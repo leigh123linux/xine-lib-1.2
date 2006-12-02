@@ -2,6 +2,7 @@ srcdir = @srcdir@
 CC = @CC@
 CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
+VISIBILITY_FLAG = @VISIBILITY_FLAG@
 
 config.mak: $(srcdir)/configure makefile.xine
 	$(srcdir)/configure \
@@ -12,7 +13,7 @@ config.mak: $(srcdir)/configure makefile.xine
 		--disable-strip \
 		--make="$(MAKE)" \
 		--cc="$(CC)" \
-		--extra-cflags="$(CFLAGS) -fPIC -DPIC" \
+		--extra-cflags="$(CFLAGS) $(VISIBILITY_FLAG) -fPIC -DPIC" \
 		--extra-ldflags="$(LDFLAGS)" \
 		--enable-gpl \
 		--enable-pthreads \
