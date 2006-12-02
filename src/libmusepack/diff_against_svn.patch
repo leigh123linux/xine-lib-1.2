@@ -1,0 +1,35 @@
+Use xine's inttypes.
+The file config_types.h is generated from config_types.h.in in musepack SVN.
+
+Index: src/libmusepack/musepack/config_types.h
+===================================================================
+RCS file: /home/valtri/CVS/xine-lib/src/libmusepack/musepack/config_types.h,v
+retrieving revision 1.1.1.2
+diff -u -p -u -p -r1.1.1.2 config_types.h
+--- src/libmusepack/musepack/config_types.h	3 Feb 2005 00:19:24 -0000	1.1.1.2
++++ src/libmusepack/musepack/config_types.h	3 Feb 2005 00:21:06 -0000
+@@ -1,7 +1,7 @@
+ #ifndef __CONFIG_TYPES_H__
+ #define __CONFIG_TYPES_H__
+ 
+-#include <stdint.h>
++#include "os_types.h"
+ 
+ #ifdef WORDS_BIGENDIAN
+   #undef MPC_LITTLE_ENDIAN
+Index: src/libmusepack/synth_filter.c
+===================================================================
+RCS file: /cvsroot/xine/xine-lib/src/libmusepack/synth_filter.c,v
+retrieving revision 1.1
+diff -u -r1.1 synth_filter.c
+--- src/libmusepack/synth_filter.c	14 Jan 2005 15:24:25 -0000	1.1
++++ src/libmusepack/synth_filter.c	7 Jan 2006 10:54:27 -0000
+@@ -39,8 +39,6 @@
+ #include "musepack/musepack.h"
+ #include "musepack/internal.h"
+ 
+-typedef mpc_int32_t ptrdiff_t;
+-
+ /* C O N S T A N T S */
+ #undef _
+ 

@@ -1,0 +1,30 @@
+srcdir = @srcdir@
+CC = @CC@
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
+
+config.mak: $(srcdir)/configure makefile.xine
+	$(srcdir)/configure \
+		--disable-shared --enable-static \
+		--disable-encoders \
+		--disable-demuxers \
+		--disable-muxers \
+		--disable-strip \
+		--make="$(MAKE)" \
+		--cc="$(CC)" \
+		--extra-cflags="$(CFLAGS) -fPIC -DPIC" \
+		--extra-ldflags="$(LDFLAGS)" \
+		--enable-gpl \
+		--enable-pthreads \
+		--disable-ffmpeg \
+		--disable-ffserver \
+		--disable-ffplay
+
+libavutil/libavutil.a: config.mak
+	$(MAKE) -C libavutil libavutil.a
+
+libavcodec/libavcodec.a: config.mak
+	$(MAKE) -C libavcodec libavcodec.a
+
+libpostproc/libpostproc.a: config.mak
+	$(MAKE) -C libpostproc libpostproc.a

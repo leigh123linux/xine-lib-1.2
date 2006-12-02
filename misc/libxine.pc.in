@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libxine
+Description: The xine engine library
+Version: @XINE_MAJOR@.@XINE_MINOR@.@XINE_SUB@
+Requires:
+Libs: -L${libdir} -lxine @ZLIB_LIBS@ @NET_LIBS@ @THREAD_LIBS@ @LIBICONV@ @RT_LIBS@
+Cflags: -I${includedir} @THREAD_CPPFLAGS@
