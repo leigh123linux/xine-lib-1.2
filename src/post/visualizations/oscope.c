@@ -20,7 +20,7 @@
  * Basic Oscilloscope Visualization Post Plugin For xine
  *   by Mike Melanson (melanson@pcisys.net)
  *
- * $Id: oscope.c,v 1.20 2006/01/27 07:46:14 tmattern Exp $
+ * $Id: oscope.c,v 1.21 2006/12/02 22:35:18 miguelfreitas Exp $
  *
  */
 
@@ -191,6 +191,7 @@ static int oscope_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream,
     this->channels = MAXCHANNELS;
   this->samples_per_frame = rate / FPS;
   this->data_idx = 0;
+  this->sample_counter = 0;
   init_yuv_planes(&this->yuv, OSCOPE_WIDTH, OSCOPE_HEIGHT);
 
   this->vo_port->open(this->vo_port, XINE_ANON_STREAM);
@@ -252,7 +253,7 @@ static void oscope_port_put_buffer (xine_audio_port_t *port_gen,
       data8 += samples_used * this->channels;
   
       /* scale 8 bit data to 16 bits and convert to signed as well */
-      for( i = 0; i < buf->num_frames && this->data_idx < NUMSAMPLES;
+      for( i = samples_used; i < buf->num_frames && this->data_idx < NUMSAMPLES;
            i++, this->data_idx++, data8 += this->channels )
         for( c = 0; c < this->channels; c++)
           this->data[c][this->data_idx] = ((int16_t)data8[c] << 8) - 0x8000;
@@ -260,23 +261,30 @@ static void oscope_port_put_buffer (xine_audio_port_t *port_gen,
       data = buf->mem;
       data += samples_used * this->channels;
   
-      for( i = 0; i < buf->num_frames && this->data_idx < NUMSAMPLES;
+      for( i = samples_used; i < buf->num_frames && this->data_idx < NUMSAMPLES;
            i++, this->data_idx++, data += this->channels )
         for( c = 0; c < this->channels; c++)
           this->data[c][this->data_idx] = data[c];
     }
   
-    if( this->sample_counter >= this->samples_per_frame &&
-        this->data_idx == NUMSAMPLES ) {
+    if( this->sample_counter >= this->samples_per_frame ) {
   
-      this->data_idx = 0;
       samples_used += this->samples_per_frame;
   
       frame = this->vo_port->get_frame (this->vo_port, OSCOPE_WIDTH, OSCOPE_HEIGHT,
                                         this->ratio, XINE_IMGFMT_YUY2,
                                         VO_BOTH_FIELDS);
       frame->extra_info->invalid = 1;
-      frame->bad_frame = 0;
+      
+      /* frame is marked as bad if we don't have enough samples for 
+       * updating the viz plugin (calculations may be skipped).
+       * we must keep the framerate though. */
+      if( this->data_idx == NUMSAMPLES ) {
+        frame->bad_frame = 0;
+        this->data_idx = 0;
+      } else {
+        frame->bad_frame = 1;
+      }
       frame->duration = 90000 * this->samples_per_frame / port->rate;
       frame->pts = pts;
       this->metronom->got_video_frame(this->metronom, frame);

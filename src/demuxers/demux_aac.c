@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2005 the xine project
+ * Copyright (C) 2001-2007 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -21,7 +21,7 @@
  * This demuxer detects ADIF and ADTS headers in AAC files.
  * Then it shovels buffer-sized chunks over to the AAC decoder.
  *
- * $Id: demux_aac.c,v 1.12 2006/11/14 21:51:32 dsalt Exp $
+ * $Id: demux_aac.c,v 1.17 2007/03/03 01:41:16 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -48,6 +48,8 @@
 #include "bswap.h"
 #include "group_audio.h"
 
+#include "id3.h"
+
 typedef struct {
   demux_plugin_t       demux_plugin;
 
@@ -57,7 +59,6 @@ typedef struct {
   input_plugin_t      *input;
   int                  status;
 
-  off_t                data_start;
   off_t                data_size;
 
   int                  seek_flag;  /* this is set when a seek just occurred */
@@ -72,11 +73,30 @@ static int open_aac_file(demux_aac_t *this) {
   int i;
   uint8_t peak[MAX_PREVIEW_SIZE];
   uint16_t syncword = 0;
+  uint32_t id3size = 0;
+  off_t data_start = 0;
 
-  /* Check for an ADIF header - should be at the start of the file */
-  if (_x_demux_read_header(this->input, peak, 4) != 4)
+  _x_assert(MAX_PREVIEW_SIZE > 10);
+
+  /* Get enough data to be able to check the size of ID3 tag */
+  if (_x_demux_read_header(this->input, peak, 10) != 10)
       return 0;
 
+  /* Check if there's an ID3v2 tag at the start */
+  if ( id3v2_istag(peak) ) {
+    id3size = id3v2_tagsize(&peak[6]);
+
+    this->input->seek(this->input, 4, SEEK_SET);
+
+    id3v2_parse_tag(this->input, this->stream, peak);
+
+    lprintf("ID3v2 tag encountered, skipping %u bytes.\n", id3size);
+  }
+
+  if ( this->input->read(this->input, peak, 4) != 4 )
+    return 0;
+
+  /* Check for an ADIF header - should be at the start of the file */
   if ((peak[0] == 'A') && (peak[1] == 'D') &&
       (peak[2] == 'I') && (peak[3] == 'F')) {
     lprintf("found ADIF header\n");
@@ -84,13 +104,20 @@ static int open_aac_file(demux_aac_t *this) {
   }
 
   /* Look for an ADTS header - might not be at the start of the file */
-  if (_x_demux_read_header(this->input, peak, MAX_PREVIEW_SIZE) != 
-      MAX_PREVIEW_SIZE)
+  if ( id3size != 0 && this->input->get_capabilities(this->input) & INPUT_CAP_SEEKABLE ) {
+    lprintf("Getting a buffer of size %u starting from %u\n", MAX_PREVIEW_SIZE, id3size);
+
+    this->input->seek(this->input, id3size, SEEK_SET);
+    if ( this->input->read(this->input, peak, MAX_PREVIEW_SIZE) != MAX_PREVIEW_SIZE )
+      return 0;
+    this->input->seek(this->input, 0, SEEK_SET);
+  } else if (_x_demux_read_header(this->input, peak, MAX_PREVIEW_SIZE) != 
+	   MAX_PREVIEW_SIZE)
     return 0;
 
   for (i=0; i<MAX_PREVIEW_SIZE; i++) {
     if ((syncword & 0xfff6) == 0xfff0) {
-      this->data_start = i - 2;
+      data_start = i - 2;
       lprintf("found ADTS header at offset %d\n", i-2);
       break;
     }
@@ -99,27 +126,27 @@ static int open_aac_file(demux_aac_t *this) {
   }
 
   /* Look for second ADTS header to confirm it's really aac */
-  if (this->data_start + 5 < MAX_PREVIEW_SIZE) {
-    int frame_size = ((peak[this->data_start+3] & 0x03) << 11) |
-                      (peak[this->data_start+4] << 3) |
-                     ((peak[this->data_start+5] & 0xe0) >> 5);
+  if (data_start + 5 < MAX_PREVIEW_SIZE) {
+    int frame_size = ((peak[data_start+3] & 0x03) << 11) |
+                      (peak[data_start+4] << 3) |
+                     ((peak[data_start+5] & 0xe0) >> 5);
 
     lprintf("first frame size %d\n", frame_size);
 
     if ((frame_size > 0) &&
-        (this->data_start+frame_size < MAX_PREVIEW_SIZE-1) &&
+        (data_start+frame_size < MAX_PREVIEW_SIZE-1) &&
         /* first 28 bits must be identical */
-        (peak[this->data_start  ]   ==peak[this->data_start+frame_size  ]) &&
-        (peak[this->data_start+1]   ==peak[this->data_start+frame_size+1]) &&
-        (peak[this->data_start+2]   ==peak[this->data_start+frame_size+2]) &&
-        (peak[this->data_start+3]>>4==peak[this->data_start+frame_size+3]>>4))
+        (peak[data_start  ]   ==peak[data_start+frame_size  ]) &&
+        (peak[data_start+1]   ==peak[data_start+frame_size+1]) &&
+        (peak[data_start+2]   ==peak[data_start+frame_size+2]) &&
+        (peak[data_start+3]>>4==peak[data_start+frame_size+3]>>4))
     {
       lprintf("found second ADTS header\n");
 
       _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 0);
       _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 1);
 
-      this->input->seek(this->input, this->data_start, SEEK_SET);
+      this->input->seek(this->input, data_start+id3size, SEEK_SET);
       return 1;
     }
   }
@@ -255,7 +282,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   switch (stream->content_detection_method) {
 
   case METHOD_BY_EXTENSION: {
-    char *extensions, *mrl;
+    const char *extensions, *mrl;
 
     mrl = input->get_mrl (input);
     extensions = class_gen->get_extensions (class_gen);
@@ -283,19 +310,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "ADIF/ADTS AAC demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "AAC";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return "aac";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return NULL;
 }
 

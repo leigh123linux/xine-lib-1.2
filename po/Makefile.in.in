@@ -10,6 +10,8 @@
 #
 # Origin: gettext-0.14.4
 
+include @srcdir@/Makefile.format
+
 PACKAGE = @PACKAGE@
 LIBNAME = @LIBNAME@
 VERSION = @VERSION@
@@ -50,7 +52,7 @@ POFILES = @POFILES@
 GMOFILES = @GMOFILES@
 UPDATEPOFILES = @UPDATEPOFILES@
 DUMMYPOFILES = @DUMMYPOFILES@
-DISTFILES.common = Makefile.in.in remove-potcdate.sin \
+DISTFILES.common = Makefile.in.in remove-potcdate.sin Makefile.format \
 $(DISTFILES.common.extra1) $(DISTFILES.common.extra2) $(DISTFILES.common.extra3)
 DISTFILES = $(DISTFILES.common) Makevars POTFILES.in \
 $(POFILES) $(GMOFILES) \
@@ -121,6 +123,7 @@ $(DOMAIN).pot-update: $(POTFILES) $(srcdir)/POTFILES.in remove-potcdate.sed
 	  msgid_bugs_address='$(PACKAGE_BUGREPORT)'; \
 	fi; \
 	$(XGETTEXT) --default-domain=$(DOMAIN) --directory=$(top_srcdir) \
+	  $(XGETTEXT_FORMAT_FLAGS) $(XGETTEXT_FORMAT_FLAGS_PRIVATE) \
 	  --add-comments=TRANSLATORS: $(XGETTEXT_OPTIONS) \
 	  --files-from=$(srcdir)/POTFILES.in \
 	  --copyright-holder='$(COPYRIGHT_HOLDER)' \

@@ -36,7 +36,7 @@
  * * ANIM (Animations)
  *   - Animation works fine, without seeking.
  *
- * $Id: demux_iff.c,v 1.17 2006/07/10 22:08:13 dgp85 Exp $
+ * $Id: demux_iff.c,v 1.19 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -827,7 +827,8 @@ static int demux_iff_send_chunk(demux_plugin_t *this_gen) {
               }
             } else {
               for (j = 0, k = (interleave_index / 2); j < (buf->size / 2); j += this->audio_channels) {
-                zw_16                   = BE_16(&pointer16_from[k++]);
+                zw_16                   = BE_16(&pointer16_from[k]);
+                k++;
                 zw_rescale              = zw_16;
                 zw_rescale             *= this->audio_volume_left;
                 zw_rescale             /= max_volume;
@@ -856,7 +857,8 @@ static int demux_iff_send_chunk(demux_plugin_t *this_gen) {
               }
             } else {
               for (j = 1; j < (buf->size / 2); j += this->audio_channels) {
-                zw_16                   = BE_16(&pointer16_from[k++]);
+                zw_16                   = BE_16(&pointer16_from[k]);
+                k++;
                 zw_rescale              = zw_16;
                 zw_rescale             *= this->audio_volume_left;
                 zw_rescale             /= max_volume;
@@ -1253,7 +1255,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   switch (stream->content_detection_method) {
 
     case METHOD_BY_EXTENSION: {
-      char *extensions, *mrl;
+      const char *extensions, *mrl;
 
       mrl                               = input->get_mrl (input);
       extensions                        = class_gen->get_extensions (class_gen);
@@ -1283,19 +1285,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "IFF demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "IFF";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return "iff svx 8svx 16sv ilbm ham ham6 ham8 anim anim3 anim5 anim7 anim8";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return "audio/x-8svx: 8svx: IFF-8SVX Audio;"
          "audio/8svx: 8svx: IFF-8SVX Audio;"
          "audio/x-16sv: 16sv: IFF-16SV Audio;"

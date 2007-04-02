@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2003 the xine project
+ * Copyright (C) 2000-2007 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: demux_mpgaudio.c,v 1.145 2006/09/03 02:03:21 dgp85 Exp $
+ * $Id: demux_mpgaudio.c,v 1.156 2007/03/29 16:32:12 dgp85 Exp $
  *
  * demultiplexer for mpeg audio (i.e. mp3) streams
  *
@@ -79,28 +79,16 @@
 /* mp3 frame struct */
 typedef struct {
   /* header */
-  uint16_t  frame_sync;
-  uint8_t   mpeg25_bit;
-  uint8_t   lsf_bit;
-  uint8_t   layer;
-  uint8_t   protection_bit;
-  uint8_t   bitrate_idx;
-  uint8_t   freq_idx;
-  uint8_t   padding_bit;
-  uint8_t   private_bit;
-  uint8_t   channel_mode;
-  uint8_t   mode_extension;
-  uint8_t   copyright;
-  uint8_t   original;
-  uint8_t   emphasis;
+  double               duration;
+  uint32_t             size;                 /* in bytes */
+  uint32_t             bitrate;              /* in bit per second */
+  uint16_t             freq;                 /* in Hz */
 
-  uint8_t   version_idx;          /* 0: mpeg1, 1: mpeg2, 2: mpeg2.5 */
-  int       bitrate;              /* in bit per second */
-  int       freq;                 /* in Hz */
-  int       samples;              /* samples per frame */
-  int       padding;              /* padding bytes (0, 1 or 4)*/
-  int       size;                 /* in bytes */
-  double    duration;             /* in xine pts */
+  uint8_t              layer;
+
+  uint8_t              version_idx:2;        /* 0: mpeg1, 1: mpeg2, 2: mpeg2.5 */
+  uint8_t              lsf_bit:1;
+  uint8_t              channel_mode:3;
 } mpg_audio_frame_t;
 
 /* Xing Vbr Header struct */
@@ -163,61 +151,72 @@ typedef struct {
 
 } demux_mpgaudio_class_t;
 
-/* bitrate table[mpeg version][layer][bitrate index]
- * values stored in kbps
- */
-const int mp3_bitrates[3][3][16] = {
-   { {0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448,},
-     {0, 32, 48, 56,  64,  80,  96, 112, 128, 160, 192, 224, 256, 320, 384,},
-     {0, 32, 40, 48,  56,  64,  80,  96, 112, 128, 160, 192, 224, 256, 320,} },
-   { {0, 32, 48, 56,  64,  80,  96, 112, 128, 144, 160, 176, 192, 224, 256,},
-     {0,  8, 16, 24,  32,  40,  48,  56,  64,  80,  96, 112, 128, 144, 160,},
-     {0,  8, 16, 24,  32,  40,  48,  56,  64,  80,  96, 112, 128, 144, 160,} },
-   { {0, 32, 48, 56,  64,  80,  96, 112, 128, 144, 160, 176, 192, 224, 256,},
-     {0,  8, 16, 24,  32,  40,  48,  56,  64,  80,  96, 112, 128, 144, 160,},
-     {0,  8, 16, 24,  32,  40,  48,  56,  64,  80,  96, 112, 128, 144, 160,} }
-};
-
-/* frequency table[mpeg version][frequence index] (in KHz) */
-static int mp3_freqs[3][3] = {
-	{ 44100, 48000, 32000 },
-	{ 22050, 24000, 16000 },
-	{ 11025, 12000,  8000 }
-};
-
-/* samples per frame table[mpeg version][layer] */
-static int mp3_samples[3][3] = {
-	{ 384, 1152, 1152 },
-	{ 384, 1152, 576 },
-	{ 384, 1152, 576 }
-};
-
-/* samples per frame table[layer][padding bit] */
-static int mp3_paddings[3][2] = {
-	{ 0, 4 },
-	{ 0, 1 },
-	{ 0, 1 }
-};
-
 /*
  * Parse a mp3 frame
  * return 1 on success
  */
-static int parse_frame_header(mpg_audio_frame_t *frame, uint8_t *buf) {
-  uint32_t head;
+static int parse_frame_header(mpg_audio_frame_t *const frame, const uint8_t *const buf) {
+  /* bitrate table[mpeg version][layer][bitrate index]
+   * values stored in kbps
+   */
+  static const uint16_t mp3_bitrates[3][3][16] = {
+    { {0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448,},
+      {0, 32, 48, 56,  64,  80,  96, 112, 128, 160, 192, 224, 256, 320, 384,},
+      {0, 32, 40, 48,  56,  64,  80,  96, 112, 128, 160, 192, 224, 256, 320,} },
+    { {0, 32, 48, 56,  64,  80,  96, 112, 128, 144, 160, 176, 192, 224, 256,},
+      {0,  8, 16, 24,  32,  40,  48,  56,  64,  80,  96, 112, 128, 144, 160,},
+      {0,  8, 16, 24,  32,  40,  48,  56,  64,  80,  96, 112, 128, 144, 160,} },
+    { {0, 32, 48, 56,  64,  80,  96, 112, 128, 144, 160, 176, 192, 224, 256,},
+      {0,  8, 16, 24,  32,  40,  48,  56,  64,  80,  96, 112, 128, 144, 160,},
+      {0,  8, 16, 24,  32,  40,  48,  56,  64,  80,  96, 112, 128, 144, 160,} }
+  };
 
-  head = BE_32(buf);
+  /* frequency table[mpeg version][frequence index] (in KHz) */
+  static const uint16_t mp3_freqs[3][3] = {
+    { 44100, 48000, 32000 },
+    { 22050, 24000, 16000 },
+    { 11025, 12000,  8000 }
+  };
+
+  /* samples per frame table[mpeg version][layer] */
+  static const uint16_t mp3_samples[3][3] = {
+    { 384, 1152, 1152 },
+    { 384, 1152, 576 },
+    { 384, 1152, 576 }
+  };
+
+  struct {
+    uint16_t  mpeg25_bit:1;
+    uint16_t  bitrate_idx:4;
+    uint16_t  freq_idx:3;
+    uint16_t  padding_bit:1;
+    uint16_t  channel_mode:3;
+
+#if 0 /* Unused */
+    uint16_t  protection_bit:1;
+    uint16_t  private_bit:1;
+    uint16_t  mode_extension:3;
+    uint16_t  copyright:1;
+    uint16_t  original:1;
+#endif
+
+#if defined(OPT_STRICT)
+    uint16_t  emphasis:3;
+#endif
+  } frame_header;
+
+  const uint32_t head = BE_32(buf);
+  const uint16_t frame_sync = head >> 21;
 
   lprintf("header: %08X\n", head);
-  frame->frame_sync     =  head >> 21;
-  if (frame->frame_sync != 0x7ff) {
+  if (frame_sync != 0x7ff) {
     lprintf("invalid frame sync\n");
     return 0;
   }
 
-  frame->mpeg25_bit     = (head >> 20) & 0x1;
+  frame_header.mpeg25_bit     = (head >> 20) & 0x1;
   frame->lsf_bit        = (head >> 19) & 0x1;
-  if (!frame->mpeg25_bit) {
+  if (!frame_header.mpeg25_bit) {
     if (frame->lsf_bit) {
       lprintf("reserved mpeg25 lsf combination\n");
       return 0;
@@ -236,54 +235,60 @@ static int parse_frame_header(mpg_audio_frame_t *frame, uint8_t *buf) {
     return 0;
   }
 
-  frame->protection_bit = (head >> 16) & 0x1;
-  frame->bitrate_idx    = (head >> 12) & 0xf;
-  if ((frame->bitrate_idx == 0) || (frame->bitrate_idx == 15)) {
+  frame_header.bitrate_idx    = (head >> 12) & 0xf;
+  if ((frame_header.bitrate_idx == 0) || (frame_header.bitrate_idx == 15)) {
     lprintf("invalid bitrate index\n");
     return 0;
   }
 
-  frame->freq_idx       = (head >> 10) & 0x3;
-  if (frame->freq_idx == 3) {
+  frame_header.freq_idx       = (head >> 10) & 0x3;
+  if (frame_header.freq_idx == 3) {
     lprintf("invalid frequence index\n");
     return 0;
   }
 
-  frame->padding_bit    = (head >>  9) & 0x1;
-  frame->private_bit    = (head >>  8) & 0x1;
-  frame->channel_mode   = (head >>  6) & 0x3;
-  frame->mode_extension = (head >>  4) & 0x3;
-  frame->copyright      = (head >>  3) & 0x1;
-  frame->original       = (head >>  2) & 0x1;
-  frame->emphasis       =  head        & 0x3;
+  frame_header.padding_bit    = (head >>  9) & 0x1;
+  frame_header.channel_mode   = (head >>  6) & 0x3;
+
+#if 0 /* Unused */
+  frame_header.protection_bit = (head >> 16) & 0x1;
+  frame_header.private_bit    = (head >>  8) & 0x1;
+  frame_header.mode_extension = (head >>  4) & 0x3;
+  frame_header.copyright      = (head >>  3) & 0x1;
+  frame_header.original       = (head >>  2) & 0x1;
+#endif
 
 #if defined(OPT_STRICT)
+  frame_header.emphasis       =  head        & 0x3;
+
   /*
    * ISO/IEC 11172-3 says this is a reserved emphasis value, but
    * streams exist which use it anyway. Since the value is not important
    * to the decoder proper, we allow it unless OPT_STRICT is defined.
    */
-  if (frame->emphasis == 2) {
+  if (frame_header.emphasis == 2) {
     lprintf("reserved emphasis\n");
     return 0;
   }
 #endif
   
-  frame->bitrate = mp3_bitrates[frame->version_idx][frame->layer - 1][frame->bitrate_idx] * 1000;
-  frame->freq    = mp3_freqs[frame->version_idx][frame->freq_idx];
-  frame->samples = mp3_samples[frame->version_idx][frame->layer - 1];
-  frame->padding = mp3_paddings[frame->layer - 1][frame->padding_bit];
+  {
+    const uint16_t samples = mp3_samples[frame->version_idx][frame->layer - 1];
+    frame->bitrate = mp3_bitrates[frame->version_idx][frame->layer - 1][frame_header.bitrate_idx] * 1000;
+    frame->freq    = mp3_freqs[frame->version_idx][frame_header.freq_idx];
   
-  frame->size  = frame->samples * (frame->bitrate / 8);
-  frame->size /= frame->freq;
-  frame->size += frame->padding;
+    frame->size  = samples * (frame->bitrate / 8);
+    frame->size /= frame->freq;
+    /* Padding: only if padding_bit is set; 4 bytes for Layer 1 and 1 byte for others */
+    frame->size += ( frame_header.padding_bit ? ( frame->layer == 1 ? 4 : 1 ) : 0 );
 
-  frame->duration  = 1000.0f * (double)frame->samples / (double)frame->freq;
+    frame->duration  = 1000.0f * (double)samples / (double)frame->freq;
+  }
 
   lprintf("mpeg %d, layer %d\n", frame->version_idx + 1, frame->layer);
   lprintf("bitrate: %d bps, samplerate: %d Hz\n", frame->bitrate, frame->freq);
   lprintf("length: %d bytes, %f ms\n", frame->size, frame->duration);
-  lprintf("padding: %d bytes\n", frame->padding);
+  lprintf("padding: %d bytes\n", ( frame_header.padding_bit ? ( frame->layer == 1 ? 4 : 1 ) : 0 ));
   return 1;
 }
 
@@ -294,7 +299,9 @@ static int parse_frame_header(mpg_audio_frame_t *frame, uint8_t *buf) {
 static xing_header_t* parse_xing_header(mpg_audio_frame_t *frame,
                                         uint8_t *buf, int bufsize) {
 
+#ifdef LOG
   int i;
+#endif
   uint8_t *ptr = buf;
   xing_header_t *xing;
 
@@ -338,14 +345,12 @@ static xing_header_t* parse_xing_header(mpg_audio_frame_t *frame,
       lprintf("toc found\n");
       if (ptr >= (buf + bufsize - XING_TOC_LENGTH)) return 0;
 
+      memcpy(xing->toc, ptr, XING_TOC_LENGTH);
+#ifdef LOG
       for (i = 0; i < XING_TOC_LENGTH; i++) {
-        xing->toc[i] = *(ptr + i);
-#ifdef LOG
-        printf("%d ", xing->toc[i]);
-#endif
+        lprintf("%d ", xing->toc[i]);
       }
-#ifdef LOG
-      printf("\n");
+      lprintf("\n");
 #endif
       ptr += XING_TOC_LENGTH;
     }
@@ -437,7 +442,7 @@ static vbri_header_t* parse_vbri_header(mpg_audio_frame_t *frame,
       for (i = 0; i <= vbri->toc_entries; i++) {
         toc_stream_size += vbri->toc[i];
       }
-      lprintf("stream size from toc: %lld\n", toc_stream_size);
+      lprintf("stream size from toc: %"PRId64"\n", toc_stream_size);
     }
 
     return vbri;
@@ -460,7 +465,7 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
   uint64_t       pts = 0;
 
   frame_pos = this->input->get_current_pos(this->input) - 4;
-  lprintf("frame_pos = %lld\n", frame_pos);
+  lprintf("frame_pos = %"PRId64"\n", frame_pos);
 
   buf = this->audio_fifo->buffer_pool_alloc(this->audio_fifo);
 
@@ -510,7 +515,7 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
   buf->decoder_flags          = decoder_flags|BUF_FLAG_FRAME_END;
 
   this->audio_fifo->put(this->audio_fifo, buf);
-  lprintf("send buffer: pts=%lld\n", pts);  
+  lprintf("send buffer: pts=%"PRId64"\n", pts);  
   this->cur_time += this->cur_frame.duration;
   return 1;
 }
@@ -606,39 +611,14 @@ static int demux_mpgaudio_next (demux_mpgaudio_t *this, int decoder_flags, int s
 	
         return parse_frame_payload(this, header_buf, decoder_flags);
         
-      } else if ((BE_32(header_buf)) == ID3V22_TAG) {
-        xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-                "demux_mpgaudio: ID3V2.2 tag\n");
-        if (!id3v22_parse_tag(this->input, this->stream, header_buf)) {
+      } else if ( id3v2_istag(header_buf) ) {
+	if (!id3v2_parse_tag(this->input, this->stream, header_buf)) {
           xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-                  "demux_mpgaudio: ID3V2.2 tag parsing error\n");
+                  LOG_MODULE ": ID3V2 tag parsing error\n");
           bytes = 1; /* resync */
         } else {
           bytes = 4;
         }
-
-      } else if ((BE_32(header_buf)) == ID3V23_TAG) {
-        xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-                "demux_mpgaudio: ID3V2.3 tag\n");
-        if (!id3v23_parse_tag(this->input, this->stream, header_buf)) {
-          xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-                  "demux_mpgaudio: ID3V2.3 tag parsing error\n");
-          bytes = 1; /* resync */
-        } else {
-          bytes = 4;
-        }
-
-      } else if ((BE_32(header_buf)) == ID3V24_TAG) {
-        xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-                "demux_mpgaudio: ID3V2.4 tag\n");
-        if (!id3v24_parse_tag(this->input, this->stream, header_buf)) {
-          xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-                  "demux_mpgaudio: ID3V2.4 tag parsing error\n");
-          bytes = 1; /* resync */
-        } else {
-          bytes = 4;
-        }
-
       } else {
         /* skip */
         bytes = 1;
@@ -718,10 +698,7 @@ static int detect_mpgaudio_file(input_plugin_t *input) {
      * flac files can contain id3v2 tags
      */
     uint8_t *ptr = &buf[6];
-    uint32_t tag_size = ((uint32_t)ptr[0] << 21) +
-                        ((uint32_t)ptr[1] << 14) +
-                        ((uint32_t)ptr[2] << 7) +
-                         (uint32_t)ptr[3];
+    uint32_t tag_size = id3v2_tagsize(ptr);
     lprintf("try to skip id3v2 tag (%d bytes)\n", tag_size);
     if ((10 + tag_size) >= preview_len) {
       lprintf("cannot skip id3v2 tag\n");
@@ -823,9 +800,9 @@ static void demux_mpgaudio_send_headers (demux_plugin_t *this_gen) {
 
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_BITRATE, this->br);
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITRATE, this->br);
-    lprintf("frame_start: %lld, frame_end: %lld\n",
+    lprintf("frame_start: %"PRId64", frame_end: %"PRId64"\n",
             this->mpg_frame_start, this->mpg_frame_end);
-    lprintf("stream size: %lld, mp3 size: %lld\n",
+    lprintf("stream size: %"PRId64", mp3 size: %"PRId64"\n",
             this->input->get_length(this->input),
             this->mpg_size);
     lprintf("stream_length: %d ms\n", this->stream_length);
@@ -939,7 +916,7 @@ static int demux_mpgaudio_seek (demux_plugin_t *this_gen,
     /* Convert position seek to time seek */
     if (!start_time) {
       start_time = (int)((double)start_pos * (double)this->stream_length / 65535.0f);
-      lprintf("position seek: start_pos=%lld => start_time=%d\n", start_pos, start_time);
+      lprintf("position seek: start_pos=%"PRId64" => start_time=%d\n", start_pos, start_time);
     }
 
     if (start_time < 0)
@@ -951,14 +928,14 @@ static int demux_mpgaudio_seek (demux_plugin_t *this_gen,
       if (this->xing_header &&
           (this->xing_header->flags & (XING_TOC_FLAG | XING_BYTES_FLAG))) {
         seek_pos += xing_get_seek_point(this->xing_header, start_time, this->stream_length);
-        lprintf("time seek: xing: time=%d, pos=%lld\n", start_time, seek_pos);
+        lprintf("time seek: xing: time=%d, pos=%"PRId64"\n", start_time, seek_pos);
       } else if (this->vbri_header) {
         seek_pos += vbri_get_seek_point(this->vbri_header, start_time, this->stream_length);
-        lprintf("time seek: vbri: time=%d, pos=%lld\n", start_time, seek_pos);
+        lprintf("time seek: vbri: time=%d, pos=%"PRId64"\n", start_time, seek_pos);
       } else {
         /* cbr */
         seek_pos += ((double)start_time / 1000.0) * ((double)this->br / 8.0);
-        lprintf("time seek: cbr: time=%d, pos=%lld\n", start_time, seek_pos);
+        lprintf("time seek: cbr: time=%d, pos=%"PRId64"\n", start_time, seek_pos);
       }
     }
     /* assume seeking is always perfect... */
@@ -1016,8 +993,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   break;
 
   case METHOD_BY_EXTENSION: {
-    char *mrl = input->get_mrl(input);
-    char *extensions = class_gen->get_extensions (class_gen);
+    const char *const mrl = input->get_mrl(input);
+    const char *const extensions = class_gen->get_extensions (class_gen);
     
     lprintf ("stage by extension %s\n", mrl);
     
@@ -1058,15 +1035,15 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
  * demux mpegaudio class
  */
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "MPEG audio demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "MPEGAUDIO";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   demux_mpgaudio_class_t *this = (demux_mpgaudio_class_t *) this_gen;
   
   if( _x_decoder_available(this->xine, BUF_AUDIO_MPEG) )
@@ -1075,7 +1052,7 @@ static char *get_extensions (demux_class_t *this_gen) {
     return "";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   demux_mpgaudio_class_t *this = (demux_mpgaudio_class_t *) this_gen;
 
   if( _x_decoder_available(this->xine, BUF_AUDIO_MPEG) )
@@ -1085,7 +1062,7 @@ static char *get_mimetypes (demux_class_t *this_gen) {
           "audio/x-mpeg3: mp3: MPEG audio;"
           "audio/mpeg: mpa,abs,mpega: MPEG audio;"
           "audio/x-mpeg: mpa,abs,mpega: MPEG audio;"
-          "x-mpegurl: mp3: MPEG audio;"
+          "audio/x-mpegurl: mp3: MPEG audio;"
           "audio/mpegurl: mp3: MPEG audio;"
           "audio/mp3: mp3: MPEG audio;"
           "audio/x-mp3: mp3: MPEG audio;";

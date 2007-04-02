@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: video_decoder.c,v 1.161 2006/09/08 21:11:29 miguelfreitas Exp $
+ * $Id: video_decoder.c,v 1.163 2007/02/20 00:34:58 dgp85 Exp $
  *
  */
 
@@ -193,8 +193,13 @@ static void *video_decoder_loop (void *stream_gen) {
 
       /*
        * wait the output fifos to run dry before sending the notification event
-       * to the frontend. this test is only valid if there is only a single
-       * stream attached to the current output port.
+       * to the frontend. exceptions:
+       * 1) don't wait if there is more than one stream attached to the current
+       *    output port (the other stream might be sending data so we would be
+       *    here forever)
+       * 2) early_finish_event: send notification asap to allow gapless switch
+       * 3) slave stream: don't wait. get into an unblocked state asap to allow
+       *    new master actions.
        */
       while(1) {
         int num_bufs, num_streams;
@@ -204,7 +209,8 @@ static void *video_decoder_loop (void *stream_gen) {
         num_streams = stream->video_out->get_property(stream->video_out, VO_PROP_NUM_STREAMS);
         running_ticket->release(running_ticket, 0);
         
-        if( num_bufs > 0 && num_streams == 1 && !stream->early_finish_event )
+        if( num_bufs > 0 && num_streams == 1 && !stream->early_finish_event &&
+            stream->master == stream )
           xine_usec_sleep (10000);
         else
           break;
@@ -302,7 +308,7 @@ static void *video_decoder_loop (void *stream_gen) {
       break;
     
     case BUF_CONTROL_NEWPTS:
-      lprintf ("new pts %lld\n", buf->disc_off);
+      lprintf ("new pts %"PRId64"\n", buf->disc_off);
 
       if (stream->video_decoder_plugin) {
         running_ticket->acquire(running_ticket, 0);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: configfile.c,v 1.81 2006/09/26 21:51:11 dgp85 Exp $
+ * $Id: configfile.c,v 1.85 2007/02/22 15:49:16 dgp85 Exp $
  *
  * config object (was: file) management - implementation
  *
@@ -491,14 +491,15 @@ static cfg_entry_t *config_register_key (config_values_t *this,
   return entry;
 }
 
-static char *config_register_string (config_values_t *this,
-				     const char *key,
-				     const char *def_value,
-				     const char *description,
-				     const char *help,
-				     int exp_level,
-				     xine_config_cb_t changed_cb,
-				     void *cb_data) {
+static cfg_entry_t *config_register_string_internal (config_values_t *this,
+						     const char *key,
+						     const char *def_value,
+						     int num_value,
+						     const char *description,
+						     const char *help,
+						     int exp_level,
+						     xine_config_cb_t changed_cb,
+						     void *cb_data) {
   cfg_entry_t *entry;
 
   _x_assert(this);
@@ -512,7 +513,7 @@ static char *config_register_string (config_values_t *this,
   if (entry->type != XINE_CONFIG_TYPE_UNKNOWN) {
     lprintf("config entry already registered: %s\n", key);
     pthread_mutex_unlock(&this->config_lock);
-    return entry->str_value;
+    return entry;
   }
 
   config_reset_value(entry);
@@ -525,13 +526,40 @@ static char *config_register_string (config_values_t *this,
   else
     entry->str_value = strdup(def_value);
 
+  entry->num_value = num_value;
+
   /* fill out rest of struct */
   entry->str_default    = strdup(def_value);
   entry->description    = (description) ? strdup(description) : NULL;
   entry->help           = (help) ? strdup(help) : NULL;
 
   pthread_mutex_unlock(&this->config_lock);
-  return entry->str_value;
+  return entry;
+}
+
+static char *config_register_string (config_values_t *this,
+				     const char *key,
+				     const char *def_value,
+				     const char *description,
+				     const char *help,
+				     int exp_level,
+				     xine_config_cb_t changed_cb,
+				     void *cb_data) {
+  return config_register_string_internal (this, key, def_value, 0, description,
+					  help, exp_level, changed_cb, cb_data)->str_value;
+}
+
+static char *config_register_filename (config_values_t *this,
+				       const char *key,
+				       const char *def_value,
+				       int req_type,
+				       const char *description,
+				       const char *help,
+				       int exp_level,
+				       xine_config_cb_t changed_cb,
+				       void *cb_data) {
+  return config_register_string_internal (this, key, def_value, req_type, description,
+					  help, exp_level, changed_cb, cb_data)->str_value;
 }
 
 static int config_register_num (config_values_t *this,
@@ -661,9 +689,9 @@ static int config_register_range (config_values_t *this,
   return entry->num_value;
 }
 
-static int config_parse_enum (const char *str, char **values) {
+static int config_parse_enum (const char *str, const char **values) {
 
-  char **value;
+  const char **value;
   int    i;
 
 
@@ -697,7 +725,8 @@ static int config_register_enum (config_values_t *this,
 				 void *cb_data) {
 
   cfg_entry_t *entry;
-  char **value_src, **value_dest;
+  const char **value_src;
+  char **value_dest;
   int value_count;
 
 
@@ -1184,6 +1213,7 @@ config_values_t *_x_config_init (void) {
   pthread_mutex_init(&this->config_lock, &attr);
 
   this->register_string     = config_register_string;
+  this->register_filename   = config_register_filename;
   this->register_range      = config_register_range;
   this->register_enum       = config_register_enum;
   this->register_num        = config_register_num;

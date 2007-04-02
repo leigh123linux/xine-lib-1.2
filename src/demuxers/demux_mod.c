@@ -50,6 +50,7 @@
 #include "demux.h"
 #include "group_audio.h"
 #include "modplug.h"
+#include "bswap.h"
 
 #define MOD_SAMPLERATE 44100
 #define MOD_BITS 16
@@ -88,6 +89,43 @@ typedef struct {
 typedef struct {
   demux_class_t     demux_class;
 } demux_mod_class_t;
+
+#define FOURCC_32(a, b, c, d) (d + (c<<8) + (b<<16) + (a<<24))
+
+/**
+ * @brief Probes if the given file can be demuxed using modplug or not
+ * @retval 0 The file is not a valid modplug file (or the probe isn't complete yet)
+ * @retval 1 The file has been identified as a valid modplug file
+ * @todo Just Protracker files are detected right now.
+ */
+static int probe_mod_file(demux_mod_t *this) {
+  /* We need the value present at offset 1080, of size 4 */
+  union {
+    uint8_t buffer[1080+4]; /* The raw buffer */
+    uint32_t values[(1080+4)/sizeof(uint32_t)];
+  } header;
+
+  if (_x_demux_read_header(this->input, header.buffer, 1080+4) != 1080+4)
+      return 0;
+
+  /* Magic numbers taken from GNU file's magic description */
+  switch( ABE_32(header.values + (1080/sizeof(uint32_t))) ) {
+  case FOURCC_32('M', '.', 'K', '.'): /* 4-channel Protracker module sound data */
+  case FOURCC_32('M', '!', 'K', '!'): /* 4-channel Protracker module sound data */
+  case FOURCC_32('F', 'L', 'T', '4'): /* 4-channel Startracker module sound data */
+  case FOURCC_32('F', 'L', 'T', '8'): /* 8-channel Startracker module sound data */
+  case FOURCC_32('4', 'C', 'H', 'N'): /* 4-channel Fasttracker module sound data */
+  case FOURCC_32('6', 'C', 'H', 'N'): /* 6-channel Fasttracker module sound data */
+  case FOURCC_32('8', 'C', 'H', 'N'): /* 8-channel Fasttracker module sound data */
+  case FOURCC_32('C', 'D', '8', '1'): /* 8-channel Octalyser module sound data */
+  case FOURCC_32('O', 'K', 'T', 'A'): /* 8-channel Oktalyzer module sound data */
+  case FOURCC_32('1', '6', 'C', 'N'): /* 16-channel Taketracker module sound data */
+  case FOURCC_32('3', '2', 'C', 'N'): /* 32-channel Taketracker module sound data */
+    return 1;
+  }
+
+  return 0;
+}
 
 /* returns 1 if the MOD file was opened successfully, 0 otherwise */
 static int open_mod_file(demux_mod_t *this) {
@@ -289,7 +327,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   case METHOD_EXPLICIT:
   case METHOD_BY_EXTENSION: {
-    char *extensions, *mrl;
+    const char *extensions, *mrl;
 
     mrl = input->get_mrl (input);
     extensions = class_gen->get_extensions (class_gen);
@@ -306,6 +344,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   break;
 
   case METHOD_BY_CONTENT:
+    if (probe_mod_file(this) && open_mod_file(this))
+      break;
+
   default:
     free (this);
     return NULL;
@@ -314,19 +355,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "ModPlug Amiga MOD Music file demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "mod";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return "mod it stm s3m 669 amf med mdl xm";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return NULL;
 }
 

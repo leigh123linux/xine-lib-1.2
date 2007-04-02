@@ -6,7 +6,8 @@
        free multimedia
 
 
-xine-lib is a free multimedia engine, released under the GPL.
+xine-lib is a free multimedia engine, released under the GNU GPL. See COPYING
+for details.
 
 see the doc/ directory for more information about xine-lib. You will find
 various README files, FAQ and developer documentation (xine hacker's guide)
@@ -19,3 +20,8 @@ additional documentation in their packages.
 
 For more information on xine features (supported multimedia formats etc.)
 see the xine homepage, located at http://xinehq.de/
+
+The xine-lib XML parser (src/xine-utils/xmlparser.[ch] and
+src/xine-utils/xmllexer.[ch]) is released under the GNU LGPL, see COPYING.LIB
+for details.
+

@@ -265,7 +265,9 @@ static int ao_coreaudio_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate
   format.mSampleRate   = rate;
   format.mFormatID     = kAudioFormatLinearPCM;
   format.mFormatFlags  = kLinearPCMFormatFlagIsSignedInteger
+#ifdef WORDS_BIGENDIAN
                        | kLinearPCMFormatFlagIsBigEndian
+#endif
                        | kLinearPCMFormatFlagIsPacked;
   format.mBitsPerChannel   = this->bits_per_sample;
   format.mChannelsPerFrame = this->num_channels;

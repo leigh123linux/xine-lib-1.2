@@ -77,17 +77,17 @@ xineplug_inp_file_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_file_la_LDFLAGS = -avoid-version -module
 
 xineplug_inp_dvd_la_SOURCES = input_dvd.c media_helper.c
-xineplug_inp_dvd_la_LIBADD = $(XINE_LIB) $(link_dvdnav) $(THREAD_LIBS)
+xineplug_inp_dvd_la_LIBADD = $(XINE_LIB) $(link_dvdnav) $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS)
 xineplug_inp_dvd_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_dvd_la_LDFLAGS = -avoid-version -module
 
 xineplug_inp_net_la_SOURCES = input_net.c net_buf_ctrl.c
-xineplug_inp_net_la_LIBADD = $(XINE_LIB) $(THREAD_LIBS)
+xineplug_inp_net_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS)
 xineplug_inp_net_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_net_la_LDFLAGS = -avoid-version -module
 
 xineplug_inp_mms_la_SOURCES = input_mms.c net_buf_ctrl.c mms.c mmsh.c http_helper.c ../demuxers/asfheader.c
-xineplug_inp_mms_la_LIBADD = $(XINE_LIB) @LIBICONV@ $(THREAD_LIBS)
+xineplug_inp_mms_la_LIBADD = $(XINE_LIB) @LIBICONV@ $(PTHREAD_LIBS)
 xineplug_inp_mms_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_mms_la_LDFLAGS = -avoid-version -module
 
@@ -97,32 +97,32 @@ xineplug_inp_vcdo_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_vcdo_la_LDFLAGS = -avoid-version -module
 
 xineplug_inp_stdin_fifo_la_SOURCES = input_stdin_fifo.c net_buf_ctrl.c
-xineplug_inp_stdin_fifo_la_LIBADD = $(XINE_LIB) $(THREAD_LIBS)
+xineplug_inp_stdin_fifo_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS)
 xineplug_inp_stdin_fifo_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_stdin_fifo_la_LDFLAGS = -avoid-version -module
 
 xineplug_inp_rtp_la_SOURCES = input_rtp.c net_buf_ctrl.c
-xineplug_inp_rtp_la_LIBADD = $(XINE_LIB) $(THREAD_LIBS)
+xineplug_inp_rtp_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS)
 xineplug_inp_rtp_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_rtp_la_LDFLAGS = -avoid-version -module
 
 xineplug_inp_http_la_SOURCES = input_http.c net_buf_ctrl.c http_helper.c
-xineplug_inp_http_la_LIBADD = $(XINE_LIB) $(THREAD_LIBS)
+xineplug_inp_http_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS)
 xineplug_inp_http_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_http_la_LDFLAGS = -avoid-version -module
 
 xineplug_inp_pnm_la_SOURCES = input_pnm.c net_buf_ctrl.c pnm.c
-xineplug_inp_pnm_la_LIBADD = $(XINE_LIB) $(THREAD_LIBS)
+xineplug_inp_pnm_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS)
 xineplug_inp_pnm_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_pnm_la_LDFLAGS = -avoid-version -module
 
 xineplug_inp_dvb_la_SOURCES = input_dvb.c net_buf_ctrl.c
-xineplug_inp_dvb_la_LIBADD = $(XINE_LIB) $(THREAD_LIBS)
+xineplug_inp_dvb_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS)
 xineplug_inp_dvb_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_dvb_la_LDFLAGS = -avoid-version -module
 
 xineplug_inp_rtsp_la_SOURCES = input_rtsp.c net_buf_ctrl.c
-xineplug_inp_rtsp_la_LIBADD = $(XINE_LIB) $(THREAD_LIBS) libreal/libreal.la librtsp/librtsp.la
+xineplug_inp_rtsp_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) libreal/libreal.la librtsp/librtsp.la
 xineplug_inp_rtsp_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_rtsp_la_LDFLAGS = -avoid-version -module
 
@@ -137,7 +137,7 @@ xineplug_inp_v4l_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_v4l_la_LDFLAGS = -avoid-version -module
 
 xineplug_inp_gnome_vfs_la_SOURCES = input_gnome_vfs.c net_buf_ctrl.c
-xineplug_inp_gnome_vfs_la_LIBADD = $(GNOME_VFS_LIBS) $(XINE_LIB) $(THREAD_LIBS)
+xineplug_inp_gnome_vfs_la_LIBADD = $(GNOME_VFS_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
 xineplug_inp_gnome_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_gnome_vfs_la_LDFLAGS = -avoid-version -module
 
@@ -147,10 +147,10 @@ xineplug_inp_smb_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_smb_la_LDFLAGS = -avoid-version -module
 
 xineplug_inp_pvr_la_SOURCES = input_pvr.c
-xineplug_inp_pvr_la_LIBADD = $(XINE_LIB)
+xineplug_inp_pvr_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS)
 xineplug_inp_pvr_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_pvr_la_LDFLAGS = -avoid-version -module
 
-include_HEADERS = input_plugin.h
+xineinclude_HEADERS = input_plugin.h
 noinst_HEADERS = net_buf_ctrl.h mms.h mmsh.h pnm.h media_helper.h videodev2.h http_helper.h
 

@@ -17,7 +17,7 @@
  * along with self program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: audio_out.c,v 1.207 2006/11/04 23:30:14 dsalt Exp $
+ * $Id: audio_out.c,v 1.210 2007/04/01 00:52:36 dgp85 Exp $
  *
  * 22-8-2001 James imported some useful AC3 sections from the previous alsa driver.
  *   (c) 2001 Andy Lo A Foe <andy@alsaplayer.org>
@@ -204,36 +204,45 @@ typedef struct {
   /* private stuff */
   ao_driver_t         *driver;
   pthread_mutex_t      driver_lock;
-  int                  driver_open;
-  pthread_mutex_t      driver_action_lock; /* protects num_driver_actions */
+  
+  uint32_t             driver_open:1;
+  uint32_t             audio_loop_running:1;
+  uint32_t             audio_thread_created:1;
+  uint32_t             grab_only:1; /* => do not start thread, frontend will consume samples */
+  uint32_t             do_resample:1;
+  uint32_t             do_compress:1;
+  uint32_t             do_amp:1;
+  uint32_t             amp_mute:1;
+  uint32_t             do_equ:1;
+
   int                  num_driver_actions; /* number of threads, that wish to call
                                             * functions needing driver_lock */
+  pthread_mutex_t      driver_action_lock; /* protects num_driver_actions */
+
   metronom_clock_t    *clock;
   xine_t              *xine;
   xine_list_t         *streams;
   pthread_mutex_t      streams_lock;
 
-  int             audio_loop_running;
-  int             grab_only; /* => do not start thread, frontend will consume samples */
   pthread_t       audio_thread;
-  int             audio_thread_created;
 
   int64_t         audio_step;           /* pts per 32 768 samples (sample = #bytes/2) */
   int32_t         frames_per_kpts;      /* frames per 1024/90000 sec                  */
   
+  int             av_sync_method_conf;
+  resample_sync_t resample_sync_info;
+  double          resample_sync_factor; /* correct buffer length by this factor
+                                         * to sync audio hardware to (dxr3) clock */
+  int             resample_sync_method; /* fix sound card clock drift by resampling */
+
+  int             gap_tolerance;
+
   ao_format_t     input, output;        /* format conversion done at audio_out.c */
   double          frame_rate_factor;
   double          output_frame_excess;  /* used to keep track of 'half' frames */
 
-  int             av_sync_method_conf;
-  resample_sync_t resample_sync_info;
-  int             resample_sync_method; /* fix sound card clock drift by resampling */
-  double          resample_sync_factor; /* correct buffer length by this factor
-                                         * to sync audio hardware to (dxr3) clock */
   int             resample_conf;
   uint32_t        force_rate;           /* force audio output rate to this value if non-zero */
-  int             do_resample;
-  int             gap_tolerance;
   audio_fifo_t   *free_fifo;
   audio_fifo_t   *out_fifo;
   int64_t         last_audio_vpts;
@@ -247,22 +256,18 @@ typedef struct {
 
   int64_t         passthrough_offset;
   int             flush_audio_driver;
+  int             discard_buffers;
   pthread_mutex_t flush_audio_driver_lock;
   pthread_cond_t  flush_audio_driver_reached;
-  int             discard_buffers;
 
   /* some built-in audio filters */
 
-  int             do_compress;
   double          compression_factor;   /* current compression */
   double          compression_factor_max; /* user limit on compression */
-  int             do_amp;
-  int             amp_mute;
   double          amp_factor;
 
   /* 10-band equalizer */
 
-  int             do_equ;
   int             eq_gain[EQ_BANDS];
   int             eq_preamp;
   int             eq_i;
@@ -1055,9 +1060,7 @@ static void *ao_loop (void *this_gen) {
       delay = this->driver->delay(this->driver);
       while (delay < 0 && this->audio_loop_running) {
         /* Get the audio card into RUNNING state. */
-        pthread_mutex_unlock( &this->driver_lock ); 
         ao_fill_gap (this, 10000); /* FIXME, this PTS of 1000 should == period size */
-        pthread_mutex_lock( &this->driver_lock ); 
         delay = this->driver->delay(this->driver);
       }
       pthread_mutex_unlock( &this->driver_lock );
@@ -1200,7 +1203,7 @@ static void *ao_loop (void *this_gen) {
 
       if (this->driver_open) {
         pthread_mutex_lock( &this->driver_lock );
-        result = this->driver->write (this->driver, out_buf->mem, out_buf->num_frames );
+        result = this->driver_open ? this->driver->write (this->driver, out_buf->mem, out_buf->num_frames ) : 0;
         pthread_mutex_unlock( &this->driver_lock );
       } else {
         result = 0;
@@ -1762,13 +1765,15 @@ static int ao_set_property (xine_audio_port_t *this_gen, int property, int value
 
     this->amp_factor = (double) value / 100.0;
 
-    this->do_amp = (this->amp_factor != 1.0);
+    this->do_amp = (this->amp_factor != 1.0 || this->amp_mute);
 
     ret = this->amp_factor*100;
     break;
 
   case AO_PROP_AMP_MUTE:
     ret = this->amp_mute = value;
+
+    this->do_amp = (this->amp_factor != 1.0 || this->amp_mute);
     break;
 
   case AO_PROP_EQ_30HZ:
@@ -1984,6 +1989,7 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
   aos_t           *this;
   int              i, err;
   pthread_attr_t   pth_attrs;
+  pthread_mutexattr_t attr;
   static const char* resample_modes[] = {"auto", "off", "on", NULL};
   static const char* av_sync_methods[] = {"metronom feedback", "resample", NULL};
 
@@ -1994,8 +2000,14 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
   this->clock                 = xine->clock;
   this->streams               = xine_list_new();
     
+  /* warning: driver_lock is a recursive mutex. it must NOT be
+   * used with neither pthread_cond_wait() or pthread_cond_timedwait()
+   */
+  pthread_mutexattr_init( &attr );
+  pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
+
   pthread_mutex_init( &this->streams_lock, NULL );
-  pthread_mutex_init( &this->driver_lock, NULL );
+  pthread_mutex_init( &this->driver_lock, &attr );
   pthread_mutex_init( &this->driver_action_lock, NULL );
 
   this->ao.open                   = ao_open;

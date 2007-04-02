@@ -21,7 +21,8 @@
  *
  * expand video filter by James Stembridge 24/05/2003
  *            improved by Michael Roitzsch
- * 
+ *            centre_crop_out_mode by Reinhard Nissl
+ *
  * based on invert.c
  *
  */
@@ -52,6 +53,11 @@
  * This way, the decoder (or any other post plugin up the tree) will only
  * see the frame area between the black bars and by that modify the
  * enlarged version directly. No need for later copying.
+ *
+ * When centre_crop_out_mode is enabled, the plugin will detect the black
+ * bars to the left and right of the image and will then set up cropping
+ * to efficiently remove the black border around the 4:3 image, which the
+ * plugin would produce otherwise for this case.
  */ 
 
 
@@ -63,6 +69,7 @@ typedef struct expand_parameters_s {
   int enable_automatic_shift;
   int overlay_y_offset;
   double aspect;
+  int centre_cut_out_mode;
 } expand_parameters_t;
 
 START_PARAM_DESCR(expand_parameters_t)
@@ -72,6 +79,8 @@ PARAM_ITEM(POST_PARAM_TYPE_INT, overlay_y_offset, NULL, -500, 500, 0,
   "manually shift the overlay vertically")
 PARAM_ITEM(POST_PARAM_TYPE_DOUBLE, aspect, NULL, 1.0, 3.5, 0,
   "target aspect ratio")
+PARAM_ITEM(POST_PARAM_TYPE_BOOL, centre_cut_out_mode, NULL, 0, 1, 0,
+  "cut out centred 4:3 image contained in 16:9 frame")
 END_PARAM_DESCR(expand_param_descr)
 
 typedef struct post_expand_s {
@@ -83,6 +92,8 @@ typedef struct post_expand_s {
   int                      overlay_y_offset;
   double                   aspect;
   int                      top_bar_height;
+  int                      centre_cut_out_mode;
+  int                      cropping_active;
 } post_expand_t;
 
 /* plugin class functions */
@@ -106,6 +117,8 @@ static char          *expand_get_help (void);
 static vo_frame_t    *expand_get_frame(xine_video_port_t *port_gen, uint32_t width, 
 				       uint32_t height, double ratio, 
 				       int format, int flags);
+
+/* replaced vo_frame functions */
 static int            expand_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 /* overlay manager intercept check */
@@ -153,6 +166,8 @@ static post_plugin_t *expand_open_plugin(post_class_t *class_gen, int inputs,
   this->enable_automatic_shift = 0;
   this->overlay_y_offset       = 0;
   this->aspect                 = 4.0 / 3.0;
+  this->centre_cut_out_mode    = 0;
+  this->cropping_active        = 0;
   
   port = _x_post_intercept_video_port(&this->post, video_target[0], &input, &output);
   port->new_port.get_frame     = expand_get_frame;
@@ -166,8 +181,8 @@ static post_plugin_t *expand_open_plugin(post_class_t *class_gen, int inputs,
   input_param->data = &post_api;
   xine_list_push_back(this->post.input, input_param);
   
-  input->xine_in.name     = "video";
-  output->xine_out.name   = "expanded video";
+  input->xine_in.name   = "video";
+  output->xine_out.name = "expanded video";
   
   this->post.xine_post.video_input[0] = &port->new_port;
   
@@ -214,6 +229,8 @@ static int expand_set_parameters(xine_post_t *this_gen, void *param_gen)
   this->enable_automatic_shift = param->enable_automatic_shift;
   this->overlay_y_offset       = param->overlay_y_offset;
   this->aspect                 = param->aspect;
+  this->centre_cut_out_mode    = param->centre_cut_out_mode;
+
   return 1;
 }
 
@@ -225,6 +242,8 @@ static int expand_get_parameters(xine_post_t *this_gen, void *param_gen)
   param->enable_automatic_shift = this->enable_automatic_shift;
   param->overlay_y_offset       = this->overlay_y_offset;
   param->aspect                 = this->aspect;
+  param->centre_cut_out_mode    = this->centre_cut_out_mode;
+  
   return 1;
 }
 
@@ -238,22 +257,86 @@ static char *expand_get_help(void) {
            "  Enable_automatic_shift: Enable automatic overlay shifting\n"
            "  Overlay_y_offset: Manually shift the overlay vertically\n"
            "  aspect: The target aspect ratio (default 4:3)\n"
+           "  Centre_cut_out_mode: extracts 4:3 image contained in 16:9 frame\n"
            "\n"
          );
 }
 
 
+static int is_pixel_black(vo_frame_t *frame, int x, int y)
+{
+  int Y = 0x00, Cr = 0x00, Cb = 0x00;
+
+  if (x < 0)              x = 0;
+  if (x >= frame->width)  x = frame->width - 1;
+  if (y < 0)              y = 0;
+  if (y >= frame->height) y = frame->height - 1;
+  
+  switch (frame->format)
+  {
+  case XINE_IMGFMT_YV12:
+    Y  = *(frame->base[ 0 ] + frame->pitches[ 0 ] * y     + x);
+    Cr = *(frame->base[ 1 ] + frame->pitches[ 1 ] * y / 2 + x / 2);
+    Cb = *(frame->base[ 2 ] + frame->pitches[ 2 ] * y / 2 + x / 2);
+    break;
+    
+  case XINE_IMGFMT_YUY2:
+    Y  = *(frame->base[ 0 ] + frame->pitches[ 0 ] * y + x * 2 + 0);
+    x &= ~1;
+    Cr = *(frame->base[ 0 ] + frame->pitches[ 0 ] * y + x * 2 + 1);
+    Cb = *(frame->base[ 0 ] + frame->pitches[ 0 ] * y + x * 2 + 3);
+    break;
+  }
+
+  return (Y == 0x10 && Cr == 0x80 && Cb == 0x80);
+}
+
+
 static int expand_draw(vo_frame_t *frame, xine_stream_t *stream)
 {
-    post_video_port_t *port = (post_video_port_t *)frame->port;
-    post_expand_t *this = (post_expand_t *)port->post;
-    int skip;
+  post_video_port_t *port = (post_video_port_t *)frame->port;
+  post_expand_t     *this = (post_expand_t *)port->post;
+  int                skip;
 
-    frame->ratio = this->aspect;
-    _x_post_frame_copy_down(frame, frame->next);
-    skip = frame->next->draw(frame->next, stream);
-    _x_post_frame_copy_up(frame, frame->next);
-    return skip;
+  if (this->centre_cut_out_mode && !frame->bad_frame)
+  {
+    /* expected area of inner 4:3 image */
+    int centre_width = frame->width * (9 * 4) / (16 * 3);
+    int centre_left  = (frame->width - centre_width ) / 2;
+
+    /* centre point for detecting a black frame */
+    int centre_x = frame->width  / 2;
+    int centre_y = frame->height / 2;
+
+    /* ignore a black frame as it could lead to wrong results */
+    if (!is_pixel_black(frame, centre_x, centre_y))
+    {
+      /* coordinates for testing black border near the centre area */
+      int test_left  = centre_left - 16;
+      int test_right = centre_left + 16 + centre_width;
+
+      /* enable cropping when these pixels are black */
+      this->cropping_active = is_pixel_black(frame, test_left, centre_y)
+        && is_pixel_black(frame, test_right, centre_y);
+    }
+
+    /* crop frame */
+    if (this->centre_cut_out_mode && this->cropping_active) {
+      frame->crop_left  += centre_left;
+      frame->crop_right += centre_left;
+
+      /* get_frame() allocated an extra high frame */
+      frame->crop_top    += (frame->next->height - frame->height) / 2;
+      frame->crop_bottom += (frame->next->height - frame->height) / 2;
+    }
+  }
+
+  frame->ratio = this->aspect;
+  _x_post_frame_copy_down(frame, frame->next);
+  skip = frame->next->draw(frame->next, stream);
+  _x_post_frame_copy_up(frame, frame->next);
+
+  return skip;
 }
 
 
@@ -338,6 +421,10 @@ static vo_frame_t *expand_get_frame(xine_video_port_t *port_gen, uint32_t width,
 
 static int expand_intercept_ovl(post_video_port_t *port)
 {
+  post_expand_t         *this = (post_expand_t *)port->post;
+
+  if (this->centre_cut_out_mode && this->cropping_active) return 0;
+  
   /* we always intercept overlay manager */
   return 1;
 }

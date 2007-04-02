@@ -26,7 +26,7 @@ xineplug_decode_mpeg2_la_SOURCES = \
 	xine_decoder.c \
 	libmpeg2_accel.c
 
-xineplug_decode_mpeg2_la_LIBADD = $(MLIB_LIBS) $(XINE_LIB)
+xineplug_decode_mpeg2_la_LIBADD = $(MLIB_LIBS) $(XINE_LIB) -lm
 xineplug_decode_mpeg2_la_CFLAGS = $(VISIBILITY_FLAG)
 xineplug_decode_mpeg2_la_LDFLAGS = -avoid-version -module
 

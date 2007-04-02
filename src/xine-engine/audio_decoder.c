@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: audio_decoder.c,v 1.138 2006/09/08 21:11:29 miguelfreitas Exp $
+ * $Id: audio_decoder.c,v 1.139 2007/02/20 00:34:57 dgp85 Exp $
  *
  *
  * functions that implement audio decoding
@@ -67,7 +67,7 @@ static void *audio_decoder_loop (void *stream_gen) {
     if( !replaying_headers )
       buf = stream->audio_fifo->get (stream->audio_fifo);
 
-    lprintf ("audio_loop: got package pts = %lld, type = %08x\n", buf->pts, buf->type); 
+    lprintf ("audio_loop: got package pts = %"PRId64", type = %08x\n", buf->pts, buf->type); 
 
     _x_extra_info_merge( stream->audio_decoder_extra_info, buf->extra_info );
     stream->audio_decoder_extra_info->seek_count = stream->video_seek_count;

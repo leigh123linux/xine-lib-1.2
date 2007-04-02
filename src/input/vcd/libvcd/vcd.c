@@ -1,5 +1,5 @@
 /*
-    $Id: vcd.c,v 1.3 2005/01/01 02:43:59 rockyb Exp $
+    $Id: vcd.c,v 1.4 2006/12/08 16:26:10 mshopf Exp $
 
     Copyright (C) 2000, 2004 Herbert Valerio Riedel <hvr@gnu.org>
 
@@ -49,7 +49,7 @@
 #include "util.h"
 #include "vcd.h"
 
-static const char _rcsid[] = "$Id: vcd.c,v 1.3 2005/01/01 02:43:59 rockyb Exp $";
+static const char _rcsid[] = "$Id: vcd.c,v 1.4 2006/12/08 16:26:10 mshopf Exp $";
 
 static const char zero[CDIO_CD_FRAMESIZE_RAW] = { 0, };
 
@@ -1664,7 +1664,7 @@ _write_sequence (VcdObj *obj, int track_idx)
                       track->info->ahdr[i].bitrate / 1024,
                       _mode_str[track->info->ahdr[i].mode]);
                     
-            strncat (buf2, buf, sizeof(buf));
+            strncat (buf2, buf, sizeof(buf2) - strlen(buf2) - 1);
           }      
 
       vcd_info ("writing track %d, %s, %s, %s...", track_idx + 2,

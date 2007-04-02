@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: asmrp.c,v 1.9 2006/11/29 19:43:01 dgp85 Exp $
+ * $Id: asmrp.c,v 1.10 2006/12/25 15:39:31 dgp85 Exp $
  *
  * a parser for real's asm rules
  *
@@ -417,7 +417,9 @@ static int asmrp_operand (asmrp_t *p) {
 
     i = asmrp_find_id (p, p->str);
     if (i<0) {
-      lprintf ("error: unknown identifier %s\n", p->str);
+      printf ("error: unknown identifier %s\n", p->str);
+      ret = 0;
+      break;
     }
     ret = p->sym_tab[i].v;
 

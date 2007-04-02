@@ -96,7 +96,7 @@ static inline int get_xvmc_macroblock_modes (picture_t * picture)
 #define bits (picture->bitstream_bits)
 #define bit_ptr (picture->bitstream_ptr)
     int macroblock_modes;
-    MBtab * tab;
+    const MBtab * tab;
 
     switch (picture->picture_coding_type) {
     case I_TYPE:
@@ -211,7 +211,7 @@ static inline int get_xvmc_motion_delta (picture_t * picture, int f_code)
 
     int delta;
     int sign;
-    MVtab * tab;
+    const MVtab * tab;
 
     if (bit_buf & 0x80000000) {
 	DUMPBITS (bit_buf, bits, 1);
@@ -281,7 +281,7 @@ static inline int get_xvmc_dmv (picture_t * picture)
 #define bits (picture->bitstream_bits)
 #define bit_ptr (picture->bitstream_ptr)
 
-    DMVtab * tab;
+    const DMVtab * tab;
 
     tab = DMV_2 + UBITS (bit_buf, 2);
     DUMPBITS (bit_buf, bits, tab->len);
@@ -297,7 +297,7 @@ static inline int get_xvmc_coded_block_pattern (picture_t * picture)
 #define bits (picture->bitstream_bits)
 #define bit_ptr (picture->bitstream_ptr)
 
-    CBPtab * tab;
+    const CBPtab * tab;
 
     NEEDBITS (bit_buf, bits, bit_ptr);
 
@@ -324,7 +324,7 @@ static inline int get_xvmc_luma_dc_dct_diff (picture_t * picture)
 #define bit_buf (picture->bitstream_buf)
 #define bits (picture->bitstream_bits)
 #define bit_ptr (picture->bitstream_ptr)
-    DCtab * tab;
+    const DCtab * tab;
     int size;
     int dc_diff;
 
@@ -361,7 +361,7 @@ static inline int get_xvmc_chroma_dc_dct_diff (picture_t * picture)
 #define bit_buf (picture->bitstream_buf)
 #define bits (picture->bitstream_bits)
 #define bit_ptr (picture->bitstream_ptr)
-    DCtab * tab;
+    const DCtab * tab;
     int size;
     int dc_diff;
 
@@ -405,12 +405,12 @@ static void get_xvmc_intra_block_B14 (picture_t * picture)
     int j;
     int l;
     int val;
-    uint8_t * scan = picture->scan;
+    const uint8_t * scan = picture->scan;
     uint8_t * scan_ptable = mpeg2_scan_orig_ptable;
     uint8_t * quant_matrix = picture->intra_quantizer_matrix;
     int quantizer_scale = picture->quantizer_scale;
     int mismatch;
-    DCTtab * tab;
+    const DCTtab * tab;
     uint32_t bit_buf;
     int bits;
     uint8_t * bit_ptr;
@@ -534,12 +534,12 @@ static void get_xvmc_intra_block_B15 (picture_t * picture)
     int j;
     int l;
     int val;
-    uint8_t * scan = picture->scan;
+    const uint8_t * scan = picture->scan;
     uint8_t * scan_ptable = mpeg2_scan_orig_ptable;
     uint8_t * quant_matrix = picture->intra_quantizer_matrix;
     int quantizer_scale = picture->quantizer_scale;
     int mismatch;
-    DCTtab * tab;
+    const DCTtab * tab;
     uint32_t bit_buf;
     int bits;
     uint8_t * bit_ptr;
@@ -661,12 +661,12 @@ static void get_xvmc_non_intra_block (picture_t * picture)
     int j;
     int l;
     int val;
-    uint8_t * scan = picture->scan;
+    const uint8_t * scan = picture->scan;
     uint8_t * scan_ptable = mpeg2_scan_orig_ptable;
     uint8_t * quant_matrix = picture->non_intra_quantizer_matrix;
     int quantizer_scale = picture->quantizer_scale;
     int mismatch;
-    DCTtab * tab;
+    const DCTtab * tab;
     uint32_t bit_buf;
     int bits;
     uint8_t * bit_ptr;
@@ -797,11 +797,11 @@ static void get_xvmc_mpeg1_intra_block (picture_t * picture)
     int j;
     int l;
     int val;
-    uint8_t * scan = picture->scan;
+    const uint8_t * scan = picture->scan;
     uint8_t * scan_ptable = mpeg2_scan_orig_ptable;
     uint8_t * quant_matrix = picture->intra_quantizer_matrix;
     int quantizer_scale = picture->quantizer_scale;
-    DCTtab * tab;
+    const DCTtab * tab;
     uint32_t bit_buf;
     int bits;
     uint8_t * bit_ptr;
@@ -929,11 +929,11 @@ static void get_xvmc_mpeg1_non_intra_block (picture_t * picture)
     int j;
     int l;
     int val;
-    uint8_t * scan = picture->scan;
+    const uint8_t * scan = picture->scan;
     uint8_t * scan_ptable = mpeg2_scan_orig_ptable;
     uint8_t * quant_matrix = picture->non_intra_quantizer_matrix;
     int quantizer_scale = picture->quantizer_scale;
-    DCTtab * tab;
+    const DCTtab * tab;
     uint32_t bit_buf;
     int bits;
     uint8_t * bit_ptr;
@@ -1473,7 +1473,7 @@ static inline int slice_xvmc_init (picture_t * picture, int code)
     int offset, height;
     struct vo_frame_s * forward_reference_frame;
     struct vo_frame_s * backward_reference_frame;
-    MBAtab * mba;
+    const MBAtab * mba;
 
     offset = picture->picture_structure == BOTTOM_FIELD;
     picture->pitches[0] = picture->current_frame->pitches[0];
@@ -1664,7 +1664,7 @@ void mpeg2_xvmc_slice (mpeg2dec_accel_t *accel, picture_t * picture, int code, u
     while (1) {
 	int macroblock_modes;
 	int mba_inc;
-	MBAtab * mba;
+	const MBAtab * mba;
 
 	NEEDBITS (bit_buf, bits, bit_ptr);
 

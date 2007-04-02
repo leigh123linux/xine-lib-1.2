@@ -20,7 +20,7 @@
 ** nsf.h
 **
 ** NSF loading/saving related defines / prototypes
-** $Id: nsf.h,v 1.2 2003/12/05 15:55:01 f1rmb Exp $
+** $Id: nsf.h,v 1.3 2007/01/18 21:34:10 dgp85 Exp $
 */
 
 #ifndef _NSF_H_
@@ -66,22 +66,22 @@ enum
 typedef struct nsf_s
 {
    /* NESM header */
-   uint8  id[5]               __PACKED__; /* NESM\x1A */
-   uint8  version             __PACKED__; /* spec version */
-   uint8  num_songs           __PACKED__; /* total num songs */
-   uint8  start_song          __PACKED__; /* first song */
-   uint16 load_addr           __PACKED__; /* loc to load code */
-   uint16 init_addr           __PACKED__; /* init call address */
-   uint16 play_addr           __PACKED__; /* play call address */
-   uint8  song_name[32]       __PACKED__; /* name of song */
-   uint8  artist_name[32]     __PACKED__; /* artist name */
-   uint8  copyright[32]       __PACKED__; /* copyright info */
-   uint16 ntsc_speed          __PACKED__; /* playback speed (if NTSC) */
-   uint8  bankswitch_info[8]  __PACKED__; /* initial code banking */
-   uint16 pal_speed           __PACKED__; /* playback speed (if PAL) */
-   uint8  pal_ntsc_bits       __PACKED__; /* NTSC/PAL determination bits */
-   uint8  ext_sound_type      __PACKED__; /* type of external sound gen. */
-   uint8  reserved[4]         __PACKED__; /* reserved */
+   uint8  id[5];               /* NESM\x1A */
+   uint8  version;             /* spec version */
+   uint8  num_songs;           /* total num songs */
+   uint8  start_song;          /* first song */
+   uint16 load_addr;           /* loc to load code */
+   uint16 init_addr;           /* init call address */
+   uint16 play_addr;           /* play call address */
+   uint8  song_name[32];       /* name of song */
+   uint8  artist_name[32];     /* artist name */
+   uint8  copyright[32];       /* copyright info */
+   uint16 ntsc_speed;          /* playback speed (if NTSC) */
+   uint8  bankswitch_info[8];  /* initial code banking */
+   uint16 pal_speed;           /* playback speed (if PAL) */
+   uint8  pal_ntsc_bits;       /* NTSC/PAL determination bits */
+   uint8  ext_sound_type;      /* type of external sound gen. */
+   uint8  reserved[4];         /* reserved */
 
    /* things that the NSF player needs */
    uint8  *data;              /* actual NSF data */
@@ -96,7 +96,7 @@ typedef struct nsf_s
 
    /* our main processing routine, calls all external mixing routines */
    void (*process)(void *buffer, int num_samples);
-} nsf_t;
+} __PACKED__ nsf_t;
 
 /* Function prototypes */
 extern void nsf_init(void);
@@ -114,6 +114,9 @@ extern void nsf_setfilter(nsf_t *nsf, int filter_type);
 
 /*
 ** $Log: nsf.h,v $
+** Revision 1.3  2007/01/18 21:34:10  dgp85
+** __attribute__(packed) is used on the struct, not on its members.
+**
 ** Revision 1.2  2003/12/05 15:55:01  f1rmb
 ** cleanup phase II. use xprintf when it's relevant, use xine_xmalloc when it's relevant too. Small other little fix (can't remember). Change few internal function prototype because it xine_t pointer need to be used if some xine's internal sections. NOTE: libdvd{nav,read} is still too noisy, i will take a look to made it quit, without invasive changes. To be continued...
 **

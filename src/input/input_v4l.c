@@ -1628,7 +1628,7 @@ static void v4l_plugin_dispose (input_plugin_t *this_gen) {
  *
  * Get the current MRL used by the plugin.
  */
-static char* v4l_plugin_get_mrl (input_plugin_t *this_gen) {
+static const char* v4l_plugin_get_mrl (input_plugin_t *this_gen) {
   v4l_input_plugin_t *this = (v4l_input_plugin_t *) this_gen;
   
   return this->mrl;
@@ -1907,8 +1907,8 @@ static void *init_video_class (xine_t *xine, void *data)
   this->input_class.dispose            = v4l_class_dispose;
   this->input_class.eject_media        = NULL;
   
-  config->register_string (config, "media.video4linux.video_device",
-			   VIDEO_DEV,
+  config->register_filename (config, "media.video4linux.video_device",
+			   VIDEO_DEV, XINE_CONFIG_STRING_IS_DEVICE_NAME,
 			   _("v4l video device"),
 			   _("The path to your Video4Linux video device."),
 			   10, NULL, NULL);
@@ -1933,8 +1933,8 @@ static void *init_radio_class (xine_t *xine, void *data)
   this->input_class.dispose            = v4l_class_dispose;
   this->input_class.eject_media        = NULL;
   
-  config->register_string (config, "media.video4linux.radio_device",
-			   RADIO_DEV,
+  config->register_filename (config, "media.video4linux.radio_device",
+			   RADIO_DEV, XINE_CONFIG_STRING_IS_DEVICE_NAME,
 			   _("v4l radio device"),
 			   _("The path to your Video4Linux radio device."),
 			   10, NULL, NULL);

@@ -18,5 +18,5 @@ ltmain.sh
 missing
 mkinstalldirs
 stamp-h1
-*.cache
 post-install.sh
+autom4te.cache

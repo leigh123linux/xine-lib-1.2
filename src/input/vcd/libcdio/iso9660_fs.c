@@ -1,5 +1,5 @@
 /*
-    $Id: iso9660_fs.c,v 1.6 2006/09/28 08:19:14 dgp85 Exp $
+    $Id: iso9660_fs.c,v 1.7 2006/12/08 16:26:10 mshopf Exp $
 
     Copyright (C) 2001 Herbert Valerio Riedel <hvr@gnu.org>
     Copyright (C) 2003, 2004 Rocky Bernstein <rocky@panix.com>
@@ -51,7 +51,7 @@
 
 #include <stdio.h>
 
-static const char _rcsid[] = "$Id: iso9660_fs.c,v 1.6 2006/09/28 08:19:14 dgp85 Exp $";
+static const char _rcsid[] = "$Id: iso9660_fs.c,v 1.7 2006/12/08 16:26:10 mshopf Exp $";
 
 /* Implementation of iso9660_t type */
 struct _iso9660 {
@@ -1200,9 +1200,7 @@ find_fs_lsn_recurse (CdIo *p_cdio, const char pathname[], lsn_t lsn)
       char _fullname[4096] = { 0, };
       char *filename = (char *) statbuf->filename;
 
-      snprintf (_fullname, sizeof (_fullname), "%s%s", pathname, filename);
-  
-      strncat (_fullname, "/", sizeof (_fullname));
+      snprintf (_fullname, sizeof (_fullname), "%s%s/", pathname, filename);
 
       if (statbuf->type == _STAT_DIR
           && strcmp ((char *) statbuf->filename, ".") 

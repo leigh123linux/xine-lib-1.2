@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: dxr3_mpeg_encoders.c,v 1.24 2005/11/28 12:24:57 valtri Exp $
+ * $Id: dxr3_mpeg_encoders.c,v 1.25 2007/03/10 17:25:13 dgp85 Exp $
  */
  
 /* mpeg encoders for the dxr3 video out plugin.
@@ -44,6 +44,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <math.h>
+#include <unistd.h>
 
 #define LOG_MODULE "dxr3_mpeg_encoder"
 /* #define LOG_VERBOSE */

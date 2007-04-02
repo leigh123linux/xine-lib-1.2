@@ -21,7 +21,7 @@
 /*
  * SND/AU File Demuxer by Mike Melanson (melanson@pcisys.net)
  *
- * $Id: demux_snd.c,v 1.40 2004/10/18 18:20:32 miguelfreitas Exp $
+ * $Id: demux_snd.c,v 1.41 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -339,7 +339,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   switch (stream->content_detection_method) {
 
   case METHOD_BY_EXTENSION: {
-    char *extensions, *mrl;
+    const char *extensions, *mrl;
 
     mrl = input->get_mrl (input);
     extensions = class_gen->get_extensions (class_gen);
@@ -369,19 +369,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "SND/AU file demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "SND/AU";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return "snd au";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return "audio/basic: snd,au: ULAW (Sun) audio;"
          "audio/x-basic: snd,au: ULAW (Sun) audio;"
          "audio/x-pn-au: snd,au: ULAW (Sun) audio;"; 

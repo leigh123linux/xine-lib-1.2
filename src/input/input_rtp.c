@@ -174,7 +174,10 @@ static int host_connect_attempt(struct in_addr ia, int port,
 				const char *interface,
 				xine_t *xine) {
   int s=socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  struct sockaddr_in sin;
+  union {
+    struct sockaddr_in in;
+    struct sockaddr sa;
+  } saddr;
   int optval;
   int multicast = 0;  /* boolean, assume unicast */
 
@@ -183,12 +186,12 @@ static int host_connect_attempt(struct in_addr ia, int port,
     return -1;
   }
 
-  sin.sin_family = AF_INET;	
-  sin.sin_addr   = ia;
-  sin.sin_port   = htons(port);
+  saddr.in.sin_family = AF_INET;	
+  saddr.in.sin_addr   = ia;
+  saddr.in.sin_port   = htons(port);
 
   /* Is it a multicast address? */
-  if ((ntohl(sin.sin_addr.s_addr) >> 28) == 0xe) {
+  if ((ntohl(saddr.in.sin_addr.s_addr) >> 28) == 0xe) {
     LOG_MSG(xine, _("IP address specified is multicast\n"));
     multicast = 1;  /* boolean true */
   }
@@ -205,14 +208,14 @@ static int host_connect_attempt(struct in_addr ia, int port,
   /* If multicast we allow multiple readers to open the same address */
   if (multicast) {
     if ((setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
-		    &sin, sizeof(sin))) < 0) {
+		    &saddr.in, sizeof(saddr.in))) < 0) {
       LOG_MSG(xine, _("setsockopt(SO_REUSEADDR): %s.\n"), strerror(errno));
       return -1;
     }
   }
 
   /* datagram socket */
-  if (bind(s, (struct sockaddr *)&sin, sizeof(sin))) {
+  if (bind(s, &saddr.sa, sizeof(saddr.in))) {
     LOG_MSG(xine, _("bind(): %s.\n"), strerror(errno));
     return -1;
   }
@@ -240,7 +243,7 @@ static int host_connect_attempt(struct in_addr ia, int port,
     }
 
     /* struct ip_mreq mreq; */
-    mreq.imr_multiaddr.s_addr = sin.sin_addr.s_addr;
+    mreq.imr_multiaddr.s_addr = saddr.in.sin_addr.s_addr;
     if (interface == NULL) {
       mreq.imr_interface.s_addr = htonl(INADDR_ANY);
     }
@@ -559,7 +562,7 @@ static uint32_t rtp_plugin_get_blocksize (input_plugin_t *this_gen) {
 /*
  *
  */
-static char* rtp_plugin_get_mrl (input_plugin_t *this_gen) {
+static const char* rtp_plugin_get_mrl (input_plugin_t *this_gen) {
   rtp_input_plugin_t *this = (rtp_input_plugin_t *) this_gen;
   
   return this->mrl;
@@ -739,7 +742,7 @@ static input_plugin_t *rtp_class_get_instance (input_class_t *cls_gen,
  *  net plugin class
  */
  
-static char *rtp_class_get_description (input_class_t *this_gen) {
+static const char *rtp_class_get_description (input_class_t *this_gen) {
 	return _("RTP and UDP input plugin as shipped with xine");
 }
 

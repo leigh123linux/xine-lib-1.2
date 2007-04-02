@@ -19,7 +19,7 @@
  *
  * input plugin for http network streams
  *
- * $Id: input_http.c,v 1.124 2006/11/30 10:54:18 dgp85 Exp $
+ * $Id: input_http.c,v 1.129 2007/03/17 16:47:16 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -335,12 +335,9 @@ static int http_plugin_read_metainf (http_input_plugin_t *this) {
           /* prepares the event */
           radio = _x_meta_info_get(this->stream, XINE_META_INFO_ALBUM);
           if (radio) {
-            int len = strlen(radio);
-            strncpy(data.str, radio, sizeof(data.str));
-            strncat(data.str, " - ", sizeof(data.str) - len);
-            strncat(data.str, songtitle, sizeof(data.str) - len - 3);
+	    snprintf (data.str, sizeof(data.str), "%s - %s", radio, songtitle);
           } else {
-            strncpy(data.str, songtitle, sizeof(data.str));
+            strncpy(data.str, songtitle, sizeof(data.str)-1);
           }
           data.str[sizeof(data.str) - 1] = '\0';
           data.str_len = strlen(data.str) + 1;
@@ -366,7 +363,7 @@ static off_t http_plugin_read_int (http_input_plugin_t *this,
   int read_bytes = 0;
   int nlen;
   
-  lprintf("total=%lld\n", total);
+  lprintf("total=%"PRId64"\n", total);
   while (total) {
     nlen = total;
     if (this->shoutcast_mode &&
@@ -418,7 +415,7 @@ static off_t http_plugin_read (input_plugin_t *this_gen,
     else
       n = nlen;
 
-    lprintf ("%lld bytes from preview (which has %lld bytes)\n", n, this->preview_size);
+    lprintf ("%"PRId64" bytes from preview (which has %"PRId64" bytes)\n", n, this->preview_size);
     memcpy (buf, &this->preview[this->curpos], n);
 
     num_bytes += n;
@@ -577,7 +574,7 @@ static off_t http_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin
   return this->curpos;
 }
 
-static char* http_plugin_get_mrl (input_plugin_t *this_gen) {
+static const char* http_plugin_get_mrl (input_plugin_t *this_gen) {
   http_input_plugin_t *this = (http_input_plugin_t *) this_gen;
 
   return this->mrl;
@@ -766,13 +763,11 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   }
   
   snprintf(this->buf + buflen, BUFSIZE - buflen,
-           "User-Agent: xine/%s\015\012", VERSION);
-  buflen = strlen(this->buf);
-  strncat (this->buf, "Accept: */*\015\012", BUFSIZE - buflen);
-  buflen = strlen(this->buf);
-  strncat (this->buf, "Icy-MetaData: 1\015\012", BUFSIZE - buflen);
-  buflen = strlen(this->buf);
-  strncat (this->buf, "\015\012", BUFSIZE - buflen);
+           "User-Agent: xine/%s\015\012"
+           "Accept: */*\015\012"
+           "Icy-MetaData: 1\015\012"
+           "\015\012",
+           VERSION);
   buflen = strlen(this->buf);
   if (_x_io_tcp_write (this->stream, this->fh, this->buf, buflen) != buflen) {
     _x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "couldn't send request", NULL);
@@ -809,18 +804,20 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 
       if (linenum == 1) {
         int httpver, httpsub;
-	char httpstatus[51];
+	char httpstatus[51] = { 0, };
 
-	if (sscanf(this->buf, "HTTP/%d.%d %d %50[^\015\012]", &httpver, &httpsub,
-		   &httpcode, httpstatus) != 4)	{
-	  
-	  /* icecast 1 ? */
-	  if (sscanf(this->buf, "ICY %d %50[^\015\012]", &httpcode, httpstatus) != 2)	{
+	if (
+	    (sscanf(this->buf, "HTTP/%d.%d %d %50[^\015\012]", &httpver, &httpsub,
+		    &httpcode, httpstatus) != 4) &&
+	    (sscanf(this->buf, "HTTP/%d.%d %d", &httpver, &httpsub,
+		    &httpcode) != 3) &&
+	    (sscanf(this->buf, "ICY %d %50[^\015\012]", /* icecast 1 ? */
+		    &httpcode, httpstatus) != 2)
+	   ) {
 	    _x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "invalid http answer", NULL);
 	    xine_log (this->stream->xine, XINE_LOG_MSG, 
 		      _("input_http: invalid http answer\n"));
 	    return -6;
-	  }
 	}
 
 	if (httpcode >= 300 && httpcode < 400) {
@@ -947,7 +944,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
     return -12;
   }
   
-  lprintf("preview_size=%lld\n", this->preview_size);
+  lprintf("preview_size=%"PRId64"\n", this->preview_size);
   this->curpos = 0;
   
   return 1;
@@ -995,7 +992,7 @@ static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_str
   return &this->input_plugin;
 }
 
-static char *http_class_get_description (input_class_t *this_gen) {
+static const char *http_class_get_description (input_class_t *this_gen) {
   return _("http input plugin");
 }
 

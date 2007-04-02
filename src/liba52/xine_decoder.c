@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: xine_decoder.c,v 1.80 2006/07/10 22:08:29 dgp85 Exp $
+ * $Id: xine_decoder.c,v 1.81 2007/02/20 00:34:57 dgp85 Exp $
  *
  * stuff needed to turn liba52 into a xine decoder plugin
  */
@@ -425,7 +425,7 @@ static void a52dec_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   uint16_t          crc16;
   uint16_t          crc16_result;
 
-  lprintf ("decode data %d bytes of type %08x, pts=%lld\n",
+  lprintf ("decode data %d bytes of type %08x, pts=%"PRId64"\n",
 	   buf->size, buf->type, buf->pts);
   lprintf ("decode data decoder_info=%d, %d\n",buf->decoder_info[1],buf->decoder_info[2]);
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: xine_decoder.c,v 1.83 2006/07/10 22:08:30 dgp85 Exp $
+ * $Id: xine_decoder.c,v 1.93 2007/03/17 15:45:41 dgp85 Exp $
  *
  * thin layer to use real binary-only codecs in xine
  *
@@ -32,9 +32,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dlfcn.h>
-#ifdef __x86_64__
-  #include <elf.h>
-#endif
 
 #define LOG_MODULE "real_decoder"
 #define LOG_VERBOSE
@@ -46,6 +43,8 @@
 #include "video_out.h"
 #include "buffer.h"
 #include "xineutils.h"
+
+#include "real_common.h"
 
 typedef struct {
   video_decoder_class_t   decoder_class;
@@ -64,11 +63,11 @@ typedef struct realdec_decoder_s {
 
   void            *rv_handle;
 
-  uint32_t        (*rvyuv_custom_message)(uint32_t*, void*);
+  uint32_t        (*rvyuv_custom_message)(void*, void*);
   uint32_t        (*rvyuv_free)(void*);
   uint32_t        (*rvyuv_hive_message)(uint32_t, uint32_t);
   uint32_t        (*rvyuv_init)(void*, void*); /* initdata,context */
-  uint32_t        (*rvyuv_transform)(char*, char*, uint32_t*, uint32_t*,void*);
+  uint32_t        (*rvyuv_transform)(char*, char*, void*, uint32_t*,void*);
 
   void            *context;
 
@@ -101,87 +100,40 @@ typedef struct {
   int32_t  format;
 } rv_init_t;
 
+/*
+ * Structures for data packets.  These used to be tables of unsigned ints, but
+ * that does not work on 64 bit platforms (e.g. Alpha).  The entries that are
+ * pointers get truncated.  Pointers on 64 bit platforms are 8 byte longs.
+ * So we have to use structures so the compiler will assign the proper space
+ * for the pointer.
+ */
+typedef struct cmsg_data_s {
+        uint32_t data1;
+        uint32_t data2;
+        uint32_t* dimensions;
+} cmsg_data_t;
 
-void *__builtin_vec_new(uint32_t size);
-void __builtin_vec_delete(void *mem);
-void __pure_virtual(void);
-
-#ifdef __x86_64__
-/* (gb) quick-n-dirty check to be run natively */
-static int is_x86_64_object_(FILE *f)
-{
-  Elf64_Ehdr *hdr = malloc(sizeof(Elf64_Ehdr));
-  if (hdr == NULL)
-	return 0;
-
-  if (fseek(f, 0, SEEK_SET) != 0) {
-	free(hdr);
-	return 0;
-  }
-
-  if (fread(hdr, sizeof(Elf64_Ehdr), 1, f) != 1) {
-	free(hdr);
-	return 0;
-  }
-
-  if (hdr->e_ident[EI_MAG0] != ELFMAG0 ||
-	  hdr->e_ident[EI_MAG1] != ELFMAG1 ||
-	  hdr->e_ident[EI_MAG2] != ELFMAG2 ||
-	  hdr->e_ident[EI_MAG3] != ELFMAG3) {
-	free(hdr);
-	return 0;
-  }
-
-  return hdr->e_machine == EM_X86_64;
-}
-
-static inline int is_x86_64_object(const char *filename)
-{
-  FILE *f;
-  int ret;
-
-  if ((f = fopen(filename, "r")) == NULL)
-	return 0;
-
-  ret = is_x86_64_object_(f);
-  fclose(f);
-  return ret;
-}
-#endif
+typedef struct transform_in_s {
+        uint32_t len;
+        uint32_t unknown1;
+        uint32_t chunks;
+        uint32_t* extra;
+        uint32_t unknown2;
+        uint32_t timestamp;
+} transform_in_t;
 
 /*
  * real codec loader
  */
 
-static int load_syms_linux (realdec_decoder_t *this, char *codec_name,
-			    const char *alt_codec_name) {
+static int load_syms_linux (realdec_decoder_t *this, const char *codec_name, const char *const codec_alternate) {
+  cfg_entry_t* entry =
+    this->stream->xine->config->lookup_entry(this->stream->xine->config,
+					     "decoder.external.real_codecs_path");
 
-  cfg_entry_t* entry = this->stream->xine->config->lookup_entry(
-			 this->stream->xine->config, "decoder.external.real_codecs_path");
-  char path[1024];
-  struct stat sb;
-
-  snprintf (path, sizeof(path), "%s/%s", entry->str_value, codec_name);
-  if (stat(path, &sb))
-    snprintf (path, sizeof(path), "%s/%s", entry->str_value, alt_codec_name);
-
-#ifdef __x86_64__
-  /* check whether it's a real x86-64 library */
-  if (!is_x86_64_object(path))
-	return 0;
-#endif
-
-  lprintf ("opening shared obj '%s'\n", path);
-
-  this->rv_handle = dlopen (path, RTLD_LAZY);
-
-  if (!this->rv_handle) {
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libreal: error: %s\n", dlerror());
-    _x_message(this->stream, XINE_MSG_LIBRARY_LOAD_ERROR,
-                 codec_name, NULL);
+  if ( (this->rv_handle = _x_real_codec_open(this->stream, entry->str_value, codec_name, codec_alternate)) == NULL )
     return 0;
-  }
-  
+
   this->rvyuv_custom_message = dlsym (this->rv_handle, "RV20toYUV420CustomMessage");
   this->rvyuv_free           = dlsym (this->rv_handle, "RV20toYUV420Free");
   this->rvyuv_hive_message   = dlsym (this->rv_handle, "RV20toYUV420HiveMessage");
@@ -233,7 +185,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
     break;
   case BUF_VIDEO_RV40:
     _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, "Real Video 4.0");
-    if (!load_syms_linux(this, "drvc.so", "drv4.so.6.0"))
+    if (!load_syms_linux(this, "drvc.so", "drv3.so.6.0"))
       return 0;
     break;
   default:
@@ -262,7 +214,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
   this->duration = 90000.0 / this->fps;
 #endif
   
-  lprintf("this->ratio=%d\n", this->ratio);
+  lprintf("this->ratio=%f\n", this->ratio);
   
   lprintf ("init_data.w=%d(0x%x), init_data.h=%d(0x%x),"
 	   "this->width=%d(0x%x), this->height=%d(0x%x)\n",
@@ -298,20 +250,14 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
   /* setup rv30 codec (codec sub-type and image dimensions): */
   if ((init_data.format>=0x20200002) && (buf->type != BUF_VIDEO_RV40)) {
     int       i, j;
-    uint32_t *cmsg24;
-    uint32_t  cmsg_data[9];
+    uint32_t  cmsg24[(buf->size - 34 + 2) * sizeof(uint32_t)];
+    cmsg_data_t cmsg_data = { 0x24, 1 + ((init_data.subformat >> 16) & 7), &cmsg24[0] };
 
-    cmsg24 = xine_xmalloc((buf->size - 34 + 2) * sizeof(uint32_t));
-    
     cmsg24[0] = this->width;
     cmsg24[1] = this->height;
     for(i = 2, j = 34; j < buf->size; i++, j++)
       cmsg24[i] = 4 * buf->content[j];
     
-    cmsg_data[0] = 0x24;
-    cmsg_data[1] = 1 + ((init_data.subformat >> 16) & 7);
-    cmsg_data[2] = (uint32_t) cmsg24;
-
 #ifdef LOG
     printf ("libreal: CustomMessage cmsg_data:\n");
     xine_hexdump ((uint8_t *) cmsg_data, sizeof (cmsg_data));
@@ -319,9 +265,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
     xine_hexdump ((uint8_t *) cmsg24, (buf->size - 34 + 2) * sizeof(uint32_t));
 #endif
     
-    this->rvyuv_custom_message (cmsg_data, this->context);
-    
-    free(cmsg24);
+    this->rvyuv_custom_message (&cmsg_data, this->context);
   }
   
   this->stream->video_out->open(this->stream->video_out, this->stream);
@@ -338,7 +282,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
 static void realdec_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
   realdec_decoder_t *this = (realdec_decoder_t *) this_gen;
 
-  lprintf ("decode_data, flags=0x%08x, len=%d, pts=%lld ...\n", 
+  lprintf ("decode_data, flags=0x%08x, len=%d, pts=%"PRId64" ...\n", 
            buf->decoder_flags, buf->size, buf->pts);
 
   if (buf->decoder_flags & BUF_FLAG_PREVIEW) {
@@ -374,7 +318,7 @@ static void realdec_decode_data (video_decoder_t *this_gen, buf_element_t *buf) 
 
         this->chunk_buffer_size = 0;
         this->pts = buf->pts;
-        lprintf ("new frame starting, pts=%lld\n", this->pts);
+        lprintf ("new frame starting, pts=%"PRId64"\n", this->pts);
       }
       
       if ((this->chunk_buffer_size + buf->size) > this->chunk_buffer_max) {
@@ -401,16 +345,23 @@ static void realdec_decode_data (video_decoder_t *this_gen, buf_element_t *buf) 
         vo_frame_t    *img;
 
         uint32_t       transform_out[5];
-        uint32_t       transform_in[6];
+	transform_in_t transform_in = {
+	  this->chunk_buffer_size,
+	    /* length of the packet (sub-packets appended) */
+	  0,
+	    /* unknown, seems to be unused  */
+	  buf->decoder_info[2],
+	    /* number of sub-packets - 1 */
+	  buf->decoder_info_ptr[2],
+	    /* table of sub-packet offsets */
+	  0,
+	    /* unknown, seems to be unused  */
+	  this->pts / 90
+	    /* timestamp (the integer value from the stream) */
+	};
 
         lprintf ("chunk table\n");
 
-        transform_in[0] = this->chunk_buffer_size; /* length of the packet (sub-packets appended) */
-        transform_in[1] = 0;                       /* unknown, seems to be unused  */
-        transform_in[2] = buf->decoder_info[2];    /* number of sub-packets - 1 */
-        transform_in[3] = (uint32_t) buf->decoder_info_ptr[2]; /* table of sub-packet offsets */
-        transform_in[4] = 0;                       /* unknown, seems to be unused  */
-        transform_in[5] = this->pts / 90;          /* timestamp (the integer value from the stream) */
 
 #ifdef LOG
         printf ("libreal: got %d chunks\n",
@@ -429,7 +380,7 @@ static void realdec_decode_data (video_decoder_t *this_gen, buf_element_t *buf) 
 
         result = this->rvyuv_transform (this->chunk_buffer,
                                         this->frame_buffer,
-                                        transform_in,
+                                        &transform_in,
                                         transform_out,
                                         this->context);
 
@@ -574,32 +525,10 @@ static void dispose_class (video_decoder_class_t *this) {
   free (this);
 }
 
-/*
- * some fake functions to make real codecs happy 
- */
-void *__builtin_vec_new(uint32_t size) EXPORTED;
-void __builtin_vec_delete(void *mem) EXPORTED;
-void __pure_virtual(void) EXPORTED;
-
-void *__builtin_vec_new(uint32_t size) {
-  return malloc(size);
-}
-void __builtin_vec_delete(void *mem) {
-  free(mem);
-}
-void __pure_virtual(void) {
-  lprintf("libreal: FATAL: __pure_virtual() called!\n");
-  /*      exit(1); */
-}
-
-
-static void *init_class (xine_t *xine, void *data) {
+void *init_realvdec (xine_t *xine, void *data) {
 
   real_class_t       *this;
   config_values_t    *config = xine->config;
-  char               *real_codec_path;
-  char               *default_real_codec_path = "";
-  struct stat s;
 
   this = (real_class_t *) xine_xmalloc (sizeof (real_class_t));
 
@@ -608,44 +537,7 @@ static void *init_class (xine_t *xine, void *data) {
   this->decoder_class.get_description = get_description;
   this->decoder_class.dispose         = dispose_class;
 
-  /* try some auto-detection */
-
-  if (!stat ("/usr/local/RealPlayer8/Codecs/drv3.so.6.0", &s)) 
-    default_real_codec_path = "/usr/local/RealPlayer8/Codecs";
-  if (!stat ("/usr/RealPlayer8/Codecs/drv3.so.6.0", &s)) 
-    default_real_codec_path = "/usr/RealPlayer8/Codecs";
-  if (!stat ("/usr/lib/RealPlayer8/Codecs/drv3.so.6.0", &s)) 
-    default_real_codec_path = "/usr/lib/RealPlayer8/Codecs";
-  if (!stat ("/opt/RealPlayer8/Codecs/drv3.so.6.0", &s)) 
-    default_real_codec_path = "/opt/RealPlayer8/Codecs";
-  if (!stat ("/usr/lib/RealPlayer9/users/Real/Codecs/drv3.so.6.0", &s)) 
-    default_real_codec_path = "/usr/lib/RealPlayer9/users/Real/Codecs";
-  if (!stat ("/usr/lib/RealPlayer10/codecs/drvc.so", &s)) 
-    default_real_codec_path = "/usr/lib/RealPlayer10/codecs";
-  if (!stat ("/usr/lib64/RealPlayer8/Codecs/drv3.so.6.0", &s)) 
-    default_real_codec_path = "/usr/lib64/RealPlayer8/Codecs";
-  if (!stat ("/usr/lib64/RealPlayer9/users/Real/Codecs/drv3.so.6.0", &s)) 
-    default_real_codec_path = "/usr/lib64/RealPlayer9/users/Real/Codecs";
-  if (!stat ("/usr/lib64/RealPlayer10/codecs/drvc.so", &s)) 
-    default_real_codec_path = "/usr/lib64/RealPlayer10/codecs";
-  if (!stat ("/usr/lib/codecs/drv3.so.6.0", &s)) 
-    default_real_codec_path = "/usr/lib/codecs";
-  if (!stat ("/usr/lib/win32/drv3.so.6.0", &s)) 
-    default_real_codec_path = "/usr/lib/win32";
-  
-  real_codec_path = config->register_string (config, "decoder.external.real_codecs_path", 
-					     default_real_codec_path,
-					     _("path to RealPlayer codecs"),
-					     _("If you have RealPlayer installed, specify the path "
-					       "to its codec directory here. You can easily find "
-					       "the codec directory by looking for a file named "
-					       "\"drv3.so.6.0\" in it. If xine can find the RealPlayer "
-					       "codecs, it will use them to decode RealPlayer content "
-					       "for you. Consult the xine FAQ for more information on "
-					       "how to install the codecs."),
-					     10, NULL, this);
-
-  lprintf ("real codec path : %s\n",  real_codec_path);
+  _x_real_codecs_init(xine);
 
   return this;
 }
@@ -659,13 +551,7 @@ static uint32_t supported_types[] = { BUF_VIDEO_RV20,
                                       BUF_VIDEO_RV40,
                                       0 };
 
-static const decoder_info_t dec_info_real = {
+const decoder_info_t dec_info_realvideo = {
   supported_types,     /* supported types */
   7                    /* priority        */
-};
-
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_VIDEO_DECODER | PLUGIN_MUST_PRELOAD, 18, "real", XINE_VERSION_CODE, &dec_info_real, init_class },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

@@ -18,7 +18,7 @@ xineplug_inp_vcd_la_LDFLAGS = -avoid-version -module
 if HAVE_VCDNAV
 xineplug_inp_vcd_la_LIBADD = $(XINE_LIB) $(LIBVCDINFO_LIBS)
 else
-xineplug_inp_vcd_la_LIBADD = $(XINE_LIB) $(LIBVCD_LIBS) $(LIBVCDINFO_LIBS)
+xineplug_inp_vcd_la_LIBADD = $(XINE_LIB) $(LIBVCD_LIBS) $(LIBVCDINFO_LIBS) -lm
 endif
 
 endif

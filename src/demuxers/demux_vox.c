@@ -22,7 +22,7 @@
  * VOX Demuxer by Mike Melanson (melanson@pcisys.net)
  * This a demuxer for .vox files containing raw Dialogic ADPCM data.
  *
- * $Id: demux_vox.c,v 1.13 2004/06/13 21:28:54 miguelfreitas Exp $
+ * $Id: demux_vox.c,v 1.14 2007/01/19 00:26:40 dgp85 Exp $
  *
  */
 
@@ -192,7 +192,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   case METHOD_BY_CONTENT:
   case METHOD_EXPLICIT:
   case METHOD_BY_EXTENSION: {
-    char *extensions, *mrl;
+    const char *extensions, *mrl;
 
     mrl = input->get_mrl (input);
     extensions = class_gen->get_extensions (class_gen);
@@ -225,19 +225,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "Dialogic VOX file demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "VOX";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return "vox";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return NULL;
 }
 

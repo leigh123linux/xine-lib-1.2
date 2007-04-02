@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: xine_decoder.c,v 1.66 2006/07/10 22:08:29 dgp85 Exp $
+ * $Id: xine_decoder.c,v 1.67 2007/02/20 00:34:57 dgp85 Exp $
  *
  * 04-09-2001 DTS passtrough  (C) Joachim Koenig 
  * 09-12-2001 DTS passthrough inprovements (C) James Courtier-Dutton
@@ -201,7 +201,7 @@ static void dts_decode_frame (dts_decoder_t *this, int64_t pts, int preview_mode
       }
 #endif
 
-      lprintf("length=%d pts=%lld\n",this->ac5_pcm_length,audio_buffer->vpts);
+      lprintf("length=%d pts=%"PRId64"\n",this->ac5_pcm_length,audio_buffer->vpts);
 
       audio_buffer->num_frames = this->ac5_pcm_length;
 

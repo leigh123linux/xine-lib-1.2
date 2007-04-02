@@ -3,8 +3,22 @@ Section: libs
 Priority: optional
 Maintainer: Siggi Langauf <siggi@debian.org>
 Uploaders: Philipp Matthias Hahn <pmhahn@debian.org>, Reinhard Tartler <siretart@tauware.de>
-Build-Depends: debhelper (>= 4.0.4), binutils (>= 2.12.90.0.9), libaa1-dev | aalib1-dev (>= 1.4p5-2), libcaca-dev, libxinerama-dev | xlibs-static-dev (<< 6.8.0), libxv-dev | xlibs-static-dev (<< 6.8.0), libesd0-dev, zlib1g-dev | libz-dev, libartsc0-dev (>>1.1.0), liblircclient-dev, libogg-dev, libvorbis-dev, libtheora-dev, libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386], libflac-dev (>>1.1.0), libmodplug-dev, libgnomevfs2-dev, libsmbclient-dev, libspeex-dev, libmng-dev, libpng12-dev | libpng-dev, libfreetype6-dev, libsdl1.2-dev (>=1.1.5), libvcdinfo-dev, libmad0-dev, libxvmc-dev | xlibs-dev (<< 6.8.0), w3m, automake1.9, autoconf, libtool, libcdio-dev (>= 0.76-1)
-Build-Conflicts: libdvdnav-dev
+Build-Depends: debhelper (>= 4.0.4), binutils (>= 2.12.90.0.9), pkg-config,
+	automake1.9, autoconf, libtool,
+	libxinerama-dev, libxv-dev, libxvmc-dev, libxt-dev, 
+	libdirectfb-dev (>= 0.9.22),
+	libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
+	libaa1-dev, libcaca-dev (>= 0.99.beta4-1), libmodplug-dev,
+	libmagick9-dev, libpng12-dev, libfreetype6-dev, 
+	libogg-dev, libvorbis-dev, libtheora-dev,
+	libesd0-dev, libgnomevfs2-dev,
+	zlib1g-dev, libartsc0-dev (>>1.1.0),
+	liblircclient-dev,
+	libflac-dev (>>1.1.0), libpulse-dev, libsdl1.2-dev (>=1.2.11),
+	libsmbclient-dev, libspeex-dev, libmng-dev, 
+	libmad0-dev,  libcdio-dev (>= 0.76-1), 
+	w3m, transfig, gs, sgmltools-lite
+Build-Conflicts: libdvdnav-dev, libvcdinfo-dev
 Standards-Version: 3.7.2
 
 Package: libxine-dev
@@ -32,8 +46,6 @@ Architecture: any
 Depends: ${shlibs:Depends}
 Recommends: ${shlibs:Recommends}
 Suggests: ${shlibs:Suggests}, libartsc0
-Conflicts: sinek(<<0.7), xine-ui (<< 0.9.10), xine
-Replaces: xine-dvdnav, xine
 Description: the xine video/media player library, binary files
  This is the xine media player library (libxine). 
  .
@@ -49,6 +61,7 @@ Description: the xine video/media player library, binary files
  you can just start watching your VCDs ;-)
 
 Package: libxine1-dbg
+Priority: extra
 Architecture: any
 Depends: libxine1 (= ${Source-Version})
 Description: the xine video/media player library, debug data

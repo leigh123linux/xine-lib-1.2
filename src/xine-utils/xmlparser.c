@@ -1,24 +1,24 @@
 /*
- *  Copyright (C) 2002-2003 the xine project
+ *  Copyright (C) 2002-2003,2007 the xine project
  *
  *  This file is part of xine, a free video player.
- *  This file is part of gxine, a free video player.
  *
- *  xine is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ * The xine-lib XML parser is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
  *
- *  xine is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * The xine-lib XML parser is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * You should have received a copy of the GNU Library General Public
+ * License along with the Gnome Library; see the file COPYING.LIB.  If not,
+ * write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
- *  $Id: xmlparser.c,v 1.15 2006/02/14 02:25:01 dsalt Exp $
+ *  $Id: xmlparser.c,v 1.16 2007/03/04 16:19:12 hadess Exp $
  *
  */
 
@@ -35,7 +35,12 @@
 #define LOG
 */
 
+#ifdef XINE_COMPILE
 #include "xineutils.h"
+#else
+#define lprintf(...)
+#define xine_xmalloc malloc
+#endif
 #include "xmllexer.h"
 #include "xmlparser.h"
 
@@ -466,7 +471,7 @@ int xml_parser_build_tree(xml_node_t **root_node) {
   return res;
 }
 
-char *xml_parser_get_property (const xml_node_t *node, const char *name) {
+const char *xml_parser_get_property (const xml_node_t *node, const char *name) {
 
   xml_property_t *prop;
 
@@ -489,8 +494,8 @@ char *xml_parser_get_property (const xml_node_t *node, const char *name) {
 int xml_parser_get_property_int (const xml_node_t *node, const char *name, 
 				 int def_value) {
 
-  char *v;
-  int   ret;
+  const char *v;
+  int         ret;
 
   v = xml_parser_get_property (node, name);
 
@@ -506,7 +511,7 @@ int xml_parser_get_property_int (const xml_node_t *node, const char *name,
 int xml_parser_get_property_bool (const xml_node_t *node, const char *name, 
 				  int def_value) {
 
-  char *v;
+  const char *v;
 
   v = xml_parser_get_property (node, name);
 

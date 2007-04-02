@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: input_mms.c,v 1.64 2006/10/23 21:18:18 hadess Exp $
+ * $Id: input_mms.c,v 1.70 2007/02/20 00:51:39 dgp85 Exp $
  *
  * mms input plugin based on work from major mms
  */
@@ -56,18 +56,18 @@
 #define PROTOCOL_MMSH      2
 
 /* network bandwidth */
-const uint32_t mms_bandwidths[]={14400,19200,28800,33600,34430,57600,
-                                  115200,262200,393216,524300,1544000,10485800};
+static const uint32_t mms_bandwidths[]={14400,19200,28800,33600,34430,57600,
+					115200,262200,393216,524300,1544000,10485800};
 
-const char * mms_bandwidth_strs[]={"14.4 Kbps (Modem)", "19.2 Kbps (Modem)",
-                                   "28.8 Kbps (Modem)", "33.6 Kbps (Modem)",
-                                   "34.4 Kbps (Modem)", "57.6 Kbps (Modem)",
-                                   "115.2 Kbps (ISDN)", "262.2 Kbps (Cable/DSL)",
-                                   "393.2 Kbps (Cable/DSL)","524.3 Kbps (Cable/DSL)",
-                                   "1.5 Mbps (T1)", "10.5 Mbps (LAN)", NULL};
+static const char * mms_bandwidth_strs[]={"14.4 Kbps (Modem)", "19.2 Kbps (Modem)",
+					  "28.8 Kbps (Modem)", "33.6 Kbps (Modem)",
+					  "34.4 Kbps (Modem)", "57.6 Kbps (Modem)",
+					  "115.2 Kbps (ISDN)", "262.2 Kbps (Cable/DSL)",
+					  "393.2 Kbps (Cable/DSL)","524.3 Kbps (Cable/DSL)",
+					  "1.5 Mbps (T1)", "10.5 Mbps (LAN)", NULL};
 
 /* connection methods */
-const char *mms_protocol_strs[]={"auto", "TCP", "HTTP", NULL};
+static const char *mms_protocol_strs[]={"auto", "TCP", "HTTP", NULL};
 
 typedef struct {
   input_plugin_t   input_plugin;
@@ -102,7 +102,7 @@ static off_t mms_plugin_read (input_plugin_t *this_gen,
   mms_input_plugin_t *this = (mms_input_plugin_t *) this_gen;
   off_t               n = 0;
 
-  lprintf ("mms_plugin_read: %lld bytes ...\n", len);
+  lprintf ("mms_plugin_read: %"PRId64" bytes ...\n", len);
 
   switch (this->protocol) {
     case PROTOCOL_MMST:
@@ -122,7 +122,7 @@ static buf_element_t *mms_plugin_read_block (input_plugin_t *this_gen,
   buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
   int                   total_bytes;
 
-  lprintf ("mms_plugin_read_block: %lld bytes...\n", todo);
+  lprintf ("mms_plugin_read_block: %"PRId64" bytes...\n", todo);
 
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
@@ -144,7 +144,7 @@ static off_t mms_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin
   off_t                 dest = 0;
   off_t                 curpos = 0;
 
-  lprintf ("mms_plugin_seek: %lld offset, %d origin...\n", offset, origin);
+  lprintf ("mms_plugin_seek: %"PRId64" offset, %d origin...\n", offset, origin);
 
 
   switch (this->protocol) {
@@ -201,6 +201,28 @@ static off_t mms_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin
   return curpos;
 }
 
+static off_t mms_plugin_seek_time (input_plugin_t *this_gen, int time_offset, int origin) {
+  mms_input_plugin_t *this = (mms_input_plugin_t *) this_gen;
+  off_t               curpos = 0;
+
+  lprintf ("seek_time %d msec, origin %d\n", time_offset, origin);
+  
+  switch (this->protocol) {
+    case PROTOCOL_MMST:
+      if (origin == SEEK_SET)
+        mms_set_start_time (this->mms, time_offset);
+      curpos = mms_get_current_pos (this->mms);
+      break;
+    case PROTOCOL_MMSH:
+      if (origin == SEEK_SET)
+        mmsh_set_start_time (this->mmsh, time_offset);
+      curpos = mmsh_get_current_pos (this->mmsh);
+      break;
+  }
+    
+  return curpos;
+}
+
 static off_t mms_plugin_get_length (input_plugin_t *this_gen) {
   mms_input_plugin_t   *this = (mms_input_plugin_t *) this_gen; 
   off_t                 length = 0;
@@ -217,7 +239,7 @@ static off_t mms_plugin_get_length (input_plugin_t *this_gen) {
       break;
   }
 
-  lprintf ("length is %lld\n", length);
+  lprintf ("length is %"PRId64"\n", length);
 
   return length;
 
@@ -270,7 +292,7 @@ static void mms_plugin_dispose (input_plugin_t *this_gen) {
   free (this);
 }
 
-static char* mms_plugin_get_mrl (input_plugin_t *this_gen) {
+static const char* mms_plugin_get_mrl (input_plugin_t *this_gen) {
   mms_input_plugin_t *this = (mms_input_plugin_t *) this_gen;
 
   return this->mrl;
@@ -400,6 +422,7 @@ static input_plugin_t *mms_class_get_instance (input_class_t *cls_gen, xine_stre
   this->input_plugin.read              = mms_plugin_read;
   this->input_plugin.read_block        = mms_plugin_read_block;
   this->input_plugin.seek              = mms_plugin_seek;
+  this->input_plugin.seek_time         = mms_plugin_seek_time;
   this->input_plugin.get_current_pos   = mms_plugin_get_current_pos;
   this->input_plugin.get_length        = mms_plugin_get_length;
   this->input_plugin.get_blocksize     = mms_plugin_get_blocksize;
@@ -416,7 +439,7 @@ static input_plugin_t *mms_class_get_instance (input_class_t *cls_gen, xine_stre
  * mms input plugin class stuff
  */
 
-static char *mms_class_get_description (input_class_t *this_gen) {
+static const char *mms_class_get_description (input_class_t *this_gen) {
   return _("mms streaming input plugin");
 }
 
@@ -452,7 +475,7 @@ static void *init_class (xine_t *xine, void *data) {
   this->input_class.eject_media        = NULL;
 
   xine->config->register_enum(xine->config, "media.network.bandwidth", 10,
-			      (char **)mms_bandwidth_strs,
+			      mms_bandwidth_strs,
 			      _("network bandwidth"),
 			      _("Specify the bandwidth of your internet connection here. "
 			        "This will be used when streaming servers offer different versions "
@@ -462,7 +485,7 @@ static void *init_class (xine_t *xine, void *data) {
   this->protocol = xine->config->register_enum(xine->config,
     "media.network.mms_protocol", 
     0, 
-    (char **)mms_protocol_strs, 
+    mms_protocol_strs, 
     _("MMS protocol"),
     _("Select the protocol to encapsulate MMS.\nTCP is better but you may need HTTP behind a firewall."),
      20, 

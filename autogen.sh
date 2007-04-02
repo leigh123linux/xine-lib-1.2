@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
 #
-# $Id: autogen.sh,v 1.19 2006/10/01 09:04:45 klan Exp $
+# $Id: autogen.sh,v 1.20 2007/03/26 12:52:05 dgp85 Exp $
 #
 # Maintained by Stephen Torri <storri@users.sourceforge.net>
 #
@@ -30,7 +30,7 @@ PROG=xine-lib
 WANT_AUTOMAKE_1_8=1 export WANT_AUTOMAKE_1_8
 WANT_AUTOMAKE=1.8 export WANT_AUTOMAKE
 AUTOMAKE_MIN=1.8.0
-AUTOCONF_MIN=2.53
+AUTOCONF_MIN=2.59
 LIBTOOL_MIN=1.4.0
 
 # Check how echo works in this /bin/sh

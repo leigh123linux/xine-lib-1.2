@@ -20,7 +20,7 @@
  * Simple MPEG-ES parser/framer by Thibaut Mattern (tmattern@noos.fr)
  *   based on libmpeg2 decoder.
  *
- * $Id: mpeg_parser.c,v 1.4 2006/09/26 01:19:31 dgp85 Exp $
+ * $Id: mpeg_parser.c,v 1.7 2007/03/29 18:52:45 dgp85 Exp $
  */
 #define LOG_MODULE "mpeg_parser"
 #define LOG_VERBOSE
@@ -52,7 +52,15 @@ static const int frame_rate_tab[][2] = {
 
 void mpeg_parser_init (mpeg_parser_t *parser)
 {
+  parser->chunk_buffer = xine_xmalloc(BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
   mpeg_parser_reset(parser);
+}
+
+void mpeg_parser_dispose (mpeg_parser_t *parser)
+{
+  if ( parser == NULL ) return;
+  
+  free(parser->chunk_buffer);
 }
 
 void mpeg_parser_reset (mpeg_parser_t *parser)
@@ -162,8 +170,7 @@ static int parse_chunk (mpeg_parser_t *parser, int code, uint8_t *buffer, int le
   case 0xb3:     /* sequence_header_code */
     {
       int value;
-      int width;
-      int height;
+      uint16_t width, height;
       
       if (parser->is_sequence_needed) {
         parser->is_sequence_needed = 0;

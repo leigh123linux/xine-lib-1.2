@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: xine_decoder.c,v 1.47 2006/07/10 22:08:30 dgp85 Exp $
+ * $Id: xine_decoder.c,v 1.48 2006/12/04 13:59:38 dgp85 Exp $
  *
  * (ogg/)vorbis audio decoder plugin (libvorbis wrapper) for xine
  */
@@ -148,13 +148,16 @@ static void vorbis_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     lprintf ("%d headers to go\n", this->header_count);
 
     if (this->header_count) {
+      int res = 0;
 
       if (this->header_count == 3)
         this->op.b_o_s = 1;
 
-      if(vorbis_synthesis_headerin(&this->vi,&this->vc,&this->op)<0){ 
+      
+      if( (res = vorbis_synthesis_headerin(&this->vi,&this->vc,&this->op)) < 0 ){ 
 	/* error case; not a vorbis header */
-	printf("libvorbis: this bitstream does not contain vorbis audio data.\n");
+	xine_log(this->stream->xine, XINE_LOG_MSG, "libvorbis: this bitstream does not contain vorbis audio data. Following first 64 bytes (return: %d).\n", res);
+	xine_hexdump(this->op.packet, this->op.bytes < 64 ? this->op.bytes : 64);
 	return;
       }
 

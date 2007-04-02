@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: input_stdin_fifo.c,v 1.67 2006/07/10 22:08:16 dgp85 Exp $
+ * $Id: input_stdin_fifo.c,v 1.70 2007/02/20 00:34:56 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -86,14 +86,14 @@ static off_t stdin_plugin_read (input_plugin_t *this_gen,
   stdin_input_plugin_t  *this = (stdin_input_plugin_t *) this_gen;
   off_t n, total;
 
-  lprintf ("reading %lld bytes...\n", len);
+  lprintf ("reading %"PRId64" bytes...\n", len);
 
   total=0;
   if (this->curpos < this->preview_size) {
     n = this->preview_size - this->curpos;
     if (n > (len - total))
       n = len - total;
-    lprintf ("%lld bytes from preview (which has %lld bytes)\n", n, this->preview_size);
+    lprintf ("%"PRId64" bytes from preview (which has %"PRId64" bytes)\n", n, this->preview_size);
 
     memcpy (&buf[total], &this->preview[this->curpos], n);
     this->curpos += n;
@@ -103,7 +103,7 @@ static off_t stdin_plugin_read (input_plugin_t *this_gen,
   if( (len-total) > 0 ) {
     n = _x_io_file_read (this->stream, this->fh, &buf[total], len - total);
 
-    lprintf ("got %lld bytes (%lld/%lld bytes read)\n", n,total,len);
+    lprintf ("got %"PRId64" bytes (%"PRId64"/%"PRId64" bytes read)\n", n,total,len);
   
     if (n < 0) {
       _x_message(this->stream, XINE_MSG_READ_ERROR, NULL);
@@ -143,7 +143,7 @@ static off_t stdin_plugin_seek (input_plugin_t *this_gen, off_t offset, int orig
 
   stdin_input_plugin_t  *this = (stdin_input_plugin_t *) this_gen;
 
-  lprintf ("seek %lld offset, %d origin...\n", offset, origin);
+  lprintf ("seek %"PRId64" offset, %d origin...\n", offset, origin);
 
   if ((origin == SEEK_CUR) && (offset >= 0)) {
 
@@ -202,7 +202,7 @@ static off_t stdin_plugin_get_current_pos (input_plugin_t *this_gen){
   return this->curpos;
 }
 
-static char* stdin_plugin_get_mrl (input_plugin_t *this_gen) {
+static const char* stdin_plugin_get_mrl (input_plugin_t *this_gen) {
   stdin_input_plugin_t *this = (stdin_input_plugin_t *) this_gen;
 
   return this->mrl;
@@ -346,7 +346,7 @@ static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen,
  * stdin input plugin class stuff
  */
 
-static char *stdin_class_get_description (input_class_t *this_gen) {
+static const char *stdin_class_get_description (input_class_t *this_gen) {
   return _("stdin streaming input plugin");
 }
 

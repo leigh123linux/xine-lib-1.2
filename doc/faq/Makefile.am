@@ -1,12 +1,11 @@
 include $(top_srcdir)/misc/Makefile.common
 
-docs_DATA = faq.html faq.txt
+doc_DATA = faq.txt
+html_DATA = faq.html
 
-EXTRA_DIST = README faq.sgml $(docs_DATA)
+EXTRA_DIST = README faq.sgml $(doc_DATA) $(html_DATA)
 
-docsdir = $(prefix)/share/doc/xine/faq
-
-docs: $(docs_DATA)
+docs: $(doc_DATA) $(html_DATA)
 
 distclean-local: clean-docs
 
@@ -16,7 +15,7 @@ docs-prepare: $(srcdir)/faq.sgml
 	fi
 
 clean-docs:
-	rm -f $(docs_DATA)
+	rm -f $(doc_DATA) $(html_DATA)
 	test "x$(srcdir)" = x. || rm -f faq.sgml
 
 dist-hook:

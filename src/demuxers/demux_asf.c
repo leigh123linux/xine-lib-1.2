@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: demux_asf.c,v 1.188 2006/11/29 21:26:52 dgp85 Exp $
+ * $Id: demux_asf.c,v 1.194 2007/03/09 23:18:19 dgp85 Exp $
  *
  * demultiplexer for asf streams
  *
@@ -38,6 +38,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
 
 #define LOG_MODULE "demux_asf"
 #define LOG_VERBOSE
@@ -408,7 +411,9 @@ static int asf_read_header (demux_asf_t *this) {
     this->length = 0;
     
   /* compute average byterate (needed for seeking) */
-  if (this->length)
+  if (this->asf_header->file->max_bitrate)
+    this->rate = this->asf_header->file->max_bitrate >> 3;
+  else if (this->length)
     this->rate = (int64_t) this->input->get_length(this->input) * 1000 / this->length;
 
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_BITRATE, this->asf_header->file->max_bitrate);
@@ -639,15 +644,15 @@ static void check_newpts (demux_asf_t *this, int64_t pts, int video, int frame_e
 #ifdef LOG
   if (pts) {
     if (video) {
-      printf ("demux_asf: VIDEO: pts = %8lld, diff = %8lld\n", pts, pts - this->last_pts[video]);
+      printf ("demux_asf: VIDEO: pts = %8"PRId64", diff = %8"PRId64"\n", pts, pts - this->last_pts[video]);
     } else {
-      printf ("demux_asf: AUDIO: pts = %8lld, diff = %8lld\n", pts, pts - this->last_pts[video]);
+      printf ("demux_asf: AUDIO: pts = %8"PRId64", diff = %8"PRId64"\n", pts, pts - this->last_pts[video]);
     }
   }
 #endif
   if (pts && (this->send_newpts || (this->last_pts[video] && abs(diff) > WRAP_THRESHOLD))) {
 
-    lprintf ("sending newpts %lld (video = %d diff = %lld)\n", pts, video, diff);
+    lprintf ("sending newpts %"PRId64" (video = %d diff = %"PRId64")\n", pts, video, diff);
 
     if (this->buf_flag_seek) {
       _x_demux_control_newpts(this->stream, pts, BUF_FLAG_SEEK);
@@ -674,7 +679,7 @@ static void asf_send_buffer_nodefrag (demux_asf_t *this, asf_demux_stream_t *str
   int            bufsize;
   int            package_done;
 
-  lprintf ("pts=%lld, off=%d, len=%d, total=%d\n",
+  lprintf ("pts=%"PRId64", off=%d, len=%d, total=%d\n",
            timestamp * 90, frag_offset, frag_len, stream->payload_size);
 
   if (frag_offset == 0) {
@@ -758,7 +763,7 @@ static void asf_send_buffer_defrag (demux_asf_t *this, asf_demux_stream_t *strea
     printf("asf_send_buffer seq=%d frag_offset=%d frag_len=%d\n",
     seq, frag_offset, frag_len );
   */
-  lprintf ("asf_send_buffer_defrag: timestamp=%lld, pts=%lld\n", timestamp, timestamp * 90);
+  lprintf ("asf_send_buffer_defrag: timestamp=%"PRId64", pts=%"PRId64"\n", timestamp, timestamp * 90);
 
   if (frag_offset == 0) {
     /* new packet */
@@ -864,11 +869,11 @@ static int asf_parse_packet_align(demux_asf_t *this) {
   
   /* check packet_count */
   packet_num = (packet_pos - this->first_packet_pos) / this->packet_size;
-  lprintf("packet_num=%lld, packet_count=%lld\n", packet_num, this->packet_count);
+  lprintf("packet_num=%"PRId64", packet_count=%"PRId64"\n", packet_num, this->packet_count);
   if (packet_num >= this->packet_count) {
     /* end of payload data */
     current_pos = this->input->get_current_pos (this->input);
-    lprintf("end of payload data, current_pos=%lld\n", current_pos);
+    lprintf("end of payload data, current_pos=%"PRId64"\n", current_pos);
     {
       /* check new asf header */
       if (get_guid(this) == GUID_ASF_HEADER) {
@@ -998,7 +1003,7 @@ static int asf_parse_packet_payload_header(demux_asf_t *this, uint32_t p_hdr_siz
   timestamp = get_le32(this); p_hdr_size += 4;
   duration  = get_le16(this); p_hdr_size += 2;
 
-  lprintf ("timestamp=%lld, duration=%lld\n", timestamp, duration);
+  lprintf ("timestamp=%"PRId64", duration=%"PRId64"\n", timestamp, duration);
 
   if ((this->packet_len_flags >> 5) & 3) {
     /* absolute data size */
@@ -1354,7 +1359,6 @@ static int demux_asf_parse_http_references( demux_asf_t *this) {
   int             buf_used = 0;
   int             len;
   char           *href = NULL;
-  char           *mrl;
   int             free_href = 0;
 
   /* read file to memory.
@@ -1379,7 +1383,7 @@ static int demux_asf_parse_http_references( demux_asf_t *this) {
   ptr = buf;
   if (!strncmp(ptr, "[Reference]", 11)) {
 
-    mrl = this->input->get_mrl(this->input);
+    const char *const mrl = this->input->get_mrl(this->input);
     if (!strncmp(mrl, "http", 4)) {
       /* never trust a ms server, reopen the same mrl with the mms input plugin
        * some servers are badly configured and return a incorrect reference.
@@ -1789,11 +1793,7 @@ static int demux_asf_seek (demux_plugin_t *this_gen,
   int            i, state;
   int64_t        ts;
 
-  start_time /= 1000;
-  start_pos = (off_t) ( (double) start_pos / 65535 *
-              this->input->get_length (this->input) );
-
-  lprintf ("demux_asf_seek: start_pos=%lld, start_time=%d\n",
+  lprintf ("demux_asf_seek: start_pos=%"PRId64", start_time=%d\n",
 	   start_pos, start_time);
 
   this->status = DEMUX_OK;
@@ -1823,6 +1823,10 @@ static int demux_asf_seek (demux_plugin_t *this_gen,
   if (this->input->get_capabilities(this->input) & INPUT_CAP_SEEKABLE) {
 
     _x_demux_flush_engine(this->stream);
+    
+    start_time /= 1000;
+    start_pos = (off_t) ( (double) start_pos / 65535 *
+                this->input->get_length (this->input) );
     
     if ( (!start_pos) && (start_time))
       start_pos = start_time * this->rate;
@@ -1910,13 +1914,13 @@ static int demux_asf_seek (demux_plugin_t *this_gen,
             }
             state = 1; /* search an audio packet with pts < this->keyframe_pts */
 
-            lprintf ("demux_asf_seek: keyframe found at %lld, timestamp = %lld\n", start_pos, ts);
+            lprintf ("demux_asf_seek: keyframe found at %"PRId64", timestamp = %"PRId64"\n", start_pos, ts);
             check_newpts (this, ts * 90, 1, 0);
           }
         } else if (state == 1) {
           if ((this->audio_stream != -1 && stream_id == this->asf_header->streams[this->audio_stream]->stream_number) && ts &&
               (ts <= this->keyframe_ts)) {
-            lprintf ("demux_asf_seek: audio packet found at %lld, ts = %lld\n", start_pos, ts);
+            lprintf ("demux_asf_seek: audio packet found at %"PRId64", ts = %"PRId64"\n", start_pos, ts);
 
             state = 5; /* end */
             break;
@@ -1927,7 +1931,7 @@ static int demux_asf_seek (demux_plugin_t *this_gen,
             this->keyframe_ts = ts;
             state = 5; /* end */
 
-            lprintf ("demux_asf_seek: audio packet found at %lld, timestamp = %lld\n", start_pos, ts);
+            lprintf ("demux_asf_seek: audio packet found at %"PRId64", timestamp = %"PRId64"\n", start_pos, ts);
             check_newpts (this, ts * 90, 0, 0);
           }
         }
@@ -1941,7 +1945,7 @@ static int demux_asf_seek (demux_plugin_t *this_gen,
     } else {
       this->input->seek (this->input, start_pos + this->packet_size, SEEK_SET);
     }
-    lprintf ("demux_asf_seek: keyframe_found=%d, keyframe_ts=%lld\n",
+    lprintf ("demux_asf_seek: keyframe_found=%d, keyframe_ts=%"PRId64"\n",
              this->keyframe_found, this->keyframe_ts);
     if (this->video_stream >= 0) {
       this->streams[this->video_stream].resync = 1;
@@ -1950,6 +1954,22 @@ static int demux_asf_seek (demux_plugin_t *this_gen,
     if (this->audio_stream >= 0) {
       this->streams[this->audio_stream].resync = 1;
       this->streams[this->audio_stream].skip   = 1;
+    }
+  } else if (!playing && this->input->seek_time != NULL) {    
+    if (start_pos && !start_time)
+      start_time = this->length * start_pos / 65535;
+      
+    this->input->seek_time (this->input, start_time, SEEK_SET);
+    
+    this->keyframe_ts = 0;
+    this->keyframe_found = 0; /* means next keyframe */
+    if (this->video_stream >= 0) {
+      this->streams[this->video_stream].resync = 1;
+      this->streams[this->video_stream].skip   = 1;
+    }
+    if (this->audio_stream >= 0) {
+      this->streams[this->audio_stream].resync = 0;
+      this->streams[this->audio_stream].skip   = 0;
     }
   } else {
     /* "streaming" mode */
@@ -2034,15 +2054,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
     break;
 
   case METHOD_BY_EXTENSION: {
-    char *ending, *mrl;
-
-    mrl = input->get_mrl (input);
-
-    /*
-     * check extension
-     */
-
-    ending = strrchr (mrl, '.');
+    const char *const mrl = input->get_mrl (input);
+    const char *const ending = strrchr (mrl, '.');
 
     if (!ending)
       return NULL;
@@ -2105,20 +2118,20 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "ASF demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "ASF";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   /* asx, wvx, wax are metafile or playlist */
   return "asf wmv wma asx wvx wax";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
 
   return "video/x-ms-asf: asf: ASF stream;"
          "video/x-ms-wmv: wmv: Windows Media Video;"

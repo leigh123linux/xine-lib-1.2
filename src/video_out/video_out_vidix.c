@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: video_out_vidix.c,v 1.74 2006/07/10 22:08:44 dgp85 Exp $
+ * $Id: video_out_vidix.c,v 1.75 2006/12/19 19:10:51 dsalt Exp $
  * 
  * video_out_vidix.c
  *
@@ -1235,7 +1235,7 @@ static vo_driver_t *vidixfb_open_plugin (video_driver_class_t *class_gen, const 
   this->visual_type = XINE_VISUAL_TYPE_FB;
   
   /* Register config option for fb device */
-  device = config->register_string(config, "video.device.vidixfb_device", "/dev/fb0",
+  device = config->register_filename(config, "video.device.vidixfb_device", "/dev/fb0", XINE_CONFIG_STRING_IS_DEVICE_NAME,
     _("framebuffer device name"),
     _("Specifies the file name for the framebuffer device to be used.\n"
       "This setting is security critical, because when changed to a different file, xine "

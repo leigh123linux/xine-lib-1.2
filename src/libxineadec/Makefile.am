@@ -20,7 +20,7 @@ xineplug_decode_gsm610_la_LIBADD = \
 xineplug_decode_nsf_la_SOURCES = nsf.c
 xineplug_decode_nsf_la_CFLAGS = $(VISIBILITY_FLAG) -DNSF_PLAYER -fno-strict-aliasing
 xineplug_decode_nsf_la_LDFLAGS = -avoid-version -module
-xineplug_decode_nsf_la_LIBADD = \
+xineplug_decode_nsf_la_LIBADD = -lm \
 	$(XINE_LIB) \
 	$(top_builddir)/src/libxineadec/nosefart/libnosefart.la
 

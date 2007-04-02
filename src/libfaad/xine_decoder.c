@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: xine_decoder.c,v 1.48 2006/07/10 22:08:29 dgp85 Exp $
+ * $Id: xine_decoder.c,v 1.49 2007/02/20 00:34:57 dgp85 Exp $
  *
  */
 
@@ -140,7 +140,7 @@ static int faad_open_dec( faad_decoder_t *this ) {
                 _("libfaad: libfaad NeAACDecInit2 failed.\n"));
         this->faac_failed++;
       } else
-        lprintf( "NeAACDecInit2 returned rate=%ld channels=%d\n",
+        lprintf( "NeAACDecInit2 returned rate=%"PRId32" channels=%d\n",
                  this->rate, this->num_channels );
     } else {
       used = NeAACDecInit(this->faac_dec, this->buf, this->size,
@@ -151,7 +151,7 @@ static int faad_open_dec( faad_decoder_t *this ) {
                   _("libfaad: libfaad NeAACDecInit failed.\n"));
         this->faac_failed++;
       } else {
-        lprintf( "NeAACDecInit() returned rate=%ld channels=%d (used=%d)\n",
+        lprintf( "NeAACDecInit() returned rate=%"PRId32" channels=%d (used=%d)\n",
                  this->rate, this->num_channels, used);
                       
         this->size -= used;
@@ -239,7 +239,7 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
         this->num_channels = this->faac_finfo.channels;
         this->rate = this->faac_finfo.samplerate;
 	
-        lprintf("faacDecDecode() returned rate=%ld channels=%d used=%d\n",
+        lprintf("faacDecDecode() returned rate=%"PRId32" channels=%d used=%d\n",
                 this->rate, this->num_channels, used);
       
         this->stream->audio_out->close (this->stream->audio_out, this->stream);

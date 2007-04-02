@@ -1,5 +1,5 @@
 /*****************************************************************************
-** $Id: greedy2frame_template.c,v 1.9 2006/02/04 14:06:29 miguelfreitas Exp $
+** $Id: greedy2frame_template.c,v 1.10 2006/12/21 09:54:45 dgp85 Exp $
 ******************************************************************************
 ** Copyright (c) 2000 John Adcock, Tom Barry, Steve Grimm  All rights reserved.
 ** port copyright (c) 2003 Miguel Freitas
@@ -19,6 +19,9 @@
 ** CVS Log
 **
 ** $Log: greedy2frame_template.c,v $
+** Revision 1.10  2006/12/21 09:54:45  dgp85
+** Apply the textrel patch from Gentoo, thanks to PaX team for providing it. The patch was applied and tested for a while in Gentoo and Pardus, and solves also Debian's problems with non-PIC code. If problems will arise, they'll be debugged.
+**
 ** Revision 1.9  2006/02/04 14:06:29  miguelfreitas
 ** Enable AMD64 mmx/sse support in some plugins (tvtime, libmpeg2, goom...)
 ** patch by dani3l
@@ -187,7 +190,7 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
         * See above for a description of the algorithm.
 	*/
             ".align 8 \n\t"
-            "movq "MANGLE(Mask)", %%mm6			\n\t"
+            "movq %4, %%mm6			\n\t"
 
             "movq %0, %%mm1			\n\t"     // T1
             "movq %1, %%mm0			\n\t"     // M1
@@ -195,7 +198,7 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
             "movq %3, %%mm2			\n\t"     // M0
             : /* no output */
             : "m" (*T1), "m" (*M1), 
-              "m" (*B1), "m" (*M0) );
+              "m" (*B1), "m" (*M0), "m" (Mask) );
           
 
           asm volatile(
@@ -252,10 +255,10 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
 #endif
 
             /* if |M1-M0| > Threshold we want dword worth of twos */
-            "pcmpgtb "MANGLE(qwGreedyTwoFrameThreshold)", %%mm4			\n\t"
-            "pand    "MANGLE(Mask)", %%mm4 	\n\t" /* get rid of sign bit */
-            "pcmpgtd "MANGLE(DwordOne)", %%mm4 	\n\t" /* do we want to bob */
-            "pandn   "MANGLE(DwordTwo)", %%mm4	\n\t"
+            "pcmpgtb %3, %%mm4			\n\t"
+            "pand    %4, %%mm4			\n\t" /* get rid of sign bit */
+            "pcmpgtd %5, %%mm4			\n\t" /* do we want to bob */
+            "pandn   %6, %%mm4			\n\t"
 
             "movq    %1, %%mm2			\n\t" /* mm2 = T0 */
 
@@ -268,11 +271,11 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
             "pand    %%mm6, %%mm5			\n\t"
 
             /* if |T1-T0| > Threshold we want dword worth of ones */
-            "pcmpgtb "MANGLE(qwGreedyTwoFrameThreshold)", %%mm5	      	\n\t"
+            "pcmpgtb %3, %%mm5			\n\t"
             "pand    %%mm6, %%mm5		\n\t" /* get rid of sign bit */
 
-            "pcmpgtd "MANGLE(DwordOne)", %%mm5			\n\t" 
-            "pandn   "MANGLE(DwordOne)", %%mm5			\n\t"
+            "pcmpgtd %5, %%mm5			\n\t" 
+            "pandn   %5, %%mm5			\n\t"
             "paddd   %%mm5, %%mm4			\n\t"
 
             "movq    %2, %%mm2			\n\t"     /* B0 */
@@ -286,13 +289,13 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
             "pand    %%mm6, %%mm5			\n\t"
 
             /* if |B1-B0| > Threshold we want dword worth of ones */
-            "pcmpgtb "MANGLE(qwGreedyTwoFrameThreshold)", %%mm5		\n\t"
+            "pcmpgtb %3, %%mm5		\n\t"
             "pand    %%mm6, %%mm5	\n\t"     /* get rid of any sign bit */
-            "pcmpgtd "MANGLE(DwordOne)", %%mm5			\n\t"
-            "pandn   "MANGLE(DwordOne)", %%mm5			\n\t"
+            "pcmpgtd %5, %%mm5			\n\t"
+            "pandn   %5, %%mm5			\n\t"
             "paddd   %%mm5, %%mm4			\n\t"
 
-            "pcmpgtd "MANGLE(DwordTwo)", %%mm4			\n\t"
+            "pcmpgtd %6, %%mm4			\n\t"
 
 /* debugging feature
  * output the value of mm4 at this point which is pink where we will weave
@@ -318,7 +321,7 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
 #endif
 
           : "=m" (*Dest2)
-          : "m" (*T0), "m" (*B0) );
+          : "m" (*T0), "m" (*B0), "m" (qwGreedyTwoFrameThreshold), "m" (Mask), "m" (DwordOne), "m" (DwordTwo) );
 
           /* Advance to the next set of pixels. */
           T1 += 8;

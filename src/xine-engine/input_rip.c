@@ -29,7 +29,7 @@
  * - it's possible speeder saving streams in the xine without playing:
  *     xine stream_mrl#save:file.raw\;noaudio\;novideo
  *
- * $Id: input_rip.c,v 1.31 2006/06/20 00:35:07 dgp85 Exp $
+ * $Id: input_rip.c,v 1.34 2007/02/20 00:34:57 dgp85 Exp $
  */
 
 /* TODO:
@@ -103,7 +103,7 @@ static off_t rip_plugin_read(input_plugin_t *this_gen, char *buf, off_t len) {
   rip_input_plugin_t *this = (rip_input_plugin_t *)this_gen;
   off_t retlen, npreview, nread, nwrite, nread_orig, nread_file;
 
-  lprintf("reading %lld bytes (curpos = %lld, savepos = %lld)\n", len, this->curpos, this->savepos);
+  lprintf("reading %"PRId64" bytes (curpos = %"PRId64", savepos = %"PRId64")\n", len, this->curpos, this->savepos);
 
   if (len < 0) return -1;
 
@@ -117,7 +117,7 @@ static off_t rip_plugin_read(input_plugin_t *this_gen, char *buf, off_t len) {
       nread = min_off(this->savepos - this->preview_size, len - npreview);
     }
 
-    lprintf(" => get %lld bytes from preview (%lld bytes)\n", npreview, this->preview_size);
+    lprintf(" => get %"PRId64" bytes from preview (%"PRId64" bytes)\n", npreview, this->preview_size);
 
     memcpy(buf, &this->preview[this->curpos], npreview);
   } else {
@@ -134,7 +134,7 @@ static off_t rip_plugin_read(input_plugin_t *this_gen, char *buf, off_t len) {
 
   /* re-reading from file */
   if (nread_file) {
-    lprintf(" => read %lld bytes from file\n", nread_file);
+    lprintf(" => read %"PRId64" bytes from file\n", nread_file);
     if (fread(&buf[npreview], nread_file, 1, this->file) != 1) {
       xine_log(this->stream->xine, XINE_LOG_MSG, _("input_rip: reading of saved data failed: %s\n"), strerror(errno));
       return -1;
@@ -143,11 +143,11 @@ static off_t rip_plugin_read(input_plugin_t *this_gen, char *buf, off_t len) {
 
   /* really to read/catch */
   if (nread_orig + nwrite) {
-    lprintf(" => read %lld bytes from input plugin\n", nread_orig + nwrite);
+    lprintf(" => read %"PRId64" bytes from input plugin\n", nread_orig + nwrite);
 
     /* read from main input plugin */
     retlen = this->main_input_plugin->read(this->main_input_plugin, &buf[npreview + nread_file], nread_orig + nwrite);
-    lprintf("%s => returned %lld" CLR_RST "\n", retlen == nread_orig + nwrite ? "" : CLR_FAIL, retlen);
+    lprintf("%s => returned %"PRId64"" CLR_RST "\n", retlen == nread_orig + nwrite ? "" : CLR_FAIL, retlen);
 
     if (retlen < 0) {
       xine_log(this->stream->xine, XINE_LOG_MSG, 
@@ -163,7 +163,7 @@ static off_t rip_plugin_read(input_plugin_t *this_gen, char *buf, off_t len) {
         return -1;
       }
       this->savepos += nwrite;
-      lprintf(" => saved %lld bytes\n", nwrite);
+      lprintf(" => saved %"PRId64" bytes\n", nwrite);
     } else 
       nwrite = 0;
   }
@@ -212,7 +212,7 @@ static buf_element_t *rip_plugin_read_block(input_plugin_t *this_gen, fifo_buffe
   buf_element_t *buf = NULL;
   off_t retlen, npreview, nread, nwrite, nread_orig, nread_file;
 
-  lprintf("reading %lld bytes (curpos = %lld, savepos = %lld) (block)\n", todo, this->curpos, this->savepos);
+  lprintf("reading %"PRId64" bytes (curpos = %"PRId64", savepos = %"PRId64") (block)\n", todo, this->curpos, this->savepos);
 
   if (todo <= 0) return NULL;
 
@@ -226,7 +226,7 @@ static buf_element_t *rip_plugin_read_block(input_plugin_t *this_gen, fifo_buffe
       nread = min_off(this->savepos - this->preview_size, todo - npreview);
     }
 
-    lprintf(" => get %lld bytes from preview (%lld bytes) (block)\n", npreview, this->preview_size);
+    lprintf(" => get %"PRId64" bytes from preview (%"PRId64" bytes) (block)\n", npreview, this->preview_size);
   } else {
     npreview = 0;
     nread = min_off(this->savepos - this->curpos, todo);
@@ -247,13 +247,13 @@ static buf_element_t *rip_plugin_read_block(input_plugin_t *this_gen, fifo_buffe
 
     /* get data from preview */
     if (npreview) {
-      lprintf(" => get %lld bytes from the preview (block)\n", npreview);
+      lprintf(" => get %"PRId64" bytes from the preview (block)\n", npreview);
       memcpy(buf->content, &this->preview[this->curpos], npreview);
     }
     
     /* re-reading from the file */
     if (nread_file) {
-      lprintf(" => read %lld bytes from the file (block)\n", nread_file);
+      lprintf(" => read %"PRId64" bytes from the file (block)\n", nread_file);
       if (fread(&buf->content[npreview], nread_file, 1, this->file) != 1) {
         xine_log(this->stream->xine, XINE_LOG_MSG,
                  _("input_rip: reading of saved data failed: %s\n"),
@@ -267,10 +267,10 @@ static buf_element_t *rip_plugin_read_block(input_plugin_t *this_gen, fifo_buffe
   if (nread_orig + nwrite) {
     /* read from main input plugin */
     if (buf) {
-      lprintf(" => read %lld bytes from input plugin (block)\n", nread_orig + nwrite);
+      lprintf(" => read %"PRId64" bytes from input plugin (block)\n", nread_orig + nwrite);
       retlen = this->main_input_plugin->read(this->main_input_plugin, &buf->content[npreview + nread_file], nread_orig + nwrite);
     } else {
-      lprintf(" => read block of %lld bytes from input plugin (block)\n", nread_orig + nwrite);
+      lprintf(" => read block of %"PRId64" bytes from input plugin (block)\n", nread_orig + nwrite);
       buf = this->main_input_plugin->read_block(this->main_input_plugin, fifo, nread_orig + nwrite);
       if (buf) retlen = buf->size;
       else {
@@ -279,7 +279,7 @@ static buf_element_t *rip_plugin_read_block(input_plugin_t *this_gen, fifo_buffe
       }
     }
     if (retlen != nread_orig + nwrite) {
-      lprintf(CLR_FAIL " => returned %lld" CLR_RST "\n", retlen);
+      lprintf(CLR_FAIL " => returned %"PRId64"" CLR_RST "\n", retlen);
       return NULL;
     }
 
@@ -293,7 +293,7 @@ static buf_element_t *rip_plugin_read_block(input_plugin_t *this_gen, fifo_buffe
         return NULL;
       }
       this->savepos += nwrite;
-      lprintf(" => saved %lld bytes\n", nwrite);
+      lprintf(" => saved %"PRId64" bytes\n", nwrite);
     } else 
       nwrite = 0;
   }
@@ -307,7 +307,7 @@ static buf_element_t *rip_plugin_read_block(input_plugin_t *this_gen, fifo_buffe
 static off_t rip_seek_original(rip_input_plugin_t *this, off_t reqpos) {
   off_t pos;
 
-  lprintf(" => seeking original input plugin to %lld\n", reqpos);
+  lprintf(" => seeking original input plugin to %"PRId64"\n", reqpos);
 
   pos = this->main_input_plugin->seek(this->main_input_plugin, reqpos, SEEK_SET);
   if (pos == -1) {
@@ -316,7 +316,7 @@ static off_t rip_seek_original(rip_input_plugin_t *this, off_t reqpos) {
   }
 #ifdef LOG
   if (pos != reqpos) {
-    lprintf(CLR_FAIL " => reqested position %lld differs from result position %lld" CLR_RST "\n", reqpos, pos);
+    lprintf(CLR_FAIL " => reqested position %"PRId64" differs from result position %"PRId64"" CLR_RST "\n", reqpos, pos);
   }
 #endif
 
@@ -339,7 +339,7 @@ static off_t rip_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin)
   struct timeval time1, time2;
   double interval = 0;
 
-  lprintf("seek, offset %lld, origin %d (curpos %lld, savepos %lld)\n", offset, origin, this->curpos, this->savepos);
+  lprintf("seek, offset %"PRId64", origin %d (curpos %"PRId64", savepos %"PRId64")\n", offset, origin, this->curpos, this->savepos);
   
   switch (origin) {
     case SEEK_SET: newpos = offset; break;
@@ -355,7 +355,7 @@ static off_t rip_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin)
     blocksize = 0;
 
   if (newpos < this->savepos) {
-    lprintf(" => virtual seeking from %lld to %lld\n", this->curpos, newpos);
+    lprintf(" => virtual seeking from %"PRId64" to %"PRId64"\n", this->curpos, newpos);
 
     /* don't seek into preview area */
     if (this->preview && newpos < this->preview_size) {
@@ -366,7 +366,7 @@ static off_t rip_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin)
 
     if (this->regular) {
       if (reqpos != this->savepos) {
-        lprintf(" => seeking file to %lld\n", reqpos);
+        lprintf(" => seeking file to %"PRId64"\n", reqpos);
         if (fseeko(this->file, reqpos, SEEK_SET) != 0) {
           xine_log(this->stream->xine, XINE_LOG_MSG, _("input_rip: seeking failed: %s\n"), strerror(errno));
           return -1;
@@ -382,9 +382,9 @@ static off_t rip_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin)
   }
 
   if (this->curpos < this->savepos) {
-    lprintf(" => seeking to end: %lld\n", this->savepos);
+    lprintf(" => seeking to end: %"PRId64"\n", this->savepos);
     if (this->regular) {
-      lprintf(" => seeking file to end: %lld\n", this->savepos);
+      lprintf(" => seeking file to end: %"PRId64"\n", this->savepos);
       if (fseeko(this->file, this->savepos, SEEK_SET) != 0) {
         xine_log(this->stream->xine, XINE_LOG_MSG, _("input_rip: seeking failed: %s\n"), strerror(errno));
         return -1;
@@ -425,9 +425,17 @@ static off_t rip_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin)
                + (double)(time2.tv_usec - time1.tv_usec) / 1000000;
   }
 
-  lprintf(" => new position %lld\n", this->curpos);
+  lprintf(" => new position %"PRId64"\n", this->curpos);
   
   return this->curpos;
+}
+
+static off_t rip_plugin_seek_time(input_plugin_t *this_gen, int time_offset, int origin) {
+  rip_input_plugin_t *this = (rip_input_plugin_t *)this_gen;
+  
+  lprintf("seek_time, time_offset: %d, origin: %d\n", time_offset, origin);
+
+  return this->main_input_plugin->seek_time(this->main_input_plugin, time_offset, origin);
 }
 
 /*
@@ -441,11 +449,17 @@ static off_t rip_plugin_get_current_pos(input_plugin_t *this_gen) {
 
   pos = this->main_input_plugin->get_current_pos(this->main_input_plugin);
   if (pos != this->curpos) {
-    lprintf(CLR_FAIL "position: computed = %lld, input plugin = %lld" CLR_RST "\n", this->curpos, pos);
+    lprintf(CLR_FAIL "position: computed = %"PRId64", input plugin = %"PRId64"" CLR_RST "\n", this->curpos, pos);
   }
 #endif
   
   return this->curpos;
+}
+
+static int rip_plugin_get_current_time(input_plugin_t *this_gen) {
+  rip_input_plugin_t *this = (rip_input_plugin_t *)this_gen;
+  
+  return this->main_input_plugin->get_current_time(this->main_input_plugin);
 }
 
 static off_t rip_plugin_get_length (input_plugin_t *this_gen) {
@@ -465,7 +479,7 @@ static uint32_t rip_plugin_get_blocksize(input_plugin_t *this_gen) {
   return this->main_input_plugin->get_blocksize(this->main_input_plugin);
 }
 
-static char* rip_plugin_get_mrl (input_plugin_t *this_gen) {
+static const char* rip_plugin_get_mrl (input_plugin_t *this_gen) {
   rip_input_plugin_t *this = (rip_input_plugin_t *)this_gen;
 
   return this->main_input_plugin->get_mrl(this->main_input_plugin);
@@ -646,7 +660,7 @@ input_plugin_t *_x_rip_plugin_get_instance (xine_stream_t *stream, const char *f
       free(this);
       return NULL;
     }
-    lprintf(" => saved %lld bytes (preview)\n", this->preview_size);
+    lprintf(" => saved %"PRId64" bytes (preview)\n", this->preview_size);
     this->savepos = this->preview_size;
   }
 
@@ -655,7 +669,11 @@ input_plugin_t *_x_rip_plugin_get_instance (xine_stream_t *stream, const char *f
   this->input_plugin.read                = rip_plugin_read;
   this->input_plugin.read_block          = rip_plugin_read_block;
   this->input_plugin.seek                = rip_plugin_seek;
+  if(this->main_input_plugin->seek_time)
+    this->input_plugin.seek_time         = rip_plugin_seek_time;
   this->input_plugin.get_current_pos     = rip_plugin_get_current_pos;
+  if(this->main_input_plugin->get_current_time)
+    this->input_plugin.get_current_time  = rip_plugin_get_current_time;
   this->input_plugin.get_length          = rip_plugin_get_length;
   this->input_plugin.get_blocksize       = rip_plugin_get_blocksize;
   this->input_plugin.get_mrl             = rip_plugin_get_mrl;

@@ -34,8 +34,7 @@
 
 #ifndef XAX
 
-#if defined (ARCH_X86)
-
+#if defined (ARCH_X86) && !defined (ARCH_X86_64)
 #define XAX   "eax"
 #define XBX   "ebx"
 #define XCX   "ecx"
@@ -55,7 +54,6 @@
 #define SUBX  "subl"
 
 #elif defined (ARCH_X86_64)
-
 #define XAX   "rax"
 #define XBX   "rbx"
 #define XCX   "rcx"

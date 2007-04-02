@@ -845,15 +845,3 @@ int deinterlace_yuv_supported ( int method )
   return 0;
 }
 
-char *deinterlace_methods[] = {
-  "none", 
-  "bob",
-  "weave",
-  "greedy",
-  "onefield",
-  "onefield_xv",
-  "linearblend",
-  NULL
-};
-
-

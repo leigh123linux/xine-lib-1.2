@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: input_smb.c,v 1.15 2006/07/10 22:08:16 dgp85 Exp $
+ * $Id: input_smb.c,v 1.16 2007/01/26 17:06:05 dgp85 Exp $
  */
 
 
@@ -146,6 +146,10 @@ smb_plugin_get_mrl (input_plugin_t *this_gen)
 	smb_input_t *this = (smb_input_t *) this_gen;
 
 	return this->mrl;
+}
+
+static uint32_t smb_plugin_get_blocksize (input_plugin_t *this_gen) {
+  return 0;
 }
 
 static char
@@ -485,7 +489,7 @@ smb_class_get_instance (input_class_t *class_gen, xine_stream_t *stream,
 	this->input_plugin.seek              = smb_plugin_seek;
 	this->input_plugin.get_current_pos   = smb_plugin_get_current_pos;
 	this->input_plugin.get_length        = smb_plugin_get_length;
-	this->input_plugin.get_blocksize     = NULL;
+	this->input_plugin.get_blocksize     = smb_plugin_get_blocksize;
 	this->input_plugin.get_mrl           = smb_plugin_get_mrl;
 	this->input_plugin.get_optional_data =
 		smb_plugin_get_optional_data;

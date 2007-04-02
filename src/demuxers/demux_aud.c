@@ -34,7 +34,7 @@
  * data. This makes seeking conceptually impossible. Upshot: Random
  * seeking is not supported.
  *
- * $Id: demux_aud.c,v 1.19 2004/06/13 21:28:52 miguelfreitas Exp $
+ * $Id: demux_aud.c,v 1.20 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -292,7 +292,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   case METHOD_BY_CONTENT: /* no reliable detection */
   case METHOD_BY_EXTENSION: {
-    char *extensions, *mrl;
+    const char *extensions, *mrl;
 
     mrl = input->get_mrl (input);
     extensions = class_gen->get_extensions (class_gen);
@@ -320,19 +320,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "Westwood Studios AUD file demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "Westwood Studios AUD";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return "aud";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return NULL;
 }
 

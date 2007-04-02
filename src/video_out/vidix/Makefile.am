@@ -13,7 +13,7 @@ endif
 noinst_LTLIBRARIES = $(vidix_lib)
 
 libvidix_la_SOURCES = vidixlib.c
-libvidix_la_LIBADD = $(DYNAMIC_LD_LIBS)
+libvidix_la_LIBADD = $(DYNAMIC_LD_LIBS) $(top_builddir)/src/video_out/libdha/libdha.la
 
 noinst_HEADERS = fourcc.h vidix.h vidixlib.h
 

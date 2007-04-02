@@ -20,7 +20,7 @@
  * Compact Disc Digital Audio (CDDA) Input Plugin 
  *   by Mike Melanson (melanson@pcisys.net)
  *
- * $Id: input_cdda.c,v 1.90 2006/08/11 21:40:02 dsalt Exp $
+ * $Id: input_cdda.c,v 1.94 2007/03/10 00:48:59 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -86,6 +86,7 @@
 #define CD_FRAMES_PER_SECOND    75
 #define CD_RAW_FRAME_SIZE       2352
 #define CD_LEADOUT_TRACK        0xAA
+#define CD_BLOCK_OFFSET         150
 
 typedef struct _cdrom_toc_entry {
   int   track_mode;
@@ -613,14 +614,20 @@ static int read_cdrom_frames(cdda_input_plugin_t *this_gen, int frame, int num_f
   return 0;
 }
 
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
 
 #include <sys/cdio.h>
+#include <sys/scsiio.h>
 
 static int read_cdrom_toc(int fd, cdrom_toc *toc) {
 
   struct ioc_toc_header tochdr;
+#if defined(__FreeBSD__)
   struct ioc_read_toc_single_entry tocentry;
+#elif defined(__NetBSD__)
+  struct ioc_read_toc_entry tocentry;
+  struct cd_toc_entry data;
+#endif
   int i;
 
   /* fetch the table of contents */
@@ -646,13 +653,26 @@ static int read_cdrom_toc(int fd, cdrom_toc *toc) {
 
     memset(&tocentry, 0, sizeof(tocentry));
 
+#if defined(__FreeBSD__)
     tocentry.track = i;
     tocentry.address_format = CD_MSF_FORMAT;
     if (ioctl(fd, CDIOREADTOCENTRY, &tocentry) == -1) {
       perror("CDIOREADTOCENTRY");
       return -1;
     }
+#elif defined(__NetBSD__)
+    memset(&data, 0, sizeof(data));
+    tocentry.data_len = sizeof(data);
+    tocentry.data = &data;
+    tocentry.starting_track = i;
+    tocentry.address_format = CD_MSF_FORMAT;
+    if (ioctl(fd, CDIOREADTOCENTRYS, &tocentry) == -1) {
+      perror("CDIOREADTOCENTRYS");
+      return -1;
+    }
+#endif
 
+#if defined(__FreeBSD__)
     toc->toc_entries[i-1].track_mode = (tocentry.entry.control & 0x04) ? 1 : 0;
     toc->toc_entries[i-1].first_frame_minute = tocentry.entry.addr.msf.minute;
     toc->toc_entries[i-1].first_frame_second = tocentry.entry.addr.msf.second;
@@ -661,18 +681,41 @@ static int read_cdrom_toc(int fd, cdrom_toc *toc) {
       (tocentry.entry.addr.msf.minute * CD_SECONDS_PER_MINUTE * CD_FRAMES_PER_SECOND) +
       (tocentry.entry.addr.msf.second * CD_FRAMES_PER_SECOND) +
        tocentry.entry.addr.msf.frame;
+#elif defined(__NetBSD__)
+    toc->toc_entries[i-1].track_mode = (tocentry.data->control & 0x04) ? 1 : 0;
+    toc->toc_entries[i-1].first_frame_minute = tocentry.data->addr.msf.minute;
+    toc->toc_entries[i-1].first_frame_second = tocentry.data->addr.msf.second;
+    toc->toc_entries[i-1].first_frame_frame = tocentry.data->addr.msf.frame;
+    toc->toc_entries[i-1].first_frame =
+      (tocentry.data->addr.msf.minute * CD_SECONDS_PER_MINUTE * CD_FRAMES_PER_SECOND) +
+      (tocentry.data->addr.msf.second * CD_FRAMES_PER_SECOND) +
+       tocentry.data->addr.msf.frame - CD_BLOCK_OFFSET;
+#endif
   }
 
   /* fetch the leadout as well */
   memset(&tocentry, 0, sizeof(tocentry));
 
+#if defined(__FreeBSD__)
   tocentry.track = CD_LEADOUT_TRACK;
   tocentry.address_format = CD_MSF_FORMAT;
   if (ioctl(fd, CDIOREADTOCENTRY, &tocentry) == -1) {
     perror("CDIOREADTOCENTRY");
     return -1;
   }
+#elif defined(__NetBSD__)
+  memset(&data, 0, sizeof(data));
+  tocentry.data_len = sizeof(data);
+  tocentry.data = &data;
+  tocentry.starting_track = CD_LEADOUT_TRACK;
+  tocentry.address_format = CD_MSF_FORMAT;
+  if (ioctl(fd, CDIOREADTOCENTRYS, &tocentry) == -1) {
+    perror("CDIOREADTOCENTRYS");
+    return -1;
+  }
+#endif
 
+#if defined(__FreeBSD__)
   toc->leadout_track.track_mode = (tocentry.entry.control & 0x04) ? 1 : 0;
   toc->leadout_track.first_frame_minute = tocentry.entry.addr.msf.minute;
   toc->leadout_track.first_frame_second = tocentry.entry.addr.msf.second;
@@ -681,6 +724,16 @@ static int read_cdrom_toc(int fd, cdrom_toc *toc) {
     (tocentry.entry.addr.msf.minute * CD_SECONDS_PER_MINUTE * CD_FRAMES_PER_SECOND) +
     (tocentry.entry.addr.msf.second * CD_FRAMES_PER_SECOND) +
      tocentry.entry.addr.msf.frame;
+#elif defined(__NetBSD__)
+  toc->leadout_track.track_mode = (tocentry.data->control & 0x04) ? 1 : 0;
+  toc->leadout_track.first_frame_minute = tocentry.data->addr.msf.minute;
+  toc->leadout_track.first_frame_second = tocentry.data->addr.msf.second;
+  toc->leadout_track.first_frame_frame = tocentry.data->addr.msf.frame;
+  toc->leadout_track.first_frame =
+    (tocentry.data->addr.msf.minute * CD_SECONDS_PER_MINUTE * CD_FRAMES_PER_SECOND) +
+    (tocentry.data->addr.msf.second * CD_FRAMES_PER_SECOND) +
+     tocentry.data->addr.msf.frame - CD_BLOCK_OFFSET;
+#endif
 
   return 0;
 }
@@ -689,12 +742,12 @@ static int read_cdrom_frames(cdda_input_plugin_t *this_gen, int frame, int num_f
   unsigned char *data) {
 
   int fd = this_gen->fd;
-#if  __FreeBSD_version < 501106
-  struct ioc_read_audio cdda;
-#endif
 
   while( num_frames ) {
+#if defined(__FreeBSD__)
 #if  __FreeBSD_version < 501106
+    struct ioc_read_audio cdda;
+
     cdda.address_format = CD_MSF_FORMAT;
     cdda.address.msf.minute = frame / CD_SECONDS_PER_MINUTE / CD_FRAMES_PER_SECOND;
     cdda.address.msf.second = (frame / CD_FRAMES_PER_SECOND) % CD_SECONDS_PER_MINUTE;
@@ -712,6 +765,33 @@ static int read_cdrom_frames(cdda_input_plugin_t *this_gen, int frame, int num_f
       perror("CDIOCREADAUDIO");
       return -1;
     }
+#elif defined(__NetBSD__)
+    scsireq_t req;
+    int nblocks = 1;
+
+    memset(&req, 0, sizeof(req));
+    req.cmd[0] = 0xbe;
+    req.cmd[1] = 0;
+    req.cmd[2] = (frame >> 24) & 0xff;
+    req.cmd[3] = (frame >> 16) & 0xff;
+    req.cmd[4] = (frame >> 8) & 0xff;
+    req.cmd[5] = (frame >> 0) & 0xff;
+    req.cmd[6] = (nblocks >> 16) & 0xff;
+    req.cmd[7] = (nblocks >> 8) & 0xff;
+    req.cmd[8] = (nblocks >> 0) & 0xff;
+    req.cmd[9] = 0x78;
+    req.cmdlen = 10;
+
+    req.datalen = nblocks * CD_RAW_FRAME_SIZE;
+    req.databuf = data;
+    req.timeout = 10000;
+    req.flags = SCCMD_READ;
+
+    if(ioctl(fd, SCIOCCOMMAND, &req) < 0) {
+      perror("SCIOCCOMMAND");
+      return -1;
+    }
+#endif
     
     data += CD_RAW_FRAME_SIZE;
     frame++;
@@ -2270,7 +2350,7 @@ static uint32_t cdda_plugin_get_blocksize (input_plugin_t *this_gen) {
   return CD_RAW_FRAME_SIZE;
 }
 
-static char* cdda_plugin_get_mrl (input_plugin_t *this_gen) {
+static const char* cdda_plugin_get_mrl (input_plugin_t *this_gen) {
   cdda_input_plugin_t *this = (cdda_input_plugin_t *) this_gen;
 
   return this->mrl;
@@ -2623,7 +2703,7 @@ static const char *cdda_class_get_identifier (input_class_t *this_gen) {
   return "cdda";
 }
 
-static char *cdda_class_get_description (input_class_t *this_gen) {
+static const char *cdda_class_get_description (input_class_t *this_gen) {
   return _("CD Digital Audio (aka. CDDA)");
 }
 
@@ -2675,8 +2755,8 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->mrls_allocated_entries = 0;
   this->ip = NULL;
   
-  this->cdda_device = config->register_string(config, "media.audio_cd.device", 
-					      DEFAULT_CDDA_DEVICE,
+  this->cdda_device = config->register_filename(config, "media.audio_cd.device", 
+					      DEFAULT_CDDA_DEVICE, XINE_CONFIG_STRING_IS_DEVICE_NAME,
 					      _("device used for CD audio"),
 					      _("The path to the device, usually a "
 						"CD or DVD drive, which you intend to use "
@@ -2704,8 +2784,8 @@ static void *init_plugin (xine_t *xine, void *data) {
 		       "title and track information from."), XINE_CONFIG_SECURITY,
 		       port_changed_cb, (void *) this);
   
-  config->register_string(config, "media.audio_cd.cddb_cachedir", 
-			  (_cdda_cddb_get_default_location()),
+  config->register_filename(config, "media.audio_cd.cddb_cachedir", 
+			  (_cdda_cddb_get_default_location()), XINE_CONFIG_STRING_IS_DIRECTORY_NAME,
 			  _("CDDB cache directory"), _("The replies from the CDDB server will be "
 			  "cached in this directory.\nThis setting is security critical, because files "
 			  "with uncontrollable names will be created in this directory. Be sure to use "

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: mmsh.h,v 1.5 2006/06/20 01:46:41 dgp85 Exp $
+ * $Id: mmsh.h,v 1.6 2007/01/09 20:51:00 klan Exp $
  *
  * libmmsh public header
  */
@@ -31,7 +31,7 @@
 typedef struct mmsh_s mmsh_t;
 
 char*    mmsh_connect_common(int *s ,int *port, char *url, char **host, char **path, char **file);
-mmsh_t*   mmsh_connect (xine_stream_t *stream, const char *url_, int bandwidth);
+mmsh_t*  mmsh_connect (xine_stream_t *stream, const char *url_, int bandwidth);
 
 int      mmsh_read (mmsh_t *this, char *data, int len);
 uint32_t mmsh_get_length (mmsh_t *this);
@@ -40,5 +40,7 @@ void     mmsh_close (mmsh_t *this);
 size_t   mmsh_peek_header (mmsh_t *this, char *data, size_t maxsize);
 
 off_t    mmsh_get_current_pos (mmsh_t *this);
+
+void     mmsh_set_start_time (mmsh_t *this, int time_offset);
 
 #endif

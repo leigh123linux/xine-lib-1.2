@@ -1,12 +1,10 @@
 include $(top_srcdir)/misc/Makefile.common
 
-if HAVE_FLAC
-flac_module = xineplug_flac.la
-endif
-
 libdir = $(XINE_PLUGINDIR)
 
-lib_LTLIBRARIES = $(flac_module)
+if HAVE_LIBFLAC
+lib_LTLIBRARIES = xineplug_flac.la
+endif
 
 xineplug_flac_la_SOURCES = demux_flac.c decoder_flac.c
 xineplug_flac_la_LIBADD = $(LIBFLAC_LIBS) $(XINE_LIB)

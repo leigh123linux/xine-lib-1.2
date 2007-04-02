@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: mmsh.c,v 1.40 2006/11/11 00:05:22 dgp85 Exp $
+ * $Id: mmsh.c,v 1.42 2007/01/11 16:20:55 klan Exp $
  *
  * MMS over HTTP protocol
  *   written by Thibaut Mattern
@@ -99,7 +99,7 @@
     "Pragma: no-cache,rate=1.000000,stream-time=%u,stream-offset=%u:%u,request-context=%u,max-duration=%u\r\n" \
     CLIENTGUID \
     "Pragma: xPlayStrm=1\r\n" \
-    "Pragma: stream-switch-coun t=%d\r\n" \
+    "Pragma: stream-switch-count=%d\r\n" \
     "Pragma: stream-switch-entry=%s\r\n" /*  ffff:1:0 ffff:2:0 */ \
     "Connection: Close\r\n\r\n"
 
@@ -180,9 +180,15 @@ struct mmsh_s {
   uint32_t      asf_header_len;
   uint32_t      asf_header_read;
   int           seq_num;
+  
+  int           video_stream;
+  int           audio_stream;
 
   off_t         current_pos;
-  int           user_bandwitdh;
+  int           user_bandwidth;
+  
+  int           playing;
+  unsigned int  start_time;
 };
 
 static int send_command (mmsh_t *this, char *cmd)  {
@@ -382,7 +388,6 @@ static int get_header (mmsh_t *this) {
   lprintf("get_header\n");
 
   this->asf_header_len = 0;
-  this->asf_header_read = 0;
   
   /* read chunk */
   while (1) {
@@ -514,13 +519,10 @@ static int mmsh_tcp_connect(mmsh_t *this) {
   return 0;
 }
 
-
+/*
+ * firts http request
+ */
 static int mmsh_connect_int(mmsh_t *this, int bandwidth) {
-  int    i;
-  char   stream_selection[10 * ASF_MAX_NUM_STREAMS]; /* 10 chars per stream */
-  int    offset;
-  int audio_stream, video_stream;
-
   /*
    * let the negotiations begin...
    */
@@ -532,29 +534,44 @@ static int mmsh_connect_int(mmsh_t *this, int bandwidth) {
             this->host, this->port, 1);
 
   if (!send_command (this, this->str))
-    goto fail;
+    return 0;
 
   if (!get_answer (this)) 
-    goto fail;
+    return 0;
 
-  get_header(this); /* FIXME: it returns 0 */
+  get_header (this); /* FIXME: it returns 0 */
 
-  if (!interp_header(this))
-    goto fail;
+  if (!interp_header (this))
+    return 0;
   
-  close(this->s);
+  close (this->s);
   report_progress (this->stream, 20);
 
-  asf_header_choose_streams (this->asf_header, bandwidth, &video_stream, &audio_stream);
+  asf_header_choose_streams (this->asf_header, bandwidth,
+                             &this->video_stream, &this->audio_stream);
 
-  lprintf("audio stream %d, video stream %d\n", audio_stream, video_stream);
+  lprintf("audio stream %d, video stream %d\n",
+          this->audio_stream, this->video_stream);
+           
+  asf_header_disable_streams (this->asf_header,
+                              this->video_stream, this->audio_stream);
+                              
+  if (mmsh_tcp_connect(this))
+    return 0;
+  
+  return 1;
+}
+
+/*
+ * second http request
+ */
+static int mmsh_connect_int2(mmsh_t *this, int bandwidth) {
+  int    i;
+  char   stream_selection[10 * ASF_MAX_NUM_STREAMS]; /* 10 chars per stream */
+  int    offset;
   
   /* second request */
   lprintf("second http request\n");
-
-  if (mmsh_tcp_connect(this)) {
-    goto fail;
-  }
 
   /* stream selection string */
   /* The same selection is done with mmst */
@@ -563,8 +580,8 @@ static int mmsh_connect_int(mmsh_t *this, int bandwidth) {
   offset = 0;
   for (i = 0; i < this->asf_header->stream_count; i++) {
     int size;
-    if ((i == audio_stream) ||
-        (i == video_stream)) {
+    if ((i == this->audio_stream) ||
+        (i == this->video_stream)) {
       size = snprintf(stream_selection + offset, sizeof(stream_selection) - offset,
                       "ffff:%d:0 ", this->asf_header->streams[i]->stream_number);
     } else {
@@ -573,14 +590,15 @@ static int mmsh_connect_int(mmsh_t *this, int bandwidth) {
       size = snprintf(stream_selection + offset, sizeof(stream_selection) - offset,
                       "ffff:%d:2 ", this->asf_header->streams[i]->stream_number);
     }
-    if (size < 0) goto fail;
+    if (size < 0)
+      return 0;
     offset += size;
   }
 
   switch (this->stream_type) {
     case MMSH_SEEKABLE:
       snprintf (this->str, SCRATCH_SIZE, mmsh_SeekableRequest, this->uri,
-                this->host, this->port, 0, 0, 0, 2, 0,
+                this->host, this->port, this->start_time, 0, 0, 2, 0,
                 this->asf_header->stream_count, stream_selection);
       break;
     case MMSH_LIVE:
@@ -591,25 +609,25 @@ static int mmsh_connect_int(mmsh_t *this, int bandwidth) {
   }
 
   if (!send_command (this, this->str))
-    goto fail;
+    return 0;
   
   lprintf("before read \n");
 
   if (!get_answer (this))
-    goto fail;
+    return 0;
 
-  if (!get_header(this))
-    goto fail;
-
-  if (!interp_header(this))
-    goto fail;
-
-  asf_header_disable_streams (this->asf_header, video_stream, audio_stream);
+  if (!get_header (this))
+    return 0;
+    
+#if 0
+  if (!interp_header (this))
+    return 0;
+      
+  asf_header_disable_streams (this->asf_header,
+                              this->video_stream, this->audio_stream);
+#endif
 
   return 1;
-  
-fail:
-  return 0;
 }
 
 mmsh_t *mmsh_connect (xine_stream_t *stream, const char *url, int bandwidth) {
@@ -630,7 +648,7 @@ mmsh_t *mmsh_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   this->buf_size        = 0;
   this->buf_read        = 0;
   this->current_pos     = 0;
-  this->user_bandwitdh  = bandwidth;
+  this->user_bandwidth  = bandwidth;
 
   report_progress (stream, 0);
   
@@ -650,7 +668,7 @@ mmsh_t *mmsh_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   
   report_progress (stream, 30);
 
-  if (!mmsh_connect_int(this, this->user_bandwitdh))
+  if (!mmsh_connect_int(this, this->user_bandwidth))
     goto fail;
 
   report_progress (stream, 100);
@@ -709,8 +727,10 @@ static int get_media_packet (mmsh_t *this) {
         if (mmsh_tcp_connect(this))
           return 0;
 
-        if (!mmsh_connect_int(this, this->user_bandwitdh))
+        if (!mmsh_connect_int(this, this->user_bandwidth))
           return 0;
+          
+        this->playing = 0;
 
         /* mmsh_connect_int reads the first data packet */
         /* this->buf_size is set by mmsh_connect_int */    
@@ -784,7 +804,7 @@ int mmsh_read (mmsh_t *this, char *data, int len) {
     if (this->asf_header_read < this->asf_header_len) {
       int n, bytes_left ;
 
-      bytes_left = this->asf_header_len - this->asf_header_read ;
+      bytes_left = this->asf_header_len - this->asf_header_read;
 
       if ((len-total) < bytes_left)
         n = len-total;
@@ -796,9 +816,18 @@ int mmsh_read (mmsh_t *this, char *data, int len) {
       this->asf_header_read += n;
       total += n;
       this->current_pos += n;
+      
+      if (this->asf_header_read == this->asf_header_len)
+      	break;
     } else {
 
       int n, bytes_left ;
+      
+      if (!this->playing) {
+        if (!mmsh_connect_int2 (this, this->user_bandwidth))
+          break;
+        this->playing = 1;
+      }
 
       bytes_left = this->buf_size - this->buf_read;
 
@@ -866,4 +895,9 @@ uint32_t mmsh_get_length (mmsh_t *this) {
 
 off_t mmsh_get_current_pos (mmsh_t *this) {
   return this->current_pos;
+}
+
+void mmsh_set_start_time (mmsh_t *this, int time_offset) {
+  if (time_offset >= 0)
+    this->start_time = time_offset;
 }

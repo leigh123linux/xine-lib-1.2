@@ -24,7 +24,7 @@
  * This demuxer handles either raw STR files (which are just a concatenation
  * of raw compact disc sectors) or STR files with RIFF headers.
  *
- * $Id: demux_str.c,v 1.25 2004/06/13 21:28:54 miguelfreitas Exp $
+ * $Id: demux_str.c,v 1.26 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 /*
@@ -576,7 +576,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   switch (stream->content_detection_method) {
 
   case METHOD_BY_EXTENSION: {
-    char *extensions, *mrl;
+    const char *extensions, *mrl;
 
     mrl = input->get_mrl (input);
     extensions = class_gen->get_extensions (class_gen);
@@ -605,20 +605,20 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "Sony Playstation STR file demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "PSX STR";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   /* also .mov, but we don't want to hijack that extension */
   return "str iki ik2 dps dat xa xa1 xa2 xas xap";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return NULL;
 }
 

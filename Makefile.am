@@ -2,7 +2,7 @@
 ## Process this file with automake to produce Makefile.in
 ##
 
-AUTOMAKE_OPTIONS = 1.3
+AUTOMAKE_OPTIONS = 1.8 no-dist-gzip dist-bzip2
 
 ACLOCAL_AMFLAGS = -I m4
 
@@ -76,6 +76,18 @@ release-check:
 slackbuild:
 	@(cd misc && $(MAKE) SlackBuild) && \
 	 PREFIX="/usr" misc/SlackBuild
+
+
+install-exec-hook:
+	find $(top_builddir) -name \*.so | \
+	  xargs $(STRINGS) -a | \
+	  $(EGREP) '^([-a-z]+/[-+.a-z0-9]+:[^:]+:[^;]+;[ \t]*)+' | \
+	  sed -e 's/:[^;]\+;/\n/g' | \
+	  sort -u | \
+	  sed -e '1 d' >$(DESTDIR)$(XINE_PLUGINDIR)/mime.types
+
+uninstall-hook:
+	rm -f $(DESTDIR)$(XINE_PLUGINDIR)/mime.types
 
 
 install-data-hook:

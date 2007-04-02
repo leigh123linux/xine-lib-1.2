@@ -26,7 +26,7 @@ xineplug_decode_a52_la_SOURCES = \
 if EXTERNAL_A52DEC
 xineplug_decode_a52_la_LIBADD = $(XINE_LIB) -la52 -lm
 else
-xineplug_decode_a52_la_LIBADD = $(XINE_LIB)
+xineplug_decode_a52_la_LIBADD = $(XINE_LIB) -lm
 endif
 
 xineplug_decode_a52_la_CFLAGS = $(VISIBILITY_FLAG)

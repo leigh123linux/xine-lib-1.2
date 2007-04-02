@@ -19,7 +19,7 @@
  *
  * Raw DTS Demuxer by James Stembridge (jstembridge@gmail.com)
  *
- * $Id: demux_dts.c,v 1.6 2005/06/04 20:32:08 jstembridge Exp $
+ * $Id: demux_dts.c,v 1.8 2007/03/19 16:42:32 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -47,7 +47,6 @@
 #include "group_audio.h"
 
 #define DATA_TAG 0x61746164
-#define PEAK_SIZE 7056        /* 3 raw cd frames */
 
 typedef struct {
   demux_plugin_t       demux_plugin;
@@ -79,29 +78,29 @@ static const int dts_sample_rates[] =
 static int open_dts_file(demux_dts_t *this) {
   int i, offset = 0;
   uint32_t syncword = 0;
-  int peak_size = 0;
+  size_t peak_size = 0;
   uint32_t blocksize;
-  uint8_t peak[PEAK_SIZE];
+  uint8_t *peak;
 
   lprintf("open_dts_file\n");
 
-  /* block based demuxer (i.e. cdda) will only allow reads in block
-   * sized pieces */
   blocksize = this->input->get_blocksize(this->input);
-  if (blocksize && INPUT_IS_SEEKABLE(this->input)) {
-    int read;
+  if (blocksize) {
+    this->input->seek(this->input, 0, SEEK_SET);
+    buf_element_t *buf = this->input->read_block(this->input,
+						 this->audio_fifo,
+						 blocksize);
+    this->input->seek(this->input, 0, SEEK_SET);
 
-    this->input->seek(this->input, 0, SEEK_SET);
-    while (peak_size < PEAK_SIZE) {
-      read = this->input->read(this->input, &peak[peak_size], blocksize);
-      if (read)
-        peak_size += read;
-      else
-        break;
-    }
-    this->input->seek(this->input, 0, SEEK_SET);
+    if (!buf)
+      return 0;
+
+    peak = alloca(peak_size = buf->size);
+    xine_fast_memcpy(peak, buf->content, peak_size);
+
+    buf->free_buffer(buf);
   } else {
-    peak_size = MAX_PREVIEW_SIZE;
+    peak = alloca(peak_size = MAX_PREVIEW_SIZE);
 
     if (_x_demux_read_header(this->input, peak, peak_size) != peak_size)
       return 0;
@@ -111,10 +110,7 @@ static int open_dts_file(demux_dts_t *this) {
 
   /* Check for wav header, as we'll handle DTS with a wav header shoved
    * on the front for CD burning */
-  if ((peak[0]  == 'R') && (peak[1]  == 'I') && (peak[2]  == 'F') && 
-      (peak[3]  == 'F') && (peak[8]  == 'W') && (peak[9]  == 'A') &&
-      (peak[10] == 'V') && (peak[11] == 'E') && (peak[12] == 'f') &&
-      (peak[13] == 'm') && (peak[14] == 't') && (peak[15] == ' ')) {
+  if ( memcmp(peak, "RIFF", 4) == 0 || memcmp(&peak[8], "WAVEfmt ", 8) == 0 ) {
     /* Check this looks like a cd audio wav */
     unsigned int audio_type;
     xine_waveformatex *wave = (xine_waveformatex *) &peak[20];
@@ -368,7 +364,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   switch (stream->content_detection_method) {
 
   case METHOD_BY_EXTENSION: {
-    char *extensions, *mrl;
+    const char *extensions, *mrl;
 
     mrl = input->get_mrl (input);
     extensions = class_gen->get_extensions (class_gen);
@@ -396,19 +392,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "Raw DTS demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "DTS";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return "dts";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return NULL;
 }
 

@@ -12,15 +12,15 @@ hackersguide_fig = architecture.fig \
 		   overlays.fig \
 		   post_frame.fig
 
-docs_DATA = hackersguide.html \
+hackersguide_DATA = hackersguide.html \
             architecture.png library.png overlays.png post_frame.png
 
 EXTRA_DIST = README $(hackersguide_sgml) $(hackersguide_fig) \
-	 $(docs_DATA)
+	 $(hackersguide_DATA)
 
-docsdir = $(prefix)/share/doc/xine/hackersguide
+hackersguidedir = $(htmldir)/hackersguide
 
-docs: $(docs_DATA)
+docs: $(hackersguide_DATA)
 
 distclean-local: clean-docs
 
@@ -32,7 +32,7 @@ docs-prepare: $(addprefix $(srcdir)/, $(hackersguide_sgml))
 	fi
 
 clean-docs:
-	rm -f $(docs_DATA)
+	rm -f $(hackersguide_DATA)
 	test "x$(srcdir)" = x. || rm -f $(hackersguide_sgml) *.fig
 
 dist-hook:

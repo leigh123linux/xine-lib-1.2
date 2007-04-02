@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: post.h,v 1.23 2006/09/26 05:19:49 dgp85 Exp $
+ * $Id: post.h,v 1.26 2007/02/20 01:13:08 dgp85 Exp $
  *
  * post plugin definitions
  *
@@ -259,7 +259,7 @@ void _x_post_frame_copy_up(vo_frame_t *to, vo_frame_t *from) XINE_PROTECTED;
 /* when you shortcut a frames usual draw() travel so that it will never reach
  * the draw() function of the original issuer, you still have to do some
  * housekeeping on the frame, before returning control up the pipe */
-void _x_post_frame_u_turn(vo_frame_t *frame, xine_stream_t *stream);
+void _x_post_frame_u_turn(vo_frame_t *frame, xine_stream_t *stream) XINE_PROTECTED;
 
 /* use this to create a new, trivially decorated overlay manager in which
  * port functions can be replaced with own implementations */
@@ -380,7 +380,7 @@ static xine_post_api_parameter_t temp_p[] = {
 
 #define PARAM_ITEM( param_type, var, enumv, min, max, readonly, descr ) \
 { param_type, #var, sizeof(temp_s.var), \
-  (char *)&temp_s.var-(char *)&temp_s, enumv, min, max, readonly, descr },
+  (char*)&temp_s.var-(char*)&temp_s, enumv, min, max, readonly, descr },
 
 #define END_PARAM_DESCR( name ) \
   { POST_PARAM_TYPE_LAST, NULL, 0, 0, NULL, 0, 0, 1, NULL } \

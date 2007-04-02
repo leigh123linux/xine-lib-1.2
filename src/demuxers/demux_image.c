@@ -19,7 +19,7 @@
  */
 
 /*
- * $Id: demux_image.c,v 1.25 2006/08/13 23:51:33 miguelfreitas Exp $
+ * $Id: demux_image.c,v 1.26 2007/01/19 00:26:40 dgp85 Exp $
  *
  * image dummy demultiplexer
  */
@@ -177,7 +177,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   break;
 
   case METHOD_BY_EXTENSION: {
-    char *extensions, *mrl;
+    const char *extensions, *mrl;
 
     mrl = input->get_mrl (input);
     extensions = class_gen->get_extensions (class_gen);
@@ -225,19 +225,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
  * image demuxer class
  */
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "image demux plugin";
 }
  
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "imagedmx";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return "png gif jpg jpeg";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return NULL;
 }
 

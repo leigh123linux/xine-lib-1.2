@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: audio_decoder.c,v 1.29 2006/10/13 21:41:30 dgp85 Exp $
+ * $Id: audio_decoder.c,v 1.33 2007/01/28 18:38:33 miguelfreitas Exp $
  *
  * xine audio decoder plugin using ffmpeg
  *
@@ -25,6 +25,7 @@
  
 #ifdef HAVE_CONFIG_H
 #include "config.h"
+#include "ffmpeg_config.h"
 #endif
 
 #include <stdlib.h>
@@ -107,6 +108,8 @@ static const ff_codec_t ff_audio_lookup[] = {
   {BUF_AUDIO_TRUESPEECH, CODEC_ID_TRUESPEECH,     "TrueSpeech (ffmpeg)"},
   {BUF_AUDIO_TTA,        CODEC_ID_TTA,            "True Audio Lossless (ffmpeg)"},
   {BUF_AUDIO_SMACKER,    CODEC_ID_SMACKAUDIO,     "Smacker (ffmpeg)"},
+  {BUF_AUDIO_FLVADPCM,   CODEC_ID_ADPCM_SWF,	  "Flash ADPCM (ffmpeg)"},
+  {BUF_AUDIO_WAVPACK,	 CODEC_ID_WAVPACK,	  "WavPack (ffmpeg)"},
 };
 
 
@@ -288,7 +291,8 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 
       offset = 0;
       while (this->size>0) {
-        bytes_consumed = avcodec_decode_audio (this->context, 
+        decode_buffer_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
+        bytes_consumed = avcodec_decode_audio2 (this->context, 
                                                (int16_t *)this->decode_buffer,
                                                &decode_buffer_size, 
                                                &this->buf[offset],
@@ -441,37 +445,106 @@ void *init_audio_plugin (xine_t *xine, void *data) {
 }
 
 static uint32_t supported_audio_types[] = { 
+  #ifdef CONFIG_WMAV1_DECODER
   BUF_AUDIO_WMAV1,
+  #endif
+  #ifdef CONFIG_WMAV2_DECODER
   BUF_AUDIO_WMAV2,
+  #endif
+  #ifdef CONFIG_RA_144_DECODER
   BUF_AUDIO_14_4,
+  #endif
+  #ifdef CONFIG_RA_288_DECODER
   BUF_AUDIO_28_8,
-  BUF_AUDIO_MULAW,
-  BUF_AUDIO_ALAW,
-  BUF_AUDIO_MSADPCM,
-  BUF_AUDIO_QTIMAADPCM,
-  BUF_AUDIO_MSIMAADPCM,
-  BUF_AUDIO_DK3ADPCM,
-  BUF_AUDIO_DK4ADPCM,
-  BUF_AUDIO_XA_ADPCM,
-  BUF_AUDIO_ROQ,
-  BUF_AUDIO_INTERPLAY,
-  BUF_AUDIO_VQA_IMA,
-  BUF_AUDIO_4X_ADPCM,
-  BUF_AUDIO_MAC3,
-  BUF_AUDIO_MAC6,
-  BUF_AUDIO_XAN_DPCM,
-  BUF_AUDIO_VMD,
-  BUF_AUDIO_EA_ADPCM,
-  BUF_AUDIO_SMJPEG_IMA,
-  BUF_AUDIO_FLAC,
-  BUF_AUDIO_ALAC,
-  BUF_AUDIO_SHORTEN,
+  #endif
+  #ifdef CONFIG_MP3_DECODER
   BUF_AUDIO_MPEG,
+  #endif
+  #ifdef CONFIG_ADPCM_MS_DECODER
+  BUF_AUDIO_MSADPCM,
+  #endif
+  #ifdef CONFIG_ADPCM_IMA_QT_DECODER
+  BUF_AUDIO_QTIMAADPCM,
+  #endif
+  #ifdef CONFIG_ADPCM_IMA_WAV_DECODER
+  BUF_AUDIO_MSIMAADPCM,
+  #endif
+  #ifdef CONFIG_ADPCM_IMA_DK3_DECODER
+  BUF_AUDIO_DK3ADPCM,
+  #endif
+  #ifdef CONFIG_ADPCM_IMA_DK4_DECODER
+  BUF_AUDIO_DK4ADPCM,
+  #endif
+  #ifdef CONFIG_ADPCM_IMA_WS_DECODER
+  BUF_AUDIO_VQA_IMA,
+  #endif
+  #ifdef CONFIG_ADPCM_IMA_SMJPEG_DECODER
+  BUF_AUDIO_SMJPEG_IMA,
+  #endif
+  #ifdef CONFIG_ADPCM_XA_DECODER
+  BUF_AUDIO_XA_ADPCM,
+  #endif
+  #ifdef CONFIG_ADPCM_4XM_DECODER
+  BUF_AUDIO_4X_ADPCM,
+  #endif
+  #ifdef CONFIG_ADPCM_EA_DECODER
+  BUF_AUDIO_EA_ADPCM,
+  #endif
+  #ifdef CONFIG_PCM_MULAW_DECODER
+  BUF_AUDIO_MULAW,
+  #endif
+  #ifdef CONFIG_PCM_ALAW_DECODER
+  BUF_AUDIO_ALAW,
+  #endif
+  #ifdef CONFIG_ROQ_DPCM_DECODER
+  BUF_AUDIO_ROQ,
+  #endif
+  #ifdef CONFIG_INTERPLAY_DPCM_DECODER
+  BUF_AUDIO_INTERPLAY,
+  #endif
+  #ifdef CONFIG_MACE3_DECODER
+  BUF_AUDIO_MAC3,
+  #endif
+  #ifdef CONFIG_MACE6_DECODER
+  BUF_AUDIO_MAC6,
+  #endif
+  #ifdef CONFIG_XAN_DPCM_DECODER
+  BUF_AUDIO_XAN_DPCM,
+  #endif
+  #ifdef CONFIG_VMDAUDIO_DECODER
+  BUF_AUDIO_VMD,
+  #endif
+  #ifdef CONFIG_FLAC_DECODER
+  BUF_AUDIO_FLAC,
+  #endif
+  #ifdef CONFIG_SHORTEN_DECODER
+  BUF_AUDIO_SHORTEN,
+  #endif
+  #ifdef CONFIG_ALAC_DECODER
+  BUF_AUDIO_ALAC,
+  #endif
+  #ifdef CONFIG_QDM2_DECODER
   BUF_AUDIO_QDESIGN2,
+  #endif
+  #ifdef CONFIG_COOK_DECODER
   BUF_AUDIO_COOK,
+  #endif
+  #ifdef CONFIG_TRUESPEECH_DECODER
   BUF_AUDIO_TRUESPEECH,
+  #endif
+  #ifdef CONFIG_TTA_DECODER
   BUF_AUDIO_TTA,
+  #endif
+  #ifdef CONFIG_SMACKAUDIO_DECODER
   BUF_AUDIO_SMACKER,
+  #endif
+  #ifdef CONFIG_ADPCM_SWF_DECODER
+  BUF_AUDIO_FLVADPCM,
+  #endif
+  #ifdef CONFIG_WAVPACK_DECODER
+  BUF_AUDIO_WAVPACK,
+  #endif
+  
   0
 };
 

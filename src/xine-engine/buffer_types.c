@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: buffer_types.c,v 1.106 2006/10/02 15:56:06 valtri Exp $
+ * $Id: buffer_types.c,v 1.107 2006/12/26 03:18:56 dgp85 Exp $
  *
  *
  * contents:
@@ -1113,6 +1113,13 @@ static audio_db_t audio_db[] = {
   },
   BUF_AUDIO_MPC,
   "Musepack"
+},
+{
+  {
+    0
+  },
+  BUF_AUDIO_WAVPACK,
+  "Wavpack"
 },
 { { 0 }, 0, "last entry" }
 };

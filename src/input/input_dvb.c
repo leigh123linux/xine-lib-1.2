@@ -2651,7 +2651,7 @@ static void dvb_plugin_dispose (input_plugin_t *this_gen) {
   free (this);
 }
 
-static char* dvb_plugin_get_mrl (input_plugin_t *this_gen) {
+static const char* dvb_plugin_get_mrl (input_plugin_t *this_gen) {
   dvb_input_plugin_t *this = (dvb_input_plugin_t *) this_gen;
 
   return this->mrl;
@@ -3085,7 +3085,7 @@ static input_plugin_t *dvb_class_get_instance (input_class_t *class_gen,
  * dvb input plugin class stuff
  */
 
-static char *dvb_class_get_description (input_class_t *this_gen) {
+static const char *dvb_class_get_description (input_class_t *this_gen) {
   return _("DVB (Digital TV) input plugin");
 }
 
@@ -3183,15 +3183,14 @@ static char **dvb_class_get_autoplay_list(input_class_t * this_gen,
       }
 
     if (lastchannel_enable.num_value){
-      if (lastchannel.num_value>-1) /* plugin has been used before - channel is valid */
-       sprintf(foobuffer,"dvb://%s",channels[lastchannel.num_value].name);
-      else 			    /* set a reasonable default - the first channel */
-       sprintf(foobuffer,"dvb://%s",channels[lastchannel_enable.num_value].name);
-       if(class->autoplaylist[0])
-         free(class->autoplaylist[0]);
-       class->autoplaylist[0]=xine_xmalloc(128);
-       _x_assert(class->autoplaylist[0] != NULL);
-       class->autoplaylist[0]=strdup(foobuffer);
+      if (lastchannel.num_value > -1 && lastchannel.num_value < num_channels)
+	/* plugin has been used before - channel is valid */
+	sprintf (foobuffer, "dvb://%s", channels[lastchannel.num_value].name);
+      else
+	/* set a reasonable default - the first channel */
+	sprintf (foobuffer, "dvb://%s", num_channels ? channels[0].name : "0");
+      free(class->autoplaylist[0]);
+      class->autoplaylist[0]=strdup(foobuffer);
     }
 
     free(tmpbuffer);

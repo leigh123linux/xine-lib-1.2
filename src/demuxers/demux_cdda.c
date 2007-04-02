@@ -24,7 +24,7 @@
  * linear PCM "decoder" (which in turn sends them directly to the audio
  * output target; this is a really fancy CD-playing architecture).
  *
- * $Id: demux_cdda.c,v 1.19 2004/06/13 21:28:52 miguelfreitas Exp $
+ * $Id: demux_cdda.c,v 1.20 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -227,19 +227,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "CD Digital Audio demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "CDDA";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return NULL;
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return NULL;
 }
 

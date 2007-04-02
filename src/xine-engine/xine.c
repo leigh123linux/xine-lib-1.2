@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: xine.c,v 1.335 2006/10/16 22:18:24 valtri Exp $
+ * $Id: xine.c,v 1.342 2007/02/20 00:37:02 dgp85 Exp $
  */
 
 /*
@@ -77,6 +77,10 @@
 #   include <winsock.h>
 #endif /* WIN32 */
 
+
+static void mutex_cleanup (void *mutex) {
+  pthread_mutex_unlock ((pthread_mutex_t *) mutex);
+}
 
 void _x_handle_stream_end (xine_stream_t *stream, int non_user) {
 
@@ -294,6 +298,7 @@ static void stop_internal (xine_stream_t *stream) {
 void xine_stop (xine_stream_t *stream) {
 
   pthread_mutex_lock (&stream->frontend_lock);
+  pthread_cleanup_push (mutex_cleanup, (void *) &stream->frontend_lock);
 
   /* make sure that other threads cannot change the speed, especially pauseing the stream */
   pthread_mutex_lock(&stream->speed_change_lock);
@@ -320,6 +325,7 @@ void xine_stop (xine_stream_t *stream) {
   stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
   stream->ignore_speed_change = 0;
   
+  pthread_cleanup_pop (0);
   pthread_mutex_unlock (&stream->frontend_lock);
 }
 
@@ -395,6 +401,7 @@ static void close_internal (xine_stream_t *stream) {
 void xine_close (xine_stream_t *stream) {
 
   pthread_mutex_lock (&stream->frontend_lock);
+  pthread_cleanup_push (mutex_cleanup, (void *) &stream->frontend_lock);
 
   close_internal (stream);
 
@@ -408,6 +415,7 @@ void xine_close (xine_stream_t *stream) {
   if (stream->status != XINE_STATUS_QUIT)
     stream->status = XINE_STATUS_IDLE;
 
+  pthread_cleanup_pop (0);
   pthread_mutex_unlock (&stream->frontend_lock);
 }
 
@@ -1131,11 +1139,13 @@ int xine_open (xine_stream_t *stream, const char *mrl) {
   int ret;
 
   pthread_mutex_lock (&stream->frontend_lock);
+  pthread_cleanup_push (mutex_cleanup, (void *) &stream->frontend_lock);
 
   lprintf ("open MRL:%s\n", mrl);
 
   ret = open_internal (stream, mrl);
 
+  pthread_cleanup_pop (0);
   pthread_mutex_unlock (&stream->frontend_lock);
 
   return ret;
@@ -1263,6 +1273,7 @@ int xine_play (xine_stream_t *stream, int start_pos, int start_time) {
   int ret;
 
   pthread_mutex_lock (&stream->frontend_lock);
+  pthread_cleanup_push (mutex_cleanup, (void *) &stream->frontend_lock);
 
   stream->delay_finish_event = 0;
   
@@ -1272,6 +1283,7 @@ int xine_play (xine_stream_t *stream, int start_pos, int start_time) {
   
   stream->gapless_switch = 0;
 
+  pthread_cleanup_pop (0);
   pthread_mutex_unlock (&stream->frontend_lock);
   
   return ret;
@@ -1285,6 +1297,7 @@ int xine_eject (xine_stream_t *stream) {
     return 0;
   
   pthread_mutex_lock (&stream->frontend_lock);
+  pthread_cleanup_push (mutex_cleanup, (void *) &stream->frontend_lock);
 
   status = 0;
   /* only eject, if we are stopped OR a different input plugin is playing */
@@ -1295,7 +1308,9 @@ int xine_eject (xine_stream_t *stream) {
     status = stream->eject_class->eject_media (stream->eject_class);
   }
 
+  pthread_cleanup_pop (0);
   pthread_mutex_unlock (&stream->frontend_lock);
+  
   return status;
 }
 
@@ -1520,8 +1535,8 @@ static void config_save_cb (void *this_gen, xine_cfg_entry_t *entry) {
 }
 
 void xine_init (xine_t *this) {
-  static char *demux_strategies[] = {"default", "reverse", "content",
-				     "extension", NULL};
+  static const char *demux_strategies[] = {"default", "reverse", "content",
+					   "extension", NULL};
 
   /* initialize color conversion tables and functions */
   init_yuv_conversion();
@@ -1561,9 +1576,9 @@ void xine_init (xine_t *this) {
   /*
    * save directory
    */
-  this->save_path  = this->config->register_string (
+  this->save_path  = this->config->register_filename (
       this->config, 
-      "media.capture.save_dir", "",
+      "media.capture.save_dir", "", XINE_CONFIG_STRING_IS_DIRECTORY_NAME,
       _("directory for saving streams"),
       _("When using the stream save feature, files will be written only into this directory.\n"
 	"This setting is security critical, because when changed to a different directory, xine "
@@ -1604,9 +1619,10 @@ void xine_init (xine_t *this) {
   this->streams = xine_list_new();
 
   /*
-   * streams lock
+   * locks
    */
   pthread_mutex_init (&this->streams_lock, NULL);
+  pthread_mutex_init (&this->log_lock, NULL);
   
   /*
    * start metronom clock
@@ -1951,12 +1967,21 @@ const char *const *xine_get_log_names (xine_t *this) {
   return log_sections;
 }
 
+static inline void check_log_alloc (xine_t *this, int buf)
+{
+  pthread_mutex_lock (&this->log_lock);
+
+  if ( ! this->log_buffers[buf] )
+    this->log_buffers[buf] = _x_new_scratch_buffer(150);
+
+  pthread_mutex_unlock (&this->log_lock);
+}
+
 void xine_log (xine_t *this, int buf, const char *format, ...) {
   va_list argp;
   char    buffer[SCRATCH_LINE_LEN_MAX];
   
-  if ( ! this->log_buffers[buf] )
-    this->log_buffers[buf] = _x_new_scratch_buffer(150);
+  check_log_alloc (this, buf);
 
   va_start (argp, format);
   this->log_buffers[buf]->scratch_printf (this->log_buffers[buf], format, argp);
@@ -1973,13 +1998,12 @@ void xine_log (xine_t *this, int buf, const char *format, ...) {
 void xine_vlog(xine_t *this, int buf, const char *format, 
                 va_list args)
 {
-  if ( ! this->log_buffers[buf] )
-    this->log_buffers[buf] = _x_new_scratch_buffer(150);
+  check_log_alloc (this, buf);
 
   this->log_buffers[buf]->scratch_printf(this->log_buffers[buf], format, args);
 }
 
-const char *const *xine_get_log (xine_t *this, int buf) {
+char *const *xine_get_log (xine_t *this, int buf) {
 
   if(buf >= XINE_LOG_NUM)
     return NULL;

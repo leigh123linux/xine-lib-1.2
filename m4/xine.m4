@@ -31,14 +31,16 @@ AC_DEFUN([AM_PATH_XINE],
 dnl Get the cflags and libraries from the xine-config script
 dnl
 AC_ARG_WITH(xine-prefix,
-    AC_HELP_STRING([--with-xine-prefix=DIR], [prefix where XINE is installed (optional)]),
+    AS_HELP_STRING([--with-xine-prefix=DIR], [prefix where XINE is installed (optional)]),
             xine_config_prefix="$withval", xine_config_prefix="")
 AC_ARG_WITH(xine-exec-prefix,
-    AC_HELP_STRING([--with-xine-exec-prefix=DIR], [exec prefix where XINE is installed (optional)]),
+    AS_HELP_STRING([--with-xine-exec-prefix=DIR], [exec prefix where XINE is installed (optional)]),
             xine_config_exec_prefix="$withval", xine_config_exec_prefix="")
 AC_ARG_ENABLE(xinetest, 
-    AC_HELP_STRING([--disable-xinetest], [do not try to compile and run a test XINE program]),
+    AS_HELP_STRING([--disable-xinetest], [do not try to compile and run a test XINE program]),
             enable_xinetest=$enableval, enable_xinetest=yes)
+
+  AC_LANG_PUSH([C])
 
   if test x$xine_config_exec_prefix != x ; then
      xine_config_args="$xine_config_args --exec-prefix=$xine_config_exec_prefix"
@@ -85,10 +87,8 @@ dnl
 dnl Now check if the installed XINE is sufficiently new. (Also sanity
 dnl checks the results of xine-config to some extent
 dnl
-      AC_LANG_SAVE()
-      AC_LANG_C()
       rm -f conf.xinetest
-      AC_TRY_RUN([
+      AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <xine.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -153,7 +153,7 @@ main ()
     }
   return 1;
 }
-],, no_xine=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
+]])],[],[no_xine=yes],[echo $ac_n "cross compiling; assumed OK... $ac_c"])
        CFLAGS="$ac_save_CFLAGS"
        LIBS="$ac_save_LIBS"
      fi
@@ -175,10 +175,10 @@ main ()
           echo "*** Could not run XINE test program, checking why..."
           CFLAGS="$CFLAGS $XINE_CFLAGS"
           LIBS="$LIBS $XINE_LIBS"
-          AC_TRY_LINK([
+          AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <xine.h>
 #include <stdio.h>
-],      [ return ((XINE_MAJOR_VERSION) || (XINE_MINOR_VERSION) || (XINE_SUB_VERSION)); ],
+]], [[ return ((XINE_MAJOR_VERSION) || (XINE_MINOR_VERSION) || (XINE_SUB_VERSION)); ]])],
         [ echo "*** The test program compiled, but did not run. This usually means"
           echo "*** that the run-time linker is not finding XINE or finding the wrong"
           echo "*** version of XINE. If it is not finding XINE, you'll need to set your"
@@ -204,7 +204,7 @@ main ()
   AC_SUBST(XINE_CFLAGS)
   AC_SUBST(XINE_LIBS)
   AC_SUBST(XINE_ACFLAGS)
-  AC_LANG_RESTORE()
+  AC_LANG_POP([C])
   rm -f conf.xinetest
 
 dnl Make sure HAVE_STRSEP, HAVE_SETENV and HAVE_STRPBRK are defined as

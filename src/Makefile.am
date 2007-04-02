@@ -30,4 +30,5 @@ SUBDIRS = \
 	libfaad \
 	libflac \
         libmusepack \
-	post
+	post \
+	combined

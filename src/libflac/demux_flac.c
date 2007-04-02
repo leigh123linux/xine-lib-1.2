@@ -441,7 +441,11 @@ demux_flac_dispose (demux_plugin_t *this_gen) {
     lprintf("demux_flac_dispose\n");
 
     if (this->flac_decoder)
+#ifdef LEGACY_FLAC
         FLAC__seekable_stream_decoder_delete (this->flac_decoder);
+#else
+	FLAC__stream_decoder_delete (this->flac_decoder);
+#endif
 
     free(this);
     return;
@@ -494,8 +498,13 @@ demux_flac_seek (demux_plugin_t *this_gen, off_t start_pos, int start_time, int 
         }
         target_sample = (uint64_t)(distance * this->total_samples);
 
+#ifdef LEGACY_FLAC
         s = FLAC__seekable_stream_decoder_seek_absolute (this->flac_decoder,
                                                          target_sample);
+#else
+        s = FLAC__stream_decoder_seek_absolute (this->flac_decoder,
+                                                         target_sample);
+#endif
 
         if (s) {
 	  lprintf ("Seek to: %d successfull!\n", start_time);
@@ -618,9 +627,6 @@ open_plugin (demux_class_t *class_gen,
     /* Get a new FLAC decoder and hook up callbacks */
 #ifdef LEGACY_FLAC
     this->flac_decoder = FLAC__seekable_stream_decoder_new();
-#else
-    this->flac_decoder = FLAC__stream_decoder_new();
-#endif
     lprintf("this->flac_decoder: %p\n", this->flac_decoder);
 
     FLAC__seekable_stream_decoder_set_md5_checking  (this->flac_decoder, false);
@@ -644,6 +650,37 @@ open_plugin (demux_class_t *class_gen,
                                                      this);
 
     FLAC__seekable_stream_decoder_init (this->flac_decoder);
+#else
+    this->flac_decoder = FLAC__stream_decoder_new();
+    lprintf("this->flac_decoder: %p\n", this->flac_decoder);
+
+    if ( ! this->flac_decoder ) {
+      free(this);
+      return NULL;
+    }
+
+    FLAC__stream_decoder_set_md5_checking  (this->flac_decoder, false);
+
+    if ( FLAC__stream_decoder_init_stream(this->flac_decoder,
+					  flac_read_callback,
+					  flac_seek_callback,
+					  flac_tell_callback,
+					  flac_length_callback,
+					  flac_eof_callback,
+					  flac_write_callback,
+					  flac_metadata_callback,
+					  flac_error_callback,
+					  this
+					  ) != FLAC__STREAM_DECODER_INIT_STATUS_OK ) {
+#ifdef LEGACY_FLAC
+      FLAC__seekable_stream_decoder_delete (this->flac_decoder);
+#else
+      FLAC__stream_decoder_delete (this->flac_decoder);
+#endif
+      free(this);
+      return NULL;
+    }
+#endif
 
     /* Get some stream info */
     this->data_size  = this->input->get_length (this->input);
@@ -653,13 +690,21 @@ open_plugin (demux_class_t *class_gen,
      * this flac stream
      */
     this->status = DEMUX_OK;
+#ifdef LEGACY_FLAC
     FLAC__seekable_stream_decoder_process_until_end_of_metadata (this->flac_decoder);
+#else
+    FLAC__stream_decoder_process_until_end_of_metadata (this->flac_decoder);
+#endif
 
     lprintf("Processed file until end of metadata: %s\n",
 	    this->status == DEMUX_OK ? "success" : "failure");
 
     if (this->status != DEMUX_OK) {
+#ifdef LEGACY_FLAC
         FLAC__seekable_stream_decoder_delete (this->flac_decoder);
+#else
+	FLAC__stream_decoder_delete (this->flac_decoder);
+#endif
         free (this);
         return NULL;
     }

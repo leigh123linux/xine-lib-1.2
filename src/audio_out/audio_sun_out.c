@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: audio_sun_out.c,v 1.45 2006/07/16 16:18:09 dsalt Exp $
+ * $Id: audio_sun_out.c,v 1.47 2007/03/10 00:55:14 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -41,13 +41,20 @@
 #ifdef	__svr4__
 #include <stropts.h>
 #endif
+#include <sys/param.h>
+
+#if (defined(BSD) && BSD >= 199306)
+typedef unsigned uint_t;
+#endif
 
 #include "xine_internal.h"
 #include "xineutils.h"
 #include "audio_out.h"
 
+#ifdef __svr4__
 #define	CS4231_WORKAROUND	1	/* enable workaround for audiocs play.samples bug */
 #define	SW_SAMPLE_COUNT		1
+#endif
 
 
 #ifndef	AUDIO_CHANNELS_MONO
@@ -89,7 +96,9 @@ typedef struct sun_driver_s {
   uint32_t       num_channels;
   int		 bytes_per_frame;
 
+#ifdef __svr4__
   uint32_t       frames_in_buffer;     /* number of frames writen to audio hardware   */
+#endif
 
   enum {
       RTSC_UNKNOWN = 0,
@@ -114,12 +123,14 @@ typedef struct sun_driver_s {
   unsigned	 buf_len;
 #endif
 
+#ifdef __svr4__
 #if	SW_SAMPLE_COUNT
   struct timeval tv0;
   uint_t	 sample0;
 #endif
 
   uint_t	 last_samplecnt;
+#endif
 } sun_driver_t;
 
 
@@ -129,6 +140,7 @@ typedef struct sun_driver_s {
  */
 static int realtime_samplecounter_available(xine_t *xine, char *dev)
 {
+#ifdef __svr4__
   int fd = -1;
   audio_info_t info;
   int rtsc_ok = RTSC_DISABLED;
@@ -247,6 +259,9 @@ error:
   }
 
   return rtsc_ok;
+#else
+  return RTSC_ENABLED;
+#endif
 }
 
 
@@ -430,7 +445,9 @@ static int ao_sun_open(ao_driver_t *this_gen,
   
   this->mode			= mode;
   this->input_sample_rate	= rate;
+#ifdef __svr4__
   this->frames_in_buffer	= 0;
+#endif
 
   /*
    * open audio device
@@ -462,6 +479,9 @@ static int ao_sun_open(ao_driver_t *this_gen,
       info.play.sample_rate = this->input_sample_rate;
       info.play.eof = 0;
       info.play.samples = 0;
+#ifndef __svr4__
+      info.blocksize = 1024;
+#endif
 
       this->convert_u8_s8 = 0;
 
@@ -523,7 +543,9 @@ static int ao_sun_open(ao_driver_t *this_gen,
       return 0;
   }
 
+#ifdef __svr4__
   this->last_samplecnt = 0;
+#endif
 
   this->output_sample_rate = info.play.sample_rate;
   this->num_channels = info.play.channels;
@@ -564,6 +586,7 @@ static int ao_sun_delay(ao_driver_t *this_gen)
   sun_driver_t *this = (sun_driver_t *) this_gen;
   audio_info_t info;
 
+#ifdef __svr4__
   if (ioctl(this->audio_fd, AUDIO_GETINFO, &info) == 0 &&
       (this->frames_in_buffer == 0 || info.play.samples > 0)) {
 
@@ -610,6 +633,10 @@ static int ao_sun_delay(ao_driver_t *this_gen)
     }
 #endif
   }
+#else
+  if (ioctl(this->audio_fd, AUDIO_GETINFO, &info) == 0)
+    return info.play.seek / this->bytes_per_frame;
+#endif
   return NOT_REAL_TIME;
 }
 
@@ -718,7 +745,9 @@ static int ao_sun_write(ao_driver_t *this_gen,
   if (num_written > 0) {
     int buffered_samples;
 
+#ifdef __svr4__
     this->frames_in_buffer += num_written / this->bytes_per_frame;
+#endif
 
     /* 
      * Avoid storing too much data in the sound driver's buffers.
@@ -862,6 +891,9 @@ static int ao_sun_ctrl(ao_driver_t *this_gen, int cmd, ...) {
     this->frames_in_buffer = 0;
     this->last_samplecnt = 0;
 #endif
+#ifdef __NetBSD__
+    ioctl(this->audio_fd, AUDIO_FLUSH);
+#endif
     break;
   }
 
@@ -888,9 +920,10 @@ static ao_driver_t *ao_sun_open_plugin (audio_driver_class_t *class_gen, const v
   audiodev = getenv("AUDIODEV");
 
   /* This config entry is security critical, is it really necessary? */
-  devname = config->register_string(config,
+  devname = config->register_filename(config,
 				    "audio.device.sun_audio_device",
 				    audiodev && *audiodev ? audiodev : "/dev/audio",
+				    XINE_CONFIG_STRING_IS_DEVICE_NAME,
 				    _("Sun audio device name"),
 				    _("Specifies the file name for the Sun audio device "
 				      "to be used.\nThis setting is security critical, "
@@ -945,7 +978,10 @@ static ao_driver_t *ao_sun_open_plugin (audio_driver_class_t *class_gen, const v
    */
 
   this->capabilities = AO_CAP_MODE_MONO | AO_CAP_MODE_STEREO | AO_CAP_8BITS
-  		     | AO_CAP_PCM_VOL | AO_CAP_MUTE_VOL;
+  		     | AO_CAP_16BITS | AO_CAP_PCM_VOL;
+#ifdef __svr4__
+  this->capabilities |= AO_CAP_MUTE_VOL;
+#endif
 
   /*
    * get initial mixer volume

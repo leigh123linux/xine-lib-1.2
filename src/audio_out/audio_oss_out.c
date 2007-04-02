@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: audio_oss_out.c,v 1.117 2006/07/16 16:18:09 dsalt Exp $
+ * $Id: audio_oss_out.c,v 1.120 2007/03/17 06:59:31 dgp85 Exp $
  *
  * 20-8-2001 First implementation of Audio sync and Audio driver separation.
  * Copyright (C) 2001 James Courtier-Dutton James@superbug.demon.co.uk
@@ -48,19 +48,18 @@
 #include <fcntl.h>
 #include <math.h>
 #include <unistd.h>
-#if defined(__OpenBSD__)
-# include <soundcard.h>
-#elif defined (__FreeBSD__)
-#  if __FreeBSD__ < 4
-#   include <machine/soundcard.h>
-#  else
-#   include <sys/soundcard.h>
-#  endif
-#else
-# include <sys/soundcard.h>
-#endif
 #include <sys/ioctl.h>
 #include <inttypes.h>
+
+#ifdef HAVE_SYS_SOUNDCARD_H
+# include <sys/soundcard.h>
+#endif
+#ifdef HAVE_MACHINE_SOUNDCARD_H
+# include <sys/soundcard.h>
+#endif
+#ifdef HAVE_SOUNDCARD_H
+# include <soundcard.h>
+#endif
 
 #define LOG_MODULE "audio_oss_out"
 #define LOG_VERBOSE
@@ -75,9 +74,18 @@
 
 #include <sys/time.h>
 
+#ifndef SNDCTL_DSP_SETFMT
+/* Deprecated OSS API */
+#define SNDCTL_DSP_SETFMT SOUND_PCM_SETFMT
+#endif
+
+#ifndef SNDCTL_DSP_SPEED
+/* Deprecated OSS API */
+#define SNDCTL_DSP_SPEED SOUND_PCM_WRITE_RATE
+#endif
+
 #ifndef AFMT_S16_NE
-# if defined(sparc) || defined(__sparc__) || defined(PPC)
-/* Big endian machines */
+# ifdef WORDS_BIGENDIAN
 #  define AFMT_S16_NE AFMT_S16_BE
 # else
 #  define AFMT_S16_NE AFMT_S16_LE
@@ -515,7 +523,7 @@ static int ao_oss_get_property (ao_driver_t *this_gen, int property) {
     if(!this->mixer.mute) {
       
       if(this->mixer.fd != -1) {
-	int cmd = 0;
+	IOCTL_REQUEST_TYPE cmd = 0;
 	int v;
 	
 	ioctl(this->mixer.fd, SOUND_MIXER_READ_DEVMASK, &audio_devs);
@@ -554,7 +562,7 @@ static int ao_oss_set_property (ao_driver_t *this_gen, int property, int value) 
     if(!this->mixer.mute) {
       
       if(this->mixer.fd != -1) {
-	int cmd = 0;
+	IOCTL_REQUEST_TYPE cmd = 0;
 	int v;
 	
 	ioctl(this->mixer.fd, SOUND_MIXER_READ_DEVMASK, &audio_devs);
@@ -583,7 +591,7 @@ static int ao_oss_set_property (ao_driver_t *this_gen, int property, int value) 
     if(this->mixer.mute) {
       
       if(this->mixer.fd != -1) {
-	int cmd = 0;
+	IOCTL_REQUEST_TYPE cmd = 0;
 	int v = 0;
 	
 	ioctl(this->mixer.fd, SOUND_MIXER_READ_DEVMASK, &audio_devs);
@@ -789,9 +797,9 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
    */
 
   arg = AFMT_S16_NE; 
-  status = ioctl(audio_fd, SOUND_PCM_SETFMT, &arg);
+  status = ioctl(audio_fd, SNDCTL_DSP_SETFMT, &arg);
   arg = 44100;
-  status = ioctl(audio_fd, SOUND_PCM_WRITE_RATE, &arg);
+  status = ioctl(audio_fd, SNDCTL_DSP_SPEED, &arg);
 
   /*
    * find out which sync method to use
@@ -903,12 +911,12 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   this->capabilities = 0;
   
   arg = AFMT_U8;
-  if( ioctl(audio_fd, SOUND_PCM_SETFMT, &arg) != -1  && arg == AFMT_U8)
+  if( ioctl(audio_fd, SNDCTL_DSP_SETFMT, &arg) != -1  && arg == AFMT_U8)
     this->capabilities |= AO_CAP_8BITS;
   
   /* switch back to 16bits, because some soundcards otherwise do not report all their capabilities */
   arg = AFMT_S16_NE;
-  if (ioctl(audio_fd, SOUND_PCM_SETFMT, &arg) == -1 || arg != AFMT_S16_NE) {
+  if (ioctl(audio_fd, SNDCTL_DSP_SETFMT, &arg) == -1 || arg != AFMT_S16_NE) {
     xprintf(class->xine, XINE_VERBOSITY_DEBUG, "audio_oss_out: switching the soundcard to 16 bits mode failed\n");
     free(this);
     close(audio_fd);

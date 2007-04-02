@@ -41,6 +41,15 @@ void deinterlace_yuv( uint8_t *pdst, uint8_t *psrc[],
 #define DEINTERLACE_ONEFIELDXV  5
 #define DEINTERLACE_LINEARBLEND 6
 
-extern char *deinterlace_methods[];
+static const char *deinterlace_methods[] = {
+  "none", 
+  "bob",
+  "weave",
+  "greedy",
+  "onefield",
+  "onefield_xv",
+  "linearblend",
+  NULL
+};
 
 #endif

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: group_audio.h,v 1.8 2005/05/29 19:20:48 jstembridge Exp $
+ * $Id: group_audio.h,v 1.9 2006/12/26 16:59:55 dgp85 Exp $
  */
 
 #ifndef HAVE_GROUP_AUDIO_H
@@ -38,6 +38,7 @@ void *demux_nsf_init_plugin (xine_t *xine, void *data);
 void *demux_realaudio_init_plugin (xine_t *xine, void *data);
 void *demux_shn_init_plugin (xine_t *xine, void *data);
 void *demux_snd_init_plugin (xine_t *xine, void *data);
+void *demux_tta_init_plugin (xine_t *xine, void *data);
 void *demux_voc_init_plugin (xine_t *xine, void *data);
 void *demux_vox_init_plugin (xine_t *xine, void *data);
 void *demux_wav_init_plugin (xine_t *xine, void *data);

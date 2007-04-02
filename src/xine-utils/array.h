@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: array.h,v 1.2 2006/09/26 05:19:49 dgp85 Exp $
+ * $Id: array.h,v 1.3 2007/02/03 16:31:55 dsalt Exp $
  *
  * Array that can grow automatically when you add elements.
  * Inserting an element in the middle of the array implies memory moves.
@@ -35,7 +35,7 @@ xine_array_t *xine_array_new(size_t initial_size) XINE_PROTECTED;
 void xine_array_delete(xine_array_t *array) XINE_PROTECTED;
 
 /* Returns the number of element stored in the array */
-size_t xine_array_size(xine_array_t *array) XINE_PROTECTED;
+size_t xine_array_size(const xine_array_t *array) XINE_PROTECTED;
 
 /* Removes all elements from an array */
 void xine_array_clear(xine_array_t *array) XINE_PROTECTED;
@@ -50,7 +50,7 @@ void xine_array_insert(xine_array_t *array, unsigned int position, void *value) 
 void xine_array_remove(xine_array_t *array, unsigned int position) XINE_PROTECTED;
 
 /* Get the element at the position specified */
-void *xine_array_get(xine_array_t *array, unsigned int position) XINE_PROTECTED;
+void *xine_array_get(const xine_array_t *array, unsigned int position) XINE_PROTECTED;
 
 /* Set the element at the position specified */
 void xine_array_set(xine_array_t *array, unsigned int position, void *value) XINE_PROTECTED;

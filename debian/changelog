@@ -1,21 +1,150 @@
-xine-lib (1.1.2-3) UNRELEASED; urgency=low
+xine-lib (1.1.5~cvs-0) unstable; urgency=low
 
- -- Reinhard Tartler <siretart@tauware.de>  Thu, 10 Aug 2006 23:47:58 +0100
+  * CVS snapshot.
 
-xine-lib (1.1.2-2) unstable; urgency=low
+  [Darren Salt]
+  * Resync build deps with 1.1.4-2.
+  * Add or update some minimum version numbers.
+  * Add a build dependency on libdirectfb-dev.
+
+ -- Darren Salt <linux@youmustbejoking.demon.co.uk>  Fri, 16 Mar 2007 01:33:24 +0000
+
+xine-lib (1.1.3-0) unstable; urgency=medium
+
+  * New upstream release.
+
+  [Darren Salt]
+  * debian/rules: work around version number breakage in libavcodec.pc.
+
+ -- Darren Salt <linux@youmustbejoking.demon.co.uk>  Thu, 28 Dec 2006 00:16:11 +0000
+
+xine-lib (1.1.2+dfsg-2) unstable; urgency=medium
+
+  * Bug fix: "CVE-2006-6172: xine-lib libreal Buffer Overflow
+    Vulnerabilities", thanks to Stefan Fritsch (Closes: #401740).
+
+ -- Reinhard Tartler <siretart@tauware.de>  Wed,  6 Dec 2006 22:15:11 +0100
+
+xine-lib (1.1.2+dfsg-1) unstable; urgency=medium
+
+  * Urgency medium for fixing release critical bug
+  * replace cetus.ttf with a new one based on FreeSans.ttf. Many thanks go
+    to Sune Vuorela for creating this! (Closes: #393677)
+  * apply patch from http://bugzilla.gnome.org/show_bug.cgi?id=344592 to
+    fix title menu if there is no DVD menu. (Closes: #369319)
+  * rename to XS-X-Vcs-Bzr field
+  
+ -- Reinhard Tartler <siretart@tauware.de>  Thu, 26 Oct 2006 23:16:12 +0200
+
+xine-lib (1.1.2-6) unstable; urgency=low
+
+  * change override for -dbg package to extra
+  * added X-Vcs-Bzr tag to the source package
+  * revert the following commit from upstream, because it causes FTBFS on
+    many arches:
+    -  [xine-lib @ 2006-07-12 21:08:46 by dsalt]
+        Tidy up the formatting of tvtime method help texts to allow better wrapping
+        by the front end.
+  
+ -- Reinhard Tartler <siretart@tauware.de>  Fri, 22 Sep 2006 21:49:56 +0200
+
+xine-lib (1.1.2-5) unstable; urgency=low
+
+  * Urgency kept low despite RC bug. (only FTBFS bug, does not affect testing)
+  * fetched patches from 1.1.3 branch:
+   -  [xine-lib @ 2006-07-12 21:08:46 by dsalt]
+       Tidy up the formatting of tvtime method help texts to allow better wrapping
+       by the front end.
+   -  [xine-lib @ 2006-07-21 03:31:42 by dgp85]
+       Fix building with LOG enabled.
+   -  [xine-lib @ 2006-07-21 04:47:17 by dgp85]
+       When trying to get the langinfo code, first of all, set the locale,
+       or you'll always get ANSI/ASCII.
+   -  [xine-lib @ 2006-08-05 13:31:13 by hadess]
+       use the gdkpixbuf loader to handle JPEG stills in Quicktime movies, as
+       the ffmpeg MJPEG decoder isn't appropriate
+   -  [xine-lib @ 2006-08-05 13:34:42 by hadess]
+       avoid crashing when the FLAC file is broken
+   -  [xine-lib @ 2006-08-08 03:15:02 by miguelfreitas]
+         patch by Chris Brien
+         1) Return the stream length correctly. This fixes a FIXME.
+         2) Set the width and height metadata.
+         3) Reset the demuxer status to DEMUX_OK on seek.
+       (in  src/demuxers/demux_rawdv.c)
+   -  [xine-lib @ 2006-08-08 03:34:15 by miguelfreitas]
+        video/x-ms-wma -> audio/x-ms-wma
+        (in src/demuxers/demux_asf.c)
+        Update API for libcaca 0.99. Patch by cjacker huang.
+        Update libcaca check to use the pkg-config file shipped with libcaca
+        0.99, and change --disable-caca to --without-caca (to conform with
+        other external libraries).
+        Remove reference to removed caca.m4 (libcaca 0.99 will use
+        pkg-config).
+        Removed m4/caca.m4 (Closes: #386745)
+  * Dropped Replaces on xine-dvdnav (only in woody) and xine (only in
+    potato!)
+  * Dropping Conflicts on sinek and xine-ui (<< 0.9.10) (all only woody)
+  * cleaning m4/caca.m4, no longer used
+  * removing doc/faq/faq.html doc/faq/faq.txt doc/hackersguide/hackersguide.html 
+    on clean, missed by build system
+  * include some targets to build 'orig' tarballs from the current branch.
+    This mainly for my convinience for bootstrapping cvs versions of xine and
+    preparing tarballs for the 'main' section of ubuntu, which I carry here in
+    order to minimize divergence    
+  
+ -- Reinhard Tartler <siretart@tauware.de>  Thu, 14 Sep 2006 21:27:27 +0200
+
+xine-lib (1.1.2-4) unstable; urgency=low
+
+  * build against external liba52
+  * Bug fix: "libxine1: Please use the Debian ffmpeg version", thanks to
+    Josselin Mouette. Please note that the ffmpeg version used has WMV3
+    support. Unfortunately, this version of xine cannot use that support
+    yet. This is 1.1.3 stuff. (Closes: #367095).
+  * Bug fix: "libxine1: Please support m4b files", thanks to Johannes
+    Adams. Bugfix by copying src/demuxers/demux_qt.c from CVS
+    version. (Closes: #384435).
+  * Build against internal libvcdinfo for now and add libvcdinfo-dev to
+    build-conflicts. This is a workaround for Bug: #364837, using internal
+    libvcdinfo makes the segfault go away.
+  * install a note for reportbug users
+  * cleanup (actually remove) confusing and unnecessary documentation.
+  * fetch bug from upstream cvs to fix bug where incorrect aspect ratio was
+    being passed to post plugins up (src/post/planar/expand.c, rev 1.16)
+  * add build dependency on sgmltools-lite to build faq
+  * add build dependencies transfig and gs to correctly build the
+    hackersguide
+  * bump shlibs to this revision because of changes in libcaca output plugin
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 27 Aug 2006 21:41:58 +0200
+
+xine-lib (1.1.2-3) unstable; urgency=low
+
+  * backport fix for cdda:/ MRL from upstream (Closes: #276728)
+  * add note from darren to xine(5) as well
+  * fix totem-xine crashing when started with no argument (closes: #370283)
+    (patch taken from upstream)
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 12 Aug 2006 00:27:15 +0200
+
+xine-lib (1.1.2-2) unstable; urgency=high
+
+  Urgency high because of security related upload
 
   * readd debian/watch file
   * update debian/rules from CVS. more complete handling of noauto flag
     to prevent running auto* tools.
   * disable AC_C_ALWAYS_INLINE from configure.ac. Should fix FTBFS on a
-    number of architectures.
+    number of architectures. (Closes: #378043)
   * added patch from Darren Salt to fix build with -O0 on at least amd64
     in src/libffmpeg/libavcodec/i386/Makefile.am
-
-  [Darren Salt]
-  * Updated the watch file - should work regardless of changes at Souceforge.
-
- -- Reinhard Tartler <siretart@tauware.de>  Thu, 13 Jul 2006 11:18:10 +0200
+  * Imported further fixes from upstream CVS:
+    +  src/input/input_dvb.c
+    + src/xine-utils/xine_mutex.c
+  * Imported security fix for included copy of libmms from upstream CVS,
+    (e.g. USN-315-1)
+ 
+ -- Reinhard Tartler <siretart@tauware.de>  Thu, 13 Jul 2006 21:51:46 +0200
 
 xine-lib (1.1.2-1) unstable; urgency=low
 

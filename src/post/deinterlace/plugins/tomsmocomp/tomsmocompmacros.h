@@ -1,8 +1,6 @@
 #include <string.h>
 #include <math.h>
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>
-#endif
+#include <stdlib.h>
 
 #define USE_FOR_DSCALER
 

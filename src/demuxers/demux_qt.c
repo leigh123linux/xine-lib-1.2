@@ -30,7 +30,7 @@
  *    build_frame_table
  *  free_qt_info
  *
- * $Id: demux_qt.c,v 1.212 2006/11/11 12:23:44 molivier Exp $
+ * $Id: demux_qt.c,v 1.214 2007/01/19 01:05:24 dgp85 Exp $
  *
  */
 
@@ -2993,11 +2993,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   break;
 
   case METHOD_BY_EXTENSION: {
-    char *ending, *mrl;
-
-    mrl = input->get_mrl (input);
-
-    ending = strrchr(mrl, '.');
+    const char *const mrl = input->get_mrl (input);
+    const char *const ending = strrchr(mrl, '.');
 
     if (!ending) {
       free (this);
@@ -3041,19 +3038,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "Apple Quicktime (MOV) and MPEG-4 demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "MOV/MPEG-4";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return "mov qt mp4 m4a m4b";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return "video/quicktime: mov,qt: Quicktime animation;"
          "video/x-quicktime: mov,qt: Quicktime animation;"
          "audio/x-m4a: m4a,m4b: MPEG-4 audio;"

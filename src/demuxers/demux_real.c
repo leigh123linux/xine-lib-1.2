@@ -31,7 +31,7 @@
  *   
  *   Based on FFmpeg's libav/rm.c.
  *
- * $Id: demux_real.c,v 1.109 2006/07/10 22:08:13 dgp85 Exp $
+ * $Id: demux_real.c,v 1.113 2007/02/20 00:34:56 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -181,7 +181,7 @@ static void real_parse_index(demux_real_t *this) {
   real_index_entry_t **index;
   
   while(next_index_chunk) {
-    lprintf("reading index chunk at %llX\n", next_index_chunk);
+    lprintf("reading index chunk at %"PRIX64"\n", next_index_chunk);
 
     /* Seek to index chunk */
     this->input->seek(this->input, next_index_chunk, SEEK_SET);
@@ -401,9 +401,9 @@ static void real_parse_headers (demux_real_t *this) {
 	this->avg_bitrate   = BE_32(&chunk_buffer[6]);
 
         lprintf("PROP: duration: %d ms\n", this->duration);
-        lprintf("PROP: index start: %llX\n", this->index_start);
-        lprintf("PROP: data start: %llX\n", this->data_start);
-        lprintf("PROP: average bit rate: %lld\n", this->avg_bitrate);
+        lprintf("PROP: index start: %"PRIX64"\n", this->index_start);
+        lprintf("PROP: data start: %"PRIX64"\n", this->data_start);
+        lprintf("PROP: average bit rate: %"PRId64"\n", this->avg_bitrate);
 
 	if (this->avg_bitrate<1)
 	  this->avg_bitrate = 1;
@@ -854,12 +854,12 @@ static void check_newpts (demux_real_t *this, int64_t pts, int video, int previe
   int64_t diff;
 
   diff = pts - this->last_pts[video];
-  lprintf ("check_newpts %lld\n", pts);
+  lprintf ("check_newpts %"PRId64"\n", pts);
 
   if (!preview && pts &&
       (this->send_newpts || (this->last_pts[video] && abs(diff)>WRAP_THRESHOLD) ) ) {
 
-    lprintf ("diff=%lld\n", diff);
+    lprintf ("diff=%"PRId64"\n", diff);
 
     if (this->buf_flag_seek) {
       _x_demux_control_newpts(this->stream, pts, BUF_FLAG_SEEK);
@@ -1012,7 +1012,7 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
     size--;
   }
 
-  lprintf ("packet of stream %d, 0x%X bytes @ %llX, pts = %lld%s\n",
+  lprintf ("packet of stream %d, 0x%X bytes @ %"PRIX64", pts = %"PRId64"%s\n",
            stream, size, offset, pts, keyframe ? ", keyframe" : "");
 
   if (this->video_stream && (stream == this->video_stream->mdpr->stream_number)) {
@@ -1409,12 +1409,15 @@ static int demux_real_seek (demux_plugin_t *this_gen,
   real_index_entry_t *index, *other_index = NULL;
   int                 i = 0, entries;
   
-  start_pos = (off_t) ( (double) start_pos / 65535 *
-              this->input->get_length (this->input) );
+  lprintf("seek start_pos=%d, start_time=%d, playing=%d\n",
+          (int)start_pos, start_time, playing);
 
   if((this->input->get_capabilities(this->input) & INPUT_CAP_SEEKABLE) &&
      ((this->audio_stream && this->audio_stream->index) ||
       (this->video_stream && this->video_stream->index))) {
+      
+    start_pos = (off_t) ( (double) start_pos / 65535 *
+                this->input->get_length (this->input) );
 
     /* video index has priority over audio index */
     if(this->video_stream && this->video_stream->index) {
@@ -1452,6 +1455,13 @@ static int demux_real_seek (demux_plugin_t *this_gen,
       this->buf_flag_seek = 1;
       _x_demux_flush_engine(this->stream);
     }
+  }
+  else if (!playing && this->input->seek_time != NULL) {
+    /* RTSP supports only time based seek */
+    if (start_pos && !start_time)
+      start_time = (int64_t) this->duration * start_pos / 65535;
+      
+    this->input->seek_time(this->input, start_time, SEEK_SET);
   }
 
   this->send_newpts     = 1;
@@ -1555,7 +1565,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   break;
 
   case METHOD_BY_EXTENSION: {
-    char *extensions, *mrl;
+    const char *extensions, *mrl;
 
     mrl = input->get_mrl (input);
     extensions = class_gen->get_extensions (class_gen);
@@ -1608,19 +1618,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "RealMedia file demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "Real";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return "rm rmvb ram";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return "audio/x-pn-realaudio: ra, rm, ram: Real Media file;"
          "audio/x-pn-realaudio-plugin: rpm: Real Media plugin file;"
          "audio/x-real-audio: ra, rm, ram: Real Media file;"

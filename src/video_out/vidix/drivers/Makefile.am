@@ -23,11 +23,10 @@ endif
 lib_LTLIBRARIES = $(vidix_drivers)
 
 radeon_vid_la_SOURCES = radeon_vid.c
-radeon_vid_la_LIBADD = -lm
-radeon_vid_la_LDFLAGS = -avoid-version -module
+radeon_vid_la_LDFLAGS = -avoid-version -module -lm
 
 rage128_vid_la_SOURCES = radeon_vid.c
-rage128_vid_la_LDFLAGS = -avoid-version -module
+rage128_vid_la_LDFLAGS = -avoid-version -module -lm
 rage128_vid_la_CFLAGS = -DRAGE128 $(AM_CFLAGS)
 
 pm2_vid_la_SOURCES = pm2_vid.c
@@ -40,12 +39,10 @@ mach64_vid_la_SOURCES = mach64_vid.c
 mach64_vid_la_LDFLAGS = -avoid-version -module
 
 mga_vid_la_SOURCES = mga_vid.c
-mga_vid_la_LIBADD = -lm
-mga_vid_la_LDFLAGS = -avoid-version -module
+mga_vid_la_LDFLAGS = -avoid-version -module -lm
 
 mga_crtc2_vid_la_SOURCES = mga_vid.c
-mga_crtc2_vid_la_LIBADD = -lm
-mga_crtc2_vid_la_LDFLAGS = -avoid-version -module
+mga_crtc2_vid_la_LDFLAGS = -avoid-version -module -lm
 mga_crtc2_vid_la_CFLAGS = -DCRTC2 $(AM_CFLAGS)
 
 cyberblade_vid_la_SOURCES = cyberblade_vid.c
@@ -61,8 +58,7 @@ sis_vid_la_SOURCES = sis_vid.c sis_bridge.c
 sis_vid_la_LDFLAGS = -avoid-version -module
 
 savage_vid_la_SOURCES = savage_vid.c
-savage_vid_la_LIBADD = -lm
-savage_vid_la_LDFLAGS = -avoid-version -module
+savage_vid_la_LDFLAGS = -avoid-version -module -lm
 
 noinst_HEADERS = mach64.h glint_regs.h pm3_regs.h radeon.h savage_regs.h \
 	cyberblade_regs.h unichrome_regs.h sis_defs.h sis_regs.h

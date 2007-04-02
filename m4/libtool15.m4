@@ -201,12 +201,12 @@ AC_PROVIDE_IFELSE([AC_LIBTOOL_WIN32_DLL],
 enable_win32_dll=yes, enable_win32_dll=no)
 
 AC_ARG_ENABLE([libtool-lock],
-    [AC_HELP_STRING([--disable-libtool-lock],
+    [AS_HELP_STRING([--disable-libtool-lock],
 	[avoid locking (might break parallel builds)])])
 test "x$enable_libtool_lock" != xno && enable_libtool_lock=yes
 
 AC_ARG_WITH([pic],
-    [AC_HELP_STRING([--with-pic],
+    [AS_HELP_STRING([--with-pic],
 	[try to use only PIC/non-PIC objects @<:@default=use both@:>@])],
     [pic_mode="$withval"],
     [pic_mode=default])
@@ -464,7 +464,7 @@ AC_SUBST(ECHO)
 # -----------
 AC_DEFUN([_LT_AC_LOCK],
 [AC_ARG_ENABLE([libtool-lock],
-    [AC_HELP_STRING([--disable-libtool-lock],
+    [AS_HELP_STRING([--disable-libtool-lock],
 	[avoid locking (might break parallel builds)])])
 test "x$enable_libtool_lock" != xno && enable_libtool_lock=yes
 
@@ -1700,7 +1700,7 @@ test "$dynamic_linker" = no && can_build_shared=no
 # ----------------
 AC_DEFUN([_LT_AC_TAGCONFIG],
 [AC_ARG_WITH([tags],
-    [AC_HELP_STRING([--with-tags@<:@=TAGS@:>@],
+    [AS_HELP_STRING([--with-tags@<:@=TAGS@:>@],
         [include additional configurations @<:@automatic@:>@])],
     [tagnames="$withval"])
 
@@ -1820,7 +1820,7 @@ AC_DEFUN([AC_LIBTOOL_WIN32_DLL],
 AC_DEFUN([AC_ENABLE_SHARED],
 [define([AC_ENABLE_SHARED_DEFAULT], ifelse($1, no, no, yes))dnl
 AC_ARG_ENABLE([shared],
-    [AC_HELP_STRING([--enable-shared@<:@=PKGS@:>@],
+    [AS_HELP_STRING([--enable-shared@<:@=PKGS@:>@],
 	[build shared libraries @<:@default=]AC_ENABLE_SHARED_DEFAULT[@:>@])],
     [p=${PACKAGE-default}
     case $enableval in
@@ -1859,7 +1859,7 @@ AC_ENABLE_SHARED(no)
 AC_DEFUN([AC_ENABLE_STATIC],
 [define([AC_ENABLE_STATIC_DEFAULT], ifelse($1, no, no, yes))dnl
 AC_ARG_ENABLE([static],
-    [AC_HELP_STRING([--enable-static@<:@=PKGS@:>@],
+    [AS_HELP_STRING([--enable-static@<:@=PKGS@:>@],
 	[build static libraries @<:@default=]AC_ENABLE_STATIC_DEFAULT[@:>@])],
     [p=${PACKAGE-default}
     case $enableval in
@@ -1898,7 +1898,7 @@ AC_ENABLE_STATIC(no)
 AC_DEFUN([AC_ENABLE_FAST_INSTALL],
 [define([AC_ENABLE_FAST_INSTALL_DEFAULT], ifelse($1, no, no, yes))dnl
 AC_ARG_ENABLE([fast-install],
-    [AC_HELP_STRING([--enable-fast-install@<:@=PKGS@:>@],
+    [AS_HELP_STRING([--enable-fast-install@<:@=PKGS@:>@],
     [optimize for fast installation @<:@default=]AC_ENABLE_FAST_INSTALL_DEFAULT[@:>@])],
     [p=${PACKAGE-default}
     case $enableval in
@@ -2038,7 +2038,7 @@ fi
 # find the pathname to the GNU or non-GNU linker
 AC_DEFUN([AC_PROG_LD],
 [AC_ARG_WITH([gnu-ld],
-    [AC_HELP_STRING([--with-gnu-ld],
+    [AS_HELP_STRING([--with-gnu-ld],
 	[assume the C compiler uses GNU ld @<:@default=no@:>@])],
     [test "$withval" = no || with_gnu_ld=yes],
     [with_gnu_ld=no])

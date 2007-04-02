@@ -1,5 +1,5 @@
 /* 
-  $Id: vcdplayer.c,v 1.19 2005/06/20 02:17:41 rockyb Exp $
+  $Id: vcdplayer.c,v 1.20 2007/02/21 23:17:14 dgp85 Exp $
  
   Copyright (C) 2002, 2003, 2004, 2005 Rocky Bernstein <rocky@panix.com>
   
@@ -45,6 +45,12 @@
 
 #include "vcdplayer.h"
 #include "vcdio.h"
+
+/* This function is _not_ exported by libvcd, its usage should be avoided, most
+ * likely.
+ */
+void vcdinfo_get_seg_resolution(const vcdinfo_obj_t *p_vcdinfo, segnum_t i_seg,
+                                /*out*/ uint16_t *max_x, /*out*/ uint16_t *max_y);
 
 #define LOG_ERR(p_vcdplayer, s, args...) \
        if (p_vcdplayer != NULL && p_vcdplayer->log_err != NULL) \

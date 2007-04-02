@@ -22,7 +22,7 @@ libdvdnav_la_SOURCES = \
 	dvd_reader.c \
 	dvd_input.c \
         dvd_udf.c
-libdvdnav_la_LIBADD = $(THREAD_LIBS)
+libdvdnav_la_LIBADD = $(PTHREAD_LIBS)
 libdvdnav_la_CFLAGS = $(VISIBILITY_FLAG)
 libdvdnav_la_LDFLAGS = -avoid-version -module
 

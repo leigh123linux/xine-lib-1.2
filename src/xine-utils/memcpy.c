@@ -461,7 +461,7 @@ void xine_probe_fast_memcpy(xine_t *xine)
   char             *buf1, *buf2;
   int               i, j, best;
   int               config_flags = -1;
-  static char      *memcpy_methods[] = {
+  static const char *memcpy_methods[] = {
     "probe", "libc",
 #if (defined(ARCH_X86) || defined(ARCH_X86_64)) && !defined(_MSC_VER)
     "kernel", "mmx", "mmxext", "sse",

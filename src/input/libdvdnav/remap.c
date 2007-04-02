@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: remap.c,v 1.5 2006/09/17 13:01:08 valtri Exp $
+ * $Id: remap.c,v 1.6 2006/12/08 16:26:10 mshopf Exp $
  */
 
 #include <stdlib.h>
@@ -193,10 +193,7 @@ remap_t* remap_loadmap( char *title) {
 
     /* Build the map filename */
     home = getenv("HOME"); assert(home);
-    strncpy(fname, home, sizeof(fname));
-    strncat(fname, "/.dvdnav/", sizeof(fname));
-    strncat(fname, title, sizeof(fname));
-    strncat(fname, ".map", sizeof(fname));
+    snprintf (fname, sizeof(fname), "%s/.dvdnav/%s.map", home, title);
 
     /* Open the map file */
     fp = fopen( fname, "r");

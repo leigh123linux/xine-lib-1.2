@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: xine_decoder.c,v 1.61 2006/07/10 22:08:29 dgp85 Exp $
+ * $Id: xine_decoder.c,v 1.62 2007/03/17 20:59:36 dgp85 Exp $
  * 
  * 31-8-2001 Added LPCM rate sensing.
  *   (c) 2001 James Courtier-Dutton James@superbug.demon.co.uk
@@ -191,20 +191,16 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     int n = buf->size;
 
     while (n >= 0) {
-      *d++ = s[8];
-      *d++ = s[0];
+      if ( stream_be ) {
+	*d++ = s[0];
+	*d++ = s[1];
+      } else {
+	*d++ = s[1];
+	*d++ = s[2];
+      }
 
-      *d++ = s[9];
-      *d++ = s[2];
-
-      *d++ = s[10];
-      *d++ = s[4];
-
-      *d++ = s[11];
-      *d++ = s[6];
-
-      s += 12;
-      n -= 12;
+      s += 3;
+      n -= 3;
     }
   } else {
     memcpy (audio_buffer->mem, sample_buffer, buf->size);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: buffer.c,v 1.36 2006/06/20 00:35:07 dgp85 Exp $
+ * $Id: buffer.c,v 1.37 2006/12/25 21:59:32 dgp85 Exp $
  *
  *
  * contents:
@@ -64,7 +64,7 @@ static void buffer_pool_free (buf_element_t *element) {
 
   this->buffer_pool_num_free++;
   if (this->buffer_pool_num_free > this->buffer_pool_capacity) {
-    printf("xine-lib:buffer: Their has been a fatal error: TOO MANY FREE's\n");
+    fprintf(stderr, _("xine-lib: buffer.c: There has been a fatal error: TOO MANY FREE's\n"));
     _x_abort();
   }
   

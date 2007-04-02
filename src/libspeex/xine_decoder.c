@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: xine_decoder.c,v 1.21 2006/09/14 02:07:01 dgp85 Exp $
+ * $Id: xine_decoder.c,v 1.22 2007/01/19 01:48:05 dgp85 Exp $
  *
  * (ogg/)speex audio decoder plugin (libspeex wrapper) for xine
  */
@@ -298,7 +298,7 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       int bitrate;
       ogg_int16_t * ptr = audio_buffer->mem;
 
-      ret = speex_decode (this->st, &this->bits, (short *) this->output);
+      ret = speex_decode (this->st, &this->bits, this->output);
 
       if (ret==-1)
 	break;
@@ -312,7 +312,7 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       }
 
       if (this->channels == 2) {
-	speex_decode_stereo ( (short *) this->output, this->frame_size, &this->stereo);
+	speex_decode_stereo (this->output, this->frame_size, &this->stereo);
       }
 
       speex_decoder_ctl (this->st, SPEEX_GET_BITRATE, &bitrate);

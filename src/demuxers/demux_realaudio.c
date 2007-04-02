@@ -22,7 +22,7 @@
  * RealAudio File Demuxer by Mike Melanson (melanson@pcisys.net)
  *     improved by James Stembridge (jstembridge@users.sourceforge.net)
  *
- * $Id: demux_realaudio.c,v 1.32 2004/06/13 21:28:54 miguelfreitas Exp $
+ * $Id: demux_realaudio.c,v 1.34 2007/03/29 17:00:32 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -57,16 +57,15 @@ typedef struct {
   unsigned int         fourcc;
   unsigned int         audio_type;
 
+  unsigned short       block_align;
+
+  uint8_t              seek_flag:1; /* this is set when a seek just occurred */
+
   off_t                data_start;
   off_t                data_size;
   
-  unsigned short       block_align;
-  unsigned int         bytes_per_sec;
-  
   unsigned char       *header;
   unsigned int         header_size;
-
-  int                  seek_flag;  /* this is set when a seek just occurred */
 } demux_ra_t;
 
 typedef struct {
@@ -316,10 +315,7 @@ static int demux_ra_get_status (demux_plugin_t *this_gen) {
 static int demux_ra_get_stream_length (demux_plugin_t *this_gen) {
   demux_ra_t *this = (demux_ra_t *) this_gen;
 
-  if(this->bytes_per_sec)
-    return (int)((int64_t) this->data_size * 1000 / this->bytes_per_sec);
-  else
-    return 0;
+  return 0;
 }
 
 static uint32_t demux_ra_get_capabilities(demux_plugin_t *this_gen) {
@@ -355,7 +351,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   switch (stream->content_detection_method) {
 
   case METHOD_BY_EXTENSION: {
-    char *extensions, *mrl;
+    const char *extensions, *mrl;
 
     mrl = input->get_mrl (input);
     extensions = class_gen->get_extensions (class_gen);
@@ -385,19 +381,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "RealAudio file demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "RA";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return "ra";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return "audio/x-realaudio: ra: RealAudio File;";
 }
 

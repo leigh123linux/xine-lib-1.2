@@ -1,3 +1,122 @@
+xine-lib (1.1.5) (Unreleased)
+  * Security fixes:
+    - Fix heap overflow in DMO loader. (CVE-2007-1246) [bug #1676925]
+      Thanks to Kees Cook for reporting.
+  * Improved PulseAudio plugin, now only one connection per instance is opened
+    and the mainloop is threaded to reduce latency during playback.
+  * Added XCB-based output plugins (Xv and XShm), to use in software using
+    XCB to talk with the server rather than libX11 (like new Kaffeine).
+    The plugins are contributed by Christoph Pfister with the help of
+    Vincent Torri, Jamey Sharp and Christophe Thommeret.
+  * Fix race condition in alsa audio out driver.
+  * Fixed a crash in the eq2 plugin. [Bug 1644312]
+  * Fixed content type detection for AAC (seekable) streams with ID3v2
+    tags prefixed clobbering the preview buffer, by skipping over the tag.
+  * Parse ID3v2 tags on AAC and FLAC files, as well as mp3 files.
+  * Priority of the AAC encoder is now lower than anything else, so
+    it's not going to crash xine down if you try to run an mp3 stream
+    on FAAD2.
+  * Relicense the xine-lib XML parser under the GNU LGPL, for use in other
+    projects.
+  * Improvement in portability to Solaris and NetBSD, thanks to Albert Lee and
+    Sergey Svishchev respectively.
+  * Spanish translation updated by Carlos E. Robinson M.
+  * Don't leave libstk support to be detected automagically; also made it
+    disabled by default as upstream is dead and a different libstk is found
+    on Debian.
+  * Improvement in portability to FreeBSD, merged some patches (with changes)
+    from the ports.
+  * Cleaned up Real binary codecs support, adding support for FreeBSD (still
+    to be completely cleaned up though), and to 64-bit platforms. Also add
+    two new configure option, one to enable or disable building of Real binary
+    support altogether and one to choose the path where to look for the codecs
+    by default (it can, and probably should) be different from the Win32
+    codecs path.
+  * Avoid a possible floating-point exception when starting stream playback.
+  * Now xine can play correctly media on HTTP servers reporting status codes
+    but no status message.
+  * Wave files with 24-bit integer PCM streams now should play correctly
+    (downplayed to 16-bit).
+  * Added centre-cutout (4:3 in 16:9) to the expand plugin.
+    Patch by Reinhard Nissl.
+  * Fix support of block devices for AC3 and DTS demuxers. Thanks to Matthias
+    Kretz for the original patch.
+  * Portability fixes for Mac OS X, in particular Mac OS X on the new Intel
+    Macs. Thanks to Martin Aumueller, Emanuele Giaquinta and Matt Messier.
+  * Fix amp muting when level is still at 100. Patch by Reinhard Nissl.
+  * Create at least a 1×1 shared image when the first frame is skipped (and
+    thus reported as 0×0), to avoid disabling shared memory for all others.
+    Patch by Reinhard Nissl.
+  * Send an event when the amp level is modified. Patch by Reinhard Nissl.
+  * Add support for H.264 video stream in PES packets. Patch by Reinhard Nissl.
+  * Support multiple audio PID in MPEG TS. Patch by Julian Scheel.
+
+xine-lib (1.1.4)
+  * Mark string-type configuration items according to whether they're plain
+    strings or names of files, device nodes or directories. This information
+    is available to front ends (via .num_value) so that they can present
+    file/dir-open dialogue boxes if they so choose.
+    Subtitle font selection is split up due to this.
+  * Applied the patch to fix text relocation, provided by PaX Team for Gentoo
+    and previously applied by other distributions as well. Fixes the non-PIC
+    code being generated. Note: patch reverted for tomsmocomp (segfault).
+  * Fix race condition in audio_out by using a recursive mutex; patch by
+    Reinhard Nissl. [bug #1551911]
+  * Allow building with Sun CC by fixing the lprintf variadic macro; patch by
+    Taso N. Devetzis. [bug #1614406]
+  * Fix disposing of image buffers in video_out_xv when SHM get disabled by
+    exhaustion of memory; patch by Matthias Drochner. [bug #1620339]
+  * Fix invalid memory access in Real Media ASM parser; reported by Roland
+    Kay. [bug #1603503]
+  * Fix program termination due to invalid Real Media SDP; reported by Roland
+    Kay. [bug #1602663]
+  * Fix invalid memory access in Real Media SDP with tailored stream; reported
+    by Roland Kay. [bug #1602631]
+  * Don't check for libpostproc version and assume that if libavcodec is found
+    correctly, libpostproc is of the same version, too. Reported by Ville
+    Skyttä. [bug #1617344]
+  * Fix Shorten demuxer: the whole "ajkg" signature has to be found, not only
+    one character of it. [bug #1601134]
+  * Implement at least a partial content-based detection of ModPlug-decoded
+    module files, using the magic numbers from GNU file. This allows to open
+    module files based on content rather than on their extension only.
+    [bug #1445746]
+  * Make the libFLAC-based decoder and demuxer for FLAC files work with recent
+    FLAC release 1.1.3.
+  * Replace --enable-flac configure option with --with-libflac, as the FLAC
+    support is always built-in through the audio demuxer plugin and the FFmpeg
+    decoder plugin, the option only controls the extra FLAC plugin that uses
+    libFLAC both for demuxing and decoding.
+  * Implement a True Audio files demuxer. [bug #1586381]
+  * Allow decoding of MusePack SV 7.x files (7.1 files at least play fine).
+  * Fix demuxing of uncompressed VobSub subtitles in Matroska files
+  * ffmpeg update to 51.29.0
+  * Workaround ffmpeg buggy codecs that don't release their DR1 frames.
+    [bugs #1599975, #1601299, #1319154]
+  * Fix several segfaults and freezing problem with H264 streams that use a lot
+    of reference frames (eg. 15) [bugs #1603305, #1576588, #1267713]
+  * Fix mpeg4 artifacts introduced in cvs (not present in 1.1.3) [#1625911]
+  * Initial support to enable/disable ffmpeg codecs. Codecs may be disabled in
+    groups by --disable-ffmpeg-uncommon-codecs/--disable-ffmpeg-popular-codecs
+    Think of "uncommon" codecs what people would never want to play with their
+    PDAs (they will save memory by removing them).
+    Note: currently both uncommon/popular codecs are _build_ but disabled.
+    that is, build system still need some improvements to really save memory.
+  * Fix possible division by zero when pausing (video_out.c).
+  * Allow disabling build of musepack decoder through a ./configure parameter
+    (--disable-musepack).
+  * Allow using external libmpcdec for MusePack decoding rather than the
+    internal copy of an old libmusepack, through a ./configure parameter
+    (--with-external-libmpcdec).
+  * Add support for WavPack files, with both a demuxer and a decoder using
+    WavPack library. As an alternative, FFmpeg's audio decoder can be used
+    to decode WavPack files.
+  * Don't crash when caching a file opened through Samba plugin, thanks to
+    Timothy Redaelli from Gentoo.
+  * Fix audio/video sync problem with NTSC DVDs (introduced in 1.1.2).
+    [bugs #1544349 and #1589644]
+
+
 xine-lib (1.1.3)
   * Security fixes:
     - Heap overflow in libmms (related to CVE-2006-2200)
@@ -1200,7 +1319,7 @@ xine (0.5.0) unstable; urgency=low
   * artsd support
   * dxr3/h+ support now finally in the official tree
   * 4/5/5.1 audio channel output (OSS/ ALSA?)
-  * a new default skin by J�r�me Villette
+  * a new default skin by Jérôme Villette
 
  -- Guenter Bartsch <guenter@users.sourceforge.net>  Sun,  22 Jul 2001 13:10:52 +0200
 

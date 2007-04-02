@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: input_dvd.c,v 1.211 2006/10/29 19:39:39 hadess Exp $
+ * $Id: input_dvd.c,v 1.216 2007/02/20 01:04:07 dgp85 Exp $
  *
  */
 
@@ -930,7 +930,7 @@ static uint32_t dvd_plugin_get_blocksize (input_plugin_t *this_gen) {
   return DVD_BLOCK_SIZE;
 }
 
-static char* dvd_plugin_get_mrl (input_plugin_t *this_gen) {
+static const char* dvd_plugin_get_mrl (input_plugin_t *this_gen) {
   dvd_input_plugin_t *this = (dvd_input_plugin_t*)this_gen;
   
   trace_print("Called\n");
@@ -1278,7 +1278,7 @@ static int dvd_plugin_get_optional_data (input_plugin_t *this_gen,
     if(this && this->stream && this->dvdnav) {
 
       if(!(dvdnav_is_domain_vts(this->dvdnav))) {
-	sprintf(data, "%s", "menu");
+	strcpy(data, "menu");
 	if (channel <= 0)
 	  return INPUT_OPTIONAL_SUCCESS;
 	else
@@ -1297,11 +1297,11 @@ static int dvd_plugin_get_optional_data (input_plugin_t *this_gen,
 	  sprintf(data, " %c%c", lang >> 8, lang & 0xff);
 	  /* TODO: provide long version in XINE_META_INFO_FULL_LANG */
 	else
-	  sprintf(data, " %c%c", '?', '?');
+	  strcpy(data, " ??");
 	return INPUT_OPTIONAL_SUCCESS;
       } else {
         if (channel == -1) {
-	  sprintf(data, "%s", "none");
+	  strcpy(data, "none");
 	  return INPUT_OPTIONAL_SUCCESS;
 	}
       }
@@ -1680,7 +1680,7 @@ static input_plugin_t *dvd_class_get_instance (input_class_t *class_gen, xine_st
   return &this->input_plugin;
 }
 
-static char *dvd_class_get_description (input_class_t *this_gen) {
+static const char *dvd_class_get_description (input_class_t *this_gen) {
   trace_print("Called\n");
 
   return "DVD Navigator";
@@ -1749,9 +1749,9 @@ static void *init_class (xine_t *xine, void *data) {
   dvd_input_class_t   *this;
   config_values_t     *config = xine->config;
   void                *dvdcss;
-  static char         *skip_modes[] = {"skip program", "skip part", "skip title", NULL};
-  static char         *seek_modes[] = {"seek in program chain", "seek in program", NULL};
-  static char         *play_single_chapter_modes[] = {"entire dvd", "one chapter", NULL};
+  static const char   *skip_modes[] = {"skip program", "skip part", "skip title", NULL};
+  static const char   *seek_modes[] = {"seek in program chain", "seek in program", NULL};
+  static const char   *play_single_chapter_modes[] = {"entire dvd", "one chapter", NULL};
 
   trace_print("Called\n");
 #ifdef INPUT_DEBUG
@@ -1779,9 +1779,9 @@ static void *init_class (xine_t *xine, void *data) {
 
   this->ip                             = NULL;
 
-  this->dvd_device = config->register_string(config,
+  this->dvd_device = config->register_filename(config,
 					     "media.dvd.device",
-					     DVD_PATH,
+					     DVD_PATH, XINE_CONFIG_STRING_IS_DEVICE_NAME,
 					     _("device used for DVD playback"),
 					     _("The path to the device, usually a "
 					       "DVD drive, which you intend to use for playing DVDs."),
@@ -1795,12 +1795,13 @@ static void *init_class (xine_t *xine, void *data) {
   {
     /* we have found libdvdcss, enable the specific config options */
     char *raw_device;
-    static char *decrypt_modes[] = { "key", "disc", "title", NULL };
+    static const char *decrypt_modes[] = { "key", "disc", "title", NULL };
     char *css_cache_default, *css_cache;
     int mode;
     
-    raw_device = config->register_string(config, "media.dvd.raw_device",
-					 RDVD_PATH, _("raw device set up for DVD access"),
+    raw_device = config->register_filename(config, "media.dvd.raw_device",
+					 RDVD_PATH, XINE_CONFIG_STRING_IS_DEVICE_NAME,
+					 _("raw device set up for DVD access"),
 					 _("If this points to a raw device connected to your "
 					   "DVD device, xine will use the raw device for playback. "
 					   "This has the advantage of being slightly faster and "
@@ -1822,7 +1823,7 @@ static void *init_class (xine_t *xine, void *data) {
     
     css_cache_default = (char *)malloc(strlen(xine_get_homedir()) + 10);
     sprintf(css_cache_default, "%s/.dvdcss/", xine_get_homedir());
-    css_cache = config->register_string(config, "media.dvd.css_cache_path", css_cache_default,
+    css_cache = config->register_filename(config, "media.dvd.css_cache_path", css_cache_default, XINE_CONFIG_STRING_IS_DIRECTORY_NAME,
 					_("path to the title key cache"),
 					_("Since cracking the copy protection of scrambled DVDs can "
 					  "be quite time consuming, libdvdcss will cache the cracked "

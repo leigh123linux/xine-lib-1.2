@@ -11,7 +11,7 @@ dnl DIRECTX_VIDEO_LIBS.
 dnl
 AC_DEFUN([AM_PATH_DIRECTX], [
 
-AC_ARG_WITH(dxheaders, AC_HELP_STRING([--with-dxheaders], [specify location of DirectX headers]),
+AC_ARG_WITH(dxheaders, AS_HELP_STRING([--with-dxheaders], [specify location of DirectX headers]),
   [dxheaders_prefix="$withval"],
   [dxheaders_prefix="no"]
 )
@@ -23,8 +23,7 @@ fi
 AC_MSG_CHECKING(for DirectX)
 DIRECTX_VIDEO_LIBS="$DIRECTX_LIBS -lgdi32 -lddraw"
 DIRECTX_AUDIO_LIBS="$DIRECTX_LIBS -ldsound"
-AC_LANG_SAVE()
-AC_LANG_C()
+AC_LANG_PUSH([C])
 ac_save_CPPFLAGS="$CPPFLAGS"
 ac_save_LIBS="$LIBS"
 CPPFLAGS="$CPPFLAGS $DIRECTX_CPPFLAGS"
@@ -48,7 +47,7 @@ int main() {
    AC_DEFINE(HAVE_DIRECTX,1,[Define this if you have DirectX])],,)
 CPPFLAGS=$ac_save_CPPFLAGS
 LIBS=$ac_save_LIBS
-AC_LANG_RESTORE()
+AC_LANG_POP([C])
 
 if test x$have_directx = xyes ; then
   AC_MSG_RESULT(yes)

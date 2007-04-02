@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: metronom.c,v 1.143 2006/01/27 22:35:07 dsalt Exp $
+ * $Id: metronom.c,v 1.144 2007/02/20 00:34:57 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -524,7 +524,7 @@ static void metronom_got_video_frame (metronom_t *this, vo_frame_t *img) {
   img->vpts = this->video_vpts + this->av_offset;
 
   if (this->video_mode == VIDEO_PREDICTION_MODE) {
-    lprintf("video vpts for %10lld : %10lld (duration:%d drift:%" PRId64 " step:%" PRId64 ")\n",
+    lprintf("video vpts for %10"PRId64" : %10"PRId64" (duration:%d drift:%" PRId64 " step:%" PRId64 ")\n",
   	  pts, this->video_vpts, img->duration, this->video_drift, this->video_drift_step );
 
     if (this->video_drift * this->video_drift_step > 0) {
@@ -681,7 +681,7 @@ static int64_t metronom_got_audio_samples (metronom_t *this, int64_t pts,
   this->audio_samples += nsamples;
   this->vpts_offset += nsamples * this->audio_drift_step / AUDIO_SAMPLE_NUM;
                         
-  lprintf("audio vpts for %10lld : %10lld\n", pts, vpts);
+  lprintf("audio vpts for %10"PRId64" : %10"PRId64"\n", pts, vpts);
 
   pthread_mutex_unlock (&this->lock);
 

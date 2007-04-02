@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: xine_decoder.c,v 1.96 2006/09/26 02:36:55 dgp85 Exp $
+ * $Id: xine_decoder.c,v 1.99 2007/02/20 01:04:07 dgp85 Exp $
  *
  */
 
@@ -64,6 +64,10 @@ typedef struct sputext_class_s {
   subtitle_size      subtitle_size;   /* size of subtitles */
   int                vertical_offset;
   char               font[FONTNAME_SIZE]; /* subtitle font */
+#ifdef HAVE_FT2
+  char               font_ft[FILENAME_MAX]; /* subtitle font */
+  int                use_font_ft;     /* use Freetype */
+#endif
   char              *src_encoding;    /* encoding of subtitle file */
   int                use_unscaled;    /* use unscaled OSD if possible */
 
@@ -87,7 +91,7 @@ typedef struct sputext_decoder_s {
    */
   subtitle_size      subtitle_size;   /* size of subtitles */
   int                vertical_offset;
-  char               font[FONTNAME_SIZE]; /* subtitle font */
+  char               font[FILENAME_MAX]; /* subtitle font */
   char              *buf_encoding;    /* encoding of subtitle buffer */
 
   int                width;          /* frame width                */
@@ -107,6 +111,14 @@ typedef struct sputext_decoder_s {
   int                last_lines;        /* number of lines of the previous subtitle */
 } sputext_decoder_t;
 
+static inline char *get_font (sputext_class_t *class)
+{
+#ifdef HAVE_FT2
+  return class->use_font_ft ? class->font_ft : class->font;
+#else
+  return class->font;
+#endif
+}
 
 static void update_font_size (sputext_decoder_t *this, int force_update) {
   static int sizes[SUBTITLE_SIZE_NUM] = { 16, 20, 24, 32, 48, 64 };
@@ -138,7 +150,7 @@ static void update_font_size (sputext_decoder_t *this, int force_update) {
                                             this->width,
                                             SUB_MAX_TEXT * this->line_height);
 
-    this->renderer->set_font (this->osd, this->class->font, this->font_size);
+    this->renderer->set_font (this->osd, get_font (this->class), this->font_size);
     this->renderer->set_position (this->osd, 0, y);
   }
 }
@@ -338,6 +350,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
   
   int line, y;
   int font_size;
+  char *font;
 
   _x_assert(this->renderer != NULL);
   if ( ! this->renderer )
@@ -345,10 +358,11 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
 
   update_font_size(this, 0);
   
-  if( strcmp(this->font, this->class->font) ) {
-    strncpy(this->font, this->class->font, FONTNAME_SIZE);
-    this->font[FONTNAME_SIZE - 1] = '\0';
-    this->renderer->set_font (this->osd, this->class->font, this->font_size);
+  font = get_font (this->class);
+  if( strcmp(this->font, font) ) {
+    strncpy(this->font, font, FILENAME_MAX);
+    this->font[FILENAME_MAX - 1] = '\0';
+    this->renderer->set_font (this->osd, font, this->font_size);
   }
 
   font_size = this->font_size;
@@ -546,7 +560,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
             
       if( w > this->width && font_size > 16 ) {
         font_size -= 4;
-        this->renderer->set_font (this->osd, this->class->font, font_size);
+        this->renderer->set_font (this->osd, get_font (this->class), font_size);
       } else {
         break;
       }
@@ -561,7 +575,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
   }
          
   if( font_size != this->font_size )
-    this->renderer->set_font (this->osd, this->class->font, this->font_size);
+    this->renderer->set_font (this->osd, get_font (this->class), this->font_size);
   
   if( this->last_subtitle_end && sub_start < this->last_subtitle_end ) {
     sub_start = this->last_subtitle_end;
@@ -577,7 +591,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
   
   this->renderer->hide (this->osd, sub_end);
   
-  lprintf ("scheduling subtitle >%s< at %lld until %lld, current time is %lld\n",
+  lprintf ("scheduling subtitle >%s< at %"PRId64" until %"PRId64", current time is %"PRId64"\n",
 	   this->text[0], sub_start, sub_end, 
 	   this->stream->xine->clock->get_current_time (this->stream->xine->clock));
 }
@@ -824,6 +838,27 @@ static void update_osd_font(void *class_gen, xine_cfg_entry_t *entry)
   xprintf(class->xine, XINE_VERBOSITY_DEBUG, "libsputext: spu_font = %s\n", class->font );
 }
 
+#ifdef HAVE_FT2
+static void update_osd_font_ft(void *class_gen, xine_cfg_entry_t *entry)
+{
+  sputext_class_t *class = (sputext_class_t *)class_gen;
+
+  strncpy(class->font_ft, entry->str_value, FILENAME_MAX);
+  class->font_ft[FILENAME_MAX - 1] = '\0';
+  
+  xprintf(class->xine, XINE_VERBOSITY_DEBUG, "libsputext: spu_font_ft = %s\n", class->font_ft);
+}
+
+static void update_osd_use_font_ft(void *class_gen, xine_cfg_entry_t *entry)
+{
+  sputext_class_t *class = (sputext_class_t *)class_gen;
+
+  class->use_font_ft = entry->num_value;
+  
+  xprintf(class->xine, XINE_VERBOSITY_DEBUG, "libsputext: spu_use_font_ft = %d\n", class->use_font_ft);
+}
+#endif
+
 static void update_subtitle_size(void *class_gen, xine_cfg_entry_t *entry)
 {
   sputext_class_t *class = (sputext_class_t *)class_gen;
@@ -890,7 +925,7 @@ static void update_src_encoding(void *class_gen, xine_cfg_entry_t *entry)
 
 static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
 
-  static char *subtitle_size_strings[] = { 
+  static const char *subtitle_size_strings[] = { 
     "tiny", "small", "normal", "large", "very large", "huge", NULL 
   };
   sputext_class_t *this ;
@@ -929,6 +964,21 @@ static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
 				  "subtitle text."),
 				10, update_osd_font, this), FONTNAME_SIZE);
   this->font[FONTNAME_SIZE - 1] = '\0';
+#ifdef HAVE_FT2
+  strncpy(this->font_ft, xine->config->register_filename(xine->config,
+				"subtitles.separate.font_freetype",
+				"", XINE_CONFIG_STRING_IS_FILENAME,
+				_("font for subtitles"),
+				_("An outline font file (e.g. a .ttf) to be used for the subtitle text."),
+				10, update_osd_font_ft, this), FILENAME_MAX);
+  this->font_ft[FILENAME_MAX - 1] = '\0';
+  this->use_font_ft = xine->config->register_bool(xine->config,
+				"subtitles.separate.font_use_freetype",
+				0,
+				_("whether to use a freetype font"),
+				NULL,
+				10, update_osd_use_font_ft, this);
+#endif
   this->src_encoding  = xine->config->register_string(xine->config, 
 				"subtitles.separate.src_encoding", 
 				xine_guess_spu_encoding(),

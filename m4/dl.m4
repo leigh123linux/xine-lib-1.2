@@ -17,8 +17,7 @@ AC_DEFUN([AM_DL], [
 
   if test x$have_dl != "xyes"; then
     AC_MSG_CHECKING(for dlopen under win32)
-    AC_LANG_SAVE()
-    AC_LANG_C()
+    AC_LANG_PUSH([C])
 
     ac_save_CPPFLAGS="$CPPFLAGS"
     ac_save_LIBS="$LIBS"
@@ -42,7 +41,7 @@ int main() {
     CPPFLAGS=$ac_save_CPPFLAGS
     LIBS=$ac_save_LIBS
 
-    AC_LANG_RESTORE()
+    AC_LANG_POP([C])
   fi
 
   if test x$have_dl != "xyes"; then

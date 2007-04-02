@@ -32,7 +32,7 @@ libxineutils_la_SOURCES = $(pppc_files) \
 	pool.c \
 	ring_buffer.c
 
-include_HEADERS = \
+xineinclude_HEADERS = \
 	attributes.h \
 	compat.h \
 	xine_buffer.h \

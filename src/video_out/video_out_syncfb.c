@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: video_out_syncfb.c,v 1.107 2006/09/02 01:10:46 dgp85 Exp $
+ * $Id: video_out_syncfb.c,v 1.108 2006/12/19 19:10:51 dsalt Exp $
  * 
  * video_out_syncfb.c, SyncFB (for Matrox G200/G400 cards) interface for xine
  * 
@@ -1073,7 +1073,8 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   char*             device_name;
   int               fd;
 
-  device_name = xine->config->register_string(xine->config, "video.device.syncfb_device", "/dev/syncfb",
+  device_name = xine->config->register_filename(xine->config, "video.device.syncfb_device", "/dev/syncfb",
+				  	XINE_CONFIG_STRING_IS_DEVICE_NAME,
 					_("SyncFB device name"),
 					_("Specifies the file name for the SyncFB (TeleTux) device "
 					  "to be used.\nThis setting is security critical, "

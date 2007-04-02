@@ -14,7 +14,6 @@ OPTIONAL="$installdir/usr/lib/xine/plugins/$ver/xineplug_ao_out_alsa.so
 	  $installdir/usr/lib/xine/plugins/$ver/xineplug_ao_out_arts.so
 	  $installdir/usr/lib/xine/plugins/$ver/xineplug_ao_out_esd.so
 	  $installdir/usr/lib/xine/plugins/$ver/xineplug_vo_out_aa.so
-	  $installdir/usr/lib/xine/plugins/$ver/xineplug_vo_out_syncfb.so
 	  $installdir/usr/lib/xine/plugins/$ver/xineplug_vo_out_sdl.so
 	  $installdir/usr/lib/xine/plugins/$ver/xineplug_flac.so
 	  $installdir/usr/lib/xine/plugins/$ver/xineplug_inp_gnome_vfs.so

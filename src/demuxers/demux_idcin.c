@@ -65,7 +65,7 @@
  *     - if any bytes exceed 63, do not shift the bytes at all before
  *       transmitting them to the video decoder
  *
- * $Id: demux_idcin.c,v 1.53 2005/11/21 10:28:18 valtri Exp $
+ * $Id: demux_idcin.c,v 1.55 2007/02/20 00:34:55 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -222,7 +222,7 @@ static int demux_idcin_send_chunk(demux_plugin_t *this_gen) {
     if (!remaining_sample_bytes)
       buf->decoder_flags |= BUF_FLAG_FRAME_END;
 
-    lprintf("sending video buf with %d bytes, %lld pts\n", buf->size, buf->pts);
+    lprintf("sending video buf with %d bytes, %"PRId64" pts\n", buf->size, buf->pts);
     this->video_fifo->put(this->video_fifo, buf);
   }
 
@@ -263,7 +263,7 @@ static int demux_idcin_send_chunk(demux_plugin_t *this_gen) {
       if (!remaining_sample_bytes)
         buf->decoder_flags |= BUF_FLAG_FRAME_END;
 
-      lprintf("sending audio buf with %d bytes, %lld pts\n", buf->size, buf->pts);
+      lprintf("sending audio buf with %d bytes, %"PRId64" pts\n", buf->size, buf->pts);
       this->audio_fifo->put(this->audio_fifo, buf);
     }
   }
@@ -493,7 +493,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   switch (stream->content_detection_method) {
 
   case METHOD_BY_EXTENSION: {
-    char *extensions, *mrl;
+    const char *extensions, *mrl;
 
     mrl = input->get_mrl (input);
     extensions = class_gen->get_extensions (class_gen);
@@ -524,19 +524,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "Id Quake II Cinematic file demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "Id CIN";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return "cin";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return NULL;
 }
 

@@ -18,9 +18,8 @@ lib_LTLIBRARIES = xineplug_post_goom.la
 #AM_CPPFLAGS = -DCPU_POWERPC
 #endif
 
-if HAVE_FFMMX
+if HAVE_MMX
 extra_files = mmx.c xmmx.c
-AM_CPPFLAGS = -DHAVE_MMX
 endif
 
 xineplug_post_goom_la_SOURCES = $(extra_files) xine_goom.c \
@@ -28,7 +27,7 @@ xineplug_post_goom_la_SOURCES = $(extra_files) xine_goom.c \
 	gfontlib.c goom_core.c goom_tools.c goomsl.c goomsl_hash.c goomsl_heap.c \
 	goomsl_lex.c goomsl_yacc.c graphic.c ifs.c lines.c \
 	plugin_info.c sound_tester.c surf3d.c tentacle3d.c v3d.c
-xineplug_post_goom_la_LIBADD = $(XINE_LIB) $(GOOM_LIBS) $(THREAD_LIBS)
+xineplug_post_goom_la_LIBADD = $(XINE_LIB) $(GOOM_LIBS) $(PTHREAD_LIBS) -lm
 xineplug_post_goom_la_CFLAGS = $(VISIBILITY_FLAG)
 xineplug_post_goom_la_LDFLAGS = -avoid-version -module
 

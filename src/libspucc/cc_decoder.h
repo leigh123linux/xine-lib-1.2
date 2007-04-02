@@ -20,7 +20,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: cc_decoder.h,v 1.7 2004/05/05 17:36:48 mroi Exp $
+ * $Id: cc_decoder.h,v 1.8 2007/02/20 00:56:36 dgp85 Exp $
  *
  * stuff needed to provide closed captioning decoding and display
  *
@@ -33,7 +33,11 @@ typedef struct cc_decoder_s cc_decoder_t;
 typedef struct cc_renderer_s cc_renderer_t;
 
 #define NUM_CC_PALETTES 2
-extern char *cc_schemes[NUM_CC_PALETTES + 1];
+static const char *cc_schemes[NUM_CC_PALETTES + 1] = {
+  "White/Gray/Translucent",
+  "White/Black/Solid",
+  NULL
+};
 
 #define CC_FONT_MAX 256
 

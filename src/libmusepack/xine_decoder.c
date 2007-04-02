@@ -23,7 +23,7 @@
  *   32bit float output
  *   Seeking??
  *
- * $Id: xine_decoder.c,v 1.9 2006/07/10 22:08:29 dgp85 Exp $
+ * $Id: xine_decoder.c,v 1.10 2007/01/19 02:35:36 dgp85 Exp $
  */
 
 #include <stdio.h>
@@ -43,7 +43,11 @@
 #include "buffer.h"
 #include "xineutils.h"
 
-#include "musepack/musepack.h"
+#ifdef HAVE_MPCDEC_MPCDEC_H
+# include <mpcdec/mpcdec.h>
+#else
+# include "musepack/musepack.h"
+#endif
 
 #define MPC_DECODER_MEMSIZE  65536
 #define MPC_DECODER_MEMSIZE2 (MPC_DECODER_MEMSIZE/2)

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: video_out_xv.c,v 1.220 2006/10/28 18:51:08 miguelfreitas Exp $
+ * $Id: video_out_xv.c,v 1.224 2007/03/29 19:01:03 dgp85 Exp $
  *
  * video_out_xv.c, X11 video extension interface for xine
  *
@@ -130,10 +130,10 @@ struct xv_driver_s {
   xv_property_t      props[VO_NUM_PROPERTIES];
   uint32_t           capabilities;
 
+  int                ovl_changed;
   xv_frame_t        *recent_frames[VO_NUM_RECENT_FRAMES];
   xv_frame_t        *cur_frame;
   x11osd            *xoverlay;
-  int                ovl_changed;
 
   /* all scaling information goes here */
   vo_scale_t         sc;
@@ -187,7 +187,7 @@ static void xv_frame_dispose (vo_frame_t *vo_img) {
 
   if (frame->image) {
 
-    if (this->use_shm) {
+    if (frame->shminfo.shmaddr) {
       LOCK_DISPLAY(this);
       XShmDetach (this->display, &frame->shminfo);
       XFree (frame->image);
@@ -257,6 +257,11 @@ static XvImage *create_ximage (xv_driver_t *this, XShmSegmentInfo *shminfo,
 			       int width, int height, int format) {
   unsigned int  xv_format;
   XvImage      *image = NULL;
+
+  if (width <= 0)
+    width = 1;
+  if (height <= 0)
+    height = 1;
 
   if (this->use_pitch_alignment) {
     width = (width + 7) & ~0x7;
@@ -382,6 +387,7 @@ static XvImage *create_ximage (xv_driver_t *this, XShmSegmentInfo *shminfo,
 
     image = XvCreateImage (this->display, this->xv_port,
 			   xv_format, data, width, height);
+    shminfo->shmaddr = 0;
   }
   return image;
 }
@@ -391,7 +397,7 @@ static void dispose_ximage (xv_driver_t *this,
 			    XShmSegmentInfo *shminfo,
 			    XvImage *myimage) {
 
-  if (this->use_shm) {
+  if (shminfo->shmaddr) {
 
     XShmDetach (this->display, shminfo);
     XFree (myimage);
@@ -952,6 +958,7 @@ static int xv_gui_data_exchange (vo_driver_t *this_gen,
     /* XExposeEvent * xev = (XExposeEvent *) data; */
 
     if (this->cur_frame) {
+      int i;
 
       LOCK_DISPLAY(this);
 
@@ -969,6 +976,16 @@ static int xv_gui_data_exchange (vo_driver_t *this_gen,
 		   this->sc.displayed_width, this->sc.displayed_height,
 		   this->sc.output_xoffset, this->sc.output_yoffset,
 		   this->sc.output_width, this->sc.output_height);
+      }
+
+      XSetForeground (this->display, this->gc, this->black.pixel);
+
+      for( i = 0; i < 4; i++ ) {
+	if( this->sc.border[i].w && this->sc.border[i].h ) {
+	  XFillRectangle(this->display, this->drawable, this->gc,
+			 this->sc.border[i].x, this->sc.border[i].y,
+			 this->sc.border[i].w, this->sc.border[i].h);
+	}
       }
 
       if(this->xoverlay)

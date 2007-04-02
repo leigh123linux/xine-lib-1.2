@@ -35,18 +35,91 @@ dnl   * use aalib-config instead of aainfo now.
 dnl 17/06/2001 
 dnl   * First shot
 dnl
+
+dnl Internal bits, used by AM_PATH_AALIB.
+dnl Requires AALIB_CFLAGS and AALIB_FLAGS to be defined
+AC_DEFUN([_AALIB_CHECK_VERSION], [
+  ac_save_CFLAGS="$CFLAGS"
+  ac_save_LIBS="$LIBS"
+  CFLAGS="$AALIB_CFLAGS $CFLAGS"
+  LIBS="$AALIB_LIBS $LIBS"
+
+dnl Now check if the installed AALIB is sufficiently new. (Also sanity
+dnl checks the results of aalib-config to some extent.)
+
+  rm -f conf.aalibtest
+  AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <stdio.h>
+#include <stdlib.h>
+#include <aalib.h>
+
+int main () {
+  int major, minor;
+  char *tmp_version;
+
+  system ("touch conf.aalibtest");
+
+  /* HP/UX 9 (%@#!) writes to sscanf strings */
+  tmp_version = (char *) strdup("$min_aalib_version");
+  if (sscanf(tmp_version, "%d.%d", &major, &minor) != 2) {
+    printf("%s, bad version string\n", "$min_aalib_version");
+    exit(1);
+  }
+
+  if ((AA_LIB_VERSION > major) || ((AA_LIB_VERSION == major) && 
+#ifdef AA_LIB_MINNOR
+      (AA_LIB_MINNOR >= minor)
+#else
+      (AA_LIB_MINOR >= minor)
+#endif
+     )) {
+    return 0;
+  }
+  else {
+#ifdef AA_LIB_MINNOR
+    printf("\n*** An old version of AALIB (%d.%d) was found.\n", AA_LIB_VERSION, AA_LIB_MINNOR);
+#else
+    printf("\n*** An old version of AALIB (%d.%d) was found.\n", AA_LIB_VERSION, AA_LIB_MINOR);
+#endif
+    printf("*** You need a version of AALIB newer than %d.%d. The latest version of\n", major, minor);
+    printf("*** AALIB is always available from:\n");
+    printf("***        http://www.ta.jcu.cz://aa\n");
+    printf("***\n");
+  }
+  return 1;
+}
+]])],[],[no_aalib=yes],[no_aalib=cc])
+  if test "x$no_aalib" = xcc; then 
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <stdio.h>
+#include <aalib.h>
+]], [[ return ((AA_LIB_VERSION) || 
+#ifdef AA_LIB_MINNOR
+             (AA_LIB_MINNOR)
+#else
+             (AA_LIB_MINOR)
+#endif
+            ); ]])],[no_aalib=''],[no_aalib=yes])
+  fi
+  CFLAGS="$ac_save_CFLAGS"
+  LIBS="$ac_save_LIBS"
+])
+
+
 AC_DEFUN([AM_PATH_AALIB],
 [dnl 
 dnl
 AC_ARG_WITH(aalib-prefix,
-    AC_HELP_STRING([--with-aalib-prefix=DIR], [prefix where AALIB is installed (optional)]),
+    AS_HELP_STRING([--with-aalib-prefix=DIR], [prefix where AALIB is installed (optional)]),
             aalib_config_prefix="$withval", aalib_config_prefix="")
 AC_ARG_WITH(aalib-exec-prefix,
-    AC_HELP_STRING([--with-aalib-exec-prefix=DIR], [exec prefix where AALIB is installed (optional)]),
+    AS_HELP_STRING([--with-aalib-exec-prefix=DIR], [exec prefix where AALIB is installed (optional)]),
             aalib_config_exec_prefix="$withval", aalib_config_exec_prefix="")
 AC_ARG_ENABLE(aalibtest, 
-    AC_HELP_STRING([--disable-aalibtest], [do not try to compile and run a test AALIB program]),
+    AS_HELP_STRING([--disable-aalibtest], [do not try to compile and run a test AALIB program]),
             enable_aalibtest=$enableval, enable_aalibtest=yes)
+
+  AC_LANG_PUSH([C])
 
   if test x$aalib_config_exec_prefix != x ; then
      aalib_config_args="$aalib_config_args --exec-prefix=$aalib_config_exec_prefix"
@@ -124,78 +197,14 @@ dnl            gpmdep="yes"
 dnl          fi
         done
 
-        ac_save_CFLAGS="$CFLAGS"
-        ac_save_LIBS="$LIBS"
-        CFLAGS="$AALIB_CFLAGS $CFLAGS"
-        LIBS="$AALIB_LIBS $LIBS"
-
-dnl
-dnl Now check if the installed AALIB is sufficiently new. (Also sanity
-dnl checks the results of xine-config to some extent
-dnl
-        AC_LANG_SAVE()
-        AC_LANG_C()
-        rm -f conf.aalibtest
-        AC_TRY_RUN([
-#include <stdio.h>
-#include <stdlib.h>
-#include <aalib.h>
-
-int main () {
-  int major, minor;
-   char *tmp_version;
-
-  system ("touch conf.aalibtest");
-
-  /* HP/UX 9 (%@#!) writes to sscanf strings */
-  tmp_version = (char *) strdup("$min_aalib_version");
-  if (sscanf(tmp_version, "%d.%d", &major, &minor) != 2) {
-     printf("%s, bad version string\n", "$min_aalib_version");
-     exit(1);
-  }
-
-  if ((AA_LIB_VERSION > major) || ((AA_LIB_VERSION == major) && 
-#ifdef AA_LIB_MINNOR
-     (AA_LIB_MINNOR >= minor)
-#else
-     (AA_LIB_MINOR >= minor)
-#endif
-     )) {
-     return 0;
-  }
-  else {
-#ifdef AA_LIB_MINNOR
-     printf("\n*** An old version of AALIB (%d.%d) was found.\n", AA_LIB_VERSION, AA_LIB_MINNOR);
-#else
-     printf("\n*** An old version of AALIB (%d.%d) was found.\n", AA_LIB_VERSION, AA_LIB_MINOR);
-#endif
-     printf("*** You need a version of AALIB newer than %d.%d. The latest version of\n", major, minor);
-     printf("*** AALIB is always available from:\n");
-     printf("***        http://www.ta.jcu.cz://aa\n");
-     printf("***\n");
-  }
-  return 1;
-}
-],, no_aalib=yes,
-          AC_TRY_LINK([
-#include <stdio.h>
-#include <aalib.h>
-],          [ return ((AA_LIB_VERSION) || 
-#ifdef AA_LIB_MINNOR
-                    (AA_LIB_MINNOR)
-#else
-                    (AA_LIB_MINOR)
-#endif
-                    ); ],, no_aalib=yes))
-        CFLAGS="$ac_save_CFLAGS"
-        LIBS="$ac_save_LIBS"
+        _AALIB_CHECK_VERSION
       fi
 
     else dnl AALIB_CONFIG
       AC_MSG_CHECKING([for AALIB version >= $min_aalib_version])
       no_aalib=""
-      AALIB_CFLAGS=`$AALIB_CONFIG $aalib_config_args --cflags`
-      AALIB_LIBS=`$AALIB_CONFIG $aalib_config_args --libs`
+      AALIB_CFLAGS="`$AALIB_CONFIG $aalib_config_args --cflags`"
+      AALIB_LIBS="`$AALIB_CONFIG $aalib_config_args --libs`"
       aalib_config_major_version=`$AALIB_CONFIG $aalib_config_args --version | \
              sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
       aalib_config_minor_version=`$AALIB_CONFIG $aalib_config_args --version | \
@@ -203,71 +212,7 @@ int main () {
       aalib_config_sub_version=`$AALIB_CONFIG $aalib_config_args --version | \
              sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
 
-      ac_save_CFLAGS="$CFLAGS"
-      ac_save_LIBS="$LIBS"
-      CFLAGS="$CFLAGS $AALIB_CFLAGS"
-      LIBS="$AALIB_LIBS $LIBS"
-
-dnl
-dnl Now check if the installed AALIB is sufficiently new. (Also sanity
-dnl checks the results of aalib-config to some extent
-dnl
-      AC_LANG_SAVE()
-      AC_LANG_C()
-      rm -f conf.aalibtest
-      AC_TRY_RUN([
-#include <stdio.h>
-#include <stdlib.h>
-#include <aalib.h>
-
-int main () {
-  int major, minor;
-   char *tmp_version;
-
-  system ("touch conf.aalibtest");
-
-  /* HP/UX 9 (%@#!) writes to sscanf strings */
-  tmp_version = (char *) strdup("$min_aalib_version");
-  if (sscanf(tmp_version, "%d.%d", &major, &minor) != 2) {
-     printf("%s, bad version string\n", "$min_aalib_version");
-     exit(1);
-  }
-
-  if ((AA_LIB_VERSION > major) || ((AA_LIB_VERSION == major) && 
-#ifdef AA_LIB_MINNOR
-     (AA_LIB_MINNOR >= minor)
-#else
-     (AA_LIB_MINOR >= minor)
-#endif
-     )) {
-     return 0;
-  }
-  else {
-#ifdef AA_LIB_MINNOR
-     printf("\n*** An old version of AALIB (%d.%d) was found.\n", AA_LIB_VERSION, AA_LIB_MINNOR);
-#else
-printf("\n*** An old version of AALIB (%d.%d) was found.\n", AA_LIB_VERSION, AA_LIB_MINOR);
-#endif
-     printf("*** You need a version of AALIB newer than %d.%d. The latest version of\n", major, minor);
-     printf("*** AALIB is always available from:\n");
-     printf("***        http://www.ta.jcu.cz://aa\n");
-     printf("***\n");
-  }
-  return 1;
-}
-],, no_aalib=yes,
-        AC_TRY_LINK([
-#include <stdio.h>
-#include <aalib.h>
-],        [ return ((AA_LIB_VERSION) || 
-#ifdef AA_LIB_MINNOR
-                  (AA_LIB_MINNOR)
-#else
-                  (AA_LIB_MINOR)
-#endif
-                  ); ],, no_aalib=yes))
-      CFLAGS="$ac_save_CFLAGS"
-      LIBS="$ac_save_LIBS"
+      _AALIB_CHECK_VERSION
     fi dnl AALIB_CONFIG
   fi dnl enable_aalibtest
 
@@ -288,17 +233,17 @@ printf("\n*** An old version of AALIB (%d.%d) was found.\n", AA_LIB_VERSION, AA_
         echo "*** Could not run AALIB test program, checking why..."
         CFLAGS="$CFLAGS $AALIB_CFLAGS"
         LIBS="$LIBS $AALIB_LIBS"
-        AC_TRY_LINK([
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <stdio.h>
 #include <aalib.h>
-],      [ 
+]], [[ 
           return ((AA_LIB_VERSION) || 
 #ifdef AA_LIB_MINNOR
                   (AA_LIB_MINNOR)
 #else
                   (AA_LIB_MINOR)
 #endif
-                  ); ],
+                  ); ]])],
         [ echo "*** The test program compiled, but did not run. This usually means"
           echo "*** that the run-time linker is not finding AALIB or finding the wrong"
           echo "*** version of AALIB. If it is not finding AALIB, you'll need to set your"
@@ -322,6 +267,6 @@ printf("\n*** An old version of AALIB (%d.%d) was found.\n", AA_LIB_VERSION, AA_
   fi
   AC_SUBST(AALIB_CFLAGS)
   AC_SUBST(AALIB_LIBS)
-  AC_LANG_RESTORE()
+  AC_LANG_POP([C])
   rm -f conf.aalibtest
 ])

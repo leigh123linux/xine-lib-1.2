@@ -1,29 +1,34 @@
 /*
- *  Copyright (C) 2002-2003 the xine project
+ *  Copyright (C) 2002-2003,2007 the xine project
  *
  *  This file is part of xine, a free video player.
  *
- *  xine is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ * The xine-lib XML parser is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
  *
- *  xine is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * The xine-lib XML parser is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * You should have received a copy of the GNU Library General Public
+ * License along with the Gnome Library; see the file COPYING.LIB.  If not,
+ * write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
- * $Id: xmllexer.h,v 1.7 2006/09/26 05:19:49 dgp85 Exp $
+ * $Id: xmllexer.h,v 1.8 2007/03/04 16:19:12 hadess Exp $
  *
  */
 
 /* xml lexer */
 #ifndef XML_LEXER_H
 #define XML_LEXER_H
+
+#ifndef XINE_PROTECTED
+#define XINE_PROTECTED
+#endif
 
 /* public constants */
 #define T_ERROR         -1   /* lexer error */

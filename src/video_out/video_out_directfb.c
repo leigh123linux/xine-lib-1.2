@@ -1444,7 +1444,14 @@ static void init_subpicture (directfb_driver_t *this) {
       config.flags       = DLCONF_PIXELFORMAT | DLCONF_OPTIONS;
       config.pixelformat = DSPF_ARGB;
       config.options     = DLOP_ALPHACHANNEL;
+      
       ret = this->underlay->SetConfiguration (this->underlay, &config);
+      if (ret) {
+        /* try AiRGB if the previous failed */
+        config.pixelformat = DSPF_AiRGB; 
+        ret = this->underlay->SetConfiguration (this->underlay, &config);
+      }
+      
       if (ret == DFB_OK) {
         this->underlay->AddRef (this->underlay);
         this->spic_layer = this->underlay;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2004 the xine project
+ * Copyright (C) 2000-2007 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -23,7 +23,7 @@
  * For more information on the FLAC file format, visit:
  *   http://flac.sourceforge.net/
  *
- * $Id: demux_flac.c,v 1.12 2006/11/09 23:51:29 dgp85 Exp $
+ * $Id: demux_flac.c,v 1.17 2007/03/29 16:52:23 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -49,6 +49,7 @@
 #include "bswap.h"
 #include "group_audio.h"
 
+#include "id3.h"
 #include "flacutils.h"
 
 typedef struct {
@@ -66,10 +67,10 @@ typedef struct {
   off_t                data_start;
   off_t                data_size;
 
-  unsigned char        streaminfo[sizeof(xine_waveformatex) + FLAC_STREAMINFO_SIZE];
   flac_seekpoint_t    *seekpoints;
   int                  seekpoint_count;
 
+  unsigned char        streaminfo[sizeof(xine_waveformatex) + FLAC_STREAMINFO_SIZE];
 } demux_flac_t;
 
 typedef struct {
@@ -81,7 +82,7 @@ typedef struct {
  * It returns 1 if flac file was opened successfully. */
 static int open_flac_file(demux_flac_t *flac) {
 
-  unsigned char preamble[4];
+  unsigned char preamble[10];
   unsigned int block_length;
   unsigned char buffer[FLAC_SEEKPOINT_SIZE];
   unsigned char *streaminfo = flac->streaminfo + sizeof(xine_waveformatex);
@@ -89,25 +90,18 @@ static int open_flac_file(demux_flac_t *flac) {
 
   flac->seekpoints = NULL;
 
-  /* fetch the file signature */
-  if (_x_demux_read_header(flac->input, preamble, 4) != 4)
+  /* fetch the file signature, get enough bytes so that id3 can also
+     be skipped and/or parsed */
+  if (_x_demux_read_header(flac->input, preamble, 10) != 10)
     return 0;
 
-  /* validate signature */
-  if ((preamble[0] != 'f') ||
-      (preamble[1] != 'L') ||
-      (preamble[2] != 'a') ||
-      (preamble[3] != 'C')) {
-
+  /* Unfortunately some FLAC files have an ID3 flag prefixed on them
+   * before the actual FLAC headers... these are barely legal, but
+   * users use them and want them working, so check and skip the ID3
+   * tag if present.
+   */
+  if ( id3v2_istag(preamble) ) {
     uint32_t id3size;
-
-    /* Unfortunately some FLAC files have an ID3 flag prefixed on them
-     * before the actual FLAC headers... these are barely legal, but
-     * users use them and want them working, so check and skip the ID3
-     * tag if present.
-     */
-    if ( preamble[0] != 'I' || preamble[1] != 'D' || preamble[2] != '3' )
-      return 0;
 
     /* First 3 bytes are the ID3 signature as above, then comes two bytes
      * encoding the major and minor version of ID3 used, that we can ignore
@@ -117,23 +111,21 @@ static int open_flac_file(demux_flac_t *flac) {
      * is encoded as four bytes.. but only 7 out of 8 bits of every byte is
      * used... don't ask.
      */
-    flac->input->seek(flac->input, 6, SEEK_SET);
-    if ( flac->input->read(flac->input, preamble, 4) != 4 )
-      return 0;
+    id3size = id3v2_tagsize(&preamble[6]);
 
-    id3size = (preamble[0] << 7*3) + (preamble[1] << 7*2) + (preamble[2] << 7) + preamble[3];
-    
-    flac->input->seek(flac->input, id3size, SEEK_CUR);
+    id3v2_parse_tag(flac->input, flac->stream, preamble);
+
+    flac->input->seek(flac->input, id3size, SEEK_SET);
 
     if ( flac->input->read(flac->input, preamble, 4) != 4 )
       return 0;
-    
-    if ( preamble[0] != 'f' || preamble[1] != 'L' || preamble[2] != 'a' || preamble[3] != 'C' )
-      return 0;
-      
-  } else 
-    /* file is qualified; skip over the signature bytes in the stream */
+  } else
     flac->input->seek(flac->input, 4, SEEK_SET);
+
+  /* validate signature */
+  if ((preamble[0] != 'f') || (preamble[1] != 'L') ||
+      (preamble[2] != 'a') || (preamble[3] != 'C'))
+      return 0;
 
   /* loop through the metadata blocks; use a do-while construct since there
    * will always be 1 metadata block */
@@ -166,7 +158,7 @@ static int open_flac_file(demux_flac_t *flac) {
       flac->bits_per_sample = ((flac->sample_rate >> 4) & 0x1F) + 1;
       flac->sample_rate >>= 12;
       flac->total_samples = BE_64(&streaminfo[10]) & UINT64_C(0x0FFFFFFFFF);  /* 36 bits */
-      lprintf ("%d Hz, %d bits, %d channels, %lld total samples\n", 
+      lprintf ("%d Hz, %d bits, %d channels, %"PRId64" total samples\n", 
         flac->sample_rate, flac->bits_per_sample, 
         flac->channels, flac->total_samples);
       break;
@@ -193,15 +185,15 @@ static int open_flac_file(demux_flac_t *flac) {
         if (flac->input->read(flac->input, buffer, FLAC_SEEKPOINT_SIZE) != FLAC_SEEKPOINT_SIZE)
           return 0;
         flac->seekpoints[i].sample_number = BE_64(&buffer[0]);
-        lprintf (" %d: sample %lld, ", i, flac->seekpoints[i].sample_number);
+        lprintf (" %d: sample %"PRId64", ", i, flac->seekpoints[i].sample_number);
         flac->seekpoints[i].offset = BE_64(&buffer[8]);
         flac->seekpoints[i].size = BE_16(&buffer[16]);
-        lprintf ("@ 0x%llX, size = %d bytes, ", 
+        lprintf ("@ 0x%"PRIX64", size = %d bytes, ", 
           flac->seekpoints[i].offset, flac->seekpoints[i].size);
         flac->seekpoints[i].pts = flac->seekpoints[i].sample_number;
         flac->seekpoints[i].pts *= 90000;
         flac->seekpoints[i].pts /= flac->sample_rate;
-        lprintf ("pts = %lld\n", flac->seekpoints[i].pts);
+        lprintf ("pts = %"PRId64"\n", flac->seekpoints[i].pts);
       }
       break;
 
@@ -524,7 +516,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   switch (stream->content_detection_method) {
 
   case METHOD_BY_EXTENSION: {
-    char *extensions, *mrl;
+    const char *extensions, *mrl;
 
     mrl = input->get_mrl (input);
     extensions = class_gen->get_extensions (class_gen);
@@ -554,19 +546,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "Free Lossless Audio Codec (flac) demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "FLAC";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return "flac";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return NULL;
 }
 

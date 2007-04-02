@@ -262,6 +262,12 @@ static uint32_t ao_fusionsound_get_capabilities(ao_driver_t *ao_driver) {
 static void ao_fusionsound_exit(ao_driver_t *ao_driver) {
   fusionsound_driver_t *this = (fusionsound_driver_t *) ao_driver;
 
+  if (this->playback)
+    this->playback->Release (this->playback);
+      
+  if (this->stream)
+    this->stream->Release (this->stream);
+
   if (this->sound)
     this->sound->Release (this->sound);
     

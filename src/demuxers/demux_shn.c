@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: demux_shn.c,v 1.2 2006/09/28 22:27:52 dgp85 Exp $
+ * $Id: demux_shn.c,v 1.4 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -67,8 +67,8 @@ static int open_shn_file(demux_shn_t *this) {
   if (_x_demux_read_header(this->input, peak, 4) != 4)
       return 0;
 
-  if ((peak[0] != 'a') && (peak[1] != 'j') &&
-      (peak[2] != 'k') && (peak[3] != 'g')) {
+  if ((peak[0] != 'a') || (peak[1] != 'j') ||
+      (peak[2] != 'k') || (peak[3] != 'g')) {
     return 0;
   }
 
@@ -202,7 +202,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   switch (stream->content_detection_method) {
 
   case METHOD_BY_EXTENSION: {
-    char *extensions, *mrl;
+    const char *extensions, *mrl;
 
     mrl = input->get_mrl (input);
     extensions = class_gen->get_extensions (class_gen);
@@ -230,19 +230,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "Shorten demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "Shorten";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return "shn";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return NULL;
 }
 

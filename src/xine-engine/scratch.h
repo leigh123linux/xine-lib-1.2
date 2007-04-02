@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: scratch.h,v 1.11 2006/09/26 05:19:49 dgp85 Exp $
+ * $Id: scratch.h,v 1.13 2007/01/19 00:12:22 dgp85 Exp $
  *
  * scratch buffer for log output
  *
@@ -27,6 +27,7 @@
 #define HAVE_SCRATCH_H
 
 #include <stdarg.h>
+#include <pthread.h>
 
 typedef struct scratch_buffer_s scratch_buffer_t;
 
@@ -40,16 +41,17 @@ struct scratch_buffer_s {
 #endif
                (*scratch_printf) (scratch_buffer_t *this, const char *format, va_list ap);
 
-  const char **(*get_content) (scratch_buffer_t *this);
+  char       **(*get_content) (scratch_buffer_t *this);
 
   void         (*dispose) (scratch_buffer_t *this);
 
   char         **lines;
-  const char   **ordered;
+  char         **ordered;
 
   int            num_lines;
   int            cur;
 
+  pthread_mutex_t lock;
 };
 
 scratch_buffer_t *_x_new_scratch_buffer (int num_lines) XINE_PROTECTED;

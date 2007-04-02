@@ -20,7 +20,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: cc_decoder.c,v 1.27 2005/09/25 00:44:04 miguelfreitas Exp $
+ * $Id: cc_decoder.c,v 1.28 2007/02/20 00:56:36 dgp85 Exp $
  *
  * stuff needed to provide closed captioning decoding and display
  *
@@ -211,13 +211,6 @@ static colorinfo_t *cc_text_palettes[NUM_CC_PALETTES] = {
 static uint8_t *cc_alpha_palettes[NUM_CC_PALETTES] = {
   cc_text_trans_alpha,
   cc_text_solid_alpha
-};
-
-
-char *cc_schemes[NUM_CC_PALETTES + 1] = {
-  "White/Gray/Translucent",
-  "White/Black/Solid",
-  NULL
 };
 
 /* --------------------- misc. EIA 608 definitions -------------------*/

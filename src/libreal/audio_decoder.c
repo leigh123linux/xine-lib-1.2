@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: audio_decoder.c,v 1.49 2006/07/10 22:08:30 dgp85 Exp $
+ * $Id: audio_decoder.c,v 1.59 2007/03/17 15:45:41 dgp85 Exp $
  *
  * thin layer to use real binary-only codecs in xine
  *
@@ -32,9 +32,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dlfcn.h>
-#ifdef __x86_64__
-  #include <elf.h>
-#endif
 
 #define LOG_MODULE "real_audio_decoder"
 #define LOG_VERBOSE
@@ -47,6 +44,8 @@
 #include "video_out.h"
 #include "buffer.h"
 #include "xineutils.h"
+
+#include "real_common.h"
 
 typedef struct {
   audio_decoder_class_t   decoder_class;
@@ -105,94 +104,14 @@ typedef struct {
     void  *extras;
 } ra_init_t;
 
-void *__builtin_new(unsigned long size);
-void __builtin_delete (void *foo);
-void *__builtin_vec_new(unsigned long size);
-void __builtin_vec_delete(void *mem);
-void __pure_virtual(void);
+static int load_syms_linux (realdec_decoder_t *this, const char *const codec_name, const char *const codec_alternate) {
+  cfg_entry_t* entry =
+    this->stream->xine->config->lookup_entry(this->stream->xine->config,
+					     "decoder.external.real_codecs_path");
 
-
-void *__builtin_new(unsigned long size) {
-  return malloc(size);
-}
-
-void __builtin_delete (void *foo) {
-  /* printf ("libareal: __builtin_delete called\n"); */
-  free (foo);
-}
-
-#ifdef __x86_64__
-/* (gb) quick-n-dirty check to be run natively */
-static int is_x86_64_object_(FILE *f)
-{
-  Elf64_Ehdr *hdr = malloc(sizeof(Elf64_Ehdr));
-  if (hdr == NULL)
-	return 0;
-
-  if (fseek(f, 0, SEEK_SET) != 0) {
-	free(hdr);
-	return 0;
-  }
-
-  if (fread(hdr, sizeof(Elf64_Ehdr), 1, f) != 1) {
-	free(hdr);
-	return 0;
-  }
-
-  if (hdr->e_ident[EI_MAG0] != ELFMAG0 ||
-	  hdr->e_ident[EI_MAG1] != ELFMAG1 ||
-	  hdr->e_ident[EI_MAG2] != ELFMAG2 ||
-	  hdr->e_ident[EI_MAG3] != ELFMAG3) {
-	free(hdr);
-	return 0;
-  }
-
-  return hdr->e_machine == EM_X86_64;
-}
-
-static inline int is_x86_64_object(const char *filename)
-{
-  FILE *f;
-  int ret;
-
-  if ((f = fopen(filename, "r")) == NULL)
-	return 0;
-
-  ret = is_x86_64_object_(f);
-  fclose(f);
-  return ret;
-}
-#endif
-
-static int load_syms_linux (realdec_decoder_t *this, char *codec_name,
-			    const char *alt_codec_name) {
-
-  cfg_entry_t* entry = this->stream->xine->config->lookup_entry(
-			 this->stream->xine->config, "decoder.external.real_codecs_path");
-  char path[1024];
-  struct stat sb;
-
-  snprintf (path, sizeof(path), "%s/%s", entry->str_value, codec_name);
-  if (stat(path, &sb))
-    snprintf (path, sizeof(path), "%s/%s", entry->str_value, alt_codec_name);
-    
-#ifdef __x86_64__
-  /* check whether it's a real x86-64 library */
-  if (!is_x86_64_object(path))
-	return 0;
-#endif
-
-  lprintf ("(audio) opening shared obj '%s'\n", path);
-
-  this->ra_handle = dlopen (path, RTLD_LAZY);
-
-  if (!this->ra_handle) {
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libareal: error: %s\n", dlerror());
-    _x_message(this->stream, XINE_MSG_LIBRARY_LOAD_ERROR,
-                 codec_name, NULL);
+  if ( (this->ra_handle = _x_real_codec_open(this->stream, entry->str_value, codec_name, codec_alternate)) == NULL )
     return 0;
-  }
-  
+
   this->raCloseCodec        = dlsym (this->ra_handle, "RACloseCodec");
   this->raDecode            = dlsym (this->ra_handle, "RADecode");
   this->raFlush             = dlsym (this->ra_handle, "RAFlush");
@@ -208,7 +127,7 @@ static int load_syms_linux (realdec_decoder_t *this, char *codec_name,
       !this->raGetFlavorProperty || !this->raOpenCodec2 || !this->raSetFlavor ||
       /*!raSetDLLAccessPath ||*/ !this->raInitDecoder){
     xprintf (this->stream->xine, XINE_VERBOSITY_LOG, 
-	     _("libareal: (audio) Cannot resolve symbols - incompatible dll: %s\n"), path);
+	     _("libareal: (audio) Cannot resolve symbols - incompatible dll: %s\n"), codec_name);
     return 0;
   }
 
@@ -443,7 +362,7 @@ static unsigned char sipr_swaps[38][2]={
 static void realdec_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   realdec_decoder_t *this = (realdec_decoder_t *) this_gen;
 
-  lprintf ("decode_data %d bytes, flags=0x%08x, pts=%lld ...\n", 
+  lprintf ("decode_data %d bytes, flags=0x%08x, pts=%"PRId64" ...\n", 
 	   buf->size, buf->decoder_flags, buf->pts);
 
   if (buf->decoder_flags & BUF_FLAG_PREVIEW) {
@@ -678,35 +597,10 @@ static void dispose_class (audio_decoder_class_t *this) {
   free (this);
 }
 
-/*
- * some fake functions to make real codecs happy 
- */
-void *__builtin_vec_new(unsigned long size) EXPORTED;
-void __builtin_vec_delete(void *mem) EXPORTED;
-void __pure_virtual(void) EXPORTED;
-
-void *__builtin_vec_new(unsigned long size) {
-  return malloc(size);
-}
-void __builtin_vec_delete(void *mem) {
-  free(mem);
-}
-void __pure_virtual(void) {
-  lprintf("libareal: FATAL: __pure_virtual() called!\n");
-  /*      exit(1); */
-}
-
-/*
- * real audio codec loader
- */
-
-static void *init_class (xine_t *xine, void *data) {
+void *init_realadec (xine_t *xine, void *data) {
 
   real_class_t       *this;
   config_values_t    *config = xine->config;
-  char               *real_codec_path;
-  char               *default_real_codec_path = "";
-  struct stat s;
 
   this = (real_class_t *) xine_xmalloc (sizeof (real_class_t));
 
@@ -715,44 +609,7 @@ static void *init_class (xine_t *xine, void *data) {
   this->decoder_class.get_description = get_description;
   this->decoder_class.dispose         = dispose_class;
 
-  /* try some auto-detection */
-
-  if (!stat ("/usr/local/RealPlayer8/Codecs/drv3.so.6.0", &s)) 
-    default_real_codec_path = "/usr/local/RealPlayer8/Codecs";
-  if (!stat ("/usr/RealPlayer8/Codecs/drv3.so.6.0", &s)) 
-    default_real_codec_path = "/usr/RealPlayer8/Codecs";
-  if (!stat ("/usr/lib/RealPlayer8/Codecs/drv3.so.6.0", &s)) 
-    default_real_codec_path = "/usr/lib/RealPlayer8/Codecs";
-  if (!stat ("/opt/RealPlayer8/Codecs/drv3.so.6.0", &s)) 
-    default_real_codec_path = "/opt/RealPlayer8/Codecs";
-  if (!stat ("/usr/lib/RealPlayer9/users/Real/Codecs/drv3.so.6.0", &s)) 
-    default_real_codec_path = "/usr/lib/RealPlayer9/users/Real/Codecs";
-  if (!stat ("/usr/lib/RealPlayer10/codecs/drvc.so", &s)) 
-    default_real_codec_path = "/usr/lib/RealPlayer10/codecs";
-  if (!stat ("/usr/lib64/RealPlayer8/Codecs/drv3.so.6.0", &s)) 
-    default_real_codec_path = "/usr/lib64/RealPlayer8/Codecs";
-  if (!stat ("/usr/lib64/RealPlayer9/users/Real/Codecs/drv3.so.6.0", &s)) 
-    default_real_codec_path = "/usr/lib64/RealPlayer9/users/Real/Codecs";
-  if (!stat ("/usr/lib64/RealPlayer10/codecs/drvc.so", &s)) 
-    default_real_codec_path = "/usr/lib64/RealPlayer10/codecs";
-  if (!stat ("/usr/lib/codecs/drv3.so.6.0", &s)) 
-    default_real_codec_path = "/usr/lib/codecs";
-  if (!stat ("/usr/lib/win32/drv3.so.6.0", &s)) 
-    default_real_codec_path = "/usr/lib/win32";
-  
-  real_codec_path = config->register_string (config, "decoder.external.real_codecs_path", 
-					     default_real_codec_path,
-					     _("path to RealPlayer codecs"),
-					     _("If you have RealPlayer installed, specify the path "
-					       "to its codec directory here. You can easily find "
-					       "the codec directory by looking for a file named "
-					       "\"drv3.so.6.0\" in it. If xine can find the RealPlayer "
-					       "codecs, it will use them to decode RealPlayer content "
-					       "for you. Consult the xine FAQ for more information on "
-					       "how to install the codecs."),
-					     10, NULL, this);
-  
-  lprintf ("real codec path : %s\n",  real_codec_path);
+  _x_real_codecs_init(xine);
 
   return this;
 }
@@ -765,13 +622,7 @@ static uint32_t audio_types[] = {
   BUF_AUDIO_COOK, BUF_AUDIO_ATRK, /* BUF_AUDIO_14_4, BUF_AUDIO_28_8, */ BUF_AUDIO_SIPRO, 0
  };
 
-static const decoder_info_t dec_info_audio = {
+const decoder_info_t dec_info_realaudio = {
   audio_types,         /* supported types */
-  5                    /* priority        */
-};
-
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_AUDIO_DECODER | PLUGIN_MUST_PRELOAD, 15, "realadec", XINE_VERSION_CODE, &dec_info_audio, init_class },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  7                    /* priority        */
 };

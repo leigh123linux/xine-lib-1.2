@@ -9,7 +9,7 @@ dnl
 
 AC_DEFUN([AC_OPTIMIZATIONS], [
   AC_ARG_ENABLE([optimizations],
-    AC_HELP_STRING([--disable-optimizations], [Don't try to guess what optimization to enable]))
+    AS_HELP_STRING([--disable-optimizations], [Don't try to guess what optimization to enable]))
 
   if test "x$enable_optimizations" != "xno"; then
     INLINE_FUNCTIONS=-finline-functions
@@ -17,11 +17,6 @@ AC_DEFUN([AC_OPTIMIZATIONS], [
     if test "$GCC" = yes; then
         dnl
         dnl check cflags not supported by all gcc versions
-        dnl eg: -mpreferred-stack-boundary=2 and 2.91.66,
-        dnl and gcc-2.7.2.3 support a bit less options
-        dnl
-        AC_TRY_CFLAGS("-mpreferred-stack-boundary=2",
-            m_psb="-mpreferred-stack-boundary=2", m_psb="")
         AC_TRY_CFLAGS("-fschedule-insns2", f_si="-fschedule-insns2", f_si="")
         AC_TRY_CFLAGS("-mwide-multiply", m_wm="-mwide-multiply", m_wm="")
         dnl
@@ -58,7 +53,7 @@ AC_DEFUN([AC_OPTIMIZATIONS], [
         AC_MSG_CHECKING(for sane -Wpointer-arith)
         SAVE_CFLAGS="$CFLAGS"
         CFLAGS="-O2 -Wpointer-arith -Werror $CFLAGS"
-        AC_TRY_COMPILE([#include <string.h>],[int a; memset(&a, 0, sizeof(int));],
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <string.h>]], [[int a; memset(&a, 0, sizeof(int));]])],
             [AC_MSG_RESULT(yes); CFLAGS="-Wpointer-arith $SAVE_CFLAGS"],
             [AC_MSG_RESULT(no);  CFLAGS="$SAVE_CFLAGS"]);
 
@@ -67,8 +62,7 @@ AC_DEFUN([AC_OPTIMIZATIONS], [
 
         AC_MSG_CHECKING(for gcc 3.4.0 or later)
         newGCC="`"$CC" -dumpversion |
-                awk 'BEGIN { FS = "." };
-                      1 { if ((@S|@1 * 10000 + @S|@2 * 100 + @S|@3) >= 30400) { print "yes" } }'
+                awk -F. '{ if ((@S|@1 * 10000 + @S|@2 * 100 + @S|@3) >= 30400) { print "yes" } }'
                 `"
         AC_MSG_RESULT(${newGCC:-no - assuming bugginess in -finline-functions})
         test "$newGCC" = yes || INLINE_FUNCTIONS=-fno-inline-functions

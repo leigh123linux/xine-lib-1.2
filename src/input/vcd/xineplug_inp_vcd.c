@@ -1,5 +1,5 @@
 /*
-  $Id: xineplug_inp_vcd.c,v 1.50 2006/07/10 22:08:29 dgp85 Exp $
+  $Id: xineplug_inp_vcd.c,v 1.53 2007/02/08 02:40:23 dsalt Exp $
  
   Copyright (C) 2002, 2003, 2004, 2005 Rocky Bernstein <rocky@panix.com>
   
@@ -322,6 +322,7 @@ vcd_build_mrl_list(vcd_input_class_t *class, char *vcd_device)
   unsigned int n, i=0;
   unsigned int i_entries;
   vcdinfo_obj_t *p_vcdinfo;
+  int was_open;
 
   if (NULL == class) {
     LOG_MSG("%s", _("was passed a null class parameter"));
@@ -331,7 +332,7 @@ vcd_build_mrl_list(vcd_input_class_t *class, char *vcd_device)
   vcdplayer = &(my_vcd.player);
 
   /* If VCD already open, we gotta close and stop it. */
-  if (vcdplayer->b_opened) {
+  if ((was_open = vcdplayer->b_opened)) {
     vcd_close(class);
   }
 
@@ -374,6 +375,8 @@ vcd_build_mrl_list(vcd_input_class_t *class, char *vcd_device)
   if (NULL == class->mrls) {
     LOG_ERR("Can't calloc %d MRL entries", class->num_mrls);
     class->num_mrls = 0;
+    if (!was_open)
+      vcdio_close(vcdplayer);
     return false;
   }
 
@@ -445,6 +448,8 @@ vcd_build_mrl_list(vcd_input_class_t *class, char *vcd_device)
             class->mrl_track_offset, class->mrl_entry_offset, 
             class->mrl_play_offset,  class->mrl_segment_offset);
   
+  if (!was_open)
+    vcdio_close(vcdplayer);
   return true;
 }
 
@@ -1290,7 +1295,7 @@ vcd_get_optional_data (input_plugin_t *this_gen,
 
       dbg_print(INPUT_DBG_EXT, "AUDIO CHANNEL = %d\n", channel);
       if (channel == (uint8_t)-1) {
-        sprintf(data, " %s", "auto");
+        strcpy(data, "auto");
       } else {
         const vcdinfo_obj_t *p_vcdinfo= my_vcd.player.vcd;
         unsigned int audio_type;
@@ -1315,9 +1320,9 @@ vcd_get_optional_data (input_plugin_t *this_gen,
       channel = (int8_t) _x_get_spu_channel(my_vcd.stream);
       dbg_print(INPUT_DBG_EXT, "SPU CHANNEL = %d\n", channel);
       if (-1 == channel) {
-        sprintf(data, " %s", "auto");
+        strcpy(data, "auto");
       } else {
-        sprintf(data, " %1d", channel);
+        sprintf(data, "%1d", channel);
       }
       
     }
@@ -1824,9 +1829,9 @@ _("The VCD play unit to use when none is specified in an MRL, e.g. "
     
     
     class->vcd_device = 
-      strdup (config->register_string(config, 
+      strdup (config->register_filename(config, 
                               "media.vcd.device",
-                              "",
+                              "", XINE_CONFIG_STRING_IS_DEVICE_NAME,
           _("CD-ROM drive used for VCD when none given"),
 _("What to use if no drive specified. If the setting is empty, xine will scan for CD drives."), 
                               20,

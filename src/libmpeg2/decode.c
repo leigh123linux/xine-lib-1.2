@@ -130,7 +130,7 @@ static inline void get_frame_duration (mpeg2dec_t * mpeg2dec, vo_frame_t *frame)
       (mpeg2dec->rff_pattern & 0xff) == 0x55) &&
       !mpeg2dec->picture->progressive_sequence ) {
     /* special case for ntsc 3:2 pulldown */
-    duration *= 5 / 4;
+    duration *= 5.0 / 4.0;
   }
   else
   {  
@@ -139,7 +139,7 @@ static inline void get_frame_duration (mpeg2dec_t * mpeg2dec, vo_frame_t *frame)
            frame->progressive_frame ) {
         /* decoder should output 3 fields, so adjust duration to
            count on this extra field time */
-        duration *= 3 / 2;
+        duration *= 3.0 / 2.0;
       } else if( mpeg2dec->picture->progressive_sequence ) {
         /* for progressive sequences the output should repeat the
            frame 1 or 2 times depending on top_field_first flag. */

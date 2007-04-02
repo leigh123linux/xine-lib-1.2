@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: video_out_xxmc.c,v 1.22 2006/07/10 22:08:44 dgp85 Exp $
+ * $Id: video_out_xxmc.c,v 1.23 2007/03/25 23:13:53 dgp85 Exp $
  *
  * video_out_xxmc.c, X11 decoding accelerated video extension interface for xine
  *
@@ -607,6 +607,11 @@ static XvImage *create_ximage (xxmc_driver_t *this, XShmSegmentInfo *shminfo,
 			       int width, int height, int format) {
   unsigned int  xv_format;
   XvImage      *image = NULL;
+
+  if (width <= 0)
+    width = 1;
+  if (height <= 0)
+    height = 1;
 
   if (this->use_pitch_alignment) {
     width = (width + 7) & ~0x7;

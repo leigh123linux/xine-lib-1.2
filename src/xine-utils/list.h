@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: list.h,v 1.4 2006/09/26 05:19:49 dgp85 Exp $
+ * $Id: list.h,v 1.5 2007/02/19 23:34:32 dgp85 Exp $
  *
  * Doubly-linked linked list.
  *
@@ -33,7 +33,7 @@
  *     xine_list_iterator_t ite = xine_list_front(list);
  *     while (ite) {
  *       _useful code here_
- *       ite = xine_list_iterator_next(ite);
+ *       ite = xine_list_next(list, ite);
  *     }
  *
  * The list elements are managed using memory chunks and a free list. The first

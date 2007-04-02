@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: xine_goom.c,v 1.63 2006/10/23 21:13:44 hadess Exp $
+ * $Id: xine_goom.c,v 1.65 2007/02/20 00:58:51 dgp85 Exp $
  *
  * GOOM post plugin.
  *
@@ -43,7 +43,7 @@
 
 #include "goom.h"
 
-#define NUMSAMPLES  512
+#define NUMSAMPLES  512 /* hardcoded into goom api */
 #define FPS          14
 
 #define GOOM_WIDTH  320
@@ -83,7 +83,7 @@ struct post_plugin_goom_s {
   PluginInfo        *goom;
   
   int data_idx;
-  gint16 data [2][512];
+  gint16 data [2][NUMSAMPLES];
   audio_buffer_t buf;   /* dummy buffer just to hold a copy of audio data */
   
   int channels;
@@ -218,7 +218,7 @@ static void *goom_init_plugin(xine_t *xine, void *data)
   
 
   cfg->register_enum (cfg, "effects.goom.csc_method", 0,
-                           (char **)goom_csc_methods,
+                           goom_csc_methods,
                            _("colorspace conversion method"),
                            _("You can choose the colorspace conversion method used by goom.\n"
 			     "The available selections should be self-explaining."),
@@ -386,6 +386,7 @@ static int goom_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream,
   this->sample_rate = rate;
   this->samples_per_frame = rate / this->fps;
   this->data_idx = 0;
+  this->sample_counter = 0;
   init_yuv_planes(&this->yuv, this->width, this->height);
   this->skip_frame = 0;
   
@@ -445,7 +446,6 @@ static void goom_port_put_buffer (xine_audio_port_t *port_gen,
   buf = &this->buf; 
 
   this->sample_counter += buf->num_frames;
-  
   j = (this->channels >= 2) ? 1 : 0;
 
   do {
@@ -455,7 +455,7 @@ static void goom_port_put_buffer (xine_audio_port_t *port_gen,
       data8 += samples_used * this->channels;
   
       /* scale 8 bit data to 16 bits and convert to signed as well */
-      for( i = 0; i < buf->num_frames && this->data_idx < NUMSAMPLES;
+      for( i = samples_used; i < buf->num_frames && this->data_idx < NUMSAMPLES;
            i++, this->data_idx++, data8 += this->channels ) {
         this->data[0][this->data_idx] = ((int16_t)data8[0] << 8) - 0x8000;
         this->data[1][this->data_idx] = ((int16_t)data8[j] << 8) - 0x8000;
@@ -464,16 +464,15 @@ static void goom_port_put_buffer (xine_audio_port_t *port_gen,
       data = buf->mem;
       data += samples_used * this->channels;
   
-      for( i = 0; i < buf->num_frames && this->data_idx < NUMSAMPLES;
+      for( i = samples_used; i < buf->num_frames && this->data_idx < NUMSAMPLES;
            i++, this->data_idx++, data += this->channels ) {
         this->data[0][this->data_idx] = data[0];
         this->data[1][this->data_idx] = data[j];
       }
     }
   
-    if( this->sample_counter >= this->samples_per_frame &&
-        this->data_idx == NUMSAMPLES ) {
-      this->data_idx = 0;
+    if( this->sample_counter >= this->samples_per_frame ) {
+    
       samples_used += this->samples_per_frame;
 
       frame = this->vo_port->get_frame (this->vo_port, this->width_back, this->height_back,
@@ -481,14 +480,23 @@ static void goom_port_put_buffer (xine_audio_port_t *port_gen,
                                         VO_BOTH_FIELDS);
       
       frame->extra_info->invalid = 1;
-      frame->bad_frame = 0;
+      
+      /* frame is marked as bad if we don't have enough samples for 
+       * updating the viz plugin (calculations may be skipped).
+       * we must keep the framerate though. */
+      if( this->data_idx == NUMSAMPLES ) {
+        frame->bad_frame = 0;
+        this->data_idx = 0;
+      } else {
+        frame->bad_frame = 1;
+      }
       frame->duration = 90000 * this->samples_per_frame / this->sample_rate;
       frame->pts = pts;
       this->metronom->got_video_frame(this->metronom, frame);
       
       this->sample_counter -= this->samples_per_frame;
 
-      if (!this->skip_frame) {
+      if (!this->skip_frame && !frame->bad_frame) {
         /* Try to be fast */
         goom_frame = (uint8_t *)goom_update (this->goom, this->data, 0, 0, NULL, NULL);
 

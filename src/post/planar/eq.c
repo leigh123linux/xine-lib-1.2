@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: eq.c,v 1.14 2006/02/04 14:06:52 miguelfreitas Exp $
+ * $Id: eq.c,v 1.15 2007/03/22 23:32:05 dgp85 Exp $
  *
  * mplayer's eq (soft video equalizer)
  * Copyright (C) Richard Felker
@@ -52,7 +52,7 @@ static void process_MMX(unsigned char *dest, int dstride, unsigned char *src, in
 			"movq (%6), %%mm4 \n\t"
 			"pxor %%mm0, %%mm0 \n\t"
 			"movl %4, %%eax\n\t"
-                       ".balign 16 \n\t"
+			ASMALIGN(4)
 			"1: \n\t"
 			"movq (%0), %%mm1 \n\t"
 			"movq (%0), %%mm2 \n\t"

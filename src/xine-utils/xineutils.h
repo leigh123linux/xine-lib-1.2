@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: xineutils.h,v 1.105 2006/10/16 22:18:24 valtri Exp $
+ * $Id: xineutils.h,v 1.107 2006/12/25 15:16:33 dgp85 Exp $
  *
  */
 #ifndef XINEUTILS_H
@@ -847,6 +847,7 @@ void xine_hexdump (const char *buf, int length) XINE_PROTECTED;
       do {                                                                  \
         LONG_LOG_MODULE_STRING                                              \
         printf(fmt, ##args);                                                \
+        fflush(stdout);                                                     \
       } while(0)
   #else /* __GNUC__ */
     #ifdef _MSC_VER
@@ -854,12 +855,14 @@ void xine_hexdump (const char *buf, int length) XINE_PROTECTED;
         do {                                                                \
           LONG_LOG_MODULE_STRING                                            \
           printf("%s", fmtargs);                                            \
+          fflush(stdout);                                                   \
         } while(0)
     #else /* _MSC_VER */
-      #define lprintf(fmt, ...)                                             \
+      #define lprintf(...)                                                  \
         do {                                                                \
           LONG_LOG_MODULE_STRING                                            \
           printf(__VA_ARGS__);                                              \
+          fflush(stdout);                                                   \
         } while(0)
     #endif  /* _MSC_VER */
   #endif /* __GNUC__ */

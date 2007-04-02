@@ -19,7 +19,7 @@
  */
 
 /*
- * $Id: demux_elem.c,v 1.89 2006/07/10 22:08:13 dgp85 Exp $
+ * $Id: demux_elem.c,v 1.91 2007/02/20 00:34:55 dgp85 Exp $
  *
  * demultiplexer for elementary mpeg streams
  */
@@ -73,7 +73,7 @@ static int demux_mpeg_elem_next (demux_mpeg_elem_t *this, int preview_mode) {
   buf = this->video_fifo->buffer_pool_alloc(this->video_fifo);
   blocksize = (this->blocksize ? this->blocksize : buf->max_size);
   done = this->input->read(this->input, buf->mem, blocksize);
-  lprintf ("read size = %lld\n", done);
+  lprintf ("read size = %"PRId64"\n", done);
 
   if (done <= 0) {
     buf->free_buffer (buf);
@@ -160,7 +160,7 @@ static int demux_mpeg_elem_seek (demux_plugin_t *this_gen,
       this->status = DEMUX_FINISHED;
       return this->status;
     }
-    lprintf ("seeking to %lld\n", start_pos);
+    lprintf ("seeking to %"PRId64"\n", start_pos);
   }
 
   /*
@@ -225,7 +225,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   break;
 
   case METHOD_BY_EXTENSION: {
-    char *extensions, *mrl;
+    const char *extensions, *mrl;
 
     mrl = input->get_mrl (input);
     extensions = class_gen->get_extensions (class_gen);
@@ -261,19 +261,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "Elementary MPEG stream demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "MPEG_ELEM";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return "mpv";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return NULL;
 }
 

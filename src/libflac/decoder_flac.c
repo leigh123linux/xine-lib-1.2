@@ -30,6 +30,13 @@
 
 #include <FLAC/stream_decoder.h>
 
+#if !defined FLAC_API_VERSION_CURRENT || FLAC_API_VERSION_CURRENT < 8
+#include <FLAC/seekable_stream_decoder.h>
+#define LEGACY_FLAC
+#else
+#undef LEGACY_FLAC
+#endif
+
 #define LOG_MODULE "flac_decoder"
 #define LOG_VERBOSE
 
@@ -344,6 +351,7 @@ open_plugin (audio_decoder_class_t *class_gen, xine_stream_t *stream) {
 
     this->flac_decoder = FLAC__stream_decoder_new();
 
+#ifdef LEGACY_FLAC
     FLAC__stream_decoder_set_read_callback     (this->flac_decoder,
                                                 flac_read_callback);
     FLAC__stream_decoder_set_write_callback    (this->flac_decoder,
@@ -355,10 +363,26 @@ open_plugin (audio_decoder_class_t *class_gen, xine_stream_t *stream) {
 
     FLAC__stream_decoder_set_client_data (this->flac_decoder, this);
 
-    if (FLAC__stream_decoder_init (this->flac_decoder) == FLAC__STREAM_DECODER_SEARCH_FOR_METADATA) {
+    if (FLAC__stream_decoder_init (this->flac_decoder) != FLAC__STREAM_DECODER_SEARCH_FOR_METADATA) {
 	    free (this);
 	    return NULL;
     }
+#else
+    if ( FLAC__stream_decoder_init_stream (this->flac_decoder,
+					   flac_read_callback,
+					   NULL, /* seek */
+					   NULL, /* tell */
+					   NULL, /* length */
+					   NULL, /* eof */
+					   flac_write_callback,
+					   NULL, /* metadata */
+					   flac_error_callback,
+					   this
+					   ) != FLAC__STREAM_DECODER_INIT_STATUS_OK ) {
+	    free (this);
+	    return NULL;
+    }
+#endif
 
     return (audio_decoder_t *) this;
 }

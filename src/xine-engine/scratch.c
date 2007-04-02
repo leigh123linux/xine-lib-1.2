@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: scratch.c,v 1.22 2006/10/18 18:46:17 hadess Exp $
+ * $Id: scratch.c,v 1.24 2007/01/19 00:12:22 dgp85 Exp $
  *
  * top-level xine functions
  *
@@ -47,6 +47,8 @@ static void __attribute__((__format__(__printf__, 2, 0)))
   struct tm tm;
   size_t l;
 
+  pthread_mutex_lock (&this->lock);
+
   time (&t);
   localtime_r (&t, &tm);
 
@@ -61,37 +63,46 @@ static void __attribute__((__format__(__printf__, 2, 0)))
 
   lprintf ("printing format %s to line %d\n", format, this->cur);
   this->cur = (this->cur + 1) % this->num_lines;
+
+  pthread_mutex_unlock (&this->lock);
 }
 
-static const char **scratch_get_content (scratch_buffer_t *this) {
+static char **scratch_get_content (scratch_buffer_t *this) {
   int i, j;
+
+  pthread_mutex_lock (&this->lock);
 
   for(i = 0, j = (this->cur - 1); i < this->num_lines; i++, j--) {
 
     if(j < 0)
       j = (this->num_lines - 1);
 
-    this->ordered[i] = this->lines[j];
+    free (this->ordered[i]);
+    this->ordered[i] = this->lines[j] ? strdup (this->lines[j]) : NULL;
     lprintf ("line %d contains >%s<\n", i , this->lines[j]);
   }
 
+  pthread_mutex_unlock (&this->lock);
   return this->ordered;
 
 }
 
 static void scratch_dispose (scratch_buffer_t *this) {
-  char *mem;
   int   i;
   
-  mem = (char *) this->lines[0];
-  
+  pthread_mutex_lock (&this->lock);
+
   for(i = 0; i < this->num_lines; i++ ) {
+    free(this->ordered[i]);
     free(this->lines[i]);
-    this->lines[i] = NULL;
   }
   
   free (this->lines);
   free (this->ordered);
+
+  pthread_mutex_unlock (&this->lock);
+  pthread_mutex_destroy (&this->lock);
+
   free (this);
 }
 
@@ -104,16 +115,15 @@ scratch_buffer_t *_x_new_scratch_buffer (int num_lines) {
   this->lines   = xine_xmalloc (sizeof (char *) * (num_lines + 1));
   this->ordered = xine_xmalloc (sizeof (char *) * (num_lines + 1));
 
-  for (i = 0; i < num_lines; i++)
-    this->lines[i] = NULL;
+  for (i = 0; i <= num_lines; i++)
+    this->lines[i] = this->ordered[i] = NULL;
 
-  this->ordered[i]     = NULL;
-  this->lines[i]       = NULL;
   this->scratch_printf = scratch_printf;
   this->get_content    = scratch_get_content;
   this->dispose        = scratch_dispose;
   this->num_lines      = num_lines;
   this->cur            = 0;
+  pthread_mutex_init (&this->lock, NULL);
 
   return this;
 }

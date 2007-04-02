@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: video_out_xshm.c,v 1.148 2006/10/28 18:51:08 miguelfreitas Exp $
+ * $Id: video_out_xshm.c,v 1.150 2007/03/25 23:13:53 dgp85 Exp $
  * 
  * video_out_xshm.c, X11 shared memory extension interface for xine
  *
@@ -87,7 +87,6 @@ typedef struct {
 
   yuv2rgb_t         *yuv2rgb; /* yuv2rgb converter set up for this frame */
   uint8_t           *rgb_dst;
-  int                yuv_stride;
 
 } xshm_frame_t;
 
@@ -105,8 +104,6 @@ typedef struct {
   int                use_shm;
   XColor             black;
   
-  int                yuv2rgb_mode;
-  int                yuv2rgb_swap;
   int                yuv2rgb_brightness;
   int                yuv2rgb_contrast;
   int                yuv2rgb_saturation;
@@ -177,6 +174,11 @@ static void x11_DeInstallXErrorHandler (xshm_driver_t *this) {
 static XImage *create_ximage (xshm_driver_t *this, XShmSegmentInfo *shminfo, 
 			      int width, int height) {
   XImage *myimage = NULL;
+
+  if (width <= 0)
+    width = 1;
+  if (height <= 0)
+    height = 1;
 
   if (this->use_shm) {
 
@@ -585,7 +587,6 @@ static void xshm_update_frame_format (vo_driver_t *this_gen,
 				 frame->sc.output_width,
 				 frame->sc.output_height,
 				 frame->image->bytes_per_line*2);
-      frame->yuv_stride = frame->image->bytes_per_line*2;
       break;
     case VO_BOTH_FIELDS:
       frame->yuv2rgb->configure (frame->yuv2rgb,
@@ -596,7 +597,6 @@ static void xshm_update_frame_format (vo_driver_t *this_gen,
 				 frame->sc.output_width,
 				 frame->sc.output_height,
 				 frame->image->bytes_per_line);
-      frame->yuv_stride = frame->image->bytes_per_line;
       break;
     }
   }
@@ -1255,8 +1255,6 @@ static vo_driver_t *xshm_open_plugin_2 (video_driver_class_t *class_gen, const v
     return NULL;
   }
   
-  this->yuv2rgb_mode  = mode;
-  this->yuv2rgb_swap  = swapped;
   this->yuv2rgb_brightness = 0;
   this->yuv2rgb_contrast   = 128;
   this->yuv2rgb_saturation = 128;

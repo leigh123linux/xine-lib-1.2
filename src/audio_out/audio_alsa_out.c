@@ -26,7 +26,7 @@
  * (c) 2001 James Courtier-Dutton <James@superbug.demon.co.uk>
  *
  * 
- * $Id: audio_alsa_out.c,v 1.165 2006/09/08 20:40:34 miguelfreitas Exp $
+ * $Id: audio_alsa_out.c,v 1.168 2007/02/25 22:33:25 miguelfreitas Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -162,7 +162,6 @@ static int my_snd_mixer_wait(snd_mixer_t *mixer, int timeout) {
 static void *ao_alsa_handle_event_thread(void *data) {
   alsa_driver_t  *this = (alsa_driver_t *) data;
 
-  this->mixer.running = 1;
   do {
 
     if(my_snd_mixer_wait(this->mixer.handle, 333) > 0) {
@@ -665,6 +664,15 @@ static int ao_alsa_delay (ao_driver_t *this_gen)  {
   printf("audio_alsa_out:delay:ENTERED\n");
 #endif
   err=snd_pcm_delay( this->audio_fd, &delay );
+
+  int state = snd_pcm_state(this->audio_fd);
+
+  /* check for idle states, which need to be handled as delay=0 */
+  if(state == SND_PCM_STATE_PREPARED || state == SND_PCM_STATE_PAUSED ||
+     state == SND_PCM_STATE_OPEN || SND_PCM_STATE_XRUN) {
+      return 0;
+  }
+
 #ifdef LOG_DEBUG
   printf("audio_alsa_out:delay:delay all=%ld err=%d\n",delay, err);
   gettimeofday(&now, 0);
@@ -1292,6 +1300,8 @@ static void ao_alsa_mixer_init(ao_driver_t *this_gen) {
   if (send_events && found) {
     pthread_attr_t       pth_attrs;
     struct sched_param   pth_params;
+  
+    this->mixer.running = 1;
 
     pthread_attr_init(&pth_attrs);
     
@@ -1321,7 +1331,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   char                *pcm_device;
   snd_pcm_hw_params_t *params;
   /* for usability reasons, keep this in sync with audio_oss_out.c */
-  static char         *speaker_arrangement[] = {"Mono 1.0", "Stereo 2.0", "Headphones 2.0", "Stereo 2.1",
+  static const char   *speaker_arrangement[] = {"Mono 1.0", "Stereo 2.0", "Headphones 2.0", "Stereo 2.1",
     "Surround 3.0", "Surround 4.0", "Surround 4.1", "Surround 5.0", "Surround 5.1", "Surround 6.0",
     "Surround 6.1", "Surround 7.1", "Pass Through", NULL};
   #define MONO		0
@@ -1503,6 +1513,13 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   if (!(snd_pcm_hw_params_test_format(this->audio_fd, params, SND_PCM_FORMAT_FLOAT))) {
     this->capabilities |= AO_CAP_FLOAT32;
     xprintf(class->xine, XINE_VERBOSITY_LOG, _("32bit "));
+  }
+  if (0 == (this->capabilities & (AO_CAP_FLOAT32 | AO_CAP_24BITS | AO_CAP_16BITS | AO_CAP_8BITS))) {
+    xprintf (this->class->xine, XINE_VERBOSITY_DEBUG,
+        "\naudio_alsa_out: no supported PCM format found\n");
+    snd_pcm_close(this->audio_fd);
+    free(this);
+    return NULL;
   }
   if (!(snd_pcm_hw_params_test_channels(this->audio_fd, params, 1))) {
     this->capabilities |= AO_CAP_MODE_MONO;

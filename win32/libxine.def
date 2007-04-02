@@ -26,13 +26,6 @@ xine_hexdump
 xine_list_new
 xine_list_free
 xine_list_is_empty
-xine_list_first_content
-xine_list_next_content
-xine_list_last_content
-xine_list_prev_content
-xine_list_append_content
-xine_list_insert_content
-xine_list_delete_current
 
 xine_buffer_init
 _xine_buffer_free

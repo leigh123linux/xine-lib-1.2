@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: demux.h,v 1.39 2005/02/06 15:26:00 tmattern Exp $
+ * $Id: demux.h,v 1.40 2007/01/19 00:26:39 dgp85 Exp $
  */
 
 #ifndef HAVE_DEMUX_H
@@ -58,19 +58,19 @@ struct demux_class_s {
   /*
    * return human readable (verbose = 1 line) description for this plugin
    */
-  char* (*get_description) (demux_class_t *this);
+  const char* (*get_description) (demux_class_t *this);
 
   /*
    * return human readable identifier for this plugin
    */
 
-  char* (*get_identifier) (demux_class_t *this);
+  const char* (*get_identifier) (demux_class_t *this);
   
   /*
    * return MIME types supported for this plugin
    */
 
-  char* (*get_mimetypes) (demux_class_t *this);
+  const char* (*get_mimetypes) (demux_class_t *this);
 
   /*
    * return ' ' seperated list of file extensions this
@@ -79,7 +79,7 @@ struct demux_class_s {
    * file selection dialogs)
    */
 
-  char* (*get_extensions) (demux_class_t *this);
+  const char* (*get_extensions) (demux_class_t *this);
 
   /*
    * close down, free all resources

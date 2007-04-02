@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: mms.h,v 1.12 2006/06/20 01:46:41 dgp85 Exp $
+ * $Id: mms.h,v 1.13 2007/01/03 15:09:42 klan Exp $
  *
  * libmms public header
  */
@@ -40,6 +40,8 @@ void     mms_close (mms_t *this);
 size_t   mms_peek_header (mms_t *this, char *data, size_t maxsize);
 
 off_t    mms_get_current_pos (mms_t *this);
+
+void     mms_set_start_time (mms_t *this, int time_offset);
 
 #endif
 

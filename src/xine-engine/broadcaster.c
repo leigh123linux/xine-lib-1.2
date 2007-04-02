@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: broadcaster.c,v 1.12 2006/06/20 00:18:44 dgp85 Exp $
+ * $Id: broadcaster.c,v 1.15 2007/01/19 01:23:06 dgp85 Exp $
  * 
  * broadcaster.c - xine network broadcaster
  *
@@ -305,7 +305,10 @@ static void audio_put_cb (fifo_buffer_t *fifo, buf_element_t *buf, void *this_ge
 broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port)
 {
   broadcaster_t *this;
-  struct sockaddr_in servAddr;
+  union {
+    struct sockaddr_in in;
+    struct sockaddr sa;
+  } servAddr;
   int msock, err;
   
   msock = socket(PF_INET, SOCK_STREAM, 0);
@@ -314,11 +317,11 @@ broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port)
     xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "broadcaster: error opening master socket.\n");
     return NULL;
   }
-  servAddr.sin_family = AF_INET;
-  servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  servAddr.sin_port = htons(port);
+  servAddr.in.sin_family = AF_INET;
+  servAddr.in.sin_addr.s_addr = htonl(INADDR_ANY);
+  servAddr.in.sin_port = htons(port);
 
-  if(bind(msock, (struct sockaddr *) &servAddr, sizeof(servAddr))<0)
+  if(bind(msock, &servAddr.sa, sizeof(servAddr.in))<0)
   {
     xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "broadcaster: error binding to port %d\n", port);
     return NULL;

@@ -19,7 +19,7 @@
  */
 
 /*
- * $Id: demux_ogg.c,v 1.171 2006/11/10 14:53:23 dgp85 Exp $
+ * $Id: demux_ogg.c,v 1.177 2007/03/29 19:38:51 dgp85 Exp $
  *
  * demultiplexer for ogg streams
  *
@@ -126,17 +126,20 @@ typedef struct demux_ogg_s {
   input_plugin_t       *input;
   int                   status;
 
+  int                   frame_duration;
+
 #ifdef HAVE_THEORA
   theora_info           t_info;
   theora_comment        t_comment;
 #endif
 
-  int                   frame_duration;
-
   ogg_sync_state        oy;
   ogg_page              og;
 
   int64_t               start_pts;
+  int64_t               last_pts[2];
+
+  int                   time_length;
 
   int                   num_streams;
   stream_info_t        *si[MAX_STREAMS];   /* stream info */
@@ -148,16 +151,14 @@ typedef struct demux_ogg_s {
 
   off_t                 avg_bitrate;
 
-  int64_t               last_pts[2];
-  int                   send_newpts;
-  int                   buf_flag_seek;
-  int                   keyframe_needed;
-  int                   ignore_keyframes;
-  int                   time_length;
-
   char                 *title;
   chapter_info_t       *chapter_info;
   xine_event_queue_t   *event_queue;
+
+  uint8_t               send_newpts:1;
+  uint8_t               buf_flag_seek:1;
+  uint8_t               keyframe_needed:1;
+  uint8_t               ignore_keyframes:1;
 } demux_ogg_t ;
 
 typedef struct {
@@ -536,7 +537,11 @@ static void update_chapter_display (demux_ogg_t *this, int stream_num, ogg_packe
     if (chapter >= 0) {
       char t_title[256];
 
-      snprintf(t_title, sizeof (t_title), "%s / %s", this->title, this->chapter_info->entries[chapter].name);
+      if (this->title) {
+        snprintf(t_title, sizeof (t_title), "%s / %s", this->title, this->chapter_info->entries[chapter].name);
+      } else {
+        snprintf(t_title, sizeof (t_title), "%s", this->chapter_info->entries[chapter].name);
+      }
       title = t_title;
     } else {
       title = this->title;
@@ -714,7 +719,7 @@ static void send_ogg_buf (demux_ogg_t *this,
 
     buf->size = 12 + op->bytes + 1;
 
-    lprintf ("CMML stream %d (bytes=%ld): PTS %lld: %s\n",
+    lprintf ("CMML stream %d (bytes=%ld): PTS %"PRId64": %s\n",
              stream_num, op->bytes, buf->pts, str);
 
     this->video_fifo->put (this->video_fifo, buf);
@@ -1861,9 +1866,7 @@ static int format_lang_string (demux_ogg_t * this, uint32_t buf_mask, uint32_t b
   for (stream_num=0; stream_num<this->num_streams; stream_num++) {
     if ((this->si[stream_num]->buf_types & buf_mask) == buf_type) {
       if (this->si[stream_num]->language) {
-        strncpy (str, this->si[stream_num]->language, XINE_LANG_MAX);
-        str[XINE_LANG_MAX - 1] = '\0';
-        if (strlen(this->si[stream_num]->language) >= XINE_LANG_MAX)
+        if (snprintf (str, XINE_LANG_MAX, "%s", this->si[stream_num]->language) >= XINE_LANG_MAX)
           /* the string got truncated */
           str[XINE_LANG_MAX - 2] = str[XINE_LANG_MAX - 3] = str[XINE_LANG_MAX - 4] = '.';
         /* TODO: provide long version in XINE_META_INFO_FULL_LANG */
@@ -1926,7 +1929,7 @@ static int detect_ogg_content (int detection_method, demux_class_t *class_gen,
     }
 
     case METHOD_BY_EXTENSION: {
-      char *extensions, *mrl;
+      const char *extensions, *mrl;
 
       mrl = input->get_mrl (input);
       extensions = class_gen->get_extensions (class_gen);
@@ -1988,7 +1991,7 @@ static int detect_anx_content (int detection_method, demux_class_t *class_gen,
 #undef ANNODEX_SIGNATURE_SEARCH
 
     case METHOD_BY_EXTENSION: {
-      char *extensions, *mrl;
+      const char *extensions, *mrl;
 
       mrl = input->get_mrl (input);
       extensions = class_gen->get_extensions (class_gen);
@@ -2099,19 +2102,19 @@ static demux_plugin_t *ogg_open_plugin (demux_class_t *class_gen,
  * Annodex demuxer class
  */
 
-static char *anx_get_description (demux_class_t *this_gen) {
+static const char *anx_get_description (demux_class_t *this_gen) {
   return "Annodex demux plugin";
 }
  
-static char *anx_get_identifier (demux_class_t *this_gen) {
+static const char *anx_get_identifier (demux_class_t *this_gen) {
   return "Annodex";
 }
 
-static char *anx_get_extensions (demux_class_t *this_gen) {
+static const char *anx_get_extensions (demux_class_t *this_gen) {
   return "anx axa axv";
 }
 
-static char *anx_get_mimetypes (demux_class_t *this_gen) {
+static const char *anx_get_mimetypes (demux_class_t *this_gen) {
   return "application/x-annodex: ogg: Annodex media;";
 }
 
@@ -2140,22 +2143,23 @@ static void *anx_init_class (xine_t *xine, void *data) {
  * ogg demuxer class
  */
 
-static char *ogg_get_description (demux_class_t *this_gen) {
+static const char *ogg_get_description (demux_class_t *this_gen) {
   return "OGG demux plugin";
 }
  
-static char *ogg_get_identifier (demux_class_t *this_gen) {
+static const char *ogg_get_identifier (demux_class_t *this_gen) {
   return "OGG";
 }
 
-static char *ogg_get_extensions (demux_class_t *this_gen) {
+static const char *ogg_get_extensions (demux_class_t *this_gen) {
   return "ogg ogm spx";
 }
 
-static char *ogg_get_mimetypes (demux_class_t *this_gen) {
+static const char *ogg_get_mimetypes (demux_class_t *this_gen) {
   return "audio/x-ogg: ogg: OggVorbis Audio;"
          "audio/x-speex: ogg: Speex Audio;"
-         "application/x-ogg: ogg: OggVorbis Audio;";
+         "application/x-ogg: ogg: Ogg Stream;"
+         "application/ogg: ogg: Ogg Stream;";
 }
 
 static void ogg_class_dispose (demux_class_t *this_gen) {

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: array.c,v 1.3 2006/09/26 05:19:49 dgp85 Exp $
+ * $Id: array.c,v 1.4 2007/02/03 16:31:55 dsalt Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -78,7 +78,7 @@ void xine_array_delete(xine_array_t *array) {
   free(array);
 }
 
-size_t xine_array_size(xine_array_t *array) {
+size_t xine_array_size(const xine_array_t *array) {
   return array->size;
 }
 
@@ -116,7 +116,7 @@ void xine_array_remove(xine_array_t *array, unsigned int position) {
   }
 }
 
-void *xine_array_get(xine_array_t *array, unsigned int position) {
+void *xine_array_get(const xine_array_t *array, unsigned int position) {
   if (position < array->size)
     return array->chunk[position];
   else

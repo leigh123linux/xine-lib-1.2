@@ -31,7 +31,7 @@ to read from. Valid MRLs may be plain file names or one of the following:
 .TP
 \(bu CD and DVD:
 .br
-.BI dvd:/[<DVD_image>|<device_name>][/<title>.<part>]
+.BI dvd:/[<DVD_image>|<DVD_directory>|<device_name>][/<title>.<part>]
 .br
 .BI vcd://[<CD_image>|<device_name>][@[letter]<number>]
 .br
@@ -52,7 +52,7 @@ to read from. Valid MRLs may be plain file names or one of the following:
 .br
 .BI dvbt://<channel_name>:<tuning_parameters>
 .br
-.BI pvr://... "for WinTV PVR 250 and 350)"
+.BR pvr:/<tmp_files_path>!<saved_files_path>!<max_page_age> " (for WinTV PVR 250 and 350)"
 .LP
 .TP
 \(bu Network:

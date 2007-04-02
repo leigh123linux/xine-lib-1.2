@@ -62,7 +62,13 @@ endif
 CONFIGURE_FLAGS := --prefix=/usr \
 	--mandir=\$${prefix}/share/man \
 	--with-external-libmad \
+	--with-external-ffmpeg \
+	--with-external-a52dec \
+	--with-external-libdts \
+	--disable-cacatest \
 	$(DEB_BUILD_CONFIG_OPTIONS) \
+	FFMPEG_CFLAGS="`pkg-config --cflags libavcodec`" \
+	FFMPEG_LIBS="`pkg-config --libs libavcodec`" \
 	CFLAGS="$(CFLAGS)"
 
 configure: configure-stamp
@@ -97,8 +103,9 @@ clean:
 	rm -f build-stamp configure-stamp po/*.gmo po/stamp-po
 	-$(MAKE) distclean
 	# remove more cruft leftover by autohell
+	rm -f doc/faq/faq.html doc/faq/faq.txt doc/hackersguide/hackersguide.html m4/caca.m4
 	-test -f .noauto || find . -name Makefile.in -print | xargs rm
-	test -f .noauto || rm -rf compile config.guess configure depcomp install-sh ltmain.sh missing
+	test -f .noauto || rm -rf compile config.guess configure depcomp install-sh ltmain.sh missing aclocal.m4 config.h.in
 	dh_clean
 
 install: build
@@ -116,10 +123,11 @@ binary-indep: build install
 binary-arch: build install
 	dh_testdir
 	dh_testroot
-	#
-	#ugly hack, documentation should never have been in /u/s/d/xine/...
+	mkdir -p debian/tmp/usr/share/bug/libxine${major}/
+	cp debian/reportbug.presubj debian/tmp/usr/share/bug/libxine${major}/presubj
+# 	ugly hack, documentation should never have been in /u/s/d/xine/...
 	mv debian/tmp/usr/share/doc/xine debian/tmp/usr/share/doc/libxine${major}
-	# build libxine${major} package by moving files from libxine-dev
+#	build libxine${major} package by moving files from libxine-dev
 	dh_install --autodest --sourcedir=debian/tmp --list-missing
 	dh_installdocs
 	dh_installchangelogs -k ChangeLog
@@ -127,7 +135,7 @@ binary-arch: build install
 	dh_strip --dbg-package=libxine1
 	dh_compress
 	dh_fixperms
-	dh_makeshlibs -V 'libxine1 (>= 1.1.1+cvs20060621-1)'
+	dh_makeshlibs -V 'libxine1 (>= 1.1.2-5)'
 	dh_installdeb
 	chmod +x debian/shlibdeps.sh
 	debian/shlibdeps.sh libxine${major}
@@ -137,3 +145,42 @@ binary-arch: build install
 
 binary: binary-indep binary-arch
 .PHONY: build clean binary-indep binary-arch binary install configure
+
+# this target is used to strip out libffmpeg, libfaad & libmad
+# Canonical has concerns distributing them on the live/desktop cd
+strip-non-main-stuff: clean
+	rm -rf src/libffmpeg
+	rm -rf src/libfaad
+	rm -rf src/libmad
+	cat configure.ac \
+		| grep -v "^src/libffmpeg" \
+		| grep -v "^src/libfaad" \
+		| grep -v "^src/libmad" \
+		> configure.ac.bak
+	mv configure.ac.bak configure.ac
+	cat src/Makefile.am \
+		| grep -v "ffmpeg" \
+		| grep -v "libmad" \
+		| grep -v "faad" \
+		> src/Makefile.am.bak
+	mv src/Makefile.am.bak src/Makefile.am
+	@echo stripped things unsuitable for ubuntu/main
+	@echo make sure that the tree still builds
+
+# use this target on an ``unstripped'' xine-lib tarball
+# to generate an orig.tar.gz suitable for ubuntu-main:
+
+# be sure to increase the 'repacked' level in debian/changelog
+
+UPSTREAM_VERSION=$(shell dpkg-parsechangelog | grep ^Version | sed "s/Version: //" | sed "s/-.$$//")
+get-orig-source:
+#	this monstrum works for me, please double check it before using!
+	current_dir=$(shell basename $(PWD)) ; cd .. ; \
+	tar cz --exclude .bzr --exclude debian \
+		-f xine-lib_$(UPSTREAM_VERSION).orig.tar.gz \
+		$$current_dir
+
+get-ubuntu-orig-source: strip-non-main-stuff get-orig-source
+get-cvs-orig-source: get-cvs-orig-source
+
+.PHONY: strip-non-main-stuff get-ubuntu-orig-source get-cvs-orig-source get-orig-source

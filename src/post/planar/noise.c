@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: noise.c,v 1.3 2006/03/26 14:45:41 valtri Exp $
+ * $Id: noise.c,v 1.4 2007/03/22 23:32:05 dgp85 Exp $
  *
  * mplayer's noise filter, ported by Jason Tackaberry.  Original filter
  * is copyright 2002 Michael Niedermayer <michaelni@gmx.at>
@@ -159,7 +159,7 @@ static inline void lineNoise_MMX(uint8_t *dst, uint8_t *src, int8_t *noise, int 
         "pcmpeqb %%mm7, %%mm7       \n\t"
         "psllw $15, %%mm7       \n\t"
         "packsswb %%mm7, %%mm7      \n\t"
-        ".balign 16         \n\t"
+	ASMALIGN(4)
         "1:             \n\t"
         "movq (%0, %%"REG_a"), %%mm0    \n\t"
         "movq (%1, %%"REG_a"), %%mm1    \n\t"
@@ -186,7 +186,7 @@ static inline void lineNoise_MMX2(uint8_t *dst, uint8_t *src, int8_t *noise, int
         "pcmpeqb %%mm7, %%mm7       \n\t"
         "psllw $15, %%mm7       \n\t"
         "packsswb %%mm7, %%mm7      \n\t"
-        ".balign 16         \n\t"
+	ASMALIGN(4)
         "1:             \n\t"
         "movq (%0, %%"REG_a"), %%mm0    \n\t"
         "movq (%1, %%"REG_a"), %%mm1    \n\t"
@@ -225,7 +225,7 @@ static inline void lineNoiseAvg_MMX(uint8_t *dst, uint8_t *src, int len, int8_t 
 
     asm volatile(
         "mov %5, %%"REG_a"      \n\t"
-        ".balign 16         \n\t"
+	ASMALIGN(4)
         "1:             \n\t"
         "movq (%1, %%"REG_a"), %%mm1    \n\t"
         "movq (%0, %%"REG_a"), %%mm0    \n\t"

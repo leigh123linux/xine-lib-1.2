@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: mms.c,v 1.63 2006/09/16 08:13:51 tmattern Exp $
+ * $Id: mms.c,v 1.65 2007/02/20 00:34:56 dgp85 Exp $
  *
  * MMS over TCP protocol
  *   based on work from major mms
@@ -144,7 +144,17 @@ struct mms_s {
   int           eos;
 
   uint8_t       live_flag;
+  
+  uint8_t       playing; 
+  double        start_time;
 };
+
+
+#define D2Q(d) ({\
+  union { double db; long long qw; } _tmp;\
+  _tmp.db = d;\
+  _tmp.qw;\
+})\
 
 
 static void mms_buffer_init (mms_buffer_t *mms_buffer, char *buffer) {
@@ -177,6 +187,20 @@ static void mms_buffer_put_32 (mms_buffer_t *mms_buffer, uint32_t value) {
   mms_buffer->buffer[mms_buffer->pos + 3] = (value  >> 24) & 0xff;
 
   mms_buffer->pos += 4;
+}
+
+static void mms_buffer_put_64 (mms_buffer_t *mms_buffer, uint64_t value) {
+
+  mms_buffer->buffer[mms_buffer->pos]     = value          & 0xff;
+  mms_buffer->buffer[mms_buffer->pos + 1] = (value  >> 8)  & 0xff;
+  mms_buffer->buffer[mms_buffer->pos + 2] = (value  >> 16) & 0xff;
+  mms_buffer->buffer[mms_buffer->pos + 3] = (value  >> 24) & 0xff;
+  mms_buffer->buffer[mms_buffer->pos + 4] = (value  >> 32) & 0xff;
+  mms_buffer->buffer[mms_buffer->pos + 5] = (value  >> 40) & 0xff;
+  mms_buffer->buffer[mms_buffer->pos + 6] = (value  >> 48) & 0xff;
+  mms_buffer->buffer[mms_buffer->pos + 7] = (value  >> 56) & 0xff;
+
+  mms_buffer->pos += 8;
 }
 
 
@@ -361,7 +385,7 @@ static int get_packet_header (mms_t *this, mms_packet_header_t *header) {
   return packet_type;
   
 error:
-  lprintf("read error, len=%d\n", len);
+  lprintf("read error, len=%zd\n", len);
   return MMS_PACKET_ERR;
 }
 
@@ -839,11 +863,13 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   report_progress (stream, 80);
 
   /* command 0x07 */
+  /* moved to mms_read() */
+#if 0
   {
     mms_buffer_t command_buffer;
     mms_buffer_init(&command_buffer, this->scmd_body);
     mms_buffer_put_32 (&command_buffer, 0x00000000);                  /* 64 byte float timestamp */
-    mms_buffer_put_32 (&command_buffer, 0x00000000);                  
+    mms_buffer_put_32 (&command_buffer, 0x00000000);
     mms_buffer_put_32 (&command_buffer, 0xFFFFFFFF);                  /* ?? */
     mms_buffer_put_32 (&command_buffer, 0xFFFFFFFF);                  /* first packet sequence */
     mms_buffer_put_8  (&command_buffer, 0xFF);                        /* max stream time limit (3 bytes) */
@@ -857,6 +883,7 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
       goto fail;
     }
   }
+#endif
 
   report_progress (stream, 100);
 
@@ -1052,9 +1079,33 @@ int mms_read (mms_t *this, char *data, int len) {
       this->asf_header_read += n;
       total += n;
       this->current_pos += n;
+      
+      if (this->asf_header_read == this->asf_header_len)
+        break;
     } else {
 
       int n, bytes_left ;
+      
+      if (!this->playing) {
+        /* send command 0x07 with initial timestamp */
+        mms_buffer_t command_buffer;
+        mms_buffer_init(&command_buffer, this->scmd_body);
+        mms_buffer_put_64 (&command_buffer, D2Q(this->start_time));       /* 64 byte float timestamp */
+        mms_buffer_put_32 (&command_buffer, 0xFFFFFFFF);                  /* ?? */
+        mms_buffer_put_32 (&command_buffer, 0xFFFFFFFF);                  /* first packet sequence */
+        mms_buffer_put_8  (&command_buffer, 0xFF);                        /* max stream time limit (3 bytes) */
+        mms_buffer_put_8  (&command_buffer, 0xFF);
+        mms_buffer_put_8  (&command_buffer, 0xFF);
+        mms_buffer_put_8  (&command_buffer, 0x00);                        /* stream time limit flag */
+        mms_buffer_put_32 (&command_buffer, ASF_MEDIA_PACKET_ID_TYPE);    /* asf media packet id type */
+        if (!send_command (this, 0x07, 1, 0x0001FFFF, command_buffer.pos)) {
+          xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
+                  "libmms: failed to send command 0x07\n");
+          this->eos = 1;
+          break;
+        }
+        this->playing = 1;
+      }
 
       bytes_left = this->buf_size - this->buf_read;
       if (bytes_left == 0) {
@@ -1111,3 +1162,9 @@ uint32_t mms_get_length (mms_t *this) {
 off_t mms_get_current_pos (mms_t *this) {
   return this->current_pos;
 }
+
+void mms_set_start_time (mms_t *this, int time_offset) {
+  if (time_offset >= 0)
+    this->start_time = (double) time_offset / 1000.0;
+}
+

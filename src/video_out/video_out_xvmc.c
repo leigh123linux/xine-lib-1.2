@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: video_out_xvmc.c,v 1.28 2006/07/10 22:08:44 dgp85 Exp $
+ * $Id: video_out_xvmc.c,v 1.29 2007/03/25 23:07:23 dgp85 Exp $
  * 
  * video_out_xvmc.c, X11 video motion compensation extension interface for xine
  *
@@ -1074,7 +1074,7 @@ static int xvmc_set_property (vo_driver_t *this_gen,
       if ((value >= XINE_VO_ZOOM_MIN) && (value <= XINE_VO_ZOOM_MAX)) {
         this->props[property].value = value;
         xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
-		 "video_out_xv: VO_PROP_ZOOM_X = %d\n", this->props[property].value);
+		 "video_out_xvmc: VO_PROP_ZOOM_X = %d\n", this->props[property].value);
 
 	this->sc.zoom_factor_x = (double)value / (double)XINE_VO_ZOOM_STEP;
 	xvmc_compute_ideal_size (this);
@@ -1086,7 +1086,7 @@ static int xvmc_set_property (vo_driver_t *this_gen,
       if ((value >= XINE_VO_ZOOM_MIN) && (value <= XINE_VO_ZOOM_MAX)) {
         this->props[property].value = value;
         xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
-		 "video_out_xv: VO_PROP_ZOOM_Y = %d\n", this->props[property].value);
+		 "video_out_xvmc: VO_PROP_ZOOM_Y = %d\n", this->props[property].value);
 
 	this->sc.zoom_factor_y = (double)value / (double)XINE_VO_ZOOM_STEP;
 	xvmc_compute_ideal_size (this);

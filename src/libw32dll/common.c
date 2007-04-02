@@ -13,7 +13,7 @@ static char *get_win32_codecs_path(config_values_t *cfg) {
                                      NULL };
   int                 i = 0;
 
-  cfgpath = cfg->register_string (cfg, "decoder.external.win32_codecs_path", WIN32_PATH,
+  cfgpath = cfg->register_filename (cfg, "decoder.external.win32_codecs_path", WIN32_PATH, XINE_CONFIG_STRING_IS_DIRECTORY_NAME,
 					 _("path to Win32 codecs"),
 					 _("If you have the Windows or Apple Quicktime codec packs "
 					   "installed, specify the path the codec directory here. "

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: input_vcd.c,v 1.85 2006/07/10 22:08:16 dgp85 Exp $
+ * $Id: input_vcd.c,v 1.89 2007/03/16 16:32:58 dgp85 Exp $
  *
  */
 
@@ -25,7 +25,6 @@
 #include "config.h"
 #endif
 
-#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -34,6 +33,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <string.h>
+#include <netinet/in.h>
 #ifdef HAVE_LINUX_CDROM_H
 # include <linux/cdrom.h>
 #endif
@@ -813,7 +813,7 @@ static void vcd_plugin_dispose (input_plugin_t *this_gen ) {
   free (this);
 }
 
-static char* vcd_plugin_get_mrl (input_plugin_t *this_gen) {
+static const char* vcd_plugin_get_mrl (input_plugin_t *this_gen) {
   vcd_input_plugin_t *this = (vcd_input_plugin_t *) this_gen;
 
   return this->mrl;
@@ -919,7 +919,7 @@ static input_plugin_t *vcd_class_get_instance (input_class_t *cls_gen, xine_stre
  * vcd input plugin class stuff
  */
 
-static char *vcd_class_get_description (input_class_t *this_gen) {
+static const char *vcd_class_get_description (input_class_t *this_gen) {
   return _("Video CD input plugin");
 }
 
@@ -1094,7 +1094,7 @@ static void *init_class (xine_t *xine, void *data) {
   this->input_class.dispose            = vcd_class_dispose;
   this->input_class.eject_media        = vcd_class_eject_media;
 
-  this->device = config->register_string (config, "media.vcd.device", CDROM,
+  this->device = config->register_filename (config, "media.vcd.device", CDROM, XINE_CONFIG_STRING_IS_DEVICE_NAME,
 					  _("device used for VCD playback"),
 					  _("The path to the device, usually a CD or DVD drive, "
 					    "you intend to play your VideoCDs with."),

@@ -102,6 +102,12 @@
 #  define KERNING_DEFAULT ft_kerning_default
 #endif
 
+#ifdef ENABLE_ANTIALIASING
+#  define FT_LOAD_FLAGS   FT_LOAD_DEFAULT
+#else
+#  define FT_LOAD_FLAGS  (FT_LOAD_DEFAULT | FT_LOAD_NO_HINTING)
+#endif
+
 typedef struct osd_fontchar_s {
   uint16_t code;
   uint16_t width;
@@ -194,7 +200,7 @@ static int _osd_show (osd_object_t *osd, int64_t vpts, int unscaled ) {
   int x, y, required;
   uint8_t *c;
 
-  lprintf("osd=%p vpts=%lld\n", osd, vpts);
+  lprintf("osd=%p vpts=%"PRId64"\n", osd, vpts);
   
   this->stream->xine->port_ticket->acquire(this->stream->xine->port_ticket, 1);
   
@@ -341,7 +347,7 @@ static int _osd_hide (osd_object_t *osd, int64_t vpts) {
   osd_renderer_t *this = osd->renderer;
   video_overlay_manager_t *ovl_manager;
   
-  lprintf("osd=%p vpts=%lld\n",osd, vpts);
+  lprintf("osd=%p vpts=%"PRId64"\n",osd, vpts);
       
   if( osd->handle < 0 )
     return 0;
@@ -1171,7 +1177,7 @@ static int osd_render_text (osd_object_t *osd, int x1, int y1,
       }
       previous = i;
 
-      if (FT_Load_Glyph(osd->ft2->face, i, FT_LOAD_DEFAULT)) {
+      if (FT_Load_Glyph(osd->ft2->face, i, FT_LOAD_FLAGS)) {
         xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("osd: error loading glyph\n"));
         continue;
       }
@@ -1475,7 +1481,16 @@ static void osd_free_object (osd_object_t *osd_to_close) {
   while( osd ) {
     if ( osd == osd_to_close ) {
       free( osd->area );
-      if( osd->ft2 ) free( osd->ft2 );
+
+#ifdef HAVE_FT2
+      if( osd->ft2 ) {
+	if ( osd->ft2->library )
+	  FT_Done_FreeType(osd->ft2->library);
+
+	free( osd->ft2 );
+      }
+#endif
+
       osd_free_encoding(osd);
       
       if( last )

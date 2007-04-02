@@ -7,11 +7,11 @@ AC_DEFUN([AM_PATH_LIBFAME],
 [dnl 
 dnl Get the cflags and libraries from the libfame-config script
 dnl
-AC_ARG_WITH(libfame-prefix, AC_HELP_STRING([--with-libfame-prefix=DIR], [prefix where libfame is installed (optional)]),
+AC_ARG_WITH(libfame-prefix, AS_HELP_STRING([--with-libfame-prefix=DIR], [prefix where libfame is installed (optional)]),
             libfame_config_prefix="$withval", libfame_config_prefix="")
-AC_ARG_WITH(libfame-exec-prefix, AC_HELP_STRING([--with-libfame-exec-prefix=DIR], [exec prefix where libfame is installed (optional)]),
+AC_ARG_WITH(libfame-exec-prefix, AS_HELP_STRING([--with-libfame-exec-prefix=DIR], [exec prefix where libfame is installed (optional)]),
             libfame_config_exec_prefix="$withval", libfame_config_exec_prefix="")
-AC_ARG_ENABLE(libfametest, AC_HELP_STRING([--disable-libfametest], [do not try to compile and run a test libfame program]),
+AC_ARG_ENABLE(libfametest, AS_HELP_STRING([--disable-libfametest], [do not try to compile and run a test libfame program]),
             enable_libfametest=$enableval, enable_libfametest=yes)
 
   if test x$libfame_config_exec_prefix != x ; then

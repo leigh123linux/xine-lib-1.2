@@ -31,14 +31,16 @@ AC_DEFUN([AM_PATH_DVDNAV],
 dnl Get the cflags and libraries from the dvdnav-config script
 dnl
 AC_ARG_WITH(dvdnav-prefix,
-    AC_HELP_STRING([--with-dvdnav-prefix=DIR], [prefix where DVDNAV is installed (optional)]),
+    AS_HELP_STRING([--with-dvdnav-prefix=DIR], [prefix where DVDNAV is installed (optional)]),
             dvdnav_config_prefix="$withval", dvdnav_config_prefix="")
 AC_ARG_WITH(dvdnav-exec-prefix,
-    AC_HELP_STRING([--with-dvdnav-exec-prefix=DIR], [exec prefix where DVDNAV is installed (optional)]),
+    AS_HELP_STRING([--with-dvdnav-exec-prefix=DIR], [exec prefix where DVDNAV is installed (optional)]),
             dvdnav_config_exec_prefix="$withval", dvdnav_config_exec_prefix="")
 AC_ARG_ENABLE(dvdnavtest, 
-    AC_HELP_STRING([--disable-dvdnavtest], [do not try to compile and run a test DVDNAV program]),
+    AS_HELP_STRING([--disable-dvdnavtest], [do not try to compile and run a test DVDNAV program]),
             enable_dvdnavtest=$enableval, enable_dvdnavtest=yes)
+
+  AC_LANG_PUSH([C])
 
   if test x$dvdnav_config_exec_prefix != x ; then
      dvdnav_config_args="$dvdnav_config_args --exec-prefix=$dvdnav_config_exec_prefix"
@@ -80,10 +82,8 @@ dnl
 dnl Now check if the installed DVDNAV is sufficiently new. (Also sanity
 dnl checks the results of dvdnav-config to some extent
 dnl
-      AC_LANG_SAVE()
-      AC_LANG_C()
       rm -f conf.dvdnavtest
-      AC_TRY_RUN([
+      AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <dvdnav.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -126,11 +126,13 @@ main ()
   }
   return 1;
 }
-],, no_dvdnav=yes,
-         AC_TRY_LINK([
+]])],[],[no_dvdnav=yes],[no_dvdnav=cc])
+       if test "x$no_dvdnav" = xcc; then
+         AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <dvdnav.h>
 #include <stdio.h>
-],       [ return 0; ],, no_dvdnav=yes))
+]], [[ return 0; ]])],[no_dvdnav=''],[no_dvdnav=yes])
+       fi
        CFLAGS="$ac_save_CFLAGS"
        LIBS="$ac_save_LIBS"
      fi
@@ -152,10 +154,10 @@ main ()
           echo "*** Could not run DVDNAV test program, checking why..."
           CFLAGS="$CFLAGS $DVDNAV_CFLAGS"
           LIBS="$LIBS $DVDNAV_LIBS"
-          AC_TRY_LINK([
+          AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <dvdnav.h>
 #include <stdio.h>
-],      [ return 0; ],
+]], [[ return 0; ]])],
         [ echo "*** The test program compiled, but did not run. This usually means"
           echo "*** that the run-time linker is not finding DVDNAV or finding the wrong"
           echo "*** version of DVDNAV. If it is not finding DVDNAV, you'll need to set your"
@@ -180,6 +182,6 @@ main ()
   fi
   AC_SUBST(DVDNAV_CFLAGS)
   AC_SUBST(DVDNAV_LIBS)
-  AC_LANG_RESTORE()
+  AC_LANG_POP([C])
   rm -f conf.dvdnavtest
 ])

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: demux_sputext.c,v 1.49 2006/07/10 22:08:30 dgp85 Exp $
+ * $Id: demux_sputext.c,v 1.53 2007/01/19 01:05:25 dgp85 Exp $
  *
  * code based on old libsputext/xine_decoder.c
  *
@@ -727,7 +727,7 @@ static subtitle_t *sub_read_line_aqt (demux_sputext_t *this, subtitle_t *current
   sub_readtext((char *) &line,&current->text[1]);
   current->lines = 2;
   
-  if ((current->text[0]=="") && (current->text[1]=="")) {
+  if ((current->text[0][0]==0) && (current->text[1][0]==0)) {
     return NULL;
   }
   
@@ -915,7 +915,8 @@ static subtitle_t *sub_read_line_jacobsub(demux_sputext_t *this, subtitle_t *cur
 			return NULL;
 		    trail_space(directive);
 		    strncat(line2, directive,
-			    (LINE_LEN > 511) ? LINE_LEN : 511);
+			    ((LINE_LEN > 511) ? LINE_LEN-1 : 511)
+			    - strlen(line2));
 		    break;
 		}
 	    default:
@@ -1403,10 +1404,8 @@ static demux_plugin_t *open_demux_plugin (demux_class_t *class_gen, xine_stream_
   switch (stream->content_detection_method) {
   case METHOD_BY_EXTENSION:
     {
-      char *mrl, *ending;
-      
-      mrl = input->get_mrl(input);
-      ending = strrchr(mrl, '.');
+      const char *const mrl = input->get_mrl(input);
+      const char *const ending = strrchr(mrl, '.');
 
       if (!ending || (
 	  (strncasecmp(ending, ".asc", 4) != 0) &&
@@ -1451,19 +1450,19 @@ static demux_plugin_t *open_demux_plugin (demux_class_t *class_gen, xine_stream_
   return NULL;
 }
   
-static char *get_demux_description (demux_class_t *this_gen) {
+static const char *get_demux_description (demux_class_t *this_gen) {
   return "sputext demuxer plugin";
 }
 
-static char *get_demux_identifier (demux_class_t *this_gen) {
+static const char *get_demux_identifier (demux_class_t *this_gen) {
   return "sputext";
 }
 
-static char *get_demux_extensions (demux_class_t *this_gen) {
+static const char *get_demux_extensions (demux_class_t *this_gen) {
   return "asc txt sub srt smi ssa";
 }
 
-static char *get_demux_mimetypes (demux_class_t *this_gen) {
+static const char *get_demux_mimetypes (demux_class_t *this_gen) {
   return NULL;
 
   /* do not report this mimetype, it might confuse browsers. */

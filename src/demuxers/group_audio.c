@@ -19,7 +19,7 @@
  *
  * This file contains plugin entries for several demuxers used in games
  *
- * $Id: group_audio.c,v 1.24 2006/07/10 22:08:13 dgp85 Exp $
+ * $Id: group_audio.c,v 1.26 2007/03/03 02:06:09 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -36,7 +36,7 @@
  */
 
 static const demuxer_info_t demux_info_aac = {
-  0                       /* priority */
+  -1                      /* priority */
 };
 
 static const demuxer_info_t demux_info_ac3 = {
@@ -87,6 +87,10 @@ static const demuxer_info_t demux_info_snd = {
   10                       /* priority */
 };
 
+static const demuxer_info_t demux_info_tta = {
+  10                       /* priority */
+};
+
 static const demuxer_info_t demux_info_voc = {
   10                       /* priority */
 };
@@ -120,6 +124,7 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_DEMUX, 26, "realaudio", XINE_VERSION_CODE, &demux_info_realaudio, demux_realaudio_init_plugin },
   { PLUGIN_DEMUX, 26, "shn",       XINE_VERSION_CODE, &demux_info_shn,       demux_shn_init_plugin },
   { PLUGIN_DEMUX, 26, "snd",       XINE_VERSION_CODE, &demux_info_snd,       demux_snd_init_plugin },
+  { PLUGIN_DEMUX, 26, "tta",       XINE_VERSION_CODE, &demux_info_tta,       demux_tta_init_plugin },
   { PLUGIN_DEMUX, 26, "voc",       XINE_VERSION_CODE, &demux_info_voc,       demux_voc_init_plugin },
   { PLUGIN_DEMUX, 26, "vox",       XINE_VERSION_CODE, &demux_info_vox,       demux_vox_init_plugin },
   { PLUGIN_DEMUX, 26, "wav",       XINE_VERSION_CODE, &demux_info_wav,       demux_wav_init_plugin },

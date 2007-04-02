@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: xine_interface.c,v 1.99 2006/10/16 06:29:38 dgp85 Exp $
+ * $Id: xine_interface.c,v 1.104 2007/03/26 11:48:01 dgp85 Exp $
  *
  * convenience/abstraction layer, functions to implement
  * libxine's public interface
@@ -100,7 +100,23 @@ const char* xine_config_register_string (xine_t *self,
 					cb_data);
 
 }
+
+const char* xine_config_register_filename (xine_t *self,
+					   const char *key,
+					   const char *def_value,
+					   int req_type,
+					   const char *description,
+					   const char *help,
+					   int   exp_level,
+					   xine_config_cb_t changed_cb,
+					   void *cb_data) {
   
+  return self->config->register_filename (self->config,
+					  key, def_value, req_type,
+					  description, help, exp_level,
+					  changed_cb, cb_data);
+}
+
 int xine_config_register_range (xine_t *self,
 				const char *key,
 				int def_value,
@@ -325,6 +341,24 @@ int xine_port_send_gui_data (xine_video_port_t *vo,
 						  type, data);
 }
 
+static void send_audio_amp_event_internal(xine_stream_t *stream)
+{
+  xine_event_t            event;
+  xine_audio_level_data_t data;
+
+  data.left
+    = data.right
+    = stream->audio_out->get_property (stream->audio_out, AO_PROP_AMP);
+  data.mute
+    = stream->audio_out->get_property (stream->audio_out, AO_PROP_AMP_MUTE);
+
+  event.type        = XINE_EVENT_AUDIO_AMP_LEVEL;
+  event.data        = &data;
+  event.data_length = sizeof (data);
+
+  xine_event_send(stream, &event);
+}
+
 void xine_set_param (xine_stream_t *stream, int param, int value) {
   /* Avoid crashing */
   if ( ! stream ) {
@@ -396,15 +430,21 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
     
   case XINE_PARAM_AUDIO_AMP_LEVEL:
     stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
-    if (stream->audio_out)
-      stream->audio_out->set_property (stream->audio_out, AO_PROP_AMP, value);
+    if (stream->audio_out) {
+      int old_value = stream->audio_out->get_property (stream->audio_out, AO_PROP_AMP);
+      if (old_value != stream->audio_out->set_property (stream->audio_out, AO_PROP_AMP, value))
+        send_audio_amp_event_internal(stream);
+    }
     stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
     break;
 
   case XINE_PARAM_AUDIO_AMP_MUTE:
     stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
-    if (stream->audio_out)
-      stream->audio_out->set_property (stream->audio_out, AO_PROP_AMP_MUTE, value);
+    if (stream->audio_out) {
+      int old_value = stream->audio_out->get_property (stream->audio_out, AO_PROP_AMP_MUTE);
+      if (old_value != stream->audio_out->set_property (stream->audio_out, AO_PROP_AMP_MUTE, value))
+        send_audio_amp_event_internal(stream);
+    }
     stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
     break;
 
@@ -913,7 +953,7 @@ int _x_message(xine_stream_t *stream, int type, ...) {
   va_list                 ap;
   char                   *s, *params;
   char                   *args[1025];
-  static char            *std_explanation[] = {
+  static const char      *std_explanation[] = {
     "",
     N_("Warning:"),
     N_("Unknown host:"),

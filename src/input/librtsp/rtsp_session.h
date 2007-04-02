@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: rtsp_session.h,v 1.6 2003/12/09 00:02:31 f1rmb Exp $
+ * $Id: rtsp_session.h,v 1.7 2006/12/18 21:31:47 klan Exp $
  *
  * high level interface to rtsp servers.
  */
@@ -28,6 +28,8 @@
 typedef struct rtsp_session_s rtsp_session_t;
 
 rtsp_session_t *rtsp_session_start(xine_stream_t *stream, char *mrl);
+
+void rtsp_session_set_start_time(rtsp_session_t *this, int start_time);
 
 int rtsp_session_read(rtsp_session_t *session, char *data, int len);
 

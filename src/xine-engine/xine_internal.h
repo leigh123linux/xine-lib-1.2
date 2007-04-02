@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: xine_internal.h,v 1.179 2006/10/02 15:56:06 valtri Exp $
+ * $Id: xine_internal.h,v 1.181 2007/01/18 23:28:46 dgp85 Exp $
  *
  */
 
@@ -118,6 +118,7 @@ struct xine_s {
 
 #ifdef XINE_ENGINE_INTERNAL
   xine_ticket_t             *port_ticket;
+  pthread_mutex_t            log_lock;
 #endif
 };
 
@@ -415,7 +416,7 @@ void _x_demux_control_end          (xine_stream_t *stream, uint32_t flags) XINE_
 int _x_demux_start_thread          (xine_stream_t *stream) XINE_PROTECTED;
 int _x_demux_stop_thread           (xine_stream_t *stream) XINE_PROTECTED;
 int _x_demux_read_header           (input_plugin_t *input, unsigned char *buffer, off_t size) XINE_PROTECTED;
-int _x_demux_check_extension       (char *mrl, char *extensions) XINE_PROTECTED;
+int _x_demux_check_extension       (const char *mrl, const char *extensions) XINE_PROTECTED;
 
 off_t _x_read_abort (xine_stream_t *stream, int fd, char *buf, off_t todo) XINE_PROTECTED;
 

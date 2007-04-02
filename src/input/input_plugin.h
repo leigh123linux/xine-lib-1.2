@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: input_plugin.h,v 1.60 2005/10/14 21:02:16 miguelfreitas Exp $
+ * $Id: input_plugin.h,v 1.64 2007/01/19 01:05:25 dgp85 Exp $
  */
 
 #ifndef HAVE_INPUT_PLUGIN_H
@@ -60,7 +60,7 @@ struct input_class_s {
    * return human readable (verbose = 1 line) description for 
    * this plugin class
    */
-  char* (*get_description) (input_class_t *this);
+  const char* (*get_description) (input_class_t *this);
 
   /*
    * ls function, optional: may be NULL
@@ -201,7 +201,7 @@ struct input_plugin_s {
   /*
    * return current MRL
    */
-  char * (*get_mrl) (input_plugin_t *this);
+  const char * (*get_mrl) (input_plugin_t *this);
 
 
   /*
@@ -296,6 +296,7 @@ struct input_plugin_s {
  */
 
 #define INPUT_CAP_RIP_FORBIDDEN        0x00000100
+
 
 #define INPUT_IS_SEEKABLE(input) (((input)->get_capabilities(input) & INPUT_CAP_SEEKABLE) != 0)
 

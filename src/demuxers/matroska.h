@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2003 the xine project
+ * Copyright (C) 2000-2007 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: matroska.h,v 1.10 2006/11/14 07:09:46 molivier Exp $
+ * $Id: matroska.h,v 1.11 2007/01/07 12:33:50 molivier Exp $
  *
  */
 #ifndef MATROSKA_H
@@ -224,6 +224,7 @@ struct matroska_track_s {
   uint8_t                 *codec_private;
   uint32_t                 codec_private_len;
   int                      default_flag;
+  uint32_t                 compress_algo;
   
   uint32_t                 buf_type;
   fifo_buffer_t           *fifo;
@@ -304,5 +305,13 @@ struct matroska_track_s {
 #define MATROSKA_TRACK_LOGO              0x10
 #define MATROSKA_TRACK_SUBTITLE          0x11
 #define MATROSKA_TRACK_CONTROL           0x20
+
+/* compression algorithms */
+#define MATROSKA_COMPRESS_ZLIB           0x00
+#define MATROSKA_COMPRESS_BZLIB          0x01
+#define MATROSKA_COMPRESS_LZO1X          0x02
+#define MATROSKA_COMPRESS_HEADER_STRIP   0x03
+#define MATROSKA_COMPRESS_UNKNOWN        0xFFFFFFFE  /* Xine internal type */
+#define MATROSKA_COMPRESS_NONE           0xFFFFFFFF  /* Xine internal type */
 
 #endif /* MATROSKA_H */

@@ -20,7 +20,7 @@
  * Simple MPEG-ES parser/framer by Thibaut Mattern (tmattern@noos.fr)
  *   based on libmpeg2 decoder.
  *
- * $Id: mpeg_parser.h,v 1.2 2004/09/21 19:27:18 tmattern Exp $
+ * $Id: mpeg_parser.h,v 1.5 2007/03/29 18:52:45 dgp85 Exp $
  */
 #ifndef HAVE_MPEG_PARSER_H
 #define HAVE_MPEG_PARSER_H
@@ -37,23 +37,26 @@
 #define D_TYPE 4
 
 typedef struct mpeg_parser_s {
-  uint32_t        shift;
-  int             is_sequence_needed;
-  uint8_t         chunk_buffer[BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE];
+  uint8_t        *chunk_buffer;
   uint8_t        *chunk_ptr;
   uint8_t        *chunk_start;
+  uint32_t        shift;
   int             buffer_size;
   uint8_t         code;
   uint8_t         picture_coding_type;
-  int             rate_code;
+
+  uint8_t         is_sequence_needed:1;
+  uint8_t         is_mpeg1:1;     /* public */
+  uint8_t         has_sequence:1; /* public */
+  uint8_t         in_slice:1;
+
+  uint8_t         rate_code:4;
+ 
   int             aspect_ratio_info;
-  int             in_slice;
 
   /* public properties */
-  int             is_mpeg1;
-  int             has_sequence;
-  int             width;
-  int             height;
+  uint16_t        width;
+  uint16_t        height;
   int             frame_duration;
   double          frame_aspect_ratio;
 
@@ -61,6 +64,9 @@ typedef struct mpeg_parser_s {
 
 /* parser initialization */
 void mpeg_parser_init (mpeg_parser_t *parser);
+
+/* parser disposal */
+void mpeg_parser_dispose (mpeg_parser_t *parser);
 
 /* read a frame
  *   return a pointer to the first byte of the next frame

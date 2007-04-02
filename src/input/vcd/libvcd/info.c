@@ -1,5 +1,5 @@
 /*
-    $Id: info.c,v 1.7 2006/09/26 22:29:39 dgp85 Exp $
+    $Id: info.c,v 1.8 2007/03/23 21:47:31 dsalt Exp $
 
     Copyright (C) 2002, 2003, 2004 Rocky Bernstein <rocky@panix.com>
 
@@ -59,7 +59,7 @@
 #include <stddef.h>
 #include <errno.h>
 
-static const char _rcsid[] = "$Id: info.c,v 1.7 2006/09/26 22:29:39 dgp85 Exp $";
+static const char _rcsid[] = "$Id: info.c,v 1.8 2007/03/23 21:47:31 dsalt Exp $";
 
 #define BUF_COUNT 16
 #define BUF_SIZE 80
@@ -1904,14 +1904,12 @@ vcdinfo_open(vcdinfo_obj_t **obj_p, char *source_name[],
                            strlen (ISO_XA_MARKER_STRING));
   }
     
-  if (!read_info(obj->img, &(obj->info), &(obj->vcd_type)))
+  if (!read_info(obj->img, &(obj->info), &(obj->vcd_type)) ||
+      vcdinfo_get_format_version (obj) == VCD_TYPE_INVALID ||
+      !read_entries(obj->img, &(obj->entries))) {
+    free (obj); /* match 0.7.23's behaviour */
     return VCDINFO_OPEN_OTHER;
-
-  if (vcdinfo_get_format_version (obj) == VCD_TYPE_INVALID)
-    return VCDINFO_OPEN_OTHER;
-
-  if (!read_entries(obj->img, &(obj->entries)))
-    return VCDINFO_OPEN_OTHER;
+  }
   
   {
     size_t len = strlen(*source_name)+1;

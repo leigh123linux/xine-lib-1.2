@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: demux_mpeg_block.c,v 1.217 2006/10/16 22:18:24 valtri Exp $
+ * $Id: demux_mpeg_block.c,v 1.220 2007/02/20 00:34:55 dgp85 Exp $
  *
  * demultiplexer for mpeg 1/2 program streams
  * used with fixed blocksize devices (like dvd/vcd)
@@ -458,7 +458,7 @@ static int32_t parse_program_stream_pack_header(demux_mpeg_block_t *this, uint8_
     this->scr += ( (p[8] & 0x03 << 7) | (p[9] & 0xFE >> 1) );
     */
 
-    lprintf ("SCR=%lld\n", this->scr);
+    lprintf ("SCR=%"PRId64"\n", this->scr);
 
     /* mux_rate */
 
@@ -525,7 +525,7 @@ static int32_t parse_private_stream_2(demux_mpeg_block_t *this, uint8_t *p, buf_
     this->last_begin_time = buf->extra_info->input_time;
   }
     
-  lprintf ("NAV packet, start pts = %lld, end_pts = %lld\n",
+  lprintf ("NAV packet, start pts = %"PRId64", end_pts = %"PRId64"\n",
            start_pts, end_pts);
 
   if (this->nav_last_end_pts != start_pts && !this->preview_mode) {
@@ -664,7 +664,7 @@ static int32_t parse_pes_for_pts(demux_mpeg_block_t *this, uint8_t *p, buf_eleme
       this->pts |=  p[12]         <<  7 ;
       this->pts |= (p[13] & 0xFE) >>  1 ;
 
-      lprintf ("pts = %lld\n", this->pts);
+      lprintf ("pts = %"PRId64"\n", this->pts);
 
     } else
       this->pts = 0;
@@ -731,7 +731,7 @@ static int32_t parse_private_stream_1(demux_mpeg_block_t *this, uint8_t *p, buf_
         check_newpts( this, this->pts, PTS_VIDEO );
       */
       this->video_fifo->put (this->video_fifo, buf);    
-      lprintf ("SPU SVCD PACK (%lld, %d) put on fifo\n", this->pts, spu_id);
+      lprintf ("SPU SVCD PACK (%"PRId64", %d) put on fifo\n", this->pts, spu_id);
       
       return -1;
     }
@@ -749,7 +749,7 @@ static int32_t parse_private_stream_1(demux_mpeg_block_t *this, uint8_t *p, buf_
         check_newpts( this, this->pts, PTS_VIDEO );
       */      
       this->video_fifo->put (this->video_fifo, buf);    
-      lprintf ("SPU CVD PACK (%lld, %d) put on fifo\n", this->pts, spu_id);
+      lprintf ("SPU CVD PACK (%"PRId64", %d) put on fifo\n", this->pts, spu_id);
       
       return -1;
     }
@@ -1146,7 +1146,7 @@ static int demux_mpeg_block_estimate_rate (demux_mpeg_block_t *this) {
 	count ++;
 	
 	/*
-	printf ("demux_mpeg_block: stream_id %02x, pos: %lld, pts: %d, cur_rate = %d, overall rate : %d\n", 
+	printf ("demux_mpeg_block: stream_id %02x, pos: %"PRId64", pts: %d, cur_rate = %d, overall rate : %d\n", 
 		stream_id, pos, pts, cur_rate, rate); 
 	*/
       }
@@ -1456,9 +1456,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   break;
 
   case METHOD_BY_EXTENSION: {
-    char *ending, *mrl;
+    char *ending;
 
-    mrl = input->get_mrl (input);
+    const char *const mrl = input->get_mrl (input);
 
     if(!strncmp(mrl, "vcd:", 4)) {
       this->blocksize = 2324;
@@ -1516,19 +1516,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "DVD/VOB demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "MPEG_BLOCK";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return "vob";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return NULL;
 }
 

@@ -19,7 +19,7 @@
  */
 
 /*
- * $Id: demux_mpeg.c,v 1.150 2006/07/10 22:08:13 dgp85 Exp $
+ * $Id: demux_mpeg.c,v 1.152 2007/02/20 00:34:55 dgp85 Exp $
  *
  * demultiplexer for mpeg 1/2 program streams
  * reads streams of variable blocksizes
@@ -310,7 +310,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
         check_newpts( this, this->pts, PTS_VIDEO );
       */
       this->video_fifo->put (this->video_fifo, buf);
-      lprintf ("SPU SVCD PACK (pts: %lld, spu id: %d) put on FIFO\n", 
+      lprintf ("SPU SVCD PACK (pts: %"PRId64", spu id: %d) put on FIFO\n", 
 	       buf->pts, spu_id);
 
       return;
@@ -1199,7 +1199,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   }
 
   case METHOD_BY_EXTENSION: {
-    char *extensions, *mrl;
+    const char *extensions, *mrl;
 
     mrl = input->get_mrl (input);
     extensions = class_gen->get_extensions (class_gen);
@@ -1222,19 +1222,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "MPEG program stream demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "MPEG";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return "mpg mpeg";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return "video/mpeg: mpeg, mpg, mpe: MPEG animation;"
          "video/x-mpeg: mpeg, mpg, mpe: MPEG animation;";
 }

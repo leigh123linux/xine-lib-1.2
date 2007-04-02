@@ -26,16 +26,16 @@ EXTRA_DIST = lrb.c lrb.h accel_xvmc.h
 
 libxine_la_DEPENDENCIES = $(XINEUTILS_LIB) \
                           $(pthread_dep) $(LIBXINEPOSIX)
-libxine_la_LIBADD = $(THREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL) $(ZLIB_LIBS) \
+libxine_la_LIBADD = $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL) $(ZLIB_LIBS) \
 		    -lm $(XINEUTILS_LIB) $(LIBICONV) $(FT2_LIBS) $(FONTCONFIG_LIBS) \
-                    $(LIBXINEPOSIX) $(RT_LIBS)
+                    $(LIBXINEPOSIX) $(RT_LIBS) $(NET_LIBS)
 
 libxine_la_LDFLAGS =  \
 	-version-info $(XINE_LT_CURRENT):$(XINE_LT_REVISION):$(XINE_LT_AGE) \
 	$(def_ldflags)
 
 
-include_HEADERS  = buffer.h metronom.h configfile.h vo_scale.h \
+xineinclude_HEADERS  = buffer.h metronom.h configfile.h vo_scale.h \
         audio_out.h resample.h video_out.h xine_internal.h spu_decoder.h \
 	video_overlay.h osd.h scratch.h xine_plugin.h xineintl.h  \
 	plugin_catalog.h audio_decoder.h video_decoder.h post.h \

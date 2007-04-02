@@ -24,7 +24,7 @@
  *   APE tag reading
  *   Seeking??
  *
- * $Id: demux_mpc.c,v 1.3 2005/03/06 11:41:00 jstembridge Exp $
+ * $Id: demux_mpc.c,v 1.5 2007/01/19 00:26:40 dgp85 Exp $
  */
  
 #ifdef HAVE_CONFIG_H
@@ -119,11 +119,11 @@ static int open_mpc_file(demux_mpc_t *this) {
     }
   }
   
-  /* Validate signature - We only support SV7 at the moment */
+  /* Validate signature - We only support SV 7.x at the moment */
   if ((this->header[0] != 'M') ||
       (this->header[1] != 'P') ||
       (this->header[2] != '+') ||
-      (this->header[3] != 0x07))
+      ((this->header[3]&0x0f) != 0x07))
     return 0;
     
   /* Get frame count */
@@ -344,7 +344,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   switch (stream->content_detection_method) {
 
   case METHOD_BY_EXTENSION: {
-    char *extensions, *mrl;
+    const char *extensions, *mrl;
 
     mrl = input->get_mrl (input);
     extensions = class_gen->get_extensions (class_gen);
@@ -374,19 +374,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static char *get_description (demux_class_t *this_gen) {
+static const char *get_description (demux_class_t *this_gen) {
   return "Musepack demux plugin";
 }
 
-static char *get_identifier (demux_class_t *this_gen) {
+static const char *get_identifier (demux_class_t *this_gen) {
   return "Musepack";
 }
 
-static char *get_extensions (demux_class_t *this_gen) {
+static const char *get_extensions (demux_class_t *this_gen) {
   return "mpc mp+";
 }
 
-static char *get_mimetypes (demux_class_t *this_gen) {
+static const char *get_mimetypes (demux_class_t *this_gen) {
   return NULL;
 }
 

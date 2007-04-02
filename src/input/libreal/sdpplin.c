@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: sdpplin.c,v 1.6 2006/06/20 01:07:58 dgp85 Exp $
+ * $Id: sdpplin.c,v 1.8 2006/12/25 16:21:56 dgp85 Exp $
  *
  * sdp/sdpplin parser.
  *
@@ -71,8 +71,9 @@ static char *b64_decode(const char *in, char *out, int *size)
       int c = in[i+j];
 
       if (dtable[c] & 0x80) {
-        printf("Illegal character '%c' in input.\n", c);
-        exit(1);
+        fprintf(stderr, "Illegal character '%c' in input.\n", c);
+	*size = 0;
+	return NULL;
       }
       a[i] = (char) c;
       b[i] = (char) dtable[c];
@@ -200,11 +201,13 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
 
     if(filter(*data,"a=OpaqueData:buffer;",&buf)) {
       decoded = b64_decode(buf, decoded, &(desc->mlti_data_size));
-      desc->mlti_data = malloc(sizeof(char)*desc->mlti_data_size);
-      memcpy(desc->mlti_data, decoded, desc->mlti_data_size);
-      handled=1;
-      *data=nl(*data);
-      lprintf("mlti_data_size: %i\n", desc->mlti_data_size);
+      if ( decoded != NULL ) {
+	desc->mlti_data = malloc(sizeof(char)*desc->mlti_data_size);
+	memcpy(desc->mlti_data, decoded, desc->mlti_data_size);
+	handled=1;
+	*data=nl(*data);
+	lprintf("mlti_data_size: %i\n", desc->mlti_data_size);
+      }
     }
     
     if(filter(*data,"a=ASMRuleBook:string;",&buf)) {
@@ -239,11 +242,17 @@ sdpplin_t *sdpplin_parse(char *data) {
   int              handled;
   int              len;
 
+  desc->stream = NULL;
+
   while (data && *data) {
 
     handled=0;
     
     if (filter(data, "m=", &buf)) {
+      if ( ! desc->stream ) {
+	fprintf(stderr, "sdpplin.c: stream identifier found before stream count, skipping.");
+	continue;
+      }
       stream=sdpplin_parse_stream(&data);
       lprintf("got data for stream id %u\n", stream->stream_id);
       desc->stream[stream->stream_id]=stream;
@@ -252,30 +261,38 @@ sdpplin_t *sdpplin_parse(char *data) {
 
     if(filter(data,"a=Title:buffer;",&buf)) {
       decoded=b64_decode(buf, decoded, &len);
-      desc->title=strdup(decoded);
-      handled=1;
-      data=nl(data);
+      if ( decoded != NULL ) {
+	desc->title=strdup(decoded);
+	handled=1;
+	data=nl(data);
+      }
     }
     
     if(filter(data,"a=Author:buffer;",&buf)) {
       decoded=b64_decode(buf, decoded, &len);
-      desc->author=strdup(decoded);
-      handled=1;
-      data=nl(data);
+      if ( decoded != NULL ) {
+	desc->author=strdup(decoded);
+	handled=1;
+	data=nl(data);
+      }
     }
     
     if(filter(data,"a=Copyright:buffer;",&buf)) {
       decoded=b64_decode(buf, decoded, &len);
-      desc->copyright=strdup(decoded);
-      handled=1;
-      data=nl(data);
+      if ( decoded != NULL ) {
+	desc->copyright=strdup(decoded);
+	handled=1;
+	data=nl(data);
+      }
     }
     
     if(filter(data,"a=Abstract:buffer;",&buf)) {
       decoded=b64_decode(buf, decoded, &len);
-      desc->abstract=strdup(decoded);
-      handled=1;
-      data=nl(data);
+      if ( decoded != NULL ) {
+	desc->abstract=strdup(decoded);
+	handled=1;
+	data=nl(data);
+      }
     }
     
     if(filter(data,"a=StreamCount:integer;",&buf)) {

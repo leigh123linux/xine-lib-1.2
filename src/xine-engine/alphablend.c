@@ -66,7 +66,7 @@ static void mem_blend24(uint8_t *mem, uint8_t r, uint8_t g, uint8_t b,
   }
 }
 
-static void mem_blend32(uint8_t *mem, uint8_t *src, uint8_t o, int len) {
+static void mem_blend32(uint8_t *mem, const uint8_t *src, uint8_t o, int len) {
   uint8_t *limit = mem + len*4;
   while (mem < limit) {
     *mem = BLEND_BYTE(*mem, src[0], o);

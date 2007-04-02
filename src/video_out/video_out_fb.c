@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: video_out_fb.c,v 1.48 2006/07/10 22:08:44 dgp85 Exp $
+ * $Id: video_out_fb.c,v 1.49 2006/12/19 19:10:51 dsalt Exp $
  * 
  * video_out_fb.c, frame buffer xine driver by Miguel Freitas
  *
@@ -848,7 +848,7 @@ static int open_fb_device(config_values_t *config, xine_t *xine)
 
   /* This config entry is security critical, is it really necessary
    * or is a number enough? */
-  device_name = config->register_string(config, devkey, "",
+  device_name = config->register_filename(config, devkey, "", XINE_CONFIG_STRING_IS_DEVICE_NAME,
 					_("framebuffer device name"),
 					_("Specifies the file name for the framebuffer device "
 					  "to be used.\nThis setting is security critical, "

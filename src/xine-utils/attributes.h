@@ -47,8 +47,10 @@
 #endif
 
 /* Export protected only for libxine functions */
-#if defined(XINE_LIBRARY_COMPILE) && defined(SUPPORT_ATTRIBUTE_VISIBILITY)
+#if defined(XINE_LIBRARY_COMPILE) && defined(SUPPORT_ATTRIBUTE_VISIBILITY_PROTECTED)
 # define XINE_PROTECTED __attribute__((visibility("protected")))
+#elif defined(XINE_LIBRARY_COMPILE) && defined(SUPPORT_ATTRIBUTE_VISIBILITY_DEFAULT)
+# define XINE_PROTECTED __attribute__((visibility("default")))
 #else
 # define XINE_PROTECTED
 #endif
@@ -57,6 +59,14 @@
 # define XINE_SENTINEL __attribute__((sentinel))
 #else
 # define XINE_SENTINEL
+#endif
+
+#ifndef __attr_unused
+# ifdef SUPPORT_ATTRIBUTE_UNUSED
+#  define __attr_unused __attribute__((unused))
+# else
+#  define __attr_unused
+# endif
 #endif
 
 #endif /* ATTRIBUTE_H_ */

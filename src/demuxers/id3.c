@@ -29,7 +29,7 @@
  *
  * ID3v2 specs: http://www.id3.org/
  *
- * $Id: id3.c,v 1.12 2006/04/05 22:12:18 valtri Exp $
+ * $Id: id3.c,v 1.13 2007/03/03 00:58:52 dgp85 Exp $
  */
  
 #ifdef HAVE_CONFIG_H
@@ -877,4 +877,34 @@ int id3v24_parse_tag(input_plugin_t *input,
     xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "id3v23: id3v2_parse_header problem\n");
     return 0;
   }
+}
+
+int id3v2_parse_tag(input_plugin_t *input,
+		    xine_stream_t *stream,
+		    int8_t *mp3_frame_header) {
+  _x_assert(mp3_frame_header[0] == 'I' && mp3_frame_header[1] == 'D' && mp3_frame_header[2] == '3');
+
+  int result = 0;
+
+  switch(mp3_frame_header[3]) {
+  case 2:
+    xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.2 tag\n");
+    result = id3v22_parse_tag(input, stream, mp3_frame_header);
+    break;
+   
+  case 3:
+    xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.3 tag\n");
+    result = id3v23_parse_tag(input, stream, mp3_frame_header);
+    break;
+
+  case 4:
+    xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.3 tag\n");
+    result = id3v24_parse_tag(input, stream, mp3_frame_header);
+    break;
+
+  default:
+    xprintf(stream->xine, XINE_VERBOSITY_LOG, "Unknown ID3v2 version: 0x%02x.\n", mp3_frame_header[3]);
+  }
+
+  return result;
 }

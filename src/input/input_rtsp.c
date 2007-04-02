@@ -81,7 +81,7 @@ static off_t rtsp_plugin_read (input_plugin_t *this_gen,
   rtsp_input_plugin_t *this = (rtsp_input_plugin_t *) this_gen;
   off_t               n;
 
-  lprintf ("rtsp_plugin_read: %lld bytes ...\n", len);
+  lprintf ("rtsp_plugin_read: %"PRId64" bytes ...\n", len);
 
   nbc_check_buffers (this->nbc);
 
@@ -97,7 +97,7 @@ static buf_element_t *rtsp_plugin_read_block (input_plugin_t *this_gen,
   buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
   int                   total_bytes;
 
-  lprintf ("rtsp_plugin_read_block: %lld bytes...\n", todo);
+  lprintf ("rtsp_plugin_read_block: %"PRId64" bytes...\n", todo);
 
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
@@ -118,7 +118,7 @@ static off_t rtsp_plugin_seek (input_plugin_t *this_gen, off_t offset, int origi
 
   rtsp_input_plugin_t *this = (rtsp_input_plugin_t *) this_gen;
 
-  lprintf ("seek %lld bytes, origin %d\n", offset, origin);
+  lprintf ("seek %"PRId64" bytes, origin %d\n", offset, origin);
 
   /* only realtive forward-seeking is implemented */
 
@@ -131,6 +131,18 @@ static off_t rtsp_plugin_seek (input_plugin_t *this_gen, off_t offset, int origi
     this->curpos += rtsp_plugin_read (this_gen, this->scratch, offset);
   }
 
+  return this->curpos;
+}
+
+static off_t rtsp_plugin_seek_time (input_plugin_t *this_gen, int time_offset, int origin) {
+
+  rtsp_input_plugin_t *this = (rtsp_input_plugin_t *) this_gen;
+
+  lprintf ("seek_time %d msec, origin %d\n", time_offset, origin);
+  
+  if (origin == SEEK_SET)
+    rtsp_session_set_start_time (this->rtsp, time_offset);
+    
   return this->curpos;
 }
 
@@ -156,7 +168,7 @@ static off_t rtsp_plugin_get_current_pos (input_plugin_t *this_gen){
   rtsp_input_plugin_t *this = (rtsp_input_plugin_t *) this_gen;
 
   /*
-  printf ("current pos is %lld\n", this->curpos);
+  printf ("current pos is %"PRId64"\n", this->curpos);
   */
 
   return this->curpos;
@@ -184,7 +196,7 @@ static void rtsp_plugin_dispose (input_plugin_t *this_gen) {
   free (this);
 }
 
-static char* rtsp_plugin_get_mrl (input_plugin_t *this_gen) {
+static const char* rtsp_plugin_get_mrl (input_plugin_t *this_gen) {
   rtsp_input_plugin_t *this = (rtsp_input_plugin_t *) this_gen;
 
   return this->public_mrl;
@@ -212,7 +224,7 @@ static int rtsp_plugin_open (input_plugin_t *this_gen) {
 
   lprintf ("trying to open '%s'\n", this->mrl);
 
-  rtsp = rtsp_session_start(this->stream,this->mrl);
+  rtsp = rtsp_session_start(this->stream, this->mrl);
 
   if (!rtsp) {
     lprintf ("returning null.\n");
@@ -226,22 +238,19 @@ static int rtsp_plugin_open (input_plugin_t *this_gen) {
 }
 
 static input_plugin_t *rtsp_class_get_instance (input_class_t *cls_gen, xine_stream_t *stream, 
-				    const char *data) {
+				    const char *mrl) {
 
   /* rtsp_input_class_t  *cls = (rtsp_input_class_t *) cls_gen; */
   rtsp_input_plugin_t *this;
-  char                *mrl = strdup(data);
 
-  if (strncasecmp (mrl, "rtsp://", 6)) {
-    free (mrl);
+  if (strncasecmp (mrl, "rtsp://", 6))
     return NULL;
-  }
 
   this = (rtsp_input_plugin_t *) xine_xmalloc (sizeof (rtsp_input_plugin_t));
 
   this->stream  = stream;
   this->rtsp    = NULL;
-  this->mrl     = mrl;
+  this->mrl     = strdup (mrl);
   /* since we handle only real streams yet, we can savely add
    * an .rm extention to force handling by demux_real.
    */
@@ -255,6 +264,7 @@ static input_plugin_t *rtsp_class_get_instance (input_class_t *cls_gen, xine_str
   this->input_plugin.read              = rtsp_plugin_read;
   this->input_plugin.read_block        = rtsp_plugin_read_block;
   this->input_plugin.seek              = rtsp_plugin_seek;
+  this->input_plugin.seek_time         = rtsp_plugin_seek_time;
   this->input_plugin.get_current_pos   = rtsp_plugin_get_current_pos;
   this->input_plugin.get_length        = rtsp_plugin_get_length;
   this->input_plugin.get_blocksize     = rtsp_plugin_get_blocksize;
@@ -270,7 +280,7 @@ static input_plugin_t *rtsp_class_get_instance (input_class_t *cls_gen, xine_str
  * rtsp input plugin class stuff
  */
 
-static char *rtsp_class_get_description (input_class_t *this_gen) {
+static const char *rtsp_class_get_description (input_class_t *this_gen) {
   return _("rtsp streaming input plugin");
 }
 
