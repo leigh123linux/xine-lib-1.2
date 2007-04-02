@@ -366,10 +366,10 @@ static inline void ls_decode_line(JLSState *state, MJpegDecodeContext *s, void *
             }
 
             if(sign){
-                pred = clip(pred - state->C[context], 0, state->maxval);
+                pred = av_clip(pred - state->C[context], 0, state->maxval);
                 err = -ls_get_code_regular(&s->gb, state, context);
             } else {
-                pred = clip(pred + state->C[context], 0, state->maxval);
+                pred = av_clip(pred + state->C[context], 0, state->maxval);
                 err = ls_get_code_regular(&s->gb, state, context);
             }
 
@@ -381,7 +381,7 @@ static inline void ls_decode_line(JLSState *state, MJpegDecodeContext *s, void *
                 pred += state->range * state->twonear;
             else if(pred > state->maxval + state->near)
                 pred -= state->range * state->twonear;
-            pred = clip(pred, 0, state->maxval);
+            pred = av_clip(pred, 0, state->maxval);
         }
 
         pred &= state->maxval;
@@ -480,7 +480,7 @@ static int ls_decode_picture(MJpegDecodeContext *s, int near, int point_transfor
                 src += s->picture.linesize[0];
             }
         }else{
-            uint16_t *src = s->picture.data[0];
+            uint16_t *src = (uint16_t*) s->picture.data[0];
 
             for(i = 0; i < s->height; i++){
                 for(x = 0; x < w; x++){
@@ -623,9 +623,9 @@ static inline void ls_encode_line(JLSState *state, PutBitContext *pb, void *last
                     err = -(state->near - err) / state->twonear;
 
                 if(RItype || (Rb >= Ra))
-                    Ra = clip(pred + err * state->twonear, 0, state->maxval);
+                    Ra = av_clip(pred + err * state->twonear, 0, state->maxval);
                 else
-                    Ra = clip(pred - err * state->twonear, 0, state->maxval);
+                    Ra = av_clip(pred - err * state->twonear, 0, state->maxval);
                 W(cur, x, Ra);
             }
             if(err < 0)
@@ -646,11 +646,11 @@ static inline void ls_encode_line(JLSState *state, PutBitContext *pb, void *last
             if(context < 0){
                 context = -context;
                 sign = 1;
-                pred = clip(pred - state->C[context], 0, state->maxval);
+                pred = av_clip(pred - state->C[context], 0, state->maxval);
                 err = pred - R(cur, x);
             }else{
                 sign = 0;
-                pred = clip(pred + state->C[context], 0, state->maxval);
+                pred = av_clip(pred + state->C[context], 0, state->maxval);
                 err = R(cur, x) - pred;
             }
 
@@ -660,9 +660,9 @@ static inline void ls_encode_line(JLSState *state, PutBitContext *pb, void *last
                 else
                     err = -(state->near - err) / state->twonear;
                 if(!sign)
-                    Ra = clip(pred + err * state->twonear, 0, state->maxval);
+                    Ra = av_clip(pred + err * state->twonear, 0, state->maxval);
                 else
-                    Ra = clip(pred - err * state->twonear, 0, state->maxval);
+                    Ra = av_clip(pred - err * state->twonear, 0, state->maxval);
                 W(cur, x, Ra);
             }
 
@@ -804,11 +804,16 @@ static int encode_picture_ls(AVCodecContext *avctx, unsigned char *buf, int buf_
     av_free(zero);
     av_free(state);
 
+    // the specification says that after doing 0xff escaping unused bits in the
+    // last byte must be set to 0, so just append 7 "optional" zero-bits to
+    // avoid special-casing.
+    put_bits(&pb2, 7, 0);
+    size = put_bits_count(&pb2);
     flush_put_bits(&pb2);
     /* do escape coding */
-    size = put_bits_count(&pb2) >> 3;
     init_get_bits(&gb, buf2, size);
-    while(get_bits_count(&gb) < size * 8){
+    size -= 7;
+    while(get_bits_count(&gb) < size){
         int v;
         v = get_bits(&gb, 8);
         put_bits(&pb, 8, v);

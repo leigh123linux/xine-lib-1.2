@@ -1,3 +1,24 @@
+/*
+ * Various utilities for command line tools
+ * copyright (c) 2003 Fabrice Bellard
+ *
+ * This file is part of FFmpeg.
+ *
+ * FFmpeg is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * FFmpeg is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with FFmpeg; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ */
+
 #ifndef _CMD_UTILS_H
 #define _CMD_UTILS_H
 
@@ -15,12 +36,14 @@ typedef struct {
 #define OPT_FLOAT  0x0100
 #define OPT_SUBTITLE 0x0200
 #define OPT_FUNC2  0x0400
+#define OPT_INT64  0x0800
      union {
         void (*func_arg)(const char *); //FIXME passing error code as int return would be nicer then exit() in the func
         int *int_arg;
         char **str_arg;
         float *float_arg;
         int (*func2_arg)(const char *, const char *);
+        int64_t *int64_arg;
     } u;
     const char *help;
     const char *argname;

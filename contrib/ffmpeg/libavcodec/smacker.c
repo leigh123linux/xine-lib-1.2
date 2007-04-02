@@ -277,10 +277,10 @@ static int decode_header_trees(SmackVContext *smk) {
     GetBitContext gb;
     int mmap_size, mclr_size, full_size, type_size;
 
-    mmap_size = LE_32(smk->avctx->extradata);
-    mclr_size = LE_32(smk->avctx->extradata + 4);
-    full_size = LE_32(smk->avctx->extradata + 8);
-    type_size = LE_32(smk->avctx->extradata + 12);
+    mmap_size = AV_RL32(smk->avctx->extradata);
+    mclr_size = AV_RL32(smk->avctx->extradata + 4);
+    full_size = AV_RL32(smk->avctx->extradata + 8);
+    type_size = AV_RL32(smk->avctx->extradata + 12);
 
     init_get_bits(&gb, smk->avctx->extradata + 16, (smk->avctx->extradata_size - 16) * 8);
 
@@ -320,12 +320,12 @@ static int decode_header_trees(SmackVContext *smk) {
     return 0;
 }
 
-static always_inline void last_reset(int *recode, int *last) {
+static av_always_inline void last_reset(int *recode, int *last) {
     recode[last[0]] = recode[last[1]] = recode[last[2]] = 0;
 }
 
 /* get code and update history */
-static always_inline int smk_get_code(GetBitContext *gb, int *recode, int *last) {
+static av_always_inline int smk_get_code(GetBitContext *gb, int *recode, int *last) {
     register int *table = recode;
     int v, b;
 
@@ -584,7 +584,7 @@ static int smka_decode_frame(AVCodecContext *avctx, void *data, int *data_size, 
     int bits, stereo;
     int pred[2] = {0, 0};
 
-    unp_size = LE_32(buf);
+    unp_size = AV_RL32(buf);
 
     init_get_bits(&gb, buf + 4, (buf_size - 4) * 8);
 
@@ -620,14 +620,10 @@ static int smka_decode_frame(AVCodecContext *avctx, void *data, int *data_size, 
         }
     }
     if(bits) { //decode 16-bit data
-        pred[0]  = get_bits(&gb, 8);
-        pred[0] |= get_bits(&gb, 8);
-        *samples++ = pred[0];
-        if(stereo) {
-            pred[1]  = get_bits(&gb, 8);
-            pred[1] |= get_bits(&gb, 8);
-            *samples++ = pred[1];
-        }
+        for(i = stereo; i >= 0; i--)
+            pred[i] = bswap_16(get_bits(&gb, 16));
+        for(i = 0; i < stereo; i++)
+            *samples++ = pred[i];
         for(i = 0; i < unp_size / 2; i++) {
             if(i & stereo) {
                 if(vlc[2].table)
@@ -658,12 +654,10 @@ static int smka_decode_frame(AVCodecContext *avctx, void *data, int *data_size, 
             }
         }
     } else { //8-bit data
-        pred[0] = get_bits(&gb, 8);
-        *samples++ = (pred[0] - 0x80) << 8;
-        if(stereo) {
-            pred[1] = get_bits(&gb, 8);
-            *samples++ = (pred[1] - 0x80) << 8;
-        }
+        for(i = stereo; i >= 0; i--)
+            pred[i] = get_bits(&gb, 8);
+        for(i = 0; i < stereo; i++)
+            *samples++ = (pred[i] - 0x80) << 8;
         for(i = 0; i < unp_size; i++) {
             if(i & stereo){
                 if(vlc[1].table)

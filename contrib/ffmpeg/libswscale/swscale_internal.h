@@ -33,13 +33,6 @@
 #define AVV(x...) {x}
 #endif
 
-#define MSG_WARN(args...) av_log(NULL, AV_LOG_DEBUG, ##args )
-#define MSG_FATAL(args...) av_log(NULL, AV_LOG_ERROR, ##args )
-#define MSG_ERR(args...) av_log(NULL, AV_LOG_ERROR, ##args )
-#define MSG_V(args...) av_log(NULL, AV_LOG_INFO, ##args )
-#define MSG_DBG2(args...) av_log(NULL, AV_LOG_DEBUG, ##args )
-#define MSG_INFO(args...) av_log(NULL, AV_LOG_INFO, ##args )
-
 #define MAX_FILTER_SIZE 256
 
 typedef int (*SwsFunc)(struct SwsContext *context, uint8_t* src[], int srcStride[], int srcSliceY,
@@ -47,6 +40,11 @@ typedef int (*SwsFunc)(struct SwsContext *context, uint8_t* src[], int srcStride
 
 /* this struct should be aligned on at least 32-byte boundary */
 typedef struct SwsContext{
+        /**
+         * info on struct for av_log
+         */
+        AVClass *av_class;
+
 	/**
 	 *
 	 * Note the src,dst,srcStride,dstStride will be copied, in the sws_scale() warper so they can freely be modified here
@@ -76,7 +74,7 @@ typedef struct SwsContext{
 	int16_t *vChrFilter;
 	int16_t *vChrFilterPos;
 
-	uint8_t formatConvBuffer[4000]; //FIXME dynamic alloc, but we have to change alot of code for this to be usefull
+	uint8_t formatConvBuffer[4000]; //FIXME dynamic alloc, but we have to change a lot of code for this to be useful
 
 	int hLumFilterSize;
 	int hChrFilterSize;
@@ -101,10 +99,10 @@ typedef struct SwsContext{
 	int dstY;
 	int flags;
 	void * yuvTable;			// pointer to the yuv->rgb table start so it can be freed()
-	void * table_rV[256];
-	void * table_gU[256];
+	uint8_t * table_rV[256];
+	uint8_t * table_gU[256];
 	int    table_gV[256];
-	void * table_bU[256];
+	uint8_t * table_bU[256];
 
 	//Colorspace stuff
 	int contrast, brightness, saturation;	// for sws_getColorspaceDetails
@@ -182,11 +180,11 @@ char *sws_format_name(int format);
 #define isGray16(x)    ((x)==PIX_FMT_GRAY16BE || (x)==PIX_FMT_GRAY16LE)
 #define isRGB(x)       ((x)==PIX_FMT_BGR32 || (x)==PIX_FMT_RGB24	\
 			|| (x)==PIX_FMT_RGB565 || (x)==PIX_FMT_RGB555	\
-			|| (x)==PIX_FMT_RGB8 || (x)==PIX_FMT_RGB4	\
+			|| (x)==PIX_FMT_RGB8 || (x)==PIX_FMT_RGB4 || (x)==PIX_FMT_RGB4_BYTE	\
 			|| (x)==PIX_FMT_MONOBLACK)
 #define isBGR(x)       ((x)==PIX_FMT_RGB32 || (x)==PIX_FMT_BGR24	\
 			|| (x)==PIX_FMT_BGR565 || (x)==PIX_FMT_BGR555	\
-			|| (x)==PIX_FMT_BGR8 || (x)==PIX_FMT_BGR4	\
+			|| (x)==PIX_FMT_BGR8 || (x)==PIX_FMT_BGR4 || (x)==PIX_FMT_BGR4_BYTE	\
 			|| (x)==PIX_FMT_MONOBLACK)
 
 static inline int fmt_depth(int fmt)

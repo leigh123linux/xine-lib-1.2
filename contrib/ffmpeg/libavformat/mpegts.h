@@ -46,13 +46,13 @@
 #define STREAM_TYPE_AUDIO_AAC       0x0f
 #define STREAM_TYPE_VIDEO_MPEG4     0x10
 #define STREAM_TYPE_VIDEO_H264      0x1b
+#define STREAM_TYPE_VIDEO_VC1       0xea
 
 #define STREAM_TYPE_AUDIO_AC3       0x81
 #define STREAM_TYPE_AUDIO_DTS       0x8a
 
 #define STREAM_TYPE_SUBTITLE_DVB    0x100
 
-unsigned int mpegts_crc32(const uint8_t *data, int len);
 extern AVOutputFormat mpegts_muxer;
 
 typedef struct MpegTSContext MpegTSContext;

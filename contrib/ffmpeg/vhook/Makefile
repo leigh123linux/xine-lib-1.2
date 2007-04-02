@@ -11,7 +11,8 @@ ALLHOOKS=$(HOOKS) imlib2$(SLIBSUF) drawtext$(SLIBSUF)
 
 ifeq ($(HAVE_IMLIB2),yes)
     HOOKS += imlib2$(SLIBSUF)
-    LIBS_imlib2$(SLIBSUF) = -lImlib2
+    CFLAGS += `imlib2-config --cflags`
+    LIBS_imlib2$(SLIBSUF) = `imlib2-config --libs`
 endif
 
 ifeq ($(HAVE_FREETYPE2),yes)
@@ -46,6 +47,4 @@ distclean: clean
 
 .PHONY: all depend dep clean distclean install* uninstall*
 
-ifneq ($(wildcard .depend),)
-include .depend
-endif
+-include .depend

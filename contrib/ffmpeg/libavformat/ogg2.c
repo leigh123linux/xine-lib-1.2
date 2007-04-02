@@ -67,8 +67,8 @@ ogg_write_trailer (AVFormatContext * avfcontext)
 
 AVOutputFormat ogg_muxer = {
     "ogg",
-    "Ogg Vorbis",
-    "audio/x-vorbis",
+    "Ogg format",
+    "application/ogg",
     "ogg",
     sizeof (OggContext),
     CODEC_ID_VORBIS,
@@ -90,6 +90,7 @@ ogg_save (AVFormatContext * s)
     ost->pos = url_ftell (&s->pb);;
     ost->curidx = ogg->curidx;
     ost->next = ogg->state;
+    ost->nstreams = ogg->nstreams;
     memcpy(ost->streams, ogg->streams, ogg->nstreams * sizeof(*ogg->streams));
 
     for (i = 0; i < ogg->nstreams; i++){
@@ -123,8 +124,9 @@ ogg_restore (AVFormatContext * s, int discard)
 
         url_fseek (bc, ost->pos, SEEK_SET);
         ogg->curidx = ost->curidx;
-        memcpy (ogg->streams, ost->streams,
-        ogg->nstreams * sizeof (*ogg->streams));
+        ogg->nstreams = ost->nstreams;
+        memcpy(ogg->streams, ost->streams,
+               ost->nstreams * sizeof(*ogg->streams));
     }
 
     av_free (ost);
@@ -482,7 +484,8 @@ ogg_get_length (AVFormatContext * s)
     url_fseek (&s->pb, end, SEEK_SET);
 
     while (!ogg_read_page (s, &i)){
-        if (ogg->streams[i].granule != -1 && ogg->streams[i].granule != 0)
+        if (ogg->streams[i].granule != -1 && ogg->streams[i].granule != 0 &&
+            ogg->streams[i].codec)
             idx = i;
     }
 

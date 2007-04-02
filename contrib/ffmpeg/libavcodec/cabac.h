@@ -363,7 +363,7 @@ static inline void renorm_cabac_decoder_once(CABACContext *c){
         refill(c);
 }
 
-static int always_inline get_cabac_inline(CABACContext *c, uint8_t * const state){
+static int av_always_inline get_cabac_inline(CABACContext *c, uint8_t * const state){
     //FIXME gcc generates duplicate load/stores for c->low and c->range
 #define LOW          "0"
 #define RANGE        "4"
@@ -376,7 +376,7 @@ static int always_inline get_cabac_inline(CABACContext *c, uint8_t * const state
 #define BYTE        "16"
 #define BYTEEND     "20"
 #endif
-#if defined(ARCH_X86) && !(defined(PIC) && defined(__GNUC__))
+#if defined(ARCH_X86) && defined(CONFIG_7REGS) && defined(CONFIG_EBX_AVAILABLE)
     int bit;
 
 #ifndef BRANCHLESS_CABAC_DECODER
@@ -462,7 +462,7 @@ static int always_inline get_cabac_inline(CABACContext *c, uint8_t * const state
 #else /* BRANCHLESS_CABAC_DECODER */
 
 
-#if defined CMOV_IS_FAST
+#if defined HAVE_FAST_CMOV
 #define BRANCHLESS_GET_CABAC_UPDATE(ret, cabac, statep, low, lowword, range, tmp, tmpbyte)\
         "mov    "tmp"       , %%ecx                                     \n\t"\
         "shl    $17         , "tmp"                                     \n\t"\
@@ -472,7 +472,7 @@ static int always_inline get_cabac_inline(CABACContext *c, uint8_t * const state
         "and    %%ecx       , "tmp"                                     \n\t"\
         "sub    "tmp"       , "low"                                     \n\t"\
         "xor    %%ecx       , "ret"                                     \n\t"
-#else /* CMOV_IS_FAST */
+#else /* HAVE_FAST_CMOV */
 #define BRANCHLESS_GET_CABAC_UPDATE(ret, cabac, statep, low, lowword, range, tmp, tmpbyte)\
         "mov    "tmp"       , %%ecx                                     \n\t"\
         "shl    $17         , "tmp"                                     \n\t"\
@@ -485,7 +485,7 @@ static int always_inline get_cabac_inline(CABACContext *c, uint8_t * const state
         "and    "tmp"       , %%ecx                                     \n\t"\
         "sub    %%ecx       , "low"                                     \n\t"\
         "xor    "tmp"       , "ret"                                     \n\t"
-#endif /* CMOV_IS_FAST */
+#endif /* HAVE_FAST_CMOV */
 
 
 #define BRANCHLESS_GET_CABAC(ret, cabac, statep, low, lowword, range, tmp, tmpbyte)\
@@ -539,26 +539,26 @@ static int always_inline get_cabac_inline(CABACContext *c, uint8_t * const state
 
     c->range -= RangeLPS;
 #ifndef BRANCHLESS_CABAC_DECODER
-    if(c->low < (c->range<<17)){
+    if(c->low < (c->range<<(CABAC_BITS+1))){
         bit= s&1;
         *state= ff_h264_mps_state[s];
         renorm_cabac_decoder_once(c);
     }else{
         bit= ff_h264_norm_shift[RangeLPS];
-        c->low -= (c->range<<17);
+        c->low -= (c->range<<(CABAC_BITS+1));
         *state= ff_h264_lps_state[s];
         c->range = RangeLPS<<bit;
         c->low <<= bit;
         bit= (s&1)^1;
 
-        if(!(c->low & 0xFFFF)){
+        if(!(c->low & CABAC_MASK)){
             refill2(c);
         }
     }
 #else /* BRANCHLESS_CABAC_DECODER */
-    lps_mask= ((c->range<<17) - c->low)>>31;
+    lps_mask= ((c->range<<(CABAC_BITS+1)) - c->low)>>31;
 
-    c->low -= (c->range<<17) & lps_mask;
+    c->low -= (c->range<<(CABAC_BITS+1)) & lps_mask;
     c->range += (RangeLPS - c->range) & lps_mask;
 
     s^=lps_mask;
@@ -575,7 +575,7 @@ static int always_inline get_cabac_inline(CABACContext *c, uint8_t * const state
     return bit;
 }
 
-static int __attribute((noinline)) get_cabac_noinline(CABACContext *c, uint8_t * const state){
+static int av_noinline get_cabac_noinline(CABACContext *c, uint8_t * const state){
     return get_cabac_inline(c,state);
 }
 
@@ -620,7 +620,7 @@ static int get_cabac_bypass(CABACContext *c){
     if(!(c->low & CABAC_MASK))
         refill(c);
 
-    range= c->range<<17;
+    range= c->range<<(CABAC_BITS+1);
     if(c->low < range){
         return 0;
     }else{
@@ -631,7 +631,7 @@ static int get_cabac_bypass(CABACContext *c){
 }
 
 
-static always_inline int get_cabac_bypass_sign(CABACContext *c, int val){
+static av_always_inline int get_cabac_bypass_sign(CABACContext *c, int val){
 #if defined(ARCH_X86) && !(defined(PIC) && defined(__GNUC__))
     asm volatile(
         "movl "RANGE    "(%1), %%ebx            \n\t"
@@ -669,7 +669,7 @@ static always_inline int get_cabac_bypass_sign(CABACContext *c, int val){
     if(!(c->low & CABAC_MASK))
         refill(c);
 
-    range= c->range<<17;
+    range= c->range<<(CABAC_BITS+1);
     c->low -= range;
     mask= c->low >> 31;
     range &= mask;
@@ -680,7 +680,7 @@ static always_inline int get_cabac_bypass_sign(CABACContext *c, int val){
 
 //FIXME the x86 code from this file should be moved into i386/h264 or cabac something.c/h (note ill kill you if you move my code away from under my fingers before iam finished with it!)
 //FIXME use some macros to avoid duplicatin get_cabac (cant be done yet as that would make optimization work hard)
-#if defined(ARCH_X86) && !(defined(PIC) && defined(__GNUC__))
+#if defined(ARCH_X86) && defined(CONFIG_7REGS) && defined(CONFIG_EBX_AVAILABLE)
 static int decode_significance_x86(CABACContext *c, int max_coeff, uint8_t *significant_coeff_ctx_base, int *index){
     void *end= significant_coeff_ctx_base + max_coeff - 1;
     int minusstart= -(int)significant_coeff_ctx_base;
@@ -794,7 +794,7 @@ static int decode_significance_8x8_x86(CABACContext *c, uint8_t *significant_coe
  */
 static int get_cabac_terminate(CABACContext *c){
     c->range -= 2;
-    if(c->low < c->range<<17){
+    if(c->low < c->range<<(CABAC_BITS+1)){
         renorm_cabac_decoder_once(c);
         return 0;
     }else{

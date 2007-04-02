@@ -454,6 +454,8 @@ static int rv20_decode_picture_header(MpegEncContext *s)
         }
         if(new_w != s->width || new_h != s->height){
             av_log(s->avctx, AV_LOG_DEBUG, "attempting to change resolution to %dx%d\n", new_w, new_h);
+            if (avcodec_check_dimensions(s->avctx, new_h, new_w) < 0)
+                return -1;
             MPV_common_end(s);
             s->width  = s->avctx->width = new_w;
             s->height = s->avctx->height= new_h;
@@ -535,7 +537,7 @@ static int rv10_decode_init(AVCodecContext *avctx)
     s->height = avctx->height;
 
     s->h263_long_vectors= ((uint8_t*)avctx->extradata)[3] & 1;
-    avctx->sub_id= BE_32((uint8_t*)avctx->extradata + 4);
+    avctx->sub_id= AV_RB32((uint8_t*)avctx->extradata + 4);
 
     switch(avctx->sub_id){
     case 0x10000000:

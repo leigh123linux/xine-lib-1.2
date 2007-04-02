@@ -2588,7 +2588,6 @@ doc/man/en/Makefile
 doc/hackersguide/Makefile
 doc/faq/Makefile
 contrib/Makefile
-contrib/ffmpeg/makefile.xine
 include/Makefile
 include/xine.h
 lib/Makefile

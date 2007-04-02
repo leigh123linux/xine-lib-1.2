@@ -393,6 +393,7 @@ AVInputFormat mp3_demuxer = {
     mp3_read_header,
     mp3_read_packet,
     mp3_read_close,
+    .flags= AVFMT_GENERIC_INDEX,
     .extensions = "mp2,mp3,m2a", /* XXX: use probe */
 };
 #endif
@@ -401,7 +402,7 @@ AVOutputFormat mp2_muxer = {
     "mp2",
     "MPEG audio layer 2",
     "audio/x-mpeg",
-#ifdef CONFIG_MP3LAME
+#ifdef CONFIG_LIBMP3LAME
     "mp2,m2a",
 #else
     "mp2,mp3,m2a",

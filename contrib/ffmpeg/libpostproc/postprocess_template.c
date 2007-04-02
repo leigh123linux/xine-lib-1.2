@@ -2645,7 +2645,7 @@ Switch between
 /**
  * accurate deblock filter
  */
-static always_inline void RENAME(do_a_deblock)(uint8_t *src, int step, int stride, PPContext *c){
+static av_always_inline void RENAME(do_a_deblock)(uint8_t *src, int step, int stride, PPContext *c){
         int64_t dc_mask, eq_mask, both_masks;
         int64_t sums[10*8*2];
         src+= step*3; // src points to begin of the 8x8 Block
@@ -3464,7 +3464,7 @@ static void RENAME(postProcess)(uint8_t src[], int srcStride, uint8_t dst[], int
                 uint8_t *srcBlock= &(src[y*srcStride]);
                 uint8_t *dstBlock= tempDst + dstStride;
 
-                // From this point on it is guranteed that we can read and write 16 lines downward
+                // From this point on it is guaranteed that we can read and write 16 lines downward
                 // finish 1 block before the next otherwise we might have a problem
                 // with the L1 Cache of the P4 ... or only a few blocks at a time or soemthing
                 for(x=0; x<width; x+=BLOCK_SIZE)
@@ -3578,7 +3578,7 @@ static void RENAME(postProcess)(uint8_t src[], int srcStride, uint8_t dst[], int
                         srcBlock= tempSrc;
                 }
 
-                // From this point on it is guranteed that we can read and write 16 lines downward
+                // From this point on it is guaranteed that we can read and write 16 lines downward
                 // finish 1 block before the next otherwise we might have a problem
                 // with the L1 Cache of the P4 ... or only a few blocks at a time or soemthing
                 for(x=0; x<width; x+=BLOCK_SIZE)

@@ -672,6 +672,8 @@ struct SwsContext *sws_getContext(int srcW, int srcH, int srcFormat,
 
 void sws_freeContext(struct SwsContext *ctx)
 {
+    if (!ctx)
+        return;
     if ((ctx->resampling_ctx->iwidth != ctx->resampling_ctx->owidth) ||
         (ctx->resampling_ctx->iheight != ctx->resampling_ctx->oheight)) {
         img_resample_close(ctx->resampling_ctx);
@@ -800,7 +802,7 @@ int sws_scale(struct SwsContext *ctx, uint8_t* src[], int srcStride[],
             goto the_end;
         }
     } else if (resampled_picture != &dst_pict) {
-        img_copy(&dst_pict, resampled_picture, current_pix_fmt,
+        av_picture_copy(&dst_pict, resampled_picture, current_pix_fmt,
                         ctx->resampling_ctx->owidth, ctx->resampling_ctx->oheight);
     }
 

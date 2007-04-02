@@ -163,7 +163,7 @@ static int avi_write_header(AVFormatContext *s)
     nb_frames = 0;
 
     if(video_enc){
-        put_le32(pb, (uint32_t)(int64_t_C(1000000) * video_enc->time_base.num / video_enc->time_base.den));
+        put_le32(pb, (uint32_t)(INT64_C(1000000) * video_enc->time_base.num / video_enc->time_base.den));
     } else {
         put_le32(pb, 0);
     }
@@ -519,38 +519,37 @@ static int avi_write_trailer(AVFormatContext *s)
     int i, j, n, nb_frames;
     offset_t file_size;
 
-    if (!url_is_streamed(pb))
-    {
-    if (avi->riff_id == 1) {
-        end_tag(pb, avi->movi_list);
-        res = avi_write_idx1(s);
-        end_tag(pb, avi->riff_start);
-    } else {
-        avi_write_ix(s);
-        end_tag(pb, avi->movi_list);
-        end_tag(pb, avi->riff_start);
+    if (!url_is_streamed(pb)){
+        if (avi->riff_id == 1) {
+            end_tag(pb, avi->movi_list);
+            res = avi_write_idx1(s);
+            end_tag(pb, avi->riff_start);
+        } else {
+            avi_write_ix(s);
+            end_tag(pb, avi->movi_list);
+            end_tag(pb, avi->riff_start);
 
-        file_size = url_ftell(pb);
-        url_fseek(pb, avi->odml_list - 8, SEEK_SET);
-        put_tag(pb, "LIST"); /* Making this AVI OpenDML one */
-        url_fskip(pb, 16);
+            file_size = url_ftell(pb);
+            url_fseek(pb, avi->odml_list - 8, SEEK_SET);
+            put_tag(pb, "LIST"); /* Making this AVI OpenDML one */
+            url_fskip(pb, 16);
 
-        for (n=nb_frames=0;n<s->nb_streams;n++) {
-             AVCodecContext *stream = s->streams[n]->codec;
-             if (stream->codec_type == CODEC_TYPE_VIDEO) {
-                 if (nb_frames < avi->packet_count[n])
-                     nb_frames = avi->packet_count[n];
-             } else {
-                 if (stream->codec_id == CODEC_ID_MP2 || stream->codec_id == CODEC_ID_MP3) {
-                     nb_frames += avi->packet_count[n];
+            for (n=nb_frames=0;n<s->nb_streams;n++) {
+                AVCodecContext *stream = s->streams[n]->codec;
+                if (stream->codec_type == CODEC_TYPE_VIDEO) {
+                    if (nb_frames < avi->packet_count[n])
+                        nb_frames = avi->packet_count[n];
+                } else {
+                    if (stream->codec_id == CODEC_ID_MP2 || stream->codec_id == CODEC_ID_MP3) {
+                        nb_frames += avi->packet_count[n];
+                    }
                 }
             }
-        }
-        put_le32(pb, nb_frames);
-        url_fseek(pb, file_size, SEEK_SET);
+            put_le32(pb, nb_frames);
+            url_fseek(pb, file_size, SEEK_SET);
 
-        avi_write_counters(s, avi->riff_id);
-    }
+            avi_write_counters(s, avi->riff_id);
+        }
     }
     put_flush_packet(pb);
 
@@ -576,5 +575,6 @@ AVOutputFormat avi_muxer = {
     avi_write_header,
     avi_write_packet,
     avi_write_trailer,
+    .codec_tag= (const AVCodecTag*[]){codec_bmp_tags, codec_wav_tags, 0},
 };
 #endif //CONFIG_AVI_MUXER

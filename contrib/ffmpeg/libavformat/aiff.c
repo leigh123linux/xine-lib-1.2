@@ -23,7 +23,7 @@
 #include "riff.h"
 #include "intfloat_readwrite.h"
 
-static const CodecTag codec_aiff_tags[] = {
+static const AVCodecTag codec_aiff_tags[] = {
     { CODEC_ID_PCM_S16BE, MKTAG('N','O','N','E') },
     { CODEC_ID_PCM_S8, MKTAG('N','O','N','E') },
     { CODEC_ID_PCM_S24BE, MKTAG('N','O','N','E') },
@@ -91,7 +91,7 @@ static void get_meta(ByteIOContext *pb, char * str, int strsize, int size)
     if (size & 1)
         size++;
     size -= res;
-    if (size);
+    if (size)
         url_fskip(pb, size);
 }
 
@@ -163,28 +163,32 @@ static int aiff_write_header(AVFormatContext *s)
     ByteIOContext *pb = &s->pb;
     AVCodecContext *enc = s->streams[0]->codec;
     AVExtFloat sample_rate;
+    int aifc = 0;
 
     /* First verify if format is ok */
-    enc->codec_tag = codec_get_tag(codec_aiff_tags, enc->codec_id);
     if (!enc->codec_tag) {
-        av_free(aiff);
         return -1;
     }
+
+    if (enc->codec_tag != MKTAG('N','O','N','E'))
+        aifc = 1;
 
     /* FORM AIFF header */
     put_tag(pb, "FORM");
     aiff->form = url_ftell(pb);
     put_be32(pb, 0);                    /* file length */
-    put_tag(pb, "AIFC");
+    put_tag(pb, aifc ? "AIFC" : "AIFF");
 
-    /* Version chunk */
-    put_tag(pb, "FVER");
-    put_be32(pb, 4);
-    put_be32(pb, 0xA2805140);
+    if (aifc) {
+        /* Version chunk */
+        put_tag(pb, "FVER");
+        put_be32(pb, 4);
+        put_be32(pb, 0xA2805140);
+    }
 
     /* Common chunk */
     put_tag(pb, "COMM");
-    put_be32(pb, 24); /* size */
+    put_be32(pb, aifc ? 24 : 18); /* size */
     put_be16(pb, enc->channels);        /* Number of channels */
 
     aiff->frames = url_ftell(pb);
@@ -204,8 +208,10 @@ static int aiff_write_header(AVFormatContext *s)
     sample_rate = av_dbl2ext((double)enc->sample_rate);
     put_buffer(pb, (uint8_t*)&sample_rate, sizeof(sample_rate));
 
-    put_le32(pb, enc->codec_tag);
-    put_be16(pb, 0);
+    if (aifc) {
+        put_le32(pb, enc->codec_tag);
+        put_be16(pb, 0);
+    }
 
     /* Sound data chunk */
     put_tag(pb, "SSND");
@@ -417,6 +423,7 @@ AVInputFormat aiff_demuxer = {
     aiff_read_packet,
     aiff_read_close,
     aiff_read_seek,
+    .codec_tag= (const AVCodecTag*[]){codec_aiff_tags, 0},
 };
 #endif
 
@@ -432,5 +439,6 @@ AVOutputFormat aiff_muxer = {
     aiff_write_header,
     aiff_write_packet,
     aiff_write_trailer,
+    .codec_tag= (const AVCodecTag*[]){codec_aiff_tags, 0},
 };
 #endif

@@ -38,7 +38,7 @@ version <next>
 - ADTS AAC file reading and writing
 - Creative VOC file reading and writing
 - American Laser Games multimedia (*.mm) playback system
-- Zip Blocks Motion Video decoder
+- Zip Blocks Motion Video decoder and encoder
 - Improved Theora/VP3 decoder
 - True Audio (TTA) decoder
 - AVS demuxer and video decoder
@@ -66,6 +66,17 @@ version <next>
 - TIFF picture decoder
 - GIF picture decoder
 - Intel Music decoder
+- Musepack decoder
+- Flash Screen Video encoder
+- Theora encoding via libtheora
+- BMP encoder
+- WMA encoder
+- GSM-MS encoder and decoder
+- DCA decoder
+- DXA demuxer and decoder
+- DNxHD decoder
+- Gamecube movie (.THP) playback system
+- Blackfin optimizations
 
 version 0.4.9-pre1:
 

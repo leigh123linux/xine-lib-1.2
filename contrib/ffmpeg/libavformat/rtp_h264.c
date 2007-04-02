@@ -41,16 +41,8 @@
 #include "bitstream.h"
 
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include "network.h"
 #include <assert.h>
-#ifndef __BEOS__
-# include <arpa/inet.h>
-#else
-# include "barpainet.h"
-#endif
-#include <netdb.h>
 
 #include "rtp_internal.h"
 #include "rtp_h264.h"
@@ -172,7 +164,9 @@ static int h264_handle_packet(RTPDemuxContext * s,
                               const uint8_t * buf,
                               int len)
 {
-//    h264_rtp_extra_data *data = s->dynamic_protocol_context;
+#ifdef DEBUG
+    h264_rtp_extra_data *data = s->dynamic_protocol_context;
+#endif
     uint8_t nal = buf[0];
     uint8_t type = (nal & 0x1f);
     int result= 0;
@@ -213,7 +207,7 @@ static int h264_handle_packet(RTPDemuxContext * s,
                 int src_len= len;
 
                 do {
-                    uint16_t nal_size = BE_16(src); // this going to be a problem if unaligned (can it be?)
+                    uint16_t nal_size = AV_RB16(src); // this going to be a problem if unaligned (can it be?)
 
                     // consume the length of the aggregate...
                     src += 2;

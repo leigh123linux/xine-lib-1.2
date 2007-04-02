@@ -20,15 +20,7 @@
  */
 #include "avformat.h"
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#ifndef __BEOS__
-# include <arpa/inet.h>
-#else
-# include "barpainet.h"
-#endif
-#include <netdb.h>
+#include "network.h"
 
 #ifndef IPV6_ADD_MEMBERSHIP
 #define IPV6_ADD_MEMBERSHIP IPV6_JOIN_GROUP
@@ -214,11 +206,7 @@ static int udp_ipv6_set_local(URLContext *h) {
 
  fail:
     if (udp_fd >= 0)
-#ifdef CONFIG_BEOS_NETSERVER
         closesocket(udp_fd);
-#else
-        close(udp_fd);
-#endif
     if(res0)
         freeaddrinfo(res0);
     return -1;
@@ -307,7 +295,7 @@ static int udp_open(URLContext *h, const char *uri, int flags)
 
     s = av_malloc(sizeof(UDPContext));
     if (!s)
-        return -ENOMEM;
+        return AVERROR(ENOMEM);
 
     h->priv_data = s;
     s->ttl = 16;
@@ -342,7 +330,7 @@ static int udp_open(URLContext *h, const char *uri, int flags)
     }
 
 #ifndef CONFIG_IPV6
-    udp_fd = socket(PF_INET, SOCK_DGRAM, 0);
+    udp_fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (udp_fd < 0)
         goto fail;
 
@@ -367,7 +355,7 @@ static int udp_open(URLContext *h, const char *uri, int flags)
     getsockname(udp_fd, (struct sockaddr *)&my_addr1, &len);
     s->local_port = ntohs(my_addr1.sin_port);
 
-#ifndef CONFIG_BEOS_NETSERVER
+#ifdef IP_MULTICAST_TTL
     if (s->is_multicast) {
         if (h->flags & URL_WRONLY) {
             /* output */
@@ -395,7 +383,6 @@ static int udp_open(URLContext *h, const char *uri, int flags)
     udp_fd = udp_ipv6_set_local(h);
     if (udp_fd < 0)
         goto fail;
-#ifndef CONFIG_BEOS_NETSERVER
     if (s->is_multicast) {
         if (h->flags & URL_WRONLY) {
             if (udp_ipv6_set_multicast_ttl(udp_fd, s->ttl, (struct sockaddr *)&s->dest_addr) < 0)
@@ -405,7 +392,6 @@ static int udp_open(URLContext *h, const char *uri, int flags)
                 goto fail;
         }
     }
-#endif
 #endif
 
     if (is_output) {
@@ -421,11 +407,7 @@ static int udp_open(URLContext *h, const char *uri, int flags)
     return 0;
  fail:
     if (udp_fd >= 0)
-#ifdef CONFIG_BEOS_NETSERVER
         closesocket(udp_fd);
-#else
-        close(udp_fd);
-#endif
     av_free(s);
     return AVERROR_IO;
 }
@@ -482,22 +464,20 @@ static int udp_close(URLContext *h)
 {
     UDPContext *s = h->priv_data;
 
-#ifndef CONFIG_BEOS_NETSERVER
 #ifndef CONFIG_IPV6
+#ifdef IP_DROP_MEMBERSHIP
     if (s->is_multicast && !(h->flags & URL_WRONLY)) {
         if (setsockopt(s->udp_fd, IPPROTO_IP, IP_DROP_MEMBERSHIP,
                        &s->mreq, sizeof(s->mreq)) < 0) {
             perror("IP_DROP_MEMBERSHIP");
         }
     }
+#endif
 #else
     if (s->is_multicast && !(h->flags & URL_WRONLY))
         udp_ipv6_leave_multicast_group(s->udp_fd, (struct sockaddr *)&s->dest_addr);
 #endif
-    close(s->udp_fd);
-#else
     closesocket(s->udp_fd);
-#endif
     av_free(s);
     return 0;
 }

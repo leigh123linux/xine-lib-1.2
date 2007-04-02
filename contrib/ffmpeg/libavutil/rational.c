@@ -38,8 +38,10 @@ int av_reduce(int *dst_nom, int *dst_den, int64_t nom, int64_t den, int64_t max)
     int sign= (nom<0) ^ (den<0);
     int64_t gcd= ff_gcd(FFABS(nom), FFABS(den));
 
-    nom = FFABS(nom)/gcd;
-    den = FFABS(den)/gcd;
+    if(gcd){
+        nom = FFABS(nom)/gcd;
+        den = FFABS(den)/gcd;
+    }
     if(nom<=max && den<=max){
         a1= (AVRational){nom, den};
         den=0;
@@ -65,7 +67,7 @@ int av_reduce(int *dst_nom, int *dst_den, int64_t nom, int64_t den, int64_t max)
         nom= den;
         den= next_den;
     }
-    assert(ff_gcd(a1.num, a1.den) == 1);
+    assert(ff_gcd(a1.num, a1.den) <= 1U);
 
     *dst_nom = sign ? -a1.num : a1.num;
     *dst_den = a1.den;
@@ -73,40 +75,24 @@ int av_reduce(int *dst_nom, int *dst_den, int64_t nom, int64_t den, int64_t max)
     return den==0;
 }
 
-/**
- * returns b*c.
- */
 AVRational av_mul_q(AVRational b, AVRational c){
     av_reduce(&b.num, &b.den, b.num * (int64_t)c.num, b.den * (int64_t)c.den, INT_MAX);
     return b;
 }
 
-/**
- * returns b/c.
- */
 AVRational av_div_q(AVRational b, AVRational c){
     return av_mul_q(b, (AVRational){c.den, c.num});
 }
 
-/**
- * returns b+c.
- */
 AVRational av_add_q(AVRational b, AVRational c){
     av_reduce(&b.num, &b.den, b.num * (int64_t)c.den + c.num * (int64_t)b.den, b.den * (int64_t)c.den, INT_MAX);
     return b;
 }
 
-/**
- * returns b-c.
- */
 AVRational av_sub_q(AVRational b, AVRational c){
     return av_add_q(b, (AVRational){-c.num, c.den});
 }
 
-/**
- * Converts a double precission floating point number to a AVRational.
- * @param max the maximum allowed numerator and denominator
- */
 AVRational av_d2q(double d, int max){
     AVRational a;
 #define LOG2  0.69314718055994530941723212145817656807550013436025

@@ -68,7 +68,6 @@ static int grab_read_header(AVFormatContext *s1, AVFormatParameters *ap)
     struct video_tuner tuner;
     struct video_audio audio;
     struct video_picture pict;
-    const char *video_device;
     int j;
 
     if (ap->width <= 0 || ap->height <= 0 || ap->time_base.den <= 0) {
@@ -92,7 +91,7 @@ static int grab_read_header(AVFormatContext *s1, AVFormatParameters *ap)
 
     st = av_new_stream(s1, 0);
     if (!st)
-        return -ENOMEM;
+        return AVERROR(ENOMEM);
     av_set_pts_info(st, 64, 1, 1000000); /* 64 bits pts in us */
 
     s->width = width;
@@ -100,12 +99,9 @@ static int grab_read_header(AVFormatContext *s1, AVFormatParameters *ap)
     s->frame_rate      = frame_rate;
     s->frame_rate_base = frame_rate_base;
 
-    video_device = ap->device;
-    if (!video_device)
-        video_device = "/dev/video";
-    video_fd = open(video_device, O_RDWR);
+    video_fd = open(s1->filename, O_RDWR);
     if (video_fd < 0) {
-        perror(video_device);
+        perror(s1->filename);
         goto fail;
     }
 
@@ -124,7 +120,7 @@ static int grab_read_header(AVFormatContext *s1, AVFormatParameters *ap)
     if (ap->pix_fmt == PIX_FMT_YUV420P) {
         desired_palette = VIDEO_PALETTE_YUV420P;
         desired_depth = 12;
-    } else if (ap->pix_fmt == PIX_FMT_YUV422) {
+    } else if (ap->pix_fmt == PIX_FMT_YUYV422) {
         desired_palette = VIDEO_PALETTE_YUV422;
         desired_depth = 16;
     } else if (ap->pix_fmt == PIX_FMT_BGR24) {
@@ -174,12 +170,13 @@ static int grab_read_header(AVFormatContext *s1, AVFormatParameters *ap)
                 pict.palette=VIDEO_PALETTE_RGB24;
                 pict.depth=24;
                 ret = ioctl(video_fd, VIDIOCSPICT, &pict);
-                if (ret < 0)
+                if (ret < 0) {
                     pict.palette=VIDEO_PALETTE_GREY;
                     pict.depth=8;
                     ret = ioctl(video_fd, VIDIOCSPICT, &pict);
                     if (ret < 0)
                         goto fail1;
+                }
             }
         }
     }
@@ -219,8 +216,11 @@ static int grab_read_header(AVFormatContext *s1, AVFormatParameters *ap)
     } else {
         s->video_buf = mmap(0,s->gb_buffers.size,PROT_READ|PROT_WRITE,MAP_SHARED,video_fd,0);
         if ((unsigned char*)-1 == s->video_buf) {
-            perror("mmap");
-            goto fail;
+            s->video_buf = mmap(0,s->gb_buffers.size,PROT_READ|PROT_WRITE,MAP_PRIVATE,video_fd,0);
+            if ((unsigned char*)-1 == s->video_buf) {
+                perror("mmap");
+                goto fail;
+            }
         }
         s->gb_frame = 0;
         s->time_frame = av_gettime() * s->frame_rate / s->frame_rate_base;
@@ -256,7 +256,7 @@ static int grab_read_header(AVFormatContext *s1, AVFormatParameters *ap)
         break;
     case VIDEO_PALETTE_YUV422:
         frame_size = width * height * 2;
-        st->codec->pix_fmt = PIX_FMT_YUV422;
+        st->codec->pix_fmt = PIX_FMT_YUYV422;
         break;
     case VIDEO_PALETTE_RGB24:
         frame_size = width * height * 3;
@@ -321,16 +321,16 @@ static int grab_read_packet(AVFormatContext *s1, AVPacket *pkt)
     struct timespec ts;
 
     /* Calculate the time of the next frame */
-    s->time_frame += int64_t_C(1000000);
+    s->time_frame += INT64_C(1000000);
 
     /* wait based on the frame rate */
     for(;;) {
         curtime = av_gettime();
         delay = s->time_frame  * s->frame_rate_base / s->frame_rate - curtime;
         if (delay <= 0) {
-            if (delay < int64_t_C(-1000000) * s->frame_rate_base / s->frame_rate) {
+            if (delay < INT64_C(-1000000) * s->frame_rate_base / s->frame_rate) {
                 /* printf("grabbing is %d frames late (dropping)\n", (int) -(delay / 16666)); */
-                s->time_frame += int64_t_C(1000000);
+                s->time_frame += INT64_C(1000000);
             }
             break;
         }

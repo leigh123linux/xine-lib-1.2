@@ -31,7 +31,7 @@ ffplay:
   ffplay.c
 
 ffserver:
-  ffserver.c, ffserver.h
+  ffserver.c, ffserver.h                Alex Beregszaszi
 
 Commandline utility code:
   cmdutils.c, cmdutils.h
@@ -88,6 +88,7 @@ Generic Parts:
     dsputils.c, dsputils.h              Michael Niedermayer
   entropy coding:
     rangecoder.c, rangecoder.h          Michael Niedermayer
+    lzw.*                               Michael Niedermayer
   floating point AAN DCT:
     faandct.c, faandct.h                Michael Niedermayer
   Golomb coding:
@@ -106,6 +107,7 @@ Codecs:
   4xm.c                                 Michael Niedermayer
   8bps.c                                Roberto Togni
   aasc.c                                Kostya Shishkov
+  ac3*                                  Justin Ruggles
   asv*                                  Michael Niedermayer
   bmp.c                                 Mans Rullgard
   cavs*                                 Stefan Gehrer
@@ -113,12 +115,14 @@ Codecs:
   cljr                                  Alex Beregszaszi
   cook.c, cookdata.h                    Benjamin Larsson
   cscd.c                                Reimar Doeffinger
+  dnxhddec.c                            Baptiste Coudurier
   dpcm.c                                Mike Melanson
+  dxa.c                                 Kostya Shishkov
   dv.c                                  Roman Shaposhnik
   ffv1.c                                Michael Niedermayer
   flac.c                                Alex Beregszaszi
   flacenc.c                             Justin Ruggles
-  flashsv.c                             Benjamin Larsson
+  flashsv*                              Benjamin Larsson
   flicvideo.c                           Mike Melanson
   g726.c                                Roman Shaposhnik
   gifdec.c                              Baptiste Coudurier
@@ -133,10 +137,12 @@ Codecs:
   jpeg_ls.c                             Kostya Shishkov
   kmvc.c                                Kostya Shishkov
   lcl.c                                 Roberto Togni
+  libgsm.c                              Michel Bardiaux
   loco.c                                Kostya Shishkov
   lzo.h, lzo.c                          Reimar Doeffinger
   mdec.c                                Michael Niedermayer
   mjpeg.c                               Michael Niedermayer
+  mpc*                                  Kostya Shishkov
   mpeg12.c, mpeg12data.h                Michael Niedermayer
   mpegvideo.c, mpegvideo.h              Michael Niedermayer
   msmpeg4.c, msmpeg4data.h              Michael Niedermayer
@@ -179,7 +185,7 @@ Codecs:
   xan.c                                 Mike Melanson
   xl.c                                  Kostya Shishkov
   xvmcvideo.c                           Ivan Kalvachev
-  zmbv.c                                Kostya Shishkov
+  zmbv*                                 Kostya Shishkov
 
 
 libavformat
@@ -200,6 +206,7 @@ Muxers/Demuxers:
   crc.c                                 Michael Niedermayer
   daud.c                                Reimar Doeffinger
   dc1394.c, dv.c                        Roman Shaposhnik
+  dxa.c                                 Kostya Shishkov
   flic.c                                Mike Melanson
   flvdec.c, flvenc.c                    Michael Niedermayer
   gxf.c                                 Reimar Doeffinger
@@ -208,14 +215,16 @@ Muxers/Demuxers:
   idroq.c                               Mike Melanson
   ipmovie.c                             Mike Melanson
   img2.c                                Michael Niedermayer
+  libnut.c                              Oded Shimon
   matroska.c                            Aurelien Jacobs
-  mov.c                                 Francois Revol, Michael Niedermayer
+  mov.c                                 Michael Niedermayer, Baptiste Coudurier
   movenc.c                              Michael Niedermayer, Baptiste Coudurier
+  mpc.c                                 Kostya Shishkov
   mpegts*                               Mans Rullgard
   mtv.c                                 Reynaldo H. Verdejo Pinochet
   mxf.c                                 Baptiste Coudurier
   nsvdec.c                              Francois Revol
-  nut.c                                 Alex Beregszaszi
+  nut.c                                 Michael Niedermayer
   nuv.c                                 Reimar Doeffinger
   ogg2.c, ogg2.h                        Mans Rullgard
   oggparsevorbis.c                      Mans Rullgard
@@ -224,6 +233,7 @@ Muxers/Demuxers:
   raw.c                                 Michael Niedermayer
   rm.c                                  Roberto Togni
   segafilm.c                            Mike Melanson
+  swf.c                                 Baptiste Coudurier
   v4l2.c                                Luca Abeni
   voc.c                                 Aurelien Jacobs
   wav.c                                 Michael Niedermayer
@@ -241,3 +251,4 @@ i386                                    Michael Niedermayer
 Mac OS X / PowerPC                      Romain Dolbeau
 Amiga / PowerPC                         Colin Ward
 Linux / PowerPC                         Luca Barbato
+Windows MinGW                           Alex Beregszaszi

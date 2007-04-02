@@ -35,12 +35,12 @@
 #endif
 
 /*
- * when CONFIG_FAADBIN is defined the libfaad will be opened at runtime
+ * when CONFIG_LIBFAADBIN is defined the libfaad will be opened at runtime
  */
-//#undef CONFIG_FAADBIN
-//#define CONFIG_FAADBIN
+//#undef CONFIG_LIBFAADBIN
+//#define CONFIG_LIBFAADBIN
 
-#ifdef CONFIG_FAADBIN
+#ifdef CONFIG_LIBFAADBIN
 #include <dlfcn.h>
 static const char* libfaadname = "libfaad.so.0";
 #else
@@ -196,8 +196,7 @@ static int faac_decode_end(AVCodecContext *avctx)
 {
     FAACContext *s = (FAACContext *) avctx->priv_data;
 
-    if (s->faacDecClose)
-        s->faacDecClose(s->faac_handle);
+    s->faacDecClose(s->faac_handle);
 
     dlclose(s->handle);
     return 0;
@@ -208,7 +207,7 @@ static int faac_decode_init(AVCodecContext *avctx)
     FAACContext *s = (FAACContext *) avctx->priv_data;
     faacDecConfigurationPtr faac_cfg;
 
-#ifdef CONFIG_FAADBIN
+#ifdef CONFIG_LIBFAADBIN
     const char* err = 0;
 
     s->handle = dlopen(libfaadname, RTLD_LAZY);
@@ -222,12 +221,13 @@ static int faac_decode_init(AVCodecContext *avctx)
     do { static const char* n = "faacDec" #a; \
     if ((s->faacDec ## a = b dlsym( s->handle, n )) == NULL) { err = n; break; } } while(0)
     for(;;) {
-#else  /* !CONFIG_FAADBIN */
+#else  /* !CONFIG_LIBFAADBIN */
 #define dfaac(a, b)     s->faacDec ## a = faacDec ## a
-#endif /* CONFIG_FAADBIN */
+#endif /* CONFIG_LIBFAADBIN */
 
         // resolve all needed function calls
         dfaac(Open, (faacDecHandle FAADAPI (*)(void)));
+        dfaac(Close, (void FAADAPI (*)(faacDecHandle hDecoder)));
         dfaac(GetCurrentConfiguration, (faacDecConfigurationPtr
                                         FAADAPI (*)(faacDecHandle)));
 #ifndef FAAD2_VERSION
@@ -239,7 +239,6 @@ static int faac_decode_init(AVCodecContext *avctx)
     dfaac(Init2, (int FAADAPI (*)(faacDecHandle, unsigned char*,
                                        unsigned long, unsigned long*,
                                        unsigned long*)));
-    dfaac(Close, (void FAADAPI (*)(faacDecHandle hDecoder)));
         dfaac(Decode, (int FAADAPI (*)(faacDecHandle, unsigned char*,
                              unsigned long*, short*, unsigned long*)));
 #else
@@ -256,7 +255,7 @@ static int faac_decode_init(AVCodecContext *avctx)
 #endif
 #undef dfacc
 
-#ifdef CONFIG_FAADBIN
+#ifdef CONFIG_LIBFAADBIN
         break;
     }
     if (err) {

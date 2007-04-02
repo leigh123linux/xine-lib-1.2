@@ -360,10 +360,11 @@ static int gxf_header(AVFormatContext *s, AVFormatParameters *ap) {
         }
     }
     if (pkt_type == PKT_UMF) {
-        if (len >= 9) {
+        if (len >= 0x39) {
             AVRational fps;
-            len -= 9;
-            url_fskip(pb, 5);
+            len -= 0x39;
+            url_fskip(pb, 5); // preamble
+            url_fskip(pb, 0x30); // payload description
             fps = fps_umf2avr(get_le32(pb));
             if (!main_timebase.num || !main_timebase.den) {
                 // this may not always be correct, but simply the best we can get
@@ -375,13 +376,11 @@ static int gxf_header(AVFormatContext *s, AVFormatParameters *ap) {
     } else
         av_log(s, AV_LOG_INFO, "GXF: UMF packet missing\n");
     url_fskip(pb, len);
+    if (!main_timebase.num || !main_timebase.den)
+        main_timebase = (AVRational){1, 50}; // set some arbitrary fallback
     for (i = 0; i < s->nb_streams; i++) {
         AVStream *st = s->streams[i];
-        if (main_timebase.num && main_timebase.den)
-            st->time_base = main_timebase;
-        else {
-            st->start_time = st->duration = AV_NOPTS_VALUE;
-        }
+        av_set_pts_info(st, 32, main_timebase.num, main_timebase.den);
     }
     return 0;
 }

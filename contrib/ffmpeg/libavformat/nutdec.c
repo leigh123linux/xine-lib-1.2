@@ -29,18 +29,13 @@
 
 static uint64_t get_v(ByteIOContext *bc){
     uint64_t val = 0;
+    int tmp;
 
-    for(;;)
-    {
-        int tmp = get_byte(bc);
-
-        if (tmp&0x80)
-            val= (val<<7) + tmp - 0x80;
-        else{
-            return (val<<7) + tmp;
-        }
-    }
-    return -1;
+    do{
+        tmp = get_byte(bc);
+        val= (val<<7) + (tmp&127);
+    }while(tmp&128);
+    return val;
 }
 
 static int get_str(ByteIOContext *bc, char *string, unsigned int maxlen){
@@ -109,6 +104,8 @@ static int get_packetheader(NUTContext *nut, ByteIOContext *bc, int calculate_ch
 //    start= url_ftell(bc) - 8;
 
     size= get_v(bc);
+    if(size > 4096)
+        get_be32(bc); //FIXME check this
 
     init_checksum(bc, calculate_checksum ? av_crc04C11DB7_update : NULL, 0);
 
@@ -740,13 +737,12 @@ static int nut_read_packet(AVFormatContext *s, AVPacket *pkt)
         uint64_t tmp= nut->next_startcode;
         nut->next_startcode=0;
 
-        if (url_feof(bc))
-            return -1;
-
         if(tmp){
             pos-=8;
         }else{
             frame_code = get_byte(bc);
+            if(url_feof(bc))
+                return -1;
             if(frame_code == 'N'){
                 tmp= frame_code;
                 for(i=1; i<8; i++)

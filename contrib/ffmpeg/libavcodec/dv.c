@@ -75,12 +75,12 @@ static void* dv_anchor[DV_ANCHOR_SIZE];
 #endif
 
 /* XXX: also include quantization */
-static RL_VLC_ELEM *dv_rl_vlc;
+static RL_VLC_ELEM dv_rl_vlc[1184];
 /* VLC encoding lookup table */
 static struct dv_vlc_pair {
    uint32_t vlc;
    uint8_t  size;
-} (*dv_vlc_map)[DV_VLC_MAP_LEV_SIZE] = NULL;
+} dv_vlc_map[DV_VLC_MAP_RUN_SIZE][DV_VLC_MAP_LEV_SIZE];
 
 static void dv_build_unquantize_tables(DVVideoContext *s, uint8_t* perm)
 {
@@ -123,10 +123,6 @@ static int dvvideo_init(AVCodecContext *avctx)
 
         done = 1;
 
-        dv_vlc_map = av_mallocz_static(DV_VLC_MAP_LEV_SIZE*DV_VLC_MAP_RUN_SIZE*sizeof(struct dv_vlc_pair));
-        if (!dv_vlc_map)
-            return -ENOMEM;
-
         /* dv_anchor lets each thread know its Id */
         for (i=0; i<DV_ANCHOR_SIZE; i++)
             dv_anchor[i] = (void*)(size_t)i;
@@ -154,10 +150,7 @@ static int dvvideo_init(AVCodecContext *avctx)
            to accelerate the parsing of partial codes */
         init_vlc(&dv_vlc, TEX_VLC_BITS, j,
                  new_dv_vlc_len, 1, 1, new_dv_vlc_bits, 2, 2, 0);
-
-        dv_rl_vlc = av_mallocz_static(dv_vlc.table_size * sizeof(RL_VLC_ELEM));
-        if (!dv_rl_vlc)
-            return -ENOMEM;
+        assert(dv_vlc.table_size == 1184);
 
         for(i = 0; i < dv_vlc.table_size; i++){
             int code= dv_vlc.table[i][0];
@@ -560,7 +553,7 @@ static inline void dv_decode_video_segment(DVVideoContext *s,
 
 #ifdef DV_CODEC_TINY_TARGET
 /* Converts run and level (where level != 0) pair into vlc, returning bit size */
-static always_inline int dv_rl2vlc(int run, int level, int sign, uint32_t* vlc)
+static av_always_inline int dv_rl2vlc(int run, int level, int sign, uint32_t* vlc)
 {
     int size;
     if (run < DV_VLC_MAP_RUN_SIZE && level < DV_VLC_MAP_LEV_SIZE) {
@@ -585,7 +578,7 @@ static always_inline int dv_rl2vlc(int run, int level, int sign, uint32_t* vlc)
     return size;
 }
 
-static always_inline int dv_rl2vlc_size(int run, int level)
+static av_always_inline int dv_rl2vlc_size(int run, int level)
 {
     int size;
 
@@ -601,13 +594,13 @@ static always_inline int dv_rl2vlc_size(int run, int level)
     return size;
 }
 #else
-static always_inline int dv_rl2vlc(int run, int l, int sign, uint32_t* vlc)
+static av_always_inline int dv_rl2vlc(int run, int l, int sign, uint32_t* vlc)
 {
     *vlc = dv_vlc_map[run][l].vlc | sign;
     return dv_vlc_map[run][l].size;
 }
 
-static always_inline int dv_rl2vlc_size(int run, int l)
+static av_always_inline int dv_rl2vlc_size(int run, int l)
 {
     return dv_vlc_map[run][l].size;
 }
@@ -627,7 +620,7 @@ typedef struct EncBlockInfo {
     uint32_t partial_bit_buffer; /* we can't use uint16_t here */
 } EncBlockInfo;
 
-static always_inline PutBitContext* dv_encode_ac(EncBlockInfo* bi, PutBitContext* pb_pool,
+static av_always_inline PutBitContext* dv_encode_ac(EncBlockInfo* bi, PutBitContext* pb_pool,
                                        PutBitContext* pb_end)
 {
     int prev;
@@ -670,7 +663,7 @@ static always_inline PutBitContext* dv_encode_ac(EncBlockInfo* bi, PutBitContext
     return pb;
 }
 
-static always_inline void dv_set_class_number(DCTELEM* blk, EncBlockInfo* bi,
+static av_always_inline void dv_set_class_number(DCTELEM* blk, EncBlockInfo* bi,
                                               const uint8_t* zigzag_scan, const int *weight, int bias)
 {
     int i, area;
@@ -742,7 +735,7 @@ static always_inline void dv_set_class_number(DCTELEM* blk, EncBlockInfo* bi,
 
 //FIXME replace this by dsputil
 #define SC(x, y) ((s[x] - s[y]) ^ ((s[x] - s[y]) >> 7))
-static always_inline int dv_guess_dct_mode(DCTELEM *blk) {
+static av_always_inline int dv_guess_dct_mode(DCTELEM *blk) {
     DCTELEM *s;
     int score88 = 0;
     int score248 = 0;
@@ -845,7 +838,7 @@ static inline void dv_encode_video_segment(DVVideoContext *s,
     uint8_t*  data;
     uint8_t*  ptr;
     int       do_edge_wrap;
-    DECLARE_ALIGNED_8(DCTELEM, block[64]);
+    DECLARE_ALIGNED_16(DCTELEM, block[64]);
     EncBlockInfo  enc_blks[5*6];
     PutBitContext pbs[5*6];
     PutBitContext* pb;
@@ -853,7 +846,7 @@ static inline void dv_encode_video_segment(DVVideoContext *s,
     int       vs_bit_size = 0;
     int       qnos[5];
 
-    assert((((int)block) & 7) == 0);
+    assert((((int)block) & 15) == 0);
 
     enc_blk = &enc_blks[0];
     pb = &pbs[0];
@@ -1229,6 +1222,10 @@ static int dvvideo_encode_frame(AVCodecContext *c, uint8_t *buf, int buf_size,
 
 static int dvvideo_close(AVCodecContext *c)
 {
+    DVVideoContext *s = c->priv_data;
+
+    if(s->picture.data[0])
+        c->release_buffer(c, &s->picture);
 
     return 0;
 }
@@ -1242,10 +1239,7 @@ AVCodec dvvideo_encoder = {
     sizeof(DVVideoContext),
     dvvideo_init,
     dvvideo_encode_frame,
-    dvvideo_close,
-    NULL,
-    CODEC_CAP_DR1,
-    NULL
+    .pix_fmts = (enum PixelFormat[]) {PIX_FMT_YUV411P, PIX_FMT_YUV422P, PIX_FMT_YUV420P, -1},
 };
 #endif // CONFIG_DVVIDEO_ENCODER
 

@@ -26,9 +26,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#ifndef M_PI
-#define M_PI    3.14159265358979323846
-#endif
+#include <inttypes.h>
 
 #ifdef HAVE_AV_CONFIG_H
 /* only include the following when compiling package */
@@ -39,42 +37,23 @@
 #    include <string.h>
 #    include <ctype.h>
 #    include <limits.h>
-#    ifndef __BEOS__
-#        include <errno.h>
-#    else
-#        include "berrno.h"
-#    endif
+#    include <errno.h>
 #    include <math.h>
 #endif /* HAVE_AV_CONFIG_H */
 
-/* Suppress restrict if it was not defined in config.h.  */
-#ifndef restrict
-#    define restrict
-#endif
-
-#ifndef always_inline
+#ifndef av_always_inline
 #if defined(__GNUC__) && (__GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ > 0)
-#    define always_inline __attribute__((always_inline)) inline
+#    define av_always_inline __attribute__((always_inline)) inline
+#    define av_noinline __attribute__((noinline))
 #else
-#    define always_inline inline
+#    define av_always_inline inline
+#    define av_noinline
 #endif
 #endif
 
-#ifndef attribute_used
-#if defined(__GNUC__) && (__GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ > 0)
-#    define attribute_used __attribute__((used))
-#else
-#    define attribute_used
-#endif
-#endif
-
-#ifndef attribute_unused
-#if defined(__GNUC__) && (__GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ > 0)
-#    define attribute_unused __attribute__((unused))
-#else
-#    define attribute_unused
-#endif
-#endif
+#ifdef HAVE_AV_CONFIG_H
+#    include "internal.h"
+#endif /* HAVE_AV_CONFIG_H */
 
 #ifndef attribute_deprecated
 #if defined(__GNUC__) && (__GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ > 0)
@@ -84,92 +63,7 @@
 #endif
 #endif
 
-#   include <inttypes.h>
-
-#ifndef PRId64
-#define PRId64 "lld"
-#endif
-
-#ifndef PRIu64
-#define PRIu64 "llu"
-#endif
-
-#ifndef PRIx64
-#define PRIx64 "llx"
-#endif
-
-#ifndef PRIX64
-#define PRIX64 "llX"
-#endif
-
-#ifndef PRId32
-#define PRId32 "d"
-#endif
-
-#ifndef PRIdFAST16
-#define PRIdFAST16 PRId32
-#endif
-
-#ifndef PRIdFAST32
-#define PRIdFAST32 PRId32
-#endif
-
-#ifndef INT16_MIN
-#define INT16_MIN       (-0x7fff-1)
-#endif
-
-#ifndef INT16_MAX
-#define INT16_MAX       0x7fff
-#endif
-
-#ifndef INT32_MIN
-#define INT32_MIN       (-0x7fffffff-1)
-#endif
-
-#ifndef INT32_MAX
-#define INT32_MAX       0x7fffffff
-#endif
-
-#ifndef UINT32_MAX
-#define UINT32_MAX      0xffffffff
-#endif
-
-#ifndef INT64_MIN
-#define INT64_MIN       (-0x7fffffffffffffffLL-1)
-#endif
-
-#ifndef INT64_MAX
-#define INT64_MAX int64_t_C(9223372036854775807)
-#endif
-
-#ifndef UINT64_MAX
-#define UINT64_MAX uint64_t_C(0xFFFFFFFFFFFFFFFF)
-#endif
-
-#ifndef INT_BIT
-#    if INT_MAX != 2147483647
-#        define INT_BIT 64
-#    else
-#        define INT_BIT 32
-#    endif
-#endif
-
-#ifndef int64_t_C
-#define int64_t_C(c)     (c ## LL)
-#define uint64_t_C(c)    (c ## ULL)
-#endif
-
-#if defined(__MINGW32__) && !defined(BUILD_AVUTIL) && defined(BUILD_SHARED_AV)
-#  define FF_IMPORT_ATTR __declspec(dllimport)
-#else
-#  define FF_IMPORT_ATTR
-#endif
-
-
-#ifdef HAVE_AV_CONFIG_H
-/* only include the following when compiling package */
-#    include "internal.h"
-#endif
+#include "mem.h"
 
 //rounded divison & shift
 #define RSHIFT(a,b) ((a) > 0 ? ((a) + ((1<<(b))>>1))>>(b) : ((a) + ((1<<(b))>>1)-1)>>(b))
@@ -184,7 +78,7 @@
 #define FFSWAP(type,a,b) do{type SWAP_tmp= b; b= a; a= SWAP_tmp;}while(0)
 
 /* misc math functions */
-extern FF_IMPORT_ATTR const uint8_t ff_log2_tab[256];
+extern const uint8_t ff_log2_tab[256];
 
 static inline int av_log2(unsigned int v)
 {
@@ -221,7 +115,7 @@ static inline int av_log2_16bit(unsigned int v)
 /* median of 3 */
 static inline int mid_pred(int a, int b, int c)
 {
-#if HAVE_CMOV
+#ifdef HAVE_CMOV
     int i=b;
     asm volatile(
         "cmp    %2, %1 \n\t"
@@ -264,9 +158,9 @@ static inline int mid_pred(int a, int b, int c)
  * @param a value to clip
  * @param amin minimum value of the clip range
  * @param amax maximum value of the clip range
- * @return cliped value
+ * @return clipped value
  */
-static inline int clip(int a, int amin, int amax)
+static inline int av_clip(int a, int amin, int amax)
 {
     if (a < amin)      return amin;
     else if (a > amax) return amax;
@@ -276,9 +170,9 @@ static inline int clip(int a, int amin, int amax)
 /**
  * clip a signed integer value into the 0-255 range
  * @param a value to clip
- * @return cliped value
+ * @return clipped value
  */
-static inline uint8_t clip_uint8(int a)
+static inline uint8_t av_clip_uint8(int a)
 {
     if (a&(~255)) return (-a)>>31;
     else          return a;
@@ -415,7 +309,7 @@ tend= read_time();\
   static uint64_t tsum=0;\
   static int tcount=0;\
   static int tskip_count=0;\
-  if(tcount<2 || tend - tstart < 8*tsum/tcount){\
+  if(tcount<2 || tend - tstart < FFMAX(8*tsum/tcount, 2000)){\
       tsum+= tend - tstart;\
       tcount++;\
   }else\
@@ -428,22 +322,5 @@ tend= read_time();\
 #define START_TIMER
 #define STOP_TIMER(id) {}
 #endif
-
-/* memory */
-
-#ifdef __GNUC__
-  #define DECLARE_ALIGNED(n,t,v)       t v __attribute__ ((aligned (n)))
-#else
-  #define DECLARE_ALIGNED(n,t,v)      __declspec(align(n)) t v
-#endif
-
-/* memory */
-void *av_malloc(unsigned int size);
-void *av_realloc(void *ptr, unsigned int size);
-void av_free(void *ptr);
-
-void *av_mallocz(unsigned int size);
-char *av_strdup(const char *s);
-void av_freep(void *ptr);
 
 #endif /* COMMON_H */

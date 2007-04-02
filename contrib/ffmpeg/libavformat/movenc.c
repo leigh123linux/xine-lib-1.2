@@ -54,7 +54,6 @@ typedef struct MOVIndex {
     long        time;
     int64_t     trackDuration;
     long        sampleCount;
-    long        sampleDuration;
     long        sampleSize;
     int         hasKeyframes;
     int         hasBframes;
@@ -261,7 +260,7 @@ static int mov_write_esds_tag(ByteIOContext *pb, MOVTrack* track) // Basic
     putDescr(pb, 0x04, 13 + decoderSpecificInfoLen);
 
     // Object type indication
-    put_byte(pb, codec_get_tag(ff_mov_obj_type, track->enc->codec_id));
+    put_byte(pb, codec_get_tag(ff_mp4_obj_type, track->enc->codec_id));
 
     // the following fields is made of 6 bits to identify the streamtype (4 for video, 5 for audio)
     // plus 1 bit to indicate upstream and 1 bit set to 1 (reserved)
@@ -323,25 +322,6 @@ static int mov_write_wave_tag(ByteIOContext *pb, MOVTrack* track)
     return updateSize (pb, pos);
 }
 
-static const CodecTag codec_movaudio_tags[] = {
-    { CODEC_ID_PCM_MULAW, MKTAG('u', 'l', 'a', 'w') },
-    { CODEC_ID_PCM_ALAW, MKTAG('a', 'l', 'a', 'w') },
-    { CODEC_ID_ADPCM_IMA_QT, MKTAG('i', 'm', 'a', '4') },
-    { CODEC_ID_MACE3, MKTAG('M', 'A', 'C', '3') },
-    { CODEC_ID_MACE6, MKTAG('M', 'A', 'C', '6') },
-    { CODEC_ID_AAC, MKTAG('m', 'p', '4', 'a') },
-    { CODEC_ID_AMR_NB, MKTAG('s', 'a', 'm', 'r') },
-    { CODEC_ID_AMR_WB, MKTAG('s', 'a', 'w', 'b') },
-    { CODEC_ID_PCM_S16BE, MKTAG('t', 'w', 'o', 's') },
-    { CODEC_ID_PCM_S16LE, MKTAG('s', 'o', 'w', 't') },
-    { CODEC_ID_PCM_S24BE, MKTAG('i', 'n', '2', '4') },
-    { CODEC_ID_PCM_S24LE, MKTAG('i', 'n', '2', '4') },
-    { CODEC_ID_PCM_S32BE, MKTAG('i', 'n', '3', '2') },
-    { CODEC_ID_PCM_S32LE, MKTAG('i', 'n', '3', '2') },
-    { CODEC_ID_MP3, MKTAG('.', 'm', 'p', '3') },
-    { CODEC_ID_NONE, 0 },
-};
-
 static int mov_write_audio_tag(ByteIOContext *pb, MOVTrack* track)
 {
     offset_t pos = url_ftell(pb);
@@ -361,11 +341,20 @@ static int mov_write_audio_tag(ByteIOContext *pb, MOVTrack* track)
     put_be16(pb, 0); /* Revision level */
     put_be32(pb, 0); /* Reserved */
 
-    put_be16(pb, track->mode == MODE_MOV ? track->enc->channels : 2); /* Number of channels */
-    /* FIXME 8 bit for 'raw ' in mov */
-    put_be16(pb, 16); /* Reserved */
+    if (track->mode == MODE_MOV) {
+        put_be16(pb, track->enc->channels);
+        if (track->enc->codec_id == CODEC_ID_PCM_U8 ||
+            track->enc->codec_id == CODEC_ID_PCM_S8)
+            put_be16(pb, 8); /* bits per sample */
+        else
+            put_be16(pb, 16);
+        put_be16(pb, track->audio_vbr ? -2 : 0); /* compression ID */
+    } else { /* reserved for mp4/3gp */
+        put_be16(pb, 2);
+        put_be16(pb, 16);
+        put_be16(pb, 0);
+    }
 
-    put_be16(pb, track->mode == MODE_MOV && track->audio_vbr ? -2 : 0); /* compression ID */
     put_be16(pb, 0); /* packet size (= 0) */
     put_be16(pb, track->timescale); /* Time scale */
     put_be16(pb, 0); /* Reserved */
@@ -481,7 +470,7 @@ static int mov_write_avcc_tag(ByteIOContext *pb, MOVTrack *track)
     put_tag(pb, "avcC");
     if (track->vosLen > 6) {
         /* check for h264 start code */
-        if (BE_32(track->vosData) == 0x00000001) {
+        if (AV_RB32(track->vosData) == 0x00000001) {
             uint8_t *buf, *end;
             uint32_t sps_size=0, pps_size=0;
             uint8_t *sps=0, *pps=0;
@@ -494,7 +483,7 @@ static int mov_write_avcc_tag(ByteIOContext *pb, MOVTrack *track)
             while (buf < end) {
                 unsigned int size;
                 uint8_t nal_type;
-                size = BE_32(buf);
+                size = AV_RB32(buf);
                 nal_type = buf[4] & 0x1f;
                 if (nal_type == 7) { /* SPS */
                     sps = buf + 4;
@@ -526,22 +515,6 @@ static int mov_write_avcc_tag(ByteIOContext *pb, MOVTrack *track)
     }
     return updateSize(pb, pos);
 }
-
-static const CodecTag codec_movvideo_tags[] = {
-    { CODEC_ID_SVQ1, MKTAG('S', 'V', 'Q', '1') },
-    { CODEC_ID_SVQ3, MKTAG('S', 'V', 'Q', '3') },
-    { CODEC_ID_MPEG4, MKTAG('m', 'p', '4', 'v') },
-    { CODEC_ID_H263, MKTAG('h', '2', '6', '3') },
-    { CODEC_ID_H263, MKTAG('s', '2', '6', '3') },
-    { CODEC_ID_H264, MKTAG('a', 'v', 'c', '1') },
-    /* special handling in mov_find_video_codec_tag */
-    { CODEC_ID_DVVIDEO, MKTAG('d', 'v', 'c', ' ') }, /* DV NTSC */
-    { CODEC_ID_DVVIDEO, MKTAG('d', 'v', 'c', 'p') }, /* DV PAL */
-    { CODEC_ID_DVVIDEO, MKTAG('d', 'v', 'p', 'p') }, /* DVCPRO PAL */
-    { CODEC_ID_DVVIDEO, MKTAG('d', 'v', '5', 'n') }, /* DVCPRO50 NTSC */
-    { CODEC_ID_DVVIDEO, MKTAG('d', 'v', '5', 'p') }, /* DVCPRO50 PAL */
-    { CODEC_ID_NONE, 0 },
-};
 
 static int mov_find_video_codec_tag(AVFormatContext *s, MOVTrack *track)
 {
@@ -1501,27 +1474,19 @@ static int mov_write_header(AVFormatContext *s)
         if(st->codec->codec_type == CODEC_TYPE_VIDEO){
             track->tag = mov_find_video_codec_tag(s, track);
             track->timescale = st->codec->time_base.den;
-            track->sampleDuration = st->codec->time_base.num;
             av_set_pts_info(st, 64, 1, st->codec->time_base.den);
         }else if(st->codec->codec_type == CODEC_TYPE_AUDIO){
             track->tag = mov_find_audio_codec_tag(s, track);
             track->timescale = st->codec->sample_rate;
-            track->sampleDuration = st->codec->frame_size;
             av_set_pts_info(st, 64, 1, st->codec->sample_rate);
-            switch(track->enc->codec_id){
-            case CODEC_ID_MP3:
-            case CODEC_ID_AAC:
-            case CODEC_ID_AMR_NB:
-            case CODEC_ID_AMR_WB:
+            if(!st->codec->frame_size){
+                av_log(s, AV_LOG_ERROR, "track %d: codec frame size is not set\n", i);
+                return -1;
+            }else if(st->codec->frame_size > 1){ /* assume compressed audio */
                 track->audio_vbr = 1;
-                break;
-            default:
+            }else{
                 track->sampleSize = (av_get_bits_per_sample(st->codec->codec_id) >> 3) * st->codec->channels;
             }
-        }
-        if (!track->sampleDuration) {
-            av_log(s, AV_LOG_ERROR, "track %d: sample duration is not set\n", i);
-            return -1;
         }
     }
 

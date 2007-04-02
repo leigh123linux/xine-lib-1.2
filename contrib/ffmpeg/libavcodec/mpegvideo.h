@@ -162,7 +162,11 @@ typedef struct MotionEstContext{
     uint32_t *score_map;               ///< map to store the scores
     int map_generation;
     int pre_penalty_factor;
-    int penalty_factor;
+    int penalty_factor;                /*!< an estimate of the bits required to
+                                        code a given mv value, e.g. (1,0) takes
+                                        more bits than (0,0). We have to
+                                        estimate whether any reduction in
+                                        residual is worth the extra bits. */
     int sub_penalty_factor;
     int mb_penalty_factor;
     int flags;
@@ -324,6 +328,7 @@ typedef struct MpegEncContext {
     int dropable;
     int frame_rate_index;
     int last_lambda_for[5];     ///< last lambda for a specific pict type
+    int skipdct;                ///< skip dct and code zero residual
 
     /* motion compensation */
     int unrestricted_mv;        ///< mv can point outside of the coded picture
@@ -401,6 +406,8 @@ typedef struct MpegEncContext {
 #define CANDIDATE_MB_TYPE_FORWARD_I  0x200
 #define CANDIDATE_MB_TYPE_BACKWARD_I 0x400
 #define CANDIDATE_MB_TYPE_BIDIR_I    0x800
+
+#define CANDIDATE_MB_TYPE_DIRECT0    0x1000
 
     int block_index[6]; ///< index to current MB in block based arrays with edges
     int block_wrap[6];
@@ -779,34 +786,7 @@ void ff_mpeg1_encode_init(MpegEncContext *s);
 void ff_mpeg1_encode_slice_header(MpegEncContext *s);
 void ff_mpeg1_clean_buffers(MpegEncContext *s);
 
-
-/** RLTable. */
-typedef struct RLTable {
-    int n;                         ///< number of entries of table_vlc minus 1
-    int last;                      ///< number of values for last = 0
-    const uint16_t (*table_vlc)[2];
-    const int8_t *table_run;
-    const int8_t *table_level;
-    uint8_t *index_run[2];         ///< encoding only
-    int8_t *max_level[2];          ///< encoding & decoding
-    int8_t *max_run[2];            ///< encoding & decoding
-    VLC vlc;                       ///< decoding only deprected FIXME remove
-    RL_VLC_ELEM *rl_vlc[32];       ///< decoding only
-} RLTable;
-
-void init_rl(RLTable *rl, int use_static);
-void init_vlc_rl(RLTable *rl, int use_static);
-
-static inline int get_rl_index(const RLTable *rl, int last, int run, int level)
-{
-    int index;
-    index = rl->index_run[last][run];
-    if (index >= rl->n)
-        return rl->n;
-    if (level > rl->max_level[last][run])
-        return rl->n;
-    return index + level - 1;
-}
+#include "rl.h"
 
 extern const uint8_t ff_mpeg4_y_dc_scale_table[32];
 extern const uint8_t ff_mpeg4_c_dc_scale_table[32];

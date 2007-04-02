@@ -20,15 +20,9 @@
  */
 #include "avformat.h"
 
-#include <unistd.h> /* for select() prototype */
 #include <sys/time.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#ifndef __BEOS__
-# include <arpa/inet.h>
-#else
-# include "barpainet.h"
-#endif
+#include <unistd.h> /* for select() prototype */
+#include "network.h"
 
 #include "rtp_internal.h"
 
@@ -823,7 +817,6 @@ static void rtsp_send_cmd(AVFormatContext *s,
         *content_ptr = content;
 }
 
-/* useful for modules: set RTSP callback function */
 
 void rtsp_set_callback(FFRTSPCallback *rtsp_cb)
 {

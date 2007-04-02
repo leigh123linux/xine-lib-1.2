@@ -1,3 +1,30 @@
+/*
+ * NUT (de)muxing via libnut
+ * copyright (c) 2006 Oded Shimon <ods15@ods15.dyndns.org>
+ *
+ * This file is part of FFmpeg.
+ *
+ * FFmpeg is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * FFmpeg is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with FFmpeg; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ */
+
+/**
+ * @file libnut.c
+ * NUT demuxing and muxing via libnut.
+ * @author Oded Shimon <ods15@ods15.dyndns.org>
+ */
+
 #include "avformat.h"
 #include "riff.h"
 #include <libnut.h>
@@ -10,7 +37,7 @@ typedef struct {
     nut_stream_header_t * s;
 } NUTContext;
 
-static const CodecTag nut_tags[] = {
+static const AVCodecTag nut_tags[] = {
     { CODEC_ID_MPEG4,  MKTAG('m', 'p', '4', 'v') },
     { CODEC_ID_MP3,    MKTAG('m', 'p', '3', ' ') },
     { CODEC_ID_VORBIS, MKTAG('v', 'r', 'b', 's') },
@@ -48,7 +75,7 @@ static int nut_write_header(AVFormatContext * avf) {
         AVCodecContext * codec = avf->streams[i]->codec;
         int j;
         int fourcc = 0;
-        int nom, denom, ssize;
+        int num, denom, ssize;
 
         s[i].type = codec->codec_type == CODEC_TYPE_VIDEO ? NUT_VIDEO_CLASS : NUT_AUDIO_CLASS;
 
@@ -56,19 +83,19 @@ static int nut_write_header(AVFormatContext * avf) {
         else fourcc = codec_get_tag(nut_tags, codec->codec_id);
 
         if (!fourcc) {
-            if (codec->codec_type == CODEC_TYPE_VIDEO) fourcc = codec_get_bmp_tag(codec->codec_id);
-            if (codec->codec_type == CODEC_TYPE_AUDIO) fourcc = codec_get_wav_tag(codec->codec_id);
+            if (codec->codec_type == CODEC_TYPE_VIDEO) fourcc = codec_get_tag(codec_bmp_tags, codec->codec_id);
+            if (codec->codec_type == CODEC_TYPE_AUDIO) fourcc = codec_get_tag(codec_wav_tags, codec->codec_id);
         }
 
         s[i].fourcc_len = 4;
         s[i].fourcc = av_malloc(s[i].fourcc_len);
         for (j = 0; j < s[i].fourcc_len; j++) s[i].fourcc[j] = (fourcc >> (j*8)) & 0xFF;
 
-        ff_parse_specific_params(codec, &nom, &ssize, &denom);
-        av_set_pts_info(avf->streams[i], 60, denom, nom);
+        ff_parse_specific_params(codec, &num, &ssize, &denom);
+        av_set_pts_info(avf->streams[i], 60, denom, num);
 
-        s[i].time_base.nom = denom;
-        s[i].time_base.den = nom;
+        s[i].time_base.num = denom;
+        s[i].time_base.den = num;
 
         s[i].fixed_fps = 0;
         s[i].decode_delay = codec->has_b_frames;
@@ -82,7 +109,7 @@ static int nut_write_header(AVFormatContext * avf) {
             s[i].sample_height = 0;
             s[i].colorspace_type = 0;
         } else {
-            s[i].samplerate_nom = codec->sample_rate;
+            s[i].samplerate_num = codec->sample_rate;
             s[i].samplerate_denom = 1;
             s[i].channel_count = codec->channels;
         }
@@ -123,7 +150,7 @@ static int nut_write_trailer(AVFormatContext * avf) {
     return 0;
 }
 
-AVOutputFormat nut_muxer = {
+AVOutputFormat libnut_muxer = {
     "nut",
     "nut format",
     "video/x-nut",
@@ -199,7 +226,7 @@ static int nut_read_header(AVFormatContext * avf, AVFormatParameters * ap) {
             memcpy(st->codec->extradata, s[i].codec_specific, st->codec->extradata_size);
         }
 
-        av_set_pts_info(avf->streams[i], 60, s[i].time_base.nom, s[i].time_base.den);
+        av_set_pts_info(avf->streams[i], 60, s[i].time_base.num, s[i].time_base.den);
         st->start_time = 0;
         st->duration = s[i].max_pts;
 
@@ -208,14 +235,14 @@ static int nut_read_header(AVFormatContext * avf, AVFormatParameters * ap) {
         switch(s[i].type) {
         case NUT_AUDIO_CLASS:
             st->codec->codec_type = CODEC_TYPE_AUDIO;
-            if (st->codec->codec_id == CODEC_ID_NONE) st->codec->codec_id = codec_get_wav_id(st->codec->codec_tag);
+            if (st->codec->codec_id == CODEC_ID_NONE) st->codec->codec_id = codec_get_id(codec_wav_tags, st->codec->codec_tag);
 
             st->codec->channels = s[i].channel_count;
-            st->codec->sample_rate = s[i].samplerate_nom / s[i].samplerate_denom;
+            st->codec->sample_rate = s[i].samplerate_num / s[i].samplerate_denom;
             break;
         case NUT_VIDEO_CLASS:
             st->codec->codec_type = CODEC_TYPE_VIDEO;
-            if (st->codec->codec_id == CODEC_ID_NONE) st->codec->codec_id = codec_get_bmp_id(st->codec->codec_tag);
+            if (st->codec->codec_id == CODEC_ID_NONE) st->codec->codec_id = codec_get_id(codec_bmp_tags, st->codec->codec_tag);
 
             st->codec->width = s[i].width;
             st->codec->height = s[i].height;
@@ -255,7 +282,7 @@ static int nut_read_packet(AVFormatContext * avf, AVPacket * pkt) {
 static int nut_read_seek(AVFormatContext * avf, int stream_index, int64_t target_ts, int flags) {
     NUTContext * priv = avf->priv_data;
     int active_streams[] = { stream_index, -1 };
-    double time_pos = target_ts * priv->s[stream_index].time_base.nom / (double)priv->s[stream_index].time_base.den;
+    double time_pos = target_ts * priv->s[stream_index].time_base.num / (double)priv->s[stream_index].time_base.den;
 
     if (nut_seek(priv->nut, time_pos, 2*!(flags & AVSEEK_FLAG_BACKWARD), active_streams)) return -1;
 
@@ -270,7 +297,7 @@ static int nut_read_close(AVFormatContext *s) {
     return 0;
 }
 
-AVInputFormat nut_demuxer = {
+AVInputFormat libnut_demuxer = {
     "nut",
     "nut format",
     sizeof(NUTContext),

@@ -20,8 +20,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GNU Make; see the file COPYING. If not, write to
- * the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with mpeg2dec; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * 15,24 bpp and dithering from Michael Niedermayer (michaelni@gmx.at)
  * MMX/MMX2 Template stuff from Michael Niedermayer (needed for fast movntq support)
@@ -133,7 +133,7 @@ static inline int RENAME(yuv420_rgb16)(SwsContext *c, uint8_t* src[], int srcStr
     }
 
     h_size= (c->dstW+7)&~7;
-    if(h_size*2 > dstStride[0]) h_size-=8;
+    if(h_size*2 > FFABS(dstStride[0])) h_size-=8;
     
     __asm__ __volatile__ ("pxor %mm4, %mm4;" /* zero mm4 */ );
 //printf("%X %X %X %X %X %X %X %X %X %X\n", (int)&c->redDither, (int)&b5Dither, (int)src[0], (int)src[1], (int)src[2], (int)dst[0],
@@ -228,7 +228,7 @@ static inline int RENAME(yuv420_rgb15)(SwsContext *c, uint8_t* src[], int srcStr
     }
 
     h_size= (c->dstW+7)&~7;
-    if(h_size*2 > dstStride[0]) h_size-=8;
+    if(h_size*2 > FFABS(dstStride[0])) h_size-=8;
     
     __asm__ __volatile__ ("pxor %mm4, %mm4;" /* zero mm4 */ );
 //printf("%X %X %X %X %X %X %X %X %X %X\n", (int)&c->redDither, (int)&b5Dither, (int)src[0], (int)src[1], (int)src[2], (int)dst[0],
@@ -317,7 +317,7 @@ static inline int RENAME(yuv420_rgb24)(SwsContext *c, uint8_t* src[], int srcStr
     }
 
     h_size= (c->dstW+7)&~7;
-    if(h_size*3 > dstStride[0]) h_size-=8;
+    if(h_size*3 > FFABS(dstStride[0])) h_size-=8;
     
     __asm__ __volatile__ ("pxor %mm4, %mm4;" /* zero mm4 */ );
 
@@ -463,7 +463,7 @@ static inline int RENAME(yuv420_rgb32)(SwsContext *c, uint8_t* src[], int srcStr
     }
 
     h_size= (c->dstW+7)&~7;
-    if(h_size*4 > dstStride[0]) h_size-=8;
+    if(h_size*4 > FFABS(dstStride[0])) h_size-=8;
     
     __asm__ __volatile__ ("pxor %mm4, %mm4;" /* zero mm4 */ );
 

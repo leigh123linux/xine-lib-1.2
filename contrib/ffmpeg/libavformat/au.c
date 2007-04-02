@@ -32,10 +32,10 @@
 #include "riff.h"
 
 /* if we don't know the size in advance */
-#define AU_UNKOWN_SIZE ((uint32_t)(~0))
+#define AU_UNKNOWN_SIZE ((uint32_t)(~0))
 
 /* The ffmpeg codecs we support, and the IDs they have in the file */
-static const CodecTag codec_au_tags[] = {
+static const AVCodecTag codec_au_tags[] = {
     { CODEC_ID_PCM_MULAW, 1 },
     { CODEC_ID_PCM_S16BE, 3 },
     { CODEC_ID_PCM_ALAW, 27 },
@@ -47,12 +47,10 @@ static const CodecTag codec_au_tags[] = {
 static int put_au_header(ByteIOContext *pb, AVCodecContext *enc)
 {
     if(!enc->codec_tag)
-       enc->codec_tag = codec_get_tag(codec_au_tags, enc->codec_id);
-    if(!enc->codec_tag)
         return -1;
     put_tag(pb, ".snd");       /* magic number */
     put_be32(pb, 24);           /* header size */
-    put_be32(pb, AU_UNKOWN_SIZE); /* data size */
+    put_be32(pb, AU_UNKNOWN_SIZE); /* data size */
     put_be32(pb, (uint32_t)enc->codec_tag);     /* codec ID */
     put_be32(pb, enc->sample_rate);
     put_be32(pb, (uint32_t)enc->channels);
@@ -190,6 +188,7 @@ AVInputFormat au_demuxer = {
     au_read_packet,
     au_read_close,
     pcm_read_seek,
+    .codec_tag= (const AVCodecTag*[]){codec_au_tags, 0},
 };
 #endif
 
@@ -205,5 +204,6 @@ AVOutputFormat au_muxer = {
     au_write_header,
     au_write_packet,
     au_write_trailer,
+    .codec_tag= (const AVCodecTag*[]){codec_au_tags, 0},
 };
 #endif //CONFIG_AU_MUXER

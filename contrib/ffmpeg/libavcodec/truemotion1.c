@@ -348,9 +348,9 @@ static int truemotion1_decode_header(TrueMotion1Context *s)
     header.compression = header_buffer[0];
     header.deltaset = header_buffer[1];
     header.vectable = header_buffer[2];
-    header.ysize = LE_16(&header_buffer[3]);
-    header.xsize = LE_16(&header_buffer[5]);
-    header.checksum = LE_16(&header_buffer[7]);
+    header.ysize = AV_RL16(&header_buffer[3]);
+    header.xsize = AV_RL16(&header_buffer[5]);
+    header.checksum = AV_RL16(&header_buffer[7]);
     header.version = header_buffer[9];
     header.header_type = header_buffer[10];
     header.flags = header_buffer[11];
@@ -374,10 +374,15 @@ static int truemotion1_decode_header(TrueMotion1Context *s)
 
     if (s->flags & FLAG_SPRITE) {
         av_log(s->avctx, AV_LOG_INFO, "SPRITE frame found, please report the sample to the developers\n");
+        /* FIXME header.width, height, xoffset and yoffset aren't initialized */
+#if 0
         s->w = header.width;
         s->h = header.height;
         s->x = header.xoffset;
         s->y = header.yoffset;
+#else
+        return -1;
+#endif
     } else {
         s->w = header.xsize;
         s->h = header.ysize;
@@ -412,9 +417,9 @@ static int truemotion1_decode_header(TrueMotion1Context *s)
 
     // FIXME: where to place this ?!?!
     if (compression_types[header.compression].algorithm == ALGO_RGB24H)
-        s->avctx->pix_fmt = PIX_FMT_RGBA32;
+        s->avctx->pix_fmt = PIX_FMT_RGB32;
     else
-        s->avctx->pix_fmt = PIX_FMT_RGB555; // RGB565 is supported aswell
+        s->avctx->pix_fmt = PIX_FMT_RGB555; // RGB565 is supported as well
 
     if ((header.deltaset != s->last_deltaset) || (header.vectable != s->last_vectable))
     {

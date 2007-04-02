@@ -26,14 +26,71 @@
 #ifndef INTERNAL_H
 #define INTERNAL_H
 
+#ifndef attribute_used
+#if defined(__GNUC__) && (__GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ > 0)
+#    define attribute_used __attribute__((used))
+#else
+#    define attribute_used
+#endif
+#endif
+
+#ifndef attribute_unused
+#if defined(__GNUC__)
+#    define attribute_unused __attribute__((unused))
+#else
+#    define attribute_unused
+#endif
+#endif
+
+#ifndef M_PI
+#define M_PI    3.14159265358979323846
+#endif
+
+#ifndef INT16_MIN
+#define INT16_MIN       (-0x7fff-1)
+#endif
+
+#ifndef INT16_MAX
+#define INT16_MAX       0x7fff
+#endif
+
+#ifndef INT32_MIN
+#define INT32_MIN       (-0x7fffffff-1)
+#endif
+
+#ifndef INT32_MAX
+#define INT32_MAX       0x7fffffff
+#endif
+
+#ifndef UINT32_MAX
+#define UINT32_MAX      0xffffffff
+#endif
+
+#ifndef INT64_MIN
+#define INT64_MIN       (-0x7fffffffffffffffLL-1)
+#endif
+
+#ifndef INT64_MAX
+#define INT64_MAX INT64_C(9223372036854775807)
+#endif
+
+#ifndef UINT64_MAX
+#define UINT64_MAX UINT64_C(0xFFFFFFFFFFFFFFFF)
+#endif
+
+#ifndef INT_BIT
+#    if INT_MAX != 2147483647
+#        define INT_BIT 64
+#    else
+#        define INT_BIT 32
+#    endif
+#endif
+
 #if ( defined(__PIC__) || defined(__pic__) ) && ! defined(PIC)
 #    define PIC
 #endif
 
-#ifndef ENODATA
-#    define ENODATA  61
-#endif
-
+#include "intreadwrite.h"
 #include "bswap.h"
 
 #include <stddef.h>
@@ -93,9 +150,9 @@
 
 /* dprintf macros */
 #ifdef DEBUG
-#    define dprintf(fmt,...) av_log(NULL, AV_LOG_DEBUG, fmt, __VA_ARGS__)
+#    define dprintf(pctx, ...) av_log(pctx, AV_LOG_DEBUG, __VA_ARGS__)
 #else
-#    define dprintf(fmt,...)
+#    define dprintf(pctx, ...)
 #endif
 
 #define av_abort()      do { av_log(NULL, AV_LOG_ERROR, "Abort at %s:%d\n", __FILE__, __LINE__); abort(); } while (0)
@@ -132,7 +189,7 @@ extern const uint32_t ff_inverse[256];
 #    define FASTDIV(a,b)   ((a)/(b))
 #endif
 
-extern FF_IMPORT_ATTR const uint8_t ff_sqrt_tab[128];
+extern const uint8_t ff_sqrt_tab[128];
 
 static inline int ff_sqrt(int a)
 {
@@ -194,6 +251,7 @@ if((y)<(x)){\
 #define srand srand_is_forbidden_due_to_state_trashing
 #define sprintf sprintf_is_forbidden_due_to_security_issues_use_snprintf
 #define strcat strcat_is_forbidden_due_to_security_issues_use_pstrcat
+#define exit exit_is_forbidden
 #if !(defined(LIBAVFORMAT_BUILD) || defined(_FRAMEHOOK_H))
 #define printf please_use_av_log
 #define fprintf please_use_av_log
@@ -212,7 +270,7 @@ if((y)<(x)){\
 /* XXX: add ISOC specific test to avoid specific BSD testing. */
 /* better than nothing implementation. */
 /* btw, rintf() is existing on fbsd too -- alex */
-static always_inline long int lrintf(float x)
+static av_always_inline long int lrintf(float x)
 {
 #ifdef __MINGW32__
 #  ifdef ARCH_X86_32

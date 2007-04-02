@@ -50,7 +50,7 @@ static void copy_frame(AVFrame *f, uint8_t *src,
                        int width, int height) {
     AVPicture pic;
     avpicture_fill(&pic, src, PIX_FMT_YUV420P, width, height);
-    img_copy((AVPicture *)f, &pic, PIX_FMT_YUV420P, width, height);
+    av_picture_copy((AVPicture *)f, &pic, PIX_FMT_YUV420P, width, height);
 }
 
 /**
@@ -64,9 +64,9 @@ static int get_quant(AVCodecContext *avctx, NuvContext *c,
         return -1;
     }
     for (i = 0; i < 64; i++, buf += 4)
-        c->lq[i] = LE_32(buf);
+        c->lq[i] = AV_RL32(buf);
     for (i = 0; i < 64; i++, buf += 4)
-        c->cq[i] = LE_32(buf);
+        c->cq[i] = AV_RL32(buf);
     return 0;
 }
 

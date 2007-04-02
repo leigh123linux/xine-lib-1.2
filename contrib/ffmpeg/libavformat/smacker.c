@@ -226,7 +226,7 @@ static int smacker_read_packet(AVFormatContext *s, AVPacket *pkt)
     int pos;
 
     if (url_feof(&s->pb) || smk->cur_frame >= smk->frames)
-        return -EIO;
+        return AVERROR(EIO);
 
     /* if we demuxed all streams, pass another frame */
     if(smk->curstream < 0) {
@@ -311,7 +311,7 @@ static int smacker_read_packet(AVFormatContext *s, AVPacket *pkt)
         pkt->size = smk->buf_sizes[smk->curstream];
         pkt->stream_index = smk->stream_id[smk->curstream];
         pkt->pts = smk->aud_pts[smk->curstream];
-        smk->aud_pts[smk->curstream] += LE_32(pkt->data);
+        smk->aud_pts[smk->curstream] += AV_RL32(pkt->data);
         smk->curstream--;
     }
 

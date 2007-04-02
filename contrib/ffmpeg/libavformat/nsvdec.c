@@ -183,26 +183,26 @@ typedef struct {
     //DVDemuxContext* dv_demux;
 } NSVContext;
 
-static const CodecTag nsv_codec_video_tags[] = {
+static const AVCodecTag nsv_codec_video_tags[] = {
     { CODEC_ID_VP3, MKTAG('V', 'P', '3', ' ') },
     { CODEC_ID_VP3, MKTAG('V', 'P', '3', '0') },
     { CODEC_ID_VP3, MKTAG('V', 'P', '3', '1') },
     { CODEC_ID_VP5, MKTAG('V', 'P', '5', ' ') },
     { CODEC_ID_VP5, MKTAG('V', 'P', '5', '0') },
+    { CODEC_ID_VP6, MKTAG('V', 'P', '6', ' ') },
+    { CODEC_ID_VP6, MKTAG('V', 'P', '6', '0') },
+    { CODEC_ID_VP6, MKTAG('V', 'P', '6', '1') },
     { CODEC_ID_VP6, MKTAG('V', 'P', '6', '2') },
 /*
     { CODEC_ID_VP4, MKTAG('V', 'P', '4', ' ') },
     { CODEC_ID_VP4, MKTAG('V', 'P', '4', '0') },
-    { CODEC_ID_VP6, MKTAG('V', 'P', '6', ' ') },
-    { CODEC_ID_VP6, MKTAG('V', 'P', '6', '0') },
-    { CODEC_ID_VP6, MKTAG('V', 'P', '6', '1') },
 */
     { CODEC_ID_XVID, MKTAG('X', 'V', 'I', 'D') }, /* cf sample xvid decoder from nsv_codec_sdk.zip */
     { CODEC_ID_RAWVIDEO, MKTAG('R', 'G', 'B', '3') },
     { 0, 0 },
 };
 
-static const CodecTag nsv_codec_audio_tags[] = {
+static const AVCodecTag nsv_codec_audio_tags[] = {
     { CODEC_ID_MP3, MKTAG('M', 'P', '3', ' ') },
     { CODEC_ID_AAC, MKTAG('A', 'A', 'C', ' ') },
     { CODEC_ID_AAC, MKTAG('A', 'A', 'C', 'P') }, /* _CUTTED__MUXED_2 Heads - Out Of The City.nsv */
@@ -602,13 +602,15 @@ null_chunk_retry:
         pkt = &nsv->ahead[NSV_ST_VIDEO];
         av_get_packet(pb, pkt, vsize);
         pkt->stream_index = st[NSV_ST_VIDEO]->index;//NSV_ST_VIDEO;
-        pkt->dts = nst->frame_offset++;
+        pkt->dts = nst->frame_offset;
         pkt->flags |= nsv->state == NSV_HAS_READ_NSVS ? PKT_FLAG_KEY : 0; /* keyframe only likely on a sync frame */
 /*
         for (i = 0; i < MIN(8, vsize); i++)
             PRINT(("NSV video: [%d] = %02x\n", i, pkt->data[i]));
 */
     }
+    ((NSVStream*)st[NSV_ST_VIDEO]->priv_data)->frame_offset++;
+
     if (asize/*st[NSV_ST_AUDIO]*/) {
         nst = st[NSV_ST_AUDIO]->priv_data;
         pkt = &nsv->ahead[NSV_ST_AUDIO];

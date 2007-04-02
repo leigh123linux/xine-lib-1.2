@@ -29,7 +29,7 @@
 #include "bswap.h"
 
 /* if we don't know the size in advance */
-#define AU_UNKOWN_SIZE ((uint32_t)(~0))
+#define AU_UNKNOWN_SIZE ((uint32_t)(~0))
 
 static int sol_probe(AVProbeData *p)
 {
@@ -133,7 +133,7 @@ static int sol_read_packet(AVFormatContext *s,
     int ret;
 
     if (url_feof(&s->pb))
-        return -EIO;
+        return AVERROR(EIO);
     ret= av_get_packet(&s->pb, pkt, MAX_SIZE);
     pkt->stream_index = 0;
 

@@ -11,22 +11,13 @@ CFLAGS=$(OPTFLAGS) -I$(BUILD_ROOT) -I$(SRC_PATH) -I$(SRC_PATH)/libavutil \
        -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_ISOC9X_SOURCE
 LDFLAGS+= -g
 
-ifeq ($(CONFIG_FFMPEG),yes)
-MANPAGES=doc/ffmpeg.1
-PROGS_G+=ffmpeg_g$(EXESUF)
-PROGS+=ffmpeg$(EXESUF)
-endif
+PROGS-$(CONFIG_FFMPEG)   += ffmpeg
+PROGS-$(CONFIG_FFPLAY)   += ffplay
+PROGS-$(CONFIG_FFSERVER) += ffserver
 
-ifeq ($(CONFIG_FFSERVER),yes)
-MANPAGES+=doc/ffserver.1
-PROGS+=ffserver$(EXESUF)
-endif
-
-ifeq ($(CONFIG_FFPLAY),yes)
-MANPAGES+=doc/ffplay.1
-PROGS_G+=ffplay_g$(EXESUF)
-PROGS+=ffplay$(EXESUF)
-endif
+PROGS = $(addsuffix $(EXESUF), $(PROGS-yes))
+PROGS_G = $(addsuffix _g$(EXESUF), $(PROGS-yes))
+MANPAGES = $(addprefix doc/, $(addsuffix .1, $(PROGS-yes)))
 
 BASENAMES=ffmpeg ffplay ffserver
 ALLPROGS=$(addsuffix $(EXESUF), $(BASENAMES))
@@ -40,17 +31,16 @@ DEP_LIBS=libavcodec/$(LIBPREF)avcodec$(LIBSUF) libavformat/$(LIBPREF)avformat$(L
 endif
 
 ifeq ($(CONFIG_VHOOK),yes)
-VHOOK=videohook
-INSTALLVHOOK=install-vhook
+all: videohook
+install: install-vhook
 endif
 
 ifeq ($(BUILD_DOC),yes)
-DOC=documentation
-INSTALLMAN=install-man
+all: documentation
+install: install-man
 endif
 
-OBJS = ffmpeg.o ffserver.o cmdutils.o ffplay.o
-SRCS = $(OBJS:.o=.c) $(ASM_OBJS:.o=.s)
+SRCS = $(addsuffix .c, $(PROGS-yes)) cmdutils.c
 LDFLAGS := -L$(BUILD_ROOT)/libavformat -L$(BUILD_ROOT)/libavcodec -L$(BUILD_ROOT)/libavutil $(LDFLAGS)
 EXTRALIBS := -lavformat$(BUILDSUF) -lavcodec$(BUILDSUF) -lavutil$(BUILDSUF) $(EXTRALIBS)
 
@@ -59,7 +49,7 @@ LDFLAGS+=-L./libswscale
 EXTRALIBS+=-lswscale$(BUILDSUF)
 endif
 
-all: lib $(PROGS_G) $(PROGS) $(VHOOK) $(DOC)
+all: lib $(PROGS)
 
 lib:
 	$(MAKE) -C libavutil   all
@@ -84,6 +74,11 @@ ffplay_g$(EXESUF): ffplay.o cmdutils.o .libs
 %$(EXESUF): %_g$(EXESUF)
 	cp -p $< $@
 	$(STRIP) $@
+
+SVN_ENTRIES = $(SRC_PATH_BARE)/.svn/entries
+ifeq ($(wildcard $(SVN_ENTRIES)),$(SVN_ENTRIES))
+version.h: $(SVN_ENTRIES)
+endif
 
 version.h:
 	$(SRC_PATH)/version.sh $(SRC_PATH)
@@ -111,7 +106,7 @@ videohook: .libs
 documentation:
 	$(MAKE) -C doc all
 
-install: install-progs install-libs install-headers $(INSTALLMAN) $(INSTALLVHOOK)
+install: install-progs install-libs install-headers
 
 ifeq ($(BUILD_SHARED),yes)
 install-progs: $(PROGS) install-libs
@@ -119,9 +114,9 @@ else
 install-progs: $(PROGS)
 endif
 	install -d "$(bindir)"
-	install -c $(INSTALLSTRIP) -m 755 $(PROGS) "$(bindir)"
+	install -c -m 755 $(PROGS) "$(bindir)"
 
-# create the window installer
+# Create the Windows installer.
 wininstaller: all install
 	makensis ffinstall.nsi
 
@@ -198,9 +193,10 @@ endif
 .depend: $(SRCS) version.h
 	$(CC) -MM $(CFLAGS) $(SDL_CFLAGS) $(filter-out %.h,$^) 1>.depend
 
-.libs: lib
-	@test -f .libs || touch .libs
-	@for i in $(DEP_LIBS) ; do if test $$i -nt .libs ; then touch .libs; fi ; done
+$(DEP_LIBS): lib
+
+.libs: $(DEP_LIBS)
+	touch $@
 
 clean:
 	$(MAKE) -C libavutil   clean
@@ -236,6 +232,4 @@ codectest libavtest test-server fulltest test mpeg4 mpeg: $(PROGS)
 .PHONY: dep depend clean distclean TAGS
 .PHONY: codectest libavtest test-server fulltest test mpeg4 mpeg
 
-ifneq ($(wildcard .depend),)
-include .depend
-endif
+-include .depend

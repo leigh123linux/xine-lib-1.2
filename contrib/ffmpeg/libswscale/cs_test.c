@@ -23,7 +23,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <inttypes.h>
-#include <malloc.h>
 
 #include "swscale.h"
 #include "rgb2rgb.h"
@@ -32,9 +31,6 @@
 #define srcByte 0x55
 #define dstByte 0xBB
 
-#ifdef __APPLE_CC__
-#define memalign(x,y) malloc(y)
-#endif
 
 static int cpu_caps;
 
@@ -54,7 +50,7 @@ static char *args_parse(int argc, char *argv[])
                 cpu_caps |= SWS_CPU_CAPS_3DNOW;
                 break;
             default:
-                fprintf(stderr, "Unknown option %c\n", o);
+                av_log(NULL, AV_LOG_ERROR, "Unknown option %c\n", o);
         }
     }
 
@@ -64,14 +60,14 @@ static char *args_parse(int argc, char *argv[])
 int main(int argc, char **argv)
 {
 	int i, funcNum;
-	uint8_t *srcBuffer= (uint8_t*)memalign(128, SIZE);
-	uint8_t *dstBuffer= (uint8_t*)memalign(128, SIZE);
+	uint8_t *srcBuffer= (uint8_t*)av_malloc(SIZE);
+	uint8_t *dstBuffer= (uint8_t*)av_malloc(SIZE);
 	int failedNum=0;
 	int passedNum=0;
 	
-	printf("memory corruption test ...\n");
+	av_log(NULL, AV_LOG_INFO, "memory corruption test ...\n");
 	args_parse(argc, argv);
-	fprintf(stderr, "CPU capabilities forced to %x\n", cpu_caps);
+	av_log(NULL, AV_LOG_INFO, "CPU capabilities forced to %x\n", cpu_caps);
 	sws_rgb2rgb_init(cpu_caps);
 	
 	for(funcNum=0; funcNum<100; funcNum++){
@@ -80,16 +76,16 @@ int main(int argc, char **argv)
 		int srcBpp=0;
 		int dstBpp=0;
 
-		printf("."); fflush(stdout);
+		av_log(NULL, AV_LOG_INFO,".");
 		memset(srcBuffer, srcByte, SIZE);
 
 		for(width=32; width<64; width++){
 			int dstOffset;
-			for(dstOffset=128; dstOffset<196; dstOffset++){
+			for(dstOffset=128; dstOffset<196; dstOffset+=4){
 				int srcOffset;
 				memset(dstBuffer, dstByte, SIZE);
 
-				for(srcOffset=128; srcOffset<196; srcOffset++){
+				for(srcOffset=128; srcOffset<196; srcOffset+=4){
 					uint8_t *src= srcBuffer+srcOffset;
 					uint8_t *dst= dstBuffer+dstOffset;
 					char *name=NULL;
@@ -149,6 +145,7 @@ int main(int argc, char **argv)
 						srcBpp=4;
 						dstBpp=2;
 						name="rgb32to15";
+                        //((*s++) << TGA_SHIFT32) | TGA_ALPHA32;
 						rgb32to15(src, dst, width*srcBpp);
 						break;
 					case 9:
@@ -272,7 +269,7 @@ int main(int argc, char **argv)
 
 					for(i=0; i<SIZE; i++){
 						if(srcBuffer[i]!=srcByte){
-							printf("src damaged at %d w:%d src:%d dst:%d %s\n", 
+							av_log(NULL, AV_LOG_INFO, "src damaged at %d w:%d src:%d dst:%d %s\n", 
 								i, width, srcOffset, dstOffset, name);
 							failed=1;
 							break;
@@ -280,7 +277,7 @@ int main(int argc, char **argv)
 					}
 					for(i=0; i<dstOffset; i++){
 						if(dstBuffer[i]!=dstByte){
-							printf("dst damaged at %d w:%d src:%d dst:%d %s\n", 
+							av_log(NULL, AV_LOG_INFO, "dst damaged at %d w:%d src:%d dst:%d %s\n", 
 								i, width, srcOffset, dstOffset, name);
 							failed=1;
 							break;
@@ -288,7 +285,7 @@ int main(int argc, char **argv)
 					}
 					for(i=dstOffset + width*dstBpp; i<SIZE; i++){
 						if(dstBuffer[i]!=dstByte){
-							printf("dst damaged at %d w:%d src:%d dst:%d %s\n", 
+							av_log(NULL, AV_LOG_INFO, "dst damaged at %d w:%d src:%d dst:%d %s\n", 
 								i, width, srcOffset, dstOffset, name);
 							failed=1;
 							break;
@@ -301,6 +298,6 @@ int main(int argc, char **argv)
 		else if(srcBpp) passedNum++;
 	}
 	
-	printf("%d converters passed, %d converters randomly overwrote memory\n", passedNum, failedNum);
+	av_log(NULL, AV_LOG_INFO, "%d converters passed, %d converters randomly overwrote memory\n", passedNum, failedNum);
 	return failedNum;
 }

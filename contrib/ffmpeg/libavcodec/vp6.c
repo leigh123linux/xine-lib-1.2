@@ -42,22 +42,30 @@ static int vp6_parse_header(vp56_context_t *s, uint8_t *buf, int buf_size,
                             int *golden_frame)
 {
     vp56_range_coder_t *c = &s->c;
-    int parse_filter_info;
+    int parse_filter_info = 0;
+    int coeff_offset = 0;
+    int vrt_shift = 0;
+    int sub_version;
     int rows, cols;
     int res = 1;
+    int separated_coeff = buf[0] & 1;
 
-    if (buf[0] & 1)
-        return 0;
-
-    s->frames[VP56_FRAME_CURRENT].key_frame = !(buf[0] & 0x80);
+    s->framep[VP56_FRAME_CURRENT]->key_frame = !(buf[0] & 0x80);
     vp56_init_dequant(s, (buf[0] >> 1) & 0x3F);
 
-    if (s->frames[VP56_FRAME_CURRENT].key_frame) {
-        if ((buf[1] & 0xFE) != 0x46)  /* would be 0x36 for VP61 */
+    if (s->framep[VP56_FRAME_CURRENT]->key_frame) {
+        sub_version = buf[1] >> 3;
+        if (sub_version > 8)
             return 0;
+        s->filter_header = buf[1] & 0x06;
         if (buf[1] & 1) {
             av_log(s->avctx, AV_LOG_ERROR, "interlacing not supported\n");
             return 0;
+        }
+        if (separated_coeff || !s->filter_header) {
+            coeff_offset = AV_RB16(buf+2) - 2;
+            buf += 2;
+            buf_size -= 2;
         }
 
         rows = buf[2];  /* number of stored macroblock rows */
@@ -78,31 +86,57 @@ static int vp6_parse_header(vp56_context_t *s, uint8_t *buf, int buf_size,
         vp56_init_range_decoder(c, buf+6, buf_size-6);
         vp56_rac_gets(c, 2);
 
-        parse_filter_info = 1;
+        parse_filter_info = s->filter_header;
+        if (sub_version < 8)
+            vrt_shift = 5;
+        s->sub_version = sub_version;
     } else {
+        if (!s->sub_version)
+            return 0;
+
+        if (separated_coeff || !s->filter_header) {
+            coeff_offset = AV_RB16(buf+1) - 2;
+            buf += 2;
+            buf_size -= 2;
+        }
         vp56_init_range_decoder(c, buf+1, buf_size-1);
 
         *golden_frame = vp56_rac_get(c);
-        s->deblock_filtering = vp56_rac_get(c);
-        if (s->deblock_filtering)
-            vp56_rac_get(c);
-        parse_filter_info = vp56_rac_get(c);
+        if (s->filter_header) {
+            s->deblock_filtering = vp56_rac_get(c);
+            if (s->deblock_filtering)
+                vp56_rac_get(c);
+            if (s->sub_version > 7)
+                parse_filter_info = vp56_rac_get(c);
+        }
     }
 
     if (parse_filter_info) {
         if (vp56_rac_get(c)) {
             s->filter_mode = 2;
-            s->sample_variance_threshold = vp56_rac_gets(c, 5);
+            s->sample_variance_threshold = vp56_rac_gets(c, 5) << vrt_shift;
             s->max_vector_length = 2 << vp56_rac_gets(c, 3);
         } else if (vp56_rac_get(c)) {
             s->filter_mode = 1;
         } else {
             s->filter_mode = 0;
         }
-        s->filter_selection = vp56_rac_gets(c, 4);
+        if (s->sub_version > 7)
+            s->filter_selection = vp56_rac_gets(c, 4);
+        else
+            s->filter_selection = 16;
     }
 
     vp56_rac_get(c);
+
+    if (coeff_offset) {
+        vp56_init_range_decoder(&s->cc, buf+coeff_offset,
+                                buf_size-coeff_offset);
+        s->ccp = &s->cc;
+    } else {
+        s->ccp = &s->c;
+    }
+
     return res;
 }
 
@@ -171,7 +205,7 @@ static void vp6_parse_coeff_models(vp56_context_t *s)
             if (vp56_rac_get_prob(c, vp6_dccv_pct[pt][node])) {
                 def_prob[node] = vp56_rac_gets_nn(c, 7);
                 s->coeff_model_dccv[pt][node] = def_prob[node];
-            } else if (s->frames[VP56_FRAME_CURRENT].key_frame) {
+            } else if (s->framep[VP56_FRAME_CURRENT]->key_frame) {
                 s->coeff_model_dccv[pt][node] = def_prob[node];
             }
 
@@ -194,7 +228,7 @@ static void vp6_parse_coeff_models(vp56_context_t *s)
                     if (vp56_rac_get_prob(c, vp6_ract_pct[ct][pt][cg][node])) {
                         def_prob[node] = vp56_rac_gets_nn(c, 7);
                         s->coeff_model_ract[pt][ct][cg][node] = def_prob[node];
-                    } else if (s->frames[VP56_FRAME_CURRENT].key_frame) {
+                    } else if (s->framep[VP56_FRAME_CURRENT]->key_frame) {
                         s->coeff_model_ract[pt][ct][cg][node] = def_prob[node];
                     }
 
@@ -202,7 +236,7 @@ static void vp6_parse_coeff_models(vp56_context_t *s)
     for (pt=0; pt<2; pt++)
         for (ctx=0; ctx<3; ctx++)
             for (node=0; node<5; node++)
-                s->coeff_model_dcct[pt][ctx][node] = clip(((s->coeff_model_dccv[pt][node] * vp6_dccv_lc[ctx][node][0] + 128) >> 8) + vp6_dccv_lc[ctx][node][1], 1, 255);
+                s->coeff_model_dcct[pt][ctx][node] = av_clip(((s->coeff_model_dccv[pt][node] * vp6_dccv_lc[ctx][node][0] + 128) >> 8) + vp6_dccv_lc[ctx][node][1], 1, 255);
 }
 
 static void vp6_parse_vector_adjustment(vp56_context_t *s, vp56_mv_t *vect)
@@ -244,7 +278,7 @@ static void vp6_parse_vector_adjustment(vp56_context_t *s, vp56_mv_t *vect)
 
 static void vp6_parse_coeff(vp56_context_t *s)
 {
-    vp56_range_coder_t *c = &s->c;
+    vp56_range_coder_t *c = s->ccp;
     uint8_t *permute = s->scantable.permutated;
     uint8_t *model, *model2, *model3;
     int coeff, sign, coeff_idx;
@@ -343,7 +377,7 @@ static int vp6_block_variance(uint8_t *src, int stride)
         }
         src += 2*stride;
     }
-    return (16*square_sum - sum*sum) / (16*16);
+    return (16*square_sum - sum*sum) >> 8;
 }
 
 static void vp6_filter_hv2(vp56_context_t *s, uint8_t *dst, uint8_t *src,
@@ -361,7 +395,7 @@ static void vp6_filter_hv4(uint8_t *dst, uint8_t *src, int stride,
 
     for (y=0; y<8; y++) {
         for (x=0; x<8; x++) {
-            dst[x] = clip_uint8((  src[x-delta  ] * weights[0]
+            dst[x] = av_clip_uint8((  src[x-delta  ] * weights[0]
                                  + src[x        ] * weights[1]
                                  + src[x+delta  ] * weights[2]
                                  + src[x+2*delta] * weights[3] + 64) >> 7);
@@ -400,7 +434,7 @@ static void vp6_filter_diag4(uint8_t *dst, uint8_t *src, int stride,
 
     for (y=0; y<11; y++) {
         for (x=0; x<8; x++) {
-            t[x] = clip_uint8((  src[x-1] * h_weights[0]
+            t[x] = av_clip_uint8((  src[x-1] * h_weights[0]
                                + src[x  ] * h_weights[1]
                                + src[x+1] * h_weights[2]
                                + src[x+2] * h_weights[3] + 64) >> 7);
@@ -412,7 +446,7 @@ static void vp6_filter_diag4(uint8_t *dst, uint8_t *src, int stride,
     t = tmp + 8;
     for (y=0; y<8; y++) {
         for (x=0; x<8; x++) {
-            dst[x] = clip_uint8((  t[x-8 ] * v_weights[0]
+            dst[x] = av_clip_uint8((  t[x-8 ] * v_weights[0]
                                  + t[x   ] * v_weights[1]
                                  + t[x+8 ] * v_weights[2]
                                  + t[x+16] * v_weights[3] + 64) >> 7);
@@ -439,8 +473,8 @@ static void vp6_filter(vp56_context_t *s, uint8_t *dst, uint8_t *src,
                 (FFABS(mv.x) > s->max_vector_length ||
                  FFABS(mv.y) > s->max_vector_length)) {
                 filter4 = 0;
-            } else if (!s->sample_variance_threshold
-                       || (vp6_block_variance(src+offset1, stride)
+            } else if (s->sample_variance_threshold
+                       && (vp6_block_variance(src+offset1, stride)
                            < s->sample_variance_threshold)) {
                 filter4 = 0;
             }

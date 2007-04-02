@@ -28,7 +28,7 @@
 #include <math.h>
 
 #ifndef M_PI
-#define M_PI 3.1415926535897931
+#define M_PI 3.14159265358979323846
 #endif
 
 #include "avformat.h"
@@ -220,7 +220,7 @@ static AVStream *add_video_stream(AVFormatContext *oc, int codec_id)
            motion of the chroma plane doesnt match the luma plane */
         c->mb_decision=2;
     }
-    // some formats want stream headers to be seperate
+    // some formats want stream headers to be separate
     if(!strcmp(oc->oformat->name, "mp4") || !strcmp(oc->oformat->name, "mov") || !strcmp(oc->oformat->name, "3gp"))
         c->flags |= CODEC_FLAG_GLOBAL_HEADER;
 

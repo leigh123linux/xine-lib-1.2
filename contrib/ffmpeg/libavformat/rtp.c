@@ -23,15 +23,7 @@
 #include "bitstream.h"
 
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#ifndef __BEOS__
-# include <arpa/inet.h>
-#else
-# include "barpainet.h"
-#endif
-#include <netdb.h>
+#include "network.h"
 
 #include "rtp_internal.h"
 #include "rtp_h264.h"
@@ -215,7 +207,6 @@ int rtp_get_codec_info(AVCodecContext *codec, int payload_type)
     return -1;
 }
 
-/* return < 0 if unknown payload type */
 int rtp_get_payload_type(AVCodecContext *codec)
 {
     int i, payload_type;
@@ -344,11 +335,6 @@ static void rtcp_update_jitter(RTPStatistics *s, uint32_t sent_timestamp, uint32
 }
 #endif
 
-/**
- * some rtp servers assume client is dead if they don't hear from them...
- * so we send a Receiver Report to the provided ByteIO context
- * (we don't have access to the rtcp handle from here)
- */
 int rtp_check_and_send_back_rr(RTPDemuxContext *s, int count)
 {
     ByteIOContext pb;
@@ -508,7 +494,7 @@ static int rtp_parse_mp4_au(RTPDemuxContext *s, const uint8_t *buf)
 
     /* decode the first 2 bytes where are stored the AUHeader sections
        length in bits */
-    au_headers_length = BE_16(buf);
+    au_headers_length = AV_RB16(buf);
 
     if (au_headers_length > RTP_MAX_PACKET_LENGTH)
       return -1;
