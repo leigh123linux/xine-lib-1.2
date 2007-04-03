@@ -33,7 +33,7 @@
 
 #define MAX_ID 10
 
-#ifdef DEBUG
+#ifndef NDEBUG
 
 static long long int profiler_times[MAX_ID] ;
 static long long int profiler_start[MAX_ID] ;
@@ -74,8 +74,7 @@ __inline__ unsigned long long int rdtsc(void)
 #endif
 
 void xine_profiler_start_count (int id) {
-
-  if ((unsigned)id >= MAX_ID) return;
+  if ( id >= MAX_ID || id < 0 ) return;
 
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
   profiler_start[id] = rdtsc();
@@ -83,8 +82,7 @@ void xine_profiler_start_count (int id) {
 }
 
 void xine_profiler_stop_count (int id) {
-
-  if ((unsigned)id >= MAX_ID) return;
+  if ( id >= MAX_ID || id < 0 ) return;
 
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
   profiler_times[id] += rdtsc() - profiler_start[id];

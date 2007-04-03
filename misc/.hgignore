@@ -1,5 +1,3 @@
-Makefile
-Makefile.in
 SlackBuild
 build_rpms.sh
 libxine.pc
