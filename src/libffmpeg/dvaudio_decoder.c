@@ -91,22 +91,6 @@ typedef struct dvaudio_decoder_s {
 
 } dvaudio_decoder_t;
 
-
-enum dv_pack_type {
-     dv_header525     = 0x3f, /* see dv_write_pack for important details on */
-     dv_header625     = 0xbf, /* these two packs */
-     dv_timecode      = 0x13,
-     dv_audio_source  = 0x50,
-     dv_audio_control = 0x51,
-     dv_audio_recdate = 0x52,
-     dv_audio_rectime = 0x53,
-     dv_video_source  = 0x60,
-     dv_video_control = 0x61,
-     dv_viedo_recdate = 0x62,
-     dv_video_rectime = 0x63,
-     dv_unknown_pack  = 0xff,
-};
-
 /*
  * This is the dumbest implementation of all -- it simply looks at
  * a fixed offset and if pack isn't there -- fails. We might want
