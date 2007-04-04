@@ -123,7 +123,7 @@ binary-arch: build install
 	mkdir -p debian/tmp/usr/share/bug/libxine${major}/
 	cp debian/reportbug.presubj debian/tmp/usr/share/bug/libxine${major}/presubj
 # 	ugly hack, documentation should never have been in /u/s/d/xine/...
-	mv debian/tmp/usr/share/doc/xine debian/tmp/usr/share/doc/libxine${major}
+	mv debian/tmp/usr/share/doc/xine-lib debian/tmp/usr/share/doc/libxine${major}
 #	build libxine${major} package by moving files from libxine-dev
 	dh_install --autodest --sourcedir=debian/tmp --list-missing
 	dh_installdocs
