@@ -109,21 +109,21 @@
 #endif
 
 typedef struct osd_fontchar_s {
+  uint8_t *bmp;
   uint16_t code;
   uint16_t width;
   uint16_t height;
-  uint8_t *bmp;
 } osd_fontchar_t;
 
 struct osd_font_s {
   char             name[40];
   char            *filename;
+  osd_fontchar_t  *fontchar;
+  osd_font_t      *next;
   uint16_t         version;
   uint16_t         size;
   uint16_t         num_fontchars;
-  osd_fontchar_t  *fontchar;
-  osd_font_t      *next;
-  int              loaded;
+  uint16_t         loaded;
 }; 
 
 #ifdef HAVE_FT2

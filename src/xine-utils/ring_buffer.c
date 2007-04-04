@@ -70,11 +70,12 @@ struct xine_ring_buffer_s {
   uint8_t        *buffer_end;
 
   size_t          free_size;         /* size of the free zone */
-  pthread_cond_t  free_size_cond;
-  int             free_size_needed;
-
   size_t          full_size;         /* size of the full zone */
+
+  pthread_cond_t  free_size_cond;
   pthread_cond_t  full_size_cond;
+
+  int             free_size_needed;
   int             full_size_needed;
 
   xine_pool_t    *chunk_pool;
@@ -84,9 +85,9 @@ struct xine_ring_buffer_s {
   uint8_t        *extra_buffer;
   size_t          extra_buffer_size;
 
-  int             EOS;
-
   pthread_mutex_t lock;
+
+  int             EOS;
 };
 
 /* Constructor */

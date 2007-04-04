@@ -1,12 +1,10 @@
 include $(top_srcdir)/misc/Makefile.common
 
-libdir = $(XINE_PLUGINDIR)
-
 if A52
 a52_module = xineplug_decode_a52.la
 endif
 
-lib_LTLIBRARIES = $(a52_module)
+xineplug_LTLIBRARIES = $(a52_module)
 
 if EXTERNAL_A52DEC
 internal_sources =
@@ -20,7 +18,7 @@ internal_sources = \
 endif
 
 xineplug_decode_a52_la_SOURCES = \
-	xine_decoder.c \
+	xine_a52_decoder.c \
 	$(internal_sources)
 
 if EXTERNAL_A52DEC
@@ -30,7 +28,7 @@ xineplug_decode_a52_la_LIBADD = $(XINE_LIB) -lm
 endif
 
 xineplug_decode_a52_la_CFLAGS = $(VISIBILITY_FLAG)
-xineplug_decode_a52_la_LDFLAGS = -avoid-version -module
+xineplug_decode_a52_la_LDFLAGS = $(xineplug_ldflags)
 
 noinst_HEADERS = \
 	a52.h \

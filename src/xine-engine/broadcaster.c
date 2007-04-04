@@ -73,9 +73,10 @@ struct broadcaster_s {
   int              msock;         /* master network socket          */
   xine_list_t     *connections;   /* active connections             */
   
-  int              running;
   pthread_t        manager_thread;
   pthread_mutex_t  lock;
+
+  int              running;
 };
 
 

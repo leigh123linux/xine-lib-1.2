@@ -281,11 +281,12 @@ typedef struct {
 struct audio_fifo_s {
   audio_buffer_t    *first;
   audio_buffer_t    *last;
-  int                num_buffers;
 
   pthread_mutex_t    mutex;
   pthread_cond_t     not_empty;
   pthread_cond_t     empty;
+
+  int                num_buffers;
 };
 
 
