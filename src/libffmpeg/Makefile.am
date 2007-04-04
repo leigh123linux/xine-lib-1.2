@@ -16,33 +16,30 @@ endif
 DISTCLEANFILES = ffmpeg_config.h
 
 # this must always be included, even if the current machine has no DXR3...
-EXTRA_DIST = xine_encoder.c diff_to_ffmpeg_cvs.txt
+EXTRA_DIST = ffmpeg_encoder.c diff_to_ffmpeg_cvs.txt
 
 INTERNAL_DOCS = diff_to_ffmpeg_cvs.txt
 
-libdir = $(XINE_PLUGINDIR)
-
-lib_LTLIBRARIES = xineplug_decode_ff.la xineplug_decode_dvaudio.la
+xineplug_LTLIBRARIES = xineplug_decode_ff.la xineplug_decode_dvaudio.la
 
 if HAVE_DXR3
 AM_CPPFLAGS = -I$(top_srcdir)/src/dxr3 $(X_CFLAGS) $(ff_cppflags) \
               $(ZLIB_CPPFLAGS)
-xineplug_decode_ff_la_SOURCES = xine_decoder.c audio_decoder.c video_decoder.c \
-                                xine_encoder.c mpeg_parser.c
+xineplug_decode_ff_la_SOURCES = ffmpeg_decoder.c ff_audio_decoder.c ff_video_decoder.c \
+                                ffmpeg_encoder.c ff_mpeg_parser.c ffmpeg_decoder.h \
+				ff_mpeg_parser.h
 else
 AM_CPPFLAGS = $(ff_cppflags) $(ZLIB_CPPFLAGS)
-xineplug_decode_ff_la_SOURCES = xine_decoder.c audio_decoder.c video_decoder.c \
-                                mpeg_parser.c
+xineplug_decode_ff_la_SOURCES = ffmpeg_decoder.c ff_audio_decoder.c ff_video_decoder.c \
+                                ff_mpeg_parser.c ffmpeg_decoder.h ff_mpeg_parser.h
 endif
 
 xineplug_decode_ff_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
-xineplug_decode_ff_la_LDFLAGS = -avoid-version -module @IMPURE_TEXT_LDFLAGS@
+xineplug_decode_ff_la_LDFLAGS = $(xineplug_ldflags) $(IMPURE_TEXT_LDFLAGS)
 xineplug_decode_ff_la_LIBADD = $(MLIB_LIBS) $(XINE_LIB) -lm $(ZLIB_LIBS) \
 	$(link_ffmpeg) $(PTHREAD_LIBS)
 
 xineplug_decode_dvaudio_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
-xineplug_decode_dvaudio_la_LDFLAGS = -avoid-version -module
-xineplug_decode_dvaudio_la_SOURCES = dvaudio_decoder.c
+xineplug_decode_dvaudio_la_LDFLAGS = $(xineplug_ldflags)
+xineplug_decode_dvaudio_la_SOURCES = ff_dvaudio_decoder.c
 xineplug_decode_dvaudio_la_LIBADD  = $(XINE_LIB)
-
-noinst_HEADERS = xine_decoder.h mpeg_parser.h

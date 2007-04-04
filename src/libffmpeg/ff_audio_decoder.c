@@ -45,7 +45,7 @@
 #include "buffer.h"
 #include "xineutils.h"
 #include "bswap.h"
-#include "xine_decoder.h"
+#include "ffmpeg_decoder.h"
 
 #define AUDIOBUFSIZE (64 * 1024)
 

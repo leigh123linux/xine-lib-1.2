@@ -13,8 +13,13 @@ if HAVE_GDK_PIXBUF
 gdkpixbuf_module = xineplug_decode_gdk_pixbuf.la
 endif
 
+if HAVE_THEORA
+theora_module = xineplug_decode_theora.la
+endif
+
 xineplug_LTLIBRARIES = $(image_module) \
 	$(gdkpixbuf_module) \
+	$(theora_module) \
 	xineplug_decode_bitplane.la \
 	xineplug_decode_rgb.la \
 	xineplug_decode_yuv.la
@@ -36,3 +41,6 @@ xineplug_decode_gdk_pixbuf_la_SOURCES = gdkpixbuf.c
 xineplug_decode_gdk_pixbuf_la_CFLAGS = $(AM_CFLAGS) $(GDK_PIXBUF_CFLAGS)
 xineplug_decode_gdk_pixbuf_la_LIBADD = $(XINE_LIB) $(DYNAMIC_LD_LIBS) $(GDK_PIXBUF_LIBS)
 
+xineplug_decode_theora_la_SOURCES = xine_theora_decoder.c
+xineplug_decode_theora_la_CFLAGS = $(AM_CFLAGS) $(OGG_CFLAGS) $(THEORA_CFLAGS)
+xineplug_decode_theora_la_LIBADD = $(XINE_LIB) $(OGG_LIBS) $(THEORA_LIBS)

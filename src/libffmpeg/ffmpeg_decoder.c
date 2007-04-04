@@ -30,7 +30,7 @@
 
 #include "xine_internal.h"
 
-#include "xine_decoder.h"
+#include "ffmpeg_decoder.h"
 
 /*
  * common initialisation

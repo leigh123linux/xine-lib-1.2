@@ -2638,8 +2638,6 @@ src/libffmpeg/libavcodec/ppc/Makefile
 src/libffmpeg/libavcodec/sparc/Makefile
 src/libffmpeg/libavcodec/libpostproc/Makefile
 src/libffmpeg/libavutil/Makefile
-src/libflac/Makefile
-src/liblpcm/Makefile
 src/libmad/Makefile
 src/libmpeg2/Makefile
 src/libmusepack/Makefile
@@ -2649,9 +2647,6 @@ src/libspucc/Makefile
 src/libspucmml/Makefile
 src/libspudvb/Makefile
 src/libsputext/Makefile
-src/libvorbis/Makefile
-src/libtheora/Makefile
-src/libspeex/Makefile
 src/libw32dll/Makefile
 src/libw32dll/wine/Makefile
 src/libw32dll/DirectShow/Makefile
