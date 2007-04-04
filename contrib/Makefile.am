@@ -33,3 +33,9 @@ ffmpeg/libavcodec/libavcodec.a: ffmpeg/config.mak
 
 ffmpeg/libpostproc/libpostproc.a: ffmpeg/config.mak
 	$(MAKE) -C ffmpeg/libpostproc libpostproc.a
+
+clean-local:
+	-$(MAKE) -C ffmpeg clean
+
+distclean-local:
+	-$(MAKE) -C ffmpeg distclean
