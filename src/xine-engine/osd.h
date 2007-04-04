@@ -57,8 +57,6 @@ struct osd_object_s {
   uint32_t color[OVL_PALETTE_SIZE];	/* color lookup table  */
   uint8_t trans[OVL_PALETTE_SIZE];	/* mixer key table */
 
-  int32_t handle;
-
 #ifdef HAVE_ICONV
   iconv_t cd;                           /* iconv handle of encoding */
   char *encoding;                       /* name of encoding */
@@ -66,6 +64,8 @@ struct osd_object_s {
   
   osd_font_t *font;
   osd_ft2context_t *ft2;
+
+  int32_t handle;
 };
 
 /* this one is public */
@@ -74,6 +74,8 @@ struct xine_osd_s {
 };
 
 struct osd_renderer_s {
+  
+  xine_stream_t              *stream;
 
   /*
    * open a new osd object. this will allocated an empty (all zero) drawing
@@ -219,8 +221,6 @@ struct osd_renderer_s {
   osd_object_t               *osds;          /* instances of osd */
   osd_font_t                 *fonts;         /* loaded fonts */
   int                        textpalette;    /* default textpalette */
-  
-  xine_stream_t              *stream;
 
 };
 

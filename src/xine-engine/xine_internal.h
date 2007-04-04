@@ -103,13 +103,13 @@ struct xine_s {
 
   plugin_catalog_t          *plugin_catalog;
   
+  int                        verbosity;
+
   int                        demux_strategy;
   char                      *save_path;
 
   /* log output that may be presented to the user */
   scratch_buffer_t          *log_buffers[XINE_LOG_NUM];
-
-  int                        verbosity;
 
   xine_list_t               *streams;
   pthread_mutex_t            streams_lock;
@@ -204,9 +204,6 @@ struct xine_stream_s {
   /* demuxers use input_plugin to read data */
   input_plugin_t            *input_plugin;
   
-  /* current content detection method, see METHOD_BY_xxx */
-  int                        content_detection_method;
-
   /* used by video decoders */
   xine_video_port_t         *video_out;
   
@@ -240,6 +237,9 @@ struct xine_stream_s {
   int                        spu_channel_letterbox;
   int                        spu_channel;
     
+  /* current content detection method, see METHOD_BY_xxx */
+  int                        content_detection_method;
+
 #ifdef XINE_ENGINE_INTERNAL
   /* these are private variables, plugins must not access them */
   
@@ -247,27 +247,38 @@ struct xine_stream_s {
 
   /* lock controlling speed change access */
   pthread_mutex_t            speed_change_lock;
-  int                        ignore_speed_change;  /* speed changes during stop can be disastrous */
+  uint32_t                   ignore_speed_change:1;  /*< speed changes during stop can be disastrous */
+  uint32_t                   video_thread_created:1;
+  uint32_t                   audio_thread_created:1;
+  uint32_t                   first_frame_flag:2;
+  uint32_t                   demux_action_pending:1;
+  uint32_t                   demux_thread_created:1;
+  uint32_t                   demux_thread_running:1;
+  uint32_t                   slave_is_subtitle:1;    /*< ... and will be automaticaly disposed */
+  uint32_t                   emergency_brake:1;      /*< something went really wrong and this stream must be
+                                                      *  stopped. usually due some fatal error on output
+                                                      *  layers as they cannot call xine_stop. */
+  uint32_t                   early_finish_event:1;   /*< do not wait fifos get empty before sending event */
+  uint32_t                   gapless_switch:1;       /*< next stream switch will be gapless */
 
   input_class_t             *eject_class;
   demux_plugin_t            *demux_plugin;
 
 /*  vo_driver_t               *video_driver;*/
   pthread_t                  video_thread;
-  int                        video_thread_created;
   video_decoder_t           *video_decoder_plugin;
-  int                        video_decoder_streamtype;
   extra_info_t              *video_decoder_extra_info;
+  int                        video_decoder_streamtype;
   int                        video_channel;
   
-  pthread_t                  audio_thread;
-  int                        audio_thread_created;
-  audio_decoder_t           *audio_decoder_plugin;
-  int                        audio_decoder_streamtype;
-  extra_info_t              *audio_decoder_extra_info;
-
   uint32_t                   audio_track_map[50];
   int                        audio_track_map_entries;
+
+  int                        audio_decoder_streamtype;
+  pthread_t                  audio_thread;
+  audio_decoder_t           *audio_decoder_plugin;
+  extra_info_t              *audio_decoder_extra_info;
+
   uint32_t                   audio_type;
   /* *_user: -2 => off
              -1 => auto (use *_auto value)
@@ -299,7 +310,6 @@ struct xine_stream_s {
   char                      *meta_info[XINE_STREAM_INFO_MAX];
 
   /* seeking slowdown */
-  int                        first_frame_flag;
   pthread_mutex_t            first_frame_lock;
   pthread_cond_t             first_frame_reached;
 
@@ -317,34 +327,25 @@ struct xine_stream_s {
   
   /* demux thread stuff */
   pthread_t                  demux_thread;
-  int                        demux_thread_created;
-  int                        demux_thread_running;
   pthread_mutex_t            demux_lock;
-  int                        demux_action_pending;
   pthread_mutex_t            demux_mutex; /* used in _x_demux_... functions to synchronize order of pairwise A/V buffer operations */
 
   extra_info_t              *current_extra_info;
   pthread_mutex_t            current_extra_info_lock;
   int                        video_seek_count;
 
-  xine_post_out_t            video_source;
-  xine_post_out_t            audio_source;
-  
-  int                        slave_is_subtitle; /* ... and will be automaticaly disposed */
+  int                        delay_finish_event; /* delay event in 1/10 sec units. 0=>no delay, -1=>forever */
+
   int                        slave_affection;   /* what operations need to be propagated down to the slave? */
   
   int                        err;
   
+  xine_post_out_t            video_source;
+  xine_post_out_t            audio_source;
+  
   broadcaster_t             *broadcaster;
   
   refcounter_t              *refcounter;
-
-  int                        emergency_brake; /* something went really wrong and this stream must be
-                                               * stopped. usually due some fatal error on output
-                                               * layers as they cannot call xine_stop. */
-  int                        early_finish_event; /* do not wait fifos get empty before sending event */
-  int                        gapless_switch;     /* next stream switch will be gapless */
-  int                        delay_finish_event; /* delay event in 1/10 sec units. 0=>no delay, -1=>forever */
 #endif
 };
 

@@ -57,6 +57,9 @@ struct cfg_entry_s {
   char            *key;
   int              type;
 
+  /* user experience level */
+  int              exp_level;
+
   /* type unknown */
   char            *unknown_value;
 
@@ -79,9 +82,6 @@ struct cfg_entry_s {
   /* help info for the user */
   char            *description;
   char            *help;
-
-  /* user experience level */
-  int              exp_level;
 
   /* callback function and data for live changeable values */
   xine_config_cb_t callback;

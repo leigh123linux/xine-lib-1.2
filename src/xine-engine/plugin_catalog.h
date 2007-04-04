@@ -48,8 +48,8 @@ typedef struct {
   char            *filename;
   off_t            filesize;
   time_t           filemtime;
-  int              ref;          /* count number of classes */
   void            *lib_handle;
+  int              ref;          /* count number of classes */
   int              no_unload;    /* set if the file can't be unloaded */
 } plugin_file_t ;
 

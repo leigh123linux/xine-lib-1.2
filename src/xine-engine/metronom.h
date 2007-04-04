@@ -336,8 +336,6 @@ metronom_clock_t *_x_metronom_clock_init(xine_t *xine) XINE_PROTECTED;
 
 struct scr_plugin_s
 {
-  int interface_version;
-
   int (*get_priority) (scr_plugin_t *self);
 
   /* 
@@ -358,6 +356,8 @@ struct scr_plugin_s
   void (*exit) (scr_plugin_t *self);
 
   metronom_clock_t *clock;
+
+  int interface_version;
 };
 
 #ifdef __cplusplus

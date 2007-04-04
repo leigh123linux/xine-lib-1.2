@@ -466,17 +466,17 @@ typedef struct {
 
   int64_t  vpts;       /* timestamp 1/90000 sec for a/v sync */
   int64_t  duration;
+  double   aspect_ratio;
   int      width, height;
   int      colorspace; /* XINE_IMGFMT_* */
-  double   aspect_ratio;
 
   int      pos_stream; /* bytes from stream start */
   int      pos_time;   /* milliseconds */
 
+  int      frame_number; /* frame number (may be unknown) */
+
   uint8_t *data;
   void    *xine_frame; /* used internally by xine engine */
-  
-  int      frame_number; /* frame number (may be unknown) */
 } xine_video_frame_t;
 
 int xine_get_next_video_frame (xine_video_port_t *port,
@@ -494,11 +494,11 @@ typedef struct {
   int      num_channels;
   int      bits_per_sample; /* per channel */
 
-  off_t    pos_stream; /* bytes from stream start */
-  int      pos_time;   /* milliseconds */
-
   uint8_t *data;
   void    *xine_frame; /* used internally by xine engine */
+
+  off_t    pos_stream; /* bytes from stream start */
+  int      pos_time;   /* milliseconds */
 } xine_audio_frame_t;
 
 int xine_get_next_audio_frame (xine_audio_port_t *port,
@@ -596,12 +596,12 @@ struct xine_post_in_s {
   /* the name identifying this input */
   const char   *name;
   
-  /* the datatype of this input, use one of XINE_POST_DATA_* here */
-  int           type;
-  
   /* the data pointer; input is directed to this memory location,
    * so you simply access the pointer to access the input data */
   void         *data;
+  
+  /* the datatype of this input, use one of XINE_POST_DATA_* here */
+  int           type;
   
 };
 
@@ -609,9 +609,6 @@ struct xine_post_out_s {
 
   /* the name identifying this output */
   const char   *name;
-  
-  /* the datatype of this output, use one of XINE_POST_DATA_* here */
-  int           type;
   
   /* the data pointer; output should be directed to this memory location,
    * so in the easy case you simply write through the pointer */
@@ -628,6 +625,9 @@ struct xine_post_out_s {
    * if you do not implement rewiring, set this to NULL */
   int (*rewire) (xine_post_out_t *self, void *data);
 
+  /* the datatype of this output, use one of XINE_POST_DATA_* here */
+  int           type;
+  
 };
 
 /* get a list of all inputs of a post plugin */
@@ -969,8 +969,8 @@ typedef struct {
   char      *origin; /* file plugin: path */
   char      *mrl;    /* <type>://<location> */
   char      *link;
-  uint32_t   type;   /* see below */
   off_t      size;   /* size of this source, may be 0 */
+  uint32_t   type;   /* see below */
 } xine_mrl_t;
 
 /* mrl types */
@@ -1365,12 +1365,12 @@ typedef struct {
 #define CHECK_XV        6
 
 struct xine_health_check_s {
-  int         status;
   const char* cdrom_dev;
   const char* dvd_dev;
   char*       msg;
   char*       title;
   char*       explanation;
+  int         status;
 };
 
 typedef struct xine_health_check_s xine_health_check_t;
@@ -1407,6 +1407,11 @@ struct xine_cfg_entry_s {
 
   int              type;
 
+  /* user experience level */
+  int              exp_level; /* 0 => beginner,
+			        10 => advanced user,
+			        20 => expert */
+
   /* type unknown */
   char            *unknown_value;
 
@@ -1439,11 +1444,6 @@ struct xine_cfg_entry_s {
    */
   const char      *description;
   const char      *help;
-
-  /* user experience level */
-  int              exp_level; /* 0 => beginner,
-			        10 => advanced user,
-			        20 => expert */
 
   /* callback function and data for live changeable values */
   /* some config entries will take effect immediately, although they
@@ -1675,11 +1675,12 @@ void xine_config_reset (xine_t *self) XINE_PROTECTED;
  * xine event struct
  */
 typedef struct {
-  int                              type;   /* event type (constants see above) */
   xine_stream_t                   *stream; /* stream this event belongs to     */
 
   void                            *data;   /* contents depending on type */
   int                              data_length;
+
+  int                              type;   /* event type (constants see above) */
 
   /* you do not have to provide this, it will be filled in by xine_event_send() */
   struct timeval                   tv;     /* timestamp of event creation */

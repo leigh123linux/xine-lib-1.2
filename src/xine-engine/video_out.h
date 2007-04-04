@@ -130,6 +130,9 @@ struct vo_frame_s {
   /* cropping to be done */
   int                        crop_left, crop_right, crop_top, crop_bottom;
 
+  int                        lock_counter;
+  pthread_mutex_t            mutex; /* protect access to lock_count */
+
   /* extra info coming from input or demuxers */
   extra_info_t              *extra_info;    
  
@@ -158,8 +161,6 @@ struct vo_frame_s {
    * obs: changing anything here will require recompiling vo drivers
    */
   struct vo_frame_s         *next;
-  int                        lock_counter;
-  pthread_mutex_t            mutex; /* protect access to lock_count */
   
   int                        id; /* debugging - track this frame */
   int                        is_first;

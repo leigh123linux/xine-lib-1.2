@@ -68,14 +68,14 @@ typedef struct vo_buttons_s {
   int32_t           down; 
   int32_t           left; 
   int32_t           right; 
+  int32_t           hili_rgb_clut;      /* true if clut was converted to rgb*/
+                                        /* FIXME: Probably not needed ^^^ */
   uint32_t          select_color[OVL_PALETTE_SIZE];
   uint8_t           select_trans[OVL_PALETTE_SIZE];
   xine_event_t      select_event;
   uint32_t          active_color[OVL_PALETTE_SIZE];
   uint8_t           active_trans[OVL_PALETTE_SIZE];
   xine_event_t      active_event;
-  int32_t           hili_rgb_clut;      /* true if clut was converted to rgb*/
-                                        /* FIXME: Probably not needed ^^^ */
 } vo_buttons_t;
   
 typedef struct video_overlay_object_s {
@@ -83,8 +83,8 @@ typedef struct video_overlay_object_s {
   uint32_t	 object_type;  /* 0=Subtitle, 1=Menu */
   int64_t        pts;          /* Needed for Menu button compares */
   vo_overlay_t  *overlay;      /* The image data. */
-  uint32_t       palette_type; /* 1 Y'CrCB, 2 R'G'B' */
   uint32_t	*palette;      /* If NULL, no palette contained in this event. */
+  uint32_t       palette_type; /* 1 Y'CrCB, 2 R'G'B' */
   int32_t        buttonN;      /* Current highlighed button.  0 means no info on which button to higlight */
                                /*                            -1 means don't use this button info. */
   vo_buttons_t   button[32];   /* Info regarding each button on the overlay */
@@ -92,12 +92,12 @@ typedef struct video_overlay_object_s {
 
 /* This will hold all details of an event item, needed for event queue to function */
 typedef struct video_overlay_event_s {
-  uint32_t	 event_type;  /* Show SPU, Show OSD, Hide etc. */
   int64_t	 vpts;        /* Time when event will action. 0 means action now */
 /* Once video_out blend_yuv etc. can take rle_elem_t with Colour, blend and length information.
  * we can remove clut and blend from this structure.
  * This will allow for many more colours for OSD.
  */
+  uint32_t	 event_type;  /* Show SPU, Show OSD, Hide etc. */
   video_overlay_object_t   object; /* The image data. */
 } video_overlay_event_t;
 

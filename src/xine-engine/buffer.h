@@ -311,7 +311,6 @@ struct buf_element_s {
 
   int32_t               size ;     /* size of _content_                                     */
   int32_t               max_size;  /* size of pre-allocated memory pointed to by "mem"      */
-  uint32_t              type;
   int64_t               pts;       /* presentation time stamp, used for a/v sync            */
   int64_t               disc_off;  /* discontinuity offset                                  */
 
@@ -329,6 +328,7 @@ struct buf_element_s {
   void                 *source;   /* pointer to source of this buffer for */
                                   /* free_buffer                          */
 
+  uint32_t              type;
 } ;
 
 /* keyframe should be set whenever possible (that is, when demuxer
