@@ -49,6 +49,11 @@ uninstall-hook:
 	    rm -f $(DESTDIR)$(libdir)/$$p; \
 	  done; \
 	fi
+	@list='$(xineplug_LTLIBRARIES)'; for p in $$list; do \
+	  p="`echo $$p | sed -e 's/\.la$$/\.so/g;s|^.*/||'`"; \
+	  echo " rm -f $(DESTDIR)$(xineplugdir)/$$p"; \
+	  rm -f $(DESTDIR)$(xineplugdir)/$$p; \
+	done;
 
 mostlyclean-generic:
 	-rm -f *~ \#* .*~ .\#*
