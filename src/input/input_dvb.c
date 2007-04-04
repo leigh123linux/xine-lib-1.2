@@ -986,8 +986,13 @@ static int tuner_tune_it (tuner_t *this, struct dvb_frontend_parameters
 
   if (poll(pfd,1,3000)){
       if (pfd[0].revents & POLLIN){
-	  if (ioctl(this->fd_frontend, FE_GET_EVENT, &event) == -EOVERFLOW){
+#ifdef EOVERFLOW
+	  if (ioctl(this->fd_frontend, FE_GET_EVENT, &event) == -EOVERFLOW) {
 	      print_error("EOVERFLOW");
+#else
+	  if (ioctl(this->fd_frontend, FE_GET_EVENT, &event) == -EINVAL) {
+	      print_error("EINVAL");
+#endif
 	      return 0;
 	  }
 	  if (event.parameters.frequency <= 0)

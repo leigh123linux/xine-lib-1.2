@@ -50,6 +50,7 @@ xine-lib (1.1.5) (Unreleased)
   * Send an event when the amp level is modified. Patch by Reinhard Nissl.
   * Add support for H.264 video stream in PES packets. Patch by Reinhard Nissl.
   * Support multiple audio PID in MPEG TS. Patch by Julian Scheel.
+  * Improvement in portability to OpenBSD, thanks to Pascal S. de Kloe.
 
 xine-lib (1.1.4)
   * Mark string-type configuration items according to whether they're plain

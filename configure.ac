@@ -1618,6 +1618,12 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 AC_MSG_RESULT($have_sunaudio)
 AM_CONDITIONAL(HAVE_SUNAUDIO, test "x$have_sunaudio" = "xyes")
 
+if "x$have_sunaudio" = "xyes"; then
+   dnl NetBSD and OpenBSD don't have this, but check for it
+   dnl rather than assuming that it doesn't happen elsewhere.
+   AC_CHECK_MEMBERS([audio_info_t.output_muted])
+fi
+
 
 dnl ---------------------------------------------
 dnl IRIX style audio interface
@@ -1643,7 +1649,8 @@ dnl ---------------------------------------------
 dnl cdrom ioctls
 dnl ---------------------------------------------
 
-AC_CHECK_HEADERS(sys/cdio.h linux/cdrom.h)
+AC_CHECK_HEADERS([linux/cdrom.h sys/dvdio.h], [break])
+AC_CHECK_HEADERS([sys/cdio.h])
 AM_CHECK_CDROM_IOCTLS(
 	[AC_DEFINE(HAVE_CDROM_IOCTLS,1,[Define this if you have CDROM ioctls])],
 	[AC_MSG_RESULT([*** (S)VCD support will be disabled ***])])
@@ -2858,9 +2865,6 @@ if test "x$enable_libmad" = "xyes"; then
   else
     echo "   - MAD (MPG 1/2/3) (internal library)"
   fi
-fi
-if test "x$have_wavpack" = "xyes"; then
-  echo "   - wavpack"
 fi
 if test "x$enable_libdts" = "xyes"; then
   if test "x$have_dts" = "xyes"; then
