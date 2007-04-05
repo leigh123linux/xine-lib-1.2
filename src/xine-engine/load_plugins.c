@@ -338,6 +338,7 @@ static void _insert_node (xine_t *this,
   entry->file         = file;
   entry->ref          = 0;
   entry->priority     = 0; /* default priority */
+  entry->config_entry_list = NULL;
 
   switch (info->type & PLUGIN_TYPE_MASK){
 
@@ -694,6 +695,17 @@ static inline int _plugin_info_equal(const plugin_info_t *a,
   return 1;
 }
 
+/*
+ * This callback is called by the config entry system when a plugin register a
+ * new config entry.
+ */
+static void _new_entry_cb (void *user_data, xine_cfg_entry_t *entry) {
+  plugin_node_t *node = (plugin_node_t *)user_data;
+  /*
+  printf("_new_entry_cb: key %s, plugin id: %s\n", entry->key, node->info->id);
+  */
+}
+
 static int _load_plugin_class(xine_t *this,
 			      plugin_node_t *node,
 			      void *data) {
@@ -721,9 +733,16 @@ static int _load_plugin_class(xine_t *this,
 
     if ((info = dlsym(node->file->lib_handle, "xine_plugin_info"))) {
       /* TODO: use sigsegv handler */
-      while (info->type != PLUGIN_NONE){
-	if (_plugin_info_equal(info, target)){
-	  if ((node->plugin_class = info->init(this, data))) {
+      while (info->type != PLUGIN_NONE) {
+	if (_plugin_info_equal(info, target)) {
+          config_values_t *config = this->config;
+
+	  /* the callback is called for each entry registered by this plugin */
+	  config->set_new_entry_callback(config, _new_entry_cb, node);
+	  node->plugin_class = info->init(this, data);
+	  config->unset_new_entry_callback(config);
+
+	  if (node->plugin_class) {
 	    inc_file_ref(node->file);
 	    return 1;
 	  } else {
