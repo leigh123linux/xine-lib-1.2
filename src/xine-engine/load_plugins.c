@@ -704,6 +704,12 @@ static void _new_entry_cb (void *user_data, xine_cfg_entry_t *entry) {
   /*
   printf("_new_entry_cb: key %s, plugin id: %s\n", entry->key, node->info->id);
   */
+  if (!node->config_entry_list) {
+    node->config_entry_list = xine_list_new();
+  }
+
+  xine_list_push_back(node->config_entry_list, (void *)entry->key);
+
 }
 
 static int _load_plugin_class(xine_t *this,
@@ -2603,6 +2609,10 @@ static void dispose_plugin_list (xine_sarray_t *list) {
       /* free info structure and string copies */
       free (node->info->id);
       free (node->info);
+
+      if (node->config_entry_list) {
+	xine_list_delete(node->config_entry_list);
+      }
       free (node);
     }
     xine_sarray_delete(list);
