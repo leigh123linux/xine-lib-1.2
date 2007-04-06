@@ -16,7 +16,7 @@ dnl   XINE_SUB += 1; continue with XINE_LT_* values below
 dnl
 XINE_MAJOR=1
 XINE_MINOR=1
-XINE_SUB=5
+XINE_SUB=99
 
 #if test $XINE_SUB -eq 0 ; then
 #  XINE_SUBPART="";
