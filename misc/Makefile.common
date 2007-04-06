@@ -49,13 +49,6 @@ install-debug: debug
 	$(MAKE) $(AM_MAKEFLAGS) install-data-hook
 
 uninstall-hook:
-	@if echo '$(libdir)' | egrep ^'$(XINE_PLUGINDIR)' >/dev/null; then \
-	  list='$(lib_LTLIBRARIES)'; for p in $$list; do \
-	    p="`echo $$p | sed -e 's/\.la$$/\.so/g;s|^.*/||'`"; \
-	    echo " rm -f $(DESTDIR)$(libdir)/$$p"; \
-	    rm -f $(DESTDIR)$(libdir)/$$p; \
-	  done; \
-	fi
 	@list='$(xineplug_LTLIBRARIES)'; for p in $$list; do \
 	  p="`echo $$p | sed -e 's/\.la$$/\.so/g;s|^.*/||'`"; \
 	  echo " rm -f $(DESTDIR)$(xineplugdir)/$$p"; \
