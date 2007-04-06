@@ -1,8 +1,6 @@
 include $(top_srcdir)/misc/Makefile.common
 
-libdir = $(XINE_PLUGINDIR)
-
-lib_LTLIBRARIES = xineplug_decode_spucc.la
+xineplug_LTLIBRARIES = xineplug_decode_spucc.la
 
 xineplug_decode_spucc_la_SOURCES =  cc_decoder.c xine_cc_decoder.c
 xineplug_decode_spucc_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS) -fno-strict-aliasing

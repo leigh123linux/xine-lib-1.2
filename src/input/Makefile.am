@@ -8,8 +8,6 @@ else
 SUBDIRS = vcd dvb libreal librtsp libdvdnav
 endif
 
-libdir = $(XINE_PLUGINDIR)
-
 ##
 # IMPORTANT:
 # ---------
@@ -52,7 +50,7 @@ endif
 
 AM_CFLAGS = -D_LARGEFILE64_SOURCE $(GNOME_VFS_CFLAGS) $(ALSA_CFLAGS) $(DVD_CFLAGS)
 
-lib_LTLIBRARIES = \
+xineplug_LTLIBRARIES = \
 	xineplug_inp_file.la \
 	xineplug_inp_http.la \
 	$(in_dvd) \
