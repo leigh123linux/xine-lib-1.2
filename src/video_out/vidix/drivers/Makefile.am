@@ -2,8 +2,6 @@ include $(top_srcdir)/misc/Makefile.common
 
 EXTRA_DIST = genfb_vid.c
 
-libdir = $(XINE_PLUGINDIR)/vidix
-
 if HAVE_VIDIX
 vidix_drivers = \
 	mach64_vid.la \
@@ -20,7 +18,7 @@ vidix_drivers = \
 	savage_vid.la 
 endif
 
-lib_LTLIBRARIES = $(vidix_drivers)
+vidix_LTLIBRARIES = $(vidix_drivers)
 
 radeon_vid_la_SOURCES = radeon_vid.c
 radeon_vid_la_LDFLAGS = -avoid-version -module -lm
