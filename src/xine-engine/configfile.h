@@ -157,6 +157,8 @@ struct config_values_s {
 			xine_config_cb_t changed_cb,
 			void *cb_data);
 
+  void (*register_entry) (config_values_t *self, cfg_entry_t* entry);
+
   /* convenience function to update range, enum, num and bool values */
   void (*update_num) (config_values_t *self, const char *key, int value);
 
@@ -194,6 +196,19 @@ struct config_values_s {
    * unregister the callback
    */
   void (*unset_new_entry_callback) (config_values_t *self);
+
+  /*
+   * serialize a config entry.
+   * return a base64 null terminated string.
+   */
+  char* (*serialize_entry) (config_values_t *self, const char *key);
+
+  /*
+   * deserialize a config entry.
+   * value is a base 64 encoded string
+   */
+  cfg_entry_t* (*deserialize_entry) (config_values_t *self, const char *value);
+
 
   /*
    * config values are stored here:

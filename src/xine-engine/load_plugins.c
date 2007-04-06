@@ -701,15 +701,12 @@ static inline int _plugin_info_equal(const plugin_info_t *a,
  */
 static void _new_entry_cb (void *user_data, xine_cfg_entry_t *entry) {
   plugin_node_t *node = (plugin_node_t *)user_data;
-  /*
-  printf("_new_entry_cb: key %s, plugin id: %s\n", entry->key, node->info->id);
-  */
+  
   if (!node->config_entry_list) {
     node->config_entry_list = xine_list_new();
   }
 
   xine_list_push_back(node->config_entry_list, (void *)entry->key);
-
 }
 
 static int _load_plugin_class(xine_t *this,
@@ -857,7 +854,7 @@ static void load_required_plugins(xine_t *this) {
 /*
  *  save plugin list information to file (cached catalog)
  */
-static void save_plugin_list(FILE *fp, xine_sarray_t *list) {
+static void save_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *list) {
 
   const plugin_node_t *node;
   const plugin_file_t *file;
@@ -867,7 +864,6 @@ static void save_plugin_list(FILE *fp, xine_sarray_t *list) {
   const vo_info_t *vo_info;
   const ao_info_t *ao_info;
   const post_info_t *post_info;
-  
   int i;
   int list_id = 0;
   int list_size;
@@ -884,9 +880,9 @@ static void save_plugin_list(FILE *fp, xine_sarray_t *list) {
     fprintf(fp, "api=%d\n", node->info->API );
     fprintf(fp, "id=%s\n", node->info->id );
     fprintf(fp, "version=%lu\n", (unsigned long) node->info->version );
-  
+
     switch (node->info->type & PLUGIN_TYPE_MASK){
-    
+
       case PLUGIN_VIDEO_OUT:
         vo_info = node->info->special_info;
         fprintf(fp, "visual_type=%d\n", vo_info->visual_type );
@@ -914,7 +910,7 @@ static void save_plugin_list(FILE *fp, xine_sarray_t *list) {
         demuxer_info = node->info->special_info;
         fprintf(fp, "demuxer_priority=%d\n", demuxer_info->priority);
         break;
-      
+
       case PLUGIN_INPUT:
         input_info = node->info->special_info;
         fprintf(fp, "input_priority=%d\n", input_info->priority);
@@ -922,10 +918,27 @@ static void save_plugin_list(FILE *fp, xine_sarray_t *list) {
 
       case PLUGIN_POST:
         post_info = node->info->special_info;
-	fprintf(fp, "post_type=%lu\n", (unsigned long)post_info->type);
-	break;
-    }        
-    
+        fprintf(fp, "post_type=%lu\n", (unsigned long)post_info->type);
+        break;
+    }
+
+    if (node->config_entry_list)
+    {
+      xine_list_iterator_t ite = xine_list_front(node->config_entry_list);
+      while (ite) {
+        char *key = xine_list_get_value(node->config_entry_list, ite);
+
+        /* now get the representation of the config key */
+        char *key_value = this->config->serialize_entry(this->config, key);
+
+        printf("  config key: %s, serialization: %d bytes\n", key, strlen(key_value));
+        fprintf(fp, "config_key=%s\n", key_value);
+
+        free (key_value);
+        ite = xine_list_next(node->config_entry_list, ite);
+      }
+    }
+
     fprintf(fp, "\n");
     list_id++;
   }
@@ -1120,7 +1133,7 @@ static void save_catalog (xine_t *this) {
     fprintf(fp, "cache_catalog_version=%d\n\n", CACHE_CATALOG_VERSION);
 
     for (i = 0; i < PLUGIN_TYPE_MAX; i++) {
-      save_plugin_list (fp, this->plugin_catalog->plugin_lists[i]);
+      save_plugin_list (this, fp, this->plugin_catalog->plugin_lists[i]);
     }
     fclose(fp);
   }
@@ -1206,9 +1219,9 @@ void _x_scan_plugins (xine_t *this) {
   free(pluginpath);
   free(homedir);
 
-  save_catalog (this);
-    
   load_required_plugins (this);
+  
+  save_catalog (this);
 
   map_decoders (this);
 }

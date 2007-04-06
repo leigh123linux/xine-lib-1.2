@@ -92,4 +92,7 @@
 
 unsigned char *rfc822_binary (void *src,unsigned long srcl,unsigned long *len);
 
+unsigned char *base64_encode (void *src,unsigned long srcl,unsigned long *len);
+void *base64_decode (unsigned char *src,unsigned long srcl,unsigned long *len);
+
 #endif

@@ -30,7 +30,8 @@ libxineutils_la_SOURCES = $(pppc_files) \
 	array.c \
 	sorted_array.c \
 	pool.c \
-	ring_buffer.c
+	ring_buffer.c \
+	base64.c
 
 xineinclude_HEADERS = \
 	attributes.h \
@@ -43,7 +44,8 @@ xineinclude_HEADERS = \
 	array.h \
 	sorted_array.h \
 	pool.h \
-	ring_buffer.h
+	ring_buffer.h \
+	base64.h
 
 
 noinst_HEADERS = ppcasm_string.h xine_check.h

@@ -46,6 +46,7 @@ extern "C" {
 #  include "list.h"
 #  include "array.h"
 #  include "sorted_array.h"
+#  include "base64.h"
 #else
 #  ifdef WIN32
 #    include <winsock.h>
@@ -61,6 +62,7 @@ extern "C" {
 #  include <xine/list.h>
 #  include <xine/array.h>
 #  include <xine/sorted_array.h>
+#  include <xine/base64.h>
 #endif
 
 #include <stdio.h>

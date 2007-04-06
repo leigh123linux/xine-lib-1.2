@@ -1210,6 +1210,139 @@ static void config_unset_new_entry_callback (config_values_t *this) {
   pthread_mutex_unlock(&this->config_lock);
 }
 
+static void config_register_entry (config_values_t *this, cfg_entry_t* entry) {
+  /* FIXME: TODO */
+}
+
+static int put_int(uint8_t *buffer, int pos, int value) {
+  int32_t value_int32 = (int32_t)value;
+
+  buffer[pos] = value_int32 & 0xFF;
+  buffer[pos + 1] = (value_int32 >> 8) & 0xFF;
+  buffer[pos + 2] = (value_int32 >> 16) & 0xFF;
+  buffer[pos + 3] = (value_int32 >> 24) & 0xFF;
+  
+  return 4;
+}
+
+static int put_string(uint8_t *buffer, int pos, const char *value, int value_len) {
+  pos += put_int(buffer, pos, value_len);
+  memcpy(&buffer[pos], value, value_len);
+
+  return 4 + value_len;
+}
+
+static unsigned char* config_serialize_entry (config_values_t *this, const char *key) {
+  unsigned char *output = NULL;
+  cfg_entry_t *entry, *prev;
+  
+  pthread_mutex_lock(&this->config_lock);
+  config_lookup_entry_int(this, key, &entry, &prev);
+  
+  if (entry) {
+    /* now serialize this stuff
+      fields to serialize :
+          int              type;
+          int              range_min;
+          int              range_max;
+          int              exp_level;
+          char            *key;
+          char            *str_default;
+          char            *description;
+          char            *help;
+          char           **enum_values;
+    */
+   
+    int key_len = 0;
+    int str_default_len = 0;
+    int description_len = 0;
+    int help_len = 0;
+    
+    if (entry->key)
+      key_len = strlen(entry->key);
+    if (entry->str_default)
+      str_default_len = strlen(entry->str_default);
+    if (entry->description)
+      description_len = strlen(entry->description);
+    if (entry->help)
+      help_len = strlen(entry->help);
+    
+    // integers
+    // value: 4 bytes
+    unsigned long total_len = 4 * sizeof(int32_t);
+    
+    // strings (size + char buffer)
+    // length: 4 bytes
+    // buffer: length bytes
+    total_len += sizeof(int32_t) + key_len;
+    total_len += sizeof(int32_t) + str_default_len;
+    total_len += sizeof(int32_t) + description_len;
+    total_len += sizeof(int32_t) + help_len;
+    
+    /* enum values... */
+    // value count: 4 bytes
+    // for each value:
+    //   length: 4 bytes
+    //   buffer: length bytes
+    int value_count = 0;
+    int value_len[10];
+    total_len += sizeof(int32_t);  /* value count */
+    
+    char **cur_value = entry->enum_values;
+    if (cur_value) {
+      while (*cur_value && (value_count < (sizeof(value_len) / sizeof(int) ))) {
+        value_len[value_count] = strlen(*cur_value);
+        total_len += sizeof(int32_t) + value_len[value_count];
+        value_count++;
+        cur_value++;
+      }
+    }
+
+    /* Now we have the length needed to serialize the entry and the length of each string */
+    uint8_t *buffer = malloc (total_len);
+    if (!buffer) return NULL;
+    
+    /* Let's go */
+    int pos = 0;
+    
+    // the integers
+    pos += put_int(buffer, pos, entry->type);
+    pos += put_int(buffer, pos, entry->range_min);
+    pos += put_int(buffer, pos, entry->range_max);
+    pos += put_int(buffer, pos, entry->exp_level);
+    
+    // the strings
+    pos += put_string(buffer, pos, entry->key, key_len);
+    pos += put_string(buffer, pos, entry->str_default, str_default_len);
+    pos += put_string(buffer, pos, entry->description, description_len);
+    pos += put_string(buffer, pos, entry->help, help_len);
+
+    // the enum stuff
+    pos += put_int(buffer, pos, value_count);
+    cur_value = entry->enum_values;
+    
+    int i;
+    for (i = 0; i < value_count; i++) {
+      pos += put_string(buffer, pos, *cur_value, value_len[i]);
+      cur_value++;
+    }
+
+    // and now the output encoding
+    unsigned long output_len;
+    output = base64_encode (buffer, total_len, &output_len);
+
+    free(buffer);
+  }
+  pthread_mutex_unlock(&this->config_lock);
+
+  return output;
+}
+
+static cfg_entry_t* config_deserialize_entry (config_values_t *this, const char *value) {
+  /* FIXME: TODO */
+  return NULL;
+}
+
 config_values_t *_x_config_init (void) {
 
 #ifdef HAVE_IRIXAL
@@ -1249,6 +1382,9 @@ config_values_t *_x_config_init (void) {
   this->dispose                  = config_dispose;
   this->set_new_entry_callback   = config_set_new_entry_callback;
   this->unset_new_entry_callback = config_unset_new_entry_callback;
+  this->register_entry           = config_register_entry;
+  this->serialize_entry          = config_serialize_entry;
+  this->deserialize_entry        = config_deserialize_entry;
 
   return this;
 }

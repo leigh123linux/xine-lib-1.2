@@ -133,3 +133,66 @@ unsigned char *rfc822_binary (void *src,unsigned long srcl,unsigned long *len)
 
   return ret;			/* return the resulting string */
 }
+
+unsigned char *base64_encode (void *src,unsigned long srcl,unsigned long *len)
+{
+  unsigned char *ret,*d;
+  unsigned char *s = (unsigned char *) src;
+  char *v = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._";
+  unsigned long i = ((srcl + 2) / 3) * 4;
+  *len = i;
+  d = ret = (unsigned char *) malloc ((size_t) ++i);
+  for (i = 0; srcl; s += 3) {	/* process tuplets */
+    *d++ = v[s[0] >> 2];	/* byte 1: high 6 bits (1) */
+				/* byte 2: low 2 bits (1), high 4 bits (2) */
+    *d++ = v[((s[0] << 4) + (--srcl ? (s[1] >> 4) : 0)) & 0x3f];
+				/* byte 3: low 4 bits (2), high 2 bits (3) */
+    *d++ = srcl ? v[((s[1] << 2) + (--srcl ? (s[2] >> 6) : 0)) & 0x3f] : '-';
+				/* byte 4: low 6 bits (3) */
+    *d++ = srcl ? v[s[2] & 0x3f] : '-';
+    if (srcl) srcl--;		/* count third character if processed */
+  }
+  *d = '\0';			/* tie off string */
+
+  return ret;			/* return the resulting string */
+}
+
+void *base64_decode (unsigned char *src,unsigned long srcl,unsigned long *len)
+{
+  void *ret;
+  unsigned char *d;
+  unsigned long i = ((srcl + 3) / 4) * 3;
+  *len = i;
+  d = ret = (void *) malloc ((size_t)i);
+  for (i = 0; srcl; src += 4) {	/* process tuplets */
+    unsigned char tuplet[4];
+    int j;
+
+    for (j = 0; j < 4; j += 1) {
+      if (srcl) {
+        if ((src[j] >= 'A') && (src[j] <= 'Z')) {
+          tuplet[j] = src[j] - 'A';
+        } else if ((src[j] >= 'a') && (src[j] <= 'z')) {
+          tuplet[j] = src[j] - 'a' + 26;
+        } else if ((src[j] >= '0') && (src[j] <= '9')) {
+          tuplet[j] = src[j] - '0' + 52;
+        } else if (src[j] == '.') {
+          tuplet[j] = 62;
+        } else if (src[j] == '_') {
+          tuplet[j] = 63;
+        } else {
+          tuplet[j] = 64;
+        }
+        srcl--;
+      } else {
+        tuplet[j] = 64;
+      }
+    }
+
+    *d++ = (tuplet[0] << 2) + ((tuplet[1] & 0x3f) >> 4);
+    *d++ = (tuplet[1] << 4) + ((tuplet[2] & 0x3f) >> 2);
+    *d++ = (tuplet[2] << 6) + (tuplet[3] & 0x3f);
+  }
+
+  return ret;			/* return the resulting string */
+}

@@ -126,7 +126,7 @@ xineplug_inp_rtsp_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) libreal/libreal.la lib
 xineplug_inp_rtsp_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_rtsp_la_LDFLAGS = -avoid-version -module
 
-xineplug_inp_cdda_la_SOURCES = input_cdda.c media_helper.c sha1.c sha1.h base64.c base64.h
+xineplug_inp_cdda_la_SOURCES = input_cdda.c media_helper.c sha1.c sha1.h 
 xineplug_inp_cdda_la_LIBADD = $(XINE_LIB)
 xineplug_inp_cdda_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_cdda_la_LDFLAGS = -avoid-version -module
