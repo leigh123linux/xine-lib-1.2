@@ -4,8 +4,6 @@ AM_CPPFLAGS = -DXINE_COMPILE
 
 EXTRA_DIST = audio_irixal_out.c
 
-libdir = $(XINE_PLUGINDIR)
-
 if HAVE_OSS
 oss_module = xineplug_ao_out_oss.la
 endif
@@ -57,7 +55,7 @@ endif
 # all xine audio out plugins should be named like the 
 # scheme "xineplug_ao_out_"
 #
-lib_LTLIBRARIES = xineplug_ao_out_none.la xineplug_ao_out_file.la \
+xineplug_LTLIBRARIES = xineplug_ao_out_none.la xineplug_ao_out_file.la \
 	$(oss_module) \
 	$(alsa_module) \
 	$(sun_module) \
@@ -69,14 +67,6 @@ lib_LTLIBRARIES = xineplug_ao_out_none.la xineplug_ao_out_file.la \
 	$(directx2_module)	\
 	$(fusionsound_module) \
 	$(jack_module)
-
-#lib_LTLIBRARIES = \
-#	$(alsa_module) \
-#	$(arts_module) \
-#	$(esd_module) \
-#	$(irixal_module) \
-#	$(oss_module) \
-#	$(sun_module) 
 
 xineplug_ao_out_none_la_SOURCES = audio_none_out.c
 xineplug_ao_out_none_la_LIBADD = $(XINE_LIB)

@@ -4,13 +4,11 @@ AM_CFLAGS = -DOPT_SPEED
 
 EXTRA_DIST = imdct_l_arm.S
 
-libdir = $(XINE_PLUGINDIR)
-
 if MAD
 mad_module = xineplug_decode_mad.la
 endif
 
-lib_LTLIBRARIES = $(mad_module)
+xineplug_LTLIBRARIES = $(mad_module)
 
 if EXTERNAL_LIBMAD
 internal_sources =
@@ -29,7 +27,7 @@ internal_sources = \
 endif
 
 xineplug_decode_mad_la_SOURCES = \
-	xine_decoder.c \
+	xine_mad_decoder.c \
 	$(internal_sources)
 
 if EXTERNAL_LIBMAD
@@ -38,7 +36,7 @@ else
 xineplug_decode_mad_la_LIBADD = $(XINE_LIB)
 endif
 xineplug_decode_mad_la_CFLAGS = $(LIBMAD_CFLAGS) $(VISIBILITY_FLAG)
-xineplug_decode_mad_la_LDFLAGS = -avoid-version -module
+xineplug_decode_mad_la_LDFLAGS = $(xineplug_ldflags)
 
 noinst_HEADERS = \
 	D.dat \

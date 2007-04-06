@@ -1,10 +1,8 @@
 include $(top_srcdir)/misc/Makefile.common
 
-libdir = $(XINE_PLUGINDIR)
+xineplug_LTLIBRARIES = xineplug_decode_spucc.la
 
-lib_LTLIBRARIES = xineplug_decode_spucc.la
-
-xineplug_decode_spucc_la_SOURCES =  cc_decoder.c xine_decoder.c
+xineplug_decode_spucc_la_SOURCES =  cc_decoder.c xine_cc_decoder.c
 xineplug_decode_spucc_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS) -fno-strict-aliasing
 xineplug_decode_spucc_la_LIBADD = $(XINE_LIB)
 xineplug_decode_spucc_la_LDFLAGS = -avoid-version -module

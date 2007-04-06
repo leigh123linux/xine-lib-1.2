@@ -2,8 +2,6 @@ include $(top_srcdir)/misc/Makefile.common
 
 AM_CFLAGS = $(X_CFLAGS) $(LIBFAME_CFLAGS)
 
-libdir = $(XINE_PLUGINDIR)
-
 if HAVE_DXR3
 dxr3_modules = xineplug_decode_dxr3_video.la \
 	xineplug_decode_dxr3_spu.la \
@@ -19,7 +17,7 @@ if HAVE_LIBRTE
 link_rte = -lrte
 endif
 
-lib_LTLIBRARIES = $(dxr3_modules) 
+xineplug_LTLIBRARIES = $(dxr3_modules) 
 
 xineplug_decode_dxr3_video_la_SOURCES = dxr3_decode_video.c
 xineplug_decode_dxr3_video_la_LIBADD = $(XINE_LIB) 

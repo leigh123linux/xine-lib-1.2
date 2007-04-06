@@ -45,8 +45,8 @@
 #include "bswap.h"
 #include "buffer.h"
 #include "xineutils.h"
-#include "xine_decoder.h"
-#include "mpeg_parser.h"
+#include "ffmpeg_decoder.h"
+#include "ff_mpeg_parser.h"
 
 #ifdef HAVE_FFMPEG
 #  include <postprocess.h>

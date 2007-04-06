@@ -4,10 +4,8 @@ SUBDIRS = musepack
 
 EXTRA_DIST = diff_against_svn.patch
 
-libdir = $(XINE_PLUGINDIR)
-
 if MUSEPACK
-lib_LTLIBRARIES = xineplug_decode_mpc.la
+xineplug_LTLIBRARIES = xineplug_decode_mpc.la
 endif
 
 if EXTERNAL_MPCDEC
@@ -23,7 +21,6 @@ else
 xineplug_decode_mpc_la_LIBADD = $(XINE_LIB)
 endif
 
-xineplug_decode_mpc_la_SOURCES = $(internal_sources) xine_decoder.c
+xineplug_decode_mpc_la_SOURCES = $(internal_sources) xine_musepack_decoder.c
 xineplug_decode_mpc_la_CFLAGS = $(VISIBILITY_FLAG)
-xineplug_decode_mpc_la_LDFLAGS = -avoid-version -module
-
+xineplug_decode_mpc_la_LDFLAGS = $(xineplug_ldflags)

@@ -15,9 +15,7 @@ endif
 # work, but at least it compiles.
 AM_CFLAGS = $(ff_cflags) -fomit-frame-pointer
 
-libdir = $(XINE_PLUGINDIR)/post
-
-lib_LTLIBRARIES = xineplug_post_planar.la
+xinepost_LTLIBRARIES = xineplug_post_planar.la
 
 xineplug_post_planar_la_SOURCES = planar.c invert.c expand.c fill.c boxblur.c \
                                   denoise3d.c eq.c eq2.c unsharp.c pp.c noise.c

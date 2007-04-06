@@ -29,6 +29,16 @@ stamp-h1
 post-install.sh
 autom4te.cache
 
+build-stamp
+configure-stamp
+debian/files
+debian/libxine-dev
+debian/libxine1
+debian/libxine1-dbg
+debian/tmp
+debian/*.debhelper
+debian/*.substvars
+
 doc/faq/faq.html
 doc/faq/faq.txt
 doc/hackersguide/*.png
@@ -45,5 +55,10 @@ misc/xine-lib.spec
 
 po/POTFILES
 po/*.gmo
+po/stamp-po
 
 src/libffmpeg/ffmpeg_config.h
+src/video_out/libdha/pci_dev_ids.c
+src/video_out/libdha/pci_ids.h
+src/video_out/libdha/pci_names.[ch]
+src/video_out/libdha/pci_vendors.h

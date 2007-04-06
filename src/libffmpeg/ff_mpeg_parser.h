@@ -26,7 +26,7 @@
 #define HAVE_MPEG_PARSER_H
 
 #include "xine_internal.h"
-#include "xine_decoder.h"
+#include "ffmpeg_decoder.h"
 
 #define BUFFER_SIZE (1194 * 1024) /* libmpeg2's buffer size */
 
