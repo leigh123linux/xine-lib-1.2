@@ -68,14 +68,6 @@ xineplug_LTLIBRARIES = xineplug_ao_out_none.la xineplug_ao_out_file.la \
 	$(fusionsound_module) \
 	$(jack_module)
 
-#lib_LTLIBRARIES = \
-#	$(alsa_module) \
-#	$(arts_module) \
-#	$(esd_module) \
-#	$(irixal_module) \
-#	$(oss_module) \
-#	$(sun_module) 
-
 xineplug_ao_out_none_la_SOURCES = audio_none_out.c
 xineplug_ao_out_none_la_LIBADD = $(XINE_LIB)
 xineplug_ao_out_none_la_CFLAGS = $(VISIBILITY_FLAG)
