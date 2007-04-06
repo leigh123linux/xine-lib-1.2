@@ -18,14 +18,18 @@ install-data-hook:
 	  fi; \
 	fi; \
 	if test -x /usr/bin/chcon -a "`id -u`" -eq 0; then \
-	  list='$(lib_LTLIBRARIES)'; \
-	  if test -n "$$list" ; then \
+	  list='$(xineplug_LTLIBRARIES)'; \
 	    for p in $$list; do \
 	      p="`echo $$p | sed -e 's/\.la$$/\.so/g;s|^.*/||'`"; \
-	      echo " chcon system_u:object_r:texrel_shlib_t $(DESTDIR)$(libdir)/$$p"; \
-	      chcon system_u:object_r:texrel_shlib_t $(DESTDIR)$(libdir)/$$p || :; \
+	      echo " chcon system_u:object_r:texrel_shlib_t $(DESTDIR)$(xineplugdir)/$$p"; \
+	      chcon system_u:object_r:texrel_shlib_t $(DESTDIR)$(xineplugdir)/$$p || :; \
 	    done; \
-	  fi; \
+	  list='$(xinepost_LTLIBRARIES)'; \
+	    for p in $$list; do \
+	      p="`echo $$p | sed -e 's/\.la$$/\.so/g;s|^.*/||'`"; \
+	      echo " chcon system_u:object_r:texrel_shlib_t $(DESTDIR)$(xinepostdir)/$$p"; \
+	      chcon system_u:object_r:texrel_shlib_t $(DESTDIR)$(xinepostdir)/$$p || :; \
+	    done; \
 	fi
 
 pass1:
