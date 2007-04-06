@@ -5,6 +5,8 @@ xineincludedir = $(includedir)/xine
 xineplugdir = $(XINE_PLUGINDIR)
 xineplug_ldflags = $(NOUNDEF) -avoid-version -module
 
+xinepostdir = $(XINE_PLUGINDIR)/post
+
 $(XINE_LIB):
 	@cd $(top_srcdir)/src/xine-engine && $(MAKE)
 
@@ -53,6 +55,11 @@ uninstall-hook:
 	  p="`echo $$p | sed -e 's/\.la$$/\.so/g;s|^.*/||'`"; \
 	  echo " rm -f $(DESTDIR)$(xineplugdir)/$$p"; \
 	  rm -f $(DESTDIR)$(xineplugdir)/$$p; \
+	done;
+	@list='$(xinepost_LTLIBRARIES)'; for p in $$list; do \
+	  p="`echo $$p | sed -e 's/\.la$$/\.so/g;s|^.*/||'`"; \
+	  echo " rm -f $(DESTDIR)$(xinepostdir)/$$p"; \
+	  rm -f $(DESTDIR)$(xinepostdir)/$$p; \
 	done;
 
 mostlyclean-generic:
