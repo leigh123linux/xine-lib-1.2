@@ -26,9 +26,7 @@ endif
 DISTCLEANFILES = ffmpeg_config.h
 
 # this must always be included, even if the current machine has no DXR3...
-EXTRA_DIST = ffmpeg_encoder.c diff_to_ffmpeg_cvs.txt
-
-INTERNAL_DOCS = diff_to_ffmpeg_cvs.txt
+EXTRA_DIST = ffmpeg_encoder.c
 
 xineplug_LTLIBRARIES = xineplug_decode_ff.la xineplug_decode_dvaudio.la
 
