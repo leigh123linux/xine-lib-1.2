@@ -265,10 +265,7 @@ static long ao_alsa_get_volume_from_percent(int val, long min, long max) {
  * Error callback, we need to control this, 
  * error message should be printed only in DEBUG mode.
  */
-static void
-#ifdef __GNUC__
-	    __attribute__((format (printf, 5, 6)))
-#endif
+static void XINE_FORMAT_PRINTF(5, 6)
 	    error_callback(const char *file, int line, 
 			   const char *function, int err, const char *fmt, ...) {
 #ifdef DEBUG
@@ -663,15 +660,7 @@ static int ao_alsa_delay (ao_driver_t *this_gen)  {
   struct timeval now;
   printf("audio_alsa_out:delay:ENTERED\n");
 #endif
-  err=snd_pcm_delay( this->audio_fd, &delay );
-
-  int state = snd_pcm_state(this->audio_fd);
-
-  /* check for idle states, which need to be handled as delay=0 */
-  if(state == SND_PCM_STATE_PREPARED || state == SND_PCM_STATE_PAUSED ||
-     state == SND_PCM_STATE_OPEN || SND_PCM_STATE_XRUN) {
-      return 0;
-  }
+  err = snd_pcm_delay( this->audio_fd, &delay );
 
 #ifdef LOG_DEBUG
   printf("audio_alsa_out:delay:delay all=%ld err=%d\n",delay, err);
@@ -679,8 +668,11 @@ static int ao_alsa_delay (ao_driver_t *this_gen)  {
   printf("audio_alsa_out:delay: Time = %ld.%ld\n", now.tv_sec, now.tv_usec);
   printf("audio_alsa_out:delay:FINISHED\n");
 #endif
-  return delay;
 
+  if (err || (delay < 0))
+    delay = 0;
+
+  return delay;
 }
 
 #if 0

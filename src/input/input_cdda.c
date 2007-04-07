@@ -988,10 +988,7 @@ static int parse_url (char *urlbuf, char** host, int *port) {
 }
 #endif
 
-static int
-#ifdef __GNUC__
-__attribute__((format (printf, 4, 5)))
-#endif
+static int XINE_FORMAT_PRINTF(4, 5)
 network_command( xine_stream_t *stream, int socket, char *data_buf, char *msg, ...)
 {
   char     buf[_BUFSIZ];

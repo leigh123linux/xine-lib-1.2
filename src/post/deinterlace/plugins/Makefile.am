@@ -32,8 +32,6 @@ EXTRA_DIST = greedy2frame_template.c greedyh.asm \
 AM_CFLAGS = -I$(top_srcdir)/src/post/deinterlace \
 	-I$(top_srcdir)/contrib/ffmpeg/libpostproc
 
-libdir = $(XINE_PLUGINDIR)/post
-
 noinst_LTLIBRARIES = libdeinterlaceplugins.la
 
 libdeinterlaceplugins_la_SOURCES = \

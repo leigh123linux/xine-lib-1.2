@@ -792,17 +792,10 @@ int    xine_get_log_section_count(xine_t *self) XINE_PROTECTED;
 const char *const *xine_get_log_names(xine_t *self) XINE_PROTECTED;
 
 /* print some log information to <buf> section */
-#ifndef __GNUC__
 void   xine_log (xine_t *self, int buf,
-		 const char *format, ...) XINE_PROTECTED;
+		 const char *format, ...) XINE_FORMAT_PRINTF(3, 4) XINE_PROTECTED;
 void   xine_vlog(xine_t *self, int buf,
-		  const char *format, va_list args) XINE_PROTECTED;
-#else
-void   xine_log (xine_t *self, int buf,
-		 const char *format, ...) __attribute__ ((__format__(printf, 3, 4))) XINE_PROTECTED;
-void   xine_vlog(xine_t *self, int buf,
-		  const char *format, va_list args) __attribute__ ((__format__(printf, 3, 0))) XINE_PROTECTED;
-#endif
+		  const char *format, va_list args) XINE_FORMAT_PRINTF(3, 0) XINE_PROTECTED;
 
 /* get log messages of specified section */
 char *const *xine_get_log (xine_t *self, int buf) XINE_PROTECTED;

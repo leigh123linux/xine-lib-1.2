@@ -27,15 +27,12 @@
 #define _LOG_H_
 
 #include <stdio.h>
+#include "attributes.h"
 
 extern int log_init(void);
 extern void log_shutdown(void);
 extern void log_print(const char *string);
-extern void log_printf(const char *format, ...)
-#ifdef __GNUC__
-__attribute__ ((format (printf, 1, 2)))
-#endif
-;
+extern void log_printf(const char *format, ...) XINE_FORMAT_PRINTF(1, 2);
 
 #endif /* _LOG_H_ */
 

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-04-04 23:12+0200\n"
+"POT-Creation-Date: 2007-04-06 15:39+0200\n"
 "PO-Revision-Date: 2006-06-18 23:05+0200\n"
 "Last-Translator: Diego 'Flameeyes' Pettenò <flameeyes@gentoo.org>\n"
 "Language-Team: Italian\n"
@@ -67,11 +67,11 @@ msgstr ""
 "audio_alsa_out: configurazione errata per questo PCM: nessuna configurazione "
 "disponibile: %s\n"
 
-#: src/audio_out/audio_alsa_out.c:1294
+#: src/audio_out/audio_alsa_out.c:1289
 msgid "notify changes to the hardware mixer"
 msgstr "notifica modifiche al mixer hardware"
 
-#: src/audio_out/audio_alsa_out.c:1295
+#: src/audio_out/audio_alsa_out.c:1290
 msgid ""
 "When the hardware mixer changes, your application will receive a "
 "notification so that it can update its graphical representation of the mixer "
@@ -81,16 +81,16 @@ msgstr ""
 "una notifica così che possa aggiornare la propria rappresentazione delle "
 "impostazioni del mixer al volo."
 
-#: src/audio_out/audio_alsa_out.c:1360
+#: src/audio_out/audio_alsa_out.c:1355
 #, c-format
 msgid "snd_lib_error_set_handler() failed: %d"
 msgstr "snd_lib_error_set_handler() non riuscita: %d"
 
-#: src/audio_out/audio_alsa_out.c:1367
+#: src/audio_out/audio_alsa_out.c:1362
 msgid "sound card can do mmap"
 msgstr "la scheda audio può usare mmap"
 
-#: src/audio_out/audio_alsa_out.c:1368
+#: src/audio_out/audio_alsa_out.c:1363
 msgid ""
 "Enable this, if your sound card and alsa driver support memory mapped IO.\n"
 "You can try enabling it and check, if everything works. If it does, this "
@@ -101,11 +101,11 @@ msgstr ""
 "Si può provare ad abilitarlo e vedere se funziona, in qual caso migliorerà "
 "le prestazioni."
 
-#: src/audio_out/audio_alsa_out.c:1377
+#: src/audio_out/audio_alsa_out.c:1372
 msgid "device used for mono output"
 msgstr "dispositivo usato per output mono"
 
-#: src/audio_out/audio_alsa_out.c:1378
+#: src/audio_out/audio_alsa_out.c:1373
 msgid ""
 "xine will use this alsa device to output mono sound.\n"
 "See the alsa documentation for information on alsa devices."
@@ -113,11 +113,11 @@ msgstr ""
 "xine utilizzerà questo dispositivo ALSA per riprodurre suono mono.\n"
 "Si veda la documentazione ALSA per informazioni sui dispositivi."
 
-#: src/audio_out/audio_alsa_out.c:1386
+#: src/audio_out/audio_alsa_out.c:1381
 msgid "device used for stereo output"
 msgstr "dispositivo usato per output stereo"
 
-#: src/audio_out/audio_alsa_out.c:1387
+#: src/audio_out/audio_alsa_out.c:1382
 msgid ""
 "xine will use this alsa device to output stereo sound.\n"
 "See the alsa documentation for information on alsa devices."
@@ -125,11 +125,11 @@ msgstr ""
 "xine utilizzerà questo dispositivo ALSA per riprodurre suono stereo.\n"
 "Si veda la documentazione ALSA per informazioni sui dispositivi."
 
-#: src/audio_out/audio_alsa_out.c:1395
+#: src/audio_out/audio_alsa_out.c:1390
 msgid "device used for 4-channel output"
 msgstr "dispositivo usato per output a 4 canali"
 
-#: src/audio_out/audio_alsa_out.c:1396
+#: src/audio_out/audio_alsa_out.c:1391
 msgid ""
 "xine will use this alsa device to output 4 channel (4.0) surround sound.\n"
 "See the alsa documentation for information on alsa devices."
@@ -138,11 +138,11 @@ msgstr ""
 "canali (4.0.\n"
 "Si veda la documentazione ALSA per informazioni sui dispositivi."
 
-#: src/audio_out/audio_alsa_out.c:1405 src/audio_out/audio_alsa_out.c:1415
+#: src/audio_out/audio_alsa_out.c:1400 src/audio_out/audio_alsa_out.c:1410
 msgid "device used for 5.1-channel output"
 msgstr "dispositivo usato per output a canale 5.1"
 
-#: src/audio_out/audio_alsa_out.c:1406
+#: src/audio_out/audio_alsa_out.c:1401
 msgid ""
 "xine will use this alsa device to output 5 channel plus LFE (5.1) surround "
 "sound.\n"
@@ -152,7 +152,7 @@ msgstr ""
 "canali più RFE (5.1).\n"
 "Si veda la documentazione ALSA per informazioni sui dispositivi."
 
-#: src/audio_out/audio_alsa_out.c:1416
+#: src/audio_out/audio_alsa_out.c:1411
 msgid ""
 "xine will use this alsa device to output undecoded digital surround sound. "
 "This can be used be external surround decoders.\n"
@@ -163,21 +163,21 @@ msgstr ""
 "surround esterni.\n"
 "Si veda la documentazione ALSA per informazioni sui dispositivi."
 
-#: src/audio_out/audio_alsa_out.c:1436
+#: src/audio_out/audio_alsa_out.c:1431
 #, c-format
 msgid "snd_pcm_open() failed:%d:%s\n"
 msgstr "snd_pcm_open() non riuscito:%d:%s\n"
 
-#: src/audio_out/audio_alsa_out.c:1438
+#: src/audio_out/audio_alsa_out.c:1433
 #, c-format
 msgid ">>> Check if another program already uses PCM <<<\n"
 msgstr ">>>Controlla se un altro programma sta già usando PCM <<<\n"
 
-#: src/audio_out/audio_alsa_out.c:1469 src/audio_out/audio_oss_out.c:929
+#: src/audio_out/audio_alsa_out.c:1464 src/audio_out/audio_oss_out.c:929
 msgid "speaker arrangement"
 msgstr "disposizione degli speaker"
 
-#: src/audio_out/audio_alsa_out.c:1470 src/audio_out/audio_oss_out.c:930
+#: src/audio_out/audio_alsa_out.c:1465 src/audio_out/audio_oss_out.c:930
 msgid ""
 "Select how your speakers are arranged, this determines which speakers xine "
 "uses for sound output. The individual values are:\n"
@@ -237,80 +237,80 @@ msgstr ""
 "scheda audio un decodificatore surround digitale capace di decodificare i "
 "formati che si vogliono riprodurre."
 
-#: src/audio_out/audio_alsa_out.c:1499
+#: src/audio_out/audio_alsa_out.c:1494
 msgid "audio_alsa_out : supported modes are "
 msgstr "audio_alsa_out : i modi supportati sono "
 
-#: src/audio_out/audio_alsa_out.c:1502
+#: src/audio_out/audio_alsa_out.c:1497
 msgid "8bit "
 msgstr "8-bit "
 
-#: src/audio_out/audio_alsa_out.c:1507
+#: src/audio_out/audio_alsa_out.c:1502
 msgid "16bit "
 msgstr "16-bit "
 
-#: src/audio_out/audio_alsa_out.c:1511
+#: src/audio_out/audio_alsa_out.c:1506
 msgid "24bit "
 msgstr "24-bit"
 
-#: src/audio_out/audio_alsa_out.c:1515
+#: src/audio_out/audio_alsa_out.c:1510
 msgid "32bit "
 msgstr "32-bit"
 
-#: src/audio_out/audio_alsa_out.c:1526
+#: src/audio_out/audio_alsa_out.c:1521
 msgid "mono "
 msgstr "mono "
 
-#: src/audio_out/audio_alsa_out.c:1530
+#: src/audio_out/audio_alsa_out.c:1525
 msgid "stereo "
 msgstr "stereo "
 
-#: src/audio_out/audio_alsa_out.c:1535
+#: src/audio_out/audio_alsa_out.c:1530
 msgid "4-channel "
 msgstr "4-canali "
 
-#: src/audio_out/audio_alsa_out.c:1538
+#: src/audio_out/audio_alsa_out.c:1533
 msgid "(4-channel not enabled in xine config) "
 msgstr "(4-canali non abilitato nella configurazione di xine) "
 
-#: src/audio_out/audio_alsa_out.c:1543
+#: src/audio_out/audio_alsa_out.c:1538
 msgid "4.1-channel "
 msgstr "4.1-canali "
 
-#: src/audio_out/audio_alsa_out.c:1546
+#: src/audio_out/audio_alsa_out.c:1541
 msgid "(4.1-channel not enabled in xine config) "
 msgstr "(4.1-canali non abilitati nella configurazione di xine) "
 
-#: src/audio_out/audio_alsa_out.c:1551
+#: src/audio_out/audio_alsa_out.c:1546
 msgid "5-channel "
 msgstr "5-canali "
 
-#: src/audio_out/audio_alsa_out.c:1554
+#: src/audio_out/audio_alsa_out.c:1549
 msgid "(5-channel not enabled in xine config) "
 msgstr "(5-canali non abilitati nella configurazione di xine) "
 
-#: src/audio_out/audio_alsa_out.c:1559
+#: src/audio_out/audio_alsa_out.c:1554
 msgid "5.1-channel "
 msgstr "5.1-canali "
 
-#: src/audio_out/audio_alsa_out.c:1562
+#: src/audio_out/audio_alsa_out.c:1557
 msgid "(5.1-channel not enabled in xine config) "
 msgstr "(5.1-canali non abilitati nella configurazione di xine) "
 
-#: src/audio_out/audio_alsa_out.c:1585
+#: src/audio_out/audio_alsa_out.c:1580
 msgid "a/52 and DTS pass-through\n"
 msgstr "passaggio diretto a/52 e DTS\n"
 
-#: src/audio_out/audio_alsa_out.c:1588
+#: src/audio_out/audio_alsa_out.c:1583
 msgid "(a/52 and DTS pass-through not enabled in xine config)\n"
 msgstr ""
 "(passaggio diretto a/53 e DTS non abilitato nella configurazione di xine)\n"
 
-#: src/audio_out/audio_alsa_out.c:1595
+#: src/audio_out/audio_alsa_out.c:1590
 msgid "alsa mixer device"
 msgstr "dispositivo mixer di alsa"
 
-#: src/audio_out/audio_alsa_out.c:1596
+#: src/audio_out/audio_alsa_out.c:1591
 msgid ""
 "xine will use this alsa mixer device to change the volume.\n"
 "See the alsa documentation for information on alsa devices."
@@ -319,7 +319,7 @@ msgstr ""
 "volume.\n"
 "Si veda la documentazione ALSA per informazioni sui dispositivi."
 
-#: src/audio_out/audio_alsa_out.c:1670
+#: src/audio_out/audio_alsa_out.c:1665
 msgid "xine audio output plugin using alsa-compliant audio devices/drivers"
 msgstr ""
 "plugin output audio di xine che usa i dispositivi/driver audio compiacenti "

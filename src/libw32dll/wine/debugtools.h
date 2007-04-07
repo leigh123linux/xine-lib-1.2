@@ -80,11 +80,7 @@ static inline LPCSTR debugstr_w( LPCWSTR s ) { return debugstr_wn( s, 80 ); }
 #endif
 
 #if 0 /* dbg_printf already defined as a macro */
-#ifdef __GNUC__
-extern int dbg_printf(const char *format, ...) __attribute__((format (printf,1,2)));
-#else
-extern int dbg_printf(const char *format, ...);
-#endif
+extern int dbg_printf(const char *format, ...) XINE_FORMAT_PRINTF(1,2);
 #endif
 
 #define TRACE_(X) TRACE

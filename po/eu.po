@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib-1\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-04-04 23:12+0200\n"
+"POT-Creation-Date: 2007-04-06 15:39+0200\n"
 "PO-Revision-Date: 2005-02-17 14:29+0100\n"
 "Last-Translator: Piarres Beobide <pi@beobide.net>\n"
 "Language-Team: lubrezale <librezale@librezale.org>\n"
@@ -67,11 +67,11 @@ msgstr ""
 "audio_alsa_out: PCM onentzat apurturiko konfigurazioa: Ez dago konfigurazio "
 "erabilgarririk: %s\n"
 
-#: src/audio_out/audio_alsa_out.c:1294
+#: src/audio_out/audio_alsa_out.c:1289
 msgid "notify changes to the hardware mixer"
 msgstr "hardware nahasleari aldaketen berri eman"
 
-#: src/audio_out/audio_alsa_out.c:1295
+#: src/audio_out/audio_alsa_out.c:1290
 msgid ""
 "When the hardware mixer changes, your application will receive a "
 "notification so that it can update its graphical representation of the mixer "
@@ -80,16 +80,16 @@ msgstr ""
 "Hardware nahaslea aldatzerakoan, zure aplikazioak honen berri jasoko du eta "
 "nahaslearen irudi grafikoa denbora errealean eraldatuko du."
 
-#: src/audio_out/audio_alsa_out.c:1360
+#: src/audio_out/audio_alsa_out.c:1355
 #, c-format
 msgid "snd_lib_error_set_handler() failed: %d"
 msgstr "snd_lib_error_set_handler() hutsa: %d"
 
-#: src/audio_out/audio_alsa_out.c:1367
+#: src/audio_out/audio_alsa_out.c:1362
 msgid "sound card can do mmap"
 msgstr "soinu txartelak mmap egin dezake"
 
-#: src/audio_out/audio_alsa_out.c:1368
+#: src/audio_out/audio_alsa_out.c:1363
 msgid ""
 "Enable this, if your sound card and alsa driver support memory mapped IO.\n"
 "You can try enabling it and check, if everything works. If it does, this "
@@ -100,11 +100,11 @@ msgstr ""
 "Gaitu eta frogaru dezakezu beldurrik gabe, denak behar bezala funtzionatu "
 "ezkero portamoldea obetuko du."
 
-#: src/audio_out/audio_alsa_out.c:1377
+#: src/audio_out/audio_alsa_out.c:1372
 msgid "device used for mono output"
 msgstr "mono irteerarako erabiliko den gailua"
 
-#: src/audio_out/audio_alsa_out.c:1378
+#: src/audio_out/audio_alsa_out.c:1373
 msgid ""
 "xine will use this alsa device to output mono sound.\n"
 "See the alsa documentation for information on alsa devices."
@@ -113,11 +113,11 @@ msgstr ""
 "Irakurri alsa dokumentazioa alsa gailuei buruzko informazio gehiago behar "
 "izan ezkero."
 
-#: src/audio_out/audio_alsa_out.c:1386
+#: src/audio_out/audio_alsa_out.c:1381
 msgid "device used for stereo output"
 msgstr "Estereo irteerak erabiltzen duen gailua"
 
-#: src/audio_out/audio_alsa_out.c:1387
+#: src/audio_out/audio_alsa_out.c:1382
 msgid ""
 "xine will use this alsa device to output stereo sound.\n"
 "See the alsa documentation for information on alsa devices."
@@ -126,11 +126,11 @@ msgstr ""
 "Irakurri alsa dokumentazioa alsa gailuei buruzko informazio gehiago behar "
 "izan ezkero."
 
-#: src/audio_out/audio_alsa_out.c:1395
+#: src/audio_out/audio_alsa_out.c:1390
 msgid "device used for 4-channel output"
 msgstr "4 kanaletako irteerak erabiltzen duen gailua"
 
-#: src/audio_out/audio_alsa_out.c:1396
+#: src/audio_out/audio_alsa_out.c:1391
 msgid ""
 "xine will use this alsa device to output 4 channel (4.0) surround sound.\n"
 "See the alsa documentation for information on alsa devices."
@@ -139,11 +139,11 @@ msgstr ""
 "Irakurri alsa dokumentazioa alsa gailei buruzko informazio gehiago behar "
 "izan ezkero."
 
-#: src/audio_out/audio_alsa_out.c:1405 src/audio_out/audio_alsa_out.c:1415
+#: src/audio_out/audio_alsa_out.c:1400 src/audio_out/audio_alsa_out.c:1410
 msgid "device used for 5.1-channel output"
 msgstr "5.1 kanaletako irteerak erabiltzen duen gailua"
 
-#: src/audio_out/audio_alsa_out.c:1406
+#: src/audio_out/audio_alsa_out.c:1401
 msgid ""
 "xine will use this alsa device to output 5 channel plus LFE (5.1) surround "
 "sound.\n"
@@ -153,7 +153,7 @@ msgstr ""
 "Irakurri alsa dokumentazioa alsa gailei buruzko informazio gehiago behar "
 "izan ezkero."
 
-#: src/audio_out/audio_alsa_out.c:1416
+#: src/audio_out/audio_alsa_out.c:1411
 msgid ""
 "xine will use this alsa device to output undecoded digital surround sound. "
 "This can be used be external surround decoders.\n"
@@ -163,21 +163,21 @@ msgstr ""
 "hau kanpo ingurugiro dekodifikatzaileez erabil daiteke.\n"
 "Begiratu alsa dokumentazioa argibide gehiagorako."
 
-#: src/audio_out/audio_alsa_out.c:1436
+#: src/audio_out/audio_alsa_out.c:1431
 #, c-format
 msgid "snd_pcm_open() failed:%d:%s\n"
 msgstr "snd_pcm_open()-ek huts egin du:%d:%s\n"
 
-#: src/audio_out/audio_alsa_out.c:1438
+#: src/audio_out/audio_alsa_out.c:1433
 #, c-format
 msgid ">>> Check if another program already uses PCM <<<\n"
 msgstr ">>> Egiaztatu beste programa batek PCM darabilkien<<<\n"
 
-#: src/audio_out/audio_alsa_out.c:1469 src/audio_out/audio_oss_out.c:929
+#: src/audio_out/audio_alsa_out.c:1464 src/audio_out/audio_oss_out.c:929
 msgid "speaker arrangement"
 msgstr "bozgorailu ordenamendua"
 
-#: src/audio_out/audio_alsa_out.c:1470 src/audio_out/audio_oss_out.c:930
+#: src/audio_out/audio_alsa_out.c:1465 src/audio_out/audio_oss_out.c:930
 msgid ""
 "Select how your speakers are arranged, this determines which speakers xine "
 "uses for sound output. The individual values are:\n"
@@ -236,79 +236,79 @@ msgstr ""
 "xine. You need to connect a digital surround decoder capable of decoding the "
 "formats you want to play to your sound card's digital output."
 
-#: src/audio_out/audio_alsa_out.c:1499
+#: src/audio_out/audio_alsa_out.c:1494
 msgid "audio_alsa_out : supported modes are "
 msgstr "audio_alsa_out : Onartutako moduak: "
 
-#: src/audio_out/audio_alsa_out.c:1502
+#: src/audio_out/audio_alsa_out.c:1497
 msgid "8bit "
 msgstr "8bit "
 
-#: src/audio_out/audio_alsa_out.c:1507
+#: src/audio_out/audio_alsa_out.c:1502
 msgid "16bit "
 msgstr "16bit "
 
-#: src/audio_out/audio_alsa_out.c:1511
+#: src/audio_out/audio_alsa_out.c:1506
 msgid "24bit "
 msgstr "24bit "
 
-#: src/audio_out/audio_alsa_out.c:1515
+#: src/audio_out/audio_alsa_out.c:1510
 msgid "32bit "
 msgstr "32bit "
 
-#: src/audio_out/audio_alsa_out.c:1526
+#: src/audio_out/audio_alsa_out.c:1521
 msgid "mono "
 msgstr "mono "
 
-#: src/audio_out/audio_alsa_out.c:1530
+#: src/audio_out/audio_alsa_out.c:1525
 msgid "stereo "
 msgstr "estereo "
 
-#: src/audio_out/audio_alsa_out.c:1535
+#: src/audio_out/audio_alsa_out.c:1530
 msgid "4-channel "
 msgstr "4-kanal "
 
-#: src/audio_out/audio_alsa_out.c:1538
+#: src/audio_out/audio_alsa_out.c:1533
 msgid "(4-channel not enabled in xine config) "
 msgstr "(4-kanal ez dago gaiturik xine konfigruaketan)"
 
-#: src/audio_out/audio_alsa_out.c:1543
+#: src/audio_out/audio_alsa_out.c:1538
 msgid "4.1-channel "
 msgstr "4.1-kanal "
 
-#: src/audio_out/audio_alsa_out.c:1546
+#: src/audio_out/audio_alsa_out.c:1541
 msgid "(4.1-channel not enabled in xine config) "
 msgstr "(4.1-kanal ez dago gaiturik xine konfigruaketan)"
 
-#: src/audio_out/audio_alsa_out.c:1551
+#: src/audio_out/audio_alsa_out.c:1546
 msgid "5-channel "
 msgstr "5-kanal "
 
-#: src/audio_out/audio_alsa_out.c:1554
+#: src/audio_out/audio_alsa_out.c:1549
 msgid "(5-channel not enabled in xine config) "
 msgstr "(5-kanal ez dago gaiturik xine konfigruaketan)"
 
-#: src/audio_out/audio_alsa_out.c:1559
+#: src/audio_out/audio_alsa_out.c:1554
 msgid "5.1-channel "
 msgstr "5.1-kanal "
 
-#: src/audio_out/audio_alsa_out.c:1562
+#: src/audio_out/audio_alsa_out.c:1557
 msgid "(5.1-channel not enabled in xine config) "
 msgstr "(5.1-kanal ez dago gaiturik xine konfigruaketan)"
 
-#: src/audio_out/audio_alsa_out.c:1585
+#: src/audio_out/audio_alsa_out.c:1580
 msgid "a/52 and DTS pass-through\n"
 msgstr "a/52 eta DTS pass-through\n"
 
-#: src/audio_out/audio_alsa_out.c:1588
+#: src/audio_out/audio_alsa_out.c:1583
 msgid "(a/52 and DTS pass-through not enabled in xine config)\n"
 msgstr "(a/52 eta DTS pass-through ez daude gaiturik xine konfiguraketan)\n"
 
-#: src/audio_out/audio_alsa_out.c:1595
+#: src/audio_out/audio_alsa_out.c:1590
 msgid "alsa mixer device"
 msgstr "alsa nahasle gailua"
 
-#: src/audio_out/audio_alsa_out.c:1596
+#: src/audio_out/audio_alsa_out.c:1591
 msgid ""
 "xine will use this alsa mixer device to change the volume.\n"
 "See the alsa documentation for information on alsa devices."
@@ -316,7 +316,7 @@ msgstr ""
 "xinek alsa nahaslea erabiliko du bolumena aldatzeko.\n"
 "Begiratu alsa dokumentazioa alsa gailueri buruzko argibideentzat."
 
-#: src/audio_out/audio_alsa_out.c:1670
+#: src/audio_out/audio_alsa_out.c:1665
 msgid "xine audio output plugin using alsa-compliant audio devices/drivers"
 msgstr ""
 "xine audio irteera plugina alsa-konpilaturiko audio gailu/kontrolatzailea "

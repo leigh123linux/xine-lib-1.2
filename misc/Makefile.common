@@ -5,6 +5,9 @@ xineincludedir = $(includedir)/xine
 xineplugdir = $(XINE_PLUGINDIR)
 xineplug_ldflags = $(NOUNDEF) -avoid-version -module
 
+xinepostdir = $(XINE_PLUGINDIR)/post
+vidixdir = $(XINE_PLUGINDIR)/vidix
+
 $(XINE_LIB):
 	@cd $(top_srcdir)/src/xine-engine && $(MAKE)
 
@@ -15,14 +18,18 @@ install-data-hook:
 	  fi; \
 	fi; \
 	if test -x /usr/bin/chcon -a "`id -u`" -eq 0; then \
-	  list='$(lib_LTLIBRARIES)'; \
-	  if test -n "$$list" ; then \
+	  list='$(xineplug_LTLIBRARIES)'; \
 	    for p in $$list; do \
 	      p="`echo $$p | sed -e 's/\.la$$/\.so/g;s|^.*/||'`"; \
-	      echo " chcon system_u:object_r:texrel_shlib_t $(DESTDIR)$(libdir)/$$p"; \
-	      chcon system_u:object_r:texrel_shlib_t $(DESTDIR)$(libdir)/$$p || :; \
+	      echo " chcon system_u:object_r:texrel_shlib_t $(DESTDIR)$(xineplugdir)/$$p"; \
+	      chcon system_u:object_r:texrel_shlib_t $(DESTDIR)$(xineplugdir)/$$p || :; \
 	    done; \
-	  fi; \
+	  list='$(xinepost_LTLIBRARIES)'; \
+	    for p in $$list; do \
+	      p="`echo $$p | sed -e 's/\.la$$/\.so/g;s|^.*/||'`"; \
+	      echo " chcon system_u:object_r:texrel_shlib_t $(DESTDIR)$(xinepostdir)/$$p"; \
+	      chcon system_u:object_r:texrel_shlib_t $(DESTDIR)$(xinepostdir)/$$p || :; \
+	    done; \
 	fi
 
 pass1:
@@ -42,17 +49,20 @@ install-debug: debug
 	$(MAKE) $(AM_MAKEFLAGS) install-data-hook
 
 uninstall-hook:
-	@if echo '$(libdir)' | egrep ^'$(XINE_PLUGINDIR)' >/dev/null; then \
-	  list='$(lib_LTLIBRARIES)'; for p in $$list; do \
-	    p="`echo $$p | sed -e 's/\.la$$/\.so/g;s|^.*/||'`"; \
-	    echo " rm -f $(DESTDIR)$(libdir)/$$p"; \
-	    rm -f $(DESTDIR)$(libdir)/$$p; \
-	  done; \
-	fi
 	@list='$(xineplug_LTLIBRARIES)'; for p in $$list; do \
 	  p="`echo $$p | sed -e 's/\.la$$/\.so/g;s|^.*/||'`"; \
 	  echo " rm -f $(DESTDIR)$(xineplugdir)/$$p"; \
 	  rm -f $(DESTDIR)$(xineplugdir)/$$p; \
+	done;
+	@list='$(xinepost_LTLIBRARIES)'; for p in $$list; do \
+	  p="`echo $$p | sed -e 's/\.la$$/\.so/g;s|^.*/||'`"; \
+	  echo " rm -f $(DESTDIR)$(xinepostdir)/$$p"; \
+	  rm -f $(DESTDIR)$(xinepostdir)/$$p; \
+	done;
+	@list='$(vidix_LTLIBRARIES)'; for p in $$list; do \
+	  p="`echo $$p | sed -e 's/\.la$$/\.so/g;s|^.*/||'`"; \
+	  echo " rm -f $(DESTDIR)$(vidixdir)/$$p"; \
+	  rm -f $(DESTDIR)$(vidixdir)/$$p; \
 	done;
 
 mostlyclean-generic:
