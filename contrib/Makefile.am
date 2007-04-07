@@ -41,3 +41,12 @@ distclean-local:
 	-$(MAKE) -C ffmpeg distclean
 
 EXTRA_DIST = README.contrib ffmpeg-distfiles
+
+dist-hook:
+	while read entry; do		 \
+	  test -d $(srcdir)/$$entry &&	 \
+	    mkdir -p $(distdir)/$$entry; \
+	  test -f $(srcdir)/$$entry &&	 \
+	    cp -p $(srcdir)/$$entry $(distdir)/$$entry; \
+	done < $(srcdir)/ffmpeg-distfiles
+
