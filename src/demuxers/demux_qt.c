@@ -417,31 +417,31 @@ typedef struct {
 #if DEBUG_ATOM_LOAD
 #define debug_atom_load printf
 #else
-static inline void __attribute__((format (printf, 1, 2))) debug_atom_load(const char *format, ...) {}
+static inline void XINE_FORMAT_PRINTF(1, 2) debug_atom_load(const char *format, ...) {}
 #endif
 
 #if DEBUG_EDIT_LIST
 #define debug_edit_list printf
 #else
-static inline void __attribute__((format (printf, 1, 2))) debug_edit_list(const char *format, ...) {}
+static inline void XINE_FORMAT_PRINTF(1, 2) debug_edit_list(const char *format, ...) {}
 #endif
 
 #if DEBUG_FRAME_TABLE
 #define debug_frame_table printf
 #else
-static inline void __attribute__((format (printf, 1, 2))) debug_frame_table(const char *format, ...) {}
+static inline void XINE_FORMAT_PRINTF(1, 2) debug_frame_table(const char *format, ...) {}
 #endif
 
 #if DEBUG_VIDEO_DEMUX
 #define debug_video_demux printf
 #else
-static inline void __attribute__((format (printf, 1, 2))) debug_video_demux(const char *format, ...) {}
+static inline void XINE_FORMAT_PRINTF(1, 2) debug_video_demux(const char *format, ...) {}
 #endif
 
 #if DEBUG_AUDIO_DEMUX
 #define debug_audio_demux printf
 #else
-static inline void __attribute__((format (printf, 1, 2))) debug_audio_demux(const char *format, ...) {}
+static inline void XINE_FORMAT_PRINTF(1, 2) debug_audio_demux(const char *format, ...) {}
 #endif
 
 static inline void dump_moov_atom(unsigned char *moov_atom, int moov_atom_size) {

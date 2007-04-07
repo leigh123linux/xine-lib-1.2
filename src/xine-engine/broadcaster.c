@@ -137,10 +137,7 @@ static int sock_data_write(xine_t *xine, int socket, char *buf, int len) {
   return wlen;
 }
 
-static int
-#ifdef __GNUC__
-__attribute__((format (printf, 3, 4)))
-#endif
+static int XINE_FORMAT_PRINTF(3, 4)
 sock_string_write(xine_t *xine, int socket, char *msg, ...) {
   char     buf[_BUFSIZ];
   va_list  args;
@@ -182,10 +179,7 @@ static void broadcaster_data_write(broadcaster_t *this, char *buf, int len) {
   }
 }
 
-static void
-#ifdef __GNUC__
-__attribute__((format (printf, 2, 3)))
-#endif
+static void XINE_FORMAT_PRINTF(2, 3)
 broadcaster_string_write(broadcaster_t *this, char *msg, ...) {
   char     buf[_BUFSIZ];
   va_list  args;

@@ -12,6 +12,7 @@ for DLL to know too much about its environment.
 ************************************************************/
 
 #include "config.h"
+#include "attributes.h"
 
 #define QTX
 
@@ -183,7 +184,7 @@ static void longcount_stub(long long* z)
 
 int LOADER_DEBUG=1; // active only if compiled with -DDETAILED_OUT
 //#define DETAILED_OUT
-static inline void __attribute__((__format__(__printf__, 1, 2))) dbgprintf(char* fmt, ...)
+static inline void XINE_FORMAT_PRINTF(1, 2) dbgprintf(char* fmt, ...)
 {
 #ifdef DETAILED_OUT
     if(LOADER_DEBUG)
@@ -3976,7 +3977,7 @@ static void* exp__dllonexit()
     return NULL;
 }
 
-static int __attribute__((__format__(__printf__, 2, 3))) expwsprintfA(char* string, char* format, ...)
+static int XINE_FORMAT_PRINTF(2, 3) expwsprintfA(char* string, char* format, ...)
 {
     va_list va;
     int result;
@@ -3987,7 +3988,7 @@ static int __attribute__((__format__(__printf__, 2, 3))) expwsprintfA(char* stri
     return result;
 }
 
-static int __attribute__((__format__(__printf__, 2, 3))) expsprintf(char* str, const char* format, ...)
+static int XINE_FORMAT_PRINTF(2, 3) expsprintf(char* str, const char* format, ...)
 {
     va_list args;
     int r;
@@ -3997,7 +3998,7 @@ static int __attribute__((__format__(__printf__, 2, 3))) expsprintf(char* str, c
     va_end(args);
     return r;
 }
-static int __attribute__((__format__(__printf__, 2, 3))) expsscanf(const char* str, const char* format, ...)
+static int XINE_FORMAT_PRINTF(2, 3) expsscanf(const char* str, const char* format, ...)
 {
     va_list args;
     int r;
@@ -4013,7 +4014,7 @@ static void* expfopen(const char* path, const char* mode)
     //return fopen(path, mode);
     return fdopen(0, mode); // everything on screen
 }
-static int __attribute__((__format__(__printf__, 2, 3)))expfprintf(void* stream, const char* format, ...)
+static int XINE_FORMAT_PRINTF(2, 3)expfprintf(void* stream, const char* format, ...)
 {
     va_list args;
     int r = 0;
@@ -4026,7 +4027,7 @@ static int __attribute__((__format__(__printf__, 2, 3)))expfprintf(void* stream,
     return r;
 }
 
-static int __attribute__((__format__(__printf__, 1, 2))) expprintf(const char* format, ...)
+static int XINE_FORMAT_PRINTF(1, 2) expprintf(const char* format, ...)
 {
     va_list args;
     int r;
