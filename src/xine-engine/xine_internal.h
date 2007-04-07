@@ -184,9 +184,9 @@ struct xine_event_queue_s {
   pthread_cond_t             events_processed;
   xine_stream_t             *stream;
   pthread_t                 *listener_thread;
+  void                      *user_data;
   xine_event_listener_cb_t   callback;
   int                        callback_running;
-  void                      *user_data;
 };
 
 /*
