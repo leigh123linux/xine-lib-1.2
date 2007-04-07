@@ -1618,7 +1618,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 AC_MSG_RESULT($have_sunaudio)
 AM_CONDITIONAL(HAVE_SUNAUDIO, test "x$have_sunaudio" = "xyes")
 
-if "x$have_sunaudio" = "xyes"; then
+if test "x$have_sunaudio" = "xyes"; then
    dnl NetBSD and OpenBSD don't have this, but check for it
    dnl rather than assuming that it doesn't happen elsewhere.
    AC_CHECK_MEMBERS([audio_info_t.output_muted])
