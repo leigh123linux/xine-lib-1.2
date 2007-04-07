@@ -69,4 +69,16 @@
 # endif
 #endif
 
+/* Format attributes */
+#ifdef SUPPORT_ATTRIBUTE_FORMAT
+# define XINE_FORMAT_PRINTF(fmt,var) __attribute__((format(printf, fmt, var)))
+#else
+# define XINE_FORMAT_PRINTF(fmt,var)
+#endif
+#ifdef SUPPORT_ATTRIBUTE_FORMAT_ARG
+# define XINE_FORMAT_PRINTF_ARG(fmt) __attribute__((format_arg(fmt)))
+#else
+# define XINE_FORMAT_PRINTF_ARG(fmt)
+#endif
+
 #endif /* ATTRIBUTE_H_ */

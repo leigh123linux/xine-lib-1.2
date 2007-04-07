@@ -265,10 +265,7 @@ static long ao_alsa_get_volume_from_percent(int val, long min, long max) {
  * Error callback, we need to control this, 
  * error message should be printed only in DEBUG mode.
  */
-static void
-#ifdef __GNUC__
-	    __attribute__((format (printf, 5, 6)))
-#endif
+static void XINE_FORMAT_PRINTF(5, 6)
 	    error_callback(const char *file, int line, 
 			   const char *function, int err, const char *fmt, ...) {
 #ifdef DEBUG
