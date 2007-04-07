@@ -2570,6 +2570,7 @@ static int theora_decode_tables(AVCodecContext *avctx, GetBitContext *gb)
     return 0;
 }
 
+#if ENABLE_THEORA_DECODER
 static int theora_decode_init(AVCodecContext *avctx)
 {
     Vp3DecodeContext *s = avctx->priv_data;
@@ -2633,6 +2634,7 @@ static int theora_decode_init(AVCodecContext *avctx)
     vp3_decode_init(avctx);
     return 0;
 }
+#endif
 
 AVCodec vp3_decoder = {
     "vp3",
@@ -2647,6 +2649,7 @@ AVCodec vp3_decoder = {
     NULL
 };
 
+#if ENABLE_THEORA_DECODER
 AVCodec theora_decoder = {
     "theora",
     CODEC_TYPE_VIDEO,
@@ -2659,3 +2662,4 @@ AVCodec theora_decoder = {
     0,
     NULL
 };
+#endif
