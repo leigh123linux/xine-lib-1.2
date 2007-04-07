@@ -5,12 +5,16 @@ CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 VISIBILITY_FLAG = @VISIBILITY_FLAG@
 
+if HAVE_DXR3
+dxr3encoder = --enable-encoder=mpeg1video
+endif
+
 ffmpeg/config.mak: $(srcdir)/ffmpeg/configure Makefile
 	mkdir -p ffmpeg
 	cd ffmpeg; \
 	$(srcdir)/ffmpeg/configure \
 		--disable-shared --enable-static \
-		--disable-encoders \
+		--disable-encoders $(dxr3encoder) \
 		--disable-demuxers \
 		--disable-muxers \
 		--disable-strip \
