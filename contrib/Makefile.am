@@ -40,4 +40,4 @@ clean-local:
 distclean-local:
 	-$(MAKE) -C ffmpeg distclean
 
-EXTRA_DIST = README.contrib
+EXTRA_DIST = README.contrib ffmpeg-distfiles
