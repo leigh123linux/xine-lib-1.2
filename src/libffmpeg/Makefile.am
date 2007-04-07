@@ -47,11 +47,12 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/dxr3 $(X_CFLAGS) $(ff_cppflags) \
               $(ZLIB_CPPFLAGS)
 xineplug_decode_ff_la_SOURCES = ffmpeg_decoder.c ff_audio_decoder.c ff_video_decoder.c \
                                 ffmpeg_encoder.c ff_mpeg_parser.c ffmpeg_decoder.h \
-				ff_mpeg_parser.h
+				ff_mpeg_parser.h ffmpeg_config.h
 else
 AM_CPPFLAGS = $(ff_cppflags) $(ZLIB_CPPFLAGS)
 xineplug_decode_ff_la_SOURCES = ffmpeg_decoder.c ff_audio_decoder.c ff_video_decoder.c \
-                                ff_mpeg_parser.c ffmpeg_decoder.h ff_mpeg_parser.h
+                                ff_mpeg_parser.c ffmpeg_decoder.h ff_mpeg_parser.h \
+				ffmpeg_config.h
 endif
 
 xineplug_decode_ff_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
