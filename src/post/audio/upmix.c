@@ -57,7 +57,7 @@ typedef struct{
 } biquad_t;
 
 /* S-parameters for designing 4th order Butterworth filter */
-static biquad_t s_param[2] = {{{1.0,0.0,0.0},{1.0,0.765367,1.0}},
+static const biquad_t s_param[2] = {{{1.0,0.0,0.0},{1.0,0.765367,1.0}},
                          {{1.0,0.0,0.0},{1.0,1.847759,1.0}}};
 
 /* Data for specific instances of this filter */

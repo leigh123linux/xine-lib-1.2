@@ -32,7 +32,7 @@
 
 #include "vlc.h"
 
-static int non_linear_quantizer_scale [] = {
+static const int non_linear_quantizer_scale [] = {
      0,  1,  2,  3,  4,  5,   6,   7,
      8, 10, 12, 14, 16, 18,  20,  22,
     24, 28, 32, 36, 40, 44,  48,  52,

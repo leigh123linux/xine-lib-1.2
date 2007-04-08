@@ -96,7 +96,7 @@ static void remove_segv_handler(void){
 #endif /* 0 */
 
 
-static int plugin_iface_versions[] = {
+static const int plugin_iface_versions[] = {
   INPUT_PLUGIN_IFACE_VERSION,
   DEMUXER_PLUGIN_IFACE_VERSION,
   AUDIO_DECODER_IFACE_VERSION,

@@ -966,7 +966,7 @@ static int render_setup_fp_yuv (opengl_driver_t *this) {
  * List of render backends
  */
 /* name, display, image,  setup, needsrgb, defaction, fallback */
-opengl_render_t opengl_rb[] = {
+static const opengl_render_t opengl_rb[] = {
     {   "2D_Tex_Fragprog",  render_tex2d, render_image_fp_yuv, 
 	render_setup_fp_yuv, 0, RENDER_NONE, 1 },
     {   "2D_Tex",           render_tex2d, render_image_tex,
@@ -1007,7 +1007,7 @@ static void *render_run (opengl_driver_t *this) {
   opengl_frame_t  *frame;
   struct timeval   curtime;
   struct timespec  timeout;
-  opengl_render_t *render;
+  const opengl_render_t *render;
   
   lprintf ("* render thread created\n");
   while (1) {

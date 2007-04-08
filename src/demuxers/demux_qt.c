@@ -832,7 +832,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
   int color_index;
   int color_dec;
   int color_greyscale;
-  unsigned char *color_table;
+  const unsigned char *color_table;
 
   /* initialize trak structure */
   trak->edit_list_count = 0;

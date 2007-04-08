@@ -174,7 +174,7 @@ typedef struct {
 }sXYData;
 
 
-static sIIRCoefficients iir_cf[] = {
+static const sIIRCoefficients iir_cf[] = {
   /* 31 Hz*/
   { EQ_REAL(9.9691562441e-01), EQ_REAL(1.5421877947e-03), EQ_REAL(1.9968961468e+00) },
   /* 62 Hz*/

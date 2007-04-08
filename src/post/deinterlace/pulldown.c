@@ -85,19 +85,19 @@
  *
  */
 
-/* Offset                  1     2     3      4      5   */
-/* Field Pattern          [T B  T][B  T][B   T B]  [T B] */
-/* Action                 Copy  Save  Merge  Copy  Copy  */
-/*                              Bot   Top                */
-int tff_top_pattern[] = { 0,    1,    0,     0,    0     };
-int tff_bot_pattern[] = { 0,    0,    0,     1,    0     };
+/* Offset                               1     2     3      4      5   */
+/* Field Pattern                       [T B  T][B  T][B   T B]  [T B] */
+/* Action                              Copy  Save  Merge  Copy  Copy  */
+/*                                           Bot   Top                */
+static const int tff_top_pattern[] = { 0,    1,    0,     0,    0     };
+static const int tff_bot_pattern[] = { 0,    0,    0,     1,    0     };
 
-/* Offset                  1     2     3      4      5   */
-/* Field Pattern          [B T  B][T  B][T   B T]  [B T] */
-/* Action                 Copy  Save  Merge  Copy  Copy  */
-/*                              Top   Bot                */
-int bff_top_pattern[] = { 0,    0,    0,     1,    0     };
-int bff_bot_pattern[] = { 0,    1,    0,     0,    0     };
+/* Offset                               1     2     3      4      5   */
+/* Field Pattern                       [B T  B][T  B][T   B T]  [B T] */
+/* Action                              Copy  Save  Merge  Copy  Copy  */
+/*                                           Top   Bot                */
+static const int bff_top_pattern[] = { 0,    0,    0,     1,    0     };
+static const int bff_bot_pattern[] = { 0,    1,    0,     0,    0     };
 
 /* Timestamp mangling                                            */
 /* From the DVD :         0  +  3003+ 6006 + 9009+ 12012 = 15015 */
