@@ -148,7 +148,7 @@
 #define VEC_S16(a,b,c,d,e,f,g,h) (vector_s16_t) {a, b, c, d, e, f, g, h}
 #endif
 
-static const vector_s16_t constants[5] = {
+static vector_s16_t constants[5] = {
     VEC_S16(23170, 13573, 6518, 21895, -23170, -21895, 32, 31),
     VEC_S16(16384, 22725, 21407, 19266, 16384, 19266, 21407, 22725),
     VEC_S16(22725, 31521, 29692, 26722, 22725, 26722, 29692, 31521),
