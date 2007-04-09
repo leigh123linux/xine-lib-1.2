@@ -25,7 +25,9 @@
  
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#include "ffmpeg_config.h"
+# ifndef HAVE_FFMPEG
+#  include "ffmpeg_config.h"
+# endif
 #endif
 
 #include <stdlib.h>

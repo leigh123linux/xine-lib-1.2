@@ -4,11 +4,6 @@ if HAVE_FFMPEG
 AM_CFLAGS = $(FFMPEG_CFLAGS) $(FFMPEG_POSTPROC_CFLAGS)
 link_ffmpeg = $(FFMPEG_LIBS) $(FFMPEG_POSTPROC_LIBS)
 
-# When using external FFmpeg, consider everything present, as it is
-# outside xine's scope to handle it
-ffmpeg_config.h:
-	echo "#define EXTERNAL_FFMPEG 1" > ffmpeg_config.h
-
 else
 ff_cppflags = -I$(top_srcdir)/contrib/ffmpeg/libavutil \
 	-I$(top_srcdir)/contrib/ffmpeg/libavcodec \
