@@ -1,4 +1,4 @@
-xine-lib (1.1.5) (Unreleased)
+xine-lib (1.1.5)
   * Security fixes:
     - Fix heap overflow in DMO loader. (CVE-2007-1246) [bug #1676925]
       Thanks to Kees Cook for reporting.
