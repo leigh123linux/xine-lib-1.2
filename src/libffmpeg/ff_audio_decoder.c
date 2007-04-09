@@ -447,105 +447,105 @@ void *init_audio_plugin (xine_t *xine, void *data) {
 }
 
 static uint32_t supported_audio_types[] = { 
-  #ifdef CONFIG_WMAV1_DECODER
+#if defined(HAVE_FFMPEG) || CONFIG_WMAV1_DECODER
   BUF_AUDIO_WMAV1,
-  #endif
-  #ifdef CONFIG_WMAV2_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_WMAV2_DECODER
   BUF_AUDIO_WMAV2,
-  #endif
-  #ifdef CONFIG_RA_144_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_RA_144_DECODER
   BUF_AUDIO_14_4,
-  #endif
-  #ifdef CONFIG_RA_288_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_RA_288_DECODER
   BUF_AUDIO_28_8,
-  #endif
-  #ifdef CONFIG_MP3_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_MP3_DECODER
   BUF_AUDIO_MPEG,
-  #endif
-  #ifdef CONFIG_ADPCM_MS_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_MS_DECODER
   BUF_AUDIO_MSADPCM,
-  #endif
-  #ifdef CONFIG_ADPCM_IMA_QT_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_IMA_QT_DECODER
   BUF_AUDIO_QTIMAADPCM,
-  #endif
-  #ifdef CONFIG_ADPCM_IMA_WAV_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_IMA_WAV_DECODER
   BUF_AUDIO_MSIMAADPCM,
-  #endif
-  #ifdef CONFIG_ADPCM_IMA_DK3_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_IMA_DK3_DECODER
   BUF_AUDIO_DK3ADPCM,
-  #endif
-  #ifdef CONFIG_ADPCM_IMA_DK4_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_IMA_DK4_DECODER
   BUF_AUDIO_DK4ADPCM,
-  #endif
-  #ifdef CONFIG_ADPCM_IMA_WS_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_IMA_WS_DECODER
   BUF_AUDIO_VQA_IMA,
-  #endif
-  #ifdef CONFIG_ADPCM_IMA_SMJPEG_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_IMA_SMJPEG_DECODER
   BUF_AUDIO_SMJPEG_IMA,
-  #endif
-  #ifdef CONFIG_ADPCM_XA_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_XA_DECODER
   BUF_AUDIO_XA_ADPCM,
-  #endif
-  #ifdef CONFIG_ADPCM_4XM_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_4XM_DECODER
   BUF_AUDIO_4X_ADPCM,
-  #endif
-  #ifdef CONFIG_ADPCM_EA_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_EA_DECODER
   BUF_AUDIO_EA_ADPCM,
-  #endif
-  #ifdef CONFIG_PCM_MULAW_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_PCM_MULAW_DECODER
   BUF_AUDIO_MULAW,
-  #endif
-  #ifdef CONFIG_PCM_ALAW_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_PCM_ALAW_DECODER
   BUF_AUDIO_ALAW,
-  #endif
-  #ifdef CONFIG_ROQ_DPCM_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ROQ_DPCM_DECODER
   BUF_AUDIO_ROQ,
-  #endif
-  #ifdef CONFIG_INTERPLAY_DPCM_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_INTERPLAY_DPCM_DECODER
   BUF_AUDIO_INTERPLAY,
-  #endif
-  #ifdef CONFIG_MACE3_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_MACE3_DECODER
   BUF_AUDIO_MAC3,
-  #endif
-  #ifdef CONFIG_MACE6_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_MACE6_DECODER
   BUF_AUDIO_MAC6,
-  #endif
-  #ifdef CONFIG_XAN_DPCM_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_XAN_DPCM_DECODER
   BUF_AUDIO_XAN_DPCM,
-  #endif
-  #ifdef CONFIG_VMDAUDIO_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_VMDAUDIO_DECODER
   BUF_AUDIO_VMD,
-  #endif
-  #ifdef CONFIG_FLAC_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_FLAC_DECODER
   BUF_AUDIO_FLAC,
-  #endif
-  #ifdef CONFIG_SHORTEN_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_SHORTEN_DECODER
   BUF_AUDIO_SHORTEN,
-  #endif
-  #ifdef CONFIG_ALAC_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ALAC_DECODER
   BUF_AUDIO_ALAC,
-  #endif
-  #ifdef CONFIG_QDM2_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_QDM2_DECODER
   BUF_AUDIO_QDESIGN2,
-  #endif
-  #ifdef CONFIG_COOK_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_COOK_DECODER
   BUF_AUDIO_COOK,
-  #endif
-  #ifdef CONFIG_TRUESPEECH_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_TRUESPEECH_DECODER
   BUF_AUDIO_TRUESPEECH,
-  #endif
-  #ifdef CONFIG_TTA_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_TTA_DECODER
   BUF_AUDIO_TTA,
-  #endif
-  #ifdef CONFIG_SMACKAUDIO_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_SMACKAUDIO_DECODER
   BUF_AUDIO_SMACKER,
-  #endif
-  #ifdef CONFIG_ADPCM_SWF_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_SWF_DECODER
   BUF_AUDIO_FLVADPCM,
-  #endif
-  #ifdef CONFIG_WAVPACK_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_WAVPACK_DECODER
   BUF_AUDIO_WAVPACK,
-  #endif
+#endif
   
   0
 };

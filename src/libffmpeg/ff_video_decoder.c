@@ -1523,223 +1523,223 @@ void *init_video_plugin (xine_t *xine, void *data) {
 }
 
 static uint32_t supported_video_types[] = { 
-  #ifdef CONFIG_MSMPEG4V1_DECODER
+#if defined(HAVE_FFMPEG) || CONFIG_MSMPEG4V1_DECODER
   BUF_VIDEO_MSMPEG4_V1,
-  #endif
-  #ifdef CONFIG_MSMPEG4V2_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_MSMPEG4V2_DECODER
   BUF_VIDEO_MSMPEG4_V2,
-  #endif
-  #ifdef CONFIG_MSMPEG4V3_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_MSMPEG4V3_DECODER
   BUF_VIDEO_MSMPEG4_V3,
-  #endif
-  #ifdef CONFIG_WMV1_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_WMV1_DECODER
   BUF_VIDEO_WMV7,
-  #endif
-  #ifdef CONFIG_WMV2_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_WMV2_DECODER
   BUF_VIDEO_WMV8,
-  #endif
-  #ifdef CONFIG_WMV3_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_WMV3_DECODER
   BUF_VIDEO_WMV9,
-  #endif
-  #ifdef CONFIG_MPEG4_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_MPEG4_DECODER
   BUF_VIDEO_MPEG4,
-  #endif
-  #ifdef CONFIG_MPEG4_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_MPEG4_DECODER
   BUF_VIDEO_XVID,
-  #endif
-  #ifdef CONFIG_MPEG4_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_MPEG4_DECODER
   BUF_VIDEO_DIVX5,
-  #endif
-  #ifdef CONFIG_MPEG4_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_MPEG4_DECODER
   BUF_VIDEO_3IVX,
-  #endif
-  #ifdef CONFIG_MJPEG_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_MJPEG_DECODER
   BUF_VIDEO_JPEG,
-  #endif
-  #ifdef CONFIG_MJPEG_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_MJPEG_DECODER
   BUF_VIDEO_MJPEG,
-  #endif
-  #ifdef CONFIG_MJPEGB_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_MJPEGB_DECODER
   BUF_VIDEO_MJPEG_B,
-  #endif
-  #ifdef CONFIG_H263I_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_H263I_DECODER
   BUF_VIDEO_I263,
-  #endif
-  #ifdef CONFIG_H263_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_H263_DECODER
   BUF_VIDEO_H263,
-  #endif
-  #ifdef CONFIG_RV10_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_RV10_DECODER
   BUF_VIDEO_RV10,
-  #endif
-  #ifdef CONFIG_RV20_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_RV20_DECODER
   BUF_VIDEO_RV20,
-  #endif
-  #ifdef CONFIG_INDEO3_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_INDEO3_DECODER
   BUF_VIDEO_IV31,
-  #endif
-  #ifdef CONFIG_INDEO3_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_INDEO3_DECODER
   BUF_VIDEO_IV32,
-  #endif
-  #ifdef CONFIG_SVQ1_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_SVQ1_DECODER
   BUF_VIDEO_SORENSON_V1,
-  #endif
-  #ifdef CONFIG_SVQ3_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_SVQ3_DECODER
   BUF_VIDEO_SORENSON_V3,
-  #endif
-  #ifdef CONFIG_DVVIDEO_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_DVVIDEO_DECODER
   BUF_VIDEO_DV,
-  #endif
-  #ifdef CONFIG_HUFFYUV_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_HUFFYUV_DECODER
   BUF_VIDEO_HUFFYUV,
-  #endif
-  #ifdef CONFIG_VP3_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_VP3_DECODER
   BUF_VIDEO_VP31,
-  #endif
-  #ifdef CONFIG_VP5_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_VP5_DECODER
   BUF_VIDEO_VP5,
-  #endif
-  #ifdef CONFIG_VP6_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_VP6_DECODER
   BUF_VIDEO_VP6,
   BUF_VIDEO_VP6F,
-  #endif
-  #ifdef CONFIG_4XM_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_4XM_DECODER
   BUF_VIDEO_4XM,
-  #endif
-  #ifdef CONFIG_CINEPAK_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_CINEPAK_DECODER
   BUF_VIDEO_CINEPAK,
-  #endif
-  #ifdef CONFIG_MSVIDEO1_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_MSVIDEO1_DECODER
   BUF_VIDEO_MSVC,
-  #endif
-  #ifdef CONFIG_MSRLE_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_MSRLE_DECODER
   BUF_VIDEO_MSRLE,
-  #endif
-  #ifdef CONFIG_RPZA_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_RPZA_DECODER
   BUF_VIDEO_RPZA,
-  #endif
-  #ifdef CONFIG_CYUV_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_CYUV_DECODER
   BUF_VIDEO_CYUV,
-  #endif
-  #ifdef CONFIG_ROQ_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ROQ_DECODER
   BUF_VIDEO_ROQ,
-  #endif
-  #ifdef CONFIG_IDCIN_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_IDCIN_DECODER
   BUF_VIDEO_IDCIN,
-  #endif
-  #ifdef CONFIG_XAN_WC3_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_XAN_WC3_DECODER
   BUF_VIDEO_WC3,
-  #endif
-  #ifdef CONFIG_WS_VQA_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_WS_VQA_DECODER
   BUF_VIDEO_VQA,
-  #endif
-  #ifdef CONFIG_INTERPLAY_VIDEO_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_INTERPLAY_VIDEO_DECODER
   BUF_VIDEO_INTERPLAY,
-  #endif
-  #ifdef CONFIG_FLIC_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_FLIC_DECODER
   BUF_VIDEO_FLI,
-  #endif
-  #ifdef CONFIG_8BPS_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_8BPS_DECODER
   BUF_VIDEO_8BPS,
-  #endif
-  #ifdef CONFIG_SMC_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_SMC_DECODER
   BUF_VIDEO_SMC,
-  #endif
-  #ifdef CONFIG_TRUEMOTION1_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_TRUEMOTION1_DECODER
   BUF_VIDEO_DUCKTM1,
-  #endif
-  #ifdef CONFIG_TRUEMOTION2_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_TRUEMOTION2_DECODER
   BUF_VIDEO_DUCKTM2,
-  #endif
-  #ifdef CONFIG_VMDVIDEO_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_VMDVIDEO_DECODER
   BUF_VIDEO_VMD,
-  #endif
-  #ifdef CONFIG_ZLIB_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ZLIB_DECODER
   BUF_VIDEO_ZLIB,
-  #endif
-  #ifdef CONFIG_MSZH_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_MSZH_DECODER
   BUF_VIDEO_MSZH,
-  #endif
-  #ifdef CONFIG_ASV1_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ASV1_DECODER
   BUF_VIDEO_ASV1,
-  #endif
-  #ifdef CONFIG_ASV2_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ASV2_DECODER
   BUF_VIDEO_ASV2,
-  #endif
-  #ifdef CONFIG_VCR1_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_VCR1_DECODER
   BUF_VIDEO_ATIVCR1,
-  #endif
-  #ifdef CONFIG_FLV_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_FLV_DECODER
   BUF_VIDEO_FLV1,
-  #endif
-  #ifdef CONFIG_QTRLE_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_QTRLE_DECODER
   BUF_VIDEO_QTRLE,
-  #endif
-  #ifdef CONFIG_H264_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_H264_DECODER
   BUF_VIDEO_H264,
-  #endif
-  #ifdef CONFIG_H261_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_H261_DECODER
   BUF_VIDEO_H261,
-  #endif
-  #ifdef CONFIG_AASC_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_AASC_DECODER
   BUF_VIDEO_AASC,
-  #endif
-  #ifdef CONFIG_LOCO_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_LOCO_DECODER
   BUF_VIDEO_LOCO,
-  #endif
-  #ifdef CONFIG_QDRAW_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_QDRAW_DECODER
   BUF_VIDEO_QDRW,
-  #endif
-  #ifdef CONFIG_QPEG_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_QPEG_DECODER
   BUF_VIDEO_QPEG,
-  #endif
-  #ifdef CONFIG_TSCC_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_TSCC_DECODER
   BUF_VIDEO_TSCC,
-  #endif
-  #ifdef CONFIG_ULTI_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ULTI_DECODER
   BUF_VIDEO_ULTI,
-  #endif
-  #ifdef CONFIG_WNV1_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_WNV1_DECODER
   BUF_VIDEO_WNV1,
-  #endif
-  #ifdef CONFIG_VIXL_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_VIXL_DECODER
   BUF_VIDEO_XL,
-  #endif
-  #ifdef CONFIG_INDEO2_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_INDEO2_DECODER
   BUF_VIDEO_RT21,
-  #endif
-  #ifdef CONFIG_FRAPS_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_FRAPS_DECODER
   BUF_VIDEO_FPS1,
-  #endif
-  #ifdef CONFIG_MPEG1VIDEO_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_MPEG1VIDEO_DECODER
   BUF_VIDEO_MPEG,
-  #endif
-  #ifdef CONFIG_CSCD_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_CSCD_DECODER
   BUF_VIDEO_CSCD,
-  #endif
-  #ifdef CONFIG_AVS_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_AVS_DECODER
   BUF_VIDEO_AVS,
-  #endif
-  #ifdef CONFIG_MMVIDEO_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_MMVIDEO_DECODER
   BUF_VIDEO_ALGMM,
-  #endif
-  #ifdef CONFIG_ZMBV_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_ZMBV_DECODER
   BUF_VIDEO_ZMBV,
-  #endif
-  #ifdef CONFIG_SMACKVIDEO_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_SMACKVIDEO_DECODER
   BUF_VIDEO_SMACKER,
-  #endif
-  #ifdef CONFIG_NUV_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_NUV_DECODER
   BUF_VIDEO_NUV,
-  #endif
-  #ifdef CONFIG_KMVC_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_KMVC_DECODER
   BUF_VIDEO_KMVC,
-  #endif
-  #ifdef CONFIG_FLASHSV_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_FLASHSV_DECODER
   BUF_VIDEO_FLASHSV,
-  #endif
-  #ifdef CONFIG_CAVS_DECODER
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_CAVS_DECODER
   BUF_VIDEO_CAVS,
-  #endif
+#endif
 
   0 
 };
