@@ -1,10 +1,13 @@
-xine-lib-nopadding branch
+xine-lib (1.1.90) (Unreleased)
   * Reorder and modify public structures to reduce the holes caused by padding
     especially on 64-bit architectures.
   * Remove the buttons array from video_overlay, as the feature linked to that
     was never implemented. This change reduces by 10MB the memory usage of
     xine-lib during playback (1/3 of the memory used while playing an mp3).
-	
+  * Use FFmpeg's own buildsystem, rather than wrapping automake around its
+    sources; this allows to enable/disable FFmpeg features easily, and allow
+    to properly support --disable-ffmpeg-(uncommon|popular)-codecs.
+
 xine-lib (1.1.5) (Unreleased)
   * Security fixes:
     - Fix heap overflow in DMO loader. (CVE-2007-1246) [bug #1676925]
