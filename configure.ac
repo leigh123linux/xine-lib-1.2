@@ -2538,6 +2538,7 @@ doc/man/Makefile
 doc/man/en/Makefile
 doc/hackersguide/Makefile
 doc/faq/Makefile
+doc/Doxyfile
 contrib/Makefile
 include/Makefile
 include/xine.h
