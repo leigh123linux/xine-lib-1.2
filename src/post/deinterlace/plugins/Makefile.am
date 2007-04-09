@@ -30,7 +30,7 @@ EXTRA_DIST = greedy2frame_template.c greedyh.asm \
 
 # libpostproc is here so we can use their nice mangle.h
 AM_CFLAGS = -I$(top_srcdir)/src/post/deinterlace \
-	-I$(top_srcdir)/src/libffmpeg/libavcodec/libpostproc
+	-I$(top_srcdir)/contrib/ffmpeg/libpostproc
 
 noinst_LTLIBRARIES = libdeinterlaceplugins.la
 

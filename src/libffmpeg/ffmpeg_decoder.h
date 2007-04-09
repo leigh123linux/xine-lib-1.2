@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: xine_decoder.h,v 1.7 2006/08/02 07:15:27 tmmm Exp $
+ * $Id: xine_decoder.h,v 1.7.2.1 2006/12/02 01:20:07 dgp85 Exp $
  *
  */
  
@@ -28,11 +28,7 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_FFMPEG
-#  include <avcodec.h>
-#else
-#  include "libavcodec/avcodec.h"
-#endif
+#include <avcodec.h>
 
 typedef struct ff_codec_s {
   uint32_t          type;

@@ -363,69 +363,11 @@ AM_CONDITIONAL(HAVE_FFMPEG, test "x$with_external_ffmpeg" = "xyes")
 
 AC_ARG_ENABLE([ffmpeg_uncommon_codecs],
 	AS_HELP_STRING([--disable-ffmpeg-uncommon-codecs], [don't build uncommon ffmpeg codecs]))
-
 AC_ARG_ENABLE([ffmpeg_popular_codecs],
 	AS_HELP_STRING([--disable-ffmpeg-popular-codecs], [don't build popular ffmpeg codecs]))
 
-AS_MKDIR_P(src/libffmpeg)
-ffmpeg_config_h=src/libffmpeg/ffmpeg_config.h
-echo "/* Automatically generated */" > $ffmpeg_config_h
-
-dnl uncommon ffmpeg codecs
-ffmpeg_uncommon_codecs="AASC ASV1 ASV2 AVS CSCD CYUV DVVIDEO EIGHTBPS FLIC FLV FOURXM FRAPS HUFFYUV IDCIN INTERPLAY_VIDEO KMVC LOCO MMVIDEO NUV QDRAW QPEG ROQ RPZA SMACKER SMC SNOW TRUEMOTION1 TRUEMOTION2 TSCC ULTI VCR1 VMDVIDEO WNV1 XAN_WC3 XL ZMBV ALAC AMR_NB AMR_WB LIBGSM MACE3 MACE6 SHORTEN SMACKAUD TRUESPEECH TTA VMDAUDIO PCM_ALAW PCM_MULAW PCM_S8 PCM_S16BE PCM_S16LE PCM_S24BE PCM_S24DAUD PCM_S24LE PCM_S32BE PCM_S32LE PCM_U8 PCM_U16BE PCM_U16LE PCM_U24BE PCM_U24LE PCM_U32BE PCM_U32LE INTERPLAY_DPCM ROQ_DPCM SOL_DPCM VQA XAN_DPCM ADPCM_4XM ADPCM_CT ADPCM_EA ADPCM_IMA_DK3 ADPCM_IMA_DK4 ADPCM_IMA_QT ADPCM_IMA_SMJPEG ADPCM_IMA_WAV ADPCM_IMA_WS ADPCM_MS ADPCM_SBPRO_2 ADPCM_SBPRO_3 ADPCM_SBPRO_4 ADPCM_XA ADPCM_YAMAHA"
-for ucname in $ffmpeg_uncommon_codecs; do
-  config_name="CONFIG_${ucname}_DECODER"
-  enabled_name="ENABLE_${ucname}_DECODER"
-  
-  if test "x$enable_ffmpeg_uncommon_codecs" != xno; then
-    echo "#define $config_name 1" >> $ffmpeg_config_h
-    echo "#define $enabled_name 1" >> $ffmpeg_config_h
-  else
-    echo "#define $enabled_name 0" >> $ffmpeg_config_h
-  fi
-done
-
-dnl popular ffmpeg codecs
-ffmpeg_popular_codecs="CINEPAK FLASHSV H261 H263 H263I H264 INDEO2 INDEO3 MJPEG MJPEGB MPEG1VIDEO MPEG2VIDEO MPEG4 MPEGVIDEO MSMPEG4V1 MSMPEG4V2 MSMPEG4V3 MSRLE MSVIDEO1 QTRLE RV10 RV20 SVQ1 SVQ3 VC1 VP3 VP5 VP6 VP6F WMV1 WMV2 WMV3 COOK DTS FLAC MP2 MP3 QDM2 RA_144 RA_288 WAVPACK WMAV1 WMAV2 ADPCM_SWF"
-
-for ucname in $ffmpeg_popular_codecs; do
-  config_name="CONFIG_${ucname}_DECODER"
-  enabled_name="ENABLE_${ucname}_DECODER"
-  
-  if test "x$enable_ffmpeg_popular_codecs" != xno; then
-    echo "#define $config_name 1" >> $ffmpeg_config_h
-    echo "#define $enabled_name 1" >> $ffmpeg_config_h
-  else
-    echo "#define $enabled_name 0" >> $ffmpeg_config_h
-  fi
-done
-
-dnl disabled ffmpeg codecs
-ffmpeg_disabled_codecs="BMP CAVS CLJR DSICINVIDEO FFV1 FFVHUFF GIF MDEC MPEG_XVMC MSZH PNG RAWVIDEO SP5X TARGA TIERTEXSEQVIDEO TIFF VMNC ZLIB DSICINAUDIO IMC MP3ADU MP3ON4 MPC7 SONIC WS_SND1 ADPCM_ADX ADPCM_G726 DVBSUB DVDSUB THEORA AAC MPEG4AAC AC3 VORBIS"
-for ucname in $ffmpeg_disabled_codecs; do
-  config_name="CONFIG_${ucname}_DECODER"
-  enabled_name="ENABLE_${ucname}_DECODER"
-  
-  echo "#define $enabled_name 0" >> $ffmpeg_config_h
-done
-
-dnl disabled ffmpeg encoders
-ffmpeg_extra_encoders="H263P JPEGLS LJPEG PAM PBM PGM PGMYUV PPM SONIC_LS"
-for ucname in $ffmpeg_uncommon_codecs $ffmpeg_popular_codecs $ffmpeg_disabled_codecs $ffmpeg_extra_encoders; do
-  config_name="CONFIG_${ucname}_ENCODER"
-  enabled_name="ENABLE_${ucname}_ENCODER"
-  
-  echo "#define $enabled_name 0" >> $ffmpeg_config_h
-done
-
-dnl disabled parsers
-ffmpeg_parsers="AAC AC3 CAVSVIDEO DVBSUB DVDSUB H261 H263 H264 MJPEG MPEG4VIDEO MPEGAUDIO MPEGVIDEO PNM"
-for ucname in $ffmpeg_parsers; do
-  config_name="CONFIG_${ucname}_PARSER"
-  enabled_name="ENABLE_${ucname}_PARSER"
-  
-  echo "#define $enabled_name 0" >> $ffmpeg_config_h
-done
+AM_CONDITIONAL([FFMPEG_DISABLE_UNCOMMON_CODECS], [test "x$enable_ffmpeg_uncommon_codecs" = "xno"])
+AM_CONDITIONAL([FFMPEG_DISABLE_POPULAR_CODECS], [test "x$enable_ffmpeg_popular_codecs" = "xno"])
 
 LIBMPEG2_CFLAGS=""
 
@@ -2596,6 +2538,7 @@ doc/man/Makefile
 doc/man/en/Makefile
 doc/hackersguide/Makefile
 doc/faq/Makefile
+contrib/Makefile
 include/Makefile
 include/xine.h
 lib/Makefile
@@ -2631,15 +2574,6 @@ src/libdts/Makefile
 src/libfaad/Makefile
 src/libfaad/codebook/Makefile
 src/libffmpeg/Makefile
-src/libffmpeg/libavcodec/Makefile
-src/libffmpeg/libavcodec/armv4l/Makefile
-src/libffmpeg/libavcodec/i386/Makefile
-src/libffmpeg/libavcodec/mlib/Makefile
-src/libffmpeg/libavcodec/alpha/Makefile
-src/libffmpeg/libavcodec/ppc/Makefile
-src/libffmpeg/libavcodec/sparc/Makefile
-src/libffmpeg/libavcodec/libpostproc/Makefile
-src/libffmpeg/libavutil/Makefile
 src/libmad/Makefile
 src/libmpeg2/Makefile
 src/libmusepack/Makefile
