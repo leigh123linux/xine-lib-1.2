@@ -604,10 +604,11 @@ struct fifo_buffer_s
  * allocate and initialize new (empty) fifo buffer,
  * init buffer pool for it:
  * allocate num_buffers of buf_size bytes each
+ * these are internal functions, not to be exported
  */
 
-fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) XINE_PROTECTED;
-fifo_buffer_t *_x_dummy_fifo_buffer_new (int num_buffers, uint32_t buf_size) XINE_PROTECTED;
+fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size);
+fifo_buffer_t *_x_dummy_fifo_buffer_new (int num_buffers, uint32_t buf_size);
 
 
 /* return BUF_VIDEO_xxx given the fourcc
