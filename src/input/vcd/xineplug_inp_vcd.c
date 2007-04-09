@@ -88,7 +88,7 @@
    Convert an autoplay enumeration into an vcdinfo itemtype enumeration. 
    See definitions in vcdplayer.h and vcdinfo.h to get the below correct.
 */
-vcdinfo_item_enum_t autoplay2itemtype[]={
+static const vcdinfo_item_enum_t autoplay2itemtype[]={
   VCDINFO_ITEM_TYPE_TRACK,   /* VCDPLAYER_AUTOPLAY_TRACK */
   VCDINFO_ITEM_TYPE_ENTRY,   /* VCDPLAYER_AUTOPLAY_ENTRY */
   VCDINFO_ITEM_TYPE_SEGMENT, /* VCDPLAYER_AUTOPLAY_SEGMENT */

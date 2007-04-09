@@ -54,7 +54,7 @@ static void dispose_ximage (xxmc_driver_t *this, XShmSegmentInfo *shminfo,
  * is more efficient than VLD.
  */
 
-static unsigned accel_priority[] = {
+static const unsigned int accel_priority[] = {
 #ifdef HAVE_VLDXVMC
 				    XINE_XVMC_ACCEL_VLD,
 #endif

@@ -72,7 +72,7 @@ enum { WHITE, GREEN, BLUE, CYAN, RED, YELLOW, MAGENTA, BLACK };
 
 
 /* color mapping to OSD text color indices */
-static int text_colormap[NUM_FG_COL] = {
+static const int text_colormap[NUM_FG_COL] = {
   OSD_TEXT1, OSD_TEXT2, OSD_TEXT3, OSD_TEXT4, OSD_TEXT5, OSD_TEXT6, OSD_TEXT7
 };
 
@@ -91,7 +91,7 @@ typedef struct colorinfo_s {
 } colorinfo_t;
 
 
-static colorinfo_t cc_text_trans[NUM_FG_COL] = {
+static const colorinfo_t cc_text_trans[NUM_FG_COL] = {
   /* white, black border, translucid */
   {
     CLUT_Y_CR_CB_INIT(0x80, 0x80, 0x80),
@@ -142,7 +142,7 @@ static colorinfo_t cc_text_trans[NUM_FG_COL] = {
   }
 };
 
-static colorinfo_t cc_text_solid[NUM_FG_COL] = {
+static const colorinfo_t cc_text_solid[NUM_FG_COL] = {
   /* white, black border, solid */
   {
     CLUT_Y_CR_CB_INIT(0x00, 0x80, 0x80),
@@ -194,21 +194,21 @@ static colorinfo_t cc_text_solid[NUM_FG_COL] = {
 };
 
 
-static uint8_t cc_text_trans_alpha[TEXT_PALETTE_SIZE] = {
+static const uint8_t cc_text_trans_alpha[TEXT_PALETTE_SIZE] = {
   0, 8, 9, 10, 11, 12, 15, 15, 15, 15, 15
 };
 
-static uint8_t cc_text_solid_alpha[TEXT_PALETTE_SIZE] = {
+static const uint8_t cc_text_solid_alpha[TEXT_PALETTE_SIZE] = {
   0, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15
 };
 
 
-static colorinfo_t *cc_text_palettes[NUM_CC_PALETTES] = {
+static const colorinfo_t *const cc_text_palettes[NUM_CC_PALETTES] = {
   cc_text_trans,
   cc_text_solid
 };
 
-static uint8_t *cc_alpha_palettes[NUM_CC_PALETTES] = {
+static const uint8_t *const cc_alpha_palettes[NUM_CC_PALETTES] = {
   cc_text_trans_alpha,
   cc_text_solid_alpha
 };
@@ -221,11 +221,11 @@ static uint8_t *cc_alpha_palettes[NUM_CC_PALETTES] = {
 #define MAX(a, b) ((a) > (b)? (a) : (b))
 
 /* mapping from PAC row code to actual CC row */
-static int  rowdata[] = {10, -1, 0, 1, 2, 3, 11, 12, 13, 14, 4, 5, 6,
+static const int  rowdata[] = {10, -1, 0, 1, 2, 3, 11, 12, 13, 14, 4, 5, 6,
 			 7, 8, 9};
 /* FIXME: do real TM */
 /* must be mapped as a music note in the captioning font */ 
-static char specialchar[] = {'®','°','½','¿','T','¢','£','¶','à',
+static const char specialchar[] = {'®','°','½','¿','T','¢','£','¶','à',
 			     TRANSP_SPACE,'è','â','ê','î','ô','û'};
 
 /* character translation table - EIA 608 codes are not all the same as ASCII */
@@ -798,8 +798,8 @@ static void ccmem_exit(cc_memory_t *this)
 static void cc_renderer_build_palette(cc_renderer_t *this)
 {
   int i, j;
-  colorinfo_t *cc_text = cc_text_palettes[this->cc_state->cc_cfg->cc_scheme];
-  uint8_t *cc_alpha = cc_alpha_palettes[this->cc_state->cc_cfg->cc_scheme];
+  const colorinfo_t *cc_text = cc_text_palettes[this->cc_state->cc_cfg->cc_scheme];
+  const uint8_t *cc_alpha = cc_alpha_palettes[this->cc_state->cc_cfg->cc_scheme];
   
   memset(this->cc_palette, 0, sizeof (this->cc_palette));
   memset(this->cc_trans, 0, sizeof (this->cc_trans));

@@ -59,7 +59,7 @@ typedef struct audio_db_s {
 } audio_db_t;
 
 
-static video_db_t video_db[] = {
+static const video_db_t video_db[] = {
 {
   {
     meFOURCC('m', 'p', 'e', 'g'),
@@ -767,7 +767,7 @@ static video_db_t video_db[] = {
 };
 
 
-static audio_db_t audio_db[] = {
+static const audio_db_t audio_db[] = {
 {
   {
     0x2000,

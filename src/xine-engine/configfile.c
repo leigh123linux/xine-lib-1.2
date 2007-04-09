@@ -51,7 +51,7 @@ typedef struct {
   const char *new;
 } config_entry_translation_t;
 
-static config_entry_translation_t config_entry_translation[] = {
+static const config_entry_translation_t config_entry_translation[] = {
   { "audio.a52_pass_through",			"" },
   { "audio.alsa_a52_device",			"audio.device.alsa_passthrough_device" },
   { "audio.alsa_default_device",		"audio.device.alsa_default_device" },

@@ -118,7 +118,8 @@
 #define HAMBITS_RED                     2 /* modify red   component */
 #define HAMBITS_GREEN                   3 /* modify green component */
 
-int bitplainoffeset[] = {       1,       2,       4,       8,
+static const int bitplainoffeset[] = {
+                                1,       2,       4,       8,
                                16,      32,      64,     128,
                                 1,       2,       4,       8,
                                16,      32,      64,     128,
@@ -237,9 +238,9 @@ typedef struct {
 
 #define max_volume                      65536  /* Unity = Fixed 1.0 = maximum volume */
 
-int8_t fibonacci[]    = { -34, -21, -13, -8, -5, -3, -2, -1, 0, 1, 2, 3, 5, 8, 13, 21 };
+static const int8_t fibonacci[]    = { -34, -21, -13, -8, -5, -3, -2, -1, 0, 1, 2, 3, 5, 8, 13, 21 };
 
-int8_t exponential[]  = { -128, -64, -32, -16, -8, -4, -2, -1, 0, 1, 2, 4, 8, 16, 32, 64 };
+static const int8_t exponential[]  = { -128, -64, -32, -16, -8, -4, -2, -1, 0, 1, 2, 4, 8, 16, 32, 64 };
 
 typedef struct {
   uint32_t             oneShotHiSamples;     /* # samples in the high octave 1-shot part */

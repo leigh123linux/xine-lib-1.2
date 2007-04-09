@@ -62,7 +62,7 @@ typedef struct noise_param_t {
 
 static int nonTempRandShift[MAX_RES]= {-1};
 
-static int patt[4] = {
+static const int patt[4] = {
     -1,0,1,0
 };
 
