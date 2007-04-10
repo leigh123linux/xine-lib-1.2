@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "bswap.h"
 #include "configfile.h"
 
 #define LOG_MODULE "configfile"
@@ -1210,10 +1211,6 @@ static void config_unset_new_entry_callback (config_values_t *this) {
   pthread_mutex_unlock(&this->config_lock);
 }
 
-static void config_register_entry (config_values_t *this, cfg_entry_t* entry) {
-  /* FIXME: TODO */
-}
-
 static int put_int(uint8_t *buffer, int pos, int value) {
   int32_t value_int32 = (int32_t)value;
 
@@ -1232,8 +1229,8 @@ static int put_string(uint8_t *buffer, int pos, const char *value, int value_len
   return 4 + value_len;
 }
 
-static unsigned char* config_serialize_entry (config_values_t *this, const char *key) {
-  unsigned char *output = NULL;
+static char* config_get_serialized_entry (config_values_t *this, const char *key) {
+  char *output = NULL;
   cfg_entry_t *entry, *prev;
   
   pthread_mutex_lock(&this->config_lock);
@@ -1246,6 +1243,8 @@ static unsigned char* config_serialize_entry (config_values_t *this, const char 
           int              range_min;
           int              range_max;
           int              exp_level;
+          int              num_default;
+          int              num_value;
           char            *key;
           char            *str_default;
           char            *description;
@@ -1257,6 +1256,12 @@ static unsigned char* config_serialize_entry (config_values_t *this, const char 
     int str_default_len = 0;
     int description_len = 0;
     int help_len = 0;
+    unsigned long output_len;
+    unsigned long total_len;
+    int value_count;
+    int value_len[10];
+    int pos = 0;
+    int i;
     
     if (entry->key)
       key_len = strlen(entry->key);
@@ -1269,7 +1274,7 @@ static unsigned char* config_serialize_entry (config_values_t *this, const char 
     
     // integers
     // value: 4 bytes
-    unsigned long total_len = 4 * sizeof(int32_t);
+    total_len = 6 * sizeof(int32_t);
     
     // strings (size + char buffer)
     // length: 4 bytes
@@ -1284,8 +1289,7 @@ static unsigned char* config_serialize_entry (config_values_t *this, const char 
     // for each value:
     //   length: 4 bytes
     //   buffer: length bytes
-    int value_count = 0;
-    int value_len[10];
+    value_count = 0;
     total_len += sizeof(int32_t);  /* value count */
     
     char **cur_value = entry->enum_values;
@@ -1303,32 +1307,31 @@ static unsigned char* config_serialize_entry (config_values_t *this, const char 
     if (!buffer) return NULL;
     
     /* Let's go */
-    int pos = 0;
     
-    // the integers
+    /* the integers */
     pos += put_int(buffer, pos, entry->type);
     pos += put_int(buffer, pos, entry->range_min);
     pos += put_int(buffer, pos, entry->range_max);
     pos += put_int(buffer, pos, entry->exp_level);
+    pos += put_int(buffer, pos, entry->num_default);
+    pos += put_int(buffer, pos, entry->num_value);
     
-    // the strings
+    /* the strings */
     pos += put_string(buffer, pos, entry->key, key_len);
     pos += put_string(buffer, pos, entry->str_default, str_default_len);
     pos += put_string(buffer, pos, entry->description, description_len);
     pos += put_string(buffer, pos, entry->help, help_len);
 
-    // the enum stuff
+    /* the enum stuff */
     pos += put_int(buffer, pos, value_count);
     cur_value = entry->enum_values;
     
-    int i;
     for (i = 0; i < value_count; i++) {
       pos += put_string(buffer, pos, *cur_value, value_len[i]);
       cur_value++;
     }
 
-    // and now the output encoding
-    unsigned long output_len;
+    /* and now the output encoding */
     output = base64_encode (buffer, total_len, &output_len);
 
     free(buffer);
@@ -1336,10 +1339,166 @@ static unsigned char* config_serialize_entry (config_values_t *this, const char 
   pthread_mutex_unlock(&this->config_lock);
 
   return output;
+
 }
 
-static cfg_entry_t* config_deserialize_entry (config_values_t *this, const char *value) {
-  /* FIXME: TODO */
+static int get_int(uint8_t *buffer, int buffer_size, int pos, int *value) {
+  int32_t value_int32;
+
+  if ((pos + sizeof(int32_t)) > buffer_size)
+    return 0;
+    
+  value_int32 = LE_32(&buffer[pos]);
+  *value = (int)value_int32;
+  return sizeof(int32_t);
+}
+
+static int get_string(uint8_t *buffer, int buffer_size, int pos, char **value) {
+  int len;
+  int bytes = get_int(buffer, buffer_size, pos, &len);
+  *value = NULL;
+  
+  if (!bytes || (len < 0) || (len > 1024*64))
+    return 0;
+  
+  char *str = malloc(len + 1);
+  pos += bytes;
+  memcpy(str, &buffer[pos], len);
+  str[len] = 0;
+  
+  *value = str;
+  return bytes + len;
+}
+
+static char* config_register_serialized_entry (config_values_t *this, const char *value) {
+
+  /*
+      fields serialized :
+          int              type;
+          int              range_min;
+          int              range_max;
+          int              exp_level;
+          int              num_default;
+          int              num_value;
+          char            *key;
+          char            *str_default;
+          char            *description;
+          char            *help;
+          char           **enum_values;
+  */
+  int    type;
+  int    range_min;
+  int    range_max;
+  int    exp_level;
+  int    num_default;
+  int    num_value;
+  char  *key;
+  char  *str_default;
+  char  *description;
+  char  *help;
+  char **enum_values;
+  
+  int    bytes;
+  int    pos;
+  void  *output;
+  unsigned long output_len;
+  int    value_count;
+  int    i;
+  
+  output = base64_decode (value, strlen(value), &output_len);
+  
+  pos = 0;
+  pos += bytes = get_int(output, output_len, pos, &type);
+  if (!bytes) goto error;
+
+  pos += bytes = get_int(output, output_len, pos, &range_min);
+  if (!bytes) goto error;
+    
+  pos += bytes = get_int(output, output_len, pos, &range_max);
+  if (!bytes) goto error;
+
+  pos += bytes = get_int(output, output_len, pos, &exp_level);
+  if (!bytes) goto error;
+
+  pos += bytes = get_int(output, output_len, pos, &num_default);
+  if (!bytes) goto error;
+
+  pos += bytes = get_int(output, output_len, pos, &num_value);
+  if (!bytes) goto error;
+
+  pos += bytes = get_string(output, output_len, pos, &key);
+  if (!bytes) goto error;
+  
+  pos += bytes = get_string(output, output_len, pos, &str_default);
+  if (!bytes) goto error;
+
+  pos += bytes = get_string(output, output_len, pos, &description);
+  if (!bytes) goto error;
+
+  pos += bytes = get_string(output, output_len, pos, &help);
+  if (!bytes) goto error;
+
+  pos += bytes = get_int(output, output_len, pos, &value_count);
+  if (!bytes) goto error;
+  if ((value_count < 0) || (value_count > 256)) goto error;
+  
+  enum_values = malloc (sizeof(void*) * value_count + 1);
+  for (i = 0; i < value_count; i++) {
+    pos += bytes = get_string(output, output_len, pos, &enum_values[i]);
+    if (!bytes) goto error;
+  }
+  enum_values[value_count] = NULL;
+
+#if LOG  
+  printf("config entry deserialization:\n");
+  printf("  key        : %s\n", key);
+  printf("  type       : %d\n", type);
+  printf("  exp_level  : %d\n", exp_level);
+  printf("  num_default: %d\n", num_default);
+  printf("  num_value  : %d\n", num_value);
+  printf("  str_default: %s\n", str_default);
+  printf("  range_min  : %d\n", range_min);
+  printf("  range_max  : %d\n", range_max);
+  printf("  description: %s\n", description);
+  printf("  help       : %s\n", help);
+  printf("  enum       : %d values\n", value_count);
+  
+  for (i = 0; i < value_count; i++) {
+    printf("    enum[%2d]: %s\n", i, enum_values[i]);
+  }
+  printf("\n");
+#endif
+
+  switch (type) {
+  case XINE_CONFIG_TYPE_STRING:
+    switch (num_value) {
+      case 0:
+        this->register_string(this, key, str_default, description, help, exp_level, NULL, NULL);
+      default:
+        this->register_filename(this, key, str_default, num_value, description, help, exp_level, NULL, NULL);
+    }
+    break;
+  case XINE_CONFIG_TYPE_RANGE:
+    this->register_range(this, key, num_default, range_min, range_max, description, help, exp_level, NULL, NULL);
+    break;
+  case XINE_CONFIG_TYPE_ENUM:
+    this->register_enum(this, key, num_default, enum_values, description, help, exp_level, NULL, NULL);
+    break;
+  case XINE_CONFIG_TYPE_NUM:
+    this->register_num(this, key, num_default, description, help, exp_level, NULL, NULL);
+    break;
+  case XINE_CONFIG_TYPE_BOOL:
+    this->register_bool(this, key, num_default, description, help, exp_level, NULL, NULL);
+    break;
+  case XINE_CONFIG_TYPE_UNKNOWN:
+    break;
+  }
+
+
+  return key;
+  
+error:
+  /* serialization error */
   return NULL;
 }
 
@@ -1368,23 +1527,22 @@ config_values_t *_x_config_init (void) {
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
   pthread_mutex_init(&this->config_lock, &attr);
 
-  this->register_string          = config_register_string;
-  this->register_filename        = config_register_filename;
-  this->register_range           = config_register_range;
-  this->register_enum            = config_register_enum;
-  this->register_num             = config_register_num;
-  this->register_bool            = config_register_bool;
-  this->update_num               = config_update_num;
-  this->update_string            = config_update_string;
-  this->parse_enum               = config_parse_enum;
-  this->lookup_entry             = config_lookup_entry;
-  this->unregister_callback      = config_unregister_cb;
-  this->dispose                  = config_dispose;
-  this->set_new_entry_callback   = config_set_new_entry_callback;
-  this->unset_new_entry_callback = config_unset_new_entry_callback;
-  this->register_entry           = config_register_entry;
-  this->serialize_entry          = config_serialize_entry;
-  this->deserialize_entry        = config_deserialize_entry;
+  this->register_string           = config_register_string;
+  this->register_filename         = config_register_filename;
+  this->register_range            = config_register_range;
+  this->register_enum             = config_register_enum;
+  this->register_num              = config_register_num;
+  this->register_bool             = config_register_bool;
+  this->register_serialized_entry = config_register_serialized_entry;
+  this->update_num                = config_update_num;
+  this->update_string             = config_update_string;
+  this->parse_enum                = config_parse_enum;
+  this->lookup_entry              = config_lookup_entry;
+  this->unregister_callback       = config_unregister_cb;
+  this->dispose                   = config_dispose;
+  this->set_new_entry_callback    = config_set_new_entry_callback;
+  this->unset_new_entry_callback  = config_unset_new_entry_callback;
+  this->get_serialized_entry      = config_get_serialized_entry;
 
   return this;
 }

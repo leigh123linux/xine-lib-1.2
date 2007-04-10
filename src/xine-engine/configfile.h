@@ -201,13 +201,14 @@ struct config_values_s {
    * serialize a config entry.
    * return a base64 null terminated string.
    */
-  char* (*serialize_entry) (config_values_t *self, const char *key);
+  char* (*get_serialized_entry) (config_values_t *self, const char *key);
 
   /*
    * deserialize a config entry.
    * value is a base 64 encoded string
+   * return the key of the serialized entry
    */
-  cfg_entry_t* (*deserialize_entry) (config_values_t *self, const char *value);
+  char* (*register_serialized_entry) (config_values_t *self, const char *value);
 
 
   /*

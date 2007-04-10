@@ -134,14 +134,14 @@ unsigned char *rfc822_binary (void *src,unsigned long srcl,unsigned long *len)
   return ret;			/* return the resulting string */
 }
 
-unsigned char *base64_encode (void *src,unsigned long srcl,unsigned long *len)
+char *base64_encode (const void *src, unsigned long srcl, unsigned long *len)
 {
-  unsigned char *ret,*d;
+  char *ret, *d;
   unsigned char *s = (unsigned char *) src;
   char *v = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._";
   unsigned long i = ((srcl + 2) / 3) * 4;
   *len = i;
-  d = ret = (unsigned char *) malloc ((size_t) ++i);
+  d = ret = (char *) malloc ((size_t) ++i);
   for (i = 0; srcl; s += 3) {	/* process tuplets */
     *d++ = v[s[0] >> 2];	/* byte 1: high 6 bits (1) */
 				/* byte 2: low 2 bits (1), high 4 bits (2) */
@@ -157,7 +157,7 @@ unsigned char *base64_encode (void *src,unsigned long srcl,unsigned long *len)
   return ret;			/* return the resulting string */
 }
 
-void *base64_decode (unsigned char *src,unsigned long srcl,unsigned long *len)
+void *base64_decode (const char *src, unsigned long srcl, unsigned long *len)
 {
   void *ret;
   unsigned char *d;
@@ -185,7 +185,7 @@ void *base64_decode (unsigned char *src,unsigned long srcl,unsigned long *len)
         }
         srcl--;
       } else {
-        tuplet[j] = 64;
+        (*len)--;
       }
     }
 

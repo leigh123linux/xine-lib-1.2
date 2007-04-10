@@ -64,6 +64,8 @@
 #include "xineutils.h"
 #include "compat.h"
 
+#define LINE_MAX_LENGTH   (1024 * 32)  /* 32 KiB */
+
 #if 0
 
 static char *plugin_name;
@@ -695,6 +697,15 @@ static inline int _plugin_info_equal(const plugin_info_t *a,
   return 1;
 }
 
+static void _attach_entry_to_node (plugin_node_t *node, void *key) {
+  
+  if (!node->config_entry_list) {
+    node->config_entry_list = xine_list_new();
+  }
+
+  xine_list_push_back(node->config_entry_list, key);
+}
+
 /*
  * This callback is called by the config entry system when a plugin register a
  * new config entry.
@@ -702,11 +713,7 @@ static inline int _plugin_info_equal(const plugin_info_t *a,
 static void _new_entry_cb (void *user_data, xine_cfg_entry_t *entry) {
   plugin_node_t *node = (plugin_node_t *)user_data;
   
-  if (!node->config_entry_list) {
-    node->config_entry_list = xine_list_new();
-  }
-
-  xine_list_push_back(node->config_entry_list, (void *)entry->key);
+  _attach_entry_to_node(node, (void *)entry->key);
 }
 
 static int _load_plugin_class(xine_t *this,
@@ -922,16 +929,16 @@ static void save_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *list) {
         break;
     }
 
-    if (node->config_entry_list)
-    {
+    /* config entries */
+    if (node->config_entry_list) {
       xine_list_iterator_t ite = xine_list_front(node->config_entry_list);
       while (ite) {
         char *key = xine_list_get_value(node->config_entry_list, ite);
 
         /* now get the representation of the config key */
-        char *key_value = this->config->serialize_entry(this->config, key);
+        char *key_value = this->config->get_serialized_entry(this->config, key);
 
-        printf("  config key: %s, serialization: %d bytes\n", key, strlen(key_value));
+        lprintf("  config key: %s, serialization: %d bytes\n", key, strlen(key_value));
         fprintf(fp, "config_key=%s\n", key_value);
 
         free (key_value);
@@ -947,7 +954,7 @@ static void save_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *list) {
 /*
  *  load plugin list information from file (cached catalog)
  */
-static void load_plugin_list(FILE *fp, xine_sarray_t *plugins) {
+static void load_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *plugins) {
 
   plugin_node_t *node;
   plugin_file_t *file;
@@ -960,20 +967,29 @@ static void load_plugin_list(FILE *fp, xine_sarray_t *plugins) {
   int i;
   uint64_t llu;
   unsigned long lu;
-  char line[1024];
+  char *line;
   char *value;
+  size_t line_len;
   int version_ok = 0;
+  
+  line = malloc(LINE_MAX_LENGTH);
+  if (!line)
+    return;
   
   node = NULL;
   file = NULL;
-  while (fgets (line, 1023, fp)) {
+  while (fgets (line, LINE_MAX_LENGTH, fp)) {
     if (line[0] == '#')
       continue;
-      
-    if( (value = strchr(line, '\r')) || (value = strchr(line, '\n')) )
-      *value = (char) 0; /* eliminate any cr/lf */
+    line_len = strlen(line);
+    if (line_len < 3)
+      continue;
+    
+    value = &line[line_len - 1];
+    if( (*value == '\r') || (*value == '\n') )
+      *value-- = (char) 0; /* eliminate any cr/lf */
 
-    if( (value = strchr(line, '\r')) || (value = strchr(line, '\n')) )
+    if( (*value == '\r') || (*value == '\n') )
       *value = (char) 0; /* eliminate any cr/lf */
 
     if (line[0] == '[' && version_ok) {
@@ -1048,11 +1064,11 @@ static void load_plugin_list(FILE *fp, xine_sarray_t *plugins) {
                              xine_xmalloc(sizeof(decoder_info_t));
               break;
 	    
-	    case PLUGIN_POST:
-	      node->info->special_info = post_info =
-			  xine_xmalloc(sizeof(post_info_t));
-	      break;
-          }        
+            case PLUGIN_POST:
+              node->info->special_info = post_info =
+              xine_xmalloc(sizeof(post_info_t));
+              break;
+          }
           
         } else if( !strcmp("api",line) ) {
           sscanf(value," %d",&i);
@@ -1092,8 +1108,15 @@ static void load_plugin_list(FILE *fp, xine_sarray_t *plugins) {
           sscanf(value," %d",&i);
           input_info->priority = i;
         } else if( !strcmp("post_type",line) && post_info ) {
-	  sscanf(value," %lu",&lu);
-	  post_info->type = lu;
+          sscanf(value," %lu",&lu);
+          post_info->type = lu;
+        } else if( !strcmp("config_key",line) ) {
+          char* cfg_key;
+    
+          cfg_key = this->config->register_serialized_entry(this->config, value);
+          if (cfg_key != NULL) {
+            _attach_entry_to_node(node, cfg_key);
+          }
         }
       }
     }
@@ -1102,6 +1125,8 @@ static void load_plugin_list(FILE *fp, xine_sarray_t *plugins) {
   if( node ) {
     xine_sarray_add (plugins, node);
   }
+  
+  free (line);
 }
 
 
@@ -1154,7 +1179,7 @@ static void load_cached_catalog (xine_t *this) {
   sprintf(cachefile, "%s/%s", xine_get_homedir(), relname);
   
   if( (fp = fopen(cachefile,"r")) != NULL ) {
-    load_plugin_list (fp, this->plugin_catalog->cache_list);
+    load_plugin_list (this, fp, this->plugin_catalog->cache_list);
     fclose(fp);
   }
   free(cachefile);
