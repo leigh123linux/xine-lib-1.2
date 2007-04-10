@@ -627,16 +627,12 @@ uint32_t _x_formattag_to_buf_audio( uint32_t formattag ) XINE_PROTECTED;
 char * _x_buf_audio_name( uint32_t buf_type ) XINE_PROTECTED;
 
 
-#ifndef ATTRIBUTE_PACKED
-/* no attribute packed? let's try with pragma pack as a last resort */
-#pragma pack(2)
-#endif
 /* this is xine version of BITMAPINFOHEADER
  * - should be safe to compile on 64bits machines
  * - will always use machine endian format, so demuxers reading
  *   stuff from win32 formats must use the function below.
  */
-typedef struct __attribute__((__packed__)) {
+typedef struct XINE_PACKED {
     int32_t        biSize;
     int32_t        biWidth;
     int32_t        biHeight;
@@ -653,7 +649,7 @@ typedef struct __attribute__((__packed__)) {
 /* this is xine version of WAVEFORMATEX 
  * (the same comments from xine_bmiheader)
  */
-typedef struct __attribute__((__packed__)) {
+typedef struct XINE_PACKED {
   int16_t   wFormatTag;
   int16_t   nChannels;
   int32_t   nSamplesPerSec;
@@ -662,9 +658,6 @@ typedef struct __attribute__((__packed__)) {
   int16_t   wBitsPerSample;
   int16_t   cbSize;
 } xine_waveformatex;
-#ifndef ATTRIBUTE_PACKED
-#pragma pack()
-#endif
 
 /* convert xine_bmiheader struct from little endian */
 void _x_bmiheader_le2me( xine_bmiheader *bih ) XINE_PROTECTED;

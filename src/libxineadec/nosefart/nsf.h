@@ -30,6 +30,8 @@
 #include "nes6502.h"
 #include "nes_apu.h"
 
+#include "config.h"
+
 #define  NSF_MAGIC   "NESM\x1A"
 
 #define  NSF_DEDICATED_PAL       0x01
@@ -96,7 +98,7 @@ typedef struct nsf_s
 
    /* our main processing routine, calls all external mixing routines */
    void (*process)(void *buffer, int num_samples);
-} __PACKED__ nsf_t;
+} XINE_PACKED nsf_t;
 
 /* Function prototypes */
 extern void nsf_init(void);

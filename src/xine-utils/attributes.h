@@ -30,18 +30,6 @@
 #define ATTR_ALIGN(align)
 #endif
 
-/* disable GNU __attribute__ extension, when not compiling with GNU C */
-#if defined(__GNUC__) || defined (__ICC)
-#ifndef ATTRIBUTE_PACKED
-#define	ATTRIBUTE_PACKED 1
-#endif 
-#else
-#undef	ATTRIBUTE_PACKED
-#ifndef __attribute__
-#define	__attribute__(x)	/**/
-#endif /* __attribute __*/
-#endif
-
 #ifdef XINE_COMPILE
 # include "config.h"
 #endif
