@@ -65,16 +65,14 @@ typedef struct {
   demux_class_t     demux_class;
 } demux_tta_class_t;
 
-#define FOURCC_32(a, b, c, d) (d + (c<<8) + (b<<16) + (a<<24))
-
 static int open_tta_file(demux_tta_t *this) {
-  uint8_t peek[4];
+  uint32_t peek;
   uint32_t framelen;
 
-  if (_x_demux_read_header(this->input, peek, 4) != 4)
+  if (_x_demux_read_header(this->input, &peek, 4) != 4)
       return 0;
 
-  if ( BE_32(peek) != FOURCC_32('T', 'T', 'A', '1') )
+  if ( peek != ME_FOURCC('T', 'T', 'A', '1') )
     return 0;
 
   if ( this->input->read(this->input, this->header.buffer, sizeof(this->header)) != sizeof(this->header) )
