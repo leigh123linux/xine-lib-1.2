@@ -38,14 +38,6 @@
 #include "buffer.h"
 #include "bswap.h"
 
-/* FOURCC will be manipulated using machine endian */
-#ifdef WORDS_BIGENDIAN
-#define meFOURCC BE_FOURCC
-#else
-#define meFOURCC LE_FOURCC
-#endif
-
-
 typedef struct video_db_s {
    uint32_t fourcc[20];
    uint32_t buf_type;
@@ -62,11 +54,11 @@ typedef struct audio_db_s {
 static const video_db_t video_db[] = {
 {
   {
-    meFOURCC('m', 'p', 'e', 'g'),
-    meFOURCC('M', 'P', 'E', 'G'),
-    meFOURCC('P', 'I', 'M', '1'),
-    meFOURCC('m', 'p', 'g', '2'),
-    meFOURCC('m', 'p', 'g', '1'),
+    ME_FOURCC('m', 'p', 'e', 'g'),
+    ME_FOURCC('M', 'P', 'E', 'G'),
+    ME_FOURCC('P', 'I', 'M', '1'),
+    ME_FOURCC('m', 'p', 'g', '2'),
+    ME_FOURCC('m', 'p', 'g', '1'),
     0
   },
   BUF_VIDEO_MPEG,
@@ -74,15 +66,15 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('D', 'I', 'V', 'X'),
-    meFOURCC('d', 'i', 'v', 'x'),
-    meFOURCC('D', 'i', 'v', 'x'),
-    meFOURCC('D', 'i', 'v', 'X'),
-    meFOURCC('M', 'P', '4', 'S'),
-    meFOURCC('m', 'p', '4', 'v'),
-    meFOURCC('M', '4', 'S', '2'),
-    meFOURCC('m', '4', 's', '2'),
-    meFOURCC('F', 'M', 'P', '4'),
+    ME_FOURCC('D', 'I', 'V', 'X'),
+    ME_FOURCC('d', 'i', 'v', 'x'),
+    ME_FOURCC('D', 'i', 'v', 'x'),
+    ME_FOURCC('D', 'i', 'v', 'X'),
+    ME_FOURCC('M', 'P', '4', 'S'),
+    ME_FOURCC('m', 'p', '4', 'v'),
+    ME_FOURCC('M', '4', 'S', '2'),
+    ME_FOURCC('m', '4', 's', '2'),
+    ME_FOURCC('F', 'M', 'P', '4'),
     0
   },
   BUF_VIDEO_MPEG4,
@@ -90,8 +82,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('X', 'V', 'I', 'D'),
-    meFOURCC('x', 'v', 'i', 'd'),
+    ME_FOURCC('X', 'V', 'I', 'D'),
+    ME_FOURCC('x', 'v', 'i', 'd'),
     0
   },
   BUF_VIDEO_XVID,
@@ -99,7 +91,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('D', 'X', '5', '0'),
+    ME_FOURCC('D', 'X', '5', '0'),
     0
   },
   BUF_VIDEO_DIVX5,
@@ -107,7 +99,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('c', 'v', 'i', 'd'),
+    ME_FOURCC('c', 'v', 'i', 'd'),
     0
   },
   BUF_VIDEO_CINEPAK,
@@ -115,9 +107,9 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('S', 'V', 'Q', '1'),
-    meFOURCC('s', 'v', 'q', '1'),
-    meFOURCC('s', 'v', 'q', 'i'),
+    ME_FOURCC('S', 'V', 'Q', '1'),
+    ME_FOURCC('s', 'v', 'q', '1'),
+    ME_FOURCC('s', 'v', 'q', 'i'),
     0
   },
   BUF_VIDEO_SORENSON_V1,
@@ -125,8 +117,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('S', 'V', 'Q', '3'),
-    meFOURCC('s', 'v', 'q', '3'),
+    ME_FOURCC('S', 'V', 'Q', '3'),
+    ME_FOURCC('s', 'v', 'q', '3'),
     0
   },
   BUF_VIDEO_SORENSON_V3,
@@ -134,10 +126,10 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('M', 'P', '4', '1'),
-    meFOURCC('m', 'p', '4', '1'),
-    meFOURCC('M', 'P', 'G', '4'),
-    meFOURCC('m', 'p', 'g', '4'),
+    ME_FOURCC('M', 'P', '4', '1'),
+    ME_FOURCC('m', 'p', '4', '1'),
+    ME_FOURCC('M', 'P', 'G', '4'),
+    ME_FOURCC('m', 'p', 'g', '4'),
     0
   },
   BUF_VIDEO_MSMPEG4_V1,
@@ -145,12 +137,12 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('M', 'P', '4', '1'),
-    meFOURCC('m', 'p', '4', '1'),
-    meFOURCC('M', 'P', '4', '2'),
-    meFOURCC('m', 'p', '4', '2'),
-    meFOURCC('D', 'I', 'V', '2'),
-    meFOURCC('d', 'i', 'v', '2'),
+    ME_FOURCC('M', 'P', '4', '1'),
+    ME_FOURCC('m', 'p', '4', '1'),
+    ME_FOURCC('M', 'P', '4', '2'),
+    ME_FOURCC('m', 'p', '4', '2'),
+    ME_FOURCC('D', 'I', 'V', '2'),
+    ME_FOURCC('d', 'i', 'v', '2'),
     0
   },
   BUF_VIDEO_MSMPEG4_V2,
@@ -158,20 +150,20 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('M', 'P', '4', '3'),
-    meFOURCC('m', 'p', '4', '3'),
-    meFOURCC('D', 'I', 'V', '3'),
-    meFOURCC('d', 'i', 'v', '3'),
-    meFOURCC('D', 'I', 'V', '4'),
-    meFOURCC('d', 'i', 'v', '4'),
-    meFOURCC('D', 'I', 'V', '5'),
-    meFOURCC('d', 'i', 'v', '5'),
-    meFOURCC('D', 'I', 'V', '6'),
-    meFOURCC('d', 'i', 'v', '6'),
-    meFOURCC('A', 'P', '4', '1'),
-    meFOURCC('M', 'P', 'G', '3'),
-    meFOURCC('C', 'O', 'L', '1'),
-    meFOURCC('3', 'I', 'V', 'D'),
+    ME_FOURCC('M', 'P', '4', '3'),
+    ME_FOURCC('m', 'p', '4', '3'),
+    ME_FOURCC('D', 'I', 'V', '3'),
+    ME_FOURCC('d', 'i', 'v', '3'),
+    ME_FOURCC('D', 'I', 'V', '4'),
+    ME_FOURCC('d', 'i', 'v', '4'),
+    ME_FOURCC('D', 'I', 'V', '5'),
+    ME_FOURCC('d', 'i', 'v', '5'),
+    ME_FOURCC('D', 'I', 'V', '6'),
+    ME_FOURCC('d', 'i', 'v', '6'),
+    ME_FOURCC('A', 'P', '4', '1'),
+    ME_FOURCC('M', 'P', 'G', '3'),
+    ME_FOURCC('C', 'O', 'L', '1'),
+    ME_FOURCC('3', 'I', 'V', 'D'),
     0
   },
   BUF_VIDEO_MSMPEG4_V3,
@@ -179,8 +171,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('3', 'I', 'V', '1'),
-    meFOURCC('3', 'I', 'V', '2'),
+    ME_FOURCC('3', 'I', 'V', '1'),
+    ME_FOURCC('3', 'I', 'V', '2'),
     0
   },
   BUF_VIDEO_3IVX,
@@ -188,11 +180,11 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('d', 'm', 'b', '1'),
-    meFOURCC('M', 'J', 'P', 'G'),
-    meFOURCC('m', 'j', 'p', 'a'),
-    meFOURCC('A', 'V', 'R', 'n'),
-    meFOURCC('A', 'V', 'D', 'J'),
+    ME_FOURCC('d', 'm', 'b', '1'),
+    ME_FOURCC('M', 'J', 'P', 'G'),
+    ME_FOURCC('m', 'j', 'p', 'a'),
+    ME_FOURCC('A', 'V', 'R', 'n'),
+    ME_FOURCC('A', 'V', 'D', 'J'),
     0
   },
   BUF_VIDEO_MJPEG,
@@ -200,7 +192,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('m', 'j', 'p', 'b'),
+    ME_FOURCC('m', 'j', 'p', 'b'),
     0
   },
   BUF_VIDEO_MJPEG_B,
@@ -208,8 +200,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('I', 'V', '5', '0'),
-    meFOURCC('i', 'v', '5', '0'),
+    ME_FOURCC('I', 'V', '5', '0'),
+    ME_FOURCC('i', 'v', '5', '0'),
     0
   },
   BUF_VIDEO_IV50,
@@ -217,8 +209,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('I', 'V', '4', '1'),
-    meFOURCC('i', 'v', '4', '1'),
+    ME_FOURCC('I', 'V', '4', '1'),
+    ME_FOURCC('i', 'v', '4', '1'),
     0
   },
   BUF_VIDEO_IV41,
@@ -226,8 +218,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('I', 'V', '3', '2'),
-    meFOURCC('i', 'v', '3', '2'),
+    ME_FOURCC('I', 'V', '3', '2'),
+    ME_FOURCC('i', 'v', '3', '2'),
     0
   },
   BUF_VIDEO_IV32,
@@ -235,8 +227,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('I', 'V', '3', '1'),
-    meFOURCC('i', 'v', '3', '1'),
+    ME_FOURCC('I', 'V', '3', '1'),
+    ME_FOURCC('i', 'v', '3', '1'),
     0
   },
   BUF_VIDEO_IV31,
@@ -244,7 +236,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('V', 'C', 'R', '1'),
+    ME_FOURCC('V', 'C', 'R', '1'),
     0
   },
   BUF_VIDEO_ATIVCR1,
@@ -252,7 +244,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('V', 'C', 'R', '2'),
+    ME_FOURCC('V', 'C', 'R', '2'),
     0
   },
   BUF_VIDEO_ATIVCR2,
@@ -260,11 +252,11 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('I', '2', '6', '3'),
-    meFOURCC('i', '2', '6', '3'),
-    meFOURCC('V', 'I', 'V', 'O'),
-    meFOURCC('v', 'i', 'v', 'o'),
-    meFOURCC('v', 'i', 'v', '1'),
+    ME_FOURCC('I', '2', '6', '3'),
+    ME_FOURCC('i', '2', '6', '3'),
+    ME_FOURCC('V', 'I', 'V', 'O'),
+    ME_FOURCC('v', 'i', 'v', 'o'),
+    ME_FOURCC('v', 'i', 'v', '1'),
     0
   },
   BUF_VIDEO_I263,
@@ -272,8 +264,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('D','I','B',' '),  /* device-independent bitmap */
-    meFOURCC('r','a','w',' '),
+    ME_FOURCC('D','I','B',' '),  /* device-independent bitmap */
+    ME_FOURCC('r','a','w',' '),
     0
   },
   BUF_VIDEO_RGB,
@@ -285,8 +277,8 @@ static const video_db_t video_db[] = {
     else if (!strncasecmp (video, "yuv2", 4))
     this->video_type = BUF_VIDEO_YUY2;
     */
-    meFOURCC('y', 'u', 'v', '2'),
-    meFOURCC('Y', 'U', 'Y', '2'),
+    ME_FOURCC('y', 'u', 'v', '2'),
+    ME_FOURCC('Y', 'U', 'Y', '2'),
     0
   },
   BUF_VIDEO_YUY2,
@@ -294,8 +286,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('j','p','e','g'),
-    meFOURCC('J','F','I','F'),
+    ME_FOURCC('j','p','e','g'),
+    ME_FOURCC('J','F','I','F'),
     0
   },
   BUF_VIDEO_JPEG,
@@ -303,7 +295,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('W','M','V','1'),
+    ME_FOURCC('W','M','V','1'),
     0
   },
   BUF_VIDEO_WMV7,
@@ -311,7 +303,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('W','M','V','2'),
+    ME_FOURCC('W','M','V','2'),
     0
   },
   BUF_VIDEO_WMV8,
@@ -319,8 +311,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('W','M','V','3'),
-    meFOURCC('W','M','V','P'),
+    ME_FOURCC('W','M','V','3'),
+    ME_FOURCC('W','M','V','P'),
     0
   },
   BUF_VIDEO_WMV9,
@@ -328,12 +320,12 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('c','r','a','m'),
-    meFOURCC('C','R','A','M'),
-    meFOURCC('M','S','V','C'),
-    meFOURCC('m','s','v','c'),
-    meFOURCC('W','H','A','M'),
-    meFOURCC('w','h','a','m'),
+    ME_FOURCC('c','r','a','m'),
+    ME_FOURCC('C','R','A','M'),
+    ME_FOURCC('M','S','V','C'),
+    ME_FOURCC('m','s','v','c'),
+    ME_FOURCC('W','H','A','M'),
+    ME_FOURCC('w','h','a','m'),
     0
   },
   BUF_VIDEO_MSVC,
@@ -341,9 +333,9 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('D','V','S','D'),
-    meFOURCC('d','v','s','d'),
-    meFOURCC('d','v','c','p'),
+    ME_FOURCC('D','V','S','D'),
+    ME_FOURCC('d','v','s','d'),
+    ME_FOURCC('d','v','c','p'),
     0
   },
   BUF_VIDEO_DV,
@@ -351,11 +343,11 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('V','P','3',' '),
-    meFOURCC('V','P','3','0'),
-    meFOURCC('v','p','3','0'),
-    meFOURCC('V','P','3','1'),
-    meFOURCC('v','p','3','1'),
+    ME_FOURCC('V','P','3',' '),
+    ME_FOURCC('V','P','3','0'),
+    ME_FOURCC('v','p','3','0'),
+    ME_FOURCC('V','P','3','1'),
+    ME_FOURCC('v','p','3','1'),
     0
   },
   BUF_VIDEO_VP31,
@@ -363,7 +355,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('V','P','4','0'),
+    ME_FOURCC('V','P','4','0'),
     0,
   },
   BUF_VIDEO_VP4,
@@ -371,10 +363,10 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('H', '2', '6', '3'),
-    meFOURCC('h', '2', '6', '3'),
-    meFOURCC('U', '2', '6', '3'),
-    meFOURCC('s', '2', '6', '3'),
+    ME_FOURCC('H', '2', '6', '3'),
+    ME_FOURCC('h', '2', '6', '3'),
+    ME_FOURCC('U', '2', '6', '3'),
+    ME_FOURCC('s', '2', '6', '3'),
     0
   },
   BUF_VIDEO_H263,
@@ -382,8 +374,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('c', 'y', 'u', 'v'),
-    meFOURCC('C', 'Y', 'U', 'V'),
+    ME_FOURCC('c', 'y', 'u', 'v'),
+    ME_FOURCC('C', 'Y', 'U', 'V'),
     0
   },
   BUF_VIDEO_CYUV,
@@ -391,7 +383,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('s', 'm', 'c', ' '),
+    ME_FOURCC('s', 'm', 'c', ' '),
     0
   },
   BUF_VIDEO_SMC,
@@ -399,8 +391,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('r', 'p', 'z', 'a'),
-    meFOURCC('a', 'z', 'p', 'r'),
+    ME_FOURCC('r', 'p', 'z', 'a'),
+    ME_FOURCC('a', 'z', 'p', 'r'),
     0
   },
   BUF_VIDEO_RPZA,
@@ -408,7 +400,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('r', 'l', 'e', ' '),
+    ME_FOURCC('r', 'l', 'e', ' '),
     0
   },
   BUF_VIDEO_QTRLE,
@@ -423,7 +415,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('D', 'U', 'C', 'K'),
+    ME_FOURCC('D', 'U', 'C', 'K'),
     0
   },
   BUF_VIDEO_DUCKTM1,
@@ -431,7 +423,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('M', 'S', 'S', '1'),
+    ME_FOURCC('M', 'S', 'S', '1'),
     0
   },
   BUF_VIDEO_MSS1,
@@ -439,7 +431,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('P', 'G', 'V', 'V'),
+    ME_FOURCC('P', 'G', 'V', 'V'),
     0
   },
   BUF_VIDEO_PGVV,
@@ -447,7 +439,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('Z', 'y', 'G', 'o'),
+    ME_FOURCC('Z', 'y', 'G', 'o'),
     0
   },
   BUF_VIDEO_ZYGO,
@@ -455,7 +447,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('t', 's', 'c', 'c'),
+    ME_FOURCC('t', 's', 'c', 'c'),
     0
   },
   BUF_VIDEO_TSCC,
@@ -463,7 +455,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('Y', 'V', 'U', '9'),
+    ME_FOURCC('Y', 'V', 'U', '9'),
     0
   },
   BUF_VIDEO_YVU9,
@@ -471,7 +463,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('G', 'R', 'E', 'Y'),
+    ME_FOURCC('G', 'R', 'E', 'Y'),
     0
   },
   BUF_VIDEO_GREY,
@@ -479,9 +471,9 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('X', 'x', 'a', 'n'),
-    meFOURCC('X', 'X', 'A', 'N'),
-    meFOURCC('x', 'x', 'a', 'n'),
+    ME_FOURCC('X', 'x', 'a', 'n'),
+    ME_FOURCC('X', 'X', 'A', 'N'),
+    ME_FOURCC('x', 'x', 'a', 'n'),
     0
   },
   BUF_VIDEO_XXAN,
@@ -489,8 +481,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('Y', 'V', '1', '2'),
-    meFOURCC('y', 'v', '1', '2'),
+    ME_FOURCC('Y', 'V', '1', '2'),
+    ME_FOURCC('y', 'v', '1', '2'),
     0
   },
   BUF_VIDEO_YV12,
@@ -498,8 +490,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('I', '4', '2', '0'),
-    meFOURCC('I', 'Y', 'U', 'V'),
+    ME_FOURCC('I', '4', '2', '0'),
+    ME_FOURCC('I', 'Y', 'U', 'V'),
     0
   },
   BUF_VIDEO_I420,
@@ -507,8 +499,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('S', 'E', 'G', 'A'),
-    meFOURCC('s', 'e', 'g', 'a'),
+    ME_FOURCC('S', 'E', 'G', 'A'),
+    ME_FOURCC('s', 'e', 'g', 'a'),
     0
   },
   BUF_VIDEO_SEGA,
@@ -516,8 +508,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('m', 'v', 'i', '2'),
-    meFOURCC('M', 'V', 'I', '2'),
+    ME_FOURCC('m', 'v', 'i', '2'),
+    ME_FOURCC('M', 'V', 'I', '2'),
     0
   },
   BUF_VIDEO_MVI2,
@@ -525,8 +517,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('u', 'c', 'o', 'd'),
-    meFOURCC('U', 'C', 'O', 'D'),
+    ME_FOURCC('u', 'c', 'o', 'd'),
+    ME_FOURCC('U', 'C', 'O', 'D'),
     0
   },
   BUF_VIDEO_UCOD,
@@ -534,7 +526,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('R', 'V', '1', '0'),
+    ME_FOURCC('R', 'V', '1', '0'),
     0
   },
   BUF_VIDEO_RV10,
@@ -542,7 +534,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('R', 'V', '2', '0'),
+    ME_FOURCC('R', 'V', '2', '0'),
     0
   },
   BUF_VIDEO_RV20,
@@ -550,7 +542,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('R', 'V', '3', '0'),
+    ME_FOURCC('R', 'V', '3', '0'),
     0
   },
   BUF_VIDEO_RV30,
@@ -558,7 +550,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('R', 'V', '4', '0'),
+    ME_FOURCC('R', 'V', '4', '0'),
     0
   },
   BUF_VIDEO_RV40,
@@ -566,7 +558,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('H', 'F', 'Y', 'U'),
+    ME_FOURCC('H', 'F', 'Y', 'U'),
     0,
   },
   BUF_VIDEO_HUFFYUV,
@@ -574,8 +566,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('I', 'M', 'G', ' '),
-    meFOURCC('g', 'i', 'f', ' '),
+    ME_FOURCC('I', 'M', 'G', ' '),
+    ME_FOURCC('g', 'i', 'f', ' '),
     0,
   },
   BUF_VIDEO_IMAGE,
@@ -590,7 +582,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('V','P','5','0'),
+    ME_FOURCC('V','P','5','0'),
     0
   },
   BUF_VIDEO_VP5,
@@ -598,9 +590,9 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('V','P','6','0'),
-    meFOURCC('V','P','6','1'),
-    meFOURCC('V','P','6','2'),
+    ME_FOURCC('V','P','6','0'),
+    ME_FOURCC('V','P','6','1'),
+    ME_FOURCC('V','P','6','2'),
     0
   },
   BUF_VIDEO_VP6,
@@ -608,7 +600,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('8','B', 'P','S'),
+    ME_FOURCC('8','B', 'P','S'),
     0
   },
   BUF_VIDEO_8BPS,
@@ -616,7 +608,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('Z','L','I','B'),
+    ME_FOURCC('Z','L','I','B'),
     0
   },
   BUF_VIDEO_ZLIB,
@@ -624,7 +616,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('M','S','Z','H'),
+    ME_FOURCC('M','S','Z','H'),
     0
   },
   BUF_VIDEO_MSZH,
@@ -632,7 +624,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('A','S','V','1'),
+    ME_FOURCC('A','S','V','1'),
     0
   },
   BUF_VIDEO_ASV1,
@@ -640,7 +632,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('A','S','V','2'),
+    ME_FOURCC('A','S','V','2'),
     0
   },
   BUF_VIDEO_ASV2,
@@ -648,9 +640,9 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('a','v','c','1'),
-    meFOURCC('h','2','6','4'),
-    meFOURCC('H','2','6','4'),
+    ME_FOURCC('a','v','c','1'),
+    ME_FOURCC('h','2','6','4'),
+    ME_FOURCC('H','2','6','4'),
     0
   },
   BUF_VIDEO_H264,
@@ -658,7 +650,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('A','A','S','C'),
+    ME_FOURCC('A','A','S','C'),
     0
   },
   BUF_VIDEO_AASC,
@@ -666,7 +658,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('q','d','r','w'),
+    ME_FOURCC('q','d','r','w'),
     0
   },
   BUF_VIDEO_QDRW,
@@ -674,7 +666,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('L','O','C','O'),
+    ME_FOURCC('L','O','C','O'),
     0
   },
   BUF_VIDEO_LOCO,
@@ -682,7 +674,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('U','L','T','I'),
+    ME_FOURCC('U','L','T','I'),
     0
   },
   BUF_VIDEO_ULTI,
@@ -690,7 +682,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('W','N','V','1'),
+    ME_FOURCC('W','N','V','1'),
     0
   },
   BUF_VIDEO_WNV1,
@@ -698,8 +690,8 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('P','I','X','L'),
-    meFOURCC('X','I','X','L'),
+    ME_FOURCC('P','I','X','L'),
+    ME_FOURCC('X','I','X','L'),
     0
   },
   BUF_VIDEO_XL,
@@ -707,9 +699,9 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('Q','P','E','G'),
-    meFOURCC('Q','1','.','0'),
-    meFOURCC('Q','1','.','1'),
+    ME_FOURCC('Q','P','E','G'),
+    ME_FOURCC('Q','1','.','0'),
+    ME_FOURCC('Q','1','.','1'),
     0
   },
   BUF_VIDEO_QPEG,
@@ -717,7 +709,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('R','T','2','1'),
+    ME_FOURCC('R','T','2','1'),
     0
   },
   BUF_VIDEO_RT21,
@@ -725,7 +717,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('F','P','S','1'),
+    ME_FOURCC('F','P','S','1'),
     0
   },
   BUF_VIDEO_FPS1,
@@ -733,7 +725,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('T','M','2','0'),
+    ME_FOURCC('T','M','2','0'),
     0
   },
   BUF_VIDEO_DUCKTM2,
@@ -741,7 +733,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('C','S','C','D'),
+    ME_FOURCC('C','S','C','D'),
     0
   },
   BUF_VIDEO_CSCD,
@@ -749,7 +741,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('Z','M','B','V'),
+    ME_FOURCC('Z','M','B','V'),
     0
   },
   BUF_VIDEO_ZMBV,
@@ -757,7 +749,7 @@ static const video_db_t video_db[] = {
 },
 {
   {
-    meFOURCC('K','M','V','C'),
+    ME_FOURCC('K','M','V','C'),
     0
   },
   BUF_VIDEO_KMVC,
@@ -771,7 +763,7 @@ static const audio_db_t audio_db[] = {
 {
   {
     0x2000,
-    meFOURCC('m', 's', 0x20, 0x00),
+    ME_FOURCC('m', 's', 0x20, 0x00),
     0
   },
   BUF_AUDIO_A52,
@@ -780,9 +772,9 @@ static const audio_db_t audio_db[] = {
 {
   {
     0x50, 0x55,
-    meFOURCC('.','m','p','3'),
-    meFOURCC('m', 's', 0, 0x55),
-    meFOURCC('M','P','3',' '),
+    ME_FOURCC('.','m','p','3'),
+    ME_FOURCC('m', 's', 0, 0x55),
+    ME_FOURCC('M','P','3',' '),
     0
   },
   BUF_AUDIO_MPEG,
@@ -790,8 +782,8 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    meFOURCC('t','w','o','s'),
-    meFOURCC('i','n','2','4'),
+    ME_FOURCC('t','w','o','s'),
+    ME_FOURCC('i','n','2','4'),
     0
   },
   BUF_AUDIO_LPCM_BE,
@@ -800,8 +792,8 @@ static const audio_db_t audio_db[] = {
 {
   {
     0x01,
-    meFOURCC('r','a','w',' '),
-    meFOURCC('s','o','w','t'),
+    ME_FOURCC('r','a','w',' '),
+    ME_FOURCC('s','o','w','t'),
     0
   },
   BUF_AUDIO_LPCM_LE,
@@ -852,7 +844,7 @@ static const audio_db_t audio_db[] = {
 {
   {
     0x02, 
-    meFOURCC('m', 's', 0, 0x02),
+    ME_FOURCC('m', 's', 0, 0x02),
     0
   },
   BUF_AUDIO_MSADPCM,
@@ -861,7 +853,7 @@ static const audio_db_t audio_db[] = {
 {
   {
     0x11,
-    meFOURCC('m', 's', 0, 0x11),
+    ME_FOURCC('m', 's', 0, 0x11),
     0
   },
   BUF_AUDIO_MSIMAADPCM,
@@ -879,8 +871,8 @@ static const audio_db_t audio_db[] = {
     /* these formattags are used by Vorbis ACM encoder and
        supported by NanDub, a variant of VirtualDub. */
     0x674f, 0x676f, 0x6750, 0x6770, 0x6751, 0x6771,
-    meFOURCC('O','g','g','S'),
-    meFOURCC('O','g','g','V'),
+    ME_FOURCC('O','g','g','S'),
+    ME_FOURCC('O','g','g','V'),
     0
   },
   BUF_AUDIO_VORBIS,
@@ -937,7 +929,7 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    meFOURCC('i', 'm', 'a', '4'),
+    ME_FOURCC('i', 'm', 'a', '4'),
     0
   },
   BUF_AUDIO_QTIMAADPCM,
@@ -945,8 +937,8 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    meFOURCC('m', 'a', 'c', '3'),
-    meFOURCC('M', 'A', 'C', '3'),
+    ME_FOURCC('m', 'a', 'c', '3'),
+    ME_FOURCC('M', 'A', 'C', '3'),
     0
   },
   BUF_AUDIO_MAC3,
@@ -954,8 +946,8 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    meFOURCC('m', 'a', 'c', '6'),
-    meFOURCC('M', 'A', 'C', '6'),
+    ME_FOURCC('m', 'a', 'c', '6'),
+    ME_FOURCC('M', 'A', 'C', '6'),
     0
   },
   BUF_AUDIO_MAC6,
@@ -963,7 +955,7 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    meFOURCC('Q', 'D', 'M', 'C'),
+    ME_FOURCC('Q', 'D', 'M', 'C'),
     0
   },
   BUF_AUDIO_QDESIGN1,
@@ -971,7 +963,7 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    meFOURCC('Q', 'D', 'M', '2'),
+    ME_FOURCC('Q', 'D', 'M', '2'),
     0
   },
   BUF_AUDIO_QDESIGN2,
@@ -980,11 +972,11 @@ static const audio_db_t audio_db[] = {
 {
   {
     0xFF,
-    meFOURCC('m', 'p', '4', 'a'),
-    meFOURCC('M', 'P', '4', 'A'),
-    meFOURCC('r', 'a', 'a', 'c'),
-    meFOURCC('r', 'a', 'c', 'p'),
-    meFOURCC('A', 'A', 'C', ' '), 
+    ME_FOURCC('m', 'p', '4', 'a'),
+    ME_FOURCC('M', 'P', '4', 'A'),
+    ME_FOURCC('r', 'a', 'a', 'c'),
+    ME_FOURCC('r', 'a', 'c', 'p'),
+    ME_FOURCC('A', 'A', 'C', ' '), 
     0
   },
   BUF_AUDIO_AAC,
@@ -992,7 +984,7 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    meFOURCC('d', 'n', 'e', 't'),
+    ME_FOURCC('d', 'n', 'e', 't'),
     0
   },
   BUF_AUDIO_DNET,
@@ -1000,7 +992,7 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    meFOURCC('s', 'i', 'p', 'r'),
+    ME_FOURCC('s', 'i', 'p', 'r'),
     0
   },
   BUF_AUDIO_SIPRO,
@@ -1008,7 +1000,7 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    meFOURCC('c', 'o', 'o', 'k'),
+    ME_FOURCC('c', 'o', 'o', 'k'),
     0
   },
   BUF_AUDIO_COOK,
@@ -1016,7 +1008,7 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    meFOURCC('a', 't', 'r', 'c'),
+    ME_FOURCC('a', 't', 'r', 'c'),
     0
   },
   BUF_AUDIO_ATRK,
@@ -1024,7 +1016,7 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    meFOURCC('Q', 'c', 'l', 'p'),
+    ME_FOURCC('Q', 'c', 'l', 'p'),
     0
   },
   BUF_AUDIO_QCLP,
@@ -1033,7 +1025,7 @@ static const audio_db_t audio_db[] = {
 {
   {
     0x7,
-    meFOURCC('u', 'l', 'a', 'w'),
+    ME_FOURCC('u', 'l', 'a', 'w'),
     0
   },
   BUF_AUDIO_MULAW,
@@ -1042,7 +1034,7 @@ static const audio_db_t audio_db[] = {
 {
   {
     0x6,
-    meFOURCC('a', 'l', 'a', 'w'),
+    ME_FOURCC('a', 'l', 'a', 'w'),
     0
   },
   BUF_AUDIO_ALAW,
@@ -1050,7 +1042,7 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    meFOURCC('a', 'g', 's', 'm'),
+    ME_FOURCC('a', 'g', 's', 'm'),
     0
   },
   BUF_AUDIO_GSM610,
@@ -1072,7 +1064,7 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    meFOURCC('l', 'p', 'c', 'J'),
+    ME_FOURCC('l', 'p', 'c', 'J'),
     0
   },
   BUF_AUDIO_14_4,
@@ -1080,7 +1072,7 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    meFOURCC('2', '8', '_', '8'),
+    ME_FOURCC('2', '8', '_', '8'),
     0
   },
   BUF_AUDIO_28_8,
@@ -1095,7 +1087,7 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    meFOURCC('a', 'l', 'a', 'c'),
+    ME_FOURCC('a', 'l', 'a', 'c'),
   },
   BUF_AUDIO_ALAC,
   "Apple Lossless Audio Codec"
