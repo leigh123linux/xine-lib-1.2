@@ -39,11 +39,7 @@ typedef struct {
   uint32_t decoded_crc32; /* CRC32 of the decoded data */
 } __attribute__((packed)) wvheader_t;
 
-#ifdef WORDS_BIGENDIAN
-static const uint32_t wvpk_signature = ('k' + ('p' << 8) + ('v' << 16) + ('w' << 24));
-#else
-static const uint32_t wvpk_signature = ('w' + ('v' << 8) + ('p' << 16) + ('k' << 24));
-#endif
+static const uint32_t wvpk_signature = ME_FOURCC('w', 'v', 'p', 'k')
 
 void *demux_wv_init_plugin (xine_t *const xine, void *const data);
 void *decoder_wavpack_init_plugin (xine_t *xine, void *data);
