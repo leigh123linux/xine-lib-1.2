@@ -2096,7 +2096,8 @@ CC_ATTRIBUTE_ALIGNED
 
 CC_ATTRIBUTE_PACKED(
   [AC_DEFINE([XINE_PACKED], [__attribute__((packed))], [Mark a structure as being packed])],
-  [AC_DEFINE([XINE_PACKED], [], [Dummy mark a structure as being packed])]
+  [AC_MSG_WARN([Your compiler doesn't support __attribute__((packed)); xine might not work as expected.])
+   AC_DEFINE([XINE_PACKED], [], [Dummy mark a structure as being packed])]
 )
 
 CC_ATTRIBUTE_VISIBILITY([protected], [visibility_export="protected"],
