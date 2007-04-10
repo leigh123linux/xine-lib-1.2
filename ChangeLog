@@ -1,4 +1,5 @@
 xine-lib (1.1.6) [UNRELEASED]
+  * Split the DirectFB plugin into X11 and non-X versions.
 
 xine-lib (1.1.5)
   * Security fixes:
