@@ -22,7 +22,7 @@ libdvdnav			0.1.10			Michael Roitzsch
 libfaad				cvs-2005-01-30 [GPL]    Miguel Freitas
 libmad				0.15.1b			Miguel Freitas
 libmpeg2			0.2.1 [*]
-libmusepack			svn 13/01/05		James Stembridge
+libmpcdec			1.2.5
 libvcd				0.7.21 [o]
 nosefart                        1.92                    Mike Melanson
 tvtime				0.9.8.4			Miguel Freitas
