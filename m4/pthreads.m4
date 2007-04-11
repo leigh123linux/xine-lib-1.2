@@ -41,7 +41,7 @@ AC_DEFUN([CC_PTHREAD_FLAGS], [
      AC_LINK_IFELSE(
        [AC_LANG_PROGRAM(
           [[#include <pthread.h>
-	    void *fakethread(void *arg) { }
+	    void *fakethread(void *arg) { return NULL; }
 	    pthread_t fakevariable;
 	  ]],
           [[pthread_create(&fakevariable, NULL, &fakethread, NULL);]]
