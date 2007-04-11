@@ -2,13 +2,11 @@ include $(top_srcdir)/misc/Makefile.common
 
 SUBDIRS = codebook
 
-libdir = $(XINE_PLUGINDIR)
-
 if BUILD_FAAD
 faad_module = xineplug_decode_faad.la
 endif
 
-lib_LTLIBRARIES = $(faad_module)
+xineplug_LTLIBRARIES = $(faad_module)
 
 VPATH = @srcdir@:@srcdir@/codebook:
 
@@ -52,9 +50,9 @@ xineplug_decode_faad_la_SOURCES = \
 	ssr_ipqf.c \
 	syntax.c \
 	tns.c \
-	xine_decoder.c
+	xine_faad_decoder.c
 
-xineplug_decode_faad_la_LDFLAGS = -avoid-version -module
+xineplug_decode_faad_la_LDFLAGS = $(xineplug_ldflags)
 xineplug_decode_faad_la_LIBADD = -lm $(XINE_LIB)
 
 noinst_HEADERS = \

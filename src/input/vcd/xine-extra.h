@@ -80,11 +80,7 @@ bool xine_log_init(xine_t *this);
   an error, such as logging wasn't initialized. On error, nothing is 
   logged.
 */
-bool xine_log_msg(const char *format, ...)
-#ifdef __GNUC__
-__attribute__((format (printf, 1, 2)))
-#endif
-;
+bool xine_log_msg(const char *format, ...) XINE_FORMAT_PRINTF(1, 2);
 
 /*! This routine is like xine_log without any xine-specific paramenters.
   Before calling this routine you should have set up a xine log buffer via
@@ -96,11 +92,7 @@ __attribute__((format (printf, 1, 2)))
   an error, such as logging wasn't initialized. On error, nothing is 
   logged.
 */
-bool xine_log_err(const char *format, ...)
-#ifdef __GNUC__
-__attribute__((format (printf, 1, 2)))
-#endif
-;
+bool xine_log_err(const char *format, ...) XINE_FORMAT_PRINTF(1, 2);
 
 /* Free all (num_mrls) MRLS. */
 void xine_free_mrls(int *num_mrls, xine_mrl_t **mrls);

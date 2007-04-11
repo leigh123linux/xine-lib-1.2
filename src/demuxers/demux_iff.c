@@ -148,7 +148,7 @@ typedef struct {
  * different decoding deltas
  */
 
-static int8_t delta_decode_block(int8_t *source, int32_t n, int8_t *dest, int8_t x, int8_t *table) {
+static int8_t delta_decode_block(const int8_t *source, int32_t n, int8_t *dest, int8_t x, const int8_t *table) {
   int32_t i;
   int lim = n * 2;
 
@@ -163,7 +163,7 @@ static int8_t delta_decode_block(int8_t *source, int32_t n, int8_t *dest, int8_t
 }
 
 /* Decode a complete delta encoded array */
-static void delta_decode(int8_t *dest, int8_t *source, int32_t n, int8_t *table){
+static void delta_decode(int8_t *dest, const int8_t *source, int32_t n, const int8_t *table){
   delta_decode_block(&source[2], n-2, dest, source[1], table);
 }
 

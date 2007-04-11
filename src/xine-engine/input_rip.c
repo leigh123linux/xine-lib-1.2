@@ -83,12 +83,13 @@ typedef struct {
 
   xine_stream_t    *stream;
   FILE             *file;              /* destination file */
-  int               regular;           /* permit reading from the file */
 
   char             *preview;           /* preview data */
   off_t             preview_size;      /* size of read preview data */
   off_t             curpos;            /* current position */
   off_t             savepos;           /* amount of already saved data */
+
+  int               regular;           /* permit reading from the file */
 } rip_input_plugin_t;
 
 

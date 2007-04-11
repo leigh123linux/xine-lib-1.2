@@ -174,7 +174,7 @@ typedef struct {
 }sXYData;
 
 
-static sIIRCoefficients iir_cf[] = {
+static const sIIRCoefficients iir_cf[] = {
   /* 31 Hz*/
   { EQ_REAL(9.9691562441e-01), EQ_REAL(1.5421877947e-03), EQ_REAL(1.9968961468e+00) },
   /* 62 Hz*/
@@ -281,11 +281,12 @@ typedef struct {
 struct audio_fifo_s {
   audio_buffer_t    *first;
   audio_buffer_t    *last;
-  int                num_buffers;
 
   pthread_mutex_t    mutex;
   pthread_cond_t     not_empty;
   pthread_cond_t     empty;
+
+  int                num_buffers;
 };
 
 

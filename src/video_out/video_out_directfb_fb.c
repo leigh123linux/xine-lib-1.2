@@ -1,7 +1,7 @@
-/* 
- * Copyright (C) 2000-2004 the xine project
+/*
+ * Copyright (C) 2007 the xine project
  * 
- * This file is part of xine, a unix video player.
+ * This file is part of xine, a free video player.
  * 
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,26 +12,14 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * WIN32 PORT,
+ *
+ * DirectFB output plugin (console version wrapper)
  */
 
-#ifndef _SOCKET_H
-#define _SOCKET_H
-
-#include <fcntl.h> /* Not sure that this is needed */
-
-#include <io.h> /* open, close, ... */
-#include <winsock.h>
-
-#define SIGPIPE  13
-
-#ifndef SIGALRM
-#define SIGALRM 14
-#endif
-
-#endif /* _SOCKET_H */
+#undef DIRECTFB_X11
+#include "video_out_directfb.c"

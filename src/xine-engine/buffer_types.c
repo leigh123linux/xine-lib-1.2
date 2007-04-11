@@ -49,17 +49,17 @@
 typedef struct video_db_s {
    uint32_t fourcc[20];
    uint32_t buf_type;
-   char *name;
+   const char *name;
 } video_db_t;
 
 typedef struct audio_db_s {
    uint32_t formattag[10];
    uint32_t buf_type;
-   char *name;
+   const char *name;
 } audio_db_t;
 
 
-static video_db_t video_db[] = {
+static const video_db_t video_db[] = {
 {
   {
     meFOURCC('m', 'p', 'e', 'g'),
@@ -767,7 +767,7 @@ static video_db_t video_db[] = {
 };
 
 
-static audio_db_t audio_db[] = {
+static const audio_db_t audio_db[] = {
 {
   {
     0x2000,

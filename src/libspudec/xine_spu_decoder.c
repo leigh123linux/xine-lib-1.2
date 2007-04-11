@@ -49,7 +49,7 @@
 #define LOG_BUTTON 1
 */
 
-static clut_t default_clut[] = {
+static const clut_t default_clut[] = {
   CLUT_Y_CR_CB_INIT(0x00, 0x80, 0x80),
   CLUT_Y_CR_CB_INIT(0xbf, 0x80, 0x80),
   CLUT_Y_CR_CB_INIT(0x10, 0x80, 0x80),

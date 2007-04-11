@@ -521,7 +521,7 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
     break;
   
   case XINE_PARAM_EARLY_FINISHED_EVENT:
-    stream->early_finish_event = value;
+    stream->early_finish_event = !!value;
     break;
   
   case XINE_PARAM_DELAY_FINISHED_EVENT:
@@ -529,7 +529,7 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
     break;
   
   case XINE_PARAM_GAPLESS_SWITCH:
-    stream->gapless_switch = value;
+    stream->gapless_switch = !!value;
     break;
     
   default:

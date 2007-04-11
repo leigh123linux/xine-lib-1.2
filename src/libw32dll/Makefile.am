@@ -9,9 +9,7 @@ w32dll_codec = xineplug_decode_w32dll.la
 qt_codec = xineplug_decode_qt.la
 endif
 
-libdir = $(XINE_PLUGINDIR)
-
-lib_LTLIBRARIES = $(w32dll_codec) $(qt_codec)
+xineplug_LTLIBRARIES = $(w32dll_codec) $(qt_codec)
 
 EXTRA_DIST = common.c
 

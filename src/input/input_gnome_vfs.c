@@ -304,7 +304,7 @@ gnomevfs_klass_dispose (input_class_t *this_gen)
 	g_free (this);
 }
 
-static char * ignore_scheme[] = { "cdda", "file", "http" };
+static const char *const ignore_scheme[] = { "cdda", "file", "http" };
 
 static input_plugin_t *
 gnomevfs_klass_get_instance (input_class_t *klass_gen, xine_stream_t *stream,

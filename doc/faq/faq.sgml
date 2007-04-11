@@ -498,10 +498,10 @@
    <sect2 id="win32build">
     <title>How to compile xine for Windows?</title>
     <para>
-     For compiling xine under Windows with MinGW, CygWin or MS Visual C see <ulink url="http://xine.cvs.sourceforge.net/*checkout*/xine/xine-lib/doc/README.WIN32"><filename>README.WIN32</filename></ulink>.
+     For compiling xine under Windows with MinGW, CygWin or MS Visual C see <ulink url="http://hg.debian.org/hg/xine-lib/xine-lib?cmd=file;file=doc/README.WIN32;filenode=-1;style=raw"><filename>README.WIN32</filename></ulink>.
     </para>
     <para>
-     For cross-compiling xine under comfortable unix-like environment with MinGW see <ulink url="http://xine.cvs.sourceforge.net/*checkout*/xine/xine-lib/doc/README.MINGWCROSS"><filename>README.MINGWCROSS</filename></ulink>.
+     For cross-compiling xine under comfortable unix-like environment with MinGW see <ulink url="http://hg.debian.org/hg/xine-lib/xine-lib?cmd=file;file=doc/README.MINGWCROSS;filenode=-1;style=raw"><filename>README.MINGWCROSS</filename></ulink>.
     </para>
    </sect2>
 

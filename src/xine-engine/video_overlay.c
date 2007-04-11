@@ -51,6 +51,8 @@ typedef struct video_overlay_showing_s {
 typedef struct video_overlay_s {
   video_overlay_manager_t   video_overlay;
   
+  xine_t                   *xine;
+
   pthread_mutex_t           events_mutex;  
   video_overlay_events_t    events[MAX_EVENTS];
   pthread_mutex_t           objects_mutex;  
@@ -58,7 +60,6 @@ typedef struct video_overlay_s {
   pthread_mutex_t           showing_mutex;
   video_overlay_showing_t   showing[MAX_SHOWING];  
   int                       showing_changed;
-  xine_t                   *xine;
 } video_overlay_t;
 
 

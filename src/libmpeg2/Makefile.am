@@ -1,10 +1,6 @@
 include $(top_srcdir)/misc/Makefile.common
 
-AM_CFLAGS = $(LIBMPEG2_CFLAGS)
-
-libdir = $(XINE_PLUGINDIR)
-
-lib_LTLIBRARIES = xineplug_decode_mpeg2.la
+xineplug_LTLIBRARIES = xineplug_decode_mpeg2.la
 
 xineplug_decode_mpeg2_la_SOURCES = \
 	cpu_state.c \
@@ -23,12 +19,12 @@ xineplug_decode_mpeg2_la_SOURCES = \
 	slice_xvmc.c \
 	slice_xvmc_vld.c \
 	stats.c \
-	xine_decoder.c \
+	xine_mpeg2_decoder.c \
 	libmpeg2_accel.c
 
 xineplug_decode_mpeg2_la_LIBADD = $(MLIB_LIBS) $(XINE_LIB) -lm
-xineplug_decode_mpeg2_la_CFLAGS = $(VISIBILITY_FLAG)
-xineplug_decode_mpeg2_la_LDFLAGS = -avoid-version -module
+xineplug_decode_mpeg2_la_CFLAGS = $(VISIBILITY_FLAG) $(LIBMPEG2_CFLAGS)
+xineplug_decode_mpeg2_la_LDFLAGS = $(xineplug_ldflags)
 
 noinst_HEADERS = vlc.h mpeg2.h xvmc.h xvmc_vld.h mpeg2_internal.h idct_mlib.h vis.h \
 	libmpeg2_accel.h

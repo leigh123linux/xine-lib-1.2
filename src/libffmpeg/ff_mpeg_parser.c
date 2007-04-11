@@ -27,7 +27,7 @@
 /*
 #define LOG
 */
-#include "mpeg_parser.h"
+#include "ff_mpeg_parser.h"
 
 /* mpeg frame rate table from lavc */
 static const int frame_rate_tab[][2] = {

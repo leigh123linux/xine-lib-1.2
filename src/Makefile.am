@@ -20,15 +20,10 @@ SUBDIRS = \
 	libdts \
 	libmad \
 	libw32dll \
-	liblpcm \
 	libxinevdec \
 	libxineadec \
-	libvorbis \
-	libtheora \
-	libspeex \
 	libreal \
 	libfaad \
-	libflac \
         libmusepack \
 	post \
 	combined

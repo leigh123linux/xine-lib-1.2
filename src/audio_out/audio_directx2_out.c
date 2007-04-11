@@ -151,10 +151,7 @@ static int buffer_ready(dx2_driver_t *this);
 
 
 /* popup a dialog with error */
-static void
-#ifdef __GNUC__
-	    __attribute__((format (printf, 1, 2)))
-#endif
+static void XINE_FORMAT_PRINTF(1, 2)
 	    error_message(const char *fmt, ...) {
   char message[256];
   va_list ap;

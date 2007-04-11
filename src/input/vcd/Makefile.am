@@ -2,14 +2,12 @@ include $(top_srcdir)/misc/Makefile.common
 
 SUBDIRS = libcdio libvcd
 
-libdir = $(XINE_PLUGINDIR)
-
 vcd_SRCS = xineplug_inp_vcd.c vcdplayer.c vcdio.c xine-extra.c
 
 EXTRA_DIST = $(vcd_SRCS)
 
 if ENABLE_VCD
-lib_LTLIBRARIES = xineplug_inp_vcd.la
+xineplug_LTLIBRARIES = xineplug_inp_vcd.la
 
 AM_CFLAGS = $(LIBCDIO_CFLAGS) $(LIBVCD_CFLAGS)
 

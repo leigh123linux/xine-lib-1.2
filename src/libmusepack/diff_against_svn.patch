@@ -1,5 +1,6 @@
 Use xine's inttypes.
 The file config_types.h is generated from config_types.h.in in musepack SVN.
+Check for previous swap32 definition before writing a new swap32 function.
 
 Index: src/libmusepack/musepack/config_types.h
 ===================================================================
@@ -33,3 +34,22 @@ diff -u -r1.1 synth_filter.c
  /* C O N S T A N T S */
  #undef _
  
+diff -r d25b274e6e6a src/libmusepack/musepack/internal.h
+--- a/src/libmusepack/musepack/internal.h	Wed Apr 04 13:41:11 2007 +0200
++++ b/src/libmusepack/musepack/internal.h	Wed Apr 04 13:42:45 2007 +0200
+@@ -8,6 +8,7 @@ enum {
+     MPC_DECODER_SYNTH_DELAY = 481
+ };
+ 
++#ifndef swap32
+ /// Big/little endian 32 bit byte swapping routine.
+ static inline
+ mpc_uint32_t swap32(mpc_uint32_t val) {
+@@ -16,6 +17,7 @@ mpc_uint32_t swap32(mpc_uint32_t val) {
+         (mpc_uint32_t)src[0] | 
+         ((mpc_uint32_t)src[1] << 8) | ((mpc_uint32_t)src[2] << 16) | ((mpc_uint32_t)src[3] << 24);
+ }
++#endif
+ 
+ /// Searches for a ID3v2-tag and reads the length (in bytes) of it.
+ /// \param reader supplying raw stream data

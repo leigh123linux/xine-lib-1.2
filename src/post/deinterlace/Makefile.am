@@ -4,9 +4,7 @@ SUBDIRS = plugins
 
 EXTRA_DIST = 
 
-libdir = $(XINE_PLUGINDIR)/post
-
-lib_LTLIBRARIES = xineplug_post_tvtime.la
+xinepost_LTLIBRARIES = xineplug_post_tvtime.la
 
 xineplug_post_tvtime_la_SOURCES = xine_plugin.c \
 	deinterlace.c pulldown.c speedy.c tvtime.c 
