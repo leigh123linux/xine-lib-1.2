@@ -2588,7 +2588,6 @@ src/libfaad/codebook/Makefile
 src/libffmpeg/Makefile
 src/libmad/Makefile
 src/libmpeg2/Makefile
-src/libmusepack/Makefile
 src/libspudec/Makefile
 src/libspucc/Makefile
 src/libspucmml/Makefile

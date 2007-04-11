@@ -24,6 +24,5 @@ SUBDIRS = \
 	libxineadec \
 	libreal \
 	libfaad \
-        libmusepack \
 	post \
 	combined
