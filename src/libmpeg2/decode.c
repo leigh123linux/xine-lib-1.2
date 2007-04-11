@@ -598,13 +598,63 @@ fprintf(stderr, "AFD changed from %d to %d\n", mpeg2dec->afd_value_reported, mpe
     return is_frame_done;
 }
 
+static inline int find_start_code (mpeg2dec_t * mpeg2dec,
+                                   uint8_t ** current, uint8_t * limit)
+{
+    uint8_t * p;
+
+    if (*current >= limit)
+	return 0;
+    if (mpeg2dec->shift == 0x00000100)
+	return 1;
+
+    mpeg2dec->shift = (mpeg2dec->shift | *(*current)++) << 8;
+
+    if (*current >= limit)
+	return 0;
+    if (mpeg2dec->shift == 0x00000100)
+	return 1;
+
+    mpeg2dec->shift = (mpeg2dec->shift | *(*current)++) << 8;
+
+    if (*current >= limit)
+	return 0;
+    if (mpeg2dec->shift == 0x00000100)
+	return 1;
+
+    limit--;
+
+    if (*current >= limit) {
+	mpeg2dec->shift = (mpeg2dec->shift | *(*current)++) << 8;
+	return 0;
+    }
+
+    p = *current;
+
+    while (p < limit && (p = (uint8_t *)memchr(p, 0x01, limit - p))) {
+	if (p[-2] || p[-1])
+	    p += 3;
+	else {
+	    *current = ++p;
+	    return 1;
+	}
+    }
+
+    *current = ++limit;
+    p = limit - 3;
+    mpeg2dec->shift = (mpeg2dec->shift | *p++) << 8;
+    mpeg2dec->shift = (mpeg2dec->shift | *p++) << 8;
+    mpeg2dec->shift = (mpeg2dec->shift | *p++) << 8;
+
+    return 0;
+}
+
 static inline uint8_t * copy_chunk (mpeg2dec_t * mpeg2dec,
 				    uint8_t * current, uint8_t * end)
 {
-    uint32_t shift;
-    uint8_t * chunk_ptr;
     uint8_t * limit;
-    uint8_t byte;
+    uint8_t * data = current;
+    int found, bite;
 
     /* sequence end code 0xb7 doesn't have any data and there might be the case
      * that no start code will follow this code for quite some time (e. g. in case
@@ -618,37 +668,32 @@ static inline uint8_t * copy_chunk (mpeg2dec_t * mpeg2dec,
 	return current;
     }
 
-    shift = mpeg2dec->shift;
-    chunk_ptr = mpeg2dec->chunk_ptr;
-    limit = current + (mpeg2dec->chunk_buffer + BUFFER_SIZE - chunk_ptr);
+    limit = current + (mpeg2dec->chunk_buffer + BUFFER_SIZE - mpeg2dec->chunk_ptr);
     if (limit > end)
 	limit = end;
 
-    while (1) {
+    found = find_start_code(mpeg2dec, &current, limit);
+    bite = current - data;
+    if (bite) {
+	xine_fast_memcpy(mpeg2dec->chunk_ptr, data, bite);
+	mpeg2dec->chunk_ptr += bite;
+    }
 
-	byte = *current++;
-	if (shift != 0x00000100) {
-	    shift = (shift | byte) << 8;
-	    *chunk_ptr++ = byte;
-	    if (current < limit)
-		continue;
-	    if (current == end) {
-		mpeg2dec->chunk_ptr = chunk_ptr;
-		mpeg2dec->shift = shift;
-		return NULL;
-	    } else {
-		/* we filled the chunk buffer without finding a start code */
-		mpeg2dec->code = 0xb4;	/* sequence_error_code */
-		mpeg2dec->chunk_ptr = mpeg2dec->chunk_buffer;
-		return current;
-	    }
-	}
-	mpeg2dec->code = byte;
-	mpeg2dec->chunk_size = chunk_ptr - mpeg2dec->chunk_buffer - 3;
+    if (found) {
+	mpeg2dec->code = *current++;
+	mpeg2dec->chunk_size = mpeg2dec->chunk_ptr - mpeg2dec->chunk_buffer - 3;
 	mpeg2dec->chunk_ptr = mpeg2dec->chunk_buffer;
 	mpeg2dec->shift = 0xffffff00;
 	return current;
     }
+ 
+    if (current == end)
+	return NULL;
+
+    /* we filled the chunk buffer without finding a start code */
+    mpeg2dec->code = 0xb4;	/* sequence_error_code */
+    mpeg2dec->chunk_ptr = mpeg2dec->chunk_buffer;
+    return current;
 }
 
 int mpeg2_decode_data (mpeg2dec_t * mpeg2dec, uint8_t * current, uint8_t * end,
