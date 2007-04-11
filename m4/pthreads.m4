@@ -36,11 +36,15 @@ AC_DEFUN([CC_PTHREAD_FLAGS], [
     [ac_save_CFLAGS="$CFLAGS"
      ac_save_LIBS="$LIBS"
      CFLAGS="$CFLAGS $cc_cv_werror $PTHREAD_CFLAGS"
+     
      LIBS="$LIBS $PTHREAD_LIBS"
-     AC_COMPILE_IFELSE(
+     AC_LINK_IFELSE(
        [AC_LANG_PROGRAM(
-          [[#include <pthread.h>]],
-          [[pthread_create(NULL, NULL, NULL, NULL);]]
+          [[#include <pthread.h>
+	    void *fakethread(void *arg) { }
+	    pthread_t fakevariable;
+	  ]],
+          [[pthread_create(&fakevariable, NULL, &fakethread, NULL);]]
         )],
        [cc_cv_pthreads=yes],
        [cc_cv_pthreads=no])

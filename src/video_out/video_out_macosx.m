@@ -170,7 +170,9 @@ static void macosx_update_frame_format(vo_driver_t *vo_driver, vo_frame_t *vo_fr
 
     }
 
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     [this->view setVideoSize:video_size];
+    [pool release];
 
     if((format == XINE_IMGFMT_YV12
         && (frame->vo_frame.base[0] == NULL 
@@ -189,29 +191,35 @@ static void macosx_update_frame_format(vo_driver_t *vo_driver, vo_frame_t *vo_fr
 static void macosx_display_frame(vo_driver_t *vo_driver, vo_frame_t *vo_frame) {
   macosx_driver_t  *driver = (macosx_driver_t *)vo_driver;
   macosx_frame_t   *frame = (macosx_frame_t *)vo_frame;
-  char *texture_buffer = [driver->view getTextureBuffer];
-
-  switch (vo_frame->format) {
-    case XINE_IMGFMT_YV12: 
-      yv12_to_yuy2 (vo_frame->base[0], vo_frame->pitches[0],
-                    vo_frame->base[1], vo_frame->pitches[1],
-                    vo_frame->base[2], vo_frame->pitches[2],
-                    texture_buffer, vo_frame->width * 2,
-                    vo_frame->width, vo_frame->height, 0);
+  char *texture_buffer;
   
-      [driver->view displayTexture];
-      break;
-    case XINE_IMGFMT_YUY2:
-      xine_fast_memcpy (texture_buffer, vo_frame->base[0], 
-	                    vo_frame->pitches[0] * vo_frame->height * 2);
-      [driver->view displayTexture];
-      break;
-    default:
-      /* unsupported frame format, do nothing. */
-      break;
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+
+  if ((texture_buffer = [driver->view textureBuffer]) != NULL) {
+    switch (vo_frame->format) {
+      case XINE_IMGFMT_YV12: 
+        yv12_to_yuy2 (vo_frame->base[0], vo_frame->pitches[0],
+                      vo_frame->base[1], vo_frame->pitches[1],
+                      vo_frame->base[2], vo_frame->pitches[2],
+                      (unsigned char *)texture_buffer,
+                      vo_frame->width * 2,
+                      vo_frame->width, vo_frame->height, 0);
+
+        [driver->view updateTexture];
+        break;
+      case XINE_IMGFMT_YUY2:
+        xine_fast_memcpy (texture_buffer, vo_frame->base[0], 
+	                  vo_frame->pitches[0] * vo_frame->height * 2);
+        [driver->view updateTexture];
+        break;
+      default:
+        /* unsupported frame format, do nothing. */
+        break;
+    }
   }
 
   frame->vo_frame.free(&frame->vo_frame);
+  [pool release];
 }
 
 static void macosx_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
@@ -228,11 +236,11 @@ static void macosx_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
     if (frame->format == XINE_IMGFMT_YV12)
       /* TODO: It may be possible to accelerate the blending via Quartz
        * Extreme ... */
-      blend_yuv(frame->vo_frame.base, overlay,
+      _x_blend_yuv(frame->vo_frame.base, overlay,
           frame->width, frame->height, frame->vo_frame.pitches,
           &this->alphablend_extra_data);
     else
-      blend_yuy2(frame->vo_frame.base[0], overlay,
+      _x_blend_yuy2(frame->vo_frame.base[0], overlay,
           frame->width, frame->height, frame->vo_frame.pitches[0],
           &this->alphablend_extra_data);
   }
@@ -299,6 +307,7 @@ static void macosx_dispose(vo_driver_t *vo_driver) {
   macosx_driver_t *this = (macosx_driver_t *) vo_driver;
 
   _x_alphablend_free(&this->alphablend_extra_data);
+  [this->view releaseInMainThread];
 
   free(this);
 }
@@ -318,7 +327,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *driver_class, const void *
   driver->config = class->config;
   driver->xine   = class->xine;
   driver->ratio  = XINE_VO_ASPECT_AUTO;
-  driver->view   = view;
+  driver->view   = [view retain];
   
   driver->vo_driver.get_capabilities     = macosx_get_capabilities;
   driver->vo_driver.alloc_frame          = macosx_alloc_frame;
@@ -377,7 +386,7 @@ static const vo_info_t vo_info_macosx = {
   XINE_VISUAL_TYPE_MACOSX   /* Visual type */
 };
 
-plugin_info_t xine_plugin_info[] = {
+plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
   /* work around the problem that dlclose() is not allowed to
    * get rid of an image module which contains objective C code and simply
