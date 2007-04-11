@@ -31,6 +31,8 @@
 # include "config.h"
 #endif
 
+#include "attributes.h"
+
 #include "goom_graphic.h"
 
 /*	Warning:  at this writing, the version of GAS packaged
