@@ -1,5 +1,6 @@
 xine-lib (1.1.6) [UNRELEASED]
   * Split the DirectFB plugin into X11 and non-X versions.
+  * Improve the Mac OS X video output plugin. Thanks to Matt Messier.
 
 xine-lib (1.1.5)
   * Security fixes:
