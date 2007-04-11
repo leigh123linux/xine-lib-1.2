@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2004, The Musepack Development Team
+  Copyright (c) 2005, The Musepack Development Team
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -35,29 +35,29 @@
 /// \file mpc_reader.c
 /// Contains implementations for simple file-based mpc_reader
 
-#include "musepack/musepack.h"
+#include <mpcdec/mpcdec.h>
 
 /// mpc_reader callback implementations
 static mpc_int32_t
 read_impl(void *data, void *ptr, mpc_int32_t size)
 {
-    mpc_reader *d = (mpc_reader *) data;
+    mpc_reader_file *d = (mpc_reader_file *) data;
 
-    return fread(ptr, 1, size, d->file);
+    return (mpc_int32_t) fread(ptr, 1, size, d->file);
 }
 
 static mpc_bool_t
-seek_impl(void *data, int offset)
+seek_impl(void *data, mpc_int32_t offset)
 {
-    mpc_reader *d = (mpc_reader *) data;
+    mpc_reader_file *d = (mpc_reader_file *) data;
 
-    return d->is_seekable ? !fseek(d->file, offset, SEEK_SET) : FALSE;
+    return d->is_seekable ? fseek(d->file, offset, SEEK_SET) == 0 : FALSE;
 }
 
 static mpc_int32_t
 tell_impl(void *data)
 {
-    mpc_reader *d = (mpc_reader *) data;
+    mpc_reader_file *d = (mpc_reader_file *) data;
 
     return ftell(d->file);
 }
@@ -65,7 +65,7 @@ tell_impl(void *data)
 static mpc_int32_t
 get_size_impl(void *data)
 {
-    mpc_reader *d = (mpc_reader *) data;
+    mpc_reader_file *d = (mpc_reader_file *) data;
 
     return d->file_size;
 }
@@ -73,24 +73,24 @@ get_size_impl(void *data)
 static mpc_bool_t
 canseek_impl(void *data)
 {
-    mpc_reader *d = (mpc_reader *) data;
+    mpc_reader_file *d = (mpc_reader_file *) data;
 
     return d->is_seekable;
 }
 
 void
-mpc_reader_setup_file_reader(mpc_reader *reader, FILE *input)
+mpc_reader_setup_file_reader(mpc_reader_file *p_reader, FILE *input)
 {
-    reader->seek = seek_impl;
-    reader->read = read_impl;
-    reader->tell = tell_impl;
-    reader->get_size = get_size_impl;
-    reader->canseek = canseek_impl;
-    reader->data = reader; // point back to ourselves
+    p_reader->reader.seek = seek_impl;
+    p_reader->reader.read = read_impl;
+    p_reader->reader.tell = tell_impl;
+    p_reader->reader.get_size = get_size_impl;
+    p_reader->reader.canseek = canseek_impl;
+    p_reader->reader.data = p_reader; // point back to ourselves
 
-    reader->file = input;
-    reader->is_seekable = TRUE;
-    fseek(reader->file, 0, SEEK_END);
-    reader->file_size = ftell(reader->file);
-    fseek(reader->file, 0, SEEK_SET);
+    p_reader->file = input;
+    p_reader->is_seekable = TRUE;
+    fseek(input, 0, SEEK_END);
+    p_reader->file_size = ftell(input);
+    fseek(input, 0, SEEK_SET);
 }

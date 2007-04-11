@@ -1,8 +1,42 @@
-/// \file musepack.h
-/// Top level include file for libmusepack.
+/*
+  Copyright (c) 2005, The Musepack Development Team
+  All rights reserved.
 
-#ifndef _musepack_h_
-#define _musepack_h_
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are
+  met:
+
+  * Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+
+  * Redistributions in binary form must reproduce the above
+  copyright notice, this list of conditions and the following
+  disclaimer in the documentation and/or other materials provided
+  with the distribution.
+
+  * Neither the name of the The Musepack Development Team nor the
+  names of its contributors may be used to endorse or promote
+  products derived from this software without specific prior
+  written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+/// \file mpcdec.h
+/// Top level include file for libmpcdec.
+
+#ifndef _mpcdec_h_
+#define _mpcdec_h_
 
 #ifdef __cplusplus
 extern "C" {
@@ -11,13 +45,17 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
-#include "musepack/config_types.h"
-#include "musepack/decoder.h"
-#include "musepack/math.h"
-#include "musepack/reader.h"
-#include "musepack/streaminfo.h"
+#ifndef WIN32
+#include "mpcdec/config_types.h"
+#else
+#include "mpcdec/config_win32.h"
+#endif
+
+#include "decoder.h"
+#include "math.h"
+#include "reader.h"
+#include "streaminfo.h"
     
 enum {
     MPC_FRAME_LENGTH = (36 * 32),    /// samples per mpc frame
@@ -62,6 +100,13 @@ void mpc_decoder_setup(mpc_decoder *d, mpc_reader *r);
 /// \return TRUE if decoder was initalized successfully, FALSE otherwise    
 mpc_bool_t mpc_decoder_initialize(mpc_decoder *d, mpc_streaminfo *si);
 
+/// Call this next after calling mpc_decoder_setup.
+/// \param si streaminfo structure indicating format of source stream
+/// \param fast_seeking boolean 0 = use fast seeking if safe, 1 = force fast seeking
+void mpc_decoder_set_seeking(mpc_decoder *d, mpc_streaminfo *si, mpc_bool_t fast_seeking);
+
+void mpc_decoder_set_streaminfo(mpc_decoder *d, mpc_streaminfo *si);
+
 /// Sets decoder sample scaling factor.  All decoded samples will be multiplied
 /// by this factor.
 /// \param scale_factor multiplicative scaling factor
@@ -81,6 +126,12 @@ mpc_uint32_t mpc_decoder_decode(
     mpc_uint32_t *vbr_update_acc, 
     mpc_uint32_t *vbr_update_bits);
 
+mpc_uint32_t mpc_decoder_decode_frame(
+    mpc_decoder *d,
+    mpc_uint32_t *in_buffer,
+    mpc_uint32_t in_len,
+    MPC_SAMPLE_FORMAT *out_buffer);
+
 /// Seeks to the specified sample in the source stream.
 mpc_bool_t mpc_decoder_seek_sample(mpc_decoder *d, mpc_int64_t destsample);
 
@@ -91,4 +142,4 @@ mpc_bool_t mpc_decoder_seek_seconds(mpc_decoder *d, double seconds);
 }
 #endif // __cplusplus
 
-#endif // _musepack_h_
+#endif // _mpcdec_h_

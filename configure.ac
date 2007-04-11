@@ -1263,10 +1263,14 @@ elif test "x$with_external_libmpcdec" = "xyes"; then
    if test "x$have_mpcdec" != "xyes"; then
       AC_MSG_ERROR([Unable to find mpcdec])
    fi
-   AC_DEFINE([HAVE_LIBMPC], [1], [Define if external libmpc is used])
+   MPCDEC_LIBS="-lmpcdec"
+   MPCDEC_CFLAGS=""
 else
    AC_MSG_RESULT([Use included libmusepack])
 fi
+
+AC_SUBST(MPCDEC_LIBS)
+AC_SUBST(MPCDEC_CFLAGS)
 
 AM_CONDITIONAL([MUSEPACK], [test "x$enable_musepack" != "xno"])
 AM_CONDITIONAL([EXTERNAL_MPCDEC], [test "x$have_mpcdec" = "xyes"])
@@ -2546,6 +2550,7 @@ doc/hackersguide/Makefile
 doc/faq/Makefile
 doc/Doxyfile
 contrib/Makefile
+contrib/libmpcdec/Makefile
 include/Makefile
 include/xine.h
 lib/Makefile
@@ -2584,7 +2589,6 @@ src/libffmpeg/Makefile
 src/libmad/Makefile
 src/libmpeg2/Makefile
 src/libmusepack/Makefile
-src/libmusepack/musepack/Makefile
 src/libspudec/Makefile
 src/libspucc/Makefile
 src/libspucmml/Makefile

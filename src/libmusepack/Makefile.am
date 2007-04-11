@@ -1,26 +1,21 @@
 include $(top_srcdir)/misc/Makefile.common
 
-SUBDIRS = musepack
-
-EXTRA_DIST = diff_against_svn.patch
-
 if MUSEPACK
 xineplug_LTLIBRARIES = xineplug_decode_mpc.la
 endif
 
-if EXTERNAL_MPCDEC
-internal_sources = 
+if !EXTERNAL_MPCDEC
+link_libmpcdec = $(top_builddir)/contrib/libmpcdec/libmpcdec.la
+cflags_libmpcdec = -I$(top_srcdir)/contrib/libmpcdec
 else
-internal_sources = huffsv46.c huffsv7.c idtag.c mpc_decoder.c \
-	mpc_reader.c requant.c streaminfo.c synth_filter.c
+link_libmpcdec = $(MPCDEC_LIBS)
+cflags_libmpcdec = $(MPCDEC_CFLAGS)
 endif
 
-if EXTERNAL_MPCDEC
-xineplug_decode_mpc_la_LIBADD = $(XINE_LIB) -lmpcdec
-else
-xineplug_decode_mpc_la_LIBADD = $(XINE_LIB)
-endif
+$(top_builddir)/contrib/libmpcdec/libmpcdec.la:
+	$(MAKE) -C $(top_builddir)/contrib/libmpcdec
 
-xineplug_decode_mpc_la_SOURCES = $(internal_sources) xine_musepack_decoder.c
-xineplug_decode_mpc_la_CFLAGS = $(VISIBILITY_FLAG)
+xineplug_decode_mpc_la_SOURCES = xine_musepack_decoder.c
+xineplug_decode_mpc_la_CFLAGS = $(VISIBILITY_FLAG) $(cflags_libmpcdec)
+xineplug_decode_mpc_la_LIBADD = $(XINE_LIB) $(link_libmpcdec)
 xineplug_decode_mpc_la_LDFLAGS = $(xineplug_ldflags)

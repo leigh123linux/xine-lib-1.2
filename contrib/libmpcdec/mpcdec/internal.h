@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2004, The Musepack Development Team
+  Copyright (c) 2005, The Musepack Development Team
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -32,52 +32,34 @@
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/// \file idtag.c
-/// Rudimentary id3tag handling routines, just enough to skip id3v2 tags,
-/// if present.
+/// \file internal.h
+/// Definitions and structures used only internally by the libmpcdec.
 
-#include "musepack/musepack.h"
-#include "musepack/internal.h"
+#ifndef _mpcdec_internal_h
+#define _mpcdec_internal_h
 
-mpc_int32_t
-JumpID3v2 (mpc_reader* r) {
-    unsigned char  tmp [10];
-    mpc_uint32_t   Unsynchronisation;   // ID3v2.4-flag
-    mpc_uint32_t   ExtHeaderPresent;    // ID3v2.4-flag
-    mpc_uint32_t   ExperimentalFlag;    // ID3v2.4-flag
-    mpc_uint32_t   FooterPresent;       // ID3v2.4-flag
-    mpc_int32_t    ret;
 
-    // seek to first byte of mpc data
-    if (!r->seek (r->data, 0)) {
-        return 0;  
-    }
-    
-    r->read(r->data, tmp, sizeof(tmp));
+enum {
+    MPC_DECODER_SYNTH_DELAY = 481
+};
 
-    // check id3-tag
-    if ( 0 != memcmp ( tmp, "ID3", 3) )
-        return 0;
-
-    // read flags
-    Unsynchronisation = tmp[5] & 0x80;
-    ExtHeaderPresent  = tmp[5] & 0x40;
-    ExperimentalFlag  = tmp[5] & 0x20;
-    FooterPresent     = tmp[5] & 0x10;
-
-    if ( tmp[5] & 0x0F )
-        return -1;              // not (yet???) allowed
-    if ( (tmp[6] | tmp[7] | tmp[8] | tmp[9]) & 0x80 )
-        return -1;              // not allowed
-
-    // read HeaderSize (syncsave: 4 * $0xxxxxxx = 28 significant bits)
-    ret  = tmp[6] << 21;
-    ret += tmp[7] << 14;
-    ret += tmp[8] <<  7;
-    ret += tmp[9]      ;
-    ret += 10;
-    if ( FooterPresent )
-        ret += 10;
-
-    return ret;
+/// Big/little endian 32 bit byte swapping routine.
+static __inline
+mpc_uint32_t mpc_swap32(mpc_uint32_t val) {
+    return (((val & 0xff000000) >> 24) | ((val & 0x00ff0000) >> 8) |
+            ((val & 0x0000ff00) <<  8) | ((val & 0x000000ff) << 24));
 }
+
+/// Searches for a ID3v2-tag and reads the length (in bytes) of it.
+/// \param reader supplying raw stream data
+/// \return size of tag, in bytes
+/// \return -1 on errors of any kind
+mpc_int32_t JumpID3v2(mpc_reader* fp);
+
+/// helper functions used by multiple files
+mpc_uint32_t mpc_random_int(mpc_decoder *d); // in synth_filter.c
+void mpc_decoder_initialisiere_quantisierungstabellen(mpc_decoder *d, double scale_factor);
+void mpc_decoder_synthese_filter_float(mpc_decoder *d, MPC_SAMPLE_FORMAT* OutData);
+
+#endif // _mpcdec_internal_h
+

@@ -43,11 +43,7 @@
 #include "buffer.h"
 #include "xineutils.h"
 
-#ifdef HAVE_MPCDEC_MPCDEC_H
-# include <mpcdec/mpcdec.h>
-#else
-# include "musepack/musepack.h"
-#endif
+#include <mpcdec/mpcdec.h>
 
 #define MPC_DECODER_MEMSIZE  65536
 #define MPC_DECODER_MEMSIZE2 (MPC_DECODER_MEMSIZE/2)

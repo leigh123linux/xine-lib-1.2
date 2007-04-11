@@ -1,3 +1,5 @@
+SUBDIRS = libmpcdec
+
 srcdir = $(shell cd @srcdir@; pwd)
 
 CC = @CC@

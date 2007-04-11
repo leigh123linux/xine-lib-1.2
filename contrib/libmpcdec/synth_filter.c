@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2004, The Musepack Development Team
+  Copyright (c) 2005, The Musepack Development Team
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,8 @@
 /// Synthesis functions.
 /// \todo document me
 
-#include "musepack/musepack.h"
-#include "musepack/internal.h"
+#include <mpcdec/mpcdec.h>
+#include <mpcdec/internal.h>
 
 /* C O N S T A N T S */
 #undef _
@@ -422,7 +422,7 @@ static const unsigned char    Parity [256] = {  // parity
  *  XORed values of both generators.
  */
 mpc_uint32_t
-random_int(mpc_decoder *d) 
+mpc_random_int(mpc_decoder *d) 
 {
 #if 1
     mpc_uint32_t  t1, t2, t3, t4;
