@@ -2582,8 +2582,14 @@ esac
 AC_SUBST([NOUNDEF])
 
 dnl Common cflags for all platforms
-CFLAGS="-DNDEBUG -D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE \$(MULTIPASS_CFLAGS) $warnflags $CFLAGS"
+CFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE \$(MULTIPASS_CFLAGS) $warnflags $CFLAGS"
 DEBUG_CFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE $DEBUG_CFLAGS"
+
+if test "x$enable_debug" = "xyes"; then
+   CFLAGS="$CFLAGS -DDEBUG"
+else
+   CFLAGS="$CFLAGS -DNDEBUG"
+fi
 
 dnl ---------------------------------------------
 dnl Output configuration files
