@@ -606,6 +606,18 @@ static inline uint8_t * copy_chunk (mpeg2dec_t * mpeg2dec,
     uint8_t * limit;
     uint8_t byte;
 
+    /* sequence end code 0xb7 doesn't have any data and there might be the case
+     * that no start code will follow this code for quite some time (e. g. in case
+     * of a still image.
+     * Therefore, return immediately with a chunk_size of 0. Setting code to 0xb4
+     * will eat up any trailing garbage next time.
+     */
+    if (mpeg2dec->code == 0xb7) {
+	mpeg2dec->code = 0xb4;
+	mpeg2dec->chunk_size = 0;
+	return current;
+    }
+
     shift = mpeg2dec->shift;
     chunk_ptr = mpeg2dec->chunk_ptr;
     limit = current + (mpeg2dec->chunk_buffer + BUFFER_SIZE - chunk_ptr);
@@ -657,7 +669,7 @@ int mpeg2_decode_data (mpeg2dec_t * mpeg2dec, uint8_t * current, uint8_t * end,
     if (pts)
       mpeg2dec->pts = pts;
 
-    while (current != end) {
+    while (current != end || mpeg2dec->code == 0xb7) {
 	code = mpeg2dec->code;
 	current = copy_chunk (mpeg2dec, current, end);
 	if (current == NULL) 
