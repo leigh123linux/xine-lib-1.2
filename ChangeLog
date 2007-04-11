@@ -8,7 +8,10 @@ xine-lib (1.1.90) (Unreleased)
     sources; this allows to enable/disable FFmpeg features easily, and allow
     to properly support --disable-ffmpeg-(uncommon|popular)-codecs.
 
-xine-lib (1.1.5) (Unreleased)
+xine-lib (1.1.6) [UNRELEASED]
+  * Split the DirectFB plugin into X11 and non-X versions.
+
+xine-lib (1.1.5)
   * Security fixes:
     - Fix heap overflow in DMO loader. (CVE-2007-1246) [bug #1676925]
       Thanks to Kees Cook for reporting.

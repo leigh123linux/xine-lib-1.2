@@ -5,7 +5,7 @@ AM_LDFLAGS = $(xineplug_ldflags)
 
 SUBDIRS = libdha vidix macosx
 
-EXTRA_DIST = video_out_directfb.c video_out_directx.c video_out_macosx.m
+EXTRA_DIST = video_out_directfb.c video_out_directfb_fb.c video_out_directfb_x.c video_out_directx.c video_out_macosx.m
 
 VIDIX_CFLAGS = -I$(top_builddir)/src/video_out/vidix \
 	-I$(top_srcdir)/src/video_out/vidix
@@ -64,6 +64,9 @@ endif
 
 if HAVE_DIRECTFB
 directfb_module = xineplug_vo_out_directfb.la
+if HAVE_X11
+directfb_module += xineplug_vo_out_xdirectfb.la
+endif
 endif
 
 if HAVE_SDL
@@ -162,9 +165,13 @@ xineplug_vo_out_fb_la_SOURCES = yuv2rgb.c yuv2rgb_mmx.c yuv2rgb_mlib.c \
 xineplug_vo_out_fb_la_LIBADD = $(MLIB_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
 xineplug_vo_out_fb_la_CFLAGS = $(VISIBILITY_FLAG) $(MLIB_CFLAGS)
 
-xineplug_vo_out_directfb_la_SOURCES = video_out_directfb.c $(X11OSD)
-xineplug_vo_out_directfb_la_LIBADD = $(XINE_LIB) $(DIRECTFB_LIBS) $(X_LIBS) $(PTHREAD_LIBS)
+xineplug_vo_out_directfb_la_SOURCES = video_out_directfb_fb.c
+xineplug_vo_out_directfb_la_LIBADD = $(XINE_LIB) $(DIRECTFB_LIBS) $(PTHREAD_LIBS)
 xineplug_vo_out_directfb_la_CFLAGS = $(VISIBILITY_FLAG) $(DIRECTFB_CFLAGS) -fno-strict-aliasing
+
+xineplug_vo_out_xdirectfb_la_SOURCES = video_out_directfb_x.c $(X11OSD)
+xineplug_vo_out_xdirectfb_la_LIBADD = $(XINE_LIB) $(DIRECTFB_LIBS) $(X_LIBS) $(PTHREAD_LIBS)
+xineplug_vo_out_xdirectfb_la_CFLAGS = $(VISIBILITY_FLAG) $(DIRECTFB_CFLAGS) -fno-strict-aliasing
 
 xineplug_vo_out_sdl_la_SOURCES = video_out_sdl.c
 xineplug_vo_out_sdl_la_LIBADD = $(SDL_LIBS) $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
