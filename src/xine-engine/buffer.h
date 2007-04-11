@@ -56,8 +56,8 @@ extern "C" {
 
 #define BUF_MAX_CALLBACKS 5
 
-/*
- * buffer types
+/**
+ * @defgroup buffer_types Buffer Types
  *
  * a buffer type ID describes the contents of a buffer
  * it consists of three fields:
@@ -68,17 +68,20 @@ extern "C" {
  * DD   : decoder selection (e.g. MPEG, OPENDIVX ... for VIDEO)
  * CCCC : channel number or other subtype information for the decoder
  */
+/*@{*/
 
 #define BUF_MAJOR_MASK       0xFF000000
 #define BUF_DECODER_MASK     0x00FF0000
 
-/* control buffer types */
-
+/**
+ * @defgroup buffer_ctrl Control buffer types
+ */
+/*@{*/
 #define BUF_CONTROL_BASE            0x01000000
 #define BUF_CONTROL_START           0x01000000
 #define BUF_CONTROL_END             0x01010000
 #define BUF_CONTROL_QUIT            0x01020000
-#define BUF_CONTROL_DISCONTINUITY   0x01030000 /* former AVSYNC_RESET */
+#define BUF_CONTROL_DISCONTINUITY   0x01030000 /**< former AVSYNC_RESET */
 #define BUF_CONTROL_NOP             0x01040000
 #define BUF_CONTROL_AUDIO_CHANNEL   0x01050000
 #define BUF_CONTROL_SPU_CHANNEL     0x01060000
@@ -87,11 +90,15 @@ extern "C" {
 #define BUF_CONTROL_HEADERS_DONE    0x01090000
 #define BUF_CONTROL_FLUSH_DECODER   0x010a0000
 #define BUF_CONTROL_RESET_TRACK_MAP 0x010b0000
+/*@}*/
 
-/* video buffer types:  (please keep in sync with buffer_types.c) */
-
+/**
+ * @defgroup buffer_video Video buffer types
+ * @note (please keep in sync with buffer_types.c)
+ */
+/*@{*/
 #define BUF_VIDEO_BASE		0x02000000
-#define BUF_VIDEO_UNKNOWN	0x02ff0000 /* no decoder should handle this one */
+#define BUF_VIDEO_UNKNOWN	0x02ff0000 /**< no decoder should handle this one */
 #define BUF_VIDEO_MPEG		0x02000000
 #define BUF_VIDEO_MPEG4		0x02010000
 #define BUF_VIDEO_CINEPAK	0x02020000
@@ -150,7 +157,7 @@ extern "C" {
 #define BUF_VIDEO_INTERPLAY	0x02380000
 #define BUF_VIDEO_RV40		0x02390000
 #define BUF_VIDEO_PSX_MDEC	0x023A0000
-#define BUF_VIDEO_YUV_FRAMES	0x023B0000 /* uncompressed YUV, delivered by v4l input plugin */
+#define BUF_VIDEO_YUV_FRAMES	0x023B0000 /**< uncompressed YUV, delivered by v4l input plugin */
 #define BUF_VIDEO_HUFFYUV	0x023C0000
 #define BUF_VIDEO_IMAGE		0x023D0000
 #define BUF_VIDEO_THEORA        0x023E0000
@@ -165,8 +172,8 @@ extern "C" {
 #define BUF_VIDEO_8BPS		0x02470000
 #define BUF_VIDEO_ASV1		0x02480000
 #define BUF_VIDEO_ASV2		0x02490000
-#define BUF_VIDEO_BITPLANE	0x024A0000 /* Amiga typical picture and animation format */
-#define BUF_VIDEO_BITPLANE_BR1	0x024B0000 /* the same with Bytrun compression 1 */
+#define BUF_VIDEO_BITPLANE	0x024A0000 /**< Amiga typical picture and animation format */
+#define BUF_VIDEO_BITPLANE_BR1	0x024B0000 /**< the same with Bytrun compression 1 */
 #define BUF_VIDEO_FLV1		0x024C0000
 #define BUF_VIDEO_H264		0x024D0000
 #define BUF_VIDEO_MJPEG_B	0x024E0000
@@ -191,11 +198,15 @@ extern "C" {
 #define BUF_VIDEO_FLASHSV	0x02610000
 #define BUF_VIDEO_CAVS		0x02620000
 #define BUF_VIDEO_VP6F		0x02630000
+/*@}*/
 
-/* audio buffer types:  (please keep in sync with buffer_types.c) */
-
+/**
+ * @defgroup buffer_audio Audio buffer types
+ * @note (please keep in sync with buffer_types.c)
+ */
+/*@{*/
 #define BUF_AUDIO_BASE		0x03000000
-#define BUF_AUDIO_UNKNOWN	0x03ff0000 /* no decoder should handle this one */
+#define BUF_AUDIO_UNKNOWN	0x03ff0000 /**< no decoder should handle this one */
 #define BUF_AUDIO_A52		0x03000000
 #define BUF_AUDIO_MPEG		0x03010000
 #define BUF_AUDIO_LPCM_BE	0x03020000
@@ -258,9 +269,12 @@ extern "C" {
 #define BUF_AUDIO_SMACKER	0x033B0000
 #define BUF_AUDIO_FLVADPCM	0x033C0000
 #define BUF_AUDIO_WAVPACK	0x033D0000
+/*@}*/
 
-/* spu buffer types:    */
-
+/**
+ * @defgroup buffer_spu SPU buffer types
+ */
+/*@{*/
 #define BUF_SPU_BASE		0x04000000
 #define BUF_SPU_DVD		0x04000000
 #define BUF_SPU_TEXT            0x04010000
@@ -270,33 +284,41 @@ extern "C" {
 #define BUF_SPU_CVD             0x04050000
 #define BUF_SPU_OGM             0x04060000
 #define BUF_SPU_CMML            0x04070000
+/*@}*/
 
-/* demuxer block types: */
-
+/**
+ * @defgroup buffer_demux Demuxer block types
+ */
+/*@{*/
 #define BUF_DEMUX_BLOCK		0x05000000
+/*@}*/
+
+/*@}*/
 
 typedef struct extra_info_s extra_info_t;
 
-/*
- * extra_info_t is used to pass information from input or demuxer plugins
- * to output frames (past decoder). new data must be added after the existing
- * fields for backward compatibility.
+/**
+ * @brief Structure to pass information from input or demuxer plugins
+ *        to output frames (past decoder).
+ * 
+ * New data must be added after the existing fields to not break ABI
+ * (backward compatibility).
  */
   
 struct extra_info_s {
 
-  int                   input_normpos; /* remember where this buf came from in
-                                        * the input source (0..65535). can be
-                                        * either time or offset based. */
-  int                   input_time;    /* time offset in miliseconds from
-                                        * beginning of stream */
-  uint32_t              frame_number;  /* number of current frame if known */
+  int                   input_normpos; /**< remember where this buf came from in
+                                        *   the input source (0..65535). can be
+                                        *   either time or offset based. */
+  int                   input_time;    /**< time offset in miliseconds from
+                                        *   beginning of stream */
+  uint32_t              frame_number;  /**< number of current frame if known */
   
-  int                   seek_count;    /* internal engine use */
-  int64_t               vpts;          /* set on output layers only */ 
+  int                   seek_count;    /**< internal engine use */
+  int64_t               vpts;          /**< set on output layers only */ 
   
-  int                   invalid;       /* do not use this extra info to update anything */
-  int                   total_time;    /* duration in miliseconds of the stream */
+  int                   invalid;       /**< do not use this extra info to update anything */
+  int                   total_time;    /**< duration in miliseconds of the stream */
 };
 
 
@@ -307,74 +329,75 @@ struct buf_element_s {
   buf_element_t        *next;
 
   unsigned char        *mem;
-  unsigned char        *content;   /* start of raw content in mem (without header etc) */
+  unsigned char        *content;   /**< start of raw content in mem (without header etc) */
 
-  int32_t               size ;     /* size of _content_                                     */
-  int32_t               max_size;  /* size of pre-allocated memory pointed to by "mem"      */
-  int64_t               pts;       /* presentation time stamp, used for a/v sync            */
-  int64_t               disc_off;  /* discontinuity offset                                  */
+  int32_t               size ;     /**< size of _content_                                     */
+  int32_t               max_size;  /**< size of pre-allocated memory pointed to by "mem"      */
+  int64_t               pts;       /**< presentation time stamp, used for a/v sync            */
+  int64_t               disc_off;  /**< discontinuity offset                                  */
 
-  extra_info_t         *extra_info; /* extra info will be passed to frames */
+  extra_info_t         *extra_info; /**< extra info will be passed to frames */
 
-  uint32_t              decoder_flags; /* stuff like keyframe, is_header ... see below      */
+  uint32_t              decoder_flags; /**< stuff like keyframe, is_header ... see below      */
 
-                        /* additional decoder flags and other dec-spec. stuff */
+  /** additional decoder flags and other dec-spec. stuff */
   uint32_t              decoder_info[BUF_NUM_DEC_INFO]; 
-                        /* pointers to dec-spec. stuff */
+  /** pointers to dec-spec. stuff */
   void                 *decoder_info_ptr[BUF_NUM_DEC_INFO];
 
   void (*free_buffer) (buf_element_t *buf);
 
-  void                 *source;   /* pointer to source of this buffer for */
-                                  /* free_buffer                          */
+  void                 *source;   /**< pointer to source of this buffer for
+                                   *   free_buffer                          */
 
   uint32_t              type;
 } ;
 
-/* keyframe should be set whenever possible (that is, when demuxer
+/** keyframe should be set whenever possible (that is, when demuxer
  * knows about frames and keyframes).                                 */
 #define BUF_FLAG_KEYFRAME    0x0001
 
-/* frame start/end. BUF_FLAG_FRAME_END is sent on last buf of a frame */
+/** frame start/end. BUF_FLAG_FRAME_END is sent on last buf of a frame */
 #define BUF_FLAG_FRAME_START 0x0002
 #define BUF_FLAG_FRAME_END   0x0004
 
-/* any out-of-band data needed to initialize decoder must have
+/** any out-of-band data needed to initialize decoder must have
  * this flag set.                                                     */
 #define BUF_FLAG_HEADER      0x0008
 
-/* preview buffers are normal data buffers that must not produce any
+/** preview buffers are normal data buffers that must not produce any
  * output in decoders (may be used to sneak details about the stream
  * to come).                                                          */
 #define BUF_FLAG_PREVIEW     0x0010
 
-/* set when user stop the playback                                    */
+/** set when user stop the playback                                    */
 #define BUF_FLAG_END_USER    0x0020
 
-/* set when stream finished naturaly                                  */
+/** set when stream finished naturaly                                  */
 #define BUF_FLAG_END_STREAM  0x0040
 
-/* decoder_info[0] carries the frame step (1/90000).                  */
+/** decoder_info[0] carries the frame step (1/90000).                  */
 #define BUF_FLAG_FRAMERATE   0x0080
 
-/* hint to metronom that seeking has occurred                         */
+/** hint to metronom that seeking has occurred                         */
 #define BUF_FLAG_SEEK        0x0100
 
-/* special information inside, see below.                             */
+/** special information inside, see below.                             */
 #define BUF_FLAG_SPECIAL     0x0200
 
-/* header use standard xine_bmiheader or xine_waveformatex structs.
+/** header use standard xine_bmiheader or xine_waveformatex structs.
  * xine_waveformatex is actually optional since the most important
  * information for audio init is available from decoder_info[].
  * note: BUF_FLAG_HEADER must also be set.                            */
 #define BUF_FLAG_STDHEADER   0x0400 
 
-/* decoder_info[1] carries numerator for display aspect ratio
+/** decoder_info[1] carries numerator for display aspect ratio
  * decoder_info[2] carries denominator for display aspect ratio       */
 #define BUF_FLAG_ASPECT      0x0800
 
 
-/* Special buffer types:
+/**
+ * \defgroup buffer_special Special buffer types:
  * Sometimes there is a need to relay special information from a demuxer
  * to a video decoder. For example, some file types store palette data in
  * the file header independant of the video data. The special buffer type
@@ -393,10 +416,9 @@ struct buf_element_s {
  * buffer will fall through to the case where the buffer's data content
  * is accumulated and no harm will be done.
  */
+/*@{*/
 
-/* these are the types of special buffers */
-
-/*
+/**
  * In a BUF_SPECIAL_PALETTE buffer:
  * decoder_info[1] = BUF_SPECIAL_PALETTE
  * decoder_info[2] = number of entries in palette table
@@ -414,7 +436,7 @@ struct buf_element_s {
 /* special buffer type 2 used to be defined but is now available for use */
 
 
-/*
+/**
  * In a BUF_SPECIAL_ASPECT buffer:
  * decoder_info[1] = BUF_SPECIAL_ASPECT
  * decoder_info[2] = MPEG2 aspect ratio code
@@ -427,7 +449,7 @@ struct buf_element_s {
  */
 #define BUF_SPECIAL_ASPECT  3
 
-/*
+/**
  * In a BUF_SPECIAL_DECODER_CONFIG buffer:
  * decoder_info[1] = BUF_SPECIAL_DECODER_CONFIG
  * decoder_info[2] = data size
@@ -437,7 +459,7 @@ struct buf_element_s {
  */
 #define BUF_SPECIAL_DECODER_CONFIG  4
 
-/*
+/**
  * In a BUF_SPECIAL_STSD_ATOM buffer:
  * decoder_info[1] = BUF_SPECIAL_STSD_ATOM
  * decoder_info[2] = size of the ImageDescription atom, minus the
@@ -451,7 +473,7 @@ struct buf_element_s {
  */
 #define BUF_SPECIAL_STSD_ATOM  5
 
-/*
+/**
  * In a BUF_SPECIAL_LPCM_CONFIG buffer:
  * decoder_info[1] = BUF_SPECIAL_LPCM_CONFIG
  * decoder_info[2] = config data
@@ -461,7 +483,7 @@ struct buf_element_s {
  */
 #define BUF_SPECIAL_LPCM_CONFIG 6
 
-/*
+/**
  * In a BUF_SPECIAL_CHARSET_ENCODING buffer:
  * decoder_info[1] = BUF_SPECIAL_CHARSET_ENCODING
  * decoder_info[2] = size of charset encoding string
@@ -473,7 +495,7 @@ struct buf_element_s {
 #define BUF_SPECIAL_CHARSET_ENCODING 7
 
 
-/*
+/**
  * In a BUF_SPECIAL_SPU_DVD_SUBTYPE:
  * decoder_info[1] = BUF_SPECIAL_SPU_DVD_SUBTYPE
  * decoder_info[2] = subtype
@@ -488,7 +510,8 @@ struct buf_element_s {
 #define SPU_DVD_SUBTYPE_VOBSUB_PACKAGE	3
 #define SPU_DVD_SUBTYPE_NAV		4
 
-/* In a BUF_SPECIAL_SPU_DVB_DESCRIPTOR
+/**
+ * In a BUF_SPECIAL_SPU_DVB_DESCRIPTOR
  * decoder_info[1] = BUF_SPECIAL_SPU_DVB_DESCRIPTOR
  * decoder_info[2] = size of spu_dvb_descriptor_t
  * decoder_info_ptr[2] = pointer to spu_dvb_descriptor_t, or NULL
@@ -500,7 +523,7 @@ struct buf_element_s {
  **/
 #define BUF_SPECIAL_SPU_DVB_DESCRIPTOR 9
 
-/*
+/**
  * In a BUF_SPECIAL_RV_CHUNK_TABLE:
  * decoder_info[1] = BUF_SPECIAL_RV_CHUNK_TABLE
  * decoder_info[2] = number of entries in chunk table
@@ -509,6 +532,7 @@ struct buf_element_s {
  * This buffer transports the chunk table associated to each RealVideo frame.
  */
 #define BUF_SPECIAL_RV_CHUNK_TABLE 10
+/*@}*/
 
 typedef struct spu_dvb_descriptor_s spu_dvb_descriptor_t;
 struct spu_dvb_descriptor_s
@@ -600,37 +624,59 @@ struct fifo_buffer_s
   void            *get_cb_data[BUF_MAX_CALLBACKS];
 } ;
 
-/*
- * allocate and initialize new (empty) fifo buffer,
- * init buffer pool for it:
- * allocate num_buffers of buf_size bytes each
- * these are internal functions, not to be exported
+/**
+ * @brief Allocate and initialise new (empty) FIFO buffers.
+ * @param num_buffer Number of buffers to allocate.
+ * @param buf_size Size of each buffer.
+ * @internal Only used by video and audio decoder loops.
  */
-
 fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size);
+
+/**
+ * @brief Allocate and initialise new dummy FIFO buffers.
+ * @param num_buffer Number of dummy buffers to allocate.
+ * @param buf_size Size of each buffer.
+ * @internal Only used by video and audio decoder loops.
+ */
 fifo_buffer_t *_x_dummy_fifo_buffer_new (int num_buffers, uint32_t buf_size);
 
 
-/* return BUF_VIDEO_xxx given the fourcc
- * fourcc_int must be read in machine endianness
+/**
+ * @brief Returns the \ref buffer_video "BUF_VIDEO_xxx" for the given fourcc.
+ * @param fourcc_int 32-bit FOURCC value in machine endianness
+ * @sa _x_formattag_to_buf_audio
+ *
  * example: fourcc_int = *(uint32_t *)fourcc_char;
  */
 uint32_t _x_fourcc_to_buf_video( uint32_t fourcc_int ) XINE_PROTECTED;
 
-/* return codec name given BUF_VIDEO_xxx */
+/**
+ * @brief Returns video codec name given the buffer type.
+ * @param buf_type One of the \ref buffer_video "BUF_VIDEO_xxx" values.
+ * @sa _x_buf_audio_name
+ */
 char * _x_buf_video_name( uint32_t buf_type ) XINE_PROTECTED;
 
-/* return BUF_AUDIO_xxx given the formattag */
+/**
+ * @brief Returns the \ref buffer_audio "BUF_AUDIO_xxx" for the given formattag.
+ * @param formattagg 32-bit format tag value in machine endianness
+ * @sa _x_fourcc_to_buf_video
+ */
 uint32_t _x_formattag_to_buf_audio( uint32_t formattag ) XINE_PROTECTED;
 
-/* return codec name given BUF_AUDIO_xxx */
+/**
+ * @brief Returns audio codec name given the buffer type.
+ * @param buf_type One of the \ref buffer_audio "BUF_AUDIO_xxx" values.
+ * @sa _x_buf_video_name
+ */
 char * _x_buf_audio_name( uint32_t buf_type ) XINE_PROTECTED;
 
 
-/* this is xine version of BITMAPINFOHEADER
- * - should be safe to compile on 64bits machines
- * - will always use machine endian format, so demuxers reading
- *   stuff from win32 formats must use the function below.
+/**
+ * @brief xine version of BITMAPINFOHEADER.
+ * @note Should be safe to compile on 64bits machines.
+ * @note Will always use machine endian format, so demuxers reading
+ *       stuff from win32 formats must use the function below.
  */
 typedef struct XINE_PACKED {
     int32_t        biSize;
@@ -646,8 +692,9 @@ typedef struct XINE_PACKED {
     int32_t        biClrImportant;
 } xine_bmiheader;
 
-/* this is xine version of WAVEFORMATEX 
- * (the same comments from xine_bmiheader)
+/**
+ * @brief xine version of WAVEFORMATEX.
+ * @note The same comments from xine_bmiheader applies.
  */
 typedef struct XINE_PACKED {
   int16_t   wFormatTag;
@@ -659,10 +706,10 @@ typedef struct XINE_PACKED {
   int16_t   cbSize;
 } xine_waveformatex;
 
-/* convert xine_bmiheader struct from little endian */
+/** Convert xine_bmiheader struct from little endian */
 void _x_bmiheader_le2me( xine_bmiheader *bih ) XINE_PROTECTED;
 
-/* convert xine_waveformatex struct from little endian */
+/** Convert xine_waveformatex struct from little endian */
 void _x_waveformatex_le2me( xine_waveformatex *wavex ) XINE_PROTECTED;
 
 #ifdef __cplusplus
