@@ -87,6 +87,10 @@ void mpeg2_init (mpeg2dec_t * mpeg2dec,
     mpeg2dec->code = 0xb4;
     mpeg2dec->seek_mode = 0;
 
+    /* initialize AFD storage */
+    mpeg2dec->afd_value_seen = XINE_VIDEO_AFD_NOT_PRESENT;
+    mpeg2dec->afd_value_reported = (XINE_VIDEO_AFD_NOT_PRESENT - 1);
+
     memset (mpeg2dec->picture, 0, sizeof (picture_t));
 
     /* initialize substructures */
@@ -394,6 +398,9 @@ static inline int parse_chunk (mpeg2dec_t * mpeg2dec, int code,
 	    break;
 	}
 
+        /* reset AFD value to detect absence */
+        mpeg2dec->afd_value_seen = XINE_VIDEO_AFD_NOT_PRESENT;
+
         /* according to ISO/IEC 13818-2, an extension start code will follow.
          * Otherwise the stream follows ISO/IEC 11172-2 which means MPEG1 */ 
         picture->mpeg1 = (next_code != 0xb5);
@@ -468,6 +475,18 @@ static inline int parse_chunk (mpeg2dec_t * mpeg2dec, int code,
 	}
 	if (code >= 0xb0)
 	    break;
+
+        /* check for AFD change once per picture */
+        if (mpeg2dec->afd_value_reported != mpeg2dec->afd_value_seen) {
+            /* AFD data should better be stored in current_frame to have it */
+            /* ready and synchronous with other data like width or height. */
+            /* An AFD change should then be detected when a new frame is emitted */
+            /* from the decoder to report the AFD change in display order and not */
+            /* in decoding order like it happens below for now. */
+            _x_stream_info_set(mpeg2dec->stream, XINE_STREAM_INFO_VIDEO_AFD, mpeg2dec->afd_value_seen);
+fprintf(stderr, "AFD changed from %d to %d\n", mpeg2dec->afd_value_reported, mpeg2dec->afd_value_seen);
+            mpeg2dec->afd_value_reported = mpeg2dec->afd_value_seen;
+        }
 
 	if (!(mpeg2dec->in_slice)) {
 	    mpeg2dec->in_slice = 1;
@@ -929,9 +948,5 @@ static void process_userdata(mpeg2dec_t *mpeg2dec, uint8_t *buffer)
   }
   /* check Active Format Description ETSI TS 101 154 V1.5.1 */
   else if (buffer[0] == 0x44 && buffer[1] == 0x54 && buffer[2] == 0x47 && buffer[3] == 0x31)
-  {
-    int afd = (buffer[4] & 0x40) ? (buffer[5] & 0x0f) : -1;
-    _x_stream_info_set(mpeg2dec->stream, XINE_STREAM_INFO_VIDEO_AFD, afd);
-    
-  }
+    mpeg2dec->afd_value_seen = (buffer[4] & 0x40) ? (buffer[5] & 0x0f) : XINE_VIDEO_AFD_NOT_PRESENT;
 }
