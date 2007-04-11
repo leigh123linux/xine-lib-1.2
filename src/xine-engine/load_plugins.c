@@ -48,6 +48,7 @@
 
 /*
 #define LOG
+#define DEBUG
 */
 
 #define XINE_ENABLE_EXPERIMENTAL_FEATURES 1
@@ -697,7 +698,7 @@ static inline int _plugin_info_equal(const plugin_info_t *a,
   return 1;
 }
 
-static void _attach_entry_to_node (plugin_node_t *node, void *key) {
+static void _attach_entry_to_node (plugin_node_t *node, char *key) {
   
   if (!node->config_entry_list) {
     node->config_entry_list = xine_list_new();
@@ -713,7 +714,7 @@ static void _attach_entry_to_node (plugin_node_t *node, void *key) {
 static void _new_entry_cb (void *user_data, xine_cfg_entry_t *entry) {
   plugin_node_t *node = (plugin_node_t *)user_data;
   
-  _attach_entry_to_node(node, (void *)entry->key);
+  _attach_entry_to_node(node, strdup(entry->key));
 }
 
 static int _load_plugin_class(xine_t *this,
@@ -935,7 +936,7 @@ static void save_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *list) {
       while (ite) {
         char *key = xine_list_get_value(node->config_entry_list, ite);
 
-        /* now get the representation of the config key */
+        /* now serialize the config key */
         char *key_value = this->config->get_serialized_entry(this->config, key);
 
         lprintf("  config key: %s, serialization: %d bytes\n", key, strlen(key_value));
@@ -1205,7 +1206,7 @@ void _x_scan_plugins (xine_t *this) {
 
   homedir = strdup(xine_get_homedir());
   this->plugin_catalog = _new_catalog();
-  load_cached_catalog (this);
+  XINE_PROFILE(load_cached_catalog (this));
 
   if ((pluginpath = getenv("XINE_PLUGIN_PATH")) != NULL) {
     pluginpath = strdup(pluginpath);
@@ -1227,7 +1228,7 @@ void _x_scan_plugins (xine_t *this) {
     case XINE_PATH_SEPARATOR_CHAR:
     case '\0':
       plugindir[j] = '\0';
-      collect_plugins(this, plugindir);
+      XINE_PROFILE(collect_plugins(this, plugindir));
       j = 0;
       break;
     case '~':
@@ -1244,9 +1245,9 @@ void _x_scan_plugins (xine_t *this) {
   free(pluginpath);
   free(homedir);
 
-  load_required_plugins (this);
+  /* load_required_plugins (this); */
   
-  save_catalog (this);
+  XINE_PROFILE(save_catalog (this));
 
   map_decoders (this);
 }
@@ -2649,7 +2650,13 @@ static void dispose_plugin_list (xine_sarray_t *list) {
       free (node->info);
 
       if (node->config_entry_list) {
-	xine_list_delete(node->config_entry_list);
+        xine_list_iterator_t ite = xine_list_front (node->config_entry_list);
+        while (ite) {
+          char *key = xine_list_get_value (node->config_entry_list, ite);
+          free (key);
+          ite = xine_list_next (node->config_entry_list, ite);
+        }
+        xine_list_delete(node->config_entry_list);
       }
       free (node);
     }

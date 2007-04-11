@@ -1371,7 +1371,6 @@ static int get_string(uint8_t *buffer, int buffer_size, int pos, char **value) {
 }
 
 static char* config_register_serialized_entry (config_values_t *this, const char *value) {
-
   /*
       fields serialized :
           int              type;
@@ -1392,60 +1391,60 @@ static char* config_register_serialized_entry (config_values_t *this, const char
   int    exp_level;
   int    num_default;
   int    num_value;
-  char  *key;
-  char  *str_default;
-  char  *description;
-  char  *help;
-  char **enum_values;
+  char  *key = NULL;
+  char  *str_default = NULL;
+  char  *description = NULL;
+  char  *help = NULL;
+  char **enum_values = NULL;
   
   int    bytes;
   int    pos;
-  void  *output;
+  void  *output = NULL;
   unsigned long output_len;
-  int    value_count;
+  int    value_count = 0;
   int    i;
   
   output = base64_decode (value, strlen(value), &output_len);
   
   pos = 0;
   pos += bytes = get_int(output, output_len, pos, &type);
-  if (!bytes) goto error;
+  if (!bytes) goto exit;
 
   pos += bytes = get_int(output, output_len, pos, &range_min);
-  if (!bytes) goto error;
+  if (!bytes) goto exit;
     
   pos += bytes = get_int(output, output_len, pos, &range_max);
-  if (!bytes) goto error;
+  if (!bytes) goto exit;
 
   pos += bytes = get_int(output, output_len, pos, &exp_level);
-  if (!bytes) goto error;
+  if (!bytes) goto exit;
 
   pos += bytes = get_int(output, output_len, pos, &num_default);
-  if (!bytes) goto error;
+  if (!bytes) goto exit;
 
   pos += bytes = get_int(output, output_len, pos, &num_value);
-  if (!bytes) goto error;
+  if (!bytes) goto exit;
 
   pos += bytes = get_string(output, output_len, pos, &key);
-  if (!bytes) goto error;
+  if (!bytes) goto exit;
   
   pos += bytes = get_string(output, output_len, pos, &str_default);
-  if (!bytes) goto error;
+  if (!bytes) goto exit;
 
   pos += bytes = get_string(output, output_len, pos, &description);
-  if (!bytes) goto error;
+  if (!bytes) goto exit;
 
   pos += bytes = get_string(output, output_len, pos, &help);
-  if (!bytes) goto error;
+  if (!bytes) goto exit;
 
   pos += bytes = get_int(output, output_len, pos, &value_count);
-  if (!bytes) goto error;
-  if ((value_count < 0) || (value_count > 256)) goto error;
+  if (!bytes) goto exit;
+  if ((value_count < 0) || (value_count > 256)) goto exit;
   
   enum_values = malloc (sizeof(void*) * value_count + 1);
   for (i = 0; i < value_count; i++) {
     pos += bytes = get_string(output, output_len, pos, &enum_values[i]);
-    if (!bytes) goto error;
+    if (!bytes) goto exit;
   }
   enum_values[value_count] = NULL;
 
@@ -1474,8 +1473,10 @@ static char* config_register_serialized_entry (config_values_t *this, const char
     switch (num_value) {
       case 0:
         this->register_string(this, key, str_default, description, help, exp_level, NULL, NULL);
+		break;
       default:
         this->register_filename(this, key, str_default, num_value, description, help, exp_level, NULL, NULL);
+		break;
     }
     break;
   case XINE_CONFIG_TYPE_RANGE:
@@ -1494,12 +1495,21 @@ static char* config_register_serialized_entry (config_values_t *this, const char
     break;
   }
 
+exit:
+  /* cleanup */
+  free(str_default);
+  free(description);
+  free(help);
+  free(output);
+
+  if (enum_values) {
+    for (i = 0; i < value_count; i++) {
+      free(enum_values[i]);
+    }
+    free(enum_values);
+  }
 
   return key;
-  
-error:
-  /* serialization error */
-  return NULL;
 }
 
 config_values_t *_x_config_init (void) {
