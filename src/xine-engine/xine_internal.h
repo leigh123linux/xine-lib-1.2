@@ -366,6 +366,8 @@ struct xine_stream_s {
  * private function prototypes:
  */
 
+int _x_query_buffer_usage(xine_stream_t *stream, int *num_video_buffers, int *num_audio_buffers, int *num_video_frames, int *num_audio_frames) XINE_PROTECTED;
+
 void _x_handle_stream_end      (xine_stream_t *stream, int non_user) XINE_PROTECTED;
 
 /* report message to UI. usually these are async errors */

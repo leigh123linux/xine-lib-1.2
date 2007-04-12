@@ -2069,3 +2069,31 @@ int xine_stream_master_slave(xine_stream_t *master, xine_stream_t *slave,
   slave->master = master->master;
   return 1;
 }
+
+int _x_query_buffer_usage(xine_stream_t *stream, int *num_video_buffers, int *num_audio_buffers, int *num_video_frames, int *num_audio_frames)
+{
+  int ticket_acquired = -1;
+
+  if (num_video_buffers)
+    *num_video_buffers = (stream->video_fifo ? stream->video_fifo->size(stream->video_fifo) : 0);
+ 
+  if (num_audio_buffers)
+    *num_audio_buffers = (stream->audio_fifo ? stream->audio_fifo->size(stream->audio_fifo) : 0);
+ 
+  if ((num_video_frames && stream->video_out)
+    || (num_audio_frames && stream->audio_out)) {
+  
+    ticket_acquired = stream->xine->port_ticket->acquire_nonblocking(stream->xine->port_ticket, 1);
+  }
+
+  if (num_video_frames)
+    *num_video_frames = ((ticket_acquired && stream->video_out) ? stream->video_out->get_property(stream->video_out, VO_PROP_BUFS_IN_FIFO) : 0);
+
+  if (num_audio_frames)
+    *num_audio_frames = ((ticket_acquired && stream->audio_out) ? stream->audio_out->get_property(stream->audio_out, AO_PROP_BUFS_IN_FIFO) : 0);
+
+  if (ticket_acquired > 0)
+    stream->xine->port_ticket->release_nonblocking(stream->xine->port_ticket, 1);
+
+  return ticket_acquired != 0;
+}
