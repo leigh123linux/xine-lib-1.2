@@ -1598,6 +1598,20 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
   xxmc_add_recent_frame (this, frame); /* deinterlacing */
 
+  /*
+   * the current implementation doesn't need recent frames for deinterlacing,
+   * but as most of the time we only have a little number of frames available
+   * per device, we only hold references to the most recent frame by filling
+   * the whole buffer with the same frame
+   */
+  {
+    int i;
+    for (i = 1; i < VO_NUM_RECENT_FRAMES; i++) {
+      frame->vo_frame.lock(&frame->vo_frame);
+      xxmc_add_recent_frame (this, frame); /* deinterlacing */
+    }
+  }
+
   if ((frame->format == XINE_IMGFMT_XXMC) &&
       (!xxmc->decoded || !xxmc_xvmc_surface_valid(this, frame->xvmc_surf))) {
     xvmc_context_reader_unlock( &this->xvmc_lock );
@@ -1943,7 +1957,7 @@ static void xxmc_dispose (vo_driver_t *this_gen) {
 
   for( i=0; i < VO_NUM_RECENT_FRAMES; i++ ) {
     if( this->recent_frames[i] )
-      this->recent_frames[i]->vo_frame.dispose
+      this->recent_frames[i]->vo_frame.free
 	(&this->recent_frames[i]->vo_frame);
     this->recent_frames[i] = NULL;
   }
