@@ -1588,12 +1588,26 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   xxmc_frame_t   *frame = (xxmc_frame_t *) frame_gen;
   xine_xxmc_t *xxmc = &frame->xxmc_data;
   int first_field;
+  int disable_deinterlace = 0;
   struct timeval tv_top;
 
   /*
    * take time to calculate the time to sleep for the bottom field
    */
   gettimeofday(&tv_top, 0);
+
+  /*
+   * bob deinterlacing doesn't make much sense for still images or at replay speeds
+   * other than 100 %, so let's disable deinterlacing at all for this frame
+   */
+  if (this->deinterlace_enabled && this->bob) {
+    disable_deinterlace = frame->vo_frame.progressive_frame
+      || !frame->vo_frame.stream
+      || xine_get_param(frame->vo_frame.stream, XINE_PARAM_FINE_SPEED) != XINE_FINE_SPEED_NORMAL;
+    if (!disable_deinterlace) {
+      /* TODO: still frame detection */
+    }
+  }
 
   /*
    * queue frames (deinterlacing)
@@ -1645,7 +1659,7 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
   first_field = (frame->vo_frame.top_field_first) ? XVMC_TOP_FIELD : XVMC_BOTTOM_FIELD;
   first_field = (this->bob) ? first_field : XVMC_TOP_FIELD;
-  this->cur_field = (this->deinterlace_enabled) ? first_field : XVMC_FRAME_PICTURE;
+  this->cur_field = (this->deinterlace_enabled && !disable_deinterlace) ? first_field : XVMC_FRAME_PICTURE;
 
   xxmc_redraw_needed (this_gen);
   if (frame->format == XINE_IMGFMT_XXMC) {
@@ -1658,7 +1672,7 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 		    this->sc.output_width, this->sc.output_height, 
 		    this->cur_field);
     XVMCUNLOCKDISPLAY( this->display );
-    if (this->deinterlace_enabled && this->bob) {
+    if (this->deinterlace_enabled && !disable_deinterlace && this->bob) {
       struct timeval tv_middle;
       long us_spent_so_far, us_per_field = frame->vo_frame.duration * 50 / 9;
 
