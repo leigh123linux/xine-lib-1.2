@@ -14,6 +14,9 @@ For 1.2 series
 - move the contributed code (not developed by xine project) in the contrib/
   directory of the source tree;
 - reduce memory footprint (e.g. variable fifo buffer sizes...);
+- handle gracefully the runtime removal of the audio output device (being
+  it a physical removal for USB devices or a missing output on a client-server
+  design like PulseAudio, ESounD or Jack);
 
 known bugs
 ==========
