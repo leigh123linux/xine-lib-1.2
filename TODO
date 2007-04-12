@@ -18,10 +18,8 @@ known bugs
 ==========
 
 - frame allocation problem with h264 streams using > 15 reference frames
-- our faad2 has problems with 5.1 streams. faad2 cvs is GPL incompatible.
 - dvdnav time search function does not use the time table, but interpolates
   only cell times
-- crash with RV10 streams
 
 
 requested/planned features
