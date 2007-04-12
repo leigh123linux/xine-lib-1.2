@@ -64,10 +64,7 @@ optional
   - helix streaming server support
 
 - detect broken savage drivers in health check, disable Xv in that case
-- directfb video output plugin
 - reduce memory footprint (e.g. variable fifo buffer sizes...)
-- opengl video output plugin (matthias, sopra at stuttgart university)
-- irix audio output plugin (matthias)
 
 beyond 1.0
 ----------
