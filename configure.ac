@@ -499,6 +499,12 @@ if test "x$with_x" != "xno"; then
    PKG_CHECK_MODULES([X], [x11 xext], , [
      AC_PATH_XTRA
    
+     dnl Set xv_path if its not done already
+     dnl we do it here before rewriting X_LIBS
+     if test x$xv_path = x; then
+     	xv_path=`echo $X_LIBS | sed -e 's/\-L\(.*\)/\1/'`
+     fi
+     
      dnl ----------------------------------------------
      dnl Check for XShm support (required with X)
      dnl ----------------------------------------------
