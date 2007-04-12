@@ -1588,6 +1588,12 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   xxmc_frame_t   *frame = (xxmc_frame_t *) frame_gen;
   xine_xxmc_t *xxmc = &frame->xxmc_data;
   int first_field;
+  struct timeval tv_top;
+
+  /*
+   * take time to calculate the time to sleep for the bottom field
+   */
+  gettimeofday(&tv_top, 0);
 
   /*
    * queue frames (deinterlacing)
@@ -1653,20 +1659,41 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 		    this->cur_field);
     XVMCUNLOCKDISPLAY( this->display );
     if (this->deinterlace_enabled && this->bob) {
-      unsigned 
-	ms_per_field = 500 * frame->vo_frame.duration / 90000 - 2;
-      
-      usleep(ms_per_field*1000);
-      this->cur_field = (frame->vo_frame.top_field_first) ? XVMC_BOTTOM_FIELD : XVMC_TOP_FIELD;
+      struct timeval tv_middle;
+      long us_spent_so_far, us_per_field = frame->vo_frame.duration * 50 / 9;
 
-      XVMCLOCKDISPLAY( this->display );
-      XvMCPutSurface( this->display, frame->xvmc_surf , this->drawable,
-		      this->sc.displayed_xoffset, this->sc.displayed_yoffset,
-		      this->sc.displayed_width, this->sc.displayed_height,
-		      this->sc.output_xoffset, this->sc.output_yoffset,
-		      this->sc.output_width, this->sc.output_height, 
-		      this->cur_field);
-      XVMCUNLOCKDISPLAY( this->display );
+      gettimeofday(&tv_middle, 0);
+      us_spent_so_far = (tv_middle.tv_sec - tv_top.tv_sec) * 1000000 + (tv_middle.tv_usec - tv_top.tv_usec);
+      if (us_spent_so_far < 0)
+        us_spent_so_far = 0;
+
+      /*
+       * typically, the operations above take just a few milliseconds, but when the
+       * driver actively waits to sync on the next field, we better skip showing the
+       * other field as it would lead to further busy waiting
+       * so display the other field only if we've spent less than 75 % of the per
+       * field time so far
+       */
+      if (4 * us_spent_so_far < 3 * us_per_field) {
+        long us_delay = (us_per_field - 2000) - us_spent_so_far;
+        if (us_delay > 0) {
+          xvmc_context_reader_unlock( &this->xvmc_lock );
+          xine_usec_sleep(us_delay);
+          LOCK_AND_SURFACE_VALID( this, frame->xvmc_surf );
+        }
+
+        this->cur_field = (frame->vo_frame.top_field_first) ? XVMC_BOTTOM_FIELD : XVMC_TOP_FIELD;
+
+        XVMCLOCKDISPLAY( this->display );
+        XvMCPutSurface( this->display, frame->xvmc_surf , this->drawable,
+		        this->sc.displayed_xoffset, this->sc.displayed_yoffset,
+		        this->sc.displayed_width, this->sc.displayed_height,
+		        this->sc.output_xoffset, this->sc.output_yoffset,
+		        this->sc.output_width, this->sc.output_height, 
+		        this->cur_field);
+
+        XVMCUNLOCKDISPLAY( this->display );
+      }
     }      
   } else {
     XLockDisplay (this->display);
