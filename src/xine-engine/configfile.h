@@ -40,7 +40,7 @@ extern "C" {
 
 #define CONFIG_FILE_VERSION 2
 
-/*
+/**
  * config entries above this experience 
  * level must never be changed from MRL
  */
@@ -57,33 +57,32 @@ struct cfg_entry_s {
   char            *key;
   int              type;
 
-  /* user experience level */
+  /** user experience level */
   int              exp_level;
 
-  /* type unknown */
+  /** type unknown */
   char            *unknown_value;
 
-  /* type string */
+  /** type string */
   char            *str_value;
   char            *str_default;
 
-  /* common to range, enum, num, bool: */
-
+  /** common to range, enum, num, bool: */
   int              num_value;
   int              num_default;
 
-  /* type range specific: */
+  /** type range specific: */
   int              range_min;
   int              range_max;
 
-  /* type enum specific: */
+  /** type enum specific: */
   char           **enum_values;
 
-  /* help info for the user */
+  /** help info for the user */
   char            *description;
   char            *help;
 
-  /* callback function and data for live changeable values */
+  /** callback function and data for live changeable values */
   xine_config_cb_t callback;
   void            *callback_data;
 };
@@ -156,17 +155,17 @@ struct config_values_s {
 			xine_config_cb_t changed_cb,
 			void *cb_data);
 
-  /* convenience function to update range, enum, num and bool values */
+  /** convenience function to update range, enum, num and bool values */
   void (*update_num) (config_values_t *self, const char *key, int value);
 
-  /* convenience function to update string values */
+  /** convenience function to update string values */
   void (*update_string) (config_values_t *self, const char *key, const char *value);
 
-  /* small utility function for enum handling */
+  /** small utility function for enum handling */
   int (*parse_enum) (const char *str, const char **values);
 
-  /*
-   * lookup config entries
+  /**
+   * @brief lookup config entries
    *
    * remember to call the changed_cb if it exists
    * and you changed the value of this item
@@ -174,12 +173,12 @@ struct config_values_s {
 
   cfg_entry_t* (*lookup_entry) (config_values_t *self, const char *key);
 
-  /*
+  /**
    * unregister callback function
    */
   void (*unregister_callback) (config_values_t *self, const char *key);
 
-  /*
+  /**
    * dispose of all config entries in memory
    */
   void (*dispose) (config_values_t *self);
@@ -189,27 +188,29 @@ struct config_values_s {
    */
   cfg_entry_t         *first, *last, *cur;
 
-  /*
+  /**
    * mutex for modification to the config
    */
   pthread_mutex_t      config_lock;
   
-  /*
+  /**
    * current config file's version number
    */
   int current_version;
 };
 
-/*
- * allocate and init a new xine config object
+/**
+ * @brief allocate and init a new xine config object
+ * @internal
  */
-config_values_t *_x_config_init (void) XINE_PROTECTED;
+config_values_t *_x_config_init (void);
 
-/*
- * interpret stream_setup part of mrls for config value changes
+/**
+ * @brief interpret stream_setup part of mrls for config value changes
+ * @internal
  */
 
-int _x_config_change_opt(config_values_t *config, const char *opt) XINE_PROTECTED;
+int _x_config_change_opt(config_values_t *config, const char *opt);
 
 
 #ifdef __cplusplus
