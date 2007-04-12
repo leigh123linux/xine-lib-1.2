@@ -2143,3 +2143,31 @@ void _x_unlock_port_rewiring(xine_t *xine)
 {
   xine->port_ticket->unlock_port_rewiring(xine->port_ticket);
 }
+
+int _x_lock_frontend(xine_stream_t *stream, int ms_to_time_out)
+{
+  if (ms_to_time_out >= 0) {
+    struct timespec abstime;
+
+    struct timeval now;
+    gettimeofday(&now, 0);
+
+    abstime.tv_sec = now.tv_sec + ms_to_time_out / 1000;
+    abstime.tv_nsec = now.tv_usec * 1000 + (ms_to_time_out % 1000) * 1e6;
+
+    if (abstime.tv_nsec > 1e9) {
+      abstime.tv_nsec -= 1e9;
+      abstime.tv_sec++;
+    }
+
+    return (0 == pthread_mutex_timedlock(&stream->frontend_lock, &abstime));
+  }
+
+  pthread_mutex_lock(&stream->frontend_lock);
+  return 1;
+}
+
+void _x_unlock_frontend(xine_stream_t *stream)
+{
+  pthread_mutex_unlock(&stream->frontend_lock);
+}
