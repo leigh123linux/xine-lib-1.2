@@ -1605,7 +1605,9 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
       || !frame->vo_frame.stream
       || xine_get_param(frame->vo_frame.stream, XINE_PARAM_FINE_SPEED) != XINE_FINE_SPEED_NORMAL;
     if (!disable_deinterlace) {
-      /* TODO: still frame detection */
+      int vo_bufs_in_fifo = 0;
+      _x_query_buffer_usage(frame->vo_frame.stream, NULL, NULL, &vo_bufs_in_fifo, NULL);
+      disable_deinterlace = (vo_bufs_in_fifo <= 0);
     }
   }
 
