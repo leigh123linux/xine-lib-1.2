@@ -371,6 +371,8 @@ struct xine_stream_s {
  */
 
 int _x_query_buffer_usage(xine_stream_t *stream, int *num_video_buffers, int *num_audio_buffers, int *num_video_frames, int *num_audio_frames) XINE_PROTECTED;
+int _x_lock_port_rewiring(xine_t *xine, int ms_to_time_out) XINE_PROTECTED;
+void _x_unlock_port_rewiring(xine_t *xine) XINE_PROTECTED;
 
 void _x_handle_stream_end      (xine_stream_t *stream, int non_user) XINE_PROTECTED;
 

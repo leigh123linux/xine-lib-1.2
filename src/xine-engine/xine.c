@@ -2133,3 +2133,13 @@ int _x_query_buffer_usage(xine_stream_t *stream, int *num_video_buffers, int *nu
 
   return ticket_acquired != 0;
 }
+
+int _x_lock_port_rewiring(xine_t *xine, int ms_timeout)
+{
+  return xine->port_ticket->lock_port_rewiring(xine->port_ticket, ms_timeout);
+}
+
+void _x_unlock_port_rewiring(xine_t *xine)
+{
+  xine->port_ticket->unlock_port_rewiring(xine->port_ticket);
+}
