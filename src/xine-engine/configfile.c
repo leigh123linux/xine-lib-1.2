@@ -1272,23 +1272,25 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
     if (entry->help)
       help_len = strlen(entry->help);
     
-    // integers
-    // value: 4 bytes
+    /* integers */
+    /* value: 4 bytes */
     total_len = 6 * sizeof(int32_t);
     
-    // strings (size + char buffer)
-    // length: 4 bytes
-    // buffer: length bytes
+    /* strings (size + char buffer)
+     * length: 4 bytes
+     * buffer: length bytes
+     */
     total_len += sizeof(int32_t) + key_len;
     total_len += sizeof(int32_t) + str_default_len;
     total_len += sizeof(int32_t) + description_len;
     total_len += sizeof(int32_t) + help_len;
     
-    /* enum values... */
-    // value count: 4 bytes
-    // for each value:
-    //   length: 4 bytes
-    //   buffer: length bytes
+    /* enum values...
+     * value count: 4 bytes
+     * for each value:
+     *   length: 4 bytes 
+     *   buffer: length bytes
+     */
     value_count = 0;
     total_len += sizeof(int32_t);  /* value count */
     
