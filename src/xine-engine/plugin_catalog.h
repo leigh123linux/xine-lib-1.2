@@ -40,10 +40,6 @@
 /* the engine takes this many plugins for one stream type */
 #define PLUGINS_PER_TYPE 10
 
-#define CACHE_CATALOG_VERSION 2
-#define CACHE_CATALOG_FILE    ".xine/catalog.cache"
-#define CACHE_CATALOG_DIR     ".xine"
-
 typedef struct {
   char            *filename;
   off_t            filesize;

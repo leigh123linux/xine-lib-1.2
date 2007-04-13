@@ -42,6 +42,9 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <signal.h>
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
 
 #define LOG_MODULE "load_plugins"
 #define LOG_VERBOSE
@@ -95,6 +98,7 @@ static void remove_segv_handler(void){
 #endif
 #endif /* 0 */
 
+#define CACHE_CATALOG_VERSION 2
 
 static const int plugin_iface_versions[] = {
   INPUT_PLUGIN_IFACE_VERSION,
@@ -1066,27 +1070,84 @@ static void load_plugin_list(FILE *fp, xine_sarray_t *plugins) {
   }
 }
 
+/**
+ * @brief Returns the complete filename for the plugins' cache file
+ * @param createdir If not zero, create the directory structure in which
+ *        the file has to reside.
+ * @return If createdir was not zero, returns NULL if the directory hasn't
+ *         been created; otherwise always returns a new string with the
+ *         name of the cachefile.
+ * @internal
+ *
+ * @see XDG Base Directory specification:
+ *      http://standards.freedesktop.org/basedir-spec/latest/index.html
+ */
+static const char *catalog_filename(int createdir) {
+  char *xdgcachedir = getenv("XDG_CACHE_HOME");
+  const char *const homedir = xine_get_homedir(); /* Run once and forever */
+  const size_t homedir_len = strlen(homedir);
+  char *cachefile = NULL;
+
+  if ( ! xdgcachedir || ! *xdgcachedir ) {
+    const size_t xdgcachedirsize = homedir_len +
+      strlen("/.cache") + 1;
+
+    xdgcachedir = alloca( xdgcachedirsize );
+
+    /* There's no need for using strncpy, as we just allocated
+       the memory area with the proper size */
+    strcpy(xdgcachedir, homedir);
+    strcat(xdgcachedir, "/.cache");
+  }
+
+  /* We use alloca here so that we can avoid freeing manually
+   * the string when returning NULL in the createdir branch.
+   * As we need to allow access to the string after the function
+   * returned, we duplicate the string on return.
+   */
+  cachefile = alloca( strlen(xdgcachedir) + strlen("/"PACKAGE"/plugins.cache") );
+  strcpy(cachefile, xdgcachedir);
+
+  /* If we're going to create the directory structure, we concatenate
+   * piece by piece the path, so that we can try to create all the
+   * directories.
+   * If we don't need to create anything, we just concatenate the
+   * whole path at once.
+   */
+  if ( createdir ) {
+    int result = 0;
+
+    result = mkdir( cachefile, 0700 );
+    if ( result != 0 && errno != EEXIST ) {
+      /** @todo Convert this to use xine's log facility */
+      fprintf(stderr, _("Unable to create %s directory: %s\n"), cachefile, strerror(errno));
+      return NULL;
+    }
+
+    strcat(cachefile, "/"PACKAGE);
+    result = mkdir( cachefile, 0700 );
+    if ( result != 0 && errno != EEXIST ) {
+      /** @todo Convert this to use xine's log facility */
+      fprintf(stderr, _("Unable to create %s directory: %s\n"), cachefile, strerror(errno));
+      return NULL;
+    }
+
+    strcat(cachefile, "/plugins.cache");
+
+  } else
+    strcat(cachefile, "/"PACKAGE"/plugins.cache");
+
+  return strdup(cachefile);
+}
 
 /*
  * save catalog to cache file
  */
 static void save_catalog (xine_t *this) {
-
   FILE       *fp;
-  char       *cachefile, *dirfile; 
-  const char *relname = CACHE_CATALOG_FILE;
-  const char *dirname = CACHE_CATALOG_DIR;
-    
-  cachefile = (char *) xine_xmalloc(strlen(xine_get_homedir()) + 
-                                    strlen(relname) + 2);
-  sprintf(cachefile, "%s/%s", xine_get_homedir(), relname);
-  
-  /* make sure homedir (~/.xine) exists */
-  dirfile = (char *) xine_xmalloc(strlen(xine_get_homedir()) + 
-				  strlen(dirname) + 2);
-  sprintf(dirfile, "%s/%s", xine_get_homedir(), dirname);
-  mkdir (dirfile, 0755);
-  free (dirfile);
+  char *const cachefile = catalog_filename(1);
+
+  if ( ! cachefile ) return;
 
   if( (fp = fopen(cachefile,"w")) != NULL ) {
     int i;
@@ -1108,13 +1169,9 @@ static void save_catalog (xine_t *this) {
 static void load_cached_catalog (xine_t *this) {
 
   FILE *fp;
-  char *cachefile;                                               
-  const char *relname = CACHE_CATALOG_FILE;
-    
-  cachefile = (char *) xine_xmalloc(strlen(xine_get_homedir()) + 
-                                    strlen(relname) + 2);
-  sprintf(cachefile, "%s/%s", xine_get_homedir(), relname);
-  
+  char *const cachefile = catalog_filename(0);
+  /* It can't return NULL without creating directories */
+
   if( (fp = fopen(cachefile,"r")) != NULL ) {
     load_plugin_list (fp, this->plugin_catalog->cache_list);
     fclose(fp);
