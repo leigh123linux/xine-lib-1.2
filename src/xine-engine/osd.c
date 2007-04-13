@@ -888,7 +888,7 @@ static int osd_lookup_fontconfig( osd_object_t *osd, const char *const fontname,
  *      http://standards.freedesktop.org/basedir-spec/latest/index.html
  */
 static int osd_lookup_xdg( osd_object_t *osd, const char *const fontname ) {
-  const char *const *data_dirs = xdgDataDirectories(osd->renderer->stream->xine->basedir_handle);
+  const char *const *data_dirs = xdgSearchableDataDirectories(osd->renderer->stream->xine->basedir_handle);
 
   /* try load font from current directory or from an absolute path */
   if ( FT_New_Face(osd->ft2->library, fontname, 0, &osd->ft2->face) == FT_Err_Ok )
@@ -1638,7 +1638,7 @@ osd_renderer_t *_x_osd_renderer_init( xine_stream_t *stream ) {
    * load available fonts
    */
   {
-    const char *const *data_dirs = xdgDataDirectories(stream->xine->basedir_handle);
+    const char *const *data_dirs = xdgSearchableDataDirectories(stream->xine->basedir_handle);
     if ( data_dirs )
       while( (*data_dirs) && *(*data_dirs) ) {
 	/* sizeof("") takes care of the final NUL byte */
