@@ -1329,18 +1329,6 @@ static void _cdda_mkdir_recursive_safe(xine_t *xine, char *path) {
 }
 
 /*
- * Where, by default, cddb cache files will be saved
- */
-static char *_cdda_cddb_get_default_location(void) {
-  static char buf[XINE_PATH_MAX + XINE_NAME_MAX + 1];
-  
-  memset(&buf, 0, sizeof(buf));
-  snprintf(buf, sizeof(buf), "%s/.xine/cddbcache", (xine_get_homedir()));
-  
-  return buf;
-}
-
-/*
  * Read from socket, fill char *s, return size length.
  */
 static int _cdda_cddb_socket_read(cdda_input_plugin_t *this, char *str, int size) {
