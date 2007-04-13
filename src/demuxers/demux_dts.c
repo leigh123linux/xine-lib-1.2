@@ -86,9 +86,9 @@ static int open_dts_file(demux_dts_t *this) {
 
   blocksize = this->input->get_blocksize(this->input);
   if (blocksize) {
-    this->input->seek(this->input, 0, SEEK_SET);
+    //    this->input->seek(this->input, 0, SEEK_SET);
     buf_element_t *buf = this->input->read_block(this->input,
-						 this->audio_fifo,
+						 this->stream->audio_fifo,
 						 blocksize);
     this->input->seek(this->input, 0, SEEK_SET);
 
