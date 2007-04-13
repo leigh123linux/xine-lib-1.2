@@ -330,10 +330,15 @@ if test "x$with_external_libxdg_basedir" = "xyes"; then
 
    XDG_BASEDIR_CFLAGS=''
    XDG_BASEDIR_LIBS='-lxdg-basedir'
+else
+   XDG_BASEDIR_CFLAGS='-I$(top_srcdir)/contrib/libxdg-basedir'
+   XDG_BASEDIR_LIBS='$(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la'
+   XDG_BASEDIR_DEPS='$(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la'
 fi
 
 AC_SUBST([XDG_BASEDIR_CFLAGS])
 AC_SUBST([XDG_BASEDIR_LIBS])
+AC_SUBST([XDG_BASEDIR_DEPS])
 
 AM_CONDITIONAL([EXTERNAL_LIBXDG_BASEDIR], [test "x$with_external_libxdg_basedir" = "xyes"])
 
