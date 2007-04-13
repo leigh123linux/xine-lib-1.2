@@ -54,8 +54,8 @@ XINE_LT_REVISION=0
 XINE_LT_AGE=17
 
 dnl for a release tarball do "rm .cvsversion" before "make dist"
-if test -f "${src_dir}/.cvsversion"; then
-  XINE_PRE="cvs"
+if test -f "${srcdir-.}/.cvsversion"; then
+  XINE_PRE="hg"
 else
   XINE_PRE=""
 fi
