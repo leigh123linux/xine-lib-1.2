@@ -898,7 +898,7 @@ static int osd_lookup_xdg( osd_object_t *osd, const char *const fontname ) {
     while( (*data_dirs) && *(*data_dirs) ) {
       FT_Error fte = FT_Err_Ok;
       char *fontpath = NULL;
-      asprintf(&fontpath, "%s/"PACKAGE"/%s", data_dirs, fontname);
+      asprintf(&fontpath, "%s/"PACKAGE"/%s", *data_dirs, fontname);
 
       fte = FT_New_Face(osd->ft2->library, fontpath, 0, &osd->ft2->face);
 
@@ -906,6 +906,8 @@ static int osd_lookup_xdg( osd_object_t *osd, const char *const fontname ) {
 
       if ( fte == FT_Err_Ok )
 	return 1;
+
+      data_dirs++;
     }
 
   xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG, 
@@ -1625,7 +1627,6 @@ static uint32_t osd_get_capabilities (osd_object_t *osd) {
 osd_renderer_t *_x_osd_renderer_init( xine_stream_t *stream ) {
 
   osd_renderer_t *this;
-  char str[1024];
 
   this = xine_xmalloc(sizeof(osd_renderer_t)); 
   this->stream = stream;
@@ -1636,12 +1637,22 @@ osd_renderer_t *_x_osd_renderer_init( xine_stream_t *stream ) {
   /*
    * load available fonts
    */
+  {
+    const char *const *data_dirs = xdgDataDirectories(stream->xine->basedir_handle);
+    if ( data_dirs )
+      while( (*data_dirs) && *(*data_dirs) ) {
+	/* sizeof(PACKAGE) takes care of the final NUL byte */
+	char *fontpath = xine_xmalloc( strlen(*data_dirs) + sizeof(PACKAGE) );
+	strcpy(fontpath, *data_dirs);
+	strcat(fontpath, "/"PACKAGE"/");
 
-  osd_preload_fonts (this, XINE_FONTDIR);
+	osd_preload_fonts(this, fontpath);
 
-  snprintf (str, 1024, "%s/.xine/fonts", xine_get_homedir ());
-
-  osd_preload_fonts (this, str);
+	free(fontpath);
+	
+	data_dirs++;
+      }
+  }
 
   this->textpalette = this->stream->xine->config->register_enum (this->stream->xine->config,
                                              "ui.osd.text_palette", 0,
