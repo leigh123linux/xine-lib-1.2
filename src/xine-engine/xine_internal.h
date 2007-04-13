@@ -72,7 +72,6 @@ extern "C" {
 #  include <xine/alphablend.h>
 #endif
 
-
 #define XINE_MAX_EVENT_LISTENERS         50
 #define XINE_MAX_EVENT_TYPES             100
 
@@ -115,6 +114,9 @@ struct xine_s {
   pthread_mutex_t            streams_lock;
   
   metronom_clock_t          *clock;
+
+  /** Handle for libxdg-basedir functions. It's actually an xdgHandle. */
+  void *                     basedir_handle;
 
 #ifdef XINE_ENGINE_INTERNAL
   xine_ticket_t             *port_ticket;

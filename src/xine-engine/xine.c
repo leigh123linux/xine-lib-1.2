@@ -47,6 +47,8 @@
 #include <locale.h>
 #endif
 
+#include <basedir.h>
+
 #define LOG_MODULE "xine"
 #define LOG_VERBOSE
 /*
@@ -1410,6 +1412,8 @@ void xine_exit (xine_t *this) {
   WSACleanup();
 #endif
 
+  xdgFreeHandle(this->basedir_handle);
+
   free (this);
 }
 
@@ -1537,6 +1541,9 @@ static void config_save_cb (void *this_gen, xine_cfg_entry_t *entry) {
 void xine_init (xine_t *this) {
   static const char *demux_strategies[] = {"default", "reverse", "content",
 					   "extension", NULL};
+
+  /* First of all, initialise libxdg-basedir as it's used by plugins. */
+  this->basedir_handle = xdgAllocHandle();
 
   /* initialize color conversion tables and functions */
   init_yuv_conversion();

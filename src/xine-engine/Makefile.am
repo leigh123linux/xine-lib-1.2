@@ -1,7 +1,18 @@
 include $(top_srcdir)/misc/Makefile.common
 include $(top_srcdir)/lib/Makefile.common
 
-AM_CFLAGS = $(X_CFLAGS) $(FT2_CFLAGS) $(FONTCONFIG_CFLAGS) $(VISIBILITY_FLAG)
+if !EXTERNAL_LIBXDG_BASEDIR
+link_libxdg_basedir = $(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la
+cflags_libxdg_basedir = -I$(top_srcdir)/contrib/libxdg-basedir
+
+$(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la:
+	$(MAKE) -C $(top_builddir)/contrib/libxdg-basedir
+else
+link_libxdg_basedir = $(XDG_BASEDIR_LIBS)
+cflags_libxdg_basedir = $(XDG_BASEDIR_CFLAGS)
+endif
+
+AM_CFLAGS = $(X_CFLAGS) $(FT2_CFLAGS) $(FONTCONFIG_CFLAGS) $(cflags_libxdg_basedir) $(VISIBILITY_FLAG)
 AM_CPPFLAGS = $(ZLIB_CPPFLAGS) -DXINE_LIBRARY_COMPILE
 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
@@ -24,11 +35,11 @@ libxine_la_SOURCES = xine.c metronom.c configfile.c buffer.c \
 # FIXME: these are currently unused:
 EXTRA_DIST = lrb.c lrb.h accel_xvmc.h
 
-libxine_la_DEPENDENCIES = $(XINEUTILS_LIB) \
+libxine_la_DEPENDENCIES = $(XINEUTILS_LIB) $(link_libxdg_basedir) \
                           $(pthread_dep) $(LIBXINEPOSIX)
 libxine_la_LIBADD = $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL) $(ZLIB_LIBS) \
 		    -lm $(XINEUTILS_LIB) $(LIBICONV) $(FT2_LIBS) $(FONTCONFIG_LIBS) \
-                    $(LIBXINEPOSIX) $(RT_LIBS) $(NET_LIBS)
+                    $(LIBXINEPOSIX) $(RT_LIBS) $(NET_LIBS) $(link_libxdg_basedir)
 
 libxine_la_LDFLAGS =  \
 	-version-info $(XINE_LT_CURRENT):$(XINE_LT_REVISION):$(XINE_LT_AGE) \
