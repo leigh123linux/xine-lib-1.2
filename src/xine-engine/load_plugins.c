@@ -42,9 +42,6 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <signal.h>
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
 
 #include <basedir.h>
 
