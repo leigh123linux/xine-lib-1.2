@@ -1,4 +1,4 @@
-SUBDIRS = libmpcdec
+SUBDIRS = libmpcdec libxdg-basedir
 
 srcdir = $(shell cd @srcdir@; pwd)
 

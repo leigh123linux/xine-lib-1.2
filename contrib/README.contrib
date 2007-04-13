@@ -45,3 +45,14 @@ This should register the file changes that happened.
 The ffmpeg-distfiles file is used by the make dist target to know
 which files needs to be copied over in the tarball file, so it's
 important that is always up to date.
+
+libxdg-basedir
+--------------
+
+The libxdg-basedir project is a (really) small library used to provide
+the proper access to XDG directories as described by the XDG Base
+Directory Specification (0.6 version).
+
+The library can be found at
+https://n.ethz.ch/student/nevillm/download/libxdg-basedir/ , and it's
+imported in xine-lib as it's far from commonly found on distributions.

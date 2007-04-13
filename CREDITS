@@ -24,6 +24,7 @@ libmad				0.15.1b			Miguel Freitas
 libmpeg2			0.2.1 [*]
 libmpcdec			1.2.5
 libvcd				0.7.21 [o]
+libxdg-basedir			0.1.2			Diego Pettenò
 nosefart                        1.92                    Mike Melanson
 tvtime				0.9.8.4			Miguel Freitas
 wine

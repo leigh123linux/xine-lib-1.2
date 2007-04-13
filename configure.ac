@@ -317,6 +317,25 @@ powerpc64:yes | s390x:yes | sparc64:yes | x86_64:yes)
 esac
 AC_MSG_RESULT([$XINE_LIBNAME])
 
+dnl ---------------------------------------------
+dnl libxdg-basedir detection
+dnl ---------------------------------------------
+
+AC_ARG_WITH([external-libxdg-basedir],
+  AS_HELP_STRING([--with-external-libxdg-basedir], [use external copy of libxdg-basedir]))
+
+if test "x$with_external_libxdg_basedir" = "xyes"; then
+   AC_CHECK_HEADER([basedir.h], , [AC_MSG_ERROR([Unable to find basedir.h for libxdg-basedir])])
+   AC_CHECK_LIB([xdg-basedir], , [AC_MSG_ERROR([Unable to find libxdg-basedir])])
+
+   XDG_BASEDIR_CFLAGS=''
+   XDG_BASEDIR_LIBS='-lxdg-basedir'
+fi
+
+AC_SUBST([XDG_BASEDIR_CFLAGS])
+AC_SUBST([XDG_BASEDIR_LIBS])
+
+AM_CONDITIONAL([EXTERNAL_LIBXDG_BASEDIR], [test "x$with_external_libxdg_basedir" = "xyes"])
 
 dnl ---------------------------------------------
 dnl mpeg2lib and ffmpeg stuff
@@ -2563,6 +2582,7 @@ doc/faq/Makefile
 doc/Doxyfile
 contrib/Makefile
 contrib/libmpcdec/Makefile
+contrib/libxdg-basedir/Makefile
 include/Makefile
 include/xine.h
 lib/Makefile
