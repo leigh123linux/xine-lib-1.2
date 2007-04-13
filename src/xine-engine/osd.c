@@ -40,6 +40,8 @@
 #  include <iconv.h>
 #endif
 
+#include <basedir.h>
+
 #define LOG_MODULE "osd"
 #define LOG_VERBOSE
 /*
@@ -826,6 +828,91 @@ static int osd_renderer_unload_font(osd_renderer_t *this, char *fontname ) {
 }
 
 #ifdef HAVE_FT2
+
+# ifdef HAVE_FONTCONFIG
+/**
+ * @brief Look up a font name using FontConfig library
+ * @param osd The OSD object to load the font for.
+ * @param fontname Name of the font to look up.
+ * @param size Size of the font to look for.
+ *
+ * @return If the lookup was done correctly, a non-zero value is returned.
+ */
+static int osd_lookup_fontconfig( osd_object_t *osd, const char *const fontname, const int size ) {
+  FcPattern *pat = NULL, *match = NULL;
+  FcFontSet *fs = FcFontSetCreate();
+  FcResult result;
+
+  pat = FcPatternBuild(NULL, FC_FAMILY, FcTypeString, fontname, FC_SIZE, FcTypeDouble, (double)size, NULL);
+  FcConfigSubstitute(NULL, pat, FcMatchPattern);
+  FcDefaultSubstitute(pat);
+
+  match = FcFontMatch(NULL, pat, &result);
+  FcPatternDestroy(pat);
+    
+  if ( ! match ) {
+    FcFontSetDestroy(fs);
+    xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG,
+	    _("osd: error matching font %s with FontConfig"), fontname);
+    return 0;
+  }
+  FcFontSetAdd(fs, match);
+
+  if ( fs->nfont != 0 ) {
+    FcChar8 *filename = NULL;
+    FcPatternGetString(fs->fonts[0], FC_FILE, 0, &filename);
+    if ( ! FT_New_Face(osd->ft2->library, (const char*)filename, 0, &osd->ft2->face) ) {
+      FcFontSetDestroy(fs);
+      return 1;
+    }
+
+    xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG,
+	    _("osd: error loading font %s with FontConfig"), fontname);
+    return 0;
+  } else {
+    xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG,
+	    _("osd: error looking up font %s with FontConfig"), fontname);
+    return 0;
+  }
+}
+# endif /* HAVE_FONTCONFIG */
+
+/**
+ * @brief Look up a font file using XDG data directories.
+ * @param osd The OSD object to load the font for.
+ * @param fontname Name (absolute or relative) of the font to look up.
+ *
+ * @return If the lookup was done correctly, a non-zero value is returned.
+ *
+ * @see XDG Base Directory specification:
+ *      http://standards.freedesktop.org/basedir-spec/latest/index.html
+ */
+static int osd_lookup_xdg( osd_object_t *osd, const char *const fontname ) {
+  const char *const *data_dirs = xdgDataDirectories(osd->renderer->stream->xine->basedir_handle);
+
+  /* try load font from current directory or from an absolute path */
+  if ( FT_New_Face(osd->ft2->library, fontname, 0, &osd->ft2->face) == FT_Err_Ok )
+    return 1;
+
+  if ( data_dirs )
+    while( (*data_dirs) && *(*data_dirs) ) {
+      FT_Error fte = FT_Err_Ok;
+      char *fontpath = NULL;
+      asprintf(&fontpath, "%s/"PACKAGE"/%s", data_dirs, fontname);
+
+      fte = FT_New_Face(osd->ft2->library, fontpath, 0, &osd->ft2->face);
+
+      free(fontpath);
+
+      if ( fte == FT_Err_Ok )
+	return 1;
+    }
+
+  xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG, 
+	  _("osd: error loading font %s with in XDG data directories.\n"), fontname);
+  return 0;
+}
+
 static int osd_set_font_freetype2( osd_object_t *osd, const char *fontname, int size ) {
   if (!osd->ft2) {
     osd->ft2 = xine_xmalloc(sizeof(osd_ft2context_t));
@@ -838,68 +925,19 @@ static int osd_set_font_freetype2( osd_object_t *osd, const char *fontname, int 
     }
   }
    
+  do { /* while 0 */
 #ifdef HAVE_FONTCONFIG
-  do {
-    FcPattern *pat = NULL, *match = NULL;
-    FcFontSet *fs = FcFontSetCreate();
-    FcResult result;
-
-    pat = FcPatternBuild(NULL, FC_FAMILY, FcTypeString, fontname, FC_SIZE, FcTypeDouble, (double)size, NULL);
-    FcConfigSubstitute(NULL, pat, FcMatchPattern);
-    FcDefaultSubstitute(pat);
-
-    match = FcFontMatch(NULL, pat, &result);
-    FcPatternDestroy(pat);
-    
-    if ( ! match ) {
-      FcFontSetDestroy(fs);
-      xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG,
-	      _("osd: error matching font %s with FontConfig"), fontname);
+    if ( osd_lookup_fontconfig(osd, fontname, size) )
       break;
-    }
-    FcFontSetAdd(fs, match);
-
-    if ( fs->nfont != 0 ) {
-      FcChar8 *filename = NULL;
-      FcPatternGetString(fs->fonts[0], FC_FILE, 0, &filename);
-      if ( ! FT_New_Face(osd->ft2->library, (const char*)filename, 0, &osd->ft2->face) ) {
-	FcFontSetDestroy(fs);
-	goto end;
-      }
-
-      xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG,
-	      _("osd: error loading font %s with FontConfig"), fontname);
-    } else {
-      xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG,
-	      _("osd: error looking up font %s with FontConfig"), fontname);
-    }
-  } while(0);
 #endif
-  {
-    char pathname[1024];
-    /* try load font from current directory */
-    if ( !FT_New_Face(osd->ft2->library, fontname, 0, &osd->ft2->face) )
-      goto end;
-    
-    /* try load font from home directory */
-    snprintf(pathname, 1024, "%s/.xine/fonts/%s", xine_get_homedir(), fontname);
-    if ( !FT_New_Face(osd->ft2->library, pathname, 0, &osd->ft2->face) )
-      goto end;
+    if ( osd_lookup_xdg(osd, fontname) )
+      break;
 
-    /* try load font from xine font directory */
-    snprintf(pathname, 1024, "%s/%s", XINE_FONTDIR, fontname);
-    if ( !FT_New_Face(osd->ft2->library, pathname, 0, &osd->ft2->face) )
-      goto end;
+    free(osd->ft2);
+    osd->ft2 = NULL;
+    return 0;
+  } while(0);
 
-    xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG, 
-	    _("osd: error loading font %s with ft2\n"), fontname);
-  }
-
-  free(osd->ft2);
-  osd->ft2 = NULL;
-  return 0;
-
- end:
   if (FT_Set_Pixel_Sizes(osd->ft2->face, 0, size)) {
     xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG,
 	    _("osd: error setting font size (no scalable font?)\n"));
