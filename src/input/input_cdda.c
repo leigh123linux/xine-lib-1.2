@@ -41,6 +41,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#ifdef HAVE_ALLOCA_H
+#  include <alloca.h>
+#endif
 
 #ifdef HAVE_SYS_IOCTL_H
 #  include <sys/ioctl.h>
@@ -54,6 +57,8 @@
 #include <signal.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+
+#include <basedir.h>
 
 #define LOG_MODULE "input_cdda"
 #define LOG_VERBOSE
@@ -128,7 +133,6 @@ typedef struct {
     int                enabled;
     char              *server;
     int                port;
-    char              *cache_dir; 
     
     char              *cdiscid;
     char              *disc_title;
@@ -1184,15 +1188,6 @@ static void port_changed_cb(void *data, xine_cfg_entry_t *cfg) {
     this->cddb.port = cfg->num_value;
   }
 }
-static void cachedir_changed_cb(void *data, xine_cfg_entry_t *cfg) {
-  cdda_input_class_t *class = (cdda_input_class_t *) data;
-  
-  if(class->ip) {
-    cdda_input_plugin_t *this = class->ip;
-
-    this->cddb.cache_dir = cfg->str_value;
-  }
-}
 #ifdef CDROM_SELECT_SPEED
 static void speed_changed_cb(void *data, xine_cfg_entry_t *cfg) {
   cdda_input_class_t *class = (cdda_input_class_t *) data;
@@ -1444,15 +1439,18 @@ static int _cdda_cddb_handle_code(char *buf) {
  * Try to load cached cddb infos
  */
 static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
-  char  cdir[XINE_PATH_MAX + XINE_NAME_MAX + 1];
+  char *cdir = NULL;
   DIR  *dir;
+
+  const char *const xdg_cache_home = xdgCacheHome(this->stream->xine->basedir_handle);
 
   if(this == NULL)
     return 0;
   
-  memset(&cdir, 0, sizeof(cdir));
-  snprintf(cdir, sizeof(cdir), "%s", this->cddb.cache_dir);
-  
+  cdir = alloca(strlen(xdg_cache_home) + sizeof("/"PACKAGE"/cddb"));
+  strcpy(cdir, xdg_cache_home);
+  strcat(cdir, "/"PACKAGE"/cddb");
+
   if((dir = opendir(cdir)) != NULL) {
     struct dirent *pdir;
     
@@ -1576,20 +1574,24 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
  * Save cddb grabbed infos.
  */
 static void _cdda_save_cached_cddb_infos(cdda_input_plugin_t *this, char *filecontent) {
-  char   cfile[XINE_PATH_MAX + XINE_NAME_MAX + 1];
   FILE  *fd;
-  
+  DIR  *dir;
+  char *cfile;
+
+  const char *const xdg_cache_home = xdgCacheHome(this->stream->xine->basedir_handle);
+
   if((this == NULL) || (filecontent == NULL))
     return;
   
-  memset(&cfile, 0, sizeof(cfile));
+  /* the filename is always 8 characters */
+  cfile = alloca(strlen(xdg_cache_home) + sizeof("/"PACKAGE"/cddb") + 9);
+  strcpy(cfile, xdg_cache_home);
+  strcat(cfile, "/"PACKAGE"/cddb");
 
-  /* Ensure "~/.xine/cddbcache" exist */
-  snprintf(cfile, sizeof(cfile), "%s", this->cddb.cache_dir);
-  
+  /* Ensure the cache directory exists */
   _cdda_mkdir_recursive_safe(this->stream->xine, cfile);
   
-  snprintf(cfile, sizeof(cfile), "%s/%08lx", this->cddb.cache_dir, this->cddb.disc_id);
+  sprintf(cfile, "%s/%08lx", cfile, this->cddb.disc_id);
   
   if((fd = fopen(cfile, "w")) == NULL) {
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
@@ -2686,10 +2688,6 @@ static input_plugin_t *cdda_class_get_instance (input_class_t *cls_gen, xine_str
 			      &port_entry)) 
     port_changed_cb(class, &port_entry);
 
-  if(xine_config_lookup_entry(this->stream->xine, "media.audio_cd.cddb_cachedir", 
-			      &cachedir_entry)) 
-    cachedir_changed_cb(class, &cachedir_entry);
-
   class->cddb_error = cddb_error;
 
   return (input_plugin_t *)this;
@@ -2712,7 +2710,6 @@ static void cdda_class_dispose (input_class_t *this_gen) {
   config->unregister_callback(config, "media.audio_cd.use_cddb");
   config->unregister_callback(config, "media.audio_cd.cddb_server");
   config->unregister_callback(config, "media.audio_cd.cddb_port");
-  config->unregister_callback(config, "media.audio_cd.cddb_cachedir");
 #ifdef CDROM_SELECT_SPEED
   config->unregister_callback(config, "media.audio_cd.drive_slowdown");
 #endif
@@ -2781,14 +2778,6 @@ static void *init_plugin (xine_t *xine, void *data) {
 		       "title and track information from."), XINE_CONFIG_SECURITY,
 		       port_changed_cb, (void *) this);
   
-  config->register_filename(config, "media.audio_cd.cddb_cachedir", 
-			  (_cdda_cddb_get_default_location()), XINE_CONFIG_STRING_IS_DIRECTORY_NAME,
-			  _("CDDB cache directory"), _("The replies from the CDDB server will be "
-			  "cached in this directory.\nThis setting is security critical, because files "
-			  "with uncontrollable names will be created in this directory. Be sure to use "
-			  "a dedicated directory not used for anything but CDDB caching."), XINE_CONFIG_SECURITY, 
-			  cachedir_changed_cb, (void *) this);
-
 #ifdef CDROM_SELECT_SPEED
   config->register_num(config, "media.audio_cd.drive_slowdown", 4,
 		       _("slow down disc drive to this speed factor"),

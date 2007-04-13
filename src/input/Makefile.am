@@ -125,8 +125,9 @@ xineplug_inp_rtsp_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_rtsp_la_LDFLAGS = -avoid-version -module
 
 xineplug_inp_cdda_la_SOURCES = input_cdda.c media_helper.c sha1.c sha1.h base64.c base64.h
-xineplug_inp_cdda_la_LIBADD = $(XINE_LIB)
-xineplug_inp_cdda_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
+xineplug_inp_cdda_la_DEPS = $(XDG_BASEDIR_DEPS)
+xineplug_inp_cdda_la_LIBADD = $(XINE_LIB) $(XDG_BASEDIR_LIBS)
+xineplug_inp_cdda_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS) $(XDG_BASEDIR_CFLAGS)
 xineplug_inp_cdda_la_LDFLAGS = -avoid-version -module
 
 xineplug_inp_v4l_la_SOURCES = input_v4l.c
