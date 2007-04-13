@@ -898,7 +898,7 @@ static int osd_lookup_xdg( osd_object_t *osd, const char *const fontname ) {
     while( (*data_dirs) && *(*data_dirs) ) {
       FT_Error fte = FT_Err_Ok;
       char *fontpath = NULL;
-      asprintf(&fontpath, "%s/"PACKAGE"/%s", *data_dirs, fontname);
+      asprintf(&fontpath, "%s/"PACKAGE"/fonts/%s", *data_dirs, fontname);
 
       fte = FT_New_Face(osd->ft2->library, fontpath, 0, &osd->ft2->face);
 
@@ -1641,10 +1641,10 @@ osd_renderer_t *_x_osd_renderer_init( xine_stream_t *stream ) {
     const char *const *data_dirs = xdgDataDirectories(stream->xine->basedir_handle);
     if ( data_dirs )
       while( (*data_dirs) && *(*data_dirs) ) {
-	/* sizeof(PACKAGE) takes care of the final NUL byte */
-	char *fontpath = xine_xmalloc( strlen(*data_dirs) + sizeof(PACKAGE) );
+	/* sizeof("") takes care of the final NUL byte */
+	char *fontpath = xine_xmalloc( strlen(*data_dirs) + sizeof("/"PACKAGE"/fonts/") );
 	strcpy(fontpath, *data_dirs);
-	strcat(fontpath, "/"PACKAGE"/");
+	strcat(fontpath, "/"PACKAGE"/fonts/");
 
 	osd_preload_fonts(this, fontpath);
 
