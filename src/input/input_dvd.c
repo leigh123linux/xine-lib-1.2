@@ -1792,7 +1792,6 @@ static void *init_class (xine_t *xine, void *data) {
     /* we have found libdvdcss, enable the specific config options */
     char *raw_device;
     static const char *decrypt_modes[] = { "key", "disc", "title", NULL };
-    char *css_cache_default, *css_cache;
     int mode;
     
     raw_device = config->register_filename(config, "media.dvd.raw_device",
@@ -1817,22 +1816,6 @@ static void *init_class (xine_t *xine, void *data) {
 				   "playing scrambled DVDs."), 20, NULL, NULL);
     xine_setenv("DVDCSS_METHOD", decrypt_modes[mode], 0);
     
-    css_cache_default = (char *)malloc(strlen(xine_get_homedir()) + 10);
-    sprintf(css_cache_default, "%s/.dvdcss/", xine_get_homedir());
-    css_cache = config->register_filename(config, "media.dvd.css_cache_path", css_cache_default, XINE_CONFIG_STRING_IS_DIRECTORY_NAME,
-					_("path to the title key cache"),
-					_("Since cracking the copy protection of scrambled DVDs can "
-					  "be quite time consuming, libdvdcss will cache the cracked "
-					  "keys in this directory.\nThis setting is security critical, "
-					  "because files with uncontrollable names will be created in "
-					  "this directory. Be sure to use a dedicated directory not "
-					  "used for anything but DVD key caching."),
-					XINE_CONFIG_SECURITY, NULL, NULL);
-    if (strlen(css_cache) > 0)
-      xine_setenv("DVDCSS_CACHE", css_cache, 0);
-    free(css_cache_default);
-    
-
     if(xine->verbosity > XINE_VERBOSITY_NONE)
       xine_setenv("DVDCSS_VERBOSE", "2", 0);
     else
