@@ -32,7 +32,8 @@ ffmpeg_config.h: $(top_builddir)/contrib/ffmpeg/config.h
 
 endif
 
-CLEANFILES = ffmpeg_config.h
+BUILT_SOURCES = ffmpeg_config.h
+CLEANFILES = $(BUILT_SOURCES)
 
 # this must always be included, even if the current machine has no DXR3...
 EXTRA_DIST = ffmpeg_encoder.c
