@@ -115,8 +115,9 @@ xineplug_inp_pnm_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_pnm_la_LDFLAGS = -avoid-version -module
 
 xineplug_inp_dvb_la_SOURCES = input_dvb.c net_buf_ctrl.c
-xineplug_inp_dvb_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS)
-xineplug_inp_dvb_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
+xineplug_inp_dvb_la_DEPS = $(XDG_BASEDIR_DEPS)
+xineplug_inp_dvb_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(XDG_BASEDIR_LIBS)
+xineplug_inp_dvb_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS) $(XDG_BASEDIR_CFLAGS)
 xineplug_inp_dvb_la_LDFLAGS = -avoid-version -module
 
 xineplug_inp_rtsp_la_SOURCES = input_rtsp.c net_buf_ctrl.c

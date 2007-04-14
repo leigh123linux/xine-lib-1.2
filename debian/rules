@@ -128,10 +128,10 @@ binary-arch: build install
 	dh_installdocs
 	dh_installchangelogs -k ChangeLog
 	dh_link
-	dh_strip --dbg-package=libxine1
+	dh_strip --dbg-package=libxine2
 	dh_compress
 	dh_fixperms
-	dh_makeshlibs -V 'libxine1 (>= 1.1.2-5)'
+	dh_makeshlibs -V 'libxine2 (>= 1.2.0~)'
 	dh_installdeb
 	chmod +x debian/shlibdeps.sh
 	debian/shlibdeps.sh libxine${major}
