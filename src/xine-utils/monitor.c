@@ -41,13 +41,10 @@ static long profiler_calls[MAX_ID] ;
 static const char *profiler_label[MAX_ID] ;
 
 void xine_profiler_init () {
-  int i;
-  for (i=0; i<MAX_ID; i++) {
-    profiler_times[i] = 0;
-    profiler_start[i] = 0;
-    profiler_calls[i] = 0;
-    profiler_label[i] = NULL;
-  }
+  memset(profiler_times, 0, sizeof(profiler_times));
+  memset(profiler_start, 0, sizeof(profiler_start));
+  memset(profiler_calls, 0, sizeof(profiler_calls));
+  memset(profiler_label, 0, sizeof(profiler_label));
 }
 
 int xine_profiler_allocate_slot (const char *label) {
