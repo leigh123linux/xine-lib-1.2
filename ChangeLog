@@ -12,6 +12,10 @@ xine-lib (1.1.90) (Unreleased)
     to separate from xine's own code.
   * Save plugins' cache in the defined cache home directory as per XDG Base
     Directory Specification.
+  * Use XDG-defined cache home directory for cddb cache.
+  * Use XDG-defined cache home directory for win32codecs fake registry.
+  * Use XDG-defined data directories to look up fonts files both while using
+    FreeType2 and the standard bitmap fonts for OSD.
 
 xine-lib (1.1.6) [UNRELEASED]
   * Split the DirectFB plugin into X11 and non-X versions.
