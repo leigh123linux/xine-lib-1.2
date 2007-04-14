@@ -66,13 +66,16 @@
  *   OSD - this will allow for filtering/searching of epg data - useful for automatic recording :)
  */
 
-/* pthread.h must be included first so rest of the headers are imported
-   thread safely (on some systems). */
-#include <pthread.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+/* pthread.h must be included first so rest of the headers are imported
+   thread safely (on some systems). 
+   However, including it before config.h causes problems with asprintf not
+   being declared (glibc 2.3.6)
+*/
+#include <pthread.h>
 
 #include <assert.h>
 #include <stdio.h>
@@ -96,6 +99,9 @@
 #include <dirent.h>
 #endif
 #include <ctype.h>
+
+/* XDG */
+#include <basedir.h>
 
 /* These will eventually be #include <linux/dvb/...> */
 #include "dvb/dmx.h"
@@ -885,8 +891,8 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
   int        num_alloc = 0;
   int        i;
   struct stat st;
-  
-  snprintf(filename, BUFSIZE, "%s/.xine/channels.conf", xine_get_homedir());
+
+  snprintf(filename, BUFSIZE, "%s/"PACKAGE"/channels.conf", xdgConfigHome(xine->basedir_handle));
 
   f = fopen(filename, "r");
   if (!f) {
@@ -3156,11 +3162,14 @@ static char **dvb_class_get_autoplay_list(input_class_t * this_gen,
     num_channels = 0;
 
     if (!(channels = load_channels(class->xine, NULL, &num_channels, 0))) {
+       static char *placefile = NULL;
        /* channels.conf not found in .xine */
-       class->mrls[0]="Sorry, No channels.conf found";
-       class->mrls[1]="Please run the dvbscan utility";
-       class->mrls[2]="from the dvb drivers apps package";
-       class->mrls[3]="and place the file in ~/.xine/";
+       class->mrls[0]="Sorry, no channels.conf found.";
+       class->mrls[1]="Please run the scan utility from the DVB";
+       class->mrls[2]="drivers apps package and place the file in";
+       if (!placefile)
+         asprintf (&placefile, "%s/"PACKAGE"/", xdgConfigHome(class->xine->basedir_handle));
+       class->mrls[3]=placefile;
        *num_files=4;
        return class->mrls;
     }
