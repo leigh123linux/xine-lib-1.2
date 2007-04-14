@@ -3,9 +3,9 @@ usr/lib/xine/plugins/*/post/*.so
 usr/lib/xine/plugins/*/*.so
 usr/lib/xine/plugins/*/vidix/*.so
 usr/share/locale
-usr/share/xine
+usr/share/xine-lib
 usr/share/man/man5/xine.5
-usr/share/doc/libxine1/faq/*
-usr/share/doc/libxine1/README*
-usr/share/doc/libxine1/hackersguide/*
-usr/share/bug/libxine1/presubj
+usr/share/doc/libxine2/faq/*
+usr/share/doc/libxine2/README*
+usr/share/doc/libxine2/hackersguide/*
+usr/share/bug/libxine2/presubj
