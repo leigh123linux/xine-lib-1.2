@@ -3,6 +3,10 @@ xine-lib (1.1.6) [UNRELEASED]
   * Improve the Mac OS X video output plugin. Thanks to Matt Messier.
   * Fixed the XcbXv plugin - an empty plugin would be built if "old" Xv
     isn't detected.
+  * Reworked the channels.conf file handling in the DVB plugin. Previously,
+    with junk content, the plugin could potentially consume lots of memory
+    (possibly causing a local DoS). Also, a few small memory leaks have been
+    eliminated.
 
 xine-lib (1.1.5)
   * Security fixes:
