@@ -276,7 +276,7 @@ static XImage *create_ximage (xshm_driver_t *this, XShmSegmentInfo *shminfo,
     this->bytes_per_pixel = this->bpp / 8;
     this->image_byte_order = myimage->byte_order;
 
-    myimage->data = xine_xmalloc (width * this->bytes_per_pixel * height);
+    myimage->data = xine_xcalloc (width * height, this->bytes_per_pixel);
   }
 
   return myimage;

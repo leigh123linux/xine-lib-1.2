@@ -158,7 +158,7 @@ static post_plugin_t *mosaico_open_plugin(post_class_t *class_gen, int inputs,
   
   _x_post_init(&this->post, 0, inputs);
 
-  this->pip       = (mosaico_pip_t *)xine_xmalloc(sizeof(mosaico_pip_t) * (inputs - 1));
+  this->pip       = (mosaico_pip_t *)xine_xcalloc((inputs - 1), sizeof(mosaico_pip_t));
   this->pip_count = inputs - 1;
 
   pthread_cond_init(&this->vpts_limit_changed, NULL);

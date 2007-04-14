@@ -945,7 +945,7 @@ static void load_plugin_list(FILE *fp, xine_sarray_t *plugins) {
       file                = xine_xmalloc(sizeof(plugin_file_t));
       node->file          = file;
       file->filename      = strdup(line+1);
-      node->info          = xine_xmalloc(2*sizeof(plugin_info_t));
+      node->info          = xine_xcalloc(2, sizeof(plugin_info_t));
       node->info[1].type  = PLUGIN_NONE;
       decoder_info        = NULL;
       vo_info             = NULL;
@@ -1029,7 +1029,7 @@ static void load_plugin_list(FILE *fp, xine_sarray_t *plugins) {
           for( s = value, i = 0; s && sscanf(s," %lu",&lu) > 0; i++ ) {
             s = strchr(s+1, ' ');
           }
-          decoder_info->supported_types = xine_xmalloc((i+1)*sizeof(uint32_t));
+          decoder_info->supported_types = xine_xcalloc((i+1), sizeof(uint32_t));
           for( s = value, i = 0; s && sscanf(s," %lu",&lu) > 0; i++ ) {
             decoder_info->supported_types[i] = lu;
             s = strchr(s+1, ' ');

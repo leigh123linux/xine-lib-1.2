@@ -1632,7 +1632,7 @@ static input_plugin_t *dvd_class_get_instance (input_class_t *class_gen, xine_st
 
   this->mem_stack     = 0;
   this->mem_stack_max = 1024;
-  this->mem           = xine_xmalloc(sizeof(unsigned char *) * this->mem_stack_max);
+  this->mem           = xine_xcalloc(this->mem_stack_max, sizeof(unsigned char *));
   if (!this->mem) {
     free(this);
     return NULL;

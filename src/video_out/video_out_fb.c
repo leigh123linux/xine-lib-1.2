@@ -324,21 +324,10 @@ static void setup_colorspace_converter(fb_frame_t *frame, int flags)
 static void frame_reallocate(fb_driver_t *this, fb_frame_t *frame,
 			     uint32_t width, uint32_t height, int format)
 {
-  if(frame->chunk[0])
-  {
-    free(frame->chunk[0]);
-        frame->chunk[0] = NULL;
-  }
-  if(frame->chunk[1])
-  {
-    free(frame->chunk[1]);
-        frame->chunk[1] = NULL;
-  }
-  if(frame->chunk[2])
-  {
-    free(frame->chunk[2]);
-        frame->chunk[2] = NULL;
-  }
+  free(frame->chunk[0]);
+  free(frame->chunk[1]);
+  free(frame->chunk[2]);
+  memset(frame->chunk, 0, sizeof(frame->chunk[0])*3);
       
   if(this->use_zero_copy)
   {
@@ -348,10 +337,9 @@ static void frame_reallocate(fb_driver_t *this, fb_frame_t *frame,
   }
   else
   {
-    if(frame->data)
-      free(frame->data);
-    frame->data = xine_xmalloc(frame->sc.output_width *
-			       frame->sc.output_height *
+    free(frame->data);
+    frame->data = xine_xcalloc(frame->sc.output_width *
+			       frame->sc.output_height,
 			       this->bytes_per_pixel);
   }
 
