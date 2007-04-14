@@ -2,6 +2,8 @@ syntax: glob
 *~
 *.orig
 
+*.o
+*.a
 *.lo
 *.la
 .libs/*
@@ -34,16 +36,21 @@ build-stamp
 configure-stamp
 debian/files
 debian/libxine-dev
-debian/libxine1
-debian/libxine1-dbg
+debian/libxine2
+debian/libxine2-dbg
 debian/tmp
 debian/*.debhelper
 debian/*.substvars
+
+contrib/ffmpeg/*.pc
+contrib/ffmpeg/config.err
+contrib/ffmpeg/config.mak
 
 doc/faq/faq.html
 doc/faq/faq.txt
 doc/hackersguide/*.png
 doc/hackersguide/hackersguide.html
+doc/Doxyfile
 
 include/xine.h
 
