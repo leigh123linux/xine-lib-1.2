@@ -925,7 +925,7 @@ static void update_src_encoding(void *class_gen, xine_cfg_entry_t *entry)
 
 static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
 
-  static const char *subtitle_size_strings[] = { 
+  static const char *const subtitle_size_strings[] = { 
     "tiny", "small", "normal", "large", "very large", "huge", NULL 
   };
   sputext_class_t *this ;

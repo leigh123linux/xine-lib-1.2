@@ -1807,13 +1807,13 @@ vcd_init (xine_t *xine, void *data)
     /*Note: these labels have to be listed in the same order as the
       enumeration vcdplayer_autoplay_t in vcdplayer.h. 
     */
-    static const char *autoplay_modes[] = 
+    static const char *const autoplay_modes[] = 
       { "MPEG track", "entry", "segment",  "playback-control item", NULL };
     
     /*Note: these labels have to be listed in the same order as the
       enumeration vcdplayer_slider_length_t in vcdplayer.h. 
     */
-    static const char *length_reporting_modes[] = 
+    static const char *const length_reporting_modes[] = 
       { "auto", "track", "entry", NULL };
     
     my_vcd.player.default_autoplay = 

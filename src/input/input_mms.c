@@ -59,15 +59,15 @@
 static const uint32_t mms_bandwidths[]={14400,19200,28800,33600,34430,57600,
 					115200,262200,393216,524300,1544000,10485800};
 
-static const char * mms_bandwidth_strs[]={"14.4 Kbps (Modem)", "19.2 Kbps (Modem)",
-					  "28.8 Kbps (Modem)", "33.6 Kbps (Modem)",
-					  "34.4 Kbps (Modem)", "57.6 Kbps (Modem)",
-					  "115.2 Kbps (ISDN)", "262.2 Kbps (Cable/DSL)",
-					  "393.2 Kbps (Cable/DSL)","524.3 Kbps (Cable/DSL)",
-					  "1.5 Mbps (T1)", "10.5 Mbps (LAN)", NULL};
+static const char *const mms_bandwidth_strs[]={"14.4 Kbps (Modem)", "19.2 Kbps (Modem)",
+					       "28.8 Kbps (Modem)", "33.6 Kbps (Modem)",
+					       "34.4 Kbps (Modem)", "57.6 Kbps (Modem)",
+					       "115.2 Kbps (ISDN)", "262.2 Kbps (Cable/DSL)",
+					       "393.2 Kbps (Cable/DSL)","524.3 Kbps (Cable/DSL)",
+					       "1.5 Mbps (T1)", "10.5 Mbps (LAN)", NULL};
 
 /* connection methods */
-static const char *mms_protocol_strs[]={"auto", "TCP", "HTTP", NULL};
+static const char *const mms_protocol_strs[]={"auto", "TCP", "HTTP", NULL};
 
 typedef struct {
   input_plugin_t   input_plugin;

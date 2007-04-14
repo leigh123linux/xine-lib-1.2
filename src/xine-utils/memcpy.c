@@ -383,8 +383,8 @@ static void *linux_kernel_memcpy(void *to, const void *from, size_t len) {
 #endif /* ARCH_X86 */
 
 static struct {
-  char *name;
-  void *(* function)(void *to, const void *from, size_t len);
+  char *const name;
+  void *(*const  function)(void *to, const void *from, size_t len);
 
   uint64_t time; /* This type could be used for non-MSC build too! */
 
@@ -461,7 +461,7 @@ void xine_probe_fast_memcpy(xine_t *xine)
   char             *buf1, *buf2;
   int               i, j, best;
   int               config_flags = -1;
-  static const char *memcpy_methods[] = {
+  static const char *const memcpy_methods[] = {
     "probe", "libc",
 #if (defined(ARCH_X86) || defined(ARCH_X86_64)) && !defined(_MSC_VER)
     "kernel", "mmx", "mmxext", "sse",

@@ -1539,8 +1539,8 @@ static void config_save_cb (void *this_gen, xine_cfg_entry_t *entry) {
 }
 
 void xine_init (xine_t *this) {
-  static const char *demux_strategies[] = {"default", "reverse", "content",
-					   "extension", NULL};
+  static const char *const demux_strategies[] = {"default", "reverse", "content",
+						 "extension", NULL};
 
   /* First of all, initialise libxdg-basedir as it's used by plugins. */
   this->basedir_handle = xdgAllocHandle();

@@ -1333,8 +1333,8 @@ static void update_config_cb (void *data, xine_cfg_entry_t *entry) {
    
 static void init_config (directfb_driver_t *this) {
   config_values_t   *config             = this->xine->config;
-  static const char *buffermode_enum[]  = {"single", "double", "triple", 0};
-  static const char *fieldparity_enum[] = {"none", "top", "bottom", 0};
+  static const char *const buffermode_enum[]  = {"single", "double", "triple", 0};
+  static const char *const fieldparity_enum[] = {"none", "top", "bottom", 0};
   
   this->buffermode = config->register_enum (config,
       "video.device.directfb_buffermode", this->buffermode, (char**)buffermode_enum,

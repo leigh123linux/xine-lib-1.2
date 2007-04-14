@@ -158,7 +158,7 @@
 # define lseek64 lseek
 #endif
 
-static const char *dvdnav_menu_table[] = {
+static const char *const dvdnav_menu_table[] = {
   NULL,
   NULL,
   "Title",
@@ -1791,7 +1791,7 @@ static void *init_class (xine_t *xine, void *data) {
   {
     /* we have found libdvdcss, enable the specific config options */
     char *raw_device;
-    static const char *decrypt_modes[] = { "key", "disc", "title", NULL };
+    static const char *const decrypt_modes[] = { "key", "disc", "title", NULL };
     int mode;
     
     raw_device = config->register_filename(config, "media.dvd.raw_device",
