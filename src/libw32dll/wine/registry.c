@@ -312,7 +312,7 @@ static void init_registry(void)
 
 	localregpathname = malloc(strlen(xdg_cache_home) + sizeof("/"PACKAGE"/win32registry"));
 	strcpy(localregpathname, xdg_cache_home);
-	strcat(localregpathname, "/"PACKAGE"/win32registry")
+	strcat(localregpathname, "/"PACKAGE"/win32registry");
 
 	open_registry();
 	insert_handle(HKEY_LOCAL_MACHINE, "HKLM");
