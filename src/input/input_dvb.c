@@ -77,6 +77,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
@@ -888,9 +890,14 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
 
   f = fopen(filename, "r");
   if (!f) {
-    xprintf(xine, XINE_VERBOSITY_LOG, _("input_dvb: failed to open dvb channel file '%s'\n"), filename);
+    xprintf(xine, XINE_VERBOSITY_LOG, _("input_dvb: failed to open dvb channel file '%s': %s\n"), filename, strerror (errno));
     if (!f && stream)
       _x_message(stream, XINE_MSG_FILE_NOT_FOUND, filename, "Please run the dvbscan utility.", NULL);
+    return NULL;
+  }
+  if (fstat (f, &st) || !S_ISREG (st.st_mode)) {
+    xprintf(xine, XINE_VERBOSITY_LOG, _("input_dvb: dvb channel file '%s' is not a plain file\n"), filename);
+    fclose(f);
     return NULL;
   }
 
