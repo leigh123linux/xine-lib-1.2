@@ -68,9 +68,9 @@ src/libffmpeg/ff_audio_decoder.c
 src/libffmpeg/ff_dvaudio_decoder.c
 src/libffmpeg/ff_video_decoder.c
 src/libffmpeg/ffmpeg_encoder.c
-src/libmusepack/requant.c
-src/libmusepack/synth_filter.c
-src/libmusepack/xine_musepack_decoder.c
+contrib/libmpcdec/requant.c
+contrib/libmpcdec/synth_filter.c
+src/libxineadec/xine_musepack_decoder.c
 src/libreal/real_common.c
 src/libreal/xine_real_video_decoder.c
 src/libreal/xine_real_audio_decoder.c
