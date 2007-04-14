@@ -256,6 +256,27 @@ void *xine_xmalloc(size_t size) {
   return ptr;
 }
 
+/**
+ * @brief Wrapper around calloc() function.
+ * @param nmemb Number of elements to allocate
+ * @param size Size of each element to allocate
+ *
+ * This is a simple wrapper around calloc(), the only thing
+ * it does more than calloc() is outputting an error if
+ * the calloc fails (returning NULL).
+ */
+void *xine_xcalloc(size_t nmemb, size_t size) {
+  void *ptr;
+
+  if((ptr = calloc(nmemb, size)) == NULL) {
+    fprintf(stderr, "%s: calloc() failed: %s.\n",
+	    __XINE_FUNCTION__, strerror(errno));
+    return NULL;
+  }
+
+  return ptr;
+}
+
 void *xine_xmalloc_aligned(size_t alignment, size_t size, void **base) {
 
   char *ptr;

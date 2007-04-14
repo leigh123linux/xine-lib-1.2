@@ -630,6 +630,12 @@ void *xine_xmalloc(size_t size) XINE_PROTECTED;
 void *xine_xmalloc(size_t size) __attribute__ ((__malloc__)) XINE_PROTECTED;
 #endif
 
+#if !defined(__GNUC__) || __GNUC__ < 3
+void *xine_xcalloc(size_t nmemb, size_t size) XINE_PROTECTED;
+#else
+void *xine_xcalloc(size_t nmemb, size_t size) __attribute__ ((__malloc__)) XINE_PROTECTED;
+#endif
+
 /*
  * Same as above, but memory is aligned to 'alignement'.
  * **base is used to return pointer to un-aligned memory, use
