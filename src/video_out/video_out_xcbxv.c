@@ -37,8 +37,6 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_XV
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1618,5 +1616,3 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_VIDEO_OUT, 21, "xv", XINE_VERSION_CODE, &vo_info_xv, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
-
-#endif
