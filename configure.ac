@@ -325,11 +325,7 @@ AC_ARG_WITH([external-libxdg-basedir],
   AS_HELP_STRING([--with-external-libxdg-basedir], [use external copy of libxdg-basedir]))
 
 if test "x$with_external_libxdg_basedir" = "xyes"; then
-   AC_CHECK_HEADER([basedir.h], , [AC_MSG_ERROR([Unable to find basedir.h for libxdg-basedir])])
-   AC_CHECK_LIB([xdg-basedir], [xdgCacheHome], , [AC_MSG_ERROR([Unable to find libxdg-basedir])])
-
-   XDG_BASEDIR_CFLAGS=''
-   XDG_BASEDIR_LIBS='-lxdg-basedir'
+   PKG_CHECK_MODULES([XDG_BASEDIR], [libxdg-basedir >= 0.1.3])
 else
    XDG_BASEDIR_CFLAGS='-I$(top_srcdir)/contrib/libxdg-basedir'
    XDG_BASEDIR_LIBS='$(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la'

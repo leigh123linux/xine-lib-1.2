@@ -29,7 +29,7 @@
 #ifndef XDG_BASEDIR_H
 #define XDG_BASEDIR_H
 
-#if !defined(__cplusplus) && !defined(__bool_true_false_are_defined)
+#if !defined(__cplusplus) && !defined(__bool_true_false_are_defined) && !defined(_DOXYGEN)
 #if defined(STDC_HEADERS) || defined(HAVE_STDBOOL_H)
 #include <stdbool.h>
 #else
@@ -129,13 +129,13 @@ const char * xdgCacheHome(xdgHandle handle);
 /*@{*/
 
 /** Find all existing data files corresponding to relativePath.
- *	Consider as performing @code fopen(filename, "r") @endcode on every possible @c filename
- *		and returning the successful <tt>filename</tt>s.
- *	@param relativePath Path to scan for.
- *	@param handle Handle to data cache.
- *	@return A sequence of null-terminated strings terminated by a double-null (empty string)
- *		and allocated using malloc().
- */
+  * Consider as performing @code fopen(filename, "r") @endcode on every possible @c filename
+  * 	and returning the successful <tt>filename</tt>s.
+  * @param relativePath Path to scan for.
+  * @param handle Handle to data cache.
+  * @return A sequence of null-terminated strings terminated by a double-null (empty string)
+  * 	and allocated using malloc(), e.g.: @code "/etc/share\0/home/jdoe/.local\0" @endcode
+  */
 const char * xdgDataFind(const char* relativePath, xdgHandle handle);
 
 /** Find all existing config files corresponding to relativePath.
@@ -144,7 +144,7 @@ const char * xdgDataFind(const char* relativePath, xdgHandle handle);
   * @param relativePath Path to scan for.
   * @param handle Handle to data cache.
   * @return A sequence of null-terminated strings terminated by a double-null (empty string)
-  * 	and allocated using malloc().
+  * 	and allocated using malloc(), e.g.: @code "/etc/xdg\0/home/jdoe/.config\0" @endcode
   */
 const char * xdgConfigFind(const char* relativePath, xdgHandle handle);
 
