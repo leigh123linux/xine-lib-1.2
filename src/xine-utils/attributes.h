@@ -75,4 +75,10 @@
 # define XINE_PACKED
 #endif
 
+#ifdef SUPPORT_ATTRIBUTE_MALLOC
+# define XINE_MALLOC __attributes__((__malloc__))
+#else
+# define XINE_MALLOC
+#endif
+
 #endif /* ATTRIBUTE_H_ */

@@ -624,17 +624,9 @@ void xine_profiler_print_results (void) XINE_PROTECTED;
  * Allocate and clean memory size_t 'size', then return the pointer
  * to the allocated memory.
  */
-#if !defined(__GNUC__) || __GNUC__ < 3
-void *xine_xmalloc(size_t size) XINE_PROTECTED;
-#else
-void *xine_xmalloc(size_t size) __attribute__ ((__malloc__)) XINE_PROTECTED;
-#endif
+void *xine_xmalloc(size_t size) XINE_MALLOC XINE_PROTECTED;
 
-#if !defined(__GNUC__) || __GNUC__ < 3
-void *xine_xcalloc(size_t nmemb, size_t size) XINE_PROTECTED;
-#else
-void *xine_xcalloc(size_t nmemb, size_t size) __attribute__ ((__malloc__)) XINE_PROTECTED;
-#endif
+void *xine_xcalloc(size_t nmemb, size_t size) XINE_MALLOC XINE_PROTECTED;
 
 /*
  * Same as above, but memory is aligned to 'alignement'.

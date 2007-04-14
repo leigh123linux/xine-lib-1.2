@@ -2127,6 +2127,8 @@ CC_ATTRIBUTE_PACKED(
    AC_DEFINE([XINE_PACKED], [], [Dummy mark a structure as being packed])]
 )
 
+CC_ATTRIBUTE_MALLOC
+
 CC_ATTRIBUTE_VISIBILITY([protected], [visibility_export="protected"],
   [CC_ATTRIBUTE_VISIBILITY([default], [visibility_export="default"])]
 )
