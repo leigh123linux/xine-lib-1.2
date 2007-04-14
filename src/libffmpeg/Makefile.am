@@ -13,6 +13,8 @@ link_ffmpeg = \
   $(top_builddir)/contrib/ffmpeg/libavutil/libavutil.a \
   $(top_builddir)/contrib/ffmpeg/libpostproc/libpostproc.a
 
+deps_ffmpeg = $(link_ffmpeg) ffmpeg_config.h
+
 $(top_builddir)/contrib/ffmpeg/libavcodec/libavcodec.a:
 	$(MAKE) -C $(top_builddir)/contrib/ ffmpeg/libavcodec/libavcodec.a
 
@@ -50,6 +52,7 @@ xineplug_decode_ff_la_SOURCES = ffmpeg_decoder.c ff_audio_decoder.c ff_video_dec
 				ffmpeg_config.h
 endif
 
+xineplug_decode_ff_la_DEPS = $(deps_ffmpeg)
 xineplug_decode_ff_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_decode_ff_la_LDFLAGS = $(xineplug_ldflags) $(IMPURE_TEXT_LDFLAGS)
 xineplug_decode_ff_la_LIBADD = $(MLIB_LIBS) $(XINE_LIB) -lm $(ZLIB_LIBS) \
