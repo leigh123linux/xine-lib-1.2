@@ -6,6 +6,8 @@ For 1.3 series
 
 For 1.2 series
 ==============
+- Security-Related: start using xine_xcalloc rather than xine_xmalloc when
+  the number of elements is not a build-time constant.
 - mimetype-based demuxer selection, solves the effects of shoutcast's bug;
 - Doxygen API documentation for both internal and public functions;
 - removal of (deprecated) software deinterlacers from video output plugins;
