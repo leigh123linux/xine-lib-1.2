@@ -895,7 +895,7 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
       _x_message(stream, XINE_MSG_FILE_NOT_FOUND, filename, "Please run the dvbscan utility.", NULL);
     return NULL;
   }
-  if (fstat (f, &st) || !S_ISREG (st.st_mode)) {
+  if (fstat(fileno(f), &st) || !S_ISREG (st.st_mode)) {
     xprintf(xine, XINE_VERBOSITY_LOG, _("input_dvb: dvb channel file '%s' is not a plain file\n"), filename);
     fclose(f);
     return NULL;
