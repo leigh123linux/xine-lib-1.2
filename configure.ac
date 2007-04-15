@@ -1290,9 +1290,13 @@ elif test "x$with_external_libmpcdec" = "xyes"; then
    MPCDEC_CFLAGS=""
 else
    AC_MSG_RESULT([Use included libmusepack])
+   MPCDEC_CFLAGS='-I$(top_srcdir)/contrib/libmpcdec'
+   MPCDEC_LIBS='$(top_builddir)/contrib/libmpcdec/libmpcdec.la'
+   MPCDEC_DEPS='$(top_builddir)/contrib/libmpcdec/libmpcdec.la'
 fi
 
 AC_SUBST(MPCDEC_LIBS)
+AC_SUBST(MPCDEC_DEPS)
 AC_SUBST(MPCDEC_CFLAGS)
 
 AM_CONDITIONAL([MUSEPACK], [test "x$enable_musepack" != "xno"])
