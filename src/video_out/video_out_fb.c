@@ -35,13 +35,10 @@
  * @author Geert Uytterhoeven and Chris Lawrence:
  *         Ideas from ppmtofb - Display P?M graphics on framebuffer devices.
  *
- * @note Use this with fbxine. It may work with the regular xine too,
- *       provided the visual type is changed (USE_X11_VISUAL).
+ * @note Use this with fbxine.
  *
  * @todo VT Switching (configurable)
  */
-
-/* #define USE_X11_VISUAL */
 
 #define RECOMMENDED_NUM_BUFFERS  5
 #define MAXIMUM_NUM_BUFFERS     25
@@ -1117,11 +1114,7 @@ static void *fb_init_class(xine_t *xine, void *visual_gen)
 static const vo_info_t vo_info_fb =
 {
   1,                    /* priority    */
-#ifdef USE_X11_VISUAL
-  XINE_VISUAL_TYPE_X11  /* visual type */
-#else
   XINE_VISUAL_TYPE_FB   /* visual type */
-#endif
 };
 
 /* exported plugin catalog entry */
