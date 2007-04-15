@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib 1.0\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-04-15 15:39+0200\n"
+"POT-Creation-Date: 2007-04-15 23:56+0200\n"
 "PO-Revision-Date: 2004-09-15 13:53+0100\n"
 "Last-Translator: \n"
 "Language-Team: Slovak <ski18n@lists.isternet.sk>\n"
@@ -3468,7 +3468,7 @@ msgstr "výstupný modul xine s použitím DirectFB knižnice."
 msgid "xine video output plugin for win32 using directx"
 msgstr "výstupný video modul pre win32 použitím directx"
 
-#: src/video_out/video_out_fb.c:783
+#: src/video_out/video_out_fb.c:780
 #, c-format
 msgid ""
 "video_out_fb: only packed truecolor/directcolor is supported (%d).\n"
@@ -3477,12 +3477,12 @@ msgstr ""
 "video_out_fb: sú podporované iba pravé farby truecolor/directcolor (%d).\n"
 "     Zkontrolujte 'fbset -i' alebo skúste 'fbset -depth 16'.\n"
 
-#: src/video_out/video_out_fb.c:843 src/video_out/video_out_vidix.c:1239
+#: src/video_out/video_out_fb.c:840 src/video_out/video_out_vidix.c:1239
 #, fuzzy
 msgid "framebuffer device name"
 msgstr "zariadenie framebufferu"
 
-#: src/video_out/video_out_fb.c:844 src/video_out/video_out_vidix.c:1240
+#: src/video_out/video_out_fb.c:841 src/video_out/video_out_vidix.c:1240
 msgid ""
 "Specifies the file name for the framebuffer device to be used.\n"
 "This setting is security critical, because when changed to a different file, "
@@ -3490,17 +3490,17 @@ msgid ""
 "careful that the value you enter really is a proper framebuffer device."
 msgstr ""
 
-#: src/video_out/video_out_fb.c:918
+#: src/video_out/video_out_fb.c:915
 #, fuzzy, c-format
 msgid "%s: Your video mode was not recognized, sorry.\n"
 msgstr "video_out_fb: Váš video mód nebol rozpoznaný, prepáčte.\n"
 
-#: src/video_out/video_out_fb.c:975
+#: src/video_out/video_out_fb.c:972
 #, fuzzy, c-format
 msgid "%s: %d video RAM buffers are available.\n"
 msgstr "video_out_fb: %d video RAM buffere dostupné.\n"
 
-#: src/video_out/video_out_fb.c:981
+#: src/video_out/video_out_fb.c:978
 #, fuzzy, c-format
 msgid ""
 "WARNING: %s: Zero copy buffers are DISABLED because only %d buffers\n"
@@ -3511,7 +3511,7 @@ msgstr ""
 "     k dispozícii, čo je menej neždoporučených %d buffrov. Zníženie\n"
 "     rozlíšenia bufferu snímkov môže pomôcť.\n"
 
-#: src/video_out/video_out_fb.c:992
+#: src/video_out/video_out_fb.c:989
 #, fuzzy, c-format
 msgid ""
 "WARNING: %s: Zero copy buffers are DISABLED because kernel driver\n"
@@ -3521,7 +3521,7 @@ msgstr ""
 "ovládač\n"
 "     nepodporuje screen panning (používaný pre prepínanie snímkov).\n"
 
-#: src/video_out/video_out_fb.c:1061
+#: src/video_out/video_out_fb.c:1058
 #, fuzzy, c-format
 msgid ""
 "WARNING: %s: current display depth is %d. For better performance\n"
@@ -3534,7 +3534,7 @@ msgstr ""
 "je doporučená hĺbka 16 bit/bod!\n"
 "\n"
 
-#: src/video_out/video_out_fb.c:1093
+#: src/video_out/video_out_fb.c:1090
 msgid "Xine video output plugin using the Linux frame buffer device"
 msgstr ""
 "výstupný xine video modul s použitím Linux kernelového frame buffer "

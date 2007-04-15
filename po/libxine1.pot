@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-04-15 15:39+0200\n"
+"POT-Creation-Date: 2007-04-15 23:56+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3122,18 +3122,18 @@ msgstr ""
 msgid "xine video output plugin for win32 using directx"
 msgstr ""
 
-#: src/video_out/video_out_fb.c:783
+#: src/video_out/video_out_fb.c:780
 #, c-format
 msgid ""
 "video_out_fb: only packed truecolor/directcolor is supported (%d).\n"
 "     Check 'fbset -i' or try 'fbset -depth 16'.\n"
 msgstr ""
 
-#: src/video_out/video_out_fb.c:843 src/video_out/video_out_vidix.c:1239
+#: src/video_out/video_out_fb.c:840 src/video_out/video_out_vidix.c:1239
 msgid "framebuffer device name"
 msgstr ""
 
-#: src/video_out/video_out_fb.c:844 src/video_out/video_out_vidix.c:1240
+#: src/video_out/video_out_fb.c:841 src/video_out/video_out_vidix.c:1240
 msgid ""
 "Specifies the file name for the framebuffer device to be used.\n"
 "This setting is security critical, because when changed to a different file, "
@@ -3141,17 +3141,17 @@ msgid ""
 "careful that the value you enter really is a proper framebuffer device."
 msgstr ""
 
-#: src/video_out/video_out_fb.c:918
+#: src/video_out/video_out_fb.c:915
 #, c-format
 msgid "%s: Your video mode was not recognized, sorry.\n"
 msgstr ""
 
-#: src/video_out/video_out_fb.c:975
+#: src/video_out/video_out_fb.c:972
 #, c-format
 msgid "%s: %d video RAM buffers are available.\n"
 msgstr ""
 
-#: src/video_out/video_out_fb.c:981
+#: src/video_out/video_out_fb.c:978
 #, c-format
 msgid ""
 "WARNING: %s: Zero copy buffers are DISABLED because only %d buffers\n"
@@ -3159,14 +3159,14 @@ msgid ""
 "     the frame buffer resolution might help.\n"
 msgstr ""
 
-#: src/video_out/video_out_fb.c:992
+#: src/video_out/video_out_fb.c:989
 #, c-format
 msgid ""
 "WARNING: %s: Zero copy buffers are DISABLED because kernel driver\n"
 "     do not support screen panning (used for frame flips).\n"
 msgstr ""
 
-#: src/video_out/video_out_fb.c:1061
+#: src/video_out/video_out_fb.c:1058
 #, c-format
 msgid ""
 "WARNING: %s: current display depth is %d. For better performance\n"
@@ -3174,7 +3174,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/video_out/video_out_fb.c:1093
+#: src/video_out/video_out_fb.c:1090
 msgid "Xine video output plugin using the Linux frame buffer device"
 msgstr ""
 
