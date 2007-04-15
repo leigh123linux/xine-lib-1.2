@@ -2034,6 +2034,9 @@ const char *const *xine_get_log_names (xine_t *this) {
 
 static inline void check_log_alloc (xine_t *this, int buf)
 {
+  if ( this->log_buffers[buf] )
+    return;
+
   pthread_mutex_lock (&this->log_lock);
 
   if ( ! this->log_buffers[buf] )
