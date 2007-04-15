@@ -2190,3 +2190,26 @@ int _x_query_unprocessed_osd_events(xine_stream_t *stream)
 
   return redraw_needed;
 }
+
+int _x_demux_seek(xine_stream_t *stream, off_t start_pos, int start_time, int playing)
+{
+  if (!stream->demux_plugin)
+    return -1;
+  return stream->demux_plugin->seek(stream->demux_plugin, start_pos, start_time, playing);
+}
+
+int _x_continue_stream_processing(xine_stream_t *stream)
+{
+  return stream->status != XINE_STATUS_STOP
+    && stream->status != XINE_STATUS_QUIT;
+}
+
+void _x_trigger_relaxed_frame_drop_mode(xine_stream_t *stream)
+{
+  stream->first_frame_flag = 2;
+}
+
+void _x_reset_relaxed_frame_drop_mode(xine_stream_t *stream)
+{
+  stream->first_frame_flag = 1;
+}

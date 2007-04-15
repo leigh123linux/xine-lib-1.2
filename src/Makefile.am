@@ -26,4 +26,5 @@ SUBDIRS = \
 	libfaad \
         libmusepack \
 	post \
-	combined
+	combined \
+	vdr

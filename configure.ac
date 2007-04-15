@@ -2679,6 +2679,7 @@ src/video_out/vidix/Makefile
 src/video_out/vidix/drivers/Makefile
 src/xine-utils/Makefile
 src/xine-engine/Makefile
+src/vdr/Makefile
 win32/Makefile
 win32/include/Makefile])
 AC_CONFIG_COMMANDS([default],[[chmod +x ./misc/SlackBuild ./misc/build_rpms.sh ./misc/relchk.sh]],[[]])
@@ -2714,7 +2715,7 @@ echo "   - file          - net"
 echo "   - stdin_fifo    - rtp"
 echo "   - http          - mms"
 echo "   - pnm           - rtsp"
-echo "   - dvb"
+echo "   - dvb           - vdr"
 if test "x$external_dvdnav" = "xyes"; then
   echo "   - dvd (external libs)"
 else
@@ -2914,6 +2915,7 @@ echo "   - invert          - expand"
 echo "   - eq              - eq2"
 echo "   - boxblur         - denoise3d"
 echo "   - unsharp         - tvtime"
+echo "   - vdr"
 echo "  * SFX:"
 echo "   - goom            - oscope"
 echo "   - fftscope        - mosaico"
