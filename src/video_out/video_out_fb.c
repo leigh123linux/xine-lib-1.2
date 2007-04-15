@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2003 the xine project and Fredrik Noring
+ * Copyright (C) 2000-2007 the xine project and Fredrik Noring
  * 
  * This file is part of xine, a free video player.
  * 
@@ -18,24 +18,27 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
  * $Id: video_out_fb.c,v 1.49 2006/12/19 19:10:51 dsalt Exp $
- * 
- * video_out_fb.c, frame buffer xine driver by Miguel Freitas
+ */
+
+/**
+ * @file
+ * @brief Frame buffer xine driver
  *
- * Contributors:
+ * @author Miguel Freitas
  *
- *     Fredrik Noring <noring@nocrew.org>:  Zero copy buffers and clean up.
+ * @author Fredrik Noring <noring@nocrew.org>:
+ *         Zero copy buffers and clean up.
  *
- * based on xine's video_out_xshm.c...
- * ...based on mpeg2dec code from
- * Aaron Holtzman <aholtzma@ess.engr.uvic.ca>
+ * @author Aaron Holtzman <aholtzma@ess.engr.uvic.ca>: 
+ *         Based on xine's video_out_xshm.c, based on mpeg2dec code from
  *
- * ideas from ppmtofb - Display P?M graphics on framebuffer devices
- *            by Geert Uytterhoeven and Chris Lawrence
+ * @author Geert Uytterhoeven and Chris Lawrence:
+ *         Ideas from ppmtofb - Display P?M graphics on framebuffer devices.
  *
- * Note: Use this with fbxine. It may work with the regular xine too,
- * provided the visual type is changed (see below).
+ * @note Use this with fbxine. It may work with the regular xine too,
+ *       provided the visual type is changed (USE_X11_VISUAL).
  *
- * TODO: VT switching (configurable)
+ * @todo VT Switching (configurable)
  */
 
 /* #define USE_X11_VISUAL */
@@ -830,7 +833,7 @@ static void register_callbacks(fb_driver_t *this)
 
 static int open_fb_device(config_values_t *config, xine_t *xine)
 {
-  static char devkey[] = "video.device.fb_device";   /* Why static? */
+  static const char devkey[] = "video.device.fb_device";
   char *device_name;
   int fd;
 
@@ -912,7 +915,7 @@ static int mode_visual(fb_driver_t *this, config_values_t *config,
       }
   }
   
-  xprintf(this->xine, XINE_VERBOSITY_LOG, _("video_out_fb: Your video mode was not recognized, sorry.\n"));
+  xprintf(this->xine, XINE_VERBOSITY_LOG, _("%s: Your video mode was not recognized, sorry.\n"), LOG_MODULE);
   return 0;
 }
     
@@ -969,16 +972,16 @@ static void setup_buffers(fb_driver_t *this,
   this->cur_frame = this->old_frame = 0;
 	
   xprintf(this->xine, XINE_VERBOSITY_LOG,
-	  _("video_out_fb: %d video RAM buffers are available.\n"), this->total_num_native_buffers);
+	  _("%s: %d video RAM buffers are available.\n"), LOG_MODULE, this->total_num_native_buffers);
 
   if(this->total_num_native_buffers < RECOMMENDED_NUM_BUFFERS)
   {
     this->use_zero_copy = 0;
     xprintf(this->xine, XINE_VERBOSITY_LOG,
-	    _("WARNING: video_out_fb: Zero copy buffers are DISABLED because only %d buffers\n"
+	    _("WARNING: %s: Zero copy buffers are DISABLED because only %d buffers\n"
 	      "     are available which is less than the recommended %d buffers. Lowering\n"
 	      "     the frame buffer resolution might help.\n"), 
-	    this->total_num_native_buffers, RECOMMENDED_NUM_BUFFERS);
+	    LOG_MODULE, this->total_num_native_buffers, RECOMMENDED_NUM_BUFFERS);
   }
   else
   {
@@ -986,8 +989,8 @@ static void setup_buffers(fb_driver_t *this,
     this->fb_var.yoffset = this->fb_var.yres;
     if(ioctl(this->fd, FBIOPAN_DISPLAY, &this->fb_var) == -1) {
       xprintf(this->xine, XINE_VERBOSITY_LOG,
-	      _("WARNING: video_out_fb: Zero copy buffers are DISABLED because kernel driver\n"
-		"     do not support screen panning (used for frame flips).\n"));
+	      _("WARNING: %s: Zero copy buffers are DISABLED because kernel driver\n"
+		"     do not support screen panning (used for frame flips).\n"), LOG_MODULE);
     } else {
       this->fb_var.yoffset = 0;
       ioctl(this->fd, FBIOPAN_DISPLAY, &this->fb_var);
@@ -1055,12 +1058,13 @@ static vo_driver_t *fb_open_plugin(video_driver_class_t *class_gen,
 
   if(this->depth > 16)
     xprintf(this->xine, XINE_VERBOSITY_LOG,
-	    _("WARNING: video_out_fb: current display depth is %d. For better performance\n"
-	      "     a depth of 16 bpp is recommended!\n\n"), this->depth);
+	    _("WARNING: %s: current display depth is %d. For better performance\n"
+	      "     a depth of 16 bpp is recommended!\n\n"), LOG_MODULE, this->depth);
 
   xprintf(class->xine, XINE_VERBOSITY_DEBUG,
-	  "video_out_fb: video mode depth is %d (%d bpp),\n"
+	  "%s: video mode depth is %d (%d bpp),\n"
 	  "     red: %d/%d, green: %d/%d, blue: %d/%d\n",
+	  LOG_MODULE,
 	  this->depth, this->bpp,
 	  this->fb_var.red.length, this->fb_var.red.offset,
 	  this->fb_var.green.length, this->fb_var.green.offset,
