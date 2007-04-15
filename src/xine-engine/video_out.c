@@ -1043,6 +1043,32 @@ static void check_redraw_needed (vos_t *this, int64_t vpts) {
     this->redraw_needed = 1;
 }
 
+static int interruptable_sleep(vos_t *this, int usec_to_sleep)
+{
+  int timedout = 0;
+
+  struct timeval now;
+  gettimeofday(&now, 0);
+
+  pthread_mutex_lock (&this->trigger_drawing_mutex);
+  if (!this->trigger_drawing) {
+    struct timespec abstime;
+    abstime.tv_sec  = now.tv_sec + usec_to_sleep / 1000000;
+    abstime.tv_nsec = now.tv_usec * 1000 + (usec_to_sleep % 1000000) * 1000;
+
+    if (abstime.tv_nsec > 1000000000) {
+      abstime.tv_nsec -= 1000000000;
+      abstime.tv_sec++;
+    }
+
+    timedout = pthread_cond_timedwait(&this->trigger_drawing_cond, &this->trigger_drawing_mutex, &abstime);
+  }
+  this->trigger_drawing = 0;
+  pthread_mutex_unlock (&this->trigger_drawing_mutex);
+
+  return timedout;
+}
+
 /* special loop for paused mode
  * needed to update screen due overlay changes, resize, window
  * movement, brightness adjusting etc.
@@ -1088,7 +1114,7 @@ static void paused_loop( vos_t *this, int64_t vpts )
     }
     
     pthread_mutex_unlock( &this->free_img_buf_queue->mutex );
-    xine_usec_sleep (20000);
+    interruptable_sleep(this, 20000);
     pthread_mutex_lock( &this->free_img_buf_queue->mutex );
   }
   
@@ -1218,7 +1244,10 @@ static void *video_out_loop (void *this_gen) {
 		"video_out: vpts/clock error, next_vpts=%" PRId64 " cur_vpts=%" PRId64 "\n", next_frame_vpts,vpts);
                
       if (usec_to_sleep > 0)
-        xine_usec_sleep (usec_to_sleep);
+      {
+        if (0 == interruptable_sleep(this, usec_to_sleep))
+          break;
+      }
 
       if (this->discard_frames)
         break;
@@ -1601,6 +1630,9 @@ static void vo_exit (xine_video_port_t *this_gen) {
   free (this->free_img_buf_queue);
   free (this->display_img_buf_queue);
 
+  pthread_cond_destroy(&this->trigger_drawing_cond);
+  pthread_mutex_destroy(&this->trigger_drawing_mutex);
+
   free (this);
 }
 
@@ -1668,6 +1700,15 @@ static void vo_flush (xine_video_port_t *this_gen) {
     this->discard_frames--;
     pthread_mutex_unlock(&this->display_img_buf_queue->mutex);
   }
+}
+
+static void vo_trigger_drawing (xine_video_port_t *this_gen) {
+  vos_t      *this = (vos_t *) this_gen;
+
+  pthread_mutex_lock (&this->trigger_drawing_mutex);
+  this->trigger_drawing = 1;
+  pthread_cond_signal (&this->trigger_drawing_cond);
+  pthread_mutex_unlock (&this->trigger_drawing_mutex);
 }
 
 /* crop_frame() will allocate a new frame to copy in the given image
@@ -1765,6 +1806,7 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this->vo.enable_ovl            = vo_enable_overlay;
   this->vo.get_overlay_manager   = vo_get_overlay_manager;
   this->vo.flush                 = vo_flush;
+  this->vo.trigger_drawing       = vo_trigger_drawing;
   this->vo.get_property          = vo_get_property;
   this->vo.set_property          = vo_set_property;
   this->vo.status                = vo_status;
@@ -1842,6 +1884,9 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
       "were not scheduled for display in time, xine sends a notification."),
     20, NULL, NULL);
 
+  pthread_mutex_init(&this->trigger_drawing_mutex, NULL);
+  pthread_cond_init(&this->trigger_drawing_cond, NULL);
+  this->trigger_drawing = 0;
 
   if (grabonly) {
 

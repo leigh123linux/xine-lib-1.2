@@ -149,6 +149,14 @@ static void post_video_flush(xine_video_port_t *port_gen) {
   if (port->port_lock) pthread_mutex_unlock(port->port_lock);
 }
 
+static void post_video_trigger_drawing(xine_video_port_t *port_gen) {
+  post_video_port_t *port = (post_video_port_t *)port_gen;
+  
+  if (port->port_lock) pthread_mutex_lock(port->port_lock);
+  port->original_port->trigger_drawing(port->original_port);
+  if (port->port_lock) pthread_mutex_unlock(port->port_lock);
+}
+
 static int post_video_status(xine_video_port_t *port_gen, xine_stream_t *stream,
                              int *width, int *height, int64_t *img_duration) {
   post_video_port_t *port = (post_video_port_t *)port_gen;
@@ -225,6 +233,7 @@ post_video_port_t *_x_post_intercept_video_port(post_plugin_t *post, xine_video_
   port->new_port.exit                = post_video_exit;
   port->new_port.get_overlay_manager = post_video_get_overlay_manager;
   port->new_port.flush               = post_video_flush;
+  port->new_port.trigger_drawing     = post_video_trigger_drawing;
   port->new_port.status              = post_video_status;
   port->new_port.get_property        = post_video_get_property;
   port->new_port.set_property        = post_video_set_property;

@@ -205,6 +205,9 @@ struct xine_video_port_s {
   /* flush video_out fifo */
   void (*flush) (xine_video_port_t *self);
 
+  /* trigger immediate drawing */
+  void (*trigger_drawing) (xine_video_port_t *self);
+
   /* Get/Set video property
    *
    * See VO_PROP_* bellow
