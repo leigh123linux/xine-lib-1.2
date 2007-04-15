@@ -2084,10 +2084,14 @@ dnl ---------------------------------------------
 dnl ASM ALIGN is power of two ?
 dnl Used by internal FFmpeg and Planar postprocess
 dnl ---------------------------------------------
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[ asm (".align 3"); ]])],[
-  AC_DEFINE([ASMALIGN(ZEROBITS)], [".align " #ZEROBITS "\n\t"], "asmalign power of two")
-],[
-  AC_DEFINE([ASMALIGN(ZEROBITS)], [".align 1<<" #ZEROBITS "\n\t"], "asmalign power of two")
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[ asm (".align 3"); ]])],
+  AC_DEFINE([ASMALIGN_1SLN], [1], [define if '.align n' means alignment to (1<<n)-byte boundaries]),
+  :)
+AH_BOTTOM([#ifdef ASMALIGN_1SLN
+# define ASMALIGN(ZEROBITS) ".align " #ZEROBITS "\n\t"
+#else
+# define ASMALIGN(ZEROBITS) ".align 1<<" #ZEROBITS "\n\t"
+#endif
 ])
 
 dnl ---------------------------------------------
