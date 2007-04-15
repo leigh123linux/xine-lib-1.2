@@ -69,6 +69,7 @@ typedef struct {
   vo_frame_t        *first;
   vo_frame_t        *last;
   int                num_buffers;
+  int                num_buffers_max;
 
   int                locked_for_read;
   pthread_mutex_t    mutex;
@@ -142,9 +143,11 @@ static img_buf_fifo_t *vo_new_img_buf_queue () {
 
   queue = (img_buf_fifo_t *) xine_xmalloc (sizeof (img_buf_fifo_t));
   if( queue ) {
-    queue->first       = NULL;
-    queue->last        = NULL;
-    queue->num_buffers = 0;
+    queue->first           = NULL;
+    queue->last            = NULL;
+    queue->num_buffers     = 0;
+    queue->num_buffers_max = 0;
+
     queue->locked_for_read = 0;
     pthread_mutex_init (&queue->mutex, NULL);
     pthread_cond_init  (&queue->not_empty, NULL);
@@ -171,6 +174,8 @@ static void vo_append_to_img_buf_queue_int (img_buf_fifo_t *queue,
   }
 
   queue->num_buffers++;
+  if (queue->num_buffers_max < queue->num_buffers)
+    queue->num_buffers_max = queue->num_buffers;
 
   pthread_cond_signal (&queue->not_empty);
 }
@@ -211,14 +216,15 @@ static vo_frame_t *vo_remove_from_img_buf_queue_int (img_buf_fifo_t *queue, int 
       
       if( width && height ) {
         if( !img ) {
-          if( queue->num_buffers == 1 && !blocking) {
+          if( queue->num_buffers == 1 && !blocking && queue->num_buffers_max > 8) {
             /* non-blocking and only a single frame on fifo with different
              * format -> ignore it (give another chance of a frame format hit)
+             * only if we have a lot of buffers at all.
              */
             lprintf("frame format mismatch - will wait another frame\n");
           } else {
-            /* we have at least 2 frames on fifo but they don't match ->
-             * give up. return whatever we got.
+            /* we have just a limited number of buffers or at least 2 frames
+             * on fifo but they don't match -> give up. return whatever we got.
              */
             img = queue->first;
             lprintf("frame format miss (%d/%d)\n", i, queue->num_buffers);
