@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib-1.1.4\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-04-15 15:39+0200\n"
+"POT-Creation-Date: 2007-04-15 23:56+0200\n"
 "PO-Revision-Date: 2007-02-28 14:07+0100\n"
 "Last-Translator: Carlos E. Robinson M. <carloser@users.sourceforge.net>\n"
 "Language-Team: Spanish\n"
@@ -3908,7 +3908,7 @@ msgstr "complemento de xine de salida de vídeo usando DirectFB bajo XDirectFB."
 msgid "xine video output plugin for win32 using directx"
 msgstr "complemento de xine de salida de vídeo para win32 usando directx"
 
-#: src/video_out/video_out_fb.c:783
+#: src/video_out/video_out_fb.c:780
 #, c-format
 msgid ""
 "video_out_fb: only packed truecolor/directcolor is supported (%d).\n"
@@ -3918,11 +3918,11 @@ msgstr ""
 "directo) empaquetado (%d).\n"
 "     Compruebe 'fbset -i' o pruebe 'fbset -depth 16'.\n"
 
-#: src/video_out/video_out_fb.c:843 src/video_out/video_out_vidix.c:1239
+#: src/video_out/video_out_fb.c:840 src/video_out/video_out_vidix.c:1239
 msgid "framebuffer device name"
 msgstr "nombre del dispositivo framebuffer"
 
-#: src/video_out/video_out_fb.c:844 src/video_out/video_out_vidix.c:1240
+#: src/video_out/video_out_fb.c:841 src/video_out/video_out_vidix.c:1240
 msgid ""
 "Specifies the file name for the framebuffer device to be used.\n"
 "This setting is security critical, because when changed to a different file, "
@@ -3936,17 +3936,17 @@ msgstr ""
 "arbitrario. De modo que debería ser cuidadoso de que el valor que introduzca "
 "es realmente un verdadero dispositivo framebuffer."
 
-#: src/video_out/video_out_fb.c:918
+#: src/video_out/video_out_fb.c:915
 #, fuzzy, c-format
 msgid "%s: Your video mode was not recognized, sorry.\n"
 msgstr "video_out_fb: Lo sentimos, su modo de vídeo no fue reconocido .\n"
 
-#: src/video_out/video_out_fb.c:975
+#: src/video_out/video_out_fb.c:972
 #, fuzzy, c-format
 msgid "%s: %d video RAM buffers are available.\n"
 msgstr "video_out_fb: están disponibles %d tampones de vídeo en RAM.\n"
 
-#: src/video_out/video_out_fb.c:981
+#: src/video_out/video_out_fb.c:978
 #, fuzzy, c-format
 msgid ""
 "WARNING: %s: Zero copy buffers are DISABLED because only %d buffers\n"
@@ -3959,7 +3959,7 @@ msgstr ""
 "Disminuyendo\n"
 "     la resolución del tampón de cuadro podría ayudar.\n"
 
-#: src/video_out/video_out_fb.c:992
+#: src/video_out/video_out_fb.c:989
 #, fuzzy, c-format
 msgid ""
 "WARNING: %s: Zero copy buffers are DISABLED because kernel driver\n"
@@ -3970,7 +3970,7 @@ msgstr ""
 "     no soporta panoramizado (panning) de pantalla (usado para volteos de "
 "cuadro (frame flips)).\n"
 
-#: src/video_out/video_out_fb.c:1061
+#: src/video_out/video_out_fb.c:1058
 #, fuzzy, c-format
 msgid ""
 "WARNING: %s: current display depth is %d. For better performance\n"
@@ -3982,7 +3982,7 @@ msgstr ""
 "     se recomienda una profundidad de 16 bpp!\n"
 "\n"
 
-#: src/video_out/video_out_fb.c:1093
+#: src/video_out/video_out_fb.c:1090
 msgid "Xine video output plugin using the Linux frame buffer device"
 msgstr ""
 "Complemento de xine de salida de vídeo usando el dispositivo Linux tampón de "

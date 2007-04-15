@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib-1\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-04-15 15:39+0200\n"
+"POT-Creation-Date: 2007-04-15 23:56+0200\n"
 "PO-Revision-Date: 2005-02-17 14:29+0100\n"
 "Last-Translator: Piarres Beobide <pi@beobide.net>\n"
 "Language-Team: lubrezale <librezale@librezale.org>\n"
@@ -3520,18 +3520,18 @@ msgstr "xine bideo irteera plugina DirectFB liburutegia erabiliaz"
 msgid "xine video output plugin for win32 using directx"
 msgstr "xine bideo irteera plugina win32-rentzat directx erabiliaz"
 
-#: src/video_out/video_out_fb.c:783
+#: src/video_out/video_out_fb.c:780
 #, c-format
 msgid ""
 "video_out_fb: only packed truecolor/directcolor is supported (%d).\n"
 "     Check 'fbset -i' or try 'fbset -depth 16'.\n"
 msgstr ""
 
-#: src/video_out/video_out_fb.c:843 src/video_out/video_out_vidix.c:1239
+#: src/video_out/video_out_fb.c:840 src/video_out/video_out_vidix.c:1239
 msgid "framebuffer device name"
 msgstr "framebuffer gailu izena"
 
-#: src/video_out/video_out_fb.c:844 src/video_out/video_out_vidix.c:1240
+#: src/video_out/video_out_fb.c:841 src/video_out/video_out_vidix.c:1240
 msgid ""
 "Specifies the file name for the framebuffer device to be used.\n"
 "This setting is security critical, because when changed to a different file, "
@@ -3543,17 +3543,17 @@ msgstr ""
 "xinek fitxategia eduki arbitrario bat erabiliaz bete bait dezake. Beraz "
 "balioaegiazko framebuffer gailu bat dela ziurtatu behar duzu."
 
-#: src/video_out/video_out_fb.c:918
+#: src/video_out/video_out_fb.c:915
 #, fuzzy, c-format
 msgid "%s: Your video mode was not recognized, sorry.\n"
 msgstr "video_out_fb: Bideo modua ez da ezagutzen, barkatu.\n"
 
-#: src/video_out/video_out_fb.c:975
+#: src/video_out/video_out_fb.c:972
 #, fuzzy, c-format
 msgid "%s: %d video RAM buffers are available.\n"
 msgstr "video_out_fb: %d bideo RAM buffer eskuragarri dira.\n"
 
-#: src/video_out/video_out_fb.c:981
+#: src/video_out/video_out_fb.c:978
 #, c-format
 msgid ""
 "WARNING: %s: Zero copy buffers are DISABLED because only %d buffers\n"
@@ -3561,14 +3561,14 @@ msgid ""
 "     the frame buffer resolution might help.\n"
 msgstr ""
 
-#: src/video_out/video_out_fb.c:992
+#: src/video_out/video_out_fb.c:989
 #, c-format
 msgid ""
 "WARNING: %s: Zero copy buffers are DISABLED because kernel driver\n"
 "     do not support screen panning (used for frame flips).\n"
 msgstr ""
 
-#: src/video_out/video_out_fb.c:1061
+#: src/video_out/video_out_fb.c:1058
 #, c-format
 msgid ""
 "WARNING: %s: current display depth is %d. For better performance\n"
@@ -3576,7 +3576,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/video_out/video_out_fb.c:1093
+#: src/video_out/video_out_fb.c:1090
 msgid "Xine video output plugin using the Linux frame buffer device"
 msgstr "Xine bideo irteera plugina Linux framebuffer gailua erabiliaz"
 
