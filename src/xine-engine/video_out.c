@@ -130,6 +130,7 @@ typedef struct {
   int                       frame_drop_limit_max;
   int                       frame_drop_limit;
   int                       frame_drop_cpt;
+  int                       frame_drop_suggested;
   int                       crop_left, crop_right, crop_top, crop_bottom;
 } vos_t;
 
@@ -497,6 +498,21 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
         frames_to_skip < 0)
       frames_to_skip = 0;
       
+    /* Do not drop frames immediately, but remember this as suggestion and give
+     * decoder a further chance to supply frames.
+     * This avoids unnecessary frame drops in situations where there is only
+     * a very little number of image buffers, e. g. when using xxmc.
+     */
+    if (this->frame_drop_suggested && frames_to_skip == 0)
+      this->frame_drop_suggested = 0;
+
+    if (frames_to_skip > 0) {
+      if (!this->frame_drop_suggested) {
+        this->frame_drop_suggested = 1;
+        frames_to_skip = 0;
+      }
+    }
+
     lprintf ("delivery diff : %" PRId64 ", current vpts is %" PRId64 ", %d frames to skip\n",
 	     diff, cur_vpts, frames_to_skip);
     
@@ -1829,6 +1845,7 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
 
   this->frame_drop_limit      = this->frame_drop_limit_max;
   this->frame_drop_cpt        = 0;
+  this->frame_drop_suggested  = 0;
 
   this->extra_info_base = calloc (num_frame_buffers,
 					  sizeof(extra_info_t));
