@@ -38,7 +38,7 @@
 
 #define MAX_OBJECTS   50
 #define MAX_EVENTS    50
-#define MAX_SHOWING   16
+#define MAX_SHOWING   (5 + 16)
 
 #define OVERLAY_EVENT_NULL             0
 #define OVERLAY_EVENT_SHOW             1
