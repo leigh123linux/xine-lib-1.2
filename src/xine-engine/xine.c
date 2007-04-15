@@ -2171,3 +2171,22 @@ void _x_unlock_frontend(xine_stream_t *stream)
 {
   pthread_mutex_unlock(&stream->frontend_lock);
 }
+
+int _x_query_unprocessed_osd_events(xine_stream_t *stream)
+{
+  video_overlay_manager_t *ovl;
+  int redraw_needed;
+  
+  if (!stream->xine->port_ticket->acquire_nonblocking(stream->xine->port_ticket, 1))
+    return -1;
+
+  ovl = stream->video_out->get_overlay_manager(stream->video_out);
+  redraw_needed = ovl->redraw_needed(ovl, 0);
+ 
+  if (redraw_needed) 
+    stream->video_out->trigger_drawing(stream->video_out);
+
+  stream->xine->port_ticket->release_nonblocking(stream->xine->port_ticket, 1);
+
+  return redraw_needed;
+}

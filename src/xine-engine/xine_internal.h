@@ -375,6 +375,7 @@ int _x_lock_port_rewiring(xine_t *xine, int ms_to_time_out) XINE_PROTECTED;
 void _x_unlock_port_rewiring(xine_t *xine) XINE_PROTECTED;
 int _x_lock_frontend(xine_stream_t *stream, int ms_to_time_out) XINE_PROTECTED;
 void _x_unlock_frontend(xine_stream_t *stream) XINE_PROTECTED;
+int _x_query_unprocessed_osd_events(xine_stream_t *stream) XINE_PROTECTED;
 
 void _x_handle_stream_end      (xine_stream_t *stream, int non_user) XINE_PROTECTED;
 
