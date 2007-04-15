@@ -1,0 +1,21 @@
+# Source:
+# grep 'attribute.*format.*printf' src include -rI -B3 -C3
+
+# Internal usage
+XGETTEXT_FORMAT_FLAGS_PRIVATE = \
+	--flag=xine_log_msg:1:c-format \
+	--flag=xine_log_err:1:c-format \
+	--flag=set_hc_result:3:c-format \
+	--flag=log_printf:1:c-format \
+	--flag=error_message:1:c-format \
+	--flag=error_callback:5:c-format \
+	--flag=dbgprintf:1:c-format \
+	--flag=dbg_printf:1:c-format \
+	--flag=sock_string_write:3:c-format \
+	--flag=broadcaster_string_write:3:c-format \
+	--flag=scratch_printf:3:c-format
+
+# External usage (installed include files)
+XGETTEXT_FORMAT_FLAGS = \
+	--flag=xine_log:3:c-format \
+	--flag=xine_vlog:3:c-format
