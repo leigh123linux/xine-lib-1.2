@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define XINE_ENGINE_INTERNAL
 
@@ -107,6 +108,15 @@ static void *video_decoder_loop (void *stream_gen) {
   int              prof_video_decode = -1;
   int              prof_spu_decode = -1;
   uint32_t         buftype_unknown = 0;
+
+#ifndef WIN32
+  /* nice(-value) will fail silently for normal users.
+   * however when running as root this may provide smoother
+   * playback. follow the link for more information:
+   * http://cambuca.ldhs.cetuc.puc-rio.br/~miguel/multimedia_sim/
+   */
+  nice(-1);
+#endif /* WIN32 */
   
   if (prof_video_decode == -1)
     prof_video_decode = xine_profiler_allocate_slot ("video decoder");
