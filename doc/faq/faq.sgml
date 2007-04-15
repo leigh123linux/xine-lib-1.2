@@ -128,14 +128,6 @@
      <para>
       Currently, only xine-lib and gxine are present here.
      </para>
-     <para>
-      If you have patches for a module which is maintained using mercurial,
-      you can make them available as diffs - use <command>hg
-      export</command> for this - or via HTTP by using <command>hg
-      serve</command>. In the latter case, you'll need to post a URL from
-      which a developer can pull the changes. We prefer these methods since
-      we get proper attribution this way.
-     </para>
     </sect3>
     <sect3>
      <title>Checking out xine modules from CVS</title>
@@ -150,8 +142,44 @@
      </para>
      <para>
       If you want xine-lib or gxine, you should use Mercurial instead.
+      The CVS repositories for these are not maintained.
      </para>
     </sect3>
+   </sect2>
+
+   <sect2 id="patch">
+    <title>How do I submit patches?</title>
+    <para>
+     First, make sure that you're using a current development version
+     (see above) or at least the current release version. Then, once you're
+     ready to send the patch...
+    </para>
+    <para>
+     Generate your patch using either <command>cvs diff -u &gt;
+     my.patch</command> or <command>hg diff &gt; my.patch</command> (as
+     appropriate). Make sure that your message subject briefly describes the
+     patch; your message body should contain a longer description of the
+     patch. Your patch should be applicable using <command>patch -p0 -i
+     my.patch</command> or, preferably, <command>patch -p1 -i
+     my.patch</command> from the top-level directory in the source tree
+     (i.e. where configure.ac is) - this is fairly important for our
+     Mercurial-based repositories since it makes importing your patch that
+     much easier (hg import defaults to -p1).
+    </para>
+    <para>
+     Alternatively, if you've been hacking away at a module which is
+     maintained using mercurial, you can make them available as diffs - use
+     <command>hg export</command> or, if you have several patches, you could
+     use <command>hg bundle</command> instead (both require extra
+     parameters; <command>hg help export</command> and <command>hg help
+     bundle</command> for more details) - or via HTTP by using <command>hg
+     serve</command>. In the latter case, you'll need to post a URL from
+     which a developer can pull the changes.
+    </para>
+    <para>
+     Patches should normally be sent to the xine-devel mailing list,
+     <email>xine-devel@lists.sourceforge.net</email>.
+    </para>
    </sect2>
 
    <sect2 id="gnome-xine">
