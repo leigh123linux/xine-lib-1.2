@@ -87,7 +87,6 @@
 #include "xine.h"
 #include "video_out.h"
 #include "xine_internal.h"
-#include "deinterlace.h"
 #include "xineutils.h"
 #include "vo_scale.h"
 #include "x11osd.h"

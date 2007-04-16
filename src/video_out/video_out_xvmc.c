@@ -72,9 +72,6 @@
 #include "xine_internal.h"
 #include "accel_xvmc.h"
 
-/* TODO - delete these? */
-#include "deinterlace.h"
-
 #include "xineutils.h"
 #include "vo_scale.h"
 
@@ -197,11 +194,6 @@ struct xvmc_driver_s {
 
   double               ratio_factor;         /* output frame must fullfill:
 						height = width * ratio_factor  */
-
-  
-  xvmc_frame_t         deinterlace_frame;
-  int                  deinterlace_method;
-  int                  deinterlace_enabled;
 
   /* gui callback */
   
@@ -966,24 +958,13 @@ static void xvmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   /* Make sure the surface has finished rendering before we display */  
   XvMCSyncSurface(this->display, &this->cur_frame->surface);
   
-  if (this->deinterlace_enabled &&
-      (this->deinterlace_method == DEINTERLACE_ONEFIELD)) {
-    XvMCPutSurface(this->display, &this->cur_frame->surface,
-		   this->drawable,
-		   this->sc.displayed_xoffset, this->sc.displayed_yoffset,
-		   this->sc.displayed_width, this->sc.displayed_height,
-		   this->sc.output_xoffset, this->sc.output_yoffset,
-		   this->sc.output_width, this->sc.output_height,
-		   XVMC_TOP_FIELD);
-  } else { /* WEAVE */
-    XvMCPutSurface(this->display, &this->cur_frame->surface,
-		   this->drawable,
-		   this->sc.displayed_xoffset, this->sc.displayed_yoffset,
-		   this->sc.displayed_width, this->sc.displayed_height,
-		   this->sc.output_xoffset, this->sc.output_yoffset,
-		   this->sc.output_width, this->sc.output_height,
-		   XVMC_FRAME_PICTURE);
-  }
+  XvMCPutSurface(this->display, &this->cur_frame->surface,
+		 this->drawable,
+		 this->sc.displayed_xoffset, this->sc.displayed_yoffset,
+		 this->sc.displayed_width, this->sc.displayed_height,
+		 this->sc.output_xoffset, this->sc.output_yoffset,
+		 this->sc.output_width, this->sc.output_height,
+		 XVMC_FRAME_PICTURE);
   
   XUnlockDisplay (this->display);
   
@@ -1047,16 +1028,6 @@ static int xvmc_set_property (vo_driver_t *this_gen,
   } 
   else {
     switch (property) {
-    case VO_PROP_INTERLACED:
-      this->props[property].value = value;
-      lprintf("VO_PROP_INTERLACED(%d)\n", this->props[property].value);
-      this->deinterlace_enabled = value;
-
-      if (this->deinterlace_method == DEINTERLACE_ONEFIELDXV) {
-	xvmc_compute_ideal_size (this);
-      }
-      break;
-
     case VO_PROP_ASPECT_RATIO:
       if (value>=XINE_VO_ASPECT_NUM_RATIOS)
 	value = XINE_VO_ASPECT_AUTO;
@@ -1288,14 +1259,6 @@ static void xvmc_check_capability (xvmc_driver_t *this,
     this->props[property].value  = int_default;
 }
 
-static void xvmc_update_deinterlace(void *this_gen, xine_cfg_entry_t *entry) {
-  xvmc_driver_t *this = (xvmc_driver_t *) this_gen;
-
-  lprintf ("xvmc_update_deinterlace method = %d\n",entry->num_value);
-  
-  this->deinterlace_method = entry->num_value;
-}
-
 static void xvmc_update_XV_DOUBLE_BUFFER(void *this_gen, xine_cfg_entry_t *entry)
 {
   xvmc_driver_t *this = (xvmc_driver_t *) this_gen;
@@ -1366,7 +1329,6 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   /* TODO CLEAN UP THIS */
   this->user_data          = visual->user_data;
 
-  this->deinterlace_method = 0;
   this->use_colorkey       = 0;
   this->colorkey           = 0;
 
@@ -1517,65 +1479,6 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
     dispose_ximage (this, &myshminfo, myimage);
     XUnLockDisplay(this->display);
   */
-  
-  this->deinterlace_method =
-    config->register_enum (config, "video.output.xv_deinterlace_method", 4,
-			   deinterlace_methods, 
-			   _("deinterlace method (deprecated)"),
-			   _("This config setting is deprecated. You should use the new deinterlacing "
-			     "post processing settings instead.\n\n"
-			     "From the old days of analog television, where the even and odd numbered "
-			     "lines of a video frame would be displayed at different times comes the "
-			     "idea to increase motion smoothness by also recording the lines at "
-			     "different times. This is called \"interlacing\". But unfortunately, "
-			     "todays displays show the even and odd numbered lines as one complete frame "
-			     "all at the same time (called \"progressive display\"), which results in "
-			     "ugly frame errors known as comb artifacts. Software deinterlacing is an "
-			     "approach to reduce these artifacts. The individual values are:\n\n"
-			     "none\n"
-			     "Disables software deinterlacing.\n\n"
-			     "bob\n"
-			     "Interpolates between the lines for moving parts of the image.\n\n"
-			     "weave\n"
-			     "Similar to bob, but with a tendency to preserve the full resolution, "
-			     "better for high detail in low movement scenes.\n\n"
-			     "greedy\n"
-			     "Very good adaptive deinterlacer, but needs a lot of CPU power.\n\n"
-			     "onefield\n"
-			     "Always interpolates and reduces vertical resolution.\n\n"
-			     "onefieldxv\n"
-			     "Same as onefield, but does the interpolation in hardware.\n\n"
-			     "linearblend\n"
-			     "Applies a slight vertical blur to remove the comb artifacts. Good results "
-			     "with medium CPU usage."),
-			   10, xvmc_update_deinterlace, this);
-
-  this->deinterlace_enabled = 1;  /* default is enabled */
-  lprintf("deinterlace_methods %d ",this->deinterlace_method);
-
-  switch(this->deinterlace_method) {
-  case DEINTERLACE_NONE: 
-    lprintf("NONE\n"); 
-    break;
-  case DEINTERLACE_BOB: 
-    lprintf("BOB\n"); 
-    break;
-  case DEINTERLACE_WEAVE: 
-    lprintf("WEAVE\n");
-    break;
-  case DEINTERLACE_GREEDY: 
-    lprintf("GREEDY\n");
-    break;
-  case DEINTERLACE_ONEFIELD: 
-    lprintf("ONEFIELD\n");
-    break;
-  case DEINTERLACE_ONEFIELDXV: 
-    lprintf("ONEFIELDXV\n");
-    break;
-  case DEINTERLACE_LINEARBLEND: 
-    lprintf("LINEARBLEND\n"); 
-    break;
-  }
 
   lprintf("initialization of plugin successful\n");
   return &this->vo_driver;

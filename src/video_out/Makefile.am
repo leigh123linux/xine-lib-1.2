@@ -12,7 +12,7 @@ endif
 
 EXTRA_DIST = video_out_directfb.c video_out_directfb_fb.c video_out_directfb_x.c video_out_directx.c video_out_macosx.m
 
-noinst_HEADERS = deinterlace.h video_out_syncfb.h yuv2rgb.h x11osd.h xcbosd.h
+noinst_HEADERS = video_out_syncfb.h yuv2rgb.h x11osd.h xcbosd.h
 
 if HAVE_X11
 X11OSD = x11osd.c
@@ -112,7 +112,7 @@ xineplug_vo_out_xcbshm_la_SOURCES = yuv2rgb.c yuv2rgb_mmx.c yuv2rgb_mlib.c video
 xineplug_vo_out_xcbshm_la_LIBADD = $(MLIB_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(XCB_LIBS) $(XCBSHM_LIBS)
 xineplug_vo_out_xcbshm_la_CFLAGS = $(AM_CFLAGS) $(MLIB_CFLAGS) $(XCB_CFLAGS) $(XCBSHM_CFLAGS)
 
-xineplug_vo_out_xcbxv_la_SOURCES = deinterlace.c video_out_xcbxv.c $(XCBOSD)
+xineplug_vo_out_xcbxv_la_SOURCES = video_out_xcbxv.c $(XCBOSD)
 xineplug_vo_out_xcbxv_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(XCBXV_LIBS) $(XCB_LIBS)
 xineplug_vo_out_xcbxv_la_CFLAGS = $(AM_CFLAGS) $(XCB_CFLAGS) $(XCBXV_CFLAGS)
 
@@ -121,15 +121,15 @@ xineplug_vo_out_xshm_la_SOURCES = yuv2rgb.c yuv2rgb_mmx.c yuv2rgb_mlib.c \
 xineplug_vo_out_xshm_la_LIBADD = $(MLIB_LIBS) $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
 xineplug_vo_out_xshm_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) $(MLIB_CFLAGS) -fno-strict-aliasing
 
-xineplug_vo_out_xv_la_SOURCES = $(X11OSD) deinterlace.c video_out_xv.c
+xineplug_vo_out_xv_la_SOURCES = $(X11OSD) video_out_xv.c
 xineplug_vo_out_xv_la_LIBADD = $(XV_LIBS) $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
 xineplug_vo_out_xv_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) $(XV_CFLAGS) -fno-strict-aliasing
 
-xineplug_vo_out_xvmc_la_SOURCES = deinterlace.c video_out_xvmc.c
+xineplug_vo_out_xvmc_la_SOURCES = video_out_xvmc.c
 xineplug_vo_out_xvmc_la_LIBADD = $(XVMC_LIBS) $(XV_LIBS) $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
 xineplug_vo_out_xvmc_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) $(XV_CFLAGS)
 
-xineplug_vo_out_xxmc_la_SOURCES = $(X11OSD) deinterlace.c video_out_xxmc.c\
+xineplug_vo_out_xxmc_la_SOURCES = $(X11OSD) video_out_xxmc.c\
 				xvmc_mocomp.c xvmc_vld.c xxmc.h
 xineplug_vo_out_xxmc_la_LIBADD = $(XXMC_LIBS) $(XV_LIBS) $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
 xineplug_vo_out_xxmc_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) $(XV_CFLAGS) -fno-strict-aliasing
