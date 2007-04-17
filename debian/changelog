@@ -3,7 +3,13 @@ xine-lib (1.2.0~hg-0) unstable; urgency=low
   * Hg snapshot.
   * Adjust for libxine2.
 
- -- Darren Salt <linux@youmustbejoking.demon.co.uk>  Sat, 14 Apr 2007 16:31:58 +0100
+ -- Darren Salt <linux@youmustbejoking.demon.co.uk>  Tue, 17 Apr 2007 16:50:37 +0100
+
+xine-lib (1.1.6~hg-0) unstable; urgency=low
+
+  * Hg snapshot.
+
+ -- Darren Salt <linux@youmustbejoking.demon.co.uk>  Mon, 16 Apr 2007 22:00:07 +0100
 
 xine-lib (1.1.5~cvs-0) unstable; urgency=low
 

@@ -3,19 +3,19 @@ Section: libs
 Priority: optional
 Maintainer: Siggi Langauf <siggi@debian.org>
 Uploaders: Philipp Matthias Hahn <pmhahn@debian.org>, Reinhard Tartler <siretart@tauware.de>
-Build-Depends: debhelper (>= 4.0.4), binutils (>= 2.12.90.0.9), pkg-config,
+Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
 	automake1.9, autoconf, libtool,
 	libxinerama-dev, libxv-dev, libxvmc-dev, libxt-dev, 
 	libdirectfb-dev (>= 0.9.22),
 	libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
-	libaa1-dev, libcaca-dev (>= 0.99.beta4-1), libmodplug-dev,
+	libaa1-dev, libcaca-dev, libmodplug-dev,
 	libmagick9-dev, libpng12-dev, libfreetype6-dev, 
 	libogg-dev, libvorbis-dev, libtheora-dev,
 	libesd0-dev, libgnomevfs2-dev,
-	zlib1g-dev, libartsc0-dev (>>1.1.0),
-	liblircclient-dev,
+	zlib1g-dev, libartsc0-dev,
+	liblircclient-dev, libjack0.100.0-dev,
 	libdirectfb-dev, libgtk2.0-dev,
-	libflac-dev (>>1.1.0), libpulse-dev, libsdl1.2-dev (>=1.2.11),
+	libflac-dev, libpulse-dev, libsdl1.2-dev,
 	libsmbclient-dev, libspeex-dev, libmng-dev, 
 	libmad0-dev, libmpcdec-dev, libcdio-dev (>= 0.76-1), 
 	w3m, transfig, gs, sgmltools-lite
