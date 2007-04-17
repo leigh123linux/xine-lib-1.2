@@ -85,7 +85,7 @@ static int open_dts_file(demux_dts_t *this) {
   lprintf("open_dts_file\n");
 
   blocksize = this->input->get_blocksize(this->input);
-  if (blocksize) {
+  if (blocksize && INPUT_IS_SEEKABLE(this->input)) {
     //    this->input->seek(this->input, 0, SEEK_SET);
     buf_element_t *buf = this->input->read_block(this->input,
 						 this->stream->audio_fifo,
