@@ -498,6 +498,8 @@ EXCLUDE_PATTERNS       = */src/libw32dll/wine/*
 EXCLUDE_PATTERNS      += */src/input/libdvdnav/*
 EXCLUDE_PATTERNS      += */src/input/vcd/libcdio/*
 EXCLUDE_PATTERNS      += */src/input/vcd/libvcd/*
+EXCLUDE_PATTERNS      += */src/libxineadec/nosefart/*
+EXCLUDE_PATTERNS      += */src/libxineadec/gsm610/*
 
 # The EXAMPLE_PATH tag can be used to specify one or more files or 
 # directories that contain example code fragments that are included (see 
