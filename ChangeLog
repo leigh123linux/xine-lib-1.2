@@ -1,3 +1,6 @@
+xine-lib (1.1.7) (unreleased)
+  * Support libdca (new name for libdts) by shuffling around the dts.h file.
+
 xine-lib (1.1.6)
   * Split the DirectFB plugin into X11 and non-X versions.
   * Improve the Mac OS X video output plugin. Thanks to Matt Messier.

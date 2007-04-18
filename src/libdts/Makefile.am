@@ -24,5 +24,5 @@ else
 xineplug_decode_dts_la_LIBADD = $(XINE_LIB) -lm
 endif
 
-noinst_HEADERS = bitstream.h dts.h dts_internal.h tables.h tables_adpcm.h \
+noinst_HEADERS = bitstream.h internal-dts.h dts_internal.h tables.h tables_adpcm.h \
 	tables_fir.h tables_huffman.h tables_quantization.h tables_vq.h
