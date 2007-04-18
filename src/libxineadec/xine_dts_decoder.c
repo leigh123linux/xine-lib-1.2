@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2000-2005 the xine project
+ * Copyright (C) 2000-2007 the xine project
  * 
  * This file is part of xine, a unix video player.
  * 
@@ -16,12 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ */
+
+/**
+ * @file
+ * @brief DTS decoder for xine
  *
- * $Id: xine_decoder.c,v 1.67 2007/02/20 00:34:57 dgp85 Exp $
- *
- * 04-09-2001 DTS passtrough  (C) Joachim Koenig 
- * 09-12-2001 DTS passthrough inprovements (C) James Courtier-Dutton
- *
+ * @author Joachim Koenig (2001-09-04)
+ * @author James Courtier-Dutton (2001-12-09)
  */
 
 #ifndef __sun
@@ -49,6 +51,8 @@
 #include "xineutils.h"
 #include "audio_out.h"
 #include "buffer.h"
+
+#include "bswap.h"
 
 #include <dts.h>
 
@@ -87,65 +91,53 @@ typedef struct {
   
 } dts_decoder_t;
 
-static void dts_reset (audio_decoder_t *this_gen);
-static void dts_discontinuity (audio_decoder_t *this_gen);
-
-static void dts_reset (audio_decoder_t *this_gen) {
-
-  /* dts_decoder_t *this = (dts_decoder_t *) this_gen; */
-
+static void dts_reset (audio_decoder_t *const this_gen) {
 }
 
-static void dts_discontinuity (audio_decoder_t *this_gen) {
+static void dts_discontinuity (audio_decoder_t *const this_gen) {
 }
 
-#if 0
-static inline int16_t blah (int32_t i) {
+/**
+ * @brief Convert a array of floating point samples into 16-bit signed integer samples
+ * @param f Floating point samples array (origin)
+ * @param s16 16-bit signed integer samples array (destination)
+ * @param num_channels Number of channels present in the stream
+ *
+ * @todo This same work is being done in many decoders to adapt the output of
+ *       the decoder to what the audio output can actually use, this should be
+ *       done by the audio_output loop, not by the decoders.
+ */
+static inline void float_to_int (const float *const _f, int16_t *const s16, const int num_channels) {
+  const int endidx = 256 * num_channels;
+  int i, j;
 
-  if (i > 0x43c07fff)
-    return 32767;
-  else if (i < 0x43bf8000)
-    return -32768;
-  else
-    return i - 0x43c00000;
-}
-static inline void float_to_int (float * _f, int16_t * s16, int num_channels) {
-  int i;
-  int32_t * f = (int32_t *) _f;       /* XXX assumes IEEE float format */
-
-  for (i = 0; i < 256; i++) {
-    s16[num_channels*i] = blah (f[i]);
-  }
-}
-#endif
-
-static inline void float_to_int (float * _f, int16_t * s16, int num_channels) {
-  int i;
-  float f;
-  for (i = 0; i < 256; i++) {
-    f = _f[i] * 32767;
-    if (f > INT16_MAX) f = INT16_MAX;
-    if (f < INT16_MIN) f = INT16_MIN;
-    s16[num_channels*i] = f;
+  for (i = 0, j = 0; i < endidx; i++, j += num_channels) {
+    const float f = _f[i] * 32767;
+    if (f > INT16_MAX)
+      s16[j] = INT16_MAX;
+    else if (f < INT16_MIN)
+      s16[j] = INT16_MIN;
+    else
+      s16[j] = f;
     /* printf("samples[%d] = %f, %d\n", i, _f[i], s16[num_channels*i]); */
   }
 }
 
-static inline void mute_channel (int16_t * s16, int num_channels) {
+static inline void mute_channel (int16_t *const s16, const int num_channels) {
+  const int endidx = 256 * num_channels;
   int i;
-                                                                                                                           
-  for (i = 0; i < 256; i++) {
-    s16[num_channels*i] = 0;
-  }
+
+  for (i = 0; i < endidx; i += num_channels)
+    s16[i] = 0;
 }
 
-static void dts_decode_frame (dts_decoder_t *this, int64_t pts, int preview_mode) {
+static void dts_decode_frame (dts_decoder_t *this, const int64_t pts, const int preview_mode) {
 
   audio_buffer_t *audio_buffer;
   uint32_t  ac5_spdif_type=0;
   int output_mode = AO_CAP_MODE_STEREO;
   uint8_t        *data_out;
-  uint8_t        *data_in = this->frame_buffer;
+  uint8_t        *const data_in = this->frame_buffer;
   
   lprintf("decode_frame\n");
   audio_buffer = this->stream->audio_out->get_buffer (this->stream->audio_out);
@@ -223,7 +215,7 @@ static void dts_decode_frame (dts_decoder_t *this, int64_t pts, int preview_mode
     } else {
       /* Software decode */
       int       i, dts_output_flags;
-      int16_t  *int_samples = audio_buffer->mem;
+      int16_t  *const int_samples = audio_buffer->mem;
       int       number_of_dts_blocks;
 
       level_t   level = 1.0;
@@ -323,10 +315,10 @@ static void dts_decode_frame (dts_decoder_t *this, int64_t pts, int preview_mode
 
 static void dts_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
-  dts_decoder_t  *this = (dts_decoder_t *) this_gen;
+  dts_decoder_t  *const this = (dts_decoder_t *) this_gen;
   uint8_t        *current = (uint8_t *)buf->content;
   uint8_t        *sync_start=current + 1;
-  uint8_t        *end = buf->content + buf->size;
+  uint8_t        *const end = buf->content + buf->size;
   
   lprintf("decode_data\n");
 
@@ -347,31 +339,17 @@ static void dts_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
               (this->syncdword == 0xfe7f0180) ||
               (this->syncdword == 0x7ffe8001) ) {
 */
-          if ((this->syncdword == 0x7ffe8001)) {
+
+          if ((this->syncdword == 0x7ffe8001) || (this->syncdword == 0xff1f00e8)) {
+	    const uint32_t be_syncdword = be2me_32(this->syncdword);
 
             lprintf ("sync found: syncdword=0x%x\n", this->syncdword);
-	    this->frame_buffer[0] = 0x7f;
-	    this->frame_buffer[1] = 0xfe;
-	    this->frame_buffer[2] = 0x80;
-	    this->frame_buffer[3] = 0x01;
+
+	    memcpy(this->frame_buffer, &be_syncdword, sizeof(be_syncdword));
 
 	    this->sync_state = 1;
 	    this->frame_ptr = this->frame_buffer+4;
             this->pts = buf->pts;
-            break;
-	  }
-          if ((this->syncdword == 0xff1f00e8)) {
-
-            lprintf ("sync found: syncdword=0x%x\n", this->syncdword);
-	    this->frame_buffer[0] = 0xff;
-	    this->frame_buffer[1] = 0x1f;
-	    this->frame_buffer[2] = 0x00;
-	    this->frame_buffer[3] = 0xe8;
-
-	    this->sync_state = 1;
-	    this->frame_ptr = this->frame_buffer+4;
-            this->pts = buf->pts;
-            break;
 	  }
           break;
 
@@ -379,9 +357,9 @@ static void dts_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
           sync_start = current - 1;
 	  *this->frame_ptr++ = *current++;
           if ((this->frame_ptr - this->frame_buffer) > 19) {
-	    int old_dts_flags       = this->dts_flags;
-	    int old_dts_sample_rate = this->dts_sample_rate;
-	    int old_dts_bit_rate    = this->dts_bit_rate;
+	    const int old_dts_flags       = this->dts_flags;
+	    const int old_dts_sample_rate = this->dts_sample_rate;
+	    const int old_dts_bit_rate    = this->dts_bit_rate;
 
 	    this->ac5_length = dts_syncinfo (this->dts_state, this->frame_buffer,
 					       &this->dts_flags,
@@ -466,11 +444,10 @@ static void dts_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 }
 
 static void dts_dispose (audio_decoder_t *this_gen) {
-  dts_decoder_t *this = (dts_decoder_t *) this_gen; 
+  dts_decoder_t *const this = (dts_decoder_t *) this_gen; 
   
   if (this->output_open) 
     this->stream->audio_out->close (this->stream->audio_out, this->stream);
-  this->output_open = 0;
   
   free (this);
 }
@@ -494,7 +471,6 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
   else {
     this->bypass_mode = 0;
     /* FIXME: Leave "DOLBY pro logic" downmix out for now. */
-
     this->dts_flags_map[DTS_MONO]   = DTS_MONO;
     this->dts_flags_map[DTS_STEREO] = DTS_STEREO;
     this->dts_flags_map[DTS_3F]     = DTS_STEREO;
