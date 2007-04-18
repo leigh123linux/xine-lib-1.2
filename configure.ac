@@ -2628,7 +2628,6 @@ src/input/vcd/libcdio/image/Makefile
 src/input/vcd/libvcd/Makefile
 src/input/vcd/libvcd/libvcd/Makefile
 src/liba52/Makefile
-src/libdts/Makefile
 src/libfaad/Makefile
 src/libfaad/codebook/Makefile
 src/libffmpeg/Makefile
