@@ -1,35 +1,36 @@
 /*
- * dts_internal.h
+ * dca_internal.h
  * Copyright (C) 2004 Gildas Bazin <gbazin@videolan.org>
  * Copyright (C) 2000-2003 Michel Lespinasse <walken@zoy.org>
  * Copyright (C) 1999-2000 Aaron Holtzman <aholtzma@ess.engr.uvic.ca>
  *
- * This file is part of dtsdec, a free DTS Coherent Acoustics stream decoder.
- * See http://www.videolan.org/dtsdec.html for updates.
+ * This file is part of libdca, a free DTS Coherent Acoustics stream decoder.
+ * See http://www.videolan.org/developers/libdca.html for updates.
  *
- * dtsdec is free software; you can redistribute it and/or modify
+ * libdca is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * dtsdec is distributed in the hope that it will be useful,
+ * libdca is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * along with this program; if not, write to the
+ * Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#define DTS_SUBFRAMES_MAX (16)
-#define DTS_PRIM_CHANNELS_MAX (5)
-#define DTS_SUBBANDS (32)
-#define DTS_ABITS_MAX (32) /* Should be 28 */
-#define DTS_SUBSUBFAMES_MAX (4)
-#define DTS_LFE_MAX (3)
+#define DCA_SUBFRAMES_MAX (16)
+#define DCA_PRIM_CHANNELS_MAX (5)
+#define DCA_SUBBANDS (32)
+#define DCA_ABITS_MAX (32) /* Should be 28 */
+#define DCA_SUBSUBFAMES_MAX (4)
+#define DCA_LFE_MAX (3)
 
-struct dts_state_s {
+struct dca_state_s {
 
     /* Frame header */
     int frame_type;             /* type of the current frame */
@@ -64,55 +65,55 @@ struct dts_state_s {
     int subframes;              /* number of subframes */
     int prim_channels;          /* number of primary audio channels */
     /* subband activity count */
-    int subband_activity[DTS_PRIM_CHANNELS_MAX];
+    int subband_activity[DCA_PRIM_CHANNELS_MAX];
     /* high frequency vq start subband */
-    int vq_start_subband[DTS_PRIM_CHANNELS_MAX];
+    int vq_start_subband[DCA_PRIM_CHANNELS_MAX];
     /* joint intensity coding index */
-    int joint_intensity[DTS_PRIM_CHANNELS_MAX];
+    int joint_intensity[DCA_PRIM_CHANNELS_MAX];
     /* transient mode code book */
-    int transient_huffman[DTS_PRIM_CHANNELS_MAX];
+    int transient_huffman[DCA_PRIM_CHANNELS_MAX];
     /* scale factor code book */
-    int scalefactor_huffman[DTS_PRIM_CHANNELS_MAX];
+    int scalefactor_huffman[DCA_PRIM_CHANNELS_MAX];
     /* bit allocation quantizer select */
-    int bitalloc_huffman[DTS_PRIM_CHANNELS_MAX];
+    int bitalloc_huffman[DCA_PRIM_CHANNELS_MAX];
     /* quantization index codebook select */
-    int quant_index_huffman[DTS_PRIM_CHANNELS_MAX][DTS_ABITS_MAX];
+    int quant_index_huffman[DCA_PRIM_CHANNELS_MAX][DCA_ABITS_MAX];
     /* scale factor adjustment */
-    float scalefactor_adj[DTS_PRIM_CHANNELS_MAX][DTS_ABITS_MAX];
+    float scalefactor_adj[DCA_PRIM_CHANNELS_MAX][DCA_ABITS_MAX];
 
     /* Primary audio coding side information */
     int subsubframes;           /* number of subsubframes */
     int partial_samples;        /* partial subsubframe samples count */
     /* prediction mode (ADPCM used or not) */
-    int prediction_mode[DTS_PRIM_CHANNELS_MAX][DTS_SUBBANDS];
+    int prediction_mode[DCA_PRIM_CHANNELS_MAX][DCA_SUBBANDS];
     /* prediction VQ coefs */
-    int prediction_vq[DTS_PRIM_CHANNELS_MAX][DTS_SUBBANDS];
+    int prediction_vq[DCA_PRIM_CHANNELS_MAX][DCA_SUBBANDS];
     /* bit allocation index */
-    int bitalloc[DTS_PRIM_CHANNELS_MAX][DTS_SUBBANDS];
+    int bitalloc[DCA_PRIM_CHANNELS_MAX][DCA_SUBBANDS];
     /* transition mode (transients) */
-    int transition_mode[DTS_PRIM_CHANNELS_MAX][DTS_SUBBANDS];
+    int transition_mode[DCA_PRIM_CHANNELS_MAX][DCA_SUBBANDS];
     /* scale factors (2 if transient)*/
-    int scale_factor[DTS_PRIM_CHANNELS_MAX][DTS_SUBBANDS][2];
+    int scale_factor[DCA_PRIM_CHANNELS_MAX][DCA_SUBBANDS][2];
     /* joint subband scale factors codebook */
-    int joint_huff[DTS_PRIM_CHANNELS_MAX];
+    int joint_huff[DCA_PRIM_CHANNELS_MAX];
     /* joint subband scale factors */
-    int joint_scale_factor[DTS_PRIM_CHANNELS_MAX][DTS_SUBBANDS];
+    int joint_scale_factor[DCA_PRIM_CHANNELS_MAX][DCA_SUBBANDS];
     /* stereo downmix coefficients */
-    int downmix_coef[DTS_PRIM_CHANNELS_MAX][2];
+    int downmix_coef[DCA_PRIM_CHANNELS_MAX][2];
     /* dynamic range coefficient */
     int dynrange_coef;
 
     /* VQ encoded high frequency subbands */
-    int high_freq_vq[DTS_PRIM_CHANNELS_MAX][DTS_SUBBANDS];
+    int high_freq_vq[DCA_PRIM_CHANNELS_MAX][DCA_SUBBANDS];
 
     /* Low frequency effect data */
-    double lfe_data[2*DTS_SUBSUBFAMES_MAX*DTS_LFE_MAX * 2 /*history*/];
+    double lfe_data[2*DCA_SUBSUBFAMES_MAX*DCA_LFE_MAX * 2 /*history*/];
     int lfe_scale_factor;
 
     /* Subband samples history (for ADPCM) */
-    double subband_samples_hist[DTS_PRIM_CHANNELS_MAX][DTS_SUBBANDS][4];
-    double subband_fir_hist[DTS_PRIM_CHANNELS_MAX][512];
-    double subband_fir_noidea[DTS_PRIM_CHANNELS_MAX][64];
+    double subband_samples_hist[DCA_PRIM_CHANNELS_MAX][DCA_SUBBANDS][4];
+    double subband_fir_hist[DCA_PRIM_CHANNELS_MAX][512];
+    double subband_fir_noidea[DCA_PRIM_CHANNELS_MAX][64];
 
     /* Audio output */
     level_t clev;            /* centre channel mix level */
@@ -154,17 +155,17 @@ struct dts_state_s {
 #define LEVEL_45DB 0.5946035575013605
 #define LEVEL_6DB 0.5
 
-int dts_downmix_init (int input, int flags, level_t * level,
+int dca_downmix_init (int input, int flags, level_t * level,
                       level_t clev, level_t slev);
-int dts_downmix_coeff (level_t * coeff, int acmod, int output, level_t level,
+int dca_downmix_coeff (level_t * coeff, int acmod, int output, level_t level,
                        level_t clev, level_t slev);
-void dts_downmix (sample_t * samples, int acmod, int output, sample_t bias,
+void dca_downmix (sample_t * samples, int acmod, int output, sample_t bias,
                   level_t clev, level_t slev);
-void dts_upmix (sample_t * samples, int acmod, int output);
+void dca_upmix (sample_t * samples, int acmod, int output);
 
 #define ROUND(x) ((int)((x) + ((x) > 0 ? 0.5 : -0.5)))
 
-#ifndef LIBDTS_FIXED
+#ifndef LIBDCA_FIXED
 
 typedef sample_t quantizer_t;
 #define SAMPLE(x) (x)
@@ -175,7 +176,7 @@ typedef sample_t quantizer_t;
 #define DIV(a,b) ((a) / (b))
 #define BIAS(x) ((x) + bias)
 
-#else /* LIBDTS_FIXED */
+#else /* LIBDCA_FIXED */
 
 typedef int16_t quantizer_t;
 #define SAMPLE(x) (sample_t)((x) * (1 << 30))

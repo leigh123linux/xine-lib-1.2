@@ -50,11 +50,7 @@
 #include "audio_out.h"
 #include "buffer.h"
 
-#ifdef HAVE_DTS_H
-# include <dts.h>
-#else
-# include "internal-dts.h"
-#endif
+#include <dts.h>
 
 #define MAX_AC5_FRAME 4096
 

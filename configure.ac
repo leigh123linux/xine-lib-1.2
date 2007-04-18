@@ -1914,7 +1914,7 @@ dnl ---------------------------------------------
 
 AC_ARG_ENABLE(dts, AS_HELP_STRING([--disable-dts], [Disable support for DTS decoding library (default: enabled)]),
               [enable_libdts="$enableval"], [enable_libdts="yes"])
-AC_ARG_WITH(external-libdts, AS_HELP_STRING([--with-external-libdts], [use external libdts library (not recommended)]),
+AC_ARG_WITH(external-libdts, AS_HELP_STRING([--with-external-libdts], [use external libdts/libdca library (not recommended)]),
             [external_libdts="$withval"], [external_libdts="no"])
 
 have_dts="no"
@@ -1923,15 +1923,19 @@ if test "x$enable_libdts" = "xno"; then
   AC_MSG_RESULT([libdts support disabled])
 elif test "x$external_libdts" = "xyes"; then
   PKG_CHECK_MODULES(LIBDTS, [libdts], have_dts=yes, have_dts=no)
-  AC_CHECK_HEADERS([dts.h])
-  AC_SUBST(LIBDTS_LIBS)
-  AC_SUBST(LIBDTS_CFLAGS)
   if test "x$have_dts" = "xno"; then
     AC_MSG_RESULT([*** no usable version of libdts found, using internal copy ***])
   fi
 else
   AC_MSG_RESULT([Use included libdts support])
+  LIBDTS_CFLAGS='-I$(top_srcdir)/contrib/libdca'
+  LIBDTS_DEPS='$(top_builddir)/contrib/libdca/libdca.la'
+  LIBDTS_LIBS='$(top_builddir)/contrib/libdca/libdca.la'
 fi
+
+AC_SUBST(LIBDTS_LIBS)
+AC_SUBST(LIBDTS_DEPS)
+AC_SUBST(LIBDTS_CFLAGS)
 
 AM_CONDITIONAL(DTS, test "x$enable_libdts" = "xyes")
 AM_CONDITIONAL(EXTERNAL_LIBDTS, test "x$have_dts" = "xyes")
@@ -2590,6 +2594,7 @@ doc/hackersguide/Makefile
 doc/faq/Makefile
 doc/Doxyfile
 contrib/Makefile
+contrib/libdca/Makefile
 contrib/libmpcdec/Makefile
 contrib/libxdg-basedir/Makefile
 include/Makefile

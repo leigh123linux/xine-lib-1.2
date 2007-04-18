@@ -2,22 +2,23 @@
  * parse.c
  * Copyright (C) 2004 Gildas Bazin <gbazin@videolan.org>
  *
- * This file is part of dtsdec, a free DTS Coherent Acoustics stream decoder.
- * See http://www.videolan.org/dtsdec.html for updates.
+ * This file is part of libdca, a free DTS Coherent Acoustics stream decoder.
+ * See http://www.videolan.org/developers/libdca.html for updates.
  *
- * dtsdec is free software; you can redistribute it and/or modify
+ * libdca is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * dtsdec is distributed in the hope that it will be useful,
+ * libdca is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * along with this program; if not, write to the
+ * Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #include "config.h"
@@ -34,8 +35,8 @@
 #define M_PI 3.1415926535897932384626433832795029
 #endif
 
-#include "dts.h"
-#include "dts_internal.h"
+#include "dca.h"
+#include "dca_internal.h"
 #include "bitstream.h"
 
 #include "tables.h"
@@ -45,7 +46,7 @@
 #include "tables_fir.h"
 #include "tables_vq.h"
 
-/* #define LOG_DEBUG */
+/* #define DEBUG */
 
 #if defined(HAVE_MEMALIGN) && !defined(__cplusplus)
 /* some systems have memalign() but no declaration for it */
@@ -57,7 +58,7 @@ void * memalign (size_t align, size_t size);
 
 static int decode_blockcode (int code, int levels, int *values);
 
-static void qmf_32_subbands (dts_state_t * state, int chans,
+static void qmf_32_subbands (dca_state_t * state, int chans,
                              double samples_in[32][8], sample_t *samples_out,
                              double rScale, sample_t bias);
 
@@ -65,18 +66,19 @@ static void lfe_interpolation_fir (int nDecimationSelect, int nNumDeciSample,
                                    double *samples_in, sample_t *samples_out,
                                    double rScale, sample_t bias );
 
-static void pre_calc_cosmod( dts_state_t * state );
+static void pre_calc_cosmod( dca_state_t * state );
 
-dts_state_t * dts_init (uint32_t mm_accel)
+dca_state_t * dca_init (uint32_t mm_accel)
 {
-    dts_state_t * state;
+    dca_state_t * state;
     int i;
 
-    state = (dts_state_t *) malloc (sizeof (dts_state_t));
+    (void)mm_accel;
+    state = (dca_state_t *) malloc (sizeof (dca_state_t));
     if (state == NULL)
         return NULL;
 
-    memset (state, 0, sizeof(dts_state_t));
+    memset (state, 0, sizeof(dca_state_t));
 
     state->samples = (sample_t *) memalign (16, 256 * 12 * sizeof (sample_t));
     if (state->samples == NULL) {
@@ -95,18 +97,18 @@ dts_state_t * dts_init (uint32_t mm_accel)
     return state;
 }
 
-sample_t * dts_samples (dts_state_t * state)
+sample_t * dca_samples (dca_state_t * state)
 {
     return state->samples;
 }
 
-int dts_blocks_num (dts_state_t * state)
+int dca_blocks_num (dca_state_t * state)
 {
     /* 8 samples per subsubframe and per subband */
     return state->sample_blocks / 8;
 }
 
-static int syncinfo (dts_state_t * state, int * flags,
+static int syncinfo (dca_state_t * state, int * flags,
                      int * sample_rate, int * bit_rate, int * frame_length)
 {
     int frame_size;
@@ -130,25 +132,25 @@ static int syncinfo (dts_state_t * state, int * flags,
         return 0;
 
     *sample_rate = bitstream_get (state, 4);
-    if (*sample_rate >= sizeof (dts_sample_rates) / sizeof (int))
+    if ((size_t)*sample_rate >= sizeof (dca_sample_rates) / sizeof (int))
         return 0;
-    *sample_rate = dts_sample_rates[ *sample_rate ];
+    *sample_rate = dca_sample_rates[ *sample_rate ];
     if (!*sample_rate) return 0;
 
     *bit_rate = bitstream_get (state, 5);
-    if (*bit_rate >= sizeof (dts_bit_rates) / sizeof (int))
+    if ((size_t)*bit_rate >= sizeof (dca_bit_rates) / sizeof (int))
         return 0;
-    *bit_rate = dts_bit_rates[ *bit_rate ];
+    *bit_rate = dca_bit_rates[ *bit_rate ];
     if (!*bit_rate) return 0;
 
     /* LFE */
     bitstream_get (state, 10);
-    if (bitstream_get (state, 2)) *flags |= DTS_LFE;
+    if (bitstream_get (state, 2)) *flags |= DCA_LFE;
 
     return frame_size;
 }
 
-int dts_syncinfo (dts_state_t * state, uint8_t * buf, int * flags,
+int dca_syncinfo (dca_state_t * state, uint8_t * buf, int * flags,
                   int * sample_rate, int * bit_rate, int * frame_length)
 {
     /*
@@ -161,7 +163,7 @@ int dts_syncinfo (dts_state_t * state, uint8_t * buf, int * flags,
         (buf[4] & 0xf0) == 0xf0 && buf[5] == 0x07)
     {
         int frame_size;
-        dts_bitstream_init (state, buf, 0, 0);
+        dca_bitstream_init (state, buf, 0, 0);
         frame_size = syncinfo (state, flags, sample_rate,
                                bit_rate, frame_length);
         return frame_size;
@@ -173,7 +175,7 @@ int dts_syncinfo (dts_state_t * state, uint8_t * buf, int * flags,
         buf[4] == 0x07 && (buf[5] & 0xf0) == 0xf0)
     {
         int frame_size;
-        dts_bitstream_init (state, buf, 0, 1);
+        dca_bitstream_init (state, buf, 0, 1);
         frame_size = syncinfo (state, flags, sample_rate,
                                bit_rate, frame_length);
         return frame_size;
@@ -184,7 +186,7 @@ int dts_syncinfo (dts_state_t * state, uint8_t * buf, int * flags,
         buf[2] == 0x01 && buf[3] == 0x80)
     {
         int frame_size;
-        dts_bitstream_init (state, buf, 1, 0);
+        dca_bitstream_init (state, buf, 1, 0);
         frame_size = syncinfo (state, flags, sample_rate,
                                bit_rate, frame_length);
         return frame_size;
@@ -195,7 +197,7 @@ int dts_syncinfo (dts_state_t * state, uint8_t * buf, int * flags,
         buf[2] == 0x80 && buf[3] == 0x01)
     {
         int frame_size;
-        dts_bitstream_init (state, buf, 1, 1);
+        dca_bitstream_init (state, buf, 1, 1);
         frame_size = syncinfo (state, flags, sample_rate,
                                bit_rate, frame_length);
         return frame_size;
@@ -204,13 +206,13 @@ int dts_syncinfo (dts_state_t * state, uint8_t * buf, int * flags,
     return 0;
 }
 
-int dts_frame (dts_state_t * state, uint8_t * buf, int * flags,
+int dca_frame (dca_state_t * state, uint8_t * buf, int * flags,
                level_t * level, sample_t bias)
 {
     int i, j;
     static float adj_table[] = { 1.0, 1.1250, 1.2500, 1.4375 };
 
-    dts_bitstream_init (state, buf, state->word_mode, state->bigendian_mode);
+    dca_bitstream_init (state, buf, state->word_mode, state->bigendian_mode);
 
     /* Sync code */
     bitstream_get (state, 32);
@@ -249,13 +251,13 @@ int dts_frame (dts_state_t * state, uint8_t * buf, int * flags,
 
     /* FIME: channels mixing levels */
     state->clev = state->slev = 1;
-    state->output = dts_downmix_init (state->amode, *flags, level,
+    state->output = dca_downmix_init (state->amode, *flags, level,
                                       state->clev, state->slev);
     if (state->output < 0)
         return 1;
 
-    if (state->lfe && (*flags & DTS_LFE))
-        state->output |= DTS_LFE;
+    if (state->lfe && (*flags & DCA_LFE))
+        state->output |= DCA_LFE;
 
     *flags = state->output;
 
@@ -264,7 +266,7 @@ int dts_frame (dts_state_t * state, uint8_t * buf, int * flags,
     state->dynrnge = 1;
     state->dynrngcall = NULL;
 
-#ifdef LOG_DEBUG
+#ifdef DEBUG
     fprintf (stderr, "frame type: %i\n", state->frame_type);
     fprintf (stderr, "samples deficit: %i\n", state->samples_deficit);
     fprintf (stderr, "crc present: %i\n", state->crc_present);
@@ -272,11 +274,11 @@ int dts_frame (dts_state_t * state, uint8_t * buf, int * flags,
              state->sample_blocks, state->sample_blocks * 32);
     fprintf (stderr, "frame size: %i bytes\n", state->frame_size);
     fprintf (stderr, "amode: %i (%i channels)\n",
-             state->amode, dts_channels[state->amode]);
+             state->amode, dca_channels[state->amode]);
     fprintf (stderr, "sample rate: %i (%i Hz)\n",
-             state->sample_rate, dts_sample_rates[state->sample_rate]);
+             state->sample_rate, dca_sample_rates[state->sample_rate]);
     fprintf (stderr, "bit rate: %i (%i bits/s)\n",
-             state->bit_rate, dts_bit_rates[state->bit_rate]);
+             state->bit_rate, dca_bit_rates[state->bit_rate]);
     fprintf (stderr, "downmix: %i\n", state->downmix);
     fprintf (stderr, "dynrange: %i\n", state->dynrange);
     fprintf (stderr, "timestamp: %i\n", state->timestamp);
@@ -293,7 +295,7 @@ int dts_frame (dts_state_t * state, uint8_t * buf, int * flags,
     fprintf (stderr, "copy history: %i\n", state->copy_history);
     fprintf (stderr, "source pcm resolution: %i (%i bits/sample)\n",
              state->source_pcm_res,
-             dts_bits_per_sample[state->source_pcm_res]);
+             dca_bits_per_sample[state->source_pcm_res]);
     fprintf (stderr, "front sum: %i\n", state->front_sum);
     fprintf (stderr, "surround sum: %i\n", state->surround_sum);
     fprintf (stderr, "dialog norm: %i\n", state->dialog_norm);
@@ -304,7 +306,7 @@ int dts_frame (dts_state_t * state, uint8_t * buf, int * flags,
     state->subframes = bitstream_get (state, 4) + 1;
     state->prim_channels = bitstream_get (state, 3) + 1;
 
-#ifdef LOG_DEBUG
+#ifdef DEBUG
     fprintf (stderr, "subframes: %i\n", state->subframes);
     fprintf (stderr, "prim channels: %i\n", state->prim_channels);
 #endif
@@ -312,25 +314,25 @@ int dts_frame (dts_state_t * state, uint8_t * buf, int * flags,
     for (i = 0; i < state->prim_channels; i++)
     {
         state->subband_activity[i] = bitstream_get (state, 5) + 2;
-#ifdef LOG_DEBUG
+#ifdef DEBUG
         fprintf (stderr, "subband activity: %i\n", state->subband_activity[i]);
 #endif
-        if (state->subband_activity[i] > DTS_SUBBANDS)
-            state->subband_activity[i] = DTS_SUBBANDS;
+        if (state->subband_activity[i] > DCA_SUBBANDS)
+            state->subband_activity[i] = DCA_SUBBANDS;
     }
     for (i = 0; i < state->prim_channels; i++)
     {
         state->vq_start_subband[i] = bitstream_get (state, 5) + 1;
-#ifdef LOG_DEBUG
+#ifdef DEBUG
         fprintf (stderr, "vq start subband: %i\n", state->vq_start_subband[i]);
 #endif
-        if (state->vq_start_subband[i] > DTS_SUBBANDS)
-            state->vq_start_subband[i] = DTS_SUBBANDS;
+        if (state->vq_start_subband[i] > DCA_SUBBANDS)
+            state->vq_start_subband[i] = DCA_SUBBANDS;
     }
     for (i = 0; i < state->prim_channels; i++)
     {
         state->joint_intensity[i] = bitstream_get (state, 3);
-#ifdef LOG_DEBUG
+#ifdef DEBUG
         fprintf (stderr, "joint intensity: %i\n", state->joint_intensity[i]);
         if (state->joint_intensity[i]) {fprintf (stderr, "JOINTINTENSITY\n");}
 #endif
@@ -338,7 +340,7 @@ int dts_frame (dts_state_t * state, uint8_t * buf, int * flags,
     for (i = 0; i < state->prim_channels; i++)
     {
         state->transient_huffman[i] = bitstream_get (state, 2);
-#ifdef LOG_DEBUG
+#ifdef DEBUG
         fprintf (stderr, "transient mode codebook: %i\n",
                  state->transient_huffman[i]);
 #endif
@@ -346,7 +348,7 @@ int dts_frame (dts_state_t * state, uint8_t * buf, int * flags,
     for (i = 0; i < state->prim_channels; i++)
     {
         state->scalefactor_huffman[i] = bitstream_get (state, 3);
-#ifdef LOG_DEBUG
+#ifdef DEBUG
         fprintf (stderr, "scale factor codebook: %i\n",
                  state->scalefactor_huffman[i]);
 #endif
@@ -355,7 +357,7 @@ int dts_frame (dts_state_t * state, uint8_t * buf, int * flags,
     {
         state->bitalloc_huffman[i] = bitstream_get (state, 3);
         /* if (state->bitalloc_huffman[i] == 7) bailout */
-#ifdef LOG_DEBUG
+#ifdef DEBUG
         fprintf (stderr, "bit allocation quantizer: %i\n",
                  state->bitalloc_huffman[i]);
 #endif
@@ -377,7 +379,7 @@ int dts_frame (dts_state_t * state, uint8_t * buf, int * flags,
         for (i = 0; i < state->prim_channels; i++)
             state->quant_index_huffman[i][j] = 0; /* Not transmitted */
 
-#ifdef LOG_DEBUG
+#ifdef DEBUG
     for (i = 0; i < state->prim_channels; i++)
     {
         fprintf( stderr, "quant index huff:" );
@@ -418,7 +420,7 @@ int dts_frame (dts_state_t * state, uint8_t * buf, int * flags,
                     adj_table[bitstream_get (state, 2)];
             }
 
-#ifdef LOG_DEBUG
+#ifdef DEBUG
     for (i = 0; i < state->prim_channels; i++)
     {
         fprintf (stderr, "scalefac adj:");
@@ -440,20 +442,20 @@ int dts_frame (dts_state_t * state, uint8_t * buf, int * flags,
     return 0;
 }
 
-static int dts_subframe_header (dts_state_t * state)
+static int dca_subframe_header (dca_state_t * state)
 {
     /* Primary audio coding side information */
     int j, k;
 
     /* Subsubframe count */
     state->subsubframes = bitstream_get (state, 2) + 1;
-#ifdef LOG_DEBUG
+#ifdef DEBUG
     fprintf (stderr, "subsubframes: %i\n", state->subsubframes);
 #endif
 
     /* Partial subsubframe sample count */
     state->partial_samples = bitstream_get (state, 3);
-#ifdef LOG_DEBUG
+#ifdef DEBUG
     fprintf (stderr, "partial samples: %i\n", state->partial_samples);
 #endif
 
@@ -462,7 +464,7 @@ static int dts_subframe_header (dts_state_t * state)
     {
         for (k = 0; k < state->subband_activity[j]; k++)
             state->prediction_mode[j][k] = bitstream_get (state, 1);
-#ifdef LOG_DEBUG
+#ifdef DEBUG
         fprintf (stderr, "prediction mode:");
         for (k = 0; k < state->subband_activity[j]; k++)
             fprintf (stderr, " %i", state->prediction_mode[j][k]);
@@ -479,7 +481,7 @@ static int dts_subframe_header (dts_state_t * state)
             {
                 /* (Prediction coefficient VQ address) */
                 state->prediction_vq[j][k] = bitstream_get (state, 12);
-#ifdef LOG_DEBUG
+#ifdef DEBUG
                 fprintf (stderr, "prediction coefs: %f, %f, %f, %f\n",
                          (double)adpcm_vb[state->prediction_vq[j][k]][0]/8192,
                          (double)adpcm_vb[state->prediction_vq[j][k]][1]/8192,
@@ -513,7 +515,7 @@ static int dts_subframe_header (dts_state_t * state)
             }
         }
 
-#ifdef LOG_DEBUG
+#ifdef DEBUG
         fprintf (stderr, "bitalloc index: ");
         for (k = 0; k < state->vq_start_subband[j]; k++)
             fprintf (stderr, "%2.2i ", state->bitalloc[j][k]);
@@ -535,7 +537,7 @@ static int dts_subframe_header (dts_state_t * state)
                     tmode[state->transient_huffman[j]]);
             }
         }
-#ifdef LOG_DEBUG
+#ifdef DEBUG
         fprintf (stderr, "Transition mode:");
         for (k = 0; k < state->subband_activity[j]; k++)
             fprintf (stderr, " %i", state->transition_mode[j][k]);
@@ -607,7 +609,7 @@ static int dts_subframe_header (dts_state_t * state)
             }
         }
 
-#ifdef LOG_DEBUG
+#ifdef DEBUG
         fprintf (stderr, "Scale factor:");
         for (k = 0; k < state->subband_activity[j]; k++)
         {
@@ -670,7 +672,7 @@ static int dts_subframe_header (dts_state_t * state)
                 state->debug_flag |= 0x02;
             }
 
-#ifdef LOG_DEBUG
+#ifdef DEBUG
             fprintf (stderr, "Joint scale factor index:\n");
             for (k = state->subband_activity[j];
                  k < state->subband_activity[source_channel]; k++)
@@ -712,7 +714,7 @@ static int dts_subframe_header (dts_state_t * state)
             /* 1 vector -> 32 samples */
             state->high_freq_vq[j][k] = bitstream_get (state, 10);
 
-#ifdef LOG_DEBUG
+#ifdef DEBUG
             fprintf( stderr, "VQ index: %i\n", state->high_freq_vq[j][k] );
 #endif
         }
@@ -742,7 +744,7 @@ static int dts_subframe_header (dts_state_t * state)
         for (j = lfe_samples; j < lfe_samples * 2; j++)
             state->lfe_data[j] *= lfe_scale;
 
-#ifdef LOG_DEBUG
+#ifdef DEBUG
         fprintf (stderr, "LFE samples:\n");
         for (j = lfe_samples; j < lfe_samples * 2; j++)
             fprintf (stderr, " %f", state->lfe_data[j]);
@@ -754,7 +756,7 @@ static int dts_subframe_header (dts_state_t * state)
     return 0;
 }
 
-static int dts_subsubframe (dts_state_t * state)
+static int dca_subsubframe (dca_state_t * state)
 {
     int k, l;
     int subsubframe = state->current_subsubframe;
@@ -762,7 +764,7 @@ static int dts_subsubframe (dts_state_t * state)
     double *quant_step_table;
 
     /* FIXME */
-    double subband_samples[DTS_PRIM_CHANNELS_MAX][DTS_SUBBANDS][8];
+    double subband_samples[DCA_PRIM_CHANNELS_MAX][DCA_SUBBANDS][8];
 
     /*
      * Audio data
@@ -954,7 +956,7 @@ static int dts_subsubframe (dts_state_t * state)
     {
         if (0xFFFF == bitstream_get (state, 16)) /* 0xFFFF */
         {
-#ifdef LOG_DEBUG
+#ifdef DEBUG
             fprintf( stderr, "Got subframe DSYNC\n" );
 #endif
         }
@@ -990,21 +992,21 @@ static int dts_subsubframe (dts_state_t * state)
     }
 
     /* Down/Up mixing */
-    if (state->prim_channels < dts_channels[state->output & DTS_CHANNEL_MASK])
+    if (state->prim_channels < dca_channels[state->output & DCA_CHANNEL_MASK])
     {
-        dts_upmix (state->samples, state->amode, state->output);
+        dca_upmix (state->samples, state->amode, state->output);
     } else
-    if (state->prim_channels > dts_channels[state->output & DTS_CHANNEL_MASK])
+    if (state->prim_channels > dca_channels[state->output & DCA_CHANNEL_MASK])
     {
-        dts_downmix (state->samples, state->amode, state->output, state->bias,
+        dca_downmix (state->samples, state->amode, state->output, state->bias,
                      state->clev, state->slev);
     }
 
     /* Generate LFE samples for this subsubframe FIXME!!! */
-    if (state->output & DTS_LFE)
+    if (state->output & DCA_LFE)
     {
         int lfe_samples = 2 * state->lfe * state->subsubframes;
-        int i_channels = dts_channels[state->output & DTS_CHANNEL_MASK];
+        int i_channels = dca_channels[state->output & DCA_CHANNEL_MASK];
 
         lfe_interpolation_fir (state->lfe, 2 * state->lfe,
                                state->lfe_data + lfe_samples +
@@ -1017,7 +1019,7 @@ static int dts_subsubframe (dts_state_t * state)
     return 0;
 }
 
-static int dts_subframe_footer (dts_state_t * state)
+static int dca_subframe_footer (dca_state_t * state)
 {
     int aux_data_count = 0, i;
     int lfe_samples;
@@ -1047,14 +1049,14 @@ static int dts_subframe_footer (dts_state_t * state)
         state->lfe_data[i] = state->lfe_data[i+lfe_samples];
     }
 
-#ifdef LOG_DEBUG
+#ifdef DEBUG
     fprintf( stderr, "\n" );
 #endif
 
     return 0;
 }
 
-int dts_block (dts_state_t * state)
+int dca_block (dca_state_t * state)
 {
     /* Sanity check */
     if (state->current_subframe >= state->subframes)
@@ -1066,18 +1068,18 @@ int dts_block (dts_state_t * state)
 
     if (!state->current_subsubframe)
     {
-#ifdef LOG_DEBUG
-        fprintf (stderr, "DSYNC dts_subframe_header\n");
+#ifdef DEBUG
+        fprintf (stderr, "DSYNC dca_subframe_header\n");
 #endif
         /* Read subframe header */
-        if (dts_subframe_header (state)) return -1;
+        if (dca_subframe_header (state)) return -1;
     }
 
     /* Read subsubframe */
-#ifdef LOG_DEBUG
-    fprintf (stderr, "DSYNC dts_subsubframe\n");
+#ifdef DEBUG
+    fprintf (stderr, "DSYNC dca_subsubframe\n");
 #endif
-    if (dts_subsubframe (state)) return -1;
+    if (dca_subsubframe (state)) return -1;
 
     /* Update state */
     state->current_subsubframe++;
@@ -1088,11 +1090,11 @@ int dts_block (dts_state_t * state)
     }
     if (state->current_subframe >= state->subframes)
     {
-#ifdef LOG_DEBUG
-        fprintf(stderr, "DSYNC dts_subframe_footer\n");
+#ifdef DEBUG
+        fprintf(stderr, "DSYNC dca_subframe_footer\n");
 #endif
         /* Read subframe footer */
-        if (dts_subframe_footer (state)) return -1;
+        if (dca_subframe_footer (state)) return -1;
     }
 
     return 0;
@@ -1120,7 +1122,7 @@ int decode_blockcode( int code, int levels, int *values )
     }
 }
 
-static void pre_calc_cosmod( dts_state_t * state )
+static void pre_calc_cosmod( dca_state_t * state )
 {
     int i, j, k;
 
@@ -1139,7 +1141,7 @@ static void pre_calc_cosmod( dts_state_t * state )
         state->cos_mod[j++] = -0.25/(2.0*sin((2*k+1)*M_PI/128));
 }
 
-static void qmf_32_subbands (dts_state_t * state, int chans,
+static void qmf_32_subbands (dca_state_t * state, int chans,
                              double samples_in[32][8], sample_t *samples_out,
                              double scale, sample_t bias)
 {
@@ -1272,7 +1274,7 @@ static void lfe_interpolation_fir (int nDecimationSelect, int nNumDeciSample,
     }
 }
 
-void dts_dynrng (dts_state_t * state,
+void dca_dynrng (dca_state_t * state,
                  level_t (* call) (level_t, void *), void * data)
 {
     state->dynrange = 0;
@@ -1283,7 +1285,7 @@ void dts_dynrng (dts_state_t * state,
     }
 }
 
-void dts_free (dts_state_t * state)
+void dca_free (dca_state_t * state)
 {
     free (state->samples);
     free (state);

@@ -16,6 +16,8 @@ xine-lib (1.1.90) (Unreleased)
   * Use XDG-defined cache home directory for win32codecs fake registry.
   * Use XDG-defined data directories to look up fonts files both while using
     FreeType2 and the standard bitmap fonts for OSD.
+  * Replace internal libdts 0.0.2 with libdca 0.0.5, and contextually move it
+    to contrib/libdca to separate from xine's own code.
 
 xine-lib (1.1.7) (unreleased)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.
