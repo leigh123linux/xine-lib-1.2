@@ -16,14 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ */
+
+/**
+ * @file
+ * @brief xine interface to libmusepack/libmpcdec
+ * @author James Stembridge <jstembridge@gmail.com>
  *
- * xine interface to libmusepack by James Stembridge <jstembridge@gmail.com>
- *
- * TODO:
- *   32bit float output
- *   Seeking??
- *
- * $Id: xine_decoder.c,v 1.10 2007/01/19 02:35:36 dgp85 Exp $
+ * @todo Add support for 32-bit float samples.
+ * @todo Add support for seeking.
  */
 
 #include <stdio.h>
@@ -87,8 +88,8 @@ typedef struct mpc_decoder_s {
  *************************************************************************/
     
 /* Reads size bytes of data into buffer at ptr. */
-static int32_t mpc_reader_read(void *data, void *ptr, int size) {
-  mpc_decoder_t *this = (mpc_decoder_t *) data;
+static int32_t mpc_reader_read(void *const data, void *const ptr, int size) {
+  mpc_decoder_t *const this = (mpc_decoder_t *) data;
   
   lprintf("mpc_reader_read: size=%d\n", size);
   
@@ -106,8 +107,8 @@ static int32_t mpc_reader_read(void *data, void *ptr, int size) {
 }
  
 /* Seeks to byte position offset. */
-static mpc_bool_t mpc_reader_seek(void *data, int32_t offset) {
-  mpc_decoder_t *this = (mpc_decoder_t *) data;
+static mpc_bool_t mpc_reader_seek(void *const data, const int32_t offset) {
+  mpc_decoder_t *const this = (mpc_decoder_t *) data;
   
   lprintf("mpc_reader_seek: offset=%d\n", offset);
   
@@ -119,7 +120,7 @@ static mpc_bool_t mpc_reader_seek(void *data, int32_t offset) {
 }
 
 /* Returns the current byte offset in the stream. */
-static int32_t mpc_reader_tell(void *data) {
+static int32_t mpc_reader_tell(void *const data) {
   lprintf("mpc_reader_tell\n");
   
   /* Tell isn't used so just return 0 */
@@ -127,8 +128,8 @@ static int32_t mpc_reader_tell(void *data) {
 }
 
 /* Returns the total length of the source stream, in bytes. */
-static int32_t mpc_reader_get_size(void *data) {
-  mpc_decoder_t *this = (mpc_decoder_t *) data;
+static int32_t mpc_reader_get_size(void *const data) {
+  mpc_decoder_t *const this = (const mpc_decoder_t *) data;
   
   lprintf("mpc_reader_get_size\n");
   
@@ -142,15 +143,26 @@ static mpc_bool_t mpc_reader_canseek(void *data) {
   return TRUE;
 }
 
-/* Convert 32bit float samples into 16bit int samples */
-static inline void float_to_int(float *_f, int16_t *s16, int samples) {
+/**
+ * @brief Convert a array of floating point samples into 16-bit signed integer samples
+ * @param f Floating point samples array (origin)
+ * @param s16 16-bit signed integer samples array (destination)
+ * @param samples Number of samples to convert
+ *
+ * @todo This same work is being done in many decoders to adapt the output of
+ *       the decoder to what the audio output can actually use, this should be
+ *       done by the audio_output loop, not by the decoders.
+ */
+static inline void float_to_int(const float *const _f, int16_t *const s16, const int samples) {
   int i;
-  float f;
   for (i = 0; i < samples; i++) {
-    f = _f[i] * 32767;
-    if (f > INT16_MAX) f = INT16_MAX;
-    if (f < INT16_MIN) f = INT16_MIN;
-    s16[i] = f;
+    const float f = _f[i] * 32767;
+    if (f > INT16_MAX)
+      s16[i] = INT16_MAX;
+    else if (f < INT16_MIN)
+      s16[i] = INT16_MIN;
+    else
+      s16[i] = f;
     /* printf("samples[%d] = %f, %d\n", i, _f[i], s16[num_channels*i]); */
   }
 }
@@ -381,11 +393,9 @@ static void mpc_dispose (audio_decoder_t *this_gen) {
   /* close the audio output */
   if (this->output_open)
     this->stream->audio_out->close (this->stream->audio_out, this->stream);
-  this->output_open = 0;
 
   /* free anything that was allocated during operation */
-  if (this->buf)
-    free(this->buf);
+  free(this->buf);
   
   free(this);
 }

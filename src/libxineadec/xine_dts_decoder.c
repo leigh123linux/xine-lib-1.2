@@ -106,6 +106,7 @@ static void dts_discontinuity (audio_decoder_t *const this_gen) {
  * @todo This same work is being done in many decoders to adapt the output of
  *       the decoder to what the audio output can actually use, this should be
  *       done by the audio_output loop, not by the decoders.
+ * @note This is subtly different from the function with the same name in xine_musepack_decoder.c
  */
 static inline void float_to_int (const float *const _f, int16_t *const s16, const int num_channels) {
   const int endidx = 256 * num_channels;
