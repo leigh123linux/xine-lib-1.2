@@ -4,10 +4,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: xine-lib 1.1.5\n"
+"Project-Id-Version: xine-lib 1.1.6\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
 "POT-Creation-Date: 2007-04-15 23:56+0200\n"
-"PO-Revision-Date: 2007-02-13 09:28+0100\n"
+"PO-Revision-Date: 2007-04-18 11:00+0200\n"
 "Last-Translator: Philipp Hahn <pmhahn@users.sf.net>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -585,9 +585,8 @@ msgid "xine audio output plugin using IRIX libaudio"
 msgstr "xine Soundausgabe benutzt IRIX-kompatibles Gerät/Treiber"
 
 #: src/audio_out/audio_jack_out.c:406
-#, fuzzy
 msgid "xine output plugin for JACK Audio Connection Kit"
-msgstr "xine Soundausgabe benutzt Coreaudio/Mac OS X"
+msgstr "xine Soundausgabe für JACK Audio System"
 
 #: src/audio_out/audio_none_out.c:225
 msgid "xine dummy audio output plugin"
@@ -881,12 +880,11 @@ msgstr "Nicht erkanntes FILM-Paket\n"
 #: src/demuxers/demux_flv.c:172
 #, c-format
 msgid "unsupported FLV version (%d).\n"
-msgstr ""
+msgstr "Nicht unterstützte FLV-Version (%d).\n"
 
 #: src/demuxers/demux_flv.c:179
-#, fuzzy
 msgid "neither video nor audio stream in this file.\n"
-msgstr "metronom: Ende des Audio-Datenstroms ignoriert\n"
+msgstr "Weder ein Video- noch ein Audio-Datenstrom in dieser Datei.\n"
 
 #: src/demuxers/demux_iff.c:235
 #, c-format
@@ -995,7 +993,7 @@ msgstr "demux_snd: Unbekannter Audiotyp: %d\n"
 
 #: src/demuxers/demux_tta.c:86
 msgid "demux_tta: total frames count too high\n"
-msgstr ""
+msgstr "demux_tta: Gesamt-Bildanzahl zu hoch\n"
 
 #: src/demuxers/demux_voc.c:105
 #, c-format
@@ -2847,7 +2845,6 @@ msgid "path to RealPlayer codecs"
 msgstr "Pfad zum Real-Player-Codecs"
 
 #: src/libreal/real_common.c:108
-#, fuzzy
 msgid ""
 "If you have RealPlayer installed, specify the path to its codec directory "
 "here. You can easily find the codec directory by looking for a file named "
@@ -2855,9 +2852,9 @@ msgid ""
 "to decode RealPlayer content for you. Consult the xine FAQ for more "
 "information on how to install the codecs."
 msgstr ""
-"Geben Sie hier den Pfad zum codec-Verzeichnis von RealPlayer an, falls es "
-"installiert ist. Sie können das codec-Verzeichnis einfach finden, in dem Sie "
-"nach der Datei \"drv3.so.6.0\" in ihm suchen. Falls xine die RealPlayer-"
+"Falls Sie den RealPlayer installiert haben, geben Sie hier den Pfad zum "
+"codec-Verzeichnis an. Sie können das codec-Verzeichnis einfach finden,  "
+"indem Sie nach der Datei \"drvc.so\" in ihm suchen. xine die RealPlayer-"
 "Codecs findet, verwendet xine diese zum dekodieren von RealPlayer-Inhalten. "
 "Konsultieren Sie die xine FAQ für weitere Informationen, wie die Codecs zu "
 "installieren sind."
@@ -3524,7 +3521,6 @@ msgstr ""
 "* mplayer's eq2 (C) Hampa Hug, Daniel Moreno, Richard Felker\n"
 
 #: src/post/planar/expand.c:251
-#, fuzzy
 msgid ""
 "The expand plugin is meant to take frames of arbitrary aspect ratio and "
 "converts them to a different aspect (4:3 by default) by adding black bars on "
@@ -3545,9 +3541,10 @@ msgstr ""
 "überdecken.\n"
 "\n"
 "Parameter\n"
-"  Enable_automatic_shift: Automatisch Überlagerung verschieben\n"
+"  Enable_automatic_shift: Automatisch Überlagerungsverschiebung\n"
 "  Overlay_y_offset: Manuelle vertikale Überlagerungsverschiebung\n"
 "  aspect: das Zielseitenverhältnis (normalerweise 4:3)\n"
+"  Centre_cut_out_mode: Extrahiert 4:3 Bilder aus 16:9 Bildern\n"
 "\n"
 
 #: src/post/planar/noise.c:402
@@ -4289,32 +4286,31 @@ msgid "xine video output plugin using libvidix for linux frame buffer"
 msgstr "xine Videoausgabe benutzt libvidix für Linux Framebuffer"
 
 #: src/video_out/video_out_xcbshm.c:157
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "video_out_xcbshm: %s: allocating image\n"
 "video_out_xcbshm: => not using MIT Shared Memory extension.\n"
 msgstr ""
-"video_out_xshm: %s: Belege Bild\n"
-"video_out_xshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+"video_out_xcbshm: %s: Belege Bild\n"
+"video_out_xcbshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
 
 #: src/video_out/video_out_xcbshm.c:166
-#, fuzzy
 msgid ""
 "video_out_xcbshm: shared memory error (address error) when allocating "
 "image \n"
 "video_out_xcbshm: => not using MIT Shared Memory extension.\n"
 msgstr ""
-"video_out_xshm: Shared-Memory-Fehler (Adressfehler) beim Belegen des Bilds\n"
-"video_out_xshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+"video_out_xcbshm: Shared-Memory-Fehler (Adressfehler) beim Belegen des "
+"Bilds\n"
+"video_out_xcbshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
 
 #: src/video_out/video_out_xcbshm.c:177
-#, fuzzy
 msgid ""
 "video_out_xcbshm: x11 error during shared memory XImage creation\n"
 "video_out_xcbshm: => not using MIT Shared Memory extension.\n"
 msgstr ""
-"video_out_xshm: X11-Fehler bei Shared-Memory-XImage-Erstellung\n"
-"video_out_xshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+"video_out_xcbshm: X11-Fehler bei Shared-Memory-XImage-Erstellung\n"
+"video_out_xcbshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
 
 #: src/video_out/video_out_xcbshm.c:1100 src/video_out/video_out_xshm.c:1157
 #, c-format
@@ -4331,72 +4327,67 @@ msgstr ""
 "von 16 bpp empfohlen!\n"
 
 #: src/video_out/video_out_xcbshm.c:1113
-#, fuzzy
 msgid "video_out_xcbshm: MIT shared memory extension not present on display.\n"
 msgstr ""
-"video_out_xshm: MIT-Shared-Memory-Erweiterung für Anzeige nicht vorhanden.\n"
+"video_out_xcbshm: MIT-Shared-Memory-Erweiterung für Anzeige nicht "
+"vorhanden.\n"
 
 #: src/video_out/video_out_xcbshm.c:1212
-#, fuzzy
 msgid "video_out_xcbshm: your video mode was not recognized, sorry :-(\n"
 msgstr ""
-"video_out_xshm: Der Videomodus wurde nicht erkannt, Entschuldigung :-(\n"
+"video_out_xcbshm: Der Videomodus wurde nicht erkannt, Entschuldigung :-(\n"
 
 #: src/video_out/video_out_xcbshm.c:1242 src/video_out/video_out_xshm.c:1303
 msgid "xine video output plugin using the MIT X shared memory extension"
 msgstr "xine Videoausgabe benutzt 'MIX X Shared Memory' Erweiterung"
 
 #: src/video_out/video_out_xcbxv.c:270
-#, fuzzy
 msgid ""
 "video_out_xcbxv: XvShmCreateImage returned a zero size\n"
 "video_out_xcbxv: => not using MIT Shared Memory extension.\n"
 msgstr ""
-"video_out_xv: XvShmCreateImage lieferte Größe 0 zurück\n"
-"video_out_xv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+"video_out_xcbv: XvShmCreateImage lieferte Größe 0 zurück\n"
+"video_out_xcbv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
 
 #: src/video_out/video_out_xcbxv.c:279
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "video_out_xcbxv: shared memory error in shmget: %s\n"
 "video_out_xcbxv: => not using MIT Shared Memory extension.\n"
 msgstr ""
-"video_out_xv: Shared-Memory-Fehler bei shmget: %s\n"
-"video_out_xv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+"video_out_xcbxv: Shared-Memory-Fehler bei shmget: %s\n"
+"video_out_xcbxv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
 
 #: src/video_out/video_out_xcbxv.c:298
-#, fuzzy
 msgid ""
 "video_out_xcbxv: x11 error during shared memory XImage creation\n"
 "video_out_xcbxv: => not using MIT Shared Memory extension.\n"
 msgstr ""
-"video_out_xv: X11-Fehler bei Shared-Memory-XImage-Erstellung\n"
-"video_out_xv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+"video_out_xcbxv: X11-Fehler bei Shared-Memory-XImage-Erstellung\n"
+"video_out_xcbxv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
 
 #: src/video_out/video_out_xcbxv.c:1289
-#, fuzzy
 msgid "video_out_xcbxv: Xv extension not present.\n"
-msgstr "video_out_xv: Xv-Erweiterung nicht vorhanden.\n"
+msgstr "video_out_xcbxv: Xv-Erweiterung nicht vorhanden.\n"
 
 #: src/video_out/video_out_xcbxv.c:1331
-#, fuzzy
 msgid ""
 "video_out_xcbxv: Xv extension is present but I couldn't find a usable yuv12 "
 "port.\n"
 "                 Looks like your graphics hardware driver doesn't support "
 "Xv?!\n"
 msgstr ""
-"video_out_xv: Xv-Erweiterung ist vorhanden, aber es wurde kein benutzparer "
-"YUV12-Port gefunden.\n"
+"video_out_xcbxv: Xv-Erweiterung ist vorhanden, aber es wurde kein "
+"benutzbarer YUV12-Port gefunden.\n"
 "              Unterstützt die Grafikhardware evtl. kein Xv?!\n"
 
 #: src/video_out/video_out_xcbxv.c:1339
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "video_out_xcbxv: using Xv port %d from adaptor %s for hardware colorspace "
 "conversion and scaling.\n"
 msgstr ""
-"video_out_xv: Benutze Xv-Port %ld von Adapter %s for Hardware-"
+"video_out_xcbxv: Benutze Xv-Port %d von Adapter %s for Hardware-"
 "Farbraumtransformation und Skalierung.\n"
 
 #: src/video_out/video_out_xcbxv.c:1446 src/video_out/video_out_xv.c:1460
@@ -4442,14 +4433,12 @@ msgstr ""
 "2 - aktiviert volles bilineares Filtern"
 
 #: src/video_out/video_out_xcbxv.c:1507
-#, fuzzy
 msgid "video_out_xcbxv: this adaptor supports the yv12 format.\n"
-msgstr "video_out_xv: Adapter unterstützt YV12 Format.\n"
+msgstr "video_out_xcbxv: Adapter unterstützt YV12 Format.\n"
 
 #: src/video_out/video_out_xcbxv.c:1512
-#, fuzzy
 msgid "video_out_xcbxv: this adaptor supports the yuy2 format.\n"
-msgstr "video_out_xv: Adapter unterstützt YUY2 Format.\n"
+msgstr "video_out_xcbxv: Adapter unterstützt YUY2 Format.\n"
 
 #: src/video_out/video_out_xcbxv.c:1520 src/video_out/video_out_xv.c:1545
 #: src/video_out/video_out_xxmc.c:2533
@@ -5035,7 +5024,7 @@ msgstr ""
 #: src/xine-engine/buffer.c:67
 #, c-format
 msgid "xine-lib: buffer.c: There has been a fatal error: TOO MANY FREE's\n"
-msgstr ""
+msgstr "xine-lib: buffer.c: Fataler Defekt: ZU VIELE FREIGABEN\n"
 
 #: src/xine-engine/configfile.c:925
 #, c-format

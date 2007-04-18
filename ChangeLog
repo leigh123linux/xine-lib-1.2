@@ -17,7 +17,10 @@ xine-lib (1.1.90) (Unreleased)
   * Use XDG-defined data directories to look up fonts files both while using
     FreeType2 and the standard bitmap fonts for OSD.
 
-xine-lib (1.1.6) [UNRELEASED]
+xine-lib (1.1.7) (unreleased)
+  * Support libdca (new name for libdts) by shuffling around the dts.h file.
+
+xine-lib (1.1.6)
   * Split the DirectFB plugin into X11 and non-X versions.
   * Improve the Mac OS X video output plugin. Thanks to Matt Messier.
   * Fixed the XcbXv plugin - an empty plugin would be built if "old" Xv
@@ -26,6 +29,8 @@ xine-lib (1.1.6) [UNRELEASED]
     with junk content, the plugin could potentially consume lots of memory
     (possibly causing a local DoS). Also, a few small memory leaks have been
     eliminated.
+  * Fixed a CDDA-related crash and a DVD-related hang, both caused by the
+    same change in 1.1.5.
 
 xine-lib (1.1.5)
   * Security fixes:
