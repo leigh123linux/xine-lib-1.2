@@ -442,11 +442,12 @@ struct video_overlay_manager_s {
                                   vo_driver_t *output, vo_frame_t *vo_img, int enabled);
 };
 
-/*
- * build a video_out_port from
- * a given video driver
+/**
+ * @brief Build a video output port from a given video driver.
+ *
+ * @internal
  */
-xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabonly) XINE_PROTECTED;
+xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabonly);
 
 #ifdef __cplusplus
 }

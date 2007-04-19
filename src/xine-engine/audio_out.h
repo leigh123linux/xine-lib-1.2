@@ -257,11 +257,12 @@ struct audio_driver_class_s {
   void (*dispose) (audio_driver_class_t *);
 };
 
-/* 
- * this initiates the audio_out sync routines
- * found in ./src/xine-engine/audio_out.c
+/**
+ * @brief Initialise the audio_out sync routines
+ *
+ * @internal
  */
-xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver, int grab_only) XINE_PROTECTED;
+xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver, int grab_only);
 
 /*
  * audio output modes + capabilities
