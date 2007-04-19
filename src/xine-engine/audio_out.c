@@ -578,18 +578,16 @@ static void audio_filter_compress (aos_t *this, int16_t *mem, int num_frames) {
 }
 
 static void audio_filter_amp (aos_t *this, void *buf, int num_frames) {
-
-  int    i;
-  int    num_channels;
   double amp_factor;
-
-  num_channels = _x_ao_mode2channels (this->input.mode);
-  if (!num_channels)
+  int    i;
+  const int total_frames = num_frames * _x_ao_mode2channels (this->input.mode);
+  
+  if (!total_frames)
     return;
 
   amp_factor=this->amp_factor;
   if (this->amp_mute || amp_factor == 0) {
-    memset (buf, 0, num_frames * num_channels * (this->input.bits / 8));
+    memset (buf, 0, total_frames * (this->input.bits / 8));
     return;
   }
 
@@ -597,7 +595,7 @@ static void audio_filter_amp (aos_t *this, void *buf, int num_frames) {
     int16_t test;
     int8_t *mem = (int8_t *) buf;
 
-    for (i=0; i<num_frames*num_channels; i++) {
+    for (i=0; i<total_frames; i++) {
       test = mem[i] * amp_factor;
       /* Force limit on amp_factor to prevent clipping */
       if (test < INT8_MIN) {
@@ -614,7 +612,7 @@ static void audio_filter_amp (aos_t *this, void *buf, int num_frames) {
     int32_t test;
     int16_t *mem = (int16_t *) buf;
 
-    for (i=0; i<num_frames*num_channels; i++) {
+    for (i=0; i<total_frames; i++) {
       test = mem[i] * amp_factor;
       /* Force limit on amp_factor to prevent clipping */
       if (test < INT16_MIN) {
