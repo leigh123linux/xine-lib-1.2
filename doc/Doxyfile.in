@@ -797,8 +797,9 @@ INCLUDE_FILE_PATTERNS  =
 # undefined via #undef or recursively expanded use the := operator 
 # instead of the = operator.
 
-PREDEFINED             =  XINE_COMPILE XINE_PACKED= ATTR_ALIGN(x)=
-PREDEFINED             += XINE_PROTECTED= XINE_MALLOC=
+PREDEFINED              = DOXYGEN XINE_COMPILE
+PREDEFINED             += XINE_PACKED= ATTR_ALIGN(x)= XINE_PROTECTED=
+PREDEFINED             += XINE_MALLOC=
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 
 # this tag can be used to specify a list of macro names that should be expanded. 
