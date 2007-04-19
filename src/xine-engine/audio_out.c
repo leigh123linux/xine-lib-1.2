@@ -16,16 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with self program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
- *
- * $Id: audio_out.c,v 1.210 2007/04/01 00:52:36 dgp85 Exp $
- *
- * 22-8-2001 James imported some useful AC3 sections from the previous alsa driver.
- *   (c) 2001 Andy Lo A Foe <andy@alsaplayer.org>
- * 20-8-2001 First implementation of Audio sync and Audio driver separation.
- *   (c) 2001 James Courtier-Dutton James@superbug.demon.co.uk
  */
- 
-/*
+
+/**
+ * @file
+ * @brief xine-lib audio output implementation
+ *
+ * @date 2001-08-20 First implementation of Audio sync and Audio driver separation.
+ *       (c) 2001 James Courtier-Dutton <james@superbug.demon.co.uk>
+ * @date 2001-08-22 James imported some useful AC3 sections from the previous
+ *       ALSA driver. (c) 2001 Andy Lo A Foe <andy@alsaplayer.org>
+ *
+ *
  * General Programming Guidelines: -
  * New concept of an "audio_frame".
  * An audio_frame consists of all the samples required to fill every
