@@ -149,7 +149,8 @@ int lexer_get_token(char * tok, int tok_size) {
 	    break;
 
 	  case '?':
-	    state = STATE_T_TI_STOP;
+	    if (!in_comment)
+	      state = STATE_T_TI_STOP;
 	    tok[tok_pos] = c;
 	    tok_pos++;
 	    break;
@@ -295,6 +296,8 @@ int lexer_get_token(char * tok, int tok_size) {
 	    lexbuf_pos++;
 	    tok_pos++; /* FIXME */
 	    tok[tok_pos] = '\0';
+	    if (!in_comment)
+	      lex_mode = DATA;
 	    return T_TI_STOP;
 	  } else {
 	    tok[tok_pos] = '\0';

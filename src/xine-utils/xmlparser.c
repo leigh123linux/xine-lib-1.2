@@ -164,6 +164,11 @@ typedef enum {
   STATE_STRING,
   /* <?foo ...?> */
   STATE_Q_NODE,
+  STATE_Q_ATTRIBUTE,
+  STATE_Q_NODE_CLOSE,
+  STATE_Q_TAG_TERM,
+  STATE_Q_ATTRIBUTE_EQUALS,
+  STATE_Q_STRING,
   /* Others */
   STATE_COMMENT,
   STATE_DOCTYPE,
@@ -232,6 +237,7 @@ static int xml_parser_get_node (xml_node_t *current_node, char *root_name, int r
 	break;
 
       case STATE_NODE:
+      case STATE_Q_NODE:
 	switch (res) {
 	case (T_IDENT):
 	  properties = NULL;
@@ -241,8 +247,13 @@ static int xml_parser_get_node (xml_node_t *current_node, char *root_name, int r
 	  if (xml_parser_mode == XML_PARSER_CASE_INSENSITIVE) {
 	    strtoupper(tok);
 	  }
-	  strcpy(node_name, tok);
-	  state = 2;
+	  if (state == STATE_Q_NODE) {
+	    snprintf (node_name, TOKEN_SIZE, "?%s", tok);
+	    state = STATE_Q_ATTRIBUTE;
+	  } else {
+	    strcpy(node_name, tok);
+	    state = STATE_ATTRIBUTE;
+	  }
 	  lprintf("info: current node name \"%s\"\n", node_name);
 	  break;
 	default:
@@ -284,6 +295,7 @@ static int xml_parser_get_node (xml_node_t *current_node, char *root_name, int r
 	case (T_M_STOP_2):
 	  /* new leaf */
 	  /* new subtree */
+	  new_leaf:
 	  subtree = new_xml_node();
 
 	  /* set node name */
@@ -305,13 +317,31 @@ static int xml_parser_get_node (xml_node_t *current_node, char *root_name, int r
 	  break;
 	case (T_IDENT):
 	  /* save property name */
+	  new_prop:
 	  if (xml_parser_mode == XML_PARSER_CASE_INSENSITIVE) {
 	    strtoupper(tok);
 	  }
 	  strcpy(property_name, tok);
-	  state = STATE_ATTRIBUTE_EQUALS;
+	  state = Q_STATE(ATTRIBUTE, ATTRIBUTE_EQUALS);
 	  lprintf("info: current property name \"%s\"\n", property_name);
 	  break;
+	default:
+	  lprintf("error: unexpected token \"%s\", state %d\n", tok, state);
+	  return -1;
+	  break;
+	}
+	break;
+
+      case STATE_Q_ATTRIBUTE:
+	switch (res) {
+	case (T_EOL):
+	case (T_SEPAR):
+	  /* nothing */
+	  break;
+	case (T_TI_STOP):
+	  goto new_leaf;
+	case (T_IDENT):
+	  goto new_prop;
 	default:
 	  lprintf("error: unexpected token \"%s\", state %d\n", tok, state);
 	  return -1;
@@ -388,8 +418,44 @@ static int xml_parser_get_node (xml_node_t *current_node, char *root_name, int r
 	}
 	break;
 
+				/* = or ?> or ident or separator expected */
+      case STATE_Q_ATTRIBUTE_EQUALS:
+	switch (res) {
+	case (T_EOL):
+	case (T_SEPAR):
+	  /* do nothing */
+	  break;
+	case (T_EQUAL):
+	  state = STATE_Q_STRING;
+	  break;
+	case (T_IDENT):
+	  bypass_get_token = 1; /* jump to state 2 without get a new token */
+	  state = STATE_Q_ATTRIBUTE;
+	  break;
+	case (T_TI_STOP):
+	  /* add a new property without value */
+	  if (current_property == NULL) {
+	    properties = new_xml_property();
+	    current_property = properties;
+	  } else {
+	    current_property->next = new_xml_property();
+	    current_property = current_property->next;
+	  }
+	  current_property->name = strdup (property_name);
+	  lprintf("info: new property %s\n", current_property->name);
+	  bypass_get_token = 1; /* jump to state 2 without get a new token */
+	  state = STATE_Q_ATTRIBUTE;
+	  break;
+	default:
+	  lprintf("error: unexpected token \"%s\", state %d\n", tok, state);
+	  return -1;
+	  break;
+	}
+	break;
+
 				/* string or ident or separator expected */
       case STATE_STRING:
+      case STATE_Q_STRING:
 	switch (res) {
 	case (T_EOL):
 	case (T_SEPAR):
@@ -408,7 +474,7 @@ static int xml_parser_get_node (xml_node_t *current_node, char *root_name, int r
 	  current_property->name = strdup(property_name);
 	  current_property->value = lexer_decode_entities(tok);
 	  lprintf("info: new property %s=%s\n", current_property->name, current_property->value);
-	  state = STATE_ATTRIBUTE;
+	  state = Q_STATE(STRING, ATTRIBUTE);
 	  break;
 	default:
 	  lprintf("error: unexpected token \"%s\", state %d\n", tok, state);
@@ -422,18 +488,6 @@ static int xml_parser_get_node (xml_node_t *current_node, char *root_name, int r
 	switch (res) {
 	case (T_C_STOP):
 	  state = STATE_IDLE;
-	  break;
-	default:
-	  state = STATE_COMMENT;
-	  break;
-	}
-	break;
-
-				/* ?> expected */
-      case STATE_Q_NODE:
-	switch (res) {
-	case (T_TI_STOP):
-	  state = 0;
 	  break;
 	default:
 	  break;
@@ -468,13 +522,25 @@ static int xml_parser_get_node (xml_node_t *current_node, char *root_name, int r
 }
 
 int xml_parser_build_tree(xml_node_t **root_node) {
-  xml_node_t *tmp_node;
+  xml_node_t *tmp_node, *pri_node, *q_node = NULL;
   int res;
 
   tmp_node = new_xml_node();
   res = xml_parser_get_node(tmp_node, "", 0);
-  if ((tmp_node->child) && (!tmp_node->child->next)) {
-    *root_node = tmp_node->child;
+
+  /* find first non-<?...?> node */;
+  for (pri_node = tmp_node->child;
+       pri_node && pri_node->name[0] == '?';
+       pri_node = pri_node->next)
+    q_node = pri_node; /* last <?...?> node (eventually), or NULL */
+
+  if (pri_node && !pri_node->next) {
+    /* move the tail to the head (for compatibility reasons) */
+    if (q_node) {
+      pri_node->next = tmp_node->child;
+      q_node->next = NULL;
+    }
+    *root_node = pri_node;
     free_xml_node(tmp_node);
     res = 0;
   } else {
@@ -603,5 +669,8 @@ static void xml_parser_dump_node (const xml_node_t *node, int indent) {
 }
 
 void xml_parser_dump_tree (const xml_node_t *node) {
-  xml_parser_dump_node (node, 0);
+  do {
+    xml_parser_dump_node (node, 0);
+    node = node->next;
+  } while (node);
 }
