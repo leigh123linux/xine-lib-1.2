@@ -412,10 +412,6 @@ typedef struct {
 #define DEBUG_DUMP_MOOV 0
 #define RAW_MOOV_FILENAME "moovatom.raw"
 
-#ifndef __GNUC__
-#define __attribute__(x)
-#endif
-
 #if DEBUG_ATOM_LOAD
 #define debug_atom_load printf
 #else
