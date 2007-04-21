@@ -135,8 +135,10 @@ typedef unsigned int qt_atom;
 
 #define MAX_PTS_DIFF 100000
 
-/* network bandwidth, cribbed from src/input/input_mms.c */
-const int64_t bandwidths[]={14400,19200,28800,33600,34430,57600,
+/**
+ * @brief Network bandwidth, cribbed from src/input/input_mms.c
+ */
+static const int64_t bandwidths[]={14400,19200,28800,33600,34430,57600,
                             115200,262200,393216,524300,1544000,10485800};
 
 /* these are things that can go wrong */
