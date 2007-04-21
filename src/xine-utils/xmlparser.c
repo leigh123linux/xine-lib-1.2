@@ -256,11 +256,7 @@ static int xml_parser_get_node_internal (xml_node_t *current_node, char *root_na
 	  lprintf("info: rec %d new subtree %s\n", rec, node_name);
 	  root_names[rec + 1] = node_name;
 	  parse_res = xml_parser_get_node_internal(subtree, root_names, rec + 1, relaxed);
-	  if (parse_res < -1) {
-	    /* badly-formed XML (missing close tag) */
-	    return parse_res + 1 + (parse_res == -2);
-	  }
-	  if (parse_res != 0) {
+	  if (parse_res == -1 || parse_res > 0) {
 	    return parse_res;
 	  }
 	  if (current_subtree == NULL) {
@@ -269,6 +265,10 @@ static int xml_parser_get_node_internal (xml_node_t *current_node, char *root_na
 	  } else {
 	    current_subtree->next = subtree;
 	    current_subtree = subtree;
+	  }
+	  if (parse_res < -1) {
+	    /* badly-formed XML (missing close tag) */
+	    return parse_res + 1 + (parse_res == -2);
 	  }
 	  state = STATE_IDLE;
 	  break;
