@@ -918,9 +918,15 @@ static qt_error parse_trak_atom (qt_trak *trak,
           trak->edit_list_table[j].media_time);
       }
 
-    } else if (current_atom == MDHD_ATOM)
-      trak->timescale = BE_32(&trak_atom[i + 0x10]);
-    else if (current_atom == STSD_ATOM) {
+    } else if (current_atom == MDHD_ATOM) {
+      int version;
+      debug_atom_load ("demux_qt: mdhd atom\n");
+      
+      version = trak_atom[i+4];
+      if ( version > 1 ) continue; /* unsupported, undocumented */
+
+      trak->timescale = BE_32(&trak_atom[i + (version == 0 ? 0x10 : 0x18) ]);
+    } else if (current_atom == STSD_ATOM) {
 
       debug_atom_load ("demux_qt: stsd atom\n");
 #if DEBUG_ATOM_LOAD
