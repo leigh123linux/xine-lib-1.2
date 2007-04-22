@@ -1266,6 +1266,36 @@ elif test "x$external_libmad" = "xyes"; then
   fi
 else
   AC_MSG_RESULT([Use included libmad support])
+  case "$host_or_hostalias" in
+    i?86-* | k?-* | athlon-* | pentium*-)
+      AC_DEFINE(FPM_INTEL,1,[Define to select libmad fixed point arithmetic implementation])
+      ;;
+    x86_64-*)
+      AC_DEFINE(FPM_64BIT,1,[Define to select libmad fixed point arithmetic implementation])
+      ;;
+    ppc-* | powerpc-*) 
+      AC_DEFINE(FPM_PPC,1,[Define to select libmad fixed point arithmetic implementation])
+      ;;
+    sparc*-*)
+      if test "$GCC" = yes; then
+        AC_DEFINE(FPM_SPARC,1,[Define to select libmad fixed point arithmetic implementation])
+      else
+        AC_DEFINE(FPM_64BIT,1,[Define to select libmad fixed point arithmetic implementation])
+      fi
+      ;;
+    mips-*)
+      AC_DEFINE(FPM_MIPS,1,[Define to select libmad fixed point arithmetic implementation])
+      ;;
+    alphaev56-* | alpha* | ia64-* | hppa*-linux-*)
+      AC_DEFINE(FPM_64BIT,1,[Define to select libmad fixed point arithmetic implementation])
+      ;;
+    arm*-*)
+      AC_DEFINE(FPM_ARM,1,[Define to select libmad fixed point arithmetic implementation])
+      ;;
+    *)
+      AC_DEFINE(FPM_DEFAULT,1,[Define to select libmad fixed point arithmetic implementation])
+      ;;
+  esac
 fi
 
 AM_CONDITIONAL(MAD, test "x$enable_libmad" = "xyes")
@@ -2176,7 +2206,6 @@ case "$host_or_hostalias" in
     dnl mmx/sse/3dnow assembler instructions. 
     dnl
     AC_DEFINE_UNQUOTED(ARCH_X86_32,,[Define this if you're running x86 architecture 32 bits])
-    AC_DEFINE(FPM_INTEL,1,[Define to select libmad fixed point arithmetic implementation])
     arch_x86="yes"
     enable_impure_text="yes"
 
@@ -2188,13 +2217,11 @@ case "$host_or_hostalias" in
     ;;
   x86_64-*)
     AC_DEFINE_UNQUOTED(ARCH_X86_64,,[Define this if you're running x86 architecture 64 bits])
-    AC_DEFINE(FPM_64BIT,1,[Define to select libmad fixed point arithmetic implementation])
     arch_x86="yes"
     ;;
   powerpc-*-darwin*)
     dnl avoid ppc compilation crash
     AS="$CC"
-    AC_DEFINE_UNQUOTED(FPM_PPC,,[Define to select libmad fixed point arithmetic implementation])
     AC_DEFINE_UNQUOTED(ARCH_PPC,,[Define this if you're running PowerPC architecture])
 
     AC_CHECK_HEADER([altivec.h], , enable_altivec=no)
@@ -2208,7 +2235,6 @@ case "$host_or_hostalias" in
   ppc-*-linux* | powerpc-*) 
     dnl avoid ppc compilation crash
     AS="$CC"
-    AC_DEFINE_UNQUOTED(FPM_PPC,,[Define to select libmad fixed point arithmetic implementation])
     AC_DEFINE_UNQUOTED(ARCH_PPC,,[Define this if you're running PowerPC architecture])
 
     AC_CHECK_HEADER([altivec.h], , enable_altivec=no)
@@ -2224,7 +2250,6 @@ case "$host_or_hostalias" in
       has_vis=yes
     fi
 
-    AC_DEFINE_UNQUOTED(FPM_SPARC,,[Define to select libmad fixed point arithmetic implementation])
     AC_DEFINE_UNQUOTED(ARCH_SPARC,,[Define this if you're running SPARC architecture])
     ;;
   sparc-*-solaris*)
@@ -2238,24 +2263,11 @@ case "$host_or_hostalias" in
 	  ;;
       esac
   
-      AC_DEFINE_UNQUOTED(FPM_SPARC,,[Define to select libmad fixed point arithmetic implementation])
       AC_DEFINE_UNQUOTED(ARCH_SPARC,,[Define this if you're running SPARC architecture])
-    else
-      AC_DEFINE_UNQUOTED(FPM_64BIT,,[Define to select libmad fixed point arithmetic implementation])
     fi
     ;;
-  mips-*)
-    AC_DEFINE_UNQUOTED(FPM_MIPS,,[Define to select libmad fixed point arithmetic implementation])
-    ;;
-  alphaev56-* | alpha* | ia64-* | hppa*-linux-*)
-    AC_DEFINE_UNQUOTED(FPM_64BIT,,[Define to select libmad fixed point arithmetic implementation])
-    ;;
   armv4l-*-linux*)
-    AC_DEFINE_UNQUOTED(FPM_ARM,,[Define to select libmad fixed point arithmetic implementation])
     enable_armv4l="yes"
-    ;;
-  *)
-    AC_DEFINE_UNQUOTED(FPM_DEFAULT,,[Define to select libmad fixed point arithmetic implementation])
     ;;
 esac
 
