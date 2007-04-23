@@ -74,7 +74,11 @@ static off_t cache_plugin_read(input_plugin_t *this_gen, char *buf, off_t len) {
   if (len <= (this->buf_len - this->buf_pos)) {
     /* all bytes are in the buffer */
     switch (len) {
-#if !(defined(sparc) || defined(__sparc__) || defined __ia64__)
+#if defined(__i386__) || defined(__x86_64__)
+      /* These are restricted to x86 and amd64. Some other architectures don't
+       * handle unaligned accesses in the same way, quite possibly requiring
+       * extra code over and above simple byte copies.
+       */
       case 8:
         *((uint64_t *)buf) = *(uint64_t *)(&(this->buf[this->buf_pos]));
         break;
