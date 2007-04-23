@@ -1052,8 +1052,7 @@ static void mem_blend8(uint8_t *mem, uint8_t val, uint8_t o, size_t sz)
   }
 }
 
-static void blend_yuv_exact(uint8_t *dst_cr, uint8_t *dst_cb,
-                            int src_width, int x_odd,
+static void blend_yuv_exact(uint8_t *dst_cr, uint8_t *dst_cb, int src_width, 
                             uint8_t *(*blend_yuv_data)[ 3 ][ 2 ])
 {
   int x;
@@ -1091,6 +1090,7 @@ static void blend_yuv_exact(uint8_t *dst_cr, uint8_t *dst_cb,
         int t4 = 4*0xf - o;
 
         /* blend the output chroma to the average of the four pixels */
+        /* for explanation of the used equation, see blend_yuy2_exact() */
         *dst_cr = ((*dst_cr * t4 + cr00 * o00 + cr01 * o01 + cr10 * o10 + cr11 * o11) * (0x1111+1)) >> 18;
         *dst_cb = ((*dst_cb * t4 + cb00 * o00 + cb01 * o01 + cb10 * o10 + cb11 * o11) * (0x1111+1)) >> 18;
       }
@@ -1431,7 +1431,7 @@ void _x_blend_yuv (uint8_t *dst_base[3], vo_overlay_t * img_overl,
             memset(&(*blend_yuv_data)[ 0 ][ 1 ][ 0 ], 0, exact_blend_width_m2);
           }
           
-          blend_yuv_exact(dst_cr, dst_cb, exact_blend_width, x_odd, blend_yuv_data);
+          blend_yuv_exact(dst_cr, dst_cb, exact_blend_width, blend_yuv_data);
           
           any_line_buffered = 0;
         }
@@ -1452,7 +1452,7 @@ void _x_blend_yuv (uint8_t *dst_base[3], vo_overlay_t * img_overl,
         memset(&(*blend_yuv_data)[ 0 ][ 1 ][ 0 ], 0, exact_blend_width_m2);
       }
       
-      blend_yuv_exact(dst_cr, dst_cb, exact_blend_width, x_odd, blend_yuv_data);
+      blend_yuv_exact(dst_cr, dst_cb, exact_blend_width, blend_yuv_data);
     }
   }
       
@@ -1461,8 +1461,7 @@ void _x_blend_yuv (uint8_t *dst_base[3], vo_overlay_t * img_overl,
 #endif
 }
             
-static void blend_yuy2_exact(uint8_t *dst_cr, uint8_t *dst_cb,
-                             int src_width, int x_odd,
+static void blend_yuy2_exact(uint8_t *dst_cr, uint8_t *dst_cb, int src_width,
                              uint8_t *(*blend_yuy2_data)[ 3 ])
 {
   int x;
@@ -1491,7 +1490,49 @@ static void blend_yuy2_exact(uint8_t *dst_cr, uint8_t *dst_cb,
         /* calculate transparency of background over the two pixels */
         int t2 = 2*0xf - o;
 
+	/*
+	 * No need to adjust chroma values with +/- 128:
+	 *   *dst_cb 
+	 *   = 128 + ((*dst_cb-128) * t2 + (cb0-128) * o0 + (cb1-128) * o1) / (2 * 0xf);
+	 *   = 128 + (*dst_cb * t2 + cb0 * o0 + cb1 * o1 + (t2*(-128) - 128*o0 - 128*o1)) / (2 * 0xf);
+	 *   = 128 + (*dst_cb * t2 + cb0 * o0 + cb1 * o1 + ((2*0xf-o0-o1)*(-128) - 128*o0 - 128*o1)) / (2 * 0xf);
+	 *   = 128 + (*dst_cb * t2 + cb0 * o0 + cb1 * o1 + (2*0xf*(-128))) / (2 * 0xf);
+	 *   = 128 + (*dst_cb * t2 + cb0 * o0 + cb1 * o1) / (2 * 0xf) - 128;
+	 *   =       (*dst_cb * t2 + cb0 * o0 + cb1 * o1) / (2 * 0xf);
+	 *
+	 * Convert slow divisions to multiplication and shift:
+	 *     X/0xf
+	 *   = X * (1/0xf)
+	 *   = X * (0x1111/0x1111) * (1/0xf)
+	 *   = X * 0x1111/0xffff
+	 *   =(almost) X * 0x1112/0x10000
+	 *   = (X * 0x1112) >> 16
+	 *
+	 * The tricky point is 0x1111/0xffff --> 0x1112/0x10000. 
+	 * All calculations are done using integers and X is in 
+	 * range of [0 ... 0xff*0xf*4]. This results in error of
+	 *     X*0x1112/0x10000 - X/0xf
+	 *   = X*(0x1112/0x10000 - 1/0xf)
+	 *   = X*(0x0.1112 - 0x0.111111...)
+	 *   = X*0.0000eeeeee....
+	 *   = [0 ... 0.37c803fc...]    when X in [0...3bc4]
+	 * As the error is less than 1 and always positive, whole error
+	 * "disappears" during truncation (>>16). Rounding to exact results is
+	 * guaranteed by selecting 0x1112 instead of more accurate 0x1111
+	 * (with 0x1111 error=X*(-0.00001111...)). With 0x1112 error is 
+	 * always positive, but still less than one.
+	 * So, one can forget the "=(almost)" as it is really "=" when source
+	 * operands are within 0...0xff (U,V) and 0...0xf (A).
+	 *
+	 * 1/0x10000 (= >>16) was originally selected because of MMX pmullhw
+	 * instruction; it makes possible to do whole calculation in MMX using
+	 * uint16's (pmullhw is (X*Y)>>16).
+	 * 
+	 * Here X/(2*0xf) = X/0xf/2 = ((X*0x1112)>>16)>>1 = (X*0x1112)>>17
+	 */
+
         /* blend the output chroma to the average of the two pixels */
+        /* *dst_cr = 128 + ((*dst_cr-128) * t2 + (cr0-128) * o0 + (cr1-128) * o1) / (2 * 0xf); */
         *dst_cr = ((*dst_cr * t2 + cr0 * o0 + cr1 * o1) * (0x1111+1)) >> 17;
         *dst_cb = ((*dst_cb * t2 + cb0 * o0 + cb1 * o1) * (0x1111+1)) >> 17;
       }
@@ -1837,7 +1878,7 @@ void _x_blend_yuy2 (uint8_t * dst_img, vo_overlay_t * img_overl,
     if (enable_exact_blending) {
       /* blend buffered line */
       if (any_line_buffered) {
-        blend_yuy2_exact(dst_y - x_odd * 2 + 3, dst_y - x_odd * 2 + 1, exact_blend_width, x_odd, blend_yuy2_data);
+        blend_yuy2_exact(dst_y - x_odd * 2 + 3, dst_y - x_odd * 2 + 1, exact_blend_width, blend_yuy2_data);
         
         any_line_buffered = 0;
       }
