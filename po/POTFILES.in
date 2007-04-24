@@ -62,7 +62,7 @@ src/input/vcd/vcdplayer.c
 src/input/vcd/vcdplayer.h
 src/input/vcd/xineplug_inp_vcd.c
 src/liba52/xine_a52_decoder.c
-src/libdts/xine_dts_decoder.c
+src/libxineadec/xine_dts_decoder.c
 src/libfaad/xine_faad_decoder.c
 src/libffmpeg/ff_audio_decoder.c
 src/libffmpeg/ff_dvaudio_decoder.c
