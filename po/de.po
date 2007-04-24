@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib 1.1.6\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-04-15 23:56+0200\n"
+"POT-Creation-Date: 2007-04-24 21:48+0100\n"
 "PO-Revision-Date: 2007-04-18 11:00+0200\n"
 "Last-Translator: Philipp Hahn <pmhahn@users.sf.net>\n"
 "Language-Team: German <de@li.org>\n"
@@ -2644,7 +2644,7 @@ msgstr ""
 "1024: Standbilder\n"
 "2048: Debugging von VCDINFO\n"
 
-#: src/liba52/xine_a52_decoder.c:742 src/libdts/xine_dts_decoder.c:546
+#: src/liba52/xine_a52_decoder.c:742 src/libxineadec/xine_dts_decoder.c:524
 msgid "HELP! a mono-only audio driver?!\n"
 msgstr "HILFE! Ein nur-Mono-Audiogerät?!\n"
 
@@ -2821,21 +2821,21 @@ msgstr "Maximaler Quantisierer"
 msgid "The maximum compression to apply to an image in constant quality mode."
 msgstr "Maximale Kompression für ein Bild im Modus konstanter Qualität"
 
-#: src/libxineadec/xine_musepack_decoder.c:237
+#: src/libxineadec/xine_musepack_decoder.c:249
 #, c-format
 msgid "libmusepack: mpc_streaminfo_read failed: %d\n"
 msgstr "libmusepack: mpc_streaminfo_read schlug fehl: %d\n"
 
-#: src/libxineadec/xine_musepack_decoder.c:311
+#: src/libxineadec/xine_musepack_decoder.c:323
 msgid "libmusepack: data after last frame ignored\n"
 msgstr "libmusepack: Daten nach letzem Bild ignoriert\n"
 
-#: src/libxineadec/xine_musepack_decoder.c:322
+#: src/libxineadec/xine_musepack_decoder.c:334
 msgid "libmusepack: mpc_decoder_initialise failed\n"
 msgstr "libmusepack: mpc_decoder_initialise schlug fehl\n"
 
-#: src/libxineadec/xine_musepack_decoder.c:342
-#: src/libxineadec/xine_musepack_decoder.c:357
+#: src/libxineadec/xine_musepack_decoder.c:354
+#: src/libxineadec/xine_musepack_decoder.c:369
 #, c-format
 msgid "libmusepack: mpc_decoder_decode failed: %d\n"
 msgstr "libmusepack: mpc_decoder_decode schlug fehl: %d\n"
@@ -3954,8 +3954,8 @@ msgstr ""
 "Ignoriert für statische Renderroutinen.\n"
 
 #: src/video_out/video_out_opengl.c:1918 src/video_out/video_out_vidix.c:1015
-#: src/video_out/video_out_xcbxv.c:1470 src/video_out/video_out_xv.c:1484
-#: src/video_out/video_out_xvmc.c:1461 src/video_out/video_out_xxmc.c:2464
+#: src/video_out/video_out_xcbxv.c:1476 src/video_out/video_out_xv.c:1489
+#: src/video_out/video_out_xvmc.c:1461 src/video_out/video_out_xxmc.c:2465
 msgid "enable double buffering"
 msgstr "Doppelpufferung benutzen"
 
@@ -4044,9 +4044,9 @@ msgstr ""
 msgid "video_out_pgx64: Error: ioctl failed (FBIOGATTR)\n"
 msgstr "video_out_pgx64: Fehler: ioctl(FBIOGATTR) schlug fehl\n"
 
-#: src/video_out/video_out_pgx64.c:1464 src/video_out/video_out_xcbxv.c:1437
-#: src/video_out/video_out_xv.c:1451 src/video_out/video_out_xvmc.c:1446
-#: src/video_out/video_out_xxmc.c:2431
+#: src/video_out/video_out_pgx64.c:1464 src/video_out/video_out_xcbxv.c:1443
+#: src/video_out/video_out_xv.c:1456 src/video_out/video_out_xvmc.c:1446
+#: src/video_out/video_out_xxmc.c:2432
 msgid "video overlay colour key"
 msgstr "Farbschlüssel für Overlay"
 
@@ -4220,9 +4220,9 @@ msgstr "Blau-Intensität"
 msgid "The intensity of the blue colour components."
 msgstr "Die Intensität blauer Farbanteile"
 
-#: src/video_out/video_out_vidix.c:1016 src/video_out/video_out_xcbxv.c:1471
-#: src/video_out/video_out_xv.c:1485 src/video_out/video_out_xvmc.c:1462
-#: src/video_out/video_out_xxmc.c:2465
+#: src/video_out/video_out_vidix.c:1016 src/video_out/video_out_xcbxv.c:1477
+#: src/video_out/video_out_xv.c:1490 src/video_out/video_out_xvmc.c:1462
+#: src/video_out/video_out_xxmc.c:2466
 msgid ""
 "Double buffering will synchronize the update of the video image to the "
 "repainting of the entire screen (\"vertical retrace\"). This eliminates "
@@ -4258,9 +4258,9 @@ msgid "video overlay colour key red component"
 msgstr "Rot-Komponente des Farbschlüssels für Overlays"
 
 #: src/video_out/video_out_vidix.c:1159 src/video_out/video_out_vidix.c:1166
-#: src/video_out/video_out_vidix.c:1173 src/video_out/video_out_xcbxv.c:1438
-#: src/video_out/video_out_xv.c:1452 src/video_out/video_out_xvmc.c:1447
-#: src/video_out/video_out_xxmc.c:2432
+#: src/video_out/video_out_vidix.c:1173 src/video_out/video_out_xcbxv.c:1444
+#: src/video_out/video_out_xv.c:1457 src/video_out/video_out_xvmc.c:1447
+#: src/video_out/video_out_xxmc.c:2433
 msgid ""
 "The colour key is used to tell the graphics card where to overlay the video "
 "image. Try different values, if you experience windows becoming transparent."
@@ -4285,34 +4285,40 @@ msgstr "xine Videoausgabe benutzt libvidix für X11"
 msgid "xine video output plugin using libvidix for linux frame buffer"
 msgstr "xine Videoausgabe benutzt libvidix für Linux Framebuffer"
 
-#: src/video_out/video_out_xcbshm.c:157
+#: src/video_out/video_out_xcbshm.c:157 src/video_out/video_out_xshm.c:219
 #, c-format
-msgid ""
-"video_out_xcbshm: %s: allocating image\n"
-"video_out_xcbshm: => not using MIT Shared Memory extension.\n"
+msgid "%s: %s: allocating image\n"
 msgstr ""
-"video_out_xcbshm: %s: Belege Bild\n"
-"video_out_xcbshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
 
-#: src/video_out/video_out_xcbshm.c:166
-msgid ""
-"video_out_xcbshm: shared memory error (address error) when allocating "
-"image \n"
-"video_out_xcbshm: => not using MIT Shared Memory extension.\n"
+#: src/video_out/video_out_xcbshm.c:159 src/video_out/video_out_xcbshm.c:169
+#: src/video_out/video_out_xcbshm.c:181 src/video_out/video_out_xcbxv.c:272
+#: src/video_out/video_out_xcbxv.c:282 src/video_out/video_out_xcbxv.c:292
+#: src/video_out/video_out_xcbxv.c:304 src/video_out/video_out_xshm.c:204
+#: src/video_out/video_out_xshm.c:221 src/video_out/video_out_xshm.c:232
+#: src/video_out/video_out_xshm.c:251 src/video_out/video_out_xv.c:296
+#: src/video_out/video_out_xv.c:307 src/video_out/video_out_xv.c:316
+#: src/video_out/video_out_xv.c:352 src/video_out/video_out_xxmc.c:648
+#: src/video_out/video_out_xxmc.c:659 src/video_out/video_out_xxmc.c:668
+#: src/video_out/video_out_xxmc.c:704
+#, fuzzy, c-format
+msgid "%s: => not using MIT Shared Memory extension.\n"
+msgstr "xine Videoausgabe benutzt 'MIX X Shared Memory' Erweiterung"
+
+#: src/video_out/video_out_xcbshm.c:167 src/video_out/video_out_xshm.c:230
+#, fuzzy, c-format
+msgid "%s: shared memory error (address error) when allocating image \n"
 msgstr ""
-"video_out_xcbshm: Shared-Memory-Fehler (Adressfehler) beim Belegen des "
-"Bilds\n"
-"video_out_xcbshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+"video_out_xshm: Shared-Memory-Fehler (Adressfehler) beim Belegen des Bilds\n"
+"video_out_xshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
 
-#: src/video_out/video_out_xcbshm.c:177
-msgid ""
-"video_out_xcbshm: x11 error during shared memory XImage creation\n"
-"video_out_xcbshm: => not using MIT Shared Memory extension.\n"
+#: src/video_out/video_out_xcbshm.c:179 src/video_out/video_out_xcbxv.c:302
+#: src/video_out/video_out_xshm.c:249 src/video_out/video_out_xv.c:350
+#: src/video_out/video_out_xxmc.c:702
+#, c-format
+msgid "%s: x11 error during shared memory XImage creation\n"
 msgstr ""
-"video_out_xcbshm: X11-Fehler bei Shared-Memory-XImage-Erstellung\n"
-"video_out_xcbshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
 
-#: src/video_out/video_out_xcbshm.c:1100 src/video_out/video_out_xshm.c:1157
+#: src/video_out/video_out_xcbshm.c:1103 src/video_out/video_out_xshm.c:1161
 #, c-format
 msgid ""
 "\n"
@@ -4326,87 +4332,81 @@ msgstr ""
 "WARNUNG: Aktuelle Farbtiefe ist %d. Für bessere Leistung wird eine Farbtiefe "
 "von 16 bpp empfohlen!\n"
 
-#: src/video_out/video_out_xcbshm.c:1113
-msgid "video_out_xcbshm: MIT shared memory extension not present on display.\n"
+#: src/video_out/video_out_xcbshm.c:1116 src/video_out/video_out_xshm.c:1174
+#, fuzzy, c-format
+msgid "%s: MIT shared memory extension not present on display.\n"
 msgstr ""
-"video_out_xcbshm: MIT-Shared-Memory-Erweiterung für Anzeige nicht "
-"vorhanden.\n"
+"video_out_xshm: MIT-Shared-Memory-Erweiterung für Anzeige nicht vorhanden.\n"
 
-#: src/video_out/video_out_xcbshm.c:1212
-msgid "video_out_xcbshm: your video mode was not recognized, sorry :-(\n"
-msgstr ""
-"video_out_xcbshm: Der Videomodus wurde nicht erkannt, Entschuldigung :-(\n"
+#: src/video_out/video_out_xcbshm.c:1215 src/video_out/video_out_xshm.c:1258
+#, fuzzy, c-format
+msgid "%s: your video mode was not recognized, sorry :-(\n"
+msgstr "video_out_fb: Ihr Videomodues wurde nicht erkannt, Entschuldigung.\n"
 
-#: src/video_out/video_out_xcbshm.c:1242 src/video_out/video_out_xshm.c:1303
+#: src/video_out/video_out_xcbshm.c:1245 src/video_out/video_out_xshm.c:1307
 msgid "xine video output plugin using the MIT X shared memory extension"
 msgstr "xine Videoausgabe benutzt 'MIX X Shared Memory' Erweiterung"
 
-#: src/video_out/video_out_xcbxv.c:270
-msgid ""
-"video_out_xcbxv: XvShmCreateImage returned a zero size\n"
-"video_out_xcbxv: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xcbv: XvShmCreateImage lieferte Größe 0 zurück\n"
-"video_out_xcbv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
-
-#: src/video_out/video_out_xcbxv.c:279
+#: src/video_out/video_out_xcbxv.c:270 src/video_out/video_out_xv.c:305
+#: src/video_out/video_out_xxmc.c:657
 #, c-format
-msgid ""
-"video_out_xcbxv: shared memory error in shmget: %s\n"
-"video_out_xcbxv: => not using MIT Shared Memory extension.\n"
+msgid "%s: XvShmCreateImage returned a zero size\n"
 msgstr ""
-"video_out_xcbxv: Shared-Memory-Fehler bei shmget: %s\n"
-"video_out_xcbxv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
 
-#: src/video_out/video_out_xcbxv.c:298
-msgid ""
-"video_out_xcbxv: x11 error during shared memory XImage creation\n"
-"video_out_xcbxv: => not using MIT Shared Memory extension.\n"
+#: src/video_out/video_out_xcbxv.c:280 src/video_out/video_out_xv.c:314
+#: src/video_out/video_out_xxmc.c:666
+#, c-format
+msgid "%s: shared memory error in shmget: %s\n"
 msgstr ""
-"video_out_xcbxv: X11-Fehler bei Shared-Memory-XImage-Erstellung\n"
-"video_out_xcbxv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
 
-#: src/video_out/video_out_xcbxv.c:1289
-msgid "video_out_xcbxv: Xv extension not present.\n"
-msgstr "video_out_xcbxv: Xv-Erweiterung nicht vorhanden.\n"
-
-#: src/video_out/video_out_xcbxv.c:1331
-msgid ""
-"video_out_xcbxv: Xv extension is present but I couldn't find a usable yuv12 "
-"port.\n"
-"                 Looks like your graphics hardware driver doesn't support "
-"Xv?!\n"
+#: src/video_out/video_out_xcbxv.c:290
+#, c-format
+msgid "%s: shared memory error (address error)\n"
 msgstr ""
-"video_out_xcbxv: Xv-Erweiterung ist vorhanden, aber es wurde kein "
-"benutzbarer YUV12-Port gefunden.\n"
+
+#: src/video_out/video_out_xcbxv.c:1294 src/video_out/video_out_xv.c:1301
+#: src/video_out/video_out_xxmc.c:2283
+#, fuzzy, c-format
+msgid "%s: Xv extension not present.\n"
+msgstr "video_out_xv: Xv-Erweiterung nicht vorhanden.\n"
+
+#: src/video_out/video_out_xcbxv.c:1336 src/video_out/video_out_xv.c:1338
+#: src/video_out/video_out_xxmc.c:2320
+#, fuzzy, c-format
+msgid ""
+"%s: Xv extension is present but I couldn't find a usable yuv12 port.\n"
+"\tLooks like your graphics hardware driver doesn't support Xv?!\n"
+msgstr ""
+"video_out_xv: Xv-Erweiterung ist vorhanden, aber es wurde kein benutzparer "
+"YUV12-Port gefunden.\n"
 "              Unterstützt die Grafikhardware evtl. kein Xv?!\n"
 
-#: src/video_out/video_out_xcbxv.c:1339
-#, c-format
+#: src/video_out/video_out_xcbxv.c:1345
+#, fuzzy, c-format
 msgid ""
-"video_out_xcbxv: using Xv port %d from adaptor %s for hardware colorspace "
-"conversion and scaling.\n"
+"%s: using Xv port %d from adaptor %s for hardware colorspace conversion and "
+"scaling.\n"
 msgstr ""
-"video_out_xcbxv: Benutze Xv-Port %d von Adapter %s for Hardware-"
+"video_out_xv: Benutze Xv-Port %ld von Adapter %s for Hardware-"
 "Farbraumtransformation und Skalierung.\n"
 
-#: src/video_out/video_out_xcbxv.c:1446 src/video_out/video_out_xv.c:1460
-#: src/video_out/video_out_xvmc.c:1455 src/video_out/video_out_xxmc.c:2440
+#: src/video_out/video_out_xcbxv.c:1452 src/video_out/video_out_xv.c:1465
+#: src/video_out/video_out_xvmc.c:1455 src/video_out/video_out_xxmc.c:2441
 msgid "autopaint colour key"
 msgstr "automatischer Farbschlüssel"
 
-#: src/video_out/video_out_xcbxv.c:1447 src/video_out/video_out_xv.c:1461
-#: src/video_out/video_out_xvmc.c:1456 src/video_out/video_out_xxmc.c:2441
+#: src/video_out/video_out_xcbxv.c:1453 src/video_out/video_out_xv.c:1466
+#: src/video_out/video_out_xvmc.c:1456 src/video_out/video_out_xxmc.c:2442
 msgid "Make Xv autopaint its colorkey."
 msgstr "Veranlasst Xv automatisch den Farbschlüssel zu zeichnen."
 
-#: src/video_out/video_out_xcbxv.c:1454 src/video_out/video_out_xv.c:1468
-#: src/video_out/video_out_xxmc.c:2448
+#: src/video_out/video_out_xcbxv.c:1460 src/video_out/video_out_xv.c:1473
+#: src/video_out/video_out_xxmc.c:2449
 msgid "bilinear scaling mode"
 msgstr "Bilinearer Skalierungsmodus"
 
-#: src/video_out/video_out_xcbxv.c:1455 src/video_out/video_out_xv.c:1469
-#: src/video_out/video_out_xxmc.c:2449
+#: src/video_out/video_out_xcbxv.c:1461 src/video_out/video_out_xv.c:1474
+#: src/video_out/video_out_xxmc.c:2450
 msgid ""
 "Selects the bilinear scaling mode for Permedia cards. The individual values "
 "are:\n"
@@ -4432,30 +4432,34 @@ msgstr ""
 "1 - horizontales lineares Filtern\n"
 "2 - aktiviert volles bilineares Filtern"
 
-#: src/video_out/video_out_xcbxv.c:1507
-msgid "video_out_xcbxv: this adaptor supports the yv12 format.\n"
-msgstr "video_out_xcbxv: Adapter unterstützt YV12 Format.\n"
+#: src/video_out/video_out_xcbxv.c:1513 src/video_out/video_out_xv.c:1523
+#: src/video_out/video_out_xxmc.c:2506
+#, fuzzy, c-format
+msgid "%s: this adaptor supports the yv12 format.\n"
+msgstr "video_out_xv: Adapter unterstützt YV12 Format.\n"
 
-#: src/video_out/video_out_xcbxv.c:1512
-msgid "video_out_xcbxv: this adaptor supports the yuy2 format.\n"
-msgstr "video_out_xcbxv: Adapter unterstützt YUY2 Format.\n"
+#: src/video_out/video_out_xcbxv.c:1518 src/video_out/video_out_xv.c:1528
+#: src/video_out/video_out_xxmc.c:2511
+#, fuzzy, c-format
+msgid "%s: this adaptor supports the yuy2 format.\n"
+msgstr "video_out_xv: Adapter unterstützt YUY2 Format.\n"
 
-#: src/video_out/video_out_xcbxv.c:1520 src/video_out/video_out_xv.c:1545
-#: src/video_out/video_out_xxmc.c:2533
+#: src/video_out/video_out_xcbxv.c:1526 src/video_out/video_out_xv.c:1550
+#: src/video_out/video_out_xxmc.c:2534
 msgid "pitch alignment workaround"
 msgstr "pitch alignment Abhilfe"
 
-#: src/video_out/video_out_xcbxv.c:1521 src/video_out/video_out_xv.c:1546
-#: src/video_out/video_out_xxmc.c:2534
+#: src/video_out/video_out_xcbxv.c:1527 src/video_out/video_out_xv.c:1551
+#: src/video_out/video_out_xxmc.c:2535
 msgid "Some buggy video drivers need a workaround to function properly."
 msgstr "Einige fehlerhafte Videotreiber benötigen dies zur korrekten Funktion."
 
-#: src/video_out/video_out_xcbxv.c:1527 src/video_out/video_out_xv.c:1552
+#: src/video_out/video_out_xcbxv.c:1533 src/video_out/video_out_xv.c:1557
 #: src/video_out/video_out_xvmc.c:1524
 msgid "deinterlace method (deprecated)"
 msgstr "Deinterlace-Methode (veraltet)"
 
-#: src/video_out/video_out_xcbxv.c:1528 src/video_out/video_out_xv.c:1553
+#: src/video_out/video_out_xcbxv.c:1534 src/video_out/video_out_xv.c:1558
 #: src/video_out/video_out_xvmc.c:1525
 msgid ""
 "This config setting is deprecated. You should use the new deinterlacing post "
@@ -4527,117 +4531,29 @@ msgstr ""
 "Verwischt das Bild vertikal, um Kammartefakte zu entfernen. Gute Resultate "
 "bei mittlerer CPU-Auslastung."
 
-#: src/video_out/video_out_xcbxv.c:1582 src/video_out/video_out_xv.c:1626
-#: src/video_out/video_out_xxmc.c:2614
+#: src/video_out/video_out_xcbxv.c:1588 src/video_out/video_out_xv.c:1631
+#: src/video_out/video_out_xxmc.c:2615
 msgid "xine video output plugin using the MIT X video extension"
 msgstr "xine Videoausgabe benutzt 'MIX XVideo' Erweiterung"
 
 #: src/video_out/video_out_xshm.c:202
-msgid ""
-"video_out_xshm: shared memory error when allocating image\n"
-"video_out_xshm: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xshm: Shared-Memory-Fehler beim Speicherbelegen\n"
-"video_out_xshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
-
-#: src/video_out/video_out_xshm.c:218
 #, c-format
-msgid ""
-"video_out_xshm: %s: allocating image\n"
-"video_out_xshm: => not using MIT Shared Memory extension.\n"
+msgid "%s: shared memory error when allocating image\n"
 msgstr ""
-"video_out_xshm: %s: Belege Bild\n"
-"video_out_xshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
 
-#: src/video_out/video_out_xshm.c:228
-msgid ""
-"video_out_xshm: shared memory error (address error) when allocating image \n"
-"video_out_xshm: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xshm: Shared-Memory-Fehler (Adressfehler) beim Belegen des Bilds\n"
-"video_out_xshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
-
-#: src/video_out/video_out_xshm.c:245
-msgid ""
-"video_out_xshm: x11 error during shared memory XImage creation\n"
-"video_out_xshm: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xshm: X11-Fehler bei Shared-Memory-XImage-Erstellung\n"
-"video_out_xshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
-
-#: src/video_out/video_out_xshm.c:1170
-msgid "video_out_xshm: MIT shared memory extension not present on display.\n"
-msgstr ""
-"video_out_xshm: MIT-Shared-Memory-Erweiterung für Anzeige nicht vorhanden.\n"
-
-#: src/video_out/video_out_xshm.c:1254
-msgid "video_out_xshm: your video mode was not recognized, sorry :-(\n"
-msgstr ""
-"video_out_xshm: Der Videomodus wurde nicht erkannt, Entschuldigung :-(\n"
-
-#: src/video_out/video_out_xv.c:294
-msgid ""
-"video_out_xv: XvShmCreateImage failed\n"
-"video_out_xv: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xv: XvShmCreateImage schlug fehl\n"
-"video_out_xv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
-
-#: src/video_out/video_out_xv.c:304
-msgid ""
-"video_out_xv: XvShmCreateImage returned a zero size\n"
-"video_out_xv: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xv: XvShmCreateImage lieferte Größe 0 zurück\n"
-"video_out_xv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
-
-#: src/video_out/video_out_xv.c:312
+#: src/video_out/video_out_xv.c:294 src/video_out/video_out_xxmc.c:646
 #, c-format
-msgid ""
-"video_out_xv: shared memory error in shmget: %s\n"
-"video_out_xv: => not using MIT Shared Memory extension.\n"
+msgid "%s: XvShmCreateImage failed\n"
 msgstr ""
-"video_out_xv: Shared-Memory-Fehler bei shmget: %s\n"
-"video_out_xv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
 
-#: src/video_out/video_out_xv.c:344
+#: src/video_out/video_out_xv.c:1348 src/video_out/video_out_xxmc.c:2330
+#, fuzzy, c-format
 msgid ""
-"video_out_xv: x11 error during shared memory XImage creation\n"
-"video_out_xv: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xv: X11-Fehler bei Shared-Memory-XImage-Erstellung\n"
-"video_out_xv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
-
-#: src/video_out/video_out_xv.c:1297
-msgid "video_out_xv: Xv extension not present.\n"
-msgstr "video_out_xv: Xv-Erweiterung nicht vorhanden.\n"
-
-#: src/video_out/video_out_xv.c:1334
-msgid ""
-"video_out_xv: Xv extension is present but I couldn't find a usable yuv12 "
-"port.\n"
-"              Looks like your graphics hardware driver doesn't support Xv?!\n"
-msgstr ""
-"video_out_xv: Xv-Erweiterung ist vorhanden, aber es wurde kein benutzparer "
-"YUV12-Port gefunden.\n"
-"              Unterstützt die Grafikhardware evtl. kein Xv?!\n"
-
-#: src/video_out/video_out_xv.c:1343
-#, c-format
-msgid ""
-"video_out_xv: using Xv port %ld from adaptor %s for hardware colorspace "
-"conversion and scaling.\n"
+"%s: using Xv port %ld from adaptor %s for hardware colorspace conversion and "
+"scaling.\n"
 msgstr ""
 "video_out_xv: Benutze Xv-Port %ld von Adapter %s for Hardware-"
 "Farbraumtransformation und Skalierung.\n"
-
-#: src/video_out/video_out_xv.c:1518
-msgid "video_out_xv: this adaptor supports the yv12 format.\n"
-msgstr "video_out_xv: Adapter unterstützt YV12 Format.\n"
-
-#: src/video_out/video_out_xv.c:1523
-msgid "video_out_xv: this adaptor supports the yuy2 format.\n"
-msgstr "video_out_xv: Adapter unterstützt YUY2 Format.\n"
 
 #: src/video_out/video_out_xvmc.c:1593
 msgid "xine video output plugin using the XvMC X video extension"
@@ -4681,75 +4597,11 @@ msgstr "                Keine XvMC-Unterstützung \n"
 msgid "                With Overlay = %d; UnsignedIntra = %d.\n"
 msgstr "                Mit Überlagerung = %d; UnsignedIntra = %d.\n"
 
-#: src/video_out/video_out_xxmc.c:646
-msgid ""
-"video_out_xxmc: XvShmCreateImage failed\n"
-"video_out_xxmc: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xxmc: XvShmCreateImage schlug fehl\n"
-"video_out_xxmc: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
-
-#: src/video_out/video_out_xxmc.c:656
-msgid ""
-"video_out_xxmc: XvShmCreateImage returned a zero size\n"
-"video_out_xxmc: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xv: XvShmCreateImage lieferte Größe 0 zurück\n"
-"video_out_xv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
-
-#: src/video_out/video_out_xxmc.c:664
-#, c-format
-msgid ""
-"video_out_xxmc: shared memory error in shmget: %s\n"
-"video_out_xxmc: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xxmc: Shared-Memory-Fehler bei shmget: %s\n"
-"video_out_xxmc: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
-
-#: src/video_out/video_out_xxmc.c:696
-msgid ""
-"video_out_xxmc: x11 error during shared memory XImage creation\n"
-"video_out_xxmc: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xxmc: X11-Fehler bei Shared-Memory-XImage-Erstellung\n"
-"video_out_xxmc: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
-
-#: src/video_out/video_out_xxmc.c:2283
-msgid "video_out_xxmc: Xv extension not present.\n"
-msgstr "video_out_xxmc: Xv-Erweiterung nicht vorhanden.\n"
-
-#: src/video_out/video_out_xxmc.c:2320
-msgid ""
-"video_out_xxmc: Xv extension is present but I couldn't find a usable yuv12 "
-"port.\n"
-"              Looks like your graphics hardware driver doesn't support Xv?!\n"
-msgstr ""
-"video_out_xxmc: Xv-Erweiterung ist vorhanden, aber es wurde kein benutzparer "
-"YUV12-Port gefunden.\n"
-"              Unterstützt die Grafikhardware evtl. kein Xv?!\n"
-
-#: src/video_out/video_out_xxmc.c:2329
-#, c-format
-msgid ""
-"video_out_xxmc: using Xv port %ld from adaptor %s for hardware colorspace "
-"conversion and scaling.\n"
-msgstr ""
-"video_out_xxmc: Benutze Xv-Port %ld von Adapter %s for Hardware-"
-"Farbraumtransformation und Skalierung.\n"
-
-#: src/video_out/video_out_xxmc.c:2505
-msgid "video_out_xxmc: this adaptor supports the yv12 format.\n"
-msgstr "video_out_xxmc: Adapter unterstützt YV12 Format.\n"
-
-#: src/video_out/video_out_xxmc.c:2510
-msgid "video_out_xxmc: this adaptor supports the yuy2 format.\n"
-msgstr "video_out_xxmc: Adapter unterstützt YUY2 Format.\n"
-
-#: src/video_out/video_out_xxmc.c:2539
+#: src/video_out/video_out_xxmc.c:2540
 msgid "Make XvMC allocate more frames for better buffering."
 msgstr "XvMC belegt zur besseren Pufferung mehr Bildspeicher."
 
-#: src/video_out/video_out_xxmc.c:2540
+#: src/video_out/video_out_xxmc.c:2541
 msgid ""
 "Some XvMC implementations allow more than 8 frames.\n"
 "This option, when turned on, makes the driver try to\n"
@@ -4759,11 +4611,11 @@ msgstr ""
 "Diese Option, wenn ausgewählt, veranlasst den Treiber 15\n"
 "Bilder zu belegen. Ein Muß für Unichrome oder live VDR.\n"
 
-#: src/video_out/video_out_xxmc.c:2546
+#: src/video_out/video_out_xxmc.c:2547
 msgid "Unichrome cpu save"
 msgstr "Unichrome Prozessorschoner"
 
-#: src/video_out/video_out_xxmc.c:2547
+#: src/video_out/video_out_xxmc.c:2548
 msgid ""
 "Saves CPU time by sleeping while decoder works.\n"
 "Only for Linux kernel 2.6 series or 2.4 with multimedia patch.\n"
@@ -4774,11 +4626,11 @@ msgstr ""
 "Patch.\n"
 "Experimentell.\n"
 
-#: src/video_out/video_out_xxmc.c:2553
+#: src/video_out/video_out_xxmc.c:2554
 msgid "Fix buggy NVIDIA XvMC subpicture colors"
 msgstr "Behebe NVIDIA XvMV Subpicture-Farbfehler"
 
-#: src/video_out/video_out_xxmc.c:2554
+#: src/video_out/video_out_xxmc.c:2555
 msgid ""
 "There's a bug in NVIDIA's XvMC lib that makes red OSD colors\n"
 "look blue and vice versa. This option provides a workaround.\n"
@@ -4787,11 +4639,11 @@ msgstr ""
 "blau darstellt und umgekehrt. Diese Option liefert eine provisorische "
 "Lösung.\n"
 
-#: src/video_out/video_out_xxmc.c:2559
+#: src/video_out/video_out_xxmc.c:2560
 msgid "Use bob as accelerated deinterlace method."
 msgstr "Benutze BOB als beschleunigte Deinterlacingmethode."
 
-#: src/video_out/video_out_xxmc.c:2560
+#: src/video_out/video_out_xxmc.c:2561
 msgid ""
 "When interlacing is enabled for hardware accelerated frames,\n"
 "Alternate between top and bottom field at double the frame rate.\n"
@@ -5075,12 +4927,12 @@ msgstr ""
 "info_helper: Nichtunterstützte Konvertierung %s -> UTF-8, keine "
 "Konvertierung durchgeführt\n"
 
-#: src/xine-engine/input_cache.c:167
+#: src/xine-engine/input_cache.c:171
 #, c-format
 msgid ": open() function should never be called\n"
 msgstr ": open()-Funktion sollte niemals aufgerufen werden\n"
 
-#: src/xine-engine/input_cache.c:349
+#: src/xine-engine/input_cache.c:353
 #, c-format
 msgid ": input plugin not defined!\n"
 msgstr ": Input-Plugin nicht definiert!\n"
@@ -5878,6 +5730,193 @@ msgstr ""
 #: src/xine-utils/memcpy.c:507
 msgid "Benchmarking memcpy methods (smaller is better):\n"
 msgstr "Geschwindigkeitsvergleich der memcpy-Methoden (klein ist besser):\n"
+
+#~ msgid ""
+#~ "video_out_xcbshm: %s: allocating image\n"
+#~ "video_out_xcbshm: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xcbshm: %s: Belege Bild\n"
+#~ "video_out_xcbshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+
+#~ msgid ""
+#~ "video_out_xcbshm: shared memory error (address error) when allocating "
+#~ "image \n"
+#~ "video_out_xcbshm: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xcbshm: Shared-Memory-Fehler (Adressfehler) beim Belegen des "
+#~ "Bilds\n"
+#~ "video_out_xcbshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+
+#~ msgid ""
+#~ "video_out_xcbshm: x11 error during shared memory XImage creation\n"
+#~ "video_out_xcbshm: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xcbshm: X11-Fehler bei Shared-Memory-XImage-Erstellung\n"
+#~ "video_out_xcbshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+
+#~ msgid ""
+#~ "video_out_xcbshm: MIT shared memory extension not present on display.\n"
+#~ msgstr ""
+#~ "video_out_xcbshm: MIT-Shared-Memory-Erweiterung für Anzeige nicht "
+#~ "vorhanden.\n"
+
+#~ msgid "video_out_xcbshm: your video mode was not recognized, sorry :-(\n"
+#~ msgstr ""
+#~ "video_out_xcbshm: Der Videomodus wurde nicht erkannt, Entschuldigung :-(\n"
+
+#~ msgid ""
+#~ "video_out_xcbxv: XvShmCreateImage returned a zero size\n"
+#~ "video_out_xcbxv: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xcbv: XvShmCreateImage lieferte Größe 0 zurück\n"
+#~ "video_out_xcbv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+
+#~ msgid ""
+#~ "video_out_xcbxv: shared memory error in shmget: %s\n"
+#~ "video_out_xcbxv: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xcbxv: Shared-Memory-Fehler bei shmget: %s\n"
+#~ "video_out_xcbxv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+
+#~ msgid ""
+#~ "video_out_xcbxv: x11 error during shared memory XImage creation\n"
+#~ "video_out_xcbxv: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xcbxv: X11-Fehler bei Shared-Memory-XImage-Erstellung\n"
+#~ "video_out_xcbxv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+
+#~ msgid "video_out_xcbxv: Xv extension not present.\n"
+#~ msgstr "video_out_xcbxv: Xv-Erweiterung nicht vorhanden.\n"
+
+#~ msgid ""
+#~ "video_out_xcbxv: Xv extension is present but I couldn't find a usable "
+#~ "yuv12 port.\n"
+#~ "                 Looks like your graphics hardware driver doesn't support "
+#~ "Xv?!\n"
+#~ msgstr ""
+#~ "video_out_xcbxv: Xv-Erweiterung ist vorhanden, aber es wurde kein "
+#~ "benutzbarer YUV12-Port gefunden.\n"
+#~ "              Unterstützt die Grafikhardware evtl. kein Xv?!\n"
+
+#~ msgid ""
+#~ "video_out_xcbxv: using Xv port %d from adaptor %s for hardware colorspace "
+#~ "conversion and scaling.\n"
+#~ msgstr ""
+#~ "video_out_xcbxv: Benutze Xv-Port %d von Adapter %s for Hardware-"
+#~ "Farbraumtransformation und Skalierung.\n"
+
+#~ msgid "video_out_xcbxv: this adaptor supports the yv12 format.\n"
+#~ msgstr "video_out_xcbxv: Adapter unterstützt YV12 Format.\n"
+
+#~ msgid "video_out_xcbxv: this adaptor supports the yuy2 format.\n"
+#~ msgstr "video_out_xcbxv: Adapter unterstützt YUY2 Format.\n"
+
+#~ msgid ""
+#~ "video_out_xshm: shared memory error when allocating image\n"
+#~ "video_out_xshm: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xshm: Shared-Memory-Fehler beim Speicherbelegen\n"
+#~ "video_out_xshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+
+#~ msgid ""
+#~ "video_out_xshm: %s: allocating image\n"
+#~ "video_out_xshm: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xshm: %s: Belege Bild\n"
+#~ "video_out_xshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+
+#~ msgid ""
+#~ "video_out_xshm: x11 error during shared memory XImage creation\n"
+#~ "video_out_xshm: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xshm: X11-Fehler bei Shared-Memory-XImage-Erstellung\n"
+#~ "video_out_xshm: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+
+#~ msgid "video_out_xshm: your video mode was not recognized, sorry :-(\n"
+#~ msgstr ""
+#~ "video_out_xshm: Der Videomodus wurde nicht erkannt, Entschuldigung :-(\n"
+
+#~ msgid ""
+#~ "video_out_xv: XvShmCreateImage failed\n"
+#~ "video_out_xv: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xv: XvShmCreateImage schlug fehl\n"
+#~ "video_out_xv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+
+#~ msgid ""
+#~ "video_out_xv: XvShmCreateImage returned a zero size\n"
+#~ "video_out_xv: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xv: XvShmCreateImage lieferte Größe 0 zurück\n"
+#~ "video_out_xv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+
+#~ msgid ""
+#~ "video_out_xv: shared memory error in shmget: %s\n"
+#~ "video_out_xv: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xv: Shared-Memory-Fehler bei shmget: %s\n"
+#~ "video_out_xv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+
+#~ msgid ""
+#~ "video_out_xv: x11 error during shared memory XImage creation\n"
+#~ "video_out_xv: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xv: X11-Fehler bei Shared-Memory-XImage-Erstellung\n"
+#~ "video_out_xv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+
+#~ msgid ""
+#~ "video_out_xxmc: XvShmCreateImage failed\n"
+#~ "video_out_xxmc: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xxmc: XvShmCreateImage schlug fehl\n"
+#~ "video_out_xxmc: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+
+#~ msgid ""
+#~ "video_out_xxmc: XvShmCreateImage returned a zero size\n"
+#~ "video_out_xxmc: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xv: XvShmCreateImage lieferte Größe 0 zurück\n"
+#~ "video_out_xv: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+
+#~ msgid ""
+#~ "video_out_xxmc: shared memory error in shmget: %s\n"
+#~ "video_out_xxmc: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xxmc: Shared-Memory-Fehler bei shmget: %s\n"
+#~ "video_out_xxmc: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+
+#~ msgid ""
+#~ "video_out_xxmc: x11 error during shared memory XImage creation\n"
+#~ "video_out_xxmc: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xxmc: X11-Fehler bei Shared-Memory-XImage-Erstellung\n"
+#~ "video_out_xxmc: => MIT-Shared-Memory-Erweiterung wird nicht genutzt.\n"
+
+#~ msgid "video_out_xxmc: Xv extension not present.\n"
+#~ msgstr "video_out_xxmc: Xv-Erweiterung nicht vorhanden.\n"
+
+#~ msgid ""
+#~ "video_out_xxmc: Xv extension is present but I couldn't find a usable "
+#~ "yuv12 port.\n"
+#~ "              Looks like your graphics hardware driver doesn't support "
+#~ "Xv?!\n"
+#~ msgstr ""
+#~ "video_out_xxmc: Xv-Erweiterung ist vorhanden, aber es wurde kein "
+#~ "benutzparer YUV12-Port gefunden.\n"
+#~ "              Unterstützt die Grafikhardware evtl. kein Xv?!\n"
+
+#~ msgid ""
+#~ "video_out_xxmc: using Xv port %ld from adaptor %s for hardware colorspace "
+#~ "conversion and scaling.\n"
+#~ msgstr ""
+#~ "video_out_xxmc: Benutze Xv-Port %ld von Adapter %s for Hardware-"
+#~ "Farbraumtransformation und Skalierung.\n"
+
+#~ msgid "video_out_xxmc: this adaptor supports the yv12 format.\n"
+#~ msgstr "video_out_xxmc: Adapter unterstützt YV12 Format.\n"
+
+#~ msgid "video_out_xxmc: this adaptor supports the yuy2 format.\n"
+#~ msgstr "video_out_xxmc: Adapter unterstützt YUY2 Format.\n"
 
 #~ msgid "CDDB cache directory"
 #~ msgstr "CDDB Cacheverzeichnis"

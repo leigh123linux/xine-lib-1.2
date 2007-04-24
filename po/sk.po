@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib 1.0\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-04-15 23:56+0200\n"
+"POT-Creation-Date: 2007-04-24 21:48+0100\n"
 "PO-Revision-Date: 2004-09-15 13:53+0100\n"
 "Last-Translator: \n"
 "Language-Team: Slovak <ski18n@lists.isternet.sk>\n"
@@ -2387,7 +2387,7 @@ msgid ""
 "2048: Debugging from VCDINFO\n"
 msgstr ""
 
-#: src/liba52/xine_a52_decoder.c:742 src/libdts/xine_dts_decoder.c:546
+#: src/liba52/xine_a52_decoder.c:742 src/libxineadec/xine_dts_decoder.c:524
 msgid "HELP! a mono-only audio driver?!\n"
 msgstr "POMOC! iba mono audio ovládač?!\n"
 
@@ -2550,21 +2550,21 @@ msgstr "Dxr3enc: Maximálny kvantizér"
 msgid "The maximum compression to apply to an image in constant quality mode."
 msgstr ""
 
-#: src/libxineadec/xine_musepack_decoder.c:237
+#: src/libxineadec/xine_musepack_decoder.c:249
 #, c-format
 msgid "libmusepack: mpc_streaminfo_read failed: %d\n"
 msgstr ""
 
-#: src/libxineadec/xine_musepack_decoder.c:311
+#: src/libxineadec/xine_musepack_decoder.c:323
 msgid "libmusepack: data after last frame ignored\n"
 msgstr ""
 
-#: src/libxineadec/xine_musepack_decoder.c:322
+#: src/libxineadec/xine_musepack_decoder.c:334
 msgid "libmusepack: mpc_decoder_initialise failed\n"
 msgstr ""
 
-#: src/libxineadec/xine_musepack_decoder.c:342
-#: src/libxineadec/xine_musepack_decoder.c:357
+#: src/libxineadec/xine_musepack_decoder.c:354
+#: src/libxineadec/xine_musepack_decoder.c:369
 #, c-format
 msgid "libmusepack: mpc_decoder_decode failed: %d\n"
 msgstr ""
@@ -3588,8 +3588,8 @@ msgid ""
 msgstr ""
 
 #: src/video_out/video_out_opengl.c:1918 src/video_out/video_out_vidix.c:1015
-#: src/video_out/video_out_xcbxv.c:1470 src/video_out/video_out_xv.c:1484
-#: src/video_out/video_out_xvmc.c:1461 src/video_out/video_out_xxmc.c:2464
+#: src/video_out/video_out_xcbxv.c:1476 src/video_out/video_out_xv.c:1489
+#: src/video_out/video_out_xvmc.c:1461 src/video_out/video_out_xxmc.c:2465
 msgid "enable double buffering"
 msgstr ""
 
@@ -3672,9 +3672,9 @@ msgstr ""
 msgid "video_out_pgx64: Error: ioctl failed (FBIOGATTR)\n"
 msgstr "video_out_pgx64: Chyba: nedostatočná veľkosť video pamäte\n"
 
-#: src/video_out/video_out_pgx64.c:1464 src/video_out/video_out_xcbxv.c:1437
-#: src/video_out/video_out_xv.c:1451 src/video_out/video_out_xvmc.c:1446
-#: src/video_out/video_out_xxmc.c:2431
+#: src/video_out/video_out_pgx64.c:1464 src/video_out/video_out_xcbxv.c:1443
+#: src/video_out/video_out_xv.c:1456 src/video_out/video_out_xvmc.c:1446
+#: src/video_out/video_out_xxmc.c:2432
 #, fuzzy
 msgid "video overlay colour key"
 msgstr "Dx3: hodnota kľúčovej farby prekrývánia"
@@ -3833,9 +3833,9 @@ msgstr ""
 msgid "The intensity of the blue colour components."
 msgstr ""
 
-#: src/video_out/video_out_vidix.c:1016 src/video_out/video_out_xcbxv.c:1471
-#: src/video_out/video_out_xv.c:1485 src/video_out/video_out_xvmc.c:1462
-#: src/video_out/video_out_xxmc.c:2465
+#: src/video_out/video_out_vidix.c:1016 src/video_out/video_out_xcbxv.c:1477
+#: src/video_out/video_out_xv.c:1490 src/video_out/video_out_xvmc.c:1462
+#: src/video_out/video_out_xxmc.c:2466
 msgid ""
 "Double buffering will synchronize the update of the video image to the "
 "repainting of the entire screen (\"vertical retrace\"). This eliminates "
@@ -3869,9 +3869,9 @@ msgid "video overlay colour key red component"
 msgstr "rozsah kľúčovej farby prekrývánia"
 
 #: src/video_out/video_out_vidix.c:1159 src/video_out/video_out_vidix.c:1166
-#: src/video_out/video_out_vidix.c:1173 src/video_out/video_out_xcbxv.c:1438
-#: src/video_out/video_out_xv.c:1452 src/video_out/video_out_xvmc.c:1447
-#: src/video_out/video_out_xxmc.c:2432
+#: src/video_out/video_out_vidix.c:1173 src/video_out/video_out_xcbxv.c:1444
+#: src/video_out/video_out_xv.c:1457 src/video_out/video_out_xvmc.c:1447
+#: src/video_out/video_out_xxmc.c:2433
 msgid ""
 "The colour key is used to tell the graphics card where to overlay the video "
 "image. Try different values, if you experience windows becoming transparent."
@@ -3895,35 +3895,40 @@ msgstr "výstupný video modul xine použitím libvidix pre x11"
 msgid "xine video output plugin using libvidix for linux frame buffer"
 msgstr "výstupný video modul xine použitím libvidix pre linux frame buffer"
 
-#: src/video_out/video_out_xcbshm.c:157
-#, fuzzy, c-format
-msgid ""
-"video_out_xcbshm: %s: allocating image\n"
-"video_out_xcbshm: => not using MIT Shared Memory extension.\n"
+#: src/video_out/video_out_xcbshm.c:157 src/video_out/video_out_xshm.c:219
+#, c-format
+msgid "%s: %s: allocating image\n"
 msgstr ""
-"video_out_xshm: %s: alokácia obrazu\n"
-"video_out_xshm: => nepoužívam rozšírenie MIT Shared Memory.\n"
 
-#: src/video_out/video_out_xcbshm.c:166
-#, fuzzy
-msgid ""
-"video_out_xcbshm: shared memory error (address error) when allocating "
-"image \n"
-"video_out_xcbshm: => not using MIT Shared Memory extension.\n"
+#: src/video_out/video_out_xcbshm.c:159 src/video_out/video_out_xcbshm.c:169
+#: src/video_out/video_out_xcbshm.c:181 src/video_out/video_out_xcbxv.c:272
+#: src/video_out/video_out_xcbxv.c:282 src/video_out/video_out_xcbxv.c:292
+#: src/video_out/video_out_xcbxv.c:304 src/video_out/video_out_xshm.c:204
+#: src/video_out/video_out_xshm.c:221 src/video_out/video_out_xshm.c:232
+#: src/video_out/video_out_xshm.c:251 src/video_out/video_out_xv.c:296
+#: src/video_out/video_out_xv.c:307 src/video_out/video_out_xv.c:316
+#: src/video_out/video_out_xv.c:352 src/video_out/video_out_xxmc.c:648
+#: src/video_out/video_out_xxmc.c:659 src/video_out/video_out_xxmc.c:668
+#: src/video_out/video_out_xxmc.c:704
+#, fuzzy, c-format
+msgid "%s: => not using MIT Shared Memory extension.\n"
+msgstr "výstupný video xine modul použitím rozšírenia zdielanej pamäte MIT X"
+
+#: src/video_out/video_out_xcbshm.c:167 src/video_out/video_out_xshm.c:230
+#, fuzzy, c-format
+msgid "%s: shared memory error (address error) when allocating image \n"
 msgstr ""
 "video_out_xshm: chyba dielanej pamäte (chyba adresy) pri alokácii obrazu\n"
 "video_out_xshm: => nepoužívam rozšírenie MIT Shared Memory.\n"
 
-#: src/video_out/video_out_xcbshm.c:177
-#, fuzzy
-msgid ""
-"video_out_xcbshm: x11 error during shared memory XImage creation\n"
-"video_out_xcbshm: => not using MIT Shared Memory extension.\n"
+#: src/video_out/video_out_xcbshm.c:179 src/video_out/video_out_xcbxv.c:302
+#: src/video_out/video_out_xshm.c:249 src/video_out/video_out_xv.c:350
+#: src/video_out/video_out_xxmc.c:702
+#, c-format
+msgid "%s: x11 error during shared memory XImage creation\n"
 msgstr ""
-"video_out_xshm: x11 chyba pri vytváraní zdielanej pamäte XImage\n"
-"video_out_xshm: => nepoužívam rozšírenie MIT Shared Memory.\n"
 
-#: src/video_out/video_out_xcbshm.c:1100 src/video_out/video_out_xshm.c:1157
+#: src/video_out/video_out_xcbshm.c:1103 src/video_out/video_out_xshm.c:1161
 #, c-format
 msgid ""
 "\n"
@@ -3938,94 +3943,84 @@ msgstr ""
 "je doporučená hĺbka 16 bit/bod!\n"
 "\n"
 
-#: src/video_out/video_out_xcbshm.c:1113
-#, fuzzy
-msgid "video_out_xcbshm: MIT shared memory extension not present on display.\n"
+#: src/video_out/video_out_xcbshm.c:1116 src/video_out/video_out_xshm.c:1174
+#, fuzzy, c-format
+msgid "%s: MIT shared memory extension not present on display.\n"
 msgstr ""
 "video_out_xshm: rozšírenie zdielanej pamäte MIT neprítomné na obrazovke.\n"
 
-#: src/video_out/video_out_xcbshm.c:1212
-#, fuzzy
-msgid "video_out_xcbshm: your video mode was not recognized, sorry :-(\n"
-msgstr "video_out_xshm: váš video mód nebol rozoznaný, prepáčte :-(\n"
+#: src/video_out/video_out_xcbshm.c:1215 src/video_out/video_out_xshm.c:1258
+#, fuzzy, c-format
+msgid "%s: your video mode was not recognized, sorry :-(\n"
+msgstr "video_out_fb: Váš video mód nebol rozpoznaný, prepáčte.\n"
 
-#: src/video_out/video_out_xcbshm.c:1242 src/video_out/video_out_xshm.c:1303
+#: src/video_out/video_out_xcbshm.c:1245 src/video_out/video_out_xshm.c:1307
 msgid "xine video output plugin using the MIT X shared memory extension"
 msgstr "výstupný video xine modul použitím rozšírenia zdielanej pamäte MIT X"
 
-#: src/video_out/video_out_xcbxv.c:270
-#, fuzzy
-msgid ""
-"video_out_xcbxv: XvShmCreateImage returned a zero size\n"
-"video_out_xcbxv: => not using MIT Shared Memory extension.\n"
+#: src/video_out/video_out_xcbxv.c:270 src/video_out/video_out_xv.c:305
+#: src/video_out/video_out_xxmc.c:657
+#, c-format
+msgid "%s: XvShmCreateImage returned a zero size\n"
 msgstr ""
-"video_out_xv: XvShmCreateImage vrátila nulovú veľkosť\n"
-"video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
 
-#: src/video_out/video_out_xcbxv.c:279
+#: src/video_out/video_out_xcbxv.c:280 src/video_out/video_out_xv.c:314
+#: src/video_out/video_out_xxmc.c:666
+#, c-format
+msgid "%s: shared memory error in shmget: %s\n"
+msgstr ""
+
+#: src/video_out/video_out_xcbxv.c:290
+#, c-format
+msgid "%s: shared memory error (address error)\n"
+msgstr ""
+
+#: src/video_out/video_out_xcbxv.c:1294 src/video_out/video_out_xv.c:1301
+#: src/video_out/video_out_xxmc.c:2283
 #, fuzzy, c-format
-msgid ""
-"video_out_xcbxv: shared memory error in shmget: %s\n"
-"video_out_xcbxv: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xv: chyba zdielanej pamäte v shmget: %s\n"
-"video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
-
-#: src/video_out/video_out_xcbxv.c:298
-#, fuzzy
-msgid ""
-"video_out_xcbxv: x11 error during shared memory XImage creation\n"
-"video_out_xcbxv: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xv: x11 chyba pri vytváraní zdielanej pamäte XImage\n"
-"video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
-
-#: src/video_out/video_out_xcbxv.c:1289
-#, fuzzy
-msgid "video_out_xcbxv: Xv extension not present.\n"
+msgid "%s: Xv extension not present.\n"
 msgstr "video_out_xv: Xv rozšírenie neprítomné.\n"
 
-#: src/video_out/video_out_xcbxv.c:1331
-#, fuzzy
+#: src/video_out/video_out_xcbxv.c:1336 src/video_out/video_out_xv.c:1338
+#: src/video_out/video_out_xxmc.c:2320
+#, fuzzy, c-format
 msgid ""
-"video_out_xcbxv: Xv extension is present but I couldn't find a usable yuv12 "
-"port.\n"
-"                 Looks like your graphics hardware driver doesn't support "
-"Xv?!\n"
+"%s: Xv extension is present but I couldn't find a usable yuv12 port.\n"
+"\tLooks like your graphics hardware driver doesn't support Xv?!\n"
 msgstr ""
 "video_out_xv: rozšírenie Xv je prítomné, ale nenašiel som použiteľný yuv12 "
 "port.\n"
 "              Vyzerá to tak, že vaša grafická karta nepodoruje Xv?!\n"
 
-#: src/video_out/video_out_xcbxv.c:1339
+#: src/video_out/video_out_xcbxv.c:1345
 #, fuzzy, c-format
 msgid ""
-"video_out_xcbxv: using Xv port %d from adaptor %s for hardware colorspace "
-"conversion and scaling.\n"
+"%s: using Xv port %d from adaptor %s for hardware colorspace conversion and "
+"scaling.\n"
 msgstr ""
 "video_out_xv: používam Xv port %ld z adaptéru %s pre hardvérovú konverziu "
 "farebného priestoru a škálovania.\n"
 
-#: src/video_out/video_out_xcbxv.c:1446 src/video_out/video_out_xv.c:1460
-#: src/video_out/video_out_xvmc.c:1455 src/video_out/video_out_xxmc.c:2440
+#: src/video_out/video_out_xcbxv.c:1452 src/video_out/video_out_xv.c:1465
+#: src/video_out/video_out_xvmc.c:1455 src/video_out/video_out_xxmc.c:2441
 #, fuzzy
 msgid "autopaint colour key"
 msgstr "Donútiť Xv automaticky kresliť svojou kľúčovou farbou"
 
-#: src/video_out/video_out_xcbxv.c:1447 src/video_out/video_out_xv.c:1461
-#: src/video_out/video_out_xvmc.c:1456 src/video_out/video_out_xxmc.c:2441
+#: src/video_out/video_out_xcbxv.c:1453 src/video_out/video_out_xv.c:1466
+#: src/video_out/video_out_xvmc.c:1456 src/video_out/video_out_xxmc.c:2442
 #, fuzzy
 msgid "Make Xv autopaint its colorkey."
 msgstr "Donútiť Xv automaticky kresliť svojou kľúčovou farbou"
 
-#: src/video_out/video_out_xcbxv.c:1454 src/video_out/video_out_xv.c:1468
-#: src/video_out/video_out_xxmc.c:2448
+#: src/video_out/video_out_xcbxv.c:1460 src/video_out/video_out_xv.c:1473
+#: src/video_out/video_out_xxmc.c:2449
 #, fuzzy
 msgid "bilinear scaling mode"
 msgstr "bilinearny škálovací mód (permedia 2/3)"
 
-#: src/video_out/video_out_xcbxv.c:1455 src/video_out/video_out_xv.c:1469
-#: src/video_out/video_out_xxmc.c:2449
+#: src/video_out/video_out_xcbxv.c:1461 src/video_out/video_out_xv.c:1474
+#: src/video_out/video_out_xxmc.c:2450
 msgid ""
 "Selects the bilinear scaling mode for Permedia cards. The individual values "
 "are:\n"
@@ -4040,32 +4035,34 @@ msgid ""
 "2 - enable full bilinear filtering"
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:1507
-#, fuzzy
-msgid "video_out_xcbxv: this adaptor supports the yv12 format.\n"
+#: src/video_out/video_out_xcbxv.c:1513 src/video_out/video_out_xv.c:1523
+#: src/video_out/video_out_xxmc.c:2506
+#, fuzzy, c-format
+msgid "%s: this adaptor supports the yv12 format.\n"
 msgstr "video_out_xv: tento adaptér podporuje yv12 formát.\n"
 
-#: src/video_out/video_out_xcbxv.c:1512
-#, fuzzy
-msgid "video_out_xcbxv: this adaptor supports the yuy2 format.\n"
+#: src/video_out/video_out_xcbxv.c:1518 src/video_out/video_out_xv.c:1528
+#: src/video_out/video_out_xxmc.c:2511
+#, fuzzy, c-format
+msgid "%s: this adaptor supports the yuy2 format.\n"
 msgstr "video_out_xv: tento adaptér podporuje yuy2 formát.\n"
 
-#: src/video_out/video_out_xcbxv.c:1520 src/video_out/video_out_xv.c:1545
-#: src/video_out/video_out_xxmc.c:2533
+#: src/video_out/video_out_xcbxv.c:1526 src/video_out/video_out_xv.c:1550
+#: src/video_out/video_out_xxmc.c:2534
 msgid "pitch alignment workaround"
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:1521 src/video_out/video_out_xv.c:1546
-#: src/video_out/video_out_xxmc.c:2534
+#: src/video_out/video_out_xcbxv.c:1527 src/video_out/video_out_xv.c:1551
+#: src/video_out/video_out_xxmc.c:2535
 msgid "Some buggy video drivers need a workaround to function properly."
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:1527 src/video_out/video_out_xv.c:1552
+#: src/video_out/video_out_xcbxv.c:1533 src/video_out/video_out_xv.c:1557
 #: src/video_out/video_out_xvmc.c:1524
 msgid "deinterlace method (deprecated)"
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:1528 src/video_out/video_out_xv.c:1553
+#: src/video_out/video_out_xcbxv.c:1534 src/video_out/video_out_xv.c:1558
 #: src/video_out/video_out_xvmc.c:1525
 msgid ""
 "This config setting is deprecated. You should use the new deinterlacing post "
@@ -4104,116 +4101,29 @@ msgid ""
 "with medium CPU usage."
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:1582 src/video_out/video_out_xv.c:1626
-#: src/video_out/video_out_xxmc.c:2614
+#: src/video_out/video_out_xcbxv.c:1588 src/video_out/video_out_xv.c:1631
+#: src/video_out/video_out_xxmc.c:2615
 msgid "xine video output plugin using the MIT X video extension"
 msgstr "výstupný video xine modul použitím MIT X video rozšírenia"
 
 #: src/video_out/video_out_xshm.c:202
-msgid ""
-"video_out_xshm: shared memory error when allocating image\n"
-"video_out_xshm: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xshm: chyba dielanej pamäte pri alokácii obrazu\n"
-"video_out_xshm: => nepoužívam rozšírenie MIT Shared Memory.\n"
-
-#: src/video_out/video_out_xshm.c:218
 #, c-format
-msgid ""
-"video_out_xshm: %s: allocating image\n"
-"video_out_xshm: => not using MIT Shared Memory extension.\n"
+msgid "%s: shared memory error when allocating image\n"
 msgstr ""
-"video_out_xshm: %s: alokácia obrazu\n"
-"video_out_xshm: => nepoužívam rozšírenie MIT Shared Memory.\n"
 
-#: src/video_out/video_out_xshm.c:228
-msgid ""
-"video_out_xshm: shared memory error (address error) when allocating image \n"
-"video_out_xshm: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xshm: chyba dielanej pamäte (chyba adresy) pri alokácii obrazu\n"
-"video_out_xshm: => nepoužívam rozšírenie MIT Shared Memory.\n"
-
-#: src/video_out/video_out_xshm.c:245
-msgid ""
-"video_out_xshm: x11 error during shared memory XImage creation\n"
-"video_out_xshm: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xshm: x11 chyba pri vytváraní zdielanej pamäte XImage\n"
-"video_out_xshm: => nepoužívam rozšírenie MIT Shared Memory.\n"
-
-#: src/video_out/video_out_xshm.c:1170
-msgid "video_out_xshm: MIT shared memory extension not present on display.\n"
-msgstr ""
-"video_out_xshm: rozšírenie zdielanej pamäte MIT neprítomné na obrazovke.\n"
-
-#: src/video_out/video_out_xshm.c:1254
-msgid "video_out_xshm: your video mode was not recognized, sorry :-(\n"
-msgstr "video_out_xshm: váš video mód nebol rozoznaný, prepáčte :-(\n"
-
-#: src/video_out/video_out_xv.c:294
-msgid ""
-"video_out_xv: XvShmCreateImage failed\n"
-"video_out_xv: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xv: XvShmCreateImage zlyhala\n"
-"video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
-
-#: src/video_out/video_out_xv.c:304
-msgid ""
-"video_out_xv: XvShmCreateImage returned a zero size\n"
-"video_out_xv: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xv: XvShmCreateImage vrátila nulovú veľkosť\n"
-"video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
-
-#: src/video_out/video_out_xv.c:312
+#: src/video_out/video_out_xv.c:294 src/video_out/video_out_xxmc.c:646
 #, c-format
-msgid ""
-"video_out_xv: shared memory error in shmget: %s\n"
-"video_out_xv: => not using MIT Shared Memory extension.\n"
+msgid "%s: XvShmCreateImage failed\n"
 msgstr ""
-"video_out_xv: chyba zdielanej pamäte v shmget: %s\n"
-"video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
 
-#: src/video_out/video_out_xv.c:344
+#: src/video_out/video_out_xv.c:1348 src/video_out/video_out_xxmc.c:2330
+#, fuzzy, c-format
 msgid ""
-"video_out_xv: x11 error during shared memory XImage creation\n"
-"video_out_xv: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xv: x11 chyba pri vytváraní zdielanej pamäte XImage\n"
-"video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
-
-#: src/video_out/video_out_xv.c:1297
-msgid "video_out_xv: Xv extension not present.\n"
-msgstr "video_out_xv: Xv rozšírenie neprítomné.\n"
-
-#: src/video_out/video_out_xv.c:1334
-msgid ""
-"video_out_xv: Xv extension is present but I couldn't find a usable yuv12 "
-"port.\n"
-"              Looks like your graphics hardware driver doesn't support Xv?!\n"
-msgstr ""
-"video_out_xv: rozšírenie Xv je prítomné, ale nenašiel som použiteľný yuv12 "
-"port.\n"
-"              Vyzerá to tak, že vaša grafická karta nepodoruje Xv?!\n"
-
-#: src/video_out/video_out_xv.c:1343
-#, c-format
-msgid ""
-"video_out_xv: using Xv port %ld from adaptor %s for hardware colorspace "
-"conversion and scaling.\n"
+"%s: using Xv port %ld from adaptor %s for hardware colorspace conversion and "
+"scaling.\n"
 msgstr ""
 "video_out_xv: používam Xv port %ld z adaptéru %s pre hardvérovú konverziu "
 "farebného priestoru a škálovania.\n"
-
-#: src/video_out/video_out_xv.c:1518
-msgid "video_out_xv: this adaptor supports the yv12 format.\n"
-msgstr "video_out_xv: tento adaptér podporuje yv12 formát.\n"
-
-#: src/video_out/video_out_xv.c:1523
-msgid "video_out_xv: this adaptor supports the yuy2 format.\n"
-msgstr "video_out_xv: tento adaptér podporuje yuy2 formát.\n"
 
 #: src/video_out/video_out_xvmc.c:1593
 msgid "xine video output plugin using the XvMC X video extension"
@@ -4257,114 +4167,43 @@ msgstr "                žiadna XvMC podpora \n"
 msgid "                With Overlay = %d; UnsignedIntra = %d.\n"
 msgstr "                S Prekrývaním = %d; UnsignedIntra = %d.\n"
 
-#: src/video_out/video_out_xxmc.c:646
-#, fuzzy
-msgid ""
-"video_out_xxmc: XvShmCreateImage failed\n"
-"video_out_xxmc: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xv: XvShmCreateImage zlyhala\n"
-"video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
-
-#: src/video_out/video_out_xxmc.c:656
-#, fuzzy
-msgid ""
-"video_out_xxmc: XvShmCreateImage returned a zero size\n"
-"video_out_xxmc: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xv: XvShmCreateImage vrátila nulovú veľkosť\n"
-"video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
-
-#: src/video_out/video_out_xxmc.c:664
-#, fuzzy, c-format
-msgid ""
-"video_out_xxmc: shared memory error in shmget: %s\n"
-"video_out_xxmc: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xv: chyba zdielanej pamäte v shmget: %s\n"
-"video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
-
-#: src/video_out/video_out_xxmc.c:696
-#, fuzzy
-msgid ""
-"video_out_xxmc: x11 error during shared memory XImage creation\n"
-"video_out_xxmc: => not using MIT Shared Memory extension.\n"
-msgstr ""
-"video_out_xshm: x11 chyba pri vytváraní zdielanej pamäte XImage\n"
-"video_out_xshm: => nepoužívam rozšírenie MIT Shared Memory.\n"
-
-#: src/video_out/video_out_xxmc.c:2283
-#, fuzzy
-msgid "video_out_xxmc: Xv extension not present.\n"
-msgstr "video_out_xvmc: XvMC rozšírenie neprítomné.\n"
-
-#: src/video_out/video_out_xxmc.c:2320
-#, fuzzy
-msgid ""
-"video_out_xxmc: Xv extension is present but I couldn't find a usable yuv12 "
-"port.\n"
-"              Looks like your graphics hardware driver doesn't support Xv?!\n"
-msgstr ""
-"video_out_xv: rozšírenie Xv je prítomné, ale nenašiel som použiteľný yuv12 "
-"port.\n"
-"              Vyzerá to tak, že vaša grafická karta nepodoruje Xv?!\n"
-
-#: src/video_out/video_out_xxmc.c:2329
-#, fuzzy, c-format
-msgid ""
-"video_out_xxmc: using Xv port %ld from adaptor %s for hardware colorspace "
-"conversion and scaling.\n"
-msgstr ""
-"video_out_xv: používam Xv port %ld z adaptéru %s pre hardvérovú konverziu "
-"farebného priestoru a škálovania.\n"
-
-#: src/video_out/video_out_xxmc.c:2505
-#, fuzzy
-msgid "video_out_xxmc: this adaptor supports the yv12 format.\n"
-msgstr "video_out_xv: tento adaptér podporuje yv12 formát.\n"
-
-#: src/video_out/video_out_xxmc.c:2510
-#, fuzzy
-msgid "video_out_xxmc: this adaptor supports the yuy2 format.\n"
-msgstr "video_out_xv: tento adaptér podporuje yuy2 formát.\n"
-
-#: src/video_out/video_out_xxmc.c:2539
+#: src/video_out/video_out_xxmc.c:2540
 msgid "Make XvMC allocate more frames for better buffering."
 msgstr ""
 
-#: src/video_out/video_out_xxmc.c:2540
+#: src/video_out/video_out_xxmc.c:2541
 msgid ""
 "Some XvMC implementations allow more than 8 frames.\n"
 "This option, when turned on, makes the driver try to\n"
 "allocate 15 frames. A must for unichrome and live VDR.\n"
 msgstr ""
 
-#: src/video_out/video_out_xxmc.c:2546
+#: src/video_out/video_out_xxmc.c:2547
 msgid "Unichrome cpu save"
 msgstr ""
 
-#: src/video_out/video_out_xxmc.c:2547
+#: src/video_out/video_out_xxmc.c:2548
 msgid ""
 "Saves CPU time by sleeping while decoder works.\n"
 "Only for Linux kernel 2.6 series or 2.4 with multimedia patch.\n"
 "Experimental.\n"
 msgstr ""
 
-#: src/video_out/video_out_xxmc.c:2553
+#: src/video_out/video_out_xxmc.c:2554
 msgid "Fix buggy NVIDIA XvMC subpicture colors"
 msgstr ""
 
-#: src/video_out/video_out_xxmc.c:2554
+#: src/video_out/video_out_xxmc.c:2555
 msgid ""
 "There's a bug in NVIDIA's XvMC lib that makes red OSD colors\n"
 "look blue and vice versa. This option provides a workaround.\n"
 msgstr ""
 
-#: src/video_out/video_out_xxmc.c:2559
+#: src/video_out/video_out_xxmc.c:2560
 msgid "Use bob as accelerated deinterlace method."
 msgstr ""
 
-#: src/video_out/video_out_xxmc.c:2560
+#: src/video_out/video_out_xxmc.c:2561
 msgid ""
 "When interlacing is enabled for hardware accelerated frames,\n"
 "Alternate between top and bottom field at double the frame rate.\n"
@@ -4597,12 +4436,12 @@ msgid ""
 "info_helper: unsupported conversion %s -> UTF-8, no conversion performed\n"
 msgstr "osd: nepodporovaná konverzia %s -> %s, nebude vykonaná žiadna\n"
 
-#: src/xine-engine/input_cache.c:167
+#: src/xine-engine/input_cache.c:171
 #, fuzzy, c-format
 msgid ": open() function should never be called\n"
 msgstr "input_rip: funkcia open() by nikdy nemala byť volaná\n"
 
-#: src/xine-engine/input_cache.c:349
+#: src/xine-engine/input_cache.c:353
 #, fuzzy, c-format
 msgid ": input plugin not defined!\n"
 msgstr "input_rip: vstupný modul nedefinovaný!\n"
@@ -5334,6 +5173,211 @@ msgstr ""
 #: src/xine-utils/memcpy.c:507
 msgid "Benchmarking memcpy methods (smaller is better):\n"
 msgstr "Testovanie výkonnosti memcpy metód (menej je lepšie):\n"
+
+#, fuzzy
+#~ msgid ""
+#~ "video_out_xcbshm: %s: allocating image\n"
+#~ "video_out_xcbshm: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xshm: %s: alokácia obrazu\n"
+#~ "video_out_xshm: => nepoužívam rozšírenie MIT Shared Memory.\n"
+
+#, fuzzy
+#~ msgid ""
+#~ "video_out_xcbshm: shared memory error (address error) when allocating "
+#~ "image \n"
+#~ "video_out_xcbshm: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xshm: chyba dielanej pamäte (chyba adresy) pri alokácii obrazu\n"
+#~ "video_out_xshm: => nepoužívam rozšírenie MIT Shared Memory.\n"
+
+#, fuzzy
+#~ msgid ""
+#~ "video_out_xcbshm: x11 error during shared memory XImage creation\n"
+#~ "video_out_xcbshm: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xshm: x11 chyba pri vytváraní zdielanej pamäte XImage\n"
+#~ "video_out_xshm: => nepoužívam rozšírenie MIT Shared Memory.\n"
+
+#, fuzzy
+#~ msgid ""
+#~ "video_out_xcbshm: MIT shared memory extension not present on display.\n"
+#~ msgstr ""
+#~ "video_out_xshm: rozšírenie zdielanej pamäte MIT neprítomné na obrazovke.\n"
+
+#, fuzzy
+#~ msgid "video_out_xcbshm: your video mode was not recognized, sorry :-(\n"
+#~ msgstr "video_out_xshm: váš video mód nebol rozoznaný, prepáčte :-(\n"
+
+#, fuzzy
+#~ msgid ""
+#~ "video_out_xcbxv: XvShmCreateImage returned a zero size\n"
+#~ "video_out_xcbxv: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xv: XvShmCreateImage vrátila nulovú veľkosť\n"
+#~ "video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
+
+#, fuzzy
+#~ msgid ""
+#~ "video_out_xcbxv: shared memory error in shmget: %s\n"
+#~ "video_out_xcbxv: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xv: chyba zdielanej pamäte v shmget: %s\n"
+#~ "video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
+
+#, fuzzy
+#~ msgid ""
+#~ "video_out_xcbxv: x11 error during shared memory XImage creation\n"
+#~ "video_out_xcbxv: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xv: x11 chyba pri vytváraní zdielanej pamäte XImage\n"
+#~ "video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
+
+#, fuzzy
+#~ msgid "video_out_xcbxv: Xv extension not present.\n"
+#~ msgstr "video_out_xv: Xv rozšírenie neprítomné.\n"
+
+#, fuzzy
+#~ msgid ""
+#~ "video_out_xcbxv: Xv extension is present but I couldn't find a usable "
+#~ "yuv12 port.\n"
+#~ "                 Looks like your graphics hardware driver doesn't support "
+#~ "Xv?!\n"
+#~ msgstr ""
+#~ "video_out_xv: rozšírenie Xv je prítomné, ale nenašiel som použiteľný "
+#~ "yuv12 port.\n"
+#~ "              Vyzerá to tak, že vaša grafická karta nepodoruje Xv?!\n"
+
+#, fuzzy
+#~ msgid ""
+#~ "video_out_xcbxv: using Xv port %d from adaptor %s for hardware colorspace "
+#~ "conversion and scaling.\n"
+#~ msgstr ""
+#~ "video_out_xv: používam Xv port %ld z adaptéru %s pre hardvérovú konverziu "
+#~ "farebného priestoru a škálovania.\n"
+
+#, fuzzy
+#~ msgid "video_out_xcbxv: this adaptor supports the yv12 format.\n"
+#~ msgstr "video_out_xv: tento adaptér podporuje yv12 formát.\n"
+
+#, fuzzy
+#~ msgid "video_out_xcbxv: this adaptor supports the yuy2 format.\n"
+#~ msgstr "video_out_xv: tento adaptér podporuje yuy2 formát.\n"
+
+#~ msgid ""
+#~ "video_out_xshm: shared memory error when allocating image\n"
+#~ "video_out_xshm: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xshm: chyba dielanej pamäte pri alokácii obrazu\n"
+#~ "video_out_xshm: => nepoužívam rozšírenie MIT Shared Memory.\n"
+
+#~ msgid ""
+#~ "video_out_xshm: %s: allocating image\n"
+#~ "video_out_xshm: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xshm: %s: alokácia obrazu\n"
+#~ "video_out_xshm: => nepoužívam rozšírenie MIT Shared Memory.\n"
+
+#~ msgid ""
+#~ "video_out_xshm: x11 error during shared memory XImage creation\n"
+#~ "video_out_xshm: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xshm: x11 chyba pri vytváraní zdielanej pamäte XImage\n"
+#~ "video_out_xshm: => nepoužívam rozšírenie MIT Shared Memory.\n"
+
+#~ msgid "video_out_xshm: your video mode was not recognized, sorry :-(\n"
+#~ msgstr "video_out_xshm: váš video mód nebol rozoznaný, prepáčte :-(\n"
+
+#~ msgid ""
+#~ "video_out_xv: XvShmCreateImage failed\n"
+#~ "video_out_xv: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xv: XvShmCreateImage zlyhala\n"
+#~ "video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
+
+#~ msgid ""
+#~ "video_out_xv: XvShmCreateImage returned a zero size\n"
+#~ "video_out_xv: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xv: XvShmCreateImage vrátila nulovú veľkosť\n"
+#~ "video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
+
+#~ msgid ""
+#~ "video_out_xv: shared memory error in shmget: %s\n"
+#~ "video_out_xv: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xv: chyba zdielanej pamäte v shmget: %s\n"
+#~ "video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
+
+#~ msgid ""
+#~ "video_out_xv: x11 error during shared memory XImage creation\n"
+#~ "video_out_xv: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xv: x11 chyba pri vytváraní zdielanej pamäte XImage\n"
+#~ "video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
+
+#, fuzzy
+#~ msgid ""
+#~ "video_out_xxmc: XvShmCreateImage failed\n"
+#~ "video_out_xxmc: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xv: XvShmCreateImage zlyhala\n"
+#~ "video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
+
+#, fuzzy
+#~ msgid ""
+#~ "video_out_xxmc: XvShmCreateImage returned a zero size\n"
+#~ "video_out_xxmc: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xv: XvShmCreateImage vrátila nulovú veľkosť\n"
+#~ "video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
+
+#, fuzzy
+#~ msgid ""
+#~ "video_out_xxmc: shared memory error in shmget: %s\n"
+#~ "video_out_xxmc: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xv: chyba zdielanej pamäte v shmget: %s\n"
+#~ "video_out_xv: => nepoužívam rozšírenie MIT Shared Memory.\n"
+
+#, fuzzy
+#~ msgid ""
+#~ "video_out_xxmc: x11 error during shared memory XImage creation\n"
+#~ "video_out_xxmc: => not using MIT Shared Memory extension.\n"
+#~ msgstr ""
+#~ "video_out_xshm: x11 chyba pri vytváraní zdielanej pamäte XImage\n"
+#~ "video_out_xshm: => nepoužívam rozšírenie MIT Shared Memory.\n"
+
+#, fuzzy
+#~ msgid "video_out_xxmc: Xv extension not present.\n"
+#~ msgstr "video_out_xvmc: XvMC rozšírenie neprítomné.\n"
+
+#, fuzzy
+#~ msgid ""
+#~ "video_out_xxmc: Xv extension is present but I couldn't find a usable "
+#~ "yuv12 port.\n"
+#~ "              Looks like your graphics hardware driver doesn't support "
+#~ "Xv?!\n"
+#~ msgstr ""
+#~ "video_out_xv: rozšírenie Xv je prítomné, ale nenašiel som použiteľný "
+#~ "yuv12 port.\n"
+#~ "              Vyzerá to tak, že vaša grafická karta nepodoruje Xv?!\n"
+
+#, fuzzy
+#~ msgid ""
+#~ "video_out_xxmc: using Xv port %ld from adaptor %s for hardware colorspace "
+#~ "conversion and scaling.\n"
+#~ msgstr ""
+#~ "video_out_xv: používam Xv port %ld z adaptéru %s pre hardvérovú konverziu "
+#~ "farebného priestoru a škálovania.\n"
+
+#, fuzzy
+#~ msgid "video_out_xxmc: this adaptor supports the yv12 format.\n"
+#~ msgstr "video_out_xv: tento adaptér podporuje yv12 formát.\n"
+
+#, fuzzy
+#~ msgid "video_out_xxmc: this adaptor supports the yuy2 format.\n"
+#~ msgstr "video_out_xv: tento adaptér podporuje yuy2 formát.\n"
 
 #, fuzzy
 #~ msgid "CDDB cache directory"
