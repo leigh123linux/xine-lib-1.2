@@ -2,6 +2,8 @@ xine-lib (1.1.7) (unreleased)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.
   * Add support for MDHD version 1 atom in demux_qt. [bug #1679398]
   * Handle single-quoted attribute values in XML.
+  * Fix default paths for RealPlayer libraries (broken in 1.1.5).
+    [Bug 1707526]
 
 xine-lib (1.1.6)
   * Split the DirectFB plugin into X11 and non-X versions.
