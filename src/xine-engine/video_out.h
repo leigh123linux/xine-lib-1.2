@@ -256,6 +256,8 @@ struct xine_video_port_s {
    the palette. This should probably be classified as a bug. */
 #define OVL_PALETTE_SIZE 256
 
+#define OVL_MAX_OPACITY  0x0f
+
 /* number of recent frames to keep in memory
    these frames are needed by some deinterlace algorithms
    FIXME: we need a method to flush the recent frames (new stream)

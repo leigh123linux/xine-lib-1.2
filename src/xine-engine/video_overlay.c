@@ -288,10 +288,18 @@ static int32_t video_overlay_add_event(video_overlay_manager_t *this_gen,  void 
     }
     
     if( event->object.overlay ) {
+      int i;
+      for(i = 0; i < OVL_PALETTE_SIZE; i++) {
+	if(event->object.overlay->trans[i] >= OVL_MAX_OPACITY)
+	  event->object.overlay->trans[i] = OVL_MAX_OPACITY;
+	if(event->object.overlay->hili_trans[i] >= OVL_MAX_OPACITY)
+	  event->object.overlay->hili_trans[i] = OVL_MAX_OPACITY;
+      }
+
       this->events[new_event].event->object.overlay = xine_xmalloc (sizeof(vo_overlay_t));
       xine_fast_memcpy(this->events[new_event].event->object.overlay, 
            event->object.overlay, sizeof(vo_overlay_t));
-    
+
       /* We took the callers rle and data, therefore it will be our job to free it */
       /* clear callers overlay so it will not be freed twice */
       memset(event->object.overlay,0,sizeof(vo_overlay_t));
