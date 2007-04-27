@@ -1958,7 +1958,7 @@ elif test "x$external_libdts" = "xyes"; then
   fi
 else
   AC_MSG_RESULT([Use included libdts support])
-  LIBDTS_CFLAGS='-I$(top_srcdir)/contrib/libdca'
+  LIBDTS_CFLAGS='-I$(top_srcdir)/contrib/libdca/include'
   LIBDTS_DEPS='$(top_builddir)/contrib/libdca/libdca.la'
   LIBDTS_LIBS='$(top_builddir)/contrib/libdca/libdca.la'
 fi
