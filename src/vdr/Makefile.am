@@ -13,7 +13,7 @@ xineplug_inp_vdr_la_SOURCES = input_vdr.c
 xineplug_inp_vdr_la_LIBADD = $(XINE_LIB)
 xineplug_inp_vdr_la_LDFLAGS = -avoid-version -module @IMPURE_TEXT_LDFLAGS@
 
-include_HEADERS = input_vdr.h
+xineinclude_HEADERS = input_vdr.h
 
 
 
