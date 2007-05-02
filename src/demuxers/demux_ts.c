@@ -337,7 +337,6 @@ typedef struct {
   int32_t packet_number;
   /* NEW: var to keep track of number of last read packets */
   int32_t npkt_read;
-  int32_t read_zero;
 
   uint8_t buf[BUF_SIZE]; /* == PKT_SIZE * NPKT_PER_READ */
 
@@ -1536,12 +1535,7 @@ static unsigned char * demux_synchronise(demux_ts_t* this) {
        */
 
       if (this->npkt_read == 0) {
-	/* printf ("demux_ts: read 0 packets! (%d)\n", this->read_zero); */
-	this->read_zero++;
-      } else this->read_zero = 0;
-
-      if (this->read_zero > 200) {
-	xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_ts: read 0 packets too many times!\n");
+	xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_ts: read 0 packets\n");
 	this->status = DEMUX_FINISHED;
 	return NULL;
       }
