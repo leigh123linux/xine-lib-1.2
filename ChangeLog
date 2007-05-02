@@ -1,6 +1,8 @@
 xine-lib (1.1.7) (unreleased)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.
   * Add support for MDHD version 1 atom in demux_qt. [bug #1679398]
+  * Fix proxy usage when the hostnames cannot be resolved. Thanks to Jeff
+    Mitchell for reporting and testing the fix.
 
 xine-lib (1.1.6)
   * Split the DirectFB plugin into X11 and non-X versions.
