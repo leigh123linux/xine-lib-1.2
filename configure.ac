@@ -103,7 +103,8 @@ test "$host" == "$build" && check_athlon=yes
 AC_CONFIG_HEADERS([config.h])
 
 AC_ARG_ENABLE([macosx-universal],
-             AS_HELP_STRING([--enable-macosx-universal], [build a Mac OS X univeral binary (ppc and x86)]))
+             AS_HELP_STRING([--enable-macosx-universal], [build a Mac OS X univeral binary (ppc and x86)]),
+             [], [enable_macosx_universal="no"])
 if test x"$enable_macosx_universal" != x"no" ; then
     case "$host_os" in
         *darwin*)
