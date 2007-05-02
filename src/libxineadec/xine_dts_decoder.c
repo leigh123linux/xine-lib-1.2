@@ -112,7 +112,7 @@ static inline void float_to_int (const float *const _f, int16_t *const s16, cons
   const int endidx = 256 * num_channels;
   int i, j;
 
-  for (i = 0, j = 0; i < endidx; i++, j += num_channels) {
+  for (i = 0, j = 0; j < endidx; i++, j += num_channels) {
     const float f = _f[i] * 32767;
     if (f > INT16_MAX)
       s16[j] = INT16_MAX;
