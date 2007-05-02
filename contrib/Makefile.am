@@ -49,50 +49,86 @@ disable_popular_codecs=--disable-decoder=cinepak --disable-decoder=flashsv --dis
 	--disable-decoder=wavpack --disable-decoder=wmav1 --disable-decoder=wmav2 --disable-decoder=adpcm_swf
 endif
 
+configure_options =\
+	--disable-shared --enable-static --disable-demuxers --disable-muxers --disable-strip \
+	--enable-gpl --enable-pthreads --disable-ffmpeg --disable-ffserver --disable-ffplay
+
+disable_decoders  =\
+	--disable-decoder=bmp --disable-decoder=cavs --disable-decoder=cljr --disable-decoder=dsicinvideo \
+	--disable-decoder=ffv1 --disable-decoder=ffvhuff --disable-decoder=gif --disable-decoder=mdec \
+	--disable-decoder=mpeg_xvmc --disable-decoder=mszh --disable-decoder=png --disable-decoder=rawvideo \
+	--disable-decoder=sp5x --disable-decoder=targa --disable-decoder=tiertexseqvideo --disable-decoder=tiff \
+	--disable-decoder=vmnc --disable-decoder=zlib --disable-decoder=dsicinaudio --disable-decoder=imc \
+	--disable-decoder=mp3adu --disable-decoder=mp3on4 --disable-decoder=mpc7 --disable-decoder=sonic \
+	--disable-decoder=ws_snd1 --disable-decoder=adpcm_adx --disable-decoder=adpcm_g726 --disable-decoder=dvbsub \
+	--disable-decoder=dvdsub --disable-decoder=theora --disable-decoder=aac --disable-decoder=mpeg4aac \
+	--disable-decoder=ac3 --disable-decoder=vorbis
+
+all_configure_options = $(configure_options)							\
+			--disable-encoders $(dxr3encoder)					\
+			--enable-encoders $(disable_uncommon_codecs) $(disable_popular_codecs)	\
+			$(disable_decoders)							\
+			--make="$(MAKE)"							\
+			--cc="$(CC)"
+
 ffmpeg/config.mak: $(srcdir)/ffmpeg/configure Makefile
+if MACOSX_UNIVERSAL_BINARY
+	export CFLAGS="$(VISIBILITY_FLAG)";						\
+	export FFMPEG_CONFIGURE_OPTIONS="$(all_configure_options)";			\
+	$(srcdir)/ffmpeg-universal.sh -configure "$(srcdir)/ffmpeg" $(UNIVERSAL_ARCHES)
+else
 	mkdir -p ffmpeg
 	cd ffmpeg; \
-	$(srcdir)/ffmpeg/configure \
-		--disable-shared --enable-static \
-		--disable-encoders $(dxr3encoder) \
-		--enable-encoders $(disable_uncommon_codecs) $(disable_popular_codecs) \
-		--disable-decoder=bmp --disable-decoder=cavs --disable-decoder=cljr --disable-decoder=dsicinvideo \
-		--disable-decoder=ffv1 --disable-decoder=ffvhuff --disable-decoder=gif --disable-decoder=mdec \
-		--disable-decoder=mpeg_xvmc --disable-decoder=mszh --disable-decoder=png --disable-decoder=rawvideo \
-		--disable-decoder=sp5x --disable-decoder=targa --disable-decoder=tiertexseqvideo --disable-decoder=tiff \
-		--disable-decoder=vmnc --disable-decoder=zlib --disable-decoder=dsicinaudio --disable-decoder=imc \
-		--disable-decoder=mp3adu --disable-decoder=mp3on4 --disable-decoder=mpc7 --disable-decoder=sonic \
-		--disable-decoder=ws_snd1 --disable-decoder=adpcm_adx --disable-decoder=adpcm_g726 --disable-decoder=dvbsub \
-		--disable-decoder=dvdsub --disable-decoder=theora --disable-decoder=aac --disable-decoder=mpeg4aac \
-		--disable-decoder=ac3 --disable-decoder=vorbis \
-		--disable-demuxers \
-		--disable-muxers \
-		--disable-strip \
-		--make="$(MAKE)" \
-		--cc="$(CC)" \
+	$(srcdir)/ffmpeg/configure $(all_configure_options) \
 		--extra-cflags="$(CFLAGS) $(VISIBILITY_FLAG) -fPIC -DPIC" \
-		--extra-ldflags="$(LDFLAGS)" \
-		--enable-gpl \
-		--enable-pthreads \
-		--disable-ffmpeg \
-		--disable-ffserver \
-		--disable-ffplay; \
+		--extra-ldflags="$(LDFLAGS)"; \
 	cd ..
+endif
 
 ffmpeg/libavutil/libavutil.a: ffmpeg/config.mak
+if MACOSX_UNIVERSAL_BINARY
+	export MAKE="$(MAKE)"; \
+	$(srcdir)/ffmpeg-universal.sh -avutil "$(srcdir)/ffmpeg" $(UNIVERSAL_ARCHES)
+else
 	$(MAKE) -C ffmpeg/libavutil libavutil.a
+endif
 
 ffmpeg/libavcodec/libavcodec.a: ffmpeg/config.mak
+if MACOSX_UNIVERSAL_BINARY
+	export MAKE="$(MAKE)"; \
+	$(srcdir)/ffmpeg-universal.sh -avcodec "$(srcdir)/ffmpeg" $(UNIVERSAL_ARCHES)
+else
 	$(MAKE) -C ffmpeg/libavcodec libavcodec.a
+endif
 
 ffmpeg/libpostproc/libpostproc.a: ffmpeg/config.mak
+if MACOSX_UNIVERSAL_BINARY
+	export MAKE="$(MAKE)"; \
+	$(srcdir)/ffmpeg-universal.sh -postproc "$(srcdir)/ffmpeg" $(UNIVERSAL_ARCHES)
+else
 	$(MAKE) -C ffmpeg/libpostproc libpostproc.a
+endif
 
 clean-local:
+if MACOSX_UNIVERSAL_BINARY
+	for arch in $(UNIVERSAL_ARCHES); do	\
+		$(MAKE) -C ffmpeg/$$arch clean;	\
+	done
+	rm -f ffmpeg/libavcodec/libavcodec.a ffmpeg/libavutil/libavutil.a ffmpeg/libpostproc/libpostproc.a
+else
 	-$(MAKE) -C ffmpeg clean
+endif
 
 distclean-local:
+if MACOSX_UNIVERSAL_BINARY
+	for arch in $(UNIVERSAL_ARCHES); do		\
+		$(MAKE) -C ffmpeg/$$arch distclean;	\
+	done
+	rm -f ffmpeg/config.mak ffmpeg/config.h
+	rm -f ffmpeg/libavcodec/libavcodec.a ffmpeg/libavutil/libavutil.a ffmpeg/libpostproc/libpostproc.a
+else
 	-$(MAKE) -C ffmpeg distclean
+endif
 
 EXTRA_DIST = README.contrib ffmpeg-distfiles
 

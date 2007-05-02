@@ -19,9 +19,9 @@ xinepost_LTLIBRARIES = xineplug_post_goom.la
 #AM_CPPFLAGS = -DCPU_POWERPC
 #endif
 
-if HAVE_MMX
+#if HAVE_MMX
 extra_files = mmx.c xmmx.c
-endif
+#endif
 
 xineplug_post_goom_la_SOURCES = $(extra_files) xine_goom.c \
 	config_param.c convolve_fx.c cpu_info.c drawmethods.c filters.c flying_stars_fx.c \

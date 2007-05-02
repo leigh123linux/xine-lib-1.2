@@ -102,6 +102,54 @@ test "$host" == "$build" && check_athlon=yes
 
 AC_CONFIG_HEADERS([config.h])
 
+AC_ARG_ENABLE([macosx-universal],
+             AS_HELP_STRING([--enable-macosx-universal], [build a Mac OS X univeral binary (ppc and x86)]))
+if test x"$enable_macosx_universal" != x"no" ; then
+    case "$host_os" in
+        *darwin*)
+            dnl x64_64 and ppc64 binaries could also be built, but there is no
+            dnl version of Mac OS X currently shipping that can run them, so
+            dnl do not enable them by default for now.
+            if test x"$enable_macosx_universal" = x"yes" ; then
+                UNIVERSAL_ARCHES="i386 ppc"
+            else
+                UNIVERSAL_ARCHES=`echo "$enable_macosx_universal" | sed -e 's/,/ /g'`
+            fi
+            ;;
+        *)
+            AC_MSG_ERROR([Universal binaries can only be built on Darwin])
+            ;;
+    esac
+
+    UNIVERSAL_CFLAGS="$UNIVERSAL_CFLAGS -isysroot /Developer/SDKs/MacOSX10.4u.sdk"
+    UNIVERSAL_LDFLAGS="$UNIVERSAL_LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk"
+    if test x"$UNIVERSAL_ARCHES" != x"" ; then
+        # Forcibly disable dependency tracking for Universal builds, because -M
+        # does not work with multiple -arch arguments on the gcc command-line.
+        ac_tool_warned=yes
+        cross_compiling=yes
+        enable_dependency_tracking=no
+        host="`echo $host | sed -e s/$host_cpu/universal/g`"
+        host_cpu=universal
+
+        CFLAGS="$CFLAGS $UNIVERSAL_CFLAGS"
+        OBJCFLAGS="$OBJCFLAGS $UNIVERSAL_CFLAGS"
+        LDFLAGS="$LDFLAGS $UNIVERSAL_LDFLAGS"
+        AC_DEFINE(XINE_MACOSX_UNIVERSAL_BINARY, 1, [Define this if a universal binary is being built for Mac OS X])
+        for arch in $UNIVERSAL_ARCHES ; do
+            UNIVERSAL_CFLAGS="$UNIVERSAL_CFLAGS -arch $arch"
+            UNIVERSAL_LDFLAGS="$UNIVERSAL_LDFLAGS -arch $arch"
+            CFLAGS="$CFLAGS -arch $arch"
+            OBJCFLAGS="$OBJCFLAGS -arch $arch"
+            LDFLAGS="$LDFLAGS -arch $arch"
+        done
+    fi
+fi
+AM_CONDITIONAL([MACOSX_UNIVERSAL_BINARY], [test x"$enable_macosx_universal" = x"yes"])
+AC_SUBST(UNIVERSAL_ARCHES)
+AC_SUBST(UNIVERSAL_CFLAGS)
+AC_SUBST(UNIVERSAL_LDFLAGS)
+
 
 dnl ---------------------------------------------
 dnl Check for programs.
@@ -1796,6 +1844,9 @@ int main() {
      *-*-mingw32* | *-*-cygwin*)
        bf_lsbf=1
      ;;
+     universal-*-darwin*)
+       bf_lsbf=0
+     ;;
      *)
        AC_MSG_RESULT([unknown])
        AC_MSG_ERROR([value of bitfield test isn't known for $host
@@ -2088,11 +2139,15 @@ dnl ---------------------------------------------
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[ asm (".align 3"); ]])],
   AC_DEFINE([ASMALIGN_1SLN], [1], [define if '.align n' means alignment to (1<<n)-byte boundaries]),
   :)
+AH_TOP([#ifndef __XINE_CONFIG_H__
+#define __XINE_CONFIG_H__ 1
+])
 AH_BOTTOM([#ifdef ASMALIGN_1SLN
 # define ASMALIGN(ZEROBITS) ".align " #ZEROBITS "\n\t"
 #else
 # define ASMALIGN(ZEROBITS) ".align 1<<" #ZEROBITS "\n\t"
 #endif
+#endif  /* __XINE_CONFIG_H__ */
 ])
 
 dnl ---------------------------------------------
@@ -2218,6 +2273,9 @@ case "$host_or_hostalias" in
   x86_64-*)
     AC_DEFINE_UNQUOTED(ARCH_X86_64,,[Define this if you're running x86 architecture 64 bits])
     arch_x86="yes"
+    ;;
+  universal-*-darwin*)
+    enable_impure_text="yes"
     ;;
   powerpc-*-darwin*)
     dnl avoid ppc compilation crash
