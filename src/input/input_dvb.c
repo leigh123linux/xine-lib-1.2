@@ -105,6 +105,7 @@
 #define LOG_VERBOSE
 /*
 #define LOG
+#define LOG_READS
 */
 
 #include "xine_internal.h"
@@ -583,7 +584,8 @@ static tuner_t *tuner_init(xine_t * xine, int adapter)
     this = (tuner_t *) xine_xmalloc(sizeof(tuner_t));
 
     _x_assert(this != NULL);
-    
+
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG, "tuner_init adapter=%d\n", adapter);
     this->fd_frontend = -1;
     for (x = 0; x < MAX_FILTERS; x++)
       this->fd_pidfilter[x] = 0;
@@ -628,7 +630,7 @@ static tuner_t *tuner_init(xine_t * xine, int adapter)
      xprintf(this->xine,XINE_VERBOSITY_DEBUG,"input_dvb: couldn't set EIT to nonblock: %s\n",strerror(errno));
     /* and the internal filter used for PAT & PMT */
    if(fcntl(this->fd_pidfilter[INTERNAL_FILTER], F_SETFL, O_NONBLOCK)<0)
-     xprintf(this->xine,XINE_VERBOSITY_DEBUG,"input_dvb: couldn't set EIT to nonblock: %s\n",strerror(errno));
+     xprintf(this->xine,XINE_VERBOSITY_DEBUG,"input_dvb: couldn't set INTERNAL to nonblock: %s\n",strerror(errno));
     /* and the frontend */
     fcntl(this->fd_frontend, F_SETFL, O_NONBLOCK);
    
@@ -1004,7 +1006,7 @@ static int tuner_tune_it (tuner_t *this, struct dvb_frontend_parameters
   while (ioctl(this->fd_frontend, FE_GET_EVENT, &event) != -1);
 
   if (ioctl(this->fd_frontend, FE_SET_FRONTEND, front_param) <0) {
-    xprintf(this->xine, XINE_VERBOSITY_DEBUG, "setfront front: %s\n", strerror(errno));
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG, "input_dvb: setfront front: %s\n", strerror(errno));
     return 0;
   }
 
@@ -1030,7 +1032,7 @@ static int tuner_tune_it (tuner_t *this, struct dvb_frontend_parameters
   do {
     status = 0;
     if (ioctl(this->fd_frontend, FE_READ_STATUS, &status) < 0) {
-      xprintf(this->xine, XINE_VERBOSITY_DEBUG, "fe get event: %s\n", strerror(errno));
+      xprintf(this->xine, XINE_VERBOSITY_DEBUG, "input_dvb: fe get event: %s\n", strerror(errno));
       return 0;
     }
 
@@ -2470,8 +2472,10 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
   if (!this->tuned_in)
       return 0;
   dvb_event_handler (this);
+#ifdef LOG_READS
   xprintf(this->class->xine,XINE_VERBOSITY_DEBUG,
 	  "input_dvb: reading %" PRIdMAX " bytes...\n", (intmax_t)len);
+#endif
 
 #ifndef DVB_NO_BUFFERING
   nbc_check_buffers (this->nbc); 
@@ -2523,9 +2527,11 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
 	      break;
 	  } 
 
+#ifdef LOG_READS
       xprintf(this->class->xine,XINE_VERBOSITY_DEBUG,
 	      "input_dvb: got %" PRIdMAX " bytes (%" PRIdMAX "/%" PRIdMAX " bytes read)\n", 
 	      (intmax_t)n, (intmax_t)total, (intmax_t)len);
+#endif
     
       if (n > 0){  
 	  this->curpos += n;

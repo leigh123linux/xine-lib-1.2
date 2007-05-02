@@ -683,7 +683,11 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   stream_id  = p[3];
 
   if (packet_len==0)
+  {
+    xprintf (xine, XINE_VERBOSITY_DEBUG,
+             "demux_ts: error pes length 0\n");
     return 0;
+  }
 
 #ifdef TS_LOG
   printf ("demux_ts: packet stream id: %.2x len: %d (%x)\n",
@@ -1244,7 +1248,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
     case ISO_14496_PART10_VIDEO:
       if (this->videoPid == INVALID_PID) {
 #ifdef TS_PMT_LOG
-        printf ("demux_ts: PMT video pid 0x%.4x\n", pid);
+        printf ("demux_ts: PMT video pid 0x%.4x type %2.2x\n", pid, stream[0]);
 #endif
         demux_ts_pes_new(this, this->media_num, pid, this->video_fifo,stream[0]);
 	this->videoMedia = this->media_num;
@@ -1266,7 +1270,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
         }
         if(!found) {
 #ifdef TS_PMT_LOG
-            printf ("demux_ts: PMT audio pid 0x%.4x\n", pid);
+            printf ("demux_ts: PMT audio pid 0x%.4x type %2.2x\n", pid, stream[0]);
 #endif
             demux_ts_pes_new(this, this->media_num, pid, this->audio_fifo,stream[0]);
             this->audio_tracks[this->audio_tracks_count].pid = pid;
@@ -1280,7 +1284,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
       break;
     case ISO_13818_PRIVATE:
 #ifdef TS_PMT_LOG
-      printf ("demux_ts: PMT streamtype 13818_PRIVATE, pid: 0x%.4x\n", pid);
+      printf ("demux_ts: PMT streamtype 13818_PRIVATE, pid: 0x%.4x type %2.2x\n", pid, stream[0]);
 
       for (i = 5; i < coded_length; i++)
         printf ("%.2x ", stream[i]);
@@ -1289,7 +1293,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
       break;
     case  ISO_13818_TYPE_C: /* data carousel */
 #ifdef TS_PMT_LOG
-      printf ("demux_ts: PMT streamtype 13818_TYPE_C, pid: 0x%.4x\n", pid);
+      printf ("demux_ts: PMT streamtype 13818_TYPE_C, pid: 0x%.4x type %2.2x\n", pid, stream[0]);
 #endif
       break;
     case ISO_13818_PES_PRIVATE:
@@ -1305,7 +1309,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
 	  }
           if(!found) {
 #ifdef TS_PMT_LOG
-            printf ("demux_ts: PMT AC3 audio pid 0x%.4x\n", pid);
+            printf ("demux_ts: PMT AC3 audio pid 0x%.4x type %2.2x\n", pid, stream[0]);
 #endif
           demux_ts_pes_new(this, this->media_num, pid,
                            this->audio_fifo, 0x81);
@@ -1323,7 +1327,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
         else if (stream[i] == 0x56)
           {
 #ifdef TS_PMT_LOG
-            printf ("demux_ts: PMT Teletext, pid: 0x%.4x\n", pid);
+            printf ("demux_ts: PMT Teletext, pid: 0x%.4x type %2.2x\n", pid, stream[0]);
 
             for (i = 5; i < coded_length; i++)
               printf ("%.2x ", stream[i]);
@@ -1358,10 +1362,11 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
 				 pid, this->video_fifo,
 				 stream[0]);
 #ifdef TS_LOG
-		printf("demux_ts: DVBSUB: pid 0x%.4x: %s  page %ld %ld\n",
+		printf("demux_ts: DVBSUB: pid 0x%.4x: %s  page %ld %ld type %2.2x\n",
 		       pid, lang->desc.lang,
 		       lang->desc.comp_page_id,
-		       lang->desc.aux_page_id);
+		       lang->desc.aux_page_id,
+                       stream[0]);
 #endif
 	      }
 	  }
