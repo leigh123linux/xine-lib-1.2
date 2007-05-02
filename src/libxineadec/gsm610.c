@@ -86,7 +86,6 @@ typedef struct gsm610_decoder_s {
   int               bufsize;
   int               size;
 
-  unsigned short    decode_buffer[GSM610_BLOCK_SIZE];
   gsm               gsm_state;
 
 } gsm610_decoder_t;
@@ -138,6 +137,7 @@ static void gsm610_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   this->size += buf->size;
 
   if (buf->decoder_flags & BUF_FLAG_FRAME_END)  { /* time to decode a frame */
+    int16_t decode_buffer[GSM610_BLOCK_SIZE];
 
     /* handle the Microsoft variant of GSM data */
     if (this->buf_type == BUF_AUDIO_MSGSM) {
@@ -154,7 +154,7 @@ static void gsm610_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
       in_ptr = 0;
       while (this->size) {
-        gsm_decode(this->gsm_state, &this->buf[in_ptr], this->decode_buffer);
+        gsm_decode(this->gsm_state, &this->buf[in_ptr], decode_buffer);
         if ((in_ptr % 65) == 0) {
           in_ptr += 33;
           this->size -= 33;
@@ -167,7 +167,7 @@ static void gsm610_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
          * always contain at least 160 samples */
         audio_buffer = this->stream->audio_out->get_buffer (this->stream->audio_out);
 
-        xine_fast_memcpy(audio_buffer->mem, this->decode_buffer,
+        xine_fast_memcpy(audio_buffer->mem, decode_buffer,
           GSM610_BLOCK_SIZE * 2);
         audio_buffer->num_frames = GSM610_BLOCK_SIZE;
 
@@ -189,7 +189,7 @@ static void gsm610_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
       in_ptr = 0;
       while (this->size) {
-        gsm_decode(this->gsm_state, &this->buf[in_ptr], this->decode_buffer);
+        gsm_decode(this->gsm_state, &this->buf[in_ptr], decode_buffer);
         in_ptr += 33;
         this->size -= 33;
 
@@ -197,7 +197,7 @@ static void gsm610_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
          * always contain at least 160 samples */
         audio_buffer = this->stream->audio_out->get_buffer (this->stream->audio_out);
 
-        xine_fast_memcpy(audio_buffer->mem, this->decode_buffer,
+        xine_fast_memcpy(audio_buffer->mem, decode_buffer,
           GSM610_BLOCK_SIZE * 2);
         audio_buffer->num_frames = GSM610_BLOCK_SIZE;
 
