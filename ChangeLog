@@ -25,6 +25,8 @@ xine-lib (1.1.7) (unreleased)
   * Handle single-quoted attribute values in XML.
   * Fix default paths for RealPlayer libraries (broken in 1.1.5).
     [Bug 1707526]
+  * Fix proxy usage when the hostnames cannot be resolved. Thanks to Jeff
+    Mitchell for reporting and testing the fix.
 
 xine-lib (1.1.6)
   * Split the DirectFB plugin into X11 and non-X versions.
