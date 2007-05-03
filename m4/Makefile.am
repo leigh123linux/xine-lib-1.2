@@ -17,6 +17,8 @@ EXTRA_DIST = \
 	directx.m4 \
 	dl.m4 \
 	dvdnav.m4 \
+	gas.m4 \
+        ioctl_request.m4 \
 	irixal.m4 \
 	libFLAC.m4 \
 	libfame.m4 \
@@ -24,8 +26,8 @@ EXTRA_DIST = \
 	opengl.m4 \
 	optimizations.m4 \
 	pkg.m4 \
+	pthreads.m4 \
+        symbol.m4 \
 	xine.m4 \
 	_xine.m4 \
-	xv.m4 \
-	pthreads.m4 \
-	gas.m4
+	xv.m4
