@@ -22,7 +22,6 @@ EXTRA_DIST = \
 	irixal.m4 \
 	libFLAC.m4 \
 	libfame.m4 \
-	libtool15.m4 \
 	opengl.m4 \
 	optimizations.m4 \
 	pkg.m4 \
