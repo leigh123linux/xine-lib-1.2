@@ -59,22 +59,16 @@ typedef struct flac_decoder_s {
 
   int64_t           pts;
 
-  int               output_sampling_rate;
-  int               output_open;
-  int               output_mode;
-
   xine_stream_t    *stream;
 
   FLAC__StreamDecoder *flac_decoder;
-
-  int sample_rate;
-  int bits_per_sample;
-  int channels;
 
   unsigned char *buf;
   int            buf_size;
   int            buf_pos;
   int            min_size;
+
+  int            output_open;
 
 } flac_decoder_t;
 
@@ -249,21 +243,18 @@ flac_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
      */
     if (buf->decoder_flags & BUF_FLAG_STDHEADER)
     {
-        int mode = AO_CAP_MODE_MONO;
-
-        this->sample_rate     = buf->decoder_info[1];
-        this->bits_per_sample = buf->decoder_info[2];
-        this->channels        = buf->decoder_info[3];
-
-	mode = _x_ao_channels2mode(this->channels);
+        const int sample_rate     = buf->decoder_info[1];
+        const int bits_per_sample = buf->decoder_info[2];
+        const int channels        = buf->decoder_info[3];
+        const int mode            = _x_ao_channels2mode(channels);
 
         if (!this->output_open)
         {
             this->output_open = this->stream->audio_out->open (
                                             this->stream->audio_out,
                                             this->stream,
-                                            this->bits_per_sample,
-                                            this->sample_rate,
+                                            bits_per_sample,
+                                            sample_rate,
                                             mode);
 
 
