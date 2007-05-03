@@ -7,7 +7,7 @@ AC_CONFIG_SRCDIR([src/xine-engine/xine.c])
 AC_CONFIG_LIBOBJ_DIR([lib])
 
 dnl
-dnl Require autoconf version 2.60
+dnl Require autoconf version 2.59
 dnl
 AC_PREREQ(2.59)
 
