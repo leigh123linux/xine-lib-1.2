@@ -31,5 +31,6 @@ EXTRA_DIST = \
 	summary.m4 \
 	xine.m4 \
 	_xine.m4 \
+	x11.m4 \
 	xv.m4 \
 	vcd.m4
