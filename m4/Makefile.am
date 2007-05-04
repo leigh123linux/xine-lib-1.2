@@ -22,11 +22,14 @@ EXTRA_DIST = \
 	irixal.m4 \
 	libFLAC.m4 \
 	libfame.m4 \
+	macosx.m4 \
 	opengl.m4 \
 	optimizations.m4 \
 	pkg.m4 \
 	pthreads.m4 \
         symbol.m4 \
+	summary.m4 \
 	xine.m4 \
 	_xine.m4 \
-	xv.m4
+	xv.m4 \
+	vcd.m4

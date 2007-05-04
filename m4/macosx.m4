@@ -1,0 +1,64 @@
+AC_DEFUN([MACOSX_UNIVERSAL_BINARIES], [
+    AC_ARG_ENABLE([macosx-universal],
+                  AS_HELP_STRING([--enable-macosx-universal], [build universal binaries for Mac OS X)]),
+                  [], [enable_macosx_universal="no"])
+    if test x"$enable_macosx_universal" != x"no" ; then
+        case "$host_os" in
+            *darwin*)
+                dnl x64_64 and ppc64 binaries could also be built, but there is no
+                dnl version of Mac OS X currently shipping that can run them, so
+                dnl do not enable them by default for now.
+                if test x"$enable_macosx_universal" = x"yes" ; then
+                    UNIVERSAL_ARCHES="i386 ppc"
+                else
+                    UNIVERSAL_ARCHES=`echo "$enable_macosx_universal" | sed -e 's/,/ /g'`
+                fi
+                ;;
+            *)
+                AC_MSG_ERROR([Universal binaries can only be built on Darwin])
+                ;;
+        esac
+
+        UNIVERSAL_CFLAGS="$UNIVERSAL_CFLAGS -isysroot /Developer/SDKs/MacOSX10.4u.sdk"
+        UNIVERSAL_LDFLAGS="$UNIVERSAL_LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk"
+        if test x"$UNIVERSAL_ARCHES" != x"" ; then
+            # Forcibly disable dependency tracking for Universal builds, because -M
+            # does not work with multiple -arch arguments on the gcc command-line.
+            ac_tool_warned=yes
+            cross_compiling=yes
+            enable_dependency_tracking=no
+            host="`echo $host | sed -e s/$host_cpu/universal/g`"
+            host_cpu=universal
+
+            CFLAGS="$CFLAGS $UNIVERSAL_CFLAGS"
+            OBJCFLAGS="$OBJCFLAGS $UNIVERSAL_CFLAGS"
+            LDFLAGS="$LDFLAGS $UNIVERSAL_LDFLAGS"
+            AC_DEFINE(XINE_MACOSX_UNIVERSAL_BINARY, 1, [Define this if a universal binary is being built for Mac OS X])
+            for arch in $UNIVERSAL_ARCHES ; do
+                UNIVERSAL_CFLAGS="$UNIVERSAL_CFLAGS -arch $arch"
+                UNIVERSAL_LDFLAGS="$UNIVERSAL_LDFLAGS -arch $arch"
+                CFLAGS="$CFLAGS -arch $arch"
+                OBJCFLAGS="$OBJCFLAGS -arch $arch"
+                LDFLAGS="$LDFLAGS -arch $arch"
+            done
+        fi
+    fi
+    AM_CONDITIONAL([MACOSX_UNIVERSAL_BINARY], [test x"$enable_macosx_universal" = x"yes"])
+    AC_SUBST(UNIVERSAL_ARCHES)
+    AC_SUBST(UNIVERSAL_CFLAGS)
+    AC_SUBST(UNIVERSAL_LDFLAGS)
+])dnl MACOSX_UNIVERSAL_BINARIES
+
+AC_DEFUN([MACOSX_AUDIO_SUPPORT], [
+    AC_ARG_ENABLE([coreaudio],
+                  AS_HELP_STRING([--enable-coreaudio], [enable support for Mac OS X CoreAudio output]),
+                  [have_coreaudio="$enableval"], [have_coreaudio="no"])
+    AM_CONDITIONAL([HAVE_COREAUDIO], [test x"$have_coreaudio" = x"yes"])
+])dnl MACOSX_AUDIO_SUPPORT
+
+AC_DEFUN([MACOSX_VIDEO_SUPPORT], [
+    AC_ARG_ENABLE([macosx-video],
+                  AS_HELP_STRING([--enable-macosx-video], [enable support for Mac OS X OpenGL video output]),
+                  [have_macosx_video="$enableval"], [have_macosx_video="no"])
+    AM_CONDITIONAL([HAVE_MACOSX_VIDEO], [test x"$have_macosx_video" = x"yes"])
+])dnl MACOSX_VIDEO_SUPPORT
