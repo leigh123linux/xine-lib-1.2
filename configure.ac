@@ -1,95 +1,53 @@
-dnl
-dnl Configure.ac for xine
-dnl
-
-AC_INIT
-AC_CONFIG_SRCDIR([src/xine-engine/xine.c])
-AC_CONFIG_LIBOBJ_DIR([lib])
-
-dnl
-dnl Require autoconf version 2.59
-dnl
 AC_PREREQ(2.59)
 
-dnl Making releases:
-dnl   XINE_SUB += 1; continue with XINE_LT_* values below
-dnl
-XINE_MAJOR=1
-XINE_MINOR=1
-XINE_SUB=90
+dnl Note that autoconf/autoheader/automake cache using autom4te, so version.sh
+dnl will only be run if configure.ac has changed.
+m4_esyscmd([./version.sh])dnl
 
-#if test $XINE_SUB -eq 0 ; then
-#  XINE_SUBPART="";
+AC_INIT([xine-lib], XINE_VERSION_SPEC, [xine-bugs@lists.sourceforge.net])
+AM_INIT_AUTOMAKE
+AC_CONFIG_SRCDIR([src/xine-engine/xine.c])
+AC_CONFIG_LIBOBJ_DIR([lib])
+AC_CONFIG_HEADERS([config.h])
+AM_MAINTAINER_MODE
+
+AH_TOP([#ifndef __XINE_LIB_CONFIG_H__
+#define __XINE_LIB_CONFIG_H__ 1
+])
+AH_BOTTOM([#ifdef ASMALIGN_1SLN
+# define ASMALIGN(ZEROBITS) ".align " #ZEROBITS "\n\t"
 #else
-  XINE_SUBPART=".$XINE_SUB"
-#fi
+# define ASMALIGN(ZEROBITS) ".align 1<<" #ZEROBITS "\n\t"
+#endif
 
-dnl The libtool version numbers (XINE_LT_*); Don't even think about faking this!
-dnl 
-dnl immediately before every release do:
-dnl ===================================
-dnl if (the interface is totally unchanged from previous release)
-dnl    XINE_LT_REVISION ++;
-dnl else { /* interfaces have been added, removed or changed */
-dnl    XINE_LT_REVISION = 0;
-dnl    XINE_LT_CURRENT ++;
-dnl    if (any interfaces have been _added_ since last release)
-dnl       XINE_LT_AGE ++;
-dnl    if (any interfaces have been _removed_ or _incompatibly changed_)
-dnl       XINE_LT_AGE = 0;
-dnl }
-dnl 
-dnl If you want to know more about what you are doing, here are some details:
-dnl  * XINE_LT_CURRENT is the current API version
-dnl  * XINE_LT_REVISION is an internal revision number which is increased when the API
-dnl    itself did not change
-dnl  * XINE_LT_AGE is the number of previous API versions still supported by this library
-dnl  * libtool has its own numbering scheme, because local library numbering schemes
-dnl    are platform dependent
-dnl  * in Linux, the library will be named
-dnl    libname.so.(XINE_LT_CURRENT - XINE_LT_AGE).XINE_LT_AGE.XINE_LT_REVISION
+/* include internal system specific header */
+#include "os_internal.h"
 
-XINE_LT_CURRENT=19
-XINE_LT_REVISION=0
-XINE_LT_AGE=17
+#endif  /* __XINE_LIB_CONFIG_H__ */
+])
 
-dnl for a release tarball do "rm .cvsversion" before "make dist"
-if test -f "${srcdir-.}/.cvsversion"; then
-  XINE_PRE="hg"
-else
-  XINE_PRE=""
-fi
-
+dnl Do not change these manually; they come from running ./version.sh when
+dnl autoconf runs.
+XINE_MAJOR=XINE_VERSION_MAJOR
 AC_SUBST(XINE_MAJOR)
+AC_DEFINE_UNQUOTED([XINE_MAJOR], [$XINE_MAJOR], [xine major version number])
+XINE_MINOR=XINE_VERSION_MINOR
 AC_SUBST(XINE_MINOR)
+AC_DEFINE_UNQUOTED([XINE_MINOR], [$XINE_MINOR], [xine minor version number])
+XINE_SUB=XINE_VERSION_SUB
 AC_SUBST(XINE_SUB)
-AC_SUBST(XINE_IFACE_AGE)
-AC_SUBST(XINE_BIN_AGE)
+AC_DEFINE_UNQUOTED([XINE_SUB],   [$XINE_SUB],   [xine sub version number])
 
-AC_DEFINE_UNQUOTED(XINE_MAJOR, $XINE_MAJOR,[xine major version number])
-AC_DEFINE_UNQUOTED(XINE_MINOR, $XINE_MINOR,[xine minor version number])
-AC_DEFINE_UNQUOTED(XINE_SUB, $XINE_SUB, [xine sub version number])
-
+XINE_LT_CURRENT=__XINE_LT_CURRENT
 AC_SUBST(XINE_LT_CURRENT)
+XINE_LT_REVISION=__XINE_LT_REVISION
 AC_SUBST(XINE_LT_REVISION)
+XINE_LT_AGE=__XINE_LT_AGE
 AC_SUBST(XINE_LT_AGE)
 
-SPEC_VERSION=$XINE_MAJOR.$XINE_MINOR${XINE_SUBPART}$XINE_PRE
-TAR_NAME="xine-lib-"$SPEC_VERSION
-dnl TAR_NAME="xine-lib-"$XINE_MAJOR-$XINE_PRE
-dnl SPEC_VERSION=${XINE_MAJOR}_$XINE_PRE
-
-AC_SUBST(TAR_NAME)
-AC_SUBST(SPEC_VERSION)
-
-LIBNAME=libxine$XINE_MAJOR
+LIBNAME="libxine${XINE_MAJOR}"
 AC_SUBST(LIBNAME)
-
-AC_DEFINE_UNQUOTED(XINE_TEXTDOMAIN, "$LIBNAME", [catalog message text domain])
-
-dnl
-AM_INIT_AUTOMAKE("xine-lib", $SPEC_VERSION)
-dnl AM_INIT_AUTOMAKE("xine-lib", $XINE_MAJOR-$XINE_PRE)
+AC_DEFINE_UNQUOTED([XINE_TEXTDOMAIN], "$LIBNAME", [catalog message text domain])
 
 dnl ---------------------------------------------
 dnl Made possible to build for another arch.
@@ -100,7 +58,6 @@ AC_CANONICAL_BUILD
 
 test "$host" == "$build" && check_athlon=yes
 
-AC_CONFIG_HEADERS([config.h])
 
 MACOSX_UNIVERSAL_BINARIES
 
@@ -1569,16 +1526,6 @@ dnl ---------------------------------------------
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[ asm (".align 3"); ]])],
   AC_DEFINE([ASMALIGN_1SLN], [1], [define if '.align n' means alignment to (1<<n)-byte boundaries]),
   :)
-AH_TOP([#ifndef __XINE_CONFIG_H__
-#define __XINE_CONFIG_H__ 1
-])
-AH_BOTTOM([#ifdef ASMALIGN_1SLN
-# define ASMALIGN(ZEROBITS) ".align " #ZEROBITS "\n\t"
-#else
-# define ASMALIGN(ZEROBITS) ".align 1<<" #ZEROBITS "\n\t"
-#endif
-#endif  /* __XINE_CONFIG_H__ */
-])
 
 dnl ---------------------------------------------
 dnl Some extra checks.
@@ -1627,8 +1574,6 @@ AC_CHECK_FUNC(opendir,
     AC_MSG_ERROR([dirent is needed (opendir, readdir, ...)])
   fi])
 
-AH_BOTTOM([/* include internal system specific header */
-#include "os_internal.h"])
 
 
 dnl ---------------------------------------------

@@ -1,6 +1,6 @@
 %define shortname  libxine
 %define name       libxine2
-%define version    @SPEC_VERSION@
+%define version    @PACKAGE_VERSION@
 %define release    0
 
 %define major      1
@@ -642,7 +642,7 @@ libxine Soundausgabeplugin für den jack-Soundserver
 %endif
 
 %prep
-%setup -q -n @TAR_NAME@
+%setup -q -n @PACKAGE_TARNAME@
 
 %build
 export CFLAGS="${RPM_OPT_FLAGS}"
