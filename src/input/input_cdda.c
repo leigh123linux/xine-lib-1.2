@@ -621,7 +621,10 @@ static int read_cdrom_frames(cdda_input_plugin_t *this_gen, int frame, int num_f
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
 
 #include <sys/cdio.h>
+
+#ifdef HAVE_SYS_SCSIIO_H
 #include <sys/scsiio.h>
+#endif
 
 static int read_cdrom_toc(int fd, cdrom_toc *toc) {
 
