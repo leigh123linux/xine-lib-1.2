@@ -1,8 +1,10 @@
 /*
  * attributes.h
  * Copyright (C) 1999-2000 Aaron Holtzman <aholtzma@ess.engr.uvic.ca>
+ * Copyright (C) 2001-2007 xine developers
  *
- * This file is part of mpeg2dec, a free MPEG-2 video stream decoder.
+ * This file was originally part of mpeg2dec, a free MPEG-2 video stream
+ * decoder.
  *
  * mpeg2dec is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

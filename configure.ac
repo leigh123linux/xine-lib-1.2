@@ -1656,7 +1656,7 @@ dnl cdrom ioctls
 dnl ---------------------------------------------
 
 AC_CHECK_HEADERS([linux/cdrom.h sys/dvdio.h], [break])
-AC_CHECK_HEADERS([sys/cdio.h])
+AC_CHECK_HEADERS([sys/cdio.h sys/scsiio.h])
 AM_CHECK_CDROM_IOCTLS(
 	[AC_DEFINE(HAVE_CDROM_IOCTLS,1,[Define this if you have CDROM ioctls])],
 	[AC_MSG_RESULT([*** (S)VCD support will be disabled ***])])
