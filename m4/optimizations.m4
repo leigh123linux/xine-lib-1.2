@@ -8,8 +8,10 @@ dnl Note: always disable while crosscompiling
 dnl
 
 AC_DEFUN([AC_OPTIMIZATIONS], [
-  AC_ARG_ENABLE([optimizations],
-    AS_HELP_STRING([--disable-optimizations], [Don't try to guess what optimization to enable]))
+    dnl By default, enable optimizations only if --enable-debug is not specified
+    AC_ARG_ENABLE([optimizations],
+                  AS_HELP_STRING([--disable-optimizations], [Don't try to guess what optimization to enable]),
+                  [], [test x"$enable_debug" != x"no" && enable_optimizations="no"])
 
   if test "x$enable_optimizations" != "xno"; then
     INLINE_FUNCTIONS=-finline-functions

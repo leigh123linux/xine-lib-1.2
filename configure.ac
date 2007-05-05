@@ -1,9 +1,11 @@
 AC_PREREQ(2.59)
 
 dnl Note that autoconf/autoheader/automake cache using autom4te, so version.sh
-dnl will only be run if configure.ac has changed.
+dnl will only be run if configure.ac has changed.  This must be done before
+dnl AC_INIT so that XINE_VERSION_SPEC, which is an m4 macro, is available.
 m4_esyscmd([./version.sh])dnl
 
+dnl Initialize autoconf, autoheader, and automake
 AC_INIT([xine-lib], XINE_VERSION_SPEC, [xine-bugs@lists.sourceforge.net])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/xine-engine/xine.c])
@@ -26,8 +28,14 @@ AH_BOTTOM([#ifdef ASMALIGN_1SLN
 #endif  /* __XINE_LIB_CONFIG_H__ */
 ])
 
+
+dnl -------------------------
+dnl Setup version information
+dnl -------------------------
+
 dnl Do not change these manually; they come from running ./version.sh when
-dnl autoconf runs.
+dnl autoconf runs.  This must all be done after AC_INIT is done, but running
+dnl the version.sh script must be done before AC_INIT.
 XINE_MAJOR=XINE_VERSION_MAJOR
 AC_SUBST(XINE_MAJOR)
 AC_DEFINE_UNQUOTED([XINE_MAJOR], [$XINE_MAJOR], [xine major version number])
@@ -48,6 +56,46 @@ AC_SUBST(XINE_LT_AGE)
 LIBNAME="libxine${XINE_MAJOR}"
 AC_SUBST(LIBNAME)
 AC_DEFINE_UNQUOTED([XINE_TEXTDOMAIN], "$LIBNAME", [catalog message text domain])
+
+dnl
+dnl Always set flags to begin with -g so that debug information will be
+dnl included.  In release bulids, this can be stripped out later if desired.
+dnl More importantly, it prevents autoconf from initializing the defaults to
+dnl include -O2, which is not desirable in a debug build, and it messes with
+dnl other optimizations that we'll want to be setting ourselves later.
+ASFLAGS="$ASFLAGS -g"
+CFLAGS="$CFLAGS -g"
+CPPFLAGS="$CPPFLAGS -D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE"
+LDFLAGS="$LDFLAGS -g"
+OBJCFLAGS="$OBJCFLAGS -g"
+
+AC_SUBST(ASFLAGS)
+
+
+dnl ------------------------------
+dnl Build modes: debug and profile
+dnl ------------------------------
+
+AC_ARG_ENABLE([debug],
+              AS_HELP_STRING([--enable-debug], [build with debugging code enabled]),
+              [enable_debug="yes"], [enable_debug="no"])
+if test x"$enable_debug" != x"no"; then
+    CPPFLAGS="$CPPFLAGS -DDEBUG"
+else
+    CPPFLAGS="$CPPFLAGS -DNDEBUG"
+fi
+AM_CONDITIONAL([DEBUG_BUILD], [test x"$enable_debug" != x"no"])
+
+AC_ARG_ENABLE([profiling],
+              AS_HELP_STRING([--enable-profiling], [build with profiling code enabled]),
+              [enable_profiling="yes"], [enable_profiling="no"])
+if test x"$enable_profiling" != x"no"; then
+    CFLAGS="$CFLAGS -pg"
+    OBJCFLAGS="$OBJCFLAGS -pg"
+    LDFLAGS="$LDFLAGS -pg"
+fi
+AM_CONDITIONAL([PROFILING_BUILD], [test x"$enable_profiling" != x"no"])
+
 
 dnl ---------------------------------------------
 dnl Made possible to build for another arch.
@@ -1577,17 +1625,6 @@ AC_CHECK_FUNC(opendir,
 
 
 dnl ---------------------------------------------
-dnl cflags and debug cflags
-dnl ---------------------------------------------
- 
-AC_SUBST(DEBUG_CFLAGS)
-DEBUG_CFLAGS="-g -DDEBUG $CFLAGS"
-
-dnl dummy
-ASFLAGS="$ASFLAGS"
-AC_SUBST(ASFLAGS)
-
-dnl ---------------------------------------------
 dnl Check for some __attribute__ support needed
 dnl ---------------------------------------------
 
@@ -2016,15 +2053,7 @@ esac
 AC_SUBST([NOUNDEF])
 
 dnl Common cflags for all platforms
-CPPFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE $CPPFLAGS"
 CFLAGS="\$(MULTIPASS_CFLAGS) $warnflags $CFLAGS"
-DEBUG_CFLAGS="$warnflags $DEBUG_CFLAGS"
-
-if test "x$enable_debug" = "xyes"; then
-   CPPFLAGS="$CPPFLAGS -DDEBUG"
-else
-   CPPFLAGS="$CPPFLAGS -DNDEBUG"
-fi
 
 dnl ---------------------------------------------
 dnl Output configuration files

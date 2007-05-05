@@ -385,9 +385,6 @@ Makefile: Makefile.in.in Makevars $(top_builddir)/config.status @POMAKEFILEDEPS@
 	  && CONFIG_FILES=$(subdir)/$@.in CONFIG_HEADERS= \
 	       $(SHELL) ./config.status
 
-debug:
-install-debug:
-
 force:
 
 # Tell versions [3.59,3.63) of GNU make not to export all variables.
