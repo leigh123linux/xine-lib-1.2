@@ -3,7 +3,7 @@ AC_PREREQ(2.59)
 dnl Note that autoconf/autoheader/automake cache using autom4te, so version.sh
 dnl will only be run if configure.ac has changed.  This must be done before
 dnl AC_INIT so that XINE_VERSION_SPEC, which is an m4 macro, is available.
-m4_esyscmd([./version.sh])dnl
+m4_esyscmd([./version.sh])
 
 dnl Initialize autoconf, autoheader, and automake
 AC_INIT([xine-lib], XINE_VERSION_SPEC, [xine-bugs@lists.sourceforge.net])
@@ -63,11 +63,11 @@ dnl included.  In release bulids, this can be stripped out later if desired.
 dnl More importantly, it prevents autoconf from initializing the defaults to
 dnl include -O2, which is not desirable in a debug build, and it messes with
 dnl other optimizations that we'll want to be setting ourselves later.
-ASFLAGS="$ASFLAGS -g"
-CFLAGS="$CFLAGS -g"
-CPPFLAGS="$CPPFLAGS -D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE"
-LDFLAGS="$LDFLAGS -g"
-OBJCFLAGS="$OBJCFLAGS -g"
+ASFLAGS="-g $ASFLAGS"
+CFLAGS="-g $CFLAGS"
+CPPFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE $CPPFLAGS"
+LDFLAGS="-g $LDFLAGS"
+OBJCFLAGS="-g $OBJCFLAGS"
 
 AC_SUBST(ASFLAGS)
 
@@ -80,9 +80,9 @@ AC_ARG_ENABLE([debug],
               AS_HELP_STRING([--enable-debug], [build with debugging code enabled]),
               [enable_debug="yes"], [enable_debug="no"])
 if test x"$enable_debug" != x"no"; then
-    CPPFLAGS="$CPPFLAGS -DDEBUG"
+    CPPFLAGS="-DDEBUG $CPPFLAGS"
 else
-    CPPFLAGS="$CPPFLAGS -DNDEBUG"
+    CPPFLAGS="-DNDEBUG $CPPFLAGS"
 fi
 AM_CONDITIONAL([DEBUG_BUILD], [test x"$enable_debug" != x"no"])
 
@@ -90,9 +90,9 @@ AC_ARG_ENABLE([profiling],
               AS_HELP_STRING([--enable-profiling], [build with profiling code enabled]),
               [enable_profiling="yes"], [enable_profiling="no"])
 if test x"$enable_profiling" != x"no"; then
-    CFLAGS="$CFLAGS -pg"
-    OBJCFLAGS="$OBJCFLAGS -pg"
-    LDFLAGS="$LDFLAGS -pg"
+    CFLAGS="-pg $CFLAGS"
+    OBJCFLAGS="-pg $OBJCFLAGS"
+    LDFLAGS="-pg $LDFLAGS"
 fi
 AM_CONDITIONAL([PROFILING_BUILD], [test x"$enable_profiling" != x"no"])
 
@@ -117,61 +117,52 @@ host_or_hostalias="$host"
 test x"$host_or_hostalias" = x"" && host_or_hostalias="$host_alias"
 
 
-dnl ---------------------------------------------
-dnl Check for programs.
-dnl ---------------------------------------------
+dnl -------------------
+dnl checks for programs
+dnl -------------------
 
 AC_PROG_CC
 AC_PROG_OBJC
 AM_PROG_AS
-
-AC_GNU_SOURCE
-dnl Save CFLAGS, AC_ISC_POSIX set some unwanted default CFLAGS
-saved_CFLAGS="$CFLAGS"
-AC_ISC_POSIX
-AC_PATH_MAGIC
-CFLAGS="$saved_CFLAGS"
-AC_HEADER_STDC
 
 AC_PROG_MAKE_SET
 AC_PROG_EGREP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_AWK
-AC_C_INLINE
 
 AC_CHECK_TOOL([STRINGS], [strings], [false])
 
-dnl ---------------------------------------------
-dnl Libtool
-dnl ---------------------------------------------
+AC_GNU_SOURCE
+AC_ISC_POSIX
 
+PKG_PROG_PKG_CONFIG
+
+dnl libtool
 m4_undefine([AC_PROG_F77])
 m4_defun([AC_PROG_F77],[])
 
-AC_LIBTOOL_DLOPEN
 AC_DISABLE_STATIC
+AC_LIBTOOL_DLOPEN
 AC_LIBTOOL_WIN32_DLL
+AC_PATH_MAGIC
 AC_PROG_LIBTOOL
 AC_PROG_LIBTOOL_SANITYCHECK
+
+dnl REVISIT:
+dnl Nothing seems to use LIBTOOL_DEPS
+dnl src/video_out/libdha and src/video_out/vidix both use STATIC -- why?
 AC_SUBST(LIBTOOL_DEPS)
 if ${CONFIG_SHELL} ./libtool --features | grep "enable static" >/dev/null; then
-  STATIC="-static"
+    STATIC="-static"
 else
-  STATIC=
+    STATIC=
 fi
 AC_SUBST(STATIC)
 
 
 dnl ---------------------------------------------
-dnl Requirements for macros whose first invocations are conditional
-dnl ---------------------------------------------
-
-PKG_PROG_PKG_CONFIG
-CC_CHECK_WERROR
-
-dnl ---------------------------------------------
-dnl NLS Support
+dnl REVISIT: NLS Support
 dnl ---------------------------------------------
 
 dnl ALL_LINGUAS="cs da de el en@quot en@boldquot es et fr gl id it ja ko nl nn no pl pt pt_BR ru sl sv tr zh"
@@ -200,13 +191,35 @@ AC_PROG_GMSGFMT_PLURAL
 
 AC_CHECK_FUNCS([nl_langinfo])
 
-dnl ---------------------------------------------
-dnl Checks for typedefs, structures, and compiler characteristics.
-dnl ---------------------------------------------
+dnl --------------------
+dnl checks for libraries
+dnl --------------------
 
-AC_C_BIGENDIAN
-AC_C_CONST
-dnl AC_C_ALWAYS_INLINE removal allows ffmpeg to be more widely buildable
+AM_DL()
+
+dnl Test for socket and network support library
+AC_CHECK_LIB([socket], [socket],        [NET_LIBS="-lsocket $NET_LIBS"])
+AC_CHECK_LIB([nsl],    [gethostbyname], [NET_LIBS="-lnsl $NET_LIBS"])
+AC_SUBST(NET_LIBS)
+
+AC_CHECK_LIB([rt], [clock_getres],
+             [RT_LIBS="-lrt"
+              AC_DEFINE(HAVE_POSIX_TIMERS, 1, [Define this if you have POSIX timers.])], 
+             [AC_MSG_RESULT([*** no POSIX timers available.])])
+AC_SUBST(RT_LIBS)
+
+
+dnl -----------------------
+dnl checks for header files
+dnl -----------------------
+
+AC_HEADER_STDC
+
+
+dnl ----------------
+dnl checks for types
+dnl ----------------
+
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_CHECK_SIZEOF(long)
@@ -216,12 +229,128 @@ AC_CHECK_GENERATE_INTTYPES([include])
 AM_CONDITIONAL(GENERATED_INTTYPES_H, test "x$ac_cv_header_inttypes_h" != x"yes")
 AC_CHECK_TYPE(ssize_t, :, AC_DEFINE(ssize_t, __int64, [define ssize_t to __int64 if it's missing in default includes]))
 
-dnl ---------------------------------------------
-dnl threads and OS specific stuff
-dnl ---------------------------------------------
+AC_CHECK_SOCKLEN_T
+
+dnl ---------------------
+dnl checks for structures
+dnl ---------------------
+
+
+
+dnl -----------------------------------
+dnl checks for compiler characteristics
+dnl -----------------------------------
+
+CC_CHECK_WERROR
 
 CC_PTHREAD_FLAGS([], [AC_MSG_ERROR([Pthread support is needed])])
 CC_PTHREAD_RECURSIVE_MUTEX([], [AC_MSG_ERROR([recursive mutex support is needed - please report])])
+
+dnl REVISIT: AC_C_ALWAYS_INLINE removal allows ffmpeg to be more widely buildable
+AC_C_BIGENDIAN
+AC_C_CONST
+AC_C_INLINE
+AC_C_RESTRICT
+
+dnl ASM ALIGN is power of two ?
+dnl src/post/planar
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[asm(".align 3");]])],
+                  [AC_DEFINE([ASMALIGN_1SLN], [1],
+                             [define if '.align n' means alignment to (1 << n) - byte boundaries])])
+
+CC_ATTRIBUTE_ALIGNED
+
+CC_ATTRIBUTE_PACKED([XINE_PACKED='__attribute__((packed))'],
+                    [AC_MSG_WARN([Your compiler doesn't support __attribute__((packed)); xine might not work as expected.])])
+AC_DEFINE_UNQUOTED([XINE_PACKED], [$XINE_PACKED], [Mark a structure as being packed])
+
+CC_ATTRIBUTE_MALLOC
+
+CC_ATTRIBUTE_VISIBILITY([protected],
+                        [visibility_export="protected"],
+                        [CC_ATTRIBUTE_VISIBILITY([default], [visibility_export="default"])])
+
+if test x"$visibility_export" != x""; then
+    CC_FLAG_VISIBILITY([VISIBILITY_FLAG="-fvisibility=hidden"
+                        EXPORTED='__attribute__((visibility("default")))'])
+fi
+AC_DEFINE_UNQUOTED([EXPORTED], [$EXPORTED], [Mark a symbol as being exported if visibility is changed])
+AC_SUBST([VISIBILITY_FLAG])
+
+CC_ATTRIBUTE_SENTINEL
+CC_ATTRIBUTE_FORMAT
+CC_ATTRIBUTE_FORMAT_ARG
+
+dnl Set warning flags for warnings that we do not want to skip.  In all cases,
+dnl these warnings should be enabled.  Set these into CFLAGS and OBJCFLAGS
+dnl later after all testing is done.
+CC_CHECK_CFLAGS([-Wformat=2], [wformat="-Wformat=2"],
+                [CC_CHECK_CFLAGS([-Wformat], [wformat="-Wformat"])])
+if test x"$wformat" != x""; then
+    CC_CHECK_CFLAGS([-Wno-format-zero-length], [wformat="$wformat -Wno-format-zero-length"])
+fi
+CC_CHECK_CFLAGS([-Wmissing-format-attribute], [wformat="$wformat -Wmissing-format-attribute"])
+warnflags="$warnflags $wformat"
+
+dnl WARNING: This warning flag, if set into CFLAGS now, can break some autoconf tests.
+CC_CHECK_CFLAGS([-Werror-implicit-function-declaration], [warnflags="$warnflags -Werror-implicit-function-declaration"])
+
+CC_CHECK_CFLAGS([-Wstrict-aliasing=2], [warnflags="$warnflags -Wstrict-aliasing=2"],
+                [CC_CHECK_CFLAGS([-Wstrict-aliasing], [warnflags="$warnflags -Wstrict-aliasing"])])
+
+dnl FreeBSD (et al.) does not complete linking for shared objects when pthreads
+dnl are requested, as different implementations are present; to avoid problems
+dnl use -Wl,-z,defs only for those platform not behaving this way.
+case $host_or_hostalias in
+    *-freebsd*) ;;
+    *)
+        AC_TRY_LDFLAGS([-Wl,-z,defs], [NOUNDEF="-Wl,-z,defs"])
+        ;;
+esac
+AC_SUBST([NOUNDEF])
+
+
+dnl ----------------------------
+dnl checks for library functions
+dnl ----------------------------
+
+dnl src/libfaad
+AC_CHECK_DECL(lrintf,[
+	AC_DEFINE([HAVE_LRINTF],    [1], [Define this if the 'lrintf' function is declared in math.h])
+	AC_DEFINE([_ISOC9X_SOURCE], [1], [Define this if you are ISO C9X compliant])
+      ],,[
+#define _ISOC9X_SOURCE
+#include <math.h>
+])
+
+dnl contrib/libdca, src/video_out/vidix/drivers/mach64_vid.c
+AC_CHECK_FUNCS([memalign])
+
+dnl src/input/input_file.c
+AC_ARG_ENABLE([mmap],
+              AS_HELP_STRING([--enable-mmap], [Enable mmap() file loading (default: no)]))
+if test x"$enable_mmap" = x"yes"; then
+    AC_CHECK_FUNCS([mmap])
+fi
+
+
+dnl --------------------------
+dnl checks for system services
+dnl --------------------------
+
+AC_SYS_LARGEFILE
+
+
+
+
+
+
+
+
+
+
+
+
 
 dnl ---------------------------------------------
 dnl Windows ports checks
@@ -257,17 +386,11 @@ AM_CONDITIONAL(WIN32, test "x$SYS" = "xmingw32")
 
 
 dnl ---------------------------------------------
-dnl dynamic linker
-dnl ---------------------------------------------
-AM_DL()
-
-
-dnl ---------------------------------------------
 dnl determine libdir name
 dnl ---------------------------------------------
 
 AC_MSG_CHECKING([libdir name])
-case $host in
+case $host_or_hostalias in
 *-*-linux*)
  # Test if the compiler is 64bit
  echo 'int i;' > conftest.$ac_ext
@@ -364,21 +487,6 @@ AM_CONDITIONAL([FFMPEG_DISABLE_POPULAR_CODECS], [test "x$enable_ffmpeg_popular_c
 
 LIBMPEG2_CFLAGS=""
 
-AC_CHECK_DECL(lrintf,[
-	AC_DEFINE(HAVE_LRINTF,1,[Define this if the 'lrintf' function is declared in math.h])
-	AC_DEFINE(_ISOC9X_SOURCE,1,[Define this if you are ISO C9X compliant])
-      ],,[
-#define _ISOC9X_SOURCE
-#include <math.h>
-])
-AC_CHECK_DECL(rintf,[
-	AC_DEFINE(HAVE_RINTF,1,[Define this if the 'rintf' function is declared in math.h])
-      ],,[
-#include <math.h>
-])
-
-AC_CHECK_FUNCS(memalign)
-
 AC_ARG_ENABLE([altivec],
 	AS_HELP_STRING([--disable-altivec], [do not use assembly codes for Motorola 74xx CPUs]))
 
@@ -431,23 +539,6 @@ XINE_X11_SUPPORT
 
 
 dnl ---------------------------------------------
-dnl socket library
-dnl ---------------------------------------------
-
-dnl Test for socket and network support library
-NET_LIBS=""
-AC_CHECK_LIB(socket, socket, NET_LIBS="-lsocket $NET_LIBS",)
-AC_CHECK_LIB(nsl, gethostbyname, NET_LIBS="-lnsl $NET_LIBS",)
-AC_SUBST(NET_LIBS)
-
-
-dnl ---------------------------------------------
-dnl socklen_t
-dnl ---------------------------------------------
-AC_CHECK_SOCKLEN_T
-
-
-dnl ---------------------------------------------
 dnl IPv6
 dnl ---------------------------------------------
 
@@ -494,17 +585,6 @@ fi
 AC_SUBST(ZLIB_CPPFLAGS)
 AC_SUBST(ZLIB_LIBS)
 
-
-dnl ---------------------------------------------
-dnl check posix timers
-dnl ---------------------------------------------
-
-AC_CHECK_LIB(rt, clock_getres,
-             [RT_LIBS="-lrt"
-              AC_DEFINE(HAVE_POSIX_TIMERS,1,
-                        [Define this if you have POSIX timers.])], 
-             AC_MSG_RESULT([*** no POSIX timers available.]))
-AC_SUBST(RT_LIBS)
 
 dnl ---------------------------------------------
 dnl Check for OpenGL & [GLut | GLU]
@@ -1497,7 +1577,7 @@ AC_ARG_WITH([real-codecs-path],
 
 dnl On some systems, we cannot enable Real codecs support to begin with.
 dnl This includes Darwin, that uses Mach-O rather than ELF.
-case $host in
+case $host_or_hostalias in
      *-darwin*) enable_real_codecs="no" ;;
 esac
 
@@ -1515,17 +1595,6 @@ if test "x$enable_real_codecs" != "xno"; then
 fi
 
 AM_CONDITIONAL([ENABLE_REAL], [test "x$enable_real_codecs" != "xno"])
-
-dnl --------------------------------------------
-dnl mmap() support
-dnl --------------------------------------------
-
-AC_ARG_ENABLE([mmap],
-	AS_HELP_STRING([--enable-mmap], [Enable mmap() file loading (default: no)]))
-
-if test "x$enable_mmap" = "xyes"; then
-   AC_CHECK_FUNCS([mmap])
-fi
 
 dnl ---------------------------------------------
 dnl antialising support
@@ -1545,37 +1614,9 @@ dnl ---------------------------------------------
 AC_CHECK_IP_MREQN
 
 dnl ---------------------------------------------
-dnl restrict keyword finding (from gstreamer)
-dnl ---------------------------------------------
-restrict=""
-for restrict_keyword in restrict __restrict__ __restrict; do
-  AC_MSG_CHECKING(for restrict keyword $restrict_keyword)
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[ void foo(char * $restrict_keyword p); ]])],[
-                 KEYWORD_FOUND=yes && AC_MSG_RESULT(yes) ],[
-                 KEYWORD_FOUND=no && AC_MSG_RESULT(no) ])
-  if test "x$KEYWORD_FOUND" = xyes; then
-    restrict="$restrict_keyword"
-    break
-  fi
-done
-if test "x$restrict" = x; then
-  AC_MSG_ERROR(No restrict keyword found)
-fi
-AC_DEFINE_UNQUOTED(restrict, $restrict, [restrict keyword])
-
-dnl ---------------------------------------------
-dnl ASM ALIGN is power of two ?
-dnl Used by internal FFmpeg and Planar postprocess
-dnl ---------------------------------------------
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[ asm (".align 3"); ]])],
-  AC_DEFINE([ASMALIGN_1SLN], [1], [define if '.align n' means alignment to (1<<n)-byte boundaries]),
-  :)
-
-dnl ---------------------------------------------
 dnl Some extra checks.
 dnl ---------------------------------------------
 
-AC_SYS_LARGEFILE
 AC_CHECK_LIB(posix4, sched_get_priority_min)
 AC_CHECK_FUNCS([vsscanf sigaction sigset getpwuid_r nanosleep lstat memset readlink strchr va_copy])
 AC_CHECK_FUNCS([snprintf _snprintf], [some_snprintf="yes"; break])
@@ -1619,41 +1660,6 @@ AC_CHECK_FUNC(opendir,
   fi])
 
 
-
-dnl ---------------------------------------------
-dnl Check for some __attribute__ support needed
-dnl ---------------------------------------------
-
-CC_ATTRIBUTE_ALIGNED
-
-CC_ATTRIBUTE_PACKED(
-  [AC_DEFINE([XINE_PACKED], [__attribute__((packed))], [Mark a structure as being packed])],
-  [AC_MSG_WARN([Your compiler doesn't support __attribute__((packed)); xine might not work as expected.])
-   AC_DEFINE([XINE_PACKED], [], [Dummy mark a structure as being packed])]
-)
-
-CC_ATTRIBUTE_MALLOC
-
-CC_ATTRIBUTE_VISIBILITY([protected], [visibility_export="protected"],
-  [CC_ATTRIBUTE_VISIBILITY([default], [visibility_export="default"])]
-)
-
-if test "x$visibility_export" != "x"; then
-  CC_FLAG_VISIBILITY([
-    AC_DEFINE([EXPORTED], [__attribute__((visibility("default")))],
-      [Mark a symbol as being exported if visibility is changed])
-    VISIBILITY_FLAG="-fvisibility=hidden"
-    ], [AC_DEFINE([EXPORTED], [], [Dummy mark as being exported])
-  ])
-else
-  AC_DEFINE([EXPORTED], [], [Dummy mark as being exported])
-fi
-
-AC_SUBST([VISIBILITY_FLAG])
-
-CC_ATTRIBUTE_SENTINEL
-CC_ATTRIBUTE_FORMAT
-CC_ATTRIBUTE_FORMAT_ARG
 
 AC_OPTIMIZATIONS
 
@@ -1782,13 +1788,6 @@ if test "x$enable_impure_text" = xyes; then
   esac
 fi
 AC_SUBST(IMPURE_TEXT_LDFLAGS)
-
-dnl ---------------------------------------------
-dnl HAVE_ARMV4L is currently used in libavcodec makefile.am
-dnl ---------------------------------------------
-
-AM_CONDITIONAL(HAVE_ARMV4L, test "x$enable_armv4l" = "xyes")
-
 
 dnl ---------------------------------------------
 dnl Use features of autoconf 2.61, but stay compatible
@@ -1922,7 +1921,7 @@ AC_ARG_ENABLE([w32dll],
   AS_HELP_STRING([--disable-w32dll], [Disable Win32 DLL support]),
   , [enable_w32dll=$with_gnu_as])
 
-case $host in
+case $host_or_hostalias in
    *-mingw* | *-cygwin)
      enable_w32dll="no" ;;
    i?86-* | k?-* | athlon-* | pentium*-)
@@ -2019,37 +2018,9 @@ _AM_DEPENDENCIES([OBJC])
 
 AM_CONDITIONAL([BUILD_DMX_IMAGE], [test "x$have_imagemagick" = "xyes" -o "x$no_gdkpixbuf" != "xyes"])
 
-dnl Important warnings we _don't_ want to skip
-dnl Don't put these under conditional for optimisations, because these
-dnl need always to be enabled.
-CC_CHECK_CFLAGS([-Wformat=2], [wformat="-Wformat=2"],
-  [CC_CHECK_CFLAGS([-Wformat], [wformat="-Wformat"])])
-
-test "x$wformat" != "x" && \
-   CC_CHECK_CFLAGS([-Wno-format-zero-length], [wformat="$wformat -Wno-format-zero-length"])
-
-CC_CHECK_CFLAGS([-Wmissing-format-attribute], [wformat="$wformat -Wmissing-format-attribute"])
-warnflags="$warnflags $wformat"
-
-dnl This *has* to stay at the end as it can break some autoconf tests.
-CC_CHECK_CFLAGS([-Werror-implicit-function-declaration], [warnflags="$warnflags -Werror-implicit-function-declaration"])
-
-CC_CHECK_CFLAGS([-Wstrict-aliasing=2], [warnflags="$warnflags -Wstrict-aliasing=2"],
-  [CC_CHECK_CFLAGS([-Wstrict-aliasing], [warnflags="$warnflags -Wstrict-aliasing"])])
-
-case $host in
-     dnl FreeBSD (et al.) does not complete linking for shared objects when pthreads
-     dnl are requested, as different implementations are present; to avoid problems
-     dnl use -Wl,-z,defs only for those platform not behaving this way.
-     *-freebsd*) ;;
-     *)
-	AC_TRY_LDFLAGS([-Wl,-z,defs], [NOUNDEF="-Wl,-z,defs"])
-	;;
-esac
-AC_SUBST([NOUNDEF])
-
 dnl Common cflags for all platforms
 CFLAGS="\$(MULTIPASS_CFLAGS) $warnflags $CFLAGS"
+OBJCFLAGS="$warnflags $OBJCFLAGS"
 
 dnl ---------------------------------------------
 dnl Output configuration files
