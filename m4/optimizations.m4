@@ -125,7 +125,7 @@ AC_DEFUN([AC_OPTIMIZATIONS], [
                   ;;
               pentiumpro-* | pentium2-* | i686-*)
                   archopt_val="pentiumpro"
-                  if test x"$check_athlon" = "xyes"; then
+                  if test x"$host" = x"$build"; then
                       if test -f /proc/cpuinfo; then
                           modelname=`cat /proc/cpuinfo | grep "model\ name\	:" | sed -e 's/ //g' | cut -d':' -f2`
                           case "$modelname" in

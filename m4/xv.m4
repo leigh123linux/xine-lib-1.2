@@ -121,17 +121,6 @@ AC_DEFUN([XINE_XV_SUPPORT], [
     AM_CONDITIONAL(HAVE_XV, test "x$ac_have_xv" = "xyes")
 
 
-    host_or_hostalias="$host"
-    if test "$host_or_hostalias" = ""; then
-        dnl user has called ./configure with a host parameter unknown to
-        dnl config.sub; the canonical "$host" is empty
-        dnl
-        dnl Try the following switch with user's original host_alias 
-        dnl input instead.
-        dnl
-        host_or_hostalias="$host_alias"
-    fi
-
     case "$host_or_hostalias" in
         hppa*)
             if test "x$ac_have_xv_static" = "xyes"; then

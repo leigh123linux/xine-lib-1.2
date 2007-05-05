@@ -97,17 +97,24 @@ fi
 AM_CONDITIONAL([PROFILING_BUILD], [test x"$enable_profiling" != x"no"])
 
 
-dnl ---------------------------------------------
-dnl Made possible to build for another arch.
-dnl ---------------------------------------------
+dnl ----------------------------------------------
+dnl Cross compilation, Mac OS X Universal Binaries
+dnl ----------------------------------------------
 
-AC_CANONICAL_HOST
 AC_CANONICAL_BUILD
+AC_CANONICAL_HOST
 
-test "$host" == "$build" && check_athlon=yes
-
-
+dnl check for Mac OS X universal binary support early, because certain flags
+dnl must be set prior to looking for cc/libtool, etc.
 MACOSX_UNIVERSAL_BINARIES
+
+dnl Check to see if $host is empty.  If it is, try $host_alias instead.
+dnl If $host is empty, it's because the user has run ./configure with a host
+dnl parameter unknown to config.sub.  This used to be set in xv handling, but
+dnl it's also used in a bunch of other places unrelated to Xwindows support,
+dnl so if X is disabled, other things could go badly.
+host_or_hostalias="$host"
+test x"$host_or_hostalias" = x"" && host_or_hostalias="$host_alias"
 
 
 dnl ---------------------------------------------
@@ -115,19 +122,8 @@ dnl Check for programs.
 dnl ---------------------------------------------
 
 AC_PROG_CC
+AC_PROG_OBJC
 AM_PROG_AS
-
-case "$host_os" in
-  *darwin*)
-     m4_ifdef([AC_PROG_OBJC],
-       [AC_PROG_OBJC],
-       [AC_CHECK_TOOL([OBJC], [gcc])
-        AC_SUBST([OBJC])
-	AC_SUBST([OBJCFLAGS])
-       ])
-     CPPFLAGS="$CPPFLAGS -DCONFIG_DARWIN"
-     ;;
-esac
 
 AC_GNU_SOURCE
 dnl Save CFLAGS, AC_ISC_POSIX set some unwanted default CFLAGS

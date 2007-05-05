@@ -23,6 +23,7 @@ EXTRA_DIST = \
 	libFLAC.m4 \
 	libfame.m4 \
 	macosx.m4 \
+	objc.m4 \
 	opengl.m4 \
 	optimizations.m4 \
 	pkg.m4 \
