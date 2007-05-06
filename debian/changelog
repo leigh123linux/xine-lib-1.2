@@ -1,3 +1,9 @@
+xine-lib (1.1.6~hg-0) unstable; urgency=low
+
+  * Hg snapshot.
+
+ -- Darren Salt <linux@youmustbejoking.demon.co.uk>  Mon, 16 Apr 2007 22:00:07 +0100
+
 xine-lib (1.1.5~cvs-0) unstable; urgency=low
 
   * CVS snapshot.

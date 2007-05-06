@@ -413,7 +413,7 @@ static int xml_parser_get_node (xml_node_t *current_node, char *root_name, int r
 	}
 	break;
 
-				/* > expected */
+				/* ?> expected */
       case 8:
 	switch (res) {
 	case (T_TI_STOP):
@@ -425,7 +425,7 @@ static int xml_parser_get_node (xml_node_t *current_node, char *root_name, int r
 	}
 	break;
 
-				/* ?> expected */
+				/* > expected */
       case 9:
 	switch (res) {
 	case (T_M_STOP_1):

@@ -16,7 +16,7 @@ dnl   XINE_SUB += 1; continue with XINE_LT_* values below
 dnl
 XINE_MAJOR=1
 XINE_MINOR=1
-XINE_SUB=5
+XINE_SUB=7
 
 #if test $XINE_SUB -eq 0 ; then
 #  XINE_SUBPART="";
@@ -54,8 +54,8 @@ XINE_LT_REVISION=0
 XINE_LT_AGE=17
 
 dnl for a release tarball do "rm .cvsversion" before "make dist"
-if test -f "${src_dir}/.cvsversion"; then
-  XINE_PRE="cvs"
+if test -f "${srcdir-.}/.cvsversion"; then
+  XINE_PRE="hg"
 else
   XINE_PRE=""
 fi
@@ -499,6 +499,12 @@ if test "x$with_x" != "xno"; then
    PKG_CHECK_MODULES([X], [x11 xext], , [
      AC_PATH_XTRA
    
+     dnl Set xv_path if its not done already
+     dnl we do it here before rewriting X_LIBS
+     if test x$xv_path = x; then
+     	xv_path=`echo $X_LIBS | sed -e 's/\-L\(.*\)/\1/'`
+     fi
+     
      dnl ----------------------------------------------
      dnl Check for XShm support (required with X)
      dnl ----------------------------------------------
@@ -1650,7 +1656,7 @@ dnl cdrom ioctls
 dnl ---------------------------------------------
 
 AC_CHECK_HEADERS([linux/cdrom.h sys/dvdio.h], [break])
-AC_CHECK_HEADERS([sys/cdio.h])
+AC_CHECK_HEADERS([sys/cdio.h sys/scsiio.h])
 AM_CHECK_CDROM_IOCTLS(
 	[AC_DEFINE(HAVE_CDROM_IOCTLS,1,[Define this if you have CDROM ioctls])],
 	[AC_MSG_RESULT([*** (S)VCD support will be disabled ***])])
@@ -2078,10 +2084,14 @@ dnl ---------------------------------------------
 dnl ASM ALIGN is power of two ?
 dnl Used by internal FFmpeg and Planar postprocess
 dnl ---------------------------------------------
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[ asm (".align 3"); ]])],[
-  AC_DEFINE([ASMALIGN(ZEROBITS)], [".align " #ZEROBITS "\n\t"], "asmalign power of two")
-],[
-  AC_DEFINE([ASMALIGN(ZEROBITS)], [".align 1<<" #ZEROBITS "\n\t"], "asmalign power of two")
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[ asm (".align 3"); ]])],
+  AC_DEFINE([ASMALIGN_1SLN], [1], [define if '.align n' means alignment to (1<<n)-byte boundaries]),
+  :)
+AH_BOTTOM([#ifdef ASMALIGN_1SLN
+# define ASMALIGN(ZEROBITS) ".align " #ZEROBITS "\n\t"
+#else
+# define ASMALIGN(ZEROBITS) ".align 1<<" #ZEROBITS "\n\t"
+#endif
 ])
 
 dnl ---------------------------------------------
@@ -2582,8 +2592,14 @@ esac
 AC_SUBST([NOUNDEF])
 
 dnl Common cflags for all platforms
-CFLAGS="-DNDEBUG -D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE \$(MULTIPASS_CFLAGS) $warnflags $CFLAGS"
+CFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE \$(MULTIPASS_CFLAGS) $warnflags $CFLAGS"
 DEBUG_CFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE $DEBUG_CFLAGS"
+
+if test "x$enable_debug" = "xyes"; then
+   CFLAGS="$CFLAGS -DDEBUG"
+else
+   CFLAGS="$CFLAGS -DNDEBUG"
+fi
 
 dnl ---------------------------------------------
 dnl Output configuration files
