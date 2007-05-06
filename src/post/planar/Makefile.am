@@ -15,6 +15,11 @@ endif
 # work, but at least it compiles.
 AM_CFLAGS = $(ff_cflags) -fomit-frame-pointer
 
+# Avoid errors with -O0
+xineplug_post_planar_la-eq.o xineplug_post_planar_la-eq.lo: CFLAGS=`echo @CFLAGS@ | sed -e 's/-O0\?\s/-Os /g'`
+xineplug_post_planar_la-eq2.o xineplug_post_planar_la-eq2.lo: CFLAGS=`echo @CFLAGS@ | sed -e 's/-O0\?\s/-Os /g'`
+xineplug_post_planar_la-noise.o xineplug_post_planar_la-noise.lo: CFLAGS=`echo @CFLAGS@ | sed -e 's/-O0\?\s/-Os /g'`
+
 xinepost_LTLIBRARIES = xineplug_post_planar.la
 
 xineplug_post_planar_la_SOURCES = planar.c invert.c expand.c fill.c boxblur.c \

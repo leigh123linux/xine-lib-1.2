@@ -14,6 +14,9 @@ dsputil_mmx.o dsputil_mmx.lo: CFLAGS=$(shell echo @CFLAGS@ | sed -e 's/-funroll-
 # Avoid errors on (at least) amd64 with -O0
 fdct_mmx.o fdct_mmx.lo: CFLAGS=`echo @CFLAGS@ | sed -e 's/^/-Os /; s/-O0\?\s/-Os /g'`
 
+# Avoid errors with -O0
+mpegvideo_mmx.o mpegvideo_mmx.lo: CFLAGS=`echo @CFLAGS@ | sed -e 's/-O0\?\s/-Os /g'`
+
 ASFLAGS =
 
 noinst_LTLIBRARIES = libavcodec_mmx.la

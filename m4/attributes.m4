@@ -119,7 +119,7 @@ AC_DEFUN([CC_ATTRIBUTE_FORMAT_ARG], [
 	AC_CACHE_CHECK([if compiler supports __attribute__((format_arg(printf)))],
 		[cc_cv_attribute_format_arg],
 		[AC_COMPILE_IFELSE([
-			void __attribute__((format_arg(1))) gettextlike(const char *fmt) { fmt = (void *)0; }
+			char *__attribute__((format_arg(1))) gettextlike(const char *fmt) { fmt = (void *)0; }
 			],
 			[cc_cv_attribute_format_arg=yes],
 			[cc_cv_attribute_format_arg=no])

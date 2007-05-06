@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef HAVE_X11
+#ifdef DIRECTFB_X11
 # include <X11/Xlib.h>
 #endif
 
@@ -44,7 +44,7 @@
 #include "xineutils.h"
 #include "vo_scale.h"
 
-#ifdef HAVE_X11
+#ifdef DIRECTFB_X11
 # include "x11osd.h"
 #endif
 
@@ -118,7 +118,7 @@ typedef struct directfb_driver_s {
   int                          flicker_filtering;
   int                          field_parity;
   
-#ifdef HAVE_X11
+#ifdef DIRECTFB_X11
   /* X11 related stuff */
   Display                     *display;
   int                          screen;
@@ -317,7 +317,7 @@ static void directfb_update_frame_format (vo_driver_t *this_gen,
   frame->ratio = ratio;
 }
 
-#ifdef HAVE_X11
+#ifdef DIRECTFB_X11
 static uint32_t directfb_colorkey_to_pixel (directfb_driver_t *this) {
   switch (this->depth) {
     case 8:
@@ -343,7 +343,7 @@ static uint32_t directfb_colorkey_to_pixel (directfb_driver_t *this) {
 static void directfb_clean_output_area (directfb_driver_t *this) {
   if (this->visual_type == XINE_VISUAL_TYPE_X11 ||
       this->visual_type == XINE_VISUAL_TYPE_X11_2) {
-#ifdef HAVE_X11
+#ifdef DIRECTFB_X11
     if (this->config.options & DLOP_DST_COLORKEY) {
       int i;
       
@@ -410,7 +410,7 @@ static void directfb_overlay_begin (vo_driver_t *this_gen,
   this->ovl_changed += changed;
 
   if (this->ovl_changed) {
-#ifdef HAVE_X11
+#ifdef DIRECTFB_X11
     if (this->xoverlay) {
       LOCK_DISPLAY();
       x11osd_clear (this->xoverlay); 
@@ -554,7 +554,7 @@ static void directfb_overlay_blend (vo_driver_t *this_gen,
   if (overlay->unscaled) {
     if (!this->ovl_changed)
       return;
-#ifdef HAVE_X11
+#ifdef DIRECTFB_X11
     if (this->xoverlay) {
       LOCK_DISPLAY();
       x11osd_blend (this->xoverlay, overlay); 
@@ -586,7 +586,7 @@ static void directfb_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) 
   directfb_driver_t *this = (directfb_driver_t *) this_gen;
 
   if (this->ovl_changed) {
-#ifdef HAVE_X11
+#ifdef DIRECTFB_X11
     if (this->xoverlay) {
       LOCK_DISPLAY();
       x11osd_expose (this->xoverlay);
@@ -1120,7 +1120,7 @@ static int directfb_gui_data_exchange (vo_driver_t *this_gen,
   switch (data_type) {
     case XINE_GUI_SEND_DRAWABLE_CHANGED:
       lprintf ("drawable changed.\n");
-#ifdef HAVE_X11
+#ifdef DIRECTFB_X11
       if (this->visual_type == XINE_VISUAL_TYPE_X11 ||
           this->visual_type == XINE_VISUAL_TYPE_X11_2) {
         this->drawable = (Drawable) data;
@@ -1140,7 +1140,7 @@ static int directfb_gui_data_exchange (vo_driver_t *this_gen,
 
     case XINE_GUI_SEND_EXPOSE_EVENT:
       lprintf ("expose event.\n");
-#ifdef HAVE_X11
+#ifdef DIRECTFB_X11
       if (this->visual_type == XINE_VISUAL_TYPE_X11 ||
           this->visual_type == XINE_VISUAL_TYPE_X11_2) {
         if (this->xoverlay) {
@@ -1182,7 +1182,7 @@ static void directfb_dispose (vo_driver_t *this_gen) {
   if (this->cur_frame)
     this->cur_frame->vo_frame.dispose (&this->cur_frame->vo_frame);
         
-#ifdef HAVE_X11
+#ifdef DIRECTFB_X11
   if (this->visual_type == XINE_VISUAL_TYPE_X11 ||
       this->visual_type == XINE_VISUAL_TYPE_X11_2) {
     LOCK_DISPLAY();
@@ -1280,7 +1280,7 @@ static void update_config_cb (void *data, xine_cfg_entry_t *entry) {
     this->layer->SetDstColorKey (this->layer, (this->colorkey & 0xff0000) >> 16,
                                               (this->colorkey & 0x00ff00) >>  8,
                                               (this->colorkey & 0x0000ff) >>  0); 
-#ifdef HAVE_X11
+#ifdef DIRECTFB_X11
     if (this->xoverlay) {
       x11osd_colorkey (this->xoverlay, 
                        directfb_colorkey_to_pixel(this), &this->sc);
@@ -1893,6 +1893,7 @@ static void dispose_class_fb (video_driver_class_t *this_gen) {
   free (this);
 }
 
+#ifndef DIRECTFB_X11
 static void *init_class_fb (xine_t *xine, void *visual_gen) {
   directfb_class_t *this;
   const char       *error;
@@ -1925,7 +1926,7 @@ static const vo_info_t vo_info_directfb_fb = {
 
 /*** XDirectFB plugin functions ****/
 
-#ifdef HAVE_X11
+#else
 static vo_driver_t *open_plugin_x11 (video_driver_class_t *class_gen, const void *visual_gen) {
   directfb_class_t  *class  = (directfb_class_t *) class_gen;
   directfb_driver_t *this;
@@ -2163,9 +2164,10 @@ static const vo_info_t vo_info_directfb_x11_2 = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
+#ifndef DIRECTFB_X11
   { PLUGIN_VIDEO_OUT, VIDEO_OUT_DRIVER_IFACE_VERSION, "DirectFB",
     XINE_VERSION_CODE, &vo_info_directfb_fb, init_class_fb },
-#ifdef HAVE_X11
+#else
   { PLUGIN_VIDEO_OUT, VIDEO_OUT_DRIVER_IFACE_VERSION, "XDirectFB",
     XINE_VERSION_CODE, &vo_info_directfb_x11, init_class_x11 },
   { PLUGIN_VIDEO_OUT, VIDEO_OUT_DRIVER_IFACE_VERSION, "XDirectFB",
