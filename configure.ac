@@ -76,7 +76,6 @@ LIBNAME="libxine${XINE_MAJOR}"
 AC_SUBST(LIBNAME)
 AC_DEFINE_UNQUOTED([XINE_TEXTDOMAIN], "$LIBNAME", [catalog message text domain])
 
-dnl
 dnl Always set flags to begin with -g so that debug information will be
 dnl included.  In release bulids, this can be stripped out later if desired.
 dnl More importantly, it prevents autoconf from initializing the defaults to
@@ -187,6 +186,37 @@ else
 fi
 AC_SUBST(STATIC)
 
+dnl Windows ports checks
+dnl check if we are using the cygwin, mingw or cygwin with mno-cygwin mode
+dnl in which case we are actually dealing with a mingw32 compiler
+dnl This cannot be done until AC_PROG_EGREP and AC_PROG_CC are both done.
+case "$host_or_hostalias" in
+    *-*-mingw* | *-*-cygwin*)
+        case "$host_or_hostalias" in
+            *-*-mingw32*)
+                WIN32_SYS=mingw32
+                ;;
+            *-*-cygwin*)
+                AC_EGREP_CPP([yes],
+                             [#ifdef WIN32
+                              yes
+                              #endif],
+                             [WIN32_SYS=mingw32], [WIN32_SYS=cygwin])
+                ;;
+        esac
+
+        if test "$WIN32_SYS" = "mingw32"; then
+            WIN32_CPPFLAGS='-I$(top_srcdir)/win32/include'
+            LIBS="-lwinmm -lwsock32 $LIBS"
+            GOOM_LIBS="-liberty"
+        fi
+        LDFLAGS="-no-undefined $LDFLAGS"
+        ;;
+esac
+AC_SUBST(GOOM_LIBS)
+AC_SUBST(WIN32_CPPFLAGS)
+AM_CONDITIONAL([WIN32], [test x"$WIN32_SYS" = x"mingw32"])
+
 
 dnl ---------------------------------------------
 dnl REVISIT: NLS Support
@@ -261,7 +291,7 @@ AC_CHECK_SIZEOF(long)
 dnl AC_CHECK_TYPES([ptrdiff_t])
 dnl For systems without inttypes.h would be needed extend generated replacement.
 AC_CHECK_GENERATE_INTTYPES([include])
-AM_CONDITIONAL(GENERATED_INTTYPES_H, test "x$ac_cv_header_inttypes_h" != x"yes")
+AM_CONDITIONAL([GENERATED_INTTYPES_H], [test "x$ac_cv_header_inttypes_h" != x"yes"])
 AC_CHECK_TYPE(ssize_t, :, AC_DEFINE(ssize_t, __int64, [define ssize_t to __int64 if it's missing in default includes]))
 
 AC_CHECK_SOCKLEN_T
@@ -392,7 +422,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <netdb.h>]], [[hstrerror(0)]])],
 AC_LIBSOURCE([dirent_msvc.c])
 AC_CHECK_FUNC([opendir],
               [AC_DEFINE([HAVE_OPENDIR], 1, [Define to 1 if you have 'opendir' function])],
-              [if test x"$SYS" = x"mingw32"; then
+              [if test x"$WIN32_SYS" = x"mingw32"; then
                    AC_LIBOBJ([dirent_msvc])
                else
                    AC_MSG_ERROR([dirent is needed (opendir, readdir, ...)])
@@ -415,39 +445,6 @@ AC_SYS_LARGEFILE
 
 
 
-
-
-dnl ---------------------------------------------
-dnl Windows ports checks
-dnl ---------------------------------------------
-case "$host" in
-  *-*-mingw* | *-*-cygwin*)
-    dnl check if we are using the cygwin, mingw or cygwin with mno-cygwin mode
-    dnl in which case we are actually dealing with a mingw32 compiler
-    case "$host" in
-      *-*-mingw32*)
-        SYS=mingw32
-        ;;
-      *-*-cygwin*)
-        AC_EGREP_CPP(pattern, 
-                     [#ifdef WIN32
-                      yes
-                      #endif],
-                     SYS=mingw32, SYS=cygwin)
-        ;;
-    esac
-
-    if test "$SYS" = "mingw32"; then
-      WIN32_CPPFLAGS='-I$(top_srcdir)/win32/include'
-      LIBS="-lwinmm -lwsock32 $LIBS"
-      GOOM_LIBS="-liberty"
-    fi
-    LDFLAGS="-no-undefined $LDFLAGS"
-    ;;
-esac
-AC_SUBST(GOOM_LIBS)
-AC_SUBST(WIN32_CPPFLAGS)
-AM_CONDITIONAL(WIN32, test "x$SYS" = "xmingw32")
 
 
 dnl ---------------------------------------------
@@ -1674,6 +1671,16 @@ fi
 
 
 
+
+
+
+
+
+
+
+
+
+
 AC_OPTIMIZATIONS
 
 arch_x86="no"
@@ -1830,7 +1837,7 @@ XINE_REL_PLUGINDIR="`makeexpand "$XINE_PLUGINDIR"`"
 XINE_REL_PLUGINDIR="`makeexpand "$XINE_REL_PLUGINDIR" | sed -e "s,^${prefix}/,,"`"
 XINE_REL_FONTDIR="`makeexpand "$XINE_FONTDIR" | sed -e "s,^${prefix}/,,"`"
 XINE_REL_LOCALEDIR="`makeexpand "$XINE_LOCALEDIR" | sed -e "s,^${prefix}/,,"`"
-if test "x$SYS" = "xmingw32" -o "x$SYS" = "xcygwin"; then
+if test "x$WIN32_SYS" = "xmingw32" -o "x$WIN32_SYS" = "xcygwin"; then
   dnl polish paths (MinGW runtime accepts both \ and / anyway)
   XINE_REL_PLUGINDIR="`echo "$XINE_REL_PLUGINDIR" | sed -e 's/\\//\\\\\\\\/g'`"
   XINE_REL_FONTDIR="`echo "$XINE_REL_FONTDIR" | sed -e 's/\\//\\\\\\\\/g'`"
@@ -1931,14 +1938,6 @@ AM_CONDITIONAL(HAVE_W32DLL, test "x$enable_w32dll" != "xno")
 
 
 dnl ---------------------------------------------
-dnl some include paths ( !!! DO NOT REMOVE !!! )
-dnl ---------------------------------------------
-
-INCLUDES='-I$(top_srcdir) -I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/src -I$(top_builddir)/src/xine-engine -I$(top_srcdir)/src/xine-engine -I$(top_srcdir)/src/xine-utils $(INTLDIR) -I$(top_builddir)/src/input -I$(top_srcdir)/src/input $(WIN32_CPPFLAGS) -I$(top_builddir)/lib -I$(top_srcdir)/lib'
-AC_SUBST(INCLUDES)
-
-
-dnl ---------------------------------------------
 dnl Get where .m4 should be installed.
 dnl ---------------------------------------------
 
@@ -1962,32 +1961,6 @@ AC_SUBST(ACLOCAL_DIR)
 AM_CONDITIONAL([INSTALL_M4],[test "x$ACLOCAL_DIR" != "x"])
 
 
-dnl ---------------------------------------------
-dnl It seems automake 1.5 don't take care about this script
-dnl ---------------------------------------------
-
-if test ! -z "$am_depcomp"; then
-	DEPCOMP="depcomp"
-fi
-AC_SUBST(DEPCOMP)
-
-
-
-dnl ---------------------------------------------
-dnl Newest automake workaround
-dnl ---------------------------------------------
-
-AC_SUBST(mkdir_p)
-if test -n "$ac_aux_dir"; then
-  case "$ac_aux_dir" in
-    /*) MKINSTALLDIRS="$ac_aux_dir/install-sh -d" ;;
-    *) MKINSTALLDIRS="\$(top_builddir)/$ac_aux_dir/install-sh -d" ;;
-  esac
-else
-  MKINSTALLDIRS="\$(top_srcdir)/install-sh -d"
-fi
-AC_SUBST(MKINSTALLDIRS)
-
 dnl this is an internal function we should not use, but
 dnl as long as neither autoconf nor automake offer an A[CM]_PROG_OBJC
 dnl check we will have to call it
@@ -1995,9 +1968,18 @@ _AM_DEPENDENCIES([OBJC])
 
 AM_CONDITIONAL([BUILD_DMX_IMAGE], [test "x$have_imagemagick" = "xyes" -o "x$no_gdkpixbuf" != "xyes"])
 
+dnl ---------------------------------------------
+dnl some include paths ( !!! DO NOT REMOVE !!! )
+dnl ---------------------------------------------
+
+INCLUDES='-I$(top_srcdir) -I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/src -I$(top_builddir)/src/xine-engine -I$(top_srcdir)/src/xine-engine -I$(top_srcdir)/src/xine-utils $(INTLDIR) -I$(top_builddir)/src/input -I$(top_srcdir)/src/input $(WIN32_CPPFLAGS) -I$(top_builddir)/lib -I$(top_srcdir)/lib'
+AC_SUBST(INCLUDES)
+
+
 dnl Common cflags for all platforms
-CFLAGS="\$(MULTIPASS_CFLAGS) $warnflags $CFLAGS"
-OBJCFLAGS="$warnflags $OBJCFLAGS"
+CFLAGS="$UNIVERSAL_CFLAGS \$(MULTIPASS_CFLAGS) $warnflags $CFLAGS"
+LDFLAGS="$UNIVERSAL_LDFLAGS $LDFLAGS"
+OBJCFLAGS="$UNIVERSAL_CFLAGS $warnflags $OBJCFLAGS"
 
 dnl ---------------------------------------------
 dnl Output configuration files
