@@ -83,8 +83,8 @@ void _x_real_codecs_init(xine_t *const xine) {
     default_real_codecs_path = path;
 #define try_real_subpath(path) \
   try_real_path("/usr/" path) \
-  else try_real_path("/usr/local" path) \
-  else try_real_path("/opt" path)
+  else try_real_path("/usr/local/" path) \
+  else try_real_path("/opt/" path)
 
   /* The priority is for the first found */
   try_real_subpath("lib/win32")

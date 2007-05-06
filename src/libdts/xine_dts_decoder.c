@@ -49,7 +49,12 @@
 #include "xineutils.h"
 #include "audio_out.h"
 #include "buffer.h"
-#include "dts.h"
+
+#ifdef HAVE_DTS_H
+# include <dts.h>
+#else
+# include "internal-dts.h"
+#endif
 
 #define MAX_AC5_FRAME 4096
 

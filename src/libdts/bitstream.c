@@ -26,7 +26,7 @@
 
 #include <inttypes.h>
 
-#include "dts.h"
+#include "internal-dts.h"
 #include "dts_internal.h"
 #include "bitstream.h"
 

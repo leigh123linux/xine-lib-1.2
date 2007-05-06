@@ -23,6 +23,7 @@
 #define __HAVE_XINE_OPENGL_VIEW_H__
 
 #import <Cocoa/Cocoa.h>
+#import <OpenGL/gl.h>
 
 #import "XineVideoWindow.h"
 
@@ -32,74 +33,106 @@ extern NSString *XineViewDidResizeNotification;
 
 @interface XineOpenGLView : NSOpenGLView
 {
+    @private
     IBOutlet id <NSObject, XineOpenGLViewDelegate>  delegate;
-    int                            video_width, video_height;
-    char                          *texture_buffer;
-    unsigned long                  i_texture;
-    BOOL                           initDone;
-    BOOL                           isFullScreen;
-    XineVideoWindowFullScreenMode  fullscreen_mode;
-    NSOpenGLContext               *fullScreenContext;
-    NSOpenGLContext               *currentContext;
-    NSLock                        *mutex;
-    BOOL                           keepsVideoAspectRatio;
-    BOOL                           resizeViewOnVideoSizeChange;
-    NSCursor                      *currentCursor;
-    id <NSObject, XineOpenGLViewDelegate>  _xineController;
-    NSColor                       *initialColor;
-    unsigned int                   initialColorYUV;
-    BOOL                           initialColorYUVIsSet;
+    IBOutlet id <NSObject, XineOpenGLViewDelegate>  controller;
+
+    NSRecursiveLock *                   mutex;
+    BOOL                                initDone;
+
+    NSSize                              videoSize;
+    char *                              textureBuffer;
+    GLuint                              texture;
+
+    BOOL                                keepsVideoAspectRatio;
+    BOOL                                resizeViewOnVideoSizeChange;
+    NSCursor *                          currentCursor;
+
+    NSColor *                           initialColor;
+    unsigned int                        initialColorYUV;
+    BOOL                                initialColorYUVIsSet;
+
+    BOOL                                isFullScreen;
+    BOOL                                isFullScreenPrepared;
+    XineVideoWindowFullScreenMode       fullScreenMode;
+    NSOpenGLContext *                   fullScreenContext;
 }
 
-- (void) displayTexture;
-- (void) drawQuad;
-- (void) drawRect: (NSRect) rect;
-- (void) goFullScreen: (XineVideoWindowFullScreenMode) mode;
-- (void) exitFullScreen;
-- (BOOL) isFullScreen;
-- (void) reshape;
-- (void) initTextures;
-- (void) reloadTexture;
-- (char *) getTextureBuffer;
-- (void) setViewSizeInMainThread:(NSSize)size;
-// TODO: replace set...Size below with setSize:(double)videoSizeMultiplier
-- (void) setNormalSize;
-- (void) setHalfSize;
-- (void) setDoubleSize;
-- (void) setResizeViewOnVideoSizeChange:(BOOL)flag;
-- (BOOL) resizeViewOnVideoSizeChange;
-- (void) resetCursorRectsInMainThread;
++ (NSOpenGLPixelFormat *)defaultPixelFormat;
++ (NSOpenGLPixelFormat *)fullScreenPixelFormat;
 
-// Accessors
-- (void) setVideoSize:(NSSize)size;
-- (NSSize) videoSize;
-- (void) setKeepsVideoAspectRatio:(BOOL)flag;
-- (BOOL) keepsVideoAspectRatio;
-- (void) setCurrentCursor:(NSCursor *)cursor;
-- (NSCursor *) currentCursor;
-- (void) setXineController:(id)controller;
-- (id) xineController;
-- (void) setInitialColor:(NSColor *)color;
-- (NSColor *) initialColor;
+- (id)initWithCoder:(NSCoder *)coder;
+- (id)initWithFrame:(NSRect)frame;
+- (id)initWithFrame:(NSRect)frame pixelFormat:(NSOpenGLPixelFormat *)pixelFormat;
 
-// Delegate Methods
-- (id) delegate;
-- (void) setDelegate:(id)aDelegate;
+- (void)dealloc;
+
+- (void)encodeWithCoder:(NSCoder *)coder;
+
+- (NSOpenGLContext *)openGLContext;
+- (void)prepareOpenGL;
+- (void)reshape;
+- (void)update;
+
+- (void)initTextures;
+- (void)updateTexture;
+- (void)drawRect:(NSRect)rect;
+
+- (NSColor *)initialColor;
+- (void)setInitialColor:(NSColor *)color;
+
+- (void)setNormalSize;
+- (void)setHalfSize;
+- (void)setDoubleSize;
+
+- (NSSize)videoSize;
+
+- (BOOL)keepsVideoAspectRatio;
+- (void)setKeepsVideoAspectRatio:(BOOL)flag;
+- (BOOL)resizeViewOnVideoSizeChange;
+- (void)setResizeViewOnVideoSizeChange:(BOOL)flag;
+
+- (void)setViewSize:(NSValue *)sizeWrapper;
+- (void)setViewSizeInMainThread:(NSSize)size;
+
+- (NSCursor *)currentCursor;
+- (void)setCurrentCursor:(NSCursor *)cursor;
+
+- (BOOL)isFullScreen;
+- (void)goFullScreen:(XineVideoWindowFullScreenMode)mode;
+- (void)exitFullScreen;
+
+- (id)delegate;
+- (void)setDelegate:(id)aDelegate;
+- (id)xineController;
+- (void)setXineController:(id)aController;
+
+- (BOOL)acceptsFirstResponder;
+- (BOOL)mouseDownCanMoveWindow;
+
+// Not intended for public use:
+- (char *)textureBuffer;
+- (void)setVideoSize:(NSSize)size;
+- (void)resetCursorRects;
+- (void)resetCursorRectsInMainThread;
+- (void)calcFullScreenAspect;
+- (void)releaseInMainThread;
+- (void)passEventToDelegate:(NSEvent *)theEvent withSelector:(SEL)selector;
+
+- (BOOL)acceptsFirstResponder;
+- (BOOL)mouseDownCanMoveWindow;
 
 @end
 
 /* XineOpenGLView delegate methods */
+@protocol XineOpenGLViewDelegate
 
-@interface NSObject (XineOpenGLViewDelegate)
-
-- (NSSize) xineViewWillResize:(NSSize)oldSize toSize:(NSSize)proposedSize;
-- (void) xineViewDidResize:(NSNotification *)aNotification;
-- (void) mouseDown:(NSEvent *)theEvent inXineView:(XineOpenGLView *)theView;
-- (void) mouseMoved:(NSEvent *)theEvent inXineView:(XineOpenGLView *)theView;
-- (void) otherMouseDown:(NSEvent *)theEvent
-             inXineView:(XineOpenGLView *)theView;
-- (void) rightMouseDown:(NSEvent *)theEvent
-             inXineView:(XineOpenGLView *)theView;
+- (void)mouseDown:(NSEvent *)theEvent inXineView:(XineOpenGLView *)theView;
+- (void)mouseMoved:(NSEvent *)theEvent inXineView:(XineOpenGLView *)theView;
+- (void)otherMouseDown:(NSEvent *)theEvent inXineView:(XineOpenGLView *)theView;
+- (void)rightMouseDown:(NSEvent *)theEvent inXineView:(XineOpenGLView *)theView;
+- (NSSize)xineViewWillResize:(NSSize)oldSize toSize:(NSSize)proposedSize;
+- (void)xineViewDidResize:(NSNotification *)note;
 
 @end
 
