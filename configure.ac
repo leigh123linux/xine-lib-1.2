@@ -28,6 +28,25 @@ AH_BOTTOM([#ifdef ASMALIGN_1SLN
 #endif  /* __XINE_LIB_CONFIG_H__ */
 ])
 
+test x"$prefix"      = x"NONE" && prefix="${ac_default_prefix}"
+test x"$exec_prefix" = x"NONE" && exec_prefix='${prefix}'
+
+dnl Use features of autoconf 2.61, but stay compatible with older versions.
+if test x"$datarootdir" = x""; then
+   datarootdir='${datadir}'
+   AC_SUBST(datarootdir)
+fi
+
+if test x"$docdir" = x""; then
+   docdir='${datarootdir}/doc/${PACKAGE}'
+   AC_SUBST(docdir)
+fi
+
+if test x"$htmldir" = x""; then
+   htmldir='${docdir}'
+   AC_SUBST(htmldir)
+fi
+
 
 dnl -------------------------
 dnl Setup version information
@@ -138,6 +157,14 @@ AC_ISC_POSIX
 
 PKG_PROG_PKG_CONFIG
 
+dnl Check for documentation formatting tools
+AC_CHECK_PROG([SGMLTOOLS], [sgmltools], [sgmltools], [no])
+AM_CONDITIONAL([HAVE_SGMLTOOLS], [test x"$SGMLTOOLS" != x"no"])
+
+AC_CHECK_PROG([FIG2DEV], [fig2dev], [fig2dev], [no])
+AM_CONDITIONAL([HAVE_FIG2DEV], [test x"$FIG2DEV" != x"no"])
+
+
 dnl libtool
 m4_undefine([AC_PROG_F77])
 m4_defun([AC_PROG_F77],[])
@@ -200,6 +227,7 @@ AM_DL()
 dnl Test for socket and network support library
 AC_CHECK_LIB([socket], [socket],        [NET_LIBS="-lsocket $NET_LIBS"])
 AC_CHECK_LIB([nsl],    [gethostbyname], [NET_LIBS="-lnsl $NET_LIBS"])
+AC_CHECK_LIB([resolv], [hstrerror],     [NET_LIBS="-lresolv $NET_LIBS"])
 AC_SUBST(NET_LIBS)
 
 AC_CHECK_LIB([rt], [clock_getres],
@@ -208,12 +236,19 @@ AC_CHECK_LIB([rt], [clock_getres],
              [AC_MSG_RESULT([*** no POSIX timers available.])])
 AC_SUBST(RT_LIBS)
 
+AC_CHECK_LIB([posix4], [sched_get_priority_min])
 
 dnl -----------------------
 dnl checks for header files
 dnl -----------------------
 
 AC_HEADER_STDC
+
+dnl REVISIT: should we not be using AC_FUNC_ALLOCA for this?
+AC_CHECK_HEADERS([alloca.h])
+
+AC_CHECK_HEADERS([assert.h byteswap.h dirent.h execinfo.h libgen.h malloc.h netdb.h ucontext.h])
+AC_CHECK_HEADERS([sys/ioctl.h sys/mixer.h sys/mman.h sys/param.h sys/times.h])
 
 
 dnl ----------------
@@ -235,6 +270,7 @@ dnl ---------------------
 dnl checks for structures
 dnl ---------------------
 
+AC_CHECK_IP_MREQN
 
 
 dnl -----------------------------------
@@ -332,6 +368,35 @@ AC_ARG_ENABLE([mmap],
 if test x"$enable_mmap" = x"yes"; then
     AC_CHECK_FUNCS([mmap])
 fi
+
+AC_CHECK_FUNCS([vsscanf sigaction sigset getpwuid_r nanosleep lstat memset readlink strchr va_copy])
+
+AC_CHECK_FUNCS([snprintf _snprintf], [have_required_function="yes"])
+               test x"$have_required_function" != x"yes" && AC_MSG_ERROR([required function not found])
+AC_CHECK_FUNCS([vsnprintf _vsnprintf], [have_required_function="yes"])
+               test x"$have_required_function" != x"yes" && AC_MSG_ERROR([required function not found])
+AC_CHECK_FUNCS([strcasecmp _stricmp], [have_required_function="yes"])
+               test x"$have_required_function" != x"yes" && AC_MSG_ERROR([required function not found])
+AC_CHECK_FUNCS([strncasecmp _strnicmp], [have_required_function="yes"])
+               test x"$have_required_function" != x"yes" && AC_MSG_ERROR([required function not found])
+
+AC_FUNC_FSEEKO
+
+AC_REPLACE_FUNCS([asprintf basename gettimeofday setenv strndup strpbrk strsep strtok_r timegm unsetenv])
+
+AC_LIBSOURCE([hstrerror.c])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <netdb.h>]], [[hstrerror(0)]])],
+               [AC_DEFINE([HAVE_HSTRERROR], 1, [Define to 1 if you have 'hstrerror' in <netdb.h>])],
+               [AC_LIBOBJ([hstrerror])])
+
+AC_LIBSOURCE([dirent_msvc.c])
+AC_CHECK_FUNC([opendir],
+              [AC_DEFINE([HAVE_OPENDIR], 1, [Define to 1 if you have 'opendir' function])],
+              [if test x"$SYS" = x"mingw32"; then
+                   AC_LIBOBJ([dirent_msvc])
+               else
+                   AC_MSG_ERROR([dirent is needed (opendir, readdir, ...)])
+               fi])
 
 
 dnl --------------------------
@@ -1607,58 +1672,6 @@ if test "x$enable_antialiasing" = "xyes"; then
    AC_DEFINE(ENABLE_ANTIALIASING,1,[Define this to 1 to enable font antialising.])    
 fi
 
-dnl ---------------------------------------------
-dnl ip_mreqn
-dnl ---------------------------------------------
-
-AC_CHECK_IP_MREQN
-
-dnl ---------------------------------------------
-dnl Some extra checks.
-dnl ---------------------------------------------
-
-AC_CHECK_LIB(posix4, sched_get_priority_min)
-AC_CHECK_FUNCS([vsscanf sigaction sigset getpwuid_r nanosleep lstat memset readlink strchr va_copy])
-AC_CHECK_FUNCS([snprintf _snprintf], [some_snprintf="yes"; break])
-AC_CHECK_FUNCS([vsnprintf _vsnprintf], [some_vsnprintf="yes"; break])
-AC_CHECK_FUNCS([strcasecmp _stricmp], [some_strcasecmp="yes"; break])
-AC_CHECK_FUNCS([strncasecmp _strnicmp], [some_strncasecmp="yes"; break])
-if test "x$some_snprintf" != "xyes" -o \
-        "x$some_vsnprintf" != "xyes" -o \
-        "x$some_strcasecmp" != "xyes" -o \
-        "x$some_strncasecmp" != "xyes"; then
-  AC_MSG_ERROR([required function not found])
-fi
-AC_FUNC_FSEEKO
-AC_CHECK_HEADERS(assert.h byteswap.h malloc.h execinfo.h ucontext.h sys/mman.h sys/mixer.h libgen.h netdb.h dirent.h sys/times.h sys/ioctl.h sys/param.h alloca.h)
-AC_REPLACE_FUNCS(asprintf basename gettimeofday setenv strndup strpbrk strsep strtok_r timegm unsetenv)
-
-AC_LIBSOURCE(hstrerror.c)
-AC_LINK_IFELSE([#include <netdb.h>
-int main(void) {
-  hstrerror(0);
-}], ac_cv_function_system_hstrerror="yes")
-AC_CHECK_LIB([resolv], [hstrerror], [
-  ac_cv_function_system_hstrerror="yes"
-  NET_LIBS="-lresolv $NET_LIBS"
-])
-AC_SUBST(NET_LIBS)
-if test "x$ac_cv_function_system_hstrerror" = "xyes"; then
-  AC_DEFINE(HAVE_HSTRERROR, 1, [Define to 1 if you have 'hstrerror' in <netdb.h>])
-
-else
-  AC_LIBOBJ(hstrerror)
-fi
-
-AC_LIBSOURCE(dirent_msvc.c)
-AC_CHECK_FUNC(opendir,
-  [AC_DEFINE(HAVE_OPENDIR, 1, [Define to 1 if you have 'opendir' function])],
-  [if test "x$SYS" = "xmingw32"; then
-    AC_LIBOBJ(dirent_msvc)
-  else
-    AC_MSG_ERROR([dirent is needed (opendir, readdir, ...)])
-  fi])
-
 
 
 AC_OPTIMIZATIONS
@@ -1790,36 +1803,9 @@ fi
 AC_SUBST(IMPURE_TEXT_LDFLAGS)
 
 dnl ---------------------------------------------
-dnl Use features of autoconf 2.61, but stay compatible
-dnl with older versions.
-dnl ---------------------------------------------
-
-if test "x$datarootdir" = "x"; then
-   datarootdir='${datadir}'
-   AC_SUBST(datarootdir)
-fi
-
-if test "x$docdir" = "x"; then
-   docdir='${datarootdir}/doc/${PACKAGE}'
-   AC_SUBST(docdir)
-fi
-
-if test "x$htmldir" = "x"; then
-   htmldir='${docdir}'
-   AC_SUBST(htmldir)
-fi
-
-dnl ---------------------------------------------
 dnl XINE_ROOTDIR does not work if architecture independent files are 
 dnl installed to another place than architecture dependent files !!!
 dnl ---------------------------------------------
-
-if test "x$prefix" = xNONE; then
-   prefix="${ac_default_prefix}"
-fi
-if test "x$exec_prefix" = xNONE; then
-   exec_prefix='${prefix}'
-fi
 
 dnl
 dnl installation directories and directories relative to prefix
@@ -1986,15 +1972,6 @@ fi
 AC_SUBST(DEPCOMP)
 
 
-dnl ---------------------------------------------
-dnl Check for documentation formatting tool
-dnl ---------------------------------------------
-
-AC_CHECK_PROG(SGMLTOOLS, sgmltools, sgmltools, no)
-AM_CONDITIONAL([HAVE_SGMLTOOLS], [test "$SGMLTOOLS" != "no"])
-
-AC_CHECK_PROG(FIG2DEV, fig2dev, fig2dev, no)
-AM_CONDITIONAL([HAVE_FIG2DEV], [test "$FIG2DEV" != "no"])
 
 dnl ---------------------------------------------
 dnl Newest automake workaround
