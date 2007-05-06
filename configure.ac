@@ -95,8 +95,8 @@ dnl Build modes: debug and profile
 dnl ------------------------------
 
 AC_ARG_ENABLE([debug],
-              AS_HELP_STRING([--enable-debug], [build with debugging code enabled]),
-              [enable_debug="yes"], [enable_debug="no"])
+              [AS_HELP_STRING([--enable-debug], [build with debugging code enabled])],
+              [], [enable_debug="no"])
 if test x"$enable_debug" != x"no"; then
     CPPFLAGS="-DDEBUG $CPPFLAGS"
 else
@@ -105,14 +105,39 @@ fi
 AM_CONDITIONAL([DEBUG_BUILD], [test x"$enable_debug" != x"no"])
 
 AC_ARG_ENABLE([profiling],
-              AS_HELP_STRING([--enable-profiling], [build with profiling code enabled]),
-              [enable_profiling="yes"], [enable_profiling="no"])
+              [AS_HELP_STRING([--enable-profiling], [build with profiling code enabled])],
+              [], [enable_profiling="no"])
 if test x"$enable_profiling" != x"no"; then
     CFLAGS="-pg $CFLAGS"
     OBJCFLAGS="-pg $OBJCFLAGS"
     LDFLAGS="-pg $LDFLAGS"
 fi
 AM_CONDITIONAL([PROFILING_BUILD], [test x"$enable_profiling" != x"no"])
+
+
+dnl --------------
+dnl Build features
+dnl --------------
+
+AC_ARG_ENABLE([altivec],
+              [AS_HELP_STRING([--disable-altivec], [do not use assembly codes for Motorola 74xx CPUs])],
+              [], [enable_altivec="yes"])
+
+AC_ARG_ENABLE([vis],
+	      [AS_HELP_STRING([--disable-vis], [do not use assembly codes for Sun UltraSPARC CPUs])],
+              [], [enable_vis="yes"])
+
+AC_ARG_ENABLE([ipv6],
+              [AS_HELP_STRING([--enable-ipv6], [enable use of IPv6])],
+              [if test x"$enableval" != x"no"; then
+                   AC_DEFINE([ENABLE_IPV6], 1, [Enable this when IPv6 is requested])
+               fi])
+
+AC_ARG_ENABLE([antialiasing],
+              [AS_HELP_STRING([--enable-antialiasing], [enable font antialiasing])],
+              [if test x"$enableval" != x"no"; then
+                   AC_DEFINE([ENABLE_ANTIALIASING], 1, [Define this to 1 to enable font antialising.])    
+               fi])
 
 
 dnl ----------------------------------------------
@@ -549,12 +574,6 @@ AM_CONDITIONAL([FFMPEG_DISABLE_POPULAR_CODECS], [test "x$enable_ffmpeg_popular_c
 
 LIBMPEG2_CFLAGS=""
 
-AC_ARG_ENABLE([altivec],
-	AS_HELP_STRING([--disable-altivec], [do not use assembly codes for Motorola 74xx CPUs]))
-
-AC_ARG_ENABLE([vis],
-	AS_HELP_STRING([--disable-vis], [do not use assembly codes for Sun UltraSPARC CPUs]))
-
 AC_ARG_ENABLE([mlib],
 	AS_HELP_STRING([--disable-mlib], [do not build Sun mediaLib support]))
 
@@ -599,17 +618,6 @@ AC_SUBST(MLIB_CFLAGS)
 
 XINE_X11_SUPPORT
 
-
-dnl ---------------------------------------------
-dnl IPv6
-dnl ---------------------------------------------
-
-AC_ARG_ENABLE([ipv6],
-	AS_HELP_STRING([--enable-ipv6], [enable use of IPv6]))
-
-if test "x$enable_ipv6" = "xyes"; then
-   AC_DEFINE([ENABLE_IPV6], [1], [Enable this when IPv6 is requested])
-fi
 
 dnl ---------------------------------------------
 dnl zlib
@@ -1659,15 +1667,41 @@ fi
 AM_CONDITIONAL([ENABLE_REAL], [test "x$enable_real_codecs" != "xno"])
 
 dnl ---------------------------------------------
-dnl antialising support
+dnl For win32 libraries location, needed by libw32dll.
 dnl ---------------------------------------------
 
-AC_ARG_ENABLE([antialiasing],
-     AS_HELP_STRING([--enable-antialiasing], [enable font antialiasing]))
+AC_ARG_WITH([w32-path],
+  AS_HELP_STRING([--with-w32-path=path], [location of Win32 binary codecs]),
+  [w32_path="$withval"], [w32_path="/usr/lib/codecs"])
+AC_SUBST(w32_path)
 
-if test "x$enable_antialiasing" = "xyes"; then
-   AC_DEFINE(ENABLE_ANTIALIASING,1,[Define this to 1 to enable font antialising.])    
+AC_ARG_ENABLE([w32dll],
+  AS_HELP_STRING([--disable-w32dll], [Disable Win32 DLL support]),
+  , [enable_w32dll=$with_gnu_as])
+
+case $host_or_hostalias in
+   *-mingw* | *-cygwin)
+     enable_w32dll="no" ;;
+   i?86-* | k?-* | athlon-* | pentium*-)
+     if test "x$enable_w32dll" != "xno"; then
+	CC_PROG_AS
+     fi
+     test "x$enable_w32dll" = "x" && \
+       enable_w32dll="$with_gnu_as"
+     ;;
+   *)
+     enable_w32dll="no" ;;
+esac
+
+if test "x$enable_w32dll" = "xyes" && \
+   test "x$with_gnu_as" = "xno"; then
+
+   AC_MSG_ERROR([You need GNU as to enable Win32 codecs support])
 fi
+
+AM_CONDITIONAL(HAVE_W32DLL, test "x$enable_w32dll" != "xno")
+
+
 
 
 
@@ -1809,6 +1843,20 @@ if test "x$enable_impure_text" = xyes; then
 fi
 AC_SUBST(IMPURE_TEXT_LDFLAGS)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 dnl ---------------------------------------------
 dnl XINE_ROOTDIR does not work if architecture independent files are 
 dnl installed to another place than architecture dependent files !!!
@@ -1890,54 +1938,6 @@ AC_SUBST(XINE_SCRIPTPATH)
 
 
 dnl ---------------------------------------------
-dnl Some informations about xine-lib compilation
-dnl ---------------------------------------------
-
-XINE_BUILD_CC="`$CC -v 2>&1 | tail -1 2>/dev/null`"
-XINE_BUILD_OS="`uname -s -r -m`"
-XINE_BUILD_DATE="`date \"+%a %d %b %Y %T\"`"
-AC_SUBST(XINE_BUILD_CC)
-AC_SUBST(XINE_BUILD_OS)
-AC_SUBST(XINE_BUILD_DATE)
-
-
-dnl ---------------------------------------------
-dnl For win32 libraries location, needed by libw32dll.
-dnl ---------------------------------------------
-
-AC_ARG_WITH([w32-path],
-  AS_HELP_STRING([--with-w32-path=path], [location of Win32 binary codecs]),
-  [w32_path="$withval"], [w32_path="/usr/lib/codecs"])
-AC_SUBST(w32_path)
-
-AC_ARG_ENABLE([w32dll],
-  AS_HELP_STRING([--disable-w32dll], [Disable Win32 DLL support]),
-  , [enable_w32dll=$with_gnu_as])
-
-case $host_or_hostalias in
-   *-mingw* | *-cygwin)
-     enable_w32dll="no" ;;
-   i?86-* | k?-* | athlon-* | pentium*-)
-     if test "x$enable_w32dll" != "xno"; then
-	CC_PROG_AS
-     fi
-     test "x$enable_w32dll" = "x" && \
-       enable_w32dll="$with_gnu_as"
-     ;;
-   *)
-     enable_w32dll="no" ;;
-esac
-
-if test "x$enable_w32dll" = "xyes" && \
-   test "x$with_gnu_as" = "xno"; then
-
-   AC_MSG_ERROR([You need GNU as to enable Win32 codecs support])
-fi
-
-AM_CONDITIONAL(HAVE_W32DLL, test "x$enable_w32dll" != "xno")
-
-
-dnl ---------------------------------------------
 dnl Get where .m4 should be installed.
 dnl ---------------------------------------------
 
@@ -1980,6 +1980,16 @@ dnl Common cflags for all platforms
 CFLAGS="$UNIVERSAL_CFLAGS \$(MULTIPASS_CFLAGS) $warnflags $CFLAGS"
 LDFLAGS="$UNIVERSAL_LDFLAGS $LDFLAGS"
 OBJCFLAGS="$UNIVERSAL_CFLAGS $warnflags $OBJCFLAGS"
+
+
+dnl Some informations about xine-lib compilation for xine-config
+XINE_BUILD_CC="`$CC -v 2>&1 | tail -1 2>/dev/null`"
+XINE_BUILD_OS="`uname -s -r -m`"
+XINE_BUILD_DATE="`date \"+%a %d %b %Y %T\"`"
+AC_SUBST(XINE_BUILD_CC)
+AC_SUBST(XINE_BUILD_OS)
+AC_SUBST(XINE_BUILD_DATE)
+
 
 dnl ---------------------------------------------
 dnl Output configuration files
