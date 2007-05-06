@@ -276,7 +276,7 @@ int _x_io_select (xine_stream_t *stream, int fd, int state, int timeout_msec) {
     wset = (state & XIO_WRITE_READY) ? &fdset : NULL;
     ret = select (fd + 1, rset, wset, NULL, &select_timeout);
 
-    if (ret == -1) {
+    if (ret == -1 && errno != EINTR) {
       /* select error */
       return XIO_ERROR;
     } else if (ret == 1) {

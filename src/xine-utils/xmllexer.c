@@ -120,6 +120,10 @@ int lexer_get_token(char * tok, int tok_size) {
 	    state = 7;
 	    break;
 
+	  case '\'': /* " */
+	    state = 12;
+	    break;
+
 	  case '-':
 	    state = 10;
 	    tok[tok_pos] = c;
@@ -320,6 +324,17 @@ int lexer_get_token(char * tok, int tok_size) {
 	    lexbuf_pos++;
 	    state = 100;
 	  }
+	  break;
+
+	  /* T_STRING (single quotes) */
+	case 12:
+	  tok[tok_pos] = c;
+	  lexbuf_pos++;
+	  if (c == '\'') { /* " */
+	    tok[tok_pos] = '\0'; /* FIXME */
+	    return T_STRING;
+	  }
+	  tok_pos++;
 	  break;
 
 	  /* IDENT */

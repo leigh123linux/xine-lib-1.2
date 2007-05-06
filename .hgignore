@@ -57,6 +57,8 @@ misc/xine-lib.spec
 po/POTFILES
 po/*.gmo
 po/stamp-po
+po/insert-header.sed
+po/remove-potcdate.sed
 
 src/libffmpeg/ffmpeg_config.h
 src/video_out/libdha/pci_dev_ids.c

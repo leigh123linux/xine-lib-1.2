@@ -64,7 +64,6 @@ CONFIGURE_FLAGS := --prefix=/usr \
 	--with-external-libmad \
 	--with-external-a52dec \
 	--with-external-libdts \
-	--disable-cacatest \
 	$(DEB_BUILD_CONFIG_OPTIONS) \
 	CFLAGS="$(CFLAGS)"
 

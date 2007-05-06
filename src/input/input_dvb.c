@@ -77,6 +77,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
@@ -703,7 +705,7 @@ static int find_param(const Param *list, const char *name)
   return list->value;;
 }
 
-static int extract_channel_from_string(channel_t * channel,char * str,fe_type_t fe_type)
+static int extract_channel_from_string_internal(channel_t * channel,char * str,fe_type_t fe_type)
 {
 	/*
 		try to extract channel data from a string in the following format
@@ -864,54 +866,68 @@ static int extract_channel_from_string(channel_t * channel,char * str,fe_type_t 
 	return 0;
 }
 
-static channel_t *load_channels(dvb_input_plugin_t *this, int *num_ch, fe_type_t fe_type) {
+static int extract_channel_from_string(channel_t *channel, char *str, fe_type_t fe_type)
+{
+  channel->name = NULL;
+  if (!extract_channel_from_string_internal(channel, str, fe_type))
+    return 0;
+  free (channel->name); /* without this, we have a possible memleak */
+  return -1;
+}
+
+static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch, fe_type_t fe_type) {
 
   FILE      *f;
   char       str[BUFSIZE];
   char       filename[BUFSIZE];
-  channel_t *channels;
-  int        num_channels;
+  channel_t *channels = NULL;
+  int        num_channels = 0;
+  int        num_alloc = 0;
   int        i;
-  xine_t     *xine = this->class->xine;
+  struct stat st;
   
   snprintf(filename, BUFSIZE, "%s/.xine/channels.conf", xine_get_homedir());
 
-  f = fopen(filename, "rb");
+  f = fopen(filename, "r");
   if (!f) {
-    xprintf(xine, XINE_VERBOSITY_LOG, _("input_dvb: failed to open dvb channel file '%s'\n"), filename);
-    _x_message(this->stream, XINE_MSG_FILE_NOT_FOUND, filename, "Please run the dvbscan utility.", NULL);
+    xprintf(xine, XINE_VERBOSITY_LOG, _("input_dvb: failed to open dvb channel file '%s': %s\n"), filename, strerror (errno));
+    if (!f && stream)
+      _x_message(stream, XINE_MSG_FILE_NOT_FOUND, filename, "Please run the dvbscan utility.", NULL);
     return NULL;
   }
-
-  /*
-   * count and alloc channels
-   */
-  num_channels = 0;
-  while ( fgets (str, BUFSIZE, f)) {
-    num_channels++;
-  }
-  fclose (f);
-
-  if(num_channels > 0) 
-    xprintf (xine, XINE_VERBOSITY_DEBUG, "input_dvb: expecting %d channels...\n", num_channels);
-  else {
-    xprintf (xine, XINE_VERBOSITY_DEBUG, "input_dvb: no channels found in the file: giving up.\n");
+  if (fstat(fileno(f), &st) || !S_ISREG (st.st_mode)) {
+    xprintf(xine, XINE_VERBOSITY_LOG, _("input_dvb: dvb channel file '%s' is not a plain file\n"), filename);
+    fclose(f);
     return NULL;
   }
-
-  channels = xine_xmalloc (sizeof (channel_t) * num_channels);
-
-  _x_assert(channels != NULL);
 
   /*
    * load channel list 
    */
 
-  f = fopen (filename, "rb");
-  num_channels = 0;
   while ( fgets (str, BUFSIZE, f)) {
-    if (extract_channel_from_string(&(channels[num_channels]),str,fe_type) < 0) 
+    channel_t channel = {0};
+
+    /* lose trailing spaces & control characters */ 
+    i = strlen (str);
+    while (i && str[i - 1] <= ' ')
+      --i;
+    if (i == 0)
+        continue;
+    str[i] = 0;
+
+    if (extract_channel_from_string(&channel,str,fe_type) < 0) 
 	continue;
+
+    if (num_channels >= num_alloc) {
+      channel_t *new_channels = xine_xmalloc((num_alloc += 32) * sizeof (channel_t));
+      _x_assert(new_channels != NULL);
+      memcpy(new_channels, channels, num_channels * sizeof (channel_t));
+      free(channels);
+      channels = new_channels;
+    }
+
+    channels[num_channels] = channel;
 
     /* Initially there's no EPG data in the EPG structs. */
     channels[num_channels].epg_count = 0;
@@ -921,6 +937,9 @@ static channel_t *load_channels(dvb_input_plugin_t *this, int *num_ch, fe_type_t
     num_channels++;
   }
   fclose(f);
+
+  /* free any trailing unused entries */
+  channels = realloc (channels, num_channels * sizeof (channel_t));
 
   if(num_channels > 0) 
     xprintf (xine, XINE_VERBOSITY_DEBUG, "input_dvb: found %d channels...\n", num_channels);
@@ -932,6 +951,14 @@ static channel_t *load_channels(dvb_input_plugin_t *this, int *num_ch, fe_type_t
   
   *num_ch = num_channels;
   return channels;
+}
+
+static void free_channel_list (channel_t *channels, int num_channels)
+{
+  if (channels)
+    while (--num_channels >= 0)
+      free(channels[num_channels].name);
+  free(channels);
 }
 
 static int tuner_set_diseqc(tuner_t *this, channel_t *c)
@@ -2624,7 +2651,7 @@ static void dvb_plugin_dispose (input_plugin_t *this_gen) {
       }
   }
   if (this->channels)
-    free (this->channels);
+    free_channel_list (this->channels, this->num_channels);
 
 
   /* Make the EPG updater thread return. */
@@ -2719,7 +2746,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
       * and assume that its format is valid for our tuner type
       */
 
-      if (!(channels = load_channels(this, &num_channels, tuner->feinfo.type))) 
+      if (!(channels = load_channels(this->class->xine, this->stream, &num_channels, tuner->feinfo.type))) 
       {
         /* failed to load the channels */
 	 tuner_dispose(tuner);
@@ -3120,77 +3147,46 @@ static char **dvb_class_get_autoplay_list(input_class_t * this_gen,
 {
     dvb_input_class_t *class = (dvb_input_class_t *) this_gen;
     channel_t *channels=NULL;
-    FILE *f;
-    char *tmpbuffer=xine_xmalloc(BUFSIZE);
-    char *foobuffer=xine_xmalloc(BUFSIZE);
-    char *str=tmpbuffer;
-    int num_channels;
-    int nlines=0;
-    int default_channel;    
-    xine_cfg_entry_t lastchannel_enable;
+    char foobuffer[BUFSIZE];
+    int ch, apch, num_channels;
+    int default_channel = -1;
+    xine_cfg_entry_t lastchannel_enable = {0};
     xine_cfg_entry_t lastchannel;
 
-    _x_assert(tmpbuffer != NULL);
-    _x_assert(foobuffer != NULL);    
-    
-    snprintf(tmpbuffer, BUFSIZE, "%s/.xine/channels.conf", xine_get_homedir());
-    
     num_channels = 0;
 
-    f=fopen (tmpbuffer,"rb");
-    if(!f){ /* channels.conf not found in .xine */
+    if (!(channels = load_channels(class->xine, NULL, &num_channels, 0))) {
+       /* channels.conf not found in .xine */
        class->mrls[0]="Sorry, No channels.conf found";
        class->mrls[1]="Please run the dvbscan utility";
        class->mrls[2]="from the dvb drivers apps package";
        class->mrls[3]="and place the file in ~/.xine/";
        *num_files=4;
-       free(tmpbuffer);
-       free(foobuffer);
        return class->mrls;
-    } else {  
-      while (fgets(str, BUFSIZE, f)) 
-        nlines++;
     }
-    fclose (f);
    
-    if (xine_config_lookup_entry(class->xine, "media.dvb.remember_channel", &lastchannel_enable))
-      if (lastchannel_enable.num_value){
-        num_channels++;
-        if (xine_config_lookup_entry(class->xine, "media.dvb.last_channel", &lastchannel))
-            default_channel = lastchannel.num_value;
-      }
+    if (xine_config_lookup_entry(class->xine, "media.dvb.remember_channel", &lastchannel_enable)
+        && lastchannel_enable.num_value
+        && xine_config_lookup_entry(class->xine, "media.dvb.last_channel", &lastchannel))
+    {
+      default_channel = lastchannel.num_value - 1;
+      if (default_channel < 0 || default_channel >= num_channels)
+        default_channel = -1;
+    }
 
-    if (nlines+lastchannel_enable.num_value >= MAX_AUTOCHANNELS)
-        nlines = MAX_AUTOCHANNELS-lastchannel_enable.num_value;
-
-    snprintf(tmpbuffer, BUFSIZE, "%s/.xine/channels.conf", xine_get_homedir());
-
-
-    f=fopen (tmpbuffer,"rb");
-    channels=xine_xmalloc(sizeof(channel_t)*(nlines+lastchannel_enable.num_value));
-
-    _x_assert(channels != NULL);
-    
-
-    while (fgets(str,BUFSIZE,f) && num_channels < nlines+lastchannel_enable.num_value) {
-        if (extract_channel_from_string (&(channels[num_channels]), str,  0) < 0)
-          continue;
-          
-        sprintf(foobuffer,"dvb://%s",channels[num_channels].name);
-        if(class->autoplaylist[num_channels])
-           free(class->autoplaylist[num_channels]);
-         class->autoplaylist[num_channels]=xine_xmalloc(128);
-
-	 _x_assert(class->autoplaylist[num_channels] != NULL);
-        
-        class->autoplaylist[num_channels]=strdup(foobuffer);
-	  num_channels++;
-      }
+    for (ch = 0, apch = !!lastchannel_enable.num_value;
+         ch < num_channels && ch < MAX_AUTOCHANNELS;
+         ++ch, ++apch) {
+        snprintf(foobuffer, BUFSIZE, "dvb://%s", channels[ch].name);
+        free(class->autoplaylist[apch]);
+        class->autoplaylist[apch] = strdup(foobuffer);
+        _x_assert(class->autoplaylist[apch] != NULL);
+    }
 
     if (lastchannel_enable.num_value){
-      if (lastchannel.num_value > -1 && lastchannel.num_value < num_channels)
+      if (default_channel != -1)
 	/* plugin has been used before - channel is valid */
-	sprintf (foobuffer, "dvb://%s", channels[lastchannel.num_value].name);
+	sprintf (foobuffer, "dvb://%s", channels[default_channel].name);
       else
 	/* set a reasonable default - the first channel */
 	sprintf (foobuffer, "dvb://%s", num_channels ? channels[0].name : "0");
@@ -3198,13 +3194,10 @@ static char **dvb_class_get_autoplay_list(input_class_t * this_gen,
       class->autoplaylist[0]=strdup(foobuffer);
     }
 
-    free(tmpbuffer);
-    free(foobuffer);
-    free(channels);
-    fclose(f);
+    free_channel_list(channels, num_channels);
 
-    *num_files = num_channels; 
-    class->numchannels=nlines;        
+    *num_files = num_channels + lastchannel_enable.num_value;
+    class->numchannels = *num_files;
 
    return class->autoplaylist;
 }

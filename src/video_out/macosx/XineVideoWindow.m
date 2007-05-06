@@ -108,7 +108,7 @@
 }
 
 
-- (XineOpenGLView *) xineView
+- (id) xineView
 {
     return xineView;
 }

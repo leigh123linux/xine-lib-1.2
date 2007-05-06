@@ -135,10 +135,10 @@ static int open_ac3_file(demux_ac3_t *this) {
   uint8_t *peak;
 
   blocksize = this->input->get_blocksize(this->input);
-  if (blocksize) {
+  if (blocksize && INPUT_IS_SEEKABLE(this->input)) {
     this->input->seek(this->input, 0, SEEK_SET);
     buf_element_t *buf = this->input->read_block(this->input,
-						 this->audio_fifo,
+						 this->stream->audio_fifo,
 						 blocksize);
     this->input->seek(this->input, 0, SEEK_SET);
 
