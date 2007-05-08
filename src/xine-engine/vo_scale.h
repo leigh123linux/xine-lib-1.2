@@ -100,6 +100,9 @@ struct vo_scale_s {
   int                gui_width, gui_height;
   int                gui_win_x, gui_win_y;
   
+  /* */
+  int                force_redraw;
+  
   /*
    * video + display pixel aspect
    * One pixel of height 1 has this width
@@ -119,10 +122,6 @@ struct vo_scale_s {
   int                output_height;
   int                output_xoffset;
   int                output_yoffset;
-  
-
-  /* */
-  int                force_redraw;
   
 
   /* gui callbacks */

@@ -692,7 +692,7 @@ unknown:
                          this->video_stream->mdpr->avg_bit_rate);
                          
     /* Allocate fragment offset table */
-    this->fragment_tab = xine_xmalloc(FRAGMENT_TAB_SIZE*sizeof(uint32_t));
+    this->fragment_tab = xine_xcalloc(FRAGMENT_TAB_SIZE, sizeof(uint32_t));
     this->fragment_tab_max = FRAGMENT_TAB_SIZE;
   }
 
@@ -1282,7 +1282,7 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
       frames = (stream_read_word(this) & 0xf0) >> 4;
       
       /* 2 bytes per frame size */
-      sizes = xine_xmalloc(frames*sizeof(int));
+      sizes = xine_xcalloc(frames, sizeof(int));
       for(i = 0; i < frames; i++)
         sizes[i] = stream_read_word(this);
         

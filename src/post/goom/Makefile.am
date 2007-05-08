@@ -8,6 +8,9 @@ EXTRA_DIST = mmx.c xmmx.c ppc_drawings.s ppc_zoom_ultimate.s diff_against_releas
 #CFLAGS = `echo @CFLAGS@ | sed -e 's/-fomit-frame-pointer//g;s/-Os/-O2/g'`
 CFLAGS = `echo @CFLAGS@ | sed -e 's/-Os/-O2/g'`
 
+# Avoid errors with -O0
+xineplug_post_goom_la-xmmx.o xineplug_post_goom_la-xmmx.lo: CFLAGS=`echo @CFLAGS@ | sed -e 's/-O0\?\s/-Os /g'`
+
 xinepost_LTLIBRARIES = xineplug_post_goom.la
 
 ## doesn't work
@@ -16,9 +19,9 @@ xinepost_LTLIBRARIES = xineplug_post_goom.la
 #AM_CPPFLAGS = -DCPU_POWERPC
 #endif
 
-if HAVE_MMX
+#if HAVE_MMX
 extra_files = mmx.c xmmx.c
-endif
+#endif
 
 xineplug_post_goom_la_SOURCES = $(extra_files) xine_goom.c \
 	config_param.c convolve_fx.c cpu_info.c drawmethods.c filters.c flying_stars_fx.c \

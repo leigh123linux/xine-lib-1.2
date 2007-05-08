@@ -74,7 +74,13 @@ AC_DEFUN([AC_OPTIMIZATIONS], [
     CFLAGS="$wall ${CFLAGS}"
     DEBUG_CFLAGS="$wall ${DEBUG_CFLAGS}"
 
-    case "$host_or_hostalias" in
+    if test "$enable_macosx_universal"; then
+        optimize_for_host="universal-darwin"
+    else
+        optimize_for_host="$host_or_hostalias"
+    fi
+
+    case "$optimize_for_host" in
       i?86-* | k?-* | athlon-* | pentium*)
         if test "$GCC" = yes -o "${CC##*/}x" = "iccx" ; then
 
@@ -182,6 +188,7 @@ AC_DEFUN([AC_OPTIMIZATIONS], [
         ;;
       *darwin*)
         CFLAGS="-O3 -pipe -fomit-frame-pointer $m_wm $m_psb -fexpensive-optimizations $f_si -ffast-math $INLINE_FUNCTIONS -no-cpp-precomp -D_INTL_REDIRECT_MACROS $CFLAGS"
+        OBJCFLAGS="-O3 -pipe -fomit-frame-pointer $m_wm $m_psb -fexpensive-optimizations $f_si -ffast-math $INLINE_FUNCTIONS -no-cpp-precomp -D_INTL_REDIRECT_MACROS $CFLAGS"
         DEBUG_CFLAGS="-O3 $DEBUG_CFLAGS"
         ;;
       ppc-*-linux* | powerpc-*)

@@ -258,7 +258,7 @@ static int open_film_file(demux_film_t *film) {
       film->frequency = BE_32(&film_header[i + 8]);
       film->sample_count = BE_32(&film_header[i + 12]);
       film->sample_table =
-        xine_xmalloc(film->sample_count * sizeof(film_sample_t));
+        xine_xcalloc(film->sample_count, sizeof(film_sample_t));
       for (j = 0; j < film->sample_count; j++) {
 
         film->sample_table[j].sample_offset =

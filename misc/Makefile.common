@@ -11,6 +11,9 @@ vidixdir = $(XINE_PLUGINDIR)/vidix
 $(XINE_LIB):
 	@cd $(top_srcdir)/src/xine-engine && $(MAKE)
 
+$(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la:
+	$(MAKE) -C $(top_builddir)/contrib/libxdg-basedir
+
 install-data-hook:
 	@if test $$MAKELEVEL -le 4 ; then \
 	  if test -x "$(top_srcdir)/post-install.sh" ; then \

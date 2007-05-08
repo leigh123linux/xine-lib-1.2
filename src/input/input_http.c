@@ -181,7 +181,7 @@ static int _x_use_proxy(http_input_class_t *this, const char *host) {
     /* \177\0\0\1 is the *octal* representation of 127.0.0.1 */
     if ( info->h_addrtype == AF_INET && !memcmp(info->h_addr_list[0], "\177\0\0\1", 4) ) {
       lprintf("host '%s' is localhost\n", host);
-      return 1;
+      return 0;
     }
     /* TODO: IPv6 check */
   }
@@ -200,13 +200,13 @@ static int _x_use_proxy(http_input_class_t *this, const char *host) {
       /* special-case domain beginning with '=' -> is a host name */
       if (domain[0] == '=' && strcmp(target, domain + 1) == 0) {
 	lprintf("host '%s' is in no-proxy domain '%s'\n", target, domain);
-	return 1;
+	return 0;
       }
       noprox_len = strlen(domain);
       /* special-case host==domain, avoiding dot checks */
       if (host_len == noprox_len && strcmp(target, domain) == 0) {
 	lprintf("host '%s' is in no-proxy domain '%s'\n", target, domain);
-	return 1;
+	return 0;
       }
       /* check for host in domain, and require that (if matched) the domain
        * name is preceded by a dot, either in the host or domain strings,
@@ -216,7 +216,7 @@ static int _x_use_proxy(http_input_class_t *this, const char *host) {
 	  && (domain[0] == '.' || target[host_len - noprox_len - 1] == '.')
 	  && strcmp(target + host_len - noprox_len, domain) == 0) {
 	lprintf("host '%s' is in no-proxy domain '%s'\n", target, domain);
-	return 1;
+	return 0;
       }
       lprintf("host '%s' isn't in no-proxy domain '%s'\n", target, domain);
     }
@@ -225,7 +225,7 @@ static int _x_use_proxy(http_input_class_t *this, const char *host) {
   }
   free(no_proxy);
 
-  return 0;
+  return 1;
 }
 
 static int http_plugin_basicauth (const char *user, const char *password, char* dest, int len) {
@@ -663,9 +663,8 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
     _x_message(this->stream, XINE_MSG_GENERAL_WARNING, "malformed url", NULL);
     return 0;
   }
-  if (use_proxy && _x_use_proxy(this_class, this->host)) {
-    use_proxy = 0;
-  }
+  use_proxy = use_proxy && _x_use_proxy(this_class, this->host);
+
   if (this->port == 0)
     this->port = DEFAULT_HTTP_PORT;
   

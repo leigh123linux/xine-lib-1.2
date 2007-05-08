@@ -1,6 +1,83 @@
 #ifndef _XINE_OS_INTERNAL_H
 #define _XINE_OS_INTERNAL_H
 
+/* When using Apple's GCC, __APPLE__ will be defined.  This is a whole lot of
+ * messiness, but it's necessary in order to perform universal builds properly.
+ * It's meant to over-ride configure time stuff that would be different at
+ * compile time.
+ */
+#if defined(__APPLE__) && defined(XINE_MACOSX_UNIVERSAL_BINARY)
+
+#if !defined(__ppc__) && !defined(__ppc64__) && !defined(__i386__) && !defined(__x86_64__)
+#error unrecognized/unsupported CPU type building for Apple Darwin
+#endif
+
+/* First get rid of anything that initial configure might have set */
+#undef  ARCH_PPC
+#undef  ARCH_X86
+#undef  ARCH_X86_32
+#undef  ARCH_X86_64
+#undef  BITFIELD_LSBF
+#undef  ENABLE_ALTIVEC
+#undef  FPM_64BIT
+#undef  FPM_DEFAULT
+#undef  FPM_INTEL
+#undef  FPM_PPC
+#undef  HAVE_MMX
+#undef  HOST_ARCH
+#undef  HOST_DARWIN
+#undef  SIZEOF_INT
+#undef  SIZEOF_LONG
+#undef  SIZEOF_LONG_LONG
+#undef  WORDS_BIGENDIAN
+
+#define HOST_DARWIN 1
+
+/* WORDS_BIGENDIAN (replaces AC_C_BIGENDIAN autoconf test at compile time) */
+#include <machine/endian.h>
+#if BYTE_ORDER == BIG_ENDIAN
+#define WORDS_BIGENDIAN 1
+#endif
+
+/* __ppc__, __ppc64__, __i386__, __x86_64__ are interesting arch macros */
+#if defined(__ppc__)
+#define ARCH_PPC
+#define FPM_PPC             1
+#define HOST_ARCH           "darwin/powerpc"
+#define SIZEOF_INT          4
+#define SIZEOF_LONG         4
+#define SIZEOF_LONG_LONG    8
+#elif defined(__ppc64__)
+#define ARCH_PPC
+#define FPM_64BIT           1
+#define SIZEOF_INT          4
+#define SIZEOF_LONG         8
+#define SIZEOF_LONG_LONG    8
+#define HOST_ARCH           "darwin/powerpc64"
+#elif defined(__i386__)
+#define ARCH_X86
+#define ARCH_X86_32
+#define BITFIELD_LSBF
+#define FPM_INTEL           1
+#define HAVE_MMX
+#define HOST_ARCH           "darwin/i386"
+#define SIZEOF_INT          4
+#define SIZEOF_LONG         4
+#define SIZEOF_LONG_LONG    8
+#elif defined(__x86_64__)
+#define ARCH_X86
+#define ARCH_X86_64
+#define BITFIELD_LSBF
+#define FPM_64BIT           1
+#define HAVE_MMX
+#define HOST_ARCH           "darwin/x64_64"
+#define SIZEOF_INT          4
+#define SIZEOF_LONG         8
+#define SIZEOF_LONG_LONG    8
+#endif
+
+#endif  /* __APPLE__ */
+
 #include <stddef.h>
 #include <stdarg.h>
 

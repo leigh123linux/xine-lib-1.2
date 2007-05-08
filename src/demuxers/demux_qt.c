@@ -135,8 +135,10 @@ typedef unsigned int qt_atom;
 
 #define MAX_PTS_DIFF 100000
 
-/* network bandwidth, cribbed from src/input/input_mms.c */
-const int64_t bandwidths[]={14400,19200,28800,33600,34430,57600,
+/**
+ * @brief Network bandwidth, cribbed from src/input/input_mms.c
+ */
+static const int64_t bandwidths[]={14400,19200,28800,33600,34430,57600,
                             115200,262200,393216,524300,1544000,10485800};
 
 /* these are things that can go wrong */
@@ -409,10 +411,6 @@ typedef struct {
  * RAW_MOOV_FILENAME. */
 #define DEBUG_DUMP_MOOV 0
 #define RAW_MOOV_FILENAME "moovatom.raw"
-
-#ifndef __GNUC__
-#define __attribute__(x)
-#endif
 
 #if DEBUG_ATOM_LOAD
 #define debug_atom_load printf
@@ -918,9 +916,15 @@ static qt_error parse_trak_atom (qt_trak *trak,
           trak->edit_list_table[j].media_time);
       }
 
-    } else if (current_atom == MDHD_ATOM)
-      trak->timescale = BE_32(&trak_atom[i + 0x10]);
-    else if (current_atom == STSD_ATOM) {
+    } else if (current_atom == MDHD_ATOM) {
+      int version;
+      debug_atom_load ("demux_qt: mdhd atom\n");
+      
+      version = trak_atom[i+4];
+      if ( version > 1 ) continue; /* unsupported, undocumented */
+
+      trak->timescale = BE_32(&trak_atom[i + (version == 0 ? 0x10 : 0x18) ]);
+    } else if (current_atom == STSD_ATOM) {
 
       debug_atom_load ("demux_qt: stsd atom\n");
 #if DEBUG_ATOM_LOAD
@@ -929,12 +933,11 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
       /* allocate space for each of the properties unions */
       trak->stsd_atoms_count = BE_32(&trak_atom[i + 8]);
-      trak->stsd_atoms = xine_xmalloc(trak->stsd_atoms_count * sizeof(properties_t));
+      trak->stsd_atoms = xine_xcalloc(trak->stsd_atoms_count, sizeof(properties_t));
       if (!trak->stsd_atoms) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
       }
-      memset(trak->stsd_atoms, 0, trak->stsd_atoms_count * sizeof(properties_t));
 
       atom_pos = i + 0x10;
       properties_offset = 0x0C;

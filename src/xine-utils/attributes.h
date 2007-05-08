@@ -1,8 +1,10 @@
 /*
  * attributes.h
  * Copyright (C) 1999-2000 Aaron Holtzman <aholtzma@ess.engr.uvic.ca>
+ * Copyright (C) 2001-2007 xine developers
  *
- * This file is part of mpeg2dec, a free MPEG-2 video stream decoder.
+ * This file was originally part of mpeg2dec, a free MPEG-2 video stream
+ * decoder.
  *
  * mpeg2dec is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,18 +30,6 @@
 #define ATTR_ALIGN(align) __attribute__ ((__aligned__ ((ATTRIBUTE_ALIGNED_MAX < align) ? ATTRIBUTE_ALIGNED_MAX : align)))
 #else
 #define ATTR_ALIGN(align)
-#endif
-
-/* disable GNU __attribute__ extension, when not compiling with GNU C */
-#if defined(__GNUC__) || defined (__ICC)
-#ifndef ATTRIBUTE_PACKED
-#define	ATTRIBUTE_PACKED 1
-#endif 
-#else
-#undef	ATTRIBUTE_PACKED
-#ifndef __attribute__
-#define	__attribute__(x)	/**/
-#endif /* __attribute __*/
 #endif
 
 #ifdef XINE_COMPILE
@@ -79,6 +69,18 @@
 # define XINE_FORMAT_PRINTF_ARG(fmt) __attribute__((format_arg(fmt)))
 #else
 # define XINE_FORMAT_PRINTF_ARG(fmt)
+#endif
+
+#ifdef SUPPORT_ATTRIBUTE_PACKED
+# define XINE_PACKED __attribute__((packed))
+#else
+# define XINE_PACKED
+#endif
+
+#ifdef SUPPORT_ATTRIBUTE_MALLOC
+# define XINE_MALLOC __attribute__((__malloc__))
+#else
+# define XINE_MALLOC
 #endif
 
 #endif /* ATTRIBUTE_H_ */

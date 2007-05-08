@@ -68,11 +68,6 @@ AC_DEFUN([AC_FIND_LIBXV],
   # Ensure that AC_PATH_XTRA is executed before this
   AC_REQUIRE([AC_PATH_XTRA])
 
-  # Set xv_path if its not done already
-  if test x$xv_path = x; then
-    xv_path=`echo $X_LIBS | sed -e 's/\-L\(.*\)/\1/'`
-  fi
-
   if test x$xv_path = x; then
     xv_path=/usr/X11R6/lib
   fi

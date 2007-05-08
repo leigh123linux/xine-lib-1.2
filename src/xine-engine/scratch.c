@@ -112,11 +112,8 @@ scratch_buffer_t *_x_new_scratch_buffer (int num_lines) {
 
   this = xine_xmalloc (sizeof (scratch_buffer_t));
 
-  this->lines   = xine_xmalloc (sizeof (char *) * (num_lines + 1));
-  this->ordered = xine_xmalloc (sizeof (char *) * (num_lines + 1));
-
-  for (i = 0; i <= num_lines; i++)
-    this->lines[i] = this->ordered[i] = NULL;
+  this->lines   = xine_xcalloc ((num_lines + 1), sizeof(char*));
+  this->ordered = xine_xcalloc ((num_lines + 1), sizeof(char*));
 
   this->scratch_printf = scratch_printf;
   this->get_content    = scratch_get_content;

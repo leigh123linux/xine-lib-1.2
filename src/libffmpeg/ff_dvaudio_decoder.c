@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: dvaudio_decoder.c,v 1.12 2006/12/04 22:25:13 miguelfreitas Exp $
+ * $Id: dvaudio_decoder.c,v 1.11 2006/07/10 22:08:29 dgp85 Exp $
  *
  * dv audio decoder based on patch by Dan Dennedy <dan@dennedy.org>
  *
@@ -55,13 +55,8 @@
 #  undef uint64_t
 #endif
 
-#ifdef HAVE_FFMPEG
-#  include <avcodec.h>
-#  include "libavcodec/dvdata.h"
-#else
-#  include "libavcodec/avcodec.h"
-#  include "libavcodec/dvdata.h"
-#endif
+#include <avcodec.h>
+#include <dvdata.h> /* This is not installed by FFmpeg, its usage has to be cleared up */
 
 #ifdef _MSC_VER
 #  undef malloc
@@ -95,7 +90,6 @@ typedef struct dvaudio_decoder_s {
   int               decoder_ok;
 
 } dvaudio_decoder_t;
-
 
 /*
  * This is the dumbest implementation of all -- it simply looks at

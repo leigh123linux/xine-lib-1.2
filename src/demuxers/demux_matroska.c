@@ -68,13 +68,6 @@
 #define MAX(a, b)	((a)>(b)?(a):(b))
 #endif
 
-/* FOURCC will be manipulated using machine endian */
-#ifdef WORDS_BIGENDIAN
-#define meFOURCC BE_FOURCC
-#else
-#define meFOURCC LE_FOURCC
-#endif
-
 typedef struct {
   int                  track_num;
   off_t               *pos;
@@ -1320,7 +1313,7 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       /* create a bitmap info header struct for MPEG 4 */
       bih = malloc(sizeof(xine_bmiheader) + track->codec_private_len);
       bih->biSize = sizeof(xine_bmiheader) + track->codec_private_len;
-      bih->biCompression = meFOURCC('M', 'P', '4', 'S');
+      bih->biCompression = ME_FOURCC('M', 'P', '4', 'S');
       bih->biWidth = track->video_track->pixel_width;
       bih->biHeight = track->video_track->pixel_height;
       _x_bmiheader_le2me(bih);
@@ -1341,7 +1334,7 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       /* create a bitmap info header struct for h264 */
       bih = malloc(sizeof(xine_bmiheader) + track->codec_private_len);
       bih->biSize = sizeof(xine_bmiheader) + track->codec_private_len;
-      bih->biCompression = meFOURCC('a', 'v', 'c', '1');
+      bih->biCompression = ME_FOURCC('a', 'v', 'c', '1');
       bih->biWidth = track->video_track->pixel_width;
       bih->biHeight = track->video_track->pixel_height;
       _x_bmiheader_le2me(bih);

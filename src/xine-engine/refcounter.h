@@ -31,9 +31,9 @@
 
 typedef struct {
   pthread_mutex_t   lock;
-  int               count;
   void*             object;               /* referenced object */
   void            (*destructor)(void *);  /* object destructor */
+  int               count;
 } refcounter_t;
 
 typedef void (*refcounter_destructor)(void*);

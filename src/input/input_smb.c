@@ -258,8 +258,8 @@ static xine_mrl_t **smb_class_get_dir (input_class_t *this_gen,
 	}
   
 	if ((dir = smbc_opendir(current_path_smb)) >= 0){
-		xine_mrl_t *dir_files  = (xine_mrl_t *) xine_xmalloc(sizeof(xine_mrl_t) * MAXFILES);
-		xine_mrl_t *norm_files = (xine_mrl_t *) xine_xmalloc(sizeof(xine_mrl_t) * MAXFILES);
+		xine_mrl_t *dir_files  = (xine_mrl_t *) xine_xcalloc(MAXFILES, sizeof(xine_mrl_t));
+		xine_mrl_t *norm_files = (xine_mrl_t *) xine_xcalloc(MAXFILES, sizeof(xine_mrl_t));
     		int num_dir_files=0;
 		int num_norm_files=0;
 		while ((pdirent = smbc_readdir(dir)) != NULL){

@@ -73,3 +73,45 @@ diff -u -p -r1.1.1.1 nes_apu.c
     }
  
     /* resync cycle counter */
+--- a/src/libxineadec/nosefart/nsf.h	Tue Apr 10 13:42:00 2007 +0200
++++ b/src/libxineadec/nosefart/nsf.h	Tue Apr 10 13:48:50 2007 +0200
+@@ -29,6 +29,8 @@
+ #include "osd.h"
+ #include "nes6502.h"
+ #include "nes_apu.h"
++
++#include "config.h"
+ 
+ #define  NSF_MAGIC   "NESM\x1A"
+ 
+@@ -96,7 +98,7 @@ typedef struct nsf_s
+ 
+    /* our main processing routine, calls all external mixing routines */
+    void (*process)(void *buffer, int num_samples);
+-} __PACKED__ nsf_t;
++} XINE_PACKED nsf_t;
+ 
+ /* Function prototypes */
+ extern void nsf_init(void);
+--- a/src/libxineadec/nosefart/osd.h	Tue Apr 10 13:42:00 2007 +0200
++++ b/src/libxineadec/nosefart/osd.h	Tue Apr 10 13:19:34 2007 +0200
+@@ -26,19 +26,15 @@
+ #ifndef _OSD_H_
+ #define _OSD_H_
+ 
+-
+ #if defined(__GNUC__) || defined(__ICC)
+-#define  __PACKED__  __attribute__ ((packed))
+ #define  PATH_SEP    '/'
+ #ifdef __DJGPP__
+ #include <dpmi.h>
+ #include "dos_ints.h"
+ #endif
+ #elif defined(WIN32)
+-#define  __PACKED__
+ #define  PATH_SEP    '\\'
+ #else /* crapintosh? */
+-#define  __PACKED__
+ #define  PATH_SEP    ':'
+ #endif
+ 

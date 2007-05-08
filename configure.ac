@@ -16,7 +16,7 @@ dnl   XINE_SUB += 1; continue with XINE_LT_* values below
 dnl
 XINE_MAJOR=1
 XINE_MINOR=1
-XINE_SUB=5
+XINE_SUB=90
 
 #if test $XINE_SUB -eq 0 ; then
 #  XINE_SUBPART="";
@@ -49,13 +49,13 @@ dnl    are platform dependent
 dnl  * in Linux, the library will be named
 dnl    libname.so.(XINE_LT_CURRENT - XINE_LT_AGE).XINE_LT_AGE.XINE_LT_REVISION
 
-XINE_LT_CURRENT=18
+XINE_LT_CURRENT=19
 XINE_LT_REVISION=0
 XINE_LT_AGE=17
 
 dnl for a release tarball do "rm .cvsversion" before "make dist"
-if test -f "${src_dir}/.cvsversion"; then
-  XINE_PRE="cvs"
+if test -f "${srcdir-.}/.cvsversion"; then
+  XINE_PRE="hg"
 else
   XINE_PRE=""
 fi
@@ -101,6 +101,55 @@ AC_CANONICAL_BUILD
 test "$host" == "$build" && check_athlon=yes
 
 AC_CONFIG_HEADERS([config.h])
+
+AC_ARG_ENABLE([macosx-universal],
+             AS_HELP_STRING([--enable-macosx-universal], [build a Mac OS X univeral binary (ppc and x86)]),
+             [], [enable_macosx_universal="no"])
+if test x"$enable_macosx_universal" != x"no" ; then
+    case "$host_os" in
+        *darwin*)
+            dnl x64_64 and ppc64 binaries could also be built, but there is no
+            dnl version of Mac OS X currently shipping that can run them, so
+            dnl do not enable them by default for now.
+            if test x"$enable_macosx_universal" = x"yes" ; then
+                UNIVERSAL_ARCHES="i386 ppc"
+            else
+                UNIVERSAL_ARCHES=`echo "$enable_macosx_universal" | sed -e 's/,/ /g'`
+            fi
+            ;;
+        *)
+            AC_MSG_ERROR([Universal binaries can only be built on Darwin])
+            ;;
+    esac
+
+    UNIVERSAL_CFLAGS="$UNIVERSAL_CFLAGS -isysroot /Developer/SDKs/MacOSX10.4u.sdk"
+    UNIVERSAL_LDFLAGS="$UNIVERSAL_LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk"
+    if test x"$UNIVERSAL_ARCHES" != x"" ; then
+        # Forcibly disable dependency tracking for Universal builds, because -M
+        # does not work with multiple -arch arguments on the gcc command-line.
+        ac_tool_warned=yes
+        cross_compiling=yes
+        enable_dependency_tracking=no
+        host="`echo $host | sed -e s/$host_cpu/universal/g`"
+        host_cpu=universal
+
+        CFLAGS="$CFLAGS $UNIVERSAL_CFLAGS"
+        OBJCFLAGS="$OBJCFLAGS $UNIVERSAL_CFLAGS"
+        LDFLAGS="$LDFLAGS $UNIVERSAL_LDFLAGS"
+        AC_DEFINE(XINE_MACOSX_UNIVERSAL_BINARY, 1, [Define this if a universal binary is being built for Mac OS X])
+        for arch in $UNIVERSAL_ARCHES ; do
+            UNIVERSAL_CFLAGS="$UNIVERSAL_CFLAGS -arch $arch"
+            UNIVERSAL_LDFLAGS="$UNIVERSAL_LDFLAGS -arch $arch"
+            CFLAGS="$CFLAGS -arch $arch"
+            OBJCFLAGS="$OBJCFLAGS -arch $arch"
+            LDFLAGS="$LDFLAGS -arch $arch"
+        done
+    fi
+fi
+AM_CONDITIONAL([MACOSX_UNIVERSAL_BINARY], [test x"$enable_macosx_universal" = x"yes"])
+AC_SUBST(UNIVERSAL_ARCHES)
+AC_SUBST(UNIVERSAL_CFLAGS)
+AC_SUBST(UNIVERSAL_LDFLAGS)
 
 
 dnl ---------------------------------------------
@@ -317,6 +366,26 @@ powerpc64:yes | s390x:yes | sparc64:yes | x86_64:yes)
 esac
 AC_MSG_RESULT([$XINE_LIBNAME])
 
+dnl ---------------------------------------------
+dnl libxdg-basedir detection
+dnl ---------------------------------------------
+
+AC_ARG_WITH([external-libxdg-basedir],
+  AS_HELP_STRING([--with-external-libxdg-basedir], [use external copy of libxdg-basedir]))
+
+if test "x$with_external_libxdg_basedir" = "xyes"; then
+   PKG_CHECK_MODULES([XDG_BASEDIR], [libxdg-basedir >= 0.1.3])
+else
+   XDG_BASEDIR_CFLAGS='-I$(top_srcdir)/contrib/libxdg-basedir'
+   XDG_BASEDIR_LIBS='$(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la'
+   XDG_BASEDIR_DEPS='$(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la'
+fi
+
+AC_SUBST([XDG_BASEDIR_CFLAGS])
+AC_SUBST([XDG_BASEDIR_LIBS])
+AC_SUBST([XDG_BASEDIR_DEPS])
+
+AM_CONDITIONAL([EXTERNAL_LIBXDG_BASEDIR], [test "x$with_external_libxdg_basedir" = "xyes"])
 
 dnl ---------------------------------------------
 dnl mpeg2lib and ffmpeg stuff
@@ -354,78 +423,17 @@ use internal ffmpeg.
 *********************************************************************])
 else
   AC_MSG_RESULT([using included ffmpeg])
-  LIBFFMPEG_CPPFLAGS="-DHAVE_AV_CONFIG_H -DRUNTIME_CPUDETECT -DXINE_MPEG_ENCODER -D_ISOC9X_SOURCE -DCONFIG_DECODERS"
-  AC_CHECK_TYPES(int_fast8_t, [], [LIBFFMPEG_CPPFLAGS="$LIBFFMPEG_CPPFLAGS -DEMULATE_FAST_INT"])
-  AC_SUBST([LIBFFMPEG_CPPFLAGS])
 fi
 AM_CONDITIONAL(HAVE_FFMPEG, test "x$with_external_ffmpeg" = "xyes")
 
 
 AC_ARG_ENABLE([ffmpeg_uncommon_codecs],
 	AS_HELP_STRING([--disable-ffmpeg-uncommon-codecs], [don't build uncommon ffmpeg codecs]))
-
 AC_ARG_ENABLE([ffmpeg_popular_codecs],
 	AS_HELP_STRING([--disable-ffmpeg-popular-codecs], [don't build popular ffmpeg codecs]))
 
-AS_MKDIR_P(src/libffmpeg)
-ffmpeg_config_h=src/libffmpeg/ffmpeg_config.h
-echo "/* Automatically generated */" > $ffmpeg_config_h
-
-dnl uncommon ffmpeg codecs
-ffmpeg_uncommon_codecs="AASC ASV1 ASV2 AVS CSCD CYUV DVVIDEO EIGHTBPS FLIC FLV FOURXM FRAPS HUFFYUV IDCIN INTERPLAY_VIDEO KMVC LOCO MMVIDEO NUV QDRAW QPEG ROQ RPZA SMACKER SMC SNOW TRUEMOTION1 TRUEMOTION2 TSCC ULTI VCR1 VMDVIDEO WNV1 XAN_WC3 XL ZMBV ALAC AMR_NB AMR_WB LIBGSM MACE3 MACE6 SHORTEN SMACKAUD TRUESPEECH TTA VMDAUDIO PCM_ALAW PCM_MULAW PCM_S8 PCM_S16BE PCM_S16LE PCM_S24BE PCM_S24DAUD PCM_S24LE PCM_S32BE PCM_S32LE PCM_U8 PCM_U16BE PCM_U16LE PCM_U24BE PCM_U24LE PCM_U32BE PCM_U32LE INTERPLAY_DPCM ROQ_DPCM SOL_DPCM VQA XAN_DPCM ADPCM_4XM ADPCM_CT ADPCM_EA ADPCM_IMA_DK3 ADPCM_IMA_DK4 ADPCM_IMA_QT ADPCM_IMA_SMJPEG ADPCM_IMA_WAV ADPCM_IMA_WS ADPCM_MS ADPCM_SBPRO_2 ADPCM_SBPRO_3 ADPCM_SBPRO_4 ADPCM_XA ADPCM_YAMAHA"
-for ucname in $ffmpeg_uncommon_codecs; do
-  config_name="CONFIG_${ucname}_DECODER"
-  enabled_name="ENABLE_${ucname}_DECODER"
-  
-  if test "x$enable_ffmpeg_uncommon_codecs" != xno; then
-    echo "#define $config_name 1" >> $ffmpeg_config_h
-    echo "#define $enabled_name 1" >> $ffmpeg_config_h
-  else
-    echo "#define $enabled_name 0" >> $ffmpeg_config_h
-  fi
-done
-
-dnl popular ffmpeg codecs
-ffmpeg_popular_codecs="CINEPAK FLASHSV H261 H263 H263I H264 INDEO2 INDEO3 MJPEG MJPEGB MPEG1VIDEO MPEG2VIDEO MPEG4 MPEGVIDEO MSMPEG4V1 MSMPEG4V2 MSMPEG4V3 MSRLE MSVIDEO1 QTRLE RV10 RV20 SVQ1 SVQ3 VC1 VP3 VP5 VP6 VP6F WMV1 WMV2 WMV3 COOK DTS FLAC MP2 MP3 QDM2 RA_144 RA_288 WAVPACK WMAV1 WMAV2 ADPCM_SWF"
-
-for ucname in $ffmpeg_popular_codecs; do
-  config_name="CONFIG_${ucname}_DECODER"
-  enabled_name="ENABLE_${ucname}_DECODER"
-  
-  if test "x$enable_ffmpeg_popular_codecs" != xno; then
-    echo "#define $config_name 1" >> $ffmpeg_config_h
-    echo "#define $enabled_name 1" >> $ffmpeg_config_h
-  else
-    echo "#define $enabled_name 0" >> $ffmpeg_config_h
-  fi
-done
-
-dnl disabled ffmpeg codecs
-ffmpeg_disabled_codecs="BMP CAVS CLJR DSICINVIDEO FFV1 FFVHUFF GIF MDEC MPEG_XVMC MSZH PNG RAWVIDEO SP5X TARGA TIERTEXSEQVIDEO TIFF VMNC ZLIB DSICINAUDIO IMC MP3ADU MP3ON4 MPC7 SONIC WS_SND1 ADPCM_ADX ADPCM_G726 DVBSUB DVDSUB THEORA AAC MPEG4AAC AC3 VORBIS"
-for ucname in $ffmpeg_disabled_codecs; do
-  config_name="CONFIG_${ucname}_DECODER"
-  enabled_name="ENABLE_${ucname}_DECODER"
-  
-  echo "#define $enabled_name 0" >> $ffmpeg_config_h
-done
-
-dnl disabled ffmpeg encoders
-ffmpeg_extra_encoders="H263P JPEGLS LJPEG PAM PBM PGM PGMYUV PPM SONIC_LS"
-for ucname in $ffmpeg_uncommon_codecs $ffmpeg_popular_codecs $ffmpeg_disabled_codecs $ffmpeg_extra_encoders; do
-  config_name="CONFIG_${ucname}_ENCODER"
-  enabled_name="ENABLE_${ucname}_ENCODER"
-  
-  echo "#define $enabled_name 0" >> $ffmpeg_config_h
-done
-
-dnl disabled parsers
-ffmpeg_parsers="AAC AC3 CAVSVIDEO DVBSUB DVDSUB H261 H263 H264 MJPEG MPEG4VIDEO MPEGAUDIO MPEGVIDEO PNM"
-for ucname in $ffmpeg_parsers; do
-  config_name="CONFIG_${ucname}_PARSER"
-  enabled_name="ENABLE_${ucname}_PARSER"
-  
-  echo "#define $enabled_name 0" >> $ffmpeg_config_h
-done
+AM_CONDITIONAL([FFMPEG_DISABLE_UNCOMMON_CODECS], [test "x$enable_ffmpeg_uncommon_codecs" = "xno"])
+AM_CONDITIONAL([FFMPEG_DISABLE_POPULAR_CODECS], [test "x$enable_ffmpeg_popular_codecs" = "xno"])
 
 LIBMPEG2_CFLAGS=""
 
@@ -499,6 +507,12 @@ if test "x$with_x" != "xno"; then
    PKG_CHECK_MODULES([X], [x11 xext], , [
      AC_PATH_XTRA
    
+     dnl Set xv_path if its not done already
+     dnl we do it here before rewriting X_LIBS
+     if test x$xv_path = x; then
+     	xv_path=`echo $X_LIBS | sed -e 's/\-L\(.*\)/\1/'`
+     fi
+     
      dnl ----------------------------------------------
      dnl Check for XShm support (required with X)
      dnl ----------------------------------------------
@@ -1301,6 +1315,36 @@ elif test "x$external_libmad" = "xyes"; then
   fi
 else
   AC_MSG_RESULT([Use included libmad support])
+  case "$host_or_hostalias" in
+    i?86-* | k?-* | athlon-* | pentium*-)
+      AC_DEFINE(FPM_INTEL,1,[Define to select libmad fixed point arithmetic implementation])
+      ;;
+    x86_64-*)
+      AC_DEFINE(FPM_64BIT,1,[Define to select libmad fixed point arithmetic implementation])
+      ;;
+    ppc-* | powerpc-*) 
+      AC_DEFINE(FPM_PPC,1,[Define to select libmad fixed point arithmetic implementation])
+      ;;
+    sparc*-*)
+      if test "$GCC" = yes; then
+        AC_DEFINE(FPM_SPARC,1,[Define to select libmad fixed point arithmetic implementation])
+      else
+        AC_DEFINE(FPM_64BIT,1,[Define to select libmad fixed point arithmetic implementation])
+      fi
+      ;;
+    mips-*)
+      AC_DEFINE(FPM_MIPS,1,[Define to select libmad fixed point arithmetic implementation])
+      ;;
+    alphaev56-* | alpha* | ia64-* | hppa*-linux-*)
+      AC_DEFINE(FPM_64BIT,1,[Define to select libmad fixed point arithmetic implementation])
+      ;;
+    arm*-*)
+      AC_DEFINE(FPM_ARM,1,[Define to select libmad fixed point arithmetic implementation])
+      ;;
+    *)
+      AC_DEFINE(FPM_DEFAULT,1,[Define to select libmad fixed point arithmetic implementation])
+      ;;
+  esac
 fi
 
 AM_CONDITIONAL(MAD, test "x$enable_libmad" = "xyes")
@@ -1321,10 +1365,18 @@ elif test "x$with_external_libmpcdec" = "xyes"; then
    if test "x$have_mpcdec" != "xyes"; then
       AC_MSG_ERROR([Unable to find mpcdec])
    fi
-   AC_DEFINE([HAVE_LIBMPC], [1], [Define if external libmpc is used])
+   MPCDEC_LIBS="-lmpcdec"
+   MPCDEC_CFLAGS=""
 else
    AC_MSG_RESULT([Use included libmusepack])
+   MPCDEC_CFLAGS='-I$(top_srcdir)/contrib/libmpcdec'
+   MPCDEC_LIBS='$(top_builddir)/contrib/libmpcdec/libmpcdec.la'
+   MPCDEC_DEPS='$(top_builddir)/contrib/libmpcdec/libmpcdec.la'
 fi
+
+AC_SUBST(MPCDEC_LIBS)
+AC_SUBST(MPCDEC_DEPS)
+AC_SUBST(MPCDEC_CFLAGS)
 
 AM_CONDITIONAL([MUSEPACK], [test "x$enable_musepack" != "xno"])
 AM_CONDITIONAL([EXTERNAL_MPCDEC], [test "x$have_mpcdec" = "xyes"])
@@ -1650,7 +1702,7 @@ dnl cdrom ioctls
 dnl ---------------------------------------------
 
 AC_CHECK_HEADERS([linux/cdrom.h sys/dvdio.h], [break])
-AC_CHECK_HEADERS([sys/cdio.h])
+AC_CHECK_HEADERS([sys/cdio.h sys/scsiio.h])
 AM_CHECK_CDROM_IOCTLS(
 	[AC_DEFINE(HAVE_CDROM_IOCTLS,1,[Define this if you have CDROM ioctls])],
 	[AC_MSG_RESULT([*** (S)VCD support will be disabled ***])])
@@ -1792,6 +1844,9 @@ int main() {
   [case "$host" in
      *-*-mingw32* | *-*-cygwin*)
        bf_lsbf=1
+     ;;
+     universal-*-darwin*)
+       bf_lsbf=0
      ;;
      *)
        AC_MSG_RESULT([unknown])
@@ -1941,7 +1996,7 @@ dnl ---------------------------------------------
 
 AC_ARG_ENABLE(dts, AS_HELP_STRING([--disable-dts], [Disable support for DTS decoding library (default: enabled)]),
               [enable_libdts="$enableval"], [enable_libdts="yes"])
-AC_ARG_WITH(external-libdts, AS_HELP_STRING([--with-external-libdts], [use external libdts library (not recommended)]),
+AC_ARG_WITH(external-libdts, AS_HELP_STRING([--with-external-libdts], [use external libdts/libdca library (not recommended)]),
             [external_libdts="$withval"], [external_libdts="no"])
 
 have_dts="no"
@@ -1950,15 +2005,19 @@ if test "x$enable_libdts" = "xno"; then
   AC_MSG_RESULT([libdts support disabled])
 elif test "x$external_libdts" = "xyes"; then
   PKG_CHECK_MODULES(LIBDTS, [libdts], have_dts=yes, have_dts=no)
-  AC_CHECK_HEADERS([dts.h])
-  AC_SUBST(LIBDTS_LIBS)
-  AC_SUBST(LIBDTS_CFLAGS)
   if test "x$have_dts" = "xno"; then
     AC_MSG_RESULT([*** no usable version of libdts found, using internal copy ***])
   fi
 else
   AC_MSG_RESULT([Use included libdts support])
+  LIBDTS_CFLAGS='-I$(top_srcdir)/contrib/libdca/include'
+  LIBDTS_DEPS='$(top_builddir)/contrib/libdca/libdca.la'
+  LIBDTS_LIBS='$(top_builddir)/contrib/libdca/libdca.la'
 fi
+
+AC_SUBST(LIBDTS_LIBS)
+AC_SUBST(LIBDTS_DEPS)
+AC_SUBST(LIBDTS_CFLAGS)
 
 AM_CONDITIONAL(DTS, test "x$enable_libdts" = "xyes")
 AM_CONDITIONAL(EXTERNAL_LIBDTS, test "x$have_dts" = "xyes")
@@ -2078,10 +2137,18 @@ dnl ---------------------------------------------
 dnl ASM ALIGN is power of two ?
 dnl Used by internal FFmpeg and Planar postprocess
 dnl ---------------------------------------------
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[ asm (".align 3"); ]])],[
-  AC_DEFINE([ASMALIGN(ZEROBITS)], [".align " #ZEROBITS "\n\t"], "asmalign power of two")
-],[
-  AC_DEFINE([ASMALIGN(ZEROBITS)], [".align 1<<" #ZEROBITS "\n\t"], "asmalign power of two")
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[ asm (".align 3"); ]])],
+  AC_DEFINE([ASMALIGN_1SLN], [1], [define if '.align n' means alignment to (1<<n)-byte boundaries]),
+  :)
+AH_TOP([#ifndef __XINE_CONFIG_H__
+#define __XINE_CONFIG_H__ 1
+])
+AH_BOTTOM([#ifdef ASMALIGN_1SLN
+# define ASMALIGN(ZEROBITS) ".align " #ZEROBITS "\n\t"
+#else
+# define ASMALIGN(ZEROBITS) ".align 1<<" #ZEROBITS "\n\t"
+#endif
+#endif  /* __XINE_CONFIG_H__ */
 ])
 
 dnl ---------------------------------------------
@@ -2152,6 +2219,14 @@ dnl ---------------------------------------------
 
 CC_ATTRIBUTE_ALIGNED
 
+CC_ATTRIBUTE_PACKED(
+  [AC_DEFINE([XINE_PACKED], [__attribute__((packed))], [Mark a structure as being packed])],
+  [AC_MSG_WARN([Your compiler doesn't support __attribute__((packed)); xine might not work as expected.])
+   AC_DEFINE([XINE_PACKED], [], [Dummy mark a structure as being packed])]
+)
+
+CC_ATTRIBUTE_MALLOC
+
 CC_ATTRIBUTE_VISIBILITY([protected], [visibility_export="protected"],
   [CC_ATTRIBUTE_VISIBILITY([default], [visibility_export="default"])]
 )
@@ -2187,7 +2262,6 @@ case "$host_or_hostalias" in
     dnl mmx/sse/3dnow assembler instructions. 
     dnl
     AC_DEFINE_UNQUOTED(ARCH_X86_32,,[Define this if you're running x86 architecture 32 bits])
-    AC_DEFINE(FPM_INTEL,1,[Define to select libmad fixed point arithmetic implementation])
     arch_x86="yes"
     enable_impure_text="yes"
 
@@ -2199,13 +2273,14 @@ case "$host_or_hostalias" in
     ;;
   x86_64-*)
     AC_DEFINE_UNQUOTED(ARCH_X86_64,,[Define this if you're running x86 architecture 64 bits])
-    AC_DEFINE(FPM_64BIT,1,[Define to select libmad fixed point arithmetic implementation])
     arch_x86="yes"
+    ;;
+  universal-*-darwin*)
+    enable_impure_text="yes"
     ;;
   powerpc-*-darwin*)
     dnl avoid ppc compilation crash
     AS="$CC"
-    AC_DEFINE_UNQUOTED(FPM_PPC,,[Define to select libmad fixed point arithmetic implementation])
     AC_DEFINE_UNQUOTED(ARCH_PPC,,[Define this if you're running PowerPC architecture])
 
     AC_CHECK_HEADER([altivec.h], , enable_altivec=no)
@@ -2219,7 +2294,6 @@ case "$host_or_hostalias" in
   ppc-*-linux* | powerpc-*) 
     dnl avoid ppc compilation crash
     AS="$CC"
-    AC_DEFINE_UNQUOTED(FPM_PPC,,[Define to select libmad fixed point arithmetic implementation])
     AC_DEFINE_UNQUOTED(ARCH_PPC,,[Define this if you're running PowerPC architecture])
 
     AC_CHECK_HEADER([altivec.h], , enable_altivec=no)
@@ -2235,7 +2309,6 @@ case "$host_or_hostalias" in
       has_vis=yes
     fi
 
-    AC_DEFINE_UNQUOTED(FPM_SPARC,,[Define to select libmad fixed point arithmetic implementation])
     AC_DEFINE_UNQUOTED(ARCH_SPARC,,[Define this if you're running SPARC architecture])
     ;;
   sparc-*-solaris*)
@@ -2249,24 +2322,11 @@ case "$host_or_hostalias" in
 	  ;;
       esac
   
-      AC_DEFINE_UNQUOTED(FPM_SPARC,,[Define to select libmad fixed point arithmetic implementation])
       AC_DEFINE_UNQUOTED(ARCH_SPARC,,[Define this if you're running SPARC architecture])
-    else
-      AC_DEFINE_UNQUOTED(FPM_64BIT,,[Define to select libmad fixed point arithmetic implementation])
     fi
     ;;
-  mips-*)
-    AC_DEFINE_UNQUOTED(FPM_MIPS,,[Define to select libmad fixed point arithmetic implementation])
-    ;;
-  alphaev56-* | alpha* | ia64-* | hppa*-linux-*)
-    AC_DEFINE_UNQUOTED(FPM_64BIT,,[Define to select libmad fixed point arithmetic implementation])
-    ;;
   armv4l-*-linux*)
-    AC_DEFINE_UNQUOTED(FPM_ARM,,[Define to select libmad fixed point arithmetic implementation])
     enable_armv4l="yes"
-    ;;
-  *)
-    AC_DEFINE_UNQUOTED(FPM_DEFAULT,,[Define to select libmad fixed point arithmetic implementation])
     ;;
 esac
 
@@ -2582,8 +2642,15 @@ esac
 AC_SUBST([NOUNDEF])
 
 dnl Common cflags for all platforms
-CFLAGS="-DNDEBUG -D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE \$(MULTIPASS_CFLAGS) $warnflags $CFLAGS"
-DEBUG_CFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE $DEBUG_CFLAGS"
+CPPFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE $CPPFLAGS"
+CFLAGS="\$(MULTIPASS_CFLAGS) $warnflags $CFLAGS"
+DEBUG_CFLAGS="$warnflags $DEBUG_CFLAGS"
+
+if test "x$enable_debug" = "xyes"; then
+   CPPFLAGS="$CPPFLAGS -DDEBUG"
+else
+   CPPFLAGS="$CPPFLAGS -DNDEBUG"
+fi
 
 dnl ---------------------------------------------
 dnl Output configuration files
@@ -2596,6 +2663,11 @@ doc/man/Makefile
 doc/man/en/Makefile
 doc/hackersguide/Makefile
 doc/faq/Makefile
+doc/Doxyfile
+contrib/Makefile
+contrib/libdca/Makefile
+contrib/libmpcdec/Makefile
+contrib/libxdg-basedir/Makefile
 include/Makefile
 include/xine.h
 lib/Makefile
@@ -2627,23 +2699,11 @@ src/input/vcd/libcdio/image/Makefile
 src/input/vcd/libvcd/Makefile
 src/input/vcd/libvcd/libvcd/Makefile
 src/liba52/Makefile
-src/libdts/Makefile
 src/libfaad/Makefile
 src/libfaad/codebook/Makefile
 src/libffmpeg/Makefile
-src/libffmpeg/libavcodec/Makefile
-src/libffmpeg/libavcodec/armv4l/Makefile
-src/libffmpeg/libavcodec/i386/Makefile
-src/libffmpeg/libavcodec/mlib/Makefile
-src/libffmpeg/libavcodec/alpha/Makefile
-src/libffmpeg/libavcodec/ppc/Makefile
-src/libffmpeg/libavcodec/sparc/Makefile
-src/libffmpeg/libavcodec/libpostproc/Makefile
-src/libffmpeg/libavutil/Makefile
 src/libmad/Makefile
 src/libmpeg2/Makefile
-src/libmusepack/Makefile
-src/libmusepack/musepack/Makefile
 src/libspudec/Makefile
 src/libspucc/Makefile
 src/libspucmml/Makefile

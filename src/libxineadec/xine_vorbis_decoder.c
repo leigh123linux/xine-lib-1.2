@@ -91,8 +91,8 @@ static void vorbis_discontinuity (audio_decoder_t *this_gen) {
 }
 
 /* Known vorbis comment keys from ogg123 sources*/
-static struct {
-  char *key;         /* includes the '=' for programming convenience */
+static const struct {
+  const char *key;         /* includes the '=' for programming convenience */
   int   xine_metainfo_index;
 } vorbis_comment_keys[] = {
   {"ARTIST=", XINE_META_INFO_ARTIST},

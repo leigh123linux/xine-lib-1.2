@@ -16,16 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with self program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
- *
- * $Id: audio_out.c,v 1.210 2007/04/01 00:52:36 dgp85 Exp $
- *
- * 22-8-2001 James imported some useful AC3 sections from the previous alsa driver.
- *   (c) 2001 Andy Lo A Foe <andy@alsaplayer.org>
- * 20-8-2001 First implementation of Audio sync and Audio driver separation.
- *   (c) 2001 James Courtier-Dutton James@superbug.demon.co.uk
  */
- 
-/*
+
+/**
+ * @file
+ * @brief xine-lib audio output implementation
+ *
+ * @date 2001-08-20 First implementation of Audio sync and Audio driver separation.
+ *       (c) 2001 James Courtier-Dutton <james@superbug.demon.co.uk>
+ * @date 2001-08-22 James imported some useful AC3 sections from the previous
+ *       ALSA driver. (c) 2001 Andy Lo A Foe <andy@alsaplayer.org>
+ *
+ *
  * General Programming Guidelines: -
  * New concept of an "audio_frame".
  * An audio_frame consists of all the samples required to fill every
@@ -576,18 +578,16 @@ static void audio_filter_compress (aos_t *this, int16_t *mem, int num_frames) {
 }
 
 static void audio_filter_amp (aos_t *this, void *buf, int num_frames) {
-
-  int    i;
-  int    num_channels;
   double amp_factor;
-
-  num_channels = _x_ao_mode2channels (this->input.mode);
-  if (!num_channels)
+  int    i;
+  const int total_frames = num_frames * _x_ao_mode2channels (this->input.mode);
+  
+  if (!total_frames)
     return;
 
   amp_factor=this->amp_factor;
   if (this->amp_mute || amp_factor == 0) {
-    memset (buf, 0, num_frames * num_channels * (this->input.bits / 8));
+    memset (buf, 0, total_frames * (this->input.bits / 8));
     return;
   }
 
@@ -595,7 +595,7 @@ static void audio_filter_amp (aos_t *this, void *buf, int num_frames) {
     int16_t test;
     int8_t *mem = (int8_t *) buf;
 
-    for (i=0; i<num_frames*num_channels; i++) {
+    for (i=0; i<total_frames; i++) {
       test = mem[i] * amp_factor;
       /* Force limit on amp_factor to prevent clipping */
       if (test < INT8_MIN) {
@@ -612,7 +612,7 @@ static void audio_filter_amp (aos_t *this, void *buf, int num_frames) {
     int32_t test;
     int16_t *mem = (int16_t *) buf;
 
-    for (i=0; i<num_frames*num_channels; i++) {
+    for (i=0; i<total_frames; i++) {
       test = mem[i] * amp_factor;
       /* Force limit on amp_factor to prevent clipping */
       if (test < INT16_MIN) {

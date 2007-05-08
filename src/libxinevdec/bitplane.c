@@ -1160,8 +1160,8 @@ static void bitplane_decode_data (video_decoder_t *this_gen,
       this->bytes_per_pixel             = 1;
 
     /* New Buffer for indexes (palette based formats) */
-    this->index_buf                     = xine_xmalloc( this->num_pixel * this->bytes_per_pixel );
-    this->index_buf_hist                = xine_xmalloc( this->num_pixel * this->bytes_per_pixel );
+    this->index_buf                     = xine_xcalloc( this->num_pixel, this->bytes_per_pixel );
+    this->index_buf_hist                = xine_xcalloc( this->num_pixel, this->bytes_per_pixel );
 
     this->num_bitplanes                 = bih->biPlanes;
     this->camg_mode                     = bih->biCompression;
@@ -1316,8 +1316,8 @@ static void bitplane_decode_data (video_decoder_t *this_gen,
           }
         }
         if( this->index_buf == NULL ) {
-          this->index_buf               = xine_xmalloc( (this->num_pixel * this->bytes_per_pixel) );
-          this->index_buf_hist          = xine_xmalloc( (this->num_pixel * this->bytes_per_pixel) );
+          this->index_buf               = xine_xcalloc( this->num_pixel, this->bytes_per_pixel );
+          this->index_buf_hist          = xine_xcalloc( this->num_pixel, this->bytes_per_pixel );
           for (i = 0; i < (this->num_pixel * this->bytes_per_pixel); i++) {
             this->index_buf[i]          = 0;
             this->index_buf_hist[i]     = 0;

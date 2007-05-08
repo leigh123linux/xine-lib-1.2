@@ -92,9 +92,6 @@ struct post_plugin_s {
    */
   void (*dispose) (post_plugin_t *this);
   
-  /* has dispose been called */
-  int                 dispose_pending;
-  
   /* plugins don't have to init the stuff below */
   
   /* 
@@ -119,6 +116,9 @@ struct post_plugin_s {
 
   /* used by plugin loader */
   void               *node;
+
+  /* has dispose been called */
+  int                 dispose_pending;
 };
 
 /* helper function to initialize a post_plugin_t */
@@ -290,14 +290,14 @@ struct post_audio_port_s {
   /* the original port to call its functions from inside yours */
   xine_audio_port_t *original_port;
   
-  /* usage counter: how many objects are floating around that need
-   * these pointers to exist */
-  int                usage_count;
-  pthread_mutex_t    usage_lock;
-  
   /* the stream we are being fed by; NULL means no stream is connected;
    * this may be an anonymous stream */
   xine_stream_t     *stream;
+  
+  pthread_mutex_t    usage_lock;
+  /* usage counter: how many objects are floating around that need
+   * these pointers to exist */
+  int                usage_count;
   
   /* some values remembered by port->open() */
   uint32_t           bits;

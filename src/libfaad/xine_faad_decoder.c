@@ -75,7 +75,6 @@ typedef struct faad_decoder_s {
   int              bits_per_sample; 
   unsigned char    num_channels; 
   int              sbr;
-  uint32_t         ao_cap_mode; 
    
   int              output_open;
 
@@ -177,16 +176,18 @@ static int faad_open_dec( faad_decoder_t *this ) {
 }
 
 static int faad_open_output( faad_decoder_t *this ) {
+  int ao_cap_mode;
+
   this->rec_audio_src_size = this->num_channels * FAAD_MIN_STREAMSIZE;
        
   switch( this->num_channels ) {
     case 1:
-      this->ao_cap_mode=AO_CAP_MODE_MONO; 
+      ao_cap_mode=AO_CAP_MODE_MONO; 
       break;
     case 6:
       if(this->stream->audio_out->get_capabilities(this->stream->audio_out) &
          AO_CAP_MODE_5_1CHANNEL) {
-        this->ao_cap_mode = AO_CAP_MODE_5_1CHANNEL;
+        ao_cap_mode = AO_CAP_MODE_5_1CHANNEL;
         break;
       } else {
         this->faac_cfg = NeAACDecGetCurrentConfiguration(this->faac_dec);
@@ -195,7 +196,7 @@ static int faad_open_output( faad_decoder_t *this ) {
         this->num_channels = 2;
       }
     case 2:
-      this->ao_cap_mode=AO_CAP_MODE_STEREO;
+      ao_cap_mode=AO_CAP_MODE_STEREO;
       break; 
   }
    
@@ -203,7 +204,7 @@ static int faad_open_output( faad_decoder_t *this ) {
                                              this->stream,
                                              this->bits_per_sample,
                                              this->rate,
-                                             this->ao_cap_mode) ;
+                                             ao_cap_mode) ;
   return this->output_open;
 }
 

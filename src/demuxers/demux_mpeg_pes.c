@@ -1135,17 +1135,20 @@ static int32_t parse_video_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_elemen
    */
   if (this->mpeg12_h264_detected & 1) {
     buf_type = BUF_VIDEO_H264;
-    int nal_type_code = -1;
-    if (payload_size >= 4 && p[2] == 0x01 && p[1] == 0x00 && p[0] == 0x00)
-      nal_type_code = p[3] & 0x1f; 
-    if (nal_type_code == 9) { /* access unit delimiter */
-      buf_element_t *b = this->video_fifo->buffer_pool_alloc (this->video_fifo);
-      b->content       = b->mem;
-      b->size          = 0;
-      b->pts           = 0;
-      b->type          = buf_type;
-      b->decoder_flags = BUF_FLAG_FRAME_END;
-      this->video_fifo->put (this->video_fifo, b);
+    /* omit sending BUF_FLAG_FRAME_END for the first AUD occurence */
+    if (this->mpeg12_h264_detected > 2) {
+      int nal_type_code = -1;
+      if (payload_size >= 4 && p[2] == 0x01 && p[1] == 0x00 && p[0] == 0x00)
+        nal_type_code = p[3] & 0x1f; 
+      if (nal_type_code == 9) { /* access unit delimiter */
+        buf_element_t *b = this->video_fifo->buffer_pool_alloc (this->video_fifo);
+        b->content       = b->mem;
+        b->size          = 0;
+        b->pts           = 0;
+        b->type          = buf_type;
+        b->decoder_flags = BUF_FLAG_FRAME_END;
+        this->video_fifo->put (this->video_fifo, b);
+      }
     }
   }
 

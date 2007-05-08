@@ -39,36 +39,13 @@ typedef struct {
 void _x_alphablend_init(alphablend_t *extra_data, xine_t *xine) XINE_PROTECTED;
 void _x_alphablend_free(alphablend_t *extra_data) XINE_PROTECTED;
 
-/* _MSC_VER port changes */
-#undef ATTRIBUTE_PACKED
-#undef PRAGMA_PACK_BEGIN 
-#undef PRAGMA_PACK_END
-
-#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95) || defined(__ICC)
-#define ATTRIBUTE_PACKED __attribute__ ((packed))
-#define PRAGMA_PACK 0
-#endif
-
-#if !defined(ATTRIBUTE_PACKED)
-#define ATTRIBUTE_PACKED
-#define PRAGMA_PACK 1
-#endif
-
-#if PRAGMA_PACK
-#pragma pack(8)
-#endif
-
 typedef struct {         /* CLUT == Color LookUp Table */
   uint8_t cb;
   uint8_t cr;
   uint8_t y;
   uint8_t foo;
-} ATTRIBUTE_PACKED clut_t;
+} XINE_PACKED clut_t;
 
-
-#if PRAGMA_PACK
-#pragma pack()
-#endif
 
 #define XX44_PALETTE_SIZE 32
 

@@ -46,58 +46,23 @@
 #define OVERLAY_EVENT_MENU_BUTTON      3
 #define OVERLAY_EVENT_FREE_HANDLE      8 /* Frees a handle, previous allocated via get_handle */
 
-/* number of colors in the overlay palette. Currently limited to 256
-   at most, because some alphablend functions use an 8-bit index into
-   the palette. This should probably be classified as a bug. */
-/* FIXME: Also defines in video_out.h */
-#define OVL_PALETTE_SIZE 256
-
-typedef struct vo_buttons_s {
-  int32_t           type;        /*  0:Button not valid, 
-                                     1:Button Valid, no auto_action,
-                                     2:Button Valid, auto_action.
-                                  */
-
-  /* The following clipping coordinates are relative to the left upper corner
-   * of the OVERLAY, not of the target FRAME. Please do not mix them up! */
-  int32_t           hili_top;
-  int32_t           hili_bottom;
-  int32_t           hili_left;
-  int32_t           hili_right;
-  int32_t           up; 
-  int32_t           down; 
-  int32_t           left; 
-  int32_t           right; 
-  uint32_t          select_color[OVL_PALETTE_SIZE];
-  uint8_t           select_trans[OVL_PALETTE_SIZE];
-  xine_event_t      select_event;
-  uint32_t          active_color[OVL_PALETTE_SIZE];
-  uint8_t           active_trans[OVL_PALETTE_SIZE];
-  xine_event_t      active_event;
-  int32_t           hili_rgb_clut;      /* true if clut was converted to rgb*/
-                                        /* FIXME: Probably not needed ^^^ */
-} vo_buttons_t;
-  
 typedef struct video_overlay_object_s {
   int32_t	 handle;       /* Used to match Show and Hide events. */
   uint32_t	 object_type;  /* 0=Subtitle, 1=Menu */
   int64_t        pts;          /* Needed for Menu button compares */
   vo_overlay_t  *overlay;      /* The image data. */
-  uint32_t       palette_type; /* 1 Y'CrCB, 2 R'G'B' */
   uint32_t	*palette;      /* If NULL, no palette contained in this event. */
-  int32_t        buttonN;      /* Current highlighed button.  0 means no info on which button to higlight */
-                               /*                            -1 means don't use this button info. */
-  vo_buttons_t   button[32];   /* Info regarding each button on the overlay */
+  uint32_t       palette_type; /* 1 Y'CrCB, 2 R'G'B' */
 } video_overlay_object_t;
 
 /* This will hold all details of an event item, needed for event queue to function */
 typedef struct video_overlay_event_s {
-  uint32_t	 event_type;  /* Show SPU, Show OSD, Hide etc. */
   int64_t	 vpts;        /* Time when event will action. 0 means action now */
 /* Once video_out blend_yuv etc. can take rle_elem_t with Colour, blend and length information.
  * we can remove clut and blend from this structure.
  * This will allow for many more colours for OSD.
  */
+  uint32_t	 event_type;  /* Show SPU, Show OSD, Hide etc. */
   video_overlay_object_t   object; /* The image data. */
 } video_overlay_event_t;
 

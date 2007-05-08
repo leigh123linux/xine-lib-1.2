@@ -278,7 +278,7 @@ static int parse_flv_var(demux_flv_t *this,
       if (key && keylen == 5 && !strncmp(key, "times", 5)) {
         if (this->index)
           free (this->index);
-        this->index = xine_xmalloc(num*sizeof(flv_index_entry_t));
+        this->index = xine_xcalloc(num, sizeof(flv_index_entry_t));
         this->num_indices = num;
         for (num = 0; num < this->num_indices && tmp < end; num++) {
           if (*tmp++ == FLV_DATA_TYPE_NUMBER) {

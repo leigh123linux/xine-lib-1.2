@@ -16,13 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
- *
- * $Id: xine_decoder.c,v 1.62 2007/03/17 20:59:36 dgp85 Exp $
- * 
- * 31-8-2001 Added LPCM rate sensing.
- *   (c) 2001 James Courtier-Dutton James@superbug.demon.co.uk
- *
  */
+
+/**
+ * @file
+ * @author James Courtier-Dutton <james@superbug.demon.co.uk>
+ *
+ * @date 2001-08-31 Added LPCM rate sensing
+ */
+
 #ifndef __sun
 #define _XOPEN_SOURCE 500
 #endif
@@ -61,7 +63,7 @@ typedef struct lpcm_decoder_s {
   uint32_t         ao_cap_mode; 
    
   int              output_open;
-  int		   cpu_be;	/* TRUE, if we're a Big endian CPU */
+  int		   cpu_be;	/**< TRUE, if we're a Big endian CPU */
 } lpcm_decoder_t;
 
 static void lpcm_reset (audio_decoder_t *this_gen) {

@@ -17,13 +17,11 @@ SUBDIRS = \
 	libspucmml \
 	libspudvb \
 	libsputext \
-	libdts \
 	libmad \
 	libw32dll \
 	libxinevdec \
 	libxineadec \
 	libreal \
 	libfaad \
-        libmusepack \
 	post \
 	combined
