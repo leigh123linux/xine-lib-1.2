@@ -1,5 +1,8 @@
 include $(top_srcdir)/misc/Makefile.common
 
+AM_CFLAGS = $(DEFAULT_OCFLAGS)
+AM_LDFLAGS = $(xineplug_ldflags)
+
 SUBDIRS = libvcd
 
 INCLUDES = $(LIBCDIO_CFLAGS) -I$(top_srcdir)/include -I$(top_srcdir)/lib
@@ -36,10 +39,8 @@ if HAVE_VCDNAV
 else
 noinst_LTLIBRARIES = libvcd.la libvcdinfo.la
 libvcd_la_SOURCES = $(libvcd_SRCS)
-libvcd_la_LDFLAGS = -avoid-version -module
 libvcd_la_LIBADD = $(LIBCDIO_LIBS) $(LIBISO9660_LIBS)
 libvcdinfo_la_SOURCES = $(libvcdinfo_SRCS)
-libvcdinfo_la_LDFLAGS = -avoid-version -module
 endif
 endif
 

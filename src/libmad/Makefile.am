@@ -1,6 +1,8 @@
 include $(top_srcdir)/misc/Makefile.common
 
-AM_CFLAGS = -DOPT_SPEED
+AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
+AM_CPPFLAGS = -DOPT_SPEED
+AM_LDFLAGS = $(xineplug_ldflags)
 
 EXTRA_DIST = imdct_l_arm.S
 
@@ -35,8 +37,7 @@ xineplug_decode_mad_la_LIBADD = $(XINE_LIB) $(LIBMAD_LIBS)
 else
 xineplug_decode_mad_la_LIBADD = $(XINE_LIB)
 endif
-xineplug_decode_mad_la_CFLAGS = $(LIBMAD_CFLAGS) $(VISIBILITY_FLAG)
-xineplug_decode_mad_la_LDFLAGS = $(xineplug_ldflags)
+xineplug_decode_mad_la_CFLAGS = $(AM_CFLAGS) $(LIBMAD_CFLAGS)
 
 noinst_HEADERS = \
 	D.dat \

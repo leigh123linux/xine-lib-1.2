@@ -25,7 +25,6 @@ EXTRA_DIST = \
 	macosx.m4 \
 	objc.m4 \
 	opengl.m4 \
-	optimizations.m4 \
 	pkg.m4 \
 	pthreads.m4 \
         symbol.m4 \

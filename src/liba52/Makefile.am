@@ -1,5 +1,8 @@
 include $(top_srcdir)/misc/Makefile.common
 
+AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
+AM_LDFLAGS = $(xineplug_ldflags)
+
 if A52
 a52_module = xineplug_decode_a52.la
 endif
@@ -26,9 +29,6 @@ xineplug_decode_a52_la_LIBADD = $(XINE_LIB) -la52 -lm
 else
 xineplug_decode_a52_la_LIBADD = $(XINE_LIB) -lm
 endif
-
-xineplug_decode_a52_la_CFLAGS = $(VISIBILITY_FLAG)
-xineplug_decode_a52_la_LDFLAGS = $(xineplug_ldflags)
 
 noinst_HEADERS = \
 	a52.h \

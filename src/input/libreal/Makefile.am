@@ -1,5 +1,6 @@
 include $(top_srcdir)/misc/Makefile.common
 
+AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_CPPFLAGS = -D_LARGEFILE64_SOURCE -I$(srcdir)/../librtsp
 
 noinst_LTLIBRARIES = libreal.la
@@ -9,8 +10,6 @@ libreal_la_SOURCES = \
   asmrp.c \
   rmff.c \
   sdpplin.c
-
-libreal_la_CFLAGS = $(VISIBILITY_FLAG)
 
 noinst_HEADERS = \
   real.h \

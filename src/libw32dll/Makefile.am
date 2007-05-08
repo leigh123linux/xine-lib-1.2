@@ -1,6 +1,8 @@
 include $(top_srcdir)/misc/Makefile.common
 
-AM_CFLAGS = -I$(srcdir)/wine -DWIN32_PATH=\"@w32_path@\" $(VISIBILITY_FLAG)
+AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
+AM_CPPFLAGS = -I$(srcdir)/wine -DWIN32_PATH=\"@w32_path@\"
+AM_LDFLAGS = $(xineplug_ldflags)
 
 SUBDIRS = wine DirectShow dmo qtx
 
@@ -15,7 +17,6 @@ EXTRA_DIST = common.c
 
 xineplug_decode_w32dll_la_SOURCES = w32codec.c
 xineplug_decode_w32dll_la_CFLAGS = $(AM_CFLAGS) $(XDG_BASEDIR_CFLAGS)
-xineplug_decode_w32dll_la_LDFLAGS = -avoid-version -module
 xineplug_decode_w32dll_la_DEPS = $(XDG_BASEDIR_DEPS)
 xineplug_decode_w32dll_la_LIBADD = \
 	$(top_builddir)/src/libw32dll/wine/libwine.la \
@@ -28,7 +29,6 @@ xineplug_decode_w32dll_la_LIBADD = \
 	$(XDG_BASEDIR_LIBS)
 
 xineplug_decode_qt_la_SOURCES = qt_decoder.c
-xineplug_decode_qt_la_LDFLAGS = -avoid-version -module
 xineplug_decode_qt_la_LIBADD = \
 	$(top_builddir)/src/libw32dll/wine/libwine.la \
 	$(XINE_LIB) \

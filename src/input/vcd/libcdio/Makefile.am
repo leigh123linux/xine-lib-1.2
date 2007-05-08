@@ -1,5 +1,8 @@
 include $(top_srcdir)/misc/Makefile.common
 
+AM_CFLAGS = $(DEFAULT_OCFLAGS)
+AM_LDFLAGS = $(xineplug_ldflags)
+
 SUBDIRS = cdio MSWindows image
 
 INCLUDES = $(LIBCDIO_CFLAGS) -I$(top_srcdir)/include -I$(top_srcdir)/lib -I$(top_builddir)/lib
@@ -54,9 +57,7 @@ if HAVE_VCDNAV
 else
 noinst_LTLIBRARIES = libcdio.la libiso9660.la
 libcdio_la_SOURCES = $(libcdio_SRCS)
-libcdio_la_LDFLAGS = -avoid-version -module
 libiso9660_la_SOURCES = $(libiso9660_SRCS)
-libiso9660_la_LDFLAGS = -avoid-version -module
 endif
 endif
 

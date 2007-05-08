@@ -50,6 +50,24 @@ AC_DEFUN([CC_CHECK_CFLAGS], [
   fi
 ])
 
+AC_DEFUN([CC_CHECK_LDFLAGS], [
+  AC_CACHE_CHECK([if $CC supports $1 flag],
+    AS_TR_SH([cc_cv_ldflags_$1]),
+    [ac_save_LDFLAGS="$LDFLAGS"
+     LDFLAGS="$LDFLAGS $1"
+     AC_LINK_IFELSE([int a;],
+       [eval "AS_TR_SH([cc_cv_ldflags_$1])='yes'"],
+       [eval "AS_TR_SH([cc_cv_ldflags_$1])="])
+     LDFLAGS="$ac_save_LDFLAGS"
+    ])
+
+  if eval test [x$]AS_TR_SH([cc_cv_ldflags_$1]) = xyes; then
+    ifelse([$2], , [:], [$2])
+  else
+    ifelse([$3], , [:], [$3])
+  fi
+])
+
 dnl Check for a -Werror flag or equivalent. -Werror is the GCC
 dnl and ICC flag that tells the compiler to treat all the warnings
 dnl as fatal. We usually need this option to make sure that some

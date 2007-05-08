@@ -192,7 +192,7 @@ run_automake () {
 
   echo $_echo_n " + Running automake: $_echo_c";
 
-  automake --gnu --add-missing --copy;
+  automake --gnu --add-missing --copy -Wno-portability;
   echo "done."
 }
 

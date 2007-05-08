@@ -1,6 +1,6 @@
 include $(top_srcdir)/misc/Makefile.common
 
-AM_CFLAGS = $(VISIBILITY_FLAG)
+AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
 if HAVE_VORBIS
@@ -101,7 +101,6 @@ xineplug_dmx_games_la_SOURCES = group_games.c demux_eawve.c \
 				demux_film.c demux_smjpeg.c demux_4xm.c \
 				demux_vmd.c
 xineplug_dmx_games_la_LIBADD = $(XINE_LIB)
-xineplug_dmx_games_la_LDFLAGS = -avoid-version -module
 
 xineplug_dmx_audio_la_SOURCES = group_audio.c demux_aud.c demux_aiff.c \
 				demux_cdda.c demux_mpgaudio.c demux_nsf.c \

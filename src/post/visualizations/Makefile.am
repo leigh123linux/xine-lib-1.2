@@ -1,5 +1,8 @@
 include $(top_srcdir)/misc/Makefile.common
 
+AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
+AM_LDFLAGS = $(xineplug_ldflags)
+
 EXTRA_DIST = fooviz.c
 
 xinepost_LTLIBRARIES = xineplug_post_visualizations.la
@@ -7,7 +10,5 @@ xinepost_LTLIBRARIES = xineplug_post_visualizations.la
 xineplug_post_visualizations_la_SOURCES = \
         visualizations.c fft.c fftscope.c oscope.c fftgraph.c
 xineplug_post_visualizations_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) -lm
-xineplug_post_visualizations_la_CFLAGS = $(VISIBILITY_FLAG)
-xineplug_post_visualizations_la_LDFLAGS = -avoid-version -module
 
 noinst_HEADERS = fft.h visualizations.h

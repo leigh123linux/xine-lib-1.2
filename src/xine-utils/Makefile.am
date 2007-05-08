@@ -1,6 +1,5 @@
 include $(top_srcdir)/misc/Makefile.common
 
-LIBTOOL = $(SHELL) $(top_builddir)/libtool
 noinst_LTLIBRARIES = libxineutils.la
 
 EXTRA_DIST = ppcasm_string.S ppc_asm.tmpl
@@ -11,7 +10,7 @@ pppc_files = ppcasm_string.S
 endif
 endif
 
-AM_CFLAGS = $(X_CFLAGS) $(VISIBILITY_FLAG)
+AM_CFLAGS = $(DEFAULT_OCFLAGS) $(X_CFLAGS) $(VISIBILITY_FLAG)
 AM_CPPFLAGS=-DXINE_LIBRARY_COMPILE
 
 libxineutils_la_SOURCES = $(pppc_files) \

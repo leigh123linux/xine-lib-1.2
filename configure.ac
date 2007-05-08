@@ -83,7 +83,7 @@ dnl include -O2, which is not desirable in a debug build, and it messes with
 dnl other optimizations that we'll want to be setting ourselves later.
 ASFLAGS="-g $ASFLAGS"
 CFLAGS="-g $CFLAGS"
-CPPFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE $CPPFLAGS"
+CPPFLAGS="-D_REENTRANT -DXINE_COMPILE $CPPFLAGS"
 LDFLAGS="-g $LDFLAGS"
 OBJCFLAGS="-g $OBJCFLAGS"
 
@@ -211,37 +211,6 @@ else
 fi
 AC_SUBST(STATIC)
 
-dnl Windows ports checks
-dnl check if we are using the cygwin, mingw or cygwin with mno-cygwin mode
-dnl in which case we are actually dealing with a mingw32 compiler
-dnl This cannot be done until AC_PROG_EGREP and AC_PROG_CC are both done.
-case "$host_or_hostalias" in
-    *-*-mingw* | *-*-cygwin*)
-        case "$host_or_hostalias" in
-            *-*-mingw32*)
-                WIN32_SYS=mingw32
-                ;;
-            *-*-cygwin*)
-                AC_EGREP_CPP([yes],
-                             [#ifdef WIN32
-                              yes
-                              #endif],
-                             [WIN32_SYS=mingw32], [WIN32_SYS=cygwin])
-                ;;
-        esac
-
-        if test "$WIN32_SYS" = "mingw32"; then
-            WIN32_CPPFLAGS='-I$(top_srcdir)/win32/include'
-            LIBS="-lwinmm -lwsock32 $LIBS"
-            GOOM_LIBS="-liberty"
-        fi
-        LDFLAGS="-no-undefined $LDFLAGS"
-        ;;
-esac
-AC_SUBST(GOOM_LIBS)
-AC_SUBST(WIN32_CPPFLAGS)
-AM_CONDITIONAL([WIN32], [test x"$WIN32_SYS" = x"mingw32"])
-
 
 dnl ---------------------------------------------
 dnl REVISIT: NLS Support
@@ -332,6 +301,17 @@ dnl -----------------------------------
 dnl checks for compiler characteristics
 dnl -----------------------------------
 
+if test x"$GCC" = x"yes"; then
+    GCC_VERSION="`"$CC" -dumpversion`"
+    GCC_VERSION_MAJOR="`echo "$GCC_VERSION" | cut -d '.' -f1`"
+    GCC_VERSION_MINOR="`echo "$GCC_VERSION" | cut -d '.' -f2`"
+    GCC_VERSION_PATCHLEVEL="`echo "$GCC_VERSION" | cut -d '.' -f3`"
+fi
+AC_SUBST(GCC_VERSION)
+AC_SUBST(GCC_VERSION_MAJOR)
+AC_SUBST(GCC_VERSION_MINOR)
+AC_SUBST(GCC_VERSION_PATCHLEVEL)
+
 CC_CHECK_WERROR
 
 CC_PTHREAD_FLAGS([], [AC_MSG_ERROR([Pthread support is needed])])
@@ -372,9 +352,14 @@ CC_ATTRIBUTE_SENTINEL
 CC_ATTRIBUTE_FORMAT
 CC_ATTRIBUTE_FORMAT_ARG
 
+CC_CHECK_CFLAGS([-pipe], [miscflags="$miscflags -pipe"])
+
 dnl Set warning flags for warnings that we do not want to skip.  In all cases,
 dnl these warnings should be enabled.  Set these into CFLAGS and OBJCFLAGS
 dnl later after all testing is done.
+
+CC_CHECK_CFLAGS([-Wall], [warnflags="$warnflags -Wall"])
+
 CC_CHECK_CFLAGS([-Wformat=2], [wformat="-Wformat=2"],
                 [CC_CHECK_CFLAGS([-Wformat], [wformat="-Wformat"])])
 if test x"$wformat" != x""; then
@@ -389,16 +374,340 @@ CC_CHECK_CFLAGS([-Werror-implicit-function-declaration], [warnflags="$warnflags 
 CC_CHECK_CFLAGS([-Wstrict-aliasing=2], [warnflags="$warnflags -Wstrict-aliasing=2"],
                 [CC_CHECK_CFLAGS([-Wstrict-aliasing], [warnflags="$warnflags -Wstrict-aliasing"])])
 
+CC_CHECK_CFLAGS([-Wchar-subscripts],      [warnflags="$warnflags -Wchar-subscripts"])
+CC_CHECK_CFLAGS([-Wmissing-declarations], [warnflags="$warnflags -Wmissing-declarations"])
+CC_CHECK_CFLAGS([-Wmissing-prototypes],   [warnflags="$warnflags -Wmissing-prototypes"])
+
+dnl Some combinations of gcc and glibc produce useless warnings on memset when
+dnl compiling with -Wpointer-arith, so check for this first.
+AC_MSG_CHECKING([for sane -Wpointer-arith])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <string.h>]], [[int a; memset(&a, 0, sizeof(int))]])],
+                  [warnflags="$warnflags -Wpointer-arith"
+                   AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
+
 dnl FreeBSD (et al.) does not complete linking for shared objects when pthreads
 dnl are requested, as different implementations are present; to avoid problems
-dnl use -Wl,-z,defs only for those platform not behaving this way.
-case $host_or_hostalias in
+dnl use -Wl,-z,defs only for those platforms not behaving this way.
+case "$host_or_hostalias" in
     *-freebsd*) ;;
+
+    dnl check if we are using the cygwin, mingw or cygwin with mno-cygwin mode
+    dnl in which case we are actually dealing with a mingw32 compiler
+    dnl This cannot be done until AC_PROG_EGREP and AC_PROG_CC are both done.
+    *-*-mingw* | *-*-cygwin*)
+        case "$host_or_hostalias" in
+            *-*-mingw32*)
+                WIN32_SYS=mingw32
+                ;;
+            *-*-cygwin*)
+                AC_EGREP_CPP([yes],
+                             [#ifdef WIN32
+                              yes
+                              #endif],
+                             [WIN32_SYS=mingw32], [WIN32_SYS=cygwin])
+                ;;
+        esac
+
+        if test "$WIN32_SYS" = "mingw32"; then
+            WIN32_CPPFLAGS='-I$(top_srcdir)/win32/include'
+            LIBS="-lwinmm -lwsock32 $LIBS"
+            GOOM_LIBS="-liberty"
+            AC_SUBST(GOOM_LIBS)
+            AC_SUBST(WIN32_CPPFLAGS)
+        fi
+        LDFLAGS="-no-undefined $LDFLAGS"
+        ;;
+
     *)
-        AC_TRY_LDFLAGS([-Wl,-z,defs], [NOUNDEF="-Wl,-z,defs"])
+        CC_CHECK_LDFLAGS([-Wl,-z,defs], [NOUNDEF="-Wl,-z,defs"])
+        AC_SUBST([NOUNDEF])
         ;;
 esac
-AC_SUBST([NOUNDEF])
+
+AM_CONDITIONAL([WIN32], [test x"$WIN32_SYS" = x"mingw32"])
+
+dnl No optimization at all.  For gcc, this is the optimization level.
+O0_CFLAGS="-O0"
+
+dnl Lowest level of optimization.  For gcc, this enables:
+dnl     -fdefer-pop -fdelayed-branch -fguess-branch-probability -fcprop-registers
+dnl     -floop-optimize -fif-conversion -fif-conversion2 -ftree-ccp -ftree-dce
+dnl     -ftree-dce -ftree-dominator-opts -ftree-dse -ftree-ter -ftree-lrs
+dnl     -ftree-sra -ftree-copyrename -ftree-fre -ftree-ch -fmerge-constants
+dnl On platforms where -fomit-frame-pointer does not interfere with debugging,
+dnl it is also enabled by -O1.
+O1_CFLAGS="-O1"
+
+dnl Middle level of optimization.  For gcc, this enables -O1 and:
+dnl     -fthread-jumps -fcrossjumping -foptimize-sibling-calls -fcse-follow-jumps
+dnl     -fcse-skip-blocks -fgcse -fgcse-lm -fexpensive-optimizations
+dnl     -fstrength-reduce -frerun-cse-after-loop -frerun-loop-opt -fcaller-saves
+dnl     -fforce-mem -fpeephole2 -fschedule-insns -fschedule-insns2
+dnl     -fsched-interblock -fsched-spec -fregmove -fstrict-aliasing
+dnl     -fdelete-null-pointer-checks -freorder-blocks -freorder-functions
+dnl     -funit-at-a-time -falign-functions -falign-jumps -falign-loops
+dnl     -falign-labels -ftree-pre
+dnl Note that Apple's version of gcc differs slightly, because it does not enable
+dnl     -fstrict-aliasing -freorder-blocks -fsched-interblock
+O2_CFLAGS="-O2"
+
+dnl Highest level of optimization.  For gcc, this enables -O2 and:
+dnl     -finline-functions -funswitch-loops -fgcse-after-reload
+O3_CFLAGS="-O3"
+
+dnl gcc 3.3.5 (at least) is known to be buggy wrt optimization with
+dnl -finline-functions, so use -fno-inline-functions for gcc < 3.4.0
+if test x"$GCC" = x"yes"; then
+    if test "$GCC_VERSION_MAJOR" -lt 3; then
+        O3_CFLAGS="$O3_CFLAGS -fno-inline-functions"
+    else
+        if test "$GCC_VERSION_MAJOR" -eq 3 -a "$GCC_VERSION_MINOR" -lt 4; then
+            O3_CFLAGS="$O3_CFLAGS -fno-inline-functions"
+        fi
+    fi
+fi
+
+CC_CHECK_CFLAGS([-ffast-math],               [optflags="$optflags -ffast-math"])
+CC_CHECK_CFLAGS([-fexpensive-optimizations], [optflags="$optflags -fexpensive-optimizations"])
+
+case "$host_or_hostalias" in
+    alphaev56-*)    cpuflags="-mcpu=ev56 -mieee $cpuflags" ;;
+    alpha*)         cpuflags="-mieee $cpuflags" ;;
+
+    armv4l-*-linux*)
+        cpuflags="-mcpu=strongarm1100 -ffast-math -fsigned-char $cpuflags"
+        DEFAULT_OCFLAGS='$(O2_CFLAGS)'
+        ;;
+
+    sparc*-*-linux*)
+        case "`uname -m`" in
+            sparc)      cpuflags="-mcpu=supersparc -mtune=supersparc" ;;
+            sparc64)    cpuflags="-mcpu=ultrasparc -mtune=ultrasparc" ;;
+        esac
+        test x"$enable_vis" != x"no" && has_vis=yes
+        AC_DEFINE([ARCH_SPARC], [], [Define this if you're running SPARC architecture])
+        ;;
+
+    sparc-*-solaris*)
+        if test x"$GCC" = x"yes"; then
+            case "`uname -m`" in
+                sun4c) cpuflags="-mcpu=v7 -mtune=supersparc" ;;
+                sun4m) cpuflags="-mcpu=v8 -mtune=supersparc" ;;
+                sun4u)
+                    if test x"$GCC_VERSION_MAJOR" -lt 3; then
+                        # -mcpu=ultrasparc triggers a GCC 2.95.x compiler bug
+                        # when compiling video_out.c:
+                        #   gcc: Internal compiler error: program cc1 got fatal signal 11
+                        # avoid -mcpu=ultrasparc with gcc 2.*
+                        cpuflags="-mcpu=v8 -mtune=ultrasparc"
+                    else
+                        cpuflags="-mcpu=ultrasparc -mtune=ultrasparc"
+                    fi
+                    ;;
+            esac
+            if test "$GCC_VERSION_MAJOR" -ge 3; then
+                test x$"enable_vis" != x"no" && has_vis=yes
+            fi
+        else
+            case "`uname -m`" in
+                sun4c) cpuflags="-xarch=v7" ;;
+                sun4m) cpuflags="-xarch=v8" ;;
+                sun4u) cpuflags="-xarch=v8plusa" ;;
+            esac
+            O1_CFLAGS="-fast -xCC"
+            O2_CFLAGS="$O1_CFLAGS"
+            O3_CFLAGS="$O1_CFLAGS"
+        fi
+        AC_DEFINE([ARCH_SPARC], [], [Define this if you're running SPARC architecture])
+        ;;
+
+    x86_64-*)
+        arch_x86=yes
+        AC_DEFINE([ARCH_X86_64], [], [Define this if you're running x86 architecture 64 bits])
+        ;;
+
+    *-*-darwin*)
+        case "$host_or_hostalias" in
+            i386-* | universal-* | x86_64-*)
+                arch_x86=yes
+                ;;
+            ppc* | powerpc*)
+                dnl avoid ppc compilation crash
+                AS="$CC"
+
+                AC_CHECK_HEADER([altivec.h], [], [enable_altivec=no])
+                if test x"$enable_altivec" != x"no"; then
+                    AC_DEFINE([ENABLE_ALTIVEC], [], [Define this if you want to use altivec on PowerPC CPUs])
+                    cpuflags="$cpuflags -faltivec -maltivec"
+                    LIBMPEG2_CFLAGS="$LIBMPEG2_CFLAGS -force_cpusubtype_ALL"
+                fi
+                ;;
+        esac
+
+        enable_impure_text=yes
+        HOST_OS_DARWIN=1
+        dnl HOST_OS_DARWIN is used by a bunch of difference stuff, including
+        dnl libdvdnav, libmpeg2, and xine itself (xine-engine, xine-utils)
+        AC_DEFINE([HOST_OS_DARWIN], 1, [Define this if built on Mac OS X/Darwin])
+        dnl CONFIG_DARWIN is used by ffmpeg, so anything that pulls ffmpeg
+        dnl headers needs to have this set.
+        AC_DEFINE([CONFIG_DARWIN],  1, [Define this if built on Mac OS X/Darwin])
+        CPPFLAGS="-D_INTL_REDIRECT_MACROS $CPPFLAGS"
+        ;;
+
+    ppc-*-linux* | powerpc-*) 
+        dnl avoid ppc compilation crash
+        AS="$CC"
+        AC_DEFINE([ARCH_PPC], [], [Define this if you're running PowerPC architecture])
+
+        AC_CHECK_HEADER([altivec.h], [], [enable_altivec=no])
+        
+        if test x"$enable_altivec" != x"no"; then
+            AC_DEFINE([ENABLE_ALTIVEC], [], [Define this if you want to use altivec on PowerPC CPUs])
+            cpuflags="$cpuflags -maltivec"
+        fi
+        ;;
+
+    i?86-* | k?-* | athlon-* | pentium*)
+        arch_x86=yes
+        enable_impure_text=yes
+
+        case "$host_or_hostalias" in
+            *-*-cygwin* | *-*-mingw32*)
+                CC_CHECK_CFLAGS([-fno-omit-frame-pointer], [W32_NO_OPTIMIZE="$W32_NO_OPTIMIZE -fno-omit-frame-pointer"])
+                CC_CHECK_CFLAGS([-fno-inline-functions],   [W32_NO_OPTIMIZE="$W32_NO_OPTIMIZE -fno-inline-functions"])
+                CC_CHECK_CFLAGS([-fno-rename-registers],   [W32_NO_OPTIMIZE="$W32_NO_OPTIMIZE -fno-rename-registers"])
+                AC_SUBST(W32_NO_OPTIMIZE)
+                case "$host_or_hostalias" in
+                    *-*-cygwin*) LIBS="$LIBS @INTLLIBS@ -lkernel32" ;;
+                esac
+                ;;
+        esac
+
+        AC_DEFINE([ARCH_X86_32], [], [Define this if you're running x86 architecture 32 bits])
+
+        if test x"$GCC" = x"yes" -o x"${CC##*/}" = x"icc"; then
+            if test x"$GCC" = x"yes"; then
+                # GCC optimizations
+                CC_CHECK_CFLAGS([-mtune=i386], [sarchopt="-mtune"],
+                    [CC_CHECK_CFLAGS([-mcpu=i386], [sarchopt="-mcpu"],
+                        [CC_CHECK_CFLAGS([-march=i386], [sarchopt="-march"], [sarchopt="no"])])])
+                if test "$sarchopt" != "no"; then
+                    case "$host_or_hostalias" in
+                        i386-*)         archopt_val="i386" ;;
+                        i486-*)         archopt_val="i486" ;;
+                        i586-*)         archopt_val="pentium" ;;
+                        pentium-mmx-*)  archopt_val="pentium-mmx" ;;
+                        k6-2* | k6-3-*) archopt_val="k6-2" ;;
+                        k6-*)           archopt_val="k6" ;;
+                        pentium3-*)     archopt_val="pentium3" ;;
+                        pentium4-*)     archopt_val="pentium4" ;;
+
+                        athlon-4-* | athlon-xp-* | althon-mp-*) archopt_val="athlon-4" ;;
+                        k7-* | athlon-tbird-* | athlon-*)       archopt_val="athlon" ;;
+
+                        pentiumpro-* | pentium2-* | i686-*)
+                            archopt_val="pentiumpro"
+                            if test x"$cross_compiling" != x"yes"; then
+                                if test -f /proc/cpuinfo; then
+                                    modelname=`cat /proc/cpuinfo | grep "model\ name\	:" | sed -e 's/ //g' | cut -d ':' -f2`
+                                    case "$modelname" in
+                                        *Athlon* | *Duron* | *K7*)
+                                            dnl Special check for k7 cpu CC support
+                                            CC_CHECK_CFLAGS([$sarchopt=athlon],
+                                                            [archopt_val="athlon"], [archopt_val="i686"])
+                                            ;;
+                                        VIAEzra)
+                                            archopt_val="c3"
+                                            ;;
+                                    esac
+                                fi
+                            fi
+                            ;;
+                    esac
+                    test x$"archopt_val" != x"" && cpuflags="$cpuflags $sarchopt=$archopt_val"
+                fi
+            else
+                # Intel optimizations
+                O3_CFLAGS="$O3_CFLAGS -unroll -ipo -ipo_obj"
+            fi
+        fi
+        ;;
+esac
+
+if test "x$has_vis" = "xyes"; then
+    AC_DEFINE([ENABLE_VIS], [], [Define this if you have Sun UltraSPARC CPU])
+    case "$cpuflags" in
+        *-mcpu=*) ;;
+        *) cpuflags="$cpuflags -mcpu=v9" ;;
+    esac
+fi
+AM_CONDITIONAL([ENABLE_VIS], test x"$has_vis" = x"yes")
+
+dnl Allow turning off/on of optimizations.  By default, optimizations are
+dnl enabled if --enable-debug is not specified.  Even with --enable-debug,
+dnl optimizations can be enabled by explicitly specifying --enable-optimizations
+AC_ARG_ENABLE([optimizations],
+              [AS_HELP_STRING([--disable-optimizations], [Don't try to guess what optimization to enable])],
+              [], [test x"$enable_debug" != x"no" && enable_optimizations="no"])
+if test x"$enable_optimizations" = x"no"; then
+    O1_CFLAGS="$O0_CLFAGS"
+    O2_CFLAGS="$O0_CFLAGS"
+    O3_CFLAGS="$O0_CFLAGS"
+else
+    O1_CFLAGS="$O1_CFLAGS $optflags $cpuflags"
+    O2_CFLAGS="$O2_CFLAGS $optflags $cpuflags"
+    O3_CFLAGS="$O3_CFLAGS $optflags $cpuflags"
+
+    dnl For multi-pass compilation: never when cross-compiling
+    if test x"$cross_compiling" != x"yes"; then
+        if test x"$GCC" = x"yes"; then
+            CC_CHECK_CFLAGS([-fprofile-arcs], [CC_CHECK_CFLAGS([-fbranch-probabilities],
+                            [PASS1_CFLAGS="-fprofile-arcs $PASS1_CFLAGS"
+                             PASS2_CFLAGS="-fbranch-probabilities $PASS2_CFLAGS"])])
+        else
+            pass1flags="-prof_dir \$(PWD)/\$(top_builddir)/ -prof_genx"
+            pass2flags="-prof_dir \$(PWD)/\$(top_builddir)/ -prof_use"
+            CC_CHECK_CFLAGS(["$pass1flags"], [CC_CHECK_CFLAGS(["$pass2flags"],
+                            [PASS1_CFLAGS="$pass1flags $PASS1_CFLAGS"
+                             PASS2_CFLAGS="$pass2flags $PASS2_CFLAGS"])])
+        fi
+    fi
+fi
+AC_SUBST(O0_CFLAGS)
+AC_SUBST(O1_CFLAGS)
+AC_SUBST(O2_CFLAGS)
+AC_SUBST(O3_CFLAGS)
+
+AC_SUBST(PASS1_CFLAGS)
+AC_SUBST(PASS2_CFLAGS)
+
+test x"$DEFAULT_OCFLAGS" = x"" && DEFAULT_OCFLAGS='$(O3_CFLAGS)'
+AC_SUBST(DEFAULT_OCFLAGS)
+
+if test x"$arch_x86" = x"yes"; then
+     AC_DEFINE([ARCH_X86], [], [Define this if you're running x86 architecture])
+     AC_DEFINE([HAVE_MMX], [], [Define this if you can compile MMX asm instructions])
+fi
+AM_CONDITIONAL([ARCH_X86], test x"$arch_x86" = x"yes")
+AM_CONDITIONAL([HAVE_MMX], test x"$arch_x86" = x"yes")
+AM_CONDITIONAL([HOST_OS_DARWIN], test x"$HOST_OS_DARWIN" = x"1")
+
+if test x"$enable_impure_text" = x"yes"; then
+    case "$host_or_hostalias" in
+        *solaris*)
+            if test "$GCC" = yes; then
+                IMPURE_TEXT_LDFLAGS="-mimpure-text"
+            else
+                IMPURE_TEXT_LDFLAGS="-z textoff"
+            fi
+            ;;
+        *darwin*)
+            IMPURE_TEXT_LDFLAGS="-Wl,-read_only_relocs,warning"
+            ;;
+    esac
+fi
+AC_SUBST(IMPURE_TEXT_LDFLAGS)
 
 
 dnl ----------------------------
@@ -1702,161 +2011,6 @@ fi
 AM_CONDITIONAL(HAVE_W32DLL, test "x$enable_w32dll" != "xno")
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-AC_OPTIMIZATIONS
-
-arch_x86="no"
-enable_armv4l="no"
-
-case "$host_or_hostalias" in
-  i?86-* | k?-* | athlon-* | pentium*-)
-    dnl enable x86 specific parts of the code
-    dnl
-    dnl all of this stuff needs gcc/gas; it uses gnu c compiler extensions
-    dnl like the extended asm() or __attribute(__cdecl__), or other direct
-    dnl mmx/sse/3dnow assembler instructions. 
-    dnl
-    AC_DEFINE_UNQUOTED(ARCH_X86_32,,[Define this if you're running x86 architecture 32 bits])
-    arch_x86="yes"
-    enable_impure_text="yes"
-
-    case "$host_or_hostalias" in
-      *-*-cygwin) 
-        LIBS="$LIBS @INTLLIBS@ -lkernel32"
-        ;;
-    esac
-    ;;
-  x86_64-*)
-    AC_DEFINE_UNQUOTED(ARCH_X86_64,,[Define this if you're running x86 architecture 64 bits])
-    arch_x86="yes"
-    ;;
-  universal-*-darwin*)
-    enable_impure_text="yes"
-    ;;
-  powerpc-*-darwin*)
-    dnl avoid ppc compilation crash
-    AS="$CC"
-    AC_DEFINE_UNQUOTED(ARCH_PPC,,[Define this if you're running PowerPC architecture])
-
-    AC_CHECK_HEADER([altivec.h], , enable_altivec=no)
-    
-    if test "x$enable_altivec" != xno; then
-        AC_DEFINE_UNQUOTED(ENABLE_ALTIVEC,,[Define this if you want to use altivec on PowerPC CPUs])
-        CFLAGS="$CFLAGS -faltivec -maltivec"
-        LIBMPEG2_CFLAGS="$LIBMPEG2_CFLAGS -force_cpusubtype_ALL -faltivec -maltivec"
-    fi
-    ;;
-  ppc-*-linux* | powerpc-*) 
-    dnl avoid ppc compilation crash
-    AS="$CC"
-    AC_DEFINE_UNQUOTED(ARCH_PPC,,[Define this if you're running PowerPC architecture])
-
-    AC_CHECK_HEADER([altivec.h], , enable_altivec=no)
-    
-    if test "x$enable_altivec" != xno; then
-        AC_DEFINE_UNQUOTED(ENABLE_ALTIVEC,,[Define this if you have a Motorola 74xx CPU])
-        CFLAGS="$CFLAGS -maltivec"
-        LIBMPEG2_CFLAGS="$LIBMPEG2_CFLAGS -maltivec"
-    fi
-    ;;
-  sparc*-*-linux*)
-    if test "x$enable_vis" != xno; then
-      has_vis=yes
-    fi
-
-    AC_DEFINE_UNQUOTED(ARCH_SPARC,,[Define this if you're running SPARC architecture])
-    ;;
-  sparc-*-solaris*)
-    if test "$GCC" = yes; then
-      case `$CC --version 2>/dev/null` in
-	1.*|2.*) ;;
-        *)
-          if test "x$enable_vis" != xno; then
-	     has_vis=yes
-          fi
-	  ;;
-      esac
-  
-      AC_DEFINE_UNQUOTED(ARCH_SPARC,,[Define this if you're running SPARC architecture])
-    fi
-    ;;
-  armv4l-*-linux*)
-    enable_armv4l="yes"
-    ;;
-esac
-
-if test "x$has_vis" = "xyes"; then
-   AC_DEFINE_UNQUOTED(ENABLE_VIS,,[Define this if you have Sun UltraSPARC CPU])
-   case "$CFLAGS" in
-     *-mcpu=*) ;;
-     *) CFLAGS="$CFLAGS -mcpu=v9" ;;
-   esac
-fi
-AM_CONDITIONAL(ENABLE_VIS, test "x$has_vis" = "xyes")
-
-if test "x$arch_x86" = "xyes"; then
-   AC_DEFINE_UNQUOTED(ARCH_X86,,[Define this if you're running x86 architecture])
-   AC_DEFINE_UNQUOTED(HAVE_MMX,,[Define this if you can compile MMX asm instructions])
-fi
-AM_CONDITIONAL(ARCH_X86, test "x$arch_x86" = "xyes")
-AM_CONDITIONAL(HAVE_MMX, test "x$arch_x86" = "xyes")
-
-case $host_os in
-  darwin*)
-      HOST_OS_DARWIN=1
-      AC_DEFINE_UNQUOTED(HOST_OS_DARWIN, 1, [Define this if built on Mac OS X/Darwin])
-      OBJCFLAGS="-D_INTL_REDIRECT_MACROS $OBJCFLAGS"
-        ;;
-esac
-AM_CONDITIONAL(HOST_OS_DARWIN, test "x$HOST_OS_DARWIN" = "x1")
-
-dnl ---------------------------------------------
-dnl Set IMPURE_TEXT_LDFLAGS
-dnl ---------------------------------------------
-
-IMPURE_TEXT_LDFLAGS=""
-if test "x$enable_impure_text" = xyes; then
-  case "$host_or_hostalias" in
-    *solaris*)
-      if test "$GCC" = yes; then
-        IMPURE_TEXT_LDFLAGS="-mimpure-text"
-      else
-        IMPURE_TEXT_LDFLAGS="-z textoff"
-      fi
-    ;;
-    *-darwin*)
-      IMPURE_TEXT_LDFLAGS="-Wl,-read_only_relocs,warning"
-      ;;
-  esac
-fi
-AC_SUBST(IMPURE_TEXT_LDFLAGS)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 dnl ---------------------------------------------
 dnl XINE_ROOTDIR does not work if architecture independent files are 
 dnl installed to another place than architecture dependent files !!!
@@ -1977,9 +2131,9 @@ AC_SUBST(INCLUDES)
 
 
 dnl Common cflags for all platforms
-CFLAGS="$UNIVERSAL_CFLAGS \$(MULTIPASS_CFLAGS) $warnflags $CFLAGS"
+CFLAGS="$UNIVERSAL_CFLAGS \$(MULTIPASS_CFLAGS) $miscflags $warnflags $CFLAGS"
 LDFLAGS="$UNIVERSAL_LDFLAGS $LDFLAGS"
-OBJCFLAGS="$UNIVERSAL_CFLAGS $warnflags $OBJCFLAGS"
+OBJCFLAGS="$UNIVERSAL_CFLAGS $miscflags $warnflags $OBJCFLAGS"
 
 
 dnl Some informations about xine-lib compilation for xine-config

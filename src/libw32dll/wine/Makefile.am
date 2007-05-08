@@ -1,20 +1,16 @@
 include $(top_srcdir)/misc/Makefile.common
 
-LIBTOOL = $(SHELL) $(top_builddir)/libtool
-
 EXTRA_DIST = stubs.s wrapper.S
 
 noinst_LTLIBRARIES = $(wine_lib)
 
-AM_CFLAGS = $(X_CFLAGS) @W32_NO_OPTIMIZE@ \
-	-Wmissing-prototypes -Wimplicit-function-declaration \
-	-DWIN32_PATH=\"@w32_path@\" -I$(srcdir)/.. -D__WINE__ \
+# disable -fomit-frame-pointer, -finline-functions, and -frename-registers
+# because they cause bad behavior of wine
+AM_CFLAGS = $(DEFAULT_OCFLAGS) $(X_CFLAGS) @W32_NO_OPTIMIZE@ \
+        -fno-omit-frame-pointer -fno-inline-functions -fno-rename-registers
+AM_CPPFLAGS = -DWIN32_PATH=\"@w32_path@\" -I$(srcdir)/.. -D__WINE__ \
 	-Ddbg_printf=__vprintf -DTRACE=__vprintf
 
-# CFLAGS is here to filter out -fomit-frame-pointer,
-# -finline-functions and -frename-registers because they cause bad
-# behavior of wine
-CFLAGS = `echo @CFLAGS@ | sed -e 's/-fomit-frame-pointer//g;s/-finline-functions//g;s/-frename-registers//g'`
 
 if HAVE_W32DLL
 wine_lib = libwine.la

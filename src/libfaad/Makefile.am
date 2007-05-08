@@ -1,5 +1,8 @@
 include $(top_srcdir)/misc/Makefile.common
 
+AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
+AM_LDFLAGS = $(xineplug_ldflags)
+
 SUBDIRS = codebook
 
 if BUILD_FAAD
@@ -10,7 +13,7 @@ xineplug_LTLIBRARIES = $(faad_module)
 
 VPATH = @srcdir@:@srcdir@/codebook:
 
-xineplug_decode_faad_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS) -fno-strict-aliasing
+xineplug_decode_faad_la_CFLAGS = $(AM_CFLAGS) -fno-strict-aliasing
 xineplug_decode_faad_la_SOURCES = \
 	bits.c \
 	cfft.c \
@@ -52,7 +55,6 @@ xineplug_decode_faad_la_SOURCES = \
 	tns.c \
 	xine_faad_decoder.c
 
-xineplug_decode_faad_la_LDFLAGS = $(xineplug_ldflags)
 xineplug_decode_faad_la_LIBADD = -lm $(XINE_LIB)
 
 noinst_HEADERS = \

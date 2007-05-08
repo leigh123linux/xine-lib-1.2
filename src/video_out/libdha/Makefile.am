@@ -4,7 +4,7 @@ EXTRA_DIST = README pci_db2c.awk
 
 SUBDIRS = bin kernelhelper oth sysdep
 
-AM_CFLAGS = @STATIC@
+AM_CFLAGS = $(DEFAULT_OCFLAGS) $(STATIC)
 
 if HAVE_VIDIX
 dha_lib = libdha.la
