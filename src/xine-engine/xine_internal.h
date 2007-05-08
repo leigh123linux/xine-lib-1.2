@@ -379,6 +379,10 @@ void _x_unlock_port_rewiring(xine_t *xine) XINE_PROTECTED;
 int _x_lock_frontend(xine_stream_t *stream, int ms_to_time_out) XINE_PROTECTED;
 void _x_unlock_frontend(xine_stream_t *stream) XINE_PROTECTED;
 int _x_query_unprocessed_osd_events(xine_stream_t *stream) XINE_PROTECTED;
+int _x_demux_seek(xine_stream_t *stream, off_t start_pos, int start_time, int playing) XINE_PROTECTED;
+int _x_continue_stream_processing(xine_stream_t *stream) XINE_PROTECTED;
+void _x_trigger_relaxed_frame_drop_mode(xine_stream_t *stream) XINE_PROTECTED;
+void _x_reset_relaxed_frame_drop_mode(xine_stream_t *stream) XINE_PROTECTED;
 
 void _x_handle_stream_end      (xine_stream_t *stream, int non_user) XINE_PROTECTED;
 
