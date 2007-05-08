@@ -16,7 +16,7 @@ xineplug_LTLIBRARIES = $(w32dll_codec) $(qt_codec)
 EXTRA_DIST = common.c
 
 xineplug_decode_w32dll_la_SOURCES = w32codec.c
-xineplug_decode_w32dll_la_CFLAGS = $(AM_CFLAGS) $(XDG_BASEDIR_CFLAGS)
+xineplug_decode_w32dll_la_CPPFLAGS = $(AM_CPPFLAGS) $(XDG_BASEDIR_CPPFLAGS)
 xineplug_decode_w32dll_la_DEPS = $(XDG_BASEDIR_DEPS)
 xineplug_decode_w32dll_la_LIBADD = \
 	$(top_builddir)/src/libw32dll/wine/libwine.la \

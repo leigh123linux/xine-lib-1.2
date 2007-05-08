@@ -212,17 +212,16 @@ fi
 AC_SUBST(STATIC)
 
 
-dnl ---------------------------------------------
-dnl REVISIT: NLS Support
-dnl ---------------------------------------------
+dnl --------------------
+dnl checks for libraries
+dnl --------------------
 
-dnl ALL_LINGUAS="cs da de el en@quot en@boldquot es et fr gl id it ja ko nl nn no pl pt pt_BR ru sl sv tr zh"
 AM_ICONV
 AC_ARG_ENABLE([iconvtest],
-	AS_HELP_STRING([--disable-iconvtest], [don't require iconv library]))
-if test "x$enable_iconvtest" != xno; then
-  if test "x$am_cv_func_iconv" != xyes; then
-    AC_MSG_ERROR([
+              [AS_HELP_STRING([--disable-iconvtest], [don't require iconv library])])
+if test x"$enable_iconvtest" != x"no"; then
+    if test x"$am_cv_func_iconv" != x"yes"; then
+        AC_MSG_ERROR([
 ****************************************************************
 * iconv library not found. It's necessary for proper           *
 * manipulation with texts so xine requires it as default.      *
@@ -231,22 +230,33 @@ if test "x$enable_iconvtest" != xno; then
 * by option --with-libiconv-prefix.                            *
 *                                                              *
 * If you don't want iconv support use the option               *
-* --disable-iconvtest.                                          *
+* --disable-iconvtest.                                         *
 ****************************************************************
-  ])
-  fi
+])
+    fi
 fi
 
 AM_GNU_GETTEXT([external])
 AC_PROG_GMSGFMT_PLURAL
 
-AC_CHECK_FUNCS([nl_langinfo])
-
-dnl --------------------
-dnl checks for libraries
-dnl --------------------
-
 AM_DL()
+
+AC_ARG_WITH([external-libxdg-basedir],
+            [AS_HELP_STRING([--with-external-libxdg-basedir], [use external copy of libxdg-basedir])])
+
+if test x"$with_external_libxdg_basedir" = x"yes"; then
+    PKG_CHECK_MODULES([XDG_BASEDIR], [libxdg-basedir >= 0.1.3])
+else
+    XDG_BASEDIR_CPPFLAGS='-I$(top_srcdir)/contrib/libxdg-basedir'
+    XDG_BASEDIR_LIBS='$(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la'
+    XDG_BASEDIR_DEPS='$(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la'
+fi
+
+AC_SUBST([XDG_BASEDIR_CPPFLAGS])
+AC_SUBST([XDG_BASEDIR_LIBS])
+AC_SUBST([XDG_BASEDIR_DEPS])
+
+AM_CONDITIONAL([EXTERNAL_LIBXDG_BASEDIR], [test x"$with_external_libxdg_basedir" = x"yes"])
 
 dnl Test for socket and network support library
 AC_CHECK_LIB([socket], [socket],        [NET_LIBS="-lsocket $NET_LIBS"])
@@ -261,6 +271,26 @@ AC_CHECK_LIB([rt], [clock_getres],
 AC_SUBST(RT_LIBS)
 
 AC_CHECK_LIB([posix4], [sched_get_priority_min])
+
+AC_ARG_WITH([zlib-prefix], 
+            [AS_HELP_STRING([--with-zlib-prefix=PREFIX], [path to zlib compression library])],
+            [if test x"$withval" != x"no"; then
+                 ZLIB_CPPFLAGS="-I$withval/include"
+                 ZLIB_LIBS="-L$withval/lib"
+             fi])
+
+AC_CHECK_LIB([z], [gzsetparams],
+             [ZLIB_LIBS="$ZLIB_LIBS -lz"
+              ac_save_CPPFLAGS="$CPPFLAGS" CPPFLAGS="$CPPFLAGS $ZLIB_CPPFLAGS"
+              AC_CHECK_HEADER([zlib.h], [have_zlib=yes], [have_zlib=no])
+              CPPFLAGS="$ac_save_CPPFLAGS"],
+             [have_zlib=no],
+             ["$ZLIB_LIBS"])
+
+test x"$have_zlib" != x"yes" && AC_MSG_ERROR(zlib needed)
+AC_SUBST(ZLIB_CPPFLAGS)
+AC_SUBST(ZLIB_LIBS)
+
 
 dnl -----------------------
 dnl checks for header files
@@ -714,6 +744,9 @@ dnl ----------------------------
 dnl checks for library functions
 dnl ----------------------------
 
+dnl NLS: src/input/mms.c src/input/vcd, xine-utils
+AC_CHECK_FUNCS([nl_langinfo])
+
 dnl src/libfaad
 AC_CHECK_DECL(lrintf,[
 	AC_DEFINE([HAVE_LRINTF],    [1], [Define this if the 'lrintf' function is declared in math.h])
@@ -767,9 +800,34 @@ dnl --------------------------
 dnl checks for system services
 dnl --------------------------
 
+XINE_X11_SUPPORT
+
 AC_SYS_LARGEFILE
 
 
+dnl -------
+dnl Plugins
+dnl -------
+
+XINE_AUDIO_OUT_PLUGINS
+XINE_VIDEO_OUT_PLUGINS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -782,56 +840,13 @@ AC_SYS_LARGEFILE
 
 
 dnl ---------------------------------------------
-dnl determine libdir name
+dnl Solaris kstat kernel statistics
 dnl ---------------------------------------------
 
-AC_MSG_CHECKING([libdir name])
-case $host_or_hostalias in
-*-*-linux*)
- # Test if the compiler is 64bit
- echo 'int i;' > conftest.$ac_ext
- xine_cv_cc_64bit_output=no
- if AC_TRY_EVAL(ac_compile); then
- case `"$MAGIC_CMD" conftest.$ac_objext` in
- *"ELF 64"*)
-   xine_cv_cc_64bit_output=yes
-   ;;
- esac
- fi
- rm -rf conftest*
- ;;
-esac
-
-case $host_cpu:$xine_cv_cc_64bit_output in
-powerpc64:yes | s390x:yes | sparc64:yes | x86_64:yes)
- XINE_LIBNAME="lib64"
- ;;
-*:*)
- XINE_LIBNAME="lib"
- ;;
-esac
-AC_MSG_RESULT([$XINE_LIBNAME])
-
-dnl ---------------------------------------------
-dnl libxdg-basedir detection
-dnl ---------------------------------------------
-
-AC_ARG_WITH([external-libxdg-basedir],
-  AS_HELP_STRING([--with-external-libxdg-basedir], [use external copy of libxdg-basedir]))
-
-if test "x$with_external_libxdg_basedir" = "xyes"; then
-   PKG_CHECK_MODULES([XDG_BASEDIR], [libxdg-basedir >= 0.1.3])
-else
-   XDG_BASEDIR_CFLAGS='-I$(top_srcdir)/contrib/libxdg-basedir'
-   XDG_BASEDIR_LIBS='$(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la'
-   XDG_BASEDIR_DEPS='$(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la'
-fi
-
-AC_SUBST([XDG_BASEDIR_CFLAGS])
-AC_SUBST([XDG_BASEDIR_LIBS])
-AC_SUBST([XDG_BASEDIR_DEPS])
-
-AM_CONDITIONAL([EXTERNAL_LIBXDG_BASEDIR], [test "x$with_external_libxdg_basedir" = "xyes"])
+AC_CHECK_LIB(kstat, kstat_open,
+	[KSTAT_LIBS=-lkstat
+	 AC_DEFINE(HAVE_KSTAT,1,[Define this if you have kernel statistics available via kstat interface])])
+AC_SUBST(KSTAT_LIBS)
 
 dnl ---------------------------------------------
 dnl mpeg2lib and ffmpeg stuff
@@ -924,73 +939,6 @@ AM_CONDITIONAL(HAVE_MLIB, test "x$ac_have_mlib" = "xyes")
 AC_SUBST(MLIB_LIBS)
 AC_SUBST(MLIB_CFLAGS)
 
-
-XINE_X11_SUPPORT
-
-
-dnl ---------------------------------------------
-dnl zlib
-dnl ---------------------------------------------
-
-AC_ARG_WITH(zlib-prefix, 
-  AS_HELP_STRING(
-    [--with-zlib-prefix=PREFIX],
-    [path to zlib compression library]),
-  [zlib_prefix="$withval"],
-  [zlib_prefix="no"])
-
-if test "x$zlib_prefix" = "xno"; then
-  ZLIB_LIBS="-lz"
-else
-  ZLIB_CPPFLAGS="-I$zlib_prefix/include"
-  ZLIB_LIBS="-L$zlib_prefix/lib -lz"
-fi
-
-ac_save_CPPFLAGS="$CPPFLAGS"
-ac_save_LIBS="$LIBS"
-CPPFLAGS="$CPPFLAGS $ZLIB_CPPFLAGS"
-LIBS="$LIBS $ZLIB_LIBS"
-
-AC_CHECK_LIB(z, gzsetparams,
-  [AC_CHECK_HEADER(zlib.h,
-     have_zlib=yes)])
-
-CPPFLAGS="$ac_save_CPPFLAGS"
-LIBS="$ac_save_LIBS"
-
-if test "x$have_zlib" != "xyes"; then
-  AC_MSG_ERROR(zlib needed)
-fi
-AC_SUBST(ZLIB_CPPFLAGS)
-AC_SUBST(ZLIB_LIBS)
-
-
-dnl ---------------------------------------------
-dnl Check for OpenGL & [GLut | GLU]
-dnl ---------------------------------------------
-
-AM_PATH_OPENGL()
-
-
-dnl ---------------------------------------------
-dnl Check for platform which supports syncfb
-dnl ---------------------------------------------
-
-AC_ARG_ENABLE([syncfb],
-	AS_HELP_STRING([--disable-syncfb], [do not build syncfb plugin]))
-
-case "$host_os" in
-  *linux*) ;;
-  *)
-    if test "x$enable_syncfb" = "xyes"; then
-       AC_MSG_ERROR([You cannot build SyncFB support on non-Linux systems.])
-    fi
-    enable_syncfb=no ;;
-esac
-
-AM_CONDITIONAL(HAVE_SYNCFB, test "x$enable_syncfb" != "xno")
-
-
 dnl ----------------------------------------------
 dnl Check for usable video-for-linux (v4l) support
 dnl ----------------------------------------------
@@ -1006,310 +954,6 @@ if test "x$enable_v4l" != "xno"; then
 fi
 
 AM_CONDITIONAL(HAVE_V4L, [test "x$have_v4l" = "xyes"])
-
-XINE_XV_SUPPORT
-
-dnl ---------------------------------------------
-dnl Check for xcb
-dnl ---------------------------------------------
-AC_ARG_WITH([xcb], AS_HELP_STRING([--without-xcb], [Doesn't build XCB video out plugins]))
-
-if test "x$with_xcb" != "xno"; then
-  PKG_CHECK_MODULES([XCB], [xcb-shape >= 1.0], [have_xcb="yes"], [have_xcb="no"])
-fi
-
-AC_SUBST(XCB_CFLAGS)
-AC_SUBST(XCB_LIBS)
-AM_CONDITIONAL(HAVE_XCB, test "x$have_xcb" = "xyes" )
-
-
-dnl ---------------------------------------------
-dnl Check for xcb-shm
-dnl ---------------------------------------------
-
-if test "x$have_xcb" = "xyes"; then
-  PKG_CHECK_MODULES([XCBSHM], [xcb-shm], [have_xcbshm="yes"], [have_xcbshm="no"])
-fi
-
-AC_SUBST(XCBSHM_CFLAGS)
-AC_SUBST(XCBSHM_LIBS)
-AM_CONDITIONAL(HAVE_XCBSHM, test "x$have_xcbshm" = "xyes" )
-
-
-dnl ---------------------------------------------
-dnl Check for xcb-xv
-dnl ---------------------------------------------
-
-if test "x$have_xcb" = "xyes"; then
-  PKG_CHECK_MODULES([XCBXV], [xcb-xv], [have_xcbxv="yes"], [have_xcbxv="no"])
-fi
-
-AC_SUBST(XCBXV_CFLAGS)
-AC_SUBST(XCBXV_LIBS)
-AM_CONDITIONAL(HAVE_XCBXV, test "x$have_xcbxv" = "xyes" )
-
-
-dnl ---------------------------------------------
-dnl Checks for Xinerama extension
-dnl ---------------------------------------------
-
-AC_ARG_ENABLE([xinerama],
-  AS_HELP_STRING([--disable-xinerama], [do not build Xinerama support]))
-
-if test "x$enable_xinerama" != "xno"; then
-   PKG_CHECK_MODULES([XINERAMA], [xinerama], [ac_have_xinerama=yes], [
-      AC_CHECK_LIB(Xinerama, XineramaQueryExtension, 
-                  [XINERAMA_LIBS="-lXinerama"
-                   ac_have_xinerama="yes"],,
-                  [$X_LIBS $X_PRE_LIBS -lXext $X_EXTRA_LIBS])
-   ])
-   if test "x$ac_have_xinerama" = "xyes"; then
-      AC_DEFINE(HAVE_XINERAMA,1,[Define this if you have libXinerama installed])
-      X_LIBS="${X_LIBS} ${XINERAMA_LIBS}"
-   fi
-else
-  ac_have_xinerama=no
-fi
-dnl AM_CONDITIONAL(HAVE_XINERAMA, test "x$ac_have_xinerama" = "xyes")
-
- 
-dnl ---------------------------------------------
-dnl Checks for Ascii-Art library
-dnl ---------------------------------------------
-
-AC_ARG_ENABLE([aalib],
-  AS_HELP_STRING([--disable-aalib], [do not build AALIB support]),
-  [with_aalib=$enableval], [with_aalib=yes])
-
-if test "x$with_aalib" = "xyes"; then
-  AM_PATH_AALIB(1.4,, AC_MSG_RESULT([*** All of AALIB dependent parts will be disabled ***]))
-else
-  no_aalib=yes
-fi
-
-AM_CONDITIONAL(HAVE_AA, test "x$no_aalib" != "xyes")
-
-dnl ---------------------------------------------
-dnl Checks for Color AsCii Art library
-dnl ---------------------------------------------
-
-AC_ARG_WITH([caca],
-  AS_HELP_STRING([--without-caca], [Do not build CACA support]))
-
-if test "x$with_caca" != "xno"; then
-   PKG_CHECK_MODULES([CACA], [caca cucul], [have_caca="yes"], [have_caca="no"])
-   if test "x$with_caca" = "xyes" && test "x$have_caca" = "xno"; then
-      AC_MSG_ERROR([CACA support requested, but libcaca 0.99 not found])
-   fi
-fi
-
-AM_CONDITIONAL([HAVE_CACA], [test "x$have_caca" = "xyes"])
-
-dnl ---------------------------------------------
-dnl Check solaris framebuffer device support
-dnl ---------------------------------------------
-
-AC_CHECK_HEADER(sys/fbio.h, ac_have_sunfb=yes,)
-AM_CONDITIONAL(HAVE_SUNFB, [test "x$ac_have_sunfb" = "xyes"])
-
-
-dnl ---------------------------------------------
-dnl Check for Sun DGA
-dnl ---------------------------------------------
-
-saved_LDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS -L/usr/openwin/lib"
-saved_CPPFLAGS="$CPPFLAGS"
-CPPFLAGS="$CPPFLAGS -I/usr/openwin/include"
-AC_CHECK_LIB(dga, XDgaGrabDrawable, [
-	AC_CHECK_HEADER(dga/dga.h, [
-	        SUNDGA_CFLAGS="-I/usr/openwin/include"
-		SUNDGA_LIBS="-L/usr/openwin/lib -R/usr/openwin/lib -ldga"
-		ac_have_sundga=yes
-	])
-])
-LDFLAGS="$saved_LDFLAGS"
-CPPFLAGS="$saved_CPPFLAGS"
-AM_CONDITIONAL(HAVE_SUNDGA, [test "x$ac_have_sundga" = "xyes"])
-AC_SUBST(SUNDGA_CFLAGS)
-AC_SUBST(SUNDGA_LIBS)
-
-
-dnl ---------------------------------------------
-dnl Check linux framebuffer device support
-dnl ---------------------------------------------
-
-AC_CHECK_HEADER(linux/fb.h,
-                [AC_DEFINE(HAVE_FB,1,[Define this if you have linux framebuffer support])
-                 have_fb=yes],)
-AC_ARG_ENABLE(fb, AS_HELP_STRING([--disable-fb], [do not build linux framebuffer support]),
-	      have_fb=$enableval)
-AM_CONDITIONAL(HAVE_FB, [test "x$have_fb" = "xyes"])
-
-
-dnl ---------------------------------------------
-dnl Check whether to build Mac OS X video output driver
-dnl ---------------------------------------------
-
-MACOSX_VIDEO_SUPPORT
-
-
-dnl ---------------------------------------------
-dnl Check whether to build Mac OS X audio output driver
-dnl ---------------------------------------------
-
-MACOSX_AUDIO_SUPPORT
-
-
-dnl ---------------------------------------------
-dnl Check for DirectFB
-dnl ---------------------------------------------
-AC_ARG_ENABLE(directfb,
-	AS_HELP_STRING([--enable-directfb], [enable use of DirectFB]),
-		enable_directfb=$enableval,
-		enable_directfb=no)
-
-if test "x$enable_directfb" = "xyes"; then
-  PKG_CHECK_MODULES([DIRECTFB], [directfb >= 0.9.22], [have_directfb="yes"], [have_directfb="no"])
-fi
-
-AC_SUBST(DIRECTFB_CFLAGS)
-AC_SUBST(DIRECTFB_LIBS)
-AM_CONDITIONAL(HAVE_DIRECTFB, test "x$have_directfb" = "xyes" )
-
-
-dnl ---------------------------------------------
-dnl check for SDL
-dnl ---------------------------------------------
-
-AC_ARG_WITH([sdl],
-	AS_HELP_STRING([--without-sdl], [Build without SDL video output]))
-
-if test "x$with_sdl" != "xno"; then
-   PKG_CHECK_MODULES([SDL], [sdl], [have_sdl=yes], [have_sdl=no])
-   if test "x$with_sdl" = "xyes" && test "x$have_sdl" = "xno"; then
-      AC_MSG_ERROR([SDL support requested, but SDL not found])
-   elif test "x$have_sdl" = "xyes"; then
-      AC_DEFINE([HAVE_SDL], [1], [Define this if you have SDL installed])
-   fi
-fi
-
-AM_CONDITIONAL([HAVE_SDL], [test "x$have_sdl" = "xyes"])
-
-AC_SUBST([SDL_CFLAGS])
-AC_SUBST([SDL_LIBS])
-
-dnl ---------------------------------------------
-dnl check for Libstk
-dnl ---------------------------------------------
-
-AC_ARG_WITH([libstk],
-	AS_HELP_STRING([--with-libstk], [Build with STK surface video driver]))
-
-if test "x$with_libstk" = "xyes"; then
-   PKG_CHECK_MODULES([LIBSTK], [libstk >= 0.2.0], [have_libstk=yes], [have_libstk=no])
-   if test "x$with_libstk" = "xyes" && test "x$have_libstk" = "xno"; then
-      AC_MSG_ERROR([libstk support requested, but libstk not found])
-   fi
-fi
-
-AM_CONDITIONAL([HAVE_STK], [test "x$have_libstk" = "xyes"])
-
-dnl ---------------------------------------------
-dnl check for pulseaudio
-dnl ---------------------------------------------
-
-AC_ARG_WITH([pulseaudio],
-   AS_HELP_STRING([--without-pulseaudio], [Do not build Pulseaudio support]))
-
-if test "x$with_pulseaudio" != "xno"; then
-   PKG_CHECK_MODULES([PULSEAUDIO], [libpulse], [have_pulseaudio="yes"], [have_pulseaudio="no"])
-fi
-AM_CONDITIONAL(HAVE_PULSEAUDIO, [test "x$have_pulseaudio" = x"yes"])
-
-dnl ---------------------------------------------
-dnl check for DirectX
-dnl ---------------------------------------------
-
-AM_PATH_DIRECTX()
-
-
-dnl ---------------------------------------------
-dnl dxr3 / hollywood plus card
-dnl ---------------------------------------------
-
-case "$host_or_hostalias" in
-  *-linux*)
-    AC_CHECK_DXR3()
-    if test "x$have_libfame" = "xyes" ; then
-      AC_DEFINE_UNQUOTED(HAVE_LIBFAME,1,[Define this if you have libfame mpeg encoder installed (fame.sf.net)])
-      AM_PATH_LIBFAME(0.8.10, 
-        AC_DEFINE(HAVE_NEW_LIBFAME,1,[Define this if you have libfame 0.8.10 or above]))
-    fi
-    if test "x$have_librte" = "xyes" ; then
-      AC_DEFINE_UNQUOTED(HAVE_LIBRTE,1,[Define this if you have librte mpeg encoder installed (zapping.sf.net)])
-    fi
-    ;;
-  *)
-    have_dxr3="no"
-    have_libfame="no"
-    have_librte="no"
-    have_encoder="no"
-    ;;
-esac
-AM_CONDITIONAL(HAVE_DXR3, test "x$have_dxr3" = "xyes")
-AM_CONDITIONAL(HAVE_LIBFAME, test "x$have_libfame" = "xyes")
-AM_CONDITIONAL(HAVE_LIBRTE, test "x$have_librte" = "xyes")
-
-
-dnl ---------------------------------------------
-dnl Vidix/libdha
-dnl ---------------------------------------------
-
-AC_LINUX_PATH(/usr/src/linux)
-AC_SUBST([LINUX_INCLUDE])
-
-AC_ARG_ENABLE(vidix, AS_HELP_STRING([--disable-vidix], [do not build vidix support]),
-	      check_vidix=$enableval, check_vidix=yes)
-AC_ARG_ENABLE(dha-kmod, AS_HELP_STRING([--enable-dha-kmod], [build DHA kernel module]),
-	      enable_dha_kmod=$enableval,enable_dha_kmod=no)
-
-enable_vidix="no"
-
-AC_MSG_CHECKING(for vidix support)
-if test "x$check_vidix" = "xyes" -a "x$ac_cv_prog_AWK" != "xno"; then
-  if test "x$no_x" != "xyes" -o "x$have_fb" = "xyes"; then
-    case "$host_or_hostalias" in
-      i?86-*-linux* | k?-*-linux* | athlon-*-linux*)
-        enable_vidix="yes"
-        enable_linux="yes"
-        ;;
-      i?86-*-freebsd* | k?-*-freebsd* | athlon-*-freebsd*)
-        enable_vidix="yes"
-        enable_dha_kmod="no"
-        ;;
-      *)
-        enable_dha_kmod="no"
-        enable_vidix="no"
-        ;;
-    esac
-  fi
-fi
-AC_MSG_RESULT($enable_vidix)
-
-AC_MSG_CHECKING(for DHA linux kernel module build)
-if test "x$enable_dha_kmod" = "xyes"; then
-  AC_MSG_RESULT(yes)
-else
-  AC_MSG_RESULT(no)
-fi
-
-AM_CONDITIONAL(HAVE_VIDIX, test "x$enable_vidix" = "xyes")
-AM_CONDITIONAL(HAVE_LINUX, test "x$enable_linux" = "xyes")
-AM_CONDITIONAL(BUILD_DHA_KMOD, test "x$enable_dha_kmod" = "xyes")
-AC_CHECK_PROG(MKNOD, mknod, mknod, no)
-AC_CHECK_PROG(DEPMOD, depmod, depmod, no, "$PATH:/sbin")
-
 
 dnl ---------------------------------------------
 dnl Ogg/Vorbis libs.
@@ -1595,130 +1239,6 @@ AC_SUBST([FONTCONFIG_LIBS])
 
 
 dnl ---------------------------------------------
-dnl OSS style audio interface
-dnl ---------------------------------------------
-AC_ARG_ENABLE([oss],
-	AS_HELP_STRING([--disable-oss], [Do not build OSS audio output support]))
-
-if test "x$enable_oss" != "xno"; then
-   AC_CHECK_HEADERS([sys/soundcard.h machine/soundcard.h soundcard.h], [break])
-   AC_CHECK_DECL([SNDCTL_DSP_SETFRAGMENT], [have_ossaudio=yes], [], [
-     #ifdef HAVE_SYS_SOUNDCARD_H
-     # include <sys/soundcard.h>
-     #endif
-     #ifdef HAVE_MACHINE_SOUNDCARD_H
-     # include <sys/soundcard.h>
-     #endif
-     #ifdef HAVE_SOUNDCARD_H
-     # include <soundcard.h>
-     #endif
-   ])
-
-   AC_IOCTL_REQUEST
-fi
-
-AM_CONDITIONAL(HAVE_OSS, test "x$have_ossaudio" = "xyes")
-
-
-dnl ---------------------------------------------
-dnl Alsa support
-dnl ---------------------------------------------
-
-AC_ARG_WITH([alsa],
-   AS_HELP_STRING([--without-alsa], [Build without ALSA audio output]))
-
-if test "x$with_alsa" != "xno"; then
-   PKG_CHECK_MODULES([ALSA], [alsa >= 0.9.0], [have_alsa=yes], [have_alsa=no])
-   AC_SUBST([ALSA_LIBS])
-   AC_SUBST([ALSA_CFLAGS])
-   if test "x$have_alsa" = "xyes"; then
-      AC_DEFINE([HAVE_ALSA], [1], [Define this if you have ALSA installed])
-   elif test "x$with_alsa" = "xyes"; then
-      AC_MSG_ERROR([ALSA support requested but not found.])
-   fi
-fi
-
-AM_CONDITIONAL([HAVE_ALSA], [test "x$have_alsa" = "xyes"])
-
-dnl ---------------------------------------------
-dnl ESD support
-dnl ---------------------------------------------
-
-AC_ARG_WITH([esound],
-	AS_HELP_STRING([--without-esound], [Build without ESounD audio output]))
-
-if test "x$with_esound" != "xno"; then
-   PKG_CHECK_MODULES([ESD], [esound], [have_esound=yes], [have_esound=no])
-   if test "x$with_esound" = "xyes" && test "x$have_esound" = "xno"; then
-      AC_MSG_ERROR([ESounD support requested, but libesd not found])
-   elif test "x$have_esound" = "xyes"; then
-      AC_DEFINE([HAVE_ESD], [1], [Define this if you have ESounD installed])
-   fi
-fi
-
-AM_CONDITIONAL([HAVE_ESD], [test "x$have_esound" = "xyes"])
-
-AC_SUBST([ESD_CFLAGS])
-AC_SUBST([ESD_LIBS])
-
-
-dnl ---------------------------------------------
-dnl ARTS support
-dnl ---------------------------------------------
-
-AC_ARG_WITH([arts],
-  AS_HELP_STRING([--without-arts], [Build without ARTS audio output]),
-  [with_arts=$withval], [with_arts=yes])
-
-if test "x$with_arts" = "xyes"; then
-  AM_PATH_ARTS(0.9.5,
-        AC_DEFINE(HAVE_ARTS,1,[Define this if you have ARTS (libartsc) installed]),
-        AC_MSG_RESULT(*** All of ARTS dependent parts will be disabled ***))
-else
-  no_arts=yes
-fi
-AM_CONDITIONAL(HAVE_ARTS, test "x$no_arts" != "xyes")
-
-
-dnl ---------------------------------------------
-dnl FusionSound support
-dnl ---------------------------------------------
-
-AC_ARG_WITH([fusionsound],
-  AS_HELP_STRING([--with-fusionsound], [Build with FunsionSound audio output]),
-  [with_fusionsound=$withval], [with_fusionsound=no])
-
-if test "x$with_fusionsound" = "xyes"; then
-  PKG_CHECK_MODULES(FUSIONSOUND, fusionsound >= 0.9.23,
-      AC_DEFINE(HAVE_FUSIONSOUND,1,[Define to 1 if you have FusionSound.]),
-      AC_MSG_RESULT(*** All of FusionSound dependent parts will be disabled ***))
-  AC_SUBST(FUSIONSOUND_CFLAGS)
-  AC_SUBST(FUSIONSOUND_LIBS)
-else
-  no_fusionsound=yes
-fi
-AM_CONDITIONAL(HAVE_FUSIONSOUND, test "x$no_fusionsound" != "xyes")
-
-
-dnl ---------------------------------------------
-dnl JACK support
-dnl ---------------------------------------------
-
-AC_ARG_WITH([jack],
-	AS_HELP_STRING([--without-jack], [Build without Jack support]))
-
-if test "x$with_jack" != "xno"; then
-   PKG_CHECK_MODULES([JACK], [jack >= 0.100], [have_jack=yes], [have_jack=no])
-   
-   if test "x$with_jack" = "xyes" && test "x$have_jack" = "xno"; then
-      AC_MSG_ERROR([Jack support requested, but Jack not found])
-   fi
-fi
-
-AM_CONDITIONAL([HAVE_JACK], [test "x$have_jack" = "xyes"])
-
-
-dnl ---------------------------------------------
 dnl gnome-vfs support
 dnl ---------------------------------------------
 
@@ -1783,51 +1303,6 @@ if test "x$with_samba" = "xyes"; then
   AC_SUBST(LIBSMBCLIENT_LIBS)
 fi
 AM_CONDITIONAL(HAVE_LIBSMBCLIENT, test "x$have_libsmbclient" = "xyes")
-
-
-dnl ---------------------------------------------
-dnl SUN style audio interface
-dnl ---------------------------------------------
-
-AC_MSG_CHECKING(for Sun audio support)
-have_sunaudio=no
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-	    #include <sys/types.h>
-	    #include <sys/audioio.h>
-	]], [[
-	    audio_info_t audio_info;
-	    AUDIO_INITINFO(&audio_info);
-	]])],[
-	    have_sunaudio=yes
-	],[])
-AC_MSG_RESULT($have_sunaudio)
-AM_CONDITIONAL(HAVE_SUNAUDIO, test "x$have_sunaudio" = "xyes")
-
-if test "x$have_sunaudio" = "xyes"; then
-   dnl NetBSD and OpenBSD don't have this, but check for it
-   dnl rather than assuming that it doesn't happen elsewhere.
-   AC_CHECK_MEMBERS([audio_info_t.output_muted])
-fi
-
-
-dnl ---------------------------------------------
-dnl IRIX style audio interface
-dnl ---------------------------------------------
-
-AM_CHECK_IRIXAL([AC_DEFINE(HAVE_IRIXAL,1,
-			[Define this if you have a usable IRIX al interface available])],
-	[AC_MSG_RESULT([*** All of IRIX AL dependent parts will be disabled ***])])
-AM_CONDITIONAL(HAVE_IRIXAL, [test "x$am_cv_have_irixal" = xyes])
-
-
-dnl ---------------------------------------------
-dnl Solaris kstat kernel statistics
-dnl ---------------------------------------------
-
-AC_CHECK_LIB(kstat, kstat_open,
-	[KSTAT_LIBS=-lkstat
-	 AC_DEFINE(HAVE_KSTAT,1,[Define this if you have kernel statistics available via kstat interface])])
-AC_SUBST(KSTAT_LIBS)
 
 
 dnl ---------------------------------------------

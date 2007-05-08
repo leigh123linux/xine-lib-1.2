@@ -31,7 +31,7 @@ libwine_la_SOURCES = \
 	win32.c \
 	stubs.s \
 	wrapper.S 
-libwine_la_CFLAGS = $(AM_CFLAGS) $(XDG_BASEDIR_CFLAGS)
+libwine_la_CPPFLAGS = $(AM_CPPFLAGS) $(XDG_BASEDIR_CPPFLAGS)
 
 noinst_HEADERS = \
 	avifmt.h \
