@@ -1184,6 +1184,11 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
       if ((this->aspect_ratio_prio < 2) &&
 	  av_cmp_q(this->context->sample_aspect_ratio, avr00)) {
 
+        if (!this->bih.biWidth || !this->bih.biHeight) {
+          this->bih.biWidth  = this->context->width;
+          this->bih.biHeight = this->context->height;
+        }
+
 	this->aspect_ratio = av_q2d(this->context->sample_aspect_ratio) * 
 	  (double)this->bih.biWidth / (double)this->bih.biHeight;
 	this->aspect_ratio_prio = 2;

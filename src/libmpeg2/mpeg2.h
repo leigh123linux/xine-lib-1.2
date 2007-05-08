@@ -57,6 +57,12 @@ typedef struct mpeg2dec_s {
     int force_aspect;
     int force_pan_scan;
 
+    /* AFD data can be found after a sequence, group or picture start code */
+    /* and will be stored in afd_value_seen. Later it will be transfered to */
+    /* a stream property and stored into afd_value_reported to detect changes */
+    int afd_value_seen;
+    int afd_value_reported;
+
     xine_stream_t *stream;
     
     /* a spu decoder for possible closed captions */
