@@ -7,9 +7,11 @@ postproc_lib = $(FFMPEG_POSTPROC_LIBS)
 ff_cflags = $(FFMPEG_POSTPROC_CFLAGS)
 else
 ff_cflags = -I$(top_srcdir)/contrib/ffmpeg/libpostproc
-postproc_lib = $(top_builddir)/contrib/ffmpeg/libpostproc/libpostproc.a
-
+postproc_lib = $(top_builddir)/contrib/ffmpeg/libpostproc/libpostproc.a \
+	       $(top_builddir)/contrib/ffmpeg/libavutil/libavutil.a
 $(top_builddir)/contrib/ffmpeg/libpostproc/libpostproc.a:
+	$(MAKE) -C $(top_builddir)/contrib/ffmpeg/ -f makefile.xine libpostproc/libpostproc.a
+$(top_builddir)/contrib/ffmpeg/libavutil/libavutil.a:
 	$(MAKE) -C $(top_builddir)/contrib/ffmpeg/ -f makefile.xine libpostproc/libpostproc.a
 endif
 
