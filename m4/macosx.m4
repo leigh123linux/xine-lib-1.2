@@ -43,13 +43,6 @@ AC_DEFUN([MACOSX_UNIVERSAL_BINARIES], [
     AC_SUBST(UNIVERSAL_LDFLAGS)
 ])dnl MACOSX_UNIVERSAL_BINARIES
 
-AC_DEFUN([MACOSX_AUDIO_SUPPORT], [
-    AC_ARG_ENABLE([coreaudio],
-                  AS_HELP_STRING([--enable-coreaudio], [enable support for Mac OS X CoreAudio output]),
-                  [have_coreaudio="$enableval"], [have_coreaudio="no"])
-    AM_CONDITIONAL([HAVE_COREAUDIO], [test x"$have_coreaudio" = x"yes"])
-])dnl MACOSX_AUDIO_SUPPORT
-
 AC_DEFUN([MACOSX_VIDEO_SUPPORT], [
     AC_ARG_ENABLE([macosx-video],
                   AS_HELP_STRING([--enable-macosx-video], [enable support for Mac OS X OpenGL video output]),

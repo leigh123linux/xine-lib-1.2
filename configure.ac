@@ -319,6 +319,7 @@ AM_CONDITIONAL([GENERATED_INTTYPES_H], [test "x$ac_cv_header_inttypes_h" != x"ye
 AC_CHECK_TYPE(ssize_t, :, AC_DEFINE(ssize_t, __int64, [define ssize_t to __int64 if it's missing in default includes]))
 
 AC_CHECK_SOCKLEN_T
+AC_IOCTL_REQUEST
 
 dnl ---------------------
 dnl checks for structures
