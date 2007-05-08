@@ -516,17 +516,17 @@ static void xv_deinterlace_frame (xv_driver_t *this) {
       else
         recent_bitmaps[i] = NULL;
 
-    deinterlace_yuv( this->deinterlace_frame.image->data+frame->width*frame->height,
-		     recent_bitmaps, frame->width/2, frame->height/2, this->deinterlace_method );
+    deinterlace_yuv( this->deinterlace_frame.image->data+this->deinterlace_frame.image->width*frame->height,
+		     recent_bitmaps, this->deinterlace_frame.image->width/2, frame->height/2, this->deinterlace_method );
     for( i = 0; i < VO_NUM_RECENT_FRAMES; i++ )
       if( this->recent_frames[i] && this->recent_frames[i]->width == frame->width &&
           this->recent_frames[i]->height == frame->height )
-        recent_bitmaps[i] = this->recent_frames[i]->image->data + frame->width*frame->height*5/4;
+        recent_bitmaps[i] = this->recent_frames[i]->image->data + this->deinterlace_frame.image->width*frame->height*5/4;
       else
         recent_bitmaps[i] = NULL;
 
-    deinterlace_yuv( this->deinterlace_frame.image->data+frame->width*frame->height*5/4,
-		     recent_bitmaps, frame->width/2, frame->height/2, this->deinterlace_method );
+    deinterlace_yuv( this->deinterlace_frame.image->data+this->deinterlace_frame.image->width*frame->height*5/4,
+		     recent_bitmaps, this->deinterlace_frame.image->width/2, frame->height/2, this->deinterlace_method );
 
 #else
 
@@ -545,7 +545,7 @@ static void xv_deinterlace_frame (xv_driver_t *this) {
         recent_bitmaps[i] = NULL;
 
     deinterlace_yuv( this->deinterlace_frame.image->data, recent_bitmaps,
-                     frame->width, frame->height, this->deinterlace_method );
+                     this->deinterlace_frame.image->width, frame->height, this->deinterlace_method );
   }
   else {
     /*

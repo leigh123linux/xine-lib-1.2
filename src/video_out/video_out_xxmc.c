@@ -31,8 +31,8 @@
  *
  * overlay support by James Courtier-Dutton <James@superbug.demon.co.uk> - July 2001
  * X11 unscaled overlay support by Miguel Freitas - Nov 2003
- * XvMC VLD implementation by Thomas Hellström - 2004, 2005.
- * XvMC merge by Thomas Hellström - Sep 2004
+ * XvMC VLD implementation by Thomas HellstrÃ¶m - 2004, 2005.
+ * XvMC merge by Thomas HellstrÃ¶m - Sep 2004
  *
  */
 
@@ -977,7 +977,7 @@ static void xvmc_check_colorkey_properties(xxmc_driver_t *driver)
 
 
 static int xxmc_xvmc_update_context(xxmc_driver_t *driver, xxmc_frame_t *frame,
-				    uint32_t width, uint32_t height) 
+				    uint32_t width, uint32_t height, int frame_format_xxmc) 
 {
   xine_xxmc_t *xxmc = &frame->xxmc_data;
 
@@ -991,8 +991,12 @@ static int xxmc_xvmc_update_context(xxmc_driver_t *driver, xxmc_frame_t *frame,
 
   xprintf(driver->xine, XINE_VERBOSITY_LOG,
 	  LOG_MODULE ": New format. Need to change XvMC Context.\n"
-	  LOG_MODULE ": width: %d height: %d mpeg: %d acceleration: %d\n", width, height,
-	    xxmc->mpeg, xxmc->acceleration);
+	  LOG_MODULE ": width: %d height: %d", width, height);
+  if (frame_format_xxmc) {
+    xprintf(driver->xine, XINE_VERBOSITY_LOG,
+	  " mpeg: %d acceleration: %d", xxmc->mpeg, xxmc->acceleration);
+  }
+  xprintf(driver->xine, XINE_VERBOSITY_LOG, "\n");
   
   if (frame->xvmc_surf)
     xxmc_xvmc_free_surface( driver , frame->xvmc_surf);
@@ -1000,7 +1004,7 @@ static int xxmc_xvmc_update_context(xxmc_driver_t *driver, xxmc_frame_t *frame,
 
   xxmc_dispose_context( driver );
   
-  if (xxmc_find_context( driver, xxmc, width, height )) {
+  if (frame_format_xxmc && xxmc_find_context( driver, xxmc, width, height )) {
     xxmc_create_context( driver, width, height);
     xvmc_check_colorkey_properties( driver );
     xxmc_setup_subpictures(driver, width, height);
@@ -1231,7 +1235,7 @@ static void xxmc_do_update_frame(vo_driver_t *this_gen,
 	(this->xvmc_width != width) ||
 	(this->xvmc_height != height)) {
       this->last_accel_request = xxmc->acceleration;
-      xxmc_xvmc_update_context(this, frame, width, height);
+      xxmc_xvmc_update_context(this, frame, width, height, 1);
     } else {
       this->last_accel_request = xxmc->acceleration;
     }
@@ -1254,6 +1258,11 @@ static void xxmc_do_update_frame(vo_driver_t *this_gen,
     xvmc_context_writer_unlock( &this->xvmc_lock);
     
   } else {
+    /* switch back to an unaccelerated context */
+    if (this->last_accel_request != 0xFFFFFFFF) {
+      this->last_accel_request = 0xFFFFFFFF;
+      xxmc_xvmc_update_context(this, frame, width, height, 0);
+    }
     frame->vo_frame.proc_duplicate_frame_data = NULL;
     xxmc_do_update_frame_xv(this_gen, frame_gen, width, height, ratio, 
 			    format, flags);
@@ -1579,6 +1588,28 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   xxmc_frame_t   *frame = (xxmc_frame_t *) frame_gen;
   xine_xxmc_t *xxmc = &frame->xxmc_data;
   int first_field;
+  int disable_deinterlace = 0;
+  struct timeval tv_top;
+
+  /*
+   * take time to calculate the time to sleep for the bottom field
+   */
+  gettimeofday(&tv_top, 0);
+
+  /*
+   * bob deinterlacing doesn't make much sense for still images or at replay speeds
+   * other than 100 %, so let's disable deinterlacing at all for this frame
+   */
+  if (this->deinterlace_enabled && this->bob) {
+    disable_deinterlace = frame->vo_frame.progressive_frame
+      || !frame->vo_frame.stream
+      || xine_get_param(frame->vo_frame.stream, XINE_PARAM_FINE_SPEED) != XINE_FINE_SPEED_NORMAL;
+    if (!disable_deinterlace) {
+      int vo_bufs_in_fifo = 0;
+      _x_query_buffer_usage(frame->vo_frame.stream, NULL, NULL, &vo_bufs_in_fifo, NULL);
+      disable_deinterlace = (vo_bufs_in_fifo <= 0);
+    }
+  }
 
   /*
    * queue frames (deinterlacing)
@@ -1588,6 +1619,20 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   xvmc_context_reader_lock( &this->xvmc_lock );
 
   xxmc_add_recent_frame (this, frame); /* deinterlacing */
+
+  /*
+   * the current implementation doesn't need recent frames for deinterlacing,
+   * but as most of the time we only have a little number of frames available
+   * per device, we only hold references to the most recent frame by filling
+   * the whole buffer with the same frame
+   */
+  {
+    int i;
+    for (i = 1; i < VO_NUM_RECENT_FRAMES; i++) {
+      frame->vo_frame.lock(&frame->vo_frame);
+      xxmc_add_recent_frame (this, frame); /* deinterlacing */
+    }
+  }
 
   if ((frame->format == XINE_IMGFMT_XXMC) &&
       (!xxmc->decoded || !xxmc_xvmc_surface_valid(this, frame->xvmc_surf))) {
@@ -1616,7 +1661,7 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
   first_field = (frame->vo_frame.top_field_first) ? XVMC_TOP_FIELD : XVMC_BOTTOM_FIELD;
   first_field = (this->bob) ? first_field : XVMC_TOP_FIELD;
-  this->cur_field = (this->deinterlace_enabled) ? first_field : XVMC_FRAME_PICTURE;
+  this->cur_field = (this->deinterlace_enabled && !disable_deinterlace) ? first_field : XVMC_FRAME_PICTURE;
 
   xxmc_redraw_needed (this_gen);
   if (frame->format == XINE_IMGFMT_XXMC) {
@@ -1629,21 +1674,42 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 		    this->sc.output_width, this->sc.output_height, 
 		    this->cur_field);
     XVMCUNLOCKDISPLAY( this->display );
-    if (this->deinterlace_enabled && this->bob) {
-      unsigned 
-	ms_per_field = 500 * frame->vo_frame.duration / 90000 - 2;
-      
-      usleep(ms_per_field*1000);
-      this->cur_field = (frame->vo_frame.top_field_first) ? XVMC_BOTTOM_FIELD : XVMC_TOP_FIELD;
+    if (this->deinterlace_enabled && !disable_deinterlace && this->bob) {
+      struct timeval tv_middle;
+      long us_spent_so_far, us_per_field = frame->vo_frame.duration * 50 / 9;
 
-      XVMCLOCKDISPLAY( this->display );
-      XvMCPutSurface( this->display, frame->xvmc_surf , this->drawable,
-		      this->sc.displayed_xoffset, this->sc.displayed_yoffset,
-		      this->sc.displayed_width, this->sc.displayed_height,
-		      this->sc.output_xoffset, this->sc.output_yoffset,
-		      this->sc.output_width, this->sc.output_height, 
-		      this->cur_field);
-      XVMCUNLOCKDISPLAY( this->display );
+      gettimeofday(&tv_middle, 0);
+      us_spent_so_far = (tv_middle.tv_sec - tv_top.tv_sec) * 1000000 + (tv_middle.tv_usec - tv_top.tv_usec);
+      if (us_spent_so_far < 0)
+        us_spent_so_far = 0;
+
+      /*
+       * typically, the operations above take just a few milliseconds, but when the
+       * driver actively waits to sync on the next field, we better skip showing the
+       * other field as it would lead to further busy waiting
+       * so display the other field only if we've spent less than 75 % of the per
+       * field time so far
+       */
+      if (4 * us_spent_so_far < 3 * us_per_field) {
+        long us_delay = (us_per_field - 2000) - us_spent_so_far;
+        if (us_delay > 0) {
+          xvmc_context_reader_unlock( &this->xvmc_lock );
+          xine_usec_sleep(us_delay);
+          LOCK_AND_SURFACE_VALID( this, frame->xvmc_surf );
+        }
+
+        this->cur_field = (frame->vo_frame.top_field_first) ? XVMC_BOTTOM_FIELD : XVMC_TOP_FIELD;
+
+        XVMCLOCKDISPLAY( this->display );
+        XvMCPutSurface( this->display, frame->xvmc_surf , this->drawable,
+		        this->sc.displayed_xoffset, this->sc.displayed_yoffset,
+		        this->sc.displayed_width, this->sc.displayed_height,
+		        this->sc.output_xoffset, this->sc.output_yoffset,
+		        this->sc.output_width, this->sc.output_height, 
+		        this->cur_field);
+
+        XVMCUNLOCKDISPLAY( this->display );
+      }
     }      
   } else {
     XLockDisplay (this->display);
@@ -1934,7 +2000,7 @@ static void xxmc_dispose (vo_driver_t *this_gen) {
 
   for( i=0; i < VO_NUM_RECENT_FRAMES; i++ ) {
     if( this->recent_frames[i] )
-      this->recent_frames[i]->vo_frame.dispose
+      this->recent_frames[i]->vo_frame.free
 	(&this->recent_frames[i]->vo_frame);
     this->recent_frames[i] = NULL;
   }
