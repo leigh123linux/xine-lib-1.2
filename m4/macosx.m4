@@ -30,7 +30,7 @@ AC_DEFUN([MACOSX_UNIVERSAL_BINARIES], [
             host="`echo $host | sed -e s/$host_cpu/universal/g`"
             host_cpu=universal
 
-            AC_DEFINE(XINE_MACOSX_UNIVERSAL_BINARY, 1, [Define this if a universal binary is being built for Mac OS X])
+            AC_DEFINE([XINE_MACOSX_UNIVERSAL_BINARY], 1, [Define this if a universal binary is being built for Mac OS X])
             for arch in $UNIVERSAL_ARCHES ; do
                 UNIVERSAL_CFLAGS="$UNIVERSAL_CFLAGS -arch $arch"
                 UNIVERSAL_LDFLAGS="$UNIVERSAL_LDFLAGS -arch $arch"

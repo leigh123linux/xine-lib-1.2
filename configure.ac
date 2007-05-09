@@ -239,7 +239,19 @@ fi
 AM_GNU_GETTEXT([external])
 AC_PROG_GMSGFMT_PLURAL
 
-AM_DL()
+AC_CHECK_LIB([c], [dlopen], [DYNAMIC_LD_LIBS=""],
+             [AC_CHECK_LIB([dl], [dlopen], [DYNAMIC_LD_LIBS="-ldl"],
+                           [AC_MSG_CHECKING(for dlopen under win32)
+                            AC_LANG_PUSH([C])
+                            ac_save_CPPFLAGS="$CPPFLAGS" CPPFLAGS="-I${srcdir}/win32/include $CPPFLAGS"
+                            ac_save_LIBS="$LIBS" LIBS="$LIBS -lkernel32"
+                            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stddef.h>
+                                                                 #include <dlfcn.h>]], [[dlopen(NULL, 0)]])],
+                                              [DYNAMIC_LD_LIBS="-lkernel32"
+                                               AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
+                            CPPFLAGS="$ac_save_CPPFLAGS" LIBS="$ac_save_LIBS"
+                            AC_LANG_POP([C])], [AC_MSG_ERROR([dynamic linker needed])])])
+AC_SUBST([DYNAMIC_LD_LIBS])
 
 AC_ARG_WITH([external-libxdg-basedir],
             [AS_HELP_STRING([--with-external-libxdg-basedir], [use external copy of libxdg-basedir])])
@@ -271,6 +283,11 @@ AC_CHECK_LIB([rt], [clock_getres],
 AC_SUBST(RT_LIBS)
 
 AC_CHECK_LIB([posix4], [sched_get_priority_min])
+
+AC_CHECK_LIB([kstat], [kstat_open],
+             [KSTAT_LIBS=-lkstat
+              AC_DEFINE([HAVE_KSTAT], 1, [Define this if you have kernel statistics available via kstat interface])])
+AC_SUBST(KSTAT_LIBS)
 
 AC_ARG_WITH([zlib-prefix], 
             [AS_HELP_STRING([--with-zlib-prefix=PREFIX], [path to zlib compression library])],
@@ -324,8 +341,6 @@ AC_IOCTL_REQUEST
 dnl ---------------------
 dnl checks for structures
 dnl ---------------------
-
-AC_CHECK_IP_MREQN
 
 
 dnl -----------------------------------
@@ -812,6 +827,7 @@ dnl -------
 
 XINE_AUDIO_OUT_PLUGINS
 XINE_VIDEO_OUT_PLUGINS
+XINE_INPUT_PLUGINS
 
 
 
@@ -835,19 +851,6 @@ XINE_VIDEO_OUT_PLUGINS
 
 
 
-
-
-
-
-
-dnl ---------------------------------------------
-dnl Solaris kstat kernel statistics
-dnl ---------------------------------------------
-
-AC_CHECK_LIB(kstat, kstat_open,
-	[KSTAT_LIBS=-lkstat
-	 AC_DEFINE(HAVE_KSTAT,1,[Define this if you have kernel statistics available via kstat interface])])
-AC_SUBST(KSTAT_LIBS)
 
 dnl ---------------------------------------------
 dnl mpeg2lib and ffmpeg stuff
@@ -939,22 +942,6 @@ fi
 AM_CONDITIONAL(HAVE_MLIB, test "x$ac_have_mlib" = "xyes")
 AC_SUBST(MLIB_LIBS)
 AC_SUBST(MLIB_CFLAGS)
-
-dnl ----------------------------------------------
-dnl Check for usable video-for-linux (v4l) support
-dnl ----------------------------------------------
-AC_ARG_ENABLE([v4l],
-	AS_HELP_STRING([--disable-v4l], [do not build Video4Linux input plugin]))
-
-if test "x$enable_v4l" != "xno"; then
-  AC_CHECK_HEADERS([linux/videodev.h], [have_v4l=yes], [have_v4l=no])
-  AC_CHECK_HEADERS([asm/types.h])
-  if test "x$enable_v4l" = "xyes" && test "x$have_v4l" = "xno"; then
-     AC_MSG_ERROR([Video4Linux support requested, but prerequisite headers not found.])
-  fi
-fi
-
-AM_CONDITIONAL(HAVE_V4L, [test "x$have_v4l" = "xyes"])
 
 dnl ---------------------------------------------
 dnl Ogg/Vorbis libs.
@@ -1240,30 +1227,6 @@ AC_SUBST([FONTCONFIG_LIBS])
 
 
 dnl ---------------------------------------------
-dnl gnome-vfs support
-dnl ---------------------------------------------
-
-AC_ARG_ENABLE([gnomevfs],
-  AS_HELP_STRING([--disable-gnomevfs], [do not build gnome-vfs support]),
-  [with_gnome_vfs=$enableval], [with_gnome_vfs=yes])
-
-if test "x$with_gnome_vfs" = "xyes"; then
-  PKG_CHECK_MODULES(GNOME_VFS, gnome-vfs-2.0,
-                no_gnome_vfs=no,
-		no_gnome_vfs=yes)
-  AC_SUBST(GNOME_VFS_CFLAGS)
-  AC_SUBST(GNOME_VFS_LIBS)
-  if test "x$no_gnome_vfs" != "xyes"; then
-    AC_DEFINE(HAVE_GNOME_VFS,1,[Define this if you have gnome-vfs installed])
-  else
-    AC_MSG_RESULT(*** All of the gnome-vfs dependent parts will be disabled ***)
-  fi
-else
-  no_gnome_vfs=yes
-fi
-AM_CONDITIONAL(HAVE_GNOME_VFS, test "x$no_gnome_vfs" != "xyes")
-
-dnl ---------------------------------------------
 dnl gdk-pixbuf support
 dnl ---------------------------------------------
 
@@ -1285,63 +1248,6 @@ else
   no_gdkpixbuf=yes
 fi
 AM_CONDITIONAL(HAVE_GDK_PIXBUF, test "x$no_gdkpixbuf" != "xyes")
-
-dnl ---------------------------------------------
-dnl libsmbclient support
-dnl ---------------------------------------------
-
-AC_ARG_ENABLE([samba],
-  AS_HELP_STRING([--disable-samba], [do not build Samba support]),
-  [with_samba=$enableval], [with_samba=yes])
-
-if test "x$with_samba" = "xyes"; then
-  AC_CHECK_LIB(smbclient, smbc_init,
-	[ AC_CHECK_HEADER(libsmbclient.h,
-		[ have_libsmbclient=yes
-		  LIBSMBCLIENT_LIBS="-lsmbclient" ], 
-		AC_MSG_RESULT([*** All libsmbclient dependent parts will be disabled ***]))],
-	AC_MSG_RESULT([*** All libsmbclient dependent parts will be disabled ***]))
-  AC_SUBST(LIBSMBCLIENT_LIBS)
-fi
-AM_CONDITIONAL(HAVE_LIBSMBCLIENT, test "x$have_libsmbclient" = "xyes")
-
-
-dnl ---------------------------------------------
-dnl cdrom ioctls
-dnl ---------------------------------------------
-
-AC_CHECK_HEADERS([linux/cdrom.h sys/dvdio.h], [break])
-AC_CHECK_HEADERS([sys/cdio.h sys/scsiio.h])
-AM_CHECK_CDROM_IOCTLS(
-	[AC_DEFINE(HAVE_CDROM_IOCTLS,1,[Define this if you have CDROM ioctls])],
-	[AC_MSG_RESULT([*** (S)VCD support will be disabled ***])])
-AM_CONDITIONAL(HAVE_CDROM_IOCTLS, [test "x$have_cdrom_ioctls" = "xyes"])
-
-
-dnl ---------------------------------------------
-dnl check for a usable version of libdvdnav
-dnl ---------------------------------------------
-
-AC_ARG_WITH(external-dvdnav, AS_HELP_STRING([--with-external-dvdnav], [use external dvdnav library (not recommended)]),
-            [external_dvdnav="$withval"], [no_dvdnav="yes"; external_dvdnav="no"])
-
-if test "x$external_dvdnav" = "xyes"; then
-  AM_PATH_DVDNAV(0.1.9,
-	  AC_DEFINE(HAVE_DVDNAV,1,[Define this if you have a suitable version of libdvdnav]),
-	  [AC_MSG_RESULT([*** no usable version of libdvdnav found, using internal copy ***])])
-else
-  AC_MSG_RESULT([Use included DVDNAV support])
-fi
-
-AM_CONDITIONAL(HAVE_DVDNAV, [test "x$no_dvdnav" != "xyes"])
-
-
-dnl ---------------------------------------------
-dnl Video CD
-dnl ---------------------------------------------
-
-VCD_SUPPORT
-
 
 dnl ---------------------------------------------
 dnl ASF build can be optional

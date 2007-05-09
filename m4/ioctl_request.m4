@@ -34,19 +34,15 @@ dnl well.
 
 dnl Usage AC_IOCTL_REQUEST
 AC_DEFUN([AC_IOCTL_REQUEST], [
-  AC_CACHE_CHECK([type of request parameter for ioctl()],
-    ac_cv_ioctl_request,
-    [for ac_ioctl_request_type in "unsigned long" "int"
-     do
-       AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-        #include <sys/ioctl.h>
-        int ioctl(int fd, $ac_ioctl_request_type request, ...);
-       ]], [[]])],[ac_cv_ioctl_request=$ac_ioctl_request_type],[])
-     done])
-
-  if test "x$ac_cv_ioctl_request" = "x"; then
-    AC_MSG_ERROR([Unable to determine the type for ioctl() request parameter])
-  fi
-
-  AC_DEFINE_UNQUOTED([IOCTL_REQUEST_TYPE], $ac_cv_ioctl_request, [Type of the request parameter for ioctl()])
+    AC_CACHE_CHECK([type of request parameter for ioctl()], [ac_cv_ioctl_request], [
+        for ac_ioctl_request_type in "unsigned long" "int"; do
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <sys/ioctl.h>
+                                              int ioctl(int fd, $ac_ioctl_request_type request, ...);]], [[]])],
+                           [ac_cv_ioctl_request=$ac_ioctl_request_type], [])
+        done
+        if test "x$ac_cv_ioctl_request" = "x"; then
+            AC_MSG_ERROR([Unable to determine the type for ioctl() request parameter])
+        fi
+    ])
+    AC_DEFINE_UNQUOTED([IOCTL_REQUEST_TYPE], [$ac_cv_ioctl_request], [Type of the request parameter for ioctl()])
 ])

@@ -3,8 +3,8 @@ dnl Define inline to something appropriate, including the new always_inline
 dnl attribute from gcc 3.1
 dnl Thanks to Michel LESPINASSE <walken@zoy.org>
 dnl __inline__ "check" added by Darren Salt
-AC_DEFUN([AC_C_ALWAYS_INLINE],
-    [AC_C_INLINE
+AC_DEFUN([AC_C_ALWAYS_INLINE], [
+    AC_C_INLINE
     if test x"$GCC" = x"yes" -a x"$ac_cv_c_inline" = x"inline"; then
         AC_MSG_CHECKING([for always_inline])
         SAVE_CFLAGS="$CFLAGS"
@@ -43,6 +43,16 @@ AC_DEFUN([AC_C_ALWAYS_INLINE],
 	AC_DEFINE_UNQUOTED([__inline__],[$ac_cv_c___inline__],[Define if the compiler doesn't recognise __inline__])
     fi
 ])
+
+
+dnl AC_COMPILE_CHECK_SIZEOF (TYPE SUPPOSED-SIZE)
+dnl abort if the given type does not have the supposed size
+AC_DEFUN([AC_COMPILE_CHECK_SIZEOF], [
+    AC_MSG_CHECKING(that size of $1 is $2)
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[switch (0) case 0: case (sizeof ($1) == $2):;]])],
+                      [AC_MSG_RESULT([yes])], [AC_MSG_ERROR([can not build a default inttypes.h])])
+])
+
 
 dnl AC_CHECK_GENERATE_INTTYPES_H (INCLUDE-DIRECTORY)
 dnl generate a default inttypes.h if the header file does not exist already
@@ -226,64 +236,7 @@ EOF
 
 #endif
 EOF
-        ])]
-)
-
-
-dnl AC_COMPILE_CHECK_SIZEOF (TYPE SUPPOSED-SIZE)
-dnl abort if the given type does not have the supposed size
-AC_DEFUN([AC_COMPILE_CHECK_SIZEOF],
-    [AC_MSG_CHECKING(that size of $1 is $2)
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[switch (0) case 0: case (sizeof ($1) == $2):;]])],[],
-        [AC_MSG_ERROR([can not build a default inttypes.h])])
-    AC_MSG_RESULT([yes])])
-
-
-dnl AM_CHECK_CDROM_IOCTLS ([ACTION-IF-YES], [ACTION-IF-NO])
-dnl check for CDROM_DRIVE_STATUS in ioctl.h
-AC_DEFUN([AM_CHECK_CDROM_IOCTLS],
-         [AC_CACHE_CHECK([if cdrom ioctls are available],
-	     [am_cv_have_cdrom_ioctls],
-             [AC_EGREP_HEADER([CDROM_DRIVE_STATUS],[sys/ioctl.h],
-	        am_cv_have_cdrom_ioctls=yes,
-                [AC_EGREP_HEADER([CDIOCALLOW],[sys/ioctl.h],
-		   am_cv_have_cdrom_ioctls=yes,
-                   [AC_EGREP_CPP(we_have_cdrom_ioctls,[
-#include <sys/ioctl.h>
-#ifdef HAVE_SYS_CDIO_H
-#  include <sys/cdio.h>
-#endif
-#ifdef HAVE_LINUX_CDROM_H
-#  include <linux/cdrom.h>
-#endif
-#if defined(CDROM_DRIVE_STATUS) || defined(CDIOCALLOW) || defined(CDROMCDXA)
-  we_have_cdrom_ioctls
-#endif
-],
-                   am_cv_have_cdrom_ioctls=yes,
-		   am_cv_have_cdrom_ioctls=no
-          )])])])
-          have_cdrom_ioctls=$am_cv_have_cdrom_ioctls
-          if test "x$have_cdrom_ioctls" = xyes ; then
-            ifelse([$1], , :, [$1])
-          else
-            ifelse([$2], , :, [$2])
-          fi
-])
-
-
-dnl AC_CHECK_IP_MREQN
-dnl check for struct ip_mreqn in netinet/in.h
-AC_DEFUN([AC_CHECK_IP_MREQN],
-         [AC_CACHE_CHECK([for ip_mreqn], [ac_cv_have_ip_mreqn],
-		[AC_EGREP_HEADER([ip_mreqn],
-			[netinet/in.h],
-			[ac_cv_have_ip_mreqn=yes],
-			[ac_cv_have_ip_mreqn=no])])
-	  if test $ac_cv_have_ip_mreqn = yes; then
-             AC_DEFINE([HAVE_IP_MREQN],1,[Define this if you have ip_mreqn in netinet/in.h])
-	  fi
-])
+        ])])
 
 
 dnl AC_PROG_GMSGFMT_PLURAL
@@ -411,30 +364,25 @@ _ACEOF
   esac
 ])# AC_PROG_LIBTOOL_SANITYCHECK
 
+
 dnl Check for the type of the third argument of getsockname
 AC_DEFUN([AC_CHECK_SOCKLEN_T], [
-  AC_MSG_CHECKING(for socklen_t)
-  AC_LANG_PUSH(C++)
-
-  AC_CACHE_VAL(ac_cv_socklen_t, [
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
-#include <sys/socket.h>
-      ]], [[socklen_t a=0;
-getsockname(0,(struct sockaddr*)0, &a);
-      ]])],[ac_cv_socklen_t=socklen_t],[ac_cv_socklen_t=''])
-    if test "x$ac_cv_socklen_t" = x; then
-      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
-#include <sys/socket.h>]], [[
-int a=0;
-getsockname(0,(struct sockaddr*)0, &a);]])],
-      [ac_cv_socklen_t=int],[ac_cv_socklen_t=size_t])
+    AC_MSG_CHECKING([for socklen_t])
+    AC_LANG_PUSH([C])
+    AC_CACHE_VAL([ac_cv_socklen_t],
+                 [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
+                                                       #include <sys/socket.h>]],
+                                                     [[socklen_t a=0; getsockname(0,(struct sockaddr*)0, &a)]])],
+                                    [ac_cv_socklen_t=socklen_t], [ac_cv_socklen_t=''])
+                  if test x"$ac_cv_socklen_t" = x""; then
+                      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
+                                                           #include <sys/socket.h>]],
+                                                         [[int a=0; getsockname(0,(struct sockaddr*)0, &a);]])],
+                                        [ac_cv_socklen_t=int], [ac_cv_socklen_t=size_t])
+                  fi])
+    AC_LANG_POP([C])
+    AC_MSG_RESULT([$ac_cv_socklen_t])
+    if test x"$ac_cv_socklen_t" != x"socklen_t"; then
+        AC_DEFINE_UNQUOTED([socklen_t], [$ac_cv_socklen_t], [Define the real type of socklen_t])
     fi
-  ])
-  AC_LANG_POP([C++])
-
-  AC_MSG_RESULT($ac_cv_socklen_t)
-  if test "$ac_cv_socklen_t" != "socklen_t"; then
-    AC_DEFINE_UNQUOTED(socklen_t, $ac_cv_socklen_t,
-        [Define the real type of socklen_t])
-  fi
 ])

@@ -16,9 +16,9 @@ EXTRA_DIST = \
 	attributes.m4 \
 	audio_out.m4 \
 	directx.m4 \
-	dl.m4 \
 	dvdnav.m4 \
 	gas.m4 \
+	input.m4 \
 	ioctl_request.m4 \
 	libFLAC.m4 \
 	libfame.m4 \
@@ -29,7 +29,6 @@ EXTRA_DIST = \
 	pthreads.m4 \
 	symbol.m4 \
 	summary.m4 \
-	vcd.m4 \
 	video_out.m4 \
 	xine.m4 \
 	_xine.m4 \
