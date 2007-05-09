@@ -1,14 +1,13 @@
 include $(top_srcdir)/misc/Makefile.common
 
 xineplug_LTLIBRARIES = xineplug_inp_vdr.la
+xinepost_LTLIBRARIES = xineplug_post_vdr.la
 
 xineplug_inp_vdr_la_SOURCES = input_vdr.c
 xineplug_inp_vdr_la_LIBADD = $(XINE_LIB)
 xineplug_inp_vdr_la_LDFLAGS = $(xineplug_ldflags)
 
 xineinclude_HEADERS = input_vdr.h
-
-xinepost_LTLIBRARIES = xineplug_post_vdr.la
 
 xineplug_post_vdr_la_SOURCES = post_vdr.c post_vdr_video.c post_vdr_audio.c post_vdr.h
 xineplug_post_vdr_la_LIBADD = $(XINE_LIB)
