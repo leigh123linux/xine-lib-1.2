@@ -15,6 +15,7 @@ EXTRA_DIST = \
 	arts.m4 \
 	attributes.m4 \
 	audio_out.m4 \
+	decoders.m4 \
 	directx.m4 \
 	dvdnav.m4 \
 	gas.m4 \
