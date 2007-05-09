@@ -12,9 +12,6 @@ xineinclude_HEADERS = input_vdr.h
 xinepost_LTLIBRARIES = \
 	xineplug_post_vdr.la
 
-xineplug_post_vdr_la_SOURCES = post_vdr.c post_vdr_video.c post_vdr_audio.c
+xineplug_post_vdr_la_SOURCES = post_vdr.c post_vdr_video.c post_vdr_audio.c post_vdr.h
 xineplug_post_vdr_la_LIBADD = $(XINE_LIB)
 xineplug_post_vdr_la_LDFLAGS = $(xineplug_ldflags)
-
-noinst_HEADERS = post_vdr.h
-
