@@ -70,8 +70,6 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
                 [], [test $default_with_alsa = without && with_alsa="no"])
     if test x"$with_alsa" != x"no"; then
         PKG_CHECK_MODULES([ALSA], [alsa >= 0.9.0], [have_alsa=yes], [have_alsa=no])
-        AC_SUBST([ALSA_LIBS])
-        AC_SUBST([ALSA_CFLAGS])
         if test x"$have_alsa" = x"yes"; then
             AC_DEFINE([HAVE_ALSA], 1, [Define this if you have ALSA installed])
         elif test x"$with_alsa" = x"yes"; then
@@ -99,8 +97,8 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
     AC_ARG_ENABLE([coreaudio],
                   [AS_HELP_STRING([--enable-coreaudio], [Enable support for Mac OS X CoreAudio])],
                   [have_coreaudio="$enableval"],
-                  [test $default_enable_coreaudio = enable && have_coreaudio="yes"])
-    AM_CONDITIONAL([HAVE_COREAUDIO], [test x"$have_coreaudio" = x"yes"])
+                  [test $default_enable_coreaudio = disable && have_coreaudio="no"])
+    AM_CONDITIONAL([HAVE_COREAUDIO], [test x"$have_coreaudio" != x"no"])
 
 
     dnl EsounD support
@@ -114,8 +112,6 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
         elif test x"$have_esound" = x"yes"; then
             AC_DEFINE([HAVE_ESD], 1, [Define this if you have EsounD installed])
         fi
-        AC_SUBST([ESD_CFLAGS])
-        AC_SUBST([ESD_LIBS])
     fi
     AM_CONDITIONAL([HAVE_ESD], [test x"$have_esound" = x"yes"])
 
@@ -127,8 +123,6 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
     if test x"$with_fusionsound" != x"no"; then
         PKG_CHECK_MODULES([FUSIONSOUND], [fusionsound >= 0.9.23],
                           [AC_DEFINE([HAVE_FUSIONSOUND], 1, [Define to 1 if you have FusionSound.])], [])
-        AC_SUBST(FUSIONSOUND_CFLAGS)
-        AC_SUBST(FUSIONSOUND_LIBS)
     else
         no_fusionsound=yes
     fi

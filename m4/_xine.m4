@@ -44,50 +44,6 @@ AC_DEFUN([AC_C_ALWAYS_INLINE],
     fi
 ])
 
-dnl AC_LINUX_PATH(DEFAULT PATH)
-AC_DEFUN([AC_LINUX_PATH],
-  [AC_ARG_WITH(linux-path,
-    AS_HELP_STRING([--with-linux-path=PATH], [where the linux sources are located]),
-            linux_path="$withval", linux_path="$1")
-  LINUX_INCLUDE="-I$linux_path/include"
-])
-
-dnl AC_CHECK_DXR3()
-AC_DEFUN([AC_CHECK_DXR3],
-[
-  AC_ARG_ENABLE(dxr3,
-    AS_HELP_STRING([--disable-dxr3], [do not build the DXR3/HW+ plugins]),
-    enable_dxr3=$enableval, enable_dxr3=yes)
-  if test x"$enable_dxr3" = xyes; then
-    have_dxr3=yes
-    AC_MSG_RESULT([*** checking for a supported mpeg encoder])
-    have_encoder=no
-    have_libfame=yes
-    AC_CHECK_LIB(fame, fame_open, 
-      [AC_CHECK_HEADER(fame.h, true, have_libfame=no)], have_libfame=no)
-    if test "$have_libfame" = "yes"; then
-      AC_DEFINE(HAVE_LIBFAME)
-      have_encoder=yes
-    fi
-    have_librte=yes
-    AC_CHECK_LIB(rte, rte_init, 
-      [AC_CHECK_HEADER(rte.h, true, have_librte=no)], have_librte=no)
-    if test "$have_librte" = "yes"; then
-      AC_DEFINE(HAVE_LIBRTE)
-      AC_MSG_WARN([this will probably only work with rte version 0.4!])
-      have_encoder=yes
-    fi
-    if test "$have_encoder" = "yes"; then
-      AC_MSG_RESULT([*** found one or more external mpeg encoders]);
-    else
-      AC_MSG_RESULT([*** no external mpeg encoder found]);
-    fi
-  else
-    AC_MSG_RESULT([DXR3 plugins will not be built.])
-    have_dxr3=no
-  fi
-])
-
 dnl AC_CHECK_GENERATE_INTTYPES_H (INCLUDE-DIRECTORY)
 dnl generate a default inttypes.h if the header file does not exist already
 AC_DEFUN([AC_CHECK_GENERATE_INTTYPES],

@@ -141,10 +141,12 @@ xineplug_vo_out_syncfb_la_LIBADD = $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
 xineplug_vo_out_pgx64_la_SOURCES = video_out_pgx64.c
 xineplug_vo_out_pgx64_la_LIBADD = $(XINE_LIB) $(X_LIBS) $(SUNDGA_LIBS) $(PTHREAD_LIBS)
 xineplug_vo_out_pgx64_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS)
+xineplug_vo_out_pgx64_la_CPPFLAGS = $(AM_CPPFLAGS) $(SUNDGA_CPPFLAGS)
 
 xineplug_vo_out_pgx32_la_SOURCES = video_out_pgx32.c
 xineplug_vo_out_pgx32_la_LIBADD = $(XINE_LIB) $(X_LIBS) $(SUNDGA_LIBS) $(PTHREAD_LIBS)
 xineplug_vo_out_pgx32_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS)
+xineplug_vo_out_pgx32_la_CPPFLAGS = $(AM_CPPFLAGS) $(SUNDGA_CPPFLAGS)
 
 xineplug_vo_out_vidix_la_SOURCES = video_out_vidix.c $(X11OSD)
 xineplug_vo_out_vidix_la_LIBADD =  $(XINE_LIB) $(X_LIBS) \
