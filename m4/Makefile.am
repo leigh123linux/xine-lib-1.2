@@ -27,11 +27,12 @@ EXTRA_DIST = \
 	objc.m4 \
 	opengl.m4 \
 	pkg.m4 \
+	programs.m4 \
 	pthreads.m4 \
 	symbol.m4 \
 	summary.m4 \
+	types.m4 \
 	video_out.m4 \
 	xine.m4 \
-	_xine.m4 \
 	x11.m4 \
 	xv.m4

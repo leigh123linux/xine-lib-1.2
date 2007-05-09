@@ -380,3 +380,50 @@ AC_DEFUN([CC_ATTRIBUTE_MALLOC], [
     ifelse([$2], , [:], [$2])
   fi
 ])
+
+
+dnl AC_C_ALWAYS_INLINE
+dnl Define inline to something appropriate, including the new always_inline
+dnl attribute from gcc 3.1
+dnl Thanks to Michel LESPINASSE <walken@zoy.org>
+dnl __inline__ "check" added by Darren Salt
+AC_DEFUN([AC_C_ALWAYS_INLINE], [
+    AC_C_INLINE
+    if test x"$GCC" = x"yes" -a x"$ac_cv_c_inline" = x"inline"; then
+        AC_MSG_CHECKING([for always_inline])
+        SAVE_CFLAGS="$CFLAGS"
+        CFLAGS="$CFLAGS -Wall -Werror"
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[inline __attribute__ ((__always_inline__)) void f (void);]])],
+            [ac_cv_always_inline=yes],[ac_cv_always_inline=no])
+        CFLAGS="$SAVE_CFLAGS"
+        AC_MSG_RESULT([$ac_cv_always_inline])
+        if test x"$ac_cv_always_inline" = x"yes"; then
+            AH_TOP([
+#ifdef inline
+/* the strange formatting below is needed to prevent config.status from rewriting it */
+#  undef \
+     inline
+#endif
+            ])
+            AC_DEFINE_UNQUOTED([inline],[inline __attribute__ ((__always_inline__))])
+        fi
+	ac_cv_c___inline__=''
+    else
+	# FIXME: test the compiler to see if it supports __inline__
+	#	 instead of assuming that if it isn't gcc, it doesn't
+	case "$ac_cv_c_inline" in
+	    yes)
+		ac_cv_c___inline__=inline
+		;;
+	    inline|__inline__)
+		ac_cv_c___inline__=''
+		;;
+	    *)
+		ac_cv_c___inline__="$ac_cv_c_inline"
+		;;
+	esac
+    fi
+    if test x"$ac_cv_c___inline__" != x; then
+	AC_DEFINE_UNQUOTED([__inline__],[$ac_cv_c___inline__],[Define if the compiler doesn't recognise __inline__])
+    fi
+])
