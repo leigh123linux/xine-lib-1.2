@@ -9,7 +9,7 @@ xinepostdir = $(XINE_PLUGINDIR)/post
 vidixdir = $(XINE_PLUGINDIR)/vidix
 
 $(XINE_LIB):
-	@cd $(top_srcdir)/src/xine-engine && $(MAKE)
+	$(MAKE) -C $(top_builddir)/src/xine-engine
 
 $(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la:
 	$(MAKE) -C $(top_builddir)/contrib/libxdg-basedir
