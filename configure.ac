@@ -119,14 +119,6 @@ dnl --------------
 dnl Build features
 dnl --------------
 
-AC_ARG_ENABLE([altivec],
-              [AS_HELP_STRING([--disable-altivec], [do not use assembly codes for Motorola 74xx CPUs])],
-              [], [enable_altivec="yes"])
-
-AC_ARG_ENABLE([vis],
-	      [AS_HELP_STRING([--disable-vis], [do not use assembly codes for Sun UltraSPARC CPUs])],
-              [], [enable_vis="yes"])
-
 AC_ARG_ENABLE([ipv6],
               [AS_HELP_STRING([--enable-ipv6], [enable use of IPv6])],
               [if test x"$enableval" != x"no"; then
@@ -308,6 +300,35 @@ test x"$have_zlib" != x"yes" && AC_MSG_ERROR(zlib needed)
 AC_SUBST(ZLIB_CPPFLAGS)
 AC_SUBST(ZLIB_LIBS)
 
+dnl FreeType2 (optional; disabled by default)
+AC_ARG_WITH([freetype],
+	    [AS_HELP_STRING([--with-freetype], [Build with FreeType2 library])],
+            [], [with_freetype=no])
+if test x"$with_freetype" != x"no"; then
+    PKG_CHECK_MODULES([FT2], [freetype2], [have_freetype=yes], [have_freetype=no])
+    if test x"$have_freetype" = x"no"; then
+        AC_MSG_ERROR([FreeType2 support requested but FreeType2 library not found])
+    elif test x"$have_freetype" = x"yes"; then
+        AC_DEFINE([HAVE_FT2], 1, [Define this if you have freetype2 library])
+    fi
+fi
+
+dnl fontconfig (optional; disabled by default)
+AC_ARG_WITH([fontconfig],
+	    [AS_HELP_STRING([--with-fontconfig], [Build with fontconfig library])],
+            [], [with_fontconfig=no])
+if test x"$with_fontconfig" = x"yes"; then
+    if test x"$have_freetype" != x"yes"; then
+        AC_MSG_ERROR([fontconfig support requested, but FreeType2 not enabled.])
+    fi
+    PKG_CHECK_MODULES([FONTCONFIG], [fontconfig], [have_fontconfig=yes], [have_fontconfig=no])
+    if test x"$have_fontconfig" = x"no"; then
+        AC_MSG_ERROR([fontconfig support requested but fontconfig library not found])
+    elif test x"$have_fontconfig" = x"yes"; then
+        AC_DEFINE([HAVE_FONTCONFIG], 1, [Define this if you have fontconfig library])
+    fi
+fi
+
 
 dnl -----------------------
 dnl checks for header files
@@ -471,6 +492,10 @@ case "$host_or_hostalias" in
 esac
 
 AM_CONDITIONAL([WIN32], [test x"$WIN32_SYS" = x"mingw32"])
+
+AC_ARG_ENABLE([altivec],
+              [AS_HELP_STRING([--disable-altivec], [do not use assembly codes for Motorola 74xx CPUs])],
+              [], [enable_altivec="yes"])
 
 dnl No optimization at all.  For gcc, this is the optimization level.
 O0_CFLAGS="-O0"
@@ -681,6 +706,9 @@ case "$host_or_hostalias" in
         ;;
 esac
 
+AC_ARG_ENABLE([vis],
+	      [AS_HELP_STRING([--disable-vis], [do not use assembly codes for Sun UltraSPARC CPUs])],
+              [], [enable_vis="yes"])
 if test "x$has_vis" = "xyes"; then
     AC_DEFINE([ENABLE_VIS], [], [Define this if you have Sun UltraSPARC CPU])
     case "$cpuflags" in

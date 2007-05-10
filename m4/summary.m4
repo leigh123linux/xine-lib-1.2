@@ -67,7 +67,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     if test "x$have_vorbis" = "xyes"; then
         echo "   - ogg"
     fi
-    if test "x$have_libmng" = "xyes"; then
+    if test "x$enable_mng" != x"no"; then
         echo "   - mng"
     fi
     if test "x$enable_modplug" != x"no"; then
@@ -162,8 +162,8 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     if test "x$enable_faad" = "xyes"; then
         echo "   - faad"
     fi
-    if test "x$enable_libmad" = "xyes"; then
-        if test "x$have_mad" = "xyes"; then
+    if test "x$enable_mad" = "xyes"; then
+        if test "x$with_external_mad" != "xno"; then
             echo "   - MAD (MPG 1/2/3) (external library)"
         else
             echo "   - MAD (MPG 1/2/3) (internal library)"
