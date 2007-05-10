@@ -3,7 +3,6 @@ include $(top_srcdir)/misc/Makefile.common
 # REVISIT: This second line here bothers me more than just a little bit
 AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG) \
             $(GNOME_VFS_CFLAGS) $(ALSA_CFLAGS) $(DVD_CFLAGS)
-AM_CPPFLAGS = -D_LARGEFILE64_SOURCE
 AM_LDFLAGS = $(xineplug_ldflags)
 
 EXTRA_DIST = input_dvd.c input_vcd.c input_gnome_vfs.c input_rtp.c

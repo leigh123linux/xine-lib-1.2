@@ -1,7 +1,7 @@
 include $(top_srcdir)/misc/Makefile.common
 
 AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
-AM_CPPFLAGS = -D_LARGEFILE64_SOURCE -I$(srcdir)/../libreal
+AM_CPPFLAGS = -I$(srcdir)/../libreal
 AM_LDFLAGS = $(xineplug_ldflags)
 
 noinst_LTLIBRARIES = librtsp.la

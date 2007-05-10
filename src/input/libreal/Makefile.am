@@ -1,7 +1,7 @@
 include $(top_srcdir)/misc/Makefile.common
 
 AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
-AM_CPPFLAGS = -D_LARGEFILE64_SOURCE -I$(srcdir)/../librtsp
+AM_CPPFLAGS = -I$(srcdir)/../librtsp
 
 noinst_LTLIBRARIES = libreal.la
 
