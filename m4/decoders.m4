@@ -147,13 +147,13 @@ use internal ffmpeg.
 
 
     dnl libFLAC (optional; disabled by default)
-dnl AC_ARG_WITH([libflac],
-dnl             [AS_HELP_STRING([--with-libflac], [build libFLAC-based decoder and demuxer])],
-dnl             [], [enable_libflac=no])
-dnl if test x"$with_libflac" != x"no"; then
-dnl     AM_PATH_LIBFLAC([have_libflac=yes])
-dnl fi
-dnl AM_CONDITIONAL([HAVE_LIBFLAC], [test x"$have_libflac" = x"yes"])
+    AC_ARG_WITH([libflac],
+                [AS_HELP_STRING([--with-libflac], [build libFLAC-based decoder and demuxer])],
+                [], [enable_libflac=no])
+    if test x"$with_libflac" != x"no"; then
+        AM_PATH_LIBFLAC([have_libflac=yes])
+    fi
+    AM_CONDITIONAL([HAVE_LIBFLAC], [test x"$have_libflac" = x"yes"])
 
 
     dnl libmad (optional; enabled by default; external version allowed)
