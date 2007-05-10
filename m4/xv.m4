@@ -128,15 +128,7 @@ AC_DEFUN([XINE_XV_SUPPORT], [
                 XV_LIBS="libXv.so"
             fi
             ;;
-
-        ppc-*-linux* | powerpc-*)
-            ppc_arch="yes"
-            ;;
-
-        *)
-            ;;
     esac
-    AM_CONDITIONAL(PPC_ARCH, test "x$ppc_arch" = "xyes")
 
     dnl
     dnl Check if we can enable the xxmc plugin.

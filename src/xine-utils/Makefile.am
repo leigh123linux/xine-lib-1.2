@@ -1,17 +1,17 @@
 include $(top_srcdir)/misc/Makefile.common
 
+AM_CFLAGS   = $(DEFAULT_OCFLAGS) $(X_CFLAGS) $(VISIBILITY_FLAG)
+AM_CPPFLAGS = -DXINE_LIBRARY_COMPILE
+
 noinst_LTLIBRARIES = libxineutils.la
 
 EXTRA_DIST = ppcasm_string.S ppc_asm.tmpl
 
-if PPC_ARCH
+if ARCH_PPC
 if !HOST_OS_DARWIN
 pppc_files = ppcasm_string.S
 endif
 endif
-
-AM_CFLAGS = $(DEFAULT_OCFLAGS) $(X_CFLAGS) $(VISIBILITY_FLAG)
-AM_CPPFLAGS=-DXINE_LIBRARY_COMPILE
 
 libxineutils_la_SOURCES = $(pppc_files) \
 	cpu_accel.c \

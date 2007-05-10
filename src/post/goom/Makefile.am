@@ -17,7 +17,7 @@ EXTRA_DIST = mmx.c xmmx.c ppc_drawings.s ppc_zoom_ultimate.s diff_against_releas
 xinepost_LTLIBRARIES = xineplug_post_goom.la
 
 ## doesn't work
-#if PPC_ARCH
+#if ARCH_PPC
 #extra_files = ppc_drawings.s ppc_zoom_ultimate.s
 #AM_CPPFLAGS = -DCPU_POWERPC
 #endif

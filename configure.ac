@@ -599,10 +599,15 @@ case "$host_or_hostalias" in
 
     *-*-darwin*)
         case "$host_or_hostalias" in
-            i386-* | universal-* | x86_64-*)
+            universal-*)
+                arch_ppc=yes
+                arch_x86=yes
+                ;;
+            i386-* | x86_64-*)
                 arch_x86=yes
                 ;;
             ppc* | powerpc*)
+                arch_ppc=yes
                 dnl avoid ppc compilation crash
                 AS="$CC"
 
@@ -627,6 +632,8 @@ case "$host_or_hostalias" in
         ;;
 
     ppc-*-linux* | powerpc-*) 
+        arch_ppc=yes
+
         dnl avoid ppc compilation crash
         AS="$CC"
         AC_DEFINE([ARCH_PPC], [], [Define this if you're running PowerPC architecture])
@@ -763,6 +770,7 @@ if test x"$arch_x86" = x"yes"; then
      AC_DEFINE([ARCH_X86], [], [Define this if you're running x86 architecture])
      AC_DEFINE([HAVE_MMX], [], [Define this if you can compile MMX asm instructions])
 fi
+AM_CONDITIONAL([ARCH_PPC], test x"$arch_ppc" = x"yes")
 AM_CONDITIONAL([ARCH_X86], test x"$arch_x86" = x"yes")
 AM_CONDITIONAL([HAVE_MMX], test x"$arch_x86" = x"yes")
 AM_CONDITIONAL([HOST_OS_DARWIN], test x"$HOST_OS_DARWIN" = x"1")
