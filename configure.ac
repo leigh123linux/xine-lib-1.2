@@ -846,7 +846,18 @@ dnl --------------------------
 
 XINE_X11_SUPPORT
 
+dnl _FILE_OFFSET_BITS   (AC_SYS_LARGEFILE; ac_cv_sys_file_offset_bits)
+dnl _LARGE_FILES        (AC_SYS_LARGEFILE; ac_cv_sys_large_files)
+dnl _LARGEFILE_SOURCE   (AC_FUNC_SEEKO; ac_cv_sys_largfile_source)
+dnl _LARGEFILE64_SOURCE (glibc transitional; not tested or used anywhere)
 AC_SYS_LARGEFILE
+
+dnl Add macros to the compiler command line that are also in config.h for things
+dnl that do not #include config.h.
+dnl known: src/input/libreal, src/input/librtsp
+test x"$ac_cv_sys_file_offset_bits" != x"no" && CPPFLAGS="-D_FILE_OFFSET_BITS=64 $CPPFLAGS"
+test x"$ac_cv_sys_largefile_source" != x"no" && CPPFLAGS="-D_LARGEFILE_SOURCE $CPPFLAGS"
+test x"$ac_cv_sys_large_files" != x"" && CPPFLAGS="-D_LARGE_FILES $CPPFLAGS"
 
 
 dnl -------
