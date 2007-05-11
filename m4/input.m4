@@ -241,7 +241,6 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
                 fi
             fi
 
-            dnl REVISIT: CFLAGS stuff here is wrong; it should be CPPFLAGS
             LIBCDIO_CFLAGS='-I$(top_srcdir)/src/input/vcd/libcdio'
             LIBCDIO_LIBS='$(top_builddir)/src/input/vcd/libcdio/libcdio.la'
             LIBISO9660_LIBS='$(top_builddir)/src/input/vcd/libcdio/libiso9660.la'

@@ -3,9 +3,24 @@ include $(top_srcdir)/misc/Makefile.common
 AM_CFLAGS   = $(DEFAULT_OCFLAGS) $(X_CFLAGS) $(VISIBILITY_FLAG)
 AM_CPPFLAGS = -DXINE_LIBRARY_COMPILE
 
-noinst_LTLIBRARIES = libxineutils.la
-
 EXTRA_DIST = ppcasm_string.S ppc_asm.tmpl
+
+noinst_HEADERS = ppcasm_string.h xine_check.h
+
+xineinclude_HEADERS = \
+	attributes.h \
+	compat.h \
+	xine_buffer.h \
+	xineutils.h \
+	xmllexer.h \
+	xmlparser.h \
+	list.h \
+	array.h \
+	sorted_array.h \
+	pool.h \
+	ring_buffer.h
+
+noinst_LTLIBRARIES = libxineutils.la
 
 if ARCH_PPC
 if !HOST_OS_DARWIN
@@ -30,20 +45,4 @@ libxineutils_la_SOURCES = $(pppc_files) \
 	sorted_array.c \
 	pool.c \
 	ring_buffer.c
-
-xineinclude_HEADERS = \
-	attributes.h \
-	compat.h \
-	xine_buffer.h \
-	xineutils.h \
-	xmllexer.h \
-	xmlparser.h \
-	list.h \
-	array.h \
-	sorted_array.h \
-	pool.h \
-	ring_buffer.h
-
-
-noinst_HEADERS = ppcasm_string.h xine_check.h
 

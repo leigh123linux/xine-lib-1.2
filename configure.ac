@@ -190,17 +190,6 @@ AC_PATH_MAGIC
 AC_PROG_LIBTOOL
 AC_PROG_LIBTOOL_SANITYCHECK
 
-dnl REVISIT:
-dnl Nothing seems to use LIBTOOL_DEPS
-dnl src/video_out/libdha and src/video_out/vidix both use STATIC -- why?
-AC_SUBST(LIBTOOL_DEPS)
-if ${CONFIG_SHELL} ./libtool --features | grep "enable static" >/dev/null; then
-    STATIC="-static"
-else
-    STATIC=
-fi
-AC_SUBST(STATIC)
-
 
 dnl --------------------
 dnl checks for libraries

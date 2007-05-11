@@ -1,13 +1,24 @@
 include $(top_srcdir)/misc/Makefile.common
 
-AM_CFLAGS = $(DEFAULT_OCFLAGS)
+AM_CFLAGS  = $(DEFAULT_OCFLAGS)
 AM_LDFLAGS = $(xineplug_ldflags)
 
 SUBDIRS = cdio MSWindows image
 
 INCLUDES = $(LIBCDIO_CFLAGS) -I$(top_srcdir)/include -I$(top_srcdir)/lib -I$(top_builddir)/lib
 
-libcdio_SRCS = \
+noinst_HEADERS = \
+	cdio_assert.h \
+	_cdio_stdio.h \
+	scsi_mmc.h \
+	cdio_private.h \
+	_cdio_stream.h \
+	iso9660_private.h \
+	portable.h
+
+noinst_LTLIBRARIES = libcdio.la libiso9660.la
+
+libcdio_la_SOURCES = \
 	_cdio_bsdi.c \
 	_cdio_generic.c \
 	_cdio_linux.c \
@@ -44,28 +55,8 @@ libcdio_SRCS = \
 	sector.c \
 	util.c
 
-libiso9660_SRCS = \
+libiso9660_la_SOURCES = \
 	iso9660.c \
 	iso9660_private.h \
 	iso9660_fs.c \
 	xa.c
-
-EXTRA_DIST = $(libcdio_SRCS) $(libiso9660_SRCS)
-
-if ENABLE_VCD
-if HAVE_VCDNAV
-else
-noinst_LTLIBRARIES = libcdio.la libiso9660.la
-libcdio_la_SOURCES = $(libcdio_SRCS)
-libiso9660_la_SOURCES = $(libiso9660_SRCS)
-endif
-endif
-
-noinst_HEADERS = \
-	cdio_assert.h \
-	_cdio_stdio.h \
-	scsi_mmc.h \
-	cdio_private.h \
-	_cdio_stream.h \
-	iso9660_private.h \
-	portable.h

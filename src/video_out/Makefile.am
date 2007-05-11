@@ -1,15 +1,30 @@
 include $(top_srcdir)/misc/Makefile.common
 
-AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
-AM_LDFLAGS = $(xineplug_ldflags)
+AM_CFLAGS    = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
+AM_LDFLAGS   = $(xineplug_ldflags)
 AM_OBJCFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 
-SUBDIRS = libdha vidix macosx
+SUBDIRS = 
+
+if BUILD_DHA_KMOD
+SUBDIRS += libdha
+endif
+
+# vidix depends on portions of dha
+if HAVE_VIDIX
+if !BUILD_DHA_KMOD
+SUBDIRS += libdha
+endif
+SUBDIRS += vidix
+endif
+
+if HAVE_MACOSX_VIDEO
+SUBDIRS += macosx
+endif
 
 EXTRA_DIST = video_out_directfb.c video_out_directfb_fb.c video_out_directfb_x.c video_out_directx.c video_out_macosx.m
 
-VIDIX_CPPFLAGS = -I$(top_builddir)/src/video_out/vidix \
-	-I$(top_srcdir)/src/video_out/vidix
+noinst_HEADERS = deinterlace.h video_out_syncfb.h yuv2rgb.h x11osd.h xcbosd.h
 
 if HAVE_X11
 X11OSD = x11osd.c
@@ -152,7 +167,9 @@ xineplug_vo_out_vidix_la_SOURCES = video_out_vidix.c $(X11OSD)
 xineplug_vo_out_vidix_la_LIBADD =  $(XINE_LIB) $(X_LIBS) \
 	$(top_builddir)/src/video_out/vidix/libvidix.la $(PTHREAD_LIBS)
 xineplug_vo_out_vidix_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) -fno-strict-aliasing
-xineplug_vo_out_vidix_la_CPPFLAGS = $(VIDIX_CPPFLAGS)
+xineplug_vo_out_vidix_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_builddir)/src/video_out/vidix \
+	-I$(top_srcdir)/src/video_out/vidix
+
 
 xineplug_vo_out_aa_la_SOURCES =  video_out_aa.c
 xineplug_vo_out_aa_la_LIBADD = $(AALIB_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
@@ -185,8 +202,8 @@ xineplug_vo_out_stk_la_LIBADD = $(XINE_LIB) $(LIBSTK_LIBS) $(PTHREAD_LIBS)
 xineplug_vo_out_stk_la_CFLAGS = $(AM_CFLAGS) $(LIBSTK_CFLAGS)
 
 xineplug_vo_out_directx_la_SOURCES = yuv2rgb.c yuv2rgb_mmx.c video_out_directx.c 
-xineplug_vo_out_directx_la_CPPFLAGS = $(DIRECTX_CPPFLAGS)
 xineplug_vo_out_directx_la_LIBADD = $(DIRECTX_VIDEO_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
+xineplug_vo_out_directx_la_CPPFLAGS = $(AM_CPPFLAGS) $(DIRECTX_CPPFLAGS)
 
 xineplug_vo_out_none_la_SOURCES =  video_out_none.c
 xineplug_vo_out_none_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS)
@@ -194,6 +211,3 @@ xineplug_vo_out_none_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS)
 xineplug_vo_out_macosx_la_SOURCES = video_out_macosx.m
 xineplug_vo_out_macosx_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS)
 xineplug_vo_out_macosx_la_LDFLAGS = $(AM_LDFLAGS) -framework Cocoa -framework OpenGL
-
-noinst_HEADERS = deinterlace.h video_out_syncfb.h \
-	yuv2rgb.h x11osd.h xcbosd.h

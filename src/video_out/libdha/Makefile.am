@@ -1,19 +1,23 @@
 include $(top_srcdir)/misc/Makefile.common
 
-EXTRA_DIST = README pci_db2c.awk
+SUBDIRS = bin oth sysdep
 
-SUBDIRS = bin kernelhelper oth sysdep
-
-AM_CFLAGS = $(DEFAULT_OCFLAGS) $(STATIC)
-
-if HAVE_VIDIX
-dha_lib = libdha.la
+if BUILD_DHA_KMOD
+SUBDIRS += kernelhelper
 endif
+
+AM_CFLAGS = $(DEFAULT_OCFLAGS)
+
+EXTRA_DIST = README pci_db2c.awk
 
 awk_generated = pci_dev_ids.c pci_ids.h pci_names.c pci_names.h pci_vendors.h
 CLEANFILES = $(awk_generated)
 
-noinst_LTLIBRARIES = $(dha_lib)
+noinst_HEADERS = AsmMacros.h libdha.h pci_ids.h pci_names.h pci_vendors.h
+
+if HAVE_VIDIX
+noinst_LTLIBRARIES = libdha.la
+endif
 
 libdha_la_SOURCES = libdha.c mtrr.c pci.c mmi.c ports.c irq.c cpu_flush.c
 nodist_libdha_la_SOURCES = pci_names.c 
@@ -23,8 +27,6 @@ EXTRA_PROGRAMS = test
 test_SOURCES = test.c
 test_LDADD = $(top_builddir)/src/video_out/libdha/libdha.la
 
-noinst_HEADERS = AsmMacros.h libdha.h pci_ids.h pci_names.h pci_vendors.h
-
 ## for OpenBSD LIBS += -li386
 
 ## We have to create some files, on the fly, this is why this rule is needed.
@@ -33,7 +35,7 @@ oth/pci.db:
 
 $(awk_generated): pci_db2c.awk oth/pci.db
 	LC_ALL=C $(AWK) -f $(top_srcdir)/src/video_out/libdha/pci_db2c.awk \
-	  $(top_srcdir)/src/video_out/libdha/oth/pci.db
+		$(top_srcdir)/src/video_out/libdha/oth/pci.db
 
 pci_names.lo: $(awk_generated)
 	source='$*.c' object='$@' libtool=yes \

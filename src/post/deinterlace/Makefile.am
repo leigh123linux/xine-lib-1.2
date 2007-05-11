@@ -1,11 +1,9 @@
 include $(top_srcdir)/misc/Makefile.common
 
-AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
+AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags) $(IMPURE_TEXT_LDFLAGS)
 
 SUBDIRS = plugins
-
-EXTRA_DIST = 
 
 xinepost_LTLIBRARIES = xineplug_post_tvtime.la
 

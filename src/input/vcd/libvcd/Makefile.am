@@ -1,48 +1,10 @@
 include $(top_srcdir)/misc/Makefile.common
 
 AM_CFLAGS = $(DEFAULT_OCFLAGS)
-AM_LDFLAGS = $(xineplug_ldflags)
+
+INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/lib
 
 SUBDIRS = libvcd
-
-INCLUDES = $(LIBCDIO_CFLAGS) -I$(top_srcdir)/include -I$(top_srcdir)/lib
-
-libvcd_SRCS = \
-	vcd.c \
-	data_structures.c \
-	directory.c \
-	files.c \
-	image.c \
-	image_bincue.c \
-	image_cdrdao.c \
-	image_nrg.c \
-	logging.c \
-	mpeg.c \
-	mpeg_stream.c \
-	pbc.c \
-	salloc.c \
-	sector.c \
-	stream.c \
-	stream_stdio.c \
-	util.c 
-
-libvcdinfo_SRCS = \
-	info.c \
-	inf.c \
-	info_private.c \
-	vcd_read.c
-
-EXTRA_DIST = $(libvcd_SRCS) $(libvcdinfo_SRCS)
-
-if ENABLE_VCD
-if HAVE_VCDNAV
-else
-noinst_LTLIBRARIES = libvcd.la libvcdinfo.la
-libvcd_la_SOURCES = $(libvcd_SRCS)
-libvcd_la_LIBADD = $(LIBCDIO_LIBS) $(LIBISO9660_LIBS)
-libvcdinfo_la_SOURCES = $(libvcdinfo_SRCS)
-endif
-endif
 
 noinst_HEADERS = \
 	vcd_assert.h \
@@ -65,3 +27,31 @@ noinst_HEADERS = \
 	obj.h \
 	stream.h \
 	vcd_read.h
+
+noinst_LTLIBRARIES = libvcd.la libvcdinfo.la
+libvcd_la_SOURCES = \
+	vcd.c \
+	data_structures.c \
+	directory.c \
+	files.c \
+	image.c \
+	image_bincue.c \
+	image_cdrdao.c \
+	image_nrg.c \
+	logging.c \
+	mpeg.c \
+	mpeg_stream.c \
+	pbc.c \
+	salloc.c \
+	sector.c \
+	stream.c \
+	stream_stdio.c \
+	util.c 
+libvcd_la_LIBADD = $(LIBCDIO_LIBS) $(LIBISO9660_LIBS)
+libvcd_la_CFLAGS = $(AM_CFLAGS) $(LIBCDIO_CFLAGS)
+
+libvcdinfo_la_SOURCES = \
+	info.c \
+	inf.c \
+	info_private.c \
+	vcd_read.c

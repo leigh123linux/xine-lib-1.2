@@ -1,7 +1,16 @@
 include $(top_srcdir)/misc/Makefile.common
 
-AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
+AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
+
+##
+# IMPORTANT:
+# ---------
+# All of xine demuxer plugins should be named like the scheme "xineplug_dmx_"
+
+xineinclude_HEADERS = demux.h
+
+noinst_HEADERS = asfheader.h qtpalette.h group_games.h group_audio.h id3.h ebml.h matroska.h iff.h flacutils.h
 
 if HAVE_VORBIS
 ogg_module = xineplug_dmx_ogg.la
@@ -19,12 +28,11 @@ if BUILD_DMX_IMAGE
 image_module = xineplug_dmx_image.la
 endif
 
-##
-# IMPORTANT:
-# ---------
-# All of xine demuxer plugins should be named like the scheme "xineplug_dmx_"
-
-xineplug_LTLIBRARIES = $(ogg_module) $(asf_module) $(mng_module) $(image_module) \
+xineplug_LTLIBRARIES = \
+	$(ogg_module) \
+	$(asf_module) \
+	$(mng_module) \
+	$(image_module) \
 	xineplug_dmx_games.la \
 	xineplug_dmx_audio.la \
 	xineplug_dmx_mpeg_ts.la \
@@ -70,7 +78,7 @@ xineplug_dmx_mpeg_ts_la_LIBADD = $(XINE_LIB)
 
 xineplug_dmx_qt_la_SOURCES = demux_qt.c
 xineplug_dmx_qt_la_LIBADD = $(XINE_LIB) $(ZLIB_LIBS)
-xineplug_dmx_qt_la_CPPFLAGS = $(ZLIB_CPPFLAGS)
+xineplug_dmx_qt_la_CPPFLAGS = $(AM_CPPFLAGS) $(ZLIB_CPPFLAGS)
 
 xineplug_dmx_asf_la_SOURCES = demux_asf.c asfheader.c
 xineplug_dmx_asf_la_LIBADD = $(XINE_LIB)
@@ -90,7 +98,7 @@ xineplug_dmx_rawdv_la_LIBADD = $(XINE_LIB)
 
 xineplug_dmx_mng_la_SOURCES = demux_mng.c
 xineplug_dmx_mng_la_LIBADD = $(XINE_LIB) $(ZLIB_LIBS) $(MNG_LIBS)
-xineplug_dmx_mng_la_CPPFLAGS = $(ZLIB_CPPFLAGS)
+xineplug_dmx_mng_la_CPPFLAGS = $(AM_CPPFLAGS) $(ZLIB_CPPFLAGS)
 
 xineplug_dmx_pva_la_SOURCES = demux_pva.c
 xineplug_dmx_pva_la_LIBADD = $(XINE_LIB)
@@ -126,14 +134,11 @@ xineplug_dmx_nsv_la_LIBADD = $(XINE_LIB)
 
 xineplug_dmx_matroska_la_SOURCES = demux_matroska.c ebml.c
 xineplug_dmx_matroska_la_LIBADD = $(XINE_LIB) $(ZLIB_LIBS)
-xineplug_dmx_matroska_la_CPPFLAGS = $(ZLIB_CPPFLAGS)
 xineplug_dmx_matroska_la_CFLAGS = $(AM_CFLAGS) -fno-strict-aliasing
+xineplug_dmx_matroska_la_CPPFLAGS = $(AM_CPPFLAGS) $(ZLIB_CPPFLAGS)
 
 xineplug_dmx_iff_la_SOURCES = demux_iff.c
 xineplug_dmx_iff_la_LIBADD = $(XINE_LIB)
 
 xineplug_dmx_flv_la_SOURCES = demux_flv.c
 xineplug_dmx_flv_la_LIBADD = $(XINE_LIB)
-
-xineinclude_HEADERS = demux.h
-noinst_HEADERS = asfheader.h qtpalette.h group_games.h group_audio.h id3.h ebml.h matroska.h iff.h flacutils.h

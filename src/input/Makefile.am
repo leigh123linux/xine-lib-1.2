@@ -1,17 +1,8 @@
 include $(top_srcdir)/misc/Makefile.common
 
 # REVISIT: This second line here bothers me more than just a little bit
-AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG) \
-            $(GNOME_VFS_CFLAGS) $(ALSA_CFLAGS) $(DVD_CFLAGS)
+AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
-
-EXTRA_DIST = input_dvd.c input_vcd.c input_gnome_vfs.c input_rtp.c
-
-if HAVE_DVDNAV
-SUBDIRS = vcd dvb libreal librtsp
-else
-SUBDIRS = vcd dvb libreal librtsp libdvdnav
-endif
 
 ##
 # IMPORTANT:
@@ -19,7 +10,20 @@ endif
 # All of xine input plugins should be named like the scheme "xineplug_inp_"
 #
 
-if HAVE_CDROM_IOCTLS
+SUBDIRS = dvb libreal librtsp
+if ENABLE_VCD
+SUBDIRS += vcd
+endif
+if !HAVE_DVDNAV
+SUBDIRS += libdvdnav
+endif
+
+
+xineinclude_HEADERS = input_plugin.h
+noinst_HEADERS = net_buf_ctrl.h mms.h mmsh.h pnm.h media_helper.h videodev2.h http_helper.h
+
+
+if ENABLE_VCD
 in_vcd = xineplug_inp_vcdo.la
 endif
 
@@ -36,19 +40,16 @@ if HAVE_LIBSMBCLIENT
 in_smb = xineplug_inp_smb.la
 endif
 
-# For DVD
-in_dvd = xineplug_inp_dvd.la
 if HAVE_DVDNAV
-DVD_CFLAGS = $(DVDNAV_CFLAGS)
+DVD_CFLAGS  = $(DVDNAV_CFLAGS)
 link_dvdnav = $(DVDNAV_LIBS)
 else
-DVD_CFLAGS = -I$(top_srcdir)/src/input/libdvdnav/
+DVD_CFLAGS  = -I$(top_srcdir)/src/input/libdvdnav
 link_dvdnav = libdvdnav/libdvdnav.la
 endif
 
 # not ported to native Windows
-if WIN32
-else
+if !WIN32
 in_rtp = xineplug_inp_rtp.la
 in_dvb = xineplug_inp_dvb.la 
 endif
@@ -57,7 +58,7 @@ endif
 xineplug_LTLIBRARIES = \
 	xineplug_inp_file.la \
 	xineplug_inp_http.la \
-	$(in_dvd) \
+	xineplug_inp_dvd.la \
 	$(in_vcd) \
 	$(in_v4l) \
 	$(in_gnome_vfs) \
@@ -78,6 +79,7 @@ xineplug_inp_file_la_LIBADD = $(XINE_LIB)
 
 xineplug_inp_dvd_la_SOURCES = input_dvd.c media_helper.c
 xineplug_inp_dvd_la_LIBADD = $(XINE_LIB) $(link_dvdnav) $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS)
+xineplug_inp_dvd_la_CFLAGS = $(AM_CFLAGS) $(DVD_CFLAGS)
 
 xineplug_inp_net_la_SOURCES = input_net.c net_buf_ctrl.c
 xineplug_inp_net_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS)
@@ -115,16 +117,14 @@ xineplug_inp_cdda_la_CPPFLAGS = $(AM_CPPFLAGS) $(XDG_BASEDIR_CPPFLAGS)
 
 xineplug_inp_v4l_la_SOURCES = input_v4l.c
 xineplug_inp_v4l_la_LIBADD = $(ALSA_LIBS) $(XINE_LIB)
+xineplug_inp_v4l_la_CFLAGS = $(AM_CFLAGS) $(ALSA_CFLAGS)
 
 xineplug_inp_gnome_vfs_la_SOURCES = input_gnome_vfs.c net_buf_ctrl.c
 xineplug_inp_gnome_vfs_la_LIBADD = $(GNOME_VFS_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
+xineplug_inp_gnome_vfs_la_CFLAGS = $(AM_CFLAGS) $(GNOME_VFS_CFLAGS)
 
 xineplug_inp_smb_la_SOURCES = input_smb.c
 xineplug_inp_smb_la_LIBADD = $(LIBSMBCLIENT_LIBS) $(XINE_LIB)
 
 xineplug_inp_pvr_la_SOURCES = input_pvr.c
 xineplug_inp_pvr_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS)
-
-xineinclude_HEADERS = input_plugin.h
-noinst_HEADERS = net_buf_ctrl.h mms.h mmsh.h pnm.h media_helper.h videodev2.h http_helper.h
-

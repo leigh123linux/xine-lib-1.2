@@ -1,15 +1,10 @@
 include $(top_srcdir)/misc/Makefile.common
 
-AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
-AM_CPPFLAGS = -I$(srcdir)/../libreal
-AM_LDFLAGS = $(xineplug_ldflags)
+AM_CFLAGS   = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
+AM_CPPFLAGS = -I$(top_srcdir)/src/input/libreal
+
+noinst_HEADERS = rtsp.h rtsp_session.h
 
 noinst_LTLIBRARIES = librtsp.la
 
-librtsp_la_SOURCES = \
-  rtsp.c \
-  rtsp_session.c
-
-noinst_HEADERS = \
-  rtsp.h \
-  rtsp_session.h
+librtsp_la_SOURCES = rtsp.c rtsp_session.c

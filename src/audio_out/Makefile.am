@@ -1,7 +1,14 @@
 include $(top_srcdir)/misc/Makefile.common
 
-AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
+AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
+
+##
+# IMPORTANT:
+# ---------
+# all xine audio out plugins should be named like the 
+# scheme "xineplug_ao_out_"
+#
 
 EXTRA_DIST = audio_irixal_out.c
 
@@ -50,23 +57,19 @@ if HAVE_JACK
 jack_module = xineplug_ao_out_jack.la
 endif
 
-##
-# IMPORTANT:
-# ---------
-# all xine audio out plugins should be named like the 
-# scheme "xineplug_ao_out_"
-#
-xineplug_LTLIBRARIES = xineplug_ao_out_none.la xineplug_ao_out_file.la \
-	$(oss_module) \
-	$(alsa_module) \
-	$(sun_module) \
-	$(arts_module) \
-	$(esd_module) \
-	$(directx_module) \
-	$(coreaudio_module) \
-	$(pulseaudio_module) \
+xineplug_LTLIBRARIES =		\
+	xineplug_ao_out_none.la	\
+	xineplug_ao_out_file.la	\
+	$(oss_module)		\
+	$(alsa_module)		\
+	$(sun_module)		\
+	$(arts_module)		\
+	$(esd_module)		\
+	$(directx_module)	\
+	$(coreaudio_module)	\
+	$(pulseaudio_module)	\
 	$(directx2_module)	\
-	$(fusionsound_module) \
+	$(fusionsound_module)	\
 	$(jack_module)
 
 xineplug_ao_out_none_la_SOURCES = audio_none_out.c
@@ -98,8 +101,8 @@ xineplug_ao_out_arts_la_LIBADD = $(ARTS_LIBS) $(XINE_LIB)
 xineplug_ao_out_arts_la_CFLAGS = $(AM_CFLAGS) $(ARTS_CFLAGS)
 
 xineplug_ao_out_directx_la_SOURCES = audio_directx_out.c
-xineplug_ao_out_directx_la_CPPFLAGS = $(DIRECTX_CPPFLAGS)
 xineplug_ao_out_directx_la_LIBADD = $(DIRECTX_AUDIO_LIBS) $(XINE_LIB)
+xineplug_ao_out_directx_la_CPPFLAGS = $(AM_CPPFLAGS) $(DIRECTX_CPPFLAGS)
 
 xineplug_ao_out_coreaudio_la_SOURCES = audio_coreaudio_out.c
 xineplug_ao_out_coreaudio_la_LIBADD = $(XINE_LIB)
@@ -110,7 +113,7 @@ xineplug_ao_out_pulseaudio_la_LIBADD = $(PULSEAUDIO_LIBS) $(XINE_LIB)
 xineplug_ao_out_pulseaudio_la_CFLAGS = $(AM_CFLAGS) $(PULSEAUDIO_CFLAGS)
 
 xineplug_ao_out_directx2_la_SOURCES = audio_directx2_out.c
-xineplug_ao_out_directx2_la_CPPFLAGS = $(DIRECTX_CPPFLAGS)
+xineplug_ao_out_directx2_la_CPPFLAGS = $(AM_CPPFLAGS) $(DIRECTX_CPPFLAGS)
 xineplug_ao_out_directx2_la_LIBADD = $(XINE_LIB) $(DIRECTX_AUDIO_LIBS) $(PTHREAD_LIBS)
 
 xineplug_ao_out_fusionsound_la_SOURCES = audio_fusionsound_out.c
