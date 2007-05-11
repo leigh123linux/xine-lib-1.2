@@ -1,6 +1,6 @@
 include $(top_srcdir)/misc/Makefile.common
 
-AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
+AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
 EXTRA_DIST = foovideo.c
@@ -34,13 +34,13 @@ xineplug_decode_yuv_la_SOURCES = yuv.c
 xineplug_decode_yuv_la_LIBADD = $(XINE_LIB)
 
 xineplug_decode_image_la_SOURCES = image.c
-xineplug_decode_image_la_CFLAGS = $(AM_CFLAGS) $(WAND_CFLAGS)
 xineplug_decode_image_la_LIBADD = $(XINE_LIB) $(DYNAMIC_LD_LIBS) $(WAND_LIBS)
+xineplug_decode_image_la_CFLAGS = $(AM_CFLAGS) $(WAND_CFLAGS)
 
 xineplug_decode_gdk_pixbuf_la_SOURCES = gdkpixbuf.c
-xineplug_decode_gdk_pixbuf_la_CFLAGS = $(AM_CFLAGS) $(GDK_PIXBUF_CFLAGS)
 xineplug_decode_gdk_pixbuf_la_LIBADD = $(XINE_LIB) $(DYNAMIC_LD_LIBS) $(GDK_PIXBUF_LIBS)
+xineplug_decode_gdk_pixbuf_la_CFLAGS = $(AM_CFLAGS) $(GDK_PIXBUF_CFLAGS)
 
 xineplug_decode_theora_la_SOURCES = xine_theora_decoder.c
-xineplug_decode_theora_la_CFLAGS = $(AM_CFLAGS) $(OGG_CFLAGS) $(THEORA_CFLAGS)
 xineplug_decode_theora_la_LIBADD = $(XINE_LIB) $(OGG_LIBS) $(THEORA_LIBS)
+xineplug_decode_theora_la_CFLAGS = $(AM_CFLAGS) $(OGG_CFLAGS) $(THEORA_CFLAGS)

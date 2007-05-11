@@ -1,6 +1,6 @@
 include $(top_srcdir)/misc/Makefile.common
 
-AM_CFLAGS = $(DEFAULT_OCFLAGS)
+AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 
 noinst_LTLIBRARIES = libmpeg2.la libmpeg2arch.la
 
@@ -12,4 +12,3 @@ libmpeg2arch_la_SOURCES = motion_comp_mmx.c idct_mmx.c \
                           motion_comp_alpha.c idct_alpha.c \
                           motion_comp_vis.c \
                           cpu_accel.c cpu_state.c
-

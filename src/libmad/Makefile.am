@@ -1,43 +1,10 @@
 include $(top_srcdir)/misc/Makefile.common
 
-AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
+AM_CFLAGS   = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_CPPFLAGS = -DOPT_SPEED
-AM_LDFLAGS = $(xineplug_ldflags)
+AM_LDFLAGS  = $(xineplug_ldflags)
 
 EXTRA_DIST = imdct_l_arm.S
-
-if MAD
-mad_module = xineplug_decode_mad.la
-endif
-
-xineplug_LTLIBRARIES = $(mad_module)
-
-if EXTERNAL_LIBMAD
-internal_sources =
-else
-internal_sources = \
-	bit.c \
-	fixed.c \
-	frame.c \
-	huffman.c \
-	layer12.c \
-	layer3.c \
-	stream.c \
-	synth.c \
-	timer.c \
-	version.c
-endif
-
-xineplug_decode_mad_la_SOURCES = \
-	xine_mad_decoder.c \
-	$(internal_sources)
-
-if EXTERNAL_LIBMAD
-xineplug_decode_mad_la_LIBADD = $(XINE_LIB) $(LIBMAD_LIBS)
-else
-xineplug_decode_mad_la_LIBADD = $(XINE_LIB)
-endif
-xineplug_decode_mad_la_CFLAGS = $(AM_CFLAGS) $(LIBMAD_CFLAGS)
 
 noinst_HEADERS = \
 	D.dat \
@@ -56,3 +23,29 @@ noinst_HEADERS = \
 	synth.h \
 	timer.h \
 	version.h
+
+if MAD
+xineplug_LTLIBRARIES = xineplug_decode_mad.la
+endif
+
+if EXTERNAL_LIBMAD
+internal_sources =
+external_libs = $(LIBMAD_LIBS)
+else
+internal_sources = \
+	bit.c \
+	fixed.c \
+	frame.c \
+	huffman.c \
+	layer12.c \
+	layer3.c \
+	stream.c \
+	synth.c \
+	timer.c \
+	version.c
+external_libs =
+endif
+
+xineplug_decode_mad_la_SOURCES = xine_mad_decoder.c $(internal_sources)
+xineplug_decode_mad_la_LIBADD = $(XINE_LIB) $(external_libs)
+xineplug_decode_mad_la_CFLAGS = $(AM_CFLAGS) $(LIBMAD_CFLAGS)
