@@ -81,13 +81,10 @@ dnl included.  In release bulids, this can be stripped out later if desired.
 dnl More importantly, it prevents autoconf from initializing the defaults to
 dnl include -O2, which is not desirable in a debug build, and it messes with
 dnl other optimizations that we'll want to be setting ourselves later.
-ASFLAGS="-g $ASFLAGS"
 CFLAGS="-g $CFLAGS"
 CPPFLAGS="-D_REENTRANT -DXINE_COMPILE $CPPFLAGS"
 LDFLAGS="-g $LDFLAGS"
 OBJCFLAGS="-g $OBJCFLAGS"
-
-AC_SUBST(ASFLAGS)
 
 
 dnl ------------------------------
@@ -157,8 +154,12 @@ dnl checks for programs
 dnl -------------------
 
 AC_PROG_CC
+AC_GNU_SOURCE
+AC_ISC_POSIX
+
 AC_PROG_OBJC
-AM_PROG_AS
+
+CC_PROG_AS
 
 AC_PROG_MAKE_SET
 AC_PROG_EGREP
@@ -167,9 +168,6 @@ AC_PROG_LN_S
 AC_PROG_AWK
 
 AC_CHECK_TOOL([STRINGS], [strings], [false])
-
-AC_GNU_SOURCE
-AC_ISC_POSIX
 
 PKG_PROG_PKG_CONFIG
 
@@ -605,11 +603,13 @@ case "$host_or_hostalias" in
                 ;;
             i386-* | x86_64-*)
                 arch_x86=yes
+                AC_DEFINE([ARCH_X86_32], [], [Define this if you're running x86 architecture 32 bits])
                 ;;
             ppc* | powerpc*)
                 arch_ppc=yes
                 dnl avoid ppc compilation crash
                 AS="$CC"
+                AC_DEFINE([ARCH_PPC], [], [Define this if you're running PowerPC architecture])
 
                 AC_CHECK_HEADER([altivec.h], [], [enable_altivec=no])
                 if test x"$enable_altivec" != x"no"; then
@@ -639,7 +639,6 @@ case "$host_or_hostalias" in
         AC_DEFINE([ARCH_PPC], [], [Define this if you're running PowerPC architecture])
 
         AC_CHECK_HEADER([altivec.h], [], [enable_altivec=no])
-        
         if test x"$enable_altivec" != x"no"; then
             AC_DEFINE([ENABLE_ALTIVEC], [], [Define this if you want to use altivec on PowerPC CPUs])
             cpuflags="$cpuflags -maltivec"

@@ -262,7 +262,6 @@ use internal ffmpeg.
                 enable_w32dll=no
                 ;;
             i?86-* | k?-* | athlon-* | pentium*-)
-                CC_PROG_AS
                 test x"$with_gnu_as" = x"no" && enable_w32dll=no
                 ;;
             *)
