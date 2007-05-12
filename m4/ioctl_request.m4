@@ -40,7 +40,7 @@ AC_DEFUN([AC_IOCTL_REQUEST], [
                                               int ioctl(int fd, $ac_ioctl_request_type request, ...);]], [[]])],
                            [ac_cv_ioctl_request=$ac_ioctl_request_type], [])
         done
-        if test "x$ac_cv_ioctl_request" = "x"; then
+        if test x"$ac_cv_ioctl_request" = x""; then
             AC_MSG_ERROR([Unable to determine the type for ioctl() request parameter])
         fi
     ])
