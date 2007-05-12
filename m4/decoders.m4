@@ -164,14 +164,14 @@ use internal ffmpeg.
                 [AS_HELP_STRING([--with-external-libmad], [use external libmad library (not recommended)])],
                 [], [with_external_libmad=no])
     if test x"$enable_mad" != x"no"; then
-        if test x$"with_external_libmad" != x"no"; then
+        if test x"$with_external_libmad" != x"no"; then
             PKG_CHECK_MODULES([LIBMAD], [mad],
                               [AC_CHECK_HEADERS([mad.h], [], [with_external_libmad=no])], [with_external_libmad=no])
-            if test x$"with_external_libmad" = x"no"; then
+            if test x"$with_external_libmad" = x"no"; then
                 AC_MSG_RESULT([*** no usable version of libmad found, using internal copy ***])
             fi
         fi
-        if test x$"with_external_libmad" != x"no"; then
+        if test x"$with_external_libmad" != x"no"; then
             AC_MSG_RESULT([Using included libmad support])
             case "$host_or_hostalias" in
                 i?86-* | k?-* | athlon-* | pentium*-)
@@ -287,7 +287,7 @@ use internal ffmpeg.
     AC_ARG_ENABLE([mlib-lazyload],
                   [AS_HELP_STRING([--enable-mlib-lazyload], [check for Sun mediaLib at runtime])],
                   [], [enable_mlib_lazyload=no])
-    if test x$"enable_mlib" != x"no"; then
+    if test x"$enable_mlib" != x"no"; then
         mlibhome="$MLIBHOME"
         test x"$mlibhome" = x"" && mlibhome="/opt/SUNWmlib"
         AC_CHECK_LIB([mlib], [mlib_VideoAddBlock_U8_S16],

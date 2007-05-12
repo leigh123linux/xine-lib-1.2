@@ -104,7 +104,7 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
         AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[return 0]])], [have_coreaudio=yes], [have_coreaudio=no])
         LIBS="$ac_save_LIBS"
         AC_MSG_RESULT([$have_coreaudio])
-        if test x"$enable_coreaudio" = x"yes" && test x$"have_coreaudio" != x"yes"; then
+        if test x"$enable_coreaudio" = x"yes" && test x"$have_coreaudio" != x"yes"; then
             AC_MSG_ERROR([CoreAudio support requested, but CoreAudio not found])
         fi
     fi
