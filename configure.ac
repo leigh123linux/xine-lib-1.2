@@ -323,9 +323,7 @@ dnl -----------------------
 
 AC_HEADER_STDC
 
-dnl REVISIT: should we not be using AC_FUNC_ALLOCA for this?
 AC_CHECK_HEADERS([alloca.h])
-
 AC_CHECK_HEADERS([assert.h byteswap.h dirent.h execinfo.h libgen.h malloc.h netdb.h ucontext.h])
 AC_CHECK_HEADERS([sys/ioctl.h sys/mixer.h sys/mman.h sys/param.h sys/times.h])
 
@@ -337,14 +335,13 @@ dnl ----------------
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_CHECK_SIZEOF(long)
-dnl AC_CHECK_TYPES([ptrdiff_t])
-dnl For systems without inttypes.h would be needed extend generated replacement.
 AC_CHECK_GENERATE_INTTYPES([include])
 AM_CONDITIONAL([GENERATED_INTTYPES_H], [test "x$ac_cv_header_inttypes_h" != x"yes"])
-AC_CHECK_TYPE(ssize_t, :, AC_DEFINE(ssize_t, __int64, [define ssize_t to __int64 if it's missing in default includes]))
-
+AC_CHECK_TYPE([ssize_t], [],
+              [AC_DEFINE([ssize_t], [__int64], [define ssize_t to __int64 if it's missing in default includes])])
 AC_CHECK_SOCKLEN_T
 AC_IOCTL_REQUEST
+
 
 dnl ---------------------
 dnl checks for structures
@@ -361,10 +358,6 @@ if test x"$GCC" = x"yes"; then
     GCC_VERSION_MINOR="`echo "$GCC_VERSION" | cut -d '.' -f2`"
     GCC_VERSION_PATCHLEVEL="`echo "$GCC_VERSION" | cut -d '.' -f3`"
 fi
-AC_SUBST(GCC_VERSION)
-AC_SUBST(GCC_VERSION_MAJOR)
-AC_SUBST(GCC_VERSION_MINOR)
-AC_SUBST(GCC_VERSION_PATCHLEVEL)
 
 CC_CHECK_WERROR
 
@@ -449,6 +442,7 @@ case "$host_or_hostalias" in
     dnl in which case we are actually dealing with a mingw32 compiler
     dnl This cannot be done until AC_PROG_EGREP and AC_PROG_CC are both done.
     *-*-mingw* | *-*-cygwin*)
+        CC_CHECK_LDFLAGS([-Wl,-z,defs], [NOUNDEF="-Wl,-z,defs"])
         case "$host_or_hostalias" in
             *-*-mingw32*)
                 WIN32_SYS=mingw32
@@ -463,21 +457,20 @@ case "$host_or_hostalias" in
         esac
 
         if test "$WIN32_SYS" = "mingw32"; then
-            WIN32_CPPFLAGS='-I$(top_srcdir)/win32/include'
+            WIN32_INCLUDES='-I$(top_srcdir)/win32/include'
             LIBS="-lwinmm -lwsock32 $LIBS"
             GOOM_LIBS="-liberty"
             AC_SUBST(GOOM_LIBS)
-            AC_SUBST(WIN32_CPPFLAGS)
         fi
         LDFLAGS="-no-undefined $LDFLAGS"
         ;;
 
     *)
         CC_CHECK_LDFLAGS([-Wl,-z,defs], [NOUNDEF="-Wl,-z,defs"])
-        AC_SUBST([NOUNDEF])
         ;;
 esac
 
+AC_SUBST(NOUNDEF)
 AM_CONDITIONAL([WIN32], [test x"$WIN32_SYS" = x"mingw32"])
 
 AC_ARG_ENABLE([altivec],
@@ -980,7 +973,7 @@ dnl ---------------------------------------------
 dnl some include paths ( !!! DO NOT REMOVE !!! )
 dnl ---------------------------------------------
 
-INCLUDES='-I$(top_srcdir) -I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/src -I$(top_builddir)/src/xine-engine -I$(top_srcdir)/src/xine-engine -I$(top_srcdir)/src/xine-utils $(INTLDIR) -I$(top_builddir)/src/input -I$(top_srcdir)/src/input $(WIN32_CPPFLAGS) -I$(top_builddir)/lib -I$(top_srcdir)/lib'
+INCLUDES='-I$(top_srcdir) -I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/src -I$(top_builddir)/src/xine-engine -I$(top_srcdir)/src/xine-engine -I$(top_srcdir)/src/xine-utils $(INTLDIR) -I$(top_builddir)/src/input -I$(top_srcdir)/src/input $(WIN32_INCLUDES) -I$(top_builddir)/lib -I$(top_srcdir)/lib'
 AC_SUBST(INCLUDES)
 
 
