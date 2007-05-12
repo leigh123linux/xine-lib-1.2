@@ -322,39 +322,17 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
 
     dnl Audio plugins
     echo " * audio driver plugins:"
-    if test "x$have_ossaudio" = "xyes"; then
-        echo "   - oss (Open Sound System)"
-    fi
-    if test "x$have_alsa" = "xyes"; then
-        echo "   - alsa"
-    fi
-    if test "x$have_esound" = "xyes"; then
-        echo "   - esd (Enlightened Sound Daemon)"
-    fi
-    if test "x$no_arts" != "xyes"; then
-        echo "   - arts (aRts - KDE soundserver)"
-    fi
-    if test "x$no_fusionsound" != "xyes"; then
-        echo "   - fusionsound (FusionSound driver)"
-    fi
-    if test "x$have_sunaudio" = "xyes"; then
-        echo "   - sun ()"
-    fi
-    if test "x$am_cv_have_irixal" = xyes; then
-        echo "   - irixal (Irix audio library)"
-    fi
-    if test "x$have_directx" = "xyes"; then
-        echo "   - directx (DirectX audio driver)"
-    fi
-    if test "x$have_coreaudio" = "xyes"; then
-        echo "   - CoreAudio (Mac OS X audio driver)"
-    fi  
-    if test "x$have_pulseaudio" = "xyes"; then
-        echo "   - pulseaudio sound server"
-    fi
-    if test "x$have_jack" = "xyes"; then
-        echo "   - Jack"
-    fi
+    test x"$have_alsa" = x"yes"         && echo "   - alsa (ALSA - Advanced Linux Sound Architecture)"
+    test x"$with_arts" != x"no"         && echo "   - arts (aRts - KDE soundserver)"
+    test x"$have_coreaudio" = x"yes"    && echo "   - CoreAudio (Mac OS X audio driver)"
+    test x"$have_directx" = x"yes"      && echo "   - directx (DirectX audio driver)"
+    test x"$have_esound" = x"yes"       && echo "   - esd (Enlightened Sound Daemon)"
+    test x"$have_fusionsound" = x"yes"  && echo "   - fusionsound (FusionSound driver)"
+    test x"$am_cv_have_irixal" = x"yes" && echo "   - irixal (Irix audio library)"
+    test x"$have_jack" = x"yes"         && echo "   - Jack"
+    test x"$have_oss" = x"yes"          && echo "   - oss (Open Sound System)"
+    test x"$have_pulseaudio" = x"yes"   && echo "   - pulseaudio (PulseAudio sound server)"
+    test x"$have_sunaudio" = x"yes"     && echo "   - sun (Sun audio interface)"
     echo "---"
 
 

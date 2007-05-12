@@ -67,13 +67,15 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
     dnl Alsa support
     AC_ARG_WITH([alsa],
                 [AS_HELP_STRING([--with-alsa], [Build with ALSA audio output support])],
-                [], [test $default_with_alsa = without && with_alsa="no"])
+                [test x"$withval" != x"no" && with_alsa="yes"],
+                [test $default_with_alsa = without && with_alsa="no"])
     if test x"$with_alsa" != x"no"; then
         PKG_CHECK_MODULES([ALSA], [alsa >= 0.9.0], [have_alsa=yes], [have_alsa=no])
-        if test x"$have_alsa" = x"yes"; then
-            AC_DEFINE([HAVE_ALSA], 1, [Define this if you have ALSA installed])
-        elif test x"$with_alsa" = x"yes"; then
+        if test x"$with_alsa" = x"yes" && test x"$have_alsa" != x"yes"; then
             AC_MSG_ERROR([ALSA support requested but not found.])
+        elif test x"$have_alsa" = x"yes"; then
+            dnl This is needed by src/input/input_v4l.c
+            AC_DEFINE([HAVE_ALSA], 1, [Define this if you have ALSA installed])
         fi
     fi
     AM_CONDITIONAL([ENABLE_ALSA], [test x"$have_alsa" = x"yes"])
@@ -82,35 +84,42 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
     dnl aRts support
     AC_ARG_WITH([arts],
                 [AS_HELP_STRING([--with-arts], [Build with aRts audio output support])],
-                [], [test $default_with_arts = without && with_arts="no"])
+                [test x"$withval" != x"no" && with_arts="yes"],
+                [test $default_with_arts = without && with_arts="no"])
     if test x"$with_arts" != x"no"; then
         AM_PATH_ARTS([0.9.5],
                      [AC_DEFINE([HAVE_ARTS], 1, [Define this if you have aRts (libartsc) installed])])
-    else
-        no_arts=yes
     fi
-    AM_CONDITIONAL([ENABLE_ARTS], [test x"$no_arts" != x"yes"])
+    AM_CONDITIONAL([ENABLE_ARTS], [test x"$with_arts" != x"no"])
 
 
     dnl CoreAudio for Mac OS X
-    dnl TODO: CoreAudio tests could be much better, but there's not really much need
     AC_ARG_ENABLE([coreaudio],
                   [AS_HELP_STRING([--enable-coreaudio], [Enable support for Mac OS X CoreAudio])],
-                  [have_coreaudio="$enableval"],
-                  [test $default_enable_coreaudio = disable && have_coreaudio="no"])
-    AM_CONDITIONAL([ENABLE_COREAUDIO], [test x"$have_coreaudio" != x"no"])
+                  [test x"$enableval" != x"no" && enable_coreaudio="yes"],
+                  [test $default_enable_coreaudio = disable && enable_coreaudio="no"])
+    if test x"$enable_coreaudio" != x"no"; then
+        AC_MSG_CHECKING([for CoreAudio frameworks])
+        ac_save_LIBS="$LIBS" LIBS="$LIBS -framework CoreAudio -framework AudioUnit"
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[return 0]])], [have_coreaudio=yes], [have_coreaudio=no])
+        LIBS="$ac_save_LIBS"
+        AC_MSG_RESULT([$have_coreaudio])
+        if test x"$enable_coreaudio" = x"yes" && test x$"have_coreaudio" != x"yes"; then
+            AC_MSG_ERROR([CoreAudio support requested, but CoreAudio not found])
+        fi
+    fi
+    AM_CONDITIONAL([ENABLE_COREAUDIO], [test x"$have_coreaudio" = x"yes"])
 
 
     dnl EsounD support
     AC_ARG_WITH([esound],
                 [AS_HELP_STRING([--with-esound], [Build with EsounD audio output support])],
-                [], [test $default_with_esound = without && with_esound="no"])
+                [test x"$withval" != x"no" && with_esound="yes"],
+                [test $default_with_esound = without && with_esound="no"])
     if test x"$with_esound" != x"no"; then
         PKG_CHECK_MODULES([ESD], [esound], [have_esound=yes], [have_esound=no])
-        if test x"$with_esound" = x"yes" && test x"$have_esound" = x"no"; then
-            AC_MSG_ERROR([EsounD support requested, but libesd not found])
-        elif test x"$have_esound" = x"yes"; then
-            AC_DEFINE([HAVE_ESD], 1, [Define this if you have EsounD installed])
+        if test x"$with_esound" = x"yes" && test x"$have_esound" != x"yes"; then
+            AC_MSG_ERROR([EsounD support requested, but EsounD not found])
         fi
     fi
     AM_CONDITIONAL([ENABLE_ESD], [test x"$have_esound" = x"yes"])
@@ -119,20 +128,22 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
     dnl FusionSound support
     AC_ARG_WITH([fusionsound],
                 [AS_HELP_STRING([--with-fusionsound], [Build with FunsionSound audio output support])],
-                [], [test $default_with_fusionsound = without && with_fusionsound="no"])
+                [test x"$withval" != x"no" && with_fusionsound="yes"],
+                [test $default_with_fusionsound = without && with_fusionsound="no"])
     if test x"$with_fusionsound" != x"no"; then
-        PKG_CHECK_MODULES([FUSIONSOUND], [fusionsound >= 0.9.23],
-                          [AC_DEFINE([HAVE_FUSIONSOUND], 1, [Define to 1 if you have FusionSound.])], [])
-    else
-        no_fusionsound=yes
+        PKG_CHECK_MODULES([FUSIONSOUND], [fusionsound >= 0.9.23], [have_fusionsound=yes], [have_fusionsound=no])
+        if test x"$with_fusionsound" = x"yes" && test x"$have_fusionsound" != x"yes"; then
+            AC_MSG_ERROR([FusionSound support requested, but FusionSound not found])
+        fi
     fi
-    AM_CONDITIONAL([ENABLE_FUSIONSOUND], [test x"$no_fusionsound" != x"yes"])
+    AM_CONDITIONAL([ENABLE_FUSIONSOUND], [test x"$have_fusionsound" = x"yes"])
 
 
     dnl IRIX style audio interface
     AC_ARG_ENABLE([irixal],
                   [AS_HELP_STRING([--enable-irixal], [Enable support for IRIX libaudio])],
-                  [], [test $default_enable_irixal = disable && enable_irixal="no"])
+                  [test x"$enableval" != x"no" && enable_irixal="yes"],
+                  [test $default_enable_irixal = disable && enable_irixal="no"])
     if test x"$enable_irixal" != x"no"; then
         AC_CACHE_CHECK([for IRIX libaudio support], [am_cv_have_irixal],
                        [AC_CHECK_HEADER([dmedia/audio.h],
@@ -151,10 +162,11 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
     dnl JACK support
     AC_ARG_WITH([jack],
                 [AS_HELP_STRING([--with-jack], [Build with Jack support])],
-                [], [test $default_with_jack = without && with_jack="no"])
+                [test x"$withval" != x"no" && with_jack="yes"],
+                [test $default_with_jack = without && with_jack="no"])
     if test x"$with_jack" != x"no"; then
         PKG_CHECK_MODULES([JACK], [jack >= 0.100], [have_jack=yes], [have_jack=no])
-        if test x"$with_jack" = x"yes" && test x"$have_jack" = x"no"; then
+        if test x"$with_jack" = x"yes" && test x"$have_jack" != x"yes"; then
             AC_MSG_ERROR([Jack support requested, but Jack not found])
         fi
     fi
@@ -164,20 +176,23 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
     dnl OSS (Open Sound System)
     AC_ARG_ENABLE([oss],
                   [AS_HELP_STRING([--enable-oss], [Enable OSS (Open Sound System) support])],
-                  [], [test $default_enable_oss = disable && enable_oss="no"])
+                  [test x"$enableval" != x"no" && enable_oss="yes"],
+                  [test $default_enable_oss = disable && enable_oss="no"])
     if test x"$enable_oss" != x"no"; then
         AC_CHECK_HEADERS([sys/soundcard.h machine/soundcard.h soundcard.h], [break])
-        AC_CHECK_DECL([SNDCTL_DSP_SETFRAGMENT], [have_ossaudio=yes], [],
-            [#ifdef HAVE_SYS_SOUNDCARD_H
-             # include <sys/soundcard.h>
-             #endif
-             #ifdef HAVE_MACHINE_SOUNDCARD_H
-             # include <sys/soundcard.h>
-             #endif
-             #ifdef HAVE_SOUNDCARD_H
-             # include <soundcard.h>
-             #endif
-            ])
+        AC_CHECK_DECL([SNDCTL_DSP_SETFRAGMENT], [have_oss=yes], [have_oss=no],
+                      [#ifdef HAVE_SYS_SOUNDCARD_H
+                       # include <sys/soundcard.h>
+                       #endif
+                       #ifdef HAVE_MACHINE_SOUNDCARD_H
+                       # include <sys/soundcard.h>
+                       #endif
+                       #ifdef HAVE_SOUNDCARD_H
+                       # include <soundcard.h>
+                       #endif])
+        if test x"$enable_oss" = x"yes" && test x"$have_oss" != x"yes"; then
+            AC_MSG_ERROR([OSS support requested, but OSS not found])
+        fi
     fi
     AM_CONDITIONAL([ENABLE_OSS], [test x"$have_ossaudio" = x"yes"])
 
@@ -185,9 +200,13 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
     dnl PulseAudio
     AC_ARG_WITH([pulseaudio],
                 [AS_HELP_STRING([--with-pulseaudio], [Build with PulseAudio support])],
-                [], [test $default_with_pulseaudio = without && with_pulseaudio="no"])
+                [test x"$withval" != x"no" && with_pulseaudio="yes"],
+                [test $default_with_pulseaudio = without && with_pulseaudio="no"])
     if test x"$with_pulseaudio" != x"no"; then
         PKG_CHECK_MODULES([PULSEAUDIO], [libpulse], [have_pulseaudio="yes"], [have_pulseaudio="no"])
+        if test x"$with_pulseaudio" = x"yes" && test x"$have_pulseaudio" != x"yes"; then
+            AC_MSG_ERROR([PulseAudio support requested, but PulseAudio not found])
+        fi
     fi
     AM_CONDITIONAL([ENABLE_PULSEAUDIO], [test x"$have_pulseaudio" = x"yes"])
 
@@ -195,7 +214,8 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
     dnl SUN style audio interface
     AC_ARG_ENABLE([sunaudio],
                   [AS_HELP_STRING([--enable-sunaudio], [Enable Sun audio support])],
-                  [], [test $default_enable_sunaudio = disable && enable_sunaudio="no"])
+                  [test x"$enableval" != x"no" && enable_sunaudio="yes"],
+                  [test $default_enable_sunaudio = disable && enable_sunaudio="no"])
     if test x"$enable_sunaudio" != x"no"; then
         AC_MSG_CHECKING([for Sun audio support])
         AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
@@ -203,7 +223,9 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
                                            [[audio_info_t audio_info; AUDIO_INITINFO(&audio_info)]])],
                           [have_sunaudio=yes], [have_sunaudio=no])
         AC_MSG_RESULT([$have_sunaudio])
-        if test x"$have_sunaudio" = x"yes"; then
+        if test x"$enable_sunaudio" = x"yes" && test x"$have_sunaudio" != x"yes"; then
+            AC_MSG_ERROR([Sun audio support requested, but Sun audio not found])
+        elif test x"$have_sunaudio" = x"yes"; then
            dnl NetBSD and OpenBSD don't have this, but check for it
            dnl rather than assuming that it doesn't happen elsewhere.
            AC_CHECK_MEMBERS([audio_info_t.output_muted])
