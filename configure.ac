@@ -557,7 +557,7 @@ case "$host_or_hostalias" in
                     ;;
             esac
             if test "$GCC_VERSION_MAJOR" -ge 3; then
-                test x$"enable_vis" != x"no" && has_vis=yes
+                test x"$enable_vis" != x"no" && has_vis=yes
             fi
         else
             case "`uname -m`" in
@@ -684,7 +684,7 @@ case "$host_or_hostalias" in
                             fi
                             ;;
                     esac
-                    test x$"archopt_val" != x"" && cpuflags="$cpuflags $sarchopt=$archopt_val"
+                    test x"$archopt_val" != x"" && cpuflags="$cpuflags $sarchopt=$archopt_val"
                 fi
             else
                 # Intel optimizations
