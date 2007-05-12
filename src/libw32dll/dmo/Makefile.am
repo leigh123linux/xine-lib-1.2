@@ -12,9 +12,7 @@ noinst_HEADERS = \
 	dmo.h \
 	DMO_VideoDecoder.h
 
-if HAVE_W32DLL
 noinst_LTLIBRARIES = libdmo_filter.la
-endif
 
 libdmo_filter_la_SOURCES = \
 	buffer.c \

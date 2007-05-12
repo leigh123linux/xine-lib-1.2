@@ -15,7 +15,7 @@ CLEANFILES = $(awk_generated)
 
 noinst_HEADERS = AsmMacros.h libdha.h pci_ids.h pci_names.h pci_vendors.h
 
-if HAVE_VIDIX
+if ENABLE_VIDIX
 noinst_LTLIBRARIES = libdha.la
 endif
 

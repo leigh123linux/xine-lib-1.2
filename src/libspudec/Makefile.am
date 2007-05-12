@@ -8,7 +8,7 @@ noinst_HEADERS = spu.h
 
 xineplug_LTLIBRARIES = xineplug_decode_spu.la
 
-if HAVE_DVDNAV
+if WITH_EXTERNAL_DVDNAV
 external_dvdnav_libs = $(DVDNAV_LIBS)
 internal_dvdnav_sources =
 else

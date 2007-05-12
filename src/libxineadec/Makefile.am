@@ -7,19 +7,19 @@ SUBDIRS = gsm610 nosefart
 
 EXTRA_DIST = fooaudio.c
 
-if HAVE_VORBIS
+if ENABLE_VORBIS
 vorbis_module = xineplug_decode_vorbis.la
 endif
 
-if HAVE_SPEEX
+if ENABLE_SPEEX
 speex_module = xineplug_decode_speex.la
 endif
 
-if MUSEPACK
+if ENABLE_MUSEPACK
 musepack_module = xineplug_decode_mpc.la
 endif
 
-if DTS
+if ENABLE_DTS
 dts_module = xineplug_decode_dts.la
 endif
 

@@ -16,9 +16,7 @@ noinst_HEADERS = \
 	DS_Filter.h \
 	DS_VideoDecoder.h
 
-if HAVE_W32DLL
 noinst_LTLIBRARIES = libds_filter.la
-endif
 
 libds_filter_la_SOURCES = \
 	allocator.c \

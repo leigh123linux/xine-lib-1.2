@@ -32,7 +32,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     else
         no_gnome_vfs=yes
     fi
-    AM_CONDITIONAL([HAVE_GNOME_VFS], [test x"$no_gnome_vfs" != x"yes"])
+    AM_CONDITIONAL([ENABLE_GNOME_VFS], [test x"$no_gnome_vfs" != x"yes"])
 
 
     dnl libsmbclient
@@ -45,7 +45,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
                                                           LIBSMBCLIENT_LIBS="-lsmbclient"])])
         AC_SUBST(LIBSMBCLIENT_LIBS)
     fi
-    AM_CONDITIONAL([HAVE_LIBSMBCLIENT], [test x"$have_libsmbclient" = x"yes"])
+    AM_CONDITIONAL([ENABLE_LIBSMBCLIENT], [test x"$have_libsmbclient" = x"yes"])
 
 
     dnl video-for-linux (v4l)
@@ -59,7 +59,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
             AC_MSG_ERROR([Video4Linux support requested, but prerequisite headers not found.])
         fi
     fi
-    AM_CONDITIONAL([HAVE_V4L], [test x"$have_v4l" = x"yes"])
+    AM_CONDITIONAL([ENABLE_V4L], [test x"$have_v4l" = x"yes"])
 
 
     dnl cdrom ioctls (common for dvdnav and vcd)
@@ -73,43 +73,20 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
             ;;
     esac
     AC_CHECK_HEADERS([sys/dvdio.h sys/cdio.h sys/scsiio.h])
-    AC_CACHE_CHECK([if cdrom ioctls are available], [am_cv_have_cdrom_ioctls],
-                   [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/ioctl.h>]], [[CDROM_DRIVE_STATUS]])],
-                                      [am_cv_have_cdrom_ioctls=yes],
-                   [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/ioctl.h>]], [[CDIOCALLOW]])],
-                                      [am_cv_have_cdrom_ioctls=yes],
-                   [AC_EGREP_CPP([we_have_cdrom_ioctls],
-                                 [#include <sys/ioctl.h>
-                                  #ifdef HAVE_SYS_CDIO_H
-                                  #  include <sys/cdio.h>
-                                  #endif
-                                  #ifdef HAVE_LINUX_CDROM_H
-                                  #  include <linux/cdrom.h>
-                                  #endif
-                                  #if defined(CDROM_DRIVE_STATUS) || defined(CDIOCALLOW) || defined(CDROMCDXA)
-                                  we_have_cdrom_ioctls
-                                  #endif],
-                                  [am_cv_have_cdrom_ioctls=yes], [am_cv_have_cdrom_ioctls=no])])])])
-    have_cdrom_ioctls="$am_cv_have_cdrom_ioctls"
-    if test x"$have_cdrom_ioctls" = x"yes"; then
-        AC_DEFINE([HAVE_CDROM_IOCTLS], 1, [Define this if you have CDROM ioctls])
-    fi
-    AM_CONDITIONAL([HAVE_CDROM_IOCTLS], [test x"$have_cdrom_ioctls" = x"yes"])
 
 
     dnl dvdnav
-    dnl REVISIT: Something doesn't feel right about this ... I'm not sure it works as intended
     AC_ARG_WITH([external-dvdnav],
                 [AS_HELP_STRING([--with-external-dvdnav], [use external dvdnav library (not recommended)])],
-                [external_dvdnav="$withval"], [no_dvdnav=yes external_dvdnav=no])
-    if test "x$external_dvdnav" = "xyes"; then
+                [], [with_external_dvdnav=no])
+    if test x"$with_external_dvdnav" != x"no"; then
         AM_PATH_DVDNAV([0.1.9],
                        [AC_DEFINE([HAVE_DVDNAV], 1, [Define this if you have a suitable version of libdvdnav])],
                        [AC_MSG_RESULT([*** no usable version of libdvdnav found, using internal copy ***])])
     else
         AC_MSG_RESULT([Using included DVDNAV support])
     fi
-    AM_CONDITIONAL([HAVE_DVDNAV], [test x"$no_dvdnav" != x"yes"])
+    AM_CONDITIONAL([WITH_EXTERNAL_DVDNAV], [test x"$with_external_dvdnav" != x"no"])
 
 
     dnl Video CD
@@ -293,15 +270,6 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     AC_SUBST(LIBVCD_CFLAGS)
     AC_SUBST(LIBVCD_LIBS)
     AC_SUBST(LIBVCDINFO_LIBS)
-    AM_CONDITIONAL([HAVE_VCDNAV], [test x"$with_internval_vcdlibs" = x"no"])
+    AM_CONDITIONAL([WITH_EXTERNAL_VCDLIBS], [test x"$with_internal_vcdlibs" != x"no"])
     AM_CONDITIONAL([ENABLE_VCD], [test x"$enable_vcd" = x"yes"])
 ])
-
-
-
-
-
-
-
-
-

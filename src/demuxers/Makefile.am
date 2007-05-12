@@ -12,7 +12,7 @@ xineinclude_HEADERS = demux.h
 
 noinst_HEADERS = asfheader.h qtpalette.h group_games.h group_audio.h id3.h ebml.h matroska.h iff.h flacutils.h
 
-if HAVE_VORBIS
+if ENABLE_VORBIS
 ogg_module = xineplug_dmx_ogg.la
 endif
 
@@ -20,7 +20,7 @@ if BUILD_ASF
 asf_module = xineplug_dmx_asf.la 
 endif
 
-if HAVE_LIBMNG
+if ENABLE_MNG
 mng_module = xineplug_dmx_mng.la
 endif
 

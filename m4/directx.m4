@@ -37,7 +37,7 @@ AC_DEFUN([AM_PATH_DIRECTX], [
     AC_SUBST(DIRECTX_CPPFLAGS)
     AC_SUBST(DIRECTX_AUDIO_LIBS)
     AC_SUBST(DIRECTX_VIDEO_LIBS)
-    AM_CONDITIONAL([HAVE_DIRECTX], [test x"$have_directx" = x"yes"])
+    AM_CONDITIONAL([ENABLE_DIRECTX], [test x"$have_directx" = x"yes"])
 
     AC_MSG_RESULT([$have_directx])
     if test x"$have_directx" = x"yes"; then

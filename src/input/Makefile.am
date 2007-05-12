@@ -14,7 +14,7 @@ SUBDIRS = dvb libreal librtsp
 if ENABLE_VCD
 SUBDIRS += vcd
 endif
-if !HAVE_DVDNAV
+if !WITH_EXTERNAL_DVDNAV
 SUBDIRS += libdvdnav
 endif
 
@@ -27,20 +27,20 @@ if ENABLE_VCD
 in_vcd = xineplug_inp_vcdo.la
 endif
 
-if HAVE_V4L
+if ENABLE_V4L
 in_v4l = xineplug_inp_v4l.la
 in_pvr = xineplug_inp_pvr.la
 endif
 
-if HAVE_GNOME_VFS
+if ENABLE_GNOME_VFS
 in_gnome_vfs = xineplug_inp_gnome_vfs.la
 endif
 
-if HAVE_LIBSMBCLIENT
+if ENABLE_LIBSMBCLIENT
 in_smb = xineplug_inp_smb.la
 endif
 
-if HAVE_DVDNAV
+if WITH_EXTERNAL_DVDNAV
 DVD_CFLAGS  = $(DVDNAV_CFLAGS)
 link_dvdnav = $(DVDNAV_LIBS)
 else

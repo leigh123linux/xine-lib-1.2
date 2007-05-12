@@ -10,7 +10,6 @@ EXTRA_DIST = genfb_vid.c
 noinst_HEADERS = mach64.h glint_regs.h pm3_regs.h radeon.h savage_regs.h \
                  cyberblade_regs.h unichrome_regs.h sis_defs.h sis_regs.h
 
-if HAVE_VIDIX
 vidix_LTLIBRARIES = \
 	mach64_vid.la \
 	mga_crtc2_vid.la \
@@ -24,7 +23,6 @@ vidix_LTLIBRARIES = \
 	nvidia_vid.la \
 	sis_vid.la \
 	savage_vid.la 
-endif
 
 cyberblade_vid_la_SOURCES = cyberblade_vid.c
 

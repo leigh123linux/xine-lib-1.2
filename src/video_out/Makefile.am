@@ -11,14 +11,14 @@ SUBDIRS += libdha
 endif
 
 # vidix depends on portions of dha
-if HAVE_VIDIX
+if ENABLE_VIDIX
 if !BUILD_DHA_KMOD
 SUBDIRS += libdha
 endif
 SUBDIRS += vidix
 endif
 
-if HAVE_MACOSX_VIDEO
+if ENABLE_MACOSX_VIDEO
 SUBDIRS += macosx
 endif
 
@@ -41,63 +41,63 @@ endif
 if HAVE_OPENGL
 opengl_module = xineplug_vo_out_opengl.la
 endif
-if HAVE_SYNCFB
+if ENABLE_SYNCFB
 syncfb_module = xineplug_vo_out_syncfb.la
 endif
-if HAVE_SUNFB
-if HAVE_SUNDGA
+if ENABLE_SUNFB
+if ENABLE_SUNDGA
 pgx64_module = xineplug_vo_out_pgx64.la
 pgx32_module = xineplug_vo_out_pgx32.la
 endif
 endif
 endif
 
-if HAVE_XCB
+if ENABLE_XCB
 XCBOSD = xcbosd.c
-if HAVE_XCBSHM
+if ENABLE_XCBSHM
 xcbshm_module = xineplug_vo_out_xcbshm.la
 endif
-if HAVE_XCBXV
+if ENABLE_XCBXV
 xcbxv_module = xineplug_vo_out_xcbxv.la
 endif
 endif
 
-if HAVE_VIDIX
+if ENABLE_VIDIX
 vidix_module = xineplug_vo_out_vidix.la
 endif
 
-if HAVE_AA
+if ENABLE_AA
 aa_module = xineplug_vo_out_aa.la
 endif
 
-if HAVE_CACA
+if ENABLE_CACA
 caca_module = xineplug_vo_out_caca.la
 endif
 
-if HAVE_FB
+if ENABLE_FB
 fb_module = xineplug_vo_out_fb.la
 endif
 
-if HAVE_DIRECTFB
+if ENABLE_DIRECTFB
 directfb_module = xineplug_vo_out_directfb.la
 if HAVE_X11
 directfb_module += xineplug_vo_out_xdirectfb.la
 endif
 endif
 
-if HAVE_SDL
+if ENABLE_SDL
 sdl_module = xineplug_vo_out_sdl.la
 endif
 
-if HAVE_STK
+if ENABLE_STK
 stk_module = xineplug_vo_out_stk.la
 endif
 
-if HAVE_DIRECTX
+if ENABLE_DIRECTX
 directx_module = xineplug_vo_out_directx.la
 endif
 
-if HAVE_MACOSX_VIDEO
+if ENABLE_MACOSX_VIDEO
 macosx_module = xineplug_vo_out_macosx.la
 endif
 

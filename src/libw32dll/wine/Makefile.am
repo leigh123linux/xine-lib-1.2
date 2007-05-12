@@ -47,9 +47,7 @@ noinst_HEADERS = \
 	winuser.h \
 	wrapper.h
 
-if HAVE_W32DLL
 noinst_LTLIBRARIES = libwine.la
-endif
 
 libwine_la_SOURCES = \
 	afl.c \

@@ -13,22 +13,20 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     echo "   - http          - mms"
     echo "   - pnm           - rtsp"
     echo "   - dvb"
-    if test "x$external_dvdnav" = "xyes"; then
+    if test "x$with_external_dvdnav" = "xyes"; then
         echo "   - dvd (external libs)"
     else
         echo "   - dvd (internal libs)"
     fi
-    if test "x$have_cdrom_ioctls" = "xyes"; then
-        if test "x$enable_vcd" = "xyes"; then
-            if test "x$internal_vcdnav" = "xno"; then
-                echo "   - vcd (external libs)"
-            else
-                echo "   - vcd (internal libs)"
-            fi
+    if test "x$enable_vcd" = "xyes"; then
+        if test "x$internal_vcdnav" = "xno"; then
+            echo "   - vcd (external libs)"
+        else
+            echo "   - vcd (internal libs)"
         fi
-        echo "   - vcdo"
-        echo "   - cdda"
     fi
+    echo "   - vcdo"
+    echo "   - cdda"
     if test "x$no_gnome_vfs" = "xno"; then
         echo "   - gnome-vfs"
     fi

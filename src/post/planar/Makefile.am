@@ -6,7 +6,7 @@ AM_CFLAGS   = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG) $(ff_cflags) -fomit-frame-po
 AM_CPPFLAGS = 
 AM_LDFLAGS  = $(xineplug_ldflags) $(IMPURE_TEXT_LDFLAGS)
 
-if HAVE_FFMPEG
+if WITH_EXTERNAL_FFMPEG
 postproc_lib = $(FFMPEG_POSTPROC_LIBS)
 ff_cflags = $(FFMPEG_POSTPROC_CFLAGS)
 else

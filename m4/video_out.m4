@@ -69,7 +69,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
         else
             ac_have_xinerama=no
         fi
-        AM_CONDITIONAL([HAVE_XINERAMA], [test x"$ac_have_xinerama" = x"yes"])
+        AM_CONDITIONAL([ENABLE_XINERAMA], [test x"$ac_have_xinerama" = x"yes"])
 
         dnl OpenGL, including GLut and/or GLU
         AM_PATH_OPENGL
@@ -88,7 +88,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
     else
         no_aalib=yes
     fi
-    AM_CONDITIONAL([HAVE_AA], [test x"$no_aalib" != x"yes"])
+    AM_CONDITIONAL([ENABLE_AA], [test x"$no_aalib" != x"yes"])
 
 
     dnl Color AsCii Art
@@ -101,7 +101,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
             AC_MSG_ERROR([CACA support requested, but libcaca 0.99 not found])
         fi
     fi
-    AM_CONDITIONAL([HAVE_CACA], [test x"$have_caca" = x"yes"])
+    AM_CONDITIONAL([ENABLE_CACA], [test x"$have_caca" = x"yes"])
 
 
     dnl dha (Linux only)
@@ -128,7 +128,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
     if test "x$enable_directfb" = "xyes"; then
         PKG_CHECK_MODULES([DIRECTFB], [directfb >= 0.9.22], [have_directfb="yes"], [have_directfb="no"])
     fi
-    AM_CONDITIONAL([HAVE_DIRECTFB], [test x"$have_directfb" = x"yes"])
+    AM_CONDITIONAL([ENABLE_DIRECTFB], [test x"$have_directfb" = x"yes"])
 
 
     dnl DirectX
@@ -165,7 +165,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
     else
         have_dxr3=no have_libfame=no have_librte=no have_encoder=no
     fi
-    AM_CONDITIONAL([HAVE_DXR3], [test x"$have_dxr3" = x"yes"])
+    AM_CONDITIONAL([ENABLE_DXR3], [test x"$have_dxr3" = x"yes"])
     AM_CONDITIONAL([HAVE_LIBFAME], [test x"$have_libfame" = x"yes"])
     AM_CONDITIONAL([HAVE_LIBRTE], [test x"$have_librte" = x"yes"])
 
@@ -180,7 +180,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
             AC_MSG_ERROR([libstk support requested, but libstk not found])
         fi
     fi
-    AM_CONDITIONAL([HAVE_STK], [test x"$have_libstk" = x"yes"])
+    AM_CONDITIONAL([ENABLE_STK], [test x"$have_libstk" = x"yes"])
 
 
     dnl Linux framebuffer device
@@ -192,7 +192,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
                          [AC_DEFINE([HAVE_FB], 1, [Define this if you have linux framebuffer support])
                           have_fb=yes])
     fi
-    AM_CONDITIONAL([HAVE_FB], [test x"$have_fb" = x"yes"])
+    AM_CONDITIONAL([ENABLE_FB], [test x"$have_fb" = x"yes"])
 
 
     dnl Mac OS X OpenGL video output
@@ -201,7 +201,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
                   [AS_HELP_STRING([--enable-macosx-video], [enable support for Mac OS X OpenGL video output])],
                   [have_macosx_video="$enableval"],
                   [test $default_enable_macosx_video = disable && have_macosx_video=no])
-    AM_CONDITIONAL([HAVE_MACOSX_VIDEO], [test x"$have_macosx_video" != x"no"])
+    AM_CONDITIONAL([ENABLE_MACOSX_VIDEO], [test x"$have_macosx_video" != x"no"])
 
 
     dnl SDL
@@ -216,7 +216,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
             AC_DEFINE([HAVE_SDL], 1, [Define this if you have SDL installed])
         fi
     fi
-    AM_CONDITIONAL([HAVE_SDL], [test x"$have_sdl" = x"yes"])
+    AM_CONDITIONAL([ENABLE_SDL], [test x"$have_sdl" = x"yes"])
 
 
     dnl Solaris framebuffer device support (exists for more than just Solaris)
@@ -233,15 +233,15 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
         AC_SUBST(SUNDGA_CPPFLAGS)
         AC_SUBST(SUNDGA_LIBS)
     fi
-    AM_CONDITIONAL([HAVE_SUNDGA], [test x"$ac_have_sundga" = x"yes"])
-    AM_CONDITIONAL([HAVE_SUNFB], [test x"$ac_have_sunfb" = x"yes"])
+    AM_CONDITIONAL([ENABLE_SUNDGA], [test x"$ac_have_sundga" = x"yes"])
+    AM_CONDITIONAL([ENABLE_SUNFB], [test x"$ac_have_sunfb" = x"yes"])
 
 
     dnl syncfb (Linux only)
     AC_ARG_ENABLE([syncfb],
                   [AS_HELP_STRING([--enable-syncfb], [enable support for syncfb (Linux only)])],
                   [], [test $default_enable_syncfb = disable && enable_syncfb=no])
-    AM_CONDITIONAL([HAVE_SYNCFB], [test x"$enable_syncfb" != x"no"])
+    AM_CONDITIONAL([ENABLE_SYNCFB], [test x"$enable_syncfb" != x"no"])
 
 
     dnl xcb
@@ -255,9 +255,9 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
             PKG_CHECK_MODULES([XCBXV], [xcb-xv], [have_xcbxv="yes"], [have_xcbxv="no"])
         fi
     fi
-    AM_CONDITIONAL([HAVE_XCB], [test x"$have_xcb" = x"yes"])
-    AM_CONDITIONAL([HAVE_XCBSHM], [test x"$have_xcbshm" = x"yes"])
-    AM_CONDITIONAL([HAVE_XCBXV], [test x"$have_xcbxv" = x"yes"])
+    AM_CONDITIONAL([ENABLE_XCB], [test x"$have_xcb" = x"yes"])
+    AM_CONDITIONAL([ENABLE_XCBSHM], [test x"$have_xcbshm" = x"yes"])
+    AM_CONDITIONAL([ENABLE_XCBXV], [test x"$have_xcbxv" = x"yes"])
 
 
     dnl vidix/libdha
@@ -280,5 +280,5 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
             fi
         fi
     fi
-    AM_CONDITIONAL([HAVE_VIDIX], test x"$enable_vidix" != x"no")
+    AM_CONDITIONAL([ENABLE_VIDIX], test x"$enable_vidix" != x"no")
 ])dnl XINE_VIDEO_OUT_PLUGINS

@@ -18,7 +18,7 @@ endif
 
 noinst_HEADERS = em8300.h dxr3.h dxr3_scr.h video_out_dxr3.h
 
-if HAVE_DXR3
+if ENABLE_DXR3
 xineplug_LTLIBRARIES =	xineplug_decode_dxr3_video.la \
 			xineplug_decode_dxr3_spu.la \
 			xineplug_vo_out_dxr3.la
@@ -27,7 +27,7 @@ endif
 xineplug_decode_dxr3_video_la_SOURCES = dxr3_decode_video.c
 xineplug_decode_dxr3_video_la_LIBADD = $(XINE_LIB) 
 
-if HAVE_DVDNAV
+if WITH_EXTERNAL_DVDNAV
 xineplug_decode_dxr3_spu_la_SOURCES = dxr3_decode_spu.c
 xineplug_decode_dxr3_spu_la_LIBADD = $(XINE_LIB) $(DVDNAV_LIBS)
 xineplug_decode_dxr3_spu_la_CFLAGS = $(AM_CFLAGS) $(DVDNAV_CFLAGS)

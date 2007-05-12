@@ -12,48 +12,48 @@ AM_LDFLAGS = $(xineplug_ldflags)
 
 EXTRA_DIST = audio_irixal_out.c
 
-if HAVE_OSS
+if ENABLE_OSS
 oss_module = xineplug_ao_out_oss.la
 endif
 
-if HAVE_ALSA
+if ENABLE_ALSA
 alsa_module = xineplug_ao_out_alsa.la
 endif
 
-if HAVE_ESD
+if ENABLE_ESD
 esd_module = xineplug_ao_out_esd.la
 endif
 
-if HAVE_SUNAUDIO
+if ENABLE_SUNAUDIO
 sun_module = xineplug_ao_out_sun.la
 endif
 
-#if HAVE_IRIXAL
+#if ENABLE_IRIXAL
 #irixal_module = xineplug_ao_out_irixal.la
 #endif
 
-if HAVE_ARTS
+if ENABLE_ARTS
 arts_module = xineplug_ao_out_arts.la
 endif
 
-if HAVE_DIRECTX
+if ENABLE_DIRECTX
 directx_module = xineplug_ao_out_directx.la
 directx2_module = xineplug_ao_out_directx2.la
 endif
 
-if HAVE_COREAUDIO
+if ENABLE_COREAUDIO
 coreaudio_module = xineplug_ao_out_coreaudio.la
 endif
 
-if HAVE_PULSEAUDIO
+if ENABLE_PULSEAUDIO
 pulseaudio_module = xineplug_ao_out_pulseaudio.la
 endif
 
-if HAVE_FUSIONSOUND
+if ENABLE_FUSIONSOUND
 fusionsound_module = xineplug_ao_out_fusionsound.la
 endif
 
-if HAVE_JACK
+if ENABLE_JACK
 jack_module = xineplug_ao_out_jack.la
 endif
 

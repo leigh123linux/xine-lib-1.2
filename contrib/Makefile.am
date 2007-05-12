@@ -7,7 +7,7 @@ CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 VISIBILITY_FLAG = @VISIBILITY_FLAG@
 
-if HAVE_DXR3
+if ENABLE_DXR3
 dxr3encoder = --enable-encoder=mpeg1video
 endif
 

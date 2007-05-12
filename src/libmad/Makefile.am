@@ -24,11 +24,11 @@ noinst_HEADERS = \
 	timer.h \
 	version.h
 
-if MAD
+if ENABLE_MAD
 xineplug_LTLIBRARIES = xineplug_decode_mad.la
 endif
 
-if EXTERNAL_LIBMAD
+if WITH_EXTERNAL_MAD
 internal_sources =
 external_libs = $(LIBMAD_LIBS)
 else

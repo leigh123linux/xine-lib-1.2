@@ -86,7 +86,7 @@ use internal ffmpeg.
                       [], [enable_ffmpeg_popular_codecs=yes])
         AM_CONDITIONAL([FFMPEG_DISABLE_POPULAR_CODECS], [test x"$enable_ffmpeg_popular_codecs" = x"no"])
     fi
-    AM_CONDITIONAL([HAVE_FFMPEG], [test x"$with_external_ffmpeg" = x"yes"])
+    AM_CONDITIONAL([WITH_EXTERNAL_FFMPEG], [test x"$with_external_ffmpeg" = x"yes"])
 
 
     dnl gdk-pixbuf (optional; enabled by default)
@@ -101,7 +101,7 @@ use internal ffmpeg.
     else
         no_gdkpixbuf=yes
     fi
-    AM_CONDITIONAL([HAVE_GDK_PIXBUF], [test x"$no_gdkpixbuf" != x"yes"])
+    AM_CONDITIONAL([ENABLE_GDK_PIXBUF], [test x"$no_gdkpixbuf" != x"yes"])
 
 
     dnl ImageMagick (optional; enabled by default)
@@ -116,7 +116,7 @@ use internal ffmpeg.
             AC_DEFINE([HAVE_WAND], 1, [Define this if you have ImageMagick installed])
         fi
     fi
-    AM_CONDITIONAL([HAVE_WAND], [test x"$have_imagemagick" = x"yes"])
+    AM_CONDITIONAL([ENABLE_IMAGEMAGICK], [test x"$have_imagemagick" != x"no"])
 
 
     dnl libdts (optional; enabled by default; external version allowed)
@@ -142,8 +142,8 @@ use internal ffmpeg.
             AC_SUBST(LIBDTS_LIBS)
         fi
     fi
-    AM_CONDITIONAL([DTS], [test x"$enable_dts" != x"no"])
-    AM_CONDITIONAL([EXTERNAL_LIBDTS], [test x"$have_dts" = x"yes"])
+    AM_CONDITIONAL([ENABLE_DTS], [test x"$enable_dts" != x"no"])
+    AM_CONDITIONAL([WITH_EXTERNAL_LIBDTS], [test x"$have_dts" = x"yes"])
 
 
     dnl libFLAC (optional; disabled by default)
@@ -153,7 +153,7 @@ use internal ffmpeg.
     if test x"$with_libflac" != x"no"; then
         AM_PATH_LIBFLAC([have_libflac=yes])
     fi
-    AM_CONDITIONAL([HAVE_LIBFLAC], [test x"$have_libflac" = x"yes"])
+    AM_CONDITIONAL([ENABLE_LIBFLAC], [test x"$have_libflac" = x"yes"])
 
 
     dnl libmad (optional; enabled by default; external version allowed)
@@ -205,8 +205,8 @@ use internal ffmpeg.
             esac
         fi
     fi
-    AM_CONDITIONAL([MAD], [test x"$enable_mad" = x"yes"])
-    AM_CONDITIONAL([EXTERNAL_LIBMAD], [test x"$have_mad" = x"yes"])
+    AM_CONDITIONAL([ENABLE_MAD], [test x"$enable_mad" = x"yes"])
+    AM_CONDITIONAL([WITH_EXTERNAL_MAD], [test x"$have_mad" = x"yes"])
 
 
     dnl libmodplug (optional; enabled by default)
@@ -218,7 +218,7 @@ use internal ffmpeg.
                           [AC_DEFINE([HAVE_MODPLUG], 1, [define this if you have libmodplug installed])],
                           [enable_modplug=no])
     fi
-    AM_CONDITIONAL([HAVE_MODPLUG], [test x"$have_modplug" = x"yes"])
+    AM_CONDITIONAL([ENABLE_MODPLUG], [test x"$have_modplug" = x"yes"])
 
 
     dnl libmpcdec (optional; enabled by default; external version allowed)
@@ -247,12 +247,11 @@ use internal ffmpeg.
         AC_SUBST(MPCDEC_DEPS)
         AC_SUBST(MPCDEC_LIBS)
     fi
-    AM_CONDITIONAL([MUSEPACK], [test x"$enable_musepack" != x"no"])
-    AM_CONDITIONAL([EXTERNAL_MPCDEC], [test x"$have_mpcdec" = x"yes"])
+    AM_CONDITIONAL([ENABLE_MUSEPACK], [test x"$enable_musepack" != x"no"])
+    AM_CONDITIONAL([WITH_EXTERNAL_LIBMPCDEC], [test x"$have_mpcdec" = x"yes"])
 
 
     dnl libw32dll (optional; x86 only; enabled if using GNU as; GNU as required)
-    dnl REVISIT: fixup with_gnu_as stuff
     AC_ARG_ENABLE([w32dll],
                   [AS_HELP_STRING([--disable-w32dll], [Disable Win32 DLL support])],
                   [], [enable_w32dll="$with_gnu_as"])
@@ -278,7 +277,7 @@ use internal ffmpeg.
                     [], [w32_path="/usr/lib/codecs"])
         AC_SUBST(w32_path)
     fi
-    AM_CONDITIONAL([HAVE_W32DLL], [test x"$enable_w32dll" != x"no"])
+    AM_CONDITIONAL([ENABLE_W32DLL], [test x"$enable_w32dll" != x"no"])
 
 
     dnl mlib
@@ -323,10 +322,10 @@ use internal ffmpeg.
                   [], [enable_mng=yes])
     if test x"$with_mng" != x"no"; then
         AC_CHECK_LIB([mng], [mng_initialize],
-                     [AC_CHECK_HEADERS([libmng.h], [MNG_LIBS="-lmng"], [enable_mng=no])], [enable_mng=no])
+                     [AC_CHECK_HEADERS([libmng.h], [MNG_LIBS="-lmng"], [enable_mng=yes])], [enable_mng=no])
         AC_SUBST(MNG_LIBS)
     fi
-    AM_CONDITIONAL([HAVE_LIBMNG], [test x"$enable_mng" != x"no"])
+    AM_CONDITIONAL([ENABLE_MNG], [test x"$enable_mng" != x"no"])
 
 
     dnl Ogg/Speex (optional; enabled by default; external)
@@ -340,7 +339,7 @@ use internal ffmpeg.
             AC_DEFINE([HAVE_SPEEX], 1, [Define this if you have speex])
         fi
     fi
-    AM_CONDITIONAL([HAVE_SPEEX], [test x"$have_speex" = x"yes"])
+    AM_CONDITIONAL([ENABLE_SPEEX], [test x"$have_speex" = x"yes"])
 
 
     dnl Ogg/Theora (optional; enabled by default; external)
@@ -354,7 +353,7 @@ use internal ffmpeg.
             AC_DEFINE([HAVE_THEORA], 1, [Define this if you have theora])
         fi
     fi
-    AM_CONDITIONAL([HAVE_THEORA], [test x"$have_theora" = x"yes"])
+    AM_CONDITIONAL([ENABLE_THEORA], [test x"$have_theora" = x"yes"])
 
 
     dnl Ogg/Vorbis (optional; enabled by default; external)
@@ -366,7 +365,7 @@ use internal ffmpeg.
             AC_MSG_ERROR([Vorbis support requested, but libvorbis not found])
         fi
     fi
-    AM_CONDITIONAL([HAVE_VORBIS], [test x"$have_vorbis" = x"yes"])
+    AM_CONDITIONAL([ENABLE_VORBIS], [test x"$have_vorbis" = x"yes"])
 
 
     dnl real (optional; default depends on platform)
@@ -404,7 +403,7 @@ use internal ffmpeg.
     if test x"$with_wavpack" != x"no"; then
         PKG_CHECK_MODULES([WAVPACK], [wavpack], [have_wavpack=yes])
     fi
-    AM_CONDITIONAL([HAVE_WAVPACK], [test x"$have_wavpack" = x"yes"])
+    AM_CONDITIONAL([ENABLE_WAVPACK], [test x"$have_wavpack" = x"yes"])
 
 
     dnl Only enable building dmx image if either gdk_pixbuf or ImageMagick are enabled

@@ -76,7 +76,7 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
             AC_MSG_ERROR([ALSA support requested but not found.])
         fi
     fi
-    AM_CONDITIONAL([HAVE_ALSA], [test x"$have_alsa" = x"yes"])
+    AM_CONDITIONAL([ENABLE_ALSA], [test x"$have_alsa" = x"yes"])
 
 
     dnl aRts support
@@ -89,7 +89,7 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
     else
         no_arts=yes
     fi
-    AM_CONDITIONAL([HAVE_ARTS], [test x"$no_arts" != x"yes"])
+    AM_CONDITIONAL([ENABLE_ARTS], [test x"$no_arts" != x"yes"])
 
 
     dnl CoreAudio for Mac OS X
@@ -98,7 +98,7 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
                   [AS_HELP_STRING([--enable-coreaudio], [Enable support for Mac OS X CoreAudio])],
                   [have_coreaudio="$enableval"],
                   [test $default_enable_coreaudio = disable && have_coreaudio="no"])
-    AM_CONDITIONAL([HAVE_COREAUDIO], [test x"$have_coreaudio" != x"no"])
+    AM_CONDITIONAL([ENABLE_COREAUDIO], [test x"$have_coreaudio" != x"no"])
 
 
     dnl EsounD support
@@ -113,7 +113,7 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
             AC_DEFINE([HAVE_ESD], 1, [Define this if you have EsounD installed])
         fi
     fi
-    AM_CONDITIONAL([HAVE_ESD], [test x"$have_esound" = x"yes"])
+    AM_CONDITIONAL([ENABLE_ESD], [test x"$have_esound" = x"yes"])
 
 
     dnl FusionSound support
@@ -126,7 +126,7 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
     else
         no_fusionsound=yes
     fi
-    AM_CONDITIONAL([HAVE_FUSIONSOUND], [test x"$no_fusionsound" != x"yes"])
+    AM_CONDITIONAL([ENABLE_FUSIONSOUND], [test x"$no_fusionsound" != x"yes"])
 
 
     dnl IRIX style audio interface
@@ -145,7 +145,7 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
             AC_SUBST(IRIXAL_STATIC_LIB)
         fi
     fi
-    AM_CONDITIONAL([HAVE_IRIXAL], [test x"$am_cv_have_irixal" = x"yes"])
+    AM_CONDITIONAL([ENABLE_IRIXAL], [test x"$am_cv_have_irixal" = x"yes"])
 
 
     dnl JACK support
@@ -158,7 +158,7 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
             AC_MSG_ERROR([Jack support requested, but Jack not found])
         fi
     fi
-    AM_CONDITIONAL([HAVE_JACK], [test x"$have_jack" = x"yes"])
+    AM_CONDITIONAL([ENABLE_JACK], [test x"$have_jack" = x"yes"])
 
 
     dnl OSS (Open Sound System)
@@ -179,7 +179,7 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
              #endif
             ])
     fi
-    AM_CONDITIONAL([HAVE_OSS], [test x"$have_ossaudio" = x"yes"])
+    AM_CONDITIONAL([ENABLE_OSS], [test x"$have_ossaudio" = x"yes"])
 
 
     dnl PulseAudio
@@ -189,7 +189,7 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
     if test x"$with_pulseaudio" != x"no"; then
         PKG_CHECK_MODULES([PULSEAUDIO], [libpulse], [have_pulseaudio="yes"], [have_pulseaudio="no"])
     fi
-    AM_CONDITIONAL([HAVE_PULSEAUDIO], [test x"$have_pulseaudio" = x"yes"])
+    AM_CONDITIONAL([ENABLE_PULSEAUDIO], [test x"$have_pulseaudio" = x"yes"])
 
 
     dnl SUN style audio interface
@@ -209,5 +209,5 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
            AC_CHECK_MEMBERS([audio_info_t.output_muted])
         fi
     fi
-    AM_CONDITIONAL([HAVE_SUNAUDIO], [test x"$have_sunaudio" = x"yes"])
+    AM_CONDITIONAL([ENABLE_SUNAUDIO], [test x"$have_sunaudio" = x"yes"])
 ])dnl XINE_AUDIO_OUT_PLUGINS

@@ -3,11 +3,11 @@ include $(top_srcdir)/misc/Makefile.common
 AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
-if HAVE_WAVPACK
+if ENABLE_WAVPACK
 xineplug_wavpack = xineplug_wavpack.la
 endif
 
-if HAVE_LIBFLAC
+if ENABLE_LIBFLAC
 xineplug_flac = xineplug_flac.la
 endif
 

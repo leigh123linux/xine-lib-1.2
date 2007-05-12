@@ -5,15 +5,15 @@ AM_LDFLAGS = $(xineplug_ldflags)
 
 EXTRA_DIST = foovideo.c
 
-if HAVE_WAND
+if ENABLE_IMAGEMAGICK
 image_module = xineplug_decode_image.la
 endif
 
-if HAVE_GDK_PIXBUF
+if ENABLE_GDK_PIXBUF
 gdkpixbuf_module = xineplug_decode_gdk_pixbuf.la
 endif
 
-if HAVE_THEORA
+if ENABLE_THEORA
 theora_module = xineplug_decode_theora.la
 endif
 
