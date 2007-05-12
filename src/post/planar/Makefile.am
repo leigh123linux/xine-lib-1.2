@@ -15,10 +15,9 @@ postproc_lib =  $(top_builddir)/contrib/ffmpeg/libpostproc/libpostproc.a \
                 $(top_builddir)/contrib/ffmpeg/libavutil/libavutil.a
 
 $(top_builddir)/contrib/ffmpeg/libpostproc/libpostproc.a:
-	$(MAKE) -C $(top_builddir)/contrib/ffmpeg/ -f makefile.xine libpostproc/libpostproc.a
-
+	$(MAKE) -C $(top_builddir)/contrib ffmpeg/libpostproc/libpostproc.a
 $(top_builddir)/contrib/ffmpeg/libavutil/libavutil.a:
-	$(MAKE) -C $(top_builddir)/contrib/ffmpeg/ -f makefile.xine libpostproc/libpostproc.a
+	$(MAKE) -C $(top_builddir)/contrib ffmpeg/libavutil/libavutil.a
 endif
 
 # Avoid errors with -O0
