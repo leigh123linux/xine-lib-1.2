@@ -74,7 +74,7 @@ AC_DEFUN([AM_PATH_DVDNAV], [
             ac_save_LIBS="$LIBS" LIBS="$DVDNAV_LIBS $LIBS"
 
             # Now check if the installed DVDNAV is sufficiently new. (Also sanity
-            # checks the results of dvdnav-config to some extent
+            # checks the results of dvdnav-config to some extent)
 
             rm -f conf.dvdnavtest
             AC_RUN_IFELSE([AC_LANG_SOURCE([[
@@ -98,8 +98,8 @@ int main(int argc, char *argv[])
     }
     
     /* HP/UX 9 (%@#!) writes to sscanf strings */
-    tmp_version = (char *)strdup("$min_dvdnav_version");
-    if (sscanf(tmp_version, "%d.%d.%d", &major, &minor, &sub) != 3) {
+    tmp_version = strdup("$min_dvdnav_version");
+    if (!tmp_version || sscanf(tmp_version, "%d.%d.%d", &major, &minor, &sub) != 3) {
         printf("%s, bad version string\n", "$min_dvdnav_version");
         exit(1);
     }
@@ -130,10 +130,10 @@ int main(int argc, char *argv[])
     return 1;
 }
             ]])], [], [with_external_dvdnav=no], [with_external_dvdnav=cc])
-            if test x"$no_dvdnav" = x"cc"; then
+            if test x"$with_external_dvdnav" = x"cc"; then
                 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <dvdnav.h>
                                                   #include <stdio.h>]], [[return 0]])],
-                               [], [with_external_dvdnav=no])
+                               [with_external_dvdnav=yes], [with_external_dvdnav=no])
             fi
             CFLAGS="$ac_save_CFLAGS"
             LIBS="$ac_save_LIBS"
@@ -155,9 +155,8 @@ int main(int argc, char *argv[])
                 if test ! -f conf.dvdnavtest ; then
                     echo "*** Could not run DVDNAV test program, checking why..."
                     CFLAGS="$CFLAGS $DVDNAV_CFLAGS"
-                    LIBS="$LIBS $DVDNAV_LIBS"
-                    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <dvdnav.h>
-                                                      #include <stdio.h>]], [[return 0]])],
+                    LIBS="$DVDNAV_LIBS $LIBS"
+                    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <dvdnav.h>]], [[return 0]])],
                                    [echo "*** The test program compiled, but did not run. This usually means"
                                     echo "*** that the run-time linker is not finding DVDNAV or finding the wrong"
                                     echo "*** version of DVDNAV. If it is not finding DVDNAV, you'll need to set your"
@@ -172,8 +171,8 @@ int main(int argc, char *argv[])
                                     echo "*** exact error that occured. This usually means DVDNAV was incorrectly installed"
                                     echo "*** or that you have moved DVDNAV since it was installed. In the latter case, you"
                                     echo "*** may want to edit the dvdnav-config script: $DVDNAV_CONFIG"])
-                        CFLAGS="$ac_save_CFLAGS"
-                        LIBS="$ac_save_LIBS"
+                    CFLAGS="$ac_save_CFLAGS"
+                    LIBS="$ac_save_LIBS"
                 else
                     rm -f conf.dvdnavtest
                 fi
