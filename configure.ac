@@ -833,28 +833,24 @@ dnl --------------------------
 dnl checks for system services
 dnl --------------------------
 
-if test x"$with_x" != x"no"; then
-    dnl Do a package check first, falling back to autoconf's built in checks if
-    dnl no package is found.
-    PKG_CHECK_MODULES([X], [x11 xext], [have_x=yes; no_x=no], [
-        dnl Even as of 2.61, autoconf is not smart enough to find the X include
-        dnl and library paths on Mac OS X, so seed them automatically if they're
-        dnl not specified on the configure command-line.
-        case "$host_os" in
-            darwin*)
-                test x"$x_includes" = x"NONE" && x_includes="/usr/X11R6/include"
-                test x"$x_libraries" = x"NONE" && x_libraries="/usr/X11R6/lib"
-                ;;
-        esac
+dnl Even as of 2.61, autoconf is not smart enough to find the X include
+dnl and library paths on Mac OS X, so seed them automatically if they're
+dnl not specified on the configure command-line.
+case "$host_os" in
+    darwin*)
+        test x"$x_includes" = x"NONE" && x_includes="/usr/X11R6/include"
+        test x"$x_libraries" = x"NONE" && x_libraries="/usr/X11R6/lib"
+        ;;
+esac
 
-        dnl Check for Xwindows using the autoconf AC_PATH_XTRA macro, which is an
-        dnl extension of AC_PATH_X that sets X_CFLAGS and X_LIBS.  It will also set
-        dnl X_EXTRA_LIBS and X_PRE_LIBS.
-        AC_PATH_XTRA
-        if test x"$no_x" != x"yes"; then
-            X_LIBS="$X_PRE_LIBS $X_LIBS -lX11 $X_EXTRA_LIBS"
-        fi
-    ])
+dnl Check for Xwindows using the autoconf AC_PATH_XTRA macro, which is an
+dnl extension of AC_PATH_X that sets X_CFLAGS and X_LIBS.  It will also set
+dnl X_EXTRA_LIBS and X_PRE_LIBS.
+AC_PATH_XTRA
+if test x"$no_x" != x"yes"; then
+    X_LIBS="$X_PRE_LIBS $X_LIBS -lX11 $X_EXTRA_LIBS"
+elif test x"$have_x" = x"no"; then
+    PKG_CHECK_MODULES([X], [x11 xext], [have_x=yes; no_x=no], [have_x=no; no_x=yes])
 fi
 
 dnl Check for XShm support (required for xine X support)
