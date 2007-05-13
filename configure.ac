@@ -833,7 +833,54 @@ dnl --------------------------
 dnl checks for system services
 dnl --------------------------
 
-XINE_X11_SUPPORT
+if test x"$with_x" != x"no"; then
+    dnl Do a package check first, falling back to autoconf's built in checks if
+    dnl no package is found.
+    PKG_CHECK_MODULES([X], [x11 xext], [have_x=yes; no_x=no], [
+        dnl Even as of 2.61, autoconf is not smart enough to find the X include
+        dnl and library paths on Mac OS X, so seed them automatically if they're
+        dnl not specified on the configure command-line.
+        case "$host_os" in
+            darwin*)
+                test x"$x_includes" = x"NONE" && x_includes="/usr/X11R6/include"
+                test x"$x_libraries" = x"NONE" && x_libraries="/usr/X11R6/lib"
+                ;;
+        esac
+
+        dnl Check for Xwindows using the autoconf AC_PATH_XTRA macro, which is an
+        dnl extension of AC_PATH_X that sets X_CFLAGS and X_LIBS.  It will also set
+        dnl X_EXTRA_LIBS and X_PRE_LIBS.
+        AC_PATH_XTRA
+        if test x"$no_x" != x"yes"; then
+            X_LIBS="$X_PRE_LIBS $X_LIBS -lX11 $X_EXTRA_LIBS"
+        fi
+    ])
+fi
+
+dnl Check for XShm support (required for xine X support)
+if test x"$no_x" != x"yes"; then
+    AC_DEFINE([HAVE_X11], 1, [Define this if you have X11R6 installed])
+    ac_save_CPPFLAGS="$CPPFLAGS" CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+    AC_CHECK_HEADERS([X11/extensions/XShm.h], [],
+                     [AC_MSG_ERROR([XShm extension is required])],
+                     [#include <X11/Xlib.h>])
+    CPPFLAGS="$ac_save_CPPFLAGS"
+    AC_CHECK_LIB([Xext], [main],
+                 [X_LIBS="$X_LIBS -lXext"], [AC_MSG_ERROR([libXext is required])],
+                 [$X_LIBS])
+fi
+AM_CONDITIONAL([HAVE_X11], [test x"$no_x" != x"yes"])
+
+dnl Locate libraries needed for X health check
+soname_script="/[[0-9]]$/! d; s%^.*/%%
+t q
+b
+:q
+q"
+x_lib_location="`ls -1 "${x_libraries:-/usr/local/lib}/libX11.$acl_cv_shlibext"* "${x_libraries:-/usr/lib}/libX11.$acl_cv_shlibext"* 2>/dev/null | sed -e \"${soname_script}\"`"
+AC_DEFINE_UNQUOTED([LIBX11_SO], "${x_lib_location:-libX11.$acl_cv_shlibext}", [The soname of libX11, needed for dlopen()])
+x_lib_location="`ls -1 "${x_libraries:-/usr/local/lib}/libXv.$acl_cv_shlibext"*  "${x_libraries:-/usr/lib}/libXv.$acl_cv_shlibext"*  2>/dev/null | sed -e \"${soname_script}\"`"
+AC_DEFINE_UNQUOTED([LIBXV_SO],  "${x_lib_location:-libXv.$acl_cv_shlibext}",  [The soname of libXv, needed for dlopen()])
 
 dnl _FILE_OFFSET_BITS   (AC_SYS_LARGEFILE; ac_cv_sys_file_offset_bits)
 dnl _LARGE_FILES        (AC_SYS_LARGEFILE; ac_cv_sys_large_files)

@@ -25,7 +25,6 @@ EXTRA_DIST = \
 	libfame.m4 \
 	macosx.m4 \
 	objc.m4 \
-	opengl.m4 \
 	pkg.m4 \
 	programs.m4 \
 	pthreads.m4 \
@@ -34,5 +33,4 @@ EXTRA_DIST = \
 	types.m4 \
 	video_out.m4 \
 	xine.m4 \
-	x11.m4 \
 	xv.m4

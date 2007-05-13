@@ -219,8 +219,8 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     echo " * video driver plugins:"
     if test "x$no_x" != "xyes"; then
         echo "   - XShm (X11 shared memory)"
-        dnl synfb
-        if test "x$enable_syncfb" != "xno"; then
+        dnl syncfb
+        if test "x$have_syncfb" = "xyes"; then
             echo "   - SyncFB (for Matrox G200/G400 cards)"
         fi
         dnl Xv
@@ -243,9 +243,12 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
         if test "x$ac_have_xvmc" = "xyes"; then
             echo "   - XvMC (XVideo motion compensation)"
         fi
-        if test "x$ac_have_opengl" = "xyes" -a "x$ac_have_glut" = "xyes" -o \
-                x$"ac_have_opengl" = "xyes" -a "x$ac_have_glu" = "xyes"; then	
-            echo "   - OpenGL"
+        if test x"$have_opengl" = "xyes"; then
+            if test x"$have_glu" = x"yes"; then
+                echo "   - OpenGL (with GLU support)"
+            else
+                echo "   - OpenGL"
+            fi
         fi
         if test "x$ac_have_sunfb" = "xyes"; then
             if test "x$ac_have_sundga" = "xyes"; then
@@ -289,7 +292,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
             echo "   - dxr3 (Hollywood+ and Creative dxr3, mpeg video only)"
         fi
     fi
-    if test "x$enable_vidix" = "xyes"; then
+    if test "x$have_vidix" = "xyes"; then
         echo $ECHO_N "   - vidix ("
       
         if test "x$no_x" != "xyes"; then

@@ -38,7 +38,7 @@ endif
 if HAVE_XXMC
 xxmc_module = xineplug_vo_out_xxmc.la
 endif
-if HAVE_OPENGL
+if ENABLE_OPENGL
 opengl_module = xineplug_vo_out_opengl.la
 endif
 if ENABLE_SYNCFB
