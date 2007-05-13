@@ -171,7 +171,7 @@ use internal ffmpeg.
                 AC_MSG_RESULT([*** no usable version of libmad found, using internal copy ***])
             fi
         fi
-        if test x"$with_external_libmad" != x"no"; then
+        if test x"$with_external_libmad" = x"no"; then
             AC_MSG_RESULT([Using included libmad support])
             case "$host_or_hostalias" in
                 i?86-* | k?-* | athlon-* | pentium*-)
