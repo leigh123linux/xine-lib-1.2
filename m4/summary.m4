@@ -224,23 +224,23 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
             echo "   - SyncFB (for Matrox G200/G400 cards)"
         fi
         dnl Xv
-        if test "x$ac_have_xv" = "xyes"; then
-            if test "x$ac_have_xv_static" = "xyes"; then
+        if test "x$have_xv" = "xyes"; then
+            if test "x$have_xv_static" = "xyes"; then
                 echo "   - Xv (XVideo *static*)"
             else
                 echo "   - Xv (XVideo *shared*)"
             fi
         fi
         dnl XxMC
-        if test "x$ac_have_xxmc" = "xyes"; then
-            if test "x$ac_have_vldxvmc_h" = "xyes"; then
+        if test "x$have_xxmc" = "xyes"; then
+            if test "x$have_vldexts" = "xyes"; then
                 echo "   - XxMC (XVideo extended motion compensation)"
             else
                 echo "   - XxMC (XVideo motion compensation - vld extensions DISABLED)"
             fi
         fi
         dnl XvMC
-        if test "x$ac_have_xvmc" = "xyes"; then
+        if test "x$have_xvmc" = "xyes"; then
             echo "   - XvMC (XVideo motion compensation)"
         fi
         if test x"$have_opengl" = "xyes"; then
@@ -250,8 +250,8 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
                 echo "   - OpenGL"
             fi
         fi
-        if test "x$ac_have_sunfb" = "xyes"; then
-            if test "x$ac_have_sundga" = "xyes"; then
+        if test "x$have_sunfb" = "xyes"; then
+            if test "x$have_sundga" = "xyes"; then
                 echo "   - PGX64 (for Sun XVR100/PGX64/PGX24 cards)"
                 echo "   - PGX32 (for Sun PGX32 cards)"
             fi

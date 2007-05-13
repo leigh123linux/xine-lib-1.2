@@ -10,8 +10,10 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
     dnl - directx is Windows only
     dnl - dxr3 is Linux only
     dnl - Mac OS X video is Mac OS X only
+    dnl - OpenGL requires Xwindows
     dnl - SyncFB is Linux only, but disabled by default
     dnl - Vidix is FreeBSD and Linux only
+    dnl - XvMC and xxmc depend on Xv
 
     default_enable_aalib=enable
     default_enable_dha_kmod=disable
@@ -23,8 +25,9 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
     default_enable_macosx_video=disable
     default_enable_opengl=enable
     default_enable_syncfb=disable
-    default_enable_xinerama=enable
     default_enable_vidix=disable
+    default_enable_xinerama=enable
+    default_enable_xvmc=enable
 
     default_with_caca=with
     default_with_libstk=without
@@ -259,7 +262,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
     dnl SDL
     AC_ARG_WITH([sdl],
                 [AS_HELP_STRING([--without-sdl], [Build without SDL video output])],
-                [test x"$withval" != x"no" && withval="yes"],
+                [test x"$withval" != x"no" && with_sdl="yes"],
                 [test $default_with_sdl = without && with_sdl="no"])
     if test x"$with_sdl" != x"no"; then
         PKG_CHECK_MODULES([SDL], [sdl], [have_sdl=yes], [have_sdl=no])
@@ -271,21 +274,21 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
 
     dnl Solaris framebuffer device support (exists for more than just Solaris)
-    AC_CHECK_HEADERS([sys/fbio.h], [ac_have_sunfb=yes], [ac_have_sunfb=no])
-    if test x"$ac_have_sunfb" = x"yes"; then
+    AC_CHECK_HEADERS([sys/fbio.h], [have_sunfb=yes], [have_sunfb=no])
+    if test x"$have_sunfb" = x"yes"; then
         saved_CPPFLAGS="$CPPFLAGS" CPPFLAGS="$CPPFLAGS -I/usr/openwin/include"
         saved_LDFLAGS="$LDFLAGS" LDFLAGS="$LDFLAGS -L/usr/openwin/lib"
         AC_CHECK_LIB([dga], [XDgaGrabDrawable],
                      [AC_CHECK_HEADER([dga/dga.h],
                                       [SUNDGA_CFLAGS="-I/usr/openwin/include"
                                        SUNDGA_LIBS="-L/usr/openwin/lib -R/usr/openwin/lib -ldga"
-                                       ac_have_sundga=yes])])
+                                       have_sundga=yes])])
         CPPFLAGS="$saved_CPPFLAGS" LDFLAGS="$saved_LDFLAGS"
         AC_SUBST(SUNDGA_CPPFLAGS)
         AC_SUBST(SUNDGA_LIBS)
     fi
-    AM_CONDITIONAL([ENABLE_SUNDGA], [test x"$ac_have_sundga" = x"yes"])
-    AM_CONDITIONAL([ENABLE_SUNFB], [test x"$ac_have_sunfb" = x"yes"])
+    AM_CONDITIONAL([ENABLE_SUNDGA], [test x"$have_sundga" = x"yes"])
+    AM_CONDITIONAL([ENABLE_SUNFB], [test x"$have_sunfb" = x"yes"])
 
 
     dnl syncfb (Linux only)
@@ -353,7 +356,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
     dnl Xinerama
     AC_ARG_ENABLE([xinerama],
                   [AS_HELP_STRING([--enable-xinerama], [enable support for Xinerama])],
-                  [test x"$enableval" != x"no" && enableval="yes"],
+                  [test x"$enableval" != x"no" && enable_xinerama="yes"],
                   [test $default_enable_xinerama = disable && enable_xinerama="no"])
     if test x"$enable_xinerama" != x"no"; then
         if test x"$no_x" != x"yes"; then
@@ -373,5 +376,142 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
 
     dnl xv
-    XINE_XV_SUPPORT
+    AC_ARG_WITH([xv-path],
+                [AS_HELP_STRING([--with-xv-path=path], [where libXv is installed])])
+    dnl With recent XFree86 or Xorg, dynamic linking is preferred!
+    dnl Only dynamic linking is possible when using libtool < 1.4.0
+    AC_ARG_ENABLE([static-xv],
+                  [AS_HELP_STRING([--enable-static-xv], [Enable this to force linking against libXv.a])],
+                  [test x"$enableval" != x"no" && xv_prefer_static="yes"], [xv_prefer_static="no"])
+    case "$host_or_hostalias" in
+        hppa*) xv_libexts="$acl_cv_shlibext" ;;
+        *)
+            if test x"$xv_prefer_static" = x"yes"; then  
+                xv_libexts="$acl_cv_libext $acl_cv_shlibext"
+            else
+                xv_libexts="$acl_cv_shlibext $acl_cv_libext"
+            fi
+            ;;
+    esac
+    if test x"$no_x" != x"yes"; then
+        PKG_CHECK_MODULES([XV], [xv], [have_xv=yes], [have_xv=no])
+        if test x"$have_xv" = x"no"; then
+            dnl No Xv package -- search for it
+            for xv_libext in $xv_libexts; do
+                xv_lib="libXv.$xv_libext"
+                AC_MSG_CHECKING([for $xv_lib])
+                for xv_try_path in "$with_xv_path" "$x_libraries" /usr/X11R6/lib /usr/lib; do
+                    if test x"$xv_try_path" != x"" && test -f "$xv_try_path/$xv_lib"; then
+                        case $xv_lib in
+                            *.$acl_cv_libext)   have_xv_static=yes xv_try_libs="$xv_try_path/$xv_lib" ;;
+                            *.$acl_cv_shlibext) have_xv_static=no  xv_try_libs="-L$xv_try_path -lXv" ;;
+                        esac
+                        ac_save_LIBS="$LIBS" LIBS="$xv_try_libs $X_PRE_LIBS $X_LIBS $X_EXTRA_LIBS $LIBS"
+                        AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[XvShmCreateImage()]])], [have_xv=yes], [])
+                        LIBS="$ac_save_LIBS"
+                        if test x"$have_xv" = x"yes"; then
+                            AC_MSG_RESULT([$xv_try_path])
+                            XV_LIBS="$xv_try_libs"
+                            break
+                        fi
+                    fi
+                done
+                test x"$have_xv" = x"yes" && break
+                AC_MSG_RESULT([no])
+            done
+        fi
+        if test x"$have_xv" = x"yes"; then
+            AC_DEFINE([HAVE_XV], 1, [Define this if you have libXv installed])
+        fi
+    fi
+    AM_CONDITIONAL([HAVE_XV], [test x"$have_xv" = x"yes"])
+
+
+    dnl XvMC
+    AC_ARG_ENABLE([xvmc],
+                  [AS_HELP_STRING([--enable-xvmc], [Disable xxmc and XvMC outplut plugins])],
+                  [test x"$enableval" != x"no" && enable_xvmc="yes"],
+                  [test $default_enable_xvmc = disable && enable_xvmc="no"])
+    AC_ARG_WITH([xvmc-path],
+                [AS_HELP_STRING([--with-xvmc-path=PATH], [where libXvMC for the xvmc plugin are installed])],
+                [], [with_xvmc_path="$x_libraries"])
+    AC_ARG_WITH([xvmc-lib],
+                [AS_HELP_STRING([--with-xvmc-lib=LIBNAME], [The name of the XvMC library libLIBNAME.so for the xvmc plugin])],
+                [], [with_xvmc_lib="XvMCW"])
+    AC_ARG_WITH([xxmc-path],
+                [AS_HELP_STRING([--with-xxmc-path=PATH], [Where libXvMC for the xxmc plugin are installed])],
+                [], [with_xxmc_path="$x_libraries"])
+    AC_ARG_WITH([xxmc-lib],
+                [AS_HELP_STRING([--with-xxmc-lib=LIBNAME], [The name of the XvMC library libLIBNAME.so for the xxmc plugin])],
+                [], [with_xxmc_lib="XvMCW"])
+    if test x"$enable_xvmc" != x"no"; then
+        if test x"$have_xv" != x"yes"; then
+            have_xvmc=no have_xxmc=no have_xvmc_or_xxmc=no
+        else
+            ac_save_CPPFLAGS="$CPPFLAGS" CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+            ac_save_LIBS="$LIBS"
+
+            dnl Check for xxmc
+            XXMC_LIBS="-L$with_xxmc_path -l$with_xxmc_lib"
+            AC_SUBST(XXMC_LIBS)
+            AC_MSG_CHECKING([whether to enable the xxmc plugin with VLD extensions])
+            AC_MSG_RESULT([])
+            LIBS="$XXMC_LIBS $X_LIBS $XV_LIBS $LIBS"
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[XvMCPutSlice()]])], [have_xxmc=yes],
+                           [LIBS="$XXMC_LIBS -lXvMC $X_LIBS $XV_LIBS $LIBS"
+                            AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[XvMCPutSlice()]])],
+                                           [have_xxmc=yes XXMC_LIBS="$XXMC_LIBS -lXvMC"])])
+            if test x"$have_xxmc" = x"yes"; then
+                AC_CHECK_HEADERS([X11/extensions/vldXvMC.h],
+                                 [have_vldexts=yes
+                                  AC_DEFINE([HAVE_VLDXVMC], 1, [Define if you have vldXvMC.h])],
+                                  [have_vldexts=no])
+            else
+                AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[XvMCCreateContext()]])], [have_xxmc=yes],
+                               [LIBS="$XXMC_LIBS -lXvMC $X_LIBS $XV_LIBS $LIBS"
+                                AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[XvMCCreateContext()]])],
+                                               [have_xxmc=yes XXMC_LIBS="$XXMC_LIBS -lXvMC"])])
+            fi
+            if test x"$have_xxmc" = x"yes"; then
+                AC_CHECK_HEADERS([X11/extensions/XvMC.h], [], [have_xxmc=no])
+            fi
+
+            dnl Check for xvmc
+            XVMC_LIBS="-L$with_xvmc_path -l$with_xvmc_lib"
+            AC_SUBST(XVMC_LIBS)
+            AC_MSG_CHECKING([whether to enable the xvmc plugin])
+            AC_MSG_RESULT([])
+            LIBS="$XVMC_LIBS $X_LIBS $XV_LIBS $LIBS"
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[XvMCCreateContext()]])], [have_xvmc=yes],
+                           [LIBS="$XVMC_LIBS -lXvMC $X_LIBS $XV_LIBS $LIBS"
+                            AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[XvMCCreateContext()]])],
+                                           [have_xvmc=yes XVMC_LIBS="$XVMC_LIBS -lXvMC"])])
+            if test x"$have_xvmc" = x"yes"; then
+                AC_CHECK_HEADERS([X11/extensions/XvMC.h], [], [have_xvmc=no])
+            fi
+            CPPFLAGS="$ac_save_CPPFLAGS" LIBS="$ac_save_LIBS"
+        fi
+        have_xvmc_or_xxmc="$have_xvmc"; test x"$have_xxmc" = x"yes" && have_xvmc_or_xxmc=yes
+        if test x"$enable_xvmc" = x"yes" && test x"$have_xvmc_or_xxmc" != x"yes"; then
+            AC_MSG_ERROR([XvMC support requested, but neither XvMC nor xxmc could be found, or X is disabled])
+        else
+            if test x"$have_xvmc" = x"yes"; then
+                AC_DEFINE([HAVE_XVMC], 1, [Define this if you have an XvMC library and XvMC.h installed.])
+                AC_MSG_RESULT([*** Enabling old xvmc plugin.])
+            else
+                AC_MSG_RESULT([*** Disabling old xvmc plugin.])
+            fi
+            if test x"$have_xxmc" = x"yes"; then
+                if test x"$have_vldexts" = x"yes"; then
+                    AC_MSG_RESULT([*** Enabling xxmc plugin with vld extensions.])
+                else
+                    AC_MSG_RESULT([*** Enabling xxmc plugin for standard XvMC *only*.])
+                fi
+            else
+                AC_MSG_RESULT([*** Disabling xxmc plugin.])
+            fi
+        fi
+    fi
+    AM_CONDITIONAL([ENABLE_XVMC], [test x"$have_xvmc" = x"yes"])
+    AM_CONDITIONAL([ENABLE_XXMC], [test x"$have_xxmc" = x"yes"])
 ])dnl XINE_VIDEO_OUT_PLUGINS

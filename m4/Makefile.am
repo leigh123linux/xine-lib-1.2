@@ -32,5 +32,4 @@ EXTRA_DIST = \
 	summary.m4 \
 	types.m4 \
 	video_out.m4 \
-	xine.m4 \
-	xv.m4
+	xine.m4

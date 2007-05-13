@@ -32,10 +32,10 @@ xshm_module = xineplug_vo_out_xshm.la
 if HAVE_XV
 xv_module = xineplug_vo_out_xv.la
 endif
-if HAVE_XVMC
+if ENABLE_XVMC
 xvmc_module = xineplug_vo_out_xvmc.la
 endif
-if HAVE_XXMC
+if ENABLE_XXMC
 xxmc_module = xineplug_vo_out_xxmc.la
 endif
 if ENABLE_OPENGL
