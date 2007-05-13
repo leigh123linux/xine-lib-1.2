@@ -2899,13 +2899,13 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     {
       fprintf(stderr,"input_dvb: 2a %x\n",tuner->feinfo.type); 
       /*
-       * This is dvbc://<channel name>:<qam tuning parameters>
+       * This is dvba://<channel name>:<atsc tuning parameters>
        */
        if (tuner->feinfo.type != FE_ATSC) 
        {
 	 fprintf(stderr,"input_dvb: FAILED 1\n"); 
          xprintf(this->class->xine, XINE_VERBOSITY_LOG,
-	 _("input_dvb: dvbc mrl specified but the tuner doesn't appear to be QAM (DVB-C)\n"));
+	 _("input_dvb: dvba mrl specified but the tuner doesn't appear to be ATSC (DVB-A)\n"));
          tuner_dispose(tuner);
          return 0;
       }
