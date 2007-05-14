@@ -57,15 +57,17 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
 
     dnl Ascii-Art
-    dnl REVISIT: FIX AM_PATH_AALIB
     AC_ARG_ENABLE([aalib],
                   [AS_HELP_STRING([--enable-aalib], [enable support for AALIB])],
                   [test x"$enableval" != x"no" && enable_aalib="yes"],
                   [test $default_enable_aalib = disable && enable_aalib="no"])
     if test x"$enable_aalib" != x"no"; then
-        AM_PATH_AALIB([1.4], [], [AC_MSG_RESULT([*** All of AALIB dependent parts will be disabled ***])])
+        ACX_PACKAGE_CHECK([AALIB], [1.4], [aalib-config], [have_aalib=yes], [have_aalib=no])
+        if test x"$enable_aalib" = x"yes" && test x"$have_aalib" != x"yes"; then
+            AC_MSG_ERROR([aalib support requested, but aalib not found])
+        fi
     fi
-    AM_CONDITIONAL([ENABLE_AA], [test x"$no_aalib" != x"yes"])
+    AM_CONDITIONAL([ENABLE_AA], [test x"$have_aalib" = x"yes"])
 
 
     dnl Color AsCii Art
@@ -131,8 +133,8 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
         if test x"$have_libfame" = x"yes"; then
             have_encoder=yes
             AC_DEFINE([HAVE_LIBFAME], 1, [Define this if you have libfame mpeg encoder installed (fame.sf.net)])
-            AM_PATH_LIBFAME([0.8.10],
-                            [AC_DEFINE([HAVE_NEW_LIBFAME], 1, [Define this if you have libfame 0.8.10 or above])])
+            ACX_PACKAGE_CHECK([LIBFAME], [0.8.10], [libfame-config],
+                              [AC_DEFINE([HAVE_NEW_LIBFAME], 1, [Define this if you have libfame 0.8.10 or above])])
         fi
         AC_CHECK_LIB([rte], [rte_init],
                      [AC_CHECK_HEADERS([rte.h], [have_librte=yes], [have_librte=no])], [have_librte=no])

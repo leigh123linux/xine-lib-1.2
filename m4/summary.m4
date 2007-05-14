@@ -267,7 +267,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
             echo "   - xcb-xv (XVideo using XCB)"
         fi
     fi
-    if test "x$no_aalib" != "xyes"; then
+    if test "x$have_aalib" = "xyes"; then
         echo "   - aa (Ascii ART)"
     fi
     if test "x$have_caca" = "xyes"; then
@@ -326,7 +326,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     dnl Audio plugins
     echo " * audio driver plugins:"
     test x"$have_alsa" = x"yes"         && echo "   - alsa (ALSA - Advanced Linux Sound Architecture)"
-    test x"$with_arts" != x"no"         && echo "   - arts (aRts - KDE soundserver)"
+    test x"$have_arts" = x"yes"         && echo "   - arts (aRts - KDE soundserver)"
     test x"$have_coreaudio" = x"yes"    && echo "   - CoreAudio (Mac OS X audio driver)"
     test x"$have_directx" = x"yes"      && echo "   - directx (DirectX audio driver)"
     test x"$have_esound" = x"yes"       && echo "   - esd (Enlightened Sound Daemon)"

@@ -80,9 +80,9 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
                 [AS_HELP_STRING([--with-external-dvdnav], [use external dvdnav library (not recommended)])],
                 [], [with_external_dvdnav=no])
     if test x"$with_external_dvdnav" != x"no"; then
-        AM_PATH_DVDNAV([0.1.9],
-                       [AC_DEFINE([HAVE_DVDNAV], 1, [Define this if you have a suitable version of libdvdnav])],
-                       [AC_MSG_RESULT([*** no usable version of libdvdnav found, using internal copy ***])])
+        ACX_PACKAGE_CHECK([DVDNAV], [0.1.9], [dvdnav-config],
+                          [AC_DEFINE([HAVE_DVDNAV], 1, [Define this if you have a suitable version of libdvdnav])],
+                          [AC_MSG_RESULT([*** no usable version of libdvdnav found, using internal copy ***])])
     else
         AC_MSG_RESULT([Using included DVDNAV support])
     fi

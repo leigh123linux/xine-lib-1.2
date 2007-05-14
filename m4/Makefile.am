@@ -11,18 +11,14 @@ endif
 m4data_DATA = xine.m4
 
 EXTRA_DIST = \
-	aa.m4 \
-	arts.m4 \
 	attributes.m4 \
 	audio_out.m4 \
 	decoders.m4 \
 	directx.m4 \
-	dvdnav.m4 \
 	gas.m4 \
 	input.m4 \
 	ioctl_request.m4 \
 	libFLAC.m4 \
-	libfame.m4 \
 	macosx.m4 \
 	objc.m4 \
 	pkg.m4 \

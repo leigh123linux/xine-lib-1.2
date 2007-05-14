@@ -87,10 +87,14 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
                 [test x"$withval" != x"no" && with_arts="yes"],
                 [test $default_with_arts = without && with_arts="no"])
     if test x"$with_arts" != x"no"; then
-        AM_PATH_ARTS([0.9.5],
-                     [AC_DEFINE([HAVE_ARTS], 1, [Define this if you have aRts (libartsc) installed])])
+        ACX_PACKAGE_CHECK([ARTS], [0.9.5], [artsc-config], [have_arts=yes], [have_arts=no])
+        if test x"$with_arts" = x"yes" && test x"$have_arts" != x"yes"; then
+            AC_MSG_ERROR([aRts support requested, but aRts not found])
+        elif test x"$have_arts" = x"yes"; then
+            AC_DEFINE([HAVE_ARTS], 1, [Define this if you have aRts (libartsc) installed])
+        fi
     fi
-    AM_CONDITIONAL([ENABLE_ARTS], [test x"$with_arts" != x"no"])
+    AM_CONDITIONAL([ENABLE_ARTS], [test x"$have_arts" = x"yes"])
 
 
     dnl CoreAudio for Mac OS X
