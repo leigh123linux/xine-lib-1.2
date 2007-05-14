@@ -851,21 +851,21 @@ dnl X_EXTRA_LIBS and X_PRE_LIBS.
 AC_PATH_XTRA
 if test x"$no_x" != x"yes"; then
     X_LIBS="$X_PRE_LIBS $X_LIBS -lX11 $X_EXTRA_LIBS"
+    AC_CHECK_LIB([Xext], [main],
+                 [X_LIBS="$X_LIBS -lXext"], [AC_MSG_ERROR([libXext is required])],
+                 [$X_LIBS])
 elif test x"$have_x" = x"no"; then
     PKG_CHECK_MODULES([X], [x11 xext], [have_x=yes; no_x=no], [have_x=no; no_x=yes])
 fi
 
 dnl Check for XShm support (required for xine X support)
 if test x"$no_x" != x"yes"; then
-    AC_DEFINE([HAVE_X11], 1, [Define this if you have X11R6 installed])
     ac_save_CPPFLAGS="$CPPFLAGS" CPPFLAGS="$CPPFLAGS $X_CFLAGS"
     AC_CHECK_HEADERS([X11/extensions/XShm.h], [],
                      [AC_MSG_ERROR([XShm extension is required])],
                      [#include <X11/Xlib.h>])
     CPPFLAGS="$ac_save_CPPFLAGS"
-    AC_CHECK_LIB([Xext], [main],
-                 [X_LIBS="$X_LIBS -lXext"], [AC_MSG_ERROR([libXext is required])],
-                 [$X_LIBS])
+    AC_DEFINE([HAVE_X11], 1, [Define this if you have X11R6 installed])
 fi
 AM_CONDITIONAL([HAVE_X11], [test x"$no_x" != x"yes"])
 
