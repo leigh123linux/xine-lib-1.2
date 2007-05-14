@@ -1,5 +1,7 @@
 AC_PREREQ(2.59)
 
+m4_include([m4/objc.m4])
+
 dnl Note that autoconf/autoheader/automake cache using autom4te, so version.sh
 dnl will only be run if configure.ac has changed.  This must be done before
 dnl AC_INIT so that XINE_VERSION_SPEC, which is an m4 macro, is available.
