@@ -18,9 +18,11 @@ AC_DEFUN([MACOSX_UNIVERSAL_BINARIES], [
                 AC_MSG_ERROR([Universal binaries can only be built on Darwin])
                 ;;
         esac
+        AC_SUBST(UNIVERSAL_ARCHES)
 
-        UNIVERSAL_CFLAGS="$UNIVERSAL_CFLAGS -isysroot /Developer/SDKs/MacOSX10.4u.sdk"
-        UNIVERSAL_LDFLAGS="$UNIVERSAL_LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk"
+        CFLAGS="$CFLAGS -isysroot /Developer/SDKs/MacOSX10.4u.sdk"
+        LDFLAGS="$LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk"
+
         if test x"$UNIVERSAL_ARCHES" != x"" ; then
             # Forcibly disable dependency tracking for Universal builds, because -M
             # does not work with multiple -arch arguments on the gcc command-line.
@@ -38,7 +40,4 @@ AC_DEFUN([MACOSX_UNIVERSAL_BINARIES], [
         fi
     fi
     AM_CONDITIONAL([MACOSX_UNIVERSAL_BINARY], [test x"$enable_macosx_universal" = x"yes"])
-    AC_SUBST(UNIVERSAL_ARCHES)
-    AC_SUBST(UNIVERSAL_CFLAGS)
-    AC_SUBST(UNIVERSAL_LDFLAGS)
 ])dnl MACOSX_UNIVERSAL_BINARIES

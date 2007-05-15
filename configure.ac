@@ -1202,7 +1202,11 @@ dnl there have no trailing slash.
 dnl ---------------------------------------------
 
 dnl Note: Brackets [] must be doubled as they are treated as m4 macro quotes.
-cat libtool | sed -e '/sys_lib_search_path_spec=/s/\/\([[ "]]\)/\1/g' > libtool.tmp
+if test x"$enable_macosx_universal" = x"no"; then
+    cat libtool | sed -e '/sys_lib_search_path_spec=/s/\/\([[ "]]\)/\1/g' > libtool.tmp
+else
+    cat libtool | sed -e 's,sys_lib_search_path_spec=.*$,sys_lib_search_path_spec=\"/Developer/SDKs/MacOSX10.4u.sdk/usr/lib\",' > libtool.tmp
+fi
 mv -f libtool.tmp libtool
 chmod +x libtool
 
