@@ -30,6 +30,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
             default_enable_vcd=enable
             ;;
         linux*)
+            default_enable_dvb=enable
             default_enable_v4l=enable
             default_enable_vcd=enable
             ;;
