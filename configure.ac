@@ -767,6 +767,7 @@ dnl optimizations can be enabled by explicitly specifying --enable-optimizations
 AC_ARG_ENABLE([optimizations],
               [AS_HELP_STRING([--disable-optimizations], [Don't try to guess what optimization to enable])],
               [], [test x"$enable_debug" != x"no" && enable_optimizations="no"])
+AM_CONDITIONAL([DISABLE_OPTIMIZATIONS], [test x"$enable_optimizations" = x"no"])
 if test x"$enable_optimizations" = x"no"; then
     O1_CFLAGS="$O0_CLFAGS"
     O2_CFLAGS="$O0_CFLAGS"
