@@ -57,7 +57,7 @@ noinst_HEADERS = \
 	syntax.h \
 	tns.h 
 
-if BUILD_FAAD
+if ENABLE_FAAD
 xineplug_LTLIBRARIES = xineplug_decode_faad.la
 endif
 

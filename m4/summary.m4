@@ -19,7 +19,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
             echo "   - vcdo          - vcd (internal libs)"
         fi
     fi
-    if test x"$with_external_dvdnav" = x"yes"; then
+    if test x"$with_external_dvdnav" != x"no"; then
         echo "   - dvd (external libs)"
     else
         echo "   - dvd (internal libs)"
@@ -52,73 +52,51 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     echo "   - FLAC          - aac"
     echo "   - iff           - matroska"
     echo "   - vmd           - flv"
-    if test x"$enable_asf" != x"no"; then
-        echo "   - asf"
-    fi
-    if test x"$have_vorbis" = x"yes"; then
-        echo "   - ogg"
-    fi
-    if test x"$enable_mng" != x"no"; then
-        echo "   - mng"
-    fi
-    if test x"$enable_modplug" != x"no"; then
-        echo "   - mod"
-    fi
-    if test x"$have_libflac" = x"yes"; then
-        echo "   - FLAC (with libFLAC)"
-    fi
-    if test x"$have_wavpack" = x"yes"; then
-        echo "   - WavPack"
-    fi
     if test x"$enable_a52dec" != x"no"; then
-        if test x"$have_a52" = x"yes"; then
+        if test x"$have_external_a52dec" = x"yes"; then
             echo "   - ac3 (external library)"
         else
             echo "   - ac3 (internal library)"
         fi
     fi
+    test x"$enable_asf" != x"no"     && echo "   - asf"
+    test x"$enable_mng" != x"no"     && echo "   - mng"
+    test x"$have_modplug" = x"yes"   && echo "   - mod"
+    test x"$have_libflac" = x"yes"   && echo "   - FLAC (with libFLAC)"
+    test x"$have_vorbis" = x"yes"    && echo "   - ogg"
+    test x"$have_wavpack" = x"yes"   && echo "   - WavPack"
     echo ""
 
     dnl video decoders
     echo " * video decoder plugins:"
     echo "   - MPEG 1,2         - Amiga Bitplane"
     echo "   - Raw RGB          - Raw YUV"
-    if test x"$with_external_ffmpeg" = x"yes"; then
-        echo "   - ffmpeg (external library):"
+    test x"$have_dxr3" = x"yes"        && echo "   - dxr3_video"
+    test x"$have_gdkpixbuf" = x"yes"   && echo "   - gdk-pixbuf"
+    test x"$have_imagemagick" = x"yes" && echo "   - image"
+    test x"$have_theora" = x"yes"      && echo "   - theora"
+    test x"$have_w32dll" = x"yes"      && echo "   - w32dll"
+    if test x"$with_external_ffmpeg" != x"no"; then
+        echo "   - ffmpeg (external library)"
     else
         echo "   - ffmpeg (internal library):"
-    fi
-    echo "     - MPEG-4 (ISO, Microsoft, DivX*, XviD)"
-    echo "     - Creative YUV    - Motion JPEG"
-    echo "     - Cinepak         - MS Video-1"
-    echo "     - FLI/FLC         - MS RLE"
-    echo "     - Id RoQ          - Id Cin"
-    echo "     - Apple Graphics  - Apple Video"
-    echo "     - Apple Animation - Interplay Video"
-    echo "     - Westwood VQA    - Origin Xan"
-    echo "     - H.263           - Intel Indeo 3"
-    echo "     - SVQ1            - SVQ3"
-    echo "     - Real Video 1.0  - Real Video 2.0"
-    echo "     - 4X Video        - Sierra Video"
-    echo "     - Asus v1/v2      - HuffYUV"
-    echo "     - On2 VP3         - DV"
-    echo "     - 8BPS            - Duck TrueMotion v1"
-    echo "     - ATI VCR1        - Flash Video"
-    echo "     - ZLIB            - MSZH"
-    if test x"$have_dxr3" = x"yes"; then
-        echo "   - dxr3_video"
-    fi
-    if test x"$enable_w32dll" != x"no"; then
-        echo "   - w32dll"
-    fi
-    if test x"$have_imagemagick" = x"yes"; then
-        echo "   - image"
-    fi
-    if test x"no_gdkpixbuf" != x"yes"; then
-        echo "   - gdk-pixbuf"
-    fi
-    if test x"$have_theora" = x"yes"; then
-        echo "   - theora"
+        echo "     - MPEG-4 (ISO, Microsoft, DivX*, XviD)"
+        echo "     - Creative YUV    - Motion JPEG"
+        echo "     - Cinepak         - MS Video-1"
+        echo "     - FLI/FLC         - MS RLE"
+        echo "     - Id RoQ          - Id Cin"
+        echo "     - Apple Graphics  - Apple Video"
+        echo "     - Apple Animation - Interplay Video"
+        echo "     - Westwood VQA    - Origin Xan"
+        echo "     - H.263           - Intel Indeo 3"
+        echo "     - SVQ1            - SVQ3"
+        echo "     - Real Video 1.0  - Real Video 2.0"
+        echo "     - 4X Video        - Sierra Video"
+        echo "     - Asus v1/v2      - HuffYUV"
+        echo "     - On2 VP3         - DV"
+        echo "     - 8BPS            - Duck TrueMotion v1"
+        echo "     - ATI VCR1        - Flash Video"
+        echo "     - ZLIB            - MSZH"
     fi
     echo ""
 
@@ -126,63 +104,51 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     echo " * audio decoder plugins:"
     echo "   - GSM 06.10"
     echo "   - linear PCM      - Nosefart (NSF)"
-    if test x"$with_external_ffmpeg" = x"yes"; then
-        echo "   - ffmpeg (external library):"
-    else
-        echo "   - ffmpeg (internal library):"
-    fi
-    echo "     - Windows Media Audio v1/v2"
-    echo "     - DV            - logarithmic PCM"
-    echo "     - 14k4          - 28k8"
-    echo "     - MS ADPCM      - IMA ADPCM"
-    echo "     - XA ADPCM      - Game DPCM/ADPCM"
-    echo "     - Mace 3:13     - Mace 6:1"
-    echo "     - FLAC"
-    if test x"$have_libflac" = x"yes"; then
-        echo "   - FLAC (with libFLAC)"
-    fi
-    if test x"$have_vorbis" = x"yes"; then
-        echo "   - vorbis"
-    fi
-    if test x"$have_speex" = x"yes"; then
-        echo "   - speex"
-    fi
-    if test x"$enable_w32dll" != x"no"; then
-        echo "   - w32dll"
-    fi
-    if test x"$enable_faad" != x"no"; then
-        echo "   - faad"
-    fi
+    test x"$enable_faad" != x"no"  && echo "   - faad"
+    test x"$have_libflac" = x"yes" && echo "   - FLAC (with libFLAC)"
+    test x"$have_speex" = x"yes"   && echo "   - speex"
+    test x"$have_vorbis" = x"yes"  && echo "   - vorbis"
+    test x"$have_w32dll" = x"yes"  && echo "   - w32dll"
+    test x"$have_wavpack" = x"yes" && echo "   - WavPack"
     if test x"$enable_mad" != x"no"; then
-        if test x"$with_external_mad" != x"no"; then
+        if test x"$have_external_libmad" = x"yes"; then
             echo "   - MAD (MPG 1/2/3) (external library)"
         else
             echo "   - MAD (MPG 1/2/3) (internal library)"
         fi
     fi
     if test x"$enable_libdts" != x"no"; then
-        if test x"$have_dts" = x"yes"; then
+        if test x"$have_external_libdts" = x"yes"; then
             echo "   - DTS (external library)"
         else
             echo "   - DTS (internal library)"
         fi
     fi
     if test x"$enable_a52dec" != x"no"; then
-        if test x"$have_a52" = x"yes"; then
+        if test x"$have_external_a52dec" = x"yes"; then
             echo "   - A52/ra-dnet (external library)"
         else
             echo "   - A52/ra-dnet (internal library)"
         fi
     fi
     if test x"$enable_musepack" != x"no"; then
-        if test x"$have_mpcdec" = x"yes"; then
-            echo "   - MusePack (external library)"
+        if test x"$have_external_libmpcdec" = x"yes"; then
+            echo "   - Musepack (external library)"
         else
-            echo "   - MusePack (internal library)"
+            echo "   - Musepack (internal library)"
         fi
     fi
-    if test x"$have_wavpack" = x"yes"; then
-        echo "   - WavPack"
+    if test x"$with_external_ffmpeg" = x"yes"; then
+        echo "   - ffmpeg (external library)"
+    else
+        echo "   - ffmpeg (internal library):"
+        echo "     - Windows Media Audio v1/v2"
+        echo "     - DV            - logarithmic PCM"
+        echo "     - 14k4          - 28k8"
+        echo "     - MS ADPCM      - IMA ADPCM"
+        echo "     - XA ADPCM      - Game DPCM/ADPCM"
+        echo "     - Mace 3:13     - Mace 6:1"
+        echo "     - FLAC"
     fi
     echo ""
 

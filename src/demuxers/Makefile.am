@@ -16,7 +16,7 @@ if ENABLE_VORBIS
 ogg_module = xineplug_dmx_ogg.la
 endif
 
-if BUILD_ASF
+if ENABLE_ASF
 asf_module = xineplug_dmx_asf.la 
 endif
 
