@@ -6,79 +6,105 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     dnl only ever available on Linux, so don't bother checking for it unless
     dnl explicitly requested to do so on other operating systems.
     dnl Notes:
+    dnl - dvb is Linux only
     dnl - v4l is Linux only
 
+    default_enable_dvb=disable
     default_enable_gnomevfs=enable
     default_enable_samba=enable
     default_enable_v4l=disable
-    default_enable_vcd=enable
+    default_enable_vcd=disable
 
     default_with_internal_vcdlibs=without
 
     case "$host_os" in
-        linux*) default_enable_v4l=enable ;;
+        cygwin* | mingw*)
+            default_enable_gnomevfs=disable
+            default_enable_samba=disable
+            ;;
+        darwin*)
+            default_enable_gnomevfs=disable
+            default_enable_samba=disable
+            ;;
+        freebsd*)
+            default_enable_vcd=enable
+            ;;
+        linux*)
+            default_enable_v4l=enable
+            default_enable_vcd=enable
+            ;;
+        solaris*)
+            default_enable_vcd=enable
+            ;;
     esac
+
+    dnl dvb
+    AC_ARG_ENABLE([dvb],
+                  [AS_HELP_STRING([--enable-dvb], [Enable support for the DVB plugin (Linux only)])],
+                  [test x"$enableval" != x"no" && enable_dvb="yes"],
+                  [test $default_enable_dvb = disable && enable_dvb="no"])
+    if test x"$enable_dvb" != x"no"; then
+        case "$host_os" in
+            linux*) have_dvb=yes ;;
+            *) have_dvb=no ;;
+        esac
+        if test x"$enable_dvb" = x"yes" && test x"$have_dvb" != x"yes"; then
+            AC_MSG_ERROR([DVB support requested, but DVB not found])
+        fi
+    fi
+    AM_CONDITIONAL([ENABLE_DVB], [test x"$have_dvb" = x"yes"])
 
 
     dnl gnome-vfs
     AC_ARG_ENABLE([gnomevfs],
-                  [AS_HELP_STRING([--disable-gnomevfs], [do not build gnome-vfs support])],
-                  [], [test $default_enable_gnomevfs = disable && enable_gnomevfs=no])
+                  [AS_HELP_STRING([--enable-gnomevfs], [Enable support for the Gnome-VFS plugin])],
+                  [test x"$enableval" != x"no" && enable_gnomevfs="yes"],
+                  [test $default_enable_gnomevfs = disable && enable_gnomevfs="no"])
     if test x"$enable_gnomevfs" != x"no"; then
-        PKG_CHECK_MODULES([GNOME_VFS], [gnome-vfs-2.0], [no_gnome_vfs=no], [no_gnome_vfs=yes])
-        if test x"$no_gnome_vfs" != x"yes"; then
-            AC_DEFINE([HAVE_GNOME_VFS], 1, [Define this if you have gnome-vfs installed])
+        PKG_CHECK_MODULES([GNOME_VFS], [gnome-vfs-2.0], [have_gnomevfs=yes], [have_gnome_vfs=no])
+        if test x"$enable_gnomevfs" = x"yes" && test x"$have_gnomevfs" != x"yes"; then
+            AC_MSG_ERROR([Gnome-VFS support requested, but Gnome-VFS not found])
         fi
-    else
-        no_gnome_vfs=yes
     fi
-    AM_CONDITIONAL([ENABLE_GNOME_VFS], [test x"$no_gnome_vfs" != x"yes"])
+    AM_CONDITIONAL([ENABLE_GNOME_VFS], [test x"$have_gnomevfs" = x"yes"])
 
 
     dnl libsmbclient
     AC_ARG_ENABLE([samba],
-                  [AS_HELP_STRING([--disable-samba], [do not build Samba support])],
-                  [], [test $default_enable_samba = disable && enable_samba=no])
+                  [AS_HELP_STRING([--enable-samba], [Enable support for the Samba plugin])],
+                  [test x"$enableval" != x"no" && enable_samba="yes"],
+                  [test $default_enable_samba = disable && enable_samba="no"])
     if test x"$enable_samba" != x"no"; then
         AC_CHECK_LIB([smbclient], [smbc_init],
-                     [AC_CHECK_HEADERS([libsmbclient.h], [have_libsmbclient=yes
-                                                          LIBSMBCLIENT_LIBS="-lsmbclient"])])
+                     [AC_CHECK_HEADERS([libsmbclient.h], [have_libsmbclient=yes LIBSMBCLIENT_LIBS="-lsmbclient"])])
         AC_SUBST(LIBSMBCLIENT_LIBS)
+        if test x"$enable_samba" = x"yes" && test x"$have_samba" != x"yes"; then
+            AC_MSG_ERROR([Samba support requested, but Samba not found])
+        fi
     fi
-    AM_CONDITIONAL([ENABLE_LIBSMBCLIENT], [test x"$have_libsmbclient" = x"yes"])
+    AM_CONDITIONAL([ENABLE_LIBSMBCLIENT], [test x"$have_samba" = x"yes"])
 
 
     dnl video-for-linux (v4l)
     AC_ARG_ENABLE([v4l],
-                  [AS_HELP_STRING([--disable-v4l], [do not build Video4Linux input plugin])],
-                  [], [test $default_enable_v4l = disable && enable_v4l=no])
+                  [AS_HELP_STRING([--enable-v4l], [Enable Video4Linux support])],
+                  [test x"$enableval" != x"no" && enable_v4l="yes"],
+                  [test $default_enable_v4l = disable && enable_v4l="no"])
     if test x"$enable_v4l" != x"no"; then
         AC_CHECK_HEADERS([linux/videodev.h], [have_v4l=yes], [have_v4l=no])
         AC_CHECK_HEADERS([asm/types.h])
-        if test x"$enable_v4l" = x"yes" && test x"$have_v4l" = x"no"; then
+        if test x"$enable_v4l" = x"yes" && test x"$have_v4l" != x"yes"; then
             AC_MSG_ERROR([Video4Linux support requested, but prerequisite headers not found.])
         fi
     fi
     AM_CONDITIONAL([ENABLE_V4L], [test x"$have_v4l" = x"yes"])
 
 
-    dnl cdrom ioctls (common for dvdnav and vcd)
-    case "$host_os" in
-        linux*)
-            AC_CHECK_HEADERS([linux/cdrom.h],
-                             [AC_DEFINE([HAVE_LINUX_CDROM], 1, [Define 1 if you have Linux-type CD-ROM support])
-                              AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <linux/cdrom.h>]],
-                                                                 [[struct cdrom_generic_command test; int has_timeout = sizeof(test.timeout);]])],
-                                                [AC_DEFINE([HAVE_LINUX_CDROM_TIMEOUT], [1], [Define 1 if timeout is in cdrom_generic_command struct])])])
-            ;;
-    esac
-    AC_CHECK_HEADERS([sys/dvdio.h sys/cdio.h sys/scsiio.h])
-
-
     dnl dvdnav
+    dnl XXX: This could be cleaned up so that code does not have to ifdef so much
     AC_ARG_WITH([external-dvdnav],
-                [AS_HELP_STRING([--with-external-dvdnav], [use external dvdnav library (not recommended)])],
-                [], [with_external_dvdnav=no])
+                [AS_HELP_STRING([--with-external-dvdnav], [Use external dvdnav library (not recommended)])],
+                [test x"$withval" != x"no" && with_external_dvdnav="yes"], [with_external_dvdnav="no"])
     if test x"$with_external_dvdnav" != x"no"; then
         ACX_PACKAGE_CHECK([DVDNAV], [0.1.9], [dvdnav-config],
                           [AC_DEFINE([HAVE_DVDNAV], 1, [Define this if you have a suitable version of libdvdnav])],
@@ -90,57 +116,29 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
 
 
     dnl Video CD
+    dnl XXX: This could be cleaned up so that code does not have it ifdef so much
     AC_ARG_ENABLE([vcd],
-                  [AS_HELP_STRING([--disable-vcd], [do not compile VCD plugin])],
-                  [], [test $default_enable_vcd = disable && enable_vcd=no])
+                  [AS_HELP_STRING([--enable-vcd], [Enable VCD (VideoCD) support])],
+                  [test x"$enableval" != x"no" && enable_vcd="yes"],
+                  [test $default_enable_vcd = disable && enable_vcd="no"])
+    AC_ARG_WITH([internal-vcdlibs],
+                [AS_HELP_STRING([--with-internal-vcdlibs], [force using internal libcdio/libvcd/libvcdinfo])],
+                [test x"$withval" != x"no" && with_internal_vcdlibs="yes"],
+                [test $default_with_internal_vcdlibs = without && with_internal_vcdlibs="no"])
     if test x"$enable_vcd" != x"no"; then
-        AC_ARG_WITH([internal-vcdlibs],
-                    [AS_HELP_STRING([--with-internal-vcdlibs], [force using internal libcdio/libvcd/libvcdinfo])],
-                    [], [test $default_with_internal_vcdlibs = without && with_internal_vcdlibs=no])
         dnl check twice - fallback is to use internal vcdlibs
         if test x"$with_internal_vcdlibs" = x"no"; then
-            PKG_CHECK_MODULES([LIBCDIO], [libcdio >= 0.71], [], [with_internval_vcdlibs=yes])
-            PKG_CHECK_MODULES([LIBVCDINFO], [libvcdinfo >= 0.7.23], [], [with_internval_vcdlibs=yes])
-            if test x"$with_internval_vcdlibs" = x"yes"; then
+            PKG_CHECK_MODULES([LIBCDIO], [libcdio >= 0.71], [], [with_internal_vcdlibs=yes])
+            PKG_CHECK_MODULES([LIBVCDINFO], [libvcdinfo >= 0.7.23], [], [with_internal_vcdlibs=yes])
+            if test x"$with_internal_vcdlibs" = x"yes"; then
                 AC_MSG_RESULT([Using included libcdio/libvcdinfo support])
             fi
         fi
-        if test "x$with_internval_vcdlibs" = "xno"; then
+        if test x"$with_internal_vcdlibs" = x"no"; then
             AC_DEFINE([HAVE_VCDNAV], 1, [Define this if you use external libcdio/libvcdinfo])
         else
             AC_DEFINE_UNQUOTED([HOST_ARCH], ["$host_os/$host_cpu"], [host os/cpu identifier])
             AC_DEFINE([_DEVELOPMENT_], [], [enable warnings about being development release])
-            AC_CHECK_FUNCS([bzero memcpy])
-
-            AC_CHECK_MEMBER([struct tm.tm_gmtoff],
-                            [AC_DEFINE([HAVE_TM_GMTOFF], 1, [Define if struct tm has the tm_gmtoff member.])],
-                            [], [#include <time.h>])
-
-            dnl empty_array_size
-            AC_MSG_CHECKING([how to create empty arrays])
-            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[struct { int foo; int bar[]; } baz]])],
-                              [empty_array_size=""],
-                              [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[struct { int foo; int bar[0]; } baz]])],
-                                                 [empty_array_size="0"],
-                                                 [AC_MSG_ERROR([compiler is unable to create empty arrays])])])
-
-            AC_DEFINE_UNQUOTED([EMPTY_ARRAY_SIZE], [$empty_array_size], [what to put between the brackets for empty arrays])
-            AC_MSG_RESULT([[[$empty_array_size]]])
-
-            dnl ISOC99_PRAGMA
-            AC_MSG_CHECKING([whether $CC supports ISOC99 _Pragma()])
-            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[_Pragma("pack(1)")]])],
-                              [ISOC99_PRAGMA=yes 
-                               AC_DEFINE([HAVE_ISOC99_PRAGMA], [], [Supports ISO _Pragma() macro])],
-                              [ISOC99_PRAGMA=no])
-            AC_MSG_RESULT([$ISOC99_PRAGMA])
-
-            AC_CHECK_HEADERS([errno.h fcntl.h glob.h stdbool.h])
-            if test x"$ac_cv_header_stdint_h" != x"yes"; then
-                AC_CHECK_SIZEOF([int], 4)
-                AC_CHECK_SIZEOF([long], 4)
-                AC_CHECK_SIZEOF([long long], 8)
-            fi
 
             dnl
             dnl bitfield order
@@ -239,6 +237,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
                 darwin*)
                     AC_CHECK_HEADERS([IOKit/IOKitLib.h CoreFoundation/CFBase.h],
                                      [AC_DEFINE([HAVE_DARWIN_CDROM], 1, [Define 1 if you have Darwin OS X-type CD-ROM support])])
+                    LIBVCD_LIBS="$LIBVCD_LIBS -framework CoreFoundation -framework IOKit"
                     ;;
                 freebsd4.*)
                     AC_DEFINE([HAVE_FREEBSD_CDROM], 1, [Define 1 if you have FreeBSD CD-ROM support])
@@ -270,6 +269,6 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     AC_SUBST(LIBVCD_CFLAGS)
     AC_SUBST(LIBVCD_LIBS)
     AC_SUBST(LIBVCDINFO_LIBS)
-    AM_CONDITIONAL([WITH_EXTERNAL_VCDLIBS], [test x"$with_internal_vcdlibs" != x"no"])
-    AM_CONDITIONAL([ENABLE_VCD], [test x"$enable_vcd" = x"yes"])
+    AM_CONDITIONAL([WITH_EXTERNAL_VCDLIBS], [test x"$with_internal_vcdlibs" = x"no"])
+    AM_CONDITIONAL([ENABLE_VCD], [test x"$enable_vcd" != x"no"])
 ])

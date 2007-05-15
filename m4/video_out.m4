@@ -72,7 +72,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
     dnl Color AsCii Art
     AC_ARG_WITH([caca],
-                [AS_HELP_STRING([--without-caca], [Do not build CACA support])],
+                [AS_HELP_STRING([--with-caca], [enable support for CACA])],
                 [test x"$withval" != x"no" && with_caca="yes"],
                 [test $default_with_caca = without && with_caca=no])
     if test x"$with_caca" != x"no"; then
@@ -263,7 +263,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
     dnl SDL
     AC_ARG_WITH([sdl],
-                [AS_HELP_STRING([--without-sdl], [Build without SDL video output])],
+                [AS_HELP_STRING([--with-sdl], [Enable support for SDL video output])],
                 [test x"$withval" != x"no" && with_sdl="yes"],
                 [test $default_with_sdl = without && with_sdl="no"])
     if test x"$with_sdl" != x"no"; then
@@ -310,7 +310,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
     dnl xcb
     AC_ARG_WITH([xcb],
-                [AS_HELP_STRING([--without-xcb], [Doesn't build XCB video out plugins])],
+                [AS_HELP_STRING([--with-xcb], [Enable support for XCB video out plugins])],
                 [test x"$withval" != x"no" && with_xcb="yes"],
                 [test $default_with_xcb = without && with_xcb="no"])
     if test x"$with_xcb" != x"no"; then

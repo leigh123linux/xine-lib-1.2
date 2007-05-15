@@ -1,8 +1,8 @@
 include $(top_srcdir)/misc/Makefile.common
 
-AM_CFLAGS = $(DEFAULT_OCFLAGS)
+AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 
-INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/lib
+INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/lib -I$(top_builddir)/lib
 
 SUBDIRS = libvcd
 
@@ -47,7 +47,6 @@ libvcd_la_SOURCES = \
 	stream.c \
 	stream_stdio.c \
 	util.c 
-libvcd_la_LIBADD = $(LIBCDIO_LIBS) $(LIBISO9660_LIBS)
 libvcd_la_CFLAGS = $(AM_CFLAGS) $(LIBCDIO_CFLAGS)
 
 libvcdinfo_la_SOURCES = \
@@ -55,3 +54,4 @@ libvcdinfo_la_SOURCES = \
 	inf.c \
 	info_private.c \
 	vcd_read.c
+libvcdinfo_la_CFLAGS = $(AM_CFLAGS) $(LIBCDIO_CFLAGS)

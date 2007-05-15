@@ -17,7 +17,6 @@ EXTRA_DIST = \
 	directx.m4 \
 	gas.m4 \
 	input.m4 \
-	ioctl_request.m4 \
 	libFLAC.m4 \
 	macosx.m4 \
 	objc.m4 \

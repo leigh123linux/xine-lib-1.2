@@ -12,30 +12,23 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     echo "   - stdin_fifo    - rtp"
     echo "   - http          - mms"
     echo "   - pnm           - rtsp"
-    echo "   - dvb"
-    if test "x$with_external_dvdnav" = "xyes"; then
+    if test x"$enable_vcd" != x"no"; then
+        if test x"$with_internal_vcdlibs" = x"no"; then
+            echo "   - vcdo          - vcd (external libs)"
+        else
+            echo "   - vcdo          - vcd (internal libs)"
+        fi
+    fi
+    if test x"$with_external_dvdnav" = x"yes"; then
         echo "   - dvd (external libs)"
     else
         echo "   - dvd (internal libs)"
     fi
-    if test "x$enable_vcd" = "xyes"; then
-        if test "x$internal_vcdnav" = "xno"; then
-            echo "   - vcd (external libs)"
-        else
-            echo "   - vcd (internal libs)"
-        fi
-    fi
-    echo "   - vcdo"
+    test x"$have_dvb" = x"yes"      && echo "   - dvb"
+    test x"$have_gnomevfs" = x"yes" && echo "   - gnome-vfs"
+    test x"$have_samba" = x"yes"    && echo "   - smb"
+    test x"$have_v4l" = x"yes"      && echo "   - v4l"
     echo "   - cdda"
-    if test "x$no_gnome_vfs" = "xno"; then
-        echo "   - gnome-vfs"
-    fi
-    if test "x$have_v4l" = "xyes"; then
-        echo "   - v4l"
-    fi
-    if test "x$have_libsmbclient" = "xyes"; then
-        echo "   - smbclient"
-    fi
     echo ""
 
     dnl Demuxers
@@ -59,26 +52,26 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     echo "   - FLAC          - aac"
     echo "   - iff           - matroska"
     echo "   - vmd           - flv"
-    if test "x$enable_asf" = "xyes"; then
+    if test x"$enable_asf" != x"no"; then
         echo "   - asf"
     fi
-    if test "x$have_vorbis" = "xyes"; then
+    if test x"$have_vorbis" = x"yes"; then
         echo "   - ogg"
     fi
-    if test "x$enable_mng" != x"no"; then
+    if test x"$enable_mng" != x"no"; then
         echo "   - mng"
     fi
-    if test "x$enable_modplug" != x"no"; then
+    if test x"$enable_modplug" != x"no"; then
         echo "   - mod"
     fi
-    if test "x$have_libflac" = "xyes"; then
+    if test x"$have_libflac" = x"yes"; then
         echo "   - FLAC (with libFLAC)"
     fi
-    if test "x$have_wavpack" = "xyes"; then
+    if test x"$have_wavpack" = x"yes"; then
         echo "   - WavPack"
     fi
-    if test "x$enable_a52dec" = "xyes"; then
-        if test "x$have_a52" = "xyes"; then
+    if test x"$enable_a52dec" != x"no"; then
+        if test x"$have_a52" = x"yes"; then
             echo "   - ac3 (external library)"
         else
             echo "   - ac3 (internal library)"
@@ -90,7 +83,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     echo " * video decoder plugins:"
     echo "   - MPEG 1,2         - Amiga Bitplane"
     echo "   - Raw RGB          - Raw YUV"
-    if test "x$with_external_ffmpeg" = "xyes"; then
+    if test x"$with_external_ffmpeg" = x"yes"; then
         echo "   - ffmpeg (external library):"
     else
         echo "   - ffmpeg (internal library):"
@@ -112,19 +105,19 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     echo "     - 8BPS            - Duck TrueMotion v1"
     echo "     - ATI VCR1        - Flash Video"
     echo "     - ZLIB            - MSZH"
-    if test "x$have_dxr3" = "xyes"; then
+    if test x"$have_dxr3" = x"yes"; then
         echo "   - dxr3_video"
     fi
-    if test "x$enable_w32dll" = "xyes"; then
+    if test x"$enable_w32dll" != x"no"; then
         echo "   - w32dll"
     fi
-    if test "x$have_imagemagick" = "xyes"; then
+    if test x"$have_imagemagick" = x"yes"; then
         echo "   - image"
     fi
-    if test x"no_gdkpixbuf" != "xyes"; then
+    if test x"no_gdkpixbuf" != x"yes"; then
         echo "   - gdk-pixbuf"
     fi
-    if test "x$have_theora" = "xyes"; then
+    if test x"$have_theora" = x"yes"; then
         echo "   - theora"
     fi
     echo ""
@@ -133,7 +126,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     echo " * audio decoder plugins:"
     echo "   - GSM 06.10"
     echo "   - linear PCM      - Nosefart (NSF)"
-    if test "x$with_external_ffmpeg" = "xyes"; then
+    if test x"$with_external_ffmpeg" = x"yes"; then
         echo "   - ffmpeg (external library):"
     else
         echo "   - ffmpeg (internal library):"
@@ -145,50 +138,50 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     echo "     - XA ADPCM      - Game DPCM/ADPCM"
     echo "     - Mace 3:13     - Mace 6:1"
     echo "     - FLAC"
-    if test "x$have_libflac" = "xyes"; then
+    if test x"$have_libflac" = x"yes"; then
         echo "   - FLAC (with libFLAC)"
     fi
-    if test "x$have_vorbis" = "xyes"; then
+    if test x"$have_vorbis" = x"yes"; then
         echo "   - vorbis"
     fi
-    if test "x$have_speex" = "xyes"; then
+    if test x"$have_speex" = x"yes"; then
         echo "   - speex"
     fi
-    if test "x$enable_w32dll" = "xyes"; then
+    if test x"$enable_w32dll" != x"no"; then
         echo "   - w32dll"
     fi
-    if test "x$enable_faad" = "xyes"; then
+    if test x"$enable_faad" != x"no"; then
         echo "   - faad"
     fi
-    if test "x$enable_mad" = "xyes"; then
-        if test "x$with_external_mad" != "xno"; then
+    if test x"$enable_mad" != x"no"; then
+        if test x"$with_external_mad" != x"no"; then
             echo "   - MAD (MPG 1/2/3) (external library)"
         else
             echo "   - MAD (MPG 1/2/3) (internal library)"
         fi
     fi
-    if test "x$enable_libdts" = "xyes"; then
-        if test "x$have_dts" = "xyes"; then
+    if test x"$enable_libdts" != x"no"; then
+        if test x"$have_dts" = x"yes"; then
             echo "   - DTS (external library)"
         else
             echo "   - DTS (internal library)"
         fi
     fi
-    if test "x$enable_a52dec" = "xyes"; then
-        if test "x$have_a52" = "xyes"; then
+    if test x"$enable_a52dec" != x"no"; then
+        if test x"$have_a52" = x"yes"; then
             echo "   - A52/ra-dnet (external library)"
         else
             echo "   - A52/ra-dnet (internal library)"
         fi
     fi
-    if test "x$enable_musepack" != "xno"; then
-        if test "x$have_mpcdec" = "xyes"; then
+    if test x"$enable_musepack" != x"no"; then
+        if test x"$have_mpcdec" = x"yes"; then
             echo "   - MusePack (external library)"
         else
             echo "   - MusePack (internal library)"
         fi
     fi
-    if test "x$have_wavpack" = "xyes"; then
+    if test x"$have_wavpack" = x"yes"; then
         echo "   - WavPack"
     fi
     echo ""
@@ -198,9 +191,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     echo "   - spu             - spucc"
     echo "   - spucmml         - sputext"
     echo "   - spudvb"
-    if test "x$have_dxr3" = "xyes"; then
-        echo "   - dxr3_spu"
-    fi
+    test x"$have_dxr3" = x"yes" && echo "   - dxr3_spu"
     echo ""
 
     dnl post plugins
@@ -217,108 +208,90 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
 
     dnl Video plugins
     echo " * video driver plugins:"
-    if test "x$no_x" != "xyes"; then
+    if test x"$no_x" != x"yes"; then
         echo "   - XShm (X11 shared memory)"
-        dnl syncfb
-        if test "x$have_syncfb" = "xyes"; then
+        if test x"$have_syncfb" = x"yes"; then
             echo "   - SyncFB (for Matrox G200/G400 cards)"
         fi
-        dnl Xv
-        if test "x$have_xv" = "xyes"; then
-            if test "x$have_xv_static" = "xyes"; then
+        if test x"$have_xv" = x"yes"; then
+            if test x"$have_xv_static" = x"yes"; then
                 echo "   - Xv (XVideo *static*)"
             else
                 echo "   - Xv (XVideo *shared*)"
             fi
         fi
-        dnl XxMC
-        if test "x$have_xxmc" = "xyes"; then
-            if test "x$have_vldexts" = "xyes"; then
+        if test x"$have_xxmc" = x"yes"; then
+            if test x"$have_vldexts" = x"yes"; then
                 echo "   - XxMC (XVideo extended motion compensation)"
             else
                 echo "   - XxMC (XVideo motion compensation - vld extensions DISABLED)"
             fi
         fi
-        dnl XvMC
-        if test "x$have_xvmc" = "xyes"; then
+        if test x"$have_xvmc" = x"yes"; then
             echo "   - XvMC (XVideo motion compensation)"
         fi
-        if test x"$have_opengl" = "xyes"; then
+        if test x"$have_opengl" = x"yes"; then
             if test x"$have_glu" = x"yes"; then
                 echo "   - OpenGL (with GLU support)"
             else
                 echo "   - OpenGL"
             fi
         fi
-        if test "x$have_sunfb" = "xyes"; then
-            if test "x$have_sundga" = "xyes"; then
+        if test x"$have_sunfb" = x"yes"; then
+            if test x"$have_sundga" = x"yes"; then
                 echo "   - PGX64 (for Sun XVR100/PGX64/PGX24 cards)"
                 echo "   - PGX32 (for Sun PGX32 cards)"
             fi
         fi
     fi
-    if test "x$have_xcb" = "xyes"; then
-        dnl xcb-shm
-        if test "x$have_xcbshm" = "xyes"; then
+    if test x"$have_xcb" = x"yes"; then
+        if test x"$have_xcbshm" = x"yes"; then
             echo "   - xcb-shm (X shared memory using XCB)"
         fi
-        dnl xcb-xv
-        if test "x$have_xcbxv" = "xyes"; then
+        if test x"$have_xcbxv" = x"yes"; then
             echo "   - xcb-xv (XVideo using XCB)"
         fi
     fi
-    if test "x$have_aalib" = "xyes"; then
-        echo "   - aa (Ascii ART)"
-    fi
-    if test "x$have_caca" = "xyes"; then
-        echo "   - caca (Color AsCii Art)"
-    fi
-    if test "x$have_fb" = "xyes"; then
-        echo "   - fb (Linux framebuffer device)"
-    fi
-    if test "x$have_sdl" = "xyes"; then
-        echo "   - sdl (Simple DirectMedia Layer)"
-    fi
-    if test "x$have_libstk" = "xyes"; then
-        echo "   - stk (Libstk Set-top Toolkit)"
-    fi
-    if test "x$have_directfb" = "xyes"; then
-        echo "   - directfb (DirectFB driver)"
-    fi
-    if test "x$have_dxr3" = "xyes"; then
-        if test "x$have_encoder" = "xyes"; then
+
+
+    test x"$have_aalib" = x"yes"        && echo "   - aa (Ascii ART)"
+    test x"$have_caca" = x"yes"         && echo "   - caca (Color AsCii Art)"
+    test x"$have_directfb" = x"yes"     && echo "   - directfb (DirectFB driver)"
+    test x"$have_directx" = x"yes"      && echo "   - directx (DirectX video driver)"
+    test x"$have_fb" = x"yes"           && echo "   - fb (Linux framebuffer device)"
+    test x"$have_libstk" = x"yes"       && echo "   - stk (Libstk Set-top Toolkit)"
+    test x"$have_macosx_video" = x"yes" && echo "   - Mac OS X OpenGL"
+    test x"$have_sdl" = x"yes"          && echo "   - sdl (Simple DirectMedia Layer)"
+
+
+    if test x"$have_dxr3" = x"yes"; then
+        if test x"$have_encoder" = x"yes"; then
             echo "   - dxr3 (Hollywood+ and Creative dxr3, both mpeg and non-mpeg video)"
         else
             echo "   - dxr3 (Hollywood+ and Creative dxr3, mpeg video only)"
         fi
     fi
-    if test "x$have_vidix" = "xyes"; then
+    if test x"$have_vidix" = x"yes"; then
         echo $ECHO_N "   - vidix ("
       
-        if test "x$no_x" != "xyes"; then
+        if test x"$no_x" != x"yes"; then
             echo $ECHO_N "X11"
-            if test "x$have_fb" = "xyes"; then
+            if test x"$have_fb" = x"yes"; then
                 echo $ECHO_N " and "
             fi
         fi
         
-        if test "x$have_fb" = "xyes"; then
+        if test x"$have_fb" = x"yes"; then
             echo $ECHO_N "framebuffer"
         fi
       
         echo $ECHO_N " support"
 
-        if test "x$enable_dha_kmod" = "xyes"; then
+        if test x"$enable_dha_kmod" != x"no"; then
             echo " with dhahelper)"
         else
             echo ")"
         fi
-    fi
-    if test "x$have_directx" = "xyes"; then
-        echo "   - directx (DirectX video driver)"
-    fi
-    if test "x$have_macosx_video" = "xyes"; then
-        echo "   - Mac OS X OpenGL"
     fi
 
     echo ""

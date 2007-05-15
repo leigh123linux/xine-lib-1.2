@@ -10,7 +10,10 @@ AM_LDFLAGS = $(xineplug_ldflags)
 # All of xine input plugins should be named like the scheme "xineplug_inp_"
 #
 
-SUBDIRS = dvb libreal librtsp
+SUBDIRS = libreal librtsp
+if ENABLE_DVB
+SUBDIRS += dvb
+endif
 if ENABLE_VCD
 SUBDIRS += vcd
 endif
@@ -22,6 +25,10 @@ endif
 xineinclude_HEADERS = input_plugin.h
 noinst_HEADERS = net_buf_ctrl.h mms.h mmsh.h pnm.h media_helper.h videodev2.h http_helper.h
 
+
+if ENABLE_DVB
+in_dvb = xineplug_inp_dvb.la
+endif
 
 if ENABLE_VCD
 in_vcd = xineplug_inp_vcdo.la
@@ -51,7 +58,6 @@ endif
 # not ported to native Windows
 if !WIN32
 in_rtp = xineplug_inp_rtp.la
-in_dvb = xineplug_inp_dvb.la 
 endif
 
 

@@ -326,8 +326,25 @@ dnl -----------------------
 AC_HEADER_STDC
 
 AC_CHECK_HEADERS([alloca.h])
-AC_CHECK_HEADERS([assert.h byteswap.h dirent.h execinfo.h libgen.h malloc.h netdb.h ucontext.h])
-AC_CHECK_HEADERS([sys/ioctl.h sys/mixer.h sys/mman.h sys/param.h sys/times.h])
+AC_CHECK_HEADERS([assert.h byteswap.h dirent.h errno.h execinfo.h fcntl.h glob.h])
+AC_CHECK_HEADERS([libgen.h malloc.h netdb.h stdbool.h ucontext.h])
+AC_CHECK_HEADERS([sys/ioctl.h sys/mixer.h sys/mman.h sys/param.h sys/times.h sys/wait.h])
+
+dnl This is duplicative due to AC_HEADER_STDC, but src/input/vcd stuff needs to
+dnl have HAVE_STDIO_H defined, or it won't compile.
+AC_CHECK_HEADERS([stdio.h])
+
+dnl cdrom ioctls (common for dvdnav and vcd)
+case "$host_os" in
+    linux*)
+        AC_CHECK_HEADERS([linux/cdrom.h],
+                         [AC_DEFINE([HAVE_LINUX_CDROM], 1, [Define 1 if you have Linux-type CD-ROM support])
+                          AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <linux/cdrom.h>]],
+                                                             [[struct cdrom_generic_command test; int has_timeout = sizeof(test.timeout);]])],
+                                            [AC_DEFINE([HAVE_LINUX_CDROM_TIMEOUT], [1], [Define 1 if timeout is in cdrom_generic_command struct])])])
+        ;;
+esac
+AC_CHECK_HEADERS([sys/dvdio.h sys/cdio.h sys/scsiio.h])
 
 
 dnl ----------------
@@ -336,18 +353,34 @@ dnl ----------------
 
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
-AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF([int])
+AC_CHECK_SIZEOF([long])
 AC_CHECK_GENERATE_INTTYPES([include])
 AM_CONDITIONAL([GENERATED_INTTYPES_H], [test "x$ac_cv_header_inttypes_h" != x"yes"])
 AC_CHECK_TYPE([ssize_t], [],
               [AC_DEFINE([ssize_t], [__int64], [define ssize_t to __int64 if it's missing in default includes])])
 AC_CHECK_SOCKLEN_T
-AC_IOCTL_REQUEST
+
+AC_CACHE_CHECK([type of request parameter for ioctl()], [ac_cv_ioctl_request], [
+    for ac_ioctl_request_type in "unsigned long" "int"; do
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <sys/ioctl.h>
+                                          int ioctl(int fd, $ac_ioctl_request_type request, ...);]], [[]])],
+                       [ac_cv_ioctl_request=$ac_ioctl_request_type], [])
+    done
+    if test x"$ac_cv_ioctl_request" = x""; then
+        AC_MSG_ERROR([Unable to determine the type for ioctl() request parameter])
+    fi
+])
+AC_DEFINE_UNQUOTED([IOCTL_REQUEST_TYPE], [$ac_cv_ioctl_request], [Type of the request parameter for ioctl()])
 
 
 dnl ---------------------
 dnl checks for structures
 dnl ---------------------
+
+AC_CHECK_MEMBER([struct tm.tm_gmtoff],
+                [AC_DEFINE([HAVE_TM_GMTOFF], 1, [Define if struct tm has the tm_gmtoff member.])],
+                [], [#include <time.h>])
 
 
 dnl -----------------------------------
@@ -371,6 +404,26 @@ AC_C_BIGENDIAN
 AC_C_CONST
 AC_C_INLINE
 AC_C_RESTRICT
+
+dnl empty_array_size - src/input/vcd
+AC_MSG_CHECKING([how to create empty arrays])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[struct { int foo; int bar[]; } baz]])],
+                  [empty_array_size=""],
+                  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[struct { int foo; int bar[0]; } baz]])],
+                                     [empty_array_size="0"],
+                                     [AC_MSG_ERROR([compiler is unable to create empty arrays])])])
+
+AC_DEFINE_UNQUOTED([EMPTY_ARRAY_SIZE], [$empty_array_size], [what to put between the brackets for empty arrays])
+AC_MSG_RESULT([[[$empty_array_size]]])
+
+dnl ISOC99_PRAGMA - src/input/vcd/libvcd
+AC_MSG_CHECKING([whether $CC supports ISOC99 _Pragma()])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[_Pragma("pack(1)")]])],
+                  [ISOC99_PRAGMA=yes 
+                   AC_DEFINE([HAVE_ISOC99_PRAGMA], [], [Supports ISO _Pragma() macro])],
+                  [ISOC99_PRAGMA=no])
+AC_MSG_RESULT([$ISOC99_PRAGMA])
+
 
 dnl ASM ALIGN is power of two ?
 dnl src/post/planar
@@ -783,16 +836,21 @@ dnl NLS: src/input/mms.c src/input/vcd, xine-utils
 AC_CHECK_FUNCS([nl_langinfo])
 
 dnl src/libfaad
-AC_CHECK_DECL(lrintf,[
-	AC_DEFINE([HAVE_LRINTF],    [1], [Define this if the 'lrintf' function is declared in math.h])
-	AC_DEFINE([_ISOC9X_SOURCE], [1], [Define this if you are ISO C9X compliant])
-      ],,[
-#define _ISOC9X_SOURCE
-#include <math.h>
-])
+AC_CHECK_DECL([lrintf],
+              [AC_DEFINE([HAVE_LRINTF],    1, [Define this if the 'lrintf' function is declared in math.h])
+	       AC_DEFINE([_ISOC9X_SOURCE], 1, [Define this if you are ISO C9X compliant])],
+              [],
+              [#define _ISOC9X_SOURCE
+               #include <math.h>])
 
 dnl contrib/libdca, src/video_out/vidix/drivers/mach64_vid.c
 AC_CHECK_FUNCS([memalign])
+
+dnl src/input/vcd/libcdio/portable.h
+AC_CHECK_FUNCS([bzero])
+
+dnl src/libfaad/common.h
+AC_CHECK_FUNCS([memcpy])
 
 dnl src/input/input_file.c
 AC_ARG_ENABLE([mmap],
@@ -850,7 +908,7 @@ dnl extension of AC_PATH_X that sets X_CFLAGS and X_LIBS.  It will also set
 dnl X_EXTRA_LIBS and X_PRE_LIBS.
 AC_PATH_XTRA
 if test x"$no_x" != x"yes"; then
-    X_LIBS="$X_PRE_LIBS $X_LIBS -lX11 $X_EXTRA_LIBS"
+    X_LIBS="$X_LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS"
     AC_CHECK_LIB([Xext], [main],
                  [X_LIBS="$X_LIBS -lXext"], [AC_MSG_ERROR([libXext is required])],
                  [$X_LIBS])
@@ -889,9 +947,9 @@ AC_SYS_LARGEFILE
 dnl Add macros to the compiler command line that are also in config.h for things
 dnl that do not #include config.h.
 dnl known: src/input/libreal, src/input/librtsp
-test x"$ac_cv_sys_file_offset_bits" != x"no" && CPPFLAGS="-D_FILE_OFFSET_BITS=64 $CPPFLAGS"
-test x"$ac_cv_sys_largefile_source" != x"no" && CPPFLAGS="-D_LARGEFILE_SOURCE $CPPFLAGS"
-test x"$ac_cv_sys_large_files" != x"" && CPPFLAGS="-D_LARGE_FILES $CPPFLAGS"
+test x"$ac_cv_sys_file_offset_bits" = x"yes" && CPPFLAGS="-D_FILE_OFFSET_BITS=64 $CPPFLAGS"
+test x"$ac_cv_sys_largefile_source" = x"yes" && CPPFLAGS="-D_LARGEFILE_SOURCE $CPPFLAGS"
+test x"$ac_cv_sys_large_files" = x"yes" && CPPFLAGS="-D_LARGE_FILES $CPPFLAGS"
 
 
 dnl -------

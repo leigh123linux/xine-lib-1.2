@@ -1,11 +1,11 @@
 include $(top_srcdir)/misc/Makefile.common
 
-AM_CFLAGS  = $(DEFAULT_OCFLAGS)
+AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
 SUBDIRS = cdio MSWindows image
 
-INCLUDES = $(LIBCDIO_CFLAGS) -I$(top_srcdir)/include -I$(top_srcdir)/lib -I$(top_builddir)/lib
+INCLUDES = $(LIBCDIO_CFLAGS) -I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/lib -I$(top_builddir)/lib
 
 noinst_HEADERS = \
 	cdio_assert.h \
