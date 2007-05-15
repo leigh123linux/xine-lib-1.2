@@ -1,8 +1,7 @@
 include $(top_srcdir)/misc/Makefile.common
 
-AM_CFLAGS = $(X_CFLAGS) -fno-omit-frame-pointer \
-AM_CPPFLAGS = -DWIN32_PATH=\"$(w32_path)\" -DNOAVIFILE_HEADERS \
-	-I$(srcdir)/.. -I$(srcdir)/../wine
+AM_CFLAGS   = $(X_CFLAGS) -fno-omit-frame-pointer
+AM_CPPFLAGS = -DWIN32_PATH=\"$(w32_path)\" -DNOAVIFILE_HEADERS -I$(srcdir)/.. -I$(srcdir)/../wine
  
 noinst_HEADERS = \
 	DMO_AudioDecoder.h \
