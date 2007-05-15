@@ -37,11 +37,12 @@ AC_DEFUN([CC_PROG_AS], [
         fi
 
         dnl Try to figure out the assembler command.  Fallback to as.
-        if test -z "$AS"; then
+        ac_prog=""
+        if test x"$AS" = x""; then
             AC_MSG_CHECKING([for as used by $CCAS])
-            if test x"$ccas_is_gnu" != x"yes"; then
+            if test x"$ccas_is_gnu" = x"yes"; then
                 # Check if gcc -print-prog-name=as gives a path.
-                case $host in
+                case "$host_or_hostalias" in
                     *-*-mingw*)
                         # gcc leaves a trailing carriage return which upsets mingw
                         ac_prog=`($CCAS -print-prog-name=as) 2>&5 | tr -d '\015'`
@@ -60,8 +61,8 @@ AC_DEFUN([CC_PROG_AS], [
                         while echo $ac_prog | grep "$re_direlt" > /dev/null 2>&1; do
                             ac_prog=`echo $ac_prog| $SED "s%$re_direlt%/%"`
                         done
-                        AC_MSG_RESULT([$ac_prog])
                         ;;
+                    *) ac_prog="" ;;
                 esac
             fi
         fi
@@ -71,8 +72,8 @@ AC_DEFUN([CC_PROG_AS], [
             for ac_dir in $PATH; do
                 IFS="$lt_save_ifs"
                 test -z "$ac_dir" && ac_dir=.
-                if test -f "$ac_dir/$ac_prog" || test -f "$ac_dir/$ac_prog$ac_exeext"; then
-                    ac_prog="$ac_dir/$ac_prog"
+                if test -f "$ac_dir/as" || test -f "$ac_dir/as$ac_exeext"; then
+                    ac_prog="$ac_dir/as"
                     break
                 fi
             done
