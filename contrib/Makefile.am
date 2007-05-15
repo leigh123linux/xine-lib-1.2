@@ -67,6 +67,10 @@ if HAVE_MLIB
 configure_options += --enable-sunmlib
 endif
 
+if !HOST_OS_DARWIN
+FFMPEG_EXTRA_CFLAGS = -fPIC -DPIC
+endif
+
 disable_decoders = \
 	--disable-decoder=bmp --disable-decoder=cavs --disable-decoder=cljr --disable-decoder=dsicinvideo \
 	--disable-decoder=ffv1 --disable-decoder=ffvhuff --disable-decoder=gif --disable-decoder=mdec \
@@ -92,8 +96,12 @@ else
 	mkdir -p ffmpeg
 	cd ffmpeg; \
 	$(srcdir)/ffmpeg/configure $(all_configure_options) \
-		--extra-cflags="$(VISIBILITY_FLAG) -fPIC -DPIC" \
+		--extra-cflags="$(VISIBILITY_FLAG) $(FFMPEG_EXTRA_CFLAGS)"; \
 	cd ..
+if HOST_OS_DARWIN
+	cat ffmpeg/config.mak | sed -e '/OPTFLAGS=/s/-mdynamic-no-pic//g' > ffmpeg/config.tmp
+	mv -f ffmpeg/config.tmp ffmpeg/config.mak
+endif
 endif
 
 ffmpeg/libavutil/libavutil.a: ffmpeg/config.mak
