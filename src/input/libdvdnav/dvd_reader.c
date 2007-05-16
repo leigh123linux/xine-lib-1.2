@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-2004 Billy Biggs <vektor@dumbterm.net>,
- *                         Håkan Hjort <d95hjort@dtek.chalmers.se>,
- *                         Björn Englund <d4bjorn@dtek.chalmers.se>
+ *                         HÃ¥kan Hjort <d95hjort@dtek.chalmers.se>,
+ *                         BjÃ¶rn Englund <d4bjorn@dtek.chalmers.se>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

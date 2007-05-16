@@ -27,7 +27,7 @@
  * Date        Author
  * ----        ------
  *
- * 01-Feb-2005 Pekka J‰‰skel‰inen <poj@iki.fi>
+ * 01-Feb-2005 Pekka J√§√§skel√§inen <poj@iki.fi>
  *
  *             - This history log started.
  *             - Disabled the automatic EPG updater thread until EPG demuxer 

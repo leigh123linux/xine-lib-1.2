@@ -90,7 +90,7 @@ void evaluate_sound(gint16 data[2][512], SoundInfo *info) {
 	if (info->goom_limit>1)
 		info->goom_limit=1;
 
-	/* toute les 2 secondes : vérifier si le taux de goom est correct
+	/* toute les 2 secondes : vÃ©rifier si le taux de goom est correct
 	 * et le modifier sinon.. */
 	if (info->cycle % 64 == 0) {
 		if (info->speedvar<0.01f)

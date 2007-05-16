@@ -31,8 +31,8 @@
  *
  * overlay support by James Courtier-Dutton <James@superbug.demon.co.uk> - July 2001
  * X11 unscaled overlay support by Miguel Freitas - Nov 2003
- * XvMC VLD implementation by Thomas Hellström - 2004, 2005.
- * XvMC merge by Thomas Hellström - Sep 2004
+ * XvMC VLD implementation by Thomas HellstrÃ¶m - 2004, 2005.
+ * XvMC merge by Thomas HellstrÃ¶m - Sep 2004
  *
  */
 

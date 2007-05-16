@@ -151,7 +151,7 @@ guint32 *goom_update (PluginInfo *goomInfo, gint16 data[2][512],
     guint32 pointWidth;
     guint32 pointHeight;
     int     i;
-    float   largfactor;	/* elargissement de l'intervalle d'évolution des points */
+    float   largfactor;	/* elargissement de l'intervalle d'Ã©volution des points */
     Pixel *tmp;
     
     ZoomFilterData *pzfd;
@@ -215,7 +215,7 @@ guint32 *goom_update (PluginInfo *goomInfo, gint16 data[2][512],
         }
     }
     
-    /* par défaut pas de changement de zoom */
+    /* par dÃ©faut pas de changement de zoom */
     pzfd = NULL;
     
     /* 
@@ -532,7 +532,7 @@ guint32 *goom_update (PluginInfo *goomInfo, gint16 data[2][512],
         }
         
         /*
-         * arreter de decrémenter au bout d'un certain temps
+         * arreter de decrÃ©menter au bout d'un certain temps
          */
         if ((goomInfo->cycle % 101 == 0) && (goomInfo->update.zoomFilterData.pertedec == 7)) {
             pzfd = &goomInfo->update.zoomFilterData;

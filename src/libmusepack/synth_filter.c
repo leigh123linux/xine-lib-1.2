@@ -282,17 +282,17 @@ static void Calculate_New_V ( const MPC_SAMPLE_FORMAT * Sample, MPC_SAMPLE_FORMA
     A14 = MPC_SHL(B14 + B15, MPC_FIXED_POINT_SYNTH_FIX);
     A15 = MPC_SCALE_CONST_SHL((B14 - B15) , 0.7071067691f , 31, MPC_FIXED_POINT_SYNTH_FIX);
 
-    // mehrfach verwendete Ausdrücke: A04+A06+A07, A09+A13+A15
+    // mehrfach verwendete AusdrÃ¼cke: A04+A06+A07, A09+A13+A15
     V[ 5] = (V[11] = (V[13] = A07 + (V[15] = A15)) + A11) + A05 + A13;
     V[ 7] = (V[ 9] = A03 + A11 + A15) + A13;
     V[33] = -(V[ 1] = A01 + A09 + A13 + A15) - A14;
     V[35] = -(V[ 3] = A05 + A07 + A09 + A13 + A15) - A06 - A14;
     V[37] = (tmp = -(A10 + A11 + A13 + A14 + A15)) - A05 - A06 - A07;
-    V[39] = tmp - A02 - A03;                      // abhängig vom Befehl drüber
-    V[41] = (tmp += A13 - A12) - A02 - A03;       // abhängig vom Befehl 2 drüber
-    V[43] = tmp - A04 - A06 - A07;                // abhängig von Befehlen 1 und 3 drüber
+    V[39] = tmp - A02 - A03;                      // abhÃ¤ngig vom Befehl drÃ¼ber
+    V[41] = (tmp += A13 - A12) - A02 - A03;       // abhÃ¤ngig vom Befehl 2 drÃ¼ber
+    V[43] = tmp - A04 - A06 - A07;                // abhÃ¤ngig von Befehlen 1 und 3 drÃ¼ber
     V[47] = (tmp = -(A08 + A12 + A14 + A15)) - A00;
-    V[45] = tmp - A04 - A06 - A07;                // abhängig vom Befehl drüber
+    V[45] = tmp - A04 - A06 - A07;                // abhÃ¤ngig vom Befehl drÃ¼ber
 
     V[32] = -V[ 0];
     V[31] = -V[ 1];

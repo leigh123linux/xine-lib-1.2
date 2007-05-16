@@ -1197,7 +1197,7 @@ mpc_bool_t mpc_decoder_initialize(mpc_decoder *d, mpc_streaminfo *si)
 
     // AB: setting position to the beginning of the data-bitstream
     switch (d->StreamVersion) {
-    case 0x04: f_seek(d, 4 + d->MPCHeaderPos); d->pos = 16; break;  // Geht auch über eine der Helperfunktionen
+    case 0x04: f_seek(d, 4 + d->MPCHeaderPos); d->pos = 16; break;  // Geht auch Ã¼ber eine der Helperfunktionen
     case 0x05:
     case 0x06: f_seek(d, 8 + d->MPCHeaderPos); d->pos =  0; break;
     case 0x07:

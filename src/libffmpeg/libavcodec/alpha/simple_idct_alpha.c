@@ -22,7 +22,7 @@
  * based upon some outcommented c code from mpeg2dec (idct_mmx.c
  * written by Aaron Holtzman <aholtzma@ess.engr.uvic.ca>)
  *
- * Alpha optimiziations by Måns Rullgård <mru@users.sourceforge.net>
+ * Alpha optimiziations by MÃ¥ns RullgÃ¥rd <mru@users.sourceforge.net>
  *                     and Falk Hueffner <falk@debian.org>
  */
 
