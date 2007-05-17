@@ -1,4 +1,5 @@
 xine-lib (1.1.90) (Unreleased)
+  * Add support for VDR.
   * Reorder and modify public structures to reduce the holes caused by padding
     especially on 64-bit architectures.
   * Remove the buttons array from video_overlay, as the feature linked to that
