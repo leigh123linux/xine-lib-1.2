@@ -253,6 +253,8 @@ use internal ffmpeg.
                 arm*-*)
                     AC_DEFINE([FPM_ARM], 1, [Define to select libmad fixed point arithmetic implementation])
                     ;;
+                universal-*)
+                    ;;
                 *)
                     AC_DEFINE([FPM_DEFAULT], 1, [Define to select libmad fixed point arithmetic implementation])
                     ;;
