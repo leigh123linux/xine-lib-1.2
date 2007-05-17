@@ -77,7 +77,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
                   [test $default_enable_samba = disable && enable_samba="no"])
     if test x"$enable_samba" != x"no"; then
         AC_CHECK_LIB([smbclient], [smbc_init],
-                     [AC_CHECK_HEADERS([libsmbclient.h], [have_libsmbclient=yes LIBSMBCLIENT_LIBS="-lsmbclient"])])
+                     [AC_CHECK_HEADERS([libsmbclient.h], [have_samba=yes LIBSMBCLIENT_LIBS="-lsmbclient"])])
         AC_SUBST(LIBSMBCLIENT_LIBS)
         if test x"$enable_samba" = x"yes" && test x"$have_samba" != x"yes"; then
             AC_MSG_ERROR([Samba support requested, but Samba not found])
