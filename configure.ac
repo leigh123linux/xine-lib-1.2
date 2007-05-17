@@ -803,7 +803,7 @@ AC_SUBST(PASS2_CFLAGS)
 test x"$DEFAULT_OCFLAGS" = x"" && DEFAULT_OCFLAGS='$(O3_CFLAGS)'
 AC_SUBST(DEFAULT_OCFLAGS)
 
-if test x"$arch_x86" = x"yes"; then
+if test x"$arch_x86" = x"yes" && test x"$enable_macosx_universal" = x"no"; then
      AC_DEFINE([ARCH_X86], [], [Define this if you're running x86 architecture])
      AC_DEFINE([HAVE_MMX], [], [Define this if you can compile MMX asm instructions])
 fi
