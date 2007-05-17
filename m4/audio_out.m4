@@ -198,7 +198,7 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
             AC_MSG_ERROR([OSS support requested, but OSS not found])
         fi
     fi
-    AM_CONDITIONAL([ENABLE_OSS], [test x"$have_ossaudio" = x"yes"])
+    AM_CONDITIONAL([ENABLE_OSS], [test x"$have_oss" = x"yes"])
 
 
     dnl PulseAudio
