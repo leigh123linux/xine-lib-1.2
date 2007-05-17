@@ -406,7 +406,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
                     if test x"$xv_try_path" != x"" && test -f "$xv_try_path/$xv_lib"; then
                         case $xv_lib in
                             *.$acl_cv_libext)   have_xv_static=yes xv_try_libs="$xv_try_path/$xv_lib" ;;
-                            *.$acl_cv_shlibext) have_xv_static=no  xv_try_libs="-L$xv_try_path -lXv" ;;
+                            *.$acl_cv_shlibext) have_xv_static=no  xv_try_libs="${xv_try_path:+-L}$xv_try_path -lXv" ;;
                         esac
                         ac_save_LIBS="$LIBS" LIBS="$xv_try_libs $X_PRE_LIBS $X_LIBS $X_EXTRA_LIBS $LIBS"
                         AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[XvShmCreateImage()]])], [have_xv=yes], [])
@@ -454,7 +454,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
             ac_save_LIBS="$LIBS"
 
             dnl Check for xxmc
-            XXMC_LIBS="-L$with_xxmc_path -l$with_xxmc_lib"
+            XXMC_LIBS="${with_xxmc_path:+-L}$with_xxmc_path -l$with_xxmc_lib"
             AC_SUBST(XXMC_LIBS)
             AC_MSG_CHECKING([whether to enable the xxmc plugin with VLD extensions])
             AC_MSG_RESULT([])
@@ -479,7 +479,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
             fi
 
             dnl Check for xvmc
-            XVMC_LIBS="-L$with_xvmc_path -l$with_xvmc_lib"
+            XVMC_LIBS="${with_xvmc_path:+-L}$with_xvmc_path -l$with_xvmc_lib"
             AC_SUBST(XVMC_LIBS)
             AC_MSG_CHECKING([whether to enable the xvmc plugin])
             AC_MSG_RESULT([])
