@@ -71,6 +71,7 @@ typedef struct {
   vo_frame_t        *first;
   vo_frame_t        *last;
   int                num_buffers;
+  int                num_buffers_max;
 
   int                locked_for_read;
   pthread_mutex_t    mutex;
@@ -128,9 +129,14 @@ typedef struct {
 
   int                       current_width, current_height;
   int64_t                   current_duration;
+  int                       frame_drop_limit_max;
   int                       frame_drop_limit;
   int                       frame_drop_cpt;
+  int                       frame_drop_suggested;
   int                       crop_left, crop_right, crop_top, crop_bottom;
+  pthread_mutex_t           trigger_drawing_mutex;
+  pthread_cond_t            trigger_drawing_cond;
+  int                       trigger_drawing;
 } vos_t;
 
 
@@ -144,9 +150,11 @@ static img_buf_fifo_t *vo_new_img_buf_queue () {
 
   queue = (img_buf_fifo_t *) xine_xmalloc (sizeof (img_buf_fifo_t));
   if( queue ) {
-    queue->first       = NULL;
-    queue->last        = NULL;
-    queue->num_buffers = 0;
+    queue->first           = NULL;
+    queue->last            = NULL;
+    queue->num_buffers     = 0;
+    queue->num_buffers_max = 0;
+
     queue->locked_for_read = 0;
     pthread_mutex_init (&queue->mutex, NULL);
     pthread_cond_init  (&queue->not_empty, NULL);
@@ -173,6 +181,8 @@ static void vo_append_to_img_buf_queue_int (img_buf_fifo_t *queue,
   }
 
   queue->num_buffers++;
+  if (queue->num_buffers_max < queue->num_buffers)
+    queue->num_buffers_max = queue->num_buffers;
 
   pthread_cond_signal (&queue->not_empty);
 }
@@ -213,14 +223,15 @@ static vo_frame_t *vo_remove_from_img_buf_queue_int (img_buf_fifo_t *queue, int 
       
       if( width && height ) {
         if( !img ) {
-          if( queue->num_buffers == 1 && !blocking) {
+          if( queue->num_buffers == 1 && !blocking && queue->num_buffers_max > 8) {
             /* non-blocking and only a single frame on fifo with different
              * format -> ignore it (give another chance of a frame format hit)
+             * only if we have a lot of buffers at all.
              */
             lprintf("frame format mismatch - will wait another frame\n");
           } else {
-            /* we have at least 2 frames on fifo but they don't match ->
-             * give up. return whatever we got.
+            /* we have just a limited number of buffers or at least 2 frames
+             * on fifo but they don't match -> give up. return whatever we got.
              */
             img = queue->first;
             lprintf("frame format miss (%d/%d)\n", i, queue->num_buffers);
@@ -467,28 +478,46 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
       duration = img->duration;
     
     /* Frame dropping slow start:
-     *   The engine starts to drop frames if there is less than frame_drop_limit
+     *   The engine starts to drop frames if there are less than frame_drop_limit
      *   frames in advance. There might be a problem just after a seek because
      *   there is no frame in advance yet.
      *   The following code increases progressively the frame_drop_limit (-2 -> 3)
      *   after a seek to give a chance to the engine to display the first frames
-     *   smootly before starting to drop frames if the decoder is really too
+     *   smoothly before starting to drop frames if the decoder is really too
      *   slow.
+     *   The above numbers are the result of frame_drop_limit_max beeing 3. They
+     *   will be (-4 -> 1) when frame_drop_limit_max is only 1. This maximum value
+     *   depends on the number of video buffers which the output device provides.
      */
     if (stream && stream->first_frame_flag == 2)
       this->frame_drop_cpt = 10;
 
     if (this->frame_drop_cpt) {
-      this->frame_drop_limit = 3 - (this->frame_drop_cpt / 2);
+      this->frame_drop_limit = this->frame_drop_limit_max - (this->frame_drop_cpt / 2);
       this->frame_drop_cpt--;
     }
     frames_to_skip = ((-1 * diff) / duration + this->frame_drop_limit) * 2;
 
     /* do not skip decoding until output fifo frames are consumed */
-    if (this->display_img_buf_queue->num_buffers > this->frame_drop_limit ||
+    if (this->display_img_buf_queue->num_buffers >= this->frame_drop_limit ||
         frames_to_skip < 0)
       frames_to_skip = 0;
       
+    /* Do not drop frames immediately, but remember this as suggestion and give
+     * decoder a further chance to supply frames.
+     * This avoids unnecessary frame drops in situations where there is only
+     * a very little number of image buffers, e. g. when using xxmc.
+     */
+    if (this->frame_drop_suggested && frames_to_skip == 0)
+      this->frame_drop_suggested = 0;
+
+    if (frames_to_skip > 0) {
+      if (!this->frame_drop_suggested) {
+        this->frame_drop_suggested = 1;
+        frames_to_skip = 0;
+      }
+    }
+
     lprintf ("delivery diff : %" PRId64 ", current vpts is %" PRId64 ", %d frames to skip\n",
 	     diff, cur_vpts, frames_to_skip);
     
@@ -1043,6 +1072,32 @@ static void check_redraw_needed (vos_t *this, int64_t vpts) {
     this->redraw_needed = 1;
 }
 
+static int interruptable_sleep(vos_t *this, int usec_to_sleep)
+{
+  int timedout = 0;
+
+  struct timeval now;
+  gettimeofday(&now, 0);
+
+  pthread_mutex_lock (&this->trigger_drawing_mutex);
+  if (!this->trigger_drawing) {
+    struct timespec abstime;
+    abstime.tv_sec  = now.tv_sec + usec_to_sleep / 1000000;
+    abstime.tv_nsec = now.tv_usec * 1000 + (usec_to_sleep % 1000000) * 1000;
+
+    if (abstime.tv_nsec > 1000000000) {
+      abstime.tv_nsec -= 1000000000;
+      abstime.tv_sec++;
+    }
+
+    timedout = pthread_cond_timedwait(&this->trigger_drawing_cond, &this->trigger_drawing_mutex, &abstime);
+  }
+  this->trigger_drawing = 0;
+  pthread_mutex_unlock (&this->trigger_drawing_mutex);
+
+  return timedout;
+}
+
 /* special loop for paused mode
  * needed to update screen due overlay changes, resize, window
  * movement, brightness adjusting etc.
@@ -1088,7 +1143,7 @@ static void paused_loop( vos_t *this, int64_t vpts )
     }
     
     pthread_mutex_unlock( &this->free_img_buf_queue->mutex );
-    xine_usec_sleep (20000);
+    interruptable_sleep(this, 20000);
     pthread_mutex_lock( &this->free_img_buf_queue->mutex );
   }
   
@@ -1218,7 +1273,10 @@ static void *video_out_loop (void *this_gen) {
 		"video_out: vpts/clock error, next_vpts=%" PRId64 " cur_vpts=%" PRId64 "\n", next_frame_vpts,vpts);
                
       if (usec_to_sleep > 0)
-        xine_usec_sleep (usec_to_sleep);
+      {
+        if (0 == interruptable_sleep(this, usec_to_sleep))
+          break;
+      }
 
       if (this->discard_frames)
         break;
@@ -1601,6 +1659,9 @@ static void vo_exit (xine_video_port_t *this_gen) {
   free (this->free_img_buf_queue);
   free (this->display_img_buf_queue);
 
+  pthread_cond_destroy(&this->trigger_drawing_cond);
+  pthread_mutex_destroy(&this->trigger_drawing_mutex);
+
   free (this);
 }
 
@@ -1668,6 +1729,15 @@ static void vo_flush (xine_video_port_t *this_gen) {
     this->discard_frames--;
     pthread_mutex_unlock(&this->display_img_buf_queue->mutex);
   }
+}
+
+static void vo_trigger_drawing (xine_video_port_t *this_gen) {
+  vos_t      *this = (vos_t *) this_gen;
+
+  pthread_mutex_lock (&this->trigger_drawing_mutex);
+  this->trigger_drawing = 1;
+  pthread_cond_signal (&this->trigger_drawing_cond);
+  pthread_mutex_unlock (&this->trigger_drawing_mutex);
 }
 
 /* crop_frame() will allocate a new frame to copy in the given image
@@ -1765,6 +1835,7 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this->vo.enable_ovl            = vo_enable_overlay;
   this->vo.get_overlay_manager   = vo_get_overlay_manager;
   this->vo.flush                 = vo_flush;
+  this->vo.trigger_drawing       = vo_trigger_drawing;
   this->vo.get_property          = vo_get_property;
   this->vo.set_property          = vo_set_property;
   this->vo.status                = vo_status;
@@ -1784,8 +1855,6 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this->overlay_source->init (this->overlay_source);
   this->overlay_enabled       = 1;
 
-  this->frame_drop_limit      = 3;
-  this->frame_drop_cpt        = 0;
 
   /* default number of video frames from config */
   num_frame_buffers = xine->config->register_num (xine->config,
@@ -1805,6 +1874,24 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   /* we need at least 5 frames */
   if (num_frame_buffers<5) 
     num_frame_buffers = 5;
+
+  /* Choose a frame_drop_limit which matches num_frame_buffers.
+   * xxmc for example supplies only 8 buffers. 2 are occupied by
+   * MPEG2 decoding, further 2 for displaying and the remaining 4 can
+   * hardly be filled all the time.
+   * The below constants reserve buffers for decoding, displaying and
+   * buffer fluctuation.
+   * A frame_drop_limit_max below 1 will disable frame drops at all.
+   */
+  this->frame_drop_limit_max  = num_frame_buffers - 2 - 2 - 1;
+  if (this->frame_drop_limit_max < 1)
+    this->frame_drop_limit_max = 1;
+  else if (this->frame_drop_limit_max > 3)
+    this->frame_drop_limit_max = 3;
+
+  this->frame_drop_limit      = this->frame_drop_limit_max;
+  this->frame_drop_cpt        = 0;
+  this->frame_drop_suggested  = 0;
 
   this->extra_info_base = calloc (num_frame_buffers,
 					  sizeof(extra_info_t));
@@ -1842,6 +1929,9 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
       "were not scheduled for display in time, xine sends a notification."),
     20, NULL, NULL);
 
+  pthread_mutex_init(&this->trigger_drawing_mutex, NULL);
+  pthread_cond_init(&this->trigger_drawing_cond, NULL);
+  this->trigger_drawing = 0;
 
   if (grabonly) {
 
