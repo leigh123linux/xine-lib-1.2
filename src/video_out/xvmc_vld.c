@@ -22,7 +22,7 @@
  *
  * xvmc_vld.c, X11 decoding accelerated video extension interface for xine
  *
- * Author: Thomas Hellström, (2004)
+ * Author: Thomas HellstrÃ¶m, (2004)
  */
 
 #include "xxmc.h"

@@ -56,6 +56,7 @@
 #include <X11/extensions/XShm.h>
 #include <X11/extensions/Xv.h>
 #include <X11/extensions/Xvlib.h>
+#include <time.h>
 
 #define LOG_MODULE "video_out_xv"
 #define LOG_VERBOSE
@@ -262,7 +263,9 @@ static XvImage *create_ximage (xv_driver_t *this, XShmSegmentInfo *shminfo,
     height = 1;
 
   if (this->use_pitch_alignment) {
+    lprintf ("use_pitch_alignment old width=%d",width);
     width = (width + 7) & ~0x7;
+    lprintf ("use_pitch_alignment new width=%d",width);
   }
 
   switch (format) {
@@ -286,6 +289,7 @@ static XvImage *create_ximage (xv_driver_t *this, XShmSegmentInfo *shminfo,
     gX11Fail = 0;
     x11_InstallXErrorHandler (this);
 
+    lprintf( "XvShmCreateImage format=0x%x, width=%d, height=%d\n", xv_format, width, height );
     image = XvShmCreateImage(this->display, this->xv_port, xv_format, 0,
 			     width, height, shminfo);
 
@@ -296,6 +300,22 @@ static XvImage *create_ximage (xv_driver_t *this, XShmSegmentInfo *shminfo,
 	      _("%s: => not using MIT Shared Memory extension.\n"), LOG_MODULE);
       this->use_shm = 0;
       goto finishShmTesting;
+    }
+
+    {
+    int q;
+
+    lprintf( "XvImage id %d\n", image->id );
+    lprintf( "XvImage width %d\n", image->width );
+    lprintf( "XvImage height %d\n", image->height );
+    lprintf( "XvImage data_size %d\n", image->data_size );
+    lprintf( "XvImage num_planes %d\n", image->num_planes );
+    
+        for( q=0; q < image->num_planes; q++)
+        {
+            lprintf( "XvImage pitches[%d] %d\n",  q, image->pitches[q] );
+            lprintf( "XvImage offsets[%d] %d\n",  q, image->offsets[q] );
+        }
     }
 
     shminfo->shmid = shmget(IPC_PRIVATE, image->data_size, IPC_CREAT | 0777);
@@ -754,6 +774,16 @@ static int xv_redraw_needed (vo_driver_t *this_gen) {
   return ret;
 }
 
+/* Used in xv_display_frame to determine how long XvShmPutImage takes
+   - if slower than 60fps, print a message
+*/
+static double timeOfDay()
+{
+    struct timeval t;
+    gettimeofday( &t, NULL );
+    return ((double)t.tv_sec) + (((double)t.tv_usec)/1000000.0);
+}
+
 static void xv_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   xv_driver_t  *this  = (xv_driver_t *) this_gen;
   xv_frame_t   *frame = (xv_frame_t *) frame_gen;
@@ -797,9 +827,14 @@ static void xv_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
    * ask for offset and output size
    */
   xv_redraw_needed (this_gen);
+  {
+  double start_time;
+  double end_time;
+  double elapse_time;
+  int factor;
 
   LOCK_DISPLAY(this);
-
+  start_time = timeOfDay();
   if (this->use_shm) {
     XvShmPutImage(this->display, this->xv_port,
                   this->drawable, this->gc, this->cur_frame->image,
@@ -818,8 +853,19 @@ static void xv_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   }
 
   XSync(this->display, False);
+  end_time = timeOfDay();
 
   UNLOCK_DISPLAY(this);
+
+  elapse_time = end_time - start_time;
+  factor = (int)(elapse_time/(1.0/60.0));
+
+  if( factor > 1 )
+  {
+    lprintf( "%s PutImage %dX interval (%fs)\n",
+        log_line_prefix(), factor, elapse_time );
+  }
+  }
 
   /*
   printf (LOG_MODULE ": xv_display_frame... done\n");

@@ -3,7 +3,7 @@
     
     (C) 2002 Alex Beregszaszi <alex@naxine.org>
     (C) 2002-2003 Nick Kurshev <nickols_k@mail.ru>
-    (C) 2002-2004 Måns Rullgård <mru@users.sourceforge.net>
+    (C) 2002-2004 MÃ¥ns RullgÃ¥rd <mru@users.sourceforge.net>
 
     Accessing hardware from userspace as USER (no root needed!)
 
@@ -109,7 +109,7 @@
 #define irqreturn(n) return
 #endif
 
-MODULE_AUTHOR("Alex Beregszaszi <alex@naxine.org>, Nick Kurshev <nickols_k@mail.ru>, Måns Rullgård <mru@users.sf.net>");
+MODULE_AUTHOR("Alex Beregszaszi <alex@naxine.org>, Nick Kurshev <nickols_k@mail.ru>, MÃ¥ns RullgÃ¥rd <mru@users.sf.net>");
 MODULE_DESCRIPTION("Provides userspace access to hardware");
 #ifdef MODULE_LICENSE
 MODULE_LICENSE("GPL");

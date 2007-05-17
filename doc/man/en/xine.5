@@ -54,6 +54,8 @@ to read from. Valid MRLs may be plain file names or one of the following:
 .br
 .BI dvbt://<channel_name>:<tuning_parameters>
 .br
+.BI dvba://<channel_name>:<tuning_parameters>
+.br
 .BR pvr:/<tmp_files_path>!<saved_files_path>!<max_page_age> " (for WinTV PVR 250 and 350)"
 .LP
 .TP
@@ -199,13 +201,16 @@ For the dvbc, dvbs and dvbt MRLs, tuning parameters are expected, taking one
 of the following forms:
 .TP
 .B DVB-S
-<frequency>:<polarisation>:<sat_no>:<sym_rate>:<vpid>:<apid>
+<frequency>:<polarisation>:<sat-no>:<sym-rate>:<vpid>:<apid>:<service-id>
 .TP
 .B DVB-C
-<frequency>:<inversion>:<sym_rate>:<fec>:<qam>:<vpid>:<apid>
+<frequency>:<inversion>:<sym-rate>:<fec>:<qam>:<vpid>:<apid>:<service-id>
 .TP
 .B DVB-T
-<frequency>:<inversion>:<bw>:<fec_hp>:<fec_lp>:<qam>:<transmission_mode>:<guardlist>:<hierarchy_info>:<vpid>:<apid>
+<frequency>:<inversion>:<bw>:<fec-hp>:<fec-lp>:<qam>:<transmission-mode>:<guardlist>:<hierarchy-info>:<vpid>:<apid>:<service-id>
+.TP
+.B DVB-A
+<frequency>:<qam>:<vpid>:<apid>:<service-id>
 .PP
 The individual parameters are:
 .TP 20
@@ -215,16 +220,16 @@ number, usually in kHz
 .B polarisation
 `v' or `h'
 .TP 20
-.B sat_no
+.B sat-no
 unsigned long, usually 0
 .TP 20
-.B sym_rate
+.B sym-rate
 symbol rate in MSyms/sec
 .TP 20
 .B inversion
 INVERSION_ON, INVERSION_OFF, INVERSION_AUTO
 .TP 20
-.B fec, fec_hp, fec_lp
+.B fec, fec-hp, fec-lp
 FEC_1_2, FEC_2_3, FEC_3_4 ... FEC_8_9, FEC_AUTO, FEC_NONE
 .TP 20
 .B qam
@@ -233,13 +238,13 @@ QPSK, QAM_128, QAM_16 ...
 .B bw
 BANDWIDTH_6_MHZ, BANDWIDTH_7_MHZ, BANDWIDTH_8_MHZ
 .TP 20
-.B transmission_mode
+.B transmission-mode
 TRANSMISSION_MODE_2K, TRANSMISSION_MODE_8K
 .TP 20
 .B guardlist
 GUARD_INTERVAL_1_4, GUARD_INTERVAL_1_8, GUARD_INTERVAL_1_16, GUARD_INTERVAL_1_32,
 .TP 20
-.B hierarchy_info
+.B hierarchy-info
 HIERARCHY_1, HIERARCHY_2, HIERARCHY_4, HIERARCHY_NONE
 .TP 20
 .B vpid
@@ -247,6 +252,9 @@ video program ID
 .TP 20
 .B apid
 audio program ID
+.TP 20
+.B service-id
+service ID (needed for now/next information etc.)
 .SH SUBTITLE
 .B external subtitle files (any mrl)
 .br

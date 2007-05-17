@@ -115,6 +115,8 @@ struct input_plugin_s {
 
   /*
    * read nlen bytes, return number of bytes read
+   * Should block until some bytes available for read;
+   * a return value of 0 indicates no data available
    */
   off_t (*read) (input_plugin_t *this, char *buf, off_t nlen);
 

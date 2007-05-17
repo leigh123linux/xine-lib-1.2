@@ -1,7 +1,7 @@
 /**
     Driver for 3DLabs Permedia 2.
 
-    Copyright (C) 2002  Måns Rullgård
+    Copyright (C) 2002  MÃ¥ns RullgÃ¥rd
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@ int pm2_vidmem = PM2_VIDMEM;
 static vidix_capability_t pm2_cap =
 {
     "3DLabs Permedia2 driver",
-    "Måns Rullgård <mru@users.sf.net>",
+    "MÃ¥ns RullgÃ¥rd <mru@users.sf.net>",
     TYPE_OUTPUT,
     { 0, 0, 0, 0 },
     2048,

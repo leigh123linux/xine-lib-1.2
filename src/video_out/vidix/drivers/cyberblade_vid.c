@@ -4,7 +4,7 @@
     Copyright (C) 2002 by Alastair M. Robinson.
     Official homepage: http://www.blackfiveservices.co.uk/EPIAVidix.shtml
 
-    Based on Permedia 3 driver by Måns Rullgård
+    Based on Permedia 3 driver by MÃ¥ns RullgÃ¥rd
 
     Thanks to Gilles Frattini for bugfixes
 

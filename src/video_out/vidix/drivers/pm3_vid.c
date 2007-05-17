@@ -1,7 +1,7 @@
 /**
     Driver for 3DLabs GLINT R3 and Permedia3 chips.
 
-    Copyright (C) 2002, 2003  Måns Rullgård
+    Copyright (C) 2002, 2003  MÃ¥ns RullgÃ¥rd
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -63,7 +63,7 @@ static u_int page_size;
 static vidix_capability_t pm3_cap =
 {
     "3DLabs GLINT R3/Permedia3 driver",
-    "Måns Rullgård <mru@users.sf.net>",
+    "MÃ¥ns RullgÃ¥rd <mru@users.sf.net>",
     TYPE_OUTPUT,
     { 0, 0, 0, 0 },
     2048,

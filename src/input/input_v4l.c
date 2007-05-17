@@ -517,11 +517,9 @@ static int extract_mrl(v4l_input_plugin_t *this, char *mrl)
     
     /* Get frequency, if available */  
     sscanf(locator, "/%d", &frequency);
-    lprintf("Tuner name: '%s' freq: %d\n", tuner_name, frequency);
-  } else {
-    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
-            "input_v4l: No tuner name given. Expected syntax: v4l:/tuner/frequency\n" 
-            "input_v4l: Using currently tuned settings\n");
+    
+    /* cannot use xprintf to log in this routine */
+    lprintf("input_v4l: Tuner name: %s frequency %d\n", tuner_name, frequency );
   }
   
   this->frequency  = frequency;

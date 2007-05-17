@@ -109,7 +109,7 @@ void zoom_filter_mmx (int prevX, int prevY,
 		"pmullw %%mm4, %%mm1 \n\t"
 		"pmullw %%mm5, %%mm2 \n\t"
 
-		/* ajout des valeurs obtenues à la valeur finale */
+		/* ajout des valeurs obtenues Ã  la valeur finale */
 		"paddw %%mm1, %%mm0 \n\t"
 		"paddw %%mm2, %%mm0 \n\t"
 
