@@ -4,7 +4,7 @@ xineplug_LTLIBRARIES = xineplug_inp_vdr.la
 xinepost_LTLIBRARIES = xineplug_post_vdr.la
 
 xineplug_inp_vdr_la_SOURCES = input_vdr.c
-xineplug_inp_vdr_la_LIBADD = $(XINE_LIB)
+xineplug_inp_vdr_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS)
 xineplug_inp_vdr_la_LDFLAGS = $(xineplug_ldflags)
 
 xineinclude_HEADERS = input_vdr.h
