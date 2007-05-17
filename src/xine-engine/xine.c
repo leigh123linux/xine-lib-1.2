@@ -241,8 +241,37 @@ static void ticket_revoke(xine_ticket_t *this, int atomic) {
     pthread_mutex_unlock(&this->revoke_lock);
 }
 
+static int ticket_lock_port_rewiring(xine_ticket_t *this, int ms_timeout) {
+
+  if (ms_timeout >= 0) {
+    struct timespec abstime;
+
+    struct timeval now;
+    gettimeofday(&now, 0);
+
+    abstime.tv_sec = now.tv_sec + ms_timeout / 1000;
+    abstime.tv_nsec = now.tv_usec * 1000 + (ms_timeout % 1000) * 1e6;
+
+    if (abstime.tv_nsec > 1e9) {
+      abstime.tv_nsec -= 1e9;
+      abstime.tv_sec++;
+    }
+
+    return (0 == pthread_mutex_timedlock(&this->port_rewiring_lock, &abstime));
+  }
+
+  pthread_mutex_lock(&this->port_rewiring_lock);
+  return 1;
+}
+
+static void ticket_unlock_port_rewiring(xine_ticket_t *this) {
+
+  pthread_mutex_unlock(&this->port_rewiring_lock);
+}
+
 static void ticket_dispose(xine_ticket_t *this) {
 
+  pthread_mutex_destroy(&this->port_rewiring_lock);
   pthread_mutex_destroy(&this->lock);
   pthread_mutex_destroy(&this->revoke_lock);
   pthread_cond_destroy(&this->issued);
@@ -263,10 +292,13 @@ static xine_ticket_t *ticket_init(void) {
   port_ticket->renew                = ticket_renew;
   port_ticket->issue                = ticket_issue;
   port_ticket->revoke               = ticket_revoke;
+  port_ticket->lock_port_rewiring   = ticket_lock_port_rewiring;
+  port_ticket->unlock_port_rewiring = ticket_unlock_port_rewiring;
   port_ticket->dispose              = ticket_dispose;
   
   pthread_mutex_init(&port_ticket->lock, NULL);
   pthread_mutex_init(&port_ticket->revoke_lock, NULL);
+  pthread_mutex_init(&port_ticket->port_rewiring_lock, NULL);
   pthread_cond_init(&port_ticket->issued, NULL);
   pthread_cond_init(&port_ticket->revoked, NULL);
   
@@ -460,6 +492,7 @@ static int stream_rewire_audio(xine_post_out_t *output, void *data)
   if (!data)
     return 0;
 
+  stream->xine->port_ticket->lock_port_rewiring(stream->xine->port_ticket, -1);
   stream->xine->port_ticket->revoke(stream->xine->port_ticket, 1);
   
   if (stream->audio_out->status(stream->audio_out, stream, &bits, &rate, &mode)) {
@@ -470,6 +503,7 @@ static int stream_rewire_audio(xine_post_out_t *output, void *data)
   stream->audio_out = new_port;
   
   stream->xine->port_ticket->issue(stream->xine->port_ticket, 1);
+  stream->xine->port_ticket->unlock_port_rewiring(stream->xine->port_ticket);
 
   return 1;
 }
@@ -484,6 +518,7 @@ static int stream_rewire_video(xine_post_out_t *output, void *data)
   if (!data)
     return 0;
 
+  stream->xine->port_ticket->lock_port_rewiring(stream->xine->port_ticket, -1);
   stream->xine->port_ticket->revoke(stream->xine->port_ticket, 1);
   
   if (stream->video_out->status(stream->video_out, stream, &width, &height, &img_duration)) {
@@ -494,6 +529,7 @@ static int stream_rewire_video(xine_post_out_t *output, void *data)
   stream->video_out = new_port;
   
   stream->xine->port_ticket->issue(stream->xine->port_ticket, 1);
+  stream->xine->port_ticket->unlock_port_rewiring(stream->xine->port_ticket);
 
   return 1;
 }
@@ -2005,6 +2041,9 @@ const char *const *xine_get_log_names (xine_t *this) {
 
 static inline void check_log_alloc (xine_t *this, int buf)
 {
+  if ( this->log_buffers[buf] )
+    return;
+
   pthread_mutex_lock (&this->log_lock);
 
   if ( ! this->log_buffers[buf] )
@@ -2103,4 +2142,84 @@ int _x_query_buffer_usage(xine_stream_t *stream, int *num_video_buffers, int *nu
     stream->xine->port_ticket->release_nonblocking(stream->xine->port_ticket, 1);
 
   return ticket_acquired != 0;
+}
+
+int _x_lock_port_rewiring(xine_t *xine, int ms_timeout)
+{
+  return xine->port_ticket->lock_port_rewiring(xine->port_ticket, ms_timeout);
+}
+
+void _x_unlock_port_rewiring(xine_t *xine)
+{
+  xine->port_ticket->unlock_port_rewiring(xine->port_ticket);
+}
+
+int _x_lock_frontend(xine_stream_t *stream, int ms_to_time_out)
+{
+  if (ms_to_time_out >= 0) {
+    struct timespec abstime;
+
+    struct timeval now;
+    gettimeofday(&now, 0);
+
+    abstime.tv_sec = now.tv_sec + ms_to_time_out / 1000;
+    abstime.tv_nsec = now.tv_usec * 1000 + (ms_to_time_out % 1000) * 1e6;
+
+    if (abstime.tv_nsec > 1e9) {
+      abstime.tv_nsec -= 1e9;
+      abstime.tv_sec++;
+    }
+
+    return (0 == pthread_mutex_timedlock(&stream->frontend_lock, &abstime));
+  }
+
+  pthread_mutex_lock(&stream->frontend_lock);
+  return 1;
+}
+
+void _x_unlock_frontend(xine_stream_t *stream)
+{
+  pthread_mutex_unlock(&stream->frontend_lock);
+}
+
+int _x_query_unprocessed_osd_events(xine_stream_t *stream)
+{
+  video_overlay_manager_t *ovl;
+  int redraw_needed;
+  
+  if (!stream->xine->port_ticket->acquire_nonblocking(stream->xine->port_ticket, 1))
+    return -1;
+
+  ovl = stream->video_out->get_overlay_manager(stream->video_out);
+  redraw_needed = ovl->redraw_needed(ovl, 0);
+ 
+  if (redraw_needed) 
+    stream->video_out->trigger_drawing(stream->video_out);
+
+  stream->xine->port_ticket->release_nonblocking(stream->xine->port_ticket, 1);
+
+  return redraw_needed;
+}
+
+int _x_demux_seek(xine_stream_t *stream, off_t start_pos, int start_time, int playing)
+{
+  if (!stream->demux_plugin)
+    return -1;
+  return stream->demux_plugin->seek(stream->demux_plugin, start_pos, start_time, playing);
+}
+
+int _x_continue_stream_processing(xine_stream_t *stream)
+{
+  return stream->status != XINE_STATUS_STOP
+    && stream->status != XINE_STATUS_QUIT;
+}
+
+void _x_trigger_relaxed_frame_drop_mode(xine_stream_t *stream)
+{
+  stream->first_frame_flag = 2;
+}
+
+void _x_reset_relaxed_frame_drop_mode(xine_stream_t *stream)
+{
+  stream->first_frame_flag = 1;
 }

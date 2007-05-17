@@ -24,4 +24,5 @@ SUBDIRS = \
 	libreal \
 	libfaad \
 	post \
-	combined
+	combined \
+	vdr
