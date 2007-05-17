@@ -27,7 +27,7 @@
  * Date        Author
  * ----        ------
  *
- * 01-Feb-2005 Pekka J‰‰skel‰inen <poj@iki.fi>
+ * 01-Feb-2005 Pekka J√§√§skel√§inen <poj@iki.fi>
  *
  *             - This history log started.
  *             - Disabled the automatic EPG updater thread until EPG demuxer 
@@ -111,6 +111,7 @@
 #define LOG_VERBOSE
 /*
 #define LOG
+#define LOG_READS
 */
 
 #include "xine_internal.h"
@@ -589,7 +590,8 @@ static tuner_t *tuner_init(xine_t * xine, int adapter)
     this = (tuner_t *) xine_xmalloc(sizeof(tuner_t));
 
     _x_assert(this != NULL);
-    
+
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG, "tuner_init adapter=%d\n", adapter);
     this->fd_frontend = -1;
     for (x = 0; x < MAX_FILTERS; x++)
       this->fd_pidfilter[x] = 0;
@@ -634,7 +636,7 @@ static tuner_t *tuner_init(xine_t * xine, int adapter)
      xprintf(this->xine,XINE_VERBOSITY_DEBUG,"input_dvb: couldn't set EIT to nonblock: %s\n",strerror(errno));
     /* and the internal filter used for PAT & PMT */
    if(fcntl(this->fd_pidfilter[INTERNAL_FILTER], F_SETFL, O_NONBLOCK)<0)
-     xprintf(this->xine,XINE_VERBOSITY_DEBUG,"input_dvb: couldn't set EIT to nonblock: %s\n",strerror(errno));
+     xprintf(this->xine,XINE_VERBOSITY_DEBUG,"input_dvb: couldn't set INTERNAL to nonblock: %s\n",strerror(errno));
     /* and the frontend */
     fcntl(this->fd_frontend, F_SETFL, O_NONBLOCK);
    
@@ -1010,7 +1012,7 @@ static int tuner_tune_it (tuner_t *this, struct dvb_frontend_parameters
   while (ioctl(this->fd_frontend, FE_GET_EVENT, &event) != -1);
 
   if (ioctl(this->fd_frontend, FE_SET_FRONTEND, front_param) <0) {
-    xprintf(this->xine, XINE_VERBOSITY_DEBUG, "setfront front: %s\n", strerror(errno));
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG, "input_dvb: setfront front: %s\n", strerror(errno));
     return 0;
   }
 
@@ -1036,7 +1038,7 @@ static int tuner_tune_it (tuner_t *this, struct dvb_frontend_parameters
   do {
     status = 0;
     if (ioctl(this->fd_frontend, FE_READ_STATUS, &status) < 0) {
-      xprintf(this->xine, XINE_VERBOSITY_DEBUG, "fe get event: %s\n", strerror(errno));
+      xprintf(this->xine, XINE_VERBOSITY_DEBUG, "input_dvb: fe get event: %s\n", strerror(errno));
       return 0;
     }
 
@@ -2476,8 +2478,10 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
   if (!this->tuned_in)
       return 0;
   dvb_event_handler (this);
+#ifdef LOG_READS
   xprintf(this->class->xine,XINE_VERBOSITY_DEBUG,
 	  "input_dvb: reading %" PRIdMAX " bytes...\n", (intmax_t)len);
+#endif
 
 #ifndef DVB_NO_BUFFERING
   nbc_check_buffers (this->nbc); 
@@ -2529,9 +2533,11 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
 	      break;
 	  } 
 
+#ifdef LOG_READS
       xprintf(this->class->xine,XINE_VERBOSITY_DEBUG,
 	      "input_dvb: got %" PRIdMAX " bytes (%" PRIdMAX "/%" PRIdMAX " bytes read)\n", 
 	      (intmax_t)n, (intmax_t)total, (intmax_t)len);
+#endif
     
       if (n > 0){  
 	  this->curpos += n;
@@ -2905,13 +2911,13 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     {
       fprintf(stderr,"input_dvb: 2a %x\n",tuner->feinfo.type); 
       /*
-       * This is dvbc://<channel name>:<qam tuning parameters>
+       * This is dvba://<channel name>:<atsc tuning parameters>
        */
        if (tuner->feinfo.type != FE_ATSC) 
        {
 	 fprintf(stderr,"input_dvb: FAILED 1\n"); 
          xprintf(this->class->xine, XINE_VERBOSITY_LOG,
-	 _("input_dvb: dvbc mrl specified but the tuner doesn't appear to be QAM (DVB-C)\n"));
+	 _("input_dvb: dvba mrl specified but the tuner doesn't appear to be ATSC (DVB-A)\n"));
          tuner_dispose(tuner);
          return 0;
       }

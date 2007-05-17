@@ -3,7 +3,7 @@
 
     Copyright (C) 2003 Rocky Bernstein <rocky@panix.com>
     Copyright (C) 1996,1997,1998  Gerd Knorr <kraxel@bytesex.org>
-         and       Heiko Eiﬂfeldt <heiko@hexco.de>
+         and       Heiko Ei√üfeldt <heiko@hexco.de>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

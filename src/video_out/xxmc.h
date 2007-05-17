@@ -31,7 +31,7 @@
  *
  * overlay support by James Courtier-Dutton <James@superbug.demon.co.uk> - July 2001
  * X11 unscaled overlay support by Miguel Freitas - Nov 2003
- * XxMC implementation by Thomas Hellström - August 2004
+ * XxMC implementation by Thomas HellstrÃ¶m - August 2004
  */
 
 #ifndef _XXMC_H

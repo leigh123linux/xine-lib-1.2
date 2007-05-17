@@ -3,7 +3,7 @@
 
 /*
  * Copyright (C) 2001, 2002 Samuel Hocevar <sam@zoy.org>,
- *                          Håkan Hjort <d95hjort@dtek.chalmers.se>
+ *                          HÃ¥kan Hjort <d95hjort@dtek.chalmers.se>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

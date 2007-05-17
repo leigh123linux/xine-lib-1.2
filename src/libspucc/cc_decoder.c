@@ -223,10 +223,14 @@ static const uint8_t *const cc_alpha_palettes[NUM_CC_PALETTES] = {
 /* mapping from PAC row code to actual CC row */
 static const int  rowdata[] = {10, -1, 0, 1, 2, 3, 11, 12, 13, 14, 4, 5, 6,
 			 7, 8, 9};
-/* FIXME: do real TM */
-/* must be mapped as a music note in the captioning font */ 
-static const char specialchar[] = {'®','°','½','¿','T','¢','£','¶','à',
-			     TRANSP_SPACE,'è','â','ê','î','ô','û'};
+/* FIXME: do real â„¢ (U+2122) */
+/* Code 182 must be mapped as a musical note ('â™ª', U+266A) in the caption font */ 
+static const char specialchar[] = {
+  174 /* Â® */, 176 /* Â° */, 189 /* Â½ */, 191 /* Â¿ */,
+  'T' /* â„¢ */, 162 /* Â¢ */, 163 /* Â£ */, 182 /* Â¶ => â™ª */,
+  224 /* Ã  */, TRANSP_SPACE,232 /* Ã¨ */, 226 /* Ã¢ */,
+  234 /* Ãª */, 238 /* Ã® */, 244 /* Ã´ */, 251 /* Ã» */
+};
 
 /* character translation table - EIA 608 codes are not all the same as ASCII */
 static char chartbl[128];
@@ -427,16 +431,16 @@ static void build_char_table(void)
   for (i = 0; i < 128; i++)
     chartbl[i] = (char) i;
   /* now the special codes */
-  chartbl[0x2a] = 'á';
-  chartbl[0x5c] = 'é';
-  chartbl[0x5e] = 'í';
-  chartbl[0x5f] = 'ó';
-  chartbl[0x60] = 'ú';
-  chartbl[0x7b] = 'ç';
-  chartbl[0x7c] = '÷';
-  chartbl[0x7d] = 'Ñ';
-  chartbl[0x7e] = 'ñ';
-  chartbl[0x7f] = '¤';    /* FIXME: this should be a solid block */
+  chartbl[0x2a] = 225; /* Ã¡ */
+  chartbl[0x5c] = 233; /* Ã© */
+  chartbl[0x5e] = 237; /* Ã­ */
+  chartbl[0x5f] = 243; /* Ã³ */
+  chartbl[0x60] = 250; /* Ãº */
+  chartbl[0x7b] = 231; /* Ã§ */
+  chartbl[0x7c] = 247; /* Ã· */
+  chartbl[0x7d] = 209; /* Ã‘ */
+  chartbl[0x7e] = 241; /* Ã± */
+  chartbl[0x7f] = 164; /* Â¤ FIXME: should be a solid block ('â–ˆ'; U+2588) */
 }
 
 
