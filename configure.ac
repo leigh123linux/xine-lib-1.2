@@ -889,6 +889,13 @@ AC_CHECK_FUNC([opendir],
                    AC_MSG_ERROR([dirent is needed (opendir, readdir, ...)])
                fi])
 
+AC_LIBSOURCE([timedlock.c])
+ac_save_LIBS="$LIBS" LIBS="$LIBS $PTHREAD_LIBS"
+AC_CHECK_FUNCS([pthread_mutex_timedlock],
+               [AC_DEFINE([HAVE_PTHREAD_MUTEX_TIMEDLOCK], 1, [Define to 1 if you have 'pthread_mutex_timedlock' in <pthread.h>])],
+               [AC_LIBOBJ([timedlock])])
+LIBS="$ac_save_LIBS"
+
 
 dnl --------------------------
 dnl checks for system services

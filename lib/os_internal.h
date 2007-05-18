@@ -79,7 +79,7 @@
 #endif
 
 #include <inttypes.h>
-
+#include <pthread.h>
 
 #if defined(WIN32) || defined(__CYGWIN__)
 #  define XINE_PATH_SEPARATOR_STRING ";"
@@ -191,6 +191,13 @@ int xine_private_vasprintf(char **string, const char *format, va_list ap) XINE_F
 #define HAVE_STRNDUP
 #define strndup(S, N) xine_private_strndup((S), (N))
 char *xine_private_strndup(const char *s, size_t n);
+#endif
+
+/* replacement of pthread_mutex_timedlock */
+#ifndef HAVE_PTHREAD_MUTEX_TIMEDLOCK
+#define HAVE_PTHREAD_MUTEX_TIMEDLOCK
+#define pthread_mutex_timedlock(M, T) xine_private_pthread_mutex_timedlock((M), (T))
+int xine_private_pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *abs_timeout);
 #endif
 
 /* handle non-standard function names */
