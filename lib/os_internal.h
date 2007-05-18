@@ -9,6 +9,7 @@
 #if defined(__APPLE__) && defined(XINE_MACOSX_UNIVERSAL_BINARY)
 
 /* __ppc__, __ppc64__, __i386__, __x86_64__ are interesting arch macros */
+#undef HOST_ARCH
 #if defined(__ppc__) || defined(__ppc64__)
 #define ARCH_PPC
 #if defined(__ppc64__)
