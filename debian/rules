@@ -58,6 +58,11 @@ ifeq (,$(findstring optimize,$(DEB_BUILD_OPTIONS)))
  DEB_BUILD_CONFIG_OPTIONS += --build=$(DEB_BUILD_GNU_TYPE)
 endif
 
+# enable SyncFB video output plugin on Linux
+ifeq (linux,$(filter linux,$(subst -, ,$(DEB_BUILD_GNU_TYPE))))
+  DEB_BUILD_CONFIG_OPTIONS += --enable-syncfb
+endif
+
 # --mandir - remove after etch released (autoconf >= 2.59c gets it right)
 CONFIGURE_FLAGS := --prefix=/usr \
 	--mandir=\$${prefix}/share/man \
