@@ -29,6 +29,9 @@ README.freebsd
 README.irix
   hints on running xine on IRIX
 
+README.macosx
+  hints on building xine on Mac OS X
+
 README.network_dvd
   how to play DVDs / Audio CDs over the network
 
