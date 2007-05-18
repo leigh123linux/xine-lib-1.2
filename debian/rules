@@ -65,7 +65,6 @@ endif
 
 # --mandir - remove after etch released (autoconf >= 2.59c gets it right)
 CONFIGURE_FLAGS := --prefix=/usr \
-	--mandir=\$${prefix}/share/man \
 	--with-external-libmad \
 	--with-external-a52dec \
 	$(DEB_BUILD_CONFIG_OPTIONS) \
