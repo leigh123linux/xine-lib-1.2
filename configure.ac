@@ -761,6 +761,10 @@ if test "x$has_vis" = "xyes"; then
 fi
 AM_CONDITIONAL([ENABLE_VIS], test x"$has_vis" = x"yes")
 
+O1_CFLAGS="$O1_CFLAGS $optflags $cpuflags"
+O2_CFLAGS="$O2_CFLAGS $optflags $cpuflags"
+O3_CFLAGS="$O3_CFLAGS $optflags $cpuflags"
+
 dnl Allow turning off/on of optimizations.  By default, optimizations are
 dnl enabled if --enable-debug is not specified.  Even with --enable-debug,
 dnl optimizations can be enabled by explicitly specifying --enable-optimizations
@@ -769,14 +773,8 @@ AC_ARG_ENABLE([optimizations],
               [], [test x"$enable_debug" != x"no" && enable_optimizations="no"])
 AM_CONDITIONAL([DISABLE_OPTIMIZATIONS], [test x"$enable_optimizations" = x"no"])
 if test x"$enable_optimizations" = x"no"; then
-    O1_CFLAGS="$O0_CLFAGS"
-    O2_CFLAGS="$O0_CFLAGS"
-    O3_CFLAGS="$O0_CFLAGS"
+    DEFAULT_OCFLAGS='$(O0_CFLAGS)'
 else
-    O1_CFLAGS="$O1_CFLAGS $optflags $cpuflags"
-    O2_CFLAGS="$O2_CFLAGS $optflags $cpuflags"
-    O3_CFLAGS="$O3_CFLAGS $optflags $cpuflags"
-
     dnl For multi-pass compilation: never when cross-compiling
     if test x"$cross_compiling" != x"yes"; then
         if test x"$GCC" = x"yes"; then
