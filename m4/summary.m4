@@ -13,10 +13,18 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     echo "   - http          - mms"
     echo "   - pnm           - rtsp"
     if test x"$enable_vcd" != x"no"; then
-        if test x"$with_internal_vcdlibs" = x"no"; then
-            echo "   - vcdo          - vcd (external libs)"
+        if test x"$enable_vcdo" != x"no"; then
+            if test x"$with_internal_vcdlibs" = x"no"; then
+                echo "   - vcdo          - vcd (external libs)"
+            else
+                echo "   - vcdo          - vcd (internal libs)"
+            fi
         else
-            echo "   - vcdo          - vcd (internal libs)"
+            if test x"$with_internal_vcdlibs" = x"no"; then
+                echo "   - vcd (external libs)"
+            else
+                echo "   - vcd (internal libs)"
+            fi
         fi
     fi
     if test x"$with_external_dvdnav" != x"no"; then

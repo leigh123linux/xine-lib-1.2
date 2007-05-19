@@ -13,7 +13,8 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     default_enable_gnomevfs=enable
     default_enable_samba=enable
     default_enable_v4l=disable
-    default_enable_vcd=disable
+    default_enable_vcd=enable
+    default_enable_vcdo=disable
 
     default_with_internal_vcdlibs=without
 
@@ -27,15 +28,15 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
             default_enable_samba=disable
             ;;
         freebsd*)
-            default_enable_vcd=enable
+            default_enable_vcdo=enable
             ;;
         linux*)
             default_enable_dvb=enable
             default_enable_v4l=enable
-            default_enable_vcd=enable
+            default_enable_vcdo=enable
             ;;
         solaris*)
-            default_enable_vcd=enable
+            default_enable_vcdo=enable
             ;;
     esac
 
@@ -262,6 +263,9 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
         fi
     fi
 
+    enable_vcdo=no
+    test $default_enable_vcdo = enable && test x"$enable_vcd" != x"no" && enable_vcdo=yes
+
     AC_DEFINE([LIBCDIO_CONFIG_H], 1, [Get of rid system libcdio build configuration])
     AC_DEFINE([EXTERNAL_LIBCDIO_CONFIG_H], 1, [Get of rid system libcdio build configuration])
     AC_SUBST(LIBCDIO_CFLAGS)
@@ -272,4 +276,5 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     AC_SUBST(LIBVCDINFO_LIBS)
     AM_CONDITIONAL([WITH_EXTERNAL_VCDLIBS], [test x"$with_internal_vcdlibs" = x"no"])
     AM_CONDITIONAL([ENABLE_VCD], [test x"$enable_vcd" != x"no"])
+    AM_CONDITIONAL([ENABLE_VCDO], [test x"$enable_vcdo" != x"no"])
 ])

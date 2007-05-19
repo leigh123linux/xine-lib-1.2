@@ -30,7 +30,7 @@ if ENABLE_DVB
 in_dvb = xineplug_inp_dvb.la
 endif
 
-if ENABLE_VCD
+if ENABLE_VCDO
 in_vcd = xineplug_inp_vcdo.la
 endif
 
