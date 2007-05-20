@@ -80,8 +80,9 @@ to read from. Valid MRLs may be plain file names or one of the following
 .br
 .LP
 \fBNOTE:\fP where a file name is required, the \fIfull path must be
-provided\fP - from a shell, you can use \fB$PWD/file\fP if the file
-is in the current directory.
+provided\fP - from a shell, you can use \fB"$PWD/file"\fP or
+\fB"$(pwd)/file"\fP or \fB"\`pwd\`/file"\fP if the file is in the current
+directory. (Which one depends on your shell; all three work in bash.)
 
 Several MRLs may be specified in order to play a number of consecutive
 streams. Additional input plugins will provide additional MRL types. The ones
