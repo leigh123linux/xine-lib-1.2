@@ -18,7 +18,8 @@
 xine \- a free video player
 .SH MRL (media resource locator)
 MRLs are similar to URLs in your web browser. They describe the media
-to read from. Valid MRLs may be plain file names or one of the following:
+to read from. Valid MRLs may be plain file names or one of the following
+(see also the notes below):
 .TP
 \(bu Filesystem:
 .br
@@ -79,8 +80,9 @@ to read from. Valid MRLs may be plain file names or one of the following:
 .br
 .LP
 \fBNOTE:\fP where a file name is required, the \fIfull path must be
-provided\fP - from a shell, you can use \fB$PWD/file\fP if the file
-is in the current directory.
+provided\fP - from a shell, you can use \fB"$PWD/file"\fP or
+\fB"$(pwd)/file"\fP or \fB"\`pwd\`/file"\fP if the file is in the current
+directory. (Which one depends on your shell; all three work in bash.)
 
 Several MRLs may be specified in order to play a number of consecutive
 streams. Additional input plugins will provide additional MRL types. The ones
@@ -188,11 +190,12 @@ Play entry 0 of /tmp/ntsc.nrg (Nero file). Works for some simple Nero images.
 .br
 .SS DVB
 .PP
-DVB MRLs require that ~/.xine/channels.conf exists and contains valid data.
+DVB MRLs require that xine-lib/channels.conf exists in $XDG_CONFIG_HOME/ or
+~/.config/ and contains valid data.
 This can be obtained by generating a tuning file using the LinuxTV DVB apps
 utility "scan" (or "dvbscan" if you're using a version newer than 1.1.0):
 .PP
-.B scan -o zap /usr/share/doc/dvb-utils/examples/scan/dvb-t/uk-PontopPike
+.B scan -o zap /usr/share/doc/dvb-utils/examples/scan/dvb-t/uk-PontopPike >~/.config/xine-lib/channels.conf
 .PP
 (This example is for the writer's local transmitter, using a file from the
 Debian dvb-utils package.)

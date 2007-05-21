@@ -1316,7 +1316,8 @@
      You can do this either in the config dialog while xine is running (press
      the config button on the xine panel and go to the AUDIO tab) or have it
      the complicated way by editing the config file yourself which is located
-     in your home directory in <filename>.gxine</filename> or <filename>.xine</filename>:
+     in your home directory in <filename>.config/gxine</filename> or
+     <filename>.xine</filename>:
      <programlisting>
 &nbsp;&nbsp;&nbsp;audio.output.speaker_arrangement:Surround 4.0
 &nbsp;&nbsp;&nbsp;audio.output.speaker_arrangement:Surround 4.1
@@ -1329,8 +1330,8 @@
     <para>
      xine can do that too. Pretty much the same story as for 4-/5-channel
      surround (see above). You can either use the config dialog or edit
-     the config file (<filename>~/.xine/config</filename> or <filename>~/.gxine/config</filename>)
-     yourself:
+     the config file (<filename>~/.xine/config</filename> or
+     <filename>~/.config/gxine/config</filename>) yourself:
      <programlisting>&nbsp;&nbsp;&nbsp;audio.output.speaker_arrangement:Pass Through</programlisting>
     </para>
    </sect2>
@@ -1858,8 +1859,8 @@
     </para>
     <para>
      Unscaled OSD usage by subtitles and xine-ui is controlled by 
-     the following settings
-     (<filename>~/.xine/config</filename> or <filename>~/.gxine/config</filename>):
+     the following settings (<filename>~/.xine/config</filename> or
+     <filename>~/.config/gxine/config</filename>):
      <programlisting>&nbsp;&nbsp;&nbsp;gui.osd_use_unscaled:0</programlisting>
      <programlisting>&nbsp;&nbsp;&nbsp;subtitles.separate.use_unscaled_osd:0</programlisting>
     </para>

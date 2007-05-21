@@ -49,7 +49,7 @@ install a channel list
 xine's dvb input plugin needs a channel/transponder list that fits your 
 dvb equipment. xine now uses the channels.conf format of szap, czap and 
 tzap as appropriate for DVB-S, DVB-C and DVB-T. it will search the channel
-list file in ~/.xine/channels.conf
+list file in ~/.config/xine/channels.conf
 
 channel list format for DVB-S: (satellite)
 -------------------------------------------
@@ -72,11 +72,11 @@ which comes with the dvb package. compile it using something like
 
 then start scanning
 
-# scan >~/.xine/channels.conf
+# scan >~/.config/xine/channels.conf
 
 newer versions of scan (after July 2004) are called dvbscan, but you can use it much the same way:
 
-# dvbscan Hotbird-13.0 >~/.xine/channels.conf
+# dvbscan Hotbird-13.0 >~/.config/xine/channels.conf
 
 this can take a while. in a DiSEqC environment, use the -s N switch to select
 different sattelites to scan and paste the results in one big channels.conf file.  As always,
