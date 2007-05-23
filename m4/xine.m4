@@ -99,6 +99,7 @@ AC_DEFUN([AM_PATH_XINE], [
 *** to modify your LD_LIBRARY_PATH enviroment variable, or edit
 *** /etc/ld.so.conf so that the correct libraries are found at run-time.
             ])
+        fi
     fi
     AC_SUBST(XINE_CFLAGS)
     AC_SUBST(XINE_LIBS)
