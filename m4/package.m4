@@ -9,7 +9,7 @@ AC_DEFUN([ACX_VERSION_CHECK], [
     required_version_parsed=_ACX_VERSION_PARSE([$required_version])
     actual_version=ifelse([$2], , [0.0.0], [$2])
     actual_version_parsed=_ACX_VERSION_PARSE([$actual_version])
-    if test $required_version_parsed -ge $actual_version_parsed; then
+    if test $required_version_parsed -le $actual_version_parsed; then
         ifelse([$3], , [:], [$3])
     else
         ifelse([$4], , [:], [$4])
