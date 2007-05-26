@@ -93,15 +93,17 @@ typedef struct {
   
   char             preview[MAX_PREVIEW_SIZE];
   off_t            preview_size;
-  
+
+  /* 2 spare bytes here */
+
+  /* NSV */
+  unsigned char    is_nsv;		/* bool */
+
   /* ShoutCast */
-  int              shoutcast_mode;
+  unsigned char    shoutcast_mode;	/* bool */
   int              shoutcast_metaint;
   off_t            shoutcast_pos;
   char            *shoutcast_songtitle;
-
-  /* NSV */
-  int              is_nsv;
 
   /* scratch buffer for forward seeking */
 
