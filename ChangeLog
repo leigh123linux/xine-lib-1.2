@@ -13,6 +13,7 @@ xine-lib (1.1.7) (unreleased)
   * Allow XxMC to switch back to software decoding; don't deinterlace if it's
     not needed for any given frame.
   * Document dvba: MRLs (ATSC with full tuning info).
+  * Fix VCD playback (broken since 1.1.4).
 
 xine-lib (1.1.6)
   * Split the DirectFB plugin into X11 and non-X versions.

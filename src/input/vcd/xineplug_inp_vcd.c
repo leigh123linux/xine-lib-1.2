@@ -160,6 +160,7 @@ struct vcd_input_plugin_tag {
                                          region; false otherwise */
 
   vcdplayer_t         player ;
+  char               *player_device;
 };
 
 vcd_input_plugin_t  my_vcd;
@@ -348,7 +349,9 @@ vcd_build_mrl_list(vcd_input_class_t *class, char *vcd_device)
     */
     return false;
   }
-  
+
+  free (my_vcd.player_device);
+  my_vcd.player_device    = strdup (vcd_device);
   p_vcdinfo               = vcdplayer->vcd;
   i_entries               = vcdplayer->i_entries;
   class->mrl_track_offset = -1;
@@ -447,9 +450,7 @@ vcd_build_mrl_list(vcd_input_class_t *class, char *vcd_device)
             "offsets are track: %d, entry: %d, play: %d seg: %d\n", 
             class->mrl_track_offset, class->mrl_entry_offset, 
             class->mrl_play_offset,  class->mrl_segment_offset);
-  
-  if (!was_open)
-    vcdio_close(vcdplayer);
+
   return true;
 }
 
@@ -688,6 +689,13 @@ vcd_plugin_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo,
   /* Should we change this to <= instead of !=? */
   if (i_len != M2F2_SECTOR_SIZE) return NULL;
 
+  /* If VCD isn't open, we need to open it now. */
+  if (!p_vcdplayer->b_opened) {
+    if (!vcdio_open(p_vcdplayer, my_vcd.player_device)) {
+      return NULL;
+    }
+  }
+
   if (vcd_handle_events()) goto read_block;
 
   if (p_vcdplayer->i_still > 0) {
@@ -920,7 +928,8 @@ vcd_close(vcd_input_class_t *class)
 {
   xine_free_mrls(&(class->num_mrls), class->mrls);
   FREE_AND_NULL(my_vcd.mrl); 
-  vcdio_close(&my_vcd.player);
+  if (my_vcd.player.b_opened)
+    vcdio_close(&my_vcd.player);
 }
 
 
@@ -941,7 +950,8 @@ vcd_class_eject_media (input_class_t *this_gen)
   
   ret = cdio_eject_media(&cdio);
   if ((ret == 0) || (ret == 2)) {
-    vcdio_close(&my_vcd.player);
+     if (my_vcd.player.b_opened)
+       vcdio_close(&my_vcd.player);
     return 1;
   } else return 0;
 }
@@ -1408,12 +1418,8 @@ vcd_plugin_dispose(input_plugin_t *this_gen)
 
   my_vcd.stream = NULL;
 
-#if 0
-  vcd_input_plugin_t *t= (vcd_input_plugin_t *) this_gen;
-  vcdplayer_t        *this = t->v;
-
-  if (NULL==this) return;
-#endif
+  if (my_vcd.player.b_opened)
+    vcdio_close(&my_vcd.player);
 }
 
 /* Pointer to vcdimager default log handler. Set by init_input_plugin
@@ -1971,6 +1977,8 @@ _("For tracking down bugs in the VCD plugin. Mask values are:\n"
   my_vcd.player.b_opened                 = false;
   my_vcd.player.play_item.num            = VCDINFO_INVALID_ENTRY;
   my_vcd.player.play_item.type           = VCDINFO_ITEM_TYPE_ENTRY;
+
+  my_vcd.player_device                   = NULL;
 
   return class;
 }
