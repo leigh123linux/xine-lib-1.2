@@ -64,12 +64,19 @@ int xine_profiler_allocate_slot (const char *label) {
 }
 
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86_32)
 __inline__ unsigned long long int rdtsc(void)
 {
   unsigned long long int x;
   __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));     
   return x;
+}
+#elif defined(ARCH_X86_64)
+__inline__ unsigned long long int rdtsc(void)
+{
+  unsigned long long int a, d;
+  __asm__ volatile (".byte 0x0f, 0x31" : "=a" (a), "=d" (d));
+  return (d << 32) | (a & 0xffffffff);
 }
 #endif
 
