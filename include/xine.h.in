@@ -1932,6 +1932,7 @@ typedef struct {
 #define XINE_MSG_AUDIO_OUT_UNAVAILABLE	11 /* none               */
 #define XINE_MSG_PERMISSION_ERROR       12 /* (file name or mrl) */
 #define XINE_MSG_FILE_EMPTY             13 /* file is empty      */
+#define XINE_MSG_AUTHENTICATION_NEEDED	14 /* (mrl, likely http) */
 
 /* opaque xine_event_queue_t */
 typedef struct xine_event_queue_s xine_event_queue_t;

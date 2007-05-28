@@ -19,6 +19,7 @@ For 1.2 series
 - handle gracefully the runtime removal of the audio output device (being
   it a physical removal for USB devices or a missing output on a client-server
   design like PulseAudio, ESounD or Jack);
+- HTTPS.
 
 known bugs
 ==========

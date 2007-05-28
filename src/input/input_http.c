@@ -93,15 +93,17 @@ typedef struct {
   
   char             preview[MAX_PREVIEW_SIZE];
   off_t            preview_size;
-  
+
+  /* 2 spare bytes here */
+
+  /* NSV */
+  unsigned char    is_nsv;		/* bool */
+
   /* ShoutCast */
-  int              shoutcast_mode;
+  unsigned char    shoutcast_mode;	/* bool */
   int              shoutcast_metaint;
   off_t            shoutcast_pos;
   char            *shoutcast_songtitle;
-
-  /* NSV */
-  int              is_nsv;
 
   /* scratch buffer for forward seeking */
 
@@ -829,7 +831,13 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 		    _("input_http: http status not 2xx: >%d %s<\n"),
 		                        httpcode, httpstatus);
 	  return -7;
-	} else if (httpcode == 403 || httpcode == 401) {
+	} else if (httpcode == 401) {
+          _x_message(this->stream, XINE_MSG_AUTHENTICATION_NEEDED, this->mrl, NULL);
+	  xine_log (this->stream->xine, XINE_LOG_MSG,
+		    _("input_http: http status not 2xx: >%d %s<\n"),
+		    httpcode, httpstatus);
+	  return -8;
+	} else if (httpcode == 403) {
           _x_message(this->stream, XINE_MSG_PERMISSION_ERROR, this->mrl, NULL);
 	  xine_log (this->stream->xine, XINE_LOG_MSG,
 		    _("input_http: http status not 2xx: >%d %s<\n"),
