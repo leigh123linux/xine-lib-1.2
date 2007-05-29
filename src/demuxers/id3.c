@@ -898,7 +898,7 @@ int id3v2_parse_tag(input_plugin_t *input,
     break;
 
   case 4:
-    xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.3 tag\n");
+    xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.4 tag\n");
     result = id3v24_parse_tag(input, stream, mp3_frame_header);
     break;
 
