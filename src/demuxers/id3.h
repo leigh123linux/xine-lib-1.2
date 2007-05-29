@@ -170,19 +170,15 @@ int id3v2_parse_tag(input_plugin_t *input,
 		    xine_stream_t *stream,
 		    int8_t *mp3_frame_header);
 
+/**
+ * @brief Checks if the given buffer is an ID3 tag preamble
+ * @param ptr Pointer to the first 10 bytes of the ID3 tag
+ */
 static inline int id3v2_istag(uint8_t *ptr) {
   return
     (ptr[0] == 'I') &&
     (ptr[1] == 'D') &&
     (ptr[2] == '3');
-}
-
-static inline uint32_t id3v2_tagsize(uint8_t *ptr) {
-  return
-    ((uint32_t)ptr[0] << 21) +
-    ((uint32_t)ptr[1] << 14) +
-    ((uint32_t)ptr[2] << 7) +
-    (uint32_t)ptr[3];
 }
 
 #endif /* ID3_H */
