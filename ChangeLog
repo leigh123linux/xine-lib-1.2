@@ -14,6 +14,7 @@ xine-lib (1.1.7) (unreleased)
     not needed for any given frame.
   * Document dvba: MRLs (ATSC with full tuning info).
   * Fix VCD playback (broken since 1.1.4).
+  * Fix demuxing of FLAC files with ID3v2 tags.
 
 xine-lib (1.1.6)
   * Split the DirectFB plugin into X11 and non-X versions.
