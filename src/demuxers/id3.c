@@ -379,7 +379,7 @@ int id3v22_parse_tag(input_plugin_t *input,
     if (tag_header.flags & ID3V22_ZERO_FLAG) {
       /* invalid flags */
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
-              "id3: invalid header flags\n");
+              "id3: invalid header flags (%02x)\n", tag_header.flags);
       input->seek (input, tag_header.size - pos, SEEK_CUR);
       return 0;
     }
@@ -573,7 +573,7 @@ int id3v23_parse_tag(input_plugin_t *input,
     if (tag_header.flags & ID3V23_ZERO_FLAG) {
       /* invalid flags */
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
-              "id3: invalid header flags\n");
+              "id3: invalid header flags (%02x)\n", tag_header.flags);
       input->seek (input, tag_header.size - pos, SEEK_CUR);
       return 0;
     }
@@ -824,7 +824,7 @@ int id3v24_parse_tag(input_plugin_t *input,
     if (tag_header.flags & ID3V24_ZERO_FLAG) {
       /* invalid flags */
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
-              "id3: invalid header flags\n");
+              "id3: invalid header flags (%02x)\n", tag_header.flags);
       input->seek (input, tag_header.size - pos, SEEK_CUR);
       return 0;
     }
