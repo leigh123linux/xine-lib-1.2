@@ -90,10 +90,12 @@ static int open_flac_file(demux_flac_t *flac) {
 
   flac->seekpoints = NULL;
 
-  /* fetch the file signature, get enough bytes so that id3 can also
-     be skipped and/or parsed */
-  if (_x_demux_read_header(flac->input, preamble, 10) != 10)
+  /* fetch the file signature, 4 bytes will read both the fLaC
+   * signature and the */
+  if (_x_demux_read_header(flac->input, preamble, 4) != 4)
     return 0;
+
+  flac->input->seek(flac->input, 4, SEEK_SET);
 
   /* Unfortunately some FLAC files have an ID3 flag prefixed on them
    * before the actual FLAC headers... these are barely legal, but
@@ -101,26 +103,11 @@ static int open_flac_file(demux_flac_t *flac) {
    * tag if present.
    */
   if ( id3v2_istag(preamble) ) {
-    uint32_t id3size;
-
-    /* First 3 bytes are the ID3 signature as above, then comes two bytes
-     * encoding the major and minor version of ID3 used, that we can ignore
-     * as long as we don't try to read the metadata; after those there's a
-     * single byte with flags that depends on the ID3 version used; and now
-     * after all that stuff, there's the size of the rest of the tag, which
-     * is encoded as four bytes.. but only 7 out of 8 bits of every byte is
-     * used... don't ask.
-     */
-    id3size = id3v2_tagsize(&preamble[6]);
-
     id3v2_parse_tag(flac->input, flac->stream, preamble);
-
-    flac->input->seek(flac->input, id3size, SEEK_SET);
 
     if ( flac->input->read(flac->input, preamble, 4) != 4 )
       return 0;
-  } else
-    flac->input->seek(flac->input, 4, SEEK_SET);
+  }
 
   /* validate signature */
   if ((preamble[0] != 'f') || (preamble[1] != 'L') ||
