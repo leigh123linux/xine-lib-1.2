@@ -72,8 +72,6 @@ typedef struct speex_decoder_s {
   SpeexStereoState  stereo;
   int               expect_metadata;
 
-  float             output[MAX_FRAME_SIZE];
-
   int               header_count;
 
   xine_stream_t    *stream;
@@ -296,9 +294,8 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     for (j = 0; j < this->nframes; j++) {
       int ret;
       int bitrate;
-      ogg_int16_t * ptr = audio_buffer->mem;
 
-      ret = speex_decode (this->st, &this->bits, this->output);
+      ret = speex_decode_int (this->st, &this->bits, audio_buffer->mem);
 
       if (ret==-1)
 	break;
@@ -312,26 +309,12 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       }
 
       if (this->channels == 2) {
-	speex_decode_stereo (this->output, this->frame_size, &this->stereo);
+	speex_decode_stereo_int (audio_buffer->mem, this->frame_size, &this->stereo);
       }
 
       speex_decoder_ctl (this->st, SPEEX_GET_BITRATE, &bitrate);
       if (bitrate <= 1) bitrate = 16000; /* assume 16 kbit */
       _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITRATE, bitrate);
-
-      /*PCM saturation (just in case)*/
-      for (i=0; i < this->frame_size * this->channels; i++)
-	{
-	  if (this->output[i]>32000.0)
-	    this->output[i]=32000.0;
-	  else if (this->output[i]<-32000.0)
-	    this->output[i]=-32000.0;
-	}
-
-      /*Convert to short and play */	
-      for (i=0; i< this->frame_size * this->channels; i++) {
-	*ptr++ = (ogg_int16_t)this->output[i];
-      }
 
       audio_buffer->vpts       = this->pts;
       this->pts=0;
