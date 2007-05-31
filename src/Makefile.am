@@ -17,7 +17,6 @@ SUBDIRS = \
 	libspucmml \
 	libspudvb \
 	libsputext \
-	libmad \
 	libw32dll \
 	libxinevdec \
 	libxineadec \

@@ -1155,7 +1155,6 @@ src/liba52/Makefile
 src/libfaad/Makefile
 src/libfaad/codebook/Makefile
 src/libffmpeg/Makefile
-src/libmad/Makefile
 src/libmpeg2/Makefile
 src/libspudec/Makefile
 src/libspucc/Makefile
