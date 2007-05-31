@@ -121,6 +121,7 @@ typedef unsigned int qt_atom;
 #define WRT_ATOM QT_ATOM(0xA9, 'w', 'r', 't')
 #define DAY_ATOM QT_ATOM(0xA9, 'd', 'a', 'y')
 
+#define RMRA_ATOM QT_ATOM('r', 'm', 'r', 'a')
 #define RMDA_ATOM QT_ATOM('r', 'm', 'd', 'a')
 #define RDRF_ATOM QT_ATOM('r', 'd', 'r', 'f')
 #define RMDR_ATOM QT_ATOM('r', 'm', 'd', 'r')
@@ -1984,7 +1985,8 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
       strncpy(info->comment, &moov_atom[i + 8], string_size - 1);
       info->comment[string_size - 1] = 0;
 
-    } else if (current_atom == RMDA_ATOM) {
+    } else if (current_atom == RMDA_ATOM ||
+               current_atom == RMRA_ATOM) {
 
       /* create a new reference structure */
       info->reference_count++;

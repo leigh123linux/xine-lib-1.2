@@ -39,9 +39,14 @@
 #include "xine_internal.h"
 #include "audio_out.h"
 #include "buffer.h"
-#include "frame.h"
-#include "synth.h"
 #include "xineutils.h"
+
+#ifdef HAVE_MAD_H
+# include <mad.h>
+#else
+# include "frame.h"
+# include "synth.h"
+#endif
 
 #define INPUT_BUF_SIZE  16384
 
