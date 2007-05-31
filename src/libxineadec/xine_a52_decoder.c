@@ -64,7 +64,7 @@
 #include "buffer.h"
 #include "xineutils.h"
 
-#include "crc.c"
+#include "../../contrib/a52dec/crc.c"
 
 #undef DEBUG_A52
 #ifdef DEBUG_A52
