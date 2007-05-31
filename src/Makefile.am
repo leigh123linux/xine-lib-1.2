@@ -11,7 +11,6 @@ SUBDIRS = \
 	demuxers \
 	libffmpeg \
 	libmpeg2 \
-	liba52 \
 	libspudec \
 	libspucc \
 	libspucmml \

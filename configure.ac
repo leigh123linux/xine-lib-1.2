@@ -1152,7 +1152,6 @@ src/input/vcd/libcdio/MSWindows/Makefile
 src/input/vcd/libcdio/image/Makefile
 src/input/vcd/libvcd/Makefile
 src/input/vcd/libvcd/libvcd/Makefile
-src/liba52/Makefile
 src/libfaad/Makefile
 src/libfaad/codebook/Makefile
 src/libffmpeg/Makefile
