@@ -36,7 +36,7 @@
 #include "attributes.h"
 
 #include <wavpack/wavpack.h>
-#include "combined_wavpack.h"
+#include "wavpack_combined.h"
 
 typedef struct {
   demux_plugin_t demux_plugin;

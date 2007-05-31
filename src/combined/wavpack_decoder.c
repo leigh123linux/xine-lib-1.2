@@ -34,7 +34,7 @@
 #include "bswap.h"
 
 #include <wavpack/wavpack.h>
-#include "combined_wavpack.h"
+#include "wavpack_combined.h"
 
 typedef struct {
   audio_decoder_class_t   decoder_class;

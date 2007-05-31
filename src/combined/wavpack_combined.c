@@ -23,7 +23,7 @@
  */
 
 #include "xine_internal.h"
-#include "combined_wavpack.h"
+#include "wavpack_combined.h"
 
 static const demuxer_info_t demux_info_wv = {
   0			/* priority */

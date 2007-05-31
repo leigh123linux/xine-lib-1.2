@@ -19,7 +19,7 @@ xineplug_LTLIBRARIES = \
 	$(xineplug_flac) \
 	xineplug_nsf.la
 
-xineplug_wavpack_la_SOURCES = demux_wavpack.c decoder_wavpack.c combined_wavpack.c combined_wavpack.h
+xineplug_wavpack_la_SOURCES = wavpack_demuxer.c wavpack_decoder.c wavpack_combined.c wavpack_combined.h
 xineplug_wavpack_la_LIBADD = $(XINE_LIB) $(WAVPACK_LIBS)
 xineplug_wavpack_la_CFLAGS = $(AM_CFLAGS) $(WAVPACK_CFLAGS)
 xineplug_wavpack_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/demuxers
