@@ -36,8 +36,8 @@
 #include "bswap.h"
 
 /* Nosefart includes */
-#include "nosefart/types.h"
-#include "nosefart/nsf.h"
+#include "types.h"
+#include "nsf.h"
 
 typedef struct {
   audio_decoder_class_t   decoder_class;

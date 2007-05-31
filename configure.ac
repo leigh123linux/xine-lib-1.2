@@ -1117,6 +1117,7 @@ contrib/Makefile
 contrib/libdca/Makefile
 contrib/libmpcdec/Makefile
 contrib/libxdg-basedir/Makefile
+contrib/nosefart/Makefile
 include/Makefile
 include/xine.h
 lib/Makefile
@@ -1168,7 +1169,6 @@ src/libw32dll/qtx/qtxsdk/Makefile
 src/libxinevdec/Makefile
 src/libxineadec/Makefile
 src/libxineadec/gsm610/Makefile
-src/libxineadec/nosefart/Makefile
 src/libreal/Makefile
 src/post/Makefile
 src/post/planar/Makefile
