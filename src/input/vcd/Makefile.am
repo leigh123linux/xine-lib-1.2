@@ -3,11 +3,6 @@ include $(top_srcdir)/misc/Makefile.common
 AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
-SUBDIRS =
-if !WITH_EXTERNAL_VCDLIBS
-SUBDIRS += libcdio libvcd
-endif
-
 noinst_HEADERS = vcdio.h vcdplayer.h xine-extra.h
 
 xineplug_LTLIBRARIES = xineplug_inp_vcd.la

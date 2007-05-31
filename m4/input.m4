@@ -218,12 +218,12 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
                 fi
             fi
 
-            LIBCDIO_CFLAGS='-I$(top_srcdir)/src/input/vcd/libcdio'
-            LIBCDIO_LIBS='$(top_builddir)/src/input/vcd/libcdio/libcdio.la'
-            LIBISO9660_LIBS='$(top_builddir)/src/input/vcd/libcdio/libiso9660.la'
-            LIBVCD_CFLAGS='-I$(top_srcdir)/src/input/vcd/libvcd'
-            LIBVCD_LIBS='$(top_builddir)/src/input/vcd/libvcd/libvcd.la'
-            LIBVCDINFO_LIBS='$(top_builddir)/src/input/vcd/libvcd/libvcdinfo.la'
+            LIBCDIO_CFLAGS='-I$(top_srcdir)/contrib/libcdio'
+            LIBCDIO_LIBS='$(top_builddir)/contrib/libcdio/libcdio.la'
+            LIBISO9660_LIBS='$(top_builddir)/contrib/libcdio/libiso9660.la'
+            LIBVCD_CFLAGS='-I$(top_srcdir)/contrib/libvcd'
+            LIBVCD_LIBS='$(top_builddir)/contrib/libvcd/libvcd.la'
+            LIBVCDINFO_LIBS='$(top_builddir)/contrib/libvcd/libvcdinfo.la'
 
             case "$host_os" in
                 bsdi*)

@@ -14,6 +14,10 @@ endif
 SUBDIRS += vidix
 endif
 
+if !WITH_EXTERNAL_VCDLIBS
+SUBDIRS += libcdio libvcd
+endif
+
 srcdir = $(shell cd @srcdir@; pwd)
 
 ffmpeg_builder = $(srcdir)/ffmpeg-universal.sh
