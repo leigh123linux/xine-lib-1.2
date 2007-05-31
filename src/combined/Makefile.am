@@ -14,7 +14,9 @@ endif
 $(top_builddir)/contrib/nosefart/libnosefart.la:
 	$(MAKE) -C $(top_builddir)/contrib/nosefart
 
-xineplug_LTLIBRARIES = $(xineplug_wavpack) $(xineplug_flac) \
+xineplug_LTLIBRARIES = \
+	$(xineplug_wavpack) \
+	$(xineplug_flac) \
 	xineplug_nsf.la
 
 xineplug_wavpack_la_SOURCES = demux_wavpack.c decoder_wavpack.c combined_wavpack.c combined_wavpack.h
