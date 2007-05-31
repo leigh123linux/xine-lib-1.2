@@ -13,5 +13,5 @@ noinst_HEADERS = vcdio.h vcdplayer.h xine-extra.h
 xineplug_LTLIBRARIES = xineplug_inp_vcd.la
 
 xineplug_inp_vcd_la_SOURCES = xineplug_inp_vcd.c vcdplayer.c vcdio.c xine-extra.c
-xineplug_inp_vcd_la_LIBADD = $(XINE_LIB) $(LIBCDIO_LIBS) $(LIBVCD_LIBS) $(LIBVCDINFO_LIBS) -lm
+xineplug_inp_vcd_la_LIBADD = $(XINE_LIB) $(LIBCDIO_LIBS) $(LIBVCD_LIBS) $(LIBVCDINFO_LIBS) $(LIBISO9660_LIBS) -lm
 xineplug_inp_vcd_la_CFLAGS  = $(AM_CFLAGS) $(LIBCDIO_CFLAGS) $(LIBVCD_CFLAGS)
