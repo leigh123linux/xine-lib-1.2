@@ -13,7 +13,6 @@ DEBFILES = debian/README.Debian debian/changelog debian/control \
 	debian/shlibdeps.sh debian/libxine-dev.install debian/libxine1.install
 
 EXTRA_DIST = config.rpath autogen.sh \
-	     automake.diff \
 	     ChangeLog \
 	     configure \
 	     config.guess \
@@ -28,8 +27,7 @@ EXTRA_DIST = config.rpath autogen.sh \
 	     README \
 	     TODO \
 	     depcomp \
-	     CREDITS \
-	     @DEPCOMP@
+	     CREDITS
 
 noinst_HEADERS = config.h
 
