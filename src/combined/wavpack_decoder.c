@@ -104,6 +104,8 @@ static int xine_buffer_set_pos_rel(void *const this_gen, const int32_t delta,
 
     return 0;
   }
+
+  return -1;
 }
 
 static int xine_buffer_set_pos_abs(void *const this_gen, const uint32_t pos) {
