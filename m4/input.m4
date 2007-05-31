@@ -220,10 +220,14 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
 
             LIBCDIO_CFLAGS='-I$(top_srcdir)/contrib/libcdio'
             LIBCDIO_LIBS='$(top_builddir)/contrib/libcdio/libcdio.la'
+            LIBCDIO_DEPS='$(top_builddir)/contrib/libcdio/libcdio.la'
             LIBISO9660_LIBS='$(top_builddir)/contrib/libcdio/libiso9660.la'
+            LIBISO9660_DEPS='$(top_builddir)/contrib/libcdio/libiso9660.la'
             LIBVCD_CFLAGS='-I$(top_srcdir)/contrib/libvcd'
             LIBVCD_LIBS='$(top_builddir)/contrib/libvcd/libvcd.la'
+            LIBVCD_DEPS='$(top_builddir)/contrib/libvcd/libvcd.la'
             LIBVCDINFO_LIBS='$(top_builddir)/contrib/libvcd/libvcdinfo.la'
+            LIBVCDINFO_DEPS='$(top_builddir)/contrib/libvcd/libvcdinfo.la'
 
             case "$host_os" in
                 bsdi*)
@@ -270,10 +274,14 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     AC_DEFINE([EXTERNAL_LIBCDIO_CONFIG_H], 1, [Get of rid system libcdio build configuration])
     AC_SUBST(LIBCDIO_CFLAGS)
     AC_SUBST(LIBCDIO_LIBS)
+    AC_SUBST(LIBCDIO_DEPS)
     AC_SUBST(LIBISO9660_LIBS)
+    AC_SUBST(LIBISO9660_DEPS)
     AC_SUBST(LIBVCD_CFLAGS)
     AC_SUBST(LIBVCD_LIBS)
+    AC_SUBST(LIBVCD_DEPS)
     AC_SUBST(LIBVCDINFO_LIBS)
+    AC_SUBST(LIBVCDINFO_DEPS)
     AM_CONDITIONAL([WITH_EXTERNAL_VCDLIBS], [test x"$with_internal_vcdlibs" = x"no"])
     AM_CONDITIONAL([ENABLE_VCD], [test x"$enable_vcd" != x"no"])
     AM_CONDITIONAL([ENABLE_VCDO], [test x"$enable_vcdo" != x"no"])
