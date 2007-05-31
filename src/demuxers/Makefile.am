@@ -24,6 +24,10 @@ if ENABLE_MNG
 mng_module = xineplug_dmx_mng.la
 endif
 
+if ENABLE_MODPLUG
+modplug_module = xineplug_dmx_modplug.la
+endif
+
 if BUILD_DMX_IMAGE
 image_module = xineplug_dmx_image.la
 endif
@@ -33,6 +37,7 @@ xineplug_LTLIBRARIES = \
 	$(asf_module) \
 	$(mng_module) \
 	$(image_module) \
+	$(modplug_module) \
 	xineplug_dmx_games.la \
 	xineplug_dmx_audio.la \
 	xineplug_dmx_mpeg_ts.la \
@@ -114,11 +119,14 @@ xineplug_dmx_audio_la_SOURCES = group_audio.c demux_aud.c demux_aiff.c \
 				demux_cdda.c demux_mpgaudio.c \
 				demux_realaudio.c demux_snd.c demux_voc.c \
 				demux_vox.c demux_wav.c demux_ac3.c id3.c \
-				demux_aac.c demux_mod.c demux_flac.c \
+				demux_aac.c demux_flac.c \
 				demux_mpc.c demux_dts.c demux_shn.c \
 				demux_tta.c
-xineplug_dmx_audio_la_LIBADD = $(XINE_LIB) $(LIBMODPLUG_LIBS)
-xineplug_dmx_audio_la_CFLAGS = $(AM_CFLAGS) $(LIBMODPLUG_CFLAGS)
+xineplug_dmx_audio_la_LIBADD = $(XINE_LIB)
+
+xineplug_dmx_modplug_la_SOURCES = demux_mod.c
+xineplug_dmx_modplug_la_LIBADD = $(XINE_LIB) $(LIBMODPLUG_LIBS)
+xineplug_dmx_modplug_la_CFLAGS = $(LIBMODPLUG_CFLAGS)
 
 xineplug_dmx_yuv_frames_la_SOURCES = demux_yuv_frames.c
 xineplug_dmx_yuv_frames_la_LIBADD = $(XINE_LIB)

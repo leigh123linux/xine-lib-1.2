@@ -31,8 +31,6 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_MODPLUG
-
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -48,7 +46,6 @@
 #include "xineutils.h"
 #include "compat.h"
 #include "demux.h"
-#include "group_audio.h"
 #include "modplug.h"
 #include "bswap.h"
 
@@ -377,7 +374,7 @@ static void class_dispose (demux_class_t *this_gen) {
   free (this);
 }
 
-void *demux_mod_init_plugin (xine_t *xine, void *data) {
+static void *demux_mod_init_plugin (xine_t *xine, void *data) {
   demux_mod_class_t     *this;
 
   this = xine_xmalloc (sizeof (demux_mod_class_t));
@@ -392,4 +389,11 @@ void *demux_mod_init_plugin (xine_t *xine, void *data) {
   return this;
 }
 
-#endif  /* HAVE_MODPLUG */
+static const demuxer_info_t demux_info_mod = {
+  10                       /* priority */
+};
+
+const plugin_info_t xine_plugin_info[] EXPORTED = {
+  { PLUGIN_DEMUX, 26, "modplug", XINE_VERSION_CODE, &demux_info_mod, demux_mod_init_plugin },
+  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+};

@@ -99,12 +99,6 @@ static const demuxer_info_t demux_info_wav = {
   6                        /* priority */
 };
 
-#ifdef HAVE_MODPLUG
-static const demuxer_info_t demux_info_mod = {
-  10                       /* priority */
-};
-#endif
-
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
   { PLUGIN_DEMUX, 26, "aac",       XINE_VERSION_CODE, &demux_info_aac,       demux_aac_init_plugin },
@@ -123,8 +117,5 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_DEMUX, 26, "voc",       XINE_VERSION_CODE, &demux_info_voc,       demux_voc_init_plugin },
   { PLUGIN_DEMUX, 26, "vox",       XINE_VERSION_CODE, &demux_info_vox,       demux_vox_init_plugin },
   { PLUGIN_DEMUX, 26, "wav",       XINE_VERSION_CODE, &demux_info_wav,       demux_wav_init_plugin },
-#ifdef HAVE_MODPLUG
-  { PLUGIN_DEMUX, 26, "mod",       XINE_VERSION_CODE, &demux_info_mod,       demux_mod_init_plugin },
-#endif
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

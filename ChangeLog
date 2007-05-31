@@ -23,6 +23,9 @@ xine-lib (1.1.90) (Unreleased)
     not possible to distinguish between 401 Authentication Requried and 403
     Forbidden.
   * Merge the demuxer and the decoder for NSF files in a combined plugin.
+  * Move modplug demuxing on its own plugin, this way binary distributions
+    can make it optional, as it requires quite a bit of CPU time during
+    initialisation, even for audio files that nothing have to do with modplug.
 
 xine-lib (1.1.7) (unreleased)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.

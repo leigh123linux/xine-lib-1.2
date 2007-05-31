@@ -273,8 +273,6 @@ use internal ffmpeg.
         PKG_CHECK_MODULES([LIBMODPLUG], [libmodplug >= 0.7], [have_modplug=yes], [have_modplug=no])
         if test x"$enable_modplug" = x"yes" && test x"$have_modplug" != x"yes"; then
             AC_MSG_ERROR([MODPlug support requested, but MODPlug not found])
-        elif test x"$have_modplug" = x"yes"; then
-            AC_DEFINE([HAVE_MODPLUG], 1, [define this if you have libmodplug installed])
         fi
     fi
     AM_CONDITIONAL([ENABLE_MODPLUG], [test x"$have_modplug" = x"yes"])

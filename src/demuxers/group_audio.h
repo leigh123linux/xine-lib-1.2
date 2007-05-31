@@ -42,8 +42,4 @@ void *demux_voc_init_plugin (xine_t *xine, void *data);
 void *demux_vox_init_plugin (xine_t *xine, void *data);
 void *demux_wav_init_plugin (xine_t *xine, void *data);
 
-#ifdef HAVE_MODPLUG
-void *demux_mod_init_plugin (xine_t *xine, void *data);
-#endif
-
 #endif
