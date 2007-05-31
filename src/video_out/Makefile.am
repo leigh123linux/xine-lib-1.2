@@ -6,18 +6,6 @@ AM_OBJCFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 
 SUBDIRS = 
 
-if BUILD_DHA_KMOD
-SUBDIRS += libdha
-endif
-
-# vidix depends on portions of dha
-if ENABLE_VIDIX
-if !BUILD_DHA_KMOD
-SUBDIRS += libdha
-endif
-SUBDIRS += vidix
-endif
-
 if ENABLE_MACOSX_VIDEO
 SUBDIRS += macosx
 endif
@@ -165,10 +153,10 @@ xineplug_vo_out_pgx32_la_CPPFLAGS = $(AM_CPPFLAGS) $(SUNDGA_CPPFLAGS)
 
 xineplug_vo_out_vidix_la_SOURCES = video_out_vidix.c $(X11OSD)
 xineplug_vo_out_vidix_la_LIBADD =  $(XINE_LIB) $(X_LIBS) \
-	$(top_builddir)/src/video_out/vidix/libvidix.la $(PTHREAD_LIBS)
+	$(top_builddir)/contrib/vidix/libvidix.la $(PTHREAD_LIBS)
 xineplug_vo_out_vidix_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) -fno-strict-aliasing
-xineplug_vo_out_vidix_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_builddir)/src/video_out/vidix \
-	-I$(top_srcdir)/src/video_out/vidix
+xineplug_vo_out_vidix_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_builddir)/contrib/vidix \
+	-I$(top_srcdir)/contrib/vidix
 
 
 xineplug_vo_out_aa_la_SOURCES =  video_out_aa.c
