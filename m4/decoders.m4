@@ -260,6 +260,14 @@ use internal ffmpeg.
                     ;;
             esac
         fi
+        if test x"$have_external_libmad" != x"yes"; then
+            LIBMAD_CFLAGS='-I$(top_srcdir)/contrib/libmad'
+            LIBMAD_LIBS='$(top_builddir)/contrib/libmad/libmad.la'
+            LIBMAD_DEPS='$(top_builddir)/contrib/libmad/libmad.la'
+        fi
+        AC_SUBST(LIBMAD_CFLAGS)
+        AC_SUBST(LIBMAD_DEPS)
+        AC_SUBST(LIBMAD_LIBS)
     fi
     AM_CONDITIONAL([ENABLE_MAD], [test x"$enable_mad" != x"no"])
     AM_CONDITIONAL([WITH_EXTERNAL_MAD], [test x"$have_external_libmad" = x"yes"])

@@ -16,16 +16,43 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * $Id: layer12.h,v 1.3 2004/04/22 00:22:49 miguelfreitas Exp $
+ * $Id: global.h,v 1.11 2004/01/23 09:41:32 rob Exp $
  */
 
-# ifndef LIBMAD_LAYER12_H
-# define LIBMAD_LAYER12_H
+# ifndef LIBMAD_GLOBAL_H
+# define LIBMAD_GLOBAL_H
 
-# include "stream.h"
-# include "frame.h"
+/* conditional debugging */
 
-int mad_layer_I(struct mad_stream *, struct mad_frame *);
-int mad_layer_II(struct mad_stream *, struct mad_frame *);
+# if defined(DEBUG) && defined(NDEBUG)
+#  error "cannot define both DEBUG and NDEBUG"
+# endif
+
+# if defined(DEBUG)
+#  include <stdio.h>
+# endif
+
+/* conditional features */
+
+# if defined(OPT_SPEED) && defined(OPT_ACCURACY)
+#  error "cannot optimize for both speed and accuracy"
+# endif
+
+# if defined(OPT_SPEED) && !defined(OPT_SSO)
+#  define OPT_SSO
+# endif
+
+# if defined(HAVE_UNISTD_H) && defined(HAVE_WAITPID) &&  \
+    defined(HAVE_FCNTL) && defined(HAVE_PIPE) && defined(HAVE_FORK)
+#  define USE_ASYNC
+# endif
+
+# if !defined(HAVE_ASSERT_H)
+#  if defined(NDEBUG)
+#   define assert(x)	/* nothing */
+#  else
+#   define assert(x)	do { if (!(x)) abort(); } while (0)
+#  endif
+# endif
 
 # endif

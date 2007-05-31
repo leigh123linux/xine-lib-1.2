@@ -1116,6 +1116,7 @@ doc/Doxyfile
 contrib/Makefile
 contrib/gsm610/Makefile
 contrib/libdca/Makefile
+contrib/libmad/Makefile
 contrib/libmpcdec/Makefile
 contrib/libxdg-basedir/Makefile
 contrib/nosefart/Makefile

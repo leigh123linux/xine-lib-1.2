@@ -16,32 +16,32 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * $Id: bit.h,v 1.3 2004/04/22 00:22:36 miguelfreitas Exp $
+ * $Id: version.h,v 1.26 2004/01/23 09:41:33 rob Exp $
  */
 
-# ifndef LIBMAD_BIT_H
-# define LIBMAD_BIT_H
+# ifndef LIBMAD_VERSION_H
+# define LIBMAD_VERSION_H
 
-struct mad_bitptr {
-  unsigned char const *byte;
-  unsigned short cache;
-  unsigned short left;
-};
+# define MAD_VERSION_MAJOR	0
+# define MAD_VERSION_MINOR	15
+# define MAD_VERSION_PATCH	1
+# define MAD_VERSION_EXTRA	" (beta)"
 
-void mad_bit_init(struct mad_bitptr *, unsigned char const *);
+# define MAD_VERSION_STRINGIZE(str)	#str
+# define MAD_VERSION_STRING(num)	MAD_VERSION_STRINGIZE(num)
 
-# define mad_bit_finish(bitptr)		/* nothing */
+# define MAD_VERSION		MAD_VERSION_STRING(MAD_VERSION_MAJOR) "."  \
+				MAD_VERSION_STRING(MAD_VERSION_MINOR) "."  \
+				MAD_VERSION_STRING(MAD_VERSION_PATCH)  \
+				MAD_VERSION_EXTRA
 
-unsigned int mad_bit_length(struct mad_bitptr const *,
-			    struct mad_bitptr const *);
+# define MAD_PUBLISHYEAR	"2000-2004"
+# define MAD_AUTHOR		"Underbit Technologies, Inc."
+# define MAD_EMAIL		"info@underbit.com"
 
-# define mad_bit_bitsleft(bitptr)  ((bitptr)->left)
-unsigned char const *mad_bit_nextbyte(struct mad_bitptr const *);
-
-void mad_bit_skip(struct mad_bitptr *, unsigned int);
-unsigned long mad_bit_read(struct mad_bitptr *, unsigned int);
-void mad_bit_write(struct mad_bitptr *, unsigned int, unsigned long);
-
-unsigned short mad_bit_crc(struct mad_bitptr, unsigned int, unsigned short);
+extern char const mad_version[];
+extern char const mad_copyright[];
+extern char const mad_author[];
+extern char const mad_build[];
 
 # endif

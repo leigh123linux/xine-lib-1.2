@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * $Id: layer3.c,v 1.7 2006/09/26 00:12:20 dgp85 Exp $
+ * $Id: layer3.c,v 1.43 2004/01/23 09:41:32 rob Exp $
  */
 
 # ifdef HAVE_CONFIG_H
@@ -1547,8 +1547,8 @@ void III_aliasreduce(mad_fixed_t xr[576], int lines)
   for (xr += 18; xr < bound; xr += 18) {
     for (i = 0; i < 8; ++i) {
       register mad_fixed_t a, b;
-      register mad_fixed64hi_t hi = 0;
-      register mad_fixed64lo_t lo = 0;
+      register mad_fixed64hi_t hi;
+      register mad_fixed64lo_t lo;
 
       a = xr[-1 - i];
       b = xr[     i];
