@@ -126,7 +126,7 @@ xineplug_dmx_audio_la_LIBADD = $(XINE_LIB)
 
 xineplug_dmx_modplug_la_SOURCES = demux_mod.c
 xineplug_dmx_modplug_la_LIBADD = $(XINE_LIB) $(LIBMODPLUG_LIBS)
-xineplug_dmx_modplug_la_CFLAGS = $(LIBMODPLUG_CFLAGS)
+xineplug_dmx_modplug_la_CFLAGS = $(AM_CFLAGS) $(LIBMODPLUG_CFLAGS)
 
 xineplug_dmx_yuv_frames_la_SOURCES = demux_yuv_frames.c
 xineplug_dmx_yuv_frames_la_LIBADD = $(XINE_LIB)
