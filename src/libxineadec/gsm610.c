@@ -61,8 +61,8 @@
 #include "xineutils.h"
 #include "bswap.h"
 
-#include "gsm610/private.h"
-#include "gsm610/gsm.h"
+#include "private.h"
+#include "gsm.h"
 
 #define AUDIOBUFSIZE 128*1024
 

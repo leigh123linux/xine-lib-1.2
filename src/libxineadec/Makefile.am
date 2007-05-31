@@ -3,8 +3,6 @@ include $(top_srcdir)/misc/Makefile.common
 AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
-SUBDIRS = gsm610
-
 EXTRA_DIST = fooaudio.c
 
 if ENABLE_VORBIS
@@ -29,6 +27,9 @@ $(top_builddir)/contrib/libmpcdec/libmpcdec.la:
 $(top_builddir)/contrib/libdca/libdca.la:
 	$(MAKE) -C $(top_builddir)/contrib/libdca
 
+$(top_builddir)/contrib/gsm610/libgsm610.la:
+	$(MAKE) -C $(top_builddir)/contrib/gsm610
+
 xineplug_LTLIBRARIES = \
 	xineplug_decode_gsm610.la \
 	xineplug_decode_lpcm.la \
@@ -38,7 +39,8 @@ xineplug_LTLIBRARIES = \
 	$(dts_module)
 
 xineplug_decode_gsm610_la_SOURCES = gsm610.c
-xineplug_decode_gsm610_la_LIBADD = $(XINE_LIB) gsm610/libgsm610.la
+xineplug_decode_gsm610_la_LIBADD = $(XINE_LIB) $(top_builddir)/contrib/gsm610/libgsm610.la
+xineplug_decode_gsm610_la_CPPFLAGS = -I$(top_srcdir)/contrib/gsm610
 
 xineplug_decode_lpcm_la_SOURCES = xine_lpcm_decoder.c
 xineplug_decode_lpcm_la_LIBADD = $(XINE_LIB)
