@@ -17,6 +17,11 @@ include $(top_srcdir)/misc/Makefile.common
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+# libpostproc is here so we can use their nice mangle.h
+AM_CFLAGS   = $(VISIBILITY_FLAG)
+AM_CPPFLAGS = -I$(top_srcdir)/src/post/deinterlace \
+	      -I$(top_srcdir)/contrib/ffmpeg/libpostproc
+
 EXTRA_DIST = greedy2frame_template.c greedyh.asm \
 	tomsmocomp/SearchLoop0A.inc tomsmocomp/SearchLoopBottom.inc \
 	tomsmocomp/SearchLoopEdgeA.inc tomsmocomp/SearchLoopEdgeA8.inc \
@@ -28,25 +33,26 @@ EXTRA_DIST = greedy2frame_template.c greedyh.asm \
 	tomsmocomp/TomsMoCompAll2.inc tomsmocomp/WierdBob.inc \
 	tomsmocomp/tomsmocompmacros.h x86-64_macros.inc
 
-# libpostproc is here so we can use their nice mangle.h
-AM_CFLAGS = -I$(top_srcdir)/src/post/deinterlace \
-	-I$(top_srcdir)/contrib/ffmpeg/libpostproc
-
-noinst_LTLIBRARIES = libdeinterlaceplugins.la
-
-libdeinterlaceplugins_la_SOURCES = \
-	double.c \
-	greedy.c \
-	linear.c \
-	linearblend.c \
-	vfir.c \
-	weave.c \
-	greedy2frame.c \
-	scalerbob.c \
-	kdetv_greedyh.c \
-	kdetv_tomsmocomp.c
-libdeinterlaceplugins_la_LIBADD = $(XINE_LIB)
-libdeinterlaceplugins_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
-libdeinterlaceplugins_la_LDFLAGS = -avoid-version -module
-
 noinst_HEADERS = plugins.h greedyhmacros.h
+
+if DEBUG_BUILD
+debug_sources   = greedy2frame.c
+nodebug_sources = 
+else
+debug_sources   = 
+nodebug_sources = greedy2frame.c
+endif
+
+# per-object CFLAGS -- drop optimization on kdetv_greedyh.c so that gcc
+# doesn't run out of general registers trying to compile it.
+
+noinst_LTLIBRARIES = libdeinterlacepluginsO1.la libdeinterlaceplugins.la
+libdeinterlacepluginsO1_la_SOURCES = kdetv_greedyh.c $(debug_sources)
+libdeinterlacepluginsO1_la_CFLAGS  = $(O1_CFLAGS) $(AM_CFLAGS)
+
+libdeinterlaceplugins_la_SOURCES = double.c greedy.c linear.c linearblend.c \
+				   vfir.c weave.c scalerbob.c kdetv_tomsmocomp.c \
+				   $(nodebug_sources)
+libdeinterlaceplugins_la_LIBADD  = $(XINE_LIB) libdeinterlacepluginsO1.la
+libdeinterlaceplugins_la_CFLAGS  = $(DEFAULT_OCFLAGS) $(AM_CFLAGS)
+libdeinterlaceplugins_la_LDFLAGS = $(AM_LDFLAGS) $(xineplug_ldflags)

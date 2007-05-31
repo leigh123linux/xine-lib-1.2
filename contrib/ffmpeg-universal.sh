@@ -7,6 +7,8 @@ function usage {
     echo "       -avcodec      build libavcodec.a for each architecture"
     echo "       -avutil       build libavutil.a for each architecture"
     echo "       -postproc     build libpostproc.a for each architecture"
+    echo "       -clean        clean for each architecture"
+    echo "       -distclean    distclean for each architecture"
     echo ""
     echo "Configuration must be done before any library builds.  Options to be passed"
     echo "to ffmpeg's configure command-line should be passed in the environment"
@@ -50,10 +52,18 @@ function run_configure {
                              --extra-ldflags="$EXTRA_LDFLAGS"
     local retval=$?
 
-    popd > /dev/null 2>&1
-    if test $retval -ne 0; then
-        exit $retval
+    # We're building ffmpeg to put it into a shared library, but ffmpeg thinks
+    # it's building to put it into a static library or program image, so it
+    # adds -mdynamic-no-pic to its list of options as an optimization.  This is
+    # fine in Tiger if later linked with -Wl,-read_only_relocs,warning, but it
+    # isn't fine on other versions of Mac OS X.
+    if test -f config.mak; then
+        cat config.mak | sed -e '/OPTFLAGS=/s/-mdynamic-no-pic//g' > config.tmp
+        mv -f config.tmp config.mak
     fi
+
+    popd > /dev/null 2>&1
+    `exit $retval` || exit $retval
 }
 
 if test x"$*" = x""; then
@@ -71,6 +81,12 @@ case "$1" in
         ;;
     -postproc)
         MODE=postproc
+        ;;
+    -clean)
+        MODE=clean
+        ;;
+    -distclean)
+        MODE=distclean
         ;;
     *)
         echo "Unrecognized mode: $1"
@@ -90,6 +106,19 @@ fi
 SOURCE_PATH="$1"
 shift
 
+TOP_BUILD_PATH="`pwd`/ffmpeg"
+if test -f "$TOP_BUILD_PATH/configure"; then
+    # Building in place.  Create a temporary build directory and use that
+    # instead, but place the final output from lipo into the original
+    # build directory.
+    BUILD_PATH="$TOP_BUILD_PATH/build"
+else
+    BUILD_PATH="$TOP_BUILD_PATH"
+fi
+# This doesn't make sense for -configure, but it does for everything else.
+# The -configure mode won't ever use it anyway.
+OUTPUT_FILENAME="$BUILD_PATH/lib$MODE/lib$MODE.a"
+
 HOST_ARCH=`arch`
 UNIVERSAL_ARCHES=$*
 if test x"$UNIVERSAL_ARCHES" = x""; then
@@ -97,9 +126,9 @@ if test x"$UNIVERSAL_ARCHES" = x""; then
     UNIVERSAL_ARCHES=$HOST_ARCH
 fi
 CONFIG_FILES=
-LIPO_CMDLINE="-create -output ffmpeg/lib$MODE/lib$MODE.a"
+LIPO_CMDLINE="-create -output $OUTPUT_FILENAME"
 for arch in $UNIVERSAL_ARCHES; do
-    ffmpeg_topbuilddir="ffmpeg/$arch"
+    ffmpeg_topbuilddir="$BUILD_PATH/$arch"
     LIPO_CMDLINE="$LIPO_CMDLINE -arch $arch $ffmpeg_topbuilddir/lib$MODE/lib$MODE.a"
     case $MODE in
         configure)
@@ -115,16 +144,34 @@ for arch in $UNIVERSAL_ARCHES; do
         postproc)
             "$MAKE" -C "$ffmpeg_topbuilddir/libpostproc" libpostproc.a || exit $?
             ;;
+        clean)
+            "$MAKE" -C "$ffmpeg_topbuilddir" clean || exit $?
+            ;;
+        distclean)
+            "$MAKE" -C "$ffmpeg_topbuilddir" distclean || exit $?
+            ;;
     esac
 done
 
-if test "$MODE" != "configure"; then
-    mkdir -p ffmpeg/lib$MODE
-    lipo $LIPO_CMDLINE
-else
-    # Now that configuration is done, create config.h in the top-level ffmpeg
-    # directory.  Pull out only what's needed by xine-lib, removing any possible
-    # platform conflicts
-    grep -h "define CONFIG_.*_DECODER" $CONFIG_FILES | uniq > ffmpeg/config.h
-    touch ffmpeg/config.mak
-fi
+case $MODE in
+    configure)
+        # Now that configuration is done, create config.h in the top-level
+        # ffmpeg directory.  Pull out only what's needed by xine-lib, removing
+        # any possible platform conflicts
+        grep -h "define CONFIG_.*_DECODER" $CONFIG_FILES | uniq > "$BUILD_PATH/config.h"
+        touch "$BUILD_PATH/config.mak"
+        ;;
+    clean)
+        rm -f "$BUILD_PATH/libavcodec/libavcodec.a" "$BUILD_PATH/libavutil/libavutil.a" \
+              "$BUILD_PATH/libpostproc/libpostproc.a"
+        ;;
+    distclean)
+        rm -f "$BUILD_PATH/config.mak" "$BUILD_PATH/config.h"
+        rm -f "$BUILD_PATH/libavcodec/libavcodec.a" "$BUILD_PATH/libavutil/libavutil.a" \
+              "$BUILD_PATH/libpostproc/libpostproc.a"
+        ;;
+    *)
+        mkdir -p "`dirname "$OUTPUT_FILENAME"`"
+        lipo $LIPO_CMDLINE
+        ;;
+esac

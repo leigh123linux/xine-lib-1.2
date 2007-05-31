@@ -8,72 +8,58 @@
  */
 #if defined(__APPLE__) && defined(XINE_MACOSX_UNIVERSAL_BINARY)
 
-#if !defined(__ppc__) && !defined(__ppc64__) && !defined(__i386__) && !defined(__x86_64__)
+/* __ppc__, __ppc64__, __i386__, __x86_64__ are interesting arch macros */
+#undef HOST_ARCH
+#if defined(__ppc__) || defined(__ppc64__)
+#define ARCH_PPC
+#if defined(__ppc64__)
+#define HOST_ARCH           "darwin/powerpc64"
+#else
+#define HOST_ARCH           "darwin/powerpc"
+#endif
+#elif defined(__i386__) || defined(__x86_64__)
+#define ARCH_X86
+#define BITFIELD_LSBF
+#define HAVE_MMX
+#if defined(__x86_64__)
+#define ARCH_X86_64
+#define HOST_ARCH           "darwin/x86_64"
+#elif defined(__i386__)
+#define ARCH_X86_32
+#define HOST_ARCH           "darwin/x86_32"
+#else
 #error unrecognized/unsupported CPU type building for Apple Darwin
 #endif
+#endif
 
-/* First get rid of anything that initial configure might have set */
-#undef  ARCH_PPC
-#undef  ARCH_X86
-#undef  ARCH_X86_32
-#undef  ARCH_X86_64
-#undef  BITFIELD_LSBF
-#undef  ENABLE_ALTIVEC
-#undef  FPM_64BIT
-#undef  FPM_DEFAULT
-#undef  FPM_INTEL
-#undef  FPM_PPC
-#undef  HAVE_MMX
-#undef  HOST_ARCH
-#undef  HOST_DARWIN
+/* See /Developer/SDKs/MacOSX10.4u.sdk/usr/include/machine/limits.h */
+#if SIZEOF_INT != 4
 #undef  SIZEOF_INT
-#undef  SIZEOF_LONG
-#undef  SIZEOF_LONG_LONG
-#undef  WORDS_BIGENDIAN
+#define SIZEOF_INT 4
+#endif
 
-#define HOST_DARWIN 1
+#if defined(__LP64__) && SIZEOF_LONG != 8
+#undef  SIZEOF_LONG
+#define SIZEOF_LONG 8
+#elif !defined(__LP64__) && SIZEOF_LONG != 4
+#undef  SIZEOF_LONG
+#define SIZEOF_LONG 4
+#endif
 
 /* WORDS_BIGENDIAN (replaces AC_C_BIGENDIAN autoconf test at compile time) */
 #include <machine/endian.h>
 #if BYTE_ORDER == BIG_ENDIAN
 #define WORDS_BIGENDIAN 1
+#else
+#undef  WORDS_BIGENDIAN
 #endif
 
-/* __ppc__, __ppc64__, __i386__, __x86_64__ are interesting arch macros */
-#if defined(__ppc__)
-#define ARCH_PPC
+#if defined(__LP64__)
+#define FPM_64BIT           1
+#elif defined(__ppc__) || defined(__ppc64__)
 #define FPM_PPC             1
-#define HOST_ARCH           "darwin/powerpc"
-#define SIZEOF_INT          4
-#define SIZEOF_LONG         4
-#define SIZEOF_LONG_LONG    8
-#elif defined(__ppc64__)
-#define ARCH_PPC
-#define FPM_64BIT           1
-#define SIZEOF_INT          4
-#define SIZEOF_LONG         8
-#define SIZEOF_LONG_LONG    8
-#define HOST_ARCH           "darwin/powerpc64"
-#elif defined(__i386__)
-#define ARCH_X86
-#define ARCH_X86_32
-#define BITFIELD_LSBF
+#elif defined(__i386__) || defined(__x86_64__)
 #define FPM_INTEL           1
-#define HAVE_MMX
-#define HOST_ARCH           "darwin/i386"
-#define SIZEOF_INT          4
-#define SIZEOF_LONG         4
-#define SIZEOF_LONG_LONG    8
-#elif defined(__x86_64__)
-#define ARCH_X86
-#define ARCH_X86_64
-#define BITFIELD_LSBF
-#define FPM_64BIT           1
-#define HAVE_MMX
-#define HOST_ARCH           "darwin/x64_64"
-#define SIZEOF_INT          4
-#define SIZEOF_LONG         8
-#define SIZEOF_LONG_LONG    8
 #endif
 
 #endif  /* __APPLE__ */
@@ -94,7 +80,7 @@
 #endif
 
 #include <inttypes.h>
-
+#include <pthread.h>
 
 #if defined(WIN32) || defined(__CYGWIN__)
 #  define XINE_PATH_SEPARATOR_STRING ";"
@@ -206,6 +192,13 @@ int xine_private_vasprintf(char **string, const char *format, va_list ap) XINE_F
 #define HAVE_STRNDUP
 #define strndup(S, N) xine_private_strndup((S), (N))
 char *xine_private_strndup(const char *s, size_t n);
+#endif
+
+/* replacement of pthread_mutex_timedlock */
+#ifndef HAVE_PTHREAD_MUTEX_TIMEDLOCK
+#define HAVE_PTHREAD_MUTEX_TIMEDLOCK
+#define pthread_mutex_timedlock(M, T) xine_private_pthread_mutex_timedlock((M), (T))
+int xine_private_pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *abs_timeout);
 #endif
 
 /* handle non-standard function names */

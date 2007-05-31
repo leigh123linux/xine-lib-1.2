@@ -15,22 +15,6 @@ AC_DEFUN([AM_ICONV_LINKFLAGS_BODY],
   dnl Search for libiconv and define LIBICONV, LTLIBICONV and INCICONV
   dnl accordingly.
   AC_LIB_LINKFLAGS_BODY([iconv])
-
-  dnl
-  dnl xine: added the prefix /usr/local on FreeBSD if none specified
-  dnl
-  if test -z "$INCICONV"; then
-    case "$host" in
-      *-*-freebsd*)
-        dir=/usr/local
-        if test -d $dir/include; then INCICONV="$INCICONV -I$dir/include"; fi
-        if test -d $dir/lib; then
-          LIBICONV="$LIBICONV -L$dir/lib"
-          LTLIBICONV="$LTLIBICONV -L$dir/lib"
-        fi
-        ;;
-    esac
-  fi
 ])
 
 AC_DEFUN([AM_ICONV_LINK],

@@ -13,6 +13,33 @@ AC_ARG_WITH(libFLAC-libraries, AS_HELP_STRING([--with-libFLAC-libraries=DIR], [d
 AC_ARG_WITH(libFLAC-includes, AS_HELP_STRING([--with-libFLAC-includes=DIR], [directory where libFLAC header files are installed (optional)]), libFLAC_includes="$withval", libFLAC_includes="")
 AC_ARG_ENABLE(libFLACtest, AS_HELP_STRING([--disable-libFLACtest], [do not try to compile and run a test libFLAC program]), enable_libFLACtest=$enableval, enable_libFLACtest=yes)
 
+    AC_MSG_CHECKING([libdir name])
+    case $host_or_hostalias in
+    *-*-linux*)
+     # Test if the compiler is 64bit
+     echo 'int i;' > conftest.$ac_ext
+     xine_cv_cc_64bit_output=no
+     if AC_TRY_EVAL(ac_compile); then
+     case `"$MAGIC_CMD" conftest.$ac_objext` in
+     *"ELF 64"*)
+       xine_cv_cc_64bit_output=yes
+       ;;
+     esac
+     fi
+     rm -rf conftest*
+     ;;
+    esac
+
+    case $host_cpu:$xine_cv_cc_64bit_output in
+    powerpc64:yes | s390x:yes | sparc64:yes | x86_64:yes)
+     XINE_LIBNAME="lib64"
+     ;;
+    *:*)
+     XINE_LIBNAME="lib"
+     ;;
+    esac
+    AC_MSG_RESULT([$XINE_LIBNAME])
+
   if test "x$libFLAC_libraries" != "x" ; then
     LIBFLAC_LIBS="-L$libFLAC_libraries"
   elif test "x$libFLAC_prefix" != "x" ; then
