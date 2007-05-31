@@ -111,7 +111,7 @@ xineplug_dmx_games_la_SOURCES = group_games.c demux_eawve.c \
 xineplug_dmx_games_la_LIBADD = $(XINE_LIB)
 
 xineplug_dmx_audio_la_SOURCES = group_audio.c demux_aud.c demux_aiff.c \
-				demux_cdda.c demux_mpgaudio.c demux_nsf.c \
+				demux_cdda.c demux_mpgaudio.c \
 				demux_realaudio.c demux_snd.c demux_voc.c \
 				demux_vox.c demux_wav.c demux_ac3.c id3.c \
 				demux_aac.c demux_mod.c demux_flac.c \

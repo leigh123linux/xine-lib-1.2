@@ -29,12 +29,8 @@ $(top_builddir)/contrib/libmpcdec/libmpcdec.la:
 $(top_builddir)/contrib/libdca/libdca.la:
 	$(MAKE) -C $(top_builddir)/contrib/libdca
 
-$(top_builddir)/contrib/nosefart/libnosefart.la:
-	$(MAKE) -C $(top_builddir)/contrib/nosefart
-
 xineplug_LTLIBRARIES = \
 	xineplug_decode_gsm610.la \
-	xineplug_decode_nsf.la \
 	xineplug_decode_lpcm.la \
 	$(vorbis_module) \
 	$(speex_module) \
@@ -43,11 +39,6 @@ xineplug_LTLIBRARIES = \
 
 xineplug_decode_gsm610_la_SOURCES = gsm610.c
 xineplug_decode_gsm610_la_LIBADD = $(XINE_LIB) gsm610/libgsm610.la
-
-xineplug_decode_nsf_la_SOURCES = nsf.c
-xineplug_decode_nsf_la_LIBADD = $(XINE_LIB) $(top_builddir)/contrib/nosefart/libnosefart.la -lm
-xineplug_decode_nsf_la_CFLAGS = $(AM_CFLAGS) -fno-strict-aliasing
-xineplug_decode_nsf_la_CPPFLAGS = $(AM_CPPFLAGS) -DNSF_PLAYER -I$(top_srcdir)/contrib/nosefart
 
 xineplug_decode_lpcm_la_SOURCES = xine_lpcm_decoder.c
 xineplug_decode_lpcm_la_LIBADD = $(XINE_LIB)

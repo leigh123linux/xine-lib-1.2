@@ -22,6 +22,7 @@ xine-lib (1.1.90) (Unreleased)
   * Add another message code to allow for auth prompts. Previously, it was
     not possible to distinguish between 401 Authentication Requried and 403
     Forbidden.
+  * Merge the demuxer and the decoder for NSF files in a combined plugin.
 
 xine-lib (1.1.7) (unreleased)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.

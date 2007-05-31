@@ -253,7 +253,7 @@ static void dispose_class (audio_decoder_class_t *this_gen) {
 
 /* This function allocates a private audio decoder class and initializes 
  * the class's member functions. */
-static void *init_plugin (xine_t *xine, void *data) {
+void *decoder_nsf_init_plugin (xine_t *xine, void *data) {
 
   nsf_class_t *this ;
 
@@ -266,30 +266,3 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   return this;
 }
-
-/* This is a list of all of the internal xine audio buffer types that 
- * this decoder is able to handle. Check src/xine-engine/buffer.h for a
- * list of valid buffer types (and add a new one if the one you need does
- * not exist). Terminate the list with a 0. */
-static uint32_t audio_types[] = { 
-  BUF_AUDIO_NSF,
-  0
-};
-
-/* This data structure combines the list of supported xine buffer types and
- * the priority that the plugin should be given with respect to other
- * plugins that handle the same buffer type. A plugin with priority (n+1) 
- * will be used instead of a plugin with priority (n). */
-static const decoder_info_t dec_info_audio = {
-  audio_types,         /* supported types */
-  5                    /* priority        */
-};
-
-/* The plugin catalog entry. This is the only information that this plugin
- * will export to the public. */
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* { type, API version, "name", version, special_info, init_function }, */
-  { PLUGIN_AUDIO_DECODER, 15, "nsf", XINE_VERSION_CODE, &dec_info_audio, &init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
-};
-

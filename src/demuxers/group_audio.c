@@ -71,10 +71,6 @@ static const demuxer_info_t demux_info_mpc = {
   0                        /* priority */
 };
 
-static const demuxer_info_t demux_info_nsf = {
-  10                       /* priority */
-};
-
 static const demuxer_info_t demux_info_realaudio = {
   10                       /* priority */
 };
@@ -120,7 +116,6 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_DEMUX, 26, "flac",      XINE_VERSION_CODE, &demux_info_flac,      demux_flac_init_plugin },
   { PLUGIN_DEMUX, 26, "mp3",       XINE_VERSION_CODE, &demux_info_mpgaudio,  demux_mpgaudio_init_class },
   { PLUGIN_DEMUX, 26, "mpc",       XINE_VERSION_CODE, &demux_info_mpc,       demux_mpc_init_plugin },
-  { PLUGIN_DEMUX, 26, "nsf",       XINE_VERSION_CODE, &demux_info_nsf,       demux_nsf_init_plugin },
   { PLUGIN_DEMUX, 26, "realaudio", XINE_VERSION_CODE, &demux_info_realaudio, demux_realaudio_init_plugin },
   { PLUGIN_DEMUX, 26, "shn",       XINE_VERSION_CODE, &demux_info_shn,       demux_shn_init_plugin },
   { PLUGIN_DEMUX, 26, "snd",       XINE_VERSION_CODE, &demux_info_snd,       demux_snd_init_plugin },

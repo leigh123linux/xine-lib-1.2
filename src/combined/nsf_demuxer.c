@@ -53,7 +53,6 @@
 #include "compat.h"
 #include "demux.h"
 #include "bswap.h"
-#include "group_audio.h"
 
 #define NSF_HEADER_SIZE 0x80
 #define NSF_SAMPLERATE 44100

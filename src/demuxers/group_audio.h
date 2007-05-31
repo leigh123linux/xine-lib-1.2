@@ -34,7 +34,6 @@ void *demux_dts_init_plugin (xine_t *xine, void *data);
 void *demux_flac_init_plugin (xine_t *xine, void *data);
 void *demux_mpgaudio_init_class (xine_t *xine, void *data);
 void *demux_mpc_init_plugin (xine_t *xine, void *data);
-void *demux_nsf_init_plugin (xine_t *xine, void *data);
 void *demux_realaudio_init_plugin (xine_t *xine, void *data);
 void *demux_shn_init_plugin (xine_t *xine, void *data);
 void *demux_snd_init_plugin (xine_t *xine, void *data);
