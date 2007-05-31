@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib-1.1.4\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-05-31 20:52+0200\n"
+"POT-Creation-Date: 2007-05-31 21:52+0200\n"
 "PO-Revision-Date: 2007-02-28 14:07+0100\n"
 "Last-Translator: Carlos E. Robinson M. <carloser@users.sourceforge.net>\n"
 "Language-Team: Spanish\n"
@@ -2222,55 +2222,55 @@ msgstr ""
 "1024: Cuadro congelado\n"
 "2048: Depurando desde VCDINFO\n"
 
-#: src/input/input_dvb.c:901
+#: src/input/input_dvb.c:900
 #, fuzzy, c-format
 msgid "input_dvb: failed to open dvb channel file '%s': %s\n"
 msgstr "input_dvb: failló al abrir el fichero de canales DVB '%s'\n"
 
-#: src/input/input_dvb.c:907
+#: src/input/input_dvb.c:906
 #, fuzzy, c-format
 msgid "input_dvb: dvb channel file '%s' is not a plain file\n"
 msgstr "input_dvb: failló al abrir el fichero de canales DVB '%s'\n"
 
-#: src/input/input_dvb.c:2117 src/input/input_dvb.c:2949
+#: src/input/input_dvb.c:2116 src/input/input_dvb.c:2948
 msgid "input_dvb: tuner_set_channel failed\n"
 msgstr "input_dvb: falló tuner_set_channel\n"
 
-#: src/input/input_dvb.c:2749
+#: src/input/input_dvb.c:2748
 msgid "input_dvb: cannot open dvb device\n"
 msgstr "input_dvb: no puedo abrir dispositivo DVB\n"
 
-#: src/input/input_dvb.c:2773
+#: src/input/input_dvb.c:2772
 #, c-format
 msgid "input_dvb: channel %d out of range, defaulting to 0\n"
 msgstr "input_dvb: canal %d fuera de rango, poniendo a 0\n"
 
-#: src/input/input_dvb.c:2784
+#: src/input/input_dvb.c:2783
 #, c-format
 msgid "input_dvb: searching for channel %s\n"
 msgstr "input_dvb: buscando el canal %s\n"
 
-#: src/input/input_dvb.c:2807
+#: src/input/input_dvb.c:2806
 #, c-format
 msgid "input_dvb: exact match for %s not found: trying partial matches\n"
 msgstr ""
 "input_dvb: no encontrada una coincidencia exacta para %s: probando "
 "coincidencias parciales\n"
 
-#: src/input/input_dvb.c:2814
+#: src/input/input_dvb.c:2813
 #, c-format
 msgid "input_dvb: found matching channel %s\n"
 msgstr "input_dvb: encontrado el canal correspondiente %s\n"
 
 # Cer: (temporal) "valores por defecto" no es la traducción exacta
-#: src/input/input_dvb.c:2827
+#: src/input/input_dvb.c:2826
 #, fuzzy, c-format
 msgid "input_dvb: channel %s not found in channels.conf, defaulting.\n"
 msgstr ""
 "input_dvb: canal %s no encontrado en channels.conf, yendo a valores por "
 "defecto.\n"
 
-#: src/input/input_dvb.c:2833
+#: src/input/input_dvb.c:2832
 msgid ""
 "input_dvb: invalid channel specification, defaulting to last viewed "
 "channel.\n"
@@ -2278,11 +2278,11 @@ msgstr ""
 "input_dvb: especificación de canal inválida, usaremos el ultimo canal "
 "visualizado.\n"
 
-#: src/input/input_dvb.c:2839
+#: src/input/input_dvb.c:2838
 msgid "input_dvb: invalid channel specification, defaulting to channel 0\n"
 msgstr "input_dvb: especificación de canal inválida, usaremos el canal 0.\n"
 
-#: src/input/input_dvb.c:2851
+#: src/input/input_dvb.c:2850
 msgid ""
 "input_dvb: dvbs mrl specified but the tuner doesn't appear to be QPSK (DVB-"
 "S)\n"
@@ -2290,7 +2290,7 @@ msgstr ""
 "input_dvb: se especificó MRL DVBS pero el sintonizador no aparenta ser QPSK "
 "(DVB-S)\n"
 
-#: src/input/input_dvb.c:2871
+#: src/input/input_dvb.c:2870
 msgid ""
 "input_dvb: dvbt mrl specified but the tuner doesn't appear to be OFDM (DVB-"
 "T)\n"
@@ -2298,7 +2298,7 @@ msgstr ""
 "input_dvb: se especificó MRL DVBT pero el sintonizador no aparenta ser OFDM "
 "(DVB-T)\n"
 
-#: src/input/input_dvb.c:2894
+#: src/input/input_dvb.c:2893
 msgid ""
 "input_dvb: dvbc mrl specified but the tuner doesn't appear to be QAM (DVB-"
 "C)\n"
@@ -2306,7 +2306,7 @@ msgstr ""
 "input_dvb: se especificó MRL DVBC pero el sintonizador no aparenta ser QAM "
 "(DVB-C)\n"
 
-#: src/input/input_dvb.c:2920
+#: src/input/input_dvb.c:2919
 #, fuzzy
 msgid ""
 "input_dvb: dvba mrl specified but the tuner doesn't appear to be ATSC (DVB-"
@@ -2315,20 +2315,20 @@ msgstr ""
 "input_dvb: se especificó MRL DVBC pero el sintonizador no aparenta ser QAM "
 "(DVB-C)\n"
 
-#: src/input/input_dvb.c:2955
+#: src/input/input_dvb.c:2954
 #, c-format
 msgid "input_dvb: cannot open dvr device '%s'\n"
 msgstr "input_dvb: no se puede abrir el dispositivo DVR '%s'\n"
 
-#: src/input/input_dvb.c:2977
+#: src/input/input_dvb.c:2976
 msgid "input_dvb: cannot create EPG updater thread\n"
 msgstr "input_dvb: no se puede crear el hilo actualizador de EPG\n"
 
-#: src/input/input_dvb.c:3039
+#: src/input/input_dvb.c:3038
 msgid "use DVB 'center cutout' (zoom)"
 msgstr "usar corte de la zona central del DVB (zoom)"
 
-#: src/input/input_dvb.c:3040
+#: src/input/input_dvb.c:3039
 msgid ""
 "This will allow fullscreen playback of 4:3 content transmitted in a 16:9 "
 "frame."
@@ -2336,15 +2336,15 @@ msgstr ""
 "Esto permitirá reproducción a pantalla completa de contenido en formato 4:3 "
 "transmitido en un cuadro 16:9."
 
-#: src/input/input_dvb.c:3133
+#: src/input/input_dvb.c:3132
 msgid "DVB (Digital TV) input plugin"
 msgstr "complemento de entrada DVB (TV Digital)"
 
-#: src/input/input_dvb.c:3250
+#: src/input/input_dvb.c:3249
 msgid "Remember last DVB channel watched"
 msgstr "Recordar el último canal DVB visto"
 
-#: src/input/input_dvb.c:3251
+#: src/input/input_dvb.c:3250
 msgid ""
 "On autoplay, xine will remember and switch to the channel indicated in media."
 "dvb.last_channel. "
@@ -2352,19 +2352,19 @@ msgstr ""
 "En autoejecución, xine recordará y cambiará al canal indicado en media.dvb."
 "last_channel. "
 
-#: src/input/input_dvb.c:3258
+#: src/input/input_dvb.c:3257
 msgid "Last DVB channel viewed"
 msgstr "Último canal DVB visto"
 
-#: src/input/input_dvb.c:3259
+#: src/input/input_dvb.c:3258
 msgid "If enabled xine will remember and switch to this channel. "
 msgstr "Si se activa xine recordará y cambiará a este canal. "
 
-#: src/input/input_dvb.c:3265
+#: src/input/input_dvb.c:3264
 msgid "Number of dvb card to use."
 msgstr "Número de tarjeta DVB a usar."
 
-#: src/input/input_dvb.c:3266
+#: src/input/input_dvb.c:3265
 msgid ""
 "Leave this at zero unless you really have more than 1 card in your system."
 msgstr ""

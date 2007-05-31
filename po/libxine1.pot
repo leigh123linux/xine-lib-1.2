@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-05-31 20:52+0200\n"
+"POT-Creation-Date: 2007-05-31 21:52+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1850,129 +1850,129 @@ msgid ""
 "2048: Debugging from VCDINFO\n"
 msgstr ""
 
-#: src/input/input_dvb.c:901
+#: src/input/input_dvb.c:900
 #, c-format
 msgid "input_dvb: failed to open dvb channel file '%s': %s\n"
 msgstr ""
 
-#: src/input/input_dvb.c:907
+#: src/input/input_dvb.c:906
 #, c-format
 msgid "input_dvb: dvb channel file '%s' is not a plain file\n"
 msgstr ""
 
-#: src/input/input_dvb.c:2117 src/input/input_dvb.c:2949
+#: src/input/input_dvb.c:2116 src/input/input_dvb.c:2948
 msgid "input_dvb: tuner_set_channel failed\n"
 msgstr ""
 
-#: src/input/input_dvb.c:2749
+#: src/input/input_dvb.c:2748
 msgid "input_dvb: cannot open dvb device\n"
 msgstr ""
 
-#: src/input/input_dvb.c:2773
+#: src/input/input_dvb.c:2772
 #, c-format
 msgid "input_dvb: channel %d out of range, defaulting to 0\n"
 msgstr ""
 
-#: src/input/input_dvb.c:2784
+#: src/input/input_dvb.c:2783
 #, c-format
 msgid "input_dvb: searching for channel %s\n"
 msgstr ""
 
-#: src/input/input_dvb.c:2807
+#: src/input/input_dvb.c:2806
 #, c-format
 msgid "input_dvb: exact match for %s not found: trying partial matches\n"
 msgstr ""
 
-#: src/input/input_dvb.c:2814
+#: src/input/input_dvb.c:2813
 #, c-format
 msgid "input_dvb: found matching channel %s\n"
 msgstr ""
 
-#: src/input/input_dvb.c:2827
+#: src/input/input_dvb.c:2826
 #, c-format
 msgid "input_dvb: channel %s not found in channels.conf, defaulting.\n"
 msgstr ""
 
-#: src/input/input_dvb.c:2833
+#: src/input/input_dvb.c:2832
 msgid ""
 "input_dvb: invalid channel specification, defaulting to last viewed "
 "channel.\n"
 msgstr ""
 
-#: src/input/input_dvb.c:2839
+#: src/input/input_dvb.c:2838
 msgid "input_dvb: invalid channel specification, defaulting to channel 0\n"
 msgstr ""
 
-#: src/input/input_dvb.c:2851
+#: src/input/input_dvb.c:2850
 msgid ""
 "input_dvb: dvbs mrl specified but the tuner doesn't appear to be QPSK (DVB-"
 "S)\n"
 msgstr ""
 
-#: src/input/input_dvb.c:2871
+#: src/input/input_dvb.c:2870
 msgid ""
 "input_dvb: dvbt mrl specified but the tuner doesn't appear to be OFDM (DVB-"
 "T)\n"
 msgstr ""
 
-#: src/input/input_dvb.c:2894
+#: src/input/input_dvb.c:2893
 msgid ""
 "input_dvb: dvbc mrl specified but the tuner doesn't appear to be QAM (DVB-"
 "C)\n"
 msgstr ""
 
-#: src/input/input_dvb.c:2920
+#: src/input/input_dvb.c:2919
 msgid ""
 "input_dvb: dvba mrl specified but the tuner doesn't appear to be ATSC (DVB-"
 "A)\n"
 msgstr ""
 
-#: src/input/input_dvb.c:2955
+#: src/input/input_dvb.c:2954
 #, c-format
 msgid "input_dvb: cannot open dvr device '%s'\n"
 msgstr ""
 
-#: src/input/input_dvb.c:2977
+#: src/input/input_dvb.c:2976
 msgid "input_dvb: cannot create EPG updater thread\n"
 msgstr ""
 
-#: src/input/input_dvb.c:3039
+#: src/input/input_dvb.c:3038
 msgid "use DVB 'center cutout' (zoom)"
 msgstr ""
 
-#: src/input/input_dvb.c:3040
+#: src/input/input_dvb.c:3039
 msgid ""
 "This will allow fullscreen playback of 4:3 content transmitted in a 16:9 "
 "frame."
 msgstr ""
 
-#: src/input/input_dvb.c:3133
+#: src/input/input_dvb.c:3132
 msgid "DVB (Digital TV) input plugin"
 msgstr ""
 
-#: src/input/input_dvb.c:3250
+#: src/input/input_dvb.c:3249
 msgid "Remember last DVB channel watched"
 msgstr ""
 
-#: src/input/input_dvb.c:3251
+#: src/input/input_dvb.c:3250
 msgid ""
 "On autoplay, xine will remember and switch to the channel indicated in media."
 "dvb.last_channel. "
 msgstr ""
 
-#: src/input/input_dvb.c:3258
+#: src/input/input_dvb.c:3257
 msgid "Last DVB channel viewed"
 msgstr ""
 
-#: src/input/input_dvb.c:3259
+#: src/input/input_dvb.c:3258
 msgid "If enabled xine will remember and switch to this channel. "
 msgstr ""
 
-#: src/input/input_dvb.c:3265
+#: src/input/input_dvb.c:3264
 msgid "Number of dvb card to use."
 msgstr ""
 
-#: src/input/input_dvb.c:3266
+#: src/input/input_dvb.c:3265
 msgid ""
 "Leave this at zero unless you really have more than 1 card in your system."
 msgstr ""
