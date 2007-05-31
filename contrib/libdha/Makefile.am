@@ -25,7 +25,7 @@ nodist_libdha_la_SOURCES = pci_names.c
 EXTRA_PROGRAMS = test
 
 test_SOURCES = test.c
-test_LDADD = $(top_builddir)/src/video_out/libdha/libdha.la
+test_LDADD = libdha.la
 
 ## for OpenBSD LIBS += -li386
 
@@ -34,8 +34,8 @@ pci_db2c.awk:
 oth/pci.db:
 
 $(awk_generated): pci_db2c.awk oth/pci.db
-	LC_ALL=C $(AWK) -f $(top_srcdir)/src/video_out/libdha/pci_db2c.awk \
-		$(top_srcdir)/src/video_out/libdha/oth/pci.db
+	LC_ALL=C $(AWK) -f $(srcdir)/pci_db2c.awk \
+		$(srcdir)/oth/pci.db
 
 pci_names.lo: $(awk_generated)
 	source='$*.c' object='$@' libtool=yes \
