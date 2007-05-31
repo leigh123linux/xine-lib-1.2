@@ -158,7 +158,7 @@ else
 	-$(MAKE) -C ffmpeg distclean
 endif
 
-EXTRA_DIST = README.contrib ffmpeg-distfiles
+EXTRA_DIST = README.contrib ffmpeg-distfiles ffmpeg-universal.sh
 
 dist-hook:
 	while read entry; do \
