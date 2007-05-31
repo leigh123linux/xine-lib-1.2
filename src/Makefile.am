@@ -20,7 +20,6 @@ SUBDIRS = \
 	libxinevdec \
 	libxineadec \
 	libreal \
-	libfaad \
 	post \
 	combined \
 	vdr

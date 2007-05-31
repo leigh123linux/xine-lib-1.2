@@ -1117,6 +1117,7 @@ contrib/Makefile
 contrib/a52dec/Makefile
 contrib/gsm610/Makefile
 contrib/libdca/Makefile
+contrib/libfaad/Makefile
 contrib/libmad/Makefile
 contrib/libmpcdec/Makefile
 contrib/libxdg-basedir/Makefile
@@ -1152,8 +1153,6 @@ src/input/vcd/libcdio/MSWindows/Makefile
 src/input/vcd/libcdio/image/Makefile
 src/input/vcd/libvcd/Makefile
 src/input/vcd/libvcd/libvcd/Makefile
-src/libfaad/Makefile
-src/libfaad/codebook/Makefile
 src/libffmpeg/Makefile
 src/libmpeg2/Makefile
 src/libspudec/Makefile

@@ -25,8 +25,19 @@ if ENABLE_MAD
 mad_module = xineplug_decode_mad.la
 endif
 
+if ENABLE_A52DEC
+a52_module = xineplug_decode_a52.la
+endif
+
+if ENABLE_FAAD
+faad_module = xineplug_decode_faad.la
+endif
+
 $(top_builddir)/contrib/a52dec/liba52.la:
 	$(MAKE) -C $(top_builddir)/contrib/a52dec
+
+$(top_builddir)/contrib/libfaad/libfaad.la:
+	$(MAKE) -C $(top_builddir)/contrib/libfaad
 
 $(top_builddir)/contrib/libmad/libmad.la:
 	$(MAKE) -C $(top_builddir)/contrib/libmad
@@ -40,10 +51,6 @@ $(top_builddir)/contrib/libdca/libdca.la:
 $(top_builddir)/contrib/gsm610/libgsm610.la:
 	$(MAKE) -C $(top_builddir)/contrib/gsm610
 
-if ENABLE_A52DEC
-a52_module = xineplug_decode_a52.la
-endif
-
 xineplug_LTLIBRARIES = \
 	xineplug_decode_gsm610.la \
 	xineplug_decode_lpcm.la \
@@ -52,7 +59,8 @@ xineplug_LTLIBRARIES = \
 	$(musepack_module) \
 	$(dts_module) \
 	$(mad_module) \
-	$(a52_module)
+	$(a52_module) \
+	$(faad_module)
 
 xineplug_decode_gsm610_la_SOURCES = gsm610.c
 xineplug_decode_gsm610_la_LIBADD = $(XINE_LIB) $(top_builddir)/contrib/gsm610/libgsm610.la
@@ -88,3 +96,7 @@ xineplug_decode_a52_la_SOURCES = xine_a52_decoder.c
 xineplug_decode_a52_la_DEPENDENCIES = $(A52DEC_DEPS)
 xineplug_decode_a52_la_LIBADD = $(XINE_LIB) $(A52DEC_LIBS) -lm
 xineplug_decode_a52_la_CFLAGS = $(AM_CFLAGS) $(A52DEC_CFLAGS)
+
+xineplug_decode_faad_la_SOURCES = xine_faad_decoder.c
+xineplug_decode_faad_la_LIBADD = $(XINE_LIB) $(top_builddir)/contrib/libfaad/libfaad.la -lm
+xineplug_decode_faad_la_CPPFLAGS = -I$(top_srcdir)/contrib/libfaad
