@@ -1150,7 +1150,6 @@ src/demuxers/Makefile
 src/dxr3/Makefile
 src/input/Makefile
 src/input/libdvdnav/Makefile
-src/input/dvb/Makefile
 src/input/librtsp/Makefile
 src/input/libreal/Makefile
 src/input/vcd/Makefile

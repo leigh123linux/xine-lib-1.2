@@ -11,9 +11,6 @@ AM_LDFLAGS = $(xineplug_ldflags)
 #
 
 SUBDIRS = libreal librtsp
-if ENABLE_DVB
-SUBDIRS += dvb
-endif
 if ENABLE_VCD
 SUBDIRS += vcd
 endif
