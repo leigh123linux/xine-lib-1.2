@@ -52,6 +52,8 @@ endif
 
 if ENABLE_VIDIX
 vidix_module = xineplug_vo_out_vidix.la
+$(top_builddir)/contrib/vidix/libvidix.la:
+	$(MAKE) -C $(top_builddir)/contrib/vidix libvidix.la
 endif
 
 if ENABLE_AA

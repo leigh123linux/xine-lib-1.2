@@ -1,14 +1,20 @@
 include $(top_srcdir)/misc/Makefile.common
 
 AM_CFLAGS   = $(DEFAULT_OCFLAGS)
-AM_CPPFLAGS = -I$(top_srcdir)/src/video_out/vidix \
-              -I$(top_srcdir)/src/video_out/libdha -I$(top_builddir)/src/video_out/libdha
+AM_CPPFLAGS = -I$(top_srcdir)/contrib/vidix \
+              -I$(top_srcdir)/contrib/libdha -I$(top_builddir)/contrib/libdha
 AM_LDFLAGS  = $(xineplug_ldflags)
 
 EXTRA_DIST = genfb_vid.c
 
 noinst_HEADERS = mach64.h glint_regs.h pm3_regs.h radeon.h savage_regs.h \
                  cyberblade_regs.h unichrome_regs.h sis_defs.h sis_regs.h
+
+BUILT_SOURCES = $(top_srcdir)/contrib/libdha/pci_ids.h \
+		$(top_srcdir)/contrib/libdha/pci_names.h
+
+$(BUILT_SOURCES):
+	$(MAKE) -C $(dir $@) $(notdir $@)
 
 vidix_LTLIBRARIES = \
 	mach64_vid.la \
