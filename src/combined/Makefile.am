@@ -24,7 +24,7 @@ xineplug_wavpack_la_LIBADD = $(XINE_LIB) $(WAVPACK_LIBS)
 xineplug_wavpack_la_CFLAGS = $(AM_CFLAGS) $(WAVPACK_CFLAGS)
 xineplug_wavpack_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/demuxers
 
-xineplug_flac_la_SOURCES = demux_flac.c decoder_flac.c demux_flac.h
+xineplug_flac_la_SOURCES = flac_demuxer.c flac_decoder.c
 xineplug_flac_la_LIBADD = $(XINE_LIB) $(LIBFLAC_LIBS)
 xineplug_flac_la_CFLAGS = $(AM_CFLAGS) $(LIBFLAC_CFLAGS)
 

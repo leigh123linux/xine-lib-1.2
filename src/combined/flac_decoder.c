@@ -48,8 +48,6 @@
 #include "audio_out.h"
 #include "buffer.h"
 
-#include "demux_flac.h"
-
 typedef struct {
   audio_decoder_class_t   decoder_class;
 } flac_class_t;
@@ -408,6 +406,8 @@ init_plugin (xine_t *xine, void *data) {
 
     return this;
 }
+
+void *demux_flac_init_class (xine_t *xine, void *data);
 
 static uint32_t audio_types[] = { 
   BUF_AUDIO_FLAC, 0
