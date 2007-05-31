@@ -29,6 +29,18 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
         else
             AC_MSG_RESULT([Using included a52dec support])
         fi
+        if test x"$have_external_a52dec" = x"yes"; then
+            A52DEC_CFLAGS=''
+            A52DEC_LIBS='-la52'
+            A52DEC_DEPS=''
+	else
+            A52DEC_CFLAGS='-I$(top_srcdir)/contrib/a52dec'
+            A52DEC_LIBS='$(top_builddir)/contrib/a52dec/liba52.la'
+            A52DEC_DEPS='$(top_builddir)/contrib/a52dec/liba52.la'
+        fi
+        AC_SUBST(A52DEC_CFLAGS)
+        AC_SUBST(A52DEC_DEPS)
+        AC_SUBST(A52DEC_LIBS)
     fi
     AM_CONDITIONAL([ENABLE_A52DEC], [test x"$enable_a52dec" != x"no"])
     AM_CONDITIONAL([WITH_EXTERNAL_A52DEC], [test x"$have_external_a52dec" = x"yes"])

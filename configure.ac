@@ -1114,6 +1114,7 @@ doc/hackersguide/Makefile
 doc/faq/Makefile
 doc/Doxyfile
 contrib/Makefile
+contrib/a52dec/Makefile
 contrib/gsm610/Makefile
 contrib/libdca/Makefile
 contrib/libmad/Makefile

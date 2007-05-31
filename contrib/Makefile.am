@@ -1,4 +1,4 @@
-SUBDIRS = libmpcdec libxdg-basedir libdca nosefart gsm610 libmad
+SUBDIRS = libmpcdec libxdg-basedir libdca nosefart gsm610 libmad a52dec
 
 srcdir = $(shell cd @srcdir@; pwd)
 
