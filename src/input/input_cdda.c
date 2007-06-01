@@ -2598,7 +2598,7 @@ static input_plugin_t *cdda_class_get_instance (input_class_t *cls_gen, xine_str
   cdda_input_plugin_t *this;
   cdda_input_class_t  *class = (cdda_input_class_t *) cls_gen;
   int                  track;
-  xine_cfg_entry_t     enable_entry, server_entry, port_entry, cachedir_entry;
+  xine_cfg_entry_t     enable_entry, server_entry, port_entry;
   char                *cdda_device = NULL;
   int                  cddb_error = class->cddb_error;
 
