@@ -68,7 +68,7 @@ static const demuxer_info_t demux_info_mpgaudio = {
 };
 
 static const demuxer_info_t demux_info_mpc = {
-  0                        /* priority */
+  1                        /* priority */
 };
 
 static const demuxer_info_t demux_info_nsf = {

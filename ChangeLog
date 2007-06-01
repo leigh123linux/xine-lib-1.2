@@ -18,6 +18,8 @@ xine-lib (1.1.7) (unreleased)
   * Use the integer versions of Speex decoding functions, this avoids an
     iteration over the decoded frames to transform them to integers, and
     also avoids an improper saturation.
+  * Prioritize the musepack demuxer over mpgaudio, as sometimes the latter can
+    misfire and report a good file as unplayable.
 
 xine-lib (1.1.6)
   * Split the DirectFB plugin into X11 and non-X versions.
