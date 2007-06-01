@@ -389,7 +389,7 @@ static void dispose_class (audio_decoder_class_t *this) {
   free (this);
 }
 
-static void *init_plugin (xine_t *xine, void *data) {
+void *speex_init_plugin (xine_t *xine, void *data) {
 
   speex_class_t *this;
   
@@ -407,13 +407,7 @@ static uint32_t audio_types[] = {
   BUF_AUDIO_SPEEX, 0
  };
 
-static const decoder_info_t dec_info_audio = {
+const decoder_info_t dec_info_speex = {
   audio_types,         /* supported types */
   5                    /* priority        */
-};
-
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_AUDIO_DECODER, 15, "speex", XINE_VERSION_CODE, &dec_info_audio, init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

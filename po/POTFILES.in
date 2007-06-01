@@ -17,6 +17,7 @@ src/audio_out/audio_none_out.c
 src/audio_out/audio_oss_out.c
 src/audio_out/audio_pulse_out.c
 src/audio_out/audio_sun_out.c
+src/combined/xine_ogg_demuxer.c
 src/demuxers/demux_asf.c
 src/demuxers/demux_avi.c
 src/demuxers/demux_film.c
@@ -25,7 +26,6 @@ src/demuxers/demux_iff.c
 src/demuxers/demux_mpc.c
 src/demuxers/demux_mpeg_block.c
 src/demuxers/demux_mpeg_pes.c
-src/demuxers/demux_ogg.c
 src/demuxers/demux_snd.c
 src/demuxers/demux_tta.c
 src/demuxers/demux_voc.c

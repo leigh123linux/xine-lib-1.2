@@ -26,6 +26,8 @@ xine-lib (1.1.90) (Unreleased)
   * Move modplug demuxing on its own plugin, this way binary distributions
     can make it optional, as it requires quite a bit of CPU time during
     initialisation, even for audio files that nothing have to do with modplug.
+  * Collapse the Ogg demuxer, and the Theora, Vorbis and Speex decoders in the
+    same 'xiph' plugin.
 
 xine-lib (1.1.7) (unreleased)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.

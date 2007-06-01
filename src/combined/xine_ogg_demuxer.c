@@ -40,7 +40,10 @@
 #include <inttypes.h>
 
 #include <ogg/ogg.h>
+
+#ifdef HAVE_VORBIS
 #include <vorbis/codec.h>
+#endif
 
 #ifdef HAVE_SPEEX
 #include <speex/speex.h>
@@ -416,6 +419,7 @@ static void ogg_handle_event (demux_ogg_t *this) {
  * to label audio and spu streams
  */
 static void read_language_comment (demux_ogg_t *this, ogg_packet *op, int stream_num) {
+#ifdef HAVE_VORBIS
   char           **ptr;
   char           *comment;
   vorbis_comment vc;
@@ -439,6 +443,7 @@ static void read_language_comment (demux_ogg_t *this, ogg_packet *op, int stream
   }
   vorbis_comment_clear(&vc);
   vorbis_info_clear(&vi);
+#endif
 }
 
 /*
@@ -446,6 +451,7 @@ static void read_language_comment (demux_ogg_t *this, ogg_packet *op, int stream
  * to name parts of the videostream
  */
 static void read_chapter_comment (demux_ogg_t *this, ogg_packet *op) {
+#ifdef HAVE_VORBIS
   char           **ptr;
   char           *comment;
   vorbis_comment vc;
@@ -512,6 +518,7 @@ static void read_chapter_comment (demux_ogg_t *this, ogg_packet *op) {
   }
   vorbis_comment_clear(&vc);
   vorbis_info_clear(&vi);
+#endif
 }
 
 /*
@@ -770,6 +777,7 @@ static void send_ogg_buf (demux_ogg_t *this,
 }
 
 static void decode_vorbis_header (demux_ogg_t *this, const int stream_num, ogg_packet *op) {
+#ifdef HAVE_VORBIS
   vorbis_info       vi;
   vorbis_comment    vc;
 
@@ -803,6 +811,7 @@ static void decode_vorbis_header (demux_ogg_t *this, const int stream_num, ogg_p
   }
   vorbis_comment_clear(&vc);
   vorbis_info_clear(&vi);
+#endif
 }
 
 static void decode_speex_header (demux_ogg_t *this, const int stream_num, ogg_packet *op) {
@@ -1295,7 +1304,11 @@ static void decode_anxdata_header (demux_ogg_t *this, const int stream_num, ogg_
 
   /* what type of stream are we dealing with? */
   if (!strncmp(content_type, "audio/x-vorbis", content_type_length)) {
+#ifdef HAVE_VORBIS
     this->si[stream_num]->buf_types = BUF_AUDIO_VORBIS;
+#else
+    this->si[stream_num]->buf_types = BUF_CONTROL_NOP;
+#endif
     this->num_audio_streams++;
   } else if (!strncmp(content_type, "audio/x-speex", content_type_length)) {
     this->num_audio_streams++;
@@ -2194,9 +2207,25 @@ static const demuxer_info_t demux_info_ogg = {
   10                       /* priority */
 };
 
+extern const demuxer_info_t dec_info_vorbis;
+void *vorbis_init_plugin (xine_t *xine, void *data);
+extern const demuxer_info_t dec_info_speex;
+void *speex_init_plugin (xine_t *xine, void *data);
+extern const demuxer_info_t dec_info_theora;
+void *theora_init_plugin (xine_t *xine, void *data);
+
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
   { PLUGIN_DEMUX, 26, "ogg", XINE_VERSION_CODE, &demux_info_ogg, ogg_init_class },
   { PLUGIN_DEMUX, 26, "anx", XINE_VERSION_CODE, &demux_info_anx, anx_init_class },
+#ifdef HAVE_VORBIS
+  { PLUGIN_AUDIO_DECODER, 15, "vorbis", XINE_VERSION_CODE, &dec_info_vorbis, vorbis_init_plugin },
+#endif
+#ifdef HAVE_SPEEX
+  { PLUGIN_AUDIO_DECODER, 15, "speex", XINE_VERSION_CODE, &dec_info_speex, speex_init_plugin },
+#endif
+#ifdef HAVE_THEORA
+  { PLUGIN_VIDEO_DECODER, 18, "theora", XINE_VERSION_CODE, &dec_info_theora, theora_init_plugin },
+#endif
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

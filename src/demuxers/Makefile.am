@@ -12,10 +12,6 @@ xineinclude_HEADERS = demux.h
 
 noinst_HEADERS = asfheader.h qtpalette.h group_games.h group_audio.h id3.h ebml.h matroska.h iff.h flacutils.h
 
-if ENABLE_VORBIS
-ogg_module = xineplug_dmx_ogg.la
-endif
-
 if ENABLE_ASF
 asf_module = xineplug_dmx_asf.la 
 endif
@@ -33,7 +29,6 @@ image_module = xineplug_dmx_image.la
 endif
 
 xineplug_LTLIBRARIES = \
-	$(ogg_module) \
 	$(asf_module) \
 	$(mng_module) \
 	$(image_module) \
@@ -58,10 +53,6 @@ xineplug_LTLIBRARIES = \
 	xineplug_dmx_matroska.la \
 	xineplug_dmx_iff.la \
 	xineplug_dmx_flv.la 
-
-xineplug_dmx_ogg_la_SOURCES = demux_ogg.c
-xineplug_dmx_ogg_la_LIBADD = $(VORBIS_LIBS) $(SPEEX_LIBS) $(THEORA_LIBS) $(OGG_LIBS) $(XINE_LIB)
-xineplug_dmx_ogg_la_CFLAGS = $(AM_CFLAGS) $(VORBIS_CFLAGS) $(SPEEX_CFLAGS) $(THEORA_CFLAGS) $(OGG_CFLAGS)
 
 xineplug_dmx_avi_la_SOURCES = demux_avi.c
 xineplug_dmx_avi_la_LIBADD = $(XINE_LIB)

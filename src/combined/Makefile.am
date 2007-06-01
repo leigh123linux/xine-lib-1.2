@@ -32,3 +32,29 @@ xineplug_nsf_la_SOURCES = nsf_decoder.c nsf_demuxer.c nsf_combined.c
 xineplug_nsf_la_LIBADD = $(XINE_LIB) $(top_builddir)/contrib/nosefart/libnosefart.la -lm
 xineplug_nsf_la_CFLAGS = $(AM_CFLAGS) -fno-strict-aliasing
 xineplug_nsf_la_CPPFLAGS = $(AM_CPPFLAGS) -DNSF_PLAYER -I$(top_srcdir)/contrib/nosefart -I$(top_srcdir)/src/demuxers
+
+xineplug_xiph_la_SOURCES = xine_ogg_demuxer.c
+xineplug_xiph_la_LIBADD = $(XINE_LIB)
+xineplug_xiph_la_CFLAGS = $(AM_CFLAGS) 
+xineplug_xiph_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/demuxers
+
+if ENABLE_VORBIS
+xineplug_LTLIBRARIES += xineplug_xiph.la
+xineplug_xiph_la_SOURCES += xine_vorbis_decoder.c
+xineplug_xiph_la_LIBADD += $(VORBIS_LIBS)
+xineplug_xiph_la_CFLAGS += $(VORBIS_CFLAGS)
+endif
+
+if ENABLE_THEORA
+xineplug_LTLIBRARIES += xineplug_xiph.la
+xineplug_xiph_la_SOURCES += xine_theora_decoder.c
+xineplug_xiph_la_LIBADD += $(THEORA_LIBS)
+xineplug_xiph_la_CFLAGS += $(THEORA_CFLAGS)
+endif
+
+if ENABLE_SPEEX
+xineplug_LTLIBRARIES += xineplug_xiph.la
+xineplug_xiph_la_SOURCES += xine_speex_decoder.c
+xineplug_xiph_la_LIBADD += $(SPEEX_LIBS)
+xineplug_xiph_la_CFLAGS += $(SPEEX_CFLAGS)
+endif
