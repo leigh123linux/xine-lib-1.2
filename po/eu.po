@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib-1\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-05-31 22:27+0200\n"
+"POT-Creation-Date: 2007-06-02 13:14+0200\n"
 "PO-Revision-Date: 2005-02-17 14:29+0100\n"
 "Last-Translator: Piarres Beobide <pi@beobide.net>\n"
 "Language-Team: lubrezale <librezale@librezale.org>\n"
@@ -843,6 +843,13 @@ msgid "xine audio output plugin using sun-compliant audio devices/drivers"
 msgstr ""
 "xine audio irteera plugina sun-kompilaturiko audio gailu/kontrolatzailea"
 
+#: src/combined/xine_ogg_demuxer.c:810
+#, c-format
+msgid "ogg: vorbis audio track indicated but no vorbis stream header found.\n"
+msgstr ""
+"ogg: vorbis audio pista esan da baina ez da vorbis korronte bururik "
+"aurkitu.\n"
+
 #: src/demuxers/demux_asf.c:428
 #, c-format
 msgid "demux_asf: warning: The stream id=%d is encrypted.\n"
@@ -982,13 +989,6 @@ msgid ""
 msgstr ""
 "demux_mpeg_pes:1 0x%02x korronte pribatu ezezaguna. Mesedez berri eman xine "
 "garatzaileei.\n"
-
-#: src/demuxers/demux_ogg.c:802
-#, c-format
-msgid "ogg: vorbis audio track indicated but no vorbis stream header found.\n"
-msgstr ""
-"ogg: vorbis audio pista esan da baina ez da vorbis korronte bururik "
-"aurkitu.\n"
 
 #: src/demuxers/demux_snd.c:104
 #, c-format
@@ -3697,8 +3697,8 @@ msgid ""
 msgstr ""
 
 #: src/video_out/video_out_opengl.c:1918 src/video_out/video_out_vidix.c:1015
-#: src/video_out/video_out_xcbxv.c:1476 src/video_out/video_out_xv.c:1535
-#: src/video_out/video_out_xvmc.c:1461 src/video_out/video_out_xxmc.c:2531
+#: src/video_out/video_out_xcbxv.c:1304 src/video_out/video_out_xv.c:1359
+#: src/video_out/video_out_xvmc.c:1423 src/video_out/video_out_xxmc.c:2531
 msgid "enable double buffering"
 msgstr "gaitu buffer bikoitza"
 
@@ -3780,8 +3780,8 @@ msgstr ""
 msgid "video_out_pgx64: Error: ioctl failed (FBIOGATTR)\n"
 msgstr "video_out_pgx64: Errorea: ioctl hutsa (FBIOGATTR)\n"
 
-#: src/video_out/video_out_pgx64.c:1464 src/video_out/video_out_xcbxv.c:1443
-#: src/video_out/video_out_xv.c:1502 src/video_out/video_out_xvmc.c:1446
+#: src/video_out/video_out_pgx64.c:1464 src/video_out/video_out_xcbxv.c:1271
+#: src/video_out/video_out_xv.c:1326 src/video_out/video_out_xvmc.c:1408
 #: src/video_out/video_out_xxmc.c:2498
 msgid "video overlay colour key"
 msgstr ""
@@ -3949,8 +3949,8 @@ msgstr "Intentsitate urdina"
 msgid "The intensity of the blue colour components."
 msgstr "Urdin koloreko osagaien intentsitatea."
 
-#: src/video_out/video_out_vidix.c:1016 src/video_out/video_out_xcbxv.c:1477
-#: src/video_out/video_out_xv.c:1536 src/video_out/video_out_xvmc.c:1462
+#: src/video_out/video_out_vidix.c:1016 src/video_out/video_out_xcbxv.c:1305
+#: src/video_out/video_out_xv.c:1360 src/video_out/video_out_xvmc.c:1424
 #: src/video_out/video_out_xxmc.c:2532
 msgid ""
 "Double buffering will synchronize the update of the video image to the "
@@ -3984,8 +3984,8 @@ msgid "video overlay colour key red component"
 msgstr "bideo ingurune kolore teklaren gorri osagaia"
 
 #: src/video_out/video_out_vidix.c:1159 src/video_out/video_out_vidix.c:1166
-#: src/video_out/video_out_vidix.c:1173 src/video_out/video_out_xcbxv.c:1444
-#: src/video_out/video_out_xv.c:1503 src/video_out/video_out_xvmc.c:1447
+#: src/video_out/video_out_vidix.c:1173 src/video_out/video_out_xcbxv.c:1272
+#: src/video_out/video_out_xv.c:1327 src/video_out/video_out_xvmc.c:1409
 #: src/video_out/video_out_xxmc.c:2499
 msgid ""
 "The colour key is used to tell the graphics card where to overlay the video "
@@ -4015,13 +4015,13 @@ msgid "%s: %s: allocating image\n"
 msgstr ""
 
 #: src/video_out/video_out_xcbshm.c:159 src/video_out/video_out_xcbshm.c:169
-#: src/video_out/video_out_xcbshm.c:181 src/video_out/video_out_xcbxv.c:272
-#: src/video_out/video_out_xcbxv.c:282 src/video_out/video_out_xcbxv.c:292
-#: src/video_out/video_out_xcbxv.c:304 src/video_out/video_out_xshm.c:204
+#: src/video_out/video_out_xcbshm.c:181 src/video_out/video_out_xcbxv.c:267
+#: src/video_out/video_out_xcbxv.c:277 src/video_out/video_out_xcbxv.c:287
+#: src/video_out/video_out_xcbxv.c:299 src/video_out/video_out_xshm.c:204
 #: src/video_out/video_out_xshm.c:221 src/video_out/video_out_xshm.c:232
-#: src/video_out/video_out_xshm.c:251 src/video_out/video_out_xv.c:300
-#: src/video_out/video_out_xv.c:327 src/video_out/video_out_xv.c:336
-#: src/video_out/video_out_xv.c:372 src/video_out/video_out_xxmc.c:648
+#: src/video_out/video_out_xshm.c:251 src/video_out/video_out_xv.c:295
+#: src/video_out/video_out_xv.c:322 src/video_out/video_out_xv.c:331
+#: src/video_out/video_out_xv.c:367 src/video_out/video_out_xxmc.c:648
 #: src/video_out/video_out_xxmc.c:659 src/video_out/video_out_xxmc.c:668
 #: src/video_out/video_out_xxmc.c:704
 #, c-format
@@ -4033,8 +4033,8 @@ msgstr ""
 msgid "%s: shared memory error (address error) when allocating image \n"
 msgstr ""
 
-#: src/video_out/video_out_xcbshm.c:179 src/video_out/video_out_xcbxv.c:302
-#: src/video_out/video_out_xshm.c:249 src/video_out/video_out_xv.c:370
+#: src/video_out/video_out_xcbshm.c:179 src/video_out/video_out_xcbxv.c:297
+#: src/video_out/video_out_xshm.c:249 src/video_out/video_out_xv.c:365
 #: src/video_out/video_out_xxmc.c:702
 #, c-format
 msgid "%s: x11 error during shared memory XImage creation\n"
@@ -4065,30 +4065,30 @@ msgstr "video_out_fb: Bideo modua ez da ezagutzen, barkatu.\n"
 msgid "xine video output plugin using the MIT X shared memory extension"
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:270 src/video_out/video_out_xv.c:325
+#: src/video_out/video_out_xcbxv.c:265 src/video_out/video_out_xv.c:320
 #: src/video_out/video_out_xxmc.c:657
 #, c-format
 msgid "%s: XvShmCreateImage returned a zero size\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:280 src/video_out/video_out_xv.c:334
+#: src/video_out/video_out_xcbxv.c:275 src/video_out/video_out_xv.c:329
 #: src/video_out/video_out_xxmc.c:666
 #, c-format
 msgid "%s: shared memory error in shmget: %s\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:290
+#: src/video_out/video_out_xcbxv.c:285
 #, c-format
 msgid "%s: shared memory error (address error)\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:1294 src/video_out/video_out_xv.c:1347
+#: src/video_out/video_out_xcbxv.c:1125 src/video_out/video_out_xv.c:1174
 #: src/video_out/video_out_xxmc.c:2349
 #, fuzzy, c-format
 msgid "%s: Xv extension not present.\n"
 msgstr "video_out_xv: Xv luzapena ez dago.\n"
 
-#: src/video_out/video_out_xcbxv.c:1336 src/video_out/video_out_xv.c:1384
+#: src/video_out/video_out_xcbxv.c:1167 src/video_out/video_out_xv.c:1211
 #: src/video_out/video_out_xxmc.c:2386
 #, fuzzy, c-format
 msgid ""
@@ -4099,29 +4099,29 @@ msgstr ""
 "erabilgarririkaurkitu.\n"
 "              Dirudienez zure txartela grafikoak ez du Xv onartzen?!\n"
 
-#: src/video_out/video_out_xcbxv.c:1345
+#: src/video_out/video_out_xcbxv.c:1176
 #, c-format
 msgid ""
 "%s: using Xv port %d from adaptor %s for hardware colorspace conversion and "
 "scaling.\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:1452 src/video_out/video_out_xv.c:1511
-#: src/video_out/video_out_xvmc.c:1455 src/video_out/video_out_xxmc.c:2507
+#: src/video_out/video_out_xcbxv.c:1280 src/video_out/video_out_xv.c:1335
+#: src/video_out/video_out_xvmc.c:1417 src/video_out/video_out_xxmc.c:2507
 msgid "autopaint colour key"
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:1453 src/video_out/video_out_xv.c:1512
-#: src/video_out/video_out_xvmc.c:1456 src/video_out/video_out_xxmc.c:2508
+#: src/video_out/video_out_xcbxv.c:1281 src/video_out/video_out_xv.c:1336
+#: src/video_out/video_out_xvmc.c:1418 src/video_out/video_out_xxmc.c:2508
 msgid "Make Xv autopaint its colorkey."
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:1460 src/video_out/video_out_xv.c:1519
+#: src/video_out/video_out_xcbxv.c:1288 src/video_out/video_out_xv.c:1343
 #: src/video_out/video_out_xxmc.c:2515
 msgid "bilinear scaling mode"
 msgstr "eskalatze modu bilinearra"
 
-#: src/video_out/video_out_xcbxv.c:1461 src/video_out/video_out_xv.c:1520
+#: src/video_out/video_out_xcbxv.c:1289 src/video_out/video_out_xv.c:1344
 #: src/video_out/video_out_xxmc.c:2516
 msgid ""
 "Selects the bilinear scaling mode for Permedia cards. The individual values "
@@ -4137,73 +4137,29 @@ msgid ""
 "2 - enable full bilinear filtering"
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:1513 src/video_out/video_out_xv.c:1569
+#: src/video_out/video_out_xcbxv.c:1341 src/video_out/video_out_xv.c:1393
 #: src/video_out/video_out_xxmc.c:2572
 #, fuzzy, c-format
 msgid "%s: this adaptor supports the yv12 format.\n"
 msgstr "video_out_xv: adaptadoreak yv12 formatua onartzen du.\n"
 
-#: src/video_out/video_out_xcbxv.c:1518 src/video_out/video_out_xv.c:1574
+#: src/video_out/video_out_xcbxv.c:1346 src/video_out/video_out_xv.c:1398
 #: src/video_out/video_out_xxmc.c:2577
 #, fuzzy, c-format
 msgid "%s: this adaptor supports the yuy2 format.\n"
 msgstr "video_out_xv: adaptadoreak yuy2 formatua onartzen du.\n"
 
-#: src/video_out/video_out_xcbxv.c:1526 src/video_out/video_out_xv.c:1596
+#: src/video_out/video_out_xcbxv.c:1354 src/video_out/video_out_xv.c:1420
 #: src/video_out/video_out_xxmc.c:2600
 msgid "pitch alignment workaround"
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:1527 src/video_out/video_out_xv.c:1597
+#: src/video_out/video_out_xcbxv.c:1355 src/video_out/video_out_xv.c:1421
 #: src/video_out/video_out_xxmc.c:2601
 msgid "Some buggy video drivers need a workaround to function properly."
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:1533 src/video_out/video_out_xv.c:1603
-#: src/video_out/video_out_xvmc.c:1524
-msgid "deinterlace method (deprecated)"
-msgstr "ez-elkarlituriko metodoa (zaharkiturik)"
-
-#: src/video_out/video_out_xcbxv.c:1534 src/video_out/video_out_xv.c:1604
-#: src/video_out/video_out_xvmc.c:1525
-msgid ""
-"This config setting is deprecated. You should use the new deinterlacing post "
-"processing settings instead.\n"
-"\n"
-"From the old days of analog television, where the even and odd numbered "
-"lines of a video frame would be displayed at different times comes the idea "
-"to increase motion smoothness by also recording the lines at different "
-"times. This is called \"interlacing\". But unfortunately, todays displays "
-"show the even and odd numbered lines as one complete frame all at the same "
-"time (called \"progressive display\"), which results in ugly frame errors "
-"known as comb artifacts. Software deinterlacing is an approach to reduce "
-"these artifacts. The individual values are:\n"
-"\n"
-"none\n"
-"Disables software deinterlacing.\n"
-"\n"
-"bob\n"
-"Interpolates between the lines for moving parts of the image.\n"
-"\n"
-"weave\n"
-"Similar to bob, but with a tendency to preserve the full resolution, better "
-"for high detail in low movement scenes.\n"
-"\n"
-"greedy\n"
-"Very good adaptive deinterlacer, but needs a lot of CPU power.\n"
-"\n"
-"onefield\n"
-"Always interpolates and reduces vertical resolution.\n"
-"\n"
-"onefieldxv\n"
-"Same as onefield, but does the interpolation in hardware.\n"
-"\n"
-"linearblend\n"
-"Applies a slight vertical blur to remove the comb artifacts. Good results "
-"with medium CPU usage."
-msgstr ""
-
-#: src/video_out/video_out_xcbxv.c:1588 src/video_out/video_out_xv.c:1677
+#: src/video_out/video_out_xcbxv.c:1383 src/video_out/video_out_xv.c:1468
 #: src/video_out/video_out_xxmc.c:2681
 msgid "xine video output plugin using the MIT X video extension"
 msgstr "xine bideo irteera plugina MIT X bideo luzapena erabiltzen"
@@ -4213,52 +4169,52 @@ msgstr "xine bideo irteera plugina MIT X bideo luzapena erabiltzen"
 msgid "%s: shared memory error when allocating image\n"
 msgstr ""
 
-#: src/video_out/video_out_xv.c:298 src/video_out/video_out_xxmc.c:646
+#: src/video_out/video_out_xv.c:293 src/video_out/video_out_xxmc.c:646
 #, c-format
 msgid "%s: XvShmCreateImage failed\n"
 msgstr ""
 
-#: src/video_out/video_out_xv.c:1394 src/video_out/video_out_xxmc.c:2396
+#: src/video_out/video_out_xv.c:1221 src/video_out/video_out_xxmc.c:2396
 #, c-format
 msgid ""
 "%s: using Xv port %ld from adaptor %s for hardware colorspace conversion and "
 "scaling.\n"
 msgstr ""
 
-#: src/video_out/video_out_xvmc.c:1593
+#: src/video_out/video_out_xvmc.c:1496
 msgid "xine video output plugin using the XvMC X video extension"
 msgstr "xineo bideo irteera plugina XvMC X bideo luzapena erabiltzen"
 
-#: src/video_out/video_out_xvmc.c:1639
+#: src/video_out/video_out_xvmc.c:1542
 msgid "video_out_xvmc: XvMC extension not present.\n"
 msgstr "video_out_xvmc: XvMC luzapena ez dago.\n"
 
-#: src/video_out/video_out_xvmc.c:1737
+#: src/video_out/video_out_xvmc.c:1640
 msgid ""
 "video_out_xvmc: Xv extension is present but I couldn't find a usable yuv12 "
 "port.\n"
 msgstr ""
 
-#: src/video_out/video_out_xvmc.c:1746
+#: src/video_out/video_out_xvmc.c:1649
 #, c-format
 msgid ""
 "video_out_xvmc: using Xv port %ld from adaptor %s\n"
 "                for hardware colorspace conversion and scaling\n"
 msgstr ""
 
-#: src/video_out/video_out_xvmc.c:1751
+#: src/video_out/video_out_xvmc.c:1654
 msgid "                idct and motion compensation acceleration \n"
 msgstr ""
 
-#: src/video_out/video_out_xvmc.c:1753
+#: src/video_out/video_out_xvmc.c:1656
 msgid "                motion compensation acceleration only\n"
 msgstr ""
 
-#: src/video_out/video_out_xvmc.c:1755
+#: src/video_out/video_out_xvmc.c:1658
 msgid "                no XvMC support \n"
 msgstr "                ez da XvMC onartzen \n"
 
-#: src/video_out/video_out_xvmc.c:1756
+#: src/video_out/video_out_xvmc.c:1659
 #, c-format
 msgid "                With Overlay = %d; UnsignedIntra = %d.\n"
 msgstr ""
@@ -5274,6 +5230,9 @@ msgstr ""
 #: src/xine-utils/memcpy.c:507
 msgid "Benchmarking memcpy methods (smaller is better):\n"
 msgstr "memcpy metodoak frogatzen (txeikiena obea da)\n"
+
+#~ msgid "deinterlace method (deprecated)"
+#~ msgstr "ez-elkarlituriko metodoa (zaharkiturik)"
 
 #, fuzzy
 #~ msgid ""
