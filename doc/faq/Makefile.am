@@ -9,13 +9,6 @@ DISTCLEANFILES = $(doc_DATA) $(html_DATA)
 
 docs: $(doc_DATA) $(html_DATA)
 
-dist-hook:
-	@if test x"$(distcheck_lax)" = x ; then \
-	  $(MAKE) fail_if_missing=yes docs ; \
-	else \
-	  $(MAKE) docs ; \
-	fi
-
 faq.html: faq.docbook
 	xmlto html-nochunks $(srcdir)/faq.docbook
 
