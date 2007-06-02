@@ -9,11 +9,6 @@ docs: $(doc_DATA) $(html_DATA)
 
 distclean-local: clean-docs
 
-docs-prepare: $(srcdir)/faq.sgml
-	if test "$(srcdir)" != "." -a "$(srcdir)" != "`pwd`"; then \
-	  test -f ./faq.sgml -a ./faq.sgml -nt $(srcdir)/faq.sgml || cp $^ . ; \
-	fi
-
 clean-docs:
 	rm -f $(doc_DATA) $(html_DATA)
 	test "x$(srcdir)" = x. || rm -f faq.sgml
