@@ -24,7 +24,7 @@ DISTCLEANFILES = $(hackersguide_DATA)
 hackersguide.html: $(hackersguide_docbook)
 	xmlto html-nochunks $(srcdir)/hackersguide.docbook
 
-.fig.png:
-	fig2dev -L png -S 4 $< $@;
+.svg.png:
+	rsvg -f png $< $@
 
 SUFFIXES = .png .fig
