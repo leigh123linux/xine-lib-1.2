@@ -61,7 +61,7 @@ hackersguide.html: $(hackersguide_sgml)
 endif
 
 if HAVE_FIG2DEV
-fig.png:
+.fig.png:
 	$(FIG2DEV) -L png -S 4 $< $@;
 else
 .fig.png:
