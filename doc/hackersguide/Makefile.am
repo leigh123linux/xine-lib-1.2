@@ -20,12 +20,7 @@ EXTRA_DIST = README $(hackersguide_docbook) $(hackersguide_fig) \
 
 hackersguidedir = $(htmldir)/hackersguide
 
-docs: $(hackersguide_DATA)
-
-distclean-local: clean-docs
-
-clean-docs:
-	rm -f $(hackersguide_DATA)
+DISTCLEANFILES = $(hackersguide_DATA)
 
 dist-hook:
 	@if test x"$(distcheck_lax)" = x ; then \
