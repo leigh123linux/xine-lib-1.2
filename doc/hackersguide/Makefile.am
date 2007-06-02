@@ -29,23 +29,8 @@ dist-hook:
 	  $(MAKE) docs ; \
 	fi
 
-if HAVE_SGMLTOOLS
-hackersguide.html: $(hackersguide_sgml)
-	@$(MAKE) docs-prepare
-	$(SGMLTOOLS) -b onehtml hackersguide.sgml;
-else
-hackersguide.html: $(hackersguide_sgml)
-	@$(MAKE) docs-prepare
-	if test x"$(fail_if_missing)" = x"yes"; then \
-	  echo "Please install sgmltools-lite."; \
-	  exit 1; \
-	fi
-	if test x"$(fail_if_missing)" != x"yes"; then \
-	  touch $@; \
-	  sleep 1; \
-	  touch $(notdir $^); \
-	fi
-endif
+hackersguide.html: $(hackersguide_docbook)
+	xmlto html-nochunks $(srcdir)/hackersguide.docbook
 
 if HAVE_FIG2DEV
 fig.png:
