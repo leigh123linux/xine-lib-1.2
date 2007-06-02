@@ -5,10 +5,10 @@
   <title>Engine architecture and data flow</title>
   <mediaobject>
    <imageobject>
-    <imagedata fileref="architecture.png" format="PNG">
+    <imagedata fileref="architecture.png" format="PNG" />
    </imageobject>
    <imageobject>
-    <imagedata fileref="architecture.eps" format="EPS">
+    <imagedata fileref="architecture.eps" format="EPS" />
    </imageobject>
    <caption>
     <para>xine engine architecture</para>
@@ -398,7 +398,7 @@
 &nbsp;&nbsp;&nbsp; *
 &nbsp;&nbsp;&nbsp; * audio buf ---> metronom --> audio fifo --> (buf->vpts - hw_vpts)
 &nbsp;&nbsp;&nbsp; *           (vpts_offset + error)                     gap
-&nbsp;&nbsp;&nbsp; *                    <---------- control --------------|
+&nbsp;&nbsp;&nbsp; *                    &lt;---------- control --------------|
 &nbsp;&nbsp;&nbsp; *
 &nbsp;&nbsp;&nbsp; * Unfortunately audio fifo adds a large delay to our closed loop.
 &nbsp;&nbsp;&nbsp; *
@@ -410,7 +410,7 @@
 &nbsp;&nbsp;&nbsp; * - each update will be of gap/SYNC_GAP_RATE.
 &nbsp;&nbsp;&nbsp; *
 &nbsp;&nbsp;&nbsp; * Sound card clock correction can only provide smooth playback for
-&nbsp;&nbsp;&nbsp; * errors < 1% nominal rate. For bigger errors (bad streams) audio
+&nbsp;&nbsp;&nbsp; * errors &lt; 1% nominal rate. For bigger errors (bad streams) audio
 &nbsp;&nbsp;&nbsp; * buffers may be dropped or gaps filled with silence.
 &nbsp;&nbsp;&nbsp; */</programlisting>
      </para>
@@ -468,10 +468,10 @@
   </para>
   <mediaobject>
    <imageobject>
-    <imagedata fileref="overlays.png" format="PNG">
+    <imagedata fileref="overlays.png" format="PNG" />
    </imageobject>
    <imageobject>
-    <imagedata fileref="overlays.eps" format="EPS">
+    <imagedata fileref="overlays.eps" format="EPS" />
    </imageobject>
    <caption>
     <para>overlays architecture</para>

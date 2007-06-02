@@ -12,10 +12,10 @@
   </para>
   <mediaobject>
    <imageobject>
-    <imagedata fileref="library.png" format="PNG">
+    <imagedata fileref="library.png" format="PNG" />
    </imageobject>
    <imageobject>
-    <imagedata fileref="library.eps" format="EPS">
+    <imagedata fileref="library.eps" format="EPS" />
    </imageobject>
    <caption>
     <para>outside view on xine components</para>

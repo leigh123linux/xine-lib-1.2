@@ -295,10 +295,10 @@
     </para>
     <mediaobject>
      <imageobject>
-      <imagedata fileref="post_frame.png" format="PNG">
+      <imagedata fileref="post_frame.png" format="PNG" />
      </imageobject>
      <imageobject>
-      <imagedata fileref="post_frame.eps" format="EPS">
+      <imagedata fileref="post_frame.eps" format="EPS" />
      </imageobject>
      <caption>
       <para>video frame passing through a post plugin</para>
