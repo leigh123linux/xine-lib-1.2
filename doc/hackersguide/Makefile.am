@@ -7,16 +7,16 @@ hackersguide_docbook = hackersguide.docbook \
 		    internals.docbook \
 		    stream.docbook \
 		    output.docbook
-hackersguide_fig = architecture.fig \
-		   library.fig \
-		   overlays.fig \
-		   post_frame.fig
+hackersguide_svg = architecture.svg \
+		   library.svg \
+		   overlays.svg \
+		   post_frame.svg
 
 hackersguidedir = $(htmldir)/hackersguide
 hackersguide_DATA = hackersguide.html \
             architecture.png library.png overlays.png post_frame.png
 
-EXTRA_DIST = README $(hackersguide_docbook) $(hackersguide_fig) \
+EXTRA_DIST = README $(hackersguide_docbook) $(hackersguide_svg) \
 	 $(hackersguide_DATA)
 
 DISTCLEANFILES = $(hackersguide_DATA)
