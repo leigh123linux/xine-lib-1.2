@@ -24,16 +24,8 @@ docs: $(hackersguide_DATA)
 
 distclean-local: clean-docs
 
-docs-prepare: $(addprefix $(srcdir)/, $(hackersguide_sgml))
-	if test "$(srcdir)" != "."  -a "$(srcdir)" != "`pwd`"; then \
-	  for file in $(hackersguide_sgml) ; do \
-	    test -f ./$$file -a ./$$file -nt $(srcdir)/$$file || cp $(srcdir)/$$file .; \
-	  done ; \
-	fi
-
 clean-docs:
 	rm -f $(hackersguide_DATA)
-	test "x$(srcdir)" = x. || rm -f $(hackersguide_sgml) *.fig
 
 dist-hook:
 	@if test x"$(distcheck_lax)" = x ; then \
