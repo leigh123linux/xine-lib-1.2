@@ -22,13 +22,6 @@ hackersguidedir = $(htmldir)/hackersguide
 
 DISTCLEANFILES = $(hackersguide_DATA)
 
-dist-hook:
-	@if test x"$(distcheck_lax)" = x ; then \
-	  $(MAKE) fail_if_missing=yes docs ; \
-	else \
-	  $(MAKE) docs ; \
-	fi
-
 hackersguide.html: $(hackersguide_docbook)
 	xmlto html-nochunks $(srcdir)/hackersguide.docbook
 
