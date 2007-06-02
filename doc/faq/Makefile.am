@@ -7,8 +7,6 @@ EXTRA_DIST = README faq.docbook $(doc_DATA) $(html_DATA)
 
 DISTCLEANFILES = $(doc_DATA) $(html_DATA)
 
-docs: $(doc_DATA) $(html_DATA)
-
 faq.html: faq.docbook
 	xmlto html-nochunks $(srcdir)/faq.docbook
 
