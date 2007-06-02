@@ -173,14 +173,6 @@ AC_CHECK_TOOL([STRINGS], [strings], [false])
 
 PKG_PROG_PKG_CONFIG
 
-dnl Check for documentation formatting tools
-AC_CHECK_PROG([SGMLTOOLS], [sgmltools], [sgmltools], [no])
-AM_CONDITIONAL([HAVE_SGMLTOOLS], [test x"$SGMLTOOLS" != x"no"])
-
-AC_CHECK_PROG([FIG2DEV], [fig2dev], [fig2dev], [no])
-AM_CONDITIONAL([HAVE_FIG2DEV], [test x"$FIG2DEV" != x"no"])
-
-
 dnl libtool
 m4_undefine([AC_PROG_F77])
 m4_defun([AC_PROG_F77],[])
