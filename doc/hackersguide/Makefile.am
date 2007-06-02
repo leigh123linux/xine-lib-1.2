@@ -32,20 +32,7 @@ dist-hook:
 hackersguide.html: $(hackersguide_docbook)
 	xmlto html-nochunks $(srcdir)/hackersguide.docbook
 
-if HAVE_FIG2DEV
-fig.png:
-	$(FIG2DEV) -L png -S 4 $< $@;
-else
 .fig.png:
-	if test x"$(fail_if_missing)" = x"yes"; then \
-	  echo "Please install fig2dev."; \
-	  exit 1; \
-	fi
-	if test x"$(fail_if_missing)" != x"yes"; then \
-	  touch $@; \
-	  sleep 1; \
-	  touch $(notdir $^); \
-	fi
-endif
+	fig2dev -L png -S 4 $< $@;
 
 SUFFIXES = .png .fig
