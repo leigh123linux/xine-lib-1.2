@@ -61,10 +61,10 @@ hackersguide.html: $(hackersguide_sgml)
 endif
 
 if HAVE_FIG2DEV
-%.png: %.fig
+fig.png:
 	$(FIG2DEV) -L png -S 4 $< $@;
 else
-%.png: %.fig
+.fig.png:
 	if test x"$(fail_if_missing)" = x"yes"; then \
 	  echo "Please install fig2dev."; \
 	  exit 1; \
@@ -75,3 +75,5 @@ else
 	  touch $(notdir $^); \
 	fi
 endif
+
+SUFFIXES = .png .fig
