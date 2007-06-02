@@ -5,13 +5,9 @@ html_DATA = faq.html
 
 EXTRA_DIST = README faq.sgml $(doc_DATA) $(html_DATA)
 
+DISTCLEANFILES = $(doc_DATA) $(html_DATA)
+
 docs: $(doc_DATA) $(html_DATA)
-
-distclean-local: clean-docs
-
-clean-docs:
-	rm -f $(doc_DATA) $(html_DATA)
-	test "x$(srcdir)" = x. || rm -f faq.sgml
 
 dist-hook:
 	@if test x"$(distcheck_lax)" = x ; then \
