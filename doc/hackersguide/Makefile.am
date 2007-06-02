@@ -12,13 +12,12 @@ hackersguide_fig = architecture.fig \
 		   overlays.fig \
 		   post_frame.fig
 
+hackersguidedir = $(htmldir)/hackersguide
 hackersguide_DATA = hackersguide.html \
             architecture.png library.png overlays.png post_frame.png
 
 EXTRA_DIST = README $(hackersguide_docbook) $(hackersguide_fig) \
 	 $(hackersguide_DATA)
-
-hackersguidedir = $(htmldir)/hackersguide
 
 DISTCLEANFILES = $(hackersguide_DATA)
 
