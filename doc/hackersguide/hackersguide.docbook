@@ -1,10 +1,11 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.1//EN" [
-<!ENTITY intro     SYSTEM "intro.sgml"    >
-<!ENTITY library   SYSTEM "library.sgml"  >
-<!ENTITY overview  SYSTEM "overview.sgml" >
-<!ENTITY internals SYSTEM "internals.sgml">
-<!ENTITY stream    SYSTEM "stream.sgml"   >
-<!ENTITY output    SYSTEM "output.sgml"   >
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+<!ENTITY intro     SYSTEM "intro.docbook"    >
+<!ENTITY library   SYSTEM "library.docbook"  >
+<!ENTITY overview  SYSTEM "overview.docbook" >
+<!ENTITY internals SYSTEM "internals.docbook">
+<!ENTITY stream    SYSTEM "stream.docbook"   >
+<!ENTITY output    SYSTEM "output.docbook"   >
 ]>
 
 <book>
