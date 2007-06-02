@@ -3,7 +3,7 @@ include $(top_srcdir)/misc/Makefile.common
 doc_DATA = faq.txt
 html_DATA = faq.html
 
-EXTRA_DIST = README faq.sgml $(doc_DATA) $(html_DATA)
+EXTRA_DIST = README faq.docbook $(doc_DATA) $(html_DATA)
 
 DISTCLEANFILES = $(doc_DATA) $(html_DATA)
 
