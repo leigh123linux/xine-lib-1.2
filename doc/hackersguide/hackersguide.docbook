@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+  "/usr/share/sgml/docbook/xml-dtd-4.4/docbookx.dtd" [
 <!ENTITY intro     SYSTEM "intro.docbook"    >
 <!ENTITY library   SYSTEM "library.docbook"  >
 <!ENTITY overview  SYSTEM "overview.docbook" >
