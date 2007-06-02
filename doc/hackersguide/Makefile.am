@@ -1,12 +1,12 @@
 include $(top_srcdir)/misc/Makefile.common
 
-hackersguide_sgml = hackersguide.sgml \
-		    intro.sgml \
-		    library.sgml \
-		    overview.sgml \
-		    internals.sgml \
-		    stream.sgml \
-		    output.sgml
+hackersguide_docbook = hackersguide.docbook \
+		    intro.docbook \
+		    library.docbook \
+		    overview.docbook \
+		    internals.docbook \
+		    stream.docbook \
+		    output.docbook
 hackersguide_fig = architecture.fig \
 		   library.fig \
 		   overlays.fig \
@@ -15,7 +15,7 @@ hackersguide_fig = architecture.fig \
 hackersguide_DATA = hackersguide.html \
             architecture.png library.png overlays.png post_frame.png
 
-EXTRA_DIST = README $(hackersguide_sgml) $(hackersguide_fig) \
+EXTRA_DIST = README $(hackersguide_docbook) $(hackersguide_fig) \
 	 $(hackersguide_DATA)
 
 hackersguidedir = $(htmldir)/hackersguide
