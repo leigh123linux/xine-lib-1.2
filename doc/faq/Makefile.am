@@ -16,38 +16,8 @@ dist-hook:
 	  $(MAKE) docs ; \
 	fi
 
-if HAVE_SGMLTOOLS
-faq.html: faq.sgml
-	@$(MAKE) docs-prepare
-	$(SGMLTOOLS) -b onehtml faq.sgml;
-else
-faq.html: faq.sgml
-	@$(MAKE) docs-prepare
-	if test x"$(fail_if_missing)" = x"yes"; then \
-	  echo "Please install sgmltools-lite."; \
-	  exit 1; \
-	fi
-	if test x"$(fail_if_missing)" != x"yes"; then \
-	  touch $@; \
-	  sleep 1; \
-	  touch $(notdir $^); \
-	fi
-endif
+faq.html: faq.docbook
+	xmlto html-nochunks $(srcdir)/faq.docbook
 
-if HAVE_SGMLTOOLS
-faq.txt: faq.sgml
-	@$(MAKE) docs-prepare
-	$(SGMLTOOLS) -b txt faq.sgml;
-else
-faq.txt: faq.sgml
-	@$(MAKE) docs-prepare
-	if test x"$(fail_if_missing)" = x"yes"; then \
-	  echo "Please install sgmltools-lite."; \
-	  exit 1; \
-	fi
-	if test x"$(fail_if_missing)" != x"yes"; then \
-	  touch $@; \
-	  sleep 1; \
-	  touch $(notdir $^); \
-	fi
-endif
+faq.txt: faq.docbook
+	xmlto txt $(srcdir)/faq.docbook
