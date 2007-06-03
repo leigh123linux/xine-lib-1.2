@@ -426,7 +426,7 @@ static int file_plugin_open (input_plugin_t *this_gen ) {
   }
 
 #ifdef HAVE_MMAP
-  tmp_size = sbuf.st_size;
+  tmp_size = sbuf.st_size; /* may cause truncation - if it does, DON'T mmap! */
   if ((tmp_size == sbuf.st_size) &&
       ( (this->mmap_base = mmap(NULL, tmp_size, PROT_READ, MAP_SHARED, this->fh, 0)) != (void*)-1 )) {
     this->mmap_on = 1;
