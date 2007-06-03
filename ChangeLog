@@ -8,7 +8,7 @@ xine-lib (1.1.90) (Unreleased)
   * Use FFmpeg's own buildsystem, rather than wrapping automake around its
     sources; this allows to enable/disable FFmpeg features easily, and allow
     to properly support --disable-ffmpeg-(uncommon|popular)-codecs.
-  * Update libmpcdec (formerly libmusepack) to version 1.2.5 (newer than the
+  * Update libmpcdec (formerly libmusepack) to version 1.2.6 (newer than the
     previous Subversion snapshot) and contestually move it to contrib/libmpcdec
     to separate from xine's own code.
   * Save plugins' cache in the defined cache home directory as per XDG Base
