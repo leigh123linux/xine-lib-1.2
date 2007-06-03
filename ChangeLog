@@ -21,6 +21,8 @@ xine-lib (1.1.7) (unreleased)
   * Prioritize the musepack demuxer over mpgaudio, as sometimes the latter can
     misfire and report a good file as unplayable.
   * Fix an mmap problem with huge files on 32-bit systems.
+  * Improved MPEG PES stream handling: specifically, misdetection of data
+    streams as PES streams.
 
 xine-lib (1.1.6)
   * Split the DirectFB plugin into X11 and non-X versions.
