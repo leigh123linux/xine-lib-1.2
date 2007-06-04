@@ -1151,6 +1151,10 @@
         </ulink>
        </para>
        <para>
+	 For recent kernels (2.6.x series) the raw devices are neither
+	 needed nor supported anymore, so don't bother.
+       </para>
+       <para>
         To use raw devices, first connect a free raw device to your dvd
         device, use something like:
         <screen>&nbsp;&nbsp;&nbsp;<command>raw /dev/raw1 /dev/dvd</command></screen>
