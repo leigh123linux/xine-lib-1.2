@@ -425,7 +425,7 @@
    </sect2>
 
    <sect2 id="athlonflags">
-    <title>Are there binaries for my AMD K7 (Athlon&trade;) available? Can I build them?</title>
+    <title>Are there binaries for my AMD K7 (Athlon™) available? Can I build them?</title>
     <para>
      If you have a recent gcc you can try to compile "more" k7 support in (esp.
      better instruction scheduling). If the configure script should fail to
