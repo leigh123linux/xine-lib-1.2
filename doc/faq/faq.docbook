@@ -1249,10 +1249,13 @@
    <sect2 id="audiodrivers">
     <title>What audio drivers does xine support? OSS? Alsa? Arts? Esd?</title>
     <para>
-     Currently xine support audio output via OSS (kernel audio drivers),
-     ALSA 0.9.x (ALSA 0.5.x is no longer supported), arts (KDE's sound daemon)
-     and esound (esd, gnome's sound daemon - not recommended because it has
-     serious issues with a/v sync).
+     Currently xine support audio output via OSS (Linux 2.4 and most
+     *BSD audio drivers), 
+     ALSA 0.9 and 1.0 (ALSA 0.5.x is no longer supported), aRTs (KDE
+     3's sound daemon), ESounD (esd, gnome's sound daemon not
+     recommended because it has serious issues with a/v sync), JACK,
+     PulseAudio, plus platform-specific output through Sun devices for
+     Solaris and NetBSD and Irix output.
     </para>
    </sect2>
 
