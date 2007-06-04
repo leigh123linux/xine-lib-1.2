@@ -74,7 +74,7 @@ AC_SUBST(XINE_LT_REVISION)
 XINE_LT_AGE=__XINE_LT_AGE
 AC_SUBST(XINE_LT_AGE)
 
-LIBNAME="libxine${XINE_MAJOR}"
+LIBNAME="libxine$(($XINE_LT_CURRENT-$XINE_LT_AGE))"
 AC_SUBST(LIBNAME)
 AC_DEFINE_UNQUOTED([XINE_TEXTDOMAIN], "$LIBNAME", [catalog message text domain])
 
@@ -1114,11 +1114,27 @@ doc/hackersguide/Makefile
 doc/faq/Makefile
 doc/Doxyfile
 contrib/Makefile
+contrib/a52dec/Makefile
 contrib/gsm610/Makefile
+contrib/libcdio/Makefile
+contrib/libcdio/cdio/Makefile
+contrib/libcdio/MSWindows/Makefile
+contrib/libcdio/image/Makefile
 contrib/libdca/Makefile
+contrib/libdha/Makefile
+contrib/libdha/bin/Makefile
+contrib/libdha/kernelhelper/Makefile
+contrib/libdha/oth/Makefile
+contrib/libdha/sysdep/Makefile
+contrib/libfaad/Makefile
+contrib/libmad/Makefile
 contrib/libmpcdec/Makefile
+contrib/libvcd/Makefile
+contrib/libvcd/libvcd/Makefile
 contrib/libxdg-basedir/Makefile
 contrib/nosefart/Makefile
+contrib/vidix/Makefile
+contrib/vidix/drivers/Makefile
 include/Makefile
 include/xine.h
 lib/Makefile
@@ -1140,21 +1156,10 @@ src/demuxers/Makefile
 src/dxr3/Makefile
 src/input/Makefile
 src/input/libdvdnav/Makefile
-src/input/dvb/Makefile
 src/input/librtsp/Makefile
 src/input/libreal/Makefile
 src/input/vcd/Makefile
-src/input/vcd/libcdio/Makefile
-src/input/vcd/libcdio/cdio/Makefile
-src/input/vcd/libcdio/MSWindows/Makefile
-src/input/vcd/libcdio/image/Makefile
-src/input/vcd/libvcd/Makefile
-src/input/vcd/libvcd/libvcd/Makefile
-src/liba52/Makefile
-src/libfaad/Makefile
-src/libfaad/codebook/Makefile
 src/libffmpeg/Makefile
-src/libmad/Makefile
 src/libmpeg2/Makefile
 src/libspudec/Makefile
 src/libspucc/Makefile
@@ -1179,14 +1184,7 @@ src/post/audio/Makefile
 src/post/deinterlace/Makefile
 src/post/deinterlace/plugins/Makefile
 src/video_out/Makefile
-src/video_out/libdha/Makefile
-src/video_out/libdha/bin/Makefile
-src/video_out/libdha/kernelhelper/Makefile
-src/video_out/libdha/oth/Makefile
-src/video_out/libdha/sysdep/Makefile
 src/video_out/macosx/Makefile
-src/video_out/vidix/Makefile
-src/video_out/vidix/drivers/Makefile
 src/xine-utils/Makefile
 src/xine-engine/Makefile
 src/vdr/Makefile

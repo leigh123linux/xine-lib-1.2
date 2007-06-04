@@ -11,18 +11,15 @@ SUBDIRS = \
 	demuxers \
 	libffmpeg \
 	libmpeg2 \
-	liba52 \
 	libspudec \
 	libspucc \
 	libspucmml \
 	libspudvb \
 	libsputext \
-	libmad \
 	libw32dll \
 	libxinevdec \
 	libxineadec \
 	libreal \
-	libfaad \
 	post \
 	combined \
 	vdr

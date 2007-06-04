@@ -1,4 +1,22 @@
-SUBDIRS = libmpcdec libxdg-basedir libdca nosefart gsm610
+SUBDIRS = libmpcdec libxdg-basedir libdca nosefart gsm610 libmad a52dec \
+	libfaad
+
+
+if BUILD_DHA_KMOD
+SUBDIRS += libdha
+endif
+
+# vidix depends on portions of dha
+if ENABLE_VIDIX
+if !BUILD_DHA_KMOD
+SUBDIRS += libdha
+endif
+SUBDIRS += vidix
+endif
+
+if !WITH_EXTERNAL_VCDLIBS
+SUBDIRS += libcdio libvcd
+endif
 
 srcdir = $(shell cd @srcdir@; pwd)
 
@@ -147,7 +165,7 @@ else
 	-$(MAKE) -C ffmpeg distclean
 endif
 
-EXTRA_DIST = README.contrib ffmpeg-distfiles
+EXTRA_DIST = README.contrib ffmpeg-distfiles ffmpeg-universal.sh
 
 dist-hook:
 	while read entry; do \

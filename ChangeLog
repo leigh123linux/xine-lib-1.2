@@ -8,7 +8,7 @@ xine-lib (1.1.90) (Unreleased)
   * Use FFmpeg's own buildsystem, rather than wrapping automake around its
     sources; this allows to enable/disable FFmpeg features easily, and allow
     to properly support --disable-ffmpeg-(uncommon|popular)-codecs.
-  * Update libmpcdec (formerly libmusepack) to version 1.2.5 (newer than the
+  * Update libmpcdec (formerly libmusepack) to version 1.2.6 (newer than the
     previous Subversion snapshot) and contestually move it to contrib/libmpcdec
     to separate from xine's own code.
   * Save plugins' cache in the defined cache home directory as per XDG Base
@@ -26,6 +26,8 @@ xine-lib (1.1.90) (Unreleased)
   * Move modplug demuxing on its own plugin, this way binary distributions
     can make it optional, as it requires quite a bit of CPU time during
     initialisation, even for audio files that nothing have to do with modplug.
+  * Collapse the Ogg demuxer, and the Theora, Vorbis and Speex decoders in the
+    same 'xiph' plugin.
 
 xine-lib (1.1.7) (unreleased)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.
@@ -47,6 +49,11 @@ xine-lib (1.1.7) (unreleased)
   * Use the integer versions of Speex decoding functions, this avoids an
     iteration over the decoded frames to transform them to integers, and
     also avoids an improper saturation.
+  * Prioritize the musepack demuxer over mpgaudio, as sometimes the latter can
+    misfire and report a good file as unplayable.
+  * Fix an mmap problem with huge files on 32-bit systems.
+  * Improved MPEG PES stream handling: specifically, misdetection of data
+    streams as PES streams.
 
 xine-lib (1.1.6)
   * Split the DirectFB plugin into X11 and non-X versions.

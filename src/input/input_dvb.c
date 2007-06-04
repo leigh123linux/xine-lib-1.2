@@ -103,9 +103,8 @@
 /* XDG */
 #include <basedir.h>
 
-/* These will eventually be #include <linux/dvb/...> */
-#include "dvb/dmx.h"
-#include "dvb/frontend.h"
+#include <linux/dvb/dmx.h>
+#include <linux/dvb/frontend.h>
 
 #define LOG_MODULE "input_dvb"
 #define LOG_VERBOSE

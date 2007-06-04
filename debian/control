@@ -22,11 +22,11 @@ Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
 Build-Conflicts: libdvdnav-dev, libvcdinfo-dev
 Standards-Version: 3.7.2
 
-Package: libxine-dev
+Package: libxine2-dev
 Architecture: any
 Section: libdevel
 Depends: libxine2 (= ${Source-Version}), libc6-dev, zlib1g-dev | libz-dev, libslang2-dev | slang1-dev, libfreetype6-dev
-Conflicts: xine-ui (<< 0.9.10)
+Conflicts: xine-ui (<< 0.9.10), libxine-dev
 Description: the xine video player library, development packages
  This contains development files (headers, documentation and the like)
  for the xine library (libxine).
@@ -42,10 +42,26 @@ Description: the xine video player library, development packages
  The xine-ui and gxine packages each provide one for your convenience, so
  you can just start watching your VCDs ;-)
 
+Package: libxine2-doc
+Architecture: all
+Section: libdevel
+Provides: libxine-doc
+Conflicts: libxine1-doc
+Replaces: libxine1-doc
+Description: the xine video player library, development packages
+ This contains documentation for the xine library (libxine).
+ .
+ Libxine provides the complete infrastructure for a video/media player. It
+ supports MPEG 1/2 and some AVI and Quicktime videos out of the box, so you
+ can use it to play DVDs, (S)VCDs and most video files out there. It
+ supports network streams, subtitles and even MP3 or Ogg files. It's
+ extensible to your heart's content via plugins for audio and video output,
+ input media, demuxers (stream types), audio/video and subtitle codecs.
+
 Package: libxine2
 Architecture: any
 Depends: ${shlibs:Depends}
-Recommends: ${shlibs:Recommends}
+Recommends: ${shlibs:Recommends}, libxine2-doc | libxine-doc
 Suggests: ${shlibs:Suggests}, libartsc0
 Description: the xine video/media player library, binary files
  This is the xine media player library (libxine). 
