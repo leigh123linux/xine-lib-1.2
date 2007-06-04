@@ -1211,13 +1211,15 @@ static void *ao_loop (void *this_gen) {
       }
       
       if( result < 0 ) {
-        /* FIXME: USB device unplugged.
-         *        We should get the card into a closed state here, that involves closing
-         *        the PCM as well as the MIXER.
-         *        Maybe we should pause the stream until the USB device is plugged in again.
-         *        Return values 0 happen even if usb not unplugged, so needs further investigation.
-         */
-        xprintf(this->xine, XINE_VERBOSITY_LOG, _("write to sound card failed. Was a USB device unplugged ?\n"));
+        /* device unplugged. */
+        xprintf(this->xine, XINE_VERBOSITY_LOG, _("write to sound card failed. Assuming the device was unplugged.\n"));
+
+        pthread_mutex_lock( &this->driver_lock );
+        if(this->driver_open)
+          this->driver->close(this->driver);  
+        this->driver_open = 0;
+        pthread_mutex_unlock( &this->driver_lock );
+        /* closing the driver will result in XINE_MSG_AUDIO_OUT_UNAVAILABLE to be emitted */
       }
       
       lprintf ("loop: next buf from fifo\n");
