@@ -332,7 +332,7 @@ find_close_samplerate_match(int dev, int sample_rate)
 
 #else
     int i, err;
-    int audiocs_rates[] = {
+    static const int audiocs_rates[] = {
 	5510, 6620, 8000, 9600, 11025, 16000, 18900, 22050,
 	27420, 32000, 33075, 37800, 44100, 48000, 0
     };
