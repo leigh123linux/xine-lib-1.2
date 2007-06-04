@@ -5139,10 +5139,10 @@ msgstr ""
 msgid "load_plugins: plugin %s found\n"
 msgstr "load_plugins: trovato plugin %s\n"
 
-#: src/xine-engine/load_plugins.c:502
-#, fuzzy, c-format
+#: src/xine-engine/load_plugins.c:499
+#, c-format
 msgid "load_plugins: static plugin found\n"
-msgstr "load_plugins: trovato plugin statico %s\n"
+msgstr "load_plugins: trovato plugin statico\n"
 
 #: src/xine-engine/load_plugins.c:509
 #, c-format
