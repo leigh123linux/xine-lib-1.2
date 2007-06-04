@@ -1,0 +1,143 @@
+
+xine Digital TV (DVB)
+=====================
+
+xine can be used to watch digital television.
+
+xine supports Digital TV (Digital Video Broadcasting - DVB) cards
+using the Linux DVB driver from Convergence (http://www.linuxtv.org).
+DVB-S (direct satellite reception), DVB-C (Cable) and DVB-T (Teresstrical)
+cards should be supported (e.g. the Hauppauge WinTV Nova DVB-S card).
+
+driver download and installation
+--------------------------------
+
+Download and install the drivers from http://www.linuxtv.org, the 1.0.0 or later release
+should work fine. 
+
+You will need kernel sources configured for your configuration for 
+a successfull build, preferably in /usr/src/linux plus a link to them in
+/lib/modules/<kernel-version>/build. Once you have that you should be ready 
+to compile the driver
+
+# cd linuxtv-dvb-1.0.0/driver
+# make
+
+if that doesn't fail, do a
+
+# make insmod
+
+UPDATE: the latest 2.6 kernels include the necessary drivers for most 
+  cards, check on the linuxtv.org website for information about supported 
+  cards, or read the documentation available in the linux kernel
+  sources (linux/Documentation/dvb/*).
+
+to load the generated modules into your running kernel. If everything went
+fine, you should have something like
+
+DVB: registering new adapter (TT-Budget/WinTV-NOVA-S  PCI).
+PCI: Found IRQ 10 for device 00:0d.0
+PCI: Sharing IRQ 10 with 00:0c.0
+DVB: registering frontend 0:0 (stv0299 based (e.g. Alps BSRU6 or LG TDQB-S00x))...
+
+in your dmesg.
+
+
+install a channel list
+----------------------
+
+xine's dvb input plugin needs a channel/transponder list that fits your 
+dvb equipment. xine now uses the channels.conf format of szap, czap and 
+tzap as appropriate for DVB-S, DVB-C and DVB-T. it will search the channel
+list file in ~/.config/xine/channels.conf
+
+channel list format for DVB-S: (satellite)
+-------------------------------------------
+NBC         :11053   :h  :1        :27500      :550 :551 :1  :8008
+station name:freqency:h/v:sat no   :symbol rate:vpid:apid:sid:????
+-------------------------------------------
+
+channel list format for DVB-T (terrestrial):
+-------------------------------------------
+WINSA	    :557500000:INVERSION_AUTO:BANDWIDTH_7_MHZ:FEC_2_3:FEC_AUTO:QAM_64: \
+		   TRANSMISSION_MODE_8K:GUARD_INTERVAL_1_8:HIERARCHY_NONE :33  :36  :1
+station name:frequency:config options go on seemingly forever ...         :vpid:apid:serviceid
+-------------------------------------------
+
+you automatically scan for all available channels using the scan utility
+which comes with the dvb package. compile it using something like
+
+# cd linuxtv-dvb-1.0.0/apps/scan
+# make
+
+then start scanning
+
+# scan >~/.config/xine/channels.conf
+
+newer versions of scan (after July 2004) are called dvbscan, but you can use it much the same way:
+
+# dvbscan Hotbird-13.0 >~/.config/xine/channels.conf
+
+this can take a while. in a DiSEqC environment, use the -s N switch to select
+different sattelites to scan and paste the results in one big channels.conf file.  As always,
+please be sure to read the man page for the version of the tool you are using.
+
+HINT 1: you might want to manually sort the channels.conf file to have your favourite
+        channels at the top and maybe remove scrambled channels which you don't have access to. 
+
+
+ ************************ If the dvb plugin doesn't seem to work for you ******************
+*  if xine doesn't seem to work for you, double check to make sure that the channels.conf  *
+*  file is _NOT_ in vdr format, which looks something like this:                           *
+*                 WINSA:557500:I999B7C23D0M64T8G8Y0:T:27500:33:36:47:0:1:0:0:0             *
+ ******************************************************************************************	
+
+using xine to watch digital television
+--------------------------------------
+
+make sure you have a recent libxine and frontend installed (latest CVS as of 
+this writing). then simply start something like
+
+$ gxine dvb://
+
+or click on the DVB button in xine-ui.  you should be able to zap around using 
+the NumPad-9 / NumPad-3 keys, the xine playlist, or using the next/previous chapter 
+buttons in your gui.
+
+An OSD menu is available too. Press NumPad-8 / NumPad-2 to scroll 
+through the channels, then press NumPad-Enter to switch to the channel
+you have selected.  As of 06-12-2004, the channel list can be brought up and scrolled 
+through via the wheel on many mouses.  Use the left mouse button to switch to
+the channel you've selected.  The side buttons (6 & 7) can be used to rapidly switch
+to previous/next channels, if they are available on your mouse.
+
+You can use MENU3 (F2 in xine-ui, F3 in gxine) to zoom into the centre of a videostream.
+This will allow you to view 4:3 content that has been embedded into a 
+16:9 stream in fullscreen (no more black borders).  Press the key again
+to return to normal viewing.  There is also an option in the xine
+preferences to zoom automatically when using xine to view DVB.
+
+MENU7 (F6 in xine-ui or F7 in gxine) will toggle viewing of the current channels' 
+Electronic Program Guide (information on the current/next program) on the OSD, if available.
+
+HINT: if audio or video is stuttering, pause (space key) shortly
+to give xine a chance to fill up it's buffers.  If watching a large HDTV stream, you
+may need to increase the xine video & audio buffer size - increasing audio buffers to
+300 and video buffers to 700 has been known to work with streams up to 1920x1088 in size.
+
+
+recording digital television
+----------------------------
+
+there is a very simple vcr-like feature built into the xine engine. just press
+MENU2 (that is F2 in gxine, or F1 in xine-ui for example) to start/stop recording 
+the currently displayed program to your local disc. a small osd in the upper 
+left corner of your screen will tell you the file name the recorded stream is 
+written to.  You can select the directory to save to in the xine configuration under 
+the MISC tab, otherwise the plugin will record to your home directory.  You can
+pause the recording at any time by pressing MENU4 (F3 in xine-ui, F4 in gxine).  
+An OSD in the top left hand corner will notify you of the status of the recording. 
+Pressing MENU4 again will resume recording.
+
+Have fun.
+
