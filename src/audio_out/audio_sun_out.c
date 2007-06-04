@@ -248,13 +248,11 @@ static int realtime_samplecounter_available(xine_t *xine, char *dev)
 error:
   if (silence != NULL) free(silence);
   if (fd >= 0) {
-#ifdef	__svr4__
     /*
      * remove the 0 bytes from the above measurement from the
      * audio driver's STREAMS queue
      */
     ioctl(fd, I_FLUSH, FLUSHW);
-#endif
     close(fd);
   }
 
