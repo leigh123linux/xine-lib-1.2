@@ -1488,8 +1488,8 @@ dnl ARTS support
 dnl ---------------------------------------------
 
 AC_ARG_WITH([arts],
-  AS_HELP_STRING([--without-arts], [Build without ARTS audio output]),
-  [with_arts=$withval], [with_arts=yes])
+  AS_HELP_STRING([--with-arts], [Build with ARTS audio output]),
+  [with_arts=$withval], [with_arts=no])
 
 if test "x$with_arts" = "xyes"; then
   AM_PATH_ARTS(0.9.5,

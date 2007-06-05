@@ -25,6 +25,8 @@ xine-lib (1.1.7) (unreleased)
     streams as PES streams.
   * Handle unplugged ALSA device (fixes crashes) and if the frontend does not
     handle the event continue playback to the none output.
+  * Disable aRTs output plugin by default, it's deprecated and will be removed
+    in 1.2 series.
 
 xine-lib (1.1.6)
   * Split the DirectFB plugin into X11 and non-X versions.
