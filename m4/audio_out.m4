@@ -7,7 +7,6 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
     dnl explicitly requested to do so on other operating systems.
     dnl Notes:
     dnl - Alsa is Linux only
-    dnl - aRts is Linux only
     dnl - CoreAudio is Mac OS X only
     dnl - EsounD is reported to be available on most platforms
     dnl - FusionSound is Linux only, but don't enable it by default
@@ -22,7 +21,6 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
     default_enable_sunaudio=disable
 
     default_with_alsa=without
-    default_with_arts=without
     default_with_esound=with
     default_with_fusionsound=without
     default_with_jack=without
@@ -47,7 +45,6 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
             ;;
         linux*)
             default_with_alsa=with
-            default_with_arts=with
             default_with_jack=with
             default_with_pulseaudio=with
             ;;
@@ -79,22 +76,6 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
         fi
     fi
     AM_CONDITIONAL([ENABLE_ALSA], [test x"$have_alsa" = x"yes"])
-
-
-    dnl aRts support
-    AC_ARG_WITH([arts],
-                [AS_HELP_STRING([--with-arts], [Build with aRts audio output support])],
-                [test x"$withval" != x"no" && with_arts="yes"],
-                [test $default_with_arts = without && with_arts="no"])
-    if test x"$with_arts" != x"no"; then
-        ACX_PACKAGE_CHECK([ARTS], [0.9.5], [artsc-config], [have_arts=yes], [have_arts=no])
-        if test x"$with_arts" = x"yes" && test x"$have_arts" != x"yes"; then
-            AC_MSG_ERROR([aRts support requested, but aRts not found])
-        elif test x"$have_arts" = x"yes"; then
-            AC_DEFINE([HAVE_ARTS], 1, [Define this if you have aRts (libartsc) installed])
-        fi
-    fi
-    AM_CONDITIONAL([ENABLE_ARTS], [test x"$have_arts" = x"yes"])
 
 
     dnl CoreAudio for Mac OS X

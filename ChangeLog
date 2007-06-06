@@ -28,6 +28,10 @@ xine-lib (1.1.90) (Unreleased)
     initialisation, even for audio files that nothing have to do with modplug.
   * Collapse the Ogg demuxer, and the Theora, Vorbis and Speex decoders in the
     same 'xiph' plugin.
+  * Remove aRTs output plugin; ALSA's DMix can allow to run both xine and aRTs
+    at the same time for Linux, and if other operating systems lacks a proper
+    software mixing facility you can consider alternative daemons. Note: aRTs
+    will not be present in KDE 4.
 
 xine-lib (1.1.7) (unreleased)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.
