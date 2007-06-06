@@ -1450,7 +1450,7 @@ static char* config_register_serialized_entry (config_values_t *this, const char
   }
   enum_values[value_count] = NULL;
 
-#if LOG  
+#ifdef LOG  
   printf("config entry deserialization:\n");
   printf("  key        : %s\n", key);
   printf("  type       : %d\n", type);
