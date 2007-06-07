@@ -31,8 +31,6 @@ EXTRA_DIST = config.rpath autogen.sh \
 	     CREDITS \
 	     @DEPCOMP@
 
-noinst_HEADERS = config.h
-
 CONFIG_CLEAN_FILES = libtool
 
 docs:
@@ -109,7 +107,7 @@ maintainer-clean-generic:
 	-@echo "This command is intended for maintainers to use;"
 	-@echo "it deletes files that may require special tools to rebuild."
 	-rm -f Makefile.in configure acinclude.m4 aclocal.m4
-	-rm -f config.h.in stamp-h.in ltconfig ltmain.sh
+	-rm -f stamp-h.in ltconfig ltmain.sh
 	-rm -f config.guess config.sub install-sh missing mkinstalldirs
 	-rm -f depcomp config.log
 

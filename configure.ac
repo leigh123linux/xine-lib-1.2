@@ -100,7 +100,7 @@ AC_CANONICAL_BUILD
 
 test "$host" == "$build" && check_athlon=yes
 
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([include/configure.h])
 
 
 dnl ---------------------------------------------
@@ -2140,9 +2140,6 @@ AC_CHECK_FUNC(opendir,
   else
     AC_MSG_ERROR([dirent is needed (opendir, readdir, ...)])
   fi])
-
-AH_BOTTOM([/* include internal system specific header */
-#include "os_internal.h"])
 
 
 dnl ---------------------------------------------

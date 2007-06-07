@@ -17,6 +17,7 @@
 #endif
 
 #include <inttypes.h>
+#include "../src/xine-utils/attributes.h"
 
 
 #if defined(WIN32) || defined(__CYGWIN__)
