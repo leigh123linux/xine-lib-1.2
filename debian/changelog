@@ -1,8 +1,8 @@
-xine-lib (1.1.6~hg-0) unstable; urgency=low
+xine-lib (1.1.7~hg-0) unstable; urgency=low
 
   * Hg snapshot.
 
- -- Darren Salt <linux@youmustbejoking.demon.co.uk>  Mon, 16 Apr 2007 22:00:07 +0100
+ -- Darren Salt <linux@youmustbejoking.demon.co.uk>  Thu, 07 Jun 2007 02:48:13 +0100
 
 xine-lib (1.1.5~cvs-0) unstable; urgency=low
 
