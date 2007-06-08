@@ -103,7 +103,7 @@ xineplug_LTLIBRARIES = $(xshm_module) $(xv_module) $(xvmc_module) \
                   xineplug_vo_out_none.la
 
 xineplug_vo_out_xcbshm_la_SOURCES = yuv2rgb.c yuv2rgb_mmx.c yuv2rgb_mlib.c video_out_xcbshm.c $(XCBOSD)
-xineplug_vo_out_xcbshm_la_LIBADD = $(MLIB_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(XCB_LIBS) $(XCBSHM_LIBS)
+xineplug_vo_out_xcbshm_la_LIBADD = $(MLIB_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(XCB_LIBS) $(XCBSHM_LIBS) $(LTLIBINTL)
 xineplug_vo_out_xcbshm_la_CFLAGS = $(VISIBILITY_FLAG) $(MLIB_CFLAGS) $(XCB_CFLAGS) $(XCBSHM_CFLAGS)
 
 xineplug_vo_out_xcbxv_la_SOURCES = deinterlace.c video_out_xcbxv.c $(XCBOSD)
@@ -112,11 +112,11 @@ xineplug_vo_out_xcbxv_la_CFLAGS = $(VISIBILITY_FLAG) $(XCB_CFLAGS) $(XCBXV_CFLAG
 
 xineplug_vo_out_xshm_la_SOURCES = yuv2rgb.c yuv2rgb_mmx.c yuv2rgb_mlib.c \
 	video_out_xshm.c $(X11OSD)
-xineplug_vo_out_xshm_la_LIBADD = $(MLIB_LIBS) $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
+xineplug_vo_out_xshm_la_LIBADD = $(MLIB_LIBS) $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_xshm_la_CFLAGS = $(VISIBILITY_FLAG) $(X_CFLAGS) $(MLIB_CFLAGS) -fno-strict-aliasing
 
 xineplug_vo_out_xv_la_SOURCES = $(X11OSD) deinterlace.c video_out_xv.c
-xineplug_vo_out_xv_la_LIBADD = $(XV_LIBS) $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
+xineplug_vo_out_xv_la_LIBADD = $(XV_LIBS) $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_xv_la_CFLAGS = $(VISIBILITY_FLAG) $(X_CFLAGS) $(XV_CFLAGS) -fno-strict-aliasing
 
 xineplug_vo_out_xvmc_la_SOURCES = deinterlace.c video_out_xvmc.c
@@ -131,7 +131,7 @@ xineplug_vo_out_xxmc_la_CFLAGS = $(VISIBILITY_FLAG) $(X_CFLAGS) $(XV_CFLAGS) -fn
 xineplug_vo_out_opengl_la_SOURCES = yuv2rgb.c yuv2rgb_mmx.c yuv2rgb_mlib.c \
 	video_out_opengl.c myglext.h $(X11OSD)
 xineplug_vo_out_opengl_la_LIBADD = $(MLIB_LIBS) $(OPENGL_LIBS) $(GLUT_LIBS) \
-	$(GLU_LIBS) $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS)
+	$(GLU_LIBS) $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_opengl_la_CFLAGS = $(VISIBILITY_FLAG) $(X_CFLAGS) $(MLIB_CFLAGS) -fno-strict-aliasing
 
 xineplug_vo_out_syncfb_la_SOURCES = video_out_syncfb.c 
@@ -139,11 +139,11 @@ xineplug_vo_out_syncfb_la_LIBADD = $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
 xineplug_vo_out_syncfb_la_CFLAGS = $(VISIBILITY_FLAG)
 
 xineplug_vo_out_pgx64_la_SOURCES = video_out_pgx64.c
-xineplug_vo_out_pgx64_la_LIBADD = $(XINE_LIB) $(X_LIBS) $(SUNDGA_LIBS) $(PTHREAD_LIBS)
+xineplug_vo_out_pgx64_la_LIBADD = $(XINE_LIB) $(X_LIBS) $(SUNDGA_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_pgx64_la_CFLAGS = $(VISIBILITY_FLAG) $(X_CFLAGS)
 
 xineplug_vo_out_pgx32_la_SOURCES = video_out_pgx32.c
-xineplug_vo_out_pgx32_la_LIBADD = $(XINE_LIB) $(X_LIBS) $(SUNDGA_LIBS) $(PTHREAD_LIBS)
+xineplug_vo_out_pgx32_la_LIBADD = $(XINE_LIB) $(X_LIBS) $(SUNDGA_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_pgx32_la_CFLAGS = $(VISIBILITY_FLAG) $(X_CFLAGS)
 
 xineplug_vo_out_vidix_la_SOURCES = video_out_vidix.c $(X11OSD)
@@ -152,7 +152,7 @@ xineplug_vo_out_vidix_la_LIBADD =  $(XINE_LIB) $(X_LIBS) \
 xineplug_vo_out_vidix_la_CFLAGS = $(VISIBILITY_FLAG) $(VIDIX_CFLAGS) $(X_CFLAGS) -fno-strict-aliasing
 
 xineplug_vo_out_aa_la_SOURCES =  video_out_aa.c
-xineplug_vo_out_aa_la_LIBADD = $(AALIB_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
+xineplug_vo_out_aa_la_LIBADD = $(AALIB_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_aa_la_CFLAGS = $(VISIBILITY_FLAG) $(AALIB_CFLAGS)
 
 xineplug_vo_out_caca_la_SOURCES = yuv2rgb.c yuv2rgb_mmx.c yuv2rgb_mlib.c \
@@ -162,7 +162,7 @@ xineplug_vo_out_caca_la_CFLAGS = $(VISIBILITY_FLAG) $(CACA_CFLAGS)
 
 xineplug_vo_out_fb_la_SOURCES = yuv2rgb.c yuv2rgb_mmx.c yuv2rgb_mlib.c \
 	video_out_fb.c
-xineplug_vo_out_fb_la_LIBADD = $(MLIB_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
+xineplug_vo_out_fb_la_LIBADD = $(MLIB_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_fb_la_CFLAGS = $(VISIBILITY_FLAG) $(MLIB_CFLAGS)
 
 xineplug_vo_out_directfb_la_SOURCES = video_out_directfb_fb.c
@@ -187,7 +187,7 @@ xineplug_vo_out_directx_la_LIBADD = $(DIRECTX_VIDEO_LIBS) $(XINE_LIB) $(PTHREAD_
 xineplug_vo_out_directx_la_CFLAGS = $(VISIBILITY_FLAG)
 
 xineplug_vo_out_none_la_SOURCES =  video_out_none.c
-xineplug_vo_out_none_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS)
+xineplug_vo_out_none_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_none_la_CFLAGS = $(VISIBILITY_FLAG)
 
 xineplug_vo_out_macosx_la_SOURCES = video_out_macosx.m
