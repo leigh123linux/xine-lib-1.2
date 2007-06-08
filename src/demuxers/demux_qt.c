@@ -817,9 +817,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
 				 unsigned char *trak_atom) {
 
   int i, j, k;
-  unsigned int trak_atom_size = BE_32(&trak_atom[0]);
-  qt_atom current_atom;
-  unsigned int current_atom_size;
+  const unsigned int trak_atom_size = BE_32(&trak_atom[0]);
   unsigned int atom_pos;
   unsigned int properties_offset;
   unsigned int current_stsd_atom_size;
@@ -866,12 +864,13 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
   /* search for media type atoms */
   for (i = ATOM_PREAMBLE_SIZE; i < trak_atom_size - 4; i++) {
-    current_atom = BE_32(&trak_atom[i]);
+    const qt_atom current_atom = BE_32(&trak_atom[i]);
 
-    if (current_atom == VMHD_ATOM) {
+    switch (current_atom) {
+    case VMHD_ATOM:
       trak->type = MEDIA_VIDEO;
       break;
-    } else if (current_atom == SMHD_ATOM) {
+    case SMHD_ATOM:
       trak->type = MEDIA_AUDIO;
       break;
     }
@@ -883,8 +882,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
   /* search for the useful atoms */
   for (i = ATOM_PREAMBLE_SIZE; i < trak_atom_size - 4; i++) {
-    current_atom_size = BE_32(&trak_atom[i - 4]);	
-    current_atom = BE_32(&trak_atom[i]);
+    const current_atom_size = BE_32(&trak_atom[i - 4]);	
+    const current_atom = BE_32(&trak_atom[i]);
 
     switch(current_atom) {
     case TKHD_ATOM:
@@ -1920,7 +1919,6 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
                             int64_t bandwidth) {
   int i, j;
   unsigned int moov_atom_size = BE_32(&moov_atom[0]);
-  qt_atom current_atom;
   int string_size, error;
   unsigned int max_video_frames = 0;
   unsigned int max_audio_frames = 0;
@@ -1935,15 +1933,17 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
 
   /* prowl through the moov atom looking for very specific targets */
   for (i = ATOM_PREAMBLE_SIZE + 4; i < moov_atom_size - 4; i += BE_32(&moov_atom[i - 4])) {
-    current_atom = BE_32(&moov_atom[i]);
+    const qt_atom current_atom = BE_32(&moov_atom[i]);
 
-    if (current_atom == MVHD_ATOM) {
+    switch (current_atom) {
+    case MVHD_ATOM:
       parse_mvhd_atom(info, &moov_atom[i - 4]);
       if (info->last_error != QT_OK)
         return;
 
-    } else if (current_atom == TRAK_ATOM) {
+      break;
 
+    case TRAK_ATOM:
       /* create a new trak structure */
       info->trak_count++;
       info->traks = (qt_trak *)realloc(info->traks, 
@@ -1955,44 +1955,44 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
         info->trak_count--;
         return;
       }
-
-    } else if (current_atom == META_ATOM) {
-
+      break;
+      
+    case META_ATOM:
       parse_meta_atom(info, &moov_atom[i - 4]);
       if (info->last_error != QT_OK)
         return;
+      break;
 
-    } else if (current_atom == NAM_ATOM) {
-
+    case NAM_ATOM:
       string_size = BE_16(&moov_atom[i + 4]) + 1;
       info->name = realloc (info->name, string_size);
       strncpy(info->name, &moov_atom[i + 8], string_size - 1);
       info->name[string_size - 1] = 0;
+      break;
 
-    } else if (current_atom == CPY_ATOM) {
-
+    case CPY_ATOM:
       string_size = BE_16(&moov_atom[i + 4]) + 1;
       info->copyright = realloc (info->copyright, string_size);
       strncpy(info->copyright, &moov_atom[i + 8], string_size - 1);
       info->copyright[string_size - 1] = 0;
+      break;
 
-    } else if (current_atom == DES_ATOM) {
-
+    case DES_ATOM:
       string_size = BE_16(&moov_atom[i + 4]) + 1;
       info->description = realloc (info->description, string_size);
       strncpy(info->description, &moov_atom[i + 8], string_size - 1);
       info->description[string_size - 1] = 0;
+      break;
 
-    } else if (current_atom == CMT_ATOM) {
-
+    case CMT_ATOM:
       string_size = BE_16(&moov_atom[i + 4]) + 1;
       info->comment = realloc (info->comment, string_size);
       strncpy(info->comment, &moov_atom[i + 8], string_size - 1);
       info->comment[string_size - 1] = 0;
+      break;
 
-    } else if (current_atom == RMDA_ATOM ||
-               current_atom == RMRA_ATOM) {
-
+    case RMDA_ATOM:
+    case RMRA_ATOM:
       /* create a new reference structure */
       info->reference_count++;
       info->references = (reference_t *)realloc(info->references,
@@ -2000,8 +2000,9 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
 
       parse_reference_atom(&info->references[info->reference_count - 1],
         &moov_atom[i - 4], info->base_mrl);
+      break;
 
-    } else {
+    default:
       debug_atom_load("  qt: unknown atom into the moov atom (0x%08X)\n", current_atom);
     }
   }
