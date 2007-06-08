@@ -41,7 +41,9 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <math.h>
+#ifdef HAVE_ALLOCA_H
 #include <alloca.h>
+#endif
 
 #define ALSA_PCM_NEW_HW_PARAMS_API
 #define ALSA_PCM_NEW_SW_PARAMS_API

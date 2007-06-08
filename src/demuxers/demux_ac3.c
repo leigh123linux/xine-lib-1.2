@@ -36,6 +36,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
 
 #define LOG_MODULE "demux_ac3"
 #define LOG_VERBOSE

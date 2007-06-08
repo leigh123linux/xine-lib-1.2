@@ -32,6 +32,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
 
 #define LOG_MODULE "demux_dts"
 #define LOG_VERBOSE
