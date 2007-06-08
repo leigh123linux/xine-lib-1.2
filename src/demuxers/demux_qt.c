@@ -886,10 +886,12 @@ static qt_error parse_trak_atom (qt_trak *trak,
     current_atom_size = BE_32(&trak_atom[i - 4]);	
     current_atom = BE_32(&trak_atom[i]);
 
-    if (current_atom == TKHD_ATOM) {
+    switch(current_atom) {
+    case TKHD_ATOM:
       trak->flags = BE_16(&trak_atom[i + 6]);
-    } else if (current_atom == ELST_ATOM) {
+      break;
 
+    case ELST_ATOM:
       /* there should only be one edit list table */
       if (trak->edit_list_table) {
         last_error = QT_HEADER_TROUBLE;
@@ -919,17 +921,19 @@ static qt_error parse_trak_atom (qt_trak *trak,
           trak->edit_list_table[j].track_duration,
           trak->edit_list_table[j].media_time);
       }
+      break;
 
-    } else if (current_atom == MDHD_ATOM) {
-      int version;
+    case MDHD_ATOM:
       debug_atom_load ("demux_qt: mdhd atom\n");
-      
-      version = trak_atom[i+4];
-      if ( version > 1 ) continue; /* unsupported, undocumented */
+      {
+	const int version = trak_atom[i+4];
+	if ( version > 1 ) continue; /* unsupported, undocumented */
 
-      trak->timescale = BE_32(&trak_atom[i + (version == 0 ? 0x10 : 0x18) ]);
-    } else if (current_atom == STSD_ATOM) {
+	trak->timescale = BE_32(&trak_atom[i + (version == 0 ? 0x10 : 0x18) ]);
+      }
+      break;
 
+    case STSD_ATOM:
       debug_atom_load ("demux_qt: stsd atom\n");
 #if DEBUG_ATOM_LOAD
       xine_hexdump (&trak_atom[i], current_atom_size);
@@ -1278,15 +1282,15 @@ static qt_error parse_trak_atom (qt_trak *trak,
         atom_pos += current_stsd_atom_size;
         properties_offset += current_stsd_atom_size;
       }
-
-    } else if (current_atom == ESDS_ATOM) {
-
-      uint32_t len;
+      break;
+      
+    case ESDS_ATOM:
       
       debug_atom_load("    qt/mpeg-4 esds atom\n");
 
       if ((trak->type == MEDIA_VIDEO) || 
           (trak->type == MEDIA_AUDIO)) {
+	uint32_t len;
         
         j = i + 8;
         if( trak_atom[j++] == 0x03 ) {
@@ -1309,17 +1313,17 @@ static qt_error parse_trak_atom (qt_trak *trak,
           }
         }
       }
+      break;
 
-    } else if (current_atom == AVCC_ATOM) {
-    
+    case AVCC_ATOM:
       debug_atom_load("    avcC atom\n");
       
       trak->decoder_config_len = current_atom_size - 8;
       trak->decoder_config = realloc(trak->decoder_config, trak->decoder_config_len);
       memcpy(trak->decoder_config, &trak_atom[i + 4], trak->decoder_config_len);
+      break;
     
-    } else if (current_atom == STSZ_ATOM) {
-
+    case STSZ_ATOM:
       /* there should only be one of these atoms */
       if (trak->sample_size_table) {
         last_error = QT_HEADER_TROUBLE;
@@ -1351,9 +1355,9 @@ static qt_error parse_trak_atom (qt_trak *trak,
         /* set the pointer to non-NULL to indicate that the atom type has
          * already been seen for this trak atom */
         trak->sample_size_table = (void *)-1;
+      break;
 
-    } else if (current_atom == STSS_ATOM) {
-
+    case STSS_ATOM:
       /* there should only be one of these atoms */
       if (trak->sync_sample_table) {
         last_error = QT_HEADER_TROUBLE;
@@ -1380,9 +1384,9 @@ static qt_error parse_trak_atom (qt_trak *trak,
           j, trak->sync_sample_table[j],
           trak->sync_sample_table[j] - 1);
       }
+      break;
 
-    } else if (current_atom == STCO_ATOM) {
-
+    case STCO_ATOM:
       /* there should only be one of either stco or co64 */
       if (trak->chunk_offset_table) {
         last_error = QT_HEADER_TROUBLE;
@@ -1408,9 +1412,9 @@ static qt_error parse_trak_atom (qt_trak *trak,
         debug_atom_load("      chunk %d @ 0x%"PRIX64"\n",
           j, trak->chunk_offset_table[j]);
       }
+      break;
 
-    } else if (current_atom == CO64_ATOM) {
-
+    case CO64_ATOM:
       /* there should only be one of either stco or co64 */
       if (trak->chunk_offset_table) {
         last_error = QT_HEADER_TROUBLE;
@@ -1439,9 +1443,9 @@ static qt_error parse_trak_atom (qt_trak *trak,
         debug_atom_load("      chunk %d @ 0x%"PRIX64"\n",
           j, trak->chunk_offset_table[j]);
       }
+      break;
 
-    } else if (current_atom == STSC_ATOM) {
-
+    case STSC_ATOM:
       /* there should only be one of these atoms */
       if (trak->sample_to_chunk_table) {
         last_error = QT_HEADER_TROUBLE;
@@ -1474,9 +1478,9 @@ static qt_error parse_trak_atom (qt_trak *trak,
           trak->sample_to_chunk_table[j].first_chunk - 1,
           trak->sample_to_chunk_table[j].media_id);
       }
+      break;
 
-    } else if (current_atom == STTS_ATOM) {
-
+    case STTS_ATOM:
       /* there should only be one of these atoms */
       if (trak->time_to_sample_table) {
         last_error = QT_HEADER_TROUBLE;
