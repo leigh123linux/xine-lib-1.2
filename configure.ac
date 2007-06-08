@@ -12,7 +12,7 @@ AC_INIT([xine-lib], XINE_VERSION_SPEC, [xine-bugs@lists.sourceforge.net])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/xine-engine/xine.c])
 AC_CONFIG_LIBOBJ_DIR([lib])
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([include/configure.h])
 AM_MAINTAINER_MODE
 
 AH_TOP([#ifndef __XINE_LIB_CONFIG_H__
@@ -23,9 +23,6 @@ AH_BOTTOM([#ifdef ASMALIGN_1SLN
 #else
 # define ASMALIGN(ZEROBITS) ".align 1<<" #ZEROBITS "\n\t"
 #endif
-
-/* include internal system specific header */
-#include "os_internal.h"
 
 #endif  /* __XINE_LIB_CONFIG_H__ */
 ])

@@ -33,7 +33,7 @@
 #endif
 
 #ifdef XINE_COMPILE
-# include "config.h"
+# include "configure.h"
 #endif
 
 /* Export protected only for libxine functions */

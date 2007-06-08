@@ -99,7 +99,6 @@ typedef struct fb_frame_s
   yuv2rgb_t         *yuv2rgb;  /* yuv2rgb converter for this frame */
   uint8_t           *rgb_dst;
   int                yuv_stride;
-  int                stripe_height, stripe_inc;
   
   int                bytes_per_line;
 
@@ -182,7 +181,6 @@ static void fb_frame_proc_slice(vo_frame_t *vo_img, uint8_t **src)
   else
     frame->yuv2rgb->yuy22rgb_fun(frame->yuv2rgb,
 				 frame->rgb_dst, src[0]);
-  frame->rgb_dst += frame->stripe_inc; 
 }
 
 static void fb_frame_field(vo_frame_t *vo_img, int which_field)
@@ -193,21 +191,18 @@ static void fb_frame_field(vo_frame_t *vo_img, int which_field)
   {
   case VO_TOP_FIELD:
       frame->rgb_dst    = frame->data;
-      frame->stripe_inc = 2*frame->stripe_height *
-			  frame->bytes_per_line;
     break;
 			
   case VO_BOTTOM_FIELD:
       frame->rgb_dst    = frame->data +
 			  frame->bytes_per_line ;
-      frame->stripe_inc = 2*frame->stripe_height *
-			  frame->bytes_per_line;
     break;
 			
   case VO_BOTH_FIELDS:
       frame->rgb_dst    = frame->data;
     break;
   }
+  frame->yuv2rgb->next_slice (frame->yuv2rgb, NULL);
 }
 
 static void fb_frame_dispose(vo_frame_t *vo_img)
@@ -304,11 +299,11 @@ static void setup_colorspace_converter(fb_frame_t *frame, int flags)
       frame->yuv2rgb->
 	configure(frame->yuv2rgb,
 		  frame->sc.delivered_width,
-		  16,
+		  frame->sc.delivered_height,
 		  2 * frame->vo_frame.pitches[0],
 		  2 * frame->vo_frame.pitches[1],
 		  frame->sc.output_width,
-		  frame->stripe_height,
+		  frame->sc.output_height,
 		  frame->bytes_per_line * 2);
       frame->yuv_stride = frame->bytes_per_line * 2;
       break;
@@ -317,38 +312,13 @@ static void setup_colorspace_converter(fb_frame_t *frame, int flags)
       frame->yuv2rgb->
 	configure(frame->yuv2rgb,
 		  frame->sc.delivered_width,
-		  16,
+		  frame->sc.delivered_height,
 		  frame->vo_frame.pitches[0],
 		  frame->vo_frame.pitches[1],
 		  frame->sc.output_width,
-		  frame->stripe_height,
+		  frame->sc.output_height,
 		  frame->bytes_per_line);
       frame->yuv_stride = frame->bytes_per_line;
-      break;
-  }
-}
-
-static void reset_dest_pointers(fb_frame_t *frame, int flags)
-{
-  switch(flags)
-  {
-    case VO_TOP_FIELD:
-      frame->rgb_dst = frame->data;
-      frame->stripe_inc = 2 * frame->stripe_height *
-			  frame->bytes_per_line;
-      break;
-
-    case VO_BOTTOM_FIELD:
-      frame->rgb_dst = frame->data +
-		       frame->bytes_per_line ;
-      frame->stripe_inc = 2 * frame->stripe_height *
-			  frame->bytes_per_line;
-      break;
-
-    case VO_BOTH_FIELDS:
-      frame->rgb_dst = frame->data;
-      frame->stripe_inc = frame->stripe_height *
-			  frame->bytes_per_line;
       break;
   }
 }
@@ -445,8 +415,6 @@ static void fb_update_frame_format(vo_driver_t *this_gen,
 
     frame_reallocate(this, frame, width, height, format);
 
-    frame->stripe_height = 16 * frame->sc.output_height /
-			   frame->sc.delivered_height;
     if(this->use_zero_copy)
       frame->bytes_per_line = this->fb_bytes_per_line;
     else
@@ -456,7 +424,7 @@ static void fb_update_frame_format(vo_driver_t *this_gen,
     setup_colorspace_converter(frame, flags);
   }
 
-  reset_dest_pointers(frame, flags);
+  fb_frame_field(frame_gen, flags);
 }
 
 static void fb_overlay_clut_yuv2rgb(fb_driver_t *this,

@@ -6,6 +6,8 @@ endif
 
 include_HEADERS = xine.h
 
+noinst_HEADERS = config.h configure.h
+
 CONFIG_CLEAN_FILES = xine.h $(inttypes_h)
 
 mostlyclean-generic:
@@ -14,7 +16,7 @@ mostlyclean-generic:
 maintainer-clean-generic:
 	-@echo "This command is intended for maintainers to use;"
 	-@echo "it deletes files that may require special tools to rebuild."
-	-rm -f Makefile.in
+	-rm -f Makefile.in configure.h.in
 
 install-data-local: install-includeHEADERS
 	sed -e '/^\/\*_x_/d' xine.h > $(DESTDIR)$(includedir)/xine.h
