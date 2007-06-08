@@ -50,22 +50,22 @@
 
 /* Export protected only for libxine functions */
 #if defined(XINE_LIBRARY_COMPILE) && defined(SUPPORT_ATTRIBUTE_VISIBILITY_PROTECTED)
-# define XINE_PROTECTED __attribute__((visibility("protected")))
+# define XINE_PROTECTED __attribute__((__visibility__("protected")))
 #elif defined(XINE_LIBRARY_COMPILE) && defined(SUPPORT_ATTRIBUTE_VISIBILITY_DEFAULT)
-# define XINE_PROTECTED __attribute__((visibility("default")))
+# define XINE_PROTECTED __attribute__((__visibility__("default")))
 #else
 # define XINE_PROTECTED
 #endif
 
 #ifdef SUPPORT_ATTRIBUTE_SENTINEL
-# define XINE_SENTINEL __attribute__((sentinel))
+# define XINE_SENTINEL __attribute__((__sentinel__))
 #else
 # define XINE_SENTINEL
 #endif
 
 #ifndef __attr_unused
 # ifdef SUPPORT_ATTRIBUTE_UNUSED
-#  define __attr_unused __attribute__((unused))
+#  define __attr_unused __attribute__((__unused__))
 # else
 #  define __attr_unused
 # endif
@@ -73,12 +73,12 @@
 
 /* Format attributes */
 #ifdef SUPPORT_ATTRIBUTE_FORMAT
-# define XINE_FORMAT_PRINTF(fmt,var) __attribute__((format(printf, fmt, var)))
+# define XINE_FORMAT_PRINTF(fmt,var) __attribute__((__format__(__printf__, fmt, var)))
 #else
 # define XINE_FORMAT_PRINTF(fmt,var)
 #endif
 #ifdef SUPPORT_ATTRIBUTE_FORMAT_ARG
-# define XINE_FORMAT_PRINTF_ARG(fmt) __attribute__((format_arg(fmt)))
+# define XINE_FORMAT_PRINTF_ARG(fmt) __attribute__((__format_arg__(fmt)))
 #else
 # define XINE_FORMAT_PRINTF_ARG(fmt)
 #endif
