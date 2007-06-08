@@ -820,19 +820,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
   const unsigned int trak_atom_size = BE_32(&trak_atom[0]);
   unsigned int atom_pos;
   unsigned int properties_offset;
-  unsigned int current_stsd_atom_size;
   qt_error last_error = QT_OK;
-
-  /* for palette traversal */
-  int color_depth;
-  int color_flag;
-  int color_start;
-  int color_count;
-  int color_end;
-  int color_index;
-  int color_dec;
-  int color_greyscale;
-  const unsigned char *color_table;
 
   /* initialize trak structure */
   trak->edit_list_count = 0;
@@ -950,7 +938,18 @@ static qt_error parse_trak_atom (qt_trak *trak,
       properties_offset = 0x0C;
       for (k = 0; k < trak->stsd_atoms_count; k++) {
 
-        current_stsd_atom_size = BE_32(&trak_atom[atom_pos - 4]);      
+        const uint32_t current_stsd_atom_size = BE_32(&trak_atom[atom_pos - 4]);      
+
+	/* for palette traversal */
+	int color_depth;
+	int color_flag;
+	int color_start;
+	int color_count;
+	int color_end;
+	int color_index;
+	int color_dec;
+	int color_greyscale;
+	const unsigned char *color_table;
 
         if (trak->type == MEDIA_VIDEO) {
 
@@ -1231,7 +1230,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
               (BE_32(&trak_atom[atom_pos + 0x34]) == WAVE_ATOM) &&
               (BE_32(&trak_atom[atom_pos + 0x3C]) == FRMA_ATOM) &&
               (ME_32(&trak_atom[atom_pos + 0x48]) == trak->stsd_atoms[k].audio.codec_fourcc)) {
-            int wave_size = BE_32(&trak_atom[atom_pos + 0x44]) - 8;
+            const int wave_size = BE_32(&trak_atom[atom_pos + 0x44]) - 8;
             
             if ((wave_size >= sizeof(xine_waveformatex)) &&
                 (current_atom_size >= (0x4C + wave_size))) {
