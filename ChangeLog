@@ -33,7 +33,7 @@ xine-lib (1.1.90) (Unreleased)
     software mixing facility you can consider alternative daemons. Note: aRTs
     will not be present in KDE 4.
 
-xine-lib (1.1.7) (unreleased)
+xine-lib (1.1.7)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.
   * Add support for MDHD version 1 atom in demux_qt. [bug #1679398]
   * Handle single-quoted attribute values in XML.
@@ -58,6 +58,11 @@ xine-lib (1.1.7) (unreleased)
   * Fix an mmap problem with huge files on 32-bit systems.
   * Improved MPEG PES stream handling: specifically, misdetection of data
     streams as PES streams.
+  * Handle unplugged ALSA device (fixes crashes) and if the frontend does not
+    handle the event continue playback to the none output.
+  * Disable aRTs output plugin by default, it's deprecated and will be removed
+    in 1.2 series.
+  * Fix a colour format conversion crash in the fb video output driver.
 
 xine-lib (1.1.6)
   * Split the DirectFB plugin into X11 and non-X versions.
