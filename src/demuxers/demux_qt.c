@@ -1540,9 +1540,7 @@ static qt_error parse_reference_atom (reference_t *ref,
                                       char *base_mrl) {
 
   int i, j;
-  unsigned int ref_atom_size = BE_32(&ref_atom[0]);
-  qt_atom current_atom;
-  unsigned int current_atom_size;
+  const unsigned int ref_atom_size = BE_32(&ref_atom[0]);
 
   /* initialize reference atom */
   ref->url = NULL;
@@ -1551,11 +1549,11 @@ static qt_error parse_reference_atom (reference_t *ref,
 
   /* traverse through the atom looking for the key atoms */
   for (i = ATOM_PREAMBLE_SIZE; i < ref_atom_size - 4; i++) {
+    const uint32_t current_atom_size = BE_32(&ref_atom[i - 4]);
+    const qt_atom current_atom = BE_32(&ref_atom[i]);
 
-    current_atom_size = BE_32(&ref_atom[i - 4]);
-    current_atom = BE_32(&ref_atom[i]);
-
-    if (current_atom == RDRF_ATOM) {
+    switch (current_atom) {
+    case RDRF_ATOM:
 
       /* if the URL starts with "http://", copy it */
       if (strncmp(&ref_atom[i + 16], "http://", 7) == 0
@@ -1584,17 +1582,17 @@ static qt_error parse_reference_atom (reference_t *ref,
       }
 
       debug_atom_load("    qt rdrf URL reference:\n      %s\n", ref->url);
+      break;
 
-    } else if (current_atom == RMDR_ATOM) {
-
+    case RMDR_ATOM:
       /* load the data rate */
       ref->data_rate = BE_32(&ref_atom[i + 8]);
       ref->data_rate *= 10;
 
       debug_atom_load("    qt rmdr data rate = %"PRId64"\n", ref->data_rate);
+      break;
 
-    } else if (current_atom == RMVC_ATOM) {
-
+    case RMVC_ATOM:
       debug_atom_load("    qt rmvc atom\n");
 
       /* search the rmvc atom for 'qtim'; 2 bytes will follow the qtim
