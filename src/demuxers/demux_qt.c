@@ -110,6 +110,7 @@ typedef unsigned int qt_atom;
 
 #define UDTA_ATOM QT_ATOM('u', 'd', 't', 'a')
 #define META_ATOM QT_ATOM('m', 'e', 't', 'a')
+#define HDLR_ATOM QT_ATOM('h', 'd', 'l', 'r')
 #define NAM_ATOM QT_ATOM(0xA9, 'n', 'a', 'm')
 #define CPY_ATOM QT_ATOM(0xA9, 'c', 'p', 'y')
 #define DES_ATOM QT_ATOM(0xA9, 'd', 'e', 's')
@@ -406,6 +407,10 @@ typedef struct {
  * demuxer is sending off to the audio decoder */
 #define DEBUG_AUDIO_DEMUX 0
 
+/* define DEBUG_META_LOAD as 1 to see details about the metadata chunks the
+ * demuxer is reading from the file */
+#define DEBUG_META_LOAD 0
+
 /* Define DEBUG_DUMP_MOOV as 1 to dump the raw moov atom to disk. This is
  * particularly useful in debugging a file with a compressed moov (cmov)
  * atom. The atom will be dumped to the filename specified as 
@@ -441,6 +446,12 @@ static inline void XINE_FORMAT_PRINTF(1, 2) debug_video_demux(const char *format
 #define debug_audio_demux printf
 #else
 static inline void XINE_FORMAT_PRINTF(1, 2) debug_audio_demux(const char *format, ...) {}
+#endif
+
+#if DEBUG_META_LOAD
+#define debug_audio_demux printf
+#else
+static inline void XINE_FORMAT_PRINTF(1, 2) debug_meta_load(const char *format, ...) {}
 #endif
 
 static inline void dump_moov_atom(unsigned char *moov_atom, int moov_atom_size) {
@@ -727,55 +738,90 @@ static int is_qt_file(input_plugin_t *qt_file) {
   }
 }
 
+static char *parse_data_atom(unsigned char *data_atom) {
+  const uint32_t data_atom_size = BE_32(&data_atom[0]);
+  
+  static const int data_atom_max_version = 0;
+  const int data_atom_version = data_atom[4];
+
+  const size_t alloc_size = data_atom_size - 8 + 1;
+  char *alloc_str = NULL;
+
+  if ( data_atom_version > data_atom_max_version ) {
+    debug_meta_load("demux_qt: version %d for data atom is higher than the highest supported version (%d)",
+		    data_atom_version, data_atom_max_version);
+    return;
+  }
+
+  alloc_str = xine_xmalloc(alloc_size);
+  xine_fast_memcpy(alloc_str, &data_atom[12], alloc_size-1);
+  return alloc_str;
+}
+
 /* parse out a meta data atom */
 static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
-  uint32_t i = 4;
-  uint32_t meta_atom_size = BE_32(&meta_atom[0]);
+  static const uint32_t meta_atom_preamble_size = 8;
+
+  const uint32_t meta_atom_size = BE_32(&meta_atom[0]);
+
+  static const int meta_atom_max_version = 0;
+  const int meta_atom_version = meta_atom[4];
+  /* const uint32_t flags = BE_24(&meta_atom[5]); */
+
+  uint32_t i = meta_atom_preamble_size;
+
+  if ( meta_atom_version > meta_atom_max_version ) {
+    debug_meta_load("demux_qt: version %d for meta atom is higher than the highest supported version (%d)",
+		    meta_atom_version, meta_atom_max_version);
+    return;
+  }
 
   while ( i < meta_atom_size ) {
-    qt_atom current_atom = BE_32(&meta_atom[i]);
-    uint32_t sub_atom_size = BE_32(&meta_atom[i + 4]);
-    uint32_t string_size = sub_atom_size - 16 + 1;
+    const uint8_t *const current_atom = &meta_atom[i];
+    const qt_atom current_atom_code = BE_32(&current_atom[0]);
+    const uint32_t current_atom_size = BE_32(&current_atom[4]);
+    uint32_t handler_type = 0;
     
-    switch (current_atom) {
+    switch (current_atom_code) {
+    case HDLR_ATOM: {
+      static const int hdlr_atom_max_version = 0;
+      const int hdlr_atom_version = current_atom[8];
+
+      /* const uint32_t hdlr_atom_flags = BE_24(&current_atom[9]); */
+
+      if ( hdlr_atom_version > hdlr_atom_max_version ) {
+	debug_meta_load("demux_qt: version %d for hdlr atom is higher than the highest supported version (%d)",
+			hdlr_atom_version, hdlr_atom_max_version);
+	return;
+      }
+
+      handler_type = BE_32(&current_atom[12]);
+    }
+
     case ART_ATOM:
-      info->artist = xine_xmalloc(string_size);
-      strncpy(info->artist, &meta_atom[i + 20], string_size - 1);
-      info->artist[string_size - 1] = 0;
+      info->artist = parse_data_atom(&current_atom[8]);
       break;
     case NAM_ATOM:
-      info->name = xine_xmalloc(string_size);
-      strncpy(info->name, &meta_atom[i + 20], string_size - 1);
-      info->name[string_size - 1] = 0;
+      info->name = parse_data_atom(&current_atom[8]);
       break;
     case ALB_ATOM:
-      info->album = xine_xmalloc(string_size);
-      strncpy(info->album, &meta_atom[i + 20], string_size - 1);
-      info->album[string_size - 1] = 0;
+      info->album = parse_data_atom(&current_atom[8]);
       break;
     case GEN_ATOM:
-      info->genre = xine_xmalloc(string_size);
-      strncpy(info->genre, &meta_atom[i + 20], string_size - 1);
-      info->genre[string_size - 1] = 0;
+      info->genre = parse_data_atom(&current_atom[8]);
       break;
-    case TOO_ATOM:
-      info->comment = xine_xmalloc(string_size);
-      strncpy(info->comment, &meta_atom[i + 20], string_size - 1);
-      info->comment[string_size - 1] = 0;
+    case CMT_ATOM:
+      info->comment = parse_data_atom(&current_atom[8]);
       break;
     case WRT_ATOM:
-      info->composer = xine_xmalloc(string_size);
-      strncpy(info->composer, &meta_atom[i + 20], string_size - 1);
-      info->composer[string_size - 1] = 0;
+      info->composer = parse_data_atom(&current_atom[8]);
       break;
     case DAY_ATOM:
-      info->year = xine_xmalloc(string_size);
-      strncpy(info->year, &meta_atom[i + 20], string_size - 1);
-      info->year[string_size - 1] = 0;
+      info->year = parse_data_atom(&current_atom[8]);
       break;
     }
 
-    i += sub_atom_size;
+    i += current_atom_size;
   }
 
 }
