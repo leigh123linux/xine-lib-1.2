@@ -85,7 +85,7 @@ xineplug_inp_net_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_net_la_LDFLAGS = -avoid-version -module
 
 xineplug_inp_mms_la_SOURCES = input_mms.c net_buf_ctrl.c mms.c mmsh.c http_helper.c ../demuxers/asfheader.c
-xineplug_inp_mms_la_LIBADD = $(XINE_LIB) @LIBICONV@ $(PTHREAD_LIBS) $(LTLIBINTL)
+xineplug_inp_mms_la_LIBADD = $(XINE_LIB) $(LTLIBICONV) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_inp_mms_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_mms_la_LDFLAGS = -avoid-version -module
 
