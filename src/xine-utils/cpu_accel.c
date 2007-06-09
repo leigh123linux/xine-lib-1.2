@@ -186,6 +186,9 @@ static uint32_t arch_accel (void)
 #endif /* i386 or x86_64 */
 
 #if defined(ARCH_PPC) && defined(ENABLE_ALTIVEC)
+#include <signal.h>
+#include <setjmp.h>
+
 static sigjmp_buf jmpbuf;
 static volatile sig_atomic_t canjump = 0;
 
@@ -270,6 +273,9 @@ static uint32_t arch_accel (void)
   return flags;
 }
 #else
+#include <signal.h>
+#include <setjmp.h>
+
 static sigjmp_buf jmpbuf;
 static volatile sig_atomic_t canjump = 0;
 
