@@ -1566,7 +1566,6 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
  */
 static void _cdda_save_cached_cddb_infos(cdda_input_plugin_t *this, char *filecontent) {
   FILE  *fd;
-  DIR  *dir;
   char *cfile;
 
   const char *const xdg_cache_home = xdgCacheHome(this->stream->xine->basedir_handle);
