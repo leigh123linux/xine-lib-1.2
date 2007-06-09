@@ -148,7 +148,7 @@ xineplug_vo_out_pgx32_la_CFLAGS = $(VISIBILITY_FLAG) $(X_CFLAGS)
 
 xineplug_vo_out_vidix_la_SOURCES = video_out_vidix.c $(X11OSD)
 xineplug_vo_out_vidix_la_LIBADD =  $(XINE_LIB) $(X_LIBS) \
-	$(top_builddir)/src/video_out/vidix/libvidix.la $(PTHREAD_LIBS)
+	$(top_builddir)/src/video_out/vidix/libvidix.la $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_vidix_la_CFLAGS = $(VISIBILITY_FLAG) $(VIDIX_CFLAGS) $(X_CFLAGS) -fno-strict-aliasing
 
 xineplug_vo_out_aa_la_SOURCES =  video_out_aa.c
