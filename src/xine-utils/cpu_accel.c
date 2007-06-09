@@ -24,8 +24,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
-#include <signal.h>
-#include <setjmp.h>
 #include <dlfcn.h>
 
 #if defined (__SVR4) && defined (__sun)
@@ -42,11 +40,16 @@
 
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
 
+#ifndef __x86_64__
+#include <signal.h>
+#include <setjmp.h>
+
 static jmp_buf sigill_return;
 
 static void sigill_handler (int n) {
   longjmp(sigill_return, 1);
 }
+#endif
 
 static uint32_t arch_accel (void)
 {
