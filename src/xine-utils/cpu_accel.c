@@ -61,7 +61,11 @@ static uint32_t arch_accel (void)
 #ifdef __x86_64__
   /* No need to test for this on AMD64, we know what the
      platform has.  */
-  caps = MM_ACCEL_X86_MMX | MM_ACCEL_X86_SSE | MM_ACCEL_X86_MMXEXT | MM_ACCEL_X86_SSE2;
+  caps = MM_ACCEL_X86_MMX | MM_ACCEL_X86_SSE | MM_ACCEL_X86_MMXEXT | MM_ACCEL_X86_SSE2
+#  if defined(__3dNOW__)
+    | MM_ACCEL_X86_3DNOW
+#  endif
+    ;
 #else
 
 #ifndef _MSC_VER
