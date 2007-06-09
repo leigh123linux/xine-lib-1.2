@@ -41,7 +41,7 @@
 
 #include "xineutils.h"
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(__i386__) || defined(__x86_64__)
 
 #ifndef __x86_64__
 #include <signal.h>
@@ -183,7 +183,7 @@ static uint32_t arch_accel (void)
   return caps;
 }
 
-#endif /* ARCH_X86 */
+#endif /* i386 or x86_64 */
 
 #if defined(ARCH_PPC) && defined(ENABLE_ALTIVEC)
 static sigjmp_buf jmpbuf;
@@ -340,7 +340,7 @@ uint32_t xine_mm_accel (void)
 #endif
 #endif
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64) || (defined(ARCH_PPC) && defined(ENABLE_ALTIVEC)) || (defined(ARCH_SPARC) && defined(ENABLE_VIS))
+#if defined(__i386__) || defined(__x86_64__) || (defined(ARCH_PPC) && defined(ENABLE_ALTIVEC)) || (defined(ARCH_SPARC) && defined(ENABLE_VIS))
     accel |= arch_accel();
 #endif
 
