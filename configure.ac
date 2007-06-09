@@ -1094,6 +1094,16 @@ AC_SUBST(XINE_BUILD_DATE)
 
 
 dnl ---------------------------------------------
+dnl Check for documentation formatting tool
+dnl ---------------------------------------------
+
+AC_CHECK_PROG(XMLTO, xmlto, xmlto, no)
+AM_CONDITIONAL([HAVE_XMLTO], [test "$XMLTO" != "no"])
+
+AC_CHECK_PROG(RSVG, rsvg, rsvg, no)
+AM_CONDITIONAL([HAVE_RSVG], [test "$RSVG" != "no"])
+
+dnl ---------------------------------------------
 dnl Output configuration files
 dnl ---------------------------------------------
 
