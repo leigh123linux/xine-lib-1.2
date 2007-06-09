@@ -500,7 +500,7 @@ vo_driver_t *_x_load_video_output_plugin(xine_t *this,
  * load a specific audio output plugin
  */
 
-ao_driver_t *_x_load_audio_output_plugin (xine_t *self, char *id) XINE_PROTECTED;
+ao_driver_t *_x_load_audio_output_plugin (xine_t *self, const char *id) XINE_PROTECTED;
 
 
 void _x_set_speed (xine_stream_t *stream, int speed) XINE_PROTECTED;

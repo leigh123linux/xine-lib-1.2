@@ -626,12 +626,6 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   this->pa_class = class;
 
   return &this->ao_driver;
-
- fail:
-  pthread_mutex_unlock(&this->pa_class->pa_mutex);
-  free(this);
-  xprintf (class->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: open_plugin failed.\n");
-  return NULL;
 }
 
 /*

@@ -79,7 +79,7 @@ void _x_real_codecs_init(xine_t *const xine) {
   struct stat s;
 
 #define try_real_path(path) \
-  if (!stat (path "/dvrc.so", &s)) \
+  if (!stat (path "/drvc.so", &s)) \
     default_real_codecs_path = path;
 #define try_real_subpath(path) \
   try_real_path("/usr/" path) \
@@ -114,7 +114,7 @@ void _x_real_codecs_init(xine_t *const xine) {
 				       "how to install the codecs."),
 				     10, NULL, NULL);
 
-  lprintf ("real codecs path : %s\n",  real_codec_path);
+  lprintf ("real codecs path : %s\n", real_codecs_path);
 }
 
 void *_x_real_codec_open(xine_stream_t *const stream, const char *const path,

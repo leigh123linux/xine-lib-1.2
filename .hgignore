@@ -24,8 +24,8 @@ config.log
 config.sub
 config.status
 config.status.lineno
-config.h
-config.h.in
+include/configure.h
+include/configure.h.in
 depcomp
 install-sh
 libtool

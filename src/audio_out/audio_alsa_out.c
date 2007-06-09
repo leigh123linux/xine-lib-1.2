@@ -752,6 +752,9 @@ static int ao_alsa_write(ao_driver_t *this_gen, int16_t *data, uint32_t count) {
     if (res < 0)
       return 0;
     state = snd_pcm_state(this->audio_fd);
+  } else if (state == SND_PCM_STATE_DISCONNECTED) {
+    /* the device is gone. audio_out.c handles it if we return something < 0 */
+    return -1;
   }
   if (state == SND_PCM_STATE_XRUN) {
 #ifdef LOG_DEBUG
@@ -784,11 +787,11 @@ static int ao_alsa_write(ao_driver_t *this_gen, int16_t *data, uint32_t count) {
 #endif
       snd_pcm_status(this->audio_fd, pcm_stat);
       if ( snd_pcm_status_get_avail(pcm_stat) < number_of_frames) {
-        wait_result = snd_pcm_wait(this->audio_fd, 1000000);
+        wait_result = snd_pcm_wait(this->audio_fd, 1000);
 #ifdef LOG_DEBUG
         printf("audio_alsa_out:write:loop:wait_result=%d\n",wait_result);
 #endif
-        if (wait_result < 0) return 0;
+        if (wait_result <= 0) return 0;
       }
     }
     if (this->mmap != 0) {
@@ -808,7 +811,10 @@ static int ao_alsa_write(ao_driver_t *this_gen, int16_t *data, uint32_t count) {
 	  return 0;
 	continue;
       }
-      if ( (state != SND_PCM_STATE_PREPARED) &&
+      if (state == SND_PCM_STATE_DISCONNECTED) {
+        /* the device is gone. audio_out.c handles it if we return something < 0 */
+        return -1;
+      } else if ( (state != SND_PCM_STATE_PREPARED) &&
            (state != SND_PCM_STATE_RUNNING) &&
            (state != SND_PCM_STATE_DRAINING) ) {
         xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 

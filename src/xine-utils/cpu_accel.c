@@ -24,9 +24,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
-#include <signal.h>
-#include <setjmp.h>
+
+#if defined(HAVE_MLIB) && defined(MLIB_LAZYLOAD)
 #include <dlfcn.h>
+#endif
 
 #if defined (__SVR4) && defined (__sun)
 #include <sys/systeminfo.h>
@@ -40,22 +41,32 @@
 
 #include "xineutils.h"
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(__i386__) || defined(__x86_64__)
+
+#ifndef __x86_64__
+#include <signal.h>
+#include <setjmp.h>
 
 static jmp_buf sigill_return;
 
 static void sigill_handler (int n) {
   longjmp(sigill_return, 1);
 }
+#endif
 
 static uint32_t arch_accel (void)
 {
   uint32_t caps;
 
-#ifdef __x86_64__
+#if defined(__x86_64__) || \
+  ( defined(__SSE__) && defined(__SSE2__) && defined(__MMX__) )
   /* No need to test for this on AMD64, we know what the
      platform has.  */
-  caps = MM_ACCEL_X86_MMX | MM_ACCEL_X86_SSE | MM_ACCEL_X86_MMXEXT | MM_ACCEL_X86_SSE2;
+  caps = MM_ACCEL_X86_MMX | MM_ACCEL_X86_SSE | MM_ACCEL_X86_MMXEXT | MM_ACCEL_X86_SSE2
+#  if defined(__3dNOW__)
+    | MM_ACCEL_X86_3DNOW
+#  endif
+    ;
 #else
 
 #ifndef _MSC_VER
@@ -148,6 +159,9 @@ static uint32_t arch_accel (void)
   caps = 0;
 #endif /* _MSC_VER */
 
+#endif /* x86_64 or built-in options */
+
+#ifndef __x86_64__
   /* test OS support for SSE */
   if (caps & MM_ACCEL_X86_SSE) {
     void (*old_sigill_handler)(int);
@@ -169,9 +183,12 @@ static uint32_t arch_accel (void)
   return caps;
 }
 
-#endif /* ARCH_X86 */
+#endif /* i386 or x86_64 */
 
 #if defined(ARCH_PPC) && defined(ENABLE_ALTIVEC)
+#include <signal.h>
+#include <setjmp.h>
+
 static sigjmp_buf jmpbuf;
 static volatile sig_atomic_t canjump = 0;
 
@@ -256,6 +273,9 @@ static uint32_t arch_accel (void)
   return flags;
 }
 #else
+#include <signal.h>
+#include <setjmp.h>
+
 static sigjmp_buf jmpbuf;
 static volatile sig_atomic_t canjump = 0;
 
@@ -326,7 +346,7 @@ uint32_t xine_mm_accel (void)
 #endif
 #endif
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64) || (defined(ARCH_PPC) && defined(ENABLE_ALTIVEC)) || (defined(ARCH_SPARC) && defined(ENABLE_VIS))
+#if defined(__i386__) || defined(__x86_64__) || (defined(ARCH_PPC) && defined(ENABLE_ALTIVEC)) || (defined(ARCH_SPARC) && defined(ENABLE_VIS))
     accel |= arch_accel();
 #endif
 

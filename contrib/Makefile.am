@@ -70,16 +70,19 @@ configure_options =\
 	--disable-shared --enable-static --disable-demuxers --disable-muxers --disable-strip \
 	--enable-gpl --enable-pthreads --disable-ffmpeg --disable-ffserver --disable-ffplay
 
-if DEBUG_BUILD
-configure_options += --enable-debug
-else
+# --enable-debug --disable-opts breaks the build of ffmpeg on x86:
+# i386/mpegvideo_mmx_template.c:108: error: can't find a register in class ‘GENERAL_REGS’ while reloading ‘asm’
+# pending a real fix --enable-debug for libxine does not enable debugging options for ffmpeg for now
+#if DEBUG_BUILD
+#configure_options += --enable-debug
+#else
 configure_options += --disable-debug
-endif
+#endif
 if PROFILING_BUILD
 configure_options += --enable-gprof
 endif
 if DISABLE_OPTIMIZATIONS
-configure_options += --disable-opts
+#configure_options += --disable-opts
 endif
 if HAVE_MLIB
 configure_options += --enable-sunmlib

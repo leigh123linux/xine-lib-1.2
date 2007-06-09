@@ -110,6 +110,8 @@ typedef unsigned int qt_atom;
 
 #define UDTA_ATOM QT_ATOM('u', 'd', 't', 'a')
 #define META_ATOM QT_ATOM('m', 'e', 't', 'a')
+#define HDLR_ATOM QT_ATOM('h', 'd', 'l', 'r')
+#define ILST_ATOM QT_ATOM('i', 'l', 's', 't')
 #define NAM_ATOM QT_ATOM(0xA9, 'n', 'a', 'm')
 #define CPY_ATOM QT_ATOM(0xA9, 'c', 'p', 'y')
 #define DES_ATOM QT_ATOM(0xA9, 'd', 'e', 's')
@@ -406,6 +408,10 @@ typedef struct {
  * demuxer is sending off to the audio decoder */
 #define DEBUG_AUDIO_DEMUX 0
 
+/* define DEBUG_META_LOAD as 1 to see details about the metadata chunks the
+ * demuxer is reading from the file */
+#define DEBUG_META_LOAD 0
+
 /* Define DEBUG_DUMP_MOOV as 1 to dump the raw moov atom to disk. This is
  * particularly useful in debugging a file with a compressed moov (cmov)
  * atom. The atom will be dumped to the filename specified as 
@@ -441,6 +447,12 @@ static inline void XINE_FORMAT_PRINTF(1, 2) debug_video_demux(const char *format
 #define debug_audio_demux printf
 #else
 static inline void XINE_FORMAT_PRINTF(1, 2) debug_audio_demux(const char *format, ...) {}
+#endif
+
+#if DEBUG_META_LOAD
+#define debug_meta_load printf
+#else
+static inline void XINE_FORMAT_PRINTF(1, 2) debug_meta_load(const char *format, ...) {}
 #endif
 
 static inline void dump_moov_atom(unsigned char *moov_atom, int moov_atom_size) {
@@ -727,52 +739,114 @@ static int is_qt_file(input_plugin_t *qt_file) {
   }
 }
 
+static char *parse_data_atom(unsigned char *data_atom) {
+  const uint32_t data_atom_size = BE_32(&data_atom[0]);
+  
+  static const int data_atom_max_version = 0;
+  const int data_atom_version = data_atom[8];
+
+  const size_t alloc_size = data_atom_size - 8 + 1;
+  char *alloc_str = NULL;
+
+  if ( data_atom_version > data_atom_max_version ) {
+    debug_meta_load("demux_qt: version %d for data atom is higher than the highest supported version (%d)\n",
+		    data_atom_version, data_atom_max_version);
+    return NULL;
+  }
+
+  alloc_str = xine_xmalloc(alloc_size);
+  xine_fast_memcpy(alloc_str, &data_atom[16], alloc_size-1);
+  alloc_str[alloc_size-1] = '\0';
+
+  debug_meta_load("demux_qt: got a string of size %zd (%s)\n", alloc_size, alloc_str);
+
+  return alloc_str;
+}
+
 /* parse out a meta data atom */
 static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
-  int i;
-  unsigned int meta_atom_size = BE_32(&meta_atom[0]);
-  qt_atom current_atom;
-  int string_size;
+  static const uint32_t meta_atom_preamble_size = 12;
 
-  for (i = 0; i < meta_atom_size - 4; i++) {
-    current_atom = BE_32(&meta_atom[i]);
+  const uint32_t meta_atom_size = BE_32(&meta_atom[0]);
 
-    if (current_atom == ART_ATOM) {
-      string_size = BE_32(&meta_atom[i + 4]) - 16 + 1;
-      info->artist = xine_xmalloc(string_size);
-      strncpy(info->artist, &meta_atom[i + 20], string_size - 1);
-      info->artist[string_size - 1] = 0;
-    } else if (current_atom == NAM_ATOM) {
-      string_size = BE_32(&meta_atom[i + 4]) - 16 + 1;
-      info->name = xine_xmalloc(string_size);
-      strncpy(info->name, &meta_atom[i + 20], string_size - 1);
-      info->name[string_size - 1] = 0;
-    } else if (current_atom == ALB_ATOM) {
-      string_size = BE_32(&meta_atom[i + 4]) - 16 + 1;
-      info->album = xine_xmalloc(string_size);
-      strncpy(info->album, &meta_atom[i + 20], string_size - 1);
-      info->album[string_size - 1] = 0;
-    } else if (current_atom == GEN_ATOM) {
-      string_size = BE_32(&meta_atom[i + 4]) - 16 + 1;
-      info->genre = xine_xmalloc(string_size);
-      strncpy(info->genre, &meta_atom[i + 20], string_size - 1);
-      info->genre[string_size - 1] = 0;
-    } else if (current_atom == TOO_ATOM) {
-      string_size = BE_32(&meta_atom[i + 4]) - 16 + 1;
-      info->comment = xine_xmalloc(string_size);
-      strncpy(info->comment, &meta_atom[i + 20], string_size - 1);
-      info->comment[string_size - 1] = 0;
-    } else if (current_atom == WRT_ATOM) {
-      string_size = BE_32(&meta_atom[i + 4]) - 16 + 1;
-      info->composer = xine_xmalloc(string_size);
-      strncpy(info->composer, &meta_atom[i + 20], string_size - 1);
-      info->composer[string_size - 1] = 0;
-    } else if (current_atom == DAY_ATOM) {
-      string_size = BE_32(&meta_atom[i + 4]) - 16 + 1;
-      info->year = xine_xmalloc(string_size);
-      strncpy(info->year, &meta_atom[i + 20], string_size - 1);
-      info->year[string_size - 1] = 0;
+  static const int meta_atom_max_version = 0;
+  const int meta_atom_version = meta_atom[8];
+  /* const uint32_t flags = BE_24(&meta_atom[9]); */
+
+  uint32_t i = meta_atom_preamble_size;
+
+  if ( meta_atom_version > meta_atom_max_version ) {
+    debug_meta_load("demux_qt: version %d for meta atom is higher than the highest supported version (%d)\n",
+		    meta_atom_version, meta_atom_max_version);
+    return;
+  }
+
+  while ( i < meta_atom_size ) {
+    const uint8_t *const current_atom = &meta_atom[i];
+    const qt_atom current_atom_code = BE_32(&current_atom[4]);
+    const uint32_t current_atom_size = BE_32(&current_atom[0]);
+    uint32_t handler_type = 0;
+    
+    switch (current_atom_code) {
+    case HDLR_ATOM: {
+      static const int hdlr_atom_max_version = 0;
+      const int hdlr_atom_version = current_atom[8];
+
+      /* const uint32_t hdlr_atom_flags = BE_24(&current_atom[9]); */
+
+      if ( hdlr_atom_version > hdlr_atom_max_version ) {
+	debug_meta_load("demux_qt: version %d for hdlr atom is higher than the highest supported version (%d)\n",
+			hdlr_atom_version, hdlr_atom_max_version);
+	return;
+      }
+
+      handler_type = BE_32(&current_atom[12]);
     }
+      break;
+
+    case ILST_ATOM: {
+      uint32_t j = i + 8;
+      while ( j < current_atom_size ) {
+	const uint8_t *const sub_atom = &meta_atom[j];
+	const qt_atom sub_atom_code = BE_32(&sub_atom[4]);
+	const uint32_t sub_atom_size = BE_32(&sub_atom[0]);
+
+	switch(sub_atom_code) {
+	case ART_ATOM:
+	  info->artist = parse_data_atom(&sub_atom[8]);
+	  break;
+	case NAM_ATOM:
+	  info->name = parse_data_atom(&sub_atom[8]);
+	  break;
+	case ALB_ATOM:
+	  info->album = parse_data_atom(&sub_atom[8]);
+	  break;
+	case GEN_ATOM:
+	  info->genre = parse_data_atom(&sub_atom[8]);
+	  break;
+	case CMT_ATOM:
+	  info->comment = parse_data_atom(&sub_atom[8]);
+	  break;
+	case WRT_ATOM:
+	  info->composer = parse_data_atom(&sub_atom[8]);
+	  break;
+	case DAY_ATOM:
+	  info->year = parse_data_atom(&sub_atom[8]);
+	  break;
+	default:
+	  debug_meta_load("unknown atom %08x in ilst\n", sub_atom_code);
+	}
+
+	j += sub_atom_size;
+      }
+    }
+      break;
+
+    default:
+      debug_meta_load("unknown atom %08x in meta\n", current_atom_code);
+    }
+
+    i += current_atom_size;
   }
 
 }
@@ -814,24 +888,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
 				 unsigned char *trak_atom) {
 
   int i, j, k;
-  unsigned int trak_atom_size = BE_32(&trak_atom[0]);
-  qt_atom current_atom;
-  unsigned int current_atom_size;
+  const unsigned int trak_atom_size = BE_32(&trak_atom[0]);
   unsigned int atom_pos;
   unsigned int properties_offset;
-  unsigned int current_stsd_atom_size;
   qt_error last_error = QT_OK;
-
-  /* for palette traversal */
-  int color_depth;
-  int color_flag;
-  int color_start;
-  int color_count;
-  int color_end;
-  int color_index;
-  int color_dec;
-  int color_greyscale;
-  const unsigned char *color_table;
 
   /* initialize trak structure */
   trak->edit_list_count = 0;
@@ -863,12 +923,13 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
   /* search for media type atoms */
   for (i = ATOM_PREAMBLE_SIZE; i < trak_atom_size - 4; i++) {
-    current_atom = BE_32(&trak_atom[i]);
+    const qt_atom current_atom = BE_32(&trak_atom[i]);
 
-    if (current_atom == VMHD_ATOM) {
+    switch (current_atom) {
+    case VMHD_ATOM:
       trak->type = MEDIA_VIDEO;
       break;
-    } else if (current_atom == SMHD_ATOM) {
+    case SMHD_ATOM:
       trak->type = MEDIA_AUDIO;
       break;
     }
@@ -880,13 +941,15 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
   /* search for the useful atoms */
   for (i = ATOM_PREAMBLE_SIZE; i < trak_atom_size - 4; i++) {
-    current_atom_size = BE_32(&trak_atom[i - 4]);	
-    current_atom = BE_32(&trak_atom[i]);
+    const current_atom_size = BE_32(&trak_atom[i - 4]);	
+    const current_atom = BE_32(&trak_atom[i]);
 
-    if (current_atom == TKHD_ATOM) {
+    switch(current_atom) {
+    case TKHD_ATOM:
       trak->flags = BE_16(&trak_atom[i + 6]);
-    } else if (current_atom == ELST_ATOM) {
+      break;
 
+    case ELST_ATOM:
       /* there should only be one edit list table */
       if (trak->edit_list_table) {
         last_error = QT_HEADER_TROUBLE;
@@ -916,17 +979,19 @@ static qt_error parse_trak_atom (qt_trak *trak,
           trak->edit_list_table[j].track_duration,
           trak->edit_list_table[j].media_time);
       }
+      break;
 
-    } else if (current_atom == MDHD_ATOM) {
-      int version;
+    case MDHD_ATOM:
       debug_atom_load ("demux_qt: mdhd atom\n");
-      
-      version = trak_atom[i+4];
-      if ( version > 1 ) continue; /* unsupported, undocumented */
+      {
+	const int version = trak_atom[i+4];
+	if ( version > 1 ) continue; /* unsupported, undocumented */
 
-      trak->timescale = BE_32(&trak_atom[i + (version == 0 ? 0x10 : 0x18) ]);
-    } else if (current_atom == STSD_ATOM) {
+	trak->timescale = BE_32(&trak_atom[i + (version == 0 ? 0x10 : 0x18) ]);
+      }
+      break;
 
+    case STSD_ATOM:
       debug_atom_load ("demux_qt: stsd atom\n");
 #if DEBUG_ATOM_LOAD
       xine_hexdump (&trak_atom[i], current_atom_size);
@@ -944,7 +1009,18 @@ static qt_error parse_trak_atom (qt_trak *trak,
       properties_offset = 0x0C;
       for (k = 0; k < trak->stsd_atoms_count; k++) {
 
-        current_stsd_atom_size = BE_32(&trak_atom[atom_pos - 4]);      
+        const uint32_t current_stsd_atom_size = BE_32(&trak_atom[atom_pos - 4]);      
+
+	/* for palette traversal */
+	int color_depth;
+	int color_flag;
+	int color_start;
+	int color_count;
+	int color_end;
+	int color_index;
+	int color_dec;
+	int color_greyscale;
+	const unsigned char *color_table;
 
         if (trak->type == MEDIA_VIDEO) {
 
@@ -1225,7 +1301,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
               (BE_32(&trak_atom[atom_pos + 0x34]) == WAVE_ATOM) &&
               (BE_32(&trak_atom[atom_pos + 0x3C]) == FRMA_ATOM) &&
               (ME_32(&trak_atom[atom_pos + 0x48]) == trak->stsd_atoms[k].audio.codec_fourcc)) {
-            int wave_size = BE_32(&trak_atom[atom_pos + 0x44]) - 8;
+            const int wave_size = BE_32(&trak_atom[atom_pos + 0x44]) - 8;
             
             if ((wave_size >= sizeof(xine_waveformatex)) &&
                 (current_atom_size >= (0x4C + wave_size))) {
@@ -1275,15 +1351,15 @@ static qt_error parse_trak_atom (qt_trak *trak,
         atom_pos += current_stsd_atom_size;
         properties_offset += current_stsd_atom_size;
       }
-
-    } else if (current_atom == ESDS_ATOM) {
-
-      uint32_t len;
+      break;
+      
+    case ESDS_ATOM:
       
       debug_atom_load("    qt/mpeg-4 esds atom\n");
 
       if ((trak->type == MEDIA_VIDEO) || 
           (trak->type == MEDIA_AUDIO)) {
+	uint32_t len;
         
         j = i + 8;
         if( trak_atom[j++] == 0x03 ) {
@@ -1306,17 +1382,17 @@ static qt_error parse_trak_atom (qt_trak *trak,
           }
         }
       }
+      break;
 
-    } else if (current_atom == AVCC_ATOM) {
-    
+    case AVCC_ATOM:
       debug_atom_load("    avcC atom\n");
       
       trak->decoder_config_len = current_atom_size - 8;
       trak->decoder_config = realloc(trak->decoder_config, trak->decoder_config_len);
       memcpy(trak->decoder_config, &trak_atom[i + 4], trak->decoder_config_len);
+      break;
     
-    } else if (current_atom == STSZ_ATOM) {
-
+    case STSZ_ATOM:
       /* there should only be one of these atoms */
       if (trak->sample_size_table) {
         last_error = QT_HEADER_TROUBLE;
@@ -1348,9 +1424,9 @@ static qt_error parse_trak_atom (qt_trak *trak,
         /* set the pointer to non-NULL to indicate that the atom type has
          * already been seen for this trak atom */
         trak->sample_size_table = (void *)-1;
+      break;
 
-    } else if (current_atom == STSS_ATOM) {
-
+    case STSS_ATOM:
       /* there should only be one of these atoms */
       if (trak->sync_sample_table) {
         last_error = QT_HEADER_TROUBLE;
@@ -1377,9 +1453,9 @@ static qt_error parse_trak_atom (qt_trak *trak,
           j, trak->sync_sample_table[j],
           trak->sync_sample_table[j] - 1);
       }
+      break;
 
-    } else if (current_atom == STCO_ATOM) {
-
+    case STCO_ATOM:
       /* there should only be one of either stco or co64 */
       if (trak->chunk_offset_table) {
         last_error = QT_HEADER_TROUBLE;
@@ -1405,9 +1481,9 @@ static qt_error parse_trak_atom (qt_trak *trak,
         debug_atom_load("      chunk %d @ 0x%"PRIX64"\n",
           j, trak->chunk_offset_table[j]);
       }
+      break;
 
-    } else if (current_atom == CO64_ATOM) {
-
+    case CO64_ATOM:
       /* there should only be one of either stco or co64 */
       if (trak->chunk_offset_table) {
         last_error = QT_HEADER_TROUBLE;
@@ -1436,9 +1512,9 @@ static qt_error parse_trak_atom (qt_trak *trak,
         debug_atom_load("      chunk %d @ 0x%"PRIX64"\n",
           j, trak->chunk_offset_table[j]);
       }
+      break;
 
-    } else if (current_atom == STSC_ATOM) {
-
+    case STSC_ATOM:
       /* there should only be one of these atoms */
       if (trak->sample_to_chunk_table) {
         last_error = QT_HEADER_TROUBLE;
@@ -1471,9 +1547,9 @@ static qt_error parse_trak_atom (qt_trak *trak,
           trak->sample_to_chunk_table[j].first_chunk - 1,
           trak->sample_to_chunk_table[j].media_id);
       }
+      break;
 
-    } else if (current_atom == STTS_ATOM) {
-
+    case STTS_ATOM:
       /* there should only be one of these atoms */
       if (trak->time_to_sample_table) {
         last_error = QT_HEADER_TROUBLE;
@@ -1533,9 +1609,7 @@ static qt_error parse_reference_atom (reference_t *ref,
                                       char *base_mrl) {
 
   int i, j;
-  unsigned int ref_atom_size = BE_32(&ref_atom[0]);
-  qt_atom current_atom;
-  unsigned int current_atom_size;
+  const unsigned int ref_atom_size = BE_32(&ref_atom[0]);
 
   /* initialize reference atom */
   ref->url = NULL;
@@ -1544,11 +1618,11 @@ static qt_error parse_reference_atom (reference_t *ref,
 
   /* traverse through the atom looking for the key atoms */
   for (i = ATOM_PREAMBLE_SIZE; i < ref_atom_size - 4; i++) {
+    const uint32_t current_atom_size = BE_32(&ref_atom[i - 4]);
+    const qt_atom current_atom = BE_32(&ref_atom[i]);
 
-    current_atom_size = BE_32(&ref_atom[i - 4]);
-    current_atom = BE_32(&ref_atom[i]);
-
-    if (current_atom == RDRF_ATOM) {
+    switch (current_atom) {
+    case RDRF_ATOM:
 
       /* if the URL starts with "http://", copy it */
       if (strncmp(&ref_atom[i + 16], "http://", 7) == 0
@@ -1577,17 +1651,17 @@ static qt_error parse_reference_atom (reference_t *ref,
       }
 
       debug_atom_load("    qt rdrf URL reference:\n      %s\n", ref->url);
+      break;
 
-    } else if (current_atom == RMDR_ATOM) {
-
+    case RMDR_ATOM:
       /* load the data rate */
       ref->data_rate = BE_32(&ref_atom[i + 8]);
       ref->data_rate *= 10;
 
       debug_atom_load("    qt rmdr data rate = %"PRId64"\n", ref->data_rate);
+      break;
 
-    } else if (current_atom == RMVC_ATOM) {
-
+    case RMVC_ATOM:
       debug_atom_load("    qt rmvc atom\n");
 
       /* search the rmvc atom for 'qtim'; 2 bytes will follow the qtim
@@ -1915,7 +1989,6 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
                             int64_t bandwidth) {
   int i, j;
   unsigned int moov_atom_size = BE_32(&moov_atom[0]);
-  qt_atom current_atom;
   int string_size, error;
   unsigned int max_video_frames = 0;
   unsigned int max_audio_frames = 0;
@@ -1930,15 +2003,17 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
 
   /* prowl through the moov atom looking for very specific targets */
   for (i = ATOM_PREAMBLE_SIZE + 4; i < moov_atom_size - 4; i += BE_32(&moov_atom[i - 4])) {
-    current_atom = BE_32(&moov_atom[i]);
+    const qt_atom current_atom = BE_32(&moov_atom[i]);
 
-    if (current_atom == MVHD_ATOM) {
+    switch (current_atom) {
+    case MVHD_ATOM:
       parse_mvhd_atom(info, &moov_atom[i - 4]);
       if (info->last_error != QT_OK)
         return;
 
-    } else if (current_atom == TRAK_ATOM) {
+      break;
 
+    case TRAK_ATOM:
       /* create a new trak structure */
       info->trak_count++;
       info->traks = (qt_trak *)realloc(info->traks, 
@@ -1950,44 +2025,50 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
         info->trak_count--;
         return;
       }
+      break;
+      
+    case UDTA_ATOM:
+      parse_meta_atom(info, &moov_atom[i + 4]);
+      if (info->last_error != QT_OK)
+        return;
+      break;
 
-    } else if (current_atom == META_ATOM) {
-
+    case META_ATOM:
       parse_meta_atom(info, &moov_atom[i - 4]);
       if (info->last_error != QT_OK)
         return;
+      break;
 
-    } else if (current_atom == NAM_ATOM) {
-
+    case NAM_ATOM:
       string_size = BE_16(&moov_atom[i + 4]) + 1;
       info->name = realloc (info->name, string_size);
       strncpy(info->name, &moov_atom[i + 8], string_size - 1);
       info->name[string_size - 1] = 0;
+      break;
 
-    } else if (current_atom == CPY_ATOM) {
-
+    case CPY_ATOM:
       string_size = BE_16(&moov_atom[i + 4]) + 1;
       info->copyright = realloc (info->copyright, string_size);
       strncpy(info->copyright, &moov_atom[i + 8], string_size - 1);
       info->copyright[string_size - 1] = 0;
+      break;
 
-    } else if (current_atom == DES_ATOM) {
-
+    case DES_ATOM:
       string_size = BE_16(&moov_atom[i + 4]) + 1;
       info->description = realloc (info->description, string_size);
       strncpy(info->description, &moov_atom[i + 8], string_size - 1);
       info->description[string_size - 1] = 0;
+      break;
 
-    } else if (current_atom == CMT_ATOM) {
-
+    case CMT_ATOM:
       string_size = BE_16(&moov_atom[i + 4]) + 1;
       info->comment = realloc (info->comment, string_size);
       strncpy(info->comment, &moov_atom[i + 8], string_size - 1);
       info->comment[string_size - 1] = 0;
+      break;
 
-    } else if (current_atom == RMDA_ATOM ||
-               current_atom == RMRA_ATOM) {
-
+    case RMDA_ATOM:
+    case RMRA_ATOM:
       /* create a new reference structure */
       info->reference_count++;
       info->references = (reference_t *)realloc(info->references,
@@ -1995,8 +2076,9 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
 
       parse_reference_atom(&info->references[info->reference_count - 1],
         &moov_atom[i - 4], info->base_mrl);
+      break;
 
-    } else {
+    default:
       debug_atom_load("  qt: unknown atom into the moov atom (0x%08X)\n", current_atom);
     }
   }

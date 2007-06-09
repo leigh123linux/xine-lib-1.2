@@ -144,7 +144,7 @@ static int check_mmap_file(file_input_plugin_t *this) {
 }
 #endif
 
-static off_t file_plugin_read (input_plugin_t *this_gen, char *buf, off_t len) {
+static off_t file_plugin_read (input_plugin_t *this_gen, void *buf, off_t len) {
   file_input_plugin_t *this = (file_input_plugin_t *) this_gen;
 
 #ifdef HAVE_MMAP
@@ -359,6 +359,9 @@ static int file_plugin_open (input_plugin_t *this_gen ) {
   file_input_plugin_t *this = (file_input_plugin_t *) this_gen;
   char                *filename;
   struct stat          sbuf;
+#ifdef HAVE_MMAP
+  size_t	       tmp_size;
+#endif
 
   lprintf("file_plugin_open\n");
 
@@ -423,10 +426,14 @@ static int file_plugin_open (input_plugin_t *this_gen ) {
   }
 
 #ifdef HAVE_MMAP
-  if ( (this->mmap_base = mmap(NULL, sbuf.st_size, PROT_READ, MAP_SHARED, this->fh, 0)) != (void*)-1 ) {
+  tmp_size = sbuf.st_size; /* may cause truncation - if it does, DON'T mmap! */
+  if ((tmp_size == sbuf.st_size) &&
+      ( (this->mmap_base = mmap(NULL, tmp_size, PROT_READ, MAP_SHARED, this->fh, 0)) != (void*)-1 )) {
     this->mmap_on = 1;
     this->mmap_curr = this->mmap_base;
     this->mmap_len = sbuf.st_size;
+  } else {
+    this->mmap_base = NULL;
   }
 #endif
 

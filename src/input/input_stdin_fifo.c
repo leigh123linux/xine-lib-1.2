@@ -81,9 +81,10 @@ static off_t stdin_plugin_get_current_pos (input_plugin_t *this_gen);
 
 
 static off_t stdin_plugin_read (input_plugin_t *this_gen, 
-				char *buf, off_t len) {
+				void *buf_gen, off_t len) {
 
   stdin_input_plugin_t  *this = (stdin_input_plugin_t *) this_gen;
+  char *buf = (char *)buf_gen;
   off_t n, total;
 
   lprintf ("reading %"PRId64" bytes...\n", len);

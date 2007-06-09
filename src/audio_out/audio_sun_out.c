@@ -248,13 +248,11 @@ static int realtime_samplecounter_available(xine_t *xine, char *dev)
 error:
   if (silence != NULL) free(silence);
   if (fd >= 0) {
-#ifdef	__svr4__
     /*
      * remove the 0 bytes from the above measurement from the
      * audio driver's STREAMS queue
      */
     ioctl(fd, I_FLUSH, FLUSHW);
-#endif
     close(fd);
   }
 
@@ -334,7 +332,7 @@ find_close_samplerate_match(int dev, int sample_rate)
 
 #else
     int i, err;
-    int audiocs_rates[] = {
+    static const int audiocs_rates[] = {
 	5510, 6620, 8000, 9600, 11025, 16000, 18900, 22050,
 	27420, 32000, 33075, 37800, 44100, 48000, 0
     };

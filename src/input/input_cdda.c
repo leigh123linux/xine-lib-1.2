@@ -1566,7 +1566,6 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
  */
 static void _cdda_save_cached_cddb_infos(cdda_input_plugin_t *this, char *filecontent) {
   FILE  *fd;
-  DIR  *dir;
   char *cfile;
 
   const char *const xdg_cache_home = xdgCacheHome(this->stream->xine->basedir_handle);
@@ -2243,7 +2242,7 @@ static uint32_t cdda_plugin_get_capabilities (input_plugin_t *this_gen) {
 }
 
 
-static off_t cdda_plugin_read (input_plugin_t *this_gen, char *buf, off_t len) {
+static off_t cdda_plugin_read (input_plugin_t *this_gen, void *buf, off_t len) {
 
   /* only allow reading in block-sized chunks */
 

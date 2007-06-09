@@ -432,8 +432,9 @@ static void * input_plugin_read_loop(void *arg) {
 /* ***************************************************************** */
 
 static off_t rtp_plugin_read (input_plugin_t *this_gen, 
-			      char *buf, off_t length) {
+			      void *buf_gen, off_t length) {
   rtp_input_plugin_t *this = (rtp_input_plugin_t *) this_gen;
+  char *buf = (char *)buf_gen;
 
   struct timeval tv;
   struct timespec timeout;

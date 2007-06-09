@@ -28,7 +28,7 @@ xineplug_flac_la_SOURCES = flac_demuxer.c flac_decoder.c
 xineplug_flac_la_LIBADD = $(XINE_LIB) $(LIBFLAC_LIBS)
 xineplug_flac_la_CFLAGS = $(AM_CFLAGS) $(LIBFLAC_CFLAGS)
 
-xineplug_nsf_la_SOURCES = nsf_decoder.c nsf_demuxer.c nsf_combined.c
+xineplug_nsf_la_SOURCES = nsf_decoder.c nsf_demuxer.c nsf_combined.c nsf_combined.h
 xineplug_nsf_la_LIBADD = $(XINE_LIB) $(top_builddir)/contrib/nosefart/libnosefart.la -lm
 xineplug_nsf_la_CFLAGS = $(AM_CFLAGS) -fno-strict-aliasing
 xineplug_nsf_la_CPPFLAGS = $(AM_CPPFLAGS) -DNSF_PLAYER -I$(top_srcdir)/contrib/nosefart -I$(top_srcdir)/src/demuxers

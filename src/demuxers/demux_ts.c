@@ -180,6 +180,8 @@
 
 #define MAX_PES_BUF_SIZE 2048
 
+#define CORRUPT_PES_THRESHOLD 10
+
 #define NULL_PID 0x1fff
 #define INVALID_PID ((unsigned int)(-1))
 #define INVALID_PROGRAM ((unsigned int)(-1))
@@ -913,12 +915,17 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
      m->buf = m->fifo->buffer_pool_alloc(m->fifo);
 
     if (!demux_ts_parse_pes_header(this->stream->xine, m, ts, len, this->stream)) {
-      m->corrupted_pes = 1;
       m->buf->free_buffer(m->buf);
       m->buf = NULL;
-      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+      
+      if (m->corrupted_pes > CORRUPT_PES_THRESHOLD) {
+        if (this->videoPid == m->pid)
+          this->videoPid = INVALID_PID;
+      } else {
+        m->corrupted_pes++;
+        xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
 	      "demux_ts: PID 0x%.4x: corrupted pes encountered\n", m->pid);
-
+      }
     } else {
 
       m->corrupted_pes = 0;
@@ -1298,7 +1305,6 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
     case ISO_13818_PES_PRIVATE:
       for (i = 5; i < coded_length; i += stream[i+1] + 2) {
           if ((stream[i] == 0x6a) && (this->audio_tracks_count < MAX_AUDIO_TRACKS)) {
-          uint32_t format_identifier=0;
           int i, found = 0;
           for(i = 0; i < this->audio_tracks_count; i++) {
             if(this->audio_tracks[i].pid == pid) {
@@ -1784,13 +1790,27 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
     
     if ( (pes_stream_id >= VIDEO_STREAM_S) && (pes_stream_id <= VIDEO_STREAM_E) ) {
       if ( this->videoPid == INVALID_PID) {
-
-	xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
-		 "demux_ts: auto-detected video pid 0x%.4x\n", pid);
-
-	this->videoPid = pid;
-	this->videoMedia = this->media_num;
-	demux_ts_pes_new(this, this->media_num++, pid, this->video_fifo, pes_stream_id);
+        int i, found = 0;
+        for(i = 0; i < this->media_num; i++) {
+          if (this->media[i].pid == pid) {
+            found = 1;
+            break;
+          }
+        }
+        
+        if (found && (this->media[i].corrupted_pes == 0)) {
+          this->videoPid = pid;
+	  this->videoMedia = i;
+        } else if (!found) {
+	  this->videoPid = pid;
+	  this->videoMedia = this->media_num;
+	  demux_ts_pes_new(this, this->media_num++, pid, this->video_fifo, pes_stream_id);
+        }
+        
+        if (this->videoPid != INVALID_PID) {
+          xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+                   "demux_ts: auto-detected video pid 0x%.4x\n", pid);
+        } 
       }
     } else if ( (pes_stream_id >= AUDIO_STREAM_S) && (pes_stream_id <= AUDIO_STREAM_E) ) {
        if (this->audio_tracks_count < MAX_AUDIO_TRACKS) {
@@ -2060,7 +2080,6 @@ static int demux_ts_get_optional_data(demux_plugin_t *this_gen,
   demux_ts_t *this = (demux_ts_t *) this_gen;
   char *str = data;
   int channel = *((int *)data);
-  int track_num;
 
   /* be a bit paranoid */
   if (this == NULL || this->stream == NULL)

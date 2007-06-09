@@ -75,8 +75,9 @@ gnomevfs_plugin_get_capabilities (input_plugin_t *this_gen)
 #define SSH_BUFFER_SIZE 256 * 1024
 
 static off_t
-gnomevfs_plugin_read (input_plugin_t *this_gen, char *buf, off_t len)
+gnomevfs_plugin_read (input_plugin_t *this_gen, void *buf_gen, off_t len)
 {
+  char *buf = (char *)buf_gen;
 	gnomevfs_input_t *this = (gnomevfs_input_t *) this_gen;
 	off_t n, num_bytes;
 

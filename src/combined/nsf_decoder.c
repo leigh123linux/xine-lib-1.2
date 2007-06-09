@@ -39,6 +39,8 @@
 #include "types.h"
 #include "nsf.h"
 
+#include "nsf_combined.h"
+
 typedef struct {
   audio_decoder_class_t   decoder_class;
 } nsf_class_t;

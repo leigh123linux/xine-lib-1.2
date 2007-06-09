@@ -77,7 +77,7 @@ typedef struct {
 
 
 static off_t rtsp_plugin_read (input_plugin_t *this_gen, 
-                              char *buf, off_t len) {
+                              void *buf, off_t len) {
   rtsp_input_plugin_t *this = (rtsp_input_plugin_t *) this_gen;
   off_t               n;
 

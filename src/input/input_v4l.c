@@ -1192,7 +1192,7 @@ static int v4l_adjust_realtime_speed(v4l_input_plugin_t *this, fifo_buffer_t *fi
  * Plugin read.
  * This function is not supported by the plugin.
  */
-static off_t v4l_plugin_read (input_plugin_t *this_gen, char *buf, off_t len) {
+static off_t v4l_plugin_read (input_plugin_t *this_gen, void *buf, off_t len) {
   lprintf("Read not supported\n");
   return 0;
 }

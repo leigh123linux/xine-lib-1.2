@@ -54,6 +54,8 @@
 #include "demux.h"
 #include "bswap.h"
 
+#include "nsf_combined.h"
+
 #define NSF_HEADER_SIZE 0x80
 #define NSF_SAMPLERATE 44100
 #define NSF_BITS 8

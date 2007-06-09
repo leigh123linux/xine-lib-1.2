@@ -32,6 +32,7 @@
 #include "buffer.h"
 #include "bswap.h"
 #include "group_audio.h"
+#include "attributes.h"
 
 typedef struct {
   demux_plugin_t       demux_plugin;
@@ -56,7 +57,7 @@ typedef struct {
       uint32_t samplerate;
       uint32_t data_length;
       uint32_t crc32;
-    } __attribute__((__packed__)) tta;
+    } XINE_PACKED tta;
     uint8_t buffer[22]; /* This is the size of the header */
   } header;
 } demux_tta_t;

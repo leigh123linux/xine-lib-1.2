@@ -32,10 +32,6 @@ endif
 #irixal_module = xineplug_ao_out_irixal.la
 #endif
 
-if ENABLE_ARTS
-arts_module = xineplug_ao_out_arts.la
-endif
-
 if ENABLE_DIRECTX
 directx_module = xineplug_ao_out_directx.la
 directx2_module = xineplug_ao_out_directx2.la
@@ -63,7 +59,6 @@ xineplug_LTLIBRARIES =		\
 	$(oss_module)		\
 	$(alsa_module)		\
 	$(sun_module)		\
-	$(arts_module)		\
 	$(esd_module)		\
 	$(directx_module)	\
 	$(coreaudio_module)	\
@@ -95,10 +90,6 @@ xineplug_ao_out_sun_la_LIBADD = $(XINE_LIB)
 #xineplug_ao_out_irixal_la_SOURCES = audio_irixal_out.c 
 #xineplug_ao_out_irixal_la_LIBADD = $(IRIXAL_LIBS)
 #xineplug_ao_out_irixal_la_CFLAGS = $(AM_CFLAGS) $(IRIXAL_CFLAGS)
-
-xineplug_ao_out_arts_la_SOURCES = audio_arts_out.c
-xineplug_ao_out_arts_la_LIBADD = $(ARTS_LIBS) $(XINE_LIB)
-xineplug_ao_out_arts_la_CFLAGS = $(AM_CFLAGS) $(ARTS_CFLAGS)
 
 xineplug_ao_out_directx_la_SOURCES = audio_directx_out.c
 xineplug_ao_out_directx_la_LIBADD = $(DIRECTX_AUDIO_LIBS) $(XINE_LIB)

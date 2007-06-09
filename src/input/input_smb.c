@@ -66,9 +66,10 @@ smb_plugin_get_capabilities (input_plugin_t *this_gen)
 
 
 static off_t
-smb_plugin_read (input_plugin_t *this_gen, char *buf, off_t len)
+smb_plugin_read (input_plugin_t *this_gen, void *buf_gen, off_t len)
 {
 	smb_input_t *this = (smb_input_t *) this_gen;
+	char *buf = (char *)buf_gen;
 	off_t n, num_bytes;
 
 	num_bytes = 0;

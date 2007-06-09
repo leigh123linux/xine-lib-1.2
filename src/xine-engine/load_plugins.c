@@ -1721,6 +1721,38 @@ static ao_driver_t *_load_audio_driver (xine_t *this, plugin_node_t *node,
   return driver;
 }
 
+ao_driver_t *_x_load_audio_output_plugin (xine_t *this, const char *id)
+{
+  plugin_node_t      *node;
+  ao_driver_t        *driver = NULL;
+  ao_info_t          *ao_info;
+  plugin_catalog_t   *catalog = this->plugin_catalog;
+  int                 list_id, list_size;
+
+  pthread_mutex_lock (&catalog->lock);
+
+  list_size = xine_sarray_size (this->plugin_catalog->plugin_lists[PLUGIN_AUDIO_OUT - 1]);
+  for (list_id = 0; list_id < list_size; list_id++) {
+
+    node = xine_sarray_get (this->plugin_catalog->plugin_lists[PLUGIN_AUDIO_OUT - 1], list_id);
+
+    ao_info = (ao_info_t *)node->info->special_info;
+
+    if (!strcasecmp(node->info->id, id)) {
+      driver = _load_audio_driver (this, node, NULL);
+      break;
+    }
+  }
+
+  pthread_mutex_unlock (&catalog->lock);
+
+  if (!driver) {
+    xprintf (this, XINE_VERBOSITY_LOG,
+        _("load_plugins: failed to load audio output plugin <%s>\n"), id);
+  }
+  return driver;
+}
+
 xine_audio_port_t *xine_open_audio_driver (xine_t *this, const char *id,
 					   void *data) {
 
