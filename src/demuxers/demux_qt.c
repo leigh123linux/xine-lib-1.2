@@ -758,7 +758,7 @@ static char *parse_data_atom(unsigned char *data_atom) {
   xine_fast_memcpy(alloc_str, &data_atom[16], alloc_size-1);
   alloc_str[alloc_size-1] = '\0';
 
-  debug_meta_load("demux_qt: got a string of size %d (%s)\n", alloc_size, alloc_str);
+  debug_meta_load("demux_qt: got a string of size %zd (%s)\n", alloc_size, alloc_str);
 
   return alloc_str;
 }
