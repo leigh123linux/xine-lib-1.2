@@ -1308,9 +1308,10 @@ static int internal_write_event_play_external(vdr_input_plugin_t *this, uint32_t
 }
 
 static off_t vdr_plugin_read(input_plugin_t *this_gen, 
-                             char *buf, off_t len)
+                             void *buf_gen, off_t len)
 {
   vdr_input_plugin_t  *this = (vdr_input_plugin_t *) this_gen;
+  char *buf = (char *)buf_gen;
   off_t n, total;
 #ifdef LOG_READ   
   lprintf ("reading %lld bytes...\n", len);

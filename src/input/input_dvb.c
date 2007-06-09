@@ -2468,8 +2468,10 @@ static void ts_rewrite_packets (dvb_input_plugin_t *this, unsigned char * origin
 }
 
 static off_t dvb_plugin_read (input_plugin_t *this_gen,
-			      char *buf, off_t len) {
+			      void *buf_gen, off_t len) {
   dvb_input_plugin_t *this = (dvb_input_plugin_t *) this_gen;
+  char *buf = (char *)buf_gen;
+  
   off_t n=0, total=0;
   int have_mutex=0;
   struct pollfd pfd;

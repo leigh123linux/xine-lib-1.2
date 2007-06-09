@@ -404,8 +404,9 @@ error:
 }
 
 static off_t http_plugin_read (input_plugin_t *this_gen,
-                               char *buf, off_t nlen) {
+                               void *buf_gen, off_t nlen) {
   http_input_plugin_t *this = (http_input_plugin_t *) this_gen;
+  char *buf = (char *)buf_gen;
   off_t n, num_bytes;
 
   num_bytes = 0;

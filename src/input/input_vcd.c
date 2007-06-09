@@ -340,9 +340,10 @@ static int sun_vcd_read(vcd_input_plugin_t *this, long lba, cdsector_t *data)
 
 #if defined (__linux__)
 static off_t vcd_plugin_read (input_plugin_t *this_gen, 
-				char *buf, off_t nlen) {
+			      void *buf_gen, off_t nlen) {
   
   vcd_input_plugin_t *this = (vcd_input_plugin_t *) this_gen;
+  char *buf = (char *)buf_gen;
   static struct cdrom_msf  msf ;
   static cdsector_t        data;
   struct cdrom_msf0       *end_msf;
@@ -398,8 +399,9 @@ static off_t vcd_plugin_read (input_plugin_t *this_gen,
 }
 #elif defined (__FreeBSD__)
 static off_t vcd_plugin_read (input_plugin_t *this_gen, 
-				char *buf, off_t nlen) {
+			      void *buf_gen, off_t nlen) {
   vcd_input_plugin_t *this = (vcd_input_plugin_t *) this_gen;
+  char *buf = (char *)buf_gen;
   static cdsector_t data;
   int bsize = 2352;
 
@@ -422,9 +424,10 @@ static off_t vcd_plugin_read (input_plugin_t *this_gen,
 }
 #elif defined (__sun)
 static off_t vcd_plugin_read (input_plugin_t *this_gen, 
-				char *buf, off_t nlen) {
+			      void *buf_gen, off_t nlen) {
   
   vcd_input_plugin_t *this = (vcd_input_plugin_t *) this_gen;
+  char *buf = (char *)buf_gen;
   static cdsector_t        data;
   struct cdrom_msf0       *end_msf;
   long			   lba;

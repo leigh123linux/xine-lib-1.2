@@ -62,8 +62,9 @@ typedef struct {
 /* 
  * read data from input plugin and write it into file
  */
-static off_t cache_plugin_read(input_plugin_t *this_gen, char *buf, off_t len) {
+static off_t cache_plugin_read(input_plugin_t *this_gen, void *buf_gen, off_t len) {
   cache_input_plugin_t *this = (cache_input_plugin_t *)this_gen;
+  char *buf = (char *)buf_gen;
   off_t read_len = 0;
   off_t main_read;
 

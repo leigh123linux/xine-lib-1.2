@@ -76,8 +76,9 @@ typedef struct {
 
 
 static off_t pnm_plugin_read (input_plugin_t *this_gen, 
-                              char *buf, off_t len) {
+                              void *buf_gen, off_t len) {
   pnm_input_plugin_t *this = (pnm_input_plugin_t *) this_gen;
+  char *buf = (char *)buf_gen;
   off_t               n;
 
   lprintf ("pnm_plugin_read: %"PRId64" bytes ...\n", len);

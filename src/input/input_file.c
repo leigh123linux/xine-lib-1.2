@@ -144,7 +144,7 @@ static int check_mmap_file(file_input_plugin_t *this) {
 }
 #endif
 
-static off_t file_plugin_read (input_plugin_t *this_gen, char *buf, off_t len) {
+static off_t file_plugin_read (input_plugin_t *this_gen, void *buf, off_t len) {
   file_input_plugin_t *this = (file_input_plugin_t *) this_gen;
 
 #ifdef HAVE_MMAP

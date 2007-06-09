@@ -249,8 +249,9 @@ static int host_connect(const char *host, int port, xine_t *xine) {
 #define HIGH_WATER_MARK 100
 
 static off_t net_plugin_read (input_plugin_t *this_gen, 
-			      char *buf, off_t len) {
+			      void *buf_gen, off_t len) {
   net_input_plugin_t *this = (net_input_plugin_t *) this_gen;
+  char *buf = (char *)buf_gen;
   off_t n, total;
 
   lprintf("reading %" PRIdMAX " bytes...\n", (intmax_t)len);

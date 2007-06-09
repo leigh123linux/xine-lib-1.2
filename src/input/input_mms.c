@@ -98,8 +98,9 @@ typedef struct {
 } mms_input_class_t;
 
 static off_t mms_plugin_read (input_plugin_t *this_gen, 
-                              char *buf, off_t len) {
+                              void *buf_gen, off_t len) {
   mms_input_plugin_t *this = (mms_input_plugin_t *) this_gen;
+  char *buf = (char *)buf_gen;
   off_t               n = 0;
 
   lprintf ("mms_plugin_read: %"PRId64" bytes ...\n", len);

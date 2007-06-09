@@ -2243,7 +2243,7 @@ static uint32_t cdda_plugin_get_capabilities (input_plugin_t *this_gen) {
 }
 
 
-static off_t cdda_plugin_read (input_plugin_t *this_gen, char *buf, off_t len) {
+static off_t cdda_plugin_read (input_plugin_t *this_gen, void *buf, off_t len) {
 
   /* only allow reading in block-sized chunks */
 
