@@ -73,7 +73,7 @@ xineplug_dmx_qt_la_LIBADD = $(XINE_LIB) $(ZLIB_LIBS)
 xineplug_dmx_qt_la_CPPFLAGS = $(ZLIB_CPPFLAGS)
 
 xineplug_dmx_asf_la_SOURCES = demux_asf.c asfheader.c
-xineplug_dmx_asf_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
+xineplug_dmx_asf_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(LTLIBICONV)
 xineplug_dmx_asf_la_CFLAGS = $(AM_CFLAGS) -fno-strict-aliasing
 
 xineplug_dmx_fli_la_SOURCES = demux_fli.c
