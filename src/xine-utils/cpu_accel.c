@@ -24,7 +24,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+
+#if defined(HAVE_MLIB) && defined(MLIB_LAZYLOAD)
 #include <dlfcn.h>
+#endif
 
 #if defined (__SVR4) && defined (__sun)
 #include <sys/systeminfo.h>
