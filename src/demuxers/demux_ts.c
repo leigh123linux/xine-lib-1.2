@@ -1305,7 +1305,6 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
     case ISO_13818_PES_PRIVATE:
       for (i = 5; i < coded_length; i += stream[i+1] + 2) {
           if ((stream[i] == 0x6a) && (this->audio_tracks_count < MAX_AUDIO_TRACKS)) {
-          uint32_t format_identifier=0;
           int i, found = 0;
           for(i = 0; i < this->audio_tracks_count; i++) {
             if(this->audio_tracks[i].pid == pid) {
@@ -2081,7 +2080,6 @@ static int demux_ts_get_optional_data(demux_plugin_t *this_gen,
   demux_ts_t *this = (demux_ts_t *) this_gen;
   char *str = data;
   int channel = *((int *)data);
-  int track_num;
 
   /* be a bit paranoid */
   if (this == NULL || this->stream == NULL)
