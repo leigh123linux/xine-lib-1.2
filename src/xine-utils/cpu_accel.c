@@ -58,7 +58,8 @@ static uint32_t arch_accel (void)
 {
   uint32_t caps;
 
-#ifdef __x86_64__
+#if defined(__x86_64__) || \
+  ( defined(__SSE__) && defined(__SSE2__) && defined(__MMX__) )
   /* No need to test for this on AMD64, we know what the
      platform has.  */
   caps = MM_ACCEL_X86_MMX | MM_ACCEL_X86_SSE | MM_ACCEL_X86_MMXEXT | MM_ACCEL_X86_SSE2
@@ -158,6 +159,9 @@ static uint32_t arch_accel (void)
   caps = 0;
 #endif /* _MSC_VER */
 
+#endif /* x86_64 or built-in options */
+
+#ifndef __x86_64__
   /* test OS support for SSE */
   if (caps & MM_ACCEL_X86_SSE) {
     void (*old_sigill_handler)(int);
