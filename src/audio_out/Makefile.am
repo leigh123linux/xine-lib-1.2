@@ -69,27 +69,27 @@ xineplug_LTLIBRARIES = xineplug_ao_out_none.la xineplug_ao_out_file.la \
 	$(jack_module)
 
 xineplug_ao_out_none_la_SOURCES = audio_none_out.c
-xineplug_ao_out_none_la_LIBADD = $(XINE_LIB)
+xineplug_ao_out_none_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 xineplug_ao_out_none_la_CFLAGS = $(VISIBILITY_FLAG)
 xineplug_ao_out_none_la_LDFLAGS = -avoid-version -module
 
 xineplug_ao_out_file_la_SOURCES = audio_file_out.c
-xineplug_ao_out_file_la_LIBADD = $(XINE_LIB)
+xineplug_ao_out_file_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 xineplug_ao_out_file_la_CFLAGS = $(VISIBILITY_FLAG)
 xineplug_ao_out_file_la_LDFLAGS = -avoid-version -module
 
 xineplug_ao_out_oss_la_SOURCES = audio_oss_out.c
-xineplug_ao_out_oss_la_LIBADD = $(XINE_LIB)
+xineplug_ao_out_oss_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 xineplug_ao_out_oss_la_CFLAGS = $(VISIBILITY_FLAG)
 xineplug_ao_out_oss_la_LDFLAGS = -avoid-version -module
 
 xineplug_ao_out_alsa_la_SOURCES = audio_alsa_out.c
-xineplug_ao_out_alsa_la_LIBADD = $(ALSA_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
+xineplug_ao_out_alsa_la_LIBADD = $(ALSA_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_ao_out_alsa_la_CFLAGS = $(VISIBILITY_FLAG) $(ALSA_CFLAGS)
 xineplug_ao_out_alsa_la_LDFLAGS = -avoid-version -module
 
 xineplug_ao_out_esd_la_SOURCES = audio_esd_out.c 
-xineplug_ao_out_esd_la_LIBADD = $(ESD_LIBS) $(XINE_LIB)
+xineplug_ao_out_esd_la_LIBADD = $(ESD_LIBS) $(XINE_LIB) $(LTLIBINTL)
 xineplug_ao_out_esd_la_CFLAGS = $(VISIBILITY_FLAG) $(ESD_CFLAGS)
 xineplug_ao_out_esd_la_LDFLAGS = -avoid-version -module
 
@@ -125,7 +125,7 @@ xineplug_ao_out_coreaudio_la_LDFLAGS = \
 xineplug_ao_out_coreaudio_la_CFLAGS = -framework CoreAudio -framework AudioUnit $(VISIBILITY_FLAG)
 
 xineplug_ao_out_pulseaudio_la_SOURCES = audio_pulse_out.c
-xineplug_ao_out_pulseaudio_la_LIBADD = $(PULSEAUDIO_LIBS) $(XINE_LIB)
+xineplug_ao_out_pulseaudio_la_LIBADD = $(PULSEAUDIO_LIBS) $(XINE_LIB) $(LTLIBINTL)
 xineplug_ao_out_pulseaudio_la_CFLAGS = $(VISIBILITY_FLAG) $(PULSEAUDIO_CFLAGS)
 xineplug_ao_out_pulseaudio_la_LDFLAGS = -avoid-version -module
 
@@ -141,6 +141,6 @@ xineplug_ao_out_fusionsound_la_CFLAGS = $(VISIBILITY_FLAG) $(FUSIONSOUND_CFLAGS)
 xineplug_ao_out_fusionsound_la_LDFLAGS = -avoid-version -module
 
 xineplug_ao_out_jack_la_SOURCES = audio_jack_out.c
-xineplug_ao_out_jack_la_LIBADD = $(JACK_LIBS) $(XINE_LIB)
+xineplug_ao_out_jack_la_LIBADD = $(JACK_LIBS) $(XINE_LIB) $(LTLIBINTL)
 xineplug_ao_out_jack_la_CFLAGS = $(VISIBILITY_FLAG) $(JACK_CFLAGS)
 xineplug_ao_out_jack_la_LDFLAGS = -avoid-version -module

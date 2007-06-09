@@ -14,9 +14,9 @@ AM_CFLAGS = $(LIBCDIO_CFLAGS) $(LIBVCD_CFLAGS)
 xineplug_inp_vcd_la_SOURCES = $(vcd_SRCS)
 xineplug_inp_vcd_la_LDFLAGS = -avoid-version -module
 if HAVE_VCDNAV
-xineplug_inp_vcd_la_LIBADD = $(XINE_LIB) $(LIBVCDINFO_LIBS)
+xineplug_inp_vcd_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(LIBVCDINFO_LIBS)
 else
-xineplug_inp_vcd_la_LIBADD = $(XINE_LIB) $(LIBVCD_LIBS) $(LIBVCDINFO_LIBS) -lm
+xineplug_inp_vcd_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(LIBVCD_LIBS) $(LIBVCDINFO_LIBS) -lm
 endif
 
 endif

@@ -19,9 +19,9 @@ xineplug_decode_dts_la_CFLAGS = $(LIBDTS_CFLAGS) $(VISIBILITY_FLAG) $(fnsa)
 xineplug_decode_dts_la_LDFLAGS = $(xineplug_ldflags)
 
 if EXTERNAL_LIBDTS
-xineplug_decode_dts_la_LIBADD = $(XINE_LIB) $(LIBDTS_LIBS) -lm
+xineplug_decode_dts_la_LIBADD = $(XINE_LIB) $(LIBDTS_LIBS) $(LTLIBINTL) -lm
 else
-xineplug_decode_dts_la_LIBADD = $(XINE_LIB) -lm
+xineplug_decode_dts_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) -lm
 endif
 
 noinst_HEADERS = bitstream.h internal-dts.h dts_internal.h tables.h tables_adpcm.h \

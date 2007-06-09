@@ -53,7 +53,7 @@ xineplug_decode_faad_la_SOURCES = \
 	xine_faad_decoder.c
 
 xineplug_decode_faad_la_LDFLAGS = $(xineplug_ldflags)
-xineplug_decode_faad_la_LIBADD = -lm $(XINE_LIB)
+xineplug_decode_faad_la_LIBADD = -lm $(XINE_LIB) $(LTLIBINTL)
 
 noinst_HEADERS = \
 	analysis.h \

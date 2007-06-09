@@ -16,9 +16,9 @@ internal_sources = huffsv46.c huffsv7.c idtag.c mpc_decoder.c \
 endif
 
 if EXTERNAL_MPCDEC
-xineplug_decode_mpc_la_LIBADD = $(XINE_LIB) -lmpcdec
+xineplug_decode_mpc_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) -lmpcdec
 else
-xineplug_decode_mpc_la_LIBADD = $(XINE_LIB)
+xineplug_decode_mpc_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 endif
 
 xineplug_decode_mpc_la_SOURCES = $(internal_sources) xine_musepack_decoder.c
