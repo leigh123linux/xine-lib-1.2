@@ -860,7 +860,7 @@ AC_CHECK_FUNCS([strncasecmp _strnicmp], [have_required_function="yes"])
 
 AC_FUNC_FSEEKO
 
-AC_REPLACE_FUNCS([asprintf basename gettimeofday setenv strndup strpbrk strsep strtok_r timegm unsetenv])
+AC_REPLACE_FUNCS([asprintf basename gettimeofday setenv strndup strpbrk strsep strtok_r timegm unsetenv memmem])
 
 AC_LIBSOURCE([hstrerror.c])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <netdb.h>]], [[hstrerror(0)]])],

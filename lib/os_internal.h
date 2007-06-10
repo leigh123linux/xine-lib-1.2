@@ -339,4 +339,13 @@ void          xine_private_rewinddir(DIR *);
 
 #endif
 
+/* replacement of memmem */
+#ifndef HAVE_MEMMEM
+#define HAVE_MEMMEM
+#define memmem(H, HL, N, NL) \
+  xine_private_memmem((H), (HL), (N), (NL))
+void *xine_internal_memmem (const void *haystack, size_t haystack_len,
+			    const void *needle, size_t needle_len);
+#endif
+
 #endif
