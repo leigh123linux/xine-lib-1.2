@@ -123,13 +123,13 @@ typedef struct {
   config_values_t  *config;
 
   char             *proxyhost;
+  char             *proxyhost_env;
   int               proxyport;
+  int               proxyport_env;
+
   char             *proxyuser;
   char             *proxypassword;
   char             *noproxylist;
-
-  char             *proxyhost_env;
-  int               proxyport_env;
 } http_input_class_t;
 
 static void proxy_host_change_cb (void *this_gen, xine_cfg_entry_t *cfg) {
