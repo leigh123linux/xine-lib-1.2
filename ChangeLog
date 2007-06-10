@@ -1,3 +1,7 @@
+xine-lib (1.1.8) (Unreleased)
+  * Send a channel changed event to the frontend when receiving the SYNC
+    string from last.fm streaming server.
+	
 xine-lib (1.1.7)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.
   * Add support for MDHD version 1 atom in demux_qt. [bug #1679398]
