@@ -32,6 +32,8 @@ xine-lib (1.1.90) (Unreleased)
     at the same time for Linux, and if other operating systems lacks a proper
     software mixing facility you can consider alternative daemons. Note: aRTs
     will not be present in KDE 4.
+  * Convert the FAQ and the Hacker's Guide from DocBook SGML to DocBook 4.4
+    XML, and the figures from fig files to SVG files.
 
 xine-lib (1.1.7)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.
