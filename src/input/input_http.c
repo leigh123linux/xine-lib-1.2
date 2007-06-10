@@ -71,7 +71,6 @@ typedef struct {
 
   xine_stream_t   *stream;
   
-  int              fh;
   char            *mrl;
 
   nbc_t           *nbc; 
@@ -85,26 +84,26 @@ typedef struct {
   char             auth[BUFSIZE];
   char             proxyauth[BUFSIZE];
   
+  char             preview[MAX_PREVIEW_SIZE];
+  off_t            preview_size;
+
   char            *proto;
   char            *user;
   char            *password;
   char            *host;
-  int              port;
   char            *uri;
-  
-  char             preview[MAX_PREVIEW_SIZE];
-  off_t            preview_size;
+  int              port;
 
-  /* 2 spare bytes here */
+  int              fh;
 
-  /* NSV */
-  unsigned char    is_nsv;		/* bool */
-
-  /* Last.FM streaming server */
-  unsigned char    is_lastfm;
+  /** Set to 1 if the stream is a NSV stream. */
+  int              is_nsv:1;
+  /** Set to 1 if the stream comes from last.fm. */
+  int              is_lastfm:1;
+  /** Set to 1 if the stream is ShoutCast. */
+  int              shoutcast_mode:1;
 
   /* ShoutCast */
-  unsigned char    shoutcast_mode;	/* bool */
   int              shoutcast_metaint;
   off_t            shoutcast_pos;
   char            *shoutcast_songtitle;
