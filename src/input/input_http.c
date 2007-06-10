@@ -64,6 +64,7 @@
 #define TAG_ICY_NOTICE2    "icy-notice2:"
 #define TAG_ICY_METAINT    "icy-metaint:"
 #define TAG_CONTENT_TYPE   "Content-Type:"
+#define TAG_LASTFM_SERVER  "Server: last.fm Streaming Server"
 
 typedef struct {
   input_plugin_t   input_plugin;
@@ -98,6 +99,9 @@ typedef struct {
 
   /* NSV */
   unsigned char    is_nsv;		/* bool */
+
+  /* Last.FM streaming server */
+  unsigned char    is_lastfm;
 
   /* ShoutCast */
   unsigned char    shoutcast_mode;	/* bool */
@@ -384,6 +388,25 @@ static off_t http_plugin_read_int (http_input_plugin_t *this,
       nlen = _x_io_tcp_read (this->stream, this->fh, &buf[read_bytes], nlen);
       if (nlen < 0)
         goto error;
+
+      /* Identify SYNC string for last.fm, this is limited to last.fm
+       * streaming servers to avoid hitting on tracks metadata for other
+       * servers.
+       */
+      if ( this->is_lastfm &&
+	   memmem(&buf[read_bytes], nlen, "SYNC", 4) != NULL ) {
+	/* Tell frontend to update the UI */
+	const xine_event_t event = {
+	  .type = XINE_EVENT_UI_CHANNELS_CHANGED,
+	  .stream = this->stream,
+	  .data = NULL,
+	  .data_length = 0
+	};
+
+	lprintf("SYNC from last.fm server received\n");
+
+	xine_event_send(this->stream, &event);
+      }
 
       this->shoutcast_pos += nlen;
     }
@@ -919,6 +942,10 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
             this->is_nsv = 1;
           }
         }
+	if ( !strncasecmp(this->buf, TAG_LASTFM_SERVER, sizeof(TAG_LASTFM_SERVER)-1) ) {
+	  lprintf("last.fm streaming server detected\n");
+	  this->is_lastfm = 1;
+	}
       }
  
       if (len == -1)
