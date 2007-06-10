@@ -39,7 +39,7 @@ distclean-local: clean-docs
 
 if HAVE_XMLTO
 hackersguide.html: $(hackersguide_docbook)
-	xmlto html-nochunks hackersguide.docbook
+	xmlto html-nochunks "$(srcdir)/hackersguide.docbook"
 else
 hackersguide.html: $(hackersguide_docbook)
 	if test x"$(fail_if_missing)" = x"yes"; then \
