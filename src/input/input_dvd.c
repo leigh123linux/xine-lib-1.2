@@ -335,12 +335,11 @@ static void send_mouse_enter_leave_event(dvd_input_plugin_t *this, int direction
     this->mouse_in = !this->mouse_in;
 
   if(direction != this->mouse_in) {
-    xine_event_t        event;
-    xine_spu_button_t   spu_event;
-
-    spu_event.direction = direction;
-    spu_event.button    = this->mouse_buttonN;
-    
+    const xine_spu_button_t spu_event = {
+      .direction = direction,
+      .button    = this->mouse_buttonN
+    };
+    xine_event_t event;
     event.type        = XINE_EVENT_SPU_BUTTON;
     event.stream      = this->stream;
     event.data        = &spu_event;
@@ -356,8 +355,6 @@ static void send_mouse_enter_leave_event(dvd_input_plugin_t *this, int direction
  
 static int update_title_display(dvd_input_plugin_t *this) {
   char ui_title[MAX_STR_LEN + 1];
-  xine_event_t uevent;
-  xine_ui_data_t data;
   int tt=-1, pr=-1;
   size_t ui_str_length=0;
   int num_tt = 0;
@@ -434,13 +431,19 @@ static int update_title_display(dvd_input_plugin_t *this) {
 #ifdef INPUT_DEBUG
   printf("input_dvd: Changing title to read '%s'\n", ui_title);
 #endif
-  uevent.type = XINE_EVENT_UI_SET_TITLE;
-  uevent.stream = this->stream;
-  uevent.data = &data;
-  uevent.data_length = sizeof(data);;
-  memcpy(data.str, ui_title, strlen(ui_title) + 1);
-  data.str_len = strlen(ui_title) + 1;
-  xine_event_send(this->stream, &uevent);
+  {
+    xine_ui_data_t data;
+    xine_event_t uevent;
+    uevent.type = XINE_EVENT_UI_SET_TITLE;
+    uevent.stream = this->stream;
+    uevent.data = &data;
+    uevent.data_length = sizeof(data);
+
+    memcpy(data.str, ui_title, strlen(ui_title) + 1);
+    data.str_len = strlen(ui_title) + 1;
+
+    xine_event_send(this->stream, &uevent);
+  }
 
   return 1;
 }
@@ -733,13 +736,14 @@ static buf_element_t *dvd_plugin_read_block (input_plugin_t *this_gen,
       {
 	dvdnav_cell_change_event_t *cell_event = 
 	 (dvdnav_cell_change_event_t*) (block);
-        xine_event_t event;
 
 	/* Tell xine to update the UI */
-	event.type = XINE_EVENT_UI_CHANNELS_CHANGED;
-	event.stream = this->stream;
-	event.data = NULL;
-	event.data_length = 0;
+        xine_event_t event = {
+	  .type = XINE_EVENT_UI_CHANNELS_CHANGED,
+	  .stream = this->stream,
+	  .data = NULL,
+	  .data_length = 0
+	};
 	xine_event_send(this->stream, &event);
 	
 	if( !update_title_display(this) ) {
@@ -1480,7 +1484,6 @@ static int dvd_plugin_open (input_plugin_t *this_gen) {
   
   char                  *locator;
   char                  *title_part;
-  xine_event_t           event;
   xine_cfg_entry_t       region_entry, lang_entry, cfg_entry;
   
   trace_print("Called\n");
@@ -1586,12 +1589,15 @@ static int dvd_plugin_open (input_plugin_t *this_gen) {
   free(class->eject_device);
   class->eject_device = strdup(this->current_dvd_device);
 
-  /* Tell Xine to update the UI */
-  event.type = XINE_EVENT_UI_CHANNELS_CHANGED;
-  event.stream = this->stream;
-  event.data = NULL;
-  event.data_length = 0;
-  xine_event_send(this->stream, &event);
+  { /* Tell Xine to update the UI */
+    const xine_event_t event = {
+      .type = XINE_EVENT_UI_CHANNELS_CHANGED,
+      .stream = this->stream,
+      .data = NULL,
+      .data_length = 0
+    };
+    xine_event_send(this->stream, &event);
+  }
 
   update_title_display(this);
   
