@@ -10,4 +10,3 @@ xinepost_LTLIBRARIES = xineplug_post_audio_filters.la
 xineplug_post_audio_filters_la_SOURCES = \
         upmix.c upmix_mono.c filter.c window.c stretch.c volnorm.c audio_filters.c
 xineplug_post_audio_filters_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) -lm
-

@@ -9,7 +9,7 @@ xinepost_LTLIBRARIES = xineplug_post_tvtime.la
 
 xineplug_post_tvtime_la_SOURCES = xine_plugin.c \
 	deinterlace.c pulldown.c speedy.c tvtime.c 
-xineplug_post_tvtime_la_LIBADD = $(XINE_LIB) \
+xineplug_post_tvtime_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) \
 	$(top_builddir)/src/post/deinterlace/plugins/libdeinterlaceplugins.la
 
 noinst_HEADERS = deinterlace.h pulldown.h speedtools.h speedy.h tvtime.h

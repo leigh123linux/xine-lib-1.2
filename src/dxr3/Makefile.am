@@ -25,15 +25,15 @@ xineplug_LTLIBRARIES =	xineplug_decode_dxr3_video.la \
 endif
 
 xineplug_decode_dxr3_video_la_SOURCES = dxr3_decode_video.c
-xineplug_decode_dxr3_video_la_LIBADD = $(XINE_LIB) 
+xineplug_decode_dxr3_video_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 if WITH_EXTERNAL_DVDNAV
 xineplug_decode_dxr3_spu_la_SOURCES = dxr3_decode_spu.c
-xineplug_decode_dxr3_spu_la_LIBADD = $(XINE_LIB) $(DVDNAV_LIBS)
+xineplug_decode_dxr3_spu_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(DVDNAV_LIBS)
 xineplug_decode_dxr3_spu_la_CFLAGS = $(AM_CFLAGS) $(DVDNAV_CFLAGS)
 else
 xineplug_decode_dxr3_spu_la_SOURCES = dxr3_decode_spu.c nav_read.c
-xineplug_decode_dxr3_spu_la_LIBADD = $(XINE_LIB)
+xineplug_decode_dxr3_spu_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 xineplug_decode_dxr3_spu_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/input/libdvdnav
 endif
 
@@ -43,4 +43,4 @@ xineplug_vo_out_dxr3_la_SOURCES = \
 	dxr3_scr.c \
 	video_out_dxr3.c 
 
-xineplug_vo_out_dxr3_la_LIBADD = $(link_fame) $(link_rte) $(link_x_libs) $(XINE_LIB) $(DYNAMIC_LD_LIBS) -lm
+xineplug_vo_out_dxr3_la_LIBADD = $(link_fame) $(link_rte) $(link_x_libs) $(XINE_LIB) $(LTLIBINTL) $(DYNAMIC_LD_LIBS) -lm

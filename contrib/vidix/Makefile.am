@@ -16,4 +16,3 @@ $(top_builddir)/contrib/libdha/libdha.la:
 
 libvidix_la_SOURCES = vidixlib.c
 libvidix_la_LIBADD = $(DYNAMIC_LD_LIBS) $(top_builddir)/contrib/libdha/libdha.la
-

@@ -45,4 +45,3 @@ libxineutils_la_SOURCES = $(pppc_files) \
 	sorted_array.c \
 	pool.c \
 	ring_buffer.c
-

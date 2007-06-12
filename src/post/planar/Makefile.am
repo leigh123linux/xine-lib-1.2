@@ -25,6 +25,6 @@ libpost_planar_asm_la_CFLAGS  = $(O1_CFLAGS) -fomit-frame-pointer $(AM_CFLAGS)
 xinepost_LTLIBRARIES = xineplug_post_planar.la
 xineplug_post_planar_la_SOURCES = planar.c invert.c expand.c fill.c boxblur.c \
                                   denoise3d.c unsharp.c pp.c
-xineplug_post_planar_la_LIBADD  = $(XINE_LIB) $(postproc_lib) -lm $(PTHREAD_LIBS) $(noinst_LTLIBRARIES)
+xineplug_post_planar_la_LIBADD  = $(XINE_LIB) $(postproc_lib) -lm $(PTHREAD_LIBS) $(LTLIBINTL) $(noinst_LTLIBRARIES)
 xineplug_post_planar_la_CFLAGS  = $(DEFAULT_OCFLAGS) $(AM_CFLAGS)
 xineplug_post_planar_la_LDFLAGS = $(AM_LDFLAGS) $(xineplug_ldflags) $(IMPURE_TEXT_LDFLAGS)

@@ -15,7 +15,7 @@ Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
 	zlib1g-dev, libartsc0-dev,
 	liblircclient-dev, libjack0.100.0-dev | libjack-dev,
 	libdirectfb-dev, libgtk2.0-dev,
-	libflac-dev, libpulse-dev, libsdl1.2-dev,
+	libflac-dev, libpulse-dev, libsdl1.2-dev, libwavpack-dev,
 	libsmbclient-dev, libspeex-dev, libmng-dev, 
 	libmad0-dev, libmpcdec-dev, libcdio-dev (>= 0.76-1), 
 	w3m, transfig, gs, sgmltools-lite

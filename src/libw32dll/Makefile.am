@@ -23,10 +23,10 @@ xineplug_decode_w32dll_la_LIBADD = \
 	$(top_builddir)/src/libw32dll/wine/libwine.la \
 	$(top_builddir)/src/libw32dll/DirectShow/libds_filter.la \
 	$(top_builddir)/src/libw32dll/dmo/libdmo_filter.la \
-	$(XINE_LIB) $(PTHREAD_LIBS) -lm $(KSTAT_LIBS) $(XDG_BASEDIR_LIBS)
+	$(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) -lm $(KSTAT_LIBS) $(XDG_BASEDIR_LIBS)
 xineplug_decode_w32dll_la_CPPFLAGS = $(AM_CPPFLAGS) $(XDG_BASEDIR_CPPFLAGS)
 
 xineplug_decode_qt_la_SOURCES = qt_decoder.c
 xineplug_decode_qt_la_LIBADD = \
 	$(top_builddir)/src/libw32dll/wine/libwine.la \
-	$(XINE_LIB) $(PTHREAD_LIBS) -lm $(KSTAT_LIBS)
+	$(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) -lm $(KSTAT_LIBS)

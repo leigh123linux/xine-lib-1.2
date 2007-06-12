@@ -67,6 +67,8 @@ endif
 CONFIGURE_FLAGS := --prefix=/usr \
 	--with-external-libmad \
 	--with-external-a52dec \
+	--with-external-libdts \
+	--with-wavpack \
 	$(DEB_BUILD_CONFIG_OPTIONS) \
 	CFLAGS="$(CFLAGS)"
 

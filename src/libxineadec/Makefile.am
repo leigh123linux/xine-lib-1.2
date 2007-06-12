@@ -61,12 +61,12 @@ xineplug_decode_lpcm_la_LIBADD = $(XINE_LIB)
 
 xineplug_decode_mpc_la_SOURCES = xine_musepack_decoder.c
 xineplug_decode_mpc_la_DEPENDENCIES = $(MPCDEC_DEPS)
-xineplug_decode_mpc_la_LIBADD = $(XINE_LIB) $(MPCDEC_LIBS)
+xineplug_decode_mpc_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(MPCDEC_LIBS)
 xineplug_decode_mpc_la_CFLAGS = $(AM_CFLAGS) $(MPCDEC_CFLAGS)
 
 xineplug_decode_dts_la_SOURCES = xine_dts_decoder.c
 xineplug_decode_dts_la_DEPENDENCIES = $(LIBDTS_DEPS)
-xineplug_decode_dts_la_LIBADD = $(XINE_LIB) $(LIBDTS_LIBS)
+xineplug_decode_dts_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(LIBDTS_LIBS)
 xineplug_decode_dts_la_CFLAGS = $(AM_CFLAGS) $(LIBDTS_CFLAGS)
 
 xineplug_decode_mad_la_SOURCES = xine_mad_decoder.c
@@ -76,9 +76,9 @@ xineplug_decode_mad_la_CFLAGS = $(AM_CFLAGS) $(LIBMAD_CFLAGS)
 
 xineplug_decode_a52_la_SOURCES = xine_a52_decoder.c
 xineplug_decode_a52_la_DEPENDENCIES = $(A52DEC_DEPS)
-xineplug_decode_a52_la_LIBADD = $(XINE_LIB) $(A52DEC_LIBS) -lm
+xineplug_decode_a52_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(A52DEC_LIBS) -lm
 xineplug_decode_a52_la_CFLAGS = $(AM_CFLAGS) $(A52DEC_CFLAGS)
 
 xineplug_decode_faad_la_SOURCES = xine_faad_decoder.c
-xineplug_decode_faad_la_LIBADD = $(XINE_LIB) $(top_builddir)/contrib/libfaad/libfaad.la -lm
+xineplug_decode_faad_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(top_builddir)/contrib/libfaad/libfaad.la -lm
 xineplug_decode_faad_la_CPPFLAGS = -I$(top_srcdir)/contrib/libfaad

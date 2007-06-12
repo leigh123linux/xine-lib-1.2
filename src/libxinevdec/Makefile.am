@@ -21,7 +21,7 @@ xineplug_LTLIBRARIES = $(image_module) \
 	xineplug_decode_yuv.la
 
 xineplug_decode_bitplane_la_SOURCES = bitplane.c
-xineplug_decode_bitplane_la_LIBADD = $(XINE_LIB)
+xineplug_decode_bitplane_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineplug_decode_rgb_la_SOURCES = rgb.c
 xineplug_decode_rgb_la_LIBADD = $(XINE_LIB)

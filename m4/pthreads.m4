@@ -20,6 +20,9 @@ AC_DEFUN([CC_PTHREAD_FLAGS], [
      case $host in
        *-hpux11*) PTHREAD_CFLAGS=""		;;
        *-darwin*) PTHREAD_CFLAGS=""		;;
+       *-solaris*)
+                  # Handle Studio compiler
+                  CC_CHECK_CFLAGS([-mt], [PTHREAD_CFLAGS="-mt -D_REENTRANT"], [PTHREAD_CFLAGS="-D_REENTRANT"]);;
        *)	  PTHREAD_CFLAGS="-pthread"	;;
      esac
   fi
@@ -27,6 +30,9 @@ AC_DEFUN([CC_PTHREAD_FLAGS], [
      case $host in
        *-hpux11*) PTHREAD_LIBS="-lpthread"	;;
        *-darwin*) PTHREAD_LIBS=""		;;
+       *-solaris*)
+                  # Handle Studio compiler
+                  CC_CHECK_CFLAGS([-mt], [PTHREAD_LIBS="-lpthread -lposix4 -lrt"], [PTHREAD_LIBS="-lpthread -lposix4 -lrt"]);;
        *)	  PTHREAD_LIBS="-pthread"	;;
      esac
   fi
