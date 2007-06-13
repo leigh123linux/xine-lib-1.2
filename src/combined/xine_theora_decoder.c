@@ -63,7 +63,7 @@ typedef struct theora_decoder_s {
   xine_stream_t*     stream;
   int                reject;
   int                op_max_size;
-  char*              packet;
+  unsigned char*     packet;
   int                done;
   int                width, height;
   double             ratio;
@@ -74,7 +74,7 @@ typedef struct theora_decoder_s {
   int                initialized;
 } theora_decoder_t;
 
-static void readin_op (theora_decoder_t *this, char* src, int size) {
+static void readin_op (theora_decoder_t *this, unsigned char* src, int size) {
   if ( this->done+size > this->op_max_size) {
     while (this->op_max_size < this->done+size)
       this->op_max_size=this->op_max_size*2;
