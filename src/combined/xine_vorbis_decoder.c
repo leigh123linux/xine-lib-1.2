@@ -79,8 +79,11 @@ static void vorbis_reset (audio_decoder_t *this_gen) {
 
   vorbis_decoder_t *this = (vorbis_decoder_t *) this_gen;
 
-  if( !this->header_count )
-    vorbis_block_init(&this->vd,&this->vb);     
+  if( this->header_count ) return;
+
+  /* clear block first, as it might contain allocated data */
+  vorbis_block_clear(&this->vb);
+  vorbis_block_init(&this->vd,&this->vb);     
 }
 
 static void vorbis_discontinuity (audio_decoder_t *this_gen) {
