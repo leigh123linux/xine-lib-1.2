@@ -41,6 +41,12 @@
 #define B2N_32(x) x = bswap_32(x)
 #define B2N_64(x) x = bswap_64(x)
 
+#elif defined(__SVR4) && defined(__sun)
+#include <sys/byteorder.h>
+#define B2N_16(x) x = BSWAP_16(x)
+#define B2N_32(x) x = BSWAP_32(x)
+#define B2N_64(x) x = BSWAP_64(x)
+
 #elif defined(__APPLE__)
 #include <libkern/OSByteOrder.h>
 #define B2N_16(x) x = OSSwapBigToHostInt16(x)
@@ -67,11 +73,11 @@
 
 /* This is a slow but portable implementation, it has multiple evaluation 
  * problems so beware.
- * Old FreeBSD's and Solaris don't have <byteswap.h> or any other such 
+ * Old FreeBSD and Windows don't have <byteswap.h> or any other such 
  * functionality! 
  */
 
-#elif defined(__FreeBSD__) || defined(__sun) || defined(__bsdi__) || defined(WIN32) || defined(__CYGWIN__)
+#elif defined(__FreeBSD__) || defined(__bsdi__) || defined(WIN32) || defined(__CYGWIN__)
 #define B2N_16(x) \
  x = ((((x) & 0xff00) >> 8) | \
       (((x) & 0x00ff) << 8))
