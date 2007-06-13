@@ -115,7 +115,7 @@
 
 #define BUFSIZE 16384
 
-#define NOPID 0xffff
+#define DVB_NOPID 0xffff
 
 /* define stream types 
  * administrative/system PIDs first */
@@ -657,7 +657,7 @@ static int dvb_set_pidfilter(dvb_input_plugin_t * this, int filter, ushort pid, 
 {
     tuner_t *tuner = this->tuner;
 
-   if(this->channels[this->channel].pid [filter] !=NOPID) {
+   if(this->channels[this->channel].pid [filter] !=DVB_NOPID) {
       ioctl(tuner->fd_pidfilter[filter], DMX_STOP);
     }
    
@@ -680,7 +680,7 @@ static int dvb_set_sectfilter(dvb_input_plugin_t * this, int filter, ushort pid,
 {
     tuner_t *tuner = this->tuner;
 
-    if(this->channels[this->channel].pid [filter] !=NOPID) {
+    if(this->channels[this->channel].pid [filter] !=DVB_NOPID) {
       ioctl(tuner->fd_pidfilter[filter], DMX_STOP);
     }
     
@@ -1148,7 +1148,7 @@ static void parse_pmt(dvb_input_plugin_t *this, const unsigned char *buf, int se
 	    * parsing the descriptor. */
 	    if(has_subs <= MAX_SUBTITLES) {
               xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"input_dvb: Adding SUBTITLES: PID 0x%04x\n", elementary_pid);
-               if(this->channels[this->channel].subpid [has_subs] !=NOPID) {
+               if(this->channels[this->channel].subpid [has_subs] !=DVB_NOPID) {
                   ioctl(this->tuner->fd_subfilter[has_subs], DMX_STOP);
                }
                this->channels[this->channel].subpid [has_subs] = elementary_pid;
@@ -3056,7 +3056,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 
     /* Clear all pids, the pmt will tell us which to use */
     for (x = 0; x < MAX_FILTERS; x++){
-      this->channels[this->channel].pid[x] = NOPID;
+      this->channels[this->channel].pid[x] = DVB_NOPID;
     }  
 
 
