@@ -22,7 +22,7 @@ AC_DEFUN([CC_PTHREAD_FLAGS], [
        *-darwin*) PTHREAD_CFLAGS=""		;;
        *-solaris*)
                   # Handle Studio compiler
-                  CC_CHECK_CFLAGS([-mt], [PTHREAD_CFLAGS="-mt -D_REENTRANT"], [PTHREAD_CFLAGS="-D_REENTRANT"]);;
+                  CC_CHECK_CFLAGS([-mt], [PTHREAD_CFLAGS="-mt"]);;
        *)	  PTHREAD_CFLAGS="-pthread"	;;
      esac
   fi
@@ -31,8 +31,8 @@ AC_DEFUN([CC_PTHREAD_FLAGS], [
        *-hpux11*) PTHREAD_LIBS="-lpthread"	;;
        *-darwin*) PTHREAD_LIBS=""		;;
        *-solaris*)
-                  # Handle Studio compiler
-                  CC_CHECK_CFLAGS([-mt], [PTHREAD_LIBS="-lpthread -lposix4 -lrt"], [PTHREAD_LIBS="-lpthread -lposix4 -lrt"]);;
+                  # Use the same libraries for gcc and sun studio cc
+                  PTHREAD_LIBS="-lpthread -lposix4 -lrt";;
        *)	  PTHREAD_LIBS="-pthread"	;;
      esac
   fi
