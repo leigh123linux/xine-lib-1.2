@@ -105,9 +105,9 @@ static int open_nsf_file(demux_nsf_t *this) {
 
   this->total_songs = header[6];
   this->current_song = header[7];
-  this->title = strdup(&header[0x0E]);
-  this->artist = strdup(&header[0x2E]);
-  this->copyright = strdup(&header[0x4E]);
+  this->title = strndup((char*)&header[0x0E], 0x20);
+  this->artist = strndup((char*)&header[0x2E], 0x20);
+  this->copyright = strndup((char*)&header[0x4E], 0x20);
 
   this->filesize = this->input->get_length(this->input);
 
