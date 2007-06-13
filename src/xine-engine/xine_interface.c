@@ -947,7 +947,7 @@ xine_post_out_t * xine_get_audio_source(xine_stream_t *stream) {
 int _x_message(xine_stream_t *stream, int type, ...) {
   xine_ui_message_data_t *data;
   xine_event_t            event;
-  char                   *explanation;
+  const char              *explanation;
   int                     size;
   int                     n;
   va_list                 ap;
