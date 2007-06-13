@@ -30,6 +30,7 @@
 */
 
 #include "xineutils.h"
+#include "bswap.h"
 #include "rmff.h"
 
 /*
