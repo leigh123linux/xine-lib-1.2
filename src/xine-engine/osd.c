@@ -1005,7 +1005,7 @@ static int osd_search(osd_fontchar_t *array, size_t n, uint16_t code) {
  * get next unicode value 
  */
 static uint16_t osd_iconv_getunicode(xine_t *xine, 
-				     iconv_t *cd, const char *encoding, ICONV_CONST char **inbuf,
+				     iconv_t cd, const char *encoding, ICONV_CONST char **inbuf,
 				     size_t *inbytesleft) {
   uint16_t unicode;
   char *outbuf = (char*)&unicode;
