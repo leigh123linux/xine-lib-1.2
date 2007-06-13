@@ -193,6 +193,7 @@ void read_metadata (speex_decoder_t *this, char * comments, int length)
 static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
   speex_decoder_t *this = (speex_decoder_t *) this_gen;
+  char *const buf_content = (char*)buf->content;
 
   llprintf (LOG_BUFFERS, "decode buf=%8p content=%8p flags=%08x\n",
 	    buf, buf->content, buf->decoder_flags);
@@ -211,7 +212,7 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
 	speex_bits_init (&this->bits);
 
-	spx_header = speex_packet_to_header (buf->content, buf->size);
+	spx_header = speex_packet_to_header (buf_content, buf->size);
 
 	if (!spx_header) {
 	  xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libspeex: could not read Speex header\n");
@@ -261,7 +262,7 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
 	free (spx_header);
       } else if (this->expect_metadata) {
-	read_metadata (this, buf->content, buf->size);
+	read_metadata (this, buf_content, buf->size);
       }
 
       this->header_count--;
@@ -282,14 +283,14 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     }
     
   } else if (this->output_open) {
-    int i, j;
+    int j;
 
     audio_buffer_t *audio_buffer;
 
     audio_buffer =
       this->stream->audio_out->get_buffer (this->stream->audio_out);
 
-    speex_bits_read_from (&this->bits, buf->content, buf->size);
+    speex_bits_read_from (&this->bits, buf_content, buf->size);
 
     for (j = 0; j < this->nframes; j++) {
       int ret;
