@@ -100,11 +100,7 @@ static int open_nsf_file(demux_nsf_t *this) {
     return 0;
 
   /* check for the signature */
-  if ((header[0] != 'N') ||
-      (header[1] != 'E') ||
-      (header[2] != 'S') ||
-      (header[3] != 'M') ||
-      (header[4] != 0x1A))
+  if ( memcmp(header, "NESM\x1A", 5) != 0 )
     return 0;
 
   this->total_songs = header[6];
