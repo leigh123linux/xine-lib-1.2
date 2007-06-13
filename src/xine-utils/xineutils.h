@@ -784,7 +784,7 @@ extern void yuy2_to_yuy2
    int width, int height) XINE_PROTECTED;
 
 /* print a hexdump of the given data */
-void xine_hexdump (const char *buf, int length) XINE_PROTECTED;
+void xine_hexdump (const void *buf, int length) XINE_PROTECTED;
 
 /*
  * Optimization macros for conditions

@@ -474,9 +474,10 @@ void xine_usec_sleep(unsigned usec) {
 
 
 /* print a hexdump of length bytes from the data given in buf */
-void xine_hexdump (const char *buf, int length) {
+void xine_hexdump (const void *buf_gen, int length) {
   int i,j;
   unsigned char c;
+  const uint8_t *const buf = (const uint8_t*)buf;
 
   /* printf ("Hexdump: %i Bytes\n", length);*/
   for(j=0; j<69; j++)
