@@ -2113,7 +2113,7 @@ if test "x$some_snprintf" != "xyes" -o \
 fi
 AC_FUNC_FSEEKO
 AC_CHECK_HEADERS(assert.h byteswap.h malloc.h execinfo.h ucontext.h sys/mman.h sys/mixer.h libgen.h netdb.h dirent.h sys/times.h sys/ioctl.h sys/param.h alloca.h)
-AC_REPLACE_FUNCS(asprintf basename gettimeofday setenv strndup strpbrk strsep strtok_r timegm unsetenv)
+AC_REPLACE_FUNCS(asprintf basename gettimeofday setenv strndup strpbrk strsep strtok_r timegm unsetenv memmem)
 
 AC_LIBSOURCE(hstrerror.c)
 AC_LINK_IFELSE([#include <netdb.h>
