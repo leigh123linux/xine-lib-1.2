@@ -192,7 +192,7 @@ static int open_flac_file(demux_flac_t *flac) {
       lprintf ("VORBIS_COMMENT metadata\n");
       {
         char comments[block_length];
-        void *ptr = comments;
+        char *ptr = comments;
         uint32_t length, user_comment_list_length;
         int cn;
         char *comment;
