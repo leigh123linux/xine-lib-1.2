@@ -451,12 +451,12 @@ AC_ARG_ENABLE([vis],
 	AS_HELP_STRING([--disable-vis], [do not use assembly codes for Sun UltraSPARC CPUs]))
 
 AC_ARG_ENABLE([mlib],
-	AS_HELP_STRING([--disable-mlib], [do not build Sun mediaLib support]))
+	AS_HELP_STRING([--enable-mlib], [build Sun mediaLib support]))
 
 AC_ARG_ENABLE([mlib-lazyload],
 	AS_HELP_STRING([--enable-mlib-lazyload], [check for Sun mediaLib at runtime]))
 
-if test "x$enable_mlib" != xno; then
+if test "x$enable_mlib" = xyes; then
     if test "x$MLIBHOME" = x; then
 	mlibhome=/opt/SUNWmlib
     else
