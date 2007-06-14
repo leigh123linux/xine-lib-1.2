@@ -335,12 +335,12 @@ use internal ffmpeg.
 
     dnl mlib
     AC_ARG_ENABLE([mlib],
-	          [AS_HELP_STRING([--enable-mlib], [do not build Sun mediaLib support (default: enabled)])],
-                  [test x"$enableval" != x"no" && enable_mlib="yes"])
+	          [AS_HELP_STRING([--enable-mlib], [build Sun mediaLib support (default: disabled)])],
+                  [test x"$enableval" != x"yes" && enable_mlib="no"])
     AC_ARG_ENABLE([mlib-lazyload],
                   [AS_HELP_STRING([--enable-mlib-lazyload], [check for Sun mediaLib at runtime])],
                   [test x"$enableval" != x"no" && enable_mlib_lazyload="yes"], [enable_mlib_lazyload="no"])
-    if test x"$enable_mlib" != x"no"; then
+    if test x"$enable_mlib" = x"yes"; then
         mlibhome="$MLIBHOME" test x"$mlibhome" = x"" && mlibhome="/opt/SUNWmlib"
         AC_CHECK_LIB([mlib], [mlib_VideoAddBlock_U8_S16],
                      [saved_CPPFLAGS="$CPPFLAGS" CPPFLAGS="$CPPFLAGS -I$mlibhome/include"
