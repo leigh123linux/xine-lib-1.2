@@ -30,13 +30,8 @@
 */
 
 #include "xineutils.h"
+#include "bswap.h"
 #include "rmff.h"
-
-#define BE_16(x)  ((((uint8_t*)(x))[0] << 8) | ((uint8_t*)(x))[1])
-#define BE_32(x)  ((((uint8_t*)(x))[0] << 24) | \
-                   (((uint8_t*)(x))[1] << 16) | \
-                   (((uint8_t*)(x))[2] << 8) | \
-                    ((uint8_t*)(x))[3])
 
 /*
  * writes header data to a buffer

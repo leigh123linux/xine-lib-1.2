@@ -38,6 +38,9 @@ xine-lib (1.1.90) (Unreleased)
 xine-lib (1.1.8) (Unreleased)
   * Send a channel changed event to the frontend when receiving the SYNC
     string from last.fm streaming server.
+  * Disable mediaLib support by default (the licenses probably disallow the
+    distribution of xine binaries built against mediaLib, and on non-VIS
+    capable boxes is probably worse than our own code).
 
 xine-lib (1.1.7)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.

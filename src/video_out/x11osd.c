@@ -436,7 +436,7 @@ void x11osd_clear(x11osd *osd)
   osd->clean = WIPED;
 }
 
-#define TRANSPARENT 0xffffffff
+#define X11OSD_TRANSPARENT 0xffffffff
 
 #define saturate(n, l, u) ((n) < (l) ? (l) : ((n) > (u) ? (u) : (n)))
 
@@ -526,13 +526,13 @@ void x11osd_blend(x11osd *osd, vo_overlay_t *overlay)
               }
             }
             else {
-              palette[use_clip_palette][j] = TRANSPARENT;
+              palette[use_clip_palette][j] = X11OSD_TRANSPARENT;
             }
           }
           max_palette_colour[use_clip_palette] = overlay->rle[i].color;
         }
 
-        if(palette[use_clip_palette][overlay->rle[i].color] != TRANSPARENT) {
+        if(palette[use_clip_palette][overlay->rle[i].color] != X11OSD_TRANSPARENT) {
           XSetForeground(osd->display, osd->gc, palette[use_clip_palette][overlay->rle[i].color]);
           XFillRectangle(osd->display, osd->bitmap, osd->gc, overlay->x + x, overlay->y + y, width, 1);
 	  if(osd->mode==X11OSD_SHAPED)

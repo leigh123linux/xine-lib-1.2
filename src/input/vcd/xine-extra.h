@@ -49,7 +49,7 @@
   In short this writes a message to buffer 'buf' and to stdout.
 */
 void 
-xine_vlog_msg(xine_t *this, int buf, const char *format, va_list args);
+xine_vlog_msg(xine_t *this, int buf, const char *format, va_list args) XINE_FORMAT_PRINTF(3, 0);
 
 /*! This routine is like xine_log, except it takes a va_list instead
   of a variable number of arguments and writes to stderr rather than
@@ -58,7 +58,7 @@ xine_vlog_msg(xine_t *this, int buf, const char *format, va_list args);
 
   In short this writes a message to buffer 'buf' and to stderr.
 */
-void xine_vlog_err(xine_t *this, int buf, const char *format, va_list args);
+void xine_vlog_err(xine_t *this, int buf, const char *format, va_list args) XINE_FORMAT_PRINTF(3, 0);
 
 /*! Call this before calling any of the xine_log_msg or xine_log_err
   routines. It sets up the xine buffer that will be used in error
