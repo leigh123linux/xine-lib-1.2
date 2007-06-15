@@ -697,7 +697,7 @@ static int detect_mpgaudio_file(input_plugin_t *input) {
      * id3v2 are not specific to mp3 files,
      * flac files can contain id3v2 tags
      */
-    uint32_t tag_size = BE_32_synchsafe(&buf[6]);
+    int tag_size = BE_32_synchsafe(&buf[6]);
     lprintf("try to skip id3v2 tag (%d bytes)\n", tag_size);
     if ((10 + tag_size) >= preview_len) {
       lprintf("cannot skip id3v2 tag\n");

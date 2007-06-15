@@ -193,8 +193,7 @@ static int open_flac_file(demux_flac_t *flac) {
       {
         char comments[block_length];
         char *ptr = comments;
-        uint32_t length, user_comment_list_length;
-        int cn;
+        uint32_t length, user_comment_list_length, cn;
         char *comment;
         char c;
 
