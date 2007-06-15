@@ -2802,7 +2802,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 	    * by numbers...
 	    */
 	    int chanlen = strlen(channame);
-	    int offset = 0;
+	    size_t offset = 0;
 
 	    xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 		     _("input_dvb: exact match for %s not found: trying partial matches\n"), channame);
@@ -2819,7 +2819,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 		idx++;
               }
 	      offset++;
-	      xprintf(this->class->xine,XINE_VERBOSITY_LOG,"%d,%d,%d\n", offset, idx, num_channels);
+	      xprintf(this->class->xine,XINE_VERBOSITY_LOG,"%zd,%d,%d\n", offset, idx, num_channels);
             }
             while ((offset < 6) && (idx == num_channels));
               if (idx < num_channels) {
