@@ -381,7 +381,7 @@ static int ao_pulse_delay (ao_driver_t *this_gen)
 {
   pulse_driver_t *this = (pulse_driver_t *) this_gen;
   pa_usec_t latency = 0;
-  int delay_frames;
+  unsigned int delay_frames;
 
   if ( ! this->stream ) return this->frames_written;
 
