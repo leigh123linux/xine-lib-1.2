@@ -1306,8 +1306,8 @@ static void dvb_parse_si(dvb_input_plugin_t *this) {
 
 /* Helper function for finding the channel index in the channels struct
    given the service_id. If channel is not found, -1 is returned. */
-static int channel_index(dvb_input_plugin_t* this, unsigned int service_id) {
-  unsigned int n;
+static int channel_index(dvb_input_plugin_t* this, int service_id) {
+  int n;
   for (n=0; n < this->num_channels; n++)
     if (this->channels[n].service_id == service_id) 
 	return n;
