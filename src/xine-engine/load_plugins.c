@@ -2271,7 +2271,7 @@ const char *const *xine_list_post_plugins(xine_t *xine) {
   return catalog->ids;
 }
 
-const char *const *xine_list_post_plugins_typed(xine_t *xine, int type) {
+const char *const *xine_list_post_plugins_typed(xine_t *xine, uint32_t type) {
   plugin_catalog_t *catalog = xine->plugin_catalog;
   plugin_node_t    *node;
   int               i;
