@@ -79,7 +79,7 @@ typedef struct pulse_driver_s {
   int               capabilities;
   int               mode;
 
-  int32_t           sample_rate;
+  uint32_t          sample_rate;
   uint32_t          num_channels;
   uint32_t          bits_per_sample;
   uint32_t          bytes_per_frame;
