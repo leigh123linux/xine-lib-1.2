@@ -965,7 +965,7 @@ static int ImlibPaletteLUTGet(xshm_driver_t *this) {
     char *retval = xcb_get_property_value(prop_reply);
 
     j = 1 + retval[0]*4;
-    this->yuv2rgb_cmap = malloc(sizeof(uint8_t) * 32 * 32 * 32);
+    this->yuv2rgb_cmap = xine_xcalloc(sizeof(uint8_t), 32 * 32 * 32);
     for (i = 0; i < 32 * 32 * 32 && j < num_ret; i++)
       this->yuv2rgb_cmap[i] = retval[1+4*retval[j++]+3];
 
