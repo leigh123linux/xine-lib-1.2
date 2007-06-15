@@ -430,7 +430,7 @@ static void fb_update_frame_format(vo_driver_t *this_gen,
 static void fb_overlay_clut_yuv2rgb(fb_driver_t *this,
 				    vo_overlay_t *overlay, fb_frame_t *frame)
 {
-  int i;
+  size_t i;
   clut_t* clut = (clut_t*)overlay->color;
 	
   if(!overlay->rgb_clut)
