@@ -201,7 +201,7 @@ static uint16_t get_le16 (demux_asf_t *this) {
     this->status = DEMUX_FINISHED;
   }
 
-  return LE_16(buf);
+  return _X_LE_16(buf);
 }
 
 static uint32_t get_le32 (demux_asf_t *this) {
@@ -218,7 +218,7 @@ static uint32_t get_le32 (demux_asf_t *this) {
     this->status = DEMUX_FINISHED;
   }
 
-  return LE_32(buf);
+  return _X_LE_32(buf);
 }
 
 static uint64_t get_le64 (demux_asf_t *this) {
@@ -233,7 +233,7 @@ static uint64_t get_le64 (demux_asf_t *this) {
     this->status = DEMUX_FINISHED;
   }
 
-  return LE_64(buf);
+  return _X_LE_64(buf);
 }
 
 static int get_guid_id (demux_asf_t *this, GUID *g) {
@@ -483,10 +483,10 @@ static int asf_read_header (demux_asf_t *this) {
 	uint16_t bmiheader_size;
 	xine_bmiheader *bmiheader;
 	
-	width = LE_32(asf_stream->private_data);
-	height = LE_32(asf_stream->private_data + 4);
+	width = _X_LE_32(asf_stream->private_data);
+	height = _X_LE_32(asf_stream->private_data + 4);
 	/* there is one unknown byte between height and the bmiheader size */
-	bmiheader_size = LE_16(asf_stream->private_data + 9);
+	bmiheader_size = _X_LE_16(asf_stream->private_data + 9);
 	
 	/* FIXME: bmiheader_size must be >= sizeof(xine_bmiheader) */
 	
@@ -935,9 +935,9 @@ static int asf_parse_packet_ecd(demux_asf_t *this, uint32_t  *p_hdr_size) {
           return 1;
         }
         *p_hdr_size += 15;
-        guid->Data1 = LE_32(buf);
-        guid->Data2 = LE_16(buf + 4);
-        guid->Data3 = LE_16(buf + 6);
+        guid->Data1 = _X_LE_32(buf);
+        guid->Data2 = _X_LE_16(buf + 4);
+        guid->Data3 = _X_LE_16(buf + 6);
         if (get_guid_id(this, guid) == GUID_ASF_HEADER) {
           lprintf("new asf header detected\n");
           _x_demux_control_end(this->stream, 0);

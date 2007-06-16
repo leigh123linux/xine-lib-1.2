@@ -247,7 +247,7 @@ static int demux_eawve_send_chunk(demux_eawve_t *this){
 
         if (first_segment) {
           buf->decoder_flags |= BUF_FLAG_FRAME_START;
-          this->sample_counter += LE_32(buf->content);
+          this->sample_counter += _X_LE_32(buf->content);
           first_segment = 0;
         }
 

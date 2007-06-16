@@ -86,7 +86,7 @@ static int open_fli_file(demux_fli_t *this) {
     return 0;
 
   /* validate the file */
-  this->magic_number = LE_16(&this->fli_header[4]);
+  this->magic_number = _X_LE_16(&this->fli_header[4]);
   if ((this->magic_number != FLI_FILE_MAGIC_1) &&
       (this->magic_number != FLI_FILE_MAGIC_2))
     return 0;
@@ -95,7 +95,7 @@ static int open_fli_file(demux_fli_t *this) {
   this->input->seek(this->input, FLI_HEADER_SIZE, SEEK_SET);
 
   /* check if this is a special FLI file from Magic Carpet game */
-  if (LE_16(&this->fli_header[16]) == FLI_CHUNK_MAGIC_1) {
+  if (_X_LE_16(&this->fli_header[16]) == FLI_CHUNK_MAGIC_1) {
     /* if the input is non-seekable, do not bother with playing the
      * special file type */
     if (INPUT_IS_SEEKABLE(this->input)) {
@@ -108,11 +108,11 @@ static int open_fli_file(demux_fli_t *this) {
     this->magic_number = FLI_FILE_MAGIC_3;
   }
 
-  this->frame_count = LE_16(&this->fli_header[6]);
-  this->bih.biWidth = LE_16(&this->fli_header[8]);
-  this->bih.biHeight = LE_16(&this->fli_header[10]);
+  this->frame_count = _X_LE_16(&this->fli_header[6]);
+  this->bih.biWidth = _X_LE_16(&this->fli_header[8]);
+  this->bih.biHeight = _X_LE_16(&this->fli_header[10]);
 
-  this->speed = LE_32(&this->fli_header[16]);
+  this->speed = _X_LE_32(&this->fli_header[16]);
   if (this->magic_number == FLI_FILE_MAGIC_1) {
     /* 
      * in this case, the speed (n) is number of 1/70s ticks between frames:
@@ -169,8 +169,8 @@ static int demux_fli_send_chunk(demux_plugin_t *this_gen) {
     this->status = DEMUX_FINISHED;
     return this->status;
   }
-  chunk_size = LE_32(&fli_buf[0]);
-  chunk_magic = LE_16(&fli_buf[4]);
+  chunk_size = _X_LE_32(&fli_buf[0]);
+  chunk_magic = _X_LE_16(&fli_buf[4]);
 
   if ((chunk_magic == FLI_CHUNK_MAGIC_1) ||
       (chunk_magic == FLI_CHUNK_MAGIC_2)) {

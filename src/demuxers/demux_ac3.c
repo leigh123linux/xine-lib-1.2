@@ -178,10 +178,10 @@ static int open_ac3_file(demux_ac3_t *this) {
     lprintf("looks like a cd audio wav file\n");
 
     /* Find the data chunk */
-    offset = 20 + LE_32(&peak[16]);
+    offset = 20 + _X_LE_32(&peak[16]);
     while (offset < peak_size-8) {
-      unsigned int chunk_tag = LE_32(&peak[offset]);
-      unsigned int chunk_size = LE_32(&peak[offset+4]);
+      unsigned int chunk_tag = _X_LE_32(&peak[offset]);
+      unsigned int chunk_size = _X_LE_32(&peak[offset+4]);
 
       if (chunk_tag == DATA_TAG) {
         offset += 8;

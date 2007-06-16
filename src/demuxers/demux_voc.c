@@ -91,7 +91,7 @@ static int open_voc_file(demux_voc_t *this) {
     return 0;
 
   /* file is qualified */
-  first_block_offset = LE_16(&header[0x14]);
+  first_block_offset = _X_LE_16(&header[0x14]);
   this->input->seek(this->input, first_block_offset, SEEK_SET);
 
   /* load the block preamble */

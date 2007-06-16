@@ -95,7 +95,7 @@ static int asf_reader_get_8(asf_reader_t *reader, uint8_t *value) {
 static int asf_reader_get_16(asf_reader_t *reader, uint16_t *value) {
   if ((reader->size - reader->pos) < 2)
     return 0;
-  *value = LE_16(reader->buffer + reader->pos);
+  *value = _X_LE_16(reader->buffer + reader->pos);
   reader->pos += 2;
   return 1;
 }
@@ -103,7 +103,7 @@ static int asf_reader_get_16(asf_reader_t *reader, uint16_t *value) {
 static int asf_reader_get_32(asf_reader_t *reader, uint32_t *value) {
   if ((reader->size - reader->pos) < 4)
     return 0;
-  *value = LE_32(reader->buffer + reader->pos);
+  *value = _X_LE_32(reader->buffer + reader->pos);
   reader->pos += 4;
   return 1;
 }
@@ -111,7 +111,7 @@ static int asf_reader_get_32(asf_reader_t *reader, uint32_t *value) {
 static int asf_reader_get_64(asf_reader_t *reader, uint64_t *value) {
   if ((reader->size - reader->pos) < 8)
     return 0;
-  *value = LE_64(reader->buffer + reader->pos);
+  *value = _X_LE_64(reader->buffer + reader->pos);
   reader->pos += 8;
   return 1;
 }
@@ -187,9 +187,9 @@ static size_t asf_reader_get_size(asf_reader_t *reader) {
 void asf_get_guid(uint8_t *buffer, GUID *value) {
   int i;
 
-  value->Data1 = LE_32(buffer);
-  value->Data2 = LE_16(buffer + 4);
-  value->Data3 = LE_16(buffer + 6);
+  value->Data1 = _X_LE_32(buffer);
+  value->Data2 = _X_LE_16(buffer + 4);
+  value->Data3 = _X_LE_16(buffer + 6);
   for(i = 0; i < 8; i++) {
     value->Data4[i] = *(buffer + i + 8);
   }

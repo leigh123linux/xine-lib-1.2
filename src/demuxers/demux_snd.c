@@ -85,17 +85,17 @@ static int open_snd_file(demux_snd_t *this) {
     return 0;
 
   /* check the signature */
-  if (BE_32(&header[0]) != snd_TAG)
+  if (_X_BE_32(&header[0]) != snd_TAG)
     return 0;
 
   /* file is qualified; skip over the header bytes in the stream */
   this->input->seek(this->input, SND_HEADER_SIZE, SEEK_SET);
 
-  this->data_start = BE_32(&header[0x04]);
-  this->data_size = BE_32(&header[0x08]);
-  encoding = BE_32(&header[0x0C]);
-  this->audio_sample_rate = BE_32(&header[0x10]);
-  this->audio_channels = BE_32(&header[0x14]);
+  this->data_start = _X_BE_32(&header[0x04]);
+  this->data_size = _X_BE_32(&header[0x08]);
+  encoding = _X_BE_32(&header[0x0C]);
+  this->audio_sample_rate = _X_BE_32(&header[0x10]);
+  this->audio_channels = _X_BE_32(&header[0x14]);
 
   /* basic sanity checks on the loaded audio parameters */
   if ((!this->audio_sample_rate) ||

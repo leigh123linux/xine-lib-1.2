@@ -96,8 +96,8 @@ static int open_aiff_file(demux_aiff_t *this) {
     return 0;
 
   /* check the signature */
-  if ((BE_32(&signature[0]) != FORM_TAG) ||
-      (BE_32(&signature[8]) != AIFF_TAG))
+  if ((_X_BE_32(&signature[0]) != FORM_TAG) ||
+      (_X_BE_32(&signature[8]) != AIFF_TAG))
     return 0;
 
   /* file is qualified; skip over the header bytes in the stream */
@@ -118,8 +118,8 @@ static int open_aiff_file(demux_aiff_t *this) {
       this->status = DEMUX_FINISHED;
       return 0;
     }
-    chunk_type = BE_32(&preamble[0]);
-    chunk_size = BE_32(&preamble[4]);
+    chunk_type = _X_BE_32(&preamble[0]);
+    chunk_size = _X_BE_32(&preamble[4]);
     
     if (chunk_size > sizeof(buffer) / sizeof(buffer[0])) {
       /* the chunk is too large to fit in the buffer -> this cannot be an aiff chunk */
@@ -134,10 +134,10 @@ static int open_aiff_file(demux_aiff_t *this) {
         return 0;
       }
 
-      this->audio_channels = BE_16(&buffer[0]);
-      this->audio_frames = BE_32(&buffer[2]);
-      this->audio_bits = BE_16(&buffer[6]);
-      this->audio_sample_rate = BE_16(&buffer[0x0A]);
+      this->audio_channels = _X_BE_16(&buffer[0]);
+      this->audio_frames = _X_BE_32(&buffer[2]);
+      this->audio_bits = _X_BE_16(&buffer[6]);
+      this->audio_sample_rate = _X_BE_16(&buffer[0x0A]);
       this->audio_bytes_per_second = this->audio_channels *
         (this->audio_bits / 8) * this->audio_sample_rate;
 

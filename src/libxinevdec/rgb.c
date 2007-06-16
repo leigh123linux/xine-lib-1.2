@@ -203,7 +203,7 @@ static void rgb_decode_data (video_decoder_t *this_gen,
             } else if (this->bytes_per_pixel == 2) {
 
               /* ABGR1555 format, little-endian order */
-              packed_pixel = LE_16(&this->buf[buf_ptr]);
+              packed_pixel = _X_LE_16(&this->buf[buf_ptr]);
               buf_ptr += 2;
               UNPACK_BGR15(packed_pixel, r, g, b);
 
@@ -315,7 +315,7 @@ static void rgb_decode_data (video_decoder_t *this_gen,
             } else if (this->bytes_per_pixel == 2) {
 
               /* ARGB1555 format, big-endian order */
-              packed_pixel = BE_16(&this->buf[buf_ptr]);
+              packed_pixel = _X_BE_16(&this->buf[buf_ptr]);
               buf_ptr += 2;
               UNPACK_RGB15(packed_pixel, r, g, b);
 

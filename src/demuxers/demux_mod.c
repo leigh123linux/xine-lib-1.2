@@ -109,7 +109,7 @@ static int probe_mod_file(demux_mod_t *this) {
       return 0;
 
   /* Magic numbers taken from GNU file's magic description */
-  switch( ABE_32(header.values + (1080/sizeof(uint32_t))) ) {
+  switch( _X_ABE_32(header.values + (1080/sizeof(uint32_t))) ) {
   case FOURCC_32('M', '.', 'K', '.'): /* 4-channel Protracker module sound data */
   case FOURCC_32('M', '!', 'K', '!'): /* 4-channel Protracker module sound data */
   case FOURCC_32('F', 'L', 'T', '4'): /* 4-channel Startracker module sound data */

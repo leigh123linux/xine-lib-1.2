@@ -187,8 +187,8 @@ static int read_iff_chunk(demux_iff_t *this) {
         if (this->input->read(this->input, &signature[7], 1) != 1)
           return 0;
       }
-      junk_size = BE_32(&signature[4]);
-      switch( BE_32(&signature[0]) ) {
+      junk_size = _X_BE_32(&signature[4]);
+      switch( _X_BE_32(&signature[0]) ) {
         case IFF_CMAP_CHUNK:
         case IFF_BODY_CHUNK:
         case IFF_DLTA_CHUNK:
@@ -206,19 +206,19 @@ static int read_iff_chunk(demux_iff_t *this) {
           break;
       }
 
-      switch( BE_32(&signature[0]) ) {
+      switch( _X_BE_32(&signature[0]) ) {
         case IFF_FORM_CHUNK:
           if (this->input->read(this->input, buffer, 4) != 4)
             return 0;
-          this->iff_sub_type            = BE_32(&buffer[0]);
+          this->iff_sub_type            = _X_BE_32(&buffer[0]);
           break;
         case IFF_VHDR_CHUNK:
           if( this->vhdr == NULL )
             this->vhdr                  = (Voice8Header *)xine_xmalloc(sizeof(Voice8Header));
-          this->vhdr->oneShotHiSamples  = BE_32(&buffer[0]);
-          this->vhdr->repeatHiSamples   = BE_32(&buffer[4]);
-          this->vhdr->samplesPerHiCycle = BE_32(&buffer[8]);
-          this->vhdr->samplesPerSec     = BE_16(&buffer[12]);
+          this->vhdr->oneShotHiSamples  = _X_BE_32(&buffer[0]);
+          this->vhdr->repeatHiSamples   = _X_BE_32(&buffer[4]);
+          this->vhdr->samplesPerHiCycle = _X_BE_32(&buffer[8]);
+          this->vhdr->samplesPerSec     = _X_BE_16(&buffer[12]);
           this->vhdr->ctOctave          = buffer[14];
           this->vhdr->sCompression      = buffer[15];
           this->audio_channels          = 1;
@@ -237,7 +237,7 @@ static int read_iff_chunk(demux_iff_t *this) {
               return 0;
               break;
           }
-          this->vhdr->volume             = BE_32(&buffer[16]);
+          this->vhdr->volume             = _X_BE_32(&buffer[16]);
           if (this->vhdr->volume > max_volume)
             this->vhdr->volume           = max_volume;
           xprintf (this->stream->xine, XINE_VERBOSITY_LOG, "vhdr->oneShotHiSamples      %d\n",
@@ -300,7 +300,7 @@ static int read_iff_chunk(demux_iff_t *this) {
           /* not yet implemented */
           break;
         case IFF_CHAN_CHUNK:
-          this->chan_settings           = BE_32(&buffer[0]);
+          this->chan_settings           = _X_BE_32(&buffer[0]);
           switch( this->chan_settings ) {
             case STEREO:
               this->audio_volume_left   = this->vhdr->volume;
@@ -325,7 +325,7 @@ static int read_iff_chunk(demux_iff_t *this) {
           break;
         case IFF_PAN_CHUNK:
           this->chan_settings           = PAN;
-          this->pan_sposition           = BE_32(&buffer[0]);
+          this->pan_sposition           = _X_BE_32(&buffer[0]);
           this->audio_channels          = 2;
           this->audio_volume_left       = this->vhdr->volume / (max_volume / this->pan_sposition);
           this->audio_volume_right      = this->vhdr->volume - this->audio_volume_left;
@@ -333,19 +333,19 @@ static int read_iff_chunk(demux_iff_t *this) {
         case IFF_BMHD_CHUNK:
           if( this->bmhd == NULL )
             this->bmhd                  = (BitMapHeader *)xine_xmalloc(sizeof(BitMapHeader));
-          this->bmhd->w                 = BE_16(&buffer[0]);
-          this->bmhd->h                 = BE_16(&buffer[2]);
-          this->bmhd->x                 = BE_16(&buffer[4]);
-          this->bmhd->y                 = BE_16(&buffer[6]);
+          this->bmhd->w                 = _X_BE_16(&buffer[0]);
+          this->bmhd->h                 = _X_BE_16(&buffer[2]);
+          this->bmhd->x                 = _X_BE_16(&buffer[4]);
+          this->bmhd->y                 = _X_BE_16(&buffer[6]);
           this->bmhd->nplanes           = buffer[8];
           this->bmhd->masking           = buffer[9];
           this->bmhd->compression       = buffer[10];
           this->bmhd->pad1              = buffer[11];
-          this->bmhd->transparentColor  = BE_16(&buffer[12]);
+          this->bmhd->transparentColor  = _X_BE_16(&buffer[12]);
           this->bmhd->xaspect           = buffer[14];
           this->bmhd->yaspect           = buffer[15];
-          this->bmhd->pagewidth         = BE_16(&buffer[16]);
-          this->bmhd->pageheight        = BE_16(&buffer[18]);
+          this->bmhd->pagewidth         = _X_BE_16(&buffer[16]);
+          this->bmhd->pageheight        = _X_BE_16(&buffer[18]);
 
           if (this->bmhd->w > 0)
             this->bih.biWidth           = this->bmhd->w;
@@ -409,25 +409,25 @@ static int read_iff_chunk(demux_iff_t *this) {
         case IFF_GRAB_CHUNK:
           if( this->grab == NULL )
             this->grab                  = (Point2D *)xine_xmalloc(sizeof(Point2D));
-          this->grab->x                 = BE_16(&buffer[0]);
-          this->grab->y                 = BE_16(&buffer[2]);
+          this->grab->x                 = _X_BE_16(&buffer[0]);
+          this->grab->y                 = _X_BE_16(&buffer[2]);
           break;
         case IFF_DEST_CHUNK:
           if( this->dest == NULL )
             this->dest                  = (DestMerge *)xine_xmalloc(sizeof(DestMerge));
           this->dest->depth             = buffer[0];
           this->dest->pad1              = buffer[1];
-          this->dest->plane_pick        = BE_16(&buffer[2]);
-          this->dest->plane_onoff       = BE_16(&buffer[4]);
-          this->dest->plane_mask        = BE_16(&buffer[6]);
+          this->dest->plane_pick        = _X_BE_16(&buffer[2]);
+          this->dest->plane_onoff       = _X_BE_16(&buffer[4]);
+          this->dest->plane_mask        = _X_BE_16(&buffer[6]);
           break;
         case IFF_SPRT_CHUNK:
-          this->sprt                    = BE_16(&buffer[0]);
+          this->sprt                    = _X_BE_16(&buffer[0]);
           break;
         case IFF_CAMG_CHUNK:
           if( this->camg == NULL )
             this->camg                  = (CamgChunk *)xine_xmalloc(sizeof(CamgChunk));
-          this->camg->view_modes        = BE_32(&buffer[0]);
+          this->camg->view_modes        = _X_BE_32(&buffer[0]);
           this->bih.biCompression       = this->camg->view_modes;
           if( this->camg->view_modes & CAMG_PAL &&
               this->video_pts_inc       == 4500 )
@@ -435,9 +435,9 @@ static int read_iff_chunk(demux_iff_t *this) {
           break;
         case IFF_CRNG_CHUNK:
           if (this->crng_used < 256) {
-            this->crng[this->crng_used].pad1   = BE_16(&buffer[0]);
-            this->crng[this->crng_used].rate   = BE_16(&buffer[2]);
-            this->crng[this->crng_used].active = BE_16(&buffer[4]);
+            this->crng[this->crng_used].pad1   = _X_BE_16(&buffer[0]);
+            this->crng[this->crng_used].rate   = _X_BE_16(&buffer[2]);
+            this->crng[this->crng_used].active = _X_BE_16(&buffer[4]);
             this->crng[this->crng_used].low    = buffer[6];
             this->crng[this->crng_used].high   = buffer[7];
             this->crng_used++;
@@ -446,33 +446,33 @@ static int read_iff_chunk(demux_iff_t *this) {
         case IFF_CCRT_CHUNK:
           if( this->ccrt == NULL )
             this->ccrt                  = (CcrtChunk *)xine_xmalloc(sizeof(CcrtChunk));
-          this->ccrt->direction         = BE_16(&buffer[0]);
+          this->ccrt->direction         = _X_BE_16(&buffer[0]);
           this->ccrt->start             = buffer[2];
           this->ccrt->end               = buffer[3];
-          this->ccrt->seconds           = BE_32(&buffer[4]);
-          this->ccrt->microseconds      = BE_32(&buffer[8]);
-          this->ccrt->pad               = BE_16(&buffer[12]);
+          this->ccrt->seconds           = _X_BE_32(&buffer[4]);
+          this->ccrt->microseconds      = _X_BE_32(&buffer[8]);
+          this->ccrt->pad               = _X_BE_16(&buffer[12]);
           break;
         case IFF_DPI_CHUNK:
           if( this->dpi == NULL )
             this->dpi                   = (DPIHeader *)xine_xmalloc(sizeof(DPIHeader));
-          this->dpi->x                  = BE_16(&buffer[0]);
-          this->dpi->y                  = BE_16(&buffer[0]);
+          this->dpi->x                  = _X_BE_16(&buffer[0]);
+          this->dpi->y                  = _X_BE_16(&buffer[0]);
           break;
         case IFF_ANHD_CHUNK:
           if( this->anhd == NULL )
             this->anhd                  = (AnimHeader *)xine_xmalloc(sizeof(AnimHeader));
           this->anhd->operation         = buffer[0];
           this->anhd->mask              = buffer[1];
-          this->anhd->w                 = BE_16(&buffer[2]);
-          this->anhd->h                 = BE_16(&buffer[4]);
-          this->anhd->x                 = BE_16(&buffer[6]);
-          this->anhd->y                 = BE_16(&buffer[8]);
-          this->anhd->abs_time          = BE_32(&buffer[10]);
-          this->anhd->rel_time          = BE_32(&buffer[14]);
+          this->anhd->w                 = _X_BE_16(&buffer[2]);
+          this->anhd->h                 = _X_BE_16(&buffer[4]);
+          this->anhd->x                 = _X_BE_16(&buffer[6]);
+          this->anhd->y                 = _X_BE_16(&buffer[8]);
+          this->anhd->abs_time          = _X_BE_32(&buffer[10]);
+          this->anhd->rel_time          = _X_BE_32(&buffer[14]);
           this->anhd->interleave        = buffer[18];
           this->anhd->pad0              = buffer[19];
-          this->anhd->bits              = BE_32(&buffer[20]);
+          this->anhd->bits              = _X_BE_32(&buffer[20]);
           /* Using rel_time deaktivated, seems to be broken in most animations */
           /*if( this->dpan == NULL )
             this->video_pts            += this->video_pts_inc *
@@ -503,8 +503,8 @@ static int read_iff_chunk(demux_iff_t *this) {
         case IFF_DPAN_CHUNK:
           if( this->dpan == NULL )
             this->dpan                  = (DPAnimChunk *)xine_xmalloc(sizeof(DPAnimChunk));
-          this->dpan->version           = BE_16(&buffer[0]);
-          this->dpan->nframes           = BE_16(&buffer[2]);
+          this->dpan->version           = _X_BE_16(&buffer[0]);
+          this->dpan->nframes           = _X_BE_16(&buffer[2]);
           this->dpan->fps               = buffer[4];
           this->dpan->unused1           = buffer[5];
           this->dpan->unused2           = buffer[6];
@@ -626,7 +626,7 @@ static int open_iff_file(demux_iff_t *this) {
   this->anhd                            = NULL;
   this->dpan                            = NULL;
 
-  this->iff_type                        = BE_32(&signature[8]);
+  this->iff_type                        = _X_BE_32(&signature[8]);
   this->iff_sub_type                    = this->iff_type;
 
   this->video_type                      = 0;
@@ -647,7 +647,7 @@ static int open_iff_file(demux_iff_t *this) {
   this->bih.biClrImportant              = 0;
 
   /* check the signature */
-  if (BE_32(&signature[0]) == IFF_FORM_CHUNK)
+  if (_X_BE_32(&signature[0]) == IFF_FORM_CHUNK)
   {
     switch( this->iff_type )
     {
@@ -827,13 +827,13 @@ static int demux_iff_send_chunk(demux_plugin_t *this_gen) {
               }
             } else {
               for (j = 0, k = (interleave_index / 2); j < (buf->size / 2); j += this->audio_channels) {
-                zw_16                   = BE_16(&pointer16_from[k]);
+                zw_16                   = _X_BE_16(&pointer16_from[k]);
                 k++;
                 zw_rescale              = zw_16;
                 zw_rescale             *= this->audio_volume_left;
                 zw_rescale             /= max_volume;
                 zw_16                   = (zw_rescale>32767) ? 32767 : ((zw_rescale<-32768) ? -32768 : zw_rescale);
-                pointer16_to[j]         = BE_16(&zw_16);
+                pointer16_to[j]         = _X_BE_16(&zw_16);
               }
             }
           } else {
@@ -857,13 +857,13 @@ static int demux_iff_send_chunk(demux_plugin_t *this_gen) {
               }
             } else {
               for (j = 1; j < (buf->size / 2); j += this->audio_channels) {
-                zw_16                   = BE_16(&pointer16_from[k]);
+                zw_16                   = _X_BE_16(&pointer16_from[k]);
                 k++;
                 zw_rescale              = zw_16;
                 zw_rescale             *= this->audio_volume_left;
                 zw_rescale             /= max_volume;
                 zw_16                   = (zw_rescale>32767) ? 32767 : ((zw_rescale<-32768) ? -32768 : zw_rescale);
-                pointer16_to[j]         = BE_16(&zw_16);
+                pointer16_to[j]         = _X_BE_16(&zw_16);
               }
             }
           } else if (this->chan_settings == LEFT) {

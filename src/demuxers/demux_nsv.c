@@ -172,7 +172,7 @@ static off_t nsv_read(demux_nsv_t *this, uint8_t *buffer, off_t len) {
 	  return -1;
 	}
 	/* read packet payload len */
-	this->ultravox_size = BE_16(&ultravox_buf[5]);
+	this->ultravox_size = _X_BE_16(&ultravox_buf[5]);
 	this->ultravox_pos = 0;
 	lprintf("ultravox_size: %d\n", this->ultravox_size);
       } else {
@@ -287,11 +287,11 @@ static int open_nsv_file(demux_nsv_t *this) {
 	  return 0;
 
 	lprintf("found NSVf chunk\n");
-	/*	this->data_size = LE_32(&preview[8]);*/
+	/*	this->data_size = _X_LE_32(&preview[8]);*/
 	/*lprintf("data_size: %lld\n", this->data_size);*/
 	
 	/* skip the rest of the data */
-	chunk_size = LE_32(&preview[4]);
+	chunk_size = _X_LE_32(&preview[4]);
 	nsv_seek(this, chunk_size - 28, SEEK_CUR);
       }
       break;
@@ -303,21 +303,21 @@ static int open_nsv_file(demux_nsv_t *this) {
       if (nsv_read(this, &preview[4], 15) != 15)
 	return 0;
       
-      this->video_fourcc = ME_32(&preview[4]);
-      if (BE_32(&preview[4]) == NONE_TAG)
+      this->video_fourcc = _X_ME_32(&preview[4]);
+      if (_X_BE_32(&preview[4]) == NONE_TAG)
 	this->video_type = 0;
       else
 	this->video_type = _x_fourcc_to_buf_video(this->video_fourcc);
       
-      this->audio_fourcc = ME_32(&preview[8]);
-      if (BE_32(&preview[8]) == NONE_TAG)
+      this->audio_fourcc = _X_ME_32(&preview[8]);
+      if (_X_BE_32(&preview[8]) == NONE_TAG)
 	this->audio_type = 0;
       else
 	this->audio_type = _x_formattag_to_buf_audio(this->audio_fourcc);
       
       this->bih.biSize = sizeof(this->bih);
-      this->bih.biWidth = LE_16(&preview[12]);
-      this->bih.biHeight = LE_16(&preview[14]);
+      this->bih.biWidth = _X_LE_16(&preview[12]);
+      this->bih.biHeight = _X_LE_16(&preview[14]);
       this->bih.biCompression = this->video_fourcc;
       this->video_pts = 0;
       
@@ -493,10 +493,10 @@ static int demux_nsv_send_chunk(demux_plugin_t *this_gen) {
       this->status = DEMUX_FINISHED;
       return this->status;
     }
-    video_size = LE_32(&buffer[0]);
+    video_size = _X_LE_32(&buffer[0]);
     video_size >>= 4;
     video_size &= 0xFFFFF;
-    audio_size = LE_16(&buffer[3]);
+    audio_size = _X_LE_16(&buffer[3]);
     
     nsv_parse_payload(this, video_size, audio_size);
     break;

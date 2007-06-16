@@ -115,7 +115,7 @@ static int open_vmd_file(demux_vmd_t *this) {
     VMD_HEADER_SIZE)
     return 0;
 
-  if (LE_16(&vmd_header[0]) != VMD_HEADER_SIZE - 2)
+  if (_X_LE_16(&vmd_header[0]) != VMD_HEADER_SIZE - 2)
     return 0;
 
   /* file is minimally qualified at this point, proceed to load */
@@ -125,11 +125,11 @@ static int open_vmd_file(demux_vmd_t *this) {
     this->data_size = 1;
 
   bih->biSize = sizeof(xine_bmiheader) + VMD_HEADER_SIZE;
-  bih->biWidth = LE_16(&vmd_header[12]);
-  bih->biHeight = LE_16(&vmd_header[14]);
-  this->wave.nSamplesPerSec = LE_16(&vmd_header[804]);
+  bih->biWidth = _X_LE_16(&vmd_header[12]);
+  bih->biHeight = _X_LE_16(&vmd_header[14]);
+  this->wave.nSamplesPerSec = _X_LE_16(&vmd_header[804]);
   this->wave.nChannels =  (vmd_header[811] & 0x80) ? 2 : 1;
-  this->wave.nBlockAlign = LE_16(&vmd_header[806]);
+  this->wave.nBlockAlign = _X_LE_16(&vmd_header[806]);
   if (this->wave.nBlockAlign & 0x8000) {
       this->wave.nBlockAlign -= 0x8000;
       this->wave.wBitsPerSample = 16;
@@ -149,8 +149,8 @@ static int open_vmd_file(demux_vmd_t *this) {
   /* skip over the offset table and load the table of contents; don't
    * care about the offset table since demuxer will calculate those
    * independently */
-  toc_offset = LE_32(&vmd_header[812]);
-  this->frame_count = LE_16(&vmd_header[6]);
+  toc_offset = _X_LE_32(&vmd_header[812]);
+  this->frame_count = _X_LE_16(&vmd_header[6]);
   this->input->seek(this->input, toc_offset + this->frame_count * 6, SEEK_SET);
 
   /* while we have the toal number of blocks, calculate the total running
@@ -172,7 +172,7 @@ static int open_vmd_file(demux_vmd_t *this) {
 
   this->frame_table = xine_xmalloc(this->frame_count * sizeof(vmd_frame_t));
 
-  current_offset = this->data_start = LE_32(&vmd_header[20]);
+  current_offset = this->data_start = _X_LE_32(&vmd_header[20]);
   this->data_size = toc_offset - this->data_start;
   current_frame_record = raw_frame_table;
   total_frames = this->frame_count;
@@ -180,7 +180,7 @@ static int open_vmd_file(demux_vmd_t *this) {
   while (total_frames--) {
     /* if the frame size is 0, do not count the frame and bring the
      * total frame count down */
-    this->frame_table[i].frame_size = LE_32(&current_frame_record[2]);
+    this->frame_table[i].frame_size = _X_LE_32(&current_frame_record[2]);
 
     /* this logic is present so that 0-length audio chunks are not
      * accounted */

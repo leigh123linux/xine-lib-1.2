@@ -74,7 +74,7 @@ static int open_tta_file(demux_tta_t *this) {
   if (_x_demux_read_header(this->input, peek, 4) != 4)
       return 0;
 
-  if ( BE_32(peek) != FOURCC_32('T', 'T', 'A', '1') )
+  if ( _X_BE_32(peek) != FOURCC_32('T', 'T', 'A', '1') )
     return 0;
 
   if ( this->input->read(this->input, this->header.buffer, sizeof(this->header)) != sizeof(this->header) )

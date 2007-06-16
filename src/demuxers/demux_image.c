@@ -168,7 +168,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
     }
     if (memcmp (header, "GIF", 3) == 0 /* GIF */
         || memcmp (header, "\377\330\377", 3) == 0 /* JPEG */
-	|| (BE_16(&header[0]) == 0xffd8) /* another JPEG */
+	|| (_X_BE_16(&header[0]) == 0xffd8) /* another JPEG */
 	|| memcmp (header, "\x89PNG", 4) == 0) { /* PNG */
       break;
     }

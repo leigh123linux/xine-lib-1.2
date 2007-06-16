@@ -297,12 +297,12 @@ int ebml_read_float (ebml_parser_t *ebml, ebml_elem_t *elem, double *num) {
   if (size == 4) {
     float f;
 
-    *((uint32_t *) &f) = BE_32(data);
+    *((uint32_t *) &f) = _X_BE_32(data);
     *num = f;
   } else {
     double d;
 
-    *((uint64_t *) &d) = BE_64(data);
+    *((uint64_t *) &d) = _X_BE_64(data);
     *num = d;
   }
   return 1;

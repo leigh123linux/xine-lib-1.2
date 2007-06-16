@@ -98,8 +98,8 @@ static int open_vqa_file(demux_vqa_t *this) {
     return 0;
 
   /* check for the VQA signatures */
-  if ((BE_32(&scratch[0]) != FORM_TAG) ||
-      (BE_32(&scratch[8]) != WVQA_TAG))
+  if ((_X_BE_32(&scratch[0]) != FORM_TAG) ||
+      (_X_BE_32(&scratch[8]) != WVQA_TAG))
     return 0;
 
   /* file is qualified; skip to the start of the VQA header */
@@ -115,9 +115,9 @@ static int open_vqa_file(demux_vqa_t *this) {
     return 0;
 
   bih->biSize = sizeof(xine_bmiheader) + VQA_HEADER_SIZE;
-  bih->biWidth = LE_16(&vqa_header[6]);
-  bih->biHeight = LE_16(&vqa_header[8]);
-  this->wave.nSamplesPerSec = LE_16(&vqa_header[24]);
+  bih->biWidth = _X_LE_16(&vqa_header[6]);
+  bih->biHeight = _X_LE_16(&vqa_header[8]);
+  this->wave.nSamplesPerSec = _X_LE_16(&vqa_header[24]);
   this->wave.nChannels = vqa_header[26];
   this->wave.wBitsPerSample = 16;
 
@@ -125,7 +125,7 @@ static int open_vqa_file(demux_vqa_t *this) {
   if (this->input->read(this->input, scratch, VQA_PREAMBLE_SIZE) !=
     VQA_PREAMBLE_SIZE)
     return 0;
-  chunk_size = BE_32(&scratch[4]);
+  chunk_size = _X_BE_32(&scratch[4]);
   this->input->seek(this->input, chunk_size, SEEK_CUR);
 
   this->video_pts = this->audio_frames = 0;
@@ -152,7 +152,7 @@ static int demux_vqa_send_chunk(demux_plugin_t *this_gen) {
   }
 
   current_file_pos = this->input->get_current_pos(this->input);
-  chunk_size = BE_32(&preamble[4]);
+  chunk_size = _X_BE_32(&preamble[4]);
   skip_byte = chunk_size & 0x1;
   audio_pts = this->audio_frames;
   audio_pts *= 90000;
@@ -204,7 +204,7 @@ static int demux_vqa_send_chunk(demux_plugin_t *this_gen) {
     }
 
     current_file_pos = this->input->get_current_pos(this->input);
-    chunk_size = BE_32(&preamble[4]);
+    chunk_size = _X_BE_32(&preamble[4]);
     while (chunk_size) {
       buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
       buf->type = BUF_VIDEO_VQA;
