@@ -79,7 +79,7 @@ typedef struct pulse_driver_s {
   int               capabilities;
   int               mode;
 
-  int32_t           sample_rate;
+  uint32_t          sample_rate;
   uint32_t          num_channels;
   uint32_t          bits_per_sample;
   uint32_t          bytes_per_frame;
@@ -342,7 +342,7 @@ static int ao_pulse_write(ao_driver_t *this_gen, int16_t *data,
                          uint32_t num_frames)
 {
   pulse_driver_t *this = (pulse_driver_t *) this_gen;
-  int size = num_frames * this->bytes_per_frame;
+  size_t size = num_frames * this->bytes_per_frame;
   int ret = 0;
   
   if ( !this->stream || !this->pa_class->context)
@@ -381,7 +381,7 @@ static int ao_pulse_delay (ao_driver_t *this_gen)
 {
   pulse_driver_t *this = (pulse_driver_t *) this_gen;
   pa_usec_t latency = 0;
-  int delay_frames;
+  unsigned int delay_frames;
 
   if ( ! this->stream ) return this->frames_written;
 

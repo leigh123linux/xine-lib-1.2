@@ -2042,10 +2042,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
           !strstr(buf,"ASX") &&
           strncmp(buf,"[Reference]", 11) &&
           strncmp(buf,"ASF ", 4) &&
-	  ((buf[0] != 0x30)
-	   || (buf[1] != 0x26)
-	   || (buf[2] != 0xb2)
-	   || (buf[3] != 0x75)))
+	  memcmp(buf, "\x30\x26\xB2\x75", 4)
+	  )
         return NULL;
     }
 

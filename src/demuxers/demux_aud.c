@@ -133,7 +133,7 @@ static int demux_aud_send_chunk(demux_plugin_t *this_gen) {
   demux_aud_t *this = (demux_aud_t *) this_gen;
 
   unsigned char chunk_preamble[AUD_CHUNK_PREAMBLE_SIZE];
-  unsigned int chunk_size;
+  int chunk_size;
   off_t current_file_pos;
   int64_t audio_pts;
   buf_element_t *buf;

@@ -155,20 +155,20 @@ int id3v1_parse_tag (input_plugin_t *input, xine_stream_t *stream);
 
 int id3v22_parse_tag(input_plugin_t *input,
                      xine_stream_t *stream,
-                     int8_t *mp3_frame_header);
+                     uint8_t *mp3_frame_header);
 
 int id3v23_parse_tag(input_plugin_t *input,
                      xine_stream_t *stream,
-                     int8_t *mp3_frame_header);
+                     uint8_t *mp3_frame_header);
 
 int id3v24_parse_tag(input_plugin_t *input,
                      xine_stream_t *stream,
-                     int8_t *mp3_frame_header);
+                     uint8_t *mp3_frame_header);
 
 /* Generic function that switch between the three above */
 int id3v2_parse_tag(input_plugin_t *input,
 		    xine_stream_t *stream,
-		    int8_t *mp3_frame_header);
+		    uint8_t *mp3_frame_header);
 
 /**
  * @brief Checks if the given buffer is an ID3 tag preamble

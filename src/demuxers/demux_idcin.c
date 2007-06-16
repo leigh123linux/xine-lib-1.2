@@ -130,7 +130,7 @@ static int demux_idcin_send_chunk(demux_plugin_t *this_gen) {
   unsigned char disk_palette[PALETTE_SIZE * 3];
   palette_entry_t palette[PALETTE_SIZE];
   int i;
-  unsigned int remaining_sample_bytes;
+  int remaining_sample_bytes;
   int scale_bits;
 
   /* figure out what the next data is */
@@ -359,7 +359,8 @@ static void demux_idcin_send_headers(demux_plugin_t *this_gen) {
   demux_idcin_t *this = (demux_idcin_t *) this_gen;
   buf_element_t *buf;
   xine_bmiheader *bih = (xine_bmiheader *)this->bih;
-  uint32_t i, size;
+  uint32_t i;
+  int size;
 
   this->video_fifo  = this->stream->video_fifo;
   this->audio_fifo  = this->stream->audio_fifo;

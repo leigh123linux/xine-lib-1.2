@@ -82,8 +82,8 @@ typedef struct {
   int               fh;
 #ifdef HAVE_MMAP
   int               mmap_on;
-  void             *mmap_base;
-  void             *mmap_curr;
+  uint8_t          *mmap_base;
+  uint8_t          *mmap_curr;
   off_t             mmap_len;
 #endif
   char             *mrl;
@@ -223,7 +223,7 @@ static off_t file_plugin_seek (input_plugin_t *this_gen, off_t offset, int origi
 
 #ifdef HAVE_MMAP /* Simulate f*() library calls */
   if ( check_mmap_file(this) ) {
-    void *new_point = this->mmap_curr;
+    uint8_t *new_point = this->mmap_curr;
     switch(origin) {
     case SEEK_SET: new_point = this->mmap_base + offset; break;
     case SEEK_CUR: new_point = this->mmap_curr + offset; break;
@@ -359,9 +359,6 @@ static int file_plugin_open (input_plugin_t *this_gen ) {
   file_input_plugin_t *this = (file_input_plugin_t *) this_gen;
   char                *filename;
   struct stat          sbuf;
-#ifdef HAVE_MMAP
-  size_t	       tmp_size;
-#endif
 
   lprintf("file_plugin_open\n");
 
@@ -426,14 +423,16 @@ static int file_plugin_open (input_plugin_t *this_gen ) {
   }
 
 #ifdef HAVE_MMAP
-  tmp_size = sbuf.st_size; /* may cause truncation - if it does, DON'T mmap! */
-  if ((tmp_size == sbuf.st_size) &&
-      ( (this->mmap_base = mmap(NULL, tmp_size, PROT_READ, MAP_SHARED, this->fh, 0)) != (void*)-1 )) {
-    this->mmap_on = 1;
-    this->mmap_curr = this->mmap_base;
-    this->mmap_len = sbuf.st_size;
-  } else {
-    this->mmap_base = NULL;
+  {
+    size_t tmp_size = sbuf.st_size; /* may cause truncation - if it does, DON'T mmap! */
+    if ((tmp_size == sbuf.st_size) &&
+	( (this->mmap_base = mmap(NULL, tmp_size, PROT_READ, MAP_SHARED, this->fh, 0)) != (void*)-1 )) {
+      this->mmap_on = 1;
+      this->mmap_curr = this->mmap_base;
+      this->mmap_len = sbuf.st_size;
+    } else {
+      this->mmap_base = NULL;
+    }
   }
 #endif
 

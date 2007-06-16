@@ -577,7 +577,7 @@ xine_post_t *xine_post_init(xine_t *xine, const char *name,
 const char *const *xine_list_post_plugins(xine_t *xine) XINE_PROTECTED;
 
 /* get a list of all post plugins of one type */
-const char *const *xine_list_post_plugins_typed(xine_t *xine, int type) XINE_PROTECTED;
+const char *const *xine_list_post_plugins_typed(xine_t *xine, uint32_t type) XINE_PROTECTED;
 
 /*
  * post plugin input/output

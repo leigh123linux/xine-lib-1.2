@@ -152,7 +152,7 @@ static char *asf_reader_get_string(asf_reader_t *reader, size_t size, iconv_t cd
   outbuf = scratch;
   outbytesleft = sizeof(scratch);
   reader->pos += size;
-  if (iconv (cd, (ICONV_CONST char **)&inbuf, &inbytesleft, &outbuf, &outbytesleft) != -1) {
+  if (iconv (cd, (ICONV_CONST char **)&inbuf, &inbytesleft, &outbuf, &outbytesleft) != (size_t)-1) {
     return strdup(scratch);
   } else {
     lprintf("iconv error\n");

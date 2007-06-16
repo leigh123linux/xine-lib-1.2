@@ -1306,8 +1306,8 @@ static void dvb_parse_si(dvb_input_plugin_t *this) {
 
 /* Helper function for finding the channel index in the channels struct
    given the service_id. If channel is not found, -1 is returned. */
-static int channel_index(dvb_input_plugin_t* this, unsigned int service_id) {
-  unsigned int n;
+static int channel_index(dvb_input_plugin_t* this, int service_id) {
+  int n;
   for (n=0; n < this->num_channels; n++)
     if (this->channels[n].service_id == service_id) 
 	return n;
@@ -2802,7 +2802,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 	    * by numbers...
 	    */
 	    int chanlen = strlen(channame);
-	    int offset = 0;
+	    size_t offset = 0;
 
 	    xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 		     _("input_dvb: exact match for %s not found: trying partial matches\n"), channame);
@@ -2819,7 +2819,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 		idx++;
               }
 	      offset++;
-	      xprintf(this->class->xine,XINE_VERBOSITY_LOG,"%d,%d,%d\n", offset, idx, num_channels);
+	      xprintf(this->class->xine,XINE_VERBOSITY_LOG,"%zd,%d,%d\n", offset, idx, num_channels);
             }
             while ((offset < 6) && (idx == num_channels));
               if (idx < num_channels) {
