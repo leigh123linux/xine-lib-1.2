@@ -73,19 +73,19 @@ static inline void _x_parse_flac_metadata_header(uint8_t *buffer, xine_flac_meta
   parsed->last = buffer[0] & 0x80 ? 1 : 0;
   parsed->blocktype = buffer[0] & 0x7f;
 
-  parsed->length = BE_24(&buffer[1]);
+  parsed->length = _X_BE_24(&buffer[1]);
 }
 
 static inline void _x_parse_flac_streaminfo_block(uint8_t *buffer, xine_flac_streaminfo_block *parsed) {
-  parsed->blocksize_min = BE_16(&buffer[0]);
-  parsed->blocksize_max = BE_16(&buffer[2]);
-  parsed->framesize_min = BE_24(&buffer[4]);
-  parsed->framesize_max = BE_24(&buffer[7]);
-  parsed->samplerate = BE_32(&buffer[10]);
+  parsed->blocksize_min = _X_BE_16(&buffer[0]);
+  parsed->blocksize_max = _X_BE_16(&buffer[2]);
+  parsed->framesize_min = _X_BE_24(&buffer[4]);
+  parsed->framesize_max = _X_BE_24(&buffer[7]);
+  parsed->samplerate = _X_BE_32(&buffer[10]);
   parsed->channels = ((parsed->samplerate >> 9) & 0x07) + 1;
   parsed->bits_per_sample = ((parsed->samplerate >> 4) & 0x1F) + 1;
   parsed->samplerate >>= 12;
-  parsed->total_samples = BE_64(&buffer[10]) & UINT64_C(0x0FFFFFFFFF);  /* 36 bits */
+  parsed->total_samples = _X_BE_64(&buffer[10]) & UINT64_C(0x0FFFFFFFFF);  /* 36 bits */
 }
 
 #endif

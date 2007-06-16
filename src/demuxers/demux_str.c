@@ -202,8 +202,8 @@ static int open_str_file(demux_str_t *this) {
   }
 
   /* check for STR with a RIFF header */
-  if ((BE_32(&check_bytes[0]) == RIFF_TAG) &&
-      (BE_32(&check_bytes[8]) == CDXA_TAG))
+  if ((_X_BE_32(&check_bytes[0]) == RIFF_TAG) &&
+      (_X_BE_32(&check_bytes[8]) == CDXA_TAG))
     local_offset = 0x2C;
   else
     local_offset = 0;
@@ -220,16 +220,16 @@ static int open_str_file(demux_str_t *this) {
             check_bytes[local_offset + 0x13]);
 
     /* check for 12-byte sync marker */
-    if ((BE_32(&check_bytes[local_offset + 0]) != 0x00FFFFFF) ||
-	(BE_32(&check_bytes[local_offset + 4]) != 0xFFFFFFFF) ||
-	(BE_32(&check_bytes[local_offset + 8]) != 0xFFFFFF00)) {
+    if ((_X_BE_32(&check_bytes[local_offset + 0]) != 0x00FFFFFF) ||
+	(_X_BE_32(&check_bytes[local_offset + 4]) != 0xFFFFFFFF) ||
+	(_X_BE_32(&check_bytes[local_offset + 8]) != 0xFFFFFF00)) {
       lprintf("sector %d sync error\n", sector);
       return 0;
     }
 
     /* the 32 bits starting at 0x10 and at 0x14 should be the same */
-    if (BE_32(&check_bytes[local_offset + 0x10]) !=
-	BE_32(&check_bytes[local_offset + 0x14])) {
+    if (_X_BE_32(&check_bytes[local_offset + 0x10]) !=
+	_X_BE_32(&check_bytes[local_offset + 0x14])) {
       lprintf("sector %d control bits copy error\n", sector);
       return 0;
     }
@@ -248,15 +248,15 @@ static int open_str_file(demux_str_t *this) {
     case CDXA_TYPE_VIDEO:
       /* first time we have seen video/data in this channel? */
       if ((!(this->channel_type[channel] & CDXA_TYPE_DATA)) &&
-	  (LE_32(&check_bytes[local_offset + 0x18]) == STR_MAGIC)) {
+	  (_X_LE_32(&check_bytes[local_offset + 0x18]) == STR_MAGIC)) {
 
 	/* mark this channel as having video data */
 	this->channel_type[channel] |= CDXA_TYPE_VIDEO;
 
 	this->bih[channel].biWidth =
-	  LE_16(&check_bytes[local_offset + 0x18 + 0x10]);
+	  _X_LE_16(&check_bytes[local_offset + 0x18 + 0x10]);
 	this->bih[channel].biHeight =
-	  LE_16(&check_bytes[local_offset + 0x18 + 0x12]);
+	  _X_LE_16(&check_bytes[local_offset + 0x18 + 0x12]);
       }
       break;
 
@@ -349,12 +349,12 @@ static int demux_str_send_chunk(demux_plugin_t *this_gen) {
   case CDXA_TYPE_DATA:
     /* video chunk */
 
-    if (LE_32(&sector[0x18]) != STR_MAGIC ||
+    if (_X_LE_32(&sector[0x18]) != STR_MAGIC ||
 	channel != this->default_video_channel) {
       return 0;
     }
 
-    frame_number = LE_32(&sector[0x18 + 0x08]);
+    frame_number = _X_LE_32(&sector[0x18 + 0x08]);
     buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
     buf->pts = frame_number * FRAME_DURATION;
 
@@ -365,7 +365,7 @@ static int demux_str_send_chunk(demux_plugin_t *this_gen) {
 
     /* first chunk of frame? sync forthcoming audio packets */
     /* FIXME */
-    /*if (LE_16(&sector[0x18+0x04]) == 0) {
+    /*if (_X_LE_16(&sector[0x18+0x04]) == 0) {
      *  int i;
      *  for (i = 0; i < STR_MAX_CHANNELS; i++) this->audio_pts[i] = buf->pts;
      *}
@@ -385,7 +385,7 @@ static int demux_str_send_chunk(demux_plugin_t *this_gen) {
 
     /* if the current chunk is 1 less than the chunk count, this is the
      * last chunk of the frame */
-    if ((LE_16(&sector[0x18+0x04]) + 1) == LE_16(&sector[0x18+0x06]))
+    if ((_X_LE_16(&sector[0x18+0x04]) + 1) == _X_LE_16(&sector[0x18+0x06]))
       buf->decoder_flags |= BUF_FLAG_FRAME_END;
 
     buf->type = BUF_VIDEO_PSX_MDEC | channel;

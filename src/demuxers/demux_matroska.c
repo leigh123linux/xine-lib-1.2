@@ -1850,7 +1850,7 @@ static int parse_block (demux_matroska_t *this, uint64_t block_size,
     return 0;
   data += num_len;
     
-  timecode_diff = (int)BE_16(data);
+  timecode_diff = (int)_X_BE_16(data);
   data += 2;
 
   flags = *data;

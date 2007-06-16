@@ -119,7 +119,7 @@ static int open_smjpeg_file(demux_smjpeg_t *this) {
   this->input->seek(this->input, SMJPEG_SIGNATURE_SIZE + 4, SEEK_SET);
   if (this->input->read(this->input, header_chunk, 4) != 4)
     return 0;
-  this->duration = BE_32(&header_chunk[0]);
+  this->duration = _X_BE_32(&header_chunk[0]);
   
   /* initial state: no video and no audio (until headers found) */
   this->video_type = this->audio_type = 0;
@@ -131,7 +131,7 @@ static int open_smjpeg_file(demux_smjpeg_t *this) {
 
     if (this->input->read(this->input, header_chunk, 4) != 4)
       return 0;
-    chunk_tag = BE_32(&header_chunk[0]);
+    chunk_tag = _X_BE_32(&header_chunk[0]);
 
     switch(chunk_tag) {
 
@@ -145,8 +145,8 @@ static int open_smjpeg_file(demux_smjpeg_t *this) {
           SMJPEG_VIDEO_HEADER_SIZE) != SMJPEG_VIDEO_HEADER_SIZE)
         return 0;
 
-      this->bih.biWidth = BE_16(&header_chunk[8]);
-      this->bih.biHeight = BE_16(&header_chunk[10]);
+      this->bih.biWidth = _X_BE_16(&header_chunk[8]);
+      this->bih.biHeight = _X_BE_16(&header_chunk[10]);
       this->bih.biCompression = *(uint32_t *)&header_chunk[12];
       this->video_type = _x_fourcc_to_buf_video(this->bih.biCompression);
       break;
@@ -156,13 +156,13 @@ static int open_smjpeg_file(demux_smjpeg_t *this) {
           SMJPEG_AUDIO_HEADER_SIZE) != SMJPEG_AUDIO_HEADER_SIZE)
         return 0;
 
-      this->audio_sample_rate = BE_16(&header_chunk[4]);
+      this->audio_sample_rate = _X_BE_16(&header_chunk[4]);
       this->audio_bits = header_chunk[6];
       this->audio_channels = header_chunk[7];
       /* ADPCM in these files is ID'd by 'APCM' which is used in other
        * files to denote a slightly different format; thus, use the
        * following special case */
-      if (BE_32(&header_chunk[8]) == APCM_TAG) {
+      if (_X_BE_32(&header_chunk[8]) == APCM_TAG) {
         audio_codec = be2me_32(APCM_TAG);
         this->audio_type = BUF_AUDIO_SMJPEG_IMA;
       } else {
@@ -176,7 +176,7 @@ static int open_smjpeg_file(demux_smjpeg_t *this) {
        * of the chunk */
       if (this->input->read(this->input, header_chunk, 4) != 4)
         return 0;
-      this->input->seek(this->input, BE_32(&header_chunk[0]), SEEK_CUR);
+      this->input->seek(this->input, _X_BE_32(&header_chunk[0]), SEEK_CUR);
       break;
     }
   }
@@ -210,8 +210,8 @@ static int demux_smjpeg_send_chunk(demux_plugin_t *this_gen) {
     return this->status;  /* skip to next while() iteration to bail out */
   }
 
-  chunk_tag = BE_32(&preamble[0]);
-  remaining_sample_bytes = BE_32(&preamble[8]);
+  chunk_tag = _X_BE_32(&preamble[0]);
+  remaining_sample_bytes = _X_BE_32(&preamble[8]);
 
   /*
    * Each sample has an absolute timestamp in millisecond units:
@@ -238,7 +238,7 @@ static int demux_smjpeg_send_chunk(demux_plugin_t *this_gen) {
     pts /= (this->audio_sample_rate * this->audio_channels);
     audio_frame_count += ((remaining_sample_bytes - 4) * 2);
   } else {
-    pts = BE_32(&preamble[4]);
+    pts = _X_BE_32(&preamble[4]);
     pts *= 90;
   }
 

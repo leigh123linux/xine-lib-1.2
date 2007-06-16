@@ -433,15 +433,15 @@ static void bitplane_sdelta_opt_3 (bitplane_decoder_t *this) {
     /* data starts at beginn of delta-Buffer + offset of the first */
     /* 32 Bit long word in the buffer. The buffer starts with 8    */
     /* of this Offset, for every bitplane (max 8) one              */
-    data                                = (uint16_t *)(&this->buf[BE_32(&deltadata[palette_index])]);
+    data                                = (uint16_t *)(&this->buf[_X_BE_32(&deltadata[palette_index])]);
     if( data != (uint16_t *)this->buf ) {
       /* This 8 Pointers are followd by another 8                    */
-      ptr                               = (uint16_t *)(&this->buf[BE_32(&deltadata[(palette_index+8)])]);
+      ptr                               = (uint16_t *)(&this->buf[_X_BE_32(&deltadata[(palette_index+8)])]);
 
       /* in this case, I think big/little endian is not important ;-) */
       while( *data !=  0xFFFF) {
         row_ptr                         = 0;
-        size                            = BE_16(data);
+        size                            = _X_BE_16(data);
         data++;
         if( size >= 0 ) {
           rowworkptr                    = planeptr + size;
@@ -460,7 +460,7 @@ static void bitplane_sdelta_opt_3 (bitplane_decoder_t *this) {
           size                          = 0 - size + 2;
           rowworkptr                    = planeptr + size;
           pixel_ptr_bit                 = size * 16;
-          s                             = BE_16(data);
+          s                             = _X_BE_16(data);
           data++;
           while( s--) {
             if( this->is_ham ) {
@@ -480,7 +480,7 @@ static void bitplane_sdelta_opt_3 (bitplane_decoder_t *this) {
 
 
 
-        size                            = BE_16(ptr);
+        size                            = _X_BE_16(ptr);
         ptr++;
         if (size < 0) {
           for (s = size; s < 0; s++) {
@@ -553,19 +553,19 @@ static void bitplane_set_dlta_short (bitplane_decoder_t *this) {
     /* data starts at beginn of delta-Buffer + offset of the first */
     /* 32 Bit long word in the buffer. The buffer starts with 8    */
     /* of this Offset, for every bitplane (max 8) one              */
-    data                                = (uint16_t *)(&this->buf[BE_32(&deltadata[palette_index])]);
+    data                                = (uint16_t *)(&this->buf[_X_BE_32(&deltadata[palette_index])]);
     if( data != (uint16_t *)this->buf ) {
       /* This 8 Pointers are followd by another 8                    */
-      ptr                               = (uint16_t *)(&this->buf[BE_32(&deltadata[(palette_index+8)])]);
+      ptr                               = (uint16_t *)(&this->buf[_X_BE_32(&deltadata[(palette_index+8)])]);
 
       /* in this case, I think big/little endian is not important ;-) */
       while( *ptr !=  0xFFFF) {
-        pixel_ptr                       = BE_16(ptr);
+        pixel_ptr                       = _X_BE_16(ptr);
         pixel_ptr_bit                   = pixel_ptr * 16;
         row_ptr                         = 0;
         rowworkptr                      = planeptr + pixel_ptr;
         ptr++;
-        size                            = BE_16(ptr);
+        size                            = _X_BE_16(ptr);
         ptr++;
         if (size < 0) {
           for (s = size; s < 0; s++) {
@@ -638,7 +638,7 @@ static void bitplane_dlta_5 (bitplane_decoder_t *this) {
     /* data starts at beginn of delta-Buffer + offset of the first */
     /* 32 Bit long word in the buffer. The buffer starts with 8    */
     /* of this Offset, for every bitplane (max 8) one              */
-    delta_offset                        = BE_32(&deltadata[palette_index]);
+    delta_offset                        = _X_BE_32(&deltadata[palette_index]);
 
     if (delta_offset > 0) {
       data                              = this->buf + delta_offset;
@@ -731,8 +731,8 @@ static void bitplane_dlta_7_short (bitplane_decoder_t *this) {
 
     planeptr                            = &this->buf_uk[(palette_index * rowsize * 2)];
     /* find opcode and data offset (up to 8 pointers, one for every bitplane */
-    opcode_offset                       = BE_32(&deltadata[palette_index]);
-    data_offset                         = BE_32(&deltadata[palette_index + 8]);
+    opcode_offset                       = _X_BE_32(&deltadata[palette_index]);
+    data_offset                         = _X_BE_32(&deltadata[palette_index + 8]);
 
     if (opcode_offset > 0 && data_offset > 0) {
       data                              = (uint16_t *)(&this->buf[data_offset]);
@@ -825,8 +825,8 @@ static void bitplane_dlta_7_long  (bitplane_decoder_t *this) {
   for(palette_index = 0; palette_index < this->num_bitplanes; palette_index++) {
     planeptr                            = &this->buf_uk[(palette_index * rowsize * 4)];
     /* find opcode and data offset (up to 8 pointers, one for every bitplane */
-    opcode_offset                       = BE_32(&deltadata[palette_index]);
-    data_offset                         = BE_32(&deltadata[palette_index + 8]);
+    opcode_offset                       = _X_BE_32(&deltadata[palette_index]);
+    data_offset                         = _X_BE_32(&deltadata[palette_index + 8]);
 
     if (opcode_offset > 0 && data_offset > 0) {
       data                              = (uint32_t *)(&this->buf[data_offset]);
@@ -920,7 +920,7 @@ static void bitplane_dlta_8_short (bitplane_decoder_t *this) {
     /* data starts at beginn of delta-Buffer + offset of the first */
     /* 32 Bit long word in the buffer. The buffer starts with 8    */
     /* of this Offset, for every bitplane (max 8) one              */
-    delta_offset                        = BE_32(&deltadata[palette_index]);
+    delta_offset                        = _X_BE_32(&deltadata[palette_index]);
 
     if (delta_offset > 0) {
       data                              = (uint16_t *)(&this->buf[delta_offset]);
@@ -929,10 +929,10 @@ static void bitplane_dlta_8_short (bitplane_decoder_t *this) {
         pixel_ptr_bit                   = pixel_ptr * 16;
         row_ptr                         = 0;
         /* execute ops */
-        op_count = BE_16(data);
+        op_count = _X_BE_16(data);
         data++;
         for( ; op_count; op_count--) {
-          op                            = BE_16(data);
+          op                            = _X_BE_16(data);
           data++;
           if (op & 0x8000) {
             /* Uniq ops */
@@ -957,7 +957,7 @@ static void bitplane_dlta_8_short (bitplane_decoder_t *this) {
           } else {
             if (op == 0) {
               /* Same ops */
-              count                     = BE_16(data);
+              count                     = _X_BE_16(data);
               data++;
               while(count--) {
                 if (data > data_end || rowworkptr > picture_end)
@@ -1017,7 +1017,7 @@ static void bitplane_dlta_8_long (bitplane_decoder_t *this) {
     /* data starts at beginn of delta-Buffer + offset of the first */
     /* 32 Bit long word in the buffer. The buffer starts with 8    */
     /* of this Offset, for every bitplane (max 8) one              */
-    delta_offset                        = BE_32(&deltadata[palette_index]);
+    delta_offset                        = _X_BE_32(&deltadata[palette_index]);
 
     if (delta_offset > 0) {
       data                              = (uint32_t *)(&this->buf[delta_offset]);
@@ -1026,10 +1026,10 @@ static void bitplane_dlta_8_long (bitplane_decoder_t *this) {
         pixel_ptr_bit                   = pixel_ptr * 32;
         row_ptr                         = 0;
         /* execute ops */
-        op_count                        = BE_32(data);
+        op_count                        = _X_BE_32(data);
         data++;
         for( ; op_count; op_count--) {
-          op                            = BE_32(data);
+          op                            = _X_BE_32(data);
           data++;
           if (op & 0x80000000) {
             /* Uniq ops */
@@ -1054,7 +1054,7 @@ static void bitplane_dlta_8_long (bitplane_decoder_t *this) {
           } else {
             if (op == 0) {
               /* Same ops */
-              count                     = BE_32(data);
+              count                     = _X_BE_32(data);
               data++;
               while(count--) {
                 if (data <= data_end && rowworkptr <= picture_end) {

@@ -144,8 +144,8 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
   if (this->input->read(this->input, chunk_preamble, CHUNK_PREAMBLE_SIZE) !=
     CHUNK_PREAMBLE_SIZE)
     return CHUNK_BAD;
-  chunk_size = LE_16(&chunk_preamble[0]);
-  chunk_type = LE_16(&chunk_preamble[2]);
+  chunk_size = _X_LE_16(&chunk_preamble[0]);
+  chunk_type = _X_LE_16(&chunk_preamble[2]);
 
   lprintf("chunk type 0x%04X, 0x%04X bytes:\n", chunk_type, chunk_size);
 
@@ -191,7 +191,7 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
       break;
     }
 
-    opcode_size = LE_16(&opcode_preamble[0]);
+    opcode_size = _X_LE_16(&opcode_preamble[0]);
     opcode_type = opcode_preamble[2];
     opcode_version = opcode_preamble[3];
 
@@ -228,10 +228,10 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
           chunk_type = CHUNK_BAD;
           break;
         }
-        this->fps = 1000000.0 / (LE_32(&scratch[0]) * LE_16(&scratch[4]));
+        this->fps = 1000000.0 / (_X_LE_32(&scratch[0]) * _X_LE_16(&scratch[4]));
         this->frame_pts_inc = (int)(90000.0 / this->fps);
         lprintf("%.1f frames/second (timer div = %d, subdiv = %d)\n",
-          this->fps, LE_32(&scratch[0]), LE_16(&scratch[4]));
+          this->fps, _X_LE_32(&scratch[0]), _X_LE_16(&scratch[4]));
         break;
 
       case OPCODE_INIT_AUDIO_BUFFERS:
@@ -246,8 +246,8 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
           chunk_type = CHUNK_BAD;
           break;
         }
-        this->wave.nSamplesPerSec = LE_16(&scratch[4]);
-        audio_flags = LE_16(&scratch[2]);
+        this->wave.nSamplesPerSec = _X_LE_16(&scratch[4]);
+        audio_flags = _X_LE_16(&scratch[2]);
         /* bit 0 of the flags: 0 = mono, 1 = stereo */
         this->wave.nChannels = (audio_flags & 1) + 1;
         /* bit 1 of the flags: 0 = 8 bit, 1 = 16 bit */
@@ -282,8 +282,8 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
           chunk_type = CHUNK_BAD;
           break;
         }
-        this->bih.biWidth = LE_16(&scratch[0]) * 8;
-        this->bih.biHeight = LE_16(&scratch[2]) * 8;
+        this->bih.biWidth = _X_LE_16(&scratch[0]) * 8;
+        this->bih.biHeight = _X_LE_16(&scratch[2]) * 8;
         /* set up staging area for decode map */
         this->decode_map_size = (this->bih.biWidth * this->bih.biHeight) /
           (8 * 8) / 2;
@@ -392,8 +392,8 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
         }
 
         /* load the palette into internal data structure */
-        first_color = LE_16(&scratch[0]);
-        color_count = LE_16(&scratch[2]);
+        first_color = _X_LE_16(&scratch[0]);
+        color_count = _X_LE_16(&scratch[2]);
         /* sanity check (since they are 16 bit values) */
         if ((first_color > 0xFF) || (first_color + color_count > 0x100)) {
           lprintf("set_palette indices out of range (%d -> %d)\n",

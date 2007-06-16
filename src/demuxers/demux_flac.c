@@ -140,11 +140,11 @@ static int open_flac_file(demux_flac_t *flac) {
         flac->streaminfo + sizeof(xine_waveformatex),
         FLAC_STREAMINFO_SIZE) != FLAC_STREAMINFO_SIZE)
         return 0;
-      flac->sample_rate = BE_32(&streaminfo[10]);
+      flac->sample_rate = _X_BE_32(&streaminfo[10]);
       flac->channels = ((flac->sample_rate >> 9) & 0x07) + 1;
       flac->bits_per_sample = ((flac->sample_rate >> 4) & 0x1F) + 1;
       flac->sample_rate >>= 12;
-      flac->total_samples = BE_64(&streaminfo[10]) & UINT64_C(0x0FFFFFFFFF);  /* 36 bits */
+      flac->total_samples = _X_BE_64(&streaminfo[10]) & UINT64_C(0x0FFFFFFFFF);  /* 36 bits */
       lprintf ("%d Hz, %d bits, %d channels, %"PRId64" total samples\n", 
         flac->sample_rate, flac->bits_per_sample, 
         flac->channels, flac->total_samples);
@@ -171,10 +171,10 @@ static int open_flac_file(demux_flac_t *flac) {
       for (i = 0; i < flac->seekpoint_count; i++) {
         if (flac->input->read(flac->input, buffer, FLAC_SEEKPOINT_SIZE) != FLAC_SEEKPOINT_SIZE)
           return 0;
-        flac->seekpoints[i].sample_number = BE_64(&buffer[0]);
+        flac->seekpoints[i].sample_number = _X_BE_64(&buffer[0]);
         lprintf (" %d: sample %"PRId64", ", i, flac->seekpoints[i].sample_number);
-        flac->seekpoints[i].offset = BE_64(&buffer[8]);
-        flac->seekpoints[i].size = BE_16(&buffer[16]);
+        flac->seekpoints[i].offset = _X_BE_64(&buffer[8]);
+        flac->seekpoints[i].size = _X_BE_16(&buffer[16]);
         lprintf ("@ 0x%"PRIX64", size = %d bytes, ", 
           flac->seekpoints[i].offset, flac->seekpoints[i].size);
         flac->seekpoints[i].pts = flac->seekpoints[i].sample_number;
@@ -202,15 +202,15 @@ static int open_flac_file(demux_flac_t *flac) {
           int tracknumber = -1;
           int tracktotal = -1;
 
-          length = LE_32(ptr);
+          length = _X_LE_32(ptr);
           ptr += 4 + length;
 
-          user_comment_list_length = LE_32(ptr);
+          user_comment_list_length = _X_LE_32(ptr);
           ptr += 4;
 
           cn = 0;
           for (; cn < user_comment_list_length; cn++) {
-            length = LE_32(ptr);
+            length = _X_LE_32(ptr);
             ptr += 4;
 
             comment = (char*) ptr;

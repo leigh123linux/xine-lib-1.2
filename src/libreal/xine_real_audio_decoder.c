@@ -163,27 +163,27 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
    * extract header data
    */
 
-  version = BE_16 (buf->content+4);
+  version = _X_BE_16 (buf->content+4);
 
   lprintf ("header buffer detected, header version %d\n", version);
 #ifdef LOG
   xine_hexdump (buf->content, buf->size);
 #endif
     
-  flavor           = BE_16 (buf->content+22);
-  coded_frame_size = BE_32 (buf->content+24);
-  codec_data_length= BE_16 (buf->content+40);
-  coded_frame_size2= BE_16 (buf->content+42);
-  subpacket_size   = BE_16 (buf->content+44);
+  flavor           = _X_BE_16 (buf->content+22);
+  coded_frame_size = _X_BE_32 (buf->content+24);
+  codec_data_length= _X_BE_16 (buf->content+40);
+  coded_frame_size2= _X_BE_16 (buf->content+42);
+  subpacket_size   = _X_BE_16 (buf->content+44);
     
   this->sps        = subpacket_size;
   this->w          = coded_frame_size2;
   this->h          = codec_data_length;
 
   if (version == 4) {
-    samples_per_sec = BE_16 (buf->content+48);
-    bits_per_sample = BE_16 (buf->content+52);
-    num_channels    = BE_16 (buf->content+54);
+    samples_per_sec = _X_BE_16 (buf->content+48);
+    bits_per_sample = _X_BE_16 (buf->content+52);
+    num_channels    = _X_BE_16 (buf->content+54);
 
     /* FIXME: */
     if (buf->type==BUF_AUDIO_COOK) {
@@ -196,10 +196,10 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
     extras          = buf->content+71;
 
   } else {
-    samples_per_sec = BE_16 (buf->content+54);
-    bits_per_sample = BE_16 (buf->content+58);
-    num_channels    = BE_16 (buf->content+60);
-    data_len        = BE_32 (buf->content+74);
+    samples_per_sec = _X_BE_16 (buf->content+54);
+    bits_per_sample = _X_BE_16 (buf->content+58);
+    num_channels    = _X_BE_16 (buf->content+60);
+    data_len        = _X_BE_32 (buf->content+74);
     extras          = buf->content+78;
   }
 

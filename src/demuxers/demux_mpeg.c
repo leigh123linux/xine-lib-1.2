@@ -140,8 +140,8 @@ static void find_mdat_atom(input_plugin_t *input, off_t *mdat_offset,
       ATOM_PREAMBLE_SIZE)
       break;
 
-    atom_size = BE_32(&atom_preamble[0]);
-    atom = BE_32(&atom_preamble[4]);
+    atom_size = _X_BE_32(&atom_preamble[0]);
+    atom = _X_BE_32(&atom_preamble[4]);
 
     if (atom == MDAT_ATOM) {
       *mdat_offset = input->get_current_pos(input) - ATOM_PREAMBLE_SIZE;
@@ -165,9 +165,9 @@ static void find_mdat_atom(input_plugin_t *input, off_t *mdat_offset,
         ATOM_PREAMBLE_SIZE)
         break;
 
-      atom_size = BE_32(&atom_preamble[0]);
+      atom_size = _X_BE_32(&atom_preamble[0]);
       atom_size <<= 32;
-      atom_size |= BE_32(&atom_preamble[4]);
+      atom_size |= _X_BE_32(&atom_preamble[4]);
       atom_size -= ATOM_PREAMBLE_SIZE * 2;
     } else
       atom_size -= ATOM_PREAMBLE_SIZE;
@@ -1157,7 +1157,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     }
 
     /* special case for MPEG streams with a RIFF header */
-    fourcc_tag = BE_32(&buf[0]);
+    fourcc_tag = _X_BE_32(&buf[0]);
     if (fourcc_tag == RIFF_TAG) {
       uint8_t large_buf[1024];
       
@@ -1165,7 +1165,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
         free(this);
         return NULL;
       }
-      fourcc_tag = BE_32(&large_buf[8]);
+      fourcc_tag = _X_BE_32(&large_buf[8]);
       /* disregard the RIFF file if it is certainly a better known
        * format like AVI or WAVE */
       if ((fourcc_tag == WAVE_TAG) ||
@@ -1185,7 +1185,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 	if (input->read(input, large_buf, 1024) != 1024)
 	  break;
 	for (j = 0; j < 1024 - 4; j++) {
-	  if (BE_32(&large_buf[j]) == MPEG_MARKER) {
+	  if (_X_BE_32(&large_buf[j]) == MPEG_MARKER) {
 	    ok = 1;
 	    break;
 	  }

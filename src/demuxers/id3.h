@@ -183,21 +183,21 @@ static inline int id3v2_istag(uint8_t *ptr) {
 
 #if 0
 /* parse an unsynchronized 16bits integer */
-static inline uint16_t BE_16_synchsafe(uint8_t buf[2]) {
+static inline uint16_t _X_BE_16_synchsafe(uint8_t buf[2]) {
   return ((uint16_t)(buf[0] & 0x7F) << 7) |
           (uint16_t)(buf[1] & 0x7F);
 }
 #endif
 
 /* parse an unsynchronized 24bits integer */
-static inline uint32_t BE_24_synchsafe(uint8_t buf[3]) {
+static inline uint32_t _X_BE_24_synchsafe(uint8_t buf[3]) {
   return ((uint32_t)(buf[0] & 0x7F) << 14) |
          ((uint32_t)(buf[1] & 0x7F) << 7) |
           (uint32_t)(buf[2] & 0x7F);
 }
 
 /* parse an unsynchronized 32bits integer */
-static inline uint32_t BE_32_synchsafe(uint8_t buf[4]) {
+static inline uint32_t _X_BE_32_synchsafe(uint8_t buf[4]) {
   return ((uint32_t)(buf[0] & 0x7F) << 21) |
          ((uint32_t)(buf[1] & 0x7F) << 14) |
          ((uint32_t)(buf[2] & 0x7F) << 7) |

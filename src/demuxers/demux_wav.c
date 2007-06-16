@@ -123,8 +123,8 @@ static int open_wav_file(demux_wav_t *this) {
       free (this->wave);
       return 0;
     }
-    chunk_tag = LE_32(&chunk_preamble[0]);      
-    chunk_size = LE_32(&chunk_preamble[4]);
+    chunk_tag = _X_LE_32(&chunk_preamble[0]);      
+    chunk_size = _X_LE_32(&chunk_preamble[4]);
 
     if (chunk_tag == data_TAG) {
       this->data_start = this->input->get_current_pos(this->input);

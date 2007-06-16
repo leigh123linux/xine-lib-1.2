@@ -128,11 +128,11 @@ static int open_mpc_file(demux_mpc_t *this) {
     
   /* Get frame count */
   this->current_frame = 0;
-  this->frames = LE_32(&this->header[4]);
+  this->frames = _X_LE_32(&this->header[4]);
   lprintf("number of frames: %u\n", this->frames);
   
   /* Get sample rate */
-  switch ((LE_32(&this->header[8]) >> 16) & 0x3) {
+  switch ((_X_LE_32(&this->header[8]) >> 16) & 0x3) {
     case 0:
       this->samplerate = 44.1;
       break;
@@ -155,7 +155,7 @@ static int open_mpc_file(demux_mpc_t *this) {
   lprintf("stream length: %d ms\n", this->length);
 
   /* Calculate the number of bits of the first frame that are still be sent */
-  first_frame_size = (LE_32(&this->header[24]) >> 4) & 0xFFFFF;
+  first_frame_size = (_X_LE_32(&this->header[24]) >> 4) & 0xFFFFF;
   this->next_frame_bits =  first_frame_size - 4;
   lprintf("first frame size: %u\n", first_frame_size);
   
@@ -164,7 +164,7 @@ static int open_mpc_file(demux_mpc_t *this) {
   
   /* Set stream info */
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 1);
-  _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_FOURCC, ME_32(this->header));
+  _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_FOURCC, _X_ME_32(this->header));
   
   return 1;
 }
@@ -229,10 +229,10 @@ static int demux_mpc_send_chunk(demux_plugin_t *this_gen) {
     extra_bits_read = bits_to_read - (this->next_frame_bits+20);
   
     if(extra_bits_read <= 12)
-      next_frame_size = (LE_32(&buf->content[bytes_to_read-4]) >> extra_bits_read) & 0xFFFFF;
+      next_frame_size = (_X_LE_32(&buf->content[bytes_to_read-4]) >> extra_bits_read) & 0xFFFFF;
     else
-      next_frame_size = ((LE_32(&buf->content[bytes_to_read-8]) << (32-extra_bits_read)) |
-                        (LE_32(&buf->content[bytes_to_read-4]) >> extra_bits_read)) & 0xFFFFF;
+      next_frame_size = ((_X_LE_32(&buf->content[bytes_to_read-8]) << (32-extra_bits_read)) |
+                        (_X_LE_32(&buf->content[bytes_to_read-4]) >> extra_bits_read)) & 0xFFFFF;
       
     lprintf("next frame size: %u\n", next_frame_size);
     

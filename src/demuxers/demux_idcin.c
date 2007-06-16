@@ -191,7 +191,7 @@ static int demux_idcin_send_chunk(demux_plugin_t *this_gen) {
     this->status = DEMUX_FINISHED;
     return this->status;
   }
-  remaining_sample_bytes = LE_32(&preamble[0]) - 4;
+  remaining_sample_bytes = _X_LE_32(&preamble[0]) - 4;
 
   lprintf("dispatching %d video bytes\n", remaining_sample_bytes);
   while (remaining_sample_bytes) {
@@ -293,28 +293,28 @@ static int open_idcin_file(demux_idcin_t *this) {
    */
 
   /* check the width */
-  bih->biWidth = LE_32(&header[0]);
+  bih->biWidth = _X_LE_32(&header[0]);
   if ((bih->biWidth == 0) || (bih->biWidth > 1024))
     return 0;
 
   /* check the height */
-  bih->biHeight = LE_32(&header[4]);
+  bih->biHeight = _X_LE_32(&header[4]);
   if ((bih->biHeight == 0) || (bih->biHeight > 1024))
     return 0;
 
   /* check the audio sample rate */
-  this->wave.nSamplesPerSec = LE_32(&header[8]);
+  this->wave.nSamplesPerSec = _X_LE_32(&header[8]);
   if ((this->wave.nSamplesPerSec != 0) &&
      ((this->wave.nSamplesPerSec < 8000) || (this->wave.nSamplesPerSec > 48000)))
     return 0;
 
   /* check the audio bytes/sample */
-  this->wave.wBitsPerSample = LE_32(&header[12]) * 8;
+  this->wave.wBitsPerSample = _X_LE_32(&header[12]) * 8;
   if (this->wave.wBitsPerSample > 16)
     return 0;
 
   /* check the audio channels */
-  this->wave.nChannels = LE_32(&header[16]);
+  this->wave.nChannels = _X_LE_32(&header[16]);
   if (this->wave.nChannels > 2)
     return 0;
 

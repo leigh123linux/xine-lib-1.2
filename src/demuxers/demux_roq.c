@@ -95,8 +95,8 @@ static int open_roq_file(demux_roq_t *this) {
     return 0;
 
   /* check for the RoQ magic numbers */
-  if ((LE_16(&preamble[0]) != RoQ_MAGIC_NUMBER) ||
-      (LE_32(&preamble[2]) != 0xFFFFFFFF))
+  if ((_X_LE_16(&preamble[0]) != RoQ_MAGIC_NUMBER) ||
+      (_X_LE_32(&preamble[2]) != 0xFFFFFFFF))
     return 0;
     
   this->bih.biSize = sizeof(xine_bmiheader);
@@ -112,7 +112,7 @@ static int open_roq_file(demux_roq_t *this) {
    *
    * therefore, the frame pts increment is 90000 / fps
    */
-  fps = LE_16(&preamble[6]);
+  fps = _X_LE_16(&preamble[6]);
   this->frame_pts_inc = 90000 / fps;
 
   /* iterate through the first 2 seconds worth of chunks searching for
@@ -124,16 +124,16 @@ static int open_roq_file(demux_roq_t *this) {
     if (this->input->read(this->input, preamble, RoQ_CHUNK_PREAMBLE_SIZE) != 
       RoQ_CHUNK_PREAMBLE_SIZE)
       break;
-    chunk_type = LE_16(&preamble[0]);
-    chunk_size = LE_32(&preamble[2]);
+    chunk_type = _X_LE_16(&preamble[0]);
+    chunk_size = _X_LE_32(&preamble[2]);
 
     if (chunk_type == RoQ_INFO) {
       /* fetch the width and height; reuse the preamble bytes */
       if (this->input->read(this->input, preamble, 8) != 8)
         break;
 
-      this->bih.biWidth = LE_16(&preamble[0]);
-      this->bih.biHeight = LE_16(&preamble[2]);
+      this->bih.biWidth = _X_LE_16(&preamble[0]);
+      this->bih.biHeight = _X_LE_16(&preamble[2]);
 
       /* if an audio chunk was already found, search is done */
       if (this->wave.nChannels)
@@ -188,8 +188,8 @@ static int demux_roq_send_chunk(demux_plugin_t *this_gen) {
     this->status = DEMUX_FINISHED;
     return this->status;
   }
-  chunk_type = LE_16(&preamble[0]);
-  chunk_size = LE_32(&preamble[2]);
+  chunk_type = _X_LE_16(&preamble[0]);
+  chunk_size = _X_LE_32(&preamble[2]);
 
   /* if the chunk is an audio chunk, route it to the audio fifo */
   if ((chunk_type == RoQ_SOUND_MONO) || (chunk_type == RoQ_SOUND_STEREO)) {

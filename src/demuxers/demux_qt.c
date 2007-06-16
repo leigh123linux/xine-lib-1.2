@@ -501,8 +501,8 @@ static void find_moov_atom(input_plugin_t *input, off_t *moov_offset,
       ATOM_PREAMBLE_SIZE)
       break;
 
-    atom_size = BE_32(&atom_preamble[0]);
-    atom = BE_32(&atom_preamble[4]);
+    atom_size = _X_BE_32(&atom_preamble[0]);
+    atom = _X_BE_32(&atom_preamble[4]);
 
     /* Special case alert: 'free' atoms sometimes masquerade as 'moov'
      * atoms. If this is a free atom, check for 'cmov' or 'mvhd' immediately 
@@ -516,8 +516,8 @@ static void find_moov_atom(input_plugin_t *input, off_t *moov_offset,
 
       /* if there is a cmov, qualify this free atom as the 'moov' atom
        * if no actual 'moov' atom is found. */
-      if ((BE_32(&atom_preamble[4]) == CMOV_ATOM) ||
-          (BE_32(&atom_preamble[4]) == MVHD_ATOM)) {
+      if ((_X_BE_32(&atom_preamble[4]) == CMOV_ATOM) ||
+          (_X_BE_32(&atom_preamble[4]) == MVHD_ATOM)) {
         /* pos = current pos minus 2 atom preambles */
         free_moov_offset = input->get_current_pos(input) - ATOM_PREAMBLE_SIZE * 2;
         free_moov_size = atom_size;
@@ -561,9 +561,9 @@ static void find_moov_atom(input_plugin_t *input, off_t *moov_offset,
         ATOM_PREAMBLE_SIZE)
         break;
 
-      atom_size = BE_32(&atom_preamble[0]);
+      atom_size = _X_BE_32(&atom_preamble[0]);
       atom_size <<= 32;
-      atom_size |= BE_32(&atom_preamble[4]);
+      atom_size |= _X_BE_32(&atom_preamble[4]);
       atom_size -= ATOM_PREAMBLE_SIZE * 2;
     } else
       atom_size -= ATOM_PREAMBLE_SIZE;
@@ -688,20 +688,20 @@ static int is_qt_file(input_plugin_t *qt_file) {
   if ((qt_file->get_capabilities(qt_file) & INPUT_CAP_SEEKABLE) == 0) {
     memset (&preview, 0, MAX_PREVIEW_SIZE);
     len = qt_file->get_optional_data(qt_file, preview, INPUT_OPTIONAL_DATA_PREVIEW);
-    if (BE_32(&preview[4]) == MOOV_ATOM)
+    if (_X_BE_32(&preview[4]) == MOOV_ATOM)
       return 1;
     else {
-      if (BE_32(&preview[4]) == FTYP_ATOM) {
+      if (_X_BE_32(&preview[4]) == FTYP_ATOM) {
         /* show some lenience if the first atom is 'ftyp'; the second atom
          * could be 'moov' */
-        moov_atom_size = BE_32(&preview[0]);
+        moov_atom_size = _X_BE_32(&preview[0]);
         /* compute the size of the current atom plus the preamble of the
          * next atom; if the size is within the range on the preview buffer
          * then the next atom's preamble is in the preview buffer */
         i = moov_atom_size + ATOM_PREAMBLE_SIZE;
         if (i >= MAX_PREVIEW_SIZE)
           return 0;
-        if (BE_32(&preview[i - 4]) == MOOV_ATOM)
+        if (_X_BE_32(&preview[i - 4]) == MOOV_ATOM)
           return 1;
         else
           return 0;
@@ -732,45 +732,45 @@ static int is_qt_file(input_plugin_t *qt_file) {
 /* parse out a meta data atom */
 static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
   int i;
-  unsigned int meta_atom_size = BE_32(&meta_atom[0]);
+  unsigned int meta_atom_size = _X_BE_32(&meta_atom[0]);
   qt_atom current_atom;
   int string_size;
 
   for (i = 0; i < meta_atom_size - 4; i++) {
-    current_atom = BE_32(&meta_atom[i]);
+    current_atom = _X_BE_32(&meta_atom[i]);
 
     if (current_atom == ART_ATOM) {
-      string_size = BE_32(&meta_atom[i + 4]) - 16 + 1;
+      string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
       info->artist = xine_xmalloc(string_size);
       strncpy(info->artist, &meta_atom[i + 20], string_size - 1);
       info->artist[string_size - 1] = 0;
     } else if (current_atom == NAM_ATOM) {
-      string_size = BE_32(&meta_atom[i + 4]) - 16 + 1;
+      string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
       info->name = xine_xmalloc(string_size);
       strncpy(info->name, &meta_atom[i + 20], string_size - 1);
       info->name[string_size - 1] = 0;
     } else if (current_atom == ALB_ATOM) {
-      string_size = BE_32(&meta_atom[i + 4]) - 16 + 1;
+      string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
       info->album = xine_xmalloc(string_size);
       strncpy(info->album, &meta_atom[i + 20], string_size - 1);
       info->album[string_size - 1] = 0;
     } else if (current_atom == GEN_ATOM) {
-      string_size = BE_32(&meta_atom[i + 4]) - 16 + 1;
+      string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
       info->genre = xine_xmalloc(string_size);
       strncpy(info->genre, &meta_atom[i + 20], string_size - 1);
       info->genre[string_size - 1] = 0;
     } else if (current_atom == TOO_ATOM) {
-      string_size = BE_32(&meta_atom[i + 4]) - 16 + 1;
+      string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
       info->comment = xine_xmalloc(string_size);
       strncpy(info->comment, &meta_atom[i + 20], string_size - 1);
       info->comment[string_size - 1] = 0;
     } else if (current_atom == WRT_ATOM) {
-      string_size = BE_32(&meta_atom[i + 4]) - 16 + 1;
+      string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
       info->composer = xine_xmalloc(string_size);
       strncpy(info->composer, &meta_atom[i + 20], string_size - 1);
       info->composer[string_size - 1] = 0;
     } else if (current_atom == DAY_ATOM) {
-      string_size = BE_32(&meta_atom[i + 4]) - 16 + 1;
+      string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
       info->year = xine_xmalloc(string_size);
       strncpy(info->year, &meta_atom[i + 20], string_size - 1);
       info->year[string_size - 1] = 0;
@@ -782,10 +782,10 @@ static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
 /* fetch interesting information from the movie header atom */
 static void parse_mvhd_atom(qt_info *info, unsigned char *mvhd_atom) {
 
-  info->creation_time = BE_32(&mvhd_atom[0x0C]);
-  info->modification_time = BE_32(&mvhd_atom[0x10]);
-  info->timescale = BE_32(&mvhd_atom[0x14]);
-  info->duration = BE_32(&mvhd_atom[0x18]);
+  info->creation_time = _X_BE_32(&mvhd_atom[0x0C]);
+  info->modification_time = _X_BE_32(&mvhd_atom[0x10]);
+  info->timescale = _X_BE_32(&mvhd_atom[0x14]);
+  info->duration = _X_BE_32(&mvhd_atom[0x18]);
 
   debug_atom_load("  qt: timescale = %d, duration = %d (%d seconds)\n",
     info->timescale, info->duration,
@@ -816,7 +816,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
 				 unsigned char *trak_atom) {
 
   int i, j, k;
-  unsigned int trak_atom_size = BE_32(&trak_atom[0]);
+  unsigned int trak_atom_size = _X_BE_32(&trak_atom[0]);
   qt_atom current_atom;
   unsigned int current_atom_size;
   unsigned int atom_pos;
@@ -865,7 +865,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
   /* search for media type atoms */
   for (i = ATOM_PREAMBLE_SIZE; i < trak_atom_size - 4; i++) {
-    current_atom = BE_32(&trak_atom[i]);
+    current_atom = _X_BE_32(&trak_atom[i]);
 
     if (current_atom == VMHD_ATOM) {
       trak->type = MEDIA_VIDEO;
@@ -882,11 +882,11 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
   /* search for the useful atoms */
   for (i = ATOM_PREAMBLE_SIZE; i < trak_atom_size - 4; i++) {
-    current_atom_size = BE_32(&trak_atom[i - 4]);	
-    current_atom = BE_32(&trak_atom[i]);
+    current_atom_size = _X_BE_32(&trak_atom[i - 4]);	
+    current_atom = _X_BE_32(&trak_atom[i]);
 
     if (current_atom == TKHD_ATOM) {
-      trak->flags = BE_16(&trak_atom[i + 6]);
+      trak->flags = _X_BE_16(&trak_atom[i + 6]);
     } else if (current_atom == ELST_ATOM) {
 
       /* there should only be one edit list table */
@@ -895,7 +895,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
         goto free_trak;
       }
 
-      trak->edit_list_count = BE_32(&trak_atom[i + 8]);
+      trak->edit_list_count = _X_BE_32(&trak_atom[i + 8]);
 
       debug_atom_load("    qt elst atom (edit list atom): %d entries\n",
         trak->edit_list_count);
@@ -910,9 +910,9 @@ static qt_error parse_trak_atom (qt_trak *trak,
       /* load the edit list table */
       for (j = 0; j < trak->edit_list_count; j++) {
         trak->edit_list_table[j].track_duration =
-          BE_32(&trak_atom[i + 12 + j * 12 + 0]);
+          _X_BE_32(&trak_atom[i + 12 + j * 12 + 0]);
         trak->edit_list_table[j].media_time =
-          BE_32(&trak_atom[i + 12 + j * 12 + 4]);
+          _X_BE_32(&trak_atom[i + 12 + j * 12 + 4]);
         debug_atom_load("      %d: track duration = %d, media time = %d\n",
           j,
           trak->edit_list_table[j].track_duration,
@@ -926,7 +926,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
       version = trak_atom[i+4];
       if ( version > 1 ) continue; /* unsupported, undocumented */
 
-      trak->timescale = BE_32(&trak_atom[i + (version == 0 ? 0x10 : 0x18) ]);
+      trak->timescale = _X_BE_32(&trak_atom[i + (version == 0 ? 0x10 : 0x18) ]);
     } else if (current_atom == STSD_ATOM) {
 
       debug_atom_load ("demux_qt: stsd atom\n");
@@ -935,7 +935,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
 #endif
 
       /* allocate space for each of the properties unions */
-      trak->stsd_atoms_count = BE_32(&trak_atom[i + 8]);
+      trak->stsd_atoms_count = _X_BE_32(&trak_atom[i + 8]);
       trak->stsd_atoms = xine_xmalloc(trak->stsd_atoms_count * sizeof(properties_t));
       if (!trak->stsd_atoms) {
         last_error = QT_NO_MEMORY;
@@ -947,7 +947,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
       properties_offset = 0x0C;
       for (k = 0; k < trak->stsd_atoms_count; k++) {
 
-        current_stsd_atom_size = BE_32(&trak_atom[atom_pos - 4]);      
+        current_stsd_atom_size = _X_BE_32(&trak_atom[atom_pos - 4]);      
 
         if (trak->type == MEDIA_VIDEO) {
 
@@ -970,15 +970,15 @@ static qt_error parse_trak_atom (qt_trak *trak,
           trak->stsd_atoms[k].video.palette_count = 0;
 
           /* fetch video parameters */
-          if( BE_16(&trak_atom[atom_pos + 0x1C]) && 
-              BE_16(&trak_atom[atom_pos + 0x1E]) ) {
+          if( _X_BE_16(&trak_atom[atom_pos + 0x1C]) && 
+              _X_BE_16(&trak_atom[atom_pos + 0x1E]) ) {
             trak->stsd_atoms[k].video.width =
-              BE_16(&trak_atom[atom_pos + 0x1C]);
+              _X_BE_16(&trak_atom[atom_pos + 0x1C]);
             trak->stsd_atoms[k].video.height =
-              BE_16(&trak_atom[atom_pos + 0x1E]);
+              _X_BE_16(&trak_atom[atom_pos + 0x1E]);
           }
           trak->stsd_atoms[k].video.codec_fourcc =
-            ME_32(&trak_atom[atom_pos + 0x00]);
+            _X_ME_32(&trak_atom[atom_pos + 0x00]);
 
           /* figure out the palette situation */
           color_depth = trak_atom[atom_pos + 0x4F];
@@ -989,7 +989,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
           /* if the depth is 2, 4, or 8 bpp, file is palettized */
           if ((color_depth == 2) || (color_depth == 4) || (color_depth == 8)) {
 
-            color_flag = BE_16(&trak_atom[atom_pos + 0x50]);
+            color_flag = _X_BE_16(&trak_atom[atom_pos + 0x50]);
 
             if (color_greyscale) {
 
@@ -1041,15 +1041,15 @@ static qt_error parse_trak_atom (qt_trak *trak,
             } else {
 
               /* load the palette from the file */
-              color_start = BE_32(&trak_atom[atom_pos + 0x52]);
-              color_count = BE_16(&trak_atom[atom_pos + 0x56]);
-              color_end = BE_16(&trak_atom[atom_pos + 0x58]);
+              color_start = _X_BE_32(&trak_atom[atom_pos + 0x52]);
+              color_count = _X_BE_16(&trak_atom[atom_pos + 0x56]);
+              color_end = _X_BE_16(&trak_atom[atom_pos + 0x58]);
               trak->stsd_atoms[k].video.palette_count =
                 color_end + 1;
 
               for (j = color_start; j <= color_end; j++) {
 
-                color_index = BE_16(&trak_atom[atom_pos + 0x5A + j * 8]);
+                color_index = _X_BE_16(&trak_atom[atom_pos + 0x5A + j * 8]);
                 if (color_count & 0x8000)
                   color_index = j;
                 if (color_index < 
@@ -1102,9 +1102,9 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
           /* fetch audio parameters */
           trak->stsd_atoms[k].audio.codec_fourcc =
-            ME_32(&trak_atom[atom_pos + 0x0]);
+            _X_ME_32(&trak_atom[atom_pos + 0x0]);
           trak->stsd_atoms[k].audio.sample_rate =
-            BE_16(&trak_atom[atom_pos + 0x1C]);
+            _X_BE_16(&trak_atom[atom_pos + 0x1C]);
           trak->stsd_atoms[k].audio.channels = trak_atom[atom_pos + 0x15];
           trak->stsd_atoms[k].audio.bits = trak_atom[atom_pos + 0x17];
 
@@ -1176,18 +1176,18 @@ static qt_error parse_trak_atom (qt_trak *trak,
               (trak->stsd_atoms[k].audio.codec_fourcc != SOWT_FOURCC) &&
               (trak->stsd_atoms[k].audio.codec_fourcc != RAW_FOURCC)) {
 
-            if (BE_32(&trak_atom[atom_pos + 0x20]))
+            if (_X_BE_32(&trak_atom[atom_pos + 0x20]))
               trak->stsd_atoms[k].audio.samples_per_packet = 
-                BE_32(&trak_atom[atom_pos + 0x20]);
-            if (BE_32(&trak_atom[atom_pos + 0x24]))
+                _X_BE_32(&trak_atom[atom_pos + 0x20]);
+            if (_X_BE_32(&trak_atom[atom_pos + 0x24]))
               trak->stsd_atoms[k].audio.bytes_per_packet = 
-                BE_32(&trak_atom[atom_pos + 0x24]);
-            if (BE_32(&trak_atom[atom_pos + 0x28]))
+                _X_BE_32(&trak_atom[atom_pos + 0x24]);
+            if (_X_BE_32(&trak_atom[atom_pos + 0x28]))
               trak->stsd_atoms[k].audio.bytes_per_frame = 
-                BE_32(&trak_atom[atom_pos + 0x28]);
-            if (BE_32(&trak_atom[atom_pos + 0x2C]))
+                _X_BE_32(&trak_atom[atom_pos + 0x28]);
+            if (_X_BE_32(&trak_atom[atom_pos + 0x2C]))
               trak->stsd_atoms[k].audio.bytes_per_sample = 
-                BE_32(&trak_atom[atom_pos + 0x2C]);
+                _X_BE_32(&trak_atom[atom_pos + 0x2C]);
             trak->stsd_atoms[k].audio.samples_per_frame =
               (trak->stsd_atoms[k].audio.bytes_per_frame / 
                trak->stsd_atoms[k].audio.bytes_per_packet) *
@@ -1195,7 +1195,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
           }
 
           /* see if the trak deserves a promotion to VBR */
-          if (BE_16(&trak_atom[atom_pos + 0x18]) == 0xFFFE)
+          if (_X_BE_16(&trak_atom[atom_pos + 0x18]) == 0xFFFE)
             trak->stsd_atoms[k].audio.vbr = 1;
           else
             trak->stsd_atoms[k].audio.vbr = 0;
@@ -1225,10 +1225,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
           /* check for a MS-style WAVE format header */
           if ((current_atom_size >= 0x4C) &&
-              (BE_32(&trak_atom[atom_pos + 0x34]) == WAVE_ATOM) &&
-              (BE_32(&trak_atom[atom_pos + 0x3C]) == FRMA_ATOM) &&
-              (ME_32(&trak_atom[atom_pos + 0x48]) == trak->stsd_atoms[k].audio.codec_fourcc)) {
-            int wave_size = BE_32(&trak_atom[atom_pos + 0x44]) - 8;
+              (_X_BE_32(&trak_atom[atom_pos + 0x34]) == WAVE_ATOM) &&
+              (_X_BE_32(&trak_atom[atom_pos + 0x3C]) == FRMA_ATOM) &&
+              (_X_ME_32(&trak_atom[atom_pos + 0x48]) == trak->stsd_atoms[k].audio.codec_fourcc)) {
+            int wave_size = _X_BE_32(&trak_atom[atom_pos + 0x44]) - 8;
             
             if ((wave_size >= sizeof(xine_waveformatex)) &&
                 (current_atom_size >= (0x4C + wave_size))) {
@@ -1326,8 +1326,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
         goto free_trak;
       }
 
-      trak->sample_size = BE_32(&trak_atom[i + 8]);
-      trak->sample_size_count = BE_32(&trak_atom[i + 12]);
+      trak->sample_size = _X_BE_32(&trak_atom[i + 8]);
+      trak->sample_size_count = _X_BE_32(&trak_atom[i + 12]);
 
       debug_atom_load("    qt stsz atom (sample size atom): sample size = %d, %d entries\n",
         trak->sample_size, trak->sample_size_count);
@@ -1343,7 +1343,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
         /* load the sample size table */
         for (j = 0; j < trak->sample_size_count; j++) {
           trak->sample_size_table[j] =
-            BE_32(&trak_atom[i + 16 + j * 4]);
+            _X_BE_32(&trak_atom[i + 16 + j * 4]);
           debug_atom_load("      sample size %d: %d\n",
             j, trak->sample_size_table[j]);
         }
@@ -1360,7 +1360,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
         goto free_trak;
       }
 
-      trak->sync_sample_count = BE_32(&trak_atom[i + 8]);
+      trak->sync_sample_count = _X_BE_32(&trak_atom[i + 8]);
 
       debug_atom_load("    qt stss atom (sample sync atom): %d sync samples\n",
         trak->sync_sample_count);
@@ -1375,7 +1375,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
       /* load the sync sample table */
       for (j = 0; j < trak->sync_sample_count; j++) {
         trak->sync_sample_table[j] =
-          BE_32(&trak_atom[i + 12 + j * 4]);
+          _X_BE_32(&trak_atom[i + 12 + j * 4]);
         debug_atom_load("      sync sample %d: sample %d (%d) is a keyframe\n",
           j, trak->sync_sample_table[j],
           trak->sync_sample_table[j] - 1);
@@ -1389,7 +1389,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
         goto free_trak;
       }
 
-      trak->chunk_offset_count = BE_32(&trak_atom[i + 8]);
+      trak->chunk_offset_count = _X_BE_32(&trak_atom[i + 8]);
 
       debug_atom_load("    qt stco atom (32-bit chunk offset atom): %d chunk offsets\n",
         trak->chunk_offset_count);
@@ -1404,7 +1404,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
       /* load the chunk offset table */
       for (j = 0; j < trak->chunk_offset_count; j++) {
         trak->chunk_offset_table[j] =
-          BE_32(&trak_atom[i + 12 + j * 4]);
+          _X_BE_32(&trak_atom[i + 12 + j * 4]);
         debug_atom_load("      chunk %d @ 0x%"PRIX64"\n",
           j, trak->chunk_offset_table[j]);
       }
@@ -1417,7 +1417,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
         goto free_trak;
       }
 
-      trak->chunk_offset_count = BE_32(&trak_atom[i + 8]);
+      trak->chunk_offset_count = _X_BE_32(&trak_atom[i + 8]);
 
       debug_atom_load("    qt co64 atom (64-bit chunk offset atom): %d chunk offsets\n",
         trak->chunk_offset_count);
@@ -1432,10 +1432,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
       /* load the 64-bit chunk offset table */
       for (j = 0; j < trak->chunk_offset_count; j++) {
         trak->chunk_offset_table[j] =
-          BE_32(&trak_atom[i + 12 + j * 8 + 0]);
+          _X_BE_32(&trak_atom[i + 12 + j * 8 + 0]);
         trak->chunk_offset_table[j] <<= 32;
         trak->chunk_offset_table[j] |=
-          BE_32(&trak_atom[i + 12 + j * 8 + 4]);
+          _X_BE_32(&trak_atom[i + 12 + j * 8 + 4]);
         debug_atom_load("      chunk %d @ 0x%"PRIX64"\n",
           j, trak->chunk_offset_table[j]);
       }
@@ -1448,7 +1448,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
         goto free_trak;
       }
 
-      trak->sample_to_chunk_count = BE_32(&trak_atom[i + 8]);
+      trak->sample_to_chunk_count = _X_BE_32(&trak_atom[i + 8]);
 
       debug_atom_load("    qt stsc atom (sample-to-chunk atom): %d entries\n",
         trak->sample_to_chunk_count);
@@ -1463,11 +1463,11 @@ static qt_error parse_trak_atom (qt_trak *trak,
       /* load the sample to chunk table */
       for (j = 0; j < trak->sample_to_chunk_count; j++) {
         trak->sample_to_chunk_table[j].first_chunk =
-          BE_32(&trak_atom[i + 12 + j * 12 + 0]);
+          _X_BE_32(&trak_atom[i + 12 + j * 12 + 0]);
         trak->sample_to_chunk_table[j].samples_per_chunk =
-          BE_32(&trak_atom[i + 12 + j * 12 + 4]);
+          _X_BE_32(&trak_atom[i + 12 + j * 12 + 4]);
         trak->sample_to_chunk_table[j].media_id =
-          BE_32(&trak_atom[i + 12 + j * 12 + 8]);
+          _X_BE_32(&trak_atom[i + 12 + j * 12 + 8]);
         debug_atom_load("      %d: %d samples/chunk starting at chunk %d (%d) for media id %d\n",
           j, trak->sample_to_chunk_table[j].samples_per_chunk,
           trak->sample_to_chunk_table[j].first_chunk,
@@ -1483,7 +1483,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
         goto free_trak;
       }
 
-      trak->time_to_sample_count = BE_32(&trak_atom[i + 8]);
+      trak->time_to_sample_count = _X_BE_32(&trak_atom[i + 8]);
 
       debug_atom_load("    qt stts atom (time-to-sample atom): %d entries\n",
         trak->time_to_sample_count);
@@ -1498,9 +1498,9 @@ static qt_error parse_trak_atom (qt_trak *trak,
       /* load the time to sample table */
       for (j = 0; j < trak->time_to_sample_count; j++) {
         trak->time_to_sample_table[j].count =
-          BE_32(&trak_atom[i + 12 + j * 8 + 0]);
+          _X_BE_32(&trak_atom[i + 12 + j * 8 + 0]);
         trak->time_to_sample_table[j].duration =
-          BE_32(&trak_atom[i + 12 + j * 8 + 4]);
+          _X_BE_32(&trak_atom[i + 12 + j * 8 + 4]);
         debug_atom_load("      %d: count = %d, duration = %d\n",
           j, trak->time_to_sample_table[j].count,
           trak->time_to_sample_table[j].duration);
@@ -1536,7 +1536,7 @@ static qt_error parse_reference_atom (reference_t *ref,
                                       char *base_mrl) {
 
   int i, j;
-  unsigned int ref_atom_size = BE_32(&ref_atom[0]);
+  unsigned int ref_atom_size = _X_BE_32(&ref_atom[0]);
   qt_atom current_atom;
   unsigned int current_atom_size;
 
@@ -1548,8 +1548,8 @@ static qt_error parse_reference_atom (reference_t *ref,
   /* traverse through the atom looking for the key atoms */
   for (i = ATOM_PREAMBLE_SIZE; i < ref_atom_size - 4; i++) {
 
-    current_atom_size = BE_32(&ref_atom[i - 4]);
-    current_atom = BE_32(&ref_atom[i]);
+    current_atom_size = _X_BE_32(&ref_atom[i - 4]);
+    current_atom = _X_BE_32(&ref_atom[i]);
 
     if (current_atom == RDRF_ATOM) {
 
@@ -1558,24 +1558,24 @@ static qt_error parse_reference_atom (reference_t *ref,
         || strncmp(&ref_atom[i + 16], "rtsp://", 7) == 0) {
 
         /* URL is spec'd to terminate with a NULL; don't trust it */
-        ref->url = xine_xmalloc(BE_32(&ref_atom[i + 12]) + 1);
-        strncpy(ref->url, &ref_atom[i + 16], BE_32(&ref_atom[i + 12]));
-        ref->url[BE_32(&ref_atom[i + 12]) - 1] = '\0';
+        ref->url = xine_xmalloc(_X_BE_32(&ref_atom[i + 12]) + 1);
+        strncpy(ref->url, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
+        ref->url[_X_BE_32(&ref_atom[i + 12]) - 1] = '\0';
 
       } else {
 
         int string_size;
 
 	if (base_mrl)
-          string_size = strlen(base_mrl) + BE_32(&ref_atom[i + 12]) + 1;
+          string_size = strlen(base_mrl) + _X_BE_32(&ref_atom[i + 12]) + 1;
 	else
-          string_size = BE_32(&ref_atom[i + 12]) + 1;
+          string_size = _X_BE_32(&ref_atom[i + 12]) + 1;
 
         /* otherwise, append relative URL to base MRL */
         ref->url = xine_xmalloc(string_size);
 	if (base_mrl)
           strcpy(ref->url, base_mrl);
-        strncat(ref->url, &ref_atom[i + 16], BE_32(&ref_atom[i + 12]));
+        strncat(ref->url, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
         ref->url[string_size - 1] = '\0';
       }
 
@@ -1584,7 +1584,7 @@ static qt_error parse_reference_atom (reference_t *ref,
     } else if (current_atom == RMDR_ATOM) {
 
       /* load the data rate */
-      ref->data_rate = BE_32(&ref_atom[i + 8]);
+      ref->data_rate = _X_BE_32(&ref_atom[i + 8]);
       ref->data_rate *= 10;
 
       debug_atom_load("    qt rmdr data rate = %"PRId64"\n", ref->data_rate);
@@ -1597,9 +1597,9 @@ static qt_error parse_reference_atom (reference_t *ref,
        * chars so only search to 6 bytes to the end */
       for (j = 4; j < current_atom_size - 6; j++) {
 
-        if (BE_32(&ref_atom[i + j]) == QTIM_ATOM) {
+        if (_X_BE_32(&ref_atom[i + j]) == QTIM_ATOM) {
 
-          ref->qtim_version = BE_16(&ref_atom[i + j + 4]);
+          ref->qtim_version = _X_BE_16(&ref_atom[i + j + 4]);
           debug_atom_load("      qtim version = %04X\n", ref->qtim_version);
         }
       }
@@ -1917,7 +1917,7 @@ static qt_error build_frame_table(qt_trak *trak,
 static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
                             int64_t bandwidth) {
   int i, j;
-  unsigned int moov_atom_size = BE_32(&moov_atom[0]);
+  unsigned int moov_atom_size = _X_BE_32(&moov_atom[0]);
   qt_atom current_atom;
   int string_size, error;
   unsigned int max_video_frames = 0;
@@ -1925,15 +1925,15 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
 
   /* make sure this is actually a moov atom (will also accept 'free' as
    * a special case) */
-  if ((BE_32(&moov_atom[4]) != MOOV_ATOM) &&
-      (BE_32(&moov_atom[4]) != FREE_ATOM)) {
+  if ((_X_BE_32(&moov_atom[4]) != MOOV_ATOM) &&
+      (_X_BE_32(&moov_atom[4]) != FREE_ATOM)) {
     info->last_error = QT_NO_MOOV_ATOM;
     return;
   }
 
   /* prowl through the moov atom looking for very specific targets */
-  for (i = ATOM_PREAMBLE_SIZE + 4; i < moov_atom_size - 4; i += BE_32(&moov_atom[i - 4])) {
-    current_atom = BE_32(&moov_atom[i]);
+  for (i = ATOM_PREAMBLE_SIZE + 4; i < moov_atom_size - 4; i += _X_BE_32(&moov_atom[i - 4])) {
+    current_atom = _X_BE_32(&moov_atom[i]);
 
     if (current_atom == MVHD_ATOM) {
       parse_mvhd_atom(info, &moov_atom[i - 4]);
@@ -1962,28 +1962,28 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
 
     } else if (current_atom == NAM_ATOM) {
 
-      string_size = BE_16(&moov_atom[i + 4]) + 1;
+      string_size = _X_BE_16(&moov_atom[i + 4]) + 1;
       info->name = realloc (info->name, string_size);
       strncpy(info->name, &moov_atom[i + 8], string_size - 1);
       info->name[string_size - 1] = 0;
 
     } else if (current_atom == CPY_ATOM) {
 
-      string_size = BE_16(&moov_atom[i + 4]) + 1;
+      string_size = _X_BE_16(&moov_atom[i + 4]) + 1;
       info->copyright = realloc (info->copyright, string_size);
       strncpy(info->copyright, &moov_atom[i + 8], string_size - 1);
       info->copyright[string_size - 1] = 0;
 
     } else if (current_atom == DES_ATOM) {
 
-      string_size = BE_16(&moov_atom[i + 4]) + 1;
+      string_size = _X_BE_16(&moov_atom[i + 4]) + 1;
       info->description = realloc (info->description, string_size);
       strncpy(info->description, &moov_atom[i + 8], string_size - 1);
       info->description[string_size - 1] = 0;
 
     } else if (current_atom == CMT_ATOM) {
 
-      string_size = BE_16(&moov_atom[i + 4]) + 1;
+      string_size = _X_BE_16(&moov_atom[i + 4]) + 1;
       info->comment = realloc (info->comment, string_size);
       strncpy(info->comment, &moov_atom[i + 8], string_size - 1);
       info->comment[string_size - 1] = 0;
@@ -2100,24 +2100,24 @@ static qt_error open_qt_file(qt_info *info, input_plugin_t *input,
   else {
     memset (&preview, 0, MAX_PREVIEW_SIZE);
     input->get_optional_data(input, preview, INPUT_OPTIONAL_DATA_PREVIEW);
-    if (BE_32(&preview[4]) != MOOV_ATOM) {
+    if (_X_BE_32(&preview[4]) != MOOV_ATOM) {
       /* special case if there is an ftyp atom first */
-      if (BE_32(&preview[4]) == FTYP_ATOM) {
-        moov_atom_size = BE_32(&preview[0]);
+      if (_X_BE_32(&preview[4]) == FTYP_ATOM) {
+        moov_atom_size = _X_BE_32(&preview[0]);
         if ((moov_atom_size + ATOM_PREAMBLE_SIZE >= MAX_PREVIEW_SIZE) ||
-            (BE_32(&preview[moov_atom_size + 4]) != MOOV_ATOM)) {
+            (_X_BE_32(&preview[moov_atom_size + 4]) != MOOV_ATOM)) {
           info->last_error = QT_NO_MOOV_ATOM;
           return info->last_error;
         }
         moov_atom_offset = moov_atom_size;
-        moov_atom_size = BE_32(&preview[moov_atom_offset]);
+        moov_atom_size = _X_BE_32(&preview[moov_atom_offset]);
       } else {
         info->last_error = QT_NO_MOOV_ATOM;
         return info->last_error;
       }
     } else {
       moov_atom_offset = 0;
-      moov_atom_size = BE_32(&preview[0]);
+      moov_atom_size = _X_BE_32(&preview[0]);
     }
   }
 
@@ -2148,14 +2148,14 @@ static qt_error open_qt_file(qt_info *info, input_plugin_t *input,
   }
 
   /* check if moov is compressed */
-  if (BE_32(&moov_atom[12]) == CMOV_ATOM) {
+  if (_X_BE_32(&moov_atom[12]) == CMOV_ATOM) {
 
     info->compressed_header = 1;
 
     z_state.next_in = &moov_atom[0x28];
     z_state.avail_in = moov_atom_size - 0x28;
-    z_state.avail_out = BE_32(&moov_atom[0x24]);
-    unzip_buffer = (unsigned char *)malloc(BE_32(&moov_atom[0x24]));
+    z_state.avail_out = _X_BE_32(&moov_atom[0x24]);
+    unzip_buffer = (unsigned char *)malloc(_X_BE_32(&moov_atom[0x24]));
     if (!unzip_buffer) {
       free(moov_atom);
       info->last_error = QT_NO_MEMORY;
@@ -2194,7 +2194,7 @@ static qt_error open_qt_file(qt_info *info, input_plugin_t *input,
     /* replace the compressed moov atom with the decompressed atom */
     free (moov_atom);
     moov_atom = unzip_buffer;
-    moov_atom_size = BE_32(&moov_atom[0]);
+    moov_atom_size = _X_BE_32(&moov_atom[0]);
   }
 
   if (!moov_atom) {

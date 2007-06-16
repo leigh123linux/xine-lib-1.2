@@ -144,8 +144,8 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
     return 0;
 
   /* check for the signature tags */
-  if ((LE_32(&preview[0]) !=  RIFF_TAG) ||
-      (LE_32(&preview[8]) != _4XMV_TAG))
+  if ((_X_LE_32(&preview[0]) !=  RIFF_TAG) ||
+      (_X_LE_32(&preview[8]) != _4XMV_TAG))
     return 0;
 
   /* file is qualified; skip over the header bytes in the stream */
@@ -154,12 +154,12 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
   /* fetch the LIST-HEAD header */
   if (fourxm->input->read(fourxm->input, preview, 12) != 12)
     return 0;
-  if ((LE_32(&preview[0]) != LIST_TAG) ||
-      (LE_32(&preview[8]) != HEAD_TAG))
+  if ((_X_LE_32(&preview[0]) != LIST_TAG) ||
+      (_X_LE_32(&preview[8]) != HEAD_TAG))
     return 0;
 
   /* read the whole header */
-  header_size = LE_32(&preview[4]) - 4;
+  header_size = _X_LE_32(&preview[4]) - 4;
   header = xine_xmalloc(header_size);
   if (fourxm->input->read(fourxm->input, header, header_size) != header_size) {
     free(header);
@@ -174,8 +174,8 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
 
   /* take the lazy approach and search for any and all vtrk and strk chunks */
   for (i = 0; i < header_size - 8; i++) {
-    fourcc_tag = LE_32(&header[i]);
-    size = LE_32(&header[i + 4]);
+    fourcc_tag = _X_LE_32(&header[i]);
+    size = _X_LE_32(&header[i + 4]);
 
     if (fourcc_tag == std__TAG) {
       fps = get_le_float(&header[i + 12]);
@@ -186,13 +186,13 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
         free(header);
         return 0;
       }
-      total_frames = LE_32(&header[i + 24]);
+      total_frames = _X_LE_32(&header[i + 24]);
       fourxm->duration_in_ms = total_frames;
       fourxm->duration_in_ms *= fourxm->video_pts_inc;
       fourxm->duration_in_ms /= 90000;
       fourxm->duration_in_ms *= 1000;
-      fourxm->bih.biWidth = LE_32(&header[i + 36]);
-      fourxm->bih.biHeight = LE_32(&header[i + 40]);
+      fourxm->bih.biWidth = _X_LE_32(&header[i + 36]);
+      fourxm->bih.biHeight = _X_LE_32(&header[i + 40]);
       i += 8 + size;
     } else if (fourcc_tag == strk_TAG) {
       /* check that there is enough data */
@@ -200,7 +200,7 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
         free(header);
         return 0;
       }
-      current_track = LE_32(&header[i + 8]);
+      current_track = _X_LE_32(&header[i + 8]);
       if (current_track + 1 > fourxm->track_count) {
         fourxm->track_count = current_track + 1;
         fourxm->tracks = realloc(fourxm->tracks,
@@ -211,10 +211,10 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
         }
       }
 
-      fourxm->tracks[current_track].channels = LE_32(&header[i + 36]);
-      fourxm->tracks[current_track].sample_rate = LE_32(&header[i + 40]);
-      fourxm->tracks[current_track].bits = LE_32(&header[i + 44]);
-      audio_type = LE_32(&header[i + 12]);
+      fourxm->tracks[current_track].channels = _X_LE_32(&header[i + 36]);
+      fourxm->tracks[current_track].sample_rate = _X_LE_32(&header[i + 40]);
+      fourxm->tracks[current_track].bits = _X_LE_32(&header[i + 44]);
+      audio_type = _X_LE_32(&header[i + 12]);
       if (audio_type == 0)
           fourxm->tracks[current_track].audio_type = BUF_AUDIO_LPCM_LE;
       else if (audio_type == 1)
@@ -253,8 +253,8 @@ static int demux_fourxm_send_chunk(demux_plugin_t *this_gen) {
     return this->status;
   }
 
-  fourcc_tag = LE_32(&header[0]);
-  size = LE_32(&header[4]);
+  fourcc_tag = _X_LE_32(&header[0]);
+  size = _X_LE_32(&header[4]);
 
   switch (fourcc_tag) {
 
@@ -314,8 +314,8 @@ static int demux_fourxm_send_chunk(demux_plugin_t *this_gen) {
       this->status = DEMUX_FINISHED;
       return this->status;
     }
-    current_track = LE_32(&header[0]);
-//    size = LE_32(&header[4]);
+    current_track = _X_LE_32(&header[0]);
+//    size = _X_LE_32(&header[4]);
 
     if (current_track >= this->track_count) {
       lprintf ("bad audio track number (%d >= %d)\n",

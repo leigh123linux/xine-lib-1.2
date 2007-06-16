@@ -97,7 +97,7 @@ static int open_aud_file(demux_aud_t *this) {
    * of numbers. There is a 80002/16777216 = 0.48% chance of a false
    * positive.
    */
-  this->audio_samplerate = LE_16(&header[0]);
+  this->audio_samplerate = _X_LE_16(&header[0]);
   if ((this->audio_samplerate < 8000) || (this->audio_samplerate > 48000))
     return 0;
 
@@ -145,12 +145,12 @@ static int demux_aud_send_chunk(demux_plugin_t *this_gen) {
   }
 
   /* validate the chunk */
-  if (LE_32(&chunk_preamble[4]) != 0x0000DEAF) {
+  if (_X_LE_32(&chunk_preamble[4]) != 0x0000DEAF) {
     this->status = DEMUX_FINISHED;
     return this->status;
   }
 
-  chunk_size = LE_16(&chunk_preamble[0]);
+  chunk_size = _X_LE_16(&chunk_preamble[0]);
 
   current_file_pos = this->input->get_current_pos(this->input) -
     this->data_start;

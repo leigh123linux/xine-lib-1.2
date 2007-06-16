@@ -205,7 +205,7 @@ static int parse_frame_header(mpg_audio_frame_t *const frame, const uint8_t *con
 #endif
   } frame_header;
 
-  const uint32_t head = BE_32(buf);
+  const uint32_t head = _X_BE_32(buf);
   const uint16_t frame_sync = head >> 21;
 
   lprintf("header: %08X\n", head);
@@ -324,21 +324,21 @@ static xing_header_t* parse_xing_header(mpg_audio_frame_t *frame,
   
   if (ptr >= (buf + bufsize - 4)) return 0;
   lprintf("checking %08X\n", *ptr);
-  if (BE_32(ptr) == XING_TAG) {
+  if (_X_BE_32(ptr) == XING_TAG) {
     lprintf("Xing header found\n");
     ptr += 4;
     
     if (ptr >= (buf + bufsize - 4)) return 0;
-    xing->flags = BE_32(ptr); ptr += 4;
+    xing->flags = _X_BE_32(ptr); ptr += 4;
 
     if (xing->flags & XING_FRAMES_FLAG) {
       if (ptr >= (buf + bufsize - 4)) return 0;
-      xing->stream_frames = BE_32(ptr); ptr += 4;
+      xing->stream_frames = _X_BE_32(ptr); ptr += 4;
       lprintf("stream frames: %d\n", xing->stream_frames);
     }
     if (xing->flags & XING_BYTES_FLAG) {
       if (ptr >= (buf + bufsize - 4)) return 0;
-      xing->stream_size = BE_32(ptr); ptr += 4;
+      xing->stream_size = _X_BE_32(ptr); ptr += 4;
       lprintf("stream size: %d\n", xing->stream_size);
     }
     if (xing->flags & XING_TOC_FLAG) {
@@ -357,7 +357,7 @@ static xing_header_t* parse_xing_header(mpg_audio_frame_t *frame,
     xing->vbr_scale = -1;
     if (xing->flags & XING_VBR_SCALE_FLAG) {
       if (ptr >= (buf + bufsize - 4)) return 0;
-      xing->vbr_scale = BE_32(ptr);
+      xing->vbr_scale = _X_BE_32(ptr);
       lprintf("vbr_scale: %d\n", xing->vbr_scale);
     }
 
@@ -388,20 +388,20 @@ static vbri_header_t* parse_vbri_header(mpg_audio_frame_t *frame,
   
   if ((ptr + 4) >= (buf + bufsize)) return 0;
   lprintf("Checking %08X\n", *ptr);
-  if (BE_32(ptr) == VBRI_TAG) {
+  if (_X_BE_32(ptr) == VBRI_TAG) {
     lprintf("Vbri header found\n");
     ptr += 4;
     
     if ((ptr + 22) >= (buf + bufsize)) return 0;
-    vbri->version           = BE_16(ptr); ptr += 2;
-    vbri->delai             = BE_16(ptr); ptr += 2;
-    vbri->quality           = BE_16(ptr); ptr += 2;
-    vbri->stream_size       = BE_32(ptr); ptr += 4;
-    vbri->stream_frames     = BE_32(ptr); ptr += 4;
-    vbri->toc_entries       = BE_16(ptr); ptr += 2;
-    vbri->toc_scale_factor  = BE_16(ptr); ptr += 2;
-    vbri->entry_size        = BE_16(ptr); ptr += 2;
-    vbri->entry_frames      = BE_16(ptr); ptr += 2;
+    vbri->version           = _X_BE_16(ptr); ptr += 2;
+    vbri->delai             = _X_BE_16(ptr); ptr += 2;
+    vbri->quality           = _X_BE_16(ptr); ptr += 2;
+    vbri->stream_size       = _X_BE_32(ptr); ptr += 4;
+    vbri->stream_frames     = _X_BE_32(ptr); ptr += 4;
+    vbri->toc_entries       = _X_BE_16(ptr); ptr += 2;
+    vbri->toc_scale_factor  = _X_BE_16(ptr); ptr += 2;
+    vbri->entry_size        = _X_BE_16(ptr); ptr += 2;
+    vbri->entry_frames      = _X_BE_16(ptr); ptr += 2;
     lprintf("version: %d\n", vbri->version);
     lprintf("delai: %d\n", vbri->delai);
     lprintf("quality: %d\n", vbri->quality);
@@ -688,7 +688,7 @@ static int detect_mpgaudio_file(input_plugin_t *input) {
   lprintf("got preview %02x %02x %02x %02x\n",
     buf[0], buf[1], buf[2], buf[3]);
 
-  head = BE_32(buf);
+  head = _X_BE_32(buf);
 
   if ((head == ID3V22_TAG) ||
       (head == ID3V23_TAG) ||
@@ -697,7 +697,7 @@ static int detect_mpgaudio_file(input_plugin_t *input) {
      * id3v2 are not specific to mp3 files,
      * flac files can contain id3v2 tags
      */
-    uint32_t tag_size = BE_32_synchsafe(&buf[6]);
+    uint32_t tag_size = _X_BE_32_synchsafe(&buf[6]);
     lprintf("try to skip id3v2 tag (%d bytes)\n", tag_size);
     if ((10 + tag_size) >= preview_len) {
       lprintf("cannot skip id3v2 tag\n");
