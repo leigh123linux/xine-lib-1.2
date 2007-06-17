@@ -152,7 +152,7 @@ static int open_film_file(demux_film_t *film) {
   film->input->seek(film->input, 16, SEEK_SET);
 
   /* header size = header size - 16-byte FILM signature */
-  film_header_size = BE_32(&scratch[4]) - 16;
+  film_header_size = _X_BE_32(&scratch[4]) - 16;
   film_header = xine_xmalloc(film_header_size);
   if (!film_header)
     return 0;
@@ -180,8 +180,8 @@ static int open_film_file(demux_film_t *film) {
   /* traverse the FILM header */
   i = 0;
   while (i < film_header_size) {
-    chunk_type = BE_32(&film_header[i]);
-    chunk_size = BE_32(&film_header[i + 4]);
+    chunk_type = _X_BE_32(&film_header[i]);
+    chunk_size = _X_BE_32(&film_header[i + 4]);
 
     /* sanity check the chunk size */
     if (i + chunk_size > film_header_size) {
@@ -197,8 +197,8 @@ static int open_film_file(demux_film_t *film) {
       llprintf(DEBUG_FILM_LOAD, "parsing FDSC chunk\n");
 
       /* always fetch the video information */
-      film->bih.biWidth = BE_32(&film_header[i + 16]);
-      film->bih.biHeight = BE_32(&film_header[i + 12]);
+      film->bih.biWidth = _X_BE_32(&film_header[i + 16]);
+      film->bih.biHeight = _X_BE_32(&film_header[i + 12]);
       film->video_codec = *(uint32_t *)&film_header[i + 8];
       film->video_type = _x_fourcc_to_buf_video(*(uint32_t *)&film_header[i + 8]);
 
@@ -209,7 +209,7 @@ static int open_film_file(demux_film_t *film) {
       if (chunk_size == 32) {
         film->audio_channels = film_header[21];
         film->audio_bits = film_header[22];
-        film->sample_rate = BE_16(&film_header[24]);
+        film->sample_rate = _X_BE_16(&film_header[24]);
       } else {
         /* If the FDSC chunk is not 32 bytes long, this is an early FILM
          * file. Make a few assumptions about the audio parms based on the
@@ -255,21 +255,21 @@ static int open_film_file(demux_film_t *film) {
       /* load the sample table */
       if (film->sample_table)
         free(film->sample_table);
-      film->frequency = BE_32(&film_header[i + 8]);
-      film->sample_count = BE_32(&film_header[i + 12]);
+      film->frequency = _X_BE_32(&film_header[i + 8]);
+      film->sample_count = _X_BE_32(&film_header[i + 12]);
       film->sample_table =
         xine_xmalloc(film->sample_count * sizeof(film_sample_t));
       for (j = 0; j < film->sample_count; j++) {
 
         film->sample_table[j].sample_offset =
-          BE_32(&film_header[(i + 16) + j * 16 + 0])
+          _X_BE_32(&film_header[(i + 16) + j * 16 + 0])
           + film_header_size + 16;
         film->sample_table[j].sample_size =
-          BE_32(&film_header[(i + 16) + j * 16 + 4]);
+          _X_BE_32(&film_header[(i + 16) + j * 16 + 4]);
         pts =
-          BE_32(&film_header[(i + 16) + j * 16 + 8]);
+          _X_BE_32(&film_header[(i + 16) + j * 16 + 8]);
         film->sample_table[j].duration =
-          BE_32(&film_header[(i + 16) + j * 16 + 12]);
+          _X_BE_32(&film_header[(i + 16) + j * 16 + 12]);
 
         if (pts == 0xFFFFFFFF) {
 

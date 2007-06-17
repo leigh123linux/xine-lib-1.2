@@ -84,7 +84,7 @@ static int open_aac_file(demux_aac_t *this) {
 
   /* Check if there's an ID3v2 tag at the start */
   if ( id3v2_istag(peak) ) {
-    id3size = BE_32_synchsafe(&peak[6]);
+    id3size = _X_BE_32_synchsafe(&peak[6]);
 
     this->input->seek(this->input, 4, SEEK_SET);
 

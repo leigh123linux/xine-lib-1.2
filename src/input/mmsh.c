@@ -316,8 +316,8 @@ static int get_chunk_header (mmsh_t *this) {
              "libmmsh: chunk header read failed, %d != %d\n", read_len, CHUNK_HEADER_LENGTH);
     return 0;
   }
-  this->chunk_type       = LE_16 (&chunk_header[0]);
-  this->chunk_length     = LE_16 (&chunk_header[2]);
+  this->chunk_type       = _X_LE_16 (&chunk_header[0]);
+  this->chunk_length     = _X_LE_16 (&chunk_header[2]);
   
   switch (this->chunk_type) {
     case CHUNK_TYPE_DATA:
@@ -347,16 +347,16 @@ static int get_chunk_header (mmsh_t *this) {
   
   switch (this->chunk_type) {
     case CHUNK_TYPE_DATA:
-      this->chunk_seq_number = LE_32 (&ext_header[0]);
+      this->chunk_seq_number = _X_LE_32 (&ext_header[0]);
       lprintf ("chunk type:       CHUNK_TYPE_DATA\n");
       lprintf ("chunk length:     %d\n", this->chunk_length);
       lprintf ("chunk seq:        %d\n", this->chunk_seq_number);
       lprintf ("unknown:          %d\n", ext_header[4]);
       lprintf ("mmsh seq:         %d\n", ext_header[5]);
-      lprintf ("len2:             %d\n", LE_16(&ext_header[6]));
+      lprintf ("len2:             %d\n", _X_LE_16(&ext_header[6]));
       break;
     case CHUNK_TYPE_END:
-      this->chunk_seq_number = LE_32 (&ext_header[0]);
+      this->chunk_seq_number = _X_LE_32 (&ext_header[0]);
       lprintf ("chunk type:       CHUNK_TYPE_END\n");
       lprintf ("continue: %d\n", this->chunk_seq_number);
       break;
@@ -366,7 +366,7 @@ static int get_chunk_header (mmsh_t *this) {
       lprintf ("unknown:          %2X %2X %2X %2X %2X %2X\n",
                ext_header[0], ext_header[1], ext_header[2], ext_header[3],
                ext_header[4], ext_header[5]);
-      lprintf ("len2:             %d\n", LE_16(&ext_header[6]));
+      lprintf ("len2:             %d\n", _X_LE_16(&ext_header[6]));
       break;
     case CHUNK_TYPE_RESET:
       lprintf ("chunk type:       CHUNK_TYPE_RESET\n");

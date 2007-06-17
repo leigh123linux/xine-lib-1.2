@@ -145,7 +145,7 @@ static int demux_pva_send_chunk(demux_plugin_t *this_gen) {
     return this->status;
   }
 
-  chunk_size = BE_16(&preamble[6]);
+  chunk_size = _X_BE_16(&preamble[6]);
 
   current_file_pos = this->input->get_current_pos(this->input);
 
@@ -160,7 +160,7 @@ static int demux_pva_send_chunk(demux_plugin_t *this_gen) {
         return this->status;
       }
       chunk_size -= 4;
-      pts = BE_32(&pts_buf[0]);
+      pts = _X_BE_32(&pts_buf[0]);
       check_newpts( this, pts, PTS_VIDEO );
     } else
       pts = 0;
@@ -207,11 +207,11 @@ static int demux_pva_send_chunk(demux_plugin_t *this_gen) {
       this->status = DEMUX_FINISHED;
       return this->status;
     }
-    if (BE_32(&preamble[0]) != 0x000001C0) {
+    if (_X_BE_32(&preamble[0]) != 0x000001C0) {
       this->status = DEMUX_FINISHED;
       return this->status;
     }
-    chunk_size = BE_16(&preamble[4]);
+    chunk_size = _X_BE_16(&preamble[4]);
 
     /* get next 3 header bytes */
     if (this->input->read(this->input, preamble, 3) != 3) {
@@ -234,8 +234,8 @@ static int demux_pva_send_chunk(demux_plugin_t *this_gen) {
       }
 
       pts = (int64_t)(preamble[0] & 0x0e) << 29 ;
-      pts |= (BE_16(&preamble[1]) & 0xFFFE) << 14;
-      pts |= (BE_16(&preamble[3]) & 0xFFFE) >> 1;
+      pts |= (_X_BE_16(&preamble[1]) & 0xFFFE) << 14;
+      pts |= (_X_BE_16(&preamble[3]) & 0xFFFE) >> 1;
 
       header_len -= 5 ;
 

@@ -208,8 +208,8 @@ static void print_command (char *data, int len) {
 
 #ifdef LOG
   int i;
-  int dir = LE_32 (data + 36) >> 16;
-  int comm = LE_32 (data + 36) & 0xFFFF;
+  int dir = _X_LE_32 (data + 36) >> 16;
+  int comm = _X_LE_32 (data + 36) & 0xFFFF;
 
   printf ("----------------------------------------------\n");
   if (dir == 3) {
@@ -217,18 +217,18 @@ static void print_command (char *data, int len) {
   } else {
     printf ("receive command 0x%02x, %d bytes\n", comm, len);
   }
-  printf ("  start sequence %08x\n", LE_32 (data +  0));
-  printf ("  command id     %08x\n", LE_32 (data +  4));
-  printf ("  length         %8x \n", LE_32 (data +  8));
-  printf ("  protocol       %08x\n", LE_32 (data + 12));
-  printf ("  len8           %8x \n", LE_32 (data + 16));
-  printf ("  sequence #     %08x\n", LE_32 (data + 20));
-  printf ("  len8  (II)     %8x \n", LE_32 (data + 32));
-  printf ("  dir | comm     %08x\n", LE_32 (data + 36));
+  printf ("  start sequence %08x\n", _X_LE_32 (data +  0));
+  printf ("  command id     %08x\n", _X_LE_32 (data +  4));
+  printf ("  length         %8x \n", _X_LE_32 (data +  8));
+  printf ("  protocol       %08x\n", _X_LE_32 (data + 12));
+  printf ("  len8           %8x \n", _X_LE_32 (data + 16));
+  printf ("  sequence #     %08x\n", _X_LE_32 (data + 20));
+  printf ("  len8  (II)     %8x \n", _X_LE_32 (data + 32));
+  printf ("  dir | comm     %08x\n", _X_LE_32 (data + 36));
   if (len >= 4)
-    printf ("  prefix1        %08x\n", LE_32 (data + 40));
+    printf ("  prefix1        %08x\n", _X_LE_32 (data + 40));
   if (len >= 8)
-    printf ("  prefix2        %08x\n", LE_32 (data + 44));
+    printf ("  prefix2        %08x\n", _X_LE_32 (data + 44));
 
   for (i = (CMD_HEADER_LEN + CMD_PREFIX_LEN); i < (CMD_HEADER_LEN + CMD_PREFIX_LEN + len); i += 1) {
     unsigned char c = data[i];
@@ -355,14 +355,14 @@ static int get_packet_header (mms_t *this, mms_packet_header_t *header) {
   if (len != 8)
     goto error;
     
-  if (LE_32(this->buf + 4) == 0xb00bface) {
+  if (_X_LE_32(this->buf + 4) == 0xb00bface) {
     /* command packet */
     header->flags = this->buf[3];
     len = _x_io_tcp_read (this->stream, this->s, (char*)(this->buf + 8), 4);
     if (len != 4)
       goto error;
     
-    header->packet_len = LE_32(this->buf + 8) + 4;
+    header->packet_len = _X_LE_32(this->buf + 8) + 4;
     if (header->packet_len > BUF_SIZE - 12) {
       header->packet_len = 0;
       goto error;
@@ -370,10 +370,10 @@ static int get_packet_header (mms_t *this, mms_packet_header_t *header) {
     lprintf("mms command\n");
     packet_type = MMS_PACKET_COMMAND;
   } else {
-    header->packet_seq     = LE_32(this->buf);
+    header->packet_seq     = _X_LE_32(this->buf);
     header->packet_id_type = this->buf[4];
     header->flags          = this->buf[5];
-    header->packet_len     = (LE_16(this->buf + 6) - 8) & 0xffff;
+    header->packet_len     = (_X_LE_16(this->buf + 6) - 8) & 0xffff;
     if (header->packet_id_type == ASF_HEADER_PACKET_ID_TYPE) {
       lprintf("asf header\n");
       packet_type = MMS_PACKET_ASF_HEADER;
@@ -407,14 +407,14 @@ static int get_packet_command (mms_t *this, uint32_t packet_len) {
   print_command ((char*)this->buf, len);
   
   /* check protocol type ("MMS ") */
-  if (LE_32(this->buf + 12) != 0x20534D4D) {
+  if (_X_LE_32(this->buf + 12) != 0x20534D4D) {
     lprintf("unknown protocol type: %c%c%c%c (0x%08X)\n",
             this->buf[12], this->buf[13], this->buf[14], this->buf[15],
-            LE_32(this->buf + 12));  
+            _X_LE_32(this->buf + 12));  
     return 0;
   }
 
-  command = LE_32 (this->buf + 36) & 0xFFFF;
+  command = _X_LE_32 (this->buf + 36) & 0xFFFF;
   lprintf("command = 0x%2x\n", command);
     
   return command;
@@ -937,7 +937,7 @@ static int get_media_packet (mms_t *this) {
               uint32_t error_code;
 
               /* Warning: sdp is incomplete. Do not stop if error_code==1 */
-              error_code = LE_32(this->buf + CMD_HEADER_LEN);
+              error_code = _X_LE_32(this->buf + CMD_HEADER_LEN);
               lprintf ("End of the current stream. Continue=%d\n", error_code);
 
               if (error_code == 0) {

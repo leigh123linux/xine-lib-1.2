@@ -194,11 +194,11 @@ static void real_parse_index(demux_real_t *this) {
     }
 
     /* Check chunk is actually an index chunk */
-    if(BE_32(&index_chunk_header[0]) == INDX_TAG) {
+    if(_X_BE_32(&index_chunk_header[0]) == INDX_TAG) {
       unsigned short version;
 
       /* Check version */
-      version = BE_16(&index_chunk_header[8]);
+      version = _X_BE_16(&index_chunk_header[8]);
       if(version != 0) {
         xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
                 "demux_real: unknown object version in INDX: 0x%04x\n", version);
@@ -206,9 +206,9 @@ static void real_parse_index(demux_real_t *this) {
       }
 
       /* Read data from header */
-      entries          = BE_32(&index_chunk_header[10]);
-      stream_num       = BE_16(&index_chunk_header[14]);
-      next_index_chunk = BE_32(&index_chunk_header[16]);
+      entries          = _X_BE_32(&index_chunk_header[10]);
+      stream_num       = _X_BE_16(&index_chunk_header[14]);
+      next_index_chunk = _X_BE_32(&index_chunk_header[16]);
 
       /* Find which stream this index is for */
       index = NULL;
@@ -246,9 +246,9 @@ static void real_parse_index(demux_real_t *this) {
             break;
           }
 
-          (*index)[i].timestamp = BE_32(&index_record[2]);
-          (*index)[i].offset    = BE_32(&index_record[6]);
-          (*index)[i].packetno  = BE_32(&index_record[10]);
+          (*index)[i].timestamp = _X_BE_32(&index_record[2]);
+          (*index)[i].offset    = _X_BE_32(&index_record[6]);
+          (*index)[i].packetno  = _X_BE_32(&index_record[10]);
         }
       } else {
         lprintf("unused index chunk with %d entries for stream num %d\n",
@@ -267,14 +267,14 @@ static void real_parse_index(demux_real_t *this) {
 static mdpr_t *real_parse_mdpr(const char *data) {
   mdpr_t *mdpr=malloc(sizeof(mdpr_t));
 
-  mdpr->stream_number=BE_16(&data[2]);
-  mdpr->max_bit_rate=BE_32(&data[4]);
-  mdpr->avg_bit_rate=BE_32(&data[8]);
-  mdpr->max_packet_size=BE_32(&data[12]);
-  mdpr->avg_packet_size=BE_32(&data[16]);
-  mdpr->start_time=BE_32(&data[20]);
-  mdpr->preroll=BE_32(&data[24]);
-  mdpr->duration=BE_32(&data[28]);
+  mdpr->stream_number=_X_BE_16(&data[2]);
+  mdpr->max_bit_rate=_X_BE_32(&data[4]);
+  mdpr->avg_bit_rate=_X_BE_32(&data[8]);
+  mdpr->max_packet_size=_X_BE_32(&data[12]);
+  mdpr->avg_packet_size=_X_BE_32(&data[16]);
+  mdpr->start_time=_X_BE_32(&data[20]);
+  mdpr->preroll=_X_BE_32(&data[24]);
+  mdpr->duration=_X_BE_32(&data[28]);
 
   mdpr->stream_name_size=data[32];
   mdpr->stream_name=malloc(sizeof(char)*(mdpr->stream_name_size+1));
@@ -286,7 +286,7 @@ static mdpr_t *real_parse_mdpr(const char *data) {
   memcpy(mdpr->mime_type, &data[34+mdpr->stream_name_size], mdpr->mime_type_size);
   mdpr->mime_type[(int)mdpr->mime_type_size]=0;
 
-  mdpr->type_specific_len=BE_32(&data[34+mdpr->stream_name_size+mdpr->mime_type_size]);
+  mdpr->type_specific_len=_X_BE_32(&data[34+mdpr->stream_name_size+mdpr->mime_type_size]);
   mdpr->type_specific_data=malloc(sizeof(char)*(mdpr->type_specific_len));
   memcpy(mdpr->type_specific_data,
       &data[38+mdpr->stream_name_size+mdpr->mime_type_size], mdpr->type_specific_len);
@@ -345,14 +345,14 @@ static void real_parse_headers (demux_real_t *this) {
     return;
   }
 
-  if (BE_32(signature) != RMF_TAG) {
+  if (_X_BE_32(signature) != RMF_TAG) {
     this->status = DEMUX_FINISHED;
     lprintf ("signature not found '%.4s'\n", signature);
     return;
   }
 
   /* skip to the start of the first chunk and start traversing */
-  chunk_size = BE_32(&signature[4]);
+  chunk_size = _X_BE_32(&signature[4]);
   this->input->seek(this->input, chunk_size-8, SEEK_CUR);
 
   /* iterate through chunks and gather information until the first DATA
@@ -364,8 +364,8 @@ static void real_parse_headers (demux_real_t *this) {
       this->status = DEMUX_FINISHED;
       return;
     }
-    chunk_type = BE_32(&preamble[0]);
-    chunk_size = BE_32(&preamble[4]);
+    chunk_type = _X_BE_32(&preamble[0]);
+    chunk_size = _X_BE_32(&preamble[4]);
 
     lprintf ("chunktype %.4s len %d\n", (char *) &chunk_type, chunk_size);
     switch (chunk_type) {
@@ -383,7 +383,7 @@ static void real_parse_headers (demux_real_t *this) {
 	return;
       }
       
-      version = BE_16(&chunk_buffer[0]);
+      version = _X_BE_16(&chunk_buffer[0]);
 
       if (chunk_type == PROP_TAG) {
       
@@ -395,10 +395,10 @@ static void real_parse_headers (demux_real_t *this) {
           return;
         }
 
-        this->duration      = BE_32(&chunk_buffer[22]);
-        this->index_start   = BE_32(&chunk_buffer[30]);
-        this->data_start    = BE_32(&chunk_buffer[34]);
-	this->avg_bitrate   = BE_32(&chunk_buffer[6]);
+        this->duration      = _X_BE_32(&chunk_buffer[22]);
+        this->index_start   = _X_BE_32(&chunk_buffer[30]);
+        this->data_start    = _X_BE_32(&chunk_buffer[34]);
+	this->avg_bitrate   = _X_BE_32(&chunk_buffer[6]);
 
         lprintf("PROP: duration: %d ms\n", this->duration);
         lprintf("PROP: index start: %"PRIX64"\n", this->index_start);
@@ -427,7 +427,7 @@ static void real_parse_headers (demux_real_t *this) {
 
         lprintf ("parsing type specific data...\n");
 
-        if(BE_32(mdpr->type_specific_data) == RA_TAG) {
+        if(_X_BE_32(mdpr->type_specific_data) == RA_TAG) {
           int version, len;
 
           if(this->num_audio_streams == MAX_AUDIO_STREAMS) {
@@ -436,7 +436,7 @@ static void real_parse_headers (demux_real_t *this) {
             goto unknown;
           }
           
-          version = BE_16(mdpr->type_specific_data + 4);
+          version = _X_BE_16(mdpr->type_specific_data + 4);
 
           lprintf("audio version %d detected\n", version);
 
@@ -444,14 +444,14 @@ static void real_parse_headers (demux_real_t *this) {
             case 3:
               /* Version 3 header stores fourcc after meta info - cheat by reading backwards from the 
                * end of the header instead of having to parse it all */
-              fourcc = ME_32(mdpr->type_specific_data + mdpr->type_specific_len - 5);
+              fourcc = _X_ME_32(mdpr->type_specific_data + mdpr->type_specific_len - 5);
               break;
             case 4:
               len = *(mdpr->type_specific_data + 56);
-              fourcc = ME_32(mdpr->type_specific_data + 58 + len);
+              fourcc = _X_ME_32(mdpr->type_specific_data + 58 + len);
               break;
             case 5:
-              fourcc = ME_32(mdpr->type_specific_data + 66);
+              fourcc = _X_ME_32(mdpr->type_specific_data + 66);
               break;
             default:
               lprintf("unsupported audio header version %d\n", version);
@@ -467,7 +467,7 @@ static void real_parse_headers (demux_real_t *this) {
 
           this->num_audio_streams++;
 
-        } else if(BE_32(mdpr->type_specific_data + 4) == VIDO_TAG) {
+        } else if(_X_BE_32(mdpr->type_specific_data + 4) == VIDO_TAG) {
 
           if(this->num_video_streams == MAX_VIDEO_STREAMS) {
             xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
@@ -476,12 +476,12 @@ static void real_parse_headers (demux_real_t *this) {
           }
           
           lprintf ("video detected\n");
-          fourcc = ME_32(mdpr->type_specific_data + 8);
+          fourcc = _X_ME_32(mdpr->type_specific_data + 8);
           lprintf("fourcc = %.4s\n", (char *) &fourcc);
 
           this->video_streams[this->num_video_streams].fourcc = fourcc;
           this->video_streams[this->num_video_streams].buf_type = _x_fourcc_to_buf_video(fourcc);
-          this->video_streams[this->num_video_streams].format = BE_32(mdpr->type_specific_data + 30);
+          this->video_streams[this->num_video_streams].format = _X_BE_32(mdpr->type_specific_data + 30);
           this->video_streams[this->num_video_streams].index = NULL;
           this->video_streams[this->num_video_streams].mdpr = mdpr;
 
@@ -506,28 +506,28 @@ unknown:
         stream_ptr = 2;
 
         /* load the title string */
-        field_size = BE_16(&chunk_buffer[stream_ptr]);
+        field_size = _X_BE_16(&chunk_buffer[stream_ptr]);
         stream_ptr += 2;
         _x_meta_info_n_set(this->stream, XINE_META_INFO_TITLE,
                             &chunk_buffer[stream_ptr], field_size);
         stream_ptr += field_size;
 
         /* load the author string */
-        field_size = BE_16(&chunk_buffer[stream_ptr]);
+        field_size = _X_BE_16(&chunk_buffer[stream_ptr]);
         stream_ptr += 2;
         _x_meta_info_n_set(this->stream, XINE_META_INFO_ARTIST,
                             &chunk_buffer[stream_ptr], field_size);
         stream_ptr += field_size;
 
         /* load the copyright string as the year */
-        field_size = BE_16(&chunk_buffer[stream_ptr]);
+        field_size = _X_BE_16(&chunk_buffer[stream_ptr]);
         stream_ptr += 2;
         _x_meta_info_n_set(this->stream, XINE_META_INFO_YEAR,
                             &chunk_buffer[stream_ptr], field_size);
         stream_ptr += field_size;
 
         /* load the comment string */
-        field_size = BE_16(&chunk_buffer[stream_ptr]);
+        field_size = _X_BE_16(&chunk_buffer[stream_ptr]);
         stream_ptr += 2;
         _x_meta_info_n_set(this->stream, XINE_META_INFO_COMMENT,
                             &chunk_buffer[stream_ptr], field_size);
@@ -545,7 +545,7 @@ unknown:
       }
       
       /* check version */
-      version = BE_16(&data_chunk_header[0]);
+      version = _X_BE_16(&data_chunk_header[0]);
       if(version != 0) {
           xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
                   "demux_real: unknown object version in DATA: 0x%04x\n", version);
@@ -553,8 +553,8 @@ unknown:
           return;
       }
 
-      this->current_data_chunk_packet_count = BE_32(&data_chunk_header[2]);
-      this->next_data_chunk_offset = BE_32(&data_chunk_header[6]);
+      this->current_data_chunk_packet_count = _X_BE_32(&data_chunk_header[2]);
+      this->next_data_chunk_offset = _X_BE_32(&data_chunk_header[6]);
       this->data_chunk_size = chunk_size;
       break;
 
@@ -625,11 +625,11 @@ unknown:
       int      i, stream;
       
       /* Check for end of the data chunk */
-      if(((id = BE_32(&search_buffer[offset])) == DATA_TAG) ||
+      if(((id = _X_BE_32(&search_buffer[offset])) == DATA_TAG) ||
          (id == INDX_TAG))
         break;
       
-      stream = BE_16(&search_buffer[offset + 4]);
+      stream = _X_BE_16(&search_buffer[offset + 4]);
 
       for(i = 0; !this->video_stream && (i < this->num_video_streams); i++) {
         if(stream == this->video_streams[i].mdpr->stream_number) {
@@ -645,7 +645,7 @@ unknown:
         }
       }
 
-      offset += BE_16(&search_buffer[offset + 2]);
+      offset += _X_BE_16(&search_buffer[offset + 2]);
     }
     
     if(INPUT_IS_SEEKABLE(this->input))
@@ -716,7 +716,7 @@ unknown:
        * The second is the codec initialisation data found at the end of
        * the type specific data for the audio stream */
       if(buf->type == BUF_AUDIO_AAC) {
-        int version = BE_16(mdpr->type_specific_data + 4);
+        int version = _X_BE_16(mdpr->type_specific_data + 4);
         
         if(version != 5) {
           xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
@@ -725,9 +725,9 @@ unknown:
           goto unsupported;
         }
         
-        buf->decoder_info[1] = BE_16(mdpr->type_specific_data + 54);
-        buf->decoder_info[2] = BE_16(mdpr->type_specific_data + 58);
-        buf->decoder_info[3] = BE_16(mdpr->type_specific_data + 60);
+        buf->decoder_info[1] = _X_BE_16(mdpr->type_specific_data + 54);
+        buf->decoder_info[2] = _X_BE_16(mdpr->type_specific_data + 58);
+        buf->decoder_info[3] = _X_BE_16(mdpr->type_specific_data + 60);
 
         buf->decoder_flags |= BUF_FLAG_STDHEADER;
         buf->content        = NULL;
@@ -740,7 +740,7 @@ unknown:
         buf->type                = this->audio_stream->buf_type;
         buf->decoder_flags       = BUF_FLAG_HEADER|BUF_FLAG_FRAME_END|BUF_FLAG_SPECIAL;
         buf->decoder_info[1]     = BUF_SPECIAL_DECODER_CONFIG;
-        buf->decoder_info[2]     = BE_32(mdpr->type_specific_data + 74) - 1;
+        buf->decoder_info[2]     = _X_BE_32(mdpr->type_specific_data + 74) - 1;
         buf->decoder_info_ptr[2] = buf->content;
         buf->size                = 0;
                         
@@ -952,7 +952,7 @@ static int stream_read_char (demux_real_t *this) {
 static int stream_read_word (demux_real_t *this) {
   uint16_t ret;
   this->input->read (this->input, (char *) &ret, 2);
-  return BE_16(&ret);
+  return _X_BE_16(&ret);
 }
 
 static int demux_real_send_chunk(demux_plugin_t *this_gen) {
@@ -981,7 +981,7 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
   }
 
   /* Check to see if we've gone past the end of the data chunk */
-  if(((id = BE_32(&header[0])) == DATA_TAG) ||
+  if(((id = _X_BE_32(&header[0])) == DATA_TAG) ||
      (id == INDX_TAG)) {
     lprintf("finished reading data chunk\n");
     this->status = DEMUX_FINISHED;
@@ -989,7 +989,7 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
   }
 
   /* check version */
-  version = BE_16(&header[0]);
+  version = _X_BE_16(&header[0]);
   if(version > 1) {
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
             "demux_real: unknown object version in data packet: 0x%04x\n", version);
@@ -998,10 +998,10 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
   }
   
   /* read the packet information */
-  stream   = BE_16(&header[4]);
+  stream   = _X_BE_16(&header[4]);
   offset   = this->input->get_current_pos(this->input);
-  size     = BE_16(&header[2]) - DATA_PACKET_HEADER_SIZE;
-  timestamp= BE_32(&header[6]);
+  size     = _X_BE_16(&header[2]) - DATA_PACKET_HEADER_SIZE;
+  timestamp= _X_BE_32(&header[6]);
   pts      = (int64_t) timestamp * 90;
   
   /* Data packet header with version 1 contains 1 extra byte */
@@ -1355,8 +1355,8 @@ discard:
       return this->status;
     }
     lprintf ("**** found next DATA tag\n");
-    this->current_data_chunk_packet_count = BE_32(&data_chunk_header[2]);
-    this->next_data_chunk_offset = BE_32(&data_chunk_header[6]);
+    this->current_data_chunk_packet_count = _X_BE_32(&data_chunk_header[2]);
+    this->next_data_chunk_offset = _X_BE_32(&data_chunk_header[6]);
   }
 
   if (!this->current_data_chunk_packet_count) {

@@ -880,10 +880,10 @@ static void ff_handle_header_buffer (ff_video_decoder_t *this, buf_element_t *bu
       switch (codec_type) {
       case BUF_VIDEO_RV10:
       case BUF_VIDEO_RV20:
-        this->bih.biWidth  = BE_16(&this->buf[12]);
-        this->bih.biHeight = BE_16(&this->buf[14]);
+        this->bih.biWidth  = _X_BE_16(&this->buf[12]);
+        this->bih.biHeight = _X_BE_16(&this->buf[14]);
         
-        this->context->sub_id = BE_32(&this->buf[30]);
+        this->context->sub_id = _X_BE_32(&this->buf[30]);
 
         this->context->slice_offset = xine_xmalloc(sizeof(int)*SLICE_OFFSET_SIZE);
         this->slice_offset_size = SLICE_OFFSET_SIZE;

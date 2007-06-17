@@ -860,20 +860,20 @@ static void qtv_init_driver (qtv_decoder_t *this, buf_element_t *buf) {
     id=malloc (8+stdata_len) ; /* trak->stdata_len); */
     id->idSize          = 4+stdata_len;
     id->cType           = FOUR_CHAR_CODE('S','V','Q','3');
-    id->version         = BE_16 (stdata+0x08);
-    id->revisionLevel   = BE_16 (stdata+0x0C);
-    id->vendor          = BE_32 (stdata+0x10);
-    id->temporalQuality = BE_32 (stdata+0x14);
-    id->spatialQuality  = BE_32 (stdata+0x18);
-    id->width           = BE_16 (stdata+0x1C);
-    id->height          = BE_16 (stdata+0x1E);
-    id->hRes            = BE_32 (stdata+0x20);
-    id->vRes            = BE_32 (stdata+0x24);
-    id->dataSize        = BE_32 (stdata+0x28);
-    id->frameCount      = BE_16 (stdata+0x2C);
+    id->version         = _X_BE_16 (stdata+0x08);
+    id->revisionLevel   = _X_BE_16 (stdata+0x0C);
+    id->vendor          = _X_BE_32 (stdata+0x10);
+    id->temporalQuality = _X_BE_32 (stdata+0x14);
+    id->spatialQuality  = _X_BE_32 (stdata+0x18);
+    id->width           = _X_BE_16 (stdata+0x1C);
+    id->height          = _X_BE_16 (stdata+0x1E);
+    id->hRes            = _X_BE_32 (stdata+0x20);
+    id->vRes            = _X_BE_32 (stdata+0x24);
+    id->dataSize        = _X_BE_32 (stdata+0x28);
+    id->frameCount      = _X_BE_16 (stdata+0x2C);
     memcpy(&id->name,stdata+0x2D,32);
-    id->depth           = BE_16 (stdata+0x4E);
-    id->clutID          = BE_16 (stdata+0x50);
+    id->depth           = _X_BE_16 (stdata+0x4E);
+    id->clutID          = _X_BE_16 (stdata+0x50);
     if (stdata_len>0x56)	
       memcpy (((char*)&id->clutID)+2, stdata+0x52, stdata_len-0x52);
 

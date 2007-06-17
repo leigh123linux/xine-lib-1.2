@@ -90,13 +90,13 @@ static int open_ra_file(demux_ra_t *this) {
     return 0;
 
   /* read version */
-  version = BE_16(&file_header[0x04]);
+  version = _X_BE_16(&file_header[0x04]);
   
   /* read header size according to version */
   if (version == 3)
-    this->header_size = BE_16(&file_header[0x06]) + 8;
+    this->header_size = _X_BE_16(&file_header[0x06]) + 8;
   else if (version == 4)
-    this->header_size = BE_32(&file_header[0x12]) + 16;
+    this->header_size = _X_BE_32(&file_header[0x12]) + 16;
   else {
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_realaudio: unknown version number %d\n", version);
     return 0;
@@ -113,18 +113,18 @@ static int open_ra_file(demux_ra_t *this) {
     
   /* read header data according to version */
   if((version == 3) && (this->header_size >= 32)) {
-    this->data_size = BE_32(&this->header[0x12]);
+    this->data_size = _X_BE_32(&this->header[0x12]);
     
     this->block_align = 240;
     
     offset = 0x16;
   } else if(this->header_size >= 72) {
-    this->data_size = BE_32(&this->header[0x1C]);    
+    this->data_size = _X_BE_32(&this->header[0x1C]);    
     
-    this->block_align = BE_16(&this->header[0x2A]);
+    this->block_align = _X_BE_16(&this->header[0x2A]);
     
     if(this->header[0x3D] == 4)
-      this->fourcc = ME_32(&this->header[0x3E]);
+      this->fourcc = _X_ME_32(&this->header[0x3E]);
     else {
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
 	      "demux_realaudio: invalid fourcc size %d\n", this->header[0x3D]);
@@ -169,7 +169,7 @@ static int open_ra_file(demux_ra_t *this) {
   /* Fourcc for version 3 comes after meta info */
   if((version == 3) && ((offset+7) <= this->header_size)) {
     if(this->header[offset+2] == 4)
-      this->fourcc = ME_32(&this->header[offset+3]);
+      this->fourcc = _X_ME_32(&this->header[offset+3]);
     else {
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
 	      "demux_realaudio: invalid fourcc size %d\n", this->header[offset+2]);

@@ -198,21 +198,21 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
             this->context->block_align = 240;
             break;
           case BUF_AUDIO_28_8:
-            this->audio_sample_rate = BE_16(&this->buf[0x30]);
+            this->audio_sample_rate = _X_BE_16(&this->buf[0x30]);
             this->audio_channels    = this->buf[0x37];
             /* this->audio_bits = buf->content[0x35] */
   
-            this->context->block_align = BE_16(&this->buf[0x2A]);
+            this->context->block_align = _X_BE_16(&this->buf[0x2A]);
   
             this->context->extradata_size = 5*sizeof(short);
             this->context->extradata      = xine_xmalloc(this->context->extradata_size);
   
             ptr = (short *) this->context->extradata;
   
-            ptr[0] = BE_16(&this->buf[0x2C]); /* subpacket size */
-            ptr[1] = BE_16(&this->buf[0x28]); /* subpacket height */
-            ptr[2] = BE_16(&this->buf[0x16]); /* subpacket flavour */
-            ptr[3] = BE_32(&this->buf[0x18]); /* coded frame size */
+            ptr[0] = _X_BE_16(&this->buf[0x2C]); /* subpacket size */
+            ptr[1] = _X_BE_16(&this->buf[0x28]); /* subpacket height */
+            ptr[2] = _X_BE_16(&this->buf[0x16]); /* subpacket flavour */
+            ptr[3] = _X_BE_32(&this->buf[0x18]); /* coded frame size */
             ptr[4] = 0;                          /* codec's data length  */
             break;
           default:

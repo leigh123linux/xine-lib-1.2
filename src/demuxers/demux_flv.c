@@ -180,7 +180,7 @@ static int open_flv_file(demux_flv_t *this) {
     return 0;
   }
 
-  this->start = BE_32(&buffer[5]);
+  this->start = _X_BE_32(&buffer[5]);
   this->size = this->input->get_length(this->input);
    
   if (INPUT_IS_SEEKABLE(this->input))
@@ -196,7 +196,7 @@ static int open_flv_file(demux_flv_t *this) {
 
 #define BE_F64(buf) ({\
   union { uint64_t q; double d; } _tmp;\
-  _tmp.q = BE_64(buf);\
+  _tmp.q = _X_BE_64(buf);\
   _tmp.d;\
 })\
 
@@ -244,11 +244,11 @@ static int parse_flv_var(demux_flv_t *this,
       break;
     case FLV_DATA_TYPE_STRING:
       lprintf("  got string (%s)\n", tmp+2);
-      len = BE_16(tmp);
+      len = _X_BE_16(tmp);
       tmp += len + 2;
       break;
     case FLV_DATA_TYPE_OBJECT:
-      while ((len = BE_16(tmp)) && tmp < end) {
+      while ((len = _X_BE_16(tmp)) && tmp < end) {
         lprintf("  got object var (%s)\n", tmp+2);
         str = tmp + 2;
         tmp += len + 2;
@@ -259,12 +259,12 @@ static int parse_flv_var(demux_flv_t *this,
         return 0;
       break;
     case FLV_DATA_TYPE_ECMARRAY:
-      lprintf("  got EMCA array (%d indices)\n", BE_32(tmp));
-      num = BE_32(tmp);
+      lprintf("  got EMCA array (%d indices)\n", _X_BE_32(tmp));
+      num = _X_BE_32(tmp);
       tmp += 4;
       while (num-- && tmp < end) {
         lprintf("  got array key (%s)\n", tmp+2);
-        len = BE_16(tmp);
+        len = _X_BE_16(tmp);
         str = tmp + 2;
         tmp += len + 2;
         len = parse_flv_var(this, tmp, end-tmp, str, len);
@@ -272,8 +272,8 @@ static int parse_flv_var(demux_flv_t *this,
       }
       break;
     case FLV_DATA_TYPE_ARRAY:
-      lprintf("  got array (%d indices)\n", BE_32(tmp));
-      num = BE_32(tmp);
+      lprintf("  got array (%d indices)\n", _X_BE_32(tmp));
+      num = _X_BE_32(tmp);
       tmp += 4;
       if (key && keylen == 5 && !strncmp(key, "times", 5)) {
         if (this->index)
@@ -307,7 +307,7 @@ static int parse_flv_var(demux_flv_t *this,
       }
       break;
     case FLV_DATA_TYPE_DATE:
-      lprintf("  got date (%"PRId64", %d)\n", BE_64(tmp), BE_16(tmp+8));
+      lprintf("  got date (%"PRId64", %d)\n", _X_BE_64(tmp), _X_BE_16(tmp+8));
       tmp += 10;
       break;
     default:
@@ -359,8 +359,8 @@ static int read_flv_packet(demux_flv_t *this) {
     }
 
     tag_type = buffer[0];
-    remaining_bytes = BE_24(&buffer[1]);
-    pts = BE_24(&buffer[4]) | (buffer[7] << 24);
+    remaining_bytes = _X_BE_24(&buffer[1]);
+    pts = _X_BE_24(&buffer[4]) | (buffer[7] << 24);
     
     lprintf("  tag_type = 0x%02X, 0x%X bytes, pts %u\n",
             tag_type, remaining_bytes, pts/90);
@@ -577,10 +577,10 @@ static void seek_flv_file(demux_flv_t *this, int seek_pts) {
       break;
     }
         
-    ptag_size = BE_32(&buffer[0]);
+    ptag_size = _X_BE_32(&buffer[0]);
     tag_type = buffer[4];
-    data_size = BE_24(&buffer[5]);
-    pts = BE_24(&buffer[8]) | (buffer[11] << 24);
+    data_size = _X_BE_24(&buffer[5]);
+    pts = _X_BE_24(&buffer[8]) | (buffer[11] << 24);
     
     if (do_rewind) {
       if (!ptag_size) break; /* beginning of movie */

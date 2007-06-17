@@ -90,7 +90,7 @@ static void ao_arts_volume(void *buffer, int length, int volume) {
   while (length--) {
     v=(int) ((*(data) * volume) / 100);
     *(data)=(v>32767) ? 32767 : ((v<-32768) ? -32768 : v);
-    *(data)=LE_16(data);
+    *(data)=_X_LE_16(data);
     data++;
   }
 }

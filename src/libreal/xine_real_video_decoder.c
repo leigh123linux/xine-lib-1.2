@@ -194,8 +194,8 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
     _x_abort();
   }
 
-  init_data.w = BE_16(&buf->content[12]);
-  init_data.h = BE_16(&buf->content[14]);
+  init_data.w = _X_BE_16(&buf->content[12]);
+  init_data.h = _X_BE_16(&buf->content[14]);
   
   this->width  = (init_data.w + 1) & (~1);
   this->height = (init_data.h + 1) & (~1);
@@ -209,8 +209,8 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
    * much resemblence to the actual frequency of frames in the file. Hence
    * it's better to just let the engine estimate the frame duration for us */ 
 #if 0
-  this->fps      = (double) BE_16(&buf->content[22]) + 
-                   ((double) BE_16(&buf->content[24]) / 65536.0);
+  this->fps      = (double) _X_BE_16(&buf->content[22]) + 
+                   ((double) _X_BE_16(&buf->content[24]) / 65536.0);
   this->duration = 90000.0 / this->fps;
 #endif
   
@@ -227,8 +227,8 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_RATIO,  this->ratio*10000);
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->duration);
 
-  init_data.subformat = BE_32(&buf->content[26]);
-  init_data.format    = BE_32(&buf->content[30]);
+  init_data.subformat = _X_BE_32(&buf->content[26]);
+  init_data.format    = _X_BE_32(&buf->content[30]);
   
 #ifdef LOG
   printf ("libreal: init_data for rvyuv_init:\n");

@@ -231,11 +231,11 @@ static int id3v2_parse_header(input_plugin_t *input, uint8_t *mp3_frame_header,
                               id3v2_header_t *tag_header) {
   uint8_t buf[6];
 
-  tag_header->id = BE_32(mp3_frame_header);
+  tag_header->id = _X_BE_32(mp3_frame_header);
   if (input->read (input, buf, 6) == 6) {
     tag_header->revision = buf[0];
     tag_header->flags    = buf[1];
-    tag_header->size     = BE_32_synchsafe(&buf[2]);
+    tag_header->size     = _X_BE_32_synchsafe(&buf[2]);
 
     lprintf("tag: ID3 v2.%d.%d\n", mp3_frame_header[3], tag_header->revision);
     lprintf("flags: %d\n", tag_header->flags);
@@ -257,7 +257,7 @@ static int id3v22_parse_frame_header(input_plugin_t *input,
   if (len == ID3V22_FRAME_HEADER_SIZE) {
     frame_header->id   = (buf[0] << 16) + (buf[1] << 8) + buf[2];
 
-    frame_header->size = BE_24_synchsafe(&buf[3]);
+    frame_header->size = _X_BE_24_synchsafe(&buf[3]);
 
     lprintf("frame: %c%c%c: size: %d\n", buf[0], buf[1], buf[2],
             frame_header->size);
@@ -409,9 +409,9 @@ static int id3v23_parse_frame_header(input_plugin_t *input,
 
   len  = input->read (input, buf, ID3V23_FRAME_HEADER_SIZE);
   if (len == ID3V23_FRAME_HEADER_SIZE) {
-    frame_header->id    = BE_32(buf);
-    frame_header->size  = BE_32(&buf[4]);
-    frame_header->flags = BE_16(buf + 8);
+    frame_header->id    = _X_BE_32(buf);
+    frame_header->size  = _X_BE_32(&buf[4]);
+    frame_header->flags = _X_BE_16(buf + 8);
 
     lprintf("frame: %c%c%c%c, size: %d, flags: %X\n", buf[0], buf[1], buf[2], buf[3],
             frame_header->size, frame_header->flags);
@@ -428,12 +428,12 @@ static int id3v23_parse_frame_ext_header(input_plugin_t *input,
 
   if (input->read (input, buf, 4) == 4) {
   
-    frame_ext_header->size  = BE_32_synchsafe(&buf[0]);
+    frame_ext_header->size  = _X_BE_32_synchsafe(&buf[0]);
     
     if (frame_ext_header->size == 6) {
       if (input->read (input, buf + 4, 6) == 6) {
-        frame_ext_header->flags = BE_16(buf + 4);
-        frame_ext_header->padding_size = BE_32(buf + 6);
+        frame_ext_header->flags = _X_BE_16(buf + 4);
+        frame_ext_header->padding_size = _X_BE_32(buf + 6);
         frame_ext_header->crc = 0;
       } else {
         return 0;
@@ -441,9 +441,9 @@ static int id3v23_parse_frame_ext_header(input_plugin_t *input,
 
     } else if (frame_ext_header->size == 10) {
       if (input->read (input, buf + 4, 10) == 10) {
-        frame_ext_header->flags = BE_16(buf + 4);
-        frame_ext_header->padding_size = BE_32(buf + 6);
-        frame_ext_header->crc = BE_32(buf + 10);
+        frame_ext_header->flags = _X_BE_16(buf + 4);
+        frame_ext_header->padding_size = _X_BE_32(buf + 6);
+        frame_ext_header->crc = _X_BE_32(buf + 10);
       } else {
         return 0;
       }
@@ -618,9 +618,9 @@ static int id3v24_parse_frame_header(input_plugin_t *input,
 
   len  = input->read (input, buf, ID3V24_FRAME_HEADER_SIZE);
   if (len == ID3V24_FRAME_HEADER_SIZE) {
-    frame_header->id    = BE_32(buf);
-    frame_header->size  = BE_32_synchsafe(&buf[4]);
-    frame_header->flags = BE_16(&buf[8]);
+    frame_header->id    = _X_BE_32(buf);
+    frame_header->size  = _X_BE_32_synchsafe(&buf[4]);
+    frame_header->flags = _X_BE_16(&buf[8]);
 
     lprintf("frame: %c%c%c%c, size: %d, flags: %X\n", buf[0], buf[1], buf[2], buf[3],
             frame_header->size, frame_header->flags);
@@ -637,7 +637,7 @@ static int id3v24_parse_ext_header(input_plugin_t *input,
 
   if (input->read (input, buf, 4) == 4) {
  
-    frame_ext_header->size  = BE_32_synchsafe(&buf[0]);
+    frame_ext_header->size  = _X_BE_32_synchsafe(&buf[0]);
 
     if (input->read (input, buf, 2) == 2) {
       uint8_t flags_size = buf[0];

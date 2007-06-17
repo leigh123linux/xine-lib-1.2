@@ -862,14 +862,14 @@ static void decode_video_header (demux_ogg_t *this, const int stream_num, ogg_pa
   locsubtype = *((uint32_t *)&op->packet[9]);
 
   /* everything else little endian */
-  locsize = LE_32(&op->packet[13]);
-  loctime_unit = LE_64(&op->packet[17]);
-  locsamples_per_unit = LE_64(&op->packet[25]);
-  locdefault_len = LE_32(&op->packet[33]);
-  locbuffersize = LE_32(&op->packet[37]);
-  locbits_per_sample = LE_16(&op->packet[41]);
-  locwidth = LE_32(&op->packet[45]);
-  locheight = LE_32(&op->packet[49]);
+  locsize = _X_LE_32(&op->packet[13]);
+  loctime_unit = _X_LE_64(&op->packet[17]);
+  locsamples_per_unit = _X_LE_64(&op->packet[25]);
+  locdefault_len = _X_LE_32(&op->packet[33]);
+  locbuffersize = _X_LE_32(&op->packet[37]);
+  locbits_per_sample = _X_LE_16(&op->packet[41]);
+  locwidth = _X_LE_32(&op->packet[45]);
+  locheight = _X_LE_32(&op->packet[49]);
 
   lprintf ("direct show filter created stream detected, hexdump:\n");
 #ifdef LOG
@@ -940,15 +940,15 @@ static void decode_audio_header (demux_ogg_t *this, const int stream_num, ogg_pa
     int32_t          locsize, locdefault_len, locbuffersize, locavgbytespersec;
     int64_t          loctime_unit, locsamples_per_unit;
 
-    locsize = LE_32(&op->packet[13]);
-    loctime_unit = LE_64(&op->packet[17]);
-    locsamples_per_unit = LE_64(&op->packet[25]);
-    locdefault_len = LE_32(&op->packet[33]);
-    locbuffersize = LE_32(&op->packet[37]);
-    locbits_per_sample = LE_16(&op->packet[41]);
-    locchannels = LE_16(&op->packet[45]);
-    locblockalign = LE_16(&op->packet[47]);
-    locavgbytespersec= LE_32(&op->packet[49]);
+    locsize = _X_LE_32(&op->packet[13]);
+    loctime_unit = _X_LE_64(&op->packet[17]);
+    locsamples_per_unit = _X_LE_64(&op->packet[25]);
+    locdefault_len = _X_LE_32(&op->packet[33]);
+    locbuffersize = _X_LE_32(&op->packet[37]);
+    locbits_per_sample = _X_LE_16(&op->packet[41]);
+    locchannels = _X_LE_16(&op->packet[45]);
+    locblockalign = _X_LE_16(&op->packet[47]);
+    locavgbytespersec= _X_LE_32(&op->packet[49]);
 
     lprintf ("direct show filter created audio stream detected, hexdump:\n");
 #ifdef LOG
@@ -1017,7 +1017,7 @@ static void decode_dshow_header (demux_ogg_t *this, const int stream_num, ogg_pa
 
   this->si[stream_num]->headers = 0; /* header is sent below */
 
-  if ( (LE_32(&op->packet[96]) == 0x05589f80) && (op->bytes >= 184)) {
+  if ( (_X_LE_32(&op->packet[96]) == 0x05589f80) && (op->bytes >= 184)) {
 
     buf_element_t    *buf;
     xine_bmiheader    bih;
@@ -1036,11 +1036,11 @@ static void decode_dshow_header (demux_ogg_t *this, const int stream_num, ogg_pa
     this->si[stream_num]->buf_types |= channel;
 
     bih.biSize          = sizeof(xine_bmiheader);
-    bih.biWidth         = LE_32(&op->packet[176]);
-    bih.biHeight        = LE_32(&op->packet[180]);
+    bih.biWidth         = _X_LE_32(&op->packet[176]);
+    bih.biHeight        = _X_LE_32(&op->packet[180]);
     bih.biPlanes        = 0;
     memcpy (&bih.biCompression, op->packet+68, 4);
-    bih.biBitCount      = LE_16(&op->packet[182]);
+    bih.biBitCount      = _X_LE_16(&op->packet[182]);
     if (!bih.biBitCount)
       bih.biBitCount = 24; /* FIXME ? */
     bih.biSizeImage     = (bih.biBitCount>>3)*bih.biWidth*bih.biHeight;
@@ -1076,7 +1076,7 @@ static void decode_dshow_header (demux_ogg_t *this, const int stream_num, ogg_pa
 
     this->ignore_keyframes = 1;
 
-  } else if (LE_32(&op->packet[96]) == 0x05589F81) {
+  } else if (_X_LE_32(&op->packet[96]) == 0x05589F81) {
 
 #if 0
     /* FIXME: no test streams */
@@ -1206,7 +1206,7 @@ static void decode_flac_header (demux_ogg_t *this, const int stream_num, ogg_pac
   _x_assert(op->packet[5] == 1); _x_assert(op->packet[6] == 0);
 
   /* Header count */
-  this->si[stream_num]->headers = 0/*BE_16(&op->packet[7]) +1*/;
+  this->si[stream_num]->headers = 0/*_X_BE_16(&op->packet[7]) +1*/;
 
   /* fLaC signature */
   _x_assert(op->packet[9] == 'f'); _x_assert(op->packet[10] == 'L');
@@ -1269,9 +1269,9 @@ static void decode_anxdata_header (demux_ogg_t *this, const int stream_num, ogg_
   lprintf("AnxData stream detected\n");
 
   /* read granule rate */
-  granule_rate_n = LE_64(&op->packet[8]);
-  granule_rate_d = LE_64(&op->packet[16]);
-  secondary_headers = LE_32(&op->packet[24]);
+  granule_rate_n = _X_LE_64(&op->packet[8]);
+  granule_rate_d = _X_LE_64(&op->packet[16]);
+  secondary_headers = _X_LE_32(&op->packet[24]);
 
   lprintf("granule_rate %" PRId64 "/%" PRId64 ", %d secondary headers\n",
       granule_rate_n, granule_rate_d, secondary_headers);
@@ -1327,8 +1327,8 @@ static void decode_cmml_header (demux_ogg_t *this, const int stream_num, ogg_pac
     this->si[stream_num]->headers = 0;
     this->si[stream_num]->buf_types = BUF_SPU_CMML | channel;
 
-    this->si[stream_num]->factor = 90000 * LE_64(&op->packet[20]);
-    this->si[stream_num]->quotient = LE_64(&op->packet[12]);
+    this->si[stream_num]->factor = 90000 * _X_LE_64(&op->packet[20]);
+    this->si[stream_num]->quotient = _X_LE_64(&op->packet[12]);
     this->si[stream_num]->granuleshift = (int)op->packet[28];
 }
 
