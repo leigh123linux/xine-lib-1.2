@@ -845,28 +845,30 @@ static int xv_gui_data_exchange (vo_driver_t *this_gen,
 }
 
 static void xv_store_port_attribute(xv_driver_t *this, char *name) {
-  xv_portattribute_t  *attr;
-
   xcb_intern_atom_cookie_t atom_cookie;
   xcb_intern_atom_reply_t *atom_reply;
 
   xcb_xv_get_port_attribute_cookie_t get_attribute_cookie;
   xcb_xv_get_port_attribute_reply_t *get_attribute_reply;
   
-  attr = (xv_portattribute_t *)malloc( sizeof(xv_portattribute_t) );
-  attr->name = strdup(name);
-  
   pthread_mutex_lock(&this->main_mutex);
-  atom_cookie = xcb_intern_atom(this->connection, 0, strlen(attr->name), attr->name);
+  atom_cookie = xcb_intern_atom(this->connection, 0, strlen(name), name);
   atom_reply = xcb_intern_atom_reply(this->connection, atom_cookie, NULL);
   get_attribute_cookie = xcb_xv_get_port_attribute(this->connection, this->xv_port, atom_reply->atom);
   get_attribute_reply = xcb_xv_get_port_attribute_reply(this->connection, get_attribute_cookie, NULL);
-  attr->value = get_attribute_reply->value;
   free(atom_reply);
-  free(get_attribute_reply);
   pthread_mutex_unlock(&this->main_mutex);
   
-  xine_list_push_back (this->port_attributes, attr);
+  if (get_attribute_reply != NULL) {
+    xv_portattribute_t *attr;
+
+    attr = (xv_portattribute_t *) malloc(sizeof(xv_portattribute_t));
+    attr->name = strdup(name);
+    attr->value = get_attribute_reply->value;
+    free(get_attribute_reply);
+
+    xine_list_push_back(this->port_attributes, attr);
+  }
 }
 
 static void xv_restore_port_attributes(xv_driver_t *this) {

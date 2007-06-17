@@ -36,11 +36,13 @@ xine-lib (1.1.90) (Unreleased)
     XML, and the figures from fig files to SVG files.
 
 xine-lib (1.1.8) (Unreleased)
-  * Send a channel changed event to the frontend when receiving the SYNC
+  * Send a channel-changed event to the frontend when receiving the SYNC
     string from last.fm streaming server.
   * Disable mediaLib support by default (the licenses probably disallow the
     distribution of xine binaries built against mediaLib, and on non-VIS
-    capable boxes is probably worse than our own code).
+    capable boxes it's probably worse than our own code).
+  * Rename endianness-reading macros so that they don't collide with Solaris
+    system macros. BE_/LE_ are now _X_BE_ and _X_LE_.
 
 xine-lib (1.1.7)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.
@@ -56,7 +58,7 @@ xine-lib (1.1.7)
   * Ensure that the ffmpeg video image size is properly initialised.
   * Allow XxMC to switch back to software decoding; don't deinterlace if it's
     not needed for any given frame.
-  * Document dvba: MRLs (ATSC with full tuning info).
+  * Document "dvba:" MRLs (ATSC with full tuning info).
   * Fix VCD playback (broken since 1.1.4).
   * Fix demuxing of FLAC files with ID3v2 tags.
   * Use the integer versions of Speex decoding functions, this avoids an
@@ -203,7 +205,6 @@ xine-lib (1.1.4)
     Timothy Redaelli from Gentoo.
   * Fix audio/video sync problem with NTSC DVDs (introduced in 1.1.2).
     [bugs #1544349 and #1589644]
-
 
 xine-lib (1.1.3)
   * Security fixes:
