@@ -5,12 +5,12 @@ xine-lib (1.1.90) (Unreleased)
   * Remove the buttons array from video_overlay, as the feature linked to that
     was never implemented. This change reduces by 10MB the memory usage of
     xine-lib during playback (1/3 of the memory used while playing an mp3).
-  * Use FFmpeg's own buildsystem, rather than wrapping automake around its
-    sources; this allows to enable/disable FFmpeg features easily, and allow
-    to properly support --disable-ffmpeg-(uncommon|popular)-codecs.
+  * Use FFmpeg's own build system rather than wrapping automake around its
+    sources; this allows easy enabling or disabling of FFmpeg features and
+    proper support for --disable-ffmpeg-(uncommon|popular)-codecs.
   * Update libmpcdec (formerly libmusepack) to version 1.2.6 (newer than the
-    previous Subversion snapshot) and contestually move it to contrib/libmpcdec
-    to separate from xine's own code.
+    previous Subversion snapshot) and contextually move it to
+    contrib/libmpcdec to separate from xine's own code.
   * Save plugins' cache in the defined cache home directory as per XDG Base
     Directory Specification.
   * Use XDG-defined cache home directory for cddb cache.
@@ -20,18 +20,18 @@ xine-lib (1.1.90) (Unreleased)
   * Replace internal libdts 0.0.2 with libdca 0.0.5, and contextually move it
     to contrib/libdca to separate from xine's own code.
   * Add another message code to allow for auth prompts. Previously, it was
-    not possible to distinguish between 401 Authentication Requried and 403
-    Forbidden.
+    not possible to distinguish between '401 Authentication Required' and
+    '403 Forbidden'.
   * Merge the demuxer and the decoder for NSF files in a combined plugin.
-  * Move modplug demuxing on its own plugin, this way binary distributions
-    can make it optional, as it requires quite a bit of CPU time during
+  * Move modplug demuxing to its own plugin. This way, binary distributions
+    can make it optional as it requires quite a bit of CPU time during
     initialisation, even for audio files that nothing have to do with modplug.
   * Collapse the Ogg demuxer, and the Theora, Vorbis and Speex decoders in the
     same 'xiph' plugin.
-  * Remove aRTs output plugin; ALSA's DMix can allow to run both xine and aRTs
-    at the same time for Linux, and if other operating systems lacks a proper
-    software mixing facility you can consider alternative daemons. Note: aRTs
-    will not be present in KDE 4.
+  * Remove aRTs output plugin; ALSA's DMix can allow both xine and aRTs to
+    access the audio device at the same time for Linux, and if other
+    operating systems lack a proper software mixing facility you can
+    consider alternative daemons. Note: aRTs will not be present in KDE 4.
   * Convert the FAQ and the Hacker's Guide from DocBook SGML to DocBook 4.4
     XML, and the figures from fig files to SVG files.
 
