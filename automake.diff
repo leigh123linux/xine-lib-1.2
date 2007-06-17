@@ -1,0 +1,11 @@
+--- /usr/bin/automake	Sat Mar 11 09:25:33 2000
++++ automake	Thu Sep  7 22:08:33 2000
+@@ -187,7 +187,7 @@ $seen_libtool = 0;
+ $libtool_line = 0;
+ 
+ # Files installed by libtoolize.
+-@libtoolize_files = ('ltconfig', 'ltmain.sh', 'config.guess', 'config.sub');
++@libtoolize_files = ('ltmain.sh', 'config.guess', 'config.sub');
+ 
+ # TRUE if we've seen AM_MAINTAINER_MODE.
+ $seen_maint_mode = 0;
