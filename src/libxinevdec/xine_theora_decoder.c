@@ -123,23 +123,22 @@ static void yuv2frame(yuv_buffer *yuv, vo_frame_t *frame, int offset_x, int offs
 static int collect_data (theora_decoder_t *this, buf_element_t *buf ) {
   /* Assembles an ogg_packet which was sent with send_ogg_packet over xinebuffers */
   /* this->done, this->rejected, this->op and this->decoder->flags are needed*/
-  int op_size = sizeof (ogg_packet);
 
   if (buf->decoder_flags & BUF_FLAG_FRAME_START) {
     this->done=0;  /*start from the beginnig*/
     this->reject=0;/*new packet - new try*/ 
 
     /*copy the ogg_packet struct and the sum, correct the adress of the packet*/
-    xine_fast_memcpy (&this->op, buf->content, op_size);
+    xine_fast_memcpy (&this->op, buf->content, sizeof(ogg_packet));
     this->op.packet=this->packet;
 
-    readin_op (this, buf->content + op_size, buf->size - op_size );
+    readin_op (this, buf->content + sizeof(ogg_packet), buf->size - sizeof(ogg_packet) );
     /*read the rest of the data*/
 
   } else {
     if (this->done==0 || this->reject) {
       /*we are starting to collect an packet without the beginnig
-       reject the rest*/
+	reject the rest*/
       printf ("libtheora: rejecting packet\n");
       this->reject=1;
       return 0;
