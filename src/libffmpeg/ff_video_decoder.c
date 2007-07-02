@@ -311,6 +311,7 @@ static const ff_codec_t ff_video_lookup[] = {
   {BUF_VIDEO_KMVC,        CODEC_ID_KMVC,       "Karl Morton's Video Codec (ffmpeg)"},
   {BUF_VIDEO_FLASHSV,     CODEC_ID_FLASHSV,    "Flash Screen Video (ffmpeg)"},
   {BUF_VIDEO_CAVS,        CODEC_ID_CAVS,       "Chinese AVS (ffmpeg)"},
+  {BUF_VIDEO_THEORA_RAW,  CODEC_ID_THEORA,     "Theora (ffmpeg)"},
 };
 
 
@@ -1747,7 +1748,7 @@ static uint32_t supported_video_types[] = {
   #ifdef CONFIG_CAVS_DECODER
   BUF_VIDEO_CAVS,
   #endif
-
+  BUF_VIDEO_THEORA_RAW,
   0 
 };
 

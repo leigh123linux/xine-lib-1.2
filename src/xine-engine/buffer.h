@@ -191,6 +191,7 @@ extern "C" {
 #define BUF_VIDEO_FLASHSV	0x02610000
 #define BUF_VIDEO_CAVS		0x02620000
 #define BUF_VIDEO_VP6F		0x02630000
+#define BUF_VIDEO_THEORA_RAW	0x02640000
 
 /* audio buffer types:  (please keep in sync with buffer_types.c) */
 
