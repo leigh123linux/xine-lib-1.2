@@ -610,8 +610,7 @@ static void init_codec_real(demux_matroska_t *this, matroska_track_t * track) {
   track->fifo->put (track->fifo, buf);
 }
 
-
-static void init_codec_vorbis(demux_matroska_t *this, matroska_track_t *track) {
+static void init_codec_xiph(demux_matroska_t *this, matroska_track_t *track) {
   buf_element_t *buf;
   uint8_t nb_lace;
   int frame[3];
@@ -1373,6 +1372,10 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       init_codec = init_codec_real;
 
     } else if (!strcmp(track->codec_id, MATROSKA_CODEC_ID_V_MJPEG)) {
+    } else if (!strcmp(track->codec_id, MATROSKA_CODEC_ID_V_THEORA)) {
+      lprintf("MATROSKA_CODEC_ID_V_THEORA\n");
+      track->buf_type = BUF_VIDEO_THEORA_RAW;
+      init_codec = init_codec_xiph;
     } else if ((!strcmp(track->codec_id, MATROSKA_CODEC_ID_A_MPEG1_L1)) ||
                (!strcmp(track->codec_id, MATROSKA_CODEC_ID_A_MPEG1_L2)) ||
                (!strcmp(track->codec_id, MATROSKA_CODEC_ID_A_MPEG1_L3))) {
@@ -1397,7 +1400,7 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
 
       lprintf("MATROSKA_CODEC_ID_A_VORBIS\n");
       track->buf_type = BUF_AUDIO_VORBIS;
-      init_codec = init_codec_vorbis;
+      init_codec = init_codec_xiph;
 
     } else if (!strcmp(track->codec_id, MATROSKA_CODEC_ID_A_ACM)) {
       xine_waveformatex *wfh;
@@ -1853,6 +1856,7 @@ static int parse_block (demux_matroska_t *this, uint64_t block_size,
 
   gap = flags & 1;
   lacing = (flags >> 1) & 0x3;
+  fprintf(stderr, "lacing: %x\n", lacing);
 
   if (!find_track_by_id(this, (int)track_num, &track)) {
      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
