@@ -28,6 +28,7 @@
 
 #define LOG_MODULE "demux_wavpack"
 #define LOG_VERBOSE
+#define LOG
 
 #include "xine_internal.h"
 #include "xineutils.h"
@@ -230,11 +231,12 @@ static int demux_wv_send_chunk(demux_plugin_t *const this_gen) {
       input_time_guess *= buf->extra_info->input_normpos;
       input_time_guess /= 65535;
       buf->extra_info->input_time = input_time_guess;
+      
+      if ( ! header_sent )
+	offset = sizeof(wvheader_t);
 
-      bytes_to_read_now = ( bytes_to_read > buf->max_size ) ? buf->max_size : bytes_to_read;
+      bytes_to_read_now = ( bytes_to_read+offset > buf->max_size ) ? buf->max_size-offset : bytes_to_read;
       if ( ! header_sent ) {
-	bytes_to_read_now -= (offset = sizeof(wvheader_t));
-
 	header_sent = 1;
 	xine_fast_memcpy(buf->content, &header, sizeof(wvheader_t));
       }
