@@ -22,7 +22,7 @@ Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
 Build-Conflicts: libdvdnav-dev, libvcdinfo-dev
 Standards-Version: 3.7.2
 
-Package: libxine2-dev
+Package: libxine-dev
 Architecture: any
 Section: libdevel
 Depends: libxine2 (= ${Source-Version}), libc6-dev, zlib1g-dev | libz-dev, libslang2-dev | slang1-dev, libfreetype6-dev
