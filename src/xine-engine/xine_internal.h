@@ -448,6 +448,10 @@ void _x_demux_send_mrl_reference (xine_stream_t *stream, int alternative,
 				  const char *mrl, const char *title,
 				  int start_time, int duration) XINE_PROTECTED;
 
+/*
+ * MRL escaped-character decoding (overwrites the source string)
+ */
+void _x_mrl_unescape(char *mrl) XINE_PROTECTED;
 
 /* 
  * plugin_loader functions

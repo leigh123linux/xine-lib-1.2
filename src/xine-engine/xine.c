@@ -676,7 +676,7 @@ xine_stream_t *xine_stream_new (xine_t *this,
   return stream;
 }
 
-static void mrl_unescape(char *mrl) {
+void _x_mrl_unescape(char *mrl) {
   int i, len = strlen(mrl);
 
   for (i = 0; i < len; i++) {
@@ -824,7 +824,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 	    memcpy(demux_name, tmp, strlen(tmp));
 	    demux_name[strlen(tmp)] = '\0';
 	  }
-	  mrl_unescape(demux_name);
+	  _x_mrl_unescape(demux_name);
 	  if (!(stream->demux_plugin = _x_find_demux_plugin_by_name(stream, demux_name, stream->input_plugin))) {
 	    xine_log(stream->xine, XINE_LOG_MSG, _("xine: specified demuxer %s failed to start\n"), demux_name);
 	    stream->err = XINE_ERROR_NO_DEMUX_PLUGIN;
@@ -898,7 +898,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 	    memcpy(demux_name, tmp, strlen(tmp));
 	    demux_name[strlen(tmp)] = '\0';
 	  }
-	  mrl_unescape(demux_name);
+	  _x_mrl_unescape(demux_name);
 	  if (!(stream->demux_plugin = _x_find_demux_plugin_last_probe(stream, demux_name, stream->input_plugin))) {
 	    xine_log(stream->xine, XINE_LOG_MSG, _("xine: last_probed demuxer %s failed to start\n"), demux_name);
 	    stream->err = XINE_ERROR_NO_DEMUX_PLUGIN;
@@ -985,7 +985,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 	    memcpy(volume, tmp, strlen(tmp));
 	    volume[strlen(tmp)] = '\0';
 	  }
-	  mrl_unescape(volume);
+	  _x_mrl_unescape(volume);
 	  xine_set_param(stream, XINE_PARAM_AUDIO_VOLUME, atoi(volume));
 	  free(volume);
 	} else {
@@ -1010,7 +1010,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 	    memcpy(compression, tmp, strlen(tmp));
 	    compression[strlen(tmp)] = '\0';
 	  }
-	  mrl_unescape(compression);
+	  _x_mrl_unescape(compression);
 	  xine_set_param(stream, XINE_PARAM_AUDIO_COMPR_LEVEL, atoi(compression));
 	  free(compression);
 	} else {
@@ -1035,7 +1035,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 	    memcpy(subtitle_mrl, tmp, strlen(tmp));
 	    subtitle_mrl[strlen(tmp)] = '\0';
 	  }
-	  mrl_unescape(subtitle_mrl);
+	  _x_mrl_unescape(subtitle_mrl);
 	  stream->slave = xine_stream_new (stream->xine, NULL, stream->video_out );
 	  stream->slave_affection = XINE_MASTER_SLAVE_PLAY | XINE_MASTER_SLAVE_STOP;
 	  if( xine_open( stream->slave, subtitle_mrl ) ) {
@@ -1070,7 +1070,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 	  memcpy(config_entry, tmp, strlen(tmp));
 	  config_entry[strlen(tmp)] = '\0';
 	}
-	mrl_unescape(config_entry);
+	_x_mrl_unescape(config_entry);
 	retval = _x_config_change_opt(stream->xine->config, config_entry);
 	if (retval <= 0) {
 	  if (retval == 0) {
