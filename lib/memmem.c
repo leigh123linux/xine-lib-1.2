@@ -21,7 +21,7 @@
 #include <string.h>
 
 /* Return the first occurrence of NEEDLE in HAYSTACK.  */
-void *xine_internal_memmem (const void *haystack, size_t haystack_len,
+void *xine_private_memmem (const void *haystack, size_t haystack_len,
 	      const void *needle, size_t needle_len)
 {
   const char *begin;

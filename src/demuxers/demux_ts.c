@@ -341,6 +341,8 @@ typedef struct {
   int32_t npkt_read;
 
   uint8_t buf[BUF_SIZE]; /* == PKT_SIZE * NPKT_PER_READ */
+  
+  int numPreview;
 
 } demux_ts_t;
 
@@ -894,6 +896,16 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
         m->buf->decoder_flags |= BUF_FLAG_SPECIAL;
         m->buf->decoder_info[1] = BUF_SPECIAL_SPU_DVD_SUBTYPE;
         m->buf->decoder_info[2] = SPU_DVD_SUBTYPE_PACKAGE;
+      }
+      else {
+        if (this->numPreview<5)
+	  ++this->numPreview;
+	if ( this->numPreview==1 )
+	  m->buf->decoder_flags=BUF_FLAG_HEADER | BUF_FLAG_FRAME_END;
+	else if ( this->numPreview<5 )
+	  m->buf->decoder_flags=BUF_FLAG_PREVIEW;
+	else
+	  m->buf->decoder_flags=BUF_FLAG_FRAME_END;
       }
       m->buf->pts = m->pts;
       m->buf->decoder_info[0] = 1;
@@ -2255,6 +2267,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 
   /* dvb */
   this->event_queue = xine_event_new_queue (this->stream);
+  
+  this->numPreview=0;
   
   return &this->demux_plugin;
 }

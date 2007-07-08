@@ -327,31 +327,8 @@ static void file_plugin_dispose (input_plugin_t *this_gen ) {
 }
 
 static char *decode_uri (char *uri) {
-
-  int len = strlen (uri);
-  int i;
-  
   uri = strdup(uri);
-
-  for (i=0; i<len; i++) {
-
-    if ( (uri[i]=='%') && (i<(len-2)) ) {
-
-      int c;
-
-      if ( sscanf (&uri[i+1], "%02x", &c) == 1) {
-
-	uri[i]= (char) c;
-
-	memmove (uri+i+1, uri+i+3, len-i-3);
-
-	len-=2;
-      }
-    }
-  }
-  
-  uri[len] = 0;
-
+  _x_mrl_unescape (uri);
   return uri;
 }
 
