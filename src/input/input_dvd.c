@@ -1485,12 +1485,14 @@ static int dvd_plugin_open (input_plugin_t *this_gen) {
   trace_print("Called\n");
 
   /* we already checked the "dvd:/" MRL before */
-  locator = this->mrl + (sizeof("dvd:") - 1);
+  locator = strdup (this->mrl + (sizeof("dvd:") - 1));
 
   /* FIXME: call a generic xine-lib MRL parser here to pre-parse
    * the MRL for ?title=<title>&part=<part> stuff and to expand 
    * escaped characters properly */
-  
+
+  _x_mrl_unescape (locator);
+
   this->mode = dvd_parse_mrl(this, &locator, &title_part);
   
   if (this->mode == MODE_FAIL) {
@@ -1499,8 +1501,11 @@ static int dvd_plugin_open (input_plugin_t *this_gen) {
     _x_message(this->stream, XINE_MSG_READ_ERROR,
       /* FIXME: see FIXME in dvd_parse_try_open() */
       (strlen(locator) && !(locator[0] == '/' && locator[1] == '\0')) ? locator : class->dvd_device, NULL);
+    free (locator);
     return 0;
   }
+
+  free (locator);
   
   dvdnav_get_title_string(this->dvdnav, &this->dvd_name);
   if(this->dvd_name)
