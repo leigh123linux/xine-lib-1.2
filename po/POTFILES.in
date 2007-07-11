@@ -5,7 +5,6 @@ contrib/libmpcdec/requant.c
 contrib/libmpcdec/synth_filter.c
 lib/hstrerror.c
 src/audio_out/audio_alsa_out.c
-src/audio_out/audio_arts_out.c
 src/audio_out/audio_coreaudio_out.c
 src/audio_out/audio_directx2_out.c
 src/audio_out/audio_directx_out.c
