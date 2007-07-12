@@ -62,11 +62,31 @@
 #define XINE_ENABLE_EXPERIMENTAL_FEATURES
 
 /********** logging **********/
-#define LOG_MODULE "input_v4l"
+/* #define LOG_MODULE "input_v4l" */
 #define LOG_VERBOSE
 /*
 #define LOG 
 */
+
+#ifdef LOG
+#define LOG_MODULE log_line_prefix()
+
+static char *log_line_prefix()
+{
+    static int print_timestamp = 1;
+    struct timeval now;
+    struct tm now_tm;
+    char buffer[64];
+
+    if( print_timestamp ) {
+        gettimeofday( &now, NULL );
+        localtime_r( &now.tv_sec, &now_tm );
+        strftime( buffer, sizeof( buffer ), "%Y-%m-%d %H:%M:%S", &now_tm );
+        printf( "%s.%6.6ld: ", buffer, now.tv_usec );
+    }
+    return "input_v4l";
+}
+#endif
 
 #include "xine_internal.h"
 #include "xineutils.h"
@@ -89,6 +109,9 @@ static const resolution_t resolutions[] = {
 	{ 320, 240 },
 	{ 160, 120 }
 };
+
+static char *tv_standard_names[] = { "PAL", "NTSC", "SECAM", NULL };
+static int tv_standard_values[] = { VIDEO_MODE_PAL, VIDEO_MODE_NTSC, VIDEO_MODE_SECAM };
 
 #define NUM_RESOLUTIONS  (sizeof(resolutions)/sizeof(resolutions[0]))
 #define RADIO_DEV        "/dev/v4l/radio0"
@@ -547,7 +570,8 @@ static int set_frequency(v4l_input_plugin_t *this, unsigned long frequency)
     
     ret = ioctl(fd, VIDIOCSFREQ, &this->calc_frequency);
 
-    lprintf("IOCTL set frequency (%ld) returned: %d\n", frequency, ret);
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+            "input_v4l: set frequency (%ld) returned: %d\n", frequency, ret);
   } else {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
             "input_v4l: No frequency given. Expected syntax: v4l:/tuner/frequency\n"
@@ -624,6 +648,7 @@ static int search_by_channel(v4l_input_plugin_t *this, char *input_source)
 {
   int  ret = 0;
   int  fd  = 0;
+  cfg_entry_t *tv_standard_entry;
 
   lprintf("input_source: %s\n", input_source);
   
@@ -659,11 +684,17 @@ static int search_by_channel(v4l_input_plugin_t *this, char *input_source)
       return -1;
     }
     
+    tv_standard_entry = this->stream->xine->config->lookup_entry(this->stream->xine->config,
+                                                   "media.video4linux.tv_standard");
     this->tuner_name = input_source;
-    ret              = ioctl(fd, VIDIOCSCHAN, &this->input);
+    this->video_channel.norm = tv_standard_values[ tv_standard_entry->num_value ];
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+            "input_v4l: TV Standard configured as STD %s (%d)\n", 
+            tv_standard_names[ tv_standard_entry->num_value ], this->video_channel.norm );
+    ret = ioctl(fd, VIDIOCSCHAN, &this->video_channel);
     
     lprintf("(%d) Set channel to %d\n", ret, this->input);
-    
+
     /* FIXME: Don't assume tuner 0 ? */
     
     this->tuner = 0;
@@ -819,7 +850,7 @@ static int open_video_capture_device(v4l_input_plugin_t *this)
   }
   
   lprintf("Device opened, tv %d\n", this->video_fd);
-  
+
   /* figure out the resolution */
   for (j = 0; j < NUM_RESOLUTIONS; j++)
     {
@@ -1911,6 +1942,12 @@ static void *init_video_class (xine_t *xine, void *data)
 			   _("The path to your Video4Linux video device."),
 			   10, NULL, NULL);
   
+  config->register_enum (config, "media.video4linux.tv_standard", 0,
+                        tv_standard_names, _("v4l TV standard"),
+                        _("Selects the TV standard of the input signals. "
+                        "Either: PAL, NTSC and SECAM. "), 20, NULL, NULL);
+
+
   return this;
 }
 
