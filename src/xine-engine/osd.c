@@ -197,7 +197,7 @@ static int _osd_show (osd_object_t *osd, int64_t vpts, int unscaled ) {
   osd_renderer_t *this = osd->renderer;
   video_overlay_manager_t *ovl_manager;
   rle_elem_t rle, *rle_p=0;
-  int x, y, required;
+  int x, y;
   uint8_t *c;
 
   lprintf("osd=%p vpts=%"PRId64"\n", osd, vpts);
@@ -251,11 +251,11 @@ static int _osd_show (osd_object_t *osd, int64_t vpts, int unscaled ) {
     this->event.object.overlay->hili_right  = this->event.object.overlay->width;
    
     /* there will be at least that many rle objects (one for each row) */
-    required = osd->y2 - osd->y1;
     this->event.object.overlay->num_rle = 0;
-    this->event.object.overlay->data_size = 1024;
-    while (required > this->event.object.overlay->data_size)
-      this->event.object.overlay->data_size += 1024;
+    /* We will never need more rle objects than columns in any row
+       Rely on lazy page allocation to avoid us actually taking up
+       this much RAM */
+    this->event.object.overlay->data_size = osd->width * osd->height;
     rle_p = this->event.object.overlay->rle = 
        malloc(this->event.object.overlay->data_size * sizeof(rle_elem_t) );
     
@@ -272,14 +272,6 @@ static int _osd_show (osd_object_t *osd, int64_t vpts, int unscaled ) {
       /* loop over the remaining pixels in the row */
       for( x = osd->x1 + rle.len; x < osd->x2; x++, c++ ) {
         if( rle.color != *c ) {
-          if( (this->event.object.overlay->num_rle + required) > 
-              this->event.object.overlay->data_size ) {
-            this->event.object.overlay->data_size += 1024;
-            rle_p = this->event.object.overlay->rle = 
-              realloc( this->event.object.overlay->rle,
-                       this->event.object.overlay->data_size * sizeof(rle_elem_t) );
-            rle_p += this->event.object.overlay->num_rle;
-          }
 #ifdef DEBUG_RLE          
           lprintf("(%d, %d), ", rle.len, rle.color);
 #endif
@@ -297,8 +289,6 @@ static int _osd_show (osd_object_t *osd, int64_t vpts, int unscaled ) {
 #endif
       *rle_p++ = rle;
       this->event.object.overlay->num_rle++;
-      /* another row done */
-      required--;
     }
 #ifdef DEBUG_RLE
     lprintf("osd_show %p rle ends\n", osd);
