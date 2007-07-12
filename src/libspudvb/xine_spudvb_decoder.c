@@ -28,14 +28,10 @@
  */
 
 #include "pthread.h"
+#include <errno.h>
 #include "xine_internal.h"
 #include "osd.h"
 #define MAX_REGIONS 7
-
-/* check every DVBSUB_TIMER_DELAY seconds */
-#define DVBSUB_TIMER_DELAY 1
-/* hide subs after n counts of the delay */
-#define SUB_TIMEOUT 6
 
 typedef struct {
   int 			x, y;
@@ -90,6 +86,9 @@ typedef struct dvb_spu_decoder_s {
 
   spu_dvb_descriptor_t *spu_descriptor;
 
+  /* dvbsub_osd_mutex should be locked around all calls to this->osd_renderer->show()
+     and this->osd_renderer->hide() */
+  pthread_mutex_t     	dvbsub_osd_mutex;
   osd_object_t 	       *osd;
   char		       *bitmap;
   
@@ -101,11 +100,9 @@ typedef struct dvb_spu_decoder_s {
   uint64_t 		vpts;
   uint64_t		end_vpts;
 
-  pthread_mutex_t     	dvbsub_timer_mutex;
-  /* This is set to non-zero if the timer thread is wanted to stop. */
-  int                	dvbsub_timer_stop;
   pthread_t           	dvbsub_timer_thread;
-  unsigned int		dvbsub_timer_tcount;  
+  struct timespec       dvbsub_hide_timeout;
+  pthread_cond_t        dvbsub_restart_timeout;
   dvbsub_func_t        *dvbsub;
   int 			show;
 } dvb_spu_decoder_t;
@@ -544,43 +541,58 @@ void process_object_data_segment (dvb_spu_decoder_t * this)
   }
 }
 
-
-/* Sleep routine for pthread */
-static void dvbsub_pthread_sleep(int seconds) {    
-    pthread_mutex_t dummy_mutex;
-    pthread_cond_t dummy_cond;
-    struct timespec timeout;
-
-    /* Create a dummy mutex which doesn't unlock for sure while waiting. */
-    pthread_mutex_init(&dummy_mutex, NULL);
-    pthread_mutex_lock(&dummy_mutex);
-
-    /* Create a dummy condition variable. */
-    pthread_cond_init(&dummy_cond, NULL);
-
-    timeout.tv_sec = time(NULL) + seconds;
-    timeout.tv_nsec = 0;
-
-    pthread_cond_timedwait(&dummy_cond, &dummy_mutex, &timeout);
-
-    pthread_cond_destroy(&dummy_cond);
-    pthread_mutex_unlock(&dummy_mutex);
-    pthread_mutex_destroy(&dummy_mutex);
+static void unlock_mutex_cancellation_func(void *mutex_gen)
+{
+  pthread_mutex_t *mutex = (pthread_mutex_t*) mutex_gen;
+  pthread_mutex_unlock(mutex);
 }
 
+/* Thread routine that checks for subtitle timeout periodically.
+   To avoid unexpected subtitle hiding, calls to this->stream->osd_renderer->show()
+   should be in blocks like:
 
-/* Thread routine that checks for subtitle timeout periodically. */
-static void* dvbsub_timer_func(void *this_gen) {
-    dvb_spu_decoder_t *this = (dvb_spu_decoder_t *) this_gen;
+   pthread_mutex_lock(&this->dvbsub_osd_mutex);
+   this->stream->osd_renderer->show(...);
+   this->dvbsub_hide_timeout.tv_sec = time(NULL) + timeout value;
+   pthread_cond_signal(&this->dvbsub_restart_timeout);
+   pthread_mutex_unlock(&this->dvbsub_osd_mutex);
 
-    while (!this->dvbsub_timer_stop) {
-	pthread_mutex_lock(&this->dvbsub_timer_mutex);      
-	if(this->dvbsub_timer_tcount++ > SUB_TIMEOUT)
-          this->stream->osd_renderer->hide (this->osd, 0);
-	pthread_mutex_unlock(&this->dvbsub_timer_mutex);
-	dvbsub_pthread_sleep(DVBSUB_TIMER_DELAY);
+   This ensures that the timeout is changed with the lock held, and
+   that the thread is signalled to pick up the new timeout.
+*/
+static void* dvbsub_timer_func(void *this_gen)
+{
+  dvb_spu_decoder_t *this = (dvb_spu_decoder_t *) this_gen;
+  pthread_mutex_lock(&this->dvbsub_osd_mutex);
+
+  /* If we're cancelled via pthread_cancel, unlock the mutex */
+  pthread_cleanup_push(unlock_mutex_cancellation_func, &this->dvbsub_osd_mutex);
+
+  while(1)
+  {
+    /* Record the current timeout, and wait - note that pthread_cond_timedwait
+       will unlock the mutex on entry, and lock it on exit */
+    struct timespec timeout = this->dvbsub_hide_timeout;
+    int result = pthread_cond_timedwait(&this->dvbsub_restart_timeout,
+                                        &this->dvbsub_osd_mutex,
+                                        &this->dvbsub_hide_timeout);
+    if(result == ETIMEDOUT && 
+       timeout.tv_sec == this->dvbsub_hide_timeout.tv_sec &&
+       timeout.tv_nsec == this->dvbsub_hide_timeout.tv_nsec)
+    {
+      /* We timed out, and no-one changed the timeout underneath us.
+         Hide the OSD, then wait until we're signalled. */
+      if(this && this->stream && this->stream->osd_renderer && this->osd)
+      {
+        lprintf("Hiding OSD in emergency thread\n");
+        this->stream->osd_renderer->hide(this->osd, 0);
+      }
+      pthread_cond_wait(&this->dvbsub_restart_timeout, &this->dvbsub_osd_mutex);
     }
-    return NULL;
+  }
+
+  pthread_cleanup_pop(1);
+  return NULL;
 }
 
 void draw_subtitles (dvb_spu_decoder_t * this)
@@ -614,23 +626,17 @@ void draw_subtitles (dvb_spu_decoder_t * this)
 
   if(display){
     
-    /* start timer thread if stopped */
-    if(this->dvbsub_timer_stop){
-      this->dvbsub_timer_stop=0;
-      if (pthread_create(&this->dvbsub_timer_thread, NULL, dvbsub_timer_func, this) != 0) {
-        xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, _("dvbsub: cannot create timer thread\n"));
-      }
-    }
-
     /* display immediately at requested PTS*/
     this->stream->osd_renderer->set_palette(this->osd,(uint32_t *)this->dvbsub->colours,this->dvbsub->trans);
     this->stream->osd_renderer->draw_bitmap (this->osd,this->bitmap, 1,1,720,576,NULL);
     
-    pthread_mutex_lock(&this->dvbsub_timer_mutex);      
+    pthread_mutex_lock(&this->dvbsub_osd_mutex);      
     this->stream->osd_renderer->show (this->osd, this->vpts);
-    /* reset the timer thread */
-    this->dvbsub_timer_tcount=0;
-    pthread_mutex_unlock(&this->dvbsub_timer_mutex);
+    this->dvbsub_hide_timeout.tv_nsec = 0;
+    this->dvbsub_hide_timeout.tv_sec = time(NULL) + this->dvbsub->page.page_time_out;
+    lprintf("page_time_out %d\n",this->dvbsub->page.page_time_out);
+    pthread_cond_signal(&this->dvbsub_restart_timeout);
+    pthread_mutex_unlock(&this->dvbsub_osd_mutex);
   }
 }
 
@@ -651,8 +657,10 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
   if (buf->decoder_flags & BUF_FLAG_SPECIAL) {
     if (buf->decoder_info[1] == BUF_SPECIAL_SPU_DVB_DESCRIPTOR) {
       if (buf->decoder_info[2] == 0) {
-        this->dvbsub_timer_stop=1;
-	this->stream->osd_renderer->hide (this->osd, 0);
+        /* Hide the osd - note that if the timeout thread times out, it'll rehide, which is harmless */
+        pthread_mutex_lock(&this->dvbsub_osd_mutex);
+        this->stream->osd_renderer->hide(this->osd, 0);
+        pthread_mutex_unlock(&this->dvbsub_osd_mutex);
       }
       else {
 	xine_fast_memcpy (this->spu_descriptor, buf->decoder_info_ptr[2], buf->decoder_info[2]);
@@ -746,8 +754,10 @@ static void spudec_reset (spu_decoder_t * this_gen)
 {
   dvb_spu_decoder_t *this = (dvb_spu_decoder_t *) this_gen;
 
-  if (this->osd)
-    this->stream->osd_renderer->hide (this->osd, 0);
+  /* Hide the osd - if the timeout thread times out, it'll rehide harmlessly */
+  pthread_mutex_lock(&this->dvbsub_osd_mutex);
+  this->stream->osd_renderer->hide(this->osd, 0);
+  pthread_mutex_unlock(&this->dvbsub_osd_mutex);
 
 }
 
@@ -760,9 +770,10 @@ static void spudec_dispose (spu_decoder_t * this_gen)
 {
   dvb_spu_decoder_t *this = (dvb_spu_decoder_t *) this_gen;
 
-  if(!this->dvbsub_timer_stop){
-    this->dvbsub_timer_stop=1;
-  }
+  pthread_cancel(this->dvbsub_timer_thread);
+  pthread_join(this->dvbsub_timer_thread, NULL);
+  pthread_mutex_destroy(&this->dvbsub_osd_mutex);
+  pthread_cond_destroy(&this->dvbsub_restart_timeout);
 
   if(this->spu_descriptor){
     free(this->spu_descriptor);
@@ -822,9 +833,11 @@ static spu_decoder_t *dvb_spu_class_open_plugin (spu_decoder_class_t * class_gen
   this->stream->osd_renderer->set_encoding (this->osd, NULL);
   this->stream->osd_renderer->set_text_palette (this->osd, TEXTPALETTE_YELLOW_BLACK_TRANSPARENT, OSD_TEXT1);
 
-
-  /* subtitle timer thread. */
-  this->dvbsub_timer_stop = 1;
+  pthread_mutex_init(&this->dvbsub_osd_mutex, NULL);
+  pthread_cond_init(&this->dvbsub_restart_timeout, NULL);
+  this->dvbsub_hide_timeout.tv_nsec = 0;
+  this->dvbsub_hide_timeout.tv_sec = time(NULL);
+  pthread_create(&this->dvbsub_timer_thread, NULL, dvbsub_timer_func, this);
 
   return (spu_decoder_t *) this;
 }
