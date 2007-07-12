@@ -336,6 +336,8 @@ typedef struct {
   /* scratch buffer for forward seeking */
   char                seek_buf[BUFSIZE];
 
+  /* Is the GUI enabled at all? */
+  int                 dvb_gui_enabled;
   /* simple vcr-like functionality */
   int                 record_fd;
   int		      record_paused;
@@ -2506,7 +2508,8 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
 
   if (!this->tuned_in)
       return 0;
-  dvb_event_handler (this);
+  if (this->dvb_gui_enabled)
+      dvb_event_handler (this);
 #ifdef LOG_READS
   xprintf(this->class->xine,XINE_VERBOSITY_DEBUG,
 	  "input_dvb: reading %" PRIdMAX " bytes...\n", (intmax_t)len);
@@ -2771,6 +2774,11 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     xine_cfg_entry_t zoomdvb;
     xine_cfg_entry_t adapter;
     xine_cfg_entry_t lastchannel;
+    xine_cfg_entry_t gui_enabled;
+
+    xine_config_lookup_entry(this->stream->xine, "media.dvb.gui_enabled", &gui_enabled);
+    this->dvb_gui_enabled = gui_enabled.num_value;
+    xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("input_dvb: DVB GUI %s\n"), this->dvb_gui_enabled ? "enabled" : "disabled");
     
     xine_config_lookup_entry(this->stream->xine, "media.dvb.adapter", &adapter);
 
@@ -2997,15 +3005,16 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     this->event_queue = xine_event_new_queue(this->stream);
 
 #ifdef EPG_UPDATE_IN_BACKGROUND
-    /* Start the EPG updater thread. */
-    this->epg_updater_stop = 0;
-    if (pthread_create(&this->epg_updater_thread, NULL, 
-		       epg_data_updater, this) != 0) {
-	xprintf(
-	    this->class->xine, XINE_VERBOSITY_LOG,
-	    _("input_dvb: cannot create EPG updater thread\n"));
-	return 0;
-
+    if (this->dvb_gui_enabled) {
+      /* Start the EPG updater thread. */
+      this->epg_updater_stop = 0;
+      if (pthread_create(&this->epg_updater_thread, NULL, 
+		         epg_data_updater, this) != 0) {
+	  xprintf(
+	      this->class->xine, XINE_VERBOSITY_LOG,
+	      _("input_dvb: cannot create EPG updater thread\n"));
+	  return 0;
+      }
     } 
 #endif
     /*
@@ -3294,6 +3303,13 @@ static void *init_class (xine_t *xine, void *data) {
 		       _("Leave at 0 means try forever. "
 			 "Greater than 0 means wait that many seconds to get a lock. Minimum is 5 seconds."),
 		       0, NULL, (void *) this);
+
+  /* set to 0 to turn off the GUI built into this input plugin */
+  config->register_bool(config, "media.dvb.gui_enabled",
+			1,
+			_("Enable the DVB GUI"),
+			_("Enable the DVB GUI, mouse controlled recording and channel switching."),
+			21, NULL, NULL);
 
   config->register_num(config, "media.dvb.adapter",
 		       0,
