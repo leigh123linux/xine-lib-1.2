@@ -395,6 +395,8 @@ static int video_overlay_event( video_overlay_t *this, int64_t vpts ) {
 #endif
         /* free any overlay associated with this event */
         if (this->events[this_event].event->object.overlay != NULL) {
+          if( this->events[this_event].event->object.overlay->rle != NULL )
+            free( this->events[this_event].event->object.overlay->rle );
           free(this->events[this_event].event->object.overlay);
           this->events[this_event].event->object.overlay = NULL; 
         }
@@ -406,9 +408,11 @@ static int video_overlay_event( video_overlay_t *this, int64_t vpts ) {
         printf ("video_overlay: FREE SPU NOW\n");
 #endif
         /* free any overlay associated with this event */
-        if (this->events[this_event].event->object.overlay != NULL) {
+        if( this->events[this_event].event->object.overlay != NULL) {   
+          if( this->events[this_event].event->object.overlay->rle != NULL )
+            free( this->events[this_event].event->object.overlay->rle );
           free(this->events[this_event].event->object.overlay);
-          this->events[this_event].event->object.overlay = NULL; 
+          this->events[this_event].event->object.overlay = NULL;
         }
         /* this avoid removing this_event from the queue
          * (it will be removed at the end of this loop) */
