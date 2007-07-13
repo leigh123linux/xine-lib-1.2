@@ -5,6 +5,7 @@ Maintainer: Siggi Langauf <siggi@debian.org>
 Uploaders: Philipp Matthias Hahn <pmhahn@debian.org>, Reinhard Tartler <siretart@tauware.de>
 Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
 	automake1.9, autoconf, libtool,
+	libxcb-xinerama0-dev | libxv-dev (<< 1.0.3), libxcb-xv0-dev | libxv-dev (<< 1.0.3), libxcb-xvmc0-dev | libxv-dev (<< 1.0.3), libxcb-shm0-dev | libxv-dev (<< 1.0.3), libxcb-shape0-dev | libxv-dev (<< 1.0.3),
 	libxinerama-dev, libxv-dev, libxvmc-dev, libxt-dev, 
 	libdirectfb-dev (>= 0.9.22),
 	libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
