@@ -57,6 +57,7 @@ typedef struct xml_node_s {
 void xml_parser_init(const char * buf, int size, int mode) XINE_PROTECTED;
 
 int xml_parser_build_tree(xml_node_t **root_node) XINE_PROTECTED;
+int xml_parser_build_tree_relaxed(xml_node_t **root_node, int relaxed) XINE_PROTECTED;
 
 void xml_parser_free_tree(xml_node_t *root_node) XINE_PROTECTED;
 

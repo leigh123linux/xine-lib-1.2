@@ -34,6 +34,9 @@ xine-lib (1.1.90) (Unreleased)
     consider alternative daemons. Note: aRTs will not be present in KDE 4.
   * Convert the FAQ and the Hacker's Guide from DocBook SGML to DocBook 4.4
     XML, and the figures from fig files to SVG files.
+  * The XML parser no longer ignores <?...?> elements.
+    Such elements are handled as if they were after the XML content for
+    compatibility reasons, though they must appear before it.
 
 xine-lib (1.1.8) (Unreleased)
   * Send a channel-changed event to the frontend when receiving the SYNC
