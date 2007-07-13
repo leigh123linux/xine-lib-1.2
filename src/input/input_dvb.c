@@ -3282,7 +3282,7 @@ static void *init_class (xine_t *xine, void *data) {
 		       0,
 		       _("Number of seconds until tuning times out."),
 		       _("Leave at 0 means try forever. "
-			 "Greater then 0 means wait that many seconds to get a lock. Minimum is 5 seconds."),
+			 "Greater than 0 means wait that many seconds to get a lock. Minimum is 5 seconds."),
 		       0, NULL, (void *) this);
 
   config->register_num(config, "media.dvb.adapter",
