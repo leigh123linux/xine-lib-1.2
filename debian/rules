@@ -102,7 +102,7 @@ clean:
 	# remove more cruft leftover by autohell
 	rm -f doc/faq/faq.html doc/faq/faq.txt doc/hackersguide/hackersguide.html m4/caca.m4
 	-test -f .noauto || find . -name Makefile.in -print | xargs -r rm
-	test -f .noauto || rm -rf compile config.guess configure depcomp install-sh ltmain.sh missing aclocal.m4 config.h.in
+	test -f .noauto || rm -rf compile config.guess configure depcomp install-sh ltmain.sh missing aclocal.m4 include/configure.h.in
 	dh_clean
 
 install: build
