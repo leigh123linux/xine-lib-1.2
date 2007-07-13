@@ -1006,6 +1006,9 @@ static int tuner_tune_it (tuner_t *this, struct dvb_frontend_parameters
   struct dvb_frontend_event event;
   unsigned int strength;
   struct pollfd pfd[1];
+  xine_cfg_entry_t config_tuning_timeout;
+  struct timeval time_now;
+  struct timeval tuning_timeout;
 
   /* discard stale events */
   while (ioctl(this->fd_frontend, FE_GET_EVENT, &event) != -1);
@@ -1033,6 +1036,19 @@ static int tuner_tune_it (tuner_t *this, struct dvb_frontend_parameters
 	      return 0;
       }
   }
+
+  xine_config_lookup_entry(this->xine, "media.dvb.tuning_timeout", &config_tuning_timeout);
+  xprintf(this->xine, XINE_VERBOSITY_DEBUG, "input_dvb: media.dvb.tuning_timeout is %d\n", config_tuning_timeout.num_value );
+
+  if( config_tuning_timeout.num_value != 0 ) {
+    gettimeofday( &tuning_timeout, NULL );
+    if( config_tuning_timeout.num_value < 5 )
+        tuning_timeout.tv_sec += 5;
+    else
+        tuning_timeout.tv_sec += config_tuning_timeout.num_value;
+  }
+
+  xprintf(this->xine, XINE_VERBOSITY_DEBUG, "input_dvb: tuner_tune_it - waiting for lock...\n" );
   
   do {
     status = 0;
@@ -1045,8 +1061,20 @@ static int tuner_tune_it (tuner_t *this, struct dvb_frontend_parameters
     if (status & FE_HAS_LOCK) {
       break;
     }
-    usleep(500000);
-    print_error("Trying to get lock...");
+
+    /* FE_TIMEDOUT does not happen in a no signal condition.
+     * Use the tuning_timeout config to prevent a hang in this loop
+     */
+    if( config_tuning_timeout.num_value != 0 ) {
+      gettimeofday( &time_now, NULL );
+      if( time_now.tv_sec > tuning_timeout.tv_sec ) {
+        xprintf(this->xine, XINE_VERBOSITY_DEBUG, "input_dvb: No FE_HAS_LOCK before timeout\n");
+        break;
+      }
+    }
+
+    usleep(10000);
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG, "Trying to get lock...");
   } while (!(status & FE_TIMEDOUT));
   
   /* inform the user of frontend status */ 
@@ -3260,6 +3288,12 @@ static void *init_class (xine_t *xine, void *data) {
 		       _("If enabled xine will remember and switch to this channel. "),
 		       21, NULL, NULL);
 
+  config->register_num(config, "media.dvb.tuning_timeout",
+		       0,
+		       _("Number of seconds until tuning times out."),
+		       _("Leave at 0 means try forever. "
+			 "Greater than 0 means wait that many seconds to get a lock. Minimum is 5 seconds."),
+		       0, NULL, (void *) this);
 
   config->register_num(config, "media.dvb.adapter",
 		       0,

@@ -74,6 +74,7 @@ extern "C" {
 
 #define XINE_MAX_EVENT_LISTENERS         50
 #define XINE_MAX_EVENT_TYPES             100
+#define XINE_MAX_TICKET_HOLDER_THREADS   64
 
 /* used by plugin loader */
 #define XINE_VERSION_CODE                XINE_MAJOR_VERSION*10000+XINE_MINOR_VERSION*100+XINE_SUB_VERSION
@@ -185,6 +186,11 @@ struct xine_ticket_s {
   int             atomic_revoke;
   pthread_t       atomic_revoker_thread;
   pthread_mutex_t port_rewiring_lock;
+  struct {
+    int count;
+    pthread_t holder;
+  } *holder_threads;
+  unsigned        holder_thread_count;
 #endif
 };
 
