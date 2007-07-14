@@ -668,6 +668,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   int                  buflen;
   int                  use_proxy;
   int                  proxyport;
+  int                  mpegurl_redirect = 0;
   
   use_proxy = this_class->proxyhost && strlen(this_class->proxyhost);
   
@@ -899,6 +900,15 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
         if (!strncasecmp (this->buf, "WWW-Authenticate: ", 18))
           strcpy (this->preview, this->buf + 18);
 
+	{
+	  static const char mpegurl_ct_str[] = "Content-Type: audio/x-mpegurl";
+	  static const size_t mpegurl_ct_size = sizeof(mpegurl_ct_str)-1;
+	  if (!strncasecmp(this->buf, mpegurl_ct_str, mpegurl_ct_size)) {
+	    lprintf("Opening an audio/x-mpegurl file, late redirect.");
+
+	    mpegurl_redirect = 1;
+	  }
+	}
 
         /* Icecast / ShoutCast Stuff */
         if (!strncasecmp(this->buf, TAG_ICY_NAME, sizeof(TAG_ICY_NAME) - 1)) {
@@ -966,6 +976,30 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   if (httpcode == 401)
     _x_message(this->stream, XINE_MSG_AUTHENTICATION_NEEDED,
                this->mrl, *this->preview ? this->preview : NULL, NULL);
+
+  if ( mpegurl_redirect ) {
+    char buf[4096] = { 0, };
+    char *newline = NULL;
+
+    http_plugin_read_int(this, buf, 4095);
+    newline = strstr(buf, "\r\n");
+
+    /* If the newline can't be found, either the 4K buffer is too small, or
+     * more likely something is fuzzy.
+     */
+    if ( newline ) {
+      char *href;
+
+      *newline = '\0';
+
+      lprintf("mpegurl pointing to %s\n", buf);
+      
+      href = _x_canonicalise_url (this->mrl, buf);
+      free(this->mrl);
+      this->mrl = href;
+      return http_plugin_open(this_gen);
+    }
+  }
 
   /*
    * fill preview buffer
