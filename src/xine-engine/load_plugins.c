@@ -320,7 +320,6 @@ static void _insert_node (xine_t *this,
   const input_info_t   *input_old;
   uint32_t             *types;
   char                  key[80];
-  char                  desc[100];
   int                   i;
 
   _x_assert(list);
@@ -384,13 +383,8 @@ static void _insert_node (xine_t *this,
     entry->priority = decoder_new->priority = decoder_old->priority;
     
     snprintf(key, sizeof(key), "engine.decoder_priorities.%s", info->id);
-    snprintf(desc, sizeof(desc), _("priority for %s decoder"), info->id);
-    /* write the description on the heap because the config system
-     * does not strdup() it, so we have to provide a different pointer
-     * for each decoder */
     for (i = 0; catalog->prio_desc[i]; i++);
-    catalog->prio_desc[i] = malloc(strlen(desc) + 1);
-    strcpy(catalog->prio_desc[i], desc);
+    asprintf(&catalog->prio_desc[i], _("priority for %s decoder"), info->id);
     this->config->register_num (this->config,
 				key,
 				0,
