@@ -856,6 +856,8 @@ static void xvmc_overlay_blend (vo_driver_t *this_gen,
       _x_blend_yuy2(frame->vo_frame.base[0], overlay, 
 		 frame->width, frame->height, frame->vo_frame.pitches[0],
                  &this->alphablend_extra_data);
+    else
+      xprintf (this->xine, XINE_VERBOSITY_LOG, "xvmc_overlay_blend: overlay blending not supported for frame format %08x\n", frame->format);
   }
 }
 
