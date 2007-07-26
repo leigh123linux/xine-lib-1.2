@@ -556,6 +556,7 @@ static vo_frame_t *xvmc_alloc_frame (vo_driver_t *this_gen) {
     return NULL;
 
   frame->vo_frame.accel_data = &frame->xvmc_data;
+  frame->xvmc_data.vo_frame = &frame->vo_frame;
 
   /* keep track of frames and how many frames alocated. */
   this->frames[this->num_frame_buffers++] = frame;

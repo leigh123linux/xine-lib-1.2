@@ -454,6 +454,7 @@ static void xxmc_duplicate_frame_data(vo_frame_t *this_gen,
     return;
   }		
   this->xxmc_data = *xxmc;
+  this->xxmc_data.xvmc.vo_frame = &this->vo_frame;
   this->width = original->width;
   this->height = original->height;
   this->format = original->format;
@@ -568,6 +569,7 @@ static vo_frame_t *xxmc_alloc_frame (vo_driver_t *this_gen) {
   frame->vo_frame.driver     = this_gen;
   frame->last_sw_format      = 0;
   frame->vo_frame.accel_data = &frame->xxmc_data;
+  frame->xxmc_data.xvmc.vo_frame = &frame->vo_frame;
   frame->image               = NULL;
 
   xprintf (this->xine, XINE_VERBOSITY_DEBUG, "Allocating frame\n");
