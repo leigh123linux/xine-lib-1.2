@@ -180,6 +180,13 @@ struct post_video_port_s {
   /* the new frame function pointers */
   vo_frame_t               *new_frame;
   
+  /* if you want to decide yourself, whether the preprocessing functions
+   * should still be routed when draw is intercepted, fill in this
+   * function; _x_post_intercept_video_frame() acts as a template method
+   * and asks your function; return a boolean; the default is _not_ to
+   * route preprocessing functions when draw is intercepted */
+  int (*route_preprocessing_procs)(post_video_port_t *self, vo_frame_t *frame);
+
   /* if you want to decide yourself, whether the overlay manager should
    * be intercepted, fill in this function; get_overlay_manager() acts as
    * a template method and asks your function; return a boolean;
