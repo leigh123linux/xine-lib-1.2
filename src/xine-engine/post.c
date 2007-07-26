@@ -393,10 +393,11 @@ vo_frame_t *_x_post_intercept_video_frame(vo_frame_t *frame, post_video_port_t *
     port->new_frame->free             ? port->new_frame->free             : post_frame_free;
   new_frame->dispose          =
     port->new_frame->dispose          ? port->new_frame->dispose          : post_frame_dispose;
-  
-  if (!port->new_frame->draw) {
+
+  if (!port->new_frame->draw || (port->route_preprocessing_procs && port->route_preprocessing_procs(port, frame))) {
     /* draw will most likely modify the frame, so the decoder
-     * should only request preprocessing when there is no new draw */
+     * should only request preprocessing when there is no new draw
+     * but route_preprocessing_procs() can override this decision */
     if (frame->proc_frame       && !new_frame->proc_frame)
       new_frame->proc_frame       = post_frame_proc_frame;
     if (frame->proc_slice       && !new_frame->proc_slice)
