@@ -362,6 +362,9 @@ vo_frame_t *_x_post_intercept_video_frame(vo_frame_t *frame, post_video_port_t *
   /* make a copy and attach the original */
   xine_fast_memcpy(new_frame, frame, sizeof(vo_frame_t));
   new_frame->next = frame;
+
+  if (new_frame->stream)
+    _x_refcounter_inc(new_frame->stream->refcounter);
   
   /* modify the frame with the intercept functions */
   new_frame->port             = &port->new_port;
@@ -399,6 +402,9 @@ vo_frame_t *_x_post_restore_video_frame(vo_frame_t *frame, post_video_port_t *po
   /* propagate any changes */
   _x_post_frame_copy_down(frame, original);
   
+  if (frame->stream)
+    _x_refcounter_dec(frame->stream->refcounter);
+
   /* put the now free slot into the free frames list */
   pthread_mutex_lock(&port->free_frames_lock);
   frame->next = port->free_frame_slots;
@@ -410,6 +416,11 @@ vo_frame_t *_x_post_restore_video_frame(vo_frame_t *frame, post_video_port_t *po
 
 void _x_post_frame_copy_down(vo_frame_t *from, vo_frame_t *to) {
   /* propagate changes downwards (from decoders to video out) */
+  if (from->stream)
+    _x_refcounter_inc(from->stream->refcounter);
+  if (to->stream)
+    _x_refcounter_dec(to->stream->refcounter);
+
   to->pts                 = from->pts;
   to->bad_frame           = from->bad_frame;
   to->duration            = from->duration;
@@ -432,8 +443,14 @@ void _x_post_frame_copy_down(vo_frame_t *from, vo_frame_t *to) {
 
 void _x_post_frame_copy_up(vo_frame_t *to, vo_frame_t *from) {
   /* propagate changes upwards (from video out to decoders) */
+  if (from->stream)
+    _x_refcounter_inc(from->stream->refcounter);
+  if (to->stream)
+    _x_refcounter_dec(to->stream->refcounter);
+
   to->vpts     = from->vpts;
   to->duration = from->duration;
+  to->stream   = from->stream;
   
   if (to->extra_info != from->extra_info)
     _x_extra_info_merge(to->extra_info, from->extra_info);
@@ -441,6 +458,11 @@ void _x_post_frame_copy_up(vo_frame_t *to, vo_frame_t *from) {
 
 void _x_post_frame_u_turn(vo_frame_t *frame, xine_stream_t *stream) {
   /* frame's travel will end here => do the housekeeping */
+  if (stream)
+    _x_refcounter_inc(stream->refcounter);
+  if (frame->stream)
+    _x_refcounter_dec(frame->stream->refcounter);
+
   frame->stream = stream;
   if (stream) {
     _x_extra_info_merge(frame->extra_info, stream->video_decoder_extra_info);
