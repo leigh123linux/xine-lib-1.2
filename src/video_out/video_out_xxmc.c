@@ -367,15 +367,15 @@ static int xxmc_lock_and_validate_surfaces(vo_frame_t *cur_frame,
 
   switch(pc_type) {
   case XINE_PICT_B_TYPE:
-    frame = (xxmc_frame_t *) bw_frame;
+    frame = XXMC_FRAME(bw_frame);
     if (!xxmc_xvmc_surface_valid( driver, frame->xvmc_surf)) break;
     /* fall through */
   case XINE_PICT_P_TYPE:
-    frame = (xxmc_frame_t *) fw_frame;
+    frame = XXMC_FRAME(fw_frame);
     if (!xxmc_xvmc_surface_valid( driver, frame->xvmc_surf)) break;
     /* fall through */
   default:
-    frame = (xxmc_frame_t *) cur_frame;
+    frame = XXMC_FRAME(cur_frame);
     if (!xxmc_xvmc_surface_valid( driver, frame->xvmc_surf)) break;
     return 0;
   }
@@ -406,7 +406,7 @@ static void xvmc_flush(vo_frame_t *this_gen)
 {
 
   xxmc_frame_t
-    *frame = (xxmc_frame_t *) this_gen;
+    *frame = XXMC_FRAME(this_gen);
   xxmc_driver_t
     *driver = (xxmc_driver_t *) this_gen->driver;
 
@@ -1226,7 +1226,7 @@ static void xxmc_do_update_frame(vo_driver_t *this_gen,
 				 double ratio, int format, int flags) {
 
   xxmc_driver_t  *this  = (xxmc_driver_t *) this_gen;
-  xxmc_frame_t   *frame = (xxmc_frame_t *) frame_gen;
+  xxmc_frame_t   *frame = XXMC_FRAME(frame_gen);
 
   if ( XINE_IMGFMT_XXMC == format ) {
     xine_xxmc_t *xxmc = &frame->xxmc_data;
@@ -1245,7 +1245,7 @@ static void xxmc_do_update_frame(vo_driver_t *this_gen,
     if (this->contextActive) 
       xxmc_frame_updates(this, frame, 1);
 
-    xxmc_do_update_frame_xv(this_gen, frame_gen, width, height, ratio, 
+    xxmc_do_update_frame_xv(this_gen, &frame->vo_frame, width, height, ratio, 
 			    xxmc->fallback_format, flags);
 
     if (!this->contextActive) {
@@ -1266,7 +1266,7 @@ static void xxmc_do_update_frame(vo_driver_t *this_gen,
       xxmc_xvmc_update_context(this, frame, width, height, 0);
     }
     frame->vo_frame.proc_duplicate_frame_data = NULL;
-    xxmc_do_update_frame_xv(this_gen, frame_gen, width, height, ratio, 
+    xxmc_do_update_frame_xv(this_gen, &frame->vo_frame, width, height, ratio, 
 			    format, flags);
   }
 }

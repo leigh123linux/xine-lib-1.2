@@ -34,12 +34,12 @@ void xvmc_vld_frame(struct vo_frame_s *this_gen)
 {
   vo_frame_t *this = (vo_frame_t *) this_gen;
   xxmc_frame_t
-    *cf = (xxmc_frame_t *) this;
+    *cf = XXMC_FRAME(this);
   xine_vld_frame_t
     *vft = &(cf->xxmc_data.vld_frame);
   xxmc_frame_t
-    *ff = (xxmc_frame_t *) vft->forward_reference_frame,
-    *bf = (xxmc_frame_t *) vft->backward_reference_frame;
+    *ff = XXMC_FRAME(vft->forward_reference_frame),
+    *bf = XXMC_FRAME(vft->backward_reference_frame);
   XvMCMpegControl ctl;
   xxmc_driver_t 
     *driver = (xxmc_driver_t *) cf->vo_frame.driver;
@@ -106,7 +106,7 @@ void xvmc_vld_frame(struct vo_frame_s *this_gen)
 void xvmc_vld_slice(vo_frame_t *this_gen) 
 {
   xxmc_frame_t 
-    *cf = (xxmc_frame_t *) this_gen;
+    *cf = XXMC_FRAME(this_gen);
   xxmc_driver_t
     *driver = (xxmc_driver_t *) cf->vo_frame.driver;
 

@@ -481,9 +481,9 @@ static void xvmc_render_macro_blocks(vo_frame_t *current_image,
 				     int second_field,
 				     xvmc_macroblocks_t *macroblocks) {
   xvmc_driver_t *this           = (xvmc_driver_t *) current_image->driver;
-  xvmc_frame_t  *current_frame  = (xvmc_frame_t *)  current_image;
-  xvmc_frame_t  *forward_frame  = (xvmc_frame_t *)  forward_ref_image;
-  xvmc_frame_t  *backward_frame = (xvmc_frame_t *)  backward_ref_image;
+  xvmc_frame_t  *current_frame  = XVMC_FRAME(current_image);
+  xvmc_frame_t  *forward_frame  = XVMC_FRAME(forward_ref_image);
+  xvmc_frame_t  *backward_frame = XVMC_FRAME(backward_ref_image);
   int           flags;
 
   lprintf ("xvmc_render_macro_blocks\n");
