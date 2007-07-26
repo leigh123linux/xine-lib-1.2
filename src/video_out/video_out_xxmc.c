@@ -1230,6 +1230,13 @@ static void xxmc_do_update_frame(vo_driver_t *this_gen,
 
   if ( XINE_IMGFMT_XXMC == format ) {
     xine_xxmc_t *xxmc = &frame->xxmc_data;
+    vo_frame_t orig_frame_content;
+
+    if (frame_gen != &frame->vo_frame) {
+      /* this is an intercepted frame, so we need to detect and propagate any
+       * changes on the original vo_frame to all the intercepted frames */
+       xine_fast_memcpy(&orig_frame_content, &frame->vo_frame, sizeof (vo_frame_t));
+    }
 
     xvmc_context_writer_lock( &this->xvmc_lock);
     if (xxmc_accel_update(this, this->last_accel_request, xxmc->acceleration) ||
@@ -1259,6 +1266,33 @@ static void xxmc_do_update_frame(vo_driver_t *this_gen,
 
     xvmc_context_writer_unlock( &this->xvmc_lock);
     
+    if (frame_gen != &frame->vo_frame) {
+      /* this is an intercepted frame, so we need to detect and propagate any
+       * changes on the original vo_frame to all the intercepted frames */
+      unsigned char *p0 = (unsigned char *)&orig_frame_content;
+      unsigned char *p1 = (unsigned char *)&frame->vo_frame;
+      int i;
+      for (i = 0; i < sizeof (vo_frame_t); i++) {
+        if (*p0 != *p1) {
+          /* propagate the change */
+          vo_frame_t *f = frame_gen;
+          while (f->next) {
+            /* serveral restrictions apply when intercepting XXMC frames. So let's check
+             * the intercepted frames before modifing them and fail otherwise. */
+            unsigned char *p = (unsigned char *)f + i;
+            if (*p != *p0) {
+              xprintf(this->xine, XINE_VERBOSITY_DEBUG, "xxmc_do_update_frame: a post plugin violates the restrictions on intercepting XXMC frames\n");
+              _x_abort();
+            }
+
+            *p = *p1;
+            f = f->next;
+          }
+        }
+        p0++;
+        p1++;
+      }
+    }
   } else {
     /* switch back to an unaccelerated context */
     if (this->last_accel_request != 0xFFFFFFFF) {
