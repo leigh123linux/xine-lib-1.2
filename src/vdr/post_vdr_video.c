@@ -90,8 +90,8 @@ static void           vdr_video_class_dispose(post_class_t *class_gen);
 /* plugin instance functions */
 static void           vdr_video_dispose(post_plugin_t *this_gen);
 
-/* frame intercept check */
-static int            vdr_video_intercept_frame(post_video_port_t *port, vo_frame_t *frame);
+/* route preprocessing functions check */
+static int            vdr_video_route_preprocessing_procs(post_video_port_t *port, vo_frame_t *frame);
 
 /* replaced vo_frame functions */
 static int            vdr_video_draw(vo_frame_t *frame, xine_stream_t *stream);
@@ -131,11 +131,9 @@ static post_plugin_t *vdr_video_open_plugin(post_class_t *class_gen, int inputs,
   this->post_plugin.dispose = vdr_video_dispose;
 
   port = _x_post_intercept_video_port(&this->post_plugin, video_target[ 0 ], &input, &output);
-  port->intercept_frame = vdr_video_intercept_frame;
-  port->new_frame->draw = vdr_video_draw;
+  port->route_preprocessing_procs = vdr_video_route_preprocessing_procs;
+  port->new_frame->draw           = vdr_video_draw;
   this->post_plugin.xine_post.video_input[ 0 ] = &port->new_port;
-  
-  
   
   this->enabled          = 0;
   this->vdr_stream       = 0;
@@ -195,11 +193,12 @@ static void vdr_video_dispose(post_plugin_t *this_gen)
   }
 }
 
-
-static int vdr_video_intercept_frame(post_video_port_t *port, vo_frame_t *frame)
+static int vdr_video_route_preprocessing_procs(post_video_port_t *port, vo_frame_t *frame)
 {
-  return (frame->format == XINE_IMGFMT_YUY2
-          || frame->format == XINE_IMGFMT_YV12);
+  vdr_video_post_plugin_t *this = (vdr_video_post_plugin_t *)port->post;
+  return !this->enabled
+    || (frame->format != XINE_IMGFMT_YUY2
+      && frame->format != XINE_IMGFMT_YV12);
 }
 
 
@@ -416,6 +415,8 @@ static int vdr_video_draw(vo_frame_t *frame, xine_stream_t *stream)
       frame_height = frame->height;
     
     if (this->vdr_stream
+        && frame_width != 0
+        && frame_height != 0
         && (this->old_frame_left    != frame_left
           || this->old_frame_top    != frame_top
           || this->old_frame_width  != frame_width
@@ -460,7 +461,9 @@ static int vdr_video_draw(vo_frame_t *frame, xine_stream_t *stream)
   if (!this->enabled 
       || frame->bad_frame
       || (frame->format != XINE_IMGFMT_YUY2
-          && frame->format != XINE_IMGFMT_YV12))
+          && frame->format != XINE_IMGFMT_YV12)
+      || frame->proc_frame
+      || frame->proc_slice)
   {
     _x_post_frame_copy_down(frame, frame->next);
     skip = frame->next->draw(frame->next, stream);
