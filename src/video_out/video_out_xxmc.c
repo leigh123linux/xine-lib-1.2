@@ -1500,6 +1500,7 @@ static void xxmc_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
     } else if (frame->format == XINE_IMGFMT_XXMC) {
       if (this->ovl_changed && this->hwSubpictures) {
 	if (this->new_subpic) {
+          int x0, y0, x1, y1, w, h;
 	  LOCK_AND_SURFACE_VALID( this, frame->xvmc_surf );
 	  if (this->first_overlay) {
 	    memset(this->subImage->data,0,this->subImage->width*
@@ -1510,13 +1511,29 @@ static void xxmc_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
 		     this->subImage->height, this->subImage->width,
                      &this->alphablend_extra_data,
 		     &this->palette, (this->subImage->id == FOURCC_IA44));
-	  XVMCLOCKDISPLAY( this->display );
-	  XvMCCompositeSubpicture( this->display, this->new_subpic, 
-				   this->subImage, 
-				   overlay->x, overlay->y,overlay->width,
-				   overlay->height,
-				   overlay->x, overlay->y);
-	  XVMCUNLOCKDISPLAY( this->display );
+
+          /* clip overlay against sub image like in _x_blend_xx44() */
+          x0 = overlay->x;
+          y0 = overlay->y;
+          x1 = x0 + overlay->width;
+          y1 = y0 + overlay->height;
+          w = this->subImage->width;
+          h = this->subImage->height;
+          
+          x0 = (x0 < 0) ? 0 : ((x0 > w) ? w : x0);
+          y0 = (y0 < 0) ? 0 : ((y0 > h) ? h : y0);
+          x1 = (x1 < 0) ? 0 : ((x1 > w) ? w : x1);
+          y1 = (y1 < 0) ? 0 : ((y1 > h) ? h : y1);
+
+          /* anything left after clipping? */
+          if (x0 != x1 && y0 != y1) {
+	    XVMCLOCKDISPLAY( this->display );
+	    XvMCCompositeSubpicture( this->display, this->new_subpic, 
+				     this->subImage, 
+				     x0, y0, x1 - x0, y1 - y0,
+				     x0, y0);
+	    XVMCUNLOCKDISPLAY( this->display );
+          }
 	  xvmc_context_reader_unlock( &this->xvmc_lock ); 
         }
       }

@@ -352,6 +352,17 @@ broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port)
 
 void _x_close_broadcaster(broadcaster_t *this)
 {
+  this->running = 0;
+  pthread_cancel(this->manager_thread);
+  pthread_join(this->manager_thread,NULL);
+  close(this->msock);
+  
+  if (this->stream->video_fifo)
+    this->stream->video_fifo->unregister_put_cb(this->stream->video_fifo, video_put_cb);
+
+  if(this->stream->audio_fifo)
+    this->stream->audio_fifo->unregister_put_cb(this->stream->audio_fifo, audio_put_cb);
+  
   xine_list_iterator_t ite;
   
   while ( (ite = xine_list_front(this->connections)) ) {
@@ -362,18 +373,9 @@ void _x_close_broadcaster(broadcaster_t *this)
     xine_list_remove (this->connections, ite);
   }
   xine_list_delete(this->connections);
-  
-  this->running = 0;  
-  close(this->msock);
-  pthread_mutex_lock( &this->lock );
-  pthread_cancel(this->manager_thread);
-  pthread_join(this->manager_thread,NULL);
-    
-  this->stream->video_fifo->unregister_put_cb(this->stream->video_fifo, video_put_cb);
 
-  if(this->stream->audio_fifo)
-    this->stream->audio_fifo->unregister_put_cb(this->stream->audio_fifo, audio_put_cb);
-  
+  pthread_mutex_destroy( &this->lock );
+
   free(this);
 }
 
