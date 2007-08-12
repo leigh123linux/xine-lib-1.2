@@ -45,13 +45,8 @@
 #include "xineutils.h"
 #include "xine_internal.h"
 
-
-typedef struct {
-  const char *old;
-  const char *new;
-} config_entry_translation_t;
-
-static const config_entry_translation_t config_entry_translation[] = {
+static const xine_config_entry_translation_t *config_entry_translation_user = NULL;
+static const xine_config_entry_translation_t config_entry_translation[] = {
   { "audio.a52_pass_through",			"" },
   { "audio.alsa_a52_device",			"audio.device.alsa_passthrough_device" },
   { "audio.alsa_default_device",		"audio.device.alsa_default_device" },
@@ -209,7 +204,8 @@ static const config_entry_translation_t config_entry_translation[] = {
   { "video.xv_colorkey",			"video.device.xv_colorkey" },
   { "video.xv_pitch_alignment",			"video.device.xv_pitch_alignment" },
   { "video.xvmc_more_frames",			"video.device.xvmc_more_frames" },
-  { "video.xvmc_nvidia_color_fix",		"video.device.xvmc_nvidia_color_fix" }
+  { "video.xvmc_nvidia_color_fix",		"video.device.xvmc_nvidia_color_fix" },
+  {}
 };
 
 
@@ -354,6 +350,15 @@ static void config_remove(config_values_t *this, cfg_entry_t *entry, cfg_entry_t
     prev->next = entry->next;
 }
 
+static const char *config_xlate_internal (const char *key, const xine_config_entry_translation_t *trans)
+{
+  --trans;
+  while ((++trans)->old)
+    if (trans->new[0] && strcmp(key, trans->old) == 0)
+      return trans->new;
+  return NULL;
+}
+
 static const char *config_translate_key (const char *key) {
   /* Returns translated key or, if no translation found, NULL.
    * Translated key may be in a static buffer allocated within this function.
@@ -373,13 +378,11 @@ static const char *config_translate_key (const char *key) {
   }
 
   /* search the translation table... */
-  for (trans = 0;
-       trans < sizeof(config_entry_translation) / sizeof(config_entry_translation[0]);
-       trans++)
-    if (config_entry_translation[trans].new[0] && strcmp(key, config_entry_translation[trans].old) == 0)
-      return config_entry_translation[trans].new;
+  newkey = config_xlate_internal (key, config_entry_translation);
+  if (!newkey && config_entry_translation_user)
+    newkey = config_xlate_internal (key, config_entry_translation_user);
 
-  return NULL;
+  return newkey;
 }
 
 static void config_lookup_entry_int (config_values_t *this, const char *key,
@@ -892,6 +895,14 @@ static void config_update_string (config_values_t *this,
   if (str_free)
     free(str_free);
   pthread_mutex_unlock(&this->config_lock);
+}
+
+/*
+ * front end config translation handling
+ */
+void xine_config_set_translation_user (const xine_config_entry_translation_t *xlate)
+{
+  config_entry_translation_user = xlate;
 }
 
 /*
