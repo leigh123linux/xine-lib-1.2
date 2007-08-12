@@ -82,19 +82,23 @@ struct post_plugin_goom_s {
   /* goom context */
   PluginInfo        *goom;
   
-  int data_idx;
+  int data_idx; 
   gint16 data [2][NUMSAMPLES];
   audio_buffer_t buf;   /* dummy buffer just to hold a copy of audio data */
   
   int channels;
   int sample_rate;
-  int sample_counter;
   int samples_per_frame;
   int width, height;
   int width_back, height_back;
   double ratio;
   int fps;
   int csc_method;
+
+
+  int do_samples_skip; /* true = skipping samples, false reading samples*/
+  int left_to_read; /* data to read before switching modes*/
+
 
   yuv_planes_t yuv;
   
@@ -282,7 +286,6 @@ static post_plugin_t *goom_open_plugin(post_class_t *class_gen, int inputs,
 
   this->ratio = (double)this->width_back/(double)this->height_back;
 
-  this->sample_counter = 0;
   this->buf.mem = NULL;
   this->buf.mem_size = 0;  
 
@@ -386,9 +389,11 @@ static int goom_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream,
   this->sample_rate = rate;
   this->samples_per_frame = rate / this->fps;
   this->data_idx = 0;
-  this->sample_counter = 0;
   init_yuv_planes(&this->yuv, this->width, this->height);
   this->skip_frame = 0;
+
+  this->do_samples_skip = 0;
+  this->left_to_read = NUMSAMPLES;
   
   this->vo_port->open(this->vo_port, XINE_ANON_STREAM);
   this->metronom->set_master(this->metronom, stream->metronom);
@@ -422,11 +427,12 @@ static void goom_port_put_buffer (xine_audio_port_t *port_gen,
   uint8_t *goom_frame, *goom_frame_end;
   int16_t *data;
   int8_t *data8;
-  int samples_used = 0;
   int64_t pts = buf->vpts;
   int i, j;
   uint8_t *dest_ptr;
   int width, height;
+
+  int current_sample = 0;
   
   /* make a copy of buf data for private use */
   if( this->buf.mem_size < buf->mem_size ) {
@@ -444,59 +450,73 @@ static void goom_port_put_buffer (xine_audio_port_t *port_gen,
    * to the fifo of free audio buffers. just use our private copy instead.
    */
   buf = &this->buf; 
-
-  this->sample_counter += buf->num_frames;
   j = (this->channels >= 2) ? 1 : 0;
 
-  do {
-    
+
+  while (current_sample < buf->num_frames) {
+  
+  if (this->do_samples_skip) {
+    if (current_sample + this->left_to_read > buf->num_frames) {
+      this->left_to_read -= (buf->num_frames-current_sample);
+      break;
+    } else {
+      current_sample+=this->left_to_read;
+      this->left_to_read = NUMSAMPLES;
+      this->do_samples_skip = 0;
+      
+    }
+  } else {
+
     if( port->bits == 8 ) {
       data8 = (int8_t *)buf->mem;
-      data8 += samples_used * this->channels;
+      data8 += current_sample * this->channels;
   
       /* scale 8 bit data to 16 bits and convert to signed as well */
-      for( i = samples_used; i < buf->num_frames && this->data_idx < NUMSAMPLES;
-           i++, this->data_idx++, data8 += this->channels ) {
+      for ( i=current_sample ; this->data_idx < NUMSAMPLES && i < buf->num_frames;
+        i++, this->data_idx++,data8 += this->channels) {
+
         this->data[0][this->data_idx] = ((int16_t)data8[0] << 8) - 0x8000;
         this->data[1][this->data_idx] = ((int16_t)data8[j] << 8) - 0x8000;
       }
     } else {
       data = buf->mem;
-      data += samples_used * this->channels;
-  
-      for( i = samples_used; i < buf->num_frames && this->data_idx < NUMSAMPLES;
-           i++, this->data_idx++, data += this->channels ) {
+      data += current_sample * this->channels;
+
+      for ( i=current_sample ; this->data_idx < NUMSAMPLES && i < buf->num_frames;
+        i++, this->data_idx++,data += this->channels) {
+
         this->data[0][this->data_idx] = data[0];
         this->data[1][this->data_idx] = data[j];
       }
     }
-  
-    if( this->sample_counter >= this->samples_per_frame ) {
-    
-      samples_used += this->samples_per_frame;
+
+    if (this->data_idx < NUMSAMPLES) {
+      this->left_to_read = NUMSAMPLES - this->data_idx;
+      break;
+    } else {
+      _x_assert(this->data_idx == NUMSAMPLES);
+      this->data_idx = 0;
+
+      if (this->samples_per_frame > NUMSAMPLES) {
+        current_sample += NUMSAMPLES;
+        this->do_samples_skip = 1;
+        this->left_to_read = this->samples_per_frame - NUMSAMPLES;
+      } else {
+        current_sample += this->samples_per_frame;
+        this->left_to_read = NUMSAMPLES;
+      }
 
       frame = this->vo_port->get_frame (this->vo_port, this->width_back, this->height_back,
-                                        this->ratio, XINE_IMGFMT_YUY2,
-                                        VO_BOTH_FIELDS);
+                this->ratio, XINE_IMGFMT_YUY2,
+                VO_BOTH_FIELDS);
       
       frame->extra_info->invalid = 1;
       
-      /* frame is marked as bad if we don't have enough samples for 
-       * updating the viz plugin (calculations may be skipped).
-       * we must keep the framerate though. */
-      if( this->data_idx == NUMSAMPLES ) {
-        frame->bad_frame = 0;
-        this->data_idx = 0;
-      } else {
-        frame->bad_frame = 1;
-      }
       frame->duration = 90000 * this->samples_per_frame / this->sample_rate;
       frame->pts = pts;
       this->metronom->got_video_frame(this->metronom, frame);
       
-      this->sample_counter -= this->samples_per_frame;
-
-      if (!this->skip_frame && !frame->bad_frame) {
+      if (!this->skip_frame) {
         /* Try to be fast */
         goom_frame = (uint8_t *)goom_update (this->goom, this->data, 0, 0, NULL, NULL);
 
@@ -561,21 +581,25 @@ static void goom_port_put_buffer (xine_audio_port_t *port_gen,
       } else {
         frame->bad_frame = 1;
         frame->draw(frame, XINE_ANON_STREAM);
-	this->skip_frame--;
+
+        _x_assert(this->skip_frame>0);
+        this->skip_frame--;
       }
+
       frame->free(frame);
       
       width  = this->width;
       height = this->height;
       if ((width != this->width_back) || (height != this->height_back)) {
-          goom_close(this->goom);
-          this->goom = goom_init (this->width, this->height);
-          this->width_back = width;
-          this->height_back = height;
-	  this->ratio = (double)width/(double)height;
-	  free_yuv_planes(&this->yuv);
-	  init_yuv_planes(&this->yuv, this->width, this->height);
-       }
+        goom_close(this->goom);
+        this->goom = goom_init (this->width, this->height);
+        this->width_back = width;
+        this->height_back = height;
+        this->ratio = (double)width/(double)height;
+        free_yuv_planes(&this->yuv);
+        init_yuv_planes(&this->yuv, this->width, this->height);
+      }
     }
-  } while( this->sample_counter >= this->samples_per_frame );
+  }
+  }
 }
