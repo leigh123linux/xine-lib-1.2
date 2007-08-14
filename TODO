@@ -6,6 +6,7 @@ known bugs
 - dvdnav time search function does not use the time table, but interpolates
   only cell times
 - crash with RV10 streams
+- apparently, dvb:// (but not dvb://CHANNEL) is broken for ATSC
 
 
 requested/planned features
