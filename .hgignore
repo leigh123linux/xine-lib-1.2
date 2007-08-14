@@ -36,6 +36,7 @@ debian/files
 debian/libxine-dev
 debian/libxine1
 debian/libxine1-dbg
+debian/libxine1-doc
 debian/tmp
 debian/*.debhelper
 debian/*.substvars
