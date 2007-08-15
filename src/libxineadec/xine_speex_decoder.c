@@ -271,7 +271,7 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	
 	if (!this->output_open) {
 	  this->output_open =
-	    this->stream->audio_out->open(this->stream->audio_out, 
+	    (this->stream->audio_out->open) (this->stream->audio_out, 
 					  this->stream,
 					  16,
 					  this->rate,

@@ -1421,7 +1421,7 @@ static int ao_change_settings(aos_t *this, uint32_t bits, uint32_t rate, int mod
                _("stereo not supported by driver, converting to mono.\n"));
     }
  
-    output_sample_rate=this->driver->open(this->driver,bits,(this->force_rate ? this->force_rate : rate),mode);
+    output_sample_rate=(this->driver->open) (this->driver,bits,(this->force_rate ? this->force_rate : rate),mode);
   } else
     output_sample_rate = this->input.rate;
 

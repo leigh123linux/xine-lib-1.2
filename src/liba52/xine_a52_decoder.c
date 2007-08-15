@@ -275,7 +275,7 @@ static void a52dec_decode_frame (a52dec_decoder_t *this, int64_t pts, int previe
 	this->stream->audio_out->close (this->stream->audio_out, this->stream);
 
 
-      this->output_open = this->stream->audio_out->open (this->stream->audio_out, 
+      this->output_open = (this->stream->audio_out->open) (this->stream->audio_out, 
 							 this->stream, 16,
 							 this->a52_sample_rate,
 							 output_mode) ;
@@ -373,7 +373,7 @@ static void a52dec_decode_frame (a52dec_decoder_t *this, int64_t pts, int previe
 
       a52_syncinfo (this->frame_buffer, &flags, &sample_rate, &bit_rate);
 
-      this->output_open = this->stream->audio_out->open (this->stream->audio_out,
+      this->output_open = (this->stream->audio_out->open) (this->stream->audio_out,
 						 this->stream, 16,
 						 sample_rate,
 						 AO_CAP_MODE_A52) ;

@@ -268,7 +268,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
     this->rvyuv_custom_message (&cmsg_data, this->context);
   }
   
-  this->stream->video_out->open(this->stream->video_out, this->stream);
+  (this->stream->video_out->open) (this->stream->video_out, this->stream);
     
   this->frame_size   = this->width * this->height;
   this->frame_buffer = xine_xmalloc (this->width * this->height * 3 / 2);

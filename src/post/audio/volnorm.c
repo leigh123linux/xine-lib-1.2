@@ -184,7 +184,7 @@ static int volnorm_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream,
     port->rate = rate;
     port->mode = mode;
 
-    return port->original_port->open(port->original_port, stream, bits, rate, mode );
+    return (port->original_port->open) (port->original_port, stream, bits, rate, mode );
 }
 
 static void volnorm_port_close(xine_audio_port_t *port_gen, xine_stream_t *stream ) {

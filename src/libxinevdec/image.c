@@ -81,7 +81,7 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 
   if (!this->video_open) {
     lprintf("opening video\n");
-    this->stream->video_out->open(this->stream->video_out, this->stream);
+    (this->stream->video_out->open) (this->stream->video_out, this->stream);
     this->video_open = 1;
   }
 

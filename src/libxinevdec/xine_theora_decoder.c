@@ -337,7 +337,7 @@ static video_decoder_t *theora_open_plugin (video_decoder_class_t *class_gen, xi
 
   theora_comment_init (&this->t_comment);
   theora_info_init (&this->t_info);
-  stream->video_out->open (stream->video_out, stream);
+  (stream->video_out->open) (stream->video_out, stream);
 
   return &this->theora_decoder;
 

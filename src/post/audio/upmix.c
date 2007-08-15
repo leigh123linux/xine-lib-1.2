@@ -203,7 +203,7 @@ static int upmix_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream,
 
   pthread_mutex_unlock (&this->lock);
 
-  return port->original_port->open(port->original_port, stream, bits, rate, mode );
+  return (port->original_port->open) (port->original_port, stream, bits, rate, mode );
 }
 
 #if 0

@@ -16,6 +16,7 @@ xine-lib (1.1.8) (Unreleased)
   * DVB subtitle fixes: deadlock prevention, thread leakage, spec compliance.
   * Allow the DVB input plugin to timeout if it is receiving no signal.
   * Fix an audio resampling problem which was causing regular clicking.
+  * Fix build with recent glibc and a debugging #define. [Bug 1773769]
 
 xine-lib (1.1.7)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.

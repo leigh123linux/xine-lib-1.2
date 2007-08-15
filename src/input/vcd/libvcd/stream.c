@@ -59,7 +59,7 @@ _vcd_data_sink_open_if_necessary(VcdDataSink *obj)
   vcd_assert (obj != NULL);
 
   if (!obj->is_open) {
-    if (obj->op.open(obj->user_data))
+    if ((obj->op.open) (obj->user_data))
       vcd_error("could not opening output stream...");
     else {
       obj->is_open = 1;
@@ -173,7 +173,7 @@ _vcd_data_source_open_if_necessary(VcdDataSource *obj)
   vcd_assert (obj != NULL);
 
   if (!obj->is_open) {
-    if (obj->op.open(obj->user_data))
+    if ((obj->op.open) (obj->user_data))
       vcd_error ("could not opening input stream...");
     else {
 #ifdef STREAM_DEBUG

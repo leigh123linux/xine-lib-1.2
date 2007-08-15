@@ -119,7 +119,7 @@ static void gsm610_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     this->gsm_state = gsm_create();
     this->buf_type = buf->type;
 
-    this->output_open = this->stream->audio_out->open(this->stream->audio_out,
+    this->output_open = (this->stream->audio_out->open) (this->stream->audio_out,
       this->stream, GSM610_SAMPLE_SIZE, this->sample_rate, AO_CAP_MODE_MONO);
   }
 

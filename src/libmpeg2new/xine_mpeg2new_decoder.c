@@ -465,7 +465,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
   this->mpeg2dec = mpeg2_init ();
   mpeg2_custom_fbuf (this->mpeg2dec, 1);  /* <- Force libmpeg2 to use xine frame buffers. */
-  stream->video_out->open(stream->video_out, stream);
+  (stream->video_out->open) (stream->video_out, stream);
   this->force_aspect = this->force_pan_scan = 0;
   for(n=0;n<30;n++) this->img_state[n].id=0;
 

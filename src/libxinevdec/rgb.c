@@ -121,7 +121,7 @@ static void rgb_decode_data (video_decoder_t *this_gen,
   }
   
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) { /* need to initialize */
-    this->stream->video_out->open (this->stream->video_out, this->stream);
+    (this->stream->video_out->open) (this->stream->video_out, this->stream);
 
     bih = (xine_bmiheader *) buf->content;
     this->width = (bih->biWidth + 3) & ~0x03;
@@ -152,7 +152,7 @@ static void rgb_decode_data (video_decoder_t *this_gen,
 
     init_yuv_planes(&this->yuv_planes, this->width, this->height);
 
-    this->stream->video_out->open (this->stream->video_out, this->stream);
+    (this->stream->video_out->open) (this->stream->video_out, this->stream);
     this->decoder_ok = 1;
 
     /* load the stream/meta info */

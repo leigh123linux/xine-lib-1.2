@@ -339,7 +339,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
     return 0;
   }
 
-  this->stream->audio_out->open(this->stream->audio_out, 
+  (this->stream->audio_out->open) (this->stream->audio_out, 
 				this->stream,
 				bits_per_sample,
 				samples_per_sec,

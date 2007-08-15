@@ -519,7 +519,7 @@ static int stream_rewire_audio(xine_post_out_t *output, void *data)
   
   if (stream->audio_out->status(stream->audio_out, stream, &bits, &rate, &mode)) {
     /* register our stream at the new output port */
-    new_port->open(new_port, stream, bits, rate, mode);
+    (new_port->open) (new_port, stream, bits, rate, mode);
     stream->audio_out->close(stream->audio_out, stream);
   }
   stream->audio_out = new_port;
@@ -543,7 +543,7 @@ static int stream_rewire_video(xine_post_out_t *output, void *data)
   
   if (stream->video_out->status(stream->video_out, stream, &width, &height, &img_duration)) {
     /* register our stream at the new output port */
-    new_port->open(new_port, stream);
+    (new_port->open) (new_port, stream);
     stream->video_out->close(stream->video_out, stream);
   }
   stream->video_out = new_port;
@@ -830,7 +830,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
       _x_meta_info_set_utf8(stream, XINE_META_INFO_INPUT_PLUGIN, 
 			    (stream->input_plugin->input_class->get_identifier (stream->input_plugin->input_class)));
 
-      res = stream->input_plugin->open(stream->input_plugin);
+      res = (stream->input_plugin->open) (stream->input_plugin);
       switch(res) {
       case 1: /* Open successfull */
 	free(input_source);

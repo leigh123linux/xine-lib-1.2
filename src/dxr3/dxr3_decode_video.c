@@ -294,7 +294,7 @@ static video_decoder_t *dxr3_open_plugin(video_decoder_class_t *class_gen, xine_
   /* the dxr3 needs a longer prebuffering to have time for its internal decoding */
   this->stream->metronom->set_option(this->stream->metronom, METRONOM_PREBUFFER, 90000);
   
-  stream->video_out->open(stream->video_out, stream);
+  (stream->video_out->open) (stream->video_out, stream);
   
   class->instance = 1;
   

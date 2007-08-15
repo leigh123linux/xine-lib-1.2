@@ -57,7 +57,7 @@ _cdio_stream_open_if_necessary(CdioDataSource *obj)
   cdio_assert (obj != NULL);
 
   if (!obj->is_open) {
-    if (obj->op.open(obj->user_data)) {
+    if ((obj->op.open) (obj->user_data)) {
       cdio_warn ("could not open input stream...");
       return false;
     } else {

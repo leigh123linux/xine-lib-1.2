@@ -493,7 +493,7 @@ static void deinterlace_open(xine_video_port_t *port_gen, xine_stream_t *stream)
   _x_post_rewire(&this->post);
   _x_post_inc_usage(port);
   port->stream = stream;
-  port->original_port->open(port->original_port, stream);
+  (port->original_port->open) (port->original_port, stream);
   this->vo_deinterlace_enabled = !this->cur_method;
   port->original_port->set_property(port->original_port, 
                                     XINE_PARAM_VO_DEINTERLACE, 

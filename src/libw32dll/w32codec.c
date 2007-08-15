@@ -657,7 +657,7 @@ static void w32v_init_codec (w32v_decoder_t *this, int buf_type) {
   this->bufsize = VIDEOBUFSIZE;
   this->buf = malloc(this->bufsize);
 
-  this->stream->video_out->open (this->stream->video_out, this->stream);
+  (this->stream->video_out->open) (this->stream->video_out, this->stream);
 
   this->outfmt = outfmt;
   this->decoder_ok = 1;
@@ -752,7 +752,7 @@ static void w32v_init_ds_dmo_codec (w32v_decoder_t *this, int buf_type) {
   this->bufsize = VIDEOBUFSIZE;
   this->buf = malloc(this->bufsize);
   
-  this->stream->video_out->open (this->stream->video_out, this->stream);
+  (this->stream->video_out->open) (this->stream->video_out, this->stream);
 
   this->outfmt = outfmt;
   this->decoder_ok = 1;
@@ -1181,7 +1181,7 @@ static int w32a_init_audio (w32a_decoder_t *this,
   if (this->output_open)
     this->stream->audio_out->close (this->stream->audio_out, this->stream);
 
-  this->output_open = this->stream->audio_out->open( this->stream->audio_out, this->stream,
+  this->output_open = (this->stream->audio_out->open) ( this->stream->audio_out, this->stream,
 					      16, in_fmt->nSamplesPerSec, 
 					      _x_ao_channels2mode(in_fmt->nChannels));
   if (!this->output_open) {
