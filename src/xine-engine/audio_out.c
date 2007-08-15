@@ -251,6 +251,7 @@ typedef struct {
    * sure nobody will change speed without going through xine.c:set_speed_internal */
   int             slow_fast_audio;      /* play audio even on slow/fast speeds */
   
+  int16_t	  last_sample[RESAMPLE_MAX_CHANNELS];
   audio_buffer_t *frame_buf[2];         /* two buffers for "stackable" conversions */
   int16_t        *zero_space;
 
@@ -746,19 +747,19 @@ static audio_buffer_t* prepare_samples( aos_t *this, audio_buffer_t *buf) {
     switch (this->input.mode) {
     case AO_CAP_MODE_MONO:
       ensure_buffer_size(this->frame_buf[1], (this->output.bits>>3), num_output_frames);
-      _x_audio_out_resample_mono (buf->mem, buf->num_frames,
+      _x_audio_out_resample_mono (this->last_sample, buf->mem, buf->num_frames,
 			       this->frame_buf[1]->mem, num_output_frames);
       buf = swap_frame_buffers(this);
       break;
     case AO_CAP_MODE_STEREO:
       ensure_buffer_size(this->frame_buf[1], (this->output.bits>>3)*2, num_output_frames);
-      _x_audio_out_resample_stereo (buf->mem, buf->num_frames,
+      _x_audio_out_resample_stereo (this->last_sample, buf->mem, buf->num_frames,
 				 this->frame_buf[1]->mem, num_output_frames);
       buf = swap_frame_buffers(this);
       break;
     case AO_CAP_MODE_4CHANNEL:
       ensure_buffer_size(this->frame_buf[1], (this->output.bits>>3)*4, num_output_frames);
-      _x_audio_out_resample_4channel (buf->mem, buf->num_frames,
+      _x_audio_out_resample_4channel (this->last_sample, buf->mem, buf->num_frames,
 				   this->frame_buf[1]->mem, num_output_frames);
       buf = swap_frame_buffers(this);
       break;
@@ -766,7 +767,7 @@ static audio_buffer_t* prepare_samples( aos_t *this, audio_buffer_t *buf) {
     case AO_CAP_MODE_5CHANNEL:
     case AO_CAP_MODE_5_1CHANNEL:
       ensure_buffer_size(this->frame_buf[1], (this->output.bits>>3)*6, num_output_frames);
-      _x_audio_out_resample_6channel (buf->mem, buf->num_frames,
+      _x_audio_out_resample_6channel (this->last_sample, buf->mem, buf->num_frames,
 				   this->frame_buf[1]->mem, num_output_frames);
       buf = swap_frame_buffers(this);
       break;
@@ -774,6 +775,25 @@ static audio_buffer_t* prepare_samples( aos_t *this, audio_buffer_t *buf) {
     case AO_CAP_MODE_AC5:
       /* pass-through modes: no resampling */
       break;
+    }
+  } else {
+    /* maintain last_sample in case we need it */
+    switch (this->input.mode) {
+    case AO_CAP_MODE_MONO:
+      memcpy (this->last_sample, &buf->mem[buf->num_frames - 1], sizeof (this->last_sample[0]));
+      break;
+    case AO_CAP_MODE_STEREO:
+      memcpy (this->last_sample, &buf->mem[(buf->num_frames - 1) * 2], 2 * sizeof (this->last_sample[0]));
+      break;
+    case AO_CAP_MODE_4CHANNEL:
+      memcpy (this->last_sample, &buf->mem[(buf->num_frames - 1) * 4], 4 * sizeof (this->last_sample[0]));
+      break;
+    case AO_CAP_MODE_4_1CHANNEL:
+    case AO_CAP_MODE_5CHANNEL:
+    case AO_CAP_MODE_5_1CHANNEL:
+      memcpy (this->last_sample, &buf->mem[(buf->num_frames - 1) * 6], 6 * sizeof (this->last_sample[0]));
+      break;
+    default:;
     }
   }
 
@@ -2160,6 +2180,8 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
     
     fifo_append (this->free_fifo, buf);
   }
+
+  memset (this->last_sample, 0, sizeof (this->last_sample));
   
   /* buffers used for audio conversions */
   for (i=0; i<2; i++) {

@@ -27,19 +27,26 @@
 #ifndef HAVE_RESAMPLE_H
 #define HAVE_RESAMPLE_H
 
-void _x_audio_out_resample_stereo(int16_t* input_samples, uint32_t in_samples, 
+#define RESAMPLE_MAX_CHANNELS 6
+
+void _x_audio_out_resample_stereo(int16_t* last_sample,
+				  int16_t* input_samples, uint32_t in_samples, 
 				  int16_t* output_samples, uint32_t out_samples) XINE_PROTECTED;
 
-void _x_audio_out_resample_mono(int16_t* input_samples, uint32_t in_samples, 
+void _x_audio_out_resample_mono(int16_t* last_sample,
+				int16_t* input_samples, uint32_t in_samples, 
 				int16_t* output_samples, uint32_t out_samples) XINE_PROTECTED;
 
-void _x_audio_out_resample_4channel(int16_t* input_samples, uint32_t in_samples, 
+void _x_audio_out_resample_4channel(int16_t* last_sample,
+				    int16_t* input_samples, uint32_t in_samples, 
 				    int16_t* output_samples, uint32_t out_samples) XINE_PROTECTED;
 
-void _x_audio_out_resample_5channel(int16_t* input_samples, uint32_t in_samples, 
+void _x_audio_out_resample_5channel(int16_t* last_sample,
+				    int16_t* input_samples, uint32_t in_samples, 
 				    int16_t* output_samples, uint32_t out_samples) XINE_PROTECTED;
 
-void _x_audio_out_resample_6channel(int16_t* input_samples, uint32_t in_samples, 
+void _x_audio_out_resample_6channel(int16_t* last_sample,
+				    int16_t* input_samples, uint32_t in_samples, 
 				    int16_t* output_samples, uint32_t out_samples) XINE_PROTECTED;
 
 void _x_audio_out_resample_8to16(int8_t* input_samples, 

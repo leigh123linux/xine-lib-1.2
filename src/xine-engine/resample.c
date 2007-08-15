@@ -24,26 +24,34 @@
 #include "config.h"
 #endif
 
+#include <string.h>
 #include <inttypes.h>
 #include "attributes.h"
 #include "resample.h"
 
 /* contributed by paul flinders */
 
-void _x_audio_out_resample_mono(int16_t* input_samples, uint32_t in_samples, 
+void _x_audio_out_resample_mono(int16_t *last_sample,
+				int16_t* input_samples, uint32_t in_samples, 
 				int16_t* output_samples, uint32_t out_samples)
 {
   unsigned int osample;
   /* 16+16 fixed point math */
-  uint32_t isample = 0;
-  uint32_t istep = ((in_samples-2) << 16)/(out_samples-2);
+  uint32_t isample = 0xFFFF0000U;
+  uint32_t istep = (in_samples << 16) / out_samples + 1;
 
 #ifdef VERBOSE
   printf ("Audio : resample %d samples to %d\n",
           in_samples, out_samples);
 #endif
 
-  for (osample = 0; osample < out_samples - 1; osample++) {
+  for (osample = 0; osample < out_samples && isample >= 0xFFFF0000U; osample++) {
+    uint32_t t = isample&0xffff;
+    output_samples[osample] = (last_sample[0] * (0x10000-t) + input_samples[0] * t) >> 16;
+    isample += istep;
+  }
+
+  for (; osample < out_samples; osample++) {
     int  s1;
     int  s2;
     int16_t  os;
@@ -58,23 +66,31 @@ void _x_audio_out_resample_mono(int16_t* input_samples, uint32_t in_samples,
 
     isample += istep;
   }
-  output_samples[out_samples-1] = input_samples[in_samples-1];
+  last_sample[0] = input_samples[in_samples - 1];
 }
 
-void _x_audio_out_resample_stereo(int16_t* input_samples, uint32_t in_samples, 
+void _x_audio_out_resample_stereo(int16_t *last_sample,
+				  int16_t* input_samples, uint32_t in_samples, 
 				  int16_t* output_samples, uint32_t out_samples)
 {
   unsigned int osample;
   /* 16+16 fixed point math */
-  uint32_t isample = 0;
-  uint32_t istep = ((in_samples-2) << 16)/(out_samples-2);
+  uint32_t isample = 0xFFFF0000U;
+  uint32_t istep = (in_samples << 16) / out_samples + 1;
 
 #ifdef VERBOSE
   printf ("Audio : resample %d samples to %d\n",
           in_samples, out_samples);
 #endif
 
-  for (osample = 0; osample < out_samples - 1; osample++) {
+  for (osample = 0; osample < out_samples && isample >= 0xFFFF0000U; osample++) {
+    uint32_t t = isample&0xffff;
+    output_samples[osample*2  ] = (last_sample[0] * (0x10000-t) + input_samples[0] * t) >> 16;
+    output_samples[osample*2+1] = (last_sample[1] * (0x10000-t) + input_samples[1] * t) >> 16;
+    isample += istep;
+  }
+
+  for (; osample < out_samples; osample++) {
     int  s1;
     int  s2;
     int16_t  os;
@@ -94,25 +110,34 @@ void _x_audio_out_resample_stereo(int16_t* input_samples, uint32_t in_samples,
     output_samples[(osample * 2 )+1] = os;
     isample += istep;
   }
-  output_samples[out_samples*2-2] = input_samples[in_samples*2-2];
-  output_samples[out_samples*2-1] = input_samples[in_samples*2-1];
+  memcpy (last_sample, &input_samples[in_samples*2-2], 2 * sizeof (last_sample[0]));
 }
 
 
-void _x_audio_out_resample_4channel(int16_t* input_samples, uint32_t in_samples, 
+void _x_audio_out_resample_4channel(int16_t *last_sample,
+				    int16_t* input_samples, uint32_t in_samples, 
 				    int16_t* output_samples, uint32_t out_samples)
 {
   unsigned int osample;
   /* 16+16 fixed point math */
-  uint32_t isample = 0;
-  uint32_t istep = ((in_samples-2) << 16)/(out_samples-2);
+  uint32_t isample = 0xFFFF0000U;
+  uint32_t istep = (in_samples << 16) / out_samples + 1;
 
 #ifdef VERBOSE
   printf ("Audio : resample %d samples to %d\n",
           in_samples, out_samples);
 #endif
 
-  for (osample = 0; osample < out_samples - 1; osample++) {
+  for (osample = 0; osample < out_samples && isample >= 0xFFFF0000U; osample++) {
+    uint32_t t = isample&0xffff;
+    output_samples[osample*4  ] = (last_sample[0] * (0x10000-t) + input_samples[0] * t) >> 16;
+    output_samples[osample*4+1] = (last_sample[1] * (0x10000-t) + input_samples[1] * t) >> 16;
+    output_samples[osample*4+2] = (last_sample[2] * (0x10000-t) + input_samples[2] * t) >> 16;
+    output_samples[osample*4+3] = (last_sample[3] * (0x10000-t) + input_samples[3] * t) >> 16;
+    isample += istep;
+  }
+
+  for (; osample < out_samples; osample++) {
     int  s1;
     int  s2;
     int16_t  os;
@@ -145,28 +170,35 @@ void _x_audio_out_resample_4channel(int16_t* input_samples, uint32_t in_samples,
 
     isample += istep;
   }
-  output_samples[out_samples*4-4] = input_samples[in_samples*4-4];
-  output_samples[out_samples*4-3] = input_samples[in_samples*4-3];
-  output_samples[out_samples*4-2] = input_samples[in_samples*4-2];
-  output_samples[out_samples*4-1] = input_samples[in_samples*4-1];
-
+  memcpy (last_sample, &input_samples[in_samples*4-4], 4 * sizeof (last_sample[0]));
 }
 
 
-void _x_audio_out_resample_5channel(int16_t* input_samples, uint32_t in_samples, 
+void _x_audio_out_resample_5channel(int16_t *last_sample,
+				    int16_t* input_samples, uint32_t in_samples, 
 				    int16_t* output_samples, uint32_t out_samples)
 {
   unsigned int osample;
   /* 16+16 fixed point math */
-  uint32_t isample = 0;
-  uint32_t istep = ((in_samples-2) << 16)/(out_samples-2);
+  uint32_t isample = 0xFFFF0000U;
+  uint32_t istep = (in_samples << 16) / out_samples + 1;
 
 #ifdef VERBOSE
   printf ("Audio : resample %d samples to %d\n",
           in_samples, out_samples);
 #endif
 
-  for (osample = 0; osample < out_samples - 1; osample++) {
+  for (osample = 0; osample < out_samples && isample >= 0xFFFF0000U; osample++) {
+    uint32_t t = isample&0xffff;
+    output_samples[osample*5  ] = (last_sample[0] * (0x10000-t) + input_samples[0] * t) >> 16;
+    output_samples[osample*5+1] = (last_sample[1] * (0x10000-t) + input_samples[1] * t) >> 16;
+    output_samples[osample*5+2] = (last_sample[2] * (0x10000-t) + input_samples[2] * t) >> 16;
+    output_samples[osample*5+3] = (last_sample[3] * (0x10000-t) + input_samples[3] * t) >> 16;
+    output_samples[osample*5+4] = (last_sample[4] * (0x10000-t) + input_samples[4] * t) >> 16;
+    isample += istep;
+  }
+
+  for (; osample < out_samples; osample++) {
     int  s1;
     int  s2;
     int16_t  os;
@@ -205,29 +237,36 @@ void _x_audio_out_resample_5channel(int16_t* input_samples, uint32_t in_samples,
 
     isample += istep;
   }
-
-  output_samples[out_samples*5-5] = input_samples[in_samples*5-5];
-  output_samples[out_samples*5-4] = input_samples[in_samples*5-4];
-  output_samples[out_samples*5-3] = input_samples[in_samples*5-3];
-  output_samples[out_samples*5-2] = input_samples[in_samples*5-2];
-  output_samples[out_samples*5-1] = input_samples[in_samples*5-1];
+  memcpy (last_sample, &input_samples[in_samples*5-5], 5 * sizeof (last_sample[0]));
 }
 
 
-void _x_audio_out_resample_6channel(int16_t* input_samples, uint32_t in_samples, 
+void _x_audio_out_resample_6channel(int16_t *last_sample,
+				    int16_t* input_samples, uint32_t in_samples, 
 				    int16_t* output_samples, uint32_t out_samples)
 {
   unsigned int osample;
   /* 16+16 fixed point math */
-  uint32_t isample = 0;
-  uint32_t istep = ((in_samples-2) << 16)/(out_samples-2);
+  uint32_t isample = 0xFFFF0000U;
+  uint32_t istep = (in_samples << 16) / out_samples + 1;
 
 #ifdef VERBOSE
   printf ("Audio : resample %d samples to %d\n",
           in_samples, out_samples);
 #endif
 
-  for (osample = 0; osample < out_samples - 1; osample++) {
+  for (osample = 0; osample < out_samples && isample >= 0xFFFF0000U; osample++) {
+    uint32_t t = isample&0xffff;
+    output_samples[osample*6  ] = (last_sample[0] * (0x10000-t) + input_samples[0] * t) >> 16;
+    output_samples[osample*6+1] = (last_sample[1] * (0x10000-t) + input_samples[1] * t) >> 16;
+    output_samples[osample*6+2] = (last_sample[2] * (0x10000-t) + input_samples[2] * t) >> 16;
+    output_samples[osample*6+3] = (last_sample[3] * (0x10000-t) + input_samples[3] * t) >> 16;
+    output_samples[osample*6+4] = (last_sample[4] * (0x10000-t) + input_samples[4] * t) >> 16;
+    output_samples[osample*6+5] = (last_sample[5] * (0x10000-t) + input_samples[5] * t) >> 16;
+    isample += istep;
+  }
+
+  for (; osample < out_samples; osample++) {
     int  s1;
     int  s2;
     int16_t  os;
@@ -272,13 +311,7 @@ void _x_audio_out_resample_6channel(int16_t* input_samples, uint32_t in_samples,
 
     isample += istep;
   }
-
-  output_samples[out_samples*6-6] = input_samples[in_samples*6-6];
-  output_samples[out_samples*6-5] = input_samples[in_samples*6-5];
-  output_samples[out_samples*6-4] = input_samples[in_samples*6-4];
-  output_samples[out_samples*6-3] = input_samples[in_samples*6-3];
-  output_samples[out_samples*6-2] = input_samples[in_samples*6-2];
-  output_samples[out_samples*6-1] = input_samples[in_samples*6-1];
+  memcpy (last_sample, &input_samples[in_samples*6-6], 6 * sizeof (last_sample[0]));
 }
 
 void _x_audio_out_resample_8to16(int8_t* input_samples, 
