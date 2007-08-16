@@ -173,7 +173,7 @@ static void wavpack_decode_data (audio_decoder_t *const this_gen, buf_element_t 
 
         if (!this->output_open)
         {
-            this->output_open = this->stream->audio_out->open (
+            this->output_open = (this->stream->audio_out->open) (
                                             this->stream->audio_out,
                                             this->stream,
                                             this->bits_per_sample,

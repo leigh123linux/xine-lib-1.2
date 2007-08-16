@@ -197,7 +197,7 @@ static int fftgraph_rewire_video(xine_post_out_t *output_gen, void *data)
     return 0;
   /* register our stream at the new output port */
   old_port->close(old_port, XINE_ANON_STREAM);
-  new_port->open(new_port, XINE_ANON_STREAM);
+  (new_port->open) (new_port, XINE_ANON_STREAM);
   /* reconnect ourselves */
   this->vo_port = new_port;
   return 1;
@@ -232,7 +232,7 @@ static int fftgraph_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream
   this->data_idx = 0;
   this->sample_counter = 0;
 
-  this->vo_port->open(this->vo_port, XINE_ANON_STREAM);
+  (this->vo_port->open) (this->vo_port, XINE_ANON_STREAM);
   this->metronom->set_master(this->metronom, stream->metronom);
 
   this->fft = fft_new(FFT_BITS);
@@ -284,7 +284,7 @@ static int fftgraph_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream
     }
   }
 
-  return port->original_port->open(port->original_port, stream, bits, rate, mode );
+  return (port->original_port->open) (port->original_port, stream, bits, rate, mode );
 }
 
 static void fftgraph_port_close(xine_audio_port_t *port_gen, xine_stream_t *stream ) {

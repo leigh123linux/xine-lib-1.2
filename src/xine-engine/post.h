@@ -306,7 +306,7 @@ struct post_audio_port_s {
    * these pointers to exist */
   int                usage_count;
   
-  /* some values remembered by port->open() */
+  /* some values remembered by (port->open) () */
   uint32_t           bits;
   uint32_t           rate;
   uint32_t           mode;

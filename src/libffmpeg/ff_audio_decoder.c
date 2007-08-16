@@ -273,7 +273,7 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
     }
 
     if (!this->output_open) {
-      this->output_open = this->stream->audio_out->open(this->stream->audio_out,
+      this->output_open = (this->stream->audio_out->open) (this->stream->audio_out,
         this->stream, this->audio_bits, this->audio_sample_rate,
         _x_ao_channels2mode(this->audio_channels));
     }

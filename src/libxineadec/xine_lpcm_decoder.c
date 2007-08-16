@@ -136,12 +136,12 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
     /* force 24-bit samples into 16 bits for now */
     if (this->bits_per_sample == 24)
-      this->output_open = this->stream->audio_out->open (this->stream->audio_out, this->stream,
+      this->output_open = (this->stream->audio_out->open) (this->stream->audio_out, this->stream,
                                                16,
                                                this->rate,
                                                this->ao_cap_mode) ;
     else
-      this->output_open = this->stream->audio_out->open (this->stream->audio_out, this->stream,
+      this->output_open = (this->stream->audio_out->open) (this->stream->audio_out, this->stream,
                                                this->bits_per_sample,
                                                this->rate,
                                                this->ao_cap_mode) ;

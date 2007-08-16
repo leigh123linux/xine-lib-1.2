@@ -200,7 +200,7 @@ static int faad_open_output( faad_decoder_t *this ) {
       break; 
   }
    
-  this->output_open = this->stream->audio_out->open (this->stream->audio_out,
+  this->output_open = (this->stream->audio_out->open) (this->stream->audio_out,
                                              this->stream,
                                              this->bits_per_sample,
                                              this->rate,

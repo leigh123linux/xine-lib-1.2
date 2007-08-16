@@ -59,7 +59,7 @@ static void post_video_open(xine_video_port_t *port_gen, xine_stream_t *stream) 
   _x_post_rewire(port->post);
   _x_post_inc_usage(port);
   if (port->port_lock) pthread_mutex_lock(port->port_lock);
-  port->original_port->open(port->original_port, stream);
+  (port->original_port->open) (port->original_port, stream);
   if (port->port_lock) pthread_mutex_unlock(port->port_lock);
   port->stream = stream;
 }
@@ -205,7 +205,7 @@ static int post_video_rewire(xine_post_out_t *output_gen, void *data) {
   
   if (input_port->original_port->status(input_port->original_port, input_port->stream,
       &width, &height, &img_duration)) {
-    new_port->open(new_port, input_port->stream);
+    (new_port->open) (new_port, input_port->stream);
     input_port->original_port->close(input_port->original_port, input_port->stream);
   }
   input_port->original_port = new_port;
@@ -617,7 +617,7 @@ static int post_audio_open(xine_audio_port_t *port_gen, xine_stream_t *stream,
   _x_post_rewire(port->post);
   _x_post_inc_usage(port);
   if (port->port_lock) pthread_mutex_lock(port->port_lock);
-  result = port->original_port->open(port->original_port, stream, bits, rate, mode);
+  result = (port->original_port->open) (port->original_port, stream, bits, rate, mode);
   if (port->port_lock) pthread_mutex_unlock(port->port_lock);
   port->stream = stream;
   port->bits   = bits;
@@ -719,7 +719,7 @@ static int post_audio_rewire(xine_post_out_t *output_gen, void *data) {
   
   if (input_port->original_port->status(input_port->original_port, input_port->stream,
       &bits, &rate, &mode)) {
-    new_port->open(new_port, input_port->stream, bits, rate, mode);
+    (new_port->open) (new_port, input_port->stream, bits, rate, mode);
     input_port->original_port->close(input_port->original_port, input_port->stream);
   }
   input_port->original_port = new_port;

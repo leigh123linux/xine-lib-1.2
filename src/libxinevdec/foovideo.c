@@ -98,7 +98,7 @@ static void foovideo_decode_data (video_decoder_t *this_gen,
   }
   
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) { /* need to initialize */
-    this->stream->video_out->open (this->stream->video_out, this->stream);
+    (this->stream->video_out->open) (this->stream->video_out, this->stream);
 
     if(this->buf)
       free(this->buf);

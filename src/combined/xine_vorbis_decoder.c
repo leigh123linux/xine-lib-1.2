@@ -177,7 +177,7 @@ static void vorbis_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	this->convsize=MAX_NUM_SAMPLES/this->vi.channels;
 
 	if (!this->output_open) {
-	  this->output_open = this->stream->audio_out->open(this->stream->audio_out, 
+	  this->output_open = (this->stream->audio_out->open) (this->stream->audio_out, 
 						    this->stream,
 						    16,
 						    this->vi.rate,

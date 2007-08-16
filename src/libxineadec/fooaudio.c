@@ -110,7 +110,7 @@ static void fooaudio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
   /* if the audio output is not open yet, open the audio output */
 #warning: Audio output is hardcoded to mono 16-bit PCM
   if (!this->output_open) {
-    this->output_open = this->stream->audio_out->open(
+    this->output_open = (this->stream->audio_out->open) (
       this->stream->audio_out,
       this->stream,
 /*      this->bits_per_sample, */

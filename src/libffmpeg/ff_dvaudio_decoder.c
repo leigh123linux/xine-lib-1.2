@@ -265,7 +265,7 @@ static void dvaudio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) 
   if (this->decoder_ok && !(buf->decoder_flags & (BUF_FLAG_HEADER|BUF_FLAG_SPECIAL))) {
     
     if (!this->output_open) {
-      this->output_open = this->stream->audio_out->open(this->stream->audio_out,
+      this->output_open = (this->stream->audio_out->open) (this->stream->audio_out,
         this->stream, this->audio_bits, this->audio_sample_rate,
 	_x_ao_channels2mode(this->audio_channels));
     }

@@ -307,7 +307,7 @@ static int stretch_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream,
   /* force updating on stretch_port_put_buffer */
   this->params_changed = 1;
     
-  return port->original_port->open(port->original_port, stream, bits, rate, mode);
+  return (port->original_port->open) (port->original_port, stream, bits, rate, mode);
 }
 
 static void stretch_port_close(xine_audio_port_t *port_gen, xine_stream_t *stream ) {

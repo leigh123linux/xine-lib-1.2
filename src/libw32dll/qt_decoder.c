@@ -405,7 +405,7 @@ static void qta_init_driver (qta_decoder_t *this, buf_element_t *buf) {
 
   this->frame_size = this->wave.nChannels * this->wave.wBitsPerSample / 8;
 
-  this->output_open = this->stream->audio_out->open(this->stream->audio_out, 
+  this->output_open = (this->stream->audio_out->open) (this->stream->audio_out, 
 						    this->stream,
 						    this->wave.wBitsPerSample,
 						    this->wave.nSamplesPerSec,
@@ -936,7 +936,7 @@ static void qtv_init_driver (qtv_decoder_t *this, buf_element_t *buf) {
 
   this->codec_initialized = 1;
 
-  this->stream->video_out->open (this->stream->video_out, this->stream);
+  (this->stream->video_out->open) (this->stream->video_out, this->stream);
 
   pthread_mutex_unlock(&win32_codec_mutex);
 

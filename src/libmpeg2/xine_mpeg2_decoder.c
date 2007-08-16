@@ -131,7 +131,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->mpeg2.stream = stream;
 
   mpeg2_init (&this->mpeg2, stream->video_out);
-  stream->video_out->open(stream->video_out, stream);
+  (stream->video_out->open) (stream->video_out, stream);
   this->mpeg2.force_aspect = this->mpeg2.force_pan_scan = 0;
 
   return &this->video_decoder;

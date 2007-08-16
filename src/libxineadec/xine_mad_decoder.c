@@ -234,7 +234,7 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	    this->output_open = 0;
           }
           if (!this->output_open) {
-	    this->output_open = this->xstream->audio_out->open(this->xstream->audio_out,
+	    this->output_open = (this->xstream->audio_out->open) (this->xstream->audio_out,
 				   this->xstream, 16,
 				   this->frame.header.samplerate, 
 			           mode) ;

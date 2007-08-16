@@ -172,7 +172,7 @@ fprintf(stderr, "~~~~~~~~~~ vdr port open\n");
 
   this->num_channels = _x_ao_mode2channels(mode);
 
-  return port->original_port->open(port->original_port, stream, bits, rate, mode );
+  return (port->original_port->open) (port->original_port, stream, bits, rate, mode );
 }
 
 

@@ -384,7 +384,7 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
     set_stream_info(this);
   }
 
-  this->stream->video_out->open (this->stream->video_out, this->stream);
+  (this->stream->video_out->open) (this->stream->video_out, this->stream);
 
   this->skipframes = 0;
   

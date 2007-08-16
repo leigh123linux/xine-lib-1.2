@@ -147,7 +147,7 @@ static void dts_decode_frame (dts_decoder_t *this, const int64_t pts, const int 
     if(this->bypass_mode) {
       /* SPDIF digital output */
       if (!this->output_open) {
-        this->output_open = (this->stream->audio_out->open (this->stream->audio_out, this->stream,
+        this->output_open = ((this->stream->audio_out->open) (this->stream->audio_out, this->stream,
                                                             16, this->dts_sample_rate, 
                                                             AO_CAP_MODE_AC5));
       }
@@ -243,7 +243,7 @@ static void dts_decode_frame (dts_decoder_t *this, const int64_t pts, const int 
         output_mode = this->ao_flags_map[dts_output_flags & DTS_CHANNEL_MASK];
 
       if (!this->output_open) {
-        this->output_open = this->stream->audio_out->open (this->stream->audio_out, this->stream,
+        this->output_open = (this->stream->audio_out->open) (this->stream->audio_out, this->stream,
                                                            16, this->dts_sample_rate, 
                                                            output_mode);
       }
