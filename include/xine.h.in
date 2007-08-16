@@ -1533,6 +1533,16 @@ void xine_config_update_entry (xine_t *self,
 			       const xine_cfg_entry_t *entry) XINE_PROTECTED;
 
 /*
+ * translation of old configuration entry names
+ */
+typedef struct {
+  const char *old;
+  const char *new;
+} xine_config_entry_translation_t;
+
+void xine_config_set_translation_user (const xine_config_entry_translation_t *) XINE_PROTECTED;
+
+/*
  * load/save config data from/to afile (e.g. $HOME/.xine/config)
  */
 void xine_config_load  (xine_t *self, const char *cfg_filename) XINE_PROTECTED;

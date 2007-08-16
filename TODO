@@ -28,6 +28,7 @@ known bugs
 - frame allocation problem with h264 streams using > 15 reference frames
 - dvdnav time search function does not use the time table, but interpolates
   only cell times
+- apparently, dvb:// (but not dvb://CHANNEL) is broken for ATSC
 
 
 requested/planned features

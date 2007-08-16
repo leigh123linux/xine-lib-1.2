@@ -1245,7 +1245,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 	
 	if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_HUE")) {
 	  if (!strncmp(xcb_xv_adaptor_info_name(adaptor_it.data), "NV", 2)) {
-            xprintf (this->xine, XINE_VERBOSITY_NONE, LOG_MODULE ": ignoring broken XV_HUE settings on NVidia cards");
+            xprintf (this->xine, XINE_VERBOSITY_NONE, LOG_MODULE ": ignoring broken XV_HUE settings on NVidia cards\n");
 	  } else {
 	    xv_check_capability (this, VO_PROP_HUE, attribute_it.data,
 			         adaptor_it.data->base_id,

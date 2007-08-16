@@ -225,6 +225,8 @@ struct post_plugin_stretch_s {
   int                  frames_per_frag;
   int                  frames_per_outfrag;
   int                  num_frames;        /* current # of frames on audiofrag */
+
+  int16_t             last_sample[RESAMPLE_MAX_CHANNELS];
  
   int64_t              pts;               /* pts for audiofrag */
       
@@ -353,12 +355,16 @@ static void stretch_process_fragment( post_audio_port_t *port,
 
   if( !this->params.preserve_pitch ) {
      if( this->channels == 2 )
-       _x_audio_out_resample_stereo(this->audiofrag, num_frames_in,
+       _x_audio_out_resample_stereo(this->last_sample, this->audiofrag, num_frames_in,
                                     this->outfrag, num_frames_out);
      else if( this->channels == 1 )
-        _x_audio_out_resample_mono(this->audiofrag, num_frames_in,
+        _x_audio_out_resample_mono(this->last_sample, this->audiofrag, num_frames_in,
                                    this->outfrag, num_frames_out);
   } else {
+     if (this->channels == 2)
+       memcpy (this->last_sample, &this->audiofrag[(num_frames_in - 1) * 2], 2 * sizeof (this->last_sample[0]));
+     else if (this->channels == 1)
+       memcpy (this->last_sample, &this->audiofrag[num_frames_in - 1], sizeof (this->last_sample[0]));
      if( num_frames_in > num_frames_out )
      {
        /*

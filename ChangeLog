@@ -46,6 +46,16 @@ xine-lib (1.1.8) (Unreleased)
     capable boxes it's probably worse than our own code).
   * Rename endianness-reading macros so that they don't collide with Solaris
     system macros. BE_/LE_ are now _X_BE_ and _X_LE_.
+  * Add an extra function to allow front ends to rename their old,
+    badly-named configuration items.
+  * Various build fixes and cleanups for Solaris, plugin dependencies etc.
+  * Fix some memory leaks in the Vorbis decoder and video overlays.
+  * Fix a problem with the goom plugin which could cause it to stop working.
+  * Clean up "%" unescaping in MRLs; correctly handle "%" in DVD MRLs.
+  * Fix a crash with "dvb:/".
+  * DVB subtitle fixes: deadlock prevention, thread leakage, spec compliance.
+  * Allow the DVB input plugin to timeout if it is receiving no signal.
+  * Fix an audio resampling problem which was causing regular clicking.
 
 xine-lib (1.1.7)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.
