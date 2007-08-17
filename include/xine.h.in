@@ -1536,8 +1536,7 @@ void xine_config_update_entry (xine_t *self,
  * translation of old configuration entry names
  */
 typedef struct {
-  const char *old;
-  const char *new;
+  const char *old_name, *new_name;
 } xine_config_entry_translation_t;
 
 void xine_config_set_translation_user (const xine_config_entry_translation_t *) XINE_PROTECTED;
