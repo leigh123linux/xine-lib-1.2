@@ -44,6 +44,39 @@
 #define SUB_MAX_TEXT  5      /* lines */
 #define SUB_BUFSIZE   256    /* chars per line */
 
+#define rgb2yuv(R,G,B) ((((((66*R+129*G+25*B+128)>>8)+16)<<8)|(((112*R-94*G-18*B+128)>>8)+128))<<8|(((-38*R-74*G+112*B+128)>>8)+128))
+
+static uint32_t sub_palette[22]={
+/* RED */
+  rgb2yuv(0,0,0),
+  rgb2yuv(0,0,0),
+  rgb2yuv(0,0,0),
+  rgb2yuv(0,0,0),
+  rgb2yuv(0,0,0),
+  rgb2yuv(0,0,0),
+  rgb2yuv(0,0,0),
+  rgb2yuv(50,10,10),
+  rgb2yuv(120,20,20),
+  rgb2yuv(185,50,50),
+  rgb2yuv(255,70,70),
+/* BLUE */
+  rgb2yuv(0,0,0),
+  rgb2yuv(0,0,0),
+  rgb2yuv(0,0,0),
+  rgb2yuv(0,0,0),
+  rgb2yuv(0,0,0),
+  rgb2yuv(0,0,0),
+  rgb2yuv(0,0,0),
+  rgb2yuv(0,30,50),
+  rgb2yuv(0,90,120),
+  rgb2yuv(0,140,185),
+  rgb2yuv(0,170,255)
+};
+
+static uint8_t sub_trans[22]={
+  0, 0, 3, 6, 8, 10, 12, 14, 15, 15, 15,
+  0, 0, 3, 6, 8, 10, 12, 14, 15, 15, 15
+};
 
 typedef enum {
   SUBTITLE_SIZE_TINY = 0,
@@ -103,6 +136,9 @@ typedef struct sputext_decoder_s {
 
   osd_renderer_t    *renderer;
   osd_object_t      *osd;
+  int               current_osd_text;
+  uint32_t          spu_palette[OVL_PALETTE_SIZE];
+  uint8_t           spu_trans[OVL_PALETTE_SIZE];
 
   int64_t            img_duration;
   int64_t            last_subtitle_end; /* no new subtitle before this vpts */
@@ -304,19 +340,23 @@ static void ogm_render_line(sputext_decoder_t *this, int x, int y, char* text) {
     switch (text[i]) {
     case '<':
       if (!strncmp("<b>", text+i, 3)) {
-	/*Do somethink to enable BOLD typeface*/
+	/* enable Bold color */
+	this->current_osd_text = OSD_TEXT2;
 	i=i+3;
 	break;
       } else if (!strncmp("</b>", text+i, 3)) {
-	/*Do somethink to disable BOLD typeface*/
+	/* disable BOLD */
+	this->current_osd_text = OSD_TEXT1;
 	i=i+4;
 	break;
       } else if (!strncmp("<i>", text+i, 3)) {	
-	/*Do somethink to enable italics typeface*/
+	/* enable italics color */
+	this->current_osd_text = OSD_TEXT3;
 	i=i+3;
 	break;
       } else if (!strncmp("</i>", text+i, 3)) {
-	/*Do somethink to disable italics typeface*/
+	/* disable italics */
+	this->current_osd_text = OSD_TEXT1;
 	i=i+4;
 	break;
       } else if (!strncmp("<font>", text+i, 3)) {	
@@ -338,7 +378,7 @@ static void ogm_render_line(sputext_decoder_t *this, int x, int y, char* text) {
       memcpy(letter,&text[i],shift);
       letter[shift]=0;
       
-      this->renderer->render_text(this->osd, x, y, letter, OSD_TEXT1);
+      this->renderer->render_text(this->osd, x, y, letter, this->current_osd_text);
       this->renderer->get_text_size(this->osd, letter, &w, &dummy);
       x=x+w;
       i+=shift;
@@ -373,11 +413,8 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
 
   for (line = 0; line < this->lines; line++) /* first, check lenghts and word-wrap if needed */
   {
-    int w, h;
-    if( this->ogm )
-      w = ogm_get_width( this, this->text[line]);
-    else
-      this->renderer->get_text_size( this->osd, this->text[line], &w, &h);
+    int w;
+    w = ogm_get_width( this, this->text[line]);
     if( w > this->width ) { /* line is too long */
       int chunks=(int)(w/this->width)+(w%this->width?1:0);
       if( this->lines+chunks <= SUB_MAX_TEXT && chunks>1 ) { /* try adding newlines while keeping existing ones */
@@ -411,7 +448,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
         this->lines+=chunks-1;
       } else { /* regenerate all the lines to find something that better fits */
         char buf[SUB_BUFSIZE*SUB_MAX_TEXT];
-        int a,w,h,chunks;
+        int a,w,chunks;
         buf[0]='\0';
         for(a=0;a<this->lines;a++) {
           if(a) {
@@ -421,10 +458,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
           }
           strcat(buf,this->text[a]);
         }
-        if( this->ogm )
-          w = ogm_get_width( this, buf);
-        else
-          this->renderer->get_text_size( this->osd, buf, &w, &h);
+        w = ogm_get_width( this, buf);
         chunks=(int)(w/this->width)+(w%this->width?1:0);
         xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "Complete subtitle line splitting in %i chunks\n",chunks);
         if(chunks<=SUB_MAX_TEXT) {/* if the length is over than SUB_MAX_TEXT*this->width nothing can be done */
@@ -461,11 +495,8 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
 
   for (line = 0; line < this->lines; line++) /* first, check lenghts and word-wrap if needed */
   {
-    int w, h;
-    if( this->ogm )
-      w = ogm_get_width( this, this->text[line]);
-    else
-      this->renderer->get_text_size( this->osd, this->text[line], &w, &h);
+    int w;
+    w = ogm_get_width( this, this->text[line]);
     if( w > this->width ) { /* line is too long */
       int chunks=(int)(w/this->width)+(w%this->width?1:0);
       if( this->lines+chunks <= SUB_MAX_TEXT && chunks>1 ) { /* try adding newlines while keeping existing ones */
@@ -499,7 +530,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
         this->lines+=chunks-1;
       } else { /* regenerate all the lines to find something that better fits */
         char buf[SUB_BUFSIZE*SUB_MAX_TEXT];
-        int a,w,h,chunks;
+        int a,w,chunks;
         buf[0]='\0';
         for(a=0;a<this->lines;a++) {
           if(a) {
@@ -509,10 +540,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
           }
           strcat(buf,this->text[a]);
         }
-        if( this->ogm )
-          w = ogm_get_width( this, buf);
-        else
-          this->renderer->get_text_size( this->osd, buf, &w, &h);
+        w = ogm_get_width( this, buf);
         chunks=(int)(w/this->width)+(w%this->width?1:0);
         xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "Complete subtitle line splitting in %i chunks\n",chunks);
         if(chunks<=SUB_MAX_TEXT) {/* if the length is over than SUB_MAX_TEXT*this->width nothing can be done */
@@ -548,14 +576,10 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
   y = (SUB_MAX_TEXT - this->lines) * this->line_height;
 
   for (line = 0; line < this->lines; line++) {
-    int w, h, x;
+    int w, x;
           
     while(1) {
-      if( this->ogm )
-        w = ogm_get_width( this, this->text[line]);
-      else
-        this->renderer->get_text_size( this->osd, this->text[line], 
-                                       &w, &h);
+      w = ogm_get_width( this, this->text[line]);
       x = (this->width - w) / 2;
             
       if( w > this->width && font_size > 16 ) {
@@ -566,12 +590,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
       }
     }
     
-    if( this->ogm ) {
-      ogm_render_line(this, x, y + line*this->line_height, this->text[line]);
-    } else  {
-      this->renderer->render_text (this->osd, x, y + line * this->line_height,
-                                   this->text[line], OSD_TEXT1);
-    }
+    ogm_render_line(this, x, y + line*this->line_height, this->text[line]);
   }
          
   if( font_size != this->font_size )
@@ -583,6 +602,11 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
   this->last_subtitle_end = sub_end;
           
   this->renderer->set_text_palette (this->osd, -1, OSD_TEXT1);
+  this->renderer->get_palette(this->osd, this->spu_palette, this->spu_trans);
+  /* append some colors for colored typeface tag */
+  memcpy(this->spu_palette+OSD_TEXT2, sub_palette, sizeof(sub_palette));
+  memcpy(this->spu_trans+OSD_TEXT2, sub_trans, sizeof(sub_trans));
+  this->renderer->set_palette(this->osd, this->spu_palette, this->spu_trans);
   
   if (this->unscaled)
     this->renderer->show_unscaled (this->osd, sub_start);
@@ -626,7 +650,9 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
     this->buf_encoding = buf->decoder_info_ptr[2];
   else
     this->buf_encoding = NULL;
-    
+
+  this->current_osd_text = OSD_TEXT1;
+
   if( (buf->type & 0xFFFF0000) == BUF_SPU_OGM ) {
 
     this->ogm = 1;
