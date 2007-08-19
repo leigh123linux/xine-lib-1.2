@@ -17,6 +17,8 @@ xine-lib (1.1.8) (Unreleased)
   * Allow the DVB input plugin to timeout if it is receiving no signal.
   * Fix an audio resampling problem which was causing regular clicking.
   * Fix build with recent glibc and a debugging #define. [Bug 1773769]
+  * Fix handling of multiple MPEG TS audio streams & subtitle languages.
+  * Add colouring for bold & italic in text subtitles.
 
 xine-lib (1.1.7)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.
