@@ -20,6 +20,7 @@ For 1.2 series
   it a physical removal for USB devices or a missing output on a client-server
   design like PulseAudio, ESounD or Jack);
 - review media_eject_media, possibly rewrite to use libcdio;
+- improve error reporting (for when demuxer/decoder plugins aren't found);
 - HTTPS.
 
 known bugs
