@@ -271,119 +271,74 @@ static int parse_utf8_size(unsigned char *c)
     return 1;
 }
 
-static int ogm_get_width(sputext_decoder_t *this, char* text) {
-  int i=0,width=0,w,dummy;
+static int ogm_render_line_internal(sputext_decoder_t *this, int x, int y, const char *text, int render)
+{
+  int i = 0, w, dummy;
   char letter[5]={0, 0, 0, 0, 0};
-  int shift, isutf8 = 0;
-  char *encoding = (this->buf_encoding)?this->buf_encoding:
-                                        this->class->src_encoding;
-  if( strcmp(encoding, "utf-8") == 0 )
-    isutf8 = 1;
-    
-  while (i<=strlen(text)) {
-    switch (text[i]) {
-    case '<':
-      if (!strncmp("<b>", text+i, 3)) {
-	/*Do somethink to enable BOLD typeface*/
-	i=i+3;
-	break;
-      } else if (!strncmp("</b>", text+i, 3)) {
-	/*Do somethink to disable BOLD typeface*/
-	i=i+4;
-	break;
-      } else if (!strncmp("<i>", text+i, 3)) {	
-	/*Do somethink to enable italics typeface*/
-	i=i+3;
-	break;
-      } else if (!strncmp("</i>", text+i, 3)) {
-	/*Do somethink to disable italics typeface*/
-	i=i+4;
-	break;
-      } else if (!strncmp("<font>", text+i, 3)) {	
-	/*Do somethink to disable typing
-	  fixme - no teststreams*/
-	i=i+6;
-	break;
-      } else if (!strncmp("</font>", text+i, 3)) {
-	/*Do somethink to enable typing
-	  fixme - no teststreams*/
-	i=i+7;
-	break;
-      } 
-default:
-      if ( isutf8 )
-        shift = parse_utf8_size(&text[i]);
-      else
-        shift = 1;
-      memcpy(letter,&text[i],shift);
-      letter[shift]=0;
-      
-      this->renderer->get_text_size(this->osd, letter, &w, &dummy);
-      width=width+w;
-      i+=shift;
-    }
-  }
+  const char *encoding = this->buf_encoding ? this->buf_encoding
+                                            : this->class->src_encoding;
+  int shift, isutf8 = !strcmp(encoding, "utf-8");
+  size_t length = strlen (text);
 
-  return width;
-}
-
-static void ogm_render_line(sputext_decoder_t *this, int x, int y, char* text) {
-  int i=0,w,dummy;
-  char letter[5]={0, 0, 0, 0, 0};
-  int shift, isutf8 = 0;
-  char *encoding = (this->buf_encoding)?this->buf_encoding:
-                                        this->class->src_encoding;
-  if( strcmp(encoding, "utf-8") == 0 )
-    isutf8 = 1;
-
-  while (i<=strlen(text)) {
+  while (i <= length) {
     switch (text[i]) {
     case '<':
       if (!strncmp("<b>", text+i, 3)) {
 	/* enable Bold color */
-	this->current_osd_text = OSD_TEXT2;
+	if (render)
+	  this->current_osd_text = OSD_TEXT2;
 	i=i+3;
 	break;
-      } else if (!strncmp("</b>", text+i, 3)) {
+      } else if (!strncmp("</b>", text+i, 4)) {
 	/* disable BOLD */
-	this->current_osd_text = OSD_TEXT1;
+	if (render)
+	  this->current_osd_text = OSD_TEXT1;
 	i=i+4;
 	break;
       } else if (!strncmp("<i>", text+i, 3)) {	
 	/* enable italics color */
-	this->current_osd_text = OSD_TEXT3;
+	if (render)
+	  this->current_osd_text = OSD_TEXT3;
 	i=i+3;
 	break;
-      } else if (!strncmp("</i>", text+i, 3)) {
+      } else if (!strncmp("</i>", text+i, 4)) {
 	/* disable italics */
-	this->current_osd_text = OSD_TEXT1;
+	if (render)
+	  this->current_osd_text = OSD_TEXT1;
 	i=i+4;
 	break;
-      } else if (!strncmp("<font>", text+i, 3)) {	
+      } else if (!strncmp("<font>", text+i, 6)) {	
 	/*Do somethink to disable typing
 	  fixme - no teststreams*/
 	i=i+6;
 	break;
-      } else if (!strncmp("</font>", text+i, 3)) {
+      } else if (!strncmp("</font>", text+i, 7)) {
 	/*Do somethink to enable typing
 	  fixme - no teststreams*/
 	i=i+7;
 	break;
       } 
     default:
-      if ( isutf8 )
-        shift = parse_utf8_size(&text[i]);
-      else
-        shift = 1;
+      shift = isutf8 ? parse_utf8_size (&text[i]) : 1;
       memcpy(letter,&text[i],shift);
       letter[shift]=0;
       
-      this->renderer->render_text(this->osd, x, y, letter, this->current_osd_text);
+      if (render)
+	this->renderer->render_text(this->osd, x, y, letter, this->current_osd_text);
       this->renderer->get_text_size(this->osd, letter, &w, &dummy);
       x=x+w;
       i+=shift;
     }
   }
+  return x;
+}
+
+static inline int ogm_get_width(sputext_decoder_t *this, char* text) {
+  return ogm_render_line_internal (this, 0, 0, text, 0);
+}
+
+static inline void ogm_render_line(sputext_decoder_t *this, int x, int y, char* text) {
+  ogm_render_line_internal (this, x, y, text, 1);
 }
 
 static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t sub_end ) {
