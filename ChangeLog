@@ -11,7 +11,7 @@ xine-lib (1.1.8) (Unreleased)
   * Various build fixes and cleanups for Solaris, plugin dependencies etc.
   * Fix some memory leaks in the Vorbis decoder and video overlays.
   * Fix a problem with the goom plugin which could cause it to stop working.
-  * Clean up "%" unescaping in MRLs; correctly handle "%" in DVD MRLs.
+  * Clean up "%" unescaping in MRLs; correctly handle "%" in DVD and VCD MRLs.
   * Fix a crash with "dvb:/".
   * DVB subtitle fixes: deadlock prevention, thread leakage, spec compliance.
   * Allow the DVB input plugin to timeout if it is receiving no signal.
