@@ -121,6 +121,7 @@ void process_CLUT_definition_segment (dvb_spu_decoder_t * this);
 void process_object_data_segment (dvb_spu_decoder_t * this);
 void draw_subtitles (dvb_spu_decoder_t * this);
 static void spudec_dispose (spu_decoder_t * this_gen);
+void downscale_region_image( region_t *reg, unsigned char *dest, int dest_width );
 
 void create_region (dvb_spu_decoder_t * this, int region_id, int region_width, int region_height, int region_depth)
 {
@@ -595,11 +596,31 @@ static void* dvbsub_timer_func(void *this_gen)
   return NULL;
 }
 
+void downscale_region_image( region_t *reg, unsigned char *dest, int dest_width )
+{
+  float i, k, inc=reg->width/(float)dest_width;
+  int j;
+  for ( j=0; j<reg->height; j++ ) {
+    for ( i=0,k=0; i<reg->width && k<dest_width; i+=inc,k++ ) {
+      dest[(j*dest_width)+(int)k] = reg->img[(j*reg->width)+(int)i];
+    }
+  }
+}
+
 void draw_subtitles (dvb_spu_decoder_t * this)
 {
   int r;
   int x, y, out_y;
   int display=0;
+  int64_t dum;
+  int dest_width=0, dest_height, reg_width;
+  this->stream->video_out->status(this->stream->video_out, NULL, &dest_width, &dest_height, &dum);
+  unsigned char tmp[dest_width*576];
+  unsigned char *reg;
+
+  if ( !dest_width )
+    return;
+
   /* clear it */
   memset (this->bitmap, 0, 720 * 576);
   /* render all regions onto the page */
@@ -608,11 +629,20 @@ void draw_subtitles (dvb_spu_decoder_t * this)
   for (r = 0; r < MAX_REGIONS; r++) {
     if (this->dvbsub->regions[r].win >= 0) { 
       if (this->dvbsub->page.regions[r].is_visible) {
+        if (this->dvbsub->regions[r].width>dest_width) {
+	  downscale_region_image(&this->dvbsub->regions[r], tmp, dest_width);
+	  reg = tmp;
+	  reg_width = dest_width;
+	}
+	else {
+	  reg = this->dvbsub->regions[r].img;
+	  reg_width = this->dvbsub->regions[r].width;
+	}
 
 	out_y = this->dvbsub->page.regions[r].y * 720;
 	for (y = 0; y < this->dvbsub->regions[r].height; y++) {
-	  for (x = 0; x < this->dvbsub->regions[r].width; x++) {
-	    this->bitmap[out_y + x + this->dvbsub->page.regions[r].x] = this->dvbsub->regions[r].img[(y * this->dvbsub->regions[r].width) + x];
+	  for (x = 0; x < reg_width; x++) {
+	    this->bitmap[out_y + x + this->dvbsub->page.regions[r].x] = reg[(y*reg_width) + x];
 	    if (this->bitmap[out_y + x + this->dvbsub->page.regions[r].x])
 	    {
 	      display=1;
