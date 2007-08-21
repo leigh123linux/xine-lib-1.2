@@ -502,14 +502,16 @@ vcd_parse_mrl(/*in*/ const char *default_vcd_device, /*in*/ char *mrl,
   itemid->type  = (vcdinfo_item_enum_t) auto_type;
   *used_default = false;
 
-  if ( NULL != mrl && !strncasecmp(mrl, MRL_PREFIX, MRL_PREFIX_LEN) )
-    p = &mrl[MRL_PREFIX_LEN];
-  else {
+  if ( NULL == mrl || strncasecmp(mrl, MRL_PREFIX, MRL_PREFIX_LEN) )
     return false;
-  }
+  p = &mrl[MRL_PREFIX_LEN - 2];
+  while (*p == '/')
+    ++p;
 
-  count = sscanf (p, "%1024[^@]@%1[EePpSsTt]%u", 
-		  device_str, type_str, &num);
+  device_str[0] = '/';
+  device_str[1] = 0;
+  count = sscanf (p, "%1023[^@]@%1[EePpSsTt]%u", 
+		  device_str + 1, type_str, &num);
   itemid->num = num;
   
   switch (count) {
@@ -522,11 +524,18 @@ vcd_parse_mrl(/*in*/ const char *default_vcd_device, /*in*/ char *mrl,
       itemid->num = num;
       if (1==count) {
         type_str[0] = 'T';
+        if (default_vcd_device)
+          strncpy(device_str, default_vcd_device, MAX_DEVICE_LEN);
+        else
+          *device_str = 0;
       }
-      
+      else
+        _x_mrl_unescape (device_str);
       break;
     }
-    
+  case 2 ... 9:
+    _x_mrl_unescape (device_str);
+
   case 0:
   case EOF: 
     {

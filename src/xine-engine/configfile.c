@@ -353,9 +353,9 @@ static void config_remove(config_values_t *this, cfg_entry_t *entry, cfg_entry_t
 static const char *config_xlate_internal (const char *key, const xine_config_entry_translation_t *trans)
 {
   --trans;
-  while ((++trans)->old)
-    if (trans->new[0] && strcmp(key, trans->old) == 0)
-      return trans->new;
+  while ((++trans)->old_name)
+    if (trans->new_name[0] && strcmp(key, trans->old_name) == 0)
+      return trans->new_name;
   return NULL;
 }
 

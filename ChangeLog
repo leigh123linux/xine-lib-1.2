@@ -51,12 +51,16 @@ xine-lib (1.1.8) (Unreleased)
   * Various build fixes and cleanups for Solaris, plugin dependencies etc.
   * Fix some memory leaks in the Vorbis decoder and video overlays.
   * Fix a problem with the goom plugin which could cause it to stop working.
-  * Clean up "%" unescaping in MRLs; correctly handle "%" in DVD MRLs.
+  * Clean up "%" unescaping in MRLs; correctly handle "%" in DVD and VCD MRLs.
   * Fix a crash with "dvb:/".
   * DVB subtitle fixes: deadlock prevention, thread leakage, spec compliance.
   * Allow the DVB input plugin to timeout if it is receiving no signal.
   * Fix an audio resampling problem which was causing regular clicking.
   * Fix build with recent glibc and a debugging #define. [Bug 1773769]
+  * Fix handling of multiple MPEG TS audio streams & subtitle languages.
+  * Add colouring for bold & italic in text subtitles.
+  * Simple scaling of subtitles to fit the frame width (intended to cope
+    with common DVB resolutions such as 544x576).
 
 xine-lib (1.1.7)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.

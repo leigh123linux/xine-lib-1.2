@@ -253,6 +253,7 @@ static void *audio_decoder_loop (void *stream_gen) {
 	
 	uint32_t audio_type = 0;
 	int      i,j;
+	uint32_t chan=buf->type&0x0000FFFF;
 
 	/*
         printf("audio_decoder: buf_type=%08x auto=%08x user=%08x\n",
@@ -264,11 +265,11 @@ static void *audio_decoder_loop (void *stream_gen) {
         /* update track map */
         
         i = 0;
-        while ( (i<stream->audio_track_map_entries) && (stream->audio_track_map[i]<buf->type) ) 
+        while ( (i<stream->audio_track_map_entries) && ((stream->audio_track_map[i]&0x0000FFFF)<chan) ) 
           i++;
         
         if ( (i==stream->audio_track_map_entries) 
-	     || (stream->audio_track_map[i] != buf->type) ) {
+	     || ((stream->audio_track_map[i]&0x0000FFFF)!=chan) ) {
           xine_event_t  ui_event;
 
           j = stream->audio_track_map_entries;
