@@ -1684,12 +1684,14 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   if (frame->format == XINE_IMGFMT_XXMC) {
     XVMCLOCKDISPLAY( this->display );
     XvMCSyncSurface( this->display, frame->xvmc_surf );
+    XLockDisplay( this->display ); /* blocks XINE_GUI_SEND_DRAWABLE_CHANGED from changing drawable */
     XvMCPutSurface( this->display, frame->xvmc_surf , this->drawable,
 		    this->sc.displayed_xoffset, this->sc.displayed_yoffset,
 		    this->sc.displayed_width, this->sc.displayed_height,
 		    this->sc.output_xoffset, this->sc.output_yoffset,
 		    this->sc.output_width, this->sc.output_height, 
 		    this->cur_field);
+    XUnlockDisplay( this->display ); /* unblocks XINE_GUI_SEND_DRAWABLE_CHANGED from changing drawable */
     XVMCUNLOCKDISPLAY( this->display );
     if (this->deinterlace_enabled && !disable_deinterlace && this->bob) {
       struct timeval tv_middle;
@@ -1718,13 +1720,14 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
         this->cur_field = (frame->vo_frame.top_field_first) ? XVMC_BOTTOM_FIELD : XVMC_TOP_FIELD;
 
         XVMCLOCKDISPLAY( this->display );
+        XLockDisplay( this->display ); /* blocks XINE_GUI_SEND_DRAWABLE_CHANGED from changing drawable */
         XvMCPutSurface( this->display, frame->xvmc_surf , this->drawable,
 		        this->sc.displayed_xoffset, this->sc.displayed_yoffset,
 		        this->sc.displayed_width, this->sc.displayed_height,
 		        this->sc.output_xoffset, this->sc.output_yoffset,
 		        this->sc.output_width, this->sc.output_height, 
 		        this->cur_field);
-
+        XUnlockDisplay( this->display ); /* unblocks XINE_GUI_SEND_DRAWABLE_CHANGED from changing drawable */
         XVMCUNLOCKDISPLAY( this->display );
       }
     }      
