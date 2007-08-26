@@ -205,6 +205,9 @@ struct xxmc_driver_s {
   xxmc_frame_t       *cur_frame;
   int                cur_field;
   int                bob;
+  int                disable_bob_for_progressive_frames;
+  int                disable_bob_for_scaled_osd;
+  int                scaled_osd_active;
   x11osd             *xoverlay;
   int                xv_xoverlay_type;
   int                xoverlay_type;

@@ -1491,6 +1491,7 @@ static void xxmc_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
   xxmc_frame_t   *frame = (xxmc_frame_t *) frame_gen;
 
   if (overlay->rle) {
+    this->scaled_osd_active = !overlay->unscaled;
     if( overlay->unscaled ) {
       if( this->ovl_changed && this->xoverlay ) {
         XLockDisplay (this->display);
@@ -1618,7 +1619,8 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
    * other than 100 %, so let's disable deinterlacing at all for this frame
    */
   if (this->deinterlace_enabled && this->bob) {
-    disable_deinterlace = frame->vo_frame.progressive_frame
+    disable_deinterlace = this->disable_bob_for_progressive_frames && frame->vo_frame.progressive_frame
+      || this->disable_bob_for_scaled_osd && this->scaled_osd_active
       || !frame->vo_frame.stream
       || xine_get_param(frame->vo_frame.stream, XINE_PARAM_FINE_SPEED) != XINE_FINE_SPEED_NORMAL;
     if (!disable_deinterlace) {
@@ -1627,6 +1629,12 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
       disable_deinterlace = (vo_bufs_in_fifo <= 0);
     }
   }
+
+  /*
+   * reset this flag now -- it will be set again before the next call to
+   * xxmc_display_frame() as long as there is a scaled OSD active on screen.
+   */
+  this->scaled_osd_active = 0; 
 
   /*
    * queue frames (deinterlacing)
@@ -2182,6 +2190,18 @@ static void xxmc_update_bob(void *this_gen, xine_cfg_entry_t *entry) {
   this->bob = entry->num_value;
 }
 
+static void xxmc_update_disable_bob_for_progressive_frames(void *this_gen, xine_cfg_entry_t *entry) {
+  xxmc_driver_t *this = (xxmc_driver_t *) this_gen;
+
+  this->disable_bob_for_progressive_frames = entry->num_value;
+}
+
+static void xxmc_update_disable_bob_for_scaled_osd(void *this_gen, xine_cfg_entry_t *entry) {
+  xxmc_driver_t *this = (xxmc_driver_t *) this_gen;
+
+  this->disable_bob_for_scaled_osd = entry->num_value;
+}
+
 
 static void checkXvMCCap( xxmc_driver_t *this, XvPortID xv_port) 
 {
@@ -2648,8 +2668,22 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
     config->register_bool (config, "video.device.xvmc_bob_deinterlacing", 0,
 			   _("Use bob as accelerated deinterlace method."),
 			   _("When interlacing is enabled for hardware accelerated frames,\n"
-			     "Alternate between top and bottom field at double the frame rate.\n"),
+			     "alternate between top and bottom field at double the frame rate.\n"),
 			   10, xxmc_update_bob, this);
+
+  this->disable_bob_for_progressive_frames =
+    config->register_bool (config, "video.device.xvmc_disable_bob_deinterlacing_for_progressive_frames", 0,
+			   _("Don't use bob deinterlacing for progressive frames."),
+			   _("Progressive frames don't need deinterlacing, so disabling it on\n"
+			     "demand should result in a better picture.\n"),
+			   10, xxmc_update_disable_bob_for_progressive_frames, this);
+
+  this->disable_bob_for_scaled_osd =
+    config->register_bool (config, "video.device.xvmc_disable_bob_deinterlacing_for_scaled_osd", 0,
+			   _("Don't use bob deinterlacing while a scaled OSD is active."),
+			   _("Bob deinterlacing adds some noise to horizontal lines, so disabling it\n"
+                             "on demand should result in a better OSD picture.\n"),
+			   10, xxmc_update_disable_bob_for_scaled_osd, this);
 
   this->deinterlace_enabled = 0;
   this->cur_field = XVMC_FRAME_PICTURE;
