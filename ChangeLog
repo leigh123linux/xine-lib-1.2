@@ -21,6 +21,8 @@ xine-lib (1.1.8) (Unreleased)
   * Add colouring for bold & italic in text subtitles.
   * Simple scaling of subtitles to fit the frame width (intended to cope
     with common DVB resolutions such as 544x576).
+  * Various small video frame-handling bug fixes.
+  * Add options to control bob deinterlacing in the XxMC video output plugin.
 
 xine-lib (1.1.7)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.
