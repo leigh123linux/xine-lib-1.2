@@ -1527,6 +1527,7 @@ static void xxmc_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
   xxmc_frame_t   *frame = (xxmc_frame_t *) frame_gen;
 
   if (overlay->rle) {
+    this->scaled_osd_active = !overlay->unscaled;
     if( overlay->unscaled ) {
       if( this->ovl_changed && this->xoverlay ) {
         XLockDisplay (this->display);
@@ -1654,7 +1655,8 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
    * other than 100 %, so let's disable deinterlacing at all for this frame
    */
   if (this->deinterlace_enabled && this->bob) {
-    disable_deinterlace = frame->vo_frame.progressive_frame
+    disable_deinterlace = this->disable_bob_for_progressive_frames && frame->vo_frame.progressive_frame
+      || this->disable_bob_for_scaled_osd && this->scaled_osd_active
       || !frame->vo_frame.stream
       || xine_get_param(frame->vo_frame.stream, XINE_PARAM_FINE_SPEED) != XINE_FINE_SPEED_NORMAL;
     if (!disable_deinterlace) {
@@ -1665,27 +1667,28 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   }
 
   /*
+   * reset this flag now -- it will be set again before the next call to
+   * xxmc_display_frame() as long as there is a scaled OSD active on screen.
+   */
+  this->scaled_osd_active = 0; 
+
+  /*
    * queue frames (deinterlacing)
    * free old frames
    */
 
   xvmc_context_reader_lock( &this->xvmc_lock );
 
-  xxmc_add_recent_frame (this, frame); /* deinterlacing */
-
   /*
    * the current implementation doesn't need recent frames for deinterlacing,
-   * but as most of the time we only have a little number of frames available
-   * per device, we only hold references to the most recent frame by filling
-   * the whole buffer with the same frame
+   * but we need to hold references on the frame we are about to show and to
+   * the previous frame which is currently shown on screen. Otherwise, the
+   * frame on screen will be immediately reused for decoding which will then
+   * most often result in mixed images on screen, especially when decoding
+   * is faster than sending the image to the monitor, and/or when exchanging
+   * the overlay image is synced to retrace.
    */
-  {
-    int i;
-    for (i = 1; i < VO_NUM_RECENT_FRAMES; i++) {
-      frame->vo_frame.lock(&frame->vo_frame);
-      xxmc_add_recent_frame (this, frame); /* deinterlacing */
-    }
-  }
+  xxmc_add_recent_frame (this, frame); /* deinterlacing */
 
   if ((frame->format == XINE_IMGFMT_XXMC) &&
       (!xxmc->decoded || !xxmc_xvmc_surface_valid(this, frame->xvmc_surf))) {
@@ -1720,12 +1723,14 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   if (frame->format == XINE_IMGFMT_XXMC) {
     XVMCLOCKDISPLAY( this->display );
     XvMCSyncSurface( this->display, frame->xvmc_surf );
+    XLockDisplay( this->display ); /* blocks XINE_GUI_SEND_DRAWABLE_CHANGED from changing drawable */
     XvMCPutSurface( this->display, frame->xvmc_surf , this->drawable,
 		    this->sc.displayed_xoffset, this->sc.displayed_yoffset,
 		    this->sc.displayed_width, this->sc.displayed_height,
 		    this->sc.output_xoffset, this->sc.output_yoffset,
 		    this->sc.output_width, this->sc.output_height, 
 		    this->cur_field);
+    XUnlockDisplay( this->display ); /* unblocks XINE_GUI_SEND_DRAWABLE_CHANGED from changing drawable */
     XVMCUNLOCKDISPLAY( this->display );
     if (this->deinterlace_enabled && !disable_deinterlace && this->bob) {
       struct timeval tv_middle;
@@ -1754,13 +1759,14 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
         this->cur_field = (frame->vo_frame.top_field_first) ? XVMC_BOTTOM_FIELD : XVMC_TOP_FIELD;
 
         XVMCLOCKDISPLAY( this->display );
+        XLockDisplay( this->display ); /* blocks XINE_GUI_SEND_DRAWABLE_CHANGED from changing drawable */
         XvMCPutSurface( this->display, frame->xvmc_surf , this->drawable,
 		        this->sc.displayed_xoffset, this->sc.displayed_yoffset,
 		        this->sc.displayed_width, this->sc.displayed_height,
 		        this->sc.output_xoffset, this->sc.output_yoffset,
 		        this->sc.output_width, this->sc.output_height, 
 		        this->cur_field);
-
+        XUnlockDisplay( this->display ); /* unblocks XINE_GUI_SEND_DRAWABLE_CHANGED from changing drawable */
         XVMCUNLOCKDISPLAY( this->display );
       }
     }      
@@ -2213,6 +2219,18 @@ static void xxmc_update_bob(void *this_gen, xine_cfg_entry_t *entry) {
   xxmc_driver_t *this = (xxmc_driver_t *) this_gen;
 
   this->bob = entry->num_value;
+}
+
+static void xxmc_update_disable_bob_for_progressive_frames(void *this_gen, xine_cfg_entry_t *entry) {
+  xxmc_driver_t *this = (xxmc_driver_t *) this_gen;
+
+  this->disable_bob_for_progressive_frames = entry->num_value;
+}
+
+static void xxmc_update_disable_bob_for_scaled_osd(void *this_gen, xine_cfg_entry_t *entry) {
+  xxmc_driver_t *this = (xxmc_driver_t *) this_gen;
+
+  this->disable_bob_for_scaled_osd = entry->num_value;
 }
 
 
@@ -2678,8 +2696,22 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
     config->register_bool (config, "video.device.xvmc_bob_deinterlacing", 0,
 			   _("Use bob as accelerated deinterlace method."),
 			   _("When interlacing is enabled for hardware accelerated frames,\n"
-			     "Alternate between top and bottom field at double the frame rate.\n"),
+			     "alternate between top and bottom field at double the frame rate.\n"),
 			   10, xxmc_update_bob, this);
+
+  this->disable_bob_for_progressive_frames =
+    config->register_bool (config, "video.device.xvmc_disable_bob_deinterlacing_for_progressive_frames", 0,
+			   _("Don't use bob deinterlacing for progressive frames."),
+			   _("Progressive frames don't need deinterlacing, so disabling it on\n"
+			     "demand should result in a better picture.\n"),
+			   10, xxmc_update_disable_bob_for_progressive_frames, this);
+
+  this->disable_bob_for_scaled_osd =
+    config->register_bool (config, "video.device.xvmc_disable_bob_deinterlacing_for_scaled_osd", 0,
+			   _("Don't use bob deinterlacing while a scaled OSD is active."),
+			   _("Bob deinterlacing adds some noise to horizontal lines, so disabling it\n"
+                             "on demand should result in a better OSD picture.\n"),
+			   10, xxmc_update_disable_bob_for_scaled_osd, this);
 
   this->deinterlace_enabled = 0;
   this->cur_field = XVMC_FRAME_PICTURE;
