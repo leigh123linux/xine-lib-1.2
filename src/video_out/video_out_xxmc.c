@@ -1643,21 +1643,16 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
   xvmc_context_reader_lock( &this->xvmc_lock );
 
-  xxmc_add_recent_frame (this, frame); /* deinterlacing */
-
   /*
    * the current implementation doesn't need recent frames for deinterlacing,
-   * but as most of the time we only have a little number of frames available
-   * per device, we only hold references to the most recent frame by filling
-   * the whole buffer with the same frame
+   * but we need to hold references on the frame we are about to show and to
+   * the previous frame which is currently shown on screen. Otherwise, the
+   * frame on screen will be immediately reused for decoding which will then
+   * most often result in mixed images on screen, especially when decoding
+   * is faster than sending the image to the monitor, and/or when exchanging
+   * the overlay image is synced to retrace.
    */
-  {
-    int i;
-    for (i = 1; i < VO_NUM_RECENT_FRAMES; i++) {
-      frame->vo_frame.lock(&frame->vo_frame);
-      xxmc_add_recent_frame (this, frame); /* deinterlacing */
-    }
-  }
+  xxmc_add_recent_frame (this, frame); /* deinterlacing */
 
   if ((frame->format == XINE_IMGFMT_XXMC) &&
       (!xxmc->decoded || !xxmc_xvmc_surface_valid(this, frame->xvmc_surf))) {
