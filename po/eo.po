@@ -4191,7 +4191,7 @@ msgstr "Uzu metodon nomitan bob kiel metodo de akcelita malplektado."
 #: src/video_out/video_out_xxmc.c:2564
 msgid ""
 "When interlacing is enabled for hardware accelerated frames,\n"
-"Alternate between top and bottom field at double the frame rate.\n"
+"alternate between top and bottom field at double the frame rate.\n"
 msgstr ""
 
 #: src/video_out/x11osd.c:276 src/video_out/xcbosd.c:270
