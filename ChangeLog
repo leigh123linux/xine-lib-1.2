@@ -1,4 +1,4 @@
-xine-lib (1.1.8) (Unreleased)
+xine-lib (1.1.8)
   * Send a channel-changed event to the frontend when receiving the SYNC
     string from last.fm streaming server.
   * Disable mediaLib support by default (the licenses probably disallow the
