@@ -1505,8 +1505,6 @@ static int dvd_plugin_open (input_plugin_t *this_gen) {
     return 0;
   }
 
-  free (locator_orig);
-  
   dvdnav_get_title_string(this->dvdnav, &this->dvd_name);
   if(this->dvd_name)
     _x_meta_info_set(this->stream, XINE_META_INFO_TITLE, this->dvd_name);
@@ -1554,6 +1552,7 @@ static int dvd_plugin_open (input_plugin_t *this_gen) {
 	      "input_dvd: Title %i is out of range (1 to %i).\n", tt, titles);
       dvdnav_close(this->dvdnav);
       this->dvdnav = NULL;
+      free (locator_orig);
       return 0;
     }
 
@@ -1567,6 +1566,7 @@ static int dvd_plugin_open (input_plugin_t *this_gen) {
 		"input_dvd: Part %i is out of range (1 to %i).\n", pr, parts);
 	dvdnav_close(this->dvdnav);
 	this->dvdnav = NULL;
+	free (locator_orig);
 	return 0;
       }
     }
@@ -1598,7 +1598,8 @@ static int dvd_plugin_open (input_plugin_t *this_gen) {
   xine_event_send(this->stream, &event);
 
   update_title_display(this);
-  
+
+  free (locator_orig);
   return 1;
 }
 
