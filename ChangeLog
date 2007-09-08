@@ -1,5 +1,6 @@
 xine-lib (1.1.9) (unreleased)
   * Fix dvd://.../title[.chapter] handling (somewhat broken in 1.1.8).
+  * Fix switching DVB subtitles channels.
   * DVB sub: switch to dyn mem alloc and allow multiple CLUTs per page.
   * Check if DVB sub PTS is reliable and show sub immediately if it's not.
 
