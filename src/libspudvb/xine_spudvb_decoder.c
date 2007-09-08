@@ -715,11 +715,23 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
       }
     }
   }
-      /* inform metronom we've received the package */
-      if (buf->pts) {
-        metronom_t *metronom = this->stream->metronom;
-        this->vpts = metronom->got_spu_packet (metronom, buf->pts);
-      }
+
+  /* don't ask metronom for a vpts but rather do the calculation
+   * because buf->pts could be too far in future and metronom won't accept
+   * further backwards pts (see metronom_got_spu_packet) */
+  if (buf->pts) {
+    metronom_t *metronom = this->stream->metronom;
+    int64_t vpts_offset = metronom->get_option( metronom, METRONOM_VPTS_OFFSET );
+    int64_t spu_offset = metronom->get_option( metronom, METRONOM_SPU_OFFSET );
+    int64_t vpts = (int64_t)(buf->pts)+vpts_offset+spu_offset;
+    metronom_clock_t *clock = this->stream->xine->clock;
+    int64_t curvpts = clock->get_current_time( clock );
+    /* if buf->pts is unreliable, show page asap (better than nothing) */
+    if ( vpts<=curvpts || (vpts-curvpts)>(5*90000) )
+      this->vpts = 0;
+    else
+      this->vpts = vpts;
+  }
 
   /* process the pes section */
      

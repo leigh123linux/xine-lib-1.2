@@ -1,5 +1,6 @@
 xine-lib (1.1.9) (unreleased)
   * Fix dvd://.../title[.chapter] handling (somewhat broken in 1.1.8).
+  * Check if DVB sub PTS is reliable and show sub immediately if it's not.
 
 xine-lib (1.1.8)
   * Send a channel-changed event to the frontend when receiving the SYNC
