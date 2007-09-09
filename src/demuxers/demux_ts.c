@@ -447,6 +447,17 @@ static void check_newpts( demux_ts_t *this, int64_t pts, int video )
   }
 }
 
+/* Send a BUF_SPU_DVB to let xine know of that channel. */
+static void demux_send_special_spu_buf( demux_ts_t *this, int spu_channel )
+{
+  buf_element_t *buf;
+
+  buf = this->video_fifo->buffer_pool_alloc( this->video_fifo );
+  buf->type = BUF_SPU_DVB|spu_channel;
+  buf->content = buf->mem;
+  buf->size = 0;
+  this->video_fifo->put( this->video_fifo, buf );
+}
 
 /*
  * demux_ts_update_spu_channel
@@ -456,7 +467,6 @@ static void check_newpts( demux_ts_t *this, int64_t pts, int video )
  */
 static void demux_ts_update_spu_channel(demux_ts_t *this)
 {
-  xine_event_t ui_event;
   buf_element_t *buf;
   
   this->current_spu_channel = this->stream->spu_channel;
@@ -475,6 +485,7 @@ static void demux_ts_update_spu_channel(demux_ts_t *this)
 
       buf->decoder_info[2] = sizeof(lang->desc);
       buf->decoder_info_ptr[2] = &(lang->desc);
+      buf->type |= this->current_spu_channel;
 
       this->spu_pid = lang->pid;
       this->spu_media = lang->media_index;
@@ -496,11 +507,6 @@ static void demux_ts_update_spu_channel(demux_ts_t *this)
     }
 
   this->video_fifo->put(this->video_fifo, buf);
-
-  /* Inform UI of SPU channel changes */
-  ui_event.type = XINE_EVENT_UI_CHANNELS_CHANGED;
-  ui_event.data_length = 0;
-  xine_event_send(this->stream, &ui_event);
 }
 
 /*
@@ -763,7 +769,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
 
       m->content = p;
       m->size = packet_len;
-      m->type = BUF_SPU_DVB;
+      m->type |= BUF_SPU_DVB;
       m->buf->decoder_info[2] = payload_len;
       return 1;
     } else if ((p[0] & 0xE0) == 0x20) {
@@ -1385,9 +1391,9 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
 		  (stream[pos + 6] << 8) | stream[pos + 7];
 		lang->pid = pid;
 		lang->media_index = this->media_num;
-		demux_ts_pes_new(this, this->media_num,
-				 pid, this->video_fifo,
-				 stream[0]);
+		this->media[this->media_num].type = no;
+		demux_ts_pes_new(this, this->media_num, pid, this->video_fifo, stream[0]);
+		demux_send_special_spu_buf( this, no );
 #ifdef TS_LOG
 		printf("demux_ts: DVBSUB: pid 0x%.4x: %s  page %ld %ld type %2.2x\n",
 		       pid, lang->desc.lang,
@@ -1465,8 +1471,14 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
     this->pcrPid = pid;
   }
 
-  /* DVBSUB: update spu decoder */
-  demux_ts_update_spu_channel(this);
+  if ( this->stream->spu_channel>=0 && this->spu_langs_count>0 )
+    demux_ts_update_spu_channel( this );
+
+  /* Inform UI of channels changes */
+  xine_event_t ui_event;
+  ui_event.type = XINE_EVENT_UI_CHANNELS_CHANGED;
+  ui_event.data_length = 0;
+  xine_event_send( this->stream, &ui_event );
 }
 
 static int sync_correct(demux_ts_t*this, uint8_t *buf, int32_t npkt_read) {
@@ -2026,7 +2038,7 @@ static void demux_ts_send_headers (demux_plugin_t *this_gen) {
   /* DVBSUB */
   this->spu_pid = INVALID_PID;
   this->spu_langs_count = 0;
-  this->current_spu_channel = this->stream->spu_channel;
+  this->current_spu_channel = -1;
   
   /* FIXME ? */
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 1);
@@ -2266,7 +2278,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   /* DVBSUB */
   this->spu_pid = INVALID_PID;
   this->spu_langs_count = 0;
-  this->current_spu_channel = this->stream->spu_channel;
+  this->current_spu_channel = -1;
 
   /* dvb */
   this->event_queue = xine_event_new_queue (this->stream);
