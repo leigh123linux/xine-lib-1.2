@@ -1472,6 +1472,9 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
     this->pcrPid = pid;
   }
 
+  if ( this->stream->spu_channel>=0 && this->spu_langs_count>0 )
+    demux_ts_update_spu_channel( this );
+
   /* Inform UI of channels changes */
   xine_event_t ui_event;
   ui_event.type = XINE_EVENT_UI_CHANNELS_CHANGED;
