@@ -370,10 +370,10 @@ void process_CLUT_definition_segment(dvb_spu_decoder_t *this) {
       Cb_value=dvbsub->buf[dvbsub->i++];
       T_value=dvbsub->buf[dvbsub->i++];
     } else {
-      Y_value=(dvbsub->buf[dvbsub->i]&0xfc)>>2;
-      Cr_value=(dvbsub->buf[dvbsub->i]&0x2<<2)|((dvbsub->buf[dvbsub->i+1]&0xc0)>>6);
-      Cb_value=(dvbsub->buf[dvbsub->i+1]&0x2c)>>2;
-      T_value=dvbsub->buf[dvbsub->i+1]&2;
+      Y_value = dvbsub->buf[dvbsub->i] & 0xfc;
+      Cr_value = (dvbsub->buf[dvbsub->i] << 6 | dvbsub->buf[dvbsub->i + 1] >> 2) & 0xf0;
+      Cb_value = (dvbsub->buf[dvbsub->i + 1] << 2) & 0xf0;
+      T_value = (dvbsub->buf[dvbsub->i + 1] & 3) * 0x55; /* expand only this one to full range! */
       dvbsub->i+=2;
     }
     set_clut(this, CLUT_id,CLUT_entry_id,Y_value,Cr_value,Cb_value,T_value);
