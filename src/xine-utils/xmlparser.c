@@ -209,9 +209,13 @@ static xml_node_t *xml_parser_append_text (xml_node_t *node, xml_node_t *subnode
     asprintf (&newtext, "%s%s", node->data, text);
     free (node->data);
     node->data = newtext;
-  } else
+  } else {
     /* no text, "no" subtree - duplicate & assign */
-    node->data = strdup (text);
+    while (isspace (*text))
+      ++text;
+    if (*text)
+      node->data = strdup (text);
+  }
 
   return subnode;
 }
