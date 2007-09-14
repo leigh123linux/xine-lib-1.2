@@ -42,7 +42,7 @@
 #ifdef XINE_COMPILE
 #include "xineutils.h"
 #else
-#define lprintf(...)
+#define lprintf printf
 #define xine_xmalloc malloc
 #endif
 #include "xmllexer.h"
@@ -177,6 +177,7 @@ typedef enum {
   /* Others */
   STATE_COMMENT,
   STATE_DOCTYPE,
+  STATE_CDATA,
 } parser_state_t;
 
 #define Q_STATE(CURRENT,NEW) (STATE_##NEW + state - STATE_##CURRENT)
@@ -226,6 +227,9 @@ static int xml_parser_get_node_internal (xml_node_t *current_node, char *root_na
 	  break;
 	case (T_DOCTYPE_START):
 	  state = STATE_DOCTYPE;
+	  break;
+	case (T_CDATA_START):
+	  state = STATE_CDATA;
 	  break;
 	case (T_DATA):
 	  /* current data */
@@ -534,6 +538,29 @@ static int xml_parser_get_node_internal (xml_node_t *current_node, char *root_na
 	  state = 0;
 	  break;
 	default:
+	  break;
+	}
+	break;
+
+				/* ]]> expected */
+      case STATE_CDATA:
+	switch (res) {
+	case (T_CDATA_STOP):
+	  if (current_node->data) {
+	    /* Append to existing text. FIXME - should use a child node */
+	    char *data;
+	    asprintf (&data, "%s%s", current_node->data, tok);
+	    free (current_node->data);
+	    current_node->data = data;
+	  }
+	  else
+	    current_node->data = strdup (tok);
+	  lprintf("info: node cdata : %s\n", current_node->data);
+	  state = STATE_IDLE;
+	  break;
+        default:
+	  lprintf("error: unexpected token \"%s\", state %d\n", tok, state);
+	  return -1;
 	  break;
 	}
 	break;
