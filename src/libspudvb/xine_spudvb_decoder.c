@@ -108,22 +108,7 @@ typedef struct dvb_spu_decoder_s {
 } dvb_spu_decoder_t;
 
 
-void update_region (dvb_spu_decoder_t * this, int region_id, int region_width, int region_height, int fill, int fill_color);
-void do_plot (dvb_spu_decoder_t * this, int r, int x, int y, unsigned char pixel);
-void plot (dvb_spu_decoder_t * this, int r, int run_length, unsigned char pixel);
-unsigned char next_nibble (dvb_spu_decoder_t * this);
-void set_clut (dvb_spu_decoder_t * this, int CLUT_id, int CLUT_entry_id, int Y_value, int Cr_value, int Cb_value, int T_value);
-void decode_4bit_pixel_code_string (dvb_spu_decoder_t * this, int r, int object_id, int ofs, int n);
-void process_pixel_data_sub_block (dvb_spu_decoder_t * this, int r, int o, int ofs, int n);
-void process_page_composition_segment (dvb_spu_decoder_t * this);
-void process_region_composition_segment (dvb_spu_decoder_t * this);
-void process_CLUT_definition_segment (dvb_spu_decoder_t * this);
-void process_object_data_segment (dvb_spu_decoder_t * this);
-void draw_subtitles (dvb_spu_decoder_t * this);
-static void spudec_dispose (spu_decoder_t * this_gen);
-void downscale_region_image( region_t *reg, unsigned char *dest, int dest_width );
-
-void update_region (dvb_spu_decoder_t * this, int region_id, int region_width, int region_height, int fill, int fill_color)
+static void update_region (dvb_spu_decoder_t * this, int region_id, int region_width, int region_height, int fill, int fill_color)
 {
 
   dvbsub_func_t *dvbsub = this->dvbsub;
@@ -180,7 +165,7 @@ void update_region (dvb_spu_decoder_t * this, int region_id, int region_width, i
 }
 
 
-void do_plot (dvb_spu_decoder_t * this, int r, int x, int y, unsigned char pixel)
+static void do_plot (dvb_spu_decoder_t * this, int r, int x, int y, unsigned char pixel)
 {
   int i;
   dvbsub_func_t *dvbsub = this->dvbsub;
@@ -191,7 +176,7 @@ void do_plot (dvb_spu_decoder_t * this, int r, int x, int y, unsigned char pixel
     dvbsub->regions[r].img[i] = pixel;
 }
 
-void plot (dvb_spu_decoder_t * this, int r, int run_length, unsigned char pixel)
+static void plot (dvb_spu_decoder_t * this, int r, int run_length, unsigned char pixel)
 {
 
   dvbsub_func_t *dvbsub = this->dvbsub;
@@ -204,7 +189,7 @@ void plot (dvb_spu_decoder_t * this, int r, int run_length, unsigned char pixel)
   }
 }
 
-unsigned char next_nibble (dvb_spu_decoder_t * this)
+static unsigned char next_nibble (dvb_spu_decoder_t * this)
 {
   unsigned char x;
   dvbsub_func_t *dvbsub = this->dvbsub;
@@ -220,7 +205,7 @@ unsigned char next_nibble (dvb_spu_decoder_t * this)
   return (x);
 }
 
-void decode_4bit_pixel_code_string (dvb_spu_decoder_t * this, int r, int object_id, int ofs, int n)
+static void decode_4bit_pixel_code_string (dvb_spu_decoder_t * this, int r, int object_id, int ofs, int n)
 {
   int next_bits, switch_1, switch_2, switch_3, run_length, pixel_code;
 
@@ -308,7 +293,7 @@ void decode_4bit_pixel_code_string (dvb_spu_decoder_t * this, int r, int object_
 }
 
 
-void set_clut(dvb_spu_decoder_t *this,int CLUT_id,int CLUT_entry_id,int Y_value, int Cr_value, int Cb_value, int T_value) {
+static void set_clut(dvb_spu_decoder_t *this,int CLUT_id,int CLUT_entry_id,int Y_value, int Cr_value, int Cb_value, int T_value) {
  
   dvbsub_func_t *dvbsub = this->dvbsub;
 
@@ -328,7 +313,7 @@ void set_clut(dvb_spu_decoder_t *this,int CLUT_id,int CLUT_entry_id,int Y_value,
 
 }
 
-void process_CLUT_definition_segment(dvb_spu_decoder_t *this) {
+static void process_CLUT_definition_segment(dvb_spu_decoder_t *this) {
   int page_id,
       segment_length,
       CLUT_id,
@@ -370,17 +355,17 @@ void process_CLUT_definition_segment(dvb_spu_decoder_t *this) {
       Cb_value=dvbsub->buf[dvbsub->i++];
       T_value=dvbsub->buf[dvbsub->i++];
     } else {
-      Y_value=(dvbsub->buf[dvbsub->i]&0xfc)>>2;
-      Cr_value=(dvbsub->buf[dvbsub->i]&0x2<<2)|((dvbsub->buf[dvbsub->i+1]&0xc0)>>6);
-      Cb_value=(dvbsub->buf[dvbsub->i+1]&0x2c)>>2;
-      T_value=dvbsub->buf[dvbsub->i+1]&2;
+      Y_value = dvbsub->buf[dvbsub->i] & 0xfc;
+      Cr_value = (dvbsub->buf[dvbsub->i] << 6 | dvbsub->buf[dvbsub->i + 1] >> 2) & 0xf0;
+      Cb_value = (dvbsub->buf[dvbsub->i + 1] << 2) & 0xf0;
+      T_value = (dvbsub->buf[dvbsub->i + 1] & 3) * 0x55; /* expand only this one to full range! */
       dvbsub->i+=2;
     }
     set_clut(this, CLUT_id,CLUT_entry_id,Y_value,Cr_value,Cb_value,T_value);
   }
 }
 
-void process_pixel_data_sub_block (dvb_spu_decoder_t * this, int r, int o, int ofs, int n)
+static void process_pixel_data_sub_block (dvb_spu_decoder_t * this, int r, int o, int ofs, int n)
 {
   int data_type;
   int j;
@@ -413,7 +398,7 @@ void process_pixel_data_sub_block (dvb_spu_decoder_t * this, int r, int o, int o
   dvbsub->i = j;
 }
 
-void process_page_composition_segment (dvb_spu_decoder_t * this)
+static void process_page_composition_segment (dvb_spu_decoder_t * this)
 {
   int segment_length;
   int region_id, region_x, region_y;
@@ -459,7 +444,7 @@ void process_page_composition_segment (dvb_spu_decoder_t * this)
 }
 
 
-void process_region_composition_segment (dvb_spu_decoder_t * this)
+static void process_region_composition_segment (dvb_spu_decoder_t * this)
 {
   int segment_length,
     region_id,
@@ -528,7 +513,7 @@ void process_region_composition_segment (dvb_spu_decoder_t * this)
 
 }
 
-void process_object_data_segment (dvb_spu_decoder_t * this)
+static void process_object_data_segment (dvb_spu_decoder_t * this)
 {
   int segment_length, object_id, object_version_number, object_coding_method, non_modifying_colour_flag;
 
@@ -637,7 +622,7 @@ static void* dvbsub_timer_func(void *this_gen)
   return NULL;
 }
 
-void downscale_region_image( region_t *reg, unsigned char *dest, int dest_width )
+static void downscale_region_image( region_t *reg, unsigned char *dest, int dest_width )
 {
   float i, k, inc=reg->width/(float)dest_width;
   int j;
@@ -648,7 +633,7 @@ void downscale_region_image( region_t *reg, unsigned char *dest, int dest_width 
   }
 }
 
-void draw_subtitles (dvb_spu_decoder_t * this)
+static void draw_subtitles (dvb_spu_decoder_t * this)
 {
   int r;
   int display=0;
