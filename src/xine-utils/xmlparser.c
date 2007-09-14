@@ -22,6 +22,10 @@
  *
  */
 
+#ifdef XINE_COMPILE
+# include "config.h"
+#endif
+
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -226,10 +230,15 @@ static int xml_parser_get_node_internal (xml_node_t *current_node, char *root_na
 	case (T_DATA):
 	  /* current data */
 	  if (current_node->data) {
-	    /* avoid a memory leak */
-	    free(current_node->data);
+	    /* Append to existing text. FIXME - should use a child node */
+	    char *data, *decoded = lexer_decode_entities (tok);
+	    asprintf (&data, "%s%s", current_node->data, decoded);
+	    free (decoded);
+	    free (current_node->data);
+	    current_node->data = data;
 	  }
-	  current_node->data = lexer_decode_entities(tok);
+	  else
+	    current_node->data = lexer_decode_entities (tok);
 	  lprintf("info: node data : %s\n", current_node->data);
 	  break;
 	default:
