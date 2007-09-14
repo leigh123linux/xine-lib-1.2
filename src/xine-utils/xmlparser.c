@@ -672,10 +672,6 @@ int xml_parser_build_tree_with_options(xml_node_t **root_node, int flags) {
   return res;
 }
 
-int xml_parser_build_tree_relaxed(xml_node_t **root_node, int relaxed) {
-  return xml_parser_build_tree_with_options (root_node, relaxed ? XML_PARSER_RELAXED : 0);
-}
-
 int xml_parser_build_tree(xml_node_t **root_node) {
   return xml_parser_build_tree_with_options (root_node, 0);
 }
