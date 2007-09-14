@@ -37,6 +37,8 @@ xine-lib (1.1.90) (Unreleased)
   * The XML parser no longer ignores <?...?> elements.
     Such elements are handled as if they were after the XML content for
     compatibility reasons, though they must appear before it.
+  * The XML parser handles CDATA elements.
+  * Text handling within XML is improved.
 
 xine-lib (1.1.9) (unreleased)
   * Fix dvd://.../title[.chapter] handling (somewhat broken in 1.1.8).
