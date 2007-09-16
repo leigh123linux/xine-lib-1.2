@@ -38,7 +38,7 @@ AC_COMPILE_IFELSE(
 
 int main() {
   DirectDrawCreate(0, NULL, 0);
-  DirectsoundCreate(0, NULL, 0);
+  DirectSoundCreate(0, NULL, 0);
   
   return 0;
 }
