@@ -42,7 +42,7 @@
 #ifdef XINE_COMPILE
 #include "xineutils.h"
 #else
-#define lprintf printf
+#define lprintf(...)
 #define xine_xmalloc malloc
 #endif
 #include "xmllexer.h"
