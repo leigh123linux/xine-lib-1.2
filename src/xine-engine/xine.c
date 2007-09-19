@@ -70,6 +70,7 @@
 #include "metronom.h"
 #include "configfile.h"
 #include "osd.h"
+#include "spu.h"
 
 #include "xineutils.h"
 #include "compat.h"
@@ -730,9 +731,10 @@ xine_stream_t *xine_stream_new (xine_t *this,
   /*
    * osd
    */
-  if (vo)
+  if (vo) {
+    _x_spu_misc_init (this);
     stream->osd_renderer = _x_osd_renderer_init(stream);
-  else
+  } else
     stream->osd_renderer = NULL;
 
   /*

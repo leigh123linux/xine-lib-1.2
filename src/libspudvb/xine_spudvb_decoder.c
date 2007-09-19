@@ -30,6 +30,7 @@
 #include "pthread.h"
 #include <errno.h>
 #include "xine_internal.h"
+#include "spu.h"
 #include "osd.h"
 #define MAX_REGIONS 7
 
@@ -292,6 +293,24 @@ static void decode_4bit_pixel_code_string (dvb_spu_decoder_t * this, int r, int 
   }
 }
 
+static void recalculate_trans (dvb_spu_decoder_t *this)
+{
+  dvbsub_func_t *const dvbsub = this->dvbsub;
+  xine_spu_opacity_t opacity;
+  int i;
+
+  _x_spu_get_opacity (this->stream->xine, &opacity);
+  for (i = 0; i < MAX_REGIONS * 256; ++i) {
+    /* ETSI-300-743 says "full transparency if Y == 0". */
+    if (dvbsub->colours[i].y == 0)
+      dvbsub->trans[i] = 0;
+    else {
+      int v = _x_spu_calculate_opacity (&dvbsub->colours[i], dvbsub->colours[i].foo, &opacity);
+      dvbsub->trans[i] = v * 14 / 255 + 1;
+    }
+  }
+    
+}
 
 static void set_clut(dvb_spu_decoder_t *this,int CLUT_id,int CLUT_entry_id,int Y_value, int Cr_value, int Cb_value, int T_value) {
  
@@ -304,13 +323,7 @@ static void set_clut(dvb_spu_decoder_t *this,int CLUT_id,int CLUT_entry_id,int Y
   dvbsub->colours[(CLUT_id*256)+CLUT_entry_id].y=Y_value;
   dvbsub->colours[(CLUT_id*256)+CLUT_entry_id].cr=Cr_value;
   dvbsub->colours[(CLUT_id*256)+CLUT_entry_id].cb=Cb_value;
-
-  if (Y_value==0) {
-    dvbsub->trans[(CLUT_id*256)+CLUT_entry_id]=T_value;
-  } else {
-    dvbsub->trans[(CLUT_id*256)+CLUT_entry_id]=255;
-  }
-
+  dvbsub->colours[(CLUT_id*256)+CLUT_entry_id].foo = T_value;
 }
 
 static void process_CLUT_definition_segment(dvb_spu_decoder_t *this) {
@@ -816,6 +829,7 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
               process_object_data_segment (this);
               break;
             case 0x80:		/* Page is now completely rendered */
+              recalculate_trans(this);
 	      draw_subtitles( this );
               break;
             default:
@@ -909,6 +923,18 @@ static spu_decoder_t *dvb_spu_class_open_plugin (spu_decoder_class_t * class_gen
     this->dvbsub->regions[i].img = NULL;
     this->dvbsub->regions[i].osd = NULL;
     this->dvbsub->regions[i].CLUT_id = 0;
+  }
+
+  {
+    xine_spu_opacity_t opacity;
+    static const clut_t black = { 0, 0, 0, 0 };
+    int t;
+
+    _x_spu_get_opacity (this->stream->xine, &opacity);
+    t = _x_spu_calculate_opacity (&black, 0, &opacity);
+
+    for (i = 0; i < MAX_REGIONS * 256; i++)
+      this->dvbsub->colours[i].foo = t;
   }
 
   pthread_mutex_init(&this->dvbsub_osd_mutex, NULL);

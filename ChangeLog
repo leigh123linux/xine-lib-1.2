@@ -39,6 +39,7 @@ xine-lib (1.1.90) (Unreleased)
     compatibility reasons, though they must appear before it.
   * The XML parser handles CDATA elements.
   * Text handling within XML is improved.
+  * DVB subtitles' opacity is now controllable.
 
 xine-lib (1.1.9) (unreleased)
   * Fix dvd://.../title[.chapter] handling (somewhat broken in 1.1.8).
