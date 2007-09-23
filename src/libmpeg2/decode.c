@@ -484,7 +484,7 @@ static inline int parse_chunk (mpeg2dec_t * mpeg2dec, int code,
             /* from the decoder to report the AFD change in display order and not */
             /* in decoding order like it happens below for now. */
             _x_stream_info_set(mpeg2dec->stream, XINE_STREAM_INFO_VIDEO_AFD, mpeg2dec->afd_value_seen);
-fprintf(stderr, "AFD changed from %d to %d\n", mpeg2dec->afd_value_reported, mpeg2dec->afd_value_seen);
+            lprintf ("AFD changed from %d to %d\n", mpeg2dec->afd_value_reported, mpeg2dec->afd_value_seen);
             mpeg2dec->afd_value_reported = mpeg2dec->afd_value_seen;
         }
 

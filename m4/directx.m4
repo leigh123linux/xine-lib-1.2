@@ -28,7 +28,7 @@ AC_DEFUN([AM_PATH_DIRECTX], [
                                          #include <windows.h>
                                          #include <ddraw.h>
                                          #include <dsound.h>]],
-                                       [[DirectDrawCreate(0, NULL, 0); DirectsoundCreate(0, NULL, 0)]])],
+                                       [[DirectDrawCreate(0, NULL, 0); DirectSoundCreate(0, NULL, 0)]])],
                       [have_directx=yes], [have_directx=no])
     CPPFLAGS="$ac_save_CPPFLAGS"
     LIBS="$ac_save_LIBS"
