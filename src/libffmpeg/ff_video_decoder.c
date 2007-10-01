@@ -1301,7 +1301,10 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
                                                 this->aspect_ratio, 
                                                 this->output_format,
                                                 VO_BOTH_FIELDS|this->frame_flags);
-      img->pts       = 0;
+      /* set PTS to allow early syncing */
+      img->pts       = this->pts;
+      this->pts      = 0;
+
       img->duration  = this->video_step;
       img->bad_frame = 1;
       this->skipframes = img->draw(img, this->stream);
