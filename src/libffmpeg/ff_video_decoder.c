@@ -1294,10 +1294,10 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
     }
 
     if (!got_one_picture) {
-      /* skipped frame, output a bad frame */
+      /* skipped frame, output a bad frame (of size 1x1 when size still uninitialized) */
       img = this->stream->video_out->get_frame (this->stream->video_out,
-                                                this->bih.biWidth,
-                                                this->bih.biHeight,
+                                                (this->bih.biWidth <= 0) ? 1 : this->bih.biWidth,
+                                                (this->bih.biHeight <= 0) ? 1 : this->bih.biHeight,
                                                 this->aspect_ratio, 
                                                 this->output_format,
                                                 VO_BOTH_FIELDS|this->frame_flags);
