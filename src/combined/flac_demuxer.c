@@ -55,8 +55,6 @@
 #include "xineutils.h"
 #include "../demuxers/demux.h"
 
-#include "demux_flac.h"
-
 #ifndef LEGACY_FLAC
 # define FLAC__SeekableStreamDecoder FLAC__StreamDecoder
 #endif
