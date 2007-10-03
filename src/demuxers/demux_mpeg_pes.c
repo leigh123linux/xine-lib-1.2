@@ -1110,7 +1110,7 @@ static int32_t parse_video_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_elemen
     uint8_t *pp = p + 2, *pp_limit = p + payload_size - 1;
     while (0 < pp && pp < pp_limit) {
       if (pp[0] == 0x01 && pp[-1] == 0x00 && pp[-2] == 0x00) {
-        if (pp[1] >= 0x80) { /* MPEG 1/2 start code */
+        if (pp[1] >= 0x80 || !pp[1]) { /* MPEG 1/2 start code */
           this->mpeg12_h264_detected = 2;
           break;
         } else {

@@ -65,6 +65,7 @@ typedef struct ff_video_class_s {
   video_decoder_class_t   decoder_class;
 
   int                     pp_quality;
+  int                     thread_count;
   
   xine_t                 *xine;
 } ff_video_class_t;
@@ -366,6 +367,12 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_HANDLED, 0);
     return;
   }
+
+  if (this->class->thread_count > 1) {
+    avcodec_thread_init(this->context, this->class->thread_count);
+    this->context->thread_count = this->class->thread_count;
+  }
+
   pthread_mutex_unlock(&ffmpeg_lock);
 
   lprintf("lavc decoder opened\n");
@@ -418,6 +425,12 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
       break;
   }
 
+}
+
+static void thread_count_cb(void *user_data, xine_cfg_entry_t *entry) {
+  ff_video_class_t   *class = (ff_video_class_t *) user_data;
+  
+  class->thread_count = entry->num_value;
 }
 
 static void pp_quality_cb(void *user_data, xine_cfg_entry_t *entry) {
@@ -1292,14 +1305,17 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
     }
 
     if (!got_one_picture) {
-      /* skipped frame, output a bad frame */
+      /* skipped frame, output a bad frame (of size 1x1 when size still uninitialized) */
       img = this->stream->video_out->get_frame (this->stream->video_out,
-                                                this->bih.biWidth,
-                                                this->bih.biHeight,
+                                                (this->bih.biWidth <= 0) ? 1 : this->bih.biWidth,
+                                                (this->bih.biHeight <= 0) ? 1 : this->bih.biHeight,
                                                 this->aspect_ratio, 
                                                 this->output_format,
                                                 VO_BOTH_FIELDS|this->frame_flags);
-      img->pts       = 0;
+      /* set PTS to allow early syncing */
+      img->pts       = this->pts;
+      this->pts      = 0;
+
       img->duration  = this->video_step;
       img->bad_frame = 1;
       this->skipframes = img->draw(img, this->stream);
@@ -1525,6 +1541,15 @@ void *init_video_plugin (xine_t *xine, void *data) {
       "too much."),
     10, pp_quality_cb, this);
   
+  this->thread_count = xine->config->register_num(config, "video.processing.ffmpeg_thread_count", 1, 
+    _("FFmpeg video decoding thread count"),
+    _("You can adjust the number of video decoding threads which FFmpeg may use.\n"
+      "Higher values should speed up decoding but it depends on the codec used "
+      "whether parallel decoding is supported. A rule of thumb is to have one "
+      "decoding thread per logical CPU (typically 1 to 4). A change will take "
+      "effect with playing the next stream."),
+    10, thread_count_cb, this);
+
   return this;
 }
 

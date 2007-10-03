@@ -606,11 +606,6 @@ static XvImage *create_ximage (xxmc_driver_t *this, XShmSegmentInfo *shminfo,
   unsigned int  xv_format;
   XvImage      *image = NULL;
 
-  if (width <= 0)
-    width = 1;
-  if (height <= 0)
-    height = 1;
-
   if (this->use_pitch_alignment) {
     width = (width + 7) & ~0x7;
   }

@@ -46,6 +46,10 @@ xine-lib (1.1.9) (unreleased)
   * Fix switching DVB subtitles channels.
   * DVB sub: switch to dyn mem alloc and allow multiple CLUTs per page.
   * Check if DVB sub PTS is reliable and show sub immediately if it's not.
+  * Fix incorrect H.264 detection on successive MPEG1/2 B frames.
+  * Add UI option to configure FFmpeg's video decoder thread count.
+  * Improve syncing of audio and video in the presence of bad frames.
+  * Improve handling of invalid or unknown frame sizes.
 
 xine-lib (1.1.8)
   * Send a channel-changed event to the frontend when receiving the SYNC
