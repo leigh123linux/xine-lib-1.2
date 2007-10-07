@@ -175,11 +175,6 @@ static XImage *create_ximage (xshm_driver_t *this, XShmSegmentInfo *shminfo,
 			      int width, int height) {
   XImage *myimage = NULL;
 
-  if (width <= 0)
-    width = 1;
-  if (height <= 0)
-    height = 1;
-
   if (this->use_shm) {
 
     /*
