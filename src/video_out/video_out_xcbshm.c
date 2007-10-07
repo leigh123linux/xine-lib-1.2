@@ -131,11 +131,6 @@ typedef struct {
  */
 static void create_ximage(xshm_driver_t *this, xshm_frame_t *frame, int width, int height)
 {
-  if (width <= 0)
-    width = 1;
-  if (height <= 0)
-    height = 1;
-
   frame->bytes_per_line = ((this->bpp * width + this->scanline_pad - 1) &
 			   (~(this->scanline_pad - 1))) >> 3;
 

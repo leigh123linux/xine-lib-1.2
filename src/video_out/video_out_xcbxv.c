@@ -211,11 +211,6 @@ static void create_ximage(xv_driver_t *this, xv_frame_t *frame, int width, int h
 
   unsigned int length;
 
-  if (width <= 0)
-    width = 1;
-  if (height <= 0)
-    height = 1;
-
   if (this->use_pitch_alignment) {
     width = (width + 7) & ~0x7;
   }
