@@ -1,5 +1,8 @@
 xine-lib (1.1.90) (Unreleased)
   * Add support for VDR.
+  * xine-config is deprecated in favour of pkg-config libxine.
+    Use "pkgconfig --variable=foo libxine" where you previously used
+    "xine-config --foo".
   * Reorder and modify public structures to reduce the holes caused by padding
     especially on 64-bit architectures.
   * Remove the buttons array from video_overlay, as the feature linked to that

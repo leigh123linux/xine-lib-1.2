@@ -161,7 +161,7 @@
    </para>
    <para>
     The default value for XINE_PLUGINDIR can be obtained using the
-    <command>xine-config --plugindir</command> command.
+    <command>pkg-config --variable=plugindir libxine</command> command.
    </para>
   </sect2>
   <sect2>

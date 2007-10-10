@@ -47,11 +47,13 @@ dnl AM_PATH_XINE([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND ]]])
 dnl Test for XINE, and define XINE_CFLAGS and XINE_LIBS
 dnl
 AC_DEFUN([AM_PATH_XINE], [
-    AC_ARG_VAR([XINE_CONFIG], [Full path to xine-config])
+    AC_REQUIRE([PKG_CHECK_MODULES])
+
+    AC_ARG_VAR([XINE_CONFIG], [Full path to xine-config (xine-lib < 1.2)])
     AC_ARG_WITH([xine-prefix],
-                [AS_HELP_STRING([--with-xine-prefix], [prefix where xine-lib is installed (optional)])])
+                [AS_HELP_STRING([--with-xine-prefix], [prefix where xine-lib is installed (optional, xine-lib < 1.2)])])
     AC_ARG_WITH([xine-exec-prefix],
-                [AS_HELP_STRING([--with-xine-exec-prefix], [exec prefix where xine-lib is installed (optional)])])
+                [AS_HELP_STRING([--with-xine-exec-prefix], [exec prefix where xine-lib is installed (optional, xine-lib < 1.2)])])
 
     xine_config_args=""
     if test x"$with_xine_exec_prefix" != x""; then
@@ -65,15 +67,19 @@ AC_DEFUN([AM_PATH_XINE], [
 
     min_xine_version=ifelse([$1], , [0.5.0], [$1])
     AC_PATH_TOOL([XINE_CONFIG], [xine-config], [no])
-    AC_MSG_CHECKING([for XINE-LIB version >= $min_xine_version])
     if test x"$XINE_CONFIG" = x"no"; then
-        AC_MSG_RESULT([unknown])
-        AC_MSG_NOTICE([
-*** If xine-lib was installed in PREFIX, make sure PREFIX/bin is in your path,
-*** or set the XINE_CONFIG environment variable to the full path to the
-*** xine-config shell script.
-        ])
+	min_xine_version=ifelse([$1], , [1.2.0], [$1])
+	PKG_CHECK_MODULES([XINE], [libxine >= $min_xine_version],
+	    [XINE_VERSION="`"$PKG_CONFIG" --modversion libxine`"
+	    XINE_ACFLAGS="`"$PKG_CONFIG" --variable=acflags libxine`"
+	    xine_data_dir="`"$PKG_CONFIG" --variable=datadir libxine`"
+	    xine_script_dir="`"$PKG_CONFIG" --variable=scriptdir libxine`"
+	    xine_plugin_dir="`"$PKG_CONFIG" --variable=plugindir libxine`"
+	    xine_locale_dir="`"$PKG_CONFIG" --variable=localedir libxine`"
+	    $2],
+	    [$3])
     else
+        AC_MSG_CHECKING([for XINE-LIB version >= $min_xine_version])
         XINE_CFLAGS="`$XINE_CONFIG $xine_config_args --cflags`"
         XINE_LIBS="`$XINE_CONFIG $xine_config_args --libs`"
         XINE_VERSION="`$XINE_CONFIG $xine_config_args --version`"
@@ -85,7 +91,9 @@ AC_DEFUN([AM_PATH_XINE], [
         _XINE_VERSION_CHECK([$min_xine_version], [$XINE_VERSION],
                             [xine_version_ok=yes; AC_MSG_RESULT([yes, $XINE_VERSION])],
                             [xine_version_ok=no;  AC_MSG_RESULT([no, $XINE_VERSION])])
-        if test x"$xine_version_ok" != x"yes"; then
+	if test x"$xine_version_ok" = x"yes"; then
+	    ifelse([$2], , [:], [$2])
+	else
             AC_MSG_NOTICE([
 *** You need a version of xine-lib newer than $XINE_VERSION.
 *** The latest version of xine-lib is always available from:
@@ -99,15 +107,11 @@ AC_DEFUN([AM_PATH_XINE], [
 *** to modify your LD_LIBRARY_PATH enviroment variable, or edit
 *** /etc/ld.so.conf so that the correct libraries are found at run-time.
             ])
+	    ifelse([$3], , [:], [$3])
         fi
     fi
+
     AC_SUBST(XINE_CFLAGS)
     AC_SUBST(XINE_LIBS)
     AC_SUBST(XINE_ACFLAGS)
-
-    if test x"$xine_version_ok" = x"yes"; then
-        ifelse([$2], , [:], [$2])
-    else
-        ifelse([$3], , [:], [$3])
-    fi
 ])
