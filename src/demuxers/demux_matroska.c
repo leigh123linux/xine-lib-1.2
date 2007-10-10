@@ -1863,7 +1863,7 @@ static int parse_block (demux_matroska_t *this, uint64_t block_size,
 
   gap = flags & 1;
   lacing = (flags >> 1) & 0x3;
-  fprintf(stderr, "lacing: %x\n", lacing);
+/*fprintf(stderr, "lacing: %x\n", lacing);*/
 
   if (!find_track_by_id(this, (int)track_num, &track)) {
      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
