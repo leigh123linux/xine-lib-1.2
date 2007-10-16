@@ -2386,6 +2386,7 @@ static void event_handler(void *user_data, const xine_event_t *event)
   case XINE_EVENT_VDR_CHANNELPREVIOUS: key = key_channel_previous; break;
   case XINE_EVENT_INPUT_NEXT:          key = key_next;             break;
   case XINE_EVENT_INPUT_PREVIOUS:      key = key_previous;         break;
+  case XINE_EVENT_VDR_SUBTITLES:       key = key_subtitles;        break;
   default:
     return;
   }

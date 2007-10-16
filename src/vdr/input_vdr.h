@@ -3,7 +3,7 @@
 #define __INPUT_VDR_H
 
 
-#define XINE_INPUT_VDR_VERSION 711
+#define XINE_INPUT_VDR_VERSION 712
 
 
 enum funcs
@@ -99,6 +99,7 @@ enum keys
   key_channel_previous,
   key_next,
   key_previous,
+  key_subtitles,
 };
 
 
