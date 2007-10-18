@@ -65,9 +65,7 @@ AC_DEFUN([AM_PATH_XINE], [
         test x"$XINE_CONFIG" = x"" && XINE_CONFIG="$with_xine_prefix/bin/xine-config"
     fi
 
-    min_xine_version=ifelse([$1], , [0.5.0], [$1])
-    AC_PATH_TOOL([XINE_CONFIG], [xine-config], [no])
-    if test x"$XINE_CONFIG" = x"no"; then
+    if "$PKG_CONFIG" --atleast-version 1.1.90 libxine; then
 	min_xine_version=ifelse([$1], , [1.2.0], [$1])
 	PKG_CHECK_MODULES([XINE], [libxine >= $min_xine_version],
 	    [XINE_VERSION="`"$PKG_CONFIG" --modversion libxine`"
@@ -79,6 +77,8 @@ AC_DEFUN([AM_PATH_XINE], [
 	    $2],
 	    [$3])
     else
+	min_xine_version=ifelse([$1], , [0.5.0], [$1])
+	AC_PATH_TOOL([XINE_CONFIG], [xine-config], [no])
         AC_MSG_CHECKING([for XINE-LIB version >= $min_xine_version])
         XINE_CFLAGS="`$XINE_CONFIG $xine_config_args --cflags`"
         XINE_LIBS="`$XINE_CONFIG $xine_config_args --libs`"
