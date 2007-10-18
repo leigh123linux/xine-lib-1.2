@@ -11,10 +11,7 @@ xine-config - script to get information about the installed version of libxine
 \fIxine\-config\fP is a tool that is used to determine
 the compiler and linker flags that should be used to compile
 and link programs that use \fIlibxine\fP. It can also be used to determine
-the directories where \fIlibxine\fP expects plugins and skins.
-Finally, it's also used internally
-by the .m4 macros for GNU autoconf that are included with \fIxine-lib\fP.
-.
+the directories where \fIlibxine\fP expects plugins.
 .SH OPTIONS
 .l
 \fIxine-config\fP accepts the following options, passing them on (possibly
@@ -32,7 +29,7 @@ Passed on unmodified.
 Print the directory where \fIlibxine\fP plugins are stored/expected.
 .TP 8
 .B  \-\-prefix=PREFIX
-\-\-define-variable=prefix=PREFIX
+\-\-define\-variable=prefix=PREFIX
 .br
 If specified, use PREFIX instead of the installation prefix that \fIxine-lib\fP
 was built with. This option is also used for the exec prefix if
@@ -40,7 +37,7 @@ was built with. This option is also used for the exec prefix if
 
 .TP 8
 .B  \-\-exec\-prefix=PREFIX
-\-\-define-variable=exec_prefix=PREFIX
+\-\-define\-variable=exec_prefix=PREFIX
 .br
 If specified, use PREFIX instead of the installation exec prefix that
 \fIxine-lib\fP was built with.
