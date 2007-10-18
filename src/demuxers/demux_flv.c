@@ -183,10 +183,7 @@ static int open_flv_file(demux_flv_t *this) {
   this->start = _X_BE_32(&buffer[5]);
   this->size = this->input->get_length(this->input);
    
-  if (INPUT_IS_SEEKABLE(this->input))
-    this->input->seek(this->input, this->start, SEEK_SET);
-  else if (this->start > 9)
-    this->input->seek(this->input, this->start-9, SEEK_CUR);
+  this->input->seek(this->input, this->start, SEEK_SET);
   
   lprintf("  qualified FLV file, repositioned @ offset 0x%" PRIxMAX "\n", 
           (intmax_t)this->start);
@@ -340,7 +337,7 @@ static void parse_flv_script(demux_flv_t *this, int size) {
   free(buf);
 }
 
-static int read_flv_packet(demux_flv_t *this) {
+static int read_flv_packet(demux_flv_t *this, int preview) {
   fifo_buffer_t *fifo = NULL;
   buf_element_t *buf  = NULL;
   unsigned char  buffer[12];
@@ -487,7 +484,9 @@ static int read_flv_packet(demux_flv_t *this) {
       buf = fifo->buffer_pool_alloc(fifo);
       buf->type = buf_type;
       buf->pts = (int64_t) pts * 90;
-      check_newpts(this, buf->pts, (tag_type == FLV_TAG_TYPE_VIDEO));
+      
+      if (!preview)
+        check_newpts(this, buf->pts, (tag_type == FLV_TAG_TYPE_VIDEO));
       
       buf->extra_info->input_time = pts;
       if (this->input->get_length(this->input)) {
@@ -502,6 +501,8 @@ static int read_flv_packet(demux_flv_t *this) {
       remaining_bytes -= buf->size;
 
       buf->decoder_flags = buf_flags;
+      if (preview)
+        buf->decoder_flags |= BUF_FLAG_PREVIEW;
       if (!remaining_bytes)
         buf->decoder_flags |= BUF_FLAG_FRAME_END;
 
@@ -609,7 +610,7 @@ static void seek_flv_file(demux_flv_t *this, int seek_pts) {
 static int demux_flv_send_chunk(demux_plugin_t *this_gen) {
   demux_flv_t *this = (demux_flv_t *) this_gen;
   
-  return read_flv_packet(this);
+  return read_flv_packet(this, 0);
 }
 
 static void demux_flv_send_headers(demux_plugin_t *this_gen) {
@@ -632,7 +633,7 @@ static void demux_flv_send_headers(demux_plugin_t *this_gen) {
 
   /* find first audio/video packets and send headers */
   for (i = 0; i < 20; i++) {
-    if (read_flv_packet(this) != DEMUX_OK)
+    if (read_flv_packet(this, 1) != DEMUX_OK)
       break;
     if (((this->flags & FLV_FLAG_HAS_VIDEO) && this->got_video) &&
         ((this->flags & FLV_FLAG_HAS_AUDIO) && this->got_audio)) {
