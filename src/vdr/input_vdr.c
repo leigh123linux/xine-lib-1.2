@@ -34,6 +34,10 @@
 #include <errno.h>
 #include <pthread.h>
 
+#include <sys/socket.h>
+#include <resolv.h>
+#include <netdb.h>
+
 #define LOG_MODULE "input_vdr"
 #define LOG_VERBOSE
 /*
@@ -50,8 +54,6 @@
 
 #define VDR_MAX_NUM_WINDOWS 16
 #define VDR_ABS_FIFO_DIR "/tmp/vdr-xine"
-
-
 
 #define BUF_SIZE 1024
 
@@ -1547,6 +1549,7 @@ static int vdr_plugin_get_optional_data(input_plugin_t *this_gen,
 {
   vdr_input_plugin_t *this = (vdr_input_plugin_t *)this_gen;
   int preview_size = (this->preview_size > MAX_PREVIEW_SIZE) ? MAX_PREVIEW_SIZE : this->preview_size;
+  (void)preview_size;
 /*
   switch (data_type)
   {
@@ -2116,108 +2119,227 @@ static uint8_t preview_mpg_data[] =
 
 static uint8_t preview_data[ sizeof (preview_mpg_data) + ((sizeof (preview_mpg_data) - 1) / (2048 - 6 - 3) + 1) * (6 + 3) ];
 
+static int vdr_plugin_open_fifo_mrl(input_plugin_t *this_gen)
+{
+  vdr_input_plugin_t *this = (vdr_input_plugin_t *)this_gen;
+  char *filename;
+
+  filename = (char *)&this->mrl[ 4 ];
+  this->fh = open(filename, O_RDONLY | O_NONBLOCK);
+
+  lprintf("filename '%s'\n", filename);
+
+  if (this->fh == -1)
+  {
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+            _(LOG_MODULE ": failed to open '%s' (%s)\n"),
+            filename,
+            strerror(errno));
+
+    return 0;
+  }
+
+  {
+    struct pollfd poll_fh = { this->fh, POLLIN, 0 };
+
+    int r = poll(&poll_fh, 1, 300);
+    if (1 != r)
+    {
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              _(LOG_MODULE ": failed to open '%s' (%s)\n"),
+              filename,
+              _("timeout expired during setup phase"));
+
+      return 0;
+    }
+  }
+
+  fcntl(this->fh, F_SETFL, ~O_NONBLOCK & fcntl(this->fh, F_GETFL, 0));
+
+  {
+    char *filename_control = 0;
+    asprintf(&filename_control, "%s.control", filename);
+
+    this->fh_control = open(filename_control, O_RDONLY);
+
+    if (this->fh_control == -1) {
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              _(LOG_MODULE ": failed to open '%s' (%s)\n"),
+              filename_control,
+              strerror(errno));
+
+      free(filename_control);
+      return 0;
+    }
+
+    free(filename_control);
+  }
+
+  {
+    char *filename_result = 0;
+    asprintf(&filename_result, "%s.result", filename);
+
+    this->fh_result = open(filename_result, O_WRONLY);
+
+    if (this->fh_result == -1) {
+      perror("failed");
+
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              _(LOG_MODULE ": failed to open '%s' (%s)\n"),
+              filename_result,
+              strerror(errno));
+
+      free(filename_result);
+      return 0;
+    }
+
+    free(filename_result);
+  }
+
+  {
+    char *filename_event = 0;
+    asprintf(&filename_event, "%s.event", filename);
+
+    this->fh_event = open(filename_event, O_WRONLY);
+
+    if (this->fh_event == -1) {
+      perror("failed");
+
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              _(LOG_MODULE ": failed to open '%s' (%s)\n"),
+              filename_event,
+              strerror(errno));
+
+      free(filename_event);
+      return 0;
+    }
+
+    free(filename_event);
+  }
+ 
+  return 1;
+}
+
+static int vdr_plugin_open_socket(vdr_input_plugin_t *this, struct hostent *host, unsigned short port)
+{
+  int fd;
+  struct sockaddr_in sain;
+  struct in_addr iaddr;
+
+  if ((fd = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+  {
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+            _(LOG_MODULE ": failed to create socket for port %d (%s)\n"),
+            port, strerror(errno));
+    return -1;
+  }
+
+  iaddr.s_addr = *((unsigned int *)host->h_addr_list[0]);
+
+  sain.sin_port = htons(port);
+  sain.sin_family = AF_INET;
+  sain.sin_addr = iaddr;
+
+  if (connect(fd, (struct sockaddr *)&sain, sizeof (sain)) < 0)
+  {
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+            _(LOG_MODULE ": failed to connect to port %d (%s)\n"), port,
+            strerror(errno));
+
+    return -1;
+  }
+
+  xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+          _(LOG_MODULE ": socket opening (port %d) successful, fd = %d\n"), port, fd);
+
+  return fd;
+}    
+
+static int vdr_plugin_open_sockets(vdr_input_plugin_t *this)
+{
+  struct hostent *host;
+  char *mrl_port = strchr(&this->mrl[6], ':');
+  int port = 18701;
+
+  if (mrl_port)
+  {
+    port = atoi(mrl_port + 1);
+    *mrl_port = 0;
+  }
+
+  host = gethostbyname(&this->mrl[6]);
+ 
+  xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+          _(LOG_MODULE ": connecting to vdr.\n"));
+
+  if (!host)
+  {
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+            _(LOG_MODULE ": failed to resolve hostname '%s' (%s)\n"),
+            &this->mrl[6],
+            strerror(errno));
+
+    return 0;
+  }
+
+  if ((this->fh = vdr_plugin_open_socket(this, host, port + 0)) == -1)
+    return 0;
+  
+  fcntl(this->fh, F_SETFL, ~O_NONBLOCK & fcntl(this->fh, F_GETFL, 0));
+  
+  if ((this->fh_control = vdr_plugin_open_socket(this, host, port + 1)) == -1)
+    return 0;
+
+  if ((this->fh_result = vdr_plugin_open_socket(this, host, port + 2)) == -1)
+    return 0;
+
+  if ((this->fh_event = vdr_plugin_open_socket(this, host, port + 3)) == -1)
+    return 0;
+
+  xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+          _(LOG_MODULE ": connecting to all sockets (port %d .. %d) was successful.\n"), port, port + 3);
+
+  return 1;
+}
+
+static int vdr_plugin_open_socket_mrl(input_plugin_t *this_gen)
+{
+  vdr_input_plugin_t *this = (vdr_input_plugin_t *)this_gen;
+
+  lprintf("input_vdr: connecting to vdr-xine-server...\n");
+ 
+  if (!vdr_plugin_open_sockets(this))
+    return 0;
+   
+  return 1;
+}
+
 static int vdr_plugin_open(input_plugin_t *this_gen)
 {
   vdr_input_plugin_t *this = (vdr_input_plugin_t *)this_gen;
 
   lprintf("trying to open '%s'...\n", this->mrl);
 
-  if (this->fh == -1)
+  if (this->fh == -1) 
   {
-    char *filename;
     int err = 0;
 
-    filename = (char *)&this->mrl[ 4 ];
-    this->fh = open(filename, O_RDONLY | O_NONBLOCK);
-
-    lprintf("filename '%s'\n", filename);
-
-    if (this->fh == -1)
+    if (!strncasecmp(&this->mrl[0], "vdr://", 6))
     {
-      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-              _(LOG_MODULE ": failed to open '%s' (%s)\n"),
-              filename,
-              strerror(errno));
-      
+      if (!vdr_plugin_open_socket_mrl(this_gen))
+        return 0;
+    }
+    else if (!strncasecmp(&this->mrl[0], "vdr:/", 5))
+    {
+      if (!vdr_plugin_open_fifo_mrl(this_gen))
+        return 0;
+    }
+    else
+    {
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+              _(LOG_MODULE ": MRL (%s) invalid! MRL should start with vdr:/path/to/fifo/stream or vdr://host:port where ':port' is optional.\n"),
+              strerror(err));
       return 0;
-    }
-
-    {
-      struct pollfd poll_fh = { this->fh, POLLIN, 0 };
-      
-      int r = poll(&poll_fh, 1, 300);      
-      if (1 != r)
-      {
-        xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-                _(LOG_MODULE ": failed to open '%s' (%s)\n"),
-                filename,
-                _("timeout expired during setup phase"));
-        
-        return 0;
-      }
-    }
-    
-    fcntl(this->fh, F_SETFL, ~O_NONBLOCK & fcntl(this->fh, F_GETFL, 0));
-    
-    {
-      char *filename_control = 0;
-      asprintf(&filename_control, "%s.control", filename);
-
-      this->fh_control = open(filename_control, O_RDONLY);
-
-      if (this->fh_control == -1) {
-        xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-                _(LOG_MODULE ": failed to open '%s' (%s)\n"),
-                filename_control,
-                strerror(errno));
-
-        free(filename_control);
-        return 0;
-      }
-
-      free(filename_control);      
-    }
-
-    {
-      char *filename_result = 0;
-      asprintf(&filename_result, "%s.result", filename);
-
-      this->fh_result = open(filename_result, O_WRONLY);
-
-      if (this->fh_result == -1) {
-        perror("failed");
-        
-        xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-                _(LOG_MODULE ": failed to open '%s' (%s)\n"),
-                filename_result,
-                strerror(errno));
-        
-        free(filename_result);
-        return 0;
-      }
-
-      free(filename_result);
-    }
-
-    {
-      char *filename_event = 0;
-      asprintf(&filename_event, "%s.event", filename);
-
-      this->fh_event = open(filename_event, O_WRONLY);
-
-      if (this->fh_event == -1) {
-        perror("failed");
-
-        xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-                _(LOG_MODULE ": failed to open '%s' (%s)\n"),
-                filename_event,
-                strerror(errno));
-        
-        free(filename_event);
-        return 0;
-      }
-
-      free(filename_event);
     }
 
     this->rpc_thread_shutdown = 0;
@@ -2231,7 +2353,6 @@ static int vdr_plugin_open(input_plugin_t *this_gen)
       return 0;
     }
   }
-
 
   /*
    * mrl accepted and opened successfully at this point
@@ -2402,7 +2523,11 @@ static input_plugin_t *vdr_class_get_instance(input_class_t *cls_gen, xine_strea
   vdr_input_plugin_t *this;
   char               *mrl = strdup(data);
 
-  if (!strncasecmp(mrl, "vdr:/", 5))
+  if (!strncasecmp(mrl, "vdr://", 6))
+  {
+    lprintf("host '%s'\n", (char *)&mrl[ 6 ]);
+  }
+  else if (!strncasecmp(mrl, "vdr:/", 5))
   {
     lprintf("filename '%s'\n", (char *)&mrl[ 4 ]);
   }
