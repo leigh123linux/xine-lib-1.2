@@ -182,7 +182,7 @@ static void event_handler_external(void *user_data, const xine_event_t *event)
   
   if (0 != internal_write_event_play_external(this, key))
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
-            _(LOG_MODULE ": input event write: %s.\n"), strerror(errno));
+            _("%s : input event write: %s.\n"), LOG_MODULE, strerror(errno));
 }
 
 static void external_stream_stop(vdr_input_plugin_t *this)
@@ -222,7 +222,7 @@ static void external_stream_play(vdr_input_plugin_t *this, char *file_name)
     
     if ( 0 != internal_write_event_play_external(this, key))
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
-              _(LOG_MODULE ": input event write: %s.\n"), strerror(errno));
+              _("%s: input event write: %s.\n"), LOG_MODULE, strerror(errno));
   }
 }
 
@@ -712,7 +712,7 @@ fprintf(stderr, "ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß\n");
           buf_element_t *buf = this->stream->video_fifo->buffer_pool_alloc(this->stream->video_fifo);
           if (!buf)
           {
-            xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _(LOG_MODULE ": buffer_pool_alloc() failed!\n"));
+            xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("%s: buffer_pool_alloc() failed!\n"), LOG_MODULE);
             return -1;
           }
           
@@ -781,8 +781,8 @@ fprintf(stderr, "ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß\n");
         
         xprintf(this->stream->xine
                 , XINE_VERBOSITY_LOG
-                , _(LOG_MODULE ": flush buffers (vb: %d, ab: %d, vf: %d, af: %d) %s.\n")
-                , vb, ab, vf, af
+                , _("%s: flush buffers (vb: %d, ab: %d, vf: %d, af: %d) %s.\n")
+                , LOG_MODULE, vb, ab, vf, af
                 , (timed_out ? "timed out" : "done"));
         
         {
@@ -1136,7 +1136,7 @@ fprintf(stderr, "ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß\n");
             buf_element_t *buf = this->stream->audio_fifo->buffer_pool_alloc(this->stream->audio_fifo);
             if (!buf)
             {
-              xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _(LOG_MODULE ": buffer_pool_alloc() failed!\n"));
+              xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("%s: buffer_pool_alloc() failed!\n"), LOG_MODULE);
               return -1;
             }
             
@@ -1475,7 +1475,7 @@ static void vdr_plugin_dispose(input_plugin_t *this_gen)
     struct timespec abstime;
     int ms_to_time_out = 10000;
 
-    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _(LOG_MODULE ": shutting down rpc thread (timeout: %d ms) ...\n"), ms_to_time_out);
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("%s: shutting down rpc thread (timeout: %d ms) ...\n"), LOG_MODULE, ms_to_time_out);
 
     pthread_mutex_lock(&this->rpc_thread_shutdown_lock);
 
@@ -1499,16 +1499,16 @@ static void vdr_plugin_dispose(input_plugin_t *this_gen)
       
       if (0 != pthread_cond_timedwait(&this->rpc_thread_shutdown_cond, &this->rpc_thread_shutdown_lock, &abstime))
       {
-        xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _(LOG_MODULE ": cancelling rpc thread in function %d...\n"), this->cur_func);
+        xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("%s: cancelling rpc thread in function %d...\n"), LOG_MODULE, this->cur_func);
         pthread_cancel(this->rpc_thread);
       }
     }
     
     pthread_mutex_unlock(&this->rpc_thread_shutdown_lock);
     
-    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _(LOG_MODULE ": joining rpc thread ...\n"));
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("%s: joining rpc thread ...\n"), LOG_MODULE);
     pthread_join(this->rpc_thread, 0);
-    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _(LOG_MODULE ": rpc thread joined.\n"));
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("%s: rpc thread joined.\n"), LOG_MODULE);
   }
 
   pthread_cond_destroy(&this->rpc_thread_shutdown_cond);
@@ -2132,7 +2132,7 @@ static int vdr_plugin_open_fifo_mrl(input_plugin_t *this_gen)
   if (this->fh == -1)
   {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-            _(LOG_MODULE ": failed to open '%s' (%s)\n"),
+            _("%s: failed to open '%s' (%s)\n"), LOG_MODULE,
             filename,
             strerror(errno));
 
@@ -2146,7 +2146,7 @@ static int vdr_plugin_open_fifo_mrl(input_plugin_t *this_gen)
     if (1 != r)
     {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-              _(LOG_MODULE ": failed to open '%s' (%s)\n"),
+              _("%s: failed to open '%s' (%s)\n"), LOG_MODULE,
               filename,
               _("timeout expired during setup phase"));
 
@@ -2164,7 +2164,7 @@ static int vdr_plugin_open_fifo_mrl(input_plugin_t *this_gen)
 
     if (this->fh_control == -1) {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-              _(LOG_MODULE ": failed to open '%s' (%s)\n"),
+              _("%s: failed to open '%s' (%s)\n"), LOG_MODULE,
               filename_control,
               strerror(errno));
 
@@ -2185,7 +2185,7 @@ static int vdr_plugin_open_fifo_mrl(input_plugin_t *this_gen)
       perror("failed");
 
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-              _(LOG_MODULE ": failed to open '%s' (%s)\n"),
+              _("%s: failed to open '%s' (%s)\n"), LOG_MODULE,
               filename_result,
               strerror(errno));
 
@@ -2206,7 +2206,7 @@ static int vdr_plugin_open_fifo_mrl(input_plugin_t *this_gen)
       perror("failed");
 
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-              _(LOG_MODULE ": failed to open '%s' (%s)\n"),
+              _("%s: failed to open '%s' (%s)\n"), LOG_MODULE,
               filename_event,
               strerror(errno));
 
@@ -2229,7 +2229,7 @@ static int vdr_plugin_open_socket(vdr_input_plugin_t *this, struct hostent *host
   if ((fd = socket(PF_INET, SOCK_STREAM, 0)) == -1)
   {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-            _(LOG_MODULE ": failed to create socket for port %d (%s)\n"),
+            _("%s: failed to create socket for port %d (%s)\n"), LOG_MODULE,
             port, strerror(errno));
     return -1;
   }
@@ -2243,14 +2243,14 @@ static int vdr_plugin_open_socket(vdr_input_plugin_t *this, struct hostent *host
   if (connect(fd, (struct sockaddr *)&sain, sizeof (sain)) < 0)
   {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-            _(LOG_MODULE ": failed to connect to port %d (%s)\n"), port,
+            _("%s: failed to connect to port %d (%s)\n"), LOG_MODULE, port,
             strerror(errno));
 
     return -1;
   }
 
   xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-          _(LOG_MODULE ": socket opening (port %d) successful, fd = %d\n"), port, fd);
+          _("%s: socket opening (port %d) successful, fd = %d\n"), LOG_MODULE, port, fd);
 
   return fd;
 }    
@@ -2270,12 +2270,12 @@ static int vdr_plugin_open_sockets(vdr_input_plugin_t *this)
   host = gethostbyname(&this->mrl[6]);
  
   xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
-          _(LOG_MODULE ": connecting to vdr.\n"));
+          _("%s: connecting to vdr.\n"), LOG_MODULE);
 
   if (!host)
   {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-            _(LOG_MODULE ": failed to resolve hostname '%s' (%s)\n"),
+            _("%s: failed to resolve hostname '%s' (%s)\n"), LOG_MODULE,
             &this->mrl[6],
             strerror(errno));
 
@@ -2297,7 +2297,7 @@ static int vdr_plugin_open_sockets(vdr_input_plugin_t *this)
     return 0;
 
   xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-          _(LOG_MODULE ": connecting to all sockets (port %d .. %d) was successful.\n"), port, port + 3);
+          _("%s: connecting to all sockets (port %d .. %d) was successful.\n"), LOG_MODULE, port, port + 3);
 
   return 1;
 }
@@ -2337,7 +2337,7 @@ static int vdr_plugin_open(input_plugin_t *this_gen)
     else
     {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
-              _(LOG_MODULE ": MRL (%s) invalid! MRL should start with vdr:/path/to/fifo/stream or vdr://host:port where ':port' is optional.\n"),
+              _("%s: MRL (%s) invalid! MRL should start with vdr:/path/to/fifo/stream or vdr://host:port where ':port' is optional.\n"), LOG_MODULE,
               strerror(err));
       return 0;
     }
@@ -2347,7 +2347,7 @@ static int vdr_plugin_open(input_plugin_t *this_gen)
                               vdr_rpc_thread_loop, (void *)this)) != 0)
     {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
-              _(LOG_MODULE ": can't create new thread (%s)\n"),
+              _("%s: can't create new thread (%s)\n"), LOG_MODULE,
               strerror(err));
       
       return 0;
@@ -2416,7 +2416,7 @@ static void event_handler(void *user_data, const xine_event_t *event)
 
     if (0 != internal_write_event_frame_size(this))
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
-              _(LOG_MODULE ": input event write: %s.\n"), strerror(errno));
+              _("%s: input event write: %s.\n"), LOG_MODULE, strerror(errno));
 
     adjust_zoom(this);
     return;
@@ -2514,7 +2514,7 @@ static void event_handler(void *user_data, const xine_event_t *event)
 
   if (0 != internal_write_event_key(this, key))
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
-            _(LOG_MODULE ": input event write: %s.\n"), strerror(errno));
+            _("%s: input event write: %s.\n"), LOG_MODULE, strerror(errno));
 }
 
 static input_plugin_t *vdr_class_get_instance(input_class_t *cls_gen, xine_stream_t *stream,
