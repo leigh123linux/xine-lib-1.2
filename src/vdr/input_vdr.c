@@ -2119,12 +2119,32 @@ static uint8_t preview_mpg_data[] =
 
 static uint8_t preview_data[ sizeof (preview_mpg_data) + ((sizeof (preview_mpg_data) - 1) / (2048 - 6 - 3) + 1) * (6 + 3) ];
 
+static int mrl_is_path (const char *mrl)
+{
+  const char *path = mrl + 4;
+  while (*++path == '/')
+    /**/;
+  return strchr (path, '/') || (path - mrl) > 6;
+}
+
+static inline const char *mrl_to_fifo (const char *mrl)
+{
+  /* vdr:///foo -> /foo */
+  return mrl + 3 + strspn (mrl + 4, "/");
+}
+
+static inline const char *mrl_to_host (const char *mrl)
+{
+  /* vdr://host:port -> host:port */
+  return strrchr (mrl, '/') + 1;
+}
+
 static int vdr_plugin_open_fifo_mrl(input_plugin_t *this_gen)
 {
   vdr_input_plugin_t *this = (vdr_input_plugin_t *)this_gen;
-  char *filename;
+  char *filename = strdup (mrl_to_fifo (this->mrl));
 
-  filename = (char *)&this->mrl[ 4 ];
+  _x_mrl_unescape (filename);
   this->fh = open(filename, O_RDONLY | O_NONBLOCK);
 
   lprintf("filename '%s'\n", filename);
@@ -2135,7 +2155,7 @@ static int vdr_plugin_open_fifo_mrl(input_plugin_t *this_gen)
             _("%s: failed to open '%s' (%s)\n"), LOG_MODULE,
             filename,
             strerror(errno));
-
+    free (filename);
     return 0;
   }
 
@@ -2149,7 +2169,7 @@ static int vdr_plugin_open_fifo_mrl(input_plugin_t *this_gen)
               _("%s: failed to open '%s' (%s)\n"), LOG_MODULE,
               filename,
               _("timeout expired during setup phase"));
-
+      free (filename);
       return 0;
     }
   }
@@ -2169,6 +2189,7 @@ static int vdr_plugin_open_fifo_mrl(input_plugin_t *this_gen)
               strerror(errno));
 
       free(filename_control);
+      free (filename);
       return 0;
     }
 
@@ -2190,6 +2211,7 @@ static int vdr_plugin_open_fifo_mrl(input_plugin_t *this_gen)
               strerror(errno));
 
       free(filename_result);
+      free (filename);
       return 0;
     }
 
@@ -2211,12 +2233,14 @@ static int vdr_plugin_open_fifo_mrl(input_plugin_t *this_gen)
               strerror(errno));
 
       free(filename_event);
+      free (filename);
       return 0;
     }
 
     free(filename_event);
   }
  
+  free (filename);
   return 1;
 }
 
@@ -2258,16 +2282,24 @@ static int vdr_plugin_open_socket(vdr_input_plugin_t *this, struct hostent *host
 static int vdr_plugin_open_sockets(vdr_input_plugin_t *this)
 {
   struct hostent *host;
-  char *mrl_port = strchr(&this->mrl[6], ':');
+  char *mrl_host = strdup (mrl_to_host (this->mrl));
+  char *mrl_port;
   int port = 18701;
 
+  mrl_port = strchr(mrl_host, '#');
+  if (mrl_port)
+    *mrl_port = 0; /* strip off things like '#demux:mpeg_pes' */
+
+  _x_mrl_unescape (mrl_host);
+
+  mrl_port = strchr(mrl_host, ':');
   if (mrl_port)
   {
     port = atoi(mrl_port + 1);
     *mrl_port = 0;
   }
 
-  host = gethostbyname(&this->mrl[6]);
+  host = gethostbyname(mrl_host);
  
   xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
           _("%s: connecting to vdr.\n"), LOG_MODULE);
@@ -2276,11 +2308,12 @@ static int vdr_plugin_open_sockets(vdr_input_plugin_t *this)
   {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             _("%s: failed to resolve hostname '%s' (%s)\n"), LOG_MODULE,
-            &this->mrl[6],
+            mrl_host,
             strerror(errno));
-
+    free (mrl_host);
     return 0;
   }
+  free (mrl_host);
 
   if ((this->fh = vdr_plugin_open_socket(this, host, port + 0)) == -1)
     return 0;
@@ -2324,20 +2357,17 @@ static int vdr_plugin_open(input_plugin_t *this_gen)
   {
     int err = 0;
 
-    if (!strncasecmp(&this->mrl[0], "vdr://", 6))
+    if (!strncasecmp(&this->mrl[0], "vdr:/", 5))
     {
-      if (!vdr_plugin_open_socket_mrl(this_gen))
-        return 0;
-    }
-    else if (!strncasecmp(&this->mrl[0], "vdr:/", 5))
-    {
-      if (!vdr_plugin_open_fifo_mrl(this_gen))
+      if (mrl_is_path (this->mrl)
+          ? !vdr_plugin_open_fifo_mrl(this_gen)
+          : !vdr_plugin_open_socket_mrl(this_gen))
         return 0;
     }
     else
     {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
-              _("%s: MRL (%s) invalid! MRL should start with vdr:/path/to/fifo/stream or vdr://host:port where ':port' is optional.\n"), LOG_MODULE,
+              _("%s: MRL (%s) invalid! MRL should start with vdr:///path/to/fifo/stream or vdr://host:port where ':port' is optional.\n"), LOG_MODULE,
               strerror(err));
       return 0;
     }
@@ -2523,13 +2553,12 @@ static input_plugin_t *vdr_class_get_instance(input_class_t *cls_gen, xine_strea
   vdr_input_plugin_t *this;
   char               *mrl = strdup(data);
 
-  if (!strncasecmp(mrl, "vdr://", 6))
+  if (!strncasecmp(mrl, "vdr:/", 5))
   {
-    lprintf("host '%s'\n", (char *)&mrl[ 6 ]);
-  }
-  else if (!strncasecmp(mrl, "vdr:/", 5))
-  {
-    lprintf("filename '%s'\n", (char *)&mrl[ 4 ]);
+    if (mrl_is_path (mrl))
+      lprintf("filename '%s'\n", mrl_to_path (mrl));
+    else
+      lprintf("host '%s'\n", mrl_to_socket (mrl));
   }
   else
   {
@@ -2645,7 +2674,7 @@ static void *init_class(xine_t *xine, void *data)
   
   this->xine = xine;
 
-  this->mrls[ 0 ] = "vdr:" VDR_ABS_FIFO_DIR "/stream#demux:mpeg_pes";
+  this->mrls[ 0 ] = "vdr://" VDR_ABS_FIFO_DIR "/stream#demux:mpeg_pes";
   this->mrls[ 1 ] = 0;
 
   this->input_class.get_instance      = vdr_class_get_instance;
