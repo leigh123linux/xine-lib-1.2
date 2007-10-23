@@ -1156,6 +1156,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
     int         got_one_picture = 0;
     int         offset = 0;
     int         codec_type = buf->type & 0xFFFF0000;
+    int         video_step_to_use;
 
     /* pad input data */
     /* note: bitstream, alt bitstream reader or something will cause
@@ -1195,6 +1196,9 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
           }
         }
       }
+
+      /* use externally provided video_step or fall back to stream's time_base otherwise */
+      video_step_to_use = (this->video_step || !this->context->time_base.den) ? this->video_step : (int)(90000ll * this->context->time_base.num / this->context->time_base.den);
 
       /* aspect ratio provided by ffmpeg, override previous setting */
       if ((this->aspect_ratio_prio < 2) &&
@@ -1285,16 +1289,20 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
         img->pts  = this->pts;
         this->pts = 0;
 
+        /* workaround for demux_mpeg_pes sending fields as frames */
+        if (!this->video_step && this->av_frame->interlaced_frame)
+          video_step_to_use /= 2;
+
         /* workaround for weird 120fps streams */
-        if( this->video_step == 750 ) {
+        if( video_step_to_use == 750 ) {
           /* fallback to the VIDEO_PTS_MODE */
-          this->video_step = 0;
+          video_step_to_use = 0;
         }
         
         if (this->av_frame->repeat_pict)
-          img->duration = this->video_step * 3 / 2;
+          img->duration = video_step_to_use * 3 / 2;
         else
-          img->duration = this->video_step;
+          img->duration = video_step_to_use;
 
         img->crop_right  = this->crop_right;
         img->crop_bottom = this->crop_bottom;
@@ -1318,7 +1326,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
       img->pts       = this->pts;
       this->pts      = 0;
 
-      img->duration  = this->video_step;
+      img->duration  = video_step_to_use;
       img->bad_frame = 1;
       this->skipframes = img->draw(img, this->stream);
       img->free(img);
