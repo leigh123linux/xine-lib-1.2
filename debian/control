@@ -65,6 +65,7 @@ Recommends: ${shlibs:Recommends}, libxine1-doc | libxine-doc
 Suggests: ${shlibs:Suggests}, libartsc0
 Conflicts: libxine1-console, libxine1-ffmpeg, libxine1-gnome, libxine1-misc-plugins, libxine1-plugins, libxine1-x
 Replaces: libxine1-console, libxine1-ffmpeg, libxine1-gnome, libxine1-misc-plugins, libxine1-plugins, libxine1-x
+Provides: libxine1-x, libxine1-console
 Description: the xine video/media player library, binary files
  This is the xine media player library (libxine). 
  .
