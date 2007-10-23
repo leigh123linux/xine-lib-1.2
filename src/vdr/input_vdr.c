@@ -2119,23 +2119,15 @@ static uint8_t preview_mpg_data[] =
 
 static uint8_t preview_data[ sizeof (preview_mpg_data) + ((sizeof (preview_mpg_data) - 1) / (2048 - 6 - 3) + 1) * (6 + 3) ];
 
-static int mrl_is_path (const char *mrl)
-{
-  const char *path = mrl + 4;
-  while (*++path == '/')
-    /**/;
-  return strchr (path, '/') || (path - mrl) > 6;
-}
-
 static inline const char *mrl_to_fifo (const char *mrl)
 {
-  /* vdr:///foo -> /foo */
+  /* vdr://foo -> /foo */
   return mrl + 3 + strspn (mrl + 4, "/");
 }
 
 static inline const char *mrl_to_host (const char *mrl)
 {
-  /* vdr://host:port -> host:port */
+  /* netvdr://host:port -> host:port */
   return strrchr (mrl, '/') + 1;
 }
 
@@ -2359,15 +2351,18 @@ static int vdr_plugin_open(input_plugin_t *this_gen)
 
     if (!strncasecmp(&this->mrl[0], "vdr:/", 5))
     {
-      if (mrl_is_path (this->mrl)
-          ? !vdr_plugin_open_fifo_mrl(this_gen)
-          : !vdr_plugin_open_socket_mrl(this_gen))
+      if (!vdr_plugin_open_fifo_mrl(this_gen))
+        return 0;
+    }
+    else if (!strncasecmp(&this->mrl[0], "netvdr:/", 8))
+    {
+      if (!vdr_plugin_open_socket_mrl(this_gen))
         return 0;
     }
     else
     {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
-              _("%s: MRL (%s) invalid! MRL should start with vdr:///path/to/fifo/stream or vdr://host:port where ':port' is optional.\n"), LOG_MODULE,
+              _("%s: MRL (%s) invalid! MRL should start with vdr://path/to/fifo/stream or netvdr://host:port where ':port' is optional.\n"), LOG_MODULE,
               strerror(err));
       return 0;
     }
@@ -2554,12 +2549,9 @@ static input_plugin_t *vdr_class_get_instance(input_class_t *cls_gen, xine_strea
   char               *mrl = strdup(data);
 
   if (!strncasecmp(mrl, "vdr:/", 5))
-  {
-    if (mrl_is_path (mrl))
-      lprintf("filename '%s'\n", mrl_to_path (mrl));
-    else
-      lprintf("host '%s'\n", mrl_to_socket (mrl));
-  }
+    lprintf("filename '%s'\n", mrl_to_path (mrl));
+  else if (!strncasecmp(mrl, "netvdr:/", 5))
+    lprintf("host '%s'\n", mrl_to_socket (mrl));
   else
   {
     free(mrl);
@@ -2674,7 +2666,7 @@ static void *init_class(xine_t *xine, void *data)
   
   this->xine = xine;
 
-  this->mrls[ 0 ] = "vdr://" VDR_ABS_FIFO_DIR "/stream#demux:mpeg_pes";
+  this->mrls[ 0 ] = "vdr:/" VDR_ABS_FIFO_DIR "/stream#demux:mpeg_pes";
   this->mrls[ 1 ] = 0;
 
   this->input_class.get_instance      = vdr_class_get_instance;
