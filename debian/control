@@ -66,6 +66,8 @@ Architecture: any
 Depends: ${shlibs:Depends}
 Recommends: ${shlibs:Recommends}, libxine2-doc | libxine-doc
 Suggests: ${shlibs:Suggests}, libartsc0
+Conflicts: libxine2-console, libxine2-ffmpeg, libxine2-gnome, libxine2-misc-plugins, libxine2-plugins, libxine2-x
+Replaces: libxine2-console, libxine2-ffmpeg, libxine2-gnome, libxine2-misc-plugins, libxine2-plugins, libxine2-x
 Description: the xine video/media player library, binary files
  This is the xine media player library (libxine). 
  .

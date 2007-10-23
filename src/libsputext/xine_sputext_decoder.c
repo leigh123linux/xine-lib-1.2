@@ -703,9 +703,11 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
       lprintf("started\n");
 
       this->width = this->height = 0;
-      this->started = 1;
 
-      update_output_size( this );      
+      update_output_size( this );
+      if( this->width && this->height ) {
+        this->started = 1;
+      }
     }
 
     if( this->started ) {
