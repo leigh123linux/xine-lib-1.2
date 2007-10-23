@@ -171,6 +171,8 @@ static int xml_parser_get_node (xml_node_t *current_node, char *root_name, int r
 
   if (rec < MAX_RECURSION) {
 
+    memset (tok, 0, TOKEN_SIZE);
+
     while ((bypass_get_token) || (res = lexer_get_token(tok, TOKEN_SIZE)) != T_ERROR) {
       bypass_get_token = 0;
       lprintf("info: %d - %d : '%s'\n", state, res, tok);
