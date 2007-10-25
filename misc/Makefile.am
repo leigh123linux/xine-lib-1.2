@@ -7,6 +7,7 @@ EXTRA_DIST = build_rpms.sh \
 	SlackBuild.in \
 	SlackBuild \
 	vga.xinefont.gz \
+	xine-config \
 	xine-fontconv.c \
 	xine-lib.spec.in \
 	xine-lib.spec \
