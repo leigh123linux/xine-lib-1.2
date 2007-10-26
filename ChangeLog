@@ -9,6 +9,7 @@ xine-lib (1.1.9) (unreleased)
   * Improve handling of invalid or unknown frame sizes.
   * Fixed handling of streamed Flash videos (broken in 1.1.5).
   * Fixed division by zero in sputext decoder
+  * Build fix for when using Linux 2.6.23 headers. [Bug 1820958]
 
 xine-lib (1.1.8)
   * Send a channel-changed event to the frontend when receiving the SYNC
