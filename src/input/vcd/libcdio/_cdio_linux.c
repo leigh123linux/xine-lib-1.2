@@ -59,6 +59,7 @@ static const char _rcsid[] = "$Id: _cdio_linux.c,v 1.4 2006/09/26 22:18:44 dgp85
 #include <unistd.h>
 #include <fcntl.h>
 #include <mntent.h>
+#include <limits.h>
 
 #include <linux/cdrom.h>
 #include <scsi/scsi.h>
