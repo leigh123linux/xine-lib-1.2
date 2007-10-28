@@ -67,6 +67,7 @@ static const video_db_t video_db[] = {
     meFOURCC('P', 'I', 'M', '1'),
     meFOURCC('m', 'p', 'g', '2'),
     meFOURCC('m', 'p', 'g', '1'),
+    meFOURCC(0x02, 0, 0, 0x10),
     0
   },
   BUF_VIDEO_MPEG,
