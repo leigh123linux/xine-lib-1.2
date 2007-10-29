@@ -182,7 +182,7 @@ static void event_handler_external(void *user_data, const xine_event_t *event)
   
   if (0 != internal_write_event_play_external(this, key))
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
-            _("%s : input event write: %s.\n"), LOG_MODULE, strerror(errno));
+            _("%s: input event write: %s.\n"), LOG_MODULE, strerror(errno));
 }
 
 static void external_stream_stop(vdr_input_plugin_t *this)
