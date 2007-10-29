@@ -4523,18 +4523,14 @@ msgstr ""
 #, c-format
 msgid "%s: => not using MIT Shared Memory extension.\n"
 msgstr ""
-"video_out_xcbshm: %s: ubicando imagen\n"
-"video_out_xcbshm: => no usando la extensión de memoria compartida MIT (MIT "
-"Shared Memory).\n"
+"%s: => no usando la extensión de memoria compartida MIT (MIT Shared "
+"Memory).\n"
 
 #: src/video_out/video_out_xcbshm.c:167 src/video_out/video_out_xshm.c:230
 #, c-format
 msgid "%s: shared memory error (address error) when allocating image \n"
 msgstr ""
-"video_out_xcbshm: error de memoria compartida (error de dirección) ) al "
-"ubicar imagen\n"
-"video_out_xcbshm: => no usando la extensión de memoria compartida MIT (MIT "
-"Shared Memory).\n"
+"%s: error de memoria compartida (error de dirección) ) al ubicar imagen\n"
 
 #: src/video_out/video_out_xcbshm.c:179 src/video_out/video_out_xcbxv.c:297
 #: src/video_out/video_out_xshm.c:249 src/video_out/video_out_xv.c:365
@@ -4542,10 +4538,7 @@ msgstr ""
 #, c-format
 msgid "%s: x11 error during shared memory XImage creation\n"
 msgstr ""
-"video_out_xcbshm: x11 error durante creación de XImage en memoria "
-"compartida\n"
-"video_out_xcbshm: => no usando la extensión de memoria compartida MIT (MIT "
-"Shared Memory).\n"
+"%s: x11 error durante creación de XImage en memoria compartida\n"
 
 #: src/video_out/video_out_xcbshm.c:1103 src/video_out/video_out_xshm.c:1161
 #, c-format
@@ -4566,7 +4559,7 @@ msgstr ""
 #, c-format
 msgid "%s: MIT shared memory extension not present on display.\n"
 msgstr ""
-"video_out_xcbshm: la extensión de memoria compartida del MIT (MIT Shared "
+"%s: la extensión de memoria compartida del MIT (MIT Shared "
 "Memory) no está presente en la pantalla.\n"
 
 #: src/video_out/video_out_xcbshm.c:1212
@@ -4583,27 +4576,18 @@ msgstr ""
 #: src/video_out/video_out_xxmc.c:657
 #, c-format
 msgid "%s: XvShmCreateImage returned a zero size\n"
-msgstr ""
-"video_out_xcbxv: XvShmCreateImage retornó un tamaño cero\n"
-"video_out_xcbxv: => no usando la extensión de memoria compartida MIT (MIT "
-"Shared Memory).\n"
+msgstr "%s: XvShmCreateImage retornó un tamaño cero\n"
 
 #: src/video_out/video_out_xcbxv.c:275 src/video_out/video_out_xv.c:329
 #: src/video_out/video_out_xxmc.c:666
 #, c-format
 msgid "%s: shared memory error in shmget: %s\n"
-msgstr ""
-"video_out_xcbxv: error de memoria compartida en shmget: %s\n"
-"video_out_xcbxv: => no usando la extensión de memoria compartida MIT (MIT "
-"Shared Memory).\n"
+msgstr "%s: error de memoria compartida en shmget: %s\n"
 
 #: src/video_out/video_out_xcbxv.c:285
-#, c-format
+#, fuzzy, c-format
 msgid "%s: shared memory error (address error)\n"
-msgstr ""
-"video_out_xcbxv: x11 error durante creación de XImage en memoria compartida\n"
-"video_out_xcbxv: => no usando la extensión de memoria compartida MIT (MIT "
-"Shared Memory).\n"
+msgstr "%s: x11 error durante creación de XImage en memoria compartida\n"
 
 #: src/video_out/video_out_xcbxv.c:1291
 msgid "video_out_xcbxv: Xv extension not present.\n"
@@ -4616,7 +4600,7 @@ msgid ""
 "%s: Xv extension is present but I couldn't find a usable yuv12 port.\n"
 "\tLooks like your graphics hardware driver doesn't support Xv?!\n"
 msgstr ""
-"video_out_xcbxv: la extensión Xv  está presente pero no pude encontrar un "
+"%s: la extensión Xv  está presente pero no pude encontrar un "
 "puerto yuv12 usable.\n"
 "              ¡¿Parece que su driver de hardware gráfico no soporta Xv?!\n"
 
@@ -4626,7 +4610,7 @@ msgid ""
 "%s: using Xv port %d from adaptor %s for hardware colorspace conversion and "
 "scaling.\n"
 msgstr ""
-"video_out_xcbxv: usando puerto Xv %d del adaptador %s para conversión y "
+"%s: usando puerto Xv %d del adaptador %s para conversión y "
 "escalado de espacio de color en hardware .\n"
 
 #: src/video_out/video_out_xcbxv.c:1280 src/video_out/video_out_xv.c:1335
@@ -4892,7 +4876,7 @@ msgid ""
 "%s: using Xv port %ld from adaptor %s for hardware colorspace conversion and "
 "scaling.\n"
 msgstr ""
-"video_out_xv: usando puerto Xv %ld del adaptador %s para conversión y "
+"%s: usando puerto Xv %ld del adaptador %s para conversión y "
 "escalado de espacio de color en hardware .\n"
 
 #: src/video_out/video_out_xv.c:1564
