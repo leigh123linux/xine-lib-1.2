@@ -59,6 +59,7 @@ static const video_db_t video_db[] = {
     ME_FOURCC('P', 'I', 'M', '1'),
     ME_FOURCC('m', 'p', 'g', '2'),
     ME_FOURCC('m', 'p', 'g', '1'),
+    ME_FOURCC(0x02, 0, 0, 0x10),
     0
   },
   BUF_VIDEO_MPEG,
@@ -1212,3 +1213,4 @@ void _x_waveformatex_le2me( xine_waveformatex *wavex ) {
   wavex->wBitsPerSample = le2me_16(wavex->wBitsPerSample);
   wavex->cbSize = le2me_16(wavex->cbSize);
 }
+
