@@ -136,13 +136,79 @@ static int32_t parse_IEC14496_FlexMux_stream(demux_mpeg_pes_t *this, uint8_t *p,
 static int32_t parse_program_stream_directory(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf);
 static int32_t parse_program_stream_pack_header(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf);
 
-static void check_newpts( demux_mpeg_pes_t *this, int64_t pts, int video )
+static int detect_pts_discontinuity( demux_mpeg_pes_t *this, int64_t pts, int video )
 {
   int64_t diff;
-  
+
+  /* discontinuity detection is difficult to implement in the demuxer as it gets
+   * for example video packets in decoding order and there can be multiple audio
+   * and video tracks. So for simplicity, let's just deal with a single audio and
+   * a single video track.
+   *
+   * To start with, let's have a look at the audio and video track independently.
+   * Whenever pts differs from last_pts[video] by at least WRAP_THRESHOLD, a jump
+   * in pts is detected. Such a jump can happen for example when the pts counter
+   * overflows, as shown below (video decoding order ignored for simplicity; the
+   * variable values are shown after returning from the below function check_newpts;
+   * an asterisk means that this value has been cleared (see check_newpts)):
+   *
+   *         pts: 7v 7a 8v 9v 9a : 0v 1v 1a 2v 3v 3a 4v
+   * last_pts[0]: 6  7  7  7  9  : *  *  1  1  1  3  3
+   * last_pts[1]: 7  7  8  9  9  : 0  1  1  2  3  3  4
+   *                             | |     |
+   *                             | |     +--- audio pts wrap ignored
+   *                             | +--------- video pts wrap detected
+   *                             +----------- pts wrap boundary
+   */
   diff = pts - this->last_pts[video];
-  
-  if( pts && (this->send_newpts || (this->last_pts[video] && abs(diff)>WRAP_THRESHOLD) ) ) {
+
+  if (this->last_pts[video] && abs(diff)>WRAP_THRESHOLD)
+    return 1;
+
+  /* but the above code can cause a huge delay while replaying when audio and video
+   * track are not aligned on a common pts wrap boundery, as shown below:
+   *
+   *         pts: 7v 8v 7a 9v : 0v 9a 1v 2v : 1a 3v 4v 3a
+   * last_pts[0]: 6  6  7  7  : *  9  9  9  : 1  1  1  3
+   * last_pts[1]: 7  8  8  9  : 0  0  1  2  : *  3  4  4
+   *                          | |  |        | |
+   *                          | |  |        | +--- audio pts wrap detected
+   *                          | |  |        +----- audio pts wrap boundary
+   *                          | |  +-------------- audio packet causes a huge delay
+   *                          | +----------------- video pts wrap detected
+   *                          +------------------- video pts wrap boundery
+   *
+   * So there is the need to compare audio track pts against video track pts
+   * to detect when pts values are in between pts wrap bounderies, where a
+   * jump needs to be detected too, as shown below:
+   *
+   *         pts: 7v 8v 7a 9v : 0v 9a 1v 2v : 1a 3v 4v 3a
+   * last_pts[0]: 6  6  7  7  : *  9  *  *  : 1  1  1  3
+   * last_pts[1]: 7  8  8  9  : 0  *  1  2  : 2  3  4  4
+   *                          | |  |  |     | |
+   *                          | |  |  |     | +--- (audio pts wrap ignored)
+   *                          | |  |  |     +----- audio pts wrap boundary
+   *                          | |  |  +----------- video pts wrap detected
+   *                          | |  +-------------- audio pts wrap detected
+   *                          | +----------------- video pts wrap detected
+   *                          +------------------- (video pts wrap boundery)
+   *
+   * Basically, it's almost the same test like above, but against the other track's
+   * pts value and with a different limit. As the pts counter is a 33 bit unsigned
+   * integer, we choose 2^31 as limit (2^32 would require the tracks to be aligned).
+   */
+  diff = pts - this->last_pts[1-video];
+
+  if (this->last_pts[1-video] && abs(diff)>(1u<<31))
+    return 1;
+
+  /* no discontinuity detected */
+  return 0;
+}
+ 
+static void check_newpts( demux_mpeg_pes_t *this, int64_t pts, int video )
+{
+  if( pts && (this->send_newpts || detect_pts_discontinuity(this, pts, video) ) ) {
 
     /* check if pts is outside nav pts range. any stream without nav must enter here. */
     if( pts > this->nav_last_end_pts || pts < this->nav_last_start_pts )
@@ -159,47 +225,13 @@ static void check_newpts( demux_mpeg_pes_t *this, int64_t pts, int video )
     } else {
       lprintf("no wrap detected\n" );
     }
-    
+
+    /* clear pts on the other track to avoid detecting the same discontinuity again */
     this->last_pts[1-video] = 0;
   }
   
   if( pts )
-  {
-    /* don't detect a discontinuity only for video respectively audio. It's also a discontinuity
-       indication when audio and video pts differ to much e. g. when a pts wrap happens.
-       The original code worked well when the wrap happend like this:
-
-       V7 A7 V8 V9 A9 Dv V0 V1 da A1 V2 V3 A3 V4
-       
-       Legend:
-       Vn = video packet with timestamp n
-       An = audio packet with timestamp n
-       Dv = discontinuity detected on following video packet
-       Da = discontinuity detected on following audio packet
-       dv = discontinuity detected on following video packet but ignored
-       da = discontinuity detected on following audio packet but ignored
-
-       But with a certain delay between audio and video packets (e. g. the way DVB-S broadcasts
-       the packets) the code didn't work:
-
-       V7 V8 A7 V9 Dv V0 _A9_ V1 V2 Da _A1_ V3 V4 A3
-
-       Packet A9 caused audio to jump forward and A1 caused it to jump backward with inserting
-       a delay of almoust 26.5 hours!
-
-       The new code gives the following sequences for the above examples:
-       
-       V7 A7 V8 V9 A9 Dv V0 V1 A1 V2 V3 A3 V4
-
-       V7 V8 A7 V9 Dv V0 Da A9 Dv V1 V2 A1 V3 V4 A3
-
-       After proving this code it should be cleaned up to use just a single variable "last_pts". */
-    
-/*
     this->last_pts[video] = pts;
-*/    
-    this->last_pts[video] = this->last_pts[1-video] = pts;
-  }
 }
 
 static off_t read_data(demux_mpeg_pes_t *this, uint8_t *buf, off_t nlen)
