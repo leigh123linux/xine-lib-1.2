@@ -289,7 +289,7 @@ fprintf(stderr, "ratio: %d\n", ratio);
       xine_set_param(this->stream, XINE_PARAM_VO_ZOOM_X, this->image4_3_zoom_x);
       xine_set_param(this->stream, XINE_PARAM_VO_ZOOM_Y, this->image4_3_zoom_y);
     }
-    else if (17777 <= ratio && ratio <= 17779)
+    else /* if (17777 <= ratio && ratio <= 17779) */
     {
       xine_set_param(this->stream, XINE_PARAM_VO_ZOOM_X, this->image16_9_zoom_x);
       xine_set_param(this->stream, XINE_PARAM_VO_ZOOM_Y, this->image16_9_zoom_y);

@@ -458,6 +458,13 @@ static int vdr_video_draw(vo_frame_t *frame, xine_stream_t *stream)
     frame->next->pts = 0;
   }
 */  
+  {
+    int a = 0, b = 0, c = 0, d = 0;
+    if (stream)
+      _x_query_buffer_usage(stream, &a, &b, &c, &d);
+    fprintf(stderr, "buffer usage: %3d, %2d, %2d, %2d, %p\n", a, b, c, d, stream);
+  }
+
   if (!this->enabled 
       || frame->bad_frame
       || (frame->format != XINE_IMGFMT_YUY2
