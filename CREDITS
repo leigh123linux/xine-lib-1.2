@@ -19,7 +19,7 @@ liba52				0.7.4
 libcdio				0.71 [o]
 libca				0.0.5
 libdvdnav			0.1.10			Michael Roitzsch
-libfaad				cvs-2005-01-30 [GPL]    Miguel Freitas
+libfaad				2.6.1                   Miguel Freitas
 libmad				0.15.1b			Miguel Freitas
 libmpeg2			0.2.1 [*]
 libmpcdec			1.2.5
@@ -31,11 +31,6 @@ wine
 vidix				cvs 6/03/05		James Stembridge
 
 -----------------------------------------------------------------------
-
-[GPL] this is the latest GPL compatible version of FAAD2. later cvs
-  snapshots have added an advertisement clause so we cannot update until
-  the situation gets fixed.
-
 
 [*] common question: lastest version of libmpeg2 is 0.3.1, why don't
 you update?

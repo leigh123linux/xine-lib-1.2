@@ -94,6 +94,7 @@ libfaad_la_SOURCES = \
 	structs.h \
 	syntax.h \
 	tns.h \
+	neaacdec.h \
 	codebook/hcb.h \
 	codebook/hcb_1.h \
 	codebook/hcb_2.h \
