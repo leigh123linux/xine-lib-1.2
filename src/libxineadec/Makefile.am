@@ -80,5 +80,6 @@ xineplug_decode_a52_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(A52DEC_LIBS) -lm
 xineplug_decode_a52_la_CFLAGS = $(AM_CFLAGS) $(A52DEC_CFLAGS)
 
 xineplug_decode_faad_la_SOURCES = xine_faad_decoder.c
-xineplug_decode_faad_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(top_builddir)/contrib/libfaad/libfaad.la -lm
-xineplug_decode_faad_la_CPPFLAGS = -I$(top_srcdir)/contrib/libfaad
+xineplug_decode_faad_la_DEPENDENCIES = $(FAAD_DEPS)
+xineplug_decode_faad_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(FAAD_LIBS) -lm
+xineplug_decode_faad_la_CFLAGS = $(FAAD_CFLAGS)

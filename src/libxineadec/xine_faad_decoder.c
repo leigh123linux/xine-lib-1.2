@@ -38,10 +38,14 @@
 #include "audio_out.h"
 #include "buffer.h"
 #include "xineutils.h"
+#ifdef HAVE_NEAACDEC_H
+#include <neaacdec.h>
+#else
 #include "common.h"
 #include "structs.h"
 #include "decoder.h"
 #include "syntax.h"
+#endif
 
 #define FAAD_MIN_STREAMSIZE 768 /* 6144 bits/channel */
 

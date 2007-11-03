@@ -57,8 +57,35 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
     AC_ARG_ENABLE([faad],
                   [AS_HELP_STRING([--enable-faad], [Enable support for FAAD decoder (default: enabled)])],
                   [test x"$enableval" != x"no" && enable_faad="yes"])
+    AC_ARG_WITH([external-faad],
+                [AS_HELP_STRING([--with-external-faad], [Use external FAAD decoeder])],
+                [test x"$withval" != x"no" && with_external_faad="yes"], [with_external_faad="no"])
+    if test x"$enable_faad" != x"no"; then
+        if test x"$with_external_faad" != x"no"; then
+            AC_CHECK_LIB([faad], [NeAACDecInit],
+                         [AC_CHECK_HEADERS([neaacdec.h], [have_external_faad=yes], [have_external_faad=no],
+                                           [#include <neaacdec.h>])], [have_external_faad=no], [-lm])
+            if test x"$have_external_faad" = x"no"; then
+                AC_MSG_RESULT([*** no usable version of libfaad found, using internal copy ***])
+            fi
+        else
+            AC_MSG_RESULT([Using included libfaad support])
+        fi
+        if test x"$have_external_faad" = x"yes"; then
+            FAAD_CFLAGS=''
+            FAAD_LIBS='-lfaad'
+            FAAD_DEPS=''
+	else
+            FAAD_CFLAGS='-I$(top_srcdir)/contrib/libfaad'
+            FAAD_LIBS='$(top_builddir)/contrib/libfaad/libfaad.la'
+            FAAD_DEPS='$(top_builddir)/contrib/libfaad/libfaad.la'
+        fi
+        AC_SUBST(FAAD_CFLAGS)
+        AC_SUBST(FAAD_DEPS)
+        AC_SUBST(FAAD_LIBS)
+    fi
     AM_CONDITIONAL([ENABLE_FAAD], [test x"$enable_faad" != x"no"])
-
+    AM_CONDITIONAL([WITH_EXTERNAL_FAAD], [test x"$have_external_faad" = x"yes"])
 
     dnl ffmpeg (required; external version allowed)
     AC_ARG_WITH([external-ffmpeg],

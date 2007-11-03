@@ -4,7 +4,9 @@ AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
 if ENABLE_FAAD
+if !WITH_EXTERNAL_FAAD
 noinst_LTLIBRARIES = libfaad.la
+endif
 endif
 
 libfaad_la_SOURCES = \
