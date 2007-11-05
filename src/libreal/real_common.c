@@ -91,6 +91,7 @@ void _x_real_codecs_init(xine_t *const xine) {
   else try_real_subpath("lib/codecs")
   else try_real_subpath("lib64/real")
   else try_real_subpath("lib/real")
+  else try_real_path("/opt/real/RealPlayer/codecs")
   else try_real_subpath("lib/RealPlayer10GOLD/codecs")
   else try_real_subpath("lib64/RealPlayer10/codecs")
   else try_real_subpath("lib/RealPlayer10/codecs")
