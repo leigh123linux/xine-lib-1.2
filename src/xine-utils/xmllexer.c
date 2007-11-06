@@ -39,6 +39,9 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_ICONV
+#include <iconv.h>
+#endif
 
 /* private constants*/
 #define NORMAL       0  /* normal lex mode */
@@ -463,7 +466,7 @@ char *lexer_decode_entities (const char *tok)
     {
       /* parse the character entity (on failure, treat it as literal text) */
       const char *tp = tok;
-      long i;
+      signed long i;
 
       for (i = 0; lexer_entities[i].code; ++i)
 	if (!strncmp (lexer_entities[i].name, tok, lexer_entities[i].namelen)
@@ -491,7 +494,7 @@ char *lexer_decode_entities (const char *tok)
       else
 	i = strtol (tp, (char **)&tp, 10);
 
-      if (i < 1 || i > 255 || *tp != ';')
+      if (*tp != ';' || i < 1)
       {
         /* out of range, or format error */
 	*bp++ = '&';
@@ -499,7 +502,23 @@ char *lexer_decode_entities (const char *tok)
       }
 
       tok = tp + 1;
-      *bp++ = i;
+
+      if (i < 128)
+        /* ASCII - store as-is */
+	*bp++ = i;
+      else
+      {
+	/* Non-ASCII, so convert to UTF-8 */
+	int count = (i >= 0x04000000) ? 5 :
+		    (i >= 0x00200000) ? 4 :
+		    (i >= 0x00010000) ? 3 :
+		    (i >= 0x00000800) ? 2 : 1;
+	*bp = (char)(0x1F80 >> count);
+	count *= 6;
+	*bp++ |= i >> count;
+	while ((count -= 6) >= 0)
+	  *bp++ = 128 | ((i >> count) & 0x3F);
+      }
     }
   }
   *bp = 0;
