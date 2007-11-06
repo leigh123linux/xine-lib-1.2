@@ -75,33 +75,63 @@ void _x_real_codecs_init(xine_t *const xine) {
 #ifdef REAL_CODEC_PATH
   const char *const default_real_codecs_path = REAL_CODEC_PATH;
 #else
-  const char *default_real_codecs_path = "";
-  struct stat s;
+  char default_real_codecs_path[256];
 
-#define try_real_path(path) \
-  if (!stat (path "/drvc.so", &s)) \
-    default_real_codecs_path = path;
-#define try_real_subpath(path) \
-  try_real_path("/usr/" path) \
-  else try_real_path("/usr/local/" path) \
-  else try_real_path("/opt/" path)
+  default_real_codecs_path[0] = 0;
 
-  /* The priority is for the first found */
-  try_real_subpath("lib/win32")
-  else try_real_subpath("lib/codecs")
-  else try_real_subpath("lib64/real")
-  else try_real_subpath("lib/real")
-  else try_real_path("/opt/real/RealPlayer/codecs")
-  else try_real_subpath("lib/RealPlayer10GOLD/codecs")
-  else try_real_subpath("lib64/RealPlayer10/codecs")
-  else try_real_subpath("lib/RealPlayer10/codecs")
-  else try_real_subpath("lib64/RealPlayer9/users/Real/Codecs")
-  else try_real_subpath("lib/RealPlayer9/users/Real/Codecs")
-  else try_real_subpath("lib/RealPlayer8/Codecs")
-  else try_real_subpath("RealPlayer8/Codecs");
+#define UL64	0x05	/* /usr/{,local/}lib64	*/
+#define UL	0x0A	/* /usr/{,local/}lib	*/
+#define O	0x10	/* /opt			*/
+#define OL64	0x20	/* /opt/lib64		*/
+#define OL	0x40	/* /opt/lib		*/
 
-#undef try_real_path
-#undef try_real_subpath
+  static const char *const prefix[] = {
+    "/usr/lib64", "/usr/local/lib64",
+    "/usr/lib", "/usr/local/lib",
+    "/opt", "/opt/lib64", "/opt/lib",
+  };
+
+  static const struct {
+    int prefix;
+    const char *path;
+  } paths[] = {
+    { O | UL,			"win32" },
+    { O | UL,			"codecs" },
+    { O | UL | UL64,		"real" },
+    { O,			"real/RealPlayer/codecs" },
+    { OL | OL64 | UL | UL64,	"RealPlayer10GOLD/codecs" },
+    { OL | OL64 | UL | UL64,	"RealPlayer10/codecs" },
+    { OL | OL64 | UL | UL64,	"RealPlayer9/users/Real/Codecs" },
+    { O | OL | UL,		"RealPlayer8/Codecs" },
+    {}
+  };
+
+  int i;
+  for (i = 0; paths[i].prefix; ++i)
+  {
+    int p;
+    for (p = 0; p < sizeof (prefix) / sizeof (prefix[0]); ++p)
+    {
+      if (paths[i].prefix & (1 << p))
+      {
+        void *handle;
+        snprintf (default_real_codecs_path, sizeof (default_real_codecs_path), "%s/%s/drvc.so", prefix[p], paths[i].path);
+        handle = dlopen (default_real_codecs_path, RTLD_NOW);
+        if (handle)
+        {
+          dlclose (handle);
+          snprintf (default_real_codecs_path, sizeof (default_real_codecs_path), "%s/%s", prefix[p], paths[i].path);
+          goto found;
+        }
+      }
+    }
+  }
+
+  /* if this is reached, no valid path was found */
+  default_real_codecs_path[0] = 0;
+
+  found:;
+
 #endif
 
   real_codecs_path = 
