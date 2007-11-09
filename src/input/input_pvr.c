@@ -100,7 +100,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <sys/ioctl.h>
-#include "videodev2.h"
+#include <linux/videodev2.h>
 
 #define XINE_ENABLE_EXPERIMENTAL_FEATURES
 

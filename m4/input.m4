@@ -93,7 +93,8 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
                   [test x"$enableval" != x"no" && enable_v4l="yes"],
                   [test $default_enable_v4l = disable && enable_v4l="no"])
     if test x"$enable_v4l" != x"no"; then
-        AC_CHECK_HEADERS([linux/videodev.h], [have_v4l=yes], [have_v4l=no])
+        have_v4l=yes
+        AC_CHECK_HEADERS([linux/videodev.h linux/videodev2.h], , [have_v4l=no])
         AC_CHECK_HEADERS([asm/types.h])
         if test x"$enable_v4l" = x"yes" && test x"$have_v4l" != x"yes"; then
             AC_MSG_ERROR([Video4Linux support requested, but prerequisite headers not found.])
