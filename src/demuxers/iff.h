@@ -21,8 +21,6 @@
 /*
  * IFF header file by Manfred Tremmel (Manfred.Tremmel@iiv.de)
  * Based on the information of the Amiga Developer CD
- *
- * $Id: iff.h,v 1.2 2004/02/25 18:57:36 manfredtremmel Exp $
  */
 
 #ifndef IFFP_IFF_H

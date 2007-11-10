@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: demux_ts.c,v 1.129 2007/04/02 10:46:08 dgp85 Exp $
- *
  * Demultiplexer for MPEG2 Transport Streams.
  *
  * For the purposes of playing video, we make some assumptions about the

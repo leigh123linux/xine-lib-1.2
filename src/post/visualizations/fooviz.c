@@ -22,9 +22,6 @@
  * This is an example/template for the xine visualization post plugin
  * process. It simply paints the screen a solid color and rotates through
  * colors on each iteration.
- *
- * $Id: fooviz.c,v 1.28 2006/12/02 22:35:18 miguelfreitas Exp $
- *
  */
 
 #include <stdio.h>

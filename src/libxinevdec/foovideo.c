@@ -22,8 +22,6 @@
  * where each byte in the map is the same value, which is 3 larger than the
  * value from the last frame. This creates a slowly rotating solid color
  * frame when the frames are played in succession.
- *
- * $Id: foovideo.c,v 1.26 2006/07/10 22:08:43 dgp85 Exp $
  */
 
 #include <stdio.h>

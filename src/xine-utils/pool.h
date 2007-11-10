@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: pool.h,v 1.2 2006/09/26 05:19:49 dgp85 Exp $
- *
  * Object Pool
  */
 

@@ -20,8 +20,6 @@
  * fooaudio.c: This is a reference audio decoder for the xine multimedia
  * player. It really works too! It will output a continuous sine wave in
  * place of the data it should actually send.
- *
- * $Id: fooaudio.c,v 1.18 2006/07/10 22:08:43 dgp85 Exp $
  */
 
 #include <stdio.h>

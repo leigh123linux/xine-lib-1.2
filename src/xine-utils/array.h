@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: array.h,v 1.3 2007/02/03 16:31:55 dsalt Exp $
- *
  * Array that can grow automatically when you add elements.
  * Inserting an element in the middle of the array implies memory moves.
  */

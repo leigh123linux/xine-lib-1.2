@@ -16,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- * $Id: metronom.c,v 1.144 2007/02/20 00:34:57 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

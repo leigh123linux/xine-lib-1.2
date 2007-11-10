@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: rtsp.c,v 1.21 2006/06/20 01:07:58 dgp85 Exp $
- *
  * a minimalistic implementation of rtsp protocol,
  * *not* RFC 2326 compilant yet.
  */

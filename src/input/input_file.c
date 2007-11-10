@@ -16,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- * $Id: input_file.c,v 1.122 2007/03/29 19:47:17 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

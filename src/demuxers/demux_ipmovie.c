@@ -22,8 +22,6 @@
  * Interplay MVE File Demuxer by Mike Melanson (melanson@pcisys.net)
  * For more information regarding the Interplay MVE file format, visit:
  *   http://www.pcisys.net/~melanson/codecs/
- *
- * $Id: demux_ipmovie.c,v 1.27 2007/02/20 00:34:55 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

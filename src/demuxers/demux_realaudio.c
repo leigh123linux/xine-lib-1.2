@@ -21,8 +21,6 @@
 /*
  * RealAudio File Demuxer by Mike Melanson (melanson@pcisys.net)
  *     improved by James Stembridge (jstembridge@users.sourceforge.net)
- *
- * $Id: demux_realaudio.c,v 1.34 2007/03/29 17:00:32 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

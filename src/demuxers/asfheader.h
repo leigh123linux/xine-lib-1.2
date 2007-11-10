@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: asfheader.h,v 1.8 2006/09/12 21:24:19 valtri Exp $
- *
  * demultiplexer for asf streams
  *
  * based on ffmpeg's

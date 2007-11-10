@@ -20,8 +20,6 @@
  * Raw AAC File Demuxer by Mike Melanson (melanson@pcisys.net)
  * This demuxer detects ADIF and ADTS headers in AAC files.
  * Then it shovels buffer-sized chunks over to the AAC decoder.
- *
- * $Id: demux_aac.c,v 1.17 2007/03/03 01:41:16 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

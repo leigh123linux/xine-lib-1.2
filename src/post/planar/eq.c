@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: eq.c,v 1.15 2007/03/22 23:32:05 dgp85 Exp $
- *
  * mplayer's eq (soft video equalizer)
  * Copyright (C) Richard Felker
  */

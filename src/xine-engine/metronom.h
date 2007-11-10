@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: metronom.h,v 1.64 2006/09/26 05:19:49 dgp85 Exp $
- *
  * metronom: general pts => virtual calculation/assoc
  *                   
  * virtual pts: unit 1/90000 sec, always increasing
@@ -37,7 +35,6 @@
  *    video_pts and audio_vpts are not given for every frame.
  *  - corrections to the frame rate may be needed to cope with bad
  *    encoded streams.
- *
  */
 
 #ifndef HAVE_METRONOM_H

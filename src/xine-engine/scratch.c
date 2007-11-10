@@ -17,10 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: scratch.c,v 1.24 2007/01/19 00:12:22 dgp85 Exp $
- *
  * top-level xine functions
- *
  */
 
 #ifdef HAVE_CONFIG_H

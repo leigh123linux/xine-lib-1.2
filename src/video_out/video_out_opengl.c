@@ -17,13 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: video_out_opengl.c,v 1.59 2006/07/10 22:08:44 dgp85 Exp $
- * 
  * video_out_opengl.c, OpenGL based interface for xine
  *
  * Written by Matthias Hopf <mat@mshopf.de>,
  * based on the xshm and xv video output plugins.
- * 
  */
 
 /* #define LOG */

@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: buffer.c,v 1.37 2006/12/25 21:59:32 dgp85 Exp $
- *
  *
  * contents:
  *
@@ -28,7 +26,6 @@
  * free buffer pool management routines
  *
  * FIFO buffer structures/routines
- *
  */
 
 #ifdef HAVE_CONFIG_H

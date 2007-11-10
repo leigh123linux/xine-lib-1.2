@@ -21,9 +21,6 @@
  *   (c) 2004 James Courtier-Dutton (James@superbug.demon.co.uk)
  * This is an up-mix audio filter post plugin.
  * It simply converts Mono into Stereo.
- *
- * $Id: upmix_mono.c,v 1.5 2006/01/27 07:46:12 tmattern Exp $
- *
  */
 
 #include <stdio.h>

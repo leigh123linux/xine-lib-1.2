@@ -20,9 +20,6 @@
  * Volume normalization audio filter for xine.  Ported by Jason Tackaberry
  * from MPlayer's af_volnorm, which is copyright 2004 by Alex Beregszaszi 
  * & Pierre Lombard.
- *
- * $Id: volnorm.c,v 1.1 2006/02/05 20:38:37 miguelfreitas Exp $
- *
  */
 
 #include <stdio.h>

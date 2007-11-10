@@ -20,8 +20,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: cc_decoder.h,v 1.8 2007/02/20 00:56:36 dgp85 Exp $
- *
  * stuff needed to provide closed captioning decoding and display
  *
  * Some small bits and pieces of the EIA-608 captioning decoder were

@@ -23,8 +23,6 @@
  *   ID3 tag reading
  *   APE tag reading
  *   Seeking??
- *
- * $Id: demux_mpc.c,v 1.5 2007/01/19 00:26:40 dgp85 Exp $
  */
  
 #ifdef HAVE_CONFIG_H

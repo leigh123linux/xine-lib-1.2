@@ -17,15 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: audio_pulse_out.c,v 1.17 2007/04/01 00:32:29 dgp85 Exp $
- *
  * ao plugin for pulseaudio (rename of polypaudio):
  * http://0pointer.de/lennart/projects/pulsaudio/
  *
  * originally written for polypaudio simple api. Lennart then suggested
  * using the async api for better control (such as volume), therefore, a lot
  * of this code comes from Lennart's patch to mplayer.
- *
  */
 
 #ifdef HAVE_CONFIG_H

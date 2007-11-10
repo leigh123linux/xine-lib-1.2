@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: gdkpixbuf.c,v 1.7 2006/08/05 13:31:13 hadess Exp $
- *
  * a gdk-pixbuf-based image video decoder
  */
 

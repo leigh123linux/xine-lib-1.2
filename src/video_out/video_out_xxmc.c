@@ -18,8 +18,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: video_out_xxmc.c,v 1.23 2007/03/25 23:13:53 dgp85 Exp $
- *
  * video_out_xxmc.c, X11 decoding accelerated video extension interface for xine
  *
  * based on mpeg2dec code from
@@ -33,7 +31,6 @@
  * X11 unscaled overlay support by Miguel Freitas - Nov 2003
  * XvMC VLD implementation by Thomas Hellström - 2004, 2005.
  * XvMC merge by Thomas Hellström - Sep 2004
- *
  */
 
 

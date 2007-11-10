@@ -39,7 +39,3 @@ building the hackersguide.html
 ------------------------------
 
 The easy way to build everything is to issue a "make docs" here.
-
---- 
-version of this file:
- $Id: README,v 1.3 2003/10/12 19:06:43 mroi Exp $

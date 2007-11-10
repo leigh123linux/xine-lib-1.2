@@ -17,15 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: demux_matroska.c,v 1.53 2007/03/12 16:27:21 dgp85 Exp $
- *
  * demultiplexer for matroska streams
  *
  * TODO:
  *   more decoders init
  *   metadata
  *   non seekable input plugins support
- *
  */
 
 #ifdef HAVE_CONFIG_H

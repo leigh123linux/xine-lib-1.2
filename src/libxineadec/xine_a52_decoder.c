@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: xine_decoder.c,v 1.81 2007/02/20 00:34:57 dgp85 Exp $
- *
  * stuff needed to turn liba52 into a xine decoder plugin
  */
 

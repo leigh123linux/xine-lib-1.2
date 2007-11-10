@@ -19,8 +19,6 @@
  *
  * stream metainfo helper functions
  * hide some xine engine details from demuxers and reduce code duplication
- *
- * $Id: info_helper.c,v 1.19 2006/10/16 22:18:24 valtri Exp $ 
  */
 
 #ifdef HAVE_CONFIG_H

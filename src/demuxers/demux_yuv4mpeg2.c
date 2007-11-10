@@ -23,8 +23,6 @@
  * For more information regarding the YUV4MPEG2 file format and associated
  * tools, visit:
  *   http://mjpeg.sourceforge.net/
- *
- * $Id: demux_yuv4mpeg2.c,v 1.44 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

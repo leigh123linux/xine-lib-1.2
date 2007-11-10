@@ -27,8 +27,6 @@
  * Note that the only way that this demuxer validates by content is by
  * checking the first 2 bytes, which are 0x2E 0x03 in a Sierra VMD file.
  * There is a 1/65536 chance of a false positive using this method.
- *
- * $Id: demux_vmd.c,v 1.4 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

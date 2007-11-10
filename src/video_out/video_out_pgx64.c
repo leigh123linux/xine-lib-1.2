@@ -17,15 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: video_out_pgx64.c,v 1.78 2006/07/10 22:08:44 dgp85 Exp $
- *
  * video_out_pgx64.c, Sun XVR100/PGX64/PGX24 output plugin for xine
  *
  * written and currently maintained by
  *   Robin Kay <komadori [at] gekkou [dot] co [dot] uk>
  *
  * Sun XVR-100 framebuffer graciously donated by Jake Goerzen.
- *
  */
 
 #ifdef HAVE_CONFIG_H

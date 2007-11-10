@@ -64,8 +64,6 @@
  *   - scan through all 768 palette bytes
  *     - if any bytes exceed 63, do not shift the bytes at all before
  *       transmitting them to the video decoder
- *
- * $Id: demux_idcin.c,v 1.55 2007/02/20 00:34:55 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

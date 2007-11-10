@@ -28,8 +28,6 @@
  * 
  * - it's possible speeder saving streams in the xine without playing:
  *     xine stream_mrl#save:file.raw\;noaudio\;novideo
- *
- * $Id: input_rip.c,v 1.34 2007/02/20 00:34:57 dgp85 Exp $
  */
 
 /* TODO:

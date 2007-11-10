@@ -17,14 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: buffer_types.c,v 1.107 2006/12/26 03:18:56 dgp85 Exp $
- *
  *
  * contents:
  *
  * buffer types management. 
  * convert FOURCC and audioformattag to BUF_xxx defines
- *
  */
 
 #ifdef HAVE_CONFIG_H

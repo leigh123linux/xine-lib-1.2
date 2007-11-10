@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * OSD stuff (text and graphic primitives)
- * $Id: osd.h,v 1.27 2006/09/26 05:19:49 dgp85 Exp $
  */
 
 #ifndef HAVE_OSD_H

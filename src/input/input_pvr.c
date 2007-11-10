@@ -37,8 +37,6 @@
  *
  * usage: 
  *   xine pvr:/<prefix_to_tmp_files>\!<prefix_to_saved_files>\!<max_page_age>
- *
- * $Id: input_pvr.c,v 1.65 2007/01/19 01:05:25 dgp85 Exp $
  */
 
 /**************************************************************************

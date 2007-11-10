@@ -9,8 +9,6 @@
  * Further modifications to include the "UNRAVEL" stuff, below 
  *
  * This code is in the public domain 
- *
- * $Id: sha1.c,v 1.1 2004/05/05 09:11:39 hadess Exp $
  */
 
 #include <string.h>

@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * This file contains plugin entries for several demuxers used in games
- *
- * $Id: group_games.c,v 1.15 2006/07/10 22:08:13 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

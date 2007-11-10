@@ -16,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- * $Id: invert.c,v 1.20 2004/04/17 19:54:32 mroi Exp $
  */
  
 /*

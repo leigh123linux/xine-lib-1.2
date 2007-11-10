@@ -24,8 +24,6 @@
  * possibly be seen in a VOC file. It only plays the first block in a file.
  * It will only play that block if it is PCM data. More variations will be
  * supported as they are encountered.
- *
- * $Id: demux_voc.c,v 1.41 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

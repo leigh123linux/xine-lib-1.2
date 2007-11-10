@@ -22,8 +22,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- * $Id: yuv2rgb.c,v 1.52 2006/06/20 01:07:59 dgp85 Exp $
  */
 
 #include "config.h"

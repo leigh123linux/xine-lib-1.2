@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: denoise3d.c,v 1.14 2006/01/27 07:46:14 tmattern Exp $
- *
  * mplayer's denoise3d
  * Copyright (C) 2003 Daniel Moreno <comac@comac.darktech.org>
  */

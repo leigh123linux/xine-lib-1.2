@@ -29,9 +29,6 @@
  *    parse_trak_atom
  *    build_frame_table
  *  free_qt_info
- *
- * $Id: demux_qt.c,v 1.214 2007/01/19 01:05:24 dgp85 Exp $
- *
  */
 
 #ifdef HAVE_CONFIG_H

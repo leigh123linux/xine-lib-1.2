@@ -22,8 +22,6 @@
  * TechnoTrend PVA File Demuxer by Mike Melanson (melanson@pcisys.net)
  * For more information regarding the PVA file format, refer to this PDF:
  *   http://www.technotrend.de/download/av_format_v1.pdf
- *
- * $Id: demux_pva.c,v 1.25 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

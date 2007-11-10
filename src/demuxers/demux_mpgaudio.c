@@ -17,13 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: demux_mpgaudio.c,v 1.156 2007/03/29 16:32:12 dgp85 Exp $
- *
  * demultiplexer for mpeg audio (i.e. mp3) streams
  *
  * mp3 file structure:
  *   [id3v2][Xing|Vbri] Frame1 Frame2 Frame3...FrameX [Lyrics][id3v2][id3v1]
- *
  */
 
 #ifdef HAVE_CONFIG_H

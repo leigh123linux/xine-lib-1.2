@@ -17,10 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: video_decoder.h,v 1.14 2004/09/26 22:54:52 valtri Exp $
- *
  * xine video decoder plugin interface
- *
  */
 
 #ifndef HAVE_VIDEO_DECODER_H

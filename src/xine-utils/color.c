@@ -60,8 +60,6 @@
  * to facilitate these operations (such as the PPC AltiVec pixel-unpacking
  * instructions), these macros will automatically map to those special
  * instructions.
- *
- * $Id: color.c,v 1.30 2006/07/17 18:31:24 hadess Exp $
  */
 
 #include "xine_internal.h"

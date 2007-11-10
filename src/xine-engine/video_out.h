@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: video_out.h,v 1.114 2006/09/26 05:19:49 dgp85 Exp $
- *
  *
  * xine version of video_out.h 
  *
@@ -29,7 +27,6 @@
  *
  * vo_port     : generic frame_handling code, uses
  *               a vo_driver for output
- *
  */
 
 #ifndef HAVE_VIDEO_OUT_H

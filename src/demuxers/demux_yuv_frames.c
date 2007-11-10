@@ -20,8 +20,6 @@
  */
 
 /*
- * $Id: demux_yuv_frames.c,v 1.24 2007/01/19 01:05:24 dgp85 Exp $
- *
  * dummy demultiplexer for raw yuv frames (delivered by v4l)
  */
 

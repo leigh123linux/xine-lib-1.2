@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: audio_directx2_out.c,v 1.9 2006/07/16 16:18:09 dsalt Exp $
- *
  *
  * xine audio output plugin using DirectX
  *

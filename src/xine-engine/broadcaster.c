@@ -19,8 +19,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: broadcaster.c,v 1.15 2007/01/19 01:23:06 dgp85 Exp $
- * 
  * broadcaster.c - xine network broadcaster
  *
  * how it works:
@@ -32,7 +30,6 @@
  *  - streams played on master will appear on every slave. 
  *    if master is not meant to use video/audio devices it may be started with
  *    'xine -V none -A none'
- *
  */
 
 #include <stdio.h>

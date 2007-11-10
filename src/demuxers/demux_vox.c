@@ -21,9 +21,6 @@
 /*
  * VOX Demuxer by Mike Melanson (melanson@pcisys.net)
  * This a demuxer for .vox files containing raw Dialogic ADPCM data.
- *
- * $Id: demux_vox.c,v 1.14 2007/01/19 00:26:40 dgp85 Exp $
- *
  */
 
 #ifdef HAVE_CONFIG_H

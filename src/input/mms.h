@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: mms.h,v 1.13 2007/01/03 15:09:42 klan Exp $
- *
  * libmms public header
  */
 

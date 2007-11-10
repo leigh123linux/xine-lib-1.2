@@ -19,8 +19,6 @@
  *
  * True Audio demuxer by Diego Pettenò <flameeyes@gentoo.org>
  * Inspired by tta libavformat demuxer by Alex Beregszaszi
- *
- * $Id: demux_tta.c,v 1.4 2007/03/29 16:46:23 dgp85 Exp $
  */
 
 #define LOG_MODULE "demux_tta"

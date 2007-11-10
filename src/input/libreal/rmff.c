@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: rmff.c,v 1.8 2006/06/20 01:07:58 dgp85 Exp $
- *
  * functions for real media file format
  * adopted from joschkas real tools
  */

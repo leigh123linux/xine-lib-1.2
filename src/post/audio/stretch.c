@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * Time stretch by a given factor, optionally preserving pitch
- *
- * $Id: stretch.c,v 1.8 2006/01/27 07:46:12 tmattern Exp $
- *
  */
 
 #include <stdio.h>

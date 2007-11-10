@@ -21,8 +21,6 @@
 /*
  * MS WAV File Demuxer by Mike Melanson (melanson@pcisys.net)
  * based on WAV specs that are available far and wide
- *
- * $Id: demux_wav.c,v 1.65 2007/03/17 20:57:04 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

@@ -22,8 +22,6 @@
  * 4X Technologies (.4xm) File Demuxer by Mike Melanson (melanson@pcisys.net)
  * For more information on the 4xm file format, visit:
  *   http://www.pcisys.net/~melanson/codecs/
- *
- * $Id: demux_4xm.c,v 1.16 2007/01/19 00:26:39 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

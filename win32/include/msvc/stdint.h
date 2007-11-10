@@ -26,8 +26,6 @@ details. */
  * You should have received a copy of the GNU General Public License
  * along with self program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- * $Id: stdint.h,v 1.2 2004/09/20 19:30:08 valtri Exp $
  */
 
 /* Modified original CygWin version for using by MSVC port. */

@@ -55,7 +55,6 @@
  *   Copyright (C) 2002  Felipe Rivera <liebremx at users sourceforge net>
  *
  * heavily modified by guenter bartsch 2003 for use in libxine
- *
  */
 
 #ifndef	__sun

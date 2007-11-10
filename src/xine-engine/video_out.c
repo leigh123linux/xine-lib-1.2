@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: video_out.c,v 1.228 2007/04/01 01:03:06 dgp85 Exp $
- *
  * frame allocation / queuing / scheduling / output functions
  */
 

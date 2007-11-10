@@ -27,8 +27,6 @@
  * - IFF ANIM compression methods OPT 5, 7 (long and short) and
  *   8 (long and short)
  * - untested (found no testfiles) IFF-ANIM OPT 3, 4 and 6
- *
- * $Id: bitplane.c,v 1.15 2006/07/10 22:08:43 dgp85 Exp $
  */
 
 #include <stdio.h>

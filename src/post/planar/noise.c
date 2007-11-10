@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: noise.c,v 1.4 2007/03/22 23:32:05 dgp85 Exp $
- *
  * mplayer's noise filter, ported by Jason Tackaberry.  Original filter
  * is copyright 2002 Michael Niedermayer <michaelni@gmx.at>
  */

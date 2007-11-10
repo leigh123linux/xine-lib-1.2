@@ -17,11 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: real.h,v 1.5 2004/04/24 16:55:42 miguelfreitas Exp $
- *
  * special functions for real streams.
  * adopted from joschkas real tools.
- *
  */
  
 #ifndef HAVE_REAL_H

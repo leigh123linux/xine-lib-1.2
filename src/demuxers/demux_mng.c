@@ -19,8 +19,6 @@
  */
 
 /*
- * $Id: demux_mng.c,v 1.29 2007/01/19 00:26:40 dgp85 Exp $
- *
  * demux_mng.c, Demuxer plugin for Multiple-image Network Graphics format
  *
  * written and currently maintained by Robin Kay <komadori@myrealbox.com>

@@ -19,8 +19,6 @@
  */
 
 /*
- * $Id: demux_rawdv.c,v 1.30 2007/01/19 00:26:40 dgp85 Exp $
- *
  * demultiplexer for raw dv streams
  */
 

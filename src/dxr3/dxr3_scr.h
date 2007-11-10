@@ -16,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- * $Id: dxr3_scr.h,v 1.7 2004/01/04 22:26:29 mroi Exp $
  */
 
 #include "xine_internal.h"

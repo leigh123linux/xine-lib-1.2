@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: pnm.c,v 1.22 2006/06/20 01:46:41 dgp85 Exp $
- *
  * pnm protocol implementation 
  * based upon code from joschka
  */

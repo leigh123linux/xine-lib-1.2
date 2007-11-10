@@ -22,9 +22,6 @@
  * This is an up-mix audio filter post plugin.
  * It simply creates output channels to match the speaker arrangement.
  * E.g. Converts Stereo into Surround 5.1
- *
- * $Id: upmix.c,v 1.17 2006/01/27 07:46:12 tmattern Exp $
- *
  */
 
 #include <stdio.h>

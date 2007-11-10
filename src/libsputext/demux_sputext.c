@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: demux_sputext.c,v 1.53 2007/01/19 01:05:25 dgp85 Exp $
- *
  * code based on old libsputext/xine_decoder.c
  *
  * code based on mplayer module:

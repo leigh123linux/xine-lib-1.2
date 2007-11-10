@@ -19,7 +19,6 @@
  *
  * Base64 encoding modified for Musicbrainz
  *   relicensed under the GNU General Public License for use in xine-lib
- *
  */
 /* --------------------------------------------------------------------------
 
@@ -40,8 +39,6 @@
    You should have received a copy of the GNU Lesser General Public
    License along with this library; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
-
-     $Id: base64.c,v 1.2 2004/05/05 18:44:19 mroi Exp $
 
 ----------------------------------------------------------------------------*/
 /*
@@ -84,7 +81,6 @@
  * RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
  * CONTRACT, TORT (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
  */
 
 #include <ctype.h>

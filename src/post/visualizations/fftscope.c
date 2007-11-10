@@ -21,9 +21,6 @@
  *   by Mike Melanson (melanson@pcisys.net)
  *
  * FFT code by Steve Haehnichen, originally licensed under GPL v1
- *
- * $Id: fftscope.c,v 1.30 2006/12/02 22:35:18 miguelfreitas Exp $
- *
  */
 
 #include <stdio.h>

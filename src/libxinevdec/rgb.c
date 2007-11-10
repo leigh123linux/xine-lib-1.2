@@ -29,8 +29,6 @@
  *
  * One more catch: Raw RGB from a Microsoft file is upside down. This is 
  * indicated by a negative height parameter.
- * 
- * $Id: rgb.c,v 1.34 2006/07/10 22:08:43 dgp85 Exp $
  */
 
 #include <stdio.h>

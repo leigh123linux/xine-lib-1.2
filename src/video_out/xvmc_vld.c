@@ -18,8 +18,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: xvmc_vld.c,v 1.4 2005/05/06 07:42:21 totte67 Exp $
- *
  * xvmc_vld.c, X11 decoding accelerated video extension interface for xine
  *
  * Author: Thomas Hellström, (2004)

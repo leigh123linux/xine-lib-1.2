@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: rtsp_session.c,v 1.19 2006/12/22 18:08:10 klan Exp $
- *
  * high level interface to rtsp servers.
  */
 

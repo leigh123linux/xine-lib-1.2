@@ -19,9 +19,6 @@
  *
  * EBML parser
  * a lot of ideas from the gstreamer parser
- *
- * $Id: ebml.h,v 1.1 2004/01/05 00:40:54 tmattern Exp $
- *
  */
 #ifndef EBML_H
 #define EBML_H

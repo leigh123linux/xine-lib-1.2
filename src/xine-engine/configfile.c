@@ -17,10 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: configfile.c,v 1.85 2007/02/22 15:49:16 dgp85 Exp $
- *
  * config object (was: file) management - implementation
- *
  */
 
 #ifdef HAVE_CONFIG_H

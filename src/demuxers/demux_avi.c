@@ -19,8 +19,6 @@
  */
 
 /*
- * $Id: demux_avi.c,v 1.232 2007/03/29 19:24:18 dgp85 Exp $
- *
  * demultiplexer for avi streams
  *
  * part of the code is taken from
@@ -46,7 +44,6 @@
  * expect to find the next A/V frame.  We periodically check if we can
  * read data from the file at that offset.  If we can, we append index
  * data for as many frames as we can read at the time.
- *
  */
 
 /*
@@ -55,7 +52,6 @@
  * Transcode's and xine's avi code comes from the same source and
  * still has a very similar architecture, so it wasn't much effort to
  * port it from transcode to xine.
- *
  */
 
 #ifdef HAVE_CONFIG_H

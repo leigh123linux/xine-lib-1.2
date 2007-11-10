@@ -3,7 +3,6 @@
 /* from Peter C. Gutmann's implementation as found in */
 /* Applied Cryptography by Bruce Schneier */
 /* This code is in the public domain */
-/* $Id: sha1.h,v 1.1 2004/05/05 09:11:39 hadess Exp $ */
 
 #ifndef SHA_H
 #define SHA_H

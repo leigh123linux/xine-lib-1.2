@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: input_mms.c,v 1.70 2007/02/20 00:51:39 dgp85 Exp $
- *
  * mms input plugin based on work from major mms
  */
 

@@ -33,8 +33,6 @@
  * initialized to 0 at the start of the file and maintained throughout the
  * data. This makes seeking conceptually impossible. Upshot: Random
  * seeking is not supported.
- *
- * $Id: demux_aud.c,v 1.20 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

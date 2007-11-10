@@ -18,8 +18,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: accel_xvmc.h,v 1.3 2005/05/06 07:42:21 totte67 Exp $
- *
  *
  * Common acceleration definitions for XvMC. 
  *

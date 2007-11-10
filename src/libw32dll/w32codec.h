@@ -17,10 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: w32codec.h,v 1.3 2001/06/10 00:21:53 guenter Exp $
- *
  * routines for using w32 codecs
- *
  */
 
 #include "wine/msacm.h"

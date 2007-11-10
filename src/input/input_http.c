@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * input plugin for http network streams
- *
- * $Id: input_http.c,v 1.129 2007/03/17 16:47:16 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -64,7 +62,7 @@
 #define TAG_ICY_NOTICE2    "icy-notice2:"
 #define TAG_ICY_METAINT    "icy-metaint:"
 #define TAG_CONTENT_TYPE   "Content-Type:"
-#define TAG_LASTFM_SERVER  "Server: last.fm Streaming Server"
+#define TAG_LASTFM_SERVER  "Server: last.fm "
 
 typedef struct {
   input_plugin_t   input_plugin;

@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * This file contains plugin entries for several visualization post plugins.
- *
- * $Id: visualizations.h,v 1.1 2003/10/30 22:40:53 mroi Exp $
  */
 
 #include "xine_internal.h"

@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: unsharp.c,v 1.18 2006/01/27 07:46:14 tmattern Exp $
- *
  * mplayer's unsharp
  * Copyright (C) 2002 Rémi Guyomarch <rguyom@pobox.com>
  */

@@ -19,8 +19,6 @@
  */
 
 /*
- * $Id: demux_eawve.c,v 1.29 2007/01/19 00:26:40 dgp85 Exp $
- *
  * demux_eawve.c, Demuxer plugin for Electronic Arts' WVE file format
  *
  * written and currently maintained by Robin Kay <komadori@myrealbox.com>

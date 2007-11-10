@@ -19,8 +19,6 @@
  *
  * audio_directx_out.c, direct sound audio output plugin for xine
  * by Matthew Grooms <elon@altavista.com>
- *
- * $Id: audio_directx_out.c,v 1.17 2006/09/21 15:01:08 valtri Exp $
  */
 
 /*

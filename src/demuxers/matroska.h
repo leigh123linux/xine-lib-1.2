@@ -16,9 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- * $Id: matroska.h,v 1.11 2007/01/07 12:33:50 molivier Exp $
- *
  */
 #ifndef MATROSKA_H
 #define MATROSKA_H

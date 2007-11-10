@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: image.c,v 1.21 2006/10/16 22:18:24 valtri Exp $
- *
  * a image video decoder
  */
 

@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: video_out_macosx.m,v 1.15 2006/06/02 22:18:58 dsalt Exp $
- *
  * This output driver makes use of xine's objective-c video_output 
  * classes located in the macosx folder.
  */

@@ -17,15 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: demux_mpeg_pes.c,v 1.43 2007/03/29 17:11:36 dgp85 Exp $
- *
  * demultiplexer for mpeg 2 PES (Packetized Elementary Streams)
  * reads streams of variable blocksizes
  *
  * 1-7-2003 New implementation of mpeg 2 PES demuxers.
  *   (c) 2003 James Courtier-Dutton James@superbug.demon.co.uk
  *   This code might also decode normal MPG files.
- *
  */
  
 #ifdef HAVE_CONFIG_H

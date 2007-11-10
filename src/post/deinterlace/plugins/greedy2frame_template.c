@@ -1,6 +1,4 @@
 /*****************************************************************************
-** $Id: greedy2frame_template.c,v 1.10 2006/12/21 09:54:45 dgp85 Exp $
-******************************************************************************
 ** Copyright (c) 2000 John Adcock, Tom Barry, Steve Grimm  All rights reserved.
 ** port copyright (c) 2003 Miguel Freitas
 ******************************************************************************
@@ -18,7 +16,6 @@
 ******************************************************************************
 ** CVS Log
 **
-** $Log: greedy2frame_template.c,v $
 ** Revision 1.10  2006/12/21 09:54:45  dgp85
 ** Apply the textrel patch from Gentoo, thanks to PaX team for providing it. The patch was applied and tested for a while in Gentoo and Pardus, and solves also Debian's problems with non-PIC code. If problems will arise, they'll be debugged.
 **

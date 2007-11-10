@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: xine_decoder.c,v 1.57 2006/07/10 22:08:29 dgp85 Exp $
- *
  * stuff needed to turn libmad into a xine decoder plugin
  */
 
