@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: buffer.h,v 1.162 2007/01/14 16:53:37 klan Exp $
- *
  *
  * contents:
  *
@@ -28,7 +26,6 @@
  * free buffer pool management routines
  *
  * FIFO buffer structures/routines
- *
  */
 
 #ifndef HAVE_BUFFER_H

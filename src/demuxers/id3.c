@@ -28,8 +28,6 @@
  *          unzip support
  *
  * ID3v2 specs: http://www.id3.org/
- *
- * $Id: id3.c,v 1.13 2007/03/03 00:58:52 dgp85 Exp $
  */
  
 #ifdef HAVE_CONFIG_H

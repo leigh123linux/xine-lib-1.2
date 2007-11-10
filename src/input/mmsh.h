@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: mmsh.h,v 1.6 2007/01/09 20:51:00 klan Exp $
- *
  * libmmsh public header
  */
 

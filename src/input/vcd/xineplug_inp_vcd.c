@@ -1,5 +1,4 @@
 /*
-  $Id: xineplug_inp_vcd.c,v 1.53 2007/02/08 02:40:23 dsalt Exp $
  
   Copyright (C) 2002, 2003, 2004, 2005 Rocky Bernstein <rocky@panix.com>
   

@@ -19,9 +19,6 @@
  *
  * EBML parser
  * a lot of ideas from the gstreamer parser
- *
- * $Id: ebml.c,v 1.4 2005/11/28 12:24:57 valtri Exp $
- *
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

@@ -17,10 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: sdpplin.c,v 1.8 2006/12/25 16:21:56 dgp85 Exp $
- *
  * sdp/sdpplin parser.
- *
  */
  
 #define LOG_MODULE "sdpplin"

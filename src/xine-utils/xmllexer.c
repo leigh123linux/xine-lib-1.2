@@ -17,9 +17,6 @@
  * License along with the Gnome Library; see the file COPYING.LIB.  If not,
  * write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth
  * Floor, Boston, MA 02110, USA
- *
- *  $Id: xmllexer.c,v 1.13 2007/03/04 16:19:12 hadess Exp $
- *
  */
 
 #define LOG_MODULE "xmllexer"

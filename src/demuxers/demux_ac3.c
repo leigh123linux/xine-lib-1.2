@@ -22,8 +22,6 @@
  * AC3 File Demuxer by Mike Melanson (melanson@pcisys.net)
  * This demuxer detects raw AC3 data in a file and shovels AC3 data
  * directly to the AC3 decoder.
- *
- * $Id: demux_ac3.c,v 1.21 2007/03/19 16:42:32 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

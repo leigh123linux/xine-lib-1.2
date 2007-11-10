@@ -22,8 +22,6 @@
  * FLAC File Demuxer by Mike Melanson (melanson@pcisys.net)
  * For more information on the FLAC file format, visit:
  *   http://flac.sourceforge.net/
- *
- * $Id: demux_flac.c,v 1.17 2007/03/29 16:52:23 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

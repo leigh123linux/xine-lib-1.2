@@ -30,8 +30,6 @@
  *   (C) Alex Beregszaszi <alex@naxine.org>
  *   
  *   Based on FFmpeg's libav/rm.c.
- *
- * $Id: demux_real.c,v 1.113 2007/02/20 00:34:56 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

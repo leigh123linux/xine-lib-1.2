@@ -19,8 +19,6 @@
  */
 
 /*
- * $Id: demux_image.c,v 1.26 2007/01/19 00:26:40 dgp85 Exp $
- *
  * image dummy demultiplexer
  */
 

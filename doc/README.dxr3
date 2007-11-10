@@ -183,8 +183,3 @@ prefer, of course).
 
 Have a look at the previous explained configuration options dxr3.output.keycolor
 and dxr3.output.keycolor_interval too.
-
-
---- 
-version of this file:
- $Id: README.dxr3,v 1.11 2004/12/12 22:00:47 mroi Exp $

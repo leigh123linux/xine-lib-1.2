@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: x11osd.h,v 1.4 2004/04/10 15:31:10 miguelfreitas Exp $
- *
  * x11osd.h, use X11 Nonrectangular Window Shape Extension to draw xine OSD
  *
  * Nov 2003 - Miguel Freitas

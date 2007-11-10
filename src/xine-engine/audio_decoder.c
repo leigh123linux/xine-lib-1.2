@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: audio_decoder.c,v 1.139 2007/02/20 00:34:57 dgp85 Exp $
- *
  *
  * functions that implement audio decoding
  */

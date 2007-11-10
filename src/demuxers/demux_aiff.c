@@ -20,9 +20,6 @@
 
 /*
  * AIFF File Demuxer by Mike Melanson (melanson@pcisys.net)
- *
- * $Id: demux_aiff.c,v 1.41 2007/01/19 00:26:40 dgp85 Exp $
- *
  */
 
 #ifdef HAVE_CONFIG_H

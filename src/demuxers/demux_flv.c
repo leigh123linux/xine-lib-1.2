@@ -25,8 +25,6 @@
  *
  * For more information on the FLV file format, visit:
  * http://download.macromedia.com/pub/flash/flash_file_format_specification.pdf
- *
- * $Id: demux_flv.c,v 1.21 2007/03/17 11:29:43 klan Exp $
  */
 
 #ifdef HAVE_CONFIG_H

@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * URL helper functions
- *
- * $Id: http_helper.c,v 1.9 2006/11/19 15:38:47 dgp85 Exp $ 
  */
 
 #ifdef HAVE_CONFIG_H

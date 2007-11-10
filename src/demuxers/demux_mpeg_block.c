@@ -17,11 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: demux_mpeg_block.c,v 1.220 2007/02/20 00:34:55 dgp85 Exp $
- *
  * demultiplexer for mpeg 1/2 program streams
  * used with fixed blocksize devices (like dvd/vcd)
- *
  */
  
 #ifdef HAVE_CONFIG_H

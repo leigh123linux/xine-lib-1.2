@@ -22,8 +22,6 @@
  * TODO:
  *   32bit float output
  *   Seeking??
- *
- * $Id: xine_decoder.c,v 1.10 2007/01/19 02:35:36 dgp85 Exp $
  */
 
 #include <stdio.h>

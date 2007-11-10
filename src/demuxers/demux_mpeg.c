@@ -19,8 +19,6 @@
  */
 
 /*
- * $Id: demux_mpeg.c,v 1.152 2007/02/20 00:34:55 dgp85 Exp $
- *
  * demultiplexer for mpeg 1/2 program streams
  * reads streams of variable blocksizes
  */

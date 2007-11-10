@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: real_common.c,v 1.12 2007/03/17 15:45:41 dgp85 Exp $
- *
  * Common function for the thin layer to use Real binary-only codecs in xine
  */
 

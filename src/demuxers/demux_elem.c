@@ -19,8 +19,6 @@
  */
 
 /*
- * $Id: demux_elem.c,v 1.91 2007/02/20 00:34:55 dgp85 Exp $
- *
  * demultiplexer for elementary mpeg streams
  */
 

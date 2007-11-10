@@ -17,10 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: audio_decoder.c,v 1.33 2007/01/28 18:38:33 miguelfreitas Exp $
- *
  * xine audio decoder plugin using ffmpeg
- *
  */
  
 #ifdef HAVE_CONFIG_H

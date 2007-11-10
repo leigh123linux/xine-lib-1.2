@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: ring_buffer.h,v 1.3 2006/09/26 05:19:49 dgp85 Exp $
- *
  * Fifo + Ring Buffer
  */
 typedef struct xine_ring_buffer_s xine_ring_buffer_t;

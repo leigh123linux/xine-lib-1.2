@@ -19,9 +19,6 @@
  *
  * FftGraph Visualization Post Plugin For xine
  *   by Thibaut Mattern (tmattern@noos.fr)
- *
- * $Id: fftgraph.c,v 1.15 2006/12/02 22:35:18 miguelfreitas Exp $
- *
  */
 
 #include <stdio.h>

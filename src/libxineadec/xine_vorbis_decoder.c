@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: xine_decoder.c,v 1.48 2006/12/04 13:59:38 dgp85 Exp $
- *
  * (ogg/)vorbis audio decoder plugin (libvorbis wrapper) for xine
  */
 

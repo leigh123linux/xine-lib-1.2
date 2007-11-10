@@ -22,8 +22,6 @@
  * RoQ File Demuxer by Mike Melanson (melanson@pcisys.net)
  * For more information regarding the RoQ file format, visit:
  *   http://www.csse.monash.edu.au/~timf/
- *
- * $Id: demux_roq.c,v 1.54 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

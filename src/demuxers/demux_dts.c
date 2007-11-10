@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * Raw DTS Demuxer by James Stembridge (jstembridge@gmail.com)
- *
- * $Id: demux_dts.c,v 1.8 2007/03/19 16:42:32 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

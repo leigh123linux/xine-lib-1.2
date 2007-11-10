@@ -21,8 +21,6 @@
  */
 
 /*
- * $Id: demux_slave.c,v 1.23 2007/01/19 01:05:24 dgp85 Exp $
- *
  * demuxer for slave "protocol"
  * master xine must be started with XINE_PARAM_BROADCASTER_PORT set, that is,
  * 'xine --broadcast-port <port_number>'

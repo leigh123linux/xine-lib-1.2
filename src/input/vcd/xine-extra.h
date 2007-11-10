@@ -1,5 +1,4 @@
 /* 
-  $Id: xine-extra.h,v 1.2 2006/04/21 23:15:45 dsalt Exp $
  
   Copyright (C) 2002 Rocky Bernstein <rocky@panix.com>
   

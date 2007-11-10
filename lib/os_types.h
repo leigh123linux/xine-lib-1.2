@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: os_types.h,v 1.5 2006/04/08 16:42:23 valtri Exp $ Ext
- *
  * Platform dependent types needed by public xine.h. 
  * Types not needed by xine.h are specified in os_internal.h.
  *

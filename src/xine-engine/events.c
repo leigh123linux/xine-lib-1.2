@@ -17,10 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: events.c,v 1.32 2006/10/16 22:18:24 valtri Exp $
- *
  * Event handling functions
- *
  */
 
 #ifdef HAVE_CONFIG_H

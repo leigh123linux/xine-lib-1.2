@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: pnm.h,v 1.5 2003/12/09 00:02:30 f1rmb Exp $
- *
  * pnm util functions header by joschka
  */
  

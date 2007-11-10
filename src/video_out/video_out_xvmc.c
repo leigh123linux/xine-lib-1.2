@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: video_out_xvmc.c,v 1.29 2007/03/25 23:07:23 dgp85 Exp $
- * 
  * video_out_xvmc.c, X11 video motion compensation extension interface for xine
  *
  * based on mpeg2dec code from

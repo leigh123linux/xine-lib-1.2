@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: xine_goom.c,v 1.65 2007/02/20 00:58:51 dgp85 Exp $
- *
  * GOOM post plugin.
  *
  * first version by Mark Thomas

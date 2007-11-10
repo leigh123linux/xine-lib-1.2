@@ -18,8 +18,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
 #
-# $Id: autogen.sh,v 1.20 2007/03/26 12:52:05 dgp85 Exp $
-#
 # Maintained by Stephen Torri <storri@users.sourceforge.net>
 #
 # run this to generate all the initial makefiles, etc.

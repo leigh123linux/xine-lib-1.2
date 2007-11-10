@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * xine interface to libwavpack by Diego Pettenò <flameeyes@gmail.com>
- *
- * $Id: demux_wavpack.c,v 1.11 2007/03/17 07:34:02 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

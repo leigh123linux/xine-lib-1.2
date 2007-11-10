@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: vo_scale.c,v 1.39 2006/09/26 08:00:02 dgp85 Exp $
- * 
  * Contains common code to calculate video scaling parameters.
  * In short, it will map frame dimensions to screen/window size.
  * Takes into account aspect ratio correction and zooming.

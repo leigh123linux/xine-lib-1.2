@@ -19,10 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: spu.h,v 1.27 2004/07/14 01:18:48 miguelfreitas Exp $
- *
  * This file was originally part of the OMS program.
- *
  */
 
 #ifndef __SPU_H__

@@ -20,8 +20,6 @@
  * YUV "Decoder" by Mike Melanson (melanson@pcisys.net)
  * Actually, this decoder just reorganizes chunks of raw YUV data in such
  * a way that xine can display them.
- * 
- * $Id: yuv.c,v 1.37 2006/07/10 22:08:43 dgp85 Exp $
  */
 
 #include <stdio.h>

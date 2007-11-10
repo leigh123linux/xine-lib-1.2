@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: xine_buffer.c,v 1.11 2006/06/23 18:24:22 dsalt Exp $
- *
  *
  * generic dynamic buffer functions. The goals
  * of these functions are (in fact many of these points

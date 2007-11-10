@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: mmsh.c,v 1.42 2007/01/11 16:20:55 klan Exp $
- *
  * MMS over HTTP protocol
  *   written by Thibaut Mattern
  *   based on mms.c and specs from avifile

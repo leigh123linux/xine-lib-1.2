@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: xcbosd.c,v 1.1 2007/02/15 15:19:33 dgp85 Exp $
- *
  * xcbosd.c, use X11 Nonrectangular Window Shape Extension to draw xine OSD
  *
  * Nov 2003 - Miguel Freitas

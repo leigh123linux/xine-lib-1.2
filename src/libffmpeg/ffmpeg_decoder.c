@@ -17,10 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: xine_decoder.c,v 1.173 2007/01/13 21:19:52 miguelfreitas Exp $
- *
  * xine decoder plugin using ffmpeg
- *
  */
 
 #ifdef HAVE_CONFIG_H

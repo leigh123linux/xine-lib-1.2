@@ -18,8 +18,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: xxmc.h,v 1.9 2005/09/25 00:44:04 miguelfreitas Exp $
- *
  * video_out_xxmc.c, X11 decoding accelerated video extension interface for xine
  *
  * based on mpeg2dec code from

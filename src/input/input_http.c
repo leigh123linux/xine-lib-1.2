@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * input plugin for http network streams
- *
- * $Id: input_http.c,v 1.129 2007/03/17 16:47:16 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

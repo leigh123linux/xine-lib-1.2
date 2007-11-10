@@ -16,9 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- * $Id: array.c,v 1.4 2007/02/03 16:31:55 dsalt Exp $
- *
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

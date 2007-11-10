@@ -19,8 +19,6 @@
  *
  * Simple MPEG-ES parser/framer by Thibaut Mattern (tmattern@noos.fr)
  *   based on libmpeg2 decoder.
- *
- * $Id: mpeg_parser.h,v 1.5 2007/03/29 18:52:45 dgp85 Exp $
  */
 #ifndef HAVE_MPEG_PARSER_H
 #define HAVE_MPEG_PARSER_H

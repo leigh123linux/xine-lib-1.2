@@ -17,11 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: xine_decoder.c,v 1.62 2007/03/17 20:59:36 dgp85 Exp $
- * 
  * 31-8-2001 Added LPCM rate sensing.
  *   (c) 2001 James Courtier-Dutton James@superbug.demon.co.uk
- *
  */
 #ifndef __sun
 #define _XOPEN_SOURCE 500

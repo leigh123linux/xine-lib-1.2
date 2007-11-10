@@ -24,9 +24,6 @@
  * for initial ALSA 0.9.x support.
  *     adding MONO/STEREO/4CHANNEL/5CHANNEL/5.1CHANNEL analogue support.
  * (c) 2001 James Courtier-Dutton <James@superbug.demon.co.uk>
- *
- * 
- * $Id: audio_alsa_out.c,v 1.168 2007/02/25 22:33:25 miguelfreitas Exp $
  */
 
 #ifdef HAVE_CONFIG_H

@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: xine_plugin.c,v 1.52 2006/07/12 21:08:46 dsalt Exp $
- *
  * advanced video deinterlacer plugin
  * Jun/2003 by Miguel Freitas
  *

@@ -17,10 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: post.h,v 1.26 2007/02/20 01:13:08 dgp85 Exp $
- *
  * post plugin definitions
- *
  */
 
 #ifndef XINE_POST_H

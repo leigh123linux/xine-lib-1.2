@@ -23,8 +23,6 @@
  * All this demuxer does is read raw CD frames and shovel them to the
  * linear PCM "decoder" (which in turn sends them directly to the audio
  * output target; this is a really fancy CD-playing architecture).
- *
- * $Id: demux_cdda.c,v 1.20 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

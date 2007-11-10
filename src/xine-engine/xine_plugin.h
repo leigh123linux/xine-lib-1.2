@@ -17,10 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: xine_plugin.h,v 1.23 2007/01/19 02:49:31 dgp85 Exp $
- *
  * generic plugin definitions
- *
  */
 
 #ifndef XINE_PLUGIN_H

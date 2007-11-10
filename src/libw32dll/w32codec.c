@@ -17,12 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: w32codec.c,v 1.155 2006/07/10 22:08:43 dgp85 Exp $
- *
  * routines for using w32 codecs
  * DirectShow support by Miguel Freitas (Nov/2001)
  * DMO support (Dez/2002)
- *
  */
                    
 #include <stdlib.h>

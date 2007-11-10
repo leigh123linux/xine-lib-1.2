@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * This file contains plugin entries for several visualization post plugins.
- *
- * $Id: visualizations.c,v 1.14 2006/07/10 22:08:44 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

@@ -19,8 +19,6 @@
  *
  * NSF Audio "Decoder" using the Nosefart NSF engine by Matt Conte
  *   http://www.baisoku.org/
- *
- * $Id: nsf.c,v 1.13 2006/09/25 23:56:31 dgp85 Exp $
  */
 
 #include <stdio.h>

@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: video_out_xv.c,v 1.224 2007/03/29 19:01:03 dgp85 Exp $
- *
  * video_out_xv.c, X11 video extension interface for xine
  *
  * based on mpeg2dec code from

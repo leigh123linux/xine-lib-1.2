@@ -20,8 +20,6 @@
  * ID3 tag parser
  *
  * Supported versions: v1, v1.1, v2.2, v2.3, v2.4
- *
- * $Id: id3.h,v 1.6 2007/03/03 01:41:16 dgp85 Exp $
  */
 
 #ifndef ID3_H

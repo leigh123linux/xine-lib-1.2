@@ -23,8 +23,6 @@
  * For information on the FLI format, as well as various traps to
  * avoid while programming a FLI decoder, visit:
  *   http://www.pcisys.net/~melanson/codecs/
- *
- * $Id: demux_fli.c,v 1.60 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

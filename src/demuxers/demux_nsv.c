@@ -22,8 +22,6 @@
  * Nullsoft Video (NSV) file demuxer by Mike Melanson (melanson@pcisys.net)
  * For more information regarding the NSV file format, visit:
  *   http://www.pcisys.net/~melanson/codecs/
- *
- * $Id: demux_nsv.c,v 1.25 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

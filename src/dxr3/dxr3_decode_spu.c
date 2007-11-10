@@ -16,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- * $Id: dxr3_decode_spu.c,v 1.56 2006/07/10 22:08:13 dgp85 Exp $
  */
  
 /* dxr3 spu decoder plugin.

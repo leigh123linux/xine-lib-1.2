@@ -28,8 +28,6 @@
  * However, seeking is infeasible due to the audio encoding: Each audio 
  * block needs information from the previous audio block in order to be
  * decoded, thus making random seeking difficult.
- *
- * $Id: demux_vqa.c,v 1.42 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

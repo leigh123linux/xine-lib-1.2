@@ -19,8 +19,6 @@
  *
  * Demuxer helper functions
  * hide some xine engine details from demuxers and reduce code duplication
- *
- * $Id: demux.c,v 1.66 2007/01/18 23:28:46 dgp85 Exp $ 
  */
 
 

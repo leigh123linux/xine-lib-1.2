@@ -17,10 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: dvaudio_decoder.c,v 1.12 2006/12/04 22:25:13 miguelfreitas Exp $
- *
  * dv audio decoder based on patch by Dan Dennedy <dan@dennedy.org>
- *
  */
  
 #ifdef HAVE_CONFIG_H

@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: rmff.h,v 1.5 2004/04/06 19:20:16 valtri Exp $
- *
  * some functions for real media file headers
  * adopted from joschkas real tools
  */

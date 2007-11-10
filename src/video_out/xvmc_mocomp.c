@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: xvmc_mocomp.c,v 1.4 2005/05/06 07:42:21 totte67 Exp $
- *
  * XvMC image support by Jack Kelliher
  */
 

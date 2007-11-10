@@ -1,5 +1,4 @@
 /* 
-  $Id: xine-extra.c,v 1.5 2006/09/09 17:41:45 dgp85 Exp $
  
   Copyright (C) 2002 Rocky Bernstein <rocky@panix.com>
   

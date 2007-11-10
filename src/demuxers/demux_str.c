@@ -23,8 +23,6 @@
  *                  and Stuart Caie (kyzer@4u.net)
  * This demuxer handles either raw STR files (which are just a concatenation
  * of raw compact disc sectors) or STR files with RIFF headers.
- *
- * $Id: demux_str.c,v 1.26 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 /*

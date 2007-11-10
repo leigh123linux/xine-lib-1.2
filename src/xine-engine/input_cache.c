@@ -21,8 +21,6 @@
  *
  * The goal of this input plugin is to reduce 
  * the number of calls to the real input plugin.
- *
- * $Id: input_cache.c,v 1.14 2007/02/20 00:34:57 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

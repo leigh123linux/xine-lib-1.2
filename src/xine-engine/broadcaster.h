@@ -17,10 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: broadcaster.h,v 1.3 2006/09/26 05:19:48 dgp85 Exp $
- * 
  * broadcaster.h
- *
  */
 
 #ifndef HAVE_BROADCASTER_H

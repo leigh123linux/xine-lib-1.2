@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: demux_asf.c,v 1.194 2007/03/09 23:18:19 dgp85 Exp $
- *
  * demultiplexer for asf streams
  *
  * based on ffmpeg's

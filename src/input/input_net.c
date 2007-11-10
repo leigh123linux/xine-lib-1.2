@@ -20,8 +20,6 @@
  * Read from a tcp network stream over a lan (put a tweaked mp1e encoder the
  * other end and you can watch tv anywhere in the house ..)
  *
- * $Id: input_net.c,v 1.70 2007/01/19 01:05:25 dgp85 Exp $
- *
  * how to set up mp1e for use with this plugin:
  * 
  * use mp1 to capture the live stream, e.g.

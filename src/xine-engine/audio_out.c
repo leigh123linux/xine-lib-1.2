@@ -17,8 +17,6 @@
  * along with self program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: audio_out.c,v 1.210 2007/04/01 00:52:36 dgp85 Exp $
- *
  * 22-8-2001 James imported some useful AC3 sections from the previous alsa driver.
  *   (c) 2001 Andy Lo A Foe <andy@alsaplayer.org>
  * 20-8-2001 First implementation of Audio sync and Audio driver separation.
@@ -53,7 +51,6 @@
  *   Copyright (C) 2002  Felipe Rivera <liebremx at users sourceforge net>
  *
  * heavily modified by guenter bartsch 2003 for use in libxine
- *
  */
 
 #ifndef	__sun

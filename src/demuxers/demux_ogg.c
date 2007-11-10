@@ -19,10 +19,7 @@
  */
 
 /*
- * $Id: demux_ogg.c,v 1.177 2007/03/29 19:38:51 dgp85 Exp $
- *
  * demultiplexer for ogg streams
- *
  */
 /* 2003.02.09 (dilb) update of the handling for audio/video infos for strongarm cpus. */
 

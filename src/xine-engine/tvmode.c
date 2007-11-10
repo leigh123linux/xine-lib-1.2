@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: tvmode.c,v 1.17 2003/12/09 00:02:37 f1rmb Exp $
- *
  * tvmode - TV output selection
  *
  * Currently uses nvtvd (Dirk Thierbach <dthierbach@gmx.de>)

@@ -17,12 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: fill.c,v 1.1 2005/07/18 18:02:51 jstembridge Exp $
- *
  * fill video filter by James Stembridge (jstembridge@gmail.com)
  *
  * based on invert.c
- *
  */
 
 #include "xine_internal.h"

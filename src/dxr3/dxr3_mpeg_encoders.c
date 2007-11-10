@@ -16,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- * $Id: dxr3_mpeg_encoders.c,v 1.25 2007/03/10 17:25:13 dgp85 Exp $
  */
  
 /* mpeg encoders for the dxr3 video out plugin.

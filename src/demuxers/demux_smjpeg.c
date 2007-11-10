@@ -22,8 +22,6 @@
  * SMJPEG File Demuxer by Mike Melanson (melanson@pcisys.net)
  * For more information on the SMJPEG file format, visit:
  *   http://www.lokigames.com/development/smjpeg.php3
- *
- * $Id: demux_smjpeg.c,v 1.51 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

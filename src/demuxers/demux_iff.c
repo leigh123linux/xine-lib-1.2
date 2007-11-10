@@ -35,8 +35,6 @@
  *   - simple pictures work, nothing more (most work is done in bitmap-decoder)
  * * ANIM (Animations)
  *   - Animation works fine, without seeking.
- *
- * $Id: demux_iff.c,v 1.19 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

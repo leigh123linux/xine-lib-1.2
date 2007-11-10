@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: audio_decoder.c,v 1.59 2007/03/17 15:45:41 dgp85 Exp $
- *
  * thin layer to use real binary-only codecs in xine
  *
  * code inspired by work from Florian Schneider for the MPlayer Project 

@@ -17,10 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: video_out_aa.c,v 1.49 2006/07/10 22:08:44 dgp85 Exp $
- *
  * video_out_aa.c, ascii-art output plugin for xine
- *
  */
 
 #ifdef HAVE_CONFIG_H

@@ -17,10 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: monitor.c,v 1.8 2006/06/23 18:24:22 dsalt Exp $
- *
  * debug print and profiling functions - implementation
- *
  */
 
 #ifdef HAVE_CONFIG_H

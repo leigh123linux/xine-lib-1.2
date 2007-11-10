@@ -16,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- * $Id: video_out_dxr3.c,v 1.117 2006/07/17 17:19:51 dsalt Exp $
  */
  
 /* mpeg1 encoding video out plugin for the dxr3.  

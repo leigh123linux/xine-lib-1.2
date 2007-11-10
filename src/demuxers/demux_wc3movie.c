@@ -23,8 +23,6 @@
  *   by Mike Melanson (melanson@pcisys.net)
  * For more information on the MVE file format, visit:
  *   http://www.pcisys.net/~melanson/codecs/
- *
- * $Id: demux_wc3movie.c,v 1.54 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

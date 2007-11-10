@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: video_out_fb.c,v 1.49 2006/12/19 19:10:51 dsalt Exp $
- * 
  * video_out_fb.c, frame buffer xine driver by Miguel Freitas
  *
  * Contributors:
