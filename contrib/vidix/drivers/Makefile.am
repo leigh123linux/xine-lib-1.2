@@ -10,8 +10,8 @@ EXTRA_DIST = genfb_vid.c
 noinst_HEADERS = mach64.h glint_regs.h pm3_regs.h radeon.h savage_regs.h \
                  cyberblade_regs.h unichrome_regs.h sis_defs.h sis_regs.h
 
-BUILT_SOURCES = $(top_srcdir)/contrib/libdha/pci_ids.h \
-		$(top_srcdir)/contrib/libdha/pci_names.h
+BUILT_SOURCES = $(top_builddir)/contrib/libdha/pci_ids.h \
+		$(top_builddir)/contrib/libdha/pci_names.h
 
 $(BUILT_SOURCES):
 	$(MAKE) -C $(dir $@) $(notdir $@)
