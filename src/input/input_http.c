@@ -64,7 +64,7 @@
 #define TAG_ICY_NOTICE2    "icy-notice2:"
 #define TAG_ICY_METAINT    "icy-metaint:"
 #define TAG_CONTENT_TYPE   "Content-Type:"
-#define TAG_LASTFM_SERVER  "Server: last.fm Streaming Server"
+#define TAG_LASTFM_SERVER  "Server: last.fm "
 
 typedef struct {
   input_plugin_t   input_plugin;
