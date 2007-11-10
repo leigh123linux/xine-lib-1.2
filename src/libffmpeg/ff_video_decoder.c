@@ -88,6 +88,7 @@ struct ff_video_decoder_s {
   uint8_t           yuv_init:1;
   uint8_t           is_direct_rendering_disabled:1;
   uint8_t           cs_convert_init:1;
+  uint8_t           assume_bad_field_picture:1;
 
   xine_bmiheader    bih;
   unsigned char    *buf;
@@ -423,6 +424,9 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
       this->frame_flags |= VO_INTERLACED_FLAG;
       break;
     case BUF_VIDEO_HUFFYUV:
+      this->frame_flags |= VO_INTERLACED_FLAG;
+      break;
+    case BUF_VIDEO_H264:
       this->frame_flags |= VO_INTERLACED_FLAG;
       break;
   }
@@ -1157,7 +1161,6 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
     int         offset = 0;
     int         codec_type = buf->type & 0xFFFF0000;
     int         video_step_to_use;
-    int         frame_flags_to_use;
 
     /* pad input data */
     /* note: bitstream, alt bitstream reader or something will cause
@@ -1200,12 +1203,6 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
 
       /* use externally provided video_step or fall back to stream's time_base otherwise */
       video_step_to_use = (this->video_step || !this->context->time_base.den) ? this->video_step : (int)(90000ll * this->context->time_base.num / this->context->time_base.den);
-
-      frame_flags_to_use = this->frame_flags;
-
-      /* adjust frame flags for interlaced frames when running in demux_mpeg_pes context */
-      if (!this->video_step && this->av_frame->interlaced_frame)
-        frame_flags_to_use |= VO_INTERLACED_FLAG;
 
       /* aspect ratio provided by ffmpeg, override previous setting */
       if ((this->aspect_ratio_prio < 2) &&
@@ -1251,12 +1248,13 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
 	    set_stream_info(this);
 	  }
 
+          /* xine-lib expects the framesize to be a multiple of 16x16 (macroblock) */
           img = this->stream->video_out->get_frame (this->stream->video_out,
-                                                    this->bih.biWidth,
-                                                    (this->bih.biHeight + 31) & ~31,
+                                                    (this->bih.biWidth  + 15) & ~15,
+                                                    (this->bih.biHeight + 15) & ~15,
                                                     this->aspect_ratio, 
                                                     this->output_format,
-                                                    VO_BOTH_FIELDS|frame_flags_to_use);
+                                                    VO_BOTH_FIELDS|this->frame_flags);
           free_img = 1;
         } else {
           /* DR1 */
@@ -1273,11 +1271,11 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
           if(this->av_frame->opaque) {
             /* DR1 */
             img = this->stream->video_out->get_frame (this->stream->video_out,
-                                                      img->width,
-                                                      (img->height + 31) & ~31,
+                                                      (img->width  + 15) & ~15,
+                                                      (img->height + 15) & ~15,
                                                       this->aspect_ratio, 
                                                       this->output_format,
-                                                      VO_BOTH_FIELDS|frame_flags_to_use);
+                                                      VO_BOTH_FIELDS|this->frame_flags);
             free_img = 1;
           }
 
@@ -1307,14 +1305,13 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
         else
           img->duration = video_step_to_use;
 
-        img->crop_right  = this->crop_right;
+        /* additionally crop away the extra pixels due to adjusting frame size above */
+        img->crop_right  = this->crop_right  + (img->width  - this->bih.biWidth);
         img->crop_bottom = this->crop_bottom + (img->height - this->bih.biHeight);
 
-        /* transfer some more frame settings when running in demux_mpeg_pes context */
-        if (!this->video_step) {
-           img->progressive_frame = !this->av_frame->interlaced_frame;
-           img->top_field_first = this->av_frame->top_field_first;
-        }
+        /* transfer some more frame settings for deinterlacing */
+        img->progressive_frame = !this->av_frame->interlaced_frame;
+        img->top_field_first   = this->av_frame->top_field_first;
 
         this->skipframes = img->draw(img, this->stream);
         
@@ -1326,28 +1323,30 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
     /* workaround for demux_mpeg_pes sending fields as frames:
      * do not generate a bad frame for the first field picture
      */
-    if (!got_one_picture && (this->size || this->video_step || !this->av_frame->interlaced_frame)) {
-      /* skipped frame, output a bad frame (of size 1x1 when size still uninitialized) */
+    if (!got_one_picture && (this->size || this->video_step || this->assume_bad_field_picture)) {
+      /* skipped frame, output a bad frame (use size 16x16, when size still uninitialized) */
       img = this->stream->video_out->get_frame (this->stream->video_out,
-                                                (this->bih.biWidth <= 0) ? 16 : this->bih.biWidth,
-                                                (this->bih.biHeight <= 0) ? 32 : this->bih.biHeight,
+                                                (this->bih.biWidth  <= 0) ? 16 : ((this->bih.biWidth  + 15) & ~15),
+                                                (this->bih.biHeight <= 0) ? 16 : ((this->bih.biHeight + 15) & ~15),
                                                 this->aspect_ratio, 
                                                 this->output_format,
-                                                VO_BOTH_FIELDS|frame_flags_to_use);
+                                                VO_BOTH_FIELDS|this->frame_flags);
       /* set PTS to allow early syncing */
       img->pts       = this->pts;
       this->pts      = 0;
 
       img->duration  = video_step_to_use;
-      /* transfer some more frame settings when running in demux_mpeg_pes context */
-      if (!this->video_step) {
-         img->progressive_frame = !this->av_frame->interlaced_frame;
-         img->top_field_first = this->av_frame->top_field_first;
-      }
+
+      /* additionally crop away the extra pixels due to adjusting frame size above */
+      img->crop_right  = ((this->bih.biWidth  <= 0) ? 0 : this->crop_right)  + (img->width  - this->bih.biWidth);
+      img->crop_bottom = ((this->bih.biHeight <= 0) ? 0 : this->crop_bottom) + (img->height - this->bih.biHeight);
+
       img->bad_frame = 1;
       this->skipframes = img->draw(img, this->stream);
       img->free(img);
     }
+
+    this->assume_bad_field_picture = !got_one_picture;
   }
 }
 
