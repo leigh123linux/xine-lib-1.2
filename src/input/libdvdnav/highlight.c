@@ -16,9 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
- *
- * $Id: highlight.c,v 1.17 2004/03/16 11:43:38 mroi Exp $
- *
  */
 
 #ifdef HAVE_CONFIG_H

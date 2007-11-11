@@ -4,10 +4,6 @@
   =====                                                               =====
 
 
-   VERSION
-    => $Id: README.syncfb,v 1.4 2006/11/30 08:45:51 matt2000 Exp $
-  
-
 * WHAT IS THIS PLUGIN ABOUT and WHY SHOULD I EVEN CONSIDER TO USE IT? :)
   
   This xine video output plugin uses the so called  SyncFB  driver (from

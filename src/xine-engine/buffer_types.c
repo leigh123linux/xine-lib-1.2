@@ -15,16 +15,13 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
- *
- * $Id: buffer_types.c,v 1.107 2006/12/26 03:18:56 dgp85 Exp $
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  *
  * contents:
  *
  * buffer types management. 
  * convert FOURCC and audioformattag to BUF_xxx defines
- *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -59,6 +56,7 @@ static const video_db_t video_db[] = {
     ME_FOURCC('P', 'I', 'M', '1'),
     ME_FOURCC('m', 'p', 'g', '2'),
     ME_FOURCC('m', 'p', 'g', '1'),
+    ME_FOURCC(0x02, 0, 0, 0x10),
     0
   },
   BUF_VIDEO_MPEG,
@@ -1220,3 +1218,4 @@ void _x_waveformatex_le2me( xine_waveformatex *wavex ) {
   wavex->wBitsPerSample = le2me_16(wavex->wBitsPerSample);
   wavex->cbSize = le2me_16(wavex->cbSize);
 }
+

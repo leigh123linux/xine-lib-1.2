@@ -15,16 +15,13 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * Reference Visualization Post Plugin For xine
  *   by Mike Melanson (melanson@pcisys.net)
  * This is an example/template for the xine visualization post plugin
  * process. It simply paints the screen a solid color and rotates through
  * colors on each iteration.
- *
- * $Id: fooviz.c,v 1.28 2006/12/02 22:35:18 miguelfreitas Exp $
- *
  */
 
 #include <stdio.h>

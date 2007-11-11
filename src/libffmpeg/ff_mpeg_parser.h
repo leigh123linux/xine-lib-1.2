@@ -15,12 +15,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * Simple MPEG-ES parser/framer by Thibaut Mattern (tmattern@noos.fr)
  *   based on libmpeg2 decoder.
- *
- * $Id: mpeg_parser.h,v 1.5 2007/03/29 18:52:45 dgp85 Exp $
  */
 #ifndef HAVE_MPEG_PARSER_H
 #define HAVE_MPEG_PARSER_H

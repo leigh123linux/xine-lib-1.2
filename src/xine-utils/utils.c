@@ -15,10 +15,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
- *
- * $Id: utils.c,v 1.46 2006/07/21 04:47:17 dgp85 Exp $
- *
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
 #define	_POSIX_PTHREAD_SEMANTICS 1	/* for 5-arg getpwuid_r on solaris */
 

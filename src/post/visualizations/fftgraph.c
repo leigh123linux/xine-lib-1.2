@@ -15,13 +15,10 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * FftGraph Visualization Post Plugin For xine
  *   by Thibaut Mattern (tmattern@noos.fr)
- *
- * $Id: fftgraph.c,v 1.15 2006/12/02 22:35:18 miguelfreitas Exp $
- *
  */
 
 #include <stdio.h>

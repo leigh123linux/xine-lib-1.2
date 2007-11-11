@@ -15,11 +15,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * Base64 encoding modified for Musicbrainz
  *   relicensed under the GNU General Public License for use in xine-lib
- *
  */
 /* --------------------------------------------------------------------------
 
@@ -39,9 +38,7 @@
    
    You should have received a copy of the GNU Lesser General Public
    License along with this library; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-     $Id: base64.c,v 1.2 2004/05/05 18:44:19 mroi Exp $
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
 
 ----------------------------------------------------------------------------*/
 /*
@@ -84,7 +81,6 @@
  * RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
  * CONTRACT, TORT (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
  */
 
 #include <ctype.h>

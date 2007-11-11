@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
 
 /*
@@ -25,8 +25,6 @@
  *
  * For more information on the FLV file format, visit:
  * http://download.macromedia.com/pub/flash/flash_file_format_specification.pdf
- *
- * $Id: demux_flv.c,v 1.21 2007/03/17 11:29:43 klan Exp $
  */
 
 #ifdef HAVE_CONFIG_H

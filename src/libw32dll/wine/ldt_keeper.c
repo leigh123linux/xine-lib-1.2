@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: ldt_keeper.c,v 1.16 2007/03/09 23:49:35 dgp85 Exp $
- *
  *
  * contents:
  *
@@ -35,7 +33,6 @@
  * Also, IMHO, that was slightly wrong. The TEB is supposed to be unique 
  * per W32 thread. The current xine implementation will allocate different
  * TEBs for the audio and video codecs.
- *
  */
  
  

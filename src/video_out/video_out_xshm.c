@@ -15,17 +15,14 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: video_out_xshm.c,v 1.150 2007/03/25 23:13:53 dgp85 Exp $
- * 
  * video_out_xshm.c, X11 shared memory extension interface for xine
  *
  * based on mpeg2dec code from
  * Aaron Holtzman <aholtzma@ess.engr.uvic.ca>
  *
  * xine-specific code by Guenter Bartsch <bartscgr@studbox.uni-stuttgart.de>
- * 
  */
 
 #ifdef HAVE_CONFIG_H

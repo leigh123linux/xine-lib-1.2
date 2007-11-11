@@ -15,11 +15,9 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * xine interface to libwavpack by Diego Pettenò <flameeyes@gmail.com>
- *
- * $Id: decoder_wavpack.c,v 1.14 2007/03/29 19:45:33 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

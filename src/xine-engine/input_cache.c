@@ -15,14 +15,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * Buffered Input Plugin (request optimizer).
  *
  * The goal of this input plugin is to reduce 
  * the number of calls to the real input plugin.
- *
- * $Id: input_cache.c,v 1.14 2007/02/20 00:34:57 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

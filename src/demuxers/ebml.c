@@ -15,13 +15,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * EBML parser
  * a lot of ideas from the gstreamer parser
- *
- * $Id: ebml.c,v 1.4 2005/11/28 12:24:57 valtri Exp $
- *
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

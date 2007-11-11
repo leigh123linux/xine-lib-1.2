@@ -15,15 +15,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
 
 /*
  * Nullsoft Video (NSV) file demuxer by Mike Melanson (melanson@pcisys.net)
  * For more information regarding the NSV file format, visit:
  *   http://www.pcisys.net/~melanson/codecs/
- *
- * $Id: demux_nsv.c,v 1.25 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

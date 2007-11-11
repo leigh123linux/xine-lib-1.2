@@ -15,13 +15,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * Raw AAC File Demuxer by Mike Melanson (melanson@pcisys.net)
  * This demuxer detects ADIF and ADTS headers in AAC files.
  * Then it shovels buffer-sized chunks over to the AAC decoder.
- *
- * $Id: demux_aac.c,v 1.17 2007/03/03 01:41:16 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H

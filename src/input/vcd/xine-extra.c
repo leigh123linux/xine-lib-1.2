@@ -1,5 +1,4 @@
 /* 
-  $Id: xine-extra.c,v 1.5 2006/09/09 17:41:45 dgp85 Exp $
  
   Copyright (C) 2002 Rocky Bernstein <rocky@panix.com>
   
@@ -15,7 +14,7 @@
   
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  
   These are routines that probably should be in xine, but for whatever
   reason aren't - yet. 
