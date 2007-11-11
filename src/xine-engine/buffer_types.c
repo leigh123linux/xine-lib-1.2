@@ -598,6 +598,14 @@ static const video_db_t video_db[] = {
 },
 {
   {
+    ME_FOURCC('V','P','6','F'),
+    0
+  },
+  BUF_VIDEO_VP6F,
+  "On2 VP6"
+},
+{
+  {
     ME_FOURCC('8','B', 'P','S'),
     0
   },
