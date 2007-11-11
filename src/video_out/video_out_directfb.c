@@ -1663,13 +1663,13 @@ static DFBResult init_device (directfb_driver_t *this) {
       
       if (this->visual_type == XINE_VISUAL_TYPE_FB) {
         this->underlay->SetCooperativeLevel (this->underlay, DLSCL_EXCLUSIVE);
-        this->underlay->SetBackgroundMode( this->underlay, DLBM_DONTCARE);
+        this->underlay->SetConfiguration (this->underlay, &config);
       }
     } 
   }
   else {
     /* playing to underlay,
-     * check if stretchblit is hardware accelerated. */
+     * check whether stretchblit is hardware accelerated. */
     IDirectFBSurface      *temp;
     DFBSurfaceDescription  dsc;
     DFBAccelerationMask    mask = DFXL_NONE;
