@@ -3182,20 +3182,19 @@ static char **dvb_class_get_autoplay_list(input_class_t * this_gen,
     dvb_input_class_t *class = (dvb_input_class_t *) this_gen;
     channel_t *channels=NULL;
     char foobuffer[BUFSIZE];
-    int ch, apch, num_channels;
+    int ch, apch, num_channels = 0;
     int default_channel = -1;
     xine_cfg_entry_t lastchannel_enable = {0};
     xine_cfg_entry_t lastchannel;
 
-    num_channels = 0;
-
     if (!(channels = load_channels(class->xine, NULL, &num_channels, 0))) {
        /* channels.conf not found in .xine */
-       class->mrls[0]="Sorry, No channels.conf found";
-       class->mrls[1]="Please run the dvbscan utility";
-       class->mrls[2]="from the dvb drivers apps package";
-       class->mrls[3]="and place the file in ~/.xine/";
-       *num_files=4;
+       class->mrls[0]="Sorry, No valid channels.conf found";
+       class->mrls[1]="for the selected DVB device.";
+       class->mrls[2]="Please run the dvbscan utility";
+       class->mrls[3]="from the dvb drivers apps package";
+       class->mrls[4]="and place the file in ~/.xine/";
+       *num_files=5;
        return class->mrls;
     }
    
