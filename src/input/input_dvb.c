@@ -3187,7 +3187,20 @@ static char **dvb_class_get_autoplay_list(input_class_t * this_gen,
     xine_cfg_entry_t lastchannel_enable = {0};
     xine_cfg_entry_t lastchannel;
 
-    if (!(channels = load_channels(class->xine, NULL, &num_channels, 0))) {
+    /* need to probe card here to get fe_type to read in channels.conf */
+    tuner_t *tuner;
+    xine_cfg_entry_t adapter;
+
+    xine_config_lookup_entry(class->xine, "media.dvb.adapter", &adapter);
+
+    if (!(tuner = tuner_init(class->xine,adapter.num_value))) {
+       xprintf(class->xine, XINE_VERBOSITY_LOG, _("input_dvb: cannot open dvb device\n"));
+       class->mrls[0]="Sorry, No DVB input device found.";
+       *num_files=1;
+       return class->mrls;
+    }
+
+    if (!(channels = load_channels(class->xine, NULL, &num_channels, tuner->feinfo.type))) {
        /* channels.conf not found in .xine */
        class->mrls[0]="Sorry, No valid channels.conf found";
        class->mrls[1]="for the selected DVB device.";
@@ -3195,9 +3208,12 @@ static char **dvb_class_get_autoplay_list(input_class_t * this_gen,
        class->mrls[3]="from the dvb drivers apps package";
        class->mrls[4]="and place the file in ~/.xine/";
        *num_files=5;
+       tuner_dispose(tuner);
        return class->mrls;
     }
    
+    tuner_dispose(tuner);
+
     if (xine_config_lookup_entry(class->xine, "media.dvb.remember_channel", &lastchannel_enable)
         && lastchannel_enable.num_value
         && xine_config_lookup_entry(class->xine, "media.dvb.last_channel", &lastchannel))
