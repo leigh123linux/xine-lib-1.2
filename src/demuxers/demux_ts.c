@@ -369,8 +369,8 @@ static void demux_ts_build_crc32_table(demux_ts_t*this) {
 }
 
 static uint32_t demux_ts_compute_crc32(demux_ts_t*this, uint8_t *data, 
-				       uint32_t length, uint32_t crc32) {
-  uint32_t i;
+				       int32_t length, uint32_t crc32) {
+  int32_t i;
 
   for(i = 0; i < length; i++) {
     crc32 = (crc32 << 8) ^ this->crc32_table[(crc32 >> 24) ^ data[i]];
@@ -521,7 +521,7 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
                                 unsigned char *pkt, unsigned int pusi) {
   uint32_t       table_id;
   uint32_t       section_syntax_indicator;
-  uint32_t       section_length;
+  int32_t        section_length;
   uint32_t       transport_stream_id;
   uint32_t       version_number;
   uint32_t       current_next_indicator;

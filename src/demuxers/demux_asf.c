@@ -1536,108 +1536,90 @@ static int demux_asf_parse_asx_references( demux_asf_t *this) {
                        ENTRYREF, MOREINFO, PARAM, REPEAT, TITLE
      */
 
-    const char *version = xml_parser_get_property (xml_tree, "VERSION");
+    const char *base_href = NULL;
 
-    if (version) {
-      int  version_major, version_minor = 0;
+    for (asx_entry = xml_tree->child; asx_entry; asx_entry = asx_entry->next)
+    {
+      const char *ref_base_href = base_href;
 
-      if((sscanf (version, "%d.%d", &version_major, &version_minor) == 2 ||
-          sscanf (version, "%d", &version_major) == 1) &&
-         (version_major == 3 && version_minor == 0))
+      if (!strcasecmp (asx_entry->name, "ENTRY"))
       {
-        const char *base_href = NULL;
+        /* Attributes: CLIENTSKIP, SKIPIFREF
+         * Child elements: ABSTRACT, AUTHOR, BASE, COPYRIGHT, DURATION,
+                           ENDMARKER, MOREINFO, PARAM, REF, STARTMARKER,
+                           STARTTIME, TITLE
+         */
+        const char *href = NULL;
+        const char *title = NULL;
+        uint32_t start_time = (uint32_t)-1;
+        uint32_t duration = (uint32_t)-1;
 
-        for (asx_entry = xml_tree->child; asx_entry; asx_entry = asx_entry->next)
+        for (asx_ref = asx_entry->child; asx_ref; asx_ref = asx_ref->next)
         {
-          const char *ref_base_href = base_href;
-
-          if (!strcasecmp (asx_entry->name, "ENTRY"))
+          if (!strcasecmp(asx_ref->name, "REF"))
           {
-            /* Attributes: CLIENTSKIP, SKIPIFREF
-             * Child elements: ABSTRACT, AUTHOR, BASE, COPYRIGHT, DURATION,
-                               ENDMARKER, MOREINFO, PARAM, REF, STARTMARKER,
-                               STARTTIME, TITLE
+            xml_node_t *asx_sub;
+            /* Attributes: HREF
+             * Child elements: DURATION, ENDMARKER, STARTMARKER, STARTTIME
              */
-            const char *href = NULL;
-            const char *title = NULL;
-            uint32_t start_time = (uint32_t)-1;
-            uint32_t duration = (uint32_t)-1;
 
-            for (asx_ref = asx_entry->child; asx_ref; asx_ref = asx_ref->next)
+            /* FIXME: multiple REFs => alternative streams
+             * (and per-ref start times and durations?).
+             * Just the one title, though.
+             */
+            href = xml_parser_get_property (asx_ref, "HREF");
+
+            for (asx_sub = asx_ref->child; asx_sub; asx_sub = asx_sub->next)
             {
-              if (!strcasecmp(asx_ref->name, "REF"))
-              {
-                xml_node_t *asx_sub;
-                /* Attributes: HREF
-                 * Child elements: DURATION, ENDMARKER, STARTMARKER, STARTTIME
-                 */
-
-                /* FIXME: multiple REFs => alternative streams
-                 * (and per-ref start times and durations?).
-                 * Just the one title, though.
-                 */
-                href = xml_parser_get_property (asx_ref, "HREF");
-
-                for (asx_sub = asx_ref->child; asx_sub; asx_sub = asx_sub->next)
-                {
-                  if (!strcasecmp (asx_sub->name, "STARTTIME"))
-                    start_time = asx_get_time_value (asx_sub);
-                  else if (!strcasecmp (asx_sub->name, "DURATION"))
-                    duration = asx_get_time_value (asx_sub);
-                }
-              }
-
-              else if (!strcasecmp (asx_ref->name, "TITLE"))
-              {
-                if (!title)
-                  title = asx_ref->data;
-              }
-
-              else if (!strcasecmp (asx_ref->name, "STARTTIME"))
-              {
-                if (start_time == (uint32_t)-1) 
-                  start_time = asx_get_time_value (asx_ref);
-              }
-
-              else if (!strcasecmp (asx_ref->name, "DURATION"))
-              {
-                if (duration == (uint32_t)-1) 
-                  duration = asx_get_time_value (asx_ref);
-              }
-
-              else if (!strcasecmp (asx_ref->name, "BASE"))
-                /* Attributes: HREF */
-                ref_base_href = xml_parser_get_property (asx_entry, "HREF");
+              if (!strcasecmp (asx_sub->name, "STARTTIME"))
+                start_time = asx_get_time_value (asx_sub);
+              else if (!strcasecmp (asx_sub->name, "DURATION"))
+                duration = asx_get_time_value (asx_sub);
             }
-
-            /* FIXME: prepend ref_base_href to href */
-            if (href && *href)
-              _x_demux_send_mrl_reference (this->stream, 0, href, title,
-                                           start_time == (uint32_t)-1 ? 0 : start_time,
-                                           duration == (uint32_t)-1 ? -1 : duration);
           }
 
-          else if (!strcasecmp (asx_entry->name, "ENTRYREF"))
+          else if (!strcasecmp (asx_ref->name, "TITLE"))
           {
-            /* Attributes: HREF, CLIENTBIND */
-            const char *href = xml_parser_get_property (asx_entry, "HREF");
-            if (href && *href)
-              _x_demux_send_mrl_reference (this->stream, 0, href, NULL, 0, -1);
+            if (!title)
+              title = asx_ref->data;
           }
 
-          else if (!strcasecmp (asx_entry->name, "BASE"))
+          else if (!strcasecmp (asx_ref->name, "STARTTIME"))
+          {
+            if (start_time == (uint32_t)-1) 
+              start_time = asx_get_time_value (asx_ref);
+          }
+
+          else if (!strcasecmp (asx_ref->name, "DURATION"))
+          {
+            if (duration == (uint32_t)-1) 
+              duration = asx_get_time_value (asx_ref);
+          }
+
+          else if (!strcasecmp (asx_ref->name, "BASE"))
             /* Attributes: HREF */
-            base_href = xml_parser_get_property (asx_entry, "HREF");
+                ref_base_href = xml_parser_get_property (asx_entry, "HREF");
         }
+
+        /* FIXME: prepend ref_base_href to href */
+        if (href && *href)
+          _x_demux_send_mrl_reference (this->stream, 0, href, title,
+                                       start_time == (uint32_t)-1 ? 0 : start_time,
+                                       duration == (uint32_t)-1 ? -1 : duration);
       }
-      else
-        xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-		_("demux_asf: Wrong ASX version: %s\n"), version);
-      
+
+      else if (!strcasecmp (asx_entry->name, "ENTRYREF"))
+      {
+        /* Attributes: HREF, CLIENTBIND */
+        const char *href = xml_parser_get_property (asx_entry, "HREF");
+        if (href && *href)
+          _x_demux_send_mrl_reference (this->stream, 0, href, NULL, 0, -1);
+      }
+
+      else if (!strcasecmp (asx_entry->name, "BASE"))
+        /* Attributes: HREF */
+        base_href = xml_parser_get_property (asx_entry, "HREF");
     }
-    else
-      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	      "demux_asf: Unable to find VERSION tag from ASX.\n");
   }
   else
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,

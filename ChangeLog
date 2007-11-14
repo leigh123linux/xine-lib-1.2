@@ -58,6 +58,8 @@ xine-lib (1.1.9) (unreleased)
   * Build fix for when using Linux 2.6.23 headers. [Bug 1820958]
   * Implemented decoding of XML character entities with codes >= 256.
     This requires conversion to UTF-8 of entities with codes >= 128.
+  * Fixed ATSC support. [Bug 1749508]
+  * Fixed a possible DVB plugin crash when switching channels.
 
 xine-lib (1.1.8)
   * Send a channel-changed event to the frontend when receiving the SYNC
