@@ -970,6 +970,11 @@ const char *xine_guess_spu_encoding(void) XINE_PROTECTED;
  */
 int xine_monotonic_clock(struct timeval *tv, struct timezone *tz) XINE_PROTECTED;
 
+/**
+ * CRC functions
+ */
+uint32_t _x_compute_crc32 (const uint8_t * data, int32_t length, uint32_t crc32) XINE_PROTECTED;
+
 /* don't harm following code */
 #ifdef extern
 #  undef extern

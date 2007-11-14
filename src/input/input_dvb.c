@@ -330,8 +330,6 @@ typedef struct {
   osd_object_t	     *background;
   
   xine_event_queue_t *event_queue;
-  /* CRC table for PAT rebuilding */
-  unsigned long       crc32_table[256];
   
   /* scratch buffer for forward seeking */
   char                seek_buf[BUFSIZE];
@@ -449,28 +447,6 @@ static void print_info(const char* estring) {
     printf("input_dvb: %s\n", estring);
 }
 #endif
-
-static void ts_build_crc32_table(dvb_input_plugin_t *this) {
-  uint32_t  i, j, k;
-
-  for( i = 0 ; i < 256 ; i++ ) {
-    k = 0;
-    for (j = (i << 24) | 0x800000 ; j != 0x80000000 ; j <<= 1) {
-      k = (k << 1) ^ (((k ^ j) & 0x80000000) ? 0x04c11db7 : 0);
-    }
-    this->crc32_table[i] = k;
-  }
-}
-
-static uint32_t ts_compute_crc32(dvb_input_plugin_t *this, uint8_t *data, 
-				       uint32_t length, uint32_t crc32) {
-  uint32_t i;
-
-  for(i = 0; i < length; i++) {
-    crc32 = (crc32 << 8) ^ this->crc32_table[(crc32 >> 24) ^ data[i]];
-  }
-  return crc32;
-}
 
 
 static unsigned int getbits(unsigned char *buffer, unsigned int bitpos, unsigned int bitcount)
@@ -2480,7 +2456,7 @@ static void ts_rewrite_packets (dvb_input_plugin_t *this, unsigned char * origin
       originalPkt[11]=(this->channels[this->channel].pmtpid >> 8) & 0xff;
       originalPkt[12]=this->channels[this->channel].pmtpid & 0xff;
 
-      crc= ts_compute_crc32 (this, originalPkt+1, 12, 0xffffffff);
+      crc= _x_compute_crc32 (originalPkt+1, 12, 0xffffffff);
       
       originalPkt[13]=(crc>>24) & 0xff;
       originalPkt[14]=(crc>>16) & 0xff;
@@ -3095,8 +3071,6 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     snprintf(str, 256, "%s", this->channels[this->channel].name);
 
     _x_meta_info_set(this->stream, XINE_META_INFO_TITLE, str);
-    /* compute CRC table for rebuilding pat */
-    ts_build_crc32_table(this);
 
     /* Clear all pids, the pmt will tell us which to use */
     for (x = 0; x < MAX_FILTERS; x++){

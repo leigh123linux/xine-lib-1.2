@@ -296,7 +296,6 @@ typedef struct {
   uint32_t         pmt_pid[MAX_PMTS];
   uint8_t         *pmt[MAX_PMTS];
   uint8_t         *pmt_write_ptr[MAX_PMTS];
-  uint32_t         crc32_table[256];
   uint32_t         last_pmt_crc;
   /*
    * Stuff to do with the transport header. As well as the video
@@ -355,28 +354,6 @@ typedef struct {
   config_values_t  *config;
 } demux_ts_class_t;
 
-
-static void demux_ts_build_crc32_table(demux_ts_t*this) {
-  uint32_t  i, j, k;
-
-  for( i = 0 ; i < 256 ; i++ ) {
-    k = 0;
-    for (j = (i << 24) | 0x800000 ; j != 0x80000000 ; j <<= 1) {
-      k = (k << 1) ^ (((k ^ j) & 0x80000000) ? 0x04c11db7 : 0);
-    }
-    this->crc32_table[i] = k;
-  }
-}
-
-static uint32_t demux_ts_compute_crc32(demux_ts_t*this, uint8_t *data, 
-				       int32_t length, uint32_t crc32) {
-  int32_t i;
-
-  for(i = 0; i < length; i++) {
-    crc32 = (crc32 << 8) ^ this->crc32_table[(crc32 >> 24) ^ data[i]];
-  }
-  return crc32;
-}
 
 /* redefine abs as macro to handle 64-bit diffs.
    i guess llabs may not be available everywhere */
@@ -596,8 +573,7 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
   }
 
   /* Check CRC. */
-  calc_crc32 = demux_ts_compute_crc32 (this, pkt+5, section_length+3-4,
-                                       0xffffffff);
+  calc_crc32 = _x_compute_crc32 (pkt+5, section_length+3-4, 0xffffffff);
   if (crc32 != calc_crc32) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
 	     "demux_ts: demux error! PAT with invalid CRC32: packet_crc32: %.8x calc_crc32: %.8x\n",
@@ -1203,9 +1179,8 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
   crc32 |= (uint32_t) this->pmt[program_count][section_length+3-1] ;
 
   /* Check CRC. */
-  calc_crc32 = demux_ts_compute_crc32 (this,
-                                       this->pmt[program_count],
-                                       section_length+3-4, 0xffffffff);
+  calc_crc32 = _x_compute_crc32 (this->pmt[program_count],
+                                 section_length+3-4, 0xffffffff);
   if (crc32 != calc_crc32) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
 	     "demux_ts: demux error! PMT with invalid CRC32: packet_crc32: %#.8x calc_crc32: %#.8x\n",
@@ -2025,8 +2000,6 @@ static void demux_ts_send_headers (demux_plugin_t *this_gen) {
   this->input->seek (this->input, 0, SEEK_SET);
 
   this->send_newpts = 1;
-  
-  demux_ts_build_crc32_table (this);
   
   this->status = DEMUX_OK ;
 
