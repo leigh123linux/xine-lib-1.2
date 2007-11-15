@@ -47,7 +47,9 @@ dnl AM_PATH_XINE([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND ]]])
 dnl Test for XINE, and define XINE_CFLAGS and XINE_LIBS
 dnl
 AC_DEFUN([AM_PATH_XINE], [
-    AC_REQUIRE([PKG_PROG_PKG_CONFIG])
+    if test -z "$PKG_CONFIG"; then
+        AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+    fi
 
     AC_ARG_VAR([XINE_CONFIG], [Full path to xine-config (xine-lib < 1.2)])
     AC_ARG_WITH([xine-prefix],
