@@ -68,13 +68,19 @@ typedef struct {
   off_t                start;  /* in bytes */
   off_t                size;   /* in bytes */
   
-  unsigned char        got_video;
-  unsigned char        got_audio;
+  unsigned char        got_video_header;
+  unsigned char        got_audio_header;
   
   unsigned int         length; /* in ms */
   int                  width;
   int                  height;
-  double               framerate;
+  int                  duration;
+  int                  videocodec;
+  
+  int                  samplerate;
+  int                  samplesize;
+  int                  stereo;
+  int                  audiocodec;
   
   flv_index_entry_t   *index;
   int                  num_indices;
@@ -225,10 +231,31 @@ static int parse_flv_var(demux_flv_t *this,
           _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_HEIGHT, this->height);
         }
         else if (keylen == 9 && !strncmp(key, "framerate", 9)) {
-          this->framerate = val;
+          if (val > 0) {
+            this->duration = 90000.0 / val;
+            _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->duration);
+          }
         }
         else if (keylen == 13 && !strncmp(key, "videodatarate", 13)) {
           _x_stream_info_set(this->stream, XINE_STREAM_INFO_BITRATE, val*1000.0);
+        }
+        else if (keylen == 12 && !strncmp(key, "videocodecid", 12)) {
+          this->videocodec = val;
+        }
+        else if (keylen == 15 && !strncmp(key, "audiosamplerate", 15)) {
+          this->samplerate = val;
+          _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_SAMPLERATE, this->samplerate);
+        }
+        else if (keylen == 15 && !strncmp(key, "audiosamplesize", 15)) {
+          this->samplesize = val;
+          _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITS, this->samplesize);
+        }
+        else if (keylen == 5 && !strncmp(key, "stereo", 5)) {
+          this->stereo = val;
+          _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_CHANNELS, this->stereo ? 2 : 1);
+        }
+        else if (keylen == 12 && !strncmp(key, "audiocodecid", 12)) {
+          this->audiocodec = val;
         }
       }
       tmp += 8;
@@ -389,20 +416,18 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
         }
         
         fifo = this->audio_fifo;
-        if (!this->got_audio) {
+        if (preview && !this->got_audio_header) {
           /* send init info to audio decoder */
           buf = fifo->buffer_pool_alloc(fifo);
-          buf->decoder_flags = BUF_FLAG_HEADER|BUF_FLAG_STDHEADER|BUF_FLAG_FRAME_END;
+          buf->decoder_flags = BUF_FLAG_HEADER | BUF_FLAG_STDHEADER | BUF_FLAG_FRAME_END;
           buf->decoder_info[0] = 0;
           buf->decoder_info[1] = 44100 >> (3 - ((buffer[0] >> 2) & 3)); /* samplerate */
           buf->decoder_info[2] = (buffer[0] & 2) ? 16 : 8; /* bits per sample */
           buf->decoder_info[3] = (buffer[0] & 1) + 1; /* channels */
           buf->size = 0; /* no extra data */
           buf->type = buf_type;
-          
           fifo->put(fifo, buf);
-          
-          this->got_audio = 1;
+          this->got_audio_header = 1;
         }
         break;
         
@@ -439,15 +464,15 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
             break;
         }
         
-        fifo = this->video_fifo;        
-        if (!this->got_video) {
+        fifo = this->video_fifo;
+        if (preview && !this->got_video_header) {
           xine_bmiheader *bih;
           /* send init info to video decoder; send the bitmapinfo header to the decoder
            * primarily as a formality since there is no real data inside */          
           buf = fifo->buffer_pool_alloc(fifo);
           buf->decoder_flags = BUF_FLAG_HEADER | BUF_FLAG_STDHEADER |
                                BUF_FLAG_FRAMERATE | BUF_FLAG_FRAME_END;
-          buf->decoder_info[0] = this->framerate ? (90000.0/this->framerate) : 0;  
+          buf->decoder_info[0] = this->duration;
           bih = (xine_bmiheader *) buf->content;
           memset(bih, 0, sizeof(xine_bmiheader));
           bih->biSize = sizeof(xine_bmiheader);
@@ -460,16 +485,81 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
             bih->biSize++;
             buf->size++;
           }
-          
           fifo->put(fifo, buf);
-          
-          this->got_video = 1;
+          this->got_video_header = 1;
         }
         break;
         
       case FLV_TAG_TYPE_SCRIPT:
         lprintf("  got script tag...\n");
         parse_flv_script(this, remaining_bytes);
+
+        if (preview) {
+          /* send init info to decoders using script information as reference */
+          if (!this->got_audio_header && this->audiocodec) {
+            buf = this->audio_fifo->buffer_pool_alloc(this->audio_fifo);
+            buf->decoder_flags = BUF_FLAG_HEADER | BUF_FLAG_STDHEADER | BUF_FLAG_FRAME_END;
+            buf->decoder_info[0] = 0;
+            buf->decoder_info[1] = this->samplerate;
+            buf->decoder_info[2] = this->samplesize;
+            buf->decoder_info[3] = this->stereo ? 2 : 1;
+            switch (this->audiocodec) {
+              case FLV_SOUND_FORMAT_PCM_BE:
+                buf->type = BUF_AUDIO_LPCM_BE;
+                break;
+              case FLV_SOUND_FORMAT_ADPCM:
+                buf->type = BUF_AUDIO_FLVADPCM;
+                break;
+              case FLV_SOUND_FORMAT_MP3:
+                buf->type = BUF_AUDIO_MPEG;
+                break;
+              case FLV_SOUND_FORMAT_PCM_LE:
+                buf->type = BUF_AUDIO_LPCM_LE;
+                break;
+              default:
+                buf->type = BUF_AUDIO_UNKNOWN;
+                break;
+            }
+            buf->size = 0;
+            this->audio_fifo->put(this->audio_fifo, buf);
+            this->got_audio_header = 1;
+          }
+          
+          if (!this->got_video_header && this->videocodec) {
+            xine_bmiheader *bih;
+            buf = this->video_fifo->buffer_pool_alloc(this->video_fifo);
+            buf->decoder_flags = BUF_FLAG_HEADER | BUF_FLAG_STDHEADER |
+                                 BUF_FLAG_FRAMERATE | BUF_FLAG_FRAME_END;
+            buf->decoder_info[0] = this->duration;
+            switch (this->videocodec) {
+              case FLV_VIDEO_FORMAT_FLV1:
+                buf->type = BUF_VIDEO_FLV1;
+                break;
+              case FLV_VIDEO_FORMAT_VP6:
+              case FLV_VIDEO_FORMAT_VP6A:
+                buf->type = BUF_VIDEO_VP6F;
+                break;
+              default:
+                buf->type = BUF_VIDEO_UNKNOWN;
+                break;
+            }
+            buf->size = sizeof(xine_bmiheader);
+            bih = (xine_bmiheader *) buf->content;
+            memset(bih, 0, sizeof(xine_bmiheader));
+            bih->biSize = sizeof(xine_bmiheader);
+            bih->biWidth = this->width;
+            bih->biHeight = this->height;
+            if (buf->type == BUF_VIDEO_VP6F) {
+              *((unsigned char *)buf->content+buf->size) = 0; /* FIXME: need a packet */
+              bih->biSize++;
+              buf->size++;
+            }
+            this->video_fifo->put(this->video_fifo, buf);
+            this->got_video_header = 1;
+          }
+          
+          return this->status;
+        }            
         continue;
         
       default:
@@ -619,6 +709,8 @@ static void demux_flv_send_headers(demux_plugin_t *this_gen) {
   this->audio_fifo  = this->stream->audio_fifo;
 
   this->status = DEMUX_OK;
+  
+  this->buf_flag_seek = 1;
 
   /* load stream information */
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 
@@ -633,8 +725,8 @@ static void demux_flv_send_headers(demux_plugin_t *this_gen) {
   for (i = 0; i < 20; i++) {
     if (read_flv_packet(this, 1) != DEMUX_OK)
       break;
-    if (((this->flags & FLV_FLAG_HAS_VIDEO) && this->got_video) &&
-        ((this->flags & FLV_FLAG_HAS_AUDIO) && this->got_audio)) {
+    if (((this->flags & FLV_FLAG_HAS_VIDEO) && this->got_video_header) &&
+        ((this->flags & FLV_FLAG_HAS_AUDIO) && this->got_audio_header)) {
       lprintf("  headers sent...\n");
       break;
     }
