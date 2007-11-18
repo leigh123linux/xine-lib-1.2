@@ -82,6 +82,8 @@ typedef struct {
   int                  stereo;
   int                  audiocodec;
   
+  off_t                filesize;
+  
   flv_index_entry_t   *index;
   int                  num_indices;
   
@@ -259,6 +261,9 @@ static int parse_flv_var(demux_flv_t *this,
         }
         else if (keylen == 12 && !strncmp(key, "audiocodecid", 12)) {
           this->audiocodec = val;
+        }
+        else if (keylen == 8 && !strncmp(key, "filesize", 8)) {
+          this->filesize = val;
         }
       }
       tmp += 8;
@@ -661,7 +666,7 @@ static void seek_flv_file(demux_flv_t *this, off_t seek_pos, int seek_pts) {
     off_t pos, size;
     
     pos = this->input->get_current_pos(this->input);
-    size = this->input->get_length(this->input);
+    size = this->filesize ? : this->input->get_length(this->input);
     this->input->seek(this->input, (uint64_t)size * seek_pos / 65535, SEEK_SET);
     lprintf("  resyncing...\n");
     
