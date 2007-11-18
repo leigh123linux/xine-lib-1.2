@@ -237,7 +237,7 @@ static int parse_flv_var(demux_flv_t *this,
           }
         }
         else if (keylen == 13 && !strncmp(key, "videodatarate", 13)) {
-          _x_stream_info_set(this->stream, XINE_STREAM_INFO_BITRATE, val*1000.0);
+          _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_BITRATE, val*1000.0);
         }
         else if (keylen == 12 && !strncmp(key, "videocodecid", 12)) {
           this->videocodec = val;
@@ -253,6 +253,9 @@ static int parse_flv_var(demux_flv_t *this,
         else if (keylen == 5 && !strncmp(key, "stereo", 5)) {
           this->stereo = val;
           _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_CHANNELS, this->stereo ? 2 : 1);
+        }
+        else if (keylen == 13 && !strncmp(key, "audiodatarate", 13)) {
+          _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITRATE, val*1000.0);
         }
         else if (keylen == 12 && !strncmp(key, "audiocodecid", 12)) {
           this->audiocodec = val;
@@ -396,7 +399,8 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
         }
         remaining_bytes--;
         
-        switch (buffer[0] >> 4) {
+        this->audiocodec = buffer[0] >> 4; /* override */
+        switch (this->audiocodec) {
           case FLV_SOUND_FORMAT_PCM_BE:
             buf_type = BUF_AUDIO_LPCM_BE;
             break;
@@ -442,7 +446,8 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
         if ((buffer[0] >> 4) == 0x01)
           buf_flags = BUF_FLAG_KEYFRAME;
         
-        switch (buffer[0] & 0x0F) {
+        this->videocodec = buffer[0] & 0x0F; /* override */
+        switch (this->videocodec) {
           case FLV_VIDEO_FORMAT_FLV1:
             buf_type = BUF_VIDEO_FLV1;
             break;
@@ -550,7 +555,8 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
             bih->biWidth = this->width;
             bih->biHeight = this->height;
             if (buf->type == BUF_VIDEO_VP6F) {
-              *((unsigned char *)buf->content+buf->size) = 0; /* FIXME: need a packet */
+              *((uint8_t *)buf->content+buf->size) = ((16-(this->width&15)) << 4) |
+                                                     ((16-(this->height&15)) & 0xf);
               bih->biSize++;
               buf->size++;
             }
@@ -610,12 +616,13 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
   return this->status;
 }
 
-static void seek_flv_file(demux_flv_t *this, int seek_pts) {
+static void seek_flv_file(demux_flv_t *this, off_t seek_pos, int seek_pts) {
   unsigned char buffer[16];
   unsigned int  pts = this->cur_pts;
   int           len = 0;
   int           next_tag = 0;
   int           do_rewind = (seek_pts < this->cur_pts);
+  int           i;
    
   lprintf("  seeking %s to %d...\n", 
           do_rewind ? "backward" : "forward", seek_pts);
@@ -627,8 +634,6 @@ static void seek_flv_file(demux_flv_t *this, int seek_pts) {
   }
   
   if (this->index) {
-    int i;
-    
     if (do_rewind) {
       for (i = this->num_indices-1; i > 0; i--) {
         if (this->index[i-1].pts < seek_pts)
@@ -651,6 +656,44 @@ static void seek_flv_file(demux_flv_t *this, int seek_pts) {
       return;
     }
   }
+  
+  if (seek_pos && this->videocodec) {
+    off_t pos, size;
+    
+    pos = this->input->get_current_pos(this->input);
+    size = this->input->get_length(this->input);
+    this->input->seek(this->input, (uint64_t)size * seek_pos / 65535, SEEK_SET);
+    lprintf("  resyncing...\n");
+    
+    /* resync */
+    for (i = 0; i < 200000; i++) {
+      uint8_t buf[4];
+      
+      if (this->input->read(this->input, buf, 1) < 1) {
+        this->status = DEMUX_FINISHED;
+        return;
+      }
+      if (buf[0] == FLV_TAG_TYPE_VIDEO) {
+        this->input->seek(this->input, 7, SEEK_CUR);
+        if (this->input->read(this->input, buf, 4) < 4) {
+          this->status = DEMUX_FINISHED;
+          return;
+        }
+        /* check StreamID and CodecID */
+        if (buf[0] == 0 && buf[1] == 0 && buf[2] == 0 &&
+            buf[3] == (this->videocodec | 0x10)) {
+          this->input->seek(this->input, -16, SEEK_CUR);
+          lprintf("  ...resynced after %d bytes\n", i);
+          return;
+        }
+        this->input->seek(this->input, -11, SEEK_CUR);
+      }
+    }
+    
+    lprintf("  ...resync failed!\n");
+    this->input->seek(this->input, pos, SEEK_SET);
+    return;
+  }  
   
   while (do_rewind ? (seek_pts < this->cur_pts) : (seek_pts > this->cur_pts)) {
     unsigned char tag_type;
@@ -745,7 +788,7 @@ static int demux_flv_seek (demux_plugin_t *this_gen,
       start_time = (int64_t) this->length * start_pos / 65535;
 
     if (!this->length || start_time < this->length) {
-      seek_flv_file(this, start_time);
+      seek_flv_file(this, start_pos, start_time);
     
       if (playing) {
         this->buf_flag_seek = 1;
