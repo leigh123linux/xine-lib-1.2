@@ -78,7 +78,7 @@ struct ioc_read_audio
 #include <sys/ioctl.h>
 #include <sys/param.h> /* for __FreeBSD_version */
 
-#if __FreeBSD_version < 500000
+#if __FreeBSD_kernel_version < 500000
 #define DEVICE_POSTFIX "c"
 #else
 #define DEVICE_POSTFIX ""

@@ -36,7 +36,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD_kernel__)
 #include <sys/cdio.h> /* CDIOCALLOW etc... */
 #elif defined(HAVE_LINUX_CDROM_H)
 #include <linux/cdrom.h>
@@ -130,7 +130,7 @@ int media_eject_media (xine_t *xine, const char *device)
       return 0;
     }
 
-#elif defined (__NetBSD__) || defined (__OpenBSD__) || defined (__FreeBSD__)
+#elif defined (__NetBSD__) || defined (__OpenBSD__) || defined (__FreeBSD_kernel__)
 
     if (ioctl(fd, CDIOCALLOW) == -1) {
       xprintf(xine, XINE_VERBOSITY_DEBUG, "ioctl(cdromallow): %s\n", strerror(errno));

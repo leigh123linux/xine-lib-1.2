@@ -69,7 +69,7 @@
 /* OS depended stuff */
 #if defined (linux)
 #include "sysdep/pci_linux.c"
-#elif defined (__FreeBSD__)
+#elif defined (__FreeBSD_kernel__)
 #include "sysdep/pci_freebsd.c"
 #elif defined (__386BSD__)
 #include "sysdep/pci_386bsd.c"

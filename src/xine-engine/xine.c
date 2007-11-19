@@ -35,7 +35,7 @@
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
-#if defined (__linux__)
+#if defined (__linux__) || defined (__GLIBC__)
 #include <endian.h>
 #elif defined (__FreeBSD__)
 #include <machine/endian.h>
