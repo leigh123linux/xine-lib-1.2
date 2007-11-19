@@ -1,17 +1,5 @@
 include $(top_srcdir)/misc/Makefile.common
 
-$(top_builddir)/contrib/libcdio/libcdio.la:
-	$(MAKE) -C $(top_builddir)/contrib/libcdio
-
-$(top_builddir)/contrib/libcdio/libiso9660.la:
-	$(MAKE) -C $(top_builddir)/contrib/libcdio
-
-$(top_builddir)/contrib/libvcd/libvcd.la:
-	$(MAKE) -C $(top_builddir)/contrib/libvcd
-
-$(top_builddir)/contrib/libvcd/libvcdinfo.la:
-	$(MAKE) -C $(top_builddir)/contrib/libvcd
-
 AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 

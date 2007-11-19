@@ -16,8 +16,6 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     default_enable_vcd=enable
     default_enable_vcdo=disable
 
-    default_with_internal_vcdlibs=without
-
     case "$host_os" in
         cygwin* | mingw*)
             default_enable_gnomevfs=disable
@@ -124,148 +122,10 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
                   [AS_HELP_STRING([--enable-vcd], [Enable VCD (VideoCD) support])],
                   [test x"$enableval" != x"no" && enable_vcd="yes"],
                   [test $default_enable_vcd = disable && enable_vcd="no"])
-    AC_ARG_WITH([internal-vcdlibs],
-                [AS_HELP_STRING([--with-internal-vcdlibs], [force using internal libcdio/libvcd/libvcdinfo])],
-                [test x"$withval" != x"no" && with_internal_vcdlibs="yes"],
-                [test $default_with_internal_vcdlibs = without && with_internal_vcdlibs="no"])
     if test x"$enable_vcd" != x"no"; then
-        dnl check twice - fallback is to use internal vcdlibs
-        if test x"$with_internal_vcdlibs" = x"no"; then
-            PKG_CHECK_MODULES([LIBCDIO], [libcdio >= 0.71], [], [with_internal_vcdlibs=yes])
-            PKG_CHECK_MODULES([LIBVCDINFO], [libvcdinfo >= 0.7.23], [], [with_internal_vcdlibs=yes])
-            if test x"$with_internal_vcdlibs" = x"yes"; then
-                AC_MSG_RESULT([Using included libcdio/libvcdinfo support])
-            fi
-        fi
-        if test x"$with_internal_vcdlibs" = x"no"; then
-            AC_DEFINE([HAVE_VCDNAV], 1, [Define this if you use external libcdio/libvcdinfo])
-        else
-            AC_DEFINE_UNQUOTED([HOST_ARCH], ["$host_os/$host_cpu"], [host os/cpu identifier])
-            AC_DEFINE([_DEVELOPMENT_], [], [enable warnings about being development release])
-
-            dnl
-            dnl bitfield order
-            dnl
-            AC_MSG_CHECKING([bitfield ordering in structs])
-
-            dnl basic compile test for all platforms
-            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[
-    struct { char bit_0:1, bit_12:2, bit_345:3, bit_67:2; }
-    #if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ > 4)
-        __attribute__((packed))
-    #endif
-    bf = { 1,1,1,1 };
-    switch (0) case 0: case sizeof(bf) == 1:;]])],
-                              [], [AC_MSG_ERROR([compiler doesn't support bitfield structs])])
-
-
-            dnl run test
-            AC_RUN_IFELSE([[
-    int main() {
-        struct { char bit_0:1, bit_12:2, bit_345:3, bit_67:2; }
-    #if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ > 4)
-            __attribute__((packed))
-    #endif
-        bf = { 1,1,1,1 };
-        if (sizeof (bf) != 1) return 1;
-        return *((unsigned char*) &bf) != 0x4b;
-    }]], [bf_lsbf=1], [
-            AC_RUN_IFELSE([[
-    int main() {
-        struct { char bit_0:1, bit_12:2, bit_345:3, bit_67:2; }
-    #if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ > 4)
-            __attribute__((packed))
-    #endif
-        bf = { 1,1,1,1 };
-        if (sizeof (bf) != 1) return 1;
-        return *((unsigned char*) &bf) != 0xa5;
-    }]], [bf_lsbf=0], [AC_MSG_ERROR([unsupported bitfield ordering])])],
-            [case "$host" in
-                *-*-mingw32* | *-*-cygwin* | i?86-* | k?-* | athlon-* | pentium*- | x86_64-*)
-                    bf_lsbf=1
-                    ;;
-                universal-*-darwin*)
-                    bf_lsbf=2
-                    ;;
-                powerpc-* | powerpc64-* | ppc-* | sparc*-* | mips-*)
-                    bf_lsbf=0
-                    ;;
-                *)
-                    AC_MSG_RESULT([unknown])
-                    AC_MSG_ERROR([value of bitfield test isn't known for $host
-    *********************************************************************
-    Value of bitfield test can't be found out for cross-compiling and we
-    don't know its value for host "$host".
-
-    Because it's needed for VCD plugin, disable VCD by configure option
-    --disable-vcd or use external VCD library.
-    *********************************************************************])
-                    ;;
-            esac])
-
-            if test "x$cross_compiling" = "xyes"; then
-                TEXT=" (guessed)"
-            else
-                TEXT=""
-            fi
-            if test "x$bf_lsbf" = "x1"; then
-                AC_MSG_RESULT([LSBF${TEXT}])
-                AC_DEFINE([BITFIELD_LSBF], [], [compiler does lsbf in struct bitfields])
-            else
-                if test "x$bf_lsbf" = "x2"; then
-                    AC_MSG_RESULT([indeterminate (universal build)])
-                else
-                    AC_MSG_RESULT([MSBF${TEXT}])
-                fi
-            fi
-
-            LIBCDIO_CFLAGS='-I$(top_srcdir)/contrib/libcdio'
-            LIBCDIO_LIBS='$(top_builddir)/contrib/libcdio/libcdio.la'
-            LIBCDIO_DEPS='$(top_builddir)/contrib/libcdio/libcdio.la'
-            LIBISO9660_LIBS='$(top_builddir)/contrib/libcdio/libiso9660.la'
-            LIBISO9660_DEPS='$(top_builddir)/contrib/libcdio/libiso9660.la'
-            LIBVCD_CFLAGS='-I$(top_srcdir)/contrib/libvcd'
-            LIBVCD_LIBS='$(top_builddir)/contrib/libvcd/libvcd.la'
-            LIBVCD_DEPS='$(top_builddir)/contrib/libvcd/libvcd.la'
-            LIBVCDINFO_LIBS='$(top_builddir)/contrib/libvcd/libvcdinfo.la'
-            LIBVCDINFO_DEPS='$(top_builddir)/contrib/libvcd/libvcdinfo.la'
-
-            case "$host_os" in
-                bsdi*)
-                    AC_CHECK_HEADERS([dvd.h],
-                                     [AC_DEFINE([HAVE_BSDI_CDROM], 1, [Define 1 if you have BSDI-type CD-ROM support])])
-                    ;;
-                cygwin*)
-                    AC_DEFINE([CYGWIN], 1, [Define 1 if you are compiling using cygwin])
-                    AC_DEFINE([HAVE_WIN32_CDROM], 1, [Define 1 if you have MinGW CD-ROM support])
-                    LIBCDIO_LIBS="$LIBCDIO_LIBS -lwinmm"
-                    LIBVCD_LIBS="$LIBVCD_LIBS -lwinmm"
-                    ;;
-                darwin*)
-                    AC_CHECK_HEADERS([IOKit/IOKitLib.h CoreFoundation/CFBase.h],
-                                     [AC_DEFINE([HAVE_DARWIN_CDROM], 1, [Define 1 if you have Darwin OS X-type CD-ROM support])])
-                    LIBVCD_LIBS="$LIBVCD_LIBS -framework CoreFoundation -framework IOKit"
-                    ;;
-                freebsd4.*)
-                    AC_DEFINE([HAVE_FREEBSD_CDROM], 1, [Define 1 if you have FreeBSD CD-ROM support])
-                    ;;
-                linux*)
-                    AC_CHECK_HEADERS([linux/version.h])
-                    ;;
-                mingw*)
-                    AC_DEFINE([MINGW32], 1, [Define 1 if you are compiling using MinGW])
-                    AC_DEFINE([HAVE_WIN32_CDROM], 1, [Define 1 if you have MinGW CD-ROM support])
-                    ;;
-                sunos*|sun*|solaris*)
-                    AC_CHECK_HEADERS([sys/cdio.h],
-                                     [AC_DEFINE([HAVE_SOLARIS_CDROM], 1, [Define 1 if you have Solaris CD-ROM support])])
-                    ;;
-                *)
-                    AC_MSG_WARN([Don't have OS CD-reading support for ${host_os} ... Will use generic support.])
-                    ;;
-            esac
-
-        fi
+        PKG_CHECK_MODULES([LIBCDIO], [libcdio >= 0.71])
+        PKG_CHECK_MODULES([LIBVCDINFO], [libvcdinfo >= 0.7.23])
+        AC_DEFINE([HAVE_VCDNAV], 1, [Define this if you use external libcdio/libvcdinfo])
     fi
 
     enable_vcdo=no
@@ -275,15 +135,8 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     AC_DEFINE([EXTERNAL_LIBCDIO_CONFIG_H], 1, [Get of rid system libcdio build configuration])
     AC_SUBST(LIBCDIO_CFLAGS)
     AC_SUBST(LIBCDIO_LIBS)
-    AC_SUBST(LIBCDIO_DEPS)
-    AC_SUBST(LIBISO9660_LIBS)
-    AC_SUBST(LIBISO9660_DEPS)
     AC_SUBST(LIBVCD_CFLAGS)
     AC_SUBST(LIBVCD_LIBS)
-    AC_SUBST(LIBVCD_DEPS)
-    AC_SUBST(LIBVCDINFO_LIBS)
-    AC_SUBST(LIBVCDINFO_DEPS)
-    AM_CONDITIONAL([WITH_EXTERNAL_VCDLIBS], [test x"$with_internal_vcdlibs" = x"no"])
     AM_CONDITIONAL([ENABLE_VCD], [test x"$enable_vcd" != x"no"])
     AM_CONDITIONAL([ENABLE_VCDO], [test x"$enable_vcdo" != x"no"])
 ])

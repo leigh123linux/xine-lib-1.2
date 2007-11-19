@@ -14,17 +14,9 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     echo "   - pnm           - rtsp"
     if test x"$enable_vcd" != x"no"; then
         if test x"$enable_vcdo" != x"no"; then
-            if test x"$with_internal_vcdlibs" = x"no"; then
-                echo "   - vcdo          - vcd (external libs)"
-            else
-                echo "   - vcdo          - vcd (internal libs)"
-            fi
+            echo "   - vcdo          - vcd"
         else
-            if test x"$with_internal_vcdlibs" = x"no"; then
-                echo "   - vcd (external libs)"
-            else
-                echo "   - vcd (internal libs)"
-            fi
+            echo "   - vcd"
         fi
     fi
     if test x"$with_external_dvdnav" != x"no"; then

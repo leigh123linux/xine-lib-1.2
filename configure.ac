@@ -1122,10 +1122,6 @@ doc/Doxyfile
 contrib/Makefile
 contrib/a52dec/Makefile
 contrib/gsm610/Makefile
-contrib/libcdio/Makefile
-contrib/libcdio/cdio/Makefile
-contrib/libcdio/MSWindows/Makefile
-contrib/libcdio/image/Makefile
 contrib/libdca/Makefile
 contrib/libdha/Makefile
 contrib/libdha/bin/Makefile
@@ -1135,8 +1131,6 @@ contrib/libdha/sysdep/Makefile
 contrib/libfaad/Makefile
 contrib/libmad/Makefile
 contrib/libmpcdec/Makefile
-contrib/libvcd/Makefile
-contrib/libvcd/libvcd/Makefile
 contrib/libxdg-basedir/Makefile
 contrib/nosefart/Makefile
 contrib/vidix/Makefile
