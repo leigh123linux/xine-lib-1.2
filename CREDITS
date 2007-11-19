@@ -16,14 +16,12 @@ ffmpeg				51.29.0			Mike Melanson
 goom				2k4-0
 gsm610				1.0.10			Mike Melanson
 liba52				0.7.4
-libcdio				0.71 [o]
 libca				0.0.5
 libdvdnav			0.1.10			Michael Roitzsch
 libfaad				2.6.1                   Miguel Freitas
 libmad				0.15.1b			Miguel Freitas
 libmpeg2			0.2.1 [*]
 libmpcdec			1.2.5
-libvcd				0.7.21 [o]
 libxdg-basedir			0.1.3			Diego Pettenò
 nosefart                        1.92                    Mike Melanson
 tvtime				0.9.8.4			Miguel Freitas
@@ -59,9 +57,3 @@ you update?
   update plan for libmpeg2: we should leave our patched libmpeg2 for 
   hardware accelerated decoding (xvmc) only and use "libmpeg2new" (containing 
   updated libmpeg2) for software decoding.
-
-
-[o] These libraries are not well maintained and subsetted from the
-    packages where they come from. The external versions of libcdio
-    and libvcdinfo are preferred. You also get regression tests and
-    CD/VCD diagnostic tools.
