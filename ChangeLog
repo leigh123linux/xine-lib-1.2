@@ -43,6 +43,8 @@ xine-lib (1.1.90) (Unreleased)
   * The XML parser handles CDATA elements.
   * Text handling within XML is improved.
   * DVB subtitles' opacity is now controllable.
+  * The internal copies of libcdio and libvcd are no longer present,
+    you need to use an installed copy of them if you want VCD support.
 
 xine-lib (1.1.9) (unreleased)
   * Fix dvd://.../title[.chapter] handling (somewhat broken in 1.1.8).
