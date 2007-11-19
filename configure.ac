@@ -377,7 +377,7 @@ dnl checks for compiler characteristics
 dnl -----------------------------------
 
 if test x"$GCC" = x"yes"; then
-    GCC_VERSION="`"$CC" -dumpversion`"
+    GCC_VERSION="`$CC -dumpversion`"
     GCC_VERSION_MAJOR="`echo "$GCC_VERSION" | cut -d '.' -f1`"
     GCC_VERSION_MINOR="`echo "$GCC_VERSION" | cut -d '.' -f2`"
     GCC_VERSION_PATCHLEVEL="`echo "$GCC_VERSION" | cut -d '.' -f3`"
