@@ -71,7 +71,6 @@ src/libreal/xine_real_audio_decoder.c
 src/libreal/xine_real_video_decoder.c
 src/libspucc/xine_cc_decoder.c
 src/libspucmml/xine_cmml_decoder.c
-src/libspudvb/xine_spudvb_decoder.c
 src/libsputext/demux_sputext.c
 src/libsputext/xine_sputext_decoder.c
 src/libw32dll/common.c
@@ -131,6 +130,7 @@ src/xine-engine/input_rip.c
 src/xine-engine/io_helper.c
 src/xine-engine/load_plugins.c
 src/xine-engine/osd.c
+src/xine-engine/spu.c
 src/xine-engine/video_decoder.c
 src/xine-engine/video_out.c
 src/xine-engine/vo_scale.c
