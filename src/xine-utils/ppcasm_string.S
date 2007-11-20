@@ -34,7 +34,8 @@
 #define _GLOBFN(n)\
         .stabs __stringify(n:F-1),N_FUN,0,0,n;\
         .type  n,@function; \
-       .globl n;\
+	.globl n;\
+	.hidden n;\
 n:
 
 #define _SIZE(n) \
