@@ -28,10 +28,10 @@
 
 
 
-static post_info_t vdr_video_special_info = { XINE_POST_TYPE_VIDEO_FILTER };
-static post_info_t vdr_audio_special_info = { XINE_POST_TYPE_AUDIO_FILTER };
+static const post_info_t vdr_video_special_info = { XINE_POST_TYPE_VIDEO_FILTER };
+static const post_info_t vdr_audio_special_info = { XINE_POST_TYPE_AUDIO_FILTER };
 
-plugin_info_t xine_plugin_info[] EXPORTED =
+const plugin_info_t xine_plugin_info[] EXPORTED =
 {
   /* type, API, "name", version, special_info, init_function */  
   { PLUGIN_POST, 9, "vdr"      , XINE_VERSION_CODE, &vdr_video_special_info, &vdr_video_init_plugin },
