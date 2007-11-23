@@ -15,7 +15,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  */
 
@@ -36,7 +36,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD_kernel__)
 #include <sys/cdio.h> /* CDIOCALLOW etc... */
 #elif defined(HAVE_LINUX_CDROM_H)
 #include <linux/cdrom.h>
@@ -130,7 +130,7 @@ int media_eject_media (xine_t *xine, const char *device)
       return 0;
     }
 
-#elif defined (__NetBSD__) || defined (__OpenBSD__) || defined (__FreeBSD__)
+#elif defined (__NetBSD__) || defined (__OpenBSD__) || defined (__FreeBSD_kernel__)
 
     if (ioctl(fd, CDIOCALLOW) == -1) {
       xprintf(xine, XINE_VERBOSITY_DEBUG, "ioctl(cdromallow): %s\n", strerror(errno));

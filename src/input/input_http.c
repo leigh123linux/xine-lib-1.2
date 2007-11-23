@@ -15,11 +15,9 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * input plugin for http network streams
- *
- * $Id: input_http.c,v 1.129 2007/03/17 16:47:16 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -64,7 +62,7 @@
 #define TAG_ICY_NOTICE2    "icy-notice2:"
 #define TAG_ICY_METAINT    "icy-metaint:"
 #define TAG_CONTENT_TYPE   "Content-Type:"
-#define TAG_LASTFM_SERVER  "Server: last.fm Streaming Server"
+#define TAG_LASTFM_SERVER  "Server: last.fm "
 
 typedef struct {
   input_plugin_t   input_plugin;

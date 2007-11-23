@@ -15,10 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: video_out_vidix.c,v 1.75 2006/12/19 19:10:51 dsalt Exp $
- * 
  * video_out_vidix.c
  *
  * xine video_out driver to vidix library by Miguel Freitas 30/05/2002
@@ -26,7 +24,6 @@
  * based on video_out_xv.c, video_out_syncfb.c and video_out_pgx64.c
  *
  * some vidix specific code from mplayer (file vosub_vidix.c)
- *
  */
 
 #ifdef HAVE_CONFIG_H

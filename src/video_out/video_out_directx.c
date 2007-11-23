@@ -15,12 +15,10 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * video_out_directx.c, direct draw video output plugin for xine
  * by Matthew Grooms <elon@altavista.com>
- *
- * $Id: video_out_directx.c,v 1.31 2006/07/10 22:08:44 dgp85 Exp $
  */
 
 typedef unsigned char boolean;

@@ -15,9 +15,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
- *
- * $Id: demux_matroska.c,v 1.53 2007/03/12 16:27:21 dgp85 Exp $
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * demultiplexer for matroska streams
  *
@@ -25,7 +23,6 @@
  *   more decoders init
  *   metadata
  *   non seekable input plugins support
- *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -66,13 +63,6 @@
 #endif
 #if !defined(MAX)
 #define MAX(a, b)	((a)>(b)?(a):(b))
-#endif
-
-/* FOURCC will be manipulated using machine endian */
-#ifdef WORDS_BIGENDIAN
-#define meFOURCC BE_FOURCC
-#else
-#define meFOURCC LE_FOURCC
 #endif
 
 typedef struct {
@@ -1319,7 +1309,7 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       /* create a bitmap info header struct for MPEG 4 */
       bih = malloc(sizeof(xine_bmiheader) + track->codec_private_len);
       bih->biSize = sizeof(xine_bmiheader) + track->codec_private_len;
-      bih->biCompression = meFOURCC('M', 'P', '4', 'S');
+      bih->biCompression = ME_FOURCC('M', 'P', '4', 'S');
       bih->biWidth = track->video_track->pixel_width;
       bih->biHeight = track->video_track->pixel_height;
       _x_bmiheader_le2me(bih);
@@ -1340,7 +1330,7 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       /* create a bitmap info header struct for h264 */
       bih = malloc(sizeof(xine_bmiheader) + track->codec_private_len);
       bih->biSize = sizeof(xine_bmiheader) + track->codec_private_len;
-      bih->biCompression = meFOURCC('a', 'v', 'c', '1');
+      bih->biCompression = ME_FOURCC('a', 'v', 'c', '1');
       bih->biWidth = track->video_track->pixel_width;
       bih->biHeight = track->video_track->pixel_height;
       _x_bmiheader_le2me(bih);

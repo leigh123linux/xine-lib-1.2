@@ -15,13 +15,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * fooaudio.c: This is a reference audio decoder for the xine multimedia
  * player. It really works too! It will output a continuous sine wave in
  * place of the data it should actually send.
- *
- * $Id: fooaudio.c,v 1.18 2006/07/10 22:08:43 dgp85 Exp $
  */
 
 #include <stdio.h>

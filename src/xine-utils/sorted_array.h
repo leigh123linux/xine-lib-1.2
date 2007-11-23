@@ -15,9 +15,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
- *
- * $Id: sorted_array.h,v 1.3 2006/09/26 05:19:49 dgp85 Exp $
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * Sorted array which grows automatically when you add elements.
  * A binary search is used to find the position of a new element.
@@ -52,7 +50,6 @@
  *
  *   Delete the array:
  *     xine_sarray_delete(sarray);
- * 
  */
 #ifndef XINE_SORTED_ARRAY_H
 #define XINE_SORTED_ARRAY_H

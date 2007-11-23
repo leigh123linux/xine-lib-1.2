@@ -15,9 +15,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
- *
- * $Id: xine_plugin.c,v 1.52 2006/07/12 21:08:46 dsalt Exp $
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * advanced video deinterlacer plugin
  * Jun/2003 by Miguel Freitas

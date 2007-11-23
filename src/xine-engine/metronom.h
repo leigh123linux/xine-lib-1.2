@@ -15,9 +15,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
- *
- * $Id: metronom.h,v 1.64 2006/09/26 05:19:49 dgp85 Exp $
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * metronom: general pts => virtual calculation/assoc
  *                   
@@ -37,7 +35,6 @@
  *    video_pts and audio_vpts are not given for every frame.
  *  - corrections to the frame rate may be needed to cope with bad
  *    encoded streams.
- *
  */
 
 #ifndef HAVE_METRONOM_H

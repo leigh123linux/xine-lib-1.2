@@ -15,14 +15,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
 
 /*
  * IFF header file by Manfred Tremmel (Manfred.Tremmel@iiv.de)
  * Based on the information of the Amiga Developer CD
- *
- * $Id: iff.h,v 1.2 2004/02/25 18:57:36 manfredtremmel Exp $
  */
 
 #ifndef IFFP_IFF_H

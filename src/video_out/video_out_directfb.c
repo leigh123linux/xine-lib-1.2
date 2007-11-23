@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  *
  * DirectFB based output plugin by Claudio Ciccani <klan@directfb.org>
@@ -1663,13 +1663,13 @@ static DFBResult init_device (directfb_driver_t *this) {
       
       if (this->visual_type == XINE_VISUAL_TYPE_FB) {
         this->underlay->SetCooperativeLevel (this->underlay, DLSCL_EXCLUSIVE);
-        this->underlay->SetBackgroundMode( this->underlay, DLBM_DONTCARE);
+        this->underlay->SetConfiguration (this->underlay, &config);
       }
     } 
   }
   else {
     /* playing to underlay,
-     * check if stretchblit is hardware accelerated. */
+     * check whether stretchblit is hardware accelerated. */
     IDirectFBSurface      *temp;
     DFBSurfaceDescription  dsc;
     DFBAccelerationMask    mask = DFXL_NONE;

@@ -15,15 +15,12 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * Upmix audio filter for xine.
  *   (c) 2004 James Courtier-Dutton (James@superbug.demon.co.uk)
  * This is an up-mix audio filter post plugin.
  * It simply converts Mono into Stereo.
- *
- * $Id: upmix_mono.c,v 1.5 2006/01/27 07:46:12 tmattern Exp $
- *
  */
 
 #include <stdio.h>

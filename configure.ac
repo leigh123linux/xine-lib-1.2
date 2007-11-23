@@ -1143,7 +1143,7 @@ if test "x$check_vidix" = "xyes" -a "x$ac_cv_prog_AWK" != "xno"; then
         enable_vidix="yes"
         enable_linux="yes"
         ;;
-      i?86-*-freebsd* | k?-*-freebsd* | athlon-*-freebsd*)
+      i?86-*-freebsd* | k?-*-freebsd* | athlon-*-freebsd* | i?86-*-kfreebsd*)
         enable_vidix="yes"
         enable_dha_kmod="no"
         ;;
@@ -1885,7 +1885,7 @@ int has_timeout=sizeof(test.timeout);]])],
      	    AC_DEFINE([HAVE_WIN32_CDROM], [1], 
                       [Define 1 if you have MinGW CD-ROM support])
 	 ;;
-         freebsd4.*)
+         freebsd4.*|kfreebsd*-gnu)
      	    AC_DEFINE([HAVE_FREEBSD_CDROM], [1], 
                       [Define 1 if you have FreeBSD CD-ROM support])
 	 ;;
@@ -2587,6 +2587,24 @@ case $host in
 	;;
 esac
 AC_SUBST([NOUNDEF])
+
+
+dnl signal FreeBSD have also FreeBSD based kernel.
+dnl 
+
+AH_BOTTOM([
+#if defined (__FreeBSD__) && !defined (__FreeBSD_kernel__)
+#define __FreeBSD_kernel__ __FreeBSD__
+#endif
+
+#if defined (__FreeBSD_kernel__)
+#include <sys/param.h>
+# if defined (__FreeBSD_version) && !defined (__FreeBSD_kernel_version)
+# define __FreeBSD_kernel_version __FreeBSD_version
+# endif
+#endif
+])
+
 
 dnl Common cflags for all platforms
 CFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE \$(MULTIPASS_CFLAGS) $warnflags $CFLAGS"

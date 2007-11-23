@@ -15,13 +15,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * ID3 tag parser
  *
  * Supported versions: v1, v1.1, v2.2, v2.3, v2.4
- *
- * $Id: id3.h,v 1.6 2007/03/03 01:41:16 dgp85 Exp $
  */
 
 #ifndef ID3_H

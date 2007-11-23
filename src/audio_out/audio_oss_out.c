@@ -15,9 +15,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
- *
- * $Id: audio_oss_out.c,v 1.120 2007/03/17 06:59:31 dgp85 Exp $
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * 20-8-2001 First implementation of Audio sync and Audio driver separation.
  * Copyright (C) 2001 James Courtier-Dutton James@superbug.demon.co.uk
@@ -34,7 +32,6 @@
  * when dealing with audio_bytes instead of audio_frames.
  *
  * The number of samples passed to/from the audio driver is also sent in units of audio_frames.
- *              
  */
 
 #ifdef HAVE_CONFIG_H

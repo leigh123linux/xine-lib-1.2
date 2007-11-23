@@ -15,13 +15,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
- *
- * $Id: load_plugins.c,v 1.230 2007/02/19 23:33:33 dgp85 Exp $
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  *
  * Load input/demux/audio_out/video_out/codec plugins
- *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -153,7 +150,6 @@ static void dec_node_ref(plugin_node_t *node) {
 
 /*
  * plugin list/catalog management functions
- *
  */
 
 static int get_decoder_priority(xine_t *this, plugin_node_t *node) {

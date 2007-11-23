@@ -15,7 +15,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * Credits go 
  * - for the SPDIF A/52 sync part
@@ -24,9 +24,6 @@
  * for initial ALSA 0.9.x support.
  *     adding MONO/STEREO/4CHANNEL/5CHANNEL/5.1CHANNEL analogue support.
  * (c) 2001 James Courtier-Dutton <James@superbug.demon.co.uk>
- *
- * 
- * $Id: audio_alsa_out.c,v 1.168 2007/02/25 22:33:25 miguelfreitas Exp $
  */
 
 #ifdef HAVE_CONFIG_H

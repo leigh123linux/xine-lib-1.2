@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
 
 /*
@@ -24,8 +24,6 @@
  * possibly be seen in a VOC file. It only plays the first block in a file.
  * It will only play that block if it is PCM data. More variations will be
  * supported as they are encountered.
- *
- * $Id: demux_voc.c,v 1.41 2007/01/19 00:26:40 dgp85 Exp $
  */
 
 #ifdef HAVE_CONFIG_H
