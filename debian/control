@@ -20,9 +20,9 @@ Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
 	libdirectfb-dev, libgtk2.0-dev,
 	libflac-dev, libpulse-dev, libsdl1.2-dev, libwavpack-dev,
 	libsmbclient-dev, libspeex-dev, libmng-dev, 
-	libmad0-dev, libmpcdec-dev, libcdio-dev (>= 0.76-1), 
+	libmad0-dev, libmpcdec-dev, libcdio-dev (>= 0.76-1), libvcdinfo-dev,
 	w3m, gs, xmlto, librsvg2-bin
-Build-Conflicts: libdvdnav-dev, libvcdinfo-dev
+Build-Conflicts: libdvdnav-dev
 Standards-Version: 3.7.2
 
 Package: libxine-dev
