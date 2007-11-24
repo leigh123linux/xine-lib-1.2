@@ -2,7 +2,12 @@ include $(top_srcdir)/misc/Makefile.common
 
 EXTRA_DIST = fooaudio.c
 
-SUBDIRS = gsm610 nosefart
+if BUILD_NOSEFART
+nosefart_subdir = nosefart
+nosefart_module = xineplug_decode_nsf.la
+endif
+
+SUBDIRS = gsm610 $(nosefart_subdir)
 
 AM_LDFLAGS = $(xineplug_ldflags)
 
@@ -16,7 +21,7 @@ endif
 
 xineplug_LTLIBRARIES = \
 	xineplug_decode_gsm610.la \
-	xineplug_decode_nsf.la \
+	$(nosefart_module) \
 	xineplug_decode_lpcm.la \
 	$(vorbis_module) \
 	$(speex_module)

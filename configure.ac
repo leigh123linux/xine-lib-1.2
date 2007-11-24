@@ -1935,6 +1935,16 @@ AM_CONDITIONAL(BUILD_ASF, test "x$enable_asf" != "xno")
 
 
 dnl ---------------------------------------------
+dnl Nosefart build can be optional
+dnl ---------------------------------------------
+
+AC_ARG_ENABLE([nosefart], AS_HELP_STRING([--disable-nosefart], [do not build nosefart player]))
+if test "x$enable_nosefart" != "xno"; then
+   AC_DEFINE([HAVE_NOSEFART], 1, [Define this if Nosefart is being built.])
+fi
+AM_CONDITIONAL(BUILD_NOSEFART, test "x$enable_nosefart" != "xno")
+
+dnl ---------------------------------------------
 dnl FAAD build can be optional
 dnl ---------------------------------------------
 
@@ -2789,13 +2799,16 @@ echo "   - yuv4mpeg2     - real/realaudio"
 echo "   - ea wve        - raw dv"
 echo "   - interplay mve - psx str"
 echo "   - ws aud        - pva"
-echo "   - vox           - nsf"
+echo "   - vox"
 echo "   - nsv           - 4xm"
 echo "   - FLAC          - aac"
 echo "   - iff           - matroska"
 echo "   - vmd           - flv"
 if test "x$enable_asf" = "xyes"; then
   echo "   - asf"
+fi
+if test "x$enable_nosefart" != "xno"; then
+  echo "   - nsf"
 fi
 if test "x$have_vorbis" = "xyes"; then
   echo "   - ogg"
@@ -2866,8 +2879,7 @@ echo ""
 
 dnl audio decoders
 echo " * audio decoder plugins:"
-echo "   - GSM 06.10"
-echo "   - linear PCM      - Nosefart (NSF)"
+echo "   - GSM 06.10       - linear PCM"
 if test "x$with_external_ffmpeg" = "xyes"; then
   echo "   - ffmpeg (external library):"
 else
@@ -2880,6 +2892,9 @@ echo "     - MS ADPCM      - IMA ADPCM"
 echo "     - XA ADPCM      - Game DPCM/ADPCM"
 echo "     - Mace 3:13     - Mace 6:1"
 echo "     - FLAC"
+if test "x$enable_nosefart" != "xno"; then
+  echo "   - Nosefart (NSF)"
+fi
 if test "x$have_libflac" = "xyes"; then
   echo "   - FLAC (with libFLAC)"
 fi

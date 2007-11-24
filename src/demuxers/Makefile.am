@@ -11,6 +11,10 @@ if BUILD_ASF
 asf_module = xineplug_dmx_asf.la 
 endif
 
+if BUILD_NOSEFART
+nsf_demuxer = demux_nsf.c
+endif
+
 if HAVE_LIBMNG
 mng_module = xineplug_dmx_mng.la
 endif
@@ -104,7 +108,7 @@ xineplug_dmx_games_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 xineplug_dmx_games_la_LDFLAGS = -avoid-version -module
 
 xineplug_dmx_audio_la_SOURCES = group_audio.c demux_aud.c demux_aiff.c \
-				demux_cdda.c demux_mpgaudio.c demux_nsf.c \
+				demux_cdda.c demux_mpgaudio.c $(nsf_demuxer) \
 				demux_realaudio.c demux_snd.c demux_voc.c \
 				demux_vox.c demux_wav.c demux_ac3.c id3.c \
 				demux_aac.c demux_mod.c demux_flac.c \
