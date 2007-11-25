@@ -78,7 +78,7 @@ int modify_ldt(int func, void *ptr, unsigned long bytecount);
 }
 #endif
 #else
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
 #include <machine/segments.h>
 #include <machine/sysarch.h>
 #endif
@@ -153,7 +153,7 @@ void Setup_FS_Segment(ldt_fs_t *ldt_fs)
 
 void Check_FS_Segment(ldt_fs_t *ldt_fs)
 {
-#if defined(__FreeBSD__) && defined(LDT_AUTO_ALLOC)
+#if defined(__FreeBSD_kernel__) && defined(LDT_AUTO_ALLOC)
     int fs;
      __asm__ __volatile__(
 	"movw %%fs,%%ax; mov %%eax,%0" : "=r" (fs) :: "%eax"
@@ -171,7 +171,7 @@ void Check_FS_Segment(ldt_fs_t *ldt_fs)
 #endif
 }
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
 static void LDT_EntryToBytes( unsigned long *buffer, const struct modify_ldt_ldt_s *content )
 {
     *buffer++ = ((content->base_addr & 0x0000ffff) << 16) |
@@ -202,12 +202,12 @@ static int _modify_ldt(ldt_fs_t *ldt_fs, struct modify_ldt_ldt_s array)
     }
 #endif /*linux*/
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
     {
         unsigned long d[2];
 
         LDT_EntryToBytes( d, &array );
-#if defined(__FreeBSD__) && defined(LDT_AUTO_ALLOC)
+#if defined(__FreeBSD_kernel__) && defined(LDT_AUTO_ALLOC)
         ret = i386_set_ldt(LDT_AUTO_ALLOC, (union descriptor *)d, 1);
         array.entry_number = ret;
         ldt_fs->teb_sel = LDT_SEL(ret);

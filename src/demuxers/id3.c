@@ -45,7 +45,7 @@
 #include "bswap.h"
 #include "id3.h"
 
-#define ID3_GENRE_COUNT 126
+#define ID3_GENRE_COUNT (sizeof (id3_genre) / sizeof (id3_genre[0]))
 static const char* const id3_genre[] =
   {"Blues", "Classic Rock", "Country", "Dance", "Disco",
    "Funk", "Grunge", "Hip-Hop", "Jazz", "Metal",
@@ -72,7 +72,11 @@ static const char* const id3_genre[] =
    "Satire", "Slow Jam", "Club", "Tango", "Samba",
    "Folklore", "Ballad", "Power Ballad", "Rhythmic Soul", "Freestyle",
    "Duet", "Punk Rock", "Drum Solo", "A capella", "Euro-House",
-   "Dance Hall" };
+   "Dance Hall", "Goa", "Drum & Bass", "Club-House", "Hardcore", "Terror",
+   "Indie", "BritPop", "Negerpunk", "Polsk Punk", "Beat",
+   "Christian Gangsta Rap", "Heavy Metal", "Black Metal", "Crossover",
+   "Contemporary Christian", "Christian Rock", "Merengue", "Salsa",
+   "Thrash Metal", "Anime", "JPop", "Synthpop" };
 
 #define ID3_ENCODING_COUNT 4
 static const char* const id3_encoding[] = {
@@ -595,15 +599,15 @@ int id3v23_parse_tag(input_plugin_t *input,
 
 /* id3v2 "genre" parsing code. what a ugly format ! */
 static int id3v24_parse_genre(char* dest, char *src, int len) {
-  int index = 0;
+  unsigned int index = 0;
   
   dest[0] = '\0';
-  if (sscanf(src, "%2d", &index) == 1) {
+  if (sscanf(src, "%u", &index) == 1) {
     if (index < ID3_GENRE_COUNT) {
       strncpy(dest, id3_genre[index], len);
       dest[len - 1] = '\0';
     } else {
-      lprintf("invalid index: %d\n", index);
+      lprintf("invalid index: %u\n", index);
     }
   }
   return 1;

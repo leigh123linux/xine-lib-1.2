@@ -343,7 +343,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
             else
                 case "$host_or_hostalias" in
                     i?86-*-linux* | k?-*-linux* | athlon-*-linux*) ;;
-                    i?86-*-freebsd* | k?-*-freebsd* | athlon-*-freebsd*) ;;
+                    i?86-*-freebsd* | k?-*-freebsd* | athlon-*-freebsd* | i?86-*-kfreebsd*) ;;
                     *) have_vidix="no" ;;
                 esac
             fi

@@ -35,7 +35,7 @@
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
-#if defined (__linux__)
+#if defined (__linux__) || defined (__GLIBC__)
 #include <endian.h>
 #elif defined (__FreeBSD__)
 #include <machine/endian.h>
@@ -1233,7 +1233,11 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
   stream->demux_plugin->send_headers (stream->demux_plugin);
 
   if (stream->demux_plugin->get_status(stream->demux_plugin) != DEMUX_OK) {
-    xine_log (stream->xine, XINE_LOG_MSG, _("xine: demuxer failed to start\n"));
+    if (stream->demux_plugin->get_status(stream->demux_plugin) == DEMUX_FINISHED) {
+      xine_log (stream->xine, XINE_LOG_MSG, _("xine: demuxer is already done. that was fast!\n"));
+    } else {
+      xine_log (stream->xine, XINE_LOG_MSG, _("xine: demuxer failed to start\n"));
+    }
 
     _x_free_demux_plugin(stream, stream->demux_plugin);
     stream->demux_plugin = NULL;

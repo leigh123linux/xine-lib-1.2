@@ -158,7 +158,7 @@ static void vorbis_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       if( (res = vorbis_synthesis_headerin(&this->vi,&this->vc,&this->op)) < 0 ){ 
 	/* error case; not a vorbis header */
 	xine_log(this->stream->xine, XINE_LOG_MSG, "libvorbis: this bitstream does not contain vorbis audio data. Following first 64 bytes (return: %d).\n", res);
-	xine_hexdump(this->op.packet, this->op.bytes < 64 ? this->op.bytes : 64);
+	xine_hexdump((char *)this->op.packet, this->op.bytes < 64 ? this->op.bytes : 64);
 	return;
       }
 
@@ -219,7 +219,6 @@ static void vorbis_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
        */
 
       int i,j;
-      int clipflag=0;
       int bout=(samples<this->convsize?samples:this->convsize);
       audio_buffer_t *audio_buffer;
 
@@ -231,15 +230,13 @@ static void vorbis_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	ogg_int16_t *ptr=audio_buffer->mem+i;
 	float  *mono=pcm[i];
 	for(j=0;j<bout;j++){
-	  int val=mono[j]*32767.f;
+	  int val=(mono[j] + 1.0f) * 32768.f;
+          val -= 32768;
 	  /* might as well guard against clipping */
 	  if(val>32767){
 	    val=32767;
-	    clipflag=1;
-	  }
-	  if(val<-32768){
+	  } else if(val<-32768){
 	    val=-32768;
-	    clipflag=1;
 	  }
 	  *ptr=val;
 	  ptr+=this->vi.channels;
@@ -257,8 +254,9 @@ static void vorbis_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       /* tell libvorbis how many samples we actually consumed */
       vorbis_synthesis_read(&this->vd,bout);
     }
-  } 
-  lprintf("output not open\n");
+  } else {
+    lprintf("output not open\n");
+  }
 }
 
 static void vorbis_dispose (audio_decoder_t *this_gen) {

@@ -236,13 +236,19 @@ static int64_t get_pts (demux_ogg_t *this, int stream_num , int64_t granulepos )
 static int read_ogg_packet (demux_ogg_t *this) {
   char *buffer;
   long bytes;
+  long total = 0;
   while (ogg_sync_pageout(&this->oy,&this->og)!=1) {
     buffer = ogg_sync_buffer(&this->oy, CHUNKSIZE);
     bytes  = this->input->read(this->input, buffer, CHUNKSIZE);
-    ogg_sync_wrote(&this->oy, bytes);
-    if (bytes < CHUNKSIZE/2) {
-      return 0;
+    if (bytes == 0) {
+      if (total == 0) {
+        printf("read_ogg_packet read nothing\n");
+        return 0;
+      }
+      break;
     }
+    ogg_sync_wrote(&this->oy, bytes);
+    total += bytes;
   }
   return 1;
 }
@@ -1359,7 +1365,6 @@ static void send_header (demux_ogg_t *this) {
 
   while (!done) {
     if (!read_ogg_packet(this)) {
-      this->status = DEMUX_FINISHED;
       return;
     }
     /* now we've got at least one new page */

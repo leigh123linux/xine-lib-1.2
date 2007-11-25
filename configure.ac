@@ -1082,6 +1082,22 @@ INCLUDES='-I$(top_srcdir) -I$(top_builddir)/include -I$(top_srcdir)/include -I$(
 AC_SUBST(INCLUDES)
 
 
+dnl signal FreeBSD have also FreeBSD based kernel.
+dnl 
+
+AH_BOTTOM([
+#if defined (__FreeBSD__) && !defined (__FreeBSD_kernel__)
+#define __FreeBSD_kernel__ __FreeBSD__
+#endif
+
+#if defined (__FreeBSD_kernel__)
+#include <sys/param.h>
+# if defined (__FreeBSD_version) && !defined (__FreeBSD_kernel_version)
+# define __FreeBSD_kernel_version __FreeBSD_version
+# endif
+#endif
+])
+
 dnl Common cflags for all platforms
 CFLAGS="$UNIVERSAL_CFLAGS \$(MULTIPASS_CFLAGS) $miscflags $warnflags $CFLAGS"
 LDFLAGS="$UNIVERSAL_LDFLAGS $LDFLAGS"

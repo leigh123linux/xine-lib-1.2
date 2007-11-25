@@ -616,7 +616,7 @@ static int read_cdrom_frames(cdda_input_plugin_t *this_gen, int frame, int num_f
   return 0;
 }
 
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#elif defined(__FreeBSD_kernel__) || defined(__NetBSD__)
 
 #include <sys/cdio.h>
 
@@ -627,7 +627,7 @@ static int read_cdrom_frames(cdda_input_plugin_t *this_gen, int frame, int num_f
 static int read_cdrom_toc(int fd, cdrom_toc *toc) {
 
   struct ioc_toc_header tochdr;
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD_kernel__)
   struct ioc_read_toc_single_entry tocentry;
 #elif defined(__NetBSD__)
   struct ioc_read_toc_entry tocentry;
@@ -658,7 +658,7 @@ static int read_cdrom_toc(int fd, cdrom_toc *toc) {
 
     memset(&tocentry, 0, sizeof(tocentry));
 
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD_kernel__)
     tocentry.track = i;
     tocentry.address_format = CD_MSF_FORMAT;
     if (ioctl(fd, CDIOREADTOCENTRY, &tocentry) == -1) {
@@ -677,7 +677,7 @@ static int read_cdrom_toc(int fd, cdrom_toc *toc) {
     }
 #endif
 
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD_kernel__)
     toc->toc_entries[i-1].track_mode = (tocentry.entry.control & 0x04) ? 1 : 0;
     toc->toc_entries[i-1].first_frame_minute = tocentry.entry.addr.msf.minute;
     toc->toc_entries[i-1].first_frame_second = tocentry.entry.addr.msf.second;
@@ -701,7 +701,7 @@ static int read_cdrom_toc(int fd, cdrom_toc *toc) {
   /* fetch the leadout as well */
   memset(&tocentry, 0, sizeof(tocentry));
 
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD_kernel__)
   tocentry.track = CD_LEADOUT_TRACK;
   tocentry.address_format = CD_MSF_FORMAT;
   if (ioctl(fd, CDIOREADTOCENTRY, &tocentry) == -1) {
@@ -720,7 +720,7 @@ static int read_cdrom_toc(int fd, cdrom_toc *toc) {
   }
 #endif
 
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD_kernel__)
   toc->leadout_track.track_mode = (tocentry.entry.control & 0x04) ? 1 : 0;
   toc->leadout_track.first_frame_minute = tocentry.entry.addr.msf.minute;
   toc->leadout_track.first_frame_second = tocentry.entry.addr.msf.second;
@@ -749,8 +749,8 @@ static int read_cdrom_frames(cdda_input_plugin_t *this_gen, int frame, int num_f
   int fd = this_gen->fd;
 
   while( num_frames ) {
-#if defined(__FreeBSD__)
-#if  __FreeBSD_version < 501106
+#if defined(__FreeBSD_kernel__)
+#if __FreeBSD_kernel_version < 501106
     struct ioc_read_audio cdda;
 
     cdda.address_format = CD_MSF_FORMAT;
@@ -759,13 +759,10 @@ static int read_cdrom_frames(cdda_input_plugin_t *this_gen, int frame, int num_f
     cdda.address.msf.frame = frame % CD_FRAMES_PER_SECOND;
     cdda.nframes = 1;
     cdda.buffer = data;
-#endif
-
-#if  __FreeBSD_version >= 501106
-    if (pread(fd, data, CD_RAW_FRAME_SIZE, frame * CD_RAW_FRAME_SIZE) != CD_RAW_FRAME_SIZE) {
-#else
     /* read a frame */
     if(ioctl(fd, CDIOCREADAUDIO, &cdda) < 0) {
+#else
+    if (pread(fd, data, CD_RAW_FRAME_SIZE, frame * CD_RAW_FRAME_SIZE) != CD_RAW_FRAME_SIZE) {
 #endif
       perror("CDIOCREADAUDIO");
       return -1;

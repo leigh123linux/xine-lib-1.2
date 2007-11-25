@@ -34,6 +34,7 @@
 */
 
 #include "xine_internal.h"
+#include <assert.h>
 
 #define DEFAULT_BUFFER_SIZE 1024
 
@@ -191,6 +192,7 @@ static buf_element_t *cache_plugin_read_block(input_plugin_t *this_gen, fifo_buf
     if (buf) {
       buf->type = BUF_DEMUX_BLOCK;
    
+      assert(todo <= buf->max_size);
       read_len = cache_plugin_read (this_gen, buf->content, todo);
       buf->size = read_len;
     }

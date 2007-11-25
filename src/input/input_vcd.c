@@ -37,7 +37,7 @@
 #ifdef HAVE_SYS_CDIO_H
 # include <sys/cdio.h>
 /* TODO: not clean yet */
-# if defined (__FreeBSD__)
+# if defined (__FreeBSD_kernel__)
 #  include <sys/cdrio.h>
 # endif
 #endif
@@ -92,7 +92,7 @@ typedef struct {
 #if defined (__linux__) || defined(__sun)
   struct cdrom_tochdr    tochdr;
   struct cdrom_tocentry  tocent[100];
-#elif defined (__FreeBSD__)
+#elif defined (__FreeBSD_kernel__)
   struct ioc_toc_header  tochdr;
   struct cd_toc_entry    *tocent;
   off_t                  cur_sec;
@@ -117,7 +117,7 @@ typedef struct {
 
   int                    cur_track;
 
-#if defined (__linux__) || defined(__sun) || defined(__FreeBSD__)
+#if defined (__linux__) || defined(__sun) || defined (__FreeBSD_kernel__)
   uint8_t                cur_min, cur_sec, cur_frame;
 #endif
 
@@ -177,7 +177,7 @@ static int input_vcd_read_toc (vcd_input_class_t *this, int fd) {
 
   return 0;
 }
-#elif defined (__FreeBSD__)
+#elif defined (__FreeBSD_kernel__)
 static int input_vcd_read_toc (vcd_input_class_t *this, int fd) {
 
   struct ioc_read_toc_entry te;
@@ -394,7 +394,7 @@ static off_t vcd_plugin_read (input_plugin_t *this_gen,
   memcpy (buf, data.data, VCDSECTORSIZE); /* FIXME */
   return VCDSECTORSIZE;
 }
-#elif defined (__FreeBSD__)
+#elif defined (__FreeBSD_kernel__)
 static off_t vcd_plugin_read (input_plugin_t *this_gen, 
 			      void *buf_gen, off_t nlen) {
   vcd_input_plugin_t *this = (vcd_input_plugin_t *) this_gen;
@@ -534,7 +534,7 @@ static buf_element_t *vcd_plugin_read_block (input_plugin_t *this_gen,
   memcpy (buf->mem, data.data, VCDSECTORSIZE); /* FIXME */
   return buf;
 }
-#elif defined (__FreeBSD__)
+#elif defined (__FreeBSD_kernel__)
 static buf_element_t *vcd_plugin_read_block (input_plugin_t *this_gen, 
 					     fifo_buffer_t *fifo, off_t nlen) {
   
@@ -693,7 +693,7 @@ static off_t vcd_plugin_seek (input_plugin_t *this_gen,
 
   return offset ; /* FIXME */
 }
-#elif defined (__FreeBSD__)
+#elif defined (__FreeBSD_kernel__)
 static off_t vcd_plugin_seek (input_plugin_t *this_gen, 
 				off_t offset, int origin) {
 
@@ -767,7 +767,7 @@ static off_t vcd_plugin_get_length (input_plugin_t *this_gen) {
 
   return (off_t) 0;
 }
-#elif defined (__FreeBSD__)
+#elif defined (__FreeBSD_kernel__)
 static off_t vcd_plugin_get_length (input_plugin_t *this_gen) {
   vcd_input_plugin_t *this = (vcd_input_plugin_t *) this_gen;
   off_t len ;
@@ -862,7 +862,7 @@ static int vcd_plugin_open (input_plugin_t *this_gen) {
   this->cur_min   = this->cls->tocent[this->cur_track].cdte_addr.msf.minute;
   this->cur_sec   = this->cls->tocent[this->cur_track].cdte_addr.msf.second;
   this->cur_frame = this->cls->tocent[this->cur_track].cdte_addr.msf.frame;
-#elif defined (__FreeBSD__)
+#elif defined (__FreeBSD_kernel__)
   {
     int bsize = 2352;
     if (ioctl (this->fd, CDRIOCSETBLOCKSIZE, &bsize) == -1) {

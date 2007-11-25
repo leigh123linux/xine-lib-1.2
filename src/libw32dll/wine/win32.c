@@ -894,7 +894,7 @@ static void WINAPI expGetSystemInfo(SYSTEM_INFO* si)
     /* FIXME: better values for the two entries below... */
     static int cache = 0;
     static SYSTEM_INFO cachedsi;
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__svr4__)
+#if defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__svr4__)
     unsigned int regs[4];
 #endif
     dbgprintf("GetSystemInfo(%p) =>\n", si);
@@ -958,7 +958,7 @@ static void WINAPI expGetSystemInfo(SYSTEM_INFO* si)
 
 /* disable cpuid based detection (mplayer's cpudetect.c does this - see above) */
 #ifndef MPLAYER
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__svr4__)
+#if defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__svr4__)
     do_cpuid(1, regs);
     switch ((regs[0] >> 8) & 0xf) {			// cpu family
     case 3: cachedsi.dwProcessorType = PROCESSOR_INTEL_386;

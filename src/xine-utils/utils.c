@@ -452,6 +452,7 @@ char *xine_chomp(char *str) {
  * a thread-safe usecond sleep
  */
 void xine_usec_sleep(unsigned usec) {
+#if 0
 #if HAVE_NANOSLEEP
   /* nanosleep is prefered on solaris, because it's mt-safe */
   struct timespec ts, remaining;
@@ -466,6 +467,15 @@ void xine_usec_sleep(unsigned usec) {
 #  else
   usleep(usec);
 #  endif
+#endif
+#else
+  if (usec < 10000) {
+      usec = 10000;
+  }
+  struct timeval tm;
+  tm.tv_sec  = usec / 1000000;
+  tm.tv_usec = usec % 1000000;
+  select(0, 0, 0, 0, &tm);
 #endif
 }
 
