@@ -45,7 +45,7 @@
 #include "bswap.h"
 #include "id3.h"
 
-#define ID3_GENRE_COUNT 148
+#define ID3_GENRE_COUNT (sizeof (id3_genre) / sizeof (id3_genre[0]))
 static const char* const id3_genre[] =
   {"Blues", "Classic Rock", "Country", "Dance", "Disco",
    "Funk", "Grunge", "Hip-Hop", "Jazz", "Metal",
