@@ -52,6 +52,11 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
                   [test x"$enableval" != x"no" && enable_asf="yes"])
     AM_CONDITIONAL([ENABLE_ASF], [test x"$enable_asf" != x"no"])
 
+    dnl Nosefart (optional, enabled by default)
+    AC_ARG_ENABLE([nosefart],
+                  [AS_HELP_STRING([--enable-nosefart], [Enable support for nosefart player (default: enabled)])],
+                  [test x"$enableval" != x"no" && enable_nosefart="yes"])
+    AM_CONDITIONAL([ENABLE_NOSEFART], [test "x$enable_nosefart" != "xno"])
 
     dnl FAAD (optional; enabled by default)
     AC_ARG_ENABLE([faad],

@@ -60,6 +60,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
         fi
     fi
     test x"$enable_asf" != x"no"     && echo "   - asf"
+    test x"$enable_nosefart" != xno  && echo "   - Nosefart (NSF)"
     test x"$enable_mng" != x"no"     && echo "   - mng"
     test x"$have_modplug" = x"yes"   && echo "   - mod"
     test x"$have_libflac" = x"yes"   && echo "   - FLAC (with libFLAC)"
@@ -102,9 +103,9 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
 
     dnl audio decoders
     echo " * audio decoder plugins:"
-    echo "   - GSM 06.10"
-    echo "   - linear PCM      - Nosefart (NSF)"
+    echo "   - GSM 06.10       - linear PCM"
     test x"$enable_faad" != x"no"  && echo "   - faad"
+    test x"$enable_nosefart" != xno && echo "   - Nosefart (NSF)"
     test x"$have_libflac" = x"yes" && echo "   - FLAC (with libFLAC)"
     test x"$have_speex" = x"yes"   && echo "   - speex"
     test x"$have_vorbis" = x"yes"  && echo "   - vorbis"

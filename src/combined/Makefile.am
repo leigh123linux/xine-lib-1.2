@@ -7,6 +7,10 @@ if ENABLE_WAVPACK
 xineplug_wavpack = xineplug_wavpack.la
 endif
 
+if ENABLE_NOSEFART
+xineplug_nsf = xineplug_nsf.la
+endif
+
 if ENABLE_LIBFLAC
 xineplug_flac = xineplug_flac.la
 endif
@@ -17,7 +21,7 @@ $(top_builddir)/contrib/nosefart/libnosefart.la:
 xineplug_LTLIBRARIES = \
 	$(xineplug_wavpack) \
 	$(xineplug_flac) \
-	xineplug_nsf.la
+	$(xineplug_nsf)
 
 xineplug_wavpack_la_SOURCES = wavpack_demuxer.c wavpack_decoder.c wavpack_combined.c wavpack_combined.h
 xineplug_wavpack_la_LIBADD = $(XINE_LIB) $(WAVPACK_LIBS)
