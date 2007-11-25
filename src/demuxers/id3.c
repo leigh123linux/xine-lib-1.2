@@ -599,15 +599,15 @@ int id3v23_parse_tag(input_plugin_t *input,
 
 /* id3v2 "genre" parsing code. what a ugly format ! */
 static int id3v24_parse_genre(char* dest, char *src, int len) {
-  int index = 0;
+  unsigned int index = 0;
   
   dest[0] = '\0';
-  if (sscanf(src, "%d", &index) == 1) {
+  if (sscanf(src, "%u", &index) == 1) {
     if (index < ID3_GENRE_COUNT) {
       strncpy(dest, id3_genre[index], len);
       dest[len - 1] = '\0';
     } else {
-      lprintf("invalid index: %d\n", index);
+      lprintf("invalid index: %u\n", index);
     }
   }
   return 1;
