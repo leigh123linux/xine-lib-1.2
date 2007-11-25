@@ -1,8 +1,7 @@
 Source: xine-lib
 Section: libs
 Priority: optional
-Maintainer: Siggi Langauf <siggi@debian.org>
-Uploaders: Philipp Matthias Hahn <pmhahn@debian.org>, Reinhard Tartler <siretart@tauware.de>
+Maintainer: xine Developers <xine-devel@lists.sourceforge.net>
 Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
 	automake1.9, autoconf, libtool,
 	libxcb-xinerama0-dev | libxv-dev (<< 1:1.0.3), libxcb-xv0-dev | libxv-dev (<< 1:1.0.3),
