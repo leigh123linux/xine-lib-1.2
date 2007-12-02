@@ -856,7 +856,11 @@ static int ao_alsa_write(ao_driver_t *this_gen, int16_t *data, uint32_t count) {
 static void ao_alsa_close(ao_driver_t *this_gen) {
   alsa_driver_t *this = (alsa_driver_t *) this_gen;
 
-  if(this->audio_fd) snd_pcm_close(this->audio_fd);
+  if(this->audio_fd) {
+    snd_pcm_nonblock(this->audio_fd, 0);
+    snd_pcm_drain(this->audio_fd);
+    snd_pcm_close(this->audio_fd);
+  }
   this->audio_fd = NULL;
   this->has_pause_resume = 0; /* This is set at open time */
 }

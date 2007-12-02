@@ -18,6 +18,8 @@ xine-lib (1.1.9) (unreleased)
   * Fixed deadlock on ao_close while paused.
   * Nicer wakeup behaviour, using select instead of nanosleep (800 -> 100
     wakeups/s).
+  * Fixed ALSA close function to not discard all data that had been written
+    but not played yet.
 
 xine-lib (1.1.8)
   * Send a channel-changed event to the frontend when receiving the SYNC
