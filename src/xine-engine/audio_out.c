@@ -358,22 +358,19 @@ static audio_buffer_t *fifo_remove_int (audio_fifo_t *fifo, int blocking) {
 
   buf = fifo->first;
 
-  if (buf) {
-    fifo->first = buf->next;
+  fifo->first = buf->next;
 
-    if (!fifo->first) {
+  if (!fifo->first) {
 
-      fifo->last = NULL;
-      fifo->num_buffers = 0;
-      pthread_cond_signal (&fifo->empty);
+    fifo->last = NULL;
+    fifo->num_buffers = 0;
+    pthread_cond_signal (&fifo->empty);
 
-    } else 
-      fifo->num_buffers--;
-
-  }
+  } else
+    fifo->num_buffers--;
 
   buf->next = NULL;
-    
+
   return buf;
 }
 
