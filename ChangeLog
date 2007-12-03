@@ -20,6 +20,8 @@ xine-lib (1.1.9) (unreleased)
     wakeups/s).
   * Fixed ALSA close function to not discard all data that had been written
     but not played yet.
+  * Fixed a race condition between ao_loop and ao_close to not lose the last
+    buffer.
 
 xine-lib (1.1.8)
   * Send a channel-changed event to the frontend when receiving the SYNC

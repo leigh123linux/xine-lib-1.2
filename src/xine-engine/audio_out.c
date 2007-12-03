@@ -338,9 +338,7 @@ static void fifo_append (audio_fifo_t *fifo,
   pthread_mutex_unlock (&fifo->mutex);
 }
 
-static audio_buffer_t *fifo_remove_int (audio_fifo_t *fifo, int blocking) {
-  audio_buffer_t *buf;
-
+static audio_buffer_t *fifo_peek_int (audio_fifo_t *fifo, int blocking) {
   while (!fifo->first) {
     pthread_cond_signal (&fifo->empty);
     if (blocking)
@@ -355,8 +353,11 @@ static audio_buffer_t *fifo_remove_int (audio_fifo_t *fifo, int blocking) {
         return NULL;
     }
   }
+  return fifo->first;
+}
 
-  buf = fifo->first;
+static audio_buffer_t *fifo_remove_int (audio_fifo_t *fifo, int blocking) {
+  audio_buffer_t *buf = fifo_peek_int(fifo, blocking);
 
   fifo->first = buf->next;
 
@@ -364,11 +365,23 @@ static audio_buffer_t *fifo_remove_int (audio_fifo_t *fifo, int blocking) {
 
     fifo->last = NULL;
     fifo->num_buffers = 0;
+    pthread_cond_signal (&fifo->empty);
 
   } else
     fifo->num_buffers--;
 
   buf->next = NULL;
+
+  return buf;
+}
+
+static audio_buffer_t *fifo_peek (audio_fifo_t *fifo) {
+
+  audio_buffer_t *buf;
+
+  pthread_mutex_lock (&fifo->mutex);
+  buf = fifo_peek_int(fifo, 1);
+  pthread_mutex_unlock (&fifo->mutex);
 
   return buf;
 }
@@ -994,7 +1007,7 @@ static void *ao_loop (void *this_gen) {
     
     if (!in_buf) {
       lprintf ("loop: get buf from fifo\n");
-      in_buf = fifo_remove (this->out_fifo);
+      in_buf = fifo_peek (this->out_fifo);
       bufs_since_sync++;
       lprintf ("got a buffer\n");
     }
@@ -1007,6 +1020,7 @@ static void *ao_loop (void *this_gen) {
     }
 
     if (this->discard_buffers) {
+      fifo_remove (this->out_fifo);
       if (in_buf->stream)
 	_x_refcounter_dec(in_buf->stream->refcounter);
       fifo_append (this->free_fifo, in_buf);
@@ -1033,6 +1047,7 @@ static void *ao_loop (void *this_gen) {
 	cur_time = this->clock->get_current_time (this->clock);
 	if (in_buf->vpts < cur_time ) {
 	  lprintf ("loop: next fifo\n");
+	  fifo_remove (this->out_fifo);
 	  if (in_buf->stream)
 	    _x_refcounter_dec(in_buf->stream->refcounter);
 	  fifo_append (this->free_fifo, in_buf);
@@ -1157,6 +1172,7 @@ static void *ao_loop (void *this_gen) {
 
       /* drop package */
       lprintf ("loop: drop package, next fifo\n");
+      fifo_remove (this->out_fifo);
       if (in_buf->stream)
 	_x_refcounter_dec(in_buf->stream->refcounter);
       fifo_append (this->free_fifo, in_buf);
@@ -1223,6 +1239,7 @@ static void *ao_loop (void *this_gen) {
       } else {
         result = 0;
       }
+      fifo_remove (this->out_fifo);
       
       if( result < 0 ) {
         /* device unplugged. */
