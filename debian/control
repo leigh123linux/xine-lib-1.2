@@ -1,8 +1,7 @@
 Source: xine-lib-1.2
 Section: libs
 Priority: optional
-Maintainer: Darren Salt <linux@youmustbejoking.demon.co.uk>
-Uploaders: Reinhard Tartler <siretart@tauware.de>
+Maintainer: xine Developers <xine-devel@lists.sourceforge.net>
 Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
 	automake1.9, autoconf, libtool,
 	libxcb-xinerama0-dev | libxv-dev (<< 1:1.0.3), libxcb-xv0-dev | libxv-dev (<< 1:1.0.3),
@@ -21,7 +20,7 @@ Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
 	libflac-dev, libpulse-dev, libsdl1.2-dev, libwavpack-dev,
 	libsmbclient-dev, libspeex-dev, libmng-dev, 
 	libmad0-dev, libmpcdec-dev, libcdio-dev (>= 0.76-1), libvcdinfo-dev,
-	w3m, gs, xmlto, librsvg2-bin
+	w3m, xmlto, librsvg2-bin
 Build-Conflicts: libdvdnav-dev
 Standards-Version: 3.7.2
 

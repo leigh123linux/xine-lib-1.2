@@ -242,7 +242,7 @@ static int read_ogg_packet (demux_ogg_t *this) {
     bytes  = this->input->read(this->input, buffer, CHUNKSIZE);
     if (bytes == 0) {
       if (total == 0) {
-        printf("read_ogg_packet read nothing\n");
+        lprintf("read_ogg_packet read nothing\n");
         return 0;
       }
       break;
