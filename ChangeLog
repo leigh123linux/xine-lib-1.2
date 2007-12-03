@@ -14,6 +14,10 @@ xine-lib (1.1.9) (unreleased)
     This requires conversion to UTF-8 of entities with codes >= 128.
   * Fixed ATSC support. [Bug 1749508]
   * Fixed a possible DVB plugin crash when switching channels.
+  * Fixed ogg demuxer to not discard data at the end of the stream.
+  * Fixed deadlock on ao_close while paused.
+  * Nicer wakeup behaviour, using select instead of nanosleep (800 -> 100
+    wakeups/s).
 
 xine-lib (1.1.8)
   * Send a channel-changed event to the frontend when receiving the SYNC
