@@ -358,6 +358,8 @@ static audio_buffer_t *fifo_peek_int (audio_fifo_t *fifo, int blocking) {
 
 static audio_buffer_t *fifo_remove_int (audio_fifo_t *fifo, int blocking) {
   audio_buffer_t *buf = fifo_peek_int(fifo, blocking);
+  if (!buf)
+    return NULL;
 
   fifo->first = buf->next;
 
