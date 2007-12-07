@@ -213,11 +213,13 @@ static void release_buffer(struct AVCodecContext *context, AVFrame *av_frame){
   ff_video_decoder_t *this = (ff_video_decoder_t *)context->opaque;
 
   if (av_frame->type == FF_BUFFER_TYPE_USER) {
-    vo_frame_t *img = (vo_frame_t *)av_frame->opaque;
+    if ( av_frame->opaque ) {
+      vo_frame_t *img = (vo_frame_t *)av_frame->opaque;
+
+      img->free(img);
+    }
+
     xine_list_iterator_t it;
-    
-    assert(av_frame->opaque);  
-    img->free(img);
     
     it = xine_list_find(this->dr1_frames, av_frame);
     assert(it);

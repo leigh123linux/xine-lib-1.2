@@ -70,7 +70,7 @@ int dxr3_encoder_init(dxr3_driver_t *drv)
   lavc_data_t* this;
   avcodec_init();
 
-  register_avcodec(&mpeg1video_encoder);  
+  avcodec_register_all();  
   lprintf("lavc init , version %x\n", avcodec_version());
   this = xine_xmalloc(sizeof(lavc_data_t));
   if (!this) return 0;
