@@ -22,6 +22,8 @@ xine-lib (1.1.9) (unreleased)
     but not played yet.
   * Fixed a race condition between ao_loop and ao_close to not lose the last
     buffer.
+  * DXR3 encoding with external ffmpeg should be fixed now.
+    (This was broken by ffmpeg revision 9283).
 
 xine-lib (1.1.8)
   * Send a channel-changed event to the frontend when receiving the SYNC
