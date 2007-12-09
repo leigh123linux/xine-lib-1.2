@@ -318,6 +318,16 @@ static const video_db_t video_db[] = {
 },
 {
   {
+    ME_FOURCC('W','V','C','1'),
+    ME_FOURCC('W','M','V','A'),
+    ME_FOURCC('v','c','-','1'),
+    0
+  },
+  BUF_VIDEO_VC1,
+  "Windows Media Video VC-1"
+},
+{
+  {
     ME_FOURCC('c','r','a','m'),
     ME_FOURCC('C','R','A','M'),
     ME_FOURCC('M','S','V','C'),
