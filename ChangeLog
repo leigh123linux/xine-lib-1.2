@@ -72,6 +72,7 @@ xine-lib (1.1.9) (unreleased)
     buffer.
   * DXR3 encoding with external ffmpeg should be fixed now.
     (This was broken by ffmpeg revision 9283).
+  * Enabled the WMV VC1 (ffmpeg) codec.
 
 xine-lib (1.1.8)
   * Send a channel-changed event to the frontend when receiving the SYNC

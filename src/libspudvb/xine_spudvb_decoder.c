@@ -49,6 +49,7 @@ typedef struct {
 
 typedef struct {
   int 			width, height;
+  int                   empty;
   int 			depth;
   int 			CLUT_id;
   int 			objects_start;
@@ -107,11 +108,40 @@ typedef struct dvb_spu_decoder_s {
 } dvb_spu_decoder_t;
 
 
+static void update_osd(dvb_spu_decoder_t *this, int region_id)
+{
+  dvbsub_func_t *dvbsub = this->dvbsub;
+  region_t *reg = &dvbsub->regions[region_id];
+
+  if ( !reg->img ) {
+    if ( reg->osd ) {
+      pthread_mutex_lock( &this->dvbsub_osd_mutex );
+      this->stream->osd_renderer->free_object( reg->osd );
+      reg->osd = NULL;
+      pthread_mutex_unlock( &this->dvbsub_osd_mutex );
+    }
+    return;
+  }
+
+  if ( reg->osd ) {
+    if ( reg->width!=reg->osd->width || reg->height!=reg->osd->height ) {
+      pthread_mutex_lock( &this->dvbsub_osd_mutex );
+      this->stream->osd_renderer->free_object( reg->osd );
+      reg->osd = NULL;
+      pthread_mutex_unlock( &this->dvbsub_osd_mutex );
+    }
+  }
+
+  if ( !reg->osd )
+    reg->osd = this->stream->osd_renderer->new_object( this->stream->osd_renderer, reg->width, reg->height );
+}
+
 static void update_region (dvb_spu_decoder_t * this, int region_id, int region_width, int region_height, int fill, int fill_color)
 {
 
   dvbsub_func_t *dvbsub = this->dvbsub;
   region_t *reg = &dvbsub->regions[region_id];
+  page_t *page = &dvbsub->page;
 
   /* reject invalid sizes and set some limits ! */
   if ( region_width<=0 || region_height<=0 || region_width>720 || region_height>576 ) {
@@ -119,31 +149,19 @@ static void update_region (dvb_spu_decoder_t * this, int region_id, int region_w
       free( reg->img );
       reg->img = NULL;
     }
-    if ( reg->osd ) {
-      pthread_mutex_lock( &this->dvbsub_osd_mutex );
-      this->stream->osd_renderer->free_object( reg->osd );
-      reg->osd = NULL;
-      pthread_mutex_unlock( &this->dvbsub_osd_mutex );
-    }
 #ifdef LOG
     printf("SPUDVB: rejected region %d = %dx%d\n", region_id, region_width, region_height );
 #endif
     return;
   }
 
-  if ( reg->width!=region_width || reg->height!=region_height ) {
+  if ( reg->width*reg->height<region_width*region_height ) {
 #ifdef LOG
     printf("SPUDVB: update size of region %d = %dx%d\n", region_id, region_width, region_height);
 #endif
     if ( reg->img ) {
       free( reg->img );
       reg->img = NULL;
-    }
-    if ( reg->osd ) {
-      pthread_mutex_lock( &this->dvbsub_osd_mutex );
-      this->stream->osd_renderer->free_object( reg->osd );
-      reg->osd = NULL;
-      pthread_mutex_unlock( &this->dvbsub_osd_mutex );
     }
   }
 
@@ -152,15 +170,20 @@ static void update_region (dvb_spu_decoder_t * this, int region_id, int region_w
       lprintf( "can't allocate mem for region %d\n", region_id );
       return;
     }
-  }
-  if ( !reg->osd )
-    reg->osd = this->stream->osd_renderer->new_object( this->stream->osd_renderer, region_width, region_height );
-
-  if ( fill!=1 )
     fill_color = 15;
-  memset( reg->img, fill_color, region_width*region_height );
+    fill = 1;
+  }
+
+  if ( fill ) {
+    memset( reg->img, fill_color, region_width*region_height );
+    reg->empty = 1;
+#ifdef LOG
+  printf("SPUDVB : FILL REGION %d\n", region_id);
+#endif
+  }
   reg->width = region_width;
   reg->height = region_height;
+  page->regions[region_id].is_visible = 1;
 }
 
 
@@ -171,8 +194,10 @@ static void do_plot (dvb_spu_decoder_t * this, int r, int x, int y, unsigned cha
 
   i = (y * dvbsub->regions[r].width) + x;
   /* do some clipping */
-  if ( i<(dvbsub->regions[r].width*dvbsub->regions[r].height) )
+  if ( i<(dvbsub->regions[r].width*dvbsub->regions[r].height) ) {
     dvbsub->regions[r].img[i] = pixel;
+    dvbsub->regions[r].empty = 0;
+  }
 }
 
 static void plot (dvb_spu_decoder_t * this, int r, int run_length, unsigned char pixel)
@@ -429,15 +454,14 @@ static void process_page_composition_segment (dvb_spu_decoder_t * this)
   dvbsub->page.page_version_number = (dvbsub->buf[dvbsub->i] & 0xf0) >> 4;
   dvbsub->page.page_state = (dvbsub->buf[dvbsub->i] & 0x0c) >> 2;
   dvbsub->i++;
-  if ((dvbsub->page.page_state != 2) && (dvbsub->page.page_state != 1)) {
+  if (dvbsub->page.page_state==2) {
+    for (r=0; r<MAX_REGIONS; r++)
+      dvbsub->page.regions[r].is_visible = 0;
+  }
+  else if ( dvbsub->page.page_state!=0 && dvbsub->page.page_state!=1 ) {
     return;
   }
-  else {
-  }
 
-  for (r = 0; r < MAX_REGIONS; r++) {
-    dvbsub->page.regions[r].is_visible = 0;
-  }
   while (dvbsub->i < j) {
     region_id = dvbsub->buf[dvbsub->i++];
     dvbsub->i++;		/* reserved */
@@ -448,10 +472,7 @@ static void process_page_composition_segment (dvb_spu_decoder_t * this)
 
     dvbsub->page.regions[region_id].x = region_x;
     dvbsub->page.regions[region_id].y = region_y;
-    dvbsub->page.regions[region_id].is_visible = 1;
-
   }
-
 }
 
 
@@ -668,7 +689,10 @@ static void draw_subtitles (dvb_spu_decoder_t * this)
 
   for (r = 0; r < MAX_REGIONS; r++) {
     if (this->dvbsub->regions[r].img) { 
-      if (this->dvbsub->page.regions[r].is_visible && this->dvbsub->regions[r].osd) {
+      if (this->dvbsub->page.regions[r].is_visible && !this->dvbsub->regions[r].empty) {
+        update_osd( this, r );
+	if ( !this->dvbsub->regions[r].osd )
+	  continue;
         /* clear osd */
         this->stream->osd_renderer->clear( this->dvbsub->regions[r].osd );
         if (this->dvbsub->regions[r].width>dest_width) {
@@ -691,7 +715,7 @@ static void draw_subtitles (dvb_spu_decoder_t * this)
   printf("SPUDVB: this->vpts=%llu\n",this->vpts);
 #endif
   for ( r=0; r<MAX_REGIONS; r++ ) {
-    if ( this->dvbsub->page.regions[r].is_visible && this->dvbsub->regions[r].osd ) {
+    if ( this->dvbsub->page.regions[r].is_visible && this->dvbsub->regions[r].osd && !this->dvbsub->regions[r].empty ) {
       this->stream->osd_renderer->set_position( this->dvbsub->regions[r].osd, this->dvbsub->page.regions[r].x, this->dvbsub->page.regions[r].y );
       this->stream->osd_renderer->show( this->dvbsub->regions[r].osd, this->vpts );
 #ifdef LOG
@@ -706,8 +730,6 @@ static void draw_subtitles (dvb_spu_decoder_t * this)
 #endif
       }
     }
-    /* reset page */
-    this->dvbsub->page.regions[r].is_visible = 0;
   }
   this->dvbsub_hide_timeout.tv_nsec = 0;
   this->dvbsub_hide_timeout.tv_sec = time(NULL) + this->dvbsub->page.page_time_out;

@@ -243,6 +243,7 @@ static const ff_codec_t ff_video_lookup[] = {
   {BUF_VIDEO_WMV7,        CODEC_ID_WMV1,      "MS Windows Media Video 7 (ffmpeg)"},
   {BUF_VIDEO_WMV8,        CODEC_ID_WMV2,      "MS Windows Media Video 8 (ffmpeg)"},
   {BUF_VIDEO_WMV9,        CODEC_ID_WMV3,      "MS Windows Media Video 9 (ffmpeg)"},
+  {BUF_VIDEO_VC1,         CODEC_ID_VC1,       "MS Windows Media Video VC-1 (ffmpeg)"},
   {BUF_VIDEO_MPEG4,       CODEC_ID_MPEG4,     "ISO MPEG-4 (ffmpeg)"},
   {BUF_VIDEO_XVID,        CODEC_ID_MPEG4,     "ISO MPEG-4 (XviD, ffmpeg)"},
   {BUF_VIDEO_DIVX5,       CODEC_ID_MPEG4,     "ISO MPEG-4 (DivX5, ffmpeg)"},
@@ -1594,6 +1595,9 @@ static uint32_t supported_video_types[] = {
 #endif
 #if defined(HAVE_FFMPEG) || CONFIG_WMV3_DECODER
   BUF_VIDEO_WMV9,
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_VC1_DECODER
+  BUF_VIDEO_VC1,
 #endif
 #if defined(HAVE_FFMPEG) || CONFIG_MPEG4_DECODER
   BUF_VIDEO_MPEG4,
