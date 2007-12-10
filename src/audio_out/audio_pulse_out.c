@@ -51,6 +51,14 @@
 /* CHECKME: should this be conditional on autotools? */
 extern const char *__progname;
 
+typedef struct operation_waiter {
+  struct pa_operation     *operation; /**< Operation waiting */
+  pthread_cond_t           condition; /**< Condition to signal */
+
+  struct operation_waiter *prev;
+  struct operation_waiter *next;
+} operation_waiter_t;
+
 typedef struct {
   audio_driver_class_t  driver_class;
   xine_t                      *xine;
@@ -58,6 +66,9 @@ typedef struct {
   pthread_mutex_t              pa_mutex;  /*< Mutex controlling PulseAudio access. */
   struct pa_context           *context;   /*< Pulseaudio connection context */
   struct pa_threaded_mainloop *mainloop;  /*< Main event loop object */
+  operation_waiter_t          *op_list;   /**< List of operations awaited */
+  pthread_mutex_t              op_mutex;  /**< Mutex controlling op_list access. */
+  pthread_t                    op_thread; /**< The operation_waiting_thread() thread. */
 } pulse_class_t;
 
 typedef struct pulse_driver_s {
@@ -84,6 +95,65 @@ typedef struct pulse_driver_s {
   uint32_t          frames_written;
 
 } pulse_driver_t;
+
+
+static void *operation_waiting_thread(void *class_gen) {
+  pulse_class_t *class = class_gen;
+  operation_waiter_t *curr_op;
+
+  while(1) {
+    pa_threaded_mainloop_lock(class->mainloop);
+    pa_threaded_mainloop_wait(class->mainloop);
+
+    pthread_mutex_lock(&class->op_mutex);
+
+    curr_op = class->op_list;
+    while(curr_op) {
+      if ( pa_operation_get_state(curr_op->operation) != PA_OPERATION_RUNNING ) {
+	/* Unlink the current operation from the list. */
+	if ( curr_op->prev )
+	  curr_op->prev->next = curr_op->next;
+	if ( class->op_list == curr_op )
+	  class->op_list = curr_op->next;
+
+	pthread_cond_signal(&curr_op->condition);
+      }
+      curr_op = curr_op->next;
+    }
+
+    pthread_mutex_unlock(&class->op_mutex);
+
+    pa_threaded_mainloop_unlock(class->mainloop);
+
+    pthread_testcancel();
+  }
+
+  return NULL;
+}
+
+static void wait_for_operation(pulse_driver_t *this, struct pa_operation *operation) {
+  operation_waiter_t *op = xine_xmalloc(sizeof(operation_waiter_t));
+  pthread_mutex_t condmutex = PTHREAD_MUTEX_INITIALIZER;
+  pthread_mutex_lock(&condmutex);
+
+  op->operation = operation;
+  pthread_cond_init(&op->condition, NULL);
+
+  pthread_mutex_lock(&this->pa_class->op_mutex);
+
+  if ( this->pa_class->op_list )
+    op->next = this->pa_class->op_list;
+  this->pa_class->op_list = op;
+
+  pthread_mutex_unlock(&this->pa_class->op_mutex);
+
+  pthread_cond_wait(&op->condition, &condmutex);
+
+  /* Assuming that the waiting thread already unlinked it from the list */
+  pthread_mutex_lock(&this->pa_class->op_mutex);
+  free(op);
+  pthread_mutex_unlock(&this->pa_class->op_mutex);
+}
 
 /**
  * @brief Callback function called when a stream operation succeed
@@ -177,20 +247,6 @@ static void __xine_pa_sink_info_callback(pa_context *const ctx, const pa_sink_in
   this->cvolume = info->volume;
 
   __xine_pa_context_success_callback(ctx, 0, this);
-}
-
-static int wait_for_operation(pulse_driver_t *this, pa_operation *o)
-{
-  _x_assert(this && o && this->pa_class->mainloop);
-
-  pa_threaded_mainloop_lock(this->pa_class->mainloop);
-  
-  while (pa_operation_get_state(o) == PA_OPERATION_RUNNING)
-    pa_threaded_mainloop_wait(this->pa_class->mainloop);
-  
-  pa_threaded_mainloop_unlock(this->pa_class->mainloop);
-
-  return 0;
 }
 
 /*
@@ -417,6 +473,7 @@ static void ao_pulse_close(ao_driver_t *this_gen)
 
     if (pa_stream_get_state(this->stream) == PA_STREAM_READY)
       wait_for_operation(this, pa_stream_drain(this->stream, __xine_pa_stream_success_callback, this));
+
     pa_stream_disconnect(this->stream);
     pa_stream_unref(this->stream);
     this->stream = NULL;
@@ -677,6 +734,9 @@ static void *init_class (xine_t *xine, void *data) {
   _x_assert(this->mainloop);
 
   pa_threaded_mainloop_start(this->mainloop);
+  
+  pthread_mutex_init(&this->op_mutex, NULL);
+  pthread_create(&this->op_thread, NULL, &operation_waiting_thread, this);
 
   this->context = NULL;
 
