@@ -51,13 +51,24 @@
 /* CHECKME: should this be conditional on autotools? */
 extern const char *__progname;
 
+typedef struct operation_waiter {
+  struct pa_operation     *operation; /**< Operation waiting */
+  pthread_cond_t           condition; /**< Condition to signal */
+
+  struct operation_waiter *prev;
+  struct operation_waiter *next;
+} operation_waiter_t;
+
 typedef struct {
   audio_driver_class_t  driver_class;
   xine_t                      *xine;
 
-  pthread_mutex_t              pa_mutex;  /*< Mutex controlling PulseAudio access. */
   struct pa_context           *context;   /*< Pulseaudio connection context */
   struct pa_threaded_mainloop *mainloop;  /*< Main event loop object */
+  operation_waiter_t          *op_list;   /**< List of operations awaited */
+  pthread_mutex_t              op_mutex;  /**< Mutex controlling op_list access. */
+  pthread_t                    op_thread; /**< The operation_waiting_thread() thread. */
+  pthread_cond_t               op_list_newentries; /**< condition signalled when new entries are added to the list */
 } pulse_class_t;
 
 typedef struct pulse_driver_s {
@@ -76,7 +87,7 @@ typedef struct pulse_driver_s {
   int               capabilities;
   int               mode;
 
-  int32_t           sample_rate;
+  uint32_t          sample_rate;
   uint32_t          num_channels;
   uint32_t          bits_per_sample;
   uint32_t          bytes_per_frame;
@@ -84,6 +95,78 @@ typedef struct pulse_driver_s {
   uint32_t          frames_written;
 
 } pulse_driver_t;
+
+
+static void *operation_waiting_thread(void *class_gen) {
+  pulse_class_t *class = class_gen;
+  operation_waiter_t *curr_op;
+
+  pthread_mutex_t condmutex = PTHREAD_MUTEX_INITIALIZER;
+
+  while(1) {
+    if ( class->op_list == NULL ) {
+      pthread_mutex_lock(&condmutex);
+      pthread_cond_wait(&class->op_list_newentries, &condmutex);
+    }
+
+    pa_threaded_mainloop_lock(class->mainloop);
+    pa_threaded_mainloop_wait(class->mainloop);
+
+    pthread_mutex_lock(&class->op_mutex);
+
+    curr_op = class->op_list;
+    while(curr_op) {
+      if ( pa_operation_get_state(curr_op->operation) != PA_OPERATION_RUNNING ) {
+	/* Unlink the current operation from the list. */
+	if ( curr_op->prev )
+	  curr_op->prev->next = curr_op->next;
+	if ( class->op_list == curr_op )
+	  class->op_list = curr_op->next;
+
+	pthread_cond_signal(&curr_op->condition);
+      }
+      curr_op = curr_op->next;
+    }
+
+    pthread_mutex_unlock(&class->op_mutex);
+
+    pa_threaded_mainloop_unlock(class->mainloop);
+
+    pthread_testcancel();
+  }
+
+  return NULL;
+}
+
+static void wait_for_operation(pulse_driver_t *this, struct pa_operation *operation) {
+  operation_waiter_t *op = xine_xmalloc(sizeof(operation_waiter_t));
+  int signal_new_entries = 0; /* Signal that new entries are available */
+  pthread_mutex_t condmutex = PTHREAD_MUTEX_INITIALIZER;
+  pthread_mutex_lock(&condmutex);
+
+  op->operation = operation;
+  pthread_cond_init(&op->condition, NULL);
+
+  pthread_mutex_lock(&this->pa_class->op_mutex);
+
+  if ( this->pa_class->op_list )
+    op->next = this->pa_class->op_list;
+  else
+    signal_new_entries = 1;
+  this->pa_class->op_list = op;
+
+  if ( signal_new_entries )
+    pthread_cond_signal(&this->pa_class->op_list_newentries);
+
+  pthread_mutex_unlock(&this->pa_class->op_mutex);
+
+  pthread_cond_wait(&op->condition, &condmutex);
+
+  /* Assuming that the waiting thread already unlinked it from the list */
+  pthread_mutex_lock(&this->pa_class->op_mutex);
+  free(op);
+  pthread_mutex_unlock(&this->pa_class->op_mutex);
+}
 
 /**
  * @brief Callback function called when a stream operation succeed
@@ -179,20 +262,6 @@ static void __xine_pa_sink_info_callback(pa_context *const ctx, const pa_sink_in
   __xine_pa_context_success_callback(ctx, 0, this);
 }
 
-static int wait_for_operation(pulse_driver_t *this, pa_operation *o)
-{
-  _x_assert(this && o && this->pa_class->mainloop);
-
-  pa_threaded_mainloop_lock(this->pa_class->mainloop);
-  
-  while (pa_operation_get_state(o) == PA_OPERATION_RUNNING)
-    pa_threaded_mainloop_wait(this->pa_class->mainloop);
-  
-  pa_threaded_mainloop_unlock(this->pa_class->mainloop);
-
-  return 0;
-}
-
 /*
  * open the audio device for writing to
  */
@@ -246,7 +315,6 @@ static int ao_pulse_open(ao_driver_t *this_gen,
     goto fail;
   }
 
-  pthread_mutex_lock(&this->pa_class->pa_mutex);
   if ( this->pa_class->context && pa_context_get_state(this->pa_class->context) > PA_CONTEXT_READY ) {
     pa_context_unref(this->pa_class->context);
     this->pa_class->context = NULL;
@@ -297,8 +365,6 @@ static int ao_pulse_open(ao_driver_t *this_gen,
     streamstate = pa_stream_get_state(this->stream);
   } while (streamstate < PA_STREAM_READY);
      
-  pthread_mutex_unlock(&this->pa_class->pa_mutex);
-
   if (streamstate != PA_STREAM_READY) {
     xprintf (this->xine, XINE_VERBOSITY_LOG, "audio_pulse_out: Failed to connect to server: %s\n",
              pa_strerror(pa_context_errno(this->pa_class->context)));
@@ -312,7 +378,6 @@ static int ao_pulse_open(ao_driver_t *this_gen,
 
 fail:
   pa_threaded_mainloop_unlock(this->pa_class->mainloop);
-  pthread_mutex_unlock(&this->pa_class->pa_mutex);
   this_gen->close(this_gen);
   return 0;
 }
@@ -339,7 +404,7 @@ static int ao_pulse_write(ao_driver_t *this_gen, int16_t *data,
                          uint32_t num_frames)
 {
   pulse_driver_t *this = (pulse_driver_t *) this_gen;
-  int size = num_frames * this->bytes_per_frame;
+  size_t size = num_frames * this->bytes_per_frame;
   int ret = 0;
   
   if ( !this->stream || !this->pa_class->context)
@@ -378,11 +443,9 @@ static int ao_pulse_delay (ao_driver_t *this_gen)
 {
   pulse_driver_t *this = (pulse_driver_t *) this_gen;
   pa_usec_t latency = 0;
-  int delay_frames;
+  unsigned int delay_frames;
 
   if ( ! this->stream ) return this->frames_written;
-
-  pthread_mutex_lock(&this->pa_class->pa_mutex);
 
   if (pa_stream_get_latency(this->stream, &latency, NULL) < 0) {
     pa_context_unref(this->pa_class->context);
@@ -392,13 +455,9 @@ static int ao_pulse_delay (ao_driver_t *this_gen)
     pa_stream_unref(this->stream);
     this->stream = NULL;
 
-    pthread_mutex_unlock(&this->pa_class->pa_mutex);
-
     return 0;
   }
 
-  pthread_mutex_unlock(&this->pa_class->pa_mutex);
-  
   /* convert latency (us) to frame units. */
   delay_frames = (int)(latency * this->sample_rate / 1000000);
 
@@ -413,17 +472,14 @@ static void ao_pulse_close(ao_driver_t *this_gen)
   pulse_driver_t *this = (pulse_driver_t *) this_gen;
   
   if (this->stream) {
-    pthread_mutex_lock(&this->pa_class->pa_mutex);
-
     if (pa_stream_get_state(this->stream) == PA_STREAM_READY)
       wait_for_operation(this, pa_stream_drain(this->stream, __xine_pa_stream_success_callback, this));
+
     pa_stream_disconnect(this->stream);
     pa_stream_unref(this->stream);
     this->stream = NULL;
 
     pa_context_unref(this->pa_class->context);
-
-    pthread_mutex_unlock(&this->pa_class->pa_mutex);
   }
 }
 
@@ -446,8 +502,6 @@ static int ao_pulse_get_property (ao_driver_t *this_gen, int property) {
   if ( ! this->stream || ! this->pa_class->context )
     return 0;
 
-  pthread_mutex_lock(&this->pa_class->pa_mutex);
-  
   switch(property) {
   case AO_PROP_PCM_VOL:
   case AO_PROP_MIXER_VOL:
@@ -467,8 +521,6 @@ static int ao_pulse_get_property (ao_driver_t *this_gen, int property) {
     break;
   }
   
-  pthread_mutex_unlock(&this->pa_class->pa_mutex);
-  
   return result;
 }
 
@@ -478,8 +530,6 @@ static int ao_pulse_set_property (ao_driver_t *this_gen, int property, int value
 
   if ( ! this->stream || ! this->pa_class->context )
     return result;
-
-  pthread_mutex_lock(&this->pa_class->pa_mutex);
 
   switch(property) {
   case AO_PROP_PCM_VOL:
@@ -507,8 +557,6 @@ static int ao_pulse_set_property (ao_driver_t *this_gen, int property, int value
     break;
   }
   
-  pthread_mutex_unlock(&this->pa_class->pa_mutex);
-
   return result;
 }
 
@@ -519,39 +567,11 @@ static int ao_pulse_ctrl(ao_driver_t *this_gen, int cmd, ...) {
 
   switch (cmd) {
 
-  case AO_CTRL_PLAY_PAUSE:
-    _x_assert(this->stream && this->pa_class->context );
-
-    pthread_mutex_lock(&this->pa_class->pa_mutex);
-    if(pa_stream_get_state(this->stream) == PA_STREAM_READY)
-      wait_for_operation(this,pa_stream_cork(this->stream, 1, __xine_pa_stream_success_callback, this));
-    pthread_mutex_unlock(&this->pa_class->pa_mutex);
-
-    break;
-
-  case AO_CTRL_PLAY_RESUME:
-    _x_assert(this->stream && this->pa_class->context);
-
-    pthread_mutex_lock(&this->pa_class->pa_mutex);
-    if(pa_stream_get_state(this->stream) == PA_STREAM_READY) {
-        struct pa_operation *o2, *o1;
-        o1 = pa_stream_prebuf(this->stream, __xine_pa_stream_success_callback, this);
-	_x_assert(o1); wait_for_operation(this, o1);
-
-        o2 = pa_stream_cork(this->stream, 0, __xine_pa_stream_success_callback, this);
-        _x_assert(o2); wait_for_operation(this,o2);
-    }
-    pthread_mutex_unlock(&this->pa_class->pa_mutex);
-
-    break;
-
   case AO_CTRL_FLUSH_BUFFERS:
     _x_assert(this->stream && this->pa_class->context);
 
-    pthread_mutex_lock(&this->pa_class->pa_mutex);
     if(pa_stream_get_state(this->stream) == PA_STREAM_READY)
       wait_for_operation(this,pa_stream_flush(this->stream, __xine_pa_stream_success_callback, this));
-    pthread_mutex_unlock(&this->pa_class->pa_mutex);
 
     this->frames_written = 0;
 
@@ -623,12 +643,6 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   this->pa_class = class;
 
   return &this->ao_driver;
-
- fail:
-  pthread_mutex_unlock(&this->pa_class->pa_mutex);
-  free(this);
-  xprintf (class->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: open_plugin failed.\n");
-  return NULL;
 }
 
 /*
@@ -647,15 +661,12 @@ static void dispose_class (audio_driver_class_t *this_gen) {
 
   pulse_class_t *this = (pulse_class_t *) this_gen;
 
-  pthread_mutex_lock(&this->pa_mutex);
-
   if ( this->context )
     pa_context_unref(this->context);
 
   pa_threaded_mainloop_stop(this->mainloop);
   pa_threaded_mainloop_free(this->mainloop);
 
-  pthread_mutex_destroy(&this->pa_mutex);
   free (this);
 }
 
@@ -676,17 +687,16 @@ static void *init_class (xine_t *xine, void *data) {
 
   this->xine                         = xine;
 
-  pthread_mutex_init(&this->pa_mutex, NULL);
-  pthread_mutex_lock(&this->pa_mutex);
-
   this->mainloop = pa_threaded_mainloop_new();
   _x_assert(this->mainloop);
 
   pa_threaded_mainloop_start(this->mainloop);
+  
+  pthread_mutex_init(&this->op_mutex, NULL);
+  pthread_cond_init(&this->op_list_newentries, NULL);
+  pthread_create(&this->op_thread, NULL, &operation_waiting_thread, this);
 
   this->context = NULL;
-
-  pthread_mutex_unlock(&this->pa_mutex);
 
   return this;
 }
