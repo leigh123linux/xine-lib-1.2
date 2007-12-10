@@ -68,6 +68,7 @@ typedef struct {
   operation_waiter_t          *op_list;   /**< List of operations awaited */
   pthread_mutex_t              op_mutex;  /**< Mutex controlling op_list access. */
   pthread_t                    op_thread; /**< The operation_waiting_thread() thread. */
+  pthread_cond_t               op_list_newentries; /**< condition signalled when new entries are added to the list */
 } pulse_class_t;
 
 typedef struct pulse_driver_s {
@@ -100,7 +101,14 @@ static void *operation_waiting_thread(void *class_gen) {
   pulse_class_t *class = class_gen;
   operation_waiter_t *curr_op;
 
+  pthread_mutex_t condmutex = PTHREAD_MUTEX_INITIALIZER;
+
   while(1) {
+    if ( class->op_list == NULL ) {
+      pthread_mutex_lock(&condmutex);
+      pthread_cond_wait(&class->op_list_newentries, &condmutex);
+    }
+
     pa_threaded_mainloop_lock(class->mainloop);
     pa_threaded_mainloop_wait(class->mainloop);
 
@@ -132,6 +140,7 @@ static void *operation_waiting_thread(void *class_gen) {
 
 static void wait_for_operation(pulse_driver_t *this, struct pa_operation *operation) {
   operation_waiter_t *op = xine_xmalloc(sizeof(operation_waiter_t));
+  int signal_new_entries = 0; /* Signal that new entries are available */
   pthread_mutex_t condmutex = PTHREAD_MUTEX_INITIALIZER;
   pthread_mutex_lock(&condmutex);
 
@@ -142,7 +151,12 @@ static void wait_for_operation(pulse_driver_t *this, struct pa_operation *operat
 
   if ( this->pa_class->op_list )
     op->next = this->pa_class->op_list;
+  else
+    signal_new_entries = 1;
   this->pa_class->op_list = op;
+
+  if ( signal_new_entries )
+    pthread_cond_signal(&this->pa_class->op_list_newentries);
 
   pthread_mutex_unlock(&this->pa_class->op_mutex);
 
@@ -679,6 +693,7 @@ static void *init_class (xine_t *xine, void *data) {
   pa_threaded_mainloop_start(this->mainloop);
   
   pthread_mutex_init(&this->op_mutex, NULL);
+  pthread_cond_init(&this->op_list_newentries, NULL);
   pthread_create(&this->op_thread, NULL, &operation_waiting_thread, this);
 
   this->context = NULL;
