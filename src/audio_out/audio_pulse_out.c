@@ -51,24 +51,12 @@
 /* CHECKME: should this be conditional on autotools? */
 extern const char *__progname;
 
-typedef struct operation_waiter {
-  struct pa_operation     *operation; /**< Operation waiting */
-  pthread_cond_t           condition; /**< Condition to signal */
-
-  struct operation_waiter *prev;
-  struct operation_waiter *next;
-} operation_waiter_t;
-
 typedef struct {
   audio_driver_class_t  driver_class;
   xine_t                      *xine;
 
   struct pa_context           *context;   /*< Pulseaudio connection context */
   struct pa_threaded_mainloop *mainloop;  /*< Main event loop object */
-  operation_waiter_t          *op_list;   /**< List of operations awaited */
-  pthread_mutex_t              op_mutex;  /**< Mutex controlling op_list access. */
-  pthread_t                    op_thread; /**< The operation_waiting_thread() thread. */
-  pthread_cond_t               op_list_newentries; /**< condition signalled when new entries are added to the list */
 } pulse_class_t;
 
 typedef struct pulse_driver_s {
@@ -80,6 +68,8 @@ typedef struct pulse_driver_s {
   char             *host;    /*< The host to connect to */
   char             *sink;    /*< The sink to connect to */
   struct pa_stream *stream;  /*< Pulseaudio playback stream object */
+
+  pthread_mutex_t   info_mutex; /**< Mutex for info callback signaling */
 
   pa_volume_t       swvolume;
   pa_cvolume        cvolume;
@@ -97,77 +87,6 @@ typedef struct pulse_driver_s {
 } pulse_driver_t;
 
 
-static void *operation_waiting_thread(void *class_gen) {
-  pulse_class_t *class = class_gen;
-  operation_waiter_t *curr_op;
-
-  pthread_mutex_t condmutex = PTHREAD_MUTEX_INITIALIZER;
-
-  while(1) {
-    if ( class->op_list == NULL ) {
-      pthread_mutex_lock(&condmutex);
-      pthread_cond_wait(&class->op_list_newentries, &condmutex);
-    }
-
-    pa_threaded_mainloop_lock(class->mainloop);
-    pa_threaded_mainloop_wait(class->mainloop);
-
-    pthread_mutex_lock(&class->op_mutex);
-
-    curr_op = class->op_list;
-    while(curr_op) {
-      if ( pa_operation_get_state(curr_op->operation) != PA_OPERATION_RUNNING ) {
-	/* Unlink the current operation from the list. */
-	if ( curr_op->prev )
-	  curr_op->prev->next = curr_op->next;
-	if ( class->op_list == curr_op )
-	  class->op_list = curr_op->next;
-
-	pthread_cond_signal(&curr_op->condition);
-      }
-      curr_op = curr_op->next;
-    }
-
-    pthread_mutex_unlock(&class->op_mutex);
-
-    pa_threaded_mainloop_unlock(class->mainloop);
-
-    pthread_testcancel();
-  }
-
-  return NULL;
-}
-
-static void wait_for_operation(pulse_driver_t *this, struct pa_operation *operation) {
-  operation_waiter_t *op = xine_xmalloc(sizeof(operation_waiter_t));
-  int signal_new_entries = 0; /* Signal that new entries are available */
-  pthread_mutex_t condmutex = PTHREAD_MUTEX_INITIALIZER;
-  pthread_mutex_lock(&condmutex);
-
-  op->operation = operation;
-  pthread_cond_init(&op->condition, NULL);
-
-  pthread_mutex_lock(&this->pa_class->op_mutex);
-
-  if ( this->pa_class->op_list )
-    op->next = this->pa_class->op_list;
-  else
-    signal_new_entries = 1;
-  this->pa_class->op_list = op;
-
-  if ( signal_new_entries )
-    pthread_cond_signal(&this->pa_class->op_list_newentries);
-
-  pthread_mutex_unlock(&this->pa_class->op_mutex);
-
-  pthread_cond_wait(&op->condition, &condmutex);
-
-  /* Assuming that the waiting thread already unlinked it from the list */
-  pthread_mutex_lock(&this->pa_class->op_mutex);
-  free(op);
-  pthread_mutex_unlock(&this->pa_class->op_mutex);
-}
-
 /**
  * @brief Callback function called when a stream operation succeed
  * @param stream Stream which operation has succeeded
@@ -176,14 +95,11 @@ static void wait_for_operation(pulse_driver_t *this, struct pa_operation *operat
  *        instance.
  */
 static void __xine_pa_stream_success_callback(pa_stream *const stream, const int success,
-					      void *const this_gen)
+					      void *const mutex_gen)
 {
-  pulse_driver_t *const this = (pulse_driver_t*)this_gen;
+  pthread_mutex_t *const completion_mutex = (pthread_mutex_t*)mutex_gen;
 
-  _x_assert(stream); _x_assert(this);
-  _x_assert(stream == this->stream);
-
-  pa_threaded_mainloop_signal(this->pa_class->mainloop, 0);
+  pthread_mutex_unlock(completion_mutex);
 }
 
 /**
@@ -195,9 +111,6 @@ static void __xine_pa_stream_success_callback(pa_stream *const stream, const int
 static void __xine_pa_context_status_callback(pa_context *const ctx, void *const this_gen)
 {
   pulse_driver_t *const this = (pulse_driver_t*)this_gen;
-
-  _x_assert(ctx); _x_assert(this);
-  _x_assert(ctx == this->pa_class->context);
 
   switch (pa_context_get_state(ctx)) {
   case PA_CONTEXT_READY:
@@ -259,7 +172,7 @@ static void __xine_pa_sink_info_callback(pa_context *const ctx, const pa_sink_in
 
   this->cvolume = info->volume;
 
-  __xine_pa_context_success_callback(ctx, 0, this);
+  pthread_mutex_unlock(&this->info_mutex);
 }
 
 /*
@@ -472,8 +385,13 @@ static void ao_pulse_close(ao_driver_t *this_gen)
   pulse_driver_t *this = (pulse_driver_t *) this_gen;
   
   if (this->stream) {
-    if (pa_stream_get_state(this->stream) == PA_STREAM_READY)
-      wait_for_operation(this, pa_stream_drain(this->stream, __xine_pa_stream_success_callback, this));
+    if (pa_stream_get_state(this->stream) == PA_STREAM_READY) {
+      pthread_mutex_t completion_callback = PTHREAD_MUTEX_INITIALIZER; pthread_mutex_lock(&completion_callback);
+      pa_stream_drain(this->stream, __xine_pa_stream_success_callback, &completion_callback);
+
+      pthread_mutex_lock(&completion_callback);
+      pthread_mutex_destroy(&completion_callback);
+    }
 
     pa_stream_disconnect(this->stream);
     pa_stream_unref(this->stream);
@@ -506,11 +424,12 @@ static int ao_pulse_get_property (ao_driver_t *this_gen, int property) {
   case AO_PROP_PCM_VOL:
   case AO_PROP_MIXER_VOL:
     {
+      pthread_mutex_lock(&this->info_mutex);
       pa_operation *o = pa_context_get_sink_input_info(this->pa_class->context,
 						       pa_stream_get_index(this->stream),
 						       __xine_pa_sink_info_callback, this);
       if ( ! o ) return 0;
-      wait_for_operation(this, o);
+      pthread_mutex_lock(&this->info_mutex); pthread_mutex_unlock(&this->info_mutex);
 			 
       result = (pa_sw_volume_to_linear(this->swvolume)*100);
     }
@@ -536,9 +455,9 @@ static int ao_pulse_set_property (ao_driver_t *this_gen, int property, int value
   case AO_PROP_MIXER_VOL:
     this->swvolume = pa_sw_volume_from_linear((double)value/100.0);
     pa_cvolume_set(&this->cvolume, pa_stream_get_sample_spec(this->stream)->channels, this->swvolume);
-    wait_for_operation(this,
-      pa_context_set_sink_input_volume(this->pa_class->context, pa_stream_get_index(this->stream),
-				       &this->cvolume, __xine_pa_context_success_callback, this));
+
+    pa_context_set_sink_input_volume(this->pa_class->context, pa_stream_get_index(this->stream),
+				     &this->cvolume, __xine_pa_context_success_callback, this);
 
     result = value;
     break;
@@ -549,9 +468,8 @@ static int ao_pulse_set_property (ao_driver_t *this_gen, int property, int value
     else
       pa_cvolume_set(&this->cvolume, pa_stream_get_sample_spec(this->stream)->channels, this->swvolume);
 
-    wait_for_operation(this,
-      pa_context_set_sink_input_volume(this->pa_class->context, pa_stream_get_index(this->stream),
-				       &this->cvolume, __xine_pa_context_success_callback, this));
+    pa_context_set_sink_input_volume(this->pa_class->context, pa_stream_get_index(this->stream),
+				     &this->cvolume, __xine_pa_context_success_callback, this);
     
     result = value;
     break;
@@ -570,8 +488,13 @@ static int ao_pulse_ctrl(ao_driver_t *this_gen, int cmd, ...) {
   case AO_CTRL_FLUSH_BUFFERS:
     _x_assert(this->stream && this->pa_class->context);
 
-    if(pa_stream_get_state(this->stream) == PA_STREAM_READY)
-      wait_for_operation(this,pa_stream_flush(this->stream, __xine_pa_stream_success_callback, this));
+    if(pa_stream_get_state(this->stream) == PA_STREAM_READY) {
+      pthread_mutex_t completion_callback = PTHREAD_MUTEX_INITIALIZER; pthread_mutex_lock(&completion_callback);
+      pa_stream_flush(this->stream, __xine_pa_stream_success_callback, &completion_callback);
+
+      pthread_mutex_lock(&completion_callback);
+      pthread_mutex_destroy(&completion_callback);
+    }
 
     this->frames_written = 0;
 
@@ -637,6 +560,8 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
       this->host = strdup(device);
   }
 
+  pthread_mutex_init(&this->info_mutex, NULL);
+
   xprintf (class->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: host %s sink %s\n",
            this->host ? this->host : "(null)", this->sink ? this->sink : "(null)");
 
@@ -692,10 +617,6 @@ static void *init_class (xine_t *xine, void *data) {
 
   pa_threaded_mainloop_start(this->mainloop);
   
-  pthread_mutex_init(&this->op_mutex, NULL);
-  pthread_cond_init(&this->op_list_newentries, NULL);
-  pthread_create(&this->op_thread, NULL, &operation_waiting_thread, this);
-
   this->context = NULL;
 
   return this;
