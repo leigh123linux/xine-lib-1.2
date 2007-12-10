@@ -576,32 +576,6 @@ static int ao_pulse_ctrl(ao_driver_t *this_gen, int cmd, ...) {
 
   switch (cmd) {
 
-  case AO_CTRL_PLAY_PAUSE:
-    _x_assert(this->stream && this->pa_class->context );
-
-    pthread_mutex_lock(&this->pa_class->pa_mutex);
-    if(pa_stream_get_state(this->stream) == PA_STREAM_READY)
-      wait_for_operation(this,pa_stream_cork(this->stream, 1, __xine_pa_stream_success_callback, this));
-    pthread_mutex_unlock(&this->pa_class->pa_mutex);
-
-    break;
-
-  case AO_CTRL_PLAY_RESUME:
-    _x_assert(this->stream && this->pa_class->context);
-
-    pthread_mutex_lock(&this->pa_class->pa_mutex);
-    if(pa_stream_get_state(this->stream) == PA_STREAM_READY) {
-        struct pa_operation *o2, *o1;
-        o1 = pa_stream_prebuf(this->stream, __xine_pa_stream_success_callback, this);
-	_x_assert(o1); wait_for_operation(this, o1);
-
-        o2 = pa_stream_cork(this->stream, 0, __xine_pa_stream_success_callback, this);
-        _x_assert(o2); wait_for_operation(this,o2);
-    }
-    pthread_mutex_unlock(&this->pa_class->pa_mutex);
-
-    break;
-
   case AO_CTRL_FLUSH_BUFFERS:
     _x_assert(this->stream && this->pa_class->context);
 
