@@ -1114,7 +1114,7 @@ static const decoder_info_t qtv_dec_info = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_VIDEO_DECODER | PLUGIN_MUST_PRELOAD, 18, "qtv", XINE_VERSION_CODE, &qtv_dec_info, qtv_init_class },
+  { PLUGIN_VIDEO_DECODER | PLUGIN_MUST_PRELOAD, 19, "qtv", XINE_VERSION_CODE, &qtv_dec_info, qtv_init_class },
   { PLUGIN_AUDIO_DECODER | PLUGIN_MUST_PRELOAD, 16, "qta", XINE_VERSION_CODE, &qta_dec_info, qta_init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

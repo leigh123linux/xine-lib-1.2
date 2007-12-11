@@ -1549,6 +1549,6 @@ static const decoder_info_t dec_info_video = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_VIDEO_DECODER, 18, "bitplane", XINE_VERSION_CODE, &dec_info_video, init_plugin },
+  { PLUGIN_VIDEO_DECODER, 19, "bitplane", XINE_VERSION_CODE, &dec_info_video, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

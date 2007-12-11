@@ -31,7 +31,7 @@
 #  include <xine/buffer.h>
 #endif
 
-#define VIDEO_DECODER_IFACE_VERSION 18
+#define VIDEO_DECODER_IFACE_VERSION 19
 
 
 /*

@@ -47,9 +47,9 @@ void init_once_routine(void) {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_VIDEO_DECODER | PLUGIN_MUST_PRELOAD, 18, "ffmpegvideo", XINE_VERSION_CODE, &dec_info_ffmpeg_video, init_video_plugin },
-  { PLUGIN_VIDEO_DECODER, 18, "ffmpeg-wmv8", XINE_VERSION_CODE, &dec_info_ffmpeg_wmv8, init_video_plugin },
-  { PLUGIN_VIDEO_DECODER, 18, "ffmpeg-wmv9", XINE_VERSION_CODE, &dec_info_ffmpeg_wmv9, init_video_plugin },
+  { PLUGIN_VIDEO_DECODER | PLUGIN_MUST_PRELOAD, 19, "ffmpegvideo", XINE_VERSION_CODE, &dec_info_ffmpeg_video, init_video_plugin },
+  { PLUGIN_VIDEO_DECODER, 19, "ffmpeg-wmv8", XINE_VERSION_CODE, &dec_info_ffmpeg_wmv8, init_video_plugin },
+  { PLUGIN_VIDEO_DECODER, 19, "ffmpeg-wmv9", XINE_VERSION_CODE, &dec_info_ffmpeg_wmv9, init_video_plugin },
   { PLUGIN_AUDIO_DECODER, 16, "ffmpegaudio", XINE_VERSION_CODE, &dec_info_ffmpeg_audio, init_audio_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

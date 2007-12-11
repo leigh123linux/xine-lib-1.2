@@ -2199,7 +2199,7 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_AUDIO_DECODER, 16, "speex", XINE_VERSION_CODE, &dec_info_speex, speex_init_plugin },
 #endif
 #ifdef HAVE_THEORA
-  { PLUGIN_VIDEO_DECODER, 18, "theora", XINE_VERSION_CODE, &dec_info_theora, theora_init_plugin },
+  { PLUGIN_VIDEO_DECODER, 19, "theora", XINE_VERSION_CODE, &dec_info_theora, theora_init_plugin },
 #endif
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

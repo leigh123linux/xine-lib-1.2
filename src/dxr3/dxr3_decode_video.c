@@ -74,7 +74,7 @@ static const decoder_info_t dxr3_video_decoder_info = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_VIDEO_DECODER, 18, "dxr3-mpeg2", XINE_VERSION_CODE, &dxr3_video_decoder_info, &dxr3_init_plugin },
+  { PLUGIN_VIDEO_DECODER, 19, "dxr3-mpeg2", XINE_VERSION_CODE, &dxr3_video_decoder_info, &dxr3_init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 
