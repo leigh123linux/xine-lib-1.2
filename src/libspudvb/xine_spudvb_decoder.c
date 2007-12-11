@@ -993,7 +993,7 @@ static const decoder_info_t spudec_info = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
 /* type, API, "name", version, special_info, init_function */
-  {PLUGIN_SPU_DECODER, 16, "spudvb", XINE_VERSION_CODE, &spudec_info,
+  {PLUGIN_SPU_DECODER, 17, "spudvb", XINE_VERSION_CODE, &spudec_info,
    &init_spu_decoder_plugin},
   {PLUGIN_NONE, 0, "", 0, NULL, NULL}
 };

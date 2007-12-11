@@ -73,7 +73,7 @@ static const decoder_info_t dxr3_spudec_info = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_SPU_DECODER, 16, "dxr3-spudec", XINE_VERSION_CODE, &dxr3_spudec_info, &dxr3_spudec_init_plugin },
+  { PLUGIN_SPU_DECODER, 17, "dxr3-spudec", XINE_VERSION_CODE, &dxr3_spudec_info, &dxr3_spudec_init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 
