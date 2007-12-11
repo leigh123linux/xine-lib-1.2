@@ -52,7 +52,7 @@ typedef unsigned char boolean;
 #define DSBUFF_LEFT		  1
 #define DSBUFF_RIGHT	          2
 
-#define AO_DIRECTX_IFACE_VERSION  8
+#define AO_DIRECTX_IFACE_VERSION  9
 
 /*****************************************************************************
  * DirectDraw GUIDs.

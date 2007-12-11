@@ -52,7 +52,7 @@
 #include <AudioUnit/AudioUnitParameters.h>
 #include <AudioUnit/AudioOutputUnit.h>
 
-#define AO_OUT_COREAUDIO_IFACE_VERSION 8
+#define AO_OUT_COREAUDIO_IFACE_VERSION 9
 
 #define GAP_TOLERANCE        AO_MAX_GAP 
 #define BUFSIZE              30720

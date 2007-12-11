@@ -36,7 +36,7 @@
 #include "audio_out.h"
 #include "bswap.h"
 
-#define AO_OUT_FILE_IFACE_VERSION 8
+#define AO_OUT_FILE_IFACE_VERSION 9
 
 #define GAP_TOLERANCE        INT_MAX
 

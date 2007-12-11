@@ -38,7 +38,7 @@
 #include "audio_out.h"
 #include "metronom.h"
 
-#define AO_OUT_ESD_IFACE_VERSION 8
+#define AO_OUT_ESD_IFACE_VERSION 9
 
 #define	REBLOCK		      1	    /* reblock output to ESD_BUF_SIZE blks */
 #define GAP_TOLERANCE         5000

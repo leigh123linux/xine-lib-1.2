@@ -62,7 +62,7 @@
 #include "audio_out.h"
 
 
-#define AO_OUT_DIRECTX2_IFACE_VERSION 8
+#define AO_OUT_DIRECTX2_IFACE_VERSION 9
 
 /* 
  * buffer size in miliseconds 

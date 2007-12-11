@@ -49,7 +49,7 @@
                                                 FUSIONSOUND_MICRO_VERSION )
 
 
-#define AO_OUT_FS_IFACE_VERSION 8
+#define AO_OUT_FS_IFACE_VERSION 9
 
 #define GAP_TOLERANCE  5000
 

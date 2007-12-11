@@ -37,7 +37,7 @@ extern "C" {
 #endif
 
 
-#define AUDIO_OUT_IFACE_VERSION  8
+#define AUDIO_OUT_IFACE_VERSION  9
 
 /*
  * ao_driver_s contains the driver every audio output

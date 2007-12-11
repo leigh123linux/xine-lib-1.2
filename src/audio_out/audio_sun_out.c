@@ -64,7 +64,7 @@ typedef unsigned uint_t;
 #define	AUDIO_PRECISION_16	16
 #endif
 
-#define AO_SUN_IFACE_VERSION 8
+#define AO_SUN_IFACE_VERSION 9
 
 #define GAP_TOLERANCE         5000
 #define GAP_NONRT_TOLERANCE   AO_MAX_GAP

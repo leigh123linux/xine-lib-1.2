@@ -14,7 +14,7 @@
 
 #include <jack/jack.h>
 
-#define AO_OUT_JACK_IFACE_VERSION 8
+#define AO_OUT_JACK_IFACE_VERSION 9
 
 #define GAP_TOLERANCE        AO_MAX_GAP
 #define BUFSIZE              81920

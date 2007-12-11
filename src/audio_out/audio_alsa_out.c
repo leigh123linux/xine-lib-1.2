@@ -63,7 +63,7 @@
 #define LOG_DEBUG
 */
 
-#define AO_OUT_ALSA_IFACE_VERSION 8
+#define AO_OUT_ALSA_IFACE_VERSION 9
 
 #define BUFFER_TIME               1000*1000
 #define GAP_TOLERANCE             5000

@@ -35,7 +35,7 @@
 #include "xineutils.h"
 #include "audio_out.h"
 
-#define AO_OUT_NONE_IFACE_VERSION 8
+#define AO_OUT_NONE_IFACE_VERSION 9
 
 #define AUDIO_NUM_FRAGMENTS     15
 #define AUDIO_FRAGMENT_SIZE   8192

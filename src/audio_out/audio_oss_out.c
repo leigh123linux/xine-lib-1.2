@@ -93,7 +93,7 @@
 #       define AFMT_AC3         0x00000400  
 #endif
 
-#define AO_OUT_OSS_IFACE_VERSION 8
+#define AO_OUT_OSS_IFACE_VERSION 9
 
 #define AUDIO_NUM_FRAGMENTS     15
 #define AUDIO_FRAGMENT_SIZE   8192
