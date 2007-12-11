@@ -180,6 +180,8 @@ struct demux_plugin_s {
 
 } ;
 
+#define default_demux_plugin_dispose (void (*) (demux_plugin_t *this))free
+
 /*
  * possible capabilites a demux plugin can have:
  */

@@ -362,12 +362,6 @@ static int demux_smjpeg_seek (demux_plugin_t *this_gen, off_t start_pos, int sta
 }
 
 
-static void demux_smjpeg_dispose (demux_plugin_t *this_gen) {
-  demux_smjpeg_t *this = (demux_smjpeg_t *) this_gen;
-
-  free(this);
-}
-
 static int demux_smjpeg_get_status (demux_plugin_t *this_gen) {
   demux_smjpeg_t *this = (demux_smjpeg_t *) this_gen;
 
@@ -407,7 +401,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.send_headers      = demux_smjpeg_send_headers;
   this->demux_plugin.send_chunk        = demux_smjpeg_send_chunk;
   this->demux_plugin.seek              = demux_smjpeg_seek;
-  this->demux_plugin.dispose           = demux_smjpeg_dispose;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
   this->demux_plugin.get_status        = demux_smjpeg_get_status;
   this->demux_plugin.get_stream_length = demux_smjpeg_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_smjpeg_get_capabilities;

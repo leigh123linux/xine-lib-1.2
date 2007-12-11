@@ -611,12 +611,6 @@ static int demux_playlist_seek (demux_plugin_t *this_gen,
   return DEMUX_OK;
 }
 
-static void demux_playlist_dispose (demux_plugin_t *this_gen) {
-  demux_playlist_t *this = (demux_playlist_t *) this_gen;
-  
-  free (this);
-}
-
 static int demux_playlist_get_status (demux_plugin_t *this_gen) {
   demux_playlist_t *this = (demux_playlist_t *) this_gen;
   
@@ -649,7 +643,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   this->demux_plugin.send_headers      = demux_playlist_send_headers;
   this->demux_plugin.send_chunk        = demux_playlist_send_chunk;
   this->demux_plugin.seek              = demux_playlist_seek;
-  this->demux_plugin.dispose           = demux_playlist_dispose;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
   this->demux_plugin.get_status        = demux_playlist_get_status;
   this->demux_plugin.get_stream_length = demux_playlist_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_playlist_get_capabilities;

@@ -266,11 +266,6 @@ static int demux_fli_seek (demux_plugin_t *this_gen, off_t start_pos, int start_
   return this->status;
 }
 
-static void demux_fli_dispose (demux_plugin_t *this) {
-
-  free(this);
-}
-
 static int demux_fli_get_status (demux_plugin_t *this_gen) {
   demux_fli_t *this = (demux_fli_t *) this_gen;
 
@@ -310,7 +305,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.send_headers      = demux_fli_send_headers;
   this->demux_plugin.send_chunk        = demux_fli_send_chunk;
   this->demux_plugin.seek              = demux_fli_seek;
-  this->demux_plugin.dispose           = demux_fli_dispose;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
   this->demux_plugin.get_status        = demux_fli_get_status;
   this->demux_plugin.get_stream_length = demux_fli_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_fli_get_capabilities;

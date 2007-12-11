@@ -389,12 +389,6 @@ static int demux_vmd_seek (demux_plugin_t *this_gen,
   return this->status;
 }
 
-static void demux_vmd_dispose (demux_plugin_t *this_gen) {
-  demux_vmd_t *this = (demux_vmd_t *) this_gen;
-
-  free(this);
-}
-
 static int demux_vmd_get_status (demux_plugin_t *this_gen) {
   demux_vmd_t *this = (demux_vmd_t *) this_gen;
 
@@ -428,7 +422,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.send_headers      = demux_vmd_send_headers;
   this->demux_plugin.send_chunk        = demux_vmd_send_chunk;
   this->demux_plugin.seek              = demux_vmd_seek;
-  this->demux_plugin.dispose           = demux_vmd_dispose;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
   this->demux_plugin.get_status        = demux_vmd_get_status;
   this->demux_plugin.get_stream_length = demux_vmd_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_vmd_get_capabilities;

@@ -143,13 +143,6 @@ static int demux_image_get_optional_data(demux_plugin_t *this_gen,
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
-static void demux_image_dispose (demux_plugin_t *this_gen) {
-  demux_image_t *this = (demux_image_t *) this_gen;
-
-  lprintf("closed\n");
-  free (this);
-}
-
 static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 				    xine_stream_t *stream,
 				    input_plugin_t *input) {
@@ -205,7 +198,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   this->demux_plugin.send_headers      = demux_image_send_headers;
   this->demux_plugin.send_chunk        = demux_image_send_chunk;
   this->demux_plugin.seek              = demux_image_seek;
-  this->demux_plugin.dispose           = demux_image_dispose;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
   this->demux_plugin.get_status        = demux_image_get_status;
   this->demux_plugin.get_stream_length = demux_image_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_image_get_capabilities;

@@ -230,12 +230,6 @@ static int demux_aac_seek (demux_plugin_t *this_gen,
   return this->status;
 }
 
-static void demux_aac_dispose (demux_plugin_t *this_gen) {
-  demux_aac_t *this = (demux_aac_t *) this_gen;
-
-  free(this);
-}
-
 static int demux_aac_get_status (demux_plugin_t *this_gen) {
   demux_aac_t *this = (demux_aac_t *) this_gen;
 
@@ -269,7 +263,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.send_headers      = demux_aac_send_headers;
   this->demux_plugin.send_chunk        = demux_aac_send_chunk;
   this->demux_plugin.seek              = demux_aac_seek;
-  this->demux_plugin.dispose           = demux_aac_dispose;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
   this->demux_plugin.get_status        = demux_aac_get_status;
   this->demux_plugin.get_stream_length = demux_aac_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_aac_get_capabilities;
