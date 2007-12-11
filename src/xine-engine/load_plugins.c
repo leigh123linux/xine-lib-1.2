@@ -2581,7 +2581,6 @@ char *xine_get_demux_for_mime_type (xine_t *self, const char *mime_type) {
   char             *id = NULL;
   char             *mime_arg, *mime_demux;
   char             *s;
-  const char       *mt;
   int               list_id, list_size;
 
   /* create a copy and convert to lower case */  
