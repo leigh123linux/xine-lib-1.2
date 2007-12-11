@@ -2672,9 +2672,8 @@ static void demux_matroska_dispose (demux_plugin_t *this_gen) {
 
   /* free tracks */
   for (i = 0; i < this->num_tracks; i++) {
-    matroska_track_t *const track;
+    matroska_track_t *const track = this->tracks[i];
 
-    track = this->tracks[i];
     free (track->language);
     free (track->codec_id);
     free (track->codec_private);
