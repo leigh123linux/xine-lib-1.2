@@ -430,10 +430,6 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
   return &this->audio_decoder;
 }
 
-static char *get_identifier (audio_decoder_class_t *this) {
-  return "mpc";
-}
-
 static void dispose_class (audio_decoder_class_t *this_gen) {
 
   mpc_class_t *this = (mpc_class_t *)this_gen;
