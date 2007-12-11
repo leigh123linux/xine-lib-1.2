@@ -1002,31 +1002,6 @@ vcd_plugin_get_mrl (input_plugin_t *this_gen)
   }
 }
 
-/*!
-  From xine plugin spec:
-  
-  return human readable (verbose = 1 line) description for this plugin
-*/
-static const char *
-vcd_class_get_description (input_class_t *this_gen) 
-{
-  dbg_print((INPUT_DBG_CALL|INPUT_DBG_EXT), "called\n");
-  return _("Video CD plugin with PBC and support for: (X)VCD, (X)SVCD, HQVCD, CVD ... ");
-}
-
-/*!
-  From xine plugin spec:
-
-  return short, human readable identifier for this plugin
-  this is used for GUI buttons, The identifier must have max. 4 characters
-  characters (max. 5 including terminating \0)
-*/
-static const char *
-vcd_class_get_identifier (input_class_t *this_gen) {
-  dbg_print((INPUT_DBG_CALL|INPUT_DBG_EXT), "called\n");
-  return SHORT_PLUGIN_NAME;
-}
-
 /* 
    Handle all queued keyboard/mouse events. Return TRUE if this causes
    a change in the play item.
@@ -1776,8 +1751,8 @@ vcd_init (xine_t *xine, void *data)
   class->mrls   = NULL;
 
   class->input_class.get_instance        = vcd_class_get_instance;
-  class->input_class.get_identifier      = vcd_class_get_identifier;
-  class->input_class.get_description     = vcd_class_get_description;
+  class->input_class.identifier          = SHORT_PLUGIN_NAME;
+  class->input_class.description         = _("Video CD plugin with PBC and support for: (X)VCD, (X)SVCD, HQVCD, CVD ... ");
   class->input_class.get_dir             = vcd_class_get_dir; 
   class->input_class.get_autoplay_list   = vcd_class_get_autoplay_list;
   class->input_class.dispose		 = vcd_class_dispose;

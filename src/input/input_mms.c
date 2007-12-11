@@ -438,14 +438,6 @@ static input_plugin_t *mms_class_get_instance (input_class_t *cls_gen, xine_stre
  * mms input plugin class stuff
  */
 
-static const char *mms_class_get_description (input_class_t *this_gen) {
-  return _("mms streaming input plugin");
-}
-
-static const char *mms_class_get_identifier (input_class_t *this_gen) {
-  return "mms";
-}
-
 static void mms_class_dispose (input_class_t *this_gen) {
   mms_input_class_t  *this = (mms_input_class_t *) this_gen;
 
@@ -466,8 +458,8 @@ static void *init_class (xine_t *xine, void *data) {
   this->ip                             = NULL;
 
   this->input_class.get_instance       = mms_class_get_instance;
-  this->input_class.get_identifier     = mms_class_get_identifier;
-  this->input_class.get_description    = mms_class_get_description;
+  this->input_class.identifier         = "mms";
+  this->input_class.description        = _("mms streaming input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
   this->input_class.dispose            = mms_class_dispose;

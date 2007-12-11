@@ -918,15 +918,6 @@ static input_plugin_t *vcd_class_get_instance (input_class_t *cls_gen, xine_stre
 /*
  * vcd input plugin class stuff
  */
-
-static const char *vcd_class_get_description (input_class_t *this_gen) {
-  return _("Video CD input plugin");
-}
-
-static const char *vcd_class_get_identifier (input_class_t *this_gen) {
-  return "vcdo";
-}
-
 static void vcd_class_dispose (input_class_t *this_gen) {
 
   vcd_input_class_t  *this = (vcd_input_class_t *) this_gen;
@@ -1087,8 +1078,8 @@ static void *init_class (xine_t *xine, void *data) {
   this->xine   = xine;
 
   this->input_class.get_instance       = vcd_class_get_instance;
-  this->input_class.get_identifier     = vcd_class_get_identifier;
-  this->input_class.get_description    = vcd_class_get_description;
+  this->input_class.identifier         = "vcdo";
+  this->input_class.description        = _("Video CD input plugin");
   this->input_class.get_dir            = vcd_class_get_dir;
   this->input_class.get_autoplay_list  = vcd_class_get_autoplay_list;
   this->input_class.dispose            = vcd_class_dispose;

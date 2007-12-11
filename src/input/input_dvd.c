@@ -1686,18 +1686,6 @@ static input_plugin_t *dvd_class_get_instance (input_class_t *class_gen, xine_st
   return &this->input_plugin;
 }
 
-static const char *dvd_class_get_description (input_class_t *this_gen) {
-  trace_print("Called\n");
-
-  return "DVD Navigator";
-}
-
-static const char *dvd_class_get_identifier (input_class_t *this_gen) {
-  trace_print("Called\n");
-
-  return "DVD";
-}
-
 /* FIXME: adapt to new api. */
 #if 0
 static xine_mrl_t **dvd_class_get_dir (input_class_t *this_gen, 
@@ -1770,8 +1758,8 @@ static void *init_class (xine_t *xine, void *data) {
     return NULL;
   
   this->input_class.get_instance       = dvd_class_get_instance;
-  this->input_class.get_identifier     = dvd_class_get_identifier;
-  this->input_class.get_description    = dvd_class_get_description;
+  this->input_class.identifier         = "DVD";
+  this->input_class.description        = _("DVD Navigator");
 /*
   this->input_class.get_dir            = dvd_class_get_dir;
 */

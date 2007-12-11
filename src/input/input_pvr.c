@@ -1522,16 +1522,6 @@ static input_plugin_t *pvr_class_get_instance (input_class_t *cls_gen, xine_stre
 /*
  * plugin class functions
  */
-
-static const char *pvr_class_get_description (input_class_t *this_gen) {
-  return _("WinTV-PVR 250/350 input plugin");
-}
-
-static const char *pvr_class_get_identifier (input_class_t *this_gen) {
-  return "pvr";
-}
-
-
 static void pvr_class_dispose (input_class_t *this_gen) {
   pvr_input_class_t  *this = (pvr_input_class_t *) this_gen;
 
@@ -1556,8 +1546,8 @@ static void *init_plugin (xine_t *xine, void *data) {
 				    NULL);
 
   this->input_class.get_instance       = pvr_class_get_instance;
-  this->input_class.get_identifier     = pvr_class_get_identifier;
-  this->input_class.get_description    = pvr_class_get_description;
+  this->input_class.identifier         = "pvr";
+  this->input_class.description        = _("WinTV-PVR 250/350 input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
   this->input_class.dispose            = pvr_class_dispose;

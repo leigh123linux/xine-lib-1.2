@@ -151,18 +151,6 @@ static uint32_t smb_plugin_get_blocksize (input_plugin_t *this_gen) {
   return 0;
 }
 
-static char
-*smb_class_get_description (input_class_t *this_gen)
-{
-	return _("CIFS/SMB input plugin based on libsmbclient");
-}
-
-static const char
-*smb_class_get_identifier (input_class_t *this_gen)
-{
-	return "smb";
-}
-
 /*
  * Sorting function, it comes from GNU fileutils package.
  */
@@ -519,8 +507,8 @@ static void
 	this->xine = xine;
 
 	this->input_class.get_instance       = smb_class_get_instance;
-	this->input_class.get_identifier     = smb_class_get_identifier;
-	this->input_class.get_description    = smb_class_get_description;
+	this->input_class.identifier         = "smb";
+	this->input_class.description        = _("CIFS/SMB input plugin based on libsmbclient");
 	this->input_class.get_dir            = smb_class_get_dir;
 	this->input_class.get_autoplay_list  = NULL;
 	this->input_class.dispose            = smb_class_dispose;

@@ -211,18 +211,6 @@ gnomevfs_plugin_get_mrl (input_plugin_t *this_gen)
 	return this->mrl;
 }
 
-static const char
-*gnomevfs_klass_get_description (input_class_t *this_gen)
-{
-	return _("gnome-vfs input plugin as shipped with xine");
-}
-
-static const char
-*gnomevfs_klass_get_identifier (input_class_t *this_gen)
-{
-	return "gnomevfs";
-}
-
 static int
 gnomevfs_plugin_get_optional_data (input_plugin_t *this_gen, 
 		void *data, int data_type)
@@ -375,8 +363,8 @@ static void
 	this->xine = xine;
 
 	this->input_class.get_instance       = gnomevfs_klass_get_instance;
-	this->input_class.get_identifier     = gnomevfs_klass_get_identifier;
-	this->input_class.get_description    = gnomevfs_klass_get_description;
+	this->input_class.identifier         = "gnomevfs";
+	this->input_class.description        = _("gnome-vfs input plugin as shipped with xine");
 	this->input_class.get_dir            = NULL;
 	this->input_class.get_autoplay_list  = NULL;
 	this->input_class.dispose            = gnomevfs_klass_dispose;

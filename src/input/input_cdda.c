@@ -2679,14 +2679,6 @@ static input_plugin_t *cdda_class_get_instance (input_class_t *cls_gen, xine_str
 }
 
 
-static const char *cdda_class_get_identifier (input_class_t *this_gen) {
-  return "cdda";
-}
-
-static const char *cdda_class_get_description (input_class_t *this_gen) {
-  return _("CD Digital Audio (aka. CDDA)");
-}
-
 static void cdda_class_dispose (input_class_t *this_gen) {
   cdda_input_class_t  *this = (cdda_input_class_t *) this_gen;
   config_values_t     *config = this->xine->config;
@@ -2722,8 +2714,8 @@ static void *init_plugin (xine_t *xine, void *data) {
   config       = xine->config;
 
   this->input_class.get_instance       = cdda_class_get_instance;
-  this->input_class.get_identifier     = cdda_class_get_identifier;
-  this->input_class.get_description    = cdda_class_get_description;
+  this->input_class.identifier         = "cdda";
+  this->input_class.description        = _("CD Digital Audio (aka. CDDA)");
   /* this->input_class.get_dir            = cdda_class_get_dir; */
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = cdda_class_get_autoplay_list;

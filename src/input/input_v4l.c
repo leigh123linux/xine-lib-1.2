@@ -1901,18 +1901,6 @@ static input_plugin_t *v4l_class_get_radio_instance (input_class_t *cls_gen,
  * v4l input plugin class stuff
  */
 
-static char *v4l_class_get_video_description (input_class_t *this_gen) {
-  return _("v4l tv input plugin");
-}
-
-static char *v4l_class_get_radio_description (input_class_t *this_gen) {
-  return _("v4l radio input plugin");
-}
-
-static const char *v4l_class_get_identifier (input_class_t *this_gen) {
-  return "v4l";
-}
-
 static void v4l_class_dispose (input_class_t *this_gen) {
   v4l_input_class_t  *this = (v4l_input_class_t *) this_gen;
   
@@ -1929,8 +1917,8 @@ static void *init_video_class (xine_t *xine, void *data)
   this->xine                           = xine;
   
   this->input_class.get_instance       = v4l_class_get_video_instance;
-  this->input_class.get_identifier     = v4l_class_get_identifier;
-  this->input_class.get_description    = v4l_class_get_video_description;
+  this->input_class.identifier         = "v4l";
+  this->input_class.description        = _("v4l tv input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
   this->input_class.dispose            = v4l_class_dispose;
@@ -1961,8 +1949,8 @@ static void *init_radio_class (xine_t *xine, void *data)
   this->xine                           = xine;
   
   this->input_class.get_instance       = v4l_class_get_radio_instance;
-  this->input_class.get_identifier     = v4l_class_get_identifier;
-  this->input_class.get_description    = v4l_class_get_radio_description;
+  this->input_class.identifier         = "v4l";
+  this->input_class.description        = _("v4l radio input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
   this->input_class.dispose            = v4l_class_dispose;

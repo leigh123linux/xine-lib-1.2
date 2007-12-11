@@ -344,15 +344,6 @@ static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen,
 /*
  * stdin input plugin class stuff
  */
-
-static const char *stdin_class_get_description (input_class_t *this_gen) {
-  return _("stdin streaming input plugin");
-}
-
-static const char *stdin_class_get_identifier (input_class_t *this_gen) {
-  return "stdin_fifo";
-}
-
 static void stdin_class_dispose (input_class_t *this_gen) {
   stdin_input_class_t  *this = (stdin_input_class_t *) this_gen;
 
@@ -368,8 +359,8 @@ static void *init_class (xine_t *xine, void *data) {
   this->xine   = xine;
 
   this->input_class.get_instance       = stdin_class_get_instance;
-  this->input_class.get_identifier     = stdin_class_get_identifier;
-  this->input_class.get_description    = stdin_class_get_description;
+  this->input_class.identifier         = "stdin_fifo";
+  this->input_class.description        = _("stdin streaming input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
   this->input_class.dispose            = stdin_class_dispose;
