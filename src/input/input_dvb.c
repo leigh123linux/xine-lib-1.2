@@ -2448,9 +2448,8 @@ static void ts_rewrite_packets (dvb_input_plugin_t *this, unsigned char * origin
     originalPkt+=data_offset;
     
     if (pid == 0 && sync_byte==0x47) {
-      static AVCRC crc_ctx; static int ctx_init = 0;
-      if ( ! ctx_init )
-	ctx_init = !av_crc_init(&crc_ctx, 0, 32, AV_CRC_32_IEEE, sizeof(AVCRC)*257);
+      if ( ! *av_crc04C11DB7 )
+	av_crc_init(av_crc04C11DB7, 0, 32, AV_CRC_32_IEEE, sizeof(AVCRC)*257);
 
       unsigned long crc;
       
@@ -2463,7 +2462,7 @@ static void ts_rewrite_packets (dvb_input_plugin_t *this, unsigned char * origin
       originalPkt[11]=(this->channels[this->channel].pmtpid >> 8) & 0xff;
       originalPkt[12]=this->channels[this->channel].pmtpid & 0xff;
 
-      crc = av_crc(&crc_ctx, 0xffffffff, originalPkt+1, 12);
+      crc = av_crc(av_crc04C11DB7, 0xffffffff, originalPkt+1, 12);
       
       originalPkt[13]=(crc>>24) & 0xff;
       originalPkt[14]=(crc>>16) & 0xff;
