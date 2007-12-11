@@ -365,6 +365,6 @@ static const demuxer_info_t demux_info_mng = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  { PLUGIN_DEMUX, 26, "mng", XINE_VERSION_CODE, &demux_info_mng, (void*)init_plugin},
+  { PLUGIN_DEMUX, 27, "mng", XINE_VERSION_CODE, &demux_info_mng, (void*)init_plugin},
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

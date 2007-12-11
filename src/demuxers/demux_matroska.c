@@ -2886,6 +2886,6 @@ static const demuxer_info_t demux_info_matroska = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_DEMUX, 26, "matroska", XINE_VERSION_CODE, &demux_info_matroska, init_class },
+  { PLUGIN_DEMUX, 27, "matroska", XINE_VERSION_CODE, &demux_info_matroska, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

@@ -2190,8 +2190,8 @@ void *theora_init_plugin (xine_t *xine, void *data);
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_DEMUX, 26, "ogg", XINE_VERSION_CODE, &demux_info_ogg, ogg_init_class },
-  { PLUGIN_DEMUX, 26, "anx", XINE_VERSION_CODE, &demux_info_anx, anx_init_class },
+  { PLUGIN_DEMUX, 27, "ogg", XINE_VERSION_CODE, &demux_info_ogg, ogg_init_class },
+  { PLUGIN_DEMUX, 27, "anx", XINE_VERSION_CODE, &demux_info_anx, anx_init_class },
 #ifdef HAVE_VORBIS
   { PLUGIN_AUDIO_DECODER, 15, "vorbis", XINE_VERSION_CODE, &dec_info_vorbis, vorbis_init_plugin },
 #endif

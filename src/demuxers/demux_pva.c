@@ -505,6 +505,6 @@ static const demuxer_info_t demux_info_pva = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_DEMUX, 26, "pva", XINE_VERSION_CODE, &demux_info_pva, init_plugin },
+  { PLUGIN_DEMUX, 27, "pva", XINE_VERSION_CODE, &demux_info_pva, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

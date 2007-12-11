@@ -79,16 +79,16 @@ static const demuxer_info_t demux_info_vmd = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_DEMUX, 26, "wve",      XINE_VERSION_CODE, &demux_info_eawve,    demux_eawve_init_plugin},
-  { PLUGIN_DEMUX, 26, "idcin",    XINE_VERSION_CODE, &demux_info_idcin,    demux_idcin_init_plugin },
-  { PLUGIN_DEMUX, 26, "ipmovie",  XINE_VERSION_CODE, &demux_info_ipmovie,  demux_ipmovie_init_plugin },
-  { PLUGIN_DEMUX, 26, "vqa",      XINE_VERSION_CODE, &demux_info_vqa,      demux_vqa_init_plugin },
-  { PLUGIN_DEMUX, 26, "wc3movie", XINE_VERSION_CODE, &demux_info_wc3movie, demux_wc3movie_init_plugin },
-  { PLUGIN_DEMUX, 26, "roq",      XINE_VERSION_CODE, &demux_info_roq,      demux_roq_init_plugin },
-  { PLUGIN_DEMUX, 26, "str",      XINE_VERSION_CODE, &demux_info_str,      demux_str_init_plugin },
-  { PLUGIN_DEMUX, 26, "film",     XINE_VERSION_CODE, &demux_info_film,     demux_film_init_plugin },
-  { PLUGIN_DEMUX, 26, "smjpeg",   XINE_VERSION_CODE, &demux_info_smjpeg,   demux_smjpeg_init_plugin },
-  { PLUGIN_DEMUX, 26, "fourxm",   XINE_VERSION_CODE, &demux_info_fourxm,   demux_fourxm_init_plugin },
-  { PLUGIN_DEMUX, 26, "vmd",      XINE_VERSION_CODE, &demux_info_vmd,      demux_vmd_init_plugin },
+  { PLUGIN_DEMUX, 27, "wve",      XINE_VERSION_CODE, &demux_info_eawve,    demux_eawve_init_plugin},
+  { PLUGIN_DEMUX, 27, "idcin",    XINE_VERSION_CODE, &demux_info_idcin,    demux_idcin_init_plugin },
+  { PLUGIN_DEMUX, 27, "ipmovie",  XINE_VERSION_CODE, &demux_info_ipmovie,  demux_ipmovie_init_plugin },
+  { PLUGIN_DEMUX, 27, "vqa",      XINE_VERSION_CODE, &demux_info_vqa,      demux_vqa_init_plugin },
+  { PLUGIN_DEMUX, 27, "wc3movie", XINE_VERSION_CODE, &demux_info_wc3movie, demux_wc3movie_init_plugin },
+  { PLUGIN_DEMUX, 27, "roq",      XINE_VERSION_CODE, &demux_info_roq,      demux_roq_init_plugin },
+  { PLUGIN_DEMUX, 27, "str",      XINE_VERSION_CODE, &demux_info_str,      demux_str_init_plugin },
+  { PLUGIN_DEMUX, 27, "film",     XINE_VERSION_CODE, &demux_info_film,     demux_film_init_plugin },
+  { PLUGIN_DEMUX, 27, "smjpeg",   XINE_VERSION_CODE, &demux_info_smjpeg,   demux_smjpeg_init_plugin },
+  { PLUGIN_DEMUX, 27, "fourxm",   XINE_VERSION_CODE, &demux_info_fourxm,   demux_fourxm_init_plugin },
+  { PLUGIN_DEMUX, 27, "vmd",      XINE_VERSION_CODE, &demux_info_vmd,      demux_vmd_init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

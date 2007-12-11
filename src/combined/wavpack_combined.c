@@ -38,7 +38,7 @@ static const decoder_info_t decoder_info_wv = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_DEMUX, 26, "wavpack", XINE_VERSION_CODE, &demux_info_wv, demux_wv_init_plugin },
+  { PLUGIN_DEMUX, 27, "wavpack", XINE_VERSION_CODE, &demux_info_wv, demux_wv_init_plugin },
   { PLUGIN_AUDIO_DECODER, 15, "wavpackdec", XINE_VERSION_CODE, &decoder_info_wv, decoder_wavpack_init_plugin },
   { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };

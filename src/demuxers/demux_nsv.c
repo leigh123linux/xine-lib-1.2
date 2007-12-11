@@ -670,6 +670,6 @@ static const demuxer_info_t demux_info_nsv = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_DEMUX, 26, "nsv", XINE_VERSION_CODE, &demux_info_nsv, demux_nsv_init_plugin },
+  { PLUGIN_DEMUX, 27, "nsv", XINE_VERSION_CODE, &demux_info_nsv, demux_nsv_init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

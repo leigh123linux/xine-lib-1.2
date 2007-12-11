@@ -31,7 +31,7 @@
 #  include <xine/xine_internal.h>
 #endif
 
-#define DEMUXER_PLUGIN_IFACE_VERSION    26
+#define DEMUXER_PLUGIN_IFACE_VERSION    27
 
 #define DEMUX_OK                   0
 #define DEMUX_FINISHED             1
