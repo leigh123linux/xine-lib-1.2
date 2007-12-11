@@ -257,14 +257,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
  * image plugin class
  */
 
-static char *get_identifier (video_decoder_class_t *this) {
-  return "gdkpixbuf";
-}
-
-static char *get_description (video_decoder_class_t *this) {
-  return "gdk-pixbuf image video decoder plugin";
-}
-
 static void dispose_class (video_decoder_class_t *this_gen) {
   image_class_t   *this = (image_class_t *) this_gen;
 
@@ -280,8 +272,8 @@ static void *init_class (xine_t *xine, void *data) {
   this = (image_class_t *) xine_xmalloc (sizeof (image_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.get_identifier  = get_identifier;
-  this->decoder_class.get_description = get_description;
+  this->decoder_class.identifier      = "gdkpixbuf";
+  this->decoder_class.description     = _("gdk-pixbuf image video decoder plugin");
   this->decoder_class.dispose         = dispose_class;
 
   /*

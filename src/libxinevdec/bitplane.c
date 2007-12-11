@@ -1544,14 +1544,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   return &this->video_decoder;
 }
 
-static char *get_identifier (video_decoder_class_t *this) {
-  return "bitplane";
-}
-
-static char *get_description (video_decoder_class_t *this) {
-  return "Raw bitplane video decoder plugin";
-}
-
 static void dispose_class (video_decoder_class_t *this) {
   free (this);
 }
@@ -1561,8 +1553,8 @@ static void *init_plugin (xine_t *xine, void *data) {
   bitplane_class_t *this                = (bitplane_class_t *) xine_xmalloc (sizeof (bitplane_class_t));
 
   this->decoder_class.open_plugin       = open_plugin;
-  this->decoder_class.get_identifier    = get_identifier;
-  this->decoder_class.get_description   = get_description;
+  this->decoder_class.identifier        = "bitplane";
+  this->decoder_class.description       = _("Raw bitplane video decoder plugin");
   this->decoder_class.dispose           = dispose_class;
 
   return this;
