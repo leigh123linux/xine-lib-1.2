@@ -78,6 +78,8 @@ struct post_class_s {
   void (*dispose) (post_class_t *this);
 };
 
+#define default_post_class_dispose (void (*) (post_class_t *this))free
+
 struct post_plugin_s {
 
   /* public part of the plugin */

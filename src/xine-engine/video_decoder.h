@@ -71,6 +71,7 @@ struct video_decoder_class_s {
   void (*dispose) (video_decoder_class_t *this);
 };
 
+#define default_video_decoder_class_dispose (void (*) (video_decoder_class_t *this))free
 
 struct video_decoder_s {
 

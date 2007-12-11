@@ -261,6 +261,8 @@ struct audio_driver_class_s {
   void (*dispose) (audio_driver_class_t *);
 };
 
+#define default_audio_driver_class_dispose (void (*) (audio_driver_class_t *this))free
+
 /**
  * @brief Initialise the audio_out sync routines
  *

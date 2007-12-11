@@ -91,6 +91,7 @@ struct demux_class_s {
   void (*dispose) (demux_class_t *this);
 };
 
+#define default_demux_class_dispose (void (*) (demux_class_t *this))free
 
 /*
  * any demux plugin must implement these functions

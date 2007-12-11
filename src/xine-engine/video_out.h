@@ -392,6 +392,7 @@ struct video_driver_class_s {
   void (*dispose) (video_driver_class_t *self);
 };
 
+#define default_video_driver_class_dispose (void (*) (video_driver_class_t *this))free
 
 typedef struct rle_elem_s {
   uint16_t len;

@@ -71,6 +71,7 @@ struct audio_decoder_class_s {
   void (*dispose) (audio_decoder_class_t *this);
 };
 
+#define default_audio_decoder_class_dispose (void (*) (audio_decoder_class_t *this))free
 
 struct audio_decoder_s {
 

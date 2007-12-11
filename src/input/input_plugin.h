@@ -90,6 +90,8 @@ struct input_class_s {
   int (*eject_media) (input_class_t *this);
 };
 
+#define default_input_class_dispose (void (*) (input_class_t *this))free
+
 struct input_plugin_s {
 
   /*
