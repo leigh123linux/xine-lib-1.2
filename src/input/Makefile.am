@@ -113,7 +113,7 @@ xineplug_inp_dvb_la_CPPFLAGS = $(AM_CPPFLAGS) $(XDG_BASEDIR_CPPFLAGS) $(AVUTIL_C
 xineplug_inp_rtsp_la_SOURCES = input_rtsp.c net_buf_ctrl.c
 xineplug_inp_rtsp_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) libreal/libreal.la librtsp/librtsp.la
 
-xineplug_inp_cdda_la_SOURCES = input_cdda.c media_helper.c sha1.c sha1.h
+xineplug_inp_cdda_la_SOURCES = input_cdda.c media_helper.c
 xineplug_inp_cdda_la_DEPS = $(XDG_BASEDIR_DEPS) $(AVUTIL_DEPS)
 xineplug_inp_cdda_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(XDG_BASEDIR_LIBS) $(AVUTIL_LIBS)
 xineplug_inp_cdda_la_CPPFLAGS = $(AM_CPPFLAGS) $(XDG_BASEDIR_CPPFLAGS) $(AVUTIL_CFLAGS)
