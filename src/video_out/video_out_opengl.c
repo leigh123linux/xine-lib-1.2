@@ -1955,14 +1955,6 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
  * class functions
  */
 
-static char* opengl_get_identifier (video_driver_class_t *this_gen) {
-  return "opengl";
-}
-
-static char* opengl_get_description (video_driver_class_t *this_gen) {
-  return _("xine video output plugin using the OpenGL 3D graphics API");
-}
-
 static void opengl_dispose_class (video_driver_class_t *this_gen) {
   opengl_class_t         *this = (opengl_class_t *) this_gen;
 
@@ -1973,8 +1965,8 @@ static void *opengl_init_class (xine_t *xine, void *visual_gen) {
   opengl_class_t	       *this = (opengl_class_t *) xine_xmalloc (sizeof (opengl_class_t));
 
   this->driver_class.open_plugin     = opengl_open_plugin;
-  this->driver_class.get_identifier  = opengl_get_identifier;
-  this->driver_class.get_description = opengl_get_description;
+  this->driver_class.identifier      = "opengl";
+  this->driver_class.description     = _("xine video output plugin using the OpenGL 3D graphics API");
   this->driver_class.dispose         = opengl_dispose_class;
   this->xine                         = xine;
 

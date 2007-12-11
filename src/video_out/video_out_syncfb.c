@@ -1050,14 +1050,6 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
  * class functions
  */
 
-static char* get_identifier (video_driver_class_t *this_gen) {
-  return "SyncFB";
-}
-
-static char* get_description (video_driver_class_t *this_gen) {
-  return _("xine video output plugin using the SyncFB module for Matrox G200/G400 cards");
-}
-
 static void dispose_class (video_driver_class_t *this_gen) {
 
   syncfb_class_t        *this = (syncfb_class_t *) this_gen;
@@ -1096,8 +1088,8 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   this = (syncfb_class_t *) xine_xmalloc (sizeof (syncfb_class_t));
 
   this->driver_class.open_plugin     = open_plugin;
-  this->driver_class.get_identifier  = get_identifier;
-  this->driver_class.get_description = get_description;
+  this->driver_class.identifier      = "SyncFB";
+  this->driver_class.description     = _("xine video output plugin using the SyncFB module for Matrox G200/G400 cards");
   this->driver_class.dispose         = dispose_class;
 
   this->config            = xine->config;

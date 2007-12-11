@@ -563,14 +563,6 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 /**
  * Class Functions
  */
-static char* get_identifier (video_driver_class_t *this_gen) {
-  return "SDL";
-}
-
-static char* get_description (video_driver_class_t *this_gen) {
-  return _("xine video output plugin using the Simple Direct Media Layer");
-}
-
 static void dispose_class (video_driver_class_t *this_gen) {
   free(this_gen);
 }
@@ -591,8 +583,8 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   this = (sdl_class_t*) xine_xmalloc (sizeof (sdl_class_t));
    
   this->driver_class.open_plugin      = open_plugin;
-  this->driver_class.get_identifier   = get_identifier;
-  this->driver_class.get_description  = get_description;
+  this->driver_class.identifier       = "SDL";
+  this->driver_class.description      = _("xine video output plugin using the Simple Direct Media Layer");
   this->driver_class.dispose          = dispose_class;
 
   this->config                        = xine->config;

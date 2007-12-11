@@ -1880,14 +1880,6 @@ static vo_driver_t *open_plugin_fb (video_driver_class_t *class_gen, const void 
   return &this->vo_driver;
 }
 
-static char* get_identifier_fb (video_driver_class_t *this_gen) {
-  return "DirectFB";
-}
-
-static char* get_description_fb (video_driver_class_t *this_gen) {
-  return _("xine video output plugin using DirectFB.");
-}
-
 static void dispose_class_fb (video_driver_class_t *this_gen) {
   directfb_class_t *this = (directfb_class_t *) this_gen;
   free (this);
@@ -1910,8 +1902,8 @@ static void *init_class_fb (xine_t *xine, void *visual_gen) {
 
   this = (directfb_class_t *) xine_xmalloc (sizeof (directfb_class_t));
   this->driver_class.open_plugin     = open_plugin_fb;
-  this->driver_class.get_identifier  = get_identifier_fb;
-  this->driver_class.get_description = get_description_fb;
+  this->driver_class.identifier      = "DirectFB";
+  this->driver_class.description     = _("xine video output plugin using DirectFB.");
   this->driver_class.dispose         = dispose_class_fb;
 
   this->xine = xine;
@@ -2088,14 +2080,6 @@ static vo_driver_t *open_plugin_x11 (video_driver_class_t *class_gen, const void
   return &this->vo_driver;
 }
 
-static char* get_identifier_x11 (video_driver_class_t *this_gen) {
-  return "XDirectFB";
-}
-
-static char* get_description_x11 (video_driver_class_t *this_gen) {
-  return _("xine video output plugin using DirectFB under XDirectFB.");
-}
-
 static void dispose_class_x11 (video_driver_class_t *this_gen) {
   directfb_class_t *this = (directfb_class_t *) this_gen;
 
@@ -2129,8 +2113,8 @@ static void *init_class_x11 (xine_t *xine, void *visual_gen) {
 
   this = (directfb_class_t *) xine_xmalloc (sizeof (directfb_class_t));
   this->driver_class.open_plugin     = open_plugin_x11;
-  this->driver_class.get_identifier  = get_identifier_x11;
-  this->driver_class.get_description = get_description_x11;
+  this->driver_class.identifier      = "XDirectFB";
+  this->driver_class.description     = _("xine video output plugin using DirectFB under XDirectFB.");
   this->driver_class.dispose         = dispose_class_x11;
 
   this->visual_type = XINE_VISUAL_TYPE_X11;

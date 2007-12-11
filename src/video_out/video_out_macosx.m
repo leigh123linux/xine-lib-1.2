@@ -349,13 +349,6 @@ static vo_driver_t *open_plugin(video_driver_class_t *driver_class, const void *
 /*
  * Class related functions.
  */
-static char* get_identifier (video_driver_class_t *driver_class) {
-  return "MacOSX";
-}
-
-static char* get_description (video_driver_class_t *driver_class) {
-  return _("xine video output plugin for Mac OS X");
-}
 
 static void dispose_class (video_driver_class_t *driver_class) {
   macosx_class_t    *this = (macosx_class_t *) driver_class;
@@ -369,8 +362,8 @@ static void *init_class (xine_t *xine, void *visual) {
   this = (macosx_class_t *) xine_xmalloc(sizeof(macosx_class_t));
 
   this->driver_class.open_plugin     = open_plugin;
-  this->driver_class.get_identifier  = get_identifier;
-  this->driver_class.get_description = get_description;
+  this->driver_class.identifier      = "MacOSX";
+  this->driver_class.description     = _("xine video output plugin for Mac OS X");
   this->driver_class.dispose         = dispose_class;
 
   this->config                       = xine->config;

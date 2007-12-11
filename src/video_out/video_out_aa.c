@@ -300,14 +300,6 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   return &this->vo_driver;
 }    
 
-static char* get_identifier (video_driver_class_t *this_gen) {
-  return "AA";
-}
-
-static char* get_description (video_driver_class_t *this_gen) {
-  return _("xine video output plugin using the ascii-art library");
-}
-
 static void dispose_class (video_driver_class_t *this_gen) {
   aa_class_t   *this = (aa_class_t *) this_gen;
   free(this);
@@ -319,8 +311,8 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   this = (aa_class_t *) xine_xmalloc(sizeof(aa_class_t));
   
   this->driver_class.open_plugin     = open_plugin;
-  this->driver_class.get_identifier  = get_identifier;
-  this->driver_class.get_description = get_description;
+  this->driver_class.identifier      = "AA";
+  this->driver_class.description     = _("xine video output plugin using the ascii-art library");
   this->driver_class.dispose         = dispose_class;
   
   this->config            = xine->config;

@@ -1193,22 +1193,14 @@ static vo_driver_t *vidix_open_plugin (video_driver_class_t *class_gen, const vo
   return &this->vo_driver;
 }
 
-static char* vidix_get_identifier (video_driver_class_t *this_gen) {
-  return "vidix";
-}
-
-static char* vidix_get_description (video_driver_class_t *this_gen) {
-  return _("xine video output plugin using libvidix for x11");
-}
-
 static void *vidix_init_class (xine_t *xine, void *visual_gen) {
 
   vidix_class_t *this = init_class (xine, visual_gen);
   
   if(this) {
     this->driver_class.open_plugin     = vidix_open_plugin;
-    this->driver_class.get_identifier  = vidix_get_identifier;
-    this->driver_class.get_description = vidix_get_description;
+    this->driver_class.identifier      = "vidix";
+    this->driver_class.description     = _("xine video output plugin using libvidix for x11");
     this->driver_class.dispose         = dispose_class;
   }
   
@@ -1275,22 +1267,14 @@ static vo_driver_t *vidixfb_open_plugin (video_driver_class_t *class_gen, const 
   return &this->vo_driver;
 }
 
-static char* vidixfb_get_identifier (video_driver_class_t *this_gen) {
-  return "vidixfb";
-} 
-
-static char* vidixfb_get_description (video_driver_class_t *this_gen) {
-  return _("xine video output plugin using libvidix for linux frame buffer");
-}
-
 static void *vidixfb_init_class (xine_t *xine, void *visual_gen) {
 
   vidix_class_t *this = init_class (xine, visual_gen);
   
   if(this) {
     this->driver_class.open_plugin     = vidixfb_open_plugin;
-    this->driver_class.get_identifier  = vidixfb_get_identifier;
-    this->driver_class.get_description = vidixfb_get_description;
+    this->driver_class.identifier      = "vidixfb";
+    this->driver_class.description     = _("xine video output plugin using libvidix for linux frame buffer");
     this->driver_class.dispose         = dispose_class;
   }
   

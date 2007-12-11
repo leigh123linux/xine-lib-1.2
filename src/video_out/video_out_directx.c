@@ -1228,14 +1228,6 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *wi
 }
 
 
-static char* get_identifier (video_driver_class_t *this_gen) {
-  return "DirectX";
-}
-
-static char* get_description (video_driver_class_t *this_gen) {
-  return _("xine video output plugin for win32 using directx");
-}
-
 static void dispose_class (video_driver_class_t *this_gen) {
   directx_class_t *directx = (directx_class_t *) this_gen;
 
@@ -1252,8 +1244,8 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   directx = (directx_class_t *) xine_xmalloc (sizeof (directx_class_t));
 
   directx->driver_class.open_plugin     = open_plugin;
-  directx->driver_class.get_identifier  = get_identifier;
-  directx->driver_class.get_description = get_description;
+  directx->driver_class.identifier      = "DirectX";
+  directx->driver_class.description     = _("xine video output plugin for win32 using directx");
   directx->driver_class.dispose         = dispose_class;
 
   directx->xine                         = xine;

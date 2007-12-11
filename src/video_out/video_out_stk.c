@@ -442,16 +442,6 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 /**
  * Class Functions
  */
-static char* get_identifier (video_driver_class_t *this_gen) {
-    //printf("video_out_stk: get_identifier()\n");
-    return "stk";
-}
-
-static char* get_description (video_driver_class_t *this_gen) {
-    //printf("video_out_stk: get_description()\n");
-    return _("xine video output plugin using the Libstk Surface Set-top Toolkit");
-}
-
 static void dispose_class (video_driver_class_t *this_gen) {
     //printf("video_out_stk: dispose_class()\n");
     free(this_gen);
@@ -466,8 +456,8 @@ static void *init_class (xine_t *xine, void *visual_gen) {
     this = (stk_class_t *) xine_xmalloc(sizeof(stk_class_t));
 
     this->driver_class.open_plugin      = open_plugin;
-    this->driver_class.get_identifier   = get_identifier;
-    this->driver_class.get_description  = get_description;
+    this->driver_class.identifier       = "stk";
+    this->driver_class.description      = _("xine video output plugin using the Libstk Surface Set-top Toolkit");
     this->driver_class.dispose          = dispose_class;
     
     this->config                        = xine->config;
