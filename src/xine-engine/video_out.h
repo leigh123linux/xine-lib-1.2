@@ -291,7 +291,7 @@ struct xine_video_port_s {
  * from generic vo functions.
  */
 
-#define VIDEO_OUT_DRIVER_IFACE_VERSION  21
+#define VIDEO_OUT_DRIVER_IFACE_VERSION  22
 
 struct vo_driver_s {
 

@@ -376,7 +376,7 @@ plugin_info_t xine_plugin_info[] EXPORTED = {
   /* work around the problem that dlclose() is not allowed to
    * get rid of an image module which contains objective C code and simply
    * crashes with a Trace/BPT trap when we try to do so */
-  { PLUGIN_VIDEO_OUT | PLUGIN_NO_UNLOAD, 21, "macosx", XINE_VERSION_CODE, &vo_info_macosx, init_class },
+  { PLUGIN_VIDEO_OUT | PLUGIN_NO_UNLOAD, 22, "macosx", XINE_VERSION_CODE, &vo_info_macosx, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 
