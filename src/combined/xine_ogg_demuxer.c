@@ -2117,14 +2117,6 @@ static demux_plugin_t *ogg_open_plugin (demux_class_t *class_gen,
  * Annodex demuxer class
  */
 
-static const char *anx_get_description (demux_class_t *this_gen) {
-  return "Annodex demux plugin";
-}
- 
-static const char *anx_get_identifier (demux_class_t *this_gen) {
-  return "Annodex";
-}
-
 static const char *anx_get_extensions (demux_class_t *this_gen) {
   return "anx axa axv";
 }
@@ -2145,8 +2137,8 @@ static void *anx_init_class (xine_t *xine, void *data) {
   this = xine_xmalloc (sizeof (demux_anx_class_t));
 
   this->demux_class.open_plugin     = anx_open_plugin;
-  this->demux_class.get_description = anx_get_description;
-  this->demux_class.get_identifier  = anx_get_identifier;
+  this->demux_class.description     = _("Annodex demux plugin");
+  this->demux_class.identifier      = "Annodex";
   this->demux_class.get_mimetypes   = anx_get_mimetypes;
   this->demux_class.get_extensions  = anx_get_extensions;
   this->demux_class.dispose         = anx_class_dispose;
@@ -2157,14 +2149,6 @@ static void *anx_init_class (xine_t *xine, void *data) {
 /*
  * ogg demuxer class
  */
-
-static const char *ogg_get_description (demux_class_t *this_gen) {
-  return "OGG demux plugin";
-}
- 
-static const char *ogg_get_identifier (demux_class_t *this_gen) {
-  return "OGG";
-}
 
 static const char *ogg_get_extensions (demux_class_t *this_gen) {
   return "ogg ogm spx";
@@ -2189,8 +2173,8 @@ static void *ogg_init_class (xine_t *xine, void *data) {
   this = xine_xmalloc (sizeof (demux_ogg_class_t));
 
   this->demux_class.open_plugin     = ogg_open_plugin;
-  this->demux_class.get_description = ogg_get_description;
-  this->demux_class.get_identifier  = ogg_get_identifier;
+  this->demux_class.description     = _("OGG demux plugin");
+  this->demux_class.identifier      = "OGG";
   this->demux_class.get_mimetypes   = ogg_get_mimetypes;
   this->demux_class.get_extensions  = ogg_get_extensions;
   this->demux_class.dispose         = ogg_class_dispose;

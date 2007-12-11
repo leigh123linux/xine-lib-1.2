@@ -311,14 +311,6 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
  * vorbis plugin class
  */
 
-static char *get_identifier (audio_decoder_class_t *this) {
-  return "vorbis";
-}
-
-static char *get_description (audio_decoder_class_t *this) {
-  return "vorbis audio decoder plugin";
-}
-
 static void dispose_class (audio_decoder_class_t *this) {
   free (this);
 }
@@ -330,8 +322,8 @@ void *vorbis_init_plugin (xine_t *xine, void *data) {
   this = (vorbis_class_t *) xine_xmalloc (sizeof (vorbis_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.get_identifier  = get_identifier;
-  this->decoder_class.get_description = get_description;
+  this->decoder_class.identifier      = "vorbis";
+  this->decoder_class.description     = _("vorbis audio decoder plugin");
   this->decoder_class.dispose         = dispose_class;
 
   return this;

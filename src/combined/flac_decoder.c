@@ -380,14 +380,6 @@ open_plugin (audio_decoder_class_t *class_gen, xine_stream_t *stream) {
  * flac plugin class
  */
 
-static char *get_identifier (audio_decoder_class_t *this) {
-  return "flacdec";
-}
-
-static char *get_description (audio_decoder_class_t *this) {
-  return "flac audio decoder plugin";
-}
-
 static void dispose_class (audio_decoder_class_t *this) {
   free (this);
 }
@@ -399,8 +391,8 @@ init_plugin (xine_t *xine, void *data) {
     this = (flac_class_t *) xine_xmalloc (sizeof (flac_class_t));
 
     this->decoder_class.open_plugin     = open_plugin;
-    this->decoder_class.get_identifier  = get_identifier;
-    this->decoder_class.get_description = get_description;
+    this->decoder_class.identifier      = "flacdec";
+    this->decoder_class.description     = _("flac audio decoder plugin");
     this->decoder_class.dispose         = dispose_class;
 
 
