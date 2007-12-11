@@ -59,6 +59,11 @@ struct audio_decoder_class_s {
    */
   const char *description;
 
+  /**
+   * @brief Optional non-standard catalog to use with dgettext() for description.
+   */
+  const char *textdomain;
+  
   /*
    * free all class-related resources
    */

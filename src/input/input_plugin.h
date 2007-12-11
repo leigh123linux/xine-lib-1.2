@@ -60,6 +60,11 @@ struct input_class_s {
    */
   const char *description;
 
+  /**
+   * @brief Optional non-standard catalog to use with dgettext() for description.
+   */
+  const char *textdomain;
+  
   /*
    * ls function, optional: may be NULL
    * return value: NULL => filename is a file, **char=> filename is a dir

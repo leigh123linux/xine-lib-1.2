@@ -65,6 +65,11 @@ struct demux_class_s {
    */
   const char *description;
   
+  /**
+   * @brief Optional non-standard catalog to use with dgettext() for description.
+   */
+  const char *textdomain;
+  
   /*
    * return MIME types supported for this plugin
    */
