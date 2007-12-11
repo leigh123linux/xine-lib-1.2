@@ -141,6 +141,9 @@
 #include <unistd.h>
 #include <string.h>
 
+/* libavutil from FFmpeg */
+#include <crc.h>
+
 #define LOG_MODULE "demux_ts"
 #define LOG_VERBOSE
 /*
@@ -573,7 +576,10 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
   }
 
   /* Check CRC. */
-  calc_crc32 = _x_compute_crc32 (pkt+5, section_length+3-4, 0xffffffff);
+  if ( ! *av_crc04C11DB7 )
+    av_crc_init(av_crc04C11DB7, 0, 32, AV_CRC_32_IEEE, sizeof(AVCRC)*257);
+
+  calc_crc32 = av_crc(av_crc04C11DB7, 0xffffffff, pkt+5, section_length+3-4);
   if (crc32 != calc_crc32) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
 	     "demux_ts: demux error! PAT with invalid CRC32: packet_crc32: %.8x calc_crc32: %.8x\n",
@@ -1179,8 +1185,12 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
   crc32 |= (uint32_t) this->pmt[program_count][section_length+3-1] ;
 
   /* Check CRC. */
-  calc_crc32 = _x_compute_crc32 (this->pmt[program_count],
-                                 section_length+3-4, 0xffffffff);
+  if ( ! *av_crc04C11DB7 )
+    av_crc_init(av_crc04C11DB7, 0, 32, AV_CRC_32_IEEE, sizeof(AVCRC)*257);
+
+  calc_crc32 = av_crc(av_crc04C11DB7, 0xffffffff,
+		      this->pmt[program_count], section_length+3-4);
+
   if (crc32 != calc_crc32) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
 	     "demux_ts: demux error! PMT with invalid CRC32: packet_crc32: %#.8x calc_crc32: %#.8x\n",

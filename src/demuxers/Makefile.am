@@ -71,7 +71,9 @@ xineplug_dmx_mpeg_pes_la_SOURCES = demux_mpeg_pes.c
 xineplug_dmx_mpeg_pes_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineplug_dmx_mpeg_ts_la_SOURCES = demux_ts.c
-xineplug_dmx_mpeg_ts_la_LIBADD = $(XINE_LIB)
+xineplug_dmx_mpeg_ts_la_CFLAGS = $(AM_CFLAGS) $(AVUTIL_CFLAGS)
+xineplug_dmx_mpeg_ts_la_LIBADD = $(XINE_LIB) $(AVUTIL_LIBS)
+xineplug_dmx_mpeg_ts_la_DEPS = $(AVUTIL_DEPS)
 
 xineplug_dmx_qt_la_SOURCES = demux_qt.c
 xineplug_dmx_qt_la_LIBADD = $(XINE_LIB) $(ZLIB_LIBS)
