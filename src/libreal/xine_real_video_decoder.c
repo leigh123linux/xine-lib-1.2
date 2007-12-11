@@ -511,14 +511,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
  * real plugin class
  */
 
-static char *get_identifier (video_decoder_class_t *this) {
-  return "realvdec";
-}
-
-static char *get_description (video_decoder_class_t *this) {
-  return "real binary-only codec based video decoder plugin";
-}
-
 static void dispose_class (video_decoder_class_t *this) {
   free (this);
 }
@@ -531,8 +523,8 @@ void *init_realvdec (xine_t *xine, void *data) {
   this = (real_class_t *) xine_xmalloc (sizeof (real_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.get_identifier  = get_identifier;
-  this->decoder_class.get_description = get_description;
+  this->decoder_class.identifier      = "realvdec";
+  this->decoder_class.description     = _("real binary-only codec based video decoder plugin");
   this->decoder_class.dispose         = dispose_class;
 
   _x_real_codecs_init(xine);

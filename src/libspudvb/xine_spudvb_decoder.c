@@ -971,16 +971,6 @@ static void dvb_spu_class_dispose (spu_decoder_class_t * this)
   free (this);
 }
 
-static char *dvb_spu_class_get_identifier (spu_decoder_class_t * this)
-{
-  return "spudvb";
-}
-
-static char *dvb_spu_class_get_description (spu_decoder_class_t * this)
-{
-  return "DVB subtitle decoder plugin";
-}
-
 static void *init_spu_decoder_plugin (xine_t * xine, void *data)
 {
 
@@ -988,8 +978,8 @@ static void *init_spu_decoder_plugin (xine_t * xine, void *data)
   this = (dvb_spu_class_t *) xine_xmalloc (sizeof (dvb_spu_class_t));
 
   this->class.open_plugin = dvb_spu_class_open_plugin;
-  this->class.get_identifier = dvb_spu_class_get_identifier;
-  this->class.get_description = dvb_spu_class_get_description;
+  this->class.identifier  = "spudvb";
+  this->class.description = _("DVB subtitle decoder plugin");
   this->class.dispose = dvb_spu_class_dispose;
 
   this->xine = xine;

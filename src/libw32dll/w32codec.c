@@ -1568,14 +1568,6 @@ static video_decoder_t *open_video_decoder_plugin (video_decoder_class_t *class_
  * video decoder class
  */
 
-static char *get_video_identifier (video_decoder_class_t *this) {
-  return "w32v";
-}
-
-static char *get_video_description (video_decoder_class_t *this) {
-  return "win32 binary video codec plugin";
-}
-
 static void dispose_video_class (video_decoder_class_t *this) {
   free (this);
 }
@@ -1596,8 +1588,8 @@ static void *init_video_decoder_class (xine_t *xine, void *data) {
   this = (w32v_class_t *) xine_xmalloc (sizeof (w32v_class_t));
 
   this->decoder_class.open_plugin     = open_video_decoder_plugin;
-  this->decoder_class.get_identifier  = get_video_identifier;
-  this->decoder_class.get_description = get_video_description;
+  this->decoder_class.identifier      = "w32v";
+  this->decoder_class.description     = _("win32 binary video codec plugin");
   this->decoder_class.dispose         = dispose_video_class;
 
   pthread_once (&once_control, init_routine);
@@ -1635,14 +1627,6 @@ static audio_decoder_t *open_audio_decoder_plugin (audio_decoder_class_t *class_
  * audio decoder plugin class
  */
 
-static char *get_identifier (audio_decoder_class_t *this) {
-  return "win32 audio";
-}
-
-static char *get_description (audio_decoder_class_t *this) {
-  return "win32 binary audio codec plugin";
-}
-
 static void dispose_class (audio_decoder_class_t *this) {
   free (this);
 }
@@ -1658,8 +1642,8 @@ static void *init_audio_decoder_class (xine_t *xine, void *data) {
   this = (w32a_class_t *) xine_xmalloc (sizeof (w32a_class_t));
 
   this->decoder_class.open_plugin     = open_audio_decoder_plugin;
-  this->decoder_class.get_identifier  = get_identifier;
-  this->decoder_class.get_description = get_description;
+  this->decoder_class.identifier      = "win32 audio";
+  this->decoder_class.description     = _("win32 binary audio codec plugin");
   this->decoder_class.dispose         = dispose_class;
 
   pthread_once (&once_control, init_routine);

@@ -62,19 +62,9 @@ inline static int vdr_is_vdr_stream(xine_stream_t *stream)
     return 0;
   }
 
-  {
-    input_class_t *input_class = stream->input_plugin->input_class;
-
-    if (input_class->get_identifier)
-    {
-      const char *identifier = input_class->get_identifier(input_class);
-      if (identifier
-          && 0 == strcmp(identifier, "VDR"))
-      {
-        return 1;
-      }
-    }
-  }
+  if (stream->input_plugin->input_class->identifier &&
+      strcmp(stream->input_plugin->input_class->identifier, "VDR"))
+    return 1;
 
   return 0;
 }

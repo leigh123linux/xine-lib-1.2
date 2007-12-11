@@ -81,8 +81,6 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
 
 /* plugin class functions */
 static video_decoder_t *dxr3_open_plugin(video_decoder_class_t *class_gen, xine_stream_t *stream);
-static char            *dxr3_get_identifier(video_decoder_class_t *class_gen);
-static char            *dxr3_get_description(video_decoder_class_t *class_gen);
 static void             dxr3_class_dispose(video_decoder_class_t *class_gen);
 
 /* plugin instance functions */
@@ -169,8 +167,8 @@ static inline int dxr3_present(xine_stream_t *stream)
     node = (plugin_node_t *)stream->video_driver->node;
     if (node->plugin_class) {
       vo_class = (video_driver_class_t *)node->plugin_class;
-      if (vo_class->get_identifier)
-        present = (strcmp(vo_class->get_identifier(vo_class), DXR3_VO_ID) == 0);
+      if (vo_class->identifier)
+        present = (strcmp(vo_class->identifier, DXR3_VO_ID) == 0);
     }
   }
   llprintf(LOG_VID, "dxr3 %s\n", present ? "present" : "not present");
@@ -197,8 +195,8 @@ static void *dxr3_init_plugin(xine_t *xine, void *data)
   if (!this) return NULL;
   
   this->video_decoder_class.open_plugin     = dxr3_open_plugin;
-  this->video_decoder_class.get_identifier  = dxr3_get_identifier;
-  this->video_decoder_class.get_description = dxr3_get_description;
+  this->video_decoder_class.identifier      = "dxr3-mpeg2";
+  this->video_decoder_class.description     = _("MPEGI/II decoder plugin using the hardware decoding capabilities of a DXR3 decoder card.");
   this->video_decoder_class.dispose         = dxr3_class_dispose;
   
   this->instance                            = 0;
@@ -297,16 +295,6 @@ static video_decoder_t *dxr3_open_plugin(video_decoder_class_t *class_gen, xine_
   class->instance = 1;
   
   return &this->video_decoder;
-}
-
-static char *dxr3_get_identifier(video_decoder_class_t *class_gen)
-{
-  return "dxr3-mpeg2";
-}
-
-static char *dxr3_get_description(video_decoder_class_t *class_gen)
-{
-  return "MPEGI/II decoder plugin using the hardware decoding capabilities of a DXR3 decoder card.";
 }
 
 static void dxr3_class_dispose(video_decoder_class_t *class_gen)

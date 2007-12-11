@@ -570,14 +570,6 @@ static audio_decoder_t *qta_open_plugin (audio_decoder_class_t *class_gen,
  * qta plugin class
  */
 
-static char *qta_get_identifier (audio_decoder_class_t *this) {
-  return "qta";
-}
-
-static char *qta_get_description (audio_decoder_class_t *this) {
-  return "quicktime audio decoder plugin";
-}
-
 static void qta_dispose_class (audio_decoder_class_t *this) {
   free (this);
 }
@@ -595,8 +587,8 @@ static void *qta_init_class (xine_t *xine, void *data) {
   this = (qta_class_t *) xine_xmalloc (sizeof (qta_class_t));
 
   this->decoder_class.open_plugin     = qta_open_plugin;
-  this->decoder_class.get_identifier  = qta_get_identifier;
-  this->decoder_class.get_description = qta_get_description;
+  this->decoder_class.identifier      = "qta";
+  this->decoder_class.description     = _("quicktime audio decoder plugin");
   this->decoder_class.dispose         = qta_dispose_class;
 
   return this;
@@ -1081,14 +1073,6 @@ static video_decoder_t *qtv_open_plugin (video_decoder_class_t *class_gen,
  * qtv plugin class
  */
 
-static char *qtv_get_identifier (video_decoder_class_t *this) {
-  return "qtvdec";
-}
-
-static char *qtv_get_description (video_decoder_class_t *this) {
-  return "quicktime binary-only codec based video decoder plugin";
-}
-
 static void qtv_dispose_class (video_decoder_class_t *this) {
   free (this);
 }
@@ -1119,8 +1103,8 @@ static void *qtv_init_class (xine_t *xine, void *data) {
   this = (qtv_class_t *) xine_xmalloc (sizeof (qtv_class_t));
 
   this->decoder_class.open_plugin     = qtv_open_plugin;
-  this->decoder_class.get_identifier  = qtv_get_identifier;
-  this->decoder_class.get_description = qtv_get_description;
+  this->decoder_class.identifier      = "qtvdec";
+  this->decoder_class.description     = _("quicktime binary-only codec based video decoder plugin");
   this->decoder_class.dispose         = qtv_dispose_class;
 
   return this;

@@ -1488,8 +1488,8 @@ static void *init_sputext_demux_class (xine_t *xine, void *data) {
   this = xine_xmalloc (sizeof (demux_sputext_class_t));
 
   this->demux_class.open_plugin     = open_demux_plugin;
-  this->demux_class.get_description = get_demux_description;
-  this->demux_class.get_identifier  = get_demux_identifier;
+  this->demux_class.description     = FLAMEFIXMEget_demux_description;
+  this->demux_class.identifier      = FLAMEFIXMEget_demux_identifier;
   this->demux_class.get_mimetypes   = get_demux_mimetypes;
   this->demux_class.get_extensions  = get_demux_extensions;
   this->demux_class.dispose         = demux_class_dispose;
