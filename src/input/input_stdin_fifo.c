@@ -344,12 +344,6 @@ static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen,
 /*
  * stdin input plugin class stuff
  */
-static void stdin_class_dispose (input_class_t *this_gen) {
-  stdin_input_class_t  *this = (stdin_input_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
 
   stdin_input_class_t  *this;
@@ -363,7 +357,7 @@ static void *init_class (xine_t *xine, void *data) {
   this->input_class.description        = N_("stdin streaming input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
-  this->input_class.dispose            = stdin_class_dispose;
+  this->input_class.dispose            = default_input_class_dispose;
   this->input_class.eject_media        = NULL;
 
   return this;

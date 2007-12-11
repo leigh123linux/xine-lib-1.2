@@ -2749,20 +2749,13 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 /*
  * class functions
  */
-
-static void dispose_class (video_driver_class_t *this_gen) {
-  xxmc_class_t        *this = (xxmc_class_t *) this_gen;
-  
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *visual_gen) {
   xxmc_class_t        *this = (xxmc_class_t *) xine_xmalloc (sizeof (xxmc_class_t));
 
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.identifier      = "XxMC";
   this->driver_class.description     = N_("xine video output plugin using the MIT X video extension");
-  this->driver_class.dispose         = dispose_class;
+  this->driver_class.dispose         = default_video_driver_class_dispose;
 
   this->config                       = xine->config;
   this->xine                         = xine;

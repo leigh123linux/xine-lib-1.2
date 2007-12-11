@@ -385,12 +385,6 @@ static const char *get_mimetypes (demux_class_t *this_gen) {
   return "audio/x-realaudio: ra: RealAudio File;";
 }
 
-static void class_dispose (demux_class_t *this_gen) {
-  demux_ra_class_t *this = (demux_ra_class_t *) this_gen;
-
-  free (this);
-}
-
 void *demux_realaudio_init_plugin (xine_t *xine, void *data) {
   demux_ra_class_t     *this;
 
@@ -401,7 +395,7 @@ void *demux_realaudio_init_plugin (xine_t *xine, void *data) {
   this->demux_class.identifier      = "RA";
   this->demux_class.get_mimetypes   = get_mimetypes;
   this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }

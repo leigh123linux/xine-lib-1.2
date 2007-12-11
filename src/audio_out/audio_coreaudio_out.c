@@ -560,14 +560,6 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
 /*
  * class functions
  */
-
-static void dispose_class (audio_driver_class_t *this_gen) {
-
-  coreaudio_class_t *this = (coreaudio_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
 
   coreaudio_class_t        *this;
@@ -581,7 +573,7 @@ static void *init_class (xine_t *xine, void *data) {
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.identifier      = "coreaudio";
   this->driver_class.description     = N_("xine output plugin for Coreaudio/Mac OS X");
-  this->driver_class.dispose         = dispose_class;
+  this->driver_class.dispose         = default_audio_driver_class_dispose;
 
   this->config = xine->config;
   this->xine   = xine;

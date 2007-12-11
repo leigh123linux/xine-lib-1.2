@@ -307,10 +307,6 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   return &this->vo_driver;
 }    
 
-static void dispose_class (video_driver_class_t *this_gen) {
-  caca_class_t   *this = (caca_class_t *) this_gen;
-  free(this);
-}
 static void *init_class (xine_t *xine, void *visual_gen) {
   caca_class_t    *this;
   
@@ -319,7 +315,7 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.identifier      = "CACA";
   this->driver_class.description     = N_("xine video output plugin using the Color AsCii Art library");
-  this->driver_class.dispose         = dispose_class;
+  this->driver_class.dispose         = default_video_driver_class_dispose;
   
   this->config            = xine->config;
   this->xine              = xine;

@@ -249,10 +249,6 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
   return &this->audio_decoder;
 }
 
-static void dispose_class (audio_decoder_class_t *this) {
-  free (this);
-}
-
 static void *init_plugin (xine_t *xine, void *data) {
 
   gsm610_class_t *this ;
@@ -262,7 +258,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "GSM 6.10";
   this->decoder_class.description     = N_("GSM 6.10 audio decoder plugin");
-  this->decoder_class.dispose         = dispose_class;
+  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
 
   return this;
 }

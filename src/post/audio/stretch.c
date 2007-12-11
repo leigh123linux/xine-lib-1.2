@@ -659,11 +659,6 @@ static post_plugin_t *stretch_open_plugin(post_class_t *class_gen, int inputs,
   return &this->post;
 }
 
-static void stretch_class_dispose(post_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 /* plugin class initialization function */
 void *stretch_init_plugin(xine_t *xine, void *data)
 {
@@ -675,7 +670,7 @@ void *stretch_init_plugin(xine_t *xine, void *data)
   class->post_class.open_plugin     = stretch_open_plugin;
   class->post_class.identifier      = "stretch";
   class->post_class.description     = N_("Time stretch by a given factor, optionally preserving pitch");
-  class->post_class.dispose         = stretch_class_dispose;
+  class->post_class.dispose         = default_post_class_dispose;
   
   class->xine                       = xine;
   

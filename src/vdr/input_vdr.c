@@ -2627,14 +2627,6 @@ static input_plugin_t *vdr_class_get_instance(input_class_t *cls_gen, xine_strea
 /*
  * vdr input plugin class stuff
  */
-
-static void vdr_class_dispose (input_class_t *this_gen)
-{
-  vdr_input_class_t *this = (vdr_input_class_t *)this_gen;
-
-  free(this);
-}
-
 static char **vdr_class_get_autoplay_list(input_class_t *this_gen,
                                           int *num_files)
 {
@@ -2662,7 +2654,7 @@ static void *init_class(xine_t *xine, void *data)
   this->input_class.description       = N_("VDR display device plugin");
   this->input_class.get_dir           = NULL;
   this->input_class.get_autoplay_list = vdr_class_get_autoplay_list;
-  this->input_class.dispose           = vdr_class_dispose;
+  this->input_class.dispose           = default_input_class_dispose;
   this->input_class.eject_media       = NULL;
 
   return this;

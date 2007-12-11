@@ -81,7 +81,6 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
 
 /* plugin class functions */
 static video_decoder_t *dxr3_open_plugin(video_decoder_class_t *class_gen, xine_stream_t *stream);
-static void             dxr3_class_dispose(video_decoder_class_t *class_gen);
 
 /* plugin instance functions */
 static void dxr3_decode_data(video_decoder_t *this_gen, buf_element_t *buf);
@@ -197,7 +196,7 @@ static void *dxr3_init_plugin(xine_t *xine, void *data)
   this->video_decoder_class.open_plugin     = dxr3_open_plugin;
   this->video_decoder_class.identifier      = "dxr3-mpeg2";
   this->video_decoder_class.description     = N_("MPEGI/II decoder plugin using the hardware decoding capabilities of a DXR3 decoder card.");
-  this->video_decoder_class.dispose         = dxr3_class_dispose;
+  this->video_decoder_class.dispose         = default_video_decoder_class_dispose;
   
   this->instance                            = 0;
   
@@ -296,12 +295,6 @@ static video_decoder_t *dxr3_open_plugin(video_decoder_class_t *class_gen, xine_
   
   return &this->video_decoder;
 }
-
-static void dxr3_class_dispose(video_decoder_class_t *class_gen)
-{
-  free(class_gen);
-}
- 
 
 static void dxr3_decode_data(video_decoder_t *this_gen, buf_element_t *buf)
 {

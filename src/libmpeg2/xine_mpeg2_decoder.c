@@ -138,11 +138,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 /*
  * mpeg2 plugin class
  */
-
-static void dispose_class (video_decoder_class_t *this) {
-  free (this);
-}
-
 static void *init_plugin (xine_t *xine, void *data) {
 
   mpeg2_class_t *this;
@@ -152,7 +147,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "mpeg2dec";
   this->decoder_class.description     = N_("mpeg2 based video decoder plugin");
-  this->decoder_class.dispose         = dispose_class;
+  this->decoder_class.dispose         = default_video_decoder_class_dispose;
 
   return this;
 }

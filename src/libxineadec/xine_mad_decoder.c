@@ -335,11 +335,6 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 /*
  * mad plugin class
  */
-
-static void dispose_class (audio_decoder_class_t *this) {
-  free (this);
-}
-
 static void *init_plugin (xine_t *xine, void *data) {
 
   mad_class_t *this;
@@ -349,7 +344,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "mad";
   this->decoder_class.description     = N_("libmad based mpeg audio layer 1/2/3 decoder plugin");
-  this->decoder_class.dispose         = dispose_class;
+  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
 
   return this;
 }

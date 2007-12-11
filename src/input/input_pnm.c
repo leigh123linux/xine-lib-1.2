@@ -259,12 +259,6 @@ static input_plugin_t *pnm_class_get_instance (input_class_t *cls_gen, xine_stre
  * pnm input plugin class stuff
  */
 
-static void pnm_class_dispose (input_class_t *this_gen) {
-  pnm_input_class_t  *this = (pnm_input_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
 
   pnm_input_class_t  *this;
@@ -278,7 +272,7 @@ static void *init_class (xine_t *xine, void *data) {
   this->input_class.description        = N_("pnm streaming input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
-  this->input_class.dispose            = pnm_class_dispose;
+  this->input_class.dispose            = default_input_class_dispose;
   this->input_class.eject_media        = NULL;
 
   return this;

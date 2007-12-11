@@ -569,11 +569,6 @@ static audio_decoder_t *qta_open_plugin (audio_decoder_class_t *class_gen,
 /*
  * qta plugin class
  */
-
-static void qta_dispose_class (audio_decoder_class_t *this) {
-  free (this);
-}
-
 static void *qta_init_class (xine_t *xine, void *data) {
 
   qta_class_t     *this;
@@ -589,7 +584,7 @@ static void *qta_init_class (xine_t *xine, void *data) {
   this->decoder_class.open_plugin     = qta_open_plugin;
   this->decoder_class.identifier      = "qta";
   this->decoder_class.description     = N_("quicktime audio decoder plugin");
-  this->decoder_class.dispose         = qta_dispose_class;
+  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
 
   return this;
 }
@@ -1073,10 +1068,6 @@ static video_decoder_t *qtv_open_plugin (video_decoder_class_t *class_gen,
  * qtv plugin class
  */
 
-static void qtv_dispose_class (video_decoder_class_t *this) {
-  free (this);
-}
-
 /*
  * some fake functions to make qt codecs happy 
  */
@@ -1105,7 +1096,7 @@ static void *qtv_init_class (xine_t *xine, void *data) {
   this->decoder_class.open_plugin     = qtv_open_plugin;
   this->decoder_class.identifier      = "qtvdec";
   this->decoder_class.description     = N_("quicktime binary-only codec based video decoder plugin");
-  this->decoder_class.dispose         = qtv_dispose_class;
+  this->decoder_class.dispose         = default_video_decoder_class_dispose;
 
   return this;
 }

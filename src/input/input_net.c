@@ -505,12 +505,6 @@ static input_plugin_t *net_class_get_instance (input_class_t *cls_gen, xine_stre
  *  net plugin class
  */
  
-static void net_class_dispose (input_class_t *this_gen) {
-  net_input_class_t  *this = (net_input_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
 
   net_input_class_t  *this;
@@ -524,7 +518,7 @@ static void *init_class (xine_t *xine, void *data) {
   this->input_class.identifier        = "TCP";
   this->input_class.get_dir           = NULL;
   this->input_class.get_autoplay_list = NULL;
-  this->input_class.dispose           = net_class_dispose;
+  this->input_class.dispose           = default_input_class_dispose;
   this->input_class.eject_media       = NULL;
 
   return this;

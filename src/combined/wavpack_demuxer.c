@@ -386,12 +386,6 @@ static const char *get_mimetypes (demux_class_t *const this_gen) {
   return NULL;
 }
 
-static void class_dispose (demux_class_t *const this_gen) {
-  demux_wv_class_t *const this = (demux_wv_class_t *) this_gen;
-
-  free (this);
-}
-
 void *demux_wv_init_plugin (xine_t *const xine, void *const data) {
   demux_wv_class_t *const this = xine_xmalloc (sizeof (demux_wv_class_t));
 
@@ -400,7 +394,7 @@ void *demux_wv_init_plugin (xine_t *const xine, void *const data) {
   this->demux_class.identifier      = "Wavpack";
   this->demux_class.get_mimetypes   = get_mimetypes;
   this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }

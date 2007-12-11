@@ -452,11 +452,6 @@ static post_plugin_t *fftgraph_open_plugin(post_class_t *class_gen, int inputs,
   return &this->post;
 }
 
-static void fftgraph_class_dispose(post_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 /* plugin class initialization function */
 void *fftgraph_init_plugin(xine_t *xine, void *data)
 {
@@ -468,7 +463,7 @@ void *fftgraph_init_plugin(xine_t *xine, void *data)
   class->post_class.open_plugin     = fftgraph_open_plugin;
   class->post_class.identifier      = "fftgraph";
   class->post_class.description     = N_("fftgraph Visualization Post Plugin");
-  class->post_class.dispose         = fftgraph_class_dispose;
+  class->post_class.dispose         = default_post_class_dispose;
   
   class->xine                       = xine;
   

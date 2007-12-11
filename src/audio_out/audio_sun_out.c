@@ -1011,14 +1011,6 @@ static ao_driver_t *ao_sun_open_plugin (audio_driver_class_t *class_gen, const v
 /*
  * class functions
  */
-
-static void ao_sun_dispose_class (audio_driver_class_t *this_gen) {
-
-  sun_class_t *this = (sun_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *ao_sun_init_class (xine_t *xine, void *data) {
   sun_class_t         *this;
 
@@ -1029,7 +1021,7 @@ static void *ao_sun_init_class (xine_t *xine, void *data) {
   this->driver_class.open_plugin     = ao_sun_open_plugin;
   this->driver_class.identifier      = "sun";
   this->driver_class.description     = N_("xine audio output plugin using sun-compliant audio devices/drivers");
-  this->driver_class.dispose         = ao_sun_dispose_class;
+  this->driver_class.dispose         = default_audio_driver_class_dispose;
 
   this->xine = xine;
 

@@ -339,10 +339,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   return &this->video_decoder;
 }
 
-static void dispose_class (video_decoder_class_t *this) {
-  free (this);
-}
-
 static void *init_plugin (xine_t *xine, void *data) {
 
   yuv_class_t *this;
@@ -352,7 +348,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "YUV";
   this->decoder_class.description     = N_("Raw YUV video decoder plugin");
-  this->decoder_class.dispose         = dispose_class;
+  this->decoder_class.dispose         = default_video_decoder_class_dispose;
 
   return this;
 }

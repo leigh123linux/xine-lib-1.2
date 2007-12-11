@@ -582,11 +582,6 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
 /*
  * real plugin class
  */
-
-static void dispose_class (audio_decoder_class_t *this) {
-  free (this);
-}
-
 void *init_realadec (xine_t *xine, void *data) {
 
   real_class_t       *this;
@@ -597,7 +592,7 @@ void *init_realadec (xine_t *xine, void *data) {
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "realadec";
   this->decoder_class.description     = N_("real binary-only codec based audio decoder plugin");
-  this->decoder_class.dispose         = dispose_class;
+  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
 
   _x_real_codecs_init(xine);
 

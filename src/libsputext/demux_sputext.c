@@ -1459,12 +1459,6 @@ static const char *get_demux_mimetypes (demux_class_t *this_gen) {
   /* "text/plain: asc txt sub srt: VIDEO subtitles;" */
 }
 
-static void demux_class_dispose (demux_class_t *this_gen) {
-  demux_sputext_class_t *this = (demux_sputext_class_t *) this_gen;
-
-  free (this);
-}
-
 static void config_timeout_cb(void *this_gen, xine_cfg_entry_t *entry) {
   demux_sputext_class_t *this = (demux_sputext_class_t *)this_gen;
 
@@ -1484,7 +1478,7 @@ static void *init_sputext_demux_class (xine_t *xine, void *data) {
   this->demux_class.identifier      = "sputext";
   this->demux_class.get_mimetypes   = get_demux_mimetypes;
   this->demux_class.get_extensions  = get_demux_extensions;
-  this->demux_class.dispose         = demux_class_dispose;
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   /* 
    * Some subtitling formats, namely AQT and Subrip09, define the end of a

@@ -355,11 +355,6 @@ static post_plugin_t *oscope_open_plugin(post_class_t *class_gen, int inputs,
   return &this->post;
 }
 
-static void oscope_class_dispose(post_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 /* plugin class initialization function */
 void *oscope_init_plugin(xine_t *xine, void *data)
 {
@@ -371,7 +366,7 @@ void *oscope_init_plugin(xine_t *xine, void *data)
   class->post_class.open_plugin     = oscope_open_plugin;
   class->post_class.identifier      = "Oscilloscope";
   class->post_class.description     = N_("Oscilloscope");
-  class->post_class.dispose         = oscope_class_dispose;
+  class->post_class.dispose         = default_post_class_dispose;
   
   class->xine                       = xine;
   

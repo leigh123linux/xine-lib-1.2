@@ -329,11 +329,6 @@ static post_plugin_t *upmix_mono_open_plugin(post_class_t *class_gen, int inputs
   return &this->post;
 }
 
-static void upmix_mono_class_dispose(post_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 /* plugin class initialization function */
 void *upmix_mono_init_plugin(xine_t *xine, void *data)
 {
@@ -345,7 +340,7 @@ void *upmix_mono_init_plugin(xine_t *xine, void *data)
   class->post_class.open_plugin     = upmix_mono_open_plugin;
   class->post_class.identifier      = "upmix_mono";
   class->post_class.description     = N_("converts Mono into Stereo");
-  class->post_class.dispose         = upmix_mono_class_dispose;
+  class->post_class.dispose         = default_post_class_dispose;
   
   class->xine                       = xine;
   

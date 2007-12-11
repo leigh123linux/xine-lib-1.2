@@ -377,10 +377,6 @@ static audio_decoder_t *dvaudio_open_plugin (audio_decoder_class_t *class_gen, x
   return &this->audio_decoder;
 }
 
-static void dvaudio_dispose_class (audio_decoder_class_t *this) {
-  free (this);
-}
-
 static void *init_dvaudio_plugin (xine_t *xine, void *data) {
 
   dvaudio_class_t *this ;
@@ -390,7 +386,7 @@ static void *init_dvaudio_plugin (xine_t *xine, void *data) {
   this->decoder_class.open_plugin     = dvaudio_open_plugin;
   this->decoder_class.identifier      = "dv audio";
   this->decoder_class.description     = N_("dv audio decoder plugin");
-  this->decoder_class.dispose         = dvaudio_dispose_class;
+  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
 
   return this;
 }

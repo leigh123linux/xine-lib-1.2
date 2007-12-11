@@ -350,12 +350,6 @@ static vo_driver_t *open_plugin(video_driver_class_t *driver_class, const void *
  * Class related functions.
  */
 
-static void dispose_class (video_driver_class_t *driver_class) {
-  macosx_class_t    *this = (macosx_class_t *) driver_class;
-  
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *visual) {
   macosx_class_t        *this;
   
@@ -364,7 +358,7 @@ static void *init_class (xine_t *xine, void *visual) {
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.identifier      = "MacOSX";
   this->driver_class.description     = N_("xine video output plugin for Mac OS X");
-  this->driver_class.dispose         = dispose_class;
+  this->driver_class.dispose         = default_video_driver_class;
 
   this->config                       = xine->config;
   this->xine                         = xine;

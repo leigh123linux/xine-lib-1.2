@@ -769,11 +769,6 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
   return &this->audio_decoder;
 }
 
-static void dispose_class (audio_decoder_class_t *this) {
-  lprintf ("dispose_class called\n");
-  free (this);
-}
-
 static void *init_plugin (xine_t *xine, void *data) {
 
   a52dec_class_t *this;
@@ -784,7 +779,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "a/52dec";
   this->decoder_class.description     = N_("liba52 based a52 audio decoder plugin");
-  this->decoder_class.dispose         = dispose_class;
+  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
 
   cfg = this->config = xine->config;
 

@@ -447,11 +447,6 @@ static post_plugin_t *volnorm_open_plugin(post_class_t *class_gen, int inputs,
     return &this->post;
 }
 
-static void volnorm_class_dispose(post_class_t *class_gen)
-{
-    free(class_gen);
-}
-
 /* plugin class initialization function */
 void *volnorm_init_plugin(xine_t *xine, void *data)
 {
@@ -463,7 +458,7 @@ void *volnorm_init_plugin(xine_t *xine, void *data)
     class->post_class.open_plugin     = volnorm_open_plugin;
     class->post_class.identifier      = "volnorm";
     class->post_class.description     = N_("Normalize volume");
-    class->post_class.dispose         = volnorm_class_dispose;
+    class->post_class.dispose         = default_post_class_dispose;
     
     class->xine                       = xine;
     

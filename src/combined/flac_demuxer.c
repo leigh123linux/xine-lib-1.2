@@ -723,15 +723,6 @@ get_mimetypes (demux_class_t *this_gen) {
     return "application/x-flac: flac: FLAC Audio;";
 }
 
-static void 
-class_dispose (demux_class_t *this_gen) {
-    demux_flac_class_t *this = (demux_flac_class_t *) this_gen;
-
-    lprintf("class_dispose\n");
-
-    free (this);
-}
-
 void *
 demux_flac_init_class (xine_t *xine, void *data) {
 
@@ -748,7 +739,7 @@ demux_flac_init_class (xine_t *xine, void *data) {
     this->demux_class.identifier      = "FLAC";
     this->demux_class.get_mimetypes   = get_mimetypes;
     this->demux_class.get_extensions  = get_extensions;
-    this->demux_class.dispose         = class_dispose;
+    this->demux_class.dispose         = default_demux_class_dispose;
 
     return this;
 }

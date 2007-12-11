@@ -256,15 +256,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
 /*
  * image plugin class
  */
-
-static void dispose_class (video_decoder_class_t *this_gen) {
-  image_class_t   *this = (image_class_t *) this_gen;
-
-  lprintf("class closed\n");
-  
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
 
   image_class_t       *this;
@@ -274,7 +265,7 @@ static void *init_class (xine_t *xine, void *data) {
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "gdkpixbuf";
   this->decoder_class.description     = N_("gdk-pixbuf image video decoder plugin");
-  this->decoder_class.dispose         = dispose_class;
+  this->decoder_class.dispose         = default_video_decoder_class_dispose;
 
   /*
    * initialisation of privates

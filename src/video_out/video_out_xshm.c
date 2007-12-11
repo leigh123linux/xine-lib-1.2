@@ -1290,20 +1290,13 @@ static vo_driver_t *xshm_open_plugin_old (video_driver_class_t *class_gen, const
 /*
  * class functions
  */
-
-static void xshm_dispose_class (video_driver_class_t *this_gen) {
-  xshm_class_t         *this = (xshm_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *xshm_init_class (xine_t *xine, void *visual_gen) {
   xshm_class_t	       *this = (xshm_class_t *) xine_xmalloc (sizeof (xshm_class_t));
 
   this->driver_class.open_plugin     = xshm_open_plugin_old;
   this->driver_class.identifier      = "XShm";
   this->driver_class.description     = N_("xine video output plugin using the MIT X shared memory extension");
-  this->driver_class.dispose         = xshm_dispose_class;
+  this->driver_class.dispose         = default_video_driver_class_dispose;
   this->config                       = xine->config;
   this->xine                         = xine;
 

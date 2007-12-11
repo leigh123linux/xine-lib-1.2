@@ -80,7 +80,6 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
 
 /* plugin class functions */
 static spu_decoder_t *dxr3_spudec_open_plugin(spu_decoder_class_t *class_gen, xine_stream_t *stream);
-static void           dxr3_spudec_class_dispose(spu_decoder_class_t *class_gen);
 
 /* plugin instance functions */
 static void    dxr3_spudec_decode_data(spu_decoder_t *this_gen, buf_element_t *buf);
@@ -202,7 +201,7 @@ static void *dxr3_spudec_init_plugin(xine_t *xine, void* data)
   this->spu_decoder_class.open_plugin     = dxr3_spudec_open_plugin;
   this->spu_decoder_class.identifier      = "dxr3-spudec";
   this->spu_decoder_class.description     = N_("subtitle decoder plugin using the hardware decoding capabilities of a DXR3 decoder card");
-  this->spu_decoder_class.dispose         = dxr3_spudec_class_dispose;
+  this->spu_decoder_class.dispose         = default_spu_decoder_class_dispose;
   
   this->instance                          = 0;
   
@@ -272,12 +271,6 @@ static spu_decoder_t *dxr3_spudec_open_plugin(spu_decoder_class_t *class_gen, xi
   
   return &this->spu_decoder;
 }
-
-static void dxr3_spudec_class_dispose(spu_decoder_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 
 static void dxr3_spudec_decode_data(spu_decoder_t *this_gen, buf_element_t *buf)
 {

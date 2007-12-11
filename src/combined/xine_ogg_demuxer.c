@@ -2125,12 +2125,6 @@ static const char *anx_get_mimetypes (demux_class_t *this_gen) {
   return "application/x-annodex: ogg: Annodex media;";
 }
 
-static void anx_class_dispose (demux_class_t *this_gen) {
-  demux_anx_class_t *this = (demux_anx_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *anx_init_class (xine_t *xine, void *data) {
   demux_anx_class_t     *this;
 
@@ -2141,7 +2135,7 @@ static void *anx_init_class (xine_t *xine, void *data) {
   this->demux_class.identifier      = "Annodex";
   this->demux_class.get_mimetypes   = anx_get_mimetypes;
   this->demux_class.get_extensions  = anx_get_extensions;
-  this->demux_class.dispose         = anx_class_dispose;
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }
@@ -2161,12 +2155,6 @@ static const char *ogg_get_mimetypes (demux_class_t *this_gen) {
          "application/ogg: ogg: Ogg Stream;";
 }
 
-static void ogg_class_dispose (demux_class_t *this_gen) {
-  demux_ogg_class_t *this = (demux_ogg_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *ogg_init_class (xine_t *xine, void *data) {
   demux_ogg_class_t     *this;
 
@@ -2177,7 +2165,7 @@ static void *ogg_init_class (xine_t *xine, void *data) {
   this->demux_class.identifier      = "OGG";
   this->demux_class.get_mimetypes   = ogg_get_mimetypes;
   this->demux_class.get_extensions  = ogg_get_extensions;
-  this->demux_class.dispose         = ogg_class_dispose;
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }

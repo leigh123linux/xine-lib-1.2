@@ -445,14 +445,6 @@ smb_plugin_open (input_plugin_t *this_gen )
 	return 1;
 }
 
-static void
-smb_class_dispose (input_class_t *this_gen)
-{
-	smb_input_class_t *this = (smb_input_class_t *) this_gen;
-
-	free (this);
-}
-
 static input_plugin_t *
 smb_class_get_instance (input_class_t *class_gen, xine_stream_t *stream,
 		const char *mrl)
@@ -511,7 +503,7 @@ static void
 	this->input_class.description        = N_("CIFS/SMB input plugin based on libsmbclient");
 	this->input_class.get_dir            = smb_class_get_dir;
 	this->input_class.get_autoplay_list  = NULL;
-	this->input_class.dispose            = smb_class_dispose;
+	this->input_class.dispose            = default_input_class_dispose;
 	this->input_class.eject_media        = NULL;
 
  _exit_error:

@@ -1113,14 +1113,6 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   return this;
 }
 
-static void dispose_class (video_driver_class_t *this_gen) {
-  vidix_class_t        *this = (vidix_class_t *) this_gen;
-
-
-
-  free (this);
-}
-
 #ifdef HAVE_X11
 static vo_driver_t *vidix_open_plugin (video_driver_class_t *class_gen, const void *visual_gen) {
   vidix_driver_t       *this   = open_plugin(class_gen);
@@ -1201,7 +1193,7 @@ static void *vidix_init_class (xine_t *xine, void *visual_gen) {
     this->driver_class.open_plugin     = vidix_open_plugin;
     this->driver_class.identifier      = "vidix";
     this->driver_class.description     = N_("xine video output plugin using libvidix for x11");
-    this->driver_class.dispose         = dispose_class;
+    this->driver_class.dispose         = default_video_driver_class_dispose;
   }
   
   return this;
@@ -1275,7 +1267,7 @@ static void *vidixfb_init_class (xine_t *xine, void *visual_gen) {
     this->driver_class.open_plugin     = vidixfb_open_plugin;
     this->driver_class.identifier      = "vidixfb";
     this->driver_class.description     = N_("xine video output plugin using libvidix for linux frame buffer");
-    this->driver_class.dispose         = dispose_class;
+    this->driver_class.dispose         = default_video_driver_class_dispose;
   }
   
   return this;

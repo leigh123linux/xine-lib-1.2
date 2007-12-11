@@ -231,13 +231,6 @@ static const char *get_mimetypes (demux_class_t *this_gen) {
   return NULL;
 }
 
-static void class_dispose (demux_class_t *this_gen) {
-  demux_image_class_t *this = (demux_image_class_t *) this_gen;
-
-  lprintf("class closed\n");
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
   demux_image_class_t     *this;
 
@@ -248,7 +241,7 @@ static void *init_class (xine_t *xine, void *data) {
   this->demux_class.identifier      = "imagedmx";
   this->demux_class.get_mimetypes   = get_mimetypes;
   this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   lprintf("class opened\n");
   return this;

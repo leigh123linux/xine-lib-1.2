@@ -1900,13 +1900,6 @@ static input_plugin_t *v4l_class_get_radio_instance (input_class_t *cls_gen,
 /*
  * v4l input plugin class stuff
  */
-
-static void v4l_class_dispose (input_class_t *this_gen) {
-  v4l_input_class_t  *this = (v4l_input_class_t *) this_gen;
-  
-  free (this);
-}
-
 static void *init_video_class (xine_t *xine, void *data)
 {
   v4l_input_class_t  *this;
@@ -1921,7 +1914,7 @@ static void *init_video_class (xine_t *xine, void *data)
   this->input_class.description        = N_("v4l tv input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
-  this->input_class.dispose            = v4l_class_dispose;
+  this->input_class.dispose            = default_input_class_dispose;
   this->input_class.eject_media        = NULL;
   
   config->register_filename (config, "media.video4linux.video_device",
@@ -1953,7 +1946,7 @@ static void *init_radio_class (xine_t *xine, void *data)
   this->input_class.description        = N_("v4l radio input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
-  this->input_class.dispose            = v4l_class_dispose;
+  this->input_class.dispose            = default_input_class_dispose;
   this->input_class.eject_media        = NULL;
   
   config->register_filename (config, "media.video4linux.radio_device",
