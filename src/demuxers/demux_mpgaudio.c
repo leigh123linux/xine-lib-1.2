@@ -1025,34 +1025,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 /*
  * demux mpegaudio class
  */
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  demux_mpgaudio_class_t *this = (demux_mpgaudio_class_t *) this_gen;
-  
-  if( _x_decoder_available(this->xine, BUF_AUDIO_MPEG) )
-    return "mp3 mp2 mpa mpega";
-  else
-    return "";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  demux_mpgaudio_class_t *this = (demux_mpgaudio_class_t *) this_gen;
-
-  if( _x_decoder_available(this->xine, BUF_AUDIO_MPEG) )
-    return "audio/mpeg2: mp2: MPEG audio;"
-          "audio/x-mpeg2: mp2: MPEG audio;"
-          "audio/mpeg3: mp3: MPEG audio;"
-          "audio/x-mpeg3: mp3: MPEG audio;"
-          "audio/mpeg: mpa,abs,mpega: MPEG audio;"
-          "audio/x-mpeg: mpa,abs,mpega: MPEG audio;"
-          "audio/x-mpegurl: mp3: MPEG audio;"
-          "audio/mpegurl: mp3: MPEG audio;"
-          "audio/mp3: mp3: MPEG audio;"
-          "audio/x-mp3: mp3: MPEG audio;";
-  else
-    return "";
-}
-
 void *demux_mpgaudio_init_class (xine_t *xine, void *data) {
   
   demux_mpgaudio_class_t     *this;
@@ -1063,8 +1035,23 @@ void *demux_mpgaudio_init_class (xine_t *xine, void *data) {
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.description     = N_("MPEG audio demux plugin");
   this->demux_class.identifier      = "MPEGAUDIO";
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
+  if( _x_decoder_available(this->xine, BUF_AUDIO_MPEG) ) {
+    this->demux_class.mimetypes = 
+      "audio/mpeg2: mp2: MPEG audio;"
+      "audio/x-mpeg2: mp2: MPEG audio;"
+      "audio/mpeg3: mp3: MPEG audio;"
+      "audio/x-mpeg3: mp3: MPEG audio;"
+      "audio/mpeg: mpa,abs,mpega: MPEG audio;"
+      "audio/x-mpeg: mpa,abs,mpega: MPEG audio;"
+      "audio/x-mpegurl: mp3: MPEG audio;"
+      "audio/mpegurl: mp3: MPEG audio;"
+      "audio/mp3: mp3: MPEG audio;"
+      "audio/x-mp3: mp3: MPEG audio;";
+    this->demux_class.extensions    = "mp3 mp2 mpa mpega";
+  } else {
+    this->demux_class.mimetypes     = NULL;
+    this->demux_class.extensions    = NULL;
+  }
   this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;

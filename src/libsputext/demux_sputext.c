@@ -1448,17 +1448,6 @@ static demux_plugin_t *open_demux_plugin (demux_class_t *class_gen, xine_stream_
   return NULL;
 }
   
-static const char *get_demux_extensions (demux_class_t *this_gen) {
-  return "asc txt sub srt smi ssa";
-}
-
-static const char *get_demux_mimetypes (demux_class_t *this_gen) {
-  return NULL;
-
-  /* do not report this mimetype, it might confuse browsers. */
-  /* "text/plain: asc txt sub srt: VIDEO subtitles;" */
-}
-
 static void config_timeout_cb(void *this_gen, xine_cfg_entry_t *entry) {
   demux_sputext_class_t *this = (demux_sputext_class_t *)this_gen;
 
@@ -1476,8 +1465,10 @@ static void *init_sputext_demux_class (xine_t *xine, void *data) {
   this->demux_class.open_plugin     = open_demux_plugin;
   this->demux_class.description     = N_("sputext demuxer plugin");
   this->demux_class.identifier      = "sputext";
-  this->demux_class.get_mimetypes   = get_demux_mimetypes;
-  this->demux_class.get_extensions  = get_demux_extensions;
+  /* do not report this mimetype, it might confuse browsers. */
+  /* "text/plain: asc txt sub srt: VIDEO subtitles;" */
+  this->demux_class.mimetypes       = NULL;
+  this->demux_class.extensions      = "asc txt sub srt smi ssa";
   this->demux_class.dispose         = default_demux_class_dispose;
 
   /* 

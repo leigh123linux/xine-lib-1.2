@@ -215,15 +215,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 /*
  * image demuxer class
  */
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "png gif jpg jpeg";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return NULL;
-}
-
 static void *init_class (xine_t *xine, void *data) {
   demux_image_class_t     *this;
 
@@ -232,8 +223,8 @@ static void *init_class (xine_t *xine, void *data) {
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.description     = N_("image demux plugin");
   this->demux_class.identifier      = "imagedmx";
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
+  this->demux_class.mimetypes       = NULL;
+  this->demux_class.extensions      = "png gif jpg jpeg";
   this->demux_class.dispose         = default_demux_class_dispose;
 
   lprintf("class opened\n");

@@ -2116,15 +2116,6 @@ static demux_plugin_t *ogg_open_plugin (demux_class_t *class_gen,
 /*
  * Annodex demuxer class
  */
-
-static const char *anx_get_extensions (demux_class_t *this_gen) {
-  return "anx axa axv";
-}
-
-static const char *anx_get_mimetypes (demux_class_t *this_gen) {
-  return "application/x-annodex: ogg: Annodex media;";
-}
-
 static void *anx_init_class (xine_t *xine, void *data) {
   demux_anx_class_t     *this;
 
@@ -2133,8 +2124,8 @@ static void *anx_init_class (xine_t *xine, void *data) {
   this->demux_class.open_plugin     = anx_open_plugin;
   this->demux_class.description     = N_("Annodex demux plugin");
   this->demux_class.identifier      = "Annodex";
-  this->demux_class.get_mimetypes   = anx_get_mimetypes;
-  this->demux_class.get_extensions  = anx_get_extensions;
+  this->demux_class.mimetypes       = "application/x-annodex: ogg: Annodex media;";
+  this->demux_class.extensions      = "anx axa axv";
   this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
@@ -2143,18 +2134,6 @@ static void *anx_init_class (xine_t *xine, void *data) {
 /*
  * ogg demuxer class
  */
-
-static const char *ogg_get_extensions (demux_class_t *this_gen) {
-  return "ogg ogm spx";
-}
-
-static const char *ogg_get_mimetypes (demux_class_t *this_gen) {
-  return "audio/x-ogg: ogg: OggVorbis Audio;"
-         "audio/x-speex: ogg: Speex Audio;"
-         "application/x-ogg: ogg: Ogg Stream;"
-         "application/ogg: ogg: Ogg Stream;";
-}
-
 static void *ogg_init_class (xine_t *xine, void *data) {
   demux_ogg_class_t     *this;
 
@@ -2163,8 +2142,12 @@ static void *ogg_init_class (xine_t *xine, void *data) {
   this->demux_class.open_plugin     = ogg_open_plugin;
   this->demux_class.description     = N_("OGG demux plugin");
   this->demux_class.identifier      = "OGG";
-  this->demux_class.get_mimetypes   = ogg_get_mimetypes;
-  this->demux_class.get_extensions  = ogg_get_extensions;
+  this->demux_class.mimetypes       =
+    "audio/x-ogg: ogg: OggVorbis Audio;"
+    "audio/x-speex: ogg: Speex Audio;"
+    "application/x-ogg: ogg: Ogg Stream;"
+    "application/ogg: ogg: Ogg Stream;";
+  this->demux_class.extensions      = "ogg ogm spx";
   this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;

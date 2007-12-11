@@ -219,14 +219,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static const char *get_extensions (demux_class_t *this_gen) {
-  return NULL;
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return NULL;
-}
-
 void *demux_cdda_init_plugin (xine_t *xine, void *data) {
   demux_cdda_class_t     *this;
 
@@ -235,8 +227,8 @@ void *demux_cdda_init_plugin (xine_t *xine, void *data) {
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.description     = N_("CD Digital Audio demux plugin");
   this->demux_class.identifier      = "CDDA";
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
+  this->demux_class.mimetypes       = NULL;
+  this->demux_class.extensions      = NULL;
   this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;

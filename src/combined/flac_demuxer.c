@@ -712,17 +712,6 @@ open_plugin (demux_class_t *class_gen,
 
 
 /* FLAC Demuxer class */
-
-static char *
-get_extensions (demux_class_t *this_gen) {
-    return "flac";
-}
-
-static char *
-get_mimetypes (demux_class_t *this_gen) {
-    return "application/x-flac: flac: FLAC Audio;";
-}
-
 void *
 demux_flac_init_class (xine_t *xine, void *data) {
 
@@ -737,8 +726,8 @@ demux_flac_init_class (xine_t *xine, void *data) {
     this->demux_class.open_plugin     = open_plugin;
     this->demux_class.description     = N_("FLAC demux plugin");
     this->demux_class.identifier      = "FLAC";
-    this->demux_class.get_mimetypes   = get_mimetypes;
-    this->demux_class.get_extensions  = get_extensions;
+    this->demux_class.mimetypes       = "application/x-flac: flac: FLAC Audio;";
+    this->demux_class.extensions      = "flac";
     this->demux_class.dispose         = default_demux_class_dispose;
 
     return this;

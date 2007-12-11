@@ -70,20 +70,19 @@ struct demux_class_s {
    */
   const char *textdomain;
   
-  /*
-   * return MIME types supported for this plugin
+  /**
+   * @brief MIME types supported for this plugin
    */
 
-  const char* (*get_mimetypes) (demux_class_t *this);
+  const char* mimetypes;
 
-  /*
-   * return ' ' seperated list of file extensions this
-   * demuxer is likely to handle
-   * (will be used to filter media files in 
-   * file selection dialogs)
+  /**
+   * @brief space separated list of file extensions this demuxer is
+   * likely to handle
+   *
+   * (will be used to filter media files in file selection dialogs)
    */
-
-  const char* (*get_extensions) (demux_class_t *this);
+  const char* extensions;
 
   /*
    * close down, free all resources
