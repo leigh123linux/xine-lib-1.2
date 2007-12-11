@@ -855,16 +855,6 @@ static vo_driver_t *pgx32_init_driver(video_driver_class_t *class_gen, const voi
   return (vo_driver_t *)this;
 }
 
-static char *pgx32_get_identifier(video_driver_class_t *class_gen)
-{
-  return "pgx32";
-}
-
-static char *pgx32_get_description(video_driver_class_t *class_gen)
-{
-  return "xine video output plugin for Sun PGX32 framebuffers";
-}
-
 static void *pgx32_init_class(xine_t *xine, void *visual_gen)
 {
   pgx32_driver_class_t *class;
@@ -877,8 +867,8 @@ static void *pgx32_init_class(xine_t *xine, void *visual_gen)
   DGA_INIT();
 
   class->vo_driver_class.open_plugin     = pgx32_init_driver;
-  class->vo_driver_class.get_identifier  = pgx32_get_identifier;
-  class->vo_driver_class.get_description = pgx32_get_description;
+  class->vo_driver_class.identifier      = "pgx32";
+  class->vo_driver_class.description     = _("xine video output plugin for Sun PGX32 framebuffers");
   class->vo_driver_class.dispose         = pgx32_dispose_class;
 
   class->xine   = xine;
