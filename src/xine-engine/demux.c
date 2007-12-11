@@ -448,6 +448,7 @@ int _x_demux_read_header( input_plugin_t *input, unsigned char *buffer, off_t si
 
 int _x_demux_check_extension (const char *mrl, const char *extensions){
   char *last_dot, *e, *ext_copy, *ext_work;
+  int found = 0;
 
   /* An empty extensions string means that the by-extension method can't
      be used, so consider those cases as always passing. */
@@ -459,15 +460,21 @@ int _x_demux_check_extension (const char *mrl, const char *extensions){
   last_dot = strrchr (mrl, '.');
   if (last_dot) {
     last_dot++;
-    while ( ( e = xine_strsep(&ext_work, " ")) != NULL ) {
-      if (strcasecmp (last_dot, e) == 0) {
-        free(ext_copy);
-        return 1;
+  }
+
+  while ( ( e = xine_strsep(&ext_work, " ")) != NULL ) {
+    if ( strstr(e, ":/") ) {
+      if ( strcasecmp (mrl, e) == 0 ) {
+	found = 1;
+	break;
       }
+    } else if (strcasecmp (last_dot, e) == 0) {
+      found = 1;
+      break;
     }
   }
   free(ext_copy);
-  return 0;
+  return found;
 }
 
 
