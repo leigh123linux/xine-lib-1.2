@@ -15,10 +15,11 @@ OBJS= mathematics.o \
       random.o \
       aes.o \
       base64.o \
+      sha1.o \
 
 HEADERS = avutil.h common.h mathematics.h integer.h rational.h \
           intfloat_readwrite.h md5.h adler32.h log.h fifo.h lzo.h \
-          random.h mem.h base64.h
+          random.h mem.h base64.h sha1.h
 
 NAME=avutil
 LIBVERSION=$(LAVUVERSION)
