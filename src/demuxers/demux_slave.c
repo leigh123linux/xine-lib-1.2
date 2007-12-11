@@ -335,16 +335,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   switch (stream->content_detection_method) {
 
-  case METHOD_BY_MRL: {
-    const char *const mrl = input->get_mrl (input);
-
-    if(!strncmp(mrl, "slave://", 8))
-      break;
-
-    free (this);
-    return NULL;
-  }
-
   case METHOD_BY_CONTENT: {
 
     if (_x_demux_read_header(input, this->scratch, SCRATCH_SIZE) > 0) {
@@ -356,6 +346,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
+  case METHOD_BY_MRL:
   case METHOD_EXPLICIT:
   break;
 
@@ -398,7 +389,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->demux_class.description     = "";
   this->demux_class.identifier      = "slave";
   this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = NULL;
+  this->demux_class.extensions      = "slave://";
   this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;

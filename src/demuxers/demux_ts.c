@@ -2162,32 +2162,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   }
     break;
 
-  case METHOD_BY_MRL: {
-    const char *const mrl = input->get_mrl (input);
-
-    /* check extension */
-    if (_x_demux_check_extension (mrl, class_gen->extensions))
-      break;
-
-    /* accept dvb streams */
-    /*
-     * Also handle the special dvbs,dvbt and dvbc mrl formats:
-     * the content is exactly the same but the input plugin
-     * uses a different tuning algorithm [Pragma]
-     */
-
-    if (!strncasecmp (mrl, "dvb://", 6))
-      break;
-    if (!strncasecmp (mrl, "dvbs://", 7))
-      break;
-    if (!strncasecmp (mrl, "dvbc://", 7))
-      break;
-    if (!strncasecmp (mrl, "dvbt://", 7))
-      break;
-
-    return NULL;
-  }
-
+  case METHOD_BY_MRL:
   case METHOD_EXPLICIT:
     break;
 
@@ -2272,7 +2247,12 @@ static void *init_class (xine_t *xine, void *data) {
   this->demux_class.description     = N_("MPEG Transport Stream demuxer");
   this->demux_class.identifier      = "MPEG_TS";
   this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = "ts m2t trp";
+
+  /* accept dvb streams; also handle the special dvbs,dvbt and dvbc
+   * mrl formats: the content is exactly the same but the input plugin
+   * uses a different tuning algorithm [Pragma]
+   */
+  this->demux_class.extensions      = "ts m2t trp dvb:// dvbs:// dvbc:// dvbt://";
   this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
