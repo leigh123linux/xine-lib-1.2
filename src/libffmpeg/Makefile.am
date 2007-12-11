@@ -4,22 +4,10 @@ AM_CFLAGS   = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_CPPFLAGS = $(ZLIB_CPPFLAGS)
 AM_LDFLAGS  = $(xineplug_ldflags)
 
-if WITH_EXTERNAL_FFMPEG
-AM_CFLAGS  += $(FFMPEG_CFLAGS) $(FFMPEG_POSTPROC_CFLAGS)
-link_ffmpeg = $(FFMPEG_LIBS) $(FFMPEG_POSTPROC_LIBS)
-else
-AM_CPPFLAGS += -I$(top_srcdir)/contrib/ffmpeg/libavutil \
-	-I$(top_srcdir)/contrib/ffmpeg/libavcodec \
-	-I$(top_srcdir)/contrib/ffmpeg/libpostproc
-link_ffmpeg = $(top_builddir)/contrib/ffmpeg/libavcodec/libavcodec.a \
-	$(top_builddir)/contrib/ffmpeg/libavutil/libavutil.a \
-	$(top_builddir)/contrib/ffmpeg/libpostproc/libpostproc.a
+if !WITH_EXTERNAL_FFMPEG
 
 $(top_builddir)/contrib/ffmpeg/libavcodec/libavcodec.a:
 	$(MAKE) -C $(top_builddir)/contrib/ ffmpeg/libavcodec/libavcodec.a
-
-$(top_builddir)/contrib/ffmpeg/libavutil/libavutil.a:
-	$(MAKE) -C $(top_builddir)/contrib/ ffmpeg/libavutil/libavutil.a
 
 $(top_builddir)/contrib/ffmpeg/libpostproc/libpostproc.a:
 	$(MAKE) -C $(top_builddir)/contrib/ ffmpeg/libpostproc/libpostproc.a
@@ -53,10 +41,12 @@ endif
 
 nodist_xineplug_decode_ff_la_SOURCES = ffmpeg_config.h
 
+xineplug_decode_ff_la_CFLAGS = $(AM_CFLAGS) $(FFMPEG_CFLAGS) $(FFMPEG_POSTPROC_CFLAGS)
 xineplug_decode_ff_la_LIBADD = $(MLIB_LIBS) $(XINE_LIB) -lm $(ZLIB_LIBS) \
-	$(link_ffmpeg) $(PTHREAD_LIBS) $(LTLIBINTL)
+	$(FFMPEG_LIBS) $(FFMPEG_POSTPROC_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
+xineplug_decode_ff_la_DEPS = $(FFMPEG_DEPS) $(FFMPEG_POSTPROC_DEPS)
 xineplug_decode_ff_la_LDFLAGS = $(AM_LDFLAGS) $(IMPURE_TEXT_LDFLAGS)
 
 xineplug_decode_dvaudio_la_SOURCES  = ff_dvaudio_decoder.c
 xineplug_decode_dvaudio_la_LIBADD   = $(XINE_LIB) $(LTLIBINTL)
-xineplug_decode_dvaudio_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/contrib/ffmpeg/libavcodec
+xineplug_decode_dvaudio_la_CPPFLAGS = $(AM_CPPFLAGS) $(FFMPEG_CFLAGS) -I$(top_srcdir)/contrib/ffmpeg/libavcodec
