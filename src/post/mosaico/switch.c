@@ -82,8 +82,6 @@ struct post_switch_s {
 static post_plugin_t *switch_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target);
-static char          *switch_get_identifier(post_class_t *class_gen);
-static char          *switch_get_description(post_class_t *class_gen);
 static void           switch_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
@@ -107,8 +105,8 @@ static void *switch_init_plugin(xine_t *xine, void *data)
     return NULL;
   
   this->class.open_plugin     = switch_open_plugin;
-  this->class.get_identifier  = switch_get_identifier;
-  this->class.get_description = switch_get_description;
+  this->class.identifier      = "switch";
+  this->class.description     = _("Switch is a post plugin able to switch at any time between different streams");
   this->class.dispose         = switch_class_dispose;
   this->xine                  = xine;
 
@@ -166,16 +164,6 @@ static post_plugin_t *switch_open_plugin(post_class_t *class_gen, int inputs,
   this->post.dispose = switch_dispose;
 
   return &this->post;
-}
-
-static char *switch_get_identifier(post_class_t *class_gen)
-{
-  return "switch";
-}
-
-static char *switch_get_description(post_class_t *class_gen)
-{
-  return "Switch is a post plugin able to switch at any time between different streams";
 }
 
 static void switch_class_dispose(post_class_t *class_gen)

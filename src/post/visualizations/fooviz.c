@@ -284,16 +284,6 @@ static post_plugin_t *fooviz_open_plugin(post_class_t *class_gen, int inputs,
   return &this->post;
 }
 
-static char *fooviz_get_identifier(post_class_t *class_gen)
-{
-  return "fooviz";
-}
-
-static char *fooviz_get_description(post_class_t *class_gen)
-{
-  return "fooviz";
-}
-
 static void fooviz_class_dispose(post_class_t *class_gen)
 {
   free(class_gen);
@@ -308,8 +298,8 @@ static void *fooviz_init_plugin(xine_t *xine, void *data)
     return NULL;
   
   class->post_class.open_plugin     = fooviz_open_plugin;
-  class->post_class.get_identifier  = fooviz_get_identifier;
-  class->post_class.get_description = fooviz_get_description;
+  class->post_class.identifier      = "fooviz";
+  class->post_class.description     = _("fooviz");
   class->post_class.dispose         = fooviz_class_dispose;
   
   class->xine                       = xine;

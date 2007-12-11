@@ -135,8 +135,6 @@ static xine_post_api_t post_api = {
 static post_plugin_t *pp_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target);
-static char          *pp_get_identifier(post_class_t *class_gen);
-static char          *pp_get_description(post_class_t *class_gen);
 static void           pp_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
@@ -157,8 +155,8 @@ void *pp_init_plugin(xine_t *xine, void *data)
     return NULL;
   
   class->open_plugin     = pp_open_plugin;
-  class->get_identifier  = pp_get_identifier;
-  class->get_description = pp_get_description;
+  class->identifier      = "pp";
+  class->description     = _("plugin for ffmpeg libpostprocess");
   class->dispose         = pp_class_dispose;
 
   return class;
@@ -219,16 +217,6 @@ static post_plugin_t *pp_open_plugin(post_class_t *class_gen, int inputs,
   this->post.dispose = pp_dispose;
   
   return &this->post;
-}
-
-static char *pp_get_identifier(post_class_t *class_gen)
-{
-  return "pp";
-}
-
-static char *pp_get_description(post_class_t *class_gen)
-{
-  return "plugin for ffmpeg libpostprocess";
 }
 
 static void pp_class_dispose(post_class_t *class_gen)

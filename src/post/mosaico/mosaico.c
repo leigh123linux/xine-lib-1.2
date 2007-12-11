@@ -96,8 +96,6 @@ struct post_mosaico_s {
 static post_plugin_t *mosaico_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target);
-static char          *mosaico_get_identifier(post_class_t *class_gen);
-static char          *mosaico_get_description(post_class_t *class_gen);
 static void           mosaico_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
@@ -128,8 +126,8 @@ static void *mosaico_init_plugin(xine_t *xine, void *data)
     return NULL;
   
   this->class.open_plugin     = mosaico_open_plugin;
-  this->class.get_identifier  = mosaico_get_identifier;
-  this->class.get_description = mosaico_get_description;
+  this->class.identifier      = "mosaico";
+  this->class.description     = _("Mosaico is a picture in picture (pip) post plugin");
   this->class.dispose         = mosaico_class_dispose;
   this->xine                  = xine;
 
@@ -200,16 +198,6 @@ static post_plugin_t *mosaico_open_plugin(post_class_t *class_gen, int inputs,
   this->post.dispose = mosaico_dispose;
 
   return &this->post;
-}
-
-static char *mosaico_get_identifier(post_class_t *class_gen)
-{
-  return "mosaico";
-}
-
-static char *mosaico_get_description(post_class_t *class_gen)
-{
-  return "Mosaico is a picture in picture (pip) post plugin";
 }
 
 static void mosaico_class_dispose(post_class_t *class_gen)

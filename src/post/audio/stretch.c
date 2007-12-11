@@ -659,16 +659,6 @@ static post_plugin_t *stretch_open_plugin(post_class_t *class_gen, int inputs,
   return &this->post;
 }
 
-static char *stretch_get_identifier(post_class_t *class_gen)
-{
-  return "stretch";
-}
-
-static char *stretch_get_description(post_class_t *class_gen)
-{
-  return "Time stretch by a given factor, optionally preserving pitch";
-}
-
 static void stretch_class_dispose(post_class_t *class_gen)
 {
   free(class_gen);
@@ -683,8 +673,8 @@ void *stretch_init_plugin(xine_t *xine, void *data)
     return NULL;
   
   class->post_class.open_plugin     = stretch_open_plugin;
-  class->post_class.get_identifier  = stretch_get_identifier;
-  class->post_class.get_description = stretch_get_description;
+  class->post_class.identifier      = "stretch";
+  class->post_class.description     = _("Time stretch by a given factor, optionally preserving pitch");
   class->post_class.dispose         = stretch_class_dispose;
   
   class->xine                       = xine;

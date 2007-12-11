@@ -429,8 +429,6 @@ static xine_post_api_t post_api = {
 static post_plugin_t *noise_open_plugin(post_class_t *class_gen, int inputs,
                      xine_audio_port_t **audio_target,
                      xine_video_port_t **video_target);
-static char          *noise_get_identifier(post_class_t *class_gen);
-static char          *noise_get_description(post_class_t *class_gen);
 static void           noise_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
@@ -451,8 +449,8 @@ void *noise_init_plugin(xine_t *xine, void *data)
         return NULL;
   
     class->open_plugin     = noise_open_plugin;
-    class->get_identifier  = noise_get_identifier;
-    class->get_description = noise_get_description;
+    class->identifier      = "noise";
+    class->description     = _("Adds noise");
     class->dispose         = noise_class_dispose;
 
 #ifdef ARCH_X86
@@ -513,16 +511,6 @@ static post_plugin_t *noise_open_plugin(post_class_t *class_gen, int inputs,
     set_parameters ((xine_post_t *)this, &params);
     
     return &this->post;
-}
-
-static char *noise_get_identifier(post_class_t *class_gen)
-{
-    return "noise";
-}
-
-static char *noise_get_description(post_class_t *class_gen)
-{
-    return "Adds noise";
 }
 
 static void noise_class_dispose(post_class_t *class_gen)

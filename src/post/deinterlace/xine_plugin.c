@@ -268,8 +268,6 @@ static xine_post_api_t post_api = {
 static post_plugin_t *deinterlace_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target);
-static char          *deinterlace_get_identifier(post_class_t *class_gen);
-static char          *deinterlace_get_description(post_class_t *class_gen);
 static void           deinterlace_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
@@ -299,8 +297,8 @@ static void *deinterlace_init_plugin(xine_t *xine, void *data)
     return NULL;
   
   class->class.open_plugin     = deinterlace_open_plugin;
-  class->class.get_identifier  = deinterlace_get_identifier;
-  class->class.get_description = deinterlace_get_description;
+  class->class.identifier      = "tvtime";
+  class->class.description     = _("advanced deinterlacer plugin with pulldown detection");
   class->class.dispose         = deinterlace_class_dispose;
 
 
@@ -410,16 +408,6 @@ static post_plugin_t *deinterlace_open_plugin(post_class_t *class_gen, int input
   this->post.dispose = deinterlace_dispose;
   
   return &this->post;
-}
-
-static char *deinterlace_get_identifier(post_class_t *class_gen)
-{
-  return "tvtime";
-}
-
-static char *deinterlace_get_description(post_class_t *class_gen)
-{
-  return "advanced deinterlacer plugin with pulldown detection";
 }
 
 static void deinterlace_class_dispose(post_class_t *class_gen)

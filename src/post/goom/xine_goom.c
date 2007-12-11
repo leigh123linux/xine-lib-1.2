@@ -125,8 +125,6 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
 static post_plugin_t *goom_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target);
-static char          *goom_get_identifier(post_class_t *class_gen);
-static char          *goom_get_description(post_class_t *class_gen);
 static void           goom_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
@@ -194,8 +192,8 @@ static void *goom_init_plugin(xine_t *xine, void *data)
     return NULL;
   
   this->class.open_plugin     = goom_open_plugin;
-  this->class.get_identifier  = goom_get_identifier;
-  this->class.get_description = goom_get_description;
+  this->class.identifier      = "goom";
+  this->class.description     = _("What a GOOM");
   this->class.dispose         = goom_class_dispose;
   this->ip                    = NULL;
   this->xine                  = xine;
@@ -305,16 +303,6 @@ static post_plugin_t *goom_open_plugin(post_class_t *class_gen, int inputs,
   this->post.dispose = goom_dispose;
 
   return &this->post;
-}
-
-static char *goom_get_identifier(post_class_t *class_gen)
-{
-  return "goom";
-}
-
-static char *goom_get_description(post_class_t *class_gen)
-{
-  return "What a GOOM";
 }
 
 static void goom_class_dispose(post_class_t *class_gen)
