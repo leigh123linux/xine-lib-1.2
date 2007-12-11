@@ -2429,6 +2429,7 @@ char *xine_get_file_extensions (xine_t *self) {
   plugin_node_t    *node;
   char             *str;
   int               list_id, list_size;
+  const char       *exts;
 
   pthread_mutex_lock (&catalog->lock);
 
@@ -2438,14 +2439,13 @@ char *xine_get_file_extensions (xine_t *self) {
   list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
   for (list_id = 0; list_id < list_size; list_id++) {
     demux_class_t *cls;
-    const char    *exts;
 
     node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
     if (node->plugin_class || _load_plugin_class(self, node, NULL)) {
 
       cls = (demux_class_t *)node->plugin_class;
 
-      if((exts = cls->get_extensions(cls)) && *exts)
+      if( (exts = cls->extensions) && *exts )
 	len += strlen(exts) + 1;
     }
   }
@@ -2457,7 +2457,6 @@ char *xine_get_file_extensions (xine_t *self) {
   list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
   for (list_id = 0; list_id < list_size; list_id++) {
     demux_class_t *cls;
-    const char    *e;
     int            l;
     
     node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
@@ -2465,9 +2464,9 @@ char *xine_get_file_extensions (xine_t *self) {
 
       cls = (demux_class_t *)node->plugin_class;
 
-      if((e = cls->get_extensions (cls)) && *e) {
-	l = strlen(e);
-	memcpy (&str[pos], e, l);
+      if((exts = cls->extensions) && *exts) {
+	l = strlen(exts);
+	memcpy (&str[pos], exts, l);
       
 	pos += l;
 
@@ -2507,16 +2506,14 @@ char *xine_get_mime_types (xine_t *self) {
 
   for (list_id = 0; list_id < list_size; list_id++) {
     demux_class_t *cls;
-    const char *s;
 
     node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
     if (node->plugin_class || _load_plugin_class(self, node, NULL)) {
 
       cls = (demux_class_t *)node->plugin_class;
 
-      s = cls->get_mimetypes (cls);
-      if (s)
-	len += strlen(s);
+      if ( cls->mimetypes );
+	len += strlen(cls->mimetypes);
     }
   }
 
@@ -2529,18 +2526,15 @@ char *xine_get_mime_types (xine_t *self) {
 
   for (list_id = 0; list_id < list_size; list_id++) {
     demux_class_t *cls;
-    const char *s;
-    int l;
 
     node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
     if (node->plugin_class || _load_plugin_class(self, node, NULL)) {
 
       cls = (demux_class_t *)node->plugin_class;
 
-      s = cls->get_mimetypes (cls);
-      if (s) {
-	l = strlen(s);
-	memcpy (&str[pos], s, l);
+      if (cls->mimetypes) {
+	const size_t l = strlen(cls->mimetypes);
+	memcpy (&str[pos], cls->mimetypes, l);
 
 	pos += l;
       }
@@ -2586,9 +2580,8 @@ char *xine_get_demux_for_mime_type (xine_t *self, const char *mime_type) {
 
       cls = (demux_class_t *)node->plugin_class;
 
-      mt = cls->get_mimetypes (cls);
-      if (mt) {
-	mime_demux = strdup(mt);
+      if (cls->mimetypes) {
+	mime_demux = strdup(cls->mimetypes);
       
 	for(s=mime_demux; *s; s++)
 	  *s = tolower(*s);
