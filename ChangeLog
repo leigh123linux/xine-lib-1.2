@@ -45,6 +45,13 @@ xine-lib (1.1.90) (Unreleased)
   * DVB subtitles' opacity is now controllable.
   * The internal copies of libcdio and libvcd are no longer present,
     you need to use an installed copy of them if you want VCD support.
+  * Replace get_* functions for literals with direct string access.
+  * Use default dispose() functions when they just need to call free() in
+    various plugins.
+  * Rename METHOD_BY_EXTENSION to METHOD_BY_MRL as it also checks prefixes
+    for specific input protocols.
+  * Check for supported extensions before opening the plugin and remove
+    redundant core from plugins.
 
 xine-lib (1.1.9) (unreleased)
   * Fix dvd://.../title[.chapter] handling (somewhat broken in 1.1.8).
