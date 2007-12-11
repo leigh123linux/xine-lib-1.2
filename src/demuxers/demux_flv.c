@@ -306,8 +306,7 @@ static int parse_flv_var(demux_flv_t *this,
       num = _X_BE_32(tmp);
       tmp += 4;
       if (key && keylen == 5 && !strncmp(key, "times", 5)) {
-        if (this->index)
-          free (this->index);
+	free (this->index);
         this->index = xine_xcalloc(num, sizeof(flv_index_entry_t));
         this->num_indices = num;
         for (num = 0; num < this->num_indices && tmp < end; num++) {
@@ -808,8 +807,7 @@ static int demux_flv_seek (demux_plugin_t *this_gen,
 static void demux_flv_dispose (demux_plugin_t *this_gen) {
   demux_flv_t *this = (demux_flv_t *) this_gen;
 
-  if (this->index)
-    free(this->index);
+  free(this->index);
   free(this);
 }
 

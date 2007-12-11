@@ -285,9 +285,7 @@ static void mms_plugin_dispose (input_plugin_t *this_gen) {
     this->nbc = NULL;
   }
   
-  if(this->mrl)
-    free(this->mrl);
-  
+  free(this->mrl);
   free (this);
 }
 

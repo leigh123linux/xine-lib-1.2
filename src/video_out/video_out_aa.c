@@ -87,12 +87,9 @@ static uint32_t aa_get_capabilities (vo_driver_t *this) {
 static void aa_dispose_frame (vo_frame_t *vo_img) {
   aa_frame_t *frame = (aa_frame_t *)vo_img;
   
-  if (frame->mem[0])
-    free (frame->mem[0]);
-  if (frame->mem[1])
-    free (frame->mem[1]);
-  if (frame->mem[2])
-    free (frame->mem[2]);
+  free (frame->mem[0]);
+  free (frame->mem[1]);
+  free (frame->mem[2]);
 
   free (frame);
 }
@@ -132,19 +129,9 @@ static void aa_update_frame_format (vo_driver_t *this_gen, vo_frame_t *img,
   if ((frame->width != width) || (frame->height != height) 
       || (frame->format != format)) {
 
-    if (frame->mem[0]) {
-      free (frame->mem[0]);
-      frame->mem[0] = NULL;
-    }
-    if (frame->mem[1]) {
-      free (frame->mem[1]);
-      frame->mem[1] = NULL;
-    }
-      
-    if (frame->mem[2]) {
-      free (frame->mem[2]);
-      frame->mem[2] = NULL;
-    }
+    free (frame->mem[0]); frame->mem[0] = NULL;
+    free (frame->mem[1]); frame->mem[1] = NULL;
+    free (frame->mem[2]); frame->mem[2] = NULL;
 
     frame->width  = width;
     frame->height = height;

@@ -98,8 +98,7 @@ static void foovideo_decode_data (video_decoder_t *this_gen,
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) { /* need to initialize */
     (this->stream->video_out->open) (this->stream->video_out, this->stream);
 
-    if(this->buf)
-      free(this->buf);
+    free(this->buf);
 
     bih = (xine_bmiheader *) buf->content;
     this->width = bih->biWidth;
@@ -185,10 +184,7 @@ static void foovideo_dispose (video_decoder_t *this_gen) {
 
   foovideo_decoder_t *this = (foovideo_decoder_t *) this_gen;
 
-  if (this->buf) {
-    free (this->buf);
-    this->buf = NULL;
-  }
+  free (this->buf);
 
   if (this->decoder_ok) {
     this->decoder_ok = 0;

@@ -1076,8 +1076,7 @@ static const char *http_class_get_identifier (input_class_t *this_gen) {
 static void http_class_dispose (input_class_t *this_gen) {
   http_input_class_t  *this = (http_input_class_t *) this_gen;
   
-  if(this->proxyhost_env)
-    free(this->proxyhost_env);
+  free(this->proxyhost_env);
 
   free (this);
 }

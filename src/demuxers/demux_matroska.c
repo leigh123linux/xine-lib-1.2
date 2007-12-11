@@ -2672,37 +2672,27 @@ static void demux_matroska_dispose (demux_plugin_t *this_gen) {
 
   /* free tracks */
   for (i = 0; i < this->num_tracks; i++) {
-    matroska_track_t *track;
+    matroska_track_t *const track;
 
     track = this->tracks[i];
-    if (track->language)
-      free (track->language);
-    if (track->codec_id)
-      free (track->codec_id);
-    if (track->codec_private)
-      free (track->codec_private);
-    if (track->video_track)
-      free (track->video_track);
-    if (track->audio_track)
-      free (track->audio_track);
-    if (track->sub_track)
-      free (track->sub_track);
+    free (track->language);
+    free (track->codec_id);
+    free (track->codec_private);
+    free (track->video_track);
+    free (track->audio_track);
+    free (track->sub_track);
     
     free (track);
   }
   /* Free the cues. */
   for (i = 0; i < this->num_indexes; i++) {
-    if (this->indexes[i].pos)
-      free(this->indexes[i].pos);
-    if (this->indexes[i].timecode)
-      free(this->indexes[i].timecode);
+    free(this->indexes[i].pos);
+    free(this->indexes[i].timecode);
   }
-  if (this->indexes)
-    free(this->indexes);
+  free(this->indexes);
     
   /* Free the top_level elem list */    
-  if (this->top_level_list)
-    free(this->top_level_list);
+  free(this->top_level_list);
 
   dispose_ebml_parser(this->ebml);
   free (this);
