@@ -283,18 +283,6 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
   return &this->audio_decoder;
 }
 
-/* This function returns a brief string that describes (usually with the
- * decoder's most basic name) the audio decoder plugin. */
-static char *get_identifier (audio_decoder_class_t *this) {
-  return "fooaudio";
-}
-
-/* This function returns a slightly longer string describing the audio
- * decoder plugin. */
-static char *get_description (audio_decoder_class_t *this) {
-  return "fooaudio: reference xine audio decoder plugin";
-}
-
 /* This function frees the audio decoder class and any other memory that was
  * allocated. */
 static void dispose_class (audio_decoder_class_t *this_gen) {
@@ -313,8 +301,8 @@ static void *init_plugin (xine_t *xine, void *data) {
   this = (fooaudio_class_t *) xine_malloc (sizeof (fooaudio_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.get_identifier  = get_identifier;
-  this->decoder_class.get_description = get_description;
+  this->decoder_class.identifier      = "fooaudio";
+  this->decoder_class.description     = _("fooaudio: reference xine audio decoder plugin");
   this->decoder_class.dispose         = dispose_class;
 
   return this;
