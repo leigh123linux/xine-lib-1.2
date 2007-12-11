@@ -58,6 +58,9 @@
 
 #include <basedir.h>
 
+/* libavutil from FFmpeg */
+#include <base64.h>
+
 #define LOG_MODULE "input_cdda"
 #define LOG_VERBOSE
 /*
@@ -65,7 +68,6 @@
 */
 
 #include "sha1.h"
-#include "base64.h"
 #include "xine_internal.h"
 #include "xineutils.h"
 #include "input_plugin.h"
@@ -1931,7 +1933,13 @@ static unsigned long _cdda_calc_cddb_id(cdda_input_plugin_t *this) {
 static void _cdda_cdindex(cdda_input_plugin_t *this, cdrom_toc *toc) {
   char temp[10];
   SHA_INFO sha;
-  unsigned char digest[33], *base64;
+  unsigned char digest[33];
+  /* We're going to encode 20 bytes in base64, which will become
+   * 6 * 32 / 8 = 24 bytes.
+   * libavutil's base64 encoding functions, though, wants the size to
+   * be at least len * 4 / 3 + 12, so let's use 39.
+   */
+  char base64[39];
   int i;
   unsigned long size;
 
@@ -1957,12 +1965,9 @@ static void _cdda_cdindex(cdda_input_plugin_t *this, cdrom_toc *toc) {
 
   sha_final(digest, &sha);
 
-  base64 = rfc822_binary(digest, 20, &size);
-  base64[size] = 0;
+  av_base64_encode(base64, 39, digest, 20);
 
   _x_meta_info_set_utf8(this->stream, XINE_META_INFO_CDINDEX_DISCID, base64);
-
-  free (base64);
 }
 
 /*
