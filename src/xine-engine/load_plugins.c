@@ -2299,7 +2299,7 @@ const char *const *xine_list_post_plugins_typed(xine_t *xine, uint32_t type) {
 	  else										   \
 	    return NULL;								   \
 	}										   \
-	return gettext(ic->description);				      		   \
+	return ic->description;						      		   \
       }											   \
     }											   \
     return NULL;									   \
