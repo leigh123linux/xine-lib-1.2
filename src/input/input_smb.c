@@ -521,7 +521,7 @@ static const input_info_t input_info_smb = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-	{ PLUGIN_INPUT, 17, "smb", XINE_VERSION_CODE, &input_info_smb,
+	{ PLUGIN_INPUT, 18, "smb", XINE_VERSION_CODE, &input_info_smb,
 		init_input_class },
 	{ PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

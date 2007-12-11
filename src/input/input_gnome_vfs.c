@@ -377,7 +377,7 @@ static input_info_t input_info_gnomevfs = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-	{ PLUGIN_INPUT | PLUGIN_NO_UNLOAD, 17, "gnomevfs", XINE_VERSION_CODE,
+	{ PLUGIN_INPUT | PLUGIN_NO_UNLOAD, 18, "gnomevfs", XINE_VERSION_CODE,
 		&input_info_gnomevfs, init_input_class },
 	{ PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
