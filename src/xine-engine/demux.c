@@ -449,6 +449,10 @@ int _x_demux_read_header( input_plugin_t *input, unsigned char *buffer, off_t si
 int _x_demux_check_extension (const char *mrl, const char *extensions){
   char *last_dot, *e, *ext_copy, *ext_work;
 
+  /* An empty extensions string means that the by-extension method can't
+     be used, so consider those cases as always passing. */
+  if ( extensions == NULL ) return 1;
+
   ext_copy = strdup(extensions);
   ext_work = ext_copy;
 
