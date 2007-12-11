@@ -31,7 +31,7 @@
 #  include <xine/buffer.h>
 #endif
 
-#define AUDIO_DECODER_IFACE_VERSION 15
+#define AUDIO_DECODER_IFACE_VERSION 16
 
 /*
  * generic xine audio decoder plugin interface

@@ -185,6 +185,6 @@ void *_x_real_codec_open(xine_stream_t *const stream, const char *const path,
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
   { PLUGIN_VIDEO_DECODER | PLUGIN_MUST_PRELOAD, 18, "realvdec", XINE_VERSION_CODE, &dec_info_realvideo, init_realvdec },
-  { PLUGIN_AUDIO_DECODER | PLUGIN_MUST_PRELOAD, 15, "realadec", XINE_VERSION_CODE, &dec_info_realaudio, init_realadec },
+  { PLUGIN_AUDIO_DECODER | PLUGIN_MUST_PRELOAD, 16, "realadec", XINE_VERSION_CODE, &dec_info_realaudio, init_realadec },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

@@ -407,6 +407,6 @@ static const decoder_info_t dec_info_dvaudio = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_AUDIO_DECODER, 15, "dvaudio", XINE_VERSION_CODE, &dec_info_dvaudio, init_dvaudio_plugin },
+  { PLUGIN_AUDIO_DECODER, 16, "dvaudio", XINE_VERSION_CODE, &dec_info_dvaudio, init_dvaudio_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

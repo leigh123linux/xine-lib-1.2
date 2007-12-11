@@ -1679,6 +1679,6 @@ static const decoder_info_t dec_info_audio = {
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
   { PLUGIN_VIDEO_DECODER | PLUGIN_MUST_PRELOAD, 18, "win32v", XINE_VERSION_CODE, &dec_info_video, init_video_decoder_class },
-  { PLUGIN_AUDIO_DECODER | PLUGIN_MUST_PRELOAD, 15, "win32a", XINE_VERSION_CODE, &dec_info_audio, init_audio_decoder_class },
+  { PLUGIN_AUDIO_DECODER | PLUGIN_MUST_PRELOAD, 16, "win32a", XINE_VERSION_CODE, &dec_info_audio, init_audio_decoder_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

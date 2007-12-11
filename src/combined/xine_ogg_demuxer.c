@@ -2193,10 +2193,10 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_DEMUX, 27, "ogg", XINE_VERSION_CODE, &demux_info_ogg, ogg_init_class },
   { PLUGIN_DEMUX, 27, "anx", XINE_VERSION_CODE, &demux_info_anx, anx_init_class },
 #ifdef HAVE_VORBIS
-  { PLUGIN_AUDIO_DECODER, 15, "vorbis", XINE_VERSION_CODE, &dec_info_vorbis, vorbis_init_plugin },
+  { PLUGIN_AUDIO_DECODER, 16, "vorbis", XINE_VERSION_CODE, &dec_info_vorbis, vorbis_init_plugin },
 #endif
 #ifdef HAVE_SPEEX
-  { PLUGIN_AUDIO_DECODER, 15, "speex", XINE_VERSION_CODE, &dec_info_speex, speex_init_plugin },
+  { PLUGIN_AUDIO_DECODER, 16, "speex", XINE_VERSION_CODE, &dec_info_speex, speex_init_plugin },
 #endif
 #ifdef HAVE_THEORA
   { PLUGIN_VIDEO_DECODER, 18, "theora", XINE_VERSION_CODE, &dec_info_theora, theora_init_plugin },
