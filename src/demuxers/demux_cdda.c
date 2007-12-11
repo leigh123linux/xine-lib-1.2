@@ -200,14 +200,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   switch (stream->content_detection_method) {
 
   case METHOD_BY_CONTENT:
+    return NULL;
   case METHOD_BY_MRL:
-    if (strncasecmp (input->get_mrl (input), "cdda:", 5)) {
-      free (this);
-      return NULL;
-    }
-
-  break;
-
   case METHOD_EXPLICIT:
   break;
 
@@ -228,7 +222,7 @@ void *demux_cdda_init_plugin (xine_t *xine, void *data) {
   this->demux_class.description     = N_("CD Digital Audio demux plugin");
   this->demux_class.identifier      = "CDDA";
   this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = NULL;
+  this->demux_class.extensions      = "cdda:/";
   this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
