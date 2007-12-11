@@ -1298,7 +1298,7 @@ static demux_plugin_t *probe_demux (xine_stream_t *stream, int method1, int meth
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "load_plugins: probing demux '%s'\n", node->info->id);
 
       if (node->plugin_class || _load_plugin_class(stream->xine, node, NULL)) {
-	if ( stream->content_detection_method == METHOD_BY_EXTENSION && 
+	if ( stream->content_detection_method == METHOD_BY_MRL && 
 	     ! _x_demux_check_extension(input->get_mrl(input),
 					 ((demux_class_t *)node->plugin_class)->extensions)
 	     )
@@ -1325,16 +1325,16 @@ demux_plugin_t *_x_find_demux_plugin (xine_stream_t *stream, input_plugin_t *inp
   switch (stream->xine->demux_strategy) {
 
   case XINE_DEMUX_DEFAULT_STRATEGY:
-    return probe_demux (stream, METHOD_BY_CONTENT, METHOD_BY_EXTENSION, input);
+    return probe_demux (stream, METHOD_BY_CONTENT, METHOD_BY_MRL, input);
 
   case XINE_DEMUX_REVERT_STRATEGY:
-    return probe_demux (stream, METHOD_BY_EXTENSION, METHOD_BY_CONTENT, input);
+    return probe_demux (stream, METHOD_BY_MRL, METHOD_BY_CONTENT, input);
 
   case XINE_DEMUX_CONTENT_STRATEGY:
     return probe_demux (stream, METHOD_BY_CONTENT, -1, input);
 
   case XINE_DEMUX_EXTENSION_STRATEGY:
-    return probe_demux (stream, METHOD_BY_EXTENSION, -1, input);
+    return probe_demux (stream, METHOD_BY_MRL, -1, input);
 
   default:
     xprintf (stream->xine, XINE_VERBOSITY_LOG,
@@ -1364,7 +1364,7 @@ demux_plugin_t *_x_find_demux_plugin_by_name(xine_stream_t *stream, const char *
     if (strcasecmp(node->info->id, name) == 0) {
       if (node->plugin_class || _load_plugin_class(stream->xine, node, NULL)) {
 
-	if ( stream->content_detection_method == METHOD_BY_EXTENSION && 
+	if ( stream->content_detection_method == METHOD_BY_MRL && 
 	     ! _x_demux_check_extension(input->get_mrl(input),
 					 ((demux_class_t *)node->plugin_class)->extensions)
 	     )
@@ -1402,7 +1402,7 @@ demux_plugin_t *_x_find_demux_plugin_last_probe(xine_stream_t *stream, const cha
   demux_plugin_t   *plugin = NULL;
 
   methods[0] = METHOD_BY_CONTENT;
-  methods[1] = METHOD_BY_EXTENSION;
+  methods[1] = METHOD_BY_MRL;
   methods[2] = -1;
 
   i = 0;
@@ -1428,7 +1428,7 @@ demux_plugin_t *_x_find_demux_plugin_last_probe(xine_stream_t *stream, const cha
 		"load_plugin: probing '%s' (method %d)...\n", node->info->id, stream->content_detection_method );
 	if (node->plugin_class || _load_plugin_class(xine, node, NULL)) {
 
-	  if ( stream->content_detection_method == METHOD_BY_EXTENSION && 
+	  if ( stream->content_detection_method == METHOD_BY_MRL && 
 	       ! _x_demux_check_extension(input->get_mrl(input),
 					   ((demux_class_t *)node->plugin_class)->extensions)
 	       )

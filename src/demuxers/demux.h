@@ -40,7 +40,7 @@
 #define DEMUX_CAN_HANDLE           1
 
 #define METHOD_BY_CONTENT          1
-#define METHOD_BY_EXTENSION        2
+#define METHOD_BY_MRL              2
 #define METHOD_EXPLICIT            3
 
 typedef struct demux_class_s demux_class_t ;

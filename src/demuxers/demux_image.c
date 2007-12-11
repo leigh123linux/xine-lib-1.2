@@ -167,7 +167,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   }
   break;
 
-  case METHOD_BY_EXTENSION:
+  case METHOD_BY_MRL:
   case METHOD_EXPLICIT:
   break;
 

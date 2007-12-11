@@ -1943,7 +1943,7 @@ static int detect_ogg_content (int detection_method, demux_class_t *class_gen,
         return 0;
     }
 
-    case METHOD_BY_EXTENSION:
+    case METHOD_BY_MRL:
     case METHOD_EXPLICIT:
       return 1;
 
@@ -1994,7 +1994,7 @@ static int detect_anx_content (int detection_method, demux_class_t *class_gen,
 
 #undef ANNODEX_SIGNATURE_SEARCH
 
-    case METHOD_BY_EXTENSION:
+    case METHOD_BY_MRL:
     case METHOD_EXPLICIT:
       return 1;
 

@@ -349,7 +349,7 @@ static demux_plugin_t *open_plugin (demux_class_t *const class_gen,
   this->status = DEMUX_FINISHED;
   switch (stream->content_detection_method) {
 
-  case METHOD_BY_EXTENSION:
+  case METHOD_BY_MRL:
   case METHOD_BY_CONTENT:
   case METHOD_EXPLICIT:
     

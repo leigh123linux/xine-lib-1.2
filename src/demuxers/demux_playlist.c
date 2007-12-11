@@ -651,7 +651,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   this->demux_plugin.demux_class       = class_gen;
   
   switch (stream->content_detection_method) {
-    case METHOD_BY_EXTENSION:
+    case METHOD_BY_MRL:
       lprintf ("detect by extension\n");
       this->playlist = detect_by_extension (input);
       if (!this->playlist) {
