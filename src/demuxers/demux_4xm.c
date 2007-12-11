@@ -521,14 +521,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static const char *get_description (demux_class_t *this_gen) {
-  return "4X Technologies (4xm) demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "4X Technologies";
-}
-
 static const char *get_extensions (demux_class_t *this_gen) {
   return "4xm";
 }
@@ -549,8 +541,8 @@ void *demux_fourxm_init_plugin (xine_t *xine, void *data) {
   this = xine_xmalloc (sizeof (demux_fourxm_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
+  this->demux_class.description     = _("4X Technologies (4xm) demux plugin");
+  this->demux_class.identifier      = "4X Technologies";
   this->demux_class.get_mimetypes   = get_mimetypes;
   this->demux_class.get_extensions  = get_extensions;
   this->demux_class.dispose         = class_dispose;

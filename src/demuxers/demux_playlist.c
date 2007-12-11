@@ -686,14 +686,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   return &this->demux_plugin;
 }
 
-static const char *get_description (demux_class_t *this_gen) {
-  return "Playlist demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "playlist";
-}
-
 static const char *get_extensions (demux_class_t *this_gen) {
   return "m3u ram pls asx wax wvx smi smil qtl xspf rss";
 }
@@ -723,8 +715,8 @@ static void *init_plugin (xine_t *xine, void *data) {
   this = xine_xmalloc (sizeof(demux_playlist_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
+  this->demux_class.description     = _("Playlist demux plugin");
+  this->demux_class.identifier      = "playlist";
   this->demux_class.get_mimetypes   = get_mimetypes;
   this->demux_class.get_extensions  = get_extensions;
   this->demux_class.dispose         = class_dispose;
