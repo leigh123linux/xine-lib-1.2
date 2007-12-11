@@ -1087,7 +1087,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   this->input_class.get_instance       = http_class_get_instance;
   this->input_class.identifier         = "http";
-  this->input_class.description        = _("http input plugin");
+  this->input_class.description        = N_("http input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
   this->input_class.dispose            = http_class_dispose;

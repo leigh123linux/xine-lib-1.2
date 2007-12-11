@@ -868,7 +868,7 @@ static void *pgx32_init_class(xine_t *xine, void *visual_gen)
 
   class->vo_driver_class.open_plugin     = pgx32_init_driver;
   class->vo_driver_class.identifier      = "pgx32";
-  class->vo_driver_class.description     = _("xine video output plugin for Sun PGX32 framebuffers");
+  class->vo_driver_class.description     = N_("xine video output plugin for Sun PGX32 framebuffers");
   class->vo_driver_class.dispose         = pgx32_dispose_class;
 
   class->xine   = xine;

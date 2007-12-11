@@ -2715,7 +2715,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   this->input_class.get_instance       = cdda_class_get_instance;
   this->input_class.identifier         = "cdda";
-  this->input_class.description        = _("CD Digital Audio (aka. CDDA)");
+  this->input_class.description        = N_("CD Digital Audio (aka. CDDA)");
   /* this->input_class.get_dir            = cdda_class_get_dir; */
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = cdda_class_get_autoplay_list;

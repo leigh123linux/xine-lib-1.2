@@ -135,7 +135,7 @@ void *expand_init_plugin(xine_t *xine, void *data)
   
   class->open_plugin     = expand_open_plugin;
   class->identifier      = "expand";
-  class->description     = _("add black borders to top and bottom of video to expand it to 4:3 aspect ratio");
+  class->description     = N_("add black borders to top and bottom of video to expand it to 4:3 aspect ratio");
   class->dispose         = expand_class_dispose;
   
   return class;

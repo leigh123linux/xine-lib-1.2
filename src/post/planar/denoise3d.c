@@ -181,7 +181,7 @@ void *denoise3d_init_plugin(xine_t *xine, void *data)
   
   class->open_plugin     = denoise3d_open_plugin;
   class->identifier      = "denoise3d";
-  class->description     = _("3D Denoiser (variable lowpass filter)");
+  class->description     = N_("3D Denoiser (variable lowpass filter)");
   class->dispose         = denoise3d_class_dispose;
 
   return class;

@@ -427,7 +427,7 @@ void *init_audio_plugin (xine_t *xine, void *data) {
 
   this->decoder_class.open_plugin     = ff_audio_open_plugin;
   this->decoder_class.identifier      = "ffmpeg audio";
-  this->decoder_class.description     = _("ffmpeg based audio decoder plugin");
+  this->decoder_class.description     = N_("ffmpeg based audio decoder plugin");
   this->decoder_class.dispose         = ff_audio_dispose_class;
 
   pthread_once( &once_control, init_once_routine );

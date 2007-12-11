@@ -364,7 +364,7 @@ static void
 
 	this->input_class.get_instance       = gnomevfs_klass_get_instance;
 	this->input_class.identifier         = "gnomevfs";
-	this->input_class.description        = _("gnome-vfs input plugin as shipped with xine");
+	this->input_class.description        = N_("gnome-vfs input plugin as shipped with xine");
 	this->input_class.get_dir            = NULL;
 	this->input_class.get_autoplay_list  = NULL;
 	this->input_class.dispose            = gnomevfs_klass_dispose;

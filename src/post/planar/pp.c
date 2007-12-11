@@ -156,7 +156,7 @@ void *pp_init_plugin(xine_t *xine, void *data)
   
   class->open_plugin     = pp_open_plugin;
   class->identifier      = "pp";
-  class->description     = _("plugin for ffmpeg libpostprocess");
+  class->description     = N_("plugin for ffmpeg libpostprocess");
   class->dispose         = pp_class_dispose;
 
   return class;

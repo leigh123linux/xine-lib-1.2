@@ -1759,7 +1759,7 @@ static void *init_class (xine_t *xine, void *data) {
   
   this->input_class.get_instance       = dvd_class_get_instance;
   this->input_class.identifier         = "DVD";
-  this->input_class.description        = _("DVD Navigator");
+  this->input_class.description        = N_("DVD Navigator");
 /*
   this->input_class.get_dir            = dvd_class_get_dir;
 */

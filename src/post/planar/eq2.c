@@ -414,7 +414,7 @@ void *eq2_init_plugin(xine_t *xine, void *data)
   
   class->open_plugin     = eq2_open_plugin;
   class->identifier      = "eq2";
-  class->description     = _("Software video equalizer");
+  class->description     = N_("Software video equalizer");
   class->dispose         = eq2_class_dispose;
 
   return class;

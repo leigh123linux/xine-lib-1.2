@@ -279,7 +279,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   this = xine_xmalloc (sizeof (demux_mpeg_elem_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = _("Elementary MPEG stream demux plugin");
+  this->demux_class.description     = N_("Elementary MPEG stream demux plugin");
   this->demux_class.identifier      = "MPEG_ELEM";
   this->demux_class.get_mimetypes   = get_mimetypes;
   this->demux_class.get_extensions  = get_extensions;

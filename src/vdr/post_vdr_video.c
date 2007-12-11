@@ -102,7 +102,7 @@ void *vdr_video_init_plugin(xine_t *xine, void *data)
   
   class->open_plugin     = vdr_video_open_plugin;
   class->identifier      = "vdr";
-  class->description     = _("modifies every video frame as requested by VDR");
+  class->description     = N_("modifies every video frame as requested by VDR");
   class->dispose         = vdr_video_class_dispose;
   
   return class;

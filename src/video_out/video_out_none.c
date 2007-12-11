@@ -282,7 +282,7 @@ static void *init_class (xine_t *xine, void *visual) {
 
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.identifier      = "none";
-  this->driver_class.description     = _("xine video output plugin which displays nothing");
+  this->driver_class.description     = N_("xine video output plugin which displays nothing");
   this->driver_class.dispose         = dispose_class;
 
   this->config                       = xine->config;

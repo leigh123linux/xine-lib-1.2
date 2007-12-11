@@ -734,7 +734,7 @@ void *demux_wc3movie_init_plugin (xine_t *xine, void *data) {
   this = xine_xmalloc (sizeof (demux_mve_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = _("Wing Commander III Movie (MVE) demux plugin");
+  this->demux_class.description     = N_("Wing Commander III Movie (MVE) demux plugin");
   this->demux_class.identifier      = "WC3 Movie";
   this->demux_class.get_mimetypes   = get_mimetypes;
   this->demux_class.get_extensions  = get_extensions;

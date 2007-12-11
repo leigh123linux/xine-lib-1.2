@@ -106,7 +106,7 @@ static void *switch_init_plugin(xine_t *xine, void *data)
   
   this->class.open_plugin     = switch_open_plugin;
   this->class.identifier      = "switch";
-  this->class.description     = _("Switch is a post plugin able to switch at any time between different streams");
+  this->class.description     = N_("Switch is a post plugin able to switch at any time between different streams");
   this->class.dispose         = switch_class_dispose;
   this->xine                  = xine;
 

@@ -302,7 +302,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "fooaudio";
-  this->decoder_class.description     = _("fooaudio: reference xine audio decoder plugin");
+  this->decoder_class.description     = N_("fooaudio: reference xine audio decoder plugin");
   this->decoder_class.dispose         = dispose_class;
 
   return this;

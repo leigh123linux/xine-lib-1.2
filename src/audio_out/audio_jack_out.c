@@ -412,7 +412,7 @@ static void *init_class (xine_t *xine, void *data) {
 
     this->driver_class.open_plugin     = open_jack_plugin;
     this->driver_class.identifier      = "jack";
-    this->driver_class.description     = _("xine output plugin for JACK Audio Connection Kit");
+    this->driver_class.description     = N_("xine output plugin for JACK Audio Connection Kit");
     this->driver_class.dispose         = dispose_class;
 
     this->config = xine->config;

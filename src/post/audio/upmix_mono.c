@@ -344,7 +344,7 @@ void *upmix_mono_init_plugin(xine_t *xine, void *data)
   
   class->post_class.open_plugin     = upmix_mono_open_plugin;
   class->post_class.identifier      = "upmix_mono";
-  class->post_class.description     = _("converts Mono into Stereo");
+  class->post_class.description     = N_("converts Mono into Stereo");
   class->post_class.dispose         = upmix_mono_class_dispose;
   
   class->xine                       = xine;

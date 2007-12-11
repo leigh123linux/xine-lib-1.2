@@ -193,7 +193,7 @@ static void *goom_init_plugin(xine_t *xine, void *data)
   
   this->class.open_plugin     = goom_open_plugin;
   this->class.identifier      = "goom";
-  this->class.description     = _("What a GOOM");
+  this->class.description     = N_("What a GOOM");
   this->class.dispose         = goom_class_dispose;
   this->ip                    = NULL;
   this->xine                  = xine;

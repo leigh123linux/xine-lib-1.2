@@ -1245,7 +1245,7 @@ static void *init_class (xine_t *xine, void *visual_gen) {
 
   directx->driver_class.open_plugin     = open_plugin;
   directx->driver_class.identifier      = "DirectX";
-  directx->driver_class.description     = _("xine video output plugin for win32 using directx");
+  directx->driver_class.description     = N_("xine video output plugin for win32 using directx");
   directx->driver_class.dispose         = dispose_class;
 
   directx->xine                         = xine;

@@ -1903,7 +1903,7 @@ static void *init_class_fb (xine_t *xine, void *visual_gen) {
   this = (directfb_class_t *) xine_xmalloc (sizeof (directfb_class_t));
   this->driver_class.open_plugin     = open_plugin_fb;
   this->driver_class.identifier      = "DirectFB";
-  this->driver_class.description     = _("xine video output plugin using DirectFB.");
+  this->driver_class.description     = N_("xine video output plugin using DirectFB.");
   this->driver_class.dispose         = dispose_class_fb;
 
   this->xine = xine;
@@ -2114,7 +2114,7 @@ static void *init_class_x11 (xine_t *xine, void *visual_gen) {
   this = (directfb_class_t *) xine_xmalloc (sizeof (directfb_class_t));
   this->driver_class.open_plugin     = open_plugin_x11;
   this->driver_class.identifier      = "XDirectFB";
-  this->driver_class.description     = _("xine video output plugin using DirectFB under XDirectFB.");
+  this->driver_class.description     = N_("xine video output plugin using DirectFB under XDirectFB.");
   this->driver_class.dispose         = dispose_class_x11;
 
   this->visual_type = XINE_VISUAL_TYPE_X11;

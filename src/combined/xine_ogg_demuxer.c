@@ -2137,7 +2137,7 @@ static void *anx_init_class (xine_t *xine, void *data) {
   this = xine_xmalloc (sizeof (demux_anx_class_t));
 
   this->demux_class.open_plugin     = anx_open_plugin;
-  this->demux_class.description     = _("Annodex demux plugin");
+  this->demux_class.description     = N_("Annodex demux plugin");
   this->demux_class.identifier      = "Annodex";
   this->demux_class.get_mimetypes   = anx_get_mimetypes;
   this->demux_class.get_extensions  = anx_get_extensions;
@@ -2173,7 +2173,7 @@ static void *ogg_init_class (xine_t *xine, void *data) {
   this = xine_xmalloc (sizeof (demux_ogg_class_t));
 
   this->demux_class.open_plugin     = ogg_open_plugin;
-  this->demux_class.description     = _("OGG demux plugin");
+  this->demux_class.description     = N_("OGG demux plugin");
   this->demux_class.identifier      = "OGG";
   this->demux_class.get_mimetypes   = ogg_get_mimetypes;
   this->demux_class.get_extensions  = ogg_get_extensions;

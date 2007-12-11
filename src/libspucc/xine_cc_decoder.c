@@ -334,7 +334,7 @@ static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
 
   this->spu_class.open_plugin      = spudec_open_plugin;
   this->spu_class.identifier       = "spucc";
-  this->spu_class.description      = _("closed caption decoder plugin");
+  this->spu_class.description      = N_("closed caption decoder plugin");
   this->spu_class.dispose          = spudec_class_dispose;
 
   spucc_register_cfg_vars(this, xine->config);

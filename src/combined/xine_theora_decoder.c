@@ -358,7 +358,7 @@ void *theora_init_plugin (xine_t *xine, void *data) {
 
   this->decoder_class.open_plugin     = theora_open_plugin;
   this->decoder_class.identifier      = "theora video";
-  this->decoder_class.description     = _("theora video decoder plugin");
+  this->decoder_class.description     = N_("theora video decoder plugin");
   this->decoder_class.dispose         = theora_dispose_class;
 
   return this;

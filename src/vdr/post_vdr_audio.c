@@ -79,7 +79,7 @@ void *vdr_audio_init_plugin(xine_t *xine, void *data)
   
   class->open_plugin     = vdr_audio_open_plugin;
   class->identifier      = "vdr_audio";
-  class->description     = _("modifies every audio frame as requested by VDR");
+  class->description     = N_("modifies every audio frame as requested by VDR");
   class->dispose         = vdr_audio_class_dispose;
   
   return class;

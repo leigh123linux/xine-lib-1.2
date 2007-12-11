@@ -298,7 +298,7 @@ static void *deinterlace_init_plugin(xine_t *xine, void *data)
   
   class->class.open_plugin     = deinterlace_open_plugin;
   class->class.identifier      = "tvtime";
-  class->class.description     = _("advanced deinterlacer plugin with pulldown detection");
+  class->class.description     = N_("advanced deinterlacer plugin with pulldown detection");
   class->class.dispose         = deinterlace_class_dispose;
 
 

@@ -472,7 +472,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   this = xine_xmalloc (sizeof (demux_yuv4mpeg2_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = _("YUV4MPEG2 file demux plugin");
+  this->demux_class.description     = N_("YUV4MPEG2 file demux plugin");
   this->demux_class.identifier      = "YUV4MPEG2";
   this->demux_class.get_mimetypes   = get_mimetypes;
   this->demux_class.get_extensions  = get_extensions;

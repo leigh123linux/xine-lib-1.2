@@ -1028,7 +1028,7 @@ static void *ao_sun_init_class (xine_t *xine, void *data) {
 
   this->driver_class.open_plugin     = ao_sun_open_plugin;
   this->driver_class.identifier      = "sun";
-  this->driver_class.description     = _("xine audio output plugin using sun-compliant audio devices/drivers");
+  this->driver_class.description     = N_("xine audio output plugin using sun-compliant audio devices/drivers");
   this->driver_class.dispose         = ao_sun_dispose_class;
 
   this->xine = xine;

@@ -1783,7 +1783,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->xine   = xine;
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = _("mpeg pes demux plugin");
+  this->demux_class.description     = N_("mpeg pes demux plugin");
   this->demux_class.identifier      = "MPEG_PES";
   this->demux_class.get_mimetypes   = get_mimetypes;
   this->demux_class.get_extensions  = get_extensions;

@@ -1492,7 +1492,7 @@ static void *pgx64_init_class(xine_t *xine, void *visual_gen)
 
   class->vo_driver_class.open_plugin     = pgx64_init_driver;
   class->vo_driver_class.identifier      = "pgx64";
-  class->vo_driver_class.description     = _("xine video output plugin for Sun XVR100/PGX64/PGX24 framebuffers");
+  class->vo_driver_class.description     = N_("xine video output plugin for Sun XVR100/PGX64/PGX24 framebuffers");
   class->vo_driver_class.dispose         = pgx64_dispose_class;
 
   class->xine   = xine;

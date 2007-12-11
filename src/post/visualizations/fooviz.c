@@ -299,7 +299,7 @@ static void *fooviz_init_plugin(xine_t *xine, void *data)
   
   class->post_class.open_plugin     = fooviz_open_plugin;
   class->post_class.identifier      = "fooviz";
-  class->post_class.description     = _("fooviz");
+  class->post_class.description     = N_("fooviz");
   class->post_class.dispose         = fooviz_class_dispose;
   
   class->xine                       = xine;

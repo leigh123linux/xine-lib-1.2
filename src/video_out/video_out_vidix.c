@@ -1200,7 +1200,7 @@ static void *vidix_init_class (xine_t *xine, void *visual_gen) {
   if(this) {
     this->driver_class.open_plugin     = vidix_open_plugin;
     this->driver_class.identifier      = "vidix";
-    this->driver_class.description     = _("xine video output plugin using libvidix for x11");
+    this->driver_class.description     = N_("xine video output plugin using libvidix for x11");
     this->driver_class.dispose         = dispose_class;
   }
   
@@ -1274,7 +1274,7 @@ static void *vidixfb_init_class (xine_t *xine, void *visual_gen) {
   if(this) {
     this->driver_class.open_plugin     = vidixfb_open_plugin;
     this->driver_class.identifier      = "vidixfb";
-    this->driver_class.description     = _("xine video output plugin using libvidix for linux frame buffer");
+    this->driver_class.description     = N_("xine video output plugin using libvidix for linux frame buffer");
     this->driver_class.dispose         = dispose_class;
   }
   

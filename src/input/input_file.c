@@ -980,7 +980,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   
   this->input_class.get_instance       = file_class_get_instance;
   this->input_class.identifier         = "file";
-  this->input_class.description        = _("file input plugin");
+  this->input_class.description        = N_("file input plugin");
   this->input_class.get_dir            = file_class_get_dir;
   this->input_class.get_autoplay_list  = NULL;
   this->input_class.dispose            = file_class_dispose;

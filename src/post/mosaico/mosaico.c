@@ -127,7 +127,7 @@ static void *mosaico_init_plugin(xine_t *xine, void *data)
   
   this->class.open_plugin     = mosaico_open_plugin;
   this->class.identifier      = "mosaico";
-  this->class.description     = _("Mosaico is a picture in picture (pip) post plugin");
+  this->class.description     = N_("Mosaico is a picture in picture (pip) post plugin");
   this->class.dispose         = mosaico_class_dispose;
   this->xine                  = xine;
 

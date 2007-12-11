@@ -596,7 +596,7 @@ void *init_realadec (xine_t *xine, void *data) {
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "realadec";
-  this->decoder_class.description     = _("real binary-only codec based audio decoder plugin");
+  this->decoder_class.description     = N_("real binary-only codec based audio decoder plugin");
   this->decoder_class.dispose         = dispose_class;
 
   _x_real_codecs_init(xine);

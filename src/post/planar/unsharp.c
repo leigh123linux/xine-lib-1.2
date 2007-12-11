@@ -274,7 +274,7 @@ void *unsharp_init_plugin(xine_t *xine, void *data)
   
   class->open_plugin     = unsharp_open_plugin;
   class->identifier      = "unsharp";
-  class->description     = _("unsharp mask & gaussian blur");
+  class->description     = N_("unsharp mask & gaussian blur");
   class->dispose         = unsharp_class_dispose;
 
   return class;

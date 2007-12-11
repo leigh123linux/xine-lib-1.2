@@ -1667,7 +1667,7 @@ static void *init_class (xine_t *xine, void *visual_gen) {
 
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.identifier      = "XvMC";
-  this->driver_class.description     = _("xine video output plugin using the XvMC X video extension");
+  this->driver_class.description     = N_("xine video output plugin using the XvMC X video extension");
   this->driver_class.dispose         = dispose_class;
 
   this->display                      = display;

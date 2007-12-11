@@ -196,7 +196,7 @@ static void *dxr3_init_plugin(xine_t *xine, void *data)
   
   this->video_decoder_class.open_plugin     = dxr3_open_plugin;
   this->video_decoder_class.identifier      = "dxr3-mpeg2";
-  this->video_decoder_class.description     = _("MPEGI/II decoder plugin using the hardware decoding capabilities of a DXR3 decoder card.");
+  this->video_decoder_class.description     = N_("MPEGI/II decoder plugin using the hardware decoding capabilities of a DXR3 decoder card.");
   this->video_decoder_class.dispose         = dxr3_class_dispose;
   
   this->instance                            = 0;

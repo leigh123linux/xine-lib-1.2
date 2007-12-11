@@ -922,7 +922,7 @@ void *demux_film_init_plugin (xine_t *xine, void *data) {
   this = xine_xmalloc (sizeof (demux_film_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = _("FILM (CPK) demux plugin");
+  this->demux_class.description     = N_("FILM (CPK) demux plugin");
   this->demux_class.identifier      = "FILM (CPK)";
   this->demux_class.get_mimetypes   = get_mimetypes;
   this->demux_class.get_extensions  = get_extensions;

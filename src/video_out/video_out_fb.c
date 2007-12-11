@@ -1058,7 +1058,7 @@ static void *fb_init_class(xine_t *xine, void *visual_gen)
 
   this->driver_class.open_plugin     = fb_open_plugin;
   this->driver_class.identifier      = "fb";
-  this->driver_class.description     = _("Xine video output plugin using the Linux frame buffer device");
+  this->driver_class.description     = N_("Xine video output plugin using the Linux frame buffer device");
   this->driver_class.dispose         = fb_dispose_class;
 
   this->config          = xine->config;

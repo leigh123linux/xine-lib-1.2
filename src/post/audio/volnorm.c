@@ -462,7 +462,7 @@ void *volnorm_init_plugin(xine_t *xine, void *data)
     
     class->post_class.open_plugin     = volnorm_open_plugin;
     class->post_class.identifier      = "volnorm";
-    class->post_class.description     = _("Normalize volume");
+    class->post_class.description     = N_("Normalize volume");
     class->post_class.dispose         = volnorm_class_dispose;
     
     class->xine                       = xine;

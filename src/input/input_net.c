@@ -520,7 +520,7 @@ static void *init_class (xine_t *xine, void *data) {
   this->xine   = xine;
 
   this->input_class.get_instance      = net_class_get_instance;
-  this->input_class.description       = _("net input plugin as shipped with xine");
+  this->input_class.description       = N_("net input plugin as shipped with xine");
   this->input_class.identifier        = "TCP";
   this->input_class.get_dir           = NULL;
   this->input_class.get_autoplay_list = NULL;

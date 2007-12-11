@@ -1079,7 +1079,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   this->input_class.get_instance       = vcd_class_get_instance;
   this->input_class.identifier         = "vcdo";
-  this->input_class.description        = _("Video CD input plugin");
+  this->input_class.description        = N_("Video CD input plugin");
   this->input_class.get_dir            = vcd_class_get_dir;
   this->input_class.get_autoplay_list  = vcd_class_get_autoplay_list;
   this->input_class.dispose            = vcd_class_dispose;

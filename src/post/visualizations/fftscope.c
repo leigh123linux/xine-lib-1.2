@@ -488,7 +488,7 @@ void *fftscope_init_plugin(xine_t *xine, void *data)
   
   class->post_class.open_plugin     = fftscope_open_plugin;
   class->post_class.identifier      = "FFT Scope";
-  class->post_class.description     = _("FFT Scope");
+  class->post_class.description     = N_("FFT Scope");
   class->post_class.dispose         = fftscope_class_dispose;
   
   class->xine                       = xine;

@@ -201,7 +201,7 @@ static void *dxr3_spudec_init_plugin(xine_t *xine, void* data)
   
   this->spu_decoder_class.open_plugin     = dxr3_spudec_open_plugin;
   this->spu_decoder_class.identifier      = "dxr3-spudec";
-  this->spu_decoder_class.description     = _("subtitle decoder plugin using the hardware decoding capabilities of a DXR3 decoder card");
+  this->spu_decoder_class.description     = N_("subtitle decoder plugin using the hardware decoding capabilities of a DXR3 decoder card");
   this->spu_decoder_class.dispose         = dxr3_spudec_class_dispose;
   
   this->instance                          = 0;

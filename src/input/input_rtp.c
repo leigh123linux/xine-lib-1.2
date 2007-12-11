@@ -781,7 +781,7 @@ static void *init_class (xine_t *xine, void *data) {
   this->xine   = xine;
 
   this->input_class.get_instance      = rtp_class_get_instance;
-  this->input_class.description       = _("RTP and UDP input plugin as shipped with xine");
+  this->input_class.description       = N_("RTP and UDP input plugin as shipped with xine");
   this->input_class.identifier        = "RTP/UDP";
   this->input_class.get_dir           = NULL;
   this->input_class.get_autoplay_list = NULL;

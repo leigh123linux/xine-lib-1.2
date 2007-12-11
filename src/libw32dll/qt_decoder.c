@@ -588,7 +588,7 @@ static void *qta_init_class (xine_t *xine, void *data) {
 
   this->decoder_class.open_plugin     = qta_open_plugin;
   this->decoder_class.identifier      = "qta";
-  this->decoder_class.description     = _("quicktime audio decoder plugin");
+  this->decoder_class.description     = N_("quicktime audio decoder plugin");
   this->decoder_class.dispose         = qta_dispose_class;
 
   return this;
@@ -1104,7 +1104,7 @@ static void *qtv_init_class (xine_t *xine, void *data) {
 
   this->decoder_class.open_plugin     = qtv_open_plugin;
   this->decoder_class.identifier      = "qtvdec";
-  this->decoder_class.description     = _("quicktime binary-only codec based video decoder plugin");
+  this->decoder_class.description     = N_("quicktime binary-only codec based video decoder plugin");
   this->decoder_class.dispose         = qtv_dispose_class;
 
   return this;

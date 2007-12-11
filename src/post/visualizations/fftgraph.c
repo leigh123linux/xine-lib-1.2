@@ -467,7 +467,7 @@ void *fftgraph_init_plugin(xine_t *xine, void *data)
   
   class->post_class.open_plugin     = fftgraph_open_plugin;
   class->post_class.identifier      = "fftgraph";
-  class->post_class.description     = _("fftgraph Visualization Post Plugin");
+  class->post_class.description     = N_("fftgraph Visualization Post Plugin");
   class->post_class.dispose         = fftgraph_class_dispose;
   
   class->xine                       = xine;

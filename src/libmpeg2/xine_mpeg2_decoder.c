@@ -151,7 +151,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "mpeg2dec";
-  this->decoder_class.description     = _("mpeg2 based video decoder plugin");
+  this->decoder_class.description     = N_("mpeg2 based video decoder plugin");
   this->decoder_class.dispose         = dispose_class;
 
   return this;

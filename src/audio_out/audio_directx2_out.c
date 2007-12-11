@@ -1005,7 +1005,7 @@ static void *init_class(xine_t *xine, void *data) {
 
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.identifier      = "directx2";
-  this->driver_class.description     = _("second xine audio output plugin using directx");
+  this->driver_class.description     = N_("second xine audio output plugin using directx");
   this->driver_class.dispose         = dispose_class;
 
   this->xine = xine;

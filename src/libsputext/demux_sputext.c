@@ -1480,7 +1480,7 @@ static void *init_sputext_demux_class (xine_t *xine, void *data) {
   this = xine_xmalloc (sizeof (demux_sputext_class_t));
 
   this->demux_class.open_plugin     = open_demux_plugin;
-  this->demux_class.description     = _("sputext demuxer plugin");
+  this->demux_class.description     = N_("sputext demuxer plugin");
   this->demux_class.identifier      = "sputext";
   this->demux_class.get_mimetypes   = get_demux_mimetypes;
   this->demux_class.get_extensions  = get_demux_extensions;

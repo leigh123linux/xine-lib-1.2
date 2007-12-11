@@ -1241,7 +1241,7 @@ static void *xshm_init_class (xine_t *xine, void *visual_gen) {
 
   this->driver_class.open_plugin     = xshm_open_plugin;
   this->driver_class.identifier      = "XShm";
-  this->driver_class.description     = _("xine video output plugin using the MIT X shared memory extension");
+  this->driver_class.description     = N_("xine video output plugin using the MIT X shared memory extension");
   this->driver_class.dispose         = xshm_dispose_class;
   this->config                       = xine->config;
   this->xine                         = xine;

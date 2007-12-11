@@ -1752,7 +1752,7 @@ vcd_init (xine_t *xine, void *data)
 
   class->input_class.get_instance        = vcd_class_get_instance;
   class->input_class.identifier          = SHORT_PLUGIN_NAME;
-  class->input_class.description         = _("Video CD plugin with PBC and support for: (X)VCD, (X)SVCD, HQVCD, CVD ... ");
+  class->input_class.description         = N_("Video CD plugin with PBC and support for: (X)VCD, (X)SVCD, HQVCD, CVD ... ");
   class->input_class.get_dir             = vcd_class_get_dir; 
   class->input_class.get_autoplay_list   = vcd_class_get_autoplay_list;
   class->input_class.dispose		 = vcd_class_dispose;

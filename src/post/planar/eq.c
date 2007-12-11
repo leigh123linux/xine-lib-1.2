@@ -233,7 +233,7 @@ void *eq_init_plugin(xine_t *xine, void *data)
   
   class->open_plugin     = eq_open_plugin;
   class->identifier      = "eq";
-  class->description     = _("soft video equalizer");
+  class->description     = N_("soft video equalizer");
   class->dispose         = eq_class_dispose;
 
   return class;

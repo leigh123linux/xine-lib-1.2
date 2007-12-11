@@ -783,7 +783,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "a/52dec";
-  this->decoder_class.description     = _("liba52 based a52 audio decoder plugin");
+  this->decoder_class.description     = N_("liba52 based a52 audio decoder plugin");
   this->decoder_class.dispose         = dispose_class;
 
   cfg = this->config = xine->config;

@@ -1537,7 +1537,7 @@ void *init_video_plugin (xine_t *xine, void *data) {
 
   this->decoder_class.open_plugin     = ff_video_open_plugin;
   this->decoder_class.identifier      = "ffmpeg video";
-  this->decoder_class.description     = _("ffmpeg based video decoder plugin");
+  this->decoder_class.description     = N_("ffmpeg based video decoder plugin");
   this->decoder_class.dispose         = ff_video_dispose_class;
   this->xine                          = xine;
 

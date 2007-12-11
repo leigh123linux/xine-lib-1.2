@@ -348,7 +348,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "mad";
-  this->decoder_class.description     = _("libmad based mpeg audio layer 1/2/3 decoder plugin");
+  this->decoder_class.description     = N_("libmad based mpeg audio layer 1/2/3 decoder plugin");
   this->decoder_class.dispose         = dispose_class;
 
   return this;

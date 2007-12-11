@@ -366,7 +366,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "spudec";
-  this->decoder_class.description     = _("DVD/VOB SPU decoder plugin");
+  this->decoder_class.description     = N_("DVD/VOB SPU decoder plugin");
   this->decoder_class.dispose         = dispose_class;
 
   lprintf ("libspudec:init_plugin called\n");

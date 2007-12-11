@@ -370,7 +370,7 @@ void *oscope_init_plugin(xine_t *xine, void *data)
   
   class->post_class.open_plugin     = oscope_open_plugin;
   class->post_class.identifier      = "Oscilloscope";
-  class->post_class.description     = _("Oscilloscope");
+  class->post_class.description     = N_("Oscilloscope");
   class->post_class.dispose         = oscope_class_dispose;
   
   class->xine                       = xine;

@@ -54,7 +54,7 @@ void *invert_init_plugin(xine_t *xine, void *data)
   
   class->open_plugin     = invert_open_plugin;
   class->identifier      = "invert";
-  class->description     = _("inverts the colours of every video frame");
+  class->description     = N_("inverts the colours of every video frame");
   class->dispose         = invert_class_dispose;
   
   return class;

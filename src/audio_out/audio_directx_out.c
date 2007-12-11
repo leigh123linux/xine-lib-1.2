@@ -839,7 +839,7 @@ static void *init_class (xine_t *xine, void *data) {
   
   audiox->driver_class.open_plugin     = open_plugin;
   audiox->driver_class.identifier      = "DirectX";
-  audiox->driver_class.description     = _("xine audio output plugin for win32 using directx");
+  audiox->driver_class.description     = N_("xine audio output plugin for win32 using directx");
   audiox->driver_class.dispose         = dispose_class;
 
   audiox->xine                         = xine;

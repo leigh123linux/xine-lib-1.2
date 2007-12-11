@@ -908,7 +908,7 @@ static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
 
   this->class.open_plugin      = sputext_class_open_plugin;
   this->class.identifier       = "sputext";
-  this->class.description      = _("external subtitle decoder plugin");
+  this->class.description      = N_("external subtitle decoder plugin");
   this->class.dispose          = sputext_class_dispose;
 
   this->xine                   = xine;

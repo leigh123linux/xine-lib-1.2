@@ -373,7 +373,7 @@ static void *init_class (xine_t *xine, void *data) {
 
 	this->driver_class.open_plugin     = open_plugin;
 	this->driver_class.identifier      = "file";
-	this->driver_class.description     = _("xine file audio output plugin");
+	this->driver_class.description     = N_("xine file audio output plugin");
 	this->driver_class.dispose         = dispose_class;
 
 	this->config = xine->config;

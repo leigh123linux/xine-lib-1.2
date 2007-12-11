@@ -2659,7 +2659,7 @@ static void *init_class(xine_t *xine, void *data)
 
   this->input_class.get_instance      = vdr_class_get_instance;
   this->input_class.identifier        = "VDR";
-  this->input_class.description       = _("VDR display device plugin");
+  this->input_class.description       = N_("VDR display device plugin");
   this->input_class.get_dir           = NULL;
   this->input_class.get_autoplay_list = vdr_class_get_autoplay_list;
   this->input_class.dispose           = vdr_class_dispose;

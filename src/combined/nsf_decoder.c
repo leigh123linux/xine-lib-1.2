@@ -249,7 +249,7 @@ void *decoder_nsf_init_plugin (xine_t *xine, void *data) {
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "NSF";
-  this->decoder_class.description     = _("NES Music audio decoder plugin");
+  this->decoder_class.description     = N_("NES Music audio decoder plugin");
   this->decoder_class.dispose         = dispose_class;
 
   return this;

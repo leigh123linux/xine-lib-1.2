@@ -461,7 +461,7 @@ static void* init_class(xine_t *xine, void *data) {
 
   class->ao_class.open_plugin     = open_plugin;
   class->ao_class.identifier      = "FunsionSound";
-  class->ao_class.description     = _("xine FusionSound audio output plugin");
+  class->ao_class.description     = N_("xine FusionSound audio output plugin");
   class->ao_class.dispose         = dispose_class;
   class->xine                     = xine;
 

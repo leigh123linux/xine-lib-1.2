@@ -3149,7 +3149,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->xine   = xine;
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = ("Apple Quicktime (MOV) and MPEG-4 demux plugin");
+  this->demux_class.description     = N_("Apple Quicktime (MOV) and MPEG-4 demux plugin");
   this->demux_class.identifier      = "MOV/MPEG-4";
   this->demux_class.get_mimetypes   = get_mimetypes;
   this->demux_class.get_extensions  = get_extensions;

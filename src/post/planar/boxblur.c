@@ -141,7 +141,7 @@ void *boxblur_init_plugin(xine_t *xine, void *data)
   
   class->open_plugin     = boxblur_open_plugin;
   class->identifier      = "boxblur";
-  class->description     = _("box blur filter from mplayer");
+  class->description     = N_("box blur filter from mplayer");
   class->dispose         = boxblur_class_dispose;
 
   return class;

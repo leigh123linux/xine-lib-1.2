@@ -261,7 +261,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "GSM 6.10";
-  this->decoder_class.description     = _("GSM 6.10 audio decoder plugin");
+  this->decoder_class.description     = N_("GSM 6.10 audio decoder plugin");
   this->decoder_class.dispose         = dispose_class;
 
   return this;

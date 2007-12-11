@@ -53,7 +53,7 @@ void *fill_init_plugin(xine_t *xine, void *data)
   
   class->open_plugin     = fill_open_plugin;
   class->identifier      = "fill";
-  class->description     = _("crops left and right of video to fill 4:3 aspect ratio");
+  class->description     = N_("crops left and right of video to fill 4:3 aspect ratio");
   class->dispose         = fill_class_dispose;
   
   return class;

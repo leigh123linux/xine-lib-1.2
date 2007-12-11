@@ -510,7 +510,7 @@ static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
 
   this->class.open_plugin      = spucmml_class_open_plugin;
   this->class.identifier       = "spucmml";
-  this->class.description      = _("CMML subtitle decoder plugin");
+  this->class.description      = N_("CMML subtitle decoder plugin");
   this->class.dispose          = spucmml_class_dispose;
 
   this->xine                   = xine;

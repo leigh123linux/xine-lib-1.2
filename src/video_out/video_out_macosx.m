@@ -363,7 +363,7 @@ static void *init_class (xine_t *xine, void *visual) {
 
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.identifier      = "MacOSX";
-  this->driver_class.description     = _("xine video output plugin for Mac OS X");
+  this->driver_class.description     = N_("xine video output plugin for Mac OS X");
   this->driver_class.dispose         = dispose_class;
 
   this->config                       = xine->config;

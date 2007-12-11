@@ -275,7 +275,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   this->input_class.get_instance       = pnm_class_get_instance;
   this->input_class.identifier         = "pnm";
-  this->input_class.description        = _("pnm streaming input plugin");
+  this->input_class.description        = N_("pnm streaming input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
   this->input_class.dispose            = pnm_class_dispose;

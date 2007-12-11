@@ -979,7 +979,7 @@ static void *init_spu_decoder_plugin (xine_t * xine, void *data)
 
   this->class.open_plugin = dvb_spu_class_open_plugin;
   this->class.identifier  = "spudvb";
-  this->class.description = _("DVB subtitle decoder plugin");
+  this->class.description = N_("DVB subtitle decoder plugin");
   this->class.dispose = dvb_spu_class_dispose;
 
   this->xine = xine;

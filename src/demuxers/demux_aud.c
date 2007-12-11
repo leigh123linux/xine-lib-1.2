@@ -338,7 +338,7 @@ void *demux_aud_init_plugin (xine_t *xine, void *data) {
   this = xine_xmalloc (sizeof (demux_aud_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = _("Westwood Studios AUD file demux plugin");
+  this->demux_class.description     = N_("Westwood Studios AUD file demux plugin");
   this->demux_class.identifier      = "Westwood Studios AUD";
   this->demux_class.get_mimetypes   = get_mimetypes;
   this->demux_class.get_extensions  = get_extensions;

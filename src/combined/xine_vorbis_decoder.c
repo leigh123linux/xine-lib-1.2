@@ -323,7 +323,7 @@ void *vorbis_init_plugin (xine_t *xine, void *data) {
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "vorbis";
-  this->decoder_class.description     = _("vorbis audio decoder plugin");
+  this->decoder_class.description     = N_("vorbis audio decoder plugin");
   this->decoder_class.dispose         = dispose_class;
 
   return this;

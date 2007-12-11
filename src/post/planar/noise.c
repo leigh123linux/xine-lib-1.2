@@ -450,7 +450,7 @@ void *noise_init_plugin(xine_t *xine, void *data)
   
     class->open_plugin     = noise_open_plugin;
     class->identifier      = "noise";
-    class->description     = _("Adds noise");
+    class->description     = N_("Adds noise");
     class->dispose         = noise_class_dispose;
 
 #ifdef ARCH_X86

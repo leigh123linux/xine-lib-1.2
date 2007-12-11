@@ -429,7 +429,7 @@ void *upmix_init_plugin(xine_t *xine, void *data)
   
   class->post_class.open_plugin     = upmix_open_plugin;
   class->post_class.identifier      = "upmix";
-  class->post_class.description     = _("upmix");
+  class->post_class.description     = N_("upmix");
   class->post_class.dispose         = upmix_class_dispose;
   
   class->xine                       = xine;

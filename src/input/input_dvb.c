@@ -3244,7 +3244,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   this->input_class.get_instance       = dvb_class_get_instance;
   this->input_class.identifier         = "dvb";
-  this->input_class.description        = _("DVB (Digital TV) input plugin");
+  this->input_class.description        = N_("DVB (Digital TV) input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = dvb_class_get_autoplay_list;
   this->input_class.dispose            = dvb_class_dispose;

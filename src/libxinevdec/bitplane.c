@@ -1554,7 +1554,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   this->decoder_class.open_plugin       = open_plugin;
   this->decoder_class.identifier        = "bitplane";
-  this->decoder_class.description       = _("Raw bitplane video decoder plugin");
+  this->decoder_class.description       = N_("Raw bitplane video decoder plugin");
   this->decoder_class.dispose           = dispose_class;
 
   return this;

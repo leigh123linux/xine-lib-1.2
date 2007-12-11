@@ -416,7 +416,7 @@ void *demux_eawve_init_plugin(xine_t *xine, void *data) {
   this = xine_xmalloc(sizeof(demux_eawve_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = _("Electronics Arts WVE format demux plugin");
+  this->demux_class.description     = N_("Electronics Arts WVE format demux plugin");
   this->demux_class.identifier      = "EA WVE";
   this->demux_class.get_mimetypes   = get_mimetypes;
   this->demux_class.get_extensions  = get_extensions;

@@ -1966,7 +1966,7 @@ static void *opengl_init_class (xine_t *xine, void *visual_gen) {
 
   this->driver_class.open_plugin     = opengl_open_plugin;
   this->driver_class.identifier      = "opengl";
-  this->driver_class.description     = _("xine video output plugin using the OpenGL 3D graphics API");
+  this->driver_class.description     = N_("xine video output plugin using the OpenGL 3D graphics API");
   this->driver_class.dispose         = opengl_dispose_class;
   this->xine                         = xine;
 

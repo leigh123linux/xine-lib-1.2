@@ -1639,7 +1639,7 @@ static void *init_class (xine_t *xine, void *data) {
   this = xine_xmalloc (sizeof (demux_real_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = _("RealMedia file demux plugin");
+  this->demux_class.description     = N_("RealMedia file demux plugin");
   this->demux_class.identifier      = "Real";
   this->demux_class.get_mimetypes   = get_mimetypes;
   this->demux_class.get_extensions  = get_extensions;

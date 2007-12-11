@@ -1547,7 +1547,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   this->input_class.get_instance       = pvr_class_get_instance;
   this->input_class.identifier         = "pvr";
-  this->input_class.description        = _("WinTV-PVR 250/350 input plugin");
+  this->input_class.description        = N_("WinTV-PVR 250/350 input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
   this->input_class.dispose            = pvr_class_dispose;

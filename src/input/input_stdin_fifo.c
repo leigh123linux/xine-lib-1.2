@@ -360,7 +360,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   this->input_class.get_instance       = stdin_class_get_instance;
   this->input_class.identifier         = "stdin_fifo";
-  this->input_class.description        = _("stdin streaming input plugin");
+  this->input_class.description        = N_("stdin streaming input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
   this->input_class.dispose            = stdin_class_dispose;

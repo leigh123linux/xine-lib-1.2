@@ -1918,7 +1918,7 @@ static void *init_video_class (xine_t *xine, void *data)
   
   this->input_class.get_instance       = v4l_class_get_video_instance;
   this->input_class.identifier         = "v4l";
-  this->input_class.description        = _("v4l tv input plugin");
+  this->input_class.description        = N_("v4l tv input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
   this->input_class.dispose            = v4l_class_dispose;
@@ -1950,7 +1950,7 @@ static void *init_radio_class (xine_t *xine, void *data)
   
   this->input_class.get_instance       = v4l_class_get_radio_instance;
   this->input_class.identifier         = "v4l";
-  this->input_class.description        = _("v4l radio input plugin");
+  this->input_class.description        = N_("v4l radio input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
   this->input_class.dispose            = v4l_class_dispose;

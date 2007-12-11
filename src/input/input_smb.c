@@ -508,7 +508,7 @@ static void
 
 	this->input_class.get_instance       = smb_class_get_instance;
 	this->input_class.identifier         = "smb";
-	this->input_class.description        = _("CIFS/SMB input plugin based on libsmbclient");
+	this->input_class.description        = N_("CIFS/SMB input plugin based on libsmbclient");
 	this->input_class.get_dir            = smb_class_get_dir;
 	this->input_class.get_autoplay_list  = NULL;
 	this->input_class.dispose            = smb_class_dispose;

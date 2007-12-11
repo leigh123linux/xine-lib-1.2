@@ -389,7 +389,7 @@ static void *init_dvaudio_plugin (xine_t *xine, void *data) {
 
   this->decoder_class.open_plugin     = dvaudio_open_plugin;
   this->decoder_class.identifier      = "dv audio";
-  this->decoder_class.description     = _("dv audio decoder plugin");
+  this->decoder_class.description     = N_("dv audio decoder plugin");
   this->decoder_class.dispose         = dvaudio_dispose_class;
 
   return this;

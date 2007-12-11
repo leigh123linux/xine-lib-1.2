@@ -175,7 +175,7 @@ static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, void *visual_gen)
 
   this->video_driver_class.open_plugin     = dxr3_vo_open_plugin;
   this->video_driver_class.identifier      = DXR3_VO_ID;
-  this->video_driver_class.description     = _("video output plugin displaying images through your DXR3 decoder card");
+  this->video_driver_class.description     = N_("video output plugin displaying images through your DXR3 decoder card");
   this->video_driver_class.dispose         = dxr3_vo_class_dispose;
   
   this->xine                               = xine;

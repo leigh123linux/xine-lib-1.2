@@ -1680,7 +1680,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.identifier      = "alsa";
-  this->driver_class.description     = _("xine audio output plugin using alsa-compliant audio devices/drivers");
+  this->driver_class.description     = N_("xine audio output plugin using alsa-compliant audio devices/drivers");
   this->driver_class.dispose         = dispose_class;
 
 /*  this->config = xine->config; */
