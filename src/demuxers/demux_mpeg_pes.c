@@ -1726,25 +1726,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   }
   break;
 
-  case METHOD_BY_EXTENSION: {
-    const char *const mrl = input->get_mrl (input);
-    const char *const ending = strrchr(mrl, '.');
-
-    if (!ending) {
-      free (this->scratch_base);
-      free (this);
-      return NULL;
-    }
-
-    if (strncasecmp(ending, ".MPEG", 5)
-        && strncasecmp (ending, ".vdr", 4)
-        && strncasecmp (ending, ".mpg", 4)) {
-      free (this->scratch_base);
-      free (this);
-      return NULL;
-    }
-  }
-  break;
+  case METHOD_BY_EXTENSION:
+    break;
 
   case METHOD_EXPLICIT: {
 

@@ -1559,22 +1559,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   lprintf ("by content accepted.\n");
   break;
 
-  case METHOD_BY_EXTENSION: {
-    const char *extensions, *mrl;
-
-    mrl = input->get_mrl (input);
-    extensions = class_gen->get_extensions (class_gen);
-
-    lprintf ("by extension '%s'\n", mrl);
-
-    if (!_x_demux_check_extension (mrl, extensions)) {
-      return NULL;
-    }
-    lprintf ("by extension accepted.\n");
-  }
-
-  break;
-
+  case METHOD_BY_EXTENSION:
   case METHOD_EXPLICIT:
     break;
 

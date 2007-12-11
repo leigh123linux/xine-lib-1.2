@@ -3076,24 +3076,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   break;
 
-  case METHOD_BY_EXTENSION: {
-    const char *const mrl = input->get_mrl (input);
-    const char *const ending = strrchr(mrl, '.');
-
-    if (!ending) {
-      free (this);
-      return NULL;
-    }
-
-    if (strncasecmp (ending, ".mov", 4) &&
-        strncasecmp (ending, ".qt", 3) &&
-        strncasecmp (ending, ".mp4", 4)) {
-      free (this);
-      return NULL;
-    }
-  }
-
-  /* we want to fall through here */
+  case METHOD_BY_EXTENSION:
   case METHOD_EXPLICIT: {
 
     if (!is_qt_file(this->input)) {

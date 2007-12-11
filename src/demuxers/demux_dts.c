@@ -358,19 +358,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   switch (stream->content_detection_method) {
 
-  case METHOD_BY_EXTENSION: {
-    const char *extensions, *mrl;
-
-    mrl = input->get_mrl (input);
-    extensions = class_gen->get_extensions (class_gen);
-
-    if (!_x_demux_check_extension (mrl, extensions)) {
-      free (this);
-      return NULL;
-    }
-  }
-  /* falling through is intended */
-
+  case METHOD_BY_EXTENSION:
   case METHOD_BY_CONTENT:
   case METHOD_EXPLICIT:
     if (!open_dts_file(this)) {
@@ -396,7 +384,7 @@ void *demux_dts_init_plugin (xine_t *xine, void *data) {
   this->demux_class.description     = N_("Raw DTS demux plugin");
   this->demux_class.identifier      = "DTS";
   this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = "dts"
+  this->demux_class.extensions      = "dts";
   this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;

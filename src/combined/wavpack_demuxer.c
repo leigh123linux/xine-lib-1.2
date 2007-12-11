@@ -349,17 +349,7 @@ static demux_plugin_t *open_plugin (demux_class_t *const class_gen,
   this->status = DEMUX_FINISHED;
   switch (stream->content_detection_method) {
 
-  case METHOD_BY_EXTENSION: {
-    const char *const mrl = input->get_mrl (input);
-    const char *const extensions = class_gen->get_extensions (class_gen);
-
-    if (!_x_demux_check_extension (mrl, extensions)) {
-      free (this);
-      return NULL;
-    }
-  }
-  /* Falling through is intended */
-
+  case METHOD_BY_EXTENSION:
   case METHOD_BY_CONTENT:
   case METHOD_EXPLICIT:
     

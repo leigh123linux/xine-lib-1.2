@@ -983,18 +983,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   }
   break;
 
-  case METHOD_BY_EXTENSION: {
-    const char *const mrl = input->get_mrl(input);
-    const char *const extensions = class_gen->get_extensions (class_gen);
-    
-    lprintf ("stage by extension %s\n", mrl);
-    
-    if (!_x_demux_check_extension (mrl, extensions))
-      return NULL;
-      
-  }
-  break;
-
+  case METHOD_BY_EXTENSION:
   case METHOD_EXPLICIT:
   break;
   

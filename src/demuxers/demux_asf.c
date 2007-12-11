@@ -2031,23 +2031,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 
     break;
 
-  case METHOD_BY_EXTENSION: {
-    const char *const mrl = input->get_mrl (input);
-    const char *const ending = strrchr (mrl, '.');
-
-    if (!ending)
-      return NULL;
-
-    if (strncasecmp(ending, ".asf", 4) &&
-        strncasecmp(ending, ".wmv", 4) &&
-        strncasecmp(ending, ".wma", 4) ) {
-      return NULL;
-    }
-
-    lprintf ("extension accepted.\n");
-  }
-  break;
-
+  case METHOD_BY_EXTENSION:
   case METHOD_EXPLICIT:
   break;
 

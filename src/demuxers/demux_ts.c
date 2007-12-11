@@ -2166,9 +2166,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
     const char *const mrl = input->get_mrl (input);
 
     /* check extension */
-    const char *const extensions = class_gen->get_extensions (class_gen);
-
-    if (_x_demux_check_extension (mrl, extensions))
+    if (_x_demux_check_extension (mrl, class_gen->extensions))
       break;
 
     /* accept dvb streams */

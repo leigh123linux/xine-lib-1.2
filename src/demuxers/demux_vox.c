@@ -181,17 +181,18 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   switch (stream->content_detection_method) {
 
   case METHOD_BY_CONTENT:
-  case METHOD_EXPLICIT:
-  case METHOD_BY_EXTENSION: {
-    const char *extensions, *mrl;
+  case METHOD_EXPLICIT: {
+    const char *mrl;
 
     mrl = input->get_mrl (input);
-    extensions = class_gen->get_extensions (class_gen);
 
-    if (!_x_demux_check_extension (mrl, extensions))
+    if (!_x_demux_check_extension (mrl, class_gen->extensions))
       return NULL;
   }
-  break;
+    break;
+
+  case METHOD_BY_EXTENSION:
+    break;
 
   default:
     return NULL;

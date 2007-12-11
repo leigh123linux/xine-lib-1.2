@@ -580,20 +580,7 @@ open_plugin (demux_class_t *class_gen,
             return NULL;
         }
         break;
-        case METHOD_BY_EXTENSION: {
-            char *ending, *mrl;
-    
-            mrl = input->get_mrl (input);
-    
-            ending = strrchr (mrl, '.');
-
-            if (!ending || (strlen (ending) < 5))
-                return NULL;
-
-            if (strncasecmp (ending, ".flac", 5))
-                return NULL;
-        }
-        break;
+        case METHOD_BY_EXTENSION:
         case METHOD_EXPLICIT:
         break;
         default:

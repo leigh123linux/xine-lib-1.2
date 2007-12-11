@@ -167,18 +167,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   }
   break;
 
-  case METHOD_BY_EXTENSION: {
-    const char *extensions, *mrl;
-
-    mrl = input->get_mrl (input);
-    extensions = class_gen->get_extensions (class_gen);
-
-    if (!_x_demux_check_extension (mrl, extensions)) {
-      return NULL;
-    }
-  }
-  break;
-
+  case METHOD_BY_EXTENSION:
   case METHOD_EXPLICIT:
   break;
 
