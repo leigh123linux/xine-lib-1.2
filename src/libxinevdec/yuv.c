@@ -104,10 +104,8 @@ static void yuv_decode_data (video_decoder_t *this_gen,
     this->progressive = buf->decoder_info[3];
     this->top_field_first = buf->decoder_info[4];
             
-    if (this->buf) {
-      free (this->buf);
-      this->buf = NULL;
-    }
+    free (this->buf);
+    this->buf = NULL;
 
     this->bufsize = VIDEOBUFSIZE;
     this->buf = malloc(this->bufsize);
@@ -304,10 +302,7 @@ static void yuv_discontinuity (video_decoder_t *this_gen) {
 static void yuv_dispose (video_decoder_t *this_gen) {
   yuv_decoder_t *this = (yuv_decoder_t *) this_gen;
 
-  if (this->buf) {
-    free (this->buf);
-    this->buf = NULL;
-  }
+  free (this->buf);
 
   if (this->decoder_ok) {
     this->decoder_ok = 0;

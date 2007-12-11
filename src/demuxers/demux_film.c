@@ -251,8 +251,7 @@ static int open_film_file(demux_film_t *film) {
       llprintf(DEBUG_FILM_LOAD, "parsing STAB chunk\n");
 
       /* load the sample table */
-      if (film->sample_table)
-        free(film->sample_table);
+      free(film->sample_table);
       film->frequency = _X_BE_32(&film_header[i + 8]);
       film->sample_count = _X_BE_32(&film_header[i + 12]);
       film->sample_table =
@@ -329,8 +328,7 @@ static int open_film_file(demux_film_t *film) {
       /* allocate enough space in the interleave preload buffer for the
        * first chunk (which will be more than enough for successive chunks) */
       if (film->audio_type) {
-        if (film->interleave_buffer)
-          free(film->interleave_buffer);
+	free(film->interleave_buffer);
         film->interleave_buffer =
           xine_xmalloc(film->sample_table[0].sample_size);
       }
@@ -821,8 +819,7 @@ static int demux_film_seek (demux_plugin_t *this_gen, off_t start_pos, int start
 static void demux_film_dispose (demux_plugin_t *this_gen) {
   demux_film_t *this = (demux_film_t *) this_gen;
 
-  if (this->sample_table)
-    free(this->sample_table);
+  free(this->sample_table);
   free(this->interleave_buffer);
   free(this);
 }

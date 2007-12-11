@@ -1480,18 +1480,15 @@ static void demux_real_dispose (demux_plugin_t *this_gen) {
 
   for(i = 0; i < this->num_video_streams; i++) {
     real_free_mdpr(this->video_streams[i].mdpr);
-    if(this->video_streams[i].index)
-      free(this->video_streams[i].index);
+    free(this->video_streams[i].index);
   }
   
   for(i = 0; i < this->num_audio_streams; i++) {
     real_free_mdpr(this->audio_streams[i].mdpr);
-    if(this->audio_streams[i].index)
-      free(this->audio_streams[i].index);
+    free(this->audio_streams[i].index);
   }
   
-  if(this->fragment_tab)
-    free(this->fragment_tab);
+  free(this->fragment_tab);
   
   free(this);
 }

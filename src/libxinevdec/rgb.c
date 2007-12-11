@@ -140,8 +140,7 @@ static void rgb_decode_data (video_decoder_t *this_gen,
 
     this->bytes_per_pixel = (this->bit_depth + 1) / 8;
 
-    if (this->buf)
-      free (this->buf);
+    free (this->buf);
 
     /* minimal buffer size */
     this->bufsize = this->width * this->height * this->bytes_per_pixel;
@@ -381,10 +380,7 @@ static void rgb_discontinuity (video_decoder_t *this_gen) {
 static void rgb_dispose (video_decoder_t *this_gen) {
   rgb_decoder_t *this = (rgb_decoder_t *) this_gen;
 
-  if (this->buf) {
-    free (this->buf);
-    this->buf = NULL;
-  }
+  free (this->buf);
 
   if (this->decoder_ok) {
     this->decoder_ok = 0;

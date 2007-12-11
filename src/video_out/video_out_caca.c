@@ -94,15 +94,11 @@ static uint32_t caca_get_capabilities (vo_driver_t *this) {
 static void caca_dispose_frame (vo_frame_t *vo_img) {
   caca_frame_t *frame = (caca_frame_t *)vo_img;
   
-  if (frame->mem[0])
-    free (frame->mem[0]);
-  if (frame->mem[1])
-    free (frame->mem[1]);
-  if (frame->mem[2])
-    free (frame->mem[2]);
+  free (frame->mem[0]);
+  free (frame->mem[1]);
+  free (frame->mem[2]);
 
-  if (frame->pixmap_d)
-    free (frame->pixmap_d);
+  free (frame->pixmap_d);
   if (frame->pixmap_s)
     cucul_free_dither (frame->pixmap_s);
 
@@ -148,23 +144,12 @@ static void caca_update_frame_format (vo_driver_t *this_gen, vo_frame_t *img,
   if ((frame->width != width) || (frame->height != height) 
       || (frame->format != format)) {
 
-    if (frame->mem[0]) {
-      free (frame->mem[0]);
-      frame->mem[0] = NULL;
-    }
-    if (frame->mem[1]) {
-      free (frame->mem[1]);
-      frame->mem[1] = NULL;
-    }
-    if (frame->mem[2]) {
-      free (frame->mem[2]);
-      frame->mem[2] = NULL;
-    }
+    free (frame->mem[0]); frame->mem[0] = NULL;
+    free (frame->mem[1]); frame->mem[1] = NULL;
+    free (frame->mem[2]); frame->mem[2] = NULL;
 
-    if (frame->pixmap_d) {
-      free (frame->pixmap_d);
-      frame->pixmap_d = NULL;
-    }
+    free (frame->pixmap_d); frame->pixmap_d = NULL;
+
     if (frame->pixmap_s) {
       cucul_free_dither (frame->pixmap_s);
       frame->pixmap_s = NULL;

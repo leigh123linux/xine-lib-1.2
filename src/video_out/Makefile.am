@@ -10,7 +10,7 @@ if ENABLE_MACOSX_VIDEO
 SUBDIRS += macosx
 endif
 
-EXTRA_DIST = video_out_directfb.c video_out_directfb_fb.c video_out_directfb_x.c video_out_directx.c video_out_macosx.m
+EXTRA_DIST = video_out_directx.c video_out_macosx.m
 
 noinst_HEADERS = video_out_syncfb.h yuv2rgb.h x11osd.h xcbosd.h
 
@@ -175,13 +175,13 @@ xineplug_vo_out_fb_la_SOURCES = yuv2rgb.c yuv2rgb_mmx.c yuv2rgb_mlib.c \
 xineplug_vo_out_fb_la_LIBADD = $(MLIB_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_fb_la_CFLAGS = $(AM_CFLAGS) $(MLIB_CFLAGS)
 
-xineplug_vo_out_directfb_la_SOURCES = video_out_directfb_fb.c
+xineplug_vo_out_directfb_la_SOURCES = video_out_directfb.c
 xineplug_vo_out_directfb_la_LIBADD = $(XINE_LIB) $(DIRECTFB_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_directfb_la_CFLAGS = $(AM_CFLAGS) $(DIRECTFB_CFLAGS) -fno-strict-aliasing
 
-xineplug_vo_out_xdirectfb_la_SOURCES = video_out_directfb_x.c $(X11OSD)
+xineplug_vo_out_xdirectfb_la_SOURCES = video_out_directfb.c $(X11OSD)
 xineplug_vo_out_xdirectfb_la_LIBADD = $(XINE_LIB) $(DIRECTFB_LIBS) $(X_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
-xineplug_vo_out_xdirectfb_la_CFLAGS = $(AM_CFLAGS) $(DIRECTFB_CFLAGS) -fno-strict-aliasing
+xineplug_vo_out_xdirectfb_la_CFLAGS = $(AM_CFLAGS) $(DIRECTFB_CFLAGS) -fno-strict-aliasing -DDIRECTFB_X11
 
 xineplug_vo_out_sdl_la_SOURCES = video_out_sdl.c
 xineplug_vo_out_sdl_la_LIBADD = $(SDL_LIBS) $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)

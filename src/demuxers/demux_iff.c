@@ -1116,92 +1116,29 @@ static int demux_iff_seek (demux_plugin_t *this_gen,
 static void demux_iff_dispose (demux_plugin_t *this_gen) {
   demux_iff_t *this                     = (demux_iff_t *) this_gen;
 
-  if( this->bmhd ) {
-    free(this->bmhd);
-    this->bmhd                          = NULL;
-  }
-  if( this->cmap ) {
-    free( this->cmap );
-    this->cmap                          = NULL;
-  }
-  if( this->grab ) {
-    free(this->grab);
-    this->grab                          = NULL;
-  }
-  if( this->dest ) {
-    free(this->dest);
-    this->dest                          = NULL;
-  }
-  if( this->camg ) {
-    free(this->camg);
-    this->camg                          = NULL;
-  }
-  if( this->ccrt ) {
-    free(this->ccrt);
-    this->ccrt                          = NULL;
-  }
-  if( this->dpi ) {
-    free(this->dpi);
-    this->dpi                           = NULL;
-  }
+  free(this->bmhd);
+  free(this->cmap);
+  free(this->grab);
+  free(this->dest);
+  free(this->camg);
+  free(this->ccrt);
+  free(this->dpi);
+  free(this->vhdr);
+  free(this->atak);
+  free(this->rlse);
+  free(this->anhd);
+  free(this->dpan);
 
-  if( this->vhdr ) {
-    free(this->vhdr);
-    this->vhdr                          = NULL;
-  }
-  if( this->atak )
-  {
-    free( this->atak );
-    this->atak                          = NULL;
-  }
-  if( this->rlse ) {
-    free( this->rlse );
-    this->rlse                          = NULL;
-  }
+  free(this->title);
+  free(this->copyright);
+  free(this->author);
+  free(this->annotations);
+  free(this->version);
+  free(this->text);
 
-  if( this->anhd ) {
-    free( this->anhd );
-    this->anhd                          = NULL;
-  }
+  free (this->audio_interleave_buffer);
+  free (this->audio_read_buffer);
 
-  if( this->dpan ) {
-    free( this->dpan );
-    this->dpan                          = NULL;
-  }
-
-  if( this->title ) {
-    free (this->title);
-    this->title                         = NULL;
-  }
-  if( this->copyright ) {
-    free (this->copyright);
-    this->copyright                     = NULL;
-  }
-  if( this->author ) {
-    free (this->author);
-    this->author                        = NULL;
-  }
-  if( this->annotations ) {
-    free (this->annotations);
-    this->annotations                   = NULL;
-  }
-  if( this->version ) {
-    free (this->version);
-    this->version                       = NULL;
-  }
-  if( this->text ) {
-    free (this->text);
-    this->text                          = NULL;
-  }
-
-  if( this->audio_interleave_buffer ) {
-    free (this->audio_interleave_buffer);
-    this->audio_interleave_buffer       = NULL;
-  }
-  if( this->audio_read_buffer ) {
-    free (this->audio_read_buffer);
-    this->audio_read_buffer             = NULL;
-  }
   this->audio_buffer_filled             = 0;
 
   free(this);

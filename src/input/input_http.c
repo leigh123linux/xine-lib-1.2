@@ -1068,8 +1068,7 @@ static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_str
 static void http_class_dispose (input_class_t *this_gen) {
   http_input_class_t  *this = (http_input_class_t *) this_gen;
   
-  if(this->proxyhost_env)
-    free(this->proxyhost_env);
+  free(this->proxyhost_env);
 
   free (this);
 }

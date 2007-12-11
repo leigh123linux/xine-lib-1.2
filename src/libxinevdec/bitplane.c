@@ -1186,8 +1186,7 @@ static void bitplane_decode_data (video_decoder_t *this_gen,
         this->ratio                    *= 2.0;
     }
 
-    if (this->buf)
-      free (this->buf);
+    free (this->buf);
     this->bufsize                       = VIDEOBUFSIZE;
     this->buf                           = xine_xmalloc(this->bufsize);
     this->size                          = 0;
@@ -1483,35 +1482,12 @@ static void bitplane_discontinuity (video_decoder_t *this_gen) {
 static void bitplane_dispose (video_decoder_t *this_gen) {
   bitplane_decoder_t *this              = (bitplane_decoder_t *) this_gen;
 
-  if (this->buf) {
-    free (this->buf);
-    this->buf = NULL;
-  }
-
-  if (this->buf_uk) {
-    free (this->buf_uk);
-    this->buf_uk = NULL;
-  }
-
-  if (this->buf_uk_hist) {
-    free (this->buf_uk_hist);
-    this->buf_uk_hist = NULL;
-  }
-
-  if (this->index_buf) {
-    free (this->index_buf);
-    this->index_buf = NULL;
-  }
-
-  if (this->index_buf_hist) {
-    free (this->index_buf_hist);
-    this->index_buf_hist = NULL;
-  }
-
-  if (this->index_buf) {
-    free (this->index_buf);
-    this->index_buf = NULL;
-  }
+  free (this->buf);
+  free (this->buf_uk);
+  free (this->buf_uk_hist);
+  free (this->index_buf);
+  free (this->index_buf_hist);
+  free (this->index_buf);
 
   if (this->decoder_ok) {
     this->decoder_ok                    = 0;
