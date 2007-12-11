@@ -468,9 +468,11 @@ int _x_demux_check_extension (const char *mrl, const char *extensions){
 	found = 1;
 	break;
       }
-    } else if (strcasecmp (last_dot, e) == 0) {
-      found = 1;
-      break;
+    } else if (last_dot) {
+      if (strcasecmp (last_dot, e) == 0) {
+	found = 1;
+	break;
+      }
     }
   }
   free(ext_copy);
