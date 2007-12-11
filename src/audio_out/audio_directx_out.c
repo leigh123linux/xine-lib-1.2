@@ -819,14 +819,6 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   return ( ao_driver_t * ) ao_directx;
 }
 
-static char* get_identifier (audio_driver_class_t *this_gen) {
-  return "DirectX";
-}
-
-static char* get_description (audio_driver_class_t *this_gen) {
-  return _("xine audio output plugin for win32 using directx");
-}
-
 static void dispose_class (audio_driver_class_t *this_gen) {
   audiox_class_t  *audiox = (audiox_class_t *) this_gen;
 
@@ -846,8 +838,8 @@ static void *init_class (xine_t *xine, void *data) {
     return NULL;
   
   audiox->driver_class.open_plugin     = open_plugin;
-  audiox->driver_class.get_identifier  = get_identifier;
-  audiox->driver_class.get_description = get_description;
+  audiox->driver_class.identifier      = "DirectX";
+  audiox->driver_class.description     = _("xine audio output plugin for win32 using directx");
   audiox->driver_class.dispose         = dispose_class;
 
   audiox->xine                         = xine;

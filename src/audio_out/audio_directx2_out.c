@@ -989,16 +989,6 @@ static ao_driver_t *open_plugin(audio_driver_class_t *class_gen, const void *dat
 }
 
 
-static char* get_identifier(audio_driver_class_t *this_gen) {
-  return "directx2";
-}
-
-
-static char *get_description(audio_driver_class_t *this_gen) {
-  return _("second xine audio output plugin using directx");
-}
-
-
 static void dispose_class(audio_driver_class_t *this_gen) {
   free(this_gen);
 }
@@ -1014,8 +1004,8 @@ static void *init_class(xine_t *xine, void *data) {
     return NULL;
 
   this->driver_class.open_plugin     = open_plugin;
-  this->driver_class.get_identifier  = get_identifier;
-  this->driver_class.get_description = get_description;
+  this->driver_class.identifier      = "directx2";
+  this->driver_class.description     = _("second xine audio output plugin using directx");
   this->driver_class.dispose         = dispose_class;
 
   this->xine = xine;

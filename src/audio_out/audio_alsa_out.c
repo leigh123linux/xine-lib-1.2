@@ -1663,14 +1663,6 @@ static void alsa_speaker_arrangement_cb (void *user_data,
  * class functions
  */
 
-static char* get_identifier (audio_driver_class_t *this_gen) {
-  return "alsa";
-}
-
-static char* get_description (audio_driver_class_t *this_gen) {
-  return _("xine audio output plugin using alsa-compliant audio devices/drivers");
-}
-
 static void dispose_class (audio_driver_class_t *this_gen) {
 
   alsa_class_t *this = (alsa_class_t *) this_gen;
@@ -1687,8 +1679,8 @@ static void *init_class (xine_t *xine, void *data) {
     return NULL;
 
   this->driver_class.open_plugin     = open_plugin;
-  this->driver_class.get_identifier  = get_identifier;
-  this->driver_class.get_description = get_description;
+  this->driver_class.identifier      = "alsa";
+  this->driver_class.description     = _("xine audio output plugin using alsa-compliant audio devices/drivers");
   this->driver_class.dispose         = dispose_class;
 
 /*  this->config = xine->config; */

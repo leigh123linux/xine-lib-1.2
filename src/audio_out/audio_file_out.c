@@ -354,14 +354,6 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
  * class functions
  */
 
-static char* get_identifier (audio_driver_class_t *this_gen) {
-	return "file";
-}
-
-static char* get_description (audio_driver_class_t *this_gen) {
-	return _("xine file audio output plugin");
-}
-
 static void dispose_class (audio_driver_class_t *this_gen) {
 
 	file_class_t *this = (file_class_t *) this_gen;
@@ -380,8 +372,8 @@ static void *init_class (xine_t *xine, void *data) {
 		return NULL;
 
 	this->driver_class.open_plugin     = open_plugin;
-	this->driver_class.get_identifier  = get_identifier;
-	this->driver_class.get_description = get_description;
+	this->driver_class.identifier      = "file";
+	this->driver_class.description     = _("xine file audio output plugin");
 	this->driver_class.dispose         = dispose_class;
 
 	this->config = xine->config;
