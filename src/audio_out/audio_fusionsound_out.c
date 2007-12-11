@@ -434,14 +434,6 @@ static ao_driver_t* open_plugin(audio_driver_class_t *ao_class,
  * class functions
  */
 
-static char* get_identifier(audio_driver_class_t *ao_class) {
-  return "FusionSound";
-}
-
-static char* get_description(audio_driver_class_t *ao_class) {
-  return "xine FusionSound audio output plugin";
-}
-
 static void dispose_class(audio_driver_class_t *ao_class) {
   free (ao_class);
 }
@@ -468,8 +460,8 @@ static void* init_class(xine_t *xine, void *data) {
   }
 
   class->ao_class.open_plugin     = open_plugin;
-  class->ao_class.get_identifier  = get_identifier;
-  class->ao_class.get_description = get_description;
+  class->ao_class.identifier      = "FunsionSound";
+  class->ao_class.description     = _("xine FusionSound audio output plugin");
   class->ao_class.dispose         = dispose_class;
   class->xine                     = xine;
 
