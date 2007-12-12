@@ -1,7 +1,8 @@
 include $(top_srcdir)/misc/Makefile.common
 include $(top_srcdir)/lib/Makefile.common
 
-AM_CFLAGS   = $(DEFAULT_OCFLAGS) $(X_CFLAGS) $(FT2_CFLAGS) $(FONTCONFIG_CFLAGS) $(VISIBILITY_FLAG)
+AM_CFLAGS   = $(DEFAULT_OCFLAGS) $(X_CFLAGS) $(FT2_CFLAGS) $(FONTCONFIG_CFLAGS) \
+              $(AVUTIL_CFLAGS) $(VISIBILITY_FLAG)
 AM_CPPFLAGS = $(XDG_BASEDIR_CPPFLAGS) $(ZLIB_CPPFLAGS) -DXINE_LIBRARY_COMPILE
 
 XINEUTILS_LIB = $(top_builddir)/src/xine-utils/libxineutils.la
@@ -32,11 +33,12 @@ libxine_la_SOURCES = xine.c metronom.c configfile.c buffer.c \
 	input_rip.c input_cache.c info_helper.c refcounter.c \
 	alphablend.c
 
-libxine_la_DEPENDENCIES = $(XINEUTILS_LIB) $(XDG_BASEDIR_DEPS) \
+libxine_la_DEPENDENCIES = $(XINEUTILS_LIB) $(XDG_BASEDIR_DEPS) $(AVUTIL_DEPS) \
                           $(pthread_dep) $(LIBXINEPOSIX)
 libxine_la_LIBADD = $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL) $(ZLIB_LIBS) \
 		    -lm $(XINEUTILS_LIB) $(LTLIBICONV) $(FT2_LIBS) $(FONTCONFIG_LIBS) \
-                    $(LIBXINEPOSIX) $(RT_LIBS) $(NET_LIBS) $(XDG_BASEDIR_LIBS)
+                    $(LIBXINEPOSIX) $(RT_LIBS) $(NET_LIBS) $(XDG_BASEDIR_LIBS) \
+                    $(AVUTIL_LIBS)
 
 libxine_la_LDFLAGS = $(AM_LDFLAGS) $(def_ldflags) \
 	-version-info $(XINE_LT_CURRENT):$(XINE_LT_REVISION):$(XINE_LT_AGE)

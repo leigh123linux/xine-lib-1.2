@@ -36,6 +36,9 @@
 #include <stdlib.h>
 #include <assert.h>
 
+/* libavutil from FFmpeg */
+#include <mem.h>
+
 /********** logging **********/
 #define LOG_MODULE "buffer"
 #define LOG_VERBOSE
@@ -358,7 +361,7 @@ static void fifo_buffer_dispose (fifo_buffer_t *this) {
     received++;
   }
 
-  free (this->buffer_pool_base);
+  av_free (this->buffer_pool_base);
   pthread_mutex_destroy(&this->mutex);
   pthread_cond_destroy(&this->not_empty);
   pthread_mutex_destroy(&this->buffer_pool_mutex);
@@ -497,7 +500,6 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
 
   fifo_buffer_t *this;
   int            i;
-  int            alignment = 2048;
   unsigned char *multi_buffer = NULL;
 
   this = xine_xmalloc (sizeof (fifo_buffer_t));
@@ -527,15 +529,11 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
    */
 
 
-  if (buf_size % alignment != 0)
-    buf_size += alignment - (buf_size % alignment);
-
   /*
-  printf ("Allocating %d buffers of %ld bytes in one chunk (alignment = %d)\n",
-	  num_buffers, (long int) buf_size, alignment);
+  printf ("Allocating %d buffers of %ld bytes in one chunk\n",
+	  num_buffers, (long int) buf_size);
 	  */
-  multi_buffer = xine_xmalloc_aligned (alignment, num_buffers * buf_size,
-				       &this->buffer_pool_base);
+  multi_buffer = this->buffer_pool_base = av_mallocz (num_buffers * buf_size);
 
   this->buffer_pool_top = NULL;
 
