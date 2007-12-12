@@ -28,7 +28,7 @@ libxine_la_SOURCES = xine.c metronom.c configfile.c buffer.c \
 	load_plugins.c video_decoder.c buffer_types.c \
 	audio_decoder.c video_out.c audio_out.c resample.c events.c \
 	video_overlay.c osd.c spu.c scratch.c demux.c vo_scale.c \
-	xine_interface.c post.c tvmode.c broadcaster.c io_helper.c \
+	xine_interface.c post.c broadcaster.c io_helper.c \
 	input_rip.c input_cache.c info_helper.c refcounter.c \
 	alphablend.c
 
