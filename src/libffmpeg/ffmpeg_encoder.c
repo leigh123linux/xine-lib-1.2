@@ -61,7 +61,7 @@ typedef struct lavc_data_s {
   uint8_t            *ffmpeg_buffer;   /* lavc buffer */
   AVFrame            *picture;         /* picture to be encoded */
   uint8_t            *out[3];          /* aligned buffer for YV12 data */
-  uint8_t            *buf;             /* unaligned YV12 buffer */
+  uint8_t            *buf;     /* base address of YV12 buffer */
 } lavc_data_t;
 
 
@@ -108,8 +108,7 @@ static int lavc_on_update_format(dxr3_driver_t *drv, dxr3_frame_t *frame)
   if (frame->vo_frame.format == XINE_IMGFMT_YUY2) {
     int image_size = frame->vo_frame.pitches[0] * frame->oheight;
 
-    this->out[0] = xine_xmalloc_aligned(16, image_size * 3/2, 
-      (void *)&this->buf);
+    this->out[0] = this->buf = av_mallocz(image_size * 3/2);
     this->out[1] = this->out[0] + image_size; 
     this->out[2] = this->out[1] + image_size/4; 
 

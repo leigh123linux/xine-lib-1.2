@@ -37,6 +37,9 @@
 #include <cucul.h>
 #include <caca.h>
 
+/* libavutil from FFmpeg */
+#include <mem.h>
+
 #include "xine.h"
 #include "video_out.h"
 #include "xine_internal.h"
@@ -54,7 +57,6 @@ typedef struct caca_frame_s {
   cucul_dither_t *pixmap_s;  /* pixmap info structure */
   uint8_t            *pixmap_d;  /* pixmap data */
   int                width, height;
-  uint8_t            *mem[3];
 
   int                format;  /* XINE_IMGFMT_* flags */
 
@@ -94,9 +96,9 @@ static uint32_t caca_get_capabilities (vo_driver_t *this) {
 static void caca_dispose_frame (vo_frame_t *vo_img) {
   caca_frame_t *frame = (caca_frame_t *)vo_img;
   
-  free (frame->mem[0]);
-  free (frame->mem[1]);
-  free (frame->mem[2]);
+  av_free (frame->vo_frame.base[0]);
+  av_free (frame->vo_frame.base[1]);
+  av_free (frame->vo_frame.base[2]);
 
   free (frame->pixmap_d);
   if (frame->pixmap_s)
@@ -144,9 +146,9 @@ static void caca_update_frame_format (vo_driver_t *this_gen, vo_frame_t *img,
   if ((frame->width != width) || (frame->height != height) 
       || (frame->format != format)) {
 
-    free (frame->mem[0]); frame->mem[0] = NULL;
-    free (frame->mem[1]); frame->mem[1] = NULL;
-    free (frame->mem[2]); frame->mem[2] = NULL;
+    av_freep (&frame->vo_frame.base[0]);
+    av_freep (&frame->vo_frame.base[1]);
+    av_freep (&frame->vo_frame.base[2]);
 
     free (frame->pixmap_d); frame->pixmap_d = NULL;
 
@@ -167,19 +169,15 @@ static void caca_update_frame_format (vo_driver_t *this_gen, vo_frame_t *img,
       frame->vo_frame.pitches[0] = 8*((width + 7) / 8);
       frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
       frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
-      frame->vo_frame.base[0] = xine_xmalloc_aligned(16,
-        frame->vo_frame.pitches[0] * height, (void**) &frame->mem[0]);
-      frame->vo_frame.base[1] = xine_xmalloc_aligned(16,
-        frame->vo_frame.pitches[1] * ((height+1)/2), (void**) &frame->mem[1]);
-      frame->vo_frame.base[2] = xine_xmalloc_aligned(16,
-        frame->vo_frame.pitches[2] * ((height+1)/2), (void**) &frame->mem[2]);
+      frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
+      frame->vo_frame.base[1] = av_mallocz(frame->vo_frame.pitches[1] * ((height+1)/2));
+      frame->vo_frame.base[2] = av_mallocz(frame->vo_frame.pitches[2] * ((height+1)/2));
       frame->yuv2rgb->configure (frame->yuv2rgb,
         width, height, frame->vo_frame.pitches[0], frame->vo_frame.pitches[1],
         width, height, width * 4);
     } else if (format == XINE_IMGFMT_YUY2) {
       frame->vo_frame.pitches[0] = 8*((width + 3) / 4);
-      frame->vo_frame.base[0] = xine_xmalloc_aligned(16,
-        frame->vo_frame.pitches[0] * height, (void**) &frame->mem[0]);
+      frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
       frame->yuv2rgb->configure (frame->yuv2rgb,
         width, height, frame->vo_frame.pitches[0], frame->vo_frame.pitches[0],
         width, height, width * 4);

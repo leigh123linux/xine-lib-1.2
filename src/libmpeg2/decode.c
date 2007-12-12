@@ -37,6 +37,9 @@
 #define LOG
 */
 
+/* libavutil from FFmpeg */
+#include <mem.h>
+
 #include "xine_internal.h"
 #include "video_out.h"
 #include "mpeg2.h"
@@ -69,11 +72,9 @@ void mpeg2_init (mpeg2dec_t * mpeg2dec,
     }
 
     if( !mpeg2dec->chunk_buffer )
-      mpeg2dec->chunk_buffer = xine_xmalloc_aligned (16, BUFFER_SIZE + 4, 
-						     &mpeg2dec->chunk_base);
+      mpeg2dec->chunk_buffer = av_mallocz(BUFFER_SIZE + 4);
     if( !mpeg2dec->picture )
-      mpeg2dec->picture = xine_xmalloc_aligned (16, sizeof (picture_t),
-						&mpeg2dec->picture_base);
+      mpeg2dec->picture = av_mallocz(sizeof(picture_t));
 
     mpeg2dec->shift = 0xffffff00;
     mpeg2dec->new_sequence = 0;
@@ -90,8 +91,6 @@ void mpeg2_init (mpeg2dec_t * mpeg2dec,
     /* initialize AFD storage */
     mpeg2dec->afd_value_seen = XINE_VIDEO_AFD_NOT_PRESENT;
     mpeg2dec->afd_value_reported = (XINE_VIDEO_AFD_NOT_PRESENT - 1);
-
-    memset (mpeg2dec->picture, 0, sizeof (picture_t));
 
     /* initialize substructures */
     mpeg2_header_state_init (mpeg2dec->picture);
@@ -866,16 +865,9 @@ void mpeg2_close (mpeg2dec_t * mpeg2dec)
       picture->backward_reference_frame = NULL;
     }
 
-    if ( mpeg2dec->chunk_buffer ) {
-      free (mpeg2dec->chunk_base);
-      mpeg2dec->chunk_buffer = NULL;
-    }
-    
-    if ( mpeg2dec->picture ) {
-      free (mpeg2dec->picture_base);
-      mpeg2dec->picture = NULL;
-    }
-    
+    av_freep(&mpeg2dec->chunk_buffer);
+    av_freep(&mpeg2dec->picture_base);
+   
     if ( mpeg2dec->cc_dec) {
       /* dispose the closed caption decoder */
       mpeg2dec->cc_dec->dispose(mpeg2dec->cc_dec);

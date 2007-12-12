@@ -587,7 +587,7 @@ static void dxr3_frame_dispose(vo_frame_t *frame_gen)
 {
   dxr3_frame_t *frame = (dxr3_frame_t *)frame_gen;
   
-  if (frame->mem) free(frame->mem);
+  av_free(frame->mem);
   pthread_mutex_destroy(&frame_gen->mutex);
   free(frame);
 }
@@ -627,12 +627,9 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
       frame->aspect         = XINE_VO_ASPECT_ANAMORPHIC;
     frame->pan_scan         = flags & VO_PAN_SCAN_FLAG;
     
-    if (frame->mem) {
-      free(frame->mem);
-      frame->mem = NULL;
-      frame->real_base[0] = frame->real_base[1] = frame->real_base[2] = NULL;
-      frame_gen->base[0] = frame_gen->base[1] = frame_gen->base[2] = NULL;
-    }
+    av_freep(&frame->mem);
+    frame->real_base[0] = frame->real_base[1] = frame->real_base[2] = NULL;
+    frame_gen->base[0] = frame_gen->base[1] = frame_gen->base[2] = NULL;
     
     return;
   }
@@ -717,10 +714,7 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
   /* if dimensions changed, we need to re-allocate frame memory */
   if ((frame->vo_frame.width != width) || (frame->vo_frame.height != height) || 
       (frame->oheight != oheight) || (frame->vo_frame.format != format)) {
-    if (frame->mem) {
-      free (frame->mem);
-      frame->mem = NULL;
-    }
+    av_freep(&frame->mem);
     
     if (format == XINE_IMGFMT_YUY2) {
       int i, image_size;
@@ -731,8 +725,7 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
       
       /* planar format, only base[0] */
       /* add one extra line for field swap stuff */
-      frame->real_base[0] = xine_xmalloc_aligned(16, image_size + frame->vo_frame.pitches[0],
-        &frame->mem);
+      frame->real_base[0] = frame->mem = av_mallocz(image_size + frame->vo_frame.pitches[0]);
 
       /* don't use first line */
       frame->real_base[0] += frame->vo_frame.pitches[0];
@@ -759,8 +752,8 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
       image_size_v = frame->vo_frame.pitches[2] * ((oheight + 1) / 2);
 
       /* add one extra line for field swap stuff */
-      frame->real_base[0] = xine_xmalloc_aligned(16, image_size_y + frame->vo_frame.pitches[0] +
-        image_size_u + image_size_v, &frame->mem);
+      frame->real_base[0] = frame->mem = av_mallocz(image_size_y + frame->vo_frame.pitches[0] +
+						    image_size_u + image_size_v);
 
       /* don't use first line */
       frame->real_base[0] += frame->vo_frame.pitches[0];

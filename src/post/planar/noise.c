@@ -27,6 +27,8 @@
 #include <math.h>
 #include <pthread.h>
 
+/* libavutil from FFmpeg */
+#include <mem.h>
 
 #ifdef ARCH_X86_64
 #  define REG_a  "rax"
@@ -55,7 +57,6 @@ typedef struct noise_param_t {
         shiftptr;
     int8_t *noise,
            *prev_shift[MAX_RES][3];
-    void *base;
 } noise_param_t;
 
 static int nonTempRandShift[MAX_RES]= {-1};
@@ -72,9 +73,8 @@ static int8_t *initNoise(noise_param_t *fp){
     int pattern= fp->pattern;
     int8_t *noise;
     int i, j;
-    void *base;
 
-    noise = xine_xmalloc_aligned(16, MAX_NOISE*sizeof(int8_t), &base);
+    noise = av_mallocz(MAX_NOISE*sizeof(int8_t));
     srand(123457);
 
     for(i=0,j=0; i<MAX_NOISE; i++,j++)
@@ -130,7 +130,6 @@ static int8_t *initNoise(noise_param_t *fp){
     }
 
     fp->noise= noise;
-    fp->base = base;
     fp->shiftptr= 0;
     return noise;
 }
@@ -537,6 +536,8 @@ static void noise_dispose(post_plugin_t *this_gen)
 
     if (_x_post_dispose(this_gen)) {
         pthread_mutex_destroy(&this->lock);
+	av_free(this->params[0].noise);
+	av_free(this->params[1].noise);
         free(this);
     }
 }
