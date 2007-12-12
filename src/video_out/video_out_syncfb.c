@@ -525,9 +525,6 @@ static void syncfb_update_frame_format(vo_driver_t* this_gen,
 
       switch(format) {
       case XINE_IMGFMT_YV12:
-/*	 frame->vo_frame.base[0] = xine_xmalloc_aligned(16, frame_size, (void **)&frame->data_mem[0]);
-         frame->vo_frame.base[1] = xine_xmalloc_aligned(16, frame_size/4, (void **)&frame->data_mem[1]);
-	 frame->vo_frame.base[2] = xine_xmalloc_aligned(16, frame_size/4, (void **)&frame->data_mem[2]);*/
 	 frame->vo_frame.pitches[0] = 8*((width + 7) / 8);
 	 frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
 	 frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
@@ -536,7 +533,6 @@ static void syncfb_update_frame_format(vo_driver_t* this_gen,
 	 frame->vo_frame.base[2] = malloc(frame->vo_frame.pitches[2] * ((height+1)/2));
 	 break;
       case XINE_IMGFMT_YUY2:
-/*	 frame->vo_frame.base[0] = xine_xmalloc_aligned(16, (frame_size*2), (void **)&frame->data_mem[0]);*/
 	 frame->vo_frame.pitches[0] = 8*((width + 3) / 4);
 	 frame->vo_frame.base[0] = malloc(frame->vo_frame.pitches[0] * height);
 	 frame->vo_frame.base[1] = NULL;
