@@ -1403,11 +1403,6 @@ struct xine_cfg_entry_s {
   /* type string */
   char            *str_value;
   char            *str_default;
-#ifndef XINE_DISABLE_DEPRECATED_FEATURES
-  char            *str_sticky;
-#else
-  void            *dummy;
-#endif
 
   /* common to range, enum, num, bool;
    * num_value is also used by string to indicate what's required:
