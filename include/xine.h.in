@@ -87,13 +87,6 @@ typedef struct xine_stream_s xine_stream_t;
 typedef struct xine_audio_port_s xine_audio_port_t;
 typedef struct xine_video_port_s xine_video_port_t;
 
-#ifndef XINE_DISABLE_DEPRECATED_FEATURES
-/* convenience types: simple player UIs might want to call ports drivers */
-typedef xine_audio_port_t xine_ao_driver_t;
-typedef xine_video_port_t xine_vo_driver_t;
-#endif
-
-
 /*********************************************************************
  * global engine handling                                            *
  *********************************************************************/
