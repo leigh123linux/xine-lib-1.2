@@ -1068,12 +1068,6 @@ void xine_plugins_garbage_collector(xine_t *self) XINE_PROTECTED;
  * visual specific gui <-> xine engine communication                 *
  *********************************************************************/
 
-#ifndef XINE_DISABLE_DEPRECATED_FEATURES
-/* talk to video output driver - old method */
-int    xine_gui_send_vo_data (xine_stream_t *self,
-			      int type, void *data) XINE_PROTECTED;
-#endif
-
 /* new (preferred) method to talk to video driver. */
 int    xine_port_send_gui_data (xine_video_port_t *vo,
 			        int type, void *data) XINE_PROTECTED;
