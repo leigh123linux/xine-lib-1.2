@@ -1524,18 +1524,6 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
   return &this->video_decoder;
 }
 
-static char *ff_video_get_identifier (video_decoder_class_t *this) {
-  return "ffmpeg video";
-}
-
-static char *ff_video_get_description (video_decoder_class_t *this) {
-  return "ffmpeg based video decoder plugin";
-}
-
-static void ff_video_dispose_class (video_decoder_class_t *this) {
-  free (this);
-}
-
 void *init_video_plugin (xine_t *xine, void *data) {
 
   ff_video_class_t *this;
@@ -1544,9 +1532,9 @@ void *init_video_plugin (xine_t *xine, void *data) {
   this = (ff_video_class_t *) xine_xmalloc (sizeof (ff_video_class_t));
 
   this->decoder_class.open_plugin     = ff_video_open_plugin;
-  this->decoder_class.get_identifier  = ff_video_get_identifier;
-  this->decoder_class.get_description = ff_video_get_description;
-  this->decoder_class.dispose         = ff_video_dispose_class;
+  this->decoder_class.identifier      = "ffmpeg video";
+  this->decoder_class.description     = N_("ffmpeg based video decoder plugin");
+  this->decoder_class.dispose         = default_video_decoder_class_dispose;
   this->xine                          = xine;
 
   pthread_once( &once_control, init_once_routine );

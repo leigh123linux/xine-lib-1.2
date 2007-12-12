@@ -2788,18 +2788,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   }
   break;
 
-  case METHOD_BY_EXTENSION: {
-    const char *const mrl = input->get_mrl(input);
-    const char *const extensions = class_gen->get_extensions (class_gen);;
-
-    lprintf ("stage by extension %s\n", mrl);
-
-    if (!_x_demux_check_extension (mrl, extensions))
-      return NULL;
-
-  }
-  break;
-
+  case METHOD_BY_MRL:
   case METHOD_EXPLICIT:
   break;
 
@@ -2850,34 +2839,6 @@ error:
 /*
  * demux matroska class
  */
-
-static const char *get_description (demux_class_t *this_gen) {
-  return "matroska demux plugin";
-}
-
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "matroska";
-}
-
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "mkv";
-}
-
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return "video/mkv: mkv: matroska;";
-}
-
-
-static void class_dispose (demux_class_t *this_gen) {
-
-  demux_matroska_class_t *this = (demux_matroska_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
 
   demux_matroska_class_t     *this;
@@ -2886,11 +2847,11 @@ static void *init_class (xine_t *xine, void *data) {
   this->xine   = xine;
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("matroska demux plugin");
+  this->demux_class.identifier      = "matroska";
+  this->demux_class.mimetypes       = "video/mkv: mkv: matroska;";
+  this->demux_class.extensions      = "mkv";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }
@@ -2904,6 +2865,6 @@ static const demuxer_info_t demux_info_matroska = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_DEMUX, 26, "matroska", XINE_VERSION_CODE, &demux_info_matroska, init_class },
+  { PLUGIN_DEMUX, 27, "matroska", XINE_VERSION_CODE, &demux_info_matroska, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

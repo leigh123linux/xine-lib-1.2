@@ -230,27 +230,6 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
   return &this->audio_decoder;
 }
 
-/* This function returns a brief string that describes (usually with the
- * decoder's most basic name) the audio decoder plugin. */
-static char *get_identifier (audio_decoder_class_t *this) {
-  return "NSF";
-}
-
-/* This function returns a slightly longer string describing the audio
- * decoder plugin. */
-static char *get_description (audio_decoder_class_t *this) {
-  return "NES Music audio decoder plugin";
-}
-
-/* This function frees the audio decoder class and any other memory that was
- * allocated. */
-static void dispose_class (audio_decoder_class_t *this_gen) {
-
-  nsf_class_t *this = (nsf_class_t *)this_gen;
-
-  free (this);
-}
-
 /* This function allocates a private audio decoder class and initializes 
  * the class's member functions. */
 void *decoder_nsf_init_plugin (xine_t *xine, void *data) {
@@ -260,9 +239,9 @@ void *decoder_nsf_init_plugin (xine_t *xine, void *data) {
   this = (nsf_class_t *) xine_xmalloc (sizeof (nsf_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.get_identifier  = get_identifier;
-  this->decoder_class.get_description = get_description;
-  this->decoder_class.dispose         = dispose_class;
+  this->decoder_class.identifier      = "NSF";
+  this->decoder_class.description     = N_("NES Music audio decoder plugin");
+  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
 
   return this;
 }

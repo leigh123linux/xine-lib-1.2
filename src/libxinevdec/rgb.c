@@ -412,18 +412,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   return &this->video_decoder;
 }
 
-static char *get_identifier (video_decoder_class_t *this) {
-  return "RGB";
-}
-
-static char *get_description (video_decoder_class_t *this) {
-  return "Raw RGB video decoder plugin";
-}
-
-static void dispose_class (video_decoder_class_t *this) {
-  free (this);
-}
-
 static void *init_plugin (xine_t *xine, void *data) {
 
   rgb_class_t *this;
@@ -431,9 +419,9 @@ static void *init_plugin (xine_t *xine, void *data) {
   this = (rgb_class_t *) xine_xmalloc (sizeof (rgb_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.get_identifier  = get_identifier;
-  this->decoder_class.get_description = get_description;
-  this->decoder_class.dispose         = dispose_class;
+  this->decoder_class.identifier      = "RGB";
+  this->decoder_class.description     = N_("Raw RGB video decoder plugin");
+  this->decoder_class.dispose         = default_video_decoder_class_dispose;
 
   return this;
 }
@@ -454,6 +442,6 @@ static const decoder_info_t dec_info_video = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_VIDEO_DECODER, 18, "rgb", XINE_VERSION_CODE, &dec_info_video, init_plugin },
+  { PLUGIN_VIDEO_DECODER, 19, "rgb", XINE_VERSION_CODE, &dec_info_video, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

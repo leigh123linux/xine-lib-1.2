@@ -765,21 +765,6 @@ static input_plugin_t *rtp_class_get_instance (input_class_t *cls_gen,
 /*
  *  net plugin class
  */
- 
-static const char *rtp_class_get_description (input_class_t *this_gen) {
-	return _("RTP and UDP input plugin as shipped with xine");
-}
-
-static const char *rtp_class_get_identifier (input_class_t *this_gen) {
-  return "RTP/UDP";
-}
-
-static void rtp_class_dispose (input_class_t *this_gen) {
-  rtp_input_class_t  *this = (rtp_input_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
 
   rtp_input_class_t  *this;
@@ -790,11 +775,11 @@ static void *init_class (xine_t *xine, void *data) {
   this->xine   = xine;
 
   this->input_class.get_instance      = rtp_class_get_instance;
-  this->input_class.get_description   = rtp_class_get_description;
-  this->input_class.get_identifier    = rtp_class_get_identifier;
+  this->input_class.description       = N_("RTP and UDP input plugin as shipped with xine");
+  this->input_class.identifier        = "RTP/UDP";
   this->input_class.get_dir           = NULL;
   this->input_class.get_autoplay_list = NULL;
-  this->input_class.dispose           = rtp_class_dispose;
+  this->input_class.dispose           = default_input_class_dispose;
   this->input_class.eject_media       = NULL;
 
   return this;
@@ -806,7 +791,7 @@ static void *init_class (xine_t *xine, void *data) {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_INPUT, 17, "rtp", XINE_VERSION_CODE, NULL, init_class },
+  { PLUGIN_INPUT, 18, "rtp", XINE_VERSION_CODE, NULL, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 

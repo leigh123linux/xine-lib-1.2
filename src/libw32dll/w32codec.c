@@ -1568,18 +1568,6 @@ static video_decoder_t *open_video_decoder_plugin (video_decoder_class_t *class_
  * video decoder class
  */
 
-static char *get_video_identifier (video_decoder_class_t *this) {
-  return "w32v";
-}
-
-static char *get_video_description (video_decoder_class_t *this) {
-  return "win32 binary video codec plugin";
-}
-
-static void dispose_video_class (video_decoder_class_t *this) {
-  free (this);
-}
-
 static void init_routine(void) {
   pthread_mutex_init (&win32_codec_mutex, NULL);
   w32v_init_rgb_ycc();
@@ -1596,9 +1584,9 @@ static void *init_video_decoder_class (xine_t *xine, void *data) {
   this = (w32v_class_t *) xine_xmalloc (sizeof (w32v_class_t));
 
   this->decoder_class.open_plugin     = open_video_decoder_plugin;
-  this->decoder_class.get_identifier  = get_video_identifier;
-  this->decoder_class.get_description = get_video_description;
-  this->decoder_class.dispose         = dispose_video_class;
+  this->decoder_class.identifier      = "w32v";
+  this->decoder_class.description     = N_("win32 binary video codec plugin");
+  this->decoder_class.dispose         = default_video_decoder_class_dispose;
 
   pthread_once (&once_control, init_routine);
   
@@ -1634,19 +1622,6 @@ static audio_decoder_t *open_audio_decoder_plugin (audio_decoder_class_t *class_
 /*
  * audio decoder plugin class
  */
-
-static char *get_identifier (audio_decoder_class_t *this) {
-  return "win32 audio";
-}
-
-static char *get_description (audio_decoder_class_t *this) {
-  return "win32 binary audio codec plugin";
-}
-
-static void dispose_class (audio_decoder_class_t *this) {
-  free (this);
-}
-
 static void *init_audio_decoder_class (xine_t *xine, void *data) {
 
   w32a_class_t    *this;
@@ -1658,9 +1633,9 @@ static void *init_audio_decoder_class (xine_t *xine, void *data) {
   this = (w32a_class_t *) xine_xmalloc (sizeof (w32a_class_t));
 
   this->decoder_class.open_plugin     = open_audio_decoder_plugin;
-  this->decoder_class.get_identifier  = get_identifier;
-  this->decoder_class.get_description = get_description;
-  this->decoder_class.dispose         = dispose_class;
+  this->decoder_class.identifier      = "win32 audio";
+  this->decoder_class.description     = N_("win32 binary audio codec plugin");
+  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
 
   pthread_once (&once_control, init_routine);
 
@@ -1703,7 +1678,7 @@ static const decoder_info_t dec_info_audio = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_VIDEO_DECODER | PLUGIN_MUST_PRELOAD, 18, "win32v", XINE_VERSION_CODE, &dec_info_video, init_video_decoder_class },
-  { PLUGIN_AUDIO_DECODER | PLUGIN_MUST_PRELOAD, 15, "win32a", XINE_VERSION_CODE, &dec_info_audio, init_audio_decoder_class },
+  { PLUGIN_VIDEO_DECODER | PLUGIN_MUST_PRELOAD, 19, "win32v", XINE_VERSION_CODE, &dec_info_video, init_video_decoder_class },
+  { PLUGIN_AUDIO_DECODER | PLUGIN_MUST_PRELOAD, 16, "win32a", XINE_VERSION_CODE, &dec_info_audio, init_audio_decoder_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

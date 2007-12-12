@@ -32,8 +32,6 @@ void *fill_init_plugin(xine_t *xine, void *);
 static post_plugin_t *fill_open_plugin(post_class_t *class_gen, int inputs,
                                        xine_audio_port_t **audio_target,
                                        xine_video_port_t **video_target);
-static char          *fill_get_identifier(post_class_t *class_gen);
-static char          *fill_get_description(post_class_t *class_gen);
 static void           fill_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
@@ -54,8 +52,8 @@ void *fill_init_plugin(xine_t *xine, void *data)
     return NULL;
   
   class->open_plugin     = fill_open_plugin;
-  class->get_identifier  = fill_get_identifier;
-  class->get_description = fill_get_description;
+  class->identifier      = "fill";
+  class->description     = N_("crops left and right of video to fill 4:3 aspect ratio");
   class->dispose         = fill_class_dispose;
   
   return class;
@@ -90,16 +88,6 @@ static post_plugin_t *fill_open_plugin(post_class_t *class_gen, int inputs,
   this->dispose = fill_dispose;
   
   return this;
-}
-
-static char *fill_get_identifier(post_class_t *class_gen)
-{
-  return "fill";
-}
-
-static char *fill_get_description(post_class_t *class_gen)
-{
-  return "crops left and right of video to fill 4:3 aspect ratio";
 }
 
 static void fill_class_dispose(post_class_t *class_gen)

@@ -320,12 +320,6 @@ static int demux_dts_seek (demux_plugin_t *this_gen,
   return this->status;
 }
 
-static void demux_dts_dispose (demux_plugin_t *this_gen) {
-  demux_dts_t *this = (demux_dts_t *) this_gen;
-
-  free(this);
-}
-
 static int demux_dts_get_status (demux_plugin_t *this_gen) {
   demux_dts_t *this = (demux_dts_t *) this_gen;
 
@@ -353,7 +347,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.send_headers      = demux_dts_send_headers;
   this->demux_plugin.send_chunk        = demux_dts_send_chunk;
   this->demux_plugin.seek              = demux_dts_seek;
-  this->demux_plugin.dispose           = demux_dts_dispose;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
   this->demux_plugin.get_status        = demux_dts_get_status;
   this->demux_plugin.get_stream_length = demux_dts_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_dts_get_capabilities;
@@ -364,19 +358,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   switch (stream->content_detection_method) {
 
-  case METHOD_BY_EXTENSION: {
-    const char *extensions, *mrl;
-
-    mrl = input->get_mrl (input);
-    extensions = class_gen->get_extensions (class_gen);
-
-    if (!_x_demux_check_extension (mrl, extensions)) {
-      free (this);
-      return NULL;
-    }
-  }
-  /* falling through is intended */
-
+  case METHOD_BY_MRL:
   case METHOD_BY_CONTENT:
   case METHOD_EXPLICIT:
     if (!open_dts_file(this)) {
@@ -393,39 +375,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static const char *get_description (demux_class_t *this_gen) {
-  return "Raw DTS demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "DTS";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "dts";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return NULL;
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-  demux_dts_class_t *this = (demux_dts_class_t *) this_gen;
-
-  free (this);
-}
-
 void *demux_dts_init_plugin (xine_t *xine, void *data) {
   demux_dts_class_t     *this;
 
   this = xine_xmalloc (sizeof (demux_dts_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("Raw DTS demux plugin");
+  this->demux_class.identifier      = "DTS";
+  this->demux_class.mimetypes       = NULL;
+  this->demux_class.extensions      = "dts";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }

@@ -446,7 +446,7 @@ void _x_demux_control_end          (xine_stream_t *stream, uint32_t flags) XINE_
 int _x_demux_start_thread          (xine_stream_t *stream) XINE_PROTECTED;
 int _x_demux_stop_thread           (xine_stream_t *stream) XINE_PROTECTED;
 int _x_demux_read_header           (input_plugin_t *input, unsigned char *buffer, off_t size) XINE_PROTECTED;
-int _x_demux_check_extension       (const char *mrl, const char *extensions) XINE_PROTECTED;
+int _x_demux_check_extension       (const char *mrl, const char *extensions);
 
 off_t _x_read_abort (xine_stream_t *stream, int fd, char *buf, off_t todo) XINE_PROTECTED;
 

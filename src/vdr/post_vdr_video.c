@@ -81,9 +81,6 @@ static void vdr_video_set_video_window(vdr_video_post_plugin_t *this, int32_t x,
 static post_plugin_t *vdr_video_open_plugin(post_class_t *class_gen, int inputs,
                                             xine_audio_port_t **audio_target,
                                             xine_video_port_t **video_target);
-static char          *vdr_video_get_identifier(post_class_t *class_gen);
-static char          *vdr_video_get_description(post_class_t *class_gen);
-static void           vdr_video_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
 static void           vdr_video_dispose(post_plugin_t *this_gen);
@@ -103,9 +100,9 @@ void *vdr_video_init_plugin(xine_t *xine, void *data)
     return NULL;
   
   class->open_plugin     = vdr_video_open_plugin;
-  class->get_identifier  = vdr_video_get_identifier;
-  class->get_description = vdr_video_get_description;
-  class->dispose         = vdr_video_class_dispose;
+  class->identifier      = "vdr";
+  class->description     = N_("modifies every video frame as requested by VDR");
+  class->dispose         = default_post_class_dispose;
   
   return class;
 }
@@ -145,22 +142,6 @@ static post_plugin_t *vdr_video_open_plugin(post_class_t *class_gen, int inputs,
   
   return &this->post_plugin;
 }
-
-static char *vdr_video_get_identifier(post_class_t *class_gen)
-{
-  return "vdr";
-}
-
-static char *vdr_video_get_description(post_class_t *class_gen)
-{
-  return "modifies every video frame as requested by VDR";
-}
-
-static void vdr_video_class_dispose(post_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 
 static void vdr_video_dispose(post_plugin_t *this_gen)
 {

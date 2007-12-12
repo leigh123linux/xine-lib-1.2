@@ -1280,28 +1280,13 @@ static vo_driver_t *xshm_open_plugin_old (video_driver_class_t *class_gen, const
 /*
  * class functions
  */
-
-static char* xshm_get_identifier (video_driver_class_t *this_gen) {
-  return "XShm";
-}
-
-static char* xshm_get_description (video_driver_class_t *this_gen) {
-  return _("xine video output plugin using the MIT X shared memory extension");
-}
-
-static void xshm_dispose_class (video_driver_class_t *this_gen) {
-  xshm_class_t         *this = (xshm_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *xshm_init_class (xine_t *xine, void *visual_gen) {
   xshm_class_t	       *this = (xshm_class_t *) xine_xmalloc (sizeof (xshm_class_t));
 
   this->driver_class.open_plugin     = xshm_open_plugin_old;
-  this->driver_class.get_identifier  = xshm_get_identifier;
-  this->driver_class.get_description = xshm_get_description;
-  this->driver_class.dispose         = xshm_dispose_class;
+  this->driver_class.identifier      = "XShm";
+  this->driver_class.description     = N_("xine video output plugin using the MIT X shared memory extension");
+  this->driver_class.dispose         = default_video_driver_class_dispose;
   this->config                       = xine->config;
   this->xine                         = xine;
 
@@ -1334,7 +1319,7 @@ static const vo_info_t vo_info_xshm_2 = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_VIDEO_OUT, 21, "xshm", XINE_VERSION_CODE, &vo_info_xshm, xshm_init_class },
-  { PLUGIN_VIDEO_OUT, 21, "xshm", XINE_VERSION_CODE, &vo_info_xshm_2, xshm_init_class_2 },
+  { PLUGIN_VIDEO_OUT, 22, "xshm", XINE_VERSION_CODE, &vo_info_xshm, xshm_init_class },
+  { PLUGIN_VIDEO_OUT, 22, "xshm", XINE_VERSION_CODE, &vo_info_xshm_2, xshm_init_class_2 },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

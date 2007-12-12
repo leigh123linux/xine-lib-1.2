@@ -415,18 +415,6 @@ static audio_decoder_t *ff_audio_open_plugin (audio_decoder_class_t *class_gen, 
   return &this->audio_decoder;
 }
 
-static char *ff_audio_get_identifier (audio_decoder_class_t *this) {
-  return "ffmpeg audio";
-}
-
-static char *ff_audio_get_description (audio_decoder_class_t *this) {
-  return "ffmpeg based audio decoder plugin";
-}
-
-static void ff_audio_dispose_class (audio_decoder_class_t *this) {
-  free (this);
-}
-
 void *init_audio_plugin (xine_t *xine, void *data) {
 
   ff_audio_class_t *this ;
@@ -434,9 +422,9 @@ void *init_audio_plugin (xine_t *xine, void *data) {
   this = (ff_audio_class_t *) xine_xmalloc (sizeof (ff_audio_class_t));
 
   this->decoder_class.open_plugin     = ff_audio_open_plugin;
-  this->decoder_class.get_identifier  = ff_audio_get_identifier;
-  this->decoder_class.get_description = ff_audio_get_description;
-  this->decoder_class.dispose         = ff_audio_dispose_class;
+  this->decoder_class.identifier      = "ffmpeg audio";
+  this->decoder_class.description     = N_("ffmpeg based audio decoder plugin");
+  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
 
   pthread_once( &once_control, init_once_routine );
 

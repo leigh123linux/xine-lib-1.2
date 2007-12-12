@@ -350,28 +350,6 @@ static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t
   return &this->spu_decoder;
 }
 
-static char *get_identifier (spu_decoder_class_t *this) {
-#ifdef LOG_DEBUG
-  printf ("libspudec:get_identifier called\n");
-#endif
-  return "spudec";
-}
-
-static char *get_description (spu_decoder_class_t *this) {
-#ifdef LOG_DEBUG
-  printf ("libspudec:get_description called\n");
-#endif
-  return "DVD/VOB SPU decoder plugin";
-}
-
-static void dispose_class (spu_decoder_class_t *this) {
-#ifdef LOG_DEBUG
-  printf ("libspudec:dispose_class called\n");
-#endif
-  free (this);
-}
-
-
 static void *init_plugin (xine_t *xine, void *data) {
 
   spudec_class_t *this;
@@ -379,9 +357,9 @@ static void *init_plugin (xine_t *xine, void *data) {
   this = (spudec_class_t *) xine_xmalloc (sizeof (spudec_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.get_identifier  = get_identifier;
-  this->decoder_class.get_description = get_description;
-  this->decoder_class.dispose         = dispose_class;
+  this->decoder_class.identifier      = "spudec";
+  this->decoder_class.description     = N_("DVD/VOB SPU decoder plugin");
+  this->decoder_class.dispose         = default_spu_decoder_class_dispose;
 
   lprintf ("libspudec:init_plugin called\n");
   return this;
@@ -397,6 +375,6 @@ static const decoder_info_t dec_info_data = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_SPU_DECODER, 16, "spudec", XINE_VERSION_CODE, &dec_info_data, &init_plugin },
+  { PLUGIN_SPU_DECODER, 17, "spudec", XINE_VERSION_CODE, &dec_info_data, &init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

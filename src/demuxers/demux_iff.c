@@ -1189,19 +1189,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   switch (stream->content_detection_method) {
 
-    case METHOD_BY_EXTENSION: {
-      const char *extensions, *mrl;
-
-      mrl                               = input->get_mrl (input);
-      extensions                        = class_gen->get_extensions (class_gen);
-
-      if (!_x_demux_check_extension (mrl, extensions)) {
-        free (this);
-        return NULL;
-      }
-    }
-    /* falling through is intended */
-
+    case METHOD_BY_MRL:
     case METHOD_BY_CONTENT:
     case METHOD_EXPLICIT:
 
@@ -1220,46 +1208,25 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static const char *get_description (demux_class_t *this_gen) {
-  return "IFF demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "IFF";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "iff svx 8svx 16sv ilbm ham ham6 ham8 anim anim3 anim5 anim7 anim8";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return "audio/x-8svx: 8svx: IFF-8SVX Audio;"
-         "audio/8svx: 8svx: IFF-8SVX Audio;"
-         "audio/x-16sv: 16sv: IFF-16SV Audio;"
-         "audio/168sv: 16sv: IFF-16SV Audio;"
-         "image/x-ilbm: ilbm: IFF-ILBM Picture;"
-         "image/ilbm: ilbm: IFF-ILBM Picture;"
-         "video/x-anim: anim: IFF-ANIM Video;"
-         "video/anim: anim: IFF-ANIM Video;";
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-  demux_iff_class_t *this               = (demux_iff_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_plugin (xine_t *xine, void *data) {
   demux_iff_class_t     *this;
 
   this = xine_xmalloc (sizeof (demux_iff_class_t));
 
   this->demux_class.open_plugin         = open_plugin;
-  this->demux_class.get_description     = get_description;
-  this->demux_class.get_identifier      = get_identifier;
-  this->demux_class.get_mimetypes       = get_mimetypes;
-  this->demux_class.get_extensions      = get_extensions;
-  this->demux_class.dispose             = class_dispose;
+  this->demux_class.description         = N_("IFF demux plugin");
+  this->demux_class.identifier          = "IFF";
+  this->demux_class.mimetypes           =
+    "audio/x-8svx: 8svx: IFF-8SVX Audio;"
+    "audio/8svx: 8svx: IFF-8SVX Audio;"
+    "audio/x-16sv: 16sv: IFF-16SV Audio;"
+    "audio/168sv: 16sv: IFF-16SV Audio;"
+    "image/x-ilbm: ilbm: IFF-ILBM Picture;"
+    "image/ilbm: ilbm: IFF-ILBM Picture;"
+    "video/x-anim: anim: IFF-ANIM Video;"
+    "video/anim: anim: IFF-ANIM Video;";
+  this->demux_class.extensions          = "iff svx 8svx 16sv ilbm ham ham6 ham8 anim anim3 anim5 anim7 anim8";
+  this->demux_class.dispose             = default_demux_class_dispose;
 
   return this;
 }
@@ -1273,7 +1240,7 @@ static const demuxer_info_t demux_info_iff = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_DEMUX, 26, "iff", XINE_VERSION_CODE, &demux_info_iff, init_plugin },
+  { PLUGIN_DEMUX, 27, "iff", XINE_VERSION_CODE, &demux_info_iff, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 

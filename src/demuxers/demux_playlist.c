@@ -611,12 +611,6 @@ static int demux_playlist_seek (demux_plugin_t *this_gen,
   return DEMUX_OK;
 }
 
-static void demux_playlist_dispose (demux_plugin_t *this_gen) {
-  demux_playlist_t *this = (demux_playlist_t *) this_gen;
-  
-  free (this);
-}
-
 static int demux_playlist_get_status (demux_plugin_t *this_gen) {
   demux_playlist_t *this = (demux_playlist_t *) this_gen;
   
@@ -649,7 +643,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   this->demux_plugin.send_headers      = demux_playlist_send_headers;
   this->demux_plugin.send_chunk        = demux_playlist_send_chunk;
   this->demux_plugin.seek              = demux_playlist_seek;
-  this->demux_plugin.dispose           = demux_playlist_dispose;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
   this->demux_plugin.get_status        = demux_playlist_get_status;
   this->demux_plugin.get_stream_length = demux_playlist_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_playlist_get_capabilities;
@@ -657,7 +651,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   this->demux_plugin.demux_class       = class_gen;
   
   switch (stream->content_detection_method) {
-    case METHOD_BY_EXTENSION:
+    case METHOD_BY_MRL:
       lprintf ("detect by extension\n");
       this->playlist = detect_by_extension (input);
       if (!this->playlist) {
@@ -686,48 +680,27 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   return &this->demux_plugin;
 }
 
-static const char *get_description (demux_class_t *this_gen) {
-  return "Playlist demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "playlist";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "m3u ram pls asx wax wvx smi smil qtl xspf rss";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return "audio/mpegurl: m3u: M3U playlist;"
-         "audio/x-mpegurl: m3u: M3U playlist;"
-         //"audio/x-pn-realaudio: ram: RAM playlist;"
-         //"audio/vnd.rn-realaudio: ram: RAM playlist;"
-         "audio/x-scpls: pls: Winamp playlist;"
-         "audio/x-ms-wax: wax, asx: WAX playlist;"
-         "audio/x-ms-wvx: wvx, asx: WVX playlist;"
-         "application/smil: smi, smil: SMIL playlist;"
-         "application/x-quicktimeplayer: qtl: Quicktime playlist;"
-         "application/xspf+xml: xspf: XSPF playlist;";
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-  demux_playlist_class_t *this = (demux_playlist_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_plugin (xine_t *xine, void *data) {
   demux_playlist_class_t     *this;
 
   this = xine_xmalloc (sizeof(demux_playlist_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("Playlist demux plugin");
+  this->demux_class.identifier      = "playlist";
+  this->demux_class.mimetypes       = 
+    "audio/mpegurl: m3u: M3U playlist;"
+    "audio/x-mpegurl: m3u: M3U playlist;"
+    //"audio/x-pn-realaudio: ram: RAM playlist;"
+    //"audio/vnd.rn-realaudio: ram: RAM playlist;"
+    "audio/x-scpls: pls: Winamp playlist;"
+    "audio/x-ms-wax: wax, asx: WAX playlist;"
+    "audio/x-ms-wvx: wvx, asx: WVX playlist;"
+    "application/smil: smi, smil: SMIL playlist;"
+    "application/x-quicktimeplayer: qtl: Quicktime playlist;"
+    "application/xspf+xml: xspf: XSPF playlist;";
+  this->demux_class.extensions      = "m3u ram pls asx wax wvx smi smil qtl xspf rss";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }
@@ -741,6 +714,6 @@ static const demuxer_info_t demux_info_flv = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_DEMUX, 26, "playlist", XINE_VERSION_CODE, &demux_info_flv, init_plugin },
+  { PLUGIN_DEMUX, 27, "playlist", XINE_VERSION_CODE, &demux_info_flv, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

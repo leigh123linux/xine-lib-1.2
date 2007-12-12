@@ -208,8 +208,6 @@ static xine_post_api_t post_api = {
 static post_plugin_t *eq_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target);
-static char          *eq_get_identifier(post_class_t *class_gen);
-static char          *eq_get_description(post_class_t *class_gen);
 static void           eq_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
@@ -234,8 +232,8 @@ void *eq_init_plugin(xine_t *xine, void *data)
     return NULL;
   
   class->open_plugin     = eq_open_plugin;
-  class->get_identifier  = eq_get_identifier;
-  class->get_description = eq_get_description;
+  class->identifier      = "eq";
+  class->description     = N_("soft video equalizer");
   class->dispose         = eq_class_dispose;
 
   return class;
@@ -290,16 +288,6 @@ static post_plugin_t *eq_open_plugin(post_class_t *class_gen, int inputs,
   this->post.dispose = eq_dispose;
   
   return &this->post;
-}
-
-static char *eq_get_identifier(post_class_t *class_gen)
-{
-  return "eq";
-}
-
-static char *eq_get_description(post_class_t *class_gen)
-{
-  return "soft video equalizer";
 }
 
 static void eq_class_dispose(post_class_t *class_gen)

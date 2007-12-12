@@ -259,20 +259,6 @@ static input_plugin_t *pnm_class_get_instance (input_class_t *cls_gen, xine_stre
  * pnm input plugin class stuff
  */
 
-static const char *pnm_class_get_description (input_class_t *this_gen) {
-  return _("pnm streaming input plugin");
-}
-
-static const char *pnm_class_get_identifier (input_class_t *this_gen) {
-  return "pnm";
-}
-
-static void pnm_class_dispose (input_class_t *this_gen) {
-  pnm_input_class_t  *this = (pnm_input_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
 
   pnm_input_class_t  *this;
@@ -282,11 +268,11 @@ static void *init_class (xine_t *xine, void *data) {
   this->xine   = xine;
 
   this->input_class.get_instance       = pnm_class_get_instance;
-  this->input_class.get_identifier     = pnm_class_get_identifier;
-  this->input_class.get_description    = pnm_class_get_description;
+  this->input_class.identifier         = "pnm";
+  this->input_class.description        = N_("pnm streaming input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
-  this->input_class.dispose            = pnm_class_dispose;
+  this->input_class.dispose            = default_input_class_dispose;
   this->input_class.eject_media        = NULL;
 
   return this;
@@ -298,7 +284,7 @@ static void *init_class (xine_t *xine, void *data) {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_INPUT, 17, "pnm", XINE_VERSION_CODE, NULL, init_class },
+  { PLUGIN_INPUT, 18, "pnm", XINE_VERSION_CODE, NULL, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 

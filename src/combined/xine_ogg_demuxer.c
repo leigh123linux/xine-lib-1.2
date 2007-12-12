@@ -1943,18 +1943,7 @@ static int detect_ogg_content (int detection_method, demux_class_t *class_gen,
         return 0;
     }
 
-    case METHOD_BY_EXTENSION: {
-      const char *extensions, *mrl;
-
-      mrl = input->get_mrl (input);
-      extensions = class_gen->get_extensions (class_gen);
-
-      if (_x_demux_check_extension (mrl, extensions))
-        return 1;
-      else
-        return 0;
-    }
-
+    case METHOD_BY_MRL:
     case METHOD_EXPLICIT:
       return 1;
 
@@ -2005,18 +1994,7 @@ static int detect_anx_content (int detection_method, demux_class_t *class_gen,
 
 #undef ANNODEX_SIGNATURE_SEARCH
 
-    case METHOD_BY_EXTENSION: {
-      const char *extensions, *mrl;
-
-      mrl = input->get_mrl (input);
-      extensions = class_gen->get_extensions (class_gen);
-
-      if (_x_demux_check_extension (mrl, extensions))
-        return 1;
-      else
-        return 0;
-    }
-
+    case METHOD_BY_MRL:
     case METHOD_EXPLICIT:
       return 1;
 
@@ -2116,40 +2094,17 @@ static demux_plugin_t *ogg_open_plugin (demux_class_t *class_gen,
 /*
  * Annodex demuxer class
  */
-
-static const char *anx_get_description (demux_class_t *this_gen) {
-  return "Annodex demux plugin";
-}
- 
-static const char *anx_get_identifier (demux_class_t *this_gen) {
-  return "Annodex";
-}
-
-static const char *anx_get_extensions (demux_class_t *this_gen) {
-  return "anx axa axv";
-}
-
-static const char *anx_get_mimetypes (demux_class_t *this_gen) {
-  return "application/x-annodex: ogg: Annodex media;";
-}
-
-static void anx_class_dispose (demux_class_t *this_gen) {
-  demux_anx_class_t *this = (demux_anx_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *anx_init_class (xine_t *xine, void *data) {
   demux_anx_class_t     *this;
 
   this = xine_xmalloc (sizeof (demux_anx_class_t));
 
   this->demux_class.open_plugin     = anx_open_plugin;
-  this->demux_class.get_description = anx_get_description;
-  this->demux_class.get_identifier  = anx_get_identifier;
-  this->demux_class.get_mimetypes   = anx_get_mimetypes;
-  this->demux_class.get_extensions  = anx_get_extensions;
-  this->demux_class.dispose         = anx_class_dispose;
+  this->demux_class.description     = N_("Annodex demux plugin");
+  this->demux_class.identifier      = "Annodex";
+  this->demux_class.mimetypes       = "application/x-annodex: ogg: Annodex media;";
+  this->demux_class.extensions      = "anx axa axv";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }
@@ -2157,43 +2112,21 @@ static void *anx_init_class (xine_t *xine, void *data) {
 /*
  * ogg demuxer class
  */
-
-static const char *ogg_get_description (demux_class_t *this_gen) {
-  return "OGG demux plugin";
-}
- 
-static const char *ogg_get_identifier (demux_class_t *this_gen) {
-  return "OGG";
-}
-
-static const char *ogg_get_extensions (demux_class_t *this_gen) {
-  return "ogg ogm spx";
-}
-
-static const char *ogg_get_mimetypes (demux_class_t *this_gen) {
-  return "audio/x-ogg: ogg: OggVorbis Audio;"
-         "audio/x-speex: ogg: Speex Audio;"
-         "application/x-ogg: ogg: Ogg Stream;"
-         "application/ogg: ogg: Ogg Stream;";
-}
-
-static void ogg_class_dispose (demux_class_t *this_gen) {
-  demux_ogg_class_t *this = (demux_ogg_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *ogg_init_class (xine_t *xine, void *data) {
   demux_ogg_class_t     *this;
 
   this = xine_xmalloc (sizeof (demux_ogg_class_t));
 
   this->demux_class.open_plugin     = ogg_open_plugin;
-  this->demux_class.get_description = ogg_get_description;
-  this->demux_class.get_identifier  = ogg_get_identifier;
-  this->demux_class.get_mimetypes   = ogg_get_mimetypes;
-  this->demux_class.get_extensions  = ogg_get_extensions;
-  this->demux_class.dispose         = ogg_class_dispose;
+  this->demux_class.description     = N_("OGG demux plugin");
+  this->demux_class.identifier      = "OGG";
+  this->demux_class.mimetypes       =
+    "audio/x-ogg: ogg: OggVorbis Audio;"
+    "audio/x-speex: ogg: Speex Audio;"
+    "application/x-ogg: ogg: Ogg Stream;"
+    "application/ogg: ogg: Ogg Stream;";
+  this->demux_class.extensions      = "ogg ogm spx";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }
@@ -2218,16 +2151,16 @@ void *theora_init_plugin (xine_t *xine, void *data);
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_DEMUX, 26, "ogg", XINE_VERSION_CODE, &demux_info_ogg, ogg_init_class },
-  { PLUGIN_DEMUX, 26, "anx", XINE_VERSION_CODE, &demux_info_anx, anx_init_class },
+  { PLUGIN_DEMUX, 27, "ogg", XINE_VERSION_CODE, &demux_info_ogg, ogg_init_class },
+  { PLUGIN_DEMUX, 27, "anx", XINE_VERSION_CODE, &demux_info_anx, anx_init_class },
 #ifdef HAVE_VORBIS
-  { PLUGIN_AUDIO_DECODER, 15, "vorbis", XINE_VERSION_CODE, &dec_info_vorbis, vorbis_init_plugin },
+  { PLUGIN_AUDIO_DECODER, 16, "vorbis", XINE_VERSION_CODE, &dec_info_vorbis, vorbis_init_plugin },
 #endif
 #ifdef HAVE_SPEEX
-  { PLUGIN_AUDIO_DECODER, 15, "speex", XINE_VERSION_CODE, &dec_info_speex, speex_init_plugin },
+  { PLUGIN_AUDIO_DECODER, 16, "speex", XINE_VERSION_CODE, &dec_info_speex, speex_init_plugin },
 #endif
 #ifdef HAVE_THEORA
-  { PLUGIN_VIDEO_DECODER, 18, "theora", XINE_VERSION_CODE, &dec_info_theora, theora_init_plugin },
+  { PLUGIN_VIDEO_DECODER, 19, "theora", XINE_VERSION_CODE, &dec_info_theora, theora_init_plugin },
 #endif
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

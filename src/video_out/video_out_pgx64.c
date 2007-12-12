@@ -1332,14 +1332,6 @@ static void pgx64_config_changed(void *user_data, xine_cfg_entry_t *entry)
 /*
  * XINE VIDEO DRIVER CLASS FUNCTIONS
  */
-
-static void pgx64_dispose_class(video_driver_class_t *class_gen)
-{
-  pgx64_driver_class_t *class = (pgx64_driver_class_t *)(void *)class_gen;
-
-  free(class);
-}
-
 static const vo_info_t vo_info_pgx64 = {
   10,
   XINE_VISUAL_TYPE_X11
@@ -1479,16 +1471,6 @@ static vo_driver_t *pgx64_init_driver(video_driver_class_t *class_gen, const voi
   return (vo_driver_t *)this;
 }
 
-static char *pgx64_get_identifier(video_driver_class_t *class_gen)
-{
-  return "pgx64";
-}
-
-static char *pgx64_get_description(video_driver_class_t *class_gen)
-{
-  return "xine video output plugin for Sun XVR100/PGX64/PGX24 framebuffers";
-}
-
 static void *pgx64_init_class(xine_t *xine, void *visual_gen)
 {
   pgx64_driver_class_t *class;
@@ -1501,9 +1483,9 @@ static void *pgx64_init_class(xine_t *xine, void *visual_gen)
   DGA_INIT();
 
   class->vo_driver_class.open_plugin     = pgx64_init_driver;
-  class->vo_driver_class.get_identifier  = pgx64_get_identifier;
-  class->vo_driver_class.get_description = pgx64_get_description;
-  class->vo_driver_class.dispose         = pgx64_dispose_class;
+  class->vo_driver_class.identifier      = "pgx64";
+  class->vo_driver_class.description     = N_("xine video output plugin for Sun XVR100/PGX64/PGX24 framebuffers");
+  class->vo_driver_class.dispose         = default_video_driver_class_dispose;
 
   class->xine   = xine;
   class->config = xine->config;
@@ -1512,6 +1494,6 @@ static void *pgx64_init_class(xine_t *xine, void *visual_gen)
 }
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  {PLUGIN_VIDEO_OUT, 21, "pgx64", XINE_VERSION_CODE, &vo_info_pgx64, pgx64_init_class},
+  {PLUGIN_VIDEO_OUT, 22, "pgx64", XINE_VERSION_CODE, &vo_info_pgx64, pgx64_init_class},
   {PLUGIN_NONE, 0, "", 0, NULL, NULL}
 };

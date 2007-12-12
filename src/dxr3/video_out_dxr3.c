@@ -92,17 +92,15 @@ static const vo_info_t   vo_info_dxr3_aa = {
 const plugin_info_t      xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
 #ifdef HAVE_X11
-  { PLUGIN_VIDEO_OUT, 21, "dxr3", XINE_VERSION_CODE, &vo_info_dxr3_x11, &dxr3_x11_init_plugin },
+  { PLUGIN_VIDEO_OUT, 22, "dxr3", XINE_VERSION_CODE, &vo_info_dxr3_x11, &dxr3_x11_init_plugin },
 #endif
-  { PLUGIN_VIDEO_OUT, 21, "aadxr3", XINE_VERSION_CODE, &vo_info_dxr3_aa, &dxr3_aa_init_plugin },
+  { PLUGIN_VIDEO_OUT, 22, "aadxr3", XINE_VERSION_CODE, &vo_info_dxr3_aa, &dxr3_aa_init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 
 
 /* plugin class functions */
 static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const void *visual);
-static char        *dxr3_vo_get_identifier(video_driver_class_t *class_gen);
-static char        *dxr3_vo_get_description(video_driver_class_t *class_gen);
 static void         dxr3_vo_class_dispose(video_driver_class_t *class_gen);
 
 /* plugin instance functions */
@@ -176,8 +174,8 @@ static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, void *visual_gen)
     CONF_KEY, 0, CONF_NAME, CONF_HELP, 10, NULL, NULL);
 
   this->video_driver_class.open_plugin     = dxr3_vo_open_plugin;
-  this->video_driver_class.get_identifier  = dxr3_vo_get_identifier;
-  this->video_driver_class.get_description = dxr3_vo_get_description;
+  this->video_driver_class.identifier      = DXR3_VO_ID;
+  this->video_driver_class.description     = N_("video output plugin displaying images through your DXR3 decoder card");
   this->video_driver_class.dispose         = dxr3_vo_class_dispose;
   
   this->xine                               = xine;
@@ -187,16 +185,6 @@ static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, void *visual_gen)
   this->scr                                = dxr3_scr_init(xine);
   
   return this;
-}
-
-static char *dxr3_vo_get_identifier(video_driver_class_t *class_gen)
-{
-  return DXR3_VO_ID;
-}
-
-static char *dxr3_vo_get_description(video_driver_class_t *class_gen)
-{
-  return "video output plugin displaying images through your DXR3 decoder card";
 }
 
 static void dxr3_vo_class_dispose(video_driver_class_t *class_gen)

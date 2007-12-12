@@ -343,29 +343,6 @@ static video_decoder_t *theora_open_plugin (video_decoder_class_t *class_gen, xi
 /*
  * theora plugin class
  */
-
-static char *theora_get_identifier (video_decoder_class_t *this) {
-  /*
-   * return short, human readable identifier for this plugin class
-   */
-  return "theora video";
-}
-
-static char *theora_get_description (video_decoder_class_t *this) {
-  /*
-   * return human readable (verbose = 1 line) description for 
-   * this plugin class
-   */
-  return "theora video decoder plugin";
-}
-
-static void theora_dispose_class (video_decoder_class_t *this) {
-  /*
-   * free all class-related resources
-   */
-  free (this);
-}
-
 void *theora_init_plugin (xine_t *xine, void *data) {
   /*initialize our plugin*/
   theora_class_t *this;
@@ -373,9 +350,9 @@ void *theora_init_plugin (xine_t *xine, void *data) {
   this = (theora_class_t *) xine_xmalloc (sizeof (theora_class_t));
 
   this->decoder_class.open_plugin     = theora_open_plugin;
-  this->decoder_class.get_identifier  = theora_get_identifier;
-  this->decoder_class.get_description = theora_get_description;
-  this->decoder_class.dispose         = theora_dispose_class;
+  this->decoder_class.identifier      = "theora video";
+  this->decoder_class.description     = N_("theora video decoder plugin");
+  this->decoder_class.dispose         = default_video_decoder_class_dispose;
 
   return this;
 }

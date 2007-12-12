@@ -64,7 +64,7 @@ typedef unsigned uint_t;
 #define	AUDIO_PRECISION_16	16
 #endif
 
-#define AO_SUN_IFACE_VERSION 8
+#define AO_SUN_IFACE_VERSION 9
 
 #define GAP_TOLERANCE         5000
 #define GAP_NONRT_TOLERANCE   AO_MAX_GAP
@@ -1011,22 +1011,6 @@ static ao_driver_t *ao_sun_open_plugin (audio_driver_class_t *class_gen, const v
 /*
  * class functions
  */
-
-static char* ao_sun_get_identifier (audio_driver_class_t *this_gen) {
-  return "sun";
-}
-
-static char* ao_sun_get_description (audio_driver_class_t *this_gen) {
-  return _("xine audio output plugin using sun-compliant audio devices/drivers");
-}
-
-static void ao_sun_dispose_class (audio_driver_class_t *this_gen) {
-
-  sun_class_t *this = (sun_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *ao_sun_init_class (xine_t *xine, void *data) {
   sun_class_t         *this;
 
@@ -1035,9 +1019,9 @@ static void *ao_sun_init_class (xine_t *xine, void *data) {
     return NULL;
 
   this->driver_class.open_plugin     = ao_sun_open_plugin;
-  this->driver_class.get_identifier  = ao_sun_get_identifier;
-  this->driver_class.get_description = ao_sun_get_description;
-  this->driver_class.dispose         = ao_sun_dispose_class;
+  this->driver_class.identifier      = "sun";
+  this->driver_class.description     = N_("xine audio output plugin using sun-compliant audio devices/drivers");
+  this->driver_class.dispose         = default_audio_driver_class_dispose;
 
   this->xine = xine;
 

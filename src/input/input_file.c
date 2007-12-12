@@ -635,14 +635,6 @@ static off_t get_file_size(char *filepathname, char *origin) {
   return pstat.st_size;
 }
 
-static const char *file_class_get_description (input_class_t *this_gen) {
-  return _("file input plugin");
-}
-
-static const char *file_class_get_identifier (input_class_t *this_gen) {
-  return "file";
-}
-
 static xine_mrl_t **file_class_get_dir (input_class_t *this_gen, 
 					const char *filename, int *nFiles) {
 
@@ -987,8 +979,8 @@ static void *init_plugin (xine_t *xine, void *data) {
   config       = xine->config;
   
   this->input_class.get_instance       = file_class_get_instance;
-  this->input_class.get_identifier     = file_class_get_identifier;
-  this->input_class.get_description    = file_class_get_description;
+  this->input_class.identifier         = "file";
+  this->input_class.description        = N_("file input plugin");
   this->input_class.get_dir            = file_class_get_dir;
   this->input_class.get_autoplay_list  = NULL;
   this->input_class.dispose            = file_class_dispose;
@@ -1027,6 +1019,6 @@ static void *init_plugin (xine_t *xine, void *data) {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 17, "FILE", XINE_VERSION_CODE, NULL, init_plugin },
+  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "FILE", XINE_VERSION_CODE, NULL, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

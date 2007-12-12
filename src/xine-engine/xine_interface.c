@@ -322,15 +322,6 @@ void xine_config_reset (xine_t *this) {
   pthread_mutex_unlock(&config->config_lock);
 }
 
-#ifndef XINE_DISABLE_DEPRECATED_FEATURES
-int xine_gui_send_vo_data (xine_stream_t *stream,
-			   int type, void *data) {
-
-  return stream->video_driver->gui_data_exchange (stream->video_driver, 
-						  type, data);
-}
-#endif
-
 int xine_port_send_gui_data (xine_video_port_t *vo,
 			   int type, void *data) {
 

@@ -322,10 +322,6 @@ static int demux_eawve_seek(demux_eawve_t *this, off_t start_pos, int start_time
   return this->status;
 }
 
-static void demux_eawve_dispose(demux_eawve_t *this){
-  free(this);
-}
-
 static int demux_eawve_get_status(demux_eawve_t *this){
   return this->status;
 }
@@ -356,7 +352,7 @@ static demux_plugin_t* open_plugin(demux_class_t *class_gen, xine_stream_t *stre
   this->demux_plugin.send_headers      = (void*)demux_eawve_send_headers;
   this->demux_plugin.send_chunk        = (void*)demux_eawve_send_chunk;
   this->demux_plugin.seek              = (void*)demux_eawve_seek;
-  this->demux_plugin.dispose           = (void*)demux_eawve_dispose;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
   this->demux_plugin.get_status        = (void*)demux_eawve_get_status;
   this->demux_plugin.get_stream_length = (void*)demux_eawve_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_eawve_get_capabilities;
@@ -367,19 +363,7 @@ static demux_plugin_t* open_plugin(demux_class_t *class_gen, xine_stream_t *stre
 
   switch (stream->content_detection_method) {
 
-  case METHOD_BY_EXTENSION: {
-    const char *extensions, *mrl;
-
-    mrl = input->get_mrl (input);
-    extensions = class_gen->get_extensions (class_gen);
-
-    if (!_x_demux_check_extension (mrl, extensions)) {
-      free (this);
-      return NULL;
-    }
-  }
-  /* falling through is intended */
-
+  case METHOD_BY_MRL:
   case METHOD_BY_CONTENT:
   case METHOD_EXPLICIT:
 
@@ -398,37 +382,17 @@ static demux_plugin_t* open_plugin(demux_class_t *class_gen, xine_stream_t *stre
   return &this->demux_plugin;
 }
 
-static const char *get_description(demux_class_t *this_gen){
-  return "Electronics Arts WVE format demux plugin";
-}
-
-static const char *get_identifier(demux_class_t *this_gen){
-  return "EA WVE";
-}
-
-static const char *get_extensions(demux_class_t *this_gen){
-  return "wve";
-}
-
-static const char *get_mimetypes(demux_class_t *this_gen){
-  return NULL;
-}
-
-static void class_dispose(demux_class_t *this){
-  free(this);
-}
-
 void *demux_eawve_init_plugin(xine_t *xine, void *data) {
   demux_eawve_class_t     *this;
 
   this = xine_xmalloc(sizeof(demux_eawve_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("Electronics Arts WVE format demux plugin");
+  this->demux_class.identifier      = "EA WVE";
+  this->demux_class.mimetypes       = NULL;
+  this->demux_class.extensions      = "wve";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }

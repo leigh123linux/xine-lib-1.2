@@ -2253,17 +2253,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   }
   break;
 
-  case METHOD_BY_EXTENSION: {
-    const char *extensions, *mrl;
-
-    mrl = input->get_mrl (input);
-    extensions = class_gen->get_extensions (class_gen);
-
-    if (!_x_demux_check_extension (mrl, extensions))
-      return NULL;
-  }
-  /* we want to fall through here */
-
+  case METHOD_BY_MRL:
   case METHOD_EXPLICIT:
   break;
 
@@ -2310,41 +2300,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 /*
  * demux avi class
  */
-
-static const char *get_description (demux_class_t *this_gen) {
-  return "AVI/RIFF demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "AVI";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "avi";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return "video/msvideo: avi: AVI video;"
-         "video/x-msvideo: avi: AVI video;";
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-  demux_avi_class_t *this = (demux_avi_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
   demux_avi_class_t     *this;
 
   this = xine_xmalloc (sizeof (demux_avi_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("AVI/RIFF demux plugin");
+  this->demux_class.identifier      = "AVI";
+  this->demux_class.mimetypes       = 
+    "video/msvideo: avi: AVI video;"
+    "video/x-msvideo: avi: AVI video;";
+  this->demux_class.extensions      = "avi";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }
@@ -2358,6 +2326,6 @@ static const demuxer_info_t demux_info_avi = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_DEMUX, 26, "avi", XINE_VERSION_CODE, &demux_info_avi, init_class },
+  { PLUGIN_DEMUX, 27, "avi", XINE_VERSION_CODE, &demux_info_avi, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

@@ -862,11 +862,12 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
       int res;
 
       xine_log (stream->xine, XINE_LOG_MSG, _("xine: found input plugin  : %s\n"),
-		stream->input_plugin->input_class->get_description(stream->input_plugin->input_class));
+		dgettext(stream->input_plugin->input_class->textdomain ? : XINE_TEXTDOMAIN,
+			 stream->input_plugin->input_class->description));
       if (stream->input_plugin->input_class->eject_media)
         stream->eject_class = stream->input_plugin->input_class;
       _x_meta_info_set_utf8(stream, XINE_META_INFO_INPUT_PLUGIN, 
-			    (stream->input_plugin->input_class->get_identifier (stream->input_plugin->input_class)));
+			    stream->input_plugin->input_class->identifier);
 
       res = (stream->input_plugin->open) (stream->input_plugin);
       switch(res) {
@@ -929,7 +930,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 	  }
 
 	  _x_meta_info_set_utf8(stream, XINE_META_INFO_SYSTEMLAYER,
-				(stream->demux_plugin->demux_class->get_identifier(stream->demux_plugin->demux_class)));
+				stream->demux_plugin->demux_class->identifier);
 	  free(demux_name);
 	} else {
 	  xprintf(stream->xine, XINE_VERBOSITY_LOG, _("xine: error while parsing mrl\n"));
@@ -1004,7 +1005,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 	  lprintf ("demux and input plugin found\n");
 
 	  _x_meta_info_set_utf8(stream, XINE_META_INFO_SYSTEMLAYER,
-				(stream->demux_plugin->demux_class->get_identifier(stream->demux_plugin->demux_class)));
+				stream->demux_plugin->demux_class->identifier);
 	  free(demux_name);
 	} else {
 	  xprintf(stream->xine, XINE_VERBOSITY_LOG, _("xine: error while parsing mrl\n"));
@@ -1210,11 +1211,12 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
     lprintf ("demux and input plugin found\n");
 
     _x_meta_info_set_utf8(stream, XINE_META_INFO_SYSTEMLAYER,
-			  (stream->demux_plugin->demux_class->get_identifier(stream->demux_plugin->demux_class)));
+			  stream->demux_plugin->demux_class->identifier);
   }
 
   xine_log (stream->xine, XINE_LOG_MSG, _("xine: found demuxer plugin: %s\n"),
-	    stream->demux_plugin->demux_class->get_description(stream->demux_plugin->demux_class));
+	    dgettext(stream->demux_plugin->demux_class->textdomain ? : XINE_TEXTDOMAIN,
+		     stream->demux_plugin->demux_class->description));
 
   _x_extra_info_reset( stream->current_extra_info );
   _x_extra_info_reset( stream->video_decoder_extra_info );

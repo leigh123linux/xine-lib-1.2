@@ -256,23 +256,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
 /*
  * image plugin class
  */
-
-static char *get_identifier (video_decoder_class_t *this) {
-  return "gdkpixbuf";
-}
-
-static char *get_description (video_decoder_class_t *this) {
-  return "gdk-pixbuf image video decoder plugin";
-}
-
-static void dispose_class (video_decoder_class_t *this_gen) {
-  image_class_t   *this = (image_class_t *) this_gen;
-
-  lprintf("class closed\n");
-  
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
 
   image_class_t       *this;
@@ -280,9 +263,9 @@ static void *init_class (xine_t *xine, void *data) {
   this = (image_class_t *) xine_xmalloc (sizeof (image_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.get_identifier  = get_identifier;
-  this->decoder_class.get_description = get_description;
-  this->decoder_class.dispose         = dispose_class;
+  this->decoder_class.identifier      = "gdkpixbuf";
+  this->decoder_class.description     = N_("gdk-pixbuf image video decoder plugin");
+  this->decoder_class.dispose         = default_video_decoder_class_dispose;
 
   /*
    * initialisation of privates
@@ -306,6 +289,6 @@ static const decoder_info_t dec_info_image = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_VIDEO_DECODER, 18, "gdkpixbuf", XINE_VERSION_CODE, &dec_info_image, init_class },
+  { PLUGIN_VIDEO_DECODER, 19, "gdkpixbuf", XINE_VERSION_CODE, &dec_info_image, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

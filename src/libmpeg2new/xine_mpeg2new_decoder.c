@@ -473,19 +473,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 /*
  * mpeg2 plugin class
  */
-
-static char *get_identifier (video_decoder_class_t *this) {
-  return "mpeg2new";
-}
-
-static char *get_description (video_decoder_class_t *this) {
-  return "mpeg2 based video decoder plugin";
-}
-
-static void dispose_class (video_decoder_class_t *this) {
-  free (this);
-}
-
 static void *init_plugin (xine_t *xine, void *data) {
 
   mpeg2_class_t *this;
@@ -493,9 +480,9 @@ static void *init_plugin (xine_t *xine, void *data) {
   this = (mpeg2_class_t *) xine_xmalloc (sizeof (mpeg2_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.get_identifier  = get_identifier;
-  this->decoder_class.get_description = get_description;
-  this->decoder_class.dispose         = dispose_class;
+  this->decoder_class.identifier      = "mpeg2new";
+  this->decoder_class.description     = N_("mpeg2 based video decoder plugin");
+  this->decoder_class.dispose         = default_video_decoder_class_dispose;
 
   return this;
 }
@@ -512,6 +499,6 @@ static decoder_info_t dec_info_mpeg2 = {
 
 plugin_info_t xine_plugin_info[] = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_VIDEO_DECODER, 18, "mpeg2new", XINE_VERSION_CODE, &dec_info_mpeg2, init_plugin },
+  { PLUGIN_VIDEO_DECODER, 19, "mpeg2new", XINE_VERSION_CODE, &dec_info_mpeg2, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

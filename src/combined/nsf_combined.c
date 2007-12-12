@@ -36,7 +36,7 @@ static const decoder_info_t decoder_info_nsf = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  { PLUGIN_DEMUX, 26, "nsfdemux", XINE_VERSION_CODE, &demux_info_nsf, demux_nsf_init_plugin },
-  { PLUGIN_AUDIO_DECODER, 15, "nsfdec", XINE_VERSION_CODE, &decoder_info_nsf, decoder_nsf_init_plugin },
+  { PLUGIN_DEMUX, 27, "nsfdemux", XINE_VERSION_CODE, &demux_info_nsf, demux_nsf_init_plugin },
+  { PLUGIN_AUDIO_DECODER, 16, "nsfdec", XINE_VERSION_CODE, &decoder_info_nsf, decoder_nsf_init_plugin },
   { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };

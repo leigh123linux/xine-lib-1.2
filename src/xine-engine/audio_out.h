@@ -37,7 +37,7 @@ extern "C" {
 #endif
 
 
-#define AUDIO_OUT_IFACE_VERSION  8
+#define AUDIO_OUT_IFACE_VERSION  9
 
 /*
  * ao_driver_s contains the driver every audio output
@@ -237,23 +237,31 @@ struct audio_driver_class_s {
    */
   ao_driver_t* (*open_plugin) (audio_driver_class_t *, const void *data);
   
-  /*
-   * return short, human readable identifier for this plugin class
+  /**
+   * @brief short human readable identifier for this plugin class
    */
-  char* (*get_identifier) (audio_driver_class_t *);
+  const char *identifier;
 
-  /*
-   * return human readable (verbose = 1 line) description for 
-   * this plugin class
+  /**
+   * @brief human readable (verbose = 1 line) description for this plugin class
+   *
+   * The description is passed to gettext() to internationalise.
    */
-  char* (*get_description) (audio_driver_class_t *);
+  const char *description;
 
+  /**
+   * @brief Optional non-standard catalog to use with dgettext() for description.
+   */
+  const char *textdomain;
+  
   /*
    * free all class-related resources
    */
 
   void (*dispose) (audio_driver_class_t *);
 };
+
+#define default_audio_driver_class_dispose (void (*) (audio_driver_class_t *this))free
 
 /**
  * @brief Initialise the audio_out sync routines

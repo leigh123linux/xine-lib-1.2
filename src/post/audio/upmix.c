@@ -414,21 +414,6 @@ static post_plugin_t *upmix_open_plugin(post_class_t *class_gen, int inputs,
   return &this->post;
 }
 
-static char *upmix_get_identifier(post_class_t *class_gen)
-{
-  return "upmix";
-}
-
-static char *upmix_get_description(post_class_t *class_gen)
-{
-  return "upmix";
-}
-
-static void upmix_class_dispose(post_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 /* plugin class initialization function */
 void *upmix_init_plugin(xine_t *xine, void *data)
 {
@@ -438,9 +423,9 @@ void *upmix_init_plugin(xine_t *xine, void *data)
     return NULL;
   
   class->post_class.open_plugin     = upmix_open_plugin;
-  class->post_class.get_identifier  = upmix_get_identifier;
-  class->post_class.get_description = upmix_get_description;
-  class->post_class.dispose         = upmix_class_dispose;
+  class->post_class.identifier      = "upmix";
+  class->post_class.description     = N_("upmix");
+  class->post_class.dispose         = default_post_class_dispose;
   
   class->xine                       = xine;
   

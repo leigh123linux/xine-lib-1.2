@@ -2031,23 +2031,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 
     break;
 
-  case METHOD_BY_EXTENSION: {
-    const char *const mrl = input->get_mrl (input);
-    const char *const ending = strrchr (mrl, '.');
-
-    if (!ending)
-      return NULL;
-
-    if (strncasecmp(ending, ".asf", 4) &&
-        strncasecmp(ending, ".wmv", 4) &&
-        strncasecmp(ending, ".wma", 4) ) {
-      return NULL;
-    }
-
-    lprintf ("extension accepted.\n");
-  }
-  break;
-
+  case METHOD_BY_MRL:
   case METHOD_EXPLICIT:
   break;
 
@@ -2096,38 +2080,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   return &this->demux_plugin;
 }
 
-static const char *get_description (demux_class_t *this_gen) {
-  return "ASF demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "ASF";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  /* asx, wvx, wax are metafile or playlist */
-  return "asf wmv wma asx wvx wax";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-
-  return "video/x-ms-asf: asf: ASF stream;"
-         "video/x-ms-wmv: wmv: Windows Media Video;"
-         "audio/x-ms-wma: wma: Windows Media Audio;"
-         "application/vnd.ms-asf: asf: ASF stream;"
-         "application/x-mplayer2: asf,asx,asp: mplayer2;"
-         "video/x-ms-asf-plugin: asf,asx,asp: mms animation;"
-         "video/x-ms-wvx: wvx: wmv metafile;"
-         "video/x-ms-wax: wva: wma metafile;";
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-
-  demux_asf_class_t *this = (demux_asf_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
 
   demux_asf_class_t     *this;
@@ -2137,11 +2089,20 @@ static void *init_class (xine_t *xine, void *data) {
   this->xine   = xine;
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("ASF demux plugin");
+  this->demux_class.identifier      = "ASF";
+  this->demux_class.mimetypes       = 
+    "video/x-ms-asf: asf: ASF stream;"
+    "video/x-ms-wmv: wmv: Windows Media Video;"
+    "audio/x-ms-wma: wma: Windows Media Audio;"
+    "application/vnd.ms-asf: asf: ASF stream;"
+    "application/x-mplayer2: asf,asx,asp: mplayer2;"
+    "video/x-ms-asf-plugin: asf,asx,asp: mms animation;"
+    "video/x-ms-wvx: wvx: wmv metafile;"
+    "video/x-ms-wax: wva: wma metafile;";
+  /* asx, wvx, wax are metafile or playlist */
+  this->demux_class.extensions      = "asf wmv wma asx wvx wax";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }
@@ -2156,6 +2117,6 @@ static const demuxer_info_t demux_info_asf = {
  
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_DEMUX, 26, "asf", XINE_VERSION_CODE, &demux_info_asf, init_class },
+  { PLUGIN_DEMUX, 27, "asf", XINE_VERSION_CODE, &demux_info_asf, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

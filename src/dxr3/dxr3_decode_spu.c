@@ -73,16 +73,13 @@ static const decoder_info_t dxr3_spudec_info = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_SPU_DECODER, 16, "dxr3-spudec", XINE_VERSION_CODE, &dxr3_spudec_info, &dxr3_spudec_init_plugin },
+  { PLUGIN_SPU_DECODER, 17, "dxr3-spudec", XINE_VERSION_CODE, &dxr3_spudec_info, &dxr3_spudec_init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 
 
 /* plugin class functions */
 static spu_decoder_t *dxr3_spudec_open_plugin(spu_decoder_class_t *class_gen, xine_stream_t *stream);
-static char          *dxr3_spudec_get_identifier(spu_decoder_class_t *class_gen);
-static char          *dxr3_spudec_get_description(spu_decoder_class_t *class_gen);
-static void           dxr3_spudec_class_dispose(spu_decoder_class_t *class_gen);
 
 /* plugin instance functions */
 static void    dxr3_spudec_decode_data(spu_decoder_t *this_gen, buf_element_t *buf);
@@ -155,8 +152,8 @@ static inline int dxr3_present(xine_stream_t *stream)
     node = (plugin_node_t *)stream->video_driver->node;
     if (node->plugin_class) {
       vo_class = (video_driver_class_t *)node->plugin_class;
-      if (vo_class->get_identifier)
-        present = (strcmp(vo_class->get_identifier(vo_class), DXR3_VO_ID) == 0);
+      if (vo_class->identifier)
+        present = (strcmp(vo_class->identifier, DXR3_VO_ID) == 0);
     }
   }
   llprintf(LOG_SPU, "dxr3 %s\n", present ? "present" : "not present");
@@ -202,9 +199,9 @@ static void *dxr3_spudec_init_plugin(xine_t *xine, void* data)
   if (!this) return NULL;
   
   this->spu_decoder_class.open_plugin     = dxr3_spudec_open_plugin;
-  this->spu_decoder_class.get_identifier  = dxr3_spudec_get_identifier;
-  this->spu_decoder_class.get_description = dxr3_spudec_get_description;
-  this->spu_decoder_class.dispose         = dxr3_spudec_class_dispose;
+  this->spu_decoder_class.identifier      = "dxr3-spudec";
+  this->spu_decoder_class.description     = N_("subtitle decoder plugin using the hardware decoding capabilities of a DXR3 decoder card");
+  this->spu_decoder_class.dispose         = default_spu_decoder_class_dispose;
   
   this->instance                          = 0;
   
@@ -274,22 +271,6 @@ static spu_decoder_t *dxr3_spudec_open_plugin(spu_decoder_class_t *class_gen, xi
   
   return &this->spu_decoder;
 }
-
-static char *dxr3_spudec_get_identifier(spu_decoder_class_t *class_gen)
-{
-  return "dxr3-spudec";
-}
-
-static char *dxr3_spudec_get_description(spu_decoder_class_t *class_gen)
-{
-  return "subtitle decoder plugin using the hardware decoding capabilities of a DXR3 decoder card";
-}
-
-static void dxr3_spudec_class_dispose(spu_decoder_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 
 static void dxr3_spudec_decode_data(spu_decoder_t *this_gen, buf_element_t *buf)
 {

@@ -311,27 +311,15 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
  * wavpack plugin class
  */
 
-static char *get_identifier (audio_decoder_class_t *this) {
-  return "wavpackdec";
-}
-
-static char *get_description (audio_decoder_class_t *this) {
-  return "wavpack audio decoder plugin";
-}
-
-static void dispose_class (audio_decoder_class_t *this) {
-  free (this);
-}
-
 void *decoder_wavpack_init_plugin (xine_t *xine, void *data) {
     wavpack_class_t *this;
   
     this = (wavpack_class_t *) xine_xmalloc (sizeof (wavpack_class_t));
 
     this->decoder_class.open_plugin     = open_plugin;
-    this->decoder_class.get_identifier  = get_identifier;
-    this->decoder_class.get_description = get_description;
-    this->decoder_class.dispose         = dispose_class;
+    this->decoder_class.identifier      = "wavpackdec";
+    this->decoder_class.description     = N_("wavpack audio decoder plugin");
+    this->decoder_class.dispose         = default_audio_decoder_class_dispose;
 
     return this;
 }

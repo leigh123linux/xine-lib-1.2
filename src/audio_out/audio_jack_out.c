@@ -14,7 +14,7 @@
 
 #include <jack/jack.h>
 
-#define AO_OUT_JACK_IFACE_VERSION 8
+#define AO_OUT_JACK_IFACE_VERSION 9
 
 #define GAP_TOLERANCE        AO_MAX_GAP
 #define BUFSIZE              81920
@@ -397,21 +397,6 @@ static ao_driver_t *open_jack_plugin (audio_driver_class_t *class_gen,
 /*
  * class functions
  */
-
-static char* get_identifier (audio_driver_class_t *this_gen) {
-    return "jack";
-}
-
-static char* get_description (audio_driver_class_t *this_gen) {
-    return _("xine output plugin for JACK Audio Connection Kit");
-}
-
-static void dispose_class (audio_driver_class_t *this_gen) {
-
-    jack_class_t *this = (jack_class_t *) this_gen;
-    free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
 
     jack_class_t        *this;
@@ -419,9 +404,9 @@ static void *init_class (xine_t *xine, void *data) {
     this = (jack_class_t *) xine_xmalloc (sizeof (jack_class_t));
 
     this->driver_class.open_plugin     = open_jack_plugin;
-    this->driver_class.get_identifier  = get_identifier;
-    this->driver_class.get_description = get_description;
-    this->driver_class.dispose         = dispose_class;
+    this->driver_class.identifier      = "jack";
+    this->driver_class.description     = N_("xine output plugin for JACK Audio Connection Kit");
+    this->driver_class.dispose         = default_audio_driver_class_dispose;
 
     this->config = xine->config;
     this->xine   = xine;

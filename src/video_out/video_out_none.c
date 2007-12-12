@@ -269,29 +269,15 @@ static vo_driver_t *open_plugin(video_driver_class_t *driver_class, const void *
 /*
  * Class related functions.
  */
-static char* get_identifier (video_driver_class_t *driver_class) {
-  return "None";
-}
-
-static char* get_description (video_driver_class_t *driver_class) {
-  return _("xine video output plugin which displays nothing");
-}
-
-static void dispose_class (video_driver_class_t *driver_class) {
-  none_class_t    *this = (none_class_t *) driver_class;
-  
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *visual) {
   none_class_t        *this;
   
   this = (none_class_t *) xine_xmalloc(sizeof(none_class_t));
 
   this->driver_class.open_plugin     = open_plugin;
-  this->driver_class.get_identifier  = get_identifier;
-  this->driver_class.get_description = get_description;
-  this->driver_class.dispose         = dispose_class;
+  this->driver_class.identifier      = "none";
+  this->driver_class.description     = N_("xine video output plugin which displays nothing");
+  this->driver_class.dispose         = default_video_driver_class_dispose;
 
   this->config                       = xine->config;
   this->xine                         = xine;
@@ -306,6 +292,6 @@ static const vo_info_t vo_info_none = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_VIDEO_OUT, 21, "none", XINE_VERSION_CODE, &vo_info_none, init_class },
+  { PLUGIN_VIDEO_OUT, 22, "none", XINE_VERSION_CODE, &vo_info_none, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

@@ -377,18 +377,6 @@ static audio_decoder_t *dvaudio_open_plugin (audio_decoder_class_t *class_gen, x
   return &this->audio_decoder;
 }
 
-static char *dvaudio_get_identifier (audio_decoder_class_t *this) {
-  return "dv audio";
-}
-
-static char *dvaudio_get_description (audio_decoder_class_t *this) {
-  return "dv audio decoder plugin";
-}
-
-static void dvaudio_dispose_class (audio_decoder_class_t *this) {
-  free (this);
-}
-
 static void *init_dvaudio_plugin (xine_t *xine, void *data) {
 
   dvaudio_class_t *this ;
@@ -396,9 +384,9 @@ static void *init_dvaudio_plugin (xine_t *xine, void *data) {
   this = (dvaudio_class_t *) xine_xmalloc (sizeof (dvaudio_class_t));
 
   this->decoder_class.open_plugin     = dvaudio_open_plugin;
-  this->decoder_class.get_identifier  = dvaudio_get_identifier;
-  this->decoder_class.get_description = dvaudio_get_description;
-  this->decoder_class.dispose         = dvaudio_dispose_class;
+  this->decoder_class.identifier      = "dv audio";
+  this->decoder_class.description     = N_("dv audio decoder plugin");
+  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
 
   return this;
 }
@@ -419,6 +407,6 @@ static const decoder_info_t dec_info_dvaudio = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_AUDIO_DECODER, 15, "dvaudio", XINE_VERSION_CODE, &dec_info_dvaudio, init_dvaudio_plugin },
+  { PLUGIN_AUDIO_DECODER, 16, "dvaudio", XINE_VERSION_CODE, &dec_info_dvaudio, init_dvaudio_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

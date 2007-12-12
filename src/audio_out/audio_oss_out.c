@@ -93,7 +93,7 @@
 #       define AFMT_AC3         0x00000400  
 #endif
 
-#define AO_OUT_OSS_IFACE_VERSION 8
+#define AO_OUT_OSS_IFACE_VERSION 9
 
 #define AUDIO_NUM_FRAGMENTS     15
 #define AUDIO_FRAGMENT_SIZE   8192
@@ -1145,22 +1145,6 @@ static void oss_speaker_arrangement_cb (void *user_data,
 /*
  * class functions
  */
-
-static char* get_identifier (audio_driver_class_t *this_gen) {
-  return "oss";
-}
-
-static char* get_description (audio_driver_class_t *this_gen) {
-  return _("xine audio output plugin using oss-compliant audio devices/drivers");
-}
-
-static void dispose_class (audio_driver_class_t *this_gen) {
-
-  oss_class_t *this = (oss_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
 
   oss_class_t        *this;
@@ -1170,9 +1154,9 @@ static void *init_class (xine_t *xine, void *data) {
     return NULL;
 
   this->driver_class.open_plugin     = open_plugin;
-  this->driver_class.get_identifier  = get_identifier;
-  this->driver_class.get_description = get_description;
-  this->driver_class.dispose         = dispose_class;
+  this->driver_class.identifier      = "oss";
+  this->driver_class.description     = N_("xine audio output plugin using oss-compliant audio devices/drivers");
+  this->driver_class.dispose         = default_audio_driver_class_dispose;
 
   this->config = xine->config;
   this->xine   = xine;

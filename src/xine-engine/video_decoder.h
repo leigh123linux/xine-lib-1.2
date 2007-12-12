@@ -31,7 +31,7 @@
 #  include <xine/buffer.h>
 #endif
 
-#define VIDEO_DECODER_IFACE_VERSION 18
+#define VIDEO_DECODER_IFACE_VERSION 19
 
 
 /*
@@ -47,24 +47,31 @@ struct video_decoder_class_s {
    * open a new instance of this plugin class
    */
   video_decoder_t* (*open_plugin) (video_decoder_class_t *this, xine_stream_t *stream);
+
+  /**
+   * @brief short human readable identifier for this plugin class
+   */
+  const char *identifier;
+
+  /**
+   * @brief human readable (verbose = 1 line) description for this plugin class
+   *
+   * The description is passed to gettext() to internationalise.
+   */
+  const char *description;
+
+  /**
+   * @brief Optional non-standard catalog to use with dgettext() for description.
+   */
+  const char *textdomain;
   
-  /*
-   * return short, human readable identifier for this plugin class
-   */
-  char* (*get_identifier) (video_decoder_class_t *this);
-
-  /*
-   * return human readable (verbose = 1 line) description for 
-   * this plugin class
-   */
-  char* (*get_description) (video_decoder_class_t *this);
-
   /*
    * free all class-related resources
    */
   void (*dispose) (video_decoder_class_t *this);
 };
 
+#define default_video_decoder_class_dispose (void (*) (video_decoder_class_t *this))free
 
 struct video_decoder_s {
 

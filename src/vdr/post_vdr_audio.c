@@ -58,9 +58,6 @@ static void vdr_audio_select_audio(vdr_audio_post_plugin_t *this, uint8_t channe
 static post_plugin_t *vdr_audio_open_plugin(post_class_t *class_gen, int inputs,
                                             xine_audio_port_t **audio_target,
                                             xine_video_port_t **video_target);
-static char          *vdr_audio_get_identifier(post_class_t *class_gen);
-static char          *vdr_audio_get_description(post_class_t *class_gen);
-static void           vdr_audio_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
 static void           vdr_audio_dispose(post_plugin_t *this_gen);
@@ -80,9 +77,9 @@ void *vdr_audio_init_plugin(xine_t *xine, void *data)
     return NULL;
   
   class->open_plugin     = vdr_audio_open_plugin;
-  class->get_identifier  = vdr_audio_get_identifier;
-  class->get_description = vdr_audio_get_description;
-  class->dispose         = vdr_audio_class_dispose;
+  class->identifier      = "vdr_audio";
+  class->description     = N_("modifies every audio frame as requested by VDR");
+  class->dispose         = default_post_class_dispose;
   
   return class;
 }
@@ -119,22 +116,6 @@ fprintf(stderr, "~~~~~~~~~~ vdr open plugin\n");
   
   return &this->post_plugin;
 }
-
-static char *vdr_audio_get_identifier(post_class_t *class_gen)
-{
-  return "vdr_audio";
-}
-
-static char *vdr_audio_get_description(post_class_t *class_gen)
-{
-  return "modifies every audio frame as requested by VDR";
-}
-
-static void vdr_audio_class_dispose(post_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 
 static void vdr_audio_dispose(post_plugin_t *this_gen)
 {

@@ -321,19 +321,6 @@ static spu_decoder_t *spudec_open_plugin (spu_decoder_class_t *class, xine_strea
   return &this->spu_decoder;
 }
 
-static char *spudec_get_identifier(spu_decoder_class_t *class) {
-  return "spucc";
-}
-
-static char *spudec_get_description(spu_decoder_class_t *class) {
-  return "closed caption decoder plugin";
-}
-
-static void spudec_class_dispose(spu_decoder_class_t *class) {
-  free(class);
-}
-
-
 static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
 
   spucc_class_t *this ;
@@ -341,9 +328,9 @@ static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
   this = (spucc_class_t *) xine_xmalloc (sizeof (spucc_class_t));
 
   this->spu_class.open_plugin      = spudec_open_plugin;
-  this->spu_class.get_identifier   = spudec_get_identifier;
-  this->spu_class.get_description  = spudec_get_description;
-  this->spu_class.dispose          = spudec_class_dispose;
+  this->spu_class.identifier       = "spucc";
+  this->spu_class.description      = N_("closed caption decoder plugin");
+  this->spu_class.dispose          = default_spu_decoder_class_dispose;
 
   spucc_register_cfg_vars(this, xine->config);
   this->cc_cfg.config_version = 0;
@@ -361,6 +348,6 @@ static const decoder_info_t spudec_info = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_SPU_DECODER, 16, "spucc", XINE_VERSION_CODE, &spudec_info, &init_spu_decoder_plugin },
+  { PLUGIN_SPU_DECODER, 17, "spucc", XINE_VERSION_CODE, &spudec_info, &init_spu_decoder_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

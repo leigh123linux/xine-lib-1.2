@@ -291,7 +291,7 @@ struct xine_video_port_s {
  * from generic vo functions.
  */
 
-#define VIDEO_OUT_DRIVER_IFACE_VERSION  21
+#define VIDEO_OUT_DRIVER_IFACE_VERSION  22
 
 struct vo_driver_s {
 
@@ -369,23 +369,30 @@ struct video_driver_class_s {
    */
   vo_driver_t* (*open_plugin) (video_driver_class_t *self, const void *visual);
   
-  /*
-   * return short, human readable identifier for this plugin class
+  /**
+   * @brief short human readable identifier for this plugin class
    */
-  char* (*get_identifier) (video_driver_class_t *self);
+  const char *identifier;
 
-  /*
-   * return human readable (verbose = 1 line) description for 
-   * this plugin class
+  /**
+   * @brief human readable (verbose = 1 line) description for this plugin class
+   *
+   * The description is passed to gettext() to internationalise.
    */
-  char* (*get_description) (video_driver_class_t *self);
+  const char *description;
 
+  /**
+   * @brief Optional non-standard catalog to use with dgettext() for description.
+   */
+  const char *textdomain;
+  
   /*
    * free all class-related resources
    */
   void (*dispose) (video_driver_class_t *self);
 };
 
+#define default_video_driver_class_dispose (void (*) (video_driver_class_t *this))free
 
 typedef struct rle_elem_s {
   uint16_t len;

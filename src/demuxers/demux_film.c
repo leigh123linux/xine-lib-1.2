@@ -868,19 +868,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   switch (stream->content_detection_method) {
 
-  case METHOD_BY_EXTENSION: {
-    const char *extensions, *mrl;
-
-    mrl = input->get_mrl (input);
-    extensions = class_gen->get_extensions (class_gen);
-
-    if (!_x_demux_check_extension (mrl, extensions)) {
-      free (this);
-      return NULL;
-    }
-  }
-  /* falling through is intended */
-
+  case METHOD_BY_MRL:
   case METHOD_BY_CONTENT:
   case METHOD_EXPLICIT:
 
@@ -899,39 +887,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static const char *get_description (demux_class_t *this_gen) {
-  return "FILM (CPK) demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "FILM (CPK)";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "cpk cak film";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return NULL;
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-  demux_film_class_t *this = (demux_film_class_t *) this_gen;
-
-  free (this);
-}
-
 void *demux_film_init_plugin (xine_t *xine, void *data) {
   demux_film_class_t     *this;
 
   this = xine_xmalloc (sizeof (demux_film_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("FILM (CPK) demux plugin");
+  this->demux_class.identifier      = "FILM (CPK)";
+  this->demux_class.mimetypes       = NULL;
+  this->demux_class.extensions      = "cpk cak film";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }

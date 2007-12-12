@@ -3076,24 +3076,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   break;
 
-  case METHOD_BY_EXTENSION: {
-    const char *const mrl = input->get_mrl (input);
-    const char *const ending = strrchr(mrl, '.');
-
-    if (!ending) {
-      free (this);
-      return NULL;
-    }
-
-    if (strncasecmp (ending, ".mov", 4) &&
-        strncasecmp (ending, ".qt", 3) &&
-        strncasecmp (ending, ".mp4", 4)) {
-      free (this);
-      return NULL;
-    }
-  }
-
-  /* we want to fall through here */
+  case METHOD_BY_MRL:
   case METHOD_EXPLICIT: {
 
     if (!is_qt_file(this->input)) {
@@ -3122,32 +3105,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static const char *get_description (demux_class_t *this_gen) {
-  return "Apple Quicktime (MOV) and MPEG-4 demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "MOV/MPEG-4";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "mov qt mp4 m4a m4b";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return "video/quicktime: mov,qt: Quicktime animation;"
-         "video/x-quicktime: mov,qt: Quicktime animation;"
-         "audio/x-m4a: m4a,m4b: MPEG-4 audio;"
-         "application/x-quicktimeplayer: qtl: Quicktime list;";
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-
-  demux_qt_class_t *this = (demux_qt_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_plugin (xine_t *xine, void *data) {
 
   demux_qt_class_t     *this;
@@ -3157,11 +3114,15 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->xine   = xine;
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("Apple Quicktime (MOV) and MPEG-4 demux plugin");
+  this->demux_class.identifier      = "MOV/MPEG-4";
+  this->demux_class.mimetypes       =
+    "video/quicktime: mov,qt: Quicktime animation;"
+    "video/x-quicktime: mov,qt: Quicktime animation;"
+    "audio/x-m4a: m4a,m4b: MPEG-4 audio;"
+    "application/x-quicktimeplayer: qtl: Quicktime list;";
+  this->demux_class.extensions      = "mov qt mp4 m4a m4b";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }
@@ -3175,6 +3136,6 @@ static const demuxer_info_t demux_info_qt = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_DEMUX, 26, "quicktime", XINE_VERSION_CODE, &demux_info_qt, init_plugin },
+  { PLUGIN_DEMUX, 27, "quicktime", XINE_VERSION_CODE, &demux_info_qt, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

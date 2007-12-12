@@ -54,23 +54,31 @@ struct post_class_s {
 				 xine_audio_port_t **audio_target,
 				 xine_video_port_t **video_target);
   
-  /*
-   * return short, human readable identifier for this plugin class
+  /**
+   * @brief short human readable identifier for this plugin class
    */
-  char* (*get_identifier) (post_class_t *this);
+  const char *identifier;
 
-  /*
-   * return human readable (verbose = 1 line) description for 
-   * this plugin class
+  /**
+   * @brief human readable (verbose = 1 line) description for this plugin class
+   *
+   * The description is passed to gettext() to internationalise.
    */
-  char* (*get_description) (post_class_t *this);
+  const char *description;
 
+  /**
+   * @brief Optional non-standard catalog to use with dgettext() for description.
+   */
+  const char *textdomain;
+  
   /*
    * free all class-related resources
    */
 
   void (*dispose) (post_class_t *this);
 };
+
+#define default_post_class_dispose (void (*) (post_class_t *this))free
 
 struct post_plugin_s {
 

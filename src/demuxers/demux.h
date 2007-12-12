@@ -31,7 +31,7 @@
 #  include <xine/xine_internal.h>
 #endif
 
-#define DEMUXER_PLUGIN_IFACE_VERSION    26
+#define DEMUXER_PLUGIN_IFACE_VERSION    27
 
 #define DEMUX_OK                   0
 #define DEMUX_FINISHED             1
@@ -40,7 +40,7 @@
 #define DEMUX_CAN_HANDLE           1
 
 #define METHOD_BY_CONTENT          1
-#define METHOD_BY_EXTENSION        2
+#define METHOD_BY_MRL              2
 #define METHOD_EXPLICIT            3
 
 typedef struct demux_class_s demux_class_t ;
@@ -53,31 +53,36 @@ struct demux_class_s {
    */
   demux_plugin_t* (*open_plugin) (demux_class_t *this, xine_stream_t *stream, input_plugin_t *input);
 
-  /*
-   * return human readable (verbose = 1 line) description for this plugin
+  /**
+   * @brief short human readable identifier for this plugin class
    */
-  const char* (*get_description) (demux_class_t *this);
+  const char *identifier;
 
-  /*
-   * return human readable identifier for this plugin
+  /**
+   * @brief human readable (verbose = 1 line) description for this plugin class
+   *
+   * The description is passed to gettext() to internationalise.
    */
-
-  const char* (*get_identifier) (demux_class_t *this);
+  const char *description;
   
-  /*
-   * return MIME types supported for this plugin
+  /**
+   * @brief Optional non-standard catalog to use with dgettext() for description.
+   */
+  const char *textdomain;
+  
+  /**
+   * @brief MIME types supported for this plugin
    */
 
-  const char* (*get_mimetypes) (demux_class_t *this);
+  const char* mimetypes;
 
-  /*
-   * return ' ' seperated list of file extensions this
-   * demuxer is likely to handle
-   * (will be used to filter media files in 
-   * file selection dialogs)
+  /**
+   * @brief space separated list of file extensions this demuxer is
+   * likely to handle
+   *
+   * (will be used to filter media files in file selection dialogs)
    */
-
-  const char* (*get_extensions) (demux_class_t *this);
+  const char* extensions;
 
   /*
    * close down, free all resources
@@ -85,6 +90,7 @@ struct demux_class_s {
   void (*dispose) (demux_class_t *this);
 };
 
+#define default_demux_class_dispose (void (*) (demux_class_t *this))free
 
 /*
  * any demux plugin must implement these functions
@@ -172,6 +178,8 @@ struct demux_plugin_s {
   void *node; /* used by plugin loader */
 
 } ;
+
+#define default_demux_plugin_dispose (void (*) (demux_plugin_t *this))free
 
 /*
  * possible capabilites a demux plugin can have:

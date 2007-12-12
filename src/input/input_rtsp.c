@@ -279,21 +279,6 @@ static input_plugin_t *rtsp_class_get_instance (input_class_t *cls_gen, xine_str
 /*
  * rtsp input plugin class stuff
  */
-
-static const char *rtsp_class_get_description (input_class_t *this_gen) {
-  return _("rtsp streaming input plugin");
-}
-
-static const char *rtsp_class_get_identifier (input_class_t *this_gen) {
-  return "rtsp";
-}
-
-static void rtsp_class_dispose (input_class_t *this_gen) {
-  rtsp_input_class_t  *this = (rtsp_input_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
 
   rtsp_input_class_t  *this;
@@ -303,11 +288,11 @@ static void *init_class (xine_t *xine, void *data) {
   this->xine   = xine;
 
   this->input_class.get_instance       = rtsp_class_get_instance;
-  this->input_class.get_identifier     = rtsp_class_get_identifier;
-  this->input_class.get_description    = rtsp_class_get_description;
+  this->input_class.identifier         = "rtsp";
+  this->input_class.description        = N_("rtsp streaming input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
-  this->input_class.dispose            = rtsp_class_dispose;
+  this->input_class.dispose            = default_input_class_dispose;
   this->input_class.eject_media        = NULL;
 
   return this;
@@ -319,7 +304,7 @@ static void *init_class (xine_t *xine, void *data) {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_INPUT, 17, "rtsp", XINE_VERSION_CODE, NULL, init_class },
+  { PLUGIN_INPUT, 18, "rtsp", XINE_VERSION_CODE, NULL, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 

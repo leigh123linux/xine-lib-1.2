@@ -770,21 +770,6 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
   return &this->audio_decoder;
 }
 
-static char *get_identifier (audio_decoder_class_t *this) {
-  lprintf ("get_identifier called\n");
-  return "a/52dec";
-}
-
-static char *get_description (audio_decoder_class_t *this) {
-  lprintf ("get_description called\n");
-  return "liba52 based a52 audio decoder plugin";
-}
-
-static void dispose_class (audio_decoder_class_t *this) {
-  lprintf ("dispose_class called\n");
-  free (this);
-}
-
 static void *init_plugin (xine_t *xine, void *data) {
 
   a52dec_class_t *this;
@@ -793,9 +778,9 @@ static void *init_plugin (xine_t *xine, void *data) {
   this = (a52dec_class_t *) xine_xmalloc (sizeof (a52dec_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.get_identifier  = get_identifier;
-  this->decoder_class.get_description = get_description;
-  this->decoder_class.dispose         = dispose_class;
+  this->decoder_class.identifier      = "a/52dec";
+  this->decoder_class.description     = N_("liba52 based a52 audio decoder plugin");
+  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
 
   cfg = this->config = xine->config;
 
@@ -860,6 +845,6 @@ static const decoder_info_t dec_info_audio = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_AUDIO_DECODER | PLUGIN_MUST_PRELOAD, 15, "a/52", XINE_VERSION_CODE, &dec_info_audio, init_plugin },
+  { PLUGIN_AUDIO_DECODER | PLUGIN_MUST_PRELOAD, 16, "a/52", XINE_VERSION_CODE, &dec_info_audio, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

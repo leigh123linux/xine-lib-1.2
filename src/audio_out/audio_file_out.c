@@ -36,7 +36,7 @@
 #include "audio_out.h"
 #include "bswap.h"
 
-#define AO_OUT_FILE_IFACE_VERSION 8
+#define AO_OUT_FILE_IFACE_VERSION 9
 
 #define GAP_TOLERANCE        INT_MAX
 
@@ -353,22 +353,6 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
 /*
  * class functions
  */
-
-static char* get_identifier (audio_driver_class_t *this_gen) {
-	return "file";
-}
-
-static char* get_description (audio_driver_class_t *this_gen) {
-	return _("xine file audio output plugin");
-}
-
-static void dispose_class (audio_driver_class_t *this_gen) {
-
-	file_class_t *this = (file_class_t *) this_gen;
-
-	free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
 
 	file_class_t        *this;
@@ -380,9 +364,9 @@ static void *init_class (xine_t *xine, void *data) {
 		return NULL;
 
 	this->driver_class.open_plugin     = open_plugin;
-	this->driver_class.get_identifier  = get_identifier;
-	this->driver_class.get_description = get_description;
-	this->driver_class.dispose         = dispose_class;
+	this->driver_class.identifier      = "file";
+	this->driver_class.description     = N_("xine file audio output plugin");
+	this->driver_class.dispose         = default_audio_driver_class_dispose;
 
 	this->config = xine->config;
 	this->xine   = xine;

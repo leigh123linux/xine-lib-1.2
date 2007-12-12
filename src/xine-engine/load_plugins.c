@@ -1298,6 +1298,12 @@ static demux_plugin_t *probe_demux (xine_stream_t *stream, int method1, int meth
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "load_plugins: probing demux '%s'\n", node->info->id);
 
       if (node->plugin_class || _load_plugin_class(stream->xine, node, NULL)) {
+	if ( stream->content_detection_method == METHOD_BY_MRL && 
+	     ! _x_demux_check_extension(input->get_mrl(input),
+					 ((demux_class_t *)node->plugin_class)->extensions)
+	     )
+	  continue;
+
         if ((plugin = ((demux_class_t *)node->plugin_class)->open_plugin(node->plugin_class, stream, input))) {
 	  inc_node_ref(node);
 	  plugin->node = node;
@@ -1319,16 +1325,16 @@ demux_plugin_t *_x_find_demux_plugin (xine_stream_t *stream, input_plugin_t *inp
   switch (stream->xine->demux_strategy) {
 
   case XINE_DEMUX_DEFAULT_STRATEGY:
-    return probe_demux (stream, METHOD_BY_CONTENT, METHOD_BY_EXTENSION, input);
+    return probe_demux (stream, METHOD_BY_CONTENT, METHOD_BY_MRL, input);
 
   case XINE_DEMUX_REVERT_STRATEGY:
-    return probe_demux (stream, METHOD_BY_EXTENSION, METHOD_BY_CONTENT, input);
+    return probe_demux (stream, METHOD_BY_MRL, METHOD_BY_CONTENT, input);
 
   case XINE_DEMUX_CONTENT_STRATEGY:
     return probe_demux (stream, METHOD_BY_CONTENT, -1, input);
 
   case XINE_DEMUX_EXTENSION_STRATEGY:
-    return probe_demux (stream, METHOD_BY_EXTENSION, -1, input);
+    return probe_demux (stream, METHOD_BY_MRL, -1, input);
 
   default:
     xprintf (stream->xine, XINE_VERBOSITY_LOG,
@@ -1357,6 +1363,13 @@ demux_plugin_t *_x_find_demux_plugin_by_name(xine_stream_t *stream, const char *
 
     if (strcasecmp(node->info->id, name) == 0) {
       if (node->plugin_class || _load_plugin_class(stream->xine, node, NULL)) {
+
+	if ( stream->content_detection_method == METHOD_BY_MRL && 
+	     ! _x_demux_check_extension(input->get_mrl(input),
+					 ((demux_class_t *)node->plugin_class)->extensions)
+	     )
+	  continue;
+
         if ((plugin = ((demux_class_t *)node->plugin_class)->open_plugin(node->plugin_class, stream, input))) {
 	  inc_node_ref(node);
 	  plugin->node = node;
@@ -1389,7 +1402,7 @@ demux_plugin_t *_x_find_demux_plugin_last_probe(xine_stream_t *stream, const cha
   demux_plugin_t   *plugin = NULL;
 
   methods[0] = METHOD_BY_CONTENT;
-  methods[1] = METHOD_BY_EXTENSION;
+  methods[1] = METHOD_BY_MRL;
   methods[2] = -1;
 
   i = 0;
@@ -1414,6 +1427,14 @@ demux_plugin_t *_x_find_demux_plugin_last_probe(xine_stream_t *stream, const cha
 	xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
 		"load_plugin: probing '%s' (method %d)...\n", node->info->id, stream->content_detection_method );
 	if (node->plugin_class || _load_plugin_class(xine, node, NULL)) {
+
+	  if ( stream->content_detection_method == METHOD_BY_MRL && 
+	       ! _x_demux_check_extension(input->get_mrl(input),
+					   ((demux_class_t *)node->plugin_class)->extensions)
+	       )
+	    continue;
+
+	
           if ((plugin = ((demux_class_t *)node->plugin_class)->open_plugin(node->plugin_class, stream, input))) {
 	    xprintf (stream->xine, XINE_VERBOSITY_DEBUG,
 		     "load_plugins: using demuxer '%s' (instead of '%s')\n", node->info->id, last_demux_name);
@@ -2299,7 +2320,7 @@ const char *const *xine_list_post_plugins_typed(xine_t *xine, uint32_t type) {
 	  else										   \
 	    return NULL;								   \
 	}										   \
-	return ic->get_description(ic);							   \
+	return dgettext(ic->textdomain ? : XINE_TEXTDOMAIN, ic->description);		   \
       }											   \
     }											   \
     return NULL;									   \
@@ -2429,6 +2450,7 @@ char *xine_get_file_extensions (xine_t *self) {
   plugin_node_t    *node;
   char             *str;
   int               list_id, list_size;
+  const char       *exts;
 
   pthread_mutex_lock (&catalog->lock);
 
@@ -2438,14 +2460,13 @@ char *xine_get_file_extensions (xine_t *self) {
   list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
   for (list_id = 0; list_id < list_size; list_id++) {
     demux_class_t *cls;
-    const char    *exts;
 
     node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
     if (node->plugin_class || _load_plugin_class(self, node, NULL)) {
 
       cls = (demux_class_t *)node->plugin_class;
 
-      if((exts = cls->get_extensions(cls)) && *exts)
+      if( (exts = cls->extensions) && *exts )
 	len += strlen(exts) + 1;
     }
   }
@@ -2457,7 +2478,6 @@ char *xine_get_file_extensions (xine_t *self) {
   list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
   for (list_id = 0; list_id < list_size; list_id++) {
     demux_class_t *cls;
-    const char    *e;
     int            l;
     
     node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
@@ -2465,9 +2485,9 @@ char *xine_get_file_extensions (xine_t *self) {
 
       cls = (demux_class_t *)node->plugin_class;
 
-      if((e = cls->get_extensions (cls)) && *e) {
-	l = strlen(e);
-	memcpy (&str[pos], e, l);
+      if((exts = cls->extensions) && *exts) {
+	l = strlen(exts);
+	memcpy (&str[pos], exts, l);
       
 	pos += l;
 
@@ -2507,16 +2527,14 @@ char *xine_get_mime_types (xine_t *self) {
 
   for (list_id = 0; list_id < list_size; list_id++) {
     demux_class_t *cls;
-    const char *s;
 
     node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
     if (node->plugin_class || _load_plugin_class(self, node, NULL)) {
 
       cls = (demux_class_t *)node->plugin_class;
 
-      s = cls->get_mimetypes (cls);
-      if (s)
-	len += strlen(s);
+      if ( cls->mimetypes );
+	len += strlen(cls->mimetypes);
     }
   }
 
@@ -2529,18 +2547,15 @@ char *xine_get_mime_types (xine_t *self) {
 
   for (list_id = 0; list_id < list_size; list_id++) {
     demux_class_t *cls;
-    const char *s;
-    int l;
 
     node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
     if (node->plugin_class || _load_plugin_class(self, node, NULL)) {
 
       cls = (demux_class_t *)node->plugin_class;
 
-      s = cls->get_mimetypes (cls);
-      if (s) {
-	l = strlen(s);
-	memcpy (&str[pos], s, l);
+      if (cls->mimetypes) {
+	const size_t l = strlen(cls->mimetypes);
+	memcpy (&str[pos], cls->mimetypes, l);
 
 	pos += l;
       }
@@ -2566,7 +2581,6 @@ char *xine_get_demux_for_mime_type (xine_t *self, const char *mime_type) {
   char             *id = NULL;
   char             *mime_arg, *mime_demux;
   char             *s;
-  const char       *mt;
   int               list_id, list_size;
 
   /* create a copy and convert to lower case */  
@@ -2586,9 +2600,8 @@ char *xine_get_demux_for_mime_type (xine_t *self, const char *mime_type) {
 
       cls = (demux_class_t *)node->plugin_class;
 
-      mt = cls->get_mimetypes (cls);
-      if (mt) {
-	mime_demux = strdup(mt);
+      if (cls->mimetypes) {
+	mime_demux = strdup(cls->mimetypes);
       
 	for(s=mime_demux; *s; s++)
 	  *s = tolower(*s);

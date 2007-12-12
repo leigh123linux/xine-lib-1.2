@@ -31,7 +31,7 @@
 #  include <xine/buffer.h>
 #endif
 
-#define AUDIO_DECODER_IFACE_VERSION 15
+#define AUDIO_DECODER_IFACE_VERSION 16
 
 /*
  * generic xine audio decoder plugin interface
@@ -47,17 +47,23 @@ struct audio_decoder_class_s {
    */
   audio_decoder_t* (*open_plugin) (audio_decoder_class_t *this, xine_stream_t *stream);
   
-  /*
-   * return short, human readable identifier for this plugin class
+  /**
+   * @brief short human readable identifier for this plugin class
    */
-  char* (*get_identifier) (audio_decoder_class_t *this);
+  const char *identifier;
 
-  /*
-   * return human readable (verbose = 1 line) description for 
-   * this plugin class
+  /**
+   * @brief human readable (verbose = 1 line) description for this plugin class
+   *
+   * The description is passed to gettext() to internationalise.
    */
-  char* (*get_description) (audio_decoder_class_t *this);
+  const char *description;
 
+  /**
+   * @brief Optional non-standard catalog to use with dgettext() for description.
+   */
+  const char *textdomain;
+  
   /*
    * free all class-related resources
    */
@@ -65,6 +71,7 @@ struct audio_decoder_class_s {
   void (*dispose) (audio_decoder_class_t *this);
 };
 
+#define default_audio_decoder_class_dispose (void (*) (audio_decoder_class_t *this))free
 
 struct audio_decoder_s {
 

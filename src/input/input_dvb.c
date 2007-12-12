@@ -3147,15 +3147,6 @@ static input_plugin_t *dvb_class_get_instance (input_class_t *class_gen,
  * dvb input plugin class stuff
  */
 
-static const char *dvb_class_get_description (input_class_t *this_gen) {
-  return _("DVB (Digital TV) input plugin");
-}
-
-static const char *dvb_class_get_identifier (input_class_t *this_gen) {
-  return "dvb";
-}
-
-
 static void dvb_class_dispose(input_class_t * this_gen)
 {
     dvb_input_class_t *class = (dvb_input_class_t *) this_gen;
@@ -3258,8 +3249,8 @@ static void *init_class (xine_t *xine, void *data) {
   this->xine   = xine;
 
   this->input_class.get_instance       = dvb_class_get_instance;
-  this->input_class.get_identifier     = dvb_class_get_identifier;
-  this->input_class.get_description    = dvb_class_get_description;
+  this->input_class.identifier         = "dvb";
+  this->input_class.description        = N_("DVB (Digital TV) input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = dvb_class_get_autoplay_list;
   this->input_class.dispose            = dvb_class_dispose;
@@ -3322,6 +3313,6 @@ static void *init_class (xine_t *xine, void *data) {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 17, "DVB", XINE_VERSION_CODE, NULL, init_class },
+  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "DVB", XINE_VERSION_CODE, NULL, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

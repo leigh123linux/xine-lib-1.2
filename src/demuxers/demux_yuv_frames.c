@@ -164,12 +164,6 @@ static int demux_yuv_frames_get_optional_data(demux_plugin_t *this_gen,
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
-static void demux_yuv_frames_dispose (demux_plugin_t *this_gen) {
-  demux_yuv_frames_t *this = (demux_yuv_frames_t *) this_gen;
-
-  free (this);
-}
-
 static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 				    xine_stream_t *stream,
 				    input_plugin_t *input) {
@@ -182,7 +176,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
     return NULL;
     break;
 
-  case METHOD_BY_EXTENSION: {
+  case METHOD_BY_MRL: {
     const char *const mrl = input->get_mrl (input);
 
     if (strncmp (mrl, "v4l:/", 5))
@@ -210,7 +204,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   this->demux_plugin.send_headers      = demux_yuv_frames_send_headers;
   this->demux_plugin.send_chunk        = demux_yuv_frames_send_chunk;
   this->demux_plugin.seek              = demux_yuv_frames_seek;
-  this->demux_plugin.dispose           = demux_yuv_frames_dispose;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
   this->demux_plugin.get_status        = demux_yuv_frames_get_status;
   this->demux_plugin.get_stream_length = demux_yuv_frames_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_yuv_frames_get_capabilities;
@@ -227,40 +221,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 /*
  * demuxer class
  */
-
-static const char *get_description (demux_class_t *this_gen) {
-  return "YUV frames dummy demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "YUV_FRAMES";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return NULL;
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return NULL;
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-  demux_yuv_frames_class_t *this = (demux_yuv_frames_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
   demux_yuv_frames_class_t     *this;
 
   this = xine_xmalloc (sizeof (demux_yuv_frames_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("YUV frames dummy demux plugin");
+  this->demux_class.identifier      = "YUV_FRAMES";
+  this->demux_class.mimetypes       = NULL;
+  this->demux_class.extensions      = NULL;
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }
@@ -274,7 +245,7 @@ static const demuxer_info_t demux_info_yuv_frames = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_DEMUX, 26, "yuv_frames", XINE_VERSION_CODE, &demux_info_yuv_frames, init_class },
+  { PLUGIN_DEMUX, 27, "yuv_frames", XINE_VERSION_CODE, &demux_info_yuv_frames, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 

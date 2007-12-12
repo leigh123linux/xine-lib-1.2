@@ -32,7 +32,7 @@
 #  include <xine/buffer.h>
 #endif
 
-#define SPU_DECODER_IFACE_VERSION 16
+#define SPU_DECODER_IFACE_VERSION 17
 
 /*
  * generic xine spu decoder plugin interface
@@ -48,23 +48,30 @@ struct spu_decoder_class_s {
    */
   spu_decoder_t* (*open_plugin) (spu_decoder_class_t *this, xine_stream_t *stream);
   
-  /*
-   * return short, human readable identifier for this plugin class
+  /**
+   * @brief short human readable identifier for this plugin class
    */
-  char* (*get_identifier) (spu_decoder_class_t *this);
+  const char *identifier;
 
-  /*
-   * return human readable (verbose = 1 line) description for 
-   * this plugin class
+  /**
+   * @brief human readable (verbose = 1 line) description for this plugin class
+   *
+   * The description is passed to gettext() to internationalise.
    */
-  char* (*get_description) (spu_decoder_class_t *this);
+  const char *description;
+
+  /**
+   * @brief Optional non-standard catalog to use with dgettext() for description.
+   */
+  const char *textdomain;
   
   /*
    * free all class-related resources
    */
   void (*dispose) (spu_decoder_class_t *this);
 };
-  
+
+#define default_spu_decoder_class_dispose (void (*) (spu_decoder_class_t *this))free
  
 struct spu_decoder_s {
 
