@@ -31,6 +31,9 @@
 #include <string.h>
 #include <inttypes.h>
 
+/* libavutil from FFmpeg */
+#include <mem.h>
+
 #include "yuv2rgb.h"
 
 #define LOG_MODULE "yuv2rgb"
@@ -3182,7 +3185,7 @@ static yuv2rgb_t *yuv2rgb_create_converter (yuv2rgb_factory_t *factory) {
 static void yuv2rgb_factory_dispose (yuv2rgb_factory_t *this) {
 
   free (this->table_base);
-  free (this->table_mmx_base);
+  av_free(this->table_mmx);
   free (this);
 }
 
@@ -3203,7 +3206,6 @@ yuv2rgb_factory_t* yuv2rgb_factory_init (int mode, int swapped,
   this->matrix_coefficients = 6;
   this->table_base          = NULL;
   this->table_mmx           = NULL;
-  this->table_mmx_base      = NULL;
 
 
   yuv2rgb_set_csc_levels (this, 0, 128, 128);
