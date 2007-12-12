@@ -626,13 +626,6 @@ void *xine_xmalloc(size_t size) XINE_MALLOC XINE_PROTECTED;
 void *xine_xcalloc(size_t nmemb, size_t size) XINE_MALLOC XINE_PROTECTED;
 
 /*
- * Same as above, but memory is aligned to 'alignement'.
- * **base is used to return pointer to un-aligned memory, use
- * this to free the mem chunk
- */
-void *xine_xmalloc_aligned(size_t alignment, size_t size, void **base) XINE_PROTECTED;
-
-/*
  * Get user home directory.
  */
 const char *xine_get_homedir(void) XINE_PROTECTED;
