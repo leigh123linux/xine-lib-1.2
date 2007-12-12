@@ -2087,50 +2087,6 @@ void        xine_osd_set_palette   (xine_osd_t *self,
  */
 void        xine_osd_free          (xine_osd_t *self) XINE_PROTECTED;
 
-
-#ifndef XINE_DISABLE_DEPRECATED_FEATURES
-
-/*********************************************************************
- * TV-mode API, to make it possible to use nvtvd to view movies      *
- *********************************************************************/
-
-/* These functions are just dummies to maintain API compatibility.
- * You should use libnvtvsimple in your frontend instead. */
-
-typedef enum {
-	XINE_TVSYSTEM_PAL = 0,
-	XINE_TVSYSTEM_NTSC
-} xine_tvsystem;
-
-/* connect to nvtvd server and save current TV and X settings */
-int xine_tvmode_init (xine_t *self) XINE_PROTECTED;
-
-/* Turn tvmode on/off (1/0)*/
-int xine_tvmode_use(xine_t *self, int use_tvmode) XINE_PROTECTED;
-
-/* Set which tv system to use: XINE_TVSYSTEM_PAL or XINE_TVSYSTEM_NTSC */
-void xine_tvmode_set_tvsystem(xine_t *self, xine_tvsystem system) XINE_PROTECTED;
-
-/* try to change TV state if enabled
- *   type select 'regular' (0) or 'TV' (1) state
- *   width frame width the mode should match best or 0 if unknown
- *   height frame height the mode should match best or 0 if unknown
- *   fps frame rate the mode should match best or 0 if unknown
- * returns: finally selected state
- */
-int xine_tvmode_switch (xine_t *self, int type, int width, int height, double fps) XINE_PROTECTED;
-
-/* adapt (maximum) output size to visible area if necessary and return pixel
- * aspect and real frame rate if available
- */
-void xine_tvmode_size (xine_t *self, int *width, int *height,
-		       double *pixelratio, double *fps) XINE_PROTECTED;
-
-/* restore old TV and X settings and close nvtvd connection */
-void xine_tvmode_exit (xine_t *self) XINE_PROTECTED;
-
-#endif
-
 #ifdef __cplusplus
 }
 #endif
