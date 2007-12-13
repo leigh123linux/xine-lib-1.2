@@ -188,7 +188,7 @@ typedef struct {
 } time_to_sample_table_t;
 
 typedef struct {
-  unsigned char *url;
+  char *url;
   int64_t data_rate;
   int qtim_version;
 } reference_t;
