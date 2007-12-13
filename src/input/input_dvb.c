@@ -432,7 +432,7 @@ static const Param transmissionmode_list [] = {
 };
 
 
-time_t dvb_mjdtime (uint8_t *buf);
+static time_t dvb_mjdtime (uint8_t *buf);
 static void load_epg_data(dvb_input_plugin_t *this);
 static void show_eit(dvb_input_plugin_t *this);
 
@@ -491,7 +491,7 @@ static int find_descriptor(uint8_t tag, const unsigned char *buf, int descriptor
 
 /* Extract UTC time and date encoded in modified julian date format and return it as a time_t.
  */
-time_t dvb_mjdtime (uint8_t *buf)
+static time_t dvb_mjdtime (uint8_t *buf)
 {
   int i;
   unsigned int year, month, day, hour, min, sec;
