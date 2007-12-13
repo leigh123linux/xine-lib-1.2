@@ -30,11 +30,10 @@
 #include "bswap.h"
 
 /* id3v2 */
-#define FOURCC_TAG BE_FOURCC
-#define ID3V22_TAG        FOURCC_TAG('I', 'D', '3', 2) /* id3 v2.2 header tag */
-#define ID3V23_TAG        FOURCC_TAG('I', 'D', '3', 3) /* id3 v2.3 header tag */
-#define ID3V24_TAG        FOURCC_TAG('I', 'D', '3', 4) /* id3 v2.4 header tag */
-#define ID3V24_FOOTER_TAG FOURCC_TAG('3', 'D', 'I', 0) /* id3 v2.4 footer tag */
+#define ID3V22_TAG        BE_FOURCC('I', 'D', '3', 2) /* id3 v2.2 header tag */
+#define ID3V23_TAG        BE_FOURCC('I', 'D', '3', 3) /* id3 v2.3 header tag */
+#define ID3V24_TAG        BE_FOURCC('I', 'D', '3', 4) /* id3 v2.4 header tag */
+#define ID3V24_FOOTER_TAG BE_FOURCC('3', 'D', 'I', 0) /* id3 v2.4 footer tag */
 
 
 /*

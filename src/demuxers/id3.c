@@ -289,7 +289,7 @@ static int id3v22_interp_frame(input_plugin_t *input,
       enc = 0;
 
     switch (frame_header->id) {
-      case ( FOURCC_TAG(0, 'T', 'C', 'O') ):
+      case ( BE_FOURCC(0, 'T', 'C', 'O') ):
         {
           char tmp[1024];
           
@@ -299,27 +299,27 @@ static int id3v22_interp_frame(input_plugin_t *input,
         }
         break;
 
-      case ( FOURCC_TAG(0, 'T', 'T', '2') ):
+      case ( BE_FOURCC(0, 'T', 'T', '2') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_TITLE, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG(0, 'T', 'P', '1') ):
+      case ( BE_FOURCC(0, 'T', 'P', '1') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_ARTIST, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG(0, 'T', 'A', 'L') ):
+      case ( BE_FOURCC(0, 'T', 'A', 'L') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_ALBUM, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG(0, 'T', 'Y', 'E') ):
+      case ( BE_FOURCC(0, 'T', 'Y', 'E') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_YEAR, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG(0, 'C', 'O', 'M') ):
+      case ( BE_FOURCC(0, 'C', 'O', 'M') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_COMMENT, buf + 1 + 3, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG(0, 'T', 'R', 'K') ):
+      case ( BE_FOURCC(0, 'T', 'R', 'K') ):
         _x_meta_info_set(stream, XINE_META_INFO_TRACK_NUMBER, buf + 1);
         break;
 
@@ -483,7 +483,7 @@ static int id3v23_interp_frame(input_plugin_t *input,
       enc = 0;
 
     switch (frame_header->id) {
-      case ( FOURCC_TAG('T', 'C', 'O', 'N') ):
+      case ( BE_FOURCC('T', 'C', 'O', 'N') ):
         {
           char tmp[1024];
           
@@ -493,27 +493,27 @@ static int id3v23_interp_frame(input_plugin_t *input,
         }
         break;
 
-      case ( FOURCC_TAG('T', 'I', 'T', '2') ):
+      case ( BE_FOURCC('T', 'I', 'T', '2') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_TITLE, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('T', 'P', 'E', '1') ):
+      case ( BE_FOURCC('T', 'P', 'E', '1') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_ARTIST, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('T', 'A', 'L', 'B') ):
+      case ( BE_FOURCC('T', 'A', 'L', 'B') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_ALBUM, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('T', 'Y', 'E', 'R') ):
+      case ( BE_FOURCC('T', 'Y', 'E', 'R') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_YEAR, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('C', 'O', 'M', 'M') ):
+      case ( BE_FOURCC('C', 'O', 'M', 'M') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_COMMENT, buf + 1 + 3, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('T', 'R', 'C', 'K') ):
+      case ( BE_FOURCC('T', 'R', 'C', 'K') ):
         _x_meta_info_set(stream, XINE_META_INFO_TRACK_NUMBER, buf + 1);
         break;
 
@@ -734,7 +734,7 @@ static int id3v24_interp_frame(input_plugin_t *input,
     lprintf("data: %s\n", buf+1);
 
     switch (frame_header->id) {
-      case ( FOURCC_TAG('T', 'C', 'O', 'N') ):
+      case ( BE_FOURCC('T', 'C', 'O', 'N') ):
         {
           char tmp[1024];
           
@@ -744,27 +744,27 @@ static int id3v24_interp_frame(input_plugin_t *input,
         }
         break;
 
-      case ( FOURCC_TAG('T', 'I', 'T', '2') ):
+      case ( BE_FOURCC('T', 'I', 'T', '2') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_TITLE, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('T', 'P', 'E', '1') ):
+      case ( BE_FOURCC('T', 'P', 'E', '1') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_ARTIST, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('T', 'A', 'L', 'B') ):
+      case ( BE_FOURCC('T', 'A', 'L', 'B') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_ALBUM, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('T', 'Y', 'E', 'R') ):
+      case ( BE_FOURCC('T', 'Y', 'E', 'R') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_YEAR, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('C', 'O', 'M', 'M') ):
+      case ( BE_FOURCC('C', 'O', 'M', 'M') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_COMMENT, buf + 1 + 3, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('T', 'R', 'C', 'K') ):
+      case ( BE_FOURCC('T', 'R', 'C', 'K') ):
         _x_meta_info_set(stream, XINE_META_INFO_TRACK_NUMBER, buf + 1);
         break;
 
