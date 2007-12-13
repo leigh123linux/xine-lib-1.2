@@ -854,27 +854,22 @@ int id3v2_parse_tag(input_plugin_t *input,
 		    uint32_t id3_signature) {
   _x_assert((id3_signature & ID3V2X_MASK) == ID3V2X_TAG);
 
-  int result = 0;
-
   switch(id3_signature) {
   case ID3V22_TAG:
     xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.2 tag\n");
-    result = id3v22_parse_tag(input, stream, id3_signature);
-    break;
+    return id3v22_parse_tag(input, stream, id3_signature);
    
   case ID3V23_TAG:
     xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.3 tag\n");
-    result = id3v23_parse_tag(input, stream, id3_signature);
-    break;
+    return id3v23_parse_tag(input, stream, id3_signature);
 
   case ID3V24_TAG:
     xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.4 tag\n");
-    result = id3v24_parse_tag(input, stream, id3_signature);
-    break;
+    return id3v24_parse_tag(input, stream, id3_signature);
 
   default:
     xprintf(stream->xine, XINE_VERBOSITY_LOG, "Unknown ID3v2 signature: 0x%08x.\n", be2me_32(id3_signature));
   }
-
-  return result;
+  
+  return 0;
 }
