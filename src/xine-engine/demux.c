@@ -423,7 +423,7 @@ int _x_demux_stop_thread (xine_stream_t *stream) {
   return 0;
 }
 
-int _x_demux_read_header( input_plugin_t *input, unsigned char *buffer, off_t size){
+int _x_demux_read_header( input_plugin_t *input, void *buffer, off_t size){
   int read_size;
   unsigned char *buf;
 
