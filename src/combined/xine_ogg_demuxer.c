@@ -1230,15 +1230,16 @@ static void decode_flac_header (demux_ogg_t *this, const int stream_num, ogg_pac
   case FLAC_BLOCKTYPE_STREAMINFO:
     _x_assert(header.length == FLAC_STREAMINFO_SIZE);
     _x_parse_flac_streaminfo_block(&op->packet[17], &streaminfo);
+
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_SAMPLERATE, streaminfo.samplerate);
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_CHANNELS, streaminfo.channels);
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITS, streaminfo.bits_per_sample);
+
     break;
   }
 
   this->si[stream_num]->buf_types = BUF_AUDIO_FLAC
     +this->num_audio_streams++;
-
-  _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_SAMPLERATE, streaminfo.samplerate);
-  _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_CHANNELS, streaminfo.channels);
-  _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITS, streaminfo.bits_per_sample);
 
   this->si[stream_num]->factor = 90000;
 
