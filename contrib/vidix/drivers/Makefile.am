@@ -3,7 +3,7 @@ include $(top_srcdir)/misc/Makefile.common
 AM_CFLAGS   = $(DEFAULT_OCFLAGS)
 AM_CPPFLAGS = -I$(top_srcdir)/contrib/vidix \
               -I$(top_srcdir)/contrib/libdha -I$(top_builddir)/contrib/libdha
-AM_LDFLAGS  = $(xineplug_ldflags)
+AM_LDFLAGS = -avoid-version -module
 
 EXTRA_DIST = genfb_vid.c
 

@@ -185,7 +185,7 @@ static int ebml_read_elem_len(ebml_parser_t *ebml, uint64_t *len) {
 }
 
 
-static int ebml_read_elem_data(ebml_parser_t *ebml, int8_t *buf, int64_t len) {
+static int ebml_read_elem_data(ebml_parser_t *ebml, void *buf, int64_t len) {
 
   if (ebml->input->read(ebml->input, buf, len) != len) {
     off_t pos = ebml->input->get_current_pos(ebml->input);
@@ -346,7 +346,7 @@ int ebml_read_master (ebml_parser_t *ebml, ebml_elem_t *elem) {
   }
 }
 
-int ebml_read_binary(ebml_parser_t *ebml, ebml_elem_t *elem, uint8_t *binary) {
+int ebml_read_binary(ebml_parser_t *ebml, ebml_elem_t *elem, void *binary) {
   if (!ebml_read_elem_data(ebml, binary, elem->len))
     return 0;
 

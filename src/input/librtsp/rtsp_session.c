@@ -189,7 +189,7 @@ int rtsp_session_read (rtsp_session_t *this, char *data, int len) {
   
   int to_copy;
   char *dest=data;
-  char *source=this->recv + this->recv_read;
+  uint8_t *source=this->recv + this->recv_read;
   int fill=this->recv_size - this->recv_read;
 
   if (len < 0)

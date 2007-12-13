@@ -229,17 +229,17 @@ static int id3v2_parse_genre(char* dest, char *src, int len) {
   return 1;
 }
 
-static int id3v2_parse_header(input_plugin_t *input, uint8_t *mp3_frame_header,
+static int id3v2_parse_header(input_plugin_t *input, uint32_t id3_signature,
                               id3v2_header_t *tag_header) {
   uint8_t buf[6];
 
-  tag_header->id = _X_BE_32(mp3_frame_header);
+  tag_header->id = be2me_32(id3_signature);
   if (input->read (input, buf, 6) == 6) {
     tag_header->revision = buf[0];
     tag_header->flags    = buf[1];
     tag_header->size     = _X_BE_32_synchsafe(&buf[2]);
 
-    lprintf("tag: ID3 v2.%d.%d\n", mp3_frame_header[3], tag_header->revision);
+    lprintf("tag: ID3 v2.%d.%d\n", tag_header->id & 0xFF, tag_header->revision);
     lprintf("flags: %d\n", tag_header->flags);
     lprintf("size: %d\n", tag_header->size);
     return 1;
@@ -289,7 +289,7 @@ static int id3v22_interp_frame(input_plugin_t *input,
       enc = 0;
 
     switch (frame_header->id) {
-      case ( FOURCC_TAG(0, 'T', 'C', 'O') ):
+      case ( BE_FOURCC(0, 'T', 'C', 'O') ):
         {
           char tmp[1024];
           
@@ -299,27 +299,27 @@ static int id3v22_interp_frame(input_plugin_t *input,
         }
         break;
 
-      case ( FOURCC_TAG(0, 'T', 'T', '2') ):
+      case ( BE_FOURCC(0, 'T', 'T', '2') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_TITLE, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG(0, 'T', 'P', '1') ):
+      case ( BE_FOURCC(0, 'T', 'P', '1') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_ARTIST, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG(0, 'T', 'A', 'L') ):
+      case ( BE_FOURCC(0, 'T', 'A', 'L') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_ALBUM, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG(0, 'T', 'Y', 'E') ):
+      case ( BE_FOURCC(0, 'T', 'Y', 'E') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_YEAR, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG(0, 'C', 'O', 'M') ):
+      case ( BE_FOURCC(0, 'C', 'O', 'M') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_COMMENT, buf + 1 + 3, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG(0, 'T', 'R', 'K') ):
+      case ( BE_FOURCC(0, 'T', 'R', 'K') ):
         _x_meta_info_set(stream, XINE_META_INFO_TRACK_NUMBER, buf + 1);
         break;
 
@@ -339,12 +339,12 @@ static int id3v22_interp_frame(input_plugin_t *input,
 
 int id3v22_parse_tag(input_plugin_t *input,
                      xine_stream_t *stream,
-                     uint8_t *mp3_frame_header) {
+                     uint32_t id3_signature) {
   id3v2_header_t tag_header;
   id3v22_frame_header_t tag_frame_header;
   int pos = 0;
 
-  if (id3v2_parse_header(input, mp3_frame_header, &tag_header)) {
+  if (id3v2_parse_header(input, id3_signature, &tag_header)) {
 
     if (tag_header.flags & ID3V22_ZERO_FLAG) {
       /* invalid flags */
@@ -483,7 +483,7 @@ static int id3v23_interp_frame(input_plugin_t *input,
       enc = 0;
 
     switch (frame_header->id) {
-      case ( FOURCC_TAG('T', 'C', 'O', 'N') ):
+      case ( BE_FOURCC('T', 'C', 'O', 'N') ):
         {
           char tmp[1024];
           
@@ -493,27 +493,27 @@ static int id3v23_interp_frame(input_plugin_t *input,
         }
         break;
 
-      case ( FOURCC_TAG('T', 'I', 'T', '2') ):
+      case ( BE_FOURCC('T', 'I', 'T', '2') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_TITLE, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('T', 'P', 'E', '1') ):
+      case ( BE_FOURCC('T', 'P', 'E', '1') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_ARTIST, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('T', 'A', 'L', 'B') ):
+      case ( BE_FOURCC('T', 'A', 'L', 'B') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_ALBUM, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('T', 'Y', 'E', 'R') ):
+      case ( BE_FOURCC('T', 'Y', 'E', 'R') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_YEAR, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('C', 'O', 'M', 'M') ):
+      case ( BE_FOURCC('C', 'O', 'M', 'M') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_COMMENT, buf + 1 + 3, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('T', 'R', 'C', 'K') ):
+      case ( BE_FOURCC('T', 'R', 'C', 'K') ):
         _x_meta_info_set(stream, XINE_META_INFO_TRACK_NUMBER, buf + 1);
         break;
 
@@ -532,13 +532,13 @@ static int id3v23_interp_frame(input_plugin_t *input,
 
 int id3v23_parse_tag(input_plugin_t *input,
                      xine_stream_t *stream,
-                     uint8_t *mp3_frame_header) {
+                     uint32_t id3_signature) {
   id3v2_header_t tag_header;
   id3v23_frame_header_t tag_frame_header;
   id3v23_frame_ext_header_t tag_frame_ext_header;
   int pos = 0;
 
-  if (id3v2_parse_header(input, mp3_frame_header, &tag_header)) {
+  if (id3v2_parse_header(input, id3_signature, &tag_header)) {
 
     if (tag_header.flags & ID3V23_ZERO_FLAG) {
       /* invalid flags */
@@ -734,7 +734,7 @@ static int id3v24_interp_frame(input_plugin_t *input,
     lprintf("data: %s\n", buf+1);
 
     switch (frame_header->id) {
-      case ( FOURCC_TAG('T', 'C', 'O', 'N') ):
+      case ( BE_FOURCC('T', 'C', 'O', 'N') ):
         {
           char tmp[1024];
           
@@ -744,27 +744,27 @@ static int id3v24_interp_frame(input_plugin_t *input,
         }
         break;
 
-      case ( FOURCC_TAG('T', 'I', 'T', '2') ):
+      case ( BE_FOURCC('T', 'I', 'T', '2') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_TITLE, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('T', 'P', 'E', '1') ):
+      case ( BE_FOURCC('T', 'P', 'E', '1') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_ARTIST, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('T', 'A', 'L', 'B') ):
+      case ( BE_FOURCC('T', 'A', 'L', 'B') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_ALBUM, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('T', 'Y', 'E', 'R') ):
+      case ( BE_FOURCC('T', 'Y', 'E', 'R') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_YEAR, buf + 1, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('C', 'O', 'M', 'M') ):
+      case ( BE_FOURCC('C', 'O', 'M', 'M') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_COMMENT, buf + 1 + 3, id3_encoding[enc]);
         break;
 
-      case ( FOURCC_TAG('T', 'R', 'C', 'K') ):
+      case ( BE_FOURCC('T', 'R', 'C', 'K') ):
         _x_meta_info_set(stream, XINE_META_INFO_TRACK_NUMBER, buf + 1);
         break;
 
@@ -783,13 +783,13 @@ static int id3v24_interp_frame(input_plugin_t *input,
 
 int id3v24_parse_tag(input_plugin_t *input,
                      xine_stream_t *stream,
-                     uint8_t *mp3_frame_header) {
+                     uint32_t id3_signature) {
   id3v2_header_t tag_header;
   id3v24_frame_header_t tag_frame_header;
   id3v24_frame_ext_header_t tag_frame_ext_header;
   int pos = 0;
 
-  if (id3v2_parse_header(input, mp3_frame_header, &tag_header)) {
+  if (id3v2_parse_header(input, id3_signature, &tag_header)) {
 
     if (tag_header.flags & ID3V24_ZERO_FLAG) {
       /* invalid flags */
@@ -851,30 +851,25 @@ int id3v24_parse_tag(input_plugin_t *input,
 
 int id3v2_parse_tag(input_plugin_t *input,
 		    xine_stream_t *stream,
-		    uint8_t *mp3_frame_header) {
-  _x_assert(mp3_frame_header[0] == 'I' && mp3_frame_header[1] == 'D' && mp3_frame_header[2] == '3');
+		    uint32_t id3_signature) {
+  _x_assert((id3_signature & ID3V2X_MASK) == ID3V2X_TAG);
 
-  int result = 0;
-
-  switch(mp3_frame_header[3]) {
-  case 2:
+  switch(id3_signature) {
+  case ID3V22_TAG:
     xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.2 tag\n");
-    result = id3v22_parse_tag(input, stream, mp3_frame_header);
-    break;
+    return id3v22_parse_tag(input, stream, id3_signature);
    
-  case 3:
+  case ID3V23_TAG:
     xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.3 tag\n");
-    result = id3v23_parse_tag(input, stream, mp3_frame_header);
-    break;
+    return id3v23_parse_tag(input, stream, id3_signature);
 
-  case 4:
+  case ID3V24_TAG:
     xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.4 tag\n");
-    result = id3v24_parse_tag(input, stream, mp3_frame_header);
-    break;
+    return id3v24_parse_tag(input, stream, id3_signature);
 
   default:
-    xprintf(stream->xine, XINE_VERBOSITY_LOG, "Unknown ID3v2 version: 0x%02x.\n", mp3_frame_header[3]);
+    xprintf(stream->xine, XINE_VERBOSITY_LOG, "Unknown ID3v2 signature: 0x%08x.\n", be2me_32(id3_signature));
   }
-
-  return result;
+  
+  return 0;
 }

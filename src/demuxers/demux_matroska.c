@@ -1181,18 +1181,22 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       case MATROSKA_ID_TR_CODECID: {
         char *codec_id = malloc (elem.len + 1);
         lprintf("CodecID\n");
-        if (!ebml_read_ascii(ebml, &elem, codec_id))
+        if (!ebml_read_ascii(ebml, &elem, codec_id)) {
+	  free(codec_id);
           return 0;
+	}
         codec_id[elem.len] = '\0';
         track->codec_id = codec_id;
       }
       break;
         
       case MATROSKA_ID_TR_CODECPRIVATE: {
-        char *codec_private = malloc (elem.len);
+        uint8_t *codec_private = malloc (elem.len);
         lprintf("CodecPrivate\n");
-        if (!ebml_read_binary(ebml, &elem, codec_private))
+        if (!ebml_read_binary(ebml, &elem, codec_private)) {
+	  free(codec_private);
           return 0;
+	}
         track->codec_private = codec_private;
         track->codec_private_len = elem.len;
       }
@@ -1201,8 +1205,10 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       case MATROSKA_ID_TR_LANGUAGE: {
         char *language = malloc (elem.len + 1);
         lprintf("Language\n");
-        if (!ebml_read_ascii(ebml, &elem, language))
+        if (!ebml_read_ascii(ebml, &elem, language)) {
+	  free(language);
           return 0;
+	}
         language[elem.len] = '\0';
         track->language = language;
       }
@@ -1654,10 +1660,10 @@ static int parse_cue_point(demux_matroska_t *this) {
       this->num_indexes++;
     }
     if ((index->num_entries % 1024) == 0) {
-      index->pos = (off_t *)realloc(index->pos, sizeof(off_t) *
-                                    (index->num_entries + 1024));
-      index->timecode = (off_t *)realloc(index->timecode, sizeof(uint64_t) *
-                                         (index->num_entries + 1024));
+      index->pos = realloc(index->pos, sizeof(off_t) *
+			   (index->num_entries + 1024));
+      index->timecode = realloc(index->timecode, sizeof(uint64_t) *
+				(index->num_entries + 1024));
     }
     index->pos[index->num_entries] = pos;
     index->timecode[index->num_entries] = timecode;
@@ -1839,7 +1845,7 @@ static int parse_block (demux_matroska_t *this, uint64_t block_size,
   int               decoder_flags = 0;
 
   data = this->block_data;
-  if (!(num_len = parse_ebml_uint(this, data, &track_num)))
+  if (!(num_len = parse_ebml_sint(this, data, &track_num)))
     return 0;
   data += num_len;
     
@@ -1971,7 +1977,7 @@ static int parse_block (demux_matroska_t *this, uint64_t block_size,
         lprintf("ebml lacing\n");
 
         /* size of each frame */
-        if (!(num_len = parse_ebml_uint(this, data, &tmp)))
+        if (!(num_len = parse_ebml_sint(this, data, &tmp)))
           return 0;
         data += num_len; block_size_left -= num_len;
         frame[0] = (int) tmp;

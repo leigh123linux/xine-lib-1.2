@@ -376,7 +376,7 @@ static void asf_send_video_header (demux_asf_t *this, int stream) {
 static int asf_read_header (demux_asf_t *this) {
   int i;
   uint64_t asf_header_len;
-  char *asf_header_buffer = NULL;
+  uint8_t *asf_header_buffer = NULL;
 
   asf_header_len = get_le64(this);
   asf_header_buffer = alloca(asf_header_len);
@@ -1662,7 +1662,7 @@ static int demux_asf_send_chunk (demux_plugin_t *this_gen) {
 
     default:
     {    
-      int header_size = 0;
+      uint32_t header_size = 0;
     
       if (asf_parse_packet_align(this)) {
         xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_asf: asf_parse_packet_align failed\n");
@@ -1848,7 +1848,7 @@ static int demux_asf_seek (demux_plugin_t *this_gen,
 
     start_pos -= (start_pos - this->first_packet_pos) % this->packet_size;
     while ((start_pos >= this->first_packet_pos) && (state != 5)) {
-      int header_size;
+      uint32_t header_size;
 
       /* seek to the beginning of the previous packet */
       lprintf ("demux_asf_seek: seek back\n");

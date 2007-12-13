@@ -188,7 +188,7 @@ typedef struct {
 } time_to_sample_table_t;
 
 typedef struct {
-  unsigned char *url;
+  char *url;
   int64_t data_rate;
   int qtim_version;
 } reference_t;
@@ -736,7 +736,7 @@ static int is_qt_file(input_plugin_t *qt_file) {
   }
 }
 
-static char *parse_data_atom(unsigned char *data_atom) {
+static char *parse_data_atom(const uint8_t *data_atom) {
   const uint32_t data_atom_size = _X_BE_32(&data_atom[0]);
   
   static const int data_atom_max_version = 0;
@@ -938,8 +938,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
   /* search for the useful atoms */
   for (i = ATOM_PREAMBLE_SIZE; i < trak_atom_size - 4; i++) {
-    const current_atom_size = _X_BE_32(&trak_atom[i - 4]);	
-    const current_atom = _X_BE_32(&trak_atom[i]);
+    const uint32_t current_atom_size = _X_BE_32(&trak_atom[i - 4]);	
+    const qt_atom current_atom = _X_BE_32(&trak_atom[i]);
 
     switch(current_atom) {
     case TKHD_ATOM:
@@ -1619,33 +1619,28 @@ static qt_error parse_reference_atom (reference_t *ref,
     const qt_atom current_atom = _X_BE_32(&ref_atom[i]);
 
     switch (current_atom) {
-    case RDRF_ATOM:
+    case RDRF_ATOM: {
+      size_t string_size = _X_BE_32(&ref_atom[i + 12]);
+      size_t url_offset = 0;
 
       /* if the URL starts with "http://", copy it */
-      if (strncmp(&ref_atom[i + 16], "http://", 7) == 0
-        || strncmp(&ref_atom[i + 16], "rtsp://", 7) == 0) {
+      if ( memcmp(&ref_atom[i + 16], "http://", 7) &&
+	   memcmp(&ref_atom[i + 16], "rtsp://", 7) &&
+	   base_mrl )
+	url_offset = strlen(base_mrl);
 
-        /* URL is spec'd to terminate with a NULL; don't trust it */
-        ref->url = xine_xmalloc(_X_BE_32(&ref_atom[i + 12]) + 1);
-        strncpy(ref->url, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
-        ref->url[_X_BE_32(&ref_atom[i + 12]) - 1] = '\0';
+      /* otherwise, append relative URL to base MRL */
+      string_size += url_offset;
 
-      } else {
+      ref->url = xine_xmalloc(string_size + 1);
 
-        int string_size;
+      if ( url_offset )
+	strcpy(ref->url, base_mrl);
 
-	if (base_mrl)
-          string_size = strlen(base_mrl) + _X_BE_32(&ref_atom[i + 12]) + 1;
-	else
-          string_size = _X_BE_32(&ref_atom[i + 12]) + 1;
+      memcpy(ref->url + url_offset, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
 
-        /* otherwise, append relative URL to base MRL */
-        ref->url = xine_xmalloc(string_size);
-	if (base_mrl)
-          strcpy(ref->url, base_mrl);
-        strncat(ref->url, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
-        ref->url[string_size - 1] = '\0';
-      }
+      ref->url[string_size] = '\0';
+    }
 
       debug_atom_load("    qt rdrf URL reference:\n      %s\n", ref->url);
       break;
@@ -1681,7 +1676,7 @@ static qt_error parse_reference_atom (reference_t *ref,
  * building a frame table. */
 #define MAX_DURATION 0x7FFFFFFFFFFFFFFFLL
 static void get_next_edit_list_entry(qt_trak *trak, 
-  int *edit_list_index,
+  unsigned int *edit_list_index,
   unsigned int *edit_list_media_time, 
   int64_t *edit_list_duration,
   unsigned int global_timescale) {
@@ -2037,31 +2032,31 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
       break;
 
     case NAM_ATOM:
-      string_size = _X_BE_16(&moov_atom[i + 4]) + 1;
-      info->name = realloc (info->name, string_size);
-      strncpy(info->name, &moov_atom[i + 8], string_size - 1);
-      info->name[string_size - 1] = 0;
+      string_size = _X_BE_16(&moov_atom[i + 4]);
+      info->name = realloc (info->name, string_size + 1);
+      memcpy(info->name, &moov_atom[i + 8], string_size);
+      info->name[string_size] = 0;
       break;
 
     case CPY_ATOM:
-      string_size = _X_BE_16(&moov_atom[i + 4]) + 1;
-      info->copyright = realloc (info->copyright, string_size);
-      strncpy(info->copyright, &moov_atom[i + 8], string_size - 1);
-      info->copyright[string_size - 1] = 0;
+      string_size = _X_BE_16(&moov_atom[i + 4]);
+      info->copyright = realloc (info->copyright, string_size + 1);
+      memcpy(info->copyright, &moov_atom[i + 8], string_size);
+      info->copyright[string_size] = 0;
       break;
 
     case DES_ATOM:
-      string_size = _X_BE_16(&moov_atom[i + 4]) + 1;
-      info->description = realloc (info->description, string_size);
-      strncpy(info->description, &moov_atom[i + 8], string_size - 1);
-      info->description[string_size - 1] = 0;
+      string_size = _X_BE_16(&moov_atom[i + 4]);
+      info->description = realloc (info->description, string_size + 1);
+      memcpy(info->description, &moov_atom[i + 8], string_size);
+      info->description[string_size] = 0;
       break;
 
     case CMT_ATOM:
-      string_size = _X_BE_16(&moov_atom[i + 4]) + 1;
-      info->comment = realloc (info->comment, string_size);
-      strncpy(info->comment, &moov_atom[i + 8], string_size - 1);
-      info->comment[string_size - 1] = 0;
+      string_size = _X_BE_16(&moov_atom[i + 4]);
+      info->comment = realloc (info->comment, string_size + 1);
+      memcpy(info->comment, &moov_atom[i + 8], string_size);
+      info->comment[string_size] = 0;
       break;
 
     case RMDA_ATOM:

@@ -244,8 +244,9 @@ static void update_output_size (sputext_decoder_t *this) {
   }
 }
 
-static int parse_utf8_size(unsigned char *c)
+static int parse_utf8_size(const void *buf)
 {
+  const uint8_t *c = buf;
   if ( c[0]<0x80 )
       return 1;
   

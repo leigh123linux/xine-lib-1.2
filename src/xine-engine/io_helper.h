@@ -97,7 +97,7 @@ int _x_io_tcp_connect_finish(xine_stream_t *stream, int fd, int timeout_msec) XI
  *
  * aborts with zero if no data is available and *abort is set
  */
-off_t _x_io_tcp_read (xine_stream_t *stream, int s, char *buf, off_t todo) XINE_PROTECTED;
+off_t _x_io_tcp_read (xine_stream_t *stream, int s, void *buf, off_t todo) XINE_PROTECTED;
 
 
 /*
@@ -108,7 +108,7 @@ off_t _x_io_tcp_read (xine_stream_t *stream, int s, char *buf, off_t todo) XINE_
  *
  * aborts with zero if no data is available and *abort is set
  */
-off_t _x_io_tcp_write (xine_stream_t *stream, int s, char *buf, off_t todo) XINE_PROTECTED;
+off_t _x_io_tcp_write (xine_stream_t *stream, int s, void *buf, off_t todo) XINE_PROTECTED;
 
 /*
  * read from a file descriptor checking demux_action_pending
@@ -118,7 +118,7 @@ off_t _x_io_tcp_write (xine_stream_t *stream, int s, char *buf, off_t todo) XINE
  *
  * aborts with zero if no data is available and *abort is set
  */
-off_t _x_io_file_read (xine_stream_t *stream, int fd, char *buf, off_t todo) XINE_PROTECTED;
+off_t _x_io_file_read (xine_stream_t *stream, int fd, void *buf, off_t todo) XINE_PROTECTED;
 
 
 /*
@@ -129,7 +129,7 @@ off_t _x_io_file_read (xine_stream_t *stream, int fd, char *buf, off_t todo) XIN
  *
  * aborts with zero if *abort is set
  */
-off_t _x_io_file_write (xine_stream_t *stream, int fd, char *buf, off_t todo) XINE_PROTECTED;
+off_t _x_io_file_write (xine_stream_t *stream, int fd, void *buf, off_t todo) XINE_PROTECTED;
 
 /*
  * read a string from socket, return string length (same as strlen)

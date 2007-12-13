@@ -684,8 +684,7 @@ static void seek_flv_file(demux_flv_t *this, off_t seek_pos, int seek_pts) {
           return;
         }
         /* check StreamID and CodecID */
-        if (buf[0] == 0 && buf[1] == 0 && buf[2] == 0 &&
-            buf[3] == (this->videocodec | 0x10)) {
+	if ( _X_ME_32(buf) == ME_FOURCC(0, 0, 0, (this->videocodec | 0x10)) ) {
           this->input->seek(this->input, -16, SEEK_CUR);
           lprintf("  ...resynced after %d bytes\n", i);
           return;

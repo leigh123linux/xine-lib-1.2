@@ -95,6 +95,6 @@ int ebml_read_date(ebml_parser_t *ebml, ebml_elem_t *elem, int64_t *date);
 
 int ebml_read_master(ebml_parser_t *ebml, ebml_elem_t *elem);
 
-int ebml_read_binary(ebml_parser_t *ebml, ebml_elem_t *elem, uint8_t *binary);
+int ebml_read_binary(ebml_parser_t *ebml, ebml_elem_t *elem, void *binary);
 
 #endif /* EBML_H */

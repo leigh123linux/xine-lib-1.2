@@ -435,7 +435,7 @@ static const Param transmissionmode_list [] = {
 };
 
 
-time_t dvb_mjdtime (char *buf);
+static time_t dvb_mjdtime (uint8_t *buf);
 static void load_epg_data(dvb_input_plugin_t *this);
 static void show_eit(dvb_input_plugin_t *this);
 
@@ -494,7 +494,7 @@ static int find_descriptor(uint8_t tag, const unsigned char *buf, int descriptor
 
 /* Extract UTC time and date encoded in modified julian date format and return it as a time_t.
  */
-time_t dvb_mjdtime (char *buf)
+static time_t dvb_mjdtime (uint8_t *buf)
 {
   int i;
   unsigned int year, month, day, hour, min, sec;
@@ -1206,8 +1206,8 @@ static void parse_pmt(dvb_input_plugin_t *this, const unsigned char *buf, int se
 
 static void dvb_parse_si(dvb_input_plugin_t *this) {
 
-  char *tmpbuffer;
-  char *bufptr;
+  uint8_t *tmpbuffer;
+  uint8_t *bufptr;
   int 	service_id;
   int	result;
   int  	section_len;
@@ -1406,8 +1406,8 @@ static void load_epg_data(dvb_input_plugin_t *this)
   int section_len = 0;
   unsigned int service_id=-1;
   int n; 
-  char *eit = NULL;
-  char *foo = NULL;
+  uint8_t *eit = NULL;
+  uint8_t *foo = NULL;
   char *seen_channels = NULL;
   int text_len;
   struct pollfd fd;
@@ -2482,7 +2482,7 @@ static void ts_rewrite_packets (dvb_input_plugin_t *this, unsigned char * origin
 static off_t dvb_plugin_read (input_plugin_t *this_gen,
 			      void *buf_gen, off_t len) {
   dvb_input_plugin_t *this = (dvb_input_plugin_t *) this_gen;
-  char *buf = (char *)buf_gen;
+  uint8_t *buf = buf_gen;
   
   off_t n=0, total=0;
   int have_mutex=0;

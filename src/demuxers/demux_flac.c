@@ -80,6 +80,7 @@ typedef struct {
  * It returns 1 if flac file was opened successfully. */
 static int open_flac_file(demux_flac_t *flac) {
 
+  uint32_t signature;
   unsigned char preamble[10];
   unsigned int block_length;
   unsigned char buffer[FLAC_SEEKPOINT_SIZE];
@@ -90,7 +91,7 @@ static int open_flac_file(demux_flac_t *flac) {
 
   /* fetch the file signature, 4 bytes will read both the fLaC
    * signature and the */
-  if (_x_demux_read_header(flac->input, preamble, 4) != 4)
+  if (_x_demux_read_header(flac->input, &signature, 4) != 4)
     return 0;
 
   flac->input->seek(flac->input, 4, SEEK_SET);
@@ -100,16 +101,15 @@ static int open_flac_file(demux_flac_t *flac) {
    * users use them and want them working, so check and skip the ID3
    * tag if present.
    */
-  if ( id3v2_istag(preamble) ) {
-    id3v2_parse_tag(flac->input, flac->stream, preamble);
+  if ( id3v2_istag(signature) ) {
+    id3v2_parse_tag(flac->input, flac->stream, signature);
 
-    if ( flac->input->read(flac->input, preamble, 4) != 4 )
+    if ( flac->input->read(flac->input, &signature, 4) != 4 )
       return 0;
   }
 
   /* validate signature */
-  if ((preamble[0] != 'f') || (preamble[1] != 'L') ||
-      (preamble[2] != 'a') || (preamble[3] != 'C'))
+  if ( signature != ME_FOURCC('f', 'L', 'a', 'C') )
       return 0;
 
   /* loop through the metadata blocks; use a do-while construct since there

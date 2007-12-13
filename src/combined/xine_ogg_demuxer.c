@@ -1211,8 +1211,7 @@ static void decode_flac_header (demux_ogg_t *this, const int stream_num, ogg_pac
   _x_assert(op->packet[0] == 0x7F);
 
   /* OggFLAC signature */
-  _x_assert(op->packet[1] == 'F'); _x_assert(op->packet[2] == 'L');
-  _x_assert(op->packet[3] == 'A'); _x_assert(op->packet[4] == 'C');
+  _x_assert(_X_BE_32(&op->packet[1]) == ME_FOURCC('F', 'L', 'A', 'C'));
 
   /* Version: supported only 1.0 */
   _x_assert(op->packet[5] == 1); _x_assert(op->packet[6] == 0);
@@ -1221,8 +1220,7 @@ static void decode_flac_header (demux_ogg_t *this, const int stream_num, ogg_pac
   this->si[stream_num]->headers = 0/*_X_BE_16(&op->packet[7]) +1*/;
 
   /* fLaC signature */
-  _x_assert(op->packet[9] == 'f'); _x_assert(op->packet[10] == 'L');
-  _x_assert(op->packet[11] == 'a'); _x_assert(op->packet[12] == 'C');
+  _x_assert(_X_BE_32(&op->packet[9]) == ME_FOURCC('f', 'L', 'a', 'C'));
 
   _x_parse_flac_metadata_header(&op->packet[13], &header);
 
@@ -1230,15 +1228,16 @@ static void decode_flac_header (demux_ogg_t *this, const int stream_num, ogg_pac
   case FLAC_BLOCKTYPE_STREAMINFO:
     _x_assert(header.length == FLAC_STREAMINFO_SIZE);
     _x_parse_flac_streaminfo_block(&op->packet[17], &streaminfo);
+
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_SAMPLERATE, streaminfo.samplerate);
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_CHANNELS, streaminfo.channels);
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITS, streaminfo.bits_per_sample);
+
     break;
   }
 
   this->si[stream_num]->buf_types = BUF_AUDIO_FLAC
     +this->num_audio_streams++;
-
-  _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_SAMPLERATE, streaminfo.samplerate);
-  _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_CHANNELS, streaminfo.channels);
-  _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITS, streaminfo.bits_per_sample);
 
   this->si[stream_num]->factor = 90000;
 
@@ -1398,28 +1397,28 @@ static void send_header (demux_ogg_t *this) {
       if (!this->si[stream_num]->buf_types) {
 
         /* detect buftype */
-        if (!strncmp (&op.packet[1], "vorbis", 6)) {
+        if (!memcmp (&op.packet[1], "vorbis", 6)) {
           decode_vorbis_header(this, stream_num, &op);
-        } else if (!strncmp (&op.packet[0], "Speex", 5)) {
+        } else if (!memcmp (&op.packet[0], "Speex", 5)) {
           decode_speex_header(this, stream_num, &op);
-        } else if (!strncmp (&op.packet[1], "video", 5)) {
+        } else if (!memcmp (&op.packet[1], "video", 5)) {
           decode_video_header(this, stream_num, &op);
-        } else if (!strncmp (&op.packet[1], "audio", 5)) {
+        } else if (!memcmp (&op.packet[1], "audio", 5)) {
           decode_audio_header(this, stream_num, &op);
         } else if (op.bytes >= 142
-                   && !strncmp (&op.packet[1], "Direct Show Samples embedded in Ogg", 35) ) {
+                   && !memcmp (&op.packet[1], "Direct Show Samples embedded in Ogg", 35) ) {
           decode_dshow_header(this, stream_num, &op);
-        } else if (!strncmp (&op.packet[1], "text", 4)) {
+        } else if (!memcmp (&op.packet[1], "text", 4)) {
           decode_text_header(this, stream_num, &op);
-        } else if (!strncmp (&op.packet[1], "theora", 6)) {
+        } else if (!memcmp (&op.packet[1], "theora", 6)) {
           decode_theora_header(this, stream_num, &op);
-	} else if (!strncmp (&op.packet[1], "FLAC", 4)) {
+	} else if (!memcmp (&op.packet[1], "FLAC", 4)) {
 	  decode_flac_header(this, stream_num, &op);
-        } else if (!strncmp (&op.packet[0], "Annodex", 7)) {
+        } else if (!memcmp (&op.packet[0], "Annodex", 7)) {
           decode_annodex_header(this, stream_num, &op);
-        } else if (!strncmp (&op.packet[0], "AnxData", 7)) {
+        } else if (!memcmp (&op.packet[0], "AnxData", 7)) {
           decode_anxdata_header(this, stream_num, &op);
-	} else if (!strncmp (&op.packet[0], "CMML", 4)) {
+	} else if (!memcmp (&op.packet[0], "CMML", 4)) {
 	  decode_cmml_header(this, stream_num, &op);
         } else {
           xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
@@ -1931,16 +1930,12 @@ static int detect_ogg_content (int detection_method, demux_class_t *class_gen,
   switch (detection_method) {
 
     case METHOD_BY_CONTENT: {
-      uint8_t buf[4];
+      uint32_t header;
 
-      if (_x_demux_read_header(input, buf, 4) != 4)
+      if (_x_demux_read_header(input, &header, 4) != 4)
         return 0;
 
-      if ((buf[0] == 'O') && (buf[1] == 'g') && (buf[2] == 'g') &&
-          (buf[3] == 'S'))
-        return 1;
-      else
-        return 0;
+      return !!( header == ME_FOURCC('O', 'g', 'g', 'S') );
     }
 
     case METHOD_BY_MRL:

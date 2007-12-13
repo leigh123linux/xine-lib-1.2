@@ -35,7 +35,7 @@
  * writes header data to a buffer
  */
 
-static void rmff_dump_fileheader(rmff_fileheader_t *fileheader, char *buffer) {
+static void rmff_dump_fileheader(rmff_fileheader_t *fileheader, uint8_t *buffer) {
 
   if (!fileheader) return;
   fileheader->object_id=_X_BE_32(&fileheader->object_id);
@@ -55,7 +55,7 @@ static void rmff_dump_fileheader(rmff_fileheader_t *fileheader, char *buffer) {
   fileheader->object_id=_X_BE_32(&fileheader->object_id);
 }
 
-static void rmff_dump_prop(rmff_prop_t *prop, char *buffer) {
+static void rmff_dump_prop(rmff_prop_t *prop, uint8_t *buffer) {
 
   if (!prop) return;
   prop->object_id=_X_BE_32(&prop->object_id);
@@ -95,7 +95,7 @@ static void rmff_dump_prop(rmff_prop_t *prop, char *buffer) {
   prop->object_id=_X_BE_32(&prop->object_id);
 }
 
-static void rmff_dump_mdpr(rmff_mdpr_t *mdpr, char *buffer) {
+static void rmff_dump_mdpr(rmff_mdpr_t *mdpr, uint8_t *buffer) {
 
   int s1, s2, s3;
 
@@ -143,7 +143,7 @@ static void rmff_dump_mdpr(rmff_mdpr_t *mdpr, char *buffer) {
 
 }
 
-static void rmff_dump_cont(rmff_cont_t *cont, char *buffer) {
+static void rmff_dump_cont(rmff_cont_t *cont, uint8_t *buffer) {
 
   int p;
 
@@ -183,7 +183,7 @@ static void rmff_dump_cont(rmff_cont_t *cont, char *buffer) {
   cont->object_id=_X_BE_32(&cont->object_id);
 }
 
-static void rmff_dump_dataheader(rmff_data_t *data, char *buffer) {
+static void rmff_dump_dataheader(rmff_data_t *data, uint8_t *buffer) {
 
   if (!data) return;
   data->object_id=_X_BE_32(&data->object_id);
@@ -203,7 +203,8 @@ static void rmff_dump_dataheader(rmff_data_t *data, char *buffer) {
   data->object_id=_X_BE_32(&data->object_id);
 }
 
-int rmff_dump_header(rmff_header_t *h, char *buffer, int max) {
+int rmff_dump_header(rmff_header_t *h, void *buf_gen, int max) {
+  uint8_t *buffer = buf_gen;
 
   int written=0;
   rmff_mdpr_t **stream=h->streams;
@@ -230,7 +231,7 @@ int rmff_dump_header(rmff_header_t *h, char *buffer, int max) {
   return written;
 }
 
-void rmff_dump_pheader(rmff_pheader_t *h, char *data) {
+void rmff_dump_pheader(rmff_pheader_t *h, uint8_t *data) {
 
   data[0]=(h->object_version>>8) & 0xff;
   data[1]=h->object_version & 0xff;

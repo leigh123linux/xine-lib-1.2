@@ -245,12 +245,12 @@ int rmff_get_header_size(rmff_header_t *h);
 /*
  * dumps the header <h> to <buffer>. <max> is the size of <buffer>
  */
-int rmff_dump_header(rmff_header_t *h, char *buffer, int max);
+int rmff_dump_header(rmff_header_t *h, void *buffer, int max);
 
 /*
  * dumps a packet header
  */
-void rmff_dump_pheader(rmff_pheader_t *h, char *data);
+void rmff_dump_pheader(rmff_pheader_t *h, uint8_t *data);
 
 /*
  * frees a header struct

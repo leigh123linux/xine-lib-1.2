@@ -59,7 +59,7 @@
 #define RIFF_TAG FOURCC_TAG('R', 'I', 'F', 'F')
 #define AVI_TAG FOURCC_TAG('A', 'V', 'I', ' ')
 #define CDXA_TAG FOURCC_TAG('C', 'D', 'X', 'A')
-#define MPEG_MARKER FOURCC_TAG( 0x00, 0x00, 0x01, 0xBA )
+#define MPEG_MARKER ME_FOURCC( 0x00, 0x00, 0x01, 0xBA )
 
 
 /* Xing header stuff */
@@ -608,8 +608,8 @@ static int demux_mpgaudio_next (demux_mpgaudio_t *this, int decoder_flags, int s
 	
         return parse_frame_payload(this, header_buf, decoder_flags);
         
-      } else if ( id3v2_istag(header_buf) ) {
-	if (!id3v2_parse_tag(this->input, this->stream, header_buf)) {
+      } else if ( id3v2_istag(_X_ME_32(header_buf)) ) {
+	if (!id3v2_parse_tag(this->input, this->stream, _X_ME_32(header_buf))) {
           xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
                   LOG_MODULE ": ID3V2 tag parsing error\n");
           bytes = 1; /* resync */
@@ -682,14 +682,11 @@ static int detect_mpgaudio_file(input_plugin_t *input) {
   if (preview_len < 4)
     return 0;
 
-  lprintf("got preview %02x %02x %02x %02x\n",
-    buf[0], buf[1], buf[2], buf[3]);
+  head = _X_ME_32(buf);
 
-  head = _X_BE_32(buf);
+  lprintf("got preview %08x\n", head);
 
-  if ((head == ID3V22_TAG) ||
-      (head == ID3V23_TAG) ||
-      (head == ID3V24_TAG)) {
+  if (id3v2_istag(head)) {
     /* check if a mp3 frame follows the tag
      * id3v2 are not specific to mp3 files,
      * flac files can contain id3v2 tags

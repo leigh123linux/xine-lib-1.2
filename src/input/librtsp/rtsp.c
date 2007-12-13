@@ -382,8 +382,8 @@ int rtsp_request_tearoff(rtsp_t *s, const char *what) {
  * read opaque data from stream
  */
 
-int rtsp_read_data(rtsp_t *s, char *buffer, unsigned int size) {
-
+int rtsp_read_data(rtsp_t *s, void *buffer_gen, unsigned int size) {
+  uint8_t *buffer = buffer_gen;
   int i,seq;
 
   if (size>=4) {

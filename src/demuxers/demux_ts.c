@@ -1078,7 +1078,7 @@ static void demux_ts_parse_pmt (demux_ts_t     *this,
   unsigned char *stream;
   unsigned int 	 i;
   int 		 count;
-  char 		*ptr = NULL;
+  uint8_t	*ptr = NULL;
   unsigned char  len;
   unsigned int   offset=0;  
   
