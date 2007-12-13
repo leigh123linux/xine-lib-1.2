@@ -70,42 +70,36 @@ typedef struct {
 static int open_aac_file(demux_aac_t *this) {
   int i;
   uint8_t peak[MAX_PREVIEW_SIZE];
+  uint32_t signature;
   uint16_t syncword = 0;
   uint32_t id3size = 0;
   off_t data_start = 0;
 
   _x_assert(MAX_PREVIEW_SIZE > 10);
 
-  /* Get enough data to be able to check the size of ID3 tag */
-  if (_x_demux_read_header(this->input, peak, 10) != 10)
+  if (_x_demux_read_header(this->input, &signature, 4) != 4)
       return 0;
 
   /* Check if there's an ID3v2 tag at the start */
-  if ( id3v2_istag(peak) ) {
-    id3size = _X_BE_32_synchsafe(&peak[6]);
-
+  if ( id3v2_istag(signature) ) {
     this->input->seek(this->input, 4, SEEK_SET);
 
-    id3v2_parse_tag(this->input, this->stream, peak);
-
-    lprintf("ID3v2 tag encountered, skipping %u bytes.\n", id3size);
+    id3v2_parse_tag(this->input, this->stream, signature);
   }
 
-  if ( this->input->read(this->input, peak, 4) != 4 )
+  if ( this->input->read(this->input, &signature, 4) != 4 )
     return 0;
 
   /* Check for an ADIF header - should be at the start of the file */
-  if ((peak[0] == 'A') && (peak[1] == 'D') &&
-      (peak[2] == 'I') && (peak[3] == 'F')) {
+  if ( signature == ME_FOURCC('A', 'D', 'I', 'F') ) {
     lprintf("found ADIF header\n");
     return 1;
   }
 
   /* Look for an ADTS header - might not be at the start of the file */
-  if ( id3size != 0 && this->input->get_capabilities(this->input) & INPUT_CAP_SEEKABLE ) {
-    lprintf("Getting a buffer of size %u starting from %u\n", MAX_PREVIEW_SIZE, id3size);
+  if ( this->input->get_capabilities(this->input) & INPUT_CAP_SEEKABLE ) {
+    lprintf("Getting a buffer of size %u\n", MAX_PREVIEW_SIZE);
 
-    this->input->seek(this->input, id3size, SEEK_SET);
     if ( this->input->read(this->input, peak, MAX_PREVIEW_SIZE) != MAX_PREVIEW_SIZE )
       return 0;
     this->input->seek(this->input, 0, SEEK_SET);
