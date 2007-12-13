@@ -859,17 +859,17 @@ int id3v2_parse_tag(input_plugin_t *input,
   switch(mp3_frame_header[3]) {
   case 2:
     xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.2 tag\n");
-    result = id3v22_parse_tag(input, stream, mp3_frame_header);
+    result = id3v22_parse_tag(input, stream, id3_signature);
     break;
    
   case 3:
     xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.3 tag\n");
-    result = id3v23_parse_tag(input, stream, mp3_frame_header);
+    result = id3v23_parse_tag(input, stream, id3_signature);
     break;
 
   case 4:
     xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.4 tag\n");
-    result = id3v24_parse_tag(input, stream, mp3_frame_header);
+    result = id3v24_parse_tag(input, stream, id3_signature);
     break;
 
   default:
