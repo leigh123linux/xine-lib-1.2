@@ -72,7 +72,7 @@ typedef struct faad_decoder_s {
   unsigned char   *dec_config;
   int              dec_config_size;
   
-  uint32_t         rate;
+  unsigned long    rate;
   int              bits_per_sample; 
   unsigned char    num_channels; 
   int              sbr;
