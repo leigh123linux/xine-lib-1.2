@@ -85,7 +85,7 @@ static int open_voc_file(demux_voc_t *this) {
     return 0;
 
   /* check the signature */
-  if (strncmp(header, VOC_SIGNATURE, strlen(VOC_SIGNATURE)) != 0)
+  if (memcmp(header, VOC_SIGNATURE, strlen(VOC_SIGNATURE)) != 0)
     return 0;
 
   /* file is qualified */

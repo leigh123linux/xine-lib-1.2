@@ -141,7 +141,7 @@ static int open_film_file(demux_film_t *film) {
     return 0;
 
   /* FILM signature correct? */
-  if (strncmp(scratch, "FILM", 4)) {
+  if (memcmp(scratch, "FILM", 4)) {
     return 0;
   }
   llprintf(DEBUG_FILM_LOAD, "found 'FILM' signature\n");
@@ -154,7 +154,7 @@ static int open_film_file(demux_film_t *film) {
   film_header = xine_xmalloc(film_header_size);
   if (!film_header)
     return 0;
-  strncpy(film->version, &scratch[8], 4);
+  memcpy(film->version, &scratch[8], 4);
   llprintf(DEBUG_FILM_LOAD, "0x%X header bytes, version %c%c%c%c\n",
     film_header_size,
     film->version[0],

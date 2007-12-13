@@ -1627,7 +1627,7 @@ static qt_error parse_reference_atom (reference_t *ref,
 
         /* URL is spec'd to terminate with a NULL; don't trust it */
         ref->url = xine_xmalloc(_X_BE_32(&ref_atom[i + 12]) + 1);
-        strncpy(ref->url, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
+        memcpy(ref->url, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
         ref->url[_X_BE_32(&ref_atom[i + 12]) - 1] = '\0';
 
       } else {
@@ -2039,28 +2039,28 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
     case NAM_ATOM:
       string_size = _X_BE_16(&moov_atom[i + 4]) + 1;
       info->name = realloc (info->name, string_size);
-      strncpy(info->name, &moov_atom[i + 8], string_size - 1);
+      memcpy(info->name, &moov_atom[i + 8], string_size - 1);
       info->name[string_size - 1] = 0;
       break;
 
     case CPY_ATOM:
       string_size = _X_BE_16(&moov_atom[i + 4]) + 1;
       info->copyright = realloc (info->copyright, string_size);
-      strncpy(info->copyright, &moov_atom[i + 8], string_size - 1);
+      memcpy(info->copyright, &moov_atom[i + 8], string_size - 1);
       info->copyright[string_size - 1] = 0;
       break;
 
     case DES_ATOM:
       string_size = _X_BE_16(&moov_atom[i + 4]) + 1;
       info->description = realloc (info->description, string_size);
-      strncpy(info->description, &moov_atom[i + 8], string_size - 1);
+      memcpy(info->description, &moov_atom[i + 8], string_size - 1);
       info->description[string_size - 1] = 0;
       break;
 
     case CMT_ATOM:
       string_size = _X_BE_16(&moov_atom[i + 4]) + 1;
       info->comment = realloc (info->comment, string_size);
-      strncpy(info->comment, &moov_atom[i + 8], string_size - 1);
+      memcpy(info->comment, &moov_atom[i + 8], string_size - 1);
       info->comment[string_size - 1] = 0;
       break;
 

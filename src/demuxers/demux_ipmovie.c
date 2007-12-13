@@ -531,7 +531,7 @@ static int open_ipmovie_file(demux_ipmovie_t *this) {
       IPMOVIE_SIGNATURE_SIZE)
     return 0;
 
-  if (strncmp(signature, IPMOVIE_SIGNATURE, IPMOVIE_SIGNATURE_SIZE) != 0)
+  if (memcmp(signature, IPMOVIE_SIGNATURE, IPMOVIE_SIGNATURE_SIZE) != 0)
     return 0;
 
   /* file is qualified; skip over the signature bytes (+ 6 unknown) in the stream */
