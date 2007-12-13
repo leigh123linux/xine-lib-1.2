@@ -2037,31 +2037,31 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
       break;
 
     case NAM_ATOM:
-      string_size = _X_BE_16(&moov_atom[i + 4]) + 1;
-      info->name = realloc (info->name, string_size);
-      memcpy(info->name, &moov_atom[i + 8], string_size - 1);
-      info->name[string_size - 1] = 0;
+      string_size = _X_BE_16(&moov_atom[i + 4]);
+      info->name = realloc (info->name, string_size + 1);
+      memcpy(info->name, &moov_atom[i + 8], string_size);
+      info->name[string_size] = 0;
       break;
 
     case CPY_ATOM:
-      string_size = _X_BE_16(&moov_atom[i + 4]) + 1;
-      info->copyright = realloc (info->copyright, string_size);
-      memcpy(info->copyright, &moov_atom[i + 8], string_size - 1);
-      info->copyright[string_size - 1] = 0;
+      string_size = _X_BE_16(&moov_atom[i + 4]);
+      info->copyright = realloc (info->copyright, string_size + 1);
+      memcpy(info->copyright, &moov_atom[i + 8], string_size);
+      info->copyright[string_size] = 0;
       break;
 
     case DES_ATOM:
-      string_size = _X_BE_16(&moov_atom[i + 4]) + 1;
-      info->description = realloc (info->description, string_size);
-      memcpy(info->description, &moov_atom[i + 8], string_size - 1);
-      info->description[string_size - 1] = 0;
+      string_size = _X_BE_16(&moov_atom[i + 4]);
+      info->description = realloc (info->description, string_size + 1);
+      memcpy(info->description, &moov_atom[i + 8], string_size);
+      info->description[string_size] = 0;
       break;
 
     case CMT_ATOM:
-      string_size = _X_BE_16(&moov_atom[i + 4]) + 1;
-      info->comment = realloc (info->comment, string_size);
-      memcpy(info->comment, &moov_atom[i + 8], string_size - 1);
-      info->comment[string_size - 1] = 0;
+      string_size = _X_BE_16(&moov_atom[i + 4]);
+      info->comment = realloc (info->comment, string_size + 1);
+      memcpy(info->comment, &moov_atom[i + 8], string_size);
+      info->comment[string_size] = 0;
       break;
 
     case RMDA_ATOM:
