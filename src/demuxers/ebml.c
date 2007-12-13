@@ -346,7 +346,7 @@ int ebml_read_master (ebml_parser_t *ebml, ebml_elem_t *elem) {
   }
 }
 
-int ebml_read_binary(ebml_parser_t *ebml, ebml_elem_t *elem, uint8_t *binary) {
+int ebml_read_binary(ebml_parser_t *ebml, ebml_elem_t *elem, void *binary) {
   if (!ebml_read_elem_data(ebml, binary, elem->len))
     return 0;
 
