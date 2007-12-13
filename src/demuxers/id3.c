@@ -873,7 +873,7 @@ int id3v2_parse_tag(input_plugin_t *input,
     break;
 
   default:
-    xprintf(stream->xine, XINE_VERBOSITY_LOG, "Unknown ID3v2 version: 0x%02x.\n", mp3_frame_header[3]);
+    xprintf(stream->xine, XINE_VERBOSITY_LOG, "Unknown ID3v2 signature: 0x%08x.\n", be2me_32(id3_signature));
   }
 
   return result;
