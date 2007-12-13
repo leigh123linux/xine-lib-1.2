@@ -1211,8 +1211,7 @@ static void decode_flac_header (demux_ogg_t *this, const int stream_num, ogg_pac
   _x_assert(op->packet[0] == 0x7F);
 
   /* OggFLAC signature */
-  _x_assert(op->packet[1] == 'F'); _x_assert(op->packet[2] == 'L');
-  _x_assert(op->packet[3] == 'A'); _x_assert(op->packet[4] == 'C');
+  _x_assert(_X_BE_32(&op->packet[1]) == ME_FOURCC('F', 'L', 'A', 'C'));
 
   /* Version: supported only 1.0 */
   _x_assert(op->packet[5] == 1); _x_assert(op->packet[6] == 0);
@@ -1221,8 +1220,7 @@ static void decode_flac_header (demux_ogg_t *this, const int stream_num, ogg_pac
   this->si[stream_num]->headers = 0/*_X_BE_16(&op->packet[7]) +1*/;
 
   /* fLaC signature */
-  _x_assert(op->packet[9] == 'f'); _x_assert(op->packet[10] == 'L');
-  _x_assert(op->packet[11] == 'a'); _x_assert(op->packet[12] == 'C');
+  _x_assert(_X_BE_32(&op->packet[9]) == ME_FOURCC('f', 'L', 'a', 'C'));
 
   _x_parse_flac_metadata_header(&op->packet[13], &header);
 
