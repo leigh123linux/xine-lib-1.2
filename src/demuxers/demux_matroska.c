@@ -1189,7 +1189,7 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       break;
         
       case MATROSKA_ID_TR_CODECPRIVATE: {
-        char *codec_private = malloc (elem.len);
+        uint8_t *codec_private = malloc (elem.len);
         lprintf("CodecPrivate\n");
         if (!ebml_read_binary(ebml, &elem, codec_private))
           return 0;
