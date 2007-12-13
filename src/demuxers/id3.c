@@ -856,18 +856,18 @@ int id3v2_parse_tag(input_plugin_t *input,
 
   int result = 0;
 
-  switch(mp3_frame_header[3]) {
-  case 2:
+  switch(id3_signature) {
+  case ID3V22_TAG:
     xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.2 tag\n");
     result = id3v22_parse_tag(input, stream, id3_signature);
     break;
    
-  case 3:
+  case ID3V23_TAG:
     xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.3 tag\n");
     result = id3v23_parse_tag(input, stream, id3_signature);
     break;
 
-  case 4:
+  case ID3V24_TAG:
     xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.4 tag\n");
     result = id3v24_parse_tag(input, stream, id3_signature);
     break;
