@@ -56,8 +56,8 @@ typedef struct post_plugin_deinterlace_s post_plugin_deinterlace_t;
 
 #define MAX_NUM_METHODS 30
 static const char *enum_methods[MAX_NUM_METHODS];
-static char *enum_pulldown[] = { "none", "vektor", NULL };
-static char *enum_framerate[] = { "full", "half_top", "half_bottom", NULL };
+static const char *enum_pulldown[] = { "none", "vektor", NULL };
+static const char *enum_framerate[] = { "full", "half_top", "half_bottom", NULL };
 
 static void *help_string;
 
