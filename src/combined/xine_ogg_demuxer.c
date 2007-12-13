@@ -1398,28 +1398,28 @@ static void send_header (demux_ogg_t *this) {
       if (!this->si[stream_num]->buf_types) {
 
         /* detect buftype */
-        if (!strncmp (&op.packet[1], "vorbis", 6)) {
+        if (!memcmp (&op.packet[1], "vorbis", 6)) {
           decode_vorbis_header(this, stream_num, &op);
-        } else if (!strncmp (&op.packet[0], "Speex", 5)) {
+        } else if (!memcmp (&op.packet[0], "Speex", 5)) {
           decode_speex_header(this, stream_num, &op);
-        } else if (!strncmp (&op.packet[1], "video", 5)) {
+        } else if (!memcmp (&op.packet[1], "video", 5)) {
           decode_video_header(this, stream_num, &op);
-        } else if (!strncmp (&op.packet[1], "audio", 5)) {
+        } else if (!memcmp (&op.packet[1], "audio", 5)) {
           decode_audio_header(this, stream_num, &op);
         } else if (op.bytes >= 142
-                   && !strncmp (&op.packet[1], "Direct Show Samples embedded in Ogg", 35) ) {
+                   && !memcmp (&op.packet[1], "Direct Show Samples embedded in Ogg", 35) ) {
           decode_dshow_header(this, stream_num, &op);
-        } else if (!strncmp (&op.packet[1], "text", 4)) {
+        } else if (!memcmp (&op.packet[1], "text", 4)) {
           decode_text_header(this, stream_num, &op);
-        } else if (!strncmp (&op.packet[1], "theora", 6)) {
+        } else if (!memcmp (&op.packet[1], "theora", 6)) {
           decode_theora_header(this, stream_num, &op);
-	} else if (!strncmp (&op.packet[1], "FLAC", 4)) {
+	} else if (!memcmp (&op.packet[1], "FLAC", 4)) {
 	  decode_flac_header(this, stream_num, &op);
-        } else if (!strncmp (&op.packet[0], "Annodex", 7)) {
+        } else if (!memcmp (&op.packet[0], "Annodex", 7)) {
           decode_annodex_header(this, stream_num, &op);
-        } else if (!strncmp (&op.packet[0], "AnxData", 7)) {
+        } else if (!memcmp (&op.packet[0], "AnxData", 7)) {
           decode_anxdata_header(this, stream_num, &op);
-	} else if (!strncmp (&op.packet[0], "CMML", 4)) {
+	} else if (!memcmp (&op.packet[0], "CMML", 4)) {
 	  decode_cmml_header(this, stream_num, &op);
         } else {
           xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
