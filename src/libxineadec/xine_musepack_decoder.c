@@ -129,7 +129,7 @@ static int32_t mpc_reader_tell(void *const data) {
 
 /* Returns the total length of the source stream, in bytes. */
 static int32_t mpc_reader_get_size(void *const data) {
-  mpc_decoder_t *const this = (const mpc_decoder_t *) data;
+  mpc_decoder_t *const this = (mpc_decoder_t *) data;
   
   lprintf("mpc_reader_get_size\n");
   
