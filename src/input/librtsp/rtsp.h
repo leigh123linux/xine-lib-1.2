@@ -51,7 +51,7 @@ int rtsp_request_tearoff(rtsp_t *s, const char *what);
 
 int rtsp_send_ok(rtsp_t *s);
 
-int rtsp_read_data(rtsp_t *s, char *buffer, unsigned int size);
+int rtsp_read_data(rtsp_t *s, void *buffer, unsigned int size);
 
 char* rtsp_search_answers(rtsp_t *s, const char *tag);
 void rtsp_add_to_payload(char **payload, const char *string);
