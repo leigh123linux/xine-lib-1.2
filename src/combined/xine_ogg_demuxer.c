@@ -1931,16 +1931,12 @@ static int detect_ogg_content (int detection_method, demux_class_t *class_gen,
   switch (detection_method) {
 
     case METHOD_BY_CONTENT: {
-      uint8_t buf[4];
+      uint32_t header;
 
-      if (_x_demux_read_header(input, buf, 4) != 4)
+      if (_x_demux_read_header(input, &header, 4) != 4)
         return 0;
 
-      if ((buf[0] == 'O') && (buf[1] == 'g') && (buf[2] == 'g') &&
-          (buf[3] == 'S'))
-        return 1;
-      else
-        return 0;
+      return !!( header == ME_FOURCC('O', 'g', 'g', 'S') );
     }
 
     case METHOD_BY_MRL:
