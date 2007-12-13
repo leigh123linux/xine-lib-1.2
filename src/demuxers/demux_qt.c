@@ -1619,33 +1619,28 @@ static qt_error parse_reference_atom (reference_t *ref,
     const qt_atom current_atom = _X_BE_32(&ref_atom[i]);
 
     switch (current_atom) {
-    case RDRF_ATOM:
+    case RDRF_ATOM: {
+      size_t string_size = _X_BE_32(&ref_atom[i + 12]);
+      size_t url_offset = 0;
 
       /* if the URL starts with "http://", copy it */
-      if (strncmp(&ref_atom[i + 16], "http://", 7) == 0
-        || strncmp(&ref_atom[i + 16], "rtsp://", 7) == 0) {
+      if ( memcmp(&ref_atom[i + 16], "http://", 7) &&
+	   memcmp(&ref_atom[i + 16], "rtsp://", 7) &&
+	   base_mrl )
+	url_offset = strlen(base_mrl);
 
-        /* URL is spec'd to terminate with a NULL; don't trust it */
-        ref->url = xine_xmalloc(_X_BE_32(&ref_atom[i + 12]) + 1);
-        memcpy(ref->url, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
-        ref->url[_X_BE_32(&ref_atom[i + 12]) - 1] = '\0';
+      /* otherwise, append relative URL to base MRL */
+      string_size += url_offset;
 
-      } else {
+      ref->url = xine_xmalloc(string_size + 1);
 
-        int string_size;
+      if ( url_offset )
+	strcpy(ref->url, base_mrl);
 
-	if (base_mrl)
-          string_size = strlen(base_mrl) + _X_BE_32(&ref_atom[i + 12]) + 1;
-	else
-          string_size = _X_BE_32(&ref_atom[i + 12]) + 1;
+      memcpy(ref->url + url_offset, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
 
-        /* otherwise, append relative URL to base MRL */
-        ref->url = xine_xmalloc(string_size);
-	if (base_mrl)
-          strcpy(ref->url, base_mrl);
-        strncat(ref->url, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
-        ref->url[string_size - 1] = '\0';
-      }
+      ref->url[string_size] = '\0';
+    }
 
       debug_atom_load("    qt rdrf URL reference:\n      %s\n", ref->url);
       break;
