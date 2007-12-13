@@ -736,7 +736,7 @@ static int is_qt_file(input_plugin_t *qt_file) {
   }
 }
 
-static char *parse_data_atom(unsigned char *data_atom) {
+static char *parse_data_atom(const uint8_t *data_atom) {
   const uint32_t data_atom_size = _X_BE_32(&data_atom[0]);
   
   static const int data_atom_max_version = 0;
