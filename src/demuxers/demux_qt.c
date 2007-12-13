@@ -938,8 +938,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
   /* search for the useful atoms */
   for (i = ATOM_PREAMBLE_SIZE; i < trak_atom_size - 4; i++) {
-    const current_atom_size = _X_BE_32(&trak_atom[i - 4]);	
-    const current_atom = _X_BE_32(&trak_atom[i]);
+    const uint32_t current_atom_size = _X_BE_32(&trak_atom[i - 4]);	
+    const qt_atom current_atom = _X_BE_32(&trak_atom[i]);
 
     switch(current_atom) {
     case TKHD_ATOM:
