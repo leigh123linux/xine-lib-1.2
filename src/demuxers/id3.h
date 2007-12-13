@@ -174,10 +174,7 @@ int id3v2_parse_tag(input_plugin_t *input,
  * @param ptr Pointer to the first 10 bytes of the ID3 tag
  */
 static inline int id3v2_istag(uint32_t id3_signature) {
-  return
-    (ptr[0] == 'I') &&
-    (ptr[1] == 'D') &&
-    (ptr[2] == '3');
+  return (id3_signature & ID3V2X_MASK) == ID3V2X_TAG;
 }
 
 #if 0

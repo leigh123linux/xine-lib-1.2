@@ -852,7 +852,7 @@ int id3v24_parse_tag(input_plugin_t *input,
 int id3v2_parse_tag(input_plugin_t *input,
 		    xine_stream_t *stream,
 		    uint32_t id3_signature) {
-  _x_assert(mp3_frame_header[0] == 'I' && mp3_frame_header[1] == 'D' && mp3_frame_header[2] == '3');
+  _x_assert((id3_signature & ID3V2X_MASK) == ID3V2X_TAG);
 
   int result = 0;
 
