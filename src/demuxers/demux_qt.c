@@ -1676,7 +1676,7 @@ static qt_error parse_reference_atom (reference_t *ref,
  * building a frame table. */
 #define MAX_DURATION 0x7FFFFFFFFFFFFFFFLL
 static void get_next_edit_list_entry(qt_trak *trak, 
-  int *edit_list_index,
+  unsigned int *edit_list_index,
   unsigned int *edit_list_media_time, 
   int64_t *edit_list_duration,
   unsigned int global_timescale) {
