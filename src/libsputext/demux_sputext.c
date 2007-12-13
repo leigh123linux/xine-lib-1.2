@@ -754,8 +754,9 @@ static subtitle_t *sub_read_line_jacobsub(demux_sputext_t *this, subtitle_t *cur
 		    int hours = 0, minutes = 0, seconds, delta, inverter =
 			1;
 		    unsigned units = jacoShift;
-		    switch (toupper(line1[1])) {
+		    switch (line1[1]) {
 		    case 'S':
+		    case 's':
 			if (isalpha(line1[2])) {
 			    delta = 6;
 			} else {
@@ -791,6 +792,7 @@ static subtitle_t *sub_read_line_jacobsub(demux_sputext_t *this, subtitle_t *cur
 			}
 			break;
 		    case 'T':
+		    case 't':
 			if (isalpha(line1[2])) {
 			    delta = 8;
 			} else {
@@ -825,26 +827,19 @@ static subtitle_t *sub_read_line_jacobsub(demux_sputext_t *this, subtitle_t *cur
 	    ++p;
 	}
 	if (isalpha(*p)||*p == '[') {
-	    int cont, jLength;
-
 	    if (sscanf(p, "%s %" LINE_LEN_QUOT "[^\n\r]", directive, line1) < 2)
 		return ERR;
-	    jLength = strlen(directive);
-	    for (cont = 0; cont < jLength; ++cont) {
-		if (isalpha(*(directive + cont)))
-		    *(directive + cont) = toupper(*(directive + cont));
-	    }
-	    if ((strstr(directive, "RDB") != NULL)
-		|| (strstr(directive, "RDC") != NULL)
-		|| (strstr(directive, "RLB") != NULL)
-		|| (strstr(directive, "RLG") != NULL)) {
+	    if ((strcasestr(directive, "RDB") != NULL)
+		|| (strcasestr(directive, "RDC") != NULL)
+		|| (strcasestr(directive, "RLB") != NULL)
+		|| (strcasestr(directive, "RLG") != NULL)) {
 		continue;
 	    }
 	    /* no alignment */
 #if 0
-	    if (strstr(directive, "JL") != NULL) {
+	    if (strcasestr(directive, "JL") != NULL) {
 		current->alignment = SUB_ALIGNMENT_HLEFT;
-	    } else if (strstr(directive, "JR") != NULL) {
+	    } else if (strcasestr(directive, "JR") != NULL) {
 		current->alignment = SUB_ALIGNMENT_HRIGHT;
 	    } else {
 		current->alignment = SUB_ALIGNMENT_HCENTER;
@@ -889,8 +884,8 @@ static subtitle_t *sub_read_line_jacobsub(demux_sputext_t *this, subtitle_t *cur
 		    ++p;
 		    break;
 		}
-		if ((toupper(*(p + 1)) == 'C')
-		    || (toupper(*(p + 1)) == 'F')) {
+		if ((*(p + 1) == 'C') || (*(p + 1) == 'c') ||
+		    (*(p + 1) == 'F') || (*(p + 1) == 'f')) {
 		    ++p,++p;
 		    break;
 		}
