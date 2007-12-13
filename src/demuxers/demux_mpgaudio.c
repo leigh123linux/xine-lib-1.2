@@ -686,9 +686,7 @@ static int detect_mpgaudio_file(input_plugin_t *input) {
 
   lprintf("got preview %08x\n", head);
 
-  if ((head == ID3V22_TAG) ||
-      (head == ID3V23_TAG) ||
-      (head == ID3V24_TAG)) {
+  if (id3v2_istag(head)) {
     /* check if a mp3 frame follows the tag
      * id3v2 are not specific to mp3 files,
      * flac files can contain id3v2 tags
