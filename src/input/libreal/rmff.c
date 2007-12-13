@@ -231,7 +231,7 @@ int rmff_dump_header(rmff_header_t *h, void *buf_gen, int max) {
   return written;
 }
 
-void rmff_dump_pheader(rmff_pheader_t *h, char *data) {
+void rmff_dump_pheader(rmff_pheader_t *h, uint8_t *data) {
 
   data[0]=(h->object_version>>8) & 0xff;
   data[1]=h->object_version & 0xff;

@@ -250,7 +250,7 @@ int rmff_dump_header(rmff_header_t *h, void *buffer, int max);
 /*
  * dumps a packet header
  */
-void rmff_dump_pheader(rmff_pheader_t *h, char *data);
+void rmff_dump_pheader(rmff_pheader_t *h, uint8_t *data);
 
 /*
  * frees a header struct
