@@ -153,26 +153,26 @@ int id3v1_parse_tag (input_plugin_t *input, xine_stream_t *stream);
 
 int id3v22_parse_tag(input_plugin_t *input,
                      xine_stream_t *stream,
-                     uint8_t *mp3_frame_header);
+                     uint32_t id3_signature);
 
 int id3v23_parse_tag(input_plugin_t *input,
                      xine_stream_t *stream,
-                     uint8_t *mp3_frame_header);
+                     uint32_t id3_signature);
 
 int id3v24_parse_tag(input_plugin_t *input,
                      xine_stream_t *stream,
-                     uint8_t *mp3_frame_header);
+                     uint32_t id3_signature);
 
 /* Generic function that switch between the three above */
 int id3v2_parse_tag(input_plugin_t *input,
 		    xine_stream_t *stream,
-		    uint8_t *mp3_frame_header);
+		    uint32_t id3_signature);
 
 /**
  * @brief Checks if the given buffer is an ID3 tag preamble
  * @param ptr Pointer to the first 10 bytes of the ID3 tag
  */
-static inline int id3v2_istag(uint8_t *ptr) {
+static inline int id3v2_istag(uint32_t id3_signature) {
   return
     (ptr[0] == 'I') &&
     (ptr[1] == 'D') &&

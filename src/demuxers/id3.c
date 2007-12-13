@@ -229,7 +229,7 @@ static int id3v2_parse_genre(char* dest, char *src, int len) {
   return 1;
 }
 
-static int id3v2_parse_header(input_plugin_t *input, uint8_t *mp3_frame_header,
+static int id3v2_parse_header(input_plugin_t *input, uint32_t id3_signature,
                               id3v2_header_t *tag_header) {
   uint8_t buf[6];
 
@@ -339,12 +339,12 @@ static int id3v22_interp_frame(input_plugin_t *input,
 
 int id3v22_parse_tag(input_plugin_t *input,
                      xine_stream_t *stream,
-                     uint8_t *mp3_frame_header) {
+                     uint32_t id3_signature) {
   id3v2_header_t tag_header;
   id3v22_frame_header_t tag_frame_header;
   int pos = 0;
 
-  if (id3v2_parse_header(input, mp3_frame_header, &tag_header)) {
+  if (id3v2_parse_header(input, id3_signature, &tag_header)) {
 
     if (tag_header.flags & ID3V22_ZERO_FLAG) {
       /* invalid flags */
@@ -532,13 +532,13 @@ static int id3v23_interp_frame(input_plugin_t *input,
 
 int id3v23_parse_tag(input_plugin_t *input,
                      xine_stream_t *stream,
-                     uint8_t *mp3_frame_header) {
+                     uint32_t id3_signature) {
   id3v2_header_t tag_header;
   id3v23_frame_header_t tag_frame_header;
   id3v23_frame_ext_header_t tag_frame_ext_header;
   int pos = 0;
 
-  if (id3v2_parse_header(input, mp3_frame_header, &tag_header)) {
+  if (id3v2_parse_header(input, id3_signature, &tag_header)) {
 
     if (tag_header.flags & ID3V23_ZERO_FLAG) {
       /* invalid flags */
@@ -783,13 +783,13 @@ static int id3v24_interp_frame(input_plugin_t *input,
 
 int id3v24_parse_tag(input_plugin_t *input,
                      xine_stream_t *stream,
-                     uint8_t *mp3_frame_header) {
+                     uint32_t id3_signature) {
   id3v2_header_t tag_header;
   id3v24_frame_header_t tag_frame_header;
   id3v24_frame_ext_header_t tag_frame_ext_header;
   int pos = 0;
 
-  if (id3v2_parse_header(input, mp3_frame_header, &tag_header)) {
+  if (id3v2_parse_header(input, id3_signature, &tag_header)) {
 
     if (tag_header.flags & ID3V24_ZERO_FLAG) {
       /* invalid flags */
@@ -851,7 +851,7 @@ int id3v24_parse_tag(input_plugin_t *input,
 
 int id3v2_parse_tag(input_plugin_t *input,
 		    xine_stream_t *stream,
-		    uint8_t *mp3_frame_header) {
+		    uint32_t id3_signature) {
   _x_assert(mp3_frame_header[0] == 'I' && mp3_frame_header[1] == 'D' && mp3_frame_header[2] == '3');
 
   int result = 0;
