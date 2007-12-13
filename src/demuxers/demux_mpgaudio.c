@@ -608,8 +608,8 @@ static int demux_mpgaudio_next (demux_mpgaudio_t *this, int decoder_flags, int s
 	
         return parse_frame_payload(this, header_buf, decoder_flags);
         
-      } else if ( id3v2_istag(header_buf) ) {
-	if (!id3v2_parse_tag(this->input, this->stream, header_buf)) {
+      } else if ( id3v2_istag(_X_ME_32(header_buf)) ) {
+	if (!id3v2_parse_tag(this->input, this->stream, _X_ME_32(header_buf))) {
           xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
                   LOG_MODULE ": ID3V2 tag parsing error\n");
           bytes = 1; /* resync */
