@@ -199,6 +199,8 @@ static int faad_open_output( faad_decoder_t *this ) {
     case 2:
       ao_cap_mode=AO_CAP_MODE_STEREO;
       break; 
+  default:
+    return 0;
   }
    
   this->output_open = (this->stream->audio_out->open) (this->stream->audio_out,
