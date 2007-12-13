@@ -1660,10 +1660,10 @@ static int parse_cue_point(demux_matroska_t *this) {
       this->num_indexes++;
     }
     if ((index->num_entries % 1024) == 0) {
-      index->pos = (off_t *)realloc(index->pos, sizeof(off_t) *
-                                    (index->num_entries + 1024));
-      index->timecode = (off_t *)realloc(index->timecode, sizeof(uint64_t) *
-                                         (index->num_entries + 1024));
+      index->pos = realloc(index->pos, sizeof(off_t) *
+			   (index->num_entries + 1024));
+      index->timecode = realloc(index->timecode, sizeof(uint64_t) *
+				(index->num_entries + 1024));
     }
     index->pos[index->num_entries] = pos;
     index->timecode[index->num_entries] = timecode;
