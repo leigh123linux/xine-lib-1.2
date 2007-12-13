@@ -59,7 +59,7 @@
 #define RIFF_TAG FOURCC_TAG('R', 'I', 'F', 'F')
 #define AVI_TAG FOURCC_TAG('A', 'V', 'I', ' ')
 #define CDXA_TAG FOURCC_TAG('C', 'D', 'X', 'A')
-#define MPEG_MARKER FOURCC_TAG( 0x00, 0x00, 0x01, 0xBA )
+#define MPEG_MARKER ME_FOURCC( 0x00, 0x00, 0x01, 0xBA )
 
 
 /* Xing header stuff */
@@ -682,10 +682,9 @@ static int detect_mpgaudio_file(input_plugin_t *input) {
   if (preview_len < 4)
     return 0;
 
-  lprintf("got preview %02x %02x %02x %02x\n",
-    buf[0], buf[1], buf[2], buf[3]);
+  head = _X_ME_32(buf);
 
-  head = _X_BE_32(buf);
+  lprintf("got preview %08x\n", head);
 
   if ((head == ID3V22_TAG) ||
       (head == ID3V23_TAG) ||
