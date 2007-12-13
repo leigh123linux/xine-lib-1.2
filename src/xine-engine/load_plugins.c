@@ -2579,15 +2579,8 @@ char *xine_get_demux_for_mime_type (xine_t *self, const char *mime_type) {
   plugin_catalog_t *catalog = self->plugin_catalog;
   plugin_node_t    *node;
   char             *id = NULL;
-  char             *mime_arg, *mime_demux;
-  char             *s;
   int               list_id, list_size;
 
-  /* create a copy and convert to lower case */  
-  mime_arg = strdup(mime_type);
-  for(s=mime_arg; *s; s++)
-    *s = tolower(*s);
-  
   pthread_mutex_lock (&catalog->lock);
 
   list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
@@ -2599,25 +2592,14 @@ char *xine_get_demux_for_mime_type (xine_t *self, const char *mime_type) {
     if (node->plugin_class || _load_plugin_class(self, node, NULL)) {
 
       cls = (demux_class_t *)node->plugin_class;
-
-      if (cls->mimetypes) {
-	mime_demux = strdup(cls->mimetypes);
       
-	for(s=mime_demux; *s; s++)
-	  *s = tolower(*s);
-      
-	if( strstr(mime_demux, mime_arg) )
+      if (cls->mimetypes && strcasestr(cls->mimetypes, mime_type) )
 	  id = strdup(node->info->id);
-      
-	free(mime_demux);
-      }
     }
   }
 
   pthread_mutex_unlock (&catalog->lock);
 
-  free(mime_arg);
-  
   return id;
 }
 
