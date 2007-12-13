@@ -233,13 +233,13 @@ static int id3v2_parse_header(input_plugin_t *input, uint32_t id3_signature,
                               id3v2_header_t *tag_header) {
   uint8_t buf[6];
 
-  tag_header->id = _X_BE_32(mp3_frame_header);
+  tag_header->id = be2me_32(id3_signature);
   if (input->read (input, buf, 6) == 6) {
     tag_header->revision = buf[0];
     tag_header->flags    = buf[1];
     tag_header->size     = _X_BE_32_synchsafe(&buf[2]);
 
-    lprintf("tag: ID3 v2.%d.%d\n", mp3_frame_header[3], tag_header->revision);
+    lprintf("tag: ID3 v2.%d.%d\n", tag_header->id & 0xFF, tag_header->revision);
     lprintf("flags: %d\n", tag_header->flags);
     lprintf("size: %d\n", tag_header->size);
     return 1;
