@@ -35,6 +35,8 @@
 #define ID3V24_TAG        BE_FOURCC('I', 'D', '3', 4) /* id3 v2.4 header tag */
 #define ID3V24_FOOTER_TAG BE_FOURCC('3', 'D', 'I', 0) /* id3 v2.4 footer tag */
 
+#define ID3V2X_TAG        ME_FOURCC('I', 'D', '3', 0) /* id3 v2.x header tag */
+#define ID3V2X_MASK      ~ME_FOURCC( 0 ,  0 ,  0 , 0xFF) /* id3 v2.x header mask */
 
 /*
  *  ID3 v2.2
