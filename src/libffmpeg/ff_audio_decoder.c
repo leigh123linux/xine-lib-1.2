@@ -22,9 +22,6 @@
  
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-# ifndef HAVE_FFMPEG
-#  include "ffmpeg_config.h"
-# endif
 #endif
 
 #include <stdlib.h>
@@ -432,105 +429,39 @@ void *init_audio_plugin (xine_t *xine, void *data) {
 }
 
 static uint32_t supported_audio_types[] = { 
-#if defined(HAVE_FFMPEG) || CONFIG_WMAV1_DECODER
   BUF_AUDIO_WMAV1,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_WMAV2_DECODER
   BUF_AUDIO_WMAV2,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_RA_144_DECODER
   BUF_AUDIO_14_4,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_RA_288_DECODER
   BUF_AUDIO_28_8,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_MP3_DECODER
   BUF_AUDIO_MPEG,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_MS_DECODER
   BUF_AUDIO_MSADPCM,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_IMA_QT_DECODER
   BUF_AUDIO_QTIMAADPCM,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_IMA_WAV_DECODER
   BUF_AUDIO_MSIMAADPCM,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_IMA_DK3_DECODER
   BUF_AUDIO_DK3ADPCM,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_IMA_DK4_DECODER
   BUF_AUDIO_DK4ADPCM,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_IMA_WS_DECODER
   BUF_AUDIO_VQA_IMA,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_IMA_SMJPEG_DECODER
   BUF_AUDIO_SMJPEG_IMA,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_XA_DECODER
   BUF_AUDIO_XA_ADPCM,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_4XM_DECODER
   BUF_AUDIO_4X_ADPCM,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_EA_DECODER
   BUF_AUDIO_EA_ADPCM,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_PCM_MULAW_DECODER
   BUF_AUDIO_MULAW,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_PCM_ALAW_DECODER
   BUF_AUDIO_ALAW,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_ROQ_DPCM_DECODER
   BUF_AUDIO_ROQ,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_INTERPLAY_DPCM_DECODER
   BUF_AUDIO_INTERPLAY,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_MACE3_DECODER
   BUF_AUDIO_MAC3,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_MACE6_DECODER
   BUF_AUDIO_MAC6,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_XAN_DPCM_DECODER
   BUF_AUDIO_XAN_DPCM,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_VMDAUDIO_DECODER
   BUF_AUDIO_VMD,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_FLAC_DECODER
   BUF_AUDIO_FLAC,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_SHORTEN_DECODER
   BUF_AUDIO_SHORTEN,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_ALAC_DECODER
   BUF_AUDIO_ALAC,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_QDM2_DECODER
   BUF_AUDIO_QDESIGN2,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_COOK_DECODER
   BUF_AUDIO_COOK,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_TRUESPEECH_DECODER
   BUF_AUDIO_TRUESPEECH,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_TTA_DECODER
   BUF_AUDIO_TTA,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_SMACKAUDIO_DECODER
   BUF_AUDIO_SMACKER,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_ADPCM_SWF_DECODER
   BUF_AUDIO_FLVADPCM,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_WAVPACK_DECODER
   BUF_AUDIO_WAVPACK,
-#endif
   
   0
 };
