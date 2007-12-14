@@ -9,4 +9,3 @@ noinst_LTLIBRARIES = libreal.la
 
 libreal_la_SOURCES = real.c asmrp.c rmff.c sdpplin.c
 libreal_la_LIBADD = $(AVUTIL_LIBS)
-libreal_la_DEPS = $(AVUTIL_DEPS)

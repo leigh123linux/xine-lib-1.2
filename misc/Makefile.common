@@ -14,9 +14,6 @@ $(XINE_LIB):
 $(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la:
 	$(MAKE) -C $(top_builddir)/contrib/libxdg-basedir
 
-$(top_builddir)/contrib/ffmpeg/libavutil/libavutil.a:
-	$(MAKE) -C $(top_builddir)/contrib/ ffmpeg/libavutil/libavutil.a
-
 install-data-hook:
 	@if test $$MAKELEVEL -le 4 ; then \
 	  if test -x "$(top_srcdir)/post-install.sh" ; then \

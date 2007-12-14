@@ -29,5 +29,4 @@ xineplug_decode_mpeg2_la_SOURCES = \
 	libmpeg2_accel.c
 
 xineplug_decode_mpeg2_la_LIBADD = $(MLIB_LIBS) $(XINE_LIB) $(AVUTIL_LIBS) -lm
-xineplug_decode_mpeg2_la_DEPS = $(AVUTIL_DEPS)
 xineplug_decode_mpeg2_la_CFLAGS = $(AM_CFLAGS) $(MLIB_CFLAGS) $(AVUTIL_CFLAGS)

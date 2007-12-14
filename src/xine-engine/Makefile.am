@@ -33,7 +33,7 @@ libxine_la_SOURCES = xine.c metronom.c configfile.c buffer.c \
 	input_rip.c input_cache.c info_helper.c refcounter.c \
 	alphablend.c
 
-libxine_la_DEPENDENCIES = $(XINEUTILS_LIB) $(XDG_BASEDIR_DEPS) $(AVUTIL_DEPS) \
+libxine_la_DEPENDENCIES = $(XINEUTILS_LIB) $(XDG_BASEDIR_DEPS) \
                           $(pthread_dep) $(LIBXINEPOSIX)
 libxine_la_LIBADD = $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL) $(ZLIB_LIBS) \
 		    -lm $(XINEUTILS_LIB) $(LTLIBICONV) $(FT2_LIBS) $(FONTCONFIG_LIBS) \

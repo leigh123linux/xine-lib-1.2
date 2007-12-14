@@ -4,25 +4,6 @@ AM_CFLAGS   = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_CPPFLAGS = $(ZLIB_CPPFLAGS)
 AM_LDFLAGS  = $(xineplug_ldflags)
 
-if !WITH_EXTERNAL_FFMPEG
-
-$(top_builddir)/contrib/ffmpeg/libavcodec/libavcodec.a:
-	$(MAKE) -C $(top_builddir)/contrib/ ffmpeg/libavcodec/libavcodec.a
-
-$(top_builddir)/contrib/ffmpeg/libpostproc/libpostproc.a:
-	$(MAKE) -C $(top_builddir)/contrib/ ffmpeg/libpostproc/libpostproc.a
-
-$(top_builddir)/contrib/ffmpeg/config.h:
-	$(MAKE) -C $(top_builddir)/contrib/ ffmpeg/config.mak
-
-ffmpeg_config.h: $(top_builddir)/contrib/ffmpeg/config.h
-	cp $(top_builddir)/contrib/ffmpeg/config.h ffmpeg_config.h
-
-BUILT_SOURCES = ffmpeg_config.h
-CLEANFILES    = $(BUILT_SOURCES)
-
-endif
-
 # this must always be included, even if the current machine has no DXR3...
 EXTRA_DIST = ffmpeg_encoder.c
 
@@ -44,7 +25,6 @@ nodist_xineplug_decode_ff_la_SOURCES = ffmpeg_config.h
 xineplug_decode_ff_la_CFLAGS = $(AM_CFLAGS) $(FFMPEG_CFLAGS) $(FFMPEG_POSTPROC_CFLAGS)
 xineplug_decode_ff_la_LIBADD = $(MLIB_LIBS) $(XINE_LIB) -lm $(ZLIB_LIBS) \
 	$(FFMPEG_LIBS) $(FFMPEG_POSTPROC_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
-xineplug_decode_ff_la_DEPS = $(FFMPEG_DEPS) $(FFMPEG_POSTPROC_DEPS)
 xineplug_decode_ff_la_LDFLAGS = $(AM_LDFLAGS) $(IMPURE_TEXT_LDFLAGS)
 
 xineplug_decode_dvaudio_la_SOURCES  = ff_dvaudio_decoder.c

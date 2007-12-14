@@ -45,4 +45,3 @@ xineplug_vo_out_dxr3_la_SOURCES = \
 
 xineplug_vo_out_dxr3_la_CFLAGS = $(AM_CFLAGS) $(AVUTIL_CFLAGS)
 xineplug_vo_out_dxr3_la_LIBADD = $(link_fame) $(link_rte) $(link_x_libs) $(XINE_LIB) $(LTLIBINTL) $(DYNAMIC_LD_LIBS) $(AVUTIL_LIBS) -lm
-xineplug_vo_out_dxr3_la_DEPS = $(AVUTIL_DEPS)
