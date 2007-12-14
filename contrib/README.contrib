@@ -10,42 +10,6 @@ release done by that project.
 This README file should explain how to upgrade the code present in the
 contrib/ directory with new sources from the development project.
 
-FFmpeg
-------
-
-FFmpeg does not have proper releases at the moment, which means that
-to be safe that the correct version of FFmpeg is used by xine-lib
-users, a copy of the Subversion repository has to be imported in the
-source package.
-
-To upgrade the code coming from FFmpeg project, you have to run the
-following commands:
-
-  cd ${xine-lib-checkout}/contrib
-  rm -rf ffmpeg
-  svn export svn://svn.mplayerhq.hu/ffmpeg/trunk ffmpeg
-  find ffmpeg > ffmpeg-distfiles
-
-This will take a new checkout of FFmpeg and put it in place; if there
-hasn't been functional changes in their build system, this should be
-enough (if there has been, and you don't know about them, you
-shouldn't be doing the contrib/ upgrade).
-
-After this, you need to make sure that Mercurial knows to remove the
-files that were removed by FFmpeg upstream and to add the files that
-were added by FFmpeg upstream. A way to handle this is (assuming that
-you didn't try to compile xine-lib with the updated ffmpeg yet):
-
-  cd ${xine-lib-checkout}/contrib/ffmpeg
-  hg status | egrep '^!' | cut -d ' ' -f 2 | xargs hg rm
-  hg status | egrep '^?' | cut -d ' ' -f 2 | xargs hg add
-
-This should register the file changes that happened.
-
-The ffmpeg-distfiles file is used by the make dist target to know
-which files needs to be copied over in the tarball file, so it's
-important that is always up to date.
-
 libxdg-basedir
 --------------
 
