@@ -92,64 +92,11 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
     AM_CONDITIONAL([ENABLE_FAAD], [test x"$enable_faad" != x"no"])
     AM_CONDITIONAL([WITH_EXTERNAL_FAAD], [test x"$have_external_faad" = x"yes"])
 
-    dnl ffmpeg (required; external version allowed)
-    AC_ARG_WITH([external-ffmpeg],
-                [AS_HELP_STRING([--with-external-ffmpeg], [use external ffmpeg library])],
-                [], [with_external_ffmpeg="no"])
-    AC_ARG_ENABLE([ffmpeg_uncommon_codecs],
-                  [AS_HELP_STRING([--disable-ffmpeg-uncommon-codecs], [don't build uncommon ffmpeg codecs])],
-                  [test x"$enableval" != x"no" && enable_ffmpeg_uncommon_codecs="yes"])
-    AC_ARG_ENABLE([ffmpeg_popular_codecs],
-                  [AS_HELP_STRING([--disable-ffmpeg-popular-codecs], [don't build popular ffmpeg codecs])],
-                  [test x"$enableval" != x"no" && enable_ffmpeg_popular_codecs="yes"])
-    case x"$with_external_ffmpeg" in
-        x"no") with_external_ffmpeg=no ;;
-        x"soft")
-            PKG_CHECK_MODULES([FFMPEG], [libavcodec >= 51.20.0], [with_external_ffmpeg=yes], [with_external_ffmpeg=no])
-	    PKG_CHECK_MODULES([AVUTIL], [libavutil], , [with_external_ffmpeg=no])
-            ;;
-        x*)
-            PKG_CHECK_MODULES([FFMPEG], [libavcodec >= 51.20.0], [with_external_ffmpeg=yes])
-	    PKG_CHECK_MODULES([AVUTIL], [libavutil])
-            ;;
-    esac
-    if test x"$with_external_ffmpeg" != x"no"; then
-        PKG_CHECK_MODULES([FFMPEG_POSTPROC], [libpostproc])
-        AC_DEFINE([HAVE_FFMPEG], 1, [Define this if you have ffmpeg library])
-   
-        AC_MSG_NOTICE([
-*********************************************************************
-xine-lib is configured with external ffmpeg.
-
-This requires the same version of ffmpeg what is included in xine and
-you should know what you do. If some problems occur, please try to
-use internal ffmpeg.
-*********************************************************************])
-    else
-        AC_MSG_RESULT([Using included ffmpeg])
-	FFMPEG_CFLAGS='$(AVUTIL_CFLAGS) -I$(top_srcdir)/contrib/ffmpeg/libavcodec'
-	FFMPEG_LIBS='$(top_builddir)/contrib/ffmpeg/libavcodec/libavcodec.a $(AVUTIL_LIBS)'
-	FFMPEG_DEPS='$(top_builddir)/contrib/ffmpeg/libavcodec/libavcodec.a $(AVUTIL_DEPS)'
-	FFMPEG_POSTPROC_CFLAGS='$(AVUTIL_CFLAGS) -I$(top_srcdir)/contrib/ffmpeg/libpostproc'
-	FFMPEG_POSTPROC_LIBS='$(top_builddir)/contrib/ffmpeg/libpostproc/libpostproc.a $(AVUTIL_LIBS)'
-	FFMPEG_POSTPROC_DEPS='$(top_builddir)/contrib/ffmpeg/libpostproc/libpostproc.a $(AVUTIL_DEPS)'
-	AVUTIL_CFLAGS='-I$(top_srcdir)/contrib/ffmpeg/libavutil'
-	AVUTIL_LIBS='$(top_builddir)/contrib/ffmpeg/libavutil/libavutil.a'
-	AVUTIL_DEPS='$(top_builddir)/contrib/ffmpeg/libavutil/libavutil.a'
-    fi
-    AC_SUBST([FFMPEG_CFLAGS])
-    AC_SUBST([FFMPEG_LIBS])
-    AC_SUBST([FFMPEG_DEPS])
-    AC_SUBST([FFMPEG_POSTPROC_CFLAGS])
-    AC_SUBST([FFMPEG_POSTPROC_LIBS])
-    AC_SUBST([FFMPEG_POSTPROC_DEPS])
-    AC_SUBST([AVUTIL_CFLAGS])
-    AC_SUBST([AVUTIL_LIBS])
-    AC_SUBST([AVUTIL_DEPS])
-    AM_CONDITIONAL([FFMPEG_DISABLE_UNCOMMON_CODECS], [test x"$enable_ffmpeg_uncommon_codecs" = x"no"])
-    AM_CONDITIONAL([FFMPEG_DISABLE_POPULAR_CODECS], [test x"$enable_ffmpeg_popular_codecs" = x"no"])
-    AM_CONDITIONAL([WITH_EXTERNAL_FFMPEG], [test x"$with_external_ffmpeg" != x"no"])
-
+    dnl ffmpeg external version required
+    PKG_CHECK_MODULES([FFMPEG], [libavcodec >= 51.20.0])
+    PKG_CHECK_MODULES([AVUTIL], [libavutil >= 49.6.0])
+    PKG_CHECK_MODULES([FFMPEG_POSTPROC], [libpostproc])
+    AC_DEFINE([HAVE_FFMPEG], 1, [Define this if you have ffmpeg library])
 
     dnl gdk-pixbuf (optional; enabled by default)
     AC_ARG_ENABLE([gdkpixbuf],
