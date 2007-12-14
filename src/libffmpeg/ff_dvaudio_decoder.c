@@ -40,26 +40,7 @@
 #include "buffer.h"
 #include "xineutils.h"
 
-#ifdef _MSC_VER
-/* ffmpeg has own definitions of those types */
-#  undef int8_t
-#  undef uint8_t
-#  undef int16_t
-#  undef uint16_t
-#  undef int32_t
-#  undef uint32_t
-#  undef int64_t
-#  undef uint64_t
-#endif
-
-#include <avcodec.h>
-#include <dvdata.h> /* This is not installed by FFmpeg, its usage has to be cleared up */
-
-#ifdef _MSC_VER
-#  undef malloc
-#  undef free
-#  undef realloc
-#endif
+#include "ff_dvdata.h" /* This is not installed by FFmpeg, its usage has to be cleared up */
 
 #define AUDIOBUFSIZE 128*1024
 #define MAXFRAMESIZE 131072
