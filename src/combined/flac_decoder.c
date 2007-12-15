@@ -388,7 +388,7 @@ init_plugin (xine_t *xine, void *data) {
     this->decoder_class.open_plugin     = open_plugin;
     this->decoder_class.identifier      = "flacdec";
     this->decoder_class.description     = N_("flac audio decoder plugin");
-    this->decoder_class.dispose         = default_audio_decoder_dispose;
+    this->decoder_class.dispose         = default_audio_decoder_class_dispose;
 
 
     return this;
