@@ -2533,7 +2533,7 @@ char *xine_get_mime_types (xine_t *self) {
 
       cls = (demux_class_t *)node->plugin_class;
 
-      if ( cls->mimetypes );
+      if ( cls->mimetypes )
 	len += strlen(cls->mimetypes);
     }
   }
