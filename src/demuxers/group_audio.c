@@ -42,7 +42,7 @@ static const demuxer_info_t demux_info_ac3 = {
 };
 
 static const demuxer_info_t demux_info_aud = {
-  10                      /* priority */
+  -2                      /* priority */
 };
 
 static const demuxer_info_t demux_info_aiff = {
