@@ -820,8 +820,8 @@ static int demux_real_parse_references( demux_real_t *this) {
     if( !strncmp(&buf[i],"-->",3) )
       comment = 0;
       
-    if( (!strncmp(&buf[i],"pnm://",6) || !strncmp(&buf[i],"rtsp://",7)) &&
-        !comment ) {
+    if( (!strncmp(&buf[i],"pnm://",6) || !strncmp(&buf[i],"rtsp://",7) ||
+         !strncmp(&buf[i],"http://",7)) && !comment ) {
       for(j=i; buf[j] && buf[j] != '"' && !isspace(buf[j]); j++ )
         ;
       buf[j]='\0';
@@ -1529,7 +1529,8 @@ static int real_check_stream_type(uint8_t *buf, int len)
     return 1;
 
   buf[len] = '\0';
-  if( strstr(buf,"pnm://") || strstr(buf,"rtsp://") || strstr(buf,"<smil>") )
+  if( strstr(buf,"pnm://") || strstr(buf,"rtsp://") || strstr(buf,"<smil>") ||
+      strstr(buf,"http://") )
     return 2;
 
   return 0;

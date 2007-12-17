@@ -109,7 +109,7 @@ void lexer_init(const char * buf, int size) {
     lex_convert (buf + 4, size - 4, UTF32BE);
   else if (size >= 4 && !memcmp (buf, boms, 4))
     lex_convert (buf + 4, size - 4, UTF32LE);
-  else if (size >= 3 && !memcmp (buf, bom_utf8, 4))
+  else if (size >= 3 && !memcmp (buf, bom_utf8, 3))
   {
     lexbuf += 3;
     lexbuf_size -= 3;
