@@ -894,7 +894,7 @@ static const char *get_extensions (demux_class_t *this_gen) {
 static const char *get_mimetypes (demux_class_t *this_gen) {
   return "video/x-flv: flv: Flash video;"
          "video/flv: flv: Flash video;"
-         "application/x-flash-video: flv: Flash video;"
+         "application/x-flash-video: flv: Flash video;";
 }
 
 static void class_dispose (demux_class_t *this_gen) {
