@@ -138,7 +138,7 @@ static int my_snd_mixer_wait(snd_mixer_t *mixer, int timeout) {
     return count;
   
   if ((unsigned int) count > sizeof(spfds) / sizeof(spfds[0])) {
-    pfds = malloc(count * sizeof(*pfds));
+    pfds = calloc(count, sizeof(*pfds));
     
     if (!pfds)
       return -ENOMEM;
