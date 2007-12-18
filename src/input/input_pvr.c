@@ -511,10 +511,7 @@ static char *make_temp_name(pvr_input_plugin_t *this, int page) {
 
   char *filename;
   
-  int size = strlen(this->tmp_prefix)+PVR_FILENAME_SIZE;
-  filename = malloc(size);
-      
-  snprintf(filename, size, PVR_FILENAME, this->tmp_prefix, this->session, page);
+  asprintf(&filename, PVR_FILENAME, this->tmp_prefix, this->session, page);
   
   return filename;
 }
@@ -527,12 +524,9 @@ static char *make_base_save_name(int channel, time_t tm) {
   struct tm rec_time;
   char *filename;
   
-  int size = SAVE_BASE_FILENAME_SIZE;
-  filename = malloc(size);
-  
   localtime_r(&tm, &rec_time);
       
-  snprintf(filename, size, SAVE_BASE_FILENAME, 
+  asprintf(&filename, SAVE_BASE_FILENAME, 
            channel, rec_time.tm_mon+1, rec_time.tm_mday,
            rec_time.tm_year+1900, rec_time.tm_hour, rec_time.tm_min,
            rec_time.tm_sec);
@@ -546,10 +540,7 @@ static char *make_save_name(pvr_input_plugin_t *this, char *base, int page) {
 
   char *filename;
   
-  int size = strlen(this->save_prefix)+strlen(base)+SAVE_FILENAME_SIZE;
-  filename = malloc(size);
-      
-  snprintf(filename, size, SAVE_FILENAME, this->save_prefix, base, page);
+  asprintf(&filename, SAVE_FILENAME, this->save_prefix, base, page);
   
   return filename;
 }
