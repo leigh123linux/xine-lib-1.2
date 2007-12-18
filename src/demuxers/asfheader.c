@@ -130,8 +130,7 @@ static uint8_t *asf_reader_get_bytes(asf_reader_t *reader, size_t size) {
 
   if ((reader->size - reader->pos) < size)
     return NULL;
-  buffer = malloc(size);
-  if (!buffer)
+  if (! (buffer = malloc(size)) )
     return NULL;
   memcpy(buffer, reader->buffer + reader->pos, size);
   reader->pos += size;
@@ -241,8 +240,7 @@ static int asf_header_parse_file_properties(asf_header_t *header, uint8_t *buffe
     return 0;
   }
 
-  asf_file = malloc(sizeof(asf_file_t));
-  if (!asf_file) {
+  if (! (asf_file = malloc(sizeof(asf_file_t))) ) {
     lprintf("cannot allocate asf_file_struct\n");
     return 0;
   }
@@ -296,8 +294,7 @@ static int asf_header_parse_stream_properties(asf_header_t *header, uint8_t *buf
   if (buffer_len < 54)
     goto exit_error;
 
-  asf_stream = malloc(sizeof(asf_stream_t));
-  if (!asf_stream)
+  if (! (asf_stream = malloc(sizeof(asf_stream_t))) )
     goto exit_error;
 
   asf_reader_init(&reader, buffer, buffer_len);
@@ -363,8 +360,7 @@ static int asf_header_parse_stream_extended_properties(asf_header_t *header, uin
   if (buffer_len < 64)
     return 0;
 
-  asf_stream_extension = malloc(sizeof(asf_stream_extension_t));
-  if (!asf_stream_extension)
+  if (! (asf_stream_extension = malloc(sizeof(asf_stream_extension_t))) )
     return 0;
 
   asf_reader_init(&reader, buffer, buffer_len);
@@ -581,10 +577,8 @@ static int asf_header_parse_content_description(asf_header_t *header_pub, uint8_
   if (buffer_len < 10)
     return 0;
 
-  content = malloc(sizeof(asf_content_t));
-  if (!content)
+  if (! (content = calloc(1, sizeof(asf_content_t))) )
     return 0;
-  memset(content, 0, sizeof(asf_content_t));
 
   asf_reader_init(&reader, buffer, buffer_len);
   asf_reader_get_16(&reader, &title_length);
@@ -611,10 +605,8 @@ asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len) {
   uint32_t object_count;
   uint16_t junk;
 
-  asf_header = malloc(sizeof(asf_header_internal_t));
-  if (!asf_header)
+  if (! (asf_header = calloc(1, sizeof(asf_header_internal_t))) )
     return NULL;
-  memset(asf_header, 0, sizeof(asf_header_internal_t));
 
   lprintf("parsing_asf_header\n");
   if (buffer_len < 6) {
@@ -697,10 +689,8 @@ asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len) {
   }
   if (!asf_header->pub.content) {
     lprintf("no content object present\n");
-    asf_header->pub.content = malloc(sizeof(asf_content_t));
-    if (!asf_header->pub.content)
+    if (! (asf_header->pub.content = calloc(1, sizeof(asf_content_t))) )
       goto exit_error;
-    memset(asf_header->pub.content, 0, sizeof(asf_content_t));
   }
 
   return &asf_header->pub;
