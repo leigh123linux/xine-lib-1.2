@@ -685,7 +685,6 @@ static int is_qt_file(input_plugin_t *qt_file) {
   off_t moov_atom_offset = -1;
   int64_t moov_atom_size = -1;
   int i;
-  unsigned char atom_preamble[ATOM_PREAMBLE_SIZE];
   int len;
 
   /* if the input is non-seekable, be much more stringent about qualifying
@@ -715,6 +714,7 @@ static int is_qt_file(input_plugin_t *qt_file) {
   if (moov_atom_offset == -1) {
     return 0;
   } else {
+    unsigned char atom_preamble[ATOM_PREAMBLE_SIZE];
     /* check that the next atom in the chunk contains alphanumeric
      * characters in the atom type field; if not, disqualify the file 
      * as a QT file */
