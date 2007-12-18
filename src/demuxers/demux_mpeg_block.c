@@ -1452,39 +1452,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   }
   break;
 
-  case METHOD_BY_MRL: {
-    char *ending;
-
-    const char *const mrl = input->get_mrl (input);
-
-    if(!strncmp(mrl, "vcd:", 4)) {
-      this->blocksize = 2324;
-      demux_mpeg_block_accept_input (this, input);
-    } else if(!strncmp(mrl, "dvd:", 4) || !strncmp(mrl, "pvr:", 4)) {
-      this->blocksize = 2048;
-      demux_mpeg_block_accept_input (this, input);
-    } else {
-      ending = strrchr(mrl, '.');
-
-      if (!ending) {
-        free (this->scratch_base);
-        free (this);
-        return NULL;
-      }
-      if ( (!strncasecmp (ending, ".vob", 4)) ||
-	   (!strncmp((ending + 3), "mpeg2", 5)) ||
-	   (!strncmp((ending + 3), "mpeg1", 5)) ) {
-        this->blocksize = 2048;
-        demux_mpeg_block_accept_input(this, input);
-      } else {
-        free (this->scratch_base);
-        free (this);
-        return NULL;
-      }
-    }
-  }
-  break;
-
+  case METHOD_BY_MRL:
   case METHOD_EXPLICIT: {
 
     this->blocksize = input->get_blocksize(input);
@@ -1525,7 +1493,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->demux_class.description     = N_("DVD/VOB demux plugin");
   this->demux_class.identifier      = "MPEG_BLOCK";
   this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = "vob";
+  this->demux_class.extensions      = "vob vcd:/ dvd:/ pvr:/";
   this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
