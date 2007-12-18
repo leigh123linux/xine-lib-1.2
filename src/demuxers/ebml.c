@@ -315,25 +315,25 @@ int ebml_read_date (ebml_parser_t *ebml, ebml_elem_t *elem, int64_t *date) {
 int ebml_read_master (ebml_parser_t *ebml, ebml_elem_t *elem) {
   ebml_elem_t *top_elem;
 
-  if (ebml->level >= 0) {
-    top_elem = &ebml->elem_stack[ebml->level];
-    top_elem->start = elem->start;
-    top_elem->len = elem->len;
-    top_elem->id = elem->id;
-  
-    ebml->level++;
-    lprintf("id: 0x%x, len: %" PRIu64 ", level: %d\n", elem->id, elem->len, ebml->level);
-    if (ebml->level >= EBML_STACK_SIZE) {
-      xprintf(ebml->xine, XINE_VERBOSITY_LOG,
-              "ebml: max level exceeded\n");
-      return 0;
-    }
-    return 1;
-  } else {
+  if (ebml->level < 0) {
     xprintf(ebml->xine, XINE_VERBOSITY_LOG,
             "ebml: invalid current level\n");
     return 0;
   }
+
+  top_elem = &ebml->elem_stack[ebml->level];
+  top_elem->start = elem->start;
+  top_elem->len = elem->len;
+  top_elem->id = elem->id;
+  
+  ebml->level++;
+  lprintf("id: 0x%x, len: %" PRIu64 ", level: %d\n", elem->id, elem->len, ebml->level);
+  if (ebml->level >= EBML_STACK_SIZE) {
+    xprintf(ebml->xine, XINE_VERBOSITY_LOG,
+	    "ebml: max level exceeded\n");
+    return 0;
+  }
+  return 1;
 }
 
 int ebml_read_binary(ebml_parser_t *ebml, ebml_elem_t *elem, void *binary) {
