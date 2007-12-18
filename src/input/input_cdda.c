@@ -418,10 +418,9 @@ static int read_cdrom_toc(int fd, cdrom_toc *toc) {
   toc->total_tracks = toc->last_track - toc->first_track + 1;
   
   /* allocate space for the toc entries */
-  toc->toc_entries =
-    (cdrom_toc_entry *)malloc(toc->total_tracks * sizeof(cdrom_toc_entry));
+  toc->toc_entries = calloc(toc->total_tracks, sizeof(cdrom_toc_entry));
   if (!toc->toc_entries) {
-    perror("malloc");
+    perror("calloc");
     return -1;
   }
 
@@ -529,10 +528,9 @@ static int read_cdrom_toc(int fd, cdrom_toc *toc) {
   toc->total_tracks = toc->last_track - toc->first_track + 1;
 
   /* allocate space for the toc entries */
-  toc->toc_entries =
-    (cdrom_toc_entry *)malloc(toc->total_tracks * sizeof(cdrom_toc_entry));
+  toc->toc_entries = calloc(toc->total_tracks, sizeof(cdrom_toc_entry));
   if (!toc->toc_entries) {
-    perror("malloc");
+    perror("calloc");
     return -1;
   }
 
@@ -642,10 +640,9 @@ static int read_cdrom_toc(int fd, cdrom_toc *toc) {
   toc->total_tracks = toc->last_track - toc->first_track + 1;
 
   /* allocate space for the toc entries */
-  toc->toc_entries =
-    (cdrom_toc_entry *)malloc(toc->total_tracks * sizeof(cdrom_toc_entry));
+  toc->toc_entries = calloc(toc->total_tracks, sizeof(cdrom_toc_entry));
   if (!toc->toc_entries) {
-    perror("malloc");
+    perror("calloc");
     return -1;
   }
 
@@ -835,10 +832,9 @@ static int read_cdrom_toc(cdda_input_plugin_t *this_gen, cdrom_toc *toc) {
 
      
       /* allocate space for the toc entries */
-      toc->toc_entries =
-          (cdrom_toc_entry *)malloc(toc->total_tracks * sizeof(cdrom_toc_entry));
+      toc->toc_entries = calloc(toc->total_tracks, sizeof(cdrom_toc_entry));
       if (!toc->toc_entries) {
-          perror("malloc");
+          perror("calloc");
           return -1;
       }
   
@@ -1081,10 +1077,9 @@ static int network_read_cdrom_toc(xine_stream_t *stream, int fd, cdrom_toc *toc)
   toc->total_tracks = toc->last_track - toc->first_track + 1;
 
   /* allocate space for the toc entries */
-  toc->toc_entries =
-    (cdrom_toc_entry *)malloc(toc->total_tracks * sizeof(cdrom_toc_entry));
+  toc->toc_entries = calloc(toc->total_tracks, sizeof(cdrom_toc_entry));
   if (!toc->toc_entries) {
-    perror("malloc");
+    perror("calloc");
     return -1;
   }
 
