@@ -80,7 +80,6 @@ typedef struct {
   char             proxybuf[BUFSIZE];
 
   char             auth[BUFSIZE];
-  char             proxyauth[BUFSIZE];
   
   char             preview[MAX_PREVIEW_SIZE];
   off_t            preview_size;
@@ -667,6 +666,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   int                  use_proxy;
   int                  proxyport;
   int                  mpegurl_redirect = 0;
+  char                 proxyauth[BUFSIZE];
   
   use_proxy = this_class->proxyhost && strlen(this_class->proxyhost);
   
@@ -674,7 +674,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
     if (this_class->proxyuser && strlen(this_class->proxyuser)) {
       if (http_plugin_basicauth (this_class->proxyuser,
 			         this_class->proxypassword,
-				 this->proxyauth, BUFSIZE)) {
+				 proxyauth, BUFSIZE)) {
 	_x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "proxy error", NULL);
 	return 0;
       }
@@ -776,7 +776,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   buflen = strlen(this->buf);
   if (this_class->proxyuser && strlen(this_class->proxyuser)) {
     snprintf (this->buf + buflen, BUFSIZE - buflen,
-              "Proxy-Authorization: Basic %s\015\012", this->proxyauth);
+              "Proxy-Authorization: Basic %s\015\012", proxyauth);
     buflen = strlen(this->buf);
   }
   if (this->user && strlen(this->user)) {
