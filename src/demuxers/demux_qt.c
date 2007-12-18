@@ -801,31 +801,33 @@ static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
 	const uint8_t *const sub_atom = &meta_atom[j];
 	const qt_atom sub_atom_code = _X_BE_32(&sub_atom[4]);
 	const uint32_t sub_atom_size = _X_BE_32(&sub_atom[0]);
+	char *const data_atom = parse_data_atom(&sub_atom[8]);
 
 	switch(sub_atom_code) {
 	case ART_ATOM:
-	  info->artist = parse_data_atom(&sub_atom[8]);
+	  info->artist = data_atom;
 	  break;
 	case NAM_ATOM:
-	  info->name = parse_data_atom(&sub_atom[8]);
+	  info->name = data_atom;
 	  break;
 	case ALB_ATOM:
-	  info->album = parse_data_atom(&sub_atom[8]);
+	  info->album = data_atom;
 	  break;
 	case GEN_ATOM:
-	  info->genre = parse_data_atom(&sub_atom[8]);
+	  info->genre = data_atom;
 	  break;
 	case CMT_ATOM:
-	  info->comment = parse_data_atom(&sub_atom[8]);
+	  info->comment = data_atom;
 	  break;
 	case WRT_ATOM:
-	  info->composer = parse_data_atom(&sub_atom[8]);
+	  info->composer = data_atom;
 	  break;
 	case DAY_ATOM:
-	  info->year = parse_data_atom(&sub_atom[8]);
+	  info->year = data_atom;
 	  break;
 	default:
 	  debug_meta_load("unknown atom %08x in ilst\n", sub_atom_code);
+	  free(data_atom);
 	}
 
 	j += sub_atom_size;
