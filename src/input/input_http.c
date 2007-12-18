@@ -249,7 +249,7 @@ static int http_plugin_basicauth (const char *user, const char *password, char* 
   if (len < enclen)
     return -1;
   
-  tmp = malloc (sizeof(char) * (totlen + 1));
+  tmp = malloc (totlen + 1);
   strcpy (tmp, user);
   strcat (tmp, ":");
   if (password != NULL)
