@@ -232,7 +232,7 @@ static int _x_use_proxy(http_input_class_t *this, const char *host) {
 }
 
 static int http_plugin_basicauth (const char *user, const char *password, char* dest, int len) {
-  static char *enctable="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+  static const char enctable[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
   char        *tmp;
   char        *sptr;
   char        *dptr;
