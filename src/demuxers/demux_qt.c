@@ -706,10 +706,7 @@ static int is_qt_file(input_plugin_t *qt_file) {
         i = moov_atom_size + ATOM_PREAMBLE_SIZE;
         if (i >= MAX_PREVIEW_SIZE)
           return 0;
-        if (_X_BE_32(&preview[i - 4]) == MOOV_ATOM)
-          return 1;
-        else
-          return 0;
+	return _X_BE_32(&preview[i - 4]) == MOOV_ATOM;
       } else
         return 0;
     }
