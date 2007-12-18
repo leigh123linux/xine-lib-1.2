@@ -1287,14 +1287,11 @@ static void _cdda_mkdir_safe(xine_t *xine, char *path) {
  */
 static void _cdda_mkdir_recursive_safe(xine_t *xine, char *path) {
   char *p, *pp;
-  char buf[XINE_PATH_MAX + XINE_NAME_MAX + 1];
-  char buf2[XINE_PATH_MAX + XINE_NAME_MAX + 1];
+  char buf[XINE_PATH_MAX + XINE_NAME_MAX + 1] = { 0, };
+  char buf2[XINE_PATH_MAX + XINE_NAME_MAX + 1] = { 0, };
 
   if(path == NULL)
     return;
-
-  memset(&buf, 0, sizeof(buf));
-  memset(&buf2, 0, sizeof(buf2));
 
   snprintf(buf, sizeof(buf), "%s", path);
   pp = buf;
@@ -1438,7 +1435,6 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
     while((pdir = readdir(dir)) != NULL) {
       char discid[9];
       
-      memset(&discid, 0, sizeof(discid));
       snprintf(discid, sizeof(discid), "%08lx", this->cddb.disc_id);
      
       if(!strcasecmp(pdir->d_name, discid)) {
