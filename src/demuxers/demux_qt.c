@@ -1004,18 +1004,17 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
         const uint32_t current_stsd_atom_size = _X_BE_32(&trak_atom[atom_pos - 4]);      
 
-	/* for palette traversal */
-	int color_depth;
-	int color_flag;
-	int color_start;
-	int color_count;
-	int color_end;
-	int color_index;
-	int color_dec;
-	int color_greyscale;
-	const unsigned char *color_table;
-
         if (trak->type == MEDIA_VIDEO) {
+	  /* for palette traversal */
+	  int color_depth;
+	  int color_flag;
+	  int color_start;
+	  int color_count;
+	  int color_end;
+	  int color_index;
+	  int color_dec;
+	  int color_greyscale;
+	  const unsigned char *color_table;
 
           trak->stsd_atoms[k].video.media_id = k + 1;
           trak->stsd_atoms[k].video.properties_offset = properties_offset;
