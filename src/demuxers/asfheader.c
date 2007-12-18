@@ -63,7 +63,6 @@ struct asf_header_internal_s {
   /* private part */
   int                     number_count;
   uint16_t                numbers[ASF_MAX_NUM_STREAMS];
-  iconv_t                 iconv_cd;
   uint8_t                *bitrate_pointers[ASF_MAX_NUM_STREAMS];
 };
 
@@ -573,11 +572,15 @@ static int asf_header_parse_content_description(asf_header_t *header_pub, uint8_
   asf_reader_t reader;
   asf_content_t *content;
   uint16_t title_length, author_length, copyright_length, description_length, rating_length;
+  iconv_t iconv_cd;
 
   if (buffer_len < 10)
     return 0;
 
   if (! (content = calloc(1, sizeof(asf_content_t))) )
+    return 0;
+
+  if ( (iconv_cd = iconv_open("UTF-8", "UCS-2LE")) == (iconv_t)-1 )
     return 0;
 
   asf_reader_init(&reader, buffer, buffer_len);
@@ -587,13 +590,15 @@ static int asf_header_parse_content_description(asf_header_t *header_pub, uint8_
   asf_reader_get_16(&reader, &description_length);
   asf_reader_get_16(&reader, &rating_length);
 
-  content->title = asf_reader_get_string(&reader, title_length, header->iconv_cd);
-  content->author = asf_reader_get_string(&reader, author_length, header->iconv_cd);
-  content->copyright = asf_reader_get_string(&reader, copyright_length, header->iconv_cd);
-  content->description = asf_reader_get_string(&reader, description_length, header->iconv_cd);
-  content->rating = asf_reader_get_string(&reader, rating_length, header->iconv_cd);
+  content->title = asf_reader_get_string(&reader, title_length, iconv_cd);
+  content->author = asf_reader_get_string(&reader, author_length, iconv_cd);
+  content->copyright = asf_reader_get_string(&reader, copyright_length, iconv_cd);
+  content->description = asf_reader_get_string(&reader, description_length, iconv_cd);
+  content->rating = asf_reader_get_string(&reader, rating_length, iconv_cd);
 
   header->pub.content = content;
+
+  iconv_close(iconv_cd);
   return 1;
 }
 
@@ -613,13 +618,6 @@ asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len) {
 
   if (! (asf_header = calloc(1, sizeof(asf_header_internal_t))) )
     return NULL;
-
-  asf_header->iconv_cd = iconv_open ("UTF-8", "UCS-2LE");
-  if (asf_header->iconv_cd == (iconv_t)-1) {
-    printf("iconv open error\n");
-    free(asf_header);
-    return NULL;
-  }
 
   asf_reader_init(&reader, buffer, buffer_len);
   asf_reader_get_32(&reader, &object_count);
@@ -755,9 +753,6 @@ void asf_header_delete (asf_header_t *header_pub) {
       asf_header_delete_stream_extended_properties(header->pub.stream_extensions[i]);
   }
   
-  if (header->iconv_cd != (iconv_t)-1)
-    iconv_close (header->iconv_cd);
-
   free(header);
 }
 
