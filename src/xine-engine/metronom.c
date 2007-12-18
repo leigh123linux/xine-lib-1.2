@@ -176,7 +176,6 @@ static scr_plugin_t* unixscr_init () {
   unixscr_t *this;
 
   this = (unixscr_t *) xine_xmalloc(sizeof(unixscr_t));
-  memset(this, 0, sizeof(*this));
   
   this->scr.interface_version = 3;
   this->scr.get_priority      = unixscr_get_priority;
