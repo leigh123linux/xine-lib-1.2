@@ -700,15 +700,14 @@ static int is_qt_file(input_plugin_t *qt_file) {
 	return 0;
 
       /* show some lenience if the first atom is 'ftyp'; the second atom
-       * could be 'moov' */
-      moov_atom_size = _X_BE_32(&preview[0]);
-      /* compute the size of the current atom plus the preamble of the
+       * could be 'moov'
+       * compute the size of the current atom plus the preamble of the
        * next atom; if the size is within the range on the preview buffer
        * then the next atom's preamble is in the preview buffer */
-      i = moov_atom_size + ATOM_PREAMBLE_SIZE;
-      if (i >= MAX_PREVIEW_SIZE)
+      uint64_t ftyp_atom_size = _X_BE_32(&preview[0]) + ATOM_PREAMBLE_SIZE;
+      if (ftyp_atom_size >= MAX_PREVIEW_SIZE)
 	return 0;
-      return _X_BE_32(&preview[i - 4]) == MOOV_ATOM;
+      return _X_BE_32(&preview[ftyp_atom_size - 4]) == MOOV_ATOM;
     }
   }
 
