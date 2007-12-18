@@ -302,12 +302,6 @@ static int demux_wv_seek (demux_plugin_t *this_gen,
   return this->status;
 }
 
-static void demux_wv_dispose (demux_plugin_t *const this_gen) {
-  demux_wv_t *const this = (demux_wv_t *) this_gen;
-
-  free(this);
-}
-
 static int demux_wv_get_status (demux_plugin_t *const this_gen) {
   const demux_wv_t *const this = (const demux_wv_t *) this_gen;
 
@@ -339,7 +333,7 @@ static demux_plugin_t *open_plugin (demux_class_t *const class_gen,
   this->demux_plugin.send_headers      = demux_wv_send_headers;
   this->demux_plugin.send_chunk        = demux_wv_send_chunk;
   this->demux_plugin.seek              = demux_wv_seek;
-  this->demux_plugin.dispose           = demux_wv_dispose;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
   this->demux_plugin.get_status        = demux_wv_get_status;
   this->demux_plugin.get_stream_length = demux_wv_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_wv_get_capabilities;
