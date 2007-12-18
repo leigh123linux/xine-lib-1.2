@@ -464,7 +464,7 @@ int _x_demux_check_extension (const char *mrl, const char *extensions){
 
   while ( ( e = xine_strsep(&ext_work, " ")) != NULL ) {
     if ( strstr(e, ":/") ) {
-      if ( strcasecmp (mrl, e) == 0 ) {
+      if ( strncasecmp (mrl, e, strlen (e)) == 0 ) {
 	found = 1;
 	break;
       }
