@@ -473,9 +473,7 @@ rtsp_t *rtsp_connect(xine_stream_t *stream, const char *mrl, const char *user_ag
   pathbegin=slash-mrl_ptr;
   hostend=colon-mrl_ptr;
 
-  s->host = malloc(sizeof(char)*hostend+1);
-  strncpy(s->host, mrl_ptr, hostend);
-  s->host[hostend]=0;
+  s->host = strndup(mrl_ptr, hostend);
 
   if (pathbegin < strlen(mrl_ptr)) s->path=strdup(mrl_ptr+pathbegin+1);
   if (colon != slash) {
