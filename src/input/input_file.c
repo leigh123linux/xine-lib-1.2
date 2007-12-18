@@ -337,7 +337,7 @@ static int file_plugin_open (input_plugin_t *this_gen ) {
 
   lprintf("file_plugin_open\n");
 
-  if (strncasecmp (this->mrl, "file:", 5) == 0)
+  if (strncasecmp (this->mrl, "file:/", 6) == 0)
   {
     if (strncasecmp (this->mrl, "file://localhost/", 16) == 0)
       filename = decode_uri(&(this->mrl[16]));
@@ -347,42 +347,26 @@ static int file_plugin_open (input_plugin_t *this_gen ) {
       filename = decode_uri(&(this->mrl[5]));
   }
   else
-    filename = decode_uri(this->mrl);
+    filename = strdup(this->mrl); /* NEVER unescape plain file names! */
 
   this->fh = open (filename, O_RDONLY|O_BINARY);
-  
-  free(filename);
 
   if (this->fh == -1) {
-    /* try again without unescaping; such MRLs might be invalid,
-     * but we are a nice software */
-    if (strncasecmp (this->mrl, "file:", 5) == 0)
-    {
-      if (strncasecmp (this->mrl, "file://localhost/", 16) == 0)
-        this->fh = open(&this->mrl[16], O_RDONLY|O_BINARY);
-      else if (strncasecmp (this->mrl, "file://127.0.0.1/", 16) == 0)
-        this->fh = open(&this->mrl[16], O_RDONLY|O_BINARY);
-      else
-        this->fh = open(&this->mrl[5], O_RDONLY|O_BINARY);
+    if (errno == EACCES) {
+      _x_message(this->stream, XINE_MSG_PERMISSION_ERROR, this->mrl, NULL);
+      xine_log (this->stream->xine, XINE_LOG_MSG,
+                _("input_file: Permission denied: >%s<\n"), this->mrl);
+    } else if (errno == ENOENT) {
+      _x_message(this->stream, XINE_MSG_FILE_NOT_FOUND, this->mrl, NULL);
+      xine_log (this->stream->xine, XINE_LOG_MSG,
+                _("input_file: File not found: >%s<\n"), this->mrl);
     }
-    else
-      this->fh = open(this->mrl, O_RDONLY|O_BINARY);
 
-    if (this->fh == -1) {
-      if (errno == EACCES) {
-        _x_message(this->stream, XINE_MSG_PERMISSION_ERROR, this->mrl, NULL);
-	xine_log (this->stream->xine, XINE_LOG_MSG,
-		  _("input_file: Permission denied: >%s<\n"), this->mrl);
-	return -1;
-      } else if (errno == ENOENT) {
-        _x_message(this->stream, XINE_MSG_FILE_NOT_FOUND, this->mrl, NULL);
-	xine_log (this->stream->xine, XINE_LOG_MSG,
-		  _("input_file: File not found: >%s<\n"), this->mrl);
-      }
-
-      return -1;
-    }
+    free(filename);
+    return -1;
   }
+
+  free(filename);
 
 #ifdef HAVE_MMAP
   this->mmap_on = 0;

@@ -35,6 +35,7 @@
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <ctype.h>
 #if defined (__linux__) || defined (__GLIBC__)
 #include <endian.h>
 #elif defined (__FreeBSD__)
@@ -819,9 +820,9 @@ void _x_flush_events_queues (xine_stream_t *stream) {
   pthread_mutex_unlock (&stream->event_queues_lock);
 }
 
-static int open_internal (xine_stream_t *stream, const char *mrl) {
+/*static*/ int open_internal (xine_stream_t *stream, const char *mrl) {
 
-  const char *stream_setup;
+  const char *stream_setup = NULL;
   int no_cache = 0;
   
   if (!mrl) {
@@ -846,13 +847,19 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
    * look for a stream_setup in MRL and try finding an input plugin
    */
 
-  stream_setup = mrl;
-  /* look for the next '#' or try the whole MRL, if none is found */
-  while (*stream_setup &&
-	(stream_setup = (strchr(stream_setup, '#') ? strchr(stream_setup, '#') : strlen(mrl) + mrl))) {
-    char input_source[stream_setup - mrl + 1];
-    memcpy(input_source, mrl, stream_setup - mrl);
-    input_source[stream_setup - mrl] = '\0';
+  if (isalpha (*mrl))
+  {
+    stream_setup = mrl + 1;
+    while (isalnum (*stream_setup) || *stream_setup == '+' || *stream_setup == '-' || *stream_setup == '.')
+      ++stream_setup;
+    if (stream_setup[0] == ':' && stream_setup[1] == '/')
+      stream_setup = strchr (mrl, '#');
+    else
+      stream_setup = NULL;
+  }
+  
+  {
+    char *input_source = strndup (mrl, stream_setup ? stream_setup - mrl : strlen (mrl));
 
     /*
      * find an input plugin
@@ -874,6 +881,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
       case 1: /* Open successfull */
 	break;
       case -1: /* Open unsuccessfull, but correct plugin */
+	free(input_source);
 	stream->err = XINE_ERROR_INPUT_FAILED;
 	_x_flush_events_queues (stream);
 	return 0;
@@ -883,13 +891,9 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 	stream->input_plugin = NULL;
 	stream->err = XINE_ERROR_INPUT_FAILED;
       }
-      if ( res ) break;
     }
 
-    /* if we fail when passing up to the first '#' to the input plugins,
-     * maybe the user stated a (invalid) MRL, with a '#' belonging to the
-     * input source -> look for the next '#' and try again */
-    if (*stream_setup) stream_setup++;
+    free(input_source);
   }
   
   if (!stream->input_plugin) {
@@ -899,7 +903,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
     return 0;
   }
 
-  if (*stream_setup) {
+  if (stream_setup) {
 
     while (stream_setup && *stream_setup && *(++stream_setup)) {
       if (strncasecmp(stream_setup, "demux", 5) == 0) {
