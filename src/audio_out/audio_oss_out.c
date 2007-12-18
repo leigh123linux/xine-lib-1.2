@@ -1041,11 +1041,8 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 	asprintf(&this->mixer.name, "%smixer", mixer_name);
       else
 	asprintf(&this->mixer.name, "%smixer%d", mixer_name, mixer_num);
-    } else {
-      this->mixer.name = (char *)malloc(1);
-      this->mixer.name[0] = '\0';
     }
-    _x_assert(this->mixer.name[0] != '\0');
+    _x_assert(this->mixer.name);
     
     this->mixer.fd = open(this->mixer.name, O_RDONLY);
 
