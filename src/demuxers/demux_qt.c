@@ -651,8 +651,7 @@ static void free_qt_info(qt_info *info) {
         for (j = 0; j < info->traks[i].stsd_atoms_count; j++) {
           if (info->traks[i].type == MEDIA_AUDIO) {
             free(info->traks[i].stsd_atoms[j].audio.properties_atom);
-            if (info->traks[i].stsd_atoms[j].audio.wave)
-              free(info->traks[i].stsd_atoms[j].audio.wave);
+	    free(info->traks[i].stsd_atoms[j].audio.wave);
           } else if (info->traks[i].type == MEDIA_VIDEO)
             free(info->traks[i].stsd_atoms[j].video.properties_atom);
         }
