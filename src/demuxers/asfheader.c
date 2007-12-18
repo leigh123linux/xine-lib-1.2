@@ -605,15 +605,14 @@ asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len) {
   uint32_t object_count;
   uint16_t junk;
 
-  if (! (asf_header = calloc(1, sizeof(asf_header_internal_t))) )
-    return NULL;
-
   lprintf("parsing_asf_header\n");
   if (buffer_len < 6) {
     printf("invalid buffer size\n");
-    free(asf_header);
     return NULL;
   }
+
+  if (! (asf_header = calloc(1, sizeof(asf_header_internal_t))) )
+    return NULL;
 
   asf_header->iconv_cd = iconv_open ("UTF-8", "UCS-2LE");
   if (asf_header->iconv_cd == (iconv_t)-1) {
