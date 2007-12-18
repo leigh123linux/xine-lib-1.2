@@ -2134,7 +2134,6 @@ static qt_error open_qt_file(qt_info *info, input_plugin_t *input,
   unsigned char *moov_atom = NULL;
   off_t moov_atom_offset = -1;
   int64_t moov_atom_size = -1;
-  unsigned char preview[MAX_PREVIEW_SIZE];
 
   /* zlib stuff */
   z_stream z_state;
@@ -2157,7 +2156,7 @@ static qt_error open_qt_file(qt_info *info, input_plugin_t *input,
   if ((input->get_capabilities(input) & INPUT_CAP_SEEKABLE))
     find_moov_atom(input, &moov_atom_offset, &moov_atom_size);
   else {
-    memset (&preview, 0, MAX_PREVIEW_SIZE);
+    unsigned char preview[MAX_PREVIEW_SIZE] = { 0, };
     input->get_optional_data(input, preview, INPUT_OPTIONAL_DATA_PREVIEW);
     if (_X_BE_32(&preview[4]) != MOOV_ATOM) {
       /* special case if there is an ftyp atom first */
