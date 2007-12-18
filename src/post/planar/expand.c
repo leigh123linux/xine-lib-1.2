@@ -128,7 +128,7 @@ static int32_t        expand_overlay_add_event(video_overlay_manager_t *this_gen
 
 void *expand_init_plugin(xine_t *xine, void *data)
 {
-  post_class_t *class = (post_class_t *)malloc(sizeof(post_class_t));
+  post_class_t *class = (post_class_t *)xine_xmalloc(sizeof(post_class_t));
   
   if (!class)
     return NULL;
