@@ -612,14 +612,14 @@ static int demux_asf_send_headers_common (demux_asf_t *this) {
 }
 
 static void asf_reorder(demux_asf_t *this, uint8_t *src, int len){
-  uint8_t *dst = malloc(len);
+  uint8_t dst[len];
   uint8_t *s2 = src;
   int i = 0, x, y;
 
   while(len-i >= this->reorder_h * this->reorder_w*this->reorder_b){
         for(x = 0; x < this->reorder_w; x++)
           for(y = 0; y < this->reorder_h; y++){
-            memcpy(dst + i, s2 + (y * this->reorder_w+x) * this->reorder_b,
+            memcpy(&dst[i], s2 + (y * this->reorder_w+x) * this->reorder_b,
                    this->reorder_b);
             i += this->reorder_b;
           }
@@ -627,7 +627,6 @@ static void asf_reorder(demux_asf_t *this, uint8_t *src, int len){
   }
 
   xine_fast_memcpy(src,dst,i);
-  free(dst);
 }
 
 /* redefine abs as macro to handle 64-bit diffs.
