@@ -1283,39 +1283,29 @@ static void _cdda_mkdir_safe(xine_t *xine, char *path) {
 }
 
 /*
- * Make recursive directory creation
+ * Make recursive directory creation (given an absolute pathname)
  */
-static void _cdda_mkdir_recursive_safe(xine_t *xine, char *path) {
-  char *p, *pp;
-  char buf[XINE_PATH_MAX + XINE_NAME_MAX + 1] = { 0, };
-  char buf2[XINE_PATH_MAX + XINE_NAME_MAX + 1] = { 0, };
-
-  if(path == NULL)
+static void _cdda_mkdir_recursive_safe (xine_t *xine, char *path)
+{
+  if (!path)
     return;
 
-  snprintf(buf, sizeof(buf), "%s", path);
-  pp = buf;
-  while((p = xine_strsep(&pp, "/")) != NULL) {
-    if(p && strlen(p)) {
+  char buf[strlen (path) + 1];
+  strcpy (buf, path);
+  char *p = strchr (buf, '/') ? : buf;
 
-#ifdef WIN32
-		if (*buf2 != '\0') {
-#endif
+  do
+  {
+    while (*p++ == '/') /**/;
+    p = strchr (p, '/');
+    if (p)
+      *p = 0;
+    _cdda_mkdir_safe (xine, buf);
+    if (p)
+      *p = '/';
+  } while (p);
 
-      int size = strlen(buf2);
-      snprintf(buf2 + size, sizeof(buf2) - size, "/%s", p);
-
-#ifdef WIN32
-		}
-		else {
-          snprintf(buf2, sizeof(buf2), "%s", p);
-		}
-
-#endif /* WIN32 */
-
-      _cdda_mkdir_safe(xine, buf2);
-    }
-  }
+  return 0;
 }
 
 /*
