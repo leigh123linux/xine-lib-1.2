@@ -284,17 +284,17 @@ static mdpr_t *real_parse_mdpr(const char *data) {
   mdpr->duration=_X_BE_32(&data[28]);
 
   mdpr->stream_name_size=data[32];
-  mdpr->stream_name=malloc(sizeof(char)*(mdpr->stream_name_size+1));
+  mdpr->stream_name=calloc(mdpr->stream_name_size+1, sizeof(char));
   memcpy(mdpr->stream_name, &data[33], mdpr->stream_name_size);
   mdpr->stream_name[(int)mdpr->stream_name_size]=0;
 
   mdpr->mime_type_size=data[33+mdpr->stream_name_size];
-  mdpr->mime_type=malloc(sizeof(char)*(mdpr->mime_type_size+1));
+  mdpr->mime_type=calloc(mdpr->mime_type_size+1, sizeof(char));
   memcpy(mdpr->mime_type, &data[34+mdpr->stream_name_size], mdpr->mime_type_size);
   mdpr->mime_type[(int)mdpr->mime_type_size]=0;
 
   mdpr->type_specific_len=_X_BE_32(&data[34+mdpr->stream_name_size+mdpr->mime_type_size]);
-  mdpr->type_specific_data=malloc(sizeof(char)*(mdpr->type_specific_len));
+  mdpr->type_specific_data=calloc(mdpr->type_specific_len, sizeof(char));
   memcpy(mdpr->type_specific_data,
       &data[38+mdpr->stream_name_size+mdpr->mime_type_size], mdpr->type_specific_len);
 
