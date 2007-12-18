@@ -41,20 +41,10 @@
 ebml_parser_t *new_ebml_parser (xine_t *xine, input_plugin_t *input) {
   ebml_parser_t *ebml;
   
-  ebml = malloc(sizeof(ebml_parser_t));
+  ebml = xine_xmalloc(sizeof(ebml_parser_t));
   ebml->xine                 = xine;
   ebml->input                = input;
 
-  ebml->version              = 0;
-  ebml->read_version         = 0;
-  ebml->max_id_len           = 0;
-  ebml->max_size_len         = 0;
-  ebml->doctype              = NULL;
-  ebml->doctype_version      = 0;
-  ebml->doctype_read_version = 0;
-  
-  ebml->level                = 0;
-  
   return ebml;
 }
 
