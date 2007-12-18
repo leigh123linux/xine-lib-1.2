@@ -157,7 +157,6 @@ static xine_post_api_t post_api = {
 static post_plugin_t *denoise3d_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target);
-static void           denoise3d_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
 static void           denoise3d_dispose(post_plugin_t *this_gen);
@@ -182,7 +181,7 @@ void *denoise3d_init_plugin(xine_t *xine, void *data)
   class->open_plugin     = denoise3d_open_plugin;
   class->identifier      = "denoise3d";
   class->description     = N_("3D Denoiser (variable lowpass filter)");
-  class->dispose         = denoise3d_class_dispose;
+  class->dispose         = default_post_class_dispose;
 
   return class;
 }
@@ -234,12 +233,6 @@ static post_plugin_t *denoise3d_open_plugin(post_class_t *class_gen, int inputs,
   
   return &this->post;
 }
-
-static void denoise3d_class_dispose(post_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 
 static void denoise3d_dispose(post_plugin_t *this_gen)
 {

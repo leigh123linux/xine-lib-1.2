@@ -100,7 +100,6 @@ typedef struct post_expand_s {
 static post_plugin_t *expand_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target);
-static void           expand_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
 static void           expand_dispose(post_plugin_t *this_gen);
@@ -136,7 +135,7 @@ void *expand_init_plugin(xine_t *xine, void *data)
   class->open_plugin     = expand_open_plugin;
   class->identifier      = "expand";
   class->description     = N_("add black borders to top and bottom of video to expand it to 4:3 aspect ratio");
-  class->dispose         = expand_class_dispose;
+  class->dispose         = default_post_class_dispose;
   
   return class;
 }
@@ -188,12 +187,6 @@ static post_plugin_t *expand_open_plugin(post_class_t *class_gen, int inputs,
   
   return &this->post;
 }
-
-static void expand_class_dispose(post_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 
 static void expand_dispose(post_plugin_t *this_gen)
 {
