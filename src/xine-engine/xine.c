@@ -850,7 +850,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
   /* look for the next '#' or try the whole MRL, if none is found */
   while (*stream_setup &&
 	(stream_setup = (strchr(stream_setup, '#') ? strchr(stream_setup, '#') : strlen(mrl) + mrl))) {
-    char *input_source = (char *)malloc(stream_setup - mrl + 1);
+    char input_source[stream_setup - mrl + 1];
     memcpy(input_source, mrl, stream_setup - mrl);
     input_source[stream_setup - mrl] = '\0';
 
@@ -872,10 +872,8 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
       res = (stream->input_plugin->open) (stream->input_plugin);
       switch(res) {
       case 1: /* Open successfull */
-	free(input_source);
 	break;
       case -1: /* Open unsuccessfull, but correct plugin */
-	free(input_source);
 	stream->err = XINE_ERROR_INPUT_FAILED;
 	_x_flush_events_queues (stream);
 	return 0;
@@ -888,7 +886,6 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
       if ( res ) break;
     }
 
-    free(input_source);
     /* if we fail when passing up to the first '#' to the input plugins,
      * maybe the user stated a (invalid) MRL, with a '#' belonging to the
      * input source -> look for the next '#' and try again */
@@ -1640,9 +1637,8 @@ static void config_demux_strategy_cb (void *this_gen, xine_cfg_entry_t *entry) {
 
 static void config_save_cb (void *this_gen, xine_cfg_entry_t *entry) {
   xine_t *this = (xine_t *)this_gen;
-  char *homedir_trail_slash;
+  char homedir_trail_slash[strlen(xine_get_homedir()) + 2];
 
-  homedir_trail_slash = (char *)malloc(strlen(xine_get_homedir()) + 2);
   sprintf(homedir_trail_slash, "%s/", xine_get_homedir());
   if (entry->str_value[0] &&
       (entry->str_value[0] != '/' || strstr(entry->str_value, "/.") ||
@@ -1662,7 +1658,6 @@ static void config_save_cb (void *this_gen, xine_cfg_entry_t *entry) {
     pthread_mutex_unlock(&this->streams_lock);
   }
   
-  free(homedir_trail_slash);
   this->save_path = entry->str_value;
 }
 
