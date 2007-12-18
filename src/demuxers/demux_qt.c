@@ -686,13 +686,12 @@ static int is_qt_file(input_plugin_t *qt_file) {
   int64_t moov_atom_size = -1;
   int i;
   unsigned char atom_preamble[ATOM_PREAMBLE_SIZE];
-  unsigned char preview[MAX_PREVIEW_SIZE];
   int len;
 
   /* if the input is non-seekable, be much more stringent about qualifying
    * a QT file: In this case, the moov must be the first atom in the file */
   if ((qt_file->get_capabilities(qt_file) & INPUT_CAP_SEEKABLE) == 0) {
-    memset (&preview, 0, MAX_PREVIEW_SIZE);
+    unsigned char preview[MAX_PREVIEW_SIZE] = { 0, };
     len = qt_file->get_optional_data(qt_file, preview, INPUT_OPTIONAL_DATA_PREVIEW);
     if (_X_BE_32(&preview[4]) == MOOV_ATOM)
       return 1;
