@@ -657,21 +657,6 @@ char *xine_chomp (char *str) XINE_PROTECTED;
  */
 void xine_usec_sleep(unsigned usec) XINE_PROTECTED;
 
-
-  /*
-   * Some string functions
-   */
-
-
-void xine_strdupa(char *dest, char *src) XINE_PROTECTED;
-#define xine_strdupa(d, s) do {                                             \
-                                (d) = NULL;                                 \
-                                if((s) != NULL) {                           \
-                                  (d) = (char *) alloca(strlen((s)) + 1);   \
-                                  strcpy((d), (s));                         \
-                                }                                           \
-                              } while(0)
-
 /* compatibility macros */
 #define xine_strpbrk(S, ACCEPT) strpbrk((S), (ACCEPT))
 #define xine_strsep(STRINGP, DELIM) strsep((STRINGP), (DELIM))
