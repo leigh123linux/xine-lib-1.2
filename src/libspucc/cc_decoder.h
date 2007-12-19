@@ -31,7 +31,7 @@ typedef struct cc_decoder_s cc_decoder_t;
 typedef struct cc_renderer_s cc_renderer_t;
 
 #define NUM_CC_PALETTES 2
-static const char *cc_schemes[NUM_CC_PALETTES + 1] = {
+static const char *const cc_schemes[NUM_CC_PALETTES + 1] = {
   "White/Gray/Translucent",
   "White/Black/Solid",
   NULL

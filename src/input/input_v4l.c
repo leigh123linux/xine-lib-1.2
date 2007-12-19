@@ -110,7 +110,7 @@ static const resolution_t resolutions[] = {
 	{ 160, 120 }
 };
 
-static const char *tv_standard_names[] = { "PAL", "NTSC", "SECAM", NULL };
+static const char *const tv_standard_names[] = { "PAL", "NTSC", "SECAM", NULL };
 static const int tv_standard_values[] = { VIDEO_MODE_PAL, VIDEO_MODE_NTSC, VIDEO_MODE_SECAM };
 
 #define NUM_RESOLUTIONS  (sizeof(resolutions)/sizeof(resolutions[0]))

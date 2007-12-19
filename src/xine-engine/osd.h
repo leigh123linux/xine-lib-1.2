@@ -265,7 +265,7 @@ osd_renderer_t *_x_osd_renderer_init( xine_stream_t *stream );
 #ifdef __OSD_C__
  
 /* This text descriptions are used for config screen */
-static const char *textpalettes_str[NUMBER_OF_TEXT_PALETTES+1] = {
+static const char *const textpalettes_str[NUMBER_OF_TEXT_PALETTES+1] = {
   "white-black-transparent",
   "white-none-transparent",
   "white-none-translucid",

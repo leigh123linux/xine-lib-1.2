@@ -1598,7 +1598,7 @@ static void load_epg_data(dvb_input_plugin_t *this)
 
           case 0x54: {  /* Content Descriptor, riveting stuff */
               int content_bits = getbits(eit, 8, 4);
-              static const char *content[] = {
+              static const char *const content[] = {
 		  "UNKNOWN","MOVIE","NEWS","ENTERTAINMENT","SPORT",
 		  "CHILDRENS","MUSIC","ARTS/CULTURE","CURRENT AFFAIRS",
 		  "EDUCATIONAL","INFOTAINMENT","SPECIAL","COMEDY","DRAMA",
