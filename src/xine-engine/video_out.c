@@ -979,6 +979,7 @@ static vo_frame_t *get_next_frame (vos_t *this, int64_t cur_vpts,
       
       if (!img->stream ||
           _x_stream_info_get(img->stream, XINE_STREAM_INFO_VIDEO_HAS_STILL) ||
+          !img->stream->video_fifo ||
           img->stream->video_fifo->size(img->stream->video_fifo) < 10) {
 
         lprintf ("possible still frame\n");

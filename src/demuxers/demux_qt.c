@@ -651,8 +651,7 @@ static void free_qt_info(qt_info *info) {
         for (j = 0; j < info->traks[i].stsd_atoms_count; j++) {
           if (info->traks[i].type == MEDIA_AUDIO) {
             free(info->traks[i].stsd_atoms[j].audio.properties_atom);
-            if (info->traks[i].stsd_atoms[j].audio.wave)
-              free(info->traks[i].stsd_atoms[j].audio.wave);
+	    free(info->traks[i].stsd_atoms[j].audio.wave);
           } else if (info->traks[i].type == MEDIA_VIDEO)
             free(info->traks[i].stsd_atoms[j].video.properties_atom);
         }
@@ -686,34 +685,28 @@ static int is_qt_file(input_plugin_t *qt_file) {
   off_t moov_atom_offset = -1;
   int64_t moov_atom_size = -1;
   int i;
-  unsigned char atom_preamble[ATOM_PREAMBLE_SIZE];
-  unsigned char preview[MAX_PREVIEW_SIZE];
   int len;
 
   /* if the input is non-seekable, be much more stringent about qualifying
    * a QT file: In this case, the moov must be the first atom in the file */
   if ((qt_file->get_capabilities(qt_file) & INPUT_CAP_SEEKABLE) == 0) {
-    memset (&preview, 0, MAX_PREVIEW_SIZE);
+    unsigned char preview[MAX_PREVIEW_SIZE] = { 0, };
     len = qt_file->get_optional_data(qt_file, preview, INPUT_OPTIONAL_DATA_PREVIEW);
     if (_X_BE_32(&preview[4]) == MOOV_ATOM)
       return 1;
     else {
-      if (_X_BE_32(&preview[4]) == FTYP_ATOM) {
-        /* show some lenience if the first atom is 'ftyp'; the second atom
-         * could be 'moov' */
-        moov_atom_size = _X_BE_32(&preview[0]);
-        /* compute the size of the current atom plus the preamble of the
-         * next atom; if the size is within the range on the preview buffer
-         * then the next atom's preamble is in the preview buffer */
-        i = moov_atom_size + ATOM_PREAMBLE_SIZE;
-        if (i >= MAX_PREVIEW_SIZE)
-          return 0;
-        if (_X_BE_32(&preview[i - 4]) == MOOV_ATOM)
-          return 1;
-        else
-          return 0;
-      } else
-        return 0;
+      if (_X_BE_32(&preview[4]) != FTYP_ATOM)
+	return 0;
+
+      /* show some lenience if the first atom is 'ftyp'; the second atom
+       * could be 'moov'
+       * compute the size of the current atom plus the preamble of the
+       * next atom; if the size is within the range on the preview buffer
+       * then the next atom's preamble is in the preview buffer */
+      uint64_t ftyp_atom_size = _X_BE_32(&preview[0]) + ATOM_PREAMBLE_SIZE;
+      if (ftyp_atom_size >= MAX_PREVIEW_SIZE)
+	return 0;
+      return _X_BE_32(&preview[ftyp_atom_size - 4]) == MOOV_ATOM;
     }
   }
 
@@ -721,6 +714,7 @@ static int is_qt_file(input_plugin_t *qt_file) {
   if (moov_atom_offset == -1) {
     return 0;
   } else {
+    unsigned char atom_preamble[ATOM_PREAMBLE_SIZE];
     /* check that the next atom in the chunk contains alphanumeric
      * characters in the atom type field; if not, disqualify the file 
      * as a QT file */
@@ -807,31 +801,33 @@ static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
 	const uint8_t *const sub_atom = &meta_atom[j];
 	const qt_atom sub_atom_code = _X_BE_32(&sub_atom[4]);
 	const uint32_t sub_atom_size = _X_BE_32(&sub_atom[0]);
+	char *const data_atom = parse_data_atom(&sub_atom[8]);
 
 	switch(sub_atom_code) {
 	case ART_ATOM:
-	  info->artist = parse_data_atom(&sub_atom[8]);
+	  info->artist = data_atom;
 	  break;
 	case NAM_ATOM:
-	  info->name = parse_data_atom(&sub_atom[8]);
+	  info->name = data_atom;
 	  break;
 	case ALB_ATOM:
-	  info->album = parse_data_atom(&sub_atom[8]);
+	  info->album = data_atom;
 	  break;
 	case GEN_ATOM:
-	  info->genre = parse_data_atom(&sub_atom[8]);
+	  info->genre = data_atom;
 	  break;
 	case CMT_ATOM:
-	  info->comment = parse_data_atom(&sub_atom[8]);
+	  info->comment = data_atom;
 	  break;
 	case WRT_ATOM:
-	  info->composer = parse_data_atom(&sub_atom[8]);
+	  info->composer = data_atom;
 	  break;
 	case DAY_ATOM:
-	  info->year = parse_data_atom(&sub_atom[8]);
+	  info->year = data_atom;
 	  break;
 	default:
 	  debug_meta_load("unknown atom %08x in ilst\n", sub_atom_code);
+	  free(data_atom);
 	}
 
 	j += sub_atom_size;
@@ -1008,18 +1004,17 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
         const uint32_t current_stsd_atom_size = _X_BE_32(&trak_atom[atom_pos - 4]);      
 
-	/* for palette traversal */
-	int color_depth;
-	int color_flag;
-	int color_start;
-	int color_count;
-	int color_end;
-	int color_index;
-	int color_dec;
-	int color_greyscale;
-	const unsigned char *color_table;
-
         if (trak->type == MEDIA_VIDEO) {
+	  /* for palette traversal */
+	  int color_depth;
+	  int color_flag;
+	  int color_start;
+	  int color_count;
+	  int color_end;
+	  int color_index;
+	  int color_dec;
+	  int color_greyscale;
+	  const unsigned char *color_table;
 
           trak->stsd_atoms[k].video.media_id = k + 1;
           trak->stsd_atoms[k].video.properties_offset = properties_offset;
@@ -1464,8 +1459,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
       debug_atom_load("    qt stco atom (32-bit chunk offset atom): %d chunk offsets\n",
         trak->chunk_offset_count);
 
-      trak->chunk_offset_table = (int64_t *)malloc(
-        trak->chunk_offset_count * sizeof(int64_t));
+      trak->chunk_offset_table = calloc(trak->chunk_offset_count, sizeof(int64_t));
       if (!trak->chunk_offset_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1492,8 +1486,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
       debug_atom_load("    qt co64 atom (64-bit chunk offset atom): %d chunk offsets\n",
         trak->chunk_offset_count);
 
-      trak->chunk_offset_table = (int64_t *)malloc(
-        trak->chunk_offset_count * sizeof(int64_t));
+      trak->chunk_offset_table = calloc(trak->chunk_offset_count, sizeof(int64_t));
       if (!trak->chunk_offset_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1523,8 +1516,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
       debug_atom_load("    qt stsc atom (sample-to-chunk atom): %d entries\n",
         trak->sample_to_chunk_count);
 
-      trak->sample_to_chunk_table = (sample_to_chunk_table_t *)malloc(
-        trak->sample_to_chunk_count * sizeof(sample_to_chunk_table_t));
+      trak->sample_to_chunk_table = calloc(trak->sample_to_chunk_count, sizeof(sample_to_chunk_table_t));
       if (!trak->sample_to_chunk_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1558,8 +1550,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
       debug_atom_load("    qt stts atom (time-to-sample atom): %d entries\n",
         trak->time_to_sample_count);
 
-      trak->time_to_sample_table = (time_to_sample_table_t *)malloc(
-        (trak->time_to_sample_count+1) * sizeof(time_to_sample_table_t));
+      trak->time_to_sample_table = calloc(trak->time_to_sample_count+1, sizeof(time_to_sample_table_t));
       if (!trak->time_to_sample_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1752,8 +1743,7 @@ static qt_error build_frame_table(qt_trak *trak,
     /* in this case, the total number of frames is equal to the number of
      * entries in the sample size table */
     trak->frame_count = trak->sample_size_count;
-    trak->frames = (qt_frame *)malloc(
-      trak->frame_count * sizeof(qt_frame));
+    trak->frames = calloc(trak->frame_count, sizeof(qt_frame));
     if (!trak->frames)
       return QT_NO_MEMORY;
     trak->current_frame = 0;
@@ -1765,10 +1755,9 @@ static qt_error build_frame_table(qt_trak *trak,
     pts_index_countdown =
       trak->time_to_sample_table[pts_index].count;
 
-    media_id_counts = xine_xmalloc(trak->stsd_atoms_count * sizeof(int));
+    media_id_counts = xine_xcalloc(trak->stsd_atoms_count, sizeof(int));
     if (!media_id_counts)
       return QT_NO_MEMORY;
-    memset(media_id_counts, 0, trak->stsd_atoms_count * sizeof(int));
 
     /* iterate through each start chunk in the stsc table */
     for (i = 0; i < trak->sample_to_chunk_count; i++) {
@@ -1903,8 +1892,7 @@ static qt_error build_frame_table(qt_trak *trak,
     /* in this case, the total number of frames is equal to the number of
      * chunks */
     trak->frame_count = trak->chunk_offset_count;
-    trak->frames = (qt_frame *)malloc(
-      trak->frame_count * sizeof(qt_frame));
+    trak->frames = calloc(trak->frame_count, sizeof(qt_frame));
     if (!trak->frames)
       return QT_NO_MEMORY;
 
@@ -2146,7 +2134,6 @@ static qt_error open_qt_file(qt_info *info, input_plugin_t *input,
   unsigned char *moov_atom = NULL;
   off_t moov_atom_offset = -1;
   int64_t moov_atom_size = -1;
-  unsigned char preview[MAX_PREVIEW_SIZE];
 
   /* zlib stuff */
   z_stream z_state;
@@ -2169,7 +2156,7 @@ static qt_error open_qt_file(qt_info *info, input_plugin_t *input,
   if ((input->get_capabilities(input) & INPUT_CAP_SEEKABLE))
     find_moov_atom(input, &moov_atom_offset, &moov_atom_size);
   else {
-    memset (&preview, 0, MAX_PREVIEW_SIZE);
+    unsigned char preview[MAX_PREVIEW_SIZE] = { 0, };
     input->get_optional_data(input, preview, INPUT_OPTIONAL_DATA_PREVIEW);
     if (_X_BE_32(&preview[4]) != MOOV_ATOM) {
       /* special case if there is an ftyp atom first */

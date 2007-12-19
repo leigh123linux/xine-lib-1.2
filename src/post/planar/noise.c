@@ -428,7 +428,6 @@ static xine_post_api_t post_api = {
 static post_plugin_t *noise_open_plugin(post_class_t *class_gen, int inputs,
                      xine_audio_port_t **audio_target,
                      xine_video_port_t **video_target);
-static void           noise_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
 static void           noise_dispose(post_plugin_t *this_gen);
@@ -442,7 +441,7 @@ static int            noise_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 void *noise_init_plugin(xine_t *xine, void *data)
 {
-    post_class_t *class = (post_class_t *)malloc(sizeof(post_class_t));
+    post_class_t *class = (post_class_t *)xine_xmalloc(sizeof(post_class_t));
 
     if (!class)
         return NULL;
@@ -450,7 +449,7 @@ void *noise_init_plugin(xine_t *xine, void *data)
     class->open_plugin     = noise_open_plugin;
     class->identifier      = "noise";
     class->description     = N_("Adds noise");
-    class->dispose         = noise_class_dispose;
+    class->dispose         = default_post_class_dispose;
 
 #ifdef ARCH_X86
     if (xine_mm_accel() & MM_ACCEL_X86_MMX) {
@@ -511,12 +510,6 @@ static post_plugin_t *noise_open_plugin(post_class_t *class_gen, int inputs,
     
     return &this->post;
 }
-
-static void noise_class_dispose(post_class_t *class_gen)
-{
-    free(class_gen);
-}
-
 
 static void noise_dispose(post_plugin_t *this_gen)
 {

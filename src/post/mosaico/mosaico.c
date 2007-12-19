@@ -96,7 +96,6 @@ struct post_mosaico_s {
 static post_plugin_t *mosaico_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target);
-static void           mosaico_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
 static void           mosaico_dispose(post_plugin_t *this_gen);
@@ -128,7 +127,7 @@ static void *mosaico_init_plugin(xine_t *xine, void *data)
   this->class.open_plugin     = mosaico_open_plugin;
   this->class.identifier      = "mosaico";
   this->class.description     = N_("Mosaico is a picture in picture (pip) post plugin");
-  this->class.dispose         = mosaico_class_dispose;
+  this->class.dispose         = default_post_class_dispose;
   this->xine                  = xine;
 
   return &this->class;
@@ -199,12 +198,6 @@ static post_plugin_t *mosaico_open_plugin(post_class_t *class_gen, int inputs,
 
   return &this->post;
 }
-
-static void mosaico_class_dispose(post_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 
 static void mosaico_dispose(post_plugin_t *this_gen)
 {

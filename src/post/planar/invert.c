@@ -33,7 +33,6 @@ void *invert_init_plugin(xine_t *xine, void *);
 static post_plugin_t *invert_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target);
-static void           invert_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
 static void           invert_dispose(post_plugin_t *this_gen);
@@ -47,7 +46,7 @@ static int            invert_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 void *invert_init_plugin(xine_t *xine, void *data)
 {
-  post_class_t *class = (post_class_t *)malloc(sizeof(post_class_t));
+  post_class_t *class = (post_class_t *)xine_xmalloc(sizeof(post_class_t));
   
   if (!class)
     return NULL;
@@ -55,7 +54,7 @@ void *invert_init_plugin(xine_t *xine, void *data)
   class->open_plugin     = invert_open_plugin;
   class->identifier      = "invert";
   class->description     = N_("inverts the colours of every video frame");
-  class->dispose         = invert_class_dispose;
+  class->dispose         = default_post_class_dispose;
   
   return class;
 }
@@ -88,12 +87,6 @@ static post_plugin_t *invert_open_plugin(post_class_t *class_gen, int inputs,
   
   return this;
 }
-
-static void invert_class_dispose(post_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 
 static void invert_dispose(post_plugin_t *this)
 {

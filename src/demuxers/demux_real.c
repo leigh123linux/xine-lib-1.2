@@ -232,7 +232,7 @@ static void real_parse_index(demux_real_t *this) {
 
       if(index && entries) {
         /* Allocate memory for index */
-        *index = xine_xmalloc(entries * sizeof(real_index_entry_t));
+        *index = xine_xcalloc(entries, sizeof(real_index_entry_t));
         
         /* Read index */
         for(i = 0; i < entries; i++) {
@@ -275,17 +275,17 @@ static mdpr_t *real_parse_mdpr(const char *data) {
   mdpr->duration=_X_BE_32(&data[28]);
 
   mdpr->stream_name_size=data[32];
-  mdpr->stream_name=malloc(sizeof(char)*(mdpr->stream_name_size+1));
+  mdpr->stream_name=calloc(mdpr->stream_name_size+1, sizeof(char));
   memcpy(mdpr->stream_name, &data[33], mdpr->stream_name_size);
   mdpr->stream_name[(int)mdpr->stream_name_size]=0;
 
   mdpr->mime_type_size=data[33+mdpr->stream_name_size];
-  mdpr->mime_type=malloc(sizeof(char)*(mdpr->mime_type_size+1));
+  mdpr->mime_type=calloc(mdpr->mime_type_size+1, sizeof(char));
   memcpy(mdpr->mime_type, &data[34+mdpr->stream_name_size], mdpr->mime_type_size);
   mdpr->mime_type[(int)mdpr->mime_type_size]=0;
 
   mdpr->type_specific_len=_X_BE_32(&data[34+mdpr->stream_name_size+mdpr->mime_type_size]);
-  mdpr->type_specific_data=malloc(sizeof(char)*(mdpr->type_specific_len));
+  mdpr->type_specific_data=calloc(mdpr->type_specific_len, sizeof(char));
   memcpy(mdpr->type_specific_data,
       &data[38+mdpr->stream_name_size+mdpr->mime_type_size], mdpr->type_specific_len);
 
@@ -820,8 +820,8 @@ static int demux_real_parse_references( demux_real_t *this) {
     if( !strncmp(&buf[i],"-->",3) )
       comment = 0;
       
-    if( (!strncmp(&buf[i],"pnm://",6) || !strncmp(&buf[i],"rtsp://",7)) &&
-        !comment ) {
+    if( (!strncmp(&buf[i],"pnm://",6) || !strncmp(&buf[i],"rtsp://",7) ||
+         !strncmp(&buf[i],"http://",7)) && !comment ) {
       for(j=i; buf[j] && buf[j] != '"' && !isspace(buf[j]); j++ )
         ;
       buf[j]='\0';
@@ -1529,7 +1529,8 @@ static int real_check_stream_type(uint8_t *buf, int len)
     return 1;
 
   buf[len] = '\0';
-  if( strstr(buf,"pnm://") || strstr(buf,"rtsp://") || strstr(buf,"<smil>") )
+  if( strstr(buf,"pnm://") || strstr(buf,"rtsp://") || strstr(buf,"<smil>") ||
+      strstr(buf,"http://") )
     return 2;
 
   return 0;

@@ -63,7 +63,6 @@ struct asf_header_internal_s {
   /* private part */
   int                     number_count;
   uint16_t                numbers[ASF_MAX_NUM_STREAMS];
-  iconv_t                 iconv_cd;
   uint8_t                *bitrate_pointers[ASF_MAX_NUM_STREAMS];
 };
 
@@ -130,8 +129,7 @@ static uint8_t *asf_reader_get_bytes(asf_reader_t *reader, size_t size) {
 
   if ((reader->size - reader->pos) < size)
     return NULL;
-  buffer = malloc(size);
-  if (!buffer)
+  if (! (buffer = malloc(size)) )
     return NULL;
   memcpy(buffer, reader->buffer + reader->pos, size);
   reader->pos += size;
@@ -241,8 +239,7 @@ static int asf_header_parse_file_properties(asf_header_t *header, uint8_t *buffe
     return 0;
   }
 
-  asf_file = malloc(sizeof(asf_file_t));
-  if (!asf_file) {
+  if (! (asf_file = malloc(sizeof(asf_file_t))) ) {
     lprintf("cannot allocate asf_file_struct\n");
     return 0;
   }
@@ -296,8 +293,7 @@ static int asf_header_parse_stream_properties(asf_header_t *header, uint8_t *buf
   if (buffer_len < 54)
     goto exit_error;
 
-  asf_stream = malloc(sizeof(asf_stream_t));
-  if (!asf_stream)
+  if (! (asf_stream = malloc(sizeof(asf_stream_t))) )
     goto exit_error;
 
   asf_reader_init(&reader, buffer, buffer_len);
@@ -363,8 +359,7 @@ static int asf_header_parse_stream_extended_properties(asf_header_t *header, uin
   if (buffer_len < 64)
     return 0;
 
-  asf_stream_extension = malloc(sizeof(asf_stream_extension_t));
-  if (!asf_stream_extension)
+  if (! (asf_stream_extension = malloc(sizeof(asf_stream_extension_t))) )
     return 0;
 
   asf_reader_init(&reader, buffer, buffer_len);
@@ -577,14 +572,16 @@ static int asf_header_parse_content_description(asf_header_t *header_pub, uint8_
   asf_reader_t reader;
   asf_content_t *content;
   uint16_t title_length, author_length, copyright_length, description_length, rating_length;
+  iconv_t iconv_cd;
 
   if (buffer_len < 10)
     return 0;
 
-  content = malloc(sizeof(asf_content_t));
-  if (!content)
+  if (! (content = calloc(1, sizeof(asf_content_t))) )
     return 0;
-  memset(content, 0, sizeof(asf_content_t));
+
+  if ( (iconv_cd = iconv_open("UTF-8", "UCS-2LE")) == (iconv_t)-1 )
+    return 0;
 
   asf_reader_init(&reader, buffer, buffer_len);
   asf_reader_get_16(&reader, &title_length);
@@ -593,13 +590,15 @@ static int asf_header_parse_content_description(asf_header_t *header_pub, uint8_
   asf_reader_get_16(&reader, &description_length);
   asf_reader_get_16(&reader, &rating_length);
 
-  content->title = asf_reader_get_string(&reader, title_length, header->iconv_cd);
-  content->author = asf_reader_get_string(&reader, author_length, header->iconv_cd);
-  content->copyright = asf_reader_get_string(&reader, copyright_length, header->iconv_cd);
-  content->description = asf_reader_get_string(&reader, description_length, header->iconv_cd);
-  content->rating = asf_reader_get_string(&reader, rating_length, header->iconv_cd);
+  content->title = asf_reader_get_string(&reader, title_length, iconv_cd);
+  content->author = asf_reader_get_string(&reader, author_length, iconv_cd);
+  content->copyright = asf_reader_get_string(&reader, copyright_length, iconv_cd);
+  content->description = asf_reader_get_string(&reader, description_length, iconv_cd);
+  content->rating = asf_reader_get_string(&reader, rating_length, iconv_cd);
 
   header->pub.content = content;
+
+  iconv_close(iconv_cd);
   return 1;
 }
 
@@ -611,24 +610,14 @@ asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len) {
   uint32_t object_count;
   uint16_t junk;
 
-  asf_header = malloc(sizeof(asf_header_internal_t));
-  if (!asf_header)
-    return NULL;
-  memset(asf_header, 0, sizeof(asf_header_internal_t));
-
   lprintf("parsing_asf_header\n");
   if (buffer_len < 6) {
     printf("invalid buffer size\n");
-    free(asf_header);
     return NULL;
   }
 
-  asf_header->iconv_cd = iconv_open ("UTF-8", "UCS-2LE");
-  if (asf_header->iconv_cd == (iconv_t)-1) {
-    printf("iconv open error\n");
-    free(asf_header);
+  if (! (asf_header = calloc(1, sizeof(asf_header_internal_t))) )
     return NULL;
-  }
 
   asf_reader_init(&reader, buffer, buffer_len);
   asf_reader_get_32(&reader, &object_count);
@@ -697,10 +686,8 @@ asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len) {
   }
   if (!asf_header->pub.content) {
     lprintf("no content object present\n");
-    asf_header->pub.content = malloc(sizeof(asf_content_t));
-    if (!asf_header->pub.content)
+    if (! (asf_header->pub.content = calloc(1, sizeof(asf_content_t))) )
       goto exit_error;
-    memset(asf_header->pub.content, 0, sizeof(asf_content_t));
   }
 
   return &asf_header->pub;
@@ -766,9 +753,6 @@ void asf_header_delete (asf_header_t *header_pub) {
       asf_header_delete_stream_extended_properties(header->pub.stream_extensions[i]);
   }
   
-  if (header->iconv_cd != (iconv_t)-1)
-    iconv_close (header->iconv_cd);
-
   free(header);
 }
 

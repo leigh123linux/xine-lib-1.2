@@ -1756,7 +1756,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->demux_class.description     = N_("mpeg pes demux plugin");
   this->demux_class.identifier      = "MPEG_PES";
   this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = "pes";
+  this->demux_class.extensions      = "pes vdr:/ netvdr:/";
   this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;

@@ -1749,10 +1749,7 @@ static int parse_tags(demux_matroska_t *this) {
 static void alloc_block_data (demux_matroska_t *this, int len) {
   /* memory management */
   if (this->block_data_size < len) {
-    if (this->block_data)
-      this->block_data = realloc(this->block_data, len);
-    else
-      this->block_data = malloc(len);
+    this->block_data = realloc(this->block_data, len);
     this->block_data_size = len;
   }
 }

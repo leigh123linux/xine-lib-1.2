@@ -41,20 +41,10 @@
 ebml_parser_t *new_ebml_parser (xine_t *xine, input_plugin_t *input) {
   ebml_parser_t *ebml;
   
-  ebml = malloc(sizeof(ebml_parser_t));
+  ebml = xine_xmalloc(sizeof(ebml_parser_t));
   ebml->xine                 = xine;
   ebml->input                = input;
 
-  ebml->version              = 0;
-  ebml->read_version         = 0;
-  ebml->max_id_len           = 0;
-  ebml->max_size_len         = 0;
-  ebml->doctype              = NULL;
-  ebml->doctype_version      = 0;
-  ebml->doctype_read_version = 0;
-  
-  ebml->level                = 0;
-  
   return ebml;
 }
 
@@ -325,32 +315,29 @@ int ebml_read_date (ebml_parser_t *ebml, ebml_elem_t *elem, int64_t *date) {
 int ebml_read_master (ebml_parser_t *ebml, ebml_elem_t *elem) {
   ebml_elem_t *top_elem;
 
-  if (ebml->level >= 0) {
-    top_elem = &ebml->elem_stack[ebml->level];
-    top_elem->start = elem->start;
-    top_elem->len = elem->len;
-    top_elem->id = elem->id;
-  
-    ebml->level++;
-    lprintf("id: 0x%x, len: %" PRIu64 ", level: %d\n", elem->id, elem->len, ebml->level);
-    if (ebml->level >= EBML_STACK_SIZE) {
-      xprintf(ebml->xine, XINE_VERBOSITY_LOG,
-              "ebml: max level exceeded\n");
-      return 0;
-    }
-    return 1;
-  } else {
+  if (ebml->level < 0) {
     xprintf(ebml->xine, XINE_VERBOSITY_LOG,
             "ebml: invalid current level\n");
     return 0;
   }
+
+  top_elem = &ebml->elem_stack[ebml->level];
+  top_elem->start = elem->start;
+  top_elem->len = elem->len;
+  top_elem->id = elem->id;
+  
+  ebml->level++;
+  lprintf("id: 0x%x, len: %" PRIu64 ", level: %d\n", elem->id, elem->len, ebml->level);
+  if (ebml->level >= EBML_STACK_SIZE) {
+    xprintf(ebml->xine, XINE_VERBOSITY_LOG,
+	    "ebml: max level exceeded\n");
+    return 0;
+  }
+  return 1;
 }
 
 int ebml_read_binary(ebml_parser_t *ebml, ebml_elem_t *elem, void *binary) {
-  if (!ebml_read_elem_data(ebml, binary, elem->len))
-    return 0;
-
-  return 1;
+  return !!ebml_read_elem_data(ebml, binary, elem->len);
 }
 
 int ebml_check_header(ebml_parser_t *ebml) {

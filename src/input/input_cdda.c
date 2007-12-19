@@ -424,10 +424,9 @@ static int read_cdrom_toc(int fd, cdrom_toc *toc) {
   toc->total_tracks = toc->last_track - toc->first_track + 1;
   
   /* allocate space for the toc entries */
-  toc->toc_entries =
-    (cdrom_toc_entry *)malloc(toc->total_tracks * sizeof(cdrom_toc_entry));
+  toc->toc_entries = calloc(toc->total_tracks, sizeof(cdrom_toc_entry));
   if (!toc->toc_entries) {
-    perror("malloc");
+    perror("calloc");
     return -1;
   }
 
@@ -535,10 +534,9 @@ static int read_cdrom_toc(int fd, cdrom_toc *toc) {
   toc->total_tracks = toc->last_track - toc->first_track + 1;
 
   /* allocate space for the toc entries */
-  toc->toc_entries =
-    (cdrom_toc_entry *)malloc(toc->total_tracks * sizeof(cdrom_toc_entry));
+  toc->toc_entries = calloc(toc->total_tracks, sizeof(cdrom_toc_entry));
   if (!toc->toc_entries) {
-    perror("malloc");
+    perror("calloc");
     return -1;
   }
 
@@ -648,10 +646,9 @@ static int read_cdrom_toc(int fd, cdrom_toc *toc) {
   toc->total_tracks = toc->last_track - toc->first_track + 1;
 
   /* allocate space for the toc entries */
-  toc->toc_entries =
-    (cdrom_toc_entry *)malloc(toc->total_tracks * sizeof(cdrom_toc_entry));
+  toc->toc_entries = calloc(toc->total_tracks, sizeof(cdrom_toc_entry));
   if (!toc->toc_entries) {
-    perror("malloc");
+    perror("calloc");
     return -1;
   }
 
@@ -841,10 +838,9 @@ static int read_cdrom_toc(cdda_input_plugin_t *this_gen, cdrom_toc *toc) {
 
      
       /* allocate space for the toc entries */
-      toc->toc_entries =
-          (cdrom_toc_entry *)malloc(toc->total_tracks * sizeof(cdrom_toc_entry));
+      toc->toc_entries = calloc(toc->total_tracks, sizeof(cdrom_toc_entry));
       if (!toc->toc_entries) {
-          perror("malloc");
+          perror("calloc");
           return -1;
       }
   
@@ -1087,10 +1083,9 @@ static int network_read_cdrom_toc(xine_stream_t *stream, int fd, cdrom_toc *toc)
   toc->total_tracks = toc->last_track - toc->first_track + 1;
 
   /* allocate space for the toc entries */
-  toc->toc_entries =
-    (cdrom_toc_entry *)malloc(toc->total_tracks * sizeof(cdrom_toc_entry));
+  toc->toc_entries = calloc(toc->total_tracks, sizeof(cdrom_toc_entry));
   if (!toc->toc_entries) {
-    perror("malloc");
+    perror("calloc");
     return -1;
   }
 
@@ -1290,42 +1285,29 @@ static void _cdda_mkdir_safe(xine_t *xine, char *path) {
 }
 
 /*
- * Make recursive directory creation
+ * Make recursive directory creation (given an absolute pathname)
  */
-static void _cdda_mkdir_recursive_safe(xine_t *xine, char *path) {
-  char *p, *pp;
-  char buf[XINE_PATH_MAX + XINE_NAME_MAX + 1];
-  char buf2[XINE_PATH_MAX + XINE_NAME_MAX + 1];
-
-  if(path == NULL)
+static void _cdda_mkdir_recursive_safe (xine_t *xine, char *path)
+{
+  if (!path)
     return;
 
-  memset(&buf, 0, sizeof(buf));
-  memset(&buf2, 0, sizeof(buf2));
+  char buf[strlen (path) + 1];
+  strcpy (buf, path);
+  char *p = strchr (buf, '/') ? : buf;
 
-  snprintf(buf, sizeof(buf), "%s", path);
-  pp = buf;
-  while((p = xine_strsep(&pp, "/")) != NULL) {
-    if(p && strlen(p)) {
+  do
+  {
+    while (*p++ == '/') /**/;
+    p = strchr (p, '/');
+    if (p)
+      *p = 0;
+    _cdda_mkdir_safe (xine, buf);
+    if (p)
+      *p = '/';
+  } while (p);
 
-#ifdef WIN32
-		if (*buf2 != '\0') {
-#endif
-
-      int size = strlen(buf2);
-      snprintf(buf2 + size, sizeof(buf2) - size, "/%s", p);
-
-#ifdef WIN32
-		}
-		else {
-          snprintf(buf2, sizeof(buf2), "%s", p);
-		}
-
-#endif /* WIN32 */
-
-      _cdda_mkdir_safe(xine, buf2);
-    }
-  }
+  return 0;
 }
 
 /*
@@ -1445,7 +1427,6 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
     while((pdir = readdir(dir)) != NULL) {
       char discid[9];
       
-      memset(&discid, 0, sizeof(discid));
       snprintf(discid, sizeof(discid), "%08lx", this->cddb.disc_id);
      
       if(!strcasecmp(pdir->d_name, discid)) {

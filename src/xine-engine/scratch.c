@@ -26,7 +26,6 @@
 
 #include <stdio.h>
 #include <stdarg.h>
-#include <string.h>  /* For memset */
 
 #define LOG_MODULE "scratch"
 #define LOG_VERBOSE

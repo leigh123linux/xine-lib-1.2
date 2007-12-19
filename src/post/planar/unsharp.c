@@ -253,7 +253,6 @@ static xine_post_api_t post_api = {
 static post_plugin_t *unsharp_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target);
-static void           unsharp_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
 static void           unsharp_dispose(post_plugin_t *this_gen);
@@ -267,7 +266,7 @@ static int            unsharp_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 void *unsharp_init_plugin(xine_t *xine, void *data)
 {
-  post_class_t *class = (post_class_t *)malloc(sizeof(post_class_t));
+  post_class_t *class = (post_class_t *)xine_xmalloc(sizeof(post_class_t));
 
   if (!class)
     return NULL;
@@ -275,7 +274,7 @@ void *unsharp_init_plugin(xine_t *xine, void *data)
   class->open_plugin     = unsharp_open_plugin;
   class->identifier      = "unsharp";
   class->description     = N_("unsharp mask & gaussian blur");
-  class->dispose         = unsharp_class_dispose;
+  class->dispose         = default_post_class_dispose;
 
   return class;
 }
@@ -328,11 +327,6 @@ static post_plugin_t *unsharp_open_plugin(post_class_t *class_gen, int inputs,
   this->post.dispose = unsharp_dispose;
   
   return &this->post;
-}
-
-static void unsharp_class_dispose(post_class_t *class_gen)
-{
-  free(class_gen);
 }
 
 static void unsharp_free_SC(post_plugin_unsharp_t *this)

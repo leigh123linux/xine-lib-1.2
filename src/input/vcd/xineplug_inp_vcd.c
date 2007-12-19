@@ -272,11 +272,9 @@ vcd_add_mrl_slot(vcd_input_class_t *this, const char *mrl, off_t size,
   this->mrls[*i]->type   = mrl_vcd;
   this->mrls[*i]->size   = size * M2F2_SECTOR_SIZE;
   
-  this->mrls[*i]->mrl = (char *) malloc(strlen(mrl) + 1);
+  this->mrls[*i]->mrl = strdup(mrl);
   if (NULL==this->mrls[*i]->mrl) {
-    LOG_ERR("Can't malloc %zu bytes for MRL name %s", sizeof(xine_mrl_t), mrl);
-  } else {
-    sprintf(this->mrls[*i]->mrl, "%s", mrl);
+    LOG_ERR("Can't strndup %zu bytes for MRL name %s", strlen(mrl), mrl);
   }
   (*i)++;
 }

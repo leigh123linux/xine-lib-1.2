@@ -21,6 +21,8 @@
  * *not* RFC 2326 compilant yet.
  */
 
+#include <config.h>
+
 #include <unistd.h>
 #include <stdio.h>
 #include <assert.h>
@@ -103,8 +105,7 @@ const char rtsp_protocol_version[]="RTSP/1.0";
  */
  
 static char *rtsp_get(rtsp_t *s) {
-
-  char *buffer = malloc(BUF_SIZE);
+  char buffer[BUF_SIZE];
   char *string = NULL;
     
   if ( _x_io_tcp_read_line(s->stream, s->s, buffer, BUF_SIZE) >= 0 ) {
@@ -112,7 +113,6 @@ static char *rtsp_get(rtsp_t *s) {
     string = strdup( buffer );
   }
   
-  free(buffer);
   return string;
 }
 
@@ -124,7 +124,7 @@ static char *rtsp_get(rtsp_t *s) {
 static void rtsp_put(rtsp_t *s, const char *string) {
 
   int len=strlen(string);
-  char *buf = malloc(sizeof(char)*len+2);
+  char buf[len+2];
 
   lprintf(">> '%s'", string);
 
@@ -135,8 +135,6 @@ static void rtsp_put(rtsp_t *s, const char *string) {
   _x_io_tcp_write(s->stream, s->s, buf, len+2);
   
   lprintf("done.\n");
-
-  free(buf);
 }
 
 /*
@@ -171,13 +169,11 @@ static int rtsp_get_code(rtsp_t *s, const char *string) {
 static void rtsp_send_request(rtsp_t *s, const char *type, const char *what) {
 
   char **payload=s->scheduled;
-  char *buf;
-  
-  buf = malloc(strlen(type)+strlen(what)+strlen(rtsp_protocol_version)+3);
+  char buf[strlen(type)+strlen(what)+strlen(rtsp_protocol_version)+3];
   
   sprintf(buf,"%s %s %s",type, what, rtsp_protocol_version);
   rtsp_put(s,buf);
-  free(buf);
+
   if (payload)
     while (*payload) {
       rtsp_put(s,*payload);
@@ -199,11 +195,9 @@ static void rtsp_schedule_standard(rtsp_t *s) {
   rtsp_schedule_field(s, tmp);
   
   if (s->session) {
-    char *buf;
-    buf = malloc(strlen(s->session)+15);
+    char buf[strlen(s->session)+15];
     sprintf(buf, "Session: %s", s->session);
     rtsp_schedule_field(s, buf);
-    free(buf);
   }
 }
 /*
@@ -241,14 +235,13 @@ static int rtsp_get_answers(rtsp_t *s) {
       }
     }
     if (!strncasecmp(answer,"Server:",7)) {
-      char *buf = xine_xmalloc(strlen(answer));
+      char buf[strlen(answer)];
       sscanf(answer,"%*s %s",buf);
       if (s->server) free(s->server);
       s->server=strdup(buf);
-      free(buf);
     }
     if (!strncasecmp(answer,"Session:",8)) {
-      char *buf = xine_xmalloc(strlen(answer));
+      char buf[strlen(answer)];
       sscanf(answer,"%*s %s",buf);
       if (s->session) {
         if (strcmp(buf, s->session)) {
@@ -263,7 +256,6 @@ static int rtsp_get_answers(rtsp_t *s) {
 
         s->session=strdup(buf);
       }
-      free(buf);
     }
     *answer_ptr=answer;
     answer_ptr++;
@@ -304,8 +296,7 @@ int rtsp_request_options(rtsp_t *s, const char *what) {
     buf=strdup(what);
   } else
   {
-    buf = malloc(sizeof(char)*(strlen(s->host)+16));
-    sprintf(buf,"rtsp://%s:%i", s->host, s->port);
+    asprintf(&buf,"rtsp://%s:%i", s->host, s->port);
   }
   rtsp_send_request(s,"OPTIONS",buf);
   free(buf);
@@ -321,8 +312,7 @@ int rtsp_request_describe(rtsp_t *s, const char *what) {
     buf=strdup(what);
   } else
   {
-    buf = malloc(sizeof(char)*(strlen(s->host)+strlen(s->path)+16));
-    sprintf(buf,"rtsp://%s:%i/%s", s->host, s->port, s->path);
+    asprintf(&buf,"rtsp://%s:%i/%s", s->host, s->port, s->path);
   }
   rtsp_send_request(s,"DESCRIBE",buf);
   free(buf);
@@ -345,8 +335,7 @@ int rtsp_request_setparameter(rtsp_t *s, const char *what) {
     buf=strdup(what);
   } else
   {
-    buf = malloc(sizeof(char)*(strlen(s->host)+strlen(s->path)+16));
-    sprintf(buf,"rtsp://%s:%i/%s", s->host, s->port, s->path);
+    asprintf(&buf,"rtsp://%s:%i/%s", s->host, s->port, s->path);
   }
   rtsp_send_request(s,"SET_PARAMETER",buf);
   free(buf);
@@ -362,8 +351,7 @@ int rtsp_request_play(rtsp_t *s, const char *what) {
     buf=strdup(what);
   } else
   {
-    buf = malloc(sizeof(char)*(strlen(s->host)+strlen(s->path)+16));
-    sprintf(buf,"rtsp://%s:%i/%s", s->host, s->port, s->path);
+    asprintf(&buf,"rtsp://%s:%i/%s", s->host, s->port, s->path);
   }
   rtsp_send_request(s,"PLAY",buf);
   free(buf);
@@ -412,8 +400,7 @@ int rtsp_read_data(rtsp_t *s, void *buffer_gen, unsigned int size) {
       }
       /* lets make the server happy */
       rtsp_put(s, "RTSP/1.0 451 Parameter Not Understood");
-      rest = malloc(sizeof(char)*17);
-      sprintf(rest,"CSeq: %u", seq);
+      asprintf(&rest,"CSeq: %u", seq);
       rtsp_put(s, rest);
       free(rest);
       rtsp_put(s, "");
@@ -486,9 +473,7 @@ rtsp_t *rtsp_connect(xine_stream_t *stream, const char *mrl, const char *user_ag
   pathbegin=slash-mrl_ptr;
   hostend=colon-mrl_ptr;
 
-  s->host = malloc(sizeof(char)*hostend+1);
-  strncpy(s->host, mrl_ptr, hostend);
-  s->host[hostend]=0;
+  s->host = strndup(mrl_ptr, hostend);
 
   if (pathbegin < strlen(mrl_ptr)) s->path=strdup(mrl_ptr+pathbegin+1);
   if (colon != slash) {
