@@ -100,7 +100,8 @@ xineplug_inp_rtp_la_SOURCES = input_rtp.c net_buf_ctrl.c
 xineplug_inp_rtp_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 
 xineplug_inp_http_la_SOURCES = input_http.c net_buf_ctrl.c http_helper.c
-xineplug_inp_http_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
+xineplug_inp_http_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) $(AVUTIL_LIBS)
+xineplug_inp_http_la_CPPFLAGS = $(AM_CPPFLAGS) $(AVUTIL_CFLAGS)
 
 xineplug_inp_pnm_la_SOURCES = input_pnm.c net_buf_ctrl.c pnm.c
 xineplug_inp_pnm_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
