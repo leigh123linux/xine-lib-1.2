@@ -318,8 +318,8 @@ typedef struct noise_parameters_s {
         type, quality, pattern;
 } noise_parameters_t;
 
-static char *enum_types[] = {"uniform", "gaussian", NULL};
-static char *enum_quality[] = {"fixed", "temporal", "averaged temporal", NULL};
+static const char *enum_types[] = {"uniform", "gaussian", NULL};
+static const char *enum_quality[] = {"fixed", "temporal", "averaged temporal", NULL};
 
 /*
  * description of params struct
