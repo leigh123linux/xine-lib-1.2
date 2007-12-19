@@ -77,7 +77,6 @@ typedef struct {
   off_t            contentlength;
     
   char             buf[BUFSIZE];
-  char             proxybuf[BUFSIZE];
 
   char             preview[MAX_PREVIEW_SIZE];
   off_t            preview_size;
