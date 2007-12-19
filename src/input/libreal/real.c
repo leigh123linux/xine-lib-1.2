@@ -316,14 +316,13 @@ void real_calc_response_and_checksum (char *response, char *chksum, char *challe
   int   ch_len, resp_len;
   int   i;
   char *ptr;
-  char  buf[128];
+  char  buf[128] = { 0, };
 
   /* initialize return values */
   memset(response, 0, 64);
   memset(chksum, 0, 34);
 
   /* initialize buffer */
-  memset(buf, 0, 128);
   ptr=buf;
   _X_BE_32C(ptr, 0xa1e9149d);
   ptr+=4;
