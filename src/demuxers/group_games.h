@@ -21,7 +21,7 @@
 #ifndef HAVE_GROUP_GAMES_H
 #define HAVE_GROUP_GAMES_H
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 void *demux_eawve_init_plugin(xine_t *xine, void *data);
 void *demux_idcin_init_plugin (xine_t *xine, void *data);

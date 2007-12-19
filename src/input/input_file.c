@@ -44,10 +44,10 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "compat.h"
-#include "input_plugin.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/compat.h>
+#include <xine/input_plugin.h>
 
 #define MAXFILES      65535
 

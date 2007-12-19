@@ -18,7 +18,7 @@
 #include "debugtools.h"
 
 #ifdef XINE_MAJOR
-#include "xineutils.h"
+#include <xine/xineutils.h>
 #include <basedir.h>
 #endif
 

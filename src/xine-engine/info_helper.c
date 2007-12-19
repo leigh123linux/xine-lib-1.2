@@ -35,7 +35,7 @@
 
 #define XINE_ENGINE_INTERNAL
 
-#include "info_helper.h"
+#include <xine/info_helper.h>
 
 /* *******************  Stream Info  *************************** */
 

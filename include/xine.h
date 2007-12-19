@@ -57,11 +57,11 @@ extern "C" {
 
 #ifdef XINE_COMPILE
 #include <inttypes.h>
-#include "attributes.h"
 #else
 #include <xine/os_types.h>
-#include <xine/attributes.h>
 #endif
+
+#include <xine/attributes.h>
 #include <xine/version.h>
 
 /* This enables some experimental features. These are not part of the

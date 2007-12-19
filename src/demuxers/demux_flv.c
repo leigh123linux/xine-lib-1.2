@@ -42,10 +42,10 @@
 /*
 #define LOG
 */
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "compat.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/compat.h>
+#include <xine/demux.h>
 #include "bswap.h"
 #include "group_games.h"
 

@@ -30,7 +30,7 @@
 #define SUB_BUFSIZE 1024
 #define SUB_MAX_TEXT  5
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 typedef enum {
   SUBTITLE_SIZE_SMALL = 0,

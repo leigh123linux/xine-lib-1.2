@@ -45,12 +45,12 @@
 /*
 #define LOG
 */
-#include "xine_internal.h"
-#include "demux.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/demux.h>
+#include <xine/xineutils.h>
 #include "bswap.h"
 #include "asfheader.h"
-#include "xmlparser.h"
+#include <xine/xmlparser.h>
 
 #define CODEC_TYPE_AUDIO          0
 #define CODEC_TYPE_VIDEO          1

@@ -27,10 +27,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "xine_internal.h"
-#include "audio_out.h"
-#include "buffer.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/audio_out.h>
+#include <xine/buffer.h>
+#include <xine/xineutils.h>
 #include "bswap.h"
 
 /* Nosefart includes */

@@ -30,7 +30,7 @@
 #include "mpeg2.h"
 #include "mpeg2convert.h"
 #include "convert_internal.h"
-#include "attributes.h"
+#include <xine/attributes.h>
 #include "vis.h"
 
 /* Based partially upon the MMX yuv2rgb code, see there for credits.

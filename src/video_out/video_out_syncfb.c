@@ -52,10 +52,10 @@
 #include "video_out_syncfb.h"
 
 #include "xine.h"
-#include "video_out.h"
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "vo_scale.h"
+#include <xine/video_out.h>
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/vo_scale.h>
 
 /*#define DEBUG_OUTPUT*/
 

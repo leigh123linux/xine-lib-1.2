@@ -44,8 +44,8 @@
 #define LOG_PTS
 */
 
-#include "xine_internal.h"
-#include "audio_out.h"
+#include <xine/xine_internal.h>
+#include <xine/audio_out.h>
 
 #ifdef HAVE_A52DEC_A52_H
 # include <a52dec/a52.h>
@@ -59,8 +59,8 @@
 # include "a52_internal.h"
 #endif
 
-#include "buffer.h"
-#include "xineutils.h"
+#include <xine/buffer.h>
+#include <xine/xineutils.h>
 
 #include "../../contrib/a52dec/crc.c"
 

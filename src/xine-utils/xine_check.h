@@ -2,11 +2,7 @@
 #define XINE_CHECK_H
 #include <stdio.h>
 
-#ifdef XINE_COMPILE
-#  include "xine.h"
-#else
-#  include <xine.h>
-#endif
+#include <xine.h>
 
 /*
  * Start checking xine setup here

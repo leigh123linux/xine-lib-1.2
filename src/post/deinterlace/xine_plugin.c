@@ -27,10 +27,10 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "post.h"
-#include "xineutils.h"
-#include "xine_buffer.h"
+#include <xine/xine_internal.h>
+#include <xine/post.h>
+#include <xine/xineutils.h>
+#include <xine/xine_buffer.h>
 #include <pthread.h>
 
 #include "tvtime.h"

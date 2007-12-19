@@ -58,7 +58,7 @@
 #define LOG
 */
 
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 #define CHECKS
 

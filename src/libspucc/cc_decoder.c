@@ -35,12 +35,12 @@
 
 #include <inttypes.h>
 
-#include "xine_internal.h"
-#include "video_out.h"
-#include "xineutils.h"
-#include "osd.h"
+#include <xine/xine_internal.h>
+#include <xine/video_out.h>
+#include <xine/xineutils.h>
+#include <xine/osd.h>
 #include "cc_decoder.h"
-#include "osd.h"
+#include <xine/osd.h>
 
 /*
 #define LOG_DEBUG 3

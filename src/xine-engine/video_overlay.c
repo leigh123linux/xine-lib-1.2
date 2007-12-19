@@ -25,11 +25,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "buffer.h"
-#include "xine_internal.h"
+#include <xine/buffer.h>
+#include <xine/xine_internal.h>
 #include "bswap.h"
-#include "xineutils.h"
-#include "video_overlay.h"
+#include <xine/xineutils.h>
+#include <xine/video_overlay.h>
 
 /*
 #define LOG_DEBUG

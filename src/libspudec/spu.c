@@ -47,10 +47,10 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
-#include "xine_internal.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
 #include "spu.h"
-#include "buffer.h"
+#include <xine/buffer.h>
 #include "xine-engine/bswap.h"
 #ifdef HAVE_DVDNAV
 #  include <dvdnav/nav_read.h>

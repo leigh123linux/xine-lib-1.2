@@ -25,7 +25,7 @@
 #define HAVE_RTSP_H
 
 /*#include <inttypes.h> */
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 #ifdef __CYGWIN__
 #define uint32_t unsigned int

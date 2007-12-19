@@ -39,10 +39,10 @@
 #define LOG_VERBOSE
 
 #include "xine.h"
-#include "xine_internal.h"
-#include "video_out.h"
-#include "xineutils.h"
-#include "vo_scale.h"
+#include <xine/xine_internal.h>
+#include <xine/video_out.h>
+#include <xine/xineutils.h>
+#include <xine/vo_scale.h>
 
 #ifdef DIRECTFB_X11
 # include "x11osd.h"

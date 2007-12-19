@@ -40,8 +40,8 @@
 #define LOG_VID 0
 #define LOG_PTS 0
 
-#include "xine_internal.h"
-#include "buffer.h"
+#include <xine/xine_internal.h>
+#include <xine/buffer.h>
 #include "video_out_dxr3.h"
 #include "dxr3.h"
 

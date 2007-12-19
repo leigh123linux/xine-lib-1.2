@@ -28,7 +28,7 @@
 #include <inttypes.h>
 
 #include "mpeg2_internal.h"
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 #define CPU_MMXEXT 0
 #define CPU_3DNOW 1

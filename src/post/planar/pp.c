@@ -20,9 +20,9 @@
  * plugin for ffmpeg libpostprocess
  */
 
-#include "xine_internal.h"
-#include "post.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/post.h>
+#include <xine/xineutils.h>
 #include "postprocess.h"
 #include <pthread.h>
 

@@ -36,9 +36,9 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "buffer.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/buffer.h>
+#include <xine/xineutils.h>
 
 #ifdef _MSC_VER
 /* ffmpeg has own definitions of those types */

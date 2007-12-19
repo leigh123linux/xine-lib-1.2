@@ -33,8 +33,8 @@
 #define LOG
 */
 
-#include "xineutils.h"
-#include "scratch.h"
+#include <xine/xineutils.h>
+#include <xine/scratch.h>
 
 static void __attribute__((__format__(__printf__, 2, 0)))
   scratch_printf (scratch_buffer_t *this, const char *format, va_list argp)

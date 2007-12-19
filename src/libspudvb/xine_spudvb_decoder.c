@@ -27,9 +27,9 @@
 
 #include "pthread.h"
 #include <errno.h>
-#include "xine_internal.h"
-#include "spu.h"
-#include "osd.h"
+#include <xine/xine_internal.h>
+#include <xine/spu.h>
+#include <xine/osd.h>
 #define MAX_REGIONS 7
 
 /*#define LOG 1*/

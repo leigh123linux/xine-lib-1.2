@@ -28,12 +28,12 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
-#include "xine_internal.h"
-#include "video_out.h"
+#include <xine/xine_internal.h>
+#include <xine/video_out.h>
 #include "mpeg2_internal.h"
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
-#include "attributes.h"
+#include <xine/attributes.h>
 #include "accel_xvmc.h"
 #include "xvmc.h"
 

@@ -33,10 +33,10 @@
 #define LOG
 */
 
-#include "buffer.h"
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "osd.h"
+#include <xine/buffer.h>
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/osd.h>
 
 #define SUB_MAX_TEXT  5      /* lines */
 #define SUB_BUFSIZE   256    /* chars per line */

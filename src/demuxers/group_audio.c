@@ -24,8 +24,8 @@
 #include "config.h"
 #endif
 
-#include "xine_internal.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/demux.h>
 
 #include "group_audio.h"
 

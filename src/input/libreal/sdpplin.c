@@ -29,7 +29,7 @@
 #include "rmff.h"
 #include "rtsp.h"
 #include "sdpplin.h"
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 /*
  * Decodes base64 strings (based upon b64 package)

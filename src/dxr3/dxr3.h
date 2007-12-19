@@ -23,7 +23,7 @@
 
 #include "em8300.h"
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 /* data for the device name config entry */
 #define CONF_KEY  "dxr3.device_number"

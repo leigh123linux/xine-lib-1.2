@@ -65,9 +65,9 @@
 #define DEBUG_PTS 0
 #define DEBUG_VIDEO_PACKETS 0
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/demux.h>
 #include "bswap.h"
 #include "flacutils.h"
 

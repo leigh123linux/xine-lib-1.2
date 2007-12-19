@@ -22,8 +22,8 @@
  * plugins for VDR
  */
 
-#include "xine_internal.h"
-#include "post.h"
+#include <xine/xine_internal.h>
+#include <xine/post.h>
 #include "post_vdr.h"
 
 

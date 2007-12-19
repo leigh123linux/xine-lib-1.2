@@ -38,9 +38,9 @@
 */
 
 #include "bswap.h"
-#include "xine_internal.h"
-#include "audio_out.h"
-#include "buffer.h"
+#include <xine/xine_internal.h>
+#include <xine/audio_out.h>
+#include <xine/buffer.h>
 
 #include "qtx/qtxsdk/components.h"
 #include "wine/win32.h"

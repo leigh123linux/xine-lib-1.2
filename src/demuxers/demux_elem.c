@@ -38,10 +38,10 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "compat.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/compat.h>
+#include <xine/demux.h>
 
 #define NUM_PREVIEW_BUFFERS 50
 #define SCRATCH_SIZE 256

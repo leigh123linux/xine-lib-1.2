@@ -25,9 +25,9 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "post.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/post.h>
 #include "dsp.h"
 
 #include "audio_filters.h"

@@ -26,12 +26,12 @@
 */
 
 #ifdef XINE_COMPILE
-#include "xineutils.h"
+#include <xine/xineutils.h>
 #else
 #define lprintf(...)
 #define xine_xmalloc malloc
 #endif
-#include "xmllexer.h"
+#include <xine/xmllexer.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>

@@ -24,7 +24,7 @@
 #ifndef MPEG2_INTERNAL_H
 #define MPEG2_INTERNAL_H
 
-#include "video_out.h"
+#include <xine/video_out.h>
 #include "accel_xvmc.h"
 
 #ifdef ENABLE_ALTIVEC

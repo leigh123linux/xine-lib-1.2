@@ -23,7 +23,7 @@
 #endif
 
 #include "lrb.h"
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 lrb_t *lrb_new (int max_num_entries,
 		fifo_buffer_t *fifo) {

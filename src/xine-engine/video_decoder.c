@@ -35,8 +35,8 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
 #include <sched.h>
 
 #define SPU_SLEEP_INTERVAL (90000/2)

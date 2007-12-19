@@ -29,45 +29,24 @@ extern "C" {
  * include public part of xine header
  */
 
-#ifdef XINE_COMPILE
-#  include "xine.h"
-#  include "refcounter.h"
-#  include "input/input_plugin.h"
-#  include "demuxers/demux.h"
-#  include "video_out.h"
-#  include "audio_out.h"
-#  include "metronom.h"
-#  include "osd.h"
-#  include "xineintl.h"
-#  include "plugin_catalog.h"
-#  include "video_decoder.h"
-#  include "audio_decoder.h"
-#  include "spu_decoder.h"
-#  include "scratch.h"
-#  include "broadcaster.h"
-#  include "io_helper.h"
-#  include "info_helper.h"
-#  include "alphablend.h"
-#else
-#  include <xine.h>
-#  include <xine/refcounter.h>
-#  include <xine/input_plugin.h>
-#  include <xine/demux.h>
-#  include <xine/video_out.h>
-#  include <xine/audio_out.h>
-#  include <xine/metronom.h>
-#  include <xine/osd.h>
-#  include <xine/xineintl.h>
-#  include <xine/plugin_catalog.h>
-#  include <xine/video_decoder.h>
-#  include <xine/audio_decoder.h>
-#  include <xine/spu_decoder.h>
-#  include <xine/scratch.h>
-#  include <xine/broadcaster.h>
-#  include <xine/io_helper.h>
-#  include <xine/info_helper.h>
-#  include <xine/alphablend.h>
-#endif
+#include <xine.h>
+#include <xine/refcounter.h>
+#include <xine/input_plugin.h>
+#include <xine/demux.h>
+#include <xine/video_out.h>
+#include <xine/audio_out.h>
+#include <xine/metronom.h>
+#include <xine/osd.h>
+#include <xine/xineintl.h>
+#include <xine/plugin_catalog.h>
+#include <xine/video_decoder.h>
+#include <xine/audio_decoder.h>
+#include <xine/spu_decoder.h>
+#include <xine/scratch.h>
+#include <xine/broadcaster.h>
+#include <xine/io_helper.h>
+#include <xine/info_helper.h>
+#include <xine/alphablend.h>
 
 #define XINE_MAX_EVENT_LISTENERS         50
 #define XINE_MAX_EVENT_TYPES             100

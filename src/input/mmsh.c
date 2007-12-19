@@ -51,8 +51,8 @@
 /*
 #define LOG
 */
-#include "xine_internal.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
 
 #include "bswap.h"
 #include "http_helper.h"

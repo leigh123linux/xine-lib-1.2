@@ -26,9 +26,9 @@
 
 #include <stdio.h>
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "post.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/post.h>
 
 #define FPS 20
 

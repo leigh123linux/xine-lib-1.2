@@ -34,10 +34,10 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "demux.h"
-#include "buffer.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/demux.h>
+#include <xine/buffer.h>
 #include "bswap.h"
 #include "group_audio.h"
 

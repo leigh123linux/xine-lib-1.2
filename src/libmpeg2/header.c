@@ -31,7 +31,7 @@
 #include <inttypes.h>
 
 #include "mpeg2_internal.h"
-#include "attributes.h"
+#include <xine/attributes.h>
 
 /* default intra quant matrix, in zig-zag order */
 static const uint8_t default_intra_quantizer_matrix[64] ATTR_ALIGN(16) = {

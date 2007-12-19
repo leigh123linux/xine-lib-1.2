@@ -38,8 +38,8 @@ typedef unsigned char boolean;
 #define LOG
 */
 
-#include "audio_out.h"
-#include "xine_internal.h"
+#include <xine/audio_out.h>
+#include <xine/xine_internal.h>
 
 
 #define MAX_CHANNELS	          6

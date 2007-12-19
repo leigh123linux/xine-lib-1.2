@@ -32,8 +32,8 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "vo_scale.h"
+#include <xine/xine_internal.h>
+#include <xine/vo_scale.h>
 
 /*
  * convert delivered height/width to ideal width/height

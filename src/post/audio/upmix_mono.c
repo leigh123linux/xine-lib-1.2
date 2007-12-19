@@ -31,8 +31,8 @@
 #define LOG
 */
 
-#include "xineutils.h"
-#include "post.h"
+#include <xine/xineutils.h>
+#include <xine/post.h>
 
 #include "audio_filters.h"
 

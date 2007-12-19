@@ -24,7 +24,7 @@
 #include "config.h"
 #endif
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 #include "ffmpeg_decoder.h"
 

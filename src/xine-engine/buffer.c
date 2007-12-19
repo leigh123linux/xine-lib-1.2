@@ -43,9 +43,9 @@
 #define LOG
 */
 
-#include "buffer.h"
-#include "xineutils.h"
-#include "xine_internal.h"
+#include <xine/buffer.h>
+#include <xine/xineutils.h>
+#include <xine/xine_internal.h>
 
 /*
  * put a previously allocated buffer element back into the buffer pool

@@ -40,11 +40,11 @@
 
 #define XINE_ENGINE_INTERNAL
 
-#include "xine_internal.h"
-#include "audio_out.h"
-#include "video_out.h"
-#include "demuxers/demux.h"
-#include "post.h"
+#include <xine/xine_internal.h>
+#include <xine/audio_out.h>
+#include <xine/video_out.h>
+#include <xine/demux.h>
+#include <xine/post.h>
 
 /* 
  * version information / checking

@@ -17,8 +17,8 @@
  *
  */
 
-#include "xine_internal.h"
-#include "video_out.h"
+#include <xine/xine_internal.h>
+#include <xine/video_out.h>
 #include "mpeg2.h"
 #include "mpeg2_internal.h"
 #include "xvmc_vld.h"

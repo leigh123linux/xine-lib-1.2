@@ -38,9 +38,9 @@
 #include <aalib.h>
 
 #include "xine.h"
-#include "video_out.h"
-#include "xine_internal.h"
-#include "xineutils.h"
+#include <xine/video_out.h>
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
 
 /*
  * global variables
