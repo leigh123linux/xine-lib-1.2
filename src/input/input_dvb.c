@@ -234,9 +234,8 @@ typedef struct {
   
   int				 adapter_num;
 
-  char				 frontend_device[100];
-  char 				 dvr_device[100];
-  char				 demux_device[100];
+  char 				*dvr_device;
+  char				*demux_device;
   
   struct dmx_pes_filter_params   pesFilterParams[MAX_FILTERS];
   struct dmx_pes_filter_params   subFilterParams[MAX_SUBTITLES];
@@ -548,9 +547,10 @@ static void tuner_dispose(tuner_t * this)
     for (x = 0; x < MAX_SUBTITLES; x++)
       if (this->fd_subfilter[x] >= 0)
         close(this->fd_subfilter[x]);
-    
-    if(this)
-      free(this);
+
+    free(this->dvr_device);
+    free(this->demux_device);
+    free(this);
 }
 
 
@@ -560,7 +560,8 @@ static tuner_t *tuner_init(xine_t * xine, int adapter)
     tuner_t *this;
     int x;
     int test_video;
-    char *video_device=xine_xmalloc(200);
+    char *video_device = NULL;
+    char *frontend_device = NULL;
 
     _x_assert(video_device != NULL);
     
@@ -576,21 +577,24 @@ static tuner_t *tuner_init(xine_t * xine, int adapter)
     this->xine = xine;
     this->adapter_num = adapter;
     
-    snprintf(this->frontend_device,100,"/dev/dvb/adapter%i/frontend0",this->adapter_num);
-    snprintf(this->demux_device,100,"/dev/dvb/adapter%i/demux0",this->adapter_num);
-    snprintf(this->dvr_device,100,"/dev/dvb/adapter%i/dvr0",this->adapter_num);
-    snprintf(video_device,100,"/dev/dvb/adapter%i/video0",this->adapter_num);
-    
-    if ((this->fd_frontend = open(this->frontend_device, O_RDWR)) < 0) {
+    asprintf(&this->demux_device,"/dev/dvb/adapter%i/demux0",this->adapter_num);
+    asprintf(&this->dvr_device,"/dev/dvb/adapter%i/dvr0",this->adapter_num);
+    asprintf(&video_device,"/dev/dvb/adapter%i/video0",this->adapter_num);
+
+    asprintf(&frontend_device,"/dev/dvb/adapter%i/frontend0",this->adapter_num);
+    if ((this->fd_frontend = open(frontend_device, O_RDWR)) < 0) {
       xprintf(this->xine, XINE_VERBOSITY_DEBUG, "FRONTEND DEVICE: %s\n", strerror(errno));
       tuner_dispose(this);
-      return NULL;
+      this = NULL;
+      goto exit;
     }
+    free(frontend_device); frontend_device = NULL;
 
     if ((ioctl(this->fd_frontend, FE_GET_INFO, &this->feinfo)) < 0) {
       xprintf(this->xine, XINE_VERBOSITY_DEBUG, "FE_GET_INFO: %s\n", strerror(errno));
       tuner_dispose(this);
-      return NULL;
+      this = NULL;
+      goto exit;
     }
 
     for (x = 0; x < MAX_FILTERS; x++) {
@@ -598,7 +602,8 @@ static tuner_t *tuner_init(xine_t * xine, int adapter)
       if (this->fd_pidfilter[x] < 0) {
         xprintf(this->xine, XINE_VERBOSITY_DEBUG, "DEMUX DEVICE PIDfilter: %s\n", strerror(errno));
         tuner_dispose(this);
-	return NULL;
+	this = NULL;
+	goto exit;
       }
    }
     for (x = 0; x < MAX_SUBTITLES; x++) {
@@ -630,7 +635,9 @@ static tuner_t *tuner_init(xine_t * xine, int adapter)
        close(test_video);
   }
 
+ exit:
   free(video_device);
+  free(frontend_device);
   
   return this;
 }
