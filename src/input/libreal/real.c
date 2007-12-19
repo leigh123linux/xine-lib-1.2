@@ -353,10 +353,10 @@ void real_calc_response_and_checksum (char *response, char *chksum, char *challe
   calc_response_string (response, buf);
 
   /* add tail */
-  resp_len = strlen (response);
-  strcpy (&response[resp_len], "01d0a8e3");
+  strcat(response, "01d0a8a3");
 
   /* calculate checksum */
+  resp_len = strlen (response);
   for (i=0; i<resp_len/4; i++)
     chksum[i] = response[i*4];
 }
