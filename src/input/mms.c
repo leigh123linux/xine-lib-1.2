@@ -532,7 +532,7 @@ static int interp_asf_header (mms_t *this) {
   return 1;
 }
 
-static const char *const mmst_proto_s[] = { "mms", "mmst", NULL };
+static const char mmst_proto_s[][8] = { "mms", "mmst", "" };
 
 static int mmst_valid_proto (char *proto) {
   int i = 0;
@@ -542,7 +542,7 @@ static int mmst_valid_proto (char *proto) {
   if (!proto)
     return 0;
 
-  while(mmst_proto_s[i]) {
+  while(*(mmst_proto_s[i])) {
     if (!strcasecmp(proto, mmst_proto_s[i])) {
       return 1;
     }

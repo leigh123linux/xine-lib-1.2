@@ -447,7 +447,7 @@ static int interp_header (mmsh_t *this) {
   return 1;
 }
 
-static const char *const mmsh_proto_s[] = { "mms", "mmsh", NULL };
+static const char mmsh_proto_s[][8] = { "mms", "mmsh", "" };
 
 static int mmsh_valid_proto (char *proto) {
   int i = 0;
@@ -457,7 +457,7 @@ static int mmsh_valid_proto (char *proto) {
   if (!proto)
     return 0;
 
-  while(mmsh_proto_s[i]) {
+  while(*(mmsh_proto_s[i])) {
     if (!strcasecmp(proto, mmsh_proto_s[i])) {
       return 1;
     }
