@@ -207,7 +207,7 @@ static const xine_config_entry_translation_t config_entry_translation[] = {
 
 
 static int config_section_enum(const char *sect) {
-  static char *known_section[] = {
+  static const char *const known_section[] = {
     "gui",
     "ui",
     "audio",
