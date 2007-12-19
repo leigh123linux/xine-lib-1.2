@@ -359,7 +359,7 @@ typedef struct {
 } dvb_input_plugin_t;
 
 typedef struct {
-	char *name;
+	const char *name;
 	int value;
 } Param;
 
