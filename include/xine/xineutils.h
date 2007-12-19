@@ -633,6 +633,12 @@ void *xine_xcalloc(size_t nmemb, size_t size) XINE_MALLOC XINE_PROTECTED;
 void *xine_xmalloc_aligned(size_t alignment, size_t size, void **base) XINE_PROTECTED;
 
 /*
+ * Copy blocks of memory.
+ */
+void *xine_memdup (const void *src, size_t length) XINE_MALLOC XINE_PROTECTED;
+void *xine_memdup0 (const void *src, size_t length) XINE_MALLOC XINE_PROTECTED;
+
+/*
  * Get user home directory.
  */
 const char *xine_get_homedir(void) XINE_PROTECTED;
