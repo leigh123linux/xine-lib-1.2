@@ -33,7 +33,6 @@
 #include <xine/buffer.h>
 #include "xine-engine/bswap.h"
 #include <xine/xineutils.h>
-#include "spu.h"
 #ifdef HAVE_DVDNAV
 #  include <dvdnav/nav_read.h>
 #  include <dvdnav/nav_types.h>
@@ -41,6 +40,8 @@
 #  include "nav_read.h"
 #  include "nav_types.h"
 #endif
+
+#include "spudec.h"
 
 /*
 #define LOG_DEBUG 1
