@@ -620,19 +620,8 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   int                  use_proxy;
   int                  proxyport;
   int                  mpegurl_redirect = 0;
-  char                *auth = NULL;
-  char                *proxyauth = NULL;
   
   use_proxy = this_class->proxyhost && strlen(this_class->proxyhost);
-  
-  if (use_proxy) {
-    if (this_class->proxyuser && strlen(this_class->proxyuser)) {
-      http_plugin_basicauth (this_class->proxyuser,
-			     this_class->proxypassword,
-			     &proxyauth);
-    }
-  }
-  
   
   if (!_x_parse_url(this->mrl, &this->proto, &this->host, &this->port,
                     &this->user, &this->password, &this->uri)) {
@@ -643,10 +632,6 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 
   if (this->port == 0)
     this->port = DEFAULT_HTTP_PORT;
-  
-  if (this->user && strlen(this->user)) {
-    http_plugin_basicauth (this->user, this->password, &auth);
-  }
   
   if (this_class->proxyport == 0)
     proxyport = DEFAULT_HTTP_PORT;
@@ -678,8 +663,6 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   this->curpos = 0;
   
   if (this->fh == -1) {
-    free(proxyauth);
-    free(auth);
     return -2;
   }
 
@@ -701,8 +684,6 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 
     if (res != XIO_READY) {
       _x_message(this->stream, XINE_MSG_NETWORK_UNREACHABLE, this->mrl, NULL);
-      free(proxyauth);
-      free(auth);
       return -3;
     }
   }
@@ -728,17 +709,24 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 	     this->host);
   
   buflen = strlen(this->buf);
-  if (this_class->proxyuser && strlen(this_class->proxyuser)) {
+  if (use_proxy && this_class->proxyuser && strlen(this_class->proxyuser)) {
+    char *proxyauth;
+    http_plugin_basicauth (this_class->proxyuser, this_class->proxypassword,
+			   &proxyauth);
+
     snprintf (this->buf + buflen, BUFSIZE - buflen,
               "Proxy-Authorization: Basic %s\015\012", proxyauth);
     buflen = strlen(this->buf);
-    free(proxyauth); proxyauth = NULL;
+    free(proxyauth);
   }
   if (this->user && strlen(this->user)) {
+    char *auth;
+    http_plugin_basicauth (this->user, this->password, &auth);
+
     snprintf (this->buf + buflen, BUFSIZE - buflen,
               "Authorization: Basic %s\015\012", auth);
     buflen = strlen(this->buf);
-    free(auth); auth = NULL;
+    free(auth);
   }
   
   snprintf(this->buf + buflen, BUFSIZE - buflen,
