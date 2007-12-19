@@ -199,8 +199,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
     if(filter(*data,"a=OpaqueData:buffer;",&buf)) {
       decoded = b64_decode(buf, decoded, &(desc->mlti_data_size));
       if ( decoded != NULL ) {
-	desc->mlti_data = calloc(desc->mlti_data_size, sizeof(char));
-	memcpy(desc->mlti_data, decoded, desc->mlti_data_size);
+	desc->mlti_data = xine_memdup(decoded, desc->mlti_data_size);
 	handled=1;
 	*data=nl(*data);
 	lprintf("mlti_data_size: %i\n", desc->mlti_data_size);
