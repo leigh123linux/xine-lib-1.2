@@ -1621,12 +1621,12 @@ static int dvd_plugin_open (input_plugin_t *this_gen) {
 static input_plugin_t *dvd_class_get_instance (input_class_t *class_gen, xine_stream_t *stream, const char *data) {
   dvd_input_plugin_t    *this;
   dvd_input_class_t     *class = (dvd_input_class_t*)class_gen;
-  static char *handled_mrl = "dvd:/";
+  static const char handled_mrl[] = "dvd:/";
 
   trace_print("Called\n");
   
   /* Check we can handle this MRL */
-  if (strncasecmp (data, handled_mrl, strlen(handled_mrl) ) != 0)
+  if (strncasecmp (data, handled_mrl, sizeof(handled_mrl)-1 ) != 0)
     return NULL;
 
   this = (dvd_input_plugin_t *) xine_xmalloc (sizeof (dvd_input_plugin_t));
