@@ -86,7 +86,7 @@
 #include <xine/video_out.h>
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
-#include "vo_scale.h"
+#include <xine/vo_scale.h>
 #include "x11osd.h"
 #include "accel_xvmc.h"
 

@@ -37,7 +37,7 @@
 
 /* Xine includes */
 #include <xine/xine_internal.h>
-#include "input_plugin.h"
+#include <xine/input_plugin.h>
 #include <xine/xineutils.h>
 
 /*!
