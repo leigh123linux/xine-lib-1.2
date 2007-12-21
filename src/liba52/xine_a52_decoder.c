@@ -673,8 +673,25 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
   this->pts_list[0]       = 0;
   this->pts_list_position = 0;
 
-  if( !this->a52_state )
-    this->a52_state = a52_init (xine_mm_accel());
+  if( !this->a52_state ) {
+    this->a52_state = 
+#ifdef HAVE_A52DEC_A52_H /* External liba52 */
+      /* When using external liba52, enable _all_ capabilities, even
+	 if that might break stuff if they add some new capability
+	 that depends on CPU's caps.
+	 At the moment the only capability is DJBFFT, which is tested
+	 only if djbfft is being used at compile time.
+	 
+	 The actual question would be: why don't they check for
+	 capabilities themselves?
+      */
+#warning "Enabling all external liba52 capabilities."
+      a52_init (0xFFFFFFFF)
+#else
+      a52_init (xine_mm_accel())
+#endif
+      ;
+  }
 
   /*
    * find out if this driver supports a52 output
