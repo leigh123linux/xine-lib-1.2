@@ -38,7 +38,7 @@
 
 #include "a52.h"
 #include "a52_internal.h"
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 typedef struct complex_s {
     sample_t real;

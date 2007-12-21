@@ -31,7 +31,7 @@
 #include "a52_internal.h"
 #include "bitstream.h"
 #include "tables.h"
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 typedef struct {
     sample_t q1[2];
