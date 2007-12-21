@@ -33,6 +33,7 @@ xine-lib (1.1.9) (unreleased)
   * Always enable a52dec capabilities for external a52dec, this makes it
     possible to use the DJB accelerated FFT when using the external a52dec
     liba52 library.
+  * Fixed an input_pvr issue with 'set input' for ivtv versions 0.10.6+
 
 xine-lib (1.1.8)
   * Send a channel-changed event to the frontend when receiving the SYNC
