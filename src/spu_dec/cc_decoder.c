@@ -233,10 +233,58 @@ static const char specialchar[] = {
 /* character translation table - EIA 608 codes are not all the same as ASCII */
 static char chartbl[128];
 
-/* CC codes use odd parity for error detection, since they originally were */
-/* transmitted via noisy video signals */
-static int parity_table[256];
 
+/**
+ * @brief Parity table for packets
+ *
+ * CC codes use odd parity for error detection, since they originally were
+ * transmitted via noisy video signals.
+ *
+ * The code to produce the parity table would be the following:
+ *
+ * static int parity(uint8_t byte)
+ * {
+ *   int i;
+ *   int ones = 0;
+ * 
+ *   for (i = 0; i < 7; i++) {
+ *     if (byte & (1 << i))
+ *       ones++;
+ *   }
+ * 
+ *   return ones & 1;
+ * }
+ *
+ * static void build_parity_table(void)
+ * {
+ *   uint8_t byte;
+ *   int parity_v;
+ *   for (byte = 0; byte <= 127; byte++) {
+ *     parity_v = parity(byte);
+ *     // CC uses odd parity (i.e., # of 1's in byte is odd.)
+ *     parity_table[byte] = parity_v;
+ *     parity_table[byte | 0x80] = !parity_v;
+ *   }
+ * }
+ */
+static const int parity_table[256] = {
+  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0
+};
 
 /*---------------- decoder data structures -----------------------*/
 
@@ -383,33 +431,6 @@ static void get_font_metrics(osd_renderer_t *renderer,
     *maxh = MAX(*maxh, th);
   }
   renderer->free_object(testc);
-}
-
-
-static int parity(uint8_t byte)
-{
-  int i;
-  int ones = 0;
-
-  for (i = 0; i < 7; i++) {
-    if (byte & (1 << i))
-      ones++;
-  }
-
-  return ones & 1;
-}
-
-
-static void build_parity_table(void)
-{
-  uint8_t byte;
-  int parity_v;
-  for (byte = 0; byte <= 127; byte++) {
-    parity_v = parity(byte);
-    /* CC uses odd parity (i.e., # of 1's in byte is odd.) */
-    parity_table[byte] = parity_v;
-    parity_table[byte | 0x80] = !parity_v;
-  }
 }
 
 
@@ -1478,7 +1499,6 @@ void cc_decoder_close(cc_decoder_t *this)
 
 void cc_decoder_init(void)
 {
-  build_parity_table();
   build_char_table();
 }
 
