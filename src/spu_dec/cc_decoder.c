@@ -932,11 +932,11 @@ static void cc_renderer_show_caption(cc_renderer_t *this, cc_buffer_t *buf,
 static void cc_renderer_free_osd_object(cc_renderer_t *this)
 {
   /* hide and free old displayed caption object if necessary */
-  if (this->cap_display) {
-    cc_renderer_hide_caption(this, this->display_vpts);
-    this->osd_renderer->free_object(this->cap_display);
-    this->cap_display = NULL;
-  }
+  if ( ! this->cap_display ) return;
+
+  cc_renderer_hide_caption(this, this->display_vpts);
+  this->osd_renderer->free_object(this->cap_display);
+  this->cap_display = NULL;
 }
 
 
