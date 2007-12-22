@@ -7,6 +7,7 @@ SUBDIRS = \
 	audio_out \
 	audio_dec \
 	video_out \
+	video_dec \
 	dxr3 \
 	input \
 	demuxers \
@@ -18,7 +19,6 @@ SUBDIRS = \
 	libspudvb \
 	libsputext \
 	libw32dll \
-	libxinevdec \
 	libreal \
 	post \
 	combined \

@@ -1189,7 +1189,6 @@ src/libw32dll/DirectShow/Makefile
 src/libw32dll/dmo/Makefile
 src/libw32dll/qtx/Makefile
 src/libw32dll/qtx/qtxsdk/Makefile
-src/libxinevdec/Makefile
 src/libreal/Makefile
 src/post/Makefile
 src/post/planar/Makefile
@@ -1199,6 +1198,7 @@ src/post/visualizations/Makefile
 src/post/audio/Makefile
 src/post/deinterlace/Makefile
 src/post/deinterlace/plugins/Makefile
+src/video_dec/Makefile
 src/video_out/Makefile
 src/video_out/macosx/Makefile
 src/xine-utils/Makefile
