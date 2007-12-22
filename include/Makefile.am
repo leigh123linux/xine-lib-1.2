@@ -12,7 +12,6 @@ noinst_HEADERS = config.h configure.h
 CONFIG_CLEAN_FILES = $(inttypes_h)
 
 install-data-local: install-includeHEADERS
-	sed -e '/^\/\*_x_/d' xine.h > $(DESTDIR)$(includedir)/xine.h
 if GENERATED_INTTYPES_H
 	$(INSTALL) inttypes.h $(DESTDIR)$(includedir)
 endif
