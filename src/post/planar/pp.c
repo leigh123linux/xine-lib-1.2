@@ -20,9 +20,11 @@
  * plugin for ffmpeg libpostprocess
  */
 
-#include "xine_internal.h"
-#include "post.h"
-#include "xineutils.h"
+#include <config.h>
+
+#include <xine/xine_internal.h>
+#include <xine/post.h>
+#include <xine/xineutils.h>
 #include "postprocess.h"
 #include <pthread.h>
 
@@ -102,23 +104,18 @@ static xine_post_api_descr_t * get_param_descr (void) {
 }
 
 static char * get_help (void) {
-  char *help1 = 
-         _("FFmpeg libpostprocess plugin.\n"
-           "\n"
-           "Parameters\n"
-           "\n");
-   
-  char *help2 =
-         _("\n"
-           "* libpostprocess (C) Michael Niedermayer\n"
-         );
   static char *help = NULL;
 
   if( !help ) {
-    help = malloc( strlen(help1) + strlen(help2) + strlen(pp_help) + 1);
-    strcpy(help, help1);
-    strcat(help, pp_help);
-    strcat(help, help2);
+    asprintf(&help, "%s%s%s",
+	     _("FFmpeg libpostprocess plugin.\n"
+	       "\n"
+	       "Parameters\n"
+	       "\n"),
+	     pp_help,
+	     _("\n"
+	       "* libpostprocess (C) Michael Niedermayer\n")
+	     );
   }
   return help;
 }

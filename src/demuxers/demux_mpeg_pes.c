@@ -44,9 +44,9 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/demux.h>
 
 #define NUM_PREVIEW_BUFFERS   250
 #define DISC_TRESHOLD       90000

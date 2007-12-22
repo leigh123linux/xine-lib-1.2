@@ -50,7 +50,7 @@
 #define LOG
 */
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 void *(* xine_fast_memcpy)(void *to, const void *from, size_t len);
 

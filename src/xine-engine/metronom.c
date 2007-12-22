@@ -40,9 +40,9 @@
 #define METRONOM_INTERNAL
 #define METRONOM_CLOCK_INTERNAL
 
-#include "xine_internal.h"
-#include "metronom.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/metronom.h>
+#include <xine/xineutils.h>
 
 #define MAX_AUDIO_DELTA        1600
 #define AUDIO_SAMPLE_NUM      32768

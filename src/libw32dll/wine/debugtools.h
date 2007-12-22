@@ -8,7 +8,7 @@
 #include "config.h"
 #include "windef.h"
 
-#include "compat.h"
+#include <xine/compat.h>
 
 struct _GUID;
 

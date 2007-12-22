@@ -58,11 +58,11 @@
 */
 
 #include "xine.h"
-#include "video_out.h"
-#include "xine_internal.h"
+#include <xine/video_out.h>
+#include <xine/xine_internal.h>
 /* #include "overlay.h" */
-#include "xineutils.h"
-#include "vo_scale.h"
+#include <xine/xineutils.h>
+#include <xine/vo_scale.h>
 #include "xcbosd.h"
 
 typedef struct xv_driver_s xv_driver_t;

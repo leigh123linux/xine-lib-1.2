@@ -33,7 +33,7 @@
 #define LOG
 */
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #include <assert.h>
 
 #define DEFAULT_BUFFER_SIZE 1024

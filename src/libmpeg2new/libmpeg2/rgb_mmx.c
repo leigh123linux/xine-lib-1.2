@@ -34,7 +34,7 @@
 #include "mpeg2.h"
 #include "mpeg2convert.h"
 #include "convert_internal.h"
-#include "attributes.h"
+#include <xine/attributes.h>
 #include "mmx.h"
 
 #define CPU_MMXEXT 0

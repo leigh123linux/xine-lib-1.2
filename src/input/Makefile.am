@@ -19,7 +19,6 @@ SUBDIRS += libdvdnav
 endif
 
 
-xineinclude_HEADERS = input_plugin.h
 noinst_HEADERS = net_buf_ctrl.h mms.h mmsh.h pnm.h media_helper.h http_helper.h
 
 

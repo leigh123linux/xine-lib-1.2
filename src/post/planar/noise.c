@@ -21,9 +21,9 @@
  * is copyright 2002 Michael Niedermayer <michaelni@gmx.at>
  */
 
-#include "xine_internal.h"
-#include "post.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/post.h>
+#include <xine/xineutils.h>
 #include <math.h>
 #include <pthread.h>
 
@@ -317,8 +317,8 @@ typedef struct noise_parameters_s {
         type, quality, pattern;
 } noise_parameters_t;
 
-static char *enum_types[] = {"uniform", "gaussian", NULL};
-static char *enum_quality[] = {"fixed", "temporal", "averaged temporal", NULL};
+static const char *const enum_types[] = {"uniform", "gaussian", NULL};
+static const char *const enum_quality[] = {"fixed", "temporal", "averaged temporal", NULL};
 
 /*
  * description of params struct

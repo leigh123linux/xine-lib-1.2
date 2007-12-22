@@ -51,17 +51,17 @@
 
 #define XINE_ENABLE_EXPERIMENTAL_FEATURES 1
 #define XINE_ENGINE_INTERNAL
-#include "xine_internal.h"
-#include "xine_plugin.h"
-#include "plugin_catalog.h"
-#include "demuxers/demux.h"
-#include "input/input_plugin.h"
-#include "video_out.h"
-#include "post.h"
-#include "metronom.h"
-#include "configfile.h"
-#include "xineutils.h"
-#include "compat.h"
+#include <xine/xine_internal.h>
+#include <xine/xine_plugin.h>
+#include <xine/plugin_catalog.h>
+#include <xine/demux.h>
+#include <xine/input_plugin.h>
+#include <xine/video_out.h>
+#include <xine/post.h>
+#include <xine/metronom.h>
+#include <xine/configfile.h>
+#include <xine/xineutils.h>
+#include <xine/compat.h>
 
 #if 0
 

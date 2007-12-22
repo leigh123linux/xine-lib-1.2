@@ -51,7 +51,7 @@
 /* #define LOG_VERBOSE */
 /* #define LOG */
 
-#include "xineutils.h"
+#include <xine/xineutils.h>
 #include "video_out_dxr3.h"
 
 /* buffer size for encoded mpeg1 stream; will hold one intra frame 

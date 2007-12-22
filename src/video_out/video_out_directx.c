@@ -35,10 +35,10 @@ typedef unsigned char boolean;
 */
 
 #include "xine.h"
-#include "video_out.h"
-#include "xine_internal.h"
+#include <xine/video_out.h>
+#include <xine/xine_internal.h>
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #include "yuv2rgb.h"
 
 #define NEW_YUV 1

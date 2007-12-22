@@ -89,11 +89,11 @@
 
 #define LOG_RESAMPLE_SYNC 0
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "audio_out.h"
-#include "resample.h"
-#include "metronom.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/audio_out.h>
+#include <xine/resample.h>
+#include <xine/metronom.h>
 
 
 #define NUM_AUDIO_BUFFERS       32

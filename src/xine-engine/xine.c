@@ -58,21 +58,21 @@
 #define XINE_ENGINE_INTERNAL
 #define METRONOM_CLOCK_INTERNAL
 
-#include "xine_internal.h"
-#include "plugin_catalog.h"
-#include "audio_out.h"
-#include "video_out.h"
-#include "demuxers/demux.h"
-#include "buffer.h"
-#include "spu_decoder.h"
-#include "input/input_plugin.h"
-#include "metronom.h"
-#include "configfile.h"
-#include "osd.h"
-#include "spu.h"
+#include <xine/xine_internal.h>
+#include <xine/plugin_catalog.h>
+#include <xine/audio_out.h>
+#include <xine/video_out.h>
+#include <xine/demux.h>
+#include <xine/buffer.h>
+#include <xine/spu_decoder.h>
+#include <xine/input_plugin.h>
+#include <xine/metronom.h>
+#include <xine/configfile.h>
+#include <xine/osd.h>
+#include <xine/spu.h>
 
-#include "xineutils.h"
-#include "compat.h"
+#include <xine/xineutils.h>
+#include <xine/compat.h>
 
 #ifdef WIN32
 #   include <fcntl.h>

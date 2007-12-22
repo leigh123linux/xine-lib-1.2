@@ -37,13 +37,13 @@
 */
 
 #ifdef XINE_COMPILE
-#include "xineutils.h"
+#include <xine/xineutils.h>
 #else
 #define lprintf(...)
 #define xine_xmalloc malloc
 #endif
-#include "xmllexer.h"
-#include "xmlparser.h"
+#include <xine/xmllexer.h>
+#include <xine/xmlparser.h>
 
 
 #define TOKEN_SIZE  4 * 1024

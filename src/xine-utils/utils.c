@@ -27,10 +27,10 @@
 #include "config.h"
 #endif
 
-#include "xineutils.h"
-#include "xineintl.h"
+#include <xine/xineutils.h>
+#include <xine/xineintl.h>
 #ifdef _MSC_VER
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #endif
 
 #include <errno.h>
@@ -274,6 +274,19 @@ void *xine_xcalloc(size_t nmemb, size_t size) {
   return ptr;
 }
 
+}
+
+void *xine_memdup (const void *src, size_t length)
+{
+  void *dst = malloc (length);
+  return xine_fast_memcpy (dst, src, length);
+}
+
+void *xine_memdup0 (const void *src, size_t length)
+{
+  char *dst = xine_xmalloc (length + 1);
+  dst[length] = 0;
+  return xine_fast_memcpy (dst, src, length);
 #ifdef WIN32
 /*
  * Parse command line with Windows XP syntax and copy the command (argv[0]).

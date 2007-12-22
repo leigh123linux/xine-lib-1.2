@@ -70,9 +70,9 @@
 #define DEBUG_ODML
 #define LOG
 */
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/demux.h>
 #include "bswap.h"
 
 /*

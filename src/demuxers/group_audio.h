@@ -21,7 +21,7 @@
 #ifndef HAVE_GROUP_AUDIO_H
 #define HAVE_GROUP_AUDIO_H
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 void *demux_aac_init_plugin (xine_t *xine, void *data);
 void *demux_ac3_init_plugin (xine_t *xine, void *data);

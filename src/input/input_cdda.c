@@ -68,9 +68,9 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "input_plugin.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/input_plugin.h>
 #include "media_helper.h"
 
 #if defined(__sun)

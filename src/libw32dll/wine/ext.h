@@ -2,7 +2,7 @@
 #define loader_ext_h
 
 #include "windef.h"
-#include "attributes.h"
+#include <xine/attributes.h>
 
 extern LPVOID FILE_dommap( int unix_handle, LPVOID start,
 			   DWORD size_high, DWORD size_low,

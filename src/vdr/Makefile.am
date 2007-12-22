@@ -3,8 +3,6 @@ include $(top_srcdir)/misc/Makefile.common
 AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
-xineinclude_HEADERS = input_vdr.h
-
 if ENABLE_DVB
 xineplug_LTLIBRARIES = xineplug_inp_vdr.la
 xinepost_LTLIBRARIES = xineplug_post_vdr.la

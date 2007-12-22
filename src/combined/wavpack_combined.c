@@ -20,7 +20,7 @@
  * xine interface to libwavpack by Diego Pettenò <flameeyes@gmail.com>
  */
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #include "wavpack_combined.h"
 
 static const demuxer_info_t demux_info_wv = {

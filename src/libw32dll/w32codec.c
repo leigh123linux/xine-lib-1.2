@@ -50,11 +50,11 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "video_out.h"
-#include "audio_out.h"
-#include "buffer.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/video_out.h>
+#include <xine/audio_out.h>
+#include <xine/buffer.h>
+#include <xine/xineutils.h>
 
 #include "common.c"
 

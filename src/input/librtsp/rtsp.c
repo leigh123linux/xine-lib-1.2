@@ -45,8 +45,8 @@
 */ 
 
 #include "rtsp.h"
-#include "io_helper.h"
-#include "xineutils.h"
+#include <xine/io_helper.h>
+#include <xine/xineutils.h>
 
 #define BUF_SIZE 4096
 #define HEADER_SIZE 1024

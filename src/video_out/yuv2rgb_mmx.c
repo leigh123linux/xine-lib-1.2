@@ -35,7 +35,7 @@
 #include <mem.h>
 
 #include "yuv2rgb.h"
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 #define CPU_MMXEXT 0
 #define CPU_MMX 1

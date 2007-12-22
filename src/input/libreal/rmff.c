@@ -27,7 +27,7 @@
 #define LOG
 */
 
-#include "xineutils.h"
+#include <xine/xineutils.h>
 #include "bswap.h"
 #include "rmff.h"
 
@@ -311,19 +311,13 @@ static rmff_mdpr_t *rmff_scan_mdpr(const char *data) {
   mdpr->duration=_X_BE_32(&data[36]);
   
   mdpr->stream_name_size=data[40];
-  mdpr->stream_name = calloc(mdpr->stream_name_size+1, sizeof(char));
-  memcpy(mdpr->stream_name, &data[41], mdpr->stream_name_size);
-  mdpr->stream_name[mdpr->stream_name_size]=0;
+  mdpr->stream_name = xine_memdup0(&data[41], mdpr->stream_name_size);
   
   mdpr->mime_type_size=data[41+mdpr->stream_name_size];
-  mdpr->mime_type = calloc(mdpr->mime_type_size+1, sizeof(char));
-  memcpy(mdpr->mime_type, &data[42+mdpr->stream_name_size], mdpr->mime_type_size);
-  mdpr->mime_type[mdpr->mime_type_size]=0;
+  mdpr->mime_type = xine_memdup0(&data[42+mdpr->stream_name_size], mdpr->mime_type_size);
   
   mdpr->type_specific_len=_X_BE_32(&data[42+mdpr->stream_name_size+mdpr->mime_type_size]);
-  mdpr->type_specific_data = calloc(mdpr->type_specific_len, sizeof(char));
-  memcpy(mdpr->type_specific_data, 
-      &data[46+mdpr->stream_name_size+mdpr->mime_type_size], mdpr->type_specific_len);
+  mdpr->type_specific_data = xine_memdup(&data[46+mdpr->stream_name_size+mdpr->mime_type_size], mdpr->type_specific_len);
   
   return mdpr;
 }
@@ -341,24 +335,17 @@ static rmff_cont_t *rmff_scan_cont(const char *data) {
     lprintf("warning: unknown object version in CONT: 0x%04x\n", cont->object_version);
   }
   cont->title_len=_X_BE_16(&data[10]);
-  cont->title = calloc((cont->title_len+1), sizeof(char));
-  memcpy(cont->title, &data[12], cont->title_len);
-  cont->title[cont->title_len]=0;
+  cont->title = xine_memdup0(&data[12], cont->title_len);
   pos=cont->title_len+12;
   cont->author_len=_X_BE_16(&data[pos]);
-  cont->author = calloc(cont->author_len+1, sizeof(char));
-  memcpy(cont->author, &data[pos+2], cont->author_len);
-  cont->author[cont->author_len]=0;
+  cont->author = xine_memdup0(&data[pos+2], cont->author_len);
   pos=pos+2+cont->author_len;
   cont->copyright_len=_X_BE_16(&data[pos]);
-  cont->copyright = calloc(cont->copyright_len+1, sizeof(char));
-  memcpy(cont->copyright, &data[pos+2], cont->copyright_len);
+  cont->copyright = xine_memdup0(&data[pos+2], cont->copyright_len);
   cont->copyright[cont->copyright_len]=0;
   pos=pos+2+cont->copyright_len;
   cont->comment_len=_X_BE_16(&data[pos]);
-  cont->comment = calloc(cont->comment_len+1, sizeof(char));
-  memcpy(cont->comment, &data[pos+2], cont->comment_len);
-  cont->comment[cont->comment_len]=0;
+  cont->comment = xine_memdup0(&data[pos+2], cont->comment_len);
 
   return cont;
 }
@@ -584,8 +571,7 @@ rmff_mdpr_t *rmff_new_mdpr(
     mdpr->mime_type_size=strlen(mime_type);
   }
   mdpr->type_specific_len=type_specific_len;
-  mdpr->type_specific_data = calloc(type_specific_len, sizeof(char));
-  memcpy(mdpr->type_specific_data,type_specific_data,type_specific_len);
+  mdpr->type_specific_data = xine_memdup(type_specific_data,type_specific_len);
   mdpr->mlti_data=NULL;
   
   mdpr->size=mdpr->stream_name_size+mdpr->mime_type_size+mdpr->type_specific_len+46;

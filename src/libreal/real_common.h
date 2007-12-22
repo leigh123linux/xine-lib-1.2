@@ -23,7 +23,7 @@
 #ifndef __REAL_COMMON_H__
 #define __REAL_COMMON_H__
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 /*
  * some fake functions to make real codecs happy 

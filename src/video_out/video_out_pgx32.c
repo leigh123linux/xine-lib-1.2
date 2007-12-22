@@ -41,10 +41,10 @@
 #include <X11/Xatom.h>
 #include <dga/dga.h>
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #include "bswap.h"
-#include "vo_scale.h"
-#include "xineutils.h"
+#include <xine/vo_scale.h>
+#include <xine/xineutils.h>
 
 /* gfxp register defines */
 

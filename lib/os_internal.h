@@ -81,7 +81,7 @@
 
 #include <inttypes.h>
 #include <pthread.h>
-#include "../src/xine-utils/attributes.h"
+#include <xine/attributes.h>
 
 
 #if defined(WIN32) || defined(__CYGWIN__)

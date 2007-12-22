@@ -64,10 +64,10 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "compat.h"
-#include "audio_out.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/compat.h>
+#include <xine/audio_out.h>
 
 #include <sys/time.h>
 

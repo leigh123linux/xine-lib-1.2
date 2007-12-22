@@ -88,9 +88,9 @@ static char *log_line_prefix()
 }
 #endif
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "input_plugin.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/input_plugin.h>
 
 #define NUM_FRAMES  15
 
@@ -110,8 +110,8 @@ static const resolution_t resolutions[] = {
 	{ 160, 120 }
 };
 
-static char *tv_standard_names[] = { "PAL", "NTSC", "SECAM", NULL };
-static int tv_standard_values[] = { VIDEO_MODE_PAL, VIDEO_MODE_NTSC, VIDEO_MODE_SECAM };
+static const char *const tv_standard_names[] = { "PAL", "NTSC", "SECAM", NULL };
+static const int tv_standard_values[] = { VIDEO_MODE_PAL, VIDEO_MODE_NTSC, VIDEO_MODE_SECAM };
 
 #define NUM_RESOLUTIONS  (sizeof(resolutions)/sizeof(resolutions[0]))
 #define RADIO_DEV        "/dev/v4l/radio0"

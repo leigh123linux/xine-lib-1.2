@@ -63,11 +63,11 @@
 */
 
 #include "xine.h"
-#include "video_out.h"
-#include "xine_internal.h"
+#include <xine/video_out.h>
+#include <xine/xine_internal.h>
 /* #include "overlay.h" */
-#include "xineutils.h"
-#include "vo_scale.h"
+#include <xine/xineutils.h>
+#include <xine/vo_scale.h>
 #include "x11osd.h"
 
 #define LOCK_DISPLAY(this) {if(this->lock_display) this->lock_display(this->user_data); \

@@ -24,8 +24,8 @@
 
 #include <string.h>
 #include <inttypes.h>
-#include "attributes.h"
-#include "resample.h"
+#include <xine/attributes.h>
+#include <xine/resample.h>
 
 /* contributed by paul flinders */
 

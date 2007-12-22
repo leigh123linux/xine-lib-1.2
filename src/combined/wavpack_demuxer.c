@@ -28,11 +28,11 @@
 #define LOG_VERBOSE
 #define LOG
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/demux.h>
 #include "bswap.h"
-#include "attributes.h"
+#include <xine/attributes.h>
 
 #include <wavpack/wavpack.h>
 #include "wavpack_combined.h"

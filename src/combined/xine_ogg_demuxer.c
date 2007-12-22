@@ -65,9 +65,9 @@
 #define DEBUG_PTS 0
 #define DEBUG_VIDEO_PACKETS 0
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/demux.h>
 #include "bswap.h"
 #include "flacutils.h"
 
@@ -1959,32 +1959,14 @@ static int detect_anx_content (int detection_method, demux_class_t *class_gen,
 
     case METHOD_BY_CONTENT: {
       uint8_t buf[ANNODEX_SIGNATURE_SEARCH];
-      int found_annodex_signature = 0;
-      const char *annodex_signature = "Annodex";
-      int annodex_signature_length = 7; /* = strlen(annodex_signature) */
-      int i, j;
 
       if (_x_demux_read_header(input, buf, ANNODEX_SIGNATURE_SEARCH) !=
           ANNODEX_SIGNATURE_SEARCH)
         return 0;
 
       /* scan for 'Annodex' signature in the first 64 bytes */
-      for (i = 0, j = 0; i < ANNODEX_SIGNATURE_SEARCH; i++) {
-        if (buf[i] == annodex_signature[j]) {
-          if (j >= annodex_signature_length) {
-            /* found signature */
-            found_annodex_signature = 1;
-            break;
-          } else {
-            j++;
-          }
-        }
-      }
-
-      if (found_annodex_signature)
-        return 1;
-      else
-        return 0;
+      return !!memmem(buf, ANNODEX_SIGNATURE_SEARCH,
+		      "Annodex", sizeof("Annodex")-1);
     }
 
 #undef ANNODEX_SIGNATURE_SEARCH

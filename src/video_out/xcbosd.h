@@ -29,7 +29,7 @@
 #ifndef XCBOSD_H
 #define XCBOSD_H
 
-#include "vo_scale.h"
+#include <xine/vo_scale.h>
 
 typedef struct xcbosd xcbosd;
 enum xcbosd_mode {XCBOSD_SHAPED, XCBOSD_COLORKEY};

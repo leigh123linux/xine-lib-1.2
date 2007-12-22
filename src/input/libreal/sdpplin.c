@@ -29,7 +29,7 @@
 #include "rmff.h"
 #include "rtsp.h"
 #include "sdpplin.h"
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 /* libavutil from FFmpeg */
 #include <base64.h>
@@ -142,8 +142,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
       uint8_t decoded[32];
       desc->mlti_data_size = av_base64_decode(decoded, buf, 32);
       if ( desc->mlti_data_size > 0 ) {
-	desc->mlti_data = malloc(sizeof(char)*desc->mlti_data_size);
-	memcpy(desc->mlti_data, decoded, desc->mlti_data_size);
+	desc->mlti_data = xine_memdup(decoded, desc->mlti_data_size);
 	handled=1;
 	*data=nl(*data);
 	lprintf("mlti_data_size: %i\n", desc->mlti_data_size);

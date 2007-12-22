@@ -41,9 +41,9 @@
 
 #include <pulse/pulseaudio.h>
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "audio_out.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/audio_out.h>
 #include "bswap.h"
 
 #define GAP_TOLERANCE        AO_MAX_GAP

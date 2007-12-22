@@ -27,8 +27,8 @@
 #define LOG_MODULE "decode_wavpack"
 #define LOG_VERBOSE
 
-#include "xine_internal.h"
-#include "attributes.h"
+#include <xine/xine_internal.h>
+#include <xine/attributes.h>
 #include "bswap.h"
 
 #include <wavpack/wavpack.h>

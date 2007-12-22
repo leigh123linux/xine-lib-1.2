@@ -28,8 +28,8 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "post.h"
+#include <xine/xine_internal.h>
+#include <xine/post.h>
 
 /* FIXME: This plugin needs to handle overlays as well. */
 

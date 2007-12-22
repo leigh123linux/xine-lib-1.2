@@ -22,7 +22,7 @@
  */
 
 #include "config.h"
-#include "attributes.h"
+#include <xine/attributes.h>
 
 #include <inttypes.h>
 

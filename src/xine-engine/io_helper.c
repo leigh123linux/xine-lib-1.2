@@ -38,7 +38,7 @@
 
 #define XINE_ENGINE_INTERNAL
 
-#include "io_helper.h"
+#include <xine/io_helper.h>
 
 /* private constants */
 #define XIO_FILE_READ             0

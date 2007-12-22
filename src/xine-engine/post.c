@@ -25,7 +25,7 @@
 #define POST_INTERNAL
 #define XINE_ENGINE_INTERNAL
 
-#include "post.h"
+#include <xine/post.h>
 #include <stdarg.h>
 
 

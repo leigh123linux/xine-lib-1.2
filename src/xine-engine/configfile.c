@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "configfile.h"
+#include <xine/configfile.h>
 
 #define LOG_MODULE "configfile"
 #define LOG_VERBOSE
@@ -39,8 +39,8 @@
 #define LOG
 */
 
-#include "xineutils.h"
-#include "xine_internal.h"
+#include <xine/xineutils.h>
+#include <xine/xine_internal.h>
 
 static const xine_config_entry_translation_t *config_entry_translation_user = NULL;
 static const xine_config_entry_translation_t config_entry_translation[] = {
@@ -207,7 +207,7 @@ static const xine_config_entry_translation_t config_entry_translation[] = {
 
 
 static int config_section_enum(const char *sect) {
-  static char *known_section[] = {
+  static const char *const known_section[] = {
     "gui",
     "ui",
     "audio",

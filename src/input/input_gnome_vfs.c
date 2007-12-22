@@ -24,9 +24,9 @@
 #include "config.h"
 #endif
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "input_plugin.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/input_plugin.h>
 #include "net_buf_ctrl.h"
 
 #include <libgnomevfs/gnome-vfs.h>
@@ -291,7 +291,7 @@ gnomevfs_klass_dispose (input_class_t *this_gen)
 	g_free (this);
 }
 
-static const char *const ignore_scheme[] = { "cdda", "file", "http" };
+static const char ignore_scheme[][8] = { "cdda", "file", "http" };
 
 static input_plugin_t *
 gnomevfs_klass_get_instance (input_class_t *klass_gen, xine_stream_t *stream,

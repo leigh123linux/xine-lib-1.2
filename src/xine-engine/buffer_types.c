@@ -32,7 +32,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>
-#include "buffer.h"
+#include <xine/buffer.h>
 #include "bswap.h"
 
 typedef struct video_db_s {

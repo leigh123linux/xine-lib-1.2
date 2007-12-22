@@ -27,7 +27,7 @@
 #define _LOG_H_
 
 #include <stdio.h>
-#include "attributes.h"
+#include <xine/attributes.h>
 
 extern int log_init(void);
 extern void log_shutdown(void);

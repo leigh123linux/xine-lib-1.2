@@ -48,9 +48,9 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "input_plugin.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/input_plugin.h>
 #include "net_buf_ctrl.h"
 #include "http_helper.h"
 
@@ -79,7 +79,6 @@ typedef struct {
   off_t            contentlength;
     
   char             buf[BUFSIZE];
-  char             proxybuf[BUFSIZE];
 
   char             preview[MAX_PREVIEW_SIZE];
   off_t            preview_size;

@@ -27,10 +27,10 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "post.h"
-#include "xineutils.h"
-#include "xine_buffer.h"
+#include <xine/xine_internal.h>
+#include <xine/post.h>
+#include <xine/xineutils.h>
+#include <xine/xine_buffer.h>
 #include <pthread.h>
 
 #include "tvtime.h"
@@ -56,8 +56,8 @@ typedef struct post_plugin_deinterlace_s post_plugin_deinterlace_t;
 
 #define MAX_NUM_METHODS 30
 static const char *enum_methods[MAX_NUM_METHODS];
-static const char *enum_pulldown[] = { "none", "vektor", NULL };
-static const char *enum_framerate[] = { "full", "half_top", "half_bottom", NULL };
+static const char *const enum_pulldown[] = { "none", "vektor", NULL };
+static const char *const enum_framerate[] = { "full", "half_top", "half_bottom", NULL };
 
 static void *help_string;
 

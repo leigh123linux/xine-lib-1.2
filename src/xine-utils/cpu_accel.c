@@ -39,7 +39,7 @@
 #define LOG
 */
 
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 #if defined(__i386__) || defined(__x86_64__)
 

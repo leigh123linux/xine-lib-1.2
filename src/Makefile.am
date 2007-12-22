@@ -5,20 +5,14 @@ SUBDIRS = \
 	xine-utils \
 	xine-engine \
 	audio_out \
+	audio_dec \
 	video_out \
+	video_dec \
+	spu_dec \
 	dxr3 \
 	input \
 	demuxers \
-	libffmpeg \
-	libmpeg2 \
-	libspudec \
-	libspucc \
-	libspucmml \
-	libspudvb \
-	libsputext \
 	libw32dll \
-	libxinevdec \
-	libxineadec \
 	libreal \
 	post \
 	combined \

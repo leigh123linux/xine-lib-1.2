@@ -7,19 +7,6 @@ EXTRA_DIST = ppcasm_string.S ppc_asm.tmpl
 
 noinst_HEADERS = ppcasm_string.h xine_check.h
 
-xineinclude_HEADERS = \
-	attributes.h \
-	compat.h \
-	xine_buffer.h \
-	xineutils.h \
-	xmllexer.h \
-	xmlparser.h \
-	list.h \
-	array.h \
-	sorted_array.h \
-	pool.h \
-	ring_buffer.h
-
 noinst_LTLIBRARIES = libxineutils.la
 
 if ARCH_PPC

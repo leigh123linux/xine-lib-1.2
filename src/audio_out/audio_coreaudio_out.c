@@ -41,9 +41,9 @@
 #include <unistd.h>
 #include <inttypes.h>
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "audio_out.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/audio_out.h>
 
 #include <CoreAudio/CoreAudio.h>
 #include <CoreAudio/CoreAudioTypes.h>

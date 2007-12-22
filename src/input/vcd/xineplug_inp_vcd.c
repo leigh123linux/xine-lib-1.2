@@ -52,8 +52,8 @@
 #define xine_config_entry_t xine_cfg_entry_t
 
 /* Xine includes */
-#include "xineutils.h"
-#include "input_plugin.h"
+#include <xine/xineutils.h>
+#include <xine/input_plugin.h>
 
 #include "xine-extra.h"
 
