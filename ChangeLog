@@ -85,6 +85,9 @@ xine-lib (1.1.9) (unreleased)
   * Made the Real demuxer recognise http references.
   * Require correct URL encoding of '#'s which aren't separators.
   * Don't decode %nn in raw filenames. [Bug 1784272]
+  * Always enable a52dec capabilities for external a52dec, this makes it
+    possible to use the DJB accelerated FFT when using the external a52dec
+    liba52 library.
 
 xine-lib (1.1.8)
   * Send a channel-changed event to the frontend when receiving the SYNC
