@@ -1167,6 +1167,7 @@ misc/xine-lib.spec
 po/Makefile.in
 src/Makefile
 src/audio_out/Makefile
+src/audio_dec/Makefile
 src/combined/Makefile
 src/demuxers/Makefile
 src/dxr3/Makefile
@@ -1189,7 +1190,6 @@ src/libw32dll/dmo/Makefile
 src/libw32dll/qtx/Makefile
 src/libw32dll/qtx/qtxsdk/Makefile
 src/libxinevdec/Makefile
-src/libxineadec/Makefile
 src/libreal/Makefile
 src/post/Makefile
 src/post/planar/Makefile
