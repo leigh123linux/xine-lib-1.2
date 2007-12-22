@@ -463,10 +463,7 @@ static void get_font_metrics(osd_renderer_t *renderer,
   renderer->set_encoding(testc, "iso-8859-1");
   for (c = 32; c < 256; c++) {
     int tw, th;
-    char buf[2]; 
-
-    buf[0] = (char)c;
-    buf[1] = '\0';
+    const char buf[2] = { c, '\0' };
 
     renderer->get_text_size(testc, buf, &tw, &th);
     *maxw = MAX(*maxw, tw);
