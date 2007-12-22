@@ -8,14 +8,10 @@ SUBDIRS = \
 	audio_dec \
 	video_out \
 	video_dec \
+	spu_dec \
 	dxr3 \
 	input \
 	demuxers \
-	libspudec \
-	libspucc \
-	libspucmml \
-	libspudvb \
-	libsputext \
 	libw32dll \
 	libreal \
 	post \
