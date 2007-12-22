@@ -230,9 +230,51 @@ static const char specialchar[] = {
   234 /* ê */, 238 /* î */, 244 /* ô */, 251 /* û */
 };
 
-/* character translation table - EIA 608 codes are not all the same as ASCII */
-static char chartbl[128];
-
+/**
+ * @brief Character translation table
+ *
+ * EIA 608 codes are not all the same as ASCII
+ *
+ * The code to produce the characters table would be the following:
+ *
+ * static void build_char_table(void)
+ * {
+ *   int i;
+ *   // first the normal ASCII codes
+ *   for (i = 0; i < 128; i++)
+ *     chartbl[i] = (char) i;
+ *   // now the special codes
+ *   chartbl[0x2a] = 225; // á
+ *   chartbl[0x5c] = 233; // é
+ *   chartbl[0x5e] = 237; // í
+ *   chartbl[0x5f] = 243; // ó
+ *   chartbl[0x60] = 250; // ú
+ *   chartbl[0x7b] = 231; // ç
+ *   chartbl[0x7c] = 247; // ÷
+ *   chartbl[0x7d] = 209; // Ñ
+ *   chartbl[0x7e] = 241; // ñ
+ *   chartbl[0x7f] = 164; // ¤ FIXME: should be a solid block ('█'; U+2588)
+ * }
+ * 
+ */
+static const int chartbl[128] = {
+  '\x00', '\x01', '\x02', '\x03', '\x04', '\x05', '\x06', '\x07',
+  '\x08', '\x09', '\x0a', '\x0b', '\x0c', '\x0d', '\x0e', '\x0f',
+  '\x10', '\x11', '\x12', '\x13', '\x14', '\x15', '\x16', '\x17',
+  '\x18', '\x19', '\x1a', '\x1b', '\x1c', '\x1d', '\x1e', '\x1f',
+  '\x20', '\x21', '\x22', '\x23', '\x24', '\x25', '\x26', '\x27',
+  '\x28', '\x29', '\xe1', '\x2b', '\x2c', '\x2d', '\x2e', '\x2f',
+  '\x30', '\x31', '\x32', '\x33', '\x34', '\x35', '\x36', '\x37',
+  '\x38', '\x39', '\x3a', '\x3b', '\x3c', '\x3d', '\x3e', '\x3f',
+  '\x40', '\x41', '\x42', '\x43', '\x44', '\x45', '\x46', '\x47',
+  '\x48', '\x49', '\x4a', '\x4b', '\x4c', '\x4d', '\x4e', '\x4f',
+  '\x50', '\x51', '\x52', '\x53', '\x54', '\x55', '\x56', '\x57',
+  '\x58', '\x59', '\x5a', '\x5b', '\xe9', '\x5d', '\xed', '\xf3',
+  '\xfa', '\x61', '\x62', '\x63', '\x64', '\x65', '\x66', '\x67',
+  '\x68', '\x69', '\x6a', '\x6b', '\x6c', '\x6d', '\x6e', '\x6f',
+  '\x70', '\x71', '\x72', '\x73', '\x74', '\x75', '\x76', '\x77',
+  '\x78', '\x79', '\x7a', '\xe7', '\xf7', '\xd1', '\xf1', '\xa4'
+};
 
 /**
  * @brief Parity table for packets
@@ -443,24 +485,6 @@ static int good_parity(uint16_t data)
 }
 
 
-static void build_char_table(void)
-{
-  int i;
-  /* first the normal ASCII codes */
-  for (i = 0; i < 128; i++)
-    chartbl[i] = (char) i;
-  /* now the special codes */
-  chartbl[0x2a] = 225; /* á */
-  chartbl[0x5c] = 233; /* é */
-  chartbl[0x5e] = 237; /* í */
-  chartbl[0x5f] = 243; /* ó */
-  chartbl[0x60] = 250; /* ú */
-  chartbl[0x7b] = 231; /* ç */
-  chartbl[0x7c] = 247; /* ÷ */
-  chartbl[0x7d] = 209; /* Ñ */
-  chartbl[0x7e] = 241; /* ñ */
-  chartbl[0x7f] = 164; /* ¤ FIXME: should be a solid block ('█'; U+2588) */
-}
 
 
 static clut_t interpolate_color(clut_t src, clut_t dest, int steps,
@@ -1499,6 +1523,5 @@ void cc_decoder_close(cc_decoder_t *this)
 
 void cc_decoder_init(void)
 {
-  build_char_table();
 }
 
