@@ -563,8 +563,6 @@ static tuner_t *tuner_init(xine_t * xine, int adapter)
     char *video_device = NULL;
     char *frontend_device = NULL;
 
-    _x_assert(video_device != NULL);
-    
     this = (tuner_t *) xine_xmalloc(sizeof(tuner_t));
 
     _x_assert(this != NULL);
