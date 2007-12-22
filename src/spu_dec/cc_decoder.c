@@ -700,12 +700,11 @@ static void ccrow_render(cc_renderer_t *renderer, cc_row_t *this, int rownum)
 static int ccbuf_has_displayable(cc_buffer_t *this)
 {
   int i;
-  int found = 0;
-  for (i = 0; !found && i < CC_ROWS; i++) {
+  for (i = 0; i < CC_ROWS; i++)
     if (this->rows[i].num_chars > 0)
-      found = 1;
-  }
-  return found;
+      return 1;
+
+  return 0;
 }
 
 
