@@ -1169,6 +1169,7 @@ src/Makefile
 src/audio_out/Makefile
 src/audio_dec/Makefile
 src/combined/Makefile
+src/combined/ffmpeg/Makefile
 src/demuxers/Makefile
 src/dxr3/Makefile
 src/input/Makefile
@@ -1176,7 +1177,6 @@ src/input/libdvdnav/Makefile
 src/input/librtsp/Makefile
 src/input/libreal/Makefile
 src/input/vcd/Makefile
-src/libffmpeg/Makefile
 src/libmpeg2/Makefile
 src/libspudec/Makefile
 src/libspucc/Makefile

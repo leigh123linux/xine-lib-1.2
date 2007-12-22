@@ -11,7 +11,6 @@ SUBDIRS = \
 	dxr3 \
 	input \
 	demuxers \
-	libffmpeg \
 	libmpeg2 \
 	libspudec \
 	libspucc \
