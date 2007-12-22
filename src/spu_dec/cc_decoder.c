@@ -1517,11 +1517,3 @@ void cc_decoder_close(cc_decoder_t *this)
   printf("spucc: cc_decoder_close\n");
 #endif
 }
-
-
-/*--------------- initialization methods --------------------------*/
-
-void cc_decoder_init(void)
-{
-}
-

@@ -68,7 +68,6 @@ typedef struct cc_state_s {
 
 cc_decoder_t *cc_decoder_open(cc_state_t *cc_state);
 void cc_decoder_close(cc_decoder_t *this_obj);
-void cc_decoder_init(void);
 
 void decode_cc(cc_decoder_t *this, uint8_t *buffer, uint32_t buf_len,
 	       int64_t pts);

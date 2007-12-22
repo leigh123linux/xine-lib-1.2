@@ -316,8 +316,6 @@ static spu_decoder_t *spudec_open_plugin (spu_decoder_class_t *class, xine_strea
   this->config_version = 0;
   this->cc_open = 0;
 
-  cc_decoder_init();
-   
   return &this->spu_decoder;
 }
 
