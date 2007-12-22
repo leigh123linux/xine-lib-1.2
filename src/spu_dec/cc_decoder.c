@@ -896,11 +896,11 @@ static int cc_renderer_on_display(cc_renderer_t *this)
 
 static void cc_renderer_hide_caption(cc_renderer_t *this, int64_t vpts)
 {
-  if (this->displayed) {
-    this->osd_renderer->hide(this->cap_display, vpts);
-    this->displayed = 0;
-    this->last_hide_vpts = vpts;
-  }
+  if ( ! this->displayed ) return;
+
+  this->osd_renderer->hide(this->cap_display, vpts);
+  this->displayed = 0;
+  this->last_hide_vpts = vpts;
 }
 
 
