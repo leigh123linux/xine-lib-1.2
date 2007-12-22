@@ -8,7 +8,7 @@ xineplug_LTLIBRARIES = \
 	xineplug_decode_spucmml.la \
 	xineplug_decode_spu.la \
 	xineplug_decode_spudvb.la \
-	xineplug_decode_sputext.la xineplug_dmx_sputext.la
+	xineplug_sputext.la
 
 xineplug_decode_spucc_la_SOURCES = cc_decoder.c cc_decoder.h xine_cc_decoder.c
 xineplug_decode_spucc_la_LIBADD = $(XINE_LIB)
@@ -32,8 +32,5 @@ xineplug_decode_spu_la_CFLAGS  = $(AM_CFLAGS) $(DVDNAV_CFLAGS) -I$(top_srcdir)/s
 xineplug_decode_spudvb_la_SOURCES = spudvb_decoder.c
 xineplug_decode_spudvb_la_LIBADD  = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
 
-xineplug_dmx_sputext_la_SOURCES = sputext_demuxer.c
-xineplug_dmx_sputext_la_LIBADD  = $(XINE_LIB) $(LTLIBINTL)
-
-xineplug_decode_sputext_la_SOURCES = sputext_decoder.c 
-xineplug_decode_sputext_la_LIBADD  = $(XINE_LIB) $(LTLIBINTL)
+xineplug_sputext_la_SOURCES = sputext_demuxer.c sputext_decoder.c
+xineplug_sputext_la_LIBADD  = $(XINE_LIB) $(LTLIBINTL)

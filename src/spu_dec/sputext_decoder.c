@@ -985,8 +985,11 @@ static const decoder_info_t spudec_info = {
   1                    /* priority        */
 };
 
+extern void *init_sputext_demux_class (xine_t *xine, void *data);
+
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
   { PLUGIN_SPU_DECODER | PLUGIN_MUST_PRELOAD, 17, "sputext", XINE_VERSION_CODE, &spudec_info, &init_spu_decoder_plugin },
+  { PLUGIN_DEMUX, 27, "sputext", XINE_VERSION_CODE, NULL, &init_sputext_demux_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

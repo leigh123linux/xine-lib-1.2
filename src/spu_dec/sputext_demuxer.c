@@ -1449,7 +1449,7 @@ static void config_timeout_cb(void *this_gen, xine_cfg_entry_t *entry) {
   this->max_timeout = entry->num_value;
 }
 
-static void *init_sputext_demux_class (xine_t *xine, void *data) {
+void *init_sputext_demux_class (xine_t *xine, void *data) {
 
   demux_sputext_class_t *this ;
 
@@ -1481,9 +1481,3 @@ static void *init_sputext_demux_class (xine_t *xine, void *data) {
 
   return this;
 }
-
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_DEMUX, 27, "sputext", XINE_VERSION_CODE, NULL, &init_sputext_demux_class },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
-};
