@@ -37,10 +37,10 @@
 #define LOG
 */
 #include "bswap.h"
-#include "xine_internal.h"
-#include "video_out.h"
-#include "buffer.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/video_out.h>
+#include <xine/buffer.h>
+#include <xine/xineutils.h>
 
 #include "real_common.h"
 

@@ -8,8 +8,6 @@ AM_LDFLAGS = $(xineplug_ldflags)
 # ---------
 # All of xine demuxer plugins should be named like the scheme "xineplug_dmx_"
 
-xineinclude_HEADERS = demux.h
-
 noinst_HEADERS = asfheader.h qtpalette.h group_games.h group_audio.h id3.h ebml.h matroska.h iff.h flacutils.h
 
 if ENABLE_ASF

@@ -45,9 +45,9 @@
 typedef unsigned uint_t;
 #endif
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "audio_out.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/audio_out.h>
 
 #ifdef __svr4__
 #define	CS4231_WORKAROUND	1	/* enable workaround for audiocs play.samples bug */

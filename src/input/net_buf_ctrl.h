@@ -23,7 +23,7 @@
 #ifndef HAVE_NET_BUF_CTRL_H
 #define HAVE_NET_BUF_CTRL_H
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 typedef struct nbc_s nbc_t;
 

@@ -39,7 +39,7 @@
 #define LOG
 */
 
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 static int prof_scale_line = -1;
 

@@ -20,7 +20,7 @@
  * Common CRC calculation code.
  */
 
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 static const uint32_t crc32_table[256] = {
   0x00000000, 0x04c11db7, 0x09823b6e, 0x0d4326d9,

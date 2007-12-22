@@ -39,9 +39,9 @@
 #include <fcntl.h>
 #include <netinet/in.h> /* ntohs */
 
-#include "xine_internal.h"
-#include "audio_out.h"
-#include "buffer.h"
+#include <xine/xine_internal.h>
+#include <xine/audio_out.h>
+#include <xine/buffer.h>
 
 #ifdef WIN32
 #include <winsock.h>

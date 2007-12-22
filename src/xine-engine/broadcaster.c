@@ -57,9 +57,9 @@
 #include <dlfcn.h>
 #include <pthread.h>
 
-#include "xine_internal.h"
-#include "buffer.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/buffer.h>
+#include <xine/xineutils.h>
 
 #define QLEN 5    /* maximum connection queue length */
 #define _BUFSIZ 512

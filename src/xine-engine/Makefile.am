@@ -16,12 +16,6 @@ endif
 
 noinst_HEADERS = bswap.h ffmpeg_bswap.h
 
-xineinclude_HEADERS  = buffer.h metronom.h configfile.h vo_scale.h \
-	audio_out.h resample.h video_out.h xine_internal.h spu_decoder.h \
-	video_overlay.h osd.h spu.h scratch.h xine_plugin.h xineintl.h \
-	plugin_catalog.h audio_decoder.h video_decoder.h post.h \
-	io_helper.h broadcaster.h info_helper.h refcounter.h alphablend.h
-
 lib_LTLIBRARIES = libxine.la
 
 libxine_la_SOURCES = xine.c metronom.c configfile.c buffer.c \

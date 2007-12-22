@@ -20,7 +20,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  */
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #include "mpeg2.h"
 #include "mpeg2_internal.h"
 #include "xvmc_vld.h"

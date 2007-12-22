@@ -44,9 +44,9 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "audio_out.h"
-#include "buffer.h"
+#include <xine/xine_internal.h>
+#include <xine/audio_out.h>
+#include <xine/buffer.h>
 
 typedef struct {
   audio_decoder_class_t   decoder_class;

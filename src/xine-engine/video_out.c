@@ -44,10 +44,10 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "video_out.h"
-#include "metronom.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/video_out.h>
+#include <xine/metronom.h>
+#include <xine/xineutils.h>
 
 #define NUM_FRAME_BUFFERS          15
 #define MAX_USEC_TO_SLEEP       20000

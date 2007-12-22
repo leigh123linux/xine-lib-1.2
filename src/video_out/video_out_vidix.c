@@ -57,10 +57,10 @@
 #define LOG
 */
 
-#include "video_out.h"
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "vo_scale.h"
+#include <xine/video_out.h>
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/vo_scale.h>
 
 #ifdef HAVE_X11
 #include "x11osd.h"

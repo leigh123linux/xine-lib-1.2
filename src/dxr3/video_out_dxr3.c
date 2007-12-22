@@ -60,9 +60,9 @@
 #define LOG_VID 0
 #define LOG_OVR 0
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "video_out.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/video_out.h>
 #include "dxr3.h"
 #include "video_out_dxr3.h"
 

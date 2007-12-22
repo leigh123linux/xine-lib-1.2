@@ -23,8 +23,8 @@
 #define LOG
 */
  
-#include "xine_internal.h"
-#include "refcounter.h"
+#include <xine/xine_internal.h>
+#include <xine/refcounter.h>
 
 refcounter_t* _x_new_refcounter(void *object, void (*destructor)(void *))
 {

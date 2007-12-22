@@ -12,7 +12,7 @@ for DLL to know too much about its environment.
 ************************************************************/
 
 #include "config.h"
-#include "attributes.h"
+#include <xine/attributes.h>
 
 #define QTX
 

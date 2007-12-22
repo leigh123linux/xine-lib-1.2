@@ -17,7 +17,7 @@
 #define LOG
 */
 
-#include "xineutils.h"
+#include <xine/xineutils.h>
 #include "bswap.h"
 #include "asfheader.h"
 

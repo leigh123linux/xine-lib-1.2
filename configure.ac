@@ -1152,7 +1152,8 @@ contrib/nosefart/Makefile
 contrib/vidix/Makefile
 contrib/vidix/drivers/Makefile
 include/Makefile
-include/xine.h
+include/xine/Makefile
+include/xine/version.h
 lib/Makefile
 m4/Makefile
 m4/gettext/Makefile

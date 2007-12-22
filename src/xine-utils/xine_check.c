@@ -45,7 +45,7 @@
 #include <unistd.h>
 
 #include "xine_check.h"
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 #if defined(__linux__)
 

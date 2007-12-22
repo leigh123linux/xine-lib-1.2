@@ -34,11 +34,11 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "video_out.h"
+#include <xine/xine_internal.h>
+#include <xine/video_out.h>
 #include "mpeg2.h"
 #include "mpeg2_internal.h"
-#include "buffer.h"
+#include <xine/buffer.h>
 
 typedef struct {
   video_decoder_class_t   decoder_class;

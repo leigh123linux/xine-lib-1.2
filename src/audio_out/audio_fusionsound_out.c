@@ -34,9 +34,9 @@
 #define LOG_VERBOSE
 
 #include "xine.h"
-#include "xine_internal.h"
-#include "audio_out.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/audio_out.h>
+#include <xine/xineutils.h>
 
 #include <directfb.h>
 

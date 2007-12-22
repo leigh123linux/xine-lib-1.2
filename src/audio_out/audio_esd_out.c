@@ -33,10 +33,10 @@
 #include <sys/uio.h>
 #include <inttypes.h>
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "audio_out.h"
-#include "metronom.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/audio_out.h>
+#include <xine/metronom.h>
 
 #define AO_OUT_ESD_IFACE_VERSION 9
 

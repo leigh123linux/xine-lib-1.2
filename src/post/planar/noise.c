@@ -21,9 +21,9 @@
  * is copyright 2002 Michael Niedermayer <michaelni@gmx.at>
  */
 
-#include "xine_internal.h"
-#include "post.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/post.h>
+#include <xine/xineutils.h>
 #include <math.h>
 #include <pthread.h>
 

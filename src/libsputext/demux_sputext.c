@@ -47,9 +47,9 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "../demuxers/demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/demux.h>
 
 #define ERR           (void *)-1
 #define SUB_MAX_TEXT  5

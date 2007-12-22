@@ -27,10 +27,10 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include "attributes.h"
-#include "pool.h"
-#include "list.h"
-#include "ring_buffer.h"
+#include <xine/attributes.h>
+#include <xine/pool.h>
+#include <xine/list.h>
+#include <xine/ring_buffer.h>
 
 #define RING_BUFFER_EXTRA_BUFFER_SIZE (1024 * 8)
 

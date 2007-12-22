@@ -37,11 +37,11 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "video_out.h"
+#include <xine/xine_internal.h>
+#include <xine/video_out.h>
 #include "mpeg2.h"
 #include "mpeg2_internal.h"
-#include "xineutils.h"
+#include <xine/xineutils.h>
 #include "libmpeg2_accel.h"
 
 /*

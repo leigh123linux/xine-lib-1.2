@@ -39,10 +39,10 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
 #include "bswap.h"
-#include "demux.h"
+#include <xine/demux.h>
 #include "group_games.h"
 
 #define FOURCC_TAG BE_FOURCC

@@ -65,7 +65,7 @@ doc/hackersguide/*.png
 doc/hackersguide/hackersguide.html
 doc/Doxyfile
 
-include/xine.h
+include/xine/version.h
 
 misc/SlackBuild
 misc/build_rpms.sh

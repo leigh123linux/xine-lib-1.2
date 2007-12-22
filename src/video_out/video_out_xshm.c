@@ -35,7 +35,7 @@
 #include <math.h>
 
 #include "xine.h"
-#include "video_out.h"
+#include <xine/video_out.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -57,10 +57,10 @@
 #define LOG
 */
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #include "yuv2rgb.h"
-#include "xineutils.h"
-#include "vo_scale.h"
+#include <xine/xineutils.h>
+#include <xine/vo_scale.h>
 #include "x11osd.h"
 
 #define LOCK_DISPLAY(this) {if(this->lock_display) this->lock_display(this->user_data); \

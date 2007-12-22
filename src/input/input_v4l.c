@@ -88,9 +88,9 @@ static char *log_line_prefix()
 }
 #endif
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "input_plugin.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/input_plugin.h>
 
 #define NUM_FRAMES  15
 

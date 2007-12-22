@@ -26,7 +26,7 @@
 
 #include <string.h>
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #include "http_helper.h"
 
 int _x_parse_url (char *url, char **proto, char** host, int *port,

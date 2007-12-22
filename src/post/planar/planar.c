@@ -20,9 +20,9 @@
  * catalog for planar post plugins
  */
 
-#include "xine_internal.h"
-#include "post.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/post.h>
+#include <xine/xineutils.h>
 
 extern void *invert_init_plugin(xine_t *xine, void *);
 static const post_info_t invert_special_info = { XINE_POST_TYPE_VIDEO_FILTER };

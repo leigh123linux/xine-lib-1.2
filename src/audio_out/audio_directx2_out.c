@@ -58,8 +58,8 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "audio_out.h"
+#include <xine/xine_internal.h>
+#include <xine/audio_out.h>
 
 
 #define AO_OUT_DIRECTX2_IFACE_VERSION 9

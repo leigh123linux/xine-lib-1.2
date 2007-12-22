@@ -31,7 +31,7 @@
 # include "config.h"
 #endif
 
-#include "attributes.h"
+#include <xine/attributes.h>
 
 #include "goom_graphic.h"
 

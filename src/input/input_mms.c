@@ -41,9 +41,9 @@
 */
 
 #include "bswap.h"
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "input_plugin.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/input_plugin.h>
 
 #include "mms.h"
 #include "mmsh.h"

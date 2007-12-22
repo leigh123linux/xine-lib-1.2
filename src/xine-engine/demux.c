@@ -39,9 +39,9 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "demuxers/demux.h"
-#include "buffer.h"
+#include <xine/xine_internal.h>
+#include <xine/demux.h>
+#include <xine/buffer.h>
 
 #ifdef WIN32
 #include <winsock.h>

@@ -64,7 +64,7 @@
 #  define CLR_RST "\e[0;39m"
 #endif
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 #ifndef HAVE_FSEEKO
 #  define fseeko fseek

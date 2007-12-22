@@ -30,7 +30,7 @@
 #include <inttypes.h>
 
 #include "mpeg2_internal.h"
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 #define vector_s16_t vector signed short
 #define vector_u16_t vector unsigned short

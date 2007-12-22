@@ -31,9 +31,9 @@
 #include <assert.h>
 
 #include "./include/mpeg2.h"
-#include "xine_internal.h"
-#include "video_out.h"
-#include "buffer.h"
+#include <xine/xine_internal.h>
+#include <xine/video_out.h>
+#include <xine/buffer.h>
 
 
 

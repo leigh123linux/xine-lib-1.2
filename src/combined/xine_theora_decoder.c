@@ -39,11 +39,11 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "video_out.h"
-#include "buffer.h"
-#include "metronom.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/video_out.h>
+#include <xine/buffer.h>
+#include <xine/metronom.h>
+#include <xine/xineutils.h>
 
 typedef struct theora_class_s {
   video_decoder_class_t   decoder_class;

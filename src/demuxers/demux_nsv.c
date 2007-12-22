@@ -40,12 +40,12 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "compat.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/compat.h>
+#include <xine/demux.h>
 #include "bswap.h"
-#include "buffer.h"
+#include <xine/buffer.h>
 
 #define FOURCC_TAG BE_FOURCC
 #define NSVf_TAG       FOURCC_TAG('N', 'S', 'V', 'f')

@@ -21,9 +21,9 @@
  * Copyright (C) 2003 Daniel Moreno <comac@comac.darktech.org>
  */
 
-#include "xine_internal.h"
-#include "post.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/post.h>
+#include <xine/xineutils.h>
 #include <math.h>
 #include <pthread.h>
 

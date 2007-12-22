@@ -48,12 +48,11 @@
 
 #define XINE_ENGINE_INTERNAL
 
-#include "alphablend.h"
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #include "xine-engine/bswap.h"
-#include "xineutils.h"
-#include "video_out.h"
-#include "osd.h"
+#include <xine/xineutils.h>
+#include <xine/video_out.h>
+#include <xine/osd.h>
 
 #ifdef HAVE_FT2
 #include <ft2build.h>

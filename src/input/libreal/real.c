@@ -33,8 +33,8 @@
 #include "real.h"
 #include "asmrp.h"
 #include "sdpplin.h"
-#include "xine_internal.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
 #include "bswap.h"
 
 #define XOR_TABLE_LEN 37

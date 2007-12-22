@@ -85,9 +85,9 @@
 #endif
 
 /* Xine includes */
-#include "xineutils.h"
-#include "buffer.h"
-#include "xine_internal.h"
+#include <xine/xineutils.h>
+#include <xine/buffer.h>
+#include <xine/xine_internal.h>
 #include "media_helper.h"
 
 /* Print debug messages? */

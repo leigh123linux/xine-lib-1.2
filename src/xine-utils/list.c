@@ -23,8 +23,8 @@
 #endif
 
 #include <stdlib.h>
-#include "attributes.h"
-#include "list.h"
+#include <xine/attributes.h>
+#include <xine/list.h>
 
 #define MIN_CHUNK_SIZE    32
 #define MAX_CHUNK_SIZE 65536

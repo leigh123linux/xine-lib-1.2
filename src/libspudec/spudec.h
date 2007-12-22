@@ -30,8 +30,8 @@
 #endif
 
 #include <inttypes.h>
-#include "video_out.h"
-#include "video_overlay.h"
+#include <xine/video_out.h>
+#include <xine/video_overlay.h>
 #ifdef HAVE_DVDNAV
 #  include <dvdnav/nav_types.h>
 #else

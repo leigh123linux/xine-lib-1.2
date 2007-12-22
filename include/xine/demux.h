@@ -21,15 +21,9 @@
 #ifndef HAVE_DEMUX_H
 #define HAVE_DEMUX_H
 
-#ifdef XINE_COMPILE
-#  include "input/input_plugin.h"
-#  include "buffer.h"
-#  include "xine_internal.h"
-#else
-#  include <xine/input_plugin.h>
-#  include <xine/buffer.h>
-#  include <xine/xine_internal.h>
-#endif
+#include <xine/input_plugin.h>
+#include <xine/buffer.h>
+#include <xine/xine_internal.h>
 
 #define DEMUXER_PLUGIN_IFACE_VERSION    27
 

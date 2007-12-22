@@ -38,10 +38,10 @@
 /*
 #define LOG
 */
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "demux.h"
-#include "compat.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/demux.h>
+#include <xine/compat.h>
 #include "bswap.h"
 #include "group_audio.h"
 #include "id3.h"

@@ -22,8 +22,8 @@
  * based on invert.c
  */
 
-#include "xine_internal.h"
-#include "post.h"
+#include <xine/xine_internal.h>
+#include <xine/post.h>
 
 /* plugin class initialization function */
 void *fill_init_plugin(xine_t *xine, void *);

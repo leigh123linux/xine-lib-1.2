@@ -27,7 +27,7 @@
 #include <inttypes.h>
 
 #include "mpeg2_internal.h"
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 void (* mpeg2_cpu_state_save) (cpu_state_t * state) = NULL;
 void (* mpeg2_cpu_state_restore) (cpu_state_t * state) = NULL;

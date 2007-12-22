@@ -42,9 +42,9 @@
 #define LOG_SPU 0
 #define LOG_BTN 0
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "buffer.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/buffer.h>
 #include "xine-engine/bswap.h"
 #ifdef HAVE_DVDNAV
 #  include <dvdnav/nav_types.h>

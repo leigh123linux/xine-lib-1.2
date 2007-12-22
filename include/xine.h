@@ -57,11 +57,12 @@ extern "C" {
 
 #ifdef XINE_COMPILE
 #include <inttypes.h>
-#include "attributes.h"
 #else
 #include <xine/os_types.h>
-#include <xine/attributes.h>
 #endif
+
+#include <xine/attributes.h>
+#include <xine/version.h>
 
 /* This enables some experimental features. These are not part of the
  * official libxine API, so use them only, if you absolutely need them.
@@ -102,12 +103,6 @@ void xine_get_version (int *major, int *minor, int *sub) XINE_PROTECTED;
 /* compare given version to libxine version,
    return 1 if compatible, 0 otherwise */
 int  xine_check_version (int major, int minor, int sub) XINE_PROTECTED;
-
-/* static info - which libxine release this header came from */
-#define XINE_MAJOR_VERSION @XINE_MAJOR@
-#define XINE_MINOR_VERSION @XINE_MINOR@
-#define XINE_SUB_VERSION   @XINE_SUB@
-#define XINE_VERSION       "@VERSION@"
 
 /*
  * pre-init the xine engine

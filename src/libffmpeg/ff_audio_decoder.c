@@ -40,9 +40,9 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "buffer.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/buffer.h>
+#include <xine/xineutils.h>
 #include "bswap.h"
 #include "ffmpeg_decoder.h"
 

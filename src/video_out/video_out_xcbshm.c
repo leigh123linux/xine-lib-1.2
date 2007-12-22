@@ -37,7 +37,7 @@
 #include <math.h>
 
 #include "xine.h"
-#include "video_out.h"
+#include <xine/video_out.h>
 
 #include <errno.h>
 
@@ -56,10 +56,10 @@
 #define LOG
 */
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #include "yuv2rgb.h"
-#include "xineutils.h"
-#include "vo_scale.h"
+#include <xine/xineutils.h>
+#include <xine/vo_scale.h>
 #include "xcbosd.h"
 
 typedef struct {

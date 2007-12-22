@@ -70,7 +70,7 @@ static inline int _private_gettimeofday( struct timeval *tv, void *tz )
 #include <mntent.h>
 #endif
 
-#include "compat.h"
+#include <xine/compat.h>
 #include "dvd_udf.h"
 #include "dvd_input.h"
 #include "dvd_reader.h"

@@ -27,10 +27,10 @@
 #include "config.h"
 #endif
 
-#include "xineutils.h"
-#include "xineintl.h"
+#include <xine/xineutils.h>
+#include <xine/xineintl.h>
 #ifdef _MSC_VER
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #endif
 
 #include <errno.h>

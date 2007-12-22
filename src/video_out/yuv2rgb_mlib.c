@@ -34,8 +34,8 @@
 #include <mlib_algebra.h>
 #include <mlib_video.h>
 
-#include "attributes.h"
-#include "xineutils.h"
+#include <xine/attributes.h>
+#include <xine/xineutils.h>
 #include "yuv2rgb.h"
 
 #define	MIN(a, b) (((a) < (b)) ? (a) : (b))
