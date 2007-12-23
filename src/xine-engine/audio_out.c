@@ -2045,8 +2045,8 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
   int              i, err;
   pthread_attr_t   pth_attrs;
   pthread_mutexattr_t attr;
-  static const char* resample_modes[] = {"auto", "off", "on", NULL};
-  static const char* av_sync_methods[] = {"metronom feedback", "resample", NULL};
+  static const char *const resample_modes[] = {"auto", "off", "on", NULL};
+  static const char *const av_sync_methods[] = {"metronom feedback", "resample", NULL};
 
   this = xine_xmalloc (sizeof (aos_t)) ;
 
