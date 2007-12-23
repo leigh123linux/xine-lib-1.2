@@ -591,7 +591,7 @@ static int stream_rewire_video(xine_post_out_t *output, void *data)
   return 1;
 }
 
-void xine_dispose_internal (xine_stream_t *stream);
+static void xine_dispose_internal (xine_stream_t *stream);
 
 xine_stream_t *xine_stream_new (xine_t *this,
 				xine_audio_port_t *ao, xine_video_port_t *vo) {
@@ -1445,7 +1445,7 @@ int xine_eject (xine_stream_t *stream) {
   return status;
 }
 
-void xine_dispose_internal (xine_stream_t *stream) {
+static void xine_dispose_internal (xine_stream_t *stream) {
 
   xine_list_iterator_t *ite;
 
