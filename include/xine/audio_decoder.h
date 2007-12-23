@@ -26,6 +26,10 @@
 #include <xine/os_types.h>
 #include <xine/buffer.h>
 
+#ifdef XINE_COMPILE
+#  include <xine/plugin_catalog.h>
+#endif
+
 #define AUDIO_DECODER_IFACE_VERSION 16
 
 /*
@@ -93,8 +97,17 @@ struct audio_decoder_s {
    */
   void (*dispose) (audio_decoder_t *this);
 
-  void *node; /* used by plugin loader */
-
+  /**
+   * @brief Pointer to the loaded plugin node.
+   *
+   * Used by the plugins loader. It's an opaque type when using the
+   * structure outside of xine's build.
+   */
+#ifdef XINE_COMPILE
+  plugin_node_t *node;
+#else
+  void *node;
+#endif
 };
 
 #endif

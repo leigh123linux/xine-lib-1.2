@@ -45,6 +45,9 @@ extern "C" {
 #include <xine.h>
 #include <xine/buffer.h>
 
+#ifdef XINE_COMPILE
+#  include <xine/plugin_catalog.h>
+#endif
 
 typedef struct vo_frame_s vo_frame_t; 
 typedef struct vo_driver_s vo_driver_t;
@@ -354,7 +357,17 @@ struct vo_driver_s {
    */
   void (*dispose) (vo_driver_t *self);
   
-  void *node; /* needed by plugin_loader */
+  /**
+   * @brief Pointer to the loaded plugin node.
+   *
+   * Used by the plugins loader. It's an opaque type when using the
+   * structure outside of xine's build.
+   */
+#ifdef XINE_COMPILE
+  plugin_node_t *node;
+#else
+  void *node;
+#endif
 };
 
 struct video_driver_class_s {

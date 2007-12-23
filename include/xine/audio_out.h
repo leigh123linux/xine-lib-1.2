@@ -29,6 +29,10 @@ extern "C" {
 #include <xine/configfile.h>
 #include <xine/xineutils.h>
 
+#ifdef XINE_COMPILE
+#  include <xine/plugin_catalog.h>
+#endif
+
 #define AUDIO_OUT_IFACE_VERSION  9
 
 /*
@@ -118,7 +122,17 @@ struct ao_driver_s {
    */
   int (*control) (ao_driver_t *, int cmd, /* arg */ ...);
 
+  /**
+   * @brief Pointer to the loaded plugin node.
+   *
+   * Used by the plugins loader. It's an opaque type when using the
+   * structure outside of xine's build.
+   */
+#ifdef XINE_COMPILE
+  plugin_node_t *node;
+#else
   void *node;
+#endif
 };
 
 typedef struct ao_format_s ao_format_t;

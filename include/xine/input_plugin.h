@@ -28,6 +28,10 @@
 #include <xine/buffer.h>
 #include <xine/configfile.h>
 
+#ifdef XINE_COMPILE
+#  include <xine/plugin_catalog.h>
+#endif
+
 #define INPUT_PLUGIN_IFACE_VERSION   18
  
 typedef struct input_class_s input_class_t ;
@@ -221,7 +225,17 @@ struct input_plugin_s {
 
   input_class_t *input_class;
 
-  void *node; /* used by plugin loader */
+  /**
+   * @brief Pointer to the loaded plugin node.
+   *
+   * Used by the plugins loader. It's an opaque type when using the
+   * structure outside of xine's build.
+   */
+#ifdef XINE_COMPILE
+  plugin_node_t *node;
+#else
+  void *node;
+#endif
 
 };
 

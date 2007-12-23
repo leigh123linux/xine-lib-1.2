@@ -29,6 +29,10 @@
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
 
+#ifdef XINE_COMPILE
+#  include <xine/plugin_catalog.h>
+#endif
+
 #define POST_PLUGIN_IFACE_VERSION 9
 
 
@@ -111,8 +115,17 @@ struct post_plugin_s {
   const char        **input_ids;
   const char        **output_ids;
 
-  /* used by plugin loader */
-  void               *node;
+  /**
+   * @brief Pointer to the loaded plugin node.
+   *
+   * Used by the plugins loader. It's an opaque type when using the
+   * structure outside of xine's build.
+   */
+#ifdef XINE_COMPILE
+  plugin_node_t *node;
+#else
+  void *node;
+#endif
 
   /* has dispose been called */
   int                 dispose_pending;
