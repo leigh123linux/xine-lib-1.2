@@ -1740,9 +1740,9 @@ static void *init_class (xine_t *xine, void *data) {
   dvd_input_class_t   *this;
   config_values_t     *config = xine->config;
   void                *dvdcss;
-  static const char   *skip_modes[] = {"skip program", "skip part", "skip title", NULL};
-  static const char   *seek_modes[] = {"seek in program chain", "seek in program", NULL};
-  static const char   *play_single_chapter_modes[] = {"entire dvd", "one chapter", NULL};
+  static const char *const skip_modes[] = {"skip program", "skip part", "skip title", NULL};
+  static const char *const seek_modes[] = {"seek in program chain", "seek in program", NULL};
+  static const char *const play_single_chapter_modes[] = {"entire dvd", "one chapter", NULL};
 
   trace_print("Called\n");
 #ifdef INPUT_DEBUG
