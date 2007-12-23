@@ -350,7 +350,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
   return 1;
 }
 
-static unsigned char sipr_swaps[38][2]={
+static const unsigned char sipr_swaps[38][2]={
     {0,63},{1,22},{2,44},{3,90},{5,81},{7,31},{8,86},{9,58},{10,36},{12,68},
     {13,39},{14,73},{15,53},{16,69},{17,57},{19,88},{20,34},{21,71},{24,46},
     {25,94},{26,54},{28,75},{29,50},{32,70},{33,92},{35,74},{38,85},{40,56},
