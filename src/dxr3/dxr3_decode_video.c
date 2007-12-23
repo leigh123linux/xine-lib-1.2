@@ -208,7 +208,7 @@ static void *dxr3_init_plugin(xine_t *xine, void *data)
 
 static video_decoder_t *dxr3_open_plugin(video_decoder_class_t *class_gen, xine_stream_t *stream)
 {
-  static char *panscan_types[] = { "only when forced", "use MPEG hint", "use DVB hint", NULL };
+  static const char *const panscan_types[] = { "only when forced", "use MPEG hint", "use DVB hint", NULL };
   dxr3_decoder_t *this;
   dxr3_decoder_class_t *class = (dxr3_decoder_class_t *)class_gen;
   config_values_t *cfg;
@@ -625,7 +625,7 @@ static void dxr3_flush(video_decoder_t *this_gen)
      * (the highlights won't move without), but some dvds have stills
      * with no sequence end code. Since it is very likely that flush() is called
      * in still situations, we send one here. */
-    static uint8_t end_buffer[4] = { 0x00, 0x00, 0x01, 0xb7 };
+    static const uint8_t end_buffer[4] = { 0x00, 0x00, 0x01, 0xb7 };
     write(this->fd_video, &end_buffer, 4);
     this->sequence_open = 0;
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "dxr3_decode_video: WARNING: added missing end sequence\n");
