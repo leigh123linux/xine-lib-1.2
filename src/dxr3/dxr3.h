@@ -37,5 +37,19 @@
  * (used by decoders to check for dxr3 presence) */
 #define DXR3_VO_ID "dxr3"
 
-#endif
+/* inline helper implementations */
+static inline int dxr3_present(xine_stream_t *stream)
+{
+  int present = 0;
+  
+  if (stream->video_driver && stream->video_driver->node &&
+      stream->video_driver->node->plugin_class ) {
+    const video_driver_class_t *const vo_class = (video_driver_class_t *)node->plugin_class;
+    if (vo_class->identifier)
+      present = (strcmp(vo_class->identifier, DXR3_VO_ID) == 0);
+  }
+  llprintf(LOG_VID, "dxr3 %s\n", present ? "present" : "not present");
+  return present;
+}
 
+#endif

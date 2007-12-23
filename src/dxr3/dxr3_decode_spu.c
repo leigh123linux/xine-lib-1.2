@@ -142,20 +142,6 @@ static int         dxr3_spudec_copy_nav_to_btn(dxr3_spudec_t *this, int32_t mode
 static inline void dxr3_swab_clut(int* clut);
 
 /* inline helper implementations */
-static inline int dxr3_present(xine_stream_t *stream)
-{
-  int present = 0;
-  
-  if (stream->video_driver && stream->video_driver->node &&
-      stream->video_driver->node->plugin_class ) {
-    const video_driver_class_t *const vo_class = (video_driver_class_t *)node->plugin_class;
-    if (vo_class->identifier)
-      present = (strcmp(vo_class->identifier, DXR3_VO_ID) == 0);
-  }
-  llprintf(LOG_VID, "dxr3 %s\n", present ? "present" : "not present");
-  return present;
-}
-
 static inline void dxr3_spudec_clear_nav_list(dxr3_spudec_t *this)
 {
   while (this->pci_cur.next) {
