@@ -209,12 +209,12 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
   plugin_node_t *node;
 
 #ifdef HAVE_X11
-  static const char const *videoout_modes[] = { "letterboxed tv",      "widescreen tv",
+  static const char *const videoout_modes[] = { "letterboxed tv",      "widescreen tv",
 				    "letterboxed overlay", "widescreen overlay", NULL };
 #else
-  static const char const *videoout_modes[] = { "letterboxed tv", "widescreen tv", NULL };
+  static const char *const videoout_modes[] = { "letterboxed tv", "widescreen tv", NULL };
 #endif
-  static const char const *tv_modes[] = { "ntsc", "pal", "pal60" , "default", NULL };
+  static const char *const tv_modes[] = { "ntsc", "pal", "pal60" , "default", NULL };
   int list_id, list_size;
   xine_sarray_t *plugin_list;
   
