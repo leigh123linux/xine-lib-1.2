@@ -444,7 +444,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   return this;
 }
 
-static uint32_t audio_types[] = { 
+static const uint32_t audio_types[] = { 
   BUF_AUDIO_MPC,
   0
 };

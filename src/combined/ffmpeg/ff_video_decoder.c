@@ -1565,7 +1565,7 @@ void *init_video_plugin (xine_t *xine, void *data) {
   return this;
 }
 
-static uint32_t supported_video_types[] = { 
+static const uint32_t supported_video_types[] = { 
 #if defined(HAVE_FFMPEG) || CONFIG_MSMPEG4V1_DECODER
   BUF_VIDEO_MSMPEG4_V1,
 #endif
@@ -1790,12 +1790,12 @@ static uint32_t supported_video_types[] = {
   0 
 };
 
-static uint32_t wmv8_video_types[] = { 
+static const uint32_t wmv8_video_types[] = { 
   BUF_VIDEO_WMV8,
   0 
 };
 
-static uint32_t wmv9_video_types[] = { 
+static const uint32_t wmv9_video_types[] = { 
   BUF_VIDEO_WMV9,
   0 
 };

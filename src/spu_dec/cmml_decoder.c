@@ -522,7 +522,7 @@ static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
 
 
 /* plugin catalog information */
-static uint32_t supported_types[] = { BUF_SPU_CMML, 0 };
+static const uint32_t supported_types[] = { BUF_SPU_CMML, 0 };
 
 static const decoder_info_t spudec_info = {
   supported_types,     /* supported types */

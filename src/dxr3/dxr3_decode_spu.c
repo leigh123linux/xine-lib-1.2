@@ -64,7 +64,7 @@ static void   *dxr3_spudec_init_plugin(xine_t *xine, void *);
 
 
 /* plugin catalog information */
-static uint32_t supported_types[] = { BUF_SPU_DVD, 0 };
+static const uint32_t supported_types[] = { BUF_SPU_DVD, 0 };
 
 static const decoder_info_t dxr3_spudec_info = {
   supported_types,     /* supported types */

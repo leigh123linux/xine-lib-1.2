@@ -603,7 +603,7 @@ void *init_realadec (xine_t *xine, void *data) {
  * exported plugin catalog entry
  */
 
-static uint32_t audio_types[] = { 
+static const uint32_t audio_types[] = { 
   BUF_AUDIO_COOK, BUF_AUDIO_ATRK, /* BUF_AUDIO_14_4, BUF_AUDIO_28_8, */ BUF_AUDIO_SIPRO, 0
  };
 

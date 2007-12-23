@@ -396,7 +396,7 @@ init_plugin (xine_t *xine, void *data) {
 
 void *demux_flac_init_class (xine_t *xine, void *data);
 
-static uint32_t audio_types[] = { 
+static const uint32_t audio_types[] = { 
   BUF_AUDIO_FLAC, 0
  };
 

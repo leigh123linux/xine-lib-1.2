@@ -848,7 +848,7 @@ static void surround_downmix_change_cb(void *this_gen, xine_cfg_entry_t *entry)
 }
 
 
-static uint32_t audio_types[] = {
+static const uint32_t audio_types[] = {
   BUF_AUDIO_A52,
   BUF_AUDIO_DNET,
   0
