@@ -871,7 +871,7 @@ static void spudec_discover_clut(xine_t *xine, spudec_state_t *state, vo_overlay
   int n,i;
   rle_elem_t *rle;
 
-  int found[2][16];
+  int found[2][16] = { { 0, }, };
 
   static const clut_t text_clut[] = {
   CLUT_Y_CR_CB_INIT(0x80, 0x90, 0x80),
@@ -879,7 +879,6 @@ static void spudec_discover_clut(xine_t *xine, spudec_state_t *state, vo_overlay
   CLUT_Y_CR_CB_INIT(0xff, 0x90, 0x00)
   };
 
-  memset(found,0,sizeof(found));
   rle = ovl->rle;
 
   /* this seems to be a problem somewhere else,
