@@ -42,13 +42,8 @@ extern "C" {
 
 #include <pthread.h>
 
-#ifdef XINE_COMPILE
-#  include "xine.h"
-#  include "buffer.h"
-#else
-#  include <xine.h>
-#  include <xine/buffer.h>
-#endif
+#include <xine.h>
+#include <xine/buffer.h>
 
 
 typedef struct vo_frame_s vo_frame_t; 

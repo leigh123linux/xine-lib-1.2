@@ -55,12 +55,7 @@ extern "C" {
 #include <windowsx.h>
 #endif
 
-#ifdef XINE_COMPILE
-#include <inttypes.h>
-#else
 #include <xine/os_types.h>
-#endif
-
 #include <xine/attributes.h>
 #include <xine/version.h>
 

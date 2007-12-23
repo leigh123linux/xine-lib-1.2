@@ -33,32 +33,20 @@ extern "C" {
 #include <stdarg.h>
 #include <pthread.h>
 
-#ifdef XINE_COMPILE
-#  include <inttypes.h>
-#  include "attributes.h"
-#  include "compat.h"
-#  include "xmlparser.h"
-#  include "xine_buffer.h"
-#  include "configfile.h"
-#  include "list.h"
-#  include "array.h"
-#  include "sorted_array.h"
+#ifdef WIN32
+#  include <winsock.h>
 #else
-#  ifdef WIN32
-#    include <winsock.h>
-#  else
-#    include <sys/time.h>
-#  endif
-#  include <xine/os_types.h>
-#  include <xine/attributes.h>
-#  include <xine/compat.h>
-#  include <xine/xmlparser.h>
-#  include <xine/xine_buffer.h>
-#  include <xine/configfile.h>
-#  include <xine/list.h>
-#  include <xine/array.h>
-#  include <xine/sorted_array.h>
+#  include <sys/time.h>
 #endif
+#include <xine/os_types.h>
+#include <xine/attributes.h>
+#include <xine/compat.h>
+#include <xine/xmlparser.h>
+#include <xine/xine_buffer.h>
+#include <xine/configfile.h>
+#include <xine/list.h>
+#include <xine/array.h>
+#include <xine/sorted_array.h>
 
 #include <stdio.h>
 #include <string.h>

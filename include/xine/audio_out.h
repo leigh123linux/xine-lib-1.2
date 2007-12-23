@@ -24,18 +24,10 @@
 extern "C" {
 #endif
 
-#if defined(XINE_COMPILE)
-#include <inttypes.h>
-#include "metronom.h"
-#include "configfile.h"
-#include "xineutils.h"
-#else
 #include <xine/os_types.h>
 #include <xine/metronom.h>
 #include <xine/configfile.h>
 #include <xine/xineutils.h>
-#endif
-
 
 #define AUDIO_OUT_IFACE_VERSION  9
 

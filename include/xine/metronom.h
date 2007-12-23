@@ -46,13 +46,8 @@ extern "C" {
 
 #include <pthread.h>
 
-#ifdef XINE_COMPILE
-#  include "video_out.h"
-#  include "xine.h"
-#else
-#  include <xine/video_out.h>
-#  include <xine.h>
-#endif
+#include <xine/video_out.h>
+#include <xine.h>
 
 typedef struct metronom_s metronom_t ;
 typedef struct metronom_clock_s metronom_clock_t;

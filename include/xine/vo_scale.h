@@ -33,11 +33,7 @@ extern "C" {
 #include "config.h"
 #endif
 
-#ifdef XINE_COMPILE
-#  include "configfile.h"
-#else
-#  include <xine/configfile.h>
-#endif
+#include <xine/configfile.h>
 
 typedef struct {
   int x, y;

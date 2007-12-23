@@ -23,13 +23,8 @@
 #ifndef HAVE_VIDEO_DECODER_H
 #define HAVE_VIDEO_DECODER_H
 
-#ifdef XINE_COMPILE
-#  include <inttypes.h>
-#  include "buffer.h"
-#else
-#  include <xine/os_types.h>
-#  include <xine/buffer.h>
-#endif
+#include <xine/os_types.h>
+#include <xine/buffer.h>
 
 #define VIDEO_DECODER_IFACE_VERSION 19
 

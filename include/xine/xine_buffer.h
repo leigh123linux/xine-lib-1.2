@@ -50,11 +50,7 @@
 #ifndef HAVE_XINE_BUFFER_H
 #define HAVE_XINE_BUFFER_H
 
-#ifdef XINE_COMPILE
-#  include <inttypes.h>
-#else
-#  include <xine/os_types.h>
-#endif
+#include <xine/os_types.h>
 
 /*
  * returns an initialized pointer to a buffer.

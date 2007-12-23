@@ -23,19 +23,11 @@
 #ifndef XINE_POST_H
 #define XINE_POST_H
 
-#ifdef XINE_COMPILE
-#  include "xine.h"
-#  include "video_out.h"
-#  include "audio_out.h"
-#  include "xine_internal.h"
-#  include "xineutils.h"
-#else
-#  include <xine.h>
-#  include <xine/video_out.h>
-#  include <xine/audio_out.h>
-#  include <xine/xine_internal.h>
-#  include <xine/xineutils.h>
-#endif
+#include <xine.h>
+#include <xine/video_out.h>
+#include <xine/audio_out.h>
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
 
 #define POST_PLUGIN_IFACE_VERSION 9
 

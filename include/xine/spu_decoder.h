@@ -24,13 +24,8 @@
 #ifndef HAVE_SPU_API_H
 #define HAVE_SPU_API_H
 
-#ifdef XINE_COMPILE
-#  include <inttypes.h>
-#  include "buffer.h"
-#else
-#  include <xine/os_types.h>
-#  include <xine/buffer.h>
-#endif
+#include <xine/os_types.h>
+#include <xine/buffer.h>
 
 #define SPU_DECODER_IFACE_VERSION 17
 

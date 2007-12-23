@@ -23,17 +23,10 @@
 
 #include <sys/types.h>
 
-#ifdef XINE_COMPILE
-#  include <inttypes.h>
-#  include "xineutils.h"
-#  include "buffer.h"
-#  include "configfile.h"
-#else
-#  include <xine/os_types.h>
-#  include <xine/xineutils.h>
-#  include <xine/buffer.h>
-#  include <xine/configfile.h>
-#endif
+#include <xine/os_types.h>
+#include <xine/xineutils.h>
+#include <xine/buffer.h>
+#include <xine/configfile.h>
 
 #define INPUT_PLUGIN_IFACE_VERSION   18
  

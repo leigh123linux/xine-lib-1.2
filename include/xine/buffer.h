@@ -43,13 +43,8 @@ extern "C" {
 #include <pthread.h>
 #include <sys/types.h>
 
-#ifdef XINE_COMPILE
-#  include <inttypes.h>
-#  include "attributes.h"
-#else
-#  include <xine/os_types.h>
-#  include <xine/attributes.h>
-#endif
+#include <xine/os_types.h>
+#include <xine/attributes.h>
 
 #define BUF_MAX_CALLBACKS 5
 
