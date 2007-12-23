@@ -1254,10 +1254,9 @@ input_plugin_t *_x_find_input_plugin (xine_stream_t *stream, const char *mrl) {
 
 void _x_free_input_plugin (xine_stream_t *stream, input_plugin_t *input) {
   plugin_catalog_t *catalog = stream->xine->plugin_catalog;
-  plugin_node_t    *node = input->node;
 
   input->dispose(input);
-  if (node) {
+  if (input->node) {
     pthread_mutex_lock(&catalog->lock);
     dec_node_ref(node);
     pthread_mutex_unlock(&catalog->lock);
@@ -1476,10 +1475,9 @@ demux_plugin_t *_x_find_demux_plugin_last_probe(xine_stream_t *stream, const cha
 
 void _x_free_demux_plugin (xine_stream_t *stream, demux_plugin_t *demux) {
   plugin_catalog_t *catalog = stream->xine->plugin_catalog;
-  plugin_node_t    *node = demux->node;
 
   demux->dispose(demux);
-  if (node) {
+  if (demux->node) {
     pthread_mutex_lock(&catalog->lock);
     dec_node_ref(node);
     pthread_mutex_unlock(&catalog->lock);
@@ -1971,11 +1969,10 @@ video_decoder_t *_x_get_video_decoder (xine_stream_t *stream, uint8_t stream_typ
 
 void _x_free_video_decoder (xine_stream_t *stream, video_decoder_t *vd) {
   plugin_catalog_t *catalog = stream->xine->plugin_catalog;
-  plugin_node_t    *node = vd->node;
 
   vd->dispose (vd);
 
-  if (node) {
+  if (vd->node) {
     pthread_mutex_lock (&catalog->lock);
     dec_node_ref(node);
     pthread_mutex_unlock (&catalog->lock);

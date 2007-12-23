@@ -158,17 +158,13 @@ static void      dxr3_update_correct_durations(void *this_gen, xine_cfg_entry_t 
 /* inline helper implementations */
 static inline int dxr3_present(xine_stream_t *stream)
 {
-  plugin_node_t *node;
-  video_driver_class_t *vo_class;
   int present = 0;
   
-  if (stream->video_driver && stream->video_driver->node) {
-    node = (plugin_node_t *)stream->video_driver->node;
-    if (node->plugin_class) {
-      vo_class = (video_driver_class_t *)node->plugin_class;
-      if (vo_class->identifier)
-        present = (strcmp(vo_class->identifier, DXR3_VO_ID) == 0);
-    }
+  if (stream->video_driver && stream->video_driver->node &&
+      stream->video_driver->node->plugin_class ) {
+    const video_driver_class_t *const vo_class = (video_driver_class_t *)node->plugin_class;
+    if (vo_class->identifier)
+      present = (strcmp(vo_class->identifier, DXR3_VO_ID) == 0);
   }
   llprintf(LOG_VID, "dxr3 %s\n", present ? "present" : "not present");
   return present;
