@@ -65,15 +65,15 @@ struct rtsp_session_s {
 };
 
 /* network bandwidth */
-const uint32_t rtsp_bandwidths[]={14400,19200,28800,33600,34430,57600,
-                                  115200,262200,393216,524300,1544000,10485800};
+static const uint32_t rtsp_bandwidths[]={14400,19200,28800,33600,34430,57600,
+					 115200,262200,393216,524300,1544000,10485800};
 
-const char *rtsp_bandwidth_strs[]={"14.4 Kbps (Modem)", "19.2 Kbps (Modem)",
-                                   "28.8 Kbps (Modem)", "33.6 Kbps (Modem)",
-                                   "34.4 Kbps (Modem)", "57.6 Kbps (Modem)",
-                                   "115.2 Kbps (ISDN)", "262.2 Kbps (Cable/DSL)",
-                                   "393.2 Kbps (Cable/DSL)","524.3 Kbps (Cable/DSL)",
-                                   "1.5 Mbps (T1)", "10.5 Mbps (LAN)", NULL};
+static const char *const rtsp_bandwidth_strs[]={"14.4 Kbps (Modem)", "19.2 Kbps (Modem)",
+						"28.8 Kbps (Modem)", "33.6 Kbps (Modem)",
+						"34.4 Kbps (Modem)", "57.6 Kbps (Modem)",
+						"115.2 Kbps (ISDN)", "262.2 Kbps (Cable/DSL)",
+						"393.2 Kbps (Cable/DSL)","524.3 Kbps (Cable/DSL)",
+						"1.5 Mbps (T1)", "10.5 Mbps (LAN)", NULL};
 
 
 rtsp_session_t *rtsp_session_start(xine_stream_t *stream, char *mrl) {
@@ -87,7 +87,7 @@ rtsp_session_t *rtsp_session_start(xine_stream_t *stream, char *mrl) {
   uint32_t bandwidth;
   
   bandwidth_id = xine->config->register_enum(xine->config, "media.network.bandwidth", 10,
-			      (char **)rtsp_bandwidth_strs,
+			      rtsp_bandwidth_strs,
 			      _("network bandwidth"),
 			      _("Specify the bandwidth of your internet connection here. "
 			        "This will be used when streaming servers offer different versions "
