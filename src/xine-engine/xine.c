@@ -820,7 +820,7 @@ void _x_flush_events_queues (xine_stream_t *stream) {
   pthread_mutex_unlock (&stream->event_queues_lock);
 }
 
-/*static*/ int open_internal (xine_stream_t *stream, const char *mrl) {
+static int open_internal (xine_stream_t *stream, const char *mrl) {
 
   const char *stream_setup = NULL;
   int no_cache = 0;
