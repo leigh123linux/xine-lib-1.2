@@ -660,7 +660,7 @@ static int ao_oss_ctrl(ao_driver_t *this_gen, int cmd, ...) {
  * If not, the function returns 0.
  */
 static int probe_audio_devices(oss_driver_t *this) {
-  const char *base_names[2] = {"/dev/dsp", "/dev/sound/dsp"};
+  static const char *const base_names[2] = {"/dev/dsp", "/dev/sound/dsp"};
   int base_num, i;
   int audio_fd, rate;
   int best_rate;
