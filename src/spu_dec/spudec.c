@@ -873,7 +873,7 @@ static void spudec_discover_clut(xine_t *xine, spudec_state_t *state, vo_overlay
 
   int found[2][16];
 
-  static clut_t text_clut[] = {
+  static const clut_t text_clut[] = {
   CLUT_Y_CR_CB_INIT(0x80, 0x90, 0x80),
   CLUT_Y_CR_CB_INIT(0x00, 0x90, 0x00),
   CLUT_Y_CR_CB_INIT(0xff, 0x90, 0x00)
