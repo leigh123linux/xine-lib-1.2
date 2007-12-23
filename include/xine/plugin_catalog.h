@@ -23,13 +23,8 @@
 #ifndef _PLUGIN_CATALOG_H
 #define _PLUGIN_CATALOG_H
 
-#ifdef XINE_COMPILE
-#  include "xine_plugin.h"
-#  include "xineutils.h"
-#else
-#  include <xine/xine_plugin.h>
-#  include <xine/xineutils.h>
-#endif
+#include <xine/xine_plugin.h>
+#include <xine/xineutils.h>
 
 #define DECODER_MAX 128
 #define PLUGIN_MAX  256
