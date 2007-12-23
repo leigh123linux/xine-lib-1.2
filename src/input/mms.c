@@ -601,7 +601,7 @@ static int mms_tcp_connect(mms_t *this) {
 }
 
 static void mms_gen_guid(char guid[]) {
-  static char digit[16] = "0123456789ABCDEF";
+  static const char digit[16] = "0123456789ABCDEF";
   int i = 0;
 
   srand(time(NULL));
