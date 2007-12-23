@@ -70,7 +70,7 @@ typedef struct {
 
 /* special_info for a decoder plugin */
 typedef struct {
-  uint32_t          *supported_types;         /* streamtypes this decoder can handle       */
+  const uint32_t          *supported_types;         /* streamtypes this decoder can handle       */
   int                      priority;
 } decoder_info_t;
 

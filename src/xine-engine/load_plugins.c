@@ -1022,15 +1022,16 @@ static void load_plugin_list(FILE *fp, xine_sarray_t *plugins) {
           vo_info->visual_type = i;
         } else if( !strcmp("supported_types",line) && decoder_info ) {
           char *s;
+	  uint32_t *supported_types;
           
           for( s = value, i = 0; s && sscanf(s," %lu",&lu) > 0; i++ ) {
             s = strchr(s+1, ' ');
           }
-          decoder_info->supported_types = xine_xcalloc((i+1), sizeof(uint32_t));
-          for( s = value, i = 0; s && sscanf(s," %lu",&lu) > 0; i++ ) {
-            decoder_info->supported_types[i] = lu;
+          supported_types = xine_xcalloc((i+1), sizeof(uint32_t));
+          for( s = value, i = 0; s && sscanf(s," %"SCNu32,&supported_types[i]) > 0; i++ ) {
             s = strchr(s+1, ' ');
           }
+	  decoder_info->supported_types = supported_types;
         } else if( !strcmp("vo_priority",line) && vo_info ) {
           sscanf(value," %d",&i);
           vo_info->priority = i;
