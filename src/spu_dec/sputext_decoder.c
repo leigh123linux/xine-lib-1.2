@@ -43,7 +43,7 @@
 
 #define rgb2yuv(R,G,B) ((((((66*R+129*G+25*B+128)>>8)+16)<<8)|(((112*R-94*G-18*B+128)>>8)+128))<<8|(((-38*R-74*G+112*B+128)>>8)+128))
 
-static uint32_t sub_palette[22]={
+static const uint32_t sub_palette[22]={
 /* RED */
   rgb2yuv(0,0,0),
   rgb2yuv(0,0,0),
@@ -70,7 +70,7 @@ static uint32_t sub_palette[22]={
   rgb2yuv(0,170,255)
 };
 
-static uint8_t sub_trans[22]={
+static const uint8_t sub_trans[22]={
   0, 0, 3, 6, 8, 10, 12, 14, 15, 15, 15,
   0, 0, 3, 6, 8, 10, 12, 14, 15, 15, 15
 };
