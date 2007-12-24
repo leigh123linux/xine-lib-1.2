@@ -22,6 +22,8 @@ For 1.2 series
 - review media_eject_media, possibly rewrite to use libcdio;
 - improve error reporting (for when demuxer/decoder plugins aren't found);
 - HTTPS.
+- review translable strings, try to follow a defined schema for naming and
+  error reporting;
 
 known bugs
 ==========
