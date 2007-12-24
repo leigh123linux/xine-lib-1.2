@@ -1234,7 +1234,7 @@ msgstr ""
 
 #: src/input/input_cdda.c:1663
 #, c-format
-msgid "input_cdda: successfuly connected to cddb server '%s:%d'.\n"
+msgid "input_cdda: successfully connected to cddb server '%s:%d'.\n"
 msgstr ""
 
 #: src/input/input_cdda.c:1668

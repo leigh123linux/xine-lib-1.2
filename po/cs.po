@@ -1490,7 +1490,7 @@ msgstr "%s: http: nelze se připojit k %s:%d\n"
 
 #: src/input/input_cdda.c:1663
 #, c-format
-msgid "input_cdda: successfuly connected to cddb server '%s:%d'.\n"
+msgid "input_cdda: successfully connected to cddb server '%s:%d'.\n"
 msgstr "input_cdda: úspěšně připojeno k CDDB serveru '%s:%d'.\n"
 
 #: src/input/input_cdda.c:1668

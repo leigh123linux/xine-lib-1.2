@@ -1255,7 +1255,7 @@ msgstr "input_net: impossible de se connecter à '%s'.\n"
 
 #: src/input/input_cdda.c:1663
 #, fuzzy, c-format
-msgid "input_cdda: successfuly connected to cddb server '%s:%d'.\n"
+msgid "input_cdda: successfully connected to cddb server '%s:%d'.\n"
 msgstr "input_cda: serveur '%s:%d' connecté avec succés.\n"
 
 #: src/input/input_cdda.c:1668

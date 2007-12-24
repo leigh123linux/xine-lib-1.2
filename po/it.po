@@ -1523,7 +1523,7 @@ msgstr "%s: impossibile connettersi a %s: %d\n"
 
 #: src/input/input_cdda.c:1663
 #, c-format
-msgid "input_cdda: successfuly connected to cddb server '%s:%d'.\n"
+msgid "input_cdda: successfully connected to cddb server '%s:%d'.\n"
 msgstr "input_cdda: connesso al server CDDB %s:%d con successo.\n"
 
 #: src/input/input_cdda.c:1668

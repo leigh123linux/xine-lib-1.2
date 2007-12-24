@@ -1491,7 +1491,7 @@ msgstr "%s: Kann keine Verbindung zu '%s:%d' aufbauen\n"
 
 #: src/input/input_cdda.c:1663
 #, c-format
-msgid "input_cdda: successfuly connected to cddb server '%s:%d'.\n"
+msgid "input_cdda: successfully connected to cddb server '%s:%d'.\n"
 msgstr "input_cdda: Verbindung zum CDDB-Server '%s:%d' steht.\n"
 
 #: src/input/input_cdda.c:1668

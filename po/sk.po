@@ -1330,7 +1330,7 @@ msgstr "rtsp: nemožno sa pripojiť k '%s'\n"
 
 #: src/input/input_cdda.c:1663
 #, c-format
-msgid "input_cdda: successfuly connected to cddb server '%s:%d'.\n"
+msgid "input_cdda: successfully connected to cddb server '%s:%d'.\n"
 msgstr "input_cdda: úspešne pripojenie na cddb server '%s:%d'.\n"
 
 #: src/input/input_cdda.c:1668

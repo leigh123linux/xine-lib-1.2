@@ -1243,8 +1243,8 @@ msgstr "http: unable to connect to >%s<\n"
 
 #: src/input/input_cdda.c:1663
 #, fuzzy, c-format
-msgid "input_cdda: successfuly connected to cddb server '%s:%d'.\n"
-msgstr "input_cda: server '%s:%d' successfuly connected.\n"
+msgid "input_cdda: successfully connected to cddb server '%s:%d'.\n"
+msgstr "input_cda: server '%s:%d' successfully connected.\n"
 
 #: src/input/input_cdda.c:1668
 #, fuzzy, c-format
