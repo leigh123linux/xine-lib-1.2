@@ -42,6 +42,8 @@
 
 #include <basedir.h>
 
+#include "load_plugins.h"
+
 #define LOG_MODULE "load_plugins"
 #define LOG_VERBOSE
 

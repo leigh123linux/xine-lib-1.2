@@ -79,6 +79,8 @@
 #   include <winsock.h>
 #endif /* WIN32 */
 
+#include "load_plugins.h"
+
 
 static void mutex_cleanup (void *mutex) {
   pthread_mutex_unlock ((pthread_mutex_t *) mutex);
