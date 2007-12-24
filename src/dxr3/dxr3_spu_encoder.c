@@ -167,11 +167,11 @@ static void create_histogram(spu_encoder_t *this)
 #ifdef LOG
   for (i = 0; i < OVL_PALETTE_SIZE; i++)
     if (this->map[i])
-      lprintf("histogram: color #%d 0x%.8x appears %d times\n",
+      lprintf("histogram: colour #%d 0x%.8x appears %d times\n",
 	     i, this->overlay->color[i], this->map[i]);
   for (i = 0; i < OVL_PALETTE_SIZE; i++)
     if (this->clip_map[i])
-      lprintf("histogram: clip color #%d 0x%.8x appears %d times\n",
+      lprintf("histogram: clip colour #%d 0x%.8x appears %d times\n",
         i, this->overlay->hili_color[i], this->clip_map[i]);
 #endif
 }
@@ -209,7 +209,7 @@ static void generate_clut(spu_encoder_t *this)
   }
 #ifdef LOG
   for (spu_color = 0; spu_color < 4; spu_color++)
-    lprintf("spu color %d: 0x%.8x, trans: %d\n", spu_color,
+    lprintf("spu colour %d: 0x%.8x, trans: %d\n", spu_color,
       this->color[spu_color], this->trans[spu_color]);
 #endif
 
@@ -243,7 +243,7 @@ static void generate_clut(spu_encoder_t *this)
   }
 #ifdef LOG
   for (spu_color = 0; spu_color < 4; spu_color++)
-    lprintf("spu clip color %d: 0x%.8x, trans: %d\n", spu_color,
+    lprintf("spu clip colour %d: 0x%.8x, trans: %d\n", spu_color,
       this->hili_color[spu_color], this->hili_trans[spu_color]);
 #endif
 }

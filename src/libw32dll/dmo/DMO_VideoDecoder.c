@@ -524,7 +524,7 @@ int DMO_VideoDecoder_SetDestFmt(DMO_VideoDecoder *this, int bits, unsigned int c
     if (result != 0)
     {
 	if (csp)
-	    printf("Warning: unsupported color space\n");
+	    printf("Warning: unsupported colour space\n");
 	else
 	    printf("Warning: unsupported bit depth\n");
 

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-12-24 12:54+0100\n"
+"POT-Creation-Date: 2007-12-24 18:34+0000\n"
 "PO-Revision-Date: 2007-12-24 16:09+0100\n"
 "Last-Translator: Diego 'Flameeyes' Pettenò <flameeyes@gentoo.org>\n"
 "Language-Team: Italian\n"
@@ -807,7 +807,8 @@ msgstr "dispositivo utilizzato per PulseAudio"
 
 #: src/audio_out/audio_pulse_out.c:549
 msgid "use 'server[:sink]' for setting the pulseaudio sink device."
-msgstr "Si usi 'server[:sink]' per impostare il dispositivo sink di PulseAudio."
+msgstr ""
+"Si usi 'server[:sink]' per impostare il dispositivo sink di PulseAudio."
 
 #: src/audio_out/audio_pulse_out.c:582
 msgid "xine audio output plugin using pulseaudio sound server"
@@ -1430,12 +1431,12 @@ msgstr ""
 "dell'overlay DXR3."
 
 #: src/dxr3/video_out_dxr3.c:434
-msgid "overlay colorkey value"
+msgid "overlay colour key value"
 msgstr "valore della chiave cromatica di sovraimpressione"
 
 #: src/dxr3/video_out_dxr3.c:434
 msgid ""
-"Hexadecimal RGB value of the key color.\n"
+"Hexadecimal RGB value of the key colour.\n"
 "You can try different values, if you experience windows becoming transparent "
 "when using DXR3 overlay mode."
 msgstr ""
@@ -1444,12 +1445,12 @@ msgstr ""
 "trasparenti quando si utilizza la modalità overlay DXR3. "
 
 #: src/dxr3/video_out_dxr3.c:439
-msgid "overlay colorkey tolerance"
+msgid "overlay colour key tolerance"
 msgstr "tolleranza della chiave cromatica di sovraimpressione"
 
 #: src/dxr3/video_out_dxr3.c:439
 msgid ""
-"A greater value widens the tolerance for the overlay keycolor.\n"
+"A greater value widens the tolerance for the overlay key colour.\n"
 "You can try lower values, if you experience windows becoming transparent "
 "when using DXR3 overlay mode, but parts of the image borders may disappear "
 "when using a too low setting."
@@ -1715,7 +1716,9 @@ msgstr ""
 msgid ""
 "input_dvb: dvba mrl specified but the tuner doesn't appear to be ATSC (DVB-"
 "A)\n"
-msgstr "input_dvb: è stato specificato un MRL DVB-A ma il sintonizzatore non pare essere ATSC (DVB-C)\n"
+msgstr ""
+"input_dvb: è stato specificato un MRL DVB-A ma il sintonizzatore non pare "
+"essere ATSC (DVB-C)\n"
 
 #: src/input/input_dvb.c:2977
 #, c-format
@@ -1770,7 +1773,9 @@ msgstr "Numero di secondi prima dell'interruzione della sintonizzazione."
 msgid ""
 "Leave at 0 means try forever. Greater than 0 means wait that many seconds to "
 "get a lock. Minimum is 5 seconds."
-msgstr "Lasciandolo a 0 proverà all'infinito. Un valore maggiore a 0 significa attendi quei secondi per ricevere il controllo. Il minimo è di 5 secondi."
+msgstr ""
+"Lasciandolo a 0 proverà all'infinito. Un valore maggiore a 0 significa "
+"attendi quei secondi per ricevere il controllo. Il minimo è di 5 secondi."
 
 #: src/input/input_dvb.c:3305
 msgid "Number of dvb card to use."
@@ -2890,7 +2895,11 @@ msgid ""
 "effect with playing the next stream."
 msgstr ""
 "Puoi impostare il numero di thread di decodifica che FFMpeg può usare.\n"
-"Valori più alti dovrebbero renere più veloce la decodifica, ma il supporto alla decodifica parallela dipende dal codec utilizzato. Una buona regola pratica è di avere un thread di decodifica per ogni CPU virtuale (tipicamente da 1 a 4). La modifica avrà effetto alla riproduzione del prossimo flusso."
+"Valori più alti dovrebbero renere più veloce la decodifica, ma il supporto "
+"alla decodifica parallela dipende dal codec utilizzato. Una buona regola "
+"pratica è di avere un thread di decodifica per ogni CPU virtuale "
+"(tipicamente da 1 a 4). La modifica avrà effetto alla riproduzione del "
+"prossimo flusso."
 
 #: src/libffmpeg/ffmpeg_encoder.c:165
 msgid "libavcodec mpeg output bitrate (kbit/s)"
@@ -2971,7 +2980,12 @@ msgid ""
 "\"drvc.so\" in it. If xine can find the RealPlayer codecs, it will use them "
 "to decode RealPlayer content for you. Consult the xine FAQ for more "
 "information on how to install the codecs."
-msgstr "Se si ha RealPlayer installato, si specifichi il percorso ai sui codec qui. Si possono individuare facilmente i codec cercando un file chiamato \"drvc.so\". Se xine può trovare i codec RealPlayer li utilizzerà per decodificare contenuto RealPlayer. Si consultino le FAQ per maggiori informazioni su come installare i codec."
+msgstr ""
+"Se si ha RealPlayer installato, si specifichi il percorso ai sui codec qui. "
+"Si possono individuare facilmente i codec cercando un file chiamato \"drvc.so"
+"\". Se xine può trovare i codec RealPlayer li utilizzerà per decodificare "
+"contenuto RealPlayer. Si consultino le FAQ per maggiori informazioni su come "
+"installare i codec."
 
 #: src/libreal/xine_real_video_decoder.c:162
 msgid "libreal: Error resolving symbols! (version incompatibility?)\n"
@@ -3119,7 +3133,8 @@ msgstr ""
 
 #: src/libsputext/xine_sputext_decoder.c:952
 msgid "An outline font file (e.g. a .ttf) to be used for the subtitle text."
-msgstr "Un font grafico (es. un .ttf) da utilizzare per il testo dei sottotitoli."
+msgstr ""
+"Un font grafico (es. un .ttf) da utilizzare per il testo dei sottotitoli."
 
 #: src/libsputext/xine_sputext_decoder.c:958
 msgid "whether to use a freetype font"
@@ -3170,7 +3185,12 @@ msgid ""
 "Quicktime codecs, it will use them to decode various Windows Media and "
 "Quicktime streams for you. Consult the xine FAQ for more information on how "
 "to install the codecs."
-msgstr "Se si hanno i pacchetti di codec Windows o Apple QuickTime installati, si specifichi il percorso alla directory dei codec. Se xine può trovare i codec Windows o Apple QuickTime li utilizzerà per decodificare vari formati che non sono attualmente implementati. Si consultino le FAQ per maggiori informazioni su come installare i codec."
+msgstr ""
+"Se si hanno i pacchetti di codec Windows o Apple QuickTime installati, si "
+"specifichi il percorso alla directory dei codec. Se xine può trovare i codec "
+"Windows o Apple QuickTime li utilizzerà per decodificare vari formati che "
+"non sono attualmente implementati. Si consultino le FAQ per maggiori "
+"informazioni su come installare i codec."
 
 #: src/libw32dll/w32codec.c:585
 #, c-format
@@ -3367,7 +3387,7 @@ msgid ""
 "\n"
 "  Chroma_filter: DVD/MPEG2 use an interlaced image format that has a very "
 "poor vertical chroma resolution. Upsampling the chroma for purposes of "
-"deinterlacing may cause some artifacts to occur (eg. color stripes). Use "
+"deinterlacing may cause some artifacts to occur (eg. colour stripes). Use "
 "this option to blur the chroma vertically after deinterlacing to remove the "
 "artifacts. Warning: cpu intensive.\n"
 "\n"
@@ -3417,12 +3437,12 @@ msgid "The height in pixels of the image to be generated."
 msgstr "L'altezza in pixel dell'immagine da generare."
 
 #: src/post/goom/xine_goom.c:224
-msgid "colorspace conversion method"
+msgid "colour space conversion method"
 msgstr "metodo di conversione dello spazio di colore"
 
 #: src/post/goom/xine_goom.c:225
 msgid ""
-"You can choose the colorspace conversion method used by goom.\n"
+"You can choose the colour space conversion method used by goom.\n"
 "The available selections should be self-explaining."
 msgstr ""
 "Si scelga il metodo di conversione dei colori utilizzato da goom.\n"
@@ -3590,10 +3610,14 @@ msgid ""
 "  Centre_cut_out_mode: extracts 4:3 image contained in 16:9 frame\n"
 "\n"
 msgstr ""
-"Il plugin di espansione è pensato per prendere frame di proporzioni arbitrarie e convertirli ad un aspetto diverso (predefinito: 4:3) aggiungendo barre nere sopra e sotto il frame. Questo permette di inserire le sovrimpressioni dentro all'area nera in modo che non coprano l'immagine.\n"
+"Il plugin di espansione è pensato per prendere frame di proporzioni "
+"arbitrarie e convertirli ad un aspetto diverso (predefinito: 4:3) "
+"aggiungendo barre nere sopra e sotto il frame. Questo permette di inserire "
+"le sovrimpressioni dentro all'area nera in modo che non coprano l'immagine.\n"
 "\n"
 "Parametri (DA CORREGGERE: migliorare il testo informativo)\n"
-"  Enable_automatic_shift: Abilita lo spostamento automatico delle sovraimpressioni\n"
+"  Enable_automatic_shift: Abilita lo spostamento automatico delle "
+"sovraimpressioni\n"
 "  Overlay_y_offset: Sposta manualmente le sovraimpressioni veticalmente\n"
 "  aspect: La proporzione destinazione (default 4:3)\n"
 "  Centre_cut_out_mode: estrae l'immagine 4:3 contenuta in un frame 16:9\n"
@@ -3738,29 +3762,33 @@ msgstr ""
 "dello schermo intero (ritracciamento verticale)."
 
 #: src/video_out/video_out_directfb.c:1357
-msgid "enable video color key"
+msgid "enable video colour key"
 msgstr "abilita la chiave cromatica video"
 
 #: src/video_out/video_out_directfb.c:1358
 msgid ""
-"Enable using a color key to tell the graphics card where to overlay the "
+"Enable using a colour key to tell the graphics card where to overlay the "
 "video image."
 msgstr ""
 "Abilita l'uso di una chiave cromatica per dire alla scheda grafica dove "
 "sovrapporre l'immagine video."
 
 #: src/video_out/video_out_directfb.c:1364
-msgid "video color key"
+msgid "video colour key"
 msgstr "chiave cromatica video"
 
 #: src/video_out/video_out_directfb.c:1365
+#: src/video_out/video_out_vidix.c:1156 src/video_out/video_out_vidix.c:1163
+#: src/video_out/video_out_vidix.c:1170 src/video_out/video_out_xcbxv.c:1438
+#: src/video_out/video_out_xv.c:1491 src/video_out/video_out_xvmc.c:1445
+#: src/video_out/video_out_xxmc.c:2529
 msgid ""
-"The color key is used to tell the graphics card where to overlay the video "
+"The colour key is used to tell the graphics card where to overlay the video "
 "image. Try different values, if you experience windows becoming transparent."
 msgstr ""
 "La chiave cromatica è utilizzata per dire alla scheda grafica dove "
-"sovrapporre l'immagine video. Si provino valori diversi se si riscontrano "
-"finestre trasparenti."
+"sovrapporre l'immagine video. Si provino diversi valori se si notano le "
+"finestre diventare trasparenti."
 
 #: src/video_out/video_out_directfb.c:1374
 msgid "flicker filtering"
@@ -3786,7 +3814,8 @@ msgstr ""
 
 #: src/video_out/video_out_directfb.c:1516
 msgid "video_out_directfb: using hardware subpicture acceleration.\n"
-msgstr "video_out_directfb: si utilizza l'accelerazione sottotitoli hardware.\n"
+msgstr ""
+"video_out_directfb: si utilizza l'accelerazione sottotitoli hardware.\n"
 
 #: src/video_out/video_out_directfb.c:1530
 msgid "video_out_directfb: layer supports video output.\n"
@@ -3803,7 +3832,9 @@ msgstr "video_out_directfb: lo strato non supporta YUY2!\n"
 #: src/video_out/video_out_directfb.c:1557
 msgid ""
 "video_out_directfb:need at least DirectFB 0.9.25 to play on this layer!\n"
-msgstr "video_out_directfb: è necessario almeno DirectFB 0.9.25 per riprodurre su questo strato!\n"
+msgstr ""
+"video_out_directfb: è necessario almeno DirectFB 0.9.25 per riprodurre su "
+"questo strato!\n"
 
 #: src/video_out/video_out_directfb.c:1592
 #, c-format
@@ -3848,7 +3879,8 @@ msgstr "plugin di output video per xine utilizzante DirectFB"
 
 #: src/video_out/video_out_directfb.c:2007
 msgid "video_out_directfb: no usable display layer was found!\n"
-msgstr "video_out_directfb: nessuno strato di visualizzazione utilizzabile trovato!\n"
+msgstr ""
+"video_out_directfb: nessuno strato di visualizzazione utilizzabile trovato!\n"
 
 #: src/video_out/video_out_directfb.c:2096
 msgid "xine video output plugin using DirectFB under XDirectFB."
@@ -3861,7 +3893,7 @@ msgstr "plugin di output video per xine per win32 che usa directx"
 #: src/video_out/video_out_fb.c:758
 #, c-format
 msgid ""
-"video_out_fb: only packed truecolor/directcolor is supported (%d).\n"
+"video_out_fb: only packed truecolour/directcolour is supported (%d).\n"
 "     Check 'fbset -i' or try 'fbset -depth 16'.\n"
 msgstr ""
 "video_out_fb: è supportato solo truecolor/directcolor impacchettato (%d).\n"
@@ -4318,18 +4350,6 @@ msgstr "video_out_vidix: utilizzando il driver %s di %s\n"
 msgid "video overlay colour key red component"
 msgstr "componente rossa della chiave cromatica di sovraimpressione"
 
-#: src/video_out/video_out_vidix.c:1156 src/video_out/video_out_vidix.c:1163
-#: src/video_out/video_out_vidix.c:1170 src/video_out/video_out_xcbxv.c:1438
-#: src/video_out/video_out_xv.c:1491 src/video_out/video_out_xvmc.c:1445
-#: src/video_out/video_out_xxmc.c:2529
-msgid ""
-"The colour key is used to tell the graphics card where to overlay the video "
-"image. Try different values, if you experience windows becoming transparent."
-msgstr ""
-"La chiave cromatica è utilizzata per dire alla scheda grafica dove "
-"sovrapporre l'immagine video. Si provino diversi valori se si notano le "
-"finestre diventare trasparenti."
-
 #: src/video_out/video_out_vidix.c:1162
 msgid "video overlay colour key green component"
 msgstr "componente verde della chiave cromatica di sovraimpressione"
@@ -4362,7 +4382,8 @@ msgid ""
 "image \n"
 "video_out_xcbshm: => not using MIT Shared Memory extension.\n"
 msgstr ""
-"video_out_xcbshm: errore nella memoria condivisa (errore d'indirizzo) riservando l'immagine \n"
+"video_out_xcbshm: errore nella memoria condivisa (errore d'indirizzo) "
+"riservando l'immagine \n"
 "video_out_xcbshm: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
 
 #: src/video_out/video_out_xcbshm.c:175
@@ -4370,7 +4391,8 @@ msgid ""
 "video_out_xcbshm: x11 error during shared memory XImage creation\n"
 "video_out_xcbshm: => not using MIT Shared Memory extension.\n"
 msgstr ""
-"video_out_xcbshm: errore X11 durante la creazione dell'oggetto XImage condiviso\n"
+"video_out_xcbshm: errore X11 durante la creazione dell'oggetto XImage "
+"condiviso\n"
 "video_out_xcbshm: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
 
 #: src/video_out/video_out_xcbshm.c:1098 src/video_out/video_out_xshm.c:1154
@@ -4390,7 +4412,8 @@ msgstr ""
 
 #: src/video_out/video_out_xcbshm.c:1111
 msgid "video_out_xcbshm: MIT shared memory extension not present on display.\n"
-msgstr "video_out_xcbshm: l'estensione MIT Shared Meory non è presente sul display.\n"
+msgstr ""
+"video_out_xcbshm: l'estensione MIT Shared Meory non è presente sul display.\n"
 
 #: src/video_out/video_out_xcbshm.c:1210
 msgid "video_out_xcbshm: your video mode was not recognized, sorry :-(\n"
@@ -4423,7 +4446,8 @@ msgid ""
 "video_out_xcbxv: x11 error during shared memory XImage creation\n"
 "video_out_xcbxv: => not using MIT Shared Memory extension.\n"
 msgstr ""
-"video_out_xcbxv: errore X11 durante la creazione dell'oggetto XImage in memoria condivisa.\n"
+"video_out_xcbxv: errore X11 durante la creazione dell'oggetto XImage in "
+"memoria condivisa.\n"
 "video_out_xcbxv: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
 
 #: src/video_out/video_out_xcbxv.c:1289
@@ -4437,15 +4461,18 @@ msgid ""
 "                 Looks like your graphics hardware driver doesn't support "
 "Xv?!\n"
 msgstr ""
-"video_out_xcbxv: estensione XV presente ma non è stato possibile trovare una porta yuv12 utilizzabile.\n"
+"video_out_xcbxv: estensione XV presente ma non è stato possibile trovare una "
+"porta yuv12 utilizzabile.\n"
 "                 sembrerebbe che l'hardware grafico non supporti Xv.\n"
 
 #: src/video_out/video_out_xcbxv.c:1339
 #, c-format
 msgid ""
-"video_out_xcbxv: using Xv port %d from adaptor %s for hardware colorspace "
+"video_out_xcbxv: using Xv port %d from adaptor %s for hardware colour space "
 "conversion and scaling.\n"
-msgstr "video_out_xcbxv: utilizzando la porta Xv %d del dispositivo %s per la conversione di colori e il ridimensionamento hardware.\n"
+msgstr ""
+"video_out_xcbxv: utilizzando la porta Xv %d del dispositivo %s per la "
+"conversione di colori e il ridimensionamento hardware.\n"
 
 #: src/video_out/video_out_xcbxv.c:1446 src/video_out/video_out_xv.c:1499
 #: src/video_out/video_out_xvmc.c:1453 src/video_out/video_out_xxmc.c:2537
@@ -4454,7 +4481,7 @@ msgstr "colora automaticamente la chive cromatica"
 
 #: src/video_out/video_out_xcbxv.c:1447 src/video_out/video_out_xv.c:1500
 #: src/video_out/video_out_xvmc.c:1454 src/video_out/video_out_xxmc.c:2538
-msgid "Make Xv autopaint its colorkey."
+msgid "Make Xv autopaint its colour key."
 msgstr "Fa sì che Xv colori automaticamente la propria chiave cromatica."
 
 #: src/video_out/video_out_xcbxv.c:1454 src/video_out/video_out_xv.c:1507
@@ -4688,7 +4715,7 @@ msgstr ""
 #: src/video_out/video_out_xv.c:1382
 #, c-format
 msgid ""
-"video_out_xv: using Xv port %ld from adaptor %s for hardware colorspace "
+"video_out_xv: using Xv port %ld from adaptor %s for hardware colour space "
 "conversion and scaling.\n"
 msgstr ""
 "video_out_xv: utilizzando la porta Xv %ld dal dispositivo %s per la "
@@ -4722,7 +4749,7 @@ msgstr ""
 #, c-format
 msgid ""
 "video_out_xvmc: using Xv port %ld from adaptor %s\n"
-"                for hardware colorspace conversion and scaling\n"
+"                for hardware colour space conversion and scaling\n"
 msgstr ""
 "video_out_xxmc: utilizzando la porta Xv %ld dal dispositivo %s\n"
 "              per la conversione di colori e il ridimensionamento hardware.\n"
@@ -4795,7 +4822,7 @@ msgstr ""
 #: src/video_out/video_out_xxmc.c:2426
 #, c-format
 msgid ""
-"video_out_xxmc: using Xv port %ld from adaptor %s for hardware colorspace "
+"video_out_xxmc: using Xv port %ld from adaptor %s for hardware colour space "
 "conversion and scaling.\n"
 msgstr ""
 "video_out_xxmc: utilizzando la porta Xv %ld dal dispositivo %s per la "
@@ -4838,12 +4865,12 @@ msgstr ""
 "Sperimentale.\n"
 
 #: src/video_out/video_out_xxmc.c:2650
-msgid "Fix buggy NVIDIA XvMC subpicture colors"
+msgid "Fix buggy NVIDIA XvMC subpicture colours"
 msgstr "Correggi i colori dei sottotitoli difettosi su NVIDIA XvMC"
 
 #: src/video_out/video_out_xxmc.c:2651
 msgid ""
-"There's a bug in NVIDIA's XvMC lib that makes red OSD colors\n"
+"There's a bug in NVIDIA's XvMC lib that makes red OSD colours\n"
 "look blue and vice versa. This option provides a workaround.\n"
 msgstr ""
 "C'è un errore nella libreria XvMC NVIDIA che rende i colori rossi dell'OSD "
@@ -4875,14 +4902,17 @@ msgstr ""
 
 #: src/video_out/video_out_xxmc.c:2670
 msgid "Don't use bob deinterlacing while a scaled OSD is active."
-msgstr "Non utilizzare il deinterlacciamento bob quando è attivo un OSD ridimensionato."
+msgstr ""
+"Non utilizzare il deinterlacciamento bob quando è attivo un OSD "
+"ridimensionato."
 
 #: src/video_out/video_out_xxmc.c:2671
 msgid ""
 "Bob deinterlacing adds some noise to horizontal lines, so disabling it\n"
 "on demand should result in a better OSD picture.\n"
 msgstr ""
-"Il deinterlacciamento bob aggiunge del rumore alle righe orizzontali, quindi\n"
+"Il deinterlacciamento bob aggiunge del rumore alle righe orizzontali, "
+"quindi\n"
 "disabilitarlo a richiesta dovrebbe fornire una migliore immagine OSD.\n"
 
 #: src/video_out/x11osd.c:274 src/video_out/xcbosd.c:268
@@ -4958,7 +4988,9 @@ msgstr ""
 
 #: src/xine-engine/audio_out.c:1248
 msgid "write to sound card failed. Assuming the device was unplugged.\n"
-msgstr "scrittura sulla scheda audio fallita. Si suppone il dispositivo sia stato scollegato.\n"
+msgstr ""
+"scrittura sulla scheda audio fallita. Si suppone il dispositivo sia stato "
+"scollegato.\n"
 
 #: src/xine-engine/audio_out.c:1420
 msgid "8 bits not supported by driver, converting to 16 bits.\n"
@@ -5585,7 +5617,9 @@ msgstr "numero predefinito di frame video"
 msgid ""
 "The default number of video frames to request from xine video out driver. "
 "Some drivers will override this setting with their own values."
-msgstr "Il numero predefinito di frame video da richiedere dal driver di uscita video. Alcuni driver rimpiazzeranno questa impostazione con il loro valore."
+msgstr ""
+"Il numero predefinito di frame video da richiedere dal driver di uscita "
+"video. Alcuni driver rimpiazzeranno questa impostazione con il loro valore."
 
 #: src/xine-engine/video_out.c:1833
 msgid "percentage of skipped frames to tolerate"
@@ -5887,7 +5921,11 @@ msgid ""
 "Specifies the timeout when reading from network streams, in seconds. Too low "
 "values might stop streaming when the source is slow or the bandwidth is "
 "occupied, too high values will freeze the player if the connection is lost."
-msgstr "Specifica il timeout durante la lettura dei flussi di rete, in secondi. Valori troppo bassi possono fermare la riproduzione quando la sorgente è lenta o la banda è occupata, valori troppo alti congeleranno il player se la connessione viene persa."
+msgstr ""
+"Specifica il timeout durante la lettura dei flussi di rete, in secondi. "
+"Valori troppo bassi possono fermare la riproduzione quando la sorgente è "
+"lenta o la banda è occupata, valori troppo alti congeleranno il player se la "
+"connessione viene persa."
 
 #: src/xine-engine/xine.c:2051
 msgid "messages"

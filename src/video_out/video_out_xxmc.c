@@ -2424,7 +2424,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   else
     xprintf(class->xine, XINE_VERBOSITY_LOG,
 	    _("video_out_xxmc: using Xv port %ld from adaptor %s for hardware "
-	      "colorspace conversion and scaling.\n"), xv_port,
+	      "colour space conversion and scaling.\n"), xv_port,
             adaptor_info[adaptor_num].name);
   
   XUnlockDisplay(this->display);
@@ -2535,7 +2535,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 				 adaptor_info[adaptor_num].base_id, "XV_AUTOPAINT_COLORKEY",
 				 "video.device.xv_autopaint_colorkey",
 				 _("autopaint colour key"),
-				 _("Make Xv autopaint its colorkey."));
+				 _("Make Xv autopaint its colour key."));
 
 	} else if(!strcmp(attr[k].name, "XV_FILTER")) {
 	  int xv_filter;
@@ -2647,8 +2647,8 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 			   10, xxmc_update_cpu_save, this);
   this->reverse_nvidia_palette =
     config->register_bool (config, "video.device.xvmc_nvidia_color_fix", 0,
-			   _("Fix buggy NVIDIA XvMC subpicture colors"),
-			   _("There's a bug in NVIDIA's XvMC lib that makes red OSD colors\n"
+			   _("Fix buggy NVIDIA XvMC subpicture colours"),
+			   _("There's a bug in NVIDIA's XvMC lib that makes red OSD colours\n"
 			     "look blue and vice versa. This option provides a workaround.\n"),
 			   10, xxmc_update_nvidia_fix, this);
   this->bob =

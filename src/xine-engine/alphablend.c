@@ -1959,7 +1959,7 @@ static int xx44_paletteIndex(xx44_palette_t *p, int color, uint32_t clut)
   }
 
   if (p->max_used == p->size -1) {
-    printf("video_out: Warning! Out of xx44 palette colors!\n");
+    printf("video_out: Warning! Out of xx44 palette colours!\n");
     return 1;
   }
   p->cluts[p->max_used] = clut;

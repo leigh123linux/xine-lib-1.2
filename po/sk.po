@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib 1.0\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-12-24 12:54+0100\n"
+"POT-Creation-Date: 2007-12-24 18:34+0000\n"
 "PO-Revision-Date: 2004-09-15 13:53+0100\n"
 "Last-Translator: \n"
 "Language-Team: Slovak <ski18n@lists.isternet.sk>\n"
@@ -1253,24 +1253,24 @@ msgstr ""
 
 #: src/dxr3/video_out_dxr3.c:434
 #, fuzzy
-msgid "overlay colorkey value"
+msgid "overlay colour key value"
 msgstr "Dx3: hodnota kľúčovej farby prekrývánia"
 
 #: src/dxr3/video_out_dxr3.c:434
 msgid ""
-"Hexadecimal RGB value of the key color.\n"
+"Hexadecimal RGB value of the key colour.\n"
 "You can try different values, if you experience windows becoming transparent "
 "when using DXR3 overlay mode."
 msgstr ""
 
 #: src/dxr3/video_out_dxr3.c:439
 #, fuzzy
-msgid "overlay colorkey tolerance"
+msgid "overlay colour key tolerance"
 msgstr "rozsah kľúčovej farby prekrývánia"
 
 #: src/dxr3/video_out_dxr3.c:439
 msgid ""
-"A greater value widens the tolerance for the overlay keycolor.\n"
+"A greater value widens the tolerance for the overlay key colour.\n"
 "You can try lower values, if you experience windows becoming transparent "
 "when using DXR3 overlay mode, but parts of the image borders may disappear "
 "when using a too low setting."
@@ -2992,7 +2992,7 @@ msgid ""
 "\n"
 "  Chroma_filter: DVD/MPEG2 use an interlaced image format that has a very "
 "poor vertical chroma resolution. Upsampling the chroma for purposes of "
-"deinterlacing may cause some artifacts to occur (eg. color stripes). Use "
+"deinterlacing may cause some artifacts to occur (eg. colour stripes). Use "
 "this option to blur the chroma vertically after deinterlacing to remove the "
 "artifacts. Warning: cpu intensive.\n"
 "\n"
@@ -3098,12 +3098,12 @@ msgstr ""
 
 #: src/post/goom/xine_goom.c:224
 #, fuzzy
-msgid "colorspace conversion method"
+msgid "colour space conversion method"
 msgstr "Metóda konverzie priestoru farieb použitá Goom-om"
 
 #: src/post/goom/xine_goom.c:225
 msgid ""
-"You can choose the colorspace conversion method used by goom.\n"
+"You can choose the colour space conversion method used by goom.\n"
 "The available selections should be self-explaining."
 msgstr ""
 
@@ -3400,23 +3400,27 @@ msgstr ""
 
 #: src/video_out/video_out_directfb.c:1357
 #, fuzzy
-msgid "enable video color key"
+msgid "enable video colour key"
 msgstr "Dx3: hodnota kľúčovej farby prekrývánia"
 
 #: src/video_out/video_out_directfb.c:1358
 msgid ""
-"Enable using a color key to tell the graphics card where to overlay the "
+"Enable using a colour key to tell the graphics card where to overlay the "
 "video image."
 msgstr ""
 
 #: src/video_out/video_out_directfb.c:1364
 #, fuzzy
-msgid "video color key"
+msgid "video colour key"
 msgstr "Dx3: hodnota kľúčovej farby prekrývánia"
 
 #: src/video_out/video_out_directfb.c:1365
+#: src/video_out/video_out_vidix.c:1156 src/video_out/video_out_vidix.c:1163
+#: src/video_out/video_out_vidix.c:1170 src/video_out/video_out_xcbxv.c:1438
+#: src/video_out/video_out_xv.c:1491 src/video_out/video_out_xvmc.c:1445
+#: src/video_out/video_out_xxmc.c:2529
 msgid ""
-"The color key is used to tell the graphics card where to overlay the video "
+"The colour key is used to tell the graphics card where to overlay the video "
 "image. Try different values, if you experience windows becoming transparent."
 msgstr ""
 
@@ -3517,7 +3521,7 @@ msgstr "výstupný video modul pre win32 použitím directx"
 #: src/video_out/video_out_fb.c:758
 #, c-format
 msgid ""
-"video_out_fb: only packed truecolor/directcolor is supported (%d).\n"
+"video_out_fb: only packed truecolour/directcolour is supported (%d).\n"
 "     Check 'fbset -i' or try 'fbset -depth 16'.\n"
 msgstr ""
 "video_out_fb: sú podporované iba pravé farby truecolor/directcolor (%d).\n"
@@ -3911,15 +3915,6 @@ msgstr "video_out_vidix: používam ovládač: %s od %s\n"
 msgid "video overlay colour key red component"
 msgstr "rozsah kľúčovej farby prekrývánia"
 
-#: src/video_out/video_out_vidix.c:1156 src/video_out/video_out_vidix.c:1163
-#: src/video_out/video_out_vidix.c:1170 src/video_out/video_out_xcbxv.c:1438
-#: src/video_out/video_out_xv.c:1491 src/video_out/video_out_xvmc.c:1445
-#: src/video_out/video_out_xxmc.c:2529
-msgid ""
-"The colour key is used to tell the graphics card where to overlay the video "
-"image. Try different values, if you experience windows becoming transparent."
-msgstr ""
-
 #: src/video_out/video_out_vidix.c:1162
 #, fuzzy
 msgid "video overlay colour key green component"
@@ -4043,7 +4038,7 @@ msgstr ""
 #: src/video_out/video_out_xcbxv.c:1339
 #, fuzzy, c-format
 msgid ""
-"video_out_xcbxv: using Xv port %d from adaptor %s for hardware colorspace "
+"video_out_xcbxv: using Xv port %d from adaptor %s for hardware colour space "
 "conversion and scaling.\n"
 msgstr ""
 "video_out_xv: používam Xv port %ld z adaptéru %s pre hardvérovú konverziu "
@@ -4058,7 +4053,7 @@ msgstr "Donútiť Xv automaticky kresliť svojou kľúčovou farbou"
 #: src/video_out/video_out_xcbxv.c:1447 src/video_out/video_out_xv.c:1500
 #: src/video_out/video_out_xvmc.c:1454 src/video_out/video_out_xxmc.c:2538
 #, fuzzy
-msgid "Make Xv autopaint its colorkey."
+msgid "Make Xv autopaint its colour key."
 msgstr "Donútiť Xv automaticky kresliť svojou kľúčovou farbou"
 
 #: src/video_out/video_out_xcbxv.c:1454 src/video_out/video_out_xv.c:1507
@@ -4244,7 +4239,7 @@ msgstr ""
 #: src/video_out/video_out_xv.c:1382
 #, c-format
 msgid ""
-"video_out_xv: using Xv port %ld from adaptor %s for hardware colorspace "
+"video_out_xv: using Xv port %ld from adaptor %s for hardware colour space "
 "conversion and scaling.\n"
 msgstr ""
 "video_out_xv: používam Xv port %ld z adaptéru %s pre hardvérovú konverziu "
@@ -4278,7 +4273,7 @@ msgstr ""
 #, c-format
 msgid ""
 "video_out_xvmc: using Xv port %ld from adaptor %s\n"
-"                for hardware colorspace conversion and scaling\n"
+"                for hardware colour space conversion and scaling\n"
 msgstr ""
 "video_out_xvmc: používam Xv port %ld z adaptéru %s\n"
 "                pre hardvérovú konverziu farebného priestoru a škálovania\n"
@@ -4355,7 +4350,7 @@ msgstr ""
 #: src/video_out/video_out_xxmc.c:2426
 #, fuzzy, c-format
 msgid ""
-"video_out_xxmc: using Xv port %ld from adaptor %s for hardware colorspace "
+"video_out_xxmc: using Xv port %ld from adaptor %s for hardware colour space "
 "conversion and scaling.\n"
 msgstr ""
 "video_out_xv: používam Xv port %ld z adaptéru %s pre hardvérovú konverziu "
@@ -4394,12 +4389,12 @@ msgid ""
 msgstr ""
 
 #: src/video_out/video_out_xxmc.c:2650
-msgid "Fix buggy NVIDIA XvMC subpicture colors"
+msgid "Fix buggy NVIDIA XvMC subpicture colours"
 msgstr ""
 
 #: src/video_out/video_out_xxmc.c:2651
 msgid ""
-"There's a bug in NVIDIA's XvMC lib that makes red OSD colors\n"
+"There's a bug in NVIDIA's XvMC lib that makes red OSD colours\n"
 "look blue and vice versa. This option provides a workaround.\n"
 msgstr ""
 

@@ -1218,12 +1218,12 @@ msgid ""
 msgstr ""
 
 #: src/dxr3/video_out_dxr3.c:436
-msgid "overlay colorkey value"
+msgid "overlay colour key value"
 msgstr "valoro de kromata ŝlosilo de surmeto"
 
 #: src/dxr3/video_out_dxr3.c:436
 msgid ""
-"Hexadecimal RGB value of the key color.\n"
+"Hexadecimal RGB value of the key colour.\n"
 "You can try different values, if you experience windows becoming transparent "
 "when using DXR3 overlay mode."
 msgstr ""
@@ -1232,12 +1232,12 @@ msgstr ""
 "uzas DXR3-moduson de surmeto."
 
 #: src/dxr3/video_out_dxr3.c:441
-msgid "overlay colorkey tolerance"
+msgid "overlay colour key tolerance"
 msgstr "tolero de kromata ŝlosilo de surmeto"
 
 #: src/dxr3/video_out_dxr3.c:441
 msgid ""
-"A greater value widens the tolerance for the overlay keycolor.\n"
+"A greater value widens the tolerance for the overlay key colour.\n"
 "You can try lower values, if you experience windows becoming transparent "
 "when using DXR3 overlay mode, but parts of the image borders may disappear "
 "when using a too low setting."
@@ -2917,7 +2917,7 @@ msgid ""
 "\n"
 "  Chroma_filter: DVD/MPEG2 use an interlaced image format that has a very "
 "poor vertical chroma resolution. Upsampling the chroma for purposes of "
-"deinterlacing may cause some artifacts to occur (eg. color stripes). Use "
+"deinterlacing may cause some artifacts to occur (eg. colour stripes). Use "
 "this option to blur the chroma vertically after deinterlacing to remove the "
 "artifacts. Warning: cpu intensive.\n"
 "\n"
@@ -2968,12 +2968,12 @@ msgid "The height in pixels of the image to be generated."
 msgstr "Alto en bilderoj de la bildo kiu estos kreita."
 
 #: src/post/goom/xine_goom.c:222
-msgid "colorspace conversion method"
+msgid "colour space conversion method"
 msgstr "metodo de kolor-konvertado"
 
 #: src/post/goom/xine_goom.c:223
 msgid ""
-"You can choose the colorspace conversion method used by goom.\n"
+"You can choose the colour space conversion method used by goom.\n"
 "The available selections should be self-explaining."
 msgstr ""
 "Vi povas elekti metodon de kolor-konvertado kiu estas uzata far goom.\n"
@@ -3188,24 +3188,18 @@ msgid ""
 msgstr ""
 
 #: src/video_out/video_out_directfb.c:1357
-msgid "enable video color key"
+msgid "enable video colour key"
 msgstr "ebligu videan kolorŝlosilon"
 
 #: src/video_out/video_out_directfb.c:1358
 msgid ""
-"Enable using a color key to tell the graphics card where to overlay the "
+"Enable using a colour key to tell the graphics card where to overlay the "
 "video image."
 msgstr ""
 
 #: src/video_out/video_out_directfb.c:1364
-msgid "video color key"
+msgid "video colour key"
 msgstr "videa kolorŝlosilo"
-
-#: src/video_out/video_out_directfb.c:1365
-msgid ""
-"The color key is used to tell the graphics card where to overlay the video "
-"image. Try different values, if you experience windows becoming transparent."
-msgstr ""
 
 #: src/video_out/video_out_directfb.c:1374
 msgid "flicker filtering"
@@ -3301,7 +3295,7 @@ msgstr "videoeliga kromaĵo de xine por win32 uzas directx"
 #: src/video_out/video_out_fb.c:792
 #, c-format
 msgid ""
-"video_out_fb: only packed truecolor/directcolor is supported (%d).\n"
+"video_out_fb: only packed truecolour/directcolour is supported (%d).\n"
 "     Check 'fbset -i' or try 'fbset -depth 16'.\n"
 msgstr ""
 "video_out_fb: estas subtenita nur enpakigita verkoloro/rektkoloro (%d).\n"
@@ -3830,7 +3824,7 @@ msgstr ""
 #: src/video_out/video_out_xcbxv.c:1341
 #, fuzzy, c-format
 msgid ""
-"video_out_xcbxv: using Xv port %d from adaptor %s for hardware colorspace "
+"video_out_xcbxv: using Xv port %d from adaptor %s for hardware colour space "
 "conversion and scaling.\n"
 msgstr ""
 "video_out_xxmc: uzante Xv-pordon %ld el adaptilo %s por konverto de hardvara "
@@ -3843,7 +3837,7 @@ msgstr "memkoloriĝanta kolorŝlosilo"
 
 #: src/video_out/video_out_xcbxv.c:1449 src/video_out/video_out_xv.c:1463
 #: src/video_out/video_out_xvmc.c:1456 src/video_out/video_out_xxmc.c:2445
-msgid "Make Xv autopaint its colorkey."
+msgid "Make Xv autopaint its colour key."
 msgstr "Igu XV-on memkoloriĝanta laŭ kolorŝlosilo"
 
 #: src/video_out/video_out_xcbxv.c:1456 src/video_out/video_out_xv.c:1470
@@ -4029,7 +4023,7 @@ msgstr ""
 #: src/video_out/video_out_xv.c:1345
 #, c-format
 msgid ""
-"video_out_xv: using Xv port %ld from adaptor %s for hardware colorspace "
+"video_out_xv: using Xv port %ld from adaptor %s for hardware colour space "
 "conversion and scaling.\n"
 msgstr ""
 "video_out_xxmc: uzante Xv-pordon %ld el adaptilo %s por konverto de hardvara "
@@ -4063,7 +4057,7 @@ msgstr ""
 #, c-format
 msgid ""
 "video_out_xvmc: using Xv port %ld from adaptor %s\n"
-"                for hardware colorspace conversion and scaling\n"
+"                for hardware colour space conversion and scaling\n"
 msgstr ""
 "video_out_xvmc: uzante Xv-pordon %ld el adaptilo %s\n"
 "                por hardvara konverto de kolorspaco kaj skalado\n"
@@ -4135,7 +4129,7 @@ msgstr ""
 #: src/video_out/video_out_xxmc.c:2333
 #, c-format
 msgid ""
-"video_out_xxmc: using Xv port %ld from adaptor %s for hardware colorspace "
+"video_out_xxmc: using Xv port %ld from adaptor %s for hardware colour space "
 "conversion and scaling.\n"
 msgstr ""
 "video_out_xxmc: uzante Xv-pordon %ld el adaptilo %s por konverto de hardvara "
@@ -4172,12 +4166,12 @@ msgid ""
 msgstr ""
 
 #: src/video_out/video_out_xxmc.c:2557
-msgid "Fix buggy NVIDIA XvMC subpicture colors"
+msgid "Fix buggy NVIDIA XvMC subpicture colours"
 msgstr "Koretku cimajn colorojn de sub-bildoj por NVIDIA-XvMC"
 
 #: src/video_out/video_out_xxmc.c:2558
 msgid ""
-"There's a bug in NVIDIA's XvMC lib that makes red OSD colors\n"
+"There's a bug in NVIDIA's XvMC lib that makes red OSD colours\n"
 "look blue and vice versa. This option provides a workaround.\n"
 msgstr ""
 "Estas cimo en XvMC-biblioteko de NVIDIA kiu en OSD igu ruĝa la bluan "
