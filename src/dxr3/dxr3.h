@@ -25,6 +25,10 @@
 
 #include <xine/xine_internal.h>
 
+#ifndef LOG_VID
+#define LOG_VID 0
+#endif
+
 /* data for the device name config entry */
 #define CONF_KEY  "dxr3.device_number"
 #define CONF_NAME _("DXR3 device number")
@@ -44,7 +48,7 @@ static inline int dxr3_present(xine_stream_t *stream)
   
   if (stream->video_driver && stream->video_driver->node &&
       stream->video_driver->node->plugin_class ) {
-    const video_driver_class_t *const vo_class = (video_driver_class_t *)node->plugin_class;
+    const video_driver_class_t *const vo_class = (video_driver_class_t *)stream->video_driver->node->plugin_class;
     if (vo_class->identifier)
       present = (strcmp(vo_class->identifier, DXR3_VO_ID) == 0);
   }
