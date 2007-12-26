@@ -1140,7 +1140,7 @@ vixSetGrKeys (const vidix_grkey_t * grkey)
     info->use_colorkey = 1;
     info->vidixcolorkey = ((grkey->ckey.red<<16)|(grkey->ckey.green<<8)|grkey->ckey.blue);
 
-    printf("[savage_vid] set colour key 0x%x\n",info->vidixcolourkey);
+    printf("[savage_vid] set colour key 0x%x\n",info->vidixcolorkey);
   }
 	//FIXME: freezes if streams arent enabled
   SavageSetColorKeyOld();
