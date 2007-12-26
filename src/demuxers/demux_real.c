@@ -798,8 +798,17 @@ static int demux_real_parse_references( demux_real_t *this) {
   
   lprintf("received %d bytes [%s]\n", buf_used, buf);
 
-  for(i=0;i<buf_used;i++) {
+  if (!strncmp(buf,"http://",7))
+  {
+    for (i = 0; buf[i] && !isspace(buf[i]); ++i)
+      /**/;
+    buf[i] = 0;
+    lprintf("reference [%s] found\n", buf);
 
+    _x_demux_send_mrl_reference (this->stream, 0, buf, NULL, 0, 0);
+  }
+  else for (i = 0; i < buf_used; ++i)
+  {
     /* "--stop--" is used to have pnm alternative for old real clients
      * new real clients will stop processing the file and thus use
      * rtsp protocol.
@@ -814,8 +823,8 @@ static int demux_real_parse_references( demux_real_t *this) {
     if( !strncmp(&buf[i],"-->",3) )
       comment = 0;
       
-    if( (!strncmp(&buf[i],"pnm://",6) || !strncmp(&buf[i],"rtsp://",7) ||
-         !strncmp(&buf[i],"http://",7)) && !comment ) {
+    if( (!strncmp(&buf[i],"pnm://",6) || !strncmp(&buf[i],"rtsp://",7)) &&
+        !comment ) {
       for(j=i; buf[j] && buf[j] != '"' && !isspace(buf[j]); j++ )
         ;
       buf[j]='\0';
@@ -1524,7 +1533,7 @@ static int real_check_stream_type(uint8_t *buf, int len)
 
   buf[len] = '\0';
   if( strstr(buf,"pnm://") || strstr(buf,"rtsp://") || strstr(buf,"<smil>") ||
-      strstr(buf,"http://") )
+      !strncmp(buf,"http://",7) )
     return 2;
 
   return 0;
