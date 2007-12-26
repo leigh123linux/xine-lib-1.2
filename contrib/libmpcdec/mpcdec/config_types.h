@@ -35,7 +35,7 @@
 #ifndef __MUSEPACK_CONFIG_TYPES_H__
 #define __MUSEPACK_CONFIG_TYPES_H__
 
-#include "os_types.h"
+#include <xine/os_types.h>
 
 typedef unsigned char mpc_bool_t;
 #define TRUE  1
