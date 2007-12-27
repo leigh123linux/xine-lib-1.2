@@ -153,10 +153,15 @@ void xml_parser_free_tree(xml_node_t *current_node) {
 #define STATE_NODE    1
 #define STATE_COMMENT 7
 
-static int xml_parser_get_node (xml_node_t *current_node, char *root_name, int rec) {
-  char tok[TOKEN_SIZE];
-  char property_name[TOKEN_SIZE];
-  char node_name[TOKEN_SIZE];
+static int xml_parser_get_node (xml_node_t *current_node, char *root_name, int rec);
+
+static int _xml_parser_get_node (char ** token_buffer, int * token_buffer_size,
+                                 char ** pname_buffer, int * pname_buffer_size,
+                                 char ** nname_buffer, int * nname_buffer_size,
+                                 xml_node_t *current_node, char *root_name, int rec) {
+  char *tok = *token_buffer;
+  char *property_name = *pname_buffer;
+  char *node_name = *nname_buffer;
   int state = STATE_IDLE;
   int res = 0;
   int parse_res;
@@ -168,9 +173,10 @@ static int xml_parser_get_node (xml_node_t *current_node, char *root_name, int r
 
   if (rec < MAX_RECURSION) {
 
-    memset (tok, 0, TOKEN_SIZE);
+    memset (tok, 0, *token_buffer_size);
 
-    while ((bypass_get_token) || (res = lexer_get_token(tok, TOKEN_SIZE)) != T_ERROR) {
+    while ((bypass_get_token) || (res = lexer_get_token(token_buffer, token_buffer_size)) != T_ERROR) {
+      tok = *token_buffer;
       bypass_get_token = 0;
       lprintf("info: %d - %d : '%s'\n", state, res, tok);
 
@@ -225,6 +231,12 @@ static int xml_parser_get_node (xml_node_t *current_node, char *root_name, int r
 	  if (xml_parser_mode == XML_PARSER_CASE_INSENSITIVE) {
 	    strtoupper(tok);
 	  }
+      /* make sure the buffer for the node name is big enough */
+      if (token_buffer_size > nname_buffer_size) {
+        *nname_buffer_size = *token_buffer_size;
+        *nname_buffer = realloc (*nname_buffer, *nname_buffer_size);
+        node_name = *nname_buffer;
+      }
 	  strcpy(node_name, tok);
 	  state = 2;
 	  lprintf("info: current node name \"%s\"\n", node_name);
@@ -291,6 +303,12 @@ static int xml_parser_get_node (xml_node_t *current_node, char *root_name, int r
 	  if (xml_parser_mode == XML_PARSER_CASE_INSENSITIVE) {
 	    strtoupper(tok);
 	  }
+      /* make sure the buffer for the property name is big enough */
+      if (token_buffer_size > pname_buffer_size) {
+        *pname_buffer_size = *token_buffer_size;
+        *pname_buffer = realloc (*pname_buffer, *pname_buffer_size);
+        property_name = *pname_buffer;
+      }
 	  strcpy(property_name, tok);
 	  state = 5;
 	  lprintf("info: current property name \"%s\"\n", property_name);
@@ -450,6 +468,28 @@ static int xml_parser_get_node (xml_node_t *current_node, char *root_name, int r
     lprintf("error: max recursion\n");
     return -1;
   }
+}
+
+static int xml_parser_get_node (xml_node_t *current_node, char *root_name, int rec)
+{
+  int res = 0;
+  int token_buffer_size = TOKEN_SIZE;
+  int pname_buffer_size = TOKEN_SIZE;
+  int nname_buffer_size = TOKEN_SIZE;
+  char *token_buffer = xine_xmalloc (token_buffer_size);
+  char *pname_buffer = xine_xmalloc (pname_buffer_size);
+  char *nname_buffer = xine_xmalloc (nname_buffer_size);
+
+  res = _xml_parser_get_node(&token_buffer, &token_buffer_size,
+                             &pname_buffer, &pname_buffer_size,
+                             &nname_buffer, &nname_buffer_size,
+                             current_node, root_name, rec);
+
+  free (token_buffer);
+  free (pname_buffer);
+  free (nname_buffer);
+
+  return res;
 }
 
 int xml_parser_build_tree(xml_node_t **root_node) {

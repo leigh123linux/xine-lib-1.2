@@ -123,7 +123,10 @@ void lexer_init(const char * buf, int size) {
   lprintf("buffer length %d\n", size);
 }
 
-int lexer_get_token(char * tok, int tok_size) {
+int lexer_get_token(char ** _tok, int * _tok_size) {
+  char *tok = *_tok;
+  int tok_size = *_tok_size;
+
   int tok_pos = 0;
   int state = 0;
   char c;
@@ -455,7 +458,15 @@ int lexer_get_token(char * tok, int tok_size) {
 
     /* pb */
     if (tok_pos >= tok_size) {
-      lprintf("token buffer is too little\n");
+      *_tok_size *= 2;
+      *_tok = realloc (*_tok, *_tok_size);
+      lprintf("token buffer is too small\n");
+      lprintf("increasing buffer size to %d bytes\n", *_tok_size);
+      if (*_tok) {
+          return lexer_get_token (_tok, _tok_size);
+      } else {
+          return T_ERROR;
+      }
     } else {
       if (lexbuf_pos >= lexbuf_size) {
 				/* Terminate the current token */
