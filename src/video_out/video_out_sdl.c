@@ -360,6 +360,14 @@ static int sdl_get_property (vo_driver_t *this_gen, int property) {
       return this->sc.gui_width;
     case VO_PROP_WINDOW_HEIGHT:
       return this->sc.gui_height;
+    case VO_PROP_OUTPUT_WIDTH:
+      return this->sc.output_width;
+    case VO_PROP_OUTPUT_HEIGHT:
+      return this->sc.output_height;
+    case VO_PROP_OUTPUT_XOFFSET:
+      return this->sc.output_xoffset;
+    case VO_PROP_OUTPUT_YOFFSET:
+      return this->sc.output_yoffset;
     case VO_PROP_ASPECT_RATIO:
     return this->sc.user_ratio;
   }
