@@ -87,7 +87,6 @@ static int open_aiff_file(demux_aiff_t *this) {
   unsigned char preamble[PREAMBLE_SIZE];
   unsigned int chunk_type;
   unsigned int chunk_size;
-  unsigned char buffer[100];
 
   if (_x_demux_read_header(this->input, signature, AIFF_SIGNATURE_SIZE) != AIFF_SIGNATURE_SIZE)
     return 0;
@@ -118,13 +117,15 @@ static int open_aiff_file(demux_aiff_t *this) {
     chunk_type = _X_BE_32(&preamble[0]);
     chunk_size = _X_BE_32(&preamble[4]);
     
-    if (chunk_size > sizeof(buffer) / sizeof(buffer[0])) {
-      /* the chunk is too large to fit in the buffer -> this cannot be an aiff chunk */
-      this->status = DEMUX_FINISHED;
-      return 0;
-    }
-
     if (chunk_type == COMM_TAG) {
+      unsigned char buffer[100];
+
+      if (chunk_size > sizeof(buffer) / sizeof(buffer[0])) {
+	/* the chunk is too large to fit in the buffer -> this cannot be an aiff chunk */
+	this->status = DEMUX_FINISHED;
+	return 0;
+      }
+
       if (this->input->read(this->input, buffer, chunk_size) !=
         chunk_size) {
         this->status = DEMUX_FINISHED;
