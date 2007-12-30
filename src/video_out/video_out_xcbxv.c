@@ -1169,7 +1169,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   else
     xprintf(class->xine, XINE_VERBOSITY_LOG,
 	    _("%s: using Xv port %d from adaptor %s for hardware "
-	      "colorspace conversion and scaling.\n"), LOG_MODULE, xv_port,
+	      "colour space conversion and scaling.\n"), LOG_MODULE, xv_port,
             xcb_xv_adaptor_info_name(adaptor_it.data));
   
   this->xv_port           = xv_port;
@@ -1273,7 +1273,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 			       adaptor_it.data->base_id,
 			       "video.device.xv_autopaint_colorkey",
 			       _("autopaint colour key"),
-			       _("Make Xv autopaint its colorkey."));
+			       _("Make Xv autopaint its colour key."));
 
 	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_FILTER")) {
 	  int xv_filter;

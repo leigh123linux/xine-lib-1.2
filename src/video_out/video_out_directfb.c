@@ -155,7 +155,7 @@ typedef struct {
 #define DEFAULT_COLORKEY  0x202040
 
 #define DIRECTFB_OPTIONS  "no-banner,"\
-                          "bg-color=00000000,"\
+                          "bg-colour=00000000,"\
                           "no-vt-switch,"\
                           "no-vt-switching,"\
                           "no-sighandler,"\
@@ -504,7 +504,7 @@ static void directfb_subpicture_paint (directfb_driver_t *this,
             colors[index].a = alpha | (alpha << 4);
           }
             
-          lprintf ("color change to %02x%02x%02x%02x.\n",
+          lprintf ("colour change to %02x%02x%02x%02x.\n",
                    colors[index].a, colors[index].r,
                    colors[index].g, colors[index].b);
           this->spic_surface->SetColor (this->spic_surface,
@@ -1008,7 +1008,7 @@ static int directfb_set_property (vo_driver_t *this_gen,
         if (value > 0xffffff)
           value = 0xffffff;
         xprintf (this->xine, XINE_VERBOSITY_DEBUG,
-                 "video_out_directfb: setting colorkey to 0x%06x.\n", value);
+                 "video_out_directfb: setting colour key to 0x%06x.\n", value);
         this->colorkey = value;
         this->layer->SetDstColorKey (this->layer, (value & 0xff0000) >> 16,
                                                   (value & 0x00ff00) >>  8,
@@ -1266,7 +1266,7 @@ static void update_config_cb (void *data, xine_cfg_entry_t *entry) {
     if (config.options != this->config.options) {
       if (this->layer->SetConfiguration (this->layer, &config) != DFB_OK) {
           xprintf (this->xine, XINE_VERBOSITY_LOG,
-                   "video_out_directfb: failed to set colorkeying to %d!\n", 
+                   "video_out_directfb: failed to set colour keying to %d!\n", 
                    entry->num_value);
           return;
       }
@@ -1354,15 +1354,15 @@ static void init_config (directfb_driver_t *this) {
   if (this->caps & DLCAPS_DST_COLORKEY) {
     this->colorkeying = config->register_bool  (config,
           "video.device.directfb_colorkeying", this->colorkeying,
-          _("enable video color key"),
-          _("Enable using a color key to tell the graphics card "
+          _("enable video colour key"),
+          _("Enable using a colour key to tell the graphics card "
             "where to overlay the video image."),
           20, update_config_cb, (void *)this);
     
     this->colorkey    = config->register_range (config,
           "video.device.directfb_colorkey", this->colorkey, 0, 0xffffff,
-          _("video color key"),
-          _("The color key is used to tell the graphics card "
+          _("video colour key"),
+          _("The colour key is used to tell the graphics card "
             "where to overlay the video image. Try different values, "
             "if you experience windows becoming transparent."),
           10, update_config_cb, (void  *)this);

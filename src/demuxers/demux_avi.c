@@ -949,7 +949,7 @@ static avi_t *AVI_init(demux_avi_t *this) {
 
         lprintf ("palette_count: %d\n", AVI->palette_count);
         if (AVI->palette_count > 256) {
-          lprintf ("number of colors exceeded 256 (%d)", AVI->palette_count);
+          lprintf ("number of colours exceeded 256 (%d)", AVI->palette_count);
           AVI->palette_count = 256;
         }
         if ((strf_size - sizeof(xine_bmiheader)) >= (AVI->palette_count * 4)) {

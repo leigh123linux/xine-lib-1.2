@@ -779,7 +779,7 @@ static int vobsub_parse_custom_colors(matroska_track_t *t, const char *start) {
     use_custom_colors = 1;
   else if (!strncasecmp(start, "OFF", 3) || (*start == '0'))
     use_custom_colors = 0;
-  lprintf("VobSub custom colors: %s\n", use_custom_colors ? "ON" : "OFF");
+  lprintf("VobSub custom colours: %s\n", use_custom_colors ? "ON" : "OFF");
   if ((start = strstr(start, "colors:")) != NULL) {
     start += 7;
     while (isspace(*start))
@@ -793,7 +793,7 @@ static int vobsub_parse_custom_colors(matroska_track_t *t, const char *start) {
     }
     if (i == 4) {
       t->sub_track->custom_colors = 4;
-      lprintf("VobSub colors: %06x,%06x,%06x,%06x\n", t->sub_track->colors[0],
+      lprintf("VobSub colours: %06x,%06x,%06x,%06x\n", t->sub_track->colors[0],
               t->sub_track->colors[1], t->sub_track->colors[2],
               t->sub_track->colors[3]);
     }
@@ -853,7 +853,7 @@ static void init_codec_vobsub(demux_matroska_t *this,
         things_found |= vobsub_parse_size(track, start);
       else if (!strncasecmp(start, "palette:", 8))
         things_found |= vobsub_parse_palette(track, start);
-      else if (!strncasecmp(start, "custom colors:", 14))
+      else if (!strncasecmp(start, "custom colours:", 14))
         things_found |= vobsub_parse_custom_colors(track, start);
       else if (!strncasecmp(start, "forced subs:", 12))
         things_found |= vobsub_parse_forced_subs(track, start);

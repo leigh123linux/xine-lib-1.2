@@ -1009,7 +1009,7 @@ int spudec_copy_nav_to_overlay(xine_t *xine, pci_t* nav_pci, uint32_t* clut,
 #endif
     for (i = 0;i < 4; i++) {
 #ifdef LOG_BUTTON
-      printf("libspudec:btn_coln = 0, hili_color = color\n");
+      printf("libspudec:btn_coln = 0, hili_color = colour\n");
 #endif
       overlay->hili_color[i] = overlay->color[i];
       overlay->hili_trans[i] = overlay->trans[i];

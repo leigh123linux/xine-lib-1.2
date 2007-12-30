@@ -1421,7 +1421,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 				 class->adaptor_info[class->adaptor_num].base_id, "XV_AUTOPAINT_COLORKEY",
 				 "video.device.xv_autopaint_colorkey",
 				 _("autopaint colour key"),
-				 _("Make Xv autopaint its colorkey."));
+				 _("Make Xv autopaint its colour key."));
 
 	} else if(!strcmp(attr[k].name, "XV_DOUBLE_BUFFER")) {
 	  int xvmc_double_buffer;
@@ -1645,7 +1645,7 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   else {
     xprintf (xine, XINE_VERBOSITY_LOG, 
 	     _("video_out_xvmc: using Xv port %ld from adaptor %s\n"
-	       "                for hardware colorspace conversion and scaling\n"),
+	       "                for hardware colour space conversion and scaling\n"),
 	     xv_port, adaptor_info[adaptor_num].name);
     
     if(IDCTaccel&XINE_VO_IDCT_ACCEL)

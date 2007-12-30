@@ -743,7 +743,7 @@ static int get_fb_fix_screeninfo(int fd, struct fb_fix_screeninfo *fix, xine_t *
      fix->type != FB_TYPE_PACKED_PIXELS)
   {
     xprintf(xine, XINE_VERBOSITY_LOG,
-	    _("video_out_fb: only packed truecolor/directcolor is supported (%d).\n"
+	    _("video_out_fb: only packed truecolour/directcolour is supported (%d).\n"
 	      "     Check 'fbset -i' or try 'fbset -depth 16'.\n"), fix->visual);
     return 0;
   }

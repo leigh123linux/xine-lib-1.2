@@ -3220,7 +3220,7 @@ yuv2rgb_factory_t* yuv2rgb_factory_init (int mode, int swapped,
 
 #ifdef LOG
     if (this->yuv2rgb_fun != NULL)
-      printf ("yuv2rgb: using MMXEXT for colorspace transform\n");
+      printf ("yuv2rgb: using MMXEXT for colour space transform\n");
 #endif
   }
 
@@ -3230,7 +3230,7 @@ yuv2rgb_factory_t* yuv2rgb_factory_init (int mode, int swapped,
 
 #ifdef LOG
     if (this->yuv2rgb_fun != NULL)
-      printf ("yuv2rgb: using MMX for colorspace transform\n");
+      printf ("yuv2rgb: using MMX for colour space transform\n");
 #endif
   }
 #endif
@@ -3241,12 +3241,12 @@ yuv2rgb_factory_t* yuv2rgb_factory_init (int mode, int swapped,
 
 #ifdef LOG
     if (this->yuv2rgb_fun != NULL)
-      printf ("yuv2rgb: using medialib for colorspace transform\n");
+      printf ("yuv2rgb: using medialib for colour space transform\n");
 #endif
   }
 #endif
   if (this->yuv2rgb_fun == NULL) {
-    lprintf ("no accelerated colorspace conversion found\n");
+    lprintf ("no accelerated colour space conversion found\n");
 
     yuv2rgb_c_init (this);
   }

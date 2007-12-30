@@ -514,7 +514,7 @@ static int asf_read_header (demux_asf_t *this) {
 	
 	lprintf ("palette_count: %d\n", demux_stream->palette_count);
 	if (demux_stream->palette_count > 256) {
-	  lprintf ("number of colors exceeded 256 (%d)", demux_stream->palette_count);
+	  lprintf ("number of colours exceeded 256 (%d)", demux_stream->palette_count);
 	  demux_stream->palette_count = 256;
 	}
 	if ((asf_stream->private_data_length - sizeof(xine_bmiheader) - 11) >= (demux_stream->palette_count * 4)) {

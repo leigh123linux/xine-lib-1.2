@@ -913,7 +913,7 @@ static int open_video_capture_device(v4l_input_plugin_t *this)
       if (ret < 0) {
 	close (this->video_fd);
 	this->video_fd = -1;
-	lprintf("Grab: no colorspace format found\n");
+	lprintf("Grab: no colour space format found\n");
 	return 0;
       }
       else

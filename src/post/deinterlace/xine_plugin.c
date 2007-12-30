@@ -234,7 +234,7 @@ static char * get_static_help (void) {
            "\n"
            "  Chroma_filter: DVD/MPEG2 use an interlaced image format that has "
            "a very poor vertical chroma resolution. Upsampling the chroma for purposes "
-           "of deinterlacing may cause some artifacts to occur (eg. color stripes). Use "
+           "of deinterlacing may cause some artifacts to occur (eg. colour stripes). Use "
            "this option to blur the chroma vertically after deinterlacing to remove "
            "the artifacts. Warning: cpu intensive.\n"
            "\n"
