@@ -4,6 +4,9 @@ Priority: optional
 Maintainer: xine Developers <xine-devel@lists.sourceforge.net>
 Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
 	automake1.9, autoconf, libtool,
+	libavcodec-dev (>= 0.cvs20070307-3) | libavcodeccvs-dev,
+	libavformat-dev (>= 0.cvs20070307-3) | libavformatcvs-dev,
+	libpostproc-dev (>= 0.cvs20070307-3) | libpostproccvs-dev,
 	libxcb-xinerama0-dev | libxv-dev (<< 1:1.0.3), libxcb-xv0-dev | libxv-dev (<< 1:1.0.3),
 	libxcb-xvmc0-dev | libxv-dev (<< 1:1.0.3), libxcb-shm0-dev | libxv-dev (<< 1:1.0.3),
 	libxcb-shape0-dev | libxv-dev (<< 1:1.0.3),
@@ -65,9 +68,9 @@ Architecture: any
 Depends: ${shlibs:Depends}
 Recommends: ${shlibs:Recommends}, libxine2-doc | libxine-doc
 Suggests: ${shlibs:Suggests}, libartsc0
-Conflicts: libxine2-console, libxine2-ffmpeg, libxine2-gnome, libxine2-misc-plugins, libxine2-plugins, libxine2-x
-Replaces: libxine2-console, libxine2-ffmpeg, libxine2-gnome, libxine2-misc-plugins, libxine2-plugins, libxine2-x
-Provides: libxine2-console, libxine2-ffmpeg, libxine2-gnome, libxine2-misc-plugins, libxine2-plugins, libxine2-x
+Conflicts: libxine2-all-plugins, libxine2-bin, libxine2-console, libxine2-ffmpeg, libxine2-gnome, libxine2-misc-plugins, libxine2-plugins, libxine2-x
+Replaces: libxine2-all-plugins, libxine2-bin, libxine2-console, libxine2-ffmpeg, libxine2-gnome, libxine2-misc-plugins, libxine2-plugins, libxine2-x
+Provides: libxine2-all-plugins, libxine2-bin, libxine2-console, libxine2-ffmpeg, libxine2-gnome, libxine2-misc-plugins, libxine2-plugins, libxine2-x
 Description: the xine video/media player library, binary files
  This is the xine media player library (libxine). 
  .

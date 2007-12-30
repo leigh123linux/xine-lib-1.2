@@ -1630,7 +1630,7 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
     this->cddb.fd = _cdda_cddb_socket_open(this);
     if(this->cddb.fd >= 0) {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-	      _("input_cdda: successfuly connected to cddb server '%s:%d'.\n"),
+	      _("input_cdda: successfully connected to cddb server '%s:%d'.\n"),
 	      this->cddb.server, this->cddb.port);
     }
     else {

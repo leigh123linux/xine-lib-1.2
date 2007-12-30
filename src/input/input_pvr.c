@@ -979,69 +979,74 @@ static void pvr_event_handler (pvr_input_plugin_t *this) {
       /* make sure we are not paused */
       _x_set_speed(this->stream, XINE_SPEED_NORMAL);
 
-      if( v4l2_data->session_id != this->session ) {
-        /* if session changes -> closes the old one */
-        pthread_mutex_lock(&this->lock);
-        pvr_finish_recording(this);
-        time(&this->start_time);
-        this->show_time = this->start_time;
-        this->session = v4l2_data->session_id;
-        this->new_session = 1;
-        this->pvr_play_paused = 0;
-        this->scr_tunning = 0;
-        pvrscr_speed_tunning(this->scr, 1.0 );
-        pvr_break_rec_page(this);
-        pthread_mutex_unlock(&this->lock);
-        _x_demux_flush_engine (this->stream);
-      } else {
-        /* no session change, break the page and store a new show_time */
-        pthread_mutex_lock(&this->lock);
-        pvr_break_rec_page(this);
-        this->show_page = this->rec_page;
-        pthread_mutex_unlock(&this->lock);
-        time(&this->show_time);
+      if ( v4l2_data->session_id != -1) {
+        if( v4l2_data->session_id != this->session ) {
+          /* if session changes -> closes the old one */
+          pthread_mutex_lock(&this->lock);
+          pvr_finish_recording(this);
+          time(&this->start_time);
+          this->show_time = this->start_time;
+          this->session = v4l2_data->session_id;
+          this->new_session = 1;
+          this->pvr_play_paused = 0;
+          this->scr_tunning = 0;
+          pvrscr_speed_tunning(this->scr, 1.0 );
+          pvr_break_rec_page(this);
+          pthread_mutex_unlock(&this->lock);
+          _x_demux_flush_engine (this->stream);
+        } else {
+          /* no session change, break the page and store a new show_time */
+          pthread_mutex_lock(&this->lock);
+          pvr_break_rec_page(this);
+          this->show_page = this->rec_page;
+          pthread_mutex_unlock(&this->lock);
+          time(&this->show_time);
+        }
       }
-      
-      if( (v4l2_data->input != -1 && v4l2_data->input != this->input) ||
-          (v4l2_data->channel != -1 && v4l2_data->channel != this->channel) ||
-          (v4l2_data->frequency != -1 && v4l2_data->frequency != this->frequency) ) {
-        struct v4l2_frequency vf;
 
+      pthread_mutex_lock(&this->dev_lock);
+
+      /* change input */
+      if (v4l2_data->input != -1 && v4l2_data->input != this->input) {
+        lprintf("change input to:%d\n", v4l2_data->input);
         this->input = v4l2_data->input;
-        this->channel = v4l2_data->channel;
-        this->frequency = v4l2_data->frequency;
 
-        lprintf("switching to input:%d chan:%d freq:%.2f\n", 
-		v4l2_data->input, 
-		v4l2_data->channel,
-		(float)v4l2_data->frequency * 62.5);
-  
-        pthread_mutex_lock(&this->dev_lock);
-        if( ioctl(this->dev_fd, VIDIOC_S_INPUT, &this->input) )
-          xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
-		  "input_pvr: error setting v4l2 input\n");
-          
-        vf.frequency = this->frequency;
-        vf.tuner = 0;
-        if( ioctl(this->dev_fd, VIDIOC_S_FREQUENCY, &vf) )
-          xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
-		  "input_pvr: error setting v4l2 frequency\n");
-
-        /* workaround an ivtv bug where stream gets bad mpeg2 artifacts
-         * after changing inputs. reopening the device fixes it.
-         */
+        /* as of ivtv 0.10.6: must close and reopen to set input */
         close(this->dev_fd);
         this->dev_fd = open (this->class->devname, O_RDWR);
         if (this->dev_fd == -1) {
-          xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
-		  "input_pvr: error opening device %s\n", this->class->devname );
-          return;
+          xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+                  "input_pvr: error opening device %s\n", this->class->devname );
+        } else {
+          if( ioctl(this->dev_fd, VIDIOC_S_INPUT, &this->input) )
+            xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+                    "input_pvr: error setting v4l2 input\n");
         }
-        pthread_mutex_unlock(&this->dev_lock);
-        
-        /* FIXME: also flush the device */
-        /* _x_demux_flush_engine(this->stream); */
       }
+
+      /* change channel */          
+      if (v4l2_data->channel != -1 && v4l2_data->channel != this->channel) {
+        lprintf("change channel to:%d\n", v4l2_data->channel);
+        this->channel = v4l2_data->channel;
+      }
+
+      /* change frequency */
+      if (v4l2_data->frequency != -1 && v4l2_data->frequency != this->frequency) {
+        lprintf("changing frequency to:%.2f\n", (float)v4l2_data->frequency * 62.5);
+        struct v4l2_frequency vf;
+        this->frequency = v4l2_data->frequency;
+        vf.frequency = this->frequency;
+        vf.tuner = 0;
+        if( ioctl(this->dev_fd, VIDIOC_S_FREQUENCY, &vf) )
+          xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+                  "input_pvr: error setting v4l2 frequency\n");
+      }
+
+      pthread_mutex_unlock(&this->dev_lock);
+        
+      /* FIXME: also flush the device */
+      /* _x_demux_flush_engine(this->stream); */
+
       break;
     
     

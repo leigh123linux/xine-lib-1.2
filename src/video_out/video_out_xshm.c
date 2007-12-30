@@ -819,6 +819,14 @@ static int xshm_get_property (vo_driver_t *this_gen, int property) {
     return this->sc.gui_width;
   case VO_PROP_WINDOW_HEIGHT:
     return this->sc.gui_height;
+  case VO_PROP_OUTPUT_WIDTH:
+    return this->cur_frame->sc.output_width;
+  case VO_PROP_OUTPUT_HEIGHT:
+    return this->cur_frame->sc.output_height;
+  case VO_PROP_OUTPUT_XOFFSET:
+    return this->cur_frame->sc.output_xoffset;
+  case VO_PROP_OUTPUT_YOFFSET:
+    return this->cur_frame->sc.output_yoffset;
   default:
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
 	    LOG_MODULE ": tried to get unsupported property %d\n", property);

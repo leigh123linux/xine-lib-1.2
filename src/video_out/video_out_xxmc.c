@@ -1796,6 +1796,18 @@ static int xxmc_get_property (vo_driver_t *this_gen, int property) {
   case VO_PROP_WINDOW_HEIGHT:
     this->props[property].value = this->sc.gui_height;
     break;
+  case VO_PROP_OUTPUT_WIDTH:
+    this->props[property].value = this->sc.output_width;
+    break;
+  case VO_PROP_OUTPUT_HEIGHT:
+    this->props[property].value = this->sc.output_height;
+    break;
+  case VO_PROP_OUTPUT_XOFFSET:
+    this->props[property].value = this->sc.output_xoffset;
+    break;
+  case VO_PROP_OUTPUT_YOFFSET:
+    this->props[property].value = this->sc.output_yoffset;
+    break;
   }
 
   lprintf("%s: property #%d = %d\n", LOG_MODULE, property, this->props[property].value);

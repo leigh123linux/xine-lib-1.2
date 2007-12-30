@@ -64,7 +64,7 @@ IFSPoint;
 #define ifs_opts xlockmore_opts
 
 #define DEFAULTS "*delay: 20000 \n" \
-"*ncolors: 100 \n"
+"*ncolours: 100 \n"
 
 #define SMOOTH_COLORS
 

@@ -219,11 +219,14 @@ static xml_node_t *xml_parser_append_text (xml_node_t *node, xml_node_t *subnode
 
 #define Q_STATE(CURRENT,NEW) (STATE_##NEW + state - STATE_##CURRENT)
 
-static int xml_parser_get_node_internal (xml_node_t *current_node, char *root_names[], int rec, int flags)
+static int xml_parser_get_node_internal (char ** token_buffer, int * token_buffer_size,
+                                 char ** pname_buffer, int * pname_buffer_size,
+                                 char ** nname_buffer, int * nname_buffer_size,
+                                 xml_node_t *current_node, char *root_names[], int rec, int flags)
 {
-  char tok[TOKEN_SIZE];
-  char property_name[TOKEN_SIZE];
-  char node_name[TOKEN_SIZE];
+  char *tok = *token_buffer;
+  char *property_name = *pname_buffer;
+  char *node_name = *nname_buffer;
   parser_state_t state = STATE_IDLE;
   int res = 0;
   int parse_res;
@@ -236,9 +239,10 @@ static int xml_parser_get_node_internal (xml_node_t *current_node, char *root_na
 
   if (rec < MAX_RECURSION) {
 
-    memset (tok, 0, TOKEN_SIZE);
+    memset (tok, 0, *token_buffer_size);
 
-    while ((bypass_get_token) || (res = lexer_get_token(tok, TOKEN_SIZE)) != T_ERROR) {
+    while ((bypass_get_token) || (res = lexer_get_token(token_buffer, token_buffer_size)) != T_ERROR) {
+      tok = *token_buffer;
       bypass_get_token = 0;
       lprintf("info: %d - %d : '%s'\n", state, res, tok);
 
@@ -298,10 +302,15 @@ static int xml_parser_get_node_internal (xml_node_t *current_node, char *root_na
 	    strtoupper(tok);
 	  }
 	  if (state == STATE_Q_NODE) {
-	    snprintf (node_name, TOKEN_SIZE, "?%s", tok);
+	    asprintf (&node_name, "?%s", tok);
+	    free (*nname_buffer);
+	    *nname_buffer = node_name;
+	    *nname_buffer_size = strlen (node_name) + 1;
 	    state = STATE_Q_ATTRIBUTE;
 	  } else {
-	    strcpy(node_name, tok);
+	    free (*nname_buffer);
+	    *nname_buffer = node_name = strdup (tok);
+	    *nname_buffer_size = strlen (node_name) + 1;
 	    state = STATE_ATTRIBUTE;
 	  }
 	  lprintf("info: current node name \"%s\"\n", node_name);
@@ -329,8 +338,12 @@ static int xml_parser_get_node_internal (xml_node_t *current_node, char *root_na
 	  /* set node propertys */
 	  subtree->props = properties;
 	  lprintf("info: rec %d new subtree %s\n", rec, node_name);
-	  root_names[rec + 1] = node_name;
-	  parse_res = xml_parser_get_node_internal(subtree, root_names, rec + 1, flags);
+	  root_names[rec + 1] = strdup (node_name);
+	  parse_res = xml_parser_get_node_internal (token_buffer, token_buffer_size,
+						    pname_buffer, pname_buffer_size,
+						    nname_buffer, nname_buffer_size,
+						    subtree, root_names, rec + 1, flags);
+	  free (root_names[rec + 1]);
 	  if (parse_res == -1 || parse_res > 0) {
 	    return parse_res;
 	  }
@@ -375,6 +388,12 @@ static int xml_parser_get_node_internal (xml_node_t *current_node, char *root_na
 	  new_prop:
 	  if (xml_parser_mode == XML_PARSER_CASE_INSENSITIVE) {
 	    strtoupper(tok);
+	  }
+	  /* make sure the buffer for the property name is big enough */
+	  if (*token_buffer_size > *pname_buffer_size) {
+	    *pname_buffer_size = *token_buffer_size;
+	    *pname_buffer = realloc (*pname_buffer, *pname_buffer_size);
+	    property_name = *pname_buffer;
 	  }
 	  strcpy(property_name, tok);
 	  state = Q_STATE(ATTRIBUTE, ATTRIBUTE_EQUALS);
@@ -622,9 +641,25 @@ static int xml_parser_get_node_internal (xml_node_t *current_node, char *root_na
 
 static int xml_parser_get_node (xml_node_t *current_node, int flags)
 {
+  int res = 0;
+  int token_buffer_size = TOKEN_SIZE;
+  int pname_buffer_size = TOKEN_SIZE;
+  int nname_buffer_size = TOKEN_SIZE;
+  char *token_buffer = xine_xmalloc (token_buffer_size);
+  char *pname_buffer = xine_xmalloc (pname_buffer_size);
+  char *nname_buffer = xine_xmalloc (nname_buffer_size);
   char *root_names[MAX_RECURSION + 1];
   root_names[0] = "";
-  return xml_parser_get_node_internal (current_node, root_names, 0, flags);
+  res = xml_parser_get_node_internal (&token_buffer, &token_buffer_size,
+                             &pname_buffer, &pname_buffer_size,
+                             &nname_buffer, &nname_buffer_size,
+                             current_node, root_names, 0, flags);
+
+  free (token_buffer);
+  free (pname_buffer);
+  free (nname_buffer);
+
+  return res;
 }
 
 int xml_parser_build_tree_with_options(xml_node_t **root_node, int flags) {
