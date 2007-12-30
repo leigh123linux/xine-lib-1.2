@@ -231,12 +231,12 @@ static int _xml_parser_get_node (char ** token_buffer, int * token_buffer_size,
 	  if (xml_parser_mode == XML_PARSER_CASE_INSENSITIVE) {
 	    strtoupper(tok);
 	  }
-      /* make sure the buffer for the node name is big enough */
-      if (token_buffer_size > nname_buffer_size) {
-        *nname_buffer_size = *token_buffer_size;
-        *nname_buffer = realloc (*nname_buffer, *nname_buffer_size);
-        node_name = *nname_buffer;
-      }
+	  /* make sure the buffer for the node name is big enough */
+	  if (*token_buffer_size > *nname_buffer_size) {
+	    *nname_buffer_size = *token_buffer_size;
+	    *nname_buffer = realloc (*nname_buffer, *nname_buffer_size);
+	    node_name = *nname_buffer;
+	  }
 	  strcpy(node_name, tok);
 	  state = 2;
 	  lprintf("info: current node name \"%s\"\n", node_name);
@@ -303,12 +303,12 @@ static int _xml_parser_get_node (char ** token_buffer, int * token_buffer_size,
 	  if (xml_parser_mode == XML_PARSER_CASE_INSENSITIVE) {
 	    strtoupper(tok);
 	  }
-      /* make sure the buffer for the property name is big enough */
-      if (token_buffer_size > pname_buffer_size) {
-        *pname_buffer_size = *token_buffer_size;
-        *pname_buffer = realloc (*pname_buffer, *pname_buffer_size);
-        property_name = *pname_buffer;
-      }
+	  /* make sure the buffer for the property name is big enough */
+	  if (*token_buffer_size > *pname_buffer_size) {
+	    *pname_buffer_size = *token_buffer_size;
+	    *pname_buffer = realloc (*pname_buffer, *pname_buffer_size);
+	    property_name = *pname_buffer;
+	  }
 	  strcpy(property_name, tok);
 	  state = 5;
 	  lprintf("info: current property name \"%s\"\n", property_name);
