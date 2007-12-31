@@ -63,7 +63,7 @@ inline static int vdr_is_vdr_stream(xine_stream_t *stream)
   }
 
   if (stream->input_plugin->input_class->identifier &&
-      strcmp(stream->input_plugin->input_class->identifier, "VDR"))
+      0 == strcmp(stream->input_plugin->input_class->identifier, "VDR"))
     return 1;
 
   return 0;
