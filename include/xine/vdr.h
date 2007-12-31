@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
 
-#ifndef __INPUT_VDR_H
-#define __INPUT_VDR_H
+#ifndef __VDR_H
+#define __VDR_H
 
 
 #define XINE_INPUT_VDR_VERSION 712
@@ -612,5 +612,5 @@ event_union_t;
 
 
 
-#endif /* __INPUT_VDR_H */
+#endif /* __VDR_H */
 

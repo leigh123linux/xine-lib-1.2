@@ -30,7 +30,7 @@
 
 #include <xine/xine_internal.h>
 #include <xine/post.h>
-#include "post_vdr.h"
+#include "combined_vdr.h"
 
 
 

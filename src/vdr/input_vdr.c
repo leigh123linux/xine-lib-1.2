@@ -45,8 +45,8 @@
 #include <xine/xineutils.h>
 #include <xine/input_plugin.h>
 
-#include <xine/input_vdr.h>
-#include "post_vdr.h"
+#include <xine/vdr.h>
+#include "combined_vdr.h"
 
 
 
@@ -2042,7 +2042,7 @@ static char **vdr_class_get_autoplay_list(input_class_t *this_gen,
   return class->mrls;
 }
 
-static void *init_class(xine_t *xine, void *data)
+void *vdr_input_init_plugin(xine_t *xine, void *data)
 {
   vdr_input_class_t *this;
   
@@ -2065,15 +2065,3 @@ static void *init_class(xine_t *xine, void *data)
 
   return this;
 }
-
-/*
- * exported plugin catalog entry
- */
-
-const plugin_info_t xine_plugin_info[] EXPORTED =
-{
-  /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_INPUT, 18, "VDR", XINE_VERSION_CODE, NULL, init_class },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
-};
-

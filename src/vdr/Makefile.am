@@ -4,12 +4,8 @@ AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
 if ENABLE_DVB
-xineplug_LTLIBRARIES = xineplug_inp_vdr.la
-xinepost_LTLIBRARIES = xineplug_post_vdr.la
+xineplug_LTLIBRARIES = xineplug_vdr.la
 endif
 
-xineplug_inp_vdr_la_SOURCES = input_vdr.c
-xineplug_inp_vdr_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS)
-
-xineplug_post_vdr_la_SOURCES = post_vdr.c post_vdr_video.c post_vdr_audio.c post_vdr.h
-xineplug_post_vdr_la_LIBADD = $(XINE_LIB)
+xineplug_vdr_la_SOURCES = combined_vdr.c combined_vdr.h input_vdr.c post_vdr_video.c post_vdr_audio.c
+xineplug_vdr_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS)

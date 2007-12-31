@@ -24,19 +24,21 @@
 
 #include <xine/xine_internal.h>
 #include <xine/post.h>
-#include "post_vdr.h"
+#include "combined_vdr.h"
 
 
 
 static const post_info_t vdr_video_special_info = { XINE_POST_TYPE_VIDEO_FILTER };
 static const post_info_t vdr_audio_special_info = { XINE_POST_TYPE_AUDIO_FILTER };
 
+/* exported plugin catalog entry */
 const plugin_info_t xine_plugin_info[] EXPORTED =
 {
-  /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_POST, 9, "vdr"      , XINE_VERSION_CODE, &vdr_video_special_info, &vdr_video_init_plugin },
-  { PLUGIN_POST, 9, "vdr_video", XINE_VERSION_CODE, &vdr_video_special_info, &vdr_video_init_plugin },
-  { PLUGIN_POST, 9, "vdr_audio", XINE_VERSION_CODE, &vdr_audio_special_info, &vdr_audio_init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  /* type       , API, "name"     , version          , special_info           , init_function */  
+  { PLUGIN_INPUT,  18, "VDR"      , XINE_VERSION_CODE, NULL                   , &vdr_input_init_plugin },
+  { PLUGIN_POST ,   9, "vdr"      , XINE_VERSION_CODE, &vdr_video_special_info, &vdr_video_init_plugin },
+  { PLUGIN_POST ,   9, "vdr_video", XINE_VERSION_CODE, &vdr_video_special_info, &vdr_video_init_plugin },
+  { PLUGIN_POST ,   9, "vdr_audio", XINE_VERSION_CODE, &vdr_audio_special_info, &vdr_audio_init_plugin },
+  { PLUGIN_NONE ,   0, ""         , 0                , NULL                   , NULL }
 };
 
