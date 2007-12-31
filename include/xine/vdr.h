@@ -22,7 +22,7 @@
 #define __VDR_H
 
 
-#define XINE_VDR_VERSION 712
+#define XINE_VDR_VERSION 801
 
 
 enum funcs
