@@ -177,8 +177,8 @@ typedef struct picture_s {
     int progressive_sequence;
     int repeat_first_field;
     int progressive_frame;
-    uint32_t frame_centre_horizontal_offset;
-    uint32_t frame_centre_vertical_offset;
+    int32_t frame_centre_horizontal_offset;
+    int32_t frame_centre_vertical_offset;
     uint32_t video_format;
     uint32_t colour_description;
     uint32_t colour_primatives;

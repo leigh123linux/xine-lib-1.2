@@ -101,6 +101,14 @@ static uint32_t get_bits(uint8_t *buffer, uint32_t count, uint32_t *bit_position
   return result;
 }
 
+static int32_t get_bits_signed(uint8_t *buffer, uint32_t count, uint32_t *bit_position) {
+  uint32_t value = get_bits(buffer, count, bit_position);
+  uint32_t sign_mask = (uint32_t)(-1 << (count - 1));
+  if (value & sign_mask)
+    value |= sign_mask; /* sign-extend value */
+  return (int32_t)value;
+}
+
 void mpeg2_header_state_init (picture_t * picture)
 {
     picture->scan = mpeg2_scan_norm;
@@ -291,13 +299,13 @@ static int picture_display_extension (picture_t * picture, uint8_t * buffer) {
   
   bit_position = 0; 
   padding = get_bits(buffer, 4, &bit_position);
-  picture->frame_centre_horizontal_offset = get_bits(buffer, 16, &bit_position);
+  picture->frame_centre_horizontal_offset = get_bits_signed(buffer, 16, &bit_position);
   padding = get_bits(buffer, 1, &bit_position);
-  picture->frame_centre_vertical_offset = get_bits(buffer, 16, &bit_position);
+  picture->frame_centre_vertical_offset = get_bits_signed(buffer, 16, &bit_position);
   padding = get_bits(buffer, 1, &bit_position);
 
 #ifdef LOG_PAN_SCAN
-  printf("Pan & Scan centre (x,y) = (%u, %u)\n",  
+  printf("Pan & Scan centre (x,y) = (%d, %d)\n",  
     picture->frame_centre_horizontal_offset,
     picture->frame_centre_vertical_offset);
 #endif
