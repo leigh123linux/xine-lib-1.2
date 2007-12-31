@@ -1197,7 +1197,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
     int         got_one_picture = 0;
     int         offset = 0;
     int         codec_type = buf->type & 0xFFFF0000;
-    int         video_step_to_use;
+    int         video_step_to_use = this->video_step;
 
     /* pad input data */
     /* note: bitstream, alt bitstream reader or something will cause
