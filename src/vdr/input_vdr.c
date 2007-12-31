@@ -45,7 +45,7 @@
 #include <xine/xineutils.h>
 #include <xine/input_plugin.h>
 
-#include "input_vdr.h"
+#include <xine/input_vdr.h>
 #include "post_vdr.h"
 
 
