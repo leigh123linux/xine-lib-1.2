@@ -123,7 +123,7 @@ void lexer_init(const char * buf, int size) {
   lprintf("buffer length %d\n", size);
 }
 
-int lexer_get_token(char ** _tok, int * _tok_size) {
+int lexer_get_token_d(char ** _tok, int * _tok_size, int fixed) {
   char *tok = *_tok;
   int tok_size = *_tok_size;
 
@@ -458,12 +458,14 @@ int lexer_get_token(char ** _tok, int * _tok_size) {
 
     /* pb */
     if (tok_pos >= tok_size) {
+      if (fixed)
+        return T_ERROR;
       *_tok_size *= 2;
       *_tok = realloc (*_tok, *_tok_size);
       lprintf("token buffer is too small\n");
       lprintf("increasing buffer size to %d bytes\n", *_tok_size);
       if (*_tok) {
-          return lexer_get_token (_tok, _tok_size);
+          return lexer_get_token_d (_tok, _tok_size, 0);
       } else {
           return T_ERROR;
       }
@@ -507,6 +509,12 @@ int lexer_get_token(char ** _tok, int * _tok_size) {
   /* tok == null */
   lprintf("token buffer is null\n");
   return T_ERROR;
+}
+
+/* for ABI compatibility */
+int lexer_get_token (char *tok, int tok_size)
+{
+  return lexer_get_token_d (&tok, &tok_size, 1);
 }
 
 static struct {
