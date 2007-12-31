@@ -802,7 +802,7 @@ fprintf(stderr, "ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß\n");
       READ_DATA_OR_FAIL(mute, lprintf("got MUTE\n"));
 
       { 
-        int param_mute = (this->volume_mode == INPUT_VDR_VOLUME_CHANGE_SW) ? XINE_PARAM_AUDIO_AMP_MUTE : XINE_PARAM_AUDIO_MUTE;
+        int param_mute = (this->volume_mode == XINE_VDR_VOLUME_CHANGE_SW) ? XINE_PARAM_AUDIO_AMP_MUTE : XINE_PARAM_AUDIO_MUTE;
         xine_set_param(this->stream, param_mute, data->mute);
       }
     }
@@ -813,13 +813,13 @@ fprintf(stderr, "ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß\n");
       READ_DATA_OR_FAIL(set_volume, lprintf("got SETVOLUME\n"));
 
       {
-        int change_volume = (this->volume_mode != INPUT_VDR_VOLUME_IGNORE);
+        int change_volume = (this->volume_mode != XINE_VDR_VOLUME_IGNORE);
         int do_mute   = (this->last_volume != 0 && 0 == data->volume);
         int do_unmute = (this->last_volume <= 0 && 0 != data->volume);
         int report_change = 0;
 
-        int param_mute   = (this->volume_mode == INPUT_VDR_VOLUME_CHANGE_SW) ? XINE_PARAM_AUDIO_AMP_MUTE  : XINE_PARAM_AUDIO_MUTE;
-        int param_volume = (this->volume_mode == INPUT_VDR_VOLUME_CHANGE_SW) ? XINE_PARAM_AUDIO_AMP_LEVEL : XINE_PARAM_AUDIO_VOLUME;
+        int param_mute   = (this->volume_mode == XINE_VDR_VOLUME_CHANGE_SW) ? XINE_PARAM_AUDIO_AMP_MUTE  : XINE_PARAM_AUDIO_MUTE;
+        int param_volume = (this->volume_mode == XINE_VDR_VOLUME_CHANGE_SW) ? XINE_PARAM_AUDIO_AMP_LEVEL : XINE_PARAM_AUDIO_VOLUME;
         
         this->last_volume = data->volume;
 
@@ -827,16 +827,16 @@ fprintf(stderr, "ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß\n");
         {
           switch (this->mute_mode)
           {
-          case INPUT_VDR_MUTE_EXECUTE:
+          case XINE_VDR_MUTE_EXECUTE:
             report_change = 1;
             xine_set_param(this->stream, param_mute, do_mute);
             
-          case INPUT_VDR_MUTE_IGNORE:
+          case XINE_VDR_MUTE_IGNORE:
             if (do_mute)
               change_volume = 0;
             break;
 
-          case INPUT_VDR_MUTE_SIMULATE:
+          case XINE_VDR_MUTE_SIMULATE:
             change_volume = 1;
             break;
 
@@ -851,7 +851,7 @@ fprintf(stderr, "ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß\n");
           xine_set_param(this->stream, param_volume, this->last_volume);
         }
 
-        if (report_change && this->volume_mode != INPUT_VDR_VOLUME_CHANGE_SW)
+        if (report_change && this->volume_mode != XINE_VDR_VOLUME_CHANGE_SW)
         {
           xine_event_t            event;
           xine_audio_level_data_t data;
@@ -1051,7 +1051,7 @@ fprintf(stderr, "ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß\n");
         result_get_version.header.func = data->header.func;
         result_get_version.header.len = sizeof (result_get_version);
         
-        result_get_version.version = XINE_INPUT_VDR_VERSION;
+        result_get_version.version = XINE_VDR_VERSION;
         
         if (sizeof (result_get_version) != vdr_write(this->fh_result, &result_get_version, sizeof (result_get_version)))
           return -1;
@@ -2002,8 +2002,8 @@ static input_plugin_t *vdr_class_get_instance(input_class_t *cls_gen, xine_strea
   this->osd_unscaled_blending   = 0;
   this->trick_speed_mode        = 0;
   this->audio_channels          = 0;
-  this->mute_mode               = INPUT_VDR_MUTE_SIMULATE;
-  this->volume_mode             = INPUT_VDR_VOLUME_CHANGE_HW;
+  this->mute_mode               = XINE_VDR_MUTE_SIMULATE;
+  this->volume_mode             = XINE_VDR_VOLUME_CHANGE_HW;
   this->last_volume             = -1;
   this->frame_size.x            = 0;
   this->frame_size.y            = 0;

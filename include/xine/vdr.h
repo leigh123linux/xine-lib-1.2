@@ -22,7 +22,7 @@
 #define __VDR_H
 
 
-#define XINE_INPUT_VDR_VERSION 712
+#define XINE_VDR_VERSION 712
 
 
 enum funcs
@@ -350,13 +350,13 @@ result_wait_t;
 
 
 
-#define INPUT_VDR_VOLUME_IGNORE    0
-#define INPUT_VDR_VOLUME_CHANGE_HW 1
-#define INPUT_VDR_VOLUME_CHANGE_SW 2
+#define XINE_VDR_VOLUME_IGNORE    0
+#define XINE_VDR_VOLUME_CHANGE_HW 1
+#define XINE_VDR_VOLUME_CHANGE_SW 2
 
-#define INPUT_VDR_MUTE_IGNORE   0
-#define INPUT_VDR_MUTE_EXECUTE  1
-#define INPUT_VDR_MUTE_SIMULATE 2
+#define XINE_VDR_MUTE_IGNORE   0
+#define XINE_VDR_MUTE_EXECUTE  1
+#define XINE_VDR_MUTE_SIMULATE 2
 
 typedef struct __attribute__((packed)) data_setup_s
 {
