@@ -91,6 +91,8 @@ xine-lib (1.1.9) (unreleased)
   * Fixed an input_pvr issue with 'set input' for ivtv versions 0.10.6+
   * demux_aiff: only check for chunk's size being lesser than 100 when
     reading the COMM_TAG. [Bug #6]
+  * Avoid potential mislinkage at install time if a system-wide libxine.so
+    is present but is *not* pointing at libxine.so.1.
 
 xine-lib (1.1.8)
   * Send a channel-changed event to the frontend when receiving the SYNC
