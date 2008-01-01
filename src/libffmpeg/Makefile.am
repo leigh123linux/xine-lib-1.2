@@ -36,7 +36,7 @@ endif
 
 xineplug_decode_ff_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_decode_ff_la_LDFLAGS = $(xineplug_ldflags) $(IMPURE_TEXT_LDFLAGS)
-xineplug_decode_ff_la_LIBADD = $(MLIB_LIBS) $(XINE_LIB) -lm $(ZLIB_LIBS) \
+xineplug_decode_ff_la_LIBADD = $(XINE_LIB) $(MLIB_LIBS) -lm $(ZLIB_LIBS) \
 	$(link_ffmpeg) $(PTHREAD_LIBS) $(LTLIBINTL)
 
 xineplug_decode_dvaudio_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)

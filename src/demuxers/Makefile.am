@@ -51,7 +51,7 @@ xineplug_LTLIBRARIES = $(ogg_module) $(asf_module) $(mng_module) $(image_module)
 	xineplug_dmx_flv.la 
 
 xineplug_dmx_ogg_la_SOURCES = demux_ogg.c
-xineplug_dmx_ogg_la_LIBADD = $(VORBIS_LIBS) $(SPEEX_LIBS) $(THEORA_LIBS) $(OGG_LIBS) $(XINE_LIB) $(LTLIBINTL)
+xineplug_dmx_ogg_la_LIBADD = $(XINE_LIB) $(VORBIS_LIBS) $(SPEEX_LIBS) $(THEORA_LIBS) $(OGG_LIBS) $(LTLIBINTL)
 xineplug_dmx_ogg_la_CFLAGS = $(AM_CFLAGS) $(VORBIS_CFLAGS) $(SPEEX_CFLAGS) $(THEORA_CFLAGS) $(OGG_CFLAGS)
 
 xineplug_dmx_avi_la_SOURCES = demux_avi.c
