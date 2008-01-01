@@ -1060,7 +1060,7 @@ void xine_config_save (xine_t *xine, const char *filename) {
 
       if (!entry->key[0])
         /* deleted key */
-        continue;
+        goto next;
 
       lprintf ("saving key '%s'\n", entry->key);
 
@@ -1130,6 +1130,7 @@ void xine_config_save (xine_t *xine, const char *filename) {
 	break;
       }
 
+      next:
       entry = entry->next;
     }
     pthread_mutex_unlock(&this->config_lock);

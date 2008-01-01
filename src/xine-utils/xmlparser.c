@@ -241,7 +241,7 @@ static int xml_parser_get_node_internal (char ** token_buffer, int * token_buffe
 
     memset (tok, 0, *token_buffer_size);
 
-    while ((bypass_get_token) || (res = lexer_get_token(token_buffer, token_buffer_size)) != T_ERROR) {
+    while ((bypass_get_token) || (res = lexer_get_token_d(token_buffer, token_buffer_size, 0)) != T_ERROR) {
       tok = *token_buffer;
       bypass_get_token = 0;
       lprintf("info: %d - %d : '%s'\n", state, res, tok);
