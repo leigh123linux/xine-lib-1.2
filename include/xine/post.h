@@ -33,7 +33,7 @@
 #  include <xine/plugin_catalog.h>
 #endif
 
-#define POST_PLUGIN_IFACE_VERSION 9
+#define POST_PLUGIN_IFACE_VERSION 10
 
 
 typedef struct post_class_s post_class_t;

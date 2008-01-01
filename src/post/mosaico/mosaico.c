@@ -41,7 +41,7 @@ static const post_info_t mosaico_special_info = { XINE_POST_TYPE_VIDEO_COMPOSE }
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_POST, 9, "mosaico", XINE_VERSION_CODE, &mosaico_special_info, &mosaico_init_plugin },
+  { PLUGIN_POST, 10, "mosaico", XINE_VERSION_CODE, &mosaico_special_info, &mosaico_init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 
