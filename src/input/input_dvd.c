@@ -225,7 +225,7 @@ typedef struct {
   int32_t             region;
   int32_t             play_single_chapter;
 
-  char               *filelist[MAX_DIR_ENTRIES];
+  const char         *filelist[MAX_DIR_ENTRIES];
 
 } dvd_input_class_t;
 

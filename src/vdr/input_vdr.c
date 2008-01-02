@@ -120,7 +120,7 @@ typedef struct
 {
   input_class_t       input_class;
   xine_t             *xine;
-  char               *mrls[ 2 ];
+  const char         *mrls[ 2 ];
 }
 vdr_input_class_t;
 
