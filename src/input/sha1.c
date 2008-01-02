@@ -315,12 +315,12 @@ void sha_print(unsigned char digest[20])
     }
 }
 
-char *sha_version(void)
+const char *sha_version(void)
 {
 #if (SHA_VERSION == 1)
-    static char *version = "SHA-1";
+    static const char *version = "SHA-1";
 #else
-    static char *version = "SHA";
+    static const char *version = "SHA";
 #endif
     return(version);
 }

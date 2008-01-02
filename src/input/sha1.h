@@ -30,7 +30,7 @@ void sha_final(unsigned char [20], SHA_INFO *);
 
 void sha_stream(unsigned char [20], SHA_INFO *, FILE *);
 void sha_print(unsigned char [20]);
-char *sha_version(void);
+const char *sha_version(void);
 
 #define SHA_VERSION 1
 
