@@ -707,14 +707,14 @@ void xine_post_dispose(xine_t *xine, xine_post_t *self) XINE_PROTECTED;
 /* defines a single parameter entry. */
 typedef struct {
   int              type;             /* POST_PARAM_TYPE_xxx             */
-  char            *name;             /* name of this parameter          */
+  const char      *name;             /* name of this parameter          */
   int              size;             /* sizeof(parameter)               */
   int              offset;           /* offset in bytes from struct ptr */
   char           **enum_values;      /* enumeration (first=0) or NULL   */
   double           range_min;        /* minimum value                   */
   double           range_max;        /* maximum value                   */
   int              readonly;         /* 0 = read/write, 1=read-only     */
-  char            *description;      /* user-friendly description       */
+  const char      *description;      /* user-friendly description       */
 } xine_post_api_parameter_t;
 
 /* description of parameters struct (params). */
