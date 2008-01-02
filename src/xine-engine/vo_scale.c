@@ -315,7 +315,8 @@ void _x_vo_scale_translate_gui2video(vo_scale_t *this,
  * Returns description of a given ratio code
  */
 
-char *_x_vo_scale_aspect_ratio_name(int a) {
+const char *_x_vo_scale_aspect_ratio_name(int a) {
+  /* TODO replace this with a string table */
 
   switch (a) {
   case XINE_VO_ASPECT_AUTO:
