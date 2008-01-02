@@ -805,7 +805,7 @@ static void demux_mpgaudio_send_headers (demux_plugin_t *this_gen) {
      */
     {
       char scratch_buf[256];
-      char *mpeg_ver[3] = {"1", "2", "2.5"};
+      static const char mpeg_ver[3][4] = {"1", "2", "2.5"};
       
       snprintf(scratch_buf, 256, "MPEG %s Layer %1d%s",
                mpeg_ver[this->cur_frame.version_idx], this->cur_frame.layer,
