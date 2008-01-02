@@ -809,7 +809,7 @@ static void register_callbacks(fb_driver_t *this)
 static int open_fb_device(config_values_t *config, xine_t *xine)
 {
   static const char devkey[] = "video.device.fb_device";
-  char *device_name;
+  const char *device_name;
   int fd;
 
   /* This config entry is security critical, is it really necessary
