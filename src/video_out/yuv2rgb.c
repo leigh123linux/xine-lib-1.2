@@ -1261,7 +1261,7 @@ static scale_line_func_t find_scale_line_func(int step) {
     int			src_step;
     int			dest_step;
     scale_line_func_t	func;
-    char	       *desc;
+    const char	       *desc; /* FIXME: consider moving this to a char[] to avoid reloc */
   } scale_line[] = {
     { 15, 16, scale_line_15_16, "dvd 4:3(pal)" },
     { 45, 64, scale_line_45_64, "dvd 16:9(pal), fullscreen(1024x768)" },
