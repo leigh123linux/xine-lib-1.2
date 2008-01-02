@@ -987,7 +987,7 @@ static int parse_url (char *urlbuf, char** host, int *port) {
 #endif
 
 static int XINE_FORMAT_PRINTF(4, 5)
-network_command( xine_stream_t *stream, int socket, char *data_buf, char *msg, ...)
+network_command( xine_stream_t *stream, int socket, char *data_buf, const char *msg, ...)
 {
   char     buf[_BUFSIZ];
   va_list  args;
@@ -1036,13 +1036,13 @@ network_command( xine_stream_t *stream, int socket, char *data_buf, char *msg, .
 
 
 #ifndef WIN32
-static int network_connect(xine_stream_t *stream,  char *url )
+static int network_connect(xine_stream_t *stream,  const char *_url )
 {
   char *host;
   int port;
   int fd;
 
-  url = strdup(url);
+  char *url = strdup(_url);
   parse_url(url, &host, &port);
 
   if( !host || !strlen(host) || !port )
