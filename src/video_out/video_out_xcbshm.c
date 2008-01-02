@@ -978,8 +978,8 @@ static int ImlibPaletteLUTGet(xshm_driver_t *this) {
   return 0;
 }
 
-
-static char *visual_class_name(xcb_visualtype_t *visual) {
+/* TODO replace this with a string table. */
+static const char *visual_class_name(xcb_visualtype_t *visual) {
 
   switch (visual->_class) {
   case XCB_VISUAL_CLASS_STATIC_GRAY:

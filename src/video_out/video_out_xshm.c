@@ -1053,7 +1053,7 @@ static int ImlibPaletteLUTGet(xshm_driver_t *this) {
 }
 
 
-static char *visual_class_name(Visual *visual) {
+static const char *visual_class_name(Visual *visual) {
 
   switch (visual->class) {
   case StaticGray:
