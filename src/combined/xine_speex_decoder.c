@@ -92,8 +92,8 @@ static void speex_discontinuity (audio_decoder_t *this_gen) {
 }
 
 /* Known speex comment keys from ogg123 sources*/
-static struct {
-  char *key;         /* includes the '=' for programming convenience */
+static const struct {
+  char key[16];         /* includes the '=' for programming convenience */
   int   xine_metainfo_index;
 } speex_comment_keys[] = {
   {"ARTIST=", XINE_META_INFO_ARTIST},
@@ -101,8 +101,7 @@ static struct {
   {"TITLE=", XINE_META_INFO_TITLE},
   {"GENRE=", XINE_META_INFO_GENRE},
   {"DESCRIPTION=", XINE_META_INFO_COMMENT},
-  {"DATE=", XINE_META_INFO_YEAR},
-  {NULL, 0}
+  {"DATE=", XINE_META_INFO_YEAR}
 };
 
 #define readint(buf, base) (((buf[base+3]<<24)&0xff000000)| \
@@ -169,8 +168,7 @@ void read_metadata (speex_decoder_t *this, char * comments, int length)
     printf ("\n");
 #endif
 
-    for (i = 0; speex_comment_keys[i].key != NULL; i++) {
-
+    for (i = 0; i < (sizeof(speex_comment_keys)/sizeof(speex_comment_keys[0])); i++) {
       if ( !strncasecmp (speex_comment_keys[i].key, c,
 			 strlen(speex_comment_keys[i].key)) ) {
 	int keylen = strlen(speex_comment_keys[i].key);
