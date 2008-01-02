@@ -987,7 +987,7 @@ static int parse_url (char *urlbuf, char** host, int *port) {
 #endif
 
 static int XINE_FORMAT_PRINTF(4, 5)
-network_command( xine_stream_t *stream, int socket, char *data_buf, const char *msg, ...)
+network_command( xine_stream_t *stream, int socket, void *data_buf, const char *msg, ...)
 {
   char     buf[_BUFSIZ];
   va_list  args;
