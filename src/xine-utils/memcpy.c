@@ -383,7 +383,7 @@ static void *linux_kernel_memcpy(void *to, const void *from, size_t len) {
 #endif /* ARCH_X86 */
 
 static struct {
-  char *const name;
+  const char *const name;
   void *(*const  function)(void *to, const void *from, size_t len);
 
   uint64_t time; /* This type could be used for non-MSC build too! */
