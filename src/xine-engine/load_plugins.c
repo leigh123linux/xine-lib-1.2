@@ -1659,7 +1659,7 @@ xine_video_port_t *xine_new_framegrab_video_port (xine_t *this) {
   xine_video_port_t  *port;
   vo_info_t          *vo_info;
   plugin_catalog_t   *catalog = this->plugin_catalog;
-  char               *id;
+  const char         *id;
   int                 list_id, list_size;
 
   driver = NULL;
