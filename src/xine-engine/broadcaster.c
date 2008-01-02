@@ -136,7 +136,7 @@ static int sock_data_write(xine_t *xine, int socket, void *buf_gen, int len) {
 }
 
 static int XINE_FORMAT_PRINTF(3, 4)
-sock_string_write(xine_t *xine, int socket, char *msg, ...) {
+sock_string_write(xine_t *xine, int socket, const char *msg, ...) {
   char     buf[_BUFSIZ];
   va_list  args;
   
@@ -178,7 +178,7 @@ static void broadcaster_data_write(broadcaster_t *this, void *buf, int len) {
 }
 
 static void XINE_FORMAT_PRINTF(2, 3)
-broadcaster_string_write(broadcaster_t *this, char *msg, ...) {
+broadcaster_string_write(broadcaster_t *this, const char *msg, ...) {
   char     buf[_BUFSIZ];
   va_list  args;
   
@@ -248,7 +248,7 @@ static void *manager_loop (void *this_gen) {
 /*
  * receive xine buffers and send them through the broadcaster
  */
-static void send_buf (broadcaster_t *this, char *from, buf_element_t *buf) {
+static void send_buf (broadcaster_t *this, const char *from, buf_element_t *buf) {
   int i;
     
   /* ignore END buffers since they would stop the slavery */
