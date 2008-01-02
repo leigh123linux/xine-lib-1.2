@@ -468,6 +468,7 @@ CC_CHECK_CFLAGS([-Wstrict-aliasing=2], [warnflags="$warnflags -Wstrict-aliasing=
 CC_CHECK_CFLAGS([-Wchar-subscripts],      [warnflags="$warnflags -Wchar-subscripts"])
 CC_CHECK_CFLAGS([-Wmissing-declarations], [warnflags="$warnflags -Wmissing-declarations"])
 CC_CHECK_CFLAGS([-Wmissing-prototypes],   [warnflags="$warnflags -Wmissing-prototypes"])
+CC_CHECK_CFLAGS([-Wwrite-strings],        [warnflags="$warnflags -Wwrite-strings"])
 
 dnl Some combinations of gcc and glibc produce useless warnings on memset when
 dnl compiling with -Wpointer-arith, so check for this first.
