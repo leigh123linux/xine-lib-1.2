@@ -1335,9 +1335,9 @@ typedef struct {
 struct xine_health_check_s {
   const char* cdrom_dev;
   const char* dvd_dev;
-  char*       msg;
-  char*       title;
-  char*       explanation;
+  const char* msg;
+  const char* title;
+  const char* explanation;
   int         status;
 };
 
