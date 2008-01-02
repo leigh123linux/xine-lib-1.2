@@ -1030,9 +1030,9 @@ static int xv_check_yv12 (Display *display, XvPortID port) {
 static void xv_check_capability (xv_driver_t *this,
 				 int property, XvAttribute attr,
 				 int base_id,
-				 char *config_name,
-				 char *config_desc,
-				 char *config_help) {
+				 const char *config_name,
+				 const char *config_desc,
+				 const char *config_help) {
   int          int_default;
   cfg_entry_t *entry;
   char        *str_prop = attr.name;
