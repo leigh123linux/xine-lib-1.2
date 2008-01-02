@@ -742,7 +742,7 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   /* TODO: insert network timing request here */
   /* command 0x2 */
   lprintf("send command 0x02\n");
-  string_utf16 (url_conv, &this->scmd_body[8], "\002\000\\\\192.168.0.129\\TCP\\1037\0000", 28);
+  string_utf16 (url_conv, &this->scmd_body[8], (ICONV_CONST char*)"\002\000\\\\192.168.0.129\\TCP\\1037\0000", 28);
   memset (this->scmd_body, 0, 8);
   if (!send_command (this, 2, 0, 0, 28 * 2 + 8)) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
