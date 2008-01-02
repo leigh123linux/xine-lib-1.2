@@ -332,7 +332,7 @@ static void send_mouse_enter_leave_event(dvd_input_plugin_t *this, int direction
     this->mouse_in = !this->mouse_in;
 
   if(direction != this->mouse_in) {
-    const xine_spu_button_t spu_event = {
+    xine_spu_button_t spu_event = {
       .direction = direction,
       .button    = this->mouse_buttonN
     };
