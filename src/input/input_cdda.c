@@ -1304,8 +1304,6 @@ static void _cdda_mkdir_recursive_safe (xine_t *xine, char *path)
     if (p)
       *p = '/';
   } while (p);
-
-  return 0;
 }
 
 /*
