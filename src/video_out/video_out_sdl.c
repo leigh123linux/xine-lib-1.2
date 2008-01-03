@@ -384,7 +384,7 @@ static int sdl_set_property (vo_driver_t *this_gen,
       value = XINE_VO_ASPECT_AUTO;
     this->sc.user_ratio = value;
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
-	    "video_out_sdl: aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name(value));
+	    "video_out_sdl: aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name_table[value]);
 
     sdl_compute_ideal_size (this);
     this->sc.force_redraw = 1;

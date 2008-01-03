@@ -845,7 +845,7 @@ static int xshm_set_property (vo_driver_t *this_gen,
       value = XINE_VO_ASPECT_AUTO;
     this->sc.user_ratio = value;
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
-	    LOG_MODULE ": aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name(value));
+	    LOG_MODULE ": aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name_table[value]);
 
   } else if (property == VO_PROP_BRIGHTNESS) {
 

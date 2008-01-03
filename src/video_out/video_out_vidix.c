@@ -733,12 +733,12 @@ static int vidix_set_property (vo_driver_t *this_gen,
   this->props[property].value = value;
   
   if ( property == VO_PROP_ASPECT_RATIO) {
-    lprintf("video_out_vidix: aspect ratio changed to %s\n",
-	    _x_vo_scale_aspect_ratio_name(value));
-    
-    if(value == XINE_VO_ASPECT_NUM_RATIOS)
+    if(value >= XINE_VO_ASPECT_NUM_RATIOS)
       value = this->props[property].value = XINE_VO_ASPECT_AUTO;
 
+    lprintf("video_out_vidix: aspect ratio changed to %s\n",
+	    _x_vo_scale_aspect_ratio_name_table[value]);
+    
     this->sc.user_ratio = value;    
     vidix_compute_ideal_size (this);
     this->sc.force_redraw = 1;

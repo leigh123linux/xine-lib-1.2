@@ -949,7 +949,7 @@ static int directfb_set_property (vo_driver_t *this_gen,
         value = XINE_VO_ASPECT_NUM_RATIOS-1;
       xprintf (this->xine, XINE_VERBOSITY_DEBUG,
                "video_out_directfb: aspect ratio changed to %s.\n",
-               _x_vo_scale_aspect_ratio_name (value));
+	       _x_vo_scale_aspect_ratio_name_table[value]);
       this->sc.user_ratio = value;
       _x_vo_scale_compute_ideal_size (&this->sc);
       this->sc.force_redraw = 1;

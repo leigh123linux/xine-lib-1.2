@@ -183,7 +183,7 @@ void _x_vo_scale_translate_gui2video(vo_scale_t *self,
  * Returns description of a given ratio code
  */
 
-const char *_x_vo_scale_aspect_ratio_name(int a) XINE_PROTECTED;
+extern const char _x_vo_scale_aspect_ratio_name_table[][8] XINE_PROTECTED;
 
 /* 
  * initialize rescaling struct
