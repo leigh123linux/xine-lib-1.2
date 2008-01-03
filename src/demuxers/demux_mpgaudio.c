@@ -64,6 +64,7 @@
 
 /* Xing header stuff */
 #define XING_TAG FOURCC_TAG('X', 'i', 'n', 'g')
+#define INFO_TAG FOURCC_TAG('I', 'n', 'f', 'o')
 #define XING_FRAMES_FLAG     0x0001
 #define XING_BYTES_FLAG      0x0002
 #define XING_TOC_FLAG        0x0004
@@ -295,16 +296,8 @@ static int parse_frame_header(mpg_audio_frame_t *const frame, const uint8_t *con
  */
 static xing_header_t* parse_xing_header(mpg_audio_frame_t *frame,
                                         uint8_t *buf, int bufsize) {
-
-#ifdef LOG
-  int i;
-#endif
   uint8_t *ptr = buf;
-  xing_header_t *xing;
-
-  xing = xine_xmalloc (sizeof (xing_header_t));
-  if (!xing)
-    return NULL;
+  xing_header_t *xing = NULL;
 
   /* offset of the Xing header */
   if (frame->lsf_bit) {
@@ -319,52 +312,87 @@ static xing_header_t* parse_xing_header(mpg_audio_frame_t *frame,
       ptr += (9 + 4);
   }
   
-  if (ptr >= (buf + bufsize - 4)) return 0;
+  if (ptr >= (buf + bufsize - 4)) goto exit_error;
   lprintf("checking %08X\n", *ptr);
+  
   if (_X_BE_32(ptr) == XING_TAG) {
+    int has_frames_flag = 0;
+    int has_bytes_flag = 0;
+  
+    xing = xine_xmalloc (sizeof (xing_header_t));
+    if (!xing)
+      goto exit_error;
+  
     lprintf("Xing header found\n");
     ptr += 4;
     
-    if (ptr >= (buf + bufsize - 4)) return 0;
+    if (ptr >= (buf + bufsize - 4)) goto exit_error;
     xing->flags = _X_BE_32(ptr); ptr += 4;
 
     if (xing->flags & XING_FRAMES_FLAG) {
-      if (ptr >= (buf + bufsize - 4)) return 0;
+      if (ptr >= (buf + bufsize - 4)) goto exit_error;
       xing->stream_frames = _X_BE_32(ptr); ptr += 4;
       lprintf("stream frames: %d\n", xing->stream_frames);
+      has_frames_flag = 1;
     }
     if (xing->flags & XING_BYTES_FLAG) {
-      if (ptr >= (buf + bufsize - 4)) return 0;
+      if (ptr >= (buf + bufsize - 4)) goto exit_error;
       xing->stream_size = _X_BE_32(ptr); ptr += 4;
       lprintf("stream size: %d\n", xing->stream_size);
+      has_bytes_flag = 1;
     }
-    if (xing->flags & XING_TOC_FLAG) {
-      lprintf("toc found\n");
-      if (ptr >= (buf + bufsize - XING_TOC_LENGTH)) return 0;
+  
+    /* check if it's a useful Xing header */
+    if (!has_frames_flag || !has_bytes_flag) {
+      lprintf("Stupid Xing tag, cannot do anything with it !\n");
+      goto exit_error;
+    }
 
+    if (xing->flags & XING_TOC_FLAG) {
+      int i;
+
+      lprintf("toc found\n");
+
+      if (ptr >= (buf + bufsize - XING_TOC_LENGTH)) goto exit_error;
       memcpy(xing->toc, ptr, XING_TOC_LENGTH);
 #ifdef LOG
       for (i = 0; i < XING_TOC_LENGTH; i++) {
-        lprintf("%d ", xing->toc[i]);
+        printf("%d ", xing->toc[i]);
       }
-      lprintf("\n");
+      printf("\n");
 #endif
+      /* check the table validity
+       * - MUST start with 0
+       * - values MUST increase
+       */
+      if (xing->toc[0] != 0) {
+        lprintf("invalid Xing toc\n");
+        goto exit_error;
+      }
+      for (i = 1; i < XING_TOC_LENGTH; i++) {
+        if (xing->toc[i] < xing->toc[i-1]) {
+          lprintf("invalid Xing toc\n");
+          goto exit_error;
+        }
+      }
       ptr += XING_TOC_LENGTH;
     }
     xing->vbr_scale = -1;
     if (xing->flags & XING_VBR_SCALE_FLAG) {
-      if (ptr >= (buf + bufsize - 4)) return 0;
+      if (ptr >= (buf + bufsize - 4)) goto exit_error;
       xing->vbr_scale = _X_BE_32(ptr);
       lprintf("vbr_scale: %d\n", xing->vbr_scale);
     }
-
-    return xing;
   } else {
     lprintf("Xing header not found\n");
+  }
+  return xing;
+  
+exit_error:
+  lprintf("Xing header parse error\n");
     free(xing);
     return NULL;
   }
-}
 
 /*
  * Parse a Vbri header
@@ -922,7 +950,7 @@ static int demux_mpgaudio_seek (demux_plugin_t *this_gen,
 
     if (this->stream_length > 0) {
       if (this->xing_header &&
-          (this->xing_header->flags & (XING_TOC_FLAG | XING_BYTES_FLAG))) {
+          (this->xing_header->flags & XING_TOC_FLAG)) {
         seek_pos += xing_get_seek_point(this->xing_header, start_time, this->stream_length);
         lprintf("time seek: xing: time=%d, pos=%"PRId64"\n", start_time, seek_pos);
       } else if (this->vbri_header) {

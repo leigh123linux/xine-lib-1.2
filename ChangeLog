@@ -39,6 +39,7 @@ xine-lib (1.1.9) (unreleased)
   * Avoid potential mislinkage at install time if a system-wide libxine.so
     is present but is *not* pointing at libxine.so.1.
   * Update French translation, thanks to Christophe Giraud. [Bug #15]
+  * Detect corrupted or broken seek tables in CBR MP3 files. [Bug #3]
 
 xine-lib (1.1.8)
   * Send a channel-changed event to the frontend when receiving the SYNC
