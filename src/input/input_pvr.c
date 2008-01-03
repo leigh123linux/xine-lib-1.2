@@ -1016,19 +1016,21 @@ static void pvr_event_handler (pvr_input_plugin_t *this) {
 
       /* change input */
       if (v4l2_data->input != -1 && v4l2_data->input != this->input) {
-        lprintf("change input to:%d\n", v4l2_data->input);
         this->input = v4l2_data->input;
 
         /* as of ivtv 0.10.6: must close and reopen to set input */
         close(this->dev_fd);
         this->dev_fd = open (this->class->devname, O_RDWR);
-        if (this->dev_fd == -1) {
+        if (this->dev_fd < 0) {
           xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
                   "input_pvr: error opening device %s\n", this->class->devname );
         } else {
-          if( ioctl(this->dev_fd, VIDIOC_S_INPUT, &this->input) )
+          if( ioctl(this->dev_fd, VIDIOC_S_INPUT, &this->input) == 0 ) {
+            lprintf("Tuner Input set to:%d\n", v4l2_data->input);
+          } else {
             xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
                     "input_pvr: error setting v4l2 input\n");
+          }
         }
       }
 
@@ -1040,14 +1042,30 @@ static void pvr_event_handler (pvr_input_plugin_t *this) {
 
       /* change frequency */
       if (v4l2_data->frequency != -1 && v4l2_data->frequency != this->frequency) {
-        lprintf("changing frequency to:%.2f\n", (float)v4l2_data->frequency * 62.5);
+        double freq = (double)v4l2_data->frequency / 1000.0;
         struct v4l2_frequency vf;
+        struct v4l2_tuner vt;
+        double fac = 16;
+
+        memset(&vf, 0, sizeof(vf));
+        memset(&vt, 0, sizeof(vt));
+
         this->frequency = v4l2_data->frequency;
-        vf.frequency = this->frequency;
+
+        if (ioctl(this->dev_fd, VIDIOC_G_TUNER, &vt) == 0) {
+          fac = (vt.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
+        }
+
         vf.tuner = 0;
-        if( ioctl(this->dev_fd, VIDIOC_S_FREQUENCY, &vf) )
+        vf.type = vt.type;
+        vf.frequency = (__u32)(freq * fac);
+
+        if (ioctl(this->dev_fd, VIDIOC_S_FREQUENCY, &vf) == 0) {
+          lprintf("Tuner Frequency set to %d (%f.3 MHz)\n", vf.frequency, vf.frequency / fac);
+        } else {
           xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
                   "input_pvr: error setting v4l2 frequency\n");
+        }
       }
 
       pthread_mutex_unlock(&this->dev_lock);

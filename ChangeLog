@@ -40,6 +40,8 @@ xine-lib (1.1.9) (unreleased)
     is present but is *not* pointing at libxine.so.1.
   * Update French translation, thanks to Christophe Giraud. [Bug #15]
   * Detect corrupted or broken seek tables in CBR MP3 files. [Bug #3]
+  * Fixed an issue in input_pvr with setting the frequency of the tuner for
+    ivtv versions 0.10.6+
 
 xine-lib (1.1.8)
   * Send a channel-changed event to the frontend when receiving the SYNC
