@@ -1796,6 +1796,18 @@ static int xxmc_get_property (vo_driver_t *this_gen, int property) {
   case VO_PROP_WINDOW_HEIGHT:
     this->props[property].value = this->sc.gui_height;
     break;
+  case VO_PROP_OUTPUT_WIDTH:
+    this->props[property].value = this->sc.output_width;
+    break;
+  case VO_PROP_OUTPUT_HEIGHT:
+    this->props[property].value = this->sc.output_height;
+    break;
+  case VO_PROP_OUTPUT_XOFFSET:
+    this->props[property].value = this->sc.output_xoffset;
+    break;
+  case VO_PROP_OUTPUT_YOFFSET:
+    this->props[property].value = this->sc.output_yoffset;
+    break;
   }
 
   lprintf("%s: property #%d = %d\n", LOG_MODULE, property, this->props[property].value);
@@ -2457,7 +2469,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   else
     xprintf(class->xine, XINE_VERBOSITY_LOG,
 	    _("%s: using Xv port %ld from adaptor %s for hardware "
-	      "colorspace conversion and scaling.\n"), LOG_MODULE, xv_port,
+	      "colour space conversion and scaling.\n"), LOG_MODULE, xv_port,
             adaptor_info[adaptor_num].name);
   
   XUnlockDisplay(this->display);
@@ -2568,7 +2580,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 				 adaptor_info[adaptor_num].base_id, "XV_AUTOPAINT_COLORKEY",
 				 "video.device.xv_autopaint_colorkey",
 				 _("autopaint colour key"),
-				 _("Make Xv autopaint its colorkey."));
+				 _("Make Xv autopaint its colour key."));
 
 	} else if(!strcmp(attr[k].name, "XV_FILTER")) {
 	  int xv_filter;
@@ -2680,8 +2692,8 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 			   10, xxmc_update_cpu_save, this);
   this->reverse_nvidia_palette =
     config->register_bool (config, "video.device.xvmc_nvidia_color_fix", 0,
-			   _("Fix buggy NVIDIA XvMC subpicture colors"),
-			   _("There's a bug in NVIDIA's XvMC lib that makes red OSD colors\n"
+			   _("Fix buggy NVIDIA XvMC subpicture colours"),
+			   _("There's a bug in NVIDIA's XvMC lib that makes red OSD colours\n"
 			     "look blue and vice versa. This option provides a workaround.\n"),
 			   10, xxmc_update_nvidia_fix, this);
   this->bob =

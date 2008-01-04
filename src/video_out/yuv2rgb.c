@@ -1264,7 +1264,7 @@ static scale_line_func_t find_scale_line_func(int step) {
     int			src_step;
     int			dest_step;
     scale_line_func_t	func;
-    char	       *desc;
+    const char	       *desc; /* FIXME: consider moving this to a char[] to avoid reloc */
   } scale_line[] = {
     { 15, 16, scale_line_15_16, "dvd 4:3(pal)" },
     { 45, 64, scale_line_45_64, "dvd 16:9(pal), fullscreen(1024x768)" },
@@ -3222,7 +3222,7 @@ yuv2rgb_factory_t* yuv2rgb_factory_init (int mode, int swapped,
 
 #ifdef LOG
     if (this->yuv2rgb_fun != NULL)
-      printf ("yuv2rgb: using MMXEXT for colorspace transform\n");
+      printf ("yuv2rgb: using MMXEXT for colour space transform\n");
 #endif
   }
 
@@ -3232,7 +3232,7 @@ yuv2rgb_factory_t* yuv2rgb_factory_init (int mode, int swapped,
 
 #ifdef LOG
     if (this->yuv2rgb_fun != NULL)
-      printf ("yuv2rgb: using MMX for colorspace transform\n");
+      printf ("yuv2rgb: using MMX for colour space transform\n");
 #endif
   }
 #endif
@@ -3243,12 +3243,12 @@ yuv2rgb_factory_t* yuv2rgb_factory_init (int mode, int swapped,
 
 #ifdef LOG
     if (this->yuv2rgb_fun != NULL)
-      printf ("yuv2rgb: using medialib for colorspace transform\n");
+      printf ("yuv2rgb: using medialib for colour space transform\n");
 #endif
   }
 #endif
   if (this->yuv2rgb_fun == NULL) {
-    lprintf ("no accelerated colorspace conversion found\n");
+    lprintf ("no accelerated colour space conversion found\n");
 
     yuv2rgb_c_init (this);
   }

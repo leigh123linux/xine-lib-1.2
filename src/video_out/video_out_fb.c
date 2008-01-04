@@ -580,7 +580,19 @@ static int fb_get_property(vo_driver_t *this_gen, int property)
     
     case VO_PROP_WINDOW_HEIGHT:
       return this->sc.gui_height;
-    
+
+    case VO_PROP_OUTPUT_WIDTH:
+      return this->cur_frame->sc.output_width;
+
+    case VO_PROP_OUTPUT_HEIGHT:
+      return this->cur_frame->sc.output_height;
+
+    case VO_PROP_OUTPUT_XOFFSET:
+      return this->cur_frame->sc.output_xoffset;
+
+    case VO_PROP_OUTPUT_YOFFSET:
+      return this->cur_frame->sc.output_yoffset;
+
     default:
       xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
 	      "video_out_fb: tried to get unsupported property %d\n", property);
@@ -600,7 +612,7 @@ static int fb_set_property(vo_driver_t *this_gen, int property, int value)
 	value = XINE_VO_ASPECT_AUTO;
       this->sc.user_ratio = value;
       xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
-	      "video_out_fb: aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name(value));
+	      "video_out_fb: aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name_table[value]);
       break;
 
     case VO_PROP_BRIGHTNESS:
@@ -723,7 +735,7 @@ static int get_fb_fix_screeninfo(int fd, struct fb_fix_screeninfo *fix, xine_t *
      fix->type != FB_TYPE_PACKED_PIXELS)
   {
     xprintf(xine, XINE_VERBOSITY_LOG,
-	    _("video_out_fb: only packed truecolor/directcolor is supported (%d).\n"
+	    _("video_out_fb: only packed truecolour/directcolour is supported (%d).\n"
 	      "     Check 'fbset -i' or try 'fbset -depth 16'.\n"), fix->visual);
     return 0;
   }
@@ -777,7 +789,7 @@ static void register_callbacks(fb_driver_t *this)
 static int open_fb_device(config_values_t *config, xine_t *xine)
 {
   static const char devkey[] = "video.device.fb_device";
-  char *device_name;
+  const char *device_name;
   int fd;
 
   /* This config entry is security critical, is it really necessary

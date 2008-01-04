@@ -412,6 +412,8 @@ static int net_plugin_open (input_plugin_t *this_gen ) {
   char *filename;
   char *pptr;
   int port = 7658;
+  int toread = MAX_PREVIEW_SIZE;
+  int trycount = 0;
 
   filename = this->host_port;
   pptr=strrchr(filename, ':');
@@ -430,11 +432,15 @@ static int net_plugin_open (input_plugin_t *this_gen ) {
   /*
    * fill preview buffer
    */
+  while ((toread > 0) && (trycount < 10)) {
 #ifndef WIN32
-  this->preview_size = read (this->fh, this->preview, MAX_PREVIEW_SIZE);
+    this->preview_size += read (this->fh, this->preview + this->preview_size, toread);
 #else
-  this->preview_size = recv (this->fh, this->preview, MAX_PREVIEW_SIZE, 0);
+    this->preview_size += recv (this->fh, this->preview + this->preview_size, toread, 0);
 #endif
+    trycount++;
+    toread = MAX_PREVIEW_SIZE - this->preview_size;
+  }
 
   this->curpos       = 0;
 

@@ -139,4 +139,11 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     AC_SUBST(LIBVCD_LIBS)
     AM_CONDITIONAL([ENABLE_VCD], [test x"$enable_vcd" != x"no"])
     AM_CONDITIONAL([ENABLE_VCDO], [test x"$enable_vcdo" != x"no"])
+
+
+    dnl vdr
+    AC_ARG_ENABLE([vdr],
+                  [AS_HELP_STRING([--enable-vdr], [Enable support for the VDR plugin (default: enabled)])],
+                  [test x"$enableval" != x"no" && enable_vdr="yes"])
+    AM_CONDITIONAL([ENABLE_VDR], [test x"$enable_vdr" != x"no"])
 ])

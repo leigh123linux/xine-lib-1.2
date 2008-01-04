@@ -92,7 +92,7 @@ struct pnm_s {
 
 /* header of rm files */
 #define RM_HEADER_SIZE 0x12
-const unsigned char rm_header[]={
+static const unsigned char rm_header[]={
         0x2e, 0x52, 0x4d, 0x46, /* object_id      ".RMF" */
         0x00, 0x00, 0x00, 0x12, /* header_size    0x12   */
         0x00, 0x00,             /* object_version 0x00   */
@@ -102,7 +102,7 @@ const unsigned char rm_header[]={
 
 /* data chunk header */
 #define PNM_DATA_HEADER_SIZE 18
-const unsigned char pnm_data_header[]={
+static const unsigned char pnm_data_header[]={
         'D','A','T','A',
          0,0,0,0,       /* data chunk size  */
          0,0,           /* object version   */

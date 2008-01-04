@@ -425,7 +425,7 @@ static void mga_vid_write_regs(int restore)
 	writeb(PALWTADD,  XCOLMSK);
 	writeb(X_DATAREG, colkey_mask[3]);
 
-	printf(MGA_MSG" Restored colorkey (ON: %d  %02X:%02X:%02X)\n",
+	printf(MGA_MSG" Restored colour key (ON: %d  %02X:%02X:%02X)\n",
 	       colkey_on,colkey_color[0],colkey_color[1],colkey_color[2]);
 
     } else if (!colkey_saved) {
@@ -453,7 +453,7 @@ static void mga_vid_write_regs(int restore)
 	writeb(PALWTADD,  XCOLMSK);
 	colkey_mask[3]=(unsigned char)readb(X_DATAREG);
 
-	printf(MGA_MSG" Saved colorkey (ON: %d  %02X:%02X:%02X)\n",
+	printf(MGA_MSG" Saved colour key (ON: %d  %02X:%02X:%02X)\n",
 	       colkey_on,colkey_color[0],colkey_color[1],colkey_color[2]);
     }
 

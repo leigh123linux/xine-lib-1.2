@@ -123,20 +123,20 @@ xineplug_vo_out_xcbxv_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) $(XCB
 xineplug_vo_out_xcbxv_la_CFLAGS = $(AM_CFLAGS) $(XCB_CFLAGS) $(XCBXV_CFLAGS)
 
 xineplug_vo_out_xshm_la_SOURCES = video_out_xshm.c $(X11OSD)
-xineplug_vo_out_xshm_la_LIBADD = libyuv2rgb.la $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) $(AVUTIL_LIBS)
+xineplug_vo_out_xshm_la_LIBADD = libyuv2rgb.la $(XINE_LIB) $(X_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) $(AVUTIL_LIBS)
 xineplug_vo_out_xshm_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) $(AVUTIL_CFLAGS) -fno-strict-aliasing
 
 xineplug_vo_out_xv_la_SOURCES = $(X11OSD) video_out_xv.c
-xineplug_vo_out_xv_la_LIBADD = $(XV_LIBS) $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
+xineplug_vo_out_xv_la_LIBADD = $(XINE_LIB) $(XV_LIBS) $(X_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_xv_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) $(XV_CFLAGS) -fno-strict-aliasing
 
 xineplug_vo_out_xvmc_la_SOURCES = video_out_xvmc.c
-xineplug_vo_out_xvmc_la_LIBADD = $(XVMC_LIBS) $(XV_LIBS) $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
+xineplug_vo_out_xvmc_la_LIBADD = $(XINE_LIB) $(XVMC_LIBS) $(XV_LIBS) $(X_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_xvmc_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) $(XV_CFLAGS)
 
 xineplug_vo_out_xxmc_la_SOURCES = $(X11OSD) video_out_xxmc.c\
 				xvmc_mocomp.c xvmc_vld.c xxmc.h
-xineplug_vo_out_xxmc_la_LIBADD = $(XXMC_LIBS) $(XV_LIBS) $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
+xineplug_vo_out_xxmc_la_LIBADD = $(XINE_LIB) $(XXMC_LIBS) $(XV_LIBS) $(X_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_xxmc_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) $(XV_CFLAGS) -fno-strict-aliasing
 
 xineplug_vo_out_opengl_la_SOURCES = video_out_opengl.c myglext.h $(X11OSD)
@@ -145,7 +145,7 @@ xineplug_vo_out_opengl_la_LIBADD = libyuv2rgb.la $(OPENGL_LIBS) $(GLUT_LIBS) \
 xineplug_vo_out_opengl_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) $(AVUTIL_CFLAGS) -fno-strict-aliasing
 
 xineplug_vo_out_syncfb_la_SOURCES = video_out_syncfb.c 
-xineplug_vo_out_syncfb_la_LIBADD = $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
+xineplug_vo_out_syncfb_la_LIBADD = $(XINE_LIB) $(X_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 
 xineplug_vo_out_pgx64_la_SOURCES = video_out_pgx64.c
 xineplug_vo_out_pgx64_la_LIBADD = $(XINE_LIB) $(X_LIBS) $(SUNDGA_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
@@ -158,7 +158,7 @@ xineplug_vo_out_pgx32_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS)
 xineplug_vo_out_pgx32_la_CPPFLAGS = $(AM_CPPFLAGS) $(SUNDGA_CPPFLAGS)
 
 xineplug_vo_out_vidix_la_SOURCES = video_out_vidix.c $(X11OSD)
-xineplug_vo_out_vidix_la_LIBADD =  $(XINE_LIB) $(X_LIBS) \
+xineplug_vo_out_vidix_la_LIBADD = $(XINE_LIB)  $(X_LIBS) \
 	$(top_builddir)/contrib/vidix/libvidix.la $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_vidix_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) -fno-strict-aliasing
 xineplug_vo_out_vidix_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_builddir)/contrib/vidix \
@@ -166,11 +166,11 @@ xineplug_vo_out_vidix_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_builddir)/contrib/vid
 
 
 xineplug_vo_out_aa_la_SOURCES =  video_out_aa.c
-xineplug_vo_out_aa_la_LIBADD = $(AALIB_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) $(AVUTIL_LIBS)
+xineplug_vo_out_aa_la_LIBADD = $(XINE_LIB) $(AALIB_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) $(AVUTIL_LIBS)
 xineplug_vo_out_aa_la_CFLAGS = $(AM_CFLAGS) $(AALIB_CFLAGS) $(AVUTIL_CFLAGS)
 
 xineplug_vo_out_caca_la_SOURCES = video_out_caca.c
-xineplug_vo_out_caca_la_LIBADD = libyuv2rgb.la $(CACA_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) $(AVUTIL_LIBS)
+xineplug_vo_out_caca_la_LIBADD = libyuv2rgb.la $(XINE_LIB) $(CACA_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) $(AVUTIL_LIBS)
 xineplug_vo_out_caca_la_CFLAGS = $(AM_CFLAGS) $(CACA_CFLAGS) $(AVUTIL_CFLAGS)
 
 xineplug_vo_out_fb_la_SOURCES = video_out_fb.c
@@ -186,7 +186,7 @@ xineplug_vo_out_xdirectfb_la_LIBADD = $(XINE_LIB) $(DIRECTFB_LIBS) $(X_LIBS) $(P
 xineplug_vo_out_xdirectfb_la_CFLAGS = $(AM_CFLAGS) $(DIRECTFB_CFLAGS) -fno-strict-aliasing -DDIRECTFB_X11
 
 xineplug_vo_out_sdl_la_SOURCES = video_out_sdl.c
-xineplug_vo_out_sdl_la_LIBADD = $(SDL_LIBS) $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
+xineplug_vo_out_sdl_la_LIBADD = $(XINE_LIB) $(SDL_LIBS) $(X_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_sdl_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) $(SDL_CFLAGS)
 
 xineplug_vo_out_stk_la_SOURCES = video_out_stk.c 
@@ -194,7 +194,7 @@ xineplug_vo_out_stk_la_LIBADD = $(XINE_LIB) $(LIBSTK_LIBS) $(PTHREAD_LIBS)
 xineplug_vo_out_stk_la_CFLAGS = $(AM_CFLAGS) $(LIBSTK_CFLAGS)
 
 xineplug_vo_out_directx_la_SOURCES = video_out_directx.c 
-xineplug_vo_out_directx_la_LIBADD = libyuv2rgb.la $(DIRECTX_VIDEO_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
+xineplug_vo_out_directx_la_LIBADD = libyuv2rgb.la $(XINE_LIB) $(DIRECTX_VIDEO_LIBS) $(PTHREAD_LIBS)
 xineplug_vo_out_directx_la_CPPFLAGS = $(AM_CPPFLAGS) $(DIRECTX_CPPFLAGS)
 
 xineplug_vo_out_none_la_SOURCES =  video_out_none.c

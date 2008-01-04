@@ -636,6 +636,18 @@ static int xv_get_property (vo_driver_t *this_gen, int property) {
     case VO_PROP_WINDOW_HEIGHT:
       this->props[property].value = this->sc.gui_height;
       break;
+    case VO_PROP_OUTPUT_WIDTH:
+      this->props[property].value = this->sc.output_width;
+      break;
+    case VO_PROP_OUTPUT_HEIGHT:
+      this->props[property].value = this->sc.output_height;
+      break;
+    case VO_PROP_OUTPUT_XOFFSET:
+      this->props[property].value = this->sc.output_xoffset;
+      break;
+    case VO_PROP_OUTPUT_YOFFSET:
+      this->props[property].value = this->sc.output_yoffset;
+      break;
   }
 
   lprintf(LOG_MODULE ": property #%d = %d\n", property, this->props[property].value);
@@ -1169,7 +1181,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   else
     xprintf(class->xine, XINE_VERBOSITY_LOG,
 	    _("%s: using Xv port %d from adaptor %s for hardware "
-	      "colorspace conversion and scaling.\n"), LOG_MODULE, xv_port,
+	      "colour space conversion and scaling.\n"), LOG_MODULE, xv_port,
             xcb_xv_adaptor_info_name(adaptor_it.data));
   
   this->xv_port           = xv_port;
@@ -1273,7 +1285,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 			       adaptor_it.data->base_id,
 			       "video.device.xv_autopaint_colorkey",
 			       _("autopaint colour key"),
-			       _("Make Xv autopaint its colorkey."));
+			       _("Make Xv autopaint its colour key."));
 
 	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_FILTER")) {
 	  int xv_filter;

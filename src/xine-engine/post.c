@@ -891,7 +891,7 @@ int _x_post_dispose(post_plugin_t *this) {
     /* since the plugin loader does not know, when the plugin gets disposed,
      * we have to handle the reference counter here */
     pthread_mutex_lock(&this->xine->plugin_catalog->lock);
-    ((plugin_node_t *)this->node)->ref--;
+    this->node->ref--;
     pthread_mutex_unlock(&this->xine->plugin_catalog->lock);
     
     return 1;

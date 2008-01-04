@@ -941,7 +941,7 @@ int _x_message(xine_stream_t *stream, int type, ...) {
   va_list                 ap;
   char                   *s, *params;
   char                   *args[1025];
-  static const char      *std_explanation[] = {
+  static const char *const std_explanation[] = {
     "",
     N_("Warning:"),
     N_("Unknown host:"),

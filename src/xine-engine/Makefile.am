@@ -25,7 +25,8 @@ libxine_la_SOURCES = xine.c metronom.c configfile.c buffer.c \
 	video_overlay.c osd.c spu.c scratch.c demux.c vo_scale.c \
 	xine_interface.c post.c broadcaster.c io_helper.c \
 	input_rip.c input_cache.c info_helper.c refcounter.c \
-	alphablend.c
+	alphablend.c \
+	load_plugins.h
 
 libxine_la_DEPENDENCIES = $(XINEUTILS_LIB) $(XDG_BASEDIR_DEPS) \
                           $(pthread_dep) $(LIBXINEPOSIX)

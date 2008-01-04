@@ -370,7 +370,7 @@ static void SavageSetColorKeyOld(void)
     blue = info->vidixcolorkey & 0x000000FF;
 
     if( !info->vidixcolorkey ) {
-      printf("SavageSetColorKey disabling colorkey\n");
+      printf("SavageSetColorKey disabling colour key\n");
       OUTREG( COL_CHROMA_KEY_CONTROL_REG, 0 );
       OUTREG( CHROMA_KEY_UPPER_BOUND_REG, 0 );
       OUTREG( BLEND_CONTROL_REG, 0 );
@@ -1134,13 +1134,13 @@ vixSetGrKeys (const vidix_grkey_t * grkey)
   {
     info->use_colorkey = 0;
     info->vidixcolorkey=0;
-    printf("[savage_vid] colorkeying disabled\n");
+    printf("[savage_vid] colour keying disabled\n");
   }
   else {
     info->use_colorkey = 1;
     info->vidixcolorkey = ((grkey->ckey.red<<16)|(grkey->ckey.green<<8)|grkey->ckey.blue);
 
-    printf("[savage_vid] set colorkey 0x%x\n",info->vidixcolorkey);
+    printf("[savage_vid] set colour key 0x%x\n",info->vidixcolorkey);
   }
 	//FIXME: freezes if streams arent enabled
   SavageSetColorKeyOld();

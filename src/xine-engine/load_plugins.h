@@ -1,42 +1,50 @@
 /*
  * Copyright (C) 2007 the xine project
- *
+ * 
  * This file is part of xine, a free video player.
- *
+ * 
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- *
+ * 
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
 
-#include <xine/xine_internal.h>
-#include "nsf_combined.h"
+/**
+ * @file
+ * @brief Internal functions related to the plugin catalog.
+ * 
+ * @internal This code should not be used by plugins or frontends, it's only
+ * used by the xine-engine.
+ */
 
-static const demuxer_info_t demux_info_nsf = {
-  10                       /* priority */
-};
+#ifndef __LOAD_PLUGINS_H__
+#define __LOAD_PLUGINS_H__
 
-static const uint32_t audio_types[] = { 
-  BUF_AUDIO_NSF,
-  0
-};
+#include <xine.h>
 
-static const decoder_info_t decoder_info_nsf = {
-  audio_types,         /* supported types */
-  5                    /* priority        */
-};
+/*
+ * load plugins into catalog
+ *
+ * all input+demux plugins will be fully loaded+initialized
+ * decoder plugins are loaded on demand
+ * video/audio output plugins have special load/probe functions
+ */
+void _x_scan_plugins (xine_t *this);
 
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  { PLUGIN_DEMUX, 27, "nsfdemux", XINE_VERSION_CODE, &demux_info_nsf, demux_nsf_init_plugin },
-  { PLUGIN_AUDIO_DECODER, 16, "nsfdec", XINE_VERSION_CODE, &decoder_info_nsf, decoder_nsf_init_plugin },
-  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
-};
+
+/*
+ * dispose all currently loaded plugins (shutdown)
+ */
+
+void _x_dispose_plugins (xine_t *this);
+
+#endif

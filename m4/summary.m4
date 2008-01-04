@@ -24,7 +24,8 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     else
         echo "   - dvd (internal libs)"
     fi
-    test x"$have_dvb" = x"yes"      && echo "   - dvb           - vdr"
+    test x"$enable_vdr" != x"no"    && echo "   - vdr"
+    test x"$have_dvb" = x"yes"      && echo "   - dvb"
     test x"$have_gnomevfs" = x"yes" && echo "   - gnome-vfs"
     test x"$have_samba" = x"yes"    && echo "   - smb"
     test x"$have_v4l" = x"yes"      && echo "   - v4l"

@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
 
-#ifndef __POST_VDR_H
-#define __POST_VDR_H
+#ifndef __COMBINED_VDR_H
+#define __COMBINED_VDR_H
 
 
 
@@ -63,7 +63,7 @@ inline static int vdr_is_vdr_stream(xine_stream_t *stream)
   }
 
   if (stream->input_plugin->input_class->identifier &&
-      strcmp(stream->input_plugin->input_class->identifier, "VDR"))
+      0 == strcmp(stream->input_plugin->input_class->identifier, "VDR"))
     return 1;
 
   return 0;
@@ -72,10 +72,11 @@ inline static int vdr_is_vdr_stream(xine_stream_t *stream)
 
 
 /* plugin class initialization function */
-void *vdr_video_init_plugin(xine_t *xine, void *);
-void *vdr_audio_init_plugin(xine_t *xine, void *);
+void *vdr_input_init_plugin(xine_t *xine, void *data);
+void *vdr_video_init_plugin(xine_t *xine, void *data);
+void *vdr_audio_init_plugin(xine_t *xine, void *data);
 
 
 
-#endif /* __POST_VDR_H */
+#endif /* __COMBINED_VDR_H */
 

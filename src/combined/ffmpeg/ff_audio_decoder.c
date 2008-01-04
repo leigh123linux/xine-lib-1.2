@@ -428,7 +428,7 @@ void *init_audio_plugin (xine_t *xine, void *data) {
   return this;
 }
 
-static uint32_t supported_audio_types[] = { 
+static const uint32_t supported_audio_types[] = { 
   BUF_AUDIO_WMAV1,
   BUF_AUDIO_WMAV2,
   BUF_AUDIO_14_4,

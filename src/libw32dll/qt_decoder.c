@@ -589,7 +589,7 @@ static void *qta_init_class (xine_t *xine, void *data) {
   return this;
 }
 
-static uint32_t audio_types[] = { 
+static const uint32_t audio_types[] = { 
   BUF_AUDIO_QDESIGN1,
   BUF_AUDIO_QDESIGN2,
   BUF_AUDIO_QCLP,
@@ -1105,7 +1105,7 @@ static void *qtv_init_class (xine_t *xine, void *data) {
  * exported plugin catalog entry
  */
 
-static uint32_t qtv_supported_types[] = { BUF_VIDEO_SORENSON_V3, 0 };
+static const uint32_t qtv_supported_types[] = { BUF_VIDEO_SORENSON_V3, 0 };
 
 static const decoder_info_t qtv_dec_info = {
   qtv_supported_types,     /* supported types */

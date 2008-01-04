@@ -79,7 +79,7 @@ struct rtsp_s {
  * constants
  */
 
-const char rtsp_protocol_version[]="RTSP/1.0";
+static const char rtsp_protocol_version[]="RTSP/1.0";
 
 /* server states */
 #define RTSP_CONNECTED 1

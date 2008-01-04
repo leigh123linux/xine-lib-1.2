@@ -871,15 +871,14 @@ static void spudec_discover_clut(xine_t *xine, spudec_state_t *state, vo_overlay
   int n,i;
   rle_elem_t *rle;
 
-  int found[2][16];
+  int found[2][16] = { { 0, }, };
 
-  static clut_t text_clut[] = {
+  static const clut_t text_clut[] = {
   CLUT_Y_CR_CB_INIT(0x80, 0x90, 0x80),
   CLUT_Y_CR_CB_INIT(0x00, 0x90, 0x00),
   CLUT_Y_CR_CB_INIT(0xff, 0x90, 0x00)
   };
 
-  memset(found,0,sizeof(found));
   rle = ovl->rle;
 
   /* this seems to be a problem somewhere else,
@@ -1010,7 +1009,7 @@ int spudec_copy_nav_to_overlay(xine_t *xine, pci_t* nav_pci, uint32_t* clut,
 #endif
     for (i = 0;i < 4; i++) {
 #ifdef LOG_BUTTON
-      printf("libspudec:btn_coln = 0, hili_color = color\n");
+      printf("libspudec:btn_coln = 0, hili_color = colour\n");
 #endif
       overlay->hili_color[i] = overlay->color[i];
       overlay->hili_trans[i] = overlay->trans[i];

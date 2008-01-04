@@ -27,11 +27,7 @@
 #  include <iconv.h>
 #endif
 
-#ifdef XINE_COMPILE
-#  include "video_overlay.h"
-#else
-#  include <xine/video_overlay.h>
-#endif
+#include <xine/video_overlay.h>
 
 typedef struct osd_object_s osd_object_t;
 typedef struct osd_renderer_s osd_renderer_t;

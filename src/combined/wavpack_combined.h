@@ -20,7 +20,7 @@
  * xine interface to libwavpack by Diego Pettenò <flameeyes@gmail.com>
  */
 
-#include "os_types.h"
+#include <xine/os_types.h>
 #include "bswap.h"
 
 typedef struct {

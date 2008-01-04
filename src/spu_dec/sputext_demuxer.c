@@ -382,31 +382,6 @@ static subtitle_t *sub_read_line_subrip(demux_sputext_t *this,subtitle_t *curren
           } else
             temp_line[temp_index++]=*p;
           break;
-        case '{':
-#if 0 /* italic not implemented in renderer, ignore them for now */
-          if(!strncmp(p,"{\\i1}",5) && temp_index+3<SUB_BUFSIZE) {
-            temp_line[temp_index++]='<';
-            temp_line[temp_index++]='i';
-            temp_line[temp_index++]='>';
-#else
-          if(!strncmp(p,"{\\i1}",5)) {
-#endif
-            p+=4;
-          }
-#if 0 /* italic not implemented in renderer, ignore them for now */
-          else if(!strncmp(p,"{\\i0}",5) && temp_index+4<SUB_BUFSIZE) {
-            temp_line[temp_index++]='<';
-            temp_line[temp_index++]='/';
-            temp_line[temp_index++]='i';
-            temp_line[temp_index++]='>';
-#else
-          else if(!strncmp(p,"{\\i0}",5)) {
-#endif
-            p+=4;
-          }
-          else
-            temp_line[temp_index++]=*p;
-          break;
         case '\r': /* just ignore '\r's */
           break;
         case '\n':

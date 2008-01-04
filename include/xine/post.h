@@ -23,21 +23,17 @@
 #ifndef XINE_POST_H
 #define XINE_POST_H
 
+#include <xine.h>
+#include <xine/video_out.h>
+#include <xine/audio_out.h>
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+
 #ifdef XINE_COMPILE
-#  include "xine.h"
-#  include "video_out.h"
-#  include "audio_out.h"
-#  include "xine_internal.h"
-#  include "xineutils.h"
-#else
-#  include <xine.h>
-#  include <xine/video_out.h>
-#  include <xine/audio_out.h>
-#  include <xine/xine_internal.h>
-#  include <xine/xineutils.h>
+#  include <xine/plugin_catalog.h>
 #endif
 
-#define POST_PLUGIN_IFACE_VERSION 9
+#define POST_PLUGIN_IFACE_VERSION 10
 
 
 typedef struct post_class_s post_class_t;
@@ -119,8 +115,17 @@ struct post_plugin_s {
   const char        **input_ids;
   const char        **output_ids;
 
-  /* used by plugin loader */
-  void               *node;
+  /**
+   * @brief Pointer to the loaded plugin node.
+   *
+   * Used by the plugins loader. It's an opaque type when using the
+   * structure outside of xine's build.
+   */
+#ifdef XINE_COMPILE
+  plugin_node_t *node;
+#else
+  void *node;
+#endif
 
   /* has dispose been called */
   int                 dispose_pending;

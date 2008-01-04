@@ -116,7 +116,7 @@ static const post_info_t goom_special_info = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_POST | PLUGIN_MUST_PRELOAD, 9, "goom", XINE_VERSION_CODE, &goom_special_info, &goom_init_plugin },
+  { PLUGIN_POST | PLUGIN_MUST_PRELOAD, 10, "goom", XINE_VERSION_CODE, &goom_special_info, &goom_init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 
@@ -219,8 +219,8 @@ static void *goom_init_plugin(xine_t *xine, void *data)
 
   cfg->register_enum (cfg, "effects.goom.csc_method", 0,
                            goom_csc_methods,
-                           _("colorspace conversion method"),
-                           _("You can choose the colorspace conversion method used by goom.\n"
+                           _("colour space conversion method"),
+                           _("You can choose the colour space conversion method used by goom.\n"
 			     "The available selections should be self-explaining."),
 			   20, csc_method_changed_cb, this);
 

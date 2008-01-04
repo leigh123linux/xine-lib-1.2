@@ -200,7 +200,7 @@ gnomevfs_plugin_get_length (input_plugin_t *this_gen)
 static uint32_t
 gnomevfs_plugin_get_blocksize (input_plugin_t *this_gen)
 {
-	return 32 * 1024;
+	return 8 * 1024;
 }
 
 static const char*

@@ -72,7 +72,7 @@ typedef struct file_driver_s {
 	uint32_t       bits_per_sample;
 	uint32_t       bytes_per_frame;
 
-	char	      *fname;
+	const char    *fname;
 	int            fd;
 	size_t         bytes_written;
 	struct timeval endtime;

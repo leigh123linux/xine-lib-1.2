@@ -33,11 +33,7 @@ extern "C" {
 #include "config.h"
 #endif
 
-#ifdef XINE_COMPILE
-#  include "configfile.h"
-#else
-#  include <xine/configfile.h>
-#endif
+#include <xine/configfile.h>
 
 typedef struct {
   int x, y;
@@ -187,7 +183,7 @@ void _x_vo_scale_translate_gui2video(vo_scale_t *self,
  * Returns description of a given ratio code
  */
 
-char *_x_vo_scale_aspect_ratio_name(int a) XINE_PROTECTED;
+extern const char _x_vo_scale_aspect_ratio_name_table[][8] XINE_PROTECTED;
 
 /* 
  * initialize rescaling struct

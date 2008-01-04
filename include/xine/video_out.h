@@ -42,14 +42,12 @@ extern "C" {
 
 #include <pthread.h>
 
-#ifdef XINE_COMPILE
-#  include "xine.h"
-#  include "buffer.h"
-#else
-#  include <xine.h>
-#  include <xine/buffer.h>
-#endif
+#include <xine.h>
+#include <xine/buffer.h>
 
+#ifdef XINE_COMPILE
+#  include <xine/plugin_catalog.h>
+#endif
 
 typedef struct vo_frame_s vo_frame_t; 
 typedef struct vo_driver_s vo_driver_t;
@@ -249,7 +247,11 @@ struct xine_video_port_s {
 #define VO_PROP_WINDOW_HEIGHT         16 /* read-only */
 #define VO_PROP_BUFS_IN_FIFO          17 /* read-only */
 #define VO_PROP_NUM_STREAMS           18 /* read-only */
-#define VO_NUM_PROPERTIES             19
+#define VO_PROP_OUTPUT_WIDTH          19 /* read-only */
+#define VO_PROP_OUTPUT_HEIGHT         20 /* read-only */
+#define VO_PROP_OUTPUT_XOFFSET        21 /* read-only */
+#define VO_PROP_OUTPUT_YOFFSET        22 /* read-only */
+#define VO_NUM_PROPERTIES             23
 
 /* number of colors in the overlay palette. Currently limited to 256
    at most, because some alphablend functions use an 8-bit index into
@@ -359,7 +361,17 @@ struct vo_driver_s {
    */
   void (*dispose) (vo_driver_t *self);
   
-  void *node; /* needed by plugin_loader */
+  /**
+   * @brief Pointer to the loaded plugin node.
+   *
+   * Used by the plugins loader. It's an opaque type when using the
+   * structure outside of xine's build.
+   */
+#ifdef XINE_COMPILE
+  plugin_node_t *node;
+#else
+  void *node;
+#endif
 };
 
 struct video_driver_class_s {

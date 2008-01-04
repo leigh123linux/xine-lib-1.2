@@ -312,7 +312,7 @@ static void *init_plugin (xine_t *xine, void *data) {
  * this decoder is able to handle. Check src/xine-engine/buffer.h for a
  * list of valid buffer types (and add a new one if the one you need does
  * not exist). Terminate the list with a 0. */
-static uint32_t audio_types[] = { 
+static const uint32_t audio_types[] = { 
   /* BUF_AUDIO_FOO, */
   0
 };

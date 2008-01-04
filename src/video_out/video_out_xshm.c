@@ -809,6 +809,14 @@ static int xshm_get_property (vo_driver_t *this_gen, int property) {
     return this->sc.gui_width;
   case VO_PROP_WINDOW_HEIGHT:
     return this->sc.gui_height;
+  case VO_PROP_OUTPUT_WIDTH:
+    return this->cur_frame->sc.output_width;
+  case VO_PROP_OUTPUT_HEIGHT:
+    return this->cur_frame->sc.output_height;
+  case VO_PROP_OUTPUT_XOFFSET:
+    return this->cur_frame->sc.output_xoffset;
+  case VO_PROP_OUTPUT_YOFFSET:
+    return this->cur_frame->sc.output_yoffset;
   default:
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
 	    LOG_MODULE ": tried to get unsupported property %d\n", property);
@@ -827,7 +835,7 @@ static int xshm_set_property (vo_driver_t *this_gen,
       value = XINE_VO_ASPECT_AUTO;
     this->sc.user_ratio = value;
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
-	    LOG_MODULE ": aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name(value));
+	    LOG_MODULE ": aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name_table[value]);
 
   } else if (property == VO_PROP_BRIGHTNESS) {
 
@@ -1035,7 +1043,7 @@ static int ImlibPaletteLUTGet(xshm_driver_t *this) {
 }
 
 
-static char *visual_class_name(Visual *visual) {
+static const char *visual_class_name(Visual *visual) {
 
   switch (visual->class) {
   case StaticGray:

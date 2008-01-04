@@ -1647,7 +1647,7 @@ static void *init_audio_decoder_class (xine_t *xine, void *data) {
  * exported plugin catalog entry
  */
 
-static uint32_t video_types[] = { 
+static const uint32_t video_types[] = { 
   BUF_VIDEO_MSMPEG4_V1, BUF_VIDEO_MSMPEG4_V2, BUF_VIDEO_MSMPEG4_V3,
   BUF_VIDEO_IV50, BUF_VIDEO_IV41, BUF_VIDEO_IV32, BUF_VIDEO_IV31,
   BUF_VIDEO_CINEPAK, /* BUF_VIDEO_ATIVCR1, */
@@ -1663,7 +1663,7 @@ static const decoder_info_t dec_info_video = {
   1                    /* priority        */
 };
 
-static uint32_t audio_types[] = { 
+static const uint32_t audio_types[] = { 
   BUF_AUDIO_WMAV1, BUF_AUDIO_WMAV2, BUF_AUDIO_WMAV3, BUF_AUDIO_MSADPCM, 
   BUF_AUDIO_MSIMAADPCM, BUF_AUDIO_MSGSM, BUF_AUDIO_IMC, BUF_AUDIO_LH,
   BUF_AUDIO_VOXWARE, BUF_AUDIO_ACELPNET, BUF_AUDIO_VIVOG723, BUF_AUDIO_WMAV,

@@ -367,7 +367,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 }
 
 /* plugin catalog information */
-static uint32_t supported_types[] = { BUF_SPU_DVD, 0 };
+static const uint32_t supported_types[] = { BUF_SPU_DVD, 0 };
 
 static const decoder_info_t dec_info_data = {
   supported_types,     /* supported types */

@@ -1143,7 +1143,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
             trak_atom[atom_pos + 0x1],
             trak_atom[atom_pos + 0x2],
             trak_atom[atom_pos + 0x3]);
-          debug_atom_load("      %d RGB colors\n",
+          debug_atom_load("      %d RGB colours\n",
             trak->stsd_atoms[k].video.palette_count);
           for (j = 0; j < trak->stsd_atoms[k].video.palette_count;
                j++)

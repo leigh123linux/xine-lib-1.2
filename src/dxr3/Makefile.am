@@ -44,4 +44,4 @@ xineplug_vo_out_dxr3_la_SOURCES = \
 	video_out_dxr3.c 
 
 xineplug_vo_out_dxr3_la_CFLAGS = $(AM_CFLAGS) $(AVUTIL_CFLAGS)
-xineplug_vo_out_dxr3_la_LIBADD = $(link_fame) $(link_rte) $(link_x_libs) $(XINE_LIB) $(LTLIBINTL) $(DYNAMIC_LD_LIBS) $(AVUTIL_LIBS) -lm
+xineplug_vo_out_dxr3_la_LIBADD = $(XINE_LIB) $(link_fame) $(link_rte) $(link_x_libs) $(LTLIBINTL) $(DYNAMIC_LD_LIBS) $(AVUTIL_LIBS) -lm

@@ -23,13 +23,8 @@
 #ifndef _PLUGIN_CATALOG_H
 #define _PLUGIN_CATALOG_H
 
-#ifdef XINE_COMPILE
-#  include "xine_plugin.h"
-#  include "xineutils.h"
-#else
-#  include <xine/xine_plugin.h>
-#  include <xine/xineutils.h>
-#endif
+#include <xine/xine_plugin.h>
+#include <xine/xineutils.h>
 
 #define DECODER_MAX 128
 #define PLUGIN_MAX  256
@@ -75,21 +70,5 @@ struct plugin_catalog_s {
   int              decoder_count;
 };
 typedef struct plugin_catalog_s plugin_catalog_t;
-
-/*
- * load plugins into catalog
- *
- * all input+demux plugins will be fully loaded+initialized
- * decoder plugins are loaded on demand
- * video/audio output plugins have special load/probe functions
- */
-void _x_scan_plugins (xine_t *this) XINE_PROTECTED;
-
-
-/*
- * dispose all currently loaded plugins (shutdown)
- */
-
-void _x_dispose_plugins (xine_t *this) XINE_PROTECTED;
 
 #endif

@@ -29,11 +29,7 @@ extern "C" {
 
 #include <pthread.h>
 
-#ifdef XINE_COMPILE
-#  include "xine.h"
-#else
-#  include <xine.h>
-#endif
+#include <xine.h>
 
 #define CONFIG_FILE_VERSION 2
 

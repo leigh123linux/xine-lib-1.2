@@ -10,6 +10,7 @@ xine-lib-*.tar.bz2
 *.lo
 *.la
 *.so
+*.loT
 .libs
 .deps/*
 .depend

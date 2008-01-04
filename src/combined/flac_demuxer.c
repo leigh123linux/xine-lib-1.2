@@ -53,7 +53,7 @@
 
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
-#include "../demuxers/demux.h"
+#include <xine/demux.h>
 
 #ifndef LEGACY_FLAC
 # define FLAC__SeekableStreamDecoder FLAC__StreamDecoder

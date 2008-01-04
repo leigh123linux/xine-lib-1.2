@@ -88,13 +88,13 @@ static void video_frame_format_change_callback (void *user_data, const xine_even
 
 
 static void update_font_size (spucmml_decoder_t *this) {
-  static int sizes[SUBTITLE_SIZE_NUM][4] = {
+  static const int sizes[SUBTITLE_SIZE_NUM][4] = {
     { 16, 16, 16, 20 }, /* SUBTITLE_SIZE_SMALL  */
     { 16, 16, 20, 24 }, /* SUBTITLE_SIZE_NORMAL */
     { 16, 20, 24, 32 }, /* SUBTITLE_SIZE_LARGE  */
   };
 
-  int *vec = sizes[this->subtitle_size];
+  const int *vec = sizes[this->subtitle_size];
   int  y;
 
   if( this->cached_width >= 512 )
@@ -522,7 +522,7 @@ static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
 
 
 /* plugin catalog information */
-static uint32_t supported_types[] = { BUF_SPU_CMML, 0 };
+static const uint32_t supported_types[] = { BUF_SPU_CMML, 0 };
 
 static const decoder_info_t spudec_info = {
   supported_types,     /* supported types */

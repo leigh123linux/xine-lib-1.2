@@ -8,4 +8,4 @@ xineinclude_HEADERS = version.h buffer.h metronom.h configfile.h vo_scale.h \
 	io_helper.h broadcaster.h info_helper.h refcounter.h alphablend.h \
 	demux.h input_plugin.h attributes.h compat.h xine_buffer.h \
 	xineutils.h xmllexer.h xmlparser.h list.h array.h sorted_array.h \
-	pool.h ring_buffer.h
+	pool.h ring_buffer.h os_types.h vdr.h

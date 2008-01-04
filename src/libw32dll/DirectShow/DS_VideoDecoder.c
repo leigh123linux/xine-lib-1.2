@@ -570,7 +570,7 @@ int DS_VideoDecoder_SetDestFmt(DS_VideoDecoder *this, int bits, unsigned int csp
     if (result != 0)
     {
 	if (csp)
-	    printf("Warning: unsupported color space\n");
+	    printf("Warning: unsupported colour space\n");
 	else
 	    printf("Warning: unsupported bit depth\n");
 

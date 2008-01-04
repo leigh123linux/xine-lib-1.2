@@ -41,9 +41,29 @@
 #define SUB_MAX_TEXT  5      /* lines */
 #define SUB_BUFSIZE   256    /* chars per line */
 
+/* alignment in SSA codes */
+#define ALIGN_LEFT    1
+#define ALIGN_CENTER  2
+#define ALIGN_RIGHT   3
+#define ALIGN_BOTTOM  0
+#define ALIGN_TOP     4
+#define ALIGN_MIDDLE  8
+#define GET_X_ALIGNMENT(a) ((a) & 3)
+#define GET_Y_ALIGNMENT(a) ((a) - ((a) & 3))
+
+/* subtitles projection */
+/* for subrip file with SSA tags, those values are always correct.*/
+/* But for SSA files, those values are the default ones. we have */
+/* to use PlayResX and PlayResY defined in [Script Info] section. */
+/* not implemented yet... */
+#define SPU_PROJECTION_X  384
+#define SPU_PROJECTION_Y  288
+
+
+
 #define rgb2yuv(R,G,B) ((((((66*R+129*G+25*B+128)>>8)+16)<<8)|(((112*R-94*G-18*B+128)>>8)+128))<<8|(((-38*R-74*G+112*B+128)>>8)+128))
 
-static uint32_t sub_palette[22]={
+static const uint32_t sub_palette[22]={
 /* RED */
   rgb2yuv(0,0,0),
   rgb2yuv(0,0,0),
@@ -70,7 +90,7 @@ static uint32_t sub_palette[22]={
   rgb2yuv(0,170,255)
 };
 
-static uint8_t sub_trans[22]={
+static const uint8_t sub_trans[22]={
   0, 0, 3, 6, 8, 10, 12, 14, 15, 15, 15,
   0, 0, 3, 6, 8, 10, 12, 14, 15, 15, 15
 };
@@ -105,6 +125,15 @@ typedef struct sputext_class_s {
 
 } sputext_class_t;
 
+
+/* Convert subtiles coordinates in window coordinates. */
+/* (a, b) --> (x + a * dx, y + b * dy) */
+typedef struct video2wnd_s {
+  int x;
+  int y;
+  double dx;
+  double dy;
+} video2wnd_t;
 
 typedef struct sputext_decoder_s {
   spu_decoder_t      spu_decoder;
@@ -141,7 +170,9 @@ typedef struct sputext_decoder_s {
   int64_t            last_subtitle_end; /* no new subtitle before this vpts */
   int                unscaled;          /* use unscaled OSD */
   
+  int                last_y;            /* location of the previous subtitle */
   int                last_lines;        /* number of lines of the previous subtitle */
+  video2wnd_t        video2wnd;
 } sputext_decoder_t;
 
 static inline char *get_font (sputext_class_t *class)
@@ -156,8 +187,6 @@ static inline char *get_font (sputext_class_t *class)
 static void update_font_size (sputext_decoder_t *this, int force_update) {
   static int sizes[SUBTITLE_SIZE_NUM] = { 16, 20, 24, 32, 48, 64 };
 
-  int  y;
-
   if ((this->subtitle_size != this->class->subtitle_size) ||
       (this->vertical_offset != this->class->vertical_offset) ||
       force_update) {
@@ -170,21 +199,17 @@ static void update_font_size (sputext_decoder_t *this, int force_update) {
 
     this->line_height = this->font_size + 10;
 
-    y = this->height - (SUB_MAX_TEXT * this->line_height) - 5;
-
-    if(((y - this->class->vertical_offset) >= 0) && ((y - this->class->vertical_offset) <= this->height))
-      y -= this->class->vertical_offset;
-
+    /* Create a full-window OSD */
     if( this->osd )
       this->renderer->free_object (this->osd);
 
-    lprintf("new osd object, width %d, height %d*%d\n", this->width, SUB_MAX_TEXT, this->line_height);
     this->osd = this->renderer->new_object (this->renderer, 
                                             this->width,
-                                            SUB_MAX_TEXT * this->line_height);
+                                            this->height);
 
     this->renderer->set_font (this->osd, get_font (this->class), this->font_size);
-    this->renderer->set_position (this->osd, 0, y);
+
+    this->renderer->set_position (this->osd, 0, 0);
   }
 }
 
@@ -208,7 +233,7 @@ static void update_output_size (sputext_decoder_t *this) {
                                                              VO_PROP_WINDOW_HEIGHT) ||
         !this->img_duration || !this->osd ) {
 
-      int width = 0, height = 0; /* dummy */
+      int width = 0, height = 0;
         
       this->stream->video_out->status(this->stream->video_out, NULL,
                                       &width, &height, &this->img_duration );
@@ -220,8 +245,36 @@ static void update_output_size (sputext_decoder_t *this) {
                                                              VO_PROP_WINDOW_HEIGHT);
 
         if(!this->osd || (this->width && this->height)) {
+
+          /* in unscaled mode, we have to convert subtitle position in window coordinates. */
+          /* we have a scale factor because video may be zommed */
+          /* and a displacement factor because video may have blacks lines. */
+          int output_width, output_height, output_xoffset, output_yoffset;
+
+          output_width = this->stream->video_out->get_property(this->stream->video_out, 
+                                                               VO_PROP_OUTPUT_WIDTH);
+          output_height = this->stream->video_out->get_property(this->stream->video_out, 
+                                                                VO_PROP_OUTPUT_HEIGHT);
+          output_xoffset = this->stream->video_out->get_property(this->stream->video_out, 
+                                                                 VO_PROP_OUTPUT_XOFFSET);
+          output_yoffset = this->stream->video_out->get_property(this->stream->video_out, 
+                                                                 VO_PROP_OUTPUT_YOFFSET);
+
+          /* driver don't seen to be capable to give us those values */
+          /* fallback to a default full-window values */
+          if (output_width <= 0 || output_height <= 0) {
+            output_width = this->width;
+            output_height = this->height;
+            output_xoffset = 0;
+            output_yoffset = 0;
+          }
+
+          this->video2wnd.x = output_xoffset;
+          this->video2wnd.y = output_yoffset;
+          this->video2wnd.dx = (double)output_width / SPU_PROJECTION_X;
+          this->video2wnd.dy = (double)output_height / SPU_PROJECTION_Y;
+
           this->renderer = this->stream->osd_renderer;
-          
           update_font_size (this, 1);
         }
       }
@@ -238,6 +291,12 @@ static void update_output_size (sputext_decoder_t *this) {
       if(!this->osd || ( this->width && this->height)) {
         this->renderer = this->stream->osd_renderer;
         
+        /* in scaled mode, we have to convert subtitle position in film coordinates. */
+        this->video2wnd.x = 0;
+        this->video2wnd.y = 0;
+        this->video2wnd.dx = (double)this->width / SPU_PROJECTION_X;
+        this->video2wnd.dy = (double)this->height / SPU_PROJECTION_Y;
+
         update_font_size (this, 1);
       }
     }
@@ -271,7 +330,8 @@ static int parse_utf8_size(const void *buf)
 
 static int ogm_render_line_internal(sputext_decoder_t *this, int x, int y, const char *text, int render)
 {
-  int i = 0, w, dummy;
+  int i = 0, w, value;
+  char* end;
   char letter[5]={0, 0, 0, 0, 0};
   const char *encoding = this->buf_encoding ? this->buf_encoding
                                             : this->class->src_encoding;
@@ -279,55 +339,82 @@ static int ogm_render_line_internal(sputext_decoder_t *this, int x, int y, const
   size_t length = strlen (text);
 
   while (i <= length) {
-    switch (text[i]) {
-    case '<':
+
+    if (text[i] == '<') {
       if (!strncmp("<b>", text+i, 3)) {
 	/* enable Bold color */
 	if (render)
 	  this->current_osd_text = OSD_TEXT2;
 	i=i+3;
-	break;
+	continue;
       } else if (!strncmp("</b>", text+i, 4)) {
 	/* disable BOLD */
 	if (render)
 	  this->current_osd_text = OSD_TEXT1;
 	i=i+4;
-	break;
+	continue;
       } else if (!strncmp("<i>", text+i, 3)) {	
 	/* enable italics color */
 	if (render)
 	  this->current_osd_text = OSD_TEXT3;
 	i=i+3;
-	break;
+	continue;
       } else if (!strncmp("</i>", text+i, 4)) {
 	/* disable italics */
 	if (render)
 	  this->current_osd_text = OSD_TEXT1;
 	i=i+4;
-	break;
+	continue;
       } else if (!strncmp("<font>", text+i, 6)) {	
 	/*Do somethink to disable typing
 	  fixme - no teststreams*/
 	i=i+6;
-	break;
+	continue;
       } else if (!strncmp("</font>", text+i, 7)) {
 	/*Do somethink to enable typing
 	  fixme - no teststreams*/
 	i=i+7;
-	break;
-      } 
-    default:
-      shift = isutf8 ? parse_utf8_size (&text[i]) : 1;
-      memcpy(letter,&text[i],shift);
-      letter[shift]=0;
-      
-      if (render)
-	this->renderer->render_text(this->osd, x, y, letter, this->current_osd_text);
-      this->renderer->get_text_size(this->osd, letter, &w, &dummy);
-      x=x+w;
-      i+=shift;
+	continue;
+      }
     }
+    if (text[i] == '{') {
+
+      if (!strncmp("{\\", text+i, 2)) {
+
+        if (sscanf(text+i, "{\\b%d}", &value) == 1) {
+          if (render) {
+            if (value)
+              this->current_osd_text = OSD_TEXT2;
+            else
+              this->current_osd_text = OSD_TEXT1;
+          }
+        } else if (sscanf(text+i, "{\\i%d}", &value) == 1) {
+          if (render) {
+            if (value)
+              this->current_osd_text = OSD_TEXT3;
+            else
+              this->current_osd_text = OSD_TEXT1;
+          }
+        }
+        end = strstr(text+i+2, "}");
+        if (end) {
+          i=end-text+1;
+          continue;
+        }
+      }
+    }
+
+    shift = isutf8 ? parse_utf8_size (&text[i]) : 1;
+    memcpy(letter,&text[i],shift);
+    letter[shift]=0;
+      
+    if (render)
+      this->renderer->render_text(this->osd, x, y, letter, this->current_osd_text);
+    this->renderer->get_text_size(this->osd, letter, &w, &value);
+    x=x+w;
+    i+=shift;
   }
+
   return x;
 }
 
@@ -339,15 +426,102 @@ static inline void ogm_render_line(sputext_decoder_t *this, int x, int y, char* 
   ogm_render_line_internal (this, x, y, text, 1);
 }
 
+/* read SSA tags at begening of text. Suported tags are :          */
+/* \a   : alignment in SSA code (see #defines)                     */
+/* \an  : alignment in 'numpad code'                               */
+/* \pos : absolute position of subtitles. Alignment define origin. */
+static void read_ssa_tag(sputext_decoder_t *this, const char* text, 
+                         int* alignment, int* sub_x, int* sub_y, int* max_width) {
+
+  int in_tag = 0;
+
+  (*alignment) = 2;
+  (*sub_x) = -1;
+  (*sub_y) = -1;
+
+  while (*text) {
+
+    /* wait for tag begin, allow space and tab */
+    if (in_tag == 0) {
+      if (*text == '{') in_tag = 1;
+      else if ((*text != ' ') && (*text != '\t')) break;
+
+    /* parse SSA command */
+    } else {
+      if (*text == '\\') {
+        if (sscanf(text, "\\pos(%d,%d)", sub_x, sub_y) == 2) {
+          text += 8; /* just for speed up, 8 is the minimal with */
+        }
+
+        if (sscanf(text, "\\a%d", alignment) == 1) {
+           text += 2;
+        }
+
+        if (sscanf(text, "\\an%d", alignment) == 1) {
+          text += 3;
+          if ((*alignment) > 6) (*alignment) = (*alignment) - 2;
+          else if ((*alignment) > 3) (*alignment) = (*alignment) + 5;
+        }
+      }
+
+      if (*text == '}') in_tag = 0;
+    }
+   
+    text++;
+  }
+
+
+  /* check alignment validity */
+  if ((*alignment) < 1 || (*alignment) > 11) {
+    (*alignment) = 2;
+  }
+
+  /* convert to window coordinates */
+  if ((*sub_x) >= 0 && (*sub_y) >= 0) {
+    (*sub_x) = this->video2wnd.x + this->video2wnd.dx * (*sub_x);
+    (*sub_y) = this->video2wnd.y + this->video2wnd.dy * (*sub_y);
+  }  
+
+  /* check validity, compute max width */
+  if ( (*sub_x) < 0 || (*sub_x) >= this->width ||
+       (*sub_y) < 0 || (*sub_y) >= this->height  ) {
+    (*sub_x) = -1;
+    (*sub_y) = -1;
+    (*max_width) = this->width;
+  } else {
+    switch (GET_X_ALIGNMENT(*alignment)) {
+    case ALIGN_LEFT:
+      (*max_width) = this->width - (*sub_x);
+      break;
+    case ALIGN_CENTER:
+      (*max_width) = this->width;
+      break;
+    case ALIGN_RIGHT:
+      (*max_width) = (*sub_x);
+      break;
+    }
+  }
+
+  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+          "libsputext: position : (%d, %d), max width : %d, alignment : %d\n",
+          (*sub_x), (*sub_y), (*max_width), (*alignment));
+}
+
 static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t sub_end ) {
   
   int line, y;
   int font_size;
   char *font;
+  int sub_x, sub_y, max_width;
+  int alignment;
+  int rebuild_all;
+
 
   _x_assert(this->renderer != NULL);
   if ( ! this->renderer )
     return;
+
+  read_ssa_tag(this, this->text[0], &alignment, &sub_x, &sub_y, &max_width);
 
   update_font_size(this, 0);
   
@@ -364,178 +538,181 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
   else
     this->renderer->set_encoding(this->osd, this->class->src_encoding);
 
-  for (line = 0; line < this->lines; line++) /* first, check lenghts and word-wrap if needed */
-  {
-    int w;
-    w = ogm_get_width( this, this->text[line]);
-    if( w > this->width ) { /* line is too long */
-      int chunks=(int)(w/this->width)+(w%this->width?1:0);
-      if( this->lines+chunks <= SUB_MAX_TEXT && chunks>1 ) { /* try adding newlines while keeping existing ones */
-        int a;
-        xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,"Partial subtitle line splitting in %i chunks\n",chunks);
-        for(a=this->lines-1;a>=0;a--) {
-          if(a>line) /* lines after the too-long one */
-            memcpy(this->text[a+chunks-1],this->text[a],SUB_BUFSIZE);
-          else if(a==line) { /* line to be splitted */
-            int b,len=strlen(this->text[line]);
-            char *p=this->text[line];
-            for(b=0;b<chunks;b++) {
-              char *c;
-              if(b==chunks-1) { /* if we are reading the last chunk, copy it completly */
-                strncpy(this->text[line+b],p,SUB_BUFSIZE);
-                this->text[line+b][SUB_BUFSIZE - 1] = '\0';
-              } else {
-                for(c=p+(int)(len/chunks)+(len%chunks?1:0);*c!=' ' && c>p && c!='\0';c--);
-                if(*c==' ') {
-                  *c='\0';
-                  if(b) { /* we are reading something that has to be moved to another line */
-                    strncpy(this->text[line+b],p,SUB_BUFSIZE);
-                    this->text[line+b][SUB_BUFSIZE - 1] = '\0';
-                  }
-                  p=c+1;
-                }
-              }
-            }
-          }
-        }
-        this->lines+=chunks-1;
-      } else { /* regenerate all the lines to find something that better fits */
-        char buf[SUB_BUFSIZE*SUB_MAX_TEXT];
-        int a,w,chunks;
-        buf[0]='\0';
-        for(a=0;a<this->lines;a++) {
-          if(a) {
-            int len=strlen(buf);
-            buf[len]=' ';
-            buf[len+1]='\0';
-          }
-          strcat(buf,this->text[a]);
-        }
-        w = ogm_get_width( this, buf);
-        chunks=(int)(w/this->width)+(w%this->width?1:0);
-        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "Complete subtitle line splitting in %i chunks\n",chunks);
-        if(chunks<=SUB_MAX_TEXT) {/* if the length is over than SUB_MAX_TEXT*this->width nothing can be done */
-          int b,len=strlen(buf);
-          char *p=buf;
-          for(b=0;b<chunks;b++) {
-            char *c;
-            if(b==chunks-1) { /* if we are reading the last chunk, copy it completly */
-              strncpy(this->text[b],p,SUB_BUFSIZE);
-              this->text[b][SUB_BUFSIZE - 1] = '\0';
-            } else {
-              for(c=p+(int)(len/chunks)+(len%chunks?1:0);*c!=' ' && c>p && c!='\0';c--);
-              if(*c==' ') {
-                *c='\0';
-                strncpy(this->text[b],p,SUB_BUFSIZE);
-                this->text[b][SUB_BUFSIZE - 1] = '\0';
-                p=c+1;
-              }
-            }
-          }
-          this->lines=chunks;
-        } else
-          xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "Subtitle too long to be splited\n");
-        line=this->lines;
+
+  rebuild_all = 0;
+  for (line = 0; line < this->lines; line++) {
+    int line_width = ogm_get_width(this, this->text[line]);
+
+    /* line too long */
+    if (line_width > max_width) {
+      char *current_cut, *best_cut;
+      int a;
+
+      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+              "libsputext: Line too long: %d > %d, split at max size.\n", 
+              line_width, max_width);
+
+      /* can't fit with keeping existing lines */
+      if (this->lines + 1 > SUB_MAX_TEXT) {
+        xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+                "libsputext: Can't fit with keeping existing line, we have to rebuild all the subtitle\n");
+        rebuild_all = 1;
+        break;
       }
+
+      /* find the longest sequence witch fit */
+      line_width = 0;
+      current_cut = this->text[line];
+      best_cut = NULL;
+      while (line_width < max_width) {
+        while (*current_cut && *current_cut != ' ') current_cut++;
+        if (*current_cut == ' ') {
+          *current_cut = 0;
+          line_width = ogm_get_width(this, this->text[line]);
+          *current_cut = ' ';
+          if (line_width < max_width) best_cut = current_cut;
+          current_cut++;
+        } else {
+          break; /* end of line */
+        }
+      }
+
+      if (best_cut == NULL) {
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+                 "libsputext: Can't wrap line: a word is too long, abort.\n");
+        break;
+      }
+
+      /* move other lines */
+      for (a = this->lines - 1; a > line; a--)
+        memcpy(this->text[a + 1], this->text[a], SUB_BUFSIZE);
+
+      /* split current one */
+      strncpy(this->text[line + 1], best_cut + 1, SUB_BUFSIZE);
+      *best_cut = 0;
+
+      this->lines = this->lines + 1;
     }
   }
 
-  font_size = this->font_size;
-  if (this->buf_encoding)
-    this->renderer->set_encoding(this->osd, this->buf_encoding);
-  else
-    this->renderer->set_encoding(this->osd, this->class->src_encoding);
+  /* regenerate all the lines to find something that better fits */
+  if (rebuild_all) {
+    int line, line_width;
+    char *stream, *current_cut, *best_cut;
+    char buf[SUB_BUFSIZE * SUB_MAX_TEXT];
 
-  for (line = 0; line < this->lines; line++) /* first, check lenghts and word-wrap if needed */
-  {
-    int w;
-    w = ogm_get_width( this, this->text[line]);
-    if( w > this->width ) { /* line is too long */
-      int chunks=(int)(w/this->width)+(w%this->width?1:0);
-      if( this->lines+chunks <= SUB_MAX_TEXT && chunks>1 ) { /* try adding newlines while keeping existing ones */
-        int a;
-        xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,"Partial subtitle line splitting in %i chunks\n",chunks);
-        for(a=this->lines-1;a>=0;a--) {
-          if(a>line) /* lines after the too-long one */
-            memcpy(this->text[a+chunks-1],this->text[a],SUB_BUFSIZE);
-          else if(a==line) { /* line to be splitted */
-            int b,len=strlen(this->text[line]);
-            char *p=this->text[line];
-            for(b=0;b<chunks;b++) {
-              char *c;
-              if(b==chunks-1) { /* if we are reading the last chunk, copy it completly */
-                strncpy(this->text[line+b],p,SUB_BUFSIZE);
-                this->text[line+b][SUB_BUFSIZE - 1] = '\0';
-              } else {
-                for(c=p+(int)(len/chunks)+(len%chunks?1:0);*c!=' ' && c>p && c!='\0';c--);
-                if(*c==' ') {
-                  *c='\0';
-                  if(b) { /* we are reading something that has to be moved to another line */
-                    strncpy(this->text[line+b],p,SUB_BUFSIZE);
-                    this->text[line+b][SUB_BUFSIZE - 1] = '\0';
-                  }
-                  p=c+1;
-                }
-              }
-            }
-          }
-        }
-        this->lines+=chunks-1;
-      } else { /* regenerate all the lines to find something that better fits */
-        char buf[SUB_BUFSIZE*SUB_MAX_TEXT];
-        int a,w,chunks;
-        buf[0]='\0';
-        for(a=0;a<this->lines;a++) {
-          if(a) {
-            int len=strlen(buf);
-            buf[len]=' ';
-            buf[len+1]='\0';
-          }
-          strcat(buf,this->text[a]);
-        }
-        w = ogm_get_width( this, buf);
-        chunks=(int)(w/this->width)+(w%this->width?1:0);
-        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "Complete subtitle line splitting in %i chunks\n",chunks);
-        if(chunks<=SUB_MAX_TEXT) {/* if the length is over than SUB_MAX_TEXT*this->width nothing can be done */
-          int b,len=strlen(buf);
-          char *p=buf;
-          for(b=0;b<chunks;b++) {
-            char *c;
-            if(b==chunks-1) { /* if we are reading the last chunk, copy it completly */
-              strncpy(this->text[b],p,SUB_BUFSIZE);
-              this->text[b][SUB_BUFSIZE - 1] = '\0';
-            } else {
-              for(c=p+(int)(len/chunks)+(len%chunks?1:0);*c!=' ' && c>p && c!='\0';c--);
-              if(*c==' ') {
-                *c='\0';
-                strncpy(this->text[b],p,SUB_BUFSIZE);
-                this->text[b][SUB_BUFSIZE - 1] = '\0';
-                p=c+1;
-              }
-            }
-          }
-          this->lines=chunks;
-        } else
-          xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "Subtitle too long to be splited\n");
-        line=this->lines;
+    buf[0] = 0;
+    for(line = 0; line < this->lines; line++) {
+      int len = strlen(buf);
+      if (len) {
+        buf[len] = ' ';
+        len++;
       }
+      strncpy(buf + len, this->text[line], SUB_BUFSIZE);
+      *(buf + len + SUB_BUFSIZE) = 0;
     }
+
+    stream = buf;
+    this->lines = 0;
+
+    do {
+
+      if (this->lines + 1 < SUB_MAX_TEXT) {
+      
+        /* find the longest sequence witch fit */
+        line_width = 0;
+        current_cut = stream;
+        best_cut = NULL;
+        while (line_width < max_width) {
+          while (*current_cut && *current_cut != ' ') current_cut++;
+          if (*current_cut == ' ') {
+            *current_cut = 0;
+            line_width = ogm_get_width(this, stream);
+            *current_cut = ' ';
+            if (line_width < max_width) best_cut = current_cut;
+            current_cut++;
+          } else {
+            line_width = ogm_get_width(this, stream);
+            if (line_width < max_width) best_cut = current_cut;
+            break; /* end of line */
+          }
+        }
+      }
+      
+      /* line maybe too long, but we have reached last subtitle line */
+      else {
+        best_cut = current_cut = stream + strlen(stream);
+      }
+
+      /* copy current line */
+      if (best_cut != NULL) *best_cut = 0;
+      strncpy(this->text[this->lines], stream, SUB_BUFSIZE);
+      this->lines = this->lines + 1;
+
+      stream = best_cut + 1;
+
+    } while (best_cut != current_cut);    
+
   }
 
-  if (this->last_lines)
-    this->renderer->filled_rect (this->osd, 0, this->line_height * (SUB_MAX_TEXT - this->last_lines),
-                                 this->width - 1, this->line_height * SUB_MAX_TEXT - 1, 0);
-  this->last_lines = this->lines;
-  y = (SUB_MAX_TEXT - this->lines) * this->line_height;
+
+  /* Erase subtitle : use last_y and last_lines saved last turn. */
+  if (this->last_lines) {
+    this->renderer->filled_rect (this->osd, 0, this->last_y,
+                                 this->width - 1, this->last_y + this->last_lines * this->line_height, 
+                                 0);
+  }
+
+  switch (GET_Y_ALIGNMENT(alignment)) {
+  case ALIGN_TOP:
+    if (sub_y >= 0) y = sub_y;
+    else y = 5;
+    break;
+
+  case ALIGN_MIDDLE:
+    if (sub_y >= 0) y = sub_y - (this->lines * this->line_height) / 2;
+    else y = (this->height - this->lines * this->line_height) / 2;
+    break;
+    
+  case ALIGN_BOTTOM:
+  default:
+    if (sub_y >= 0) y = sub_y - this->lines * this->line_height;
+    else y = this->height - this->lines * this->line_height - this->class->vertical_offset;
+    break;
+  }
+  if (y < 0 || y >= this->height) 
+    y = this->height - this->line_height * this->lines;
+
+  this->last_lines = this->lines;  
+  this->last_y = y;  
+
 
   for (line = 0; line < this->lines; line++) {
     int w, x;
           
     while(1) {
       w = ogm_get_width( this, this->text[line]);
-      x = (this->width - w) / 2;
-            
-      if( w > this->width && font_size > 16 ) {
+
+      switch (GET_X_ALIGNMENT(alignment)) {
+      case ALIGN_LEFT:
+        if (sub_x >= 0) x = sub_x;
+        else x = 5;
+        break;
+
+      case ALIGN_RIGHT:
+        if (sub_x >= 0) x = sub_x - w;
+        else x = max_width - w - 5;
+        break;
+        
+      case ALIGN_CENTER:
+      default:
+        if (sub_x >= 0) x = sub_x - w / 2;
+        else x = (max_width - w) / 2;
+        break;
+      }
+
+
+      if( w > max_width && font_size > 16 ) {
         font_size -= 4;
         this->renderer->set_font (this->osd, get_font (this->class), font_size);
       } else {
@@ -978,7 +1155,7 @@ static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
 
 
 /* plugin catalog information */
-static uint32_t supported_types[] = { BUF_SPU_TEXT, BUF_SPU_OGM, 0 };
+static const uint32_t supported_types[] = { BUF_SPU_TEXT, BUF_SPU_OGM, 0 };
 
 static const decoder_info_t spudec_info = {
   supported_types,     /* supported types */

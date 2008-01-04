@@ -208,13 +208,14 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
   static char *available_encoders[SUPPORTED_ENCODER_COUNT + 2];
   plugin_node_t *node;
 
+  static const char *const videoout_modes[] = {
+    "letterboxed tv", "widescreen tv",
 #ifdef HAVE_X11
-  static const char const *videoout_modes[] = { "letterboxed tv",      "widescreen tv",
-				    "letterboxed overlay", "widescreen overlay", NULL };
-#else
-  static const char const *videoout_modes[] = { "letterboxed tv", "widescreen tv", NULL };
+    "letterboxed overlay", "widescreen overlay",
 #endif
-  static const char const *tv_modes[] = { "ntsc", "pal", "pal60" , "default", NULL };
+    NULL
+  };
+  static const char *const tv_modes[] = { "ntsc", "pal", "pal60" , "default", NULL };
   int list_id, list_size;
   xine_sarray_t *plugin_list;
   
@@ -419,13 +420,13 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
       this->tv_switchable = 1;
       this->widescreen_enabled = confnum - 2;
       confstr = config->register_string(config, "dxr3.output.keycolor", "0x80a040",
-	_("overlay colorkey value"), _("Hexadecimal RGB value of the key color.\n"
+	_("overlay colour key value"), _("Hexadecimal RGB value of the key colour.\n"
 	"You can try different values, if you experience windows becoming transparent "
 	"when using DXR3 overlay mode."), 20, NULL, NULL);
       sscanf(confstr, "%x", &this->overlay.colorkey);
       confstr = config->register_string(config, "dxr3.output.keycolor_interval", "50.0",
-	_("overlay colorkey tolerance"), _("A greater value widens the tolerance for "
-	"the overlay keycolor.\nYou can try lower values, if you experience windows "
+	_("overlay colour key tolerance"), _("A greater value widens the tolerance for "
+	"the overlay key colour.\nYou can try lower values, if you experience windows "
 	"becoming transparent when using DXR3 overlay mode, but parts of the image borders may "
 	"disappear when using a too low setting."), 20, NULL, NULL);
       sscanf(confstr, "%f", &this->overlay.color_interval);
@@ -497,7 +498,7 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
     
     if (dxr3_overlay_set_keycolor(&this->overlay) != 0)
       xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
-	      "video_out_dxr3: setting the overlay keycolor failed.\n");
+	      "video_out_dxr3: setting the overlay key colour failed.\n");
     if (dxr3_overlay_set_attributes(&this->overlay) != 0)
       xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
 	      "video_out_dxr3: setting an overlay attribute failed.\n");

@@ -225,7 +225,7 @@ typedef struct {
   int32_t             region;
   int32_t             play_single_chapter;
 
-  char               *filelist[MAX_DIR_ENTRIES];
+  const char         *filelist[MAX_DIR_ENTRIES];
 
 } dvd_input_class_t;
 
@@ -332,7 +332,7 @@ static void send_mouse_enter_leave_event(dvd_input_plugin_t *this, int direction
     this->mouse_in = !this->mouse_in;
 
   if(direction != this->mouse_in) {
-    const xine_spu_button_t spu_event = {
+    xine_spu_button_t spu_event = {
       .direction = direction,
       .button    = this->mouse_buttonN
     };
@@ -1740,9 +1740,9 @@ static void *init_class (xine_t *xine, void *data) {
   dvd_input_class_t   *this;
   config_values_t     *config = xine->config;
   void                *dvdcss;
-  static const char   *skip_modes[] = {"skip program", "skip part", "skip title", NULL};
-  static const char   *seek_modes[] = {"seek in program chain", "seek in program", NULL};
-  static const char   *play_single_chapter_modes[] = {"entire dvd", "one chapter", NULL};
+  static const char *const skip_modes[] = {"skip program", "skip part", "skip title", NULL};
+  static const char *const seek_modes[] = {"seek in program chain", "seek in program", NULL};
+  static const char *const play_single_chapter_modes[] = {"entire dvd", "one chapter", NULL};
 
   trace_print("Called\n");
 #ifdef INPUT_DEBUG

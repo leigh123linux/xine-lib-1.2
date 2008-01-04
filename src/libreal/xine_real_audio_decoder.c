@@ -350,7 +350,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
   return 1;
 }
 
-static unsigned char sipr_swaps[38][2]={
+static const unsigned char sipr_swaps[38][2]={
     {0,63},{1,22},{2,44},{3,90},{5,81},{7,31},{8,86},{9,58},{10,36},{12,68},
     {13,39},{14,73},{15,53},{16,69},{17,57},{19,88},{20,34},{21,71},{24,46},
     {25,94},{26,54},{28,75},{29,50},{32,70},{33,92},{35,74},{38,85},{40,56},
@@ -603,7 +603,7 @@ void *init_realadec (xine_t *xine, void *data) {
  * exported plugin catalog entry
  */
 
-static uint32_t audio_types[] = { 
+static const uint32_t audio_types[] = { 
   BUF_AUDIO_COOK, BUF_AUDIO_ATRK, /* BUF_AUDIO_14_4, BUF_AUDIO_28_8, */ BUF_AUDIO_SIPRO, 0
  };
 

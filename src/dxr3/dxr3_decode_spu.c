@@ -64,7 +64,7 @@ static void   *dxr3_spudec_init_plugin(xine_t *xine, void *);
 
 
 /* plugin catalog information */
-static uint32_t supported_types[] = { BUF_SPU_DVD, 0 };
+static const uint32_t supported_types[] = { BUF_SPU_DVD, 0 };
 
 static const decoder_info_t dxr3_spudec_info = {
   supported_types,     /* supported types */
@@ -142,24 +142,6 @@ static int         dxr3_spudec_copy_nav_to_btn(dxr3_spudec_t *this, int32_t mode
 static inline void dxr3_swab_clut(int* clut);
 
 /* inline helper implementations */
-static inline int dxr3_present(xine_stream_t *stream)
-{
-  plugin_node_t *node;
-  video_driver_class_t *vo_class;
-  int present = 0;
-  
-  if (stream->video_driver && stream->video_driver->node) {
-    node = (plugin_node_t *)stream->video_driver->node;
-    if (node->plugin_class) {
-      vo_class = (video_driver_class_t *)node->plugin_class;
-      if (vo_class->identifier)
-        present = (strcmp(vo_class->identifier, DXR3_VO_ID) == 0);
-    }
-  }
-  llprintf(LOG_SPU, "dxr3 %s\n", present ? "present" : "not present");
-  return present;
-}
-
 static inline void dxr3_spudec_clear_nav_list(dxr3_spudec_t *this)
 {
   while (this->pci_cur.next) {

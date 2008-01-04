@@ -42,6 +42,8 @@
 
 #include <basedir.h>
 
+#include "load_plugins.h"
+
 #define LOG_MODULE "load_plugins"
 #define LOG_VERBOSE
 
@@ -1022,15 +1024,16 @@ static void load_plugin_list(FILE *fp, xine_sarray_t *plugins) {
           vo_info->visual_type = i;
         } else if( !strcmp("supported_types",line) && decoder_info ) {
           char *s;
+	  uint32_t *supported_types;
           
           for( s = value, i = 0; s && sscanf(s," %lu",&lu) > 0; i++ ) {
             s = strchr(s+1, ' ');
           }
-          decoder_info->supported_types = xine_xcalloc((i+1), sizeof(uint32_t));
-          for( s = value, i = 0; s && sscanf(s," %lu",&lu) > 0; i++ ) {
-            decoder_info->supported_types[i] = lu;
+          supported_types = xine_xcalloc((i+1), sizeof(uint32_t));
+          for( s = value, i = 0; s && sscanf(s," %"SCNu32,&supported_types[i]) > 0; i++ ) {
             s = strchr(s+1, ' ');
           }
+	  decoder_info->supported_types = supported_types;
         } else if( !strcmp("vo_priority",line) && vo_info ) {
           sscanf(value," %d",&i);
           vo_info->priority = i;
@@ -1253,12 +1256,11 @@ input_plugin_t *_x_find_input_plugin (xine_stream_t *stream, const char *mrl) {
 
 void _x_free_input_plugin (xine_stream_t *stream, input_plugin_t *input) {
   plugin_catalog_t *catalog = stream->xine->plugin_catalog;
-  plugin_node_t    *node = input->node;
 
   input->dispose(input);
-  if (node) {
+  if (input->node) {
     pthread_mutex_lock(&catalog->lock);
-    dec_node_ref(node);
+    dec_node_ref(input->node);
     pthread_mutex_unlock(&catalog->lock);
   }
 }
@@ -1475,12 +1477,11 @@ demux_plugin_t *_x_find_demux_plugin_last_probe(xine_stream_t *stream, const cha
 
 void _x_free_demux_plugin (xine_stream_t *stream, demux_plugin_t *demux) {
   plugin_catalog_t *catalog = stream->xine->plugin_catalog;
-  plugin_node_t    *node = demux->node;
 
   demux->dispose(demux);
-  if (node) {
+  if (demux->node) {
     pthread_mutex_lock(&catalog->lock);
-    dec_node_ref(node);
+    dec_node_ref(demux->node);
     pthread_mutex_unlock(&catalog->lock);
   }
 }
@@ -1658,7 +1659,7 @@ xine_video_port_t *xine_new_framegrab_video_port (xine_t *this) {
   xine_video_port_t  *port;
   vo_info_t          *vo_info;
   plugin_catalog_t   *catalog = this->plugin_catalog;
-  char               *id;
+  const char         *id;
   int                 list_id, list_size;
 
   driver = NULL;
@@ -1970,13 +1971,12 @@ video_decoder_t *_x_get_video_decoder (xine_stream_t *stream, uint8_t stream_typ
 
 void _x_free_video_decoder (xine_stream_t *stream, video_decoder_t *vd) {
   plugin_catalog_t *catalog = stream->xine->plugin_catalog;
-  plugin_node_t    *node = vd->node;
 
   vd->dispose (vd);
 
-  if (node) {
+  if (vd->node) {
     pthread_mutex_lock (&catalog->lock);
-    dec_node_ref(node);
+    dec_node_ref(vd->node);
     pthread_mutex_unlock (&catalog->lock);
   }
 }

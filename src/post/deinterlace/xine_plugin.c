@@ -47,7 +47,7 @@ static const post_info_t deinterlace_special_info = { XINE_POST_TYPE_VIDEO_FILTE
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_POST | PLUGIN_MUST_PRELOAD, 9, "tvtime", XINE_VERSION_CODE, &deinterlace_special_info, &deinterlace_init_plugin },
+  { PLUGIN_POST | PLUGIN_MUST_PRELOAD, 10, "tvtime", XINE_VERSION_CODE, &deinterlace_special_info, &deinterlace_init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 
@@ -234,7 +234,7 @@ static char * get_static_help (void) {
            "\n"
            "  Chroma_filter: DVD/MPEG2 use an interlaced image format that has "
            "a very poor vertical chroma resolution. Upsampling the chroma for purposes "
-           "of deinterlacing may cause some artifacts to occur (eg. color stripes). Use "
+           "of deinterlacing may cause some artifacts to occur (eg. colour stripes). Use "
            "this option to blur the chroma vertically after deinterlacing to remove "
            "the artifacts. Warning: cpu intensive.\n"
            "\n"

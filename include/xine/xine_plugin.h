@@ -50,7 +50,7 @@
 typedef struct {
   uint8_t                  type;                    /* one of the PLUGIN_* constants above     */
   uint8_t                  API;                     /* API version supported by this plugin    */
-  char                    *id;                      /* a name that identifies this plugin      */
+  const char              *id;                      /* a name that identifies this plugin      */
   uint32_t                 version;                 /* version number, increased every release */
   const void              *special_info;            /* plugin-type specific, see structs below */
   void                  *(*init)(xine_t *, void *); /* init the plugin class            */
@@ -70,7 +70,7 @@ typedef struct {
 
 /* special_info for a decoder plugin */
 typedef struct {
-  uint32_t          *supported_types;         /* streamtypes this decoder can handle       */
+  const uint32_t          *supported_types;         /* streamtypes this decoder can handle       */
   int                      priority;
 } decoder_info_t;
 

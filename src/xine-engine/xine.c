@@ -79,6 +79,8 @@
 #   include <winsock.h>
 #endif /* WIN32 */
 
+#include "load_plugins.h"
+
 
 static void mutex_cleanup (void *mutex) {
   pthread_mutex_unlock ((pthread_mutex_t *) mutex);
@@ -591,7 +593,7 @@ static int stream_rewire_video(xine_post_out_t *output, void *data)
   return 1;
 }
 
-void xine_dispose_internal (xine_stream_t *stream);
+static void xine_dispose_internal (xine_stream_t *stream);
 
 xine_stream_t *xine_stream_new (xine_t *this,
 				xine_audio_port_t *ao, xine_video_port_t *vo) {
@@ -820,7 +822,7 @@ void _x_flush_events_queues (xine_stream_t *stream) {
   pthread_mutex_unlock (&stream->event_queues_lock);
 }
 
-/*static*/ int open_internal (xine_stream_t *stream, const char *mrl) {
+static int open_internal (xine_stream_t *stream, const char *mrl) {
 
   const char *stream_setup = NULL;
   int no_cache = 0;
@@ -1445,7 +1447,7 @@ int xine_eject (xine_stream_t *stream) {
   return status;
 }
 
-void xine_dispose_internal (xine_stream_t *stream) {
+static void xine_dispose_internal (xine_stream_t *stream) {
 
   xine_list_iterator_t *ite;
 

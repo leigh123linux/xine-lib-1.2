@@ -1612,7 +1612,7 @@ static int opengl_set_property (vo_driver_t *this_gen,
     this->sc.force_redraw = 1;    /* trigger re-calc of output size */
 
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
-	    "video_out_opengl: aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name(value));
+	    "video_out_opengl: aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name_table[value]);
     break;
   case VO_PROP_BRIGHTNESS:
     this->yuv2rgb_brightness = value;

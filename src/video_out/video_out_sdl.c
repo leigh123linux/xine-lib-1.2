@@ -360,6 +360,14 @@ static int sdl_get_property (vo_driver_t *this_gen, int property) {
       return this->sc.gui_width;
     case VO_PROP_WINDOW_HEIGHT:
       return this->sc.gui_height;
+    case VO_PROP_OUTPUT_WIDTH:
+      return this->sc.output_width;
+    case VO_PROP_OUTPUT_HEIGHT:
+      return this->sc.output_height;
+    case VO_PROP_OUTPUT_XOFFSET:
+      return this->sc.output_xoffset;
+    case VO_PROP_OUTPUT_YOFFSET:
+      return this->sc.output_yoffset;
     case VO_PROP_ASPECT_RATIO:
     return this->sc.user_ratio;
   }
@@ -376,7 +384,7 @@ static int sdl_set_property (vo_driver_t *this_gen,
       value = XINE_VO_ASPECT_AUTO;
     this->sc.user_ratio = value;
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
-	    "video_out_sdl: aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name(value));
+	    "video_out_sdl: aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name_table[value]);
 
     sdl_compute_ideal_size (this);
     this->sc.force_redraw = 1;

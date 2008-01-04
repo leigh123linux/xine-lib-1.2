@@ -60,6 +60,8 @@ typedef struct ff_video_class_s {
 
   int                     pp_quality;
   int                     thread_count;
+  int8_t                  skip_loop_filter_enum;
+  int8_t                  choose_speed_over_accuracy;
   
   xine_t                 *xine;
 } ff_video_class_t;
@@ -311,6 +313,24 @@ static const ff_codec_t ff_video_lookup[] = {
   {BUF_VIDEO_THEORA_RAW,  CODEC_ID_THEORA,     "Theora (ffmpeg)"},
 };
 
+static const char *const skip_loop_filter_enum_names[] = {
+  "default", /* AVDISCARD_DEFAULT */
+  "none",    /* AVDISCARD_NONE */
+  "nonref",  /* AVDISCARD_NONREF */
+  "bidir",   /* AVDISCARD_BIDIR */
+  "nonkey",  /* AVDISCARD_NONKEY */
+  "all",     /* AVDISCARD_ALL */
+  NULL
+};
+
+static const int skip_loop_filter_enum_values[] = {
+  AVDISCARD_DEFAULT,
+  AVDISCARD_NONE,
+  AVDISCARD_NONREF,
+  AVDISCARD_BIDIR,
+  AVDISCARD_NONKEY,
+  AVDISCARD_ALL
+};
 
 static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type) {
   size_t i;
@@ -355,6 +375,9 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
     this->context->flags |= CODEC_FLAG_EMU_EDGE;
   }
  
+  if (this->class->choose_speed_over_accuracy)
+    this->context->flags2 |= CODEC_FLAG2_FAST;
+
   pthread_mutex_lock(&ffmpeg_lock);
   if (avcodec_open (this->context, this->codec) < 0) {
     pthread_mutex_unlock(&ffmpeg_lock);
@@ -370,6 +393,8 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
     avcodec_thread_init(this->context, this->class->thread_count);
     this->context->thread_count = this->class->thread_count;
   }
+
+  this->context->skip_loop_filter = skip_loop_filter_enum_values[this->class->skip_loop_filter_enum];
 
   pthread_mutex_unlock(&ffmpeg_lock);
 
@@ -426,6 +451,18 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
       break;
   }
 
+}
+
+static void choose_speed_over_accuracy_cb(void *user_data, xine_cfg_entry_t *entry) {
+  ff_video_class_t   *class = (ff_video_class_t *) user_data;
+  
+  class->choose_speed_over_accuracy = entry->num_value;
+}
+
+static void skip_loop_filter_enum_cb(void *user_data, xine_cfg_entry_t *entry) {
+  ff_video_class_t   *class = (ff_video_class_t *) user_data;
+  
+  class->skip_loop_filter_enum = entry->num_value;
 }
 
 static void thread_count_cb(void *user_data, xine_cfg_entry_t *entry) {
@@ -1155,7 +1192,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
     int         got_one_picture = 0;
     int         offset = 0;
     int         codec_type = buf->type & 0xFFFF0000;
-    int         video_step_to_use;
+    int         video_step_to_use = this->video_step;
 
     /* pad input data */
     /* note: bitstream, alt bitstream reader or something will cause
@@ -1555,14 +1592,32 @@ void *init_video_plugin (xine_t *xine, void *data) {
     _("You can adjust the number of video decoding threads which FFmpeg may use.\n"
       "Higher values should speed up decoding but it depends on the codec used "
       "whether parallel decoding is supported. A rule of thumb is to have one "
-      "decoding thread per logical CPU (typically 1 to 4). A change will take "
-      "effect with playing the next stream."),
+      "decoding thread per logical CPU (typically 1 to 4).\n"
+      "A change of this setting will take effect with playing the next stream."),
     10, thread_count_cb, this);
+
+  this->skip_loop_filter_enum = xine->config->register_enum(config, "video.processing.ffmpeg_skip_loop_filter", 0, 
+    (char **)skip_loop_filter_enum_names,
+    _("Skip loop filter"),
+    _("You can control for which frames the loop filter shall be skipped after "
+      "decoding.\n"
+      "Skipping the loop filter will speedup decoding but may lead to artefacts. "
+      "The number of frames for which it is skipped increases from 'none' to 'all'. "
+      "The default value leaves the decision up to the implementation.\n"
+      "A change of this setting will take effect with playing the next stream."),
+    10, skip_loop_filter_enum_cb, this);
+
+  this->choose_speed_over_accuracy = xine->config->register_bool(config, "video.processing.ffmpeg_choose_speed_over_accuracy", 0, 
+    _("Choose speed over specification compliance"),
+    _("You may want to allow speed cheats which violate codec specification.\n"
+      "Cheating may speed up decoding but can also lead to decoding artefacts.\n"
+      "A change of this setting will take effect with playing the next stream."),
+    10, choose_speed_over_accuracy_cb, this);
 
   return this;
 }
 
-static uint32_t supported_video_types[] = { 
+static const uint32_t supported_video_types[] = { 
   BUF_VIDEO_MSMPEG4_V1,
   BUF_VIDEO_MSMPEG4_V2,
   BUF_VIDEO_MSMPEG4_V3,
@@ -1641,12 +1696,12 @@ static uint32_t supported_video_types[] = {
   0 
 };
 
-static uint32_t wmv8_video_types[] = { 
+static const uint32_t wmv8_video_types[] = { 
   BUF_VIDEO_WMV8,
   0 
 };
 
-static uint32_t wmv9_video_types[] = { 
+static const uint32_t wmv9_video_types[] = { 
   BUF_VIDEO_WMV9,
   0 
 };

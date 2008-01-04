@@ -155,7 +155,7 @@ static void *init_plugin (xine_t *xine, void *data) {
  * exported plugin catalog entry
  */
 
-static uint32_t supported_types[] = { BUF_VIDEO_MPEG, 0 };
+static const uint32_t supported_types[] = { BUF_VIDEO_MPEG, 0 };
 
 static const decoder_info_t dec_info_mpeg2 = {
   supported_types,     /* supported types */

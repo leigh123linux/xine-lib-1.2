@@ -53,6 +53,7 @@
 
 /* public functions */
 void lexer_init(const char * buf, int size) XINE_PROTECTED;
+int lexer_get_token_d(char ** tok, int * tok_size, int fixed) XINE_PROTECTED;
 int lexer_get_token(char * tok, int tok_size) XINE_PROTECTED;
 char *lexer_decode_entities (const char *tok) XINE_PROTECTED;
 

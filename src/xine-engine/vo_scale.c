@@ -311,28 +311,21 @@ void _x_vo_scale_translate_gui2video(vo_scale_t *this,
   *vid_y = y;
 }
 
-/*
- * Returns description of a given ratio code
+/*/
+ * @brief Table for description of a given ratio code.
+ *
+ * @note changing the size of the elements of the array will break
+ * ABI, so please don't do that unless you absolutely can't continue
+ * with the current size.
  */
-
-char *_x_vo_scale_aspect_ratio_name(int a) {
-
-  switch (a) {
-  case XINE_VO_ASPECT_AUTO:
-    return "auto";
-  case XINE_VO_ASPECT_SQUARE:
-    return "square";
-  case XINE_VO_ASPECT_4_3:
-    return "4:3";
-  case XINE_VO_ASPECT_ANAMORPHIC:
-    return "16:9";
-  case XINE_VO_ASPECT_DVB:
-    return "2:1";
-  default:
-    return "unknown";
-  }
-}
-
+const char _x_vo_scale_aspect_ratio_name_table[][8] = {
+  "auto",   /* XINE_VO_ASPECT_AUTO */
+  "square", /* XINE_VO_ASPECT_SQUARE */
+  "4:3",    /* XINE_VO_ASPECT_4_3 */
+  "16:9",   /* XINE_VO_ASPECT_ANAMORPHIC */
+  "2:1",    /* XINE_VO_ASPECT_DVB */
+  "unknown" /* All the rest */
+};
 
 /*
  * config callbacks

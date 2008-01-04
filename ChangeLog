@@ -70,7 +70,7 @@ xine-lib (1.1.9) (unreleased)
   * Handle initial Unicde BOMs in XML; convert other UTF encodings to UTF-8.
   * Fixed ATSC support. [Bug 1749508]
   * Fixed a possible DVB plugin crash when switching channels.
-  * Fixed a crash closing the frontend. [Bug FS#3]
+  * Fixed a crash closing the frontend. [Bug #7]
   * Fixed deadlock on ao_close while paused.
   * Nicer wakeup behaviour, using select instead of nanosleep (800 -> 100
     wakeups/s).
@@ -87,7 +87,12 @@ xine-lib (1.1.9) (unreleased)
   * Don't decode %nn in raw filenames. [Bug 1784272]
   * Always enable a52dec capabilities for external a52dec, this makes it
     possible to use the DJB accelerated FFT when using the external a52dec
-    liba52 library.
+    liba52 library. [Bug #9]
+  * Fixed an input_pvr issue with 'set input' for ivtv versions 0.10.6+
+  * demux_aiff: only check for chunk's size being lesser than 100 when
+    reading the COMM_TAG. [Bug #6]
+  * Avoid potential mislinkage at install time if a system-wide libxine.so
+    is present but is *not* pointing at libxine.so.1.
 
 xine-lib (1.1.8)
   * Send a channel-changed event to the frontend when receiving the SYNC

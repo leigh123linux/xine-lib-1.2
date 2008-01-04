@@ -21,11 +21,7 @@
 #ifndef HAVE_VIDEO_OVERLAY_H
 #define HAVE_VIDEO_OVERLAY_H
 
-#ifdef XINE_COMPILE
-#  include "xine_internal.h"
-#else
-#  include <xine/xine_internal.h>
-#endif
+#include <xine/xine_internal.h>
 
 #ifdef	__GNUC__
 #define CLUT_Y_CR_CB_INIT(_y,_cr,_cb)	{y: (_y), cr: (_cr), cb: (_cb)}

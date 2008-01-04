@@ -119,15 +119,15 @@ xineplug_inp_cdda_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(XDG_BASEDIR_LIBS) $(AVU
 xineplug_inp_cdda_la_CPPFLAGS = $(AM_CPPFLAGS) $(XDG_BASEDIR_CPPFLAGS) $(AVUTIL_CFLAGS)
 
 xineplug_inp_v4l_la_SOURCES = input_v4l.c
-xineplug_inp_v4l_la_LIBADD = $(ALSA_LIBS) $(XINE_LIB) $(LTLIBINTL)
+xineplug_inp_v4l_la_LIBADD = $(XINE_LIB) $(ALSA_LIBS) $(LTLIBINTL)
 xineplug_inp_v4l_la_CFLAGS = $(AM_CFLAGS) $(ALSA_CFLAGS)
 
 xineplug_inp_gnome_vfs_la_SOURCES = input_gnome_vfs.c net_buf_ctrl.c
-xineplug_inp_gnome_vfs_la_LIBADD = $(GNOME_VFS_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
+xineplug_inp_gnome_vfs_la_LIBADD = $(XINE_LIB) $(GNOME_VFS_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_inp_gnome_vfs_la_CFLAGS = $(AM_CFLAGS) $(GNOME_VFS_CFLAGS)
 
 xineplug_inp_smb_la_SOURCES = input_smb.c
-xineplug_inp_smb_la_LIBADD = $(LIBSMBCLIENT_LIBS) $(XINE_LIB) $(LTLIBINTL)
+xineplug_inp_smb_la_LIBADD = $(XINE_LIB) $(LIBSMBCLIENT_LIBS) $(LTLIBINTL)
 
 xineplug_inp_pvr_la_SOURCES = input_pvr.c
 xineplug_inp_pvr_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
