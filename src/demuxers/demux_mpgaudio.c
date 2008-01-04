@@ -631,31 +631,31 @@ static int demux_mpgaudio_next (demux_mpgaudio_t *this, int decoder_flags, int s
 
       if (parse_frame_header(&this->cur_frame, header_buf)) {
 
-	/* send header buffer */
-	if ( send_header ) {
-	  buf_element_t *buf;
-	  
-	  buf = this->audio_fifo->buffer_pool_alloc(this->audio_fifo);
-	  
-	  buf->type = BUF_AUDIO_MPEG;
-	  buf->decoder_flags = BUF_FLAG_HEADER|BUF_FLAG_STDHEADER|BUF_FLAG_FRAME_END;
-	  
-	  buf->decoder_info[0] = 0;
-	  buf->decoder_info[1] = this->cur_frame.freq;
-	  buf->decoder_info[2] = 0; /* bits_per_sample */
-	  
-	  /* Only for channel_mode == 3 (mono) there is one channel, for any other case, there are 2 */
-	  buf->decoder_info[3] = ( this->cur_frame.channel_mode == 3 ) ? 1 : 2;
-	  
-	  buf->size = 0; /* No extra header data */
-	  
-	  this->audio_fifo->put(this->audio_fifo, buf);
-	}
-	
+        /* send header buffer */
+        if ( send_header ) {
+          buf_element_t *buf;
+          
+          buf = this->audio_fifo->buffer_pool_alloc(this->audio_fifo);
+          
+          buf->type = BUF_AUDIO_MPEG;
+          buf->decoder_flags = BUF_FLAG_HEADER|BUF_FLAG_STDHEADER|BUF_FLAG_FRAME_END;
+          
+          buf->decoder_info[0] = 0;
+          buf->decoder_info[1] = this->cur_frame.freq;
+          buf->decoder_info[2] = 0; /* bits_per_sample */
+          
+          /* Only for channel_mode == 3 (mono) there is one channel, for any other case, there are 2 */
+          buf->decoder_info[3] = ( this->cur_frame.channel_mode == 3 ) ? 1 : 2;
+          
+          buf->size = 0; /* No extra header data */
+          
+          this->audio_fifo->put(this->audio_fifo, buf);
+        }
+        
         return parse_frame_payload(this, header_buf, decoder_flags);
         
       } else if ( id3v2_istag(header_buf) ) {
-	if (!id3v2_parse_tag(this->input, this->stream, header_buf)) {
+        if (!id3v2_parse_tag(this->input, this->stream, header_buf)) {
           xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
                   LOG_MODULE ": ID3V2 tag parsing error\n");
           bytes = 1; /* resync */
@@ -1015,7 +1015,7 @@ static uint32_t demux_mpgaudio_get_capabilities(demux_plugin_t *this_gen) {
 }
 
 static int demux_mpgaudio_get_optional_data(demux_plugin_t *this_gen,
-					void *data, int data_type) {
+                                        void *data, int data_type) {
   return DEMUX_OPTIONAL_UNSUPPORTED;
 } 
 
