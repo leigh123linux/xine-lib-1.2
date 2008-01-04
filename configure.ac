@@ -2725,6 +2725,13 @@ win32/include/Makefile])
 AC_CONFIG_COMMANDS([default],[[chmod +x ./misc/SlackBuild ./misc/build_rpms.sh ./misc/relchk.sh]],[[]])
 AC_OUTPUT
 
+dnl Guard against multiple inclusion
+AH_TOP([#ifndef _XINE_CONFIGURE_H_
+#define _XINE_CONFIGURE_H_
+])
+AH_BOTTOM([#endif
+])
+
 dnl ---------------------------------------------
 dnl Work around a suspected bug in libtool:
 dnl
