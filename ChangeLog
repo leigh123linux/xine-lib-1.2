@@ -8,9 +8,6 @@ xine-lib (1.1.90) (Unreleased)
   * Remove the buttons array from video_overlay, as the feature linked to that
     was never implemented. This change reduces by 10MB the memory usage of
     xine-lib during playback (1/3 of the memory used while playing an mp3).
-  * Use FFmpeg's own build system rather than wrapping automake around its
-    sources; this allows easy enabling or disabling of FFmpeg features and
-    proper support for --disable-ffmpeg-(uncommon|popular)-codecs.
   * Update libmpcdec (formerly libmusepack) to version 1.2.6 (newer than the
     previous Subversion snapshot) and contextually move it to
     contrib/libmpcdec to separate from xine's own code.
