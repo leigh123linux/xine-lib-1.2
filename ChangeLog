@@ -52,6 +52,13 @@ xine-lib (1.1.90) (Unreleased)
     for specific input protocols.
   * Check for supported extensions before opening the plugin and remove
     redundant core from plugins.
+  * Use libavutil-provided implementations for CRC, SHA1 and BASE64 algorithms,
+    this makes use of libavutil even outside the FFmpeg decoding plugin,
+    but avoid duplication of algorithms between different plugins.
+  * Use av_mallocz() when xine_xmalloc_aligned() wouldn't be needed.
+  * FFmpeg is now required as an external dependency; if you want to build
+    xine-lib from source, please download a copy of FFmpeg from their SVN
+    server.
 
 xine-lib (1.1.9) (unreleased)
   * Fix dvd://.../title[.chapter] handling (somewhat broken in 1.1.8).
