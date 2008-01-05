@@ -45,9 +45,6 @@
 #define DEFAULT_BUFFER_SIZE 512*1024
 
 
-/*initialisation function, used by the dxr3 plugin */
-int         dxr3_encoder_init(dxr3_driver_t *drv) EXPORTED;
-
 /* functions required by encoder api */
 static int lavc_on_update_format(dxr3_driver_t *drv, dxr3_frame_t *frame);
 static int lavc_on_display_frame(dxr3_driver_t *drv, dxr3_frame_t *frame);
@@ -65,7 +62,7 @@ typedef struct lavc_data_s {
 } lavc_data_t;
 
 
-int dxr3_encoder_init(dxr3_driver_t *drv)
+int dxr3_lavc_init(dxr3_driver_t *drv)
 {
   lavc_data_t* this;
   avcodec_init();
@@ -83,6 +80,15 @@ int dxr3_encoder_init(dxr3_driver_t *drv)
   this->context                       = 0;
   
   drv->enc = &this->encoder_data;
+  drv->enc->on_close = dxr3_lavc_close;
+  return 1;
+}
+
+static int dxr3_lavc_close(dxr3_driver_t *drv) {
+  drv->enc->on_unneeded(drv);
+  free(drv->enc);
+  drv->enc = NULL;
+
   return 1;
 }
 

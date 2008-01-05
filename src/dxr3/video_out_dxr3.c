@@ -286,21 +286,8 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
 #if LOG_VID
   printf("video_out_dxr3: Supported mpeg encoders: ");
 #endif
-  /* check, if ffmpeg plugin is available by looking through plugin
-   * catalog; catalog mutex is already locked here, since this is open_plugin() */
-  node = NULL;
-  plugin_list = class->xine->plugin_catalog->plugin_lists[PLUGIN_VIDEO_DECODER - 1];
-  list_size = xine_sarray_size(plugin_list);
-  for (list_id = 0; list_id < list_size; list_id++) {
-    node = xine_sarray_get (plugin_list, list_id);
-    if (strcasecmp(node->info->id, "ffmpegvideo") == 0) {
-      available_encoders[encoder++] = "libavcodec";
-#if LOG_VID
-      printf("libavcodec, ");
-#endif
-      break;
-    }
-  }
+  available_encoders[encoder++] = "libavcodec";
+  printf("libavcodec, ");
 #ifdef HAVE_LIBFAME
   available_encoders[encoder++] = "fame";
 #if LOG_VID

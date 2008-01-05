@@ -46,6 +46,7 @@ $(top_builddir)/contrib/gsm610/libgsm610.la:
 xineplug_LTLIBRARIES = \
 	xineplug_decode_gsm610.la \
 	xineplug_decode_lpcm.la \
+	xineplug_decode_dvaudio.la \
 	$(musepack_module) \
 	$(dts_module) \
 	$(mad_module) \

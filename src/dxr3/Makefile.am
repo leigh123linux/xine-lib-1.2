@@ -39,9 +39,10 @@ endif
 
 xineplug_vo_out_dxr3_la_SOURCES = \
 	dxr3_mpeg_encoders.c \
+	ffmpeg_encoder.c \
 	dxr3_spu_encoder.c \
 	dxr3_scr.c \
 	video_out_dxr3.c 
 
-xineplug_vo_out_dxr3_la_CFLAGS = $(AM_CFLAGS) $(AVUTIL_CFLAGS)
-xineplug_vo_out_dxr3_la_LIBADD = $(XINE_LIB) $(link_fame) $(link_rte) $(link_x_libs) $(LTLIBINTL) $(DYNAMIC_LD_LIBS) $(AVUTIL_LIBS) -lm
+xineplug_vo_out_dxr3_la_CFLAGS = $(AM_CFLAGS) $(AVUTIL_CFLAGS) $(FFMPEG_CFLAGS)
+xineplug_vo_out_dxr3_la_LIBADD = $(XINE_LIB) $(link_fame) $(link_rte) $(link_x_libs) $(LTLIBINTL) $(DYNAMIC_LD_LIBS) $(AVUTIL_LIBS) $(FFMPEG_LDFLAGS) -lm

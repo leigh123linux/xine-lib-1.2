@@ -110,13 +110,6 @@ static int fame_prepare_frame(fame_data_t *this, dxr3_driver_t *drv,
                               dxr3_frame_t *frame);
 #endif
 
-/* initialization function */
-int        dxr3_lavc_init(dxr3_driver_t *drv, plugin_node_t *node);
-
-/* close function from encoder api */
-static int lavc_on_close(dxr3_driver_t *drv);
-
-
 #ifdef HAVE_LIBRTE
 int dxr3_rte_init(dxr3_driver_t *drv)
 {
@@ -538,33 +531,3 @@ static int fame_prepare_frame(fame_data_t *this, dxr3_driver_t *drv, dxr3_frame_
   return 1;
 }
 #endif
-
-
-int dxr3_lavc_init(dxr3_driver_t *drv, plugin_node_t *node)
-{
-  void *ffmpeg;
-  int (*init)(dxr3_driver_t *);
-  int result;
-  
-  ffmpeg = dlopen(node->file->filename, RTLD_LAZY);
-  if (!ffmpeg) return 0;
-  
-  init = dlsym(ffmpeg, "dxr3_encoder_init");
-  if (!init) return 0;
-  
-  result = init(drv);
-  /* the close function is implemented here, because it will call dlclose()
-   * and that should not be done be the library we are closing... */
-  drv->enc->on_close = lavc_on_close;
-  drv->enc->handle   = ffmpeg;
-  return result;
-}
-
-static int lavc_on_close(dxr3_driver_t *drv)
-{
-  drv->enc->on_unneeded(drv);
-  dlclose(drv->enc->handle);
-  free(drv->enc);
-  drv->enc = NULL;
-  return 1;
-}
