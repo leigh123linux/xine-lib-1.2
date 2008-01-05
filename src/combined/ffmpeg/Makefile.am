@@ -4,21 +4,10 @@ AM_CFLAGS   = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_CPPFLAGS = $(ZLIB_CPPFLAGS)
 AM_LDFLAGS  = $(xineplug_ldflags)
 
-# this must always be included, even if the current machine has no DXR3...
-EXTRA_DIST = ffmpeg_encoder.c
-
 xineplug_LTLIBRARIES = xineplug_decode_ff.la
 
-if ENABLE_DXR3
-AM_CFLAGS   += $(X_CFLAGS)
-AM_CPPFLAGS += -I$(top_srcdir)/src/dxr3
-xineplug_decode_ff_la_SOURCES = ffmpeg_decoder.c ff_audio_decoder.c ff_video_decoder.c \
-                                ffmpeg_encoder.c ff_mpeg_parser.c ffmpeg_decoder.h \
-				ff_mpeg_parser.h
-else
 xineplug_decode_ff_la_SOURCES = ffmpeg_decoder.c ff_audio_decoder.c ff_video_decoder.c \
                                 ff_mpeg_parser.c ffmpeg_decoder.h ff_mpeg_parser.h
-endif
 
 nodist_xineplug_decode_ff_la_SOURCES = ffmpeg_config.h
 
