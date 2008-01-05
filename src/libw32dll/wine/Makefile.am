@@ -5,7 +5,8 @@ include $(top_srcdir)/misc/Makefile.common
 AM_CFLAGS   = $(DEFAULT_OCFLAGS) $(X_CFLAGS) @W32_NO_OPTIMIZE@ \
         -fno-omit-frame-pointer -fno-inline-functions -fno-rename-registers
 AM_CPPFLAGS = -DWIN32_PATH=\"$(w32_path)\" -I$(srcdir)/.. -D__WINE__ \
-	-Ddbg_printf=__vprintf -DTRACE=__vprintf
+	-Ddbg_printf=__vprintf -DTRACE=__vprintf \
+        -I$(top_srcdir)/src/xine-utils
 
 EXTRA_DIST = stubs.s wrapper.S
 

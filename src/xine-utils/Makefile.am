@@ -5,7 +5,7 @@ AM_CPPFLAGS = -DXINE_LIBRARY_COMPILE
 
 EXTRA_DIST = ppcasm_string.S ppc_asm.tmpl
 
-noinst_HEADERS = ppcasm_string.h xine_check.h
+noinst_HEADERS = ppcasm_string.h xine_check.h mangle.h
 
 noinst_LTLIBRARIES = libxineutils.la
 
