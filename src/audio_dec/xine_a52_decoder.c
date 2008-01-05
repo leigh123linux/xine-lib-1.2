@@ -78,6 +78,7 @@ typedef struct {
   int              disable_dynrng_compress;
   int              enable_surround_downmix;
   
+  const AVCRC     *av_crc;
 } a52dec_class_t;
 
 typedef struct a52dec_decoder_s {
@@ -586,18 +587,15 @@ static void a52dec_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	    this->sync_state = 3;
           } else break;
       
-    case 3:  { /* Ready for decode */ 
-      if ( ! *av_crc8005 )
-	av_crc_init(av_crc8005, 0, 16, AV_CRC_16, sizeof(AVCRC)*257);
-
-	  if (av_crc(av_crc8005, 0, &this->frame_buffer[2], this->frame_length - 2) != 0) { /* CRC16 failed */
-	    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "liba52:a52 frame failed crc16 checksum.\n");
-	    current = sync_start;
-            this->pts = 0;
-	    this->syncword = 0;
-	    this->sync_state = 0;
-	    break;
-	  }
+    case 3:  { /* Ready for decode */
+      if (av_crc(this->class->av_crc, 0, &this->frame_buffer[2], this->frame_length - 2) != 0) { /* CRC16 failed */
+	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "liba52:a52 frame failed crc16 checksum.\n");
+	current = sync_start;
+	this->pts = 0;
+	this->syncword = 0;
+	this->sync_state = 0;
+	break;
+      }
     }
 #if 0
           a52dec_decode_frame (this, this->pts_list[0], buf->decoder_flags & BUF_FLAG_PREVIEW);
@@ -798,6 +796,8 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->decoder_class.identifier      = "a/52dec";
   this->decoder_class.description     = N_("liba52 based a52 audio decoder plugin");
   this->decoder_class.dispose         = default_audio_decoder_class_dispose;
+
+  this->av_crc = av_crc_get_table(AV_CRC_16_ANSI);
 
   cfg = this->config = xine->config;
 

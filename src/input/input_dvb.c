@@ -298,6 +298,8 @@ typedef struct {
   int 		    numchannels;
 
   char		   *autoplaylist[MAX_AUTOCHANNELS];
+
+  const AVCRC      *av_crc;
 } dvb_input_class_t;
 
 typedef struct {
@@ -2453,9 +2455,6 @@ static void ts_rewrite_packets (dvb_input_plugin_t *this, unsigned char * origin
     originalPkt+=data_offset;
     
     if (pid == 0 && sync_byte==0x47) {
-      if ( ! *av_crc04C11DB7 )
-	av_crc_init(av_crc04C11DB7, 0, 32, AV_CRC_32_IEEE, sizeof(AVCRC)*257);
-
       unsigned long crc;
       
       originalPkt[3]=13; /* section length including CRC - first 3 bytes */
@@ -2467,7 +2466,7 @@ static void ts_rewrite_packets (dvb_input_plugin_t *this, unsigned char * origin
       originalPkt[11]=(this->channels[this->channel].pmtpid >> 8) & 0xff;
       originalPkt[12]=this->channels[this->channel].pmtpid & 0xff;
 
-      crc = av_crc(av_crc04C11DB7, 0xffffffff, originalPkt+1, 12);
+      crc = av_crc(this->class->av_crc, 0xffffffff, originalPkt+1, 12);
       
       originalPkt[13]=(crc>>24) & 0xff;
       originalPkt[14]=(crc>>16) & 0xff;
@@ -3267,6 +3266,8 @@ static void *init_class (xine_t *xine, void *data) {
   this->mrls[3] = "dvbt://";
   this->mrls[4] = "dvba://";
   this->mrls[5] = 0;
+
+  this->av_crc = av_crc_get_table(AV_CRC_32_IEEE);
 
   xprintf(this->xine,XINE_VERBOSITY_DEBUG,"init class succeeded\n");
 

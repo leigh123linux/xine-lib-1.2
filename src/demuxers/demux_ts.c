@@ -275,6 +275,18 @@ typedef struct {
 } demux_ts_audio_track;
 
 typedef struct {
+
+  demux_class_t     demux_class;
+
+  /* class-wide, global variables here */
+
+  xine_t           *xine;
+  config_values_t  *config;
+
+  const AVCRC      *av_crc;
+} demux_ts_class_t;
+
+typedef struct {
   /*
    * The first field must be the "base class" for the plugin!
    */
@@ -288,6 +300,8 @@ typedef struct {
   fifo_buffer_t   *video_fifo;
 
   input_plugin_t  *input;
+
+  demux_ts_class_t *class;
 
   int              status;
 
@@ -346,17 +360,6 @@ typedef struct {
   int numPreview;
 
 } demux_ts_t;
-
-typedef struct {
-
-  demux_class_t     demux_class;
-
-  /* class-wide, global variables here */
-
-  xine_t           *xine;
-  config_values_t  *config;
-} demux_ts_class_t;
-
 
 /* redefine abs as macro to handle 64-bit diffs.
    i guess llabs may not be available everywhere */
@@ -576,10 +579,7 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
   }
 
   /* Check CRC. */
-  if ( ! *av_crc04C11DB7 )
-    av_crc_init(av_crc04C11DB7, 0, 32, AV_CRC_32_IEEE, sizeof(AVCRC)*257);
-
-  calc_crc32 = av_crc(av_crc04C11DB7, 0xffffffff, pkt+5, section_length+3-4);
+  calc_crc32 = av_crc(this->class->av_crc, 0xffffffff, pkt+5, section_length+3-4);
   if (crc32 != calc_crc32) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
 	     "demux_ts: demux error! PAT with invalid CRC32: packet_crc32: %.8x calc_crc32: %.8x\n",
@@ -1185,10 +1185,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
   crc32 |= (uint32_t) this->pmt[program_count][section_length+3-1] ;
 
   /* Check CRC. */
-  if ( ! *av_crc04C11DB7 )
-    av_crc_init(av_crc04C11DB7, 0, 32, AV_CRC_32_IEEE, sizeof(AVCRC)*257);
-
-  calc_crc32 = av_crc(av_crc04C11DB7, 0xffffffff,
+  calc_crc32 = av_crc(this->class->av_crc, 0xffffffff,
 		      this->pmt[program_count], section_length+3-4);
 
   if (crc32 != calc_crc32) {
@@ -2187,6 +2184,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   this            = xine_xmalloc(sizeof(*this));
   this->stream    = stream;
   this->input     = input;
+  this->class     = class_gen;
   this->blockSize = PKT_SIZE;
 
   this->demux_plugin.send_headers      = demux_ts_send_headers;
@@ -2264,6 +2262,8 @@ static void *init_class (xine_t *xine, void *data) {
    */
   this->demux_class.extensions      = "ts m2t trp dvb:// dvbs:// dvbc:// dvbt://";
   this->demux_class.dispose         = default_demux_class_dispose;
+
+  this->av_crc = av_crc_get_table(AV_CRC_32_IEEE);
 
   return this;
 }
