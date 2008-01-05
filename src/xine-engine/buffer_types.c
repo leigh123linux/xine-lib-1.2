@@ -771,6 +771,14 @@ static const video_db_t video_db[] = {
   BUF_VIDEO_KMVC,
   "Karl Morton's Video Codec"
 },
+{
+  {
+    ME_FOURCC('V','M','n','c'),
+    0
+  },
+  BUF_VIDEO_VMNC,
+  "VMware Screen Codec"
+},
 { { 0 }, 0, "last entry" }
 };
 

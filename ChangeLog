@@ -25,7 +25,7 @@ xine-lib (1.1.9) (unreleased)
     buffer.
   * DXR3 encoding with external ffmpeg should be fixed now.
     (This was broken by ffmpeg revision 9283).
-  * Enabled the WMV VC1 (ffmpeg) codec.
+  * Enabled the WMV VC1 & VMware Screen (ffmpeg) codecs.
   * Fixed a crash that happened when a video output was closed
   * Made the Real demuxer recognise http references.
   * Require correct URL encoding of '#'s which aren't separators.
