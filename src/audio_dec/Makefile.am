@@ -46,6 +46,7 @@ $(top_builddir)/contrib/gsm610/libgsm610.la:
 xineplug_LTLIBRARIES = \
 	xineplug_decode_gsm610.la \
 	xineplug_decode_lpcm.la \
+	xineplug_decode_dvaudio.la \
 	$(musepack_module) \
 	$(dts_module) \
 	$(mad_module) \
@@ -83,3 +84,7 @@ xineplug_decode_faad_la_SOURCES = xine_faad_decoder.c
 xineplug_decode_faad_la_DEPENDENCIES = $(FAAD_DEPS)
 xineplug_decode_faad_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(FAAD_LIBS) -lm
 xineplug_decode_faad_la_CFLAGS = $(FAAD_CFLAGS)
+
+xineplug_decode_dvaudio_la_SOURCES  = ff_dvaudio_decoder.c
+xineplug_decode_dvaudio_la_LIBADD   = $(XINE_LIB) $(LTLIBINTL)
+xineplug_decode_dvaudio_la_CPPFLAGS = $(AM_CPPFLAGS) $(FFMPEG_CFLAGS)
