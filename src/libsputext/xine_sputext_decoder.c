@@ -506,11 +506,54 @@ static void read_ssa_tag(sputext_decoder_t *this, const char* text,
           (*sub_x), (*sub_y), (*max_width), (*alignment));
 }
 
+static int is_cjk_encoding(const char *enc) {
+  char **pstr;
+
+  /* CJK charset strings defined in iconvdata/gconv-modules of glibc */
+  static char *cjk_encoding_strings[] = {
+    "SJIS",
+    "CP932",
+    "EUC-KR",
+    "UHC",
+    "JOHAB",
+    "BIG5",
+    "BIG5HKSCS",
+    "EUC-JP-MS",
+    "EUC-JP",
+    "EUC-CN",
+    "GBBIG5",
+    "GBK",
+    "GBGBK",
+    "EUC-TW",
+    "ISO-2022-JP",
+    "ISO-2022-JP-2",
+    "ISO-2022-JP-3",
+    "ISO-2022-KR",
+    "ISO-2022-CN",
+    "ISO-2022-CN-EXT",
+    "GB18030",
+    "EUC-JISX0213",
+    "SHIFT_JISX0213",
+    NULL
+  };
+
+  /* return 1 if encoding string is one of the CJK(Chinese,Jananese,Korean)
+   * character set strings. */
+  for (pstr = cjk_encoding_strings; *pstr; pstr++) {
+    if (strcasecmp(enc, *pstr) == 0)
+      return 1;
+  }
+
+  return 0;
+}
+
 static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t sub_end ) {
   
   int line, y;
   int font_size;
   char *font;
+  char *encoding = (this->buf_encoding)?this->buf_encoding:
+                                        this->class->src_encoding;
   int sub_x, sub_y, max_width;
   int alignment;
   int rebuild_all;
@@ -719,7 +762,12 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
       }
     }
     
-    ogm_render_line(this, x, y + line*this->line_height, this->text[line]);
+    if( is_cjk_encoding(encoding) ) {
+      this->renderer->render_text (this->osd, x, y + line * this->line_height,
+                                   this->text[line], OSD_TEXT1);
+    } else {
+      ogm_render_line(this, x, y + line*this->line_height, this->text[line]);
+    }
   }
          
   if( font_size != this->font_size )
