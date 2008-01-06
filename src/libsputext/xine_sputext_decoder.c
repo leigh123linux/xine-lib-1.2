@@ -507,10 +507,8 @@ static void read_ssa_tag(sputext_decoder_t *this, const char* text,
 }
 
 static int is_cjk_encoding(const char *enc) {
-  char **pstr;
-
   /* CJK charset strings defined in iconvdata/gconv-modules of glibc */
-  static char *cjk_encoding_strings[] = {
+  static const char cjk_encoding_strings[][16] = {
     "SJIS",
     "CP932",
     "EUC-KR",
@@ -534,15 +532,15 @@ static int is_cjk_encoding(const char *enc) {
     "GB18030",
     "EUC-JISX0213",
     "SHIFT_JISX0213",
-    NULL
   };
+
+  int pstr;
 
   /* return 1 if encoding string is one of the CJK(Chinese,Jananese,Korean)
    * character set strings. */
-  for (pstr = cjk_encoding_strings; *pstr; pstr++) {
-    if (strcasecmp(enc, *pstr) == 0)
+  for (pstr = 0; pstr < sizeof (cjk_encoding_strings) / sizeof (cjk_encoding_strings[0]); pstr++)
+    if (strcasecmp (enc, cjk_encoding_strings[pstr]) == 0)
       return 1;
-  }
 
   return 0;
 }
@@ -552,7 +550,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
   int line, y;
   int font_size;
   char *font;
-  char *encoding = (this->buf_encoding)?this->buf_encoding:
+  const char *encoding = (this->buf_encoding)?this->buf_encoding:
                                         this->class->src_encoding;
   int sub_x, sub_y, max_width;
   int alignment;

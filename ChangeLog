@@ -43,6 +43,8 @@ xine-lib (1.1.9) (unreleased)
   * Fixed an issue in input_pvr with setting the frequency of the tuner for
     ivtv versions 0.10.6+
   * Add Turkish translation by Serdar Soytetir and Server Acim.
+  * Workaround for subtitle rendering when using variable-length character
+    encodings other than UTF-8. (There is probably still some breakage here.)
 
 xine-lib (1.1.8)
   * Send a channel-changed event to the frontend when receiving the SYNC
