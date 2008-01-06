@@ -800,12 +800,22 @@ static int demux_real_parse_references( demux_real_t *this) {
 
   if (!strncmp(buf,"http://",7))
   {
-    for (i = 0; buf[i] && !isspace(buf[i]); ++i)
-      /**/;
-    buf[i] = 0;
-    lprintf("reference [%s] found\n", buf);
-
-    _x_demux_send_mrl_reference (this->stream, 0, buf, NULL, 0, 0);
+    i = 0;
+    while (buf[i])
+    {
+      j = i;
+      while (buf[i] && !isspace(buf[i]))
+	++i; /* skip non-space */
+      len = buf[i];
+      buf[i] = 0;
+      if (strncmp (buf + j, "http://", 7) || (i - j) < 8)
+        break; /* stop at the first non-http reference */
+      lprintf("reference [%s] found\n", buf + j);
+      _x_demux_send_mrl_reference (this->stream, 0, buf + j, NULL, 0, 0);
+      buf[i] = (char) len;
+      while (buf[i] && isspace(buf[i]))
+	++i; /* skip spaces */
+    }
   }
   else for (i = 0; i < buf_used; ++i)
   {

@@ -53,7 +53,7 @@ xine-lib (1.1.90) (Unreleased)
   * Check for supported extensions before opening the plugin and remove
     redundant core from plugins.
 
-xine-lib (1.1.9) (unreleased)
+xine-lib (1.1.9)
   * Fix dvd://.../title[.chapter] handling (somewhat broken in 1.1.8).
   * Fix switching DVB subtitles channels.
   * DVB sub: switch to dyn mem alloc and allow multiple CLUTs per page.
@@ -80,9 +80,9 @@ xine-lib (1.1.9) (unreleased)
     buffer.
   * DXR3 encoding with external ffmpeg should be fixed now.
     (This was broken by ffmpeg revision 9283).
-  * Enabled the WMV VC1 (ffmpeg) codec.
+  * Enabled the WMV VC1 & VMware Screen (ffmpeg) codecs.
   * Fixed a crash that happened when a video output was closed
-  * Made the Real demuxer recognise http references.
+  * Made the Real demuxer recognise simple lists of http references.
   * Require correct URL encoding of '#'s which aren't separators.
   * Don't decode %nn in raw filenames. [Bug 1784272]
   * Always enable a52dec capabilities for external a52dec, this makes it
@@ -93,6 +93,13 @@ xine-lib (1.1.9) (unreleased)
     reading the COMM_TAG. [Bug #6]
   * Avoid potential mislinkage at install time if a system-wide libxine.so
     is present but is *not* pointing at libxine.so.1.
+  * Update French translation, thanks to Christophe Giraud. [Bug #15]
+  * Detect corrupted or broken seek tables in CBR MP3 files. [Bug #3]
+  * Fixed an issue in input_pvr with setting the frequency of the tuner for
+    ivtv versions 0.10.6+
+  * Add Turkish translation by Serdar Soytetir and Server Acim.
+  * Workaround for subtitle rendering when using variable-length character
+    encodings other than UTF-8. (There is probably still some breakage here.)
 
 xine-lib (1.1.8)
   * Send a channel-changed event to the frontend when receiving the SYNC
@@ -1660,3 +1667,4 @@ xine (0.3.0+older) unstable; urgency=low
 	- minor Makefile fixes for FreeBSD ports 
   
  -- Siggi Langauf <siggi@users.sourceforge.net>  Sun,  7 Jan 2001 23:59:12 +0100
+
