@@ -19,7 +19,7 @@ char *xine_private_strtok_r(char *s, const char *delim, char **ptrptr) {
   else s = *ptrptr;
 
   /* end of searching */
-  if (!s || s == '\0') return NULL;
+  if (!s || !*s) return NULL;
 
   /* cut the initial garbage */
   cutlen = strspn(s, delim);
@@ -32,11 +32,11 @@ char *xine_private_strtok_r(char *s, const char *delim, char **ptrptr) {
   }
   next = s + toklen;
 
+  /* prepare next call */
+  *ptrptr = *next ? next + 1 : NULL;
+
   /* cut current token */
   *next = '\0';
-
-  /* prepare next call */
-  *ptrptr = next + 1;
 
   /* return the token */
   return s;

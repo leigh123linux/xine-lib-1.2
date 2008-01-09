@@ -1,4 +1,6 @@
 xine-lib (1.1.9.1) (unreleased)
+  * Fix a read-past-end bug in xine-lib's internal strtok_r replacement.
+    (Only affects systems without strtok_r.)
 
 xine-lib (1.1.9)
   * Fix dvd://.../title[.chapter] handling (somewhat broken in 1.1.8).
