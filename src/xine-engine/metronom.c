@@ -305,6 +305,8 @@ static void metronom_handle_discontinuity (metronom_t *this, int type,
 
   /* video_vpts and audio_vpts adjustements */
   cur_time = this->xine->clock->get_current_time(this->xine->clock);
+  xprintf(this->xine, XINE_VERBOSITY_DEBUG,
+          "current time : %" PRId64 "\n", cur_time);
 
   switch (type) {
     case DISC_STREAMSTART:
@@ -321,33 +323,12 @@ static void metronom_handle_discontinuity (metronom_t *this, int type,
 
     case DISC_ABSOLUTE:
     case DISC_RELATIVE:
-      if (this->video_vpts < cur_time) {
-        /* still frame */
-        if (this->audio_vpts > cur_time) {
-          /* still frame with audio */
-          this->video_vpts = this->audio_vpts;
-          xprintf(this->xine, XINE_VERBOSITY_DEBUG, "video vpts adjusted to audio vpts %" PRId64 "\n", this->video_vpts);
-        } else {
-          /* still frame, no audio */
-          this->video_vpts = this->prebuffer + cur_time;
-          this->audio_vpts = this->video_vpts;
-          this->audio_vpts_rmndr = 0;
-          this->force_video_jump = 1;
-          this->force_audio_jump = 1;
-          this->video_drift = 0;
-          xprintf(this->xine, XINE_VERBOSITY_DEBUG, "vpts adjusted with prebuffer to %" PRId64 "\n",
-	    this->video_vpts);
-        }
+      if (this->video_vpts < this->audio_vpts) {
+        this->video_vpts = this->audio_vpts;
+        xprintf(this->xine, XINE_VERBOSITY_DEBUG, "video vpts adjusted to audio vpts %" PRId64 "\n", this->video_vpts);
       } else {
-        /* video */
-        if (this->audio_vpts < cur_time) {
-          /* video, no sound */
-          this->audio_vpts = this->video_vpts;
-          this->audio_vpts_rmndr = 0;
-          xprintf(this->xine, XINE_VERBOSITY_DEBUG, "audio vpts adjusted to video vpts %" PRId64 "\n", this->video_vpts);
-        } else {
-          /* video + audio */
-        }
+        this->audio_vpts = this->video_vpts;
+        xprintf(this->xine, XINE_VERBOSITY_DEBUG, "audio vpts adjusted to video vpts %" PRId64 "\n", this->video_vpts);
       }
       break;
   }
@@ -373,7 +354,7 @@ static void metronom_handle_discontinuity (metronom_t *this, int type,
     this->vpts_offset = this->video_vpts - disc_off;
     break;
   }
-  
+
   this->last_video_pts = 0;
   this->last_audio_pts = 0;
 }
