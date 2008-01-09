@@ -372,6 +372,13 @@ struct buf_element_s {
  * decoder_info[2] carries denominator for display aspect ratio       */
 #define BUF_FLAG_ASPECT      0x0800
 
+/* Amount of audio padding added by encoder (mp3, aac). These empty
+ * audio frames are causing a gap when switching between mp3 files.
+ * decoder_info[1] carries amount of audio frames padded at the
+ * beginning of the buffer
+ * decoder_info[2] carries amount of audio frames padded at the end of
+ * the buffer                                                         */
+#define BUF_FLAG_AUDIO_PADDING 0x1000
 
 /* Special buffer types:
  * Sometimes there is a need to relay special information from a demuxer
