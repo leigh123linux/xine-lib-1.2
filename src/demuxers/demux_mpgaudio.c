@@ -555,7 +555,22 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
   buf->content                = buf->mem;
   buf->type                   = BUF_AUDIO_MPEG;
   buf->decoder_info[0]        = 1;
-  buf->decoder_flags          = decoder_flags|BUF_FLAG_FRAME_END;
+  buf->decoder_flags          = decoder_flags | BUF_FLAG_FRAME_END;
+
+  /* send encoder padding */
+  if (this->xing_header) {
+    if (frame_pos == this->mpg_frame_start) {
+      lprintf("sending a start padding of %d samples.\n", this->xing_header->start_delay);
+      buf->decoder_flags = buf->decoder_flags | BUF_FLAG_AUDIO_PADDING;
+      buf->decoder_info[1] = this->xing_header->start_delay;
+      buf->decoder_info[2] = 0;
+    } else if ((frame_pos + this->cur_frame.size) == this->mpg_frame_end) {
+      lprintf("sending a end padding of %d samples.\n", this->xing_header->end_delay);
+      buf->decoder_flags = buf->decoder_flags | BUF_FLAG_AUDIO_PADDING;
+      buf->decoder_info[1] = 0;
+      buf->decoder_info[2] = this->xing_header->end_delay;
+    }
+  }
 
   this->audio_fifo->put(this->audio_fifo, buf);
   lprintf("send buffer: pts=%"PRId64"\n", pts);  
@@ -678,9 +693,18 @@ static int demux_mpgaudio_send_chunk (demux_plugin_t *this_gen) {
 
   demux_mpgaudio_t *this = (demux_mpgaudio_t *) this_gen;
 
-  if (!demux_mpgaudio_next (this, 0, 0))
-    this->status = DEMUX_FINISHED;
+  if (!demux_mpgaudio_next (this, 0, 0)) {
+    /* Hack: send 8 zero bytes to flush the libmad decoder */
+    buf_element_t *buf;
+    buf = this->audio_fifo->buffer_pool_alloc(this->audio_fifo);
+    buf->type = BUF_AUDIO_MPEG;
+    buf->decoder_flags = BUF_FLAG_FRAME_END;
+    buf->size = 8;
+    memset(buf->content, 0, buf->size);
+    this->audio_fifo->put(this->audio_fifo, buf);
 
+    this->status = DEMUX_FINISHED;
+  }
   return this->status;
 }
 
