@@ -70,6 +70,9 @@ typedef struct mad_decoder_s {
   uint8_t           buffer[INPUT_BUF_SIZE];
   int               bytes_in_buffer;
   int               preview_mode;
+  int               start_padding;
+  int               end_padding;
+  int               needs_more_data;
 
 } mad_decoder_t;
 
@@ -84,6 +87,9 @@ static void mad_reset (audio_decoder_t *this_gen) {
   this->pts = 0;
   this->bytes_in_buffer = 0;
   this->preview_mode = 0;
+  this->start_padding = 0;
+  this->end_padding = 0;
+  this->needs_more_data = 0;
 
   mad_synth_init  (&this->synth);
   mad_stream_init (&this->stream);
@@ -95,7 +101,7 @@ static void mad_reset (audio_decoder_t *this_gen) {
 static void mad_discontinuity (audio_decoder_t *this_gen) {
 
   mad_decoder_t *this = (mad_decoder_t *) this_gen;
-  
+
   this->pts = 0;
 }
 
@@ -136,7 +142,7 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
   mad_decoder_t *this = (mad_decoder_t *) this_gen;
 
-  lprintf ("decode data, decoder_flags: %d\n", buf->decoder_flags);
+  lprintf ("decode data, decoder_flags: 0x%08X\n", buf->decoder_flags);
   
   if (buf->size>(INPUT_BUF_SIZE-this->bytes_in_buffer)) {
     xprintf (this->xstream->xine, XINE_VERBOSITY_DEBUG,
@@ -144,7 +150,7 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	     buf->size, INPUT_BUF_SIZE-this->bytes_in_buffer);
     buf->size = INPUT_BUF_SIZE-this->bytes_in_buffer;
   }
-  
+
   if ((buf->decoder_flags & BUF_FLAG_HEADER) == 0) {
 
     /* reset decoder on leaving preview mode */
@@ -167,6 +173,17 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     mad_stream_buffer (&this->stream, this->buffer, 
 		       this->bytes_in_buffer);
 
+    if (!this->needs_more_data) {
+      this->pts = buf->pts;
+      if (buf->decoder_flags & BUF_FLAG_AUDIO_PADDING) {
+        this->start_padding = buf->decoder_info[1];
+        this->end_padding = buf->decoder_info[2];
+      } else {
+        this->start_padding = 0;
+        this->end_padding = 0;
+      }
+    }
+
     while (1) {
 
       if (mad_frame_decode (&this->frame, &this->stream) != 0) {
@@ -184,6 +201,8 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	switch (this->stream.error) {
 
 	case MAD_ERROR_BUFLEN:
+	  /* libmad wants more data */
+	  this->needs_more_data = 1;
 	  return;
 
 	default: 
@@ -247,12 +266,13 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	mad_synth_frame (&this->synth, &this->frame);
 
 	if ( (buf->decoder_flags & BUF_FLAG_PREVIEW) == 0 ) {
-        
+ 
 	  unsigned int         nchannels, nsamples;
 	  mad_fixed_t const   *left_ch, *right_ch;
 	  struct mad_pcm      *pcm = &this->synth.pcm;
 	  audio_buffer_t      *audio_buffer;
 	  uint16_t            *output;
+
 
 	  audio_buffer = this->xstream->audio_out->get_buffer (this->xstream->audio_out);
 	  output = audio_buffer->mem;
@@ -261,7 +281,24 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	  nsamples  = pcm->length;
 	  left_ch   = pcm->samples[0];
 	  right_ch  = pcm->samples[1];
-	  
+ 
+	  /* padding */
+	  if (this->start_padding || this->end_padding) {
+	    /* check padding validity */
+	    if (nsamples < (this->start_padding + this->end_padding)) {
+	      lprintf("invalid padding data");
+	      this->start_padding = 0;
+	      this->end_padding = 0;
+	    }
+	    lprintf("nsamples=%d, start_padding=%d, end_padding=%d\n",
+	            nsamples, this->start_padding, this->end_padding);
+	    nsamples -= this->start_padding + this->end_padding;
+	    left_ch  += this->start_padding;
+	    right_ch += this->start_padding;
+	  }
+	  audio_buffer->num_frames = nsamples;
+	  audio_buffer->vpts       = this->pts;
+	
 	  while (nsamples--) {
 	    /* output sample(s) in 16-bit signed little-endian PCM */
 	    
@@ -272,19 +309,25 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
 	  }
 
-	  audio_buffer->num_frames = pcm->length;
-	  audio_buffer->vpts       = buf->pts;
 
+	  lprintf ("audio_out->put_buffer, samples=%d, pts=%"PRId64"\n", audio_buffer->num_frames, audio_buffer->vpts);
 	  this->xstream->audio_out->put_buffer (this->xstream->audio_out, audio_buffer, this->xstream);
 
+	  this->pts = buf->pts;
 	  buf->pts = 0;
-
+	  if (buf->decoder_flags & BUF_FLAG_AUDIO_PADDING) {
+	    this->start_padding = buf->decoder_info[1];
+	    this->end_padding = buf->decoder_info[2];
+	    buf->decoder_info[1] = 0;
+	    buf->decoder_info[2] = 0;
+	  } else {
+	    this->start_padding = 0;
+	    this->end_padding = 0;
+	  }
 	}
-
-	lprintf ("decode worked\n"); 
+	lprintf ("decode worked\n");
       }
-    } 
-
+    }
   }
 }
 
