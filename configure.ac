@@ -63,6 +63,9 @@ AC_DEFINE_UNQUOTED([XINE_MINOR], [$XINE_MINOR], [xine minor version number])
 XINE_SUB=XINE_VERSION_SUB
 AC_SUBST(XINE_SUB)
 AC_DEFINE_UNQUOTED([XINE_SUB],   [$XINE_SUB],   [xine sub version number])
+XINE_PATCH=XINE_VERSION_PATCH
+AC_SUBST(XINE_PATCH)
+AC_DEFINE_UNQUOTED([XINE_PATCH], [$XINE_PATCH], [xine patch version number])
 
 XINE_LT_CURRENT=__XINE_LT_CURRENT
 AC_SUBST(XINE_LT_CURRENT)
@@ -984,7 +987,7 @@ xinedatadir='${datadir}/xine'
 AC_SUBST(xinelibdir)
 AC_SUBST(xinedatadir)
 
-XINE_PLUGINDIR="\${xinelibdir}/plugins/$XINE_MAJOR.$XINE_MINOR.$XINE_SUB"
+XINE_PLUGINDIR="\${xinelibdir}/plugins/$XINE_MAJOR.$XINE_MINOR.$XINE_SUB$XINE_PATCH"
 XINE_FONTDIR="\${xinedatadir}/libxine$XINE_MAJOR/fonts"
 XINE_LOCALEDIR='${datadir}/locale'
 XINE_REL_PLUGINDIR="`makeexpand "$XINE_PLUGINDIR"`"

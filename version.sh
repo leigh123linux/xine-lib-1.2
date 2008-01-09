@@ -1,7 +1,11 @@
 #!/bin/sh
 
 # Making releases:
-#   1. Increment XINE_VERSION_SUB
+#   1. For normal releases
+#        Increment XINE_VERSION_SUB
+#        Clear XINE_VERSION_PATCH
+#      For patch releases
+#        Increment XINE_VERSION_PATCH (use ".1", ".2" etc.)
 #   2. Remove .cvsversion before running make dist
 #   3. Adjust the values of XINE_LT_CURRENT, XINE_LT_REVISION, and XINE_LT_AGE
 #      according to the following rules:
@@ -27,13 +31,14 @@
 XINE_VERSION_MAJOR=1
 XINE_VERSION_MINOR=1
 XINE_VERSION_SUB=90
+XINE_VERSION_PATCH=
 
 XINE_LT_CURRENT=2
 XINE_LT_REVISION=0
 XINE_LT_AGE=0
 
 test -f "`dirname $0`/.cvsversion" && XINE_VERSION_SUFFIX="hg"
-XINE_VERSION_SPEC="${XINE_VERSION_MAJOR}.${XINE_VERSION_MINOR}.${XINE_VERSION_SUB}${XINE_VERSION_SUFFIX}"
+XINE_VERSION_SPEC="${XINE_VERSION_MAJOR}.${XINE_VERSION_MINOR}.${XINE_VERSION_SUB}${XINE_VERSION_PATCH}${XINE_VERSION_SUFFIX}"
 
 ####
 ####    You should not need to touch anything beyond this point
@@ -42,6 +47,7 @@ XINE_VERSION_SPEC="${XINE_VERSION_MAJOR}.${XINE_VERSION_MINOR}.${XINE_VERSION_SU
 echo "m4_define([XINE_VERSION_MAJOR],  [${XINE_VERSION_MAJOR}])dnl"
 echo "m4_define([XINE_VERSION_MINOR],  [${XINE_VERSION_MINOR}])dnl"
 echo "m4_define([XINE_VERSION_SUB],    [${XINE_VERSION_SUB}])dnl"
+echo "m4_define([XINE_VERSION_PATCH],  [${XINE_VERSION_PATCH}])dnl"
 echo "m4_define([XINE_VERSION_SUFFIX], [${XINE_VERSION_SUFFIX}])dnl"
 echo "m4_define([XINE_VERSION_SPEC],   [${XINE_VERSION_SPEC}])dnl"
 echo "m4_define([__XINE_LT_CURRENT],   [${XINE_LT_CURRENT}])dnl"
