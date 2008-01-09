@@ -64,6 +64,7 @@ typedef struct {
   off_t                data_start;
   off_t                data_size;
 
+  int                  send_newpts;
   int                  seek_flag;  /* this is set when a seek just occurred */
 } demux_wav_t;
 
@@ -160,9 +161,9 @@ static int demux_wav_send_chunk(demux_plugin_t *this_gen) {
   current_pts *= 90000;
   current_pts /= this->wave->nAvgBytesPerSec;
 
-  if (this->seek_flag) {
-    _x_demux_control_newpts(this->stream, current_pts, BUF_FLAG_SEEK);
-    this->seek_flag = 0;
+  if (this->send_newpts) {
+    _x_demux_control_newpts(this->stream, current_pts, this->seek_flag);
+    this->send_newpts = this->seek_flag = 0;
   }
 
   while (remaining_sample_bytes) {
@@ -258,10 +259,13 @@ static int demux_wav_seek (demux_plugin_t *this_gen,
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->data_size );
 
-  this->seek_flag = 1;
   this->status = DEMUX_OK;
-  _x_demux_flush_engine (this->stream);
 
+  this->send_newpts = 1;
+  if (playing) {
+    this->seek_flag = 1;
+    _x_demux_flush_engine (this->stream);
+  }
   /* if input is non-seekable, do not proceed with the rest of this
    * seek function */
   if (!INPUT_IS_SEEKABLE(this->input))
