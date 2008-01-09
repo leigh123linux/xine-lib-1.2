@@ -13,11 +13,11 @@ xine-lib (1.1.9)
   * Improve handling of invalid or unknown frame sizes.
   * Fixed handling of streamed Flash videos (broken in 1.1.5).
   * Fixed division by zero in sputext decoder
-  * Build fix for when using Linux 2.6.23 headers. [Bug 1820958]
+  * Build fix for when using Linux 2.6.23 headers. [Bug SF 1820958]
   * Implemented decoding of XML character entities with codes >= 256.
     This requires conversion to UTF-8 of entities with codes >= 128.
   * Handle initial Unicde BOMs in XML; convert other UTF encodings to UTF-8.
-  * Fixed ATSC support. [Bug 1749508]
+  * Fixed ATSC support. [Bug SF 1749508]
   * Fixed a possible DVB plugin crash when switching channels.
   * Fixed a crash closing the frontend. [Bug #7]
   * Fixed deadlock on ao_close while paused.
@@ -33,7 +33,7 @@ xine-lib (1.1.9)
   * Fixed a crash that happened when a video output was closed
   * Made the Real demuxer recognise simple lists of http references.
   * Require correct URL encoding of '#'s which aren't separators.
-  * Don't decode %nn in raw filenames. [Bug 1784272]
+  * Don't decode %nn in raw filenames. [Bug SF 1784272]
   * Always enable a52dec capabilities for external a52dec, this makes it
     possible to use the DJB accelerated FFT when using the external a52dec
     liba52 library. [Bug #9]
@@ -68,7 +68,7 @@ xine-lib (1.1.8)
   * DVB subtitle fixes: deadlock prevention, thread leakage, spec compliance.
   * Allow the DVB input plugin to timeout if it is receiving no signal.
   * Fix an audio resampling problem which was causing regular clicking.
-  * Fix build with recent glibc and a debugging #define. [Bug 1773769]
+  * Fix build with recent glibc and a debugging #define. [Bug SF 1773769]
   * Fix handling of multiple MPEG TS audio streams & subtitle languages.
   * Add colouring for bold & italic in text subtitles.
   * Simple scaling of subtitles to fit the frame width (intended to cope
@@ -78,10 +78,10 @@ xine-lib (1.1.8)
 
 xine-lib (1.1.7)
   * Support libdca (new name for libdts) by shuffling around the dts.h file.
-  * Add support for MDHD version 1 atom in demux_qt. [bug #1679398]
+  * Add support for MDHD version 1 atom in demux_qt. [Bug SF 1679398]
   * Handle single-quoted attribute values in XML.
   * Fix default paths for RealPlayer libraries (broken in 1.1.5).
-    [Bug 1707526]
+    [Bug SF 1707526]
   * Fix proxy usage when the hostnames cannot be resolved. Thanks to Jeff
     Mitchell for reporting and testing the fix.
   * Avoid zero-sized frames when demuxing MPEG PES.
@@ -121,7 +121,7 @@ xine-lib (1.1.6)
 
 xine-lib (1.1.5)
   * Security fixes:
-    - Fix heap overflow in DMO loader. (CVE-2007-1246) [bug #1676925]
+    - Fix heap overflow in DMO loader. (CVE-2007-1246) [Bug SF 1676925]
       Thanks to Kees Cook for reporting.
   * Improved PulseAudio plugin, now only one connection per instance is opened
     and the mainloop is threaded to reduce latency during playback.
@@ -130,7 +130,7 @@ xine-lib (1.1.5)
     The plugins are contributed by Christoph Pfister with the help of
     Vincent Torri, Jamey Sharp and Christophe Thommeret.
   * Fix race condition in alsa audio out driver.
-  * Fixed a crash in the eq2 plugin. [Bug 1644312]
+  * Fixed a crash in the eq2 plugin. [Bug SF 1644312]
   * Fixed content type detection for AAC (seekable) streams with ID3v2
     tags prefixed clobbering the preview buffer, by skipping over the tag.
   * Parse ID3v2 tags on AAC and FLAC files, as well as mp3 files.
@@ -183,41 +183,42 @@ xine-lib (1.1.4)
     and previously applied by other distributions as well. Fixes the non-PIC
     code being generated. Note: patch reverted for tomsmocomp (segfault).
   * Fix race condition in audio_out by using a recursive mutex; patch by
-    Reinhard Nissl. [bug #1551911]
+    Reinhard Nissl. [Bug SF 1551911]
   * Allow building with Sun CC by fixing the lprintf variadic macro; patch by
-    Taso N. Devetzis. [bug #1614406]
+    Taso N. Devetzis. [Bug SF 1614406]
   * Fix disposing of image buffers in video_out_xv when SHM get disabled by
-    exhaustion of memory; patch by Matthias Drochner. [bug #1620339]
+    exhaustion of memory; patch by Matthias Drochner. [Bug SF 1620339]
   * Fix invalid memory access in Real Media ASM parser; reported by Roland
-    Kay. [bug #1603503]
+    Kay. [Bug SF 1603503]
   * Fix program termination due to invalid Real Media SDP; reported by Roland
-    Kay. [bug #1602663]
+    Kay. [Bug SF 1602663]
   * Fix invalid memory access in Real Media SDP with tailored stream; reported
-    by Roland Kay. [bug #1602631]
+    by Roland Kay. [Bug SF 1602631]
   * Don't check for libpostproc version and assume that if libavcodec is found
     correctly, libpostproc is of the same version, too. Reported by Ville
-    Skyttä. [bug #1617344]
+    Skyttä. [Bug SF 1617344]
   * Fix Shorten demuxer: the whole "ajkg" signature has to be found, not only
-    one character of it. [bug #1601134]
+    one character of it. [Bug SF 1601134]
   * Implement at least a partial content-based detection of ModPlug-decoded
     module files, using the magic numbers from GNU file. This allows to open
     module files based on content rather than on their extension only.
-    [bug #1445746]
+    [Bug SF 1445746]
   * Make the libFLAC-based decoder and demuxer for FLAC files work with recent
     FLAC release 1.1.3.
   * Replace --enable-flac configure option with --with-libflac, as the FLAC
     support is always built-in through the audio demuxer plugin and the FFmpeg
     decoder plugin, the option only controls the extra FLAC plugin that uses
     libFLAC both for demuxing and decoding.
-  * Implement a True Audio files demuxer. [bug #1586381]
+  * Implement a True Audio files demuxer. [Bug SF 1586381]
   * Allow decoding of MusePack SV 7.x files (7.1 files at least play fine).
   * Fix demuxing of uncompressed VobSub subtitles in Matroska files
   * ffmpeg update to 51.29.0
   * Workaround ffmpeg buggy codecs that don't release their DR1 frames.
-    [bugs #1599975, #1601299, #1319154]
+    [Bugs SF 1599975, SF 1601299, SF 1319154]
   * Fix several segfaults and freezing problem with H264 streams that use a lot
-    of reference frames (eg. 15) [bugs #1603305, #1576588, #1267713]
-  * Fix mpeg4 artifacts introduced in cvs (not present in 1.1.3) [#1625911]
+    of reference frames (eg. 15) [Bugs SF 1603305, SF 1576588, SF 1267713]
+  * Fix mpeg4 artifacts introduced in cvs (not present in 1.1.3)
+    [Bug SF 1625911]
   * Initial support to enable/disable ffmpeg codecs. Codecs may be disabled in
     groups by --disable-ffmpeg-uncommon-codecs/--disable-ffmpeg-popular-codecs
     Think of "uncommon" codecs what people would never want to play with their
@@ -236,12 +237,12 @@ xine-lib (1.1.4)
   * Don't crash when caching a file opened through Samba plugin, thanks to
     Timothy Redaelli from Gentoo.
   * Fix audio/video sync problem with NTSC DVDs (introduced in 1.1.2).
-    [bugs #1544349 and #1589644]
+    [Bugs SF 1544349, SF 1589644]
 
 xine-lib (1.1.3)
   * Security fixes:
     - Heap overflow in libmms (related to CVE-2006-2200)
-    - Buffer overrun in Real Media input plugin. [bug #1603458]
+    - Buffer overrun in Real Media input plugin. [Bug SF 1603458]
       Thanks to Roland Kay for reporting and JW for the patch.
   * Update build system to support x86 Darwin setups, and merge patches to
     support Darwin OS better.
@@ -259,26 +260,26 @@ xine-lib (1.1.3)
     supported by upstream, and it's replaced by PulseAudio.
   * Allow 0 for DVD title/chapter (navigation or full title).
   * New experimental JACK audio driver.
-  * Fix switch from alsa/dmix 2.0 to 5.1 [bug #1226595]
-  * Don't use proxy for localhost connection. [bug #1553633]
+  * Fix switch from alsa/dmix 2.0 to 5.1 [Bug SF 1226595]
+  * Don't use proxy for localhost connection. [Bug SF 1553633]
   * Use mmap() to open local files if available.
   * Use pkg-config to look for external FFmpeg.
   * Allow FFmpeg to play MP3s in case MAD is not present.
   * Reduce the dead time when trying to connect to dead hosts, by falling back
     to non-blocking sockets on the last address found for an host, and allowing
-    users to provide a connection timeout. [bug #1550844]
+    users to provide a connection timeout. [Bug SF 1550844]
   * Return the correct error message to frontends when a file is inaccessible or
-    the network connection is broken. [bug #1550763]
+    the network connection is broken. [Bug SF 1550763]
   * Support libcaca 0.99, thanks to cjacker huang.
-  * Fix crash on video-only WMV streams. [bug #1564598]
+  * Fix crash on video-only WMV streams. [Bug SF 1564598]
   * Report audio stream on Shorten files (required for Amarok to play them).
-  * Optionally use fontconfig to look up fonts to use for OSD. [bug #1551042]
+  * Optionally use fontconfig to look up fonts to use for OSD. [Bug SF 1551042]
   * Prefer FreeType2 rendered fonts to bitmap fonts.
   * Stone age platforms update
   * Enabled TrueSpeech codec
   * New X11 visual type: xine-lib may now use frontend's mutex/lock mechanism
     instead of XLockDisplay/XUnlockDisplay.
-  * Allow playing of OggFlac files. [bug #1590690]
+  * Allow playing of OggFlac files. [Bug SF 1590690]
   * Allow playing FLAC files with an ID3 tag at the start.
   * Fix some crashes caused by MP3 files (and possibly others) being
     misdetected as AAC.
@@ -342,7 +343,7 @@ xine-lib (1.1.1)
   * support gapless playback while switching streams (requires UI cooperation)
   * fix speed changing race causing deadlock with v4l plugin
   * cddb improvements/fixes (DTITLE/DYEAR parsing, timeout increase and
-    multiline entries support) [#1205274]
+    multiline entries support) [Bug SF 1205274]
 
 xine-lib (1.1.0)
   * new quality deinterlacer from dscaler: GreedyH (Greedy High Motion)
@@ -370,20 +371,20 @@ xine-lib (1.0.2)
     rtsp://stream.samurai.fm/broadcast/live_hi.rm
   * fixed xxmc / xvmc mocomp / IDCT rendering errors caused by the big update. 
   * support --enable-fpic with recent versions of gcc
-  * clip goom fps value to >= 1 [bug #1193783]
+  * clip goom fps value to >= 1 [Bug SF 1193783]
   * fixed xvmc plugin segfault when it tried software blending on nonexistant xv image
   * cleaned up libmpeg2 behaviour on xxmc plugin abrupt software fallback
   * use -fno-inline-functions with gcc < 3.4.0 (bug known to be in 3.3.5)
   * fix xxmc plugin wanting to change vld xvmc context when stream changes from
-    non-interlaced to interlaced [bug #1194350]
+    non-interlaced to interlaced [Bug SF 1194350]
   * speed up xx44 alphablending of large transparent areas
   * stop libmpeg2 XvMC IDCT / MOCOMP attempting software motion compensation
-    [bug #1194754]
+    [Bug SF 1194754]
   * improve xxmc cpu-usage for IDCT / MOCOMP acceleration through better locking
-    [bug #1195282]
-  * gcc4 build patches [bug #1175002]
-  * don't assume that file is in /usr/bin (build fix) [bug #1195539]
-  * plugin loader fixes - could cause xine to lock up hard on startup [bug #1196819]
+    [Bug SF 1195282]
+  * gcc4 build patches [Bug SF 1175002]
+  * don't assume that file is in /usr/bin (build fix) [Bug SF 1195539]
+  * plugin loader fixes - could cause xine to lock up hard on startup [Bug SF 1196819]
   * Fix xxmc bob deinterlacing for field-coded interlaced streams
   * Fix LE_64/BE_64 macros on non-x86 plataforms. may fixes issues with some
     demuxers like avi, asf and ogg.
@@ -404,10 +405,10 @@ xine-lib (1.0.2)
     greater installed
 
 xine-lib (1.0.1)
-  * Big XvMC quality / correctness / cpu-usage fix. [bug #1114517] 
+  * Big XvMC quality / correctness / cpu-usage fix. [Bug SF 1114517] 
   * fixed builds with Xv or the entire X11 unavailable
   * updated internal copies of VCD libraries to libcdio 0.71 and vcdimager 0.7.21
-  * fixed compatibility with new libtool versions [bug #1094262]
+  * fixed compatibility with new libtool versions [Bug SF 1094262]
   * renamed input.http_no_proxy to media.network.http_no_proxy
   * tightened no-proxy domain matching & added exact host match ('=' prefix)
   * assume that front ends can handle tabs (ffmpeg pp plugin help text)
@@ -420,15 +421,15 @@ xine-lib (1.0.1)
   * fixed support of icecast 2 server
   * fixed some memleaks related to DVD playback and MPEG PES
   * fixed PNG/MNG image distortion and incorrect colouring
-  * fixed build on solaris and other platforms [bugs #1062987, #1114677 and
-    #1115001]
+  * fixed build on solaris and other platforms [Bugs SF 1062987, SF 1114677,
+    SF 1115001]
   * published documentation about Win32 platform
   * brand new DirectX audio output plugin for Windows
   * updated win32 MSVC port
   * used only ASCII characters for C locale
   * fixed cropping and zooming with vidix
   * fixed status reporting to honour IDLE status as documented
-  * fixed aborts on DVB channel switching [bug #1090707]
+  * fixed aborts on DVB channel switching [Bug SF 1090707]
   * updated vidix to 0.9.9
   * plugin description accessor functions (may load plugins)
   * fixed translations, they were not used in some cases
@@ -448,7 +449,7 @@ xine-lib (1.0)
   * unbreak DXR3 plugin
   * fix crash in the AIFF demuxer on oversized chunks
   * fix crash in the sputext decoder when subtitles have too many lines
-    [bug #1086775]
+    [Bug SF 1086775]
   * added support for OGG chained streams
   * fixed deadlock with ASF chained streams due to fifo buffer leak
   * DVB Subtitles: fixed flashing, repeating subs, fix sync & timeouts
@@ -465,9 +466,9 @@ xine-lib (1-rc8)
   * Fixed segfault when seeking with the "xvmc" and "xxmc" plugins playing 
     files with IDCT / mocomp XvMC acceleration. 
   * polypaudio sound server support
-  * fixed playback of MMS streams with the new input cache layer [bug #1066926]
-  * fixed builds without X11 [bug #1067705]
-  * added support for 24-bit LPCM from DVDs [bug #843786]
+  * fixed playback of MMS streams with the new input cache layer [Bug SF 1066926]
+  * fixed builds without X11 [Bug SF 1067705]
+  * added support for 24-bit LPCM from DVDs [Bug SF 843786]
   * Fixed segfault in xxmc plugin when switch from software decoding to 
     accelerated decoding occured while software surfaces still needed to be 
     duplicated.
@@ -518,9 +519,9 @@ xine-lib (1-rc7)
     "The Lord of the Rings - The Two Towers"
   * fixed wrong subtitle appearing in the trailer of "Girl, Interrupted" RC2
   * fixed "NAV packet expected, but none found" error when toggling between
-    menu and feature with the Escape key [bug #1025469]
+    menu and feature with the Escape key [Bug SF 1025469]
   * video image scaling can now be disabled for more video output plugins
-    than XShm [feature requests #987635, #856408]
+    than XShm [feature requests SF 987635, SF 856408]
   * Updated the xxmc driver with a better software fallback mechanism
   * Fixed playback of OpenDML streams generated by mencoder
   * Fixed playback of incomplete OpenDML streams
@@ -534,7 +535,7 @@ xine-lib (1-rc7)
     overhead of expensive system calls for reading just a couple of
     bytes. may be disabled with MRL parameter "#nocache".
   * use monotonic clock where available (eg. linux 2.6) so system clock
-    updates won't disturb xine playback. [bug #781532]
+    updates won't disturb xine playback. [Bug SF 781532]
   * fixed seeking unresponsiveness when using external subtitles
   * Allowed multiple simultaneous thread access in parts of the xxmc driver, 
     assuming that XvMC libraries are thread-safe.
@@ -554,9 +555,9 @@ xine-lib (1-rc6)
   * Added quality improvements for full frame rate deinterlacing modes
   * Added support for 44100Hz DTS in .wav files.
   * Added ability to Restore initial xv port attributes on exit
-    [bugs #965572, #957599]
-  * Fixed brightness drift problem (loss of color) [bugs #947520, #963587]
-  * Fixed rare heap overflow with some DVD subpictures [bug #923843]
+    [Bugs SF 965572, SF 957599]
+  * Fixed brightness drift problem (loss of color) [Bugs SF 947520, SF 963587]
+  * Fixed rare heap overflow with some DVD subpictures [Bug SF 923843]
   * Fixed stack overflows in the VCD plugin
   * Added experimental time stretching plugin: play stream faster or 
     slower than original speed, optionally preserving pitch
@@ -570,8 +571,8 @@ xine-lib (1-rc6)
   * next stage of MINGW port - engine library compiles now
   * Improved DVD MRL handling.
   * Improved Transport stream handling.
-  * Fixed wrong, very bright overlays on some DVDs [bug #1018193]
-  * Fixed WIN32 replacement of gettimeofday [bug #995961]
+  * Fixed wrong, very bright overlays on some DVDs [Bug SF 1018193]
+  * Fixed WIN32 replacement of gettimeofday [Bug SF 995961]
   * Removed unistd.h from public header
   * Added experimental support for H.264/AVC video
   * Added support for 3ivx video
