@@ -136,7 +136,7 @@ xineplug_vo_out_opengl_la_CFLAGS = $(VISIBILITY_FLAG) $(X_CFLAGS) $(MLIB_CFLAGS)
 
 xineplug_vo_out_syncfb_la_SOURCES = video_out_syncfb.c 
 xineplug_vo_out_syncfb_la_LIBADD = $(XINE_LIB) $(X_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
-xineplug_vo_out_syncfb_la_CFLAGS = $(VISIBILITY_FLAG)
+xineplug_vo_out_syncfb_la_CFLAGS = $(VISIBILITY_FLAG) $(X_CFLAGS)
 
 xineplug_vo_out_pgx64_la_SOURCES = video_out_pgx64.c
 xineplug_vo_out_pgx64_la_LIBADD = $(XINE_LIB) $(X_LIBS) $(SUNDGA_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)

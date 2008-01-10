@@ -12,16 +12,18 @@ dnl
 AC_PREREQ(2.59)
 
 dnl Making releases:
-dnl   XINE_SUB += 1; continue with XINE_LT_* values below
+dnl   XINE_SUB += 1; XINE_PATCH = ''; continue with XINE_LT_* values below
 dnl
 XINE_MAJOR=1
 XINE_MINOR=1
 XINE_SUB=9
+# XINE_PATCH should be left empty or set to ".1" or ".2" or something similar
+XINE_PATCH=.1
 
 #if test $XINE_SUB -eq 0 ; then
 #  XINE_SUBPART="";
 #else
-  XINE_SUBPART=".$XINE_SUB"
+  XINE_SUBPART=".$XINE_SUB$XINE_PATCH"
 #fi
 
 dnl The libtool version numbers (XINE_LT_*); Don't even think about faking this!
@@ -69,6 +71,7 @@ AC_SUBST(XINE_BIN_AGE)
 AC_DEFINE_UNQUOTED(XINE_MAJOR, $XINE_MAJOR,[xine major version number])
 AC_DEFINE_UNQUOTED(XINE_MINOR, $XINE_MINOR,[xine minor version number])
 AC_DEFINE_UNQUOTED(XINE_SUB, $XINE_SUB, [xine sub version number])
+AC_DEFINE_UNQUOTED(XINE_PATCH, $XINE_PATCH, [xine patch version number])
 
 AC_SUBST(XINE_LT_CURRENT)
 AC_SUBST(XINE_LT_REVISION)
@@ -2388,7 +2391,7 @@ makeexpand () {
   echo "$i"
 }
 
-XINE_PLUGINDIR="$libdir/xine/plugins/$XINE_MAJOR.$XINE_MINOR.$XINE_SUB"
+XINE_PLUGINDIR="$libdir/xine/plugins/$XINE_MAJOR.$XINE_MINOR.$XINE_SUB$XINE_PATCH"
 XINE_FONTDIR="${datadir}/xine/libxine$XINE_MAJOR/fonts"
 XINE_LOCALEDIR="${datadir}/locale"
 XINE_REL_PLUGINDIR="`makeexpand "$XINE_PLUGINDIR"`"
@@ -2724,6 +2727,13 @@ win32/Makefile
 win32/include/Makefile])
 AC_CONFIG_COMMANDS([default],[[chmod +x ./misc/SlackBuild ./misc/build_rpms.sh ./misc/relchk.sh]],[[]])
 AC_OUTPUT
+
+dnl Guard against multiple inclusion
+AH_TOP([#ifndef _XINE_CONFIGURE_H_
+#define _XINE_CONFIGURE_H_
+])
+AH_BOTTOM([#endif
+])
 
 dnl ---------------------------------------------
 dnl Work around a suspected bug in libtool:
