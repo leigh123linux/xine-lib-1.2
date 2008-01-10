@@ -2962,7 +2962,7 @@ msgid ": upmixing Mono to Stereo.\n"
 msgstr ": Mono'dan Stereo'ya dönüştürme.\n"
 
 #: src/post/audio/upmix_mono.c:149
-#, c-format
+#, fuzzy, c-format
 msgid ": upmixing a single channel from original %d channel stream.\n"
 msgid_plural ": upmixing a single channel from original %d channels stream.\n"
 msgstr[0] ": tek kanalı özgün %d kanal yayın akışlarına dönüştürme.\n"
