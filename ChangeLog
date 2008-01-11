@@ -4,6 +4,7 @@ xine-lib (1.1.9.1) (unreleased)
       (Fix ported from mplayer changeset 22821)
   * Fix a read-past-end bug in xine-lib's internal strtok_r replacement.
     (Only affects systems without strtok_r.) [Bug #19]
+  * Fix a bug which causes video playback display errors on PPC/Darwin.
 
 xine-lib (1.1.9)
   * Fix dvd://.../title[.chapter] handling (somewhat broken in 1.1.8).
