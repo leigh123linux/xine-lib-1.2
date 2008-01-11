@@ -53,9 +53,13 @@ xine-lib (1.1.90) (Unreleased)
   * Check for supported extensions before opening the plugin and remove
     redundant core from plugins.
 
-xine-lib (1.1.9.1) (unreleased)
+xine-lib (1.1.9.1)
+  * Security fixes:
+    - Fix a buffer overflow in RTSP header-handling code. (CVE-2008-0225)
+      (Fix ported from mplayer changeset 22821)
   * Fix a read-past-end bug in xine-lib's internal strtok_r replacement.
     (Only affects systems without strtok_r.) [Bug #19]
+  * Fix a bug which causes video playback display errors on PPC/Darwin.
 
 xine-lib (1.1.9)
   * Fix dvd://.../title[.chapter] handling (somewhat broken in 1.1.8).
@@ -1672,4 +1676,5 @@ xine (0.3.0+older) unstable; urgency=low
 	- minor Makefile fixes for FreeBSD ports 
   
  -- Siggi Langauf <siggi@users.sourceforge.net>  Sun,  7 Jan 2001 23:59:12 +0100
+
 

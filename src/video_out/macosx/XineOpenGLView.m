@@ -336,7 +336,7 @@ NSColorToYUV(NSColor *color)
     // http://developer.apple.com/samplecode/Sample_Code/Graphics_3D/TextureRange/MainOpenGLView.m.htm
     glTexSubImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, 0, 0,
                     videoSize.width, videoSize.height, GL_YCBCR_422_APPLE,
-#if WORDS_BIG_ENDIAN
+#if WORDS_BIGENDIAN
                     GL_UNSIGNED_SHORT_8_8_APPLE,
 #else
                     GL_UNSIGNED_SHORT_8_8_REV_APPLE,
