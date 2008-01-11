@@ -1,4 +1,7 @@
 xine-lib (1.1.9.1) (unreleased)
+  * Security fixes:
+    - Fix a buffer overflow in RTSP header-handling code. (CVE-2008-0225)
+      (Fix ported from mplayer changeset 22821)
   * Fix a read-past-end bug in xine-lib's internal strtok_r replacement.
     (Only affects systems without strtok_r.) [Bug #19]
 
