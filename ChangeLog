@@ -1,3 +1,5 @@
+xine-lib (1.1.10) (unreleased)
+
 xine-lib (1.1.9.1)
   * Security fixes:
     - Fix a buffer overflow in RTSP header-handling code. (CVE-2008-0225)
