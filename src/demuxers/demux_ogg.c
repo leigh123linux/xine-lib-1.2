@@ -2155,7 +2155,7 @@ static const char *ogg_get_identifier (demux_class_t *this_gen) {
 }
 
 static const char *ogg_get_extensions (demux_class_t *this_gen) {
-  return "ogg ogm spx";
+  return "ogx ogv oga ogg spx ogm";
 }
 
 static const char *ogg_get_mimetypes (demux_class_t *this_gen) {
