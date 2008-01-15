@@ -2103,7 +2103,7 @@ static void *ogg_init_class (xine_t *xine, void *data) {
   this->demux_class.mimetypes       =
     "application/ogg: ogx: Ogg Stream;"
     "audio/ogg: oga: Ogg Audio;"
-    "video/ogg: ogv: Ogg Video;"
+    "video/ogg: ogv: Ogg Video;";
   this->demux_class.extensions      = "ogx ogv oga ogg spx ogm";
   this->demux_class.dispose         = default_demux_class_dispose;
 
