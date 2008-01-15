@@ -173,7 +173,7 @@ use internal ffmpeg.
         else
             AC_MSG_RESULT([Using included libdts support])
         fi
-        if test x"$have_external_libdts" != x"yes"; then
+        if test x"$have_external_dts" != x"yes"; then
             LIBDTS_CFLAGS='-I$(top_srcdir)/contrib/libdca/include'
             LIBDTS_DEPS='$(top_builddir)/contrib/libdca/libdca.la'
             LIBDTS_LIBS='$(top_builddir)/contrib/libdca/libdca.la'
