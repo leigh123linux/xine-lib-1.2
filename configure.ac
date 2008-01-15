@@ -480,6 +480,9 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <string.h>]], [[int a; memset(&a, 
                   [warnflags="$warnflags -Wpointer-arith"
                    AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
 
+CC_CHECK_LDFLAGS([-Wl,--gc-sections], [GCSECTIONS="-Wl,--gc-sections"])
+AC_SUBST([GCSECTIONS])
+
 dnl FreeBSD (et al.) does not complete linking for shared objects when pthreads
 dnl are requested, as different implementations are present; to avoid problems
 dnl use -Wl,-z,defs only for those platforms not behaving this way.
