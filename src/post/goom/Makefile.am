@@ -30,7 +30,7 @@ xinepost_LTLIBRARIES = xineplug_post_goom.la
 xineplug_post_goom_la_SOURCES = mmx.c xine_goom.c \
 	config_param.c convolve_fx.c cpu_info.c drawmethods.c filters.c flying_stars_fx.c \
 	gfontlib.c goom_core.c goom_tools.c goomsl.c goomsl_hash.c goomsl_heap.c \
-	goomsl_lex.c goomsl_yacc.c graphic.c ifs.c lines.c \
+	graphic.c ifs.c lines.c \
 	plugin_info.c sound_tester.c surf3d.c tentacle3d.c v3d.c
 xineplug_post_goom_la_LIBADD  = $(XINE_LIB) $(GOOM_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) -lm $(noinst_LTLIBRARIES)
 xineplug_post_goom_la_CFLAGS  = $(DEFAULT_OCFLAGS) $(AM_CFLAGS)
