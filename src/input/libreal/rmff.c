@@ -475,6 +475,7 @@ rmff_header_t *rmff_scan_header(const char *data) {
 	return header;
 }
 
+#if 0
 rmff_header_t *rmff_scan_header_stream(int fd) {
 
   rmff_header_t *header;
@@ -525,6 +526,7 @@ void rmff_scan_pheader(rmff_pheader_t *h, char *data) {
   h->reserved=(uint8_t)data[10];
   h->flags=(uint8_t)data[11];
 }
+#endif
 
 rmff_fileheader_t *rmff_new_fileheader(uint32_t num_headers) {
 
@@ -670,6 +672,7 @@ rmff_data_t *rmff_new_dataheader(uint32_t num_packets, uint32_t next_data_header
   return data;
 }
   
+#if 0
 void rmff_print_header(rmff_header_t *h) {
 
   rmff_mdpr_t **stream;
@@ -736,6 +739,7 @@ void rmff_print_header(rmff_header_t *h) {
     printf("next DATA : 0x%08x\n", h->data->next_data_header);
   } 
 }
+#endif
 
 void rmff_fix_header(rmff_header_t *h) {
 
@@ -844,6 +848,7 @@ void rmff_fix_header(rmff_header_t *h) {
   }
 }
 
+#if 0
 int rmff_get_header_size(rmff_header_t *h) {
 
   if (!h) return 0;
@@ -883,3 +888,4 @@ void rmff_free_header(rmff_header_t *h) {
   }
   free(h);
 }
+#endif
