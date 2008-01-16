@@ -83,8 +83,6 @@ static off_t rtsp_plugin_read (input_plugin_t *this_gen,
 
   lprintf ("rtsp_plugin_read: %"PRId64" bytes ...\n", len);
 
-  nbc_check_buffers (this->nbc);
-
   n = rtsp_session_read (this->rtsp, buf, len);
   this->curpos += n;
 

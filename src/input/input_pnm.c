@@ -83,8 +83,6 @@ static off_t pnm_plugin_read (input_plugin_t *this_gen,
 
   lprintf ("pnm_plugin_read: %"PRId64" bytes ...\n", len);
 
-  nbc_check_buffers (this->nbc);
-
   n = pnm_read (this->pnm, buf, len);
   this->curpos += n;
 

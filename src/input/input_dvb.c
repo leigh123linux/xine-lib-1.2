@@ -2496,9 +2496,6 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
 	  "input_dvb: reading %" PRIdMAX " bytes...\n", (intmax_t)len);
 #endif
 
-#ifndef DVB_NO_BUFFERING
-  nbc_check_buffers (this->nbc); 
-#endif
   /* protect against channel changes */
   have_mutex =  pthread_mutex_lock(&this->channel_change_mutex);
   total=0;
