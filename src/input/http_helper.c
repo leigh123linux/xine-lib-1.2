@@ -220,29 +220,6 @@ error:
   return 0;  
 }
 
-char *_x_canonicalise_url (const char *base, const char *url) {
-
-  size_t base_length;
-  char *cut, *ret;
-
-  if ((cut = strstr (url, "://")))
-    return strdup (url);
-
-  cut = strstr (base, "://");
-  if (url[0] == '/') {
-    /* absolute - base up to first '/' after "://", then url */
-    cut = strchr (cut + 3, '/');
-  }
-  else {
-    /* relative - base up to & inc. last '/', then url */
-    cut = strrchr (cut, '/');
-    if (cut)
-      ++cut;
-  }
-  base_length = cut ? (size_t)(cut - base) : strlen (base);
-  asprintf (&ret, "%.*s%s", (int)base_length, base, url);
-  return ret;
-}
 
 #ifdef TEST_URL
 /*

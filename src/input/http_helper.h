@@ -43,6 +43,28 @@ int _x_parse_url (char *url, char **proto, char** host, int *port,
  * return:
  *   the canonicalised URL (caller must free() it)
  */
-char *_x_canonicalise_url (const char *base, const char *url);
+static inline char *_x_canonicalise_url (const char *base, const char *url) {
+
+  size_t base_length;
+  char *cut, *ret;
+
+  if ((cut = strstr (url, "://")))
+    return strdup (url);
+
+  cut = strstr (base, "://");
+  if (url[0] == '/') {
+    /* absolute - base up to first '/' after "://", then url */
+    cut = strchr (cut + 3, '/');
+  }
+  else {
+    /* relative - base up to & inc. last '/', then url */
+    cut = strrchr (cut, '/');
+    if (cut)
+      ++cut;
+  }
+  base_length = cut ? (size_t)(cut - base) : strlen (base);
+  asprintf (&ret, "%.*s%s", (int)base_length, base, url);
+  return ret;
+}
 
 #endif /* HTTP_HELPER_H */
