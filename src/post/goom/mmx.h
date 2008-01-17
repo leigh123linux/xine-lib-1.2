@@ -244,10 +244,8 @@ mmx_ok(void)
 	return ( mm_support() & 0x1 );
 }
 
-#ifdef CPU_X86
 int mmx_supported (void);
 int xmmx_supported (void);
-#endif
 
 
 /* MMX optimized implementations */
