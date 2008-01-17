@@ -23,7 +23,6 @@
 /*#include "xmmx.h"*/
 #include "goom_graphic.h"
 
-#ifdef CPU_X86
 int xmmx_supported (void) {
 #ifdef ARCH_X86_64
 	return 0; /* Haven't yet converted zoom_filter_xmmx 
@@ -32,7 +31,6 @@ int xmmx_supported (void) {
 	return (mm_support()&0x8)>>3;
 #endif
 }
-#endif
 
 void zoom_filter_xmmx (int prevX, int prevY,
                        Pixel *expix1, Pixel *expix2,
