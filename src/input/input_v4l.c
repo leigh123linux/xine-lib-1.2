@@ -114,8 +114,8 @@ static const char *const tv_standard_names[] = { "PAL", "NTSC", "SECAM", NULL };
 static const int tv_standard_values[] = { VIDEO_MODE_PAL, VIDEO_MODE_NTSC, VIDEO_MODE_SECAM };
 
 #define NUM_RESOLUTIONS  (sizeof(resolutions)/sizeof(resolutions[0]))
-#define RADIO_DEV        "/dev/v4l/radio0"
-#define VIDEO_DEV        "/dev/v4l/video0"
+#define RADIO_DEV        "/dev/radio0"
+#define VIDEO_DEV        "/dev/video0"
 
 #if !defined(NDELAY) && defined(O_NDELAY)
 #define FNDELAY O_NDELAY

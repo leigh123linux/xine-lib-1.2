@@ -140,9 +140,9 @@ static uint8_t *asf_reader_get_bytes(asf_reader_t *reader, size_t size) {
 static char *asf_reader_get_string(asf_reader_t *reader, size_t size, iconv_t cd) {
   char *inbuf, *outbuf;
   size_t inbytesleft, outbytesleft;
-  char scratch[2048]; 
+  char scratch[2048];
 
-  if ((reader->size - reader->pos) < size)
+  if ((size == 0) ||((reader->size - reader->pos) < size))
     return NULL;
 
   inbuf = (char *)reader->buffer + reader->pos;
@@ -595,6 +595,12 @@ static int asf_header_parse_content_description(asf_header_t *header_pub, uint8_
   content->copyright = asf_reader_get_string(&reader, copyright_length, iconv_cd);
   content->description = asf_reader_get_string(&reader, description_length, iconv_cd);
   content->rating = asf_reader_get_string(&reader, rating_length, iconv_cd);
+
+  lprintf("title: %d chars: \"%s\"\n", title_length, content->title);
+  lprintf("author: %d chars: \"%s\"\n", author_length, content->author);
+  lprintf("copyright: %d chars: \"%s\"\n", copyright_length, content->copyright);
+  lprintf("description: %d chars: \"%s\"\n", description_length, content->description);
+  lprintf("rating: %d chars: \"%s\"\n", rating_length, content->rating);
 
   header->pub.content = content;
 

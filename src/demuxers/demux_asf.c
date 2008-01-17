@@ -722,6 +722,9 @@ static void asf_send_buffer_nodefrag (demux_asf_t *this, asf_demux_stream_t *str
     buf->size       = bufsize;
     timestamp       = 0;
 
+    if (stream->frag_offset == 0)
+      buf->decoder_flags |= BUF_FLAG_FRAME_START;
+
     stream->frag_offset += bufsize;
     frag_len -= bufsize;
 
@@ -732,10 +735,6 @@ static void asf_send_buffer_nodefrag (demux_asf_t *this, asf_demux_stream_t *str
     else
       check_newpts (this, buf->pts, PTS_AUDIO, package_done);
 
-      
-    if (frag_offset == 0)
-      buf->decoder_flags |= BUF_FLAG_FRAME_START;
-      
     /* test if whole packet read */
     if (package_done) {
       buf->decoder_flags |= BUF_FLAG_FRAME_END;
