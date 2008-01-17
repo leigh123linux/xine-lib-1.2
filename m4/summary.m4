@@ -179,9 +179,6 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     echo " * video driver plugins:"
     if test x"$no_x" != x"yes"; then
         echo "   - XShm (X11 shared memory)"
-        if test x"$have_syncfb" = x"yes"; then
-            echo "   - SyncFB (for Matrox G200/G400 cards)"
-        fi
         if test x"$have_xv" = x"yes"; then
             if test x"$have_xv_static" = x"yes"; then
                 echo "   - Xv (XVideo *static*)"

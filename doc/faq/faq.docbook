@@ -1828,7 +1828,7 @@
     </para>
     <para>
      Drivers that access hardware directly includes VIDIX (warning: requires 
-     root priviledges or kernel helper) and SyncFB (requires kernel helper - Matrox only).
+     root priviledges or kernel helper).
      User may try one of those, but should be warned that with root access
      they can cause the system to crash hard. The support is also limited to
      a couple of graphics cards only.

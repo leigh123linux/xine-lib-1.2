@@ -182,8 +182,6 @@ static const xine_config_entry_translation_t config_entry_translation[] = {
   { "video.pgx64_overlay_mode",			"" },
   { "video.pgx64_saturation",			"video.output.pgx64_saturation" },
   { "video.sdl_hw_accel",			"video.device.sdl_hw_accel" },
-  { "video.syncfb_default_repeat",		"video.device.syncfb_default_repeat" },
-  { "video.syncfb_device",			"video.device.syncfb_device" },
   { "video.unichrome_cpu_save",			"video.device.unichrome_cpu_save" },
   { "video.vertical_position",			"video.output.vertical_position" },
   { "video.vidix_blue_intensity",		"video.output.vidix_blue_intensity" },

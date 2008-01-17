@@ -40,6 +40,3 @@ README.opengl
 
 README.solaris
   hints on running xine on Solaris
-
-README.syncfb
-  information about xine's SyncFB video output plugin

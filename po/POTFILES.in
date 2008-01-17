@@ -109,7 +109,6 @@ src/video_out/video_out_pgx32.c
 src/video_out/video_out_pgx64.c
 src/video_out/video_out_sdl.c
 src/video_out/video_out_stk.c
-src/video_out/video_out_syncfb.c
 src/video_out/video_out_vidix.c
 src/video_out/video_out_xcbshm.c
 src/video_out/video_out_xcbxv.c

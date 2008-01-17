@@ -51,9 +51,6 @@
 %if %{?BUILD_DIRECTFB:0}%{!?BUILD_DIRECTFB:1}
 %define BUILD_DIRECTFB  0
 %endif
-%if %{?BUILD_SYNCFB:0}%{!?BUILD_SYNCFB:1}
-%define BUILD_SYNCFB    0
-%endif
 %if %{?BUILD_W32DLL:0}%{!?BUILD_W32DLL:1}
 %define BUILD_W32DLL    0
 %endif
@@ -362,30 +359,6 @@ Videovýstupní modul libxine, který používá OpenGL (3D grafické karty).
 
 %description opengl -l de
 libxine Videoausgabeplugin per OpenGL (3D Grafikkarte)
-%endif
-
-%if %BUILD_SYNCFB
-%package syncfb
-Summary:        libxine video output plugin using synchroniced framebuffer (Matrox cards)
-Summary(cs):    Videovýstupní modul libxine používající framebuffer (karty Matrox)
-Summary(de):    libxine Videoausgabeplugin per synchronisiertem Framebuffer (Matrox Karten)
-Summary(fi):    libxine-Videolisdke Matrox-ndyttvkorttien synkronisoitua ndyttvmuistia varten.
-Group:          Development/Libraries
-Obsoletes:      libxine0-syncfb
-Requires:       %{libname} = %{version}-%{release}
-
-%description syncfb
-libxine video output plugin using synchroniced framebuffer (Matrox cards)
-
-%description syncfb -l cs
-Videovýstupní modul libxine, který používá synchronizovaný framebuffer (karty
-Matrox).
-
-%description syncfb -l de
-libxine Videoausgabeplugin per synchronisiertem Framebuffer (Matrox Karten)
-
-%description syncfb -l fi
-libxine-Videolisdke Matrox-ndyttvkorttien synkronisoitua ndyttvmuistia varten.
 %endif
 
 %if %BUILD_DVD
@@ -762,14 +735,6 @@ grep -v -E "xineplug_vo_out_opengl\.|README.opengl" ${RPM_BUILD_DIR}/filelist_li
 rm ${RPM_BUILD_DIR}/filelist_libxine2_old
 %endif
 
-%if %BUILD_SYNCFB
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine2_syncfb
-mv ${RPM_BUILD_DIR}/filelist_libxine2 ${RPM_BUILD_DIR}/filelist_libxine2_old
-grep -E "xineplug_vo_out_syncfb\.|README\.syncfb" ${RPM_BUILD_DIR}/filelist_libxine2_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine2_syncfb
-grep -v -E "xineplug_vo_out_syncfb\.|README\.syncfb" ${RPM_BUILD_DIR}/filelist_libxine2_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine2
-rm ${RPM_BUILD_DIR}/filelist_libxine2_old
-%endif
-
 %if %BUILD_DIRECTFB
 echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine2_directfb
 mv ${RPM_BUILD_DIR}/filelist_libxine2 ${RPM_BUILD_DIR}/filelist_libxine2_old
@@ -894,10 +859,6 @@ rm ${RPM_BUILD_DIR}/filelist_libxine2_old
 
 %if %BUILD_OPENGL
 %files opengl -f ../filelist_libxine2_opengl
-%endif
-
-%if %BUILD_SYNCFB
-%files syncfb -f ../filelist_libxine2_syncfb
 %endif
 
 %if %BUILD_DIRECTFB

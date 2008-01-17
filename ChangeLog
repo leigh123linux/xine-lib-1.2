@@ -52,6 +52,9 @@ xine-lib (1.1.90) (Unreleased)
     for specific input protocols.
   * Check for supported extensions before opening the plugin and remove
     redundant core from plugins.
+  * Remove SyncFB video output plugin, the kernel module needed is no more
+    active and thus it's no more usable. If you were using SyncFB somehow,
+    please use DirectFB or VIDIX instead.
 
 xine-lib (1.1.9.1)
   * Security fixes:
