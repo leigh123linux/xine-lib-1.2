@@ -64,6 +64,7 @@ CONFIGURE_FLAGS := --prefix=/usr \
 	--with-external-a52dec \
 	--with-external-libdts \
 	--with-external-faad \
+	--with-external-ffmpeg=soft \
 	--with-freetype \
 	--with-wavpack \
 	$(DEB_BUILD_CONFIG_OPTIONS) \
