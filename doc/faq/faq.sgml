@@ -6,7 +6,7 @@
   <title>The xine engine FAQ</title>
   <titleabbrev>xine FAQ</titleabbrev>
   <copyright>
-   <year>2001-2003</year>
+   <year>2001-2008</year>
    <holder>the xine project team</holder>
   </copyright>
  </bookinfo>
@@ -946,7 +946,7 @@
      Latest xine-lib modules (1-beta3 or newer) support external subtitles
      for any media file, not only AVI. In order to use it you can pass a
      special MRL construction like:
-     <screen>&nbsp;&nbsp;&nbsp;<command>xine test.mpg#subtitle:file.sub</command></screen>
+     <screen>&nbsp;&nbsp;&nbsp;<command>xine file://path/to/test.mpg#subtitle:/path/to/file.sub</command></screen>
      The external subtitles support can also be used by any xine frontend.
      Currently xine-ui and kaffeine implement this feature with a subtitle
      selection dialog.

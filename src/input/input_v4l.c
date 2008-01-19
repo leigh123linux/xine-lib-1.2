@@ -91,8 +91,8 @@ static const resolution_t resolutions[] = {
 };
 
 #define NUM_RESOLUTIONS  (sizeof(resolutions)/sizeof(resolutions[0]))
-#define RADIO_DEV        "/dev/v4l/radio0"
-#define VIDEO_DEV        "/dev/v4l/video0"
+#define RADIO_DEV        "/dev/radio0"
+#define VIDEO_DEV        "/dev/video0"
 
 #if !defined(NDELAY) && defined(O_NDELAY)
 #define FNDELAY O_NDELAY

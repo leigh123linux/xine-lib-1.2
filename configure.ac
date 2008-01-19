@@ -16,9 +16,9 @@ dnl   XINE_SUB += 1; XINE_PATCH = ''; continue with XINE_LT_* values below
 dnl
 XINE_MAJOR=1
 XINE_MINOR=1
-XINE_SUB=9
+XINE_SUB=10
 # XINE_PATCH should be left empty or set to ".1" or ".2" or something similar
-XINE_PATCH=.1
+XINE_PATCH=
 
 #if test $XINE_SUB -eq 0 ; then
 #  XINE_SUBPART="";
