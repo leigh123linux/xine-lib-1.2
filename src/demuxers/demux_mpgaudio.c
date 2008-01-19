@@ -542,17 +542,14 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
     return 0;
   }
 
-  /* the decoder needs the frame header */
-  if (!this->found_next_frame) {
-    memcpy(buf->content, frame_header, 4);
-  }
+  memcpy(buf->content, frame_header, 4);
 
   /* compute the payload size */
   if (this->cur_frame.size > 0) {
     payload_size = this->cur_frame.size - 4;
   } else if (this->free_bitrate_size > 0) {
-//    payload_size = this->free_bitrate_size + this->cur_frame.padding - 4;
-//    this->cur_frame.size = payload_size + 4;
+    payload_size = this->free_bitrate_size + this->cur_frame.padding - 4;
+    this->cur_frame.size = payload_size + 4;
     payload_size = 0;
   } else {
     payload_size = 0;
@@ -574,11 +571,9 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
      * current frame from the position of the next one. */
     int payload_size = 0;
     int max_size = buf->max_size - 4;
-    int header_size = 4 * !this->found_next_frame;
 
     while (payload_size < max_size) {
-      len = this->input->read(this->input,
-                              &buf->content[header_size + payload_size], 1);
+      len = this->input->read(this->input, &buf->content[payload_size], 1);
       if (len != 1) {
         lprintf("EOF\n");
         buf->free_buffer(buf);
@@ -586,32 +581,29 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
       }
       payload_size += len;
 
-      if ((header_size + payload_size) >= 4) {
-        if (parse_frame_header(&this->next_frame,
-                              &buf->content[header_size + payload_size - 4])) {
-          if (check_frame_validity(this, &this->next_frame)) {
-            lprintf("found next frame header\n");
-            if (this->free_bitrate_size == 0) {
-              this->free_bitrate_size = payload_size - this->cur_frame.padding;
-            }
-            /* don't read the frame header twice */
-            this->found_next_frame = 1;
-            memcpy(&this->next_header[0], &buf->content[header_size + payload_size], 4);
-            payload_size -= 4;
-            break;
-          } else {
-            lprintf("invalid frame\n");
+      if (parse_frame_header(&this->next_frame,
+                            &buf->content[payload_size - 4])) {
+        if (check_frame_validity(this, &this->next_frame)) {
+          lprintf("found next frame header\n");
+          if (this->free_bitrate_size == 0) {
+            this->free_bitrate_size = payload_size - this->cur_frame.padding;
           }
+          /* don't read the frame header twice */
+          this->found_next_frame = 1;
+          memcpy(&this->next_header[0], &buf->content[payload_size], 4);
+          payload_size -= 4;
+          break;
+        } else {
+          lprintf("invalid frame\n");
         }
       }
     }
-    this->cur_frame.size = header_size + payload_size + 4;
+    this->cur_frame.size = payload_size + 4;
     if (this->br == 0) {
       this->br = 8000 * this->cur_frame.size / this->cur_frame.duration;
     }
     this->cur_frame.bitrate = this->br;
     lprintf("free bitrate: bitrate: %d, frame size: %d\n", this->br, this->cur_frame.size);
-    
   }
 
   if (this->check_vbr_header) {
@@ -904,7 +896,7 @@ static void demux_mpgaudio_send_headers (demux_plugin_t *this_gen) {
         break;
       }
     }
-    
+
     if (this->xing_header) {
       xing_header_t *xing = this->xing_header;
 
@@ -915,7 +907,7 @@ static void demux_mpgaudio_send_headers (demux_plugin_t *this_gen) {
       if (this->stream_length) {
         this->br = ((uint64_t)xing->stream_size * 8 * 1000) / this->stream_length;
       }
-      
+
     } else if (this->vbri_header) {
       vbri_header_t *vbri = this->vbri_header;
 
@@ -958,7 +950,7 @@ static void demux_mpgaudio_send_headers (demux_plugin_t *this_gen) {
     {
       char scratch_buf[256];
       char *mpeg_ver[3] = {"1", "2", "2.5"};
-      
+
       snprintf(scratch_buf, 256, "MPEG %s Layer %1d%s",
                mpeg_ver[this->cur_frame.version_idx], this->cur_frame.layer,
                (this->xing_header)? " VBR" : " CBR" );
