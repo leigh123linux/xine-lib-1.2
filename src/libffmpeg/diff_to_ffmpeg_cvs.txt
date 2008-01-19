@@ -1,0 +1,619 @@
+Index: libavutil/internal.h
+===================================================================
+--- libavutil/internal.h	(revision 7433)
++++ libavutil/internal.h	(working copy)
+@@ -181,11 +181,15 @@
+ #include <assert.h>
+ 
+ /* dprintf macros */
+-#ifdef DEBUG
+-#    define dprintf(fmt,...) av_log(NULL, AV_LOG_DEBUG, fmt, __VA_ARGS__)
+-#else
+-#    define dprintf(fmt,...)
+-#endif
++#    ifdef DEBUG
++#        ifdef __GNUC__
++#            define dprintf(fmt,args...) av_log(NULL, AV_LOG_DEBUG, fmt, ##args)
++#        else
++#            define dprintf(fmt,...) av_log(NULL, AV_LOG_DEBUG, fmt, __VA_ARGS__)
++#        endif
++#    else
++#        define dprintf(fmt,...)
++#    endif
+ 
+ #define av_abort()      do { av_log(NULL, AV_LOG_ERROR, "Abort at %s:%d\n", __FILE__, __LINE__); abort(); } while (0)
+ 
+Index: libavutil/integer.c
+===================================================================
+--- libavutil/integer.c	(revision 7433)
++++ libavutil/integer.c	(working copy)
+@@ -126,8 +126,8 @@
+     AVInteger quot_temp;
+     if(!quot) quot = &quot_temp;
+ 
+-    assert((int16_t)a[AV_INTEGER_SIZE-1] >= 0 && (int16_t)b[AV_INTEGER_SIZE-1] >= 0);
+-    assert(av_log2(b)>=0);
++    assert((int16_t)a.v[AV_INTEGER_SIZE-1] >= 0 && (int16_t)b.v[AV_INTEGER_SIZE-1] >= 0);
++    assert(av_log2_i(b)>=0);
+ 
+     if(i > 0)
+         b= av_shr_i(b, -i);
+Index: libavutil/common.h
+===================================================================
+--- libavutil/common.h	(revision 7433)
++++ libavutil/common.h	(working copy)
+@@ -345,4 +345,20 @@
+ char *av_strdup(const char *s);
+ void av_freep(void *ptr);
+ 
++/* xine: inline causes trouble for debug compiling */
++#ifdef DISABLE_INLINE
++# ifdef inline
++#  undef inline
++# endif
++# ifdef always_inline
++#  undef always_inline
++# endif
++# define inline
++# define always_inline
++#endif
++
++/* xine: another config.h with codecs to use */
++#include "ffmpeg_config.h"
++
+ #endif /* COMMON_H */
++
+Index: libavcodec/mjpeg.c
+===================================================================
+--- libavcodec/mjpeg.c	(revision 7433)
++++ libavcodec/mjpeg.c	(working copy)
+@@ -38,6 +38,13 @@
+ #include "mpegvideo.h"
+ #include "bytestream.h"
+ 
++/* if xine's MPEG encoder is enabled, enable the encoding features in
++ * this particular module */
++#if defined(XINE_MPEG_ENCODER) && !defined(CONFIG_ENCODERS)
++#define CONFIG_ENCODERS
++#endif
++
++
+ /* use two quantizer tables (one for luminance and one for chrominance) */
+ /* not yet working */
+ #undef TWOMATRIXES
+Index: libavcodec/i386/dsputil_mmx.c
+===================================================================
+--- libavcodec/i386/dsputil_mmx.c	(revision 7433)
++++ libavcodec/i386/dsputil_mmx.c	(working copy)
+@@ -2545,33 +2545,39 @@
+                 "pmullw %%mm5, %%mm2 \n\t" // (s-dx)*dy
+                 "pmullw %%mm4, %%mm1 \n\t" // dx*(s-dy)
+ 
+-                "movd   %4,    %%mm5 \n\t"
+-                "movd   %3,    %%mm4 \n\t"
++                "movd   %3,    %%mm5 \n\t"
++                "movd   %2,    %%mm4 \n\t"
+                 "punpcklbw %%mm7, %%mm5 \n\t"
+                 "punpcklbw %%mm7, %%mm4 \n\t"
+                 "pmullw %%mm5, %%mm3 \n\t" // src[1,1] * dx*dy
+                 "pmullw %%mm4, %%mm2 \n\t" // src[0,1] * (s-dx)*dy
+ 
+-                "movd   %2,    %%mm5 \n\t"
+-                "movd   %1,    %%mm4 \n\t"
++                "movd   %1,    %%mm5 \n\t"
++                "movd   %0,    %%mm4 \n\t"
+                 "punpcklbw %%mm7, %%mm5 \n\t"
+                 "punpcklbw %%mm7, %%mm4 \n\t"
+                 "pmullw %%mm5, %%mm1 \n\t" // src[1,0] * dx*(s-dy)
+                 "pmullw %%mm4, %%mm0 \n\t" // src[0,0] * (s-dx)*(s-dy)
+-                "paddw  %5,    %%mm1 \n\t"
++                "paddw  %4,    %%mm1 \n\t"
+                 "paddw  %%mm3, %%mm2 \n\t"
+                 "paddw  %%mm1, %%mm0 \n\t"
+                 "paddw  %%mm2, %%mm0 \n\t"
+ 
+-                "psrlw    %6,    %%mm0 \n\t"
++                "psrlw    %5,    %%mm0 \n\t"
+                 "packuswb %%mm0, %%mm0 \n\t"
+-                "movd     %%mm0, %0    \n\t"
+ 
+-                : "=m"(dst[x+y*stride])
++                : 
+                 : "m"(src[0]), "m"(src[1]),
+                   "m"(src[stride]), "m"(src[stride+1]),
+                   "m"(*r4), "m"(shift2)
+             );
++            
++            asm volatile(
++                "movd     %%mm0, %0    \n\t"
++
++                : "=m"(dst[x+y*stride])
++                : 
++            );
+             src += stride;
+         }
+         src += 4-h*stride;
+Index: libavcodec/mpegvideo.c
+===================================================================
+--- libavcodec/mpegvideo.c	(revision 7433)
++++ libavcodec/mpegvideo.c	(working copy)
+@@ -40,6 +40,14 @@
+ //#undef NDEBUG
+ //#include <assert.h>
+ 
++
++/* if xine's MPEG encoder is enabled, enable the encoding features in
++ * this particular module */
++#if defined(XINE_MPEG_ENCODER) && !defined(CONFIG_ENCODERS)
++#define CONFIG_ENCODERS
++#endif
++
++
+ #ifdef CONFIG_ENCODERS
+ static int encode_picture(MpegEncContext *s, int picture_number);
+ #endif //CONFIG_ENCODERS
+@@ -1345,6 +1353,8 @@
+     ff_set_cmp(&s->dsp, s->dsp.ildct_cmp, s->avctx->ildct_cmp);
+     ff_set_cmp(&s->dsp, s->dsp.frame_skip_cmp, s->avctx->frame_skip_cmp);
+ 
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+ #ifdef CONFIG_H261_ENCODER
+     if (s->out_format == FMT_H261)
+         ff_h261_encode_init(s);
+@@ -1353,6 +1363,8 @@
+         h263_encode_init(s);
+     if(s->msmpeg4_version)
+         ff_msmpeg4_encode_init(s);
++#endif /* #if 0 */
++/* xine: we DO want this for MPEG-1 encoding */
+     if (s->out_format == FMT_MPEG1)
+         ff_mpeg1_encode_init(s);
+ 
+@@ -1397,9 +1409,12 @@
+ 
+     ff_rate_control_uninit(s);
+ 
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+     MPV_common_end(s);
+     if (s->out_format == FMT_MJPEG)
+         mjpeg_close(s);
++#endif /* #if 0 */
+ 
+     av_freep(&avctx->extradata);
+ 
+@@ -2545,8 +2560,11 @@
+ 
+         MPV_frame_end(s);
+ 
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+         if (s->out_format == FMT_MJPEG)
+             mjpeg_picture_trailer(s);
++#endif /* #if 0 */
+ 
+         if(avctx->rc_buffer_size){
+             RateControlContext *rcc= &s->rc_context;
+@@ -4574,6 +4592,8 @@
+     case CODEC_ID_MPEG1VIDEO:
+     case CODEC_ID_MPEG2VIDEO:
+         mpeg1_encode_mb(s, s->block, motion_x, motion_y); break;
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+     case CODEC_ID_MPEG4:
+         mpeg4_encode_mb(s, s->block, motion_x, motion_y); break;
+     case CODEC_ID_MSMPEG4V2:
+@@ -4594,6 +4614,7 @@
+         h263_encode_mb(s, s->block, motion_x, motion_y); break;
+     case CODEC_ID_MJPEG:
+         mjpeg_encode_mb(s, s->block); break;
++#endif /* #if 0 */
+     default:
+         assert(0);
+     }
+@@ -4815,6 +4836,8 @@
+                +sse(s, s->new_picture.data[2] + s->mb_x*8  + s->mb_y*s->uvlinesize*8,s->dest[2], w>>1, h>>1, s->uvlinesize);
+ }
+ 
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+ static int pre_estimate_motion_thread(AVCodecContext *c, void *arg){
+     MpegEncContext *s= arg;
+ 
+@@ -4860,6 +4883,7 @@
+     }
+     return 0;
+ }
++#endif /* #if 0 */
+ 
+ static int mb_var_thread(AVCodecContext *c, void *arg){
+     MpegEncContext *s= arg;
+@@ -4886,6 +4910,8 @@
+ }
+ 
+ static void write_slice_end(MpegEncContext *s){
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+     if(s->codec_id==CODEC_ID_MPEG4){
+         if(s->partitioned_frame){
+             ff_mpeg4_merge_partitions(s);
+@@ -4895,6 +4921,7 @@
+     }else if(s->out_format == FMT_MJPEG){
+         ff_mjpeg_stuffing(&s->pb);
+     }
++#endif /* #if 0 */
+ 
+     align_put_bits(&s->pb);
+     flush_put_bits(&s->pb);
+@@ -4950,10 +4977,13 @@
+     case CODEC_ID_FLV1:
+         s->gob_index = ff_h263_get_gob_height(s);
+         break;
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+     case CODEC_ID_MPEG4:
+         if(s->partitioned_frame)
+             ff_mpeg4_init_partitions(s);
+         break;
++#endif /* #if 0 */
+     }
+ 
+     s->resync_mb_x=0;
+@@ -5026,9 +5056,12 @@
+                     if(s->start_mb_y != mb_y || mb_x!=0){
+                         write_slice_end(s);
+ 
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+                         if(s->codec_id==CODEC_ID_MPEG4 && s->partitioned_frame){
+                             ff_mpeg4_init_partitions(s);
+                         }
++#endif /* #if 0 */
+                     }
+ 
+                     assert((put_bits_count(&s->pb)&7) == 0);
+@@ -5052,19 +5085,25 @@
+                     }
+ 
+                     switch(s->codec_id){
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+                     case CODEC_ID_MPEG4:
+                         ff_mpeg4_encode_video_packet_header(s);
+                         ff_mpeg4_clean_buffers(s);
+                     break;
++#endif /* #if 0 */
+                     case CODEC_ID_MPEG1VIDEO:
+                     case CODEC_ID_MPEG2VIDEO:
+                         ff_mpeg1_encode_slice_header(s);
+                         ff_mpeg1_clean_buffers(s);
+                     break;
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+                     case CODEC_ID_H263:
+                     case CODEC_ID_H263P:
+                         h263_encode_gob_header(s, mb_y);
+                     break;
++#endif /* #if 0 */
+                     }
+ 
+                     if(s->flags&CODEC_FLAG_PASS1){
+@@ -5286,7 +5325,10 @@
+                     backup_s.dquant = 0;
+                     s->mv_dir = MV_DIR_FORWARD | MV_DIR_BACKWARD | MV_DIRECT;
+                     s->mb_intra= 0;
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+                     ff_mpeg4_set_direct_mv(s, 0, 0);
++#endif /* #if 0 */
+                     encode_mb_hq(s, &backup_s, &best_s, CANDIDATE_MB_TYPE_DIRECT, pb, pb2, tex_pb,
+                                  &dmin, &next_block, 0, 0);
+                 }
+@@ -5400,7 +5442,10 @@
+                     s->mb_intra= 0;
+                     motion_x=s->b_direct_mv_table[xy][0];
+                     motion_y=s->b_direct_mv_table[xy][1];
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+                     ff_mpeg4_set_direct_mv(s, motion_x, motion_y);
++#endif /* #if 0 */
+                     break;
+                 case CANDIDATE_MB_TYPE_DIRECT0:
+                     s->mv_dir = MV_DIR_FORWARD | MV_DIR_BACKWARD | MV_DIRECT;
+@@ -5513,8 +5558,11 @@
+     }
+ 
+     //not beautiful here but we must write it before flushing so it has to be here
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+     if (s->msmpeg4_version && s->msmpeg4_version<4 && s->pict_type == I_TYPE)
+         msmpeg4_encode_ext_header(s);
++#endif /* #if 0 */
+ 
+     write_slice_end(s);
+ 
+@@ -5582,6 +5630,8 @@
+     }
+ 
+     if(s->adaptive_quant){
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+         switch(s->codec_id){
+         case CODEC_ID_MPEG4:
+             ff_clean_mpeg4_qscales(s);
+@@ -5592,6 +5642,7 @@
+             ff_clean_h263_qscales(s);
+             break;
+         }
++#endif /* #if 0 */
+ 
+         s->lambda= s->lambda_table[0];
+         //FIXME broken
+@@ -5613,10 +5664,13 @@
+     s->me.mb_var_sum_temp    =
+     s->me.mc_mb_var_sum_temp = 0;
+ 
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+     /* we need to initialize some time vars before we can encode b-frames */
+     // RAL: Condition added for MPEG1VIDEO
+     if (s->codec_id == CODEC_ID_MPEG1VIDEO || s->codec_id == CODEC_ID_MPEG2VIDEO || (s->h263_pred && !s->h263_msmpeg4))
+         ff_set_mpeg4_time(s, s->picture_number);  //FIXME rename and use has_b_frames or similar
++#endif /* #if 0 */
+ 
+     s->me.scene_change_score=0;
+ 
+@@ -5647,6 +5701,8 @@
+         ff_update_duplicate_context(s->thread_context[i], s);
+     }
+ 
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+     ff_init_me(s);
+ 
+     /* Estimate motion for every MB */
+@@ -5661,6 +5717,8 @@
+ 
+         s->avctx->execute(s->avctx, estimate_motion_thread, (void**)&(s->thread_context[0]), NULL, s->avctx->thread_count);
+     }else /* if(s->pict_type == I_TYPE) */{
++#endif /* #if 0 */
++    {
+         /* I-Frame */
+         for(i=0; i<s->mb_stride*s->mb_height; i++)
+             s->mb_type[i]= CANDIDATE_MB_TYPE_INTRA;
+@@ -5684,6 +5742,8 @@
+ //printf("Scene change detected, encoding as I Frame %d %d\n", s->current_picture.mb_var_sum, s->current_picture.mc_mb_var_sum);
+     }
+ 
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+     if(!s->umvplus){
+         if(s->pict_type==P_TYPE || s->pict_type==S_TYPE) {
+             s->f_code= ff_get_best_fcode(s, s->p_mv_table, CANDIDATE_MB_TYPE_INTER);
+@@ -5737,6 +5797,7 @@
+             }
+         }
+     }
++#endif /* #if 0 */
+ 
+     if (estimate_qp(s, 0) < 0)
+         return -1;
+@@ -5768,6 +5829,8 @@
+ 
+     s->last_bits= put_bits_count(&s->pb);
+     switch(s->out_format) {
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+     case FMT_MJPEG:
+         mjpeg_picture_header(s);
+         break;
+@@ -5796,11 +5859,15 @@
+         else
+             h263_encode_picture_header(s, picture_number);
+         break;
++#endif /* #if 0 */
+     case FMT_MPEG1:
+         mpeg1_encode_picture_header(s, picture_number);
+         break;
++/* xine: do not need this for decode or MPEG-1 encoding modes */
++#if 0
+     case FMT_H264:
+         break;
++#endif /* #if 0 */
+     default:
+         assert(0);
+     }
+Index: libavcodec/mpeg12.c
+===================================================================
+--- libavcodec/mpeg12.c	(revision 7433)
++++ libavcodec/mpeg12.c	(working copy)
+@@ -36,6 +36,13 @@
+ //#include <assert.h>
+ 
+ 
++/* if xine's MPEG encoder is enabled, enable the encoding features in
++ * this particular module */
++#if defined(XINE_MPEG_ENCODER) && !defined(CONFIG_ENCODERS)
++#define CONFIG_ENCODERS
++#endif
++
++
+ /* Start codes. */
+ #define SEQ_END_CODE            0x000001b7
+ #define SEQ_START_CODE          0x000001b3
+Index: libavcodec/motion_est.c
+===================================================================
+--- libavcodec/motion_est.c	(revision 7433)
++++ libavcodec/motion_est.c	(working copy)
+@@ -23,6 +23,9 @@
+  * new Motion Estimation (X1/EPZS) by Michael Niedermayer <michaelni@gmx.at>
+  */
+ 
++/* motion estimation only needed for encoders */
++#ifdef CONFIG_ENCODERS
++
+ /**
+  * @file motion_est.c
+  * Motion estimation.
+@@ -2142,3 +2145,5 @@
+         }
+     }
+ }
++
++#endif /* CONFIG_ENCODERS */
+Index: libavcodec/snow.c
+===================================================================
+--- libavcodec/snow.c	(revision 7433)
++++ libavcodec/snow.c	(working copy)
+@@ -487,7 +487,9 @@
+ #define slice_buffer_get_line(slice_buf, line_num) ((slice_buf)->line[line_num] ? (slice_buf)->line[line_num] : slice_buffer_load_line((slice_buf), (line_num)))
+ //#define slice_buffer_get_line(slice_buf, line_num) (slice_buffer_load_line((slice_buf), (line_num)))
+ 
++#ifdef CONFIG_ENCODERS
+ static void iterative_me(SnowContext *s);
++#endif
+ 
+ static void slice_buffer_init(slice_buffer * buf, int line_count, int max_allocated_lines, int line_width, DWTELEM * base_buffer)
+ {
+@@ -1982,6 +1982,7 @@
+ #define P_MV1 P[9]
+ #define FLAG_QPEL   1 //must be 1
+ 
++#ifdef CONFIG_ENCODERS
+ static int encode_q_branch(SnowContext *s, int level, int x, int y){
+     uint8_t p_buffer[1024];
+     uint8_t i_buffer[1024];
+@@ -2210,6 +2211,7 @@
+         return score;
+     }
+ }
++#endif
+ 
+ static av_always_inline int same_block(BlockNode *a, BlockNode *b){
+     if((a->type&BLOCK_INTRA) && (b->type&BLOCK_INTRA)){
+@@ -2322,6 +2324,7 @@
+     }
+ }
+ 
++#ifdef CONFIG_ENCODERS
+ static void encode_blocks(SnowContext *s, int search){
+     int x, y;
+     int w= s->b_width;
+@@ -2343,6 +2346,7 @@
+         }
+     }
+ }
++#endif
+ 
+ static void decode_blocks(SnowContext *s){
+     int x, y;
+@@ -3182,6 +3184,7 @@
+     }
+ }
+ 
++#ifdef CONFIG_ENCODERS
+ static void iterative_me(SnowContext *s){
+     int pass, mb_x, mb_y;
+     const int b_width = s->b_width  << s->block_max_depth;
+@@ -3406,6 +3409,7 @@
+         av_log(NULL, AV_LOG_ERROR, "pass:4mv changed:%d\n", change*4);
+     }
+ }
++#endif
+ 
+ static void quantize(SnowContext *s, SubBand *b, DWTELEM *src, int stride, int bias){
+     const int level= b->level;
+@@ -3931,6 +3935,7 @@
+     }
+ }
+ 
++#ifdef CONFIG_ENCODERS
+ static int encode_init(AVCodecContext *avctx)
+ {
+     SnowContext *s = avctx->priv_data;
+@@ -4018,6 +4023,7 @@
+ 
+     return 0;
+ }
++#endif
+ 
+ static int frame_start(SnowContext *s){
+    AVFrame tmp;
+@@ -4056,6 +4062,7 @@
+     return 0;
+ }
+ 
++#ifdef CONFIG_ENCODERS
+ static int encode_frame(AVCodecContext *avctx, unsigned char *buf, int buf_size, void *data){
+     SnowContext *s = avctx->priv_data;
+     RangeCoder * const c= &s->c;
+@@ -4308,6 +4315,7 @@
+ 
+     return ff_rac_terminate(c);
+ }
++#endif
+ 
+ static void common_end(SnowContext *s){
+     int plane_index, level, orientation, i;
+@@ -4339,6 +4347,7 @@
+     }
+ }
+ 
++#ifdef CONFIG_ENCODERS
+ static int encode_end(AVCodecContext *avctx)
+ {
+     SnowContext *s = avctx->priv_data;
+@@ -4348,6 +4357,7 @@
+ 
+     return 0;
+ }
++#endif
+ 
+ static int decode_init(AVCodecContext *avctx)
+ {
+Index: libavcodec/mlib/dsputil_mlib.c
+===================================================================
+--- libavcodec/mlib/dsputil_mlib.c	(revision 7433)
++++ libavcodec/mlib/dsputil_mlib.c	(working copy)
+@@ -22,6 +22,8 @@
+ #include "../dsputil.h"
+ #include "../mpegvideo.h"
+ 
++#include "../../../xine-utils/xineutils.h"
++
+ #include <mlib_types.h>
+ #include <mlib_status.h>
+ #include <mlib_sys.h>
+Index: libavcodec/avcodec.h
+===================================================================
+--- libavcodec/avcodec.h	(revision 7433)
++++ libavcodec/avcodec.h	(working copy)
+@@ -47,6 +47,13 @@
+ #define AV_TIME_BASE            1000000
+ #define AV_TIME_BASE_Q          (AVRational){1, AV_TIME_BASE}
+ 
++/* FIXME: We cannot use ffmpeg's XvMC capabilities, since that would require
++ * linking the ffmpeg plugin against XvMC libraries, which is a bad thing,
++ * since they are output dependend.
++ * The correct fix would be to reimplement the XvMC functions libavcodec uses
++ * and do the necessary talking with our XvMC output plugin there. */
++#undef HAVE_XVMC
++
+ enum CodecID {
+     CODEC_ID_NONE,
+     CODEC_ID_MPEG1VIDEO,
+@@ -2688,6 +2695,13 @@
+ 
+ extern unsigned int av_xiphlacing(unsigned char *s, unsigned int v);
+ 
++/* unused static macro */
++#if defined(__GNUC__) && !defined(DEBUG)
++/* since we do not compile the encoder part of ffmpeg, some static
++ * functions will be unused; this is ok, the compiler will take care */
++#  define static static __attribute__((__unused__))
++#endif
++
+ #ifdef __cplusplus
+ }
+ #endif
