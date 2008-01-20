@@ -35,9 +35,9 @@
 
 #define LOG_MODULE "demux_mpeg_audio"
 #define LOG_VERBOSE
-
+/*
 #define LOG
-
+*/
 #include "xine_internal.h"
 #include "xineutils.h"
 #include "demux.h"
