@@ -3,6 +3,9 @@ xine-lib (1.1.10) (unreleased)
   * Change the default v4l device paths to /dev/video0 and /dev/radio0.
   * Fix support for subtitles with schemes (e.g. http://), partly broken
     since 1.1.8.
+  * Unescape the filename in "#save:". This allows filenames to contain ';'
+    etc. without ambiguity, e.g. "#save:foo%3B1.ts" -> "foo;1.ts", but front
+    end authors should be careful with xine-lib older than 1.1.10.
 
 xine-lib (1.1.9.1)
   * Security fixes:

@@ -930,6 +930,7 @@ static inline int _x_path_looks_like_mrl (const char *path)
 	    memcpy(filename, tmp, strlen(tmp));
 	    filename[strlen(tmp)] = '\0';
 	  }
+	  _x_mrl_unescape(filename);#
 
 	  xine_log(stream->xine, XINE_LOG_MSG, _("xine: join rip input plugin\n"));
 	  input_saver = _x_rip_plugin_get_instance (stream, filename);
