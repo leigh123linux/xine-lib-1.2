@@ -64,8 +64,8 @@ Description: the xine video player library, development packages
 Package: libxine1
 Architecture: any
 Depends: ${shlibs:Depends}
-Recommends: ${shlibs:Recommends}, libxine1-doc | libxine-doc
-Suggests: ${shlibs:Suggests}, libartsc0
+Recommends: ${shlibs:Recommends}
+Suggests: ${shlibs:Suggests}, libxine1-doc | libxine-doc
 Conflicts: libxine1-all-plugins, libxine1-bin, libxine1-console, libxine1-ffmpeg, libxine1-gnome, libxine1-misc-plugins, libxine1-plugins, libxine1-x
 Replaces: libxine1-all-plugins, libxine1-bin, libxine1-console, libxine1-ffmpeg, libxine1-gnome, libxine1-misc-plugins, libxine1-plugins, libxine1-x
 Provides: libxine1-all-plugins, libxine1-bin, libxine1-console, libxine1-ffmpeg, libxine1-gnome, libxine1-misc-plugins, libxine1-plugins, libxine1-x
