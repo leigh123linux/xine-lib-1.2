@@ -126,14 +126,11 @@ typedef struct {
 
   /* current mp3 frame */
   mpg_audio_frame_t    cur_frame;
-  
+
   /* next mp3 frame, used when the frame size cannot be computed from the
    * current frame header */
   mpg_audio_frame_t    next_frame;
-  
-  /* reference mp3 frame, used for extra validation when sync is lost */
-  mpg_audio_frame_t    ref_frame;
-  
+
   double               cur_time;         /* in milliseconds */
 
   off_t                mpg_frame_start;  /* offset */
@@ -145,9 +142,12 @@ typedef struct {
   vbri_header_t       *vbri_header;
 
   int                  found_next_frame:1;
-  int                  has_ref_frame:1;
-  off_t                free_bitrate_size;
+  int                  free_bitrate_count;
+  off_t                free_bitrate_size; /* use this size if 3 free bitrate frames are encountered */
   uint8_t              next_header[4];
+  int                  mpg_version;
+  int                  mpg_layer;
+  int                  valid_frames;
 
 } demux_mpgaudio_t ;
 
@@ -344,7 +344,7 @@ static xing_header_t* parse_xing_header(mpg_audio_frame_t *frame,
     if (!xing)
       goto exit_error;
   
-    lprintf("Xing header found\n");
+    lprintf("found Xing header\n");
     ptr += 4;
     
     if (ptr >= (buf + bufsize - 4)) goto exit_error;
@@ -435,7 +435,7 @@ static vbri_header_t* parse_vbri_header(mpg_audio_frame_t *frame,
   if ((ptr + 4) >= (buf + bufsize)) return 0;
   lprintf("Checking %08X\n", *ptr);
   if (_X_BE_32(ptr) == VBRI_TAG) {
-    lprintf("Vbri header found\n");
+    lprintf("found Vbri header\n");
     ptr += 4;
     
     if ((ptr + 22) >= (buf + bufsize)) return 0;
@@ -499,24 +499,6 @@ static vbri_header_t* parse_vbri_header(mpg_audio_frame_t *frame,
   }
 }
 
-static int check_frame_validity(demux_mpgaudio_t *const this, mpg_audio_frame_t *const frame) {
-  int result = 0;
-
-  if (this->ref_frame.is_free_bitrate) {
-    if ((frame->bitrate == 0) &&
-        (this->ref_frame.freq == frame->freq) &&
-        (this->ref_frame.version_idx == frame->version_idx) &&
-        (this->ref_frame.channel_mode == frame->channel_mode)) {
-        result = 1;
-    }
-  } else {
-    if ((this->ref_frame.version_idx  == frame->version_idx) &&
-        (this->ref_frame.channel_mode == frame->channel_mode)) {
-        result = 1;
-    }
-  }
-  return result;
-}
 
 /*
  * Parse a mp3 frame paylod
@@ -547,11 +529,12 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
   /* compute the payload size */
   if (this->cur_frame.size > 0) {
     payload_size = this->cur_frame.size - 4;
-  } else if (this->free_bitrate_size > 0) {
+    this->free_bitrate_count = 0;
+  } else if (this->free_bitrate_count >= 3) {
     payload_size = this->free_bitrate_size + this->cur_frame.padding - 4;
     this->cur_frame.size = payload_size + 4;
-    payload_size = 0;
   } else {
+    this->free_bitrate_count++;
     payload_size = 0;
   }
 
@@ -573,7 +556,7 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
     int max_size = buf->max_size - 4;
 
     while (payload_size < max_size) {
-      len = this->input->read(this->input, &buf->content[payload_size], 1);
+      len = this->input->read(this->input, &buf->content[4 + payload_size], 1);
       if (len != 1) {
         lprintf("EOF\n");
         buf->free_buffer(buf);
@@ -581,28 +564,22 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
       }
       payload_size += len;
 
-      if (parse_frame_header(&this->next_frame,
-                            &buf->content[payload_size - 4])) {
-        if (check_frame_validity(this, &this->next_frame)) {
-          lprintf("found next frame header\n");
-          if (this->free_bitrate_size == 0) {
-            this->free_bitrate_size = payload_size - this->cur_frame.padding;
-          }
-          /* don't read the frame header twice */
-          this->found_next_frame = 1;
-          memcpy(&this->next_header[0], &buf->content[payload_size], 4);
-          payload_size -= 4;
-          break;
-        } else {
-          lprintf("invalid frame\n");
+      if (parse_frame_header(&this->next_frame, &buf->content[payload_size])) {
+        lprintf("found next frame header\n");
+
+        if (this->free_bitrate_size == 0) {
+          this->free_bitrate_size = payload_size - this->cur_frame.padding;
         }
+
+        /* don't read the frame header twice */
+        this->found_next_frame = 1;
+        memcpy(&this->next_header[0], &buf->content[payload_size], 4);
+        payload_size -= 4;
+        break;
       }
     }
     this->cur_frame.size = payload_size + 4;
-    if (this->br == 0) {
-      this->br = 8000 * this->cur_frame.size / this->cur_frame.duration;
-    }
-    this->cur_frame.bitrate = this->br;
+    this->cur_frame.bitrate = 8000 * this->cur_frame.size / this->cur_frame.duration;
     lprintf("free bitrate: bitrate: %d, frame size: %d\n", this->br, this->cur_frame.size);
   }
 
@@ -612,11 +589,15 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
     this->xing_header = parse_xing_header(&this->cur_frame, buf->content, this->cur_frame.size);
     if (this->xing_header) {
       buf->free_buffer(buf);
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              "demux_mpgaudio: found Xing header at offset %PRId64\n", frame_pos);
       return 1;
     }
     this->vbri_header = parse_vbri_header(&this->cur_frame, buf->content, this->cur_frame.size);
     if (this->vbri_header) {
       buf->free_buffer(buf);
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              "demux_mpgaudio: found Vbri header at offset %PRId64\n", frame_pos);
       return 1;
     }
   }
@@ -707,39 +688,51 @@ static int demux_mpgaudio_next (demux_mpgaudio_t *this, int decoder_flags, int s
     memcpy(&this->cur_frame, &this->next_frame, sizeof(mpg_audio_frame_t));
   } else {
     int bytes = 4;
+    int loose_sync = 0;
 
     for (;;) {
       if (!read_frame_header(this, header, bytes))
         return 0;
       if (parse_frame_header(&this->cur_frame, header)) {
-        if (!this->has_ref_frame) {
-          this->has_ref_frame = 1;
-          memcpy(&this->ref_frame, &this->cur_frame, sizeof(mpg_audio_frame_t));
-          lprintf("ref frame saved\n");
-        } else {
-          if (!check_frame_validity(this, &this->cur_frame)) {
-            lprintf("invalid frame\n");
-            bytes = 1; /* resync */
-            continue;
-          }
-        }
         lprintf("frame found\n");
-        break;
-      } else {
-        lprintf("loose sync\n");
 
-        if ( id3v2_istag(header) ) {
-          if (!id3v2_parse_tag(this->input, this->stream, header)) {
-            xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-                    LOG_MODULE ": ID3V2 tag parsing error\n");
-            bytes = 1; /* resync */
-          } else {
-            bytes = 4;
-          }
+        /* additionnal checks */
+        if ((this->mpg_version == (this->cur_frame.version_idx + 1)) &&
+            (this->mpg_layer == this->cur_frame.layer)) {
+          this->valid_frames++;
+          break;
         } else {
-          /* skip */
-          bytes = 1;
+          if (this->valid_frames > 3) {
+            lprintf("invalid frame. expected mpeg %d, layer %d\n", this->mpg_version, this->mpg_layer);
+          } else {
+            this->mpg_version = this->cur_frame.version_idx + 1;
+            this->mpg_layer = this->cur_frame.layer;
+            this->valid_frames = 0;
+            break;
+          }
         }
+      }
+
+      if (!loose_sync) {
+        off_t frame_pos = this->input->get_current_pos(this->input) - 4;
+        loose_sync = 1;
+        xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                LOG_MODULE ": loose mp3 sync at offset %"PRId64"\n", frame_pos);
+      }
+      /* the stream is broken, don't keep info about previous frames */
+      this->free_bitrate_size = 0;
+
+      if ( id3v2_istag(header) ) {
+        if (!id3v2_parse_tag(this->input, this->stream, header)) {
+          xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                  LOG_MODULE ": ID3V2 tag parsing error\n");
+          bytes = 1; /* resync */
+        } else {
+          bytes = 4;
+        }
+      } else {
+        /* skip */
+        bytes = 1;
       }
     }
   }
