@@ -349,21 +349,21 @@ int id3v22_parse_tag(input_plugin_t *input,
     if (tag_header.flags & ID3V22_ZERO_FLAG) {
       /* invalid flags */
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
-              "id3: invalid header flags (%02x)\n", tag_header.flags);
+              LOG_MODULE ": invalid header flags (%02x)\n", tag_header.flags);
       input->seek (input, tag_header.size - pos, SEEK_CUR);
       return 0;
     }
     if (tag_header.flags & ID3V22_COMPRESS_FLAG) {
       /* compressed tag: not supported */
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
-              "id3: compressed tags are not supported\n");
+              LOG_MODULE ": compressed tags are not supported\n");
       input->seek (input, tag_header.size - pos, SEEK_CUR);
       return 0;
     }
     if (tag_header.flags & ID3V22_UNSYNCH_FLAG) {
       /* unsynchronized tag: not supported */
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
-              "id3: unsynchronized tags are not supported\n");
+              LOG_MODULE ": unsynchronized tags are not supported\n");
       input->seek (input, tag_header.size - pos, SEEK_CUR);
       return 0;
     }
@@ -375,11 +375,11 @@ int id3v22_parse_tag(input_plugin_t *input,
           if ((pos + tag_frame_header.size) <= tag_header.size) {
             if (!id3v22_interp_frame(input, stream, &tag_frame_header)) {
               xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
-                      "id3: invalid frame content\n");
+                      LOG_MODULE ": invalid frame content\n");
             }
           } else {
             xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
-                    "id3: invalid frame header\n");
+                    LOG_MODULE ": invalid frame header\n");
             input->seek (input, tag_header.size - pos, SEEK_CUR);
             return 1;
           }
@@ -391,13 +391,13 @@ int id3v22_parse_tag(input_plugin_t *input,
         }
       } else {
         xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
-                "id3: id3v2_parse_frame_header problem\n");
+                LOG_MODULE ": id3v2_parse_frame_header problem\n");
         return 0;
       }
     }
     return 1;
   } else {
-    xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "id3: id3v2_parse_header problem\n");
+    xprintf(stream->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": id3v2_parse_header problem\n");
     return 0;
   }
 }
@@ -543,14 +543,14 @@ int id3v23_parse_tag(input_plugin_t *input,
     if (tag_header.flags & ID3V23_ZERO_FLAG) {
       /* invalid flags */
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
-              "id3: invalid header flags (%02x)\n", tag_header.flags);
+              LOG_MODULE ": invalid header flags (%02x)\n", tag_header.flags);
       input->seek (input, tag_header.size - pos, SEEK_CUR);
       return 0;
     }
     if (tag_header.flags & ID3V23_UNSYNCH_FLAG) {
       /* unsynchronized tag: not supported */
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
-              "id3: unsynchronized tags are not supported\n");
+              LOG_MODULE ": unsynchronized tags are not supported\n");
       input->seek (input, tag_header.size - pos, SEEK_CUR);
       return 0;
     }
@@ -568,11 +568,11 @@ int id3v23_parse_tag(input_plugin_t *input,
           if ((pos + tag_frame_header.size) <= tag_header.size) {
             if (!id3v23_interp_frame(input, stream, &tag_frame_header)) {
               xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
-                      "id3: invalid frame content\n");
+                      LOG_MODULE ": invalid frame content\n");
             }
           } else {
             xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
-                    "id3: invalid frame header\n");
+                    LOG_MODULE ": invalid frame header\n");
             input->seek (input, tag_header.size - pos, SEEK_CUR);
             return 1;
           }
@@ -584,13 +584,13 @@ int id3v23_parse_tag(input_plugin_t *input,
         }
       } else {
         xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
-                "id3: id3v2_parse_frame_header problem\n");
+                LOG_MODULE ": id3v2_parse_frame_header problem\n");
         return 0;
       }
     }
     return 1;
   } else {
-    xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "id3v23: id3v2_parse_header problem\n");
+    xprintf(stream->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": id3v2_parse_header problem\n");
     return 0;
   }
 }
@@ -794,7 +794,7 @@ int id3v24_parse_tag(input_plugin_t *input,
     if (tag_header.flags & ID3V24_ZERO_FLAG) {
       /* invalid flags */
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
-              "id3: invalid header flags (%02x)\n", tag_header.flags);
+              LOG_MODULE ": invalid header flags (%02x)\n", tag_header.flags);
       input->seek (input, tag_header.size - pos, SEEK_CUR);
       return 0;
     }
@@ -818,11 +818,11 @@ int id3v24_parse_tag(input_plugin_t *input,
           if ((pos + tag_frame_header.size) <= tag_header.size) {
             if (!id3v24_interp_frame(input, stream, &tag_frame_header)) {
               xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
-                      "id3: invalid frame content\n");
+                      LOG_MODULE ": invalid frame content\n");
             }
           } else {
             xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
-                    "id3: invalid frame header\n");
+                    LOG_MODULE ": invalid frame header\n");
             input->seek (input, tag_header.size - pos, SEEK_CUR);
             return 1;
           }
@@ -834,7 +834,7 @@ int id3v24_parse_tag(input_plugin_t *input,
         }
       } else {
         xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
-                "id3: id3v2_parse_frame_header problem\n");
+                LOG_MODULE ": id3v2_parse_frame_header problem\n");
         return 0;
       }
     }
@@ -844,7 +844,7 @@ int id3v24_parse_tag(input_plugin_t *input,
     }
     return 1;
   } else {
-    xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "id3v23: id3v2_parse_header problem\n");
+    xprintf(stream->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": id3v2_parse_header problem\n");
     return 0;
   }
 }
@@ -858,22 +858,22 @@ int id3v2_parse_tag(input_plugin_t *input,
 
   switch(mp3_frame_header[3]) {
   case 2:
-    xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.2 tag\n");
+    xprintf(stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": ID3V2.2 tag\n");
     result = id3v22_parse_tag(input, stream, mp3_frame_header);
     break;
    
   case 3:
-    xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.3 tag\n");
+    xprintf(stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": ID3V2.3 tag\n");
     result = id3v23_parse_tag(input, stream, mp3_frame_header);
     break;
 
   case 4:
-    xprintf(stream->xine, XINE_VERBOSITY_LOG, "ID3V2.4 tag\n");
+    xprintf(stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": ID3V2.4 tag\n");
     result = id3v24_parse_tag(input, stream, mp3_frame_header);
     break;
 
   default:
-    xprintf(stream->xine, XINE_VERBOSITY_LOG, "Unknown ID3v2 version: 0x%02x.\n", mp3_frame_header[3]);
+    xprintf(stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": Unknown ID3v2 version: 0x%02x.\n", mp3_frame_header[3]);
   }
 
   return result;
