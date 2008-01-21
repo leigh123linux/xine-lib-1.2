@@ -33,7 +33,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define LOG_MODULE "demux_mpeg_audio"
+#define LOG_MODULE "demux_mpgaudio"
 #define LOG_VERBOSE
 /*
 #define LOG
@@ -51,6 +51,7 @@
  * the second mp3 frame is sent to the decoder
  */
 #define NUM_PREVIEW_BUFFERS  2
+#define NUM_VALID_FRAMES     3
 
 
 #define FOURCC_TAG BE_FOURCC
@@ -519,7 +520,7 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
 
   if (this->cur_frame.size > buf->max_size) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-            "demux_mpgaudio: frame size is greater than fifo buffer size\n");
+            LOG_MODULE ": frame size is greater than fifo buffer size\n");
     buf->free_buffer(buf);
     return 0;
   }
@@ -530,7 +531,7 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
   if (this->cur_frame.size > 0) {
     payload_size = this->cur_frame.size - 4;
     this->free_bitrate_count = 0;
-  } else if (this->free_bitrate_count >= 3) {
+  } else if (this->free_bitrate_count >= NUM_VALID_FRAMES) {
     payload_size = this->free_bitrate_size + this->cur_frame.padding - 4;
     this->cur_frame.size = payload_size + 4;
   } else {
@@ -590,14 +591,14 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
     if (this->xing_header) {
       buf->free_buffer(buf);
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-              "demux_mpgaudio: found Xing header at offset %PRId64\n", frame_pos);
+              LOG_MODULE ": found Xing header at offset %PRId64\n", frame_pos);
       return 1;
     }
     this->vbri_header = parse_vbri_header(&this->cur_frame, buf->content, this->cur_frame.size);
     if (this->vbri_header) {
       buf->free_buffer(buf);
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-              "demux_mpgaudio: found Vbri header at offset %PRId64\n", frame_pos);
+              LOG_MODULE ": found Vbri header at offset %PRId64\n", frame_pos);
       return 1;
     }
   }
@@ -702,7 +703,7 @@ static int demux_mpgaudio_next (demux_mpgaudio_t *this, int decoder_flags, int s
           this->valid_frames++;
           break;
         } else {
-          if (this->valid_frames > 3) {
+          if (this->valid_frames >= NUM_VALID_FRAMES) {
             lprintf("invalid frame. expected mpeg %d, layer %d\n", this->mpg_version, this->mpg_layer);
           } else {
             this->mpg_version = this->cur_frame.version_idx + 1;
