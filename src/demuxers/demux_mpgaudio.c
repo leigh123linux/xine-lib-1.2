@@ -33,7 +33,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define LOG_MODULE "demux_mpeg_audio"
+#define LOG_MODULE "demux_mpgaudio"
 #define LOG_VERBOSE
 /*
 #define LOG
@@ -51,8 +51,8 @@
  * the second mp3 frame is sent to the decoder
  */
 #define NUM_PREVIEW_BUFFERS  2
+#define NUM_VALID_FRAMES     3
 
-#define WRAP_THRESHOLD       120000
 
 #define FOURCC_TAG BE_FOURCC
 #define RIFF_CHECK_BYTES 1024
@@ -77,16 +77,16 @@
 /* mp3 frame struct */
 typedef struct {
   /* header */
-  double               duration;
-  uint32_t             size;                 /* in bytes */
+  double               duration;             /* in milliseconds */
+  uint32_t             size;                 /* in bytes; including padding */
   uint32_t             bitrate;              /* in bit per second */
   uint16_t             freq;                 /* in Hz */
-
   uint8_t              layer;
-
   uint8_t              version_idx:2;        /* 0: mpeg1, 1: mpeg2, 2: mpeg2.5 */
   uint8_t              lsf_bit:1;
   uint8_t              channel_mode:3;
+  uint8_t              padding:3;            /* in bytes */
+  uint8_t              is_free_bitrate:1;
 } mpg_audio_frame_t;
 
 /* Xing Vbr Header struct */
@@ -125,7 +125,13 @@ typedef struct {
   int                  br;               /* bitrate in bits/second */
   uint32_t             blocksize;
 
+  /* current mp3 frame */
   mpg_audio_frame_t    cur_frame;
+
+  /* next mp3 frame, used when the frame size cannot be computed from the
+   * current frame header */
+  mpg_audio_frame_t    next_frame;
+
   double               cur_time;         /* in milliseconds */
 
   off_t                mpg_frame_start;  /* offset */
@@ -135,7 +141,15 @@ typedef struct {
   int                  check_vbr_header;
   xing_header_t       *xing_header;
   vbri_header_t       *vbri_header;
-  
+
+  int                  found_next_frame:1;
+  int                  free_bitrate_count;
+  off_t                free_bitrate_size; /* use this size if 3 free bitrate frames are encountered */
+  uint8_t              next_header[4];
+  int                  mpg_version;
+  int                  mpg_layer;
+  int                  valid_frames;
+
 } demux_mpgaudio_t ;
 
 /* demuxer class struct */
@@ -206,14 +220,14 @@ static int parse_frame_header(mpg_audio_frame_t *const frame, const uint8_t *con
   const uint32_t head = _X_BE_32(buf);
   const uint16_t frame_sync = head >> 21;
 
-  lprintf("header: %08X\n", head);
   if (frame_sync != 0x7ff) {
-    lprintf("invalid frame sync\n");
+    lprintf("invalid frame sync %08X\n", head);
     return 0;
   }
+  lprintf("header: %08X\n", head);
 
   frame_header.mpeg25_bit     = (head >> 20) & 0x1;
-  frame->lsf_bit        = (head >> 19) & 0x1;
+  frame->lsf_bit = (head >> 19) & 0x1;
   if (!frame_header.mpeg25_bit) {
     if (frame->lsf_bit) {
       lprintf("reserved mpeg25 lsf combination\n");
@@ -234,14 +248,14 @@ static int parse_frame_header(mpg_audio_frame_t *const frame, const uint8_t *con
   }
 
   frame_header.bitrate_idx    = (head >> 12) & 0xf;
-  if ((frame_header.bitrate_idx == 0) || (frame_header.bitrate_idx == 15)) {
-    lprintf("invalid bitrate index\n");
+  if (frame_header.bitrate_idx == 15) {
+    lprintf("invalid bitrate index: %d\n", frame_header.bitrate_idx);
     return 0;
   }
 
   frame_header.freq_idx       = (head >> 10) & 0x3;
   if (frame_header.freq_idx == 3) {
-    lprintf("invalid frequence index\n");
+    lprintf("invalid frequence index: %d\n", frame_header.freq_idx);
     return 0;
   }
 
@@ -274,19 +288,27 @@ static int parse_frame_header(mpg_audio_frame_t *const frame, const uint8_t *con
     const uint16_t samples = mp3_samples[frame->version_idx][frame->layer - 1];
     frame->bitrate = mp3_bitrates[frame->version_idx][frame->layer - 1][frame_header.bitrate_idx] * 1000;
     frame->freq    = mp3_freqs[frame->version_idx][frame_header.freq_idx];
-  
-    frame->size  = samples * (frame->bitrate / 8);
-    frame->size /= frame->freq;
-    /* Padding: only if padding_bit is set; 4 bytes for Layer 1 and 1 byte for others */
-    frame->size += ( frame_header.padding_bit ? ( frame->layer == 1 ? 4 : 1 ) : 0 );
-
     frame->duration  = 1000.0f * (double)samples / (double)frame->freq;
+    frame->padding = ( frame_header.padding_bit ? ( frame->layer == 1 ? 4 : 1 ) : 0 );
+    frame->channel_mode = frame_header.channel_mode;
+
+    if (frame->bitrate > 0) {
+      frame->size  = samples * (frame->bitrate / 8);
+      frame->size /= frame->freq;
+      /* Padding: only if padding_bit is set; 4 bytes for Layer 1 and 1 byte for others */
+      frame->size += frame->padding;
+    } else {
+      /* Free bitrate frame, the size of the frame cannot be computed from the header. */
+      frame->is_free_bitrate = 1;
+      frame->size = 0;
+    }
   }
 
-  lprintf("mpeg %d, layer %d\n", frame->version_idx + 1, frame->layer);
-  lprintf("bitrate: %d bps, samplerate: %d Hz\n", frame->bitrate, frame->freq);
+  lprintf("mpeg %d, layer %d, channel_mode: %d\n", frame->version_idx + 1,
+          frame->layer, frame->channel_mode);
+  lprintf("bitrate: %d bps, output freq: %d Hz\n", frame->bitrate, frame->freq);
   lprintf("length: %d bytes, %f ms\n", frame->size, frame->duration);
-  lprintf("padding: %d bytes\n", ( frame_header.padding_bit ? ( frame->layer == 1 ? 4 : 1 ) : 0 ));
+  lprintf("padding: %d bytes\n", frame->padding);
   return 1;
 }
 
@@ -323,7 +345,7 @@ static xing_header_t* parse_xing_header(mpg_audio_frame_t *frame,
     if (!xing)
       goto exit_error;
   
-    lprintf("Xing header found\n");
+    lprintf("found Xing header\n");
     ptr += 4;
     
     if (ptr >= (buf + bufsize - 4)) goto exit_error;
@@ -414,7 +436,7 @@ static vbri_header_t* parse_vbri_header(mpg_audio_frame_t *frame,
   if ((ptr + 4) >= (buf + bufsize)) return 0;
   lprintf("Checking %08X\n", *ptr);
   if (_X_BE_32(ptr) == VBRI_TAG) {
-    lprintf("Vbri header found\n");
+    lprintf("found Vbri header\n");
     ptr += 4;
     
     if ((ptr + 22) >= (buf + bufsize)) return 0;
@@ -478,6 +500,7 @@ static vbri_header_t* parse_vbri_header(mpg_audio_frame_t *frame,
   }
 }
 
+
 /*
  * Parse a mp3 frame paylod
  * return 1 on success, 0 on error
@@ -488,43 +511,97 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
   buf_element_t *buf;
   off_t          frame_pos, len;
   uint64_t       pts = 0;
+  int            payload_size = 0;
 
   frame_pos = this->input->get_current_pos(this->input) - 4;
-  lprintf("frame_pos = %"PRId64"\n", frame_pos);
+  lprintf("frame_pos = %"PRId64", header: %08X\n", frame_pos, _X_BE_32(frame_header));
 
   buf = this->audio_fifo->buffer_pool_alloc(this->audio_fifo);
 
   if (this->cur_frame.size > buf->max_size) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-            "demux_mpgaudio: frame size is greater than fifo buffer size\n");
+            LOG_MODULE ": frame size is greater than fifo buffer size\n");
     buf->free_buffer(buf);
     return 0;
   }
-  
-  /* the decoder needs the frame header */
-  memcpy(buf->mem, frame_header, 4);
 
-  len = this->input->read(this->input, buf->mem + 4, this->cur_frame.size - 4);
-  if (len != (this->cur_frame.size - 4)) {
-    buf->free_buffer(buf);
-    return 0;
+  memcpy(buf->content, frame_header, 4);
+
+  /* compute the payload size */
+  if (this->cur_frame.size > 0) {
+    payload_size = this->cur_frame.size - 4;
+    this->free_bitrate_count = 0;
+  } else if (this->free_bitrate_count >= NUM_VALID_FRAMES) {
+    payload_size = this->free_bitrate_size + this->cur_frame.padding - 4;
+    this->cur_frame.size = payload_size + 4;
+  } else {
+    this->free_bitrate_count++;
+    payload_size = 0;
+  }
+
+  /* Read the payload data. */
+  if (payload_size > 0) {
+    off_t len;
+
+    /* If we know the payload size, it's easy */
+    this->found_next_frame = 0;
+    len = this->input->read(this->input, buf->content + 4, payload_size);
+    if (len != payload_size) {
+      buf->free_buffer(buf);
+      return 0;
+    }
+  } else {
+    /* Search for the beginning of the next frame and deduce the size of the
+     * current frame from the position of the next one. */
+    int payload_size = 0;
+    int max_size = buf->max_size - 4;
+
+    while (payload_size < max_size) {
+      len = this->input->read(this->input, &buf->content[4 + payload_size], 1);
+      if (len != 1) {
+        lprintf("EOF\n");
+        buf->free_buffer(buf);
+        return 0;
+      }
+      payload_size += len;
+
+      if (parse_frame_header(&this->next_frame, &buf->content[payload_size])) {
+        lprintf("found next frame header\n");
+
+        if (this->free_bitrate_size == 0) {
+          this->free_bitrate_size = payload_size - this->cur_frame.padding;
+        }
+
+        /* don't read the frame header twice */
+        this->found_next_frame = 1;
+        memcpy(&this->next_header[0], &buf->content[payload_size], 4);
+        payload_size -= 4;
+        break;
+      }
+    }
+    this->cur_frame.size = payload_size + 4;
+    this->cur_frame.bitrate = 8000 * this->cur_frame.size / this->cur_frame.duration;
+    lprintf("free bitrate: bitrate: %d, frame size: %d\n", this->br, this->cur_frame.size);
   }
 
   if (this->check_vbr_header) {
     this->check_vbr_header = 0;
     this->mpg_frame_start = frame_pos;
-    this->xing_header = parse_xing_header(&this->cur_frame, buf->mem, this->cur_frame.size);
+    this->xing_header = parse_xing_header(&this->cur_frame, buf->content, this->cur_frame.size);
     if (this->xing_header) {
       buf->free_buffer(buf);
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              LOG_MODULE ": found Xing header at offset %PRId64\n", frame_pos);
       return 1;
     }
-    this->vbri_header = parse_vbri_header(&this->cur_frame, buf->mem, this->cur_frame.size);
+    this->vbri_header = parse_vbri_header(&this->cur_frame, buf->content, this->cur_frame.size);
     if (this->vbri_header) {
       buf->free_buffer(buf);
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              LOG_MODULE ": found Vbri header at offset %PRId64\n", frame_pos);
       return 1;
     }
   }
-  
 
   pts = (int64_t)(this->cur_time * 90.0f);
 
@@ -533,14 +610,13 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
 
   buf->extra_info->input_time = this->cur_time;
   buf->pts                    = pts;
-  buf->size                   = len + 4;
-  buf->content                = buf->mem;
+  buf->size                   = this->cur_frame.size;
   buf->type                   = BUF_AUDIO_MPEG;
   buf->decoder_info[0]        = 1;
   buf->decoder_flags          = decoder_flags|BUF_FLAG_FRAME_END;
 
+  lprintf("send buffer: size=%d, pts=%"PRId64"\n", buf->size, pts);
   this->audio_fifo->put(this->audio_fifo, buf);
-  lprintf("send buffer: pts=%"PRId64"\n", pts);  
   this->cur_time += this->cur_frame.duration;
   return 1;
 }
@@ -604,40 +680,51 @@ static int read_frame_header(demux_mpgaudio_t *this, uint8_t *header_buf, int by
  * Parse next mp3 frame
  */
 static int demux_mpgaudio_next (demux_mpgaudio_t *this, int decoder_flags, int send_header) {
-  uint8_t  header_buf[4];
-  int      bytes = 4;
+  uint8_t  buffer[4];
+  uint8_t *header = buffer;
 
-  for (;;) {
+  if (this->found_next_frame) {
+    lprintf("skip header reading\n");
+    header = this->next_header;
+    memcpy(&this->cur_frame, &this->next_frame, sizeof(mpg_audio_frame_t));
+  } else {
+    int bytes = 4;
+    int loose_sync = 0;
 
-    if (read_frame_header(this, header_buf, bytes)) {
+    for (;;) {
+      if (!read_frame_header(this, header, bytes))
+        return 0;
+      if (parse_frame_header(&this->cur_frame, header)) {
+        lprintf("frame found\n");
 
-      if (parse_frame_header(&this->cur_frame, header_buf)) {
+        /* additionnal checks */
+        if ((this->mpg_version == (this->cur_frame.version_idx + 1)) &&
+            (this->mpg_layer == this->cur_frame.layer)) {
+          this->valid_frames++;
+          break;
+        } else {
+          if (this->valid_frames >= NUM_VALID_FRAMES) {
+            lprintf("invalid frame. expected mpeg %d, layer %d\n", this->mpg_version, this->mpg_layer);
+          } else {
+            this->mpg_version = this->cur_frame.version_idx + 1;
+            this->mpg_layer = this->cur_frame.layer;
+            this->valid_frames = 0;
+            break;
+          }
+        }
+      }
 
-	/* send header buffer */
-	if ( send_header ) {
-	  buf_element_t *buf;
-	  
-	  buf = this->audio_fifo->buffer_pool_alloc(this->audio_fifo);
-	  
-	  buf->type = BUF_AUDIO_MPEG;
-	  buf->decoder_flags = BUF_FLAG_HEADER|BUF_FLAG_STDHEADER|BUF_FLAG_FRAME_END;
-	  
-	  buf->decoder_info[0] = 0;
-	  buf->decoder_info[1] = this->cur_frame.freq;
-	  buf->decoder_info[2] = 0; /* bits_per_sample */
-	  
-	  /* Only for channel_mode == 3 (mono) there is one channel, for any other case, there are 2 */
-	  buf->decoder_info[3] = ( this->cur_frame.channel_mode == 3 ) ? 1 : 2;
-	  
-	  buf->size = 0; /* No extra header data */
-	  
-	  this->audio_fifo->put(this->audio_fifo, buf);
-	}
-	
-        return parse_frame_payload(this, header_buf, decoder_flags);
-        
-      } else if ( id3v2_istag(_X_ME_32(header_buf)) ) {
-	if (!id3v2_parse_tag(this->input, this->stream, _X_ME_32(header_buf))) {
+      if (!loose_sync) {
+        off_t frame_pos = this->input->get_current_pos(this->input) - 4;
+        loose_sync = 1;
+        xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                LOG_MODULE ": loose mp3 sync at offset %"PRId64"\n", frame_pos);
+      }
+      /* the stream is broken, don't keep info about previous frames */
+      this->free_bitrate_size = 0;
+
+      if ( id3v2_istag(header) ) {
+        if (!id3v2_parse_tag(this->input, this->stream, header)) {
           xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
                   LOG_MODULE ": ID3V2 tag parsing error\n");
           bytes = 1; /* resync */
@@ -648,12 +735,31 @@ static int demux_mpgaudio_next (demux_mpgaudio_t *this, int decoder_flags, int s
         /* skip */
         bytes = 1;
       }
-
-    } else {
-      lprintf("read error\n");
-      return 0;
     }
   }
+
+  /* send header buffer */
+  if ( send_header ) {
+    buf_element_t *buf;
+
+    buf = this->audio_fifo->buffer_pool_alloc(this->audio_fifo);
+
+    buf->type = BUF_AUDIO_MPEG;
+    buf->decoder_flags = BUF_FLAG_HEADER|BUF_FLAG_STDHEADER|BUF_FLAG_FRAME_END;
+
+    buf->decoder_info[0] = 0;
+    buf->decoder_info[1] = this->cur_frame.freq;
+    buf->decoder_info[2] = 0; /* bits_per_sample */
+
+    /* Only for channel_mode == 3 (mono) there is one channel, for any other case, there are 2 */
+    buf->decoder_info[3] = ( this->cur_frame.channel_mode == 3 ) ? 1 : 2;
+
+    buf->size = 0; /* No extra header data */
+
+    this->audio_fifo->put(this->audio_fifo, buf);
+  }
+
+  return parse_frame_payload(this, header, decoder_flags);
 }
 
 static int demux_mpgaudio_send_chunk (demux_plugin_t *this_gen) {
@@ -776,11 +882,12 @@ static void demux_mpgaudio_send_headers (demux_plugin_t *this_gen) {
      */
     this->check_vbr_header = 1;
     for (i = 0; i < NUM_PREVIEW_BUFFERS; i++) {
+      lprintf("preview buffer number %d / %d\n", i + 1, NUM_PREVIEW_BUFFERS);
       if (!demux_mpgaudio_next (this, BUF_FLAG_PREVIEW, i == 0)) {
         break;
       }
     }
-    
+
     if (this->xing_header) {
       xing_header_t *xing = this->xing_header;
 
@@ -791,7 +898,7 @@ static void demux_mpgaudio_send_headers (demux_plugin_t *this_gen) {
       if (this->stream_length) {
         this->br = ((uint64_t)xing->stream_size * 8 * 1000) / this->stream_length;
       }
-      
+
     } else if (this->vbri_header) {
       vbri_header_t *vbri = this->vbri_header;
 
@@ -834,7 +941,7 @@ static void demux_mpgaudio_send_headers (demux_plugin_t *this_gen) {
     {
       char scratch_buf[256];
       static const char mpeg_ver[3][4] = {"1", "2", "2.5"};
-      
+
       snprintf(scratch_buf, 256, "MPEG %s Layer %1d%s",
                mpeg_ver[this->cur_frame.version_idx], this->cur_frame.layer,
                (this->xing_header)? " VBR" : " CBR" );
@@ -962,7 +1069,8 @@ static int demux_mpgaudio_seek (demux_plugin_t *this_gen,
     /* assume seeking is always perfect... */
     this->cur_time = start_time;
     this->input->seek (this->input, seek_pos, SEEK_SET);
-    
+    this->found_next_frame = 0;
+
     if (playing) {
       _x_demux_flush_engine(this->stream);
     }

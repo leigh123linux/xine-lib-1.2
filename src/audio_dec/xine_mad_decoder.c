@@ -48,6 +48,20 @@
 
 #define INPUT_BUF_SIZE  16384
 
+/* According to Rob Leslie (libmad author) :
+ * The absolute theoretical maximum frame size is 2881 bytes: MPEG 2.5 Layer II,
+ * 8000 Hz @ 160 kbps, with a padding slot. (Such a frame is unlikely, but it was
+ * a useful exercise to compute all possible frame sizes.) Add to this an 8 byte
+ * MAD_BUFFER_GUARD, and the minimum buffer size you should be streaming to
+ * libmad in the general case is 2889 bytes.
+
+ * Theoretical frame sizes for Layer III range from 24 to 1441 bytes, but there
+ * is a "soft" limit imposed by the standard of 960 bytes. Nonetheless MAD can
+ * decode frames of any size as long as they fit entirely in the buffer you pass,
+ * not including the MAD_BUFFER_GUARD bytes.
+ */
+#define MAD_MIN_SIZE 2889
+
 typedef struct {
   audio_decoder_class_t   decoder_class;
 } mad_class_t;
@@ -136,8 +150,8 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
   mad_decoder_t *this = (mad_decoder_t *) this_gen;
 
-  lprintf ("decode data, decoder_flags: %d\n", buf->decoder_flags);
-  
+  lprintf ("decode data, size: %d, decoder_flags: %d\n", buf->size, buf->decoder_flags);
+
   if (buf->size>(INPUT_BUF_SIZE-this->bytes_in_buffer)) {
     xprintf (this->xstream->xine, XINE_VERBOSITY_DEBUG,
 	     "libmad: ALERT input buffer too small (%d bytes, %d avail)!\n",
@@ -167,6 +181,9 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     mad_stream_buffer (&this->stream, this->buffer, 
 		       this->bytes_in_buffer);
 
+    if (this->bytes_in_buffer < MAD_MIN_SIZE)
+      return;
+
     while (1) {
 
       if (mad_frame_decode (&this->frame, &this->stream) != 0) {
@@ -187,6 +204,7 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	  return;
 
 	default: 
+	  lprintf ("error 0x%04X, mad_stream_buffer %d bytes\n", this->stream.error, this->bytes_in_buffer);
 	  mad_stream_buffer (&this->stream, this->buffer, 
 			     this->bytes_in_buffer);
 	}

@@ -822,6 +822,19 @@ void _x_flush_events_queues (xine_stream_t *stream) {
   pthread_mutex_unlock (&stream->event_queues_lock);
 }
 
+static inline int _x_path_looks_like_mrl (const char *path)
+{
+  if ((*path & 0xDF) < 'A' || (*path & 0xDF) > 'Z')
+    return 0;
+
+  for (++path; *path; ++path)
+    if ((*path != '-' && *path < '0') || (*path > '9' && *path < 'A') ||
+	(*path > 'Z' && *path < 'a') || *path > 'z')
+      break;
+
+  return path[0] == ':' && path[1] == '/';
+}
+
 static int open_internal (xine_stream_t *stream, const char *mrl) {
 
   const char *stream_setup = NULL;
@@ -960,6 +973,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 	    memcpy(filename, tmp, strlen(tmp));
 	    filename[strlen(tmp)] = '\0';
 	  }
+	  _x_mrl_unescape(filename);
 
 	  xine_log(stream->xine, XINE_LOG_MSG, _("xine: join rip input plugin\n"));
 	  input_saver = _x_rip_plugin_get_instance (stream, filename);
@@ -1134,7 +1148,9 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 	    memcpy(subtitle_mrl, tmp, strlen(tmp));
 	    subtitle_mrl[strlen(tmp)] = '\0';
 	  }
-	  _x_mrl_unescape(subtitle_mrl);
+	  /* unescape for xine_open() if the MRL looks like a raw pathname */
+	  if (!_x_path_looks_like_mrl(subtitle_mrl))
+	    _x_mrl_unescape(subtitle_mrl);
 	  stream->slave = xine_stream_new (stream->xine, NULL, stream->video_out );
 	  stream->slave_affection = XINE_MASTER_SLAVE_PLAY | XINE_MASTER_SLAVE_STOP;
 	  if( xine_open( stream->slave, subtitle_mrl ) ) {
