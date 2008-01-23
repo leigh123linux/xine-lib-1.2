@@ -149,6 +149,7 @@ static int head_check(mad_decoder_t *this) {
 static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
   mad_decoder_t *this = (mad_decoder_t *) this_gen;
+  int bytes_in_buffer_at_pts;
 
   lprintf ("decode data, size: %d, decoder_flags: %d\n", buf->size, buf->decoder_flags);
 
@@ -169,6 +170,8 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     } else {
       this->preview_mode = 1;
     }
+
+    bytes_in_buffer_at_pts = this->bytes_in_buffer;
 
     xine_fast_memcpy (&this->buffer[this->bytes_in_buffer], 
                         buf->content, buf->size);
@@ -271,6 +274,8 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	  struct mad_pcm      *pcm = &this->synth.pcm;
 	  audio_buffer_t      *audio_buffer;
 	  uint16_t            *output;
+          int                  bitrate;
+          int                  pts_offset;
 
 	  audio_buffer = this->xstream->audio_out->get_buffer (this->xstream->audio_out);
 	  output = audio_buffer->mem;
@@ -291,7 +296,22 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	  }
 
 	  audio_buffer->num_frames = pcm->length;
-	  audio_buffer->vpts       = buf->pts;
+
+          /* pts computing */
+          if (this->frame.header.bitrate > 0) {
+            bitrate = this->frame.header.bitrate;
+          } else {
+            bitrate = _x_stream_info_get(this->xstream, XINE_STREAM_INFO_AUDIO_BITRATE);
+            lprintf("offset %d bps\n", bitrate);
+          }
+          audio_buffer->vpts = buf->pts;
+          if (audio_buffer->vpts && (bitrate > 0)) {
+            pts_offset = (bytes_in_buffer_at_pts * 8 * 90) / (bitrate / 1000);
+            lprintf("pts: %"PRId64", offset: %d pts, %d bytes\n", buf->pts, pts_offset, bytes_in_buffer_at_pts);
+            if (audio_buffer->vpts < pts_offset)
+              pts_offset = audio_buffer->vpts;
+            audio_buffer->vpts -= pts_offset;
+          }
 
 	  this->xstream->audio_out->put_buffer (this->xstream->audio_out, audio_buffer, this->xstream);
 

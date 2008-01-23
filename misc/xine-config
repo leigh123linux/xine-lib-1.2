@@ -43,11 +43,11 @@ while test $# -gt 0; do
       if [ "$exec_prefix" = '' ]; then
         exec_prefix="$optarg"
       fi
+      args="$args${args+ }--variable=prefix"
       ;;
     --exec-prefix=*)
       exec_prefix="$optarg"
-      ;;
-    --prefix|--exec-prefix)
+      args="$args${args+ }--variable=exec_prefix"
       ;;
     --version)
       args="$args${args+ }--modversion"
@@ -55,8 +55,11 @@ while test $# -gt 0; do
     --cflags|--libs)
       args="$args${args+ }$1"
       ;;
-    --acflags|--plugindir|--datadir|--scriptdir|--localedir|--objcflags)
+    --prefix|--acflags|--plugindir|--datadir|--scriptdir|--localedir|--objcflags)
       args="$args${args+ }--variable=${1#--}"
+      ;;
+    --exec-prefix)
+      args="$args${args+ }--variable=exec_prefix"
       ;;
     *)
       usage 1 1>&2
@@ -68,5 +71,5 @@ done
 echo 'xine-config is DEPRECATED. Use pkg-config instead.' >&2
 
 exec pkg-config "${prefix+--define-variable=prefix=}$prefix" \
-		"${exec_prefix+--define-variable=exc_prefix=}$exec_prefix" \
+		"${exec_prefix+--define-variable=exec_prefix=}$exec_prefix" \
 		$args libxine
