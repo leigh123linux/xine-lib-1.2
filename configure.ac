@@ -2392,9 +2392,14 @@ makeexpand () {
   echo "$i"
 }
 
-XINE_PLUGINDIR="$libdir/xine/plugins/$XINE_MAJOR.$XINE_MINOR.$XINE_SUB$XINE_PATCH"
-XINE_FONTDIR="${datadir}/xine/libxine$XINE_MAJOR/fonts"
-XINE_LOCALEDIR="${datadir}/locale"
+xinelibdir='${libdir}/xine'
+xinedatadir='${datadir}/xine'
+AC_SUBST(xinelibdir)
+AC_SUBST(xinedatadir)
+
+XINE_PLUGINDIR="\${xinelibdir}/plugins/$XINE_MAJOR.$XINE_MINOR.$XINE_SUB$XINE_PATCH"
+XINE_FONTDIR="\${xinedatadir}/xine/libxine$XINE_MAJOR/fonts"
+XINE_LOCALEDIR='${datadir}/locale'
 XINE_REL_PLUGINDIR="`makeexpand "$XINE_PLUGINDIR"`"
 XINE_REL_PLUGINDIR="`makeexpand "$XINE_REL_PLUGINDIR" | sed -e "s,^${prefix}/,,"`"
 XINE_REL_FONTDIR="`makeexpand "$XINE_FONTDIR" | sed -e "s,^${prefix}/,,"`"
@@ -2438,16 +2443,16 @@ AC_SUBST(XINE_FONTDIR)
 AC_SUBST(XINE_LOCALEDIR)
 
 dnl Where aclocal m4 files should be installed
-XINE_ACFLAGS="-I `makeexpand "${datarootdir}/aclocal"`"
+XINE_ACFLAGS="-I ${datarootdir}/aclocal"
 AC_DEFINE_UNQUOTED(XINE_ACFLAGS, "$XINE_ACFLAGS", [Path where aclocal m4 files will be.])
 AC_SUBST(XINE_ACFLAGS)
 
 dnl Where architecture independent data (e.g. logo) will/should be installed
-XINE_DATADIR="`makeexpand "${datarootdir}/xine"`"
+XINE_DATADIR="\${xinedatadir}"
 AC_SUBST(XINE_DATADIR)
 
 dnl Where scripts will/should be installed.
-eval XINE_SCRIPTPATH="$XINE_DATADIR/xine/scripts"
+XINE_SCRIPTPATH="\${xinedatadir}/scripts"
 AC_SUBST(XINE_SCRIPTPATH)
 
 
@@ -2651,7 +2656,6 @@ misc/build_rpms.sh
 misc/fonts/Makefile
 misc/libxine.pc
 misc/relchk.sh
-misc/xine-config
 misc/xine-lib.spec
 po/Makefile.in
 src/Makefile

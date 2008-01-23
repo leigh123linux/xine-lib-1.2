@@ -6,6 +6,8 @@ xine-lib (1.1.10) (unreleased)
   * Unescape the filename in "#save:". This allows filenames to contain ';'
     etc. without ambiguity, e.g. "#save:foo%3B1.ts" -> "foo;1.ts", but front
     end authors should be careful with xine-lib older than 1.1.10.
+  * Backported xine-config & libxine.pc from 1.2.
+    Consequently, xine-config now requires pkg-config.
 
 xine-lib (1.1.9.1) 2008-01-11
   * Security fixes:
