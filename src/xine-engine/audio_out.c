@@ -1619,6 +1619,7 @@ static void ao_close(xine_audio_port_t *this_gen, xine_stream_t *stream) {
       }
       /* make sure there are no more buffers on queue */
       fifo_wait_empty(this->out_fifo);
+      ao_set_property(this_gen, AO_PROP_DISCARD_BUFFERS, 0);
     }
 
     pthread_mutex_lock( &this->driver_lock );
