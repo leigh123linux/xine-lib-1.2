@@ -11,6 +11,7 @@ xine-lib (1.1.10) (unreleased)
   * Sanity-check ASF header sizes. This fixes a crash in the ASF demuxer,
     caused by the example exploit given for CVE-2006-1664.
   * Don't discard audio samples forever. Fixed streaming playback.
+  * Fix a possible crash on channel change in the DVB plugin.
 
 xine-lib (1.1.9.1) 2008-01-11
   * Security fixes:
