@@ -52,6 +52,7 @@
 #define LOG_VERBOSE
 /*
 #define LOG
+#define DEBUG
 */
 
 #define XINE_ENABLE_EXPERIMENTAL_FEATURES
@@ -1699,7 +1700,7 @@ void xine_init (xine_t *this) {
   /*
    * plugins
    */
-  _x_scan_plugins(this);
+  XINE_PROFILE(_x_scan_plugins(this));
 
 #ifdef HAVE_SETLOCALE
   if (!setlocale(LC_CTYPE, ""))

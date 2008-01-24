@@ -45,6 +45,7 @@ typedef struct {
   plugin_file_t   *file;
   plugin_info_t   *info;
   void            *plugin_class;
+  xine_list_t     *config_entry_list;
   int              ref;          /* count intances of plugins */
   int              priority;
 } plugin_node_t ;

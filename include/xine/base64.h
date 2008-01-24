@@ -86,6 +86,9 @@
 #ifndef BASE64_H
 #define BASE64_H
 
-unsigned char *rfc822_binary (void *src,unsigned long srcl,unsigned long *len);
+unsigned char *xine_rfc822_binary (void *src,unsigned long srcl,unsigned long *len) XINE_PROTECTED;
+
+char *xine_base64_encode (const void *src, unsigned long srcl, unsigned long *len) XINE_PROTECTED;
+void *xine_base64_decode (const char *src, unsigned long srcl, unsigned long *len) XINE_PROTECTED;
 
 #endif
