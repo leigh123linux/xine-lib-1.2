@@ -732,7 +732,8 @@ get_extensions (demux_class_t *this_gen) {
 
 static char *
 get_mimetypes (demux_class_t *this_gen) {
-    return "application/x-flac: flac: FLAC Audio;";
+    return "audio/x-flac: flac: FLAC Audio;"
+	"audio/flac: flac: FLAC Audio;";
 }
 
 static void 

@@ -544,7 +544,8 @@ static const char *get_extensions (demux_class_t *this_gen) {
 }
 
 static const char *get_mimetypes (demux_class_t *this_gen) {
-  return NULL;
+  return "audio/x-flac: flac: FLAC Audio;"
+    "audio/flac: flac: FLAC Audio;";
 }
 
 static void class_dispose (demux_class_t *this_gen) {
