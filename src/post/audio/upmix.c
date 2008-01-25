@@ -417,7 +417,7 @@ static post_plugin_t *upmix_open_plugin(post_class_t *class_gen, int inputs,
 /* plugin class initialization function */
 void *upmix_init_plugin(xine_t *xine, void *data)
 {
-  post_class_upmix_t *class = (post_class_upmix_t *)malloc(sizeof(post_class_upmix_t));
+  post_class_upmix_t *class = (post_class_upmix_t *)xine_xmalloc(sizeof(post_class_upmix_t));
   
   if (!class)
     return NULL;

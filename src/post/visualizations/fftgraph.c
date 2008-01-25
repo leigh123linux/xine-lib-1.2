@@ -455,7 +455,7 @@ static post_plugin_t *fftgraph_open_plugin(post_class_t *class_gen, int inputs,
 /* plugin class initialization function */
 void *fftgraph_init_plugin(xine_t *xine, void *data)
 {
-  post_class_fftgraph_t *class = (post_class_fftgraph_t *)malloc(sizeof(post_class_fftgraph_t));
+  post_class_fftgraph_t *class = (post_class_fftgraph_t *)xine_xmalloc(sizeof(post_class_fftgraph_t));
   
   if (!class)
     return NULL;

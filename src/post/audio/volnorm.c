@@ -450,7 +450,7 @@ static post_plugin_t *volnorm_open_plugin(post_class_t *class_gen, int inputs,
 /* plugin class initialization function */
 void *volnorm_init_plugin(xine_t *xine, void *data)
 {
-    post_class_volnorm_t *class = (post_class_volnorm_t *)malloc(sizeof(post_class_volnorm_t));
+    post_class_volnorm_t *class = (post_class_volnorm_t *)xine_xmalloc(sizeof(post_class_volnorm_t));
     
     if (!class)
         return NULL;
