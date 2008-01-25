@@ -2119,8 +2119,11 @@ static const char *anx_get_extensions (demux_class_t *this_gen) {
 
 static const char *anx_get_mimetypes (demux_class_t *this_gen) {
   return "application/annodex: anx: Annodex media;"
+         "application/x-annodex: anx: Annodex media;"
          "audio/annodex: axa: Annodex audio;"
+         "audio/x-annodex: axa: Annodex audio;"
          "video/annodex: axv: Annodex video;";
+         "video/x-annodex: axv: Annodex video;";
 }
 
 static void anx_class_dispose (demux_class_t *this_gen) {
@@ -2162,8 +2165,11 @@ static const char *ogg_get_extensions (demux_class_t *this_gen) {
 
 static const char *ogg_get_mimetypes (demux_class_t *this_gen) {
   return "application/ogg: ogx: Ogg Stream;"
+         "application/x-ogg: ogx: Ogg Stream;"
          "audio/ogg: oga: Ogg Audio;"
+         "audio/x-ogg: oga: Ogg Audio;"
          "video/ogg: ogv: Ogg Video;";
+         "video/x-ogg: ogv: Ogg Video;";
 }
 
 static void ogg_class_dispose (demux_class_t *this_gen) {
