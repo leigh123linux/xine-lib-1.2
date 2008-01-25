@@ -306,9 +306,12 @@ static int parse_flv_var(demux_flv_t *this,
       num = _X_BE_32(tmp);
       tmp += 4;
       if (key && keylen == 5 && !strncmp(key, "times", 5)) {
-	free (this->index);
-        this->index = xine_xcalloc(num, sizeof(flv_index_entry_t));
-        this->num_indices = num;
+        if (!this->index || this->num_indices != num) {
+          if (this->index)
+            free(this->index);
+          this->index = xine_xcalloc(num, sizeof(flv_index_entry_t));
+          this->num_indices = num;
+        }
         for (num = 0; num < this->num_indices && tmp < end; num++) {
           if (*tmp++ == FLV_DATA_TYPE_NUMBER) {
             lprintf("  got number (%f)\n", BE_F64(tmp));
@@ -319,16 +322,20 @@ static int parse_flv_var(demux_flv_t *this,
         break;
       }
       if (key && keylen == 13 && !strncmp(key, "filepositions", 13)) {
-        if (this->index && this->num_indices == num) {
-          for (num = 0; num < this->num_indices && tmp < end; num++) {
-            if (*tmp++ == FLV_DATA_TYPE_NUMBER) {
-              lprintf("  got number (%f)\n", BE_F64(tmp));
-              this->index[num].offset = BE_F64(tmp);
-              tmp += 8;
-            }
-          }
-          break;
+        if (!this->index || this->num_indices != num) {
+          if (this->index)
+            free(this->index);
+          this->index = xine_xcalloc(num, sizeof(flv_index_entry_t));
+          this->num_indices = num;
         }
+        for (num = 0; num < this->num_indices && tmp < end; num++) {
+          if (*tmp++ == FLV_DATA_TYPE_NUMBER) {
+            lprintf("  got number (%f)\n", BE_F64(tmp));
+            this->index[num].offset = BE_F64(tmp);
+            tmp += 8;
+          }
+        }
+        break;
       }
       while (num-- && tmp < end) {
         len = parse_flv_var(this, tmp, end-tmp, NULL, 0);
@@ -501,9 +508,9 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
         
       case FLV_TAG_TYPE_SCRIPT:
         lprintf("  got script tag...\n");
-        parse_flv_script(this, remaining_bytes);
-
         if (preview) {
+          parse_flv_script(this, remaining_bytes);
+
           /* send init info to decoders using script information as reference */
           if (!this->got_audio_header && this->audiocodec) {
             buf = this->audio_fifo->buffer_pool_alloc(this->audio_fifo);
@@ -569,7 +576,9 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
           }
           
           return this->status;
-        }            
+        }
+        /* no preview */
+        this->input->seek(this->input, remaining_bytes, SEEK_CUR);   
         continue;
         
       default:
@@ -661,7 +670,7 @@ static void seek_flv_file(demux_flv_t *this, off_t seek_pos, int seek_pts) {
     }
   }
   
-  if (seek_pos && this->videocodec) {
+  if (seek_pos && this->videocodec && abs(seek_pts-this->cur_pts) > 300000) {
     off_t pos, size;
     
     pos = this->input->get_current_pos(this->input);
