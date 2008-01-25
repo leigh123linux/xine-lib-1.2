@@ -391,7 +391,7 @@ static const char *get_extensions (demux_class_t *const this_gen) {
 }
 
 static const char *get_mimetypes (demux_class_t *const this_gen) {
-  return NULL;
+  return "audio/x-wavpack";
 }
 
 static void class_dispose (demux_class_t *const this_gen) {
