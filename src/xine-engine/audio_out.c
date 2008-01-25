@@ -291,6 +291,7 @@ struct audio_fifo_s {
   int                num_buffers;
 };
 
+static int ao_get_property (xine_audio_port_t *this_gen, int property);
 static int ao_set_property (xine_audio_port_t *this_gen, int property, int value);
 
 static audio_fifo_t *fifo_new (xine_t *xine) {
@@ -1614,13 +1615,17 @@ static void ao_close(xine_audio_port_t *this_gen, xine_stream_t *stream) {
     xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_out: no streams left, closing driver\n");
 
     if (this->audio_loop_running) {
+      /* make sure there are no more buffers on queue */
       if (this->clock->speed == XINE_SPEED_PAUSE ||
           (this->clock->speed != XINE_FINE_SPEED_NORMAL && !this->slow_fast_audio)) {
-        /* discard buffers, otherwise we'll wait forever */
+        int discard = ao_get_property(this_gen, AO_PROP_DISCARD_BUFFERS);
+        /* discard buffers while waiting, otherwise we'll wait forever */
         ao_set_property(this_gen, AO_PROP_DISCARD_BUFFERS, 1);
+        fifo_wait_empty(this->out_fifo);
+        ao_set_property(this_gen, AO_PROP_DISCARD_BUFFERS, discard);
       }
-      /* make sure there are no more buffers on queue */
-      fifo_wait_empty(this->out_fifo);
+      else
+        fifo_wait_empty(this->out_fifo);
     }
 
     pthread_mutex_lock( &this->driver_lock );

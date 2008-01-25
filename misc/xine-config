@@ -43,11 +43,9 @@ while test $# -gt 0; do
       if [ "$exec_prefix" = '' ]; then
         exec_prefix="$optarg"
       fi
-      args="$args${args+ }--variable=prefix"
       ;;
     --exec-prefix=*)
       exec_prefix="$optarg"
-      args="$args${args+ }--variable=exec_prefix"
       ;;
     --version)
       args="$args${args+ }--modversion"
