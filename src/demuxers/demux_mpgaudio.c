@@ -591,14 +591,14 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
     if (this->xing_header) {
       buf->free_buffer(buf);
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-              LOG_MODULE ": found Xing header at offset %PRId64\n", frame_pos);
+              LOG_MODULE ": found Xing header at offset %"PRId64"\n", frame_pos);
       return 1;
     }
     this->vbri_header = parse_vbri_header(&this->cur_frame, buf->content, this->cur_frame.size);
     if (this->vbri_header) {
       buf->free_buffer(buf);
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-              LOG_MODULE ": found Vbri header at offset %PRId64\n", frame_pos);
+              LOG_MODULE ": found Vbri header at offset %"PRId64"\n", frame_pos);
       return 1;
     }
   }

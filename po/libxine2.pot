@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-01-06 21:08+0000\n"
+"POT-Creation-Date: 2008-01-26 23:28+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2020,6 +2020,16 @@ msgid ""
 "Selects the TV standard of the input signals. Either: PAL, NTSC and SECAM. "
 msgstr ""
 
+#: src/input/input_v4l.c:1941
+msgid "v4l ALSA audio input device"
+msgstr ""
+
+#: src/input/input_v4l.c:1942
+msgid ""
+"The name of the audio device which corresponds to your Video4Linux video "
+"device."
+msgstr ""
+
 #: src/input/input_v4l.c:1946
 msgid "v4l radio input plugin"
 msgstr ""
@@ -2082,6 +2092,12 @@ msgstr ""
 
 #: src/input/librtsp/rtsp_session.c:141
 msgid "rtsp_session: session can not be established.\n"
+msgstr ""
+
+#: src/input/librtsp/rtsp_session.c:153
+msgid ""
+"rtsp_session: rtsp server returned overly-large headers, session can not be "
+"established.\n"
 msgstr ""
 
 #: src/input/librtsp/rtsp_session.c:159

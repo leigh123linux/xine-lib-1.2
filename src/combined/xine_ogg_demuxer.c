@@ -2081,8 +2081,11 @@ static void *anx_init_class (xine_t *xine, void *data) {
   this->demux_class.identifier      = "Annodex";
   this->demux_class.mimetypes       = 
     "application/annodex: anx: Annodex media;"
+    "application/x-annodex: anx: Annodex media;"
     "audio/annodex: axa: Annodex audio;"
-    "video/annodex: axv: Annodex video;";
+    "audio/x-annodex: axa: Annodex audio;"
+    "video/annodex: axv: Annodex video;"
+    "video/x-annodex: axv: Annodex video;";
   this->demux_class.extensions      = "anx axa axv";
   this->demux_class.dispose         = default_demux_class_dispose;
 
@@ -2102,8 +2105,11 @@ static void *ogg_init_class (xine_t *xine, void *data) {
   this->demux_class.identifier      = "OGG";
   this->demux_class.mimetypes       =
     "application/ogg: ogx: Ogg Stream;"
+    "application/x-ogg: ogx: Ogg Stream;"
     "audio/ogg: oga: Ogg Audio;"
+    "audio/x-ogg: oga: Ogg Audio;"
     "video/ogg: ogv: Ogg Video;";
+    "video/x-ogg: ogv: Ogg Video;";
   this->demux_class.extensions      = "ogx ogv oga ogg spx ogm";
   this->demux_class.dispose         = default_demux_class_dispose;
 

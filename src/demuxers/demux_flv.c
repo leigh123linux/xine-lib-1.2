@@ -908,4 +908,3 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_DEMUX, 27, "flashvideo", XINE_VERSION_CODE, &demux_info_flv, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
-
