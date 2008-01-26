@@ -2398,7 +2398,7 @@ AC_SUBST(xinelibdir)
 AC_SUBST(xinedatadir)
 
 XINE_PLUGINDIR="\${xinelibdir}/plugins/$XINE_MAJOR.$XINE_MINOR.$XINE_SUB$XINE_PATCH"
-XINE_FONTDIR="\${xinedatadir}/xine/libxine$XINE_MAJOR/fonts"
+XINE_FONTDIR="\${xinedatadir}/libxine$XINE_MAJOR/fonts"
 XINE_LOCALEDIR='${datadir}/locale'
 XINE_REL_PLUGINDIR="`makeexpand "$XINE_PLUGINDIR"`"
 XINE_REL_PLUGINDIR="`makeexpand "$XINE_REL_PLUGINDIR" | sed -e "s,^${prefix}/,,"`"
