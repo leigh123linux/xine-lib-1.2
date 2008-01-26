@@ -93,6 +93,9 @@ static const resolution_t resolutions[] = {
 #define NUM_RESOLUTIONS  (sizeof(resolutions)/sizeof(resolutions[0]))
 #define RADIO_DEV        "/dev/radio0"
 #define VIDEO_DEV        "/dev/video0"
+#ifdef HAVE_ALSA
+#define AUDIO_DEV	 "plughw:0,0"
+#endif
 
 #if !defined(NDELAY) && defined(O_NDELAY)
 #define FNDELAY O_NDELAY
@@ -1701,6 +1704,9 @@ static input_plugin_t *v4l_class_get_instance (input_class_t *cls_gen,
 {
   /* v4l_input_class_t  *cls = (v4l_input_class_t *) cls_gen; */
   v4l_input_plugin_t *this;
+#ifdef HAVE_ALSA
+  cfg_entry_t        *entry;
+#endif
   char               *mrl     = strdup(data);
   
   /* Example mrl:  v4l:/Television/62500 */
@@ -1721,13 +1727,14 @@ static input_plugin_t *v4l_class_get_instance (input_class_t *cls_gen,
   this->event_queue   = NULL;
   this->scr           = NULL;
 #ifdef HAVE_ALSA
-  this->pcm_name      = NULL;
   this->pcm_data      = NULL;
   this->pcm_hwparams  = NULL;
   
   /* Audio */
   this->pcm_stream    = SND_PCM_STREAM_CAPTURE;
-  this->pcm_name      = strdup("plughw:0,0");
+  entry = this->stream->xine->config->lookup_entry(this->stream->xine->config,
+                                                   "media.video4linux.audio_device");
+  this->pcm_name      = strdup (entry->str_value);
   this->audio_capture = 1;
 #endif
   this->rate          = 44100;
@@ -1910,7 +1917,15 @@ static void *init_video_class (xine_t *xine, void *data)
 			   _("v4l video device"),
 			   _("The path to your Video4Linux video device."),
 			   10, NULL, NULL);
-  
+#ifdef HAVE_ALSA
+  config->register_filename (config, "media.video4linux.audio_device",
+			   AUDIO_DEV, 0,
+			   _("v4l ALSA audio input device"),
+			   _("The name of the audio device which corresponds "
+			     "to your Video4Linux video device."),
+			   10, NULL, NULL);
+#endif  
+
   return this;
 }
 

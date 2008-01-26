@@ -15,6 +15,7 @@ xine-lib (1.1.10) (unreleased)
   * Don't discard audio samples forever. Fixed streaming playback.
   * Fix a possible crash on channel change in the DVB plugin.
   * Flash video demuxer improvements and bug fixes.
+  * Make the V4L ALSA audio input device configurable. (This needs more work.)
 
 xine-lib (1.1.9.1) 2008-01-11
   * Security fixes:
