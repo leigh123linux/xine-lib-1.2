@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-01-26 14:49+0000\n"
+"POT-Creation-Date: 2008-01-26 17:44+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1923,43 +1923,53 @@ msgstr ""
 msgid "stdin streaming input plugin"
 msgstr ""
 
-#: src/input/input_v4l.c:379
+#: src/input/input_v4l.c:382
 msgid "Buffer underrun..."
 msgstr ""
 
-#: src/input/input_v4l.c:383
+#: src/input/input_v4l.c:386
 msgid "Buffer overrun..."
 msgstr ""
 
-#: src/input/input_v4l.c:386
+#: src/input/input_v4l.c:389
 msgid "Adjusting..."
 msgstr ""
 
-#: src/input/input_v4l.c:658
+#: src/input/input_v4l.c:661
 msgid "Tuner name not found\n"
 msgstr ""
 
-#: src/input/input_v4l.c:1874
+#: src/input/input_v4l.c:1881
 msgid "v4l tv input plugin"
 msgstr ""
 
-#: src/input/input_v4l.c:1878
+#: src/input/input_v4l.c:1885
 msgid "v4l radio input plugin"
 msgstr ""
 
-#: src/input/input_v4l.c:1910
+#: src/input/input_v4l.c:1917
 msgid "v4l video device"
 msgstr ""
 
-#: src/input/input_v4l.c:1911
+#: src/input/input_v4l.c:1918
 msgid "The path to your Video4Linux video device."
 msgstr ""
 
-#: src/input/input_v4l.c:1936
+#: src/input/input_v4l.c:1923
+msgid "v4l ALSA audio input device"
+msgstr ""
+
+#: src/input/input_v4l.c:1924
+msgid ""
+"The name of the audio device which corresponds to your Video4Linux video "
+"device."
+msgstr ""
+
+#: src/input/input_v4l.c:1951
 msgid "v4l radio device"
 msgstr ""
 
-#: src/input/input_v4l.c:1937
+#: src/input/input_v4l.c:1952
 msgid "The path to your Video4Linux radio device."
 msgstr ""
 
