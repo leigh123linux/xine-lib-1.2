@@ -1936,7 +1936,7 @@ static void _cdda_cdindex(cdda_input_plugin_t *this, cdrom_toc *toc) {
 
   sha_final(digest, &sha);
 
-  base64 = xine_rfc822_binary(digest, 20, &size);
+  base64 = _x_rfc822_binary(digest, 20, &size);
   base64[size] = 0;
 
   _x_meta_info_set_utf8(this->stream, XINE_META_INFO_CDINDEX_DISCID, base64);

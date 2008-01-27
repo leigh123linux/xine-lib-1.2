@@ -107,7 +107,7 @@
  * Returns: destination as BASE64
  */
 
-unsigned char *xine_rfc822_binary (void *src,unsigned long srcl,unsigned long *len)
+unsigned char *_x_rfc822_binary (void *src,unsigned long srcl,unsigned long *len)
 {
   unsigned char *ret,*d;
   unsigned char *s = (unsigned char *) src;
@@ -134,7 +134,7 @@ unsigned char *xine_rfc822_binary (void *src,unsigned long srcl,unsigned long *l
   return ret;			/* return the resulting string */
 }
 
-char *xine_base64_encode (const void *src, unsigned long srcl, unsigned long *len)
+char *_x_base64_encode (const void *src, unsigned long srcl, unsigned long *len)
 {
   char *ret, *d;
   unsigned char *s = (unsigned char *) src;
@@ -157,7 +157,7 @@ char *xine_base64_encode (const void *src, unsigned long srcl, unsigned long *le
   return ret;			/* return the resulting string */
 }
 
-void *xine_base64_decode (const char *src, unsigned long srcl, unsigned long *len)
+void *_x_base64_decode (const char *src, unsigned long srcl, unsigned long *len)
 {
   void *ret;
   unsigned char *d;

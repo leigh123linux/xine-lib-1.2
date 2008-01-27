@@ -1342,7 +1342,7 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
     }
 
     /* and now the output encoding */
-    output = xine_base64_encode (buffer, total_len, &output_len);
+    output = _x_base64_encode (buffer, total_len, &output_len);
 
     free(buffer);
   }
@@ -1414,7 +1414,7 @@ static char* config_register_serialized_entry (config_values_t *this, const char
   int    value_count = 0;
   int    i;
   
-  output = xine_base64_decode (value, strlen(value), &output_len);
+  output = _x_base64_decode (value, strlen(value), &output_len);
   
   pos = 0;
   pos += bytes = get_int(output, output_len, pos, &type);
