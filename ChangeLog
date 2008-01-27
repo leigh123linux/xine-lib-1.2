@@ -1,3 +1,5 @@
+xine-lib (1.1.11) unreleased
+
 xine-lib (1.1.10) 2008-01-26
   * Security fixes:
     - Buffer overflow which allows a remote attacker to execute arbitrary
