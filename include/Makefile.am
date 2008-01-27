@@ -16,8 +16,10 @@ nobase_include_HEADERS = xine.h xine/version.h xine/buffer.h		\
 	xine/attributes.h xine/compat.h xine/xine_buffer.h		\
 	xine/xineutils.h xine/xmllexer.h xine/xmlparser.h xine/list.h	\
 	xine/array.h xine/sorted_array.h xine/pool.h			\
-	xine/ring_buffer.h xine/os_types.h xine/vdr.h $(inttypes_h)
+	xine/ring_buffer.h xine/os_types.h xine/vdr.h
 
 noinst_HEADERS = config.h configure.h
+
+nodist_include_HEADERS = $(inttypes_h)
 
 CONFIG_CLEAN_FILES = $(inttypes_h)
