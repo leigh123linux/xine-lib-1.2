@@ -1199,7 +1199,6 @@ src/spu_dec/Makefile
 src/video_dec/Makefile
 src/video_dec/libmpeg2/Makefile
 src/video_out/Makefile
-src/video_out/macosx/Makefile
 src/xine-utils/Makefile
 src/xine-engine/Makefile
 src/vdr/Makefile

@@ -7,7 +7,8 @@ AM_OBJCFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 SUBDIRS = 
 
 if ENABLE_MACOSX_VIDEO
-SUBDIRS += macosx
+xineinclude_HEADERS = macosx/video_window.h macosx/XineOpenGLView.h macosx/XineVideoWindow.h
+lib_LTLIBRARIES = libxineMacOSXVideo.la
 endif
 
 EXTRA_DIST = video_out_directx.c video_out_macosx.m
@@ -194,3 +195,8 @@ xineplug_vo_out_none_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_macosx_la_SOURCES = video_out_macosx.m
 xineplug_vo_out_macosx_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS)
 xineplug_vo_out_macosx_la_LDFLAGS = $(AM_LDFLAGS) -framework Cocoa -framework OpenGL
+
+libxineMacOSXVideo_la_SOURCES = macosx/XineOpenGLView.m macosx/XineVideoWindow.m
+libxineMacOSXVideo_la_LDFLAGS = $(AM_LDFLAGS) -framework Cocoa	\
+                                -framework OpenGL -version-info	\
+                                $(XINE_LT_CURRENT):$(XINE_LT_REVISION):$(XINE_LT_AGE)
