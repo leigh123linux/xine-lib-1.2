@@ -6,14 +6,13 @@ EXTRA_DIST = build_rpms.sh \
 	SlackBuild.in \
 	SlackBuild \
 	vga.xinefont.gz \
-	xine-config \
 	xine-lib.spec.in \
 	xine-lib.spec \
 	libxine.pc.in \
 	libdvdcss-1.2.6-network.patch \
 	Makefile.common
 
-bin_SCRIPTS = xine-config
+dist_bin_SCRIPTS = xine-config
 
 pkgconfigdir=$(libdir)/pkgconfig
 pkgconfig_DATA=libxine.pc
