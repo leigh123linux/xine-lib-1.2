@@ -10,9 +10,8 @@ AM_LDFLAGS = $(xineplug_ldflags)
 # All of xine input plugins should be named like the scheme "xineplug_inp_"
 #
 
-SUBDIRS = libreal librtsp
 if !WITH_EXTERNAL_DVDNAV
-SUBDIRS += libdvdnav
+SUBDIRS = libdvdnav
 endif
 
 
@@ -116,8 +115,15 @@ xineplug_inp_dvb_la_DEPS = $(XDG_BASEDIR_DEPS)
 xineplug_inp_dvb_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) $(XDG_BASEDIR_LIBS)
 xineplug_inp_dvb_la_CPPFLAGS = $(AM_CPPFLAGS) $(XDG_BASEDIR_CPPFLAGS)
 
-xineplug_inp_rtsp_la_SOURCES = input_rtsp.c net_buf_ctrl.c
-xineplug_inp_rtsp_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) libreal/libreal.la librtsp/librtsp.la
+xineplug_inp_rtsp_la_SOURCES = input_rtsp.c net_buf_ctrl.c		\
+                               librtsp/rtsp.c librtsp/rtsp_session.c	\
+                               librtsp/rtsp.h librtsp/rtsp_session.h	\
+                               libreal/real.c libreal/asmrp.c		\
+                               libreal/rmff.c libreal/sdpplin.c		\
+                               libreal/real.h libreal/asmrp.h		\
+                               libreal/rmff.h libreal/sdpplin.h
+xineplug_inp_rtsp_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/libreal -I$(srcdir)/librtsp
+xineplug_inp_rtsp_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
 
 xineplug_inp_cdda_la_SOURCES = input_cdda.c media_helper.c sha1.c sha1.h
 xineplug_inp_cdda_la_DEPS = $(XDG_BASEDIR_DEPS)

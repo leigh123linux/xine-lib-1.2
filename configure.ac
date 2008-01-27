@@ -1179,8 +1179,6 @@ src/demuxers/Makefile
 src/dxr3/Makefile
 src/input/Makefile
 src/input/libdvdnav/Makefile
-src/input/librtsp/Makefile
-src/input/libreal/Makefile
 src/libw32dll/Makefile
 src/libw32dll/wine/Makefile
 src/libw32dll/DirectShow/Makefile
