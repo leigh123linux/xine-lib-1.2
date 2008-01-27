@@ -3,12 +3,10 @@ include $(top_srcdir)/misc/Makefile.common
 SUBDIRS = fonts
 
 EXTRA_DIST = build_rpms.sh \
-	cdda_server.c \
 	SlackBuild.in \
 	SlackBuild \
 	vga.xinefont.gz \
 	xine-config \
-	xine-fontconv.c \
 	xine-lib.spec.in \
 	xine-lib.spec \
 	libxine.pc.in \
@@ -20,8 +18,13 @@ bin_SCRIPTS = xine-config
 pkgconfigdir=$(libdir)/pkgconfig
 pkgconfig_DATA=libxine.pc
 
-xine-fontconv:	xine-fontconv.c
-	$(CC) -W -Wall -g -o xine-fontconv xine-fontconv.c -lz `freetype-config --cflags` `freetype-config --libs`
+EXTRA_PROGRAMS = xine-fontconv cdda_server
 
-cdda_server: cdda_server.c
-	$(CC) -W -Wall -g -o cdda_server cdda_server.c -ldl
+xine_fontconv_SOURCES = xine-fontconv.c
+xine_fontconv_CFLAGS = $(FT2_CFLAGS)
+xine_fontconv_LDFLAGS = $(GCSECTIONS)
+xine_fontconv_LDADD = -lz $(FT2_LIBS)
+
+cdda_server_SOURCES = cdda_server.c
+cdda_server_LDFLAGS = $(GCSECTIONS)
+cdda_server_LDADD = $(DYNAMIC_LD_LIBS)
