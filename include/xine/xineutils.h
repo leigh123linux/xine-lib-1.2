@@ -47,7 +47,6 @@ extern "C" {
 #include <xine/list.h>
 #include <xine/array.h>
 #include <xine/sorted_array.h>
-#include <xine/base64.h>
 
 #include <stdio.h>
 #include <string.h>

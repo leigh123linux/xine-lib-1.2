@@ -92,7 +92,7 @@
 #include <time.h>
 #include <stdlib.h>
 
-#include <xine/base64.h>
+#include "base64.h"
 
 
 /* NOTE: This is not true RFC822 anymore. The use of the characters

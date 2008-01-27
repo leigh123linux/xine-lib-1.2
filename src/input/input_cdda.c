@@ -69,6 +69,7 @@
 #include <xine/xineutils.h>
 #include <xine/input_plugin.h>
 #include "media_helper.h"
+#include "base64.h"
 
 #if defined(__sun)
 #define	DEFAULT_CDDA_DEVICE	"/vol/dev/aliases/cdrom0"
