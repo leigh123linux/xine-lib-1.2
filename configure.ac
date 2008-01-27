@@ -1166,7 +1166,6 @@ m4/gettext/Makefile
 misc/Makefile
 misc/SlackBuild
 misc/build_rpms.sh
-misc/fonts/Makefile
 misc/libxine.pc
 misc/relchk.sh
 misc/xine-lib.spec

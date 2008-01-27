@@ -1,7 +1,5 @@
 include $(top_srcdir)/misc/Makefile.common
 
-SUBDIRS = fonts
-
 EXTRA_DIST = build_rpms.sh \
 	SlackBuild.in \
 	SlackBuild \
@@ -10,12 +8,54 @@ EXTRA_DIST = build_rpms.sh \
 	xine-lib.spec \
 	libxine.pc.in \
 	libdvdcss-1.2.6-network.patch \
-	Makefile.common
+	Makefile.common \
+	fonts/cetus.ttf
 
 dist_bin_SCRIPTS = xine-config
 
 pkgconfigdir=$(libdir)/pkgconfig
 pkgconfig_DATA=libxine.pc
+
+fontdir = $(pkgdatadir)/fonts
+dist_font_DATA = \
+	fonts/cetus-16.xinefont.gz \
+	fonts/cetus-20.xinefont.gz \
+	fonts/cetus-24.xinefont.gz \
+	fonts/cetus-32.xinefont.gz \
+	fonts/cetus-48.xinefont.gz \
+	fonts/cetus-64.xinefont.gz \
+	fonts/cc-16.xinefont.gz \
+	fonts/cc-20.xinefont.gz \
+	fonts/cc-24.xinefont.gz \
+	fonts/cc-32.xinefont.gz \
+	fonts/cc-48.xinefont.gz \
+	fonts/cc-64.xinefont.gz \
+	fonts/cci-16.xinefont.gz \
+	fonts/cci-20.xinefont.gz \
+	fonts/cci-24.xinefont.gz \
+	fonts/cci-32.xinefont.gz \
+	fonts/cci-48.xinefont.gz \
+	fonts/cci-64.xinefont.gz \
+	fonts/mono-16.xinefont.gz \
+	fonts/mono-20.xinefont.gz \
+	fonts/mono-24.xinefont.gz \
+	fonts/mono-32.xinefont.gz \
+	fonts/mono-48.xinefont.gz \
+	fonts/mono-64.xinefont.gz \
+	fonts/sans-16.xinefont.gz \
+	fonts/sans-20.xinefont.gz \
+	fonts/sans-24.xinefont.gz \
+	fonts/sans-32.xinefont.gz \
+	fonts/sans-48.xinefont.gz \
+	fonts/sans-64.xinefont.gz \
+	fonts/serif-16.xinefont.gz \
+	fonts/serif-20.xinefont.gz \
+	fonts/serif-24.xinefont.gz \
+	fonts/serif-32.xinefont.gz \
+	fonts/serif-48.xinefont.gz \
+	fonts/serif-64.xinefont.gz 
+
+dist_doc_DATA = fonts/README.cetus
 
 EXTRA_PROGRAMS = xine-fontconv cdda_server
 
