@@ -74,6 +74,8 @@ misc/libxine.pc
 misc/relchk.sh
 misc/xine-config
 misc/xine-lib.spec
+misc/xine-fontconv
+misc/cdda_server
 
 po/POTFILES
 po/*.gmo
