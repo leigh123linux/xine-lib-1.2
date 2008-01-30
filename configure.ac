@@ -2394,8 +2394,10 @@ makeexpand () {
 
 xinelibdir='${libdir}/xine'
 xinedatadir='${datadir}/xine'
+pkgconfigdir='${libdir}/pkgconfig'
 AC_SUBST(xinelibdir)
 AC_SUBST(xinedatadir)
+AC_SUBST(pkgconfigdir)
 
 XINE_PLUGINDIR="\${xinelibdir}/plugins/$XINE_MAJOR.$XINE_MINOR.$XINE_SUB$XINE_PATCH"
 XINE_FONTDIR="\${xinedatadir}/libxine$XINE_MAJOR/fonts"
@@ -2404,6 +2406,7 @@ XINE_REL_PLUGINDIR="`makeexpand "$XINE_PLUGINDIR"`"
 XINE_REL_PLUGINDIR="`makeexpand "$XINE_REL_PLUGINDIR" | sed -e "s,^${prefix}/,,"`"
 XINE_REL_FONTDIR="`makeexpand "$XINE_FONTDIR" | sed -e "s,^${prefix}/,,"`"
 XINE_REL_LOCALEDIR="`makeexpand "$XINE_LOCALEDIR" | sed -e "s,^${prefix}/,,"`"
+XINE_PKGCONFIG_DIR="`makeexpand "$pkgconfigdir"`"
 if test "x$SYS" = "xmingw32" -o "x$SYS" = "xcygwin"; then
   dnl polish paths (MinGW runtime accepts both \ and / anyway)
   XINE_REL_PLUGINDIR="`echo "$XINE_REL_PLUGINDIR" | sed -e 's/\\//\\\\\\\\/g'`"
@@ -2441,6 +2444,7 @@ AC_SUBST(XINE_LOCALEPATH)
 AC_SUBST(XINE_PLUGINDIR)
 AC_SUBST(XINE_FONTDIR)
 AC_SUBST(XINE_LOCALEDIR)
+AC_SUBST(XINE_PKGCONFIG_DIR)
 
 dnl Where aclocal m4 files should be installed
 XINE_ACFLAGS="-I ${datarootdir}/aclocal"
@@ -2656,6 +2660,7 @@ misc/build_rpms.sh
 misc/fonts/Makefile
 misc/libxine.pc
 misc/relchk.sh
+misc/xine-config
 misc/xine-lib.spec
 po/Makefile.in
 src/Makefile

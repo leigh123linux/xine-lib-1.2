@@ -6,6 +6,11 @@ unset prefix
 unset exec_prefix
 unset args
 
+PKG_CONFIG_PATH="$(cat <<'EOF'
+@XINE_PKGCONFIG_DIR@
+EOF
+)${PKG_CONFIG_PATH:+:}$PKG_CONFIG_PATH"
+
 usage()
 {
 	cat <<EOF
