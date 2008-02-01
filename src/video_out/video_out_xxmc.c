@@ -2237,6 +2237,47 @@ static void xxmc_update_disable_bob_for_scaled_osd(void *this_gen, xine_cfg_entr
   this->disable_bob_for_scaled_osd = entry->num_value;
 }
 
+static int xxmc_open_port (xxmc_driver_t *this, XvPortID port) {
+  int ret;
+  x11_InstallXErrorHandler (this);
+  ret = ! xxmc_check_yv12(this->display, port)
+    && XvGrabPort(this->display, port, 0) == Success;
+  x11_DeInstallXErrorHandler (this);
+  return ret;
+}
+
+static unsigned int
+xxmc_find_adaptor_by_port (int port, unsigned int adaptors,
+			 XvAdaptorInfo *adaptor_info)
+{
+  unsigned int an;
+  for (an = 0; an < adaptors; an++)
+    if (adaptor_info[an].type & XvImageMask)
+      if (port >= adaptor_info[an].base_id &&
+	  port < adaptor_info[an].base_id + adaptor_info[an].num_ports)
+	return an;
+  return 0; /* shouldn't happen */
+}
+
+static XvPortID xxmc_autodetect_port(xxmc_driver_t *this,
+				   unsigned int adaptors,
+				   XvAdaptorInfo *adaptor_info,
+				   unsigned int *adaptor_num) {
+  unsigned int an, j;
+
+  for (an = 0; an < adaptors; an++)
+    if (adaptor_info[an].type & XvImageMask)
+      for (j = 0; j < adaptor_info[an].num_ports; j++) {
+	XvPortID port = adaptor_info[an].base_id + j;
+	if (xxmc_open_port(this, port)) {
+	  *adaptor_num = an;
+	  return port;
+	}
+      }
+
+  return 0;
+}
+
 
 static void checkXvMCCap( xxmc_driver_t *this, XvPortID xv_port) 
 {
@@ -2436,25 +2477,21 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
     return NULL;
   }
 
-  xv_port = 0;
+  xv_port = config->register_num (config, "video.device.xv_port", 0,
+				  _("Xv port number"),
+				  _("Selects the Xv port number to use (0 to autodetect)."),
+				  10, NULL, NULL);
 
-  for ( adaptor_num = 0; (adaptor_num < adaptors) && !xv_port; adaptor_num++ ) {
-
-    if (adaptor_info[adaptor_num].type & XvImageMask) {
-
-      for (j = 0; j < adaptor_info[adaptor_num].num_ports && !xv_port; j++)
-        if (( !(xxmc_check_yv12 (this->display,
-				 adaptor_info[adaptor_num].base_id + j)))
-            && (XvGrabPort (this->display,
-			    adaptor_info[adaptor_num].base_id + j,
-			    0) == Success)) {
-          xv_port = adaptor_info[adaptor_num].base_id + j;
-        }
-      
-      if( xv_port )
-        break;
-    }
-  }
+  if (xv_port != 0) {
+    if (! xxmc_open_port(this, xv_port)) {
+      xprintf(class->xine, XINE_VERBOSITY_NONE,
+	      _("%s: could not open Xv port %d - autodetecting\n"),
+	      LOG_MODULE, xv_port);
+      xv_port = xxmc_autodetect_port(this, adaptors, adaptor_info, &adaptor_num);
+    } else
+      adaptor_num = xxmc_find_adaptor_by_port (xv_port, adaptors, adaptor_info);
+  } else
+    xv_port = xxmc_autodetect_port(this, adaptors, adaptor_info, &adaptor_num);
 
   if (!xv_port) {
     xprintf(class->xine, XINE_VERBOSITY_LOG,
