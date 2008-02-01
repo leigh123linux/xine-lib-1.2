@@ -1322,8 +1322,25 @@ static void xv_update_xv_pitch_alignment(void *this_gen, xine_cfg_entry_t *entry
 }
 
 static int xv_open_port (xv_driver_t *this, XvPortID port) {
-  return ! xv_check_yv12(this->display, port)
+  int ret;
+  x11_InstallXErrorHandler (this);
+  ret = ! xv_check_yv12(this->display, port)
     && XvGrabPort(this->display, port, 0) == Success;
+  x11_DeInstallXErrorHandler (this);
+  return ret;
+}
+
+static unsigned int
+xv_find_adaptor_by_port (int port, unsigned int adaptors,
+			 XvAdaptorInfo *adaptor_info)
+{
+  unsigned int an;
+  for (an = 0; an < adaptors; an++)
+    if (adaptor_info[an].type & XvImageMask)
+      if (port >= adaptor_info[an].base_id &&
+	  port < adaptor_info[an].base_id + adaptor_info[an].num_ports)
+	return an;
+  return 0; /* shouldn't happen */
 }
 
 static XvPortID xv_autodetect_port(xv_driver_t *this,
@@ -1406,8 +1423,13 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
 				  10, NULL, NULL);
 
   if (xv_port != 0) {
-    if (! xv_open_port(this, xv_port))
-      xv_port = 0;
+    if (! xv_open_port(this, xv_port)) {
+      xprintf(class->xine, XINE_VERBOSITY_NONE,
+	      _("%s: could not open Xv port %d - autodetecting\n"),
+	      LOG_MODULE, xv_port);
+      xv_port = xv_autodetect_port(this, adaptors, adaptor_info, &adaptor_num);
+    } else
+      adaptor_num = xv_find_adaptor_by_port (xv_port, adaptors, adaptor_info);
   } else
     xv_port = xv_autodetect_port(this, adaptors, adaptor_info, &adaptor_num);
 
