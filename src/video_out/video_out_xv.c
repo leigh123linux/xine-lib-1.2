@@ -1321,6 +1321,30 @@ static void xv_update_xv_pitch_alignment(void *this_gen, xine_cfg_entry_t *entry
   this->use_pitch_alignment = entry->num_value;
 }
 
+static int xv_open_port (xv_driver_t *this, XvPortID port) {
+  return ! xv_check_yv12(this->display, port)
+    && XvGrabPort(this->display, port, 0) == Success;
+}
+
+static XvPortID xv_autodetect_port(xv_driver_t *this,
+				   unsigned int adaptors,
+				   XvAdaptorInfo *adaptor_info,
+				   unsigned int *adaptor_num) {
+  unsigned int an, j;
+
+  for (an = 0; an < adaptors; an++)
+    if (adaptor_info[an].type & XvImageMask)
+      for (j = 0; j < adaptor_info[an].num_ports; j++) {
+	XvPortID port = adaptor_info[an].base_id + j;
+	if (xv_open_port(this, port)) {
+	  *adaptor_num = an;
+	  return port;
+	}
+      }
+
+  return 0;
+}
+
 /* expects XINE_VISUAL_TYPE_X11_2 with configurable locking */
 static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *visual_gen) {
   xv_class_t           *class = (xv_class_t *) class_gen;
@@ -1333,7 +1357,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
   x11_visual_t         *visual = (x11_visual_t *) visual_gen;
   XColor                dummy;
   XvImage              *myimage;
-  unsigned int          adaptors, j;
+  unsigned int          adaptors;
   unsigned int          ver,rel,req,ev,err;
   XShmSegmentInfo       myshminfo;
   XvPortID              xv_port;
@@ -1376,25 +1400,16 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
     return NULL;
   }
 
-  xv_port = 0;
+  xv_port = config->register_num (config, "video.device.xv_port", 0,
+				  _("Xv port number"),
+				  _("Selects the Xv port number to use (0 to autodetect)."),
+				  10, NULL, NULL);
 
-  for ( adaptor_num = 0; (adaptor_num < adaptors) && !xv_port; adaptor_num++ ) {
-
-    if (adaptor_info[adaptor_num].type & XvImageMask) {
-
-      for (j = 0; j < adaptor_info[adaptor_num].num_ports && !xv_port; j++)
-        if (( !(xv_check_yv12 (this->display,
-			       adaptor_info[adaptor_num].base_id + j)))
-            && (XvGrabPort (this->display,
-			    adaptor_info[adaptor_num].base_id + j,
-			    0) == Success)) {
-          xv_port = adaptor_info[adaptor_num].base_id + j;
-        }
-      
-      if( xv_port )
-        break;
-    }
-  }
+  if (xv_port != 0) {
+    if (! xv_open_port(this, xv_port))
+      xv_port = 0;
+  } else
+    xv_port = xv_autodetect_port(this, adaptors, adaptor_info, &adaptor_num);
 
   if (!xv_port) {
     xprintf(class->xine, XINE_VERBOSITY_LOG,
