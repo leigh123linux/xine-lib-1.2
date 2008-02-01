@@ -79,6 +79,9 @@ install-data-hook:
 	  $(top_srcdir)/post-install.sh ; \
 	fi
 
+dist-hook:
+	cp -p $(srcdir)/version.sh $(distdir)
+
 
 mostlyclean-generic:
 	-rm -f *~ \#* .*~ .\#* 
