@@ -1089,13 +1089,60 @@ static void xv_update_xv_pitch_alignment(void *this_gen, xine_cfg_entry_t *entry
   this->use_pitch_alignment = entry->num_value;
 }
 
+static xcb_xv_port_t xv_open_port (xv_driver_t *this, xcb_xv_port_t port) {
+  xcb_xv_grab_port_cookie_t grab_port_cookie;
+  xcb_xv_grab_port_reply_t *grab_port_reply;
+
+  if (xv_check_yv12 (this->connection, port))
+    return 0;
+
+  grab_port_cookie = xcb_xv_grab_port (this->connection, port, XCB_CURRENT_TIME);
+  grab_port_reply = xcb_xv_grab_port_reply (this->connection, grab_port_cookie, NULL);
+
+  if (grab_port_reply && (grab_port_reply->result == XCB_GRAB_STATUS_SUCCESS))
+  {
+    free (grab_port_reply);
+    return port;
+  }
+  free (grab_port_reply);
+  return 0;
+}
+
+static xcb_xv_adaptor_info_iterator_t *
+xv_find_adaptor_by_port (int port, xcb_xv_adaptor_info_iterator_t *adaptor_it)
+{
+  for (; adaptor_it->rem; xcb_xv_adaptor_info_next(adaptor_it))
+    if (adaptor_it->data->type & XCB_XV_TYPE_IMAGE_MASK)
+      if (port >= adaptor_it->data->base_id &&
+	  port < adaptor_it->data->base_id + adaptor_it->data->num_ports)
+	return adaptor_it;
+  return NULL; /* shouldn't happen */
+}
+
+static xcb_xv_port_t xv_autodetect_port(xv_driver_t *this,
+                                        xcb_xv_adaptor_info_iterator_t *adaptor_it)
+{
+  for (; adaptor_it->rem; xcb_xv_adaptor_info_next(adaptor_it))
+    if (adaptor_it->data->type & XCB_XV_TYPE_IMAGE_MASK)
+    {
+      int j;
+      for (j = 0; j < adaptor_it->data->num_ports; ++j)
+        if (!xv_check_yv12 (this->connection, adaptor_it->data->base_id + j))
+        {
+          xcb_xv_port_t port = xv_open_port (this, adaptor_it->data->base_id + j);
+          if (port)
+            return port;
+        }
+    }
+  return 0;
+}
+
 static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *visual_gen) {
   xv_class_t           *class = (xv_class_t *) class_gen;
   config_values_t      *config = class->config;
   xv_driver_t          *this;
   int                   i;
   xcb_visual_t         *visual = (xcb_visual_t *) visual_gen;
-  unsigned int          j;
   xcb_xv_port_t         xv_port;
 
   const xcb_query_extension_reply_t *query_extension_reply;
@@ -1146,28 +1193,21 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   }
 
   adaptor_it = xcb_xv_query_adaptors_info_iterator(query_adaptors_reply);
+  xv_port = config->register_num (config, "video.device.xv_port", 0,
+				  _("Xv port number"),
+				  _("Selects the Xv port number to use (0 to autodetect)."),
+				  10, NULL, NULL);
 
-  xv_port = 0;
-
-  for (; adaptor_it.rem && !xv_port; xcb_xv_adaptor_info_next(&adaptor_it)) {
-
-    if (adaptor_it.data->type & XCB_XV_TYPE_IMAGE_MASK) {
-
-      for (j = 0; j < adaptor_it.data->num_ports; j++)
-        if (!xv_check_yv12(this->connection, adaptor_it.data->base_id + j)) {
-          xcb_xv_grab_port_cookie_t grab_port_cookie;
-          xcb_xv_grab_port_reply_t *grab_port_reply;
-          grab_port_cookie = xcb_xv_grab_port(this->connection, adaptor_it.data->base_id + j, XCB_CURRENT_TIME);
-          grab_port_reply = xcb_xv_grab_port_reply(this->connection, grab_port_cookie, NULL);
-          if (grab_port_reply && (grab_port_reply->result == XCB_GRAB_STATUS_SUCCESS)) {
-            free(grab_port_reply);
-            xv_port = adaptor_it.data->base_id + j;
-            break;
-          }
-          free(grab_port_reply);
-        }
-    }
-  }
+  if (xv_port != 0) {
+    if (! xv_open_port(this, xv_port)) {
+      xprintf(class->xine, XINE_VERBOSITY_NONE,
+	      _("%s: could not open Xv port %d - autodetecting\n"),
+	      LOG_MODULE, xv_port);
+      xv_port = xv_autodetect_port (this, &adaptor_it);
+    } else
+      xv_find_adaptor_by_port (xv_port, &adaptor_it);
+  } else
+    xv_port = xv_autodetect_port (this, &adaptor_it);
 
   if (!xv_port) {
     xprintf(class->xine, XINE_VERBOSITY_LOG,
