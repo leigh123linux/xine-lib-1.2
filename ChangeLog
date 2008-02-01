@@ -56,6 +56,9 @@ xine-lib (1.1.90) (Unreleased)
     active and thus it's no more usable. If you were using SyncFB somehow,
     please use DirectFB or VIDIX instead.
 
+xine-lib (1.1.11) unreleased
+  * Fix a RealPlayer codec detection bug.
+
 xine-lib (1.1.10) 2008-01-26
   * Security fixes:
     - Buffer overflow which allows a remote attacker to execute arbitrary

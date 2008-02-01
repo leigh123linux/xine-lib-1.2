@@ -14,7 +14,6 @@ EXTRA_DIST = build_rpms.sh \
 
 bin_SCRIPTS = xine-config
 
-pkgconfigdir=$(libdir)/pkgconfig
 pkgconfig_DATA=libxine.pc
 
 fontdir = $(pkgdatadir)/fonts
