@@ -10,23 +10,24 @@ AM_LDFLAGS = $(xineplug_ldflags)
 # All of xine input plugins should be named like the scheme "xineplug_inp_"
 #
 
+SUBDIRS = libreal librtsp
+if ENABLE_VCD
+SUBDIRS += vcd
+endif
 if !WITH_EXTERNAL_DVDNAV
-SUBDIRS = libdvdnav
+SUBDIRS += libdvdnav
 endif
 
 
 noinst_HEADERS = net_buf_ctrl.h mms.h mmsh.h pnm.h media_helper.h http_helper.h
 
+
 if ENABLE_DVB
 in_dvb = xineplug_inp_dvb.la
 endif
 
-if ENABLE_VCD
-in_vcd = xineplug_inp_vcd.la
-endif
-
 if ENABLE_VCDO
-in_vcdo = xineplug_inp_vcdo.la
+in_vcd = xineplug_inp_vcdo.la
 endif
 
 if ENABLE_V4L
@@ -61,7 +62,6 @@ xineplug_LTLIBRARIES = \
 	xineplug_inp_http.la \
 	xineplug_inp_dvd.la \
 	$(in_vcd) \
-	$(in_vcdo) \
 	$(in_v4l) \
 	$(in_gnome_vfs) \
 	$(in_smb) \
@@ -92,12 +92,6 @@ xineplug_inp_mms_la_LIBADD = $(XINE_LIB) $(LTLIBICONV) $(PTHREAD_LIBS) $(LTLIBIN
 xineplug_inp_vcdo_la_SOURCES = input_vcd.c media_helper.c
 xineplug_inp_vcdo_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
-xineplug_inp_vcd_la_SOURCES = vcd/xineplug_inp_vcd.c vcd/vcdplayer.c	\
-	                      vcd/vcdio.c vcd/xine-extra.c vcd/vcdio.h	\
-	                      vcd/vcdplayer.h vcd/xine-extra.h
-xineplug_inp_vcd_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(LIBCDIO_LIBS) $(LIBVCD_LIBS) $(LIBVCDINFO_LIBS) $(LIBISO9660_LIBS) -lm
-xineplug_inp_vcd_la_CFLAGS  = $(AM_CFLAGS) $(LIBCDIO_CFLAGS) $(LIBVCD_CFLAGS)
-
 xineplug_inp_stdin_fifo_la_SOURCES = input_stdin_fifo.c net_buf_ctrl.c
 xineplug_inp_stdin_fifo_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
 
@@ -115,15 +109,8 @@ xineplug_inp_dvb_la_DEPS = $(XDG_BASEDIR_DEPS)
 xineplug_inp_dvb_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) $(XDG_BASEDIR_LIBS)
 xineplug_inp_dvb_la_CPPFLAGS = $(AM_CPPFLAGS) $(XDG_BASEDIR_CPPFLAGS)
 
-xineplug_inp_rtsp_la_SOURCES = input_rtsp.c net_buf_ctrl.c		\
-                               librtsp/rtsp.c librtsp/rtsp_session.c	\
-                               librtsp/rtsp.h librtsp/rtsp_session.h	\
-                               libreal/real.c libreal/asmrp.c		\
-                               libreal/rmff.c libreal/sdpplin.c		\
-                               libreal/real.h libreal/asmrp.h		\
-                               libreal/rmff.h libreal/sdpplin.h
-xineplug_inp_rtsp_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/libreal -I$(srcdir)/librtsp
-xineplug_inp_rtsp_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
+xineplug_inp_rtsp_la_SOURCES = input_rtsp.c net_buf_ctrl.c
+xineplug_inp_rtsp_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) libreal/libreal.la librtsp/librtsp.la
 
 xineplug_inp_cdda_la_SOURCES = input_cdda.c media_helper.c sha1.c sha1.h
 xineplug_inp_cdda_la_DEPS = $(XDG_BASEDIR_DEPS)

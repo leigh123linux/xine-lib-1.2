@@ -1180,6 +1180,9 @@ src/demuxers/Makefile
 src/dxr3/Makefile
 src/input/Makefile
 src/input/libdvdnav/Makefile
+src/input/librtsp/Makefile
+src/input/libreal/Makefile
+src/input/vcd/Makefile
 src/libw32dll/Makefile
 src/libw32dll/wine/Makefile
 src/libw32dll/DirectShow/Makefile
@@ -1197,7 +1200,9 @@ src/post/deinterlace/Makefile
 src/post/deinterlace/plugins/Makefile
 src/spu_dec/Makefile
 src/video_dec/Makefile
+src/video_dec/libmpeg2/Makefile
 src/video_out/Makefile
+src/video_out/macosx/Makefile
 src/xine-utils/Makefile
 src/xine-engine/Makefile
 src/vdr/Makefile
