@@ -156,6 +156,7 @@ dnl checks for programs
 dnl -------------------
 
 AC_PROG_CC
+AM_PROG_CC_C_O
 AC_GNU_SOURCE
 AC_ISC_POSIX
 
