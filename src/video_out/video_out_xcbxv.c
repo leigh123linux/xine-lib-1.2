@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2004, 2007 the xine project
+ * Copyright (C) 2000-2004, 2007-2008 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -64,6 +64,7 @@
 #include <xine/xineutils.h>
 #include <xine/vo_scale.h>
 #include "xcbosd.h"
+#include "xv_common.h"
 
 typedef struct xv_driver_s xv_driver_t;
 
@@ -965,7 +966,7 @@ static void xv_check_capability (xv_driver_t *this,
 				 char *config_help) {
   int          int_default;
   cfg_entry_t *entry;
-  char        *str_prop = xcb_xv_attribute_info_name(attr);
+  const char  *str_prop = xcb_xv_attribute_info_name(attr);
 
   xcb_xv_get_port_attribute_cookie_t get_attribute_cookie;
   xcb_xv_get_port_attribute_reply_t *get_attribute_reply;
@@ -1285,10 +1286,11 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 
     for (; attribute_it.rem; xcb_xv_attribute_info_next(&attribute_it)) {
       if ((attribute_it.data->flags & XCB_XV_ATTRIBUTE_FLAG_SETTABLE) && (attribute_it.data->flags & XCB_XV_ATTRIBUTE_FLAG_GETTABLE)) {
+	const char *const name = xcb_xv_attribute_info_name(attribute_it.data);
 	/* store initial port attribute value */
-	xv_store_port_attribute(this, xcb_xv_attribute_info_name(attribute_it.data));
-	
-	if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_HUE")) {
+	xv_store_port_attribute(this, name);
+
+	if(!strcmp(name, "XV_HUE")) {
 	  if (!strncmp(xcb_xv_adaptor_info_name(adaptor_it.data), "NV", 2)) {
             xprintf (this->xine, XINE_VERBOSITY_NONE, LOG_MODULE ": ignoring broken XV_HUE settings on NVidia cards\n");
 	  } else {
@@ -1296,63 +1298,41 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 			         adaptor_it.data->base_id,
 			         NULL, NULL, NULL);
 	  }
-	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_SATURATION")) {
+	} else if(!strcmp(name, "XV_SATURATION")) {
 	  xv_check_capability (this, VO_PROP_SATURATION, attribute_it.data,
 			       adaptor_it.data->base_id,
 			       NULL, NULL, NULL);
-
-	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_BRIGHTNESS")) {
+	} else if(!strcmp(name, "XV_BRIGHTNESS")) {
 	  xv_check_capability (this, VO_PROP_BRIGHTNESS, attribute_it.data,
 			       adaptor_it.data->base_id,
 			       NULL, NULL, NULL);
-
-	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_CONTRAST")) {
+	} else if(!strcmp(name, "XV_CONTRAST")) {
 	  xv_check_capability (this, VO_PROP_CONTRAST, attribute_it.data,
 			       adaptor_it.data->base_id,
 			       NULL, NULL, NULL);
-
-	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_COLORKEY")) {
+	} else if(!strcmp(name, "XV_COLORKEY")) {
 	  xv_check_capability (this, VO_PROP_COLORKEY, attribute_it.data,
 			       adaptor_it.data->base_id,
 			       "video.device.xv_colorkey",
-			       _("video overlay colour key"),
-			       _("The colour key is used to tell the graphics card where to "
-				 "overlay the video image. Try different values, if you experience "
-				 "windows becoming transparent."));
-
-	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_AUTOPAINT_COLORKEY")) {
+			       VIDEO_DEVICE_XV_COLORKEY_HELP);
+	} else if(!strcmp(name, "XV_AUTOPAINT_COLORKEY")) {
 	  xv_check_capability (this, VO_PROP_AUTOPAINT_COLORKEY, attribute_it.data,
 			       adaptor_it.data->base_id,
 			       "video.device.xv_autopaint_colorkey",
-			       _("autopaint colour key"),
-			       _("Make Xv autopaint its colour key."));
-
-	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_FILTER")) {
+			       VIDEO_DEVICE_XV_AUTOPAINT_COLORKEY_HELP);
+	} else if(!strcmp(name, "XV_FILTER")) {
 	  int xv_filter;
 	  /* This setting is specific to Permedia 2/3 cards. */
 	  xv_filter = config->register_range (config, "video.device.xv_filter", 0,
 					      attribute_it.data->min, attribute_it.data->max,
-					      _("bilinear scaling mode"),
-					      _("Selects the bilinear scaling mode for Permedia cards. "
-						"The individual values are:\n\n"
-						"Permedia 2\n"
-						"0 - disable bilinear filtering\n"
-						"1 - enable bilinear filtering\n\n"
-						"Permedia 3\n"
-						"0 - disable bilinear filtering\n"
-						"1 - horizontal linear filtering\n"
-						"2 - enable full bilinear filtering"),
+					      VIDEO_DEVICE_XV_FILTER_HELP,
 					      20, xv_update_XV_FILTER, this);
 	  config->update_num(config,"video.device.xv_filter",xv_filter);
-	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_DOUBLE_BUFFER")) {
-	  int xv_double_buffer;
-	  xv_double_buffer = 
+	} else if(!strcmp(name, "XV_DOUBLE_BUFFER")) {
+	  int xv_double_buffer =
 	    config->register_bool (config, "video.device.xv_double_buffer", 1,
-	      _("enable double buffering"),
-	      _("Double buffering will synchronize the update of the video image to the "
-		"repainting of the entire screen (\"vertical retrace\"). This eliminates "
-		"flickering and tearing artifacts, but will use more graphics memory."),
-	      20, xv_update_XV_DOUBLE_BUFFER, this);
+				   VIDEO_DEVICE_XV_DOUBLE_BUFFER_HELP,
+				   20, xv_update_XV_DOUBLE_BUFFER, this);
 	  config->update_num(config,"video.device.xv_double_buffer",xv_double_buffer);
 	}
       }
