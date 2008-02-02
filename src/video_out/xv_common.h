@@ -48,3 +48,11 @@
 	  "image to the repainting of the entire screen (\"vertical " \
 	  "retrace\"). This eliminates flickering and tearing artifacts, " \
 	  "but will use more graphics memory.")
+
+#define VIDEO_DEVICE_XV_PORT_HELP \
+	_("Xv port number"), \
+	_("Selects the Xv port number to use (0 to autodetect).")
+
+#define VIDEO_DEVICE_XV_PITCH_ALIGNMENT_HELP \
+	_("pitch alignment workaround"), \
+	_("Some buggy video drivers need a workaround to function properly.")

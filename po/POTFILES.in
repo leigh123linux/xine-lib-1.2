@@ -118,6 +118,7 @@ src/video_out/video_out_xvmc.c
 src/video_out/video_out_xxmc.c
 src/video_out/x11osd.c
 src/video_out/xcbosd.c
+src/video_out/xv_common.h
 src/xine-engine/alphablend.c
 src/xine-engine/audio_decoder.c
 src/xine-engine/audio_out.c
