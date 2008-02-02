@@ -945,6 +945,8 @@ static int xv_check_yv12(xcb_connection_t *connection, xcb_xv_port_t port) {
 
   list_formats_cookie = xcb_xv_list_image_formats(connection, port);
   list_formats_reply = xcb_xv_list_image_formats_reply(connection, list_formats_cookie, NULL);
+  if (!list_formats_reply)
+    return 1; /* no formats listed; probably due to an invalid port no. */
   format_it = xcb_xv_list_image_formats_format_iterator(list_formats_reply);
   
   for (; format_it.rem; xcb_xv_image_format_info_next(&format_it))
