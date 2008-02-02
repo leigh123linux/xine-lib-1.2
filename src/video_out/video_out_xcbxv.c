@@ -1382,8 +1382,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 
   adaptor_it = xcb_xv_query_adaptors_info_iterator(query_adaptors_reply);
   xv_port = config->register_num (config, "video.device.xv_port", 0,
-				  _("Xv port number"),
-				  _("Selects the Xv port number to use (0 to autodetect)."),
+				  VIDEO_DEVICE_XV_PORT_HELP,
 				  10, NULL, NULL);
 
   if (xv_port != 0) {
@@ -1579,8 +1578,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 
   this->use_pitch_alignment = 
     config->register_bool (config, "video.device.xv_pitch_alignment", 0,
-			   _("pitch alignment workaround"),
-			   _("Some buggy video drivers need a workaround to function properly."),
+			   VIDEO_DEVICE_XV_PITCH_ALIGNMENT_HELP,
 			   10, xv_update_xv_pitch_alignment, this);
 
   this->deinterlace_method = 
