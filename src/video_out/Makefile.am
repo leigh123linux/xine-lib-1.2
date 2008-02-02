@@ -206,4 +206,4 @@ xineplug_vo_out_macosx_la_LDFLAGS = $(AM_LDFLAGS) \
 	-Wl,-framework -Wl,Cocoa -framework Cocoa -framework OpenGL
 
 noinst_HEADERS = deinterlace.h video_out_syncfb.h \
-	yuv2rgb.h x11osd.h xcbosd.h
+	yuv2rgb.h x11osd.h xcbosd.h xv_common.h
