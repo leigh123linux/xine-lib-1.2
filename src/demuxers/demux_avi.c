@@ -1899,8 +1899,8 @@ static void demux_avi_send_headers (demux_plugin_t *this_gen) {
    * however, at least for this case (compressor: xvid biCompression: DIVX), the
    * xvid fourcc must prevail as it is used by ffmpeg to detect encoder bugs. [MF]
    */
-  if( _x_fourcc_to_buf_video(this->avi->compressor) == BUF_VIDEO_XVID &&
-      _x_fourcc_to_buf_video(this->avi->bih->biCompression) == BUF_VIDEO_MPEG4 ) {
+  if( this->avi->video_type == BUF_VIDEO_MPEG4 &&
+      _x_fourcc_to_buf_video(this->avi->compressor) == BUF_VIDEO_XVID ) {
     this->avi->bih->biCompression = this->avi->compressor;
     this->avi->video_type = BUF_VIDEO_XVID;
   }
