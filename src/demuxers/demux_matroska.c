@@ -1845,7 +1845,7 @@ static int parse_block (demux_matroska_t *this, uint64_t block_size,
   int               decoder_flags = 0;
 
   data = this->block_data;
-  if (!(num_len = parse_ebml_sint(this, data, &track_num)))
+  if (!(num_len = parse_ebml_uint(this, data, &track_num)))
     return 0;
   data += num_len;
     
@@ -1977,7 +1977,7 @@ static int parse_block (demux_matroska_t *this, uint64_t block_size,
         lprintf("ebml lacing\n");
 
         /* size of each frame */
-        if (!(num_len = parse_ebml_sint(this, data, &tmp)))
+        if (!(num_len = parse_ebml_uint(this, data, &tmp)))
           return 0;
         data += num_len; block_size_left -= num_len;
         frame[0] = (int) tmp;
