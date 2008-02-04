@@ -1456,15 +1456,21 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 	     fo[i].id, (char*)&fo[i].id,
 	     (fo[i].format == XvPacked) ? "packed" : "planar");
     
-    if (fo[i].id == XINE_IMGFMT_YV12)  {
+    switch (fo[i].id) {
+    case XINE_IMGFMT_YV12:
       this->xvmc_format_yv12 = fo[i].id;
-      this->capabilities     |= VO_CAP_YV12;
-      lprintf("this adaptor supports the yv12 format.\n");
-    }
-    else if (fo[i].id == XINE_IMGFMT_YUY2) {
+      this->capabilities |= VO_CAP_YV12;
+      xprintf(this->xine, XINE_VERBOSITY_LOG,
+	      _("%s: this adaptor supports the %s format.\n"), LOG_MODULE, "YV12");
+      break;
+    case XINE_IMGFMT_YUY2:
       this->xvmc_format_yuy2 = fo[i].id;
-      this->capabilities     |= VO_CAP_YUY2;
-      lprintf("this adaptor supports the yuy2 format.\n");
+      this->capabilities |= VO_CAP_YUY2;
+      xprintf(this->xine, XINE_VERBOSITY_LOG, 
+	      _("%s: this adaptor supports the %s format.\n"), LOG_MODULE, "YUY2");
+      break;
+    default:
+      break;
     }
   }
 
