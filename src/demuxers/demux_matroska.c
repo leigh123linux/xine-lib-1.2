@@ -1833,7 +1833,7 @@ static int parse_block (demux_matroska_t *this, uint64_t block_size,
                         uint64_t cluster_timecode, uint64_t block_duration,
                         int normpos, int is_key) {
   matroska_track_t *track;
-  int64_t           track_num;
+  uint64_t          track_num;
   uint8_t          *data;
   uint8_t           flags;
   int               gap, lacing, num_len;
@@ -1852,7 +1852,7 @@ static int parse_block (demux_matroska_t *this, uint64_t block_size,
   flags = *data;
   data += 1;
   
-  lprintf("track_num: %" PRId64 ", timecode_diff: %d, flags: 0x%x\n", track_num, timecode_diff, flags);
+  lprintf("track_num: %" PRIu64 ", timecode_diff: %d, flags: 0x%x\n", track_num, timecode_diff, flags);
 
   gap = flags & 1;
   lacing = (flags >> 1) & 0x3;
@@ -1860,7 +1860,7 @@ static int parse_block (demux_matroska_t *this, uint64_t block_size,
 
   if (!find_track_by_id(this, (int)track_num, &track)) {
      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-             "demux_matroska: invalid track id: %" PRId64 "\n", track_num);
+             "demux_matroska: invalid track id: %" PRIu64 "\n", track_num);
      return 0;
   }
 
@@ -1969,24 +1969,51 @@ static int parse_block (demux_matroska_t *this, uint64_t block_size,
       break;
 
       case MATROSKA_EBML_LACING: {
-        int64_t tmp;
+        uint64_t first_frame_size;
 
         lprintf("ebml lacing\n");
 
         /* size of each frame */
-        if (!(num_len = parse_ebml_uint(this, data, &tmp)))
+        if (!(num_len = parse_ebml_uint(this, data, &first_frame_size)))
           return 0;
+        if (num_len > block_size_left) {
+          xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                  "demux_matroska: block too small\n");
+          return 0;
+        }
+        if (first_frame_size > INT_MAX) {
+          xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                  "demux_matroska: invalid first frame size (%" PRId64 ")\n",
+                  first_frame_size);
+          return 0;
+        }
         data += num_len; block_size_left -= num_len;
-        frame[0] = (int) tmp;
+        frame[0] = (int) first_frame_size;
         lprintf("first frame len: %d\n", frame[0]);
         block_size_left -= frame[0];
 
         for (i = 1; i < lace_num; i++) {
-          if (!(num_len = parse_ebml_sint(this, data, &tmp)))
+          int64_t frame_size_diff;
+          int64_t frame_size;
+
+          if (!(num_len = parse_ebml_sint(this, data, &frame_size_diff)))
             return 0;
 
+          if (num_len > block_size_left) {
+            xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                    "demux_matroska: block too small\n");
+            return 0;
+          }
           data += num_len; block_size_left -= num_len;
-          frame[i] = frame[i-1] + tmp;
+
+          frame_size = frame[i-1] + frame_size_diff;
+          if (frame_size > INT_MAX || frame_size < 0) {
+            xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                    "demux_matroska: invalid frame size (%" PRId64 ")\n",
+                    frame_size);
+            return 0;
+          }
+          frame[i] = frame_size;
           block_size_left -= frame[i];
         }
 
