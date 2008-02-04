@@ -954,6 +954,12 @@ int xine_monotonic_clock(struct timeval *tv, struct timezone *tz) XINE_PROTECTED
  */
 uint32_t _x_compute_crc32 (const uint8_t * data, int32_t length, uint32_t crc32) XINE_PROTECTED;
 
+/**
+ * Unknown FourCC reporting functions
+ */
+void _x_report_video_fourcc (xine_t *, const char *module, uint32_t) XINE_PROTECTED;
+void _x_report_audio_format_tag (xine_t *, const char *module, uint32_t) XINE_PROTECTED;
+
 /* don't harm following code */
 #ifdef extern
 #  undef extern

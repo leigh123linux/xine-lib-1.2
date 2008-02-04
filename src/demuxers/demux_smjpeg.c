@@ -147,6 +147,8 @@ static int open_smjpeg_file(demux_smjpeg_t *this) {
       this->bih.biHeight = _X_BE_16(&header_chunk[10]);
       this->bih.biCompression = *(uint32_t *)&header_chunk[12];
       this->video_type = _x_fourcc_to_buf_video(this->bih.biCompression);
+      if (!this->video_type)
+        _x_report_video_fourcc (this->stream->xine, LOG_MODULE, this->bih.biCompression);
       break;
 
     case _SND_TAG:
@@ -166,6 +168,8 @@ static int open_smjpeg_file(demux_smjpeg_t *this) {
       } else {
         audio_codec = *(uint32_t *)&header_chunk[8];
         this->audio_type = _x_formattag_to_buf_audio(audio_codec);
+        if (!this->audio_type)
+          _x_report_audio_format_tag (this->stream->xine, LOG_MODULE, audio_codec);
       }
       break;
 

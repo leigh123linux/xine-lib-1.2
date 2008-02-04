@@ -892,7 +892,10 @@ static void decode_video_header (demux_ogg_t *this, const int stream_num, ogg_pa
 
   this->si[stream_num]->buf_types = _x_fourcc_to_buf_video (locsubtype);
   if( !this->si[stream_num]->buf_types )
+  {
     this->si[stream_num]->buf_types = BUF_VIDEO_UNKNOWN;
+    _x_report_video_fourcc (this->stream->xine, LOG_MODULE, locsubtype);
+  }
   this->si[stream_num]->buf_types |= channel;
   this->si[stream_num]->headers = 0; /* header is sent below */
 
@@ -977,9 +980,8 @@ static void decode_audio_header (demux_ogg_t *this, const int stream_num, ogg_pa
     if( this->si[stream_num]->buf_types ) {
       this->si[stream_num]->buf_types |= channel;
     } else {
-      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-                "demux_ogg: unknown audio codec type 0x%x\n", codec);
       this->si[stream_num]->buf_types = BUF_AUDIO_UNKNOWN;
+      _x_report_audio_format_tag (this->stream->xine, LOG_MODULE, codec);
       /*break;*/
     }
 
@@ -1044,7 +1046,10 @@ static void decode_dshow_header (demux_ogg_t *this, const int stream_num, ogg_pa
 
     this->si[stream_num]->buf_types = _x_fourcc_to_buf_video (fcc);
     if( !this->si[stream_num]->buf_types )
+    {
       this->si[stream_num]->buf_types = BUF_VIDEO_UNKNOWN;
+      _x_report_video_fourcc (this->stream->xine, LOG_MODULE, fcc);
+    }
     this->si[stream_num]->buf_types |= channel;
 
     bih.biSize          = sizeof(xine_bmiheader);

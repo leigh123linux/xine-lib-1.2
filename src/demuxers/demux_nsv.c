@@ -305,13 +305,21 @@ static int open_nsv_file(demux_nsv_t *this) {
       if (_X_BE_32(&preview[4]) == NONE_TAG)
 	this->video_type = 0;
       else
+      {
 	this->video_type = _x_fourcc_to_buf_video(this->video_fourcc);
+	if (!this->video_type)
+	  _x_report_video_fourcc (this->stream->xine, LOG_MODULE, this->video_fourcc);
+      }
       
       this->audio_fourcc = _X_ME_32(&preview[8]);
       if (_X_BE_32(&preview[8]) == NONE_TAG)
 	this->audio_type = 0;
       else
+      {
 	this->audio_type = _x_formattag_to_buf_audio(this->audio_fourcc);
+	if (!this->audio_type)
+	  _x_report_audio_format_tag (this->stream->xine, LOG_MODULE, this->audio_fourcc);
+      }
       
       this->bih.biSize = sizeof(this->bih);
       this->bih.biWidth = _X_LE_16(&preview[12]);

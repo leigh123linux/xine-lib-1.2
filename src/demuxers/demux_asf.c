@@ -464,10 +464,9 @@ static int asf_read_header (demux_asf_t *this) {
       demux_stream->buf_type = _x_formattag_to_buf_audio
 	(	((xine_waveformatex *)asf_stream->private_data)->wFormatTag );
       if ( !demux_stream->buf_type ) {
-	xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-		 "demux_asf: unknown audio type 0x%x\n",
-		 ((xine_waveformatex *)asf_stream->private_data)->wFormatTag);
 	demux_stream->buf_type = BUF_AUDIO_UNKNOWN;
+	_x_report_audio_format_tag (this->stream->xine, LOG_MODULE,
+				    ((xine_waveformatex *)asf_stream->private_data)->wFormatTag);
       }
       
       _x_meta_info_set(this->stream, XINE_META_INFO_AUDIOCODEC, _x_buf_audio_name(demux_stream->buf_type));
@@ -510,10 +509,8 @@ static int asf_read_header (demux_asf_t *this) {
 
 	demux_stream->buf_type = _x_fourcc_to_buf_video(bmiheader->biCompression);
 	if( !demux_stream->buf_type ) {
-	  xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-		   "demux_asf: unknown video format %.4s\n", (char*)&(bmiheader->biCompression));
-	  
 	  demux_stream->buf_type = BUF_VIDEO_UNKNOWN;
+	  _x_report_video_fourcc (this->stream->xine, LOG_MODULE, bmiheader->biCompression);
 	}
       
 	_x_meta_info_set(this->stream, XINE_META_INFO_VIDEOCODEC, _x_buf_video_name(demux_stream->buf_type));

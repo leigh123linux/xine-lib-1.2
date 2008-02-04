@@ -1303,6 +1303,8 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       _x_bmiheader_le2me(bih);
 
       track->buf_type = _x_fourcc_to_buf_video(bih->biCompression);
+      if (!track->buf_type)
+        _x_report_video_fourcc (this->stream->xine, LOG_MODULE, bih->biCompression);
       init_codec = init_codec_video;
 
     } else if (!strcmp(track->codec_id, MATROSKA_CODEC_ID_V_UNCOMPRESSED)) {
@@ -1413,6 +1415,8 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       _x_waveformatex_le2me(wfh);
 
       track->buf_type = _x_formattag_to_buf_audio(wfh->wFormatTag);
+      if (!track->buf_type)
+        _x_report_audio_format_tag (this->stream->xine, LOG_MODULE, wfh->wFormatTag);
       init_codec = init_codec_audio;
     } else if (!strncmp(track->codec_id, MATROSKA_CODEC_ID_A_AAC,
                         sizeof(MATROSKA_CODEC_ID_A_AAC) - 1)) {

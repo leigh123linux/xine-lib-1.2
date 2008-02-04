@@ -459,6 +459,9 @@ static void real_parse_headers (demux_real_t *this) {
 
           this->num_audio_streams++;
 
+          if (!this->audio_streams[this->num_audio_streams].buf_type)
+            _x_report_audio_format_tag (this->stream->xine, LOG_MODULE, fourcc);
+
         } else if(_X_BE_32(mdpr->type_specific_data + 4) == VIDO_TAG) {
 
           if(this->num_video_streams == MAX_VIDEO_STREAMS) {
@@ -478,6 +481,9 @@ static void real_parse_headers (demux_real_t *this) {
           this->video_streams[this->num_video_streams].mdpr = mdpr;
 
           this->num_video_streams++;
+
+          if (!this->video_streams[this->num_video_streams].buf_type)
+            _x_report_video_fourcc (this->stream->xine, LOG_MODULE, fourcc);
 
         } else {
           lprintf("unrecognised type specific data\n");
