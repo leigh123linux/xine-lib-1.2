@@ -130,8 +130,8 @@ xineplug_vo_out_xxmc_la_CFLAGS = $(VISIBILITY_FLAG) $(X_CFLAGS) $(XV_CFLAGS) -fn
 
 xineplug_vo_out_opengl_la_SOURCES = yuv2rgb.c yuv2rgb_mmx.c yuv2rgb_mlib.c \
 	video_out_opengl.c myglext.h $(X11OSD)
-xineplug_vo_out_opengl_la_LIBADD = $(MLIB_LIBS) $(OPENGL_LIBS) $(GLUT_LIBS) \
-	$(GLU_LIBS) $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL)
+xineplug_vo_out_opengl_la_LIBADD = $(XINE_LIB) $(MLIB_LIBS) $(OPENGL_LIBS) \
+	$(GLUT_LIBS) $(GLU_LIBS) $(X_LIBS) $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_opengl_la_CFLAGS = $(VISIBILITY_FLAG) $(X_CFLAGS) $(MLIB_CFLAGS) -fno-strict-aliasing
 
 xineplug_vo_out_syncfb_la_SOURCES = video_out_syncfb.c 
@@ -193,8 +193,8 @@ xineplug_vo_out_none_la_CFLAGS = $(VISIBILITY_FLAG)
 xineplug_vo_out_macosx_la_SOURCES = video_out_macosx.m
 xineplug_vo_out_macosx_la_CPPFLAGS = $(AM_CPPFLAGS) $(X_CFLAGS) $(MLIB_CFLAGS)
 xineplug_vo_out_macosx_la_OBJCFLAGS = $(VISIBILITY_FLAG)
-xineplug_vo_out_macosx_la_LIBADD = $(MLIB_LIBS) $(OPENGL_LIBS) $(GLUT_LIBS) \
-	$(GLU_LIBS) $(X_LIBS) $(XINE_LIB) $(PTHREAD_LIBS)
+xineplug_vo_out_macosx_la_LIBADD = $(XINE_LIB) $(MLIB_LIBS) $(OPENGL_LIBS) \
+	$(GLUT_LIBS) $(GLU_LIBS) $(X_LIBS) $(PTHREAD_LIBS)
 # The "-Wl,-framework -Wl,Cocoa" is needed for libtool versions before
 # 1.5.x (1.257): the default version that ships with Mac OS X is 1.5 (1.1220)
 xineplug_vo_out_macosx_la_LDFLAGS = $(AM_LDFLAGS) \
