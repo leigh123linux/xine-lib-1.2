@@ -1119,14 +1119,24 @@ static void load_cached_catalog (xine_t *this) {
 }
 
 
+/* helper function for _x_scan_plugins */
+static void push_if_dir (xine_list_t *plugindirs, void *path)
+{
+  struct stat st;
+  if (!stat (path, &st) && S_ISDIR (st.st_mode))
+    xine_list_push_back (plugindirs, path);
+  else
+    free (path);
+}
+
 /*
  *  initialize catalog, load all plugins into new catalog
  */
 void _x_scan_plugins (xine_t *this) {
-  
-  char *homedir, *plugindir, *pluginpath;
-  int i,j;
-  int lenpluginpath;
+
+  char *homedir, *pluginpath;
+  xine_list_t *plugindirs = xine_list_new ();
+  xine_list_iterator_t iter;
   
   lprintf("_x_scan_plugins()\n");
 
@@ -1140,41 +1150,37 @@ void _x_scan_plugins (xine_t *this) {
   this->plugin_catalog = _new_catalog();
   load_cached_catalog (this);
 
-  if ((pluginpath = getenv("XINE_PLUGIN_PATH")) != NULL) {
-    pluginpath = strdup(pluginpath);
+  if ((pluginpath = getenv("XINE_PLUGIN_PATH")) != NULL && *pluginpath) {
+    char *p = pluginpath - 1;
+    while (p[1])
+    {
+      char *dir, *q = p;
+      p = strchr (p + 1, XINE_PATH_SEPARATOR_CHAR);
+      if (q[0] == '~' && q[1] == '/')
+	asprintf (&dir, "%s%.*s", homedir, (int)(p - q - 1), q + 1);
+      else
+	dir = strndup (q, p - q);
+      push_if_dir (plugindirs, dir); /* store or free it */
+    }
   } else {
-    const char *str1, *str2;
-    int len;
-
-    str1 = "~/.xine/plugins";
-    str2 = XINE_PLUGINDIR;
-    len = strlen(str1) + strlen(str2) + 2;
-    pluginpath = xine_xmalloc(len);
-    snprintf(pluginpath, len, "%s" XINE_PATH_SEPARATOR_STRING "%s", str1, str2);
-  }
-  plugindir = xine_xmalloc(strlen(pluginpath)+strlen(homedir)+2);
-  j=0;
-  lenpluginpath = strlen(pluginpath);
-  for (i=0; i <= lenpluginpath; ++i){
-    switch (pluginpath[i]){
-    case XINE_PATH_SEPARATOR_CHAR:
-    case '\0':
-      plugindir[j] = '\0';
-      collect_plugins(this, plugindir);
-      j = 0;
-      break;
-    case '~':
-      if (j == 0){
-	strcpy(plugindir, homedir);
-	j = strlen(plugindir);
-	break;
-      }
-    default:
-      plugindir[j++] = pluginpath[i];
+    char *dir;
+    int i;
+    asprintf (&dir, "%s/.xine/plugins", homedir);
+    push_if_dir (plugindirs, dir);
+    for (i = 0; i <= XINE_LT_AGE; ++i)
+    {
+      asprintf (&dir, "%s.%d", XINE_PLUGINROOT, XINE_LT_AGE - i);
+      push_if_dir (plugindirs, dir);
     }
   }
-  free(plugindir);
-  free(pluginpath);
+  for (iter = xine_list_front (plugindirs); iter;
+       iter = xine_list_next (plugindirs, iter))
+  {
+    char *dir = xine_list_get_value (plugindirs, iter);
+    collect_plugins(this, dir);
+    free (dir);
+  }
+  xine_list_delete (plugindirs);
   free(homedir);
 
   save_catalog (this);
