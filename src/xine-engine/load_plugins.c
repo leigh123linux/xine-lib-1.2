@@ -1169,7 +1169,7 @@ void _x_scan_plugins (xine_t *this) {
     push_if_dir (plugindirs, dir);
     for (i = 0; i <= XINE_LT_AGE; ++i)
     {
-      asprintf (&dir, "%s.%d", XINE_PLUGINROOT, i);
+      asprintf (&dir, "%s.%d", XINE_PLUGINROOT, XINE_LT_AGE - i);
       push_if_dir (plugindirs, dir);
     }
   }
@@ -1177,7 +1177,6 @@ void _x_scan_plugins (xine_t *this) {
        iter = xine_list_next (plugindirs, iter))
   {
     char *dir = xine_list_get_value (plugindirs, iter);
-fprintf (stderr, "%s\n", dir);
     collect_plugins(this, dir);
     free (dir);
   }
