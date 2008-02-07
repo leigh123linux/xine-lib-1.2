@@ -4,6 +4,8 @@ xine-lib (1.1.10.1) unreleased
       arbitrary code via a crafted FLAC tag, causing a stack buffer overflow.
       (CVE-2008-0486)
   * Fix a RealPlayer codec detection bug.
+  * Improve detection of MP3 streams with ID3v2 tags. Don't trust the tag
+    size.
 
 xine-lib (1.1.10) 2008-01-26
   * Security fixes:

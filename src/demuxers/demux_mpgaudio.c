@@ -807,7 +807,6 @@ static int demux_mpgaudio_read_head(input_plugin_t *input, uint8_t *buf) {
  * return 1 if detected, 0 otherwise
  */
 static int detect_mpgaudio_file(input_plugin_t *input) {
-  mpg_audio_frame_t frame;
   uint8_t buf[MAX_PREVIEW_SIZE];
   int preview_len;
   uint32_t head;
@@ -838,8 +837,8 @@ static int detect_mpgaudio_file(input_plugin_t *input) {
       lprintf("cannot read mp3 frame header\n");
       return 0;
     }
-    if (!parse_frame_header(&frame, &buf[10 + tag_size])) {
-      lprintf ("invalid mp3 frame header\n");
+    if (!sniff_buffer_looks_like_mp3(&buf[10 + tag_size], preview_len - 10 - tag_size)) {
+      lprintf ("sniff_buffer_looks_like_mp3 failed\n");
       return 0;
     } else {
       lprintf ("a valid mp3 frame follows the id3v2 tag\n");
