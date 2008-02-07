@@ -1,4 +1,8 @@
 xine-lib (1.1.11) unreleased
+  * Security fixes:
+    - Array index vulnerability which may allow remote attackers to execute
+      arbitrary code via a crafted FLAC tag, causing a stack buffer overflow.
+      (CVE-2008-0486)
   * Fix a RealPlayer codec detection bug.
 
 xine-lib (1.1.10) 2008-01-26

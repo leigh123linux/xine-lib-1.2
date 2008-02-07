@@ -189,7 +189,7 @@ static int open_flac_file(demux_flac_t *flac) {
     case 4:
       lprintf ("VORBIS_COMMENT metadata\n");
       {
-        char comments[block_length];
+        char comments[block_length + 1]; /* last byte for NUL termination */
         char *ptr = comments;
         uint32_t length, user_comment_list_length;
         int cn;
@@ -202,18 +202,25 @@ static int open_flac_file(demux_flac_t *flac) {
 
           length = _X_LE_32(ptr);
           ptr += 4 + length;
+          if (length >= block_length - 8)
+            return 0; /* bad length or too little left in the buffer */
 
           user_comment_list_length = _X_LE_32(ptr);
           ptr += 4;
 
           cn = 0;
           for (; cn < user_comment_list_length; cn++) {
+            if (ptr > comments + block_length - 4)
+              return 0; /* too little left in the buffer */
+
             length = _X_LE_32(ptr);
             ptr += 4;
+            if (length >= block_length || ptr + length > comments + block_length)
+              return 0; /* bad length */
 
             comment = (char*) ptr;
             c = comment[length];
-            comment[length] = 0;
+            comment[length] = 0; /* NUL termination */
 
             lprintf ("comment[%02d] = %s\n", cn, comment);
 
@@ -248,8 +255,8 @@ static int open_flac_file(demux_flac_t *flac) {
           }
 
           if ((tracknumber > 0) && (tracktotal > 0)) {
-            char tn[16];
-            snprintf (tn, 16, "%02d/%02d", tracknumber, tracktotal);
+            char tn[24];
+            snprintf (tn, 24, "%02d/%02d", tracknumber, tracktotal);
             _x_meta_info_set(flac->stream, XINE_META_INFO_TRACK_NUMBER, tn);
           }
           else if (tracknumber > 0) {
