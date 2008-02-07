@@ -17,14 +17,14 @@ dnl
 XINE_MAJOR=1
 XINE_MINOR=1
 XINE_SUB=10
-# XINE_PATCH should be left empty or set to ".1" or ".2" or something similar
+dnl XINE_PATCH should be left empty or set to ".1" or ".2" or something similar
 XINE_PATCH=
 
-#if test $XINE_SUB -eq 0 ; then
-#  XINE_SUBPART="";
-#else
+dnl if test $XINE_SUB -eq 0 ; then
+dnl  XINE_SUBPART="";
+dnl else
   XINE_SUBPART=".$XINE_SUB$XINE_PATCH"
-#fi
+dnl fi
 
 dnl The libtool version numbers (XINE_LT_*); Don't even think about faking this!
 dnl 
