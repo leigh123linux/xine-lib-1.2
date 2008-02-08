@@ -2212,7 +2212,7 @@ case "$host_or_hostalias" in
     dnl
     AC_DEFINE_UNQUOTED(ARCH_X86_32,,[Define this if you're running x86 architecture 32 bits])
     AC_DEFINE(FPM_INTEL,1,[Define to select libmad fixed point arithmetic implementation])
-    arch_x86="yes"
+    arch_x86="32"
     enable_impure_text="yes"
 
     case "$host_or_hostalias" in
@@ -2224,7 +2224,7 @@ case "$host_or_hostalias" in
   x86_64-*)
     AC_DEFINE_UNQUOTED(ARCH_X86_64,,[Define this if you're running x86 architecture 64 bits])
     AC_DEFINE(FPM_64BIT,1,[Define to select libmad fixed point arithmetic implementation])
-    arch_x86="yes"
+    arch_x86="64"
     ;;
   powerpc-*-darwin*)
     dnl avoid ppc compilation crash
@@ -2303,11 +2303,13 @@ if test "x$has_vis" = "xyes"; then
 fi
 AM_CONDITIONAL(ENABLE_VIS, test "x$has_vis" = "xyes")
 
-if test "x$arch_x86" = "xyes"; then
+if test "x$arch_x86" != "xno"; then
    AC_DEFINE_UNQUOTED(ARCH_X86,,[Define this if you're running x86 architecture])
    AC_DEFINE_UNQUOTED(HAVE_MMX,,[Define this if you can compile MMX asm instructions])
 fi
-AM_CONDITIONAL(ARCH_X86, test "x$arch_x86" = "xyes")
+AM_CONDITIONAL(ARCH_X86, test "x$arch_x86" != "xno")
+AM_CONDITIONAL(ARCH_X86_32, test "x$arch_x86" = "x32")
+AM_CONDITIONAL(ARCH_X86_64, test "x$arch_x86" = "x64")
 AM_CONDITIONAL(HAVE_MMX, test "x$arch_x86" = "xyes")
 
 case $host_os in
