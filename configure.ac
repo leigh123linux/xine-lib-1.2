@@ -69,10 +69,12 @@ AC_DEFINE_UNQUOTED([XINE_PATCH], [$XINE_PATCH], [xine patch version number])
 
 XINE_LT_CURRENT=__XINE_LT_CURRENT
 AC_SUBST(XINE_LT_CURRENT)
+AC_DEFINE_UNQUOTED(XINE_LT_CURRENT, $XINE_LT_CURRENT, [xine interface version number])
 XINE_LT_REVISION=__XINE_LT_REVISION
 AC_SUBST(XINE_LT_REVISION)
 XINE_LT_AGE=__XINE_LT_AGE
 AC_SUBST(XINE_LT_AGE)
+AC_DEFINE_UNQUOTED(XINE_LT_AGE, $XINE_LT_AGE, [xine interface version age])
 
 LIBNAME="libxine$(($XINE_LT_CURRENT-$XINE_LT_AGE))"
 AC_SUBST(LIBNAME)
@@ -993,38 +995,45 @@ AC_SUBST(xinelibdir)
 AC_SUBST(xinedatadir)
 AC_SUBST(pkgconfigdir)
 
-XINE_PLUGINDIR="\${xinelibdir}/plugins/$XINE_MAJOR.$XINE_MINOR.$XINE_SUB$XINE_PATCH"
+XINE_PLUGINROOT="\${xinelibdir}/plugins/$(($XINE_LT_CURRENT-$XINE_LT_AGE))"
+XINE_PLUGINDIR="$XINE_PLUGINROOT.$XINE_LT_AGE"
 XINE_FONTDIR="\${xinedatadir}/libxine$XINE_MAJOR/fonts"
 XINE_LOCALEDIR='${datadir}/locale'
-XINE_REL_PLUGINDIR="`makeexpand "$XINE_PLUGINDIR"`"
-XINE_REL_PLUGINDIR="`makeexpand "$XINE_REL_PLUGINDIR" | sed -e "s,^${prefix}/,,"`"
+XINE_REL_PLUGINROOT="`makeexpand "$XINE_PLUGINROOT"`"
+XINE_REL_PLUGINROOT="`makeexpand "$XINE_REL_PLUGINROOT" | sed -e "s,^${prefix}/,,"`"
+XINE_REL_PLUGINDIR="$XINE_REL_PLUGINROOT.$XINE_LT_AGE"
 XINE_REL_FONTDIR="`makeexpand "$XINE_FONTDIR" | sed -e "s,^${prefix}/,,"`"
 XINE_REL_LOCALEDIR="`makeexpand "$XINE_LOCALEDIR" | sed -e "s,^${prefix}/,,"`"
 XINE_PKGCONFIG_DIR="`makeexpand "$pkgconfigdir"`"
 if test "x$WIN32_SYS" = "xmingw32" -o "x$WIN32_SYS" = "xcygwin"; then
     dnl polish paths (MinGW runtime accepts both \ and / anyway)
-    XINE_REL_PLUGINDIR="`echo "$XINE_REL_PLUGINDIR" | sed -e 's/\\//\\\\\\\\/g'`"
+    XINE_REL_PLUGINROOT="`echo "$XINE_REL_PLUGINROOT" | sed -e 's/\\//\\\\\\\\/g'`"
+    XINE_REL_PLUGINDIR="$XINE_REL_PLUGINROOT.$XINE_LT_AGE"
     XINE_REL_FONTDIR="`echo "$XINE_REL_FONTDIR" | sed -e 's/\\//\\\\\\\\/g'`"
     XINE_REL_LOCALEDIR="`echo "$XINE_REL_LOCALEDIR" | sed -e 's/\\//\\\\\\\\/g'`"
     dnl prefix in xine-config
     XINE_CONFIG_PREFIX="\$(cd \$(dirname \$0)/..; pwd)"
     dnl installation directories (in xine-config)
-    XINE_PLUGINPATH="$XINE_CONFIG_PREFIX/$XINE_REL_PLUGINDIR"
+    XINE_PLUGINROOTPATH="$XINE_CONFIG_PREFIX/$XINE_REL_PLUGINROOT"
+    XINE_PLUGINPATH="$XINE_PLUGINROOTPATH.$XINE_LT_AGE"
     XINE_FONTPATH="$XINE_CONFIG_PREFIX/$XINE_REL_FONTDIR"
     XINE_LOCALEPATH="$XINE_CONFIG_PREFIX/$XINE_REL_LOCALEDIR"
     dnl runtime directories
-    AC_DEFINE([XINE_PLUGINDIR], [xine_get_plugindir()], [Define this to plugins directory location])
+    AC_DEFINE([XINE_PLUGINROOT],[xine_get_pluginroot()],[Define this to general plugins directory location])
+    AC_DEFINE([XINE_PLUGINDIR], [xine_get_plugindir()], [Define this to specific plugins directory location])
     AC_DEFINE([XINE_FONTDIR],   [xine_get_fontdir()],   [Define this to osd fonts dir location])
     AC_DEFINE([XINE_LOCALEDIR], [xine_get_localedir()], [Path where catalog files will be.])
 else
     dnl prefix in xine-config
     XINE_CONFIG_PREFIX="`makeexpand "${prefix}"`"
     dnl directories from xine-config and runtime directories
-    XINE_PLUGINPATH="`makeexpand "$XINE_PLUGINDIR"`"
+    XINE_PLUGINROOTPATH="`makeexpand "$XINE_PLUGINROOT"`"
+    XINE_PLUGINPATH="$XINE_PLUGINROOTPATH.$XINE_LT_AGE"
     XINE_FONTPATH="`makeexpand "$XINE_FONTDIR"`"
     XINE_LOCALEPATH="`makeexpand "$XINE_LOCALEDIR"`"
     dnl defining runtime directories
-    AC_DEFINE_UNQUOTED([XINE_PLUGINDIR], ["$XINE_PLUGINPATH"], [Define this to plugins directory location])
+    AC_DEFINE_UNQUOTED([XINE_PLUGINROOT],["$XINE_PLUGINROOTPATH"], [Define this to general plugins directory location])
+    AC_DEFINE_UNQUOTED([XINE_PLUGINDIR], ["$XINE_PLUGINPATH"], [Define this to soecific plugins directory location])
     AC_DEFINE_UNQUOTED([XINE_FONTDIR],   ["$XINE_FONTPATH"],   [Define this to osd fonts dir location])
     AC_DEFINE_UNQUOTED([XINE_LOCALEDIR], ["$XINE_LOCALEPATH"], [Path where catalog files will be.])
 fi
