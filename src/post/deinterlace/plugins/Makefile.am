@@ -32,6 +32,9 @@ EXTRA_DIST = greedy2frame_template.c greedyh.asm \
 AM_CFLAGS = -I$(top_srcdir)/src/post/deinterlace \
 	-I$(top_srcdir)/src/libffmpeg/libavcodec/libpostproc
 
+# Avoid "can't find register" failures with -O0, -O2, -O3 (gcc 4.0)
+libdeinterlaceplugins_la-kdetv_greedyh.o libdeinterlaceplugins_la-kdetv_greedyh.lo: CFLAGS=$(shell echo @CFLAGS@ | sed -e 's/$$/ -O1/')
+
 noinst_LTLIBRARIES = libdeinterlaceplugins.la
 
 libdeinterlaceplugins_la_SOURCES = \
