@@ -2310,7 +2310,7 @@ fi
 AM_CONDITIONAL(ARCH_X86, test "x$arch_x86" != "xno")
 AM_CONDITIONAL(ARCH_X86_32, test "x$arch_x86" = "x32")
 AM_CONDITIONAL(ARCH_X86_64, test "x$arch_x86" = "x64")
-AM_CONDITIONAL(HAVE_MMX, test "x$arch_x86" = "xyes")
+AM_CONDITIONAL(HAVE_MMX, test "x$arch_x86" != "xno")
 
 case $host_os in
   darwin*)
