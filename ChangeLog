@@ -5,6 +5,9 @@ xine-lib (1.1.11) unreleased
     plugin directory name is 1.19, and if this gets bumped to 1.20 in a
     future release, 1.19 will still be available for external plugins.
     (Any directories not 1.* won't be looked in.)
+  * Made the version parsing much more reliable; it wasn't properly coping
+    with four-part version numbers. This affects any program whose build
+    scripts use xine-lib's automake macros.
 
 xine-lib (1.1.10.1) 2008-02-07
   * Security fixes:
