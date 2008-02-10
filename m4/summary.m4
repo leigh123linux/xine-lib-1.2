@@ -120,7 +120,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
         fi
     fi
     if test x"$enable_libdts" != x"no"; then
-        if test x"$have_external_libdts" = x"yes"; then
+        if test x"$have_external_dts" = x"yes"; then
             echo "   - DTS (external library)"
         else
             echo "   - DTS (internal library)"
