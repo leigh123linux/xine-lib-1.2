@@ -2117,7 +2117,7 @@ dnl ---------------------------------------------
 
 AC_SYS_LARGEFILE
 AC_CHECK_LIB(posix4, sched_get_priority_min)
-AC_CHECK_FUNCS([vsscanf sigaction sigset getpwuid_r nanosleep lstat memset readlink strchr va_copy])
+AC_CHECK_FUNCS([vsscanf sigaction sigset getpwuid_r nanosleep lstat memset readlink strchr tzset va_copy])
 AC_CHECK_FUNCS([snprintf _snprintf], [some_snprintf="yes"; break])
 AC_CHECK_FUNCS([vsnprintf _vsnprintf], [some_vsnprintf="yes"; break])
 AC_CHECK_FUNCS([strcasecmp _stricmp], [some_strcasecmp="yes"; break])
