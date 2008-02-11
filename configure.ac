@@ -627,7 +627,7 @@ case "$host_or_hostalias" in
         ;;
 
     x86_64-*)
-        arch_x86=yes
+        arch_x86=64
         AC_DEFINE([ARCH_X86_64], [], [Define this if you're running x86 architecture 64 bits])
         ;;
 
@@ -635,10 +635,10 @@ case "$host_or_hostalias" in
         case "$host_or_hostalias" in
             universal-*)
                 arch_ppc=yes
-                arch_x86=yes
+                arch_x86=32
                 ;;
             i386-* | x86_64-*)
-                arch_x86=yes
+                arch_x86=32
                 AC_DEFINE([ARCH_X86_32], [], [Define this if you're running x86 architecture 32 bits])
                 ;;
             ppc* | powerpc*)
@@ -682,7 +682,7 @@ case "$host_or_hostalias" in
         ;;
 
     i?86-* | k?-* | athlon-* | pentium*)
-        arch_x86=yes
+        arch_x86=32
         enable_impure_text=yes
 
         case "$host_or_hostalias" in
@@ -800,13 +800,15 @@ AC_SUBST(PASS2_CFLAGS)
 test x"$DEFAULT_OCFLAGS" = x"" && DEFAULT_OCFLAGS='$(O3_CFLAGS)'
 AC_SUBST(DEFAULT_OCFLAGS)
 
-if test x"$arch_x86" = x"yes" && test x"$enable_macosx_universal" = x"no"; then
+if test x"$arch_x86" != x"no" && test x"$enable_macosx_universal" = x"no"; then
      AC_DEFINE([ARCH_X86], [], [Define this if you're running x86 architecture])
      AC_DEFINE([HAVE_MMX], [], [Define this if you can compile MMX asm instructions])
 fi
 AM_CONDITIONAL([ARCH_PPC], test x"$arch_ppc" = x"yes")
-AM_CONDITIONAL([ARCH_X86], test x"$arch_x86" = x"yes")
-AM_CONDITIONAL([HAVE_MMX], test x"$arch_x86" = x"yes")
+AM_CONDITIONAL([ARCH_X86], test x"$arch_x86" != x"no")
+AM_CONDITIONAL([ARCH_X86_32], test x"$arch_x86" = x"32")
+AM_CONDITIONAL([ARCH_X86_64], test x"$arch_x86" = x"64")
+AM_CONDITIONAL([HAVE_MMX], test x"$arch_x86" != x"no")
 AM_CONDITIONAL([HOST_OS_DARWIN], test x"$HOST_OS_DARWIN" = x"1")
 
 if test x"$enable_impure_text" = x"yes"; then

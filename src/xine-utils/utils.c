@@ -358,21 +358,17 @@ const char *xine_get_homedir(void) {
   char *s;
   int len;
 
-  if (!homedir[0]) {
-    len = xine_strcpy_command(GetCommandLine(), homedir, sizeof(homedir));
-    s = strdup(homedir);
-    GetFullPathName(s, sizeof(homedir), homedir, NULL);
-    free(s);
-    if ((s = strrchr(homedir, '\\'))) *s = '\0';
-  }
+  len = xine_strcpy_command(GetCommandLine(), homedir, sizeof(homedir));
+  s = strdup(homedir);
+  GetFullPathName(s, sizeof(homedir), homedir, NULL);
+  free(s);
+  if ((s = strrchr(homedir, '\\')))
+    *s = '\0';
 
   return homedir;
 #else
   struct passwd pwd, *pw = NULL;
   static char homedir[BUFSIZ] = {0,};
-
-  if(homedir[0])
-    return homedir;
 
 #ifdef HAVE_GETPWUID_R
   if(getpwuid_r(getuid(), &pwd, homedir, sizeof(homedir), &pw) != 0 || pw == NULL) {
