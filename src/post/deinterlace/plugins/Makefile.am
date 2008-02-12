@@ -48,7 +48,6 @@ libdeinterlaceplugins_la_SOURCES = \
 	scalerbob.c \
 	kdetv_greedyh.c \
 	kdetv_tomsmocomp.c
-libdeinterlaceplugins_la_LIBADD = $(XINE_LIB)
 libdeinterlaceplugins_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 libdeinterlaceplugins_la_LDFLAGS = -avoid-version -module
 
