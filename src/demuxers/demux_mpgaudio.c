@@ -626,11 +626,12 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
  * 32-bit MP3 frame header.
  * return 1 if found, 0 if not found
  */
-static int sniff_buffer_looks_like_mp3 (uint8_t *buf, int buflen)
+static int sniff_buffer_looks_like_mp3 (uint8_t *buf, int buflen, int *version, int *layer)
 {
   int offset;
   mpg_audio_frame_t frame;
 
+  *version = *layer = 0;
   if (buf == NULL)
     return 0;
 
@@ -639,20 +640,21 @@ static int sniff_buffer_looks_like_mp3 (uint8_t *buf, int buflen)
     if (parse_frame_header(&frame, buf + offset)) {
       size_t size = frame.size;
 
-      /* Since one frame is available, is there another frame
-       * just to be sure this is more likely to be a real MP3
-       * buffer? */
-      offset += size;
+      if (size > 0) {
+        /* Since one frame is available, is there another frame
+         * just to be sure this is more likely to be a real MP3
+         * buffer? */
+        if (offset + size + 4 >= buflen) {
+          return 0;
+        }
 
-      if (offset + 4 >= buflen) {
-        return 0;
+        if (parse_frame_header(&frame, buf + offset + size)) {
+	  *version = frame.version_idx + 1;
+	  *layer = frame.layer;
+	  lprintf("frame detected, mpeg %d layer %d\n", *version, *layer);
+	  return 1;
+        }
       }
-
-      if (parse_frame_header(&frame, buf + offset)) {
-        lprintf("mpeg audio frame detected\n");
-        return 1;
-      }
-      break;
     }
   }
   return 0;
@@ -806,11 +808,13 @@ static int demux_mpgaudio_read_head(input_plugin_t *input, uint8_t *buf) {
  * mp3 stream detection
  * return 1 if detected, 0 otherwise
  */
-static int detect_mpgaudio_file(input_plugin_t *input) {
+static int detect_mpgaudio_file(input_plugin_t *input,
+				int *version, int *layer) {
   uint8_t buf[MAX_PREVIEW_SIZE];
   int preview_len;
   uint32_t head;
 
+  *version = *layer = 0;
   preview_len = demux_mpgaudio_read_head(input, buf);
   if (preview_len < 4)
     return 0;
@@ -834,7 +838,7 @@ static int detect_mpgaudio_file(input_plugin_t *input) {
       lprintf("cannot read mp3 frame header\n");
       return 0;
     }
-    if (!sniff_buffer_looks_like_mp3(&buf[10 + tag_size], preview_len - 10 - tag_size)) {
+    if (!sniff_buffer_looks_like_mp3(&buf[10 + tag_size], preview_len - 10 - tag_size, version, layer)) {
       lprintf ("sniff_buffer_looks_like_mp3 failed\n");
       return 0;
     } else {
@@ -842,7 +846,7 @@ static int detect_mpgaudio_file(input_plugin_t *input) {
     }
   } else if (head == MPEG_MARKER) {
     return 0;
-  } else if (!sniff_buffer_looks_like_mp3(buf, preview_len)) {
+  } else if (!sniff_buffer_looks_like_mp3(buf, preview_len, version, layer)) {
     lprintf ("sniff_buffer_looks_like_mp3 failed\n");
     return 0;
   }
@@ -1104,13 +1108,15 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
                                     input_plugin_t *input) {
 
   demux_mpgaudio_t *this;
+  int version = 0;
+  int layer = 0;
 
   lprintf("trying to open %s...\n", input->get_mrl(input));
 
   switch (stream->content_detection_method) {
 
   case METHOD_BY_CONTENT: {
-    if (!detect_mpgaudio_file(input))
+    if (!detect_mpgaudio_file(input, &version, &layer))
       return NULL;
   }
   break;
@@ -1122,7 +1128,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   default:
     return NULL;
   }
-  
+
   this = xine_xmalloc (sizeof (demux_mpgaudio_t));
 
   this->demux_plugin.send_headers      = demux_mpgaudio_send_headers;
@@ -1134,12 +1140,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.get_capabilities  = demux_mpgaudio_get_capabilities;
   this->demux_plugin.get_optional_data = demux_mpgaudio_get_optional_data;
   this->demux_plugin.demux_class       = class_gen;
-  
-  this->input      = input;
-  this->audio_fifo = stream->audio_fifo;
-  this->status     = DEMUX_FINISHED;
-  this->stream     = stream;
-  
+
+  this->input       = input;
+  this->audio_fifo  = stream->audio_fifo;
+  this->status      = DEMUX_FINISHED;
+  this->stream      = stream;
+
+  this->mpg_version = version;
+  this->mpg_layer   = layer;
+  if (version || layer) {
+    this->valid_frames = NUM_VALID_FRAMES;
+  }
   return &this->demux_plugin;
 }
 
