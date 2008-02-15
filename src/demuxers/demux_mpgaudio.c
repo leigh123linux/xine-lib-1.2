@@ -725,8 +725,8 @@ static int demux_mpgaudio_next (demux_mpgaudio_t *this, int decoder_flags, int s
       /* the stream is broken, don't keep info about previous frames */
       this->free_bitrate_size = 0;
 
-      if ( id3v2_istag(header) ) {
-        if (!id3v2_parse_tag(this->input, this->stream, header)) {
+      if ( id3v2_istag(_X_ME_32(header)) ) {
+	if (!id3v2_parse_tag(this->input, this->stream, _X_ME_32(header))) {
           xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
                   LOG_MODULE ": ID3V2 tag parsing error\n");
           bytes = 1; /* resync */
