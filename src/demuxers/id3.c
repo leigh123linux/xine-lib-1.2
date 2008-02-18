@@ -559,6 +559,7 @@ int id3v23_parse_tag(input_plugin_t *input,
       if (!id3v23_parse_frame_ext_header(input, &tag_frame_ext_header)) {
         return 0;
       }
+      pos += tag_frame_ext_header.size;
     }
     /* frame parsing */
     while ((pos + ID3V23_FRAME_HEADER_SIZE) <= tag_header.size) {
@@ -579,7 +580,8 @@ int id3v23_parse_tag(input_plugin_t *input,
           pos += tag_frame_header.size;
         } else {
           /* end of frames, the rest is padding */
-          input->seek (input, tag_header.size - pos, SEEK_CUR);
+	  lprintf("skipping padding %d bytes\n", tag_header.size - pos);
+	  input->seek (input, tag_header.size - pos, SEEK_CUR);
           return 1;
         }
       } else {
@@ -809,6 +811,7 @@ int id3v24_parse_tag(input_plugin_t *input,
       if (!id3v24_parse_ext_header(input, &tag_frame_ext_header)) {
         return 0;
       }
+      pos += tag_frame_ext_header.size;
     }
     /* frame parsing */
     while ((pos + ID3V24_FRAME_HEADER_SIZE) <= tag_header.size) {
