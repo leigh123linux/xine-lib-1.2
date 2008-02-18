@@ -1,0 +1,8 @@
+usr/lib/libxine*.so.*
+usr/lib/xine/plugins/*/post/*.so
+usr/lib/xine/plugins/*/*.so
+usr/lib/xine/plugins/*/vidix/*.so
+usr/share/locale
+usr/share/xine
+usr/share/doc/libxine1/hackersguide/*
+usr/share/bug/libxine1/presubj
