@@ -140,11 +140,29 @@ static int open_dts_file(demux_dts_t *this) {
     }
   }
 
+  /* DTS bitstream encoding version
+   * -1 - not detected
+   *  0 - 16 bits and big endian
+   *  1 - 16 bits and low endian (detection not implemented)
+   *  2 - 14 bits and big endian (detection not implemented)
+   *  3 - 14 bits and low endian
+   */
+  int dts_version = -1;
+
   /* Look for a valid DTS syncword */
   for (i=offset; i<peak_size-1; i++) {
+    /* 16 bits and big endian bitstream */
+    if (syncword == 0x7ffe8001) {
+	dts_version = 0;
+    }
+
     /* 14 bits and little endian bitstream */
     if ((syncword == 0xff1f00e8) && 
         ((peak[i] & 0xf0) == 0xf0) && (peak[i+1] == 0x07)) {
+	dts_version = 3;
+    }
+
+    if ( dts_version != -1 ) {
       this->data_start = i-4;
       lprintf("found DTS syncword at offset %d\n", i-4);
       break;
@@ -155,14 +173,24 @@ static int open_dts_file(demux_dts_t *this) {
 
   if (i < peak_size-9) {
     unsigned int nblks, fsize, sfreq;
+    /* 16 bits and big endian bitstream */
+    if (dts_version == 0) {
+      nblks = ((peak[this->data_start+4] & 0x01) << 6) |
+               ((peak[this->data_start+5] & 0xfc) >> 2);
+      fsize = (((peak[this->data_start+5] & 0x03) << 12) |(peak[this->data_start+6] << 4) |
+               ((peak[this->data_start+7] & 0xf0) >> 4)) + 1;
+      sfreq = (peak[this->data_start+8] & 0x3c) >> 2;
+    }
 
     /* 14 bits and little endian bitstream */
-    nblks = ((peak[this->data_start+4] & 0x07) << 4) |
-             ((peak[this->data_start+7] & 0x3c) >> 2);
-    fsize = (((peak[this->data_start+7] & 0x03) << 12) |
-              (peak[this->data_start+6] << 4) |
-             ((peak[this->data_start+9] & 0x3c) >> 2)) + 1;
-    sfreq = peak[this->data_start+8] & 0x0f;
+    if (dts_version == 3) {
+      nblks = ((peak[this->data_start+4] & 0x07) << 4) |
+               ((peak[this->data_start+7] & 0x3c) >> 2);
+      fsize = (((peak[this->data_start+7] & 0x03) << 12) |
+               (peak[this->data_start+6] << 4) |
+              ((peak[this->data_start+9] & 0x3c) >> 2)) + 1;
+      sfreq = peak[this->data_start+8] & 0x0f;
+    }
 
     if ((sfreq > sizeof(dts_sample_rates)/sizeof(int)) ||
         (dts_sample_rates[sfreq] == 0))
@@ -170,7 +198,16 @@ static int open_dts_file(demux_dts_t *this) {
 
     /* Big assumption - this is CBR data */
     this->samples_per_frame = (nblks + 1) * 32;
-    this->frame_size = fsize * 8 / 14 * 2;
+
+    /* 16 bits and big endian bitstream */
+    if (dts_version == 0) {
+    	this->frame_size = fsize * 8 / 16 * 2;
+    }
+    /* 14 bits and little endian bitstream */
+    else if (dts_version == 3) {
+	this->frame_size = fsize * 8 / 14 * 2;
+    }
+
     this->sample_rate = dts_sample_rates[sfreq];
 
     lprintf("samples per frame: %d\n", this->samples_per_frame);
