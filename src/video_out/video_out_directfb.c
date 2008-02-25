@@ -1742,6 +1742,20 @@ static void directfb_frame_output_cb (void *user_data, int video_width, int vide
 
 /*** DirectFB plugin functions ***/ 
 
+static inline int convert_caps (DFBDisplayLayerCapabilities caps)
+{
+  int vo = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP | VO_CAP_ZOOM_X | VO_CAP_ZOOM_Y;
+  if (caps & DLCAPS_HUE)
+    vo |= VO_CAP_HUE;
+  if (caps & DLCAPS_SATURATION)
+    vo |= VO_CAP_SATURATION;
+  if (caps & DLCAPS_CONTRAST)
+    vo |= VO_CAP_CONTRAST;
+  if (caps & DLCAPS_BRIGHTNESS)
+    vo |= VO_CAP_BRIGHTNESS;
+  return vo;
+}
+
 static vo_driver_t *open_plugin_fb (video_driver_class_t *class_gen, const void *visual_gen) {
   directfb_class_t  *class  = (directfb_class_t *) class_gen;
   directfb_driver_t *this;
@@ -1821,7 +1835,7 @@ static vo_driver_t *open_plugin_fb (video_driver_class_t *class_gen, const void 
     return NULL;
   }
   
-  this->capabilities      = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP;
+  this->capabilities      = convert_caps (this->caps);
   /* set default configuration */
   this->buffermode        = 1; // double
   this->vsync             = 0;
@@ -2000,7 +2014,7 @@ static vo_driver_t *open_plugin_x11 (video_driver_class_t *class_gen, const void
   xprintf (this->xine, XINE_VERBOSITY_LOG,
           _("video_out_directfb: using display layer #%d.\n"), id);
   
-  this->capabilities      = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP;
+  this->capabilities      = convert_caps (this->caps);
   /* set default configuration */
   this->buffermode        = 1; // double
   this->vsync             = 0;

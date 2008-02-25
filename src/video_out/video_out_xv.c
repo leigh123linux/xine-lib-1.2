@@ -1275,7 +1275,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
   LOCK_DISPLAY(this);
   this->gc                      = XCreateGC (this->display, this->drawable, 0, NULL);
   UNLOCK_DISPLAY(this);
-  this->capabilities            = VO_CAP_CROP;
+  this->capabilities            = VO_CAP_CROP | VO_CAP_ZOOM_X | VO_CAP_ZOOM_Y;
   this->use_shm                 = 1;
   this->use_colorkey            = 0;
   this->colorkey                = 0;
@@ -1342,28 +1342,34 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
 	  if (!strncmp(adaptor_info[adaptor_num].name, "NV", 2)) {
             xprintf (this->xine, XINE_VERBOSITY_NONE, LOG_MODULE ": ignoring broken XV_HUE settings on NVidia cards\n");
 	  } else {
+	    this->capabilities |= VO_CAP_HUE;
 	    xv_check_capability (this, VO_PROP_HUE, attr[k],
 			         adaptor_info[adaptor_num].base_id,
 			         NULL, NULL, NULL);
 	  }
 	} else if(!strcmp(name, "XV_SATURATION")) {
+	  this->capabilities |= VO_CAP_SATURATION;
 	  xv_check_capability (this, VO_PROP_SATURATION, attr[k],
 			       adaptor_info[adaptor_num].base_id,
 			       NULL, NULL, NULL);
 	} else if(!strcmp(name, "XV_BRIGHTNESS")) {
+	  this->capabilities |= VO_CAP_BRIGHTNESS;
 	  xv_check_capability (this, VO_PROP_BRIGHTNESS, attr[k],
 			       adaptor_info[adaptor_num].base_id,
 			       NULL, NULL, NULL);
 	} else if(!strcmp(name, "XV_CONTRAST")) {
+	  this->capabilities |= VO_CAP_CONTRAST;
 	  xv_check_capability (this, VO_PROP_CONTRAST, attr[k],
 			       adaptor_info[adaptor_num].base_id,
 			       NULL, NULL, NULL);
 	} else if(!strcmp(name, "XV_COLORKEY")) {
+	  this->capabilities |= VO_CAP_COLORKEY;
 	  xv_check_capability (this, VO_PROP_COLORKEY, attr[k],
 			       adaptor_info[adaptor_num].base_id,
 			       "video.device.xv_colorkey",
 			       VIDEO_DEVICE_XV_COLORKEY_HELP);
 	} else if(!strcmp(name, "XV_AUTOPAINT_COLORKEY")) {
+	  this->capabilities |= VO_CAP_AUTOPAINT_COLORKEY;
 	  xv_check_capability (this, VO_PROP_AUTOPAINT_COLORKEY, attr[k],
 			       adaptor_info[adaptor_num].base_id,
 			       "video.device.xv_autopaint_colorkey",

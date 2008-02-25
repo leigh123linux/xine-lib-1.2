@@ -314,7 +314,7 @@ static void dispose_ximage (xshm_driver_t *this,
 
 static uint32_t xshm_get_capabilities (vo_driver_t *this_gen) {
   xshm_driver_t *this = (xshm_driver_t *) this_gen;
-  uint32_t capabilities = VO_CAP_YV12 | VO_CAP_YUY2;
+  uint32_t capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_BRIGHTNESS | VO_CAP_CONTRAST | VO_CAP_SATURATION;
 
   if( this->xoverlay )
     capabilities |= VO_CAP_UNSCALED_OVERLAY;

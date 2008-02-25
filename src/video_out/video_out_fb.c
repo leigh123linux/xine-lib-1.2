@@ -155,7 +155,7 @@ typedef struct
 
 static uint32_t fb_get_capabilities(vo_driver_t *this_gen)
 {
-  return VO_CAP_YV12 | VO_CAP_YUY2;
+  return VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_BRIGHTNESS | VO_CAP_CONTRAST | VO_CAP_SATURATION;
 }
 
 static void fb_frame_proc_slice(vo_frame_t *vo_img, uint8_t **src)

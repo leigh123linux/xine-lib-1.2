@@ -552,8 +552,7 @@ static uint32_t pgx64_get_capabilities(vo_driver_t *this_gen)
 {
   /*pgx64_driver_t *this = (pgx64_driver_t *)(void *)this_gen;*/
 
-  return VO_CAP_YV12 |
-         VO_CAP_YUY2;
+  return VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_BRIGHTNESS | VO_CAP_SATURATION;
 }
 
 static vo_frame_t *pgx64_alloc_frame(vo_driver_t *this_gen)

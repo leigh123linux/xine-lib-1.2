@@ -57,6 +57,8 @@ xine-lib (1.1.90) (Unreleased)
     please use DirectFB or VIDIX instead.
   * The Xv and XxMC video output plugins now support Xv port selection.
     (XvMC does not, at present.)
+  * Report more video output capabilities via (port)->get_capabilities():
+    colour controls, zooming, colour keying.
 
 xine-lib (1.1.11) unreleased
   * Reworked the plugin directory naming so that external plugins don't have

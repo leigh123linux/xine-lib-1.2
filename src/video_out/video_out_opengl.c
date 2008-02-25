@@ -1200,7 +1200,7 @@ static void *render_run (opengl_driver_t *this) {
 
 static uint32_t opengl_get_capabilities (vo_driver_t *this_gen) {
 /*   opengl_driver_t *this = (opengl_driver_t *) this_gen; */
-  uint32_t capabilities = VO_CAP_YV12 | VO_CAP_YUY2;
+  uint32_t capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_BRIGHTNESS | VO_CAP_CONTRAST | VO_CAP_SATURATION;
 
   /* TODO: somehow performance goes down during the first few frames */
 /*   if (this->xoverlay) */

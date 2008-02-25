@@ -282,7 +282,14 @@ struct xine_video_port_s {
 #define VO_CAP_UNSCALED_OVERLAY       0x00000010 /* driver can blend overlay at output resolution */
 #define VO_CAP_CROP                   0x00000020 /* driver can crop */
 #define VO_CAP_XXMC                   0x00000040 /* driver can use extended XvMC */
-
+#define VO_CAP_HUE                    0x00010000
+#define VO_CAP_SATURATION             0x00020000
+#define VO_CAP_CONTRAST               0x00040000
+#define VO_CAP_BRIGHTNESS             0x00080000
+#define VO_CAP_COLORKEY               0x00100000
+#define VO_CAP_AUTOPAINT_COLORKEY     0x00200000
+#define VO_CAP_ZOOM_X                 0x00400000
+#define VO_CAP_ZOOM_Y                 0x00800000
 
 /*
  * vo_driver_s contains the functions every display driver
