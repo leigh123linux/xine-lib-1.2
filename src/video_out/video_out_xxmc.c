@@ -2262,14 +2262,15 @@ xxmc_find_adaptor_by_port (int port, unsigned int adaptors,
 static XvPortID xxmc_autodetect_port(xxmc_driver_t *this,
 				   unsigned int adaptors,
 				   XvAdaptorInfo *adaptor_info,
-				   unsigned int *adaptor_num) {
+				   unsigned int *adaptor_num,
+				   XvPortID base) {
   unsigned int an, j;
 
   for (an = 0; an < adaptors; an++)
     if (adaptor_info[an].type & XvImageMask)
       for (j = 0; j < adaptor_info[an].num_ports; j++) {
 	XvPortID port = adaptor_info[an].base_id + j;
-	if (xxmc_open_port(this, port)) {
+	if (port >= base && xxmc_open_port(this, port)) {
 	  *adaptor_num = an;
 	  return port;
 	}
@@ -2486,11 +2487,12 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
       xprintf(class->xine, XINE_VERBOSITY_NONE,
 	      _("%s: could not open Xv port %d - autodetecting\n"),
 	      LOG_MODULE, xv_port);
-      xv_port = xxmc_autodetect_port(this, adaptors, adaptor_info, &adaptor_num);
+      xv_port = xxmc_autodetect_port(this, adaptors, adaptor_info, &adaptor_num, xv_port);
     } else
       adaptor_num = xxmc_find_adaptor_by_port (xv_port, adaptors, adaptor_info);
-  } else
-    xv_port = xxmc_autodetect_port(this, adaptors, adaptor_info, &adaptor_num);
+  }
+  if (!xv_port)
+    xv_port = xxmc_autodetect_port(this, adaptors, adaptor_info, &adaptor_num, 0);
 
   if (!xv_port) {
     xprintf(class->xine, XINE_VERBOSITY_LOG,
