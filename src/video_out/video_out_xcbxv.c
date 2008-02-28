@@ -1133,12 +1133,8 @@ static xcb_xv_port_t xv_autodetect_port(xv_driver_t *this,
       for (j = 0; j < adaptor_it->data->num_ports; ++j)
       {
         xcb_xv_port_t port = adaptor_it->data->base_id + j;
-        if (port >= base && !xv_check_yv12 (this->connection, port))
-        {
-          xcb_xv_port_t port = xv_open_port (this, port);
-          if (port)
-            return port;
-        }
+        if (port >= base && xv_open_port (this, port))
+          return port;
       }
     }
   return 0;
