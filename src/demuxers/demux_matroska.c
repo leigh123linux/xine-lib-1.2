@@ -1833,6 +1833,15 @@ static int read_block_data (demux_matroska_t *this, int len) {
   return 1;
 }
 
+static int parse_int16(uint8_t *data) {
+  int value = (int)_X_BE_16(data);
+  if (value & 1<<15)
+  {
+    value -= 1<<16;
+  }
+  return value;
+}
+
 static int parse_block (demux_matroska_t *this, uint64_t block_size,
                         uint64_t cluster_timecode, uint64_t block_duration,
                         int normpos, int is_key) {
@@ -1849,8 +1858,9 @@ static int parse_block (demux_matroska_t *this, uint64_t block_size,
   if (!(num_len = parse_ebml_uint(this, data, &track_num)))
     return 0;
   data += num_len;
-    
-  timecode_diff = (int)_X_BE_16(data);
+
+  /* timecode_diff is signed */
+  timecode_diff = parse_int16(data);
   data += 2;
 
   flags = *data;

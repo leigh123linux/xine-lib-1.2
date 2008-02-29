@@ -201,7 +201,7 @@ static int open_flac_file(demux_flac_t *flac) {
 
           length = _X_LE_32(ptr);
           ptr += 4 + length;
-          if (length >= block_length - 8)
+          if (length > block_length - 8)
             return 0; /* bad length or too little left in the buffer */
 
           user_comment_list_length = _X_LE_32(ptr);

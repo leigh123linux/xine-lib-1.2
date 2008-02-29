@@ -1130,6 +1130,22 @@ static void xv_update_XV_DOUBLE_BUFFER(void *this_gen, xine_cfg_entry_t *entry) 
 	  LOG_MODULE ": double buffering mode = %d\n", xv_double_buffer);
 }
 
+static void xv_update_XV_SYNC_TO_VBLANK(void *this_gen, xine_cfg_entry_t *entry) {
+  xv_driver_t *this = (xv_driver_t *) this_gen;
+  Atom         atom;
+  int          xv_sync_to_vblank;
+
+  xv_sync_to_vblank = entry->num_value;
+
+  LOCK_DISPLAY(this);
+  atom = XInternAtom (this->display, "XV_SYNC_TO_VBLANK", False);
+  XvSetPortAttribute (this->display, this->xv_port, atom, xv_sync_to_vblank);
+  UNLOCK_DISPLAY(this);
+
+  xprintf(this->xine, XINE_VERBOSITY_DEBUG,
+	  "video_out_xv: sync to vblank = %d\n", xv_sync_to_vblank);
+}
+
 static void xv_update_xv_pitch_alignment(void *this_gen, xine_cfg_entry_t *entry) {
   xv_driver_t *this = (xv_driver_t *) this_gen;
 
@@ -1390,6 +1406,18 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
 				   VIDEO_DEVICE_XV_DOUBLE_BUFFER_HELP,
 				   20, xv_update_XV_DOUBLE_BUFFER, this);
 	  config->update_num(config,"video.device.xv_double_buffer",xv_double_buffer);
+	} else if(!strcmp(attr[k].name, "XV_SYNC_TO_VBLANK")) {
+	  int xv_sync_to_vblank;
+	  xv_sync_to_vblank = 
+	    config->register_bool (config, "video.device.xv_sync_to_vblank", 1,
+	      _("enable vblank sync"),
+	      _("This option will synchronize the update of the video image to the "
+		"repainting of the entire screen (\"vertical retrace\"). This eliminates "
+		"flickering and tearing artifacts. On nvidia cards one may also "
+		"need to run \"nvidia-settings\" and choose which display device to "
+		"sync to under the XVideo Settings tab"),
+	      20, xv_update_XV_SYNC_TO_VBLANK, this);
+	  config->update_num(config,"video.device.xv_sync_to_vblank",xv_sync_to_vblank);
 	}
       }
     }

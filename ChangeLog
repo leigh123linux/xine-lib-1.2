@@ -70,6 +70,8 @@ xine-lib (1.1.11) unreleased
   * Made the version parsing much more reliable; it wasn't properly coping
     with four-part version numbers. This affects any program whose build
     scripts use xine-lib's automake macros.
+  * Fixed an off-by-one in the FLAC security fix patch. This breakage was
+    causing failure to play some files.
 
 xine-lib (1.1.10.1) 2008-02-07
   * Security fixes:

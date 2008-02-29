@@ -1086,6 +1086,27 @@ static void xv_update_XV_DOUBLE_BUFFER(void *this_gen, xine_cfg_entry_t *entry) 
 	  LOG_MODULE ": double buffering mode = %d\n", xv_double_buffer);
 }
 
+static void xv_update_XV_SYNC_TO_VBLANK(void *this_gen, xine_cfg_entry_t *entry) {
+  xv_driver_t *this = (xv_driver_t *) this_gen;
+  int          xv_sync_to_vblank;
+
+  xcb_intern_atom_cookie_t atom_cookie;
+  xcb_intern_atom_reply_t *atom_reply;
+
+  xv_sync_to_vblank = entry->num_value;
+
+  pthread_mutex_lock(&this->main_mutex);
+  atom_cookie = xcb_intern_atom(this->connection, 0, sizeof("XV_SYNC_TO_VBLANK"), "XV_SYNC_TO_VBLANK");
+  atom_reply = xcb_intern_atom_reply(this->connection, atom_cookie, NULL);
+  xcb_xv_set_port_attribute(this->connection, this->xv_port, atom_reply->atom, xv_sync_to_vblank);
+  free(atom_reply);
+  pthread_mutex_unlock(&this->main_mutex);
+
+  xprintf(this->xine, XINE_VERBOSITY_DEBUG,
+	  "video_out_xcbxv: sync to vblank = %d\n", xv_sync_to_vblank);
+}
+
+
 static void xv_update_xv_pitch_alignment(void *this_gen, xine_cfg_entry_t *entry) {
   xv_driver_t *this = (xv_driver_t *) this_gen;
 
@@ -1342,6 +1363,18 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 				   VIDEO_DEVICE_XV_DOUBLE_BUFFER_HELP,
 				   20, xv_update_XV_DOUBLE_BUFFER, this);
 	  config->update_num(config,"video.device.xv_double_buffer",xv_double_buffer);
+	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_SYNC_TO_VBLANK")) {
+	  int xv_sync_to_vblank;
+	  xv_sync_to_vblank = 
+	    config->register_bool (config, "video.device.xv_sync_to_vblank", 1,
+	      _("enable vblank sync"),
+	      _("This option will synchronize the update of the video image to the "
+		"repainting of the entire screen (\"vertical retrace\"). This eliminates "
+		"flickering and tearing artifacts. On nvidia cards one may also "
+		"need to run \"nvidia-settings\" and choose which display device to "
+		"sync to under the XVideo Settings tab"),
+	      20, xv_update_XV_SYNC_TO_VBLANK, this);
+	  config->update_num(config,"video.device.xv_sync_to_vblank",xv_sync_to_vblank);
 	}
       }
     }
