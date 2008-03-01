@@ -91,7 +91,7 @@
 struct NSVf_header {
     uint32_t chunk_tag; /* 'NSVf' */
     uint32_t chunk_size;
-    uint32_t file_size; /* max 4GB ??? noone learns anything it seems :^) */
+    uint32_t file_size; /* max 4GB ??? no one learns anything it seems :^) */
     uint32_t file_length; //unknown1;  /* what about MSB of file_size ? */
     uint32_t info_strings_size; /* size of the info strings */ //unknown2;
     uint32_t table_entries;
@@ -197,7 +197,7 @@ static const AVCodecTag nsv_codec_video_tags[] = {
     { CODEC_ID_VP4, MKTAG('V', 'P', '4', ' ') },
     { CODEC_ID_VP4, MKTAG('V', 'P', '4', '0') },
 */
-    { CODEC_ID_XVID, MKTAG('X', 'V', 'I', 'D') }, /* cf sample xvid decoder from nsv_codec_sdk.zip */
+    { CODEC_ID_MPEG4, MKTAG('X', 'V', 'I', 'D') }, /* cf sample xvid decoder from nsv_codec_sdk.zip */
     { CODEC_ID_RAWVIDEO, MKTAG('R', 'G', 'B', '3') },
     { 0, 0 },
 };
@@ -228,7 +228,7 @@ static void print_tag(const char *str, unsigned int tag, int size)
 static int nsv_resync(AVFormatContext *s)
 {
     NSVContext *nsv = s->priv_data;
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     uint32_t v = 0;
     int i;
 
@@ -275,7 +275,7 @@ static int nsv_resync(AVFormatContext *s)
 static int nsv_parse_NSVf_header(AVFormatContext *s, AVFormatParameters *ap)
 {
     NSVContext *nsv = s->priv_data;
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     unsigned int file_size, size;
     int64_t duration;
     int strings_size;
@@ -394,7 +394,7 @@ static int nsv_parse_NSVf_header(AVFormatContext *s, AVFormatParameters *ap)
 static int nsv_parse_NSVs_header(AVFormatContext *s, AVFormatParameters *ap)
 {
     NSVContext *nsv = s->priv_data;
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     uint32_t vtag, atag;
     uint16_t vwidth, vheight;
     AVRational framerate;
@@ -474,7 +474,7 @@ static int nsv_parse_NSVs_header(AVFormatContext *s, AVFormatParameters *ap)
             st->codec->codec_tag = atag;
             st->codec->codec_id = codec_get_id(nsv_codec_audio_tags, atag);
 
-            st->need_parsing = 1; /* for PCM we will read a chunk later and put correct info */
+            st->need_parsing = AVSTREAM_PARSE_FULL; /* for PCM we will read a chunk later and put correct info */
 
             /* set timebase to common denominator of ms and framerate */
             av_set_pts_info(st, 64, 1, framerate.num*1000);
@@ -533,7 +533,7 @@ static int nsv_read_header(AVFormatContext *s, AVFormatParameters *ap)
 static int nsv_read_chunk(AVFormatContext *s, int fill_header)
 {
     NSVContext *nsv = s->priv_data;
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     AVStream *st[2] = {NULL, NULL};
     NSVStream *nst;
     AVPacket *pkt;
@@ -609,7 +609,8 @@ null_chunk_retry:
             PRINT(("NSV video: [%d] = %02x\n", i, pkt->data[i]));
 */
     }
-    ((NSVStream*)st[NSV_ST_VIDEO]->priv_data)->frame_offset++;
+    if(st[NSV_ST_VIDEO])
+        ((NSVStream*)st[NSV_ST_VIDEO]->priv_data)->frame_offset++;
 
     if (asize/*st[NSV_ST_AUDIO]*/) {
         nst = st[NSV_ST_AUDIO]->priv_data;
@@ -626,7 +627,7 @@ null_chunk_retry:
             asize-=4;
             PRINT(("NSV RAWAUDIO: bps %d, nchan %d, srate %d\n", bps, channels, samplerate));
             if (fill_header) {
-                st[NSV_ST_AUDIO]->need_parsing = 0; /* we know everything */
+                st[NSV_ST_AUDIO]->need_parsing = AVSTREAM_PARSE_NONE; /* we know everything */
                 if (bps != 16) {
                     PRINT(("NSV AUDIO bit/sample != 16 (%d)!!!\n", bps));
                 }
@@ -728,14 +729,9 @@ static int nsv_probe(AVProbeData *p)
     int i;
 //    PRINT(("nsv_probe(), buf_size %d\n", p->buf_size));
     /* check file header */
-    if (p->buf_size <= 32)
-        return 0;
-    if (p->buf[0] == 'N' && p->buf[1] == 'S' &&
-        p->buf[2] == 'V' && p->buf[3] == 'f')
-        return AVPROBE_SCORE_MAX;
     /* streamed files might not have any header */
     if (p->buf[0] == 'N' && p->buf[1] == 'S' &&
-        p->buf[2] == 'V' && p->buf[3] == 's')
+        p->buf[2] == 'V' && (p->buf[3] == 'f' || p->buf[3] == 's'))
         return AVPROBE_SCORE_MAX;
     /* XXX: do streamed files always start at chunk boundary ?? */
     /* or do we need to search NSVs in the byte stream ? */
@@ -748,7 +744,7 @@ static int nsv_probe(AVProbeData *p)
     }
     /* so we'll have more luck on extension... */
     if (match_ext(p->filename, "nsv"))
-        return AVPROBE_SCORE_MAX-20;
+        return AVPROBE_SCORE_MAX/2;
     /* FIXME: add mime-type check */
     return 0;
 }

@@ -33,7 +33,7 @@ static const char AMRWB_header [] = "#!AMR-WB\n";
 #ifdef CONFIG_MUXERS
 static int amr_write_header(AVFormatContext *s)
 {
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     AVCodecContext *enc = s->streams[0]->codec;
 
     s->priv_data = NULL;
@@ -56,13 +56,8 @@ static int amr_write_header(AVFormatContext *s)
 
 static int amr_write_packet(AVFormatContext *s, AVPacket *pkt)
 {
-    put_buffer(&s->pb, pkt->data, pkt->size);
-    put_flush_packet(&s->pb);
-    return 0;
-}
-
-static int amr_write_trailer(AVFormatContext *s)
-{
+    put_buffer(s->pb, pkt->data, pkt->size);
+    put_flush_packet(s->pb);
     return 0;
 }
 #endif /* CONFIG_MUXERS */
@@ -73,8 +68,6 @@ static int amr_probe(AVProbeData *p)
     //This will also trigger multichannel files: "#!AMR_MC1.0\n" and
     //"#!AMR-WB_MC1.0\n" (not supported)
 
-    if (p->buf_size < 5)
-        return 0;
     if(memcmp(p->buf,AMR_header,5)==0)
         return AVPROBE_SCORE_MAX;
     else
@@ -85,7 +78,7 @@ static int amr_probe(AVProbeData *p)
 static int amr_read_header(AVFormatContext *s,
                            AVFormatParameters *ap)
 {
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     AVStream *st;
     uint8_t header[9];
 
@@ -94,7 +87,7 @@ static int amr_read_header(AVFormatContext *s,
     st = av_new_stream(s, 0);
     if (!st)
     {
-        return AVERROR_NOMEM;
+        return AVERROR(ENOMEM);
     }
     if(memcmp(header,AMR_header,6)!=0)
     {
@@ -125,15 +118,15 @@ static int amr_read_packet(AVFormatContext *s,
                           AVPacket *pkt)
 {
     AVCodecContext *enc = s->streams[0]->codec;
-    int read, size, toc, mode;
+    int read, size = 0, toc, mode;
 
-    if (url_feof(&s->pb))
+    if (url_feof(s->pb))
     {
-        return AVERROR_IO;
+        return AVERROR(EIO);
     }
 
 //FIXME this is wrong, this should rather be in a AVParset
-    toc=get_byte(&s->pb);
+    toc=get_byte(s->pb);
     mode = (toc >> 3) & 0x0F;
 
     if (enc->codec_id == CODEC_ID_AMR_NB)
@@ -155,19 +148,19 @@ static int amr_read_packet(AVFormatContext *s,
 
     if ( (size==0) || av_new_packet(pkt, size))
     {
-        return AVERROR_IO;
+        return AVERROR(EIO);
     }
 
     pkt->stream_index = 0;
-    pkt->pos= url_ftell(&s->pb);
+    pkt->pos= url_ftell(s->pb);
     pkt->data[0]=toc;
     pkt->duration= enc->codec_id == CODEC_ID_AMR_NB ? 160 : 320;
-    read = get_buffer(&s->pb, pkt->data+1, size-1);
+    read = get_buffer(s->pb, pkt->data+1, size-1);
 
     if (read != size-1)
     {
         av_free_packet(pkt);
-        return AVERROR_IO;
+        return AVERROR(EIO);
     }
 
     return 0;
@@ -196,6 +189,5 @@ AVOutputFormat amr_muxer = {
     CODEC_ID_NONE,
     amr_write_header,
     amr_write_packet,
-    amr_write_trailer,
 };
 #endif

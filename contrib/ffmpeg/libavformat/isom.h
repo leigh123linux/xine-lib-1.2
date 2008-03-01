@@ -24,17 +24,20 @@
 #ifndef FFMPEG_ISOM_H
 #define FFMPEG_ISOM_H
 
+#include "riff.h"
+
 /* isom.c */
 extern const AVCodecTag ff_mp4_obj_type[];
 extern const AVCodecTag codec_movvideo_tags[];
 extern const AVCodecTag codec_movaudio_tags[];
+extern const AVCodecTag ff_codec_movsubtitle_tags[];
 
 int ff_mov_iso639_to_lang(const char *lang, int mp4);
 int ff_mov_lang_to_iso639(int code, char *to);
 
-typedef struct Time2Sample{
+typedef struct {
     int count;
     int duration;
-}Time2Sample;
+} MOV_stts_t;
 
 #endif /* FFMPEG_ISOM_H */

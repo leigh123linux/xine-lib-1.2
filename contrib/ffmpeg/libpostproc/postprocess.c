@@ -47,8 +47,8 @@ LinBlendDeinterlace     e               E       E*
 MedianDeinterlace#      E       Ec      Ec
 TempDeNoiser#           E               e       e       Ec
 
-* i dont have a 3dnow CPU -> its untested, but noone said it doesnt work so it seems to work
-# more or less selfinvented filters so the exactness isnt too meaningfull
+* i do not have a 3DNow! CPU -> it is untested, but no one said it does not work so it seems to work
+# more or less selfinvented filters so the exactness is not too meaningful
 E = Exact implementation
 e = allmost exact implementation (slightly different rounding,...)
 a = alternative / approximate impl
@@ -87,13 +87,8 @@ try to unroll inner for(x=0 ... loop to avoid these damn if(x ... checks
 //#undef HAVE_MMX
 //#undef ARCH_X86
 //#define DEBUG_BRIGHTNESS
-#ifdef USE_FASTMEMCPY
-#include "libvo/fastmemcpy.h"
-#endif
 #include "postprocess.h"
 #include "postprocess_internal.h"
-
-#include "mangle.h" //FIXME should be supressed
 
 #ifdef HAVE_ALTIVEC_H
 #include <altivec.h>
@@ -106,20 +101,17 @@ try to unroll inner for(x=0 ... loop to avoid these damn if(x ... checks
 //#define NUM_BLOCKS_AT_ONCE 16 //not used yet
 
 #if defined(ARCH_X86)
-static uint64_t __attribute__((aligned(8))) attribute_used w05= 0x0005000500050005LL;
-static uint64_t __attribute__((aligned(8))) attribute_used w04= 0x0004000400040004LL;
-static uint64_t __attribute__((aligned(8))) attribute_used w20= 0x0020002000200020LL;
-static uint64_t __attribute__((aligned(8))) attribute_used b00= 0x0000000000000000LL;
-static uint64_t __attribute__((aligned(8))) attribute_used b01= 0x0101010101010101LL;
-static uint64_t __attribute__((aligned(8))) attribute_used b02= 0x0202020202020202LL;
-static uint64_t __attribute__((aligned(8))) attribute_used b08= 0x0808080808080808LL;
-static uint64_t __attribute__((aligned(8))) attribute_used b80= 0x8080808080808080LL;
+DECLARE_ASM_CONST(8, uint64_t, w05)= 0x0005000500050005LL;
+DECLARE_ASM_CONST(8, uint64_t, w04)= 0x0004000400040004LL;
+DECLARE_ASM_CONST(8, uint64_t, w20)= 0x0020002000200020LL;
+DECLARE_ASM_CONST(8, uint64_t, b00)= 0x0000000000000000LL;
+DECLARE_ASM_CONST(8, uint64_t, b01)= 0x0101010101010101LL;
+DECLARE_ASM_CONST(8, uint64_t, b02)= 0x0202020202020202LL;
+DECLARE_ASM_CONST(8, uint64_t, b08)= 0x0808080808080808LL;
+DECLARE_ASM_CONST(8, uint64_t, b80)= 0x8080808080808080LL;
 #endif
 
-static uint8_t clip_table[3*256];
-static uint8_t * const clip_tab= clip_table + 256;
-
-static const int attribute_used deringThreshold= 20;
+DECLARE_ASM_CONST(8, int, deringThreshold)= 20;
 
 
 static struct PPFilter filters[]=
@@ -147,11 +139,11 @@ static struct PPFilter filters[]=
 
 static const char *replaceTable[]=
 {
-        "default",      "hdeblock:a,vdeblock:a,dering:a",
-        "de",           "hdeblock:a,vdeblock:a,dering:a",
-        "fast",         "x1hdeblock:a,x1vdeblock:a,dering:a",
-        "fa",           "x1hdeblock:a,x1vdeblock:a,dering:a",
-        "ac",           "ha:a:128:7,va:a,dering:a",
+        "default",      "hb:a,vb:a,dr:a",
+        "de",           "hb:a,vb:a,dr:a",
+        "fast",         "h1:a,v1:a,dr:a",
+        "fa",           "h1:a,v1:a,dr:a",
+        "ac",           "ha:a:128:7,va:a,dr:a",
         NULL //End Marker
 };
 
@@ -401,8 +393,8 @@ static inline void doHorizLowPass_C(uint8_t dst[], int stride, PPContext *c)
  * Experimental Filter 1 (Horizontal)
  * will not damage linear gradients
  * Flat blocks should look like they where passed through the (1,1,2,2,4,2,2,1,1) 9-Tap filter
- * can only smooth blocks at the expected locations (it cant smooth them if they did move)
- * MMX2 version does correct clipping C version doesnt
+ * can only smooth blocks at the expected locations (it cannot smooth them if they did move)
+ * MMX2 version does correct clipping C version does not
  * not identical with the vertical one
  */
 static inline void horizX1Filter(uint8_t *src, int stride, int QP)
@@ -649,18 +641,18 @@ static av_always_inline void do_a_deblock_C(uint8_t *src, int step, int stride, 
 #include "postprocess_template.c"
 #endif
 
-// minor note: the HAVE_xyz is messed up after that line so dont use it
+// minor note: the HAVE_xyz is messed up after that line so do not use it.
 
-static inline void postProcess(uint8_t src[], int srcStride, uint8_t dst[], int dstStride, int width, int height,
-        QP_STORE_T QPs[], int QPStride, int isColor, pp_mode_t *vm, pp_context_t *vc)
+static inline void postProcess(const uint8_t src[], int srcStride, uint8_t dst[], int dstStride, int width, int height,
+        const QP_STORE_T QPs[], int QPStride, int isColor, pp_mode_t *vm, pp_context_t *vc)
 {
         PPContext *c= (PPContext *)vc;
         PPMode *ppMode= (PPMode *)vm;
         c->ppMode= *ppMode; //FIXME
 
-        // useing ifs here as they are faster than function pointers allthough the
-        // difference wouldnt be messureable here but its much better because
-        // someone might exchange the cpu whithout restarting mplayer ;)
+        // Using ifs here as they are faster than function pointers although the
+        // difference would not be measureable here but it is much better because
+        // someone might exchange the CPU whithout restarting MPlayer ;)
 #ifdef RUNTIME_CPUDETECT
 #if defined(ARCH_X86)
         // ordered per speed fasterst first
@@ -702,7 +694,11 @@ static inline void postProcess(uint8_t src[], int srcStride, uint8_t dst[], int 
 
 /* -pp Command line Help
 */
-char *pp_help=
+#if LIBPOSTPROC_VERSION_INT < (52<<16)
+const char *const pp_help=
+#else
+const char pp_help[] =
+#endif
 "Available postprocessing filters:\n"
 "Filters                        Options\n"
 "short  long name       short   long option     Description\n"
@@ -746,12 +742,12 @@ char *pp_help=
 "\n"
 ;
 
-pp_mode_t *pp_get_mode_by_name_and_quality(char *name, int quality)
+pp_mode_t *pp_get_mode_by_name_and_quality(const char *name, int quality)
 {
         char temp[GET_MODE_BUFFER_SIZE];
         char *p= temp;
-        const char *filterDelimiters= ",/";
-        const char *optionDelimiters= ":";
+        static const char filterDelimiters[] = ",/";
+        static const char optionDelimiters[] = ":";
         struct PPMode *ppMode;
         char *filterToken;
 
@@ -964,7 +960,7 @@ static void reallocBuffers(PPContext *c, int width, int height, int stride, int 
 
         for(i=0; i<3; i++)
         {
-                //Note:the +17*1024 is just there so i dont have to worry about r/w over te end
+                //Note: The +17*1024 is just there so i do not have to worry about r/w over the end.
                 reallocAlign((void **)&c->tempBlured[i], 8, stride*mbHeight*16 + 17*1024);
                 reallocAlign((void **)&c->tempBluredPast[i], 8, 256*((height+7)&(~7))/2 + 17*1024);//FIXME size
         }
@@ -975,26 +971,16 @@ static void reallocBuffers(PPContext *c, int width, int height, int stride, int 
         reallocAlign((void **)&c->forcedQPTable, 8, mbWidth*sizeof(QP_STORE_T));
 }
 
-static void global_init(void){
-        int i;
-        memset(clip_table, 0, 256);
-        for(i=256; i<512; i++)
-                clip_table[i]= i;
-        memset(clip_table+512, 0, 256);
-}
-
 static const char * context_to_name(void * ptr) {
     return "postproc";
 }
 
-static AVClass av_codec_context_class = { "Postproc", context_to_name, NULL };
+static const AVClass av_codec_context_class = { "Postproc", context_to_name, NULL };
 
 pp_context_t *pp_get_context(int width, int height, int cpuCaps){
         PPContext *c= av_malloc(sizeof(PPContext));
         int stride= (width+15)&(~15);    //assumed / will realloc if needed
         int qpStride= (width+15)/16 + 2; //assumed / will realloc if needed
-
-        global_init();
 
         memset(c, 0, sizeof(PPContext));
         c->av_class = &av_codec_context_class;
@@ -1035,10 +1021,10 @@ void pp_free_context(void *vc){
         av_free(c);
 }
 
-void  pp_postprocess(uint8_t * src[3], int srcStride[3],
-                 uint8_t * dst[3], int dstStride[3],
+void  pp_postprocess(const uint8_t * src[3], const int srcStride[3],
+                 uint8_t * dst[3], const int dstStride[3],
                  int width, int height,
-                 QP_STORE_T *QP_store,  int QPStride,
+                 const QP_STORE_T *QP_store,  int QPStride,
                  pp_mode_t *vm,  void *vc, int pict_type)
 {
         int mbWidth = (width+15)>>4;
@@ -1060,16 +1046,16 @@ void  pp_postprocess(uint8_t * src[3], int srcStride[3],
                 QP_store= c->forcedQPTable;
                 absQPStride = QPStride = 0;
                 if(mode->lumMode & FORCE_QUANT)
-                        for(i=0; i<mbWidth; i++) QP_store[i]= mode->forcedQuant;
+                        for(i=0; i<mbWidth; i++) c->forcedQPTable[i]= mode->forcedQuant;
                 else
-                        for(i=0; i<mbWidth; i++) QP_store[i]= 1;
+                        for(i=0; i<mbWidth; i++) c->forcedQPTable[i]= 1;
         }
 
         if(pict_type & PP_PICT_TYPE_QP2){
                 int i;
                 const int count= mbHeight * absQPStride;
                 for(i=0; i<(count>>2); i++){
-                        ((uint32_t*)c->stdQPTable)[i] = (((uint32_t*)QP_store)[i]>>1) & 0x7F7F7F7F;
+                        ((uint32_t*)c->stdQPTable)[i] = (((const uint32_t*)QP_store)[i]>>1) & 0x7F7F7F7F;
                 }
                 for(i<<=2; i<count; i++){
                         c->stdQPTable[i] = QP_store[i]>>1;
@@ -1095,7 +1081,7 @@ for(y=0; y<mbHeight; y++){
                         int i;
                         const int count= mbHeight * QPStride;
                         for(i=0; i<(count>>2); i++){
-                                ((uint32_t*)c->nonBQPTable)[i] = ((uint32_t*)QP_store)[i] & 0x3F3F3F3F;
+                                ((uint32_t*)c->nonBQPTable)[i] = ((const uint32_t*)QP_store)[i] & 0x3F3F3F3F;
                         }
                         for(i<<=2; i<count; i++){
                                 c->nonBQPTable[i] = QP_store[i] & 0x3F;

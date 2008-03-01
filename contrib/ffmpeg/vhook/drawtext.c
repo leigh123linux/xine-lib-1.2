@@ -172,7 +172,7 @@ int Configure(void **ctxp, int argc, char *argv[])
     ci->outline = 0;
     ci->text_height = 0;
 
-    optind = 0;
+    optind = 1;
     while ((c = getopt(argc, argv, "f:t:T:x:y:s:c:C:bo")) > 0) {
       switch (c) {
       case 'f':
@@ -203,7 +203,7 @@ int Configure(void **ctxp, int argc, char *argv[])
       case 'C':
         if (ParseColor(optarg, ci->bgcolor) == -1)
           {
-            av_log(NULL, AV_LOG_ERROR, "Invalid foreground color: '%s'. You must specify the color in the internet way(packaged hex): #RRGGBB, ie: -c #ffffff (for white foreground)\n", optarg);
+            av_log(NULL, AV_LOG_ERROR, "Invalid background color: '%s'. You must specify the color in the internet way(packaged hex): #RRGGBB, ie: -C #ffffff (for white background)\n", optarg);
             return -1;
           }
         break;
@@ -506,7 +506,7 @@ void Process(void *ctx, AVPicture *picture, enum PixelFormat pix_fmt, int width,
       if (
           ( (c == '_') && (text == ci->text) ) || /* skip '_' (consider as space)
                                                      IF text was specified in cmd line
-                                                     (which doesn't like neasted quotes)  */
+                                                     (which doesn't like nested quotes)  */
           ( c == '\n' ) /* Skip new line char, just go to new line */
           )
         continue;

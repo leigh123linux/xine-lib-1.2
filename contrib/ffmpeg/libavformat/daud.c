@@ -1,6 +1,6 @@
 /*
  * D-Cinema audio demuxer
- * Copyright (c) 2005 Reimar Döffinger.
+ * Copyright (c) 2005 Reimar DÃ¶ffinger
  *
  * This file is part of FFmpeg.
  *
@@ -34,10 +34,10 @@ static int daud_header(AVFormatContext *s, AVFormatParameters *ap) {
 }
 
 static int daud_packet(AVFormatContext *s, AVPacket *pkt) {
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     int ret, size;
     if (url_feof(pb))
-        return AVERROR_IO;
+        return AVERROR(EIO);
     size = get_be16(pb);
     get_be16(pb); // unknown
     ret = av_get_packet(pb, pkt, size);

@@ -23,6 +23,8 @@
 #ifndef FFMPEG_PARSER_H
 #define FFMPEG_PARSER_H
 
+#include "avcodec.h"
+
 typedef struct ParseContext{
     uint8_t *buffer;
     int index;
@@ -31,7 +33,7 @@ typedef struct ParseContext{
     uint32_t state;             ///< contains the last few bytes in MSB order
     int frame_start_found;
     int overread;               ///< the number of bytes which where irreversibly read from the next frame
-    int overread_index;         ///< the index into ParseContext.buffer of the overreaded bytes
+    int overread_index;         ///< the index into ParseContext.buffer of the overread bytes
 } ParseContext;
 
 struct MpegEncContext;
@@ -51,13 +53,10 @@ typedef struct ParseContext1{
 
 #define END_NOT_FOUND (-100)
 
-int ff_combine_frame(ParseContext *pc, int next, uint8_t **buf, int *buf_size);
+int ff_combine_frame(ParseContext *pc, int next, const uint8_t **buf, int *buf_size);
 int ff_mpeg4video_split(AVCodecContext *avctx, const uint8_t *buf,
                         int buf_size);
 void ff_parse_close(AVCodecParserContext *s);
 void ff_parse1_close(AVCodecParserContext *s);
 
-/* h263dec.c */
-int ff_mpeg4_find_frame_end(ParseContext *pc, const uint8_t *buf, int buf_size);
-
-#endif /* !FFMPEG_PARSER_H */
+#endif /* FFMPEG_PARSER_H */

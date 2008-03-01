@@ -16,24 +16,20 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with FFmpeg; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #include "voc.h"
-
-
 
 
 static int voc_probe(AVProbeData *p)
 {
     int version, check;
 
-    if (p->buf_size < 26)
-        return 0;
     if (memcmp(p->buf, voc_magic, sizeof(voc_magic) - 1))
         return 0;
-    version = p->buf[22] | (p->buf[23] << 8);
-    check = p->buf[24] | (p->buf[25] << 8);
+    version = AV_RL16(p->buf + 22);
+    check = AV_RL16(p->buf + 24);
     if (~version + 0x1234 != check)
         return 10;
 
@@ -43,7 +39,7 @@ static int voc_probe(AVProbeData *p)
 static int voc_read_header(AVFormatContext *s, AVFormatParameters *ap)
 {
     voc_dec_context_t *voc = s->priv_data;
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     int header_size;
     AVStream *st;
 
@@ -51,12 +47,12 @@ static int voc_read_header(AVFormatContext *s, AVFormatParameters *ap)
     header_size = get_le16(pb) - 22;
     if (header_size != 4) {
         av_log(s, AV_LOG_ERROR, "unknown header size: %d\n", header_size);
-        return AVERROR_NOTSUPP;
+        return AVERROR(ENOSYS);
     }
     url_fskip(pb, header_size);
     st = av_new_stream(s, 0);
     if (!st)
-        return AVERROR_NOMEM;
+        return AVERROR(ENOMEM);
     st->codec->codec_type = CODEC_TYPE_AUDIO;
 
     voc->remaining_size = 0;
@@ -68,7 +64,7 @@ voc_get_packet(AVFormatContext *s, AVPacket *pkt, AVStream *st, int max_size)
 {
     voc_dec_context_t *voc = s->priv_data;
     AVCodecContext *dec = st->codec;
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     voc_type_t type;
     int size;
     int sample_rate = 0;
@@ -77,7 +73,7 @@ voc_get_packet(AVFormatContext *s, AVPacket *pkt, AVStream *st, int max_size)
     while (!voc->remaining_size) {
         type = get_byte(pb);
         if (type == VOC_TYPE_EOF)
-            return AVERROR_IO;
+            return AVERROR(EIO);
         voc->remaining_size = get_le24(pb);
         max_size -= 4;
 
@@ -138,11 +134,6 @@ static int voc_read_packet(AVFormatContext *s, AVPacket *pkt)
     return voc_get_packet(s, pkt, s->streams[0], 0);
 }
 
-static int voc_read_close(AVFormatContext *s)
-{
-    return 0;
-}
-
 AVInputFormat voc_demuxer = {
     "voc",
     "Creative Voice File format",
@@ -150,6 +141,5 @@ AVInputFormat voc_demuxer = {
     voc_probe,
     voc_read_header,
     voc_read_packet,
-    voc_read_close,
     .codec_tag=(const AVCodecTag*[]){voc_codec_tags, 0},
 };

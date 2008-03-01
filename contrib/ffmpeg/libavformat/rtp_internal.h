@@ -20,8 +20,12 @@
  */
 
 // this is a bit of a misnomer, because rtp & rtsp internal structures and prototypes are in here.
-#ifndef RTP_INTERNAL_H
-#define RTP_INTERNAL_H
+#ifndef FFMPEG_RTP_INTERNAL_H
+#define FFMPEG_RTP_INTERNAL_H
+
+#include <stdint.h>
+#include "avcodec.h"
+#include "rtp.h"
 
 // these statistics are used for rtcp receiver reports...
 typedef struct {
@@ -37,12 +41,21 @@ typedef struct {
     uint32_t jitter;            ///< estimated jitter.
 } RTPStatistics;
 
-
+/**
+ * Packet parsing for "private" payloads in the RTP specs.
+ *
+ * @param s stream context
+ * @param pkt packet in which to write the parsed data
+ * @param timestamp pointer in which to write the timestamp of this RTP packet
+ * @param buf pointer to raw RTP packet data
+ * @param len length of buf
+ * @param flags flags from the RTP packet header (PKT_FLAG_*)
+ */
 typedef int (*DynamicPayloadPacketHandlerProc) (struct RTPDemuxContext * s,
                                                 AVPacket * pkt,
                                                 uint32_t *timestamp,
                                                 const uint8_t * buf,
-                                                int len);
+                                                int len, int flags);
 
 typedef struct RTPDynamicProtocolHandler_s {
     // fields from AVRtpDynamicPayloadType_s
@@ -101,10 +114,18 @@ struct RTPDemuxContext {
     /* dynamic payload stuff */
     DynamicPayloadPacketHandlerProc parse_packet;     ///< This is also copied from the dynamic protocol handler structure
     void *dynamic_protocol_context;        ///< This is a copy from the values setup from the sdp parsing, in rtsp.c don't free me.
+    int max_frames_per_packet;
 };
 
 extern RTPDynamicProtocolHandler *RTPFirstDynamicPayloadHandler;
 
 int rtsp_next_attr_and_value(const char **p, char *attr, int attr_size, char *value, int value_size); ///< from rtsp.c, but used by rtp dynamic protocol handlers.
-#endif /* RTP_INTERNAL_H */
+
+void ff_rtp_send_data(AVFormatContext *s1, const uint8_t *buf1, int len, int m);
+const char *ff_rtp_enc_name(int payload_type);
+enum CodecID ff_rtp_codec_id(const char *buf, enum CodecType codec_type);
+
+void av_register_rtp_dynamic_payload_handlers(void);
+
+#endif /* FFMPEG_RTP_INTERNAL_H */
 

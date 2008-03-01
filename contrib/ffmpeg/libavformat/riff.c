@@ -22,7 +22,6 @@
 #include "avformat.h"
 #include "avcodec.h"
 #include "riff.h"
-#include "allformats.h" // for asf_muxer
 
 /* Note: when encoding, the first matching tag is used, so order is
    important if multiple tags possible for a given codec. */
@@ -88,6 +87,8 @@ const AVCodecTag codec_bmp_tags[] = {
     { CODEC_ID_DVVIDEO, MKTAG('d', 'v', 'h', 'd') },
     { CODEC_ID_DVVIDEO, MKTAG('d', 'v', 's', 'l') },
     { CODEC_ID_DVVIDEO, MKTAG('d', 'v', '2', '5') },
+    { CODEC_ID_DVVIDEO, MKTAG('d', 'v', '5', '0') },
+    { CODEC_ID_DVVIDEO, MKTAG('c', 'd', 'v', 'c') },    // Canopus DV
     { CODEC_ID_MPEG1VIDEO, MKTAG('m', 'p', 'g', '1') },
     { CODEC_ID_MPEG1VIDEO, MKTAG('m', 'p', 'g', '2') },
     { CODEC_ID_MPEG2VIDEO, MKTAG('m', 'p', 'g', '2') },
@@ -97,15 +98,16 @@ const AVCodecTag codec_bmp_tags[] = {
     { CODEC_ID_MPEG1VIDEO, 0x10000001 },
     { CODEC_ID_MPEG2VIDEO, 0x10000002 },
     { CODEC_ID_MPEG2VIDEO, MKTAG('D', 'V', 'R', ' ') },
+    { CODEC_ID_MPEG2VIDEO, MKTAG('M', 'M', 'E', 'S') },
     { CODEC_ID_MJPEG, MKTAG('M', 'J', 'P', 'G') },
     { CODEC_ID_MJPEG, MKTAG('L', 'J', 'P', 'G') },
     { CODEC_ID_LJPEG, MKTAG('L', 'J', 'P', 'G') },
     { CODEC_ID_MJPEG, MKTAG('J', 'P', 'G', 'L') }, /* Pegasus lossless JPEG */
+    { CODEC_ID_JPEGLS,MKTAG('M', 'J', 'L', 'S') }, /* JPEG-LS custom FOURCC for avi - encoder */
     { CODEC_ID_MJPEG, MKTAG('M', 'J', 'L', 'S') }, /* JPEG-LS custom FOURCC for avi - decoder */
     { CODEC_ID_MJPEG, MKTAG('j', 'p', 'e', 'g') },
     { CODEC_ID_MJPEG, MKTAG('I', 'J', 'P', 'G') },
     { CODEC_ID_MJPEG, MKTAG('A', 'V', 'R', 'n') },
-    { CODEC_ID_JPEGLS, MKTAG('M', 'J', 'L', 'S') }, /* JPEG-LS custom FOURCC for avi - encoder */
     { CODEC_ID_HUFFYUV, MKTAG('H', 'F', 'Y', 'U') },
     { CODEC_ID_FFVHUFF, MKTAG('F', 'F', 'V', 'H') },
     { CODEC_ID_CYUV, MKTAG('C', 'Y', 'U', 'V') },
@@ -117,8 +119,11 @@ const AVCodecTag codec_bmp_tags[] = {
     { CODEC_ID_RAWVIDEO, MKTAG('U', 'Y', 'V', 'Y') },
     { CODEC_ID_RAWVIDEO, MKTAG('I', 'Y', 'U', 'V') },
     { CODEC_ID_RAWVIDEO, MKTAG('Y', '8', '0', '0') },
+    { CODEC_ID_RAWVIDEO, MKTAG('H', 'D', 'Y', 'C') },
     { CODEC_ID_INDEO3, MKTAG('I', 'V', '3', '1') },
     { CODEC_ID_INDEO3, MKTAG('I', 'V', '3', '2') },
+    { CODEC_ID_INDEO4, MKTAG('I', 'V', '4', '1') },
+    { CODEC_ID_INDEO5, MKTAG('I', 'V', '5', '0') },
     { CODEC_ID_VP3, MKTAG('V', 'P', '3', '1') },
     { CODEC_ID_VP3, MKTAG('V', 'P', '3', '0') },
     { CODEC_ID_VP5, MKTAG('V', 'P', '5', '0') },
@@ -175,106 +180,48 @@ const AVCodecTag codec_bmp_tags[] = {
 };
 
 const AVCodecTag codec_wav_tags[] = {
-    { CODEC_ID_MP2, 0x50 },
-    { CODEC_ID_MP3, 0x55 },
-    { CODEC_ID_AC3, 0x2000 },
-    { CODEC_ID_DTS, 0x2001 },
-    { CODEC_ID_PCM_S16LE, 0x01 },
-    { CODEC_ID_PCM_U8, 0x01 }, /* must come after s16le in this list */
-    { CODEC_ID_PCM_S24LE, 0x01 },
-    { CODEC_ID_PCM_S32LE, 0x01 },
-    { CODEC_ID_PCM_ALAW, 0x06 },
-    { CODEC_ID_PCM_MULAW, 0x07 },
-    { CODEC_ID_ADPCM_MS, 0x02 },
-    { CODEC_ID_ADPCM_IMA_WAV, 0x11 },
-    { CODEC_ID_ADPCM_YAMAHA, 0x20 },
-    { CODEC_ID_ADPCM_G726, 0x45 },
-    { CODEC_ID_ADPCM_IMA_DK4, 0x61 },  /* rogue format number */
-    { CODEC_ID_ADPCM_IMA_DK3, 0x62 },  /* rogue format number */
-    { CODEC_ID_WMAV1, 0x160 },
-    { CODEC_ID_WMAV2, 0x161 },
-    { CODEC_ID_AAC, 0x706d },
-    { CODEC_ID_AAC, 0xff },
-    { CODEC_ID_VORBIS, ('V'<<8)+'o' }, //HACK/FIXME, does vorbis in WAV/AVI have an (in)official id?
-    { CODEC_ID_SONIC, 0x2048 },
-    { CODEC_ID_SONIC_LS, 0x2048 },
-    { CODEC_ID_ADPCM_CT, 0x200 },
-    { CODEC_ID_ADPCM_SWF, ('S'<<8)+'F' },
-    { CODEC_ID_TRUESPEECH, 0x22 },
-    { CODEC_ID_FLAC, 0xF1AC },
-    { CODEC_ID_IMC, 0x401 },
-    { CODEC_ID_GSM_MS, 0x31 },
+    { CODEC_ID_PCM_S16LE,       0x0001 },
+    { CODEC_ID_PCM_U8,          0x0001 }, /* must come after s16le in this list */
+    { CODEC_ID_PCM_S24LE,       0x0001 },
+    { CODEC_ID_PCM_S32LE,       0x0001 },
+    { CODEC_ID_ADPCM_MS,        0x0002 },
+    { CODEC_ID_PCM_ALAW,        0x0006 },
+    { CODEC_ID_PCM_MULAW,       0x0007 },
+    { CODEC_ID_WMAVOICE,        0x000A },
+    { CODEC_ID_ADPCM_IMA_WAV,   0x0011 },
+    { CODEC_ID_ADPCM_YAMAHA,    0x0020 },
+    { CODEC_ID_TRUESPEECH,      0x0022 },
+    { CODEC_ID_GSM_MS,          0x0031 },
+    { CODEC_ID_ADPCM_G726,      0x0045 },
+    { CODEC_ID_MP2,             0x0050 },
+    { CODEC_ID_MP3,             0x0055 },
+    { CODEC_ID_ADPCM_IMA_DK4,   0x0061 },  /* rogue format number */
+    { CODEC_ID_ADPCM_IMA_DK3,   0x0062 },  /* rogue format number */
+    { CODEC_ID_VOXWARE,         0x0075 },
+    { CODEC_ID_AAC,             0x00ff },
+    { CODEC_ID_WMAV1,           0x0160 },
+    { CODEC_ID_WMAV2,           0x0161 },
+    { CODEC_ID_WMAPRO,          0x0162 },
+    { CODEC_ID_WMALOSSLESS,     0x0163 },
+    { CODEC_ID_ADPCM_CT,        0x0200 },
+    { CODEC_ID_ATRAC3,          0x0270 },
+    { CODEC_ID_IMC,             0x0401 },
+    { CODEC_ID_AC3,             0x2000 },
+    { CODEC_ID_DTS,             0x2001 },
+    { CODEC_ID_SONIC,           0x2048 },
+    { CODEC_ID_SONIC_LS,        0x2048 },
+    { CODEC_ID_AAC,             0x706d },
+    { CODEC_ID_FLAC,            0xF1AC },
+    { CODEC_ID_ADPCM_SWF,       ('S'<<8)+'F' },
+    { CODEC_ID_VORBIS,          ('V'<<8)+'o' }, //HACK/FIXME, does vorbis in WAV/AVI have an (in)official id?
 
     /* FIXME: All of the IDs below are not 16 bit and thus illegal. */
     // for NuppelVideo (nuv.c)
     { CODEC_ID_PCM_S16LE, MKTAG('R', 'A', 'W', 'A') },
-    { CODEC_ID_MP3, MKTAG('L', 'A', 'M', 'E') },
-    { CODEC_ID_MP3, MKTAG('M', 'P', '3', ' ') },
+    { CODEC_ID_MP3,       MKTAG('L', 'A', 'M', 'E') },
+    { CODEC_ID_MP3,       MKTAG('M', 'P', '3', ' ') },
     { 0, 0 },
 };
-
-unsigned int codec_get_tag(const AVCodecTag *tags, int id)
-{
-    while (tags->id != CODEC_ID_NONE) {
-        if (tags->id == id)
-            return tags->tag;
-        tags++;
-    }
-    return 0;
-}
-
-enum CodecID codec_get_id(const AVCodecTag *tags, unsigned int tag)
-{
-    while (tags->id != CODEC_ID_NONE) {
-        if(   toupper((tag >> 0)&0xFF) == toupper((tags->tag >> 0)&0xFF)
-           && toupper((tag >> 8)&0xFF) == toupper((tags->tag >> 8)&0xFF)
-           && toupper((tag >>16)&0xFF) == toupper((tags->tag >>16)&0xFF)
-           && toupper((tag >>24)&0xFF) == toupper((tags->tag >>24)&0xFF))
-            return tags->id;
-        tags++;
-    }
-    return CODEC_ID_NONE;
-}
-
-unsigned int av_codec_get_tag(const AVCodecTag *tags[4], enum CodecID id)
-{
-    int i;
-    for(i=0; tags && tags[i]; i++){
-        int tag= codec_get_tag(tags[i], id);
-        if(tag) return tag;
-    }
-    return 0;
-}
-
-enum CodecID av_codec_get_id(const AVCodecTag *tags[4], unsigned int tag)
-{
-    int i;
-    for(i=0; tags && tags[i]; i++){
-        enum CodecID id= codec_get_id(tags[i], tag);
-        if(id!=CODEC_ID_NONE) return id;
-    }
-    return CODEC_ID_NONE;
-}
-
-unsigned int codec_get_bmp_tag(int id)
-{
-    return codec_get_tag(codec_bmp_tags, id);
-}
-
-unsigned int codec_get_wav_tag(int id)
-{
-    return codec_get_tag(codec_wav_tags, id);
-}
-
-enum CodecID codec_get_bmp_id(unsigned int tag)
-{
-    return codec_get_id(codec_bmp_tags, tag);
-}
-
-enum CodecID codec_get_wav_id(unsigned int tag)
-{
-    return codec_get_id(codec_wav_tags, tag);
-}
 
 #ifdef CONFIG_MUXERS
 offset_t start_tag(ByteIOContext *pb, const char *tag)
@@ -327,7 +274,7 @@ int put_wav_header(ByteIOContext *pb, AVCodecContext *enc)
     }
 
     if (enc->codec_id == CODEC_ID_MP2 || enc->codec_id == CODEC_ID_MP3 || enc->codec_id == CODEC_ID_GSM_MS) {
-        blkalign = enc->frame_size; //this is wrong, but seems many demuxers dont work if this is set correctly
+        blkalign = enc->frame_size; //this is wrong, but it seems many demuxers do not work if this is set correctly
         //blkalign = 144 * enc->bit_rate/enc->sample_rate;
     } else if (enc->codec_id == CODEC_ID_ADPCM_G726) { //
         blkalign = 1;
@@ -475,6 +422,8 @@ int wav_codec_get_id(unsigned int tag, int bps)
         id = CODEC_ID_PCM_S24LE;
     if (id == CODEC_ID_PCM_S16LE && bps == 32)
         id = CODEC_ID_PCM_S32LE;
+    if (id == CODEC_ID_ADPCM_IMA_WAV && bps == 8)
+        id = CODEC_ID_PCM_ZORK;
     return id;
 }
 #endif // CONFIG_DEMUXERS

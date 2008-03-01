@@ -17,7 +17,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- *
  */
 
 /**
@@ -36,7 +35,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "common.h"
 #include "avcodec.h"
 #include "dsputil.h"
 
@@ -54,7 +52,7 @@ typedef struct Msvideo1Context {
     DSPContext dsp;
     AVFrame frame;
 
-    unsigned char *buf;
+    const unsigned char *buf;
     int size;
 
     int mode_8bit;  /* if it's not 8-bit, it's 16-bit */
@@ -63,7 +61,7 @@ typedef struct Msvideo1Context {
 
 static int msvideo1_decode_init(AVCodecContext *avctx)
 {
-    Msvideo1Context *s = (Msvideo1Context *)avctx->priv_data;
+    Msvideo1Context *s = avctx->priv_data;
 
     s->avctx = avctx;
 
@@ -76,7 +74,6 @@ static int msvideo1_decode_init(AVCodecContext *avctx)
         avctx->pix_fmt = PIX_FMT_RGB555;
     }
 
-    avctx->has_b_frames = 0;
     dsputil_init(&s->dsp, avctx);
 
     s->frame.data[0] = NULL;
@@ -300,9 +297,9 @@ static void msvideo1_decode_16bit(Msvideo1Context *s)
 
 static int msvideo1_decode_frame(AVCodecContext *avctx,
                                 void *data, int *data_size,
-                                uint8_t *buf, int buf_size)
+                                const uint8_t *buf, int buf_size)
 {
-    Msvideo1Context *s = (Msvideo1Context *)avctx->priv_data;
+    Msvideo1Context *s = avctx->priv_data;
 
     s->buf = buf;
     s->size = buf_size;
@@ -328,7 +325,7 @@ static int msvideo1_decode_frame(AVCodecContext *avctx,
 
 static int msvideo1_decode_end(AVCodecContext *avctx)
 {
-    Msvideo1Context *s = (Msvideo1Context *)avctx->priv_data;
+    Msvideo1Context *s = avctx->priv_data;
 
     if (s->frame.data[0])
         avctx->release_buffer(avctx, &s->frame);

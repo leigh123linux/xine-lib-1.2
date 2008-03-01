@@ -1,6 +1,8 @@
 optimization Tips (for libavcodec):
+===================================
 
 What to optimize:
+-----------------
 If you plan to do non-x86 architecture specific optimizations (SIMD normally),
 then take a look in the i386/ directory, as most important functions are
 already optimized for MMX.
@@ -9,10 +11,12 @@ If you want to do x86 optimizations then you can either try to finetune the
 stuff in the i386 directory or find some other functions in the C source to
 optimize, but there aren't many left.
 
+
 Understanding these overoptimized functions:
+--------------------------------------------
 As many functions tend to be a bit difficult to understand because
 of optimizations, it can be hard to optimize them further, or write
-architecture-specific versions. It is recommened to look at older
+architecture-specific versions. It is recommended to look at older
 revisions of the interesting files (for a web frontend try ViewVC at
 http://svn.mplayerhq.hu/ffmpeg/trunk/).
 Alternatively, look into the other architecture-specific versions in
@@ -24,10 +28,23 @@ NOTE: If you still don't understand some function, ask at our mailing list!!!
 (http://lists.mplayerhq.hu/mailman/listinfo/ffmpeg-devel)
 
 
+When is an optimization justified?
+----------------------------------
+Normally, clean and simple optimizations for widely used codecs are
+justified even if they only achieve an overall speedup of 0.1%. These
+speedups accumulate and can make a big difference after awhile. Also, if
+none of the following factors get worse due to an optimization -- speed,
+binary code size, source size, source readability -- and at least one
+factor improves, then an optimization is always a good idea even if the
+overall gain is less than 0.1%. For obscure codecs that are not often
+used, the goal is more toward keeping the code clean, small, and
+readable instead of making it 1% faster.
+
 
 WTF is that function good for ....:
-The primary purpose of that list is to avoid wasting time to optimize functions
-which are rarely used
+-----------------------------------
+The primary purpose of this list is to avoid wasting time optimizing functions
+which are rarely used.
 
 put(_no_rnd)_pixels{,_x2,_y2,_xy2}
     Used in motion compensation (en/decoding).
@@ -77,7 +94,7 @@ clear_blocks
 gmc
     Used for MPEG-4 gmc.
     Optimizing this should have a significant effect on the gmc decoding
-    speed but it's very likely impossible to write in SIMD.
+    speed.
 
 gmc1
     Used for chroma blocks in MPEG-4 gmc with 1 warp point
@@ -134,11 +151,29 @@ The minimum guaranteed alignment is written in the .h files, for example:
     void (*put_pixels_clamped)(const DCTELEM *block/*align 16*/, UINT8 *pixels/*align 8*/, int line_size);
 
 
+General Tips:
+-------------
+Use asm loops like:
+asm(
+    "1: ....
+    ...
+    "jump_instruciton ....
+Do not use C loops:
+do{
+    asm(
+        ...
+}while()
+
+Use asm() instead of intrinsics. The latter requires a good optimizing compiler
+which gcc is not.
+
 
 Links:
+======
 http://www.aggregate.org/MAGIC/
 
 x86-specific:
+-------------
 http://developer.intel.com/design/pentium4/manuals/248966.htm
 
 The IA-32 Intel Architecture Software Developer's Manual, Volume 2:
@@ -152,14 +187,45 @@ http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/22007.pd
 
 
 ARM-specific:
-ARM Architecture Reference Manual:
-http://www.arm.com/community/academy/resources.html
+-------------
+ARM Architecture Reference Manual (up to ARMv5TE):
+http://www.arm.com/community/university/eulaarmarm.html
 
-Instructions timings and optimization guide for ARM9E:
-http://www.arm.com/pdfs/DDI0222B_9EJS_r1p2.pdf
+Procedure Call Standard for the ARM Architecture:
+http://www.arm.com/pdfs/aapcs.pdf
 
+Optimization guide for ARM9E (used in Nokia 770 Internet Tablet):
+http://infocenter.arm.com/help/topic/com.arm.doc.ddi0240b/DDI0240A.pdf
+Optimization guide for ARM11 (used in Nokia N800 Internet Tablet):
+http://infocenter.arm.com/help/topic/com.arm.doc.ddi0211j/DDI0211J_arm1136_r1p5_trm.pdf
+Optimization guide for Intel XScale (used in Sharp Zaurus PDA):
+http://download.intel.com/design/intelxscale/27347302.pdf
+
+PowerPC-specific:
+-----------------
+PowerPC32/AltiVec PIM:
+www.freescale.com/files/32bit/doc/ref_manual/ALTIVECPEM.pdf
+
+PowerPC32/AltiVec PEM:
+www.freescale.com/files/32bit/doc/ref_manual/ALTIVECPIM.pdf
+
+CELL/SPU:
+http://www-01.ibm.com/chips/techlib/techlib.nsf/techdocs/30B3520C93F437AB87257060006FFE5E/$file/Language_Extensions_for_CBEA_2.4.pdf
+http://www-01.ibm.com/chips/techlib/techlib.nsf/techdocs/9F820A5FFA3ECE8C8725716A0062585F/$file/CBE_Handbook_v1.1_24APR2007_pub.pdf
+
+SPARC-specific:
+---------------
+SPARC Joint Programming Specification (JPS1): Commonality
+http://www.fujitsu.com/downloads/PRMPWR/JPS1-R1.0.4-Common-pub.pdf
+
+UltraSPARC III Processor User's Manual (contains instruction timings)
+http://www.sun.com/processors/manuals/USIIIv2.pdf
+
+VIS Whitepaper (contains optimization guidelines)
+http://www.sun.com/processors/vis/download/vis/vis_whitepaper.pdf
 
 GCC asm links:
+--------------
 official doc but quite ugly
 http://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html
 

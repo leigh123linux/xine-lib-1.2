@@ -1,27 +1,51 @@
 include ../config.mak
 
-OBJS= mathematics.o \
-      rational.o \
-      intfloat_readwrite.o \
-      crc.o \
-      md5.o \
-      lls.o \
-      adler32.o \
-      log.o \
-      mem.o \
-      fifo.o \
-      tree.o \
-      lzo.o \
-      random.o \
-      aes.o \
-      base64.o \
+OBJS = adler32.o \
+       aes.o \
+       base64.o \
+       crc.o \
+       des.o \
+       fifo.o \
+       intfloat_readwrite.o \
+       lls.o \
+       log.o \
+       lzo.o \
+       mathematics.o \
+       md5.o \
+       mem.o \
+       random.o \
+       rational.o \
+       rc4.o \
+       sha1.o \
+       string.o \
+       tree.o \
 
-HEADERS = avutil.h common.h mathematics.h integer.h rational.h \
-          intfloat_readwrite.h md5.h adler32.h log.h fifo.h lzo.h \
-          random.h mem.h base64.h
+HEADERS = adler32.h \
+          avstring.h \
+          avutil.h \
+          base64.h \
+          common.h \
+          crc.h \
+          fifo.h \
+          intfloat_readwrite.h \
+          log.h \
+          lzo.h \
+          mathematics.h \
+          md5.h \
+          mem.h \
+          random.h \
+          rational.h \
+          sha1.h
 
 NAME=avutil
 LIBVERSION=$(LAVUVERSION)
 LIBMAJOR=$(LAVUMAJOR)
 
+TESTS = $(addsuffix -test$(EXESUF), adler32 aes crc des lls md5 sha1 softfloat tree)
+
 include ../common.mak
+
+lzo-test$(EXESUF): EXTRALIBS += -llzo2
+
+clean::
+	rm -f lzo-test$(EXESUF)

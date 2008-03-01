@@ -17,7 +17,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- *
  */
 
 /**
@@ -34,7 +33,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "common.h"
 #include "avcodec.h"
 
 typedef struct XanContext {
@@ -43,7 +41,7 @@ typedef struct XanContext {
     AVFrame last_frame;
     AVFrame current_frame;
 
-    unsigned char *buf;
+    const unsigned char *buf;
     int size;
 
     /* scratch space */
@@ -70,7 +68,6 @@ static int xan_decode_init(AVCodecContext *avctx)
     }
 
     avctx->pix_fmt = PIX_FMT_PAL8;
-    avctx->has_b_frames = 0;
 
     if(avcodec_check_dimensions(avctx, avctx->width, avctx->height))
         return -1;
@@ -85,12 +82,12 @@ static int xan_decode_init(AVCodecContext *avctx)
     return 0;
 }
 
-/* This function is used in lieu of memcpy(). This decoder can not use
+/* This function is used in lieu of memcpy(). This decoder cannot use
  * memcpy because the memory locations often overlap and
  * memcpy doesn't like that; it's not uncommon, for example, for
  * dest = src+1, to turn byte A into  pattern AAAAAAAA.
  * This was originally repz movsb in Intel x86 ASM. */
-static inline void bytecopy(unsigned char *dest, unsigned char *src, int count)
+static inline void bytecopy(unsigned char *dest, const unsigned char *src, int count)
 {
     int i;
 
@@ -98,12 +95,12 @@ static inline void bytecopy(unsigned char *dest, unsigned char *src, int count)
         dest[i] = src[i];
 }
 
-static int xan_huffman_decode(unsigned char *dest, unsigned char *src,
+static int xan_huffman_decode(unsigned char *dest, const unsigned char *src,
     int dest_len)
 {
     unsigned char byte = *src++;
     unsigned char ival = byte + 0x16;
-    unsigned char * ptr = src + byte*2;
+    const unsigned char * ptr = src + byte*2;
     unsigned char val = ival;
     int counter = 0;
     unsigned char *dest_end = dest + dest_len;
@@ -132,7 +129,7 @@ static int xan_huffman_decode(unsigned char *dest, unsigned char *src,
     return 0;
 }
 
-static void xan_unpack(unsigned char *dest, unsigned char *src, int dest_len)
+static void xan_unpack(unsigned char *dest, const unsigned char *src, int dest_len)
 {
     unsigned char opcode;
     int size;
@@ -208,8 +205,8 @@ static void xan_unpack(unsigned char *dest, unsigned char *src, int dest_len)
     bytecopy(dest, src, size);  dest += size;  src += size;
 }
 
-static void inline xan_wc3_output_pixel_run(XanContext *s,
-    unsigned char *pixel_buffer, int x, int y, int pixel_count)
+static inline void xan_wc3_output_pixel_run(XanContext *s,
+    const unsigned char *pixel_buffer, int x, int y, int pixel_count)
 {
     int stride;
     int line_inc;
@@ -237,7 +234,7 @@ static void inline xan_wc3_output_pixel_run(XanContext *s,
     }
 }
 
-static void inline xan_wc3_copy_pixel_run(XanContext *s,
+static inline void xan_wc3_copy_pixel_run(XanContext *s,
     int x, int y, int pixel_count, int motion_x, int motion_y)
 {
     int stride;
@@ -287,14 +284,13 @@ static void xan_wc3_decode_frame(XanContext *s) {
 
     unsigned char *opcode_buffer = s->buffer1;
     int opcode_buffer_size = s->buffer1_size;
-    unsigned char *imagedata_buffer = s->buffer2;
-    int imagedata_buffer_size = s->buffer2_size;
+    const unsigned char *imagedata_buffer = s->buffer2;
 
     /* pointers to segments inside the compressed chunk */
-    unsigned char *huffman_segment;
-    unsigned char *size_segment;
-    unsigned char *vector_segment;
-    unsigned char *imagedata_segment;
+    const unsigned char *huffman_segment;
+    const unsigned char *size_segment;
+    const unsigned char *vector_segment;
+    const unsigned char *imagedata_segment;
 
     huffman_segment =   s->buf + AV_RL16(&s->buf[0]);
     size_segment =      s->buf + AV_RL16(&s->buf[2]);
@@ -304,8 +300,7 @@ static void xan_wc3_decode_frame(XanContext *s) {
     xan_huffman_decode(opcode_buffer, huffman_segment, opcode_buffer_size);
 
     if (imagedata_segment[0] == 2)
-        xan_unpack(imagedata_buffer, &imagedata_segment[1],
-            imagedata_buffer_size);
+        xan_unpack(s->buffer2, &imagedata_segment[1], s->buffer2_size);
     else
         imagedata_buffer = &imagedata_segment[1];
 
@@ -356,8 +351,7 @@ static void xan_wc3_decode_frame(XanContext *s) {
 
         case 11:
         case 21:
-            size = (size_segment[0] << 16) | (size_segment[1] << 8) |
-                size_segment[2];
+            size = AV_RB24(size_segment);
             size_segment += 3;
             break;
         }
@@ -410,7 +404,7 @@ static void xan_wc4_decode_frame(XanContext *s) {
 
 static int xan_decode_frame(AVCodecContext *avctx,
                             void *data, int *data_size,
-                            uint8_t *buf, int buf_size)
+                            const uint8_t *buf, int buf_size)
 {
     XanContext *s = avctx->priv_data;
     AVPaletteControl *palette_control = avctx->palctrl;

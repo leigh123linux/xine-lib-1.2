@@ -87,7 +87,7 @@ static int yuv4_generate_header(AVFormatContext *s, char* buf)
 static int yuv4_write_packet(AVFormatContext *s, AVPacket *pkt)
 {
     AVStream *st = s->streams[pkt->stream_index];
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     AVPicture *picture;
     int* first_pkt = s->priv_data;
     int width, height, h_chroma_shift, v_chroma_shift;
@@ -103,7 +103,7 @@ static int yuv4_write_packet(AVFormatContext *s, AVPacket *pkt)
         *first_pkt = 0;
         if (yuv4_generate_header(s, buf2) < 0) {
             av_log(s, AV_LOG_ERROR, "Error. YUV4MPEG stream header write failed.\n");
-            return AVERROR_IO;
+            return AVERROR(EIO);
         } else {
             put_buffer(pb, buf2, strlen(buf2));
         }
@@ -149,7 +149,7 @@ static int yuv4_write_header(AVFormatContext *s)
     int* first_pkt = s->priv_data;
 
     if (s->nb_streams != 1)
-        return AVERROR_IO;
+        return AVERROR(EIO);
 
     if (s->streams[0]->codec->pix_fmt == PIX_FMT_YUV411P) {
         av_log(s, AV_LOG_ERROR, "Warning: generating rarely used 4:1:1 YUV stream, some mjpegtools might not work.\n");
@@ -159,15 +159,10 @@ static int yuv4_write_header(AVFormatContext *s)
              (s->streams[0]->codec->pix_fmt != PIX_FMT_GRAY8) &&
              (s->streams[0]->codec->pix_fmt != PIX_FMT_YUV444P)) {
         av_log(s, AV_LOG_ERROR, "ERROR: yuv4mpeg only handles yuv444p, yuv422p, yuv420p, yuv411p and gray pixel formats. Use -pix_fmt to select one.\n");
-        return AVERROR_IO;
+        return AVERROR(EIO);
     }
 
     *first_pkt = 1;
-    return 0;
-}
-
-static int yuv4_write_trailer(AVFormatContext *s)
-{
     return 0;
 }
 
@@ -182,7 +177,6 @@ AVOutputFormat yuv4mpegpipe_muxer = {
     CODEC_ID_RAWVIDEO,
     yuv4_write_header,
     yuv4_write_packet,
-    yuv4_write_trailer,
     .flags = AVFMT_RAWPICTURE,
 };
 #endif
@@ -196,7 +190,7 @@ static int yuv4_read_header(AVFormatContext *s, AVFormatParameters *ap)
     char header[MAX_YUV4_HEADER+10];  // Include headroom for the longest option
     char *tokstart,*tokend,*header_end;
     int i;
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     int width=-1, height=-1, raten=0, rated=0, aspectn=0, aspectd=0;
     enum PixelFormat pix_fmt=PIX_FMT_NONE,alt_pix_fmt=PIX_FMT_NONE;
     AVStream *st;
@@ -350,7 +344,7 @@ static int yuv4_read_packet(AVFormatContext *s, AVPacket *pkt)
     struct frame_attributes *s1 = s->priv_data;
 
     for (i=0; i<MAX_FRAME_HEADER; i++) {
-        header[i] = get_byte(&s->pb);
+        header[i] = get_byte(s->pb);
         if (header[i] == '\n') {
             header[i+1] = 0;
             break;
@@ -366,8 +360,8 @@ static int yuv4_read_packet(AVFormatContext *s, AVPacket *pkt)
     if (packet_size < 0)
         return -1;
 
-    if (av_get_packet(&s->pb, pkt, packet_size) != packet_size)
-        return AVERROR_IO;
+    if (av_get_packet(s->pb, pkt, packet_size) != packet_size)
+        return AVERROR(EIO);
 
     if (s->streams[0]->codec->coded_frame) {
         s->streams[0]->codec->coded_frame->interlaced_frame = s1->interlaced_frame;
@@ -386,8 +380,6 @@ static int yuv4_read_close(AVFormatContext *s)
 static int yuv4_probe(AVProbeData *pd)
 {
     /* check file header */
-    if (pd->buf_size <= sizeof(Y4M_MAGIC))
-        return 0;
     if (strncmp(pd->buf, Y4M_MAGIC, sizeof(Y4M_MAGIC)-1)==0)
         return AVPROBE_SCORE_MAX;
     else

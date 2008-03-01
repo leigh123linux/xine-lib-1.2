@@ -2,6 +2,17 @@
  * Copyright (C) 2006 Michael Niedermayer (michaelni@gmx.at)
  * Copyright (C) 2003-2005 by Christopher R. Hertel (crh@ubiqx.mn.org)
  *
+ * References:
+ *  IETF RFC 1321: The MD5 Message-Digest Algorithm
+ *       Ron Rivest. IETF, April, 1992
+ *
+ * based on http://ubiqx.org/libcifs/source/Auth/MD5.c
+ *          from Christopher R. Hertel (crh@ubiqx.mn.org)
+ * Simplified, cleaned and IMO redundant comments removed by michael.
+ *
+ * If you use gcc, then version 4.1 or later and -fomit-frame-pointer is
+ * strongly recommended.
+ *
  * This file is part of FFmpeg.
  *
  * FFmpeg is free software; you can redistribute it and/or
@@ -17,17 +28,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- *
- * References:
- *  IETF RFC 1321: The MD5 Message-Digest Algorithm
- *       Ron Rivest. IETF, April, 1992
- *
- * based on http://ubiqx.org/libcifs/source/Auth/MD5.c
- *          from Christopher R. Hertel (crh@ubiqx.mn.org)
- * simplified, cleaned and IMO redundant comments removed by michael
- *
- * if you use gcc, then version 4.1 or later and -fomit-frame-pointer is
- * strongly recommended
  */
 
 #include "common.h"
@@ -87,7 +87,7 @@ static const uint32_t T[64] = { // T[i]= fabs(sin(i+1)<<32)
 static void body(uint32_t ABCD[4], uint32_t X[16]){
 
     int t;
-    int i attribute_unused;
+    int i av_unused;
     unsigned int a= ABCD[3];
     unsigned int b= ABCD[2];
     unsigned int c= ABCD[1];
@@ -147,7 +147,7 @@ void av_md5_final(AVMD5 *ctx, uint8_t *dst){
     while((ctx->len & 63)<56)
         av_md5_update(ctx, "", 1);
 
-    av_md5_update(ctx, &finalcount, 8);
+    av_md5_update(ctx, (uint8_t*)&finalcount, 8);
 
     for(i=0; i<4; i++)
         ((uint32_t*)dst)[i]= le2me_32(ctx->ABCD[3-i]);
@@ -164,7 +164,7 @@ void av_md5_sum(uint8_t *dst, const uint8_t *src, const int len){
 #ifdef TEST
 #include <stdio.h>
 #undef printf
-main(){
+int main(void){
     uint64_t md5val;
     int i;
     uint8_t in[1000];
@@ -176,5 +176,7 @@ main(){
     av_md5_sum( (uint8_t*)&md5val, in,  65); printf("%"PRId64"\n", md5val);
     for(i=0; i<1000; i++) in[i]= i % 127;
     av_md5_sum( (uint8_t*)&md5val, in,  999); printf("%"PRId64"\n", md5val);
+
+    return 0;
 }
 #endif

@@ -20,23 +20,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef _GCC_FIXES_
-#define _GCC_FIXES_
+#ifndef FFMPEG_GCC_FIXES_H
+#define FFMPEG_GCC_FIXES_H
+
+#include "config.h"
 
 #ifdef HAVE_ALTIVEC_H
 #include <altivec.h>
 #endif
-
-#ifdef CONFIG_DARWIN
-# ifndef __MWERKS__
-#  define AVV(x...) (x)
-# else
-#  define AVV
-# endif
-#define REG_v(a) asm ( #a )
-#else
-
-#define AVV(x...) {x}
 
 #if (__GNUC__ < 4)
 # define REG_v(a)
@@ -44,7 +35,7 @@
 # define REG_v(a) asm ( #a )
 #endif
 
-#if (__GNUC__ * 100 + __GNUC_MINOR__ < 303)
+#if (__GNUC__ == 3 && __GNUC_MINOR__ < 3)
 
 /* This code was provided to me by Bartosch Pixa
  * as a separate header file (broken_mergel.h).
@@ -106,14 +97,6 @@ __ch (__bin_args_eq (vector unsigned int, (a1), vector unsigned int, (a2)), \
       ((vector unsigned int) ff_vmrglw ((vector signed int) (a1), (vector signed int) (a2))), \
     __altivec_link_error_invalid_argument ())))))))
 
-#endif
+#endif /* (__GNUC__ == 3 && __GNUC_MINOR__ < 3) */
 
-#endif /* CONFIG_DARWIN */
-
-#ifndef __MWERKS__
-#define const_vector const vector
-#else
-#define const_vector vector
-#endif
-
-#endif /* _GCC_FIXES_ */
+#endif /* FFMPEG_GCC_FIXES_H */

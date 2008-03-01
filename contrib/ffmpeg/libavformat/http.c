@@ -21,11 +21,13 @@
 #include "avformat.h"
 #include <unistd.h>
 #include "network.h"
+#include "os_support.h"
 
 #include "base64.h"
+#include "avstring.h"
 
-/* XXX: POST protocol is not completly implemented because ffmpeg use
-   only a subset of it */
+/* XXX: POST protocol is not completely implemented because ffmpeg uses
+   only a subset of it. */
 
 //#define DEBUG
 
@@ -62,7 +64,7 @@ static int http_open_cnx(URLContext *h)
 
     proxy_path = getenv("http_proxy");
     use_proxy = (proxy_path != NULL) && !getenv("no_proxy") &&
-        strstart(proxy_path, "http://", NULL);
+        av_strstart(proxy_path, "http://", NULL);
 
     /* fill the dest addr */
  redo:
@@ -72,7 +74,7 @@ static int http_open_cnx(URLContext *h)
     if (port > 0) {
         snprintf(hoststr, sizeof(hoststr), "%s:%d", hostname, port);
     } else {
-        pstrcpy(hoststr, sizeof(hoststr), hostname);
+        av_strlcpy(hoststr, hostname, sizeof(hoststr));
     }
 
     if (use_proxy) {
@@ -100,7 +102,7 @@ static int http_open_cnx(URLContext *h)
         /* url moved, get next */
         url_close(hd);
         if (redirects++ >= MAX_REDIRECTS)
-            return AVERROR_IO;
+            return AVERROR(EIO);
         location_changed = 0;
         goto redo;
     }
@@ -108,7 +110,7 @@ static int http_open_cnx(URLContext *h)
  fail:
     if (hd)
         url_close(hd);
-    return AVERROR_IO;
+    return AVERROR(EIO);
 }
 
 static int http_open(URLContext *h, const char *uri, int flags)
@@ -125,7 +127,7 @@ static int http_open(URLContext *h, const char *uri, int flags)
     h->priv_data = s;
     s->filesize = -1;
     s->off = 0;
-    pstrcpy (s->location, URL_SIZE, uri);
+    av_strlcpy(s->location, uri, URL_SIZE);
 
     ret = http_open_cnx(h);
     if (ret != 0)
@@ -138,7 +140,7 @@ static int http_getc(HTTPContext *s)
     if (s->buf_ptr >= s->buf_end) {
         len = url_read(s->hd, s->buffer, BUFFER_SIZE);
         if (len < 0) {
-            return AVERROR_IO;
+            return AVERROR(EIO);
         } else if (len == 0) {
             return -1;
         } else {
@@ -217,7 +219,7 @@ static int http_connect(URLContext *h, const char *path, const char *hoststr,
     /* send http header */
     post = h->flags & URL_WRONLY;
     auth_b64 = av_malloc(auth_b64_len);
-    av_base64_encode(auth_b64, auth_b64_len, (uint8_t *)auth, strlen(auth));
+    av_base64_encode(auth_b64, auth_b64_len, auth, strlen(auth));
     snprintf(s->buffer, sizeof(s->buffer),
              "%s %s HTTP/1.1\r\n"
              "User-Agent: %s\r\n"
@@ -236,7 +238,7 @@ static int http_connect(URLContext *h, const char *path, const char *hoststr,
 
     av_freep(&auth_b64);
     if (http_write(h, s->buffer, strlen(s->buffer)) < 0)
-        return AVERROR_IO;
+        return AVERROR(EIO);
 
     /* init input buffer */
     s->buf_ptr = s->buffer;
@@ -245,7 +247,6 @@ static int http_connect(URLContext *h, const char *path, const char *hoststr,
     s->off = 0;
     s->filesize = -1;
     if (post) {
-        sleep(1);
         return 0;
     }
 
@@ -254,7 +255,7 @@ static int http_connect(URLContext *h, const char *path, const char *hoststr,
     for(;;) {
         ch = http_getc(s);
         if (ch < 0)
-            return AVERROR_IO;
+            return AVERROR(EIO);
         if (ch == '\n') {
             /* process line */
             if (q > line && q[-1] == '\r')

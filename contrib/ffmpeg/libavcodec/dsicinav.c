@@ -25,7 +25,7 @@
  */
 
 #include "avcodec.h"
-#include "common.h"
+#include "bytestream.h"
 
 
 typedef enum CinVideoBitmapIndex {
@@ -88,12 +88,11 @@ static const int16_t cinaudio_delta16_table[256] = {
 
 static int cinvideo_decode_init(AVCodecContext *avctx)
 {
-    CinVideoContext *cin = (CinVideoContext *)avctx->priv_data;
+    CinVideoContext *cin = avctx->priv_data;
     unsigned int i;
 
     cin->avctx = avctx;
     avctx->pix_fmt = PIX_FMT_PAL8;
-    avctx->has_b_frames = 0;
 
     cin->frame.data[0] = NULL;
 
@@ -196,9 +195,9 @@ static void cin_decode_rle(const unsigned char *src, int src_size, unsigned char
 
 static int cinvideo_decode_frame(AVCodecContext *avctx,
                                  void *data, int *data_size,
-                                 uint8_t *buf, int buf_size)
+                                 const uint8_t *buf, int buf_size)
 {
-    CinVideoContext *cin = (CinVideoContext *)avctx->priv_data;
+    CinVideoContext *cin = avctx->priv_data;
     int i, y, palette_type, palette_colors_count, bitmap_frame_type, bitmap_frame_size;
 
     cin->frame.buffer_hints = FF_BUFFER_HINTS_VALID | FF_BUFFER_HINTS_PRESERVE | FF_BUFFER_HINTS_REUSABLE;
@@ -208,7 +207,7 @@ static int cinvideo_decode_frame(AVCodecContext *avctx,
     }
 
     palette_type = buf[0];
-    palette_colors_count = buf[1] | (buf[2] << 8);
+    palette_colors_count = AV_RL16(buf+1);
     bitmap_frame_type = buf[3];
     buf += 4;
 
@@ -217,13 +216,12 @@ static int cinvideo_decode_frame(AVCodecContext *avctx,
     /* handle palette */
     if (palette_type == 0) {
         for (i = 0; i < palette_colors_count; ++i) {
-            cin->palette[i] = (buf[2] << 16) | (buf[1] << 8) | buf[0];
-            buf += 3;
+            cin->palette[i] = bytestream_get_le24(&buf);
             bitmap_frame_size -= 3;
         }
     } else {
         for (i = 0; i < palette_colors_count; ++i) {
-            cin->palette[buf[0]] = (buf[3] << 16) | (buf[2] << 8) | buf[1];
+            cin->palette[buf[0]] = AV_RL24(buf+1);
             buf += 4;
             bitmap_frame_size -= 4;
         }
@@ -288,7 +286,7 @@ static int cinvideo_decode_frame(AVCodecContext *avctx,
 
 static int cinvideo_decode_end(AVCodecContext *avctx)
 {
-    CinVideoContext *cin = (CinVideoContext *)avctx->priv_data;
+    CinVideoContext *cin = avctx->priv_data;
     int i;
 
     if (cin->frame.data[0])
@@ -302,7 +300,7 @@ static int cinvideo_decode_end(AVCodecContext *avctx)
 
 static int cinaudio_decode_init(AVCodecContext *avctx)
 {
-    CinAudioContext *cin = (CinAudioContext *)avctx->priv_data;
+    CinAudioContext *cin = avctx->priv_data;
 
     cin->avctx = avctx;
     cin->initial_decode_frame = 1;
@@ -313,11 +311,13 @@ static int cinaudio_decode_init(AVCodecContext *avctx)
 
 static int cinaudio_decode_frame(AVCodecContext *avctx,
                                  void *data, int *data_size,
-                                 uint8_t *buf, int buf_size)
+                                 const uint8_t *buf, int buf_size)
 {
-    CinAudioContext *cin = (CinAudioContext *)avctx->priv_data;
-    uint8_t *src = buf;
+    CinAudioContext *cin = avctx->priv_data;
+    const uint8_t *src = buf;
     int16_t *samples = (int16_t *)data;
+
+    buf_size = FFMIN(buf_size, *data_size/2);
 
     if (cin->initial_decode_frame) {
         cin->initial_decode_frame = 0;
@@ -327,7 +327,7 @@ static int cinaudio_decode_frame(AVCodecContext *avctx,
     }
     while (buf_size > 0) {
         cin->delta += cinaudio_delta16_table[*src++];
-        cin->delta = av_clip(cin->delta, -32768, 32767);
+        cin->delta = av_clip_int16(cin->delta);
         *samples++ = cin->delta;
         --buf_size;
     }

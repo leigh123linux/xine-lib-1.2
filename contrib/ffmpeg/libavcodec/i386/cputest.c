@@ -21,7 +21,7 @@
  */
 
 #include <stdlib.h>
-#include "../dsputil.h"
+#include "dsputil.h"
 
 #undef printf
 
@@ -35,7 +35,7 @@
 
 /* ebx saving is necessary for PIC. gcc seems unable to see it alone */
 #define cpuid(index,eax,ebx,ecx,edx)\
-    __asm __volatile\
+    asm volatile\
         ("mov %%"REG_b", %%"REG_S"\n\t"\
          "cpuid\n\t"\
          "xchg %%"REG_b", %%"REG_S\
@@ -80,15 +80,19 @@ int mm_support(void)
     if(max_std_level >= 1){
         cpuid(1, eax, ebx, ecx, std_caps);
         if (std_caps & (1<<23))
-            rval |= MM_MMX;
+            rval |= FF_MM_MMX;
         if (std_caps & (1<<25))
-            rval |= MM_MMXEXT | MM_SSE;
+            rval |= FF_MM_MMXEXT
+#if !defined(__GNUC__) || __GNUC__ > 2
+                  | FF_MM_SSE;
         if (std_caps & (1<<26))
-            rval |= MM_SSE2;
+            rval |= FF_MM_SSE2;
         if (ecx & 1)
-            rval |= MM_SSE3;
+            rval |= FF_MM_SSE3;
         if (ecx & 0x00000200 )
-            rval |= MM_SSSE3;
+            rval |= FF_MM_SSSE3
+#endif
+                  ;
     }
 
     cpuid(0x80000000, max_ext_level, ebx, ecx, edx);
@@ -96,30 +100,30 @@ int mm_support(void)
     if(max_ext_level >= 0x80000001){
         cpuid(0x80000001, eax, ebx, ecx, ext_caps);
         if (ext_caps & (1<<31))
-            rval |= MM_3DNOW;
+            rval |= FF_MM_3DNOW;
         if (ext_caps & (1<<30))
-            rval |= MM_3DNOWEXT;
+            rval |= FF_MM_3DNOWEXT;
         if (ext_caps & (1<<23))
-            rval |= MM_MMX;
+            rval |= FF_MM_MMX;
         if (ext_caps & (1<<22))
-            rval |= MM_MMXEXT;
+            rval |= FF_MM_MMXEXT;
     }
 
 #if 0
     av_log(NULL, AV_LOG_DEBUG, "%s%s%s%s%s%s%s%s\n",
-        (rval&MM_MMX) ? "MMX ":"",
-        (rval&MM_MMXEXT) ? "MMX2 ":"",
-        (rval&MM_SSE) ? "SSE ":"",
-        (rval&MM_SSE2) ? "SSE2 ":"",
-        (rval&MM_SSE3) ? "SSE3 ":"",
-        (rval&MM_SSSE3) ? "SSSE3 ":"",
-        (rval&MM_3DNOW) ? "3DNow ":"",
-        (rval&MM_3DNOWEXT) ? "3DNowExt ":"");
+        (rval&FF_MM_MMX) ? "MMX ":"",
+        (rval&FF_MM_MMXEXT) ? "MMX2 ":"",
+        (rval&FF_MM_SSE) ? "SSE ":"",
+        (rval&FF_MM_SSE2) ? "SSE2 ":"",
+        (rval&FF_MM_SSE3) ? "SSE3 ":"",
+        (rval&FF_MM_SSSE3) ? "SSSE3 ":"",
+        (rval&FF_MM_3DNOW) ? "3DNow ":"",
+        (rval&FF_MM_3DNOWEXT) ? "3DNowExt ":"");
 #endif
     return rval;
 }
 
-#ifdef __TEST__
+#ifdef TEST
 int main ( void )
 {
   int mm_flags;

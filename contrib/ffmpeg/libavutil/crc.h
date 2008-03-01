@@ -18,25 +18,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef CRC_H
-#define CRC_H
+#ifndef FFMPEG_CRC_H
+#define FFMPEG_CRC_H
+
+#include <stdint.h>
+#include <sys/types.h>
 
 typedef uint32_t AVCRC;
 
-#if LIBAVUTIL_VERSION_INT  < (50<<16)
-extern AVCRC *av_crcEDB88320;
-extern AVCRC *av_crc04C11DB7;
-extern AVCRC *av_crc8005    ;
-extern AVCRC *av_crc07      ;
-#else
-extern AVCRC av_crcEDB88320[];
-extern AVCRC av_crc04C11DB7[];
-extern AVCRC av_crc8005    [];
-extern AVCRC av_crc07      [];
-#endif
+typedef enum {
+    AV_CRC_8_ATM,
+    AV_CRC_16_ANSI,
+    AV_CRC_16_CCITT,
+    AV_CRC_32_IEEE,
+    AV_CRC_32_IEEE_LE,  /*< reversed bitorder version of AV_CRC_32_IEEE */
+    AV_CRC_MAX,         /*< not part of public API! don't use outside lavu */
+}AVCRCId;
 
 int av_crc_init(AVCRC *ctx, int le, int bits, uint32_t poly, int ctx_size);
+const AVCRC *av_crc_get_table(AVCRCId crc_id);
 uint32_t av_crc(const AVCRC *ctx, uint32_t start_crc, const uint8_t *buffer, size_t length);
 
-#endif /* CRC_H */
+#endif /* FFMPEG_CRC_H */
 

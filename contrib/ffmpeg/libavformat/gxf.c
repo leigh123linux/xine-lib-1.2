@@ -20,33 +20,7 @@
  */
 #include "avformat.h"
 #include "common.h"
-
-typedef enum {
-    PKT_MAP = 0xbc,
-    PKT_MEDIA = 0xbf,
-    PKT_EOS = 0xfb,
-    PKT_FLT = 0xfc,
-    PKT_UMF = 0xfd
-} pkt_type_t;
-
-typedef enum {
-    MAT_NAME = 0x40,
-    MAT_FIRST_FIELD = 0x41,
-    MAT_LAST_FIELD = 0x42,
-    MAT_MARK_IN = 0x43,
-    MAT_MARK_OUT = 0x44,
-    MAT_SIZE = 0x45
-} mat_tag_t;
-
-typedef enum {
-    TRACK_NAME = 0x4c,
-    TRACK_AUX = 0x4d,
-    TRACK_VER = 0x4e,
-    TRACK_MPG_AUX = 0x4f,
-    TRACK_FPS = 0x50,
-    TRACK_LINES = 0x51,
-    TRACK_FPF = 0x52
-} track_tag_t;
+#include "gxf.h"
 
 typedef struct {
     int64_t first_field;
@@ -87,8 +61,6 @@ static int parse_packet_header(ByteIOContext *pb, pkt_type_t *type, int *length)
 static int gxf_probe(AVProbeData *p) {
     static const uint8_t startcode[] = {0, 0, 0, 0, 1, 0xbc}; // start with map packet
     static const uint8_t endcode[] = {0, 0, 0, 0, 0xe1, 0xe2};
-    if (p->buf_size < 16)
-        return 0;
     if (!memcmp(p->buf, startcode, sizeof(startcode)) &&
         !memcmp(&p->buf[16 - sizeof(endcode)], endcode, sizeof(endcode)))
         return AVPROBE_SCORE_MAX;
@@ -130,13 +102,13 @@ static int get_sindex(AVFormatContext *s, int id, int format) {
         case 20:
             st->codec->codec_type = CODEC_TYPE_VIDEO;
             st->codec->codec_id = CODEC_ID_MPEG2VIDEO;
-            st->need_parsing = 2; // get keyframe flag etc.
+            st->need_parsing = AVSTREAM_PARSE_HEADERS; //get keyframe flag etc.
             break;
         case 22:
         case 23:
             st->codec->codec_type = CODEC_TYPE_VIDEO;
             st->codec->codec_id = CODEC_ID_MPEG1VIDEO;
-            st->need_parsing = 2; // get keyframe flag etc.
+            st->need_parsing = AVSTREAM_PARSE_HEADERS; //get keyframe flag etc.
             break;
         case 9:
             st->codec->codec_type = CODEC_TYPE_AUDIO;
@@ -179,7 +151,7 @@ static int get_sindex(AVFormatContext *s, int id, int format) {
 
 /**
  * \brief filters out interesting tags from material information.
- * \param len lenght of tag section, will be adjusted to contain remaining bytes
+ * \param len length of tag section, will be adjusted to contain remaining bytes
  * \param si struct to store collected information into
  */
 static void gxf_material_tags(ByteIOContext *pb, int *len, st_info_t *si) {
@@ -256,7 +228,7 @@ static void gxf_track_tags(ByteIOContext *pb, int *len, st_info_t *si) {
  * \brief read index from FLT packet into stream 0 av_index
  */
 static void gxf_read_index(AVFormatContext *s, int pkt_len) {
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     AVStream *st = s->streams[0];
     uint32_t fields_per_map = get_le32(pb);
     uint32_t map_cnt = get_le32(pb);
@@ -280,7 +252,7 @@ static void gxf_read_index(AVFormatContext *s, int pkt_len) {
 }
 
 static int gxf_header(AVFormatContext *s, AVFormatParameters *ap) {
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     pkt_type_t pkt_type;
     int map_len;
     int len;
@@ -406,7 +378,7 @@ static int64_t gxf_resync_media(AVFormatContext *s, uint64_t max_interval, int t
     int cur_track;
     int64_t cur_timestamp = AV_NOPTS_VALUE;
     int len;
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     pkt_type_t type;
     tmp = get_be32(pb);
 start:
@@ -436,7 +408,7 @@ out:
 }
 
 static int gxf_packet(AVFormatContext *s, AVPacket *pkt) {
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     pkt_type_t pkt_type;
     int pkt_len;
     while (!url_feof(pb)) {
@@ -475,7 +447,7 @@ static int gxf_packet(AVFormatContext *s, AVPacket *pkt) {
         pkt->dts = field_nr;
         return ret;
     }
-    return AVERROR_IO;
+    return AVERROR(EIO);
 }
 
 static int gxf_seek(AVFormatContext *s, int stream_index, int64_t timestamp, int flags) {
@@ -494,7 +466,7 @@ static int gxf_seek(AVFormatContext *s, int stream_index, int64_t timestamp, int
     if (idx < st->nb_index_entries - 2)
         maxlen = st->index_entries[idx + 2].pos - pos;
     maxlen = FFMAX(maxlen, 200 * 1024);
-    url_fseek(&s->pb, pos, SEEK_SET);
+    url_fseek(s->pb, pos, SEEK_SET);
     found = gxf_resync_media(s, maxlen, -1, timestamp);
     if (FFABS(found - timestamp) > 4)
         return -1;
@@ -503,7 +475,7 @@ static int gxf_seek(AVFormatContext *s, int stream_index, int64_t timestamp, int
 
 static int64_t gxf_read_timestamp(AVFormatContext *s, int stream_index,
                                   int64_t *pos, int64_t pos_limit) {
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     int64_t res;
     url_fseek(pb, *pos, SEEK_SET);
     res = gxf_resync_media(s, pos_limit - *pos, -1, -1);

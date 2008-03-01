@@ -22,7 +22,7 @@
 /**
  * @file truemotion1.c
  * Duck TrueMotion v1 Video Decoder by
- * Alex Beregszaszi (alex@fsn.hu) and
+ * Alex Beregszaszi and
  * Mike Melanson (melanson@pcisys.net)
  *
  * The TrueMotion v1 decoder presently only decodes 16-bit TM1 data and
@@ -34,7 +34,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "common.h"
 #include "avcodec.h"
 #include "dsputil.h"
 
@@ -43,14 +42,13 @@
 typedef struct TrueMotion1Context {
     AVCodecContext *avctx;
     AVFrame frame;
-    AVFrame prev_frame;
 
-    uint8_t *buf;
+    const uint8_t *buf;
     int size;
 
-    uint8_t *mb_change_bits;
+    const uint8_t *mb_change_bits;
     int mb_change_bits_row_size;
-    uint8_t *index_stream;
+    const uint8_t *index_stream;
     int index_stream_size;
 
     int flags;
@@ -465,7 +463,7 @@ static int truemotion1_decode_header(TrueMotion1Context *s)
 
 static int truemotion1_decode_init(AVCodecContext *avctx)
 {
-    TrueMotion1Context *s = (TrueMotion1Context *)avctx->priv_data;
+    TrueMotion1Context *s = avctx->priv_data;
 
     s->avctx = avctx;
 
@@ -475,8 +473,7 @@ static int truemotion1_decode_init(AVCodecContext *avctx)
 //    else
 //        avctx->pix_fmt = PIX_FMT_RGB555;
 
-    avctx->has_b_frames = 0;
-    s->frame.data[0] = s->prev_frame.data[0] = NULL;
+    s->frame.data[0] = NULL;
 
     /* there is a vertical predictor for each pixel in a line; each vertical
      * predictor is 0 to start with */
@@ -592,8 +589,7 @@ hres,vres,i,i%vres (0 < i < 4)
 
 #define OUTPUT_PIXEL_PAIR() \
     *current_pixel_pair = *vert_pred + horiz_pred; \
-    *vert_pred++ = *current_pixel_pair++; \
-    prev_pixel_pair++;
+    *vert_pred++ = *current_pixel_pair++;
 
 static void truemotion1_decode_16bit(TrueMotion1Context *s)
 {
@@ -603,13 +599,11 @@ static void truemotion1_decode_16bit(TrueMotion1Context *s)
     unsigned int horiz_pred;
     unsigned int *vert_pred;
     unsigned int *current_pixel_pair;
-    unsigned int *prev_pixel_pair;
     unsigned char *current_line = s->frame.data[0];
-    unsigned char *prev_line = s->prev_frame.data[0];
     int keyframe = s->flags & FLAG_KEYFRAME;
 
     /* these variables are for managing the stream of macroblock change bits */
-    unsigned char *mb_change_bits = s->mb_change_bits;
+    const unsigned char *mb_change_bits = s->mb_change_bits;
     unsigned char mb_change_byte;
     unsigned char mb_change_byte_mask;
     int mb_change_index;
@@ -628,7 +622,6 @@ static void truemotion1_decode_16bit(TrueMotion1Context *s)
         /* re-init variables for the next line iteration */
         horiz_pred = 0;
         current_pixel_pair = (unsigned int *)current_line;
-        prev_pixel_pair = (unsigned int *)prev_line;
         vert_pred = s->vert_pred;
         mb_change_index = 0;
         mb_change_byte = mb_change_bits[mb_change_index++];
@@ -697,9 +690,7 @@ static void truemotion1_decode_16bit(TrueMotion1Context *s)
 
                 /* skip (copy) four pixels, but reassign the horizontal
                  * predictor */
-                *current_pixel_pair = *prev_pixel_pair++;
                 *vert_pred++ = *current_pixel_pair++;
-                *current_pixel_pair = *prev_pixel_pair++;
                 horiz_pred = *current_pixel_pair - *vert_pred;
                 *vert_pred++ = *current_pixel_pair++;
 
@@ -723,7 +714,6 @@ static void truemotion1_decode_16bit(TrueMotion1Context *s)
             mb_change_bits += s->mb_change_bits_row_size;
 
         current_line += s->frame.linesize[0];
-        prev_line += s->prev_frame.linesize[0];
     }
 }
 
@@ -735,13 +725,11 @@ static void truemotion1_decode_24bit(TrueMotion1Context *s)
     unsigned int horiz_pred;
     unsigned int *vert_pred;
     unsigned int *current_pixel_pair;
-    unsigned int *prev_pixel_pair;
     unsigned char *current_line = s->frame.data[0];
-    unsigned char *prev_line = s->prev_frame.data[0];
     int keyframe = s->flags & FLAG_KEYFRAME;
 
     /* these variables are for managing the stream of macroblock change bits */
-    unsigned char *mb_change_bits = s->mb_change_bits;
+    const unsigned char *mb_change_bits = s->mb_change_bits;
     unsigned char mb_change_byte;
     unsigned char mb_change_byte_mask;
     int mb_change_index;
@@ -760,7 +748,6 @@ static void truemotion1_decode_24bit(TrueMotion1Context *s)
         /* re-init variables for the next line iteration */
         horiz_pred = 0;
         current_pixel_pair = (unsigned int *)current_line;
-        prev_pixel_pair = (unsigned int *)prev_line;
         vert_pred = s->vert_pred;
         mb_change_index = 0;
         mb_change_byte = mb_change_bits[mb_change_index++];
@@ -829,9 +816,7 @@ static void truemotion1_decode_24bit(TrueMotion1Context *s)
 
                 /* skip (copy) four pixels, but reassign the horizontal
                  * predictor */
-                *current_pixel_pair = *prev_pixel_pair++;
                 *vert_pred++ = *current_pixel_pair++;
-                *current_pixel_pair = *prev_pixel_pair++;
                 horiz_pred = *current_pixel_pair - *vert_pred;
                 *vert_pred++ = *current_pixel_pair++;
 
@@ -855,16 +840,15 @@ static void truemotion1_decode_24bit(TrueMotion1Context *s)
             mb_change_bits += s->mb_change_bits_row_size;
 
         current_line += s->frame.linesize[0];
-        prev_line += s->prev_frame.linesize[0];
     }
 }
 
 
 static int truemotion1_decode_frame(AVCodecContext *avctx,
                                     void *data, int *data_size,
-                                    uint8_t *buf, int buf_size)
+                                    const uint8_t *buf, int buf_size)
 {
-    TrueMotion1Context *s = (TrueMotion1Context *)avctx->priv_data;
+    TrueMotion1Context *s = avctx->priv_data;
 
     s->buf = buf;
     s->size = buf_size;
@@ -873,27 +857,18 @@ static int truemotion1_decode_frame(AVCodecContext *avctx,
         return -1;
 
     s->frame.reference = 1;
-    if (avctx->get_buffer(avctx, &s->frame) < 0) {
+    s->frame.buffer_hints = FF_BUFFER_HINTS_VALID |
+        FF_BUFFER_HINTS_PRESERVE | FF_BUFFER_HINTS_REUSABLE;
+    if (avctx->reget_buffer(avctx, &s->frame) < 0) {
         av_log(s->avctx, AV_LOG_ERROR, "get_buffer() failed\n");
         return -1;
     }
 
-    /* check for a do-nothing frame and copy the previous frame */
-    if (compression_types[s->compression].algorithm == ALGO_NOP)
-    {
-        memcpy(s->frame.data[0], s->prev_frame.data[0],
-            s->frame.linesize[0] * s->avctx->height);
-    } else if (compression_types[s->compression].algorithm == ALGO_RGB24H) {
+    if (compression_types[s->compression].algorithm == ALGO_RGB24H) {
         truemotion1_decode_24bit(s);
-    } else {
+    } else if (compression_types[s->compression].algorithm != ALGO_NOP) {
         truemotion1_decode_16bit(s);
     }
-
-    if (s->prev_frame.data[0])
-        avctx->release_buffer(avctx, &s->prev_frame);
-
-    /* shuffle frames */
-    s->prev_frame = s->frame;
 
     *data_size = sizeof(AVFrame);
     *(AVFrame*)data = s->frame;
@@ -904,11 +879,10 @@ static int truemotion1_decode_frame(AVCodecContext *avctx,
 
 static int truemotion1_decode_end(AVCodecContext *avctx)
 {
-    TrueMotion1Context *s = (TrueMotion1Context *)avctx->priv_data;
+    TrueMotion1Context *s = avctx->priv_data;
 
-    /* release the last frame */
-    if (s->prev_frame.data[0])
-        avctx->release_buffer(avctx, &s->prev_frame);
+    if (s->frame.data[0])
+        avctx->release_buffer(avctx, &s->frame);
 
     av_free(s->vert_pred);
 

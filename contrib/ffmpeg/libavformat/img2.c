@@ -20,6 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 #include "avformat.h"
+#include "avstring.h"
 
 typedef struct {
     int img_first;
@@ -40,6 +41,7 @@ static const IdStrMap img_tags[] = {
     { CODEC_ID_MJPEG     , "jpg"},
     { CODEC_ID_LJPEG     , "ljpg"},
     { CODEC_ID_PNG       , "png"},
+    { CODEC_ID_PNG       , "mng"},
     { CODEC_ID_PPM       , "ppm"},
     { CODEC_ID_PGM       , "pgm"},
     { CODEC_ID_PGMYUV    , "pgmyuv"},
@@ -54,6 +56,16 @@ static const IdStrMap img_tags[] = {
     { CODEC_ID_GIF       , "gif"},
     { CODEC_ID_TARGA     , "tga"},
     { CODEC_ID_TIFF      , "tiff"},
+    { CODEC_ID_SGI       , "sgi"},
+    { CODEC_ID_PTX       , "ptx"},
+    { CODEC_ID_PCX       , "pcx"},
+    { CODEC_ID_SUNRAST   , "sun"},
+    { CODEC_ID_SUNRAST   , "ras"},
+    { CODEC_ID_SUNRAST   , "rs"},
+    { CODEC_ID_SUNRAST   , "im1"},
+    { CODEC_ID_SUNRAST   , "im8"},
+    { CODEC_ID_SUNRAST   , "im24"},
+    { CODEC_ID_SUNRAST   , "sunras"},
     {0, NULL}
 };
 
@@ -180,7 +192,7 @@ static int img_read_header(AVFormatContext *s1, AVFormatParameters *ap)
         return AVERROR(ENOMEM);
     }
 
-    pstrcpy(s->path, sizeof(s->path), s1->filename);
+    av_strlcpy(s->path, s1->filename, sizeof(s->path));
     s->img_number = 0;
     s->img_count = 0;
 
@@ -189,7 +201,7 @@ static int img_read_header(AVFormatContext *s1, AVFormatParameters *ap)
         s->is_pipe = 0;
     else{
         s->is_pipe = 1;
-        st->need_parsing= 1;
+        st->need_parsing = AVSTREAM_PARSE_FULL;
     }
 
     if (!ap->time_base.num) {
@@ -205,7 +217,7 @@ static int img_read_header(AVFormatContext *s1, AVFormatParameters *ap)
 
     if (!s->is_pipe) {
         if (find_image_range(&first_index, &last_index, s->path) < 0)
-            return AVERROR_IO;
+            return AVERROR(EIO);
         s->img_first = first_index;
         s->img_last = last_index;
         s->img_number = first_index;
@@ -236,7 +248,7 @@ static int img_read_packet(AVFormatContext *s1, AVPacket *pkt)
     char filename[1024];
     int i;
     int size[3]={0}, ret[3]={0};
-    ByteIOContext f1[3], *f[3]= {&f1[0], &f1[1], &f1[2]};
+    ByteIOContext *f[3];
     AVCodecContext *codec= s1->streams[0]->codec;
 
     if (!s->is_pipe) {
@@ -246,10 +258,10 @@ static int img_read_packet(AVFormatContext *s1, AVPacket *pkt)
         }
         if (av_get_frame_filename(filename, sizeof(filename),
                                   s->path, s->img_number)<0 && s->img_number > 1)
-            return AVERROR_IO;
+            return AVERROR(EIO);
         for(i=0; i<3; i++){
-            if (url_fopen(f[i], filename, URL_RDONLY) < 0)
-                return AVERROR_IO;
+            if (url_fopen(&f[i], filename, URL_RDONLY) < 0)
+                return AVERROR(EIO);
             size[i]= url_fsize(f[i]);
 
             if(codec->codec_id != CODEC_ID_RAWVIDEO)
@@ -260,9 +272,9 @@ static int img_read_packet(AVFormatContext *s1, AVPacket *pkt)
         if(codec->codec_id == CODEC_ID_RAWVIDEO && !codec->width)
             infer_size(&codec->width, &codec->height, size[0]);
     } else {
-        f[0] = &s1->pb;
+        f[0] = s1->pb;
         if (url_feof(f[0]))
-            return AVERROR_IO;
+            return AVERROR(EIO);
         size[0]= 4096;
     }
 
@@ -283,7 +295,7 @@ static int img_read_packet(AVFormatContext *s1, AVPacket *pkt)
 
     if (ret[0] <= 0 || ret[1]<0 || ret[2]<0) {
         av_free_packet(pkt);
-        return AVERROR_IO; /* signal EOF */
+        return AVERROR(EIO); /* signal EOF */
     } else {
         s->img_count++;
         s->img_number++;
@@ -305,7 +317,7 @@ static int img_write_header(AVFormatContext *s)
     VideoData *img = s->priv_data;
 
     img->img_number = 1;
-    pstrcpy(img->path, sizeof(img->path), s->filename);
+    av_strlcpy(img->path, s->filename, sizeof(img->path));
 
     /* find format */
     if (s->oformat->flags & AVFMT_NOFILE)
@@ -319,7 +331,7 @@ static int img_write_header(AVFormatContext *s)
 static int img_write_packet(AVFormatContext *s, AVPacket *pkt)
 {
     VideoData *img = s->priv_data;
-    ByteIOContext pb1[3], *pb[3]= {&pb1[0], &pb1[1], &pb1[2]};
+    ByteIOContext *pb[3];
     char filename[1024];
     AVCodecContext *codec= s->streams[ pkt->stream_index ]->codec;
     int i;
@@ -327,17 +339,17 @@ static int img_write_packet(AVFormatContext *s, AVPacket *pkt)
     if (!img->is_pipe) {
         if (av_get_frame_filename(filename, sizeof(filename),
                                   img->path, img->img_number) < 0 && img->img_number>1)
-            return AVERROR_IO;
+            return AVERROR(EIO);
         for(i=0; i<3; i++){
-            if (url_fopen(pb[i], filename, URL_WRONLY) < 0)
-                return AVERROR_IO;
+            if (url_fopen(&pb[i], filename, URL_WRONLY) < 0)
+                return AVERROR(EIO);
 
             if(codec->codec_id != CODEC_ID_RAWVIDEO)
                 break;
             filename[ strlen(filename) - 1 ]= 'U' + i;
         }
     } else {
-        pb[0] = &s->pb;
+        pb[0] = s->pb;
     }
 
     if(codec->codec_id == CODEC_ID_RAWVIDEO){

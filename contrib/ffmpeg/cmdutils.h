@@ -19,8 +19,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef _CMD_UTILS_H
-#define _CMD_UTILS_H
+#ifndef FFMPEG_CMDUTILS_H
+#define FFMPEG_CMDUTILS_H
+
+#include <inttypes.h>
+
+/**
+ * Parses a string and returns its corresponding value as a double.
+ * Exits from the application if the string cannot be correctly
+ * parsed or the corresponding value is invalid.
+ *
+ * @param context the context of the value to be set (e.g. the
+ * corresponding commandline option name)
+ * @param numstr the string to be parsed
+ * @param type the type (OPT_INT64 or OPT_FLOAT) as which the
+ * string should be parsed
+ * @param min the minimum valid accepted value
+ * @param max the maximum valid accepted value
+ */
+double parse_number_or_die(const char *context, const char *numstr, int type, double min, double max);
 
 typedef struct {
     const char *name;
@@ -50,8 +67,41 @@ typedef struct {
 } OptionDef;
 
 void show_help_options(const OptionDef *options, const char *msg, int mask, int value);
-void parse_options(int argc, char **argv, const OptionDef *options);
-void parse_arg_file(const char *filename);
+
+/**
+ * Parses the command line arguments.
+ * @param options Array with the definitions required to interpret every
+ * option of the form: -<option_name> [<argument>]
+ * @param parse_arg_function Name of the function called to process every
+ * argument without a leading option name flag. NULL if such arguments do
+ * not have to be processed.
+ */
+void parse_options(int argc, char **argv, const OptionDef *options,
+                   void (* parse_arg_function)(const char*));
+
 void print_error(const char *filename, int err);
 
-#endif /* _CMD_UTILS_H */
+/**
+ * Prints the program banner to stderr. The banner contents depend on the
+ * current version of the repository and of the libav* libraries used by
+ * the program.
+ * @param program_name name of the program
+ * @param program_birth_year year of birth of the program
+ */
+void show_banner(const char *program_name, int program_birth_year);
+
+/**
+ * Prints the version of the program to stdout. The version message
+ * depends on the current versions of the repository and of the libav*
+ * libraries.
+ * @param program_name name of the program
+ */
+void show_version(const char *program_name);
+
+/**
+ * Prints the license of the program to stdout. The license depends on
+ * the license of the libraries compiled into the program.
+ */
+void show_license(void);
+
+#endif /* FFMPEG_CMDUTILS_H */

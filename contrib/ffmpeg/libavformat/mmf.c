@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 #include "avformat.h"
-#include "allformats.h"
+#include "raw.h"
 #include "riff.h"
 
 typedef struct {
@@ -60,7 +60,7 @@ static void end_tag_be(ByteIOContext *pb, offset_t start)
 static int mmf_write_header(AVFormatContext *s)
 {
     MMFContext *mmf = s->priv_data;
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     offset_t pos;
     int rate;
 
@@ -108,7 +108,7 @@ static int mmf_write_header(AVFormatContext *s)
 
 static int mmf_write_packet(AVFormatContext *s, AVPacket *pkt)
 {
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     put_buffer(pb, pkt->data, pkt->size);
     return 0;
 }
@@ -127,12 +127,12 @@ static void put_varlength(ByteIOContext *pb, int val)
 
 static int mmf_write_trailer(AVFormatContext *s)
 {
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     MMFContext *mmf = s->priv_data;
     offset_t pos, size;
     int gatetime;
 
-    if (!url_is_streamed(&s->pb)) {
+    if (!url_is_streamed(s->pb)) {
         /* Fill in length fields */
         end_tag_be(pb, mmf->awapos);
         end_tag_be(pb, mmf->atrpos);
@@ -168,8 +168,6 @@ static int mmf_write_trailer(AVFormatContext *s)
 static int mmf_probe(AVProbeData *p)
 {
     /* check file header */
-    if (p->buf_size <= 32)
-        return 0;
     if (p->buf[0] == 'M' && p->buf[1] == 'M' &&
         p->buf[2] == 'M' && p->buf[3] == 'D' &&
         p->buf[8] == 'C' && p->buf[9] == 'N' &&
@@ -185,7 +183,7 @@ static int mmf_read_header(AVFormatContext *s,
 {
     MMFContext *mmf = s->priv_data;
     unsigned int tag;
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     AVStream *st;
     offset_t file_size, size;
     int rate, params;
@@ -244,7 +242,7 @@ static int mmf_read_header(AVFormatContext *s,
 
     st = av_new_stream(s, 0);
     if (!st)
-        return AVERROR_NOMEM;
+        return AVERROR(ENOMEM);
 
     st->codec->codec_type = CODEC_TYPE_AUDIO;
     st->codec->codec_id = CODEC_ID_ADPCM_YAMAHA;
@@ -267,8 +265,8 @@ static int mmf_read_packet(AVFormatContext *s,
     AVStream *st;
     int ret, size;
 
-    if (url_feof(&s->pb))
-        return AVERROR_IO;
+    if (url_feof(s->pb))
+        return AVERROR(EIO);
     st = s->streams[0];
 
     size = MAX_SIZE;
@@ -276,13 +274,13 @@ static int mmf_read_packet(AVFormatContext *s,
         size = mmf->data_size;
 
     if(!size)
-        return AVERROR_IO;
+        return AVERROR(EIO);
 
     if (av_new_packet(pkt, size))
-        return AVERROR_IO;
+        return AVERROR(EIO);
     pkt->stream_index = 0;
 
-    ret = get_buffer(&s->pb, pkt->data, pkt->size);
+    ret = get_buffer(s->pb, pkt->data, pkt->size);
     if (ret < 0)
         av_free_packet(pkt);
 

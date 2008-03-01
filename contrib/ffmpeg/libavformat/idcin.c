@@ -71,7 +71,7 @@
 #include "avformat.h"
 
 #define HUFFMAN_TABLE_SIZE (64 * 1024)
-#define FRAME_PTS_INC (90000 / 14)
+#define IDCIN_FPS 14
 
 typedef struct IdcinDemuxContext {
     int video_stream_index;
@@ -103,10 +103,6 @@ static int idcin_probe(AVProbeData *p)
      * audio sample width (bytes/sample): 0 for no audio, or 1 or 2
      * audio channels: 0 for no audio, or 1 or 2
      */
-
-    /* cannot proceed without 20 bytes */
-    if (p->buf_size < 20)
-        return 0;
 
     /* check the video width */
     number = AV_RL32(&p->buf[0]);
@@ -140,8 +136,8 @@ static int idcin_probe(AVProbeData *p)
 static int idcin_read_header(AVFormatContext *s,
                              AVFormatParameters *ap)
 {
-    ByteIOContext *pb = &s->pb;
-    IdcinDemuxContext *idcin = (IdcinDemuxContext *)s->priv_data;
+    ByteIOContext *pb = s->pb;
+    IdcinDemuxContext *idcin = s->priv_data;
     AVStream *st;
     unsigned int width, height;
     unsigned int sample_rate, bytes_per_sample, channels;
@@ -155,8 +151,8 @@ static int idcin_read_header(AVFormatContext *s,
 
     st = av_new_stream(s, 0);
     if (!st)
-        return AVERROR_NOMEM;
-    av_set_pts_info(st, 33, 1, 90000);
+        return AVERROR(ENOMEM);
+    av_set_pts_info(st, 33, 1, IDCIN_FPS);
     idcin->video_stream_index = st->index;
     st->codec->codec_type = CODEC_TYPE_VIDEO;
     st->codec->codec_id = CODEC_ID_IDCIN;
@@ -169,7 +165,7 @@ static int idcin_read_header(AVFormatContext *s,
     st->codec->extradata = av_malloc(HUFFMAN_TABLE_SIZE);
     if (get_buffer(pb, st->codec->extradata, HUFFMAN_TABLE_SIZE) !=
         HUFFMAN_TABLE_SIZE)
-        return AVERROR_IO;
+        return AVERROR(EIO);
     /* save a reference in order to transport the palette */
     st->codec->palctrl = &idcin->palctrl;
 
@@ -178,8 +174,8 @@ static int idcin_read_header(AVFormatContext *s,
         idcin->audio_present = 1;
         st = av_new_stream(s, 0);
         if (!st)
-            return AVERROR_NOMEM;
-        av_set_pts_info(st, 33, 1, 90000);
+            return AVERROR(ENOMEM);
+        av_set_pts_info(st, 33, 1, IDCIN_FPS);
         idcin->audio_stream_index = st->index;
         st->codec->codec_type = CODEC_TYPE_AUDIO;
         st->codec->codec_tag = 1;
@@ -218,25 +214,25 @@ static int idcin_read_packet(AVFormatContext *s,
     int ret;
     unsigned int command;
     unsigned int chunk_size;
-    IdcinDemuxContext *idcin = (IdcinDemuxContext *)s->priv_data;
-    ByteIOContext *pb = &s->pb;
+    IdcinDemuxContext *idcin = s->priv_data;
+    ByteIOContext *pb = s->pb;
     int i;
     int palette_scale;
     unsigned char r, g, b;
     unsigned char palette_buffer[768];
 
-    if (url_feof(&s->pb))
-        return AVERROR_IO;
+    if (url_feof(s->pb))
+        return AVERROR(EIO);
 
     if (idcin->next_chunk_is_video) {
         command = get_le32(pb);
         if (command == 2) {
-            return AVERROR_IO;
+            return AVERROR(EIO);
         } else if (command == 1) {
             /* trigger a palette change */
             idcin->palctrl.palette_changed = 1;
             if (get_buffer(pb, palette_buffer, 768) != 768)
-                return AVERROR_IO;
+                return AVERROR(EIO);
             /* scale the palette as necessary */
             palette_scale = 2;
             for (i = 0; i < 768; i++)
@@ -259,7 +255,7 @@ static int idcin_read_packet(AVFormatContext *s,
         chunk_size -= 4;
         ret= av_get_packet(pb, pkt, chunk_size);
         if (ret != chunk_size)
-            return AVERROR_IO;
+            return AVERROR(EIO);
         pkt->stream_index = idcin->video_stream_index;
         pkt->pts = idcin->pts;
     } else {
@@ -270,12 +266,12 @@ static int idcin_read_packet(AVFormatContext *s,
             chunk_size = idcin->audio_chunk_size1;
         ret= av_get_packet(pb, pkt, chunk_size);
         if (ret != chunk_size)
-            return AVERROR_IO;
+            return AVERROR(EIO);
         pkt->stream_index = idcin->audio_stream_index;
         pkt->pts = idcin->pts;
 
         idcin->current_audio_chunk ^= 1;
-        idcin->pts += FRAME_PTS_INC;
+        idcin->pts++;
     }
 
     if (idcin->audio_present)

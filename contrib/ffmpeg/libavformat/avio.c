@@ -19,11 +19,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 #include "avformat.h"
+#include "avstring.h"
 
 static int default_interrupt_cb(void);
 
 URLProtocol *first_protocol = NULL;
 URLInterruptCB *url_interrupt_cb = default_interrupt_cb;
+
+URLProtocol *av_protocol_next(URLProtocol *p)
+{
+    if(p) return p->next;
+    else  return first_protocol;
+}
 
 int register_protocol(URLProtocol *protocol)
 {
@@ -75,9 +82,7 @@ int url_open(URLContext **puc, const char *filename, int flags)
         err = AVERROR(ENOMEM);
         goto fail;
     }
-#if LIBAVFORMAT_VERSION_INT >= (52<<16)
     uc->filename = (char *) &uc[1];
-#endif
     strcpy(uc->filename, filename);
     uc->prot = up;
     uc->flags = flags;
@@ -100,24 +105,22 @@ int url_read(URLContext *h, unsigned char *buf, int size)
 {
     int ret;
     if (h->flags & URL_WRONLY)
-        return AVERROR_IO;
+        return AVERROR(EIO);
     ret = h->prot->url_read(h, buf, size);
     return ret;
 }
 
-#if defined(CONFIG_MUXERS) || defined(CONFIG_PROTOCOLS)
 int url_write(URLContext *h, unsigned char *buf, int size)
 {
     int ret;
     if (!(h->flags & (URL_WRONLY | URL_RDWR)))
-        return AVERROR_IO;
+        return AVERROR(EIO);
     /* avoid sending too big packets */
     if (h->max_packet_size && size > h->max_packet_size)
-        return AVERROR_IO;
+        return AVERROR(EIO);
     ret = h->prot->url_write(h, buf, size);
     return ret;
 }
-#endif //CONFIG_MUXERS || CONFIG_PROTOCOLS
 
 offset_t url_seek(URLContext *h, offset_t pos, int whence)
 {
@@ -131,9 +134,11 @@ offset_t url_seek(URLContext *h, offset_t pos, int whence)
 
 int url_close(URLContext *h)
 {
-    int ret;
+    int ret = 0;
+    if (!h) return 0; /* can happen when url_open fails */
 
-    ret = h->prot->url_close(h);
+    if (h->prot->url_close)
+        ret = h->prot->url_close(h);
     av_free(h);
     return ret;
 }
@@ -169,7 +174,7 @@ int url_get_max_packet_size(URLContext *h)
 
 void url_get_filename(URLContext *h, char *buf, int buf_size)
 {
-    pstrcpy(buf, buf_size, h->filename);
+    av_strlcpy(buf, h->filename, buf_size);
 }
 
 
@@ -183,4 +188,19 @@ void url_set_interrupt_cb(URLInterruptCB *interrupt_cb)
     if (!interrupt_cb)
         interrupt_cb = default_interrupt_cb;
     url_interrupt_cb = interrupt_cb;
+}
+
+int av_url_read_pause(URLContext *h, int pause)
+{
+    if (!h->prot->url_read_pause)
+        return AVERROR(ENOSYS);
+    return h->prot->url_read_pause(h, pause);
+}
+
+offset_t av_url_read_seek(URLContext *h,
+        int stream_index, int64_t timestamp, int flags)
+{
+    if (!h->prot->url_read_seek)
+        return AVERROR(ENOSYS);
+    return h->prot->url_read_seek(h, stream_index, timestamp, flags);
 }

@@ -23,7 +23,7 @@
  * SSE2-optimized functions cribbed from the original VP3 source code.
  */
 
-#include "../dsputil.h"
+#include "dsputil.h"
 #include "mmx.h"
 
 static DECLARE_ALIGNED_16(const unsigned short, SSE2_dequant_const[]) =
@@ -802,8 +802,8 @@ void ff_vp3_idct_sse2(int16_t *input_data)
 {
     unsigned char *input_bytes = (unsigned char *)input_data;
     unsigned char *output_data_bytes = (unsigned char *)input_data;
-    unsigned char *idct_data_bytes = (unsigned char *)SSE2_idct_data;
-    unsigned char *Eight = (unsigned char *)eight_data;
+    const unsigned char *idct_data_bytes = (const unsigned char *)SSE2_idct_data;
+    const unsigned char *Eight = (const unsigned char *)eight_data;
 
 #define eax input_bytes
 //#define ebx dequant_matrix_bytes
@@ -824,4 +824,16 @@ void ff_vp3_idct_sse2(int16_t *input_data)
     SSE2_Transpose();
 
     SSE2_Column_IDCT();
+}
+
+void ff_vp3_idct_put_sse2(uint8_t *dest, int line_size, DCTELEM *block)
+{
+    ff_vp3_idct_sse2(block);
+    put_signed_pixels_clamped_mmx(block, dest, line_size);
+}
+
+void ff_vp3_idct_add_sse2(uint8_t *dest, int line_size, DCTELEM *block)
+{
+    ff_vp3_idct_sse2(block);
+    add_pixels_clamped_mmx(block, dest, line_size);
 }

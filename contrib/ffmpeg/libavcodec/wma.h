@@ -19,8 +19,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef WMA_H
-#define WMA_H
+#ifndef FFMPEG_WMA_H
+#define FFMPEG_WMA_H
 
 #include "bitstream.h"
 #include "dsputil.h"
@@ -92,7 +92,7 @@ typedef struct WMACodecContext {
     uint16_t *run_table[2];
     uint16_t *level_table[2];
     uint16_t *int_table[2];
-    CoefVLCTable *coef_vlcs[2];
+    const CoefVLCTable *coef_vlcs[2];
     /* frame info */
     int frame_len;                          ///< frame length in samples
     int frame_len_bits;                     ///< frame_len = 1 << frame_len_bits
@@ -107,6 +107,7 @@ typedef struct WMACodecContext {
     int block_pos;                          ///< current position in frame
     uint8_t ms_stereo;                      ///< true if mid/side stereo mode
     uint8_t channel_coded[MAX_CHANNELS];    ///< true if channel is coded
+    int exponents_bsize[MAX_CHANNELS];      ///< log2 ratio frame/exp. length
     DECLARE_ALIGNED_16(float, exponents[MAX_CHANNELS][BLOCK_MAX_SIZE]);
     float max_exponent[MAX_CHANNELS];
     int16_t coefs1[MAX_CHANNELS][BLOCK_MAX_SIZE];
@@ -146,4 +147,4 @@ int ff_wma_init(AVCodecContext * avctx, int flags2);
 int ff_wma_total_gain_to_bits(int total_gain);
 int ff_wma_end(AVCodecContext *avctx);
 
-#endif
+#endif /* FFMPEG_WMA_H */

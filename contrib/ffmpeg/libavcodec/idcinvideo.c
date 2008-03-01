@@ -17,7 +17,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- *
  */
 
 /**
@@ -50,7 +49,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "common.h"
 #include "avcodec.h"
 #include "dsputil.h"
 
@@ -71,7 +69,7 @@ typedef struct IdcinContext {
     DSPContext dsp;
     AVFrame frame;
 
-    unsigned char *buf;
+    const unsigned char *buf;
     int size;
 
     hnode_t huff_nodes[256][HUF_TOKENS*2];
@@ -149,13 +147,12 @@ static void huff_build_tree(IdcinContext *s, int prev) {
 
 static int idcin_decode_init(AVCodecContext *avctx)
 {
-    IdcinContext *s = (IdcinContext *)avctx->priv_data;
+    IdcinContext *s = avctx->priv_data;
     int i, j, histogram_index = 0;
     unsigned char *histograms;
 
     s->avctx = avctx;
     avctx->pix_fmt = PIX_FMT_PAL8;
-    avctx->has_b_frames = 0;
     dsputil_init(&s->dsp, avctx);
 
     /* make sure the Huffman tables make it */
@@ -215,9 +212,9 @@ static void idcin_decode_vlcs(IdcinContext *s)
 
 static int idcin_decode_frame(AVCodecContext *avctx,
                               void *data, int *data_size,
-                              uint8_t *buf, int buf_size)
+                              const uint8_t *buf, int buf_size)
 {
-    IdcinContext *s = (IdcinContext *)avctx->priv_data;
+    IdcinContext *s = avctx->priv_data;
     AVPaletteControl *palette_control = avctx->palctrl;
 
     s->buf = buf;
@@ -250,7 +247,7 @@ static int idcin_decode_frame(AVCodecContext *avctx,
 
 static int idcin_decode_end(AVCodecContext *avctx)
 {
-    IdcinContext *s = (IdcinContext *)avctx->priv_data;
+    IdcinContext *s = avctx->priv_data;
 
     if (s->frame.data[0])
         avctx->release_buffer(avctx, &s->frame);

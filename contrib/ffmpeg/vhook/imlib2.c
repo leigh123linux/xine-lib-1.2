@@ -2,52 +2,6 @@
  * imlib2 based hook
  * Copyright (c) 2002 Philip Gladstone
  *
- * This module implements a text overlay for a video image. Currently it
- * supports a fixed overlay or reading the text from a file. The string
- * is passed through strftime so that it is easy to imprint the date and
- * time onto the image.
- *
- * You may also overlay an image (even semi-transparent) like TV stations do.
- * You may move either the text or the image around your video to create
- * scrolling credits, for example.
- *
- * Text fonts are being looked for in FONTPATH
- *
- * Options:
- *
- * -c <color>           The color of the text
- * -F <fontname>        The font face and size
- * -t <text>            The text
- * -f <filename>        The filename to read text from
- * -x <expresion>       X coordinate of text or image
- * -y <expresion>       Y coordinate of text or image
- * -i <filename>        The filename to read a image from
- *
- * Expresions are functions of:
- *      N  // frame number (starting at zero)
- *      H  // frame height
- *      W  // frame width
- *      h  // image height
- *      w  // image width
- *      X  // previous x
- *      Y  // previous y
- *
-
-   Examples:
-
-   FONTPATH="/cygdrive/c/WINDOWS/Fonts/"
-   FONTPATH="$FONTPATH:/usr/share/imlib2/data/fonts/"
-   FONTPATH="$FONTPATH:/usr/X11R6/lib/X11/fonts/TTF/"
-   export FONTPATH
-
-   ffmpeg -i input.avi -vhook \
-     'vhook/imlib2.dll -x W*(0.5+0.25*sin(N/47*PI))-w/2 -y H*(0.5+0.50*cos(N/97*PI))-h/2 -i /usr/share/imlib2/data/images/bulb.png'
-      -acodec copy -sameq output.avi
-
-   ffmpeg -i input.avi -vhook \
-     'vhook/imlib2.dll -c red -F Vera.ttf/20 -x 150+0.5*N -y 70+0.25*N -t Hello'
-      -acodec copy -sameq output.avi
-
  * This module is very much intended as an example of what could be done.
  *
  * One caution is that this is an expensive process -- in particular the
@@ -126,10 +80,13 @@ typedef struct {
     Imlib_Font fn;
     char *text;
     char *file;
-    int r, g, b;
+    int r, g, b, a;
+    AVEvalExpr *eval_r, *eval_g, *eval_b, *eval_a;
+    char *expr_R, *expr_G, *expr_B, *expr_A;
+    int eval_colors;
     double x, y;
     char *fileImage;
-    struct _CachedImage *cache;
+    struct CachedImage *cache;
     Imlib_Image imageOverlaid;
     AVEvalExpr *eval_x, *eval_y;
     char *expr_x, *expr_y;
@@ -142,8 +99,8 @@ typedef struct {
     struct SwsContext *fromRGB_convert_ctx;
 } ContextInfo;
 
-typedef struct _CachedImage {
-    struct _CachedImage *next;
+typedef struct CachedImage {
+    struct CachedImage *next;
     Imlib_Image image;
     int width;
     int height;
@@ -164,8 +121,19 @@ void Release(void *ctx)
             imlib_context_set_image(ci->imageOverlaid);
             imlib_free_image();
         }
-        ff_eval_free(ci->expr_x);
-        ff_eval_free(ci->expr_y);
+        ff_eval_free(ci->eval_x);
+        ff_eval_free(ci->eval_y);
+        ff_eval_free(ci->eval_r);
+        ff_eval_free(ci->eval_g);
+        ff_eval_free(ci->eval_b);
+        ff_eval_free(ci->eval_a);
+
+        av_free(ci->expr_x);
+        av_free(ci->expr_y);
+        av_free(ci->expr_R);
+        av_free(ci->expr_G);
+        av_free(ci->expr_B);
+        av_free(ci->expr_A);
         sws_freeContext(ci->toRGB_convert_ctx);
         sws_freeContext(ci->fromRGB_convert_ctx);
         av_free(ctx);
@@ -176,11 +144,13 @@ int Configure(void **ctxp, int argc, char *argv[])
 {
     int c;
     ContextInfo *ci;
+    char *rgbtxt = 0;
     char *font = "LucidaSansDemiBold/16";
     char *fp = getenv("FONTPATH");
     char *color = 0;
     FILE *f;
     char *p;
+    char *error;
 
     *ctxp = av_mallocz(sizeof(ContextInfo));
     ci = (ContextInfo *) *ctxp;
@@ -190,7 +160,7 @@ int Configure(void **ctxp, int argc, char *argv[])
     ci->expr_x = "0.0";
     ci->expr_y = "0.0";
 
-    optind = 0;
+    optind = 1;
 
     /* Use ':' to split FONTPATH */
     if (fp)
@@ -203,8 +173,26 @@ int Configure(void **ctxp, int argc, char *argv[])
         imlib_add_path_to_font_path(fp);
 
 
-    while ((c = getopt(argc, argv, "c:f:F:t:x:y:i:")) > 0) {
+    while ((c = getopt(argc, argv, "R:G:B:A:C:c:f:F:t:x:y:i:")) > 0) {
         switch (c) {
+            case 'R':
+                ci->expr_R = av_strdup(optarg);
+                ci->eval_colors = 1;
+                break;
+            case 'G':
+                ci->expr_G = av_strdup(optarg);
+                ci->eval_colors = 1;
+                break;
+            case 'B':
+                ci->expr_B = av_strdup(optarg);
+                ci->eval_colors = 1;
+                break;
+            case 'A':
+                ci->expr_A = av_strdup(optarg);
+                break;
+            case 'C':
+                rgbtxt = optarg;
+                break;
             case 'c':
                 color = optarg;
                 break;
@@ -232,25 +220,42 @@ int Configure(void **ctxp, int argc, char *argv[])
         }
     }
 
-    if (ci->text || ci->file) {
-    ci->fn = imlib_load_font(font);
-    if (!ci->fn) {
-        fprintf(stderr, "Failed to load font '%s'\n", font);
+    if (ci->eval_colors && !(ci->expr_R && ci->expr_G && ci->expr_B))
+    {
+        fprintf(stderr, "You must specify expressions for all or no colors.\n");
         return -1;
     }
-    imlib_context_set_font(ci->fn);
-    imlib_context_set_direction(IMLIB_TEXT_TO_RIGHT);
+
+    if (ci->text || ci->file) {
+        ci->fn = imlib_load_font(font);
+        if (!ci->fn) {
+            fprintf(stderr, "Failed to load font '%s'\n", font);
+            return -1;
+        }
+        imlib_context_set_font(ci->fn);
+        imlib_context_set_direction(IMLIB_TEXT_TO_RIGHT);
     }
 
     if (color) {
         char buff[256];
         int done = 0;
 
-        f = fopen("/usr/share/X11/rgb.txt", "r");
-        if (!f)
-            f = fopen("/usr/lib/X11/rgb.txt", "r");
+        if (ci->eval_colors)
+        {
+            fprintf(stderr, "You must not specify both a color name and expressions for the colors.\n");
+            return -1;
+        }
+
+        if (rgbtxt)
+            f = fopen(rgbtxt, "r");
+        else
+        {
+            f = fopen("/usr/share/X11/rgb.txt", "r");
+            if (!f)
+                f = fopen("/usr/lib/X11/rgb.txt", "r");
+        }
         if (!f) {
-            fprintf(stderr, "Failed to find rgb.txt\n");
+            fprintf(stderr, "Failed to find RGB color names file\n");
             return -1;
         }
         while (fgets(buff, sizeof(buff), f)) {
@@ -272,8 +277,32 @@ int Configure(void **ctxp, int argc, char *argv[])
             fprintf(stderr, "Unable to find color '%s' in rgb.txt\n", color);
             return -1;
         }
+    } else if (ci->eval_colors) {
+        if (!(ci->eval_r = ff_parse(ci->expr_R, const_names, NULL, NULL, NULL, NULL, &error))){
+            av_log(NULL, AV_LOG_ERROR, "Couldn't parse R expression '%s': %s\n", ci->expr_R, error);
+            return -1;
+        }
+        if (!(ci->eval_g = ff_parse(ci->expr_G, const_names, NULL, NULL, NULL, NULL, &error))){
+            av_log(NULL, AV_LOG_ERROR, "Couldn't parse G expression '%s': %s\n", ci->expr_G, error);
+            return -1;
+        }
+        if (!(ci->eval_b = ff_parse(ci->expr_B, const_names, NULL, NULL, NULL, NULL, &error))){
+            av_log(NULL, AV_LOG_ERROR, "Couldn't parse B expression '%s': %s\n", ci->expr_B, error);
+            return -1;
+        }
     }
-    imlib_context_set_color(ci->r, ci->g, ci->b, 255);
+
+    if (ci->expr_A) {
+        if (!(ci->eval_a = ff_parse(ci->expr_A, const_names, NULL, NULL, NULL, NULL, &error))){
+            av_log(NULL, AV_LOG_ERROR, "Couldn't parse A expression '%s': %s\n", ci->expr_A, error);
+            return -1;
+        }
+    } else {
+        ci->a = 255;
+    }
+
+    if (!(ci->eval_colors || ci->eval_a))
+        imlib_context_set_color(ci->r, ci->g, ci->b, ci->a);
 
     /* load the image (for example, credits for a movie) */
     if (ci->fileImage) {
@@ -287,13 +316,13 @@ int Configure(void **ctxp, int argc, char *argv[])
         ci->imageOverlaid_height = imlib_image_get_height();
     }
 
-    if (!(ci->eval_x = ff_parse(ci->expr_x, const_names, NULL, NULL, NULL, NULL, NULL))){
-        av_log(NULL, AV_LOG_ERROR, "Couldn't parse x expression '%s'\n", ci->expr_x);
+    if (!(ci->eval_x = ff_parse(ci->expr_x, const_names, NULL, NULL, NULL, NULL, &error))){
+        av_log(NULL, AV_LOG_ERROR, "Couldn't parse x expression '%s': %s\n", ci->expr_x, error);
         return -1;
     }
 
-    if (!(ci->eval_y = ff_parse(ci->expr_y, const_names, NULL, NULL, NULL, NULL, NULL))){
-        av_log(NULL, AV_LOG_ERROR, "Couldn't parse y expression '%s'\n", ci->expr_y);
+    if (!(ci->eval_y = ff_parse(ci->expr_y, const_names, NULL, NULL, NULL, NULL, &error))){
+        av_log(NULL, AV_LOG_ERROR, "Couldn't parse y expression '%s': %s\n", ci->expr_y, error);
         return -1;
     }
 
@@ -340,7 +369,7 @@ void Process(void *ctx, AVPicture *picture, enum PixelFormat pix_fmt, int width,
     imlib_context_set_image(image);
     data = imlib_image_get_data();
 
-        avpicture_fill(&picture1, (uint8_t *) data, PIX_FMT_RGB32, width, height);
+    avpicture_fill(&picture1, (uint8_t *) data, PIX_FMT_RGB32, width, height);
 
     // if we already got a SWS context, let's realloc if is not re-useable
     ci->toRGB_convert_ctx = sws_getCachedContext(ci->toRGB_convert_ctx,
@@ -409,6 +438,20 @@ void Process(void *ctx, AVPicture *picture, enum PixelFormat pix_fmt, int width,
         ci->x = ff_parse_eval(ci->eval_x, const_values, ci);
         ci->y = ff_parse_eval(ci->eval_y, const_values, ci);
         y = ci->y;
+
+        if (ci->eval_a) {
+            ci->a = ff_parse_eval(ci->eval_a, const_values, ci);
+        }
+
+        if (ci->eval_colors) {
+            ci->r = ff_parse_eval(ci->eval_r, const_values, ci);
+            ci->g = ff_parse_eval(ci->eval_g, const_values, ci);
+            ci->b = ff_parse_eval(ci->eval_b, const_values, ci);
+        }
+
+        if (ci->eval_colors || ci->eval_a) {
+            imlib_context_set_color(ci->r, ci->g, ci->b, ci->a);
+        }
 
         if (!(ci->imageOverlaid))
         for (p = buff; p; p = q) {

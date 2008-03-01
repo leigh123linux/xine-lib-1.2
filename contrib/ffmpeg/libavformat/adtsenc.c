@@ -1,7 +1,7 @@
 /*
  * ADTS muxer.
  * Copyright (c) 2006 Baptiste Coudurier <baptiste.coudurier@smartjog.com>
- *                    Mans Rullgard <mru@inprovide.com>
+ *                    Mans Rullgard <mans@mansr.com>
  *
  * This file is part of FFmpeg.
  *
@@ -84,20 +84,15 @@ static int adts_write_frame_header(AVFormatContext *s, int size)
     put_bits(&pb, 2, 0);        /* number_of_raw_data_blocks_in_frame */
 
     flush_put_bits(&pb);
-    put_buffer(&s->pb, buf, ADTS_HEADER_SIZE);
+    put_buffer(s->pb, buf, ADTS_HEADER_SIZE);
 
-    return 0;
-}
-
-static int adts_write_trailer(AVFormatContext *s)
-{
     return 0;
 }
 
 static int adts_write_packet(AVFormatContext *s, AVPacket *pkt)
 {
     ADTSContext *adts = s->priv_data;
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
 
     if (!pkt->size)
         return 0;
@@ -119,5 +114,4 @@ AVOutputFormat adts_muxer = {
     CODEC_ID_NONE,
     adts_write_header,
     adts_write_packet,
-    adts_write_trailer,
 };

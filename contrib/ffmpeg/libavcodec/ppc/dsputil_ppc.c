@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "../dsputil.h"
+#include "dsputil.h"
 
 #include "dsputil_ppc.h"
 
@@ -39,6 +39,7 @@ void dsputil_init_altivec(DSPContext* c, AVCodecContext *avctx);
 void vc1dsp_init_altivec(DSPContext* c, AVCodecContext *avctx);
 void snow_init_altivec(DSPContext* c, AVCodecContext *avctx);
 void float_init_altivec(DSPContext* c, AVCodecContext *avctx);
+void int_init_altivec(DSPContext* c, AVCodecContext *avctx);
 
 #endif
 
@@ -154,11 +155,7 @@ POWERPC_PERF_START_COUNT(powerpc_clear_blocks_dcbz32, 1);
       i += 16;
     }
     for ( ; i < sizeof(DCTELEM)*6*64-31 ; i += 32) {
-#ifndef __MWERKS__
       asm volatile("dcbz %0,%1" : : "b" (blocks), "r" (i) : "memory");
-#else
-      __dcbz( blocks, i );
-#endif
     }
     if (misal) {
       ((unsigned long*)blocks)[188] = 0L;
@@ -213,7 +210,7 @@ void clear_blocks_dcbz128_ppc(DCTELEM *blocks)
    knows about dcbzl ... */
 long check_dcbzl_effect(void)
 {
-  register char *fakedata = (char*)av_malloc(1024);
+  register char *fakedata = av_malloc(1024);
   register char *fakedata_middle;
   register long zero = 0;
   register long i = 0;
@@ -260,7 +257,7 @@ static void prefetch_ppc(void *mem, int stride, int h)
 
 void dsputil_init_ppc(DSPContext* c, AVCodecContext *avctx)
 {
-    // Common optimizations whether Altivec is available or not
+    // Common optimizations whether AltiVec is available or not
     c->prefetch = prefetch_ppc;
     switch (check_dcbzl_effect()) {
         case 32:
@@ -284,6 +281,7 @@ void dsputil_init_ppc(DSPContext* c, AVCodecContext *avctx)
         if(ENABLE_VC1_DECODER || ENABLE_WMV3_DECODER)
             vc1dsp_init_altivec(c, avctx);
         float_init_altivec(c, avctx);
+        int_init_altivec(c, avctx);
         c->gmc1 = gmc1_altivec;
 
 #ifdef CONFIG_ENCODERS

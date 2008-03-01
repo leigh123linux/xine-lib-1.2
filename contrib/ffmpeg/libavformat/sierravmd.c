@@ -59,9 +59,6 @@ typedef struct VmdDemuxContext {
 
 static int vmd_probe(AVProbeData *p)
 {
-    if (p->buf_size < 2)
-        return 0;
-
     /* check if the first 2 bytes of the file contain the appropriate size
      * of a VMD header chunk */
     if (AV_RL16(&p->buf[0]) != VMD_HEADER_SIZE - 2)
@@ -74,9 +71,9 @@ static int vmd_probe(AVProbeData *p)
 static int vmd_read_header(AVFormatContext *s,
                            AVFormatParameters *ap)
 {
-    VmdDemuxContext *vmd = (VmdDemuxContext *)s->priv_data;
-    ByteIOContext *pb = &s->pb;
-    AVStream *st, *vst;
+    VmdDemuxContext *vmd = s->priv_data;
+    ByteIOContext *pb = s->pb;
+    AVStream *st = NULL, *vst;
     unsigned int toc_offset;
     unsigned char *raw_frame_table;
     int raw_frame_table_size;
@@ -92,12 +89,12 @@ static int vmd_read_header(AVFormatContext *s,
     /* fetch the main header, including the 2 header length bytes */
     url_fseek(pb, 0, SEEK_SET);
     if (get_buffer(pb, vmd->vmd_header, VMD_HEADER_SIZE) != VMD_HEADER_SIZE)
-        return AVERROR_IO;
+        return AVERROR(EIO);
 
     /* start up the decoders */
     vst = av_new_stream(s, 0);
     if (!vst)
-        return AVERROR_NOMEM;
+        return AVERROR(ENOMEM);
     av_set_pts_info(vst, 33, 1, 10);
     vmd->video_stream_index = vst->index;
     vst->codec->codec_type = CODEC_TYPE_VIDEO;
@@ -114,7 +111,7 @@ static int vmd_read_header(AVFormatContext *s,
     if (vmd->sample_rate) {
         st = av_new_stream(s, 0);
         if (!st)
-            return AVERROR_NOMEM;
+            return AVERROR(ENOMEM);
         vmd->audio_stream_index = st->index;
         st->codec->codec_type = CODEC_TYPE_AUDIO;
         st->codec->codec_id = CODEC_ID_VMDAUDIO;
@@ -158,13 +155,13 @@ static int vmd_read_header(AVFormatContext *s,
     if (!raw_frame_table || !vmd->frame_table) {
         av_free(raw_frame_table);
         av_free(vmd->frame_table);
-        return AVERROR_NOMEM;
+        return AVERROR(ENOMEM);
     }
     if (get_buffer(pb, raw_frame_table, raw_frame_table_size) !=
         raw_frame_table_size) {
         av_free(raw_frame_table);
         av_free(vmd->frame_table);
-        return AVERROR_IO;
+        return AVERROR(EIO);
     }
 
     total_frames = 0;
@@ -184,6 +181,7 @@ static int vmd_read_header(AVFormatContext *s,
                 continue;
             switch(type) {
             case 1: /* Audio Chunk */
+                if (!st) break;
                 /* first audio chunk contains several audio buffers */
                 if(current_audio_pts){
                     vmd->frame_table[total_frames].frame_offset = current_offset;
@@ -247,20 +245,20 @@ static int vmd_read_header(AVFormatContext *s,
 static int vmd_read_packet(AVFormatContext *s,
                            AVPacket *pkt)
 {
-    VmdDemuxContext *vmd = (VmdDemuxContext *)s->priv_data;
-    ByteIOContext *pb = &s->pb;
+    VmdDemuxContext *vmd = s->priv_data;
+    ByteIOContext *pb = s->pb;
     int ret = 0;
     vmd_frame_t *frame;
 
     if (vmd->current_frame >= vmd->frame_count)
-        return AVERROR_IO;
+        return AVERROR(EIO);
 
     frame = &vmd->frame_table[vmd->current_frame];
     /* position the stream (will probably be there already) */
     url_fseek(pb, frame->frame_offset, SEEK_SET);
 
     if (av_new_packet(pkt, frame->frame_size + BYTES_PER_FRAME_RECORD))
-        return AVERROR_NOMEM;
+        return AVERROR(ENOMEM);
     pkt->pos= url_ftell(pb);
     memcpy(pkt->data, frame->frame_record, BYTES_PER_FRAME_RECORD);
     ret = get_buffer(pb, pkt->data + BYTES_PER_FRAME_RECORD,
@@ -268,11 +266,11 @@ static int vmd_read_packet(AVFormatContext *s,
 
     if (ret != frame->frame_size) {
         av_free_packet(pkt);
-        ret = AVERROR_IO;
+        ret = AVERROR(EIO);
     }
     pkt->stream_index = frame->stream_index;
     pkt->pts = frame->pts;
-    av_log(NULL, AV_LOG_INFO, " dispatching %s frame with %d bytes and pts %"PRId64"\n",
+    av_log(NULL, AV_LOG_DEBUG, " dispatching %s frame with %d bytes and pts %"PRId64"\n",
             (frame->frame_record[0] == 0x02) ? "video" : "audio",
             frame->frame_size + BYTES_PER_FRAME_RECORD,
             pkt->pts);
@@ -284,7 +282,7 @@ static int vmd_read_packet(AVFormatContext *s,
 
 static int vmd_read_close(AVFormatContext *s)
 {
-    VmdDemuxContext *vmd = (VmdDemuxContext *)s->priv_data;
+    VmdDemuxContext *vmd = s->priv_data;
 
     av_free(vmd->frame_table);
 

@@ -17,7 +17,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- *
  */
 
 /**
@@ -35,7 +34,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "common.h"
 #include "avcodec.h"
 #include "dsputil.h"
 
@@ -61,7 +59,7 @@ typedef struct CinepakContext {
     DSPContext dsp;
     AVFrame frame;
 
-    unsigned char *data;
+    const unsigned char *data;
     int size;
 
     int width, height;
@@ -74,9 +72,9 @@ typedef struct CinepakContext {
 } CinepakContext;
 
 static void cinepak_decode_codebook (cvid_codebook_t *codebook,
-                                     int chunk_id, int size, uint8_t *data)
+                                     int chunk_id, int size, const uint8_t *data)
 {
-    uint8_t *eod = (data + size);
+    const uint8_t *eod = (data + size);
     uint32_t flag, mask;
     int      i, n;
 
@@ -123,9 +121,9 @@ static void cinepak_decode_codebook (cvid_codebook_t *codebook,
 }
 
 static int cinepak_decode_vectors (CinepakContext *s, cvid_strip_t *strip,
-                                   int chunk_id, int size, uint8_t *data)
+                                   int chunk_id, int size, const uint8_t *data)
 {
-    uint8_t         *eod = (data + size);
+    const uint8_t   *eod = (data + size);
     uint32_t         flag, mask;
     cvid_codebook_t *codebook;
     unsigned int     x, y;
@@ -266,9 +264,9 @@ static int cinepak_decode_vectors (CinepakContext *s, cvid_strip_t *strip,
 }
 
 static int cinepak_decode_strip (CinepakContext *s,
-                                 cvid_strip_t *strip, uint8_t *data, int size)
+                                 cvid_strip_t *strip, const uint8_t *data, int size)
 {
-    uint8_t *eod = (data + size);
+    const uint8_t *eod = (data + size);
     int      chunk_id, chunk_size;
 
     /* coordinate sanity checks */
@@ -319,7 +317,7 @@ static int cinepak_decode_strip (CinepakContext *s,
 
 static int cinepak_decode (CinepakContext *s)
 {
-    uint8_t      *eod = (s->data + s->size);
+    const uint8_t  *eod = (s->data + s->size);
     int           i, result, strip_size, frame_flags, num_strips;
     int           y0 = 0;
     int           encoded_buf_size;
@@ -391,7 +389,7 @@ static int cinepak_decode (CinepakContext *s)
 
 static int cinepak_decode_init(AVCodecContext *avctx)
 {
-    CinepakContext *s = (CinepakContext *)avctx->priv_data;
+    CinepakContext *s = avctx->priv_data;
 
     s->avctx = avctx;
     s->width = (avctx->width + 3) & ~3;
@@ -407,7 +405,6 @@ static int cinepak_decode_init(AVCodecContext *avctx)
         avctx->pix_fmt = PIX_FMT_PAL8;
     }
 
-    avctx->has_b_frames = 0;
     dsputil_init(&s->dsp, avctx);
 
     s->frame.data[0] = NULL;
@@ -417,9 +414,9 @@ static int cinepak_decode_init(AVCodecContext *avctx)
 
 static int cinepak_decode_frame(AVCodecContext *avctx,
                                 void *data, int *data_size,
-                                uint8_t *buf, int buf_size)
+                                const uint8_t *buf, int buf_size)
 {
-    CinepakContext *s = (CinepakContext *)avctx->priv_data;
+    CinepakContext *s = avctx->priv_data;
 
     s->data = buf;
     s->size = buf_size;
@@ -452,7 +449,7 @@ static int cinepak_decode_frame(AVCodecContext *avctx,
 
 static int cinepak_decode_end(AVCodecContext *avctx)
 {
-    CinepakContext *s = (CinepakContext *)avctx->priv_data;
+    CinepakContext *s = avctx->priv_data;
 
     if (s->frame.data[0])
         avctx->release_buffer(avctx, &s->frame);

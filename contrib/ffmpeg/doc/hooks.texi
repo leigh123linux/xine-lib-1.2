@@ -10,6 +10,12 @@
 
 @chapter Introduction
 
+@var{Please be aware that vhook is deprecated, and hence its development is
+frozen (bug fixes are still accepted).
+The substitute will be 'libavfilter', the result of our 'Video Filter API'
+Google Summer of Code project. You may monitor its progress by subscribing to
+the ffmpeg-soc mailing list at
+@url{http://lists.mplayerhq.hu/mailman/listinfo/ffmpeg-soc}.}
 
 The video hook functionality is designed (mostly) for live video. It allows
 the video to be modified or examined between the decoder and the encoder.
@@ -67,18 +73,27 @@ with the full path to the font file, as in:
 @end example
 where 20 is the point size.
 
+You can specify the filename to read RGB color names from. If it is not
+specified, these defaults are used: @file{/usr/share/X11/rgb.txt} and
+@file{/usr/lib/X11/rgb.txt}
+
 Options:
 @multitable @columnfractions .2 .8
+@item @option{-C <rgb.txt>}   @tab The filename to read RGB color names from
 @item @option{-c <color>}     @tab The color of the text
 @item @option{-F <fontname>}  @tab The font face and size
 @item @option{-t <text>}      @tab The text
 @item @option{-f <filename>}  @tab The filename to read text from
-@item @option{-x <expresion>} @tab x coordinate of text or image
-@item @option{-y <expresion>} @tab y coordinate of text or image
+@item @option{-x <expression>}@tab x coordinate of text or image
+@item @option{-y <expression>}@tab y coordinate of text or image
 @item @option{-i <filename>}  @tab The filename to read a image from
+@item @option{-R <expression>}@tab Value for R color
+@item @option{-G <expression>}@tab Value for G color
+@item @option{-B <expression>}@tab Value for B color
+@item @option{-A <expression>}@tab Value for Alpha channel
 @end multitable
 
-Expresions are functions of these variables:
+Expressions are functions of these variables:
 @multitable @columnfractions .2 .8
 @item @var{N} @tab frame number (starting at zero)
 @item @var{H} @tab frame height
@@ -136,6 +151,30 @@ Usage examples:
      decreasing it makes it scroll slower. Hint: Blank lines containing only
      a newline are treated as end-of-file. To create blank lines, use lines
      that consist of space characters only.
+
+   # Scrolling credits with custom color from a text file
+   ffmpeg -i input.avi -vhook \
+     'vhook/imlib2.so -C rgb.txt -c CustomColor1 -F VeraBd.ttf/16 -x 100 -y -1.0*N -f credits.txt' \
+     -sameq output.avi
+
+     This example does the same as the one above, but specifies an rgb.txt file
+     to be used, which has a custom-made color in it.
+
+   # Variable colors
+   ffmpeg -i input.avi -vhook \
+     'vhook/imlib2.so -t Hello -R abs(255*sin(N/47*PI)) -G abs(255*sin(N/47*PI)) -B abs(255*sin(N/47*PI))' \
+     -sameq output.avi
+
+     In this example, the color for the text goes up and down from black to
+     white.
+
+   # Text fade-out
+   ffmpeg -i input.avi -vhook \
+     'vhook/imlib2.so -t Hello -A max(0,255-exp(N/47))' \
+     -sameq output.avi
+
+     In this example, the text fades out in about 10 seconds for a 25 fps input
+     video file.
 
    # scrolling credits from a graphics file
    ffmpeg -sameq -i input.avi \

@@ -17,7 +17,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- *
  */
 #include "avcodec.h"
 
@@ -38,7 +37,7 @@ typedef struct TargaContext {
     int compression_type;
 } TargaContext;
 
-static void targa_decode_rle(AVCodecContext *avctx, TargaContext *s, uint8_t *src, uint8_t *dst, int w, int h, int stride, int bpp)
+static void targa_decode_rle(AVCodecContext *avctx, TargaContext *s, const uint8_t *src, uint8_t *dst, int w, int h, int stride, int bpp)
 {
     int i, x, y;
     int depth = (bpp + 1) >> 3;
@@ -90,7 +89,7 @@ static void targa_decode_rle(AVCodecContext *avctx, TargaContext *s, uint8_t *sr
 
 static int decode_frame(AVCodecContext *avctx,
                         void *data, int *data_size,
-                        uint8_t *buf, int buf_size)
+                        const uint8_t *buf, int buf_size)
 {
     TargaContext * const s = avctx->priv_data;
     AVFrame *picture = data;

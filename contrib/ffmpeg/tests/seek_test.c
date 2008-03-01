@@ -23,12 +23,18 @@
 
 #include "avformat.h"
 
+#undef exit
+
 int main(int argc, char **argv)
 {
     const char *filename;
     AVFormatContext *ic;
     int i, ret, stream_id;
     int64_t timestamp;
+    AVFormatParameters params, *ap= &params;
+    memset(ap, 0, sizeof(params));
+    ap->channels=1;
+    ap->sample_rate= 22050;
 
     /* initialize libavcodec, and register all codecs and formats */
     av_register_all();
@@ -48,9 +54,9 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    ret = av_open_input_file(&ic, filename, NULL, 0, NULL);
+    ret = av_open_input_file(&ic, filename, NULL, 0, ap);
     if (ret < 0) {
-        fprintf(stderr, "cant open %s\n", filename);
+        fprintf(stderr, "cannot open %s\n", filename);
         exit(1);
     }
 
@@ -70,7 +76,7 @@ int main(int argc, char **argv)
             printf("ret:%2d", ret);
             if(ret>=0){
                 st= ic->streams[pkt.stream_index];
-                printf(" st:%2d dts:%f pts:%f pos:%Ld size:%d flags:%d", pkt.stream_index, pkt.dts*av_q2d(st->time_base), pkt.pts*av_q2d(st->time_base), pkt.pos, pkt.size, pkt.flags);
+                printf(" st:%2d dts:%f pts:%f pos:%" PRId64 " size:%d flags:%d", pkt.stream_index, pkt.dts*av_q2d(st->time_base), pkt.pts*av_q2d(st->time_base), pkt.pos, pkt.size, pkt.flags);
             }
             printf("\n");
         }

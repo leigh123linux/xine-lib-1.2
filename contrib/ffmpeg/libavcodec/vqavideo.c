@@ -17,7 +17,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- *
  */
 
 /**
@@ -69,7 +68,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "common.h"
 #include "avcodec.h"
 #include "dsputil.h"
 
@@ -106,7 +104,7 @@ typedef struct VqaContext {
     DSPContext dsp;
     AVFrame frame;
 
-    unsigned char *buf;
+    const unsigned char *buf;
     int size;
 
     uint32_t palette[PALETTE_COUNT];
@@ -133,13 +131,12 @@ typedef struct VqaContext {
 
 static int vqa_decode_init(AVCodecContext *avctx)
 {
-    VqaContext *s = (VqaContext *)avctx->priv_data;
+    VqaContext *s = avctx->priv_data;
     unsigned char *vqa_header;
-    int i, j, codebook_index;;
+    int i, j, codebook_index;
 
     s->avctx = avctx;
     avctx->pix_fmt = PIX_FMT_PAL8;
-    avctx->has_b_frames = 0;
     dsputil_init(&s->dsp, avctx);
 
     /* make sure the extradata made it */
@@ -205,7 +202,7 @@ static int vqa_decode_init(AVCodecContext *avctx)
         return; \
     }
 
-static void decode_format80(unsigned char *src, int src_size,
+static void decode_format80(const unsigned char *src, int src_size,
     unsigned char *dest, int dest_size, int check_size) {
 
     int src_index = 0;
@@ -570,9 +567,9 @@ static void vqa_decode_chunk(VqaContext *s)
 
 static int vqa_decode_frame(AVCodecContext *avctx,
                             void *data, int *data_size,
-                            uint8_t *buf, int buf_size)
+                            const uint8_t *buf, int buf_size)
 {
-    VqaContext *s = (VqaContext *)avctx->priv_data;
+    VqaContext *s = avctx->priv_data;
 
     s->buf = buf;
     s->size = buf_size;
@@ -600,7 +597,7 @@ static int vqa_decode_frame(AVCodecContext *avctx,
 
 static int vqa_decode_end(AVCodecContext *avctx)
 {
-    VqaContext *s = (VqaContext *)avctx->priv_data;
+    VqaContext *s = avctx->priv_data;
 
     av_free(s->codebook);
     av_free(s->next_codebook_buffer);

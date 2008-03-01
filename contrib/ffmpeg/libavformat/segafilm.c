@@ -66,9 +66,6 @@ typedef struct FilmDemuxContext {
 
 static int film_probe(AVProbeData *p)
 {
-    if (p->buf_size < 4)
-        return 0;
-
     if (AV_RB32(&p->buf[0]) != FILM_TAG)
         return 0;
 
@@ -78,8 +75,8 @@ static int film_probe(AVProbeData *p)
 static int film_read_header(AVFormatContext *s,
                             AVFormatParameters *ap)
 {
-    FilmDemuxContext *film = (FilmDemuxContext *)s->priv_data;
-    ByteIOContext *pb = &s->pb;
+    FilmDemuxContext *film = s->priv_data;
+    ByteIOContext *pb = s->pb;
     AVStream *st;
     unsigned char scratch[256];
     int i;
@@ -92,7 +89,7 @@ static int film_read_header(AVFormatContext *s,
 
     /* load the main FILM header */
     if (get_buffer(pb, scratch, 16) != 16)
-        return AVERROR_IO;
+        return AVERROR(EIO);
     data_offset = AV_RB32(&scratch[4]);
     film->version = AV_RB32(&scratch[8]);
 
@@ -100,7 +97,7 @@ static int film_read_header(AVFormatContext *s,
     if (film->version == 0) {
         /* special case for Lemmings .film files; 20-byte header */
         if (get_buffer(pb, scratch, 20) != 20)
-            return AVERROR_IO;
+            return AVERROR(EIO);
         /* make some assumptions about the audio parameters */
         film->audio_type = CODEC_ID_PCM_S8;
         film->audio_samplerate = 22050;
@@ -109,8 +106,8 @@ static int film_read_header(AVFormatContext *s,
     } else {
         /* normal Saturn .cpk files; 32-byte header */
         if (get_buffer(pb, scratch, 32) != 32)
-            return AVERROR_IO;
-        film->audio_samplerate = AV_RB16(&scratch[24]);;
+            return AVERROR(EIO);
+        film->audio_samplerate = AV_RB16(&scratch[24]);
         film->audio_channels = scratch[21];
         film->audio_bits = scratch[22];
         if (film->audio_bits == 8)
@@ -133,7 +130,7 @@ static int film_read_header(AVFormatContext *s,
     if (film->video_type) {
         st = av_new_stream(s, 0);
         if (!st)
-            return AVERROR_NOMEM;
+            return AVERROR(ENOMEM);
         film->video_stream_index = st->index;
         st->codec->codec_type = CODEC_TYPE_VIDEO;
         st->codec->codec_id = film->video_type;
@@ -145,7 +142,7 @@ static int film_read_header(AVFormatContext *s,
     if (film->audio_type) {
         st = av_new_stream(s, 0);
         if (!st)
-            return AVERROR_NOMEM;
+            return AVERROR(ENOMEM);
         film->audio_stream_index = st->index;
         st->codec->codec_type = CODEC_TYPE_AUDIO;
         st->codec->codec_id = film->audio_type;
@@ -161,7 +158,7 @@ static int film_read_header(AVFormatContext *s,
 
     /* load the sample table */
     if (get_buffer(pb, scratch, 16) != 16)
-        return AVERROR_IO;
+        return AVERROR(EIO);
     if (AV_RB32(&scratch[0]) != STAB_TAG)
         return AVERROR_INVALIDDATA;
     film->base_clock = AV_RB32(&scratch[8]);
@@ -178,7 +175,7 @@ static int film_read_header(AVFormatContext *s,
         /* load the next sample record and transfer it to an internal struct */
         if (get_buffer(pb, scratch, 16) != 16) {
             av_free(film->sample_table);
-            return AVERROR_IO;
+            return AVERROR(EIO);
         }
         film->sample_table[i].sample_offset =
             data_offset + AV_RB32(&scratch[0]);
@@ -206,15 +203,15 @@ static int film_read_header(AVFormatContext *s,
 static int film_read_packet(AVFormatContext *s,
                             AVPacket *pkt)
 {
-    FilmDemuxContext *film = (FilmDemuxContext *)s->priv_data;
-    ByteIOContext *pb = &s->pb;
+    FilmDemuxContext *film = s->priv_data;
+    ByteIOContext *pb = s->pb;
     film_sample_t *sample;
     int ret = 0;
     int i;
     int left, right;
 
     if (film->current_sample >= film->sample_count)
-        return AVERROR_IO;
+        return AVERROR(EIO);
 
     sample = &film->sample_table[film->current_sample];
 
@@ -226,14 +223,14 @@ static int film_read_packet(AVFormatContext *s,
         (film->video_type == CODEC_ID_CINEPAK)) {
         pkt->pos= url_ftell(pb);
         if (av_new_packet(pkt, sample->sample_size))
-            return AVERROR_NOMEM;
+            return AVERROR(ENOMEM);
         get_buffer(pb, pkt->data, sample->sample_size);
     } else if ((sample->stream == film->audio_stream_index) &&
         (film->audio_channels == 2)) {
         /* stereo PCM needs to be interleaved */
 
         if (av_new_packet(pkt, sample->sample_size))
-            return AVERROR_NOMEM;
+            return AVERROR(ENOMEM);
 
         /* make sure the interleave buffer is large enough */
         if (sample->sample_size > film->stereo_buffer_size) {
@@ -245,7 +242,7 @@ static int film_read_packet(AVFormatContext *s,
         pkt->pos= url_ftell(pb);
         ret = get_buffer(pb, film->stereo_buffer, sample->sample_size);
         if (ret != sample->sample_size)
-            ret = AVERROR_IO;
+            ret = AVERROR(EIO);
 
         left = 0;
         right = sample->sample_size / 2;
@@ -263,7 +260,7 @@ static int film_read_packet(AVFormatContext *s,
     } else {
         ret= av_get_packet(pb, pkt, sample->sample_size);
         if (ret != sample->sample_size)
-            ret = AVERROR_IO;
+            ret = AVERROR(EIO);
     }
 
     pkt->stream_index = sample->stream;
@@ -276,7 +273,7 @@ static int film_read_packet(AVFormatContext *s,
 
 static int film_read_close(AVFormatContext *s)
 {
-    FilmDemuxContext *film = (FilmDemuxContext *)s->priv_data;
+    FilmDemuxContext *film = s->priv_data;
 
     av_free(film->sample_table);
     av_free(film->stereo_buffer);

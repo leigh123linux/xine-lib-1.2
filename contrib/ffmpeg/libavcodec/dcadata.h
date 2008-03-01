@@ -24,6 +24,11 @@
  * @file dcadata.c
  */
 
+#ifndef FFMPEG_DCADATA_H
+#define FFMPEG_DCADATA_H
+
+#include <stdint.h>
+
 /* Generic tables */
 
 static const uint32_t dca_sample_rates[16] =
@@ -7309,7 +7314,7 @@ static const float fir_32bands_nonperfect[] =
 +1.390191784E-007
 };
 
-//FIXME the coeffs are symetric
+//FIXME the coeffs are symmetric
 static const float lfe_fir_64[] =
 {
 2.6584343868307770E-004,
@@ -7826,7 +7831,7 @@ static const float lfe_fir_64[] =
 2.6584343868307770E-004
 };
 
-//FIXME the coeffs are symetric
+//FIXME the coeffs are symmetric
 
 static const float lfe_fir_128[] =
 {
@@ -8344,7 +8349,7 @@ static const float lfe_fir_128[] =
 0.00053168571
 };
 
-/* 10^-(dB/20), with dB beeing a list of dB values rangeing from 0 to -72 */
+/* 10^-(dB/20), with dB being a list of dB values ranging from 0 to -72 */
 /* do a 20*log10(dca_downmix_coeffs) to reconvert the values */
 
 static const float dca_downmix_coeffs[65] = {
@@ -8359,6 +8364,19 @@ static const float dca_downmix_coeffs[65] = {
   0.026607250597988, 0.022387211385683, 0.018836490894898, 0.015848931924611, 0.013335214321633, 0.011220184543020,
   0.009440608762859, 0.007943282347243, 0.005623413251903, 0.003981071705535, 0.002818382931264, 0.001995262314969,
   0.001412537544623, 0.001000000000000, 0.000501187233627, 0.000251188643151, 0.000000000000000,
+};
+
+static const uint8_t dca_default_coeffs[16][5][2] = {
+    { { 13, 13 },                                                 },
+    { {  0, 64 }, { 64,  0 },                                     },
+    { {  0, 64 }, { 64,  0 },                                     },
+    { {  0, 64 }, { 64,  0 },                                     },
+    { {  0, 64 }, { 64,  0 },                                     },
+    { {  6,  6 }, {  0, 25 }, { 25,  0 },                         },
+    { {  0, 25 }, { 25,  0 }, { 13, 13 },                         },
+    { {  6,  6 }, {  0, 25 }, { 25,  0 }, { 13, 13 },             },
+    { {  0, 25 }, { 25,  0 }, {  0, 13 }, { 13,  0 },             },
+    { {  6,  6 }, {  0, 25 }, { 25,  0 }, {  0, 13 }, { 13,  0 }, },
 };
 
 /* downmix coeffs
@@ -8452,3 +8470,5 @@ where Ch(n) represents the subband samples in the (n)th audio channel.
 
 
 */
+
+#endif /* FFMPEG_DCADATA_H */

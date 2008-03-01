@@ -1,25 +1,27 @@
 #!/bin/sh
-#feel free to clean this up ive made no attempt to write this overly portable ...
 
-datadir="./data"
+LC_ALL=C
+export LC_ALL
+
+datadir="tests/data"
 
 logfile="$datadir/seek.regression"
 reffile="$1"
 
-list=`ls data/a-* data/b-* | sort`
-rm $logfile
+list=`grep '^tests/data/[ab]-' "$reffile"`
+rm -f $logfile
 for i in $list ; do
-    echo ---------------- >>$logfile
-    echo $i >>$logfile
-    ./seek_test $i >> $logfile
+    echo ---------------- >> $logfile
+    echo $i >> $logfile
+    tests/seek_test $i >> $logfile
 done
 
-if diff -u "$logfile" "$reffile" ; then
+if diff -u "$reffile" "$logfile" ; then
     echo
-    echo Regression test succeeded.
+    echo seek regression test: success
     exit 0
 else
     echo
-    echo Regression test: Error.
+    echo seek regression test: error
     exit 1
 fi

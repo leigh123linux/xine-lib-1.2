@@ -17,7 +17,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- *
  */
 
 /**
@@ -34,7 +33,7 @@ typedef struct QpegContext{
     uint8_t *refdata;
 } QpegContext;
 
-static void qpeg_decode_intra(uint8_t *src, uint8_t *dst, int size,
+static void qpeg_decode_intra(const uint8_t *src, uint8_t *dst, int size,
                             int stride, int width, int height)
 {
     int i;
@@ -116,22 +115,20 @@ static int qpeg_table_w[16] =
  { 0x00, 0x20, 0x18, 0x08, 0x18, 0x10, 0x20, 0x10, 0x08, 0x10, 0x20, 0x20, 0x08, 0x10, 0x18, 0x04};
 
 /* Decodes delta frames */
-static void qpeg_decode_inter(uint8_t *src, uint8_t *dst, int size,
+static void qpeg_decode_inter(const uint8_t *src, uint8_t *dst, int size,
                             int stride, int width, int height,
-                            int delta, uint8_t *ctable, uint8_t *refdata)
+                            int delta, const uint8_t *ctable, uint8_t *refdata)
 {
     int i, j;
     int code;
     int filled = 0;
     int orig_height;
-    uint8_t *blkdata;
 
     /* copy prev frame */
     for(i = 0; i < height; i++)
         memcpy(refdata + (i * width), dst + (i * stride), width);
 
     orig_height = height;
-    blkdata = src - 0x86;
     height--;
     dst = dst + height * stride;
 
@@ -252,7 +249,7 @@ static void qpeg_decode_inter(uint8_t *src, uint8_t *dst, int size,
 
 static int decode_frame(AVCodecContext *avctx,
                         void *data, int *data_size,
-                        uint8_t *buf, int buf_size)
+                        const uint8_t *buf, int buf_size)
 {
     QpegContext * const a = avctx->priv_data;
     AVFrame * const p= (AVFrame*)&a->pic;

@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "common.h"
 #include "avcodec.h"
 
 #ifdef CONFIG_ZLIB
@@ -36,7 +35,7 @@ typedef struct {
     unsigned char* decomp_buf;
 } CamStudioContext;
 
-static void copy_frame_default(AVFrame *f, uint8_t *src,
+static void copy_frame_default(AVFrame *f, const uint8_t *src,
                                int linelen, int height) {
     int i;
     uint8_t *dst = f->data[0];
@@ -48,7 +47,7 @@ static void copy_frame_default(AVFrame *f, uint8_t *src,
     }
 }
 
-static void add_frame_default(AVFrame *f, uint8_t *src,
+static void add_frame_default(AVFrame *f, const uint8_t *src,
                               int linelen, int height) {
     int i, j;
     uint8_t *dst = f->data[0];
@@ -66,7 +65,7 @@ static void add_frame_default(AVFrame *f, uint8_t *src,
 #define add_frame_16 add_frame_default
 #define add_frame_32 add_frame_default
 #else
-static void copy_frame_16(AVFrame *f, uint8_t *src,
+static void copy_frame_16(AVFrame *f, const uint8_t *src,
                           int linelen, int height) {
     int i, j;
     uint8_t *dst = f->data[0];
@@ -82,7 +81,7 @@ static void copy_frame_16(AVFrame *f, uint8_t *src,
     }
 }
 
-static void copy_frame_32(AVFrame *f, uint8_t *src,
+static void copy_frame_32(AVFrame *f, const uint8_t *src,
                           int linelen, int height) {
     int i, j;
     uint8_t *dst = f->data[0];
@@ -100,7 +99,7 @@ static void copy_frame_32(AVFrame *f, uint8_t *src,
     }
 }
 
-static void add_frame_16(AVFrame *f, uint8_t *src,
+static void add_frame_16(AVFrame *f, const uint8_t *src,
                          int linelen, int height) {
     int i, j;
     uint8_t *dst = f->data[0];
@@ -116,7 +115,7 @@ static void add_frame_16(AVFrame *f, uint8_t *src,
     }
 }
 
-static void add_frame_32(AVFrame *f, uint8_t *src,
+static void add_frame_32(AVFrame *f, const uint8_t *src,
                          int linelen, int height) {
     int i, j;
     uint8_t *dst = f->data[0];
@@ -136,8 +135,8 @@ static void add_frame_32(AVFrame *f, uint8_t *src,
 #endif
 
 static int decode_frame(AVCodecContext *avctx, void *data, int *data_size,
-                        uint8_t *buf, int buf_size) {
-    CamStudioContext *c = (CamStudioContext *)avctx->priv_data;
+                        const uint8_t *buf, int buf_size) {
+    CamStudioContext *c = avctx->priv_data;
     AVFrame *picture = data;
 
     if (buf_size < 2) {
@@ -214,11 +213,10 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size,
 }
 
 static int decode_init(AVCodecContext *avctx) {
-    CamStudioContext *c = (CamStudioContext *)avctx->priv_data;
+    CamStudioContext *c = avctx->priv_data;
     if (avcodec_check_dimensions(avctx, avctx->height, avctx->width) < 0) {
         return 1;
     }
-    avctx->has_b_frames = 0;
     switch (avctx->bits_per_sample) {
         case 16: avctx->pix_fmt = PIX_FMT_RGB555; break;
         case 24: avctx->pix_fmt = PIX_FMT_BGR24; break;
@@ -243,7 +241,7 @@ static int decode_init(AVCodecContext *avctx) {
 }
 
 static int decode_end(AVCodecContext *avctx) {
-    CamStudioContext *c = (CamStudioContext *)avctx->priv_data;
+    CamStudioContext *c = avctx->priv_data;
     av_freep(&c->decomp_buf);
     if (c->pic.data[0])
         avctx->release_buffer(avctx, &c->pic);

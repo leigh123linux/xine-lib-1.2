@@ -31,10 +31,11 @@
 #include "integer.h"
 #include "opt.h"
 #include "crc.h"
+#include "imgconvert.h"
 #include <stdarg.h>
 #include <limits.h>
 #include <float.h>
-#ifdef __MINGW32__
+#if !defined(HAVE_MKSTEMP)
 #include <fcntl.h>
 #endif
 
@@ -126,6 +127,11 @@ static void do_free(void)
 /* encoder management */
 AVCodec *first_avcodec = NULL;
 
+AVCodec *av_codec_next(AVCodec *c){
+    if(c) return c->next;
+    else  return first_avcodec;
+}
+
 void register_avcodec(AVCodec *format)
 {
     AVCodec **p;
@@ -147,6 +153,8 @@ typedef struct InternalBuffer{
     uint8_t *base[4];
     uint8_t *data[4];
     int linesize[4];
+    int width, height;
+    enum PixelFormat pix_fmt;
 }InternalBuffer;
 
 #define INTERNAL_BUFFER_SIZE 32
@@ -169,6 +177,7 @@ void avcodec_align_dimensions(AVCodecContext *s, int *width, int *height){
     case PIX_FMT_YUVJ420P:
     case PIX_FMT_YUVJ422P:
     case PIX_FMT_YUVJ444P:
+    case PIX_FMT_YUVA420P:
         w_align= 16; //FIXME check for non mpeg style codecs and use less alignment
         h_align= 16;
         break;
@@ -251,12 +260,20 @@ int avcodec_default_get_buffer(AVCodecContext *s, AVFrame *pic){
     picture_number= &(((InternalBuffer*)s->internal_buffer)[INTERNAL_BUFFER_SIZE-1]).last_pic_num; //FIXME ugly hack
     (*picture_number)++;
 
+    if(buf->base[0] && (buf->width != w || buf->height != h || buf->pix_fmt != s->pix_fmt)){
+        for(i=0; i<4; i++){
+            av_freep(&buf->base[i]);
+            buf->data[i]= NULL;
+        }
+    }
+
     if(buf->base[0]){
         pic->age= *picture_number - buf->last_pic_num;
         buf->last_pic_num= *picture_number;
     }else{
         int h_chroma_shift, v_chroma_shift;
-        int pixel_size, size[3];
+        int size[4] = {0};
+        int tmpsize;
         AVPicture picture;
 
         avcodec_get_chroma_sub_sample(s->pix_fmt, &h_chroma_shift, &v_chroma_shift);
@@ -267,28 +284,24 @@ int avcodec_default_get_buffer(AVCodecContext *s, AVFrame *pic){
             w+= EDGE_WIDTH*2;
             h+= EDGE_WIDTH*2;
         }
-        avpicture_fill(&picture, NULL, s->pix_fmt, w, h);
-        pixel_size= picture.linesize[0]*8 / w;
-//av_log(NULL, AV_LOG_ERROR, "%d %d %d %d\n", (int)picture.data[1], w, h, s->pix_fmt);
-        assert(pixel_size>=1);
-            //FIXME next ensures that linesize= 2^x uvlinesize, thats needed because some MC code assumes it
-        if(pixel_size == 3*8)
-            w= ALIGN(w, STRIDE_ALIGN<<h_chroma_shift);
-        else
-            w= ALIGN(pixel_size*w, STRIDE_ALIGN<<(h_chroma_shift+3)) / pixel_size;
-        size[1] = avpicture_fill(&picture, NULL, s->pix_fmt, w, h);
-        size[0] = picture.linesize[0] * h;
-        size[1] -= size[0];
-        if(picture.data[2])
-            size[1]= size[2]= size[1]/2;
-        else
-            size[2]= 0;
+        avcodec_align_dimensions(s, &w, &h);
+
+        ff_fill_linesize(&picture, s->pix_fmt, w);
+
+        for (i=0; i<4; i++)
+            picture.linesize[i] = ALIGN(picture.linesize[i], STRIDE_ALIGN);
+
+        tmpsize = ff_fill_pointer(&picture, NULL, s->pix_fmt, h);
+
+        for (i=0; i<3 && picture.data[i+1]; i++)
+            size[i] = picture.data[i+1] - picture.data[i];
+        size[i] = tmpsize - (picture.data[i] - picture.data[0]);
 
         buf->last_pic_num= -256*256*256*64;
         memset(buf->base, 0, sizeof(buf->base));
         memset(buf->data, 0, sizeof(buf->data));
 
-        for(i=0; i<3 && size[i]; i++){
+        for(i=0; i<4 && size[i]; i++){
             const int h_shift= i==0 ? 0 : h_chroma_shift;
             const int v_shift= i==0 ? 0 : v_chroma_shift;
 
@@ -304,6 +317,9 @@ int avcodec_default_get_buffer(AVCodecContext *s, AVFrame *pic){
             else
                 buf->data[i] = buf->base[i] + ALIGN((buf->linesize[i]*EDGE_WIDTH>>v_shift) + (EDGE_WIDTH>>h_shift), STRIDE_ALIGN);
         }
+        buf->width  = s->width;
+        buf->height = s->height;
+        buf->pix_fmt= s->pix_fmt;
         pic->age= 256*256*256*64;
     }
     pic->type= FF_BUFFER_TYPE_INTERNAL;
@@ -337,7 +353,7 @@ void avcodec_default_release_buffer(AVCodecContext *s, AVFrame *pic){
 
     FFSWAP(InternalBuffer, *buf, *last);
 
-    for(i=0; i<3; i++){
+    for(i=0; i<4; i++){
         pic->data[i]=NULL;
 //        pic->base[i]=NULL;
     }
@@ -400,7 +416,7 @@ static const char* context_to_name(void* ptr) {
 }
 
 #define OFFSET(x) offsetof(AVCodecContext,x)
-#define DEFAULT 0 //should be NAN but it doesnt work as its not a constant in glibc as required by ANSI/ISO C
+#define DEFAULT 0 //should be NAN but it does not work as it is not a constant in glibc as required by ANSI/ISO C
 //these names are too long to be readable
 #define V AV_OPT_FLAG_VIDEO_PARAM
 #define A AV_OPT_FLAG_AUDIO_PARAM
@@ -453,6 +469,18 @@ static const AVOption options[]={
 {"local_header", "place global headers at every keyframe instead of in extradata", 0, FF_OPT_TYPE_CONST, CODEC_FLAG2_LOCAL_HEADER, INT_MIN, INT_MAX, V|E, "flags2"},
 {"sub_id", NULL, OFFSET(sub_id), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX},
 {"me_method", "set motion estimation method", OFFSET(me_method), FF_OPT_TYPE_INT, ME_EPZS, INT_MIN, INT_MAX, V|E, "me_method"},
+#if LIBAVCODEC_VERSION_INT < ((52<<16)+(0<<8)+0)
+{"me", "set motion estimation method (deprecated, use me_method instead)", OFFSET(me_method), FF_OPT_TYPE_INT, ME_EPZS, INT_MIN, INT_MAX, V|E, "me_method"},
+#endif
+{"zero", "zero motion estimation (fastest)", 0, FF_OPT_TYPE_CONST, ME_ZERO, INT_MIN, INT_MAX, V|E, "me_method" },
+{"full", "full motion estimation (slowest)", 0, FF_OPT_TYPE_CONST, ME_FULL, INT_MIN, INT_MAX, V|E, "me_method" },
+{"epzs", "EPZS motion estimation (default)", 0, FF_OPT_TYPE_CONST, ME_EPZS, INT_MIN, INT_MAX, V|E, "me_method" },
+{"log", "log motion estimation", 0, FF_OPT_TYPE_CONST, ME_LOG, INT_MIN, INT_MAX, V|E, "me_method" },
+{"phods", "phods motion estimation", 0, FF_OPT_TYPE_CONST, ME_PHODS, INT_MIN, INT_MAX, V|E, "me_method" },
+{"x1", "X1 motion estimation", 0, FF_OPT_TYPE_CONST, ME_X1, INT_MIN, INT_MAX, V|E, "me_method" },
+{"hex", "hex motion estimation", 0, FF_OPT_TYPE_CONST, ME_HEX, INT_MIN, INT_MAX, V|E, "me_method" },
+{"umh", "umh motion estimation", 0, FF_OPT_TYPE_CONST, ME_UMH, INT_MIN, INT_MAX, V|E, "me_method" },
+{"iter", "iter motion estimation", 0, FF_OPT_TYPE_CONST, ME_ITER, INT_MIN, INT_MAX, V|E, "me_method" },
 {"extradata_size", NULL, OFFSET(extradata_size), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX},
 {"time_base", NULL, OFFSET(time_base), FF_OPT_TYPE_RATIONAL, DEFAULT, INT_MIN, INT_MAX},
 {"g", "set the group of picture size", OFFSET(gop_size), FF_OPT_TYPE_INT, 12, INT_MIN, INT_MAX, V|E},
@@ -511,7 +539,7 @@ static const AVOption options[]={
 {"strict", "strictly conform to all the things in the spec no matter what consequences", 0, FF_OPT_TYPE_CONST, FF_COMPLIANCE_STRICT, INT_MIN, INT_MAX, V|E, "strict"},
 {"normal", NULL, 0, FF_OPT_TYPE_CONST, FF_COMPLIANCE_NORMAL, INT_MIN, INT_MAX, V|E, "strict"},
 {"inofficial", "allow inofficial extensions", 0, FF_OPT_TYPE_CONST, FF_COMPLIANCE_INOFFICIAL, INT_MIN, INT_MAX, V|E, "strict"},
-{"experimental", "allow non standarized experimental things", 0, FF_OPT_TYPE_CONST, FF_COMPLIANCE_EXPERIMENTAL, INT_MIN, INT_MAX, V|E, "strict"},
+{"experimental", "allow non standardized experimental things", 0, FF_OPT_TYPE_CONST, FF_COMPLIANCE_EXPERIMENTAL, INT_MIN, INT_MAX, V|E, "strict"},
 {"b_qoffset", "qp offset between p and b frames", OFFSET(b_quant_offset), FF_OPT_TYPE_FLOAT, 1.25, FLT_MIN, FLT_MAX, V|E},
 {"er", "set error resilience strategy", OFFSET(error_resilience), FF_OPT_TYPE_INT, FF_ER_CAREFUL, INT_MIN, INT_MAX, A|V|D, "er"},
 {"careful", NULL, 0, FF_OPT_TYPE_CONST, FF_ER_CAREFUL, INT_MIN, INT_MAX, V|D, "er"},
@@ -531,7 +559,7 @@ static const AVOption options[]={
 {"rc_eq", "set rate control equation", OFFSET(rc_eq), FF_OPT_TYPE_STRING, DEFAULT, CHAR_MIN, CHAR_MAX, V|E},
 {"maxrate", "set max video bitrate tolerance (in bits/s)", OFFSET(rc_max_rate), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX, V|E},
 {"minrate", "set min video bitrate tolerance (in bits/s)", OFFSET(rc_min_rate), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX, V|E},
-{"bufsize", "set ratecontrol buffer size (in bits)", OFFSET(rc_buffer_size), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX, V|E},
+{"bufsize", "set ratecontrol buffer size (in bits)", OFFSET(rc_buffer_size), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX, A|V|E},
 {"rc_buf_aggressivity", "currently useless", OFFSET(rc_buffer_aggressivity), FF_OPT_TYPE_FLOAT, 1.0, FLT_MIN, FLT_MAX, V|E},
 {"i_qfactor", "qp factor between p and i frames", OFFSET(i_quant_factor), FF_OPT_TYPE_FLOAT, -0.8, -FLT_MAX, FLT_MAX, V|E},
 {"i_qoffset", "qp offset between p and i frames", OFFSET(i_quant_offset), FF_OPT_TYPE_FLOAT, 0.0, -FLT_MAX, FLT_MAX, V|E},
@@ -567,6 +595,7 @@ static const AVOption options[]={
 {"vp3", NULL, 0, FF_OPT_TYPE_CONST, FF_IDCT_VP3, INT_MIN, INT_MAX, V|E|D, "idct"},
 {"ipp", NULL, 0, FF_OPT_TYPE_CONST, FF_IDCT_IPP, INT_MIN, INT_MAX, V|E|D, "idct"},
 {"xvidmmx", NULL, 0, FF_OPT_TYPE_CONST, FF_IDCT_XVIDMMX, INT_MIN, INT_MAX, V|E|D, "idct"},
+{"faani", "floating point AAN IDCT", 0, FF_OPT_TYPE_CONST, FF_IDCT_FAAN, INT_MIN, INT_MAX, V|D|E, "idct"},
 {"slice_count", NULL, OFFSET(slice_count), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX},
 {"ec", "set error concealment strategy", OFFSET(error_concealment), FF_OPT_TYPE_FLAGS, 3, INT_MIN, INT_MAX, V|D, "ec"},
 {"guess_mvs", "iterative motion vector (MV) search (slow)", 0, FF_OPT_TYPE_CONST, FF_EC_GUESS_MVS, INT_MIN, INT_MAX, V|D, "ec"},
@@ -636,6 +665,9 @@ static const AVOption options[]={
 {"coder", NULL, OFFSET(coder_type), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX, V|E, "coder"},
 {"vlc", "variable length coder / huffman coder", 0, FF_OPT_TYPE_CONST, FF_CODER_TYPE_VLC, INT_MIN, INT_MAX, V|E, "coder"},
 {"ac", "arithmetic coder", 0, FF_OPT_TYPE_CONST, FF_CODER_TYPE_AC, INT_MIN, INT_MAX, V|E, "coder"},
+{"raw", "raw (no encoding)", 0, FF_OPT_TYPE_CONST, FF_CODER_TYPE_RAW, INT_MIN, INT_MAX, V|E, "coder"},
+{"rle", "run-length coder", 0, FF_OPT_TYPE_CONST, FF_CODER_TYPE_RLE, INT_MIN, INT_MAX, V|E, "coder"},
+{"deflate", "deflate-based coder", 0, FF_OPT_TYPE_CONST, FF_CODER_TYPE_DEFLATE, INT_MIN, INT_MAX, V|E, "coder"},
 {"context", "context model", OFFSET(context_model), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX, V|E},
 {"slice_flags", NULL, OFFSET(slice_flags), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX},
 {"xvmc_acceleration", NULL, OFFSET(xvmc_acceleration), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX},
@@ -650,7 +682,7 @@ static const AVOption options[]={
 {"nr", "noise reduction", OFFSET(noise_reduction), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX, V|E},
 {"rc_init_occupancy", "number of bits which should be loaded into the rc buffer before decoding starts", OFFSET(rc_initial_buffer_occupancy), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX, V|E},
 {"inter_threshold", NULL, OFFSET(inter_threshold), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX, V|E},
-{"flags2", NULL, OFFSET(flags2), FF_OPT_TYPE_FLAGS, CODEC_FLAG2_FASTPSKIP, INT_MIN, INT_MAX, V|A|E|D, "flags2"},
+{"flags2", NULL, OFFSET(flags2), FF_OPT_TYPE_FLAGS, CODEC_FLAG2_FASTPSKIP|CODEC_FLAG2_BIT_RESERVOIR, INT_MIN, INT_MAX, V|A|E|D, "flags2"},
 {"error", NULL, OFFSET(error_rate), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX, V|E},
 {"antialias", "MP3 antialias algorithm", OFFSET(antialias_algo), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX, V|D, "aa"},
 {"auto", NULL, 0, FF_OPT_TYPE_CONST, FF_AA_AUTO, INT_MIN, INT_MAX, V|D, "aa"},
@@ -667,6 +699,10 @@ static const AVOption options[]={
 {"skip_bottom", "number of macroblock rows at the bottom which are skipped", OFFSET(skip_bottom), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX, V|D},
 {"profile", NULL, OFFSET(profile), FF_OPT_TYPE_INT, FF_PROFILE_UNKNOWN, INT_MIN, INT_MAX, V|A|E, "profile"},
 {"unknown", NULL, 0, FF_OPT_TYPE_CONST, FF_PROFILE_UNKNOWN, INT_MIN, INT_MAX, V|A|E, "profile"},
+{"aac_main", NULL, 0, FF_OPT_TYPE_CONST, FF_PROFILE_AAC_MAIN, INT_MIN, INT_MAX, A|E, "profile"},
+{"aac_low", NULL, 0, FF_OPT_TYPE_CONST, FF_PROFILE_AAC_LOW, INT_MIN, INT_MAX, A|E, "profile"},
+{"aac_ssr", NULL, 0, FF_OPT_TYPE_CONST, FF_PROFILE_AAC_SSR, INT_MIN, INT_MAX, A|E, "profile"},
+{"aac_ltp", NULL, 0, FF_OPT_TYPE_CONST, FF_PROFILE_AAC_LTP, INT_MIN, INT_MAX, A|E, "profile"},
 {"level", NULL, OFFSET(level), FF_OPT_TYPE_INT, FF_LEVEL_UNKNOWN, INT_MIN, INT_MAX, V|A|E, "level"},
 {"unknown", NULL, 0, FF_OPT_TYPE_CONST, FF_LEVEL_UNKNOWN, INT_MIN, INT_MAX, V|A|E, "level"},
 {"lowres", "decode at 1= 1/2, 2=1/4, 3=1/8 resolutions", OFFSET(lowres), FF_OPT_TYPE_INT, 0, 0, INT_MAX, V|D},
@@ -695,7 +731,7 @@ static const AVOption options[]={
 {"fastpskip", "fast pskip (H.264)", 0, FF_OPT_TYPE_CONST, CODEC_FLAG2_FASTPSKIP, INT_MIN, INT_MAX, V|E, "flags2"},
 {"aud", "access unit delimiters (H.264)", 0, FF_OPT_TYPE_CONST, CODEC_FLAG2_AUD, INT_MIN, INT_MAX, V|E, "flags2"},
 {"brdo", "b-frame rate-distortion optimization", 0, FF_OPT_TYPE_CONST, CODEC_FLAG2_BRDO, INT_MIN, INT_MAX, V|E, "flags2"},
-{"skiprd", "RD optimal MB level residual skiping", 0, FF_OPT_TYPE_CONST, CODEC_FLAG2_SKIP_RD, INT_MIN, INT_MAX, V|E, "flags2"},
+{"skiprd", "RD optimal MB level residual skipping", 0, FF_OPT_TYPE_CONST, CODEC_FLAG2_SKIP_RD, INT_MIN, INT_MAX, V|E, "flags2"},
 {"complexityblur", "reduce fluctuations in qp (before curve compression)", OFFSET(complexityblur), FF_OPT_TYPE_FLOAT, 20.0, FLT_MIN, FLT_MAX, V|E},
 {"deblockalpha", "in-loop deblocking filter alphac0 parameter", OFFSET(deblockalpha), FF_OPT_TYPE_INT, DEFAULT, -6, 6, V|E},
 {"deblockbeta", "in-loop deblocking filter beta parameter", OFFSET(deblockbeta), FF_OPT_TYPE_INT, DEFAULT, -6, 6, V|E},
@@ -720,6 +756,9 @@ static const AVOption options[]={
 {"timecode_frame_start", "GOP timecode frame start number, in non drop frame format", OFFSET(timecode_frame_start), FF_OPT_TYPE_INT, 0, 0, INT_MAX, V|E},
 {"drop_frame_timecode", NULL, 0, FF_OPT_TYPE_CONST, CODEC_FLAG2_DROP_FRAME_TIMECODE, INT_MIN, INT_MAX, V|E, "flags2"},
 {"non_linear_q", "use non linear quantizer", 0, FF_OPT_TYPE_CONST, CODEC_FLAG2_NON_LINEAR_QUANT, INT_MIN, INT_MAX, V|E, "flags2"},
+{"request_channels", "set desired number of audio channels", OFFSET(request_channels), FF_OPT_TYPE_INT, DEFAULT, 0, INT_MAX, A|D},
+{"drc_scale", "percentage of dynamic range compression to apply", OFFSET(drc_scale), FF_OPT_TYPE_FLOAT, 1.0, 0.0, 1.0, A|D},
+{"reservoir", "use bit reservoir", 0, FF_OPT_TYPE_CONST, CODEC_FLAG2_BIT_RESERVOIR, INT_MIN, INT_MAX, A|E, "flags2"},
 {NULL},
 };
 
@@ -738,6 +777,7 @@ void avcodec_get_context_defaults2(AVCodecContext *s, enum CodecType codec_type)
 
     s->av_class= &av_codec_context_class;
 
+    s->codec_type = codec_type;
     if(codec_type == CODEC_TYPE_AUDIO)
         flags= AV_OPT_FLAG_AUDIO_PARAM;
     else if(codec_type == CODEC_TYPE_VIDEO)
@@ -795,7 +835,7 @@ AVFrame *avcodec_alloc_frame(void){
     return pic;
 }
 
-int avcodec_open(AVCodecContext *avctx, AVCodec *codec)
+int attribute_align_arg avcodec_open(AVCodecContext *avctx, AVCodec *codec)
 {
     int ret= -1;
 
@@ -805,13 +845,15 @@ int avcodec_open(AVCodecContext *avctx, AVCodec *codec)
         goto end;
     }
 
-    if(avctx->codec)
+    if(avctx->codec || !codec)
         goto end;
 
     if (codec->priv_data_size > 0) {
         avctx->priv_data = av_mallocz(codec->priv_data_size);
-        if (!avctx->priv_data)
+        if (!avctx->priv_data) {
+            ret = AVERROR(ENOMEM);
             goto end;
+        }
     } else {
         avctx->priv_data = NULL;
     }
@@ -823,6 +865,7 @@ int avcodec_open(AVCodecContext *avctx, AVCodec *codec)
 
     if((avctx->coded_width||avctx->coded_height) && avcodec_check_dimensions(avctx,avctx->coded_width,avctx->coded_height)){
         av_freep(&avctx->priv_data);
+        ret = AVERROR(EINVAL);
         goto end;
     }
 
@@ -843,7 +886,7 @@ end:
     return ret;
 }
 
-int avcodec_encode_audio(AVCodecContext *avctx, uint8_t *buf, int buf_size,
+int attribute_align_arg avcodec_encode_audio(AVCodecContext *avctx, uint8_t *buf, int buf_size,
                          const short *samples)
 {
     if(buf_size < FF_MIN_BUFFER_SIZE && 0){
@@ -858,7 +901,7 @@ int avcodec_encode_audio(AVCodecContext *avctx, uint8_t *buf, int buf_size,
         return 0;
 }
 
-int avcodec_encode_video(AVCodecContext *avctx, uint8_t *buf, int buf_size,
+int attribute_align_arg avcodec_encode_video(AVCodecContext *avctx, uint8_t *buf, int buf_size,
                          const AVFrame *pict)
 {
     if(buf_size < FF_MIN_BUFFER_SIZE){
@@ -886,9 +929,9 @@ int avcodec_encode_subtitle(AVCodecContext *avctx, uint8_t *buf, int buf_size,
     return ret;
 }
 
-int avcodec_decode_video(AVCodecContext *avctx, AVFrame *picture,
+int attribute_align_arg avcodec_decode_video(AVCodecContext *avctx, AVFrame *picture,
                          int *got_picture_ptr,
-                         uint8_t *buf, int buf_size)
+                         const uint8_t *buf, int buf_size)
 {
     int ret;
 
@@ -909,9 +952,9 @@ int avcodec_decode_video(AVCodecContext *avctx, AVFrame *picture,
     return ret;
 }
 
-int avcodec_decode_audio2(AVCodecContext *avctx, int16_t *samples,
+int attribute_align_arg avcodec_decode_audio2(AVCodecContext *avctx, int16_t *samples,
                          int *frame_size_ptr,
-                         uint8_t *buf, int buf_size)
+                         const uint8_t *buf, int buf_size)
 {
     int ret;
 
@@ -922,8 +965,7 @@ int avcodec_decode_audio2(AVCodecContext *avctx, int16_t *samples,
             return -1;
         }
         if(*frame_size_ptr < FF_MIN_BUFFER_SIZE ||
-        *frame_size_ptr < avctx->channels * avctx->frame_size * sizeof(int16_t) ||
-        *frame_size_ptr < buf_size){
+        *frame_size_ptr < avctx->channels * avctx->frame_size * sizeof(int16_t)){
             av_log(avctx, AV_LOG_ERROR, "buffer %d too small\n", *frame_size_ptr);
             return -1;
         }
@@ -941,7 +983,7 @@ int avcodec_decode_audio2(AVCodecContext *avctx, int16_t *samples,
 #if LIBAVCODEC_VERSION_INT < ((52<<16)+(0<<8)+0)
 int avcodec_decode_audio(AVCodecContext *avctx, int16_t *samples,
                          int *frame_size_ptr,
-                         uint8_t *buf, int buf_size){
+                         const uint8_t *buf, int buf_size){
     *frame_size_ptr= AVCODEC_MAX_AUDIO_FRAME_SIZE;
     return avcodec_decode_audio2(avctx, samples, frame_size_ptr, buf, buf_size);
 }
@@ -955,7 +997,7 @@ int avcodec_decode_subtitle(AVCodecContext *avctx, AVSubtitle *sub,
 
     *got_sub_ptr = 0;
     ret = avctx->codec->decode(avctx, sub, got_sub_ptr,
-                               (uint8_t *)buf, buf_size);
+                               buf, buf_size);
     if (*got_sub_ptr)
         avctx->frame_number++;
     return ret;
@@ -970,6 +1012,8 @@ int avcodec_close(AVCodecContext *avctx)
         return -1;
     }
 
+    if (ENABLE_THREADS && avctx->thread_opaque)
+        avcodec_thread_free(avctx);
     if (avctx->codec->close)
         avctx->codec->close(avctx);
     avcodec_default_free_buffers(avctx);
@@ -1034,6 +1078,7 @@ void avcodec_string(char *buf, int buf_size, AVCodecContext *enc, int encode)
     char buf1[32];
     char channels_str[100];
     int bitrate;
+    AVRational display_aspect_ratio;
 
     if (encode)
         p = avcodec_find_encoder(enc->codec_id);
@@ -1084,7 +1129,15 @@ void avcodec_string(char *buf, int buf_size, AVCodecContext *enc, int encode)
             snprintf(buf + strlen(buf), buf_size - strlen(buf),
                      ", %dx%d",
                      enc->width, enc->height);
-            if(av_log_level >= AV_LOG_DEBUG){
+            av_reduce(&display_aspect_ratio.num, &display_aspect_ratio.den,
+                      enc->width*enc->sample_aspect_ratio.num,
+                      enc->height*enc->sample_aspect_ratio.den,
+                      1024*1024);
+            snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                     " [PAR %d:%d DAR %d:%d]",
+                     enc->sample_aspect_ratio.num, enc->sample_aspect_ratio.den,
+                     display_aspect_ratio.num, display_aspect_ratio.den);
+            if(av_log_get_level() >= AV_LOG_DEBUG){
                 int g= ff_gcd(enc->time_base.num, enc->time_base.den);
                 snprintf(buf + strlen(buf), buf_size - strlen(buf),
                      ", %d/%d",
@@ -1139,6 +1192,7 @@ void avcodec_string(char *buf, int buf_size, AVCodecContext *enc, int encode)
             break;
         case CODEC_ID_PCM_S16LE:
         case CODEC_ID_PCM_S16BE:
+        case CODEC_ID_PCM_S16LE_PLANAR:
         case CODEC_ID_PCM_U16LE:
         case CODEC_ID_PCM_U16BE:
             bitrate = enc->sample_rate * enc->channels * 16;
@@ -1160,6 +1214,10 @@ void avcodec_string(char *buf, int buf_size, AVCodecContext *enc, int encode)
         break;
     case CODEC_TYPE_SUBTITLE:
         snprintf(buf, buf_size, "Subtitle: %s", codec_name);
+        bitrate = enc->bit_rate;
+        break;
+    case CODEC_TYPE_ATTACHMENT:
+        snprintf(buf, buf_size, "Attachment: %s", codec_name);
         bitrate = enc->bit_rate;
         break;
     default:
@@ -1190,27 +1248,15 @@ unsigned avcodec_build( void )
   return LIBAVCODEC_BUILD;
 }
 
-static void init_crcs(void){
-#if LIBAVUTIL_VERSION_INT  < (50<<16)
-    av_crc04C11DB7= av_mallocz_static(sizeof(AVCRC) * 257);
-    av_crc8005    = av_mallocz_static(sizeof(AVCRC) * 257);
-    av_crc07      = av_mallocz_static(sizeof(AVCRC) * 257);
-#endif
-    av_crc_init(av_crc04C11DB7, 0, 32, 0x04c11db7, sizeof(AVCRC)*257);
-    av_crc_init(av_crc8005    , 0, 16, 0x8005    , sizeof(AVCRC)*257);
-    av_crc_init(av_crc07      , 0,  8, 0x07      , sizeof(AVCRC)*257);
-}
-
 void avcodec_init(void)
 {
-    static int inited = 0;
+    static int initialized = 0;
 
-    if (inited != 0)
+    if (initialized != 0)
         return;
-    inited = 1;
+    initialized = 1;
 
     dsputil_static_init();
-    init_crcs();
 }
 
 void avcodec_flush_buffers(AVCodecContext *avctx)
@@ -1264,6 +1310,7 @@ int av_get_bits_per_sample(enum CodecID codec_id){
         return 8;
     case CODEC_ID_PCM_S16BE:
     case CODEC_ID_PCM_S16LE:
+    case CODEC_ID_PCM_S16LE_PLANAR:
     case CODEC_ID_PCM_U16BE:
     case CODEC_ID_PCM_U16LE:
         return 16;
@@ -1277,6 +1324,22 @@ int av_get_bits_per_sample(enum CodecID codec_id){
     case CODEC_ID_PCM_S32LE:
     case CODEC_ID_PCM_U32BE:
     case CODEC_ID_PCM_U32LE:
+        return 32;
+    default:
+        return 0;
+    }
+}
+
+int av_get_bits_per_sample_format(enum SampleFormat sample_fmt) {
+    switch (sample_fmt) {
+    case SAMPLE_FMT_U8:
+        return 8;
+    case SAMPLE_FMT_S16:
+        return 16;
+    case SAMPLE_FMT_S24:
+        return 24;
+    case SAMPLE_FMT_S32:
+    case SAMPLE_FMT_FLT:
         return 32;
     default:
         return 0;
@@ -1310,7 +1373,7 @@ unsigned int av_xiphlacing(unsigned char *s, unsigned int v)
  * and opened file name in **filename. */
 int av_tempfile(char *prefix, char **filename) {
     int fd=-1;
-#ifdef __MINGW32__
+#if !defined(HAVE_MKSTEMP)
     *filename = tempnam(".", prefix);
 #else
     size_t len = strlen(prefix) + 12; /* room for "/tmp/" and "XXXXXX\0" */
@@ -1321,8 +1384,8 @@ int av_tempfile(char *prefix, char **filename) {
         av_log(NULL, AV_LOG_ERROR, "ff_tempfile: Cannot allocate file name\n");
         return -1;
     }
-#ifdef __MINGW32__
-    fd = open(*filename, _O_RDWR | _O_BINARY | _O_CREAT, 0444);
+#if !defined(HAVE_MKSTEMP)
+    fd = open(*filename, O_RDWR | O_BINARY | O_CREAT, 0444);
 #else
     snprintf(*filename, len, "/tmp/%sXXXXXX", prefix);
     fd = mkstemp(*filename);
@@ -1337,4 +1400,130 @@ int av_tempfile(char *prefix, char **filename) {
         return -1;
     }
     return fd; /* success */
+}
+
+typedef struct {
+    const char *abbr;
+    int width, height;
+} VideoFrameSizeAbbr;
+
+typedef struct {
+    const char *abbr;
+    int rate_num, rate_den;
+} VideoFrameRateAbbr;
+
+static VideoFrameSizeAbbr video_frame_size_abbrs[] = {
+    { "ntsc",      720, 480 },
+    { "pal",       720, 576 },
+    { "qntsc",     352, 240 }, /* VCD compliant NTSC */
+    { "qpal",      352, 288 }, /* VCD compliant PAL */
+    { "sntsc",     640, 480 }, /* square pixel NTSC */
+    { "spal",      768, 576 }, /* square pixel PAL */
+    { "film",      352, 240 },
+    { "ntsc-film", 352, 240 },
+    { "sqcif",     128,  96 },
+    { "qcif",      176, 144 },
+    { "cif",       352, 288 },
+    { "4cif",      704, 576 },
+    { "qqvga",     160, 120 },
+    { "qvga",      320, 240 },
+    { "vga",       640, 480 },
+    { "svga",      800, 600 },
+    { "xga",      1024, 768 },
+    { "uxga",     1600,1200 },
+    { "qxga",     2048,1536 },
+    { "sxga",     1280,1024 },
+    { "qsxga",    2560,2048 },
+    { "hsxga",    5120,4096 },
+    { "wvga",      852, 480 },
+    { "wxga",     1366, 768 },
+    { "wsxga",    1600,1024 },
+    { "wuxga",    1920,1200 },
+    { "woxga",    2560,1600 },
+    { "wqsxga",   3200,2048 },
+    { "wquxga",   3840,2400 },
+    { "whsxga",   6400,4096 },
+    { "whuxga",   7680,4800 },
+    { "cga",       320, 200 },
+    { "ega",       640, 350 },
+    { "hd480",     852, 480 },
+    { "hd720",    1280, 720 },
+    { "hd1080",   1920,1080 },
+};
+
+static VideoFrameRateAbbr video_frame_rate_abbrs[]= {
+    { "ntsc",      30000, 1001 },
+    { "pal",          25,    1 },
+    { "qntsc",     30000, 1001 }, /* VCD compliant NTSC */
+    { "qpal",         25,    1 }, /* VCD compliant PAL */
+    { "sntsc",     30000, 1001 }, /* square pixel NTSC */
+    { "spal",         25,    1 }, /* square pixel PAL */
+    { "film",         24,    1 },
+    { "ntsc-film", 24000, 1001 },
+};
+
+int av_parse_video_frame_size(int *width_ptr, int *height_ptr, const char *str)
+{
+    int i;
+    int n = sizeof(video_frame_size_abbrs) / sizeof(VideoFrameSizeAbbr);
+    const char *p;
+    int frame_width = 0, frame_height = 0;
+
+    for(i=0;i<n;i++) {
+        if (!strcmp(video_frame_size_abbrs[i].abbr, str)) {
+            frame_width = video_frame_size_abbrs[i].width;
+            frame_height = video_frame_size_abbrs[i].height;
+            break;
+        }
+    }
+    if (i == n) {
+        p = str;
+        frame_width = strtol(p, (char **)&p, 10);
+        if (*p)
+            p++;
+        frame_height = strtol(p, (char **)&p, 10);
+    }
+    if (frame_width <= 0 || frame_height <= 0)
+        return -1;
+    *width_ptr = frame_width;
+    *height_ptr = frame_height;
+    return 0;
+}
+
+int av_parse_video_frame_rate(AVRational *frame_rate, const char *arg)
+{
+    int i;
+    int n = sizeof(video_frame_rate_abbrs) / sizeof(VideoFrameRateAbbr);
+    char* cp;
+
+    /* First, we check our abbreviation table */
+    for (i = 0; i < n; ++i)
+         if (!strcmp(video_frame_rate_abbrs[i].abbr, arg)) {
+             frame_rate->num = video_frame_rate_abbrs[i].rate_num;
+             frame_rate->den = video_frame_rate_abbrs[i].rate_den;
+             return 0;
+         }
+
+    /* Then, we try to parse it as fraction */
+    cp = strchr(arg, '/');
+    if (!cp)
+        cp = strchr(arg, ':');
+    if (cp) {
+        char* cpp;
+        frame_rate->num = strtol(arg, &cpp, 10);
+        if (cpp != arg || cpp == cp)
+            frame_rate->den = strtol(cp+1, &cpp, 10);
+        else
+           frame_rate->num = 0;
+    }
+    else {
+        /* Finally we give up and parse it as double */
+        AVRational time_base = av_d2q(strtod(arg, 0), DEFAULT_FRAME_RATE_BASE);
+        frame_rate->den = time_base.den;
+        frame_rate->num = time_base.num;
+    }
+    if (!frame_rate->num || !frame_rate->den)
+        return -1;
+    else
+        return 0;
 }

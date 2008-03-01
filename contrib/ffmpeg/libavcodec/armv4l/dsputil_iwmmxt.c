@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "../dsputil.h"
+#include "dsputil.h"
 
 #define DEF(x, y) x ## _no_rnd_ ## y ##_iwmmxt
 #define SET_RND(regd)  __asm__ __volatile__ ("mov r12, #1 \n\t tbcsth " #regd ", r12":::"r12");
@@ -123,6 +123,25 @@ void add_pixels_clamped_iwmmxt(const DCTELEM *block, uint8_t *pixels, int line_s
         : "cc", "memory", "r12");
 }
 
+static void clear_blocks_iwmmxt(DCTELEM *blocks)
+{
+    asm volatile(
+                "wzero wr0                      \n\t"
+                "mov r1, #(128 * 6 / 32)        \n\t"
+                "1:                             \n\t"
+                "wstrd wr0, [%0]                \n\t"
+                "wstrd wr0, [%0, #8]            \n\t"
+                "wstrd wr0, [%0, #16]           \n\t"
+                "wstrd wr0, [%0, #24]           \n\t"
+                "subs r1, r1, #1                \n\t"
+                "add %0, %0, #32                \n\t"
+                "bne 1b                         \n\t"
+                : "+r"(blocks)
+                :
+                : "r1"
+        );
+}
+
 static void nop(uint8_t *block, const uint8_t *pixels, int line_size, int h)
 {
     return;
@@ -145,6 +164,8 @@ void dsputil_init_iwmmxt(DSPContext* c, AVCodecContext *avctx)
     if (!(mm_flags & MM_IWMMXT)) return;
 
     c->add_pixels_clamped = add_pixels_clamped_iwmmxt;
+
+    c->clear_blocks = clear_blocks_iwmmxt;
 
     c->put_pixels_tab[0][0] = put_pixels16_iwmmxt;
     c->put_pixels_tab[0][1] = put_pixels16_x2_iwmmxt;

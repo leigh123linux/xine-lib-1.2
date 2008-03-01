@@ -24,7 +24,7 @@
  */
 
 #include "avformat.h"
-#include "allformats.h"
+#include "raw.h"
 #include "riff.h"
 #include "bswap.h"
 
@@ -35,8 +35,6 @@ static int sol_probe(AVProbeData *p)
 {
     /* check file header */
     uint16_t magic;
-    if (p->buf_size <= 14)
-        return 0;
     magic=le2me_16(*((uint16_t*)p->buf));
     if ((magic == 0x0B8D || magic == 0x0C0D || magic == 0x0C8D) &&
         p->buf[2] == 'S' && p->buf[3] == 'O' &&
@@ -90,7 +88,7 @@ static int sol_read_header(AVFormatContext *s,
 {
     int size;
     unsigned int magic,tag;
-    ByteIOContext *pb = &s->pb;
+    ByteIOContext *pb = s->pb;
     unsigned int id, codec, channels, rate, type;
     AVStream *st;
 
@@ -132,9 +130,9 @@ static int sol_read_packet(AVFormatContext *s,
 {
     int ret;
 
-    if (url_feof(&s->pb))
+    if (url_feof(s->pb))
         return AVERROR(EIO);
-    ret= av_get_packet(&s->pb, pkt, MAX_SIZE);
+    ret= av_get_packet(s->pb, pkt, MAX_SIZE);
     pkt->stream_index = 0;
 
     /* note: we need to modify the packet size here to handle the last

@@ -2,6 +2,8 @@
  * PSX MDEC codec
  * Copyright (c) 2003 Michael Niedermayer
  *
+ * based upon code from Sebastian Jedruszkiewicz <elf@frogger.rules.pl>
+ *
  * This file is part of FFmpeg.
  *
  * FFmpeg is free software; you can redistribute it and/or
@@ -17,8 +19,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- *
- * based upon code from Sebastian Jedruszkiewicz <elf@frogger.rules.pl>
  */
 
 /**
@@ -60,7 +60,7 @@ static inline int mdec_decode_block_intra(MDECContext *a, DCTELEM *block, int n)
 {
     int level, diff, i, j, run;
     int component;
-    RLTable *rl = &rl_mpeg1;
+    RLTable *rl = &ff_rl_mpeg1;
     uint8_t * const scantable= a->scantable.permutated;
     const uint16_t *quant_matrix= ff_mpeg1_default_intra_matrix;
     const int qscale= a->qscale;
@@ -158,7 +158,7 @@ static inline void idct_put(MDECContext *a, int mb_x, int mb_y){
 
 static int decode_frame(AVCodecContext *avctx,
                         void *data, int *data_size,
-                        uint8_t *buf, int buf_size)
+                        const uint8_t *buf, int buf_size)
 {
     MDECContext * const a = avctx->priv_data;
     AVFrame *picture = data;
@@ -175,9 +175,6 @@ static int decode_frame(AVCodecContext *avctx,
     }
     p->pict_type= I_TYPE;
     p->key_frame= 1;
-    a->last_dc[0]=
-    a->last_dc[1]=
-    a->last_dc[2]= 0;
 
     a->bitstream_buffer= av_fast_realloc(a->bitstream_buffer, &a->bitstream_buffer_size, buf_size + FF_INPUT_BUFFER_PADDING_SIZE);
     for(i=0; i<buf_size; i+=2){
@@ -191,6 +188,10 @@ static int decode_frame(AVCodecContext *avctx,
 
     a->qscale=  get_bits(&a->gb, 16);
     a->version= get_bits(&a->gb, 16);
+
+    a->last_dc[0]=
+    a->last_dc[1]=
+    a->last_dc[2]= 128;
 
 //    printf("qscale:%d (0x%X), version:%d (0x%X)\n", a->qscale, a->qscale, a->version, a->version);
 

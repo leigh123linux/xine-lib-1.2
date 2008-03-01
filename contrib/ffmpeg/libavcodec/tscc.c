@@ -17,7 +17,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- *
  */
 
 /**
@@ -39,7 +38,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "common.h"
 #include "avcodec.h"
 
 #ifdef CONFIG_ZLIB
@@ -184,10 +182,10 @@ static int decode_rle(CamtasiaContext *c, unsigned int srcsize)
  * Decode a frame
  *
  */
-static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, uint8_t *buf, int buf_size)
+static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, const uint8_t *buf, int buf_size)
 {
-    CamtasiaContext * const c = (CamtasiaContext *)avctx->priv_data;
-    unsigned char *encoded = (unsigned char *)buf;
+    CamtasiaContext * const c = avctx->priv_data;
+    const unsigned char *encoded = buf;
     unsigned char *outptr;
 #ifdef CONFIG_ZLIB
     int zret; // Zlib return code
@@ -257,7 +255,7 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, uint8
  */
 static int decode_init(AVCodecContext *avctx)
 {
-    CamtasiaContext * const c = (CamtasiaContext *)avctx->priv_data;
+    CamtasiaContext * const c = avctx->priv_data;
     int zret; // Zlib return code
 
     c->avctx = avctx;
@@ -320,7 +318,7 @@ static int decode_init(AVCodecContext *avctx)
  */
 static int decode_end(AVCodecContext *avctx)
 {
-    CamtasiaContext * const c = (CamtasiaContext *)avctx->priv_data;
+    CamtasiaContext * const c = avctx->priv_data;
 
     av_freep(&c->decomp_buf);
 

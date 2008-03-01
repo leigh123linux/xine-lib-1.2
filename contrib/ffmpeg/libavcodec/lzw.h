@@ -27,8 +27,10 @@
  * Modified for use in TIFF by Konstantin Shishkov
  */
 
-#ifndef LZW_H
-#define LZW_H
+#ifndef FFMPEG_LZW_H
+#define FFMPEG_LZW_H
+
+#include "bitstream.h"
 
 enum FF_LZW_MODES{
     FF_LZW_GIF,
@@ -41,9 +43,17 @@ typedef void LZWState;
 /* first two functions de/allocate memory for LZWState */
 void ff_lzw_decode_open(LZWState **p);
 void ff_lzw_decode_close(LZWState **p);
-int ff_lzw_decode_init(LZWState *s, int csize, uint8_t *buf, int buf_size, int mode);
+int ff_lzw_decode_init(LZWState *s, int csize, const uint8_t *buf, int buf_size, int mode);
 int ff_lzw_decode(LZWState *s, uint8_t *buf, int len);
-uint8_t* ff_lzw_cur_ptr(LZWState *lzw);
+const uint8_t* ff_lzw_cur_ptr(LZWState *lzw);
 void ff_lzw_decode_tail(LZWState *lzw);
 
-#endif
+/** LZW encode state */
+struct LZWEncodeState;
+extern const int ff_lzw_encode_state_size;
+
+void ff_lzw_encode_init(struct LZWEncodeState * s, uint8_t * outbuf, int outsize, int maxbits);
+int ff_lzw_encode(struct LZWEncodeState * s, const uint8_t * inbuf, int insize);
+int ff_lzw_encode_flush(struct LZWEncodeState * s);
+
+#endif /* FFMPEG_LZW_H */

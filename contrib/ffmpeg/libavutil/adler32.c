@@ -18,7 +18,6 @@
  * 2. Altered source versions must be plainly marked as such, and must not be
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
- *
  */
 
 #include "common.h"
@@ -55,7 +54,7 @@ unsigned long av_adler32_update(unsigned long adler, const uint8_t *buf, unsigne
 #include "log.h"
 #define LEN 7001
 volatile int checksum;
-int main(){
+int main(void){
     int i;
     char data[LEN];
     av_log_level = AV_LOG_DEBUG;
@@ -67,5 +66,6 @@ int main(){
         STOP_TIMER("adler")
     }
     av_log(NULL, AV_LOG_DEBUG, "%X == 50E6E508\n", checksum);
+    return 0;
 }
 #endif

@@ -23,7 +23,11 @@
  * internal api header.
  */
 
+#ifndef FFMPEG_POSTPROCESS_INTERNAL_H
+#define FFMPEG_POSTPROCESS_INTERNAL_H
+
 #include "avutil.h"
+#include "postprocess.h"
 
 #define V_DEBLOCK       0x01
 #define H_DEBLOCK       0x02
@@ -62,27 +66,16 @@
 #define TEMP_NOISE_FILTER               0x100000
 #define FORCE_QUANT                     0x200000
 
-#if ( defined(__PIC__) || defined(__pic__) ) && ! defined(PIC)
-#    define PIC
-#endif
-
-//use if u want a faster postprocessing code
-//cant differentiate between chroma & luma filters (both on or both off)
-//obviosly the -pp option at the commandline has no effect except turning the here selected
+//use if you want a faster postprocessing code
+//cannot differentiate between chroma & luma filters (both on or both off)
+//obviously the -pp option on the command line has no effect except turning the here selected
 //filters on
 //#define COMPILE_TIME_MODE 0x77
 
-#if 1
 static inline int CLIP(int a){
         if(a&256) return ((a)>>31)^(-1);
         else      return a;
 }
-//#define CLIP(a) (((a)&256) ? ((a)>>31)^(-1) : (a))
-#elif 0
-#define CLIP(a) clip_tab[a]
-#else
-#define CLIP(a) (a)
-#endif
 /**
  * Postprocessng filter.
  */
@@ -122,7 +115,7 @@ typedef struct PPContext{
         /**
          * info on struct for av_log
          */
-        AVClass *av_class;
+        const AVClass *av_class;
 
         uint8_t *tempBlocks; ///<used for the horizontal code
 
@@ -173,11 +166,13 @@ typedef struct PPContext{
 } PPContext;
 
 
-static inline void linecpy(void *dest, void *src, int lines, int stride)
+static inline void linecpy(void *dest, const void *src, int lines, int stride)
 {
         if (stride > 0) {
                 memcpy(dest, src, lines*stride);
         } else {
-                memcpy(dest+(lines-1)*stride, src+(lines-1)*stride, -lines*stride);
+                memcpy((uint8_t*)dest+(lines-1)*stride, (const uint8_t*)src+(lines-1)*stride, -lines*stride);
         }
 }
+
+#endif /* FFMPEG_POSTPROCESS_INTERNAL_H */
