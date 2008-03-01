@@ -58,7 +58,7 @@
 #  include <libavcodec/avcodec.h>
 #endif
 
-#include <dvdata.h> /* This is not installed by FFmpeg, its usage has to be cleared up */
+#include <libavcodec/dvdata.h> /* This is not installed by FFmpeg, its usage has to be cleared up */
 
 #ifdef _MSC_VER
 #  undef malloc
