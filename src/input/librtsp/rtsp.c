@@ -359,12 +359,14 @@ int rtsp_request_play(rtsp_t *s, const char *what) {
   return rtsp_get_answers(s);
 }
 
+#if 0
 int rtsp_request_tearoff(rtsp_t *s, const char *what) {
 
   rtsp_send_request(s,"TEAROFF",what);
   
   return rtsp_get_answers(s);
 }
+#endif
 
 /*
  * read opaque data from stream
@@ -557,6 +559,7 @@ char *rtsp_search_answers(rtsp_t *s, const char *tag) {
   return NULL;
 }
 
+#if 0
 /*
  * session id management
  */
@@ -574,6 +577,7 @@ char *rtsp_get_session(rtsp_t *s) {
   return s->session;
 
 }
+#endif
 
 char *rtsp_get_mrl(rtsp_t *s) {
 
@@ -597,6 +601,7 @@ void rtsp_schedule_field(rtsp_t *s, const char *string) {
   s->scheduled[i]=strdup(string);
 }
 
+#if 0
 /*
  * removes the first scheduled field which prefix matches string. 
  */
@@ -617,6 +622,7 @@ void rtsp_unschedule_field(rtsp_t *s, const char *string) {
     *(ptr-1)=*ptr;
   } while(*ptr);
 }
+#endif
 
 /*
  * unschedule all fields

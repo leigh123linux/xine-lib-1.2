@@ -201,7 +201,11 @@ static int open_film_file(demux_film_t *film) {
       film->video_type = _x_fourcc_to_buf_video(*(uint32_t *)&film_header[i + 8]);
 
       if( !film->video_type )
+      {
         film->video_type = BUF_VIDEO_UNKNOWN;
+        _x_report_video_fourcc (film->stream->xine, LOG_MODULE,
+				*(uint32_t *)&film_header[i + 8]);
+      }
       
       /* fetch the audio information if the chunk size checks out */
       if (chunk_size == 32) {

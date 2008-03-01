@@ -2628,7 +2628,11 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
   
     if( !video_trak->properties->video.codec_buftype && 
          video_trak->properties->video.codec_fourcc )
+    {
       video_trak->properties->video.codec_buftype = BUF_VIDEO_UNKNOWN;
+      _x_report_video_fourcc (this->stream->xine, LOG_MODULE,
+			      video_trak->properties->video.codec_fourcc);
+    }
 
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 1);
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_WIDTH, 
@@ -2670,7 +2674,11 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
 
     if( !audio_trak->properties->audio.codec_buftype &&
          audio_trak->properties->audio.codec_fourcc )
+    {
       audio_trak->properties->audio.codec_buftype = BUF_AUDIO_UNKNOWN;
+      _x_report_audio_format_tag (this->stream->xine, LOG_MODULE,
+				  audio_trak->properties->audio.codec_fourcc);
+    }
 
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 1);
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_CHANNELS,

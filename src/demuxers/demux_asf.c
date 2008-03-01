@@ -379,10 +379,21 @@ static int asf_read_header (demux_asf_t *this) {
   uint8_t *asf_header_buffer = NULL;
 
   asf_header_len = get_le64(this);
-  asf_header_buffer = alloca(asf_header_len);
+  if (asf_header_len > 4 * 1024 * 1024)
+  {
+    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+	    "demux_asf: asf_read_header: overly-large header? (%"PRIu64" bytes)\n",
+	    asf_header_len);
+    return 0;
+  }
+
+  asf_header_buffer = malloc (asf_header_len);
 
   if (this->input->read (this->input, asf_header_buffer, asf_header_len) != asf_header_len)
+  {
+    free (asf_header_buffer);
     return 0;
+  }
 
   /* delete previous header */
   if (this->asf_header) {
@@ -395,7 +406,11 @@ static int asf_read_header (demux_asf_t *this) {
    */
   this->asf_header = asf_header_new(asf_header_buffer, asf_header_len);
   if (!this->asf_header)
+  {
+    free (asf_header_buffer);
     return 0;
+  }
+  free (asf_header_buffer);
 
   lprintf("asf header parsing ok\n");
 
@@ -449,10 +464,9 @@ static int asf_read_header (demux_asf_t *this) {
       demux_stream->buf_type = _x_formattag_to_buf_audio
 	(	((xine_waveformatex *)asf_stream->private_data)->wFormatTag );
       if ( !demux_stream->buf_type ) {
-	xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-		 "demux_asf: unknown audio type 0x%x\n",
-		 ((xine_waveformatex *)asf_stream->private_data)->wFormatTag);
 	demux_stream->buf_type = BUF_AUDIO_UNKNOWN;
+	_x_report_audio_format_tag (this->stream->xine, LOG_MODULE,
+				    ((xine_waveformatex *)asf_stream->private_data)->wFormatTag);
       }
       
       _x_meta_info_set(this->stream, XINE_META_INFO_AUDIOCODEC, _x_buf_audio_name(demux_stream->buf_type));
@@ -495,10 +509,8 @@ static int asf_read_header (demux_asf_t *this) {
 
 	demux_stream->buf_type = _x_fourcc_to_buf_video(bmiheader->biCompression);
 	if( !demux_stream->buf_type ) {
-	  xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-		   "demux_asf: unknown video format %.4s\n", (char*)&(bmiheader->biCompression));
-	  
 	  demux_stream->buf_type = BUF_VIDEO_UNKNOWN;
+	  _x_report_video_fourcc (this->stream->xine, LOG_MODULE, bmiheader->biCompression);
 	}
       
 	_x_meta_info_set(this->stream, XINE_META_INFO_VIDEOCODEC, _x_buf_video_name(demux_stream->buf_type));
@@ -722,6 +734,9 @@ static void asf_send_buffer_nodefrag (demux_asf_t *this, asf_demux_stream_t *str
     buf->size       = bufsize;
     timestamp       = 0;
 
+    if (stream->frag_offset == 0)
+      buf->decoder_flags |= BUF_FLAG_FRAME_START;
+
     stream->frag_offset += bufsize;
     frag_len -= bufsize;
 
@@ -732,10 +747,6 @@ static void asf_send_buffer_nodefrag (demux_asf_t *this, asf_demux_stream_t *str
     else
       check_newpts (this, buf->pts, PTS_AUDIO, package_done);
 
-      
-    if (frag_offset == 0)
-      buf->decoder_flags |= BUF_FLAG_FRAME_START;
-      
     /* test if whole packet read */
     if (package_done) {
       buf->decoder_flags |= BUF_FLAG_FRAME_END;

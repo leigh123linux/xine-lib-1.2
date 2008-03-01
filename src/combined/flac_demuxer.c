@@ -713,7 +713,8 @@ demux_flac_init_class (xine_t *xine, void *data) {
     this->demux_class.open_plugin     = open_plugin;
     this->demux_class.description     = N_("FLAC demux plugin");
     this->demux_class.identifier      = "FLAC";
-    this->demux_class.mimetypes       = "application/x-flac: flac: FLAC Audio;";
+    this->demux_class.mimetypes       = "application/x-flac: flac: FLAC Audio;"
+                                        "application/flac: flac: FLAC Audio;";
     this->demux_class.extensions      = "flac";
     this->demux_class.dispose         = default_demux_class_dispose;
 

@@ -942,6 +942,12 @@ const char *xine_guess_spu_encoding(void) XINE_PROTECTED;
  */
 int xine_monotonic_clock(struct timeval *tv, struct timezone *tz) XINE_PROTECTED;
 
+/**
+ * Unknown FourCC reporting functions
+ */
+void _x_report_video_fourcc (xine_t *, const char *module, uint32_t) XINE_PROTECTED;
+void _x_report_audio_format_tag (xine_t *, const char *module, uint32_t) XINE_PROTECTED;
+
 /* don't harm following code */
 #ifdef extern
 #  undef extern

@@ -11,7 +11,6 @@ Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
 	libxcb-xvmc0-dev | libxv-dev (<< 1:1.0.3), libxcb-shm0-dev | libxv-dev (<< 1:1.0.3),
 	libxcb-shape0-dev | libxv-dev (<< 1:1.0.3),
 	libxinerama-dev, libxv-dev, libxvmc-dev, libxt-dev, 
-	libdirectfb-dev (>= 0.9.22),
 	libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
 	libaa1-dev, libcaca-dev, libmodplug-dev,
 	libmagick9-dev, libpng12-dev, libfreetype6-dev, 
@@ -19,7 +18,7 @@ Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
 	libesd0-dev, libgnomevfs2-dev,
 	zlib1g-dev, libartsc0-dev,
 	liblircclient-dev, libjack0.100.0-dev | libjack-dev,
-	libdirectfb-dev, libgtk2.0-dev,
+	libdirectfb-dev (>= 0.9.22), libgtk2.0-dev,
 	libflac-dev, libpulse-dev, libsdl1.2-dev, libwavpack-dev,
 	libsmbclient-dev, libspeex-dev, libmng-dev, 
 	libmad0-dev, libmpcdec-dev, libcdio-dev (>= 0.76-1), libvcdinfo-dev,
@@ -30,7 +29,7 @@ Standards-Version: 3.7.2
 Package: libxine-dev
 Architecture: any
 Section: libdevel
-Depends: libxine2 (= ${Source-Version}), libc6-dev, zlib1g-dev | libz-dev, libslang2-dev | slang1-dev, libfreetype6-dev
+Depends: libxine2 (= ${Source-Version}), libc6-dev, zlib1g-dev | libz-dev, libslang2-dev | slang1-dev, libfreetype6-dev, pkg-config
 Conflicts: xine-ui (<< 0.9.10), libxine-dev
 Description: the xine video player library, development packages
  This contains development files (headers, documentation and the like)
@@ -66,8 +65,8 @@ Description: the xine video player library, development packages
 Package: libxine2
 Architecture: any
 Depends: ${shlibs:Depends}
-Recommends: ${shlibs:Recommends}, libxine2-doc | libxine-doc
-Suggests: ${shlibs:Suggests}, libartsc0
+Recommends: ${shlibs:Recommends}
+Suggests: ${shlibs:Suggests}, libxine2-doc | libxine-doc
 Conflicts: libxine2-all-plugins, libxine2-bin, libxine2-console, libxine2-ffmpeg, libxine2-gnome, libxine2-misc-plugins, libxine2-plugins, libxine2-x
 Replaces: libxine2-all-plugins, libxine2-bin, libxine2-console, libxine2-ffmpeg, libxine2-gnome, libxine2-misc-plugins, libxine2-plugins, libxine2-x
 Provides: libxine2-all-plugins, libxine2-bin, libxine2-console, libxine2-ffmpeg, libxine2-gnome, libxine2-misc-plugins, libxine2-plugins, libxine2-x

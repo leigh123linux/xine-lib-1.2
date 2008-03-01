@@ -892,7 +892,10 @@ static void decode_video_header (demux_ogg_t *this, const int stream_num, ogg_pa
 
   this->si[stream_num]->buf_types = _x_fourcc_to_buf_video (locsubtype);
   if( !this->si[stream_num]->buf_types )
+  {
     this->si[stream_num]->buf_types = BUF_VIDEO_UNKNOWN;
+    _x_report_video_fourcc (this->stream->xine, LOG_MODULE, locsubtype);
+  }
   this->si[stream_num]->buf_types |= channel;
   this->si[stream_num]->headers = 0; /* header is sent below */
 
@@ -977,9 +980,8 @@ static void decode_audio_header (demux_ogg_t *this, const int stream_num, ogg_pa
     if( this->si[stream_num]->buf_types ) {
       this->si[stream_num]->buf_types |= channel;
     } else {
-      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-                "demux_ogg: unknown audio codec type 0x%x\n", codec);
       this->si[stream_num]->buf_types = BUF_AUDIO_UNKNOWN;
+      _x_report_audio_format_tag (this->stream->xine, LOG_MODULE, codec);
       /*break;*/
     }
 
@@ -1044,7 +1046,10 @@ static void decode_dshow_header (demux_ogg_t *this, const int stream_num, ogg_pa
 
     this->si[stream_num]->buf_types = _x_fourcc_to_buf_video (fcc);
     if( !this->si[stream_num]->buf_types )
+    {
       this->si[stream_num]->buf_types = BUF_VIDEO_UNKNOWN;
+      _x_report_video_fourcc (this->stream->xine, LOG_MODULE, fcc);
+    }
     this->si[stream_num]->buf_types |= channel;
 
     bih.biSize          = sizeof(xine_bmiheader);
@@ -2079,7 +2084,13 @@ static void *anx_init_class (xine_t *xine, void *data) {
   this->demux_class.open_plugin     = anx_open_plugin;
   this->demux_class.description     = N_("Annodex demux plugin");
   this->demux_class.identifier      = "Annodex";
-  this->demux_class.mimetypes       = "application/x-annodex: ogg: Annodex media;";
+  this->demux_class.mimetypes       = 
+    "application/annodex: anx: Annodex media;"
+    "application/x-annodex: anx: Annodex media;"
+    "audio/annodex: axa: Annodex audio;"
+    "audio/x-annodex: axa: Annodex audio;"
+    "video/annodex: axv: Annodex video;"
+    "video/x-annodex: axv: Annodex video;";
   this->demux_class.extensions      = "anx axa axv";
   this->demux_class.dispose         = default_demux_class_dispose;
 
@@ -2098,11 +2109,13 @@ static void *ogg_init_class (xine_t *xine, void *data) {
   this->demux_class.description     = N_("OGG demux plugin");
   this->demux_class.identifier      = "OGG";
   this->demux_class.mimetypes       =
-    "audio/x-ogg: ogg: OggVorbis Audio;"
-    "audio/x-speex: ogg: Speex Audio;"
-    "application/x-ogg: ogg: Ogg Stream;"
-    "application/ogg: ogg: Ogg Stream;";
-  this->demux_class.extensions      = "ogg ogm spx";
+    "application/ogg: ogx: Ogg Stream;"
+    "application/x-ogg: ogx: Ogg Stream;"
+    "audio/ogg: oga: Ogg Audio;"
+    "audio/x-ogg: oga: Ogg Audio;"
+    "video/ogg: ogv: Ogg Video;";
+    "video/x-ogg: ogv: Ogg Video;";
+  this->demux_class.extensions      = "ogx ogv oga ogg spx ogm";
   this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;

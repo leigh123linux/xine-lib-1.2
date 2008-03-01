@@ -234,6 +234,7 @@ int ebml_read_uint(ebml_parser_t *ebml, ebml_elem_t *elem, uint64_t *num) {
   return 1;
 }
 
+#if 0
 int ebml_read_sint (ebml_parser_t *ebml, ebml_elem_t  *elem, int64_t *num) {
   uint8_t  data[8];
   uint64_t size = elem->len;
@@ -260,6 +261,7 @@ int ebml_read_sint (ebml_parser_t *ebml, ebml_elem_t  *elem, int64_t *num) {
 
   return 1;
 }
+#endif
 
 
 int ebml_read_float (ebml_parser_t *ebml, ebml_elem_t *elem, double *num) {
@@ -304,6 +306,7 @@ int ebml_read_ascii(ebml_parser_t *ebml, ebml_elem_t *elem, char *str) {
   return 1;
 }
 
+#if 0
 int ebml_read_utf8 (ebml_parser_t *ebml, ebml_elem_t *elem, char *str) {
   return ebml_read_ascii (ebml, elem, str);
 }
@@ -311,6 +314,7 @@ int ebml_read_utf8 (ebml_parser_t *ebml, ebml_elem_t *elem, char *str) {
 int ebml_read_date (ebml_parser_t *ebml, ebml_elem_t *elem, int64_t *date) {
   return ebml_read_sint (ebml, elem, date);
 }
+#endif
 
 int ebml_read_master (ebml_parser_t *ebml, ebml_elem_t *elem) {
   ebml_elem_t *top_elem;

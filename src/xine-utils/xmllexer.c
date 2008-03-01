@@ -531,27 +531,28 @@ int lexer_get_token_d(char ** _tok, int * _tok_size, int fixed) {
 				/* Terminate the current token */
 	tok[tok_pos] = '\0';
 	switch (state) {
-	case 0:
-	case 1:
-	case 2:
+	case STATE_IDLE:
+	case STATE_EOL:
+	case STATE_SEPAR:
 	  return T_EOF;
 	  break;
-	case 3:
+	case STATE_T_M_START:
 	  return T_M_START_1;
 	  break;
-	case 4:
+	case STATE_T_M_STOP_1:
 	  return T_M_STOP_1;
 	  break;
-	case 5:
+	case STATE_T_M_STOP_2:
 	  return T_ERROR;
 	  break;
-	case 6:
+	case STATE_T_EQUAL:
 	  return T_EQUAL;
 	  break;
-	case 7:
+	case STATE_T_STRING_SINGLE:
+	case STATE_T_STRING_DOUBLE:
 	  return T_STRING;
 	  break;
-	case 100:
+	case STATE_IDENT:
 	  return T_DATA;
 	  break;
 	default:

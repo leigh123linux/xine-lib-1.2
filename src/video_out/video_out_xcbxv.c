@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2004, 2007 the xine project
+ * Copyright (C) 2000-2004, 2007-2008 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -64,6 +64,7 @@
 #include <xine/xineutils.h>
 #include <xine/vo_scale.h>
 #include "xcbosd.h"
+#include "xv_common.h"
 
 typedef struct xv_driver_s xv_driver_t;
 
@@ -944,6 +945,8 @@ static int xv_check_yv12(xcb_connection_t *connection, xcb_xv_port_t port) {
 
   list_formats_cookie = xcb_xv_list_image_formats(connection, port);
   list_formats_reply = xcb_xv_list_image_formats_reply(connection, list_formats_cookie, NULL);
+  if (!list_formats_reply)
+    return 1; /* no formats listed; probably due to an invalid port no. */
   format_it = xcb_xv_list_image_formats_format_iterator(list_formats_reply);
   
   for (; format_it.rem; xcb_xv_image_format_info_next(&format_it))
@@ -965,7 +968,7 @@ static void xv_check_capability (xv_driver_t *this,
 				 char *config_help) {
   int          int_default;
   cfg_entry_t *entry;
-  char        *str_prop = xcb_xv_attribute_info_name(attr);
+  const char  *str_prop = xcb_xv_attribute_info_name(attr);
 
   xcb_xv_get_port_attribute_cookie_t get_attribute_cookie;
   xcb_xv_get_port_attribute_reply_t *get_attribute_reply;
@@ -1083,10 +1086,79 @@ static void xv_update_XV_DOUBLE_BUFFER(void *this_gen, xine_cfg_entry_t *entry) 
 	  LOG_MODULE ": double buffering mode = %d\n", xv_double_buffer);
 }
 
+static void xv_update_XV_SYNC_TO_VBLANK(void *this_gen, xine_cfg_entry_t *entry) {
+  xv_driver_t *this = (xv_driver_t *) this_gen;
+  int          xv_sync_to_vblank;
+
+  xcb_intern_atom_cookie_t atom_cookie;
+  xcb_intern_atom_reply_t *atom_reply;
+
+  xv_sync_to_vblank = entry->num_value;
+
+  pthread_mutex_lock(&this->main_mutex);
+  atom_cookie = xcb_intern_atom(this->connection, 0, sizeof("XV_SYNC_TO_VBLANK"), "XV_SYNC_TO_VBLANK");
+  atom_reply = xcb_intern_atom_reply(this->connection, atom_cookie, NULL);
+  xcb_xv_set_port_attribute(this->connection, this->xv_port, atom_reply->atom, xv_sync_to_vblank);
+  free(atom_reply);
+  pthread_mutex_unlock(&this->main_mutex);
+
+  xprintf(this->xine, XINE_VERBOSITY_DEBUG,
+	  "video_out_xcbxv: sync to vblank = %d\n", xv_sync_to_vblank);
+}
+
+
 static void xv_update_xv_pitch_alignment(void *this_gen, xine_cfg_entry_t *entry) {
   xv_driver_t *this = (xv_driver_t *) this_gen;
 
   this->use_pitch_alignment = entry->num_value;
+}
+
+static xcb_xv_port_t xv_open_port (xv_driver_t *this, xcb_xv_port_t port) {
+  xcb_xv_grab_port_cookie_t grab_port_cookie;
+  xcb_xv_grab_port_reply_t *grab_port_reply;
+
+  if (xv_check_yv12 (this->connection, port))
+    return 0;
+
+  grab_port_cookie = xcb_xv_grab_port (this->connection, port, XCB_CURRENT_TIME);
+  grab_port_reply = xcb_xv_grab_port_reply (this->connection, grab_port_cookie, NULL);
+
+  if (grab_port_reply && (grab_port_reply->result == XCB_GRAB_STATUS_SUCCESS))
+  {
+    free (grab_port_reply);
+    return port;
+  }
+  free (grab_port_reply);
+  return 0;
+}
+
+static xcb_xv_adaptor_info_iterator_t *
+xv_find_adaptor_by_port (int port, xcb_xv_adaptor_info_iterator_t *adaptor_it)
+{
+  for (; adaptor_it->rem; xcb_xv_adaptor_info_next(adaptor_it))
+    if (adaptor_it->data->type & XCB_XV_TYPE_IMAGE_MASK)
+      if (port >= adaptor_it->data->base_id &&
+	  port < adaptor_it->data->base_id + adaptor_it->data->num_ports)
+	return adaptor_it;
+  return NULL; /* shouldn't happen */
+}
+
+static xcb_xv_port_t xv_autodetect_port(xv_driver_t *this,
+                                        xcb_xv_adaptor_info_iterator_t *adaptor_it,
+                                        xcb_xv_port_t base)
+{
+  for (; adaptor_it->rem; xcb_xv_adaptor_info_next(adaptor_it))
+    if (adaptor_it->data->type & XCB_XV_TYPE_IMAGE_MASK)
+    {
+      int j;
+      for (j = 0; j < adaptor_it->data->num_ports; ++j)
+      {
+        xcb_xv_port_t port = adaptor_it->data->base_id + j;
+        if (port >= base && xv_open_port (this, port))
+          return port;
+      }
+    }
+  return 0;
 }
 
 static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *visual_gen) {
@@ -1095,7 +1167,6 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   xv_driver_t          *this;
   int                   i;
   xcb_visual_t         *visual = (xcb_visual_t *) visual_gen;
-  unsigned int          j;
   xcb_xv_port_t         xv_port;
 
   const xcb_query_extension_reply_t *query_extension_reply;
@@ -1146,28 +1217,21 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   }
 
   adaptor_it = xcb_xv_query_adaptors_info_iterator(query_adaptors_reply);
+  xv_port = config->register_num (config, "video.device.xv_port", 0,
+				  VIDEO_DEVICE_XV_PORT_HELP,
+				  10, NULL, NULL);
 
-  xv_port = 0;
-
-  for (; adaptor_it.rem && !xv_port; xcb_xv_adaptor_info_next(&adaptor_it)) {
-
-    if (adaptor_it.data->type & XCB_XV_TYPE_IMAGE_MASK) {
-
-      for (j = 0; j < adaptor_it.data->num_ports; j++)
-        if (!xv_check_yv12(this->connection, adaptor_it.data->base_id + j)) {
-          xcb_xv_grab_port_cookie_t grab_port_cookie;
-          xcb_xv_grab_port_reply_t *grab_port_reply;
-          grab_port_cookie = xcb_xv_grab_port(this->connection, adaptor_it.data->base_id + j, XCB_CURRENT_TIME);
-          grab_port_reply = xcb_xv_grab_port_reply(this->connection, grab_port_cookie, NULL);
-          if (grab_port_reply && (grab_port_reply->result == XCB_GRAB_STATUS_SUCCESS)) {
-            free(grab_port_reply);
-            xv_port = adaptor_it.data->base_id + j;
-            break;
-          }
-          free(grab_port_reply);
-        }
-    }
+  if (xv_port != 0) {
+    if (! xv_open_port(this, xv_port)) {
+      xprintf(class->xine, XINE_VERBOSITY_NONE,
+	      _("%s: could not open Xv port %d - autodetecting\n"),
+	      LOG_MODULE, xv_port);
+      xv_port = xv_autodetect_port (this, &adaptor_it, xv_port);
+    } else
+      xv_find_adaptor_by_port (xv_port, &adaptor_it);
   }
+  if (!xv_port)
+    xv_port = xv_autodetect_port (this, &adaptor_it, 0);
 
   if (!xv_port) {
     xprintf(class->xine, XINE_VERBOSITY_LOG,
@@ -1192,7 +1256,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 
   this->gc                      = xcb_generate_id(this->connection);
   xcb_create_gc(this->connection, this->gc, this->window, 0, NULL);
-  this->capabilities            = VO_CAP_CROP;
+  this->capabilities            = VO_CAP_CROP | VO_CAP_ZOOM_X | VO_CAP_ZOOM_Y;
   this->use_shm                 = 1;
   this->use_colorkey            = 0;
   this->colorkey                = 0;
@@ -1245,75 +1309,72 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 
     for (; attribute_it.rem; xcb_xv_attribute_info_next(&attribute_it)) {
       if ((attribute_it.data->flags & XCB_XV_ATTRIBUTE_FLAG_SETTABLE) && (attribute_it.data->flags & XCB_XV_ATTRIBUTE_FLAG_GETTABLE)) {
+	const char *const name = xcb_xv_attribute_info_name(attribute_it.data);
 	/* store initial port attribute value */
-	xv_store_port_attribute(this, xcb_xv_attribute_info_name(attribute_it.data));
-	
-	if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_HUE")) {
+	xv_store_port_attribute(this, name);
+
+	if(!strcmp(name, "XV_HUE")) {
 	  if (!strncmp(xcb_xv_adaptor_info_name(adaptor_it.data), "NV", 2)) {
             xprintf (this->xine, XINE_VERBOSITY_NONE, LOG_MODULE ": ignoring broken XV_HUE settings on NVidia cards\n");
 	  } else {
+	    this->capabilities |= VO_CAP_HUE;
 	    xv_check_capability (this, VO_PROP_HUE, attribute_it.data,
 			         adaptor_it.data->base_id,
 			         NULL, NULL, NULL);
 	  }
-	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_SATURATION")) {
+	} else if(!strcmp(name, "XV_SATURATION")) {
+	  this->capabilities |= VO_CAP_SATURATION;
 	  xv_check_capability (this, VO_PROP_SATURATION, attribute_it.data,
 			       adaptor_it.data->base_id,
 			       NULL, NULL, NULL);
-
-	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_BRIGHTNESS")) {
+	} else if(!strcmp(name, "XV_BRIGHTNESS")) {
+	  this->capabilities |= VO_CAP_BRIGHTNESS;
 	  xv_check_capability (this, VO_PROP_BRIGHTNESS, attribute_it.data,
 			       adaptor_it.data->base_id,
 			       NULL, NULL, NULL);
-
-	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_CONTRAST")) {
+	} else if(!strcmp(name, "XV_CONTRAST")) {
+	  this->capabilities |= VO_CAP_CONTRAST;
 	  xv_check_capability (this, VO_PROP_CONTRAST, attribute_it.data,
 			       adaptor_it.data->base_id,
 			       NULL, NULL, NULL);
-
-	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_COLORKEY")) {
+	} else if(!strcmp(name, "XV_COLORKEY")) {
+	  this->capabilities |= VO_CAP_COLORKEY;
 	  xv_check_capability (this, VO_PROP_COLORKEY, attribute_it.data,
 			       adaptor_it.data->base_id,
 			       "video.device.xv_colorkey",
-			       _("video overlay colour key"),
-			       _("The colour key is used to tell the graphics card where to "
-				 "overlay the video image. Try different values, if you experience "
-				 "windows becoming transparent."));
-
-	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_AUTOPAINT_COLORKEY")) {
+			       VIDEO_DEVICE_XV_COLORKEY_HELP);
+	} else if(!strcmp(name, "XV_AUTOPAINT_COLORKEY")) {
+	  this->capabilities |= VO_CAP_AUTOPAINT_COLORKEY;
 	  xv_check_capability (this, VO_PROP_AUTOPAINT_COLORKEY, attribute_it.data,
 			       adaptor_it.data->base_id,
 			       "video.device.xv_autopaint_colorkey",
-			       _("autopaint colour key"),
-			       _("Make Xv autopaint its colour key."));
-
-	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_FILTER")) {
+			       VIDEO_DEVICE_XV_AUTOPAINT_COLORKEY_HELP);
+	} else if(!strcmp(name, "XV_FILTER")) {
 	  int xv_filter;
 	  /* This setting is specific to Permedia 2/3 cards. */
 	  xv_filter = config->register_range (config, "video.device.xv_filter", 0,
 					      attribute_it.data->min, attribute_it.data->max,
-					      _("bilinear scaling mode"),
-					      _("Selects the bilinear scaling mode for Permedia cards. "
-						"The individual values are:\n\n"
-						"Permedia 2\n"
-						"0 - disable bilinear filtering\n"
-						"1 - enable bilinear filtering\n\n"
-						"Permedia 3\n"
-						"0 - disable bilinear filtering\n"
-						"1 - horizontal linear filtering\n"
-						"2 - enable full bilinear filtering"),
+					      VIDEO_DEVICE_XV_FILTER_HELP,
 					      20, xv_update_XV_FILTER, this);
 	  config->update_num(config,"video.device.xv_filter",xv_filter);
-	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_DOUBLE_BUFFER")) {
-	  int xv_double_buffer;
-	  xv_double_buffer = 
+	} else if(!strcmp(name, "XV_DOUBLE_BUFFER")) {
+	  int xv_double_buffer =
 	    config->register_bool (config, "video.device.xv_double_buffer", 1,
-	      _("enable double buffering"),
-	      _("Double buffering will synchronize the update of the video image to the "
-		"repainting of the entire screen (\"vertical retrace\"). This eliminates "
-		"flickering and tearing artifacts, but will use more graphics memory."),
-	      20, xv_update_XV_DOUBLE_BUFFER, this);
+				   VIDEO_DEVICE_XV_DOUBLE_BUFFER_HELP,
+				   20, xv_update_XV_DOUBLE_BUFFER, this);
 	  config->update_num(config,"video.device.xv_double_buffer",xv_double_buffer);
+	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_SYNC_TO_VBLANK")) {
+	  int xv_sync_to_vblank;
+	  xv_sync_to_vblank = 
+	    config->register_bool (config, "video.device.xv_sync_to_vblank", 1,
+	      _("enable vblank sync"),
+	      _("This option will synchronize the update of the video image to the "
+		"repainting of the entire screen (\"vertical retrace\"). This eliminates "
+		"flickering and tearing artifacts. On nvidia cards one may also "
+		"need to run \"nvidia-settings\" and choose which display device to "
+		"sync to under the XVideo Settings tab"),
+	      20, xv_update_XV_SYNC_TO_VBLANK, this);
+	  config->update_num(config,"video.device.xv_sync_to_vblank",xv_sync_to_vblank);
 	}
       }
     }
@@ -1341,16 +1402,21 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 	     (format_it.data->format == XCB_XV_IMAGE_FORMAT_INFO_FORMAT_PACKED)
 	       ? "packed" : "planar");
 
-    if (format_it.data->id == XINE_IMGFMT_YV12)  {
+    switch (format_it.data->id) {
+    case XINE_IMGFMT_YV12:
       this->xv_format_yv12 = format_it.data->id;
       this->capabilities |= VO_CAP_YV12;
       xprintf(this->xine, XINE_VERBOSITY_LOG,
-	      _("%s: this adaptor supports the yv12 format.\n"), LOG_MODULE);
-    } else if (format_it.data->id == XINE_IMGFMT_YUY2) {
+	      _("%s: this adaptor supports the %s format.\n"), LOG_MODULE, "YV12");
+      break;
+    case XINE_IMGFMT_YUY2:
       this->xv_format_yuy2 = format_it.data->id;
       this->capabilities |= VO_CAP_YUY2;
       xprintf(this->xine, XINE_VERBOSITY_LOG, 
-	      _("%s: this adaptor supports the yuy2 format.\n"), LOG_MODULE);
+	      _("%s: this adaptor supports the %s format.\n"), LOG_MODULE, "YUY2");
+      break;
+    default:
+      break;
     }
   }
 
@@ -1358,8 +1424,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 
   this->use_pitch_alignment = 
     config->register_bool (config, "video.device.xv_pitch_alignment", 0,
-			   _("pitch alignment workaround"),
-			   _("Some buggy video drivers need a workaround to function properly."),
+			   VIDEO_DEVICE_XV_PITCH_ALIGNMENT_HELP,
 			   10, xv_update_xv_pitch_alignment, this);
 
   if(this->use_colorkey==1) {

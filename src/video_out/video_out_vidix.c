@@ -964,7 +964,7 @@ static vidix_driver_t *open_plugin (video_driver_class_t *class_gen) {
   this->config            = config;
   
   this->got_frame_data    = 0;
-  this->capabilities      = VO_CAP_CROP;
+  this->capabilities      = VO_CAP_CROP | VO_CAP_ZOOM_X | VO_CAP_ZOOM_Y;
 
   /* Find what equalizer flags are supported */
   if(this->vidix_cap.flags & FLAG_EQUALIZER) {
@@ -973,24 +973,28 @@ static vidix_driver_t *open_plugin (video_driver_class_t *class_gen) {
 	      "video_out_vidix: couldn't get equalizer capabilities: %s\n", strerror(err));
     } else {
       if(this->vidix_eq.cap & VEQ_CAP_BRIGHTNESS) {
+        this->capabilities |= VO_CAP_BRIGHTNESS;
         this->props[VO_PROP_BRIGHTNESS].value = 0;
         this->props[VO_PROP_BRIGHTNESS].min = -1000;
         this->props[VO_PROP_BRIGHTNESS].max = 1000;
      }
       
       if(this->vidix_eq.cap & VEQ_CAP_CONTRAST) {
+        this->capabilities |= VO_CAP_CONTRAST;
         this->props[VO_PROP_CONTRAST].value = 0;
         this->props[VO_PROP_CONTRAST].min = -1000;
         this->props[VO_PROP_CONTRAST].max = 1000;
       }
       
       if(this->vidix_eq.cap & VEQ_CAP_SATURATION) {
+        this->capabilities |= VO_CAP_SATURATION;
         this->props[VO_PROP_SATURATION].value = 0;
         this->props[VO_PROP_SATURATION].min = -1000;
         this->props[VO_PROP_SATURATION].max = 1000;
       }
             
       if(this->vidix_eq.cap & VEQ_CAP_HUE) {
+        this->capabilities |= VO_CAP_HUE;
         this->props[VO_PROP_HUE].value = 0;
         this->props[VO_PROP_HUE].min = -1000;
         this->props[VO_PROP_HUE].max = 1000;

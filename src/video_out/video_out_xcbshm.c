@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2003, 2007 the xine project
+ * Copyright (C) 2000-2003, 2007-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -222,7 +222,7 @@ static void dispose_ximage(xshm_driver_t *this, xshm_frame_t *frame)
 
 static uint32_t xshm_get_capabilities (vo_driver_t *this_gen) {
   xshm_driver_t *this = (xshm_driver_t *) this_gen;
-  uint32_t capabilities = VO_CAP_YV12 | VO_CAP_YUY2;
+  uint32_t capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_BRIGHTNESS | VO_CAP_CONTRAST | VO_CAP_SATURATION;
 
   if( this->xoverlay )
     capabilities |= VO_CAP_UNSCALED_OVERLAY;
@@ -740,45 +740,43 @@ static int xshm_set_property (vo_driver_t *this_gen,
 			      int property, int value) {
   xshm_driver_t *this = (xshm_driver_t *) this_gen;
 
-  if ( property == VO_PROP_ASPECT_RATIO) {
-
+  switch (property) {
+  case VO_PROP_ASPECT_RATIO:
     if (value>=XINE_VO_ASPECT_NUM_RATIOS)
       value = XINE_VO_ASPECT_AUTO;
     this->sc.user_ratio = value;
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
 	    LOG_MODULE ": aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name_table[value]);
+    break;
 
-  } else if (property == VO_PROP_BRIGHTNESS) {
-
+  case VO_PROP_BRIGHTNESS:
     this->yuv2rgb_brightness = value;
     this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					   this->yuv2rgb_brightness,
 					   this->yuv2rgb_contrast,
 					   this->yuv2rgb_saturation);
-
     this->sc.force_redraw = 1;
+    break;
 
-  } else if (property == VO_PROP_CONTRAST) {
-
+  case VO_PROP_CONTRAST:
     this->yuv2rgb_contrast = value;
     this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					   this->yuv2rgb_brightness,
 					   this->yuv2rgb_contrast,
 					   this->yuv2rgb_saturation);
-
     this->sc.force_redraw = 1;
+    break;
 
-  } else if (property == VO_PROP_SATURATION) {
-
+  case VO_PROP_SATURATION:
     this->yuv2rgb_saturation = value;
     this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					   this->yuv2rgb_brightness,
 					   this->yuv2rgb_contrast,
 					   this->yuv2rgb_saturation);
-
     this->sc.force_redraw = 1;
+    break;
 
-  } else {
+  default:
     xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
 	     LOG_MODULE ": tried to set unsupported property %d\n", property);
   }

@@ -35,7 +35,7 @@ libxine_la_LIBADD = $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL) $(ZLIB_LIBS)
                     $(LIBXINEPOSIX) $(RT_LIBS) $(NET_LIBS) $(XDG_BASEDIR_LIBS) \
                     $(AVUTIL_LIBS)
 
-libxine_la_LDFLAGS = $(AM_LDFLAGS) $(def_ldflags) \
+libxine_la_LDFLAGS = $(AM_LDFLAGS) $(def_ldflags) $(GCSECTIONS) \
 	-version-info $(XINE_LT_CURRENT):$(XINE_LT_REVISION):$(XINE_LT_AGE)
 
 $(XINEUTILS_LIB):

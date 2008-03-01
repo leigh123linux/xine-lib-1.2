@@ -44,7 +44,11 @@
 #include "ffmpeg_decoder.h"
 #include "ff_mpeg_parser.h"
 
-#include <postprocess.h>
+#ifdef HAVE_FFMPEG_AVCODEC_H
+#  include <postprocess.h>
+#else
+#  include <libpostproc/postprocess.h>
+#endif
 
 #define VIDEOBUFSIZE        (128*1024)
 #define SLICE_BUFFER_SIZE   (1194*1024)
@@ -310,6 +314,7 @@ static const ff_codec_t ff_video_lookup[] = {
   {BUF_VIDEO_KMVC,        CODEC_ID_KMVC,       "Karl Morton's Video Codec (ffmpeg)"},
   {BUF_VIDEO_FLASHSV,     CODEC_ID_FLASHSV,    "Flash Screen Video (ffmpeg)"},
   {BUF_VIDEO_CAVS,        CODEC_ID_CAVS,       "Chinese AVS (ffmpeg)"},
+  {BUF_VIDEO_VMNC,        CODEC_ID_VMNC,       "VMware Screen Codec (ffmpeg)"},
   {BUF_VIDEO_THEORA_RAW,  CODEC_ID_THEORA,     "Theora (ffmpeg)"},
 };
 
@@ -1692,6 +1697,9 @@ static const uint32_t supported_video_types[] = {
   BUF_VIDEO_KMVC,
   BUF_VIDEO_FLASHSV,
   BUF_VIDEO_CAVS,
+#endif
+#if defined(HAVE_FFMPEG) || CONFIG_VMNC_DECODER
+  BUF_VIDEO_VMNC,
   BUF_VIDEO_THEORA_RAW,
   0 
 };

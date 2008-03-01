@@ -77,8 +77,8 @@ void _x_real_codecs_init(xine_t *const xine) {
 
   default_real_codecs_path[0] = 0;
 
-#define UL64	0x05	/* /usr/{,local/}lib64	*/
-#define UL	0x0A	/* /usr/{,local/}lib	*/
+#define UL64	0x03	/* /usr/{,local/}lib64	*/
+#define UL	0x0C	/* /usr/{,local/}lib	*/
 #define O	0x10	/* /opt			*/
 #define OL64	0x20	/* /opt/lib64		*/
 #define OL	0x40	/* /opt/lib		*/

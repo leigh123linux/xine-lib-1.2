@@ -2,7 +2,7 @@ dnl -----------------
 dnl Video out plugins
 dnl -----------------
 AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
-    dnl Setup defaults for the target operating system.  For example, syncfb is
+    dnl Setup defaults for the target operating system.  For example, linuxfb is
     dnl only ever available on Linux, so don't bother checking for it unless
     dnl explicitly requested to do so on other operating systems.
     dnl Notes:
@@ -11,7 +11,6 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
     dnl - dxr3 is Linux only
     dnl - Mac OS X video is Mac OS X only
     dnl - OpenGL requires Xwindows
-    dnl - SyncFB is Linux only, but disabled by default
     dnl - Vidix is FreeBSD and Linux only
     dnl - XvMC and xxmc depend on Xv
 
@@ -24,7 +23,6 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
     default_enable_linuxfb=disable
     default_enable_macosx_video=disable
     default_enable_opengl=enable
-    default_enable_syncfb=disable
     default_enable_vidix=disable
     default_enable_xinerama=enable
     default_enable_xvmc=enable
@@ -291,21 +289,6 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
     fi
     AM_CONDITIONAL([ENABLE_SUNDGA], [test x"$have_sundga" = x"yes"])
     AM_CONDITIONAL([ENABLE_SUNFB], [test x"$have_sunfb" = x"yes"])
-
-
-    dnl syncfb (Linux only)
-    AC_ARG_ENABLE([syncfb],
-                  [AS_HELP_STRING([--enable-syncfb], [enable support for syncfb (Linux only)])],
-                  [test x"$enableval" != x"no" && enable_syncfb="yes"],
-                  [test $default_enable_syncfb = disable && enable_syncfb="no"])
-    dnl There's no good test for this.  If the user says so, then do it
-    if test x"$enable_syncfb" != x"no" && test x"$no_x" != x"yes"; then
-        have_syncfb=yes
-    fi
-    if test x"$enable_syncfb" = x"yes" && test x"$have_syncfb" != x"yes"; then
-        AC_MSG_ERROR([Linux syncfb support requested, but required X support is disabled])
-    fi
-    AM_CONDITIONAL([ENABLE_SYNCFB], [test x"$have_syncfb" = x"yes"])
 
 
     dnl xcb

@@ -71,7 +71,7 @@ static void           vdr_audio_port_put_buffer(xine_audio_port_t *port_gen, aud
 
 void *vdr_audio_init_plugin(xine_t *xine, void *data)
 {
-  post_class_t *class = (post_class_t *)malloc(sizeof (post_class_t));
+  post_class_t *class = (post_class_t *)xine_xmalloc(sizeof (post_class_t));
   
   if (!class)
     return NULL;

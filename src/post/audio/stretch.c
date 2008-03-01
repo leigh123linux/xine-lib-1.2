@@ -662,7 +662,7 @@ static post_plugin_t *stretch_open_plugin(post_class_t *class_gen, int inputs,
 /* plugin class initialization function */
 void *stretch_init_plugin(xine_t *xine, void *data)
 {
-  post_class_stretch_t *class = (post_class_stretch_t *)malloc(sizeof(post_class_stretch_t));
+  post_class_stretch_t *class = (post_class_stretch_t *)xine_xmalloc(sizeof(post_class_stretch_t));
   
   if (!class)
     return NULL;

@@ -63,13 +63,18 @@ AC_DEFINE_UNQUOTED([XINE_MINOR], [$XINE_MINOR], [xine minor version number])
 XINE_SUB=XINE_VERSION_SUB
 AC_SUBST(XINE_SUB)
 AC_DEFINE_UNQUOTED([XINE_SUB],   [$XINE_SUB],   [xine sub version number])
+XINE_PATCH=XINE_VERSION_PATCH
+AC_SUBST(XINE_PATCH)
+AC_DEFINE_UNQUOTED([XINE_PATCH], [$XINE_PATCH], [xine patch version number])
 
 XINE_LT_CURRENT=__XINE_LT_CURRENT
 AC_SUBST(XINE_LT_CURRENT)
+AC_DEFINE_UNQUOTED(XINE_LT_CURRENT, $XINE_LT_CURRENT, [xine interface version number])
 XINE_LT_REVISION=__XINE_LT_REVISION
 AC_SUBST(XINE_LT_REVISION)
 XINE_LT_AGE=__XINE_LT_AGE
 AC_SUBST(XINE_LT_AGE)
+AC_DEFINE_UNQUOTED(XINE_LT_AGE, $XINE_LT_AGE, [xine interface version age])
 
 LIBNAME="libxine$(($XINE_LT_CURRENT-$XINE_LT_AGE))"
 AC_SUBST(LIBNAME)
@@ -153,6 +158,7 @@ dnl checks for programs
 dnl -------------------
 
 AC_PROG_CC
+AM_PROG_CC_C_O
 AC_GNU_SOURCE
 AC_ISC_POSIX
 
@@ -477,6 +483,9 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <string.h>]], [[int a; memset(&a, 
                   [warnflags="$warnflags -Wpointer-arith"
                    AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
 
+CC_CHECK_LDFLAGS([-Wl,--gc-sections], [GCSECTIONS="-Wl,--gc-sections"])
+AC_SUBST([GCSECTIONS])
+
 dnl FreeBSD (et al.) does not complete linking for shared objects when pthreads
 dnl are requested, as different implementations are present; to avoid problems
 dnl use -Wl,-z,defs only for those platforms not behaving this way.
@@ -618,7 +627,7 @@ case "$host_or_hostalias" in
         ;;
 
     x86_64-*)
-        arch_x86=yes
+        arch_x86=64
         AC_DEFINE([ARCH_X86_64], [], [Define this if you're running x86 architecture 64 bits])
         ;;
 
@@ -626,10 +635,10 @@ case "$host_or_hostalias" in
         case "$host_or_hostalias" in
             universal-*)
                 arch_ppc=yes
-                arch_x86=yes
+                arch_x86=32
                 ;;
             i386-* | x86_64-*)
-                arch_x86=yes
+                arch_x86=32
                 AC_DEFINE([ARCH_X86_32], [], [Define this if you're running x86 architecture 32 bits])
                 ;;
             ppc* | powerpc*)
@@ -673,7 +682,7 @@ case "$host_or_hostalias" in
         ;;
 
     i?86-* | k?-* | athlon-* | pentium*)
-        arch_x86=yes
+        arch_x86=32
         enable_impure_text=yes
 
         case "$host_or_hostalias" in
@@ -791,13 +800,15 @@ AC_SUBST(PASS2_CFLAGS)
 test x"$DEFAULT_OCFLAGS" = x"" && DEFAULT_OCFLAGS='$(O3_CFLAGS)'
 AC_SUBST(DEFAULT_OCFLAGS)
 
-if test x"$arch_x86" = x"yes" && test x"$enable_macosx_universal" = x"no"; then
+if test x"$arch_x86" != x"no" && test x"$enable_macosx_universal" = x"no"; then
      AC_DEFINE([ARCH_X86], [], [Define this if you're running x86 architecture])
      AC_DEFINE([HAVE_MMX], [], [Define this if you can compile MMX asm instructions])
 fi
 AM_CONDITIONAL([ARCH_PPC], test x"$arch_ppc" = x"yes")
-AM_CONDITIONAL([ARCH_X86], test x"$arch_x86" = x"yes")
-AM_CONDITIONAL([HAVE_MMX], test x"$arch_x86" = x"yes")
+AM_CONDITIONAL([ARCH_X86], test x"$arch_x86" != x"no")
+AM_CONDITIONAL([ARCH_X86_32], test x"$arch_x86" = x"32")
+AM_CONDITIONAL([ARCH_X86_64], test x"$arch_x86" = x"64")
+AM_CONDITIONAL([HAVE_MMX], test x"$arch_x86" != x"no")
 AM_CONDITIONAL([HOST_OS_DARWIN], test x"$HOST_OS_DARWIN" = x"1")
 
 if test x"$enable_impure_text" = x"yes"; then
@@ -981,40 +992,50 @@ makeexpand () {
 
 xinelibdir='${libdir}/xine'
 xinedatadir='${datadir}/xine'
+pkgconfigdir='${libdir}/pkgconfig'
 AC_SUBST(xinelibdir)
 AC_SUBST(xinedatadir)
+AC_SUBST(pkgconfigdir)
 
-XINE_PLUGINDIR="\${xinelibdir}/plugins/$XINE_MAJOR.$XINE_MINOR.$XINE_SUB"
+XINE_PLUGINROOT="\${xinelibdir}/plugins/$(($XINE_LT_CURRENT-$XINE_LT_AGE))"
+XINE_PLUGINDIR="$XINE_PLUGINROOT.$XINE_LT_AGE"
 XINE_FONTDIR="\${xinedatadir}/libxine$XINE_MAJOR/fonts"
 XINE_LOCALEDIR='${datadir}/locale'
-XINE_REL_PLUGINDIR="`makeexpand "$XINE_PLUGINDIR"`"
-XINE_REL_PLUGINDIR="`makeexpand "$XINE_REL_PLUGINDIR" | sed -e "s,^${prefix}/,,"`"
+XINE_REL_PLUGINROOT="`makeexpand "$XINE_PLUGINROOT"`"
+XINE_REL_PLUGINROOT="`makeexpand "$XINE_REL_PLUGINROOT" | sed -e "s,^${prefix}/,,"`"
+XINE_REL_PLUGINDIR="$XINE_REL_PLUGINROOT.$XINE_LT_AGE"
 XINE_REL_FONTDIR="`makeexpand "$XINE_FONTDIR" | sed -e "s,^${prefix}/,,"`"
 XINE_REL_LOCALEDIR="`makeexpand "$XINE_LOCALEDIR" | sed -e "s,^${prefix}/,,"`"
+XINE_PKGCONFIG_DIR="`makeexpand "$pkgconfigdir"`"
 if test "x$WIN32_SYS" = "xmingw32" -o "x$WIN32_SYS" = "xcygwin"; then
     dnl polish paths (MinGW runtime accepts both \ and / anyway)
-    XINE_REL_PLUGINDIR="`echo "$XINE_REL_PLUGINDIR" | sed -e 's/\\//\\\\\\\\/g'`"
+    XINE_REL_PLUGINROOT="`echo "$XINE_REL_PLUGINROOT" | sed -e 's/\\//\\\\\\\\/g'`"
+    XINE_REL_PLUGINDIR="$XINE_REL_PLUGINROOT.$XINE_LT_AGE"
     XINE_REL_FONTDIR="`echo "$XINE_REL_FONTDIR" | sed -e 's/\\//\\\\\\\\/g'`"
     XINE_REL_LOCALEDIR="`echo "$XINE_REL_LOCALEDIR" | sed -e 's/\\//\\\\\\\\/g'`"
     dnl prefix in xine-config
     XINE_CONFIG_PREFIX="\$(cd \$(dirname \$0)/..; pwd)"
     dnl installation directories (in xine-config)
-    XINE_PLUGINPATH="$XINE_CONFIG_PREFIX/$XINE_REL_PLUGINDIR"
+    XINE_PLUGINROOTPATH="$XINE_CONFIG_PREFIX/$XINE_REL_PLUGINROOT"
+    XINE_PLUGINPATH="$XINE_PLUGINROOTPATH.$XINE_LT_AGE"
     XINE_FONTPATH="$XINE_CONFIG_PREFIX/$XINE_REL_FONTDIR"
     XINE_LOCALEPATH="$XINE_CONFIG_PREFIX/$XINE_REL_LOCALEDIR"
     dnl runtime directories
-    AC_DEFINE([XINE_PLUGINDIR], [xine_get_plugindir()], [Define this to plugins directory location])
+    AC_DEFINE([XINE_PLUGINROOT],[xine_get_pluginroot()],[Define this to general plugins directory location])
+    AC_DEFINE([XINE_PLUGINDIR], [xine_get_plugindir()], [Define this to specific plugins directory location])
     AC_DEFINE([XINE_FONTDIR],   [xine_get_fontdir()],   [Define this to osd fonts dir location])
     AC_DEFINE([XINE_LOCALEDIR], [xine_get_localedir()], [Path where catalog files will be.])
 else
     dnl prefix in xine-config
     XINE_CONFIG_PREFIX="`makeexpand "${prefix}"`"
     dnl directories from xine-config and runtime directories
-    XINE_PLUGINPATH="`makeexpand "$XINE_PLUGINDIR"`"
+    XINE_PLUGINROOTPATH="`makeexpand "$XINE_PLUGINROOT"`"
+    XINE_PLUGINPATH="$XINE_PLUGINROOTPATH.$XINE_LT_AGE"
     XINE_FONTPATH="`makeexpand "$XINE_FONTDIR"`"
     XINE_LOCALEPATH="`makeexpand "$XINE_LOCALEDIR"`"
     dnl defining runtime directories
-    AC_DEFINE_UNQUOTED([XINE_PLUGINDIR], ["$XINE_PLUGINPATH"], [Define this to plugins directory location])
+    AC_DEFINE_UNQUOTED([XINE_PLUGINROOT],["$XINE_PLUGINROOTPATH"], [Define this to general plugins directory location])
+    AC_DEFINE_UNQUOTED([XINE_PLUGINDIR], ["$XINE_PLUGINPATH"], [Define this to soecific plugins directory location])
     AC_DEFINE_UNQUOTED([XINE_FONTDIR],   ["$XINE_FONTPATH"],   [Define this to osd fonts dir location])
     AC_DEFINE_UNQUOTED([XINE_LOCALEDIR], ["$XINE_LOCALEPATH"], [Path where catalog files will be.])
 fi
@@ -1028,6 +1049,7 @@ AC_SUBST(XINE_LOCALEPATH)
 AC_SUBST(XINE_PLUGINDIR)
 AC_SUBST(XINE_FONTDIR)
 AC_SUBST(XINE_LOCALEDIR)
+AC_SUBST(XINE_PKGCONFIG_DIR)
 
 dnl Where aclocal m4 files should be installed
 xine_acflags='-I ${datarootdir}/aclocal'
@@ -1153,7 +1175,6 @@ contrib/nosefart/Makefile
 contrib/vidix/Makefile
 contrib/vidix/drivers/Makefile
 include/Makefile
-include/xine/Makefile
 include/xine/version.h
 lib/Makefile
 m4/Makefile
@@ -1161,9 +1182,9 @@ m4/gettext/Makefile
 misc/Makefile
 misc/SlackBuild
 misc/build_rpms.sh
-misc/fonts/Makefile
 misc/libxine.pc
 misc/relchk.sh
+misc/xine-config
 misc/xine-lib.spec
 po/Makefile.in
 src/Makefile
@@ -1201,10 +1222,16 @@ src/video_out/macosx/Makefile
 src/xine-utils/Makefile
 src/xine-engine/Makefile
 src/vdr/Makefile
-win32/Makefile
-win32/include/Makefile])
+win32/Makefile])
 AC_CONFIG_COMMANDS([default],[[chmod +x ./misc/SlackBuild ./misc/build_rpms.sh ./misc/relchk.sh]],[[]])
 AC_OUTPUT
+
+dnl Guard against multiple inclusion
+AH_TOP([#ifndef _XINE_CONFIGURE_H_
+#define _XINE_CONFIGURE_H_
+])
+AH_BOTTOM([#endif
+])
 
 dnl ---------------------------------------------
 dnl Work around a suspected bug in libtool:

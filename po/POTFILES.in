@@ -109,7 +109,6 @@ src/video_out/video_out_pgx32.c
 src/video_out/video_out_pgx64.c
 src/video_out/video_out_sdl.c
 src/video_out/video_out_stk.c
-src/video_out/video_out_syncfb.c
 src/video_out/video_out_vidix.c
 src/video_out/video_out_xcbshm.c
 src/video_out/video_out_xcbxv.c
@@ -119,6 +118,7 @@ src/video_out/video_out_xvmc.c
 src/video_out/video_out_xxmc.c
 src/video_out/x11osd.c
 src/video_out/xcbosd.c
+src/video_out/xv_common.h
 src/xine-engine/alphablend.c
 src/xine-engine/audio_decoder.c
 src/xine-engine/audio_out.c

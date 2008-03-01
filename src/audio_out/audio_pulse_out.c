@@ -246,7 +246,7 @@ static int ao_pulse_open(ao_driver_t *this_gen,
     pa_threaded_mainloop_lock(this->pa_class->mainloop);
     ret = pa_context_connect(this->pa_class->context, this->host, 1, NULL);
     if ( ret < 0 )
-      goto fail;
+      goto fail_unlock;
 
     pa_context_set_state_callback(this->pa_class->context, __xine_pa_context_status_callback, this);
 
@@ -289,8 +289,9 @@ static int ao_pulse_open(ao_driver_t *this_gen,
 
   return this->sample_rate;
 
-fail:
+ fail_unlock:
   pa_threaded_mainloop_unlock(this->pa_class->mainloop);
+ fail:
   this_gen->close(this_gen);
   return 0;
 }

@@ -2,12 +2,10 @@ include $(top_srcdir)/misc/Makefile.common
 
 SUBDIRS = man hackersguide faq
 
-doc_DATA = README README.dvb README.dxr3 \
+dist_doc_DATA = README README.dvb README.dxr3 \
 	    README.freebsd README.irix README.network_dvd README.opengl \
-	    README.solaris README.syncfb README_xxmc.html README.MINGWCROSS \
+	    README.solaris README_xxmc.html README.MINGWCROSS \
 	    README.WIN32 README.macosx
-
-EXTRA_DIST = $(doc_DATA)
 
 docs clean-docs:
 	@cd faq && $(MAKE) $@

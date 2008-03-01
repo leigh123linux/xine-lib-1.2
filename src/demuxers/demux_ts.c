@@ -1175,6 +1175,15 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
     return;
   }
 
+  if (!section_length) {
+    free (this->pmt[program_count]);
+    this->pmt[program_count] = NULL;
+#ifdef TS_PMT_LOG
+    printf ("ts_demux: eek, zero-length section?\n");
+#endif
+    return;
+  }
+
 #ifdef TS_PMT_LOG
   printf ("ts_demux: have all TS packets for the PMT section\n");
 #endif
