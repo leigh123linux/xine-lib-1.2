@@ -37,8 +37,8 @@ were added by FFmpeg upstream. A way to handle this is (assuming that
 you didn't try to compile xine-lib with the updated ffmpeg yet):
 
   cd ${xine-lib-checkout}/contrib/ffmpeg
-  hg status | egrep '^!' | cut -d ' ' -f 2 | xargs hg rm
-  hg status | egrep '^?' | cut -d ' ' -f 2 | xargs hg add
+  hg status . | egrep '^!' | cut -d ' ' -f 2 | xargs hg rm
+  hg status . | egrep '^?' | cut -d ' ' -f 2 | xargs hg add
 
 This should register the file changes that happened.
 
