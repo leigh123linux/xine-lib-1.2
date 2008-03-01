@@ -57,4 +57,4 @@ xineplug_decode_ff_la_LDFLAGS = $(AM_LDFLAGS) $(IMPURE_TEXT_LDFLAGS)
 
 xineplug_decode_dvaudio_la_SOURCES  = ff_dvaudio_decoder.c
 xineplug_decode_dvaudio_la_LIBADD   = $(XINE_LIB) $(LTLIBINTL)
-xineplug_decode_dvaudio_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/contrib/ffmpeg
+xineplug_decode_dvaudio_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/contrib/ffmpeg -I$(top_srcdir)/contrib/ffmpeg/libavutil
