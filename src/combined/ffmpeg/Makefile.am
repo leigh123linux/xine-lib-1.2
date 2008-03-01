@@ -8,9 +8,7 @@ if WITH_EXTERNAL_FFMPEG
 AM_CFLAGS  += $(FFMPEG_CFLAGS) $(FFMPEG_POSTPROC_CFLAGS)
 link_ffmpeg = $(FFMPEG_LIBS) $(FFMPEG_POSTPROC_LIBS)
 else
-AM_CPPFLAGS += -I$(top_srcdir)/contrib/ffmpeg/libavutil \
-	-I$(top_srcdir)/contrib/ffmpeg/libavcodec \
-	-I$(top_srcdir)/contrib/ffmpeg/libpostproc
+AM_CPPFLAGS += -I$(top_srcdir)/contrib/ffmpeg
 link_ffmpeg = $(top_builddir)/contrib/ffmpeg/libavcodec/libavcodec.a \
 	$(top_builddir)/contrib/ffmpeg/libavutil/libavutil.a \
 	$(top_builddir)/contrib/ffmpeg/libpostproc/libpostproc.a
@@ -59,4 +57,4 @@ xineplug_decode_ff_la_LDFLAGS = $(AM_LDFLAGS) $(IMPURE_TEXT_LDFLAGS)
 
 xineplug_decode_dvaudio_la_SOURCES  = ff_dvaudio_decoder.c
 xineplug_decode_dvaudio_la_LIBADD   = $(XINE_LIB) $(LTLIBINTL)
-xineplug_decode_dvaudio_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/contrib/ffmpeg/libavcodec
+xineplug_decode_dvaudio_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/contrib/ffmpeg
