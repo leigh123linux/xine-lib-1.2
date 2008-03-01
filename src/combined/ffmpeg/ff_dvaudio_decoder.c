@@ -52,7 +52,12 @@
 #  undef uint64_t
 #endif
 
-#include <avcodec.h>
+#ifdef HAVE_FFMPEG_AVCODEC_H
+#  include <avcodec.h>
+#else
+#  include <libavcodec/avcodec.h>
+#endif
+
 #include <dvdata.h> /* This is not installed by FFmpeg, its usage has to be cleared up */
 
 #ifdef _MSC_VER
