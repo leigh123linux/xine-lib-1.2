@@ -68,8 +68,7 @@
 #include <pthread.h>
 #include <netinet/in.h>
 
-/* libavutil from FFmpeg */
-#include <mem.h>
+#include <libavutil/mem.h>
 
 #include <linux/fb.h>
 #include <linux/kd.h>

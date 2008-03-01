@@ -36,8 +36,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-/* libavutil from FFmpeg */
-#include <mem.h>
+#include <libavutil/mem.h>
 
 /********** logging **********/
 #define LOG_MODULE "buffer"

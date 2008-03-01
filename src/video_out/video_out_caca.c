@@ -37,8 +37,7 @@
 #include <cucul.h>
 #include <caca.h>
 
-/* libavutil from FFmpeg */
-#include <mem.h>
+#include <libavutil/mem.h>
 
 #include "xine.h"
 #include <xine/video_out.h>

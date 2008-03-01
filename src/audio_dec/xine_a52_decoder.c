@@ -62,8 +62,7 @@
 #include <xine/buffer.h>
 #include <xine/xineutils.h>
 
-/* libavutil from FFmpeg */
-#include <crc.h>
+#include <libavutil/crc.h>
 
 #undef DEBUG_A52
 #ifdef DEBUG_A52

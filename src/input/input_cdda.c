@@ -58,9 +58,8 @@
 
 #include <basedir.h>
 
-/* libavutil from FFmpeg */
-#include <base64.h>
-#include <sha1.h>
+#include <libavutil/base64.h>
+#include <libavutil/sha1.h>
 
 #define LOG_MODULE "input_cdda"
 #define LOG_VERBOSE
@@ -72,7 +71,6 @@
 #include <xine/xineutils.h>
 #include <xine/input_plugin.h>
 #include "media_helper.h"
-#include "base64.h"
 
 #if defined(__sun)
 #define	DEFAULT_CDDA_DEVICE	"/vol/dev/aliases/cdrom0"

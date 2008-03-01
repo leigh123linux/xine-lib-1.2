@@ -31,8 +31,7 @@
 #include <string.h>
 #include <inttypes.h>
 
-/* libavutil from FFmpeg */
-#include <mem.h>
+#include <libavutil/mem.h>
 
 #include "yuv2rgb.h"
 #include <xine/xineutils.h>

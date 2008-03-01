@@ -37,8 +37,7 @@
 #define LOG
 */
 
-/* libavutil from FFmpeg */
-#include <mem.h>
+#include <libavutil/mem.h>
 
 #include <xine/xine_internal.h>
 #include <xine/video_out.h>

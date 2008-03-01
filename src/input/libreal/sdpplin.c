@@ -31,8 +31,7 @@
 #include "sdpplin.h"
 #include <xine/xineutils.h>
 
-/* libavutil from FFmpeg */
-#include <base64.h>
+#include <libavutil/base64.h>
 
 static char *nl(char *data) {
 

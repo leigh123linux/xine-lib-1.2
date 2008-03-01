@@ -27,8 +27,7 @@
 #include <math.h>
 #include <pthread.h>
 
-/* libavutil from FFmpeg */
-#include <mem.h>
+#include <libavutil/mem.h>
 
 #ifdef ARCH_X86_64
 #  define REG_a  "rax"

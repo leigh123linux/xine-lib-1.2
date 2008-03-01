@@ -35,8 +35,7 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 
-/* libavutil from FFmpeg */
-#include <mem.h>
+#include <libavutil/mem.h>
 
 #include <aalib.h>
 

@@ -47,8 +47,7 @@
 #include <ctype.h>
 #include <pthread.h>
 
-/* libavutil from FFmpeg */
-#include <mem.h>
+#include <libavutil/mem.h>
 
 /* defines for debugging extensions only */
 /* #define GL_GLEXT_LEGACY */

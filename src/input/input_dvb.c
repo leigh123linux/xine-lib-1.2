@@ -100,8 +100,7 @@
 #endif
 #include <ctype.h>
 
-/* libavutil from FFmpeg */
-#include <crc.h>
+#include <libavutil/crc.h>
 
 /* XDG */
 #include <basedir.h>

@@ -51,8 +51,7 @@
 #include <pthread.h>
 #include <netinet/in.h>
 
-/* libavutil from FFmpeg */
-#include <mem.h>
+#include <libavutil/mem.h>
 
 #define LOG_MODULE "video_out_xshm"
 #define LOG_VERBOSE

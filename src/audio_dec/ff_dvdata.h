@@ -27,8 +27,8 @@
 #ifndef FFMPEG_DVDATA_H
 #define FFMPEG_DVDATA_H
 
-#include <avcodec.h>
-#include <rational.h>
+#include <libavcodec/avcodec.h>
+#include <libavutil/rational.h>
 
 /*
  * DVprofile is used to express the differences between various

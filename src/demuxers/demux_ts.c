@@ -141,8 +141,7 @@
 #include <unistd.h>
 #include <string.h>
 
-/* libavutil from FFmpeg */
-#include <crc.h>
+#include <libavutil/crc.h>
 
 #define LOG_MODULE "demux_ts"
 #define LOG_VERBOSE

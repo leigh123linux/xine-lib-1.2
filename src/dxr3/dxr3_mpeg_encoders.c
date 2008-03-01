@@ -44,8 +44,7 @@
 #include <math.h>
 #include <unistd.h>
 
-/* libavutil from FFmpeg */
-#include <mem.h>
+#include <libavutil/mem.h>
 
 #define LOG_MODULE "dxr3_mpeg_encoder"
 /* #define LOG_VERBOSE */
