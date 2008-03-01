@@ -23,8 +23,13 @@
 #include "xine_internal.h"
 #include "post.h"
 #include "xineutils.h"
-#include "postprocess.h"
 #include <pthread.h>
+
+#ifdef HAVE_FFMPEG_AVCODEC_H
+#  include <postprocess.h>
+#else
+#  include <libpostproc/postprocess.h>
+#endif
 
 #define PP_STRING_SIZE 256 /* size of pp mode string (including all options) */
 
