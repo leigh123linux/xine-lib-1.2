@@ -350,6 +350,10 @@ if test "x$with_external_ffmpeg" = "xyes"; then
    AC_SUBST([FFMPEG_POSTPROC_CFLAGS])
    AC_SUBST([FFMPEG_POSTPROC_LIBS])
    AC_DEFINE([HAVE_FFMPEG], [1], [Define this if you have ffmpeg library])
+
+   dnl Check presence of ffmpeg/avutil.h to see if it's old or new
+   dnl style for headers. The new style would be preferred actually...
+   AC_CHECK_HEADER([ffmpeg/avutil.h])
    
    AC_MSG_NOTICE([
 *********************************************************************

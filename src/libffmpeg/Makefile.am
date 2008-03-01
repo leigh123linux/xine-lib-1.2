@@ -1,5 +1,7 @@
 include $(top_srcdir)/misc/Makefile.common
 
+DEFAULT_INCLUDES = -I.
+
 if HAVE_FFMPEG
 AM_CFLAGS = $(FFMPEG_CFLAGS) $(FFMPEG_POSTPROC_CFLAGS)
 link_ffmpeg = $(FFMPEG_LIBS) $(FFMPEG_POSTPROC_LIBS)

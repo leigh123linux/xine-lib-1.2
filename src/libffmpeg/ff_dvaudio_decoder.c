@@ -52,13 +52,13 @@
 #  undef uint64_t
 #endif
 
-#ifdef HAVE_FFMPEG
+#ifdef HAVE_FFMPEG_AVCODEC_H
 #  include <avcodec.h>
-#  include "libavcodec/dvdata.h"
 #else
-#  include "libavcodec/avcodec.h"
-#  include "libavcodec/dvdata.h"
+#  include <libavcodec/avcodec.h>
 #endif
+
+#include "libavcodec/dvdata.h"
 
 #ifdef _MSC_VER
 #  undef malloc

@@ -45,10 +45,10 @@
 #include "ffmpeg_decoder.h"
 #include "ff_mpeg_parser.h"
 
-#ifdef HAVE_FFMPEG
+#ifdef HAVE_FFMPEG_AVCODEC_H
 #  include <postprocess.h>
 #else
-#  include "libavcodec/libpostproc/postprocess.h"
+#  include <libpostproc/postprocess.h>
 #endif
 
 #define VIDEOBUFSIZE        (128*1024)

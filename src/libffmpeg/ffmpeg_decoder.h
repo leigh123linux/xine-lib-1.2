@@ -25,10 +25,10 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_FFMPEG
+#ifdef HAVE_FFMPEG_AVCODEC_H
 #  include <avcodec.h>
 #else
-#  include "libavcodec/avcodec.h"
+#  include <libavcodec/avcodec.h>
 #endif
 
 typedef struct ff_codec_s {
