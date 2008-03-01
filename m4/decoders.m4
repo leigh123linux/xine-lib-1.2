@@ -107,6 +107,10 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
         PKG_CHECK_MODULES([FFMPEG_POSTPROC], [libpostproc])
         AC_DEFINE([HAVE_FFMPEG], 1, [Define this if you have ffmpeg library])
    
+	dnl Check presence of ffmpeg/avutil.h to see if it's old or new
+	dnl style for headers. The new style would be preferred actually...
+	AC_CHECK_HEADER([ffmpeg/avutil.h])
+   
         AC_MSG_NOTICE([
 *********************************************************************
 xine-lib is configured with external ffmpeg.
