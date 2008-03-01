@@ -1697,8 +1697,6 @@ static const uint32_t supported_video_types[] = {
   BUF_VIDEO_KMVC,
   BUF_VIDEO_FLASHSV,
   BUF_VIDEO_CAVS,
-#endif
-#if defined(HAVE_FFMPEG) || CONFIG_VMNC_DECODER
   BUF_VIDEO_VMNC,
   BUF_VIDEO_THEORA_RAW,
   0 
