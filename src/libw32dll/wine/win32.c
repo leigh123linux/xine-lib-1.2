@@ -5058,11 +5058,9 @@ struct libs libraries[]={
     LL(ddraw)
 #endif
 };
-#if defined(__CYGWIN__) || defined(__OS2__) || defined (__OpenBSD__)
-#define MANGLE(a) "_" #a
-#else
-#define MANGLE(a) #a
-#endif
+
+#include "mangle.h"
+
 static void ext_stubs(void)
 {
     // expects:

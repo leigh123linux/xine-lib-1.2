@@ -46,5 +46,5 @@ xineinclude_HEADERS = \
 	ring_buffer.h
 
 
-noinst_HEADERS = ppcasm_string.h xine_check.h
+noinst_HEADERS = ppcasm_string.h xine_check.h mangle.h
 

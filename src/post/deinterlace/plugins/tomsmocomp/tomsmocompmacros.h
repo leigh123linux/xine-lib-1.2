@@ -2,6 +2,8 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "mangle.h"
+
 #define USE_FOR_DSCALER
 
 #define MyMemCopy xine_fast_memcpy
