@@ -61,7 +61,18 @@
 */
 
 
+typedef struct vdr_input_plugin_s vdr_input_plugin_t;
+
 typedef struct
+{
+  metronom_t          metronom;
+  metronom_t         *stream_metronom;
+  vdr_input_plugin_t *input;
+}
+vdr_metronom_t;
+
+
+struct vdr_input_plugin_s
 {
   input_plugin_t      input_plugin;
    
@@ -113,9 +124,10 @@ typedef struct
 
   uint8_t             find_sync_point;
   pthread_mutex_t     find_sync_point_lock;
-}
-vdr_input_plugin_t;
 
+  vdr_metronom_t      metronom;
+  int                 last_disc_type;
+};
 
 
 typedef struct
@@ -1042,8 +1054,7 @@ fprintf(stderr, "ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß\n");
         result_get_pts.header.func = data->header.func;
         result_get_pts.header.len = sizeof (result_get_pts);
         
-        result_get_pts.pts = xine_get_current_vpts(this->stream) - this->stream->metronom->get_option(this->stream->metronom, METRONOM_VPTS_OFFSET);
-        
+        result_get_pts.pts = (this->last_disc_type == DISC_STREAMSTART) ? -2 : (xine_get_current_vpts(this->stream) - this->stream->metronom->get_option(this->stream->metronom, METRONOM_VPTS_OFFSET));
         if (sizeof (result_get_pts) != vdr_write(this->fh_result, &result_get_pts, sizeof (result_get_pts)))
           return -1;
       }
@@ -1595,6 +1606,10 @@ static void vdr_plugin_dispose(input_plugin_t *this_gen)
     close(this->fh);
 
   free(this->mrl);
+
+  this->stream->metronom = this->metronom.stream_metronom;
+  this->metronom.stream_metronom = 0;
+
   free(this);
 }
 
@@ -2002,6 +2017,69 @@ static void event_handler(void *user_data, const xine_event_t *event)
             _("%s: input event write: %s.\n"), LOG_MODULE, strerror(errno));
 }
 
+
+static void vdr_metronom_set_audio_rate(metronom_t *self, int64_t pts_per_smpls)
+{
+  vdr_metronom_t *this = (vdr_metronom_t *)self;
+  this->stream_metronom->set_audio_rate(this->stream_metronom, pts_per_smpls);
+}
+
+static void vdr_metronom_got_video_frame(metronom_t *self, vo_frame_t *frame)
+{
+  vdr_metronom_t *this = (vdr_metronom_t *)self;
+  this->stream_metronom->got_video_frame(this->stream_metronom, frame);
+}
+
+static int64_t vdr_metronom_got_audio_samples(metronom_t *self, int64_t pts, int nsamples)
+{
+  vdr_metronom_t *this = (vdr_metronom_t *)self;
+  return this->stream_metronom->got_audio_samples(this->stream_metronom, pts, nsamples);
+}
+
+static int64_t vdr_metronom_got_spu_packet(metronom_t *self, int64_t pts)
+{
+  vdr_metronom_t *this = (vdr_metronom_t *)self;
+  return this->stream_metronom->got_spu_packet(this->stream_metronom, pts);
+}
+
+static void vdr_metronom_handle_audio_discontinuity(metronom_t *self, int type, int64_t disc_off)
+{
+  vdr_metronom_t *this = (vdr_metronom_t *)self;
+  this->stream_metronom->handle_audio_discontinuity(this->stream_metronom, type, disc_off);
+  this->input->last_disc_type = type;
+}
+
+static void vdr_metronom_handle_video_discontinuity(metronom_t *self, int type, int64_t disc_off)
+{
+  vdr_metronom_t *this = (vdr_metronom_t *)self;
+  this->stream_metronom->handle_video_discontinuity(this->stream_metronom, type, disc_off);
+  this->input->last_disc_type = type;
+}
+
+static void vdr_metronom_set_option(metronom_t *self, int option, int64_t value)
+{
+  vdr_metronom_t *this = (vdr_metronom_t *)self;
+  this->stream_metronom->set_option(this->stream_metronom, option, value);
+}
+
+static int64_t vdr_metronom_get_option(metronom_t *self, int option)
+{
+  vdr_metronom_t *this = (vdr_metronom_t *)self;
+  return this->stream_metronom->get_option(this->stream_metronom, option);
+}
+
+static void vdr_metronom_set_master(metronom_t *self, metronom_t *master)
+{
+  vdr_metronom_t *this = (vdr_metronom_t *)self;
+  this->stream_metronom->set_master(this->stream_metronom, master);
+}
+
+static void vdr_metronom_exit(metronom_t *self)
+{
+  _x_abort();
+}
+
+
 static input_plugin_t *vdr_class_get_instance(input_class_t *cls_gen, xine_stream_t *stream,
                                                const char *data)
 {
@@ -2083,6 +2161,21 @@ static input_plugin_t *vdr_class_get_instance(input_class_t *cls_gen, xine_strea
   this->event_queue = xine_event_new_queue(this->stream);
   if (this->event_queue)
     xine_event_create_listener_thread(this->event_queue, event_handler, this);
+
+  this->metronom.input = this;
+  this->metronom.metronom.set_audio_rate             = vdr_metronom_set_audio_rate;
+  this->metronom.metronom.got_video_frame            = vdr_metronom_got_video_frame;
+  this->metronom.metronom.got_audio_samples          = vdr_metronom_got_audio_samples;
+  this->metronom.metronom.got_spu_packet             = vdr_metronom_got_spu_packet;
+  this->metronom.metronom.handle_audio_discontinuity = vdr_metronom_handle_audio_discontinuity;
+  this->metronom.metronom.handle_video_discontinuity = vdr_metronom_handle_video_discontinuity;
+  this->metronom.metronom.set_option                 = vdr_metronom_set_option;
+  this->metronom.metronom.get_option                 = vdr_metronom_get_option;
+  this->metronom.metronom.set_master                 = vdr_metronom_set_master;
+  this->metronom.metronom.exit                       = vdr_metronom_exit;
+
+  this->metronom.stream_metronom = stream->metronom;
+  stream->metronom = &this->metronom.metronom;
 
   return &this->input_plugin;
 }
