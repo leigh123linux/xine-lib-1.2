@@ -972,33 +972,9 @@ fprintf(stderr, "ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß\n");
         int height     = 0;       
         int ratio_code = 0;
         int format     = 0;
-        
-        int orig_speed = xine_get_param(this->stream, XINE_PARAM_FINE_SPEED);
-        if (XINE_SPEED_PAUSE != orig_speed)
-          xine_set_param(this->stream, XINE_PARAM_FINE_SPEED, XINE_SPEED_PAUSE);
-        
-        if (xine_get_current_frame(this->stream, &width, &height, &ratio_code, &format, 0))
+ 
+        if (xine_get_current_frame_alloc(this->stream, &width, &height, &ratio_code, &format, &img, &frame_size))
         {
-          switch (format)
-          {
-          case XINE_IMGFMT_YV12:
-            frame_size = width * height
-              + ((width + 1) / 2) * ((height + 1) / 2)
-              + ((width + 1) / 2) * ((height + 1) / 2);
-            break;
-            
-          case XINE_IMGFMT_YUY2:
-            frame_size = width * height
-              + ((width + 1) / 2) * height
-              + ((width + 1) / 2) * height;
-            break;
-          }
-          
-          img = xine_xmalloc(frame_size);
-          
-          if (!xine_get_current_frame(this->stream, &width, &height, &ratio_code, &format, img))
-            frame_size = 0;
-          
           if (ratio_code == XINE_VO_ASPECT_SQUARE)
             ratio_code = 10000;
           else if (ratio_code == XINE_VO_ASPECT_4_3)
@@ -1007,17 +983,15 @@ fprintf(stderr, "ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß\n");
             ratio_code = 17778;
           else if (ratio_code == XINE_VO_ASPECT_DVB)
             ratio_code = 21100;
-          
-          if (0 == frame_size)
-          {
-            width      = 0;
-            height     = 0;
-            ratio_code = 0;
-          }          
         }
-        
-        if (XINE_SPEED_PAUSE != orig_speed)
-          xine_set_param(this->stream, XINE_PARAM_FINE_SPEED, orig_speed);
+
+        if (!img)
+        {
+          frame_size = 0,
+          width      = 0;
+          height     = 0;
+          ratio_code = 0;
+        }          
         
         {
           result_grab_image_t result_grab_image;
@@ -1031,13 +1005,12 @@ fprintf(stderr, "ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß\n");
           
           if (sizeof (result_grab_image) == vdr_write(this->fh_result, &result_grab_image, sizeof (result_grab_image)))
           {
-            if (frame_size == vdr_write(this->fh_result, img, frame_size))
+            if (!frame_size || (frame_size == vdr_write(this->fh_result, img, frame_size)))
               ret_val = 0;
           }
         }
         
-        if (img)
-          free(img);
+        free(img);
         
         if (ret_val != 0)
           return ret_val;
