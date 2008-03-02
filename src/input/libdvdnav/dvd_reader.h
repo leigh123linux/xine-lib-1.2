@@ -171,6 +171,8 @@ ssize_t DVDReadBlocks( dvd_file_t *, int, size_t, unsigned char * );
  */
 int32_t DVDFileSeek( dvd_file_t *, int32_t );
 
+int32_t DVDFileSeekForce( dvd_file_t *, int, int );
+
 /**
  * Reads the given number of bytes from the file.  This call can only be used
  * on the information files, and may not be used for reading from a VOB.  This
