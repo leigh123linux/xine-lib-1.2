@@ -2039,7 +2039,7 @@ static char **vdr_class_get_autoplay_list(input_class_t *this_gen,
   vdr_input_class_t *class = (vdr_input_class_t *)this_gen;
 
   *num_files = 1;
-  return class->mrls;
+  return (char **)class->mrls;
 }
 
 void *vdr_input_init_plugin(xine_t *xine, void *data)
