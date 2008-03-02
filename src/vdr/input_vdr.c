@@ -111,6 +111,8 @@ typedef struct
   uint16_t            image16_9_zoom_x;
   uint16_t            image16_9_zoom_y;
 
+  uint8_t             find_sync_point;
+  pthread_mutex_t     find_sync_point_lock;
 }
 vdr_input_plugin_t;
 
@@ -581,7 +583,13 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
         int orig_speed = xine_get_param(this->stream, XINE_PARAM_FINE_SPEED);
         if (orig_speed <= 0)
           xine_set_param(this->stream, XINE_PARAM_FINE_SPEED, XINE_FINE_SPEED_NORMAL);
-fprintf(stderr, "+++ CLEAR(%d%c)\n", data->n, data->s ? 'b' : 'a');
+fprintf(stderr, "+++ CLEAR(%d%c): sync point: %02x\n", data->n, data->s ? 'b' : 'a', data->i);
+        if (!data->s)
+        {
+          pthread_mutex_lock(&this->find_sync_point_lock);
+          this->find_sync_point = data->i; 
+          pthread_mutex_unlock(&this->find_sync_point_lock);
+        }
 /*        
         if (!this->dont_change_xine_volume)
           xine_set_param(this->stream, XINE_PARAM_AUDIO_VOLUME, 0);
@@ -1311,7 +1319,7 @@ static off_t vdr_plugin_read(input_plugin_t *this_gen,
                              void *buf_gen, off_t len)
 {
   vdr_input_plugin_t  *this = (vdr_input_plugin_t *) this_gen;
-  char *buf = (char *)buf_gen;
+  uint8_t *buf = (uint8_t *)buf_gen;
   off_t n, total;
 #ifdef LOG_READ   
   lprintf ("reading %lld bytes...\n", len);
@@ -1336,7 +1344,7 @@ static off_t vdr_plugin_read(input_plugin_t *this_gen,
     int retries = 0;
     do
     {
-      n = vdr_read_abort (this->stream, this->fh, &buf[total], len-total);
+      n = vdr_read_abort (this->stream, this->fh, (char *)&buf[total], len-total);
       if (0 == n)
         lprintf("read 0, retries: %d\n", retries);
     }
@@ -1357,6 +1365,53 @@ static off_t vdr_plugin_read(input_plugin_t *this_gen,
     this->curpos += n;
     total += n;
   }
+
+  if (this->find_sync_point
+    && total == 6)
+  {
+    pthread_mutex_lock(&this->find_sync_point_lock);
+    
+    while (this->find_sync_point
+      && total == 6
+      && buf[0] == 0x00
+      && buf[1] == 0x00
+      && buf[2] == 0x01)
+    {
+      int l, sp;
+
+      if (buf[3] == 0xbe
+        && buf[4] == 0xff)
+      {
+//fprintf(stderr, "------- seen sync point: %02x, waiting for: %02x\n", buf[5], this->find_sync_point);
+        if (buf[5] == this->find_sync_point)
+        {
+          this->find_sync_point = 0;
+          break;
+        }
+      }
+
+      if ((buf[3] & 0xf0) != 0xe0
+        && (buf[3] & 0xe0) != 0xc0
+        && buf[3] != 0xbd
+        && buf[3] != 0xbe)
+      {
+        break;
+      }
+    
+      l = buf[4] * 256 + buf[5];
+      if (l <= 0)
+         break;
+
+      sp = this->find_sync_point;
+      this->find_sync_point = 0;
+      this_gen->seek(this_gen, l, SEEK_CUR);
+      total = this_gen->read(this_gen, buf, 6);
+      this->find_sync_point = sp;
+    }
+
+    pthread_mutex_unlock(&this->find_sync_point_lock);
+  }
+
   return total;
 }
 
@@ -1512,6 +1567,7 @@ static void vdr_plugin_dispose(input_plugin_t *this_gen)
   pthread_cond_destroy(&this->rpc_thread_shutdown_cond);
   pthread_mutex_destroy(&this->rpc_thread_shutdown_lock);
 
+  pthread_mutex_destroy(&this->find_sync_point_lock);
   pthread_mutex_destroy(&this->adjust_zoom_lock);
   
   if (this->fh_result != -1)
@@ -2017,6 +2073,7 @@ static input_plugin_t *vdr_class_get_instance(input_class_t *cls_gen, xine_strea
   pthread_mutex_init(&this->rpc_thread_shutdown_lock, 0);
   pthread_cond_init(&this->rpc_thread_shutdown_cond, 0);  
   
+  pthread_mutex_init(&this->find_sync_point_lock, 0);
   pthread_mutex_init(&this->adjust_zoom_lock, 0);
   this->image4_3_zoom_x  = 0;
   this->image4_3_zoom_y  = 0;
