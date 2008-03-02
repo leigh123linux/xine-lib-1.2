@@ -353,7 +353,7 @@ if test "x$with_external_ffmpeg" = "xyes"; then
 
    dnl Check presence of ffmpeg/avutil.h to see if it's old or new
    dnl style for headers. The new style would be preferred actually...
-   AC_CHECK_HEADER([ffmpeg/avutil.h])
+   AC_CHECK_HEADERS([ffmpeg/avutil.h])
    
    AC_MSG_NOTICE([
 *********************************************************************

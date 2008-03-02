@@ -25,7 +25,7 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_FFMPEG_AVCODEC_H
+#ifdef HAVE_FFMPEG_AVUTIL_H
 #  include <avcodec.h>
 #else
 #  include <libavcodec/avcodec.h>

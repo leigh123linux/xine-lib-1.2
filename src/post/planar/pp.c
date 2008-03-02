@@ -25,7 +25,7 @@
 #include "xineutils.h"
 #include <pthread.h>
 
-#ifdef HAVE_FFMPEG_AVCODEC_H
+#ifdef HAVE_FFMPEG_AVUTIL_H
 #  include <postprocess.h>
 #else
 #  include <libpostproc/postprocess.h>
