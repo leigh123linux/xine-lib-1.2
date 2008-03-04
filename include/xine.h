@@ -401,13 +401,37 @@ int  xine_get_param (xine_stream_t *stream, int param) XINE_PROTECTED;
  * image format can be YUV 4:2:0 or 4:2:2
  * will copy the image data into memory that <img> points to
  * (interleaved for yuv 4:2:2 or planary for 4:2:0)
+ * 
+ * xine_get_current_frame() requires that <img> must be able
+ * to hold the image data. Use a NULL pointer to retrieve the
+ * necessary parameters for calculating the buffer size. Be
+ * aware that the image can change between two successive calls
+ * so you better pause the stream.
  *
- * returns 1 on success, 0 failure.
+ * xine_get_current_frame_s() requires to specify the buffer
+ * size and it returns the needed / used size. It won't copy
+ * image data into a too small buffer.
+ *
+ * xine_get_current_frame_alloc() takes care of allocating
+ * a buffer on it's own, so image data can be retrieved by
+ * a single call without the need to pause the stream.
+ *
+ * all functions return 1 on success, 0 failure.
  */
 int  xine_get_current_frame (xine_stream_t *stream,
 			     int *width, int *height,
 			     int *ratio_code, int *format,
 			     uint8_t *img) XINE_PROTECTED;
+
+int  xine_get_current_frame_s (xine_stream_t *stream,
+			     int *width, int *height,
+			     int *ratio_code, int *format,
+			     uint8_t *img, int *size) XINE_PROTECTED;
+
+int  xine_get_current_frame_alloc (xine_stream_t *stream,
+			     int *width, int *height,
+			     int *ratio_code, int *format,
+			     uint8_t **img, int *size) XINE_PROTECTED;
 
 /* xine image formats */
 #define XINE_IMGFMT_YV12 (('2'<<24)|('1'<<16)|('V'<<8)|'Y')

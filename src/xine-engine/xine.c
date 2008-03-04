@@ -1963,11 +1963,12 @@ int xine_get_pos_length (xine_stream_t *stream, int *pos_stream,
   return 1;
 }
 
-int xine_get_current_frame (xine_stream_t *stream, int *width, int *height,
-			    int *ratio_code, int *format,
-			    uint8_t *img) {
+static int _x_get_current_frame_impl (xine_stream_t *stream, int *width, int *height,
+				      int *ratio_code, int *format,
+				      uint8_t **img, int *size, int alloc_img) {
 
   vo_frame_t *frame;
+  int required_size;
 
   stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
   frame = stream->video_out->get_last_frame (stream->video_out);
@@ -1993,20 +1994,58 @@ int xine_get_current_frame (xine_stream_t *stream, int *width, int *height,
   
   *format = frame->format;
 
-  if (img){
+  switch (*format) {
+
+  case XINE_IMGFMT_YV12:
+    required_size = *width * *height
+                  + ((*width + 1) / 2) * ((*height + 1) / 2)
+                  + ((*width + 1) / 2) * ((*height + 1) / 2);
+    break;
+
+  case XINE_IMGFMT_YUY2:
+    required_size = *width * *height
+                  + ((*width + 1) / 2) * *height
+                  + ((*width + 1) / 2) * *height;
+    break;
+
+  default:
+      xprintf (stream->xine, XINE_VERBOSITY_DEBUG, 
+	       "xine: error, snapshot function not implemented for format 0x%x\n", frame->format);
+      _x_abort ();
+  }
+
+  if (alloc_img) {
+    /* return size if requested */
+    if (size)
+      *size = required_size;
+    /* allocate img or fail */
+    if (!(*img = xine_xmalloc (required_size)))
+      return 0;
+  } else {
+    /* fail if supplied buffer is to small */
+    if (*img && size && *size < required_size) {
+      *size = required_size;
+      return 0;
+    }
+    /* return size if requested */
+    if (size)
+      *size = required_size;
+  }
+       
+  if (*img) {
     switch (frame->format) {
 
     case XINE_IMGFMT_YV12:
       yv12_to_yv12(
        /* Y */
         frame->base[0], frame->pitches[0],
-        img, frame->width,
+        *img, frame->width,
        /* U */
         frame->base[1], frame->pitches[1],
-        img+frame->width*frame->height, frame->width/2,
+        *img+frame->width*frame->height, frame->width/2,
        /* V */
         frame->base[2], frame->pitches[2],
-        img+frame->width*frame->height+frame->width*frame->height/4, frame->width/2,
+        *img+frame->width*frame->height+frame->width*frame->height/4, frame->width/2,
        /* width x height */
         frame->width, frame->height);
       break;
@@ -2016,7 +2055,7 @@ int xine_get_current_frame (xine_stream_t *stream, int *width, int *height,
        /* src */
         frame->base[0], frame->pitches[0],
        /* dst */
-        img, frame->width*2,
+        *img, frame->width*2,
        /* width x height */
         frame->width, frame->height);
       break;
@@ -2028,6 +2067,25 @@ int xine_get_current_frame (xine_stream_t *stream, int *width, int *height,
     }
   }
   return 1;
+}
+
+int xine_get_current_frame_alloc (xine_stream_t *stream, int *width, int *height,
+				  int *ratio_code, int *format,
+				  uint8_t **img, int *size) {
+  uint8_t *no_img = NULL;
+  return _x_get_current_frame_impl(stream, width, height, ratio_code, format, img ? img : &no_img, size, img != NULL);
+}
+
+int xine_get_current_frame_s (xine_stream_t *stream, int *width, int *height,
+				int *ratio_code, int *format,
+				uint8_t *img, int *size) {
+  return (!img || size) && _x_get_current_frame_impl(stream, width, height, ratio_code, format, &img, size, 0);
+}
+
+int xine_get_current_frame (xine_stream_t *stream, int *width, int *height,
+			    int *ratio_code, int *format,
+			    uint8_t *img) {
+  return _x_get_current_frame_impl(stream, width, height, ratio_code, format, &img, NULL, 0);
 }
 
 int xine_get_video_frame (xine_stream_t *stream,
