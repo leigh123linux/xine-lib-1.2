@@ -20,7 +20,7 @@ include $(top_srcdir)/misc/Makefile.common
 # libpostproc is here so we can use their nice mangle.h
 AM_CFLAGS   = $(VISIBILITY_FLAG)
 AM_CPPFLAGS = -I$(top_srcdir)/src/post/deinterlace \
-	      -I$(top_srcdir)/contrib/ffmpeg/libpostproc
+	      -I$(top_srcdir)/src/xine-utils
 
 EXTRA_DIST = greedy2frame_template.c greedyh.asm \
 	tomsmocomp/SearchLoop0A.inc tomsmocomp/SearchLoopBottom.inc \

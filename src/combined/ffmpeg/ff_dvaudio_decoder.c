@@ -52,7 +52,7 @@
 #  undef uint64_t
 #endif
 
-#ifdef HAVE_FFMPEG_AVCODEC_H
+#ifdef HAVE_FFMPEG_AVUTIL_H
 #  include <avcodec.h>
 #  include <rational.h>
 #  define FFMPEG_AVCODEC_H

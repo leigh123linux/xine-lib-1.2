@@ -2,7 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include <mangle.h>
+#include "mangle.h"
 
 #define USE_FOR_DSCALER
 
