@@ -51,9 +51,9 @@ dnl    are platform dependent
 dnl  * in Linux, the library will be named
 dnl    libname.so.(XINE_LT_CURRENT - XINE_LT_AGE).XINE_LT_AGE.XINE_LT_REVISION
 
-XINE_LT_CURRENT=20
+XINE_LT_CURRENT=21
 XINE_LT_REVISION=0
-XINE_LT_AGE=19
+XINE_LT_AGE=20
 
 dnl for a release tarball do "rm .cvsversion" before "make dist"
 if test -f "${srcdir-.}/.cvsversion"; then

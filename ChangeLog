@@ -11,6 +11,7 @@ xine-lib (1.1.11) unreleased
   * Fixed an off-by-one in the FLAC security fix patch. This breakage was
     causing failure to play some files.
   * Support 16-bit big-endian DTS audio.
+  * Improved frame snapshot API. (ABI extension.)
 
 xine-lib (1.1.10.1) 2008-02-07
   * Security fixes:
