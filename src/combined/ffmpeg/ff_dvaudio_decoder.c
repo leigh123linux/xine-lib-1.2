@@ -54,6 +54,10 @@
 
 #ifdef HAVE_FFMPEG_AVCODEC_H
 #  include <avcodec.h>
+#  include <rational.h>
+#  define FFMPEG_AVCODEC_H
+#  define FFMPEG_RATIONAL_H
+#  define av_unused
 #else
 #  include <libavcodec/avcodec.h>
 #endif
