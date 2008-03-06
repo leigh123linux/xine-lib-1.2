@@ -2009,9 +2009,13 @@ static int _x_get_current_frame_impl (xine_stream_t *stream, int *width, int *he
     break;
 
   default:
+    if (*img || alloc_img) {
       xprintf (stream->xine, XINE_VERBOSITY_DEBUG, 
 	       "xine: error, snapshot function not implemented for format 0x%x\n", frame->format);
       _x_abort ();
+    }
+
+    required_size = 0;
   }
 
   if (alloc_img) {
