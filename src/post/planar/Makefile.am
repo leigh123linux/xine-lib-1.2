@@ -6,7 +6,7 @@ if HAVE_FFMPEG
 postproc_lib = $(FFMPEG_POSTPROC_LIBS)
 ff_cflags = $(FFMPEG_POSTPROC_CFLAGS)
 else
-ff_cflags = -I$(top_srcdir)/src/libffmpeg/libavcodec/libpostproc
+ff_cflags = -I$(top_srcdir)/src/libffmpeg/libavcodec
 postproc_lib = $(POSTPROC_INT_LIB)
 postproc_dep = $(postproc_lib)
 endif

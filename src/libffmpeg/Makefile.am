@@ -1,6 +1,6 @@
 include $(top_srcdir)/misc/Makefile.common
 
-DEFAULT_INCLUDES = -I.
+DEFAULT_INCLUDES = -I. -Ilibavcodec
 
 if HAVE_FFMPEG
 AM_CFLAGS = $(FFMPEG_CFLAGS) $(FFMPEG_POSTPROC_CFLAGS)
