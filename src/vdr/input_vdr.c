@@ -1652,6 +1652,12 @@ static int vdr_plugin_open_fifo_mrl(input_plugin_t *this_gen)
 
   fcntl(this->fh, F_SETFL, ~O_NONBLOCK & fcntl(this->fh, F_GETFL, 0));
 
+  /* eat initial handshake byte */
+  {
+    char b;
+    read(this->fh, &b, 1);
+  }
+
   {
     char *filename_control = 0;
     asprintf(&filename_control, "%s.control", filename);
