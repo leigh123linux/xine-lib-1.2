@@ -2403,7 +2403,7 @@ const char *const *xine_list_post_plugins_typed(xine_t *xine, uint32_t type) {
 	  else										   \
 	    return NULL;								   \
 	}										   \
-	return dgettext(ic->textdomain ? : XINE_TEXTDOMAIN, ic->description);		   \
+	return dgettext(ic->text_domain ? : XINE_TEXTDOMAIN, ic->description);		   \
       }											   \
     }											   \
     return NULL;									   \

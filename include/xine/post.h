@@ -65,7 +65,7 @@ struct post_class_s {
   /**
    * @brief Optional non-standard catalog to use with dgettext() for description.
    */
-  const char *textdomain;
+  const char *text_domain;
   
   /*
    * free all class-related resources
