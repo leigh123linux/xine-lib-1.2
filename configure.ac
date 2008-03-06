@@ -575,6 +575,9 @@ fi
 CC_CHECK_CFLAGS([-ffast-math],               [optflags="$optflags -ffast-math"])
 CC_CHECK_CFLAGS([-fexpensive-optimizations], [optflags="$optflags -fexpensive-optimizations"])
 
+dnl initialize arch_86 as it is later tested for != "no" 
+arch_x86=no
+
 case "$host_or_hostalias" in
     alphaev56-*)    cpuflags="-mcpu=ev56 -mieee $cpuflags" ;;
     alpha*)         cpuflags="-mieee $cpuflags" ;;
