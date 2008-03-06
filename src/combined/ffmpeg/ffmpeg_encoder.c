@@ -38,7 +38,11 @@
 
 #include "video_out_dxr3.h"
 
-#include <avcodec.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <avcodec.h>
+#else
+#  include <libavcodec/avcodec.h>
+#endif
 
 /* buffer size for encoded mpeg1 stream; will hold one intra frame 
  * at 640x480 typical sizes are <50 kB. 512 kB should be plenty */
