@@ -8,7 +8,7 @@ if WITH_EXTERNAL_FFMPEG
 postproc_lib = $(FFMPEG_POSTPROC_LIBS)
 ff_cflags    = $(FFMPEG_POSTPROC_CFLAGS)
 else
-AM_CPPFLAGS += -I$(top_srcdir)/contrib/ffmpeg/libpostproc
+AM_CPPFLAGS += -I$(top_srcdir)/contrib/ffmpeg/
 postproc_lib =  $(top_builddir)/contrib/ffmpeg/libpostproc/libpostproc.a \
                 $(top_builddir)/contrib/ffmpeg/libavutil/libavutil.a
 
