@@ -399,7 +399,7 @@ static int asf_header_parse_stream_extended_properties(asf_header_t *header, uin
   if (asf_stream_extension->stream_name_count) {
     asf_stream_extension->stream_names = malloc (asf_stream_extension->stream_name_count * sizeof(void*));
     for (i = 0; i < asf_stream_extension->stream_name_count; i++) {
-      uint16_t lang_index, length;
+      uint16_t lang_index, length = 0;
       asf_reader_get_16(&reader, &lang_index);
       asf_reader_get_16(&reader, &length);
       asf_stream_extension->stream_names[i] = (char*)asf_reader_get_bytes(&reader, length); /* store them */
@@ -411,7 +411,7 @@ static int asf_header_parse_stream_extended_properties(asf_header_t *header, uin
     for (i = 0; i < asf_stream_extension->payload_extension_system_count; i++) {
       GUID guid;
       uint16_t data_size;
-      uint32_t length;
+      uint32_t length = 0;
       asf_reader_get_guid(&reader, &guid);
       asf_reader_get_16(&reader, &data_size);
       asf_reader_get_32(&reader, &length);
@@ -427,7 +427,7 @@ static int asf_header_parse_stream_extended_properties(asf_header_t *header, uin
   /* embeded stream properties */
   if (asf_reader_get_size(&reader) >= 24) {
     GUID guid;
-    uint64_t object_length;
+    uint64_t object_length = 0;
 
     asf_reader_get_guid(&reader, &guid);
     asf_reader_get_64(&reader, &object_length);
@@ -490,8 +490,8 @@ static int asf_header_parse_stream_bitrate_properties(asf_header_t *header_pub, 
   lprintf ("  bitrate count: %d\n", bitrate_count);
 
   for(i = 0; i < bitrate_count; i++) {
-    uint16_t flags;
-    uint32_t bitrate;
+    uint16_t flags = 0;
+    uint32_t bitrate = 0;
     int stream_number;
     uint8_t *bitrate_pointer;
 
@@ -533,7 +533,7 @@ static int asf_header_parse_header_extension(asf_header_t *header, uint8_t *buff
 
     GUID guid;
     int object_id;
-    uint64_t object_length, object_data_length;
+    uint64_t object_length = 0, object_data_length;
 
     if (asf_reader_get_size(&reader) < 24) {
       printf("invalid buffer size\n");
@@ -644,7 +644,7 @@ asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len) {
 
     GUID guid;
     int object_id;
-    uint64_t object_length, object_data_length;
+    uint64_t object_length = 0, object_data_length;
 
     if (asf_reader_get_size(&reader) < 24) {
       printf("invalid buffer size\n");
