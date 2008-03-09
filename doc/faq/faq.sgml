@@ -2213,7 +2213,7 @@
      OK, yes, that shouldn't happen and you're upset. We can understand that.
      But, to help you and of course to fix this, we need some information.
      So, let's go through the checklist and maybe prepare a nice bug report
-     for the xine-user mailing list:
+     for the <ulink url="http://bugs.xine-project.org/">xine bug tracker</ulink>:
      <itemizedlist>
       <listitem>
        <para>
@@ -2259,8 +2259,7 @@
         still under heavy development (nice excuse, isn't it? *grin*).
        </para>
        <para>
-        If you write to the xine user mailing list 
-        <email>xine-user@lists.sourceforge.net</email>
+        If you write to the <ulink url="http://bugs.xine-project.org/">xine bug tracker</ulink>
         make sure you include a the above information (when applicable)
         and also some information about your machine (operating system, cpu type and
         speed, gfx card, sound card, ...) and please use a meaningfull subject
