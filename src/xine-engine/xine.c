@@ -36,6 +36,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <unistd.h>
 #if defined (__linux__) || defined (__GLIBC__)
 #include <endian.h>
 #elif defined (__FreeBSD__)
@@ -796,6 +797,7 @@ static inline int _x_path_looks_like_mrl (const char *path)
 /*static*/ int open_internal (xine_stream_t *stream, const char *mrl) {
 
   const char *stream_setup = NULL;
+  const char *mrl_proto = NULL;
   int no_cache = 0;
   
   if (!mrl) {
@@ -819,16 +821,31 @@ static inline int _x_path_looks_like_mrl (const char *path)
   /*
    * look for a stream_setup in MRL and try finding an input plugin
    */
+  stream_setup = strchr (mrl, '#');
 
   if (isalpha (*mrl))
   {
-    stream_setup = mrl + 1;
-    while (isalnum (*stream_setup) || *stream_setup == '+' || *stream_setup == '-' || *stream_setup == '.')
-      ++stream_setup;
-    if (stream_setup[0] == ':' && stream_setup[1] == '/')
-      stream_setup = strchr (mrl, '#');
-    else
-      stream_setup = NULL;
+    mrl_proto = mrl + 1;
+    while (isalnum (*mrl_proto) || *mrl_proto == '+' || *mrl_proto == '-' || *mrl_proto == '.')
+      ++mrl_proto;
+    if (!mrl_proto[0] || mrl_proto[0] != ':' || mrl_proto[1] != '/')
+      mrl_proto = NULL;
+  }
+  
+  /* for raw filenames we must try every '#' checking if it is part of the filename */
+  if( !mrl_proto && stream_setup) {
+    struct stat stat_buf;
+    int res;
+    
+    while( stream_setup ) {
+      char *raw_filename = strndup (mrl, stream_setup - mrl);
+    
+      res = stat(raw_filename, &stat_buf);
+      free(raw_filename);
+      if( !res ) 
+        break;
+      stream_setup = strchr(stream_setup + 1, '#');
+    }
   }
   
   {
@@ -837,8 +854,10 @@ static inline int _x_path_looks_like_mrl (const char *path)
     /*
      * find an input plugin
      */
-
-    if ((stream->input_plugin = _x_find_input_plugin (stream, input_source))) {
+    stream->input_plugin = _x_find_input_plugin (stream, input_source);
+    free(input_source);
+    
+    if ( stream->input_plugin ) {
       int res;
 
       xine_log (stream->xine, XINE_LOG_MSG, _("xine: found input plugin  : %s\n"),
@@ -853,7 +872,6 @@ static inline int _x_path_looks_like_mrl (const char *path)
       case 1: /* Open successfull */
 	break;
       case -1: /* Open unsuccessfull, but correct plugin */
-	free(input_source);
 	stream->err = XINE_ERROR_INPUT_FAILED;
 	_x_flush_events_queues (stream);
 	return 0;
@@ -864,8 +882,6 @@ static inline int _x_path_looks_like_mrl (const char *path)
 	stream->err = XINE_ERROR_INPUT_FAILED;
       }
     }
-
-    free(input_source);
   }
   
   if (!stream->input_plugin) {
