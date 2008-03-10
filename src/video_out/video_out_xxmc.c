@@ -45,6 +45,7 @@ static void xxmc_frame_updates(xxmc_driver_t *driver, xxmc_frame_t *frame,
 static void dispose_ximage (xxmc_driver_t *this, XShmSegmentInfo *shminfo,
 			    XvImage *myimage);
 
+static const char *const prefer_types[] = VIDEO_DEVICE_XV_PREFER_TYPES;
 
 /*
  * Acceleration level priority. Static for now. It may well turn out that IDCT
@@ -2263,11 +2264,15 @@ static XvPortID xxmc_autodetect_port(xxmc_driver_t *this,
 				   unsigned int adaptors,
 				   XvAdaptorInfo *adaptor_info,
 				   unsigned int *adaptor_num,
-				   XvPortID base) {
+				   XvPortID base,
+				   xv_prefertype prefer_type)
+{
   unsigned int an, j;
 
   for (an = 0; an < adaptors; an++)
-    if (adaptor_info[an].type & XvImageMask)
+    if (adaptor_info[an].type & XvImageMask &&
+        (prefer_type == xv_prefer_none ||
+         strcasestr (adaptor_info[an].name, prefer_types[prefer_type])))
       for (j = 0; j < adaptor_info[an].num_ports; j++) {
 	XvPortID port = adaptor_info[an].base_id + j;
 	if (port >= base && xxmc_open_port(this, port)) {
@@ -2443,6 +2448,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   XvPortID              xv_port;
   XvAdaptorInfo        *adaptor_info;
   unsigned int          adaptor_num;
+  xv_prefertype		prefer_type;
   cfg_entry_t          *entry;     
   int                   use_more_frames;
   int                   use_unscaled;
@@ -2480,19 +2486,24 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 
   xv_port = config->register_num (config, "video.device.xv_port", 0,
 				  VIDEO_DEVICE_XV_PORT_HELP,
-				  10, NULL, NULL);
+				  20, NULL, NULL);
+  prefer_type = config->register_enum (config, "video.device.xv_preferred_method", 0,
+				       prefer_types, VIDEO_DEVICE_XV_PREFER_TYPE_HELP,
+				       10, NULL, NULL);
 
   if (xv_port != 0) {
     if (! xxmc_open_port(this, xv_port)) {
       xprintf(class->xine, XINE_VERBOSITY_NONE,
 	      _("%s: could not open Xv port %d - autodetecting\n"),
 	      LOG_MODULE, xv_port);
-      xv_port = xxmc_autodetect_port(this, adaptors, adaptor_info, &adaptor_num, xv_port);
+      xv_port = xxmc_autodetect_port(this, adaptors, adaptor_info, &adaptor_num, xv_port, prefer_type);
     } else
       adaptor_num = xxmc_find_adaptor_by_port (xv_port, adaptors, adaptor_info);
   }
   if (!xv_port)
-    xv_port = xxmc_autodetect_port(this, adaptors, adaptor_info, &adaptor_num, 0);
+    xv_port = xxmc_autodetect_port(this, adaptors, adaptor_info, &adaptor_num, 0, prefer_type);
+  if (!xv_port)
+    xv_port = xxmc_autodetect_port(this, adaptors, adaptor_info, &adaptor_num, 0, xv_prefer_none);
 
   if (!xv_port) {
     xprintf(class->xine, XINE_VERBOSITY_LOG,

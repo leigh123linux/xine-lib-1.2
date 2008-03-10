@@ -56,3 +56,14 @@
 #define VIDEO_DEVICE_XV_PITCH_ALIGNMENT_HELP \
 	_("pitch alignment workaround"), \
 	_("Some buggy video drivers need a workaround to function properly.")
+
+typedef enum {
+  xv_prefer_none, xv_prefer_overlay, xv_prefer_textured
+} xv_prefertype;
+#define VIDEO_DEVICE_XV_PREFER_TYPES \
+	{ "Any", "Overlay", "Textured Video", NULL }
+#define VIDEO_DEVICE_XV_PREFER_TYPE_HELP \
+	_("video display method preference"), \
+	_("Selects which video output method is preferred. " \
+	  "Detection is done using the reported Xv adaptor names.\n" \
+	  "(Only applies when auto-detecting which Xv port to use.)")

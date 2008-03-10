@@ -55,8 +55,12 @@ xine-lib (1.1.90) (Unreleased)
   * Remove SyncFB video output plugin, the kernel module needed is no more
     active and thus it's no more usable. If you were using SyncFB somehow,
     please use DirectFB or VIDIX instead.
-  * The Xv and XxMC video output plugins now support Xv port selection.
-    (XvMC does not, at present.)
+  * The Xv and XxMC video output plugins now support Xv port selection via
+    two methods: port number and port type (currently "any", "overlay" and
+    "textured video"). Port number takes precedence; the plugins will fall
+    back on another port of the same type (if a type was specified) then on
+    whatever they can find.
+    XvMC does not support port selection at present.
   * Report more video output capabilities via (port)->get_capabilities():
     colour controls, zooming, colour keying.
 
