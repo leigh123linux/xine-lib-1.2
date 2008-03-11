@@ -143,7 +143,14 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
     handled=0;
     
     if(filter(*data,"a=control:streamid=",&buf)) {
-      desc->stream_id=atoi(buf);
+      /* This way negative values are mapped to unfeasibly high
+       * values, and will be discarded afterward
+       */
+      unsigned long tmp = strtoul(buf, NULL, 10);
+      if ( tmp > UINT16_MAX )
+	lprintf("stream id out of bound: %lu\n", tmp);
+      else
+	desc->stream_id=tmp;
       handled=1;
       *data=nl(*data);
     }
@@ -252,7 +259,10 @@ sdpplin_t *sdpplin_parse(char *data) {
       }
       stream=sdpplin_parse_stream(&data);
       lprintf("got data for stream id %u\n", stream->stream_id);
-      desc->stream[stream->stream_id]=stream;
+      if ( stream->stream_id >= desc->stream_count )
+	lprintf("stream id %u is greater than stream count %u\n", stream->stream_id, desc->stream_count);
+      else
+	desc->stream[stream->stream_id]=stream;
       continue;
     }
 
@@ -293,7 +303,14 @@ sdpplin_t *sdpplin_parse(char *data) {
     }
     
     if(filter(data,"a=StreamCount:integer;",&buf)) {
-      desc->stream_count=atoi(buf);
+      /* This way negative values are mapped to unfeasibly high
+       * values, and will be discarded afterward
+       */
+      unsigned long tmp = strtoul(buf, NULL, 10);
+      if ( tmp > UINT16_MAX )
+	lprintf("stream count out of bound: %lu\n", tmp);
+      else
+	desc->stream_count = tmp;
       desc->stream = calloc(desc->stream_count, sizeof(sdpplin_stream_t*));
       handled=1;
       data=nl(data);

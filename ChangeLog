@@ -1,4 +1,6 @@
 xine-lib (1.1.11) unreleased
+  * Security fixes:
+    - Array Indexing Vulnerability in sdpplin_parse(). (CVE-2008-0073)
   * Reworked the plugin directory naming so that external plugins don't have
     to be rebuilt for every release. We now use a naming scheme based on the
     API/ABI versioning, checking older directories - with this release, the
