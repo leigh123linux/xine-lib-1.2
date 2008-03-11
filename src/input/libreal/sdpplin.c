@@ -199,7 +199,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
     if(filter(*data,"a=OpaqueData:buffer;",&buf)) {
       decoded = b64_decode(buf, decoded, &(desc->mlti_data_size));
       if ( decoded != NULL ) {
-	desc->mlti_data = malloc(sizeof(char)*desc->mlti_data_size);
+	desc->mlti_data = calloc(desc->mlti_data_size, sizeof(char));
 	memcpy(desc->mlti_data, decoded, desc->mlti_data_size);
 	handled=1;
 	*data=nl(*data);
@@ -294,7 +294,7 @@ sdpplin_t *sdpplin_parse(char *data) {
     
     if(filter(data,"a=StreamCount:integer;",&buf)) {
       desc->stream_count=atoi(buf);
-      desc->stream = malloc(sizeof(sdpplin_stream_t*)*desc->stream_count);
+      desc->stream = calloc(desc->stream_count, sizeof(sdpplin_stream_t*));
       handled=1;
       data=nl(data);
     }
