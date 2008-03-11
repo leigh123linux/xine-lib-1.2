@@ -198,6 +198,7 @@ void _x_demux_control_headers_done (xine_stream_t *stream) {
   }
 
   stream->demux_action_pending = 0;
+  pthread_cond_signal(&stream->demux_resume);
   
   lprintf ("headers processed.\n");
 
@@ -284,12 +285,14 @@ static void *demux_loop (void *stream_gen) {
 
       /* someone may want to interrupt us */
       if( stream->demux_action_pending ) {
-        pthread_mutex_unlock( &stream->demux_lock );
+        struct timeval tv;
+        struct timespec ts;
 
-        lprintf ("sched_yield\n");
-
-        sched_yield();
-        pthread_mutex_lock( &stream->demux_lock );
+        gettimeofday(&tv, NULL);
+        ts.tv_sec  = tv.tv_sec;
+        ts.tv_nsec = (tv.tv_usec + 100000) * 1000;
+    
+        pthread_cond_timedwait (&stream->demux_resume, &stream->demux_lock, &ts);
       }
     }
 
@@ -365,6 +368,7 @@ int _x_demux_start_thread (xine_stream_t *stream) {
   stream->demux_action_pending = 1;
   pthread_mutex_lock( &stream->demux_lock );
   stream->demux_action_pending = 0;
+  pthread_cond_signal(&stream->demux_resume);
   
   if( !stream->demux_thread_running ) {
 
@@ -396,6 +400,7 @@ int _x_demux_stop_thread (xine_stream_t *stream) {
   pthread_mutex_lock( &stream->demux_lock );
   stream->demux_thread_running = 0;
   stream->demux_action_pending = 0;
+  pthread_cond_signal(&stream->demux_resume);
 
   /* At that point, the demuxer has sent the last audio/video buffer,
    * so it's a safe place to flush the engine.

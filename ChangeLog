@@ -17,6 +17,7 @@ xine-lib (1.1.11) unreleased
     (This is a convenience feature for users only. Front ends which rely on
     it for functions like subtitle file detection must instead use file://
     MRLs; if they don't, we consider them to be buggy.)
+  * Fixed long delay when closing stream on dual core systems [Bug #33]
 
 xine-lib (1.1.10.1) 2008-02-07
   * Security fixes:
