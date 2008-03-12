@@ -405,6 +405,18 @@ static int ao_oss_delay(ao_driver_t *this_gen) {
     if (bytes_left<=0) /* buffer ran dry */
       bytes_left = 0;
     break;
+  case OSS_SYNC_GETODELAY:
+#ifdef SNDCTL_DSP_GETODELAY
+    if (ioctl (this->audio_fd, SNDCTL_DSP_GETODELAY, &bytes_left)) {
+      perror ("audio_oss_out: DSP_GETODELAY ioctl():");
+    }
+    if (bytes_left<0)
+      bytes_left = 0;
+
+    lprintf ("%d bytes left\n", bytes_left);
+
+    break;
+#endif
   case OSS_SYNC_GETOPTR:
     if (ioctl (this->audio_fd, SNDCTL_DSP_GETOPTR, &info)) {
       perror ("audio_oss_out: SNDCTL_DSP_GETOPTR failed:");
@@ -423,16 +435,6 @@ static int ao_oss_delay(ao_driver_t *this_gen) {
       this->bytes_in_buffer = info.bytes;
     }
     this->last_getoptr = info.bytes;
-    break;
-  case OSS_SYNC_GETODELAY:
-    if (ioctl (this->audio_fd, SNDCTL_DSP_GETODELAY, &bytes_left)) {
-      perror ("audio_oss_out: DSP_GETODELAY ioctl():");
-    }
-    if (bytes_left<0)
-      bytes_left = 0;
-
-    lprintf ("%d bytes left\n", bytes_left);
-
     break;
   }
 
@@ -840,10 +842,13 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
      * check if SNDCTL_DSP_GETODELAY works. if so, using it is preferred.
      */
 
+#ifdef SNDCTL_DSP_GETODELAY
     if (ioctl(audio_fd, SNDCTL_DSP_GETODELAY, &info) != -1) {
       xprintf(class->xine, XINE_VERBOSITY_DEBUG, "audio_oss_out: using SNDCTL_DSP_GETODELAY\n");
       this->sync_method = OSS_SYNC_GETODELAY;
-    } else if (ioctl(audio_fd, SNDCTL_DSP_GETOPTR, &info) != -1) {
+    } else
+#endif
+    if (ioctl(audio_fd, SNDCTL_DSP_GETOPTR, &info) != -1) {
       xprintf(class->xine, XINE_VERBOSITY_DEBUG, "audio_oss_out: using SNDCTL_DSP_GETOPTR\n");
       this->sync_method = OSS_SYNC_GETOPTR;
     } else {

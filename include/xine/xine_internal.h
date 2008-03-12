@@ -325,6 +325,7 @@ struct xine_stream_s {
   /* demux thread stuff */
   pthread_t                  demux_thread;
   pthread_mutex_t            demux_lock;
+  pthread_cond_t             demux_resume;
   pthread_mutex_t            demux_mutex; /* used in _x_demux_... functions to synchronize order of pairwise A/V buffer operations */
 
   extra_info_t              *current_extra_info;

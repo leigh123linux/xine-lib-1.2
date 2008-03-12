@@ -1208,7 +1208,7 @@ static void decode_theora_header (demux_ogg_t *this, const int stream_num, ogg_p
 
 static void decode_flac_header (demux_ogg_t *this, const int stream_num, ogg_packet *op) {
   xine_flac_metadata_header header;
-  xine_flac_streaminfo_block streaminfo;
+  xine_flac_streaminfo_block streaminfo = {};
   buf_element_t *buf;
   xine_waveformatex wave;
 

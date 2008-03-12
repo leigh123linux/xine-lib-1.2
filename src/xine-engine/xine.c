@@ -36,6 +36,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <unistd.h>
 #if defined (__linux__) || defined (__GLIBC__)
 #include <endian.h>
 #elif defined (__FreeBSD__)
@@ -670,6 +671,7 @@ xine_stream_t *xine_stream_new (xine_t *this,
   pthread_mutex_init (&stream->meta_mutex, NULL);
   pthread_mutex_init (&stream->demux_lock, NULL);
   pthread_mutex_init (&stream->demux_mutex, NULL);
+  pthread_cond_init  (&stream->demux_resume, NULL);
   pthread_mutex_init (&stream->event_queues_lock, NULL);
   pthread_mutex_init (&stream->counter_lock, NULL);
   pthread_cond_init  (&stream->counter_changed, NULL);
@@ -839,6 +841,7 @@ static inline int _x_path_looks_like_mrl (const char *path)
 static int open_internal (xine_stream_t *stream, const char *mrl) {
 
   const char *stream_setup = NULL;
+  const char *mrl_proto = NULL;
   int no_cache = 0;
   
   if (!mrl) {
@@ -862,16 +865,31 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
   /*
    * look for a stream_setup in MRL and try finding an input plugin
    */
+  stream_setup = strchr (mrl, '#');
 
   if (isalpha (*mrl))
   {
-    stream_setup = mrl + 1;
-    while (isalnum (*stream_setup) || *stream_setup == '+' || *stream_setup == '-' || *stream_setup == '.')
-      ++stream_setup;
-    if (stream_setup[0] == ':' && stream_setup[1] == '/')
-      stream_setup = strchr (mrl, '#');
-    else
-      stream_setup = NULL;
+    mrl_proto = mrl + 1;
+    while (isalnum (*mrl_proto) || *mrl_proto == '+' || *mrl_proto == '-' || *mrl_proto == '.')
+      ++mrl_proto;
+    if (!mrl_proto[0] || mrl_proto[0] != ':' || mrl_proto[1] != '/')
+      mrl_proto = NULL;
+  }
+  
+  /* for raw filenames we must try every '#' checking if it is part of the filename */
+  if( !mrl_proto && stream_setup) {
+    struct stat stat_buf;
+    int res;
+    
+    while( stream_setup ) {
+      char *raw_filename = strndup (mrl, stream_setup - mrl);
+    
+      res = stat(raw_filename, &stat_buf);
+      free(raw_filename);
+      if( !res ) 
+        break;
+      stream_setup = strchr(stream_setup + 1, '#');
+    }
   }
   
   {
@@ -880,8 +898,10 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
     /*
      * find an input plugin
      */
-
-    if ((stream->input_plugin = _x_find_input_plugin (stream, input_source))) {
+    stream->input_plugin = _x_find_input_plugin (stream, input_source);
+    free(input_source);
+    
+    if ( stream->input_plugin ) {
       int res;
 
       xine_log (stream->xine, XINE_LOG_MSG, _("xine: found input plugin  : %s\n"),
@@ -897,7 +917,6 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
       case 1: /* Open successfull */
 	break;
       case -1: /* Open unsuccessfull, but correct plugin */
-	free(input_source);
 	stream->err = XINE_ERROR_INPUT_FAILED;
 	_x_flush_events_queues (stream);
 	return 0;
@@ -908,8 +927,6 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 	stream->err = XINE_ERROR_INPUT_FAILED;
       }
     }
-
-    free(input_source);
   }
   
   if (!stream->input_plugin) {
@@ -1351,6 +1368,7 @@ static int play_internal (xine_stream_t *stream, int start_pos, int start_time) 
   pthread_mutex_lock( &stream->demux_lock );
   /* demux_lock taken. now demuxer is suspended */
   stream->demux_action_pending = 0;
+  pthread_cond_signal(&stream->demux_resume);
 
   /* set normal speed again (now that demuxer/input pair is suspended) 
    * some input plugin may have changed speed by itself, we must ensure
@@ -1477,6 +1495,7 @@ static void xine_dispose_internal (xine_stream_t *stream) {
   pthread_mutex_destroy (&stream->current_extra_info_lock);
   pthread_cond_destroy  (&stream->counter_changed);
   pthread_mutex_destroy (&stream->demux_mutex);
+  pthread_cond_destroy  (&stream->demux_resume);
   pthread_mutex_destroy (&stream->demux_lock);
   pthread_mutex_destroy (&stream->first_frame_lock);
   pthread_cond_destroy  (&stream->first_frame_reached);

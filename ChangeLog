@@ -78,6 +78,12 @@ xine-lib (1.1.11) unreleased
     causing failure to play some files.
   * Support 16-bit big-endian DTS audio.
   * Improved frame snapshot API. (ABI extension.)
+  * Re-add support for # (stream parameter separator) in raw filenames,
+    without the bugs found in the original implementation.
+    (This is a convenience feature for users only. Front ends which rely on
+    it for functions like subtitle file detection must instead use file://
+    MRLs; if they don't, we consider them to be buggy.)
+  * Fixed long delay when closing stream on dual core systems [Bug #33]
 
 xine-lib (1.1.10.1) 2008-02-07
   * Security fixes:
