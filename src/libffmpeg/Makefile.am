@@ -1,12 +1,13 @@
 include $(top_srcdir)/misc/Makefile.common
 
-DEFAULT_INCLUDES = -I. -Ilibavcodec
+DEFAULT_INCLUDES = -I.
 
 if HAVE_FFMPEG
 AM_CFLAGS = $(FFMPEG_CFLAGS) $(FFMPEG_POSTPROC_CFLAGS)
+ff_cppflags =
 link_ffmpeg = $(FFMPEG_LIBS) $(FFMPEG_POSTPROC_LIBS)
 else
-ff_cppflags = -I$(top_srcdir)/src/libffmpeg/libavutil
+ff_cppflags = -I$(top_srcdir)/src/libffmpeg/libavcodec -I$(top_srcdir)/src/libffmpeg/libavutil
 link_ffmpeg = \
   $(top_builddir)/src/libffmpeg/libavcodec/libavcodec.la \
   $(top_builddir)/src/libffmpeg/libavutil/libavutil.la \
