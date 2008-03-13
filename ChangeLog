@@ -32,7 +32,7 @@ xine-lib (1.1.10) 2008-01-26
   * Security fixes:
     - Buffer overflow which allows a remote attacker to execute arbitrary
       code or crash the client program via a crafted ASF header. 
-      (Related to CVE-2006-1664)
+      (CVE-2008-1110, related to CVE-2006-1664)
   * Update Ogg and Annodex mimetypes and extensions.
   * Change the default v4l device paths to /dev/video0 and /dev/radio0.
   * Fix support for subtitles with schemes (e.g. http://), partly broken
