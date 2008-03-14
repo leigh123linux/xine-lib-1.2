@@ -1662,6 +1662,12 @@ void xine_init (xine_t *this) {
   static const char *demux_strategies[] = {"default", "reverse", "content",
 					   "extension", NULL};
 
+  /*
+   * locks
+   */
+  pthread_mutex_init (&this->streams_lock, NULL);
+  pthread_mutex_init (&this->log_lock, NULL);
+  
   /* initialize color conversion tables and functions */
   init_yuv_conversion();
 
@@ -1742,12 +1748,6 @@ void xine_init (xine_t *this) {
    */
   this->streams = xine_list_new();
 
-  /*
-   * locks
-   */
-  pthread_mutex_init (&this->streams_lock, NULL);
-  pthread_mutex_init (&this->log_lock, NULL);
-  
   /*
    * start metronom clock
    */
