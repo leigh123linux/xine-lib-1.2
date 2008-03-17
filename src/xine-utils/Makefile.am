@@ -35,3 +35,7 @@ libxineutils_la_SOURCES = $(pppc_files) \
 	sorted_array.c \
 	pool.c \
 	ring_buffer.c
+
+noinst_PROGRAMS = xmltest
+xmltest_SOURCES = xmllexer.c xmlparser.c
+xmltest_CFLAGS = -DLOG -DXINE_XML_PARSER_TEST $(AM_CFLAGS)

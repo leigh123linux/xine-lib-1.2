@@ -837,3 +837,73 @@ void xml_parser_dump_tree (const xml_node_t *node) {
     node = node->next;
   } while (node);
 }
+
+#ifdef XINE_XML_PARSER_TEST
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+void *xine_xmalloc (size_t size)
+{
+  return malloc (size);
+}
+
+int main (int argc, char **argv)
+{
+  int i, ret = 0;
+  for (i = 1; argv[i]; ++i)
+  {
+    xml_node_t *tree;
+    int fd;
+    void *buf;
+    struct stat st;
+
+    if (stat (argv[i], &st))
+    {
+      perror (argv[i]);
+      ret = 1;
+      continue;
+    }
+    if (!S_ISREG (st.st_mode))
+    {
+      printf ("%s: not a file\n", argv[i]);
+      ret = 1;
+      continue;
+    }
+    fd = open (argv[i], O_RDONLY);
+    if (!fd)
+    {
+      perror (argv[i]);
+      ret = 1;
+      continue;
+    }
+    buf = mmap (NULL, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
+    if (!buf)
+    {
+      perror (argv[i]);
+      if (close (fd))
+        perror (argv[i]);
+      ret = 1;
+      continue;
+    }
+
+    xml_parser_init (buf, st.st_size, 0);
+    if (!xml_parser_build_tree (&tree))
+    {
+      puts (argv[i]);
+      xml_parser_dump_tree (tree);
+      xml_parser_free_tree (tree);
+    }
+    else
+      printf ("%s: parser failure\n", argv[i]);
+
+    if (close (fd))
+    {
+      perror (argv[i]);
+      ret = 1;
+    }
+  }
+  return ret;
+}
+#endif
