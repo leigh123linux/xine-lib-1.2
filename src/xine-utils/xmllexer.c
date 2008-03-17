@@ -411,6 +411,8 @@ int lexer_get_token_d(char ** _tok, int * _tok_size, int fixed) {
 	  case '\"': /* " */
 	  case ' ':
 	  case '\t':
+	  case '\n':
+	  case '\r':
 	  case '=':
 	  case '/':
 	    tok[tok_pos] = '\0';
