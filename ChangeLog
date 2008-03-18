@@ -90,6 +90,10 @@ xine-lib (1.1.10.1) 2008-02-07
     - Array index vulnerability which may allow remote attackers to execute
       arbitrary code via a crafted FLAC tag, causing a stack buffer overflow.
       (CVE-2008-0486)
+    - Buffer overflow in the Matroska demuxer (demuxers/demux_matroska.c)
+      which may allow remote attackers to cause a denial of service (crash)
+      or possibly execute arbitrary code via a Matroska file with invalid
+      frame sizes. (CVE-2008-1161)
   * Fix a RealPlayer codec detection bug.
   * Improve detection of MP3 streams with ID3v2 tags. Don't trust the tag
     size.
@@ -98,7 +102,7 @@ xine-lib (1.1.10) 2008-01-26
   * Security fixes:
     - Buffer overflow which allows a remote attacker to execute arbitrary
       code or crash the client program via a crafted ASF header. 
-      (Related to CVE-2006-1664)
+      (CVE-2008-1110, related to CVE-2006-1664)
   * Update Ogg and Annodex mimetypes and extensions.
   * Change the default v4l device paths to /dev/video0 and /dev/radio0.
   * Fix support for subtitles with schemes (e.g. http://), partly broken

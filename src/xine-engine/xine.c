@@ -139,7 +139,7 @@ static int acquire_allowed_to_block(xine_ticket_t *this) {
   unsigned new_size;
 
   for(entry = 0; entry < this->holder_thread_count; ++entry) {
-    if(this->holder_threads[entry].holder == own_id) {
+    if(pthread_equal(this->holder_threads[entry].holder, own_id)) {
       /* This thread may already hold this ticket */
       this->holder_threads[entry].count++;
       return (this->holder_threads[entry].count == 1);
@@ -210,7 +210,7 @@ static int release_allowed_to_block(xine_ticket_t *this) {
   unsigned entry;
   
   for(entry = 0; entry < this->holder_thread_count; ++entry) {
-    if(this->holder_threads[entry].holder == own_id) {
+    if(pthread_equal(this->holder_threads[entry].holder, own_id)) {
       this->holder_threads[entry].count--;
       return this->holder_threads[entry].count == 0;
     }
@@ -1710,6 +1710,12 @@ void xine_init (xine_t *this) {
   /* First of all, initialise libxdg-basedir as it's used by plugins. */
   this->basedir_handle = xdgAllocHandle();
 
+  /*
+   * locks
+   */
+  pthread_mutex_init (&this->streams_lock, NULL);
+  pthread_mutex_init (&this->log_lock, NULL);
+  
   /* initialize color conversion tables and functions */
   init_yuv_conversion();
 
@@ -1790,12 +1796,6 @@ void xine_init (xine_t *this) {
    */
   this->streams = xine_list_new();
 
-  /*
-   * locks
-   */
-  pthread_mutex_init (&this->streams_lock, NULL);
-  pthread_mutex_init (&this->log_lock, NULL);
-  
   /*
    * start metronom clock
    */
