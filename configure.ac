@@ -2682,6 +2682,7 @@ po/Makefile.in
 src/Makefile
 src/audio_out/Makefile
 src/combined/Makefile
+src/combined/ffmpeg/Makefile
 src/demuxers/Makefile
 src/dxr3/Makefile
 src/input/Makefile

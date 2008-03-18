@@ -27,8 +27,10 @@
 
 #ifdef HAVE_FFMPEG_AVUTIL_H
 #  include <avcodec.h>
-#else
+#elif defined HAVE_FFMPEG
 #  include <libavcodec/avcodec.h>
+#else
+#  include "../../libffmpeg/libavcodec/avcodec.h"
 #endif
 
 typedef struct ff_codec_s {

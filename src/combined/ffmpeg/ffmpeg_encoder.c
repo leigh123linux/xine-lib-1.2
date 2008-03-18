@@ -38,10 +38,12 @@
 
 #include "video_out_dxr3.h"
 
-#ifdef HAVE_FFMPEG
+#ifdef HAVE_FFMPEG_AVUTIL_H
 #  include <avcodec.h>
+#elif defined HAVE_FFMPEG
+#  include <libavcodec/avcodec.h>
 #else
-#  include "libavcodec/avcodec.h"
+#  include "../../libffmpeg/libavcodec/avcodec.h"
 #endif
 
 /* buffer size for encoded mpeg1 stream; will hold one intra frame 

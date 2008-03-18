@@ -22,7 +22,7 @@
  
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#include "ffmpeg_config.h"
+#include "../../libffmpeg/ffmpeg_config.h"
 #endif
 
 #include <stdlib.h>

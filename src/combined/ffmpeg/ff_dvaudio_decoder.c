@@ -54,11 +54,13 @@
 
 #ifdef HAVE_FFMPEG_AVUTIL_H
 #  include <avcodec.h>
-#else
+#elif defined HAVE_FFMPEG
 #  include <libavcodec/avcodec.h>
+#else
+#  include "../../libffmpeg/libavcodec/avcodec.h"
 #endif
 
-#include "libavcodec/dvdata.h"
+#include "../../libffmpeg/libavcodec/dvdata.h"
 
 #ifdef _MSC_VER
 #  undef malloc
