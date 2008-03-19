@@ -15,10 +15,10 @@ src/audio_out/audio_none_out.c
 src/audio_out/audio_oss_out.c
 src/audio_out/audio_pulse_out.c
 src/audio_out/audio_sun_out.c
-src/contrib/ffmpeg/ff_audio_decoder.c
-src/contrib/ffmpeg/ff_dvaudio_decoder.c
-src/contrib/ffmpeg/ff_video_decoder.c
-src/contrib/ffmpeg/ffmpeg_encoder.c
+src/combined/ffmpeg/ff_audio_decoder.c
+src/combined/ffmpeg/ff_dvaudio_decoder.c
+src/combined/ffmpeg/ff_video_decoder.c
+src/combined/ffmpeg/ffmpeg_encoder.c
 src/demuxers/demux_asf.c
 src/demuxers/demux_avi.c
 src/demuxers/demux_film.c
