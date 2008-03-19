@@ -1,11 +1,11 @@
-xine-lib (1.1.11) unreleased
+xine-lib (1.1.11) 2008-03-19
   * Security fixes:
     - Array Indexing Vulnerability in sdpplin_parse(). (CVE-2008-0073)
   * Reworked the plugin directory naming so that external plugins don't have
     to be rebuilt for every release. We now use a naming scheme based on the
     API/ABI versioning, checking older directories - with this release, the
-    plugin directory name is 1.19, and if this gets bumped to 1.20 in a
-    future release, 1.19 will still be available for external plugins.
+    plugin directory name is 1.20, and if this gets bumped to 1.21 in a
+    future release, 1.20 will still be available for external plugins.
     (Any directories not 1.* won't be looked in.)
   * Made the version parsing much more reliable; it wasn't properly coping
     with four-part version numbers. This affects any program whose build
