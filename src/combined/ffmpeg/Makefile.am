@@ -6,7 +6,7 @@ if HAVE_FFMPEG
 ff_cppflags =  $(FFMPEG_CFLAGS) $(FFMPEG_POSTPROC_CFLAGS)
 link_ffmpeg = $(FFMPEG_LIBS) $(FFMPEG_POSTPROC_LIBS)
 else
-ff_cppflags = -I$(top_srcdir)/src/libffmpeg -I$(top_srcdir)/src/libffmpeg/libavcodec -I$(top_srcdir)/src/libffmpeg/libavutil
+ff_cppflags = -I$(top_builddir)/src/libffmpeg -I$(top_srcdir)/src/libffmpeg/libavcodec -I$(top_srcdir)/src/libffmpeg/libavutil
 link_ffmpeg = \
   $(top_builddir)/src/libffmpeg/libavcodec/libavcodec.la \
   $(top_builddir)/src/libffmpeg/libavutil/libavutil.la \
