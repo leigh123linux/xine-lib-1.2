@@ -257,6 +257,8 @@ static int open_film_file(demux_film_t *film) {
       film->sample_count = _X_BE_32(&film_header[i + 12]);
       film->sample_table =
         xine_xmalloc(film->sample_count * sizeof(film_sample_t));
+      if (!film->sample_table)
+        goto film_abort;
       for (j = 0; j < film->sample_count; j++) {
 
         film->sample_table[j].sample_offset =
@@ -333,11 +335,14 @@ static int open_film_file(demux_film_t *film) {
           free(film->interleave_buffer);
         film->interleave_buffer =
           xine_xmalloc(film->sample_table[0].sample_size);
+        if (!film->interleave_buffer)
+          goto film_abort;
       }
       break;
 
     default:
       xine_log(film->stream->xine, XINE_LOG_MSG, _("unrecognized FILM chunk\n"));
+    film_abort:
       free (film->interleave_buffer);
       free (film->sample_table);
       free (film_header);

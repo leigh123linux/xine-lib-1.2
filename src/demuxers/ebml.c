@@ -424,10 +424,15 @@ int ebml_check_header(ebml_parser_t *ebml) {
 
       case EBML_ID_DOCTYPE: {
         char *text = malloc(elem.len + 1);
+        if (!text)
+          return 0;
 
         text[elem.len] = '\0';
         if (!ebml_read_ascii (ebml, &elem, text))
+        {
+          free (text);
           return 0;
+        }
 
         lprintf("doctype: %s\n", text);
         if (ebml->doctype)

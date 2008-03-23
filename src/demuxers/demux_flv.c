@@ -85,7 +85,7 @@ typedef struct {
   off_t                filesize;
   
   flv_index_entry_t   *index;
-  int                  num_indices;
+  unsigned int         num_indices;
   
   unsigned int         cur_pts;
   
@@ -209,7 +209,7 @@ static int parse_flv_var(demux_flv_t *this,
   unsigned char *end = buf + size;
   char          *str;
   unsigned char  type;
-  int            len, num;
+  unsigned int   len, num;
   
   if (size < 1)
     return 0;
@@ -283,6 +283,8 @@ static int parse_flv_var(demux_flv_t *this,
         str = tmp + 2;
         tmp += len + 2;
         len = parse_flv_var(this, tmp, end-tmp, str, len);
+        if (!len)
+          return 0;
         tmp += len;
       }
       if (*tmp++ != FLV_DATA_TYPE_ENDOBJECT)
@@ -298,6 +300,8 @@ static int parse_flv_var(demux_flv_t *this,
         str = tmp + 2;
         tmp += len + 2;
         len = parse_flv_var(this, tmp, end-tmp, str, len);
+        if (!len)
+          return 0;
         tmp += len;
       }
       break;
@@ -310,6 +314,8 @@ static int parse_flv_var(demux_flv_t *this,
           if (this->index)
             free(this->index);
           this->index = xine_xmalloc(num*sizeof(flv_index_entry_t));
+          if (!this->index)
+            return 0;
           this->num_indices = num;
         }
         for (num = 0; num < this->num_indices && tmp < end; num++) {
@@ -326,6 +332,8 @@ static int parse_flv_var(demux_flv_t *this,
           if (this->index)
             free(this->index);
           this->index = xine_xmalloc(num*sizeof(flv_index_entry_t));
+          if (!this->index)
+            return 0;
           this->num_indices = num;
         }
         for (num = 0; num < this->num_indices && tmp < end; num++) {
@@ -339,6 +347,8 @@ static int parse_flv_var(demux_flv_t *this,
       }
       while (num-- && tmp < end) {
         len = parse_flv_var(this, tmp, end-tmp, NULL, 0);
+        if (!len)
+          return 0;
         tmp += len;
       }
       break;
@@ -360,7 +370,7 @@ static void parse_flv_script(demux_flv_t *this, int size) {
   unsigned char *end = buf + size;
   int            len;
   
-  if (this->input->read(this->input, buf, size ) != size) {
+  if (!buf || this->input->read(this->input, buf, size ) != size) {
     this->status = DEMUX_FINISHED;
     free(buf);
     return;

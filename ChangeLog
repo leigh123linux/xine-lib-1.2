@@ -1,4 +1,7 @@
 xine-lib (1.1.11.1) 2008-??-??
+  * Security fixes:
+    - Heap overflows in FLV, Qt, Real, WC3Movie, Matroska and FILM demuxers.
+  * Added a few more memory allocation checks to the above demuxers.
   * WAV file playback fix: don't assume that the first chunk is "fmt ".
 
 xine-lib (1.1.11) 2008-03-19

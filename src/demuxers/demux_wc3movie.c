@@ -389,6 +389,12 @@ static int open_mve_file(demux_mve_t *this) {
   /* load the palette chunks */
   this->palettes = xine_xmalloc(this->number_of_shots * PALETTE_SIZE *
     sizeof(palette_entry_t));
+
+  if (!this->shot_offsets || !this->palettes) {
+    free (this->shot_offsets);
+    return 0;
+  }
+
   for (i = 0; i < this->number_of_shots; i++) {
     /* make sure there was a valid palette chunk preamble */
     if (this->input->read(this->input, preamble, PREAMBLE_SIZE) !=
@@ -460,8 +466,9 @@ static int open_mve_file(demux_mve_t *this) {
 
       case BNAM_TAG:
         /* load the name into the stream attributes */
-        title = realloc (title, chunk_size);
-        if (this->input->read(this->input, title, chunk_size) != chunk_size) {
+        free (title);
+        title = malloc (chunk_size);
+        if (!title || this->input->read(this->input, title, chunk_size) != chunk_size) {
           free (title);
           free (this->palettes);
           free (this->shot_offsets);

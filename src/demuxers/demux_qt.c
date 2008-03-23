@@ -739,38 +739,52 @@ static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
     if (current_atom == ART_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
       info->artist = xine_xmalloc(string_size);
-      strncpy(info->artist, &meta_atom[i + 20], string_size - 1);
-      info->artist[string_size - 1] = 0;
+      if (info->artist) {
+        strncpy(info->artist, &meta_atom[i + 20], string_size - 1);
+        info->artist[string_size - 1] = 0;
+      }
     } else if (current_atom == NAM_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
       info->name = xine_xmalloc(string_size);
-      strncpy(info->name, &meta_atom[i + 20], string_size - 1);
-      info->name[string_size - 1] = 0;
+      if (info->name) {
+        strncpy(info->name, &meta_atom[i + 20], string_size - 1);
+        info->name[string_size - 1] = 0;
+      }
     } else if (current_atom == ALB_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
       info->album = xine_xmalloc(string_size);
-      strncpy(info->album, &meta_atom[i + 20], string_size - 1);
-      info->album[string_size - 1] = 0;
+      if (info->album) {
+        strncpy(info->album, &meta_atom[i + 20], string_size - 1);
+        info->album[string_size - 1] = 0;
+      }
     } else if (current_atom == GEN_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
       info->genre = xine_xmalloc(string_size);
-      strncpy(info->genre, &meta_atom[i + 20], string_size - 1);
-      info->genre[string_size - 1] = 0;
+      if (info->genre) {
+        strncpy(info->genre, &meta_atom[i + 20], string_size - 1);
+        info->genre[string_size - 1] = 0;
+      }
     } else if (current_atom == TOO_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
       info->comment = xine_xmalloc(string_size);
-      strncpy(info->comment, &meta_atom[i + 20], string_size - 1);
-      info->comment[string_size - 1] = 0;
+      if (info->comment) {
+        strncpy(info->comment, &meta_atom[i + 20], string_size - 1);
+        info->comment[string_size - 1] = 0;
+      }
     } else if (current_atom == WRT_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
       info->composer = xine_xmalloc(string_size);
-      strncpy(info->composer, &meta_atom[i + 20], string_size - 1);
-      info->composer[string_size - 1] = 0;
+      if (info->composer) {
+        strncpy(info->composer, &meta_atom[i + 20], string_size - 1);
+        info->composer[string_size - 1] = 0;
+      }
     } else if (current_atom == DAY_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
       info->year = xine_xmalloc(string_size);
-      strncpy(info->year, &meta_atom[i + 20], string_size - 1);
-      info->year[string_size - 1] = 0;
+      if (info->year) {
+        strncpy(info->year, &meta_atom[i + 20], string_size - 1);
+        info->year[string_size - 1] = 0;
+      }
     }
   }
 
@@ -1549,32 +1563,29 @@ static qt_error parse_reference_atom (reference_t *ref,
     current_atom = _X_BE_32(&ref_atom[i]);
 
     if (current_atom == RDRF_ATOM) {
+      size_t string_size = _X_BE_32(&ref_atom[i + 12]);
+      size_t url_offset = 0;
+
+      if (string_size >= current_atom_size || i + string_size >= ref_atom_size)
+        return QT_NOT_A_VALID_FILE;
 
       /* if the URL starts with "http://", copy it */
-      if (strncmp(&ref_atom[i + 16], "http://", 7) == 0
-        || strncmp(&ref_atom[i + 16], "rtsp://", 7) == 0) {
+      if ( memcmp(&ref_atom[i + 16], "http://", 7) &&
+	   memcmp(&ref_atom[i + 16], "rtsp://", 7) &&
+	   base_mrl )
+	url_offset = strlen(base_mrl);
 
-        /* URL is spec'd to terminate with a NULL; don't trust it */
-        ref->url = xine_xmalloc(_X_BE_32(&ref_atom[i + 12]) + 1);
-        strncpy(ref->url, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
-        ref->url[_X_BE_32(&ref_atom[i + 12]) - 1] = '\0';
+      /* otherwise, append relative URL to base MRL */
+      string_size += url_offset;
 
-      } else {
+      ref->url = xine_xmalloc(string_size + 1);
 
-        int string_size;
+      if ( url_offset )
+	strcpy(ref->url, base_mrl);
 
-	if (base_mrl)
-          string_size = strlen(base_mrl) + _X_BE_32(&ref_atom[i + 12]) + 1;
-	else
-          string_size = _X_BE_32(&ref_atom[i + 12]) + 1;
+      memcpy(ref->url + url_offset, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
 
-        /* otherwise, append relative URL to base MRL */
-        ref->url = xine_xmalloc(string_size);
-	if (base_mrl)
-          strcpy(ref->url, base_mrl);
-        strncat(ref->url, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
-        ref->url[string_size - 1] = '\0';
-      }
+      ref->url[string_size] = '\0';
 
       debug_atom_load("    qt rdrf URL reference:\n      %s\n", ref->url);
 
@@ -1993,8 +2004,12 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
       info->references = (reference_t *)realloc(info->references,
         info->reference_count * sizeof(reference_t));
 
-      parse_reference_atom(&info->references[info->reference_count - 1],
-        &moov_atom[i - 4], info->base_mrl);
+      error = parse_reference_atom(&info->references[info->reference_count - 1],
+                                   &moov_atom[i - 4], info->base_mrl);
+      if (error != QT_OK) {
+        info->last_error = error;
+        return;
+      }
 
     } else {
       debug_atom_load("  qt: unknown atom into the moov atom (0x%08X)\n", current_atom);
