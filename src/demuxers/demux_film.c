@@ -256,7 +256,7 @@ static int open_film_file(demux_film_t *film) {
       film->frequency = _X_BE_32(&film_header[i + 8]);
       film->sample_count = _X_BE_32(&film_header[i + 12]);
       film->sample_table =
-        xine_xmalloc(film->sample_count * sizeof(film_sample_t));
+        calloc(film->sample_count, sizeof(film_sample_t));
       if (!film->sample_table)
         goto film_abort;
       for (j = 0; j < film->sample_count; j++) {

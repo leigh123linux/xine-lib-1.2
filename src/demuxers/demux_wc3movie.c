@@ -378,7 +378,7 @@ static int open_mve_file(demux_mve_t *this) {
   this->number_of_shots = _X_LE_32(&preamble[0]);
   
   /* allocate space for the shot offset index and set offsets to 0 */
-  this->shot_offsets = xine_xmalloc(this->number_of_shots * sizeof(off_t));
+  this->shot_offsets = calloc(this->number_of_shots, sizeof(off_t));
   this->current_shot = 0;
   for (i = 0; i < this->number_of_shots; i++)
     this->shot_offsets[i] = 0;
@@ -387,7 +387,7 @@ static int open_mve_file(demux_mve_t *this) {
   this->input->seek(this->input, 12, SEEK_CUR);
 
   /* load the palette chunks */
-  this->palettes = xine_xmalloc(this->number_of_shots * PALETTE_SIZE *
+  this->palettes = calloc(this->number_of_shots, PALETTE_SIZE *
     sizeof(palette_entry_t));
 
   if (!this->shot_offsets || !this->palettes) {

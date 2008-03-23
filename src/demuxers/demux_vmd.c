@@ -168,7 +168,7 @@ static int open_vmd_file(demux_vmd_t *this) {
     return 0;
   }
 
-  this->frame_table = xine_xmalloc(this->frame_count * sizeof(vmd_frame_t));
+  this->frame_table = calloc(this->frame_count, sizeof(vmd_frame_t));
 
   current_offset = this->data_start = _X_LE_32(&vmd_header[20]);
   this->data_size = toc_offset - this->data_start;

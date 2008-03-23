@@ -164,7 +164,7 @@ static int open_flac_file(demux_flac_t *flac) {
     case 3:
       lprintf ("SEEKTABLE metadata, %d bytes\n", block_length);
       flac->seekpoint_count = block_length / FLAC_SEEKPOINT_SIZE;
-      flac->seekpoints = xine_xmalloc(flac->seekpoint_count * 
+      flac->seekpoints = calloc(flac->seekpoint_count,
         sizeof(flac_seekpoint_t));
       for (i = 0; i < flac->seekpoint_count; i++) {
         if (flac->input->read(flac->input, buffer, FLAC_SEEKPOINT_SIZE) != FLAC_SEEKPOINT_SIZE)

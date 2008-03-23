@@ -911,8 +911,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
       debug_atom_load("    qt elst atom (edit list atom): %d entries\n",
         trak->edit_list_count);
 
-      trak->edit_list_table = (edit_list_table_t *)xine_xmalloc(
-        trak->edit_list_count * sizeof(edit_list_table_t));
+      trak->edit_list_table = (edit_list_table_t *)calloc(
+        trak->edit_list_count, sizeof(edit_list_table_t));
       if (!trak->edit_list_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -947,7 +947,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
       /* allocate space for each of the properties unions */
       trak->stsd_atoms_count = _X_BE_32(&trak_atom[i + 8]);
-      trak->stsd_atoms = xine_xmalloc(trak->stsd_atoms_count * sizeof(properties_t));
+      trak->stsd_atoms = calloc(trak->stsd_atoms_count, sizeof(properties_t));
       if (!trak->stsd_atoms) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1345,8 +1345,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
       /* allocate space and load table only if sample size is 0 */
       if (trak->sample_size == 0) {
-        trak->sample_size_table = (unsigned int *)malloc(
-          trak->sample_size_count * sizeof(unsigned int));
+        trak->sample_size_table = (unsigned int *)calloc(
+          trak->sample_size_count, sizeof(unsigned int));
         if (!trak->sample_size_table) {
           last_error = QT_NO_MEMORY;
           goto free_trak;
@@ -1376,8 +1376,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
       debug_atom_load("    qt stss atom (sample sync atom): %d sync samples\n",
         trak->sync_sample_count);
 
-      trak->sync_sample_table = (unsigned int *)malloc(
-        trak->sync_sample_count * sizeof(unsigned int));
+      trak->sync_sample_table = (unsigned int *)calloc(
+        trak->sync_sample_count, sizeof(unsigned int));
       if (!trak->sync_sample_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1405,8 +1405,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
       debug_atom_load("    qt stco atom (32-bit chunk offset atom): %d chunk offsets\n",
         trak->chunk_offset_count);
 
-      trak->chunk_offset_table = (int64_t *)malloc(
-        trak->chunk_offset_count * sizeof(int64_t));
+      trak->chunk_offset_table = (int64_t *)calloc(
+        trak->chunk_offset_count, sizeof(int64_t));
       if (!trak->chunk_offset_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1433,8 +1433,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
       debug_atom_load("    qt co64 atom (64-bit chunk offset atom): %d chunk offsets\n",
         trak->chunk_offset_count);
 
-      trak->chunk_offset_table = (int64_t *)malloc(
-        trak->chunk_offset_count * sizeof(int64_t));
+      trak->chunk_offset_table = (int64_t *)calloc(
+        trak->chunk_offset_count, sizeof(int64_t));
       if (!trak->chunk_offset_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1464,8 +1464,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
       debug_atom_load("    qt stsc atom (sample-to-chunk atom): %d entries\n",
         trak->sample_to_chunk_count);
 
-      trak->sample_to_chunk_table = (sample_to_chunk_table_t *)malloc(
-        trak->sample_to_chunk_count * sizeof(sample_to_chunk_table_t));
+      trak->sample_to_chunk_table = (sample_to_chunk_table_t *)calloc(
+        trak->sample_to_chunk_count, sizeof(sample_to_chunk_table_t));
       if (!trak->sample_to_chunk_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1499,8 +1499,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
       debug_atom_load("    qt stts atom (time-to-sample atom): %d entries\n",
         trak->time_to_sample_count);
 
-      trak->time_to_sample_table = (time_to_sample_table_t *)malloc(
-        (trak->time_to_sample_count+1) * sizeof(time_to_sample_table_t));
+      trak->time_to_sample_table = (time_to_sample_table_t *)calloc(
+        trak->time_to_sample_count+1, sizeof(time_to_sample_table_t));
       if (!trak->time_to_sample_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1697,8 +1697,7 @@ static qt_error build_frame_table(qt_trak *trak,
     /* in this case, the total number of frames is equal to the number of
      * entries in the sample size table */
     trak->frame_count = trak->sample_size_count;
-    trak->frames = (qt_frame *)malloc(
-      trak->frame_count * sizeof(qt_frame));
+    trak->frames = (qt_frame *)calloc(trak->frame_count, sizeof(qt_frame));
     if (!trak->frames)
       return QT_NO_MEMORY;
     trak->current_frame = 0;
@@ -1710,7 +1709,7 @@ static qt_error build_frame_table(qt_trak *trak,
     pts_index_countdown =
       trak->time_to_sample_table[pts_index].count;
 
-    media_id_counts = xine_xmalloc(trak->stsd_atoms_count * sizeof(int));
+    media_id_counts = calloc(trak->stsd_atoms_count, sizeof(int));
     if (!media_id_counts)
       return QT_NO_MEMORY;
     memset(media_id_counts, 0, trak->stsd_atoms_count * sizeof(int));
@@ -1848,8 +1847,7 @@ static qt_error build_frame_table(qt_trak *trak,
     /* in this case, the total number of frames is equal to the number of
      * chunks */
     trak->frame_count = trak->chunk_offset_count;
-    trak->frames = (qt_frame *)malloc(
-      trak->frame_count * sizeof(qt_frame));
+    trak->frames = (qt_frame *)calloc(trak->frame_count, sizeof(qt_frame));
     if (!trak->frames)
       return QT_NO_MEMORY;
 
