@@ -91,6 +91,8 @@ int ebml_read_ascii(ebml_parser_t *ebml, ebml_elem_t *elem, char *str);
 
 int ebml_read_utf8(ebml_parser_t *ebml, ebml_elem_t *elem, char *str);
 
+char *ebml_alloc_read_ascii(ebml_parser_t *ebml, ebml_elem_t *elem);
+
 int ebml_read_date(ebml_parser_t *ebml, ebml_elem_t *elem, int64_t *date);
 
 int ebml_read_master(ebml_parser_t *ebml, ebml_elem_t *elem);
