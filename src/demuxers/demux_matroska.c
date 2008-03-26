@@ -1179,13 +1179,10 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       break;
       
       case MATROSKA_ID_TR_CODECID: {
-        char *codec_id = malloc (elem.len + 1);
+        char *codec_id = ebml_alloc_read_ascii (ebml, &elem);
         lprintf("CodecID\n");
-        if (!ebml_read_ascii(ebml, &elem, codec_id)) {
-	  free(codec_id);
+        if (!codec_id)
           return 0;
-	}
-        codec_id[elem.len] = '\0';
         track->codec_id = codec_id;
       }
       break;
@@ -1203,13 +1200,10 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       break;
         
       case MATROSKA_ID_TR_LANGUAGE: {
-        char *language = malloc (elem.len + 1);
+        char *language = ebml_alloc_read_ascii (ebml, &elem);
         lprintf("Language\n");
-        if (!ebml_read_ascii(ebml, &elem, language)) {
-	  free(language);
+        if (!language)
           return 0;
-	}
-        language[elem.len] = '\0';
         track->language = language;
       }
       break;

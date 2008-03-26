@@ -64,6 +64,14 @@ xine-lib (1.1.90) (Unreleased)
   * Report more video output capabilities via (port)->get_capabilities():
     colour controls, zooming, colour keying.
 
+xine-lib (1.1.11.1) 2008-??-??
+  * Security fixes:
+    - Integer overflows in FLV, Qt, Real, WC3Movie, Matroska and FILM
+      demuxers, allowing remote attackers to trigger heap overflows and
+      possibly execute arbitrary code. (CVE-2008-1482)
+  * Added a few more memory allocation checks to the above demuxers.
+  * WAV file playback fix: don't assume that the first chunk is "fmt ".
+
 xine-lib (1.1.11) 2008-03-19
   * Security fixes:
     - Array Indexing Vulnerability in sdpplin_parse(). (CVE-2008-0073)
@@ -86,6 +94,8 @@ xine-lib (1.1.11) 2008-03-19
     it for functions like subtitle file detection must instead use file://
     MRLs; if they don't, we consider them to be buggy.)
   * Fixed long delay when closing stream on dual core systems [Bug #33]
+  * DVD playback improvement: don't trust the file sizes.
+  * Build fixes for use with recent ffmpeg.
 
 xine-lib (1.1.10.1) 2008-02-07
   * Security fixes:

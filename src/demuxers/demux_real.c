@@ -175,7 +175,8 @@ static void real_parse_index(demux_real_t *this) {
   off_t                original_pos     = this->input->get_current_pos(this->input);
   unsigned char        index_chunk_header[INDEX_CHUNK_HEADER_SIZE];
   unsigned char        index_record[INDEX_RECORD_SIZE];
-  int                  i, entries, stream_num;
+  int                  i;
+  unsigned int         entries, stream_num;
   real_index_entry_t **index;
   
   while(next_index_chunk) {
@@ -230,10 +231,11 @@ static void real_parse_index(demux_real_t *this) {
         }
       }
 
-      if(index && entries) {
+      if(index && entries)
         /* Allocate memory for index */
         *index = xine_xcalloc(entries, sizeof(real_index_entry_t));
         
+      if(index && entries && *index) {
         /* Read index */
         for(i = 0; i < entries; i++) {
           if(this->input->read(this->input, index_record, INDEX_RECORD_SIZE)
