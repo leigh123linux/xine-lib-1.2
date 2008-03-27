@@ -189,11 +189,23 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
     while (n >= 0) {
       if ( stream_be ) {
-	*d++ = s[0];
-	*d++ = s[1];
+	  if ( stream_be == this->cpu_be ) {
+	      *d++ = s[0];
+	      *d++ = s[1];
+	  } else {
+	      *d++ = s[1];
+	      *d++ = s[0];
+	  }
       } else {
-	*d++ = s[1];
-	*d++ = s[2];
+	  if ( stream_be == this->cpu_be ) {
+	      *d++ = s[1];
+	      *d++ = s[2];
+	  }
+	  else
+	  {
+	      *d++ = s[2];
+	      *d++ = s[1];
+	  }
       }
 
       s += 3;
