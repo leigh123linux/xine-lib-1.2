@@ -150,7 +150,9 @@ static int open_aiff_file(demux_aiff_t *this) {
         (this->audio_bits / 8);
       this->running_time = (this->audio_frames / this->audio_sample_rate) * 1000;
 
-      this->audio_block_align = PCM_BLOCK_ALIGN;
+      /* we should send only complete frames to decoder, as it 
+       * doesn't handle underconsumption yet */
+      this->audio_block_align = PCM_BLOCK_ALIGN - PCM_BLOCK_ALIGN % (this->audio_bits / 8 * this->audio_channels);
 
       break;
 
