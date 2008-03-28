@@ -46,6 +46,10 @@
 #define COMM_TAG FOURCC_TAG('C', 'O', 'M', 'M')
 #define SSND_TAG FOURCC_TAG('S', 'S', 'N', 'D')
 #define APCM_TAG FOURCC_TAG('A', 'P', 'C', 'M')
+#define NAME_TAG FOURCC_TAG('N', 'A', 'M', 'E')
+#define AUTH_TAG FOURCC_TAG('A', 'U', 'T', 'H')
+#define COPY_TAG FOURCC_TAG('(', 'c', ')', ' ')
+#define ANNO_TAG FOURCC_TAG('A', 'N', 'N', 'O')
 
 #define PREAMBLE_SIZE 8
 #define AIFF_SIGNATURE_SIZE 12
@@ -157,6 +161,11 @@ static int open_aiff_file(demux_aiff_t *this) {
       break;
 
     } else {
+      /* if chunk contains metadata, it will be word-aligned (as seen at sox and ffmpeg) */
+      if ( ((chunk_type == NAME_TAG) || (chunk_type==AUTH_TAG) ||
+            (chunk_type == COPY_TAG) || (chunk_type==ANNO_TAG)) && (chunk_size&1))
+	chunk_size++;
+
       /* unrecognized; skip it */
       this->input->seek(this->input, chunk_size, SEEK_CUR);
     }
