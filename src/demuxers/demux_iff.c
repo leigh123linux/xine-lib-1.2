@@ -401,7 +401,7 @@ static int read_iff_chunk(demux_iff_t *this) {
           this->cmap_num                = junk_size / PIC_SIZE_OF_COLOR_REGISTER;
           this->cmap                    = (ColorRegister *)xine_xmalloc(junk_size);
           this->video_send_palette      = 1;
-          if (this->input->read(this->input, (char *)this->cmap, junk_size) != junk_size)
+          if (!this->cmap || this->input->read(this->input, (char *)this->cmap, junk_size) != junk_size)
             return 0;
           break;
         case IFF_GRAB_CHUNK:
@@ -709,11 +709,19 @@ static int demux_iff_send_chunk(demux_plugin_t *this_gen) {
       /* load the whole chunk into the buffer */
       if (this->audio_buffer_filled == 0) {
         if (this->audio_interleave_buffer_size > 0)
+        {
           this->audio_interleave_buffer =
                 xine_xmalloc(this->audio_interleave_buffer_size);
+          if (!this->audio_interleave_buffer)
+            return this->status = DEMUX_FINISHED;
+        }
         if (this->audio_read_buffer_size > 0)
+        {
           this->audio_read_buffer       =
                     xine_xmalloc(this->audio_read_buffer_size);
+          if (!this->audio_read_buffer)
+            return this->status = DEMUX_FINISHED;
+        }
         if (this->audio_read_buffer) {
           if (this->input->read(this->input, this->audio_read_buffer,
               this->data_size) != this->data_size) {

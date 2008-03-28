@@ -973,6 +973,10 @@ static avi_t *AVI_init(demux_avi_t *this) {
         xine_waveformatex *wavex;
         
         wavex = (xine_waveformatex *)malloc(n);
+        if (!wavex) {
+          this->AVI_errno = AVI_ERR_NO_MEM;
+          return 0;
+        }
         memcpy((void *)wavex, hdrl_data+i, n);
         _x_waveformatex_le2me( wavex );
 
@@ -1237,6 +1241,9 @@ static avi_t *AVI_init(demux_avi_t *this) {
           /* read from file */
           chunk_start = en = malloc (AVI->video_superindex->aIndex[j].dwSize+hdrl_len);
 
+          if (!chunk_start)
+             ERR_EXIT(AVI_ERR_NO_MEM);
+
           if (this->input->seek(this->input, AVI->video_superindex->aIndex[j].qwOffset, SEEK_SET) == (off_t)-1) {
              lprintf("cannot seek to 0x%" PRIx64 "\n", AVI->video_superindex->aIndex[j].qwOffset);
              free(chunk_start);
@@ -1307,6 +1314,9 @@ static avi_t *AVI_init(demux_avi_t *this) {
 
           /* read from file */
           chunk_start = en = malloc (audio->audio_superindex->aIndex[j].dwSize+hdrl_len);
+
+          if (!chunk_start)
+            ERR_EXIT(AVI_ERR_NO_MEM);
 
           if (this->input->seek(this->input, audio->audio_superindex->aIndex[j].qwOffset, SEEK_SET) == (off_t)-1) {
             lprintf("cannot seek to 0x%" PRIx64 "\n", audio->audio_superindex->aIndex[j].qwOffset);

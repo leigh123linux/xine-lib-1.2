@@ -283,9 +283,10 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
         this->bih.biWidth = _X_LE_16(&scratch[0]) * 8;
         this->bih.biHeight = _X_LE_16(&scratch[2]) * 8;
         /* set up staging area for decode map */
-        this->decode_map_size = (this->bih.biWidth * this->bih.biHeight) /
-          (8 * 8) / 2;
+        this->decode_map_size = (this->bih.biWidth / 8) * (this->bih.biHeight / 8) / 2;
         this->decode_map = xine_xmalloc(this->decode_map_size);
+        if (!this->decode_map)
+          this->status = DEMUX_FINISHED;
         lprintf("video resolution: %d x %d\n",
           this->bih.biWidth, this->bih.biHeight);
         break;

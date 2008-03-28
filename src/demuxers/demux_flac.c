@@ -166,6 +166,8 @@ static int open_flac_file(demux_flac_t *flac) {
       flac->seekpoint_count = block_length / FLAC_SEEKPOINT_SIZE;
       flac->seekpoints = calloc(flac->seekpoint_count,
         sizeof(flac_seekpoint_t));
+      if (flac->seekpoint_count && !flac->seekpoints)
+        return 0;
       for (i = 0; i < flac->seekpoint_count; i++) {
         if (flac->input->read(flac->input, buffer, FLAC_SEEKPOINT_SIZE) != FLAC_SEEKPOINT_SIZE)
           return 0;
