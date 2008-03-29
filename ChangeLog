@@ -71,6 +71,9 @@ xine-lib (1.1.11.1) 2008-??-??
       possibly execute arbitrary code. (CVE-2008-1482)
   * Added a few more memory allocation checks to the above demuxers.
   * WAV file playback fix: don't assume that the first chunk is "fmt ".
+  * Don't try to play partial 24-bit AIFF frames (decoder would lose data).
+  * Fixed AIFF comment chunk handling and sample rate reading.
+  * LPCM fixes: input over-reading, conversion of 24-bit samples.
 
 xine-lib (1.1.11) 2008-03-19
   * Security fixes:

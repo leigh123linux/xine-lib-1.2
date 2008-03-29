@@ -939,6 +939,11 @@ static qt_error parse_trak_atom (qt_trak *trak,
     const uint32_t current_atom_size = _X_BE_32(&trak_atom[i - 4]);	
     const qt_atom current_atom = _X_BE_32(&trak_atom[i]);
 
+    if (current_atom_size > trak_atom_size - i) {
+      last_error = QT_NOT_A_VALID_FILE;
+      goto free_trak;
+    }
+
     switch(current_atom) {
     case TKHD_ATOM:
       trak->flags = _X_BE_16(&trak_atom[i + 6]);
@@ -1025,6 +1030,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
           trak->stsd_atoms[k].video.properties_atom_size = current_stsd_atom_size - 4;
           trak->stsd_atoms[k].video.properties_atom = 
             xine_xmalloc(trak->stsd_atoms[k].video.properties_atom_size);
+          if (!trak->stsd_atoms[k].video.properties_atom) {
+            last_error = QT_NO_MEMORY;
+            goto free_trak;
+          }
           memcpy(trak->stsd_atoms[k].video.properties_atom, &trak_atom[atom_pos],
             trak->stsd_atoms[k].video.properties_atom_size);
 
@@ -1164,6 +1173,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
           trak->stsd_atoms[k].audio.properties_atom_size = current_stsd_atom_size - 4;
           trak->stsd_atoms[k].audio.properties_atom = 
             xine_xmalloc(trak->stsd_atoms[k].audio.properties_atom_size);
+          if (!trak->stsd_atoms[k].audio.properties_atom) {
+            last_error = QT_NO_MEMORY;
+            goto free_trak;
+          }
           memcpy(trak->stsd_atoms[k].audio.properties_atom, &trak_atom[atom_pos],
             trak->stsd_atoms[k].audio.properties_atom_size);
 
@@ -1280,6 +1293,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
             trak->stsd_atoms[k].audio.properties_atom_size = 36;
             trak->stsd_atoms[k].audio.properties_atom = 
               xine_xmalloc(trak->stsd_atoms[k].audio.properties_atom_size);
+            if (!trak->stsd_atoms[k].audio.properties_atom) {
+              last_error = QT_NO_MEMORY;
+              goto free_trak;
+            }
             memcpy(trak->stsd_atoms[k].audio.properties_atom, 
               &trak_atom[atom_pos + 0x20],
               trak->stsd_atoms[k].audio.properties_atom_size);
@@ -1301,6 +1318,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
                 (current_atom_size >= (0x4C + wave_size))) {
               trak->stsd_atoms[k].audio.wave_size = wave_size;
               trak->stsd_atoms[k].audio.wave = xine_xmalloc(wave_size);
+              if (!trak->stsd_atoms[k].audio.wave) {
+                last_error = QT_NO_MEMORY;
+                goto free_trak;
+              }
               memcpy(trak->stsd_atoms[k].audio.wave, &trak_atom[atom_pos + 0x4C],
                      wave_size);
               _x_waveformatex_le2me(trak->stsd_atoms[k].audio.wave);
@@ -1370,8 +1391,16 @@ static qt_error parse_trak_atom (qt_trak *trak,
             j += mp4_read_descr_len( &trak_atom[j], &len );
             debug_atom_load("      decoder config is %d (0x%X) bytes long\n",
               len, len);
+            if (len > current_atom_size - (j - i)) {
+              last_error = QT_NOT_A_VALID_FILE;
+              goto free_trak;
+            }
             trak->decoder_config = realloc(trak->decoder_config, len);
             trak->decoder_config_len = len;
+            if (!trak->decoder_config) {
+              last_error = QT_NO_MEMORY;
+              goto free_trak;
+            }
             memcpy(trak->decoder_config,&trak_atom[j],len);
           }
         }
