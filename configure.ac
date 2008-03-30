@@ -18,7 +18,7 @@ XINE_MAJOR=1
 XINE_MINOR=1
 XINE_SUB=11
 dnl XINE_PATCH should be left empty or set to ".1" or ".2" or something similar
-XINE_PATCH=
+XINE_PATCH=.1
 
 dnl if test $XINE_SUB -eq 0 ; then
 dnl  XINE_SUBPART="";

@@ -1,4 +1,4 @@
-xine-lib (1.1.11.1) 2008-??-??
+xine-lib (1.1.11.1) 2008-03-30
   * Security fixes:
     - Integer overflows in FLV, Qt, Real, WC3Movie, Matroska and FILM
       demuxers, allowing remote attackers to trigger heap overflows and
