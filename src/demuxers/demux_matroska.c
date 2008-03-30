@@ -2915,7 +2915,8 @@ static const char *get_extensions (demux_class_t *this_gen) {
 
 
 static const char *get_mimetypes (demux_class_t *this_gen) {
-  return "video/mkv: mkv: matroska;";
+  return "video/mkv: mkv: matroska;"
+        "video/x-matroska: mkv: matroska;";
 }
 
 
