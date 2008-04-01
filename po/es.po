@@ -1,17 +1,18 @@
 # translation of xine-lib.hg.po to Spanish
-# Spanish .po file for xine-lib.
+# Spanish es.po file for xine-lib.
+# Copyright (C) YEAR Copyright (C) 2000-2006 the xine project
 # Copyright (C) 2002, 2006, 2007, 2008 Free Software Foundation, Inc.
 #
 # Juan Manuel García Molina <juanma_gm@wanadoo.es>, 2002.
-# Carlos E. Robinson M. <carloser@users.sourceforge.net>, 2006, 2007, 2008.
+# Carlos E. R. M. <carloser@users.sourceforge.net>, 2006, 2007, 2008.
 # Cer:  <<== marcas de revision.
 msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib.hg\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-03-19 13:16+0000\n"
-"PO-Revision-Date: 2008-01-31 14:32+0100\n"
-"Last-Translator: Carlos E. Robinson M. <carloser@users.sourceforge.net>\n"
+"POT-Creation-Date: 2008-04-02 01:36+0100\n"
+"PO-Revision-Date: 2008-04-02 01:05+0200\n"
+"Last-Translator: Carlos E. R. M. <carloser@users.sourceforge.net>\n"
 "Language-Team: Spanish <none>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -811,18 +812,18 @@ msgstr ""
 "compatibles OSS"
 
 # Cer: ¿pulseaudio?
-#: src/audio_out/audio_pulse_out.c:549
+#: src/audio_out/audio_pulse_out.c:715
 msgid "device used for pulseaudio"
 msgstr "dispositivo usado para audio a pulsos"
 
 # Cer: ¿pulseaudio? Estaba como "polypaudio" pero fuzzy.
-#: src/audio_out/audio_pulse_out.c:550
+#: src/audio_out/audio_pulse_out.c:716
 msgid "use 'server[:sink]' for setting the pulseaudio sink device."
 msgstr ""
 "use 'server[:sink]' para definir el sumidero del dispositivo audio a pulsos."
 
 # Cer: ¿pulseaudio?
-#: src/audio_out/audio_pulse_out.c:583
+#: src/audio_out/audio_pulse_out.c:784
 msgid "xine audio output plugin using pulseaudio sound server"
 msgstr ""
 "complemento de xine de salida de audio usando servidor de sonido audio a "
@@ -1058,7 +1059,7 @@ msgstr "Flujo de bits del medio revuelto/encriptado"
 msgid "Restoring index..."
 msgstr "Restaurando índice..."
 
-#: src/demuxers/demux_avi.c:628 src/demuxers/demux_avi.c:1683
+#: src/demuxers/demux_avi.c:628 src/demuxers/demux_avi.c:1693
 #, c-format
 msgid "demux_avi: invalid avi chunk \"%c%c%c%c\" at pos %<PRIdMAX>\n"
 msgstr "demux_avi: bloque avi inválido \"%c%c%c%c\" en posición %<PRIdMAX>\n"
@@ -1079,7 +1080,7 @@ msgstr ""
 msgid "invalid FILM chunk size\n"
 msgstr "tamaño de bloque FILM inválido\n"
 
-#: src/demuxers/demux_film.c:340
+#: src/demuxers/demux_film.c:344
 #, c-format
 msgid "unrecognized FILM chunk\n"
 msgstr "bloque FILM no reconocido\n"
@@ -1225,7 +1226,7 @@ msgid "demux_wc3movie: SHOT chunk referenced invalid palette (%d >= %d)\n"
 msgstr ""
 "demux_wc3movie: bloque SHOT referenció una paleta inválida (%d >= %d)\n"
 
-#: src/demuxers/demux_wc3movie.c:404
+#: src/demuxers/demux_wc3movie.c:410
 #, c-format
 msgid "demux_wc3movie: There was a problem while loading palette chunks\n"
 msgstr ""
@@ -4705,20 +4706,21 @@ msgstr ""
 
 #: src/video_out/video_out_xcbxv.c:1508 src/video_out/video_out_xv.c:1561
 msgid "enable vblank sync"
-msgstr ""
+msgstr "activar sincronismo de blanqueo vertical (vblank sync)"
 
 #: src/video_out/video_out_xcbxv.c:1509 src/video_out/video_out_xv.c:1562
-#, fuzzy
 msgid ""
 "This option will synchronize the update of the video image to the repainting "
 "of the entire screen (\"vertical retrace\"). This eliminates flickering and "
 "tearing artifacts. On nvidia cards one may also need to run \"nvidia-settings"
 "\" and choose which display device to sync to under the XVideo Settings tab"
 msgstr ""
-"El doble tamponeado sincronizará la actualización de la imagen de vídeo al "
+"Esta opción sincronizará la actualización de la imagen de vídeo al "
 "redibujado de la pantalla de video entera (\"vertical retrace\", retrazado "
-"vertical). Esto elimina el parpadeo y artifactos de rajado, pero usa más "
-"memoria gráfica."
+"vertical). Esto elimina el parpadeo y artefactos de rajado. En las tarjetas "
+"nvidia puede también necesitar que ejecute \"nvidia-settings"
+"\" (configuración de nvidia) y escoger que dispositivo de pantalla debe "
+"sincronizar bajo la pestaña de configuración de XVideo"
 
 #: src/video_out/video_out_xcbxv.c:1547
 msgid "video_out_xcbxv: this adaptor supports the yv12 format.\n"
