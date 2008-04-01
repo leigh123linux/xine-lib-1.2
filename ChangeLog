@@ -1,3 +1,7 @@
+xine-lib (1.1.12) 2008-??-??
+  * Fixed and improved the PulseAudio driver.
+  * Fixed a regression in 1.1.11.1 which broke Quicktime container handling.
+
 xine-lib (1.1.11.1) 2008-03-30
   * Security fixes:
     - Integer overflows in FLV, Qt, Real, WC3Movie, Matroska and FILM
