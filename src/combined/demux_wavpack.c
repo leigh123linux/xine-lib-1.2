@@ -387,7 +387,7 @@ static const char *get_identifier (demux_class_t *const this_gen) {
 }
 
 static const char *get_extensions (demux_class_t *const this_gen) {
-  return "wv";
+  return "wv wvp";
 }
 
 static const char *get_mimetypes (demux_class_t *const this_gen) {
