@@ -2887,7 +2887,8 @@ static void *init_class (xine_t *xine, void *data) {
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.description     = N_("matroska demux plugin");
   this->demux_class.identifier      = "matroska";
-  this->demux_class.mimetypes       = "video/mkv: mkv: matroska;";
+  this->demux_class.mimetypes       = "video/mkv: mkv: matroska;"
+                                      "video/x-matroska: mkv: matroska;";
   this->demux_class.extensions      = "mkv";
   this->demux_class.dispose         = default_demux_class_dispose;
 

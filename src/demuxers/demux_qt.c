@@ -939,11 +939,6 @@ static qt_error parse_trak_atom (qt_trak *trak,
     const uint32_t current_atom_size = _X_BE_32(&trak_atom[i - 4]);	
     const qt_atom current_atom = _X_BE_32(&trak_atom[i]);
 
-    if (current_atom_size > trak_atom_size - i) {
-      last_error = QT_NOT_A_VALID_FILE;
-      goto free_trak;
-    }
-
     switch(current_atom) {
     case TKHD_ATOM:
       trak->flags = _X_BE_16(&trak_atom[i + 6]);

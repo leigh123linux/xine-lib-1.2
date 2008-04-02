@@ -368,8 +368,8 @@ void *demux_wv_init_plugin (xine_t *const xine, void *const data) {
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.description     = N_("Wavpack demux plugin");
   this->demux_class.identifier      = "Wavpack";
-  this->demux_class.mimetypes       = "audio/x-wavpack";
-  this->demux_class.extensions      = "wv";
+  this->demux_class.mimetypes       = "audio/x-wavpack: wv,wvp: WavPack audio;";
+  this->demux_class.extensions      = "wv wvp";
   this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
