@@ -3031,7 +3031,7 @@ if test "x$no_x" != "xyes"; then
     echo "   - XvMC (XVideo motion compensation)"
   fi
   if test "x$ac_have_opengl" = "xyes" -a "x$ac_have_glut" = "xyes" -o \
-	  x$"ac_have_opengl" = "xyes" -a "x$ac_have_glu" = "xyes"; then	
+	  "x$ac_have_opengl" = "xyes" -a "x$ac_have_glu" = "xyes"; then	
     echo "   - OpenGL"
   fi
   if test "x$ac_have_sunfb" = "xyes"; then
