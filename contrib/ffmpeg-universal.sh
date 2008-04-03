@@ -52,12 +52,20 @@ function run_configure {
                              --extra-ldflags="$EXTRA_LDFLAGS"
     local retval=$?
 
-    # We're building ffmpeg to put it into a shared library, but ffmpeg thinks
-    # it's building to put it into a static library or program image, so it
-    # adds -mdynamic-no-pic to its list of options as an optimization.  This is
-    # fine in Tiger if later linked with -Wl,-read_only_relocs,warning, but it
-    # isn't fine on other versions of Mac OS X.
-    if test -f config.mak; then
+    # Although we're building ffmpeg to put it into a shared library, we 
+    # configure it as a static library. For static libraries, ffmpeg adds
+    # -mdynamic-no-pic to its list of options as an optimization. 
+    #
+    # With this, we end up linking code which uses absolute addressing into
+    # a shared library. This is fine with all versions of Apple's Developer
+    # Tools but not when compiling for x86 with the linker (ld64-77)
+    # contained in XCode 3.0. XCode 3.0 is default for Leopard (10.5.x).
+    #
+    # For x86-64 compilation, removing the -mdynamic-no-pic helps
+    # For x86-32 compilation, either MMX optimization has to be disabled
+    #     or the asm code needs to be written in a PIC way (not done here).
+    #
+    if test -f config.mak && what /usr/bin/ld | grep -q ld64-77; then
         cat config.mak | sed -e '/OPTFLAGS=/s/-mdynamic-no-pic//g' > config.tmp
         mv -f config.tmp config.mak
     fi

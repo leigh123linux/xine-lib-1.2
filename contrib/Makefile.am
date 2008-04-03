@@ -116,8 +116,10 @@ else
 		--extra-cflags="$(VISIBILITY_FLAG) $(FFMPEG_EXTRA_CFLAGS)"; \
 	cd ..
 if HOST_OS_DARWIN
-	cat ffmpeg/config.mak | sed -e '/OPTFLAGS=/s/-mdynamic-no-pic//g' > ffmpeg/config.tmp
-	mv -f ffmpeg/config.tmp ffmpeg/config.mak
+	if what /usr/bin/ld | grep -q ld64-77; then \
+		cat ffmpeg/config.mak | sed -e '/OPTFLAGS=/s/-mdynamic-no-pic//g' > ffmpeg/config.tmp; \
+		mv -f ffmpeg/config.tmp ffmpeg/config.mak; \
+	fi
 endif
 endif
 
