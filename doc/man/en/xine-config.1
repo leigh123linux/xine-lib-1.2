@@ -1,9 +1,16 @@
+.de TQ
+.br
+.ns
+.TP \\$1
+..
 .TH XINE 1 2001-08-28 "The xine project"
 .SH NAME
 xine-config - script to get information about the installed version of libxine
 .SH SYNOPSIS
 .B xine-config
-[\-\-prefix\fI[=DIR]\fP] [\-\-exec\-prefix\fI[=DIR]\fP] [\-\-version] [\-\-libs] [\-\-cflags] [\-\-plugindir] [\-\-skindir]
+[\-\-prefix\fI[=DIR]\fP] [\-\-exec\-prefix\fI[=DIR]\fP] [\-\-version]
+[\-\-libs] [\-\-cflags] [\-\-objcflags]
+[\-\-plugindir] [\-\-datadir] [\-\-scriptdir] [\-\-localedir]
 .SH DESCRIPTION
 .PP
 \fIxine-config\fP is a tool that is used to determine
@@ -24,11 +31,20 @@ Print the currently installed version of \fIlibxine\fP on the standard output.
 Print the linker flags that are necessary to link \fIlibxine\fP to a program.
 .TP 8
 .B  \-\-cflags
-Print the compiler flags that are necessary to compile a program that uses
-\fIlibxine\fP.
+.TQ 8
+.B  \-\-objcflags
+Print the compiler flags (for C and Objective C, respectively) that are
+necessary to compile a program that uses \fIlibxine\fP.
 .TP 8
 .B  \-\-plugindir
-Print the directory where \fIlibxine\fP plugins are stored/expected.
+.TQ 8
+.B  \-\-datadir
+.TQ 8
+.B  \-\-scriptdir
+.TQ 8
+.B  \-\-localedir
+Print the directory where, respectively, \fIlibxine\fP plugins, data files,
+scripts and locale data are stored/expected.
 .TP 8
 .B  \-\-prefix=PREFIX
 If specified, use PREFIX instead of the installation prefix that \fIxine-lib\fP
@@ -46,8 +62,8 @@ and \-\-libs options.  This option must be specified before any
 .BR xine-lib (3),
 .BR xine (1)
 .SH COPYRIGHT
-Copyright \(co 2001 Siggi Langauf/the xine project, based on the man page
-for gtk-config, \(co 1998 Owen Taylor
+Copyright \(co 2001 Siggi Langauf, \(co 2001-2008 the xine project.
+Based on the man page for gtk-config, \(co 1998 Owen Taylor.
 
 Permission to use, copy, modify, and distribute this software and its
 documentation for any purpose and without fee is hereby granted,
