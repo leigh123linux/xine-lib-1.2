@@ -51,9 +51,6 @@
 typedef struct {
   audio_driver_class_t  driver_class;
   xine_t                      *xine;
-
-  struct pa_context           *context;   /*< Pulseaudio connection context */
-  struct pa_threaded_mainloop *mainloop;  /*< Main event loop object */
 } pulse_class_t;
 
 typedef struct pulse_driver_s {
@@ -64,7 +61,10 @@ typedef struct pulse_driver_s {
 
   char             *host;    /*< The host to connect to */
   char             *sink;    /*< The sink to connect to */
-  struct pa_stream *stream;  /*< Pulseaudio playback stream object */
+
+  pa_threaded_mainloop *mainloop;  /*< Main event loop object */
+  pa_context *context;             /*< Pulseaudio connection context */
+  pa_stream  *stream;              /*< Pulseaudio playback stream object */
 
   pa_volume_t       swvolume;
   int muted;
@@ -88,7 +88,7 @@ typedef struct pulse_driver_s {
  */
 static void __xine_pa_context_state_callback(pa_context *c, void *this_gen)
 {
-  pulse_class_t * this = (pulse_class_t*) this_gen;
+  pulse_driver_t * this = (pulse_driver_t*) this_gen;
 
   switch (pa_context_get_state(c)) {
 
@@ -121,7 +121,7 @@ static void __xine_pa_stream_state_callback(pa_stream *s, void *this_gen)
     case PA_STREAM_READY:
     case PA_STREAM_TERMINATED:
     case PA_STREAM_FAILED:
-      pa_threaded_mainloop_signal(this->pa_class->mainloop, 0);
+      pa_threaded_mainloop_signal(this->mainloop, 0);
       break;
 
     case PA_STREAM_UNCONNECTED:
@@ -141,7 +141,7 @@ static void __xine_pa_stream_request_callback(pa_stream *s, size_t nbytes, void 
 {
   pulse_driver_t * this = (pulse_driver_t*) this_gen;
 
-  pa_threaded_mainloop_signal(this->pa_class->mainloop, 0);
+  pa_threaded_mainloop_signal(this->mainloop, 0);
 }
 
 /**
@@ -154,7 +154,7 @@ static void __xine_pa_stream_notify_callback(pa_stream *s, void *this_gen)
 {
   pulse_driver_t * this = (pulse_driver_t*) this_gen;
 
-  pa_threaded_mainloop_signal(this->pa_class->mainloop, 0);
+  pa_threaded_mainloop_signal(this->mainloop, 0);
 }
 
 /**
@@ -169,9 +169,9 @@ static void __xine_pa_stream_success_callback(pa_stream *s, int success, void *t
   pulse_driver_t * this = (pulse_driver_t*) this_gen;
 
   if (!success)
-    xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: stream operation failed: %s\n", pa_strerror(pa_context_errno(this->pa_class->context)));
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: stream operation failed: %s\n", pa_strerror(pa_context_errno(this->context)));
 
-  pa_threaded_mainloop_signal(this->pa_class->mainloop, 0);
+  pa_threaded_mainloop_signal(this->mainloop, 0);
 }
 
 /**
@@ -183,7 +183,7 @@ static void __xine_pa_stream_success_callback(pa_stream *s, int success, void *t
  */
 static void __xine_pa_context_success_callback(pa_context *c, int success, void *this_gen)
 {
-  pulse_class_t *this = (pulse_class_t*) this_gen;
+  pulse_driver_t *this = (pulse_driver_t*) this_gen;
 
   if (!success)
     xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: context operation failed: %s\n", pa_strerror(pa_context_errno(this->context)));
@@ -209,7 +209,7 @@ static void __xine_pa_sink_info_callback(pa_context *c, const pa_sink_input_info
 
   if (is_last < 0) {
     xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: Failed to get sink input info: %s\n",
-             pa_strerror(pa_context_errno(this->pa_class->context)));
+             pa_strerror(pa_context_errno(this->context)));
     return;
   }
 
@@ -219,6 +219,53 @@ static void __xine_pa_sink_info_callback(pa_context *c, const pa_sink_input_info
   this->cvolume = info->volume;
   this->swvolume = pa_sw_volume_to_linear(pa_cvolume_avg(&info->volume));
   this->muted = info->mute;
+}
+
+static int connect_context(pulse_driver_t *this) {
+
+  if (this->context && (pa_context_get_state(this->context) == PA_CONTEXT_FAILED ||
+                        pa_context_get_state(this->context) == PA_CONTEXT_TERMINATED)) {
+    pa_context_unref(this->context);
+    this->context = NULL;
+  }
+
+  if (!this->context) {
+    char fn[PATH_MAX], *p;
+
+    if (pa_get_binary_name(fn, sizeof(fn)))
+      p = pa_path_get_filename(fn);
+    else
+      p = "Xine";
+
+    this->context = pa_context_new(pa_threaded_mainloop_get_api(this->mainloop), p);
+    _x_assert(this->context);
+
+    pa_context_set_state_callback(this->context, __xine_pa_context_state_callback, this);
+  }
+
+  if (pa_context_get_state(this->context) == PA_CONTEXT_UNCONNECTED) {
+
+    if (pa_context_connect(this->context, this->host, 0, NULL) < 0) {
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: failed to connect context object %s\n", pa_strerror(pa_context_errno(this->context)));
+      return -1;
+    }
+  }
+
+  for (;;) {
+    pa_context_state_t state = pa_context_get_state(this->context);
+
+    if (state == PA_CONTEXT_FAILED || state == PA_CONTEXT_TERMINATED) {
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: failed to connect context object: %s\n", pa_strerror(pa_context_errno(this->context)));
+      return -1;
+    }
+
+    if (state == PA_CONTEXT_READY)
+      break;
+
+    pa_threaded_mainloop_wait(this->mainloop);
+  }
+
+  return 0;
 }
 
 /*
@@ -240,14 +287,14 @@ static int ao_pulse_open(ao_driver_t *this_gen,
     return 0;
   }
 
-  pa_threaded_mainloop_lock(this->pa_class->mainloop);
+  pa_threaded_mainloop_lock(this->mainloop);
 
   if (this->stream) {
 
     if (mode == this->mode && rate == this->sample_rate &&
         bits == this->bits_per_sample) {
 
-      pa_threaded_mainloop_unlock(this->pa_class->mainloop);
+      pa_threaded_mainloop_unlock(this->mainloop);
       return this->sample_rate;
     }
 
@@ -325,50 +372,11 @@ static int ao_pulse_open(ao_driver_t *this_gen,
     goto fail;
   }
 
-  if ( this->pa_class->context && (pa_context_get_state(this->pa_class->context) == PA_CONTEXT_FAILED ||
-                                   pa_context_get_state(this->pa_class->context) == PA_CONTEXT_TERMINATED)) {
-    pa_context_unref(this->pa_class->context);
-    this->pa_class->context = NULL;
-  }
-
-  if (!this->pa_class->context) {
-    char fn[PATH_MAX], *p;
-
-    if (pa_get_binary_name(fn, sizeof(fn)))
-      p = pa_path_get_filename(fn);
-    else
-      p = "Xine";
-
-    this->pa_class->context = pa_context_new(pa_threaded_mainloop_get_api(this->pa_class->mainloop), p);
-    _x_assert(this->pa_class->context);
-
-    pa_context_set_state_callback(this->pa_class->context, __xine_pa_context_state_callback, this->pa_class);
-  }
-
-  if (pa_context_get_state(this->pa_class->context) == PA_CONTEXT_UNCONNECTED) {
-
-    if (pa_context_connect(this->pa_class->context, this->host, 0, NULL) < 0) {
-      xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: failed to connect context object\n");
-      goto fail;
-    }
-  }
-
-  for (;;) {
-    pa_context_state_t state = pa_context_get_state(this->pa_class->context);
-
-    if (state == PA_CONTEXT_FAILED || state == PA_CONTEXT_TERMINATED) {
-      xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: failed to connect context object: %s\n", pa_strerror(pa_context_errno(this->pa_class->context)));
-      goto fail;
-    }
-
-    if (state == PA_CONTEXT_READY)
-      break;
-
-    pa_threaded_mainloop_wait(this->pa_class->mainloop);
-  }
+  if (connect_context(this) < 0)
+    goto fail;
 
   _x_assert(!this->stream);
-  this->stream = pa_stream_new(this->pa_class->context, "Audio Stream", &ss, &cm);
+  this->stream = pa_stream_new(this->context, "Audio Stream", &ss, &cm);
   _x_assert(this->stream);
 
   pa_stream_set_state_callback(this->stream, __xine_pa_stream_state_callback, this);
@@ -380,28 +388,28 @@ static int ao_pulse_open(ao_driver_t *this_gen,
                              NULL, NULL);
 
   for (;;) {
-    pa_context_state_t cstate = pa_context_get_state(this->pa_class->context);
+    pa_context_state_t cstate = pa_context_get_state(this->context);
     pa_stream_state_t sstate = pa_stream_get_state(this->stream);
 
     if (cstate == PA_CONTEXT_FAILED || cstate == PA_CONTEXT_TERMINATED ||
         sstate == PA_STREAM_FAILED || sstate == PA_STREAM_TERMINATED) {
-      xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: failed to connect context object: %s\n", pa_strerror(pa_context_errno(this->pa_class->context)));
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: failed to connect context object: %s\n", pa_strerror(pa_context_errno(this->context)));
       goto fail;
     }
 
     if (sstate == PA_STREAM_READY)
       break;
 
-    pa_threaded_mainloop_wait(this->pa_class->mainloop);
+    pa_threaded_mainloop_wait(this->mainloop);
   }
 
-  pa_threaded_mainloop_unlock(this->pa_class->mainloop);
+  pa_threaded_mainloop_unlock(this->mainloop);
 
   return this->sample_rate;
 
  fail:
 
-  pa_threaded_mainloop_unlock(this->pa_class->mainloop);
+  pa_threaded_mainloop_unlock(this->mainloop);
   this_gen->close(this_gen);
   return 0;
 }
@@ -432,7 +440,7 @@ static int ao_pulse_write(ao_driver_t *this_gen, int16_t *data,
   int ret = -1;
   size_t done = 0;
 
-  pa_threaded_mainloop_lock(this->pa_class->mainloop);
+  pa_threaded_mainloop_lock(this->mainloop);
 
   while (size > 0) {
     size_t l;
@@ -440,8 +448,8 @@ static int ao_pulse_write(ao_driver_t *this_gen, int16_t *data,
     for (;;) {
 
       if (!this->stream ||
-          !this->pa_class->context ||
-          pa_context_get_state(this->pa_class->context) != PA_CONTEXT_READY ||
+          !this->context ||
+          pa_context_get_state(this->context) != PA_CONTEXT_READY ||
           pa_stream_get_state(this->stream) != PA_STREAM_READY)
         goto finish;
 
@@ -451,7 +459,7 @@ static int ao_pulse_write(ao_driver_t *this_gen, int16_t *data,
       if (l > 0)
         break;
 
-      pa_threaded_mainloop_wait(this->pa_class->mainloop);
+      pa_threaded_mainloop_wait(this->mainloop);
     }
 
     if (l > size)
@@ -467,7 +475,7 @@ static int ao_pulse_write(ao_driver_t *this_gen, int16_t *data,
 
 finish:
 
-  pa_threaded_mainloop_unlock(this->pa_class->mainloop);
+  pa_threaded_mainloop_unlock(this->mainloop);
 
 /*   fprintf(stderr, "write-out\n"); */
 
@@ -482,14 +490,14 @@ static int ao_pulse_delay (ao_driver_t *this_gen)
 
 /*   fprintf(stderr, "delay-in\n"); */
 
-  pa_threaded_mainloop_lock(this->pa_class->mainloop);
+  pa_threaded_mainloop_lock(this->mainloop);
 
   for (;;) {
     pa_usec_t latency = 0;
 
     if (!this->stream ||
-        !this->pa_class->context ||
-        pa_context_get_state(this->pa_class->context) != PA_CONTEXT_READY ||
+        !this->context ||
+        pa_context_get_state(this->context) != PA_CONTEXT_READY ||
         pa_stream_get_state(this->stream) != PA_STREAM_READY)
       goto finish;
 
@@ -498,17 +506,17 @@ static int ao_pulse_delay (ao_driver_t *this_gen)
       goto finish;
     }
 
-    if (pa_context_errno(this->pa_class->context) != PA_ERR_NODATA) {
-      xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: failed to query latency: %s\n", pa_strerror(pa_context_errno(this->pa_class->context)));
+    if (pa_context_errno(this->context) != PA_ERR_NODATA) {
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: failed to query latency: %s\n", pa_strerror(pa_context_errno(this->context)));
       goto finish;
     }
 
-    pa_threaded_mainloop_wait(this->pa_class->mainloop);
+    pa_threaded_mainloop_wait(this->mainloop);
   }
 
 finish:
 
-  pa_threaded_mainloop_unlock(this->pa_class->mainloop);
+  pa_threaded_mainloop_unlock(this->mainloop);
 
   return ret;
 }
@@ -517,7 +525,7 @@ static void ao_pulse_close(ao_driver_t *this_gen)
 {
   pulse_driver_t *this = (pulse_driver_t *) this_gen;
 
-  pa_threaded_mainloop_lock(this->pa_class->mainloop);
+  pa_threaded_mainloop_lock(this->mainloop);
 
   if (this->stream) {
     pa_stream_disconnect(this->stream);
@@ -525,7 +533,7 @@ static void ao_pulse_close(ao_driver_t *this_gen)
     this->stream = NULL;
   }
 
-  pa_threaded_mainloop_unlock(this->pa_class->mainloop);
+  pa_threaded_mainloop_unlock(this->mainloop);
 }
 
 static uint32_t ao_pulse_get_capabilities (ao_driver_t *this_gen) {
@@ -539,7 +547,20 @@ static void ao_pulse_exit(ao_driver_t *this_gen) {
 
   ao_pulse_close(this_gen);
 
-  free (this);
+  pa_threaded_mainloop_lock(this->mainloop);
+
+  if (this->context) {
+    pa_context_disconnect(this->context);
+    pa_context_unref(this->context);
+  }
+
+  pa_threaded_mainloop_unlock(this->mainloop);
+
+  pa_threaded_mainloop_free(this->mainloop);
+
+  free(this->host);
+  free(this->sink);
+  free(this);
 }
 
 static int wait_for_operation(pulse_driver_t *this, pa_operation *o) {
@@ -547,15 +568,15 @@ static int wait_for_operation(pulse_driver_t *this, pa_operation *o) {
   for (;;) {
 
     if (!this->stream ||
-        !this->pa_class->context ||
-        pa_context_get_state(this->pa_class->context) != PA_CONTEXT_READY ||
+        !this->context ||
+        pa_context_get_state(this->context) != PA_CONTEXT_READY ||
         pa_stream_get_state(this->stream) != PA_STREAM_READY)
       return -1;
 
     if (pa_operation_get_state(o) != PA_OPERATION_RUNNING)
       return 0;
 
-    pa_threaded_mainloop_wait(this->pa_class->mainloop);
+    pa_threaded_mainloop_wait(this->mainloop);
   }
 }
 
@@ -564,13 +585,13 @@ static int ao_pulse_get_property (ao_driver_t *this_gen, int property) {
   int result = 0;
   pa_operation *o = NULL;
 
-  pa_threaded_mainloop_lock(this->pa_class->mainloop);
+  pa_threaded_mainloop_lock(this->mainloop);
 
   if (!this->stream ||
-      !this->pa_class->context ||
-      pa_context_get_state(this->pa_class->context) != PA_CONTEXT_READY ||
+      !this->context ||
+      pa_context_get_state(this->context) != PA_CONTEXT_READY ||
       pa_stream_get_state(this->stream) != PA_STREAM_READY) {
-    pa_threaded_mainloop_unlock(this->pa_class->mainloop);
+    pa_threaded_mainloop_unlock(this->mainloop);
     return 0;
   }
 
@@ -580,7 +601,7 @@ static int ao_pulse_get_property (ao_driver_t *this_gen, int property) {
     case AO_PROP_PCM_VOL:
     case AO_PROP_MIXER_VOL:
 
-      o = pa_context_get_sink_input_info(this->pa_class->context, pa_stream_get_index(this->stream),
+      o = pa_context_get_sink_input_info(this->context, pa_stream_get_index(this->stream),
                                          __xine_pa_sink_info_callback, this);
 
       break;
@@ -603,7 +624,7 @@ static int ao_pulse_get_property (ao_driver_t *this_gen, int property) {
       break;
   }
 
-  pa_threaded_mainloop_unlock(this->pa_class->mainloop);
+  pa_threaded_mainloop_unlock(this->mainloop);
 
   return result;
 }
@@ -613,13 +634,13 @@ static int ao_pulse_set_property (ao_driver_t *this_gen, int property, int value
   int result = ~value;
   pa_operation *o = NULL;
 
-  pa_threaded_mainloop_lock(this->pa_class->mainloop);
+  pa_threaded_mainloop_lock(this->mainloop);
 
   if (!this->stream ||
-      !this->pa_class->context ||
-      pa_context_get_state(this->pa_class->context) != PA_CONTEXT_READY ||
+      !this->context ||
+      pa_context_get_state(this->context) != PA_CONTEXT_READY ||
       pa_stream_get_state(this->stream) != PA_STREAM_READY) {
-    pa_threaded_mainloop_unlock(this->pa_class->mainloop);
+    pa_threaded_mainloop_unlock(this->mainloop);
     return 0;
   }
 
@@ -630,8 +651,8 @@ static int ao_pulse_set_property (ao_driver_t *this_gen, int property, int value
       this->swvolume = pa_sw_volume_from_linear((double)value/100.0);
       pa_cvolume_set(&this->cvolume, pa_stream_get_sample_spec(this->stream)->channels, this->swvolume);
 
-      o = pa_context_set_sink_input_volume(this->pa_class->context, pa_stream_get_index(this->stream),
-                                           &this->cvolume, __xine_pa_context_success_callback, this->pa_class);
+      o = pa_context_set_sink_input_volume(this->context, pa_stream_get_index(this->stream),
+                                           &this->cvolume, __xine_pa_context_success_callback, this);
 
       result = value;
       break;
@@ -640,8 +661,8 @@ static int ao_pulse_set_property (ao_driver_t *this_gen, int property, int value
 
       this->muted = value;
 
-      o = pa_context_set_sink_input_mute(this->pa_class->context, pa_stream_get_index(this->stream),
-                                           value, __xine_pa_context_success_callback, this->pa_class);
+      o = pa_context_set_sink_input_mute(this->context, pa_stream_get_index(this->stream),
+                                           value, __xine_pa_context_success_callback, this);
 
       result = value;
   }
@@ -651,7 +672,7 @@ static int ao_pulse_set_property (ao_driver_t *this_gen, int property, int value
     pa_operation_unref(o);
   }
 
-  pa_threaded_mainloop_unlock(this->pa_class->mainloop);
+  pa_threaded_mainloop_unlock(this->mainloop);
 
   return result;
 }
@@ -660,13 +681,13 @@ static int ao_pulse_ctrl(ao_driver_t *this_gen, int cmd, ...) {
   pulse_driver_t *this = (pulse_driver_t *) this_gen;
   pa_operation *o = NULL;
 
-  pa_threaded_mainloop_lock(this->pa_class->mainloop);
+  pa_threaded_mainloop_lock(this->mainloop);
 
   if (!this->stream ||
-      !this->pa_class->context ||
-      pa_context_get_state(this->pa_class->context) != PA_CONTEXT_READY ||
+      !this->context ||
+      pa_context_get_state(this->context) != PA_CONTEXT_READY ||
       pa_stream_get_state(this->stream) != PA_STREAM_READY) {
-    pa_threaded_mainloop_unlock(this->pa_class->mainloop);
+    pa_threaded_mainloop_unlock(this->mainloop);
     return 0;
   }
 
@@ -689,7 +710,7 @@ static int ao_pulse_ctrl(ao_driver_t *this_gen, int cmd, ...) {
     pa_operation_unref(o);
   }
 
-  pa_threaded_mainloop_unlock(this->pa_class->mainloop);
+  pa_threaded_mainloop_unlock(this->mainloop);
 
   return 0;
 }
@@ -697,7 +718,8 @@ static int ao_pulse_ctrl(ao_driver_t *this_gen, int cmd, ...) {
 static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *data) {
   pulse_class_t   *class = (pulse_class_t *) class_gen;
   pulse_driver_t  *this;
-  char *device;
+  const char* device;
+  int r;
 
   lprintf ("audio_pulse_out: open_plugin called\n");
 
@@ -708,15 +730,17 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   this->xine = class->xine;
   this->host = NULL;
   this->sink = NULL;
+  this->context = NULL;
+  this->mainloop = NULL;
 
-  device = this->xine->config->register_string(this->xine->config,
-                                               "audio.pulseaudio_device",
-                                               "",
-                                               _("device used for pulseaudio"),
-                                               _("use 'server[:sink]' for setting the "
-                                                 "pulseaudio sink device."),
-                                               10, NULL,
-                                               NULL);
+  device = class->xine->config->register_string(class->xine->config,
+                                         "audio.pulseaudio_device",
+                                         "",
+                                         _("device used for pulseaudio"),
+                                         _("use 'server[:sink]' for setting the "
+                                           "pulseaudio sink device."),
+                                         10, NULL,
+                                         NULL);
 
   if (device && *device) {
     char *sep = strrchr(device, ':');
@@ -739,6 +763,10 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
       }
     }
   }
+
+  this->mainloop = pa_threaded_mainloop_new();
+  _x_assert(this->mainloop);
+  pa_threaded_mainloop_start(this->mainloop);
 
   /*
    * set capabilities
@@ -769,6 +797,15 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 
   this->pa_class = class;
 
+  pa_threaded_mainloop_lock(this->mainloop);
+  r = connect_context(this);
+  pa_threaded_mainloop_unlock(this->mainloop);
+
+  if (r < 0) {
+    ao_pulse_exit((ao_driver_t *) this);
+    return NULL;
+  }
+
   return &this->ao_driver;
 }
 
@@ -788,16 +825,7 @@ static void dispose_class (audio_driver_class_t *this_gen) {
 
   pulse_class_t *this = (pulse_class_t *) this_gen;
 
-  pa_threaded_mainloop_stop(this->mainloop);
-
-  if (this->context) {
-    pa_context_disconnect(this->context);
-    pa_context_unref(this->context);
-  }
-
-  pa_threaded_mainloop_free(this->mainloop);
-
-  free (this);
+  free(this);
 }
 
 static void *init_class (xine_t *xine, void *data) {
@@ -810,17 +838,11 @@ static void *init_class (xine_t *xine, void *data) {
   if (!this)
     return NULL;
 
+  this->xine = xine;
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.get_identifier  = get_identifier;
   this->driver_class.get_description = get_description;
   this->driver_class.dispose         = dispose_class;
-
-  this->xine = xine;
-  this->context = NULL;
-
-  this->mainloop = pa_threaded_mainloop_new();
-  _x_assert(this->mainloop);
-  pa_threaded_mainloop_start(this->mainloop);
 
   return this;
 }
