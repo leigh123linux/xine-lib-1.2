@@ -327,7 +327,7 @@ char *ebml_alloc_read_ascii (ebml_parser_t *ebml, ebml_elem_t *elem)
   if (text)
   {
     text[elem->len] = '\0';
-    if (ebml_read_ascii (ebml, &elem, text))
+    if (ebml_read_ascii (ebml, elem, text))
       return text;
     free (text);
   }
