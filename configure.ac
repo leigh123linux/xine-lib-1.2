@@ -19,6 +19,8 @@ XINE_MINOR=1
 XINE_SUB=11
 dnl XINE_PATCH should be left empty or set to ".1" or ".2" or something similar
 XINE_PATCH=.1
+dnl Release series number (usually $XINE_MAJOR.$XINE_MINOR)
+XINE_SERIES=1.1
 
 dnl if test $XINE_SUB -eq 0 ; then
 dnl  XINE_SUBPART="";
@@ -66,6 +68,7 @@ AC_SUBST(XINE_MAJOR)
 AC_SUBST(XINE_MINOR)
 AC_SUBST(XINE_SUB)
 AC_SUBST(XINE_PATCH)
+AC_SUBST(XINE_SERIES)
 AC_SUBST(XINE_IFACE_AGE)
 AC_SUBST(XINE_BIN_AGE)
 
@@ -253,6 +256,8 @@ AC_CHECK_DECL(sysi86,[
       ],,[
 #include <sys/sysi86.h>
 ])
+
+AC_GETOPT_LONG
 
 dnl ---------------------------------------------
 dnl Windows ports checks

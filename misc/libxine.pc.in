@@ -1,5 +1,6 @@
 prefix=@prefix@
 exec_prefix=@exec_prefix@
+bindir=@bindir@
 libdir=@libdir@
 includedir=@includedir@
 
@@ -14,6 +15,8 @@ plugindir=@XINE_PLUGINDIR@
 scriptdir=@XINE_SCRIPTPATH@
 localedir=@XINE_LOCALEDIR@
 objcflags=@OBJCFLAGS@
+
+xine_list=${bindir}/xine-list-@XINE_SERIES@
 
 Name: libxine
 Description: The xine engine library

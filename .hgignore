@@ -4,6 +4,7 @@ syntax: glob
 
 *.lo
 *.la
+*.o
 .libs/*
 .deps/*
 Makefile
@@ -45,6 +46,7 @@ doc/faq/faq.html
 doc/faq/faq.txt
 doc/hackersguide/*.png
 doc/hackersguide/hackersguide.html
+doc/man/*/xine-list-*.1
 
 include/xine.h
 
@@ -54,6 +56,7 @@ misc/libxine.pc
 misc/relchk.sh
 misc/xine-config
 misc/xine-lib.spec
+misc/xine-list-*
 
 po/POTFILES
 po/*.gmo
