@@ -66,6 +66,8 @@ AC_DEFINE_UNQUOTED([XINE_SUB],   [$XINE_SUB],   [xine sub version number])
 XINE_PATCH=XINE_VERSION_PATCH
 AC_SUBST(XINE_PATCH)
 AC_DEFINE_UNQUOTED([XINE_PATCH], [$XINE_PATCH], [xine patch version number])
+XINE_SERIES=XINE_VERSION_SERIES
+AC_SUBST(XINE_SERIES)
 
 XINE_LT_CURRENT=__XINE_LT_CURRENT
 AC_SUBST(XINE_LT_CURRENT)
@@ -898,6 +900,7 @@ AC_CHECK_FUNCS([pthread_mutex_timedlock],
                [AC_LIBOBJ([timedlock])])
 LIBS="$ac_save_LIBS"
 
+AC_GETOPT_LONG
 
 dnl --------------------------
 dnl checks for system services

@@ -13,8 +13,12 @@ EXTRA_DIST = build_rpms.sh \
 	fonts/cetus.ttf
 
 bin_SCRIPTS = xine-config
+bin_PROGRAMS = xine-list-@XINE_SERIES@
 
 pkgconfig_DATA=libxine.pc
+
+xine_list_@XINE_SERIES@_SOURCES = xine-list.c
+xine_list_@XINE_SERIES@_LDADD = $(XINE_LIB)
 
 fontdir = $(pkgdatadir)/fonts
 dist_font_DATA = \

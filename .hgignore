@@ -64,6 +64,7 @@ doc/faq/faq.html
 doc/faq/faq.txt
 doc/hackersguide/*.png
 doc/hackersguide/hackersguide.html
+doc/man/*/xine-list-*.1
 doc/Doxyfile
 
 include/xine/version.h
@@ -75,6 +76,7 @@ misc/relchk.sh
 misc/xine-config
 misc/xine-lib.spec
 misc/xine-fontconv
+misc/xine-list-*
 misc/cdda_server
 
 po/POTFILES
