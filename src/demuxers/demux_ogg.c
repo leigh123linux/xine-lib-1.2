@@ -2166,6 +2166,9 @@ static const char *ogg_get_extensions (demux_class_t *this_gen) {
 static const char *ogg_get_mimetypes (demux_class_t *this_gen) {
   return "application/ogg: ogx: Ogg Stream;"
          "application/x-ogg: ogx: Ogg Stream;"
+         "application/x-ogm: ogx: Ogg Stream;"
+         "application/x-ogm-audio: oga: Ogg Audio;"
+         "application/x-ogm-video: ogv: Ogg Video;"
          "audio/ogg: oga: Ogg Audio;"
          "audio/x-ogg: oga: Ogg Audio;"
          "video/ogg: ogv: Ogg Video;"
