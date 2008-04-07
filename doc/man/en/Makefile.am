@@ -7,7 +7,7 @@ man_MANS = $(STATICMANS) $(DYNAMICMANS)
 
 BUILT_SOURCES = $(DYNAMICMANS)
 DISTCLEANFILES = $(DYNAMICMANS)
-EXTRA_DIST = $(STATICMANS) $(suffix .in,$(DYNAMICMANS))
+EXTRA_DIST = $(STATICMANS) xine-list.1.in
 
 xine-list-@XINE_SERIES@.1: xine-list.1.in
-	(echo '.ds xl xine\-list\-@XINE_MAJOR@.@XINE_MINOR@'; cat $<) >$@
+	(echo '.ds xl xine\-list\-@XINE_SERIES@'; cat $<) >$@
