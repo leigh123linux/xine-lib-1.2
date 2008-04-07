@@ -221,7 +221,7 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 	    {
 	      int version;
 	      int data_len;
-	      uint8_t * extradata;
+	      int extradata;
 
 	      version = _X_BE_16 (this->buf+4);
 	      if (version == 4) {
@@ -229,13 +229,13 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 		this->audio_bits = _X_BE_16 (this->buf+52);
 		this->audio_channels = _X_BE_16 (this->buf+54);
 		data_len = _X_BE_32 (this->buf+67);
-		extradata = this->buf + 71;
+		extradata = 71;
 	      } else {
 		this->audio_sample_rate = _X_BE_16 (this->buf+54);
 		this->audio_bits = _X_BE_16 (this->buf+58);
 		this->audio_channels = _X_BE_16 (this->buf+60);
 		data_len = _X_BE_32 (this->buf+74);
-		extradata = this->buf + 78;
+		extradata = 78;
 	      }
 	      this->context->block_align = _X_BE_16 (this->buf+44);
 
@@ -244,10 +244,13 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 		      this->audio_channels, this->audio_bits, this->audio_sample_rate,
 		      this->context->block_align);
 
+              if (extradata + data_len > this->size)
+                break; /* abort early - extradata length is bad */
+
 	      this->context->extradata_size = data_len;
 	      this->context->extradata      = xine_xmalloc(this->context->extradata_size +
 							   FF_INPUT_BUFFER_PADDING_SIZE);
-	      xine_fast_memcpy (this->context->extradata, extradata,
+	      xine_fast_memcpy (this->context->extradata, this->buf + extradata,
 				this->context->extradata_size);
 	      break;
 	    }
