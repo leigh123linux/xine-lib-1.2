@@ -62,6 +62,10 @@ typedef struct {
   off_t                data_start;
   off_t                data_size;
   
+  int                  sps, cfs, w, h;
+  int                  frame_size;
+  uint8_t             *frame_buffer;
+
   unsigned char       *header;
   unsigned int         header_size;
 } demux_ra_t;
@@ -69,6 +73,16 @@ typedef struct {
 typedef struct {
   demux_class_t     demux_class;
 } demux_ra_class_t;
+
+static const unsigned char sipr_swaps[38][2]={
+  {0,63},{1,22},{2,44},{3,90},{5,81},{7,31},{8,86},{9,58},{10,36},{12,68},
+  {13,39},{14,73},{15,53},{16,69},{17,57},{19,88},{20,34},{21,71},{24,46},
+  {25,94},{26,54},{28,75},{29,50},{32,70},{33,92},{35,74},{38,85},{40,56},
+  {42,87},{43,65},{45,59},{48,79},{49,93},{51,89},{55,95},{61,76},{67,83},
+  {77,80}};
+
+/* Map flavour to bytes per second */
+static int sipr_fl2bps[4] = {813, 1062, 625, 2000}; // 6.5, 8.5, 5, 16 kbit per second
 
 /* returns 1 if the RealAudio file was opened successfully, 0 otherwise */
 static int open_ra_file(demux_ra_t *this) {
@@ -165,20 +179,41 @@ static int open_ra_file(demux_ra_t *this) {
     offset++;
   
   /* Fourcc for version 3 comes after meta info */
-  if((version == 3) && ((offset+7) <= this->header_size)) {
-    if(this->header[offset+2] == 4)
-      this->fourcc = _X_ME_32(&this->header[offset+3]);
-    else {
-      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
-	      "demux_realaudio: invalid fourcc size %d\n", this->header[offset+2]);
-      free(this->header);
-      return 0;
+  if(version == 3) {
+    if (((offset+7) <= this->header_size)) {
+      if(this->header[offset+2] == 4)
+        this->fourcc = _X_ME_32(&this->header[offset+3]);
+      else {
+        xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+	        "demux_realaudio: invalid fourcc size %d\n", this->header[offset+2]);
+        free(this->header);
+        return 0;
+      }
+    } else {
+      this->fourcc = ME_FOURCC('l', 'p', 'c', 'J'); 
     }
   }
   
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_FOURCC, this->fourcc);
   this->audio_type = _x_formattag_to_buf_audio(this->fourcc);
 
+  if (version == 4) {
+    this->sps         = _X_BE_16 (this->header+44);
+    this->w           = _X_BE_16 (this->header+42);
+    this->h           = _X_BE_16 (this->header+40);
+    this->cfs         = _X_BE_32 (this->header+24);
+    if (this->sps) {
+      this->frame_size      = this->sps * this->h * this->sps;
+      this->frame_buffer    = xine_xmalloc (this->frame_size);
+    } else {
+      this->frame_size      = this->w * this->h;
+      this->frame_buffer    = xine_xmalloc (this->frame_size);
+    }
+
+    if (this->audio_type == BUF_AUDIO_28_8 || this->audio_type == BUF_AUDIO_SIPRO)
+      this->block_align = this->cfs;
+  }
+ 
   /* seek to start of data */
   this->data_start = this->header_size;
   if (this->input->seek(this->input, this->data_start, SEEK_SET) !=
@@ -212,7 +247,65 @@ static int demux_ra_send_chunk(demux_plugin_t *this_gen) {
     this->seek_flag = 0;
   }
 
-  if(_x_demux_read_send_data(this->audio_fifo, this->input, this->block_align, 
+  if (this->audio_type == BUF_AUDIO_28_8 || this->audio_type == BUF_AUDIO_SIPRO) {
+    int x;
+    uint8_t * buffer;
+
+    buffer = this->frame_buffer;
+    if (this->audio_type == BUF_AUDIO_SIPRO) {
+      int n;
+      int len = this->h * this->w;
+      int bs = len * 2 / 96;  /* nibbles per subpacket */
+      if(this->input->read(this->input, this->frame_buffer, len) < len) {
+	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+		"demux_realaudio: failed to read audio chunk\n");
+	
+	this->status = DEMUX_FINISHED;
+	return this->status; 
+      }
+      /* Perform reordering */
+      for(n = 0; n < 38; n++) {
+	int j;
+	int i = bs * sipr_swaps[n][0];
+	int o = bs * sipr_swaps[n][1];
+	/* swap nibbles of block 'i' with 'o'      TODO: optimize */
+	for(j = 0; j < bs; j++) {
+	  int x = (i & 1) ? (this->frame_buffer[i >> 1] >> 4) : (this->frame_buffer[i >> 1] & 0x0F);
+	  int y = (o & 1) ? (this->frame_buffer[o >> 1] >> 4) : (this->frame_buffer[o >> 1] & 0x0F);
+	  if(o & 1)
+	    this->frame_buffer[o >> 1] = (this->frame_buffer[o >> 1] & 0x0F) | (x << 4);
+	  else
+	    this->frame_buffer[o >> 1] = (this->frame_buffer[o >> 1] & 0xF0) | x;
+	  if(i & 1)
+	    this->frame_buffer[i >> 1] = (this->frame_buffer[i >> 1] & 0x0F) | (y << 4);
+	  else
+	    this->frame_buffer[i >> 1] = (this->frame_buffer[i >> 1] & 0xF0) | y;
+	  ++i; ++o;
+	}
+      }
+    } else {
+      int x, y;
+      int pos;
+
+      for (y = 0; y < this->h; y++)
+	for (x = 0; x < this->h / 2; x++) {
+	  pos = x * 2 * this->w + y * this->cfs;
+	  if(this->input->read(this->input, this->frame_buffer + pos,
+			       this->cfs) < this->cfs) {
+	    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+		    "demux_realaudio: failed to read audio chunk\n");
+	    
+	    this->status = DEMUX_FINISHED;
+	    return this->status; 
+	  }
+	}
+    }
+
+    _x_demux_send_data(this->audio_fifo,
+ 		       buffer, this->frame_size,
+		       current_pts, this->audio_type, 0,
+		       current_normpos, current_pts / 90, 0, 0);
+  } else if(_x_demux_read_send_data(this->audio_fifo, this->input, this->block_align, 
                              current_pts, this->audio_type, 0, current_normpos, 
                              current_pts / 90, 0, 0) < 0) {
     this->status = DEMUX_FINISHED;                           
@@ -299,6 +392,8 @@ static void demux_ra_dispose (demux_plugin_t *this_gen) {
   
   if(this->header)
     free(this->header);
+  if (this->frame_buffer)
+    free(this->frame_buffer);
 
   free(this);
 }
@@ -333,6 +428,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this         = xine_xmalloc (sizeof (demux_ra_t));
   this->stream = stream;
   this->input  = input;
+  this->frame_buffer = NULL;
 
   this->demux_plugin.send_headers      = demux_ra_send_headers;
   this->demux_plugin.send_chunk        = demux_ra_send_chunk;

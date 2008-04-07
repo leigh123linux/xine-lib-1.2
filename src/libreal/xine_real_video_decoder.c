@@ -551,8 +551,7 @@ void *init_realvdec (xine_t *xine, void *data) {
  * exported plugin catalog entry
  */
 
-static uint32_t supported_types[] = { BUF_VIDEO_RV20,
-                                      BUF_VIDEO_RV30,
+static uint32_t supported_types[] = { BUF_VIDEO_RV30,
                                       BUF_VIDEO_RV40,
                                       0 };
 

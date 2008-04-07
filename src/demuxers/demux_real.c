@@ -113,6 +113,12 @@ typedef struct {
   int                  index_entries;
   
   mdpr_t              *mdpr;
+  int                  sps, cfs, w, h;
+  int                  block_align;
+  int                  frame_size;
+  uint8_t             *frame_buffer;
+  uint32_t             frame_num_bytes;
+  uint32_t             sub_packet_cnt;
 } real_stream_t;
 
 typedef struct {
@@ -168,6 +174,12 @@ typedef struct {
   demux_class_t     demux_class;
 } demux_real_class_t;
 
+static const unsigned char sipr_swaps[38][2] = {
+  {0,63},{1,22},{2,44},{3,90},{5,81},{7,31},{8,86},{9,58},{10,36},{12,68},
+  {13,39},{14,73},{15,53},{16,69},{17,57},{19,88},{20,34},{21,71},{24,46},
+  {25,94},{26,54},{28,75},{29,50},{32,70},{33,92},{35,74},{38,85},{40,56},
+  {42,87},{43,65},{45,59},{48,79},{49,93},{51,89},{55,95},{61,76},{67,83},
+  {77,80}};
 
 static void real_parse_index(demux_real_t *this) {
 
@@ -316,6 +328,64 @@ static void real_free_mdpr (mdpr_t *mdpr) {
   free (mdpr);
 }
 
+static void real_parse_audio_specific_data (demux_real_t *this,
+					    real_stream_t * stream,
+					    uint8_t * data, int len)
+{
+  int coded_frame_size;
+  int codec_data_length;
+  int coded_frame_size2;
+  int subpacket_size;
+
+  coded_frame_size  = _X_BE_32 (data+24);
+  codec_data_length = _X_BE_16 (data+40);
+  coded_frame_size2 = _X_BE_16 (data+42);
+  subpacket_size    = _X_BE_16 (data+44);
+    
+  stream->sps         = subpacket_size;
+  stream->w           = coded_frame_size2;
+  stream->h           = codec_data_length;
+  stream->block_align = coded_frame_size2;
+  stream->cfs         = coded_frame_size;
+
+  switch (stream->buf_type) {
+  case BUF_AUDIO_COOK:
+  case BUF_AUDIO_ATRK:
+    stream->block_align = subpacket_size;
+    break;
+
+  case BUF_AUDIO_14_4:
+    break;
+
+  case BUF_AUDIO_28_8:
+    stream->block_align = stream->cfs;
+    break;
+
+  case BUF_AUDIO_SIPRO:
+    /* this->block_align = 19; */
+    break;
+
+  default:
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+	     "demux_real: error, i don't handle buf type 0x%08x\n", stream->buf_type);
+  }
+
+  if (stream->sps) {
+    stream->frame_size      = stream->w / stream->sps * stream->h * stream->sps;
+    stream->frame_buffer    = xine_xmalloc (stream->frame_size);
+    stream->frame_num_bytes = 0;
+  } else {
+    stream->frame_size      = stream->w * stream->h;
+    stream->frame_buffer    = xine_xmalloc (stream->frame_size);
+    stream->frame_num_bytes = 0;
+  }
+  stream->sub_packet_cnt = 0;
+
+  xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
+           "demux_real: buf type 0x%08x frame size %dblock align %d\n", stream->buf_type,
+	   stream->frame_size, stream->block_align);
+
+}
 
 static void real_parse_headers (demux_real_t *this) {
 
@@ -426,8 +496,16 @@ static void real_parse_headers (demux_real_t *this) {
         mdpr = real_parse_mdpr (chunk_buffer);
 
         lprintf ("parsing type specific data...\n");
+	if(!strcmp(mdpr->mime_type, "audio/X-MP3-draft-00")) {
+	  lprintf ("mpeg layer 3 audio detected...\n");
 
-        if(_X_BE_32(mdpr->type_specific_data) == RA_TAG) {
+	  fourcc = ME_FOURCC('a', 'd', 'u', 0x55);
+	  this->audio_streams[this->num_audio_streams].fourcc = fourcc;
+          this->audio_streams[this->num_audio_streams].buf_type = _x_formattag_to_buf_audio(fourcc);
+          this->audio_streams[this->num_audio_streams].index = NULL;
+          this->audio_streams[this->num_audio_streams].mdpr = mdpr;
+	  this->num_audio_streams++;
+        } else if(_X_BE_32(mdpr->type_specific_data) == RA_TAG) {
           int version, len;
 
           if(this->num_audio_streams == MAX_AUDIO_STREAMS) {
@@ -465,6 +543,10 @@ static void real_parse_headers (demux_real_t *this) {
           this->audio_streams[this->num_audio_streams].index = NULL;
           this->audio_streams[this->num_audio_streams].mdpr = mdpr;
 
+	  real_parse_audio_specific_data (this,
+					  &this->audio_streams[this->num_audio_streams], 
+					  mdpr->type_specific_data,
+					  mdpr->type_specific_len);
           this->num_audio_streams++;
 
         } else if(_X_BE_32(mdpr->type_specific_data + 4) == VIDO_TAG) {
@@ -985,6 +1067,7 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
   off_t           offset, input_length = 0;
   int             normpos = 0;
 
+ read_next_packet:
   if(this->reference_mode)
     return demux_real_parse_references(this);
     
@@ -1322,6 +1405,86 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
       }
         
       free(sizes);
+    } else if (this->audio_stream->buf_type == BUF_AUDIO_COOK ||
+	       this->audio_stream->buf_type == BUF_AUDIO_ATRK ||
+	       this->audio_stream->buf_type == BUF_AUDIO_28_8 ||
+	       this->audio_stream->buf_type == BUF_AUDIO_SIPRO) {
+      /* reorder */
+      uint8_t * buffer = this->audio_stream->frame_buffer;
+      int sps = this->audio_stream->sps;
+      int sph = this->audio_stream->h;
+      int cfs = this->audio_stream->cfs;
+      int w = this->audio_stream->w;
+      int spc = this->audio_stream->sub_packet_cnt;
+      int x, pos;
+
+      switch (this->audio_stream->buf_type) {
+      case BUF_AUDIO_28_8:
+	for (x = 0; x < sph / 2; x++) {
+	  pos = x * 2 * w + spc * cfs;
+	  if(this->input->read(this->input, buffer + pos, cfs) < cfs) {
+	    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+		    "demux_real: failed to read audio chunk\n");
+	    
+	    this->status = DEMUX_FINISHED;
+	    return this->status; 
+	  }
+	}
+	break;
+      case BUF_AUDIO_COOK:
+      case BUF_AUDIO_ATRK:
+	for (x = 0; x < w / sps; x++) {
+	  pos = sps * (sph * x + ((sph + 1) / 2) * (spc & 1) + (spc >> 1));
+	  if(this->input->read(this->input, buffer + pos, sps) < sps) {
+	    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+		    "demux_real: failed to read audio chunk\n");
+	    
+	    this->status = DEMUX_FINISHED;
+	    return this->status; 
+	  }
+	}
+	break;
+      case BUF_AUDIO_SIPRO:
+	pos = spc * w;
+	if(this->input->read(this->input, buffer + pos, w) < w) {
+	  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+		  "demux_real: failed to read audio chunk\n");
+	    
+	  this->status = DEMUX_FINISHED;
+	  return this->status; 
+	}
+	if (spc == sph - 1) {
+	  int n;
+	  int bs = sph * w * 2 / 96;  /*  nibbles per subpacket */
+	  /* Perform reordering */
+	  for(n=0; n < 38; n++) {
+	    int j;
+	    int i = bs * sipr_swaps[n][0];
+	    int o = bs * sipr_swaps[n][1];
+	    /* swap nibbles of block 'i' with 'o'      TODO: optimize */
+	    for(j = 0;j < bs; j++) {
+	      int x = (i & 1) ? (buffer[i >> 1] >> 4) : (buffer[i >> 1] & 0x0F);
+	      int y = (o & 1) ? (buffer[o >> 1] >> 4) : (buffer[o >> 1] & 0x0F);
+	      if(o & 1)
+		buffer[o >> 1] = (buffer[o >> 1] & 0x0F) | (x << 4);
+	      else
+		buffer[o >> 1] = (buffer[o >> 1] & 0xF0) | x;
+	      if(i & 1)
+		buffer[i >> 1] = (buffer[i >> 1] & 0x0F) | (y << 4);
+	      else
+		buffer[i >> 1] = (buffer[i >> 1] & 0xF0) | y;
+	      ++i; ++o;
+	    }
+	  }
+	}
+	break;
+      }
+      if(++this->audio_stream->sub_packet_cnt == sph) {
+	this->audio_stream->sub_packet_cnt = 0;
+	_x_demux_send_data(this->audio_fifo, buffer, this->audio_stream->frame_size,
+                           pts, this->audio_stream->buf_type, 0, normpos, input_time,
+			   this->duration, 0);
+      }
     } else {
       if(_x_demux_read_send_data(this->audio_fifo, this->input, size, pts, 
            this->audio_stream->buf_type, 0, normpos,
@@ -1471,6 +1634,9 @@ static int demux_real_seek (demux_plugin_t *this_gen,
     this->input->seek(this->input, index[i].offset, SEEK_SET);
 
     if(playing) {
+      if(this->audio_stream)
+        this->audio_stream->sub_packet_cnt = 0;
+
       this->buf_flag_seek = 1;
       _x_demux_flush_engine(this->stream);
     }
@@ -1509,6 +1675,8 @@ static void demux_real_dispose (demux_plugin_t *this_gen) {
     real_free_mdpr(this->audio_streams[i].mdpr);
     if(this->audio_streams[i].index)
       free(this->audio_streams[i].index);
+    if(this->audio_streams[i].frame_buffer)
+      free(this->audio_streams[i].frame_buffer);
   }
   
   if(this->fragment_tab)
