@@ -141,4 +141,4 @@ xineplug_dmx_flv_la_SOURCES = demux_flv.c
 xineplug_dmx_flv_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineinclude_HEADERS = demux.h
-noinst_HEADERS = asfheader.h qtpalette.h group_games.h group_audio.h id3.h ebml.h matroska.h iff.h flacutils.h
+noinst_HEADERS = asfheader.h qtpalette.h group_games.h group_audio.h id3.h ebml.h matroska.h iff.h flacutils.h real_common.h

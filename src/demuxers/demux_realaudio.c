@@ -41,6 +41,8 @@
 #include "bswap.h"
 #include "group_audio.h"
 
+#include "real_common.h"
+
 #define RA_FILE_HEADER_PREV_SIZE 22
 
 typedef struct {
@@ -73,13 +75,6 @@ typedef struct {
 typedef struct {
   demux_class_t     demux_class;
 } demux_ra_class_t;
-
-static const unsigned char sipr_swaps[38][2]={
-  {0,63},{1,22},{2,44},{3,90},{5,81},{7,31},{8,86},{9,58},{10,36},{12,68},
-  {13,39},{14,73},{15,53},{16,69},{17,57},{19,88},{20,34},{21,71},{24,46},
-  {25,94},{26,54},{28,75},{29,50},{32,70},{33,92},{35,74},{38,85},{40,56},
-  {42,87},{43,65},{45,59},{48,79},{49,93},{51,89},{55,95},{61,76},{67,83},
-  {77,80}};
 
 /* Map flavour to bytes per second */
 static int sipr_fl2bps[4] = {813, 1062, 625, 2000}; // 6.5, 8.5, 5, 16 kbit per second
@@ -255,7 +250,6 @@ static int demux_ra_send_chunk(demux_plugin_t *this_gen) {
     if (this->audio_type == BUF_AUDIO_SIPRO) {
       int n;
       int len = this->h * this->w;
-      int bs = len * 2 / 96;  /* nibbles per subpacket */
       if(this->input->read(this->input, this->frame_buffer, len) < len) {
 	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
 		"demux_realaudio: failed to read audio chunk\n");
@@ -263,26 +257,7 @@ static int demux_ra_send_chunk(demux_plugin_t *this_gen) {
 	this->status = DEMUX_FINISHED;
 	return this->status; 
       }
-      /* Perform reordering */
-      for(n = 0; n < 38; n++) {
-	int j;
-	int i = bs * sipr_swaps[n][0];
-	int o = bs * sipr_swaps[n][1];
-	/* swap nibbles of block 'i' with 'o'      TODO: optimize */
-	for(j = 0; j < bs; j++) {
-	  int x = (i & 1) ? (this->frame_buffer[i >> 1] >> 4) : (this->frame_buffer[i >> 1] & 0x0F);
-	  int y = (o & 1) ? (this->frame_buffer[o >> 1] >> 4) : (this->frame_buffer[o >> 1] & 0x0F);
-	  if(o & 1)
-	    this->frame_buffer[o >> 1] = (this->frame_buffer[o >> 1] & 0x0F) | (x << 4);
-	  else
-	    this->frame_buffer[o >> 1] = (this->frame_buffer[o >> 1] & 0xF0) | x;
-	  if(i & 1)
-	    this->frame_buffer[i >> 1] = (this->frame_buffer[i >> 1] & 0x0F) | (y << 4);
-	  else
-	    this->frame_buffer[i >> 1] = (this->frame_buffer[i >> 1] & 0xF0) | y;
-	  ++i; ++o;
-	}
-      }
+      demux_real_sipro_swap (this->frame_buffer, len * 2 / 96);
     } else {
       int x, y;
       int pos;
