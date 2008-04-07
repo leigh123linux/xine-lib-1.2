@@ -4,6 +4,9 @@ xine-lib (1.1.12) 2008-??-??
   * And another, this time in the Matroska demuxer.
   * Added a tool to assist with generating front ends' desktop files. It
     lists MIME types & filename extensions known to the installed xine-lib.
+  * Various Real codec improvements, including:
+    - RV20 no longer causes segfaults (observed on amd64);
+    - Cook is now handled by ffmpeg.
 
 xine-lib (1.1.11.1) 2008-03-30
   * Security fixes:
