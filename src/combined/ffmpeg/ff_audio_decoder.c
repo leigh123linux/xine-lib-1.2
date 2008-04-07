@@ -604,5 +604,5 @@ static uint32_t supported_audio_types[] = {
 
 decoder_info_t dec_info_ffmpeg_audio = {
   supported_audio_types,   /* supported types */
-  6                        /* priority        */
+  7                        /* priority        */
 };

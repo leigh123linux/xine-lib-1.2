@@ -534,5 +534,5 @@ static uint32_t audio_types[] = {
 
 const decoder_info_t dec_info_realaudio = {
   audio_types,         /* supported types */
-  7                    /* priority        */
+  6                    /* priority        */
 };
