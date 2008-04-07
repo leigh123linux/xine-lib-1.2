@@ -207,7 +207,7 @@ static void macosx_display_frame(vo_driver_t *vo_driver, vo_frame_t *vo_frame) {
         break;
       case XINE_IMGFMT_YUY2:
         xine_fast_memcpy (texture_buffer, vo_frame->base[0], 
-	                  vo_frame->pitches[0] * vo_frame->height * 2);
+	                  vo_frame->pitches[0] * vo_frame->height);
         [driver->view updateTexture];
         break;
       default:
