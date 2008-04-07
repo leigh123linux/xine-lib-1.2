@@ -824,6 +824,13 @@ unknown:
         memcpy(buf->content, mdpr->type_specific_data + 79,
                buf->decoder_info[2]);
 
+      } else if(buf->type == BUF_AUDIO_MP3ADU) {
+	buf->decoder_flags |= BUF_FLAG_STDHEADER | BUF_FLAG_FRAME_END;
+	buf->size = 0;
+	buf->decoder_info[0] = 0;
+	buf->decoder_info[1] = 0;
+	buf->decoder_info[2] = 0;
+	buf->decoder_info[3] = 0;
       } else {
         memcpy(buf->content, mdpr->type_specific_data,
                mdpr->type_specific_len);
