@@ -324,7 +324,7 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 
           /* fill up this buffer */
           xine_fast_memcpy(audio_buffer->mem, &this->decode_buffer[out],
-            bytes_to_send);
+			   bytes_to_send);
           /* byte count / 2 (bytes / sample) / channels */
           audio_buffer->num_frames = bytes_to_send / 2 / this->audio_channels;
 

@@ -51,6 +51,8 @@ typedef struct {
   /* empty so far */
 } real_class_t;
 
+typedef void * ra_codec_t;
+
 typedef struct realdec_decoder_s {
   audio_decoder_t  audio_decoder;
 
@@ -60,18 +62,18 @@ typedef struct realdec_decoder_s {
 
   void            *ra_handle;
 
-  unsigned long  (*raCloseCodec)(void*);
-  unsigned long  (*raDecode)(void*, char*,unsigned long,char*,unsigned int*,long);
-  unsigned long  (*raFlush)(unsigned long,unsigned long,unsigned long);
-  unsigned long  (*raFreeDecoder)(void*);
-  void*          (*raGetFlavorProperty)(void*,unsigned long,unsigned long,int*);
-  unsigned long  (*raInitDecoder)(void*, void*);
-  unsigned long  (*raOpenCodec2)(void*);
-  unsigned long  (*raSetFlavor)(void*,unsigned long);
-  void           (*raSetDLLAccessPath)(char*);
-  void           (*raSetPwd)(char*,char*);
+  uint32_t       (*raCloseCodec)(ra_codec_t);
+  uint32_t       (*raDecode)(ra_codec_t, char *, uint32_t, char *, uint32_t *, uint32_t);
+  uint32_t       (*raFlush)(ra_codec_t, char *, uint32_t *);
+  uint32_t       (*raFreeDecoder)(ra_codec_t);
+  void *         (*raGetFlavorProperty)(ra_codec_t, uint16_t, uint16_t, uint16_t *);
+  uint32_t       (*raInitDecoder)(ra_codec_t, void *);
+  uint32_t       (*raOpenCodec2)(ra_codec_t *, const char *);
+  uint32_t       (*raSetFlavor)(ra_codec_t, uint16_t);
+  void           (*raSetDLLAccessPath)(char *);
+  void           (*raSetPwd)(ra_codec_t, char *);
 
-  void            *context;
+  ra_codec_t       context;
 
   int              sps, w, h;
   int              block_align;
@@ -92,14 +94,14 @@ typedef struct realdec_decoder_s {
 } realdec_decoder_t;
 
 typedef struct {
-    int    samplerate;
-    short  bits;
-    short  channels;
-    int    unk1;
-    int    subpacket_size;
-    int    coded_frame_size;
-    int    codec_data_length;
-    void  *extras;
+    uint32_t  samplerate;
+    uint16_t  bits;
+    uint16_t  channels;
+    uint16_t  quality;
+    uint32_t  subpacket_size;
+    uint32_t  coded_frame_size;
+    uint32_t  codec_data_length;
+    void      *extras;
 } ra_init_t;
 
 static int load_syms_linux (realdec_decoder_t *this, const char *const codec_name, const char *const codec_alternate) {
@@ -254,7 +256,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
    * init codec
    */
 
-  result = this->raOpenCodec2 (&this->context);
+  result = this->raOpenCodec2 (&this->context, NULL);
   if (result) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libareal: error in raOpenCodec2: %d\n", result);
     return 0;
@@ -266,7 +268,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
     init_data.samplerate = samples_per_sec;
     init_data.bits = bits_per_sample;
     init_data.channels = num_channels;
-    init_data.unk1 = 100; /* ??? */
+    init_data.quality = 100; /* ??? */
     init_data.subpacket_size = subpacket_size; /* subpacket size */
     init_data.coded_frame_size = coded_frame_size; /* coded frame size */
     init_data.codec_data_length = data_len; /* codec data length */
@@ -506,7 +508,7 @@ static void realdec_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) 
 	  
 	  this->stream->audio_out->put_buffer (this->stream->audio_out, 
 					       audio_buffer, this->stream);
-	  n+=this->block_align;
+	  n += this->block_align;
 	}
       }
     }

@@ -63,9 +63,9 @@ typedef struct realdec_decoder_s {
 
   uint32_t        (*rvyuv_custom_message)(void*, void*);
   uint32_t        (*rvyuv_free)(void*);
-  uint32_t        (*rvyuv_hive_message)(uint32_t, uint32_t);
+  uint32_t        (*rvyuv_hive_message)(uint32_t, void*);
   uint32_t        (*rvyuv_init)(void*, void*); /* initdata,context */
-  uint32_t        (*rvyuv_transform)(char*, char*, void*, uint32_t*,void*);
+  uint32_t        (*rvyuv_transform)(char*, char*, void*, void*, void*);
 
   void            *context;
 
@@ -113,12 +113,20 @@ typedef struct cmsg_data_s {
 
 typedef struct transform_in_s {
         uint32_t len;
-        uint32_t unknown1;
-        uint32_t chunks;
-        uint32_t* extra;
-        uint32_t unknown2;
+        uint32_t interpolate;
+        uint32_t nsegments;
+        void    *segments;
+        uint32_t flags;
         uint32_t timestamp;
 } transform_in_t;
+
+typedef struct {
+        uint32_t frames;
+        uint32_t notes;
+        uint32_t timestamp;
+        uint32_t width;
+        uint32_t height;
+} transform_out_t;
 
 /*
  * real codec loader
@@ -168,7 +176,6 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
   /* unsigned int* extrahdr = (unsigned int*) (buf->content+28); */
   int           result;
   rv_init_t     init_data = {11, 0, 0, 0, 0, 0, 1, 0}; /* rv30 */
-
 
   switch (buf->type) {
   case BUF_VIDEO_RV20:
@@ -258,7 +265,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
     
 #ifdef LOG
     printf ("libreal: CustomMessage cmsg_data:\n");
-    xine_hexdump ((uint8_t *) cmsg_data, sizeof (cmsg_data));
+    xine_hexdump ((uint8_t *) &cmsg_data, sizeof (cmsg_data));
     printf ("libreal: cmsg24:\n");
     xine_hexdump ((uint8_t *) cmsg24, (buf->size - 34 + 2) * sizeof(uint32_t));
 #endif
@@ -342,7 +349,7 @@ static void realdec_decode_data (video_decoder_t *this_gen, buf_element_t *buf) 
         int            result;
         vo_frame_t    *img;
 
-        uint32_t       transform_out[5];
+        transform_out_t transform_out;
 	transform_in_t transform_in = {
 	  this->chunk_buffer_size,
 	    /* length of the packet (sub-packets appended) */
@@ -369,7 +376,7 @@ static void realdec_decode_data (video_decoder_t *this_gen, buf_element_t *buf) 
         xine_hexdump (this->chunk_buffer, this->chunk_buffer_size);
 
         printf ("libreal: transform_in:\n");
-        xine_hexdump ((uint8_t *) transform_in, 6 * 4);
+        xine_hexdump ((uint8_t *) &transform_in, sizeof(rv_xform_in_t));
 
         printf ("libreal: chunk_table:\n");
         xine_hexdump ((uint8_t *) buf->decoder_info_ptr[2], 
@@ -379,21 +386,21 @@ static void realdec_decode_data (video_decoder_t *this_gen, buf_element_t *buf) 
         result = this->rvyuv_transform (this->chunk_buffer,
                                         this->frame_buffer,
                                         &transform_in,
-                                        transform_out,
+                                        &transform_out,
                                         this->context);
 
         lprintf ("transform result: %08x\n", result);
         lprintf ("transform_out:\n");
-  #ifdef LOG
-        xine_hexdump ((uint8_t *) transform_out, 5 * 4);
-  #endif
+#ifdef LOG
+        xine_hexdump ((uint8_t *) &transform_out, 5 * 4);
+#endif
 
         /* Sometimes the stream contains video of a different size
          * to that specified in the realmedia header */
-        if(transform_out[0] && ((transform_out[3] != this->width) ||
-                                (transform_out[4] != this->height))) {
-          this->width  = transform_out[3];
-          this->height = transform_out[4];
+        if(transform_out.frames && ((transform_out.width != this->width) ||
+                                    (transform_out.height != this->height))) {
+          this->width  = transform_out.width;
+          this->height = transform_out.height;
 
           this->frame_size = this->width * this->height;
 
