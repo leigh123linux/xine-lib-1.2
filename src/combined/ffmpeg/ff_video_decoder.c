@@ -946,6 +946,26 @@ static void ff_handle_header_buffer (ff_video_decoder_t *this, buf_element_t *bu
         this->context->slice_offset = xine_xmalloc(sizeof(int)*SLICE_OFFSET_SIZE);
         this->slice_offset_size = SLICE_OFFSET_SIZE;
 
+        this->context->extradata_size = this->size - 26;
+	if (this->context->extradata_size < 8) {
+	  this->context->extradata_size= 8;
+	  this->context->extradata = malloc(this->context->extradata_size +
+		                            FF_INPUT_BUFFER_PADDING_SIZE);
+          ((uint32_t *)this->context->extradata)[0] = 0;
+	  if (codec_type == BUF_VIDEO_RV10)
+	     ((uint32_t *)this->context->extradata)[1] = 0x10000000;
+	  else
+	     ((uint32_t *)this->context->extradata)[1] = 0x10003001;
+	} else {
+          this->context->extradata = malloc(this->context->extradata_size +
+	                                    FF_INPUT_BUFFER_PADDING_SIZE);
+	  memcpy(this->context->extradata, this->buf + 26,
+	         this->context->extradata_size);
+	}
+
+	xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                "ffmpeg_video_dec: buf size %d\n", this->size);
+
 	lprintf("w=%d, h=%d\n", this->bih.biWidth, this->bih.biHeight);
 
         break;

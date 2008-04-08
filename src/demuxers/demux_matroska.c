@@ -635,9 +635,7 @@ static void init_codec_xiph(demux_matroska_t *this, matroska_track_t *track) {
     }
     buf->size = frame[i];
     
-    buf->decoder_flags = BUF_FLAG_HEADER;
-    if (i == 2)
-      buf->decoder_flags |= BUF_FLAG_FRAME_END;
+    buf->decoder_flags = BUF_FLAG_HEADER | BUF_FLAG_FRAME_START | BUF_FLAG_FRAME_END;
     buf->type          = track->buf_type;
     buf->pts           = 0;
 

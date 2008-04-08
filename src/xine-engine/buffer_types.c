@@ -808,6 +808,14 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
+    ME_FOURCC('a', 'd', 'u', 0x55),
+    0
+  },
+  BUF_AUDIO_MP3ADU,
+  "MPEG layer-3 adu"
+},
+{
+  {
     ME_FOURCC('t','w','o','s'),
     ME_FOURCC('i','n','2','4'),
     0
