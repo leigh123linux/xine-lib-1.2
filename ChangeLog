@@ -7,6 +7,7 @@ xine-lib (1.1.12) 2008-??-??
   * Various Real codec improvements, including:
     - RV20 no longer causes segfaults (observed on amd64);
     - Cook is now handled by ffmpeg.
+  * Added a video output plugin intended for passing raw data to the front end.
 
 xine-lib (1.1.11.1) 2008-03-30
   * Security fixes:

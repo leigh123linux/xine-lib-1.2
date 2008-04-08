@@ -175,6 +175,7 @@ void xine_close_video_driver (xine_t *self, xine_video_port_t  *driver) XINE_PRO
 #define XINE_VISUAL_TYPE_CACA              8
 #define XINE_VISUAL_TYPE_MACOSX            9
 #define XINE_VISUAL_TYPE_XCB              11
+#define XINE_VISUAL_TYPE_RAW              12
 
 /*
  * free all resources, close all plugins, close engine.
@@ -1284,6 +1285,76 @@ typedef struct {
 			   int *win_x, int *win_y);
 
 } xcb_visual_t;
+
+/**************************************************
+ * XINE_VO_RAW struct definitions
+ *************************************************/
+/*  frame_format definitions */
+#define XINE_VORAW_YV12 1
+#define XINE_VORAW_YUY2 2
+#define XINE_VORAW_RGB 4
+
+/*  maximum number of overlays the raw driver can handle */
+#define XINE_VORAW_MAX_OVL 16
+
+/* raw_overlay_t struct used in raw_overlay_cb callback */
+typedef struct {
+  uint8_t *ovl_rgba;
+  int ovl_w, ovl_h; /* overlay's width and height */
+  int ovl_x, ovl_y; /* overlay's top-left display position */
+} raw_overlay_t;
+
+/* this is the visual data struct any raw gui
+ * must supply to the xine_open_video_driver call
+ * ("data" parameter)
+ */
+typedef struct {
+  void *user_data;
+
+  /* OR'ed frame_format
+   * a frontend must at least support rgb
+   * a frontend supporting yuv must support both yv12 and yuy2
+   * then possible combinations are:
+   *   XINE_VORAW_RGB                 ( rgb )
+   *   XINE_VORAW_YV12|XINE_VORAW_YUY2|XINE_VORAW_RGB   ( yv12, yuy2 and rgb )
+   *
+   * Be aware that rgb requires more cpu than yuv,
+   * so avoid its usage for video playback.
+   * However, it's usefull for single frame capture (e.g. thumbs)
+   */
+  int supported_formats;
+
+  /* raw output callback
+   * this will be called by the video driver for every frame
+   *
+   * If frame_format==XINE_VORAW_YV12, data0 points to frame_width*frame_height Y values
+   *                                   data1 points to (frame_width/2)*(frame_height/2) U values
+   *                                   data2 points to (frame_width/2)*(frame_height/2) V values
+   *
+   * If frame_format==XINE_VORAW_YUY2, data0 points to frame_width*frame_height*2 YU/Y²V values
+   *                                   data1 is NULL
+   *                                   data2 is NULL
+   *
+   * If frame_format==XINE_VORAW_RGB, data0 points to frame_width*frame_height*3 RGB values
+   *                                  data1 is NULL
+   *                                  data2 is NULL
+   */
+  void (*raw_output_cb) (void *user_data, int frame_format,
+                        int frame_width, int frame_height,
+			double frame_aspect,
+			void *data0, void *data1, void *data2);
+
+  /* raw overlay callback
+   * this will be called by the video driver for every new overlay state
+   * overlays_array points to an array of num_ovl raw_overlay_t
+   * Note that num_ovl can be 0, meaning "end of overlay display"
+   * num_ovl is at most XINE_VORAW_MAX_OVL */
+  void (*raw_overlay_cb) (void *user_data, int num_ovl,
+                         raw_overlay_t *overlays_array);
+} raw_visual_t;
+/**********************************************
+ * end of vo_raw defs
+ *********************************************/
 
 /*
  * this is the visual data struct any fb gui
