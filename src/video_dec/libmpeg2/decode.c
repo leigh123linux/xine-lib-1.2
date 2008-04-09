@@ -37,7 +37,7 @@
 #define LOG
 */
 
-#include <libavutil/mem.h>
+#include <mem.h>
 
 #include <xine/xine_internal.h>
 #include <xine/video_out.h>

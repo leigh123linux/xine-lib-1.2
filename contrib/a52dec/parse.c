@@ -32,6 +32,7 @@
 #include "bitstream.h"
 #include "tables.h"
 #include <xine/xineutils.h>
+#include <mem.h>
 
 typedef struct {
     sample_t q1[2];
@@ -53,14 +54,12 @@ a52_state_t * a52_init (uint32_t mm_accel)
     if (state == NULL)
 	return NULL;
 
-    state->samples = xine_xmalloc_aligned (16, 256 * 12 * sizeof (sample_t), &state->samples_base);
+    state->samples_base = state->samples = av_mallocz (256 * 12 * sizeof (sample_t));
+
     if (state->samples == NULL) {
 	free (state);
 	return NULL;
     }
-
-    for (i = 0; i < 256 * 12; i++)
-	state->samples[i] = 0;
 
     state->downmixed = 1;
 

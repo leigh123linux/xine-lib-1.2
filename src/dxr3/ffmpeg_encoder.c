@@ -62,7 +62,15 @@ typedef struct lavc_data_s {
 } lavc_data_t;
 
 
-int dxr3_lavc_init(dxr3_driver_t *drv)
+static int dxr3_lavc_close(dxr3_driver_t *drv) {
+  drv->enc->on_unneeded(drv);
+  free(drv->enc);
+  drv->enc = NULL;
+
+  return 1;
+}
+
+int dxr3_lavc_init(dxr3_driver_t *drv, plugin_node_t *plugin)
 {
   lavc_data_t* this;
   avcodec_init();
@@ -81,14 +89,6 @@ int dxr3_lavc_init(dxr3_driver_t *drv)
   
   drv->enc = &this->encoder_data;
   drv->enc->on_close = dxr3_lavc_close;
-  return 1;
-}
-
-static int dxr3_lavc_close(dxr3_driver_t *drv) {
-  drv->enc->on_unneeded(drv);
-  free(drv->enc);
-  drv->enc = NULL;
-
   return 1;
 }
 

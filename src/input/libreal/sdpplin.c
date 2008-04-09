@@ -31,7 +31,7 @@
 #include "sdpplin.h"
 #include <xine/xineutils.h>
 
-#include <libavutil/base64.h>
+#include <base64.h>
 
 static char *nl(char *data) {
 

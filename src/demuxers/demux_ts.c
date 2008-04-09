@@ -141,7 +141,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <libavutil/crc.h>
+#include <crc.h>
 
 #define LOG_MODULE "demux_ts"
 #define LOG_VERBOSE

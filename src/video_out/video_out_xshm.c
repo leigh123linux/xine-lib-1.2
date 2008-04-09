@@ -51,7 +51,7 @@
 #include <pthread.h>
 #include <netinet/in.h>
 
-#include <libavutil/mem.h>
+#include <mem.h>
 
 #define LOG_MODULE "video_out_xshm"
 #define LOG_VERBOSE

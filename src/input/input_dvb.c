@@ -100,7 +100,7 @@
 #endif
 #include <ctype.h>
 
-#include <libavutil/crc.h>
+#include <crc.h>
 
 /* XDG */
 #include <basedir.h>

@@ -31,7 +31,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <libavutil/mem.h>
+#include <mem.h>
 
 #define LOG_MODULE "demux_mpeg_block"
 #define LOG_VERBOSE

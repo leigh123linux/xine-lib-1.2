@@ -44,7 +44,7 @@
 #include <math.h>
 #include <unistd.h>
 
-#include <libavutil/mem.h>
+#include <mem.h>
 
 #define LOG_MODULE "dxr3_mpeg_encoder"
 /* #define LOG_VERBOSE */

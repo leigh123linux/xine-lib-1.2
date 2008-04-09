@@ -25,7 +25,7 @@
 #include <xine/xine_internal.h>
 #include <xine/post.h>
 #include <xine/xineutils.h>
-#include <libpostproc/postprocess.h>
+#include <postprocess.h>
 #include <pthread.h>
 
 #define PP_STRING_SIZE 256 /* size of pp mode string (including all options) */

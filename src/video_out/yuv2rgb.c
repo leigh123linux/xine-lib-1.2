@@ -31,7 +31,7 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include <libavutil/mem.h>
+#include <mem.h>
 
 #include "yuv2rgb.h"
 

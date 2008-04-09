@@ -33,7 +33,7 @@
 #include <unistd.h>
 #include <xine/configfile.h>
 #include "bswap.h"
-#include <libavutil/base64.h>
+#include <base64.h>
 
 #define LOG_MODULE "configfile"
 #define LOG_VERBOSE

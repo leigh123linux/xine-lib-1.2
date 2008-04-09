@@ -35,7 +35,7 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 
-#include <libavutil/mem.h>
+#include <mem.h>
 
 #include <aalib.h>
 

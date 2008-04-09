@@ -62,7 +62,7 @@
 #include <xine/buffer.h>
 #include <xine/xineutils.h>
 
-#include <libavutil/crc.h>
+#include <crc.h>
 
 #undef DEBUG_A52
 #ifdef DEBUG_A52

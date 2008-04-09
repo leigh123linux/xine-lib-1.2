@@ -35,7 +35,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <libavutil/mem.h>
+#include <mem.h>
 
 #define LOG_MODULE "demux_mpeg_pes"
 #define LOG_VERBOSE

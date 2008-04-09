@@ -58,8 +58,8 @@
 
 #include <basedir.h>
 
-#include <libavutil/base64.h>
-#include <libavutil/sha1.h>
+#include <base64.h>
+#include <sha1.h>
 
 #define LOG_MODULE "input_cdda"
 #define LOG_VERBOSE

@@ -37,7 +37,7 @@
 #include <cucul.h>
 #include <caca.h>
 
-#include <libavutil/mem.h>
+#include <mem.h>
 
 #include "xine.h"
 #include <xine/video_out.h>

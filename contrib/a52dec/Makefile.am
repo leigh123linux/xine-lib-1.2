@@ -8,5 +8,5 @@ endif
 
 liba52_la_SOURCES = bitstream.c bit_allocate.c downmix.c imdct.c parse.c \
 	a52.h a52_internal.h bitstream.h tables.h crc.c
-liba52_la_LIBADD = -lm
-liba52_la_CPPFLAGS = $(AM_CPPFLAGS)
+liba52_la_LIBADD = -lm $(AVUTIL_LIBS)
+liba52_la_CPPFLAGS = $(AM_CPPFLAGS) $(AVUTIL_CFLAGS)

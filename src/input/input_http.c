@@ -40,7 +40,7 @@
 
 #include <sys/time.h>
 
-#include <libavutil/base64.h>
+#include <base64.h>
 
 #define LOG_MODULE "input_http"
 #define LOG_VERBOSE

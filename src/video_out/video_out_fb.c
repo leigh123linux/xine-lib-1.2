@@ -68,7 +68,7 @@
 #include <pthread.h>
 #include <netinet/in.h>
 
-#include <libavutil/mem.h>
+#include <mem.h>
 
 #include <linux/fb.h>
 #include <linux/kd.h>
