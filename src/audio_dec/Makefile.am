@@ -4,6 +4,7 @@ AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
 EXTRA_DIST = fooaudio.c
+noinst_HEADERS = ff_dvdata.h
 
 if ENABLE_MUSEPACK
 musepack_module = xineplug_decode_mpc.la
