@@ -63,8 +63,8 @@ src/input/vcd/vcdplayer.c
 src/input/vcd/vcdplayer.h
 src/input/vcd/xineplug_inp_vcd.c
 src/combined/ffmpeg/ff_audio_decoder.c
-src/combined/ffmpeg/ff_dvaudio_decoder.c
-src/combined/ffmpeg/ffmpeg_encoder.c
+src/audio_dec/ff_dvaudio_decoder.c
+src/dxr3/ffmpeg_encoder.c
 src/combined/ffmpeg/ff_video_decoder.c
 src/libreal/real_common.c
 src/libreal/xine_real_audio_decoder.c
