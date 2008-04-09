@@ -36,6 +36,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <unistd.h>
 #if defined (__linux__) || defined (__GLIBC__)
 #include <endian.h>
 #elif defined (__FreeBSD__)
@@ -138,7 +139,7 @@ static int acquire_allowed_to_block(xine_ticket_t *this) {
   unsigned new_size;
 
   for(entry = 0; entry < this->holder_thread_count; ++entry) {
-    if(this->holder_threads[entry].holder == own_id) {
+    if(pthread_equal(this->holder_threads[entry].holder, own_id)) {
       /* This thread may already hold this ticket */
       this->holder_threads[entry].count++;
       return (this->holder_threads[entry].count == 1);
@@ -209,7 +210,7 @@ static int release_allowed_to_block(xine_ticket_t *this) {
   unsigned entry;
   
   for(entry = 0; entry < this->holder_thread_count; ++entry) {
-    if(this->holder_threads[entry].holder == own_id) {
+    if(pthread_equal(this->holder_threads[entry].holder, own_id)) {
       this->holder_threads[entry].count--;
       return this->holder_threads[entry].count == 0;
     }
@@ -670,6 +671,7 @@ xine_stream_t *xine_stream_new (xine_t *this,
   pthread_mutex_init (&stream->meta_mutex, NULL);
   pthread_mutex_init (&stream->demux_lock, NULL);
   pthread_mutex_init (&stream->demux_mutex, NULL);
+  pthread_cond_init  (&stream->demux_resume, NULL);
   pthread_mutex_init (&stream->event_queues_lock, NULL);
   pthread_mutex_init (&stream->counter_lock, NULL);
   pthread_cond_init  (&stream->counter_changed, NULL);
@@ -839,6 +841,7 @@ static inline int _x_path_looks_like_mrl (const char *path)
 static int open_internal (xine_stream_t *stream, const char *mrl) {
 
   const char *stream_setup = NULL;
+  const char *mrl_proto = NULL;
   int no_cache = 0;
   
   if (!mrl) {
@@ -862,16 +865,31 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
   /*
    * look for a stream_setup in MRL and try finding an input plugin
    */
+  stream_setup = strchr (mrl, '#');
 
   if (isalpha (*mrl))
   {
-    stream_setup = mrl + 1;
-    while (isalnum (*stream_setup) || *stream_setup == '+' || *stream_setup == '-' || *stream_setup == '.')
-      ++stream_setup;
-    if (stream_setup[0] == ':' && stream_setup[1] == '/')
-      stream_setup = strchr (mrl, '#');
-    else
-      stream_setup = NULL;
+    mrl_proto = mrl + 1;
+    while (isalnum (*mrl_proto) || *mrl_proto == '+' || *mrl_proto == '-' || *mrl_proto == '.')
+      ++mrl_proto;
+    if (!mrl_proto[0] || mrl_proto[0] != ':' || mrl_proto[1] != '/')
+      mrl_proto = NULL;
+  }
+  
+  /* for raw filenames we must try every '#' checking if it is part of the filename */
+  if( !mrl_proto && stream_setup) {
+    struct stat stat_buf;
+    int res;
+    
+    while( stream_setup ) {
+      char *raw_filename = strndup (mrl, stream_setup - mrl);
+    
+      res = stat(raw_filename, &stat_buf);
+      free(raw_filename);
+      if( !res ) 
+        break;
+      stream_setup = strchr(stream_setup + 1, '#');
+    }
   }
   
   {
@@ -880,12 +898,14 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
     /*
      * find an input plugin
      */
-
-    if ((stream->input_plugin = _x_find_input_plugin (stream, input_source))) {
+    stream->input_plugin = _x_find_input_plugin (stream, input_source);
+    free(input_source);
+    
+    if ( stream->input_plugin ) {
       int res;
 
       xine_log (stream->xine, XINE_LOG_MSG, _("xine: found input plugin  : %s\n"),
-		dgettext(stream->input_plugin->input_class->textdomain ? : XINE_TEXTDOMAIN,
+		dgettext(stream->input_plugin->input_class->text_domain ? : XINE_TEXTDOMAIN,
 			 stream->input_plugin->input_class->description));
       if (stream->input_plugin->input_class->eject_media)
         stream->eject_class = stream->input_plugin->input_class;
@@ -897,7 +917,6 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
       case 1: /* Open successfull */
 	break;
       case -1: /* Open unsuccessfull, but correct plugin */
-	free(input_source);
 	stream->err = XINE_ERROR_INPUT_FAILED;
 	_x_flush_events_queues (stream);
 	return 0;
@@ -908,8 +927,6 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 	stream->err = XINE_ERROR_INPUT_FAILED;
       }
     }
-
-    free(input_source);
   }
   
   if (!stream->input_plugin) {
@@ -1235,7 +1252,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
   }
 
   xine_log (stream->xine, XINE_LOG_MSG, _("xine: found demuxer plugin: %s\n"),
-	    dgettext(stream->demux_plugin->demux_class->textdomain ? : XINE_TEXTDOMAIN,
+	    dgettext(stream->demux_plugin->demux_class->text_domain ? : XINE_TEXTDOMAIN,
 		     stream->demux_plugin->demux_class->description));
 
   _x_extra_info_reset( stream->current_extra_info );
@@ -1351,6 +1368,7 @@ static int play_internal (xine_stream_t *stream, int start_pos, int start_time) 
   pthread_mutex_lock( &stream->demux_lock );
   /* demux_lock taken. now demuxer is suspended */
   stream->demux_action_pending = 0;
+  pthread_cond_signal(&stream->demux_resume);
 
   /* set normal speed again (now that demuxer/input pair is suspended) 
    * some input plugin may have changed speed by itself, we must ensure
@@ -1477,6 +1495,7 @@ static void xine_dispose_internal (xine_stream_t *stream) {
   pthread_mutex_destroy (&stream->current_extra_info_lock);
   pthread_cond_destroy  (&stream->counter_changed);
   pthread_mutex_destroy (&stream->demux_mutex);
+  pthread_cond_destroy  (&stream->demux_resume);
   pthread_mutex_destroy (&stream->demux_lock);
   pthread_mutex_destroy (&stream->first_frame_lock);
   pthread_cond_destroy  (&stream->first_frame_reached);
@@ -1691,6 +1710,12 @@ void xine_init (xine_t *this) {
   /* First of all, initialise libxdg-basedir as it's used by plugins. */
   this->basedir_handle = xdgAllocHandle();
 
+  /*
+   * locks
+   */
+  pthread_mutex_init (&this->streams_lock, NULL);
+  pthread_mutex_init (&this->log_lock, NULL);
+  
   /* initialize color conversion tables and functions */
   init_yuv_conversion();
 
@@ -1771,12 +1796,6 @@ void xine_init (xine_t *this) {
    */
   this->streams = xine_list_new();
 
-  /*
-   * locks
-   */
-  pthread_mutex_init (&this->streams_lock, NULL);
-  pthread_mutex_init (&this->log_lock, NULL);
-  
   /*
    * start metronom clock
    */
@@ -1963,11 +1982,12 @@ int xine_get_pos_length (xine_stream_t *stream, int *pos_stream,
   return 1;
 }
 
-int xine_get_current_frame (xine_stream_t *stream, int *width, int *height,
-			    int *ratio_code, int *format,
-			    uint8_t *img) {
+static int _x_get_current_frame_impl (xine_stream_t *stream, int *width, int *height,
+				      int *ratio_code, int *format,
+				      uint8_t **img, int *size, int alloc_img) {
 
   vo_frame_t *frame;
+  int required_size;
 
   stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
   frame = stream->video_out->get_last_frame (stream->video_out);
@@ -1993,20 +2013,62 @@ int xine_get_current_frame (xine_stream_t *stream, int *width, int *height,
   
   *format = frame->format;
 
-  if (img){
+  switch (*format) {
+
+  case XINE_IMGFMT_YV12:
+    required_size = *width * *height
+                  + ((*width + 1) / 2) * ((*height + 1) / 2)
+                  + ((*width + 1) / 2) * ((*height + 1) / 2);
+    break;
+
+  case XINE_IMGFMT_YUY2:
+    required_size = *width * *height
+                  + ((*width + 1) / 2) * *height
+                  + ((*width + 1) / 2) * *height;
+    break;
+
+  default:
+    if (*img || alloc_img) {
+      xprintf (stream->xine, XINE_VERBOSITY_DEBUG, 
+	       "xine: error, snapshot function not implemented for format 0x%x\n", frame->format);
+      _x_abort ();
+    }
+
+    required_size = 0;
+  }
+
+  if (alloc_img) {
+    /* return size if requested */
+    if (size)
+      *size = required_size;
+    /* allocate img or fail */
+    if (!(*img = xine_xmalloc (required_size)))
+      return 0;
+  } else {
+    /* fail if supplied buffer is to small */
+    if (*img && size && *size < required_size) {
+      *size = required_size;
+      return 0;
+    }
+    /* return size if requested */
+    if (size)
+      *size = required_size;
+  }
+       
+  if (*img) {
     switch (frame->format) {
 
     case XINE_IMGFMT_YV12:
       yv12_to_yv12(
        /* Y */
         frame->base[0], frame->pitches[0],
-        img, frame->width,
+        *img, frame->width,
        /* U */
         frame->base[1], frame->pitches[1],
-        img+frame->width*frame->height, frame->width/2,
+        *img+frame->width*frame->height, frame->width/2,
        /* V */
         frame->base[2], frame->pitches[2],
-        img+frame->width*frame->height+frame->width*frame->height/4, frame->width/2,
+        *img+frame->width*frame->height+frame->width*frame->height/4, frame->width/2,
        /* width x height */
         frame->width, frame->height);
       break;
@@ -2016,7 +2078,7 @@ int xine_get_current_frame (xine_stream_t *stream, int *width, int *height,
        /* src */
         frame->base[0], frame->pitches[0],
        /* dst */
-        img, frame->width*2,
+        *img, frame->width*2,
        /* width x height */
         frame->width, frame->height);
       break;
@@ -2028,6 +2090,25 @@ int xine_get_current_frame (xine_stream_t *stream, int *width, int *height,
     }
   }
   return 1;
+}
+
+int xine_get_current_frame_alloc (xine_stream_t *stream, int *width, int *height,
+				  int *ratio_code, int *format,
+				  uint8_t **img, int *size) {
+  uint8_t *no_img = NULL;
+  return _x_get_current_frame_impl(stream, width, height, ratio_code, format, img ? img : &no_img, size, img != NULL);
+}
+
+int xine_get_current_frame_s (xine_stream_t *stream, int *width, int *height,
+				int *ratio_code, int *format,
+				uint8_t *img, int *size) {
+  return (!img || size) && _x_get_current_frame_impl(stream, width, height, ratio_code, format, &img, size, 0);
+}
+
+int xine_get_current_frame (xine_stream_t *stream, int *width, int *height,
+			    int *ratio_code, int *format,
+			    uint8_t *img) {
+  return _x_get_current_frame_impl(stream, width, height, ratio_code, format, &img, NULL, 0);
 }
 
 int xine_get_video_frame (xine_stream_t *stream,

@@ -635,9 +635,7 @@ static void init_codec_xiph(demux_matroska_t *this, matroska_track_t *track) {
     }
     buf->size = frame[i];
     
-    buf->decoder_flags = BUF_FLAG_HEADER;
-    if (i == 2)
-      buf->decoder_flags |= BUF_FLAG_FRAME_END;
+    buf->decoder_flags = BUF_FLAG_HEADER | BUF_FLAG_FRAME_START | BUF_FLAG_FRAME_END;
     buf->type          = track->buf_type;
     buf->pts           = 0;
 
@@ -1179,13 +1177,10 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       break;
       
       case MATROSKA_ID_TR_CODECID: {
-        char *codec_id = malloc (elem.len + 1);
+        char *codec_id = ebml_alloc_read_ascii (ebml, &elem);
         lprintf("CodecID\n");
-        if (!ebml_read_ascii(ebml, &elem, codec_id)) {
-	  free(codec_id);
+        if (!codec_id)
           return 0;
-	}
-        codec_id[elem.len] = '\0';
         track->codec_id = codec_id;
       }
       break;
@@ -1203,13 +1198,10 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       break;
         
       case MATROSKA_ID_TR_LANGUAGE: {
-        char *language = malloc (elem.len + 1);
+        char *language = ebml_alloc_read_ascii (ebml, &elem);
         lprintf("Language\n");
-        if (!ebml_read_ascii(ebml, &elem, language)) {
-	  free(language);
+        if (!language)
           return 0;
-	}
-        language[elem.len] = '\0';
         track->language = language;
       }
       break;
@@ -2893,7 +2885,8 @@ static void *init_class (xine_t *xine, void *data) {
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.description     = N_("matroska demux plugin");
   this->demux_class.identifier      = "matroska";
-  this->demux_class.mimetypes       = "video/mkv: mkv: matroska;";
+  this->demux_class.mimetypes       = "video/mkv: mkv: matroska;"
+                                      "video/x-matroska: mkv: matroska;";
   this->demux_class.extensions      = "mkv";
   this->demux_class.dispose         = default_demux_class_dispose;
 

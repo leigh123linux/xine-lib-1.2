@@ -93,7 +93,11 @@ int ebml_read_ascii(ebml_parser_t *ebml, ebml_elem_t *elem, char *str);
 
 #if 0
 int ebml_read_utf8(ebml_parser_t *ebml, ebml_elem_t *elem, char *str);
+#endif
 
+char *ebml_alloc_read_ascii(ebml_parser_t *ebml, ebml_elem_t *elem);
+
+#if 0
 int ebml_read_date(ebml_parser_t *ebml, ebml_elem_t *elem, int64_t *date);
 #endif
 

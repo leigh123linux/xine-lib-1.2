@@ -1,17 +1,18 @@
 # translation of xine-lib-1.2.hg.po to Spanish
 # Spanish .po file for xine-lib.
+# Copyright (C) YEAR Copyright (C) 2000-2006 the xine project
 # Copyright (C) 2002, 2006, 2007, 2008 Free Software Foundation, Inc.
 #
 # Juan Manuel García Molina <juanma_gm@wanadoo.es>, 2002.
-# Carlos E. Robinson M. <carloser@users.sourceforge.net>, 2006, 2007, 2008.
+# Carlos E. R M. <carloser@users.sourceforge.net>, 2006, 2007, 2008.
 # Cer:  <<== marcas de revision.
 msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib-1.2.hg\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-02-01 01:17+0000\n"
-"PO-Revision-Date: 2008-01-31 14:30+0100\n"
-"Last-Translator: Carlos E. Robinson M. <carloser@users.sourceforge.net>\n"
+"POT-Creation-Date: 2008-04-02 01:33+0100\n"
+"PO-Revision-Date: 2008-04-02 01:24+0200\n"
+"Last-Translator: Carlos E. R M. <carloser@users.sourceforge.net>\n"
 "Language-Team: Spanish <none>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -175,11 +176,11 @@ msgstr "snd_pcm_open() falló:%d:%s\n"
 msgid ">>> Check if another program already uses PCM <<<\n"
 msgstr ">>> Comprobar si otro programa está ya usando PCM <<<\n"
 
-#: src/audio_out/audio_alsa_out.c:1470 src/audio_out/audio_oss_out.c:926
+#: src/audio_out/audio_alsa_out.c:1470 src/audio_out/audio_oss_out.c:931
 msgid "speaker arrangement"
 msgstr "disposición de altavoces"
 
-#: src/audio_out/audio_alsa_out.c:1471 src/audio_out/audio_oss_out.c:927
+#: src/audio_out/audio_alsa_out.c:1471 src/audio_out/audio_oss_out.c:932
 msgid ""
 "Select how your speakers are arranged, this determines which speakers xine "
 "uses for sound output. The individual values are:\n"
@@ -554,7 +555,7 @@ msgstr "audio_esd_out: no puedo conectar al servidor ESD %s: %s\n"
 msgid "esd audio output latency (adjust a/v sync)"
 msgstr "latencia de salida de audio esd (ajustar sincronismo a/v)"
 
-#: src/audio_out/audio_esd_out.c:540 src/audio_out/audio_oss_out.c:864
+#: src/audio_out/audio_esd_out.c:540 src/audio_out/audio_oss_out.c:869
 msgid ""
 "If you experience audio being not in sync with the video, you can enter a "
 "fixed offset here to compensate.\n"
@@ -620,11 +621,11 @@ msgstr ""
 "audio_oss_out: tasa de audio: %d solicitada, %d proporcionada por el "
 "dispositivo\n"
 
-#: src/audio_out/audio_oss_out.c:743
+#: src/audio_out/audio_oss_out.c:745
 msgid "OSS audio device name"
 msgstr "nombre del dispositivo de audio OSS"
 
-#: src/audio_out/audio_oss_out.c:744
+#: src/audio_out/audio_oss_out.c:746
 msgid ""
 "Specifies the base part of the audio device name, to which the OSS device "
 "number is appended to get the full device name.\n"
@@ -635,11 +636,11 @@ msgstr ""
 "dispositivo.\n"
 "Seleccione \"auto\" si desea que xine auto detecte el parámetro correcto."
 
-#: src/audio_out/audio_oss_out.c:751
+#: src/audio_out/audio_oss_out.c:753
 msgid "OSS audio device number, -1 for none"
 msgstr "número de dispositivo audio OSS, -1 para ninguno"
 
-#: src/audio_out/audio_oss_out.c:752
+#: src/audio_out/audio_oss_out.c:754
 msgid ""
 "The full audio device name is created by concatenating the OSS device name "
 "and the audio device number.\n"
@@ -655,20 +656,20 @@ msgstr ""
 "El rango de este valor es -1 o 0-15. Éste parámetro se ignora cuando el "
 "nombre del dispositivo audio OSS está puesto a \"auto\"."
 
-#: src/audio_out/audio_oss_out.c:761
+#: src/audio_out/audio_oss_out.c:763
 msgid "audio_oss_out: audio.device.oss_device_name = auto, probing devs\n"
 msgstr "audio_oss_out: audio.device.oss_device_name = auto, sondeando devs\n"
 
-#: src/audio_out/audio_oss_out.c:764
+#: src/audio_out/audio_oss_out.c:766
 msgid "audio_oss_out: Auto probe for audio device failed\n"
 msgstr "audio_oss_out: Sondeo automático de dispositivo audio falló\n"
 
-#: src/audio_out/audio_oss_out.c:780
+#: src/audio_out/audio_oss_out.c:782
 #, c-format
 msgid "audio_oss_out: using device >%s<\n"
 msgstr "audio_oss_out: usando dispositivo >%s<\n"
 
-#: src/audio_out/audio_oss_out.c:786 src/audio_out/audio_oss_out.c:901
+#: src/audio_out/audio_oss_out.c:788 src/audio_out/audio_oss_out.c:906
 #, c-format
 msgid ""
 "audio_oss_out: opening audio device %s failed:\n"
@@ -677,11 +678,11 @@ msgstr ""
 "audio_oss_out: falló al abrir el dispositivo de audio %s:\n"
 "%s\n"
 
-#: src/audio_out/audio_oss_out.c:807
+#: src/audio_out/audio_oss_out.c:809
 msgid "a/v sync method to use by OSS"
 msgstr "método de sincronismo a/v a usar por OSS"
 
-#: src/audio_out/audio_oss_out.c:808
+#: src/audio_out/audio_oss_out.c:810
 msgid ""
 "xine can use different methods to keep audio and video synchronized. Which "
 "setting works best depends on the OSS driver and sound hardware you are "
@@ -741,7 +742,7 @@ msgstr ""
 "soporta ninguno de los ioctls de tiempo real y observa errores de "
 "sincronismo después de una reproducción larga"
 
-#: src/audio_out/audio_oss_out.c:856
+#: src/audio_out/audio_oss_out.c:861
 msgid ""
 "audio_oss_out: Audio driver realtime sync disabled...\n"
 "audio_oss_out: ...will use system real-time clock for soft-sync instead\n"
@@ -753,11 +754,11 @@ msgstr ""
 "sync, en su lugar\n"
 "audio_oss_out: ...puede haber problemas de sincronización audio/vídeo\n"
 
-#: src/audio_out/audio_oss_out.c:863
+#: src/audio_out/audio_oss_out.c:868
 msgid "OSS audio output latency (adjust a/v sync)"
 msgstr "Latencia de salida de audio OSS audio (ajuste sincronismo a/v)"
 
-#: src/audio_out/audio_oss_out.c:877
+#: src/audio_out/audio_oss_out.c:882
 msgid ""
 "audio_oss_out: Audio driver realtime sync disabled...\n"
 "audio_oss_out: ...probing output buffer size: "
@@ -765,7 +766,7 @@ msgstr ""
 "audio_oss_out: Sincronismo tiempo real driver de audio desactivado...\n"
 "audio_oss_out: ...ensayando tamaño del búfer de salida: "
 
-#: src/audio_out/audio_oss_out.c:894
+#: src/audio_out/audio_oss_out.c:899
 #, c-format
 msgid ""
 "%d bytes\n"
@@ -774,11 +775,11 @@ msgstr ""
 "%d bytes\n"
 "audio_oss_out: ...puede haber problemas de sincronización audio/vídeo\n"
 
-#: src/audio_out/audio_oss_out.c:1023
+#: src/audio_out/audio_oss_out.c:1028
 msgid "OSS audio mixer number, -1 for none"
 msgstr "número de mezclador audio OSS, -1 para ninguno"
 
-#: src/audio_out/audio_oss_out.c:1024
+#: src/audio_out/audio_oss_out.c:1029
 msgid ""
 "The full mixer device name is created by taking the OSS device name, "
 "replacing \"dsp\" with \"mixer\" and adding the mixer number.\n"
@@ -795,30 +796,30 @@ msgstr ""
 "El rango de este valor es -1 o 0-15. Este parámetro se ignora cuando el "
 "nombre del dispositivo audio OSS está puesto a \"auto\"."
 
-#: src/audio_out/audio_oss_out.c:1075
+#: src/audio_out/audio_oss_out.c:1080
 #, c-format
 msgid "audio_oss_out: open() mixer %s failed: %s\n"
 msgstr "audio_oss_out: función open() mezclador %s falló: %s\n"
 
-#: src/audio_out/audio_oss_out.c:1152
+#: src/audio_out/audio_oss_out.c:1157
 msgid "xine audio output plugin using oss-compliant audio devices/drivers"
 msgstr ""
 "complemento de xine de salida de audio usando dispositivos/drivers "
 "compatibles OSS"
 
 # Cer: ¿pulseaudio?
-#: src/audio_out/audio_pulse_out.c:548
+#: src/audio_out/audio_pulse_out.c:549
 msgid "device used for pulseaudio"
 msgstr "dispositivo usado para audio a pulsos"
 
 # Cer: ¿pulseaudio? Estaba como "polypaudio" pero fuzzy.
-#: src/audio_out/audio_pulse_out.c:549
+#: src/audio_out/audio_pulse_out.c:550
 msgid "use 'server[:sink]' for setting the pulseaudio sink device."
 msgstr ""
 "use 'server[:sink]' para definir el sumidero del dispositivo audio a pulsos."
 
 # Cer: ¿pulseaudio?
-#: src/audio_out/audio_pulse_out.c:603
+#: src/audio_out/audio_pulse_out.c:604
 msgid "xine audio output plugin using pulseaudio sound server"
 msgstr ""
 "complemento de xine de salida de audio usando servidor de sonido audio a "
@@ -866,11 +867,11 @@ msgstr ""
 "ogg: pista de audio vorbis indicada pero cabecera de flujo de bits vorbis no "
 "encontrada.\n"
 
-#: src/combined/xine_ogg_demuxer.c:2080
+#: src/combined/xine_ogg_demuxer.c:2085
 msgid "Annodex demux plugin"
 msgstr "Complemento demultiplexor annodex"
 
-#: src/combined/xine_ogg_demuxer.c:2104
+#: src/combined/xine_ogg_demuxer.c:2109
 msgid "OGG demux plugin"
 msgstr "Complemento demultiplexor OGG"
 
@@ -883,7 +884,7 @@ msgstr "demux_asf: aviso: El flujo de bits (stream) id=%d está encriptado.\n"
 msgid "Media stream scrambled/encrypted"
 msgstr "Flujo de bits del medio revuelto/encriptado"
 
-#: src/demuxers/demux_asf.c:2105
+#: src/demuxers/demux_asf.c:2102
 msgid "ASF demux plugin"
 msgstr "Complemento demultiplexor ASF"
 
@@ -891,7 +892,7 @@ msgstr "Complemento demultiplexor ASF"
 msgid "Restoring index..."
 msgstr "Restaurando índice..."
 
-#: src/demuxers/demux_avi.c:628 src/demuxers/demux_avi.c:1683
+#: src/demuxers/demux_avi.c:628 src/demuxers/demux_avi.c:1693
 #, c-format
 msgid "demux_avi: invalid avi chunk \"%c%c%c%c\" at pos %<PRIdMAX>\n"
 msgstr "demux_avi: bloque avi inválido \"%c%c%c%c\" en posición %<PRIdMAX>\n"
@@ -907,7 +908,7 @@ msgid "demux_avi: failed to seek to the next chunk (pos %<PRIdMAX>)\n"
 msgstr ""
 "demux_avi: falló el posicionamiento al siguiente bloque (pos %<PRIdMAX>)\n"
 
-#: src/demuxers/demux_avi.c:2309
+#: src/demuxers/demux_avi.c:2326
 msgid "AVI/RIFF demux plugin"
 msgstr "Complemento demultiplexor AVI/RIFF"
 
@@ -916,12 +917,12 @@ msgstr "Complemento demultiplexor AVI/RIFF"
 msgid "invalid FILM chunk size\n"
 msgstr "tamaño de bloque FILM inválido\n"
 
-#: src/demuxers/demux_film.c:338
+#: src/demuxers/demux_film.c:346
 #, c-format
 msgid "unrecognized FILM chunk\n"
 msgstr "bloque FILM no reconocido\n"
 
-#: src/demuxers/demux_film.c:896
+#: src/demuxers/demux_film.c:905
 msgid "FILM (CPK) demux plugin"
 msgstr "Complemento demultiplexor FILM (CPK)"
 
@@ -934,7 +935,7 @@ msgstr "Versión FLV no soportada (%d).\n"
 msgid "neither video nor audio stream in this file.\n"
 msgstr "no hay flujo de vídeo ni audio en este fichero.\n"
 
-#: src/demuxers/demux_flv.c:888
+#: src/demuxers/demux_flv.c:898
 msgid "Flash Video file demux plugin"
 msgstr "Complemento demultiplexor para fichero Flash Video"
 
@@ -953,7 +954,7 @@ msgstr "iff-ilbm: compresión desconocida: %d\n"
 msgid "iff: unknown Chunk: %s\n"
 msgstr "iff: Bloque no reconocido: %s\n"
 
-#: src/demuxers/demux_iff.c:1217
+#: src/demuxers/demux_iff.c:1225
 msgid "IFF demux plugin"
 msgstr "Complemento demultiplexor IFF"
 
@@ -1091,13 +1092,13 @@ msgid "demux_wc3movie: SHOT chunk referenced invalid palette (%d >= %d)\n"
 msgstr ""
 "demux_wc3movie: bloque SHOT referenció una paleta inválida (%d >= %d)\n"
 
-#: src/demuxers/demux_wc3movie.c:402
+#: src/demuxers/demux_wc3movie.c:408
 #, c-format
 msgid "demux_wc3movie: There was a problem while loading palette chunks\n"
 msgstr ""
 "demux_wc3movie: Hubo un problema mientras se cargaban bloques de paleta\n"
 
-#: src/demuxers/demux_wc3movie.c:711
+#: src/demuxers/demux_wc3movie.c:718
 msgid "Wing Commander III Movie (MVE) demux plugin"
 msgstr "Complemento demultiplexor Wing Commander III Movie (MVE)"
 
@@ -2883,22 +2884,22 @@ msgstr "ffmpeg_audio_dec: no pude abrir el decodificador\n"
 msgid "ffmpeg based audio decoder plugin"
 msgstr "complemento decodificador de audio basado en ffmpeg"
 
-#: src/combined/ffmpeg/ff_dvaudio_decoder.c:277
+#: src/combined/ffmpeg/ff_dvaudio_decoder.c:286
 #, c-format
 msgid "dvaudio: increasing buffer to %d to avoid overflow.\n"
 msgstr ""
 "dvaudio: incrementando el tamaño de la memoria tampón a %d para evitar el "
 "desbordamiento.\n"
 
-#: src/combined/ffmpeg/ff_dvaudio_decoder.c:388
+#: src/combined/ffmpeg/ff_dvaudio_decoder.c:397
 msgid "dv audio decoder plugin"
 msgstr "complemento decodificador de audio dv"
 
-#: src/combined/ffmpeg/ffmpeg_encoder.c:161
+#: src/combined/ffmpeg/ffmpeg_encoder.c:165
 msgid "libavcodec mpeg output bitrate (kbit/s)"
 msgstr "tasa de bits salida mpeg de libavcodec (kbit/s)"
 
-#: src/combined/ffmpeg/ffmpeg_encoder.c:162
+#: src/combined/ffmpeg/ffmpeg_encoder.c:166
 msgid ""
 "The bitrate the libavcodec mpeg encoder should use for DXR3's encoding mode. "
 "Higher values will increase quality and CPU usage.\n"
@@ -2910,11 +2911,11 @@ msgstr ""
 "Este ajuste sólo se considera cuando el modo de calidad constante está "
 "desactivado."
 
-#: src/combined/ffmpeg/ffmpeg_encoder.c:169
+#: src/combined/ffmpeg/ffmpeg_encoder.c:173
 msgid "constant quality mode"
 msgstr "modo de calidad constante"
 
-#: src/combined/ffmpeg/ffmpeg_encoder.c:170
+#: src/combined/ffmpeg/ffmpeg_encoder.c:174
 msgid ""
 "When enabled, libavcodec will use a constant quality mode by dynamically "
 "compressing the images based on their complexity. When disabled, libavcodec "
@@ -2924,64 +2925,64 @@ msgstr ""
 "dinámicamente comprimiendo las imágenes basado en su complejidad. Cuando se "
 "desactiva, libavcodec usará el modo de tasa de bits constante."
 
-#: src/combined/ffmpeg/ffmpeg_encoder.c:177
+#: src/combined/ffmpeg/ffmpeg_encoder.c:181
 msgid "minimum compression"
 msgstr "compresión mínima"
 
-#: src/combined/ffmpeg/ffmpeg_encoder.c:178
+#: src/combined/ffmpeg/ffmpeg_encoder.c:182
 msgid "The minimum compression to apply to an image in constant quality mode."
 msgstr ""
 "La mínima compresión a aplicar a una imagen en el modo de calidad constante."
 
-#: src/combined/ffmpeg/ffmpeg_encoder.c:183
+#: src/combined/ffmpeg/ffmpeg_encoder.c:187
 msgid "maximum quantizer"
 msgstr "cuantificador máximo"
 
-#: src/combined/ffmpeg/ffmpeg_encoder.c:184
+#: src/combined/ffmpeg/ffmpeg_encoder.c:188
 msgid "The maximum compression to apply to an image in constant quality mode."
 msgstr ""
 "La máxima compresión a aplicar a una imagen en modo de calidad constante."
 
-#: src/combined/ffmpeg/ff_video_decoder.c:156
+#: src/combined/ffmpeg/ff_video_decoder.c:160
 msgid "ffmpeg_video_dec: unsupported frame format, DR1 disabled.\n"
 msgstr "ffmpeg_video_dec: formato de cuadro no soportado, DR1 desactivado.\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:174
+#: src/combined/ffmpeg/ff_video_decoder.c:178
 msgid "ffmpeg_video_dec: unsupported frame dimensions, DR1 disabled.\n"
 msgstr ""
 "ffmpeg_video_dec: dimensiones de cuadro no soportadas, DR1 desactivado.\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:357
+#: src/combined/ffmpeg/ff_video_decoder.c:361
 #, c-format
 msgid "ffmpeg_video_dec: couldn't find ffmpeg decoder for buf type 0x%X\n"
 msgstr ""
 "ffmpeg_video_dec: no pude encontrar el decodificador ffmpeg para el tipo de "
 "tampón  0x%X\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:389
+#: src/combined/ffmpeg/ff_video_decoder.c:393
 msgid "ffmpeg_video_dec: couldn't open decoder\n"
 msgstr "ffmpeg_video_dec: no pude abrir el decodificador\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:432
+#: src/combined/ffmpeg/ff_video_decoder.c:436
 msgid "ffmpeg_video_dec: direct rendering enabled\n"
 msgstr "ffmpeg_video_dec: renderizado directo activado\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:872
+#: src/combined/ffmpeg/ff_video_decoder.c:876
 #, c-format
 msgid "ffmpeg_video_dec: increasing buffer to %d to avoid overflow.\n"
 msgstr ""
 "ffmpeg_video_dec: incrementando el tamaño de la memoria tampón a %d para "
 "evitar el desbordamiento.\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1574
+#: src/combined/ffmpeg/ff_video_decoder.c:1578
 msgid "ffmpeg based video decoder plugin"
 msgstr "complemento decodificador de vídeo basado en ffmpeg"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1586
+#: src/combined/ffmpeg/ff_video_decoder.c:1590
 msgid "MPEG-4 postprocessing quality"
 msgstr "calidad de postprocesado MPEG-4"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1587
+#: src/combined/ffmpeg/ff_video_decoder.c:1591
 msgid ""
 "You can adjust the amount of post processing applied to MPEG-4 video.\n"
 "Higher values result in better quality, but need more CPU. Lower values may "
@@ -2995,11 +2996,11 @@ msgstr ""
 "bloque. Para contenido de alta calidad, demasiado postprocesado puede de "
 "hecho hacer la imagen peor emborronándola demasiado."
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1595
+#: src/combined/ffmpeg/ff_video_decoder.c:1599
 msgid "FFmpeg video decoding thread count"
 msgstr "Conteo de hilos decodificando vídeo FFmpeg"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1596
+#: src/combined/ffmpeg/ff_video_decoder.c:1600
 msgid ""
 "You can adjust the number of video decoding threads which FFmpeg may use.\n"
 "Higher values should speed up decoding but it depends on the codec used "
@@ -3013,12 +3014,12 @@ msgstr ""
 "decodificador por cada CPU lógica (típicamente de 1 a 4). Un cambio hará "
 "efecto cuando se reproduzca el siguiente flujo."
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1605
+#: src/combined/ffmpeg/ff_video_decoder.c:1609
 msgid "Skip loop filter"
 msgstr "Saltarse filtro de bucle"
 
 # Cer "saltar" por"skip" suena raro.
-#: src/combined/ffmpeg/ff_video_decoder.c:1606
+#: src/combined/ffmpeg/ff_video_decoder.c:1610
 msgid ""
 "You can control for which frames the loop filter shall be skipped after "
 "decoding.\n"
@@ -3035,11 +3036,11 @@ msgstr ""
 "manos de la implementación.\n"
 "Un cambio de este ajuste tendrá efecto a la reproducción de siguiente flujo."
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1615
+#: src/combined/ffmpeg/ff_video_decoder.c:1619
 msgid "Choose speed over specification compliance"
 msgstr "Elegir velocidad en vez de conformidad con la especificación"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1616
+#: src/combined/ffmpeg/ff_video_decoder.c:1620
 msgid ""
 "You may want to allow speed cheats which violate codec specification.\n"
 "Cheating may speed up decoding but can also lead to decoding artefacts.\n"
@@ -3376,7 +3377,7 @@ msgstr "complemento binario win32 codec de vídeo"
 msgid "win32 binary audio codec plugin"
 msgstr "complemento binario win32 codec de audio"
 
-#: src/audio_dec/xine_a52_decoder.c:757 src/audio_dec/xine_dts_decoder.c:524
+#: src/audio_dec/xine_a52_decoder.c:757 src/audio_dec/xine_dts_decoder.c:532
 msgid "HELP! a mono-only audio driver?!\n"
 msgstr "¡AYUDA! ¿¡Un manejador de audio exclusivamente mono-aural?!\n"
 
@@ -3431,7 +3432,7 @@ msgstr ""
 "de decodificación envolvente matricial como prologic, debería activar esta "
 "opción de modo que los canales adicionales se mezclen en la señal estéreo."
 
-#: src/audio_dec/xine_dts_decoder.c:559
+#: src/audio_dec/xine_dts_decoder.c:567
 msgid "DTS passthru audio format decoder plugin"
 msgstr "complemento decodificador de formato audio paso a través DTS"
 
@@ -4019,7 +4020,7 @@ msgstr ""
 msgid "Adds noise"
 msgstr "añade ruido"
 
-#: src/post/planar/pp.c:111
+#: src/post/planar/pp.c:116
 msgid ""
 "FFmpeg libpostprocess plugin.\n"
 "\n"
@@ -4031,7 +4032,7 @@ msgstr ""
 "Parámetros\n"
 "\n"
 
-#: src/post/planar/pp.c:116
+#: src/post/planar/pp.c:121
 msgid ""
 "\n"
 "* libpostprocess (C) Michael Niedermayer\n"
@@ -4039,7 +4040,7 @@ msgstr ""
 "\n"
 "* libpostprocess (C) Michael Niedermayer\n"
 
-#: src/post/planar/pp.c:155
+#: src/post/planar/pp.c:160
 msgid "plugin for ffmpeg libpostprocess"
 msgstr "complemento para libpostprocess ffmpeg "
 
@@ -4102,83 +4103,83 @@ msgstr ""
 "Unsharp mask & gaussian blur (máscara de des-nitidez y borrosidad gaussiana)"
 
 # Cer: no lo tengo claro
-#: src/vdr/input_vdr.c:183 src/vdr/input_vdr.c:223 src/vdr/input_vdr.c:1848
-#: src/vdr/input_vdr.c:1946
+#: src/vdr/input_vdr.c:197 src/vdr/input_vdr.c:237 src/vdr/input_vdr.c:1898
+#: src/vdr/input_vdr.c:1996
 #, c-format
 msgid "%s: input event write: %s.\n"
 msgstr "%s: evento de entrada escribe: %s.\n"
 
-#: src/vdr/input_vdr.c:713 src/vdr/input_vdr.c:1137
+#: src/vdr/input_vdr.c:733 src/vdr/input_vdr.c:1129
 #, c-format
 msgid "%s: buffer_pool_alloc() failed!\n"
 msgstr "%s: ¡buffer_pool_alloc() falló!\n"
 
-#: src/vdr/input_vdr.c:782
+#: src/vdr/input_vdr.c:802
 #, c-format
 msgid "%s: flush buffers (vb: %d, ab: %d, vf: %d, af: %d) %s.\n"
 msgstr "%s: vaciar tampones (vb: %d, ab: %d, vf: %d, af: %d) %s.\n"
 
-#: src/vdr/input_vdr.c:1476
+#: src/vdr/input_vdr.c:1515
 #, c-format
 msgid "%s: shutting down rpc thread (timeout: %d ms) ...\n"
 msgstr "%s: cerrando el hilo rpc (temporizado: %d ms) ...\n"
 
-#: src/vdr/input_vdr.c:1500
+#: src/vdr/input_vdr.c:1539
 #, c-format
 msgid "%s: cancelling rpc thread in function %d...\n"
 msgstr "%s: cancelando el hilo rpc en la función %d...\n"
 
-#: src/vdr/input_vdr.c:1507
+#: src/vdr/input_vdr.c:1546
 #, c-format
 msgid "%s: joining rpc thread ...\n"
 msgstr "%s: uniendo el hilo rpc ...\n"
 
-#: src/vdr/input_vdr.c:1509
+#: src/vdr/input_vdr.c:1548
 #, c-format
 msgid "%s: rpc thread joined.\n"
 msgstr "%s: hilo rpc unido.\n"
 
-#: src/vdr/input_vdr.c:1587 src/vdr/input_vdr.c:1601 src/vdr/input_vdr.c:1619
-#: src/vdr/input_vdr.c:1641 src/vdr/input_vdr.c:1663
+#: src/vdr/input_vdr.c:1631 src/vdr/input_vdr.c:1645 src/vdr/input_vdr.c:1669
+#: src/vdr/input_vdr.c:1691 src/vdr/input_vdr.c:1713
 #, c-format
 msgid "%s: failed to open '%s' (%s)\n"
 msgstr "%s: falló en abrir '%s' (%s)\n"
 
-#: src/vdr/input_vdr.c:1603
+#: src/vdr/input_vdr.c:1647
 msgid "timeout expired during setup phase"
 msgstr "expiró el límite de tiempo durante la fase de configuración"
 
-#: src/vdr/input_vdr.c:1688
+#: src/vdr/input_vdr.c:1738
 #, c-format
 msgid "%s: failed to create socket for port %d (%s)\n"
 msgstr "%s: fallo al crear el socket para el puerto %d (%s)\n"
 
-#: src/vdr/input_vdr.c:1702
+#: src/vdr/input_vdr.c:1752
 #, c-format
 msgid "%s: failed to connect to port %d (%s)\n"
 msgstr "%s: falló en conectar al puerto %d (%s)\n"
 
-#: src/vdr/input_vdr.c:1709
+#: src/vdr/input_vdr.c:1759
 #, c-format
 msgid "%s: socket opening (port %d) successful, fd = %d\n"
 msgstr "%s: abriendo socket (puerto %d) con éxito, fd = %d\n"
 
-#: src/vdr/input_vdr.c:1737
+#: src/vdr/input_vdr.c:1787
 #, c-format
 msgid "%s: connecting to vdr.\n"
 msgstr "%s: conectando a vdr.\n"
 
-#: src/vdr/input_vdr.c:1742
+#: src/vdr/input_vdr.c:1792
 #, c-format
 msgid "%s: failed to resolve hostname '%s' (%s)\n"
 msgstr "%s: falló al resolver el nombre de equipo '%s' (%s)\n"
 
-#: src/vdr/input_vdr.c:1765
+#: src/vdr/input_vdr.c:1815
 #, c-format
 msgid "%s: connecting to all sockets (port %d .. %d) was successful.\n"
 msgstr "%s: la conexión a todos los sockets (puerto %d .. %d) tuvo éxito.\n"
 
-#: src/vdr/input_vdr.c:1805
+#: src/vdr/input_vdr.c:1855
 #, c-format
 msgid ""
 "%s: MRL (%s) invalid! MRL should start with vdr://path/to/fifo/stream or "
@@ -4187,12 +4188,12 @@ msgstr ""
 "%s: ¡MRL (%s) inválido! El MRL debiera empezar con vdr://camino/a/flujo/fifo "
 "o netvdr://equipo:puerto donde ':puerto' es opcional.\n"
 
-#: src/vdr/input_vdr.c:1815
+#: src/vdr/input_vdr.c:1865
 #, c-format
 msgid "%s: can't create new thread (%s)\n"
 msgstr "%s: no puedo crear nuevo hilo (%s)\n"
 
-#: src/vdr/input_vdr.c:2060
+#: src/vdr/input_vdr.c:2189
 msgid "VDR display device plugin"
 msgstr "complemento de dispositivo de visualización VDR"
 
@@ -4259,10 +4260,8 @@ msgid "video colour key"
 msgstr "llave de color de vídeo"
 
 #: src/video_out/video_out_directfb.c:1365
-#: src/video_out/video_out_vidix.c:1160 src/video_out/video_out_vidix.c:1167
-#: src/video_out/video_out_vidix.c:1174 src/video_out/video_out_xcbxv.c:1279
-#: src/video_out/video_out_xv.c:1332 src/video_out/video_out_xvmc.c:1427
-#: src/video_out/video_out_xxmc.c:2574
+#: src/video_out/video_out_vidix.c:1164 src/video_out/video_out_vidix.c:1171
+#: src/video_out/video_out_vidix.c:1178 src/video_out/xv_common.h:25
 msgid ""
 "The colour key is used to tell the graphics card where to overlay the video "
 "image. Try different values, if you experience windows becoming transparent."
@@ -4337,30 +4336,30 @@ msgstr ""
 "video_out_directfb: escalado de imagen con desentrelazado es acelerado en "
 "hardware.\n"
 
-#: src/video_out/video_out_directfb.c:1782
+#: src/video_out/video_out_directfb.c:1796
 msgid "video layer id (auto: -1)"
 msgstr "id. de la capa de vídeo (auto: -1)"
 
-#: src/video_out/video_out_directfb.c:1783
+#: src/video_out/video_out_directfb.c:1797
 msgid "Select the video output layer by its id."
 msgstr "Seleccione la capa de salida de vídeo por su id."
 
-#: src/video_out/video_out_directfb.c:1804
-#: src/video_out/video_out_directfb.c:2001
+#: src/video_out/video_out_directfb.c:1818
+#: src/video_out/video_out_directfb.c:2015
 #, c-format
 msgid "video_out_directfb: using display layer #%d.\n"
 msgstr "video_out_directfb: usando capa de visualización nº %d.\n"
 
-#: src/video_out/video_out_directfb.c:1901
+#: src/video_out/video_out_directfb.c:1915
 msgid "xine video output plugin using DirectFB."
 msgstr "complemento de xine de salida de vídeo usando DirectFB."
 
-#: src/video_out/video_out_directfb.c:1994
+#: src/video_out/video_out_directfb.c:2008
 msgid "video_out_directfb: no usable display layer was found!\n"
 msgstr ""
 "video_out_directfb: ¡no se encontró una capa de visualización usable!\n"
 
-#: src/video_out/video_out_directfb.c:2106
+#: src/video_out/video_out_directfb.c:2120
 msgid "xine video output plugin using DirectFB under XDirectFB."
 msgstr "complemento de xine de salida de vídeo usando DirectFB bajo XDirectFB."
 
@@ -4378,11 +4377,11 @@ msgstr ""
 "directo) empaquetado (%d).\n"
 "     Compruebe 'fbset -i' o pruebe 'fbset -depth 16'.\n"
 
-#: src/video_out/video_out_fb.c:818 src/video_out/video_out_vidix.c:1232
+#: src/video_out/video_out_fb.c:818 src/video_out/video_out_vidix.c:1236
 msgid "framebuffer device name"
 msgstr "nombre del dispositivo framebuffer"
 
-#: src/video_out/video_out_fb.c:819 src/video_out/video_out_vidix.c:1233
+#: src/video_out/video_out_fb.c:819 src/video_out/video_out_vidix.c:1237
 msgid ""
 "Specifies the file name for the framebuffer device to be used.\n"
 "This setting is security critical, because when changed to a different file, "
@@ -4527,9 +4526,8 @@ msgstr ""
 "Frecuencia mínima de cuadro para rutinas animadas de renderizado.\n"
 "Ignorado para rutinas estáticas de renderizado.\n"
 
-#: src/video_out/video_out_opengl.c:1915 src/video_out/video_out_vidix.c:1024
-#: src/video_out/video_out_xcbxv.c:1311 src/video_out/video_out_xv.c:1364
-#: src/video_out/video_out_xvmc.c:1441 src/video_out/video_out_xxmc.c:2606
+#: src/video_out/video_out_opengl.c:1915 src/video_out/video_out_vidix.c:1028
+#: src/video_out/xv_common.h:46
 msgid "enable double buffering"
 msgstr "activar doble tamponeado"
 
@@ -4610,31 +4608,29 @@ msgstr ""
 msgid "video_out_pgx64: Error: unable to set window properties\n"
 msgstr "video_out_pgx64: Error: incapaz de poner las propiedades de ventana\n"
 
-#: src/video_out/video_out_pgx64.c:808
+#: src/video_out/video_out_pgx64.c:807
 msgid "video_out_pgx64: Warning: low video memory, multi-buffering disabled\n"
 msgstr ""
 "video_out_pgx64: Aviso: memoria de vídeo baja, multi-tamponeado desactivado\n"
 
-#: src/video_out/video_out_pgx64.c:840
+#: src/video_out/video_out_pgx64.c:839
 msgid "video_out_pgx64: Error: insuffucient video memory\n"
 msgstr "video_out_pgx64: Error: memoria de vídeo insuficiente\n"
 
-#: src/video_out/video_out_pgx64.c:856
+#: src/video_out/video_out_pgx64.c:855
 msgid "video_out_pgx64: Warning: low video memory, double-buffering disabled\n"
 msgstr ""
 "video_out_pgx64: Aviso: memoria de vídeo baja, tamponeado-doble desactivado\n"
 
-#: src/video_out/video_out_pgx64.c:1386
+#: src/video_out/video_out_pgx64.c:1385
 msgid "video_out_pgx64: Error: ioctl failed (FBIOGATTR)\n"
 msgstr "video_out_pgx64: Error: falló ioctl (FBIOGATTR)\n"
 
-#: src/video_out/video_out_pgx64.c:1453 src/video_out/video_out_xcbxv.c:1278
-#: src/video_out/video_out_xv.c:1331 src/video_out/video_out_xvmc.c:1426
-#: src/video_out/video_out_xxmc.c:2573
+#: src/video_out/video_out_pgx64.c:1452 src/video_out/xv_common.h:24
 msgid "video overlay colour key"
 msgstr "llave de color de superposición de vídeo"
 
-#: src/video_out/video_out_pgx64.c:1454
+#: src/video_out/video_out_pgx64.c:1453
 msgid ""
 "The colour key is used to tell the graphics card where it can overlay the "
 "video image. Try using different values if you see the video showing through "
@@ -4644,11 +4640,11 @@ msgstr ""
 "superponer la imagen de vídeo. Pruebe usando diferentes valores si ve que el "
 "vídeo asoma a través de otras ventanas."
 
-#: src/video_out/video_out_pgx64.c:1461
+#: src/video_out/video_out_pgx64.c:1460
 msgid "enable chroma keying"
 msgstr "activa llave croma (chroma keying)"
 
-#: src/video_out/video_out_pgx64.c:1462
+#: src/video_out/video_out_pgx64.c:1461
 msgid ""
 "Draw OSD graphics on top of the overlay colour key rather than blend them "
 "into each frame."
@@ -4656,11 +4652,11 @@ msgstr ""
 "Dibuja gráficos VEP (OSD) encima de la llave de color de la superposición de "
 "vídeo en vez de mezclarlos en cada cuadro."
 
-#: src/video_out/video_out_pgx64.c:1465
+#: src/video_out/video_out_pgx64.c:1464
 msgid "enable multi-buffering"
 msgstr "activa multi-tamponeado"
 
-#: src/video_out/video_out_pgx64.c:1466
+#: src/video_out/video_out_pgx64.c:1465
 msgid ""
 "Multi buffering increases performance at the expense of using more graphics "
 "memory."
@@ -4668,7 +4664,7 @@ msgstr ""
 "Multi-tamponeado incrementa el rendimiento a costa de usar más memoria "
 "gráfica."
 
-#: src/video_out/video_out_pgx64.c:1487
+#: src/video_out/video_out_pgx64.c:1486
 msgid "xine video output plugin for Sun XVR100/PGX64/PGX24 framebuffers"
 msgstr ""
 "complemento de xine de salida de vídeo para tampones-de-cuadro Sun XVR100/"
@@ -4709,33 +4705,31 @@ msgid "xine video output plugin using the Libstk Surface Set-top Toolkit"
 msgstr ""
 "complemento de vídeo de xine usando el \"Libstk Surface Set-top Toolkit\""
 
-#: src/video_out/video_out_vidix.c:1002
+#: src/video_out/video_out_vidix.c:1006
 msgid "red intensity"
 msgstr "intensidad de rojo "
 
-#: src/video_out/video_out_vidix.c:1002
+#: src/video_out/video_out_vidix.c:1006
 msgid "The intensity of the red colour components."
 msgstr "La intensidad de los componentes de color rojo."
 
-#: src/video_out/video_out_vidix.c:1007
+#: src/video_out/video_out_vidix.c:1011
 msgid "green intensity"
 msgstr "intensidad de verde"
 
-#: src/video_out/video_out_vidix.c:1007
+#: src/video_out/video_out_vidix.c:1011
 msgid "The intensity of the green colour components."
 msgstr "La intensidad de los componentes de color verde."
 
-#: src/video_out/video_out_vidix.c:1012
+#: src/video_out/video_out_vidix.c:1016
 msgid "blue intensity"
 msgstr "intensidad de azul"
 
-#: src/video_out/video_out_vidix.c:1012
+#: src/video_out/video_out_vidix.c:1016
 msgid "The intensity of the blue colour components."
 msgstr "La intensidad de los componentes de color azul."
 
-#: src/video_out/video_out_vidix.c:1025 src/video_out/video_out_xcbxv.c:1312
-#: src/video_out/video_out_xv.c:1365 src/video_out/video_out_xvmc.c:1442
-#: src/video_out/video_out_xxmc.c:2607
+#: src/video_out/video_out_vidix.c:1029 src/video_out/xv_common.h:47
 msgid ""
 "Double buffering will synchronize the update of the video image to the "
 "repainting of the entire screen (\"vertical retrace\"). This eliminates "
@@ -4746,45 +4740,45 @@ msgstr ""
 "vertical). Esto elimina el parpadeo y artifactos de rajado, pero usa más "
 "memoria gráfica."
 
-#: src/video_out/video_out_vidix.c:1072
+#: src/video_out/video_out_vidix.c:1076
 msgid "video_out_vidix: adaptor supports the yuy2 format\n"
 msgstr "video_out_vidix: el adaptador soporta el formato yuy2\n"
 
-#: src/video_out/video_out_vidix.c:1083
+#: src/video_out/video_out_vidix.c:1087
 msgid "video_out_vidix: adaptor supports the yv12 format\n"
 msgstr "video_out_vidix: el adaptador soporta el formato yv12\n"
 
-#: src/video_out/video_out_vidix.c:1099
+#: src/video_out/video_out_vidix.c:1103
 msgid "video_out_vidix: You have wrong version of VIDIX library\n"
 msgstr ""
 "video_out_vidix: Tiene usted la versión incorrecta de la librería VIDIX\n"
 
-#: src/video_out/video_out_vidix.c:1107
+#: src/video_out/video_out_vidix.c:1111
 msgid "video_out_vidix: Couldn't find working VIDIX driver\n"
 msgstr "video_out_vidix: No pude localizar el driver VIDIX que funcione\n"
 
-#: src/video_out/video_out_vidix.c:1120
+#: src/video_out/video_out_vidix.c:1124
 #, c-format
 msgid "video_out_vidix: using driver: %s by %s\n"
 msgstr "video_out_vidix: usando driver: %s por %s\n"
 
-#: src/video_out/video_out_vidix.c:1159
+#: src/video_out/video_out_vidix.c:1163
 msgid "video overlay colour key red component"
 msgstr "clave de componente rojo en superposición de vídeo"
 
-#: src/video_out/video_out_vidix.c:1166
+#: src/video_out/video_out_vidix.c:1170
 msgid "video overlay colour key green component"
 msgstr "clave de componente verde en superposición de vídeo"
 
-#: src/video_out/video_out_vidix.c:1173
+#: src/video_out/video_out_vidix.c:1177
 msgid "video overlay colour key blue component"
 msgstr "clave de componente azul en superposición de vídeo"
 
-#: src/video_out/video_out_vidix.c:1207
+#: src/video_out/video_out_vidix.c:1211
 msgid "xine video output plugin using libvidix for x11"
 msgstr "complemento de salida de vídeo usando libvidix para x11"
 
-#: src/video_out/video_out_vidix.c:1281
+#: src/video_out/video_out_vidix.c:1285
 msgid "xine video output plugin using libvidix for linux frame buffer"
 msgstr ""
 "complemento de salida de vídeo usando libvidix para frame buffer de linux"
@@ -4795,15 +4789,15 @@ msgid "%s: %s: allocating image\n"
 msgstr "%s: %s: ubicando imagen\n"
 
 #: src/video_out/video_out_xcbshm.c:152 src/video_out/video_out_xcbshm.c:162
-#: src/video_out/video_out_xcbshm.c:174 src/video_out/video_out_xcbxv.c:260
-#: src/video_out/video_out_xcbxv.c:270 src/video_out/video_out_xcbxv.c:280
-#: src/video_out/video_out_xcbxv.c:292 src/video_out/video_out_xshm.c:196
+#: src/video_out/video_out_xcbshm.c:174 src/video_out/video_out_xcbxv.c:263
+#: src/video_out/video_out_xcbxv.c:273 src/video_out/video_out_xcbxv.c:283
+#: src/video_out/video_out_xcbxv.c:295 src/video_out/video_out_xshm.c:196
 #: src/video_out/video_out_xshm.c:213 src/video_out/video_out_xshm.c:224
-#: src/video_out/video_out_xshm.c:243 src/video_out/video_out_xv.c:288
-#: src/video_out/video_out_xv.c:315 src/video_out/video_out_xv.c:324
-#: src/video_out/video_out_xv.c:360 src/video_out/video_out_xxmc.c:642
-#: src/video_out/video_out_xxmc.c:653 src/video_out/video_out_xxmc.c:662
-#: src/video_out/video_out_xxmc.c:698
+#: src/video_out/video_out_xshm.c:243 src/video_out/video_out_xv.c:291
+#: src/video_out/video_out_xv.c:318 src/video_out/video_out_xv.c:327
+#: src/video_out/video_out_xv.c:363 src/video_out/video_out_xxmc.c:643
+#: src/video_out/video_out_xxmc.c:654 src/video_out/video_out_xxmc.c:663
+#: src/video_out/video_out_xxmc.c:699
 #, c-format
 msgid "%s: => not using MIT Shared Memory extension.\n"
 msgstr ""
@@ -4816,14 +4810,14 @@ msgid "%s: shared memory error (address error) when allocating image \n"
 msgstr ""
 "%s: error de memoria compartida (error de dirección) ) al ubicar imagen\n"
 
-#: src/video_out/video_out_xcbshm.c:172 src/video_out/video_out_xcbxv.c:290
-#: src/video_out/video_out_xshm.c:241 src/video_out/video_out_xv.c:358
-#: src/video_out/video_out_xxmc.c:696
+#: src/video_out/video_out_xcbshm.c:172 src/video_out/video_out_xcbxv.c:293
+#: src/video_out/video_out_xshm.c:241 src/video_out/video_out_xv.c:361
+#: src/video_out/video_out_xxmc.c:697
 #, c-format
 msgid "%s: x11 error during shared memory XImage creation\n"
 msgstr "%s: x11 error durante creación de XImage en memoria compartida\n"
 
-#: src/video_out/video_out_xcbshm.c:1104 src/video_out/video_out_xshm.c:1161
+#: src/video_out/video_out_xcbshm.c:1102 src/video_out/video_out_xshm.c:1159
 #, c-format
 msgid ""
 "\n"
@@ -4838,49 +4832,55 @@ msgstr ""
 "rendimiento se recomienda una profundidad de 16 bpp!\n"
 "\n"
 
-#: src/video_out/video_out_xcbshm.c:1117 src/video_out/video_out_xshm.c:1174
+#: src/video_out/video_out_xcbshm.c:1115 src/video_out/video_out_xshm.c:1172
 #, c-format
 msgid "%s: MIT shared memory extension not present on display.\n"
 msgstr ""
 "%s: la extensión de memoria compartida del MIT (MIT Shared Memory) no está "
 "presente en la pantalla.\n"
 
-#: src/video_out/video_out_xcbshm.c:1216 src/video_out/video_out_xshm.c:1258
+#: src/video_out/video_out_xcbshm.c:1214 src/video_out/video_out_xshm.c:1256
 #, c-format
 msgid "%s: your video mode was not recognized, sorry :-(\n"
 msgstr "%s: lo sentimos, su modo de vídeo no fue reconocido :-(\n"
 
-#: src/video_out/video_out_xcbshm.c:1245 src/video_out/video_out_xshm.c:1306
+#: src/video_out/video_out_xcbshm.c:1243 src/video_out/video_out_xshm.c:1304
 msgid "xine video output plugin using the MIT X shared memory extension"
 msgstr ""
 "complemento de salida de vídeo de xine usando la extensión de memoria "
 "compartida del MIT (MIT Shared Memory) "
 
-#: src/video_out/video_out_xcbxv.c:258 src/video_out/video_out_xv.c:313
-#: src/video_out/video_out_xxmc.c:651
+#: src/video_out/video_out_xcbxv.c:261 src/video_out/video_out_xv.c:316
+#: src/video_out/video_out_xxmc.c:652
 #, c-format
 msgid "%s: XvShmCreateImage returned a zero size\n"
 msgstr "%s: XvShmCreateImage retornó un tamaño cero\n"
 
-#: src/video_out/video_out_xcbxv.c:268 src/video_out/video_out_xv.c:322
-#: src/video_out/video_out_xxmc.c:660
+#: src/video_out/video_out_xcbxv.c:271 src/video_out/video_out_xv.c:325
+#: src/video_out/video_out_xxmc.c:661
 #, c-format
 msgid "%s: shared memory error in shmget: %s\n"
 msgstr "%s: error de memoria compartida en shmget: %s\n"
 
-#: src/video_out/video_out_xcbxv.c:278
+#: src/video_out/video_out_xcbxv.c:281
 #, c-format
 msgid "%s: shared memory error (address error)\n"
 msgstr "%s: error de memoria compartida (error de dirección)\n"
 
-#: src/video_out/video_out_xcbxv.c:1132 src/video_out/video_out_xv.c:1179
-#: src/video_out/video_out_xxmc.c:2424
+#: src/video_out/video_out_xcbxv.c:1211 src/video_out/video_out_xv.c:1244
+#: src/video_out/video_out_xxmc.c:2472
 #, c-format
 msgid "%s: Xv extension not present.\n"
 msgstr "%s: la extensión Xv  no está presente.\n"
 
-#: src/video_out/video_out_xcbxv.c:1174 src/video_out/video_out_xv.c:1216
-#: src/video_out/video_out_xxmc.c:2461
+#: src/video_out/video_out_xcbxv.c:1238 src/video_out/video_out_xv.c:1269
+#: src/video_out/video_out_xxmc.c:2497
+#, c-format
+msgid "%s: could not open Xv port %d - autodetecting\n"
+msgstr "%s: no se pudo abrir el puerto Xv %d - autodetectando\n"
+
+#: src/video_out/video_out_xcbxv.c:1251 src/video_out/video_out_xv.c:1282
+#: src/video_out/video_out_xxmc.c:2510
 #, c-format
 msgid ""
 "%s: Xv extension is present but I couldn't find a usable yuv12 port.\n"
@@ -4890,7 +4890,7 @@ msgstr ""
 "usable.\n"
 "              ¡¿Parece que su driver de hardware gráfico no soporta Xv?!\n"
 
-#: src/video_out/video_out_xcbxv.c:1183
+#: src/video_out/video_out_xcbxv.c:1260
 #, c-format
 msgid ""
 "%s: using Xv port %d from adaptor %s for hardware colour space conversion "
@@ -4899,74 +4899,34 @@ msgstr ""
 "%s: usando puerto Xv %d del adaptador %s para conversión y escalado de "
 "espacio de color en hardware .\n"
 
-#: src/video_out/video_out_xcbxv.c:1287 src/video_out/video_out_xv.c:1340
-#: src/video_out/video_out_xvmc.c:1435 src/video_out/video_out_xxmc.c:2582
-msgid "autopaint colour key"
-msgstr "llave de color autopintado"
+#: src/video_out/video_out_xcbxv.c:1383 src/video_out/video_out_xv.c:1425
+msgid "enable vblank sync"
+msgstr "activar sincronismo de blanqueo vertical (vblank sync)"
 
-#: src/video_out/video_out_xcbxv.c:1288 src/video_out/video_out_xv.c:1341
-#: src/video_out/video_out_xvmc.c:1436 src/video_out/video_out_xxmc.c:2583
-msgid "Make Xv autopaint its colour key."
-msgstr "Hacer Xv autopintar su llave de color."
-
-#: src/video_out/video_out_xcbxv.c:1295 src/video_out/video_out_xv.c:1348
-#: src/video_out/video_out_xxmc.c:2590
-msgid "bilinear scaling mode"
-msgstr "modo de escalado bilineal"
-
-#: src/video_out/video_out_xcbxv.c:1296 src/video_out/video_out_xv.c:1349
-#: src/video_out/video_out_xxmc.c:2591
+#: src/video_out/video_out_xcbxv.c:1384 src/video_out/video_out_xv.c:1426
 msgid ""
-"Selects the bilinear scaling mode for Permedia cards. The individual values "
-"are:\n"
-"\n"
-"Permedia 2\n"
-"0 - disable bilinear filtering\n"
-"1 - enable bilinear filtering\n"
-"\n"
-"Permedia 3\n"
-"0 - disable bilinear filtering\n"
-"1 - horizontal linear filtering\n"
-"2 - enable full bilinear filtering"
+"This option will synchronize the update of the video image to the repainting "
+"of the entire screen (\"vertical retrace\"). This eliminates flickering and "
+"tearing artifacts. On nvidia cards one may also need to run \"nvidia-settings"
+"\" and choose which display device to sync to under the XVideo Settings tab"
 msgstr ""
-"Selecciona el modo de escalado bilineal para las tarjetas Permedia. Los "
-"valores individuales son:\n"
-"\n"
-"Permedia 2\n"
-"0 - desactivar filtrado bilineal\n"
-"1 - activar filtrado bilineal\n"
-"\n"
-"Permedia 3\n"
-"0 - desactivar filtrado bilineal\n"
-"1 - filtrado horizontal lineal\n"
-"2 - sactivar filtrado bilineal completo"
+"Esta opción sincronizará la actualización de la imagen de vídeo al "
+"redibujado de la pantalla de video entera (\"vertical retrace\", retrazado "
+"vertical). Esto elimina el parpadeo y artefactos de rajado. En las tarjetas "
+"nvidia puede también necesitar que ejecute \"nvidia-settings"
+"\" (configuración de nvidia) y escoger que dispositivo de pantalla debe "
+"sincronizar bajo la pestaña de configuración de XVideo"
 
-#: src/video_out/video_out_xcbxv.c:1348 src/video_out/video_out_xv.c:1398
-#: src/video_out/video_out_xxmc.c:2647
+#: src/video_out/video_out_xcbxv.c:1423 src/video_out/video_out_xcbxv.c:1429
+#: src/video_out/video_out_xv.c:1462 src/video_out/video_out_xv.c:1468
+#: src/video_out/video_out_xvmc.c:1470 src/video_out/video_out_xvmc.c:1476
+#: src/video_out/video_out_xxmc.c:2682 src/video_out/video_out_xxmc.c:2688
 #, c-format
-msgid "%s: this adaptor supports the yv12 format.\n"
-msgstr "%s: éste adaptador soporta el formato yv12.\n"
+msgid "%s: this adaptor supports the %s format.\n"
+msgstr "%s: éste adaptador soporta el formato %s.\n"
 
-#: src/video_out/video_out_xcbxv.c:1353 src/video_out/video_out_xv.c:1403
-#: src/video_out/video_out_xxmc.c:2652
-#, c-format
-msgid "%s: this adaptor supports the yuy2 format.\n"
-msgstr "%s: éste adaptador soporta el formato yuy2.\n"
-
-#: src/video_out/video_out_xcbxv.c:1361 src/video_out/video_out_xv.c:1425
-#: src/video_out/video_out_xxmc.c:2675
-msgid "pitch alignment workaround"
-msgstr "rodeo para alineamiento de paso"
-
-#: src/video_out/video_out_xcbxv.c:1362 src/video_out/video_out_xv.c:1426
-#: src/video_out/video_out_xxmc.c:2676
-msgid "Some buggy video drivers need a workaround to function properly."
-msgstr ""
-"Algunos drivers de vídeo con errores necesitan un rodeo para que funcionen "
-"adecuadamente."
-
-#: src/video_out/video_out_xcbxv.c:1389 src/video_out/video_out_xv.c:1472
-#: src/video_out/video_out_xxmc.c:2769
+#: src/video_out/video_out_xcbxv.c:1467 src/video_out/video_out_xv.c:1539
+#: src/video_out/video_out_xxmc.c:2807
 msgid "xine video output plugin using the MIT X video extension"
 msgstr "complemento de salida de vídeo usando la extensión MIT X vídeo"
 
@@ -4975,7 +4935,7 @@ msgstr "complemento de salida de vídeo usando la extensión MIT X vídeo"
 msgid "%s: shared memory error when allocating image\n"
 msgstr "%s: error de memoria compartida al ubicar imagen\n"
 
-#: src/video_out/video_out_xv.c:286 src/video_out/video_out_xxmc.c:640
+#: src/video_out/video_out_xv.c:289 src/video_out/video_out_xxmc.c:641
 #, c-format
 msgid "%s: XvShmCreateImage failed\n"
 msgstr ""
@@ -4983,7 +4943,7 @@ msgstr ""
 "video_out_xv: => no usando la extensión de memoria compartida MIT (MIT "
 "Shared Memory).\n"
 
-#: src/video_out/video_out_xv.c:1226 src/video_out/video_out_xxmc.c:2471
+#: src/video_out/video_out_xv.c:1292 src/video_out/video_out_xxmc.c:2520
 #, c-format
 msgid ""
 "%s: using Xv port %ld from adaptor %s for hardware colour space conversion "
@@ -4992,11 +4952,11 @@ msgstr ""
 "%s: usando puerto Xv %ld del adaptador %s para conversión y escalado de "
 "espacio de color en hardware .\n"
 
-#: src/video_out/video_out_xvmc.c:1552
+#: src/video_out/video_out_xvmc.c:1548
 msgid "video_out_xvmc: XvMC extension not present.\n"
 msgstr "video_out_xvmc: extensión XvMC no presente.\n"
 
-#: src/video_out/video_out_xvmc.c:1650
+#: src/video_out/video_out_xvmc.c:1646
 msgid ""
 "video_out_xvmc: Xv extension is present but I couldn't find a usable yuv12 "
 "port.\n"
@@ -5004,7 +4964,7 @@ msgstr ""
 "video_out_xvmc: la extensión Xv está presente pero no pude encontrar un "
 "puerto yuv12 usable.\n"
 
-#: src/video_out/video_out_xvmc.c:1659
+#: src/video_out/video_out_xvmc.c:1655
 #, c-format
 msgid ""
 "video_out_xvmc: using Xv port %ld from adaptor %s\n"
@@ -5013,32 +4973,32 @@ msgstr ""
 "video_out_xvmc: usando puerto %ld de Xv del adaptador %s\n"
 "                para conversión del espacio de color y escalado en hardware\n"
 
-#: src/video_out/video_out_xvmc.c:1664
+#: src/video_out/video_out_xvmc.c:1660
 msgid "                idct and motion compensation acceleration \n"
 msgstr "                compensación de movimiento y aceleración idct \n"
 
-#: src/video_out/video_out_xvmc.c:1666
+#: src/video_out/video_out_xvmc.c:1662
 msgid "                motion compensation acceleration only\n"
 msgstr "                sólo compensación de aceleración \n"
 
-#: src/video_out/video_out_xvmc.c:1668
+#: src/video_out/video_out_xvmc.c:1664
 msgid "                no XvMC support \n"
 msgstr "                sin soporte XvMC \n"
 
-#: src/video_out/video_out_xvmc.c:1669
+#: src/video_out/video_out_xvmc.c:1665
 #, c-format
 msgid "                With Overlay = %d; UnsignedIntra = %d.\n"
 msgstr "                Con Overlay = %d; UnsignedIntra = %d.\n"
 
-#: src/video_out/video_out_xvmc.c:1682
+#: src/video_out/video_out_xvmc.c:1678
 msgid "xine video output plugin using the XvMC X video extension"
 msgstr "complemento de vídeo de xine usando extensión de vídeo X XvMC"
 
-#: src/video_out/video_out_xxmc.c:2681
+#: src/video_out/video_out_xxmc.c:2719
 msgid "Make XvMC allocate more frames for better buffering."
 msgstr "Hacer que XvMC ubique más cuadros more cuadros para mejor tamponeado."
 
-#: src/video_out/video_out_xxmc.c:2682
+#: src/video_out/video_out_xxmc.c:2720
 msgid ""
 "Some XvMC implementations allow more than 8 frames.\n"
 "This option, when turned on, makes the driver try to\n"
@@ -5048,11 +5008,11 @@ msgstr ""
 "Esta opción, cuando se activa, hace que el manejador trate de\n"
 "ubicar 15 cuadros. hay que tenerlo para VDR uni cromático y en vivo.\n"
 
-#: src/video_out/video_out_xxmc.c:2688
+#: src/video_out/video_out_xxmc.c:2726
 msgid "Unichrome cpu save"
 msgstr "Ahorro de cpu unichrome"
 
-#: src/video_out/video_out_xxmc.c:2689
+#: src/video_out/video_out_xxmc.c:2727
 msgid ""
 "Saves CPU time by sleeping while decoder works.\n"
 "Only for Linux kernel 2.6 series or 2.4 with multimedia patch.\n"
@@ -5062,11 +5022,11 @@ msgstr ""
 "Sólo para Linux con kernel serie 2.6 series o 2.4 con parche multimedia.\n"
 "Experimental.\n"
 
-#: src/video_out/video_out_xxmc.c:2695
+#: src/video_out/video_out_xxmc.c:2733
 msgid "Fix buggy NVIDIA XvMC subpicture colours"
 msgstr "Arreglar colores de subimagen en NVIDIA XvMC con errores"
 
-#: src/video_out/video_out_xxmc.c:2696
+#: src/video_out/video_out_xxmc.c:2734
 msgid ""
 "There's a bug in NVIDIA's XvMC lib that makes red OSD colours\n"
 "look blue and vice versa. This option provides a workaround.\n"
@@ -5075,11 +5035,11 @@ msgstr ""
 "rojo en el DEP aparezca como azul y viceversa.\n"
 "Esta opción proporciona un arreglo.\n"
 
-#: src/video_out/video_out_xxmc.c:2701
+#: src/video_out/video_out_xxmc.c:2739
 msgid "Use bob as accelerated deinterlace method."
 msgstr "Use «bob» como método acelerado de desentrelazado."
 
-#: src/video_out/video_out_xxmc.c:2702
+#: src/video_out/video_out_xxmc.c:2740
 msgid ""
 "When interlacing is enabled for hardware accelerated frames,\n"
 "alternate between top and bottom field at double the frame rate.\n"
@@ -5088,11 +5048,11 @@ msgstr ""
 "en hardware, alterna entre el campo superior e inferior\n"
 "al doble de la frecuencia de cuadro.\n"
 
-#: src/video_out/video_out_xxmc.c:2708
+#: src/video_out/video_out_xxmc.c:2746
 msgid "Don't use bob deinterlacing for progressive frames."
 msgstr "No usar desentrelazado «bob» para cuadros progresivos."
 
-#: src/video_out/video_out_xxmc.c:2709
+#: src/video_out/video_out_xxmc.c:2747
 msgid ""
 "Progressive frames don't need deinterlacing, so disabling it on\n"
 "demand should result in a better picture.\n"
@@ -5100,12 +5060,12 @@ msgstr ""
 "Los cuadros progresivos no necesitan desentrelazado, de manera\n"
 "que desentrelazarlos bajo demanda no resultará en una mejor imagen.\n"
 
-#: src/video_out/video_out_xxmc.c:2715
+#: src/video_out/video_out_xxmc.c:2753
 msgid "Don't use bob deinterlacing while a scaled OSD is active."
 msgstr ""
 "No usar desentrelazado «bob» mientras una escalado de VEP (OSD) está activo."
 
-#: src/video_out/video_out_xxmc.c:2716
+#: src/video_out/video_out_xxmc.c:2754
 msgid ""
 "Bob deinterlacing adds some noise to horizontal lines, so disabling it\n"
 "on demand should result in a better OSD picture.\n"
@@ -5136,6 +5096,76 @@ msgstr ""
 #, c-format
 msgid "x11osd: unscaled overlay created (%s mode).\n"
 msgstr "x11osd: superposición no escalada creada (modo %s).\n"
+
+#: src/video_out/xv_common.h:30
+msgid "autopaint colour key"
+msgstr "llave de color autopintado"
+
+#: src/video_out/xv_common.h:31
+msgid "Make Xv autopaint its colour key."
+msgstr "Hacer Xv autopintar su llave de color."
+
+#: src/video_out/xv_common.h:34
+msgid "bilinear scaling mode"
+msgstr "modo de escalado bilineal"
+
+#: src/video_out/xv_common.h:35
+msgid ""
+"Selects the bilinear scaling mode for Permedia cards. The individual values "
+"are:\n"
+"\n"
+"Permedia 2\n"
+"0 - disable bilinear filtering\n"
+"1 - enable bilinear filtering\n"
+"\n"
+"Permedia 3\n"
+"0 - disable bilinear filtering\n"
+"1 - horizontal linear filtering\n"
+"2 - enable full bilinear filtering"
+msgstr ""
+"Selecciona el modo de escalado bilineal para las tarjetas Permedia. Los "
+"valores individuales son:\n"
+"\n"
+"Permedia 2\n"
+"0 - desactivar filtrado bilineal\n"
+"1 - activar filtrado bilineal\n"
+"\n"
+"Permedia 3\n"
+"0 - desactivar filtrado bilineal\n"
+"1 - filtrado horizontal lineal\n"
+"2 - sactivar filtrado bilineal completo"
+
+#: src/video_out/xv_common.h:53
+msgid "Xv port number"
+msgstr "puerto Xv número"
+
+#: src/video_out/xv_common.h:54
+msgid "Selects the Xv port number to use (0 to autodetect)."
+msgstr "Selecciona el número de puerto Xv a usar (0 para autodetectar)."
+
+#: src/video_out/xv_common.h:57
+msgid "pitch alignment workaround"
+msgstr "rodeo para alineamiento de paso"
+
+#: src/video_out/xv_common.h:58
+msgid "Some buggy video drivers need a workaround to function properly."
+msgstr ""
+"Algunos drivers de vídeo con errores necesitan un rodeo para que funcionen "
+"adecuadamente."
+
+#: src/video_out/xv_common.h:66
+msgid "video display method preference"
+msgstr "preferencia de método de visualización de vídeo (display)"
+
+#: src/video_out/xv_common.h:67
+msgid ""
+"Selects which video output method is preferred. Detection is done using the "
+"reported Xv adaptor names.\n"
+"(Only applies when auto-detecting which Xv port to use.)"
+msgstr ""
+"Selecciona que método de salida de vídeo se prefiere. La detección se hace "
+"usando los nombres reportados del adaptador Xv.\n"
+"(Sólo aplica al detectar qué puerto Xv a usar.)"
 
 #: src/xine-engine/alphablend.c:2146
 msgid "disable exact alpha blending of overlays"
@@ -5597,12 +5627,12 @@ msgstr ""
 "load_plugins: tipo de complemento estáticamente ligado desconocido %d\n"
 
 # CER: ¿stat?
-#: src/xine-engine/load_plugins.c:594
+#: src/xine-engine/load_plugins.c:593
 #, c-format
 msgid "load_plugins: unable to stat %s\n"
 msgstr "load_plugins: incapaz de obtener estado %s\n"
 
-#: src/xine-engine/load_plugins.c:636
+#: src/xine-engine/load_plugins.c:635
 #, c-format
 msgid ""
 "load_plugins: cannot open plugin lib %s:\n"
@@ -5611,7 +5641,7 @@ msgstr ""
 "load_plugins: no puedo abrir librería de complemento %s:\n"
 "%s\n"
 
-#: src/xine-engine/load_plugins.c:651
+#: src/xine-engine/load_plugins.c:650
 #, c-format
 msgid ""
 "load_plugins: can't get plugin info from %s:\n"
@@ -5620,12 +5650,12 @@ msgstr ""
 "load_plugins: no puedo conseguir información del complemento de %s:\n"
 "%s\n"
 
-#: src/xine-engine/load_plugins.c:669
+#: src/xine-engine/load_plugins.c:668
 #, c-format
 msgid "load_plugins: skipping unreadable plugin directory %s.\n"
 msgstr "load_plugins: omitiendo directorio de complementos ilegible %s.\n"
 
-#: src/xine-engine/load_plugins.c:737
+#: src/xine-engine/load_plugins.c:736
 #, c-format
 msgid ""
 "load_plugins: cannot (stage 2) open plugin lib %s:\n"
@@ -5634,32 +5664,32 @@ msgstr ""
 "load_plugins: no puedo (etapa 2) abrir librería de complementos %s:\n"
 "%s\n"
 
-#: src/xine-engine/load_plugins.c:771
+#: src/xine-engine/load_plugins.c:770
 #, c-format
 msgid "load_plugins: Yikes! %s doesn't contain plugin info.\n"
 msgstr "load_plugins: ¡Ondiá! %s no contiene información del complemento.\n"
 
-#: src/xine-engine/load_plugins.c:1175 src/xine-engine/load_plugins.c:1184
+#: src/xine-engine/load_plugins.c:1174 src/xine-engine/load_plugins.c:1183
 #, c-format
 msgid "Unable to create %s directory: %s\n"
 msgstr "Incapaz de crear el directorio %s: %s\n"
 
-#: src/xine-engine/load_plugins.c:1421
+#: src/xine-engine/load_plugins.c:1428
 #, c-format
 msgid "load_plugins: unknown content detection strategy %d\n"
 msgstr "load_plugins: estrategia %d de detección de contenido desconocida\n"
 
-#: src/xine-engine/load_plugins.c:1546
+#: src/xine-engine/load_plugins.c:1553
 #, c-format
 msgid "load_plugins: using demuxer '%s'\n"
 msgstr "load_plugins: usando desmultiplexor '%s'\n"
 
-#: src/xine-engine/load_plugins.c:1841 src/xine-engine/load_plugins.c:1888
+#: src/xine-engine/load_plugins.c:1850 src/xine-engine/load_plugins.c:1897
 #, c-format
 msgid "load_plugins: failed to load audio output plugin <%s>\n"
 msgstr "load_plugins: fallé al cargar complemento de salida de audio <%s>\n"
 
-#: src/xine-engine/load_plugins.c:1891
+#: src/xine-engine/load_plugins.c:1900
 msgid ""
 "load_plugins: audio output auto-probing didn't find any usable audio "
 "driver.\n"
@@ -5667,7 +5697,7 @@ msgstr ""
 "load_plugins: el auto-probado de salida de audio no encontró ningún driver "
 "de audio usable audio.\n"
 
-#: src/xine-engine/load_plugins.c:2194
+#: src/xine-engine/load_plugins.c:2204
 #, c-format
 msgid ""
 "load_plugins: cannot unload plugin lib %s:\n"
@@ -5919,139 +5949,139 @@ msgstr ""
 "imagen no está acelerado en hardware, esto puede reducir drásticamente el "
 "uso de cpu."
 
-#: src/xine-engine/xine.c:845 src/xine-engine/xine.c:953
-#: src/xine-engine/xine.c:993 src/xine-engine/xine.c:1029
-#: src/xine-engine/xine.c:1041 src/xine-engine/xine.c:1054
-#: src/xine-engine/xine.c:1067 src/xine-engine/xine.c:1080
-#: src/xine-engine/xine.c:1106 src/xine-engine/xine.c:1131
-#: src/xine-engine/xine.c:1168
+#: src/xine-engine/xine.c:848 src/xine-engine/xine.c:970
+#: src/xine-engine/xine.c:1010 src/xine-engine/xine.c:1046
+#: src/xine-engine/xine.c:1058 src/xine-engine/xine.c:1071
+#: src/xine-engine/xine.c:1084 src/xine-engine/xine.c:1097
+#: src/xine-engine/xine.c:1123 src/xine-engine/xine.c:1148
+#: src/xine-engine/xine.c:1185
 msgid "xine: error while parsing mrl\n"
 msgstr "xine: error mientras se interpretaba mrl\n"
 
-#: src/xine-engine/xine.c:887
+#: src/xine-engine/xine.c:907
 #, c-format
 msgid "xine: found input plugin  : %s\n"
 msgstr "xine: encontrado complemento de entrada  : %s\n"
 
-#: src/xine-engine/xine.c:905
+#: src/xine-engine/xine.c:924
 #, c-format
 msgid "xine: input plugin cannot open MRL [%s]\n"
 msgstr "xine: el complemento de entrada no puede abrir el MRL [%s]\n"
 
-#: src/xine-engine/xine.c:916
+#: src/xine-engine/xine.c:933
 #, c-format
 msgid "xine: cannot find input plugin for MRL [%s]\n"
 msgstr "xine: no se puede encontrar el complemento de entrada para MRL [%s]\n"
 
-#: src/xine-engine/xine.c:942
+#: src/xine-engine/xine.c:959
 #, c-format
 msgid "xine: specified demuxer %s failed to start\n"
 msgstr "xine: fallo al iniciar el demultiplexor %s especificado\n"
 
 # cer: ¿join rip?
-#: src/xine-engine/xine.c:979
+#: src/xine-engine/xine.c:996
 #, c-format
 msgid "xine: join rip input plugin\n"
 msgstr "xine: complemento de entrada join rip \n"
 
-#: src/xine-engine/xine.c:986
+#: src/xine-engine/xine.c:1003
 msgid "xine: error opening rip input plugin instance\n"
 msgstr "xine: error al abrir instancia de complemento de entrada rip\n"
 
-#: src/xine-engine/xine.c:1017
+#: src/xine-engine/xine.c:1034
 #, c-format
 msgid "xine: last_probed demuxer %s failed to start\n"
 msgstr ""
 "xine: el último demultiplexor probado (last_probed) %s no consiguió "
 "iniciarse \n"
 
-#: src/xine-engine/xine.c:1046
+#: src/xine-engine/xine.c:1063
 msgid "ignoring video\n"
 msgstr "ignorando vídeo\n"
 
-#: src/xine-engine/xine.c:1059
+#: src/xine-engine/xine.c:1076
 msgid "ignoring audio\n"
 msgstr "ignorando audio\n"
 
-#: src/xine-engine/xine.c:1072
+#: src/xine-engine/xine.c:1089
 msgid "ignoring subpicture\n"
 msgstr "ignorando subimagen\n"
 
-#: src/xine-engine/xine.c:1085
+#: src/xine-engine/xine.c:1102
 msgid "input cache plugin disabled\n"
 msgstr "caché del complemento de entrada desactivado\n"
 
-#: src/xine-engine/xine.c:1158
+#: src/xine-engine/xine.c:1175
 #, c-format
 msgid "subtitle mrl opened '%s'\n"
 msgstr "abierto mrl de subtítulos '%s'\n"
 
-#: src/xine-engine/xine.c:1162
+#: src/xine-engine/xine.c:1179
 msgid "xine: error opening subtitle mrl\n"
 msgstr "xine: error abriendo mrl de subtítulos\n"
 
-#: src/xine-engine/xine.c:1194
+#: src/xine-engine/xine.c:1211
 #, c-format
 msgid "xine: error while parsing MRL\n"
 msgstr "xine: error al interpretar MRL\n"
 
-#: src/xine-engine/xine.c:1201
+#: src/xine-engine/xine.c:1218
 #, c-format
 msgid "xine: changing option '%s' from MRL isn't permitted\n"
 msgstr "xine: cambiar la ocpión '%s' del MRL no está permitido\n"
 
-#: src/xine-engine/xine.c:1221
+#: src/xine-engine/xine.c:1238
 #, c-format
 msgid "xine: couldn't find demux for >%s<\n"
 msgstr "xine: no se pudo encontrar un demultiplexor para >%s<\n"
 
-#: src/xine-engine/xine.c:1237
+#: src/xine-engine/xine.c:1254
 #, c-format
 msgid "xine: found demuxer plugin: %s\n"
 msgstr "xine: encontrado complemento demultiplexor: %s\n"
 
-#: src/xine-engine/xine.c:1259
+#: src/xine-engine/xine.c:1276
 #, c-format
 msgid "xine: demuxer is already done. that was fast!\n"
 msgstr "xine: el demultiplexor ya ha terminado, ¡eso fué rápido\n"
 
-#: src/xine-engine/xine.c:1261
+#: src/xine-engine/xine.c:1278
 #, c-format
 msgid "xine: demuxer failed to start\n"
 msgstr "xine: fallo al iniciar el demultiplexor\n"
 
-#: src/xine-engine/xine.c:1327
+#: src/xine-engine/xine.c:1344
 #, c-format
 msgid "xine_play: no demux available\n"
 msgstr "xine_play: no hay disponible un demultiplexor\n"
 
-#: src/xine-engine/xine.c:1397
+#: src/xine-engine/xine.c:1415
 #, c-format
 msgid "xine_play: demux failed to start\n"
 msgstr "xine_play: fallo al iniciar el demultiplexor\n"
 
-#: src/xine-engine/xine.c:1674
+#: src/xine-engine/xine.c:1693
 #, c-format
 msgid "xine: The specified save_dir \"%s\" might be a security risk.\n"
 msgstr ""
 "xine: El directorio (save_dir) especificado \"%s\" pudiera ser un riesgo "
 "para la seguridad.\n"
 
-#: src/xine-engine/xine.c:1679
+#: src/xine-engine/xine.c:1698
 msgid "The specified save_dir might be a security risk."
 msgstr ""
 "El directorio (save_dir) especificado pudiera ser un riesgo para la "
 "seguridad."
 
-#: src/xine-engine/xine.c:1707
+#: src/xine-engine/xine.c:1732
 msgid "xine: locale not supported by C library\n"
 msgstr "xine: \"locale\" no soportada por la librería de C\n"
 
-#: src/xine-engine/xine.c:1716
+#: src/xine-engine/xine.c:1741
 msgid "media format detection strategy"
 msgstr "estrategia de detecciónde formato"
 
-#: src/xine-engine/xine.c:1717
+#: src/xine-engine/xine.c:1742
 msgid ""
 "xine offers various methods to detect the media format of input to play. The "
 "individual values are:\n"
@@ -6085,11 +6115,11 @@ msgstr ""
 "extension\n"
 "Detectar sólo por la extensión del nombre del fichero.\n"
 
-#: src/xine-engine/xine.c:1735
+#: src/xine-engine/xine.c:1760
 msgid "directory for saving streams"
 msgstr "directorio para guardar flujos de bits"
 
-#: src/xine-engine/xine.c:1736
+#: src/xine-engine/xine.c:1761
 msgid ""
 "When using the stream save feature, files will be written only into this "
 "directory.\n"
@@ -6105,11 +6135,11 @@ msgstr ""
 "arbitrario. Así que debiera ser cuidadoso que el directorio especificado sea "
 "robusto contra cualquier contenido en cualquier fichero."
 
-#: src/xine-engine/xine.c:1747
+#: src/xine-engine/xine.c:1772
 msgid "allow implicit changes to the configuration (e.g. by MRL)"
 msgstr "permitir cambios implícitos a la configuración (p.e. por MRL)"
 
-#: src/xine-engine/xine.c:1748
+#: src/xine-engine/xine.c:1773
 msgid ""
 "If enabled, you allow xine to change your configuration without explicit "
 "actions from your side. For example configuration changes demanded by MRLs "
@@ -6126,11 +6156,11 @@ msgstr ""
 "arbitrariamente cambiar su configuración, usted podría acabar con un xine "
 "totalmente enredado."
 
-#: src/xine-engine/xine.c:1762
+#: src/xine-engine/xine.c:1787
 msgid "Timeout for network stream reading (in seconds)"
 msgstr "Temporización para lectura de flujos de bits desde red (en segundos)"
 
-#: src/xine-engine/xine.c:1763
+#: src/xine-engine/xine.c:1788
 msgid ""
 "Specifies the timeout when reading from network streams, in seconds. Too low "
 "values might stop streaming when the source is slow or the bandwidth is "
@@ -6141,15 +6171,15 @@ msgstr ""
 "fuente es lenta o el ancho de banda está ocupado; valores demasiado altos "
 "congelarán el reproductor si se pierde la conexión."
 
-#: src/xine-engine/xine.c:2115
+#: src/xine-engine/xine.c:2196
 msgid "messages"
 msgstr "mensajes"
 
-#: src/xine-engine/xine.c:2116
+#: src/xine-engine/xine.c:2197
 msgid "plugin"
 msgstr "complemento"
 
-#: src/xine-engine/xine.c:2117
+#: src/xine-engine/xine.c:2198
 msgid "trace"
 msgstr "traza"
 

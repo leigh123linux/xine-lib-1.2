@@ -41,9 +41,11 @@
 #include "bswap.h"
 #include "group_audio.h"
 
-#define WAV_SIGNATURE_SIZE 16
+#define WAV_SIGNATURE_SIZE 12
 /* this is the hex value for 'data' */
 #define data_TAG 0x61746164
+/* this is the hex value for 'fmt ' */
+#define fmt_TAG 0x20746D66
 #define PCM_BLOCK_ALIGN 1024
 
 #define PREFERED_BLOCK_SIZE 4096
@@ -73,31 +75,63 @@ typedef struct {
 
 static int demux_wav_get_stream_length (demux_plugin_t *this_gen);
 
+/* searches for the chunk with the given tag from the beginning of WAV file
+ * returns 1 if chunk was found, 0 otherwise,
+ * fills chunk_size and chunk_pos if chunk was found
+ * NOTE: chunk_pos is set to the position of the first byte of chunk data */
+static int find_chunk_by_tag(demux_wav_t *this, const uint32_t given_chunk_tag,
+                             uint32_t *found_chunk_size, off_t *found_chunk_pos) {
+  uint32_t chunk_tag;
+  uint32_t chunk_size;
+  uint8_t chunk_preamble[8];
+
+  /* search for the chunks from the start of the WAV file */
+  this->input->seek(this->input, WAV_SIGNATURE_SIZE, SEEK_SET);
+
+  while (1) {
+    if (this->input->read(this->input, chunk_preamble, 8) != 8) {
+      return 0;
+    }
+
+    chunk_tag = _X_LE_32(&chunk_preamble[0]);
+    chunk_size = _X_LE_32(&chunk_preamble[4]);
+
+    if (chunk_tag == given_chunk_tag) {
+      if (found_chunk_size)
+        *found_chunk_size = _X_LE_32(&chunk_preamble[4]);
+      if (found_chunk_pos)
+        *found_chunk_pos = this->input->get_current_pos(this->input);
+      return 1;
+    } else {
+      this->input->seek(this->input, chunk_size, SEEK_CUR);
+    }
+  }
+}
+
 /* returns 1 if the WAV file was opened successfully, 0 otherwise */
 static int open_wav_file(demux_wav_t *this) {
   uint8_t signature[WAV_SIGNATURE_SIZE];
   uint32_t chunk_tag;
   uint32_t chunk_size;
   uint8_t chunk_preamble[8];
+  off_t wave_pos;
 
   /* check the signature */
   if (_x_demux_read_header(this->input, signature, WAV_SIGNATURE_SIZE) != WAV_SIGNATURE_SIZE)
     return 0;
 
-  if (memcmp(signature, "RIFF", 4) || memcmp(&signature[8], "WAVEfmt ", 8) )
+  if (memcmp(signature, "RIFF", 4) || memcmp(&signature[8], "WAVE", 4) )
     return 0;
 
-  /* file is qualified; skip over the header bytes in the stream */
-  this->input->seek(this->input, WAV_SIGNATURE_SIZE, SEEK_SET);
-
-  /* go after the format structure */
-  if (this->input->read(this->input,
-    (unsigned char *)&this->wave_size, 4) != 4)
+  /* search for the 'fmt ' chunk first */
+  wave_pos = 0;
+  if (find_chunk_by_tag(this, fmt_TAG, &this->wave_size, &wave_pos)==0)
     return 0;
-  this->wave_size = le2me_32(this->wave_size);
+
+  this->input->seek(this->input, wave_pos, SEEK_SET);
   this->wave = xine_xmalloc( this->wave_size );
-    
-  if (this->input->read(this->input, (void *)this->wave, this->wave_size) !=
+
+  if (!this->wave || this->input->read(this->input, (void *)this->wave, this->wave_size) !=
     this->wave_size) {
     free (this->wave);
     return 0;
@@ -113,28 +147,21 @@ static int open_wav_file(demux_wav_t *this) {
     return 0;
   }
 
-  /* traverse through the chunks to find the 'data' chunk */
+  /* search for the 'data' chunk */
   this->data_start = this->data_size = 0;
-  while (this->data_start == 0) {
-
-    if (this->input->read(this->input, chunk_preamble, 8) != 8) {
-      free (this->wave);
-      return 0;
-    }
-    chunk_tag = _X_LE_32(&chunk_preamble[0]);      
-    chunk_size = _X_LE_32(&chunk_preamble[4]);
-
-    if (chunk_tag == data_TAG) {
-      this->data_start = this->input->get_current_pos(this->input);
-      /* Get the data length from the file itself, instead of the data
-       * TAG, for broken files */
-      this->data_size = this->input->get_length(this->input);
-    } else {
-      this->input->seek(this->input, chunk_size, SEEK_CUR);
-    }
+  if (find_chunk_by_tag(this, data_TAG, &this->data_size, &this->data_start)==0)
+  {
+    free (this->wave);
+    return 0;
   }
-
-  return 1;
+  else
+  {
+    /* Get the data length from the file itself, instead of the data
+     * TAG, for broken files */
+    this->input->seek(this->input, this->data_start, SEEK_SET);
+    this->data_size = this->input->get_length(this->input);
+    return 1;
+  }
 }
 
 static int demux_wav_send_chunk(demux_plugin_t *this_gen) {

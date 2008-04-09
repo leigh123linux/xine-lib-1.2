@@ -23,10 +23,12 @@ Options:
         [--libs]
 	[--acflags]
 	[--cflags]
+	[--bindir]
 	[--plugindir]
 	[--datadir]
 	[--scriptdir]
 	[--localedir]
+	[--xine-list]
 	[--objcflags]
 EOF
 	exit $1
@@ -58,8 +60,11 @@ while test $# -gt 0; do
     --cflags|--libs)
       args="$args${args+ }$1"
       ;;
-    --prefix|--acflags|--plugindir|--datadir|--scriptdir|--localedir|--objcflags)
+    --prefix|--acflags|--bindir|--plugindir|--datadir|--scriptdir|--localedir|--objcflags)
       args="$args${args+ }--variable=${1#--}"
+      ;;
+    --xine-list)
+      args="$args${args+ }--variable=xine_list"
       ;;
     --exec-prefix)
       args="$args${args+ }--variable=exec_prefix"

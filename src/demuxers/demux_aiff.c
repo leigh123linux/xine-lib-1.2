@@ -46,6 +46,10 @@
 #define COMM_TAG FOURCC_TAG('C', 'O', 'M', 'M')
 #define SSND_TAG FOURCC_TAG('S', 'S', 'N', 'D')
 #define APCM_TAG FOURCC_TAG('A', 'P', 'C', 'M')
+#define NAME_TAG FOURCC_TAG('N', 'A', 'M', 'E')
+#define AUTH_TAG FOURCC_TAG('A', 'U', 'T', 'H')
+#define COPY_TAG FOURCC_TAG('(', 'c', ')', ' ')
+#define ANNO_TAG FOURCC_TAG('A', 'N', 'N', 'O')
 
 #define PREAMBLE_SIZE 8
 #define AIFF_SIGNATURE_SIZE 12
@@ -80,6 +84,24 @@ typedef struct {
   demux_class_t     demux_class;
 } demux_aiff_class_t;
 
+/* converts IEEE 80bit extended into int, based on FFMPEG code */
+int extended_to_int(const unsigned char p[10])
+{
+    uint64_t m = 0;
+    int e, i;
+
+    for (i = 0; i < 8; i++)
+        m = (m<<8) + p[2+i];;
+    e = (((int)p[0]&0x7f)<<8) | p[1];
+    if (e == 0x7fff && m)
+        return 0.0/0.0;
+    e -= 16383 + 63;
+
+    if (p[0]&0x80)
+        m= -m;
+    return (int) ldexp(m, e);
+}
+
 /* returns 1 if the AIFF file was opened successfully, 0 otherwise */
 static int open_aiff_file(demux_aiff_t *this) {
 
@@ -87,6 +109,7 @@ static int open_aiff_file(demux_aiff_t *this) {
   unsigned char preamble[PREAMBLE_SIZE];
   unsigned int chunk_type;
   unsigned int chunk_size;
+  unsigned char extended_sample_rate[10];
 
   if (_x_demux_read_header(this->input, signature, AIFF_SIGNATURE_SIZE) != AIFF_SIGNATURE_SIZE)
     return 0;
@@ -135,7 +158,8 @@ static int open_aiff_file(demux_aiff_t *this) {
       this->audio_channels = _X_BE_16(&buffer[0]);
       this->audio_frames = _X_BE_32(&buffer[2]);
       this->audio_bits = _X_BE_16(&buffer[6]);
-      this->audio_sample_rate = _X_BE_16(&buffer[0x0A]);
+      memcpy(&extended_sample_rate, &buffer[8], sizeof(extended_sample_rate));
+      this->audio_sample_rate = extended_to_int(extended_sample_rate);
       this->audio_bytes_per_second = this->audio_channels *
         (this->audio_bits / 8) * this->audio_sample_rate;
 
@@ -150,11 +174,18 @@ static int open_aiff_file(demux_aiff_t *this) {
         (this->audio_bits / 8);
       this->running_time = (this->audio_frames / this->audio_sample_rate) * 1000;
 
-      this->audio_block_align = PCM_BLOCK_ALIGN;
+      /* we should send only complete frames to decoder, as it 
+       * doesn't handle underconsumption yet */
+      this->audio_block_align = PCM_BLOCK_ALIGN - PCM_BLOCK_ALIGN % (this->audio_bits / 8 * this->audio_channels);
 
       break;
 
     } else {
+      /* if chunk contains metadata, it will be word-aligned (as seen at sox and ffmpeg) */
+      if ( ((chunk_type == NAME_TAG) || (chunk_type==AUTH_TAG) ||
+            (chunk_type == COPY_TAG) || (chunk_type==ANNO_TAG)) && (chunk_size&1))
+	chunk_size++;
+
       /* unrecognized; skip it */
       this->input->seek(this->input, chunk_size, SEEK_CUR);
     }

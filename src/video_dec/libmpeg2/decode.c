@@ -460,9 +460,10 @@ static inline int parse_chunk (mpeg2dec_t * mpeg2dec, int code,
 	break;
 
     case 0xb7:	/* sequence end code */
-#ifdef LOG_PAN_SCAN
-      printf ("libmpeg2: sequence end code not handled\n");
-#endif
+        mpeg2_flush(mpeg2dec);
+        mpeg2dec->is_sequence_needed = 1;
+        break;
+
     case 0xb8:	/* group of pictures start code */
 	if (mpeg2_header_group_of_pictures (picture, buffer)) {
 	  printf ("libmpeg2: bad group of pictures\n");

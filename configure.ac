@@ -66,6 +66,8 @@ AC_DEFINE_UNQUOTED([XINE_SUB],   [$XINE_SUB],   [xine sub version number])
 XINE_PATCH=XINE_VERSION_PATCH
 AC_SUBST(XINE_PATCH)
 AC_DEFINE_UNQUOTED([XINE_PATCH], [$XINE_PATCH], [xine patch version number])
+XINE_SERIES=XINE_VERSION_SERIES
+AC_SUBST(XINE_SERIES)
 
 XINE_LT_CURRENT=__XINE_LT_CURRENT
 AC_SUBST(XINE_LT_CURRENT)
@@ -575,6 +577,9 @@ fi
 CC_CHECK_CFLAGS([-ffast-math],               [optflags="$optflags -ffast-math"])
 CC_CHECK_CFLAGS([-fexpensive-optimizations], [optflags="$optflags -fexpensive-optimizations"])
 
+dnl initialize arch_86 as it is later tested for != "no" 
+arch_x86=no
+
 case "$host_or_hostalias" in
     alphaev56-*)    cpuflags="-mcpu=ev56 -mieee $cpuflags" ;;
     alpha*)         cpuflags="-mieee $cpuflags" ;;
@@ -895,6 +900,7 @@ AC_CHECK_FUNCS([pthread_mutex_timedlock],
                [AC_LIBOBJ([timedlock])])
 LIBS="$ac_save_LIBS"
 
+AC_GETOPT_LONG
 
 dnl --------------------------
 dnl checks for system services

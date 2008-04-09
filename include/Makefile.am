@@ -46,7 +46,8 @@ nobase_include_HEADERS = xine.h \
 	xine/xmllexer.h		\
 	xine/xmlparser.h
 
-noinst_HEADERS = config.h configure.h
+noinst_HEADERS = config.h
+nodist_noinst_HEADERS = configure.h
 
 nodist_include_HEADERS = $(inttypes_h)
 

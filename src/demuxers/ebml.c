@@ -310,7 +310,25 @@ int ebml_read_ascii(ebml_parser_t *ebml, ebml_elem_t *elem, char *str) {
 int ebml_read_utf8 (ebml_parser_t *ebml, ebml_elem_t *elem, char *str) {
   return ebml_read_ascii (ebml, elem, str);
 }
+#endif
 
+char *ebml_alloc_read_ascii (ebml_parser_t *ebml, ebml_elem_t *elem)
+{
+  char *text;
+  if (elem->len >= 4096)
+    return NULL;
+  text = malloc(elem->len + 1);
+  if (text)
+  {
+    text[elem->len] = '\0';
+    if (ebml_read_ascii (ebml, elem, text))
+      return text;
+    free (text);
+  }
+  return NULL;
+}
+
+#if 0
 int ebml_read_date (ebml_parser_t *ebml, ebml_elem_t *elem, int64_t *date) {
   return ebml_read_sint (ebml, elem, date);
 }
@@ -414,10 +432,8 @@ int ebml_check_header(ebml_parser_t *ebml) {
       }
 
       case EBML_ID_DOCTYPE: {
-        char *text = malloc(elem.len + 1);
-
-        text[elem.len] = '\0';
-        if (!ebml_read_ascii (ebml, &elem, text))
+        char *text = ebml_alloc_read_ascii (ebml, &elem);
+        if (!text)
           return 0;
 
         lprintf("doctype: %s\n", text);

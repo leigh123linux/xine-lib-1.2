@@ -59,29 +59,70 @@ xine-lib (1.1.90) (Unreleased)
   * Remove SyncFB video output plugin, the kernel module needed is no more
     active and thus it's no more usable. If you were using SyncFB somehow,
     please use DirectFB or VIDIX instead.
-  * The Xv and XxMC video output plugins now support Xv port selection.
-    (XvMC does not, at present.)
+  * The Xv and XxMC video output plugins now support Xv port selection via
+    two methods: port number and port type (currently "any", "overlay" and
+    "textured video"). Port number takes precedence; the plugins will fall
+    back on another port of the same type (if a type was specified) then on
+    whatever they can find.
+    XvMC does not support port selection at present.
   * Report more video output capabilities via (port)->get_capabilities():
     colour controls, zooming, colour keying.
 
-xine-lib (1.1.11) unreleased
+xine-lib (1.1.12) 2008-??-??
+  * Fixed and improved the PulseAudio driver.
+  * Fixed a regression in 1.1.11.1 which broke Quicktime container handling.
+  * And another, this time in the Matroska demuxer.
+  * Added a tool to assist with generating front ends' desktop files. It
+    lists MIME types & filename extensions known to the installed xine-lib.
+  * Various Real codec improvements, including:
+    - RV20 no longer causes segfaults (observed on amd64);
+    - Cook is now handled by ffmpeg.
+
+xine-lib (1.1.11.1) 2008-03-30
+  * Security fixes:
+    - Integer overflows in FLV, Qt, Real, WC3Movie, Matroska and FILM
+      demuxers, allowing remote attackers to trigger heap overflows and
+      possibly execute arbitrary code. (CVE-2008-1482)
+  * Added a few more memory allocation checks to the above demuxers.
+  * WAV file playback fix: don't assume that the first chunk is "fmt ".
+  * Don't try to play partial 24-bit AIFF frames (decoder would lose data).
+  * Fixed AIFF comment chunk handling and sample rate reading.
+  * LPCM fixes: input over-reading, conversion of 24-bit samples.
+
+xine-lib (1.1.11) 2008-03-19
+  * Security fixes:
+    - Array Indexing Vulnerability in sdpplin_parse(). (CVE-2008-0073)
   * Reworked the plugin directory naming so that external plugins don't have
     to be rebuilt for every release. We now use a naming scheme based on the
     API/ABI versioning, checking older directories - with this release, the
-    plugin directory name is 1.19, and if this gets bumped to 1.20 in a
-    future release, 1.19 will still be available for external plugins.
+    plugin directory name is 1.20, and if this gets bumped to 1.21 in a
+    future release, 1.20 will still be available for external plugins.
     (Any directories not 1.* won't be looked in.)
   * Made the version parsing much more reliable; it wasn't properly coping
     with four-part version numbers. This affects any program whose build
     scripts use xine-lib's automake macros.
   * Fixed an off-by-one in the FLAC security fix patch. This breakage was
     causing failure to play some files.
+  * Support 16-bit big-endian DTS audio.
+  * Improved frame snapshot API. (ABI extension.)
+  * Re-add support for # (stream parameter separator) in raw filenames,
+    without the bugs found in the original implementation.
+    (This is a convenience feature for users only. Front ends which rely on
+    it for functions like subtitle file detection must instead use file://
+    MRLs; if they don't, we consider them to be buggy.)
+  * Fixed long delay when closing stream on dual core systems [Bug #33]
+  * DVD playback improvement: don't trust the file sizes.
+  * Build fixes for use with recent ffmpeg.
 
 xine-lib (1.1.10.1) 2008-02-07
   * Security fixes:
     - Array index vulnerability which may allow remote attackers to execute
       arbitrary code via a crafted FLAC tag, causing a stack buffer overflow.
       (CVE-2008-0486)
+    - Buffer overflow in the Matroska demuxer (demuxers/demux_matroska.c)
+      which may allow remote attackers to cause a denial of service (crash)
+      or possibly execute arbitrary code via a Matroska file with invalid
+      frame sizes. (CVE-2008-1161)
   * Fix a RealPlayer codec detection bug.
   * Improve detection of MP3 streams with ID3v2 tags. Don't trust the tag
     size.
@@ -90,7 +131,7 @@ xine-lib (1.1.10) 2008-01-26
   * Security fixes:
     - Buffer overflow which allows a remote attacker to execute arbitrary
       code or crash the client program via a crafted ASF header. 
-      (Related to CVE-2006-1664)
+      (CVE-2008-1110, related to CVE-2006-1664)
   * Update Ogg and Annodex mimetypes and extensions.
   * Change the default v4l device paths to /dev/video0 and /dev/radio0.
   * Fix support for subtitles with schemes (e.g. http://), partly broken

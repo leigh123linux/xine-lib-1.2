@@ -1458,7 +1458,7 @@ static char* config_register_serialized_entry (config_values_t *this, const char
   if (!bytes) goto exit;
   if ((value_count < 0) || (value_count > 256)) goto exit;
   
-  enum_values = malloc (sizeof(void*) * value_count + 1);
+  enum_values = calloc (value_count + 1, sizeof(void*));
   for (i = 0; i < value_count; i++) {
     pos += bytes = get_string(output, output_len, pos, &enum_values[i]);
     if (!bytes) goto exit;

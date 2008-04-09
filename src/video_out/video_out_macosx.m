@@ -36,11 +36,11 @@
 #define LOG
 */
 
-#include "video_out.h"
-#include "vo_scale.h"
 #include "xine.h"
-#include "xine_internal.h"
-#include "xineutils.h"
+#include "xine/video_out.h"
+#include "xine/vo_scale.h"
+#include "xine/xine_internal.h"
+#include "xine/xineutils.h"
 
 #include "macosx/video_window.h"
 
@@ -207,7 +207,7 @@ static void macosx_display_frame(vo_driver_t *vo_driver, vo_frame_t *vo_frame) {
         break;
       case XINE_IMGFMT_YUY2:
         xine_fast_memcpy (texture_buffer, vo_frame->base[0], 
-	                  vo_frame->pitches[0] * vo_frame->height * 2);
+	                  vo_frame->pitches[0] * vo_frame->height);
         [driver->view updateTexture];
         break;
       default:
@@ -358,7 +358,7 @@ static void *init_class (xine_t *xine, void *visual) {
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.identifier      = "MacOSX";
   this->driver_class.description     = N_("xine video output plugin for Mac OS X");
-  this->driver_class.dispose         = default_video_driver_class;
+  this->driver_class.dispose         = default_video_driver_class_dispose;
 
   this->config                       = xine->config;
   this->xine                         = xine;

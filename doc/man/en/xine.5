@@ -257,6 +257,23 @@ audio program ID
 .TP 20
 .B service-id
 service ID (needed for now/next information etc.)
+.PP
+The following keyboard & mouse inputs may be accepted:
+.TP 24
+.B Menu 2
+Start/stop recording
+.TP 24
+.B Menu 3
+Toggle zoom
+.TP 24
+.B Menu 7
+Toggle now/next display
+.TP 24
+.B Previous/Next Chapter
+Previous/next channel
+.TP 24
+.B Mouse wheel & button 1
+Scroll through channel list & select the highlighted channel
 .SH SUBTITLE
 .B external subtitle files (any mrl)
 .br
@@ -266,7 +283,7 @@ Text subtitle files may be appended to the MRL:.
 This is the normal way to define the subtitle file to use. The frontend will
 not take any notice of the subtitle file. For example:
 .br
-.I file://home/user/wibble.mpg#subtitles:/home/user/wibble.sub
+.I file://home/user/wibble.mpg#subtitle:/home/user/wibble.sub
 .br
 (Note that some front ends can detect subtitles files where the name differs
 as shown in the example.)
@@ -295,6 +312,10 @@ Set audio dynamic range compression.
 .TP
 .BI <config\ entry> : <config\ value>
 Assign a new value to any config entry.
+.TP
+.BI save: <file>
+Save the stream (if allowed) to the named file, relative to the directory
+given by the option "media.capture.save_dir".
 .TP
 .B change configuration option 'on the fly':
 .br

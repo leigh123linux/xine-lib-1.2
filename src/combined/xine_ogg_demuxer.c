@@ -1208,7 +1208,7 @@ static void decode_theora_header (demux_ogg_t *this, const int stream_num, ogg_p
 
 static void decode_flac_header (demux_ogg_t *this, const int stream_num, ogg_packet *op) {
   xine_flac_metadata_header header;
-  xine_flac_streaminfo_block streaminfo;
+  xine_flac_streaminfo_block streaminfo = {};
   buf_element_t *buf;
   xine_waveformatex wave;
 
@@ -2110,6 +2110,9 @@ static void *ogg_init_class (xine_t *xine, void *data) {
   this->demux_class.identifier      = "OGG";
   this->demux_class.mimetypes       =
     "application/ogg: ogx: Ogg Stream;"
+    "application/x-ogm: ogx: Ogg Stream;"
+    "application/x-ogm-audio: oga: Ogg Audio;"
+    "application/x-ogm-video: ogv: Ogg Video;"
     "application/x-ogg: ogx: Ogg Stream;"
     "audio/ogg: oga: Ogg Audio;"
     "audio/x-ogg: oga: Ogg Audio;"

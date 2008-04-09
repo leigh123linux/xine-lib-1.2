@@ -92,7 +92,7 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
 
 	dnl Check presence of ffmpeg/avutil.h to see if it's old or new
 	dnl style for headers. The new style would be preferred actually...
-	AC_CHECK_HEADER([ffmpeg/avutil.h])
+	AC_CHECK_HEADERS([ffmpeg/avutil.h])
    
     dnl gdk-pixbuf (optional; enabled by default)
     AC_ARG_ENABLE([gdkpixbuf],

@@ -746,8 +746,10 @@ static char *parse_data_atom(const uint8_t *data_atom) {
   }
 
   alloc_str = xine_xmalloc(alloc_size);
-  xine_fast_memcpy(alloc_str, &data_atom[16], alloc_size-1);
-  alloc_str[alloc_size-1] = '\0';
+  if (alloc_str) {
+    xine_fast_memcpy(alloc_str, &data_atom[16], alloc_size-1);
+    alloc_str[alloc_size-1] = '\0';
+  }
 
   debug_meta_load("demux_qt: got a string of size %zd (%s)\n", alloc_size, alloc_str);
 
@@ -954,8 +956,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
       debug_atom_load("    qt elst atom (edit list atom): %d entries\n",
         trak->edit_list_count);
 
-      trak->edit_list_table = (edit_list_table_t *)xine_xmalloc(
-        trak->edit_list_count * sizeof(edit_list_table_t));
+      trak->edit_list_table = (edit_list_table_t *)calloc(
+        trak->edit_list_count, sizeof(edit_list_table_t));
       if (!trak->edit_list_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1023,6 +1025,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
           trak->stsd_atoms[k].video.properties_atom_size = current_stsd_atom_size - 4;
           trak->stsd_atoms[k].video.properties_atom = 
             xine_xmalloc(trak->stsd_atoms[k].video.properties_atom_size);
+          if (!trak->stsd_atoms[k].video.properties_atom) {
+            last_error = QT_NO_MEMORY;
+            goto free_trak;
+          }
           memcpy(trak->stsd_atoms[k].video.properties_atom, &trak_atom[atom_pos],
             trak->stsd_atoms[k].video.properties_atom_size);
 
@@ -1162,6 +1168,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
           trak->stsd_atoms[k].audio.properties_atom_size = current_stsd_atom_size - 4;
           trak->stsd_atoms[k].audio.properties_atom = 
             xine_xmalloc(trak->stsd_atoms[k].audio.properties_atom_size);
+          if (!trak->stsd_atoms[k].audio.properties_atom) {
+            last_error = QT_NO_MEMORY;
+            goto free_trak;
+          }
           memcpy(trak->stsd_atoms[k].audio.properties_atom, &trak_atom[atom_pos],
             trak->stsd_atoms[k].audio.properties_atom_size);
 
@@ -1278,6 +1288,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
             trak->stsd_atoms[k].audio.properties_atom_size = 36;
             trak->stsd_atoms[k].audio.properties_atom = 
               xine_xmalloc(trak->stsd_atoms[k].audio.properties_atom_size);
+            if (!trak->stsd_atoms[k].audio.properties_atom) {
+              last_error = QT_NO_MEMORY;
+              goto free_trak;
+            }
             memcpy(trak->stsd_atoms[k].audio.properties_atom, 
               &trak_atom[atom_pos + 0x20],
               trak->stsd_atoms[k].audio.properties_atom_size);
@@ -1299,6 +1313,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
                 (current_atom_size >= (0x4C + wave_size))) {
               trak->stsd_atoms[k].audio.wave_size = wave_size;
               trak->stsd_atoms[k].audio.wave = xine_xmalloc(wave_size);
+              if (!trak->stsd_atoms[k].audio.wave) {
+                last_error = QT_NO_MEMORY;
+                goto free_trak;
+              }
               memcpy(trak->stsd_atoms[k].audio.wave, &trak_atom[atom_pos + 0x4C],
                      wave_size);
               _x_waveformatex_le2me(trak->stsd_atoms[k].audio.wave);
@@ -1368,8 +1386,16 @@ static qt_error parse_trak_atom (qt_trak *trak,
             j += mp4_read_descr_len( &trak_atom[j], &len );
             debug_atom_load("      decoder config is %d (0x%X) bytes long\n",
               len, len);
+            if (len > current_atom_size - (j - i)) {
+              last_error = QT_NOT_A_VALID_FILE;
+              goto free_trak;
+            }
             trak->decoder_config = realloc(trak->decoder_config, len);
             trak->decoder_config_len = len;
+            if (!trak->decoder_config) {
+              last_error = QT_NO_MEMORY;
+              goto free_trak;
+            }
             memcpy(trak->decoder_config,&trak_atom[j],len);
           }
         }
@@ -1399,8 +1425,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
       /* allocate space and load table only if sample size is 0 */
       if (trak->sample_size == 0) {
-        trak->sample_size_table = (unsigned int *)malloc(
-          trak->sample_size_count * sizeof(unsigned int));
+        trak->sample_size_table = (unsigned int *)calloc(
+          trak->sample_size_count, sizeof(unsigned int));
         if (!trak->sample_size_table) {
           last_error = QT_NO_MEMORY;
           goto free_trak;
@@ -1430,8 +1456,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
       debug_atom_load("    qt stss atom (sample sync atom): %d sync samples\n",
         trak->sync_sample_count);
 
-      trak->sync_sample_table = (unsigned int *)malloc(
-        trak->sync_sample_count * sizeof(unsigned int));
+      trak->sync_sample_table = (unsigned int *)calloc(
+        trak->sync_sample_count, sizeof(unsigned int));
       if (!trak->sync_sample_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1613,6 +1639,9 @@ static qt_error parse_reference_atom (reference_t *ref,
     case RDRF_ATOM: {
       size_t string_size = _X_BE_32(&ref_atom[i + 12]);
       size_t url_offset = 0;
+
+      if (string_size >= current_atom_size || i + string_size >= ref_atom_size)
+        return QT_NOT_A_VALID_FILE;
 
       /* if the URL starts with "http://", copy it */
       if ( memcmp(&ref_atom[i + 16], "http://", 7) &&
@@ -2054,8 +2083,12 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
       info->references = (reference_t *)realloc(info->references,
         info->reference_count * sizeof(reference_t));
 
-      parse_reference_atom(&info->references[info->reference_count - 1],
-        &moov_atom[i - 4], info->base_mrl);
+      error = parse_reference_atom(&info->references[info->reference_count - 1],
+                                   &moov_atom[i - 4], info->base_mrl);
+      if (error != QT_OK) {
+        info->last_error = error;
+        return;
+      }
       break;
 
     default:

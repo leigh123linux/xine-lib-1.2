@@ -32,6 +32,8 @@ XINE_VERSION_MAJOR=1
 XINE_VERSION_MINOR=1
 XINE_VERSION_SUB=90
 XINE_VERSION_PATCH=
+# Release series number (usually $XINE_MAJOR.$XINE_MINOR)
+XINE_VERSION_SERIES=1.2
 
 XINE_LT_CURRENT=2
 XINE_LT_REVISION=0
@@ -50,6 +52,7 @@ echo "m4_define([XINE_VERSION_SUB],    [${XINE_VERSION_SUB}])dnl"
 echo "m4_define([XINE_VERSION_PATCH],  [${XINE_VERSION_PATCH}])dnl"
 echo "m4_define([XINE_VERSION_SUFFIX], [${XINE_VERSION_SUFFIX}])dnl"
 echo "m4_define([XINE_VERSION_SPEC],   [${XINE_VERSION_SPEC}])dnl"
+echo "m4_define([XINE_VERSION_SERIES], [${XINE_VERSION_SERIES}])dnl"
 echo "m4_define([__XINE_LT_CURRENT],   [${XINE_LT_CURRENT}])dnl"
 echo "m4_define([__XINE_LT_REVISION],  [${XINE_LT_REVISION}])dnl"
 echo "m4_define([__XINE_LT_AGE],       [${XINE_LT_AGE}])dnl"

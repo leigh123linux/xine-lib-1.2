@@ -22,7 +22,7 @@
 #define __VDR_H
 
 
-#define XINE_VDR_VERSION 801
+#define XINE_VDR_VERSION 802
 
 
 enum funcs
@@ -270,6 +270,7 @@ typedef struct __attribute__((packed)) data_clear_s
 
   int32_t n;
   int8_t s;
+  uint8_t i;
 }
 data_clear_t;
 
