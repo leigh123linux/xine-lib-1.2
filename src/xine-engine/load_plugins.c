@@ -1665,6 +1665,36 @@ const char *const *xine_list_video_output_plugins (xine_t *xine) {
   return catalog->ids;
 }
 
+const char *const *xine_list_video_output_plugins_typed(xine_t *xine, uint64_t typemask)
+{
+  plugin_catalog_t *catalog = xine->plugin_catalog;
+  plugin_node_t    *node;
+  int               list_id, list_size, i;
+  
+  pthread_mutex_lock (&catalog->lock);
+
+  list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_VIDEO_OUT - 1]);
+
+  for (list_id = i = 0; list_id < list_size; list_id++)
+  {
+    node = xine_sarray_get (catalog->plugin_lists[PLUGIN_VIDEO_OUT - 1], list_id);
+    if (typemask & (1ULL << ((vo_info_t *)node->info->special_info)->visual_type))
+    {
+      const char *id = node->info->id;
+      int j = i;
+      while (--j >= 0)
+        if (!strcmp (catalog->ids[j], id))
+          goto ignore; /* already listed */
+      catalog->ids[i++] = id;
+    }
+    ignore: ;
+  }
+  catalog->ids[i] = NULL;
+
+  pthread_mutex_unlock (&catalog->lock);
+  return catalog->ids;
+}
+
 static ao_driver_t *_load_audio_driver (xine_t *this, plugin_node_t *node,
 					void *data) {
 

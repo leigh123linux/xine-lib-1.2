@@ -1071,6 +1071,8 @@ const char *xine_get_post_plugin_description  (xine_t *self,
 /* get lists of available audio and video output plugins */
 const char *const *xine_list_audio_output_plugins (xine_t *self) XINE_PROTECTED;
 const char *const *xine_list_video_output_plugins (xine_t *self) XINE_PROTECTED;
+/* typemask is (1ULL << XINE_VISUAL_TYPE_FOO) | ... */
+const char *const *xine_list_video_output_plugins_typed (xine_t *self, uint64_t typemask) XINE_PROTECTED;
 
 /* get list of available demultiplexor plugins */
 const char *const *xine_list_demuxer_plugins(xine_t *self) XINE_PROTECTED;
