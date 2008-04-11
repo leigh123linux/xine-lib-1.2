@@ -217,7 +217,7 @@ static void __xine_pa_sink_info_callback(pa_context *c, const pa_sink_input_info
       return;
 
   this->cvolume = info->volume;
-  this->swvolume = pa_sw_volume_to_linear(pa_cvolume_avg(&info->volume));
+  this->swvolume = pa_cvolume_avg(&info->volume);
   this->muted = info->mute;
 }
 
