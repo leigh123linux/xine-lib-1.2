@@ -1099,6 +1099,16 @@ AC_ARG_WITH([pulseaudio],
 
 if test "x$with_pulseaudio" != "xno"; then
    PKG_CHECK_MODULES([PULSEAUDIO], [libpulse], [have_pulseaudio="yes"], [have_pulseaudio="no"])
+   if test x"$have_pulseaudio" = xyes; then
+      AC_MSG_CHECKING([for pulseaudio >= 0.9.7])
+      PKG_CHECK_EXISTS([libpulse >= 0.9.7],
+        [have_pulseaudio_0_9_7="yes"],
+        [have_pulseaudio_0_9_7="no"])
+      AC_MSG_RESULT([$have_pulseaudio_0_9_7])
+      if test x"$have_pulseaudio_0_9_7" = xyes; then
+         AC_DEFINE([HAVE_PULSEAUDIO_0_9_7], 1, [define this if you have pulseaudio >= 0.9.7])
+      fi
+   fi
 fi
 AM_CONDITIONAL(HAVE_PULSEAUDIO, [test "x$have_pulseaudio" = x"yes"])
 

@@ -218,7 +218,11 @@ static void __xine_pa_sink_info_callback(pa_context *c, const pa_sink_input_info
 
   this->cvolume = info->volume;
   this->swvolume = pa_cvolume_avg(&info->volume);
+#ifdef HAVE_PULSEAUDIO_0_9_7
   this->muted = info->mute;
+#else
+  this->muted = pa_cvolume_is_muted (&this->cvolume);
+#endif
 }
 
 static int connect_context(pulse_driver_t *this) {
@@ -661,9 +665,21 @@ static int ao_pulse_set_property (ao_driver_t *this_gen, int property, int value
 
       this->muted = value;
 
+#ifdef HAVE_PULSEAUDIO_0_9_7
       o = pa_context_set_sink_input_mute(this->context, pa_stream_get_index(this->stream),
                                            value, __xine_pa_context_success_callback, this);
+#else
+      /* FIXME: breaks (volume=0 after unmuting) unless the volume is
+       * adjusted first (due to swvolume not being initialised properly)
+       */
+      if ( value )
+        pa_cvolume_mute(&this->cvolume, pa_stream_get_sample_spec(this->stream)->channels);
+      else
+        pa_cvolume_set(&this->cvolume, pa_stream_get_sample_spec(this->stream)->channels, this->swvolume);
 
+      o = pa_context_set_sink_input_volume(this->context, pa_stream_get_index(this->stream),
+                                           &this->cvolume, __xine_pa_context_success_callback, this);
+#endif
       result = value;
   }
 
