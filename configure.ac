@@ -236,12 +236,14 @@ AC_ARG_WITH([external-libxdg-basedir],
 
 if test x"$with_external_libxdg_basedir" = x"yes"; then
     PKG_CHECK_MODULES([XDG_BASEDIR], [libxdg-basedir >= 0.1.3])
+    XDG_BASEDIR_REQUIRES="libxdg-basedir"
 else
     XDG_BASEDIR_CPPFLAGS='-I$(top_srcdir)/contrib/libxdg-basedir'
     XDG_BASEDIR_LIBS='$(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la'
     XDG_BASEDIR_DEPS='$(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la'
 fi
 
+AC_SUBST([XDG_BASEDIR_REQUIRES])
 AC_SUBST([XDG_BASEDIR_CPPFLAGS])
 AC_SUBST([XDG_BASEDIR_LIBS])
 AC_SUBST([XDG_BASEDIR_DEPS])
