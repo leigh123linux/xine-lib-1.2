@@ -204,7 +204,7 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       if (!this->st) {
 	SpeexMode * spx_mode;
 	SpeexHeader * spx_header;
-	int modeID;
+	unsigned int modeID;
 	int bitrate;
 
 	speex_bits_init (&this->bits);
@@ -216,7 +216,12 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	  return;
 	}
 
-	modeID = spx_header->mode;
+	modeID = (unsigned int)spx_header->mode;
+	if (modeID >= SPEEX_NB_MODES) {
+	  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": invalid mode ID %u\n", modeID);
+	  return;
+	}
+	
 	spx_mode = (SpeexMode *) speex_mode_list[modeID];
 
 	if (spx_mode->bitstream_version != spx_header->mode_bitstream_version) {

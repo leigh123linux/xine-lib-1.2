@@ -1,4 +1,6 @@
 xine-lib (1.1.12) 2008-??-??
+  * Security fixes:
+    - Insufficient boundary check in speex audio decoder. (CVE-2008-1686)
   * Fixed and improved the PulseAudio driver.
   * Fixed a regression in 1.1.11.1 which broke Quicktime container handling.
   * And another, this time in the Matroska demuxer.
