@@ -263,7 +263,7 @@ static char *sub_readtext(char *source, char **dest) {
   }
   
   *dest= (char *)xine_xmalloc (len+1);
-  if (!dest) 
+  if (!(*dest)) 
     return ERR;
   
   strncpy(*dest, source, len);
