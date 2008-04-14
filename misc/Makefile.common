@@ -9,7 +9,7 @@ xinepostdir = $(XINE_PLUGINDIR)/post
 vidixdir = $(XINE_PLUGINDIR)/vidix
 
 $(XINE_LIB):
-	@cd $(top_srcdir)/src/xine-engine && $(MAKE)
+	@cd $(top_builddir)/src/xine-engine && $(MAKE)
 
 install-data-hook:
 	@if test $$MAKELEVEL -le 4 ; then \
