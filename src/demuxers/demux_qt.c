@@ -952,7 +952,6 @@ static qt_error parse_trak_atom (qt_trak *trak,
         last_error = QT_NO_MEMORY;
         goto free_trak;
       }
-      memset(trak->stsd_atoms, 0, trak->stsd_atoms_count * sizeof(properties_t));
 
       atom_pos = i + 0x10;
       properties_offset = 0x0C;
