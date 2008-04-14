@@ -669,9 +669,15 @@ static int ao_pulse_set_property (ao_driver_t *this_gen, int property, int value
       o = pa_context_set_sink_input_mute(this->context, pa_stream_get_index(this->stream),
                                            value, __xine_pa_context_success_callback, this);
 #else
-      /* FIXME: breaks (volume=0 after unmuting) unless the volume is
-       * adjusted first (due to swvolume not being initialised properly)
-       */
+      /* Get the current volume, so we can restore it properly. */
+      o = pa_context_get_sink_input_info(this->context, pa_stream_get_index(this->stream),
+                                         __xine_pa_sink_info_callback, this);
+
+      if (o) {
+        wait_for_operation(this, o);
+        pa_operation_unref(o);
+      }
+
       if ( value )
         pa_cvolume_mute(&this->cvolume, pa_stream_get_sample_spec(this->stream)->channels);
       else
