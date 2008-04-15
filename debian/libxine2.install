@@ -7,3 +7,4 @@ usr/share/locale
 usr/share/xine-lib
 usr/share/doc/libxine2/hackersguide/*
 usr/share/bug/libxine2/presubj
+usr/share/man/man1/xine-list*.1

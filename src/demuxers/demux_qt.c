@@ -1263,10 +1263,11 @@ static qt_error parse_trak_atom (qt_trak *trak,
             if (_X_BE_32(&trak_atom[atom_pos + 0x2C]))
               trak->stsd_atoms[k].audio.bytes_per_sample = 
                 _X_BE_32(&trak_atom[atom_pos + 0x2C]);
-            trak->stsd_atoms[k].audio.samples_per_frame =
-              (trak->stsd_atoms[k].audio.bytes_per_frame / 
-               trak->stsd_atoms[k].audio.bytes_per_packet) *
-               trak->stsd_atoms[k].audio.samples_per_packet;
+            if (trak->stsd_atoms[k].audio.bytes_per_packet)
+              trak->stsd_atoms[k].audio.samples_per_frame =
+                (trak->stsd_atoms[k].audio.bytes_per_frame / 
+                 trak->stsd_atoms[k].audio.bytes_per_packet) *
+                 trak->stsd_atoms[k].audio.samples_per_packet;
           }
 
           /* see if the trak deserves a promotion to VBR */

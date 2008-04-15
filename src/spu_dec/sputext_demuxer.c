@@ -263,7 +263,7 @@ static char *sub_readtext(char *source, char **dest) {
   }
   
   *dest= (char *)xine_xmalloc (len+1);
-  if (!dest) 
+  if (!(*dest)) 
     return ERR;
   
   strncpy(*dest, source, len);
@@ -544,6 +544,8 @@ static subtitle_t *sub_read_line_ssa(demux_sputext_t *this,subtitle_t *current) 
 		   line3) < 9	    );
   
   line2=strchr(line3, ',');
+  if (!line2)
+    return NULL;
   
   for (comma = 4; comma < max_comma; comma ++)
     {
@@ -895,7 +897,10 @@ static subtitle_t *sub_read_line_jacobsub(demux_sputext_t *this, subtitle_t *cur
 	    }
 	}
 	*q = '\0';
-	current->text[current->lines] = strdup(line1);
+        if (current->lines < SUB_MAX_TEXT)
+	    current->text[current->lines] = strdup(line1);
+        else
+            xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "Too many lines in a subtitle\n");
     }
     current->lines++;
     return current;

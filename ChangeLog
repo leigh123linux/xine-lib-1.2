@@ -64,7 +64,11 @@ xine-lib (1.1.90) (Unreleased)
   * Report more video output capabilities via (port)->get_capabilities():
     colour controls, zooming, colour keying.
 
-xine-lib (1.1.12) 2008-??-??
+xine-lib (1.1.13) 2008-??-??
+
+xine-lib (1.1.12) 2008-04-14
+  * Security fixes:
+    - Insufficient boundary check in speex audio decoder. (CVE-2008-1686)
   * Fixed and improved the PulseAudio driver.
   * Fixed a regression in 1.1.11.1 which broke Quicktime container handling.
   * And another, this time in the Matroska demuxer.
