@@ -1,4 +1,8 @@
-xine-lib (1.1.13) 2008-??-??
+xine-lib (1.1.12.1) 2008-??-??
+  * Security fixes:
+    - Buffer overflow in the NSF demuxer which may allow remote attackers to
+      cause a denial of service (crash) or possibly execute arbitrary code
+      via an NSF file with a long title or copyright message. (SA29850)
 
 xine-lib (1.1.12) 2008-04-14
   * Security fixes:
