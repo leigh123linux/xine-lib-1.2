@@ -680,9 +680,9 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
     return NULL;
   }
   
-  dir_files  = (xine_mrl_t *) xine_xcalloc(MAXFILES, sizeof(xine_mrl_t));
-  hide_files = (xine_mrl_t *) xine_xcalloc(MAXFILES, sizeof(xine_mrl_t));
-  norm_files = (xine_mrl_t *) xine_xcalloc(MAXFILES, sizeof(xine_mrl_t));
+  dir_files  = (xine_mrl_t *) calloc(MAXFILES, sizeof(xine_mrl_t));
+  hide_files = (xine_mrl_t *) calloc(MAXFILES, sizeof(xine_mrl_t));
+  norm_files = (xine_mrl_t *) calloc(MAXFILES, sizeof(xine_mrl_t));
   
   while((pdirent = readdir(pdir)) != NULL) {
     

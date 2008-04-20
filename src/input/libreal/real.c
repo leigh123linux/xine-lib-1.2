@@ -457,7 +457,7 @@ rmff_header_t *real_parse_sdp(char *data, char **stream_rules, uint32_t bandwidt
       desc->copyright,
       desc->abstract);
   header->data=rmff_new_dataheader(0,0);
-  header->streams = xine_xcalloc((desc->stream_count+1), sizeof(rmff_mdpr_t*));
+  header->streams = calloc((desc->stream_count+1), sizeof(rmff_mdpr_t*));
   lprintf("number of streams: %u\n", desc->stream_count);
 
   for (i=0; i<desc->stream_count; i++) {

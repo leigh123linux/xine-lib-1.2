@@ -2414,7 +2414,7 @@ static int cdda_plugin_open (input_plugin_t *this_gen ) {
   if(this->cddb.num_tracks) {
     int t;
 
-    this->cddb.track = (trackinfo_t *) xine_xcalloc(this->cddb.num_tracks, sizeof(trackinfo_t));
+    this->cddb.track = (trackinfo_t *) calloc(this->cddb.num_tracks, sizeof(trackinfo_t));
 
     for(t = 0; t < this->cddb.num_tracks; t++) {
       int length = (toc->toc_entries[t].first_frame_minute * CD_SECONDS_PER_MINUTE + 

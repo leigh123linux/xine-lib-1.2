@@ -338,7 +338,7 @@ static void frame_reallocate(fb_driver_t *this, fb_frame_t *frame,
   else
   {
     free(frame->data);
-    frame->data = xine_xcalloc(frame->sc.output_width *
+    frame->data = calloc(frame->sc.output_width *
 			       frame->sc.output_height,
 			       this->bytes_per_pixel);
   }
