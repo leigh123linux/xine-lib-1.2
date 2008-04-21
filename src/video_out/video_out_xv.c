@@ -851,8 +851,8 @@ static void xv_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
   if( factor > 1 )
   {
-    lprintf( "%s PutImage %dX interval (%fs)\n",
-        log_line_prefix(), factor, elapse_time );
+    lprintf( "%s PutImage %dX interval (%fs)\n", 
+             LOG_MODULE, factor, elapse_time );
   }
   }
 
