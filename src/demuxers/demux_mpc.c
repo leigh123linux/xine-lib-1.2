@@ -381,11 +381,12 @@ static const char *get_identifier (demux_class_t *this_gen) {
 }
 
 static const char *get_extensions (demux_class_t *this_gen) {
-  return "mpc mp+";
+  return "mpc mp+ mpp";
 }
 
 static const char *get_mimetypes (demux_class_t *this_gen) {
-  return NULL;
+  return "audio/musepack: mpc, mp+, mpp: Musepack audio;"
+         "audio/x-musepack: mpc, mp+, mpp: Musepack audio;";
 }
 
 static void class_dispose (demux_class_t *this_gen) {
