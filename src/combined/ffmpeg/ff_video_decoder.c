@@ -123,6 +123,10 @@ struct ff_video_decoder_s {
   yuv_planes_t      yuv;
 
   AVPaletteControl  palette_control;
+
+#ifdef LOG
+  enum PixelFormat  debug_fmt;
+#endif
 };
 
 
@@ -154,7 +158,7 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
   
   avcodec_align_dimensions(context, &width, &height);
 
-  if( this->context->pix_fmt != PIX_FMT_YUV420P ) {
+  if( this->context->pix_fmt != PIX_FMT_YUV420P && this->context->pix_fmt != PIX_FMT_YUVJ420P ) {
     if (!this->is_direct_rendering_disabled) {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
               _("ffmpeg_video_dec: unsupported frame format, DR1 disabled.\n"));
@@ -590,6 +594,11 @@ static int ff_handle_mpeg_sequence(ff_video_decoder_t *this, mpeg_parser_t *pars
 static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
   int         y;
   uint8_t    *dy, *du, *dv, *sy, *su, *sv;
+
+#ifdef LOG
+  if (this->debug_fmt != this->context->pix_fmt)
+    printf ("frame format == %08x\n", this->debug_fmt = this->context->pix_fmt);
+#endif
 
   dy = img->base[0];
   du = img->base[1];
@@ -1582,6 +1591,10 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
   this->mpeg_parser       = NULL;
   
   this->dr1_frames        = xine_list_new();
+
+#ifdef LOG
+  this->debug_fmt = -1;
+#endif
 
   return &this->video_decoder;
 }
