@@ -156,7 +156,7 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
   
   avcodec_align_dimensions(context, &width, &height);
 
-  if( this->context->pix_fmt != PIX_FMT_YUV420P ) {
+  if( this->context->pix_fmt != PIX_FMT_YUV420P && this->context->pix_fmt != PIX_FMT_YUVJ420P ) {
     if (!this->is_direct_rendering_disabled) {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
               _("ffmpeg_video_dec: unsupported frame format, DR1 disabled.\n"));
