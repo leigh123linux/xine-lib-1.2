@@ -258,7 +258,7 @@ use internal ffmpeg.
         else
             AC_MSG_RESULT([Using included libmad support])
         fi
-        if test x"$have_external_libmad" != x"no"; then
+        if test x"$have_external_libmad" != x"yes"; then
             case "$host_or_hostalias" in
                 i?86-* | k?-* | athlon-* | pentium*-)
                     AC_DEFINE([FPM_INTEL], 1, [Define to select libmad fixed point arithmetic implementation])
@@ -291,8 +291,6 @@ use internal ffmpeg.
                     AC_DEFINE([FPM_DEFAULT], 1, [Define to select libmad fixed point arithmetic implementation])
                     ;;
             esac
-        fi
-        if test x"$have_external_libmad" != x"yes"; then
             LIBMAD_CFLAGS='-I$(top_srcdir)/contrib/libmad'
             LIBMAD_LIBS='$(top_builddir)/contrib/libmad/libmad.la'
             LIBMAD_DEPS='$(top_builddir)/contrib/libmad/libmad.la'
