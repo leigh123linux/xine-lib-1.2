@@ -360,16 +360,16 @@ if test "x$with_external_ffmpeg" = "xyes"; then
    dnl style for headers. The new style would be preferred actually...
    AC_CHECK_HEADERS([ffmpeg/avutil.h])
    
-   AC_MSG_NOTICE([
-*********************************************************************
-xine is configured with external ffmpeg.
-
-This requires the same version of ffmpeg what is included in xine and
-you should know what you do. If some problems occur, please try to
-use internal ffmpeg.
-*********************************************************************])
+   AC_MSG_RESULT([using external ffmpeg])
 else
-  AC_MSG_RESULT([using included ffmpeg])
+  AC_MSG_NOTICE([
+*********************************************************************
+xine-lib is configured to use internal ffmpeg.
+
+This copy of ffmpeg is old. You are strongly advised to install a
+newer version (including development files) and to reconfigure
+xine-lib to use it.
+*********************************************************************])
   LIBFFMPEG_CPPFLAGS="-DHAVE_AV_CONFIG_H -DRUNTIME_CPUDETECT -DXINE_MPEG_ENCODER -D_ISOC9X_SOURCE -DCONFIG_DECODERS"
   AC_CHECK_TYPES(int_fast8_t, [], [LIBFFMPEG_CPPFLAGS="$LIBFFMPEG_CPPFLAGS -DEMULATE_FAST_INT"])
   AC_SUBST([LIBFFMPEG_CPPFLAGS])
