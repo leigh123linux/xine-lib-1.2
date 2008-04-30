@@ -381,7 +381,7 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
 
   /* Some codecs (eg rv10) copy flags in init so it's necessary to set
    * this flag here in case we are going to use direct rendering */
-  if(this->codec->capabilities & CODEC_CAP_DR1) {
+  if(this->codec->capabilities & CODEC_CAP_DR1 && this->codec->id != CODEC_ID_H264) {
     this->context->flags |= CODEC_FLAG_EMU_EDGE;
   }
  
