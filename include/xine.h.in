@@ -89,8 +89,8 @@ typedef struct xine_video_port_s xine_video_port_t;
 
 #ifndef XINE_DISABLE_DEPRECATED_FEATURES
 /* convenience types: simple player UIs might want to call ports drivers */
-typedef xine_audio_port_t xine_ao_driver_t;
-typedef xine_video_port_t xine_vo_driver_t;
+typedef xine_audio_port_t xine_ao_driver_t XINE_DEPRECATED;
+typedef xine_video_port_t xine_vo_driver_t XINE_DEPRECATED;
 #endif
 
 
@@ -2192,7 +2192,7 @@ void        xine_osd_free          (xine_osd_t *self) XINE_PROTECTED;
 typedef enum {
 	XINE_TVSYSTEM_PAL = 0,
 	XINE_TVSYSTEM_NTSC
-} xine_tvsystem;
+} xine_tvsystem XINE_DEPRECATED;
 
 /* connect to nvtvd server and save current TV and X settings */
 int xine_tvmode_init (xine_t *self) XINE_PROTECTED XINE_DEPRECATED;
