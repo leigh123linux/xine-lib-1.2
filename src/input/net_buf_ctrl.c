@@ -114,8 +114,8 @@ static void nbc_set_speed_normal (nbc_t *this) {
 }
 
 static void display_stats (nbc_t *this) {
-  const char *buffering[2] = {"   ", "buf"};
-  const char *enabled[2]   = {"off", "on "};
+  const char buffering[2][4] = {"   ", "buf"};
+  const char enabled[2][4]   = {"off", "on "};
   
   printf("bufing: %d, enb: %d\n", this->buffering, this->enabled);
   printf("net_buf_ctrl: vid %3d%% %4.1fs %4" PRId64 "kbps %1d, "\
