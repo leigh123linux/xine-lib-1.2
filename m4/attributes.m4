@@ -322,3 +322,26 @@ AC_DEFUN([CC_ATTRIBUTE_ALIGNED], [
        [Define the highest alignment supported])
   fi
 ])
+
+AC_DEFUN([CC_ATTRIBUTE_DEPRECATED], [
+	AC_REQUIRE([CC_CHECK_WERROR])
+	ac_save_CFLAGS="$CFLAGS"
+	CFLAGS="$CFLAGS $cc_cv_werror"
+	AC_CACHE_CHECK([if compiler supports __attribute__((deprecated))],
+		[cc_cv_attribute_alias],
+		[AC_COMPILE_IFELSE([
+			void some_function(void) __attribute__((deprecated));
+			],
+			[cc_cv_attribute_deprecated=yes],
+			[cc_cv_attribute_deprecated=no])
+		])
+	CFLAGS="$ac_save_CFLAGS"
+	
+	if test "x$cc_cv_attribute_deprecated" = "xyes"; then
+		AC_DEFINE([SUPPORT_ATTRIBUTE_DEPRECATED], 1, [Define this if the compiler supports the deprecated attribute])
+		$1
+	else
+		true
+		$2
+	fi
+])
