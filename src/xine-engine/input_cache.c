@@ -345,7 +345,7 @@ static void cache_plugin_dispose(input_plugin_t *this_gen) {
 /* 
  * create self instance, 
  */
-input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream, int readahead_size) {
+input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream) {
   cache_input_plugin_t *this;
   input_plugin_t *main_plugin = stream->input_plugin;
 
