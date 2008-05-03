@@ -166,6 +166,7 @@ flac_write_callback (const FLAC__StreamDecoder *decoder,
     return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
 }
 
+#ifdef LEGACY_FLAC
 static void
 flac_metadata_callback (const FLAC__StreamDecoder *decoder,
                         const FLAC__StreamMetadata *metadata,
@@ -188,6 +189,7 @@ flac_metadata_callback (const FLAC__StreamDecoder *decoder,
 
   return;
 }
+#endif
 
 static void
 flac_error_callback (const FLAC__StreamDecoder *decoder,
