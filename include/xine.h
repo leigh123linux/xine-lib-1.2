@@ -512,20 +512,6 @@ int xine_get_next_audio_frame (xine_audio_port_t *port,
 
 void xine_free_audio_frame (xine_audio_port_t *port, xine_audio_frame_t *frame) XINE_PROTECTED;
 
-  /*
-   * maybe future aproach:
-   */
-
-int xine_get_video_frame (xine_stream_t *stream,
-			  int timestamp, /* msec */
-			  int *width, int *height,
-			  int *ratio_code, 
-			  int *duration, /* msec */
-			  int *format,
-			  uint8_t *img) XINE_PROTECTED;
-
-/* TODO: xine_get_audio_frame */
-
 #endif
 
 

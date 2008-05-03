@@ -2111,18 +2111,6 @@ int xine_get_current_frame (xine_stream_t *stream, int *width, int *height,
   return _x_get_current_frame_impl(stream, width, height, ratio_code, format, &img, NULL, 0);
 }
 
-int xine_get_video_frame (xine_stream_t *stream,
-			  int timestamp, /* msec */
-			  int *width, int *height,
-			  int *ratio_code,
-			  int *duration, /* msec */
-			  int *format,
-			  uint8_t *img) {
-  xprintf (stream->xine, XINE_VERBOSITY_DEBUG, "xine: xine_get_video_frame not implemented yet.\n");
-  _x_abort ();
-  return 0;
-}
-
 int xine_get_spu_lang (xine_stream_t *stream, int channel, char *lang) {
 
   /* Ask the demuxer first (e.g. TS extracts this information from
