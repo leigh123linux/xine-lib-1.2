@@ -666,7 +666,7 @@ void xine_usec_sleep(unsigned usec) XINE_PROTECTED;
    */
 
 
-void xine_strdupa(char *dest, char *src) XINE_PROTECTED;
+void xine_strdupa(char *dest, char *src) XINE_PROTECTED XINE_DEPRECATED;
 #define xine_strdupa(d, s) do {                                             \
                                 (d) = NULL;                                 \
                                 if((s) != NULL) {                           \

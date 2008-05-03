@@ -260,7 +260,7 @@ int  xine_play (xine_stream_t *stream, int start_pos, int start_time) XINE_PROTE
  *
  * returns 1 if OK, 0 on error (use xine_get_error for details)
  */
-int  xine_trick_mode (xine_stream_t *stream, int mode, int value) XINE_PROTECTED;
+int  xine_trick_mode (xine_stream_t *stream, int mode, int value) XINE_PROTECTED XINE_DEPRECATED;
 
 /* trick modes */
 #define XINE_TRICK_MODE_OFF                0
@@ -539,7 +539,7 @@ int xine_get_video_frame (xine_stream_t *stream,
 			  int *ratio_code, 
 			  int *duration, /* msec */
 			  int *format,
-			  uint8_t *img) XINE_PROTECTED;
+			  uint8_t *img) XINE_PROTECTED XINE_DEPRECATED;
 
 /* TODO: xine_get_audio_frame */
 
@@ -826,7 +826,7 @@ char *const *xine_get_log (xine_t *self, int buf) XINE_PROTECTED;
 /* log callback will be called whenever something is logged */
 typedef void (*xine_log_cb_t) (void *user_data, int section);
 void   xine_register_log_cb (xine_t *self, xine_log_cb_t cb,
-			     void *user_data) XINE_PROTECTED;
+			     void *user_data) XINE_PROTECTED XINE_DEPRECATED;
 
 /*
  * error handling / engine status
@@ -1098,7 +1098,7 @@ void xine_plugins_garbage_collector(xine_t *self) XINE_PROTECTED;
 #ifndef XINE_DISABLE_DEPRECATED_FEATURES
 /* talk to video output driver - old method */
 int    xine_gui_send_vo_data (xine_stream_t *self,
-			      int type, void *data) XINE_PROTECTED;
+			      int type, void *data) XINE_PROTECTED XINE_DEPRECATED;
 #endif
 
 /* new (preferred) method to talk to video driver. */
@@ -2195,13 +2195,13 @@ typedef enum {
 } xine_tvsystem;
 
 /* connect to nvtvd server and save current TV and X settings */
-int xine_tvmode_init (xine_t *self) XINE_PROTECTED;
+int xine_tvmode_init (xine_t *self) XINE_PROTECTED XINE_DEPRECATED;
 
 /* Turn tvmode on/off (1/0)*/
-int xine_tvmode_use(xine_t *self, int use_tvmode) XINE_PROTECTED;
+int xine_tvmode_use(xine_t *self, int use_tvmode) XINE_PROTECTED XINE_DEPRECATED;
 
 /* Set which tv system to use: XINE_TVSYSTEM_PAL or XINE_TVSYSTEM_NTSC */
-void xine_tvmode_set_tvsystem(xine_t *self, xine_tvsystem system) XINE_PROTECTED;
+void xine_tvmode_set_tvsystem(xine_t *self, xine_tvsystem system) XINE_PROTECTED XINE_DEPRECATED;
 
 /* try to change TV state if enabled
  *   type select 'regular' (0) or 'TV' (1) state
@@ -2210,16 +2210,16 @@ void xine_tvmode_set_tvsystem(xine_t *self, xine_tvsystem system) XINE_PROTECTED
  *   fps frame rate the mode should match best or 0 if unknown
  * returns: finally selected state
  */
-int xine_tvmode_switch (xine_t *self, int type, int width, int height, double fps) XINE_PROTECTED;
+int xine_tvmode_switch (xine_t *self, int type, int width, int height, double fps) XINE_PROTECTED XINE_DEPRECATED;
 
 /* adapt (maximum) output size to visible area if necessary and return pixel
  * aspect and real frame rate if available
  */
 void xine_tvmode_size (xine_t *self, int *width, int *height,
-		       double *pixelratio, double *fps) XINE_PROTECTED;
+		       double *pixelratio, double *fps) XINE_PROTECTED XINE_DEPRECATED;
 
 /* restore old TV and X settings and close nvtvd connection */
-void xine_tvmode_exit (xine_t *self) XINE_PROTECTED;
+void xine_tvmode_exit (xine_t *self) XINE_PROTECTED XINE_DEPRECATED;
 
 #endif
 
