@@ -208,7 +208,6 @@ static void raw_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen, vo_
 static void raw_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img)
 {
   raw_driver_t  *this = (raw_driver_t *) this_gen;
-  int i;
 
   if ( !this->ovl_changed )
     return;
@@ -322,7 +321,6 @@ static vo_frame_t *raw_alloc_frame (vo_driver_t *this_gen)
 static void raw_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_gen,
       uint32_t width, uint32_t height, double ratio, int format, int flags)
 {
-  raw_driver_t  *this = (raw_driver_t *) this_gen;
   raw_frame_t   *frame = (raw_frame_t *) frame_gen;
 
   /* Check frame size and format and reallocate if necessary */
@@ -429,8 +427,6 @@ static void raw_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
 static int raw_get_property (vo_driver_t *this_gen, int property)
 {
-  raw_driver_t *this = (raw_driver_t *) this_gen;
-
   switch (property) {
   case VO_PROP_ASPECT_RATIO:
     return XINE_VO_ASPECT_AUTO;

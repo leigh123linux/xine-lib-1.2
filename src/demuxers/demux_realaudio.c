@@ -243,12 +243,10 @@ static int demux_ra_send_chunk(demux_plugin_t *this_gen) {
   }
 
   if (this->audio_type == BUF_AUDIO_28_8 || this->audio_type == BUF_AUDIO_SIPRO) {
-    int x;
     uint8_t * buffer;
 
     buffer = this->frame_buffer;
     if (this->audio_type == BUF_AUDIO_SIPRO) {
-      int n;
       int len = this->h * this->w;
       if(this->input->read(this->input, this->frame_buffer, len) < len) {
 	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
@@ -381,8 +379,6 @@ static int demux_ra_get_status (demux_plugin_t *this_gen) {
 
 /* return the approximate length in miliseconds */
 static int demux_ra_get_stream_length (demux_plugin_t *this_gen) {
-  demux_ra_t *this = (demux_ra_t *) this_gen;
-
   return 0;
 }
 

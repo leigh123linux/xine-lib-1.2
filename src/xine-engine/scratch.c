@@ -105,7 +105,6 @@ static void scratch_dispose (scratch_buffer_t *this) {
 
 scratch_buffer_t *_x_new_scratch_buffer (int num_lines) {
   scratch_buffer_t *this;
-  int               i;
 
   this = xine_xmalloc (sizeof (scratch_buffer_t));
 

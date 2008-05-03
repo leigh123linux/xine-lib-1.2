@@ -285,7 +285,7 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     }
     
   } else if (this->output_open) {
-    int i, j;
+    int j;
 
     audio_buffer_t *audio_buffer;
 
