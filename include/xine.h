@@ -237,22 +237,6 @@ int xine_open (xine_stream_t *stream, const char *mrl) XINE_PROTECTED;
 int  xine_play (xine_stream_t *stream, int start_pos, int start_time) XINE_PROTECTED;
 
 /*
- * set xine to a trick mode for fast forward, backwards playback,
- * low latency seeking. Please note that this works only with some
- * input plugins. mode constants see below.
- *
- * returns 1 if OK, 0 on error (use xine_get_error for details)
- */
-int  xine_trick_mode (xine_stream_t *stream, int mode, int value) XINE_PROTECTED;
-
-/* trick modes */
-#define XINE_TRICK_MODE_OFF                0
-#define XINE_TRICK_MODE_SEEK_TO_POSITION   1
-#define XINE_TRICK_MODE_SEEK_TO_TIME       2
-#define XINE_TRICK_MODE_FAST_FORWARD       3
-#define XINE_TRICK_MODE_FAST_REWIND        4
-
-/*
  * stop stream playback
  * xine_stream_t stays valid for new xine_open or xine_play
  */
@@ -791,11 +775,6 @@ void   xine_vlog(xine_t *self, int buf,
 
 /* get log messages of specified section */
 char *const *xine_get_log (xine_t *self, int buf) XINE_PROTECTED;
-
-/* log callback will be called whenever something is logged */
-typedef void (*xine_log_cb_t) (void *user_data, int section);
-void   xine_register_log_cb (xine_t *self, xine_log_cb_t cb,
-			     void *user_data) XINE_PROTECTED;
 
 /*
  * error handling / engine status

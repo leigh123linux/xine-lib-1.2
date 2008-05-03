@@ -2239,20 +2239,8 @@ char *const *xine_get_log (xine_t *this, int buf) {
     return NULL;
 }
 
-void xine_register_log_cb (xine_t *this, xine_log_cb_t cb, void *user_data) {
-
-  printf ("xine: xine_register_log_cb: not implemented yet.\n");
-  _x_abort();
-}
-
-
 int xine_get_error (xine_stream_t *stream) {
   return stream->err;
-}
-
-int xine_trick_mode (xine_stream_t *stream, int mode, int value) {
-  printf ("xine: xine_trick_mode not implemented yet.\n");
-  _x_abort ();
 }
 
 int xine_stream_master_slave(xine_stream_t *master, xine_stream_t *slave,
