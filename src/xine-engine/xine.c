@@ -795,7 +795,7 @@ static inline int _x_path_looks_like_mrl (const char *path)
   return path[0] == ':' && path[1] == '/';
 }
 
-/*static*/ int open_internal (xine_stream_t *stream, const char *mrl) {
+static int open_internal (xine_stream_t *stream, const char *mrl) {
 
   const char *stream_setup = NULL;
   const char *mrl_proto = NULL;
