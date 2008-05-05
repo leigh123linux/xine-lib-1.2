@@ -67,8 +67,6 @@ AC_DEFUN([CC_CHECK_WERROR], [
 
 AC_DEFUN([CC_CHECK_ATTRIBUTE], [
   AC_REQUIRE([CC_CHECK_WERROR])
-  ac_save_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS $cc_cv_werror"
   AC_CACHE_CHECK([if $CC supports __attribute__(( ifelse([$2], , [$1], [$2]) ))],
     AS_TR_SH([cc_cv_attribute_$1]),
     [ac_save_CFLAGS="$CFLAGS"
