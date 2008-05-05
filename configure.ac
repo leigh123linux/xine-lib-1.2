@@ -441,6 +441,7 @@ CC_ATTRIBUTE_MALLOC
 CC_ATTRIBUTE_VISIBILITY([protected],
                         [visibility_export="protected"],
                         [CC_ATTRIBUTE_VISIBILITY([default], [visibility_export="default"])])
+CC_ATTRIBUTE_VISIBILITY([internal])
 
 if test x"$visibility_export" != x""; then
     CC_FLAG_VISIBILITY([VISIBILITY_FLAG="-fvisibility=hidden"
