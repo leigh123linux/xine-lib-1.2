@@ -160,6 +160,14 @@ AC_DEFUN([CC_ATTRIBUTE_ALIAS], [
     [$2])
 ])
 
+AC_DEFUN([CC_ATTRIBUTE_MALLOC], [
+  CC_CHECK_ATTRIBUTE(
+    [malloc], ,
+    [void * __attribute__((malloc)) my_alloc(int n);],
+    [$1],
+    [$2])
+])
+
 AC_DEFUN([CC_FLAG_VISIBILITY], [
 	AC_REQUIRE([CC_CHECK_WERROR])
 	ac_save_CFLAGS="$CFLAGS"
