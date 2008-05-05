@@ -89,4 +89,9 @@ int _x_audio_decoder_init           (xine_stream_t *stream) INTERNAL;
 void _x_audio_decoder_shutdown      (xine_stream_t *stream) INTERNAL;
 ///@}
 
+/**
+ * @brief Benchmark available memcpy methods
+ */
+void xine_probe_fast_memcpy(xine_t *xine) INTERNAL;
+
 #endif

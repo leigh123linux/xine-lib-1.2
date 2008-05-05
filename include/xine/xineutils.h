@@ -587,12 +587,6 @@ typedef	union {
 
 extern void *(* xine_fast_memcpy)(void *to, const void *from, size_t len) XINE_PROTECTED;
 
-#ifdef HAVE_XINE_INTERNAL_H
-/* Benchmark available memcpy methods */
-void xine_probe_fast_memcpy(xine_t *xine) XINE_PROTECTED;
-#endif
-
-
 /*
  * Debug stuff
  */
