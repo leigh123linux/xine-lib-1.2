@@ -42,8 +42,6 @@
 
 #include <basedir.h>
 
-#include "load_plugins.h"
-
 #define LOG_MODULE "load_plugins"
 #define LOG_VERBOSE
 
@@ -65,6 +63,8 @@
 #include <xine/configfile.h>
 #include <xine/xineutils.h>
 #include <xine/compat.h>
+
+#include "xine_private.h"
 
 #define LINE_MAX_LENGTH   (1024 * 32)  /* 32 KiB */
 

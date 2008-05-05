@@ -377,26 +377,6 @@ int _x_message(xine_stream_t *stream, int type, ...) XINE_SENTINEL XINE_PROTECTE
 
 void _x_flush_events_queues (xine_stream_t *stream) XINE_PROTECTED;
 
-
-/* find and instantiate input and demux plugins */
-
-input_plugin_t *_x_find_input_plugin (xine_stream_t *stream, const char *mrl);
-demux_plugin_t *_x_find_demux_plugin (xine_stream_t *stream, input_plugin_t *input);
-demux_plugin_t *_x_find_demux_plugin_by_name (xine_stream_t *stream, const char *name, input_plugin_t *input);
-demux_plugin_t *_x_find_demux_plugin_last_probe(xine_stream_t *stream, const char *last_demux_name, input_plugin_t *input);
-input_plugin_t *_x_rip_plugin_get_instance (xine_stream_t *stream, const char *filename);
-input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream);
-void _x_free_input_plugin (xine_stream_t *stream, input_plugin_t *input);
-void _x_free_demux_plugin (xine_stream_t *stream, demux_plugin_t *demux);
-
-/* create decoder fifos and threads */
-
-int _x_video_decoder_init           (xine_stream_t *stream);
-void _x_video_decoder_shutdown      (xine_stream_t *stream);
-
-int _x_audio_decoder_init           (xine_stream_t *stream);
-void _x_audio_decoder_shutdown      (xine_stream_t *stream);
-
 /* extra_info operations */
 void _x_extra_info_reset( extra_info_t *extra_info ) XINE_PROTECTED;
 

@@ -65,6 +65,7 @@
 #endif
 
 #include <xine/xine_internal.h>
+#include "xine_private.h"
 
 #ifndef HAVE_FSEEKO
 #  define fseeko fseek

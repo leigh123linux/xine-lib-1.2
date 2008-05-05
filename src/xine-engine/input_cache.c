@@ -34,6 +34,7 @@
 */
 
 #include <xine/xine_internal.h>
+#include "xine_private.h"
 #include <assert.h>
 
 #define DEFAULT_BUFFER_SIZE 1024
