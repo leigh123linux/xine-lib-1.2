@@ -243,12 +243,10 @@ static int demux_ra_send_chunk(demux_plugin_t *this_gen) {
   }
 
   if (this->audio_type == BUF_AUDIO_28_8 || this->audio_type == BUF_AUDIO_SIPRO) {
-    int x;
     uint8_t * buffer;
 
     buffer = this->frame_buffer;
     if (this->audio_type == BUF_AUDIO_SIPRO) {
-      int n;
       int len = this->h * this->w;
       if(this->input->read(this->input, this->frame_buffer, len) < len) {
 	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 

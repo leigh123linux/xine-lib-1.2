@@ -659,7 +659,7 @@ rmff_header_t  *real_setup_and_get_header(rtsp_t *rtsp_session, uint32_t bandwid
     
   lprintf("Stream description size: %i\n", size);
 
-  description = calloc(size+1, sizeof(char));
+  description = malloc(size+1);
 
   if( rtsp_read_data(rtsp_session, description, size) <= 0) {
     xine_buffer_free(buf);

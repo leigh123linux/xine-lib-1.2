@@ -51,6 +51,12 @@
 # define XINE_SENTINEL
 #endif
 
+#ifdef SUPPORT_ATTRIBUTE_DEPRECATED
+# define XINE_DEPRECATED __attribute__((__deprecated__))
+#else
+# define XINE_DEPRECATED
+#endif
+
 #ifndef __attr_unused
 # ifdef SUPPORT_ATTRIBUTE_UNUSED
 #  define __attr_unused __attribute__((__unused__))

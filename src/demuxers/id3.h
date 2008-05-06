@@ -152,19 +152,16 @@ typedef struct {
 
 int id3v1_parse_tag (input_plugin_t *input, xine_stream_t *stream);
 
-int id3v22_parse_tag(input_plugin_t *input,
-                     xine_stream_t *stream,
-                     uint32_t id3_signature);
-
-int id3v23_parse_tag(input_plugin_t *input,
-                     xine_stream_t *stream,
-                     uint32_t id3_signature);
-
-int id3v24_parse_tag(input_plugin_t *input,
-                     xine_stream_t *stream,
-                     uint32_t id3_signature);
-
-/* Generic function that switch between the three above */
+/**
+ * @brief Generic function for ID3v2 tags parsing.
+ * @param input Pointer to the input plugin used by the demuxer, used
+ *              to access the tag's data.
+ * @param stream Pointer to the xine stream currently being read.
+ * @param mp3_frame_header Header of the MP3 frame carrying the tag.
+ *
+ * @note This function will take care of calling the proper function for
+ *       parsing ID3v2.2, ID3v2.3 or ID3v2.4 tags.
+ */
 int id3v2_parse_tag(input_plugin_t *input,
 		    xine_stream_t *stream,
 		    uint32_t id3_signature);

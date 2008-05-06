@@ -202,9 +202,9 @@ static void mms_buffer_put_64 (mms_buffer_t *mms_buffer, uint64_t value) {
 }
 
 
+#ifdef LOG
 static void print_command (char *data, int len) {
 
-#ifdef LOG
   int i;
   int dir = _X_LE_32 (data + 36) >> 16;
   int comm = _X_LE_32 (data + 36) & 0xFFFF;
@@ -240,8 +240,10 @@ static void print_command (char *data, int len) {
   if (len > CMD_HEADER_LEN)
     printf ("\n");
   printf ("----------------------------------------------\n");
+}
+#else
+# define print_command(data, len)
 #endif
-}  
 
 
 

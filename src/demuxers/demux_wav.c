@@ -111,9 +111,6 @@ static int find_chunk_by_tag(demux_wav_t *this, const uint32_t given_chunk_tag,
 /* returns 1 if the WAV file was opened successfully, 0 otherwise */
 static int open_wav_file(demux_wav_t *this) {
   uint8_t signature[WAV_SIGNATURE_SIZE];
-  uint32_t chunk_tag;
-  uint32_t chunk_size;
-  uint8_t chunk_preamble[8];
   off_t wave_pos;
 
   /* check the signature */

@@ -111,16 +111,16 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
 	dnl style for headers. The new style would be preferred actually...
 	AC_CHECK_HEADERS([ffmpeg/avutil.h])
    
+        AC_MSG_RESULT([Using external ffmpeg])
+    else
         AC_MSG_NOTICE([
 *********************************************************************
-xine-lib is configured with external ffmpeg.
-
-This requires the same version of ffmpeg what is included in xine and
-you should know what you do. If some problems occur, please try to
-use internal ffmpeg.
+xine-lib is configured to use internal ffmpeg.
+ 
+This copy of ffmpeg is old. You are strongly advised to install a
+newer version (including development files) and to reconfigure
+xine-lib to use it.
 *********************************************************************])
-    else
-        AC_MSG_RESULT([Using included ffmpeg])
     fi
     AM_CONDITIONAL([FFMPEG_DISABLE_UNCOMMON_CODECS], [test x"$enable_ffmpeg_uncommon_codecs" = x"no"])
     AM_CONDITIONAL([FFMPEG_DISABLE_POPULAR_CODECS], [test x"$enable_ffmpeg_popular_codecs" = x"no"])

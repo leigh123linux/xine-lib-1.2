@@ -629,6 +629,7 @@ const char *xine_get_homedir(void) XINE_PROTECTED;
 /*
  * Get other xine directories.
  */
+const char *xine_get_pluginroot(void) XINE_PROTECTED;
 const char *xine_get_plugindir(void) XINE_PROTECTED;
 const char *xine_get_fontdir(void) XINE_PROTECTED;
 const char *xine_get_localedir(void) XINE_PROTECTED;

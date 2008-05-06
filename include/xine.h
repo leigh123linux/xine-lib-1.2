@@ -1256,12 +1256,9 @@ typedef struct {
   void *user_data;
 
   /* OR'ed frame_format
-   * a frontend must at least support rgb
-   * a frontend supporting yuv must support both yv12 and yuy2
-   * then possible combinations are:
-   *   XINE_VORAW_RGB                 ( rgb )
-   *   XINE_VORAW_YV12|XINE_VORAW_YUY2|XINE_VORAW_RGB   ( yv12, yuy2 and rgb )
-   *
+   * Unsupported frame formats are converted to rgb.
+   * XINE_VORAW_RGB is always assumed by the driver, even if not set.
+   * So a frontend must at least support rgb.
    * Be aware that rgb requires more cpu than yuv,
    * so avoid its usage for video playback.
    * However, it's usefull for single frame capture (e.g. thumbs)

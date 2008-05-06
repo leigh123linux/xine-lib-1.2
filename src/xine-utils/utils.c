@@ -405,6 +405,20 @@ static void xine_get_rootdir(char *rootdir, size_t maxlen) {
   if ((s = strrchr(rootdir, XINE_DIRECTORY_SEPARATOR_CHAR))) *s = '\0';
 }
 
+const char *xine_get_pluginroot(void) {
+  static char pluginroot[1024] = {0, };
+
+  if (!pluginroot[0]) {
+    char *sep, *sep2;
+    strcpy (pluginroot, xine_get_plugindir ());
+    sep = strrchr (pluginroot, '/');
+    sep2 = strrchr (pluginroot, '\\');
+    *(sep < sep2 ? sep : sep2) = 0;
+  }
+
+  return pluginroot;
+}
+
 const char *xine_get_plugindir(void) {
   static char plugindir[1024] = {0, };
 

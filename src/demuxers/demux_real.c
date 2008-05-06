@@ -240,7 +240,7 @@ static void real_parse_index(demux_real_t *this) {
 
       if(index && entries)
         /* Allocate memory for index */
-        *index = xine_xcalloc(entries, sizeof(real_index_entry_t));
+        *index = calloc(entries, sizeof(real_index_entry_t));
         
       if(index && entries && *index) {
         /* Read index */
