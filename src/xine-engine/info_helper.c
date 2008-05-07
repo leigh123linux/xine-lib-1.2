@@ -340,7 +340,7 @@ void _x_meta_info_set_utf8(xine_stream_t *stream, int info, const char *str) {
 void _x_meta_info_n_set(xine_stream_t *stream, int info, const char *buf, int len) {
   pthread_mutex_lock(&stream->meta_mutex);
   if(meta_valid(info) && len) {
-    char *str = xine_xmalloc(len + 1);
+    char *str = malloc(len + 1);
     
     snprintf(str, len + 1 , "%s", buf);
     meta_info_set_unlocked(stream, info, (const char *) &str[0]);
@@ -376,7 +376,7 @@ void _x_meta_info_set_multi(xine_stream_t *stream, int info, ...) {
     if(len) {
       char *p, *meta;
       
-      p = meta = (char *) xine_xmalloc(len + 1);
+      p = meta = (char *) malloc(len + 1);
       
       n = 0;
       while(args[n]) {

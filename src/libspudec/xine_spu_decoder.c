@@ -227,9 +227,9 @@ static void spudec_set_button (spu_decoder_t *this_gen, int32_t button, int32_t 
   video_overlay_manager_t *ovl_manager;
   video_overlay_event_t *overlay_event = NULL;
   vo_overlay_t        *overlay = NULL;
-  overlay_event = xine_xmalloc (sizeof(video_overlay_event_t));
+  overlay_event = calloc(1, sizeof(video_overlay_event_t));
 
-  overlay = xine_xmalloc (sizeof(vo_overlay_t));
+  overlay = calloc(1, sizeof(vo_overlay_t));
   /* FIXME: Watch out for threads. We should really put a lock on this
    * because events is a different thread than decode_data */
 
@@ -315,7 +315,7 @@ static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t
   spudec_decoder_t *this ;
   int i;
 
-  this = (spudec_decoder_t *) xine_xmalloc (sizeof (spudec_decoder_t));
+  this = (spudec_decoder_t *) calloc(1, sizeof (spudec_decoder_t));
 
   this->spu_decoder.decode_data         = spudec_decode_data;
   this->spu_decoder.reset               = spudec_reset;
@@ -328,7 +328,7 @@ static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t
 
   this->menu_handle = -1;
   this->buttonN = 1;
-  this->event.object.overlay = xine_xmalloc(sizeof(vo_overlay_t));
+  this->event.object.overlay = calloc(1, sizeof(vo_overlay_t));
  
   pthread_mutex_init(&this->nav_pci_lock, NULL);
   this->pci_cur.pci.hli.hl_gi.hli_ss  = 0;
@@ -376,7 +376,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   spudec_class_t *this;
 
-  this = (spudec_class_t *) xine_xmalloc (sizeof (spudec_class_t));
+  this = calloc(1, sizeof (spudec_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;

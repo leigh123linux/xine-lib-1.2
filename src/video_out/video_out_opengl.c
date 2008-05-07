@@ -1281,7 +1281,7 @@ static vo_frame_t *opengl_alloc_frame (vo_driver_t *this_gen) {
   opengl_frame_t  *frame;
   opengl_driver_t *this = (opengl_driver_t *) this_gen;
 
-  frame = (opengl_frame_t *) xine_xmalloc (sizeof (opengl_frame_t));
+  frame = (opengl_frame_t *) calloc(1, sizeof(opengl_frame_t));
   if (!frame)
     return NULL;
 
@@ -1820,7 +1820,7 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
   char                **render_fun_names;
   int                   i;
   
-  this = (opengl_driver_t *) xine_xmalloc (sizeof (opengl_driver_t));
+  this = (opengl_driver_t *) calloc(1, sizeof(opengl_driver_t));
 
   if (!this)
     return NULL;
@@ -1970,7 +1970,7 @@ static void opengl_dispose_class (video_driver_class_t *this_gen) {
 }
 
 static void *opengl_init_class (xine_t *xine, void *visual_gen) {
-  opengl_class_t	       *this = (opengl_class_t *) xine_xmalloc (sizeof (opengl_class_t));
+  opengl_class_t	       *this = (opengl_class_t *) calloc(1, sizeof(opengl_class_t));
 
   this->driver_class.open_plugin     = opengl_open_plugin;
   this->driver_class.get_identifier  = opengl_get_identifier;

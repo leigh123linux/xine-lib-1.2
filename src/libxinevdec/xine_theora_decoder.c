@@ -312,7 +312,7 @@ static video_decoder_t *theora_open_plugin (video_decoder_class_t *class_gen, xi
 
   theora_decoder_t  *this ;
 
-  this = (theora_decoder_t *) xine_xmalloc (sizeof (theora_decoder_t));
+  this = (theora_decoder_t *) calloc(1, sizeof(theora_decoder_t));
 
   this->theora_decoder.decode_data   = theora_decode_data;
   this->theora_decoder.flush         = theora_flush;
@@ -370,7 +370,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   /*initialize our plugin*/
   theora_class_t *this;
   
-  this = (theora_class_t *) xine_xmalloc (sizeof (theora_class_t));
+  this = (theora_class_t *) calloc(1, sizeof(theora_class_t));
 
   this->decoder_class.open_plugin     = theora_open_plugin;
   this->decoder_class.get_identifier  = theora_get_identifier;

@@ -370,7 +370,7 @@ static cdrom_toc * init_cdrom_toc(void) {
 
   cdrom_toc *toc;
 
-  toc = (cdrom_toc *) xine_xmalloc(sizeof (cdrom_toc));
+  toc = calloc(1, sizeof (cdrom_toc));
   toc->first_track = toc->last_track = toc->total_tracks = 0;
   toc->toc_entries = NULL;
 
@@ -2536,7 +2536,7 @@ static char ** cdda_class_get_autoplay_list (input_class_t *this_gen,
      * device we are going to open; but it is possible that this function
      * gets called, before a plugin instance has been created;
      * let's create a dummy instance in such a condition */
-    ip = (cdda_input_plugin_t *)xine_xmalloc(sizeof(cdda_input_plugin_t));
+    ip = calloc(1, sizeof(cdda_input_plugin_t));
     ip->stream = NULL;
     ip->fd = -1;
     ip->net_fd = -1;
@@ -2637,7 +2637,7 @@ static input_plugin_t *cdda_class_get_instance (input_class_t *cls_gen, xine_str
   } else
     return NULL;
 
-  this = (cdda_input_plugin_t *) xine_xmalloc (sizeof (cdda_input_plugin_t));
+  this = calloc(1, sizeof (cdda_input_plugin_t));
   
   class->ip = this;
   this->stream      = stream;
@@ -2726,7 +2726,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   cdda_input_class_t  *this;
   config_values_t     *config;
 
-  this = (cdda_input_class_t *) xine_xmalloc (sizeof (cdda_input_class_t));
+  this = calloc(1, sizeof (cdda_input_class_t));
 
   this->xine   = xine;
   this->config = xine->config;

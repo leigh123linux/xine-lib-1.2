@@ -149,7 +149,7 @@ static osd_object_t *osd_new_object (osd_renderer_t *this, int width, int height
   
   pthread_mutex_lock (&this->osd_mutex);  
   
-  osd = xine_xmalloc( sizeof(osd_object_t) );
+  osd = calloc(1, sizeof(osd_object_t));
   osd->renderer = this;
   osd->next = this->osds;
   this->osds = osd;
@@ -670,7 +670,7 @@ static int osd_renderer_load_font(osd_renderer_t *this, char *filename) {
   /* fixme: check for all read errors... */
   if( (fp = gzopen(filename,"rb")) != NULL ) {
 
-    font = xine_xmalloc( sizeof(osd_font_t) );
+    font = calloc(1, sizeof(osd_font_t));
 
     gzread(fp, font->name, sizeof(font->name) );
     font->version = gzread_i16(fp);
@@ -818,7 +818,7 @@ static int osd_renderer_unload_font(osd_renderer_t *this, char *fontname ) {
 #ifdef HAVE_FT2
 static int osd_set_font_freetype2( osd_object_t *osd, const char *fontname, int size ) {
   if (!osd->ft2) {
-    osd->ft2 = xine_xmalloc(sizeof(osd_ft2context_t));
+    osd->ft2 = calloc(1, sizeof(osd_ft2context_t));
     if(FT_Init_FreeType( &osd->ft2->library )) {
       xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG,
 	      _("osd: cannot initialize ft2 library\n"));
@@ -1413,7 +1413,7 @@ static void osd_preload_fonts (osd_renderer_t *this, char *path) {
 	  char        *pathname;
 
           *p++ = '\0';
-          font = xine_xmalloc( sizeof(osd_font_t) );
+          font = calloc(1, sizeof(osd_font_t) );
           
           strncpy(font->name, s, sizeof(font->name));
           font->size = atoi(p);
@@ -1421,7 +1421,7 @@ static void osd_preload_fonts (osd_renderer_t *this, char *path) {
           lprintf("font '%s' size %d is preloaded\n", 
                   font->name, font->size);
 
-          pathname = (char *) xine_xmalloc(strlen(path) + strlen(entry->d_name) + 2);
+          pathname = malloc(strlen(path) + strlen(entry->d_name) + 2);
           sprintf (pathname, "%s/%s", path, entry->d_name);
           font->filename = pathname;
           
@@ -1579,9 +1579,9 @@ osd_renderer_t *_x_osd_renderer_init( xine_stream_t *stream ) {
   osd_renderer_t *this;
   char str[1024];
 
-  this = xine_xmalloc(sizeof(osd_renderer_t)); 
+  this = calloc(1, sizeof(osd_renderer_t)); 
   this->stream = stream;
-  this->event.object.overlay = xine_xmalloc( sizeof(vo_overlay_t) );
+  this->event.object.overlay = calloc(1, sizeof(vo_overlay_t));
 
   pthread_mutex_init (&this->osd_mutex, NULL);
 

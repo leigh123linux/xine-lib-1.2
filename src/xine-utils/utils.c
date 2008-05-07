@@ -257,7 +257,7 @@ void *xine_xmalloc_aligned(size_t alignment, size_t size, void **base) {
 
   char *ptr;
   
-  *base = ptr = xine_xmalloc (size+alignment);
+  *base = ptr = calloc(1, size+alignment);
   
   while ((size_t) ptr % alignment)
     ptr++;

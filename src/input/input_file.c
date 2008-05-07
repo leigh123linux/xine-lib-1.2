@@ -421,7 +421,7 @@ static input_plugin_t *file_class_get_instance (input_class_t *cls_gen, xine_str
     return NULL;
   }
 
-  this = (file_input_plugin_t *) xine_xmalloc (sizeof (file_input_plugin_t));
+  this = (file_input_plugin_t *) calloc(1, sizeof (file_input_plugin_t));
   this->stream = stream;
   this->mrl    = mrl;
   this->fh     = -1;
@@ -849,7 +849,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
       if(num_files >= this->mrls_allocated_entries) {
 	++this->mrls_allocated_entries;
 	this->mrls = realloc(this->mrls, (this->mrls_allocated_entries+1) * sizeof(xine_mrl_t*));
-	this->mrls[num_files] = (xine_mrl_t *) xine_xmalloc(sizeof(xine_mrl_t));
+	this->mrls[num_files] = calloc(1, sizeof(xine_mrl_t));
       }
       else
 	memset(this->mrls[num_files], 0, sizeof(xine_mrl_t));
@@ -867,7 +867,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
       if(num_files >= this->mrls_allocated_entries) {
 	++this->mrls_allocated_entries;
 	this->mrls = realloc(this->mrls, (this->mrls_allocated_entries+1) * sizeof(xine_mrl_t*));
-	this->mrls[num_files] = (xine_mrl_t *) xine_xmalloc(sizeof(xine_mrl_t));
+	this->mrls[num_files] = calloc(1, sizeof(xine_mrl_t));
       }
       else
 	memset(this->mrls[num_files], 0, sizeof(xine_mrl_t));
@@ -885,7 +885,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
       if(num_files >= this->mrls_allocated_entries) {
 	++this->mrls_allocated_entries;
 	this->mrls = realloc(this->mrls, (this->mrls_allocated_entries+1) * sizeof(xine_mrl_t*));
-	this->mrls[num_files] = (xine_mrl_t *) xine_xmalloc(sizeof(xine_mrl_t));
+	this->mrls[num_files] = calloc(1, sizeof(xine_mrl_t));
       }
       else
 	memset(this->mrls[num_files], 0, sizeof(xine_mrl_t));
@@ -965,7 +965,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   file_input_class_t  *this;
   config_values_t     *config;
 
-  this = (file_input_class_t *) xine_xmalloc (sizeof (file_input_class_t));
+  this = (file_input_class_t *) calloc(1, sizeof (file_input_class_t));
 
   this->xine   = xine;
   this->config = xine->config;
@@ -979,7 +979,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->input_class.dispose            = file_class_dispose;
   this->input_class.eject_media        = NULL;
 
-  this->mrls = (xine_mrl_t **) xine_xmalloc(sizeof(xine_mrl_t*));
+  this->mrls = (xine_mrl_t **) calloc(1, sizeof(xine_mrl_t*));
   this->mrls_allocated_entries = 0;
 
   {

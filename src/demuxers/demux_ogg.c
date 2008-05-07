@@ -194,7 +194,7 @@ static int get_stream (demux_ogg_t *this, int serno) {
 static int new_stream_info (demux_ogg_t *this, const int cur_serno) {
   int stream_num;
 
-  this->si[this->num_streams] = (stream_info_t *)xine_xmalloc(sizeof(stream_info_t));
+  this->si[this->num_streams] = (stream_info_t *)calloc(1, sizeof(stream_info_t));
   ogg_stream_init(&this->si[this->num_streams]->oss, cur_serno);
   stream_num = this->num_streams;
   this->si[stream_num]->buf_types = 0;
@@ -498,7 +498,7 @@ static void read_chapter_comment (demux_ogg_t *this, ogg_packet *op) {
         lprintf("time: %d %d %d %d\n", hour, min,sec,msec);
 
         if (!this->chapter_info) {
-          this->chapter_info = (chapter_info_t *)xine_xmalloc(sizeof(chapter_info_t));
+          this->chapter_info = (chapter_info_t *)calloc(1, sizeof(chapter_info_t));
           this->chapter_info->current_chapter = -1;
         }
         this->chapter_info->max_chapter = chapter_no;
@@ -2026,7 +2026,7 @@ static demux_plugin_t *anx_open_plugin (demux_class_t *class_gen,
    * if we reach this point, the input has been accepted.
    */
 
-  this         = xine_xmalloc (sizeof (demux_ogg_t));
+  this         = calloc(1, sizeof(demux_ogg_t));
   memset (this, 0, sizeof(demux_ogg_t));
   this->stream = stream;
   this->input  = input;
@@ -2072,7 +2072,7 @@ static demux_plugin_t *ogg_open_plugin (demux_class_t *class_gen,
    * if we reach this point, the input has been accepted.
    */
 
-  this         = xine_xmalloc (sizeof (demux_ogg_t));
+  this         = calloc(1, sizeof(demux_ogg_t));
   memset (this, 0, sizeof(demux_ogg_t));
   this->stream = stream;
   this->input  = input;
@@ -2135,7 +2135,7 @@ static void anx_class_dispose (demux_class_t *this_gen) {
 static void *anx_init_class (xine_t *xine, void *data) {
   demux_anx_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_anx_class_t));
+  this = calloc(1, sizeof(demux_anx_class_t));
 
   this->demux_class.open_plugin     = anx_open_plugin;
   this->demux_class.get_description = anx_get_description;
@@ -2184,7 +2184,7 @@ static void ogg_class_dispose (demux_class_t *this_gen) {
 static void *ogg_init_class (xine_t *xine, void *data) {
   demux_ogg_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_ogg_class_t));
+  this = calloc(1, sizeof(demux_ogg_class_t));
 
   this->demux_class.open_plugin     = ogg_open_plugin;
   this->demux_class.get_description = ogg_get_description;

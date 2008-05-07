@@ -636,7 +636,7 @@ mmsh_t *mmsh_connect (xine_stream_t *stream, const char *url, int bandwidth) {
 
   report_progress (stream, 0);
 
-  this = (mmsh_t*) xine_xmalloc (sizeof (mmsh_t));
+  this = calloc(1, sizeof (mmsh_t));
 
   this->stream          = stream;
   this->url             = strdup(url);

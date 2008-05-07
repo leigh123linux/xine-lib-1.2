@@ -307,7 +307,7 @@ static void ticket_dispose(xine_ticket_t *this) {
 static xine_ticket_t *ticket_init(void) {
   xine_ticket_t *port_ticket;
   
-  port_ticket = (xine_ticket_t *) xine_xmalloc(sizeof(xine_ticket_t));
+  port_ticket = calloc(1, sizeof(xine_ticket_t));
   
   port_ticket->acquire_nonblocking  = ticket_acquire_nonblocking;
   port_ticket->acquire              = ticket_acquire;
@@ -570,7 +570,7 @@ xine_stream_t *xine_stream_new (xine_t *this,
 
   pthread_mutex_lock (&this->streams_lock);
 
-  stream = (xine_stream_t *) xine_xmalloc (sizeof (xine_stream_t)) ;
+  stream = (xine_stream_t *) calloc (1, sizeof (xine_stream_t)) ;
   stream->current_extra_info       = malloc( sizeof( extra_info_t ) );
   stream->audio_decoder_extra_info = malloc( sizeof( extra_info_t ) );
   stream->video_decoder_extra_info = malloc( sizeof( extra_info_t ) );
@@ -1545,7 +1545,7 @@ xine_t *xine_new (void) {
     int i_err;
 #endif
 
-  this = xine_xmalloc (sizeof (xine_t));
+    this = calloc(1, sizeof (xine_t));
   if (!this)
     _x_abort();
 

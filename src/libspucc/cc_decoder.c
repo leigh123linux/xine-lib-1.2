@@ -922,7 +922,7 @@ cc_renderer_t *cc_renderer_open(osd_renderer_t *osd_renderer,
 				metronom_t *metronom, cc_state_t *cc_state,
 				int video_width, int video_height)
 {
-  cc_renderer_t *this = (cc_renderer_t *) xine_xmalloc(sizeof (cc_renderer_t));
+  cc_renderer_t *this = calloc(1, sizeof (cc_renderer_t));
 
   this->osd_renderer = osd_renderer;
   this->metronom = metronom;
@@ -1439,7 +1439,7 @@ void decode_cc(cc_decoder_t *this, uint8_t *buffer, uint32_t buf_len,
 
 cc_decoder_t *cc_decoder_open(cc_state_t *cc_state)
 {
-  cc_decoder_t *this = (cc_decoder_t *) xine_xmalloc(sizeof (cc_decoder_t));
+  cc_decoder_t *this = calloc(1, sizeof (cc_decoder_t));
   /* configfile stuff */
   this->cc_state = cc_state;
 

@@ -120,7 +120,7 @@ static vo_frame_t *caca_alloc_frame(vo_driver_t *this_gen) {
   caca_driver_t *this = (caca_driver_t*) this_gen;
   caca_frame_t  *frame;
 
-  frame = (caca_frame_t *) xine_xmalloc (sizeof (caca_frame_t));
+  frame = calloc(1, sizeof (caca_frame_t));
   if (!frame)
     return NULL;
 
@@ -278,7 +278,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   caca_class_t         *class = (caca_class_t *) class_gen;
   caca_driver_t        *this;
 
-  this = (caca_driver_t*) xine_xmalloc (sizeof (caca_driver_t));
+  this = calloc(1, sizeof (caca_driver_t));
   
   this->config = class->config;
   this->xine   = class->xine;
@@ -322,7 +322,7 @@ static void dispose_class (video_driver_class_t *this_gen) {
 static void *init_class (xine_t *xine, void *visual_gen) {
   caca_class_t    *this;
   
-  this = (caca_class_t *) xine_xmalloc(sizeof(caca_class_t));
+  this = calloc(1, sizeof(caca_class_t));
   
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.get_identifier  = get_identifier;

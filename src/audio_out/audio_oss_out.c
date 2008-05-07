@@ -729,7 +729,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   int speakers;
 
   
-  this = (oss_driver_t *) xine_xmalloc (sizeof (oss_driver_t));
+  this = calloc(1, sizeof (oss_driver_t));
   if (!this)
     return NULL;
 
@@ -1170,7 +1170,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   oss_class_t        *this;
 
-  this = (oss_class_t *) xine_xmalloc (sizeof (oss_class_t));
+  this = calloc(1, sizeof (oss_class_t));
   if (!this)
     return NULL;
 

@@ -717,7 +717,7 @@ static input_plugin_t *rtp_class_get_instance (input_class_t *cls_gen,
     }
   }
   
-  this = (rtp_input_plugin_t *) xine_xmalloc(sizeof(rtp_input_plugin_t));
+  this = calloc(1, sizeof(rtp_input_plugin_t));
   this->stream       = stream;
   this->mrl          = mrl;
   this->filename     = filename;
@@ -784,7 +784,7 @@ static void *init_class (xine_t *xine, void *data) {
   rtp_input_class_t  *this;
 
   
-  this         = (rtp_input_class_t *) xine_xmalloc(sizeof(rtp_input_class_t));
+  this         = calloc(1, sizeof(rtp_input_class_t));
   this->config = xine->config;
   this->xine   = xine;
 

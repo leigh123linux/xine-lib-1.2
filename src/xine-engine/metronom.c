@@ -175,8 +175,7 @@ static void unixscr_exit (scr_plugin_t *scr) {
 static scr_plugin_t* unixscr_init () {
   unixscr_t *this;
 
-  this = (unixscr_t *) xine_xmalloc(sizeof(unixscr_t));
-  memset(this, 0, sizeof(*this));
+  this = calloc(1, sizeof(unixscr_t));
   
   this->scr.interface_version = 3;
   this->scr.get_priority      = unixscr_get_priority;
@@ -909,7 +908,7 @@ static void metronom_clock_exit (metronom_clock_t *this) {
 
 metronom_t * _x_metronom_init (int have_video, int have_audio, xine_t *xine) {
 
-  metronom_t *this = xine_xmalloc (sizeof (metronom_t));
+  metronom_t *this = calloc(1, sizeof (metronom_t));
 
   this->set_audio_rate             = metronom_set_audio_rate;
   this->got_video_frame            = metronom_got_video_frame;
@@ -962,7 +961,7 @@ metronom_t * _x_metronom_init (int have_video, int have_audio, xine_t *xine) {
 
 metronom_clock_t *_x_metronom_clock_init(xine_t *xine)
 {
-  metronom_clock_t *this = (metronom_clock_t *) xine_xmalloc(sizeof(metronom_clock_t));
+  metronom_clock_t *this = calloc(1, sizeof(metronom_clock_t));
   int err;
   
   this->set_option           = metronom_clock_set_option;

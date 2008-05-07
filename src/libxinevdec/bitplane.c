@@ -1523,7 +1523,7 @@ static void bitplane_dispose (video_decoder_t *this_gen) {
 
 static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stream_t *stream) {
 
-  bitplane_decoder_t  *this             = (bitplane_decoder_t *) xine_xmalloc (sizeof (bitplane_decoder_t));
+  bitplane_decoder_t  *this             = (bitplane_decoder_t *) calloc(1, sizeof(bitplane_decoder_t));
 
   this->video_decoder.decode_data       = bitplane_decode_data;
   this->video_decoder.flush             = bitplane_flush;
@@ -1558,7 +1558,7 @@ static void dispose_class (video_decoder_class_t *this) {
 
 static void *init_plugin (xine_t *xine, void *data) {
 
-  bitplane_class_t *this                = (bitplane_class_t *) xine_xmalloc (sizeof (bitplane_class_t));
+  bitplane_class_t *this                = (bitplane_class_t *) calloc(1, sizeof(bitplane_class_t));
 
   this->decoder_class.open_plugin       = open_plugin;
   this->decoder_class.get_identifier    = get_identifier;

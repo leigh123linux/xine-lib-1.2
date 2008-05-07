@@ -356,7 +356,7 @@ input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream, int readahe
 
   lprintf("mrl: %s\n", main_plugin->get_mrl(main_plugin));
 
-  this = (cache_input_plugin_t *)xine_xmalloc(sizeof(cache_input_plugin_t));
+  this = calloc(1, sizeof(cache_input_plugin_t));
   if (!this)
     return NULL;
   

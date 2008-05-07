@@ -30,7 +30,7 @@ lrb_t *lrb_new (int max_num_entries,
 
   lrb_t *this;
   
-  this = xine_xmalloc (sizeof (lrb_t));
+  this = calloc(1, sizeof(lrb_t));
 
   this->max_num_entries = max_num_entries;
   this->cur_num_entries = 0;

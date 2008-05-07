@@ -346,7 +346,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   mad_decoder_t *this ;
 
-  this = (mad_decoder_t *) xine_xmalloc (sizeof (mad_decoder_t));
+  this = (mad_decoder_t *) calloc(1, sizeof(mad_decoder_t));
 
   this->audio_decoder.decode_data         = mad_decode_data;
   this->audio_decoder.reset               = mad_reset;
@@ -390,7 +390,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   mad_class_t *this;
   
-  this = (mad_class_t *) xine_xmalloc (sizeof (mad_class_t));
+  this = (mad_class_t *) calloc(1, sizeof(mad_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;

@@ -325,8 +325,8 @@ static void _insert_node (xine_t *this,
     return;
   }
 
-  entry = xine_xmalloc(sizeof(plugin_node_t));
-  entry->info         = xine_xmalloc(sizeof(plugin_info_t));
+  entry = calloc(1, sizeof(plugin_node_t));
+  entry->info         = calloc(1, sizeof(plugin_info_t));
   *(entry->info)      = *info;
   entry->info->id     = strdup(info->id);
   entry->info->init   = info->init;
@@ -339,7 +339,7 @@ static void _insert_node (xine_t *this,
 
   case PLUGIN_VIDEO_OUT:
     vo_old = info->special_info;
-    vo_new = xine_xmalloc(sizeof(vo_info_t));
+    vo_new = calloc(1, sizeof(vo_info_t));
     entry->priority = vo_new->priority = vo_old->priority;
     vo_new->visual_type = vo_old->visual_type;
     entry->info->special_info = vo_new;
@@ -347,7 +347,7 @@ static void _insert_node (xine_t *this,
 
   case PLUGIN_AUDIO_OUT:
     ao_old = info->special_info;
-    ao_new = xine_xmalloc(sizeof(ao_info_t));
+    ao_new = calloc(1, sizeof(ao_info_t));
     entry->priority = ao_new->priority = ao_old->priority;
     entry->info->special_info = ao_new;
     break;
@@ -356,7 +356,7 @@ static void _insert_node (xine_t *this,
   case PLUGIN_VIDEO_DECODER:
   case PLUGIN_SPU_DECODER:
     decoder_old = info->special_info;
-    decoder_new = xine_xmalloc(sizeof(decoder_info_t));
+    decoder_new = calloc(1, sizeof(decoder_info_t));
     if (decoder_old == NULL) {
       if (file)
 	xprintf (this, XINE_VERBOSITY_DEBUG,
@@ -369,7 +369,7 @@ static void _insert_node (xine_t *this,
       _x_abort();
     }
     for (i=0; decoder_old->supported_types[i] != 0; ++i);
-    types = xine_xmalloc((i+1)*sizeof(uint32_t));
+    types = calloc((i+1), sizeof(uint32_t));
     for (i=0; decoder_old->supported_types[i] != 0; ++i){
       types[i] = decoder_old->supported_types[i];
     }
@@ -402,14 +402,14 @@ static void _insert_node (xine_t *this,
   
   case PLUGIN_POST:
     post_old = info->special_info;
-    post_new = xine_xmalloc(sizeof(post_info_t));
+    post_new = calloc(1, sizeof(post_info_t));
     post_new->type = post_old->type;
     entry->info->special_info = post_new;
     break;
     
   case PLUGIN_DEMUX:
     demux_old = info->special_info;
-    demux_new = xine_xmalloc(sizeof(demuxer_info_t));
+    demux_new = calloc(1, sizeof(demuxer_info_t));
     
     if (demux_old) {
       entry->priority = demux_new->priority = demux_old->priority;
@@ -426,7 +426,7 @@ static void _insert_node (xine_t *this,
 
   case PLUGIN_INPUT:
     input_old = info->special_info;
-    input_new = xine_xmalloc(sizeof(input_info_t));
+    input_new = calloc(1, sizeof(input_info_t));
     
     if (input_old) {
       entry->priority = input_new->priority = input_old->priority;
@@ -468,7 +468,7 @@ static plugin_catalog_t *_new_catalog(void){
   plugin_catalog_t *catalog;
   int i;
 
-  catalog = xine_xmalloc(sizeof(plugin_catalog_t));
+  catalog = calloc(1, sizeof(plugin_catalog_t));
 
   for (i = 0; i < PLUGIN_TYPE_MAX; i++) {
     catalog->plugin_lists[i] = xine_sarray_new(0, _plugin_node_comparator);
@@ -941,8 +941,8 @@ static void load_plugin_list(FILE *fp, xine_sarray_t *plugins) {
       if( node ) {
         xine_sarray_add (plugins, node);
       }
-      node                = xine_xmalloc(sizeof(plugin_node_t));
-      file                = xine_xmalloc(sizeof(plugin_file_t));
+      node                = calloc(1, sizeof(plugin_node_t));
+      file                = calloc(1, sizeof(plugin_file_t));
       node->file          = file;
       file->filename      = strdup(line+1);
       node->info          = calloc(2, sizeof(plugin_info_t));
@@ -981,34 +981,34 @@ static void load_plugin_list(FILE *fp, xine_sarray_t *plugins) {
           
             case PLUGIN_VIDEO_OUT:
               node->info->special_info = vo_info =
-                        xine_xmalloc(sizeof(vo_info_t));
+		calloc(1, sizeof(vo_info_t));
               break;
           
             case PLUGIN_AUDIO_OUT:
               node->info->special_info = ao_info =
-		             xine_xmalloc(sizeof(ao_info_t));
+		calloc(1, sizeof(ao_info_t));
               break;
           
             case PLUGIN_DEMUX:
               node->info->special_info = demuxer_info =
-		             xine_xmalloc(sizeof(demuxer_info_t));
+		calloc(1, sizeof(demuxer_info_t));
               break;
 
             case PLUGIN_INPUT:
               node->info->special_info = input_info =
-		           xine_xmalloc(sizeof(input_info_t));
+		calloc(1, sizeof(input_info_t));
               break;
 
             case PLUGIN_AUDIO_DECODER:
             case PLUGIN_VIDEO_DECODER:
             case PLUGIN_SPU_DECODER:
               node->info->special_info = decoder_info =
-                             xine_xmalloc(sizeof(decoder_info_t));
+		calloc(1, sizeof(decoder_info_t));
               break;
 	    
 	    case PLUGIN_POST:
 	      node->info->special_info = post_info =
-			  xine_xmalloc(sizeof(post_info_t));
+		calloc(1, sizeof(post_info_t));
 	      break;
           }        
           
@@ -1073,13 +1073,13 @@ static void save_catalog (xine_t *this) {
   const char *relname = CACHE_CATALOG_FILE;
   const char *dirname = CACHE_CATALOG_DIR;
     
-  cachefile = (char *) xine_xmalloc(strlen(xine_get_homedir()) + 
-                                    strlen(relname) + 2);
+  cachefile = (char *) malloc(strlen(xine_get_homedir()) + 
+			      strlen(relname) + 2);
   sprintf(cachefile, "%s/%s", xine_get_homedir(), relname);
   
   /* make sure homedir (~/.xine) exists */
-  dirfile = (char *) xine_xmalloc(strlen(xine_get_homedir()) + 
-				  strlen(dirname) + 2);
+  dirfile = (char *) malloc(strlen(xine_get_homedir()) + 
+			    strlen(dirname) + 2);
   sprintf(dirfile, "%s/%s", xine_get_homedir(), dirname);
   mkdir (dirfile, 0755);
   free (dirfile);
@@ -1107,8 +1107,8 @@ static void load_cached_catalog (xine_t *this) {
   char *cachefile;                                               
   const char *relname = CACHE_CATALOG_FILE;
     
-  cachefile = (char *) xine_xmalloc(strlen(xine_get_homedir()) + 
-                                    strlen(relname) + 2);
+  cachefile = (char *) malloc(strlen(xine_get_homedir()) + 
+			      strlen(relname) + 2);
   sprintf(cachefile, "%s/%s", xine_get_homedir(), relname);
   
   if( (fp = fopen(cachefile,"r")) != NULL ) {

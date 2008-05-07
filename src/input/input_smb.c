@@ -359,7 +359,7 @@ static xine_mrl_t **smb_class_get_dir (input_class_t *this_gen,
 				++this->mrls_allocated_entries;
 				this->mrls = realloc(this->mrls, 
 					(this->mrls_allocated_entries+1) * sizeof(xine_mrl_t*));
-				this->mrls[num_files] = (xine_mrl_t *) xine_xmalloc(sizeof(xine_mrl_t));
+				this->mrls[num_files] = calloc(1, sizeof(xine_mrl_t));
 			}else
 				memset(this->mrls[num_files], 0, sizeof(xine_mrl_t));
       
@@ -376,7 +376,7 @@ static xine_mrl_t **smb_class_get_dir (input_class_t *this_gen,
 				++this->mrls_allocated_entries;
 				this->mrls = realloc(this->mrls, 
 					(this->mrls_allocated_entries+1) * sizeof(xine_mrl_t*));
-				this->mrls[num_files] = (xine_mrl_t *) xine_xmalloc(sizeof(xine_mrl_t));
+				this->mrls[num_files] = calloc(1, sizeof(xine_mrl_t));
 			}else
 				memset(this->mrls[num_files], 0, sizeof(xine_mrl_t));
 
@@ -475,7 +475,7 @@ smb_class_get_instance (input_class_t *class_gen, xine_stream_t *stream,
 	if (strncmp (mrl, "smb://",6))
 		return NULL;
 
-	this = (smb_input_t *)xine_xmalloc(sizeof(smb_input_t));
+	this = calloc(1, sizeof(smb_input_t));
 	this->stream = stream;
 	this->mrl = strdup (mrl);
 	this->fd = -1;
@@ -514,7 +514,7 @@ static void
 	if (smbc_init(smb_auth,(xine->verbosity >= XINE_VERBOSITY_DEBUG)))
 	  goto _exit_error;
 	
-	this = (smb_input_class_t *) xine_xmalloc(sizeof(smb_input_class_t));
+	this = calloc(1, sizeof(smb_input_class_t));
 	this->xine = xine;
 
 	this->input_class.get_instance       = smb_class_get_instance;

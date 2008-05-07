@@ -1081,7 +1081,7 @@ static spu_decoder_t *sputext_class_open_plugin (spu_decoder_class_t *class_gen,
   sputext_class_t *class = (sputext_class_t *)class_gen;
   sputext_decoder_t *this ;
 
-  this = (sputext_decoder_t *) xine_xmalloc (sizeof (sputext_decoder_t));
+  this = (sputext_decoder_t *) calloc(1, sizeof(sputext_decoder_t));
 
   this->spu_decoder.decode_data         = spudec_decode_data;
   this->spu_decoder.reset               = spudec_reset;
@@ -1135,7 +1135,7 @@ static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
 
   lprintf("init class\n");
   
-  this = (sputext_class_t *) xine_xmalloc (sizeof (sputext_class_t));
+  this = (sputext_class_t *) calloc(1, sizeof(sputext_class_t));
 
   this->class.open_plugin      = sputext_class_open_plugin;
   this->class.get_identifier   = sputext_class_get_identifier;

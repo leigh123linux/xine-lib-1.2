@@ -2237,7 +2237,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
    * if we reach this point, the input has been accepted.
    */
 
-  this            = xine_xmalloc(sizeof(*this));
+  this            = calloc(1, sizeof(*this));
   this->stream    = stream;
   this->input     = input;
   this->blockSize = PKT_SIZE;
@@ -2328,7 +2328,7 @@ static void *init_class (xine_t *xine, void *data) {
   
   demux_ts_class_t     *this;
   
-  this         = xine_xmalloc (sizeof (demux_ts_class_t));
+  this         = calloc(1, sizeof(demux_ts_class_t));
   this->config = xine->config;
   this->xine   = xine;
 

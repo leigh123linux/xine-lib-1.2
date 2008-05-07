@@ -585,7 +585,7 @@ input_plugin_t *_x_rip_plugin_get_instance (xine_stream_t *stream, const char *f
     return NULL;
   }
 
-  this = (rip_input_plugin_t *)xine_xmalloc(sizeof(rip_input_plugin_t));
+  this = calloc(1, sizeof(rip_input_plugin_t));
   this->main_input_plugin = main_plugin;
   this->stream            = stream;
   this->curpos  = 0;

@@ -492,7 +492,7 @@ static void nbc_get_cb (fifo_buffer_t *fifo,
 
 nbc_t *nbc_init (xine_stream_t *stream) {
   
-  nbc_t *this = (nbc_t *) xine_xmalloc (sizeof (nbc_t));
+  nbc_t *this = calloc(1, sizeof (nbc_t));
   fifo_buffer_t *video_fifo = stream->video_fifo;
   fifo_buffer_t *audio_fifo = stream->audio_fifo;
   double video_fifo_factor, audio_fifo_factor;

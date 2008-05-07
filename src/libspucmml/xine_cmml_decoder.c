@@ -450,7 +450,7 @@ static spu_decoder_t *spucmml_class_open_plugin (spu_decoder_class_t *class_gen,
   spucmml_class_t *class = (spucmml_class_t *)class_gen;
   spucmml_decoder_t *this ;
 
-  this = (spucmml_decoder_t *) xine_xmalloc (sizeof (spucmml_decoder_t));
+  this = (spucmml_decoder_t *) calloc(1, sizeof(spucmml_decoder_t));
 
   this->spu_decoder.decode_data         = spudec_decode_data;
   this->spu_decoder.reset               = spudec_reset;
@@ -514,7 +514,7 @@ static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
 
   spucmml_class_t *this ;
 
-  this = (spucmml_class_t *) xine_xmalloc (sizeof (spucmml_class_t));
+  this = (spucmml_class_t *) calloc(1, sizeof(spucmml_class_t));
 
   this->class.open_plugin      = spucmml_class_open_plugin;
   this->class.get_identifier   = spucmml_class_get_identifier;
