@@ -233,38 +233,32 @@ static int rtsp_get_answers(rtsp_t *s) {
     if (!answer)
       return 0;
     
-    if (!strncasecmp(answer,"Cseq:",5)) {
-      sscanf(answer,"%*s %u",&answer_seq);
+    if (!strncasecmp(answer,"Cseq: ",6)) {
+      sscanf(answer+6,"%u",&answer_seq);
       if (s->cseq != answer_seq) {
         lprintf("warning: Cseq mismatch. got %u, assumed %u", answer_seq, s->cseq);
 
         s->cseq=answer_seq;
       }
     }
-    if (!strncasecmp(answer,"Server:",7)) {
-      char *buf = xine_xmalloc(strlen(answer));
-      sscanf(answer,"%*s %s",buf);
-      if (s->server) free(s->server);
-      s->server=strdup(buf);
-      free(buf);
+    if (!strncasecmp(answer,"Server: ",8)) {
+      free(s->server);
+      s->server = strdup(answer + 8);
     }
-    if (!strncasecmp(answer,"Session:",8)) {
-      char *buf = xine_xmalloc(strlen(answer));
-      sscanf(answer,"%*s %s",buf);
+    if (!strncasecmp(answer,"Session: ",9)) {
+      char *tmp = answer + 9;
       if (s->session) {
-        if (strcmp(buf, s->session)) {
+        if (strcmp(tmp, s->session)) {
           xprintf(s->stream->xine, XINE_VERBOSITY_DEBUG, 
-		  "rtsp: warning: setting NEW session: %s\n", buf);
-          free(s->session);
-          s->session=strdup(buf);
+		  "rtsp: warning: setting NEW session: %s\n", tmp);
+          s->session=strdup(tmp);
         }
       } else
       {
         lprintf("setting session id to: %s\n", buf);
 
-        s->session=strdup(buf);
+        s->session=strdup(tmp);
       }
-      free(buf);
     }
     *answer_ptr=answer;
     answer_ptr++;
