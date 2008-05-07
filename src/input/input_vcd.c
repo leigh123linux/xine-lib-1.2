@@ -997,16 +997,9 @@ static xine_mrl_t **vcd_class_get_dir (input_class_t *this_gen, const char *file
       memset(this->mrls[(i-1)], 0, sizeof(xine_mrl_t));
     }
     
-    if(this->mrls[(i-1)]->mrl) {
-      this->mrls[(i-1)]->mrl = (char *)
-	realloc(this->mrls[(i-1)]->mrl, strlen(mrl) + 1);
-    }
-    else {
-      this->mrls[(i-1)]->mrl = (char *) xine_xmalloc(strlen(mrl) + 1);
-    }
-    
     this->mrls[i-1]->origin = NULL;
-    sprintf(this->mrls[i-1]->mrl, "%s", mrl);
+    free(this->mrls[(i-1)]->mrl);
+    this->mrls[i-1]->mrl = strdup(mrl);
     this->mrls[i-1]->link = NULL;
     this->mrls[i-1]->type = (0 | mrl_vcd);
 

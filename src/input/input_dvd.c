@@ -1313,7 +1313,7 @@ static int dvd_plugin_get_optional_data (input_plugin_t *this_gen,
     if(this && this->stream && this->dvdnav) {
 
       if(!(dvdnav_is_domain_vts(this->dvdnav))) {
-	sprintf(data, "%s", "menu");
+	strcpy(data, "menu");
 	if (channel <= 0)
 	  return INPUT_OPTIONAL_SUCCESS;
 	else
@@ -1336,7 +1336,7 @@ static int dvd_plugin_get_optional_data (input_plugin_t *this_gen,
 	return INPUT_OPTIONAL_SUCCESS;
       } else {
 	if(channel == -1) {
-	  sprintf(data, "%s", "none");
+	  strcpy(data, "none");
 	  return INPUT_OPTIONAL_SUCCESS;
 	}
       }

@@ -1839,8 +1839,7 @@ static void show_program_info(int x, int y, int max_x, int max_y, int* last_y,
 
   /*Content type and rating, if any. */
   if (strlen(epg_data->content) > 3) {
-
-    snprintf(buffer, 94, "%s", epg_data->content);
+    strncpy(buffer, epg_data->content, 94-1);
 
     prog_rating = epg_data->rating;
     if (prog_rating > 0) {
@@ -1870,7 +1869,7 @@ static void show_program_info(int x, int y, int max_x, int max_y, int* last_y,
   /* Print the description. */
   if (epg_data->description && strlen(epg_data->description) > 0) {
     renderer->set_font(osd, "sans", EPG_DESCRIPTION_FONT_SIZE);
-    sprintf(buffer, "%s", epg_data->description);
+    strcpy(buffer, epg_data->description);
     /* If the description is not complete (i.e., there is no comma at the end),
        add "..." to the end. In my locale they often seem to send incomplete description
        texts :( */
