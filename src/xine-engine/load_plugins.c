@@ -382,8 +382,7 @@ static void _insert_node (xine_t *this,
      * does not strdup() it, so we have to provide a different pointer
      * for each decoder */
     for (i = 0; catalog->prio_desc[i]; i++);
-    catalog->prio_desc[i] = malloc(strlen(desc) + 1);
-    strcpy(catalog->prio_desc[i], desc);
+    catalog->prio_desc[i] = strdup(desc);
     this->config->register_num (this->config,
 				key,
 				0,

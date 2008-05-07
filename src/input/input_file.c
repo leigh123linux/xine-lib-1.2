@@ -727,8 +727,9 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
 	    xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 		     "input_file: readlink() failed: %s\n", strerror(errno));
 	  else {
-	    dir_files[num_dir_files].link = (char *) xine_xmalloc(linksize + 1);
-	    strncpy(dir_files[num_dir_files].link, linkbuf, linksize);
+	    dir_files[num_dir_files].link =
+	      strndup(linkbuf, linksize);
+
 	    dir_files[num_dir_files].type |= get_file_type(dir_files[num_dir_files].link, current_dir, this->xine);
 	  }
 	}
@@ -763,9 +764,8 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
 		     "input_file: readlink() failed: %s\n", strerror(errno));
 	  }
 	  else {
-	    hide_files[num_hide_files].link = (char *) 
-	      xine_xmalloc(linksize + 1);
-	    strncpy(hide_files[num_hide_files].link, linkbuf, linksize);
+	    hide_files[num_hide_files].link =
+	      strndup(linkbuf, linksize);
 	    hide_files[num_hide_files].type |= get_file_type(hide_files[num_hide_files].link, current_dir, this->xine);
 	  }
 	}
@@ -796,9 +796,8 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
 		   "input_file: readlink() failed: %s\n", strerror(errno));
 	}
 	else {
-	  norm_files[num_norm_files].link = (char *) 
-	    xine_xmalloc(linksize + 1);
-	  strncpy(norm_files[num_norm_files].link, linkbuf, linksize);
+	  norm_files[num_norm_files].link = 
+	    strndup(linkbuf, linksize);
 	  norm_files[num_norm_files].type |= get_file_type(norm_files[num_norm_files].link, current_dir, this->xine);
 	}
       }

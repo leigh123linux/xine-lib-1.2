@@ -21,6 +21,10 @@
  * based upon code from joschka
  */
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/socket.h>
@@ -732,9 +736,7 @@ pnm_t *pnm_connect(xine_stream_t *stream, const char *mrl) {
   pathbegin=slash-mrl_ptr;
   hostend=colon-mrl_ptr;
 
-  p->host = malloc(sizeof(char)*hostend+1);
-  strncpy(p->host, mrl_ptr, hostend);
-  p->host[hostend]=0;
+  p->host = strndup(mrl_ptr, hostend);
 
   if (pathbegin < strlen(mrl_ptr)) p->path=strdup(mrl_ptr+pathbegin+1);
   if (colon != slash) {

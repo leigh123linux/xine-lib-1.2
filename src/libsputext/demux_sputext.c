@@ -262,12 +262,7 @@ static char *sub_readtext(char *source, char **dest) {
     p++,len++;
   }
   
-  *dest= (char *)xine_xmalloc (len+1);
-  if (!(*dest)) 
-    return ERR;
-  
-  strncpy(*dest, source, len);
-  (*dest)[len]=0;
+  *dest = strndup(source, len);
   
   while (*p=='\r' || *p=='\n' || *p=='|')
     p++;
@@ -333,10 +328,8 @@ static subtitle_t *sub_read_line_subviewer(demux_sputext_t *this, subtitle_t *cu
     p=q=line;
     for (current->lines=1; current->lines <= SUB_MAX_TEXT; current->lines++) {
       for (q=p,len=0; *p && *p!='\r' && *p!='\n' && *p!='|' && strncasecmp(p,"[br]",4); p++,len++);
-      current->text[current->lines-1]=(char *)xine_xmalloc (len+1);
+      current->text[current->lines-1] = strndup(q, len);
       if (!current->text[current->lines-1]) return ERR;
-      strncpy (current->text[current->lines-1], q, len);
-      current->text[current->lines-1][len]='\0';
       if (!*p || *p=='\r' || *p=='\n') break;
       if (*p=='[') while (*p++!=']');
       if (*p=='|') p++;
@@ -396,10 +389,10 @@ static subtitle_t *sub_read_line_subrip(demux_sputext_t *this,subtitle_t *curren
           xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "Too many characters in a subtitle line\n");
         if(temp_line[temp_index-1]=='\0' || temp_index==SUB_BUFSIZE) {
           if(temp_index>1) { /* more than 1 char (including '\0') -> that is a valid one */
-            current->text[i]=(char *)xine_xmalloc(temp_index);
+	    /* temp_index<=SUB_BUFSIZE is always true here */
+            current->text[i] = strndup(temp_line, temp_index);
             if(!current->text[i])
               return ERR;
-            strncpy(current->text[i],temp_line,temp_index); /* temp_index<=SUB_BUFSIZE is always true here */
             i++;
             temp_index=0;
           } else
@@ -565,9 +558,7 @@ static subtitle_t *sub_read_line_ssa(demux_sputext_t *this,subtitle_t *current) 
   current->end   = 360000*hour2 + 6000*min2 + 100*sec2 + hunsec2;
   
   while (((tmp=strstr(line2, "\\n")) != NULL) || ((tmp=strstr(line2, "\\N")) != NULL) ){
-    current->text[num]=(char *)malloc(tmp-line2+1);
-    strncpy (current->text[num], line2, tmp-line2);
-    current->text[num][tmp-line2]='\0';
+    current->text[num] = strndup(line2, tmp-line2);
     line2=tmp+2;
     num++;
     current->lines++;
@@ -930,10 +921,9 @@ static subtitle_t *sub_read_line_subviewer2(demux_sputext_t *this, subtitle_t *c
             len=0;
             for (p=line; *p!='\n' && *p!='\r' && *p; ++p,++len);
             if (len) {
-                current->text[i]=(char *)malloc (len+1);
-                if (!current->text[i]) return ERR;
-                strncpy (current->text[i], line, len); current->text[i][len]='\0';
-                ++i;
+	      current->text[i] = strndup(line, len);
+	      if (!current->text[i]) return ERR;
+	      ++i;
             } else {
                 break;
             }
