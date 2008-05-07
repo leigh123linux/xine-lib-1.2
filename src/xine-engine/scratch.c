@@ -54,8 +54,7 @@ static void __attribute__((__format__(__printf__, 2, 0)))
   if ( ! this->lines[this->cur] )
     return;
 
-  strftime (this->lines[this->cur], SCRATCH_LINE_LEN_MAX, "%X: ", &tm);
-  l = strlen (this->lines[this->cur]);
+  l = strftime (this->lines[this->cur], SCRATCH_LINE_LEN_MAX, "%X: ", &tm);
   vsnprintf (this->lines[this->cur] + l, SCRATCH_LINE_LEN_MAX - l, format, argp);
 
   lprintf ("printing format %s to line %d\n", format, this->cur);
