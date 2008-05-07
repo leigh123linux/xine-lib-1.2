@@ -621,7 +621,7 @@ void xine_profiler_print_results (void) XINE_PROTECTED;
  * Allocate and clean memory size_t 'size', then return the pointer
  * to the allocated memory.
  */
-void *xine_xmalloc(size_t size) XINE_MALLOC XINE_PROTECTED;
+void *xine_xmalloc(size_t size) XINE_MALLOC XINE_DEPRECATED XINE_PROTECTED;
 
 /*
  * Same as above, but memory is aligned to 'alignement'.
