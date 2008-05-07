@@ -1634,8 +1634,7 @@ static void config_save_cb (void *this_gen, xine_cfg_entry_t *entry) {
   xine_t *this = (xine_t *)this_gen;
   char *homedir_trail_slash;
 
-  homedir_trail_slash = (char *)malloc(strlen(xine_get_homedir()) + 2);
-  sprintf(homedir_trail_slash, "%s/", xine_get_homedir());
+  asprintf(&homedir_trail_slash, "%s/", xine_get_homedir());
   if (entry->str_value[0] &&
       (entry->str_value[0] != '/' || strstr(entry->str_value, "/.") ||
        strcmp(entry->str_value, xine_get_homedir()) == 0 ||

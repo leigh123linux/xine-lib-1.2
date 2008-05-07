@@ -708,11 +708,8 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
       }
       else {
 	
-	dir_files[num_dir_files].mrl    = (char *) 
-	  xine_xmalloc(strlen(current_dir_slashed) + 1 + strlen(pdirent->d_name) + 1);
-	
 	dir_files[num_dir_files].origin = strdup(current_dir);
-	sprintf(dir_files[num_dir_files].mrl, "%s%s", 
+	asprintf(&(dir_files[num_dir_files].mrl), "%s%s", 
 		current_dir_slashed, pdirent->d_name);
 	dir_files[num_dir_files].link   = NULL;
 	dir_files[num_dir_files].type   = get_file_type(fullfilename, current_dir, this->xine);
@@ -746,11 +743,8 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
       /* if user don't want to see hidden files, ignore them */
       if(this->show_hidden_files) {
 
-	hide_files[num_hide_files].mrl    = (char *) 
-	  xine_xmalloc(strlen(current_dir_slashed) + 1 + strlen(pdirent->d_name) + 1);
-	
 	hide_files[num_hide_files].origin = strdup(current_dir);
-	sprintf(hide_files[num_hide_files].mrl, "%s%s", 
+	asprintf(&(hide_files[num_hide_files].mrl), "%s%s", 
 		current_dir_slashed, pdirent->d_name);
 	hide_files[num_hide_files].link   = NULL;
 	hide_files[num_hide_files].type   = get_file_type(fullfilename, current_dir, this->xine);
@@ -782,11 +776,8 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
     } /* So a *normal* one. */
     else {
 
-      norm_files[num_norm_files].mrl    = (char *) 
-	xine_xmalloc(strlen(current_dir_slashed) + 1 + strlen(pdirent->d_name) + 1);
-
       norm_files[num_norm_files].origin = strdup(current_dir);
-      sprintf(norm_files[num_norm_files].mrl, "%s%s", 
+      asprintf(&(norm_files[num_norm_files].mrl), "%s%s", 
 	      current_dir_slashed, pdirent->d_name);
       norm_files[num_norm_files].link   = NULL;
       norm_files[num_norm_files].type   = get_file_type(fullfilename, current_dir, this->xine);

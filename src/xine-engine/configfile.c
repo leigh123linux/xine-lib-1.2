@@ -369,8 +369,7 @@ static const char *config_translate_key (const char *key) {
    */
   if (!strncmp (key, "decoder.", 8) &&
       !strcmp (key + (trans = strlen (key)) - 9, "_priority")) {
-    newkey = realloc (newkey, trans + 27 - 17); /* diff. in string lengths */
-    sprintf (newkey, "engine.decoder_priorities.%.*s", trans - 17, key + 8);
+    asprintf (&newkey, "engine.decoder_priorities.%.*s", trans - 17, key + 8);
     return newkey;
   }
 

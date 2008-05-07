@@ -1072,15 +1072,13 @@ static void save_catalog (xine_t *this) {
   char       *cachefile, *dirfile; 
   const char *relname = CACHE_CATALOG_FILE;
   const char *dirname = CACHE_CATALOG_DIR;
+
+  const char *const homedir = xine_get_homedir();
     
-  cachefile = (char *) malloc(strlen(xine_get_homedir()) + 
-			      strlen(relname) + 2);
-  sprintf(cachefile, "%s/%s", xine_get_homedir(), relname);
+  asprintf(&cachefile, "%s/%s", homedir, relname);
   
   /* make sure homedir (~/.xine) exists */
-  dirfile = (char *) malloc(strlen(xine_get_homedir()) + 
-			    strlen(dirname) + 2);
-  sprintf(dirfile, "%s/%s", xine_get_homedir(), dirname);
+  asprintf(&dirfile, "%s/%s", homedir, dirname);
   mkdir (dirfile, 0755);
   free (dirfile);
 
@@ -1107,9 +1105,7 @@ static void load_cached_catalog (xine_t *this) {
   char *cachefile;                                               
   const char *relname = CACHE_CATALOG_FILE;
     
-  cachefile = (char *) malloc(strlen(xine_get_homedir()) + 
-			      strlen(relname) + 2);
-  sprintf(cachefile, "%s/%s", xine_get_homedir(), relname);
+  asprintf(&cachefile, "%s/%s", xine_get_homedir(), relname);
   
   if( (fp = fopen(cachefile,"r")) != NULL ) {
     load_plugin_list (fp, this->plugin_catalog->cache_list);

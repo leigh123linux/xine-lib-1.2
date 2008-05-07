@@ -666,7 +666,7 @@ static int probe_audio_devices(oss_driver_t *this) {
   int base_num, i;
   int audio_fd, rate;
   int best_rate;
-  char devname[30];
+  char *devname[30];
 
   strcpy(this->audio_dev, "auto");
 
@@ -1040,20 +1040,17 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
     if ((parse = strstr(mixer_name, "dsp"))) {
       parse[0] = '\0';
       parse += 3;
-      this->mixer.name = (char *)malloc(strlen(mixer_name) + sizeof("mixer") + 2);
       if (devname_val == 0)
-	sprintf(this->mixer.name, "%smixer%s", mixer_name, parse);
+	asprintf(&(this->mixer.name), "%smixer%s", mixer_name, parse);
       else {
 	if (mixer_num == -1)
-	  sprintf(this->mixer.name, "%smixer", mixer_name);
+	  asprintf(&(this->mixer.name), "%smixer", mixer_name);
 	else
-	  sprintf(this->mixer.name, "%smixer%d", mixer_name, mixer_num);
+	  asprintf(&(this->mixer.name), "%smixer%d", mixer_name, mixer_num);
       }
     } else {
-      this->mixer.name = (char *)malloc(1);
-      this->mixer.name[0] = '\0';
+      _x_abort();
     }
-    _x_assert(this->mixer.name[0] != '\0');
     
     this->mixer.fd = open(this->mixer.name, O_RDONLY);
 

@@ -21,6 +21,10 @@
  * *not* RFC 2326 compilant yet.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <unistd.h>
 #include <stdio.h>
 #include <assert.h>
@@ -173,9 +177,7 @@ static void rtsp_send_request(rtsp_t *s, const char *type, const char *what) {
   char **payload=s->scheduled;
   char *buf;
   
-  buf = malloc(strlen(type)+strlen(what)+strlen(rtsp_protocol_version)+3);
-  
-  sprintf(buf,"%s %s %s",type, what, rtsp_protocol_version);
+  asprintf(&buf,"%s %s %s",type, what, rtsp_protocol_version);
   rtsp_put(s,buf);
   free(buf);
   if (payload)
@@ -200,8 +202,7 @@ static void rtsp_schedule_standard(rtsp_t *s) {
   
   if (s->session) {
     char *buf;
-    buf = malloc(strlen(s->session)+15);
-    sprintf(buf, "Session: %s", s->session);
+    asprintf(&buf, "Session: %s", s->session);
     rtsp_schedule_field(s, buf);
     free(buf);
   }
@@ -304,8 +305,7 @@ int rtsp_request_options(rtsp_t *s, const char *what) {
     buf=strdup(what);
   } else
   {
-    buf = malloc(sizeof(char)*(strlen(s->host)+16));
-    sprintf(buf,"rtsp://%s:%i", s->host, s->port);
+    asprintf(&buf,"rtsp://%s:%i", s->host, s->port);
   }
   rtsp_send_request(s,"OPTIONS",buf);
   free(buf);
@@ -321,8 +321,7 @@ int rtsp_request_describe(rtsp_t *s, const char *what) {
     buf=strdup(what);
   } else
   {
-    buf = malloc(sizeof(char)*(strlen(s->host)+strlen(s->path)+16));
-    sprintf(buf,"rtsp://%s:%i/%s", s->host, s->port, s->path);
+    asprintf(&buf,"rtsp://%s:%i/%s", s->host, s->port, s->path);
   }
   rtsp_send_request(s,"DESCRIBE",buf);
   free(buf);
@@ -345,8 +344,7 @@ int rtsp_request_setparameter(rtsp_t *s, const char *what) {
     buf=strdup(what);
   } else
   {
-    buf = malloc(sizeof(char)*(strlen(s->host)+strlen(s->path)+16));
-    sprintf(buf,"rtsp://%s:%i/%s", s->host, s->port, s->path);
+    asprintf(&buf,"rtsp://%s:%i/%s", s->host, s->port, s->path);
   }
   rtsp_send_request(s,"SET_PARAMETER",buf);
   free(buf);
@@ -362,8 +360,7 @@ int rtsp_request_play(rtsp_t *s, const char *what) {
     buf=strdup(what);
   } else
   {
-    buf = malloc(sizeof(char)*(strlen(s->host)+strlen(s->path)+16));
-    sprintf(buf,"rtsp://%s:%i/%s", s->host, s->port, s->path);
+    asprintf(&buf,"rtsp://%s:%i/%s", s->host, s->port, s->path);
   }
   rtsp_send_request(s,"PLAY",buf);
   free(buf);
@@ -412,8 +409,7 @@ int rtsp_read_data(rtsp_t *s, char *buffer, unsigned int size) {
       }
       /* lets make the server happy */
       rtsp_put(s, "RTSP/1.0 451 Parameter Not Understood");
-      rest = malloc(sizeof(char)*17);
-      sprintf(rest,"CSeq: %u", seq);
+      asprintf(&rest,"CSeq: %u", seq);
       rtsp_put(s, rest);
       free(rest);
       rtsp_put(s, "");

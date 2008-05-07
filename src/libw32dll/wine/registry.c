@@ -311,8 +311,7 @@ static void init_registry(void)
 	localregpathname = regpathname;
 #else
 #ifdef XINE_MAJOR
-	localregpathname = (char *)malloc(strlen(xine_get_homedir()) + 21);
-	sprintf(localregpathname, "%s/.xine/win32registry", xine_get_homedir());
+	asprintf(&localregpathname, "%s/.xine/win32registry", xine_get_homedir());
 #else
 	// regpathname is an external pointer
         //

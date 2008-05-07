@@ -1025,8 +1025,7 @@ static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_str
   this = calloc(1, sizeof(http_input_plugin_t));
 
   if (!strncasecmp (mrl, "peercast://pls/", 15)) {
-    this->mrl = xine_xmalloc (30 + strlen(mrl) - 15);
-    sprintf (this->mrl, "http://127.0.0.1:7144/stream/%s", mrl+15);
+    asprintf (&this->mrl, "http://127.0.0.1:7144/stream/%s", mrl+15);
   } else {    
     this->mrl = strdup (mrl);
   }
