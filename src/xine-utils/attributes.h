@@ -46,6 +46,23 @@
 
 #ifdef XINE_COMPILE
 # include "configure.h"
+#else
+# if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3 )
+#  define SUPPORT_ATTRIBUTE_DEPRECATED 1
+#  define SUPPORT_ATTRIBUTE_FORMAT 1
+#  define SUPPORT_ATTRIBUTE_FORMAT_ARG 1
+#  define SUPPORT_ATTRIBUTE_MALLOC 1
+#  define SUPPORT_ATTRIBUTE_PACKED 1
+#  define SUPPORT_ATTRIBUTE_UNUSED 1
+# endif
+  
+# if __GNUC__ >= 4
+#  define SUPPORT_ATTRIBUTE_VISIBILITY_DEFAULT 1
+#  if __ELF__
+#   define SUPPORT_ATTRIBUTE_VISIBILITY_PROTECTED 1
+#  endif
+#  define SUPPORT_ATTRIBUTE_SENTINEL 1
+# endif
 #endif
 
 /* Export protected only for libxine functions */
