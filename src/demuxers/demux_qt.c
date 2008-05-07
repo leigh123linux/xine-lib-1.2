@@ -1736,7 +1736,6 @@ static qt_error build_frame_table(qt_trak *trak,
     media_id_counts = calloc(trak->stsd_atoms_count, sizeof(int));
     if (!media_id_counts)
       return QT_NO_MEMORY;
-    memset(media_id_counts, 0, trak->stsd_atoms_count * sizeof(int));
 
     /* iterate through each start chunk in the stsc table */
     for (i = 0; i < trak->sample_to_chunk_count; i++) {

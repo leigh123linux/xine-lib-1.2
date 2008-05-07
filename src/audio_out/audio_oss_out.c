@@ -883,9 +883,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 	      "audio_oss_out: ...probing output buffer size: "));
     this->buffer_size = 0;
     
-    if( (buf=malloc(1024)) != NULL ) {
-      memset(buf,0,1024);
-     
+    if( (buf=calloc(1, 1024)) != NULL ) {
       do {
         c = write(audio_fd,buf,1024);
         if( c != -1 )

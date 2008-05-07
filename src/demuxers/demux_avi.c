@@ -882,7 +882,6 @@ static avi_t *AVI_init(demux_avi_t *this) {
             this->AVI_errno = AVI_ERR_NO_MEM;
             return 0;
           }
-          memset((void *)a,0,sizeof(avi_audio_t));
           AVI->audio[AVI->n_audio] = a;
 
           a->audio_strn      = num_stream;

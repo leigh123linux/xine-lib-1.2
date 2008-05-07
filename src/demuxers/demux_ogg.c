@@ -2027,7 +2027,6 @@ static demux_plugin_t *anx_open_plugin (demux_class_t *class_gen,
    */
 
   this         = calloc(1, sizeof(demux_ogg_t));
-  memset (this, 0, sizeof(demux_ogg_t));
   this->stream = stream;
   this->input  = input;
 
@@ -2073,7 +2072,6 @@ static demux_plugin_t *ogg_open_plugin (demux_class_t *class_gen,
    */
 
   this         = calloc(1, sizeof(demux_ogg_t));
-  memset (this, 0, sizeof(demux_ogg_t));
   this->stream = stream;
   this->input  = input;
 
