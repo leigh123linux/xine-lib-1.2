@@ -1,0 +1,104 @@
+Source: xine-lib
+Section: libs
+Priority: optional
+Maintainer: xine Developers <xine-devel@lists.sourceforge.net>
+Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
+	automake1.9, autoconf, libtool,
+	libavcodec-dev (>= 0.cvs20070307-3) | libavcodeccvs-dev,
+	libavformat-dev (>= 0.cvs20070307-3) | libavformatcvs-dev,
+	libpostproc-dev (>= 0.cvs20070307-3) | libpostproccvs-dev,
+	libxcb-xv0-dev | libxv-dev (<< 1:1.0.3),
+	libxcb-shm0-dev | libxv-dev (<< 1:1.0.3),
+	libxcb-shape0-dev | libxv-dev (<< 1:1.0.3),
+	libxinerama-dev, libxv-dev, libxvmc-dev, libxt-dev,
+	libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
+	libcam-dev [kfreebsd-i386 kfreebsd-amd64],
+	libaa1-dev, libcaca-dev, libmodplug-dev,
+	libjack-dev, libpulse-dev, libartsc0-dev,
+	libmagick9-dev | libmagick-dev,	libpng12-dev, libfreetype6-dev,
+	libogg-dev, libvorbis-dev, libtheora-dev,
+	libesd0-dev, libgnomevfs2-dev,
+	liblircclient-dev,
+	libdirectfb-dev (>= 0.9.22), libgtk2.0-dev,
+	libflac-dev, libsdl1.2-dev, libwavpack-dev,
+	libsmbclient-dev, libspeex-dev, libmng-dev,
+	libmad0-dev, libmpcdec-dev, libcdio-dev (>= 0.76-1),
+	zlib1g-dev, w3m, transfig, sgmltools-lite, gs-gpl | gs
+Standards-Version: 3.7.2
+
+Package: libxine-dev
+Architecture: any
+Section: libdevel
+Depends: libxine1 (= ${Source-Version}), libc6-dev, zlib1g-dev | libz-dev, libslang2-dev | slang1-dev, libfreetype6-dev, pkg-config
+Conflicts: xine-ui (<< 0.9.10), libxine2-dev
+Description: the xine video player library, development packages
+ This contains development files (headers, documentation and the like)
+ for the xine library (libxine).
+ .
+ Libxine provides the complete infrastructure for a video/media player. It
+ supports MPEG 1/2 and some AVI and Quicktime videos out of the box, so you
+ can use it to play DVDs, (S)VCDs and most video files out there. It
+ supports network streams, subtitles and even MP3 or Ogg files. It's
+ extensible to your heart's content via plugins for audio and video output,
+ input media, demuxers (stream types), audio/video and subtitle codecs.
+ .
+ Building a GUI (or text based) frontend around this should be quite easy.
+ The xine-ui and gxine packages each provide one for your convenience, so
+ you can just start watching your VCDs ;-)
+
+Package: libxine1-doc
+Architecture: all
+Section: libdevel
+Provides: libxine-doc
+Conflicts: libxine2-doc
+Description: the xine video player library, development packages
+ This contains documentation for the xine library (libxine).
+ .
+ Libxine provides the complete infrastructure for a video/media player. It
+ supports MPEG 1/2 and some AVI and Quicktime videos out of the box, so you
+ can use it to play DVDs, (S)VCDs and most video files out there. It
+ supports network streams, subtitles and even MP3 or Ogg files. It's
+ extensible to your heart's content via plugins for audio and video output,
+ input media, demuxers (stream types), audio/video and subtitle codecs.
+
+Package: libxine1
+Architecture: any
+Depends: ${shlibs:Depends}
+Recommends: ${shlibs:Recommends}
+Suggests: ${shlibs:Suggests}, libxine1-doc | libxine-doc
+Conflicts: libxine1-all-plugins, libxine1-bin, libxine1-console, libxine1-ffmpeg, libxine1-gnome, libxine1-misc-plugins, libxine1-plugins, libxine1-x
+Replaces: libxine1-all-plugins, libxine1-bin, libxine1-console, libxine1-ffmpeg, libxine1-gnome, libxine1-misc-plugins, libxine1-plugins, libxine1-x
+Provides: libxine1-all-plugins, libxine1-bin, libxine1-console, libxine1-ffmpeg, libxine1-gnome, libxine1-misc-plugins, libxine1-plugins, libxine1-x
+Description: the xine video/media player library, binary files
+ This is the xine media player library (libxine). 
+ .
+ Libxine provides the complete infrastructure for a video/media player. It
+ supports MPEG 1/2 and some AVI and Quicktime videos out of the box, so you
+ can use it to play DVDs, (S)VCDs and most video files out there. It
+ supports network streams, subtitles and even MP3 or Ogg files. It's
+ extensible to your heart's content via plugins for audio and video output,
+ input media, demuxers (stream types), audio/video and subtitle codecs.
+ .
+ Building a GUI (or text based) frontend around this should be quite easy.
+ The xine-ui and gxine packages each provide one for your convenience, so
+ you can just start watching your VCDs ;-)
+
+Package: libxine1-dbg
+Priority: extra
+Architecture: any
+Depends: libxine1 (= ${Source-Version})
+Description: the xine video/media player library, debug data
+ This is the xine media player library (libxine). 
+ .
+ Libxine provides the complete infrastructure for a video/media player. It
+ supports MPEG 1/2 and some AVI and Quicktime videos out of the box, so you
+ can use it to play DVDs, (S)VCDs and most video files out there. It
+ supports network streams, subtitles and even MP3 or Ogg files. It's
+ extensible to your heart's content via plugins for audio and video output,
+ input media, demuxers (stream types), audio/video and subtitle codecs.
+ .
+ This package contains debug data for the shared libraries. Its purpose is
+ to allow debuggers to produce backtraces with names, making it easier to
+ interpret core dumps. The data is installed in /usr/lib/debug.
+ .
+ Most people will not need this package.
