@@ -355,7 +355,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
   speex_decoder_t *this ;
   static SpeexStereoState init_stereo = SPEEX_STEREO_STATE_INIT;
 
-  this = (speex_decoder_t *) xine_xmalloc (sizeof (speex_decoder_t));
+  this = (speex_decoder_t *) calloc(1, sizeof(speex_decoder_t));
 
   this->audio_decoder.decode_data         = speex_decode_data;
   this->audio_decoder.reset               = speex_reset;
@@ -396,7 +396,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   speex_class_t *this;
   
-  this = (speex_class_t *) xine_xmalloc (sizeof (speex_class_t));
+  this = (speex_class_t *) calloc(1, sizeof(speex_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;

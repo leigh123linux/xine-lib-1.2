@@ -716,7 +716,7 @@ pnm_t *pnm_connect(xine_stream_t *stream, const char *mrl) {
   
   mrl_ptr+=6;
 
-  p = xine_xmalloc(sizeof(pnm_t));
+  p = calloc(1, sizeof(pnm_t));
   p->stream = stream;
   p->port=7070;
   p->url=strdup(mrl);

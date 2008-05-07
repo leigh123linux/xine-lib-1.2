@@ -208,7 +208,7 @@ static vo_frame_t *xv_alloc_frame (vo_driver_t *this_gen) {
   /* xv_driver_t  *this = (xv_driver_t *) this_gen; */
   xv_frame_t   *frame ;
 
-  frame = (xv_frame_t *) xine_xmalloc (sizeof (xv_frame_t));
+  frame = (xv_frame_t *) calloc(1, sizeof(xv_frame_t));
   if (!frame)
     return NULL;
   
@@ -1340,7 +1340,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
   XvAdaptorInfo        *adaptor_info;
   unsigned int          adaptor_num;
 
-  this = (xv_driver_t *) xine_xmalloc (sizeof (xv_driver_t));
+  this = (xv_driver_t *) calloc(1, sizeof(xv_driver_t));
   if (!this)
     return NULL;
 
@@ -1712,7 +1712,7 @@ static void dispose_class (video_driver_class_t *this_gen) {
 }
 
 static void *init_class (xine_t *xine, void *visual_gen) {
-  xv_class_t        *this = (xv_class_t *) xine_xmalloc (sizeof (xv_class_t));
+  xv_class_t        *this = (xv_class_t *) calloc(1, sizeof(xv_class_t));
 
   this->driver_class.open_plugin     = open_plugin_old;
   this->driver_class.get_identifier  = get_identifier;

@@ -331,7 +331,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   demux_slave_t *this;
   static char slave_id_str[] = "master xine v1\n";
 
-  this         = xine_xmalloc (sizeof (demux_slave_t));
+  this         = calloc(1, sizeof(demux_slave_t));
 
   switch (stream->content_detection_method) {
 
@@ -414,7 +414,7 @@ static void class_dispose (demux_class_t *this_gen) {
 static void *init_plugin (xine_t *xine, void *data) {
   demux_slave_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_slave_class_t));
+  this = calloc(1, sizeof(demux_slave_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

@@ -379,7 +379,7 @@ static void pvrscr_exit (scr_plugin_t *scr) {
 static pvrscr_t* pvrscr_init (void) {
   pvrscr_t *this;
 
-  this = (pvrscr_t *) xine_xmalloc(sizeof(pvrscr_t));
+  this = calloc(1, sizeof(pvrscr_t));
 
   this->scr.interface_version = 3;
   this->scr.get_priority      = pvrscr_get_priority;
@@ -1480,7 +1480,7 @@ static input_plugin_t *pvr_class_get_instance (input_class_t *cls_gen, xine_stre
   mrl = strdup(data);
   aux = &mrl[5];
 
-  this = (pvr_input_plugin_t *) xine_xmalloc (sizeof (pvr_input_plugin_t));
+  this = calloc(1, sizeof (pvr_input_plugin_t));
   this->class        = cls;
   this->stream       = stream;
   this->dev_fd       = -1;
@@ -1564,7 +1564,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   pvr_input_class_t  *this;
 
-  this = (pvr_input_class_t *) xine_xmalloc (sizeof (pvr_input_class_t));
+  this = calloc(1, sizeof (pvr_input_class_t));
 
   this->xine   = xine;
   this->config = xine->config;

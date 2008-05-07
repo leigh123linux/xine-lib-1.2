@@ -1022,7 +1022,7 @@ static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_str
       strncasecmp (mrl, "peercast://pls/", 15)) {
     return NULL;
   }
-  this = (http_input_plugin_t *) xine_xmalloc(sizeof(http_input_plugin_t));
+  this = calloc(1, sizeof(http_input_plugin_t));
 
   if (!strncasecmp (mrl, "peercast://pls/", 15)) {
     this->mrl = xine_xmalloc (30 + strlen(mrl) - 15);
@@ -1073,7 +1073,7 @@ static void *init_class (xine_t *xine, void *data) {
   config_values_t     *config;
   char                *proxy_env;
 
-  this = (http_input_class_t *) xine_xmalloc (sizeof (http_input_class_t));
+  this = calloc(1, sizeof (http_input_class_t));
 
   this->xine   = xine;
   this->config = xine->config;

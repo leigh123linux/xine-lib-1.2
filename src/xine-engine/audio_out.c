@@ -294,7 +294,7 @@ static audio_fifo_t *fifo_new (xine_t *xine) {
 
   audio_fifo_t *fifo;
 
-  fifo = (audio_fifo_t *) xine_xmalloc (sizeof (audio_fifo_t));
+  fifo = (audio_fifo_t *) calloc(1, sizeof(audio_fifo_t));
 
   if (!fifo)
     return NULL;
@@ -2051,7 +2051,7 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
   static const char* resample_modes[] = {"auto", "off", "on", NULL};
   static const char* av_sync_methods[] = {"metronom feedback", "resample", NULL};
 
-  this = xine_xmalloc (sizeof (aos_t)) ;
+  this = calloc(1, sizeof(aos_t)) ;
 
   this->driver                = driver;
   this->xine                  = xine;
@@ -2085,7 +2085,7 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
   this->grab_only              = grab_only;
   this->flush_audio_driver     = 0;
   this->discard_buffers        = 0;
-  this->zero_space             = xine_xmalloc (ZERO_BUF_SIZE * 4 * 6); /* MAX as 32bit, 6 channels. */
+  this->zero_space             = calloc (1, ZERO_BUF_SIZE * 4 * 6); /* MAX as 32bit, 6 channels. */
   
   pthread_mutex_init( &this->flush_audio_driver_lock, NULL );
   pthread_cond_init( &this->flush_audio_driver_reached, NULL );
@@ -2196,8 +2196,8 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
 
     audio_buffer_t *buf;
 
-    buf = (audio_buffer_t *) xine_xmalloc (sizeof (audio_buffer_t));
-    buf->mem = xine_xmalloc (AUDIO_BUF_SIZE);
+    buf = (audio_buffer_t *) calloc(1, sizeof(audio_buffer_t));
+    buf->mem = calloc (1, AUDIO_BUF_SIZE);
     buf->mem_size = AUDIO_BUF_SIZE;
     buf->extra_info = malloc(sizeof(extra_info_t));
     
@@ -2211,8 +2211,8 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
 
     audio_buffer_t *buf;
 
-    buf = (audio_buffer_t *) xine_xmalloc (sizeof (audio_buffer_t));
-    buf->mem = xine_xmalloc (4*AUDIO_BUF_SIZE);
+    buf = (audio_buffer_t *) calloc(1, sizeof(audio_buffer_t));
+    buf->mem = calloc(4, AUDIO_BUF_SIZE);
     buf->mem_size = 4*AUDIO_BUF_SIZE;
     buf->extra_info = malloc(sizeof(extra_info_t));
 

@@ -178,7 +178,7 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
           this->context->bit_rate    = audio_header->nAvgBytesPerSec * 8;
       
           if(audio_header->cbSize > 0) {
-            this->context->extradata = xine_xmalloc(audio_header->cbSize);
+            this->context->extradata = malloc(audio_header->cbSize);
             this->context->extradata_size = audio_header->cbSize;
             memcpy( this->context->extradata, 
                     (uint8_t *)audio_header + sizeof(xine_waveformatex),
@@ -203,7 +203,7 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
             this->context->block_align = _X_BE_32(&this->buf[0x18]);
 
             this->context->extradata_size = 5*sizeof(short);
-            this->context->extradata      = xine_xmalloc(this->context->extradata_size);
+            this->context->extradata      = malloc(this->context->extradata_size);
   
             ptr = (short *) this->context->extradata;
   
@@ -276,7 +276,7 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
   
       this->size = 0;
   
-      this->decode_buffer = xine_xmalloc(AVCODEC_MAX_AUDIO_FRAME_SIZE);
+      this->decode_buffer = calloc(1, AVCODEC_MAX_AUDIO_FRAME_SIZE);
   
       return;
     }
@@ -450,7 +450,7 @@ static audio_decoder_t *ff_audio_open_plugin (audio_decoder_class_t *class_gen, 
 
   ff_audio_decoder_t *this ;
 
-  this = (ff_audio_decoder_t *) xine_xmalloc (sizeof (ff_audio_decoder_t));
+  this = calloc(1, sizeof (ff_audio_decoder_t));
 
   this->audio_decoder.decode_data         = ff_audio_decode_data;
   this->audio_decoder.reset               = ff_audio_reset;
@@ -486,7 +486,7 @@ void *init_audio_plugin (xine_t *xine, void *data) {
 
   ff_audio_class_t *this ;
 
-  this = (ff_audio_class_t *) xine_xmalloc (sizeof (ff_audio_class_t));
+  this = calloc(1, sizeof (ff_audio_class_t));
 
   this->decoder_class.open_plugin     = ff_audio_open_plugin;
   this->decoder_class.get_identifier  = ff_audio_get_identifier;

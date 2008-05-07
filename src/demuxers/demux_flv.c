@@ -365,7 +365,7 @@ static int parse_flv_var(demux_flv_t *this,
 }
 
 static void parse_flv_script(demux_flv_t *this, int size) {
-  unsigned char *buf = xine_xmalloc(size);
+  unsigned char *buf = malloc(size);
   unsigned char *tmp = buf;
   unsigned char *end = buf + size;
   int            len;
@@ -856,7 +856,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
                                     input_plugin_t *input) {
   demux_flv_t *this;
 
-  this         = xine_xmalloc(sizeof (demux_flv_t));
+  this         = calloc(1, sizeof(demux_flv_t));
   this->xine   = stream->xine;
   this->stream = stream;
   this->input  = input;
@@ -924,7 +924,7 @@ static void class_dispose (demux_class_t *this_gen) {
 static void *init_plugin (xine_t *xine, void *data) {
   demux_flv_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_flv_class_t));
+  this = calloc(1, sizeof(demux_flv_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

@@ -232,7 +232,7 @@ static vo_frame_t *directfb_alloc_frame (vo_driver_t *this_gen) {
   directfb_driver_t *this = (directfb_driver_t *) this_gen;
   directfb_frame_t  *frame;
 
-  frame = (directfb_frame_t *) xine_xmalloc (sizeof (directfb_frame_t));
+  frame = (directfb_frame_t *) calloc(1, sizeof(directfb_frame_t));
   if (!frame) {
     xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
              "video_out_directfb: directfb_alloc_frame: out of memory\n");
@@ -1753,7 +1753,7 @@ static vo_driver_t *open_plugin_fb (video_driver_class_t *class_gen, const void 
   DFBDisplayLayerID  id;
   DFBResult          ret;
 
-  this = xine_xmalloc (sizeof (directfb_driver_t));
+  this = calloc(1, sizeof(directfb_driver_t));
   if (!this)
     return NULL;
   
@@ -1908,7 +1908,7 @@ static void *init_class_fb (xine_t *xine, void *visual_gen) {
     return NULL;
   }
 
-  this = (directfb_class_t *) xine_xmalloc (sizeof (directfb_class_t));
+  this = (directfb_class_t *) calloc(1, sizeof(directfb_class_t));
   this->driver_class.open_plugin     = open_plugin_fb;
   this->driver_class.get_identifier  = get_identifier_fb;
   this->driver_class.get_description = get_description_fb;
@@ -1939,7 +1939,7 @@ static vo_driver_t *open_plugin_x11 (video_driver_class_t *class_gen, const void
   DFBDisplayLayerID  id     = DLID_PRIMARY;
   DFBResult          ret;
 
-  this = xine_xmalloc (sizeof (directfb_driver_t));
+  this = calloc(1, sizeof(directfb_driver_t));
   if (!this)
     return NULL;
   
@@ -2127,7 +2127,7 @@ static void *init_class_x11 (xine_t *xine, void *visual_gen) {
   if (strcmp (XServerVendor (visual->display), "Denis Oliver Kropp"))
     return NULL;
 
-  this = (directfb_class_t *) xine_xmalloc (sizeof (directfb_class_t));
+  this = (directfb_class_t *) calloc(1, sizeof(directfb_class_t));
   this->driver_class.open_plugin     = open_plugin_x11;
   this->driver_class.get_identifier  = get_identifier_x11;
   this->driver_class.get_description = get_description_x11;

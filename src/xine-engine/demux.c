@@ -440,7 +440,7 @@ int _x_demux_read_header( input_plugin_t *input, unsigned char *buffer, off_t si
     read_size = input->read(input, buffer, size);
     input->seek(input, 0, SEEK_SET);
   } else if (input->get_capabilities(input) & INPUT_CAP_PREVIEW) {
-    buf = xine_xmalloc(MAX_PREVIEW_SIZE);
+    buf = malloc(MAX_PREVIEW_SIZE);
     read_size = input->get_optional_data(input, buf, INPUT_OPTIONAL_DATA_PREVIEW);
     read_size = MIN (read_size, size);
     memcpy(buffer, buf, read_size);

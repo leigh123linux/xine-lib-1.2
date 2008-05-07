@@ -398,7 +398,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
   rgb_decoder_t  *this ;
 
-  this = (rgb_decoder_t *) xine_xmalloc (sizeof (rgb_decoder_t));
+  this = (rgb_decoder_t *) calloc(1, sizeof(rgb_decoder_t));
 
   this->video_decoder.decode_data         = rgb_decode_data;
   this->video_decoder.flush               = rgb_flush;
@@ -432,7 +432,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   rgb_class_t *this;
 
-  this = (rgb_class_t *) xine_xmalloc (sizeof (rgb_class_t));
+  this = (rgb_class_t *) calloc(1, sizeof(rgb_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;

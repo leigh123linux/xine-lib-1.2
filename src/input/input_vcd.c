@@ -889,7 +889,7 @@ static input_plugin_t *vcd_class_get_instance (input_class_t *cls_gen, xine_stre
     return 0;
   }
     
-  this = (vcd_input_plugin_t *) xine_xmalloc(sizeof(vcd_input_plugin_t));
+  this = calloc(1, sizeof(vcd_input_plugin_t));
 
   this->stream = stream;
   this->mrl    = mrl;
@@ -991,7 +991,7 @@ static xine_mrl_t **vcd_class_get_dir (input_class_t *this_gen, const char *file
       ++this->mrls_allocated_entries;
       /* note: 1 extra pointer for terminating NULL */
       this->mrls = realloc(this->mrls, (this->mrls_allocated_entries+1) * sizeof(xine_mrl_t*));
-      this->mrls[(i-1)] = (xine_mrl_t *) xine_xmalloc(sizeof(xine_mrl_t));
+      this->mrls[(i-1)] = calloc(1, sizeof(xine_mrl_t));
     }
     else {
       memset(this->mrls[(i-1)], 0, sizeof(xine_mrl_t));
@@ -1079,7 +1079,7 @@ static void *init_class (xine_t *xine, void *data) {
   config_values_t    *config = xine->config;
   int                 i;
 
-  this = (vcd_input_class_t *) xine_xmalloc (sizeof (vcd_input_class_t));
+  this = calloc(1, sizeof (vcd_input_class_t));
 
   this->xine   = xine;
 
@@ -1097,11 +1097,11 @@ static void *init_class (xine_t *xine, void *data) {
 					    "you intend to play your VideoCDs with."),
 					  10, device_change_cb, (void *)this);
 
-  this->mrls = (xine_mrl_t **) xine_xmalloc(sizeof(xine_mrl_t*));
+  this->mrls = calloc(1, sizeof(xine_mrl_t*));
   this->mrls_allocated_entries = 0;
 
   for (i = 0; i < 100; i++) {
-    this->filelist[i]       = (char *) xine_xmalloc(sizeof(char *) * 256);
+    this->filelist[i]       = calloc(256, sizeof(char));
   }
   
   return this;

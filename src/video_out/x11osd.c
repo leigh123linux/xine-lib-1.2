@@ -245,7 +245,7 @@ x11osd_create (xine_t *xine, Display *display, int screen, Window window, enum x
   XSetWindowAttributes  attr;
   XWindowAttributes getattr;
 
-  osd = xine_xmalloc (sizeof (x11osd));
+  osd = calloc(1, sizeof(x11osd));
   if (!osd)
     return NULL;
 

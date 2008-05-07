@@ -209,7 +209,7 @@ void spudec_decode_nav(spudec_decoder_t *this, buf_element_t *buf) {
 #endif
 	/* append PCI at the end of the list */
 	while (node->next) node = node->next;
-	node->next = (pci_node_t *)xine_xmalloc(sizeof(pci_node_t));
+	node->next = malloc(sizeof(pci_node_t));
 	node->next->vpts = this->stream->metronom->got_spu_packet(this->stream->metronom, pci.hli.hl_gi.hli_s_ptm);
 	node->next->next = NULL;
 	xine_fast_memcpy(&node->next->pci, &pci, sizeof(pci_t));

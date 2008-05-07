@@ -212,7 +212,7 @@ static int read_iff_chunk(demux_iff_t *this) {
           break;
         case IFF_VHDR_CHUNK:
           if( this->vhdr == NULL )
-            this->vhdr                  = (Voice8Header *)xine_xmalloc(sizeof(Voice8Header));
+            this->vhdr                  = (Voice8Header *)calloc(1, sizeof(Voice8Header));
           this->vhdr->oneShotHiSamples  = _X_BE_32(&buffer[0]);
           this->vhdr->repeatHiSamples   = _X_BE_32(&buffer[4]);
           this->vhdr->samplesPerHiCycle = _X_BE_32(&buffer[8]);
@@ -330,7 +330,7 @@ static int read_iff_chunk(demux_iff_t *this) {
           break;
         case IFF_BMHD_CHUNK:
           if( this->bmhd == NULL )
-            this->bmhd                  = (BitMapHeader *)xine_xmalloc(sizeof(BitMapHeader));
+            this->bmhd                  = (BitMapHeader *)calloc(1, sizeof(BitMapHeader));
           this->bmhd->w                 = _X_BE_16(&buffer[0]);
           this->bmhd->h                 = _X_BE_16(&buffer[2]);
           this->bmhd->x                 = _X_BE_16(&buffer[4]);
@@ -406,13 +406,13 @@ static int read_iff_chunk(demux_iff_t *this) {
           break;
         case IFF_GRAB_CHUNK:
           if( this->grab == NULL )
-            this->grab                  = (Point2D *)xine_xmalloc(sizeof(Point2D));
+            this->grab                  = (Point2D *)calloc(1, sizeof(Point2D));
           this->grab->x                 = _X_BE_16(&buffer[0]);
           this->grab->y                 = _X_BE_16(&buffer[2]);
           break;
         case IFF_DEST_CHUNK:
           if( this->dest == NULL )
-            this->dest                  = (DestMerge *)xine_xmalloc(sizeof(DestMerge));
+            this->dest                  = (DestMerge *)calloc(1, sizeof(DestMerge));
           this->dest->depth             = buffer[0];
           this->dest->pad1              = buffer[1];
           this->dest->plane_pick        = _X_BE_16(&buffer[2]);
@@ -424,7 +424,7 @@ static int read_iff_chunk(demux_iff_t *this) {
           break;
         case IFF_CAMG_CHUNK:
           if( this->camg == NULL )
-            this->camg                  = (CamgChunk *)xine_xmalloc(sizeof(CamgChunk));
+            this->camg                  = (CamgChunk *)calloc(1, sizeof(CamgChunk));
           this->camg->view_modes        = _X_BE_32(&buffer[0]);
           this->bih.biCompression       = this->camg->view_modes;
           if( this->camg->view_modes & CAMG_PAL &&
@@ -443,7 +443,7 @@ static int read_iff_chunk(demux_iff_t *this) {
           break;
         case IFF_CCRT_CHUNK:
           if( this->ccrt == NULL )
-            this->ccrt                  = (CcrtChunk *)xine_xmalloc(sizeof(CcrtChunk));
+            this->ccrt                  = (CcrtChunk *)calloc(1, sizeof(CcrtChunk));
           this->ccrt->direction         = _X_BE_16(&buffer[0]);
           this->ccrt->start             = buffer[2];
           this->ccrt->end               = buffer[3];
@@ -453,13 +453,13 @@ static int read_iff_chunk(demux_iff_t *this) {
           break;
         case IFF_DPI_CHUNK:
           if( this->dpi == NULL )
-            this->dpi                   = (DPIHeader *)xine_xmalloc(sizeof(DPIHeader));
+            this->dpi                   = (DPIHeader *)calloc(1, sizeof(DPIHeader));
           this->dpi->x                  = _X_BE_16(&buffer[0]);
           this->dpi->y                  = _X_BE_16(&buffer[0]);
           break;
         case IFF_ANHD_CHUNK:
           if( this->anhd == NULL )
-            this->anhd                  = (AnimHeader *)xine_xmalloc(sizeof(AnimHeader));
+            this->anhd                  = (AnimHeader *)calloc(1, sizeof(AnimHeader));
           this->anhd->operation         = buffer[0];
           this->anhd->mask              = buffer[1];
           this->anhd->w                 = _X_BE_16(&buffer[2]);
@@ -500,7 +500,7 @@ static int read_iff_chunk(demux_iff_t *this) {
           break;
         case IFF_DPAN_CHUNK:
           if( this->dpan == NULL )
-            this->dpan                  = (DPAnimChunk *)xine_xmalloc(sizeof(DPAnimChunk));
+            this->dpan                  = (DPAnimChunk *)calloc(1, sizeof(DPAnimChunk));
           this->dpan->version           = _X_BE_16(&buffer[0]);
           this->dpan->nframes           = _X_BE_16(&buffer[2]);
           this->dpan->fps               = buffer[4];
@@ -1242,7 +1242,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_iff_t   *this;
 
-  this                                  = xine_xmalloc (sizeof (demux_iff_t));
+  this                                  = calloc(1, sizeof(demux_iff_t));
   this->stream                          = stream;
   this->input                           = input;
 
@@ -1323,7 +1323,7 @@ static void class_dispose (demux_class_t *this_gen) {
 static void *init_plugin (xine_t *xine, void *data) {
   demux_iff_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_iff_class_t));
+  this = calloc(1, sizeof(demux_iff_class_t));
 
   this->demux_class.open_plugin         = open_plugin;
   this->demux_class.get_description     = get_description;

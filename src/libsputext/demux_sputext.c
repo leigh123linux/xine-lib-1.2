@@ -1165,7 +1165,7 @@ static subtitle_t *sub_read_file (demux_sputext_t *this) {
   this->buflen = 0;
 
   this->num=0;n_max=32;
-  first = (subtitle_t *) xine_xmalloc(n_max*sizeof(subtitle_t));
+  first = calloc(n_max, sizeof(subtitle_t));
   if(!first) return NULL;
   timeout = ((demux_sputext_class_t *)
              (this->demux_plugin.demux_class))->max_timeout;
@@ -1363,7 +1363,7 @@ static demux_plugin_t *open_demux_plugin (demux_class_t *class_gen, xine_stream_
 
   lprintf("open_plugin() called\n");
   
-  this = xine_xmalloc (sizeof (demux_sputext_t));
+  this = calloc(1, sizeof (demux_sputext_t));
   this->stream = stream;
   this->input  = input;
 
@@ -1465,7 +1465,7 @@ static void *init_sputext_demux_class (xine_t *xine, void *data) {
 
   lprintf("initializing\n");
 
-  this = xine_xmalloc (sizeof (demux_sputext_class_t));
+  this = calloc(1, sizeof (demux_sputext_class_t));
 
   this->demux_class.open_plugin     = open_demux_plugin;
   this->demux_class.get_description = get_demux_description;

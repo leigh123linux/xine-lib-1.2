@@ -169,7 +169,7 @@ static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, void *visual_gen)
 {
   dxr3_driver_class_t *this;
   
-  this = (dxr3_driver_class_t *)xine_xmalloc(sizeof(dxr3_driver_class_t));
+  this = calloc(1, sizeof(dxr3_driver_class_t));
   if (!this) return NULL;
   
   this->devnum = xine->config->register_num(xine->config,
@@ -232,7 +232,7 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
   
   if (class->instance) return NULL;
   
-  this = (dxr3_driver_t *)xine_xmalloc(sizeof(dxr3_driver_t));
+  this = calloc(1, sizeof(dxr3_driver_t));
   if (!this) return NULL;
   
   this->vo_driver.get_capabilities     = dxr3_get_capabilities;
@@ -536,7 +536,7 @@ static vo_frame_t *dxr3_alloc_frame(vo_driver_t *this_gen)
   dxr3_frame_t *frame;
   dxr3_driver_t *this = (dxr3_driver_t *)this_gen;
   
-  frame = (dxr3_frame_t *)xine_xmalloc(sizeof(dxr3_frame_t));
+  frame = calloc(1, sizeof(dxr3_frame_t));
   
   pthread_mutex_init(&frame->vo_frame.mutex, NULL);
 

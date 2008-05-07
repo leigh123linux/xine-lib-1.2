@@ -1625,7 +1625,7 @@ static input_plugin_t *dvd_class_get_instance (input_class_t *class_gen, xine_st
   if (strncasecmp (data, handled_mrl, strlen(handled_mrl) ) != 0)
     return NULL;
 
-  this = (dvd_input_plugin_t *) xine_xmalloc (sizeof (dvd_input_plugin_t));
+  this = calloc(1, sizeof (dvd_input_plugin_t));
   if (!this) {
     return NULL;
   }
@@ -1758,7 +1758,7 @@ static void *init_class (xine_t *xine, void *data) {
   printf("input_dvd.c: config = %p\n", config);
 #endif
 
-  this = (dvd_input_class_t *) xine_xmalloc (sizeof (dvd_input_class_t));
+  this = (dvd_input_class_t *) calloc(1, sizeof (dvd_input_class_t));
   if (!this)
     return NULL;
   

@@ -680,7 +680,7 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   if (!url)
     return NULL;
 
-  this = (mms_t*) xine_xmalloc (sizeof (mms_t));
+  this = calloc(1, sizeof (mms_t));
 
   this->stream          = stream;
   this->url             = strdup (url);

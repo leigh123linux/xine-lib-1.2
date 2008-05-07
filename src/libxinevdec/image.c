@@ -212,7 +212,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
 
   lprintf("opened\n");
 
-  this = (image_decoder_t *) xine_xmalloc (sizeof (image_decoder_t));
+  this = (image_decoder_t *) calloc(1, sizeof(image_decoder_t));
 
   this->video_decoder.decode_data         = image_decode_data;
   this->video_decoder.flush               = image_flush;
@@ -255,7 +255,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   image_class_t       *this;
 
-  this = (image_class_t *) xine_xmalloc (sizeof (image_class_t));
+  this = (image_class_t *) calloc(1, sizeof(image_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;

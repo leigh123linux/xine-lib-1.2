@@ -607,7 +607,7 @@ open_plugin (demux_class_t *class_gen,
     * if we reach this point, the input has been accepted.
     */
 
-    this         = xine_xmalloc (sizeof (demux_flac_t));
+    this         = calloc(1, sizeof (demux_flac_t));
     this->stream = stream;
     this->input  = input;
 
@@ -752,7 +752,7 @@ demux_flac_init_class (xine_t *xine, void *data) {
   
     lprintf("demux_flac_init_class\n");
 
-    this         = xine_xmalloc (sizeof (demux_flac_class_t));
+    this         = calloc(1, sizeof (demux_flac_class_t));
     this->config = xine->config;
     this->xine   = xine;
 

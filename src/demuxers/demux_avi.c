@@ -739,7 +739,7 @@ static avi_t *AVI_init(demux_avi_t *this) {
   /* Create avi_t structure */
   lprintf("start\n");
 
-  AVI = (avi_t *) xine_xmalloc(sizeof(avi_t));
+  AVI = (avi_t *) calloc(1, sizeof(avi_t));
   if(AVI==NULL) {
     this->AVI_errno = AVI_ERR_NO_MEM;
     return 0;
@@ -877,7 +877,7 @@ static avi_t *AVI_init(demux_avi_t *this) {
                 
       } else if (strncasecmp (hdrl_data+i,"auds",4) ==0 /* && ! auds_strh_seen*/) {
         if(AVI->n_audio < MAX_AUDIO_STREAMS) {
-          avi_audio_t *a = (avi_audio_t *) xine_xmalloc(sizeof(avi_audio_t));
+          avi_audio_t *a = (avi_audio_t *) calloc(1, sizeof(avi_audio_t));
           if(a==NULL) {
             this->AVI_errno = AVI_ERR_NO_MEM;
             return 0;
@@ -2281,7 +2281,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
-  this         = xine_xmalloc (sizeof (demux_avi_t));
+  this         = calloc(1, sizeof(demux_avi_t));
 
   this->stream = stream;
   this->input  = input;
@@ -2347,7 +2347,7 @@ static void class_dispose (demux_class_t *this_gen) {
 static void *init_class (xine_t *xine, void *data) {
   demux_avi_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_avi_class_t));
+  this = calloc(1, sizeof(demux_avi_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

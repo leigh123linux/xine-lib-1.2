@@ -293,7 +293,7 @@ static post_plugin_t *upmix_mono_open_plugin(post_class_t *class_gen, int inputs
                                              xine_audio_port_t **audio_target,
                                              xine_video_port_t **video_target)
 {
-  post_plugin_upmix_mono_t *this = (post_plugin_upmix_mono_t *)xine_xmalloc(sizeof(post_plugin_upmix_mono_t));
+  post_plugin_upmix_mono_t *this = calloc(1, sizeof(post_plugin_upmix_mono_t));
   post_in_t                *input;
   post_out_t               *output;
   xine_post_in_t       *input_api;
