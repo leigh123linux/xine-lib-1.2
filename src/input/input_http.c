@@ -1079,25 +1079,21 @@ static void *init_class (xine_t *xine, void *data) {
   /* 
    * honour http_proxy envvar 
    */
-  if((proxy_env = getenv("http_proxy")) && (strlen(proxy_env))) {
+  if((proxy_env = getenv("http_proxy")) && *proxy_env) {
     int    proxy_port = DEFAULT_HTTP_PORT;
-    char  *http_proxy = xine_xmalloc(strlen(proxy_env) + 1);
     char  *p;
     
     if(!strncmp(proxy_env, "http://", 7))
       proxy_env += 7;
+
+    this->proxyhost_env = strdup(proxy_env);
     
-    sprintf(http_proxy, "%s", proxy_env);
-    
-    if((p = strrchr(&http_proxy[0], ':')) && (strlen(p) > 1)) {
+    if((p = strrchr(this->proxyhost_env, ':')) && (strlen(p) > 1)) {
       *p++ = '\0';
       proxy_port = (int) strtol(p, &p, 10);
     }
     
-    this->proxyhost_env = strdup(http_proxy);
     this->proxyport_env = proxy_port;
-    
-    free(http_proxy);
   }
   else
     proxy_env = NULL; /* proxy_env can be "" */
