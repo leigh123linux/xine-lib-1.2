@@ -694,10 +694,9 @@ static void *getdladdr (const GLubyte *_funcName) {
   return NULL;
 
 #elif defined(__APPLE__)
-  char *temp = xine_xmalloc (strlen (funcName) + 2);
+  char *temp;
+  asprintf(&temp, "_%s", funcName);
   void *res = NULL;
-  temp[0] = '_'; /* Mac OS X prepends an underscore on function names */
-  strcpy (temp+1, funcName);
   if (NSIsSymbolNameDefined (temp)) {
     NSSymbol symbol = NSLookupAndBindSymbol (temp);
     res = NSAddressOfSymbol (symbol);

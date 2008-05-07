@@ -235,26 +235,16 @@ static int http_plugin_basicauth (const char *user, const char *password, char* 
   char        *tmp;
   char        *sptr;
   char        *dptr;
-  int          totlen;
+  size_t       count;
   int          enclen;
-  int          count;
   
-  totlen = strlen (user) + 1;
-  if(password != NULL)
-    totlen += strlen (password);
-  
-  enclen = ((totlen + 2) / 3 ) * 4 + 1;
+  count = asprintf(&tmp, "%s:%s", user, (password != NULL) ? password : "");
+
+  enclen = ((count + 2) / 3 ) * 4 + 1;
   
   if (len < enclen)
     return -1;
-  
-  tmp = malloc (sizeof(char) * (totlen + 1));
-  strcpy (tmp, user);
-  strcat (tmp, ":");
-  if (password != NULL)
-    strcat (tmp, password);  
-  
-  count = strlen(tmp);
+
   sptr = tmp;
   dptr = dest;
   while (count >= 3) {

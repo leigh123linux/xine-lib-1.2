@@ -66,13 +66,13 @@
  *   OSD - this will allow for filtering/searching of epg data - useful for automatic recording :)
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 /* pthread.h must be included first so rest of the headers are imported
    thread safely (on some systems). */
 #include <pthread.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <assert.h>
 #include <stdio.h>
@@ -3222,21 +3222,19 @@ static char **dvb_class_get_autoplay_list(input_class_t * this_gen,
     for (ch = 0, apch = !!lastchannel_enable.num_value;
          ch < num_channels && ch < MAX_AUTOCHANNELS;
          ++ch, ++apch) {
-        snprintf(foobuffer, BUFSIZE, "dvb://%s", channels[ch].name);
-        free(class->autoplaylist[apch]);
-        class->autoplaylist[apch] = strdup(foobuffer);
-        _x_assert(class->autoplaylist[apch] != NULL);
+      free(class->autoplaylist[apch]);
+      asprintf(&(class->autoplaylist[apch]), "dvb://%s", channels[ch].name);
+      _x_assert(class->autoplaylist[apch] != NULL);
     }
 
     if (lastchannel_enable.num_value){
+      free(class->autoplaylist[0]);
       if (default_channel != -1)
 	/* plugin has been used before - channel is valid */
-	sprintf (foobuffer, "dvb://%s", channels[default_channel].name);
+	asprintf (&(class->autoplaylist[0]), "dvb://%s", channels[default_channel].name);
       else
 	/* set a reasonable default - the first channel */
-	sprintf (foobuffer, "dvb://%s", num_channels ? channels[0].name : "0");
-      free(class->autoplaylist[0]);
-      class->autoplaylist[0]=strdup(foobuffer);
+	asprintf (&(class->autoplaylist[0]), "dvb://%s", num_channels ? channels[0].name : "0");
     }
 
     free_channel_list(channels, num_channels);
