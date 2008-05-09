@@ -554,25 +554,20 @@ static void collect_plugins(xine_t *this, char *path){
   dir = opendir(path);
   if (dir) {
     struct dirent *pEntry;
-    size_t path_len, str_size;
-    char *str = NULL;
 
-    path_len = strlen(path);
-    str_size = path_len * 2 + 2; /* +2 for '/' and '\0' */
-    str = malloc(str_size);
-    xine_fast_memcpy(str, path, path_len);
-    str[path_len] = '/';
-    str[path_len + 1] = '\0';
+    size_t path_len = strlen(path);
+    size_t str_size = path_len * 2 + 2; /* +2 for '/' and '\0' */
+    char *str = malloc(str_size);
+    sprintf("%s/", path);
 
     while ((pEntry = readdir (dir)) != NULL) {
-      size_t new_str_size, d_len;
       void *lib = NULL;
       plugin_info_t *info = NULL;
       
       struct stat statbuffer;
 
-      d_len = strlen(pEntry->d_name);
-      new_str_size = path_len + d_len + 2;
+      size_t d_len = strlen(pEntry->d_name);
+      size_t new_str_size = path_len + d_len + 2;
       if (str_size < new_str_size) {
 	str_size = new_str_size + new_str_size / 2;
 	str = realloc(str, str_size);
@@ -2414,6 +2409,32 @@ void xine_post_dispose(xine_t *xine, xine_post_t *post_gen) {
    * their disposal if they are still in use => post.c handles the counting for us */
 }
 
+/**
+ * @brief Concantenates an array of strings into a single
+ *        string separated with a given string.
+ *
+ * @param strings Array of strings to concatenate.
+ * @param count Number of elements in the @p strings array.
+ * @param joining String to use to join the various strings together.
+ * @param final_length The pre-calculated final length of the string.
+ */
+static char *_x_concatenate_with_string(char **strings, size_t count, char *joining, size_t final_length) {
+  size_t i;
+  char *const result = malloc(final_length+1); /* Better be safe */
+  char *str = result;
+
+  size_t pos = 0;
+  for(i = 0; i < count; i++, strings++) {
+    if ( *strings ) {
+      int offset = snprintf(str, final_length, "%s%s", *strings, joining);
+      str += offset;
+      final_length -= offset;
+    }
+  }
+
+  return result;
+}
+
 /* get a list of file extensions for file types supported by xine
  * the list is separated by spaces 
  *
@@ -2421,66 +2442,35 @@ void xine_post_dispose(xine_t *xine, xine_post_t *post_gen) {
 char *xine_get_file_extensions (xine_t *self) {
 
   plugin_catalog_t *catalog = self->plugin_catalog;
-  int               len, pos;
-  plugin_node_t    *node;
-  char             *str;
-  int               list_id, list_size;
+  int               list_id;
 
   pthread_mutex_lock (&catalog->lock);
 
-  /* calc length of output */
+  /* calc length of output string and create an array of strings to
+     concatenate */
+  size_t len = 0;
+  const int list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
+  const char **extensions = calloc(list_size, sizeof(char*));
 
-  len = 0; 
-  list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
   for (list_id = 0; list_id < list_size; list_id++) {
-    demux_class_t *cls;
-    const char    *exts;
-
-    node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
+    plugin_node_t *const node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
     if (node->plugin_class || _load_plugin_class(self, node, NULL)) {
-
-      cls = (demux_class_t *)node->plugin_class;
-
-      if((exts = cls->get_extensions(cls)) && *exts)
-	len += strlen(exts) + 1;
+      demux_class_t *const cls = (demux_class_t *)node->plugin_class;
+      if( (extensions[list_id] = cls->get_extensions(cls)) != NULL )
+	len += strlen(extensions[list_id]) +1;
     }
   }
 
-  /* create output */
-  str = malloc (len); /* '\0' space is already counted in the previous loop */
-  pos = 0;
-
-  list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
-  for (list_id = 0; list_id < list_size; list_id++) {
-    demux_class_t *cls;
-    const char    *e;
-    int            l;
-    
-    node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
-    if (node->plugin_class || _load_plugin_class(self, node, NULL)) {
-
-      cls = (demux_class_t *)node->plugin_class;
-
-      if((e = cls->get_extensions (cls)) && *e) {
-	l = strlen(e);
-	memcpy (&str[pos], e, l);
-      
-	pos += l;
-
-	/* Don't add ' ' char at the end of str */
-	if((pos + 1) < len) {
-	  str[pos] = ' ';
-	  pos++;
-	}
-      }
-    }
-  }
-
-  str[pos] = 0;
+  /* create output string */
+  char *const result = _x_concatenate_with_string(extensions, list_size, " ", len);
+  free(extensions);
   
+  /* Drop the last whitespace */
+  result[len-1] = '\0';
+
   pthread_mutex_unlock (&catalog->lock);
 
-  return str;
+  return result;
 }
 
 /* get a list of mime types supported by xine
@@ -2489,65 +2479,34 @@ char *xine_get_file_extensions (xine_t *self) {
 char *xine_get_mime_types (xine_t *self) {
 
   plugin_catalog_t *catalog = self->plugin_catalog;
-  int               len, pos;
-  plugin_node_t    *node;
-  char             *str;
-  int               list_id, list_size;
+  int               list_id;
 
   pthread_mutex_lock (&catalog->lock);
 
   /* calc length of output */
 
-  len = 0;
-  list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
+  /* calc length of output string and create an array of strings to
+     concatenate */
+  size_t len = 0; 
+  const int list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
+  const char **mimetypes = calloc(list_size, sizeof(char*));
 
   for (list_id = 0; list_id < list_size; list_id++) {
-    demux_class_t *cls;
-    const char *s;
-
-    node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
+    plugin_node_t *const node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
     if (node->plugin_class || _load_plugin_class(self, node, NULL)) {
-
-      cls = (demux_class_t *)node->plugin_class;
-
-      s = cls->get_mimetypes (cls);
-      if (s)
-	len += strlen(s);
+      demux_class_t *const cls = (demux_class_t *)node->plugin_class;
+      if( (mimetypes[list_id] = cls->get_mimetypes(cls)) != NULL )
+	len += strlen(mimetypes[list_id]);
     }
   }
 
-  /* create output */
+  /* create output string */
+  char *const result = _x_concatenate_with_string(mimetypes, list_size, "", len);
+  free(mimetypes);
 
-  str = malloc (len+1);
-  pos = 0;
-
-  list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
-
-  for (list_id = 0; list_id < list_size; list_id++) {
-    demux_class_t *cls;
-    const char *s;
-    int l;
-
-    node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
-    if (node->plugin_class || _load_plugin_class(self, node, NULL)) {
-
-      cls = (demux_class_t *)node->plugin_class;
-
-      s = cls->get_mimetypes (cls);
-      if (s) {
-	l = strlen(s);
-	memcpy (&str[pos], s, l);
-
-	pos += l;
-      }
-    }
-  }
-
-  str[pos] = 0;
-  
   pthread_mutex_unlock (&catalog->lock);
 
-  return str;
+  return result;
 }
 
 
