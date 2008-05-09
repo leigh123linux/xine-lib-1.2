@@ -884,7 +884,6 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
   channel_t *channels = NULL;
   int        num_channels = 0;
   int        num_alloc = 0;
-  int        i;
   struct stat st;
   
   snprintf(filename, BUFSIZE, "%s/.xine/channels.conf", xine_get_homedir());
@@ -909,8 +908,8 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
   while ( fgets (str, BUFSIZE, f)) {
     channel_t channel = {0};
 
-    /* lose trailing spaces & control characters */ 
-    i = strlen (str);
+    /* lose trailing spaces & control characters */
+    size_t i = strlen (str);
     while (i && str[i - 1] <= ' ')
       --i;
     if (i == 0)
@@ -2816,7 +2815,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 	    * that the channels have really ugly names, sometimes prefixed
 	    * by numbers...
 	    */
-	    int chanlen = strlen(channame);
+	    size_t chanlen = strlen(channame);
 	    int offset = 0;
 
 	    xprintf(this->class->xine, XINE_VERBOSITY_LOG,
