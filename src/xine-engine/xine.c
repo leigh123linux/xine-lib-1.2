@@ -1938,7 +1938,7 @@ static int _x_get_current_frame_impl (xine_stream_t *stream, int *width, int *he
 				      uint8_t **img, int *size, int alloc_img) {
 
   vo_frame_t *frame;
-  int required_size;
+  size_t required_size;
 
   stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
   frame = stream->video_out->get_last_frame (stream->video_out);
@@ -1993,7 +1993,7 @@ static int _x_get_current_frame_impl (xine_stream_t *stream, int *width, int *he
     if (size)
       *size = required_size;
     /* allocate img or fail */
-    if (!(*img = xine_xmalloc (required_size)))
+    if (!(*img = calloc(1, required_size)))
       return 0;
   } else {
     /* fail if supplied buffer is to small */

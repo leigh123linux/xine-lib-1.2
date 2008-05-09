@@ -310,14 +310,14 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
   if (this->sps) {
 
     this->frame_size      = this->w/this->sps*this->h*this->sps;
-    this->frame_buffer    = xine_xmalloc (this->frame_size);
-    this->frame_reordered = xine_xmalloc (this->frame_size);
+    this->frame_buffer    = calloc (1, this->frame_size);
+    this->frame_reordered = calloc (1, this->frame_size);
     this->frame_num_bytes = 0;
 
   } else {
 
     this->frame_size      = this->w*this->h;
-    this->frame_buffer    = xine_xmalloc (this->frame_size);
+    this->frame_buffer    = calloc (this->w, this->h);
     this->frame_reordered = this->frame_buffer;
     this->frame_num_bytes = 0;
 

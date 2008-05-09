@@ -440,7 +440,7 @@ static void real_parse_headers (demux_real_t *this) {
     case CONT_TAG:
 
       chunk_size -= PREAMBLE_SIZE;
-      chunk_buffer = xine_xmalloc(chunk_size);
+      chunk_buffer = malloc(chunk_size);
       if (this->input->read(this->input, chunk_buffer, chunk_size) !=
 	  chunk_size) {
 	free (chunk_buffer);

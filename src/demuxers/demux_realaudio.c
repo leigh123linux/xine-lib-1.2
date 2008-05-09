@@ -110,7 +110,7 @@ static int open_ra_file(demux_ra_t *this) {
   }
     
   /* allocate for and read header data */
-  this->header = xine_xmalloc(this->header_size);
+  this->header = malloc(this->header_size);
   
   if (!this->header || _x_demux_read_header(this->input, this->header, this->header_size) != this->header_size) {
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_realaudio: unable to read header\n");

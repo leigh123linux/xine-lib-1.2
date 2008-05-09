@@ -214,7 +214,7 @@ static void mpc_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     this->file_size = buf->decoder_info[0];
     
     /* Initialise the data accumulation buffer */
-    this->buf     = xine_xmalloc(INIT_BUFSIZE);
+    this->buf     = calloc(1, INIT_BUFSIZE);
     this->buf_max = INIT_BUFSIZE;
     this->read    = 0;
     this->size    = 0;

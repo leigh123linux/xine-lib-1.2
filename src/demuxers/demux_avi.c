@@ -790,7 +790,7 @@ static avi_t *AVI_init(demux_avi_t *this) {
       if(strncasecmp(data,"hdrl",4) == 0) {
 
         hdrl_len = n;
-        hdrl_data = (unsigned char *) xine_xmalloc(n);
+        hdrl_data = (unsigned char *) malloc(n);
         if(hdrl_data==0)
           ERR_EXIT(AVI_ERR_NO_MEM);
         if (this->input->read(this->input, hdrl_data,n) != n )
@@ -812,9 +812,8 @@ static avi_t *AVI_init(demux_avi_t *this) {
       break if this is not the case */
 
       AVI->n_idx = AVI->max_idx = n / 16;
-      if (AVI->idx)
-        free(AVI->idx);  /* On the off chance there are multiple index chunks */
-      AVI->idx = (unsigned char((*)[16])) xine_xmalloc(n);
+      free(AVI->idx);  /* On the off chance there are multiple index chunks */
+      AVI->idx = (unsigned char((*)[16])) malloc(n);
       if (AVI->idx == 0)
         ERR_EXIT(AVI_ERR_NO_MEM);
 
@@ -921,7 +920,7 @@ static avi_t *AVI_init(demux_avi_t *this) {
       if(lasttag == 1) {
         /* lprintf ("size : %d\n",sizeof(AVI->bih)); */
         AVI->bih = (xine_bmiheader *)
-          xine_xmalloc((n < sizeof(xine_bmiheader)) ? sizeof(xine_bmiheader) : n);
+          malloc((n < sizeof(xine_bmiheader)) ? sizeof(xine_bmiheader) : n);
         if(AVI->bih == NULL) {
           this->AVI_errno = AVI_ERR_NO_MEM;
           return 0;

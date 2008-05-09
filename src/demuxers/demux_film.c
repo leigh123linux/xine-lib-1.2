@@ -151,7 +151,7 @@ static int open_film_file(demux_film_t *film) {
 
   /* header size = header size - 16-byte FILM signature */
   film_header_size = _X_BE_32(&scratch[4]) - 16;
-  film_header = xine_xmalloc(film_header_size);
+  film_header = malloc(film_header_size);
   if (!film_header)
     return 0;
   strncpy(film->version, &scratch[8], 4);
@@ -331,10 +331,8 @@ static int open_film_file(demux_film_t *film) {
       /* allocate enough space in the interleave preload buffer for the
        * first chunk (which will be more than enough for successive chunks) */
       if (film->audio_type) {
-        if (film->interleave_buffer)
-          free(film->interleave_buffer);
-        film->interleave_buffer =
-          xine_xmalloc(film->sample_table[0].sample_size);
+	free(film->interleave_buffer);
+        film->interleave_buffer = calloc(1, film->sample_table[0].sample_size);
         if (!film->interleave_buffer)
           goto film_abort;
       }

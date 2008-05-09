@@ -399,7 +399,7 @@ static int read_iff_chunk(demux_iff_t *this) {
         case IFF_CMAP_CHUNK:
           /* every color contains red, green and blue componente using 8Bit */
           this->cmap_num                = junk_size / PIC_SIZE_OF_COLOR_REGISTER;
-          this->cmap                    = (ColorRegister *)xine_xmalloc(junk_size);
+          this->cmap                    = (ColorRegister *)malloc(junk_size);
           this->video_send_palette      = 1;
           if (!this->cmap || this->input->read(this->input, (char *)this->cmap, junk_size) != junk_size)
             return 0;
@@ -711,14 +711,14 @@ static int demux_iff_send_chunk(demux_plugin_t *this_gen) {
         if (this->audio_interleave_buffer_size > 0)
         {
           this->audio_interleave_buffer =
-                xine_xmalloc(this->audio_interleave_buffer_size);
+	    calloc(1, this->audio_interleave_buffer_size);
           if (!this->audio_interleave_buffer)
             return this->status = DEMUX_FINISHED;
         }
         if (this->audio_read_buffer_size > 0)
         {
           this->audio_read_buffer       =
-                    xine_xmalloc(this->audio_read_buffer_size);
+	    calloc(1, this->audio_read_buffer_size);
           if (!this->audio_read_buffer)
             return this->status = DEMUX_FINISHED;
         }

@@ -1110,12 +1110,12 @@ static uint8_t *(*blend_yuv_grow_extra_data(alphablend_t *extra_data, int osd_wi
     uint8_t *data[ 3 ][ 2 ];
   } *header = (struct header_s *)extra_data->buffer;
   
-  int needed_buffer_size = sizeof (*header) + osd_width * sizeof (uint8_t[ 3 ][ 2 ]);
+  size_t needed_buffer_size = sizeof (*header) + osd_width * sizeof (uint8_t[ 3 ][ 2 ]);
   
   if (extra_data->buffer_size < needed_buffer_size) {
     
     free(extra_data->buffer);
-    header = xine_xmalloc(needed_buffer_size);
+    header = calloc(1, needed_buffer_size);
     if (!header) {
       extra_data->buffer_size = 0;
       return 0;
@@ -1552,12 +1552,12 @@ static uint8_t *(*blend_yuy2_grow_extra_data(alphablend_t *extra_data, int osd_w
     uint8_t *data[ 3 ];
   } *header = (struct header_s *)extra_data->buffer;
   
-  int needed_buffer_size = sizeof (*header) + osd_width * sizeof (uint8_t[ 3 ]);
+  size_t needed_buffer_size = sizeof (*header) + osd_width * sizeof (uint8_t[ 3 ]);
   
   if (extra_data->buffer_size < needed_buffer_size) {
     
     free(extra_data->buffer);
-    header = xine_xmalloc(needed_buffer_size);
+    header = calloc(1, needed_buffer_size);
     if (!header) {
       extra_data->buffer_size = 0;
       return 0;

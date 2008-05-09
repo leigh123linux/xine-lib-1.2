@@ -1875,8 +1875,7 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
                                   this->drawable, X11OSD_SHAPED);
   XUnlockDisplay (this->display);
 
-  render_fun_names = xine_xmalloc ((sizeof(opengl_rb)/sizeof(opengl_render_t)+1)
-				   * sizeof (const char *));
+  render_fun_names = calloc((sizeof(opengl_rb)/sizeof(opengl_render_t)+1), sizeof(const char*));
   for (i = 0; i < sizeof (opengl_rb) / sizeof (opengl_render_t); i++)
     render_fun_names[i] = opengl_rb[i].name;
   render_fun_names[i] = NULL;

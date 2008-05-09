@@ -249,8 +249,8 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
                 break; /* abort early - extradata length is bad */
 
 	      this->context->extradata_size = data_len;
-	      this->context->extradata      = xine_xmalloc(this->context->extradata_size +
-							   FF_INPUT_BUFFER_PADDING_SIZE);
+	      this->context->extradata      = malloc(this->context->extradata_size +
+						     FF_INPUT_BUFFER_PADDING_SIZE);
 	      xine_fast_memcpy (this->context->extradata, this->buf + extradata,
 				this->context->extradata_size);
 	      break;
@@ -284,8 +284,8 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
              (buf->decoder_info[1] == BUF_SPECIAL_STSD_ATOM)) {
 
     this->context->extradata_size = buf->decoder_info[2];
-    this->context->extradata = xine_xmalloc(buf->decoder_info[2] +
-      FF_INPUT_BUFFER_PADDING_SIZE);
+    this->context->extradata = malloc(buf->decoder_info[2] +
+				      FF_INPUT_BUFFER_PADDING_SIZE);
     memcpy(this->context->extradata, buf->decoder_info_ptr[2],
       buf->decoder_info[2]);
 

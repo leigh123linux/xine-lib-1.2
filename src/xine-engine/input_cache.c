@@ -386,7 +386,7 @@ input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream, int readahe
     this->buf_size = DEFAULT_BUFFER_SIZE;
   }
 
-  this->buf = (char *)xine_xmalloc(this->buf_size);
+  this->buf = calloc(1, this->buf_size);
   if (!this->buf) {
     free (this);
     return NULL;
