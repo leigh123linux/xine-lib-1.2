@@ -368,12 +368,13 @@ static void _insert_node (xine_t *this,
 		 info->id);
       _x_abort();
     }
-    for (i=0; decoder_old->supported_types[i] != 0; ++i);
-    types = calloc((i+1), sizeof(uint32_t));
-    for (i=0; decoder_old->supported_types[i] != 0; ++i){
-      types[i] = decoder_old->supported_types[i];
+    {
+      size_t supported_types_size;
+      for (supported_types_size=0; decoder_old->supported_types[supported_types_size] != 0; ++supported_types_size);
+      types = calloc((supported_types_size+1), sizeof(uint32_t));
+      memcpy(types, decoder_old->supported_types, supported_types_size);
+      decoder_new->supported_types = types;
     }
-    decoder_new->supported_types = types;
     entry->priority = decoder_new->priority = decoder_old->priority;
     
     snprintf(key, sizeof(key), "engine.decoder_priorities.%s", info->id);

@@ -192,32 +192,32 @@ static void upmix_mono_port_put_buffer(xine_audio_port_t *port_gen,
     _x_extra_info_merge(buf1->extra_info, buf->extra_info);
 
     {
-      int step = buf->format.bits / 8;
+      const size_t step = buf->format.bits / 8;
       uint8_t *src  = (uint8_t *)buf->mem;
       uint8_t *dst0 = (uint8_t *)buf0->mem;
       uint8_t *dst1 = (uint8_t *)buf1->mem;
 
-      int i, k;
+      int i;
       for (i = 0; i < buf->num_frames / 2; i++)
       {
-        for (k = 0; k < step; k++)
-          *dst0++ = *src++;
+	memcpy(dst0, src, step);
+	dst0 += step;
 
-        src -= step;
+	memcpy(dst0, src, step);
+	dst0 += step;
 
-        for (k = 0; k < step; k++)
-          *dst0++ = *src++;
+	src += step;
       }
 
       for (i = buf->num_frames / 2; i < buf->num_frames; i++)
       {
-        for (k = 0; k < step; k++)
-          *dst1++ = *src++;
+	memcpy(dst1, src, step);
+	dst1 += step;
 
-        src -= step;
+	memcpy(dst1, src, step);
+	dst1 += step;
 
-        for (k = 0; k < step; k++)
-          *dst1++ = *src++;
+	src += step;
       }
     }
 
@@ -244,11 +244,11 @@ static void upmix_mono_port_put_buffer(xine_audio_port_t *port_gen,
     _x_extra_info_merge(buf0->extra_info, buf->extra_info);
 
     {
-      int step = buf->format.bits / 8;
+      const size_t step = buf->format.bits / 8;
       uint8_t *src  = (uint8_t *)buf->mem;
       uint8_t *dst0 = (uint8_t *)buf0->mem;
       int cur_channel = this->params.channel;
-      int i, j, k;
+      int i, j;
       
       if( cur_channel >= this->channels )
         cur_channel = this->channels-1;
@@ -259,8 +259,8 @@ static void upmix_mono_port_put_buffer(xine_audio_port_t *port_gen,
       {
         for (j = 0; j < this->channels; j++ )
         {
-          for (k = 0; k < step; k++)
-            *dst0++ = *(src+k);
+	  memcpy(dst0, src, step);
+	  dst0 += step;
         }
         src += this->channels * step;
       }

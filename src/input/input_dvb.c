@@ -587,8 +587,7 @@ static tuner_t *tuner_init(xine_t * xine, int adapter)
 
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, "tuner_init adapter=%d\n", adapter);
     this->fd_frontend = -1;
-    for (x = 0; x < MAX_FILTERS; x++)
-      this->fd_pidfilter[x] = 0;
+    memset(this->fd_pidfilter, 0, sizeof(this->fd_pidfilter));
 
     this->xine = xine;
     this->adapter_num = adapter;
@@ -933,8 +932,7 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
 
     /* Initially there's no EPG data in the EPG structs. */
     channels[num_channels].epg_count = 0;
-    for (i = 0; i < MAX_EPG_ENTRIES_PER_CHANNEL; ++i) 
-	channels[num_channels].epg[i] = NULL;
+    memset(channels[num_channels].epg, 0, sizeof(channels[num_channels].epg));
 
     num_channels++;
   }

@@ -631,10 +631,7 @@ static int pnm_get_stream_chunk(pnm_t *p) {
    */
   n=0;
   while (p->buffer[0] != 0x5a) {
-    int i;
-    for (i=1; i<8; i++) {
-      p->buffer[i-1]=p->buffer[i];
-    }
+    memmove(p->buffer, &p->buffer[1], 8);
     _x_io_tcp_read (p->stream, p->s, &p->buffer[7], 1);
     n++;
   }

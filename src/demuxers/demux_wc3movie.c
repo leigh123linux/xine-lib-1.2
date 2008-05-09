@@ -380,8 +380,6 @@ static int open_mve_file(demux_mve_t *this) {
   /* allocate space for the shot offset index and set offsets to 0 */
   this->shot_offsets = calloc(this->number_of_shots, sizeof(off_t));
   this->current_shot = 0;
-  for (i = 0; i < this->number_of_shots; i++)
-    this->shot_offsets[i] = 0;
 
   /* skip the SOND chunk */
   this->input->seek(this->input, 12, SEEK_CUR);

@@ -188,9 +188,7 @@ static int open_str_file(demux_str_t *this) {
   unsigned char check_bytes[STR_CHECK_BYTES];
   int local_offset, sector, channel;
 
-  for (channel = 0; channel < STR_MAX_CHANNELS; channel++) {
-    this->channel_type[channel] = 0;
-  }
+  memset(this->channel_type, 0, sizeof(this->channel_type));
 
   this->input->seek(this->input, 0, SEEK_SET);
   if (this->input->read(this->input, check_bytes, STR_CHECK_BYTES) !=
