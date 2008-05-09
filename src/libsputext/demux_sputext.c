@@ -793,26 +793,19 @@ static subtitle_t *sub_read_line_jacobsub(demux_sputext_t *this, subtitle_t *cur
 	    ++p;
 	}
 	if (isalpha(*p)||*p == '[') {
-	    int cont, jLength;
-
 	    if (sscanf(p, "%s %" LINE_LEN_QUOT "[^\n\r]", directive, line1) < 2)
 		return ERR;
-	    jLength = strlen(directive);
-	    for (cont = 0; cont < jLength; ++cont) {
-		if (isalpha(*(directive + cont)))
-		    *(directive + cont) = toupper(*(directive + cont));
-	    }
-	    if ((strstr(directive, "RDB") != NULL)
-		|| (strstr(directive, "RDC") != NULL)
-		|| (strstr(directive, "RLB") != NULL)
-		|| (strstr(directive, "RLG") != NULL)) {
+	    if ((strcasestr(directive, "RDB") != NULL)
+		|| (strcasestr(directive, "RDC") != NULL)
+		|| (strcasestr(directive, "RLB") != NULL)
+		|| (strcasestr(directive, "RLG") != NULL)) {
 		continue;
 	    }
 	    /* no alignment */
 #if 0
-	    if (strstr(directive, "JL") != NULL) {
+	    if (strcasestr(directive, "JL") != NULL) {
 		current->alignment = SUB_ALIGNMENT_HLEFT;
-	    } else if (strstr(directive, "JR") != NULL) {
+	    } else if (strcasestr(directive, "JR") != NULL) {
 		current->alignment = SUB_ALIGNMENT_HRIGHT;
 	    } else {
 		current->alignment = SUB_ALIGNMENT_HCENTER;
@@ -1240,9 +1233,8 @@ static int demux_sputext_next (demux_sputext_t *this_gen) {
   *val++ = (this->uses_time) ? sub->end * 10 : sub->end;
   str = (char *)val;
   for (line = 0; line < sub->lines; line++, str+=strlen(str)+1) {
-    if( strlen(sub->text[line]) > SUB_BUFSIZE )
-      sub->text[line][SUB_BUFSIZE] = '\0';
-    strcpy(str, sub->text[line]);
+    strncpy(str, sub->text[line], SUB_BUFSIZE-1);
+    str[SUB_BUFSIZE-1] = '\0';
   }
   
   this->stream->video_fifo->put(this->stream->video_fifo, buf);
