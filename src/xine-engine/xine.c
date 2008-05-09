@@ -735,7 +735,7 @@ xine_stream_t *xine_stream_new (xine_t *this,
 }
 
 void _x_mrl_unescape(char *mrl) {
-  int i, len = strlen(mrl);
+  size_t i, len = strlen(mrl);
 
   for (i = 0; i < len; i++) {
     if ((mrl[i]=='%') && (i<(len-2))) {

@@ -99,7 +99,7 @@ static char *nl(char *data) {
 
 static int filter(const char *in, const char *filter, char **out) {
 
-  int flen=strlen(filter);
+  size_t flen=strlen(filter);
   size_t len;
   
   if (!in)

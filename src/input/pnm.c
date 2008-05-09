@@ -415,8 +415,8 @@ static void pnm_send_request(pnm_t *p, uint32_t bandwidth) {
  */
 
 static void pnm_send_response(pnm_t *p, const char *response) {
-
-  int size=strlen(response);
+  /** @TODO should check that sze is always < 256 */
+  size_t size=strlen(response);
 
   p->buffer[0]=0x23;
   p->buffer[1]=0;
