@@ -556,7 +556,7 @@ static vo_frame_t *xvmc_alloc_frame (vo_driver_t *this_gen) {
 
   lprintf ("xvmc_alloc_frame\n");
 
-  frame = calloc(1, (sizeof (xvmc_frame_t));
+  frame = calloc(1, sizeof (xvmc_frame_t));
 
   if (!frame)
     return NULL;
