@@ -651,7 +651,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   int                  done, len, linenum;
   int                  httpcode;
   int                  res;
-  int                  buflen;
+  size_t               buflen;
   int                  use_proxy;
   int                  proxyport;
   int                  mpegurl_redirect = 0;
@@ -743,43 +743,38 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 
   if (use_proxy) {
     if (this->port != DEFAULT_HTTP_PORT) {
-      snprintf (this->buf, BUFSIZE, "GET http://%s:%d%s HTTP/1.0\015\012",
-	       this->host, this->port, this->uri);
+      buflen = snprintf (this->buf, BUFSIZE, "GET http://%s:%d%s HTTP/1.0\015\012",
+			 this->host, this->port, this->uri);
     } else {
-      snprintf (this->buf, BUFSIZE, "GET http://%s%s HTTP/1.0\015\012",
-	       this->host, this->uri);
+      buflen = snprintf (this->buf, BUFSIZE, "GET http://%s%s HTTP/1.0\015\012",
+			 this->host, this->uri);
     }
   } 
   else
-    snprintf (this->buf, BUFSIZE, "GET %s HTTP/1.0\015\012", this->uri);
+    buflen = snprintf (this->buf, BUFSIZE, "GET %s HTTP/1.0\015\012", this->uri);
   
-  buflen = strlen(this->buf);
   if (this->port != DEFAULT_HTTP_PORT)
-    snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s:%d\015\012",
-	     this->host, this->port);
+    buflen += snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s:%d\015\012",
+			this->host, this->port);
   else
-    snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s\015\012",
-	     this->host);
+    buflen += snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s\015\012",
+			this->host);
   
-  buflen = strlen(this->buf);
   if (this_class->proxyuser && strlen(this_class->proxyuser)) {
-    snprintf (this->buf + buflen, BUFSIZE - buflen,
-              "Proxy-Authorization: Basic %s\015\012", this->proxyauth);
-    buflen = strlen(this->buf);
+    buflen += snprintf (this->buf + buflen, BUFSIZE - buflen,
+			"Proxy-Authorization: Basic %s\015\012", this->proxyauth);
   }
   if (this->user && strlen(this->user)) {
-    snprintf (this->buf + buflen, BUFSIZE - buflen,
-              "Authorization: Basic %s\015\012", this->auth);
-    buflen = strlen(this->buf);
+    buflen += snprintf (this->buf + buflen, BUFSIZE - buflen,
+			"Authorization: Basic %s\015\012", this->auth);
   }
   
-  snprintf(this->buf + buflen, BUFSIZE - buflen,
-           "User-Agent: xine/%s\015\012"
-           "Accept: */*\015\012"
-           "Icy-MetaData: 1\015\012"
-           "\015\012",
-           VERSION);
-  buflen = strlen(this->buf);
+  buflen += snprintf(this->buf + buflen, BUFSIZE - buflen,
+		     "User-Agent: xine/%s\015\012"
+		     "Accept: */*\015\012"
+		     "Icy-MetaData: 1\015\012"
+		     "\015\012",
+		     VERSION);
   if (_x_io_tcp_write (this->stream, this->fh, this->buf, buflen) != buflen) {
     _x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "couldn't send request", NULL);
     xprintf(this_class->xine, XINE_VERBOSITY_DEBUG, "input_http: couldn't send request\n");
