@@ -1532,14 +1532,9 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
 		int   nyear;
 		
 		y = strstr(buffer, "YEAR:");
-		if(y) {
-		  if (sscanf(y+5, "%4d", &nyear) == 1) {
-		    char year[5];
-
-		    snprintf(year, 5, "%d", nyear);
-		    if (this->cddb.disc_year == NULL)
-		      this->cddb.disc_year = strdup(year);
-		  }
+		if (y && this->cddb.disc_year == NULL) {
+		  if (sscanf(y+5, "%4d", &nyear) == 1)
+		    asprintf(&this->cddb.disc_year, "%d", nyear);
 		}
 	      }
 	    }
@@ -1875,14 +1870,9 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
           int   nyear;
 
           y = strstr(buffer, "YEAR:");
-          if (y) {
-            if (sscanf(y+5, "%4d", &nyear) == 1) {
-              char year[5];
-
-              snprintf(year, 5, "%d", nyear);
-              if (this->cddb.disc_year == NULL)
-                this->cddb.disc_year = strdup(year);
-            }
+          if (y && this->cddb.disc_year == NULL) {
+            if (sscanf(y+5, "%4d", &nyear) == 1)
+	      asprintf(&this->cddb.disc_year, "%d", nyear);
           }
         }
       }
