@@ -1721,12 +1721,11 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
 
     /* Send query command */
     memset(&buffer, 0, sizeof(buffer));
-    sprintf(buffer, "cddb query %08lx %d ", this->cddb.disc_id, this->cddb.num_tracks);
+    size_t size = sprintf(buffer, "cddb query %08lx %d ", this->cddb.disc_id, this->cddb.num_tracks);
     for (i = 0; i < this->cddb.num_tracks; i++) {
-      int size = strlen(buffer);
-      snprintf(buffer + size, sizeof(buffer) - size, "%d ", this->cddb.track[i].start);
+      size += snprintf(buffer + size, sizeof(buffer) - size, "%d ", this->cddb.track[i].start);
     }
-    snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%d\n", this->cddb.disc_length);
+    snprintf(buffer + strlen(buffer), sizeof(buffer) - size, "%d\n", this->cddb.disc_length);
     if ((err = _cdda_cddb_send_command(this, buffer)) <= 0) {
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	      "input_cdda: error while sending cddb query command.\n");
@@ -2514,7 +2513,6 @@ static char ** cdda_class_get_autoplay_list (input_class_t *this_gen,
   cdda_input_class_t *this = (cdda_input_class_t *) this_gen;
   cdda_input_plugin_t *ip = this->ip;
   cdrom_toc *toc;
-  char trackmrl[20];
   int fd, i, err = -1;
   int num_tracks;
 
@@ -2580,10 +2578,8 @@ static char ** cdda_class_get_autoplay_list (input_class_t *this_gen,
   num_tracks = toc->last_track - toc->first_track;
   if (toc->ignore_last_track)
     num_tracks--;
-  for ( i = 0; i <= num_tracks; i++ ) {
-    sprintf(trackmrl,"cdda:/%d",i+toc->first_track);
-    this->autoplaylist[i] = strdup(trackmrl);    
-  }
+  for ( i = 0; i <= num_tracks; i++ )
+    asprintf(&this->autoplaylist[i],"cdda:/%d",i+toc->first_track);
 
   *num_files = toc->last_track - toc->first_track + 1;
 
