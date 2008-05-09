@@ -21,6 +21,7 @@
  */
 
 #include "os_types.h"
+#include "attributes.h"
 
 typedef struct {
   uint32_t idcode;        /* This should always be the string "wvpk" */
@@ -35,7 +36,7 @@ typedef struct {
   uint32_t samples_count; /* Count of samples in the current frame */
   uint32_t flags;         /* Misc flags */
   uint32_t decoded_crc32; /* CRC32 of the decoded data */
-} __attribute__((packed)) wvheader_t;
+} XINE_PACKED wvheader_t;
 
 #ifdef WORDS_BIGENDIAN
 static const uint32_t wvpk_signature = ('k' + ('p' << 8) + ('v' << 16) + ('w' << 24));

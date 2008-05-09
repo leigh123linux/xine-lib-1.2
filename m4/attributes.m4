@@ -166,6 +166,14 @@ AC_DEFUN([CC_ATTRIBUTE_MALLOC], [
     [$2])
 ])
 
+AC_DEFUN([CC_ATTRIBUTE_PACKED], [
+  CC_CHECK_ATTRIBUTE(
+    [packed], ,
+    [struct astructure { char a; int b; long c; void *d; } __attribute__((packed));],
+    [$1],
+    [$2])
+])
+
 AC_DEFUN([CC_FLAG_VISIBILITY], [
 	AC_REQUIRE([CC_CHECK_WERROR])
 	ac_save_CFLAGS="$CFLAGS"
