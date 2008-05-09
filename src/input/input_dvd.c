@@ -352,11 +352,9 @@ static void send_mouse_enter_leave_event(dvd_input_plugin_t *this, int direction
 }
  
 static int update_title_display(dvd_input_plugin_t *this) {
-  char ui_title[MAX_STR_LEN + 1];
   xine_event_t uevent;
   xine_ui_data_t data;
   int tt=-1, pr=-1;
-  size_t ui_str_length=0;
   int num_tt = 0;
 
   if(!this || !(this->stream)) 
@@ -386,15 +384,15 @@ static int update_title_display(dvd_input_plugin_t *this) {
     dvdnav_get_number_of_parts(this->dvdnav, tt, &num_part);
     dvdnav_get_angle_info(this->dvdnav, &cur_angle, &num_angle);
     if(num_angle > 1) {
-      snprintf(ui_title, MAX_STR_LEN,
-               "Title %i, Chapter %i, Angle %i of %i",
-               tt,pr,cur_angle, num_angle); 
+      data.str_len = snprintf(data.str, sizeof(data.str),
+			       "Title %i, Chapter %i, Angle %i of %i",
+			       tt,pr,cur_angle, num_angle); 
        _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_ANGLE_NUMBER,cur_angle);
        _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_ANGLE_COUNT,num_angle);
     } else {
-      snprintf(ui_title, MAX_STR_LEN, 
-	       "Title %i, Chapter %i",
-	       tt,pr);
+      data.str_len = snprintf(data.str, sizeof(data.str), 
+			       "Title %i, Chapter %i",
+			       tt,pr);
        _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_ANGLE_NUMBER,0);
        _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_ANGLE_COUNT,0);
     }
@@ -403,9 +401,9 @@ static int update_title_display(dvd_input_plugin_t *this) {
     _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_CHAPTER_NUMBER,pr);
     _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_CHAPTER_COUNT,num_part);
   } else if (tt == 0 && dvdnav_menu_table[pr]) {
-    snprintf(ui_title, MAX_STR_LEN,
-             "DVD %s Menu",
-             dvdnav_menu_table[pr]);
+    data.str_len = snprintf(data.str, sizeof(data.str),
+			     "DVD %s Menu",
+			     dvdnav_menu_table[pr]);
      _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_TITLE_NUMBER,tt);
      _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_TITLE_COUNT,num_tt);
      _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_CHAPTER_NUMBER,0);
@@ -413,7 +411,8 @@ static int update_title_display(dvd_input_plugin_t *this) {
      _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_ANGLE_NUMBER,0);
      _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_ANGLE_COUNT,0);
   } else {
-    strcpy(ui_title, "DVD Menu");
+    strcpy(data.str, "DVD Menu");
+    data.str_len = strlen(data.str);
     _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_TITLE_NUMBER,0);
     _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_TITLE_COUNT,num_tt);
     _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_CHAPTER_NUMBER,0);
@@ -421,22 +420,19 @@ static int update_title_display(dvd_input_plugin_t *this) {
     _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_ANGLE_NUMBER,0);
     _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_ANGLE_COUNT,0);
   }
-  ui_str_length = strlen(ui_title);
   
   if (this->dvd_name && this->dvd_name[0] &&
-      (ui_str_length + strlen(this->dvd_name) < MAX_STR_LEN)) {
-    snprintf(ui_title+ui_str_length, MAX_STR_LEN - ui_str_length, 
-	     ", %s", this->dvd_name);
+      (data.str_len + strlen(this->dvd_name) < sizeof(data.str))) {
+    data.str_len += snprintf(data.str+data.str_len, sizeof(data.str) - data.str_len, 
+			      ", %s", this->dvd_name);
   }
 #ifdef INPUT_DEBUG
-  printf("input_dvd: Changing title to read '%s'\n", ui_title);
+  printf("input_dvd: Changing title to read '%s'\n", data.str);
 #endif
   uevent.type = XINE_EVENT_UI_SET_TITLE;
   uevent.stream = this->stream;
   uevent.data = &data;
-  uevent.data_length = sizeof(data);;
-  memcpy(data.str, ui_title, strlen(ui_title) + 1);
-  data.str_len = strlen(ui_title) + 1;
+  uevent.data_length = sizeof(data);
   xine_event_send(this->stream, &uevent);
 
   return 1;
