@@ -352,8 +352,13 @@ static void send_mouse_enter_leave_event(dvd_input_plugin_t *this, int direction
 }
  
 static int update_title_display(dvd_input_plugin_t *this) {
-  xine_event_t uevent;
   xine_ui_data_t data;
+  xine_event_t uevent = {
+    .type = XINE_EVENT_UI_SET_TITLE,
+    .stream = this->stream,
+    .data = &data,
+    .data_length = sizeof(data)
+  };
   int tt=-1, pr=-1;
   int num_tt = 0;
 
@@ -429,10 +434,6 @@ static int update_title_display(dvd_input_plugin_t *this) {
 #ifdef INPUT_DEBUG
   printf("input_dvd: Changing title to read '%s'\n", data.str);
 #endif
-  uevent.type = XINE_EVENT_UI_SET_TITLE;
-  uevent.stream = this->stream;
-  uevent.data = &data;
-  uevent.data_length = sizeof(data);
   xine_event_send(this->stream, &uevent);
 
   return 1;
