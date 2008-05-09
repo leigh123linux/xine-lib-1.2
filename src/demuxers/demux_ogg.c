@@ -1267,8 +1267,8 @@ static void decode_annodex_header (demux_ogg_t *this, const int stream_num, ogg_
 static void decode_anxdata_header (demux_ogg_t *this, const int stream_num, ogg_packet *op) {
   int64_t granule_rate_n, granule_rate_d;
   uint32_t secondary_headers;
-  char content_type[1024];
-  int content_type_length;
+  const char *content_type = "";
+  size_t content_type_length = 0;
 
   lprintf("AnxData stream detected\n");
 
@@ -1280,11 +1280,16 @@ static void decode_anxdata_header (demux_ogg_t *this, const int stream_num, ogg_
   lprintf("granule_rate %" PRId64 "/%" PRId64 ", %d secondary headers\n",
       granule_rate_n, granule_rate_d, secondary_headers);
 
-  /* read "Content-Tyoe" MIME header */
-  sscanf(&op->packet[28], "Content-Type: %1023s\r\n", content_type);
-  content_type_length = strlen(content_type);
+  /* read "Content-Type" MIME header */
+  const char *startline = &op->packet[28];
+  const char *endline;
+  if ( strcmp(&op->packet[28], "Content-Type: ") == 0 &&
+       (endline = strstr(startline, "\r\n")) ) {
+    content_type = startline + sizeof("Content-Type: ");
+    content_type_length = startline - endline;
+  }
 
-  lprintf("Content-Type: %s (length:%d)\n", content_type, content_type_length);
+  lprintf("Content-Type: %s (length:%td)\n", content_type, content_type_length);
 
   /* how many header packets in the AnxData stream? */
   this->si[stream_num]->headers = secondary_headers + 1;
