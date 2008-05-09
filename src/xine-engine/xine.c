@@ -553,7 +553,7 @@ static int stream_rewire_video(xine_post_out_t *output, void *data)
   return 1;
 }
 
-void xine_dispose_internal (xine_stream_t *stream);
+static void xine_dispose_internal (xine_stream_t *stream);
 
 xine_stream_t *xine_stream_new (xine_t *this,
 				xine_audio_port_t *ao, xine_video_port_t *vo) {
@@ -1437,7 +1437,7 @@ int xine_eject (xine_stream_t *stream) {
   return status;
 }
 
-void xine_dispose_internal (xine_stream_t *stream) {
+static void xine_dispose_internal (xine_stream_t *stream) {
 
   xine_list_iterator_t *ite;
 
@@ -1634,8 +1634,7 @@ static void config_save_cb (void *this_gen, xine_cfg_entry_t *entry) {
   xine_t *this = (xine_t *)this_gen;
   char *homedir_trail_slash;
 
-  homedir_trail_slash = (char *)malloc(strlen(xine_get_homedir()) + 2);
-  sprintf(homedir_trail_slash, "%s/", xine_get_homedir());
+  asprintf(&homedir_trail_slash, "%s/", xine_get_homedir());
   if (entry->str_value[0] &&
       (entry->str_value[0] != '/' || strstr(entry->str_value, "/.") ||
        strcmp(entry->str_value, xine_get_homedir()) == 0 ||
@@ -1939,7 +1938,7 @@ static int _x_get_current_frame_impl (xine_stream_t *stream, int *width, int *he
 				      uint8_t **img, int *size, int alloc_img) {
 
   vo_frame_t *frame;
-  int required_size;
+  size_t required_size;
 
   stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
   frame = stream->video_out->get_last_frame (stream->video_out);
@@ -1994,7 +1993,7 @@ static int _x_get_current_frame_impl (xine_stream_t *stream, int *width, int *he
     if (size)
       *size = required_size;
     /* allocate img or fail */
-    if (!(*img = xine_xmalloc (required_size)))
+    if (!(*img = calloc(1, required_size)))
       return 0;
   } else {
     /* fail if supplied buffer is to small */

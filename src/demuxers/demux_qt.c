@@ -134,7 +134,7 @@ typedef unsigned int qt_atom;
 #define MAX_PTS_DIFF 100000
 
 /* network bandwidth, cribbed from src/input/input_mms.c */
-const int64_t bandwidths[]={14400,19200,28800,33600,34430,57600,
+static const int64_t bandwidths[]={14400,19200,28800,33600,34430,57600,
                             115200,262200,393216,524300,1544000,10485800};
 
 /* these are things that can go wrong */
@@ -1736,7 +1736,6 @@ static qt_error build_frame_table(qt_trak *trak,
     media_id_counts = calloc(trak->stsd_atoms_count, sizeof(int));
     if (!media_id_counts)
       return QT_NO_MEMORY;
-    memset(media_id_counts, 0, trak->stsd_atoms_count * sizeof(int));
 
     /* iterate through each start chunk in the stsc table */
     for (i = 0; i < trak->sample_to_chunk_count; i++) {

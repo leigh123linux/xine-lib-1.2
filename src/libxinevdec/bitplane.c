@@ -252,7 +252,7 @@ static uint8_t *bitplane_decode_byterun1 (uint8_t *compressed,
   int i                                 = 0;
   int j                                 = 0;
 
-  uint8_t *uncompressed                 = xine_xmalloc( size_uncompressed );
+  uint8_t *uncompressed                 = calloc(1, size_uncompressed );
 
   while ( i < size_compressed &&
           pixel_ptr < size_uncompressed ) {
@@ -1189,7 +1189,7 @@ static void bitplane_decode_data (video_decoder_t *this_gen,
     if (this->buf)
       free (this->buf);
     this->bufsize                       = VIDEOBUFSIZE;
-    this->buf                           = xine_xmalloc(this->bufsize);
+    this->buf                           = calloc(1, this->bufsize);
     this->size                          = 0;
     this->framenumber                   = 0;
 
@@ -1255,7 +1255,7 @@ static void bitplane_decode_data (video_decoder_t *this_gen,
           case BUF_VIDEO_BITPLANE:
             /* uncompressed Buffer, set decoded_buf pointer direct to input stream */
             if( this->buf_uk == NULL )
-              this->buf_uk              = xine_xmalloc( (this->size) );
+              this->buf_uk              = malloc(this->size);
             xine_fast_memcpy (this->buf_uk, this->buf, this->size);
             break;
           case BUF_VIDEO_BITPLANE_BR1:
@@ -1294,7 +1294,7 @@ static void bitplane_decode_data (video_decoder_t *this_gen,
           }
         }
         if( this->buf_uk_hist == NULL ) {
-          this->buf_uk_hist             = xine_xmalloc( (this->size_uk) );
+          this->buf_uk_hist             = malloc(this->size_uk);
           xine_fast_memcpy (this->buf_uk_hist, this->buf_uk, this->size_uk);
           xine_fast_memcpy (this->index_buf_hist, this->index_buf,
                             (this->num_pixel * this->bytes_per_pixel));
@@ -1306,20 +1306,12 @@ static void bitplane_decode_data (video_decoder_t *this_gen,
         /* when no start-picture is given, create a empty one */
         if( this->buf_uk_hist == NULL ) {
           this->size_uk                 = (((this->num_pixel) / 8) * this->num_bitplanes);
-          this->buf_uk                  = xine_xmalloc( (this->size_uk) );
-          this->buf_uk_hist             = xine_xmalloc( (this->size_uk) );
-          for (i = 0; i < this->size_uk; i++) {
-            this->buf_uk[i]             = 0;
-            this->buf_uk_hist[i]        = 0;
-          }
+          this->buf_uk                  = calloc(this->num_bitplanes, ((this->num_pixel) / 8));
+          this->buf_uk_hist             = calloc(this->num_bitplanes, ((this->num_pixel) / 8));
         }
         if( this->index_buf == NULL ) {
           this->index_buf               = calloc( this->num_pixel, this->bytes_per_pixel );
           this->index_buf_hist          = calloc( this->num_pixel, this->bytes_per_pixel );
-          for (i = 0; i < (this->num_pixel * this->bytes_per_pixel); i++) {
-            this->index_buf[i]          = 0;
-            this->index_buf_hist[i]     = 0;
-          }
         }
 
         switch( anhd->operation ) {

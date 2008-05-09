@@ -2278,12 +2278,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   
   this->status = DEMUX_FINISHED;
 
-#ifdef TS_READ_STATS
-  for (i=0; i<=NPKT_PER_READ; i++) {
-    this->rstat[i] = 0;
-  }
-#endif
-
   /* DVBSUB */
   this->spu_pid = INVALID_PID;
   this->spu_langs_count = 0;

@@ -235,26 +235,16 @@ static int http_plugin_basicauth (const char *user, const char *password, char* 
   char        *tmp;
   char        *sptr;
   char        *dptr;
-  int          totlen;
+  size_t       count;
   int          enclen;
-  int          count;
   
-  totlen = strlen (user) + 1;
-  if(password != NULL)
-    totlen += strlen (password);
-  
-  enclen = ((totlen + 2) / 3 ) * 4 + 1;
+  count = asprintf(&tmp, "%s:%s", user, (password != NULL) ? password : "");
+
+  enclen = ((count + 2) / 3 ) * 4 + 1;
   
   if (len < enclen)
     return -1;
-  
-  tmp = malloc (sizeof(char) * (totlen + 1));
-  strcpy (tmp, user);
-  strcat (tmp, ":");
-  if (password != NULL)
-    strcat (tmp, password);  
-  
-  count = strlen(tmp);
+
   sptr = tmp;
   dptr = dest;
   while (count >= 3) {
@@ -1025,8 +1015,7 @@ static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_str
   this = calloc(1, sizeof(http_input_plugin_t));
 
   if (!strncasecmp (mrl, "peercast://pls/", 15)) {
-    this->mrl = xine_xmalloc (30 + strlen(mrl) - 15);
-    sprintf (this->mrl, "http://127.0.0.1:7144/stream/%s", mrl+15);
+    asprintf (&this->mrl, "http://127.0.0.1:7144/stream/%s", mrl+15);
   } else {    
     this->mrl = strdup (mrl);
   }
@@ -1090,25 +1079,21 @@ static void *init_class (xine_t *xine, void *data) {
   /* 
    * honour http_proxy envvar 
    */
-  if((proxy_env = getenv("http_proxy")) && (strlen(proxy_env))) {
+  if((proxy_env = getenv("http_proxy")) && *proxy_env) {
     int    proxy_port = DEFAULT_HTTP_PORT;
-    char  *http_proxy = xine_xmalloc(strlen(proxy_env) + 1);
     char  *p;
     
     if(!strncmp(proxy_env, "http://", 7))
       proxy_env += 7;
+
+    this->proxyhost_env = strdup(proxy_env);
     
-    sprintf(http_proxy, "%s", proxy_env);
-    
-    if((p = strrchr(&http_proxy[0], ':')) && (strlen(p) > 1)) {
+    if((p = strrchr(this->proxyhost_env, ':')) && (strlen(p) > 1)) {
       *p++ = '\0';
       proxy_port = (int) strtol(p, &p, 10);
     }
     
-    this->proxyhost_env = strdup(http_proxy);
     this->proxyport_env = proxy_port;
-    
-    free(http_proxy);
   }
   else
     proxy_env = NULL; /* proxy_env can be "" */

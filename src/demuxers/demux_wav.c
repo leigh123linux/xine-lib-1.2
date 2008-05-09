@@ -126,7 +126,7 @@ static int open_wav_file(demux_wav_t *this) {
     return 0;
 
   this->input->seek(this->input, wave_pos, SEEK_SET);
-  this->wave = xine_xmalloc( this->wave_size );
+  this->wave = malloc( this->wave_size );
 
   if (!this->wave || this->input->read(this->input, (void *)this->wave, this->wave_size) !=
     this->wave_size) {

@@ -66,13 +66,13 @@
  *   OSD - this will allow for filtering/searching of epg data - useful for automatic recording :)
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 /* pthread.h must be included first so rest of the headers are imported
    thread safely (on some systems). */
 #include <pthread.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <assert.h>
 #include <stdio.h>
@@ -587,8 +587,7 @@ static tuner_t *tuner_init(xine_t * xine, int adapter)
 
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, "tuner_init adapter=%d\n", adapter);
     this->fd_frontend = -1;
-    for (x = 0; x < MAX_FILTERS; x++)
-      this->fd_pidfilter[x] = 0;
+    memset(this->fd_pidfilter, 0, sizeof(this->fd_pidfilter));
 
     this->xine = xine;
     this->adapter_num = adapter;
@@ -933,8 +932,7 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
 
     /* Initially there's no EPG data in the EPG structs. */
     channels[num_channels].epg_count = 0;
-    for (i = 0; i < MAX_EPG_ENTRIES_PER_CHANNEL; ++i) 
-	channels[num_channels].epg[i] = NULL;
+    memset(channels[num_channels].epg, 0, sizeof(channels[num_channels].epg));
 
     num_channels++;
   }
@@ -1839,8 +1837,7 @@ static void show_program_info(int x, int y, int max_x, int max_y, int* last_y,
 
   /*Content type and rating, if any. */
   if (strlen(epg_data->content) > 3) {
-
-    snprintf(buffer, 94, "%s", epg_data->content);
+    strncpy(buffer, epg_data->content, 94-1);
 
     prog_rating = epg_data->rating;
     if (prog_rating > 0) {
@@ -1870,7 +1867,7 @@ static void show_program_info(int x, int y, int max_x, int max_y, int* last_y,
   /* Print the description. */
   if (epg_data->description && strlen(epg_data->description) > 0) {
     renderer->set_font(osd, "sans", EPG_DESCRIPTION_FONT_SIZE);
-    sprintf(buffer, "%s", epg_data->description);
+    strcpy(buffer, epg_data->description);
     /* If the description is not complete (i.e., there is no comma at the end),
        add "..." to the end. In my locale they often seem to send incomplete description
        texts :( */
@@ -3223,21 +3220,19 @@ static char **dvb_class_get_autoplay_list(input_class_t * this_gen,
     for (ch = 0, apch = !!lastchannel_enable.num_value;
          ch < num_channels && ch < MAX_AUTOCHANNELS;
          ++ch, ++apch) {
-        snprintf(foobuffer, BUFSIZE, "dvb://%s", channels[ch].name);
-        free(class->autoplaylist[apch]);
-        class->autoplaylist[apch] = strdup(foobuffer);
-        _x_assert(class->autoplaylist[apch] != NULL);
+      free(class->autoplaylist[apch]);
+      asprintf(&(class->autoplaylist[apch]), "dvb://%s", channels[ch].name);
+      _x_assert(class->autoplaylist[apch] != NULL);
     }
 
     if (lastchannel_enable.num_value){
+      free(class->autoplaylist[0]);
       if (default_channel != -1)
 	/* plugin has been used before - channel is valid */
-	sprintf (foobuffer, "dvb://%s", channels[default_channel].name);
+	asprintf (&(class->autoplaylist[0]), "dvb://%s", channels[default_channel].name);
       else
 	/* set a reasonable default - the first channel */
-	sprintf (foobuffer, "dvb://%s", num_channels ? channels[0].name : "0");
-      free(class->autoplaylist[0]);
-      class->autoplaylist[0]=strdup(foobuffer);
+	asprintf (&(class->autoplaylist[0]), "dvb://%s", num_channels ? channels[0].name : "0");
     }
 
     free_channel_list(channels, num_channels);

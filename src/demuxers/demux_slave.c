@@ -186,10 +186,8 @@ static int demux_slave_next (demux_slave_t *this) {
     buf->decoder_flags = decoder_flags;
 
     /* set decoder info */
-    for( i = 0; i < BUF_NUM_DEC_INFO; i++ ) {
-      buf->decoder_info[i] = this->decoder_info[i];
-      buf->decoder_info_ptr[i] = this->decoder_info_ptr[i];
-    }
+    memcpy(buf->decoder_info, this->decoder_info, sizeof(this->decoder_info));
+    memcpy(buf->decoder_info_ptr, this->decoder_info_ptr, sizeof(this->decoder_info));
     memset(this->decoder_info, 0, sizeof(this->decoder_info));
     memset(this->decoder_info_ptr, 0, sizeof(this->decoder_info_ptr));
 

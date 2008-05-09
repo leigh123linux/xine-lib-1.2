@@ -162,14 +162,10 @@ static void xxmc_xvmc_surface_handler_construct(xxmc_driver_t *this)
   xvmc_surface_handler_t *handler = &this->xvmc_surf_handler;
 
   pthread_mutex_init(&handler->mutex,NULL);
-  for (i=0; i<XVMC_MAX_SURFACES; ++i) {
-    handler->surfInUse[i] = 0;
-    handler->surfValid[i] = 0;
-  }
-  for (i=0; i<XVMC_MAX_SUBPICTURES; ++i) {
-    handler->subInUse[i] = 0;
-    handler->subValid[i] = 0;
-  }
+  memset(handler->surfInUse, 0, sizeof(handler->surfInUse));
+  memset(handler->surfValid, 0, sizeof(handler->surfValid));
+  memset(handler->subInUse, 0, sizeof(handler->subInUse));
+  memset(handler->subValid, 0, sizeof(handler->subValid));
 }
 
 static void xxmc_xvmc_destroy_surfaces(xxmc_driver_t *this)

@@ -1410,7 +1410,6 @@ static void osd_preload_fonts (osd_renderer_t *this, char *path) {
 
         if( p ) {
 	  osd_font_t  *font;
-	  char        *pathname;
 
           *p++ = '\0';
           font = calloc(1, sizeof(osd_font_t) );
@@ -1421,9 +1420,7 @@ static void osd_preload_fonts (osd_renderer_t *this, char *path) {
           lprintf("font '%s' size %d is preloaded\n", 
                   font->name, font->size);
 
-          pathname = malloc(strlen(path) + strlen(entry->d_name) + 2);
-          sprintf (pathname, "%s/%s", path, entry->d_name);
-          font->filename = pathname;
+          asprintf (&font->filename, "%s/%s", path, entry->d_name);
           
           font->next = this->fonts;
           this->fonts = font;

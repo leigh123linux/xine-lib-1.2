@@ -145,7 +145,7 @@ static void rgb_decode_data (video_decoder_t *this_gen,
 
     /* minimal buffer size */
     this->bufsize = this->width * this->height * this->bytes_per_pixel;
-    this->buf = xine_xmalloc(this->bufsize);
+    this->buf = calloc(1, this->bufsize);
     this->size = 0;
 
     init_yuv_planes(&this->yuv_planes, this->width, this->height);

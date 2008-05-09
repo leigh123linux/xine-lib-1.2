@@ -1313,7 +1313,7 @@ static int dvd_plugin_get_optional_data (input_plugin_t *this_gen,
     if(this && this->stream && this->dvdnav) {
 
       if(!(dvdnav_is_domain_vts(this->dvdnav))) {
-	sprintf(data, "%s", "menu");
+	strcpy(data, "menu");
 	if (channel <= 0)
 	  return INPUT_OPTIONAL_SUCCESS;
 	else
@@ -1336,7 +1336,7 @@ static int dvd_plugin_get_optional_data (input_plugin_t *this_gen,
 	return INPUT_OPTIONAL_SUCCESS;
       } else {
 	if(channel == -1) {
-	  sprintf(data, "%s", "none");
+	  strcpy(data, "none");
 	  return INPUT_OPTIONAL_SUCCESS;
 	}
       }
@@ -1369,10 +1369,7 @@ check_solaris_vold_device(dvd_input_class_t *this)
       (volume_action = getenv("VOLUME_ACTION")) != NULL &&
       strcmp(volume_action, "insert") == 0) {
 
-    device = malloc(strlen(volume_device) + strlen(volume_name) + 2);
-    if (device == NULL)
-      return;
-    sprintf(device, "%s/%s", volume_device, volume_name);
+    asprintf(&device, "%s/%s", volume_device, volume_name);
     if (stat(device, &stb) != 0 || !S_ISCHR(stb.st_mode)) {
       free(device);
       return;
@@ -1820,8 +1817,7 @@ static void *init_class (xine_t *xine, void *data) {
 				   "playing scrambled DVDs."), 20, NULL, NULL);
     xine_setenv("DVDCSS_METHOD", decrypt_modes[mode], 0);
     
-    css_cache_default = (char *)malloc(strlen(xine_get_homedir()) + 10);
-    sprintf(css_cache_default, "%s/.dvdcss/", xine_get_homedir());
+    asprintf(&css_cache_default, "%s/.dvdcss/", xine_get_homedir());
     css_cache = config->register_filename(config, "media.dvd.css_cache_path", css_cache_default, XINE_CONFIG_STRING_IS_DIRECTORY_NAME,
 					_("path to the title key cache"),
 					_("Since cracking the copy protection of scrambled DVDs can "

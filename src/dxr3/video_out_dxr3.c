@@ -1334,7 +1334,7 @@ static int lookup_parameter(struct lut_entry *lut, char *name,
 static int dxr3_overlay_read_state(dxr3_overlay_t *this)
 {
   char *loc;
-  char fname[256], tmp[128], line[256];
+  char *fname, line[256];
   FILE *fp;
   struct lut_entry lut[] = {
     {"xoffset",        TYPE_INT,   &this->xoffset},
@@ -1359,18 +1359,16 @@ static int dxr3_overlay_read_state(dxr3_overlay_t *this)
    * (used by .overlay/res file) */
   setlocale(LC_NUMERIC, "C");
 
-  snprintf(tmp, sizeof(tmp), "/res_%dx%dx%d",
+  asprintf(&fname, "%s/.overlay/res_%dx%dx%d", getenv("HOME"), 
     this->screen_xres, this->screen_yres, this->screen_depth);
-  strncpy(fname, getenv("HOME"), sizeof(fname) - strlen(tmp) - sizeof("/.overlay"));
-  fname[sizeof(fname) - strlen(tmp) - sizeof("/.overlay")] = '\0';
-  strcat(fname, "/.overlay");
-  strcat(fname, tmp);
   llprintf(LOG_OVR, "attempting to open %s\n", fname);
   if (!(fp = fopen(fname, "r"))) {
     xprintf(this->xine, XINE_VERBOSITY_LOG, 
 	    _("video_out_dxr3: ERROR Reading overlay init file. Run autocal!\n"));
+    free(fname);
     return -1;
   }
+  free(fname);
 
   while (!feof(fp)) {
     if (!fgets(line, 256, fp))

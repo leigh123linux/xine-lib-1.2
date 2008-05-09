@@ -368,12 +368,13 @@ static void _insert_node (xine_t *this,
 		 info->id);
       _x_abort();
     }
-    for (i=0; decoder_old->supported_types[i] != 0; ++i);
-    types = calloc((i+1), sizeof(uint32_t));
-    for (i=0; decoder_old->supported_types[i] != 0; ++i){
-      types[i] = decoder_old->supported_types[i];
+    {
+      size_t supported_types_size;
+      for (supported_types_size=0; decoder_old->supported_types[supported_types_size] != 0; ++supported_types_size);
+      types = calloc((supported_types_size+1), sizeof(uint32_t));
+      memcpy(types, decoder_old->supported_types, supported_types_size);
+      decoder_new->supported_types = types;
     }
-    decoder_new->supported_types = types;
     entry->priority = decoder_new->priority = decoder_old->priority;
     
     snprintf(key, sizeof(key), "engine.decoder_priorities.%s", info->id);
@@ -382,8 +383,7 @@ static void _insert_node (xine_t *this,
      * does not strdup() it, so we have to provide a different pointer
      * for each decoder */
     for (i = 0; catalog->prio_desc[i]; i++);
-    catalog->prio_desc[i] = malloc(strlen(desc) + 1);
-    strcpy(catalog->prio_desc[i], desc);
+    catalog->prio_desc[i] = strdup(desc);
     this->config->register_num (this->config,
 				key,
 				0,
@@ -1072,15 +1072,13 @@ static void save_catalog (xine_t *this) {
   char       *cachefile, *dirfile; 
   const char *relname = CACHE_CATALOG_FILE;
   const char *dirname = CACHE_CATALOG_DIR;
+
+  const char *const homedir = xine_get_homedir();
     
-  cachefile = (char *) malloc(strlen(xine_get_homedir()) + 
-			      strlen(relname) + 2);
-  sprintf(cachefile, "%s/%s", xine_get_homedir(), relname);
+  asprintf(&cachefile, "%s/%s", homedir, relname);
   
   /* make sure homedir (~/.xine) exists */
-  dirfile = (char *) malloc(strlen(xine_get_homedir()) + 
-			    strlen(dirname) + 2);
-  sprintf(dirfile, "%s/%s", xine_get_homedir(), dirname);
+  asprintf(&dirfile, "%s/%s", homedir, dirname);
   mkdir (dirfile, 0755);
   free (dirfile);
 
@@ -1107,9 +1105,7 @@ static void load_cached_catalog (xine_t *this) {
   char *cachefile;                                               
   const char *relname = CACHE_CATALOG_FILE;
     
-  cachefile = (char *) malloc(strlen(xine_get_homedir()) + 
-			      strlen(relname) + 2);
-  sprintf(cachefile, "%s/%s", xine_get_homedir(), relname);
+  asprintf(&cachefile, "%s/%s", xine_get_homedir(), relname);
   
   if( (fp = fopen(cachefile,"r")) != NULL ) {
     load_plugin_list (fp, this->plugin_catalog->cache_list);

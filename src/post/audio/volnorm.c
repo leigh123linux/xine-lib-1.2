@@ -426,9 +426,8 @@ static post_plugin_t *volnorm_open_plugin(post_class_t *class_gen, int inputs,
     this->mul = MUL_INIT;
     this->lastavg = MID_S16;
     this->idx = 0;
-    for (i = 0; i < NSAMPLES; i++)
-        this->mem[i].len = this->mem[i].avg = 0;
-    
+    memset(this->mem, 0, sizeof(this->mem));
+
     port = _x_post_intercept_audio_port(&this->post, audio_target[0], &input, &output);
     port->new_port.open       = volnorm_port_open;
     port->new_port.close      = volnorm_port_close;

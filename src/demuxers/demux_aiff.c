@@ -85,7 +85,7 @@ typedef struct {
 } demux_aiff_class_t;
 
 /* converts IEEE 80bit extended into int, based on FFMPEG code */
-int extended_to_int(const unsigned char p[10])
+static int extended_to_int(const unsigned char p[10])
 {
     uint64_t m = 0;
     int e, i;

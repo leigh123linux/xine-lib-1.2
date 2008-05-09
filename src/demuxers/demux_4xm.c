@@ -158,7 +158,7 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
 
   /* read the whole header */
   header_size = _X_LE_32(&preview[4]) - 4;
-  header = xine_xmalloc(header_size);
+  header = malloc(header_size);
   if (!header || fourxm->input->read(fourxm->input, header, header_size) != header_size) {
     free(header);
     return 0;
