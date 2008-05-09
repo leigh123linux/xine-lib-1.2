@@ -268,36 +268,30 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
 
     for (title_node = packet_xml_root->child; title_node != NULL; title_node = title_node->next) {
 
-      if (strcasecmp (title_node->name, "title") == 0) {
+      if (title_node->data &&
+	  strcasecmp (title_node->name, "title") == 0) {
         /* found a title node */
 
-        xine_event_t uevent;
-        char *title;
-        int title_len;
+	xine_ui_data_t data = {
+	  .str_len = strlen(title_node->data) + 1
+	};
+	xine_event_t uevent = {
+	  .type = XINE_EVENT_UI_SET_TITLE,
+	  .stream = this->stream,
+	  .data = &data,
+	  .data_length = sizeof(data),
+	};
+	strncpy(data.str, title_node->data, sizeof(data.str)-1);
 
-        title = title_node->data;
+	/* found a non-empty title */
+	lprintf ("found title: \"%s\"\n", data.str);
 
-        if (title)
-        {
-          xine_ui_data_t data;
-          /* found a non-empty title */
-          lprintf ("found title: \"%s\"\n", title);
+	/* set xine meta-info */
+	_x_meta_info_set(this->stream, XINE_META_INFO_TITLE, strdup(data.str));
 
-          /* set xine meta-info */
-          _x_meta_info_set(this->stream, XINE_META_INFO_TITLE, strdup(title));
-
-          /* and push out a new event signifying the title update on the event
-           * queue */
-          title_len = strlen(title) + 1;
-          memcpy(data.str, title, title_len);
-          data.str_len = title_len;
-
-          uevent.type = XINE_EVENT_UI_SET_TITLE;
-          uevent.stream = this->stream;
-          uevent.data = &data;
-          uevent.data_length = sizeof(data);
-          xine_event_send(this->stream, &uevent);
-        }
+	/* and push out a new event signifying the title update on the event
+	 * queue */
+	xine_event_send(this->stream, &uevent);
       }
     }
   } else if (strcasecmp(packet_xml_root->name, "clip") == 0) {
