@@ -964,16 +964,21 @@ fprintf(stderr, "ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß\n");
       READ_DATA_OR_FAIL(grab_image, lprintf("got GRABIMAGE\n"));
 
       {
-        off_t ret_val = -1;
+        off_t ret_val   = -1;
         
-        uint8_t *img   = 0;
-        int frame_size = 0;
-        int width      = 0;
-        int height     = 0;       
-        int ratio_code = 0;
-        int format     = 0;
+        uint8_t *img    = 0;
+        int frame_size  = 0;
+        int width       = 0;
+        int height      = 0;       
+        int ratio_code  = 0;
+        int format      = 0;
+        int interlaced  = 0;
+        int crop_left   = 0;
+        int crop_right  = 0;
+        int crop_top    = 0;
+        int crop_bottom = 0;
  
-        if (xine_get_current_frame_alloc(this->stream, &width, &height, &ratio_code, &format, &img, &frame_size))
+        if (xine_get_current_frame_alloc(this->stream, &width, &height, &ratio_code, &format, &img, &frame_size, &interlaced, &crop_left, &crop_right, &crop_top, &crop_bottom))
         {
           if (ratio_code == XINE_VO_ASPECT_SQUARE)
             ratio_code = 10000;

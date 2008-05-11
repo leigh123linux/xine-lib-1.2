@@ -1983,7 +1983,10 @@ int xine_get_pos_length (xine_stream_t *stream, int *pos_stream,
 
 static int _x_get_current_frame_impl (xine_stream_t *stream, int *width, int *height,
 				      int *ratio_code, int *format,
-				      uint8_t **img, int *size, int alloc_img) {
+				      uint8_t **img, int *size, int alloc_img,
+                                      int *interlaced,
+                                      int *crop_left, int *crop_right,
+                                      int *crop_top, int *crop_bottom) {
 
   vo_frame_t *frame;
   int required_size;
@@ -2011,6 +2014,17 @@ static int _x_get_current_frame_impl (xine_stream_t *stream, int *width, int *he
     *ratio_code = XINE_VO_ASPECT_DVB;
   
   *format = frame->format;
+
+  if (interlaced)
+    *interlaced = frame->progressive_frame ? 0 : (2 - frame->top_field_first);
+  if (crop_left)
+    *crop_left = frame->crop_left;
+  if (crop_right)
+    *crop_right = frame->crop_right;
+  if (crop_top)
+    *crop_top = frame->crop_top;
+  if (crop_bottom)
+    *crop_bottom = frame->crop_bottom;
 
   switch (*format) {
 
@@ -2093,21 +2107,27 @@ static int _x_get_current_frame_impl (xine_stream_t *stream, int *width, int *he
 
 int xine_get_current_frame_alloc (xine_stream_t *stream, int *width, int *height,
 				  int *ratio_code, int *format,
-				  uint8_t **img, int *size) {
+				  uint8_t **img, int *size,
+                                  int *interlaced,
+                                  int *crop_left, int *crop_right,
+                                  int *crop_top, int *crop_bottom) {
   uint8_t *no_img = NULL;
-  return _x_get_current_frame_impl(stream, width, height, ratio_code, format, img ? img : &no_img, size, img != NULL);
+  return _x_get_current_frame_impl(stream, width, height, ratio_code, format, img ? img : &no_img, size, img != NULL, interlaced, crop_left, crop_right, crop_top, crop_bottom);
 }
 
 int xine_get_current_frame_s (xine_stream_t *stream, int *width, int *height,
 				int *ratio_code, int *format,
-				uint8_t *img, int *size) {
-  return (!img || size) && _x_get_current_frame_impl(stream, width, height, ratio_code, format, &img, size, 0);
+				uint8_t *img, int *size,
+                                int *interlaced,
+                                int *crop_left, int *crop_right,
+                                int *crop_top, int *crop_bottom) {
+  return (!img || size) && _x_get_current_frame_impl(stream, width, height, ratio_code, format, &img, size, 0, interlaced, crop_left, crop_right, crop_top, crop_bottom);
 }
 
 int xine_get_current_frame (xine_stream_t *stream, int *width, int *height,
 			    int *ratio_code, int *format,
 			    uint8_t *img) {
-  return _x_get_current_frame_impl(stream, width, height, ratio_code, format, &img, NULL, 0);
+  return _x_get_current_frame_impl(stream, width, height, ratio_code, format, &img, NULL, 0, NULL, NULL, NULL, NULL, NULL);
 }
 
 int xine_get_spu_lang (xine_stream_t *stream, int channel, char *lang) {

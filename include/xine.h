@@ -411,12 +411,18 @@ int  xine_get_current_frame (xine_stream_t *stream,
 int  xine_get_current_frame_s (xine_stream_t *stream,
 			     int *width, int *height,
 			     int *ratio_code, int *format,
-			     uint8_t *img, int *size) XINE_PROTECTED;
+			     uint8_t *img, int *size,
+                             int *interlaced,
+                             int *crop_left, int *crop_right,
+                             int *crop_top, int *crop_bottom) XINE_PROTECTED;
 
 int  xine_get_current_frame_alloc (xine_stream_t *stream,
 			     int *width, int *height,
 			     int *ratio_code, int *format,
-			     uint8_t **img, int *size) XINE_PROTECTED;
+			     uint8_t **img, int *size,
+                             int *interlaced,
+                             int *crop_left, int *crop_right,
+                             int *crop_top, int *crop_bottom) XINE_PROTECTED;
 
 /* xine image formats */
 #define XINE_IMGFMT_YV12 (('2'<<24)|('1'<<16)|('V'<<8)|'Y')
