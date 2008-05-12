@@ -433,6 +433,11 @@ int  xine_get_param (xine_stream_t *stream, int param) XINE_PROTECTED;
  * xine_get_current_frame_alloc() takes care of allocating
  * a buffer on its own, so image data can be retrieved by
  * a single call without the need to pause the stream.
+ * 
+ * xine_get_current_frame_data() passes the parameters of the
+ * previously mentioned functions plus further information in
+ * a structure and can work like the _s or _alloc function
+ * respectively depending on the passed flags.
  *
  * all functions return 1 on success, 0 failure.
  */
@@ -444,12 +449,33 @@ int  xine_get_current_frame (xine_stream_t *stream,
 int  xine_get_current_frame_s (xine_stream_t *stream,
 			     int *width, int *height,
 			     int *ratio_code, int *format,
-			     uint8_t *img, int *size) XINE_PROTECTED;
+			     uint8_t *img, int *img_size) XINE_PROTECTED;
 
 int  xine_get_current_frame_alloc (xine_stream_t *stream,
 			     int *width, int *height,
 			     int *ratio_code, int *format,
-			     uint8_t **img, int *size) XINE_PROTECTED;
+			     uint8_t **img, int *img_size) XINE_PROTECTED;
+
+typedef struct {
+
+  int      width;
+  int      height;
+  int      crop_left;
+  int      crop_right;
+  int      crop_top;
+  int      crop_bottom;
+  int      ratio_code;
+  int      interlaced;
+  int      format;
+  int      img_size;
+  uint8_t *img;
+} xine_current_frame_data_t;
+
+#define XINE_FRAME_DATA_ALLOCATE_IMG (1<<0)
+
+int  xine_get_current_frame_data (xine_stream_t *stream,
+			     xine_current_frame_data_t *data,
+			     int flags) XINE_PROTECTED;
 
 /* xine image formats */
 #define XINE_IMGFMT_YV12 (('2'<<24)|('1'<<16)|('V'<<8)|'Y')
