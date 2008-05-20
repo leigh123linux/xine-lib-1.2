@@ -188,6 +188,14 @@ AC_DEFUN([CC_ATTRIBUTE_PACKED], [
     [$2])
 ])
 
+AC_DEFUN([CC_ATTRIBUTE_CONST], [
+  CC_CHECK_ATTRIBUTE(
+    [const], ,
+    [int __attribute__((const)) twopow(int n) { return 1 << n; } ],
+    [$1],
+    [$2])
+])
+
 AC_DEFUN([CC_FLAG_VISIBILITY], [
   AC_REQUIRE([CC_CHECK_WERROR])
   AC_CACHE_CHECK([if $CC supports -fvisibility=hidden],
