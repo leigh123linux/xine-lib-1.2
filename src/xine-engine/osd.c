@@ -121,6 +121,18 @@ struct osd_ft2context_s {
   FT_Face    face;
   int        size;
 };
+
+static void osd_free_ft2 (osd_object_t *osd)
+{
+  if( osd->ft2 ) {
+    if ( osd->ft2->library )
+      FT_Done_FreeType(osd->ft2->library);
+    free( osd->ft2 );
+    osd->ft2 = NULL;
+  }
+}
+#else
+static inline void osd_free_ft2 (osd_object_t *osd __attr_unused) {}
 #endif
 
 /*
@@ -874,16 +886,14 @@ static int osd_set_font_freetype2( osd_object_t *osd, const char *fontname, int 
 	    _("osd: error loading font %s with ft2\n"), fontname);
   }
 
-  free(osd->ft2);
-  osd->ft2 = NULL;
+  osd_free_ft2 (osd);
   return 0;
 
  end:
   if (FT_Set_Pixel_Sizes(osd->ft2->face, 0, size)) {
     xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG,
 	    _("osd: error setting font size (no scalable font?)\n"));
-    free(osd->ft2);
-    osd->ft2 = NULL;
+    osd_free_ft2 (osd);
     return 0;
   }
 
@@ -1458,15 +1468,7 @@ static void osd_free_object (osd_object_t *osd_to_close) {
     if ( osd == osd_to_close ) {
       free( osd->area );
 
-#ifdef HAVE_FT2
-      if( osd->ft2 ) {
-	if ( osd->ft2->library )
-	  FT_Done_FreeType(osd->ft2->library);
-
-	free( osd->ft2 );
-      }
-#endif
-
+      osd_free_ft2 (osd);
       osd_free_encoding(osd);
       
       if( last )
