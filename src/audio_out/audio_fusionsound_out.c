@@ -389,7 +389,7 @@ static ao_driver_t* open_plugin(audio_driver_class_t *ao_class,
   fusionsound_class_t  *class  = (fusionsound_class_t *) ao_class;
   fusionsound_driver_t *this;
   const char           *args[] = { "xine", "--dfb:no-sighandler", "--fs:no-banner" };
-  int                   argn   = sizeof(args) / sizeof(args[0]);
+  const size_t          argn   = sizeof(args) / sizeof(args[0]);
   char                **argp   = (char **) args;
   DFBResult             ret;
 

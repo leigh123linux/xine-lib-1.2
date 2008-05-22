@@ -525,7 +525,7 @@ void xine_hexdump (const char *buf, int length) {
 
 static const lang_locale_t *_get_first_lang_locale(const char *lcal) {
   const lang_locale_t *llocale;
-  int lang_len;
+  size_t lang_len;
   char *mod;
 
   if(lcal && *lcal) {

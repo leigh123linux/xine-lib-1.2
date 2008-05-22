@@ -657,7 +657,7 @@ void _x_demux_send_mrl_reference (xine_stream_t *stream, int alternative,
     xine_mrl_reference_data_ext_t *e;
     xine_mrl_reference_data_t *b;
   } data;
-  int mrl_len = strlen (mrl);
+  const size_t mrl_len = strlen (mrl);
 
   if (!title)
     title = "";

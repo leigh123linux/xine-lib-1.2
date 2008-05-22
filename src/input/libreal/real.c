@@ -313,7 +313,7 @@ static void calc_response_string (char *result, char *challenge) {
 
 void real_calc_response_and_checksum (char *response, char *chksum, char *challenge) {
 
-  int   ch_len, resp_len;
+  size_t ch_len, resp_len;
   int   i;
   char *ptr;
   char  buf[128];

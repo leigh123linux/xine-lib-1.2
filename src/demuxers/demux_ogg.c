@@ -304,10 +304,10 @@ static void send_ogg_packet (demux_ogg_t *this,
   buf_element_t *buf;
 
   int done=0,todo=op->bytes;
-  int op_size = sizeof(ogg_packet);
+  const size_t op_size = sizeof(ogg_packet);
 
   while (done<todo) {
-    int offset=0;
+    size_t offset=0;
     buf = fifo->buffer_pool_alloc (fifo);
     buf->decoder_flags = decoder_flags;
     if (done==0) {
@@ -531,34 +531,34 @@ static void update_chapter_display (demux_ogg_t *this, int stream_num, ogg_packe
   chapter--;
 
   if (chapter != this->chapter_info->current_chapter){
-    xine_event_t uevent;
-    xine_ui_data_t data;
-    int title_len;
-    char *title;
+    xine_ui_data_t data = {
+      .str = { 0, },
+      .str_len = 0
+    };
+    xine_event_t uevent = {
+      .type = XINE_EVENT_UI_SET_TITLE,
+      .stream = this->stream,
+      .data = &data,
+      .data_length = sizeof(data)
+    };
 
     this->chapter_info->current_chapter = chapter;
+
     if (chapter >= 0) {
-      char t_title[256];
-
       if (this->title) {
-        snprintf(t_title, sizeof (t_title), "%s / %s", this->title, this->chapter_info->entries[chapter].name);
+        data.str_len = snprintf(data.str, sizeof(data.str), "%s / %s", this->title, this->chapter_info->entries[chapter].name);
       } else {
-        snprintf(t_title, sizeof (t_title), "%s", this->chapter_info->entries[chapter].name);
+	strncpy(data.str, this->chapter_info->entries[chapter].name, sizeof(data.str)-1);
       }
-      title = t_title;
     } else {
-      title = this->title;
+      strncpy(data.str, this->title, sizeof(data.str));
     }
-    _x_meta_info_set(this->stream, XINE_META_INFO_TITLE, title);
-    lprintf("new TITLE: %s\n", title);
+    if ( data.str_len == 0 )
+      data.str_len = strlen(data.str);
 
-    uevent.type = XINE_EVENT_UI_SET_TITLE;
-    uevent.stream = this->stream;
-    uevent.data = &data;
-    uevent.data_length = sizeof(data);
-    title_len = strlen(title) + 1;
-    memcpy(data.str, title, title_len);
-    data.str_len = title_len;
+    _x_meta_info_set(this->stream, XINE_META_INFO_TITLE, data.str);
+    lprintf("new TITLE: %s\n", data.str);
+
     xine_event_send(this->stream, &uevent);
   }
 }
@@ -1267,8 +1267,8 @@ static void decode_annodex_header (demux_ogg_t *this, const int stream_num, ogg_
 static void decode_anxdata_header (demux_ogg_t *this, const int stream_num, ogg_packet *op) {
   int64_t granule_rate_n, granule_rate_d;
   uint32_t secondary_headers;
-  char content_type[1024];
-  int content_type_length;
+  const char *content_type = "";
+  size_t content_type_length = 0;
 
   lprintf("AnxData stream detected\n");
 
@@ -1280,11 +1280,16 @@ static void decode_anxdata_header (demux_ogg_t *this, const int stream_num, ogg_
   lprintf("granule_rate %" PRId64 "/%" PRId64 ", %d secondary headers\n",
       granule_rate_n, granule_rate_d, secondary_headers);
 
-  /* read "Content-Tyoe" MIME header */
-  sscanf(&op->packet[28], "Content-Type: %1023s\r\n", content_type);
-  content_type_length = strlen(content_type);
+  /* read "Content-Type" MIME header */
+  const char *startline = &op->packet[28];
+  const char *endline;
+  if ( strcmp(&op->packet[28], "Content-Type: ") == 0 &&
+       (endline = strstr(startline, "\r\n")) ) {
+    content_type = startline + sizeof("Content-Type: ");
+    content_type_length = startline - endline;
+  }
 
-  lprintf("Content-Type: %s (length:%d)\n", content_type, content_type_length);
+  lprintf("Content-Type: %s (length:%td)\n", content_type, content_type_length);
 
   /* how many header packets in the AnxData stream? */
   this->si[stream_num]->headers = secondary_headers + 1;

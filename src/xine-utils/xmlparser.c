@@ -597,11 +597,10 @@ static void xml_parser_dump_node (const xml_node_t *node, int indent) {
 
   xml_property_t *p;
   xml_node_t     *n;
-  int             l;
 
   printf ("%*s<%s ", indent, "", node->name);
 
-  l = strlen (node->name);
+  size_t l = strlen (node->name);
 
   p = node->props;
   while (p) {

@@ -190,11 +190,9 @@ struct mmsh_s {
 };
 
 static int send_command (mmsh_t *this, char *cmd)  {
-  int length;
-
   lprintf ("send_command:\n%s\n", cmd);
 
-  length = strlen(cmd);
+  const size_t length = strlen(cmd);
   if (_x_io_tcp_write(this->stream, this->s, cmd, length) != length) {
     xprintf (this->stream->xine, XINE_LOG_MSG, _("libmmsh: send error\n"));
     return 0;

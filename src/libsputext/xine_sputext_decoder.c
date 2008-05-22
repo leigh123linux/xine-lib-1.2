@@ -643,7 +643,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
 
     buf[0] = 0;
     for(line = 0; line < this->lines; line++) {
-      int len = strlen(buf);
+      size_t len = strlen(buf);
       if (len) {
         buf[len] = ' ';
         len++;

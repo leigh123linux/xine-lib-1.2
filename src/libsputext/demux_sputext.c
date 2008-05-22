@@ -129,7 +129,6 @@ static int eol(char p) {
 }
 
 static inline void trail_space(char *s) {
-  int i;
   while (isspace(*s)) {
     char *copy = s;
     do {
@@ -137,7 +136,7 @@ static inline void trail_space(char *s) {
       copy++;
     } while(*copy);
   }
-  i = strlen(s) - 1;
+  size_t i = strlen(s) - 1;
   while (i > 0 && isspace(s[i])) 
     s[i--] = '\0';
 }

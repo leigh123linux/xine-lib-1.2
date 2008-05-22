@@ -131,7 +131,7 @@ uint32_t _x_stream_info_get_public(xine_stream_t *stream, int info) {
  * at the end of the string
  */
 static void meta_info_chomp(char *str) {
-  int i, len;
+  size_t i, len;
 
   len = strlen(str);
   if (!len)
@@ -358,7 +358,7 @@ void _x_meta_info_set_multi(xine_stream_t *stream, int info, ...) {
     va_list   ap;
     char     *args[1025];
     char     *buf;
-    int       n, len;
+    size_t    n, len;
     
     len = n = 0;
 

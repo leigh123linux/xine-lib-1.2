@@ -1307,20 +1307,17 @@ static void _cdda_mkdir_recursive_safe(xine_t *xine, char *path) {
     if(p && strlen(p)) {
 
 #ifdef WIN32
-		if (*buf2 != '\0') {
+      if (*buf2 != '\0') {
 #endif
-
-      int size = strlen(buf2);
-      snprintf(buf2 + size, sizeof(buf2) - size, "/%s", p);
-
+	size_t size = strlen(buf2);
+	snprintf(buf2 + size, sizeof(buf2) - size, "/%s", p);
 #ifdef WIN32
-		}
-		else {
-          snprintf(buf2, sizeof(buf2), "%s", p);
-		}
-
+      }
+      else {
+	snprintf(buf2, sizeof(buf2), "%s", p);
+      }
 #endif /* WIN32 */
-
+      
       _cdda_mkdir_safe(xine, buf2);
     }
   }
@@ -1438,13 +1435,13 @@ static int _cdda_cddb_handle_code(char *buf) {
  */
 static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
   char  cdir[XINE_PATH_MAX + XINE_NAME_MAX + 1];
+  size_t cdir_size = 0;
   DIR  *dir;
 
   if(this == NULL)
     return 0;
   
-  memset(&cdir, 0, sizeof(cdir));
-  snprintf(cdir, sizeof(cdir), "%s", this->cddb.cache_dir);
+  cdir_size = snprintf(cdir, sizeof(cdir), "%s", this->cddb.cache_dir);
   
   if((dir = opendir(cdir)) != NULL) {
     struct dirent *pdir;
@@ -1452,14 +1449,12 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
     while((pdir = readdir(dir)) != NULL) {
       char discid[9];
       
-      memset(&discid, 0, sizeof(discid));
       snprintf(discid, sizeof(discid), "%08lx", this->cddb.disc_id);
      
       if(!strcasecmp(pdir->d_name, discid)) {
 	FILE *fd;
-	int size = strlen(cdir);
 	
-	snprintf(cdir + size, sizeof(cdir) - size, "/%s", discid);
+	cdir_size += snprintf(cdir + cdir_size, sizeof(cdir) - cdir_size, "/%s", discid);
 	if((fd = fopen(cdir, "r")) == NULL) {
 	  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 		  "input_cdda: fopen(%s) failed: %s.\n", cdir, strerror(errno));
@@ -1537,14 +1532,9 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
 		int   nyear;
 		
 		y = strstr(buffer, "YEAR:");
-		if(y) {
-		  if (sscanf(y+5, "%4d", &nyear) == 1) {
-		    char year[5];
-
-		    snprintf(year, 5, "%d", nyear);
-		    if (this->cddb.disc_year == NULL)
-		      this->cddb.disc_year = strdup(year);
-		  }
+		if (y && this->cddb.disc_year == NULL) {
+		  if (sscanf(y+5, "%4d", &nyear) == 1)
+		    asprintf(&this->cddb.disc_year, "%d", nyear);
 		}
 	      }
 	    }
@@ -1812,7 +1802,7 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
     while (strcmp(buffer, ".")) {
       char buf[2048];
       int tnum;
-      int bufsize = strlen(buffercache);
+      size_t bufsize = strlen(buffercache);
 
       memset(&buffer, 0, sizeof(buffer));
       _cdda_cddb_socket_read(this, buffer, sizeof(buffer) - 1);
@@ -1880,14 +1870,9 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
           int   nyear;
 
           y = strstr(buffer, "YEAR:");
-          if (y) {
-            if (sscanf(y+5, "%4d", &nyear) == 1) {
-              char year[5];
-
-              snprintf(year, 5, "%d", nyear);
-              if (this->cddb.disc_year == NULL)
-                this->cddb.disc_year = strdup(year);
-            }
+          if (y && this->cddb.disc_year == NULL) {
+            if (sscanf(y+5, "%4d", &nyear) == 1)
+	      asprintf(&this->cddb.disc_year, "%d", nyear);
           }
         }
       }

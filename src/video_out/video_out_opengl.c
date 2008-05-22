@@ -669,8 +669,8 @@ static int render_image_envtex (opengl_driver_t *this, opengl_frame_t *frame) {
  * Render setup functions
  */
 static int render_help_verify_ext (opengl_driver_t *this, char *ext) {
-  int   ret = 0;
-  int   l = strlen (ext);
+  int ret = 0;
+  const size_t l = strlen (ext);
   const char *e;
   for (e = (char *) this->gl_exts; e && *e; e = strchr (e, ' ')) {
     while (isspace (*e))

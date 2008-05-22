@@ -127,7 +127,7 @@ static char *rtsp_get(rtsp_t *s) {
  
 static void rtsp_put(rtsp_t *s, const char *string) {
 
-  int len=strlen(string);
+  size_t len=strlen(string);
   char *buf = malloc(sizeof(char)*len+2);
 
   lprintf(">> '%s'", string);
