@@ -558,7 +558,7 @@ static void collect_plugins(xine_t *this, char *path){
     size_t path_len = strlen(path);
     size_t str_size = path_len * 2 + 2; /* +2 for '/' and '\0' */
     char *str = malloc(str_size);
-    sprintf("%s/", path);
+    sprintf(str, "%s/", path);
 
     while ((pEntry = readdir (dir)) != NULL) {
       void *lib = NULL;
