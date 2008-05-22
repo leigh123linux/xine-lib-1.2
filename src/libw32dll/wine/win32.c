@@ -3492,6 +3492,7 @@ static HANDLE WINAPI expCreateFileA(LPCSTR cs1,DWORD i1,DWORD i2,
     {
 	int result;
 	char* x=strrchr(cs1,'\\');
+	char* tmp;
 	asprintf(&tmp,"%s/%s",win32_def_path,x?(x+1):cs1);
 //	printf("### Open: %s -> %s\n",cs1,tmp);
 	result=open(tmp, O_RDONLY);
