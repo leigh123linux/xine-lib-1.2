@@ -192,12 +192,12 @@ AC_DEFUN([CC_FLAG_VISIBILITY], [
   AC_REQUIRE([CC_CHECK_WERROR])
   AC_CACHE_CHECK([if $CC supports -fvisibility=hidden],
     [cc_cv_flag_visibility],
-    [ac_save_CFLAGS="$CFLAGS"
+    [cc_flag_visibility_save_CFLAGS="$CFLAGS"
      CFLAGS="$CFLAGS $cc_cv_werror"
      CC_CHECK_CFLAGS_SILENT([-fvisibility=hidden],
 	cc_cv_flag_visibility='yes',
 	cc_cv_flag_visibility='no')
-     CFLAGS="$ac_save_CFLAGS"])
+     CFLAGS="$cc_flag_visibility_save_CFLAGS"])
   
   if test "x$cc_cv_flag_visibility" = "xyes"; then
     AC_DEFINE([SUPPORT_FLAG_VISIBILITY], 1, [Define this if the compiler supports the -fvisibility flag])
