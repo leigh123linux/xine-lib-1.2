@@ -39,7 +39,7 @@ AC_DEFUN([CC_CHECK_CFLAGS], [
      CFLAGS="$CFLAGS $1"
      AC_COMPILE_IFELSE([int a;],
        [eval "AS_TR_SH([cc_cv_cflags_$1])='yes'"],
-       [eval "AS_TR_SH([cc_cv_cflags_$1])="])
+       [eval "AS_TR_SH([cc_cv_cflags_$1])='no'"])
      CFLAGS="$ac_save_CFLAGS"
     ])
 
