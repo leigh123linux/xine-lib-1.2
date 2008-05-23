@@ -50,9 +50,6 @@ AC_DEFUN([XINE_CHECK_MINMAX], [
         [xine_cv_minmax=no])
     ])
 
-  if test x$xine_cv_minmax = xyes; then
-    ifelse([$1], , [:], [$1])
-  else
-    ifelse([$2], , [:], [$2])
-  fi
+  AS_IF([test x$xine_cv_minmax = xyes],
+    [$1], [$2])
 ])
