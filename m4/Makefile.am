@@ -24,6 +24,7 @@ EXTRA_DIST = glibc2.m4 intdiv0.m4 intmax.m4 inttypes.m4 inttypes_h.m4 inttypes-p
 	lcmessage.m4 \
 	libFLAC.m4 \
 	libfame.m4 \
+	misc.m4 \
 	opengl.m4 \
 	optimizations.m4 \
 	pkg.m4 \

@@ -2177,6 +2177,10 @@ AC_CHECK_FUNC(opendir,
     AC_MSG_ERROR([dirent is needed (opendir, readdir, ...)])
   fi])
 
+XINE_CHECK_MINMAX([], [
+    AC_DEFINE([MIN(x, y)], [(x > y) ? y : x], [Get the minimum value between two])
+    AC_DEFINE([MAX(x, y)], [(x > y) ? x : y], [Get the maximum value between two])
+  ])
 
 dnl ---------------------------------------------
 dnl cflags and debug cflags
