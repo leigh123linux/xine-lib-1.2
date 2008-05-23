@@ -434,7 +434,7 @@ static void real_parse_headers (demux_real_t *this) {
     case CONT_TAG:
 
       chunk_size -= PREAMBLE_SIZE;
-      chunk_buffer = xine_xmalloc(chunk_size);
+      chunk_buffer = malloc(chunk_size);
       if (this->input->read(this->input, chunk_buffer, chunk_size) !=
 	  chunk_size) {
 	free (chunk_buffer);
@@ -1737,7 +1737,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   }
 
 
-  this         = xine_xmalloc (sizeof (demux_real_t));
+  this         = calloc(1, sizeof(demux_real_t));
   this->stream = stream;
   this->input  = input;
 
@@ -1770,7 +1770,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 static void *init_class (xine_t *xine, void *data) {
   demux_real_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_real_class_t));
+  this = calloc(1, sizeof(demux_real_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.description     = N_("RealMedia file demux plugin");

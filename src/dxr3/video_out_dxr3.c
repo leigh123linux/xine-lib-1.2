@@ -167,7 +167,7 @@ static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, void *visual_gen)
 {
   dxr3_driver_class_t *this;
   
-  this = (dxr3_driver_class_t *)xine_xmalloc(sizeof(dxr3_driver_class_t));
+  this = calloc(1, sizeof(dxr3_driver_class_t));
   if (!this) return NULL;
   
   this->devnum = xine->config->register_num(xine->config,
@@ -221,7 +221,7 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
   
   if (class->instance) return NULL;
   
-  this = (dxr3_driver_t *)xine_xmalloc(sizeof(dxr3_driver_t));
+  this = calloc(1, sizeof(dxr3_driver_t));
   if (!this) return NULL;
   
   this->vo_driver.get_capabilities     = dxr3_get_capabilities;
@@ -525,7 +525,7 @@ static vo_frame_t *dxr3_alloc_frame(vo_driver_t *this_gen)
   dxr3_frame_t *frame;
   dxr3_driver_t *this = (dxr3_driver_t *)this_gen;
   
-  frame = (dxr3_frame_t *)xine_xmalloc(sizeof(dxr3_frame_t));
+  frame = calloc(1, sizeof(dxr3_frame_t));
   
   pthread_mutex_init(&frame->vo_frame.mutex, NULL);
 
@@ -1323,7 +1323,7 @@ static int lookup_parameter(struct lut_entry *lut, char *name,
 static int dxr3_overlay_read_state(dxr3_overlay_t *this)
 {
   char *loc;
-  char fname[256], tmp[128], line[256];
+  char *fname, line[256];
   FILE *fp;
   struct lut_entry lut[] = {
     {"xoffset",        TYPE_INT,   &this->xoffset},
@@ -1348,18 +1348,16 @@ static int dxr3_overlay_read_state(dxr3_overlay_t *this)
    * (used by .overlay/res file) */
   setlocale(LC_NUMERIC, "C");
 
-  snprintf(tmp, sizeof(tmp), "/res_%dx%dx%d",
+  asprintf(&fname, "%s/.overlay/res_%dx%dx%d", getenv("HOME"), 
     this->screen_xres, this->screen_yres, this->screen_depth);
-  strncpy(fname, getenv("HOME"), sizeof(fname) - strlen(tmp) - sizeof("/.overlay"));
-  fname[sizeof(fname) - strlen(tmp) - sizeof("/.overlay")] = '\0';
-  strcat(fname, "/.overlay");
-  strcat(fname, tmp);
   llprintf(LOG_OVR, "attempting to open %s\n", fname);
   if (!(fp = fopen(fname, "r"))) {
     xprintf(this->xine, XINE_VERBOSITY_LOG, 
 	    _("video_out_dxr3: ERROR Reading overlay init file. Run autocal!\n"));
+    free(fname);
     return -1;
   }
+  free(fname);
 
   while (!feof(fp)) {
     if (!fgets(line, 256, fp))

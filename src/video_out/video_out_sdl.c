@@ -138,7 +138,7 @@ static vo_frame_t *sdl_alloc_frame (vo_driver_t *this_gen) {
   /* sdl_driver_t    *this = (sdl_driver_t *) this_gen; */
   sdl_frame_t     *frame ;
 
-  frame = (sdl_frame_t *) xine_xmalloc (sizeof (sdl_frame_t));
+  frame = (sdl_frame_t *) calloc(1, sizeof(sdl_frame_t));
 
   if (!frame)
     return NULL;
@@ -475,7 +475,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   XWindowAttributes     window_attributes;
 #endif
   
-  this = (sdl_driver_t *) xine_xmalloc (sizeof (sdl_driver_t));
+  this = (sdl_driver_t *) calloc(1, sizeof(sdl_driver_t));
   if (!this)
     return NULL;
 
@@ -583,7 +583,7 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   }
   SDL_QuitSubSystem (SDL_INIT_VIDEO);
 
-  this = (sdl_class_t*) xine_xmalloc (sizeof (sdl_class_t));
+  this = (sdl_class_t*) calloc(1, sizeof(sdl_class_t));
    
   this->driver_class.open_plugin      = open_plugin;
   this->driver_class.identifier       = "SDL";

@@ -169,15 +169,16 @@ void read_metadata (speex_decoder_t *this, char * comments, int length)
 #endif
 
     for (i = 0; i < (sizeof(speex_comment_keys)/sizeof(speex_comment_keys[0])); i++) {
+      size_t keylen = strlen(speex_comment_keys[i].key);
+
       if ( !strncasecmp (speex_comment_keys[i].key, c,
-			 strlen(speex_comment_keys[i].key)) ) {
-	int keylen = strlen(speex_comment_keys[i].key);
+			 keylen) ) {
 	char meta_info[(len - keylen) + 1];
 	
 	lprintf ("known metadata %d %d\n",
 		 i, speex_comment_keys[i].xine_metainfo_index);
 	
-	snprintf(meta_info, (len - keylen), "%s", c + keylen);
+	strncpy(meta_info, &c[keylen], len-keylen);
 	_x_meta_info_set_utf8(this->stream, speex_comment_keys[i].xine_metainfo_index, meta_info);
       }
     }
@@ -354,7 +355,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
   speex_decoder_t *this ;
   static SpeexStereoState init_stereo = SPEEX_STEREO_STATE_INIT;
 
-  this = (speex_decoder_t *) xine_xmalloc (sizeof (speex_decoder_t));
+  this = (speex_decoder_t *) calloc(1, sizeof(speex_decoder_t));
 
   this->audio_decoder.decode_data         = speex_decode_data;
   this->audio_decoder.reset               = speex_reset;
@@ -383,7 +384,7 @@ void *speex_init_plugin (xine_t *xine, void *data) {
 
   speex_class_t *this;
   
-  this = (speex_class_t *) xine_xmalloc (sizeof (speex_class_t));
+  this = (speex_class_t *) calloc(1, sizeof(speex_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "speex";

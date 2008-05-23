@@ -289,7 +289,7 @@ static int            deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
 
 static void *deinterlace_init_plugin(xine_t *xine, void *data)
 {
-  post_class_deinterlace_t *class = (post_class_deinterlace_t *)xine_xmalloc(sizeof(post_class_deinterlace_t));
+  post_class_deinterlace_t *class = calloc(1, sizeof(post_class_deinterlace_t));
   uint32_t config_flags = xine_mm_accel();
   int i;
 
@@ -362,7 +362,7 @@ static post_plugin_t *deinterlace_open_plugin(post_class_t *class_gen, int input
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target)
 {
-  post_plugin_deinterlace_t *this = (post_plugin_deinterlace_t *)xine_xmalloc(sizeof(post_plugin_deinterlace_t));
+  post_plugin_deinterlace_t *this = calloc(1, sizeof(post_plugin_deinterlace_t));
   post_in_t                 *input;
   xine_post_in_t            *input_api;
   post_out_t                *output;

@@ -326,7 +326,7 @@ static int demux_wv_get_optional_data(demux_plugin_t *const this_gen,
 static demux_plugin_t *open_plugin (demux_class_t *const class_gen,
 				    xine_stream_t *const stream,
 				    input_plugin_t *const input) {
-  demux_wv_t *const this = xine_xmalloc (sizeof (demux_wv_t));
+  demux_wv_t *const this = calloc(1, sizeof (demux_wv_t));
   this->stream = stream;
   this->input = input;
 
@@ -363,7 +363,7 @@ static demux_plugin_t *open_plugin (demux_class_t *const class_gen,
 }
 
 void *demux_wv_init_plugin (xine_t *const xine, void *const data) {
-  demux_wv_class_t *const this = xine_xmalloc (sizeof (demux_wv_class_t));
+  demux_wv_class_t *const this = calloc(1, sizeof (demux_wv_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.description     = N_("Wavpack demux plugin");

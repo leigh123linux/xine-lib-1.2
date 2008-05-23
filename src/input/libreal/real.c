@@ -313,7 +313,7 @@ static void calc_response_string (char *result, char *challenge) {
 
 void real_calc_response_and_checksum (char *response, char *chksum, char *challenge) {
 
-  int   ch_len, resp_len;
+  size_t ch_len, resp_len;
   int   i;
   char *ptr;
   char  buf[128] = { 0, };
@@ -448,7 +448,7 @@ rmff_header_t *real_parse_sdp(char *data, char **stream_rules, uint32_t bandwidt
   if (!desc) return NULL;
  
   buf=xine_buffer_init(2048);
-  header = xine_xmalloc(sizeof(rmff_header_t));
+  header = calloc(1, sizeof(rmff_header_t));
 
   header->fileheader=rmff_new_fileheader(4+desc->stream_count);
   header->cont=rmff_new_cont(

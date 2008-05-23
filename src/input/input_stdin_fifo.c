@@ -312,7 +312,7 @@ static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen,
    * => create plugin instance
    */
 
-  this       = (stdin_input_plugin_t *) xine_xmalloc(sizeof(stdin_input_plugin_t));
+  this       = calloc(1, sizeof(stdin_input_plugin_t));
 
   this->stream = stream;
   this->curpos = 0;
@@ -348,7 +348,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   stdin_input_class_t  *this;
 
-  this = (stdin_input_class_t *) xine_xmalloc (sizeof (stdin_input_class_t));
+  this = calloc(1, sizeof (stdin_input_class_t));
 
   this->xine   = xine;
 

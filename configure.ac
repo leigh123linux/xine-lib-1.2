@@ -432,10 +432,6 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[asm(".align 3");]])],
 
 CC_ATTRIBUTE_ALIGNED
 
-CC_ATTRIBUTE_PACKED([XINE_PACKED='__attribute__((packed))'],
-                    [AC_MSG_WARN([Your compiler doesn't support __attribute__((packed)); xine might not work as expected.])])
-AC_DEFINE_UNQUOTED([XINE_PACKED], [$XINE_PACKED], [Mark a structure as being packed])
-
 CC_ATTRIBUTE_VISIBILITY([protected],
                         [visibility_export="protected"],
                         [CC_ATTRIBUTE_VISIBILITY([default], [visibility_export="default"])])
@@ -454,6 +450,9 @@ CC_ATTRIBUTE_FORMAT_ARG
 CC_ATTRIBUTE_DEPRECATED
 CC_ATTRIBUTE_UNUSED
 CC_ATTRIBUTE_MALLOC
+
+CC_ATTRIBUTE_PACKED([],
+  [AC_MSG_WARN([Your compiler doesn't support __attribute__((packed)); xine might not work as expected.])])
 
 CC_CHECK_CFLAGS([-pipe], [miscflags="$miscflags -pipe"])
 

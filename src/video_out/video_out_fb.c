@@ -221,7 +221,7 @@ static vo_frame_t *fb_alloc_frame(vo_driver_t *this_gen)
      this->total_num_native_buffers <= this->used_num_buffers)
     return 0;
 
-  frame = (fb_frame_t *)xine_xmalloc(sizeof(fb_frame_t));
+  frame = calloc(1, sizeof(fb_frame_t));
   if(!frame)
     return NULL;
 
@@ -992,7 +992,7 @@ static vo_driver_t *fb_open_plugin(video_driver_class_t *class_gen,
   config = class->config;
 
   /* allocate plugin struct */
-  this = (fb_driver_t *) xine_xmalloc(sizeof(fb_driver_t));
+  this = calloc(1, sizeof(fb_driver_t));
   if(!this)
     return NULL;
 
@@ -1060,7 +1060,7 @@ error:
 
 static void *fb_init_class(xine_t *xine, void *visual_gen)
 {
-  fb_class_t *this = (fb_class_t *)xine_xmalloc(sizeof(fb_class_t));
+  fb_class_t *this = calloc(1, sizeof(fb_class_t));
 
   this->driver_class.open_plugin     = fb_open_plugin;
   this->driver_class.identifier      = "fb";

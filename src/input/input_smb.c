@@ -254,9 +254,7 @@ static xine_mrl_t **smb_class_get_dir (input_class_t *this_gen,
 				dir_files[num_dir_files].link   = NULL;
 				dir_files[num_dir_files].type = mrl_file | mrl_file_directory;
 				dir_files[num_dir_files].origin = strdup(current_path);
-				dir_files[num_dir_files].mrl    = (char *) xine_xmalloc(
-					strlen(current_path) + 1 + strlen(pdirent->name) + 1);
-				sprintf(dir_files[num_dir_files].mrl, "%s/%s", current_path, pdirent->name);
+				asprintf(&(dir_files[num_dir_files].mrl), "%s/%s", current_path, pdirent->name);
 				dir_files[num_dir_files].size   = pdirent->dirlen;
 				num_dir_files ++;
 			}else if (pdirent->smbc_type == SMBC_SERVER){  
@@ -264,17 +262,14 @@ static xine_mrl_t **smb_class_get_dir (input_class_t *this_gen,
 					dir_files[num_dir_files].link   = NULL;
 					dir_files[num_dir_files].type = mrl_file | mrl_file_directory;
 					dir_files[num_dir_files].origin = strdup("smb:/");
-					dir_files[num_dir_files].mrl    = (char *) xine_xmalloc(strlen("smb:/") + 4);
-					sprintf(dir_files[num_dir_files].mrl, "%s/%s", "smb:/", "..");
+					asprintf(&(dir_files[num_dir_files].mrl), "%s/%s", "smb:/", "..");
 					dir_files[num_dir_files].size   = pdirent->dirlen;
 					num_dir_files ++;
 				}
 				dir_files[num_dir_files].link   = NULL;
 				dir_files[num_dir_files].type   = mrl_file | mrl_file_directory;
 				dir_files[num_dir_files].origin = strdup("smb:/");
-				dir_files[num_dir_files].mrl    = 
-					(char *) xine_xmalloc(strlen("smb:/") + 1 + strlen(pdirent->name) + 1);
-				sprintf(dir_files[num_dir_files].mrl, "%s/%s", "smb:/", pdirent->name);
+				asprintf(*(dir_files[num_dir_files].mrl), "%s/%s", "smb:/", pdirent->name);
 				dir_files[num_dir_files].size   = pdirent->dirlen;
 				num_dir_files ++;
 			} else if (pdirent->smbc_type == SMBC_FILE_SHARE){
@@ -282,9 +277,7 @@ static xine_mrl_t **smb_class_get_dir (input_class_t *this_gen,
 					dir_files[num_dir_files].link   = NULL;
 					dir_files[num_dir_files].type   = mrl_file | mrl_file_directory;
 					dir_files[num_dir_files].origin = strdup(current_path);
-					dir_files[num_dir_files].mrl    = (char *) xine_xmalloc(
-						strlen(current_path) + 3);
-					sprintf(dir_files[num_dir_files].mrl, "%s/%s", current_path, "..");
+					asprintf(&(dir_files[num_dir_files].mrl), "%s/%s", current_path, "..");
 					dir_files[num_dir_files].type   |= mrl_file_directory;
 					dir_files[num_dir_files].size   = pdirent->dirlen;
 					num_dir_files ++;
@@ -293,9 +286,7 @@ static xine_mrl_t **smb_class_get_dir (input_class_t *this_gen,
 					dir_files[num_dir_files].link   = NULL;
 					dir_files[num_dir_files].type   = mrl_file | mrl_file_directory;
 					dir_files[num_dir_files].origin = strdup(current_path);
-					dir_files[num_dir_files].mrl    = (char *) xine_xmalloc(
-						strlen(current_path) + 1 + strlen(pdirent->name) + 1);
-					sprintf(dir_files[num_dir_files].mrl, "%s/%s", current_path, pdirent->name);
+					asprintf(&(dir_files[num_dir_files].mrl), "%s/%s", current_path, pdirent->name);
 					dir_files[num_dir_files].size   = pdirent->dirlen;
 					num_dir_files ++;
        				}
@@ -303,18 +294,14 @@ static xine_mrl_t **smb_class_get_dir (input_class_t *this_gen,
 				dir_files[num_dir_files].link   = NULL;
 				dir_files[num_dir_files].type   = mrl_file | mrl_file_directory;
 				dir_files[num_dir_files].origin = strdup(current_path);
-				dir_files[num_dir_files].mrl    = 
-					(char *) xine_xmalloc(strlen(current_path) + 1 + strlen(pdirent->name) + 1);
-				sprintf(dir_files[num_dir_files].mrl, "%s/%s", current_path, pdirent->name);
+				asprintf(&(dir_files[num_dir_files].mrl), "%s/%s", current_path, pdirent->name);
 				dir_files[num_dir_files].size   = pdirent->dirlen;
 				num_dir_files ++;
 			}else if (pdirent->smbc_type == SMBC_FILE){
 				norm_files[num_norm_files].link   = NULL;
 				norm_files[num_norm_files].type   = mrl_file | mrl_file_normal;
 				norm_files[num_norm_files].origin = strdup(current_path);
-				norm_files[num_norm_files].mrl    = 
-					(char *) xine_xmalloc(strlen(current_path) + 1 + strlen(pdirent->name) + 1);
-				sprintf(norm_files[num_norm_files].mrl, "%s/%s", current_path, pdirent->name);
+				asprintf(&(norm_files[num_norm_files].mrl), "%s/%s", current_path, pdirent->name);
 				norm_files[num_norm_files].size   = pdirent->dirlen;
 				num_norm_files ++;
 			}
@@ -324,8 +311,7 @@ static xine_mrl_t **smb_class_get_dir (input_class_t *this_gen,
 		if (num_dir_files == 0) {
 			dir_files[num_dir_files].link   = NULL;
 			dir_files[num_dir_files].origin = strdup(current_path);
-			dir_files[num_dir_files].mrl    = (char *) xine_xmalloc(strlen(current_path) + 4);
-			sprintf(dir_files[num_dir_files].mrl, "%s/%s", current_path, "..");
+			asprintf(&(dir_files[num_dir_files].mrl), "%s/%s", current_path, "..");
 			dir_files[num_dir_files].type = mrl_file | mrl_file_directory;
 			dir_files[num_dir_files].size   = 0;
 			num_dir_files ++;
@@ -348,7 +334,7 @@ static xine_mrl_t **smb_class_get_dir (input_class_t *this_gen,
 				++this->mrls_allocated_entries;
 				this->mrls = realloc(this->mrls, 
 					(this->mrls_allocated_entries+1) * sizeof(xine_mrl_t*));
-				this->mrls[num_files] = (xine_mrl_t *) xine_xmalloc(sizeof(xine_mrl_t));
+				this->mrls[num_files] = calloc(1, sizeof(xine_mrl_t));
 			}else
 				memset(this->mrls[num_files], 0, sizeof(xine_mrl_t));
       
@@ -365,7 +351,7 @@ static xine_mrl_t **smb_class_get_dir (input_class_t *this_gen,
 				++this->mrls_allocated_entries;
 				this->mrls = realloc(this->mrls, 
 					(this->mrls_allocated_entries+1) * sizeof(xine_mrl_t*));
-				this->mrls[num_files] = (xine_mrl_t *) xine_xmalloc(sizeof(xine_mrl_t));
+				this->mrls[num_files] = calloc(1, sizeof(xine_mrl_t));
 			}else
 				memset(this->mrls[num_files], 0, sizeof(xine_mrl_t));
 
@@ -456,7 +442,7 @@ smb_class_get_instance (input_class_t *class_gen, xine_stream_t *stream,
 	if (strncmp (mrl, "smb://",6))
 		return NULL;
 
-	this = (smb_input_t *)xine_xmalloc(sizeof(smb_input_t));
+	this = calloc(1, sizeof(smb_input_t));
 	this->stream = stream;
 	this->mrl = strdup (mrl);
 	this->fd = -1;
@@ -495,7 +481,7 @@ static void
 	if (smbc_init(smb_auth,(xine->verbosity >= XINE_VERBOSITY_DEBUG)))
 	  goto _exit_error;
 	
-	this = (smb_input_class_t *) xine_xmalloc(sizeof(smb_input_class_t));
+	this = calloc(1, sizeof(smb_input_class_t));
 	this->xine = xine;
 
 	this->input_class.get_instance       = smb_class_get_instance;

@@ -88,7 +88,7 @@ static vo_frame_t *none_alloc_frame(vo_driver_t *vo_driver) {
   /* none_driver_t *this = (none_driver_t *) vo_driver; */
   none_frame_t  *frame;
   
-  frame = (none_frame_t *) xine_xmalloc(sizeof(none_frame_t));
+  frame = calloc(1, sizeof(none_frame_t));
   if(!frame)
     return NULL;
 
@@ -243,7 +243,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *driver_class, const void *
   none_class_t    *class = (none_class_t *) driver_class;
   none_driver_t   *driver;
   
-  driver = (none_driver_t *) xine_xmalloc(sizeof(none_driver_t));
+  driver = calloc(1, sizeof(none_driver_t));
   
   driver->config = class->config;
   driver->xine   = class->xine;
@@ -272,7 +272,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *driver_class, const void *
 static void *init_class (xine_t *xine, void *visual) {
   none_class_t        *this;
   
-  this = (none_class_t *) xine_xmalloc(sizeof(none_class_t));
+  this = calloc(1, sizeof(none_class_t));
 
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.identifier      = "none";

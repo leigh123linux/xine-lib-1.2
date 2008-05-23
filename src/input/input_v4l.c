@@ -143,6 +143,10 @@ typedef struct {
   int		           old_zoomx;
   int		           old_zoomy;
   int		           audio_only;
+
+  buf_element_t           *frames_base;
+  void                    *audio_content_base;
+  void                    *video_content_base;
   
   /* Audio */
   buf_element_t           *aud_frames;
@@ -372,7 +376,7 @@ static pvrscr_t* pvrscr_init (void)
 {
    pvrscr_t *this;
    
-   this = (pvrscr_t *) xine_xmalloc(sizeof(pvrscr_t));
+   this = calloc(1, sizeof(pvrscr_t));
    
    this->scr.interface_version = 3;
    this->scr.get_priority      = pvrscr_get_priority;
@@ -742,23 +746,50 @@ static int search_by_channel(v4l_input_plugin_t *this, char *input_source)
   return 1;   
 }
 
-static void allocate_audio_frames(v4l_input_plugin_t *this)
+static void allocate_frames(v4l_input_plugin_t *this, unsigned dovideo)
 {
+  const size_t framescount = dovideo ? 2*NUM_FRAMES : NUM_FRAMES;
+
+  /* Allocate a single memory area for both audio and video frames */
+  buf_element_t *frames = this->frames_base =
+    calloc(framescount, sizeof(buf_element_t));
+  extra_info_t  *infos  =
+    calloc(framescount, sizeof(extra_info_t));
+
   int i;
-  
+
+  uint8_t *audio_content = this->audio_content_base =
+    calloc(NUM_FRAMES, this->periodsize);
+
+  /* Set up audio frames */
   for (i = 0; i < NUM_FRAMES; i++) {
-    buf_element_t *frame;
-    
     /* Audio frame */
-    frame = xine_xmalloc(sizeof(buf_element_t));
+    frames[i].content     = audio_content;
+    frames[i].type	   = BUF_AUDIO_LPCM_LE;
+    frames[i].source      = this;
+    frames[i].free_buffer = store_aud_frame;
+    frames[i].extra_info  = &infos[i];
     
-    frame->content         = xine_xmalloc(this->periodsize);
-    frame->type	           = BUF_AUDIO_LPCM_LE;
-    frame->source          = this;
-    frame->free_buffer     = store_aud_frame;
-    frame->extra_info      = xine_xmalloc(sizeof(extra_info_t));
-    
-    store_aud_frame(frame);
+    audio_content += this->periodsize;
+    store_aud_frame(&frames[i]);
+  }
+
+  if ( dovideo ) {
+    uint8_t *video_content = this->video_content_base =
+      calloc(NUM_FRAMES, this->frame_size);
+
+    /* Set up video frames */
+    for (i = NUM_FRAMES; i < 2*NUM_FRAMES; i++) {
+      /* Video frame */
+      frames[i].content     = video_content;
+      frames[i].type	     = this->frame_format;
+      frames[i].source      = this;
+      frames[i].free_buffer = store_vid_frame;
+      frames[i].extra_info  = &infos[i];
+
+      video_content += this->frame_size;
+      store_vid_frame(&frames[i]);
+    }
   }
 }
 
@@ -809,7 +840,7 @@ static int open_radio_capture_device(v4l_input_plugin_t *this)
   
   /* Pre-allocate some frames for audio so it doesn't have to be done during
    * capture */
-  allocate_audio_frames(this);
+  allocate_frames(this, 0);
   
   this->audio_only = 1;
   
@@ -881,7 +912,7 @@ static int open_video_capture_device(v4l_input_plugin_t *this)
   
   /* Pre-allocate some frames for audio and video so it doesn't have to be 
    * done during capture */
-  allocate_audio_frames(this);
+  allocate_frames(this, 1);
   
   /* Unmute audio off video capture device */
   unmute_audio(this);
@@ -983,20 +1014,6 @@ static int open_video_capture_device(v4l_input_plugin_t *this)
     this->frame_format = BUF_VIDEO_YUY2;
     this->frame_size = resolutions[j].width * resolutions[j].height * 2;
     break;
-  }
-  
-  for (i = 0; i < NUM_FRAMES; i++) {
-    buf_element_t *frame;
-      
-    frame = xine_xmalloc (sizeof (buf_element_t));
-    
-    frame->content         = xine_xmalloc (this->frame_size);
-    frame->type            = this->frame_format;
-    frame->source          = this;
-    frame->free_buffer     = store_vid_frame;
-    frame->extra_info      = xine_xmalloc(sizeof(extra_info_t));
-    
-    store_vid_frame(frame);
   }
   
   /* Strip the vbi / sync signal from the image by zooming in */ 
@@ -1600,52 +1617,18 @@ static void v4l_plugin_dispose (input_plugin_t *this_gen) {
   
   if (this->event_queue)
     xine_event_dispose_queue (this->event_queue);
-  
-  lprintf("Freeing allocated audio frames");
-  if (this->aud_frames) {
-    buf_element_t *cur_frame  = this->aud_frames;
-    
-    while (cur_frame != NULL) {
-      buf_element_t *next_frame = cur_frame->next;
-#ifdef LOG
-      printf(".");
-#endif
 
-      if (cur_frame->content)
-	free(cur_frame->content);
-      
-      if (cur_frame->extra_info)
-	free(cur_frame->extra_info);
-      
-      free(cur_frame);
-      cur_frame = next_frame;
-    }
-  }
-#ifdef LOG
-  printf("\n");
-#endif
+  /* All the frames, both video and audio, are allocated in a single
+     memory area pointed by the frames_base pointer. The content of
+     the frames is divided in two areas, one pointed by
+     audio_content_base and the other by video_content_base. The
+     extra_info structures are all allocated in the first frame
+     data. */
+  free(this->audio_content_base);
+  free(this->video_content_base);
+  free(this->frames_base->extra_info);
+  free(this->frames_base);
 
-  
-  lprintf("Freeing allocated video frames");
-  if (this->vid_frames) {
-    buf_element_t *cur_frame  = this->vid_frames;
-    
-    while (cur_frame != NULL) {
-      buf_element_t *next_frame = cur_frame->next;
-#ifdef LOG
-      printf(".");
-#endif
-
-      if (cur_frame->content)
-	free(cur_frame->content);
-      
-      if (cur_frame->extra_info)
-	free(cur_frame->extra_info);
-      
-      free(cur_frame);
-      cur_frame = next_frame;
-    }
-  }
 #ifdef LOG
   printf("\n");
 #endif
@@ -1746,7 +1729,7 @@ static input_plugin_t *v4l_class_get_instance (input_class_t *cls_gen,
     return NULL;
   }
   
-  this = (v4l_input_plugin_t *) xine_xmalloc (sizeof (v4l_input_plugin_t));
+  this = calloc(1, sizeof (v4l_input_plugin_t));
     
   extract_mrl(this, mrl);
   
@@ -1912,7 +1895,7 @@ static void *init_video_class (xine_t *xine, void *data)
   v4l_input_class_t  *this;
   config_values_t    *config = xine->config;
   
-  this = (v4l_input_class_t *) xine_xmalloc (sizeof (v4l_input_class_t));
+  this = calloc(1, sizeof (v4l_input_class_t));
   
   this->xine                           = xine;
   
@@ -1952,7 +1935,7 @@ static void *init_radio_class (xine_t *xine, void *data)
   v4l_input_class_t  *this;
   config_values_t    *config = xine->config;
   
-  this = (v4l_input_class_t *) xine_xmalloc (sizeof (v4l_input_class_t));
+  this = calloc(1, sizeof (v4l_input_class_t));
   
   this->xine                           = xine;
   

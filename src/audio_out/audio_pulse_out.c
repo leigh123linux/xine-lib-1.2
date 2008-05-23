@@ -745,7 +745,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 
   lprintf ("audio_pulse_out: open_plugin called\n");
 
-  this = (pulse_driver_t *) xine_xmalloc (sizeof (pulse_driver_t));
+  this = calloc(1, sizeof (pulse_driver_t));
   if (!this)
     return NULL;
 
@@ -848,7 +848,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   lprintf ("audio_pulse_out: init class\n");
 
-  this = (pulse_class_t *) xine_xmalloc (sizeof (pulse_class_t));
+  this = calloc(1, sizeof (pulse_class_t));
   if (!this)
     return NULL;
 

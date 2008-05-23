@@ -577,10 +577,8 @@ static int asf_header_parse_content_description(asf_header_t *header_pub, uint8_
   if (buffer_len < 10)
     return 0;
 
-  if (! (content = calloc(1, sizeof(asf_content_t))) )
-    return 0;
-
-  if ( (iconv_cd = iconv_open("UTF-8", "UCS-2LE")) == (iconv_t)-1 )
+  content = calloc(1, sizeof(asf_content_t));
+  if (!content)
     return 0;
 
   asf_reader_init(&reader, buffer, buffer_len);
@@ -615,6 +613,10 @@ asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len) {
   asf_reader_t reader;
   uint32_t object_count;
   uint16_t junk;
+
+  asf_header = calloc(1, sizeof(asf_header_internal_t));
+  if (!asf_header)
+    return NULL;
 
   lprintf("parsing_asf_header\n");
   if (buffer_len < 6) {
@@ -692,7 +694,8 @@ asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len) {
   }
   if (!asf_header->pub.content) {
     lprintf("no content object present\n");
-    if (! (asf_header->pub.content = calloc(1, sizeof(asf_content_t))) )
+    asf_header->pub.content = calloc(1, sizeof(asf_content_t));
+    if (!asf_header->pub.content)
       goto exit_error;
   }
 

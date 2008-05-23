@@ -100,7 +100,7 @@ static void gsm610_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) {
     this->sample_rate = buf->decoder_info[1];
 
-    this->buf = xine_xmalloc(AUDIOBUFSIZE);
+    this->buf = calloc(1, AUDIOBUFSIZE);
     this->bufsize = AUDIOBUFSIZE;
     this->size = 0;
 
@@ -233,7 +233,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   gsm610_decoder_t *this ;
 
-  this = (gsm610_decoder_t *) xine_xmalloc (sizeof (gsm610_decoder_t));
+  this = (gsm610_decoder_t *) calloc(1, sizeof(gsm610_decoder_t));
 
   this->audio_decoder.decode_data         = gsm610_decode_data;
   this->audio_decoder.reset               = gsm610_reset;
@@ -253,7 +253,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   gsm610_class_t *this ;
 
-  this = (gsm610_class_t *) xine_xmalloc (sizeof (gsm610_class_t));
+  this = (gsm610_class_t *) calloc(1, sizeof(gsm610_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "GSM 6.10";

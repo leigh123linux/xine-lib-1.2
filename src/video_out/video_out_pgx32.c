@@ -386,7 +386,7 @@ static vo_frame_t *pgx32_alloc_frame(vo_driver_t *this_gen)
   /*pgx32_driver_t *this = (pgx32_driver_t *)(void *)this_gen;*/
   pgx32_frame_t *frame;
 
-  frame = (pgx32_frame_t *) xine_xmalloc(sizeof(pgx32_frame_t));
+  frame = calloc(1, sizeof(pgx32_frame_t));
   if (!frame) {
     return NULL;
   }
@@ -793,7 +793,7 @@ static vo_driver_t *pgx32_init_driver(video_driver_class_t *class_gen, const voi
   pgx32_driver_class_t *class = (pgx32_driver_class_t *)(void *)class_gen;
   pgx32_driver_t *this;
 
-  this = (pgx32_driver_t *)xine_xmalloc(sizeof(pgx32_driver_t));
+  this = calloc(1, sizeof(pgx32_driver_t));
   if (!this) {
     return NULL;
   }
@@ -852,7 +852,7 @@ static void *pgx32_init_class(xine_t *xine, void *visual_gen)
 {
   pgx32_driver_class_t *class;
 
-  class = (pgx32_driver_class_t *)xine_xmalloc(sizeof(pgx32_driver_class_t));
+  class = calloc(1, sizeof(pgx32_driver_class_t));
   if (!class) {
     return NULL;
   }

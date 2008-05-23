@@ -40,7 +40,6 @@
 #include <xine/xineutils.h>
 #else
 #define lprintf(...)
-#define xine_xmalloc malloc
 #endif
 #include <xine/xmllexer.h>
 #include <xine/xmlparser.h>
@@ -645,11 +644,12 @@ static int xml_parser_get_node (xml_node_t *current_node, int flags)
   int token_buffer_size = TOKEN_SIZE;
   int pname_buffer_size = TOKEN_SIZE;
   int nname_buffer_size = TOKEN_SIZE;
-  char *token_buffer = xine_xmalloc (token_buffer_size);
-  char *pname_buffer = xine_xmalloc (pname_buffer_size);
-  char *nname_buffer = xine_xmalloc (nname_buffer_size);
+  char *token_buffer = calloc(1, token_buffer_size);
+  char *pname_buffer = calloc(1, pname_buffer_size);
+  char *nname_buffer = calloc(1, nname_buffer_size);
   char *root_names[MAX_RECURSION + 1];
   root_names[0] = "";
+
   res = xml_parser_get_node_internal (&token_buffer, &token_buffer_size,
                              &pname_buffer, &pname_buffer_size,
                              &nname_buffer, &nname_buffer_size,
@@ -794,7 +794,7 @@ static int xml_escape_string_internal (char *buf, const char *s,
 
 char *xml_escape_string (const char *s, xml_escape_quote_t quote_type)
 {
-  char *buf = xine_xmalloc (xml_escape_string_internal (NULL, s, quote_type));
+  char *buf = calloc (1, xml_escape_string_internal (NULL, s, quote_type));
   return buf ? (xml_escape_string_internal (buf, s, quote_type), buf) : NULL;
 }
 
@@ -802,11 +802,10 @@ static void xml_parser_dump_node (const xml_node_t *node, int indent) {
 
   xml_property_t *p;
   xml_node_t     *n;
-  int             l;
 
   printf ("%*s<%s ", indent, "", node->name);
 
-  l = strlen (node->name);
+  size_t l = strlen (node->name);
 
   p = node->props;
   while (p) {

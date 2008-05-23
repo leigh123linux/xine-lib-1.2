@@ -21,6 +21,7 @@
  */
 
 #include <xine/os_types.h>
+#include <xine/attributes.h>
 #include "bswap.h"
 
 typedef struct {

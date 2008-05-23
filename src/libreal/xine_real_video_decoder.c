@@ -278,7 +278,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
   this->frame_size   = this->width * this->height;
   this->frame_buffer = xine_xmalloc (this->width * this->height * 3 / 2);
   
-  this->chunk_buffer = xine_xmalloc (BUF_SIZE);
+  this->chunk_buffer = calloc(1, BUF_SIZE);
   this->chunk_buffer_max = BUF_SIZE;
   
   return 1;
@@ -496,7 +496,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
   real_class_t      *cls = (real_class_t *) class_gen;
   realdec_decoder_t *this ;
 
-  this = (realdec_decoder_t *) xine_xmalloc (sizeof (realdec_decoder_t));
+  this = (realdec_decoder_t *) calloc(1, sizeof(realdec_decoder_t));
 
   this->video_decoder.decode_data         = realdec_decode_data;
   this->video_decoder.flush               = realdec_flush;
@@ -522,7 +522,7 @@ void *init_realvdec (xine_t *xine, void *data) {
   real_class_t       *this;
   config_values_t    *config = xine->config;
 
-  this = (real_class_t *) xine_xmalloc (sizeof (real_class_t));
+  this = (real_class_t *) calloc(1, sizeof(real_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "realvdec";

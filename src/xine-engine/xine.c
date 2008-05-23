@@ -341,7 +341,7 @@ static void ticket_dispose(xine_ticket_t *this) {
 static xine_ticket_t *ticket_init(void) {
   xine_ticket_t *port_ticket;
   
-  port_ticket = (xine_ticket_t *) xine_xmalloc(sizeof(xine_ticket_t));
+  port_ticket = calloc(1, sizeof(xine_ticket_t));
   
   port_ticket->acquire_nonblocking  = ticket_acquire_nonblocking;
   port_ticket->acquire              = ticket_acquire;
@@ -611,7 +611,7 @@ xine_stream_t *xine_stream_new (xine_t *this,
 
   pthread_mutex_lock (&this->streams_lock);
 
-  stream = (xine_stream_t *) xine_xmalloc (sizeof (xine_stream_t)) ;
+  stream = (xine_stream_t *) calloc (1, sizeof (xine_stream_t)) ;
   stream->current_extra_info       = malloc( sizeof( extra_info_t ) );
   stream->audio_decoder_extra_info = malloc( sizeof( extra_info_t ) );
   stream->video_decoder_extra_info = malloc( sizeof( extra_info_t ) );
@@ -777,7 +777,7 @@ xine_stream_t *xine_stream_new (xine_t *this,
 }
 
 void _x_mrl_unescape(char *mrl) {
-  int i, len = strlen(mrl);
+  size_t i, len = strlen(mrl);
 
   for (i = 0; i < len; i++) {
     if ((mrl[i]=='%') && (i<(len-2))) {
@@ -1591,7 +1591,7 @@ xine_t *xine_new (void) {
     int i_err;
 #endif
 
-  this = xine_xmalloc (sizeof (xine_t));
+    this = calloc(1, sizeof (xine_t));
   if (!this)
     _x_abort();
 
@@ -1981,67 +1981,60 @@ int xine_get_pos_length (xine_stream_t *stream, int *pos_stream,
   return 1;
 }
 
-static int _x_get_current_frame_impl (xine_stream_t *stream, int *width, int *height,
-				      int *ratio_code, int *format,
-				      uint8_t **img, int *size, int alloc_img,
-                                      int *interlaced,
-                                      int *crop_left, int *crop_right,
-                                      int *crop_top, int *crop_bottom) {
+static int _x_get_current_frame_data (xine_stream_t *stream,
+				      xine_current_frame_data_t *data,
+				      int flags, int img_size_unknown) {
 
   vo_frame_t *frame;
-  int required_size;
+  size_t required_size;
 
   stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
   frame = stream->video_out->get_last_frame (stream->video_out);
   stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
   
-  if (!frame)
+  if (!frame) {
+    data->img_size = 0;
     return 0;
+  }
 
-  *width = frame->width;
-  *height = frame->height;
+  data->width       = frame->width;
+  data->height      = frame->height;
+  data->crop_left   = frame->crop_left;
+  data->crop_right  = frame->crop_right;
+  data->crop_top    = frame->crop_top;
+  data->crop_bottom = frame->crop_bottom;
 
-  *ratio_code = 10000.0 * frame->ratio;
+  data->ratio_code = 10000.0 * frame->ratio;
   /* make ratio_code backward compatible */
 #define RATIO_LIKE(a, b)  ((b) - 1 <= (a) && (a) <= 1 + (b))
-  if (RATIO_LIKE(*ratio_code, 10000))
-    *ratio_code = XINE_VO_ASPECT_SQUARE;
-  else if (RATIO_LIKE(*ratio_code, 13333))
-    *ratio_code = XINE_VO_ASPECT_4_3;
-  else if (RATIO_LIKE(*ratio_code, 17778))
-    *ratio_code = XINE_VO_ASPECT_ANAMORPHIC;
-  else if (RATIO_LIKE(*ratio_code, 21100))
-    *ratio_code = XINE_VO_ASPECT_DVB;
+  if (RATIO_LIKE(data->ratio_code, 10000))
+    data->ratio_code = XINE_VO_ASPECT_SQUARE;
+  else if (RATIO_LIKE(data->ratio_code, 13333))
+    data->ratio_code = XINE_VO_ASPECT_4_3;
+  else if (RATIO_LIKE(data->ratio_code, 17778))
+    data->ratio_code = XINE_VO_ASPECT_ANAMORPHIC;
+  else if (RATIO_LIKE(data->ratio_code, 21100))
+    data->ratio_code = XINE_VO_ASPECT_DVB;
   
-  *format = frame->format;
+  data->format     = frame->format;
+  data->interlaced = frame->progressive_frame ? 0 : (2 - frame->top_field_first);
 
-  if (interlaced)
-    *interlaced = frame->progressive_frame ? 0 : (2 - frame->top_field_first);
-  if (crop_left)
-    *crop_left = frame->crop_left;
-  if (crop_right)
-    *crop_right = frame->crop_right;
-  if (crop_top)
-    *crop_top = frame->crop_top;
-  if (crop_bottom)
-    *crop_bottom = frame->crop_bottom;
-
-  switch (*format) {
+  switch (frame->format) {
 
   case XINE_IMGFMT_YV12:
-    required_size = *width * *height
-                  + ((*width + 1) / 2) * ((*height + 1) / 2)
-                  + ((*width + 1) / 2) * ((*height + 1) / 2);
+    required_size = frame->width * frame->height
+                  + ((frame->width + 1) / 2) * ((frame->height + 1) / 2)
+                  + ((frame->width + 1) / 2) * ((frame->height + 1) / 2);
     break;
 
   case XINE_IMGFMT_YUY2:
-    required_size = *width * *height
-                  + ((*width + 1) / 2) * *height
-                  + ((*width + 1) / 2) * *height;
+    required_size = frame->width * frame->height
+                  + ((frame->width + 1) / 2) * frame->height
+                  + ((frame->width + 1) / 2) * frame->height;
     break;
 
   default:
-    if (*img || alloc_img) {
+    if (data->img || (flags & XINE_FRAME_DATA_ALLOCATE_IMG)) {
       xprintf (stream->xine, XINE_VERBOSITY_DEBUG, 
 	       "xine: error, snapshot function not implemented for format 0x%x\n", frame->format);
       _x_abort ();
@@ -2050,38 +2043,36 @@ static int _x_get_current_frame_impl (xine_stream_t *stream, int *width, int *he
     required_size = 0;
   }
 
-  if (alloc_img) {
-    /* return size if requested */
-    if (size)
-      *size = required_size;
+  if (flags & XINE_FRAME_DATA_ALLOCATE_IMG) {
+    /* return allocated buffer size */
+    data->img_size = required_size;
     /* allocate img or fail */
-    if (!(*img = xine_xmalloc (required_size)))
+    if (!(data->img = calloc(1, required_size)))
       return 0;
   } else {
     /* fail if supplied buffer is to small */
-    if (*img && size && *size < required_size) {
-      *size = required_size;
+    if (data->img && !img_size_unknown && data->img_size < required_size) {
+      data->img_size = required_size;
       return 0;
     }
-    /* return size if requested */
-    if (size)
-      *size = required_size;
+    /* return used buffer size */
+    data->img_size = required_size;
   }
        
-  if (*img) {
+  if (data->img) {
     switch (frame->format) {
 
     case XINE_IMGFMT_YV12:
       yv12_to_yv12(
        /* Y */
         frame->base[0], frame->pitches[0],
-        *img, frame->width,
+        data->img, frame->width,
        /* U */
         frame->base[1], frame->pitches[1],
-        *img+frame->width*frame->height, frame->width/2,
+        data->img+frame->width*frame->height, frame->width/2,
        /* V */
         frame->base[2], frame->pitches[2],
-        *img+frame->width*frame->height+frame->width*frame->height/4, frame->width/2,
+        data->img+frame->width*frame->height+frame->width*frame->height/4, frame->width/2,
        /* width x height */
         frame->width, frame->height);
       break;
@@ -2091,7 +2082,7 @@ static int _x_get_current_frame_impl (xine_stream_t *stream, int *width, int *he
        /* src */
         frame->base[0], frame->pitches[0],
        /* dst */
-        *img, frame->width*2,
+        data->img, frame->width*2,
        /* width x height */
         frame->width, frame->height);
       break;
@@ -2105,29 +2096,79 @@ static int _x_get_current_frame_impl (xine_stream_t *stream, int *width, int *he
   return 1;
 }
 
+int xine_get_current_frame_data (xine_stream_t *stream,
+				 xine_current_frame_data_t *data,
+				 int flags) {
+
+  return _x_get_current_frame_data(stream, data, flags, 0);
+}
+
 int xine_get_current_frame_alloc (xine_stream_t *stream, int *width, int *height,
 				  int *ratio_code, int *format,
-				  uint8_t **img, int *size,
-                                  int *interlaced,
-                                  int *crop_left, int *crop_right,
-                                  int *crop_top, int *crop_bottom) {
-  uint8_t *no_img = NULL;
-  return _x_get_current_frame_impl(stream, width, height, ratio_code, format, img ? img : &no_img, size, img != NULL, interlaced, crop_left, crop_right, crop_top, crop_bottom);
+				  uint8_t **img, int *img_size) {
+
+  int result;
+  xine_current_frame_data_t data;
+
+  memset(&data, 0, sizeof (data));
+
+  result = _x_get_current_frame_data(stream, &data, img ? XINE_FRAME_DATA_ALLOCATE_IMG : 0, 0);
+  if (width)      *width      = data.width;
+  if (height)     *height     = data.height;
+  if (ratio_code) *ratio_code = data.ratio_code;
+  if (format)     *format     = data.format;
+  if (img_size)   *img_size   = data.img_size;
+  if (img)        *img        = data.img;
+  return result;
 }
 
 int xine_get_current_frame_s (xine_stream_t *stream, int *width, int *height,
 				int *ratio_code, int *format,
-				uint8_t *img, int *size,
-                                int *interlaced,
-                                int *crop_left, int *crop_right,
-                                int *crop_top, int *crop_bottom) {
-  return (!img || size) && _x_get_current_frame_impl(stream, width, height, ratio_code, format, &img, size, 0, interlaced, crop_left, crop_right, crop_top, crop_bottom);
+				uint8_t *img, int *img_size) {
+  int result;
+  xine_current_frame_data_t data;
+
+  memset(&data, 0, sizeof (data));
+  data.img = img;
+  if (img_size)
+    data.img_size = *img_size;
+
+  result = _x_get_current_frame_data(stream, &data, 0, 0);
+  if (width)      *width      = data.width;
+  if (height)     *height     = data.height;
+  if (ratio_code) *ratio_code = data.ratio_code;
+  if (format)     *format     = data.format;
+  if (img_size)   *img_size   = data.img_size;
+  return result;
 }
 
 int xine_get_current_frame (xine_stream_t *stream, int *width, int *height,
 			    int *ratio_code, int *format,
 			    uint8_t *img) {
-  return _x_get_current_frame_impl(stream, width, height, ratio_code, format, &img, NULL, 0, NULL, NULL, NULL, NULL, NULL);
+  int result;
+  xine_current_frame_data_t data;
+
+  memset(&data, 0, sizeof (data));
+  data.img = img;
+
+  result = _x_get_current_frame_data(stream, &data, 0, 1);
+  if (width)      *width      = data.width;
+  if (height)     *height     = data.height;
+  if (ratio_code) *ratio_code = data.ratio_code;
+  if (format)     *format     = data.format;
+  return result;
+}
+
+int xine_get_video_frame (xine_stream_t *stream,
+			  int timestamp, /* msec */
+			  int *width, int *height,
+			  int *ratio_code,
+			  int *duration, /* msec */
+			  int *format,
+			  uint8_t *img) {
+  xprintf (stream->xine, XINE_VERBOSITY_DEBUG, "xine: xine_get_video_frame not implemented yet.\n");
+  _x_abort ();
+  return 0;
 }
 
 int xine_get_spu_lang (xine_stream_t *stream, int channel, char *lang) {

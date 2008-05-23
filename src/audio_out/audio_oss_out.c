@@ -666,7 +666,7 @@ static int probe_audio_devices(oss_driver_t *this) {
   int base_num, i;
   int audio_fd, rate;
   int best_rate;
-  char devname[30];
+  char *devname[30];
 
   strcpy(this->audio_dev, "auto");
 
@@ -729,7 +729,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   int speakers;
 
   
-  this = (oss_driver_t *) xine_xmalloc (sizeof (oss_driver_t));
+  this = calloc(1, sizeof (oss_driver_t));
   if (!this)
     return NULL;
 
@@ -883,9 +883,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 	      "audio_oss_out: ...probing output buffer size: "));
     this->buffer_size = 0;
     
-    if( (buf=malloc(1024)) != NULL ) {
-      memset(buf,0,1024);
-     
+    if( (buf=calloc(1, 1024)) != NULL ) {
       do {
         c = write(audio_fd,buf,1024);
         if( c != -1 )
@@ -1148,7 +1146,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   oss_class_t        *this;
 
-  this = (oss_class_t *) xine_xmalloc (sizeof (oss_class_t));
+  this = calloc(1, sizeof (oss_class_t));
   if (!this)
     return NULL;
 

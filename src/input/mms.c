@@ -680,7 +680,7 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   if (!url)
     return NULL;
 
-  this = (mms_t*) xine_xmalloc (sizeof (mms_t));
+  this = calloc(1, sizeof (mms_t));
 
   this->stream          = stream;
   this->url             = strdup (url);
@@ -771,12 +771,10 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   /* command 0x5 */
   {
     mms_buffer_t command_buffer;
-    char *path;
-    int pathlen;
+    char *path = this->uri;
+    size_t pathlen = strlen(path);
 
     /* remove the first '/' */
-    path = this->uri;
-    pathlen = strlen(path);
     if (pathlen > 1) {
       path++;
       pathlen--;

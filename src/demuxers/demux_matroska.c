@@ -1210,7 +1210,7 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
         lprintf("Video\n");
         if (track->video_track)
           return 1;
-        track->video_track = (matroska_video_track_t *)xine_xmalloc(sizeof(matroska_video_track_t));
+        track->video_track = (matroska_video_track_t *)calloc(1, sizeof(matroska_video_track_t));
         if (!ebml_read_master (ebml, &elem))
           return 0;
         if ((elem.len > 0) && !parse_video_track(this, track->video_track))
@@ -1221,7 +1221,7 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
         lprintf("Audio\n");
         if (track->audio_track)
           return 1;
-        track->audio_track = (matroska_audio_track_t *)xine_xmalloc(sizeof(matroska_audio_track_t));
+        track->audio_track = (matroska_audio_track_t *)calloc(1, sizeof(matroska_audio_track_t));
         if (!ebml_read_master (ebml, &elem))
           return 0;
         if ((elem.len > 0) && !parse_audio_track(this, track->audio_track))
@@ -1515,7 +1515,7 @@ static int parse_tracks(demux_matroska_t *this) {
         matroska_track_t *track;
 
         /* alloc and initialize a track with 0 */
-        track = xine_xmalloc(sizeof(matroska_track_t));
+        track = calloc(1, sizeof(matroska_track_t));
         track->compress_algo = MATROSKA_COMPRESS_NONE;
         this->tracks[this->num_tracks] = track;
 
@@ -2832,7 +2832,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
-  this = xine_xmalloc (sizeof (demux_matroska_t));
+  this = calloc(1, sizeof(demux_matroska_t));
 
   this->demux_plugin.send_headers      = demux_matroska_send_headers;
   this->demux_plugin.send_chunk        = demux_matroska_send_chunk;
@@ -2879,7 +2879,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   demux_matroska_class_t     *this;
 
-  this         = xine_xmalloc (sizeof (demux_matroska_class_t));
+  this         = calloc(1, sizeof(demux_matroska_class_t));
   this->xine   = xine;
 
   this->demux_class.open_plugin     = open_plugin;

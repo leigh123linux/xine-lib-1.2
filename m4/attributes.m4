@@ -32,16 +32,28 @@ dnl distribute a modified version of the Autoconf Macro, you may extend
 dnl this special exception to the GPL to apply to your modified version as
 dnl well.
 
-AC_DEFUN([CC_CHECK_CFLAGS], [
-  AC_CACHE_CHECK([if $CC supports $1 flag],
-    AS_TR_SH([cc_cv_cflags_$1]),
+AC_DEFUN([CC_CHECK_CFLAGS_SILENT], [
+  AC_CACHE_VAL(AS_TR_SH([cc_cv_cflags_$1]),
     [ac_save_CFLAGS="$CFLAGS"
      CFLAGS="$CFLAGS $1"
      AC_COMPILE_IFELSE([int a;],
        [eval "AS_TR_SH([cc_cv_cflags_$1])='yes'"],
-       [eval "AS_TR_SH([cc_cv_cflags_$1])="])
+       [eval "AS_TR_SH([cc_cv_cflags_$1])='no'"])
      CFLAGS="$ac_save_CFLAGS"
     ])
+
+  if eval test [x$]AS_TR_SH([cc_cv_cflags_$1]) = xyes; then
+    ifelse([$2], , [:], [$2])
+  else
+    ifelse([$3], , [:], [$3])
+  fi
+])
+
+AC_DEFUN([CC_CHECK_CFLAGS], [
+  AC_CACHE_CHECK([if $CC supports $1 flag],
+    AS_TR_SH([cc_cv_cflags_$1]),
+    CC_CHECK_CFLAGS_SILENT([$1]) dnl Don't execute actions here!
+  )
 
   if eval test [x$]AS_TR_SH([cc_cv_cflags_$1]) = xyes; then
     ifelse([$2], , [:], [$2])
@@ -77,9 +89,11 @@ dnl Other compilers don't support -Werror per se, but they support
 dnl an equivalent flag:
 dnl  - Sun Studio compiler supports -errwarn=%all
 AC_DEFUN([CC_CHECK_WERROR], [
-  AC_CACHE_VAL([cc_cv_werror],
-    [CC_CHECK_CFLAGS([-Werror], [cc_cv_werror=-Werror],
-      [CC_CHECK_CFLAGS([-errwarn=%all], [cc_cv_werror=-errwarn=%all])])
+  AC_CACHE_CHECK(
+    [for $CC way to treat warnings as errors],
+    [cc_cv_werror],
+    [CC_CHECK_CFLAGS_SILENT([-Werror], [cc_cv_werror=-Werror],
+      [CC_CHECK_CFLAGS_SILENT([-errwarn=%all], [cc_cv_werror=-errwarn=%all])])
     ])
 ])
 
@@ -184,29 +198,31 @@ AC_DEFUN([CC_ATTRIBUTE_MALLOC], [
     [$2])
 ])
 
+AC_DEFUN([CC_ATTRIBUTE_PACKED], [
+  CC_CHECK_ATTRIBUTE(
+    [packed], ,
+    [struct astructure { char a; int b; long c; void *d; } __attribute__((packed));],
+    [$1],
+    [$2])
+])
+
 AC_DEFUN([CC_FLAG_VISIBILITY], [
-	AC_REQUIRE([CC_CHECK_WERROR])
-	ac_save_CFLAGS="$CFLAGS"
-	CFLAGS="$CFLAGS $cc_cv_werror"
-	AC_CACHE_CHECK([if compiler supports -fvisibility=hidden],
-		[cc_cv_flag_visibility],
-		[
-		save_CFLAGS=$CFLAGS
-		CFLAGS="$CFLAGS -fvisibility=hidden"
-		AC_COMPILE_IFELSE([int a;],
-			[cc_cv_flag_visibility=yes],
-			[cc_cv_flag_visibility=no])
-		CFLAGS="$save_CFLAGS"
-		])
-	CFLAGS="$ac_save_CFLAGS"
-	
-	if test "x$cc_cv_flag_visibility" = "xyes"; then
-		AC_DEFINE([SUPPORT_FLAG_VISIBILITY], 1, [Define this if the compiler supports the -fvisibility flag])
-		$1
-	else
-		true
-		$2
-	fi
+  AC_REQUIRE([CC_CHECK_WERROR])
+  AC_CACHE_CHECK([if $CC supports -fvisibility=hidden],
+    [cc_cv_flag_visibility],
+    [cc_flag_visibility_save_CFLAGS="$CFLAGS"
+     CFLAGS="$CFLAGS $cc_cv_werror"
+     CC_CHECK_CFLAGS_SILENT([-fvisibility=hidden],
+	cc_cv_flag_visibility='yes',
+	cc_cv_flag_visibility='no')
+     CFLAGS="$cc_flag_visibility_save_CFLAGS"])
+  
+  if test "x$cc_cv_flag_visibility" = "xyes"; then
+    AC_DEFINE([SUPPORT_FLAG_VISIBILITY], 1, [Define this if the compiler supports the -fvisibility flag])
+    ifelse([$1], , [:], [$1])
+  else
+    ifelse([$2], , [:], [$2])
+  fi
 ])
 
 AC_DEFUN([CC_FUNC_EXPECT], [

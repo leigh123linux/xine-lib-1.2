@@ -76,7 +76,7 @@ int dxr3_encoder_init(dxr3_driver_t *drv)
 
   avcodec_register_all();  
   lprintf("lavc init , version %x\n", avcodec_version());
-  this = xine_xmalloc(sizeof(lavc_data_t));
+  this = calloc(1, sizeof(lavc_data_t));
   if (!this) return 0;
 
   this->encoder_data.type             = ENC_LAVC;

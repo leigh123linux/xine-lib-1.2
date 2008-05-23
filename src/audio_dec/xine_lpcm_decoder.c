@@ -245,7 +245,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   lpcm_decoder_t *this ;
 
-  this = (lpcm_decoder_t *) xine_xmalloc (sizeof (lpcm_decoder_t));
+  this = (lpcm_decoder_t *) calloc(1, sizeof(lpcm_decoder_t));
 
   this->audio_decoder.decode_data         = lpcm_decode_data;
   this->audio_decoder.reset               = lpcm_reset;
@@ -268,7 +268,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   lpcm_class_t *this ;
 
-  this = (lpcm_class_t *) xine_xmalloc (sizeof (lpcm_class_t));
+  this = (lpcm_class_t *) calloc(1, sizeof(lpcm_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "Linear PCM";

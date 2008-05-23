@@ -252,10 +252,10 @@ static void dvaudio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) 
     return;
       
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) {
-    this->buf = xine_xmalloc(AUDIOBUFSIZE);
+    this->buf = calloc(1, AUDIOBUFSIZE);
     this->bufsize = AUDIOBUFSIZE;
     this->size = 0;
-    this->decode_buffer = xine_xmalloc(MAXFRAMESIZE);
+    this->decode_buffer = calloc(1, MAXFRAMESIZE);
     
     this->audio_sample_rate = buf->decoder_info[1];
     this->audio_bits = buf->decoder_info[2];
@@ -369,7 +369,7 @@ static audio_decoder_t *dvaudio_open_plugin (audio_decoder_class_t *class_gen, x
 
   dvaudio_decoder_t *this ;
 
-  this = (dvaudio_decoder_t *) xine_xmalloc (sizeof (dvaudio_decoder_t));
+  this = calloc(1, sizeof (dvaudio_decoder_t));
 
   this->audio_decoder.decode_data    = dvaudio_decode_data;
   this->audio_decoder.reset          = dvaudio_reset;
@@ -390,7 +390,7 @@ static void *init_dvaudio_plugin (xine_t *xine, void *data) {
 
   dvaudio_class_t *this ;
 
-  this = (dvaudio_class_t *) xine_xmalloc (sizeof (dvaudio_class_t));
+  this = calloc(1, sizeof (dvaudio_class_t));
 
   this->decoder_class.open_plugin     = dvaudio_open_plugin;
   this->decoder_class.identifier      = "dv audio";

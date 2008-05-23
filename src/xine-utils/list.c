@@ -69,7 +69,7 @@ struct xine_list_s {
  */
 static xine_list_chunk_t *xine_list_alloc_chunk(size_t size) {
   xine_list_chunk_t *new_chunk;
-  size_t chunk_mem_size;;
+  size_t chunk_mem_size;
 
   chunk_mem_size  = sizeof(xine_list_chunk_t);
   chunk_mem_size += sizeof(xine_list_elem_t) * size;

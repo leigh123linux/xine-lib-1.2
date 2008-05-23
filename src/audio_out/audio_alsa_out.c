@@ -1350,7 +1350,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   #define A52_PASSTHRU	12
   int speakers;
 
-  this = (alsa_driver_t *) xine_xmalloc (sizeof (alsa_driver_t));
+  this = calloc(1, sizeof (alsa_driver_t));
   if (!this)
     return NULL;
 
@@ -1666,7 +1666,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   alsa_class_t        *this;
 
-  this = (alsa_class_t *) xine_xmalloc (sizeof (alsa_class_t));
+  this = calloc(1, sizeof (alsa_class_t));
   if (!this)
     return NULL;
 

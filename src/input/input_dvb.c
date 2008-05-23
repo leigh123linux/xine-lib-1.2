@@ -67,7 +67,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 
 /* pthread.h must be included first so rest of the headers are imported
@@ -495,7 +495,7 @@ static time_t dvb_mjdtime (uint8_t *buf)
   int i;
   unsigned int year, month, day, hour, min, sec;
   unsigned long int mjd;
-  struct tm *tma = xine_xmalloc(sizeof(struct tm));
+  struct tm *tma = calloc(1, sizeof(struct tm));
   time_t t;
 
   _x_assert(tma != NULL);
@@ -569,8 +569,7 @@ static tuner_t *tuner_init(xine_t * xine, int adapter)
 
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, "tuner_init adapter=%d\n", adapter);
     this->fd_frontend = -1;
-    for (x = 0; x < MAX_FILTERS; x++)
-      this->fd_pidfilter[x] = 0;
+    memset(this->fd_pidfilter, 0, sizeof(this->fd_pidfilter));
 
     this->xine = xine;
     this->adapter_num = adapter;
@@ -873,7 +872,6 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
   channel_t *channels = NULL;
   int        num_channels = 0;
   int        num_alloc = 0;
-  int        i;
   struct stat st;
 
   snprintf(filename, BUFSIZE, "%s/"PACKAGE"/channels.conf", xdgConfigHome(xine->basedir_handle));
@@ -898,8 +896,8 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
   while ( fgets (str, BUFSIZE, f)) {
     channel_t channel = {0};
 
-    /* lose trailing spaces & control characters */ 
-    i = strlen (str);
+    /* lose trailing spaces & control characters */
+    size_t i = strlen (str);
     while (i && str[i - 1] <= ' ')
       --i;
     if (i == 0)
@@ -910,7 +908,7 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
 	continue;
 
     if (num_channels >= num_alloc) {
-      channel_t *new_channels = xine_xmalloc((num_alloc += 32) * sizeof (channel_t));
+      channel_t *new_channels = calloc((num_alloc += 32), sizeof (channel_t));
       _x_assert(new_channels != NULL);
       memcpy(new_channels, channels, num_channels * sizeof (channel_t));
       free(channels);
@@ -921,8 +919,7 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
 
     /* Initially there's no EPG data in the EPG structs. */
     channels[num_channels].epg_count = 0;
-    for (i = 0; i < MAX_EPG_ENTRIES_PER_CHANNEL; ++i) 
-	channels[num_channels].epg[i] = NULL;
+    memset(channels[num_channels].epg, 0, sizeof(channels[num_channels].epg));
 
     num_channels++;
   }
@@ -1217,7 +1214,7 @@ static void dvb_parse_si(dvb_input_plugin_t *this) {
   struct pollfd pfd;
   
   tuner_t *tuner = this->tuner;
-  tmpbuffer = xine_xmalloc (8192);
+  tmpbuffer = calloc(1, 8192);
 
   _x_assert(tmpbuffer != NULL);
 
@@ -1425,13 +1422,10 @@ static void load_epg_data(dvb_input_plugin_t *this)
      already "found" in the stream. This information is used to initialize the 
      channel's EPG structs when the EPG information for the channel is seen in 
      the stream the first time. */
-  seen_channels = xine_xmalloc(this->num_channels*sizeof(char));
+  seen_channels = calloc(this->num_channels, sizeof(char));
   _x_assert(seen_channels != NULL);
-  for (i = 0; i < this->num_channels; i++) {
-      seen_channels[i] = 0;
-  }
 
-  foo = xine_xmalloc(8192);
+  foo = calloc(1, 8192);
   _x_assert(foo != NULL);
 
   fd.fd = this->tuner->fd_pidfilter[EITFILTER];
@@ -1481,19 +1475,19 @@ static void load_epg_data(dvb_input_plugin_t *this)
          Allocate space for the strings. */
       if (current_channel->epg[current_channel->epg_count] == NULL) {
 	  current_channel->epg[current_channel->epg_count] =
-	      xine_xmalloc(sizeof(epg_entry_t));
+	    calloc(1, sizeof(epg_entry_t));
 	  _x_assert(current_channel->epg[current_channel->epg_count] != NULL);
 
 	  current_channel->epg[current_channel->epg_count]->progname = 
-	      xine_xmalloc((MAX_EPG_PROGRAM_NAME_LENGTH + 1) * sizeof(char));
+	    malloc(MAX_EPG_PROGRAM_NAME_LENGTH + 1);
 	  _x_assert(current_channel->epg[current_channel->epg_count]->progname != NULL);
 
 	  current_channel->epg[current_channel->epg_count]->description =
-	      xine_xmalloc((MAX_EPG_PROGRAM_DESCRIPTION_LENGTH + 1) * sizeof(char));
+	    malloc(MAX_EPG_PROGRAM_DESCRIPTION_LENGTH + 1);
 	  _x_assert(current_channel->epg[current_channel->epg_count]->description != NULL);
 
 	  current_channel->epg[current_channel->epg_count]->content = 
-	      xine_xmalloc((MAX_EPG_CONTENT_TYPE_LENGTH + 1) * sizeof(char));
+	    malloc(MAX_EPG_CONTENT_TYPE_LENGTH + 1);
 	  _x_assert(current_channel->epg[current_channel->epg_count]->content != NULL);
 	  current_channel->epg[current_channel->epg_count]->running = 0;
 
@@ -1653,7 +1647,7 @@ static void render_text_area(osd_renderer_t* renderer, osd_object_t* osd, char* 
   /* The line to be printed next. */
   char text_line[512];
   int text_width, text_height;
-  int old_line_length, line_cursor;
+  size_t old_line_length, line_cursor;
   char* bound, *old_bound;
   
   *height = 0;
@@ -1813,7 +1807,7 @@ static void show_program_info(int x, int y, int max_x, int max_y, int* last_y,
   if (epg_data == NULL || epg_data->progname == NULL)
     return;
 
-  buffer = xine_xmalloc(512);
+  buffer = calloc(1, 512);
 
   _x_assert(buffer != NULL);
 
@@ -1830,8 +1824,7 @@ static void show_program_info(int x, int y, int max_x, int max_y, int* last_y,
 
   /*Content type and rating, if any. */
   if (strlen(epg_data->content) > 3) {
-
-    snprintf(buffer, 94, "%s", epg_data->content);
+    strncpy(buffer, epg_data->content, 94-1);
 
     prog_rating = epg_data->rating;
     if (prog_rating > 0) {
@@ -1861,7 +1854,7 @@ static void show_program_info(int x, int y, int max_x, int max_y, int* last_y,
   /* Print the description. */
   if (epg_data->description && strlen(epg_data->description) > 0) {
     renderer->set_font(osd, "sans", EPG_DESCRIPTION_FONT_SIZE);
-    sprintf(buffer, "%s", epg_data->description);
+    strcpy(buffer, epg_data->description);
     /* If the description is not complete (i.e., there is no comma at the end),
        add "..." to the end. In my locale they often seem to send incomplete description
        texts :( */
@@ -2195,7 +2188,7 @@ static void do_record (dvb_input_plugin_t *this) {
     this->stream->osd_renderer->hide (this->paused_osd, 0);
     this->record_paused=0;
   } else {
-    t=xine_xmalloc(sizeof(time_t));
+   t=calloc(1, sizeof(time_t));
 
     _x_assert(t != NULL);
 
@@ -2815,7 +2808,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 	    * that the channels have really ugly names, sometimes prefixed
 	    * by numbers...
 	    */
-	    int chanlen = strlen(channame);
+	    size_t chanlen = strlen(channame);
 	    size_t offset = 0;
 
 	    xprintf(this->class->xine, XINE_VERBOSITY_LOG,
@@ -2869,7 +2862,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 	}
 	ptr = this->mrl;
 	ptr += 7;
-	channels = xine_xmalloc(sizeof(channel_t));
+	channels = calloc(1, sizeof(channel_t));
 	_x_assert(channels != NULL);
 	if (extract_channel_from_string(channels, ptr, tuner->feinfo.type) < 0) {
           free(channels);
@@ -2889,7 +2882,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
          }
 	   ptr = this->mrl;
 	   ptr += 7;
-	   channels = xine_xmalloc(sizeof(channel_t));
+	   channels = calloc(1, sizeof(channel_t));
 	   _x_assert(channels != NULL);
 	   if (extract_channel_from_string(channels, ptr, tuner->feinfo.type) < 0) {
               free(channels);
@@ -2912,7 +2905,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
       }
       ptr = this->mrl;
       ptr += 7;
-      channels = xine_xmalloc(sizeof(channel_t));
+      channels = calloc(1, sizeof(channel_t));
       _x_assert(channels != NULL);
       if (extract_channel_from_string(channels, ptr, tuner->feinfo.type) < 0)
       {
@@ -2938,7 +2931,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
       }
       ptr = this->mrl;
       ptr += 7;
-      channels = xine_xmalloc(sizeof(channel_t));
+      channels = calloc(1, sizeof(channel_t));
       _x_assert(channels != NULL);
       if (extract_channel_from_string(channels, ptr, tuner->feinfo.type) < 0)
       {
@@ -3101,7 +3094,7 @@ static input_plugin_t *dvb_class_get_instance (input_class_t *class_gen,
 
   fprintf(stderr, "input_dvb: continuing in get_instance\n");
 
-  this = (dvb_input_plugin_t *) xine_xmalloc (sizeof(dvb_input_plugin_t));
+  this = calloc(1, sizeof(dvb_input_plugin_t));
 
   _x_assert(this != NULL);
 
@@ -3209,21 +3202,19 @@ static char **dvb_class_get_autoplay_list(input_class_t * this_gen,
     for (ch = 0, apch = !!lastchannel_enable.num_value;
          ch < num_channels && ch < MAX_AUTOCHANNELS;
          ++ch, ++apch) {
-        snprintf(foobuffer, BUFSIZE, "dvb://%s", channels[ch].name);
-        free(class->autoplaylist[apch]);
-        class->autoplaylist[apch] = strdup(foobuffer);
-        _x_assert(class->autoplaylist[apch] != NULL);
+      free(class->autoplaylist[apch]);
+      asprintf(&(class->autoplaylist[apch]), "dvb://%s", channels[ch].name);
+      _x_assert(class->autoplaylist[apch] != NULL);
     }
 
     if (lastchannel_enable.num_value){
+      free(class->autoplaylist[0]);
       if (default_channel != -1)
 	/* plugin has been used before - channel is valid */
-	sprintf (foobuffer, "dvb://%s", channels[default_channel].name);
+	asprintf (&(class->autoplaylist[0]), "dvb://%s", channels[default_channel].name);
       else
 	/* set a reasonable default - the first channel */
-	sprintf (foobuffer, "dvb://%s", num_channels ? channels[0].name : "0");
-      free(class->autoplaylist[0]);
-      class->autoplaylist[0]=strdup(foobuffer);
+	asprintf (&(class->autoplaylist[0]), "dvb://%s", num_channels ? channels[0].name : "0");
     }
 
     free_channel_list(channels, num_channels);
@@ -3239,7 +3230,7 @@ static void *init_class (xine_t *xine, void *data) {
   dvb_input_class_t  *this;
   config_values_t *config = xine->config;
 
-  this = (dvb_input_class_t *) xine_xmalloc (sizeof (dvb_input_class_t));
+  this = calloc(1, sizeof (dvb_input_class_t));
   _x_assert(this != NULL);
 
   this->xine   = xine;

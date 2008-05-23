@@ -328,7 +328,7 @@ static ao_driver_t *open_jack_plugin (audio_driver_class_t *class_gen,
 	}
     }
 
-    this = (jack_driver_t *) xine_xmalloc (sizeof (jack_driver_t));
+    this = calloc(1, sizeof (jack_driver_t));
     
     this->client = client;
 
@@ -401,7 +401,7 @@ static void *init_class (xine_t *xine, void *data) {
 
     jack_class_t        *this;
 
-    this = (jack_class_t *) xine_xmalloc (sizeof (jack_class_t));
+    this = calloc(1, sizeof (jack_class_t));
 
     this->driver_class.open_plugin     = open_jack_plugin;
     this->driver_class.identifier      = "jack";

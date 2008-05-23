@@ -99,7 +99,7 @@ static char *nl(char *data) {
 
 static int filter(const char *in, const char *filter, char **out) {
 
-  int flen=strlen(filter);
+  size_t flen=strlen(filter);
   size_t len;
   
   if (!in)
@@ -122,7 +122,7 @@ static int filter(const char *in, const char *filter, char **out) {
 }
 static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
 
-  sdpplin_stream_t *desc = xine_xmalloc(sizeof(sdpplin_stream_t));
+  sdpplin_stream_t *desc = calloc(1, sizeof(sdpplin_stream_t));
   char      *buf=xine_buffer_init(32);
   char      *decoded=xine_buffer_init(32);
   int       handled;
@@ -238,7 +238,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
 
 sdpplin_t *sdpplin_parse(char *data) {
 
-  sdpplin_t        *desc = xine_xmalloc(sizeof(sdpplin_t));
+  sdpplin_t        *desc = calloc(1, sizeof(sdpplin_t));
   sdpplin_stream_t *stream;
   char             *buf=xine_buffer_init(32);
   char             *decoded=xine_buffer_init(32);

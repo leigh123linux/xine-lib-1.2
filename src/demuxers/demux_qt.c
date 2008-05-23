@@ -591,7 +591,7 @@ static void find_moov_atom(input_plugin_t *input, off_t *moov_offset,
 static qt_info *create_qt_info(void) {
   qt_info *info;
 
-  info = (qt_info *)xine_xmalloc(sizeof(qt_info));
+  info = (qt_info *)calloc(1, sizeof(qt_info));
 
   if (!info)
     return NULL;
@@ -3047,7 +3047,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
-  this         = xine_xmalloc (sizeof (demux_qt_t));
+  this         = calloc(1, sizeof(demux_qt_t));
   this->stream = stream;
   this->input  = input;
 
@@ -3133,7 +3133,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   demux_qt_class_t     *this;
 
-  this         = xine_xmalloc (sizeof (demux_qt_class_t));
+  this         = calloc(1, sizeof(demux_qt_class_t));
   this->config = xine->config;
   this->xine   = xine;
 

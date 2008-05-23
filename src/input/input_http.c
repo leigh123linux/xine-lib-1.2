@@ -232,26 +232,16 @@ static int http_plugin_basicauth (const char *user, const char *password, char* 
   char        *tmp;
   char        *sptr;
   char        *dptr;
-  int          totlen;
+  size_t       count;
   int          enclen;
-  int          count;
   
-  totlen = strlen (user) + 1;
-  if(password != NULL)
-    totlen += strlen (password);
-  
-  enclen = ((totlen + 2) / 3 ) * 4 + 1;
+  count = asprintf(&tmp, "%s:%s", user, (password != NULL) ? password : "");
+
+  enclen = ((count + 2) / 3 ) * 4 + 1;
   
   if (len < enclen)
     return -1;
-  
-  tmp = malloc (totlen + 1);
-  strcpy (tmp, user);
-  strcat (tmp, ":");
-  if (password != NULL)
-    strcat (tmp, password);  
-  
-  count = strlen(tmp);
+
   sptr = tmp;
   dptr = dest;
   while (count >= 3) {
@@ -659,7 +649,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   int                  done, len, linenum;
   int                  httpcode;
   int                  res;
-  int                  buflen;
+  size_t               buflen;
   int                  use_proxy;
   int                  proxyport;
   int                  mpegurl_redirect = 0;
@@ -753,43 +743,38 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 
   if (use_proxy) {
     if (this->port != DEFAULT_HTTP_PORT) {
-      snprintf (this->buf, BUFSIZE, "GET http://%s:%d%s HTTP/1.0\015\012",
-	       this->host, this->port, this->uri);
+      buflen = snprintf (this->buf, BUFSIZE, "GET http://%s:%d%s HTTP/1.0\015\012",
+			 this->host, this->port, this->uri);
     } else {
-      snprintf (this->buf, BUFSIZE, "GET http://%s%s HTTP/1.0\015\012",
-	       this->host, this->uri);
+      buflen = snprintf (this->buf, BUFSIZE, "GET http://%s%s HTTP/1.0\015\012",
+			 this->host, this->uri);
     }
   } 
   else
-    snprintf (this->buf, BUFSIZE, "GET %s HTTP/1.0\015\012", this->uri);
+    buflen = snprintf (this->buf, BUFSIZE, "GET %s HTTP/1.0\015\012", this->uri);
   
-  buflen = strlen(this->buf);
   if (this->port != DEFAULT_HTTP_PORT)
-    snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s:%d\015\012",
-	     this->host, this->port);
+    buflen += snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s:%d\015\012",
+			this->host, this->port);
   else
-    snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s\015\012",
-	     this->host);
+    buflen += snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s\015\012",
+			this->host);
   
-  buflen = strlen(this->buf);
   if (this_class->proxyuser && strlen(this_class->proxyuser)) {
-    snprintf (this->buf + buflen, BUFSIZE - buflen,
-              "Proxy-Authorization: Basic %s\015\012", proxyauth);
-    buflen = strlen(this->buf);
+    buflen += snprintf (this->buf + buflen, BUFSIZE - buflen,
+			"Proxy-Authorization: Basic %s\015\012", proxyauth);
   }
   if (this->user && strlen(this->user)) {
-    snprintf (this->buf + buflen, BUFSIZE - buflen,
-              "Authorization: Basic %s\015\012", auth);
-    buflen = strlen(this->buf);
+    buflen += snprintf (this->buf + buflen, BUFSIZE - buflen,
+			"Authorization: Basic %s\015\012", auth);
   }
   
-  snprintf(this->buf + buflen, BUFSIZE - buflen,
-           "User-Agent: xine/%s\015\012"
-           "Accept: */*\015\012"
-           "Icy-MetaData: 1\015\012"
-           "\015\012",
-           VERSION);
-  buflen = strlen(this->buf);
+  buflen += snprintf(this->buf + buflen, BUFSIZE - buflen,
+		     "User-Agent: xine/%s\015\012"
+		     "Accept: */*\015\012"
+		     "Icy-MetaData: 1\015\012"
+		     "\015\012",
+		     VERSION);
   if (_x_io_tcp_write (this->stream, this->fh, this->buf, buflen) != buflen) {
     _x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "couldn't send request", NULL);
     xprintf(this_class->xine, XINE_VERBOSITY_DEBUG, "input_http: couldn't send request\n");
@@ -1034,11 +1019,10 @@ static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_str
       strncasecmp (mrl, "peercast://pls/", 15)) {
     return NULL;
   }
-  this = (http_input_plugin_t *) xine_xmalloc(sizeof(http_input_plugin_t));
+  this = calloc(1, sizeof(http_input_plugin_t));
 
   if (!strncasecmp (mrl, "peercast://pls/", 15)) {
-    this->mrl = xine_xmalloc (30 + strlen(mrl) - 15);
-    sprintf (this->mrl, "http://127.0.0.1:7144/stream/%s", mrl+15);
+    asprintf (&this->mrl, "http://127.0.0.1:7144/stream/%s", mrl+15);
   } else {    
     this->mrl = strdup (mrl);
   }
@@ -1076,7 +1060,7 @@ static void *init_class (xine_t *xine, void *data) {
   config_values_t     *config;
   char                *proxy_env;
 
-  this = (http_input_class_t *) xine_xmalloc (sizeof (http_input_class_t));
+  this = calloc(1, sizeof (http_input_class_t));
 
   this->xine   = xine;
   this->config = xine->config;
@@ -1093,25 +1077,21 @@ static void *init_class (xine_t *xine, void *data) {
   /* 
    * honour http_proxy envvar 
    */
-  if((proxy_env = getenv("http_proxy")) && (strlen(proxy_env))) {
+  if((proxy_env = getenv("http_proxy")) && *proxy_env) {
     int    proxy_port = DEFAULT_HTTP_PORT;
-    char  *http_proxy = xine_xmalloc(strlen(proxy_env) + 1);
     char  *p;
     
     if(!strncmp(proxy_env, "http://", 7))
       proxy_env += 7;
+
+    this->proxyhost_env = strdup(proxy_env);
     
-    sprintf(http_proxy, "%s", proxy_env);
-    
-    if((p = strrchr(&http_proxy[0], ':')) && (strlen(p) > 1)) {
+    if((p = strrchr(this->proxyhost_env, ':')) && (strlen(p) > 1)) {
       *p++ = '\0';
       proxy_port = (int) strtol(p, &p, 10);
     }
     
-    this->proxyhost_env = strdup(http_proxy);
     this->proxyport_env = proxy_port;
-    
-    free(http_proxy);
   }
   else
     proxy_env = NULL; /* proxy_env can be "" */

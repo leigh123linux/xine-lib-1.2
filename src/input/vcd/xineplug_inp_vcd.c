@@ -1740,7 +1740,7 @@ vcd_init (xine_t *xine, void *data)
 
   dbg_print(INPUT_DBG_CALL, "Called\n");
 
-  class = (vcd_input_class_t *) xine_xmalloc (sizeof (vcd_input_class_t));
+  class = calloc(1, sizeof (vcd_input_class_t));
 
   class->xine   = xine;
   class->config = config = xine->config;

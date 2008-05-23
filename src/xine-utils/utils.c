@@ -236,7 +236,25 @@ static const lang_locale_t lang_locales[] = {
   { "" }
 };
 
-
+/**
+ * @brief Allocate and clean memory size_t 'size', then return the
+ *        pointer to the allocated memory.
+ * @param size Size of the memory area to allocate.
+ *
+ * @return A pointer to the allocated memory area, or NULL in case of
+ *         error.
+ *
+ * The behaviour of this function differs from standard malloc() as
+ * xine_xmalloc(0) will not return a NULL pointer, but rather a
+ * pointer to a memory area of size 1 byte.
+ *
+ * The NULL value is only ever returned in case of an error in
+ * malloc(), and is reported to stderr stream.
+ *
+ * @deprecated This function has been deprecated, as the behaviour of
+ *             allocating a 1 byte memory area on zero size is almost
+ *             never desired, and the function is thus mostly misused.
+ */
 void *xine_xmalloc(size_t size) {
   void *ptr;
 
@@ -278,7 +296,7 @@ void *xine_xmalloc_aligned(size_t alignment, size_t size, void **base) {
 
   char *ptr;
   
-  *base = ptr = xine_xmalloc (size+alignment);
+  *base = ptr = calloc(1, size+alignment);
   
   while ((size_t) ptr % alignment)
     ptr++;
@@ -543,7 +561,7 @@ void xine_hexdump (const void *buf_gen, int length) {
 
 static const lang_locale_t *_get_first_lang_locale(const char *lcal) {
   const lang_locale_t *llocale;
-  int lang_len;
+  size_t lang_len;
   char *mod;
 
   if(lcal && *lcal) {

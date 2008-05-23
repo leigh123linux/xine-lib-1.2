@@ -897,7 +897,7 @@ static void ff_handle_preview_buffer (ff_video_decoder_t *this, buf_element_t *b
   if (codec_type == BUF_VIDEO_MPEG) {
     this->is_mpeg12 = 1;
     if ( this->mpeg_parser == NULL ) {
-      this->mpeg_parser = xine_xmalloc(sizeof(mpeg_parser_t));
+      this->mpeg_parser = calloc(1, sizeof(mpeg_parser_t));
       mpeg_parser_init(this->mpeg_parser);
       this->decoder_init_mode = 0;
     }
@@ -952,7 +952,7 @@ static void ff_handle_header_buffer (ff_video_decoder_t *this, buf_element_t *bu
         
         this->context->sub_id = _X_BE_32(&this->buf[30]);
 
-        this->context->slice_offset = xine_xmalloc(sizeof(int)*SLICE_OFFSET_SIZE);
+        this->context->slice_offset = calloc(SLICE_OFFSET_SIZE, sizeof(int));
         this->slice_offset_size = SLICE_OFFSET_SIZE;
 
         this->context->extradata_size = this->size - 26;
@@ -1000,8 +1000,8 @@ static void ff_handle_special_buffer (ff_video_decoder_t *this, buf_element_t *b
 
     lprintf("BUF_SPECIAL_STSD_ATOM\n");
     this->context->extradata_size = buf->decoder_info[2];
-    this->context->extradata = xine_xmalloc(buf->decoder_info[2] + 
-                                            FF_INPUT_BUFFER_PADDING_SIZE);
+    this->context->extradata = malloc(buf->decoder_info[2] + 
+				      FF_INPUT_BUFFER_PADDING_SIZE);
     memcpy(this->context->extradata, buf->decoder_info_ptr[2],
       buf->decoder_info[2]);
 
@@ -1010,8 +1010,8 @@ static void ff_handle_special_buffer (ff_video_decoder_t *this, buf_element_t *b
     
     lprintf("BUF_SPECIAL_DECODER_CONFIG\n");
     this->context->extradata_size = buf->decoder_info[2];
-    this->context->extradata = xine_xmalloc(buf->decoder_info[2] +
-                                            FF_INPUT_BUFFER_PADDING_SIZE);
+    this->context->extradata = malloc(buf->decoder_info[2] +
+				      FF_INPUT_BUFFER_PADDING_SIZE);
     memcpy(this->context->extradata, buf->decoder_info_ptr[2],
       buf->decoder_info[2]);
       
@@ -1559,7 +1559,7 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
 
   lprintf ("open_plugin\n");
 
-  this = (ff_video_decoder_t *) xine_xmalloc (sizeof (ff_video_decoder_t));
+  this = calloc(1, sizeof (ff_video_decoder_t));
 
   this->video_decoder.decode_data         = ff_decode_data;
   this->video_decoder.flush               = ff_flush;
@@ -1578,7 +1578,7 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
   
   this->decoder_ok        = 0;
   this->decoder_init_mode = 1;
-  this->buf               = xine_xmalloc(VIDEOBUFSIZE + FF_INPUT_BUFFER_PADDING_SIZE);
+  this->buf               = calloc(1, VIDEOBUFSIZE + FF_INPUT_BUFFER_PADDING_SIZE);
   this->bufsize           = VIDEOBUFSIZE;
 
   this->is_mpeg12         = 0;
@@ -1604,7 +1604,7 @@ void *init_video_plugin (xine_t *xine, void *data) {
   ff_video_class_t *this;
   config_values_t  *config;
   
-  this = (ff_video_class_t *) xine_xmalloc (sizeof (ff_video_class_t));
+  this = calloc(1, sizeof (ff_video_class_t));
 
   this->decoder_class.open_plugin     = ff_video_open_plugin;
   this->decoder_class.identifier      = "ffmpeg video";

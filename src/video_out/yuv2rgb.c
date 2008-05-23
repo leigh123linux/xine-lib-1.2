@@ -3144,7 +3144,7 @@ static void yuy22rgb_c_init (yuv2rgb_factory_t *this)
 
 static yuv2rgb_t *yuv2rgb_create_converter (yuv2rgb_factory_t *factory) {
 
-  yuv2rgb_t *this = xine_xmalloc (sizeof (yuv2rgb_t));
+  yuv2rgb_t *this = calloc(1, sizeof(yuv2rgb_t));
 
   this->swapped			 = factory->swapped;
   this->cmap                     = factory->cmap;

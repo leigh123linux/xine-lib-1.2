@@ -326,7 +326,7 @@ static audio_decoder_t *
 open_plugin (audio_decoder_class_t *class_gen, xine_stream_t *stream) {
     flac_decoder_t *this ;
 
-    this = (flac_decoder_t *) xine_xmalloc (sizeof (flac_decoder_t));
+    this = calloc(1, sizeof (flac_decoder_t));
 
     this->audio_decoder.decode_data         = flac_decode_data;
     this->audio_decoder.reset               = flac_reset;
@@ -385,7 +385,7 @@ static void *
 init_plugin (xine_t *xine, void *data) {
     flac_class_t *this;
   
-    this = (flac_class_t *) xine_xmalloc (sizeof (flac_class_t));
+    this = calloc(1, sizeof (flac_class_t));
 
     this->decoder_class.open_plugin     = open_plugin;
     this->decoder_class.identifier      = "flacdec";

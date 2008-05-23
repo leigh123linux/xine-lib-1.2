@@ -310,14 +310,14 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
   if (this->sps) {
 
     this->frame_size      = this->w/this->sps*this->h*this->sps;
-    this->frame_buffer    = xine_xmalloc (this->frame_size);
-    this->frame_reordered = xine_xmalloc (this->frame_size);
+    this->frame_buffer    = calloc (1, this->frame_size);
+    this->frame_reordered = calloc (1, this->frame_size);
     this->frame_num_bytes = 0;
 
   } else {
 
     this->frame_size      = this->w*this->h;
-    this->frame_buffer    = xine_xmalloc (this->frame_size);
+    this->frame_buffer    = calloc (this->w, this->h);
     this->frame_reordered = this->frame_buffer;
     this->frame_num_bytes = 0;
 
@@ -477,7 +477,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
   real_class_t      *cls = (real_class_t *) class_gen;
   realdec_decoder_t *this ;
 
-  this = (realdec_decoder_t *) xine_xmalloc (sizeof (realdec_decoder_t));
+  this = (realdec_decoder_t *) calloc(1, sizeof(realdec_decoder_t));
 
   this->audio_decoder.decode_data         = realdec_decode_data;
   this->audio_decoder.reset               = realdec_reset;
@@ -499,7 +499,7 @@ void *init_realadec (xine_t *xine, void *data) {
   real_class_t       *this;
   config_values_t    *config = xine->config;
 
-  this = (real_class_t *) xine_xmalloc (sizeof (real_class_t));
+  this = (real_class_t *) calloc(1, sizeof(real_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "realadec";

@@ -50,7 +50,7 @@ static const int frame_rate_tab[][2] = {
 
 void mpeg_parser_init (mpeg_parser_t *parser)
 {
-  parser->chunk_buffer = xine_xmalloc(BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
+  parser->chunk_buffer = malloc(BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
   mpeg_parser_reset(parser);
 }
 

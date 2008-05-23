@@ -521,7 +521,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
 
   esd_close(audio_fd);
 
-  this                     = (esd_driver_t *) xine_xmalloc (sizeof (esd_driver_t));
+  this                     = calloc(1, sizeof (esd_driver_t));
   if (!this)
     return NULL;
   this->xine               = class->xine;
@@ -567,7 +567,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   esd_class_t        *this;
 
-  this = (esd_class_t *) xine_xmalloc (sizeof (esd_class_t));
+  this = calloc(1, sizeof (esd_class_t));
   if (!this)
     return NULL;
 
