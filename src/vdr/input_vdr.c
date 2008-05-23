@@ -701,7 +701,6 @@ fprintf(stderr, "--- CLEAR(%d%c)\n", data->n, data->s ? 'b' : 'a');
 
       if (this->trick_speed_mode != data->on)
       {
-fprintf(stderr, "ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß\n");
         this->trick_speed_mode = data->on;
       
         _x_demux_seek(this->stream, 0, 0, 0);
