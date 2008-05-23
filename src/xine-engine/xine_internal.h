@@ -389,8 +389,8 @@ input_plugin_t *_x_find_input_plugin (xine_stream_t *stream, const char *mrl) XI
 demux_plugin_t *_x_find_demux_plugin (xine_stream_t *stream, input_plugin_t *input) XINE_PROTECTED;
 demux_plugin_t *_x_find_demux_plugin_by_name (xine_stream_t *stream, const char *name, input_plugin_t *input) XINE_PROTECTED;
 demux_plugin_t *_x_find_demux_plugin_last_probe(xine_stream_t *stream, const char *last_demux_name, input_plugin_t *input) XINE_PROTECTED;
-input_plugin_t *_x_rip_plugin_get_instance (xine_stream_t *stream, const char *filename) XINE_PROTECTED;
-input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream, int readahead_size) XINE_PROTECTED;
+input_plugin_t *_x_rip_plugin_get_instance (xine_stream_t *stream, const char *filename) XINE_MALLOC XINE_PROTECTED;
+input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream, int readahead_size) XINE_MALLOC XINE_PROTECTED;
 void _x_free_input_plugin (xine_stream_t *stream, input_plugin_t *input) XINE_PROTECTED;
 void _x_free_demux_plugin (xine_stream_t *stream, demux_plugin_t *demux) XINE_PROTECTED;
 

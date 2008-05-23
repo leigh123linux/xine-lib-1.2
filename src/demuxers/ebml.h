@@ -65,7 +65,7 @@ typedef struct ebml_parser_s {
 } ebml_parser_t;
 
 
-ebml_parser_t *new_ebml_parser (xine_t *xine, input_plugin_t *input);
+ebml_parser_t *new_ebml_parser (xine_t *xine, input_plugin_t *input) XINE_MALLOC;
 
 void dispose_ebml_parser (ebml_parser_t *ebml);
 

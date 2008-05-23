@@ -139,7 +139,7 @@ typedef struct {
  * frame queue (fifo) util functions
  */
 
-static img_buf_fifo_t *vo_new_img_buf_queue () {
+static img_buf_fifo_t *XINE_MALLOC vo_new_img_buf_queue () {
 
   img_buf_fifo_t *queue;
 

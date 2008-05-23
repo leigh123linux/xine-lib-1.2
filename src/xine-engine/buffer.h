@@ -607,8 +607,8 @@ struct fifo_buffer_s
  * allocate num_buffers of buf_size bytes each
  */
 
-fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) XINE_PROTECTED;
-fifo_buffer_t *_x_dummy_fifo_buffer_new (int num_buffers, uint32_t buf_size) XINE_PROTECTED;
+fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) XINE_MALLOC XINE_PROTECTED;
+fifo_buffer_t *_x_dummy_fifo_buffer_new (int num_buffers, uint32_t buf_size) XINE_MALLOC XINE_PROTECTED;
 
 
 /* return BUF_VIDEO_xxx given the fourcc

@@ -200,7 +200,7 @@ struct config_values_s {
 /*
  * allocate and init a new xine config object
  */
-config_values_t *_x_config_init (void) XINE_PROTECTED;
+config_values_t *_x_config_init (void) XINE_MALLOC XINE_PROTECTED;
 
 /*
  * interpret stream_setup part of mrls for config value changes

@@ -349,7 +349,7 @@ static void pvrscr_exit (scr_plugin_t *scr)
    free(this);
 }
 
-static pvrscr_t* pvrscr_init (void)
+static pvrscr_t *XINE_MALLOC pvrscr_init (void)
 {
    pvrscr_t *this;
    

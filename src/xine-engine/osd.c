@@ -143,7 +143,7 @@ struct osd_ft2context_s {
  * for the sake of simplicity)
  */
 
-static osd_object_t *osd_new_object (osd_renderer_t *this, int width, int height) {
+static osd_object_t *XINE_MALLOC osd_new_object (osd_renderer_t *this, int width, int height) {
      
   osd_object_t *osd;
   

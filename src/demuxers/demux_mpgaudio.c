@@ -316,8 +316,8 @@ static int parse_frame_header(mpg_audio_frame_t *const frame, const uint8_t *con
  * Parse a Xing header
  * return the Xing header or NULL on error
  */
-static xing_header_t* parse_xing_header(mpg_audio_frame_t *frame,
-                                        uint8_t *buf, int bufsize) {
+static xing_header_t *XINE_MALLOC parse_xing_header(mpg_audio_frame_t *frame,
+						    uint8_t *buf, int bufsize) {
   uint8_t *ptr = buf;
   xing_header_t *xing = NULL;
 
@@ -420,8 +420,8 @@ exit_error:
  * Parse a Vbri header
  * return the Vbri header or NULL on error
  */
-static vbri_header_t* parse_vbri_header(mpg_audio_frame_t *frame,
-                                        uint8_t *buf, int bufsize) {
+static vbri_header_t *XINE_MALLOC parse_vbri_header(mpg_audio_frame_t *frame,
+						    uint8_t *buf, int bufsize) {
 
   int i;
   uint8_t *ptr = buf;

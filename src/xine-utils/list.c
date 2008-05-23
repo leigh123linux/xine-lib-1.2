@@ -67,7 +67,7 @@ struct xine_list_s {
 /* Allocates a new chunk of n elements
  * One malloc call is used to allocate the struct and the elements.
  */
-static xine_list_chunk_t *xine_list_alloc_chunk(size_t size) {
+static xine_list_chunk_t *XINE_MALLOC xine_list_alloc_chunk(size_t size) {
   xine_list_chunk_t *new_chunk;
   size_t chunk_mem_size;
 

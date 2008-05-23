@@ -956,7 +956,7 @@ void xine_xprintf(xine_t *xine, int verbose, const char *fmt, ...);
 /**
  * get encoding of current locale
  */
-char *xine_get_system_encoding(void) XINE_PROTECTED;
+char *xine_get_system_encoding(void) XINE_MALLOC XINE_PROTECTED;
 
 /*
  * guess default encoding for the subtitles

@@ -571,7 +571,7 @@ static void tuner_dispose(tuner_t * this)
 }
 
 
-static tuner_t *tuner_init(xine_t * xine, int adapter)
+static tuner_t *XINE_MALLOC tuner_init(xine_t * xine, int adapter)
 {
 
     tuner_t *this;

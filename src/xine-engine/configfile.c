@@ -319,7 +319,7 @@ static void config_insert(config_values_t *this, cfg_entry_t *new_entry) {
     this->first = new_entry;
 }
 
-static cfg_entry_t *config_add (config_values_t *this, const char *key, int exp_level) {
+static cfg_entry_t *XINE_MALLOC config_add (config_values_t *this, const char *key, int exp_level) {
 
   cfg_entry_t *entry;
 
