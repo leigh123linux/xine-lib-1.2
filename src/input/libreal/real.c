@@ -48,9 +48,6 @@ static const unsigned char xor_table[] = {
 #define _X_BE_32C(x,y) do { *(uint32_t *)(x) = be2me_32((y)); } while(0)
 #define _X_LE_32C(x,y) do { *(uint32_t *)(x) = le2me_32((y)); } while(0)
 
-#define MAX(x,y) ((x>y) ? x : y)
-
-
 static void hash(char *field, char *param) {
 
   uint32_t a, b, c, d;

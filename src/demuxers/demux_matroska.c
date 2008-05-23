@@ -58,13 +58,6 @@
 
 #define WRAP_THRESHOLD        90000
 
-#if !defined(MIN)
-#define MIN(a, b)	((a)<(b)?(a):(b))
-#endif
-#if !defined(MAX)
-#define MAX(a, b)	((a)>(b)?(a):(b))
-#endif
-
 typedef struct {
   int                  track_num;
   off_t               *pos;

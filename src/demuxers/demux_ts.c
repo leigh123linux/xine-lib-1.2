@@ -185,9 +185,6 @@
 #define INVALID_PROGRAM ((unsigned int)(-1))
 #define INVALID_CC ((unsigned int)(-1))
 
-#define	MIN(a,b)   (((a)<(b))?(a):(b))
-#define	MAX(a,b)   (((a)>(b))?(a):(b))
-
 #define PROG_STREAM_MAP  0xBC
 #define PRIVATE_STREAM1  0xBD
 #define PADDING_STREAM   0xBE
