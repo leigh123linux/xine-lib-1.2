@@ -75,26 +75,28 @@ AC_DEFUN([CC_PTHREAD_FLAGS], [
 ])
 
 AC_DEFUN([CC_PTHREAD_RECURSIVE_MUTEX], [
-    AC_REQUIRE([CC_PTHREAD_FLAGS])
-    AC_MSG_CHECKING([for recursive mutex support in pthread])
-
-    ac_save_LIBS="$LIBS"
-    LIBS="$LIBS $PTHREAD_LIBS"
-    AC_COMPILE_IFELSE(AC_LANG_SOURCE([#include <pthread.h>
-
+  AC_REQUIRE([CC_PTHREAD_FLAGS])
+  AC_CACHE_CHECK(
+    [for recursive mutex support in pthread],
+    [cc_cv_pthread_recursive_mutex],
+    [ac_save_LIBS="$LIBS"
+     LIBS="$LIBS $PTHREAD_LIBS"
+     AC_COMPILE_IFELSE(
+       [AC_LANG_PROGRAM([
+#include <pthread.h>
+          ], [
 int main() {
     pthread_mutexattr_t attr;
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
     return 0;
 }
-        ]), [have_recursive_mutex=yes], [have_recursive_mutex=no])
-    LIBS="$ac_save_LIBS"
+           ])
+	  ],
+	  [cc_cv_pthread_recursive_mutex=yes],
+	  [cc_cv_pthread_recursive_mutex=no])
+     LIBS="$ac_save_LIBS"
+    ])
 
-    AC_MSG_RESULT([$have_recursive_mutex])
-
-    if test x"$have_recursive_mutex" = x"yes"; then
-        ifelse([$1], , [:], [$1])
-    else
-        ifelse([$2], , [:], [$2])
-    fi
+  AS_IF([test x"$cc_cv_pthread_recursive_mutex" = x"yes"],
+    [$1], [$2])
 ])
