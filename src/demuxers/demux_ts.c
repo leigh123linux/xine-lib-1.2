@@ -218,6 +218,7 @@
       ISO_14496_PART2_VIDEO = 0x10,     /* ISO/IEC 14496-2 Visual (MPEG-4) */
       ISO_14496_PART3_AUDIO = 0x11,     /* ISO/IEC 14496-3 Audio with LATM transport syntax */
       ISO_14496_PART10_VIDEO = 0x1b,    /* ISO/IEC 14496-10 Video (MPEG-4 part 10/AVC, aka H.264) */
+      STREAM_VIDEO_MPEG = 0x80,
       STREAM_AUDIO_AC3 = 0x81,
     } streamType;
 
@@ -806,6 +807,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
     switch (m->descriptor_tag) {
     case ISO_11172_VIDEO:
     case ISO_13818_VIDEO:
+    case STREAM_VIDEO_MPEG:
       lprintf ("demux_ts: found MPEG video type.\n");
       m->type      = BUF_VIDEO_MPEG;
       break;
