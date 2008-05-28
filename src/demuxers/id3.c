@@ -275,15 +275,17 @@ static int id3v22_interp_frame(input_plugin_t *input,
                                id3v22_frame_header_t *frame_header) {
   char *buf;
   int enc;
+  const size_t bufsize = frame_header->size +1;
+  if ( bufsize <= 2 ) /* frames has to be _at least_ 1 byte */
+    return 0;
   
-  buf = malloc(frame_header->size + 1);
+  buf = malloc(bufsize);
   if (buf == NULL) {
     lprintf("malloc error");
     return 0;
   }
 
   if (input->read (input, buf, frame_header->size) == frame_header->size) {
-    buf[frame_header->size] = 0;
     enc = buf[0];
     if( enc >= ID3_ENCODING_COUNT )
       enc = 0;
@@ -469,8 +471,11 @@ static int id3v23_interp_frame(input_plugin_t *input,
                                id3v23_frame_header_t *frame_header) {
   char *buf;
   int enc;
-
-  buf = malloc(frame_header->size + 1);
+  const size_t bufsize = frame_header->size +1;
+  if ( bufsize <= 2 ) /* frames has to be _at least_ 1 byte */
+    return 0;
+  
+  buf = malloc(bufsize);
   if (buf == NULL) {
     lprintf("malloc error");
     return 0;
@@ -720,8 +725,11 @@ static int id3v24_interp_frame(input_plugin_t *input,
                                id3v24_frame_header_t *frame_header) {
   char *buf;
   int enc;
-
-  buf = malloc(frame_header->size + 1);
+  const size_t bufsize = frame_header->size +1;
+  if ( bufsize <= 2 ) /* frames has to be _at least_ 1 byte */
+    return 0;
+  
+  buf = malloc(bufsize);
   if (buf == NULL) {
     lprintf("malloc error");
     return 0;
