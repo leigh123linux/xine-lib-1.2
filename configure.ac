@@ -2302,19 +2302,21 @@ case "$host_or_hostalias" in
       esac
   
       AC_DEFINE_UNQUOTED(FPM_SPARC,,[Define to select libmad fixed point arithmetic implementation])
-      AC_DEFINE_UNQUOTED(ARCH_SPARC,,[Define this if you're running SPARC architecture])
     else
       AC_DEFINE_UNQUOTED(FPM_64BIT,,[Define to select libmad fixed point arithmetic implementation])
     fi
+    AC_DEFINE_UNQUOTED(ARCH_SPARC,,[Define this if you're running SPARC architecture])
     ;;
   mips-*)
     AC_DEFINE_UNQUOTED(FPM_MIPS,,[Define to select libmad fixed point arithmetic implementation])
     ;;
   alphaev56-* | alpha* | ia64-* | hppa*-linux-*)
     AC_DEFINE_UNQUOTED(FPM_64BIT,,[Define to select libmad fixed point arithmetic implementation])
+    AC_DEFINE_UNQUOTED(ARCH_ALPHA,,[Define this if you're running Alpha architecture])
     ;;
   armv4l-*-linux*)
     AC_DEFINE_UNQUOTED(FPM_ARM,,[Define to select libmad fixed point arithmetic implementation])
+    AC_DEFINE_UNQUOTED(ARCH_ARM,,[Define this if you're running ARM architecture])
     enable_armv4l="yes"
     ;;
   *)
