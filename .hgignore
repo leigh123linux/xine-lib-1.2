@@ -40,6 +40,7 @@ debian/libxine1-dbg
 debian/libxine1-doc
 debian/tmp
 debian/*.debhelper
+debian/*.debhelper.log
 debian/*.substvars
 
 doc/faq/faq.html
