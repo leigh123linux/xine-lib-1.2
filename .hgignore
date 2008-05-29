@@ -50,7 +50,9 @@ debian/*.debhelper
 debian/*.substvars
 
 contrib/ffmpeg/*.pc
+contrib/ffmpeg/.vhookdep
 contrib/ffmpeg/config.err
+contrib/ffmpeg/config.h
 contrib/ffmpeg/config.mak
 contrib/ffmpeg/doc/*.1
 contrib/ffmpeg/doc/*.html
