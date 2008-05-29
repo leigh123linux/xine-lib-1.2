@@ -294,7 +294,7 @@ struct audio_fifo_s {
 static int ao_get_property (xine_audio_port_t *this_gen, int property);
 static int ao_set_property (xine_audio_port_t *this_gen, int property, int value);
 
-static audio_fifo_t *fifo_new (xine_t *xine) {
+static audio_fifo_t *XINE_MALLOC fifo_new (xine_t *xine) {
 
   audio_fifo_t *fifo;
 

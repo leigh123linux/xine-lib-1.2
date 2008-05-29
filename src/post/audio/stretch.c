@@ -152,7 +152,7 @@ static void stretchscr_exit (scr_plugin_t *scr) {
   free(this);
 }
 
-static stretchscr_t* stretchscr_init (double *stretch_factor) {
+static stretchscr_t *XINE_MALLOC stretchscr_init (double *stretch_factor) {
   stretchscr_t *this;
 
   this = calloc(1, sizeof(stretchscr_t));

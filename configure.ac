@@ -453,6 +453,7 @@ CC_ATTRIBUTE_MALLOC
 
 CC_ATTRIBUTE_PACKED([],
   [AC_MSG_WARN([Your compiler doesn't support __attribute__((packed)); xine might not work as expected.])])
+CC_ATTRIBUTE_CONST
 
 CC_CHECK_CFLAGS([-pipe], [miscflags="$miscflags -pipe"])
 
@@ -584,12 +585,19 @@ dnl initialize arch_86 as it is later tested for != "no"
 arch_x86=no
 
 case "$host_or_hostalias" in
-    alphaev56-*)    cpuflags="-mcpu=ev56 -mieee $cpuflags" ;;
-    alpha*)         cpuflags="-mieee $cpuflags" ;;
+    alphaev56-*)
+        cpuflags="-mcpu=ev56 -mieee $cpuflags"
+        AC_DEFINE([ARCH_ALPHA], [], [Define this if you're running Alpha architecture])
+        ;;
+    alpha*)
+        cpuflags="-mieee $cpuflags"
+        AC_DEFINE([ARCH_ALPHA], [], [Define this if you're running Alpha architecture])
+        ;;
 
     armv4l-*-linux*)
         cpuflags="-mcpu=strongarm1100 -ffast-math -fsigned-char $cpuflags"
         DEFAULT_OCFLAGS='$(O2_CFLAGS)'
+        AC_DEFINE([ARCH_ARM], [], [Define this if you're running ARM architecture])
         ;;
 
     sparc*-*-linux*)
@@ -895,6 +903,11 @@ AC_CHECK_FUNC([opendir],
                else
                    AC_MSG_ERROR([dirent is needed (opendir, readdir, ...)])
                fi])
+
+XINE_CHECK_MINMAX([], [
+    AC_DEFINE([MIN(x, y)], [(x > y) ? y : x], [Get the minimum value between two])
+    AC_DEFINE([MAX(x, y)], [(x > y) ? x : y], [Get the maximum value between two])
+  ])
 
 AC_LIBSOURCE([timedlock.c])
 ac_save_LIBS="$LIBS" LIBS="$LIBS $PTHREAD_LIBS"

@@ -185,9 +185,6 @@
 #define INVALID_PROGRAM ((unsigned int)(-1))
 #define INVALID_CC ((unsigned int)(-1))
 
-#define	MIN(a,b)   (((a)<(b))?(a):(b))
-#define	MAX(a,b)   (((a)>(b))?(a):(b))
-
 #define PROG_STREAM_MAP  0xBC
 #define PRIVATE_STREAM1  0xBD
 #define PADDING_STREAM   0xBE
@@ -220,7 +217,9 @@
       ISO_13818_PART7_AUDIO = 0x0f,     /* ISO/IEC 13818-7 Audio with ADTS transport sytax */
       ISO_14496_PART2_VIDEO = 0x10,     /* ISO/IEC 14496-2 Visual (MPEG-4) */
       ISO_14496_PART3_AUDIO = 0x11,     /* ISO/IEC 14496-3 Audio with LATM transport syntax */
-      ISO_14496_PART10_VIDEO = 0x1b     /* ISO/IEC 14496-10 Video (MPEG-4 part 10/AVC, aka H.264) */
+      ISO_14496_PART10_VIDEO = 0x1b,    /* ISO/IEC 14496-10 Video (MPEG-4 part 10/AVC, aka H.264) */
+      STREAM_VIDEO_MPEG = 0x80,
+      STREAM_AUDIO_AC3 = 0x81,
     } streamType;
 
 #define WRAP_THRESHOLD       270000
@@ -729,14 +728,14 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
      * do not include any of the ac3 header info in their audio tracks
      * these "raw" streams may begin with a byte that looks like a stream type.
      */
-    if((m->descriptor_tag == 0x81) ||    /* ac3 - raw */ 
+    if((m->descriptor_tag == STREAM_AUDIO_AC3) ||    /* ac3 - raw */ 
        (p[0] == 0x0B && p[1] == 0x77)) { /* ac3 - syncword */
       m->content   = p;
       m->size = packet_len;
       m->type |= BUF_AUDIO_A52;
       return 1;
 
-    } else if (m->descriptor_tag == 0x06
+    } else if (m->descriptor_tag == ISO_13818_PES_PRIVATE
 	     && p[0] == 0x20 && p[1] == 0x00) {
       /* DVBSUB */
       long payload_len = ((buf[4] << 8) | buf[5]) - header_len - 3;
@@ -784,6 +783,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
     switch (m->descriptor_tag) {
     case ISO_11172_VIDEO:
     case ISO_13818_VIDEO:
+    case STREAM_VIDEO_MPEG:
       lprintf ("demux_ts: found MPEG video type.\n");
       m->type      = BUF_VIDEO_MPEG;
       break;
@@ -1327,7 +1327,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
             printf ("demux_ts: PMT AC3 audio pid 0x%.4x type %2.2x\n", pid, stream[0]);
 #endif
           demux_ts_pes_new(this, this->media_num, pid,
-                           this->audio_fifo, 0x81);
+                           this->audio_fifo, STREAM_AUDIO_AC3);
 
           this->audio_tracks[this->audio_tracks_count].pid = pid;
           this->audio_tracks[this->audio_tracks_count].media_index = this->media_num;

@@ -40,6 +40,7 @@
 #include <xine/xineutils.h>
 #else
 #define lprintf(...)
+#define XINE_MALLOC
 #endif
 #include <xine/xmllexer.h>
 #include <xine/xmlparser.h>
@@ -85,7 +86,7 @@ static void free_xml_node(xml_node_t * node) {
   free(node);
 }
 
-static xml_property_t * new_xml_property(void) {
+static xml_property_t *XINE_MALLOC new_xml_property(void) {
   xml_property_t * new_property;
 
   new_property = (xml_property_t*) malloc(sizeof(xml_property_t));

@@ -45,6 +45,7 @@
 #  define SUPPORT_ATTRIBUTE_FORMAT_ARG 1
 #  define SUPPORT_ATTRIBUTE_MALLOC 1
 #  define SUPPORT_ATTRIBUTE_UNUSED 1
+#  define SUPPORT_ATTRIBUTE_CONST 1
 # endif
   
 # if __GNUC__ >= 4
@@ -107,6 +108,12 @@
 # define XINE_PACKED __attribute__((__packed__))
 #else
 # define XINE_PACKED
+#endif
+
+#ifdef SUPPORT_ATTRIBUTE_CONST
+# define XINE_CONST __attribute__((__const__))
+#else
+# define XINE_CONST
 #endif
 
 #endif /* ATTRIBUTE_H_ */

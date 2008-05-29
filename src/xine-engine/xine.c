@@ -338,7 +338,7 @@ static void ticket_dispose(xine_ticket_t *this) {
   free(this);
 }
 
-static xine_ticket_t *ticket_init(void) {
+static xine_ticket_t *XINE_MALLOC ticket_init(void) {
   xine_ticket_t *port_ticket;
   
   port_ticket = calloc(1, sizeof(xine_ticket_t));

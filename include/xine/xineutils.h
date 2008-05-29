@@ -113,7 +113,7 @@ extern "C" {
 #define MM_SSE                  MM_ACCEL_X86_SSE
 #define MM_SSE2                 MM_ACCEL_X86_SSE2
 
-uint32_t xine_mm_accel (void) XINE_PROTECTED;
+uint32_t xine_mm_accel (void) XINE_CONST XINE_PROTECTED;
 
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
 
@@ -931,7 +931,7 @@ void xine_xprintf(xine_t *xine, int verbose, const char *fmt, ...);
 /**
  * get encoding of current locale
  */
-char *xine_get_system_encoding(void) XINE_PROTECTED;
+char *xine_get_system_encoding(void) XINE_MALLOC XINE_PROTECTED;
 
 /*
  * guess default encoding for the subtitles

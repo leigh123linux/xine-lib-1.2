@@ -26,13 +26,6 @@
 #include <xine/xineutils.h>
 #include <pthread.h>
 
-#ifndef MIN
-#define        MIN(a,b) (((a)<(b))?(a):(b))
-#endif
-#ifndef MAX
-#define        MAX(a,b) (((a)>(b))?(a):(b))
-#endif
-
 /*===========================================================================*/
 
 #define MIN_MATRIX_SIZE 3

@@ -42,11 +42,8 @@ AC_DEFUN([CC_CHECK_CFLAGS_SILENT], [
      CFLAGS="$ac_save_CFLAGS"
     ])
 
-  if eval test [x$]AS_TR_SH([cc_cv_cflags_$1]) = xyes; then
-    ifelse([$2], , [:], [$2])
-  else
-    ifelse([$3], , [:], [$3])
-  fi
+  AS_IF([test x$]AS_TR_SH([cc_cv_cflags_$1])[ = xyes],
+    [$2], [$3])
 ])
 
 AC_DEFUN([CC_CHECK_CFLAGS], [
@@ -55,11 +52,8 @@ AC_DEFUN([CC_CHECK_CFLAGS], [
     CC_CHECK_CFLAGS_SILENT([$1]) dnl Don't execute actions here!
   )
 
-  if eval test [x$]AS_TR_SH([cc_cv_cflags_$1]) = xyes; then
-    ifelse([$2], , [:], [$2])
-  else
-    ifelse([$3], , [:], [$3])
-  fi
+  AS_IF([test x$]AS_TR_SH([cc_cv_cflags_$1])[ = xyes],
+    [$2], [$3])
 ])
 
 AC_DEFUN([CC_CHECK_LDFLAGS], [
@@ -73,11 +67,8 @@ AC_DEFUN([CC_CHECK_LDFLAGS], [
      LDFLAGS="$ac_save_LDFLAGS"
     ])
 
-  if eval test [x$]AS_TR_SH([cc_cv_ldflags_$1]) = xyes; then
-    ifelse([$2], , [:], [$2])
-  else
-    ifelse([$3], , [:], [$3])
-  fi
+  AS_IF([test x$]AS_TR_SH([cc_cv_ldflags_$1])[ = xyes],
+    [$2], [$3])
 ])
 
 dnl Check for a -Werror flag or equivalent. -Werror is the GCC
@@ -109,76 +100,69 @@ AC_DEFUN([CC_CHECK_ATTRIBUTE], [
      CFLAGS="$ac_save_CFLAGS"
     ])
 
-  if eval test [x$]AS_TR_SH([cc_cv_attribute_$1]) = xyes; then
-    AC_DEFINE(AS_TR_CPP([SUPPORT_ATTRIBUTE_$1]), 1, [Define this if the compiler supports __attribute__(( ifelse([$2], , [$1], [$2]) ))])
-    ifelse([$4], , [:], [$4])
-  else
-    ifelse([$5], , [:], [$5])
-  fi
+  AS_IF([test x$]AS_TR_SH([cc_cv_attribute_$1])[ = xyes],
+    [AC_DEFINE(
+       AS_TR_CPP([SUPPORT_ATTRIBUTE_$1]), 1,
+         [Define this if the compiler supports __attribute__(( ifelse([$2], , [$1], [$2]) ))]
+         )
+     $4],
+    [$5])
 ])
 
 AC_DEFUN([CC_ATTRIBUTE_CONSTRUCTOR], [
   CC_CHECK_ATTRIBUTE(
     [constructor],,
     [void __attribute__((constructor)) ctor() { int a; }],
-    [$1],
-    [$2])
+    [$1], [$2])
 ])
 
 AC_DEFUN([CC_ATTRIBUTE_FORMAT], [
   CC_CHECK_ATTRIBUTE(
     [format], [format(printf, n, n)],
     [void __attribute__((format(printf, 1, 2))) printflike(const char *fmt, ...) { fmt = (void *)0; }],
-    [$1],
-    [$2])
+    [$1], [$2])
 ])
 
 AC_DEFUN([CC_ATTRIBUTE_FORMAT_ARG], [
   CC_CHECK_ATTRIBUTE(
     [format_arg], [format_arg(printf)],
     [char *__attribute__((format_arg(1))) gettextlike(const char *fmt) { fmt = (void *)0; }],
-    [$1],
-    [$2])
+    [$1], [$2])
 ])
 
 AC_DEFUN([CC_ATTRIBUTE_VISIBILITY], [
   CC_CHECK_ATTRIBUTE(
     [visibility_$1], [visibility("$1")],
     [void __attribute__((visibility("$1"))) $1_function() { }],
-    [$2],
-    [$3])
+    [$2], [$3])
 ])
 
 AC_DEFUN([CC_ATTRIBUTE_NONNULL], [
   CC_CHECK_ATTRIBUTE(
     [nonnull], [nonnull()],
     [void __attribute__((nonnull())) some_function(void *foo, void *bar) { foo = (void*)0; bar = (void*)0; }],
-    [$1],
-    [$2])
+    [$1], [$2])
 ])
 
 AC_DEFUN([CC_ATTRIBUTE_UNUSED], [
   CC_CHECK_ATTRIBUTE(
     [unused], ,
     [void some_function(void *foo, __attribute__((unused)) void *bar);],
-    [$1],
-    [$2])
+    [$1], [$2])
 ])
 
 AC_DEFUN([CC_ATTRIBUTE_SENTINEL], [
   CC_CHECK_ATTRIBUTE(
     [sentinel], ,
     [void some_function(void *foo, ...) __attribute__((sentinel));],
-    [$1],
-    [$2])
+    [$1], [$2])
 ])
 
 AC_DEFUN([CC_ATTRIBUTE_DEPRECATED], [
   CC_CHECK_ATTRIBUTE(
     [deprecated], ,
     [void some_function(void *foo, ...) __attribute__((deprecated));],
-    [$1],
-    [$2])
+    [$1], [$2])
 ])
 
 AC_DEFUN([CC_ATTRIBUTE_ALIAS], [
@@ -186,24 +170,28 @@ AC_DEFUN([CC_ATTRIBUTE_ALIAS], [
     [alias], [weak, alias],
     [void other_function(void *foo) { }
      void some_function(void *foo) __attribute__((weak, alias("other_function")));],
-    [$1],
-    [$2])
+    [$1], [$2])
 ])
 
 AC_DEFUN([CC_ATTRIBUTE_MALLOC], [
   CC_CHECK_ATTRIBUTE(
     [malloc], ,
     [void * __attribute__((malloc)) my_alloc(int n);],
-    [$1],
-    [$2])
+    [$1], [$2])
 ])
 
 AC_DEFUN([CC_ATTRIBUTE_PACKED], [
   CC_CHECK_ATTRIBUTE(
     [packed], ,
     [struct astructure { char a; int b; long c; void *d; } __attribute__((packed));],
-    [$1],
-    [$2])
+    [$1], [$2])
+])
+
+AC_DEFUN([CC_ATTRIBUTE_CONST], [
+  CC_CHECK_ATTRIBUTE(
+    [const], ,
+    [int __attribute__((const)) twopow(int n) { return 1 << n; } ],
+    [$1], [$2])
 ])
 
 AC_DEFUN([CC_FLAG_VISIBILITY], [
@@ -217,39 +205,34 @@ AC_DEFUN([CC_FLAG_VISIBILITY], [
 	cc_cv_flag_visibility='no')
      CFLAGS="$cc_flag_visibility_save_CFLAGS"])
   
-  if test "x$cc_cv_flag_visibility" = "xyes"; then
-    AC_DEFINE([SUPPORT_FLAG_VISIBILITY], 1, [Define this if the compiler supports the -fvisibility flag])
-    ifelse([$1], , [:], [$1])
-  else
-    ifelse([$2], , [:], [$2])
-  fi
+  AS_IF([test "x$cc_cv_flag_visibility" = "xyes"],
+    [AC_DEFINE([SUPPORT_FLAG_VISIBILITY], 1,
+       [Define this if the compiler supports the -fvisibility flag])
+     $1],
+    [$2])
 ])
 
 AC_DEFUN([CC_FUNC_EXPECT], [
-	AC_REQUIRE([CC_CHECK_WERROR])
-	ac_save_CFLAGS="$CFLAGS"
-	CFLAGS="$CFLAGS $cc_cv_werror"
-	AC_CACHE_CHECK([if compiler has __builtin_expect function],
-		[cc_cv_func_expect],
-		[AC_COMPILE_IFELSE([
-			int some_function()
-			{
-				int a = 3;
-				return (int)__builtin_expect(a, 3);
-			}
-			],
-			[cc_cv_func_expect=yes],
-			[cc_cv_func_expect=no])
-		])
-	CFLAGS="$ac_save_CFLAGS"
-	
-	if test "x$cc_cv_func_expect" = "xyes"; then
-		AC_DEFINE([SUPPORT__BUILTIN_EXPECT], 1, [Define this if the compiler supports __builtin_expect() function])
-		$1
-	else
-		true
-		$2
-	fi
+  AC_REQUIRE([CC_CHECK_WERROR])
+  AC_CACHE_CHECK([if compiler has __builtin_expect function],
+    [cc_cv_func_expect],
+    [ac_save_CFLAGS="$CFLAGS"
+     CFLAGS="$CFLAGS $cc_cv_werror"
+     AC_COMPILE_IFELSE(
+       [int some_function() {
+        int a = 3;
+        return (int)__builtin_expect(a, 3);
+	}],
+       [cc_cv_func_expect=yes],
+       [cc_cv_func_expect=no])
+     CFLAGS="$ac_save_CFLAGS"
+    ])
+
+  AS_IF([test "x$cc_cv_func_expect" = "xyes"],
+    [AC_DEFINE([SUPPORT__BUILTIN_EXPECT], 1,
+     [Define this if the compiler supports __builtin_expect() function])
+     $1],
+    [$2])
 ])
 
 AC_DEFUN([CC_ATTRIBUTE_ALIGNED], [
@@ -272,91 +255,4 @@ AC_DEFUN([CC_ATTRIBUTE_ALIGNED], [
      AC_DEFINE_UNQUOTED([ATTRIBUTE_ALIGNED_MAX], [$cc_cv_attribute_aligned],
        [Define the highest alignment supported])
   fi
-])
-
-AC_DEFUN([CC_ATTRIBUTE_PACKED], [
-  AC_REQUIRE([CC_CHECK_WERROR])
-  AC_CACHE_CHECK([if $CC supports __attribute__((packed))],
-    [cc_cv_attribute_packed],
-    [ac_save_CFLAGS="$CFLAGS"
-     CFLAGS="$CFLAGS $cc_cv_werror"
-     AC_COMPILE_IFELSE([struct { char a; short b; int c; } __attribute__((packed)) foo;],
-       [cc_cv_attribute_packed=yes],
-       [cc_cv_attribute_packed=no])
-     CFLAGS="$ac_save_CFLAGS"
-    ])
-
-  if test x$cc_cv_attribute_packed = xyes; then
-    AC_DEFINE([SUPPORT_ATTRIBUTE_PACKED], 1, [Define this if the compiler supports __attribute__((packed))])
-    ifelse([$1], , [:], [$1])
-  else
-    ifelse([$2], , [:], [$2])
-  fi
-])
-
-AC_DEFUN([CC_ATTRIBUTE_MALLOC], [
-  AC_REQUIRE([CC_CHECK_WERROR])
-  AC_CACHE_CHECK([if $CC supports __attribute__((__malloc__))],
-    [cc_cv_attribute_malloc],
-    [ac_save_CFLAGS="$CFLAGS"
-     CFLAGS="$CFLAGS $cc_cv_werror"
-     AC_COMPILE_IFELSE([void *fooalloc(int size) __attribute__((__malloc__));],
-       [cc_cv_attribute_malloc=yes],
-       [cc_cv_attribute_malloc=no])
-     CFLAGS="$ac_save_CFLAGS"
-    ])
-
-  if test x$cc_cv_attribute_malloc = xyes; then
-    AC_DEFINE([SUPPORT_ATTRIBUTE_MALLOC], 1, [Define this if the compiler supports __attribute__((__malloc__))])
-    ifelse([$1], , [:], [$1])
-  else
-    ifelse([$2], , [:], [$2])
-  fi
-])
-
-
-dnl AC_C_ALWAYS_INLINE
-dnl Define inline to something appropriate, including the new always_inline
-dnl attribute from gcc 3.1
-dnl Thanks to Michel LESPINASSE <walken@zoy.org>
-dnl __inline__ "check" added by Darren Salt
-AC_DEFUN([AC_C_ALWAYS_INLINE], [
-    AC_C_INLINE
-    if test x"$GCC" = x"yes" -a x"$ac_cv_c_inline" = x"inline"; then
-        AC_MSG_CHECKING([for always_inline])
-        SAVE_CFLAGS="$CFLAGS"
-        CFLAGS="$CFLAGS -Wall -Werror"
-        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[inline __attribute__ ((__always_inline__)) void f (void);]])],
-            [ac_cv_always_inline=yes],[ac_cv_always_inline=no])
-        CFLAGS="$SAVE_CFLAGS"
-        AC_MSG_RESULT([$ac_cv_always_inline])
-        if test x"$ac_cv_always_inline" = x"yes"; then
-            AH_TOP([
-#ifdef inline
-/* the strange formatting below is needed to prevent config.status from rewriting it */
-#  undef \
-     inline
-#endif
-            ])
-            AC_DEFINE_UNQUOTED([inline],[inline __attribute__ ((__always_inline__))])
-        fi
-	ac_cv_c___inline__=''
-    else
-	# FIXME: test the compiler to see if it supports __inline__
-	#	 instead of assuming that if it isn't gcc, it doesn't
-	case "$ac_cv_c_inline" in
-	    yes)
-		ac_cv_c___inline__=inline
-		;;
-	    inline|__inline__)
-		ac_cv_c___inline__=''
-		;;
-	    *)
-		ac_cv_c___inline__="$ac_cv_c_inline"
-		;;
-	esac
-    fi
-    if test x"$ac_cv_c___inline__" != x; then
-	AC_DEFINE_UNQUOTED([__inline__],[$ac_cv_c___inline__],[Define if the compiler doesn't recognise __inline__])
-    fi
 ])

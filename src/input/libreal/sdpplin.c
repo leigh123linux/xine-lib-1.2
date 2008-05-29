@@ -120,7 +120,7 @@ static int filter(const char *in, const char *filter, char **out) {
   
   return 0;
 }
-static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
+static sdpplin_stream_t *XINE_MALLOC sdpplin_parse_stream(char **data) {
 
   sdpplin_stream_t *desc = calloc(1, sizeof(sdpplin_stream_t));
   char      *buf=xine_buffer_init(32);

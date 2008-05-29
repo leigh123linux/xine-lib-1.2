@@ -47,6 +47,7 @@ debian/libxine2-dbg
 debian/libxine2-doc
 debian/tmp
 debian/*.debhelper
+debian/*.debhelper.log
 debian/*.substvars
 
 contrib/ffmpeg/*.pc

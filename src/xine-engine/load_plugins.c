@@ -468,7 +468,7 @@ static int _plugin_node_comparator(void *a, void *b) {
   }
 }
 
-static plugin_catalog_t *_new_catalog(void){
+static plugin_catalog_t *XINE_MALLOC _new_catalog(void){
 
   plugin_catalog_t *catalog;
   int i;

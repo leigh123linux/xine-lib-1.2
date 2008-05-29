@@ -47,11 +47,6 @@
 #include <winsock.h>
 #endif
 
-#ifdef MIN
-#undef MIN
-#endif
-#define MIN(a,b) ( (a) < (b) ) ? (a) : (b)
-
 /* 
  *  Flush audio and video buffers. It is called from demuxers on
  *  seek/stop, and may be useful when user input changes a stream and

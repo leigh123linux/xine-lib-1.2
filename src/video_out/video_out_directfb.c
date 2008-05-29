@@ -168,10 +168,6 @@ typedef struct {
                           "no-deinit-check"
 
 
-#ifndef MAX
-# define MAX( a, b ) (((a) > (b)) ? (a) : (b))
-#endif
-
 #define YCBCR_TO_RGB( y, cb, cr, r, g, b ) \
   do { \
     int _y, _cb, _cr, _r, _g, _b; \
