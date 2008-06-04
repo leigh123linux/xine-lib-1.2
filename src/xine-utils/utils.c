@@ -525,7 +525,7 @@ void xine_usec_sleep(unsigned usec) {
 void xine_hexdump (const void *buf_gen, int length) {
   static const char separator[70] = "---------------------------------------------------------------------";
 
-  const uint8_t *const buf = (const uint8_t*)buf;
+  const uint8_t *const buf = (const uint8_t*)buf_gen;
   int j = 0;
 
   /* printf ("Hexdump: %i Bytes\n", length);*/
@@ -544,11 +544,7 @@ void xine_hexdump (const void *buf_gen, int length) {
     }
 
     for (i=j; i < imax; i++) {
-      uint8_t c = buf[i];
-      if ((c>=32) && (c<127))
-	c = '.';
-
-      fputc(c, stdout);
+      fputc ((buf[i] >= 32 && buf[i] <= 126) ? buf[i] : '.', stdout);
     }
     j=i;
 
