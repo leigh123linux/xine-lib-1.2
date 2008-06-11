@@ -2664,21 +2664,32 @@ char *xine_get_demux_for_mime_type (xine_t *self, const char *mime_type) {
   plugin_node_t    *node;
   char             *id = NULL;
   int               list_id, list_size;
+  const size_t      mime_type_len = strlen (mime_type);
 
   pthread_mutex_lock (&catalog->lock);
 
   list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
 
   for (list_id = 0; (list_id < list_size) && !id; list_id++) {
-    demux_class_t *cls;
 
     node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
     if (node->plugin_class || _load_plugin_class(self, node, NULL)) {
 
-      cls = (demux_class_t *)node->plugin_class;
-      
-      if (cls->mimetypes && strcasestr(cls->mimetypes, mime_type) )
-	  id = strdup(node->info->id);
+      demux_class_t *cls = (demux_class_t *)node->plugin_class;
+      const char *mime = cls->mimetypes;
+      while (mime)
+      {
+        while (*mime == ';' || isspace (*mime))
+          ++mime;
+        if (!strncmp (mime, mime_type, mime_type_len) &&
+            (!mime[mime_type_len] || mime[mime_type_len] == ':' || mime[mime_type_len] == ';'))
+        {
+          free (id);
+          id = strdup(node->info->id);
+          break;
+        }
+        mime = strchr (mime, ';');
+      }
     }
   }
 

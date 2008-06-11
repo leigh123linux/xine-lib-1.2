@@ -802,6 +802,11 @@ void   xine_vlog(xine_t *self, int buf,
 /* get log messages of specified section */
 char *const *xine_get_log (xine_t *self, int buf) XINE_PROTECTED;
 
+/* log callback will be called whenever something is logged */
+typedef void (*xine_log_cb_t) (void *user_data, int section);
+void   xine_register_log_cb (xine_t *self, xine_log_cb_t cb,
+			     void *user_data) XINE_PROTECTED XINE_DEPRECATED;
+
 /*
  * error handling / engine status
  */

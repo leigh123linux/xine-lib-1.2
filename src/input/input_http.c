@@ -927,7 +927,10 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   
         /* content type */
         if (!strncasecmp(this->buf, TAG_CONTENT_TYPE, sizeof(TAG_CONTENT_TYPE) - 1)) {
-          if (!strncasecmp(this->buf + sizeof(TAG_CONTENT_TYPE) - 1, "video/nsv", 9)) {
+          const char *type = this->buf + sizeof (TAG_CONTENT_TYPE) - 1;
+          while (isspace (*type))
+            ++type;
+          if (!strncasecmp (type, "video/nsv", 9)) {
             lprintf("shoutcast nsv detected\n");
             this->is_nsv = 1;
           }

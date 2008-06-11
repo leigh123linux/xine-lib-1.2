@@ -75,6 +75,7 @@ xine-lib (1.1.12.1) 2008-??-??
   * Fixed display of some MJPEG streams (YUVJ420P).
   * Deprecate xine_xmalloc() function, see src/xine-utils/utils.c for more
     information about the reason.
+  * Provide a useful implementation of xine_register_log_cb().
 
 xine-lib (1.1.12) 2008-04-14
   * Security fixes:
