@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib.hg\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-04-02 01:36+0100\n"
+"POT-Creation-Date: 2008-06-12 20:33+0100\n"
 "PO-Revision-Date: 2008-04-02 01:05+0200\n"
 "Last-Translator: Carlos E. R. M. <carloser@users.sourceforge.net>\n"
 "Language-Team: Spanish <none>\n"
@@ -245,74 +245,74 @@ msgstr ""
 "su tarjeta de sonido."
 
 #: src/audio_out/audio_alsa_out.c:1500
-msgid "audio_alsa_out : supported modes are "
-msgstr "audio_alsa_out : los modos soportados son "
+msgid "audio_alsa_out : supported modes are"
+msgstr "audio_alsa_out : los modos soportados son"
 
-#: src/audio_out/audio_alsa_out.c:1503
-msgid "8bit "
-msgstr "8bit "
+#: src/audio_out/audio_alsa_out.c:1504
+msgid " 8bit"
+msgstr " 8bit"
 
-#: src/audio_out/audio_alsa_out.c:1508
-msgid "16bit "
-msgstr "16bit "
+#: src/audio_out/audio_alsa_out.c:1509
+msgid " 16bit"
+msgstr " 16bit"
 
-#: src/audio_out/audio_alsa_out.c:1512
-msgid "24bit "
-msgstr "24bit "
+#: src/audio_out/audio_alsa_out.c:1513
+msgid " 24bit"
+msgstr " 24bit"
 
-#: src/audio_out/audio_alsa_out.c:1516
-msgid "32bit "
-msgstr "32bit "
+#: src/audio_out/audio_alsa_out.c:1517
+msgid " 32bit"
+msgstr " 32bit"
 
-#: src/audio_out/audio_alsa_out.c:1527
-msgid "mono "
-msgstr "mono "
+#: src/audio_out/audio_alsa_out.c:1530 src/audio_out/audio_oss_out.c:963
+msgid " mono"
+msgstr " mono"
 
-#: src/audio_out/audio_alsa_out.c:1531
-msgid "stereo "
-msgstr "estéreo "
+#: src/audio_out/audio_alsa_out.c:1534 src/audio_out/audio_oss_out.c:969
+msgid " stereo"
+msgstr " estéreo"
 
-#: src/audio_out/audio_alsa_out.c:1536
-msgid "4-channel "
-msgstr "4-canales "
+#: src/audio_out/audio_alsa_out.c:1539 src/audio_out/audio_oss_out.c:976
+msgid " 4-channel"
+msgstr " 4-canales"
 
-#: src/audio_out/audio_alsa_out.c:1539
-msgid "(4-channel not enabled in xine config) "
-msgstr "(4-canales no activado en la configuración de xine) "
-
-#: src/audio_out/audio_alsa_out.c:1544
-msgid "4.1-channel "
-msgstr "4.1-canales "
+#: src/audio_out/audio_alsa_out.c:1542 src/audio_out/audio_oss_out.c:979
+msgid " (4-channel not enabled in xine config)"
+msgstr " (4-canales no activado en la configuración de xine)"
 
 #: src/audio_out/audio_alsa_out.c:1547
-msgid "(4.1-channel not enabled in xine config) "
-msgstr "(4.1-canales no activado en la configuración de xine) "
+msgid " 4.1-channel"
+msgstr " 4.1-canales"
 
-#: src/audio_out/audio_alsa_out.c:1552
-msgid "5-channel "
-msgstr "5-canales "
+#: src/audio_out/audio_alsa_out.c:1550
+msgid " (4.1-channel not enabled in xine config)"
+msgstr " (4.1-canales no activado en la configuración de xine)"
 
-#: src/audio_out/audio_alsa_out.c:1555
-msgid "(5-channel not enabled in xine config) "
-msgstr "(5-canales no activado en la configuración de xine) "
+#: src/audio_out/audio_alsa_out.c:1555 src/audio_out/audio_oss_out.c:986
+msgid " 5-channel"
+msgstr " 5-canales"
 
-#: src/audio_out/audio_alsa_out.c:1560
-msgid "5.1-channel "
-msgstr "5.1-canales "
+#: src/audio_out/audio_alsa_out.c:1558 src/audio_out/audio_oss_out.c:989
+msgid " (5-channel not enabled in xine config)"
+msgstr " (5-canales no activado en la configuración de xine)"
 
-#: src/audio_out/audio_alsa_out.c:1563
-msgid "(5.1-channel not enabled in xine config) "
-msgstr "(5.1-canales no activado en la configuración de xine) "
+#: src/audio_out/audio_alsa_out.c:1563 src/audio_out/audio_oss_out.c:996
+msgid " 5.1-channel"
+msgstr " 5.1-canales"
 
-#: src/audio_out/audio_alsa_out.c:1586
-msgid "a/52 and DTS pass-through\n"
-msgstr "travesía a/52 y DTS\n"
+#: src/audio_out/audio_alsa_out.c:1566 src/audio_out/audio_oss_out.c:999
+msgid " (5.1-channel not enabled in xine config)"
+msgstr " (5.1-canales no activado en la configuración de xine)"
 
 #: src/audio_out/audio_alsa_out.c:1589
-msgid "(a/52 and DTS pass-through not enabled in xine config)\n"
-msgstr "(travesía a/52 and DTS no activada en la configuración de xine)\n"
+msgid " a/52 and DTS pass-through"
+msgstr " travesía a/52 y DTS"
 
-#: src/audio_out/audio_alsa_out.c:1596
+#: src/audio_out/audio_alsa_out.c:1592
+msgid " (a/52 and DTS pass-through not enabled in xine config)"
+msgstr " (travesía a/52 and DTS no activada en la configuración de xine)"
+
+#: src/audio_out/audio_alsa_out.c:1602
 msgid "alsa mixer device"
 msgstr "dispositivo mezclador alsa"
 
@@ -762,24 +762,32 @@ msgstr ""
 msgid "OSS audio output latency (adjust a/v sync)"
 msgstr "Latencia de salida de audio OSS audio (ajuste sincronismo a/v)"
 
-#: src/audio_out/audio_oss_out.c:882
-msgid ""
-"audio_oss_out: Audio driver realtime sync disabled...\n"
-"audio_oss_out: ...probing output buffer size: "
-msgstr ""
-"audio_oss_out: Sincronismo tiempo real driver de audio desactivado...\n"
-"audio_oss_out: ...ensayando tamaño del búfer de salida: "
-
-#: src/audio_out/audio_oss_out.c:899
+#: src/audio_out/audio_oss_out.c:894
 #, c-format
 msgid ""
-"%d bytes\n"
+"audio_oss_out: Audio driver realtime sync disabled...\n"
+"audio_oss_out: ...probing output buffer size: %d bytes\n"
 "audio_oss_out: ...there may be audio/video synchronization issues\n"
 msgstr ""
-"%d bytes\n"
+"audio_oss_out: Sincronismo tiempo real driver de audio desactivado...\n"
+"audio_oss_out: ...ensayando tamaño del búfer de salida: %d bytes\n"
 "audio_oss_out: ...puede haber problemas de sincronización audio/vídeo\n"
 
-#: src/audio_out/audio_oss_out.c:1028
+#: src/audio_out/audio_oss_out.c:958
+msgid "audio_oss_out: supported modes are"
+msgstr "audio_oss_out: los modos soportados son"
+
+#: src/audio_out/audio_oss_out.c:1009
+#, fuzzy
+msgid " a/52 pass-through"
+msgstr " travesía a/52"
+
+#: src/audio_out/audio_oss_out.c:1012
+#, fuzzy
+msgid " (a/52 pass-through not enabled in xine config)"
+msgstr " (travesía a/52 no activada en la configuración de xine)"
+
+#: src/audio_out/audio_oss_out.c:1027
 msgid "OSS audio mixer number, -1 for none"
 msgstr "número de mezclador audio OSS, -1 para ninguno"
 

@@ -101,7 +101,7 @@ typedef struct {
   
 } sdpplin_t;
 
-sdpplin_t *sdpplin_parse(char *data);
+sdpplin_t *sdpplin_parse(char *data) XINE_MALLOC;
 
 void sdpplin_free(sdpplin_t *description);
 

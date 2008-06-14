@@ -162,14 +162,10 @@ static void xxmc_xvmc_surface_handler_construct(xxmc_driver_t *this)
   xvmc_surface_handler_t *handler = &this->xvmc_surf_handler;
 
   pthread_mutex_init(&handler->mutex,NULL);
-  for (i=0; i<XVMC_MAX_SURFACES; ++i) {
-    handler->surfInUse[i] = 0;
-    handler->surfValid[i] = 0;
-  }
-  for (i=0; i<XVMC_MAX_SUBPICTURES; ++i) {
-    handler->subInUse[i] = 0;
-    handler->subValid[i] = 0;
-  }
+  memset(handler->surfInUse, 0, sizeof(handler->surfInUse));
+  memset(handler->surfValid, 0, sizeof(handler->surfValid));
+  memset(handler->subInUse, 0, sizeof(handler->subInUse));
+  memset(handler->subValid, 0, sizeof(handler->subValid));
 }
 
 static void xxmc_xvmc_destroy_surfaces(xxmc_driver_t *this)
@@ -550,7 +546,7 @@ static vo_frame_t *xxmc_alloc_frame (vo_driver_t *this_gen) {
   xxmc_driver_t  *this = (xxmc_driver_t *) this_gen; 
   xxmc_frame_t   *frame ;
 
-  frame = (xxmc_frame_t *) xine_xmalloc (sizeof (xxmc_frame_t));
+  frame = calloc(1, sizeof (xxmc_frame_t));
   if (!frame)
     return NULL;
   
@@ -2373,7 +2369,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   int                   use_more_frames;
   int                   use_unscaled;
 
-  this = (xxmc_driver_t *) xine_xmalloc (sizeof (xxmc_driver_t));
+  this = calloc(1, sizeof (xxmc_driver_t));
   if (!this)
     return NULL;
 
@@ -2744,7 +2740,7 @@ static void dispose_class (video_driver_class_t *this_gen) {
 }
 
 static void *init_class (xine_t *xine, void *visual_gen) {
-  xxmc_class_t        *this = (xxmc_class_t *) xine_xmalloc (sizeof (xxmc_class_t));
+  xxmc_class_t        *this = calloc(1, sizeof (xxmc_class_t));
 
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.get_identifier  = get_identifier;

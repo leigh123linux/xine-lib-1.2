@@ -955,7 +955,7 @@ static ao_driver_t *open_plugin(audio_driver_class_t *class_gen, const void *dat
 
   lprintf("open plugin called\n");
 
-  this = (dx2_driver_t *)xine_xmalloc(sizeof(dx2_driver_t));
+  this = calloc(1, sizeof(dx2_driver_t));
   if (!this)
     return NULL;
 
@@ -1009,7 +1009,7 @@ static void *init_class(xine_t *xine, void *data) {
 
   lprintf("init class\n");
 
-  this = (dx2_class_t *)xine_xmalloc(sizeof(dx2_class_t));
+  this = calloc(1, sizeof(dx2_class_t));
   if (!this)
     return NULL;
 

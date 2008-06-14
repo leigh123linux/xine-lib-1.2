@@ -581,10 +581,9 @@ static int asf_header_parse_content_description(asf_header_t *header_pub, uint8_
   if (buffer_len < 10)
     return 0;
 
-  content = malloc(sizeof(asf_content_t));
+  content = calloc(1, sizeof(asf_content_t));
   if (!content)
     return 0;
-  memset(content, 0, sizeof(asf_content_t));
 
   asf_reader_init(&reader, buffer, buffer_len);
   asf_reader_get_16(&reader, &title_length);
@@ -617,10 +616,9 @@ asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len) {
   uint32_t object_count;
   uint16_t junk;
 
-  asf_header = malloc(sizeof(asf_header_internal_t));
+  asf_header = calloc(1, sizeof(asf_header_internal_t));
   if (!asf_header)
     return NULL;
-  memset(asf_header, 0, sizeof(asf_header_internal_t));
 
   lprintf("parsing_asf_header\n");
   if (buffer_len < 6) {
@@ -703,10 +701,9 @@ asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len) {
   }
   if (!asf_header->pub.content) {
     lprintf("no content object present\n");
-    asf_header->pub.content = malloc(sizeof(asf_content_t));
+    asf_header->pub.content = calloc(1, sizeof(asf_content_t));
     if (!asf_header->pub.content)
       goto exit_error;
-    memset(asf_header->pub.content, 0, sizeof(asf_content_t));
   }
 
   return &asf_header->pub;

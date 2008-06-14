@@ -27,7 +27,7 @@
 
 typedef struct nbc_s nbc_t;
 
-nbc_t *nbc_init (xine_stream_t *xine);
+nbc_t *nbc_init (xine_stream_t *xine) XINE_MALLOC;
 
 void nbc_check_buffers (nbc_t *this) XINE_DEPRECATED;
 

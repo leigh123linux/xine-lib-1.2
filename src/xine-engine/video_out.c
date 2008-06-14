@@ -139,11 +139,11 @@ typedef struct {
  * frame queue (fifo) util functions
  */
 
-static img_buf_fifo_t *vo_new_img_buf_queue () {
+static img_buf_fifo_t *XINE_MALLOC vo_new_img_buf_queue () {
 
   img_buf_fifo_t *queue;
 
-  queue = (img_buf_fifo_t *) xine_xmalloc (sizeof (img_buf_fifo_t));
+  queue = (img_buf_fifo_t *) calloc(1, sizeof(img_buf_fifo_t));
   if( queue ) {
     queue->first           = NULL;
     queue->last            = NULL;
@@ -1771,7 +1771,7 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   int               num_frame_buffers;
 
 
-  this = xine_xmalloc (sizeof (vos_t)) ;
+  this = calloc(1, sizeof(vos_t)) ;
 
   this->xine                  = xine;
   this->clock                 = xine->clock;

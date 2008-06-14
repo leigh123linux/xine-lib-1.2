@@ -129,7 +129,6 @@ static int eol(char p) {
 }
 
 static inline void trail_space(char *s) {
-  int i;
   while (isspace(*s)) {
     char *copy = s;
     do {
@@ -137,7 +136,7 @@ static inline void trail_space(char *s) {
       copy++;
     } while(*copy);
   }
-  i = strlen(s) - 1;
+  size_t i = strlen(s) - 1;
   while (i > 0 && isspace(s[i])) 
     s[i--] = '\0';
 }
@@ -262,12 +261,7 @@ static char *sub_readtext(char *source, char **dest) {
     p++,len++;
   }
   
-  *dest= (char *)xine_xmalloc (len+1);
-  if (!(*dest)) 
-    return ERR;
-  
-  strncpy(*dest, source, len);
-  (*dest)[len]=0;
+  *dest = strndup(source, len);
   
   while (*p=='\r' || *p=='\n' || *p=='|')
     p++;
@@ -333,10 +327,8 @@ static subtitle_t *sub_read_line_subviewer(demux_sputext_t *this, subtitle_t *cu
     p=q=line;
     for (current->lines=1; current->lines <= SUB_MAX_TEXT; current->lines++) {
       for (q=p,len=0; *p && *p!='\r' && *p!='\n' && *p!='|' && strncasecmp(p,"[br]",4); p++,len++);
-      current->text[current->lines-1]=(char *)xine_xmalloc (len+1);
+      current->text[current->lines-1] = strndup(q, len);
       if (!current->text[current->lines-1]) return ERR;
-      strncpy (current->text[current->lines-1], q, len);
-      current->text[current->lines-1][len]='\0';
       if (!*p || *p=='\r' || *p=='\n') break;
       if (*p=='[') while (*p++!=']');
       if (*p=='|') p++;
@@ -396,10 +388,10 @@ static subtitle_t *sub_read_line_subrip(demux_sputext_t *this,subtitle_t *curren
           xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "Too many characters in a subtitle line\n");
         if(temp_line[temp_index-1]=='\0' || temp_index==SUB_BUFSIZE) {
           if(temp_index>1) { /* more than 1 char (including '\0') -> that is a valid one */
-            current->text[i]=(char *)xine_xmalloc(temp_index);
+	    /* temp_index<=SUB_BUFSIZE is always true here */
+            current->text[i] = strndup(temp_line, temp_index);
             if(!current->text[i])
               return ERR;
-            strncpy(current->text[i],temp_line,temp_index); /* temp_index<=SUB_BUFSIZE is always true here */
             i++;
             temp_index=0;
           } else
@@ -565,9 +557,7 @@ static subtitle_t *sub_read_line_ssa(demux_sputext_t *this,subtitle_t *current) 
   current->end   = 360000*hour2 + 6000*min2 + 100*sec2 + hunsec2;
   
   while (((tmp=strstr(line2, "\\n")) != NULL) || ((tmp=strstr(line2, "\\N")) != NULL) ){
-    current->text[num]=(char *)malloc(tmp-line2+1);
-    strncpy (current->text[num], line2, tmp-line2);
-    current->text[num][tmp-line2]='\0';
+    current->text[num] = strndup(line2, tmp-line2);
     line2=tmp+2;
     num++;
     current->lines++;
@@ -802,26 +792,19 @@ static subtitle_t *sub_read_line_jacobsub(demux_sputext_t *this, subtitle_t *cur
 	    ++p;
 	}
 	if (isalpha(*p)||*p == '[') {
-	    int cont, jLength;
-
 	    if (sscanf(p, "%s %" LINE_LEN_QUOT "[^\n\r]", directive, line1) < 2)
 		return ERR;
-	    jLength = strlen(directive);
-	    for (cont = 0; cont < jLength; ++cont) {
-		if (isalpha(*(directive + cont)))
-		    *(directive + cont) = toupper(*(directive + cont));
-	    }
-	    if ((strstr(directive, "RDB") != NULL)
-		|| (strstr(directive, "RDC") != NULL)
-		|| (strstr(directive, "RLB") != NULL)
-		|| (strstr(directive, "RLG") != NULL)) {
+	    if ((strcasestr(directive, "RDB") != NULL)
+		|| (strcasestr(directive, "RDC") != NULL)
+		|| (strcasestr(directive, "RLB") != NULL)
+		|| (strcasestr(directive, "RLG") != NULL)) {
 		continue;
 	    }
 	    /* no alignment */
 #if 0
-	    if (strstr(directive, "JL") != NULL) {
+	    if (strcasestr(directive, "JL") != NULL) {
 		current->alignment = SUB_ALIGNMENT_HLEFT;
-	    } else if (strstr(directive, "JR") != NULL) {
+	    } else if (strcasestr(directive, "JR") != NULL) {
 		current->alignment = SUB_ALIGNMENT_HRIGHT;
 	    } else {
 		current->alignment = SUB_ALIGNMENT_HCENTER;
@@ -930,10 +913,9 @@ static subtitle_t *sub_read_line_subviewer2(demux_sputext_t *this, subtitle_t *c
             len=0;
             for (p=line; *p!='\n' && *p!='\r' && *p; ++p,++len);
             if (len) {
-                current->text[i]=(char *)malloc (len+1);
-                if (!current->text[i]) return ERR;
-                strncpy (current->text[i], line, len); current->text[i][len]='\0';
-                ++i;
+	      current->text[i] = strndup(line, len);
+	      if (!current->text[i]) return ERR;
+	      ++i;
             } else {
                 break;
             }
@@ -1165,7 +1147,7 @@ static subtitle_t *sub_read_file (demux_sputext_t *this) {
   this->buflen = 0;
 
   this->num=0;n_max=32;
-  first = (subtitle_t *) xine_xmalloc(n_max*sizeof(subtitle_t));
+  first = calloc(n_max, sizeof(subtitle_t));
   if(!first) return NULL;
   timeout = ((demux_sputext_class_t *)
              (this->demux_plugin.demux_class))->max_timeout;
@@ -1250,9 +1232,8 @@ static int demux_sputext_next (demux_sputext_t *this_gen) {
   *val++ = (this->uses_time) ? sub->end * 10 : sub->end;
   str = (char *)val;
   for (line = 0; line < sub->lines; line++, str+=strlen(str)+1) {
-    if( strlen(sub->text[line]) > SUB_BUFSIZE )
-      sub->text[line][SUB_BUFSIZE] = '\0';
-    strcpy(str, sub->text[line]);
+    strncpy(str, sub->text[line], SUB_BUFSIZE-1);
+    str[SUB_BUFSIZE-1] = '\0';
   }
   
   this->stream->video_fifo->put(this->stream->video_fifo, buf);
@@ -1363,7 +1344,7 @@ static demux_plugin_t *open_demux_plugin (demux_class_t *class_gen, xine_stream_
 
   lprintf("open_plugin() called\n");
   
-  this = xine_xmalloc (sizeof (demux_sputext_t));
+  this = calloc(1, sizeof (demux_sputext_t));
   this->stream = stream;
   this->input  = input;
 
@@ -1465,7 +1446,7 @@ static void *init_sputext_demux_class (xine_t *xine, void *data) {
 
   lprintf("initializing\n");
 
-  this = xine_xmalloc (sizeof (demux_sputext_class_t));
+  this = calloc(1, sizeof (demux_sputext_class_t));
 
   this->demux_class.open_plugin     = open_demux_plugin;
   this->demux_class.get_description = get_demux_description;

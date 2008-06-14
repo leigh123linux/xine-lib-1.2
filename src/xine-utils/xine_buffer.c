@@ -117,7 +117,7 @@ typedef struct {
  */
 void *xine_buffer_init(int chunk_size) {
   
-  uint8_t *data=xine_xmalloc(chunk_size+XINE_BUFFER_HEADER_SIZE);
+  uint8_t *data=calloc(1, chunk_size+XINE_BUFFER_HEADER_SIZE);
   xine_buffer_header_t *header=(xine_buffer_header_t*)data;
 
   header->size=chunk_size;
@@ -162,7 +162,7 @@ void *xine_buffer_dup(const void *buf) {
   CHECK_MAGIC(buf);
 #endif
 
-new=xine_xmalloc(GET_HEADER(buf)->size+XINE_BUFFER_HEADER_SIZE);
+  new = malloc(GET_HEADER(buf)->size+XINE_BUFFER_HEADER_SIZE);
 
   xine_fast_memcpy(new, ((uint8_t*)buf)-XINE_BUFFER_HEADER_SIZE, 
       GET_HEADER(buf)->size+XINE_BUFFER_HEADER_SIZE);

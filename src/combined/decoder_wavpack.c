@@ -291,7 +291,7 @@ static void wavpack_dispose (audio_decoder_t *this_gen) {
 }
 
 static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stream_t *stream) {
-    wavpack_decoder_t * const this = (wavpack_decoder_t *) xine_xmalloc (sizeof (wavpack_decoder_t));
+  wavpack_decoder_t * const this = calloc(1, sizeof (wavpack_decoder_t));
 
     this->audio_decoder.decode_data         = wavpack_decode_data;
     this->audio_decoder.reset               = wavpack_reset;
@@ -324,7 +324,7 @@ static void dispose_class (audio_decoder_class_t *this) {
 void *decoder_wavpack_init_plugin (xine_t *xine, void *data) {
     wavpack_class_t *this;
   
-    this = (wavpack_class_t *) xine_xmalloc (sizeof (wavpack_class_t));
+    this = calloc(1, sizeof (wavpack_class_t));
 
     this->decoder_class.open_plugin     = open_plugin;
     this->decoder_class.get_identifier  = get_identifier;

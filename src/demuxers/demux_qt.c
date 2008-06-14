@@ -134,7 +134,7 @@ typedef unsigned int qt_atom;
 #define MAX_PTS_DIFF 100000
 
 /* network bandwidth, cribbed from src/input/input_mms.c */
-const int64_t bandwidths[]={14400,19200,28800,33600,34430,57600,
+static const int64_t bandwidths[]={14400,19200,28800,33600,34430,57600,
                             115200,262200,393216,524300,1544000,10485800};
 
 /* these are things that can go wrong */
@@ -581,7 +581,7 @@ static void find_moov_atom(input_plugin_t *input, off_t *moov_offset,
 static qt_info *create_qt_info(void) {
   qt_info *info;
 
-  info = (qt_info *)xine_xmalloc(sizeof(qt_info));
+  info = (qt_info *)calloc(1, sizeof(qt_info));
 
   if (!info)
     return NULL;
@@ -1736,7 +1736,6 @@ static qt_error build_frame_table(qt_trak *trak,
     media_id_counts = calloc(trak->stsd_atoms_count, sizeof(int));
     if (!media_id_counts)
       return QT_NO_MEMORY;
-    memset(media_id_counts, 0, trak->stsd_atoms_count * sizeof(int));
 
     /* iterate through each start chunk in the stsc table */
     for (i = 0; i < trak->sample_to_chunk_count; i++) {
@@ -2981,7 +2980,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
-  this         = xine_xmalloc (sizeof (demux_qt_t));
+  this         = calloc(1, sizeof(demux_qt_t));
   this->stream = stream;
   this->input  = input;
 
@@ -3096,7 +3095,9 @@ static const char *get_mimetypes (demux_class_t *this_gen) {
   return "video/quicktime: mov,qt: Quicktime animation;"
          "video/x-quicktime: mov,qt: Quicktime animation;"
          "audio/x-m4a: m4a,m4b: MPEG-4 audio;"
-         "application/x-quicktimeplayer: qtl: Quicktime list;";
+         "application/x-quicktimeplayer: qtl: Quicktime list;"
+         "video/mp4: mp4,mpg4: MPEG-4 video;"
+         "audio/mp4: mp4,mpg4: MPEG-4 audio;";
 }
 
 static void class_dispose (demux_class_t *this_gen) {
@@ -3110,7 +3111,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   demux_qt_class_t     *this;
 
-  this         = xine_xmalloc (sizeof (demux_qt_class_t));
+  this         = calloc(1, sizeof(demux_qt_class_t));
   this->config = xine->config;
   this->xine   = xine;
 

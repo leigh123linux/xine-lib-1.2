@@ -40,7 +40,7 @@
 
 typedef struct rtsp_s rtsp_t;
 
-rtsp_t*  rtsp_connect (xine_stream_t *stream, const char *mrl, const char *user_agent);
+rtsp_t*  rtsp_connect (xine_stream_t *stream, const char *mrl, const char *user_agent) XINE_MALLOC;
 
 int rtsp_request_options(rtsp_t *s, const char *what);
 int rtsp_request_describe(rtsp_t *s, const char *what);

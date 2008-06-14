@@ -48,7 +48,7 @@ typedef struct xine_list_s xine_list_t;
 typedef void* xine_list_iterator_t;
 
 /* Constructor */
-xine_list_t *xine_list_new(void) XINE_PROTECTED;
+xine_list_t *xine_list_new(void) XINE_MALLOC XINE_PROTECTED;
 
 /* Destructor */
 void xine_list_delete(xine_list_t *list) XINE_PROTECTED;

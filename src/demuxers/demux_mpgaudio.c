@@ -316,8 +316,8 @@ static int parse_frame_header(mpg_audio_frame_t *const frame, const uint8_t *con
  * Parse a Xing header
  * return the Xing header or NULL on error
  */
-static xing_header_t* parse_xing_header(mpg_audio_frame_t *frame,
-                                        uint8_t *buf, int bufsize) {
+static xing_header_t *XINE_MALLOC parse_xing_header(mpg_audio_frame_t *frame,
+						    uint8_t *buf, int bufsize) {
   uint8_t *ptr = buf;
   xing_header_t *xing = NULL;
 
@@ -341,7 +341,7 @@ static xing_header_t* parse_xing_header(mpg_audio_frame_t *frame,
     int has_frames_flag = 0;
     int has_bytes_flag = 0;
   
-    xing = xine_xmalloc (sizeof (xing_header_t));
+    xing = calloc(1, sizeof(xing_header_t));
     if (!xing)
       goto exit_error;
   
@@ -420,14 +420,14 @@ exit_error:
  * Parse a Vbri header
  * return the Vbri header or NULL on error
  */
-static vbri_header_t* parse_vbri_header(mpg_audio_frame_t *frame,
-                                        uint8_t *buf, int bufsize) {
+static vbri_header_t *XINE_MALLOC parse_vbri_header(mpg_audio_frame_t *frame,
+						    uint8_t *buf, int bufsize) {
 
   int i;
   uint8_t *ptr = buf;
   vbri_header_t *vbri;
 
-  vbri = xine_xmalloc (sizeof (vbri_header_t));
+  vbri = calloc(1, sizeof(vbri_header_t));
   if (!vbri)
     return NULL;
 
@@ -1148,7 +1148,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
-  this = xine_xmalloc (sizeof (demux_mpgaudio_t));
+  this = calloc(1, sizeof(demux_mpgaudio_t));
 
   this->demux_plugin.send_headers      = demux_mpgaudio_send_headers;
   this->demux_plugin.send_chunk        = demux_mpgaudio_send_chunk;
@@ -1223,7 +1223,7 @@ void *demux_mpgaudio_init_class (xine_t *xine, void *data) {
   
   demux_mpgaudio_class_t     *this;
   
-  this         = xine_xmalloc (sizeof (demux_mpgaudio_class_t));
+  this         = calloc(1, sizeof(demux_mpgaudio_class_t));
   this->xine   = xine;
 
   this->demux_class.open_plugin     = open_plugin;

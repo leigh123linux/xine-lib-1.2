@@ -863,7 +863,7 @@ static vo_frame_t * win32_alloc_frame( vo_driver_t * vo_driver )
 {
   win32_frame_t  *win32_frame;
 
-  win32_frame = ( win32_frame_t * ) xine_xmalloc( sizeof( win32_frame_t ) );
+  win32_frame = calloc(1, sizeof(win32_frame_t));
   if (!win32_frame)
     return NULL;
 
@@ -1183,7 +1183,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *wi
      /*vo_driver_t *init_video_out_plugin( config_values_t * config, void * win32_visual )*/
 {
   directx_class_t *class = (directx_class_t *)class_gen;
-  win32_driver_t  *win32_driver = ( win32_driver_t * ) xine_xmalloc ( sizeof( win32_driver_t ) );
+  win32_driver_t  *win32_driver = calloc(1, sizeof(win32_driver_t));
 
 
   _x_alphablend_init(&win32_driver->alphablend_extra_data, class->xine);
@@ -1249,7 +1249,7 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   /*
    * from this point on, nothing should go wrong anymore
    */
-  directx = (directx_class_t *) xine_xmalloc (sizeof (directx_class_t));
+  directx = calloc(1, sizeof (directx_class_t));
 
   directx->driver_class.open_plugin     = open_plugin;
   directx->driver_class.get_identifier  = get_identifier;

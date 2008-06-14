@@ -229,7 +229,7 @@ static input_plugin_t *pnm_class_get_instance (input_class_t *cls_gen, xine_stre
     return NULL;
   }
 
-  this = (pnm_input_plugin_t *) xine_xmalloc (sizeof (pnm_input_plugin_t));
+  this = calloc(1, sizeof (pnm_input_plugin_t));
 
   this->stream = stream;
   this->pnm    = NULL;
@@ -274,7 +274,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   pnm_input_class_t  *this;
 
-  this = (pnm_input_class_t *) xine_xmalloc (sizeof (pnm_input_class_t));
+  this = calloc(1, sizeof (pnm_input_class_t));
 
   this->xine   = xine;
 

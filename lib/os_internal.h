@@ -4,6 +4,10 @@
 #include <stddef.h>
 #include <stdarg.h>
 
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+
 #ifdef HOST_OS_DARWIN
   /* Darwin (Mac OS X) needs __STDC_LIBRARY_SUPPORTED__ for SCNx64 and
    * SCNxMAX macros */

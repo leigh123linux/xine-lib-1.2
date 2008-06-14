@@ -244,7 +244,7 @@ static input_plugin_t *rtsp_class_get_instance (input_class_t *cls_gen, xine_str
   if (strncasecmp (mrl, "rtsp://", 6))
     return NULL;
 
-  this = (rtsp_input_plugin_t *) xine_xmalloc (sizeof (rtsp_input_plugin_t));
+  this = calloc(1, sizeof (rtsp_input_plugin_t));
 
   this->stream  = stream;
   this->rtsp    = NULL;
@@ -252,8 +252,7 @@ static input_plugin_t *rtsp_class_get_instance (input_class_t *cls_gen, xine_str
   /* since we handle only real streams yet, we can savely add
    * an .rm extention to force handling by demux_real.
    */
-  this->public_mrl = xine_xmalloc (sizeof (char)*(strlen(this->mrl)+10));
-  sprintf(this->public_mrl, "%s.rm", this->mrl);
+  asprintf(&this->public_mrl, "%s.rm", this->mrl);
   
   this->nbc     = nbc_init (stream);
 
@@ -296,7 +295,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   rtsp_input_class_t  *this;
 
-  this = (rtsp_input_class_t *) xine_xmalloc (sizeof (rtsp_input_class_t));
+  this = calloc(1, sizeof (rtsp_input_class_t));
 
   this->xine   = xine;
 

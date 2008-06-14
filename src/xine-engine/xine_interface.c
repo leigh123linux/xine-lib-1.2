@@ -945,7 +945,7 @@ int _x_message(xine_stream_t *stream, int type, ...) {
   xine_ui_message_data_t *data;
   xine_event_t            event;
   const char              *explanation;
-  int                     size;
+  size_t                  size;
   int                     n;
   va_list                 ap;
   char                   *s, *params;
@@ -990,7 +990,7 @@ int _x_message(xine_stream_t *stream, int type, ...) {
   args[n] = NULL;
   
   size += sizeof(xine_ui_message_data_t) + 1;
-  data = xine_xmalloc( size );
+  data = calloc(1, size );
 
   strcpy(data->compatibility.str, "Upgrade your frontend to see the error messages");
   data->type           = type;

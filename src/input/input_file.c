@@ -421,7 +421,7 @@ static input_plugin_t *file_class_get_instance (input_class_t *cls_gen, xine_str
     return NULL;
   }
 
-  this = (file_input_plugin_t *) xine_xmalloc (sizeof (file_input_plugin_t));
+  this = (file_input_plugin_t *) calloc(1, sizeof (file_input_plugin_t));
   this->stream = stream;
   this->mrl    = mrl;
   this->fh     = -1;
@@ -708,11 +708,8 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
       }
       else {
 	
-	dir_files[num_dir_files].mrl    = (char *) 
-	  xine_xmalloc(strlen(current_dir_slashed) + 1 + strlen(pdirent->d_name) + 1);
-	
 	dir_files[num_dir_files].origin = strdup(current_dir);
-	sprintf(dir_files[num_dir_files].mrl, "%s%s", 
+	asprintf(&(dir_files[num_dir_files].mrl), "%s%s", 
 		current_dir_slashed, pdirent->d_name);
 	dir_files[num_dir_files].link   = NULL;
 	dir_files[num_dir_files].type   = get_file_type(fullfilename, current_dir, this->xine);
@@ -730,8 +727,9 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
 	    xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 		     "input_file: readlink() failed: %s\n", strerror(errno));
 	  else {
-	    dir_files[num_dir_files].link = (char *) xine_xmalloc(linksize + 1);
-	    strncpy(dir_files[num_dir_files].link, linkbuf, linksize);
+	    dir_files[num_dir_files].link =
+	      strndup(linkbuf, linksize);
+
 	    dir_files[num_dir_files].type |= get_file_type(dir_files[num_dir_files].link, current_dir, this->xine);
 	  }
 	}
@@ -746,11 +744,8 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
       /* if user don't want to see hidden files, ignore them */
       if(this->show_hidden_files) {
 
-	hide_files[num_hide_files].mrl    = (char *) 
-	  xine_xmalloc(strlen(current_dir_slashed) + 1 + strlen(pdirent->d_name) + 1);
-	
 	hide_files[num_hide_files].origin = strdup(current_dir);
-	sprintf(hide_files[num_hide_files].mrl, "%s%s", 
+	asprintf(&(hide_files[num_hide_files].mrl), "%s%s", 
 		current_dir_slashed, pdirent->d_name);
 	hide_files[num_hide_files].link   = NULL;
 	hide_files[num_hide_files].type   = get_file_type(fullfilename, current_dir, this->xine);
@@ -769,9 +764,8 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
 		     "input_file: readlink() failed: %s\n", strerror(errno));
 	  }
 	  else {
-	    hide_files[num_hide_files].link = (char *) 
-	      xine_xmalloc(linksize + 1);
-	    strncpy(hide_files[num_hide_files].link, linkbuf, linksize);
+	    hide_files[num_hide_files].link =
+	      strndup(linkbuf, linksize);
 	    hide_files[num_hide_files].type |= get_file_type(hide_files[num_hide_files].link, current_dir, this->xine);
 	  }
 	}
@@ -782,11 +776,8 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
     } /* So a *normal* one. */
     else {
 
-      norm_files[num_norm_files].mrl    = (char *) 
-	xine_xmalloc(strlen(current_dir_slashed) + 1 + strlen(pdirent->d_name) + 1);
-
       norm_files[num_norm_files].origin = strdup(current_dir);
-      sprintf(norm_files[num_norm_files].mrl, "%s%s", 
+      asprintf(&(norm_files[num_norm_files].mrl), "%s%s", 
 	      current_dir_slashed, pdirent->d_name);
       norm_files[num_norm_files].link   = NULL;
       norm_files[num_norm_files].type   = get_file_type(fullfilename, current_dir, this->xine);
@@ -805,9 +796,8 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
 		   "input_file: readlink() failed: %s\n", strerror(errno));
 	}
 	else {
-	  norm_files[num_norm_files].link = (char *) 
-	    xine_xmalloc(linksize + 1);
-	  strncpy(norm_files[num_norm_files].link, linkbuf, linksize);
+	  norm_files[num_norm_files].link = 
+	    strndup(linkbuf, linksize);
 	  norm_files[num_norm_files].type |= get_file_type(norm_files[num_norm_files].link, current_dir, this->xine);
 	}
       }
@@ -849,7 +839,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
       if(num_files >= this->mrls_allocated_entries) {
 	++this->mrls_allocated_entries;
 	this->mrls = realloc(this->mrls, (this->mrls_allocated_entries+1) * sizeof(xine_mrl_t*));
-	this->mrls[num_files] = (xine_mrl_t *) xine_xmalloc(sizeof(xine_mrl_t));
+	this->mrls[num_files] = calloc(1, sizeof(xine_mrl_t));
       }
       else
 	memset(this->mrls[num_files], 0, sizeof(xine_mrl_t));
@@ -867,7 +857,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
       if(num_files >= this->mrls_allocated_entries) {
 	++this->mrls_allocated_entries;
 	this->mrls = realloc(this->mrls, (this->mrls_allocated_entries+1) * sizeof(xine_mrl_t*));
-	this->mrls[num_files] = (xine_mrl_t *) xine_xmalloc(sizeof(xine_mrl_t));
+	this->mrls[num_files] = calloc(1, sizeof(xine_mrl_t));
       }
       else
 	memset(this->mrls[num_files], 0, sizeof(xine_mrl_t));
@@ -885,7 +875,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
       if(num_files >= this->mrls_allocated_entries) {
 	++this->mrls_allocated_entries;
 	this->mrls = realloc(this->mrls, (this->mrls_allocated_entries+1) * sizeof(xine_mrl_t*));
-	this->mrls[num_files] = (xine_mrl_t *) xine_xmalloc(sizeof(xine_mrl_t));
+	this->mrls[num_files] = calloc(1, sizeof(xine_mrl_t));
       }
       else
 	memset(this->mrls[num_files], 0, sizeof(xine_mrl_t));
@@ -965,7 +955,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   file_input_class_t  *this;
   config_values_t     *config;
 
-  this = (file_input_class_t *) xine_xmalloc (sizeof (file_input_class_t));
+  this = (file_input_class_t *) calloc(1, sizeof (file_input_class_t));
 
   this->xine   = xine;
   this->config = xine->config;
@@ -979,7 +969,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->input_class.dispose            = file_class_dispose;
   this->input_class.eject_media        = NULL;
 
-  this->mrls = (xine_mrl_t **) xine_xmalloc(sizeof(xine_mrl_t*));
+  this->mrls = (xine_mrl_t **) calloc(1, sizeof(xine_mrl_t*));
   this->mrls_allocated_entries = 0;
 
   {

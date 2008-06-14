@@ -47,11 +47,6 @@
 #include <winsock.h>
 #endif
 
-#ifdef MIN
-#undef MIN
-#endif
-#define MIN(a,b) ( (a) < (b) ) ? (a) : (b)
-
 /* 
  *  Flush audio and video buffers. It is called from demuxers on
  *  seek/stop, and may be useful when user input changes a stream and
@@ -440,7 +435,7 @@ int _x_demux_read_header( input_plugin_t *input, unsigned char *buffer, off_t si
     read_size = input->read(input, buffer, size);
     input->seek(input, 0, SEEK_SET);
   } else if (input->get_capabilities(input) & INPUT_CAP_PREVIEW) {
-    buf = xine_xmalloc(MAX_PREVIEW_SIZE);
+    buf = malloc(MAX_PREVIEW_SIZE);
     read_size = input->get_optional_data(input, buf, INPUT_OPTIONAL_DATA_PREVIEW);
     read_size = MIN (read_size, size);
     memcpy(buffer, buf, read_size);
@@ -657,7 +652,7 @@ void _x_demux_send_mrl_reference (xine_stream_t *stream, int alternative,
     xine_mrl_reference_data_ext_t *e;
     xine_mrl_reference_data_t *b;
   } data;
-  int mrl_len = strlen (mrl);
+  const size_t mrl_len = strlen (mrl);
 
   if (!title)
     title = "";

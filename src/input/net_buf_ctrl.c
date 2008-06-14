@@ -118,8 +118,8 @@ void nbc_check_buffers (nbc_t *this) {
 }
 
 static void display_stats (nbc_t *this) {
-  const char *buffering[2] = {"   ", "buf"};
-  const char *enabled[2]   = {"off", "on "};
+  const char buffering[2][4] = {"   ", "buf"};
+  const char enabled[2][4]   = {"off", "on "};
   
   printf("bufing: %d, enb: %d\n", this->buffering, this->enabled);
   printf("net_buf_ctrl: vid %3d%% %4.1fs %4" PRId64 "kbps %1d, "\
@@ -496,7 +496,7 @@ static void nbc_get_cb (fifo_buffer_t *fifo,
 
 nbc_t *nbc_init (xine_stream_t *stream) {
   
-  nbc_t *this = (nbc_t *) xine_xmalloc (sizeof (nbc_t));
+  nbc_t *this = calloc(1, sizeof (nbc_t));
   fifo_buffer_t *video_fifo = stream->video_fifo;
   fifo_buffer_t *audio_fifo = stream->audio_fifo;
   double video_fifo_factor, audio_fifo_factor;

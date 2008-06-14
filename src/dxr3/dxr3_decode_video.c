@@ -193,7 +193,7 @@ static void *dxr3_init_plugin(xine_t *xine, void *data)
 {
   dxr3_decoder_class_t *this;
   
-  this = (dxr3_decoder_class_t *)xine_xmalloc(sizeof (dxr3_decoder_class_t));
+  this = calloc(1, sizeof (dxr3_decoder_class_t));
   if (!this) return NULL;
   
   this->video_decoder_class.open_plugin     = dxr3_open_plugin;
@@ -220,7 +220,7 @@ static video_decoder_t *dxr3_open_plugin(video_decoder_class_t *class_gen, xine_
   if (class->instance) return NULL;
   if (!dxr3_present(stream)) return NULL;
   
-  this = (dxr3_decoder_t *)xine_xmalloc(sizeof (dxr3_decoder_t));
+  this = calloc(1, sizeof (dxr3_decoder_t));
   if (!this) return NULL;
   
   cfg = stream->xine->config;

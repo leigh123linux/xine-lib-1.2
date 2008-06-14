@@ -16,7 +16,7 @@ dnl   XINE_SUB += 1; XINE_PATCH = ''; continue with XINE_LT_* values below
 dnl
 XINE_MAJOR=1
 XINE_MINOR=1
-XINE_SUB=12
+XINE_SUB=13
 dnl XINE_PATCH should be left empty or set to ".1" or ".2" or something similar
 XINE_PATCH=
 dnl Release series number (usually $XINE_MAJOR.$XINE_MINOR)
@@ -53,9 +53,9 @@ dnl    are platform dependent
 dnl  * in Linux, the library will be named
 dnl    libname.so.(XINE_LT_CURRENT - XINE_LT_AGE).XINE_LT_AGE.XINE_LT_REVISION
 
-XINE_LT_CURRENT=22
+XINE_LT_CURRENT=23
 XINE_LT_REVISION=0
-XINE_LT_AGE=21
+XINE_LT_AGE=22
 
 dnl for a release tarball do "rm .cvsversion" before "make dist"
 if test -f "${srcdir-.}/.cvsversion"; then
@@ -2177,6 +2177,10 @@ AC_CHECK_FUNC(opendir,
     AC_MSG_ERROR([dirent is needed (opendir, readdir, ...)])
   fi])
 
+XINE_CHECK_MINMAX([], [
+    AC_DEFINE([MIN(x, y)], [(x > y) ? y : x], [Get the minimum value between two])
+    AC_DEFINE([MAX(x, y)], [(x > y) ? x : y], [Get the maximum value between two])
+  ])
 
 dnl ---------------------------------------------
 dnl cflags and debug cflags
@@ -2217,6 +2221,9 @@ CC_ATTRIBUTE_FORMAT
 CC_ATTRIBUTE_FORMAT_ARG
 CC_ATTRIBUTE_DEPRECATED
 CC_ATTRIBUTE_UNUSED
+CC_ATTRIBUTE_MALLOC
+CC_ATTRIBUTE_PACKED
+CC_ATTRIBUTE_CONST
 
 AC_OPTIMIZATIONS
 
@@ -2295,19 +2302,21 @@ case "$host_or_hostalias" in
       esac
   
       AC_DEFINE_UNQUOTED(FPM_SPARC,,[Define to select libmad fixed point arithmetic implementation])
-      AC_DEFINE_UNQUOTED(ARCH_SPARC,,[Define this if you're running SPARC architecture])
     else
       AC_DEFINE_UNQUOTED(FPM_64BIT,,[Define to select libmad fixed point arithmetic implementation])
     fi
+    AC_DEFINE_UNQUOTED(ARCH_SPARC,,[Define this if you're running SPARC architecture])
     ;;
   mips-*)
     AC_DEFINE_UNQUOTED(FPM_MIPS,,[Define to select libmad fixed point arithmetic implementation])
     ;;
   alphaev56-* | alpha* | ia64-* | hppa*-linux-*)
     AC_DEFINE_UNQUOTED(FPM_64BIT,,[Define to select libmad fixed point arithmetic implementation])
+    AC_DEFINE_UNQUOTED(ARCH_ALPHA,,[Define this if you're running Alpha architecture])
     ;;
   armv4l-*-linux*)
     AC_DEFINE_UNQUOTED(FPM_ARM,,[Define to select libmad fixed point arithmetic implementation])
+    AC_DEFINE_UNQUOTED(ARCH_ARM,,[Define this if you're running ARM architecture])
     enable_armv4l="yes"
     ;;
   *)

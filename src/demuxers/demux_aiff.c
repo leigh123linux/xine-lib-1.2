@@ -85,7 +85,7 @@ typedef struct {
 } demux_aiff_class_t;
 
 /* converts IEEE 80bit extended into int, based on FFMPEG code */
-int extended_to_int(const unsigned char p[10])
+static int extended_to_int(const unsigned char p[10])
 {
     uint64_t m = 0;
     int e, i;
@@ -369,7 +369,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_aiff_t   *this;
 
-  this         = xine_xmalloc (sizeof (demux_aiff_t));
+  this         = calloc(1, sizeof(demux_aiff_t));
   this->stream = stream;
   this->input  = input;
 
@@ -445,7 +445,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_aiff_init_plugin (xine_t *xine, void *data) {
   demux_aiff_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_aiff_class_t));
+  this = calloc(1, sizeof(demux_aiff_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

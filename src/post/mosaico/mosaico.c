@@ -22,6 +22,10 @@
  * simple video mosaico plugin
  */
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #define LOG_MODULE "mosaico"
 #define LOG_VERBOSE
 /*
@@ -122,7 +126,7 @@ static int            mosaico_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 static void *mosaico_init_plugin(xine_t *xine, void *data)
 {
-  post_class_mosaico_t *this = (post_class_mosaico_t *)xine_xmalloc(sizeof(post_class_mosaico_t));
+  post_class_mosaico_t *this = calloc(1, sizeof(post_class_mosaico_t));
 
   if (!this)
     return NULL;
@@ -140,7 +144,7 @@ static post_plugin_t *mosaico_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target)
 {
-  post_mosaico_t       *this = (post_mosaico_t *)xine_xmalloc(sizeof(post_mosaico_t));
+  post_mosaico_t       *this = calloc(1, sizeof(post_mosaico_t));
   post_in_t            *input;
   xine_post_in_t       *input_api;
   post_out_t           *output;
@@ -178,8 +182,7 @@ static post_plugin_t *mosaico_open_plugin(post_class_t *class_gen, int inputs,
     this->pip[i].y = 50;
     this->pip[i].w = 150;
     this->pip[i].h = 150;
-    this->pip[i].input_name = (char *)xine_xmalloc(sizeof("video in ") + 10);
-    snprintf(this->pip[i].input_name, sizeof("video in ") + 10, "video in %d", i+1);
+    asprintf(&(this->pip[i].input_name), "video in %d", i+1);
     
     port = _x_post_intercept_video_port(&this->post, video_target[0], &input, NULL);
     port->new_port.close  = mosaico_close;

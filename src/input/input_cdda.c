@@ -370,7 +370,7 @@ static cdrom_toc * init_cdrom_toc(void) {
 
   cdrom_toc *toc;
 
-  toc = (cdrom_toc *) xine_xmalloc(sizeof (cdrom_toc));
+  toc = calloc(1, sizeof (cdrom_toc));
   toc->first_track = toc->last_track = toc->total_tracks = 0;
   toc->toc_entries = NULL;
 
@@ -1307,20 +1307,17 @@ static void _cdda_mkdir_recursive_safe(xine_t *xine, char *path) {
     if(p && strlen(p)) {
 
 #ifdef WIN32
-		if (*buf2 != '\0') {
+      if (*buf2 != '\0') {
 #endif
-
-      int size = strlen(buf2);
-      snprintf(buf2 + size, sizeof(buf2) - size, "/%s", p);
-
+	size_t size = strlen(buf2);
+	snprintf(buf2 + size, sizeof(buf2) - size, "/%s", p);
 #ifdef WIN32
-		}
-		else {
-          snprintf(buf2, sizeof(buf2), "%s", p);
-		}
-
+      }
+      else {
+	snprintf(buf2, sizeof(buf2), "%s", p);
+      }
 #endif /* WIN32 */
-
+      
       _cdda_mkdir_safe(xine, buf2);
     }
   }
@@ -1438,13 +1435,13 @@ static int _cdda_cddb_handle_code(char *buf) {
  */
 static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
   char  cdir[XINE_PATH_MAX + XINE_NAME_MAX + 1];
+  size_t cdir_size = 0;
   DIR  *dir;
 
   if(this == NULL)
     return 0;
   
-  memset(&cdir, 0, sizeof(cdir));
-  snprintf(cdir, sizeof(cdir), "%s", this->cddb.cache_dir);
+  cdir_size = snprintf(cdir, sizeof(cdir), "%s", this->cddb.cache_dir);
   
   if((dir = opendir(cdir)) != NULL) {
     struct dirent *pdir;
@@ -1452,14 +1449,12 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
     while((pdir = readdir(dir)) != NULL) {
       char discid[9];
       
-      memset(&discid, 0, sizeof(discid));
       snprintf(discid, sizeof(discid), "%08lx", this->cddb.disc_id);
      
       if(!strcasecmp(pdir->d_name, discid)) {
 	FILE *fd;
-	int size = strlen(cdir);
 	
-	snprintf(cdir + size, sizeof(cdir) - size, "/%s", discid);
+	cdir_size += snprintf(cdir + cdir_size, sizeof(cdir) - cdir_size, "/%s", discid);
 	if((fd = fopen(cdir, "r")) == NULL) {
 	  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 		  "input_cdda: fopen(%s) failed: %s.\n", cdir, strerror(errno));
@@ -1537,14 +1532,9 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
 		int   nyear;
 		
 		y = strstr(buffer, "YEAR:");
-		if(y) {
-		  if (sscanf(y+5, "%4d", &nyear) == 1) {
-		    char year[5];
-
-		    snprintf(year, 5, "%d", nyear);
-		    if (this->cddb.disc_year == NULL)
-		      this->cddb.disc_year = strdup(year);
-		  }
+		if (y && this->cddb.disc_year == NULL) {
+		  if (sscanf(y+5, "%4d", &nyear) == 1)
+		    asprintf(&this->cddb.disc_year, "%d", nyear);
 		}
 	      }
 	    }
@@ -1721,12 +1711,11 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
 
     /* Send query command */
     memset(&buffer, 0, sizeof(buffer));
-    sprintf(buffer, "cddb query %08lx %d ", this->cddb.disc_id, this->cddb.num_tracks);
+    size_t size = sprintf(buffer, "cddb query %08lx %d ", this->cddb.disc_id, this->cddb.num_tracks);
     for (i = 0; i < this->cddb.num_tracks; i++) {
-      int size = strlen(buffer);
-      snprintf(buffer + size, sizeof(buffer) - size, "%d ", this->cddb.track[i].start);
+      size += snprintf(buffer + size, sizeof(buffer) - size, "%d ", this->cddb.track[i].start);
     }
-    snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%d\n", this->cddb.disc_length);
+    snprintf(buffer + strlen(buffer), sizeof(buffer) - size, "%d\n", this->cddb.disc_length);
     if ((err = _cdda_cddb_send_command(this, buffer)) <= 0) {
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	      "input_cdda: error while sending cddb query command.\n");
@@ -1813,7 +1802,7 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
     while (strcmp(buffer, ".")) {
       char buf[2048];
       int tnum;
-      int bufsize = strlen(buffercache);
+      size_t bufsize = strlen(buffercache);
 
       memset(&buffer, 0, sizeof(buffer));
       _cdda_cddb_socket_read(this, buffer, sizeof(buffer) - 1);
@@ -1881,14 +1870,9 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
           int   nyear;
 
           y = strstr(buffer, "YEAR:");
-          if (y) {
-            if (sscanf(y+5, "%4d", &nyear) == 1) {
-              char year[5];
-
-              snprintf(year, 5, "%d", nyear);
-              if (this->cddb.disc_year == NULL)
-                this->cddb.disc_year = strdup(year);
-            }
+          if (y && this->cddb.disc_year == NULL) {
+            if (sscanf(y+5, "%4d", &nyear) == 1)
+	      asprintf(&this->cddb.disc_year, "%d", nyear);
           }
         }
       }
@@ -2514,7 +2498,6 @@ static char ** cdda_class_get_autoplay_list (input_class_t *this_gen,
   cdda_input_class_t *this = (cdda_input_class_t *) this_gen;
   cdda_input_plugin_t *ip = this->ip;
   cdrom_toc *toc;
-  char trackmrl[20];
   int fd, i, err = -1;
   int num_tracks;
 
@@ -2536,7 +2519,7 @@ static char ** cdda_class_get_autoplay_list (input_class_t *this_gen,
      * device we are going to open; but it is possible that this function
      * gets called, before a plugin instance has been created;
      * let's create a dummy instance in such a condition */
-    ip = (cdda_input_plugin_t *)xine_xmalloc(sizeof(cdda_input_plugin_t));
+    ip = calloc(1, sizeof(cdda_input_plugin_t));
     ip->stream = NULL;
     ip->fd = -1;
     ip->net_fd = -1;
@@ -2580,10 +2563,8 @@ static char ** cdda_class_get_autoplay_list (input_class_t *this_gen,
   num_tracks = toc->last_track - toc->first_track;
   if (toc->ignore_last_track)
     num_tracks--;
-  for ( i = 0; i <= num_tracks; i++ ) {
-    sprintf(trackmrl,"cdda:/%d",i+toc->first_track);
-    this->autoplaylist[i] = strdup(trackmrl);    
-  }
+  for ( i = 0; i <= num_tracks; i++ )
+    asprintf(&this->autoplaylist[i],"cdda:/%d",i+toc->first_track);
 
   *num_files = toc->last_track - toc->first_track + 1;
 
@@ -2637,7 +2618,7 @@ static input_plugin_t *cdda_class_get_instance (input_class_t *cls_gen, xine_str
   } else
     return NULL;
 
-  this = (cdda_input_plugin_t *) xine_xmalloc (sizeof (cdda_input_plugin_t));
+  this = calloc(1, sizeof (cdda_input_plugin_t));
   
   class->ip = this;
   this->stream      = stream;
@@ -2726,7 +2707,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   cdda_input_class_t  *this;
   config_values_t     *config;
 
-  this = (cdda_input_class_t *) xine_xmalloc (sizeof (cdda_input_class_t));
+  this = calloc(1, sizeof (cdda_input_class_t));
 
   this->xine   = xine;
   this->config = xine->config;

@@ -102,7 +102,7 @@ typedef struct {
 } demux_mve_class_t;
 
 /* bizarre palette lookup table */
-const unsigned char wc3_pal_lookup[] = {
+static const unsigned char wc3_pal_lookup[] = {
 0x00, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0E, 0x10, 0x12, 0x13, 0x15, 0x16,
 0x18, 0x19, 0x1A,
 0x1C, 0x1D, 0x1F, 0x20, 0x21, 0x23, 0x24, 0x25, 0x27, 0x28, 0x29, 0x2A, 0x2C,
@@ -380,8 +380,6 @@ static int open_mve_file(demux_mve_t *this) {
   /* allocate space for the shot offset index and set offsets to 0 */
   this->shot_offsets = calloc(this->number_of_shots, sizeof(off_t));
   this->current_shot = 0;
-  for (i = 0; i < this->number_of_shots; i++)
-    this->shot_offsets[i] = 0;
 
   /* skip the SOND chunk */
   this->input->seek(this->input, 12, SEEK_CUR);
@@ -674,7 +672,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_mve_t    *this;
 
-  this         = xine_xmalloc (sizeof (demux_mve_t));
+  this         = calloc(1, sizeof(demux_mve_t));
   this->stream = stream;
   this->input  = input;
 
@@ -748,7 +746,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_wc3movie_init_plugin (xine_t *xine, void *data) {
   demux_mve_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_mve_class_t));
+  this = calloc(1, sizeof(demux_mve_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

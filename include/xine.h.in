@@ -431,8 +431,13 @@ int  xine_get_param (xine_stream_t *stream, int param) XINE_PROTECTED;
  * image data into a too small buffer.
  *
  * xine_get_current_frame_alloc() takes care of allocating
- * a buffer on it's own, so image data can be retrieved by
+ * a buffer on its own, so image data can be retrieved by
  * a single call without the need to pause the stream.
+ * 
+ * xine_get_current_frame_data() passes the parameters of the
+ * previously mentioned functions plus further information in
+ * a structure and can work like the _s or _alloc function
+ * respectively depending on the passed flags.
  *
  * all functions return 1 on success, 0 failure.
  */
@@ -444,12 +449,33 @@ int  xine_get_current_frame (xine_stream_t *stream,
 int  xine_get_current_frame_s (xine_stream_t *stream,
 			     int *width, int *height,
 			     int *ratio_code, int *format,
-			     uint8_t *img, int *size) XINE_PROTECTED;
+			     uint8_t *img, int *img_size) XINE_PROTECTED;
 
 int  xine_get_current_frame_alloc (xine_stream_t *stream,
 			     int *width, int *height,
 			     int *ratio_code, int *format,
-			     uint8_t **img, int *size) XINE_PROTECTED;
+			     uint8_t **img, int *img_size) XINE_PROTECTED;
+
+typedef struct {
+
+  int      width;
+  int      height;
+  int      crop_left;
+  int      crop_right;
+  int      crop_top;
+  int      crop_bottom;
+  int      ratio_code;
+  int      interlaced;
+  int      format;
+  int      img_size;
+  uint8_t *img;
+} xine_current_frame_data_t;
+
+#define XINE_FRAME_DATA_ALLOCATE_IMG (1<<0)
+
+int  xine_get_current_frame_data (xine_stream_t *stream,
+			     xine_current_frame_data_t *data,
+			     int flags) XINE_PROTECTED;
 
 /* xine image formats */
 #define XINE_IMGFMT_YV12 (('2'<<24)|('1'<<16)|('V'<<8)|'Y')
@@ -826,7 +852,7 @@ char *const *xine_get_log (xine_t *self, int buf) XINE_PROTECTED;
 /* log callback will be called whenever something is logged */
 typedef void (*xine_log_cb_t) (void *user_data, int section);
 void   xine_register_log_cb (xine_t *self, xine_log_cb_t cb,
-			     void *user_data) XINE_PROTECTED XINE_DEPRECATED;
+			     void *user_data) XINE_PROTECTED;
 
 /*
  * error handling / engine status
@@ -1133,7 +1159,7 @@ typedef struct {
    *
    * this will be called by the video driver to find out
    * how big the video output area size will be for a
-   * given video size. The ui should _not_ adjust it's
+   * given video size. The ui should _not_ adjust its
    * video out area, just do some calculations and return
    * the size. This will be called for every frame, ui
    * implementation should be fast.
@@ -1157,12 +1183,12 @@ typedef struct {
    * frame output callback
    *
    * this will be called by the video driver for every frame
-   * it's about to draw. ui can adapt it's size if necessary
+   * it's about to draw. ui can adapt its size if necessary
    * here.
    * note: the ui doesn't have to adjust itself to this
    * size, this is just to be taken as a hint.
    * ui must return the actual size of the video output
-   * area and the video output driver will do it's best
+   * area and the video output driver will do its best
    * to adjust the video frames to that size (while
    * preserving aspect ratio and stuff).
    *    dest_x, dest_y: offset inside window
@@ -1233,7 +1259,7 @@ typedef struct {
    *
    * this will be called by the video driver to find out
    * how big the video output area size will be for a
-   * given video size. The ui should _not_ adjust it's
+   * given video size. The ui should _not_ adjust its
    * video out area, just do some calculations and return
    * the size. This will be called for every frame, ui
    * implementation should be fast.
@@ -1257,12 +1283,12 @@ typedef struct {
    * frame output callback
    *
    * this will be called by the video driver for every frame
-   * it's about to draw. ui can adapt it's size if necessary
+   * it's about to draw. ui can adapt its size if necessary
    * here.
    * note: the ui doesn't have to adjust itself to this
    * size, this is just to be taken as a hint.
    * ui must return the actual size of the video output
-   * area and the video output driver will do it's best
+   * area and the video output driver will do its best
    * to adjust the video frames to that size (while
    * preserving aspect ratio and stuff).
    *    dest_x, dest_y: offset inside window
@@ -1319,7 +1345,7 @@ typedef struct {
    * So a frontend must at least support rgb.
    * Be aware that rgb requires more cpu than yuv,
    * so avoid its usage for video playback.
-   * However, it's usefull for single frame capture (e.g. thumbs)
+   * However, it's useful for single frame capture (e.g. thumbs)
    */
   int supported_formats;
 
@@ -1618,7 +1644,7 @@ int  xine_config_lookup_entry (xine_t *self, const char *key,
 /*
  * update a config entry (which was returned from lookup_entry() )
  *
- * xine will make a deep copy of the data in the entry into it's internal
+ * xine will make a deep copy of the data in the entry into its internal
  * config database.
  */
 void xine_config_update_entry (xine_t *self,
@@ -2013,8 +2039,8 @@ typedef struct {
  * This is the mechanism to report async errors from engine.
  *
  * If frontend knows about the XINE_MSG_xxx type it may safely 
- * ignore the 'explanation' field and provide it's own custom
- * dialog to the 'parameters'.
+ * ignore the 'explanation' field and provide its own custom
+ * dialogue to the 'parameters'.
  *
  * right column specifies the usual parameters.
  */

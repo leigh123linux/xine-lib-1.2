@@ -561,7 +561,7 @@ static vo_frame_t *pgx64_alloc_frame(vo_driver_t *this_gen)
   /*pgx64_driver_t *this = (pgx64_driver_t *)(void *)this_gen;*/
   pgx64_frame_t *frame;
 
-  frame = (pgx64_frame_t *) xine_xmalloc(sizeof(pgx64_frame_t));
+  frame = calloc(1, sizeof(pgx64_frame_t));
   if (!frame) {
     return NULL;
   }
@@ -1352,7 +1352,7 @@ static vo_driver_t *pgx64_init_driver(video_driver_class_t *class_gen, const voi
   struct fbgattr attr;
   long page_size;
 
-  this = (pgx64_driver_t *)xine_xmalloc(sizeof(pgx64_driver_t));
+  this = calloc(1, sizeof(pgx64_driver_t));
   if (!this) {
     return NULL;
   }
@@ -1493,7 +1493,7 @@ static void *pgx64_init_class(xine_t *xine, void *visual_gen)
 {
   pgx64_driver_class_t *class;
 
-  class = (pgx64_driver_class_t *)xine_xmalloc(sizeof(pgx64_driver_class_t));
+  class = calloc(1, sizeof(pgx64_driver_class_t));
   if (!class) {
     return NULL;
   }

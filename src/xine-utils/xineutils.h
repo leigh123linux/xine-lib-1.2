@@ -125,7 +125,7 @@ extern "C" {
 #define MM_SSE                  MM_ACCEL_X86_SSE
 #define MM_SSE2                 MM_ACCEL_X86_SSE2
 
-uint32_t xine_mm_accel (void) XINE_PROTECTED;
+uint32_t xine_mm_accel (void) XINE_CONST XINE_PROTECTED;
 
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
 
@@ -621,11 +621,7 @@ void xine_profiler_print_results (void) XINE_PROTECTED;
  * Allocate and clean memory size_t 'size', then return the pointer
  * to the allocated memory.
  */
-#if !defined(__GNUC__) || __GNUC__ < 3
-void *xine_xmalloc(size_t size) XINE_PROTECTED;
-#else
-void *xine_xmalloc(size_t size) __attribute__ ((__malloc__)) XINE_PROTECTED;
-#endif
+void *xine_xmalloc(size_t size) XINE_MALLOC XINE_DEPRECATED XINE_PROTECTED;
 
 /*
  * Same as above, but memory is aligned to 'alignement'.
@@ -960,7 +956,7 @@ void xine_xprintf(xine_t *xine, int verbose, const char *fmt, ...);
 /**
  * get encoding of current locale
  */
-char *xine_get_system_encoding(void) XINE_PROTECTED;
+char *xine_get_system_encoding(void) XINE_MALLOC XINE_PROTECTED;
 
 /*
  * guess default encoding for the subtitles
@@ -972,6 +968,13 @@ const char *xine_guess_spu_encoding(void) XINE_PROTECTED;
  * note: it will be a monotonic clock, if available.
  */
 int xine_monotonic_clock(struct timeval *tv, struct timezone *tz) XINE_PROTECTED;
+
+/**
+ * append to a string, reallocating
+ * normally, updates & returns *dest
+ * on error, *dest is unchanged & NULL is returned.
+ */
+char *xine_strcat_realloc (char **dest, char *append) XINE_PROTECTED;
 
 /* don't harm following code */
 #ifdef extern

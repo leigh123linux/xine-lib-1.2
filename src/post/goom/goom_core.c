@@ -841,7 +841,7 @@ void update_message (PluginInfo *goomInfo, char *message) {
     
     if (message) {
         int i=1,j=0;
-        sprintf (goomInfo->update_message.message, "%s", message);
+	strcpy(goomInfo->update_message.message, message);
         for (j=0;goomInfo->update_message.message[j];j++)
             if (goomInfo->update_message.message[j]=='\n')
                 i++;
@@ -855,8 +855,8 @@ void update_message (PluginInfo *goomInfo, char *message) {
         char *ptr = msg;
         int pos;
         float ecart;
+	strncpy(msg, goomInfo->update_message.message, goomInfo->update_message.longueur);
         message = msg;
-        sprintf (msg, "%s", goomInfo->update_message.message);
         
         while (!fin) {
             while (1) {

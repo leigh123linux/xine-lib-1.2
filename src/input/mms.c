@@ -202,9 +202,9 @@ static void mms_buffer_put_64 (mms_buffer_t *mms_buffer, uint64_t value) {
 }
 
 
+#ifdef LOG
 static void print_command (char *data, int len) {
 
-#ifdef LOG
   int i;
   int dir = _X_LE_32 (data + 36) >> 16;
   int comm = _X_LE_32 (data + 36) & 0xFFFF;
@@ -240,8 +240,10 @@ static void print_command (char *data, int len) {
   if (len > CMD_HEADER_LEN)
     printf ("\n");
   printf ("----------------------------------------------\n");
+}
+#else
+# define print_command(data, len)
 #endif
-}  
 
 
 
@@ -678,7 +680,7 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   if (!url)
     return NULL;
 
-  this = (mms_t*) xine_xmalloc (sizeof (mms_t));
+  this = calloc(1, sizeof (mms_t));
 
   this->stream          = stream;
   this->url             = strdup (url);
@@ -769,12 +771,10 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   /* command 0x5 */
   {
     mms_buffer_t command_buffer;
-    char *path;
-    int pathlen;
+    char *path = this->uri;
+    size_t pathlen = strlen(path);
 
     /* remove the first '/' */
-    path = this->uri;
-    pathlen = strlen(path);
     if (pathlen > 1) {
       path++;
       pathlen--;

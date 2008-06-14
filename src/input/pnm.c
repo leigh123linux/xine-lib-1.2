@@ -21,6 +21,10 @@
  * based upon code from joschka
  */
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/socket.h>
@@ -90,7 +94,7 @@ struct pnm_s {
 
 /* header of rm files */
 #define RM_HEADER_SIZE 0x12
-const unsigned char rm_header[]={
+static const unsigned char rm_header[]={
         0x2e, 0x52, 0x4d, 0x46, /* object_id      ".RMF" */
         0x00, 0x00, 0x00, 0x12, /* header_size    0x12   */
         0x00, 0x00,             /* object_version 0x00   */
@@ -100,7 +104,7 @@ const unsigned char rm_header[]={
 
 /* data chunk header */
 #define PNM_DATA_HEADER_SIZE 18
-const unsigned char pnm_data_header[]={
+static const unsigned char pnm_data_header[]={
         'D','A','T','A',
          0,0,0,0,       /* data chunk size  */
          0,0,           /* object version   */
@@ -411,8 +415,8 @@ static void pnm_send_request(pnm_t *p, uint32_t bandwidth) {
  */
 
 static void pnm_send_response(pnm_t *p, const char *response) {
-
-  int size=strlen(response);
+  /** @TODO should check that sze is always < 256 */
+  size_t size=strlen(response);
 
   p->buffer[0]=0x23;
   p->buffer[1]=0;
@@ -627,10 +631,7 @@ static int pnm_get_stream_chunk(pnm_t *p) {
    */
   n=0;
   while (p->buffer[0] != 0x5a) {
-    int i;
-    for (i=1; i<8; i++) {
-      p->buffer[i-1]=p->buffer[i];
-    }
+    memmove(p->buffer, &p->buffer[1], 8);
     _x_io_tcp_read (p->stream, p->s, &p->buffer[7], 1);
     n++;
   }
@@ -716,7 +717,7 @@ pnm_t *pnm_connect(xine_stream_t *stream, const char *mrl) {
   
   mrl_ptr+=6;
 
-  p = xine_xmalloc(sizeof(pnm_t));
+  p = calloc(1, sizeof(pnm_t));
   p->stream = stream;
   p->port=7070;
   p->url=strdup(mrl);
@@ -732,9 +733,7 @@ pnm_t *pnm_connect(xine_stream_t *stream, const char *mrl) {
   pathbegin=slash-mrl_ptr;
   hostend=colon-mrl_ptr;
 
-  p->host = malloc(sizeof(char)*hostend+1);
-  strncpy(p->host, mrl_ptr, hostend);
-  p->host[hostend]=0;
+  p->host = strndup(mrl_ptr, hostend);
 
   if (pathbegin < strlen(mrl_ptr)) p->path=strdup(mrl_ptr+pathbegin+1);
   if (colon != slash) {

@@ -315,7 +315,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
 
   vorbis_decoder_t *this ;
 
-  this = (vorbis_decoder_t *) xine_xmalloc (sizeof (vorbis_decoder_t));
+  this = (vorbis_decoder_t *) calloc(1, sizeof(vorbis_decoder_t));
 
   this->audio_decoder.decode_data         = vorbis_decode_data;
   this->audio_decoder.reset               = vorbis_reset;
@@ -328,7 +328,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
   this->convsize        = 0;
 
   this->bufsize         = INIT_BUFSIZE;
-  this->buf             = xine_xmalloc(INIT_BUFSIZE);
+  this->buf             = calloc(1, INIT_BUFSIZE);
   this->size            = 0;
 
   vorbis_info_init(&this->vi);
@@ -359,7 +359,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   vorbis_class_t *this;
   
-  this = (vorbis_class_t *) xine_xmalloc (sizeof (vorbis_class_t));
+  this = (vorbis_class_t *) calloc(1, sizeof(vorbis_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;

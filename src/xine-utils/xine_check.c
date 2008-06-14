@@ -44,7 +44,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "xine_check.h"
 #include "xineutils.h"
 
 #if defined(__linux__)
@@ -102,38 +101,7 @@ set_hc_result(xine_health_check_t* hc, int state, const char *format, ...)
 
 #if defined(__linux__)
 
-xine_health_check_t* xine_health_check (xine_health_check_t* hc, int check_num) {
-
-  switch(check_num) {
-    case CHECK_KERNEL:
-      hc = _x_health_check_kernel (hc);
-      break;
-    case CHECK_MTRR:
-      hc = _x_health_check_mtrr (hc);
-      break;
-    case CHECK_CDROM:
-      hc = _x_health_check_cdrom (hc);
-      break;
-    case CHECK_DVDROM:
-      hc = _x_health_check_dvdrom (hc);
-      break;
-    case CHECK_DMA:
-      hc = _x_health_check_dma (hc);
-      break;
-    case CHECK_X:
-      hc = _x_health_check_x (hc);
-      break;
-    case CHECK_XV:
-      hc = _x_health_check_xv (hc);
-      break;
-    default:
-      hc->status = XINE_HEALTH_CHECK_NO_SUCH_CHECK;
-  }
-
-  return hc;
-}
-
-xine_health_check_t* _x_health_check_kernel (xine_health_check_t* hc) {
+static xine_health_check_t* _x_health_check_kernel (xine_health_check_t* hc) {
   struct utsname kernel;
 
   hc->title       = "Check for kernel version";
@@ -153,7 +121,7 @@ xine_health_check_t* _x_health_check_kernel (xine_health_check_t* hc) {
 }
 
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
-xine_health_check_t* _x_health_check_mtrr (xine_health_check_t* hc) {
+static xine_health_check_t* _x_health_check_mtrr (xine_health_check_t* hc) {
   FILE *fd;
 
   hc->title       = "Check for MTRR support";
@@ -170,7 +138,7 @@ xine_health_check_t* _x_health_check_mtrr (xine_health_check_t* hc) {
   return hc;
 }
 #else
-xine_health_check_t* _x_health_check_mtrr (xine_health_check_t* hc) {
+static xine_health_check_t* _x_health_check_mtrr (xine_health_check_t* hc) {
 
   hc->title       = "Check for MTRR support";
   hc->explanation = "Don't worry about this one";
@@ -181,7 +149,7 @@ xine_health_check_t* _x_health_check_mtrr (xine_health_check_t* hc) {
 }
 #endif
 
-xine_health_check_t* _x_health_check_cdrom (xine_health_check_t* hc) {
+static xine_health_check_t* _x_health_check_cdrom (xine_health_check_t* hc) {
   struct stat cdrom_st;
   int fd;
 
@@ -217,7 +185,7 @@ xine_health_check_t* _x_health_check_cdrom (xine_health_check_t* hc) {
   return hc;
 }
 
-xine_health_check_t* _x_health_check_dvdrom(xine_health_check_t* hc) {
+static xine_health_check_t* _x_health_check_dvdrom(xine_health_check_t* hc) {
   struct stat dvdrom_st;
   int fd;
 
@@ -253,7 +221,7 @@ xine_health_check_t* _x_health_check_dvdrom(xine_health_check_t* hc) {
   return hc;
 }
 
-xine_health_check_t* _x_health_check_dma (xine_health_check_t* hc) {
+static xine_health_check_t* _x_health_check_dma (xine_health_check_t* hc) {
 
   int         is_scsi_dev = 0;
   int         fd = 0;
@@ -307,7 +275,7 @@ xine_health_check_t* _x_health_check_dma (xine_health_check_t* hc) {
 }
 
 
-xine_health_check_t* _x_health_check_x (xine_health_check_t* hc) {
+static xine_health_check_t* _x_health_check_x (xine_health_check_t* hc) {
   char* env_display = getenv("DISPLAY");
 
   hc->title       = "Check for X11 environment";
@@ -323,7 +291,7 @@ xine_health_check_t* _x_health_check_x (xine_health_check_t* hc) {
   return hc;
 }
 
-xine_health_check_t* _x_health_check_xv (xine_health_check_t* hc) {
+static xine_health_check_t* _x_health_check_xv (xine_health_check_t* hc) {
 
 #ifdef HAVE_X11
 #ifdef HAVE_XV
@@ -495,6 +463,37 @@ xine_health_check_t* _x_health_check_xv (xine_health_check_t* hc) {
   set_hc_result(hc, XINE_HEALTH_CHECK_FAIL, "No X11 windowing system was present at compile time");
   return hc;
 #endif /* ! HAVE_X11 */
+}
+
+xine_health_check_t* xine_health_check (xine_health_check_t* hc, int check_num) {
+
+  switch(check_num) {
+    case CHECK_KERNEL:
+      hc = _x_health_check_kernel (hc);
+      break;
+    case CHECK_MTRR:
+      hc = _x_health_check_mtrr (hc);
+      break;
+    case CHECK_CDROM:
+      hc = _x_health_check_cdrom (hc);
+      break;
+    case CHECK_DVDROM:
+      hc = _x_health_check_dvdrom (hc);
+      break;
+    case CHECK_DMA:
+      hc = _x_health_check_dma (hc);
+      break;
+    case CHECK_X:
+      hc = _x_health_check_x (hc);
+      break;
+    case CHECK_XV:
+      hc = _x_health_check_xv (hc);
+      break;
+    default:
+      hc->status = XINE_HEALTH_CHECK_NO_SUCH_CHECK;
+  }
+
+  return hc;
 }
 
 #else	/* !__linux__ */

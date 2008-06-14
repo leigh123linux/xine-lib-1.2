@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib 1.0\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-03-19 13:16+0000\n"
+"POT-Creation-Date: 2008-06-12 20:33+0100\n"
 "PO-Revision-Date: 2004-09-15 13:53+0100\n"
 "Last-Translator: \n"
 "Language-Team: Slovak <ski18n@lists.isternet.sk>\n"
@@ -190,77 +190,77 @@ msgid ""
 msgstr ""
 
 #: src/audio_out/audio_alsa_out.c:1500
-msgid "audio_alsa_out : supported modes are "
-msgstr "audio_alsa_out : podporované módy sú "
+msgid "audio_alsa_out : supported modes are"
+msgstr "audio_alsa_out : podporované módy sú"
 
-#: src/audio_out/audio_alsa_out.c:1503
-msgid "8bit "
-msgstr "8bit "
+#: src/audio_out/audio_alsa_out.c:1504
+msgid " 8bit"
+msgstr " 8bit"
 
-#: src/audio_out/audio_alsa_out.c:1508
+#: src/audio_out/audio_alsa_out.c:1509
 #, fuzzy
-msgid "16bit "
-msgstr "8bit "
+msgid " 16bit"
+msgstr " 8bit"
 
-#: src/audio_out/audio_alsa_out.c:1512
+#: src/audio_out/audio_alsa_out.c:1513
 #, fuzzy
-msgid "24bit "
-msgstr "8bit "
+msgid " 24bit"
+msgstr " 8bit"
 
-#: src/audio_out/audio_alsa_out.c:1516
+#: src/audio_out/audio_alsa_out.c:1517
 #, fuzzy
-msgid "32bit "
-msgstr "8bit "
+msgid " 32bit"
+msgstr " 8bit"
 
-#: src/audio_out/audio_alsa_out.c:1527
-msgid "mono "
-msgstr "mono "
+#: src/audio_out/audio_alsa_out.c:1530 src/audio_out/audio_oss_out.c:963
+msgid " mono"
+msgstr " mono"
 
-#: src/audio_out/audio_alsa_out.c:1531
-msgid "stereo "
-msgstr "stereo "
+#: src/audio_out/audio_alsa_out.c:1534 src/audio_out/audio_oss_out.c:969
+msgid " stereo"
+msgstr " stereo"
 
-#: src/audio_out/audio_alsa_out.c:1536
-msgid "4-channel "
-msgstr "4-kanály "
+#: src/audio_out/audio_alsa_out.c:1539 src/audio_out/audio_oss_out.c:976
+msgid " 4-channel"
+msgstr " 4-kanály"
 
-#: src/audio_out/audio_alsa_out.c:1539
-msgid "(4-channel not enabled in xine config) "
-msgstr "(4-kanály nepovolené v xine konfigu) "
-
-#: src/audio_out/audio_alsa_out.c:1544
-msgid "4.1-channel "
-msgstr "4.1-kanálov "
+#: src/audio_out/audio_alsa_out.c:1542 src/audio_out/audio_oss_out.c:979
+msgid " (4-channel not enabled in xine config)"
+msgstr " (4-kanály nepovolené v xine konfigu)"
 
 #: src/audio_out/audio_alsa_out.c:1547
-msgid "(4.1-channel not enabled in xine config) "
-msgstr "(4.1-kanálov nepovolené v xine konfigu) "
+msgid " 4.1-channel"
+msgstr " 4.1-kanálov"
 
-#: src/audio_out/audio_alsa_out.c:1552
-msgid "5-channel "
-msgstr "5-kanálov "
+#: src/audio_out/audio_alsa_out.c:1550
+msgid " (4.1-channel not enabled in xine config)"
+msgstr " (4.1-kanálov nepovolené v xine konfigu)"
 
-#: src/audio_out/audio_alsa_out.c:1555
-msgid "(5-channel not enabled in xine config) "
-msgstr "(5-kanálov nepovolené v xine konfigu) "
+#: src/audio_out/audio_alsa_out.c:1555 src/audio_out/audio_oss_out.c:986
+msgid " 5-channel"
+msgstr " 5-kanálov"
 
-#: src/audio_out/audio_alsa_out.c:1560
-msgid "5.1-channel "
-msgstr "5.1-kanálov "
+#: src/audio_out/audio_alsa_out.c:1558 src/audio_out/audio_oss_out.c:989
+msgid " (5-channel not enabled in xine config)"
+msgstr " (5-kanálov nepovolené v xine konfigu)"
 
-#: src/audio_out/audio_alsa_out.c:1563
-msgid "(5.1-channel not enabled in xine config) "
-msgstr "(5.1-kanálov nepovolené v xine konfigu) "
+#: src/audio_out/audio_alsa_out.c:1563 src/audio_out/audio_oss_out.c:996
+msgid " 5.1-channel"
+msgstr " 5.1-kanálov"
 
-#: src/audio_out/audio_alsa_out.c:1586
-msgid "a/52 and DTS pass-through\n"
-msgstr "a/52 a DTS pass-through\n"
+#: src/audio_out/audio_alsa_out.c:1566 src/audio_out/audio_oss_out.c:999
+msgid " (5.1-channel not enabled in xine config)"
+msgstr " (5.1-kanálov nepovolené v xine konfigu)"
 
 #: src/audio_out/audio_alsa_out.c:1589
-msgid "(a/52 and DTS pass-through not enabled in xine config)\n"
-msgstr "(a/52 a DTS pass-through not enabled in xine config)\n"
+msgid " a/52 and DTS pass-through"
+msgstr " a/52 a DTS pass-through"
 
-#: src/audio_out/audio_alsa_out.c:1596
+#: src/audio_out/audio_alsa_out.c:1592
+msgid " (a/52 and DTS pass-through not enabled in xine config)"
+msgstr " (a/52 a DTS pass-through not enabled in xine config)"
+
+#: src/audio_out/audio_alsa_out.c:1602
 msgid "alsa mixer device"
 msgstr "alsa mixovacie zaridenie"
 
@@ -674,24 +674,30 @@ msgstr ""
 msgid "OSS audio output latency (adjust a/v sync)"
 msgstr "výstupné oneskorenie esd audia (nastavte odstup a/v)"
 
-#: src/audio_out/audio_oss_out.c:882
-msgid ""
-"audio_oss_out: Audio driver realtime sync disabled...\n"
-"audio_oss_out: ...probing output buffer size: "
-msgstr ""
-"audio_oss_out: RT synchronizácia audio ovládača zakázaná ...\n"
-"audio_oss_out: ...zisťujem veľkosť výst. vyrovn. pamäte: "
-
-#: src/audio_out/audio_oss_out.c:899
+#: src/audio_out/audio_oss_out.c:894
 #, c-format
 msgid ""
-"%d bytes\n"
+"audio_oss_out: Audio driver realtime sync disabled...\n"
+"audio_oss_out: ...probing output buffer size: %d bytes\n"
 "audio_oss_out: ...there may be audio/video synchronization issues\n"
 msgstr ""
-"%d bytov\n"
+"audio_oss_out: RT synchronizácia audio ovládača zakázaná ...\n"
+"audio_oss_out: ...zisťujem veľkosť výst. vyrovn. pamäte: %d bytov\n"
 "audio_oss_out: ...môžu byť problémy s audio/video synchronizáciou\n"
 
-#: src/audio_out/audio_oss_out.c:1028
+#: src/audio_out/audio_oss_out.c:958
+msgid "audio_oss_out: supported modes are"
+msgstr "audio_oss_out: podporované módy sú"
+
+#: src/audio_out/audio_oss_out.c:1009
+msgid " a/52 pass-through"
+msgstr " a/52 pass-through"
+
+#: src/audio_out/audio_oss_out.c:1012
+msgid " (a/52 pass-through not enabled in xine config)"
+msgstr ""
+
+#: src/audio_out/audio_oss_out.c:1027
 msgid "OSS audio mixer number, -1 for none"
 msgstr ""
 

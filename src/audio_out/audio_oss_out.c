@@ -666,7 +666,7 @@ static int probe_audio_devices(oss_driver_t *this) {
   int base_num, i;
   int audio_fd, rate;
   int best_rate;
-  char devname[30];
+  char *devname[30];
 
   strcpy(this->audio_dev, "auto");
 
@@ -729,7 +729,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   int speakers;
 
   
-  this = (oss_driver_t *) xine_xmalloc (sizeof (oss_driver_t));
+  this = calloc(1, sizeof (oss_driver_t));
   if (!this)
     return NULL;
 
@@ -877,15 +877,10 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   if (this->sync_method == OSS_SYNC_PROBEBUFFER) {
     char *buf;
     int c;
-  
-    xprintf(class->xine, XINE_VERBOSITY_LOG,
-	    _("audio_oss_out: Audio driver realtime sync disabled...\n"
-	      "audio_oss_out: ...probing output buffer size: "));
+
     this->buffer_size = 0;
     
-    if( (buf=malloc(1024)) != NULL ) {
-      memset(buf,0,1024);
-     
+    if( (buf=calloc(1, 1024)) != NULL ) {
       do {
         c = write(audio_fd,buf,1024);
         if( c != -1 )
@@ -896,7 +891,8 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
     }
     close(audio_fd);
     xprintf(class->xine, XINE_VERBOSITY_LOG,
-	    _("%d bytes\naudio_oss_out: ...there may be audio/video synchronization issues\n"), this->buffer_size);
+	    _("audio_oss_out: Audio driver realtime sync disabled...\n"
+	      "audio_oss_out: ...probing output buffer size: %d bytes\naudio_oss_out: ...there may be audio/video synchronization issues\n"), this->buffer_size);
 
     audio_fd=open(this->audio_dev, O_WRONLY|O_NONBLOCK);
 
@@ -959,48 +955,48 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 			0, oss_speaker_arrangement_cb, this);
 
 
-  xprintf(class->xine, XINE_VERBOSITY_DEBUG, "audio_oss_out: supported modes are ");
+  char *logmsg = strdup (_("audio_oss_out: supported modes are"));
   num_channels = 1; 
   status = ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &num_channels); 
   if ( (status != -1) && (num_channels==1) ) {
     this->capabilities |= AO_CAP_MODE_MONO;
-    xprintf(class->xine, XINE_VERBOSITY_DEBUG, "mono ");
+    xine_strcat_realloc (&logmsg, _(" mono"));
   }
   num_channels = 2; 
   status = ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &num_channels); 
   if ( (status != -1) && (num_channels==2) ) {
     this->capabilities |= AO_CAP_MODE_STEREO;
-    xprintf(class->xine, XINE_VERBOSITY_DEBUG, "stereo ");
+    xine_strcat_realloc (&logmsg, _(" stereo"));
   }
   num_channels = 4; 
   status = ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &num_channels); 
   if ( (status != -1) && (num_channels==4) )  {
     if  ( speakers == SURROUND4 ) {
       this->capabilities |= AO_CAP_MODE_4CHANNEL;
-      xprintf(class->xine, XINE_VERBOSITY_DEBUG, "4-channel ");
+      xine_strcat_realloc (&logmsg, _(" 4-channel"));
     } 
     else
-      xprintf(class->xine, XINE_VERBOSITY_DEBUG, "(4-channel not enabled in xine config) " );
+      xine_strcat_realloc (&logmsg, _(" (4-channel not enabled in xine config)"));
   }
   num_channels = 5; 
   status = ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &num_channels); 
   if ( (status != -1) && (num_channels==5) ) {
     if  ( speakers == SURROUND5 ) {
       this->capabilities |= AO_CAP_MODE_5CHANNEL;
-      xprintf(class->xine, XINE_VERBOSITY_DEBUG, "5-channel ");
+      xine_strcat_realloc (&logmsg, _(" 5-channel"));
     }
     else
-      xprintf(class->xine, XINE_VERBOSITY_DEBUG, "(5-channel not enabled in xine config) " );
+      xine_strcat_realloc (&logmsg, _(" (5-channel not enabled in xine config)"));
   }
   num_channels = 6; 
   status = ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &num_channels); 
   if ( (status != -1) && (num_channels==6) ) {
     if  ( speakers == SURROUND51 ) {
       this->capabilities |= AO_CAP_MODE_5_1CHANNEL;
-      xprintf(class->xine, XINE_VERBOSITY_DEBUG, "5.1-channel ");
+      xine_strcat_realloc (&logmsg, _(" 5.1-channel"));
     } 
     else
-      xprintf(class->xine, XINE_VERBOSITY_DEBUG, "(5.1-channel not enabled in xine config) " );
+      xine_strcat_realloc (&logmsg, _(" (5.1-channel not enabled in xine config)"));
   }
 
   ioctl(audio_fd,SNDCTL_DSP_GETFMTS,&caps);
@@ -1010,10 +1006,13 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   if  ( speakers == A52_PASSTHRU ) {
     this->capabilities |= AO_CAP_MODE_A52;
     this->capabilities |= AO_CAP_MODE_AC5;
-    xprintf(class->xine, XINE_VERBOSITY_DEBUG, "a/52-pass-through ");
+    xine_strcat_realloc (&logmsg, _(" a/52 pass-through"));
   } 
   else 
-    xprintf(class->xine, XINE_VERBOSITY_DEBUG, "(a/52-pass-through not enabled in xine config)");
+    xine_strcat_realloc (&logmsg, _(" (a/52 pass-through not enabled in xine config)"));
+
+  xprintf(class->xine, XINE_VERBOSITY_DEBUG, "%s\n", logmsg);
+  free (logmsg);
   
   /*
    * mixer initialisation.
@@ -1040,20 +1039,17 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
     if ((parse = strstr(mixer_name, "dsp"))) {
       parse[0] = '\0';
       parse += 3;
-      this->mixer.name = (char *)malloc(strlen(mixer_name) + sizeof("mixer") + 2);
       if (devname_val == 0)
-	sprintf(this->mixer.name, "%smixer%s", mixer_name, parse);
+	asprintf(&(this->mixer.name), "%smixer%s", mixer_name, parse);
       else {
 	if (mixer_num == -1)
-	  sprintf(this->mixer.name, "%smixer", mixer_name);
+	  asprintf(&(this->mixer.name), "%smixer", mixer_name);
 	else
-	  sprintf(this->mixer.name, "%smixer%d", mixer_name, mixer_num);
+	  asprintf(&(this->mixer.name), "%smixer%d", mixer_name, mixer_num);
       }
     } else {
-      this->mixer.name = (char *)malloc(1);
-      this->mixer.name[0] = '\0';
+      _x_abort();
     }
-    _x_assert(this->mixer.name[0] != '\0');
     
     this->mixer.fd = open(this->mixer.name, O_RDONLY);
 
@@ -1170,7 +1166,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   oss_class_t        *this;
 
-  this = (oss_class_t *) xine_xmalloc (sizeof (oss_class_t));
+  this = calloc(1, sizeof (oss_class_t));
   if (!this)
     return NULL;
 

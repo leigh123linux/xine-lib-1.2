@@ -20,9 +20,10 @@ AC_DEFUN([CC_PTHREAD_FLAGS], [
      case $host in
        *-hpux11*) PTHREAD_CFLAGS=""		;;
        *-darwin*) PTHREAD_CFLAGS=""		;;
-       *-solaris*)
-                  # Handle Studio compiler
+       *-solaris*|*-linux-gnu)
+                  dnl Handle Sun Studio compiler (also on Linux)
                   CC_CHECK_CFLAGS([-mt], [PTHREAD_CFLAGS="-mt"]);;
+
        *)	  PTHREAD_CFLAGS="-pthread"	;;
      esac
   fi
@@ -31,10 +32,15 @@ AC_DEFUN([CC_PTHREAD_FLAGS], [
        *-hpux11*) PTHREAD_LIBS="-lpthread"	;;
        *-darwin*) PTHREAD_LIBS=""		;;
        *-solaris*)
-                  # Use the same libraries for gcc and sun studio cc
+                  dnl Use the same libraries for gcc and Sun Studio cc
                   PTHREAD_LIBS="-lpthread -lposix4 -lrt";;
        *)	  PTHREAD_LIBS="-pthread"	;;
      esac
+
+     dnl Again, handle Sun Studio compiler
+     if test "x${PTHREAD_CFLAGS}" = "x-mt"; then
+        PTHREAD_LIBS="-mt"
+     fi
   fi
 
   AC_CACHE_CHECK([if $CC supports Pthread],
@@ -66,4 +72,31 @@ AC_DEFUN([CC_PTHREAD_FLAGS], [
   else
     ifelse([$2], , [:], [$2])
   fi
+])
+
+AC_DEFUN([CC_PTHREAD_RECURSIVE_MUTEX], [
+  AC_REQUIRE([CC_PTHREAD_FLAGS])
+  AC_CACHE_CHECK(
+    [for recursive mutex support in pthread],
+    [cc_cv_pthread_recursive_mutex],
+    [ac_save_LIBS="$LIBS"
+     LIBS="$LIBS $PTHREAD_LIBS"
+     AC_COMPILE_IFELSE(
+       [AC_LANG_PROGRAM([
+#include <pthread.h>
+          ], [
+int main() {
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    return 0;
+}
+           ])
+	  ],
+	  [cc_cv_pthread_recursive_mutex=yes],
+	  [cc_cv_pthread_recursive_mutex=no])
+     LIBS="$ac_save_LIBS"
+    ])
+
+  AS_IF([test x"$cc_cv_pthread_recursive_mutex" = x"yes"],
+    [$1], [$2])
 ])

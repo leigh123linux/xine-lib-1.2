@@ -669,8 +669,8 @@ static int render_image_envtex (opengl_driver_t *this, opengl_frame_t *frame) {
  * Render setup functions
  */
 static int render_help_verify_ext (opengl_driver_t *this, char *ext) {
-  int   ret = 0;
-  int   l = strlen (ext);
+  int ret = 0;
+  const size_t l = strlen (ext);
   const char *e;
   for (e = (char *) this->gl_exts; e && *e; e = strchr (e, ' ')) {
     while (isspace (*e))
@@ -694,10 +694,9 @@ static void *getdladdr (const GLubyte *_funcName) {
   return NULL;
 
 #elif defined(__APPLE__)
-  char *temp = xine_xmalloc (strlen (funcName) + 2);
+  char *temp;
+  asprintf(&temp, "_%s", funcName);
   void *res = NULL;
-  temp[0] = '_'; /* Mac OS X prepends an underscore on function names */
-  strcpy (temp+1, funcName);
   if (NSIsSymbolNameDefined (temp)) {
     NSSymbol symbol = NSLookupAndBindSymbol (temp);
     res = NSAddressOfSymbol (symbol);
@@ -1281,7 +1280,7 @@ static vo_frame_t *opengl_alloc_frame (vo_driver_t *this_gen) {
   opengl_frame_t  *frame;
   opengl_driver_t *this = (opengl_driver_t *) this_gen;
 
-  frame = (opengl_frame_t *) xine_xmalloc (sizeof (opengl_frame_t));
+  frame = (opengl_frame_t *) calloc(1, sizeof(opengl_frame_t));
   if (!frame)
     return NULL;
 
@@ -1820,7 +1819,7 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
   char                **render_fun_names;
   int                   i;
   
-  this = (opengl_driver_t *) xine_xmalloc (sizeof (opengl_driver_t));
+  this = (opengl_driver_t *) calloc(1, sizeof(opengl_driver_t));
 
   if (!this)
     return NULL;
@@ -1876,8 +1875,7 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
                                   this->drawable, X11OSD_SHAPED);
   XUnlockDisplay (this->display);
 
-  render_fun_names = xine_xmalloc ((sizeof(opengl_rb)/sizeof(opengl_render_t)+1)
-				   * sizeof (const char *));
+  render_fun_names = calloc((sizeof(opengl_rb)/sizeof(opengl_render_t)+1), sizeof(const char*));
   for (i = 0; i < sizeof (opengl_rb) / sizeof (opengl_render_t); i++)
     render_fun_names[i] = opengl_rb[i].name;
   render_fun_names[i] = NULL;
@@ -1970,7 +1968,7 @@ static void opengl_dispose_class (video_driver_class_t *this_gen) {
 }
 
 static void *opengl_init_class (xine_t *xine, void *visual_gen) {
-  opengl_class_t	       *this = (opengl_class_t *) xine_xmalloc (sizeof (opengl_class_t));
+  opengl_class_t	       *this = (opengl_class_t *) calloc(1, sizeof(opengl_class_t));
 
   this->driver_class.open_plugin     = opengl_open_plugin;
   this->driver_class.get_identifier  = opengl_get_identifier;

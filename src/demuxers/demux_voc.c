@@ -296,7 +296,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_voc_t    *this;
 
-  this         = xine_xmalloc (sizeof (demux_voc_t));
+  this         = calloc(1, sizeof(demux_voc_t));
   this->stream = stream;
   this->input  = input;
 
@@ -370,7 +370,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_voc_init_plugin (xine_t *xine, void *data) {
   demux_voc_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_voc_class_t));
+  this = calloc(1, sizeof(demux_voc_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

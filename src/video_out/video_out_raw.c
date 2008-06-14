@@ -292,7 +292,7 @@ static vo_frame_t *raw_alloc_frame (vo_driver_t *this_gen)
   raw_frame_t  *frame;
   raw_driver_t *this = (raw_driver_t *) this_gen;
 
-  frame = (raw_frame_t *) xine_xmalloc (sizeof (raw_frame_t));
+  frame = (raw_frame_t *) calloc(1, sizeof(raw_frame_t));
 
   if (!frame)
     return NULL;
@@ -505,7 +505,7 @@ static vo_driver_t *raw_open_plugin (video_driver_class_t *class_gen, const void
   raw_driver_t      *this;
   int i;
 
-  this = (raw_driver_t *) xine_xmalloc (sizeof (raw_driver_t));
+  this = (raw_driver_t *) calloc(1, sizeof(raw_driver_t));
 
   if (!this)
     return NULL;
@@ -580,7 +580,7 @@ static void raw_dispose_class (video_driver_class_t *this_gen)
 
 static void *raw_init_class (xine_t *xine, void *visual_gen)
 {
-  raw_class_t *this = (raw_class_t *) xine_xmalloc (sizeof (raw_class_t));
+  raw_class_t *this = (raw_class_t *) calloc(1, sizeof(raw_class_t));
 
   this->driver_class.open_plugin     = raw_open_plugin;
   this->driver_class.get_identifier  = raw_get_identifier;

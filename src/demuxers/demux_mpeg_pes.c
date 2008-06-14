@@ -274,7 +274,7 @@ static void demux_mpeg_pes_parse_pack (demux_mpeg_pes_t *this, int preview_mode)
 
   while ((p[2] != 1) || p[0] || p[1]) {
     /* resync code */
-    for(n=0;n<5;n++) p[n]=p[n+1];
+    memmove(p, p+1, 5);
     i = read_data(this, p+5, (off_t) 1);
     if (i != 1) {
       this->status = DEMUX_FINISHED;
@@ -306,8 +306,7 @@ static void demux_mpeg_pes_parse_pack (demux_mpeg_pes_t *this, int preview_mode)
   p = buf->mem;
 
   /* copy local buffer to fifo element. */
-  for (n = 0; n < sizeof (buf6); n++)
-    p[ n ] = buf6[ n ];
+  memcpy(p, buf6, sizeof(buf6));
   
   if (preview_mode)
     buf->decoder_flags = BUF_FLAG_PREVIEW;
@@ -1613,7 +1612,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   input_plugin_t     *input = (input_plugin_t *) input_gen;
   demux_mpeg_pes_t *this;
 
-  this         = xine_xmalloc (sizeof (demux_mpeg_pes_t));
+  this         = calloc(1, sizeof(demux_mpeg_pes_t));
   this->stream = stream;
   this->input  = input;
   
@@ -1786,7 +1785,7 @@ static void class_dispose (demux_class_t *this_gen) {
 static void *init_plugin (xine_t *xine, void *data) {
 
   demux_mpeg_pes_class_t     *this;
-  this         = xine_xmalloc (sizeof (demux_mpeg_pes_class_t));
+  this         = calloc(1, sizeof(demux_mpeg_pes_class_t));
   this->config = xine->config;
   this->xine   = xine;
 

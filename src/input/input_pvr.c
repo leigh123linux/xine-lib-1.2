@@ -376,10 +376,10 @@ static void pvrscr_exit (scr_plugin_t *scr) {
   free(this);
 }
 
-static pvrscr_t* pvrscr_init (void) {
+static pvrscr_t *XINE_MALLOC pvrscr_init (void) {
   pvrscr_t *this;
 
-  this = (pvrscr_t *) xine_xmalloc(sizeof(pvrscr_t));
+  this = calloc(1, sizeof(pvrscr_t));
 
   this->scr.interface_version = 3;
   this->scr.get_priority      = pvrscr_get_priority;
@@ -504,34 +504,24 @@ static void pvr_adjust_realtime_speed(pvr_input_plugin_t *this, fifo_buffer_t *f
 }
 
 #define PVR_FILENAME      "%s%08d_%08d.vob"
-#define PVR_FILENAME_SIZE 1+8+1+8+4+1
 
 static char *make_temp_name(pvr_input_plugin_t *this, int page) {
-
   char *filename;
   
-  int size = strlen(this->tmp_prefix)+PVR_FILENAME_SIZE;
-  filename = malloc(size);
-      
-  snprintf(filename, size, PVR_FILENAME, this->tmp_prefix, this->session, page);
+  asprintf(&filename, PVR_FILENAME, this->tmp_prefix, this->session, page);
   
   return filename;
 }
       
 #define SAVE_BASE_FILENAME     "ch%03d %02d-%02d-%04d %02d:%02d:%02d"
-#define SAVE_BASE_FILENAME_SIZE 2+3+1+2+1+2+1+4+1+2+1+2+1+2+1
       
 static char *make_base_save_name(int channel, time_t tm) {
-  
   struct tm rec_time;
   char *filename;
   
-  int size = SAVE_BASE_FILENAME_SIZE;
-  filename = malloc(size);
-  
   localtime_r(&tm, &rec_time);
       
-  snprintf(filename, size, SAVE_BASE_FILENAME, 
+  asprintf(&filename, SAVE_BASE_FILENAME, 
            channel, rec_time.tm_mon+1, rec_time.tm_mday,
            rec_time.tm_year+1900, rec_time.tm_hour, rec_time.tm_min,
            rec_time.tm_sec);
@@ -539,16 +529,11 @@ static char *make_base_save_name(int channel, time_t tm) {
 }
 
 #define SAVE_FILENAME      "%s%s_%04d.vob"
-#define SAVE_FILENAME_SIZE 1+4+4+1
 
 static char *make_save_name(pvr_input_plugin_t *this, char *base, int page) {
-
   char *filename;
   
-  int size = strlen(this->save_prefix)+strlen(base)+SAVE_FILENAME_SIZE;
-  filename = malloc(size);
-      
-  snprintf(filename, size, SAVE_FILENAME, this->save_prefix, base, page);
+  asprintf(&filename, SAVE_FILENAME, this->save_prefix, base, page);
   
   return filename;
 }
@@ -1480,7 +1465,7 @@ static input_plugin_t *pvr_class_get_instance (input_class_t *cls_gen, xine_stre
   mrl = strdup(data);
   aux = &mrl[5];
 
-  this = (pvr_input_plugin_t *) xine_xmalloc (sizeof (pvr_input_plugin_t));
+  this = calloc(1, sizeof (pvr_input_plugin_t));
   this->class        = cls;
   this->stream       = stream;
   this->dev_fd       = -1;
@@ -1564,7 +1549,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   pvr_input_class_t  *this;
 
-  this = (pvr_input_class_t *) xine_xmalloc (sizeof (pvr_input_class_t));
+  this = calloc(1, sizeof (pvr_input_class_t));
 
   this->xine   = xine;
   this->config = xine->config;

@@ -90,7 +90,7 @@ static void nsf_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     this->song_number = buf->content[4];
     /* allocate a buffer for the file */
     this->nsf_size = _X_BE_32(&buf->content[0]);
-    this->nsf_file = xine_xmalloc(this->nsf_size);
+    this->nsf_file = calloc(1, this->nsf_size);
     this->nsf_index = 0;
 
     /* peform any other required initialization */
@@ -205,7 +205,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   nsf_decoder_t *this ;
 
-  this = (nsf_decoder_t *) xine_xmalloc (sizeof (nsf_decoder_t));
+  this = (nsf_decoder_t *) calloc(1, sizeof(nsf_decoder_t));
 
   /* connect the member functions */
   this->audio_decoder.decode_data         = nsf_decode_data;
@@ -255,7 +255,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   nsf_class_t *this ;
 
-  this = (nsf_class_t *) xine_xmalloc (sizeof (nsf_class_t));
+  this = (nsf_class_t *) calloc(1, sizeof(nsf_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;
