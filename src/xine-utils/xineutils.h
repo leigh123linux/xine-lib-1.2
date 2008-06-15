@@ -676,6 +676,13 @@ void xine_strdupa(char *dest, char *src) XINE_PROTECTED XINE_DEPRECATED;
 #define xine_strsep(STRINGP, DELIM) strsep((STRINGP), (DELIM))
 #define xine_setenv(NAME, VAL, XX) setenv((NAME), (VAL), (XX))
 
+/**
+ * append to a string, reallocating
+ * normally, updates & returns *dest
+ * on error, *dest is unchanged & NULL is returned.
+ */
+char *xine_strcat_realloc (char **dest, char *append) XINE_PROTECTED;
+
 /*
  * Color Conversion Utility Functions
  * The following data structures and functions facilitate the conversion
@@ -968,13 +975,6 @@ const char *xine_guess_spu_encoding(void) XINE_PROTECTED;
  * note: it will be a monotonic clock, if available.
  */
 int xine_monotonic_clock(struct timeval *tv, struct timezone *tz) XINE_PROTECTED;
-
-/**
- * append to a string, reallocating
- * normally, updates & returns *dest
- * on error, *dest is unchanged & NULL is returned.
- */
-char *xine_strcat_realloc (char **dest, char *append) XINE_PROTECTED;
 
 /* don't harm following code */
 #ifdef extern
