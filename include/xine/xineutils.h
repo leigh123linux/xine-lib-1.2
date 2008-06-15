@@ -651,6 +651,13 @@ void xine_usec_sleep(unsigned usec) XINE_PROTECTED;
 #define xine_strsep(STRINGP, DELIM) strsep((STRINGP), (DELIM))
 #define xine_setenv(NAME, VAL, XX) setenv((NAME), (VAL), (XX))
 
+/**
+ * append to a string, reallocating
+ * normally, updates & returns *dest
+ * on error, *dest is unchanged & NULL is returned.
+ */
+char *xine_strcat_realloc (char **dest, char *append) XINE_PROTECTED;
+
 /*
  * Color Conversion Utility Functions
  * The following data structures and functions facilitate the conversion

@@ -1497,70 +1497,73 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 			  "formats you want to play to your sound card's digital output."),
 			0, alsa_speaker_arrangement_cb, this);
 
-  xprintf(class->xine, XINE_VERBOSITY_LOG, _("audio_alsa_out : supported modes are "));
+  char *logmsg = strdup (_("audio_alsa_out : supported modes are"));
+
   if (!(snd_pcm_hw_params_test_format(this->audio_fd, params, SND_PCM_FORMAT_U8))) {
     this->capabilities |= AO_CAP_8BITS;
-    xprintf(class->xine, XINE_VERBOSITY_LOG, _("8bit "));
+    xine_strcat_realloc (&logmsg, _(" 8bit"));
   }
   /* ALSA automatically appends _LE or _BE depending on the CPU */
   if (!(snd_pcm_hw_params_test_format(this->audio_fd, params, SND_PCM_FORMAT_S16))) {
     this->capabilities |= AO_CAP_16BITS;
-    xprintf(class->xine, XINE_VERBOSITY_LOG, _("16bit "));
+    xine_strcat_realloc (&logmsg, _(" 16bit"));
   }
   if (!(snd_pcm_hw_params_test_format(this->audio_fd, params, SND_PCM_FORMAT_S24))) {
     this->capabilities |= AO_CAP_24BITS;
-    xprintf(class->xine, XINE_VERBOSITY_LOG, _("24bit "));
+    xine_strcat_realloc (&logmsg, _(" 24bit"));
   }
   if (!(snd_pcm_hw_params_test_format(this->audio_fd, params, SND_PCM_FORMAT_FLOAT))) {
     this->capabilities |= AO_CAP_FLOAT32;
-    xprintf(class->xine, XINE_VERBOSITY_LOG, _("32bit "));
+    xine_strcat_realloc (&logmsg, _(" 32bit"));
   }
   if (0 == (this->capabilities & (AO_CAP_FLOAT32 | AO_CAP_24BITS | AO_CAP_16BITS | AO_CAP_8BITS))) {
-    xprintf (this->class->xine, XINE_VERBOSITY_DEBUG,
-        "\naudio_alsa_out: no supported PCM format found\n");
+    xprintf(class->xine, XINE_VERBOSITY_LOG, "%s\n", logmsg);
+    free (logmsg);
+    xprintf (class->xine, XINE_VERBOSITY_DEBUG,
+             "audio_alsa_out: no supported PCM format found\n");
     snd_pcm_close(this->audio_fd);
     free(this);
     return NULL;
   }
   if (!(snd_pcm_hw_params_test_channels(this->audio_fd, params, 1))) {
     this->capabilities |= AO_CAP_MODE_MONO;
-    xprintf(class->xine, XINE_VERBOSITY_LOG, _("mono "));
+    xine_strcat_realloc (&logmsg, _(" mono"));
   }
   if (!(snd_pcm_hw_params_test_channels(this->audio_fd, params, 2))) {
     this->capabilities |= AO_CAP_MODE_STEREO;
-    xprintf(class->xine, XINE_VERBOSITY_LOG, _("stereo "));
+    xine_strcat_realloc (&logmsg, _(" stereo"));
   }
   if (!(snd_pcm_hw_params_test_channels(this->audio_fd, params, 4)) &&
      ( speakers == SURROUND4 )) {
     this->capabilities |= AO_CAP_MODE_4CHANNEL;
-    xprintf(class->xine, XINE_VERBOSITY_LOG, _("4-channel "));
+    xine_strcat_realloc (&logmsg, _(" 4-channel"));
   } 
   else
-    xprintf(class->xine, XINE_VERBOSITY_LOG, _("(4-channel not enabled in xine config) "));
+    xine_strcat_realloc (&logmsg, _(" (4-channel not enabled in xine config)"));
   
   if (!(snd_pcm_hw_params_test_channels(this->audio_fd, params, 6)) && 
      ( speakers == SURROUND41 )) {
     this->capabilities |= AO_CAP_MODE_4_1CHANNEL;
-    xprintf(class->xine, XINE_VERBOSITY_LOG, _("4.1-channel "));
+    xine_strcat_realloc (&logmsg, _(" 4.1-channel"));
   } 
   else
-    xprintf(class->xine, XINE_VERBOSITY_LOG, _("(4.1-channel not enabled in xine config) "));
+    xine_strcat_realloc (&logmsg, _(" (4.1-channel not enabled in xine config)"));
 
   if (!(snd_pcm_hw_params_test_channels(this->audio_fd, params, 6)) && 
      ( speakers == SURROUND5 )) {
     this->capabilities |= AO_CAP_MODE_5CHANNEL;
-    xprintf(class->xine, XINE_VERBOSITY_LOG, _("5-channel "));
+    xine_strcat_realloc (&logmsg, _(" 5-channel"));
   } 
   else
-    xprintf(class->xine, XINE_VERBOSITY_LOG, _("(5-channel not enabled in xine config) "));
+    xine_strcat_realloc (&logmsg, _(" (5-channel not enabled in xine config)"));
 
   if (!(snd_pcm_hw_params_test_channels(this->audio_fd, params, 6)) && 
      ( speakers >= SURROUND51 )) {
     this->capabilities |= AO_CAP_MODE_5_1CHANNEL;
-    xprintf(class->xine, XINE_VERBOSITY_LOG, _("5.1-channel "));
+    xine_strcat_realloc (&logmsg, _(" 5.1-channel"));
   } 
   else
-    xprintf(class->xine, XINE_VERBOSITY_LOG, _("(5.1-channel not enabled in xine config) "));
+    xine_strcat_realloc (&logmsg, _(" (5.1-channel not enabled in xine config)"));
 
   this->has_pause_resume = 0; /* This is checked at open time instead */
   this->is_paused = 0;
@@ -1583,10 +1586,13 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   if ( speakers == A52_PASSTHRU ) {
     this->capabilities |= AO_CAP_MODE_A52;
     this->capabilities |= AO_CAP_MODE_AC5;
-    xprintf(class->xine, XINE_VERBOSITY_LOG, _("a/52 and DTS pass-through\n"));
+    xine_strcat_realloc (&logmsg, _(" a/52 and DTS pass-through"));
   } 
   else
-    xprintf(class->xine, XINE_VERBOSITY_LOG, _("(a/52 and DTS pass-through not enabled in xine config)\n"));
+    xine_strcat_realloc (&logmsg, _(" (a/52 and DTS pass-through not enabled in xine config)"));
+
+  xprintf(class->xine, XINE_VERBOSITY_LOG, "%s\n", logmsg);
+  free (logmsg);
 
   /* printf("audio_alsa_out: capabilities 0x%X\n",this->capabilities); */
 

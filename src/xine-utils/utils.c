@@ -724,3 +724,11 @@ int xine_monotonic_clock(struct timeval *tv, struct timezone *tz)
 
 #endif
 }
+
+char *xine_strcat_realloc (char **dest, char *append)
+{
+  char *newstr = realloc (*dest, (*dest ? strlen (*dest) : 0) + strlen (append) + 1);
+  if (newstr)
+    strcat (*dest = newstr, append);
+  return newstr;
+}
