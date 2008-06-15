@@ -5,6 +5,7 @@ xine-lib (1.1.13) 2008-06-15
       via an NSF file with a long title or copyright message. (CVE-2008-1878)
     - For extra safety against possible Integer overflows like the ones found
       in CVE-2008-1482, backport more calloc usage from 1.2 branch.
+  * Improved JACK output plugin.
   * Added MIME types and .mpp for musepack.
   * Fixed display of some MJPEG streams (YUVJ420P).
   * Deprecate xine_xmalloc() function, see src/xine-utils/utils.c for more
