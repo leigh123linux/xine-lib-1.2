@@ -1239,6 +1239,15 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
     }
   }
 
+  /*
+   * Forget the current video, audio and subtitle PIDs; if the PMT has not
+   * changed, we'll pick them up again when we parse this PMT, while if the
+   * PMT has changed (e.g. an IPTV streamer that's just changed its source),
+   * we'll get new PIDs that we should follow.
+   */
+  this->audio_tracks_count = 0;
+  this->videoPid = INVALID_PID;
+  this->spu_pid = INVALID_PID;
 
   /*
    * ES definitions start here...we are going to learn upto one video
