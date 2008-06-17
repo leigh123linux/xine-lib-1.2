@@ -4,6 +4,7 @@ dnl
 
 AC_INIT
 AC_CONFIG_SRCDIR([src/xine-engine/xine.c])
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_LIBOBJ_DIR([lib])
 
 dnl
@@ -153,14 +154,10 @@ dnl ---------------------------------------------
 dnl Libtool
 dnl ---------------------------------------------
 
-m4_undefine([AC_PROG_F77])
-m4_defun([AC_PROG_F77],[])
-
+AC_PROG_LIBTOOL
 AC_LIBTOOL_DLOPEN
 AC_DISABLE_STATIC
 AC_LIBTOOL_WIN32_DLL
-AC_PROG_LIBTOOL
-AC_PROG_LIBTOOL_SANITYCHECK
 AC_SUBST(LIBTOOL_DEPS)
 if ${CONFIG_SHELL} ./libtool --features | grep "enable static" >/dev/null; then
   STATIC="-static"
