@@ -291,6 +291,7 @@ typedef struct {
   int 		    numchannels;
 
   char		   *autoplaylist[MAX_AUTOCHANNELS];
+  char             *default_channels_conf_filename;
 } dvb_input_class_t;
 
 typedef struct {
@@ -883,13 +884,15 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
 
   FILE      *f;
   char       str[BUFSIZE];
-  char       filename[BUFSIZE];
   channel_t *channels = NULL;
   int        num_channels = 0;
   int        num_alloc = 0;
   struct stat st;
-  
-  snprintf(filename, BUFSIZE, "%s/.xine/channels.conf", xine_get_homedir());
+  xine_cfg_entry_t channels_conf;
+  char      *filename;
+
+  xine_config_lookup_entry(xine, "media.dvb.channels_conf", &channels_conf);
+  filename = channels_conf.str_value; 
 
   f = fopen(filename, "r");
   if (!f) {
@@ -3164,6 +3167,8 @@ static void dvb_class_dispose(input_class_t * this_gen)
 {
     dvb_input_class_t *class = (dvb_input_class_t *) this_gen;
     int x;
+
+    free(class->default_channels_conf_filename);
     
     for(x=0;x<class->numchannels;x++)
        free(class->autoplaylist[x]);
@@ -3273,6 +3278,10 @@ static void *init_class (xine_t *xine, void *data) {
   this->mrls[3] = "dvbt://";
   this->mrls[4] = "dvba://";
   this->mrls[5] = 0;
+  
+  asprintf(&this->default_channels_conf_filename,
+           "%s/.xine/channels.conf",
+           xine_get_homedir());
 
   xprintf(this->xine,XINE_VERBOSITY_DEBUG,"init class succeeded\n");
 
@@ -3312,7 +3321,13 @@ static void *init_class (xine_t *xine, void *data) {
 			_("Enable the DVB GUI"),
 			_("Enable the DVB GUI, mouse controlled recording and channel switching."),
 			21, NULL, NULL);
-
+  /* Override the default channels file */
+  config->register_filename(config, "media.dvb.channels_conf",
+			this->default_channels_conf_filename,
+                        XINE_CONFIG_STRING_IS_FILENAME,
+			_("DVB Channels config file"),
+			_("DVB Channels config file to use instead of the ~/.xine/channels.conf file."),
+			21, NULL, NULL);
   return this;
 }
 
