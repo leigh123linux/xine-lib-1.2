@@ -2702,6 +2702,7 @@ misc/libxine.pc
 misc/relchk.sh
 misc/xine-config
 misc/xine-lib.spec
+po/Makevars.extra
 po/Makefile.in
 src/Makefile
 src/audio_out/Makefile

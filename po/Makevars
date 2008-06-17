@@ -1,5 +1,9 @@
 # Makefile variables for PO directory in any package using GNU gettext.
 
+include Makevars.extra
+
+DISTFILES += Makevars.extra.in
+
 # Usually the message domain is the same as the package name.
 DOMAIN = $(LIBNAME)
 
@@ -7,8 +11,29 @@ DOMAIN = $(LIBNAME)
 subdir = po
 top_builddir = ..
 
+# Internal usage
+XGETTEXT_FORMAT_FLAGS_PRIVATE = \
+	--flag=xine_log_msg:1:c-format \
+	--flag=xine_log_err:1:c-format \
+	--flag=set_hc_result:3:c-format \
+	--flag=log_printf:1:c-format \
+	--flag=error_message:1:c-format \
+	--flag=error_callback:5:c-format \
+	--flag=dbgprintf:1:c-format \
+	--flag=dbg_printf:1:c-format \
+	--flag=sock_string_write:3:c-format \
+	--flag=broadcaster_string_write:3:c-format \
+	--flag=scratch_printf:3:c-format
+
+# External usage (installed include files)
+XGETTEXT_FORMAT_FLAGS = \
+	--flag=xine_log:3:c-format \
+	--flag=xine_vlog:3:c-format
+
 # These options get passed to xgettext.
-XGETTEXT_OPTIONS = --keyword=_ --keyword=N_ --from-code=UTF-8
+XGETTEXT_OPTIONS = --keyword=_ --keyword=N_ --from-code=UTF-8 \
+		   $(XGETTEXT_FORMAT_FLAGS_PRIVATE) \
+		   $(XGETTEXT_FORMAT_FLAGS)		 
 
 # This is the copyright holder that gets inserted into the header of the
 # $(DOMAIN).pot file.  Set this to the copyright holder of the surrounding
@@ -40,3 +65,6 @@ MSGID_BUGS_ADDRESS = xine-devel@lists.sourceforge.net
 # message catalogs shall be used.  It is usually empty.
 EXTRA_LOCALE_CATEGORIES =
 
+debug:
+install-debug:
+	
