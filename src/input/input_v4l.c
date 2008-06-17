@@ -97,6 +97,9 @@ static const resolution_t resolutions[] = {
 #define AUDIO_DEV	 "plughw:0,0"
 #endif
 
+static char *tv_standard_names[] = { "OLD", "PAL", "NTSC", "SECAM", "AUTO", NULL };
+static int tv_standard_values[] = { -1, VIDEO_MODE_PAL, VIDEO_MODE_NTSC, VIDEO_MODE_SECAM, VIDEO_MODE_AUTO };
+
 #if !defined(NDELAY) && defined(O_NDELAY)
 #define FNDELAY O_NDELAY
 #endif
@@ -631,6 +634,7 @@ static int search_by_channel(v4l_input_plugin_t *this, char *input_source)
 {
   int  ret = 0;
   int  fd  = 0;
+  cfg_entry_t *tv_standard_entry;
 
   lprintf("input_source: %s\n", input_source);
   
@@ -666,8 +670,17 @@ static int search_by_channel(v4l_input_plugin_t *this, char *input_source)
       return -1;
     }
     
+    tv_standard_entry = this->stream->xine->config->lookup_entry(this->stream->xine->config,
+                                                   "media.video4linux.tv_standard");
     this->tuner_name = input_source;
-    ret              = ioctl(fd, VIDIOCSCHAN, &this->input);
+    if (tv_standard_entry->num_value != 0) {
+      this->video_channel.norm = tv_standard_values[ tv_standard_entry->num_value ];
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              "input_v4l: TV Standard configured as STD %s (%d)\n", 
+              tv_standard_names[ tv_standard_entry->num_value ], this->video_channel.norm );
+        ret = ioctl(fd, VIDIOCSCHAN, &this->video_channel);
+    } else
+        ret = ioctl(fd, VIDIOCSCHAN, &this->input);
     
     lprintf("(%d) Set channel to %d\n", ret, this->input);
     
@@ -1907,7 +1920,11 @@ static void *init_video_class (xine_t *xine, void *data)
 			   _("The name of the audio device which corresponds "
 			     "to your Video4Linux video device."),
 			   10, NULL, NULL);
-#endif  
+#endif
+  config->register_enum (config, "media.video4linux.tv_standard", 0,
+                        tv_standard_names, _("v4l TV standard"),
+                        _("Selects the TV standard of the input signals. "
+                        "Either: AUTO, PAL, NTSC or SECAM. "), 20, NULL, NULL);
 
   return this;
 }
