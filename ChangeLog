@@ -1,4 +1,9 @@
 xine-lib (1.1.14) 2008-??-??
+  * DVB: reacquire PIDs whenever a PMT is parsed. (Some channels' PIDs are
+    changed on a regular basis.)
+  * DVB: allow the GUI to be disabled.
+  * DVB: allow configuration of the location of channels.conf.
+  * V4L: allow TV standard selection.
 
 xine-lib (1.1.13) 2008-06-15
   * Security fixes:
