@@ -373,6 +373,7 @@ static const Param bw_list [] = {
 	{ "BANDWIDTH_6_MHZ", BANDWIDTH_6_MHZ },
 	{ "BANDWIDTH_7_MHZ", BANDWIDTH_7_MHZ },
 	{ "BANDWIDTH_8_MHZ", BANDWIDTH_8_MHZ },
+	{ "BANDWIDTH_AUTO", BANDWIDTH_AUTO },
         { NULL, 0 }
 };
 
@@ -395,6 +396,7 @@ static const Param guard_list [] = {
 	{"GUARD_INTERVAL_1_32", GUARD_INTERVAL_1_32},
 	{"GUARD_INTERVAL_1_4", GUARD_INTERVAL_1_4},
 	{"GUARD_INTERVAL_1_8", GUARD_INTERVAL_1_8},
+	{"GUARD_INTERVAL_AUTO", GUARD_INTERVAL_AUTO},
         { NULL, 0 }
 };
 
@@ -403,6 +405,7 @@ static const Param hierarchy_list [] = {
 	{ "HIERARCHY_2", HIERARCHY_2 },
 	{ "HIERARCHY_4", HIERARCHY_4 },
 	{ "HIERARCHY_NONE", HIERARCHY_NONE },
+	{ "HIERARCHY_AUTO", HIERARCHY_AUTO },
         { NULL, 0 }
 };
 
@@ -421,12 +424,14 @@ static const Param qam_list [] = {
 	{ "QAM_256", QAM_256 },
 	{ "QAM_32", QAM_32 },
 	{ "QAM_64", QAM_64 },
+	{ "QAM_AUTO", QAM_AUTO },
         { NULL, 0 }
 };
 
 static const Param transmissionmode_list [] = {
 	{ "TRANSMISSION_MODE_2K", TRANSMISSION_MODE_2K },
 	{ "TRANSMISSION_MODE_8K", TRANSMISSION_MODE_8K },
+	{ "TRANSMISSION_MODE_AUTO", TRANSMISSION_MODE_AUTO },
         { NULL, 0 }
 };
 
