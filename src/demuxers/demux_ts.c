@@ -245,7 +245,7 @@ typedef struct {
   int64_t          pts;
   buf_element_t   *buf;
   unsigned int     counter;
-  uint8_t          descriptor_tag;
+  uint16_t         descriptor_tag; /* +0x100 for PES stream IDs (no available TS descriptor tag?) */
   int64_t          packet_count;
   int              corrupted_pes;
   uint32_t         buffered_bytes;
@@ -958,7 +958,7 @@ static void demux_ts_pes_new(demux_ts_t*this,
                              unsigned int mediaIndex,
                              unsigned int pid,
                              fifo_buffer_t *fifo,
-			     uint8_t descriptor) {
+			     uint16_t descriptor) {
 
   demux_ts_media *m = &this->media[mediaIndex];
 
@@ -1214,6 +1214,15 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
     }
   }
 
+  /*
+   * Forget the current video, audio and subtitle PIDs; if the PMT has not
+   * changed, we'll pick them up again when we parse this PMT, while if the
+   * PMT has changed (e.g. an IPTV streamer that's just changed its source),
+   * we'll get new PIDs that we should follow.
+   */
+  this->audio_tracks_count = 0;
+  this->videoPid = INVALID_PID;
+  this->spu_pid = INVALID_PID;
 
   /*
    * ES definitions start here...we are going to learn upto one video
@@ -1820,7 +1829,7 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
         } else if (!found) {
 	  this->videoPid = pid;
 	  this->videoMedia = this->media_num;
-	  demux_ts_pes_new(this, this->media_num++, pid, this->video_fifo, pes_stream_id);
+	  demux_ts_pes_new(this, this->media_num++, pid, this->video_fifo, 0x100 + pes_stream_id);
         }
         
         if (this->videoPid != INVALID_PID) {
@@ -1846,7 +1855,7 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
                this->audio_tracks[this->audio_tracks_count].media_index = this->media_num;
                this->media[this->media_num].type = this->audio_tracks_count;
                demux_ts_pes_new(this, this->media_num++, pid,
-                                this->audio_fifo,pes_stream_id);
+                                this->audio_fifo, 0x100 + pes_stream_id);
                this->audio_tracks_count++;
 	   }
        }

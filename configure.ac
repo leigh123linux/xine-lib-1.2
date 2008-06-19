@@ -11,6 +11,7 @@ dnl Initialize autoconf, autoheader, and automake
 AC_INIT([xine-lib], XINE_VERSION_SPEC, [xine-bugs@lists.sourceforge.net])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/xine-engine/xine.c])
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_LIBOBJ_DIR([lib])
 AC_CONFIG_HEADERS([include/configure.h])
 AM_MAINTAINER_MODE
@@ -178,16 +179,15 @@ AC_CHECK_TOOL([STRINGS], [strings], [false])
 
 PKG_PROG_PKG_CONFIG
 
-dnl libtool
-m4_undefine([AC_PROG_F77])
-m4_defun([AC_PROG_F77],[])
+dnl ---------------------------------------------
+dnl Libtool
+dnl ---------------------------------------------
 
 AC_DISABLE_STATIC
 AC_LIBTOOL_DLOPEN
 AC_LIBTOOL_WIN32_DLL
 AC_PATH_MAGIC
 AC_PROG_LIBTOOL
-AC_PROG_LIBTOOL_SANITYCHECK
 
 
 dnl --------------------
@@ -215,6 +215,7 @@ if test x"$enable_iconvtest" != x"no"; then
 fi
 
 AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.16.1])
 AC_PROG_GMSGFMT_PLURAL
 
 AC_CHECK_LIB([c], [dlopen], [DYNAMIC_LD_LIBS=""],
@@ -1208,6 +1209,7 @@ misc/libxine.pc
 misc/relchk.sh
 misc/xine-config
 misc/xine-lib.spec
+po/Makevars.extra
 po/Makefile.in
 src/Makefile
 src/audio_out/Makefile

@@ -110,15 +110,15 @@ static const resolution_t resolutions[] = {
 	{ 160, 120 }
 };
 
-static const char *const tv_standard_names[] = { "PAL", "NTSC", "SECAM", NULL };
-static const int tv_standard_values[] = { VIDEO_MODE_PAL, VIDEO_MODE_NTSC, VIDEO_MODE_SECAM };
-
 #define NUM_RESOLUTIONS  (sizeof(resolutions)/sizeof(resolutions[0]))
 #define RADIO_DEV        "/dev/radio0"
 #define VIDEO_DEV        "/dev/video0"
 #ifdef HAVE_ALSA
 #define AUDIO_DEV	 "plughw:0,0"
 #endif
+
+static const char *const tv_standard_names[] = { "AUTO", "PAL", "NTSC", "SECAM", "OLD", NULL };
+static const int tv_standard_values[] = { VIDEO_MODE_AUTO, VIDEO_MODE_PAL, VIDEO_MODE_NTSC, VIDEO_MODE_SECAM, -1 };
 
 #if !defined(NDELAY) && defined(O_NDELAY)
 #define FNDELAY O_NDELAY
@@ -694,11 +694,14 @@ static int search_by_channel(v4l_input_plugin_t *this, char *input_source)
     tv_standard_entry = this->stream->xine->config->lookup_entry(this->stream->xine->config,
                                                    "media.video4linux.tv_standard");
     this->tuner_name = input_source;
-    this->video_channel.norm = tv_standard_values[ tv_standard_entry->num_value ];
-    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-            "input_v4l: TV Standard configured as STD %s (%d)\n", 
-            tv_standard_names[ tv_standard_entry->num_value ], this->video_channel.norm );
-    ret = ioctl(fd, VIDIOCSCHAN, &this->video_channel);
+    if (tv_standard_entry->num_value != 0) {
+      this->video_channel.norm = tv_standard_values[ tv_standard_entry->num_value ];
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              "input_v4l: TV Standard configured as STD %s (%d)\n", 
+              tv_standard_names[ tv_standard_entry->num_value ], this->video_channel.norm );
+        ret = ioctl(fd, VIDIOCSCHAN, &this->video_channel);
+    } else
+        ret = ioctl(fd, VIDIOCSCHAN, &this->input);
     
     lprintf("(%d) Set channel to %d\n", ret, this->input);
 
@@ -1912,12 +1915,6 @@ static void *init_video_class (xine_t *xine, void *data)
 			   _("v4l video device"),
 			   _("The path to your Video4Linux video device."),
 			   10, NULL, NULL);
-  
-  config->register_enum (config, "media.video4linux.tv_standard", 0,
-                        tv_standard_names, _("v4l TV standard"),
-                        _("Selects the TV standard of the input signals. "
-                        "Either: PAL, NTSC and SECAM. "), 20, NULL, NULL);
-
 #ifdef HAVE_ALSA
   config->register_filename (config, "media.video4linux.audio_device",
 			   AUDIO_DEV, 0,
@@ -1925,7 +1922,11 @@ static void *init_video_class (xine_t *xine, void *data)
 			   _("The name of the audio device which corresponds "
 			     "to your Video4Linux video device."),
 			   10, NULL, NULL);
-#endif  
+#endif
+  config->register_enum (config, "media.video4linux.tv_standard", 0 /* auto */,
+                        tv_standard_names, _("v4l TV standard"),
+                        _("Selects the TV standard of the input signals. "
+                        "Either: AUTO, PAL, NTSC or SECAM. "), 20, NULL, NULL);
 
   return this;
 }
