@@ -99,7 +99,7 @@ static void remove_segv_handler(void){
 #endif
 #endif /* 0 */
 
-#define CACHE_CATALOG_VERSION 3
+#define CACHE_CATALOG_VERSION 4
 
 static const int plugin_iface_versions[] = {
   INPUT_PLUGIN_IFACE_VERSION,
