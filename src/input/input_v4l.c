@@ -97,8 +97,8 @@ static const resolution_t resolutions[] = {
 #define AUDIO_DEV	 "plughw:0,0"
 #endif
 
-static char *tv_standard_names[] = { "OLD", "PAL", "NTSC", "SECAM", "AUTO", NULL };
-static int tv_standard_values[] = { -1, VIDEO_MODE_PAL, VIDEO_MODE_NTSC, VIDEO_MODE_SECAM, VIDEO_MODE_AUTO };
+static char *tv_standard_names[] = { "AUTO", "PAL", "NTSC", "SECAM", "OLD", NULL };
+static int tv_standard_values[] = { VIDEO_MODE_AUTO, VIDEO_MODE_PAL, VIDEO_MODE_NTSC, VIDEO_MODE_SECAM, -1 };
 
 #if !defined(NDELAY) && defined(O_NDELAY)
 #define FNDELAY O_NDELAY
@@ -1921,7 +1921,7 @@ static void *init_video_class (xine_t *xine, void *data)
 			     "to your Video4Linux video device."),
 			   10, NULL, NULL);
 #endif
-  config->register_enum (config, "media.video4linux.tv_standard", 0,
+  config->register_enum (config, "media.video4linux.tv_standard", 4 /* old */,
                         tv_standard_names, _("v4l TV standard"),
                         _("Selects the TV standard of the input signals. "
                         "Either: AUTO, PAL, NTSC or SECAM. "), 20, NULL, NULL);
