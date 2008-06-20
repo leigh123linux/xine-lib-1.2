@@ -81,6 +81,8 @@ typedef struct {
   char             preview[MAX_PREVIEW_SIZE];
   off_t            preview_size;
 
+  char            *mime_type;
+  
   char            *proto;
   char            *user;
   char            *password;
@@ -590,17 +592,20 @@ static const char* http_plugin_get_mrl (input_plugin_t *this_gen) {
 }
 
 static int http_plugin_get_optional_data (input_plugin_t *this_gen,
-					  void *data, int data_type) {
+					  void *const data, int data_type) {
 
+  void **const ptr = (void **const) data;
   http_input_plugin_t *this = (http_input_plugin_t *) this_gen;
 
   switch (data_type) {
   case INPUT_OPTIONAL_DATA_PREVIEW:
-
     memcpy (data, this->preview, this->preview_size);
     return this->preview_size;
 
-    break;
+  case INPUT_OPTIONAL_DATA_MIME_TYPE:
+    *ptr = this->mime_type;
+  case INPUT_OPTIONAL_DATA_DEMUX_MIME_TYPE:
+    return *this->mime_type ? INPUT_OPTIONAL_SUCCESS : INPUT_OPTIONAL_UNSUPPORTED;
   }
 
   return INPUT_OPTIONAL_UNSUPPORTED;
@@ -655,7 +660,9 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   int                  mpegurl_redirect = 0;
   char                 auth[BUFSIZE];
   char                 proxyauth[BUFSIZE];
-  
+  char                 mime_type[256];
+
+  mime_type[0] = 0;
   use_proxy = this_class->proxyhost && strlen(this_class->proxyhost);
   
   if (use_proxy) {
@@ -930,6 +937,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
           const char *type = this->buf + sizeof (TAG_CONTENT_TYPE) - 1;
           while (isspace (*type))
             ++type;
+          sprintf (mime_type, "%.255s", type);
           if (!strncasecmp (type, "video/nsv", 9)) {
             lprintf("shoutcast nsv detected\n");
             this->is_nsv = 1;
@@ -1005,6 +1013,8 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   
   lprintf("preview_size=%"PRId64"\n", this->preview_size);
   this->curpos = 0;
+  if (*mime_type)
+    this->mime_type = strdup (mime_type);
   
   return 1;
 }

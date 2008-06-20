@@ -1346,6 +1346,26 @@ void _x_free_input_plugin (xine_stream_t *stream, input_plugin_t *input) {
   }
 }
 
+static int probe_mime_type (xine_t *self, plugin_node_t *node, const char *mime_type)
+{
+  /* catalog->lock is expected to be locked */
+  if (node->plugin_class || _load_plugin_class(self, node, NULL))
+  {
+    const unsigned int mime_type_len = strlen (mime_type);
+    demux_class_t *cls = (demux_class_t *)node->plugin_class;
+    const char *mime = cls->mimetypes;
+    while (mime)
+    {
+      while (*mime == ';' || isspace (*mime))
+        ++mime;
+      if (!strncasecmp (mime, mime_type, mime_type_len) &&
+          (!mime[mime_type_len] || mime[mime_type_len] == ':' || mime[mime_type_len] == ';'))
+        return 1;
+      mime = strchr (mime, ';');
+    }
+  }
+  return 0;
+}
 
 static demux_plugin_t *probe_demux (xine_stream_t *stream, int method1, int method2,
 				    input_plugin_t *input) {
@@ -1368,8 +1388,6 @@ static demux_plugin_t *probe_demux (xine_stream_t *stream, int method1, int meth
   while (methods[i] != -1 && !plugin) {
     int list_id, list_size;
 
-    stream->content_detection_method = methods[i];
-
     pthread_mutex_lock (&catalog->lock);
 
     list_size = xine_sarray_size(catalog->plugin_lists[PLUGIN_DEMUX - 1]);
@@ -1381,6 +1399,25 @@ static demux_plugin_t *probe_demux (xine_stream_t *stream, int method1, int meth
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "load_plugins: probing demux '%s'\n", node->info->id);
 
       if (node->plugin_class || _load_plugin_class(stream->xine, node, NULL)) {
+        const char *mime_type;
+
+        /* If detecting by MRL, try the MIME type first (but not text/plain)... */
+        stream->content_detection_method = METHOD_EXPLICIT;
+        if (methods[i] == METHOD_BY_MRL &&
+            stream->input_plugin->get_optional_data &&
+            stream->input_plugin->get_optional_data (stream->input_plugin, NULL, INPUT_OPTIONAL_DATA_DEMUX_MIME_TYPE) != INPUT_OPTIONAL_UNSUPPORTED &&
+            stream->input_plugin->get_optional_data (stream->input_plugin, &mime_type, INPUT_OPTIONAL_DATA_MIME_TYPE) != INPUT_OPTIONAL_UNSUPPORTED &&
+            mime_type && strcasecmp (mime_type, "text/plain") &&
+            probe_mime_type (stream->xine, node, mime_type) &&
+            (plugin = ((demux_class_t *)node->plugin_class)->open_plugin (node->plugin_class, stream, input)))
+        {
+          inc_node_ref(node);
+          plugin->node = node;
+          break;
+        }
+
+        /* ... then try the extension */
+        stream->content_detection_method = methods[i];
 	if ( stream->content_detection_method == METHOD_BY_MRL && 
 	     ! _x_demux_check_extension(input->get_mrl(input),
 					 ((demux_class_t *)node->plugin_class)->extensions)
@@ -2664,7 +2701,6 @@ char *xine_get_demux_for_mime_type (xine_t *self, const char *mime_type) {
   plugin_node_t    *node;
   char             *id = NULL;
   int               list_id, list_size;
-  const size_t      mime_type_len = strlen (mime_type);
 
   pthread_mutex_lock (&catalog->lock);
 
@@ -2673,23 +2709,10 @@ char *xine_get_demux_for_mime_type (xine_t *self, const char *mime_type) {
   for (list_id = 0; (list_id < list_size) && !id; list_id++) {
 
     node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
-    if (node->plugin_class || _load_plugin_class(self, node, NULL)) {
-
-      demux_class_t *cls = (demux_class_t *)node->plugin_class;
-      const char *mime = cls->mimetypes;
-      while (mime)
-      {
-        while (*mime == ';' || isspace (*mime))
-          ++mime;
-        if (!strncmp (mime, mime_type, mime_type_len) &&
-            (!mime[mime_type_len] || mime[mime_type_len] == ':' || mime[mime_type_len] == ';'))
-        {
-          free (id);
-          id = strdup(node->info->id);
-          break;
-        }
-        mime = strchr (mime, ';');
-      }
+    if (probe_mime_type (self, node, mime_type))
+    {
+      free (id);
+      id = strdup(node->info->id);
     }
   }
 

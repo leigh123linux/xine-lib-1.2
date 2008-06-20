@@ -1228,6 +1228,27 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
     /* enable buffered input plugin (request optimizer) */
     stream->input_plugin = _x_cache_plugin_get_instance(stream);
 
+  /* Let the plugin request a specific demuxer (if the user hasn't).
+   * This overrides find-by-content & find-by-extension.
+   */
+  if (!stream->demux_plugin)
+  {
+    char *default_demux = NULL;
+    stream->input_plugin->get_optional_data (stream->input_plugin, &default_demux, INPUT_OPTIONAL_DATA_DEMUXER);
+    if (default_demux)
+    {
+      stream->demux_plugin = _x_find_demux_plugin_by_name (stream, default_demux, stream->input_plugin);
+      if (stream->demux_plugin)
+      {
+        lprintf ("demux and input plugin found\n");
+        _x_meta_info_set_utf8 (stream, XINE_META_INFO_SYSTEMLAYER,
+                               stream->demux_plugin->demux_class->identifier);
+      }
+      else
+        xine_log (stream->xine, XINE_LOG_MSG, _("xine: couldn't load plugin-specified demux %s for >%s<\n"), default_demux, mrl);
+    }
+  }
+
   if (!stream->demux_plugin) {
 
     /*
