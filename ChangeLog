@@ -7,6 +7,10 @@ xine-lib (1.1.14) 2008-??-??
     - Allow the GUI to be disabled.
     - Allow configuration of the location of channels.conf.
   * V4L: allow TV standard selection.
+  * Allow input plugins to report MIME type information.
+    This is used for demuxer plugin selection immediately before testing the
+    filename extension (so it won't work when demuxer selection is done by
+    stream content only). [Bug #120]
 
 xine-lib (1.1.13) 2008-06-15
   * Security fixes:
