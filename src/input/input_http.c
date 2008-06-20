@@ -232,9 +232,9 @@ static int _x_use_proxy(http_input_class_t *this, const char *host) {
 static void http_plugin_basicauth (const char *user, const char *password, char** dest) {
   const size_t totlen = strlen(user) + (password ? strlen(password) : 0) + 1;
   const size_t enclen = ((totlen + 2) * 4 ) / 3 + 12;
-  char         tmp[totlen];
+  char         tmp[totlen + 1];
 
-  snprintf(tmp, totlen, "%s:%s", user, password ? : "");
+  snprintf(tmp, totlen + 1, "%s:%s", user, password ? : "");
 
   *dest = malloc(enclen);
   av_base64_encode(*dest, enclen, tmp, totlen);
