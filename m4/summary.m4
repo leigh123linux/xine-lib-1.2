@@ -22,7 +22,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     if test x"$with_external_dvdnav" != x"no"; then
         echo "   - dvd (external libs)"
     else
-        echo "   - dvd (internal libs)"
+        echo "   - dvd (*INTERNAL* libs)"
     fi
     test x"$enable_vdr" != x"no"    && echo "   - vdr"
     test x"$have_dvb" = x"yes"      && echo "   - dvb"
@@ -57,7 +57,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
         if test x"$have_external_a52dec" = x"yes"; then
             echo "   - ac3 (external library)"
         else
-            echo "   - ac3 (internal library)"
+            echo "   - ac3 (*INTERNAL* library)"
         fi
     fi
     test x"$enable_asf" != x"no"     && echo "   - asf"
@@ -81,7 +81,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     if test x"$with_external_ffmpeg" != x"no"; then
         echo "   - ffmpeg (external library)"
     else
-        echo "   - ffmpeg (internal library):"
+        echo "   - ffmpeg (*INTERNAL* library):"
         echo "     - MPEG-4 (ISO, Microsoft, DivX*, XviD)"
         echo "     - Creative YUV    - Motion JPEG"
         echo "     - Cinepak         - MS Video-1"
@@ -116,34 +116,34 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
         if test x"$have_external_libmad" = x"yes"; then
             echo "   - MAD (MPG 1/2/3) (external library)"
         else
-            echo "   - MAD (MPG 1/2/3) (internal library)"
+            echo "   - MAD (MPG 1/2/3) (*INTERNAL* library)"
         fi
     fi
     if test x"$enable_libdts" != x"no"; then
         if test x"$have_external_dts" = x"yes"; then
             echo "   - DTS (external library)"
         else
-            echo "   - DTS (internal library)"
+            echo "   - DTS (*INTERNAL* library)"
         fi
     fi
     if test x"$enable_a52dec" != x"no"; then
         if test x"$have_external_a52dec" = x"yes"; then
             echo "   - A52/ra-dnet (external library)"
         else
-            echo "   - A52/ra-dnet (internal library)"
+            echo "   - A52/ra-dnet (*INTERNAL* library)"
         fi
     fi
     if test x"$enable_musepack" != x"no"; then
         if test x"$have_external_libmpcdec" = x"yes"; then
             echo "   - Musepack (external library)"
         else
-            echo "   - Musepack (internal library)"
+            echo "   - Musepack (*INTERNAL* library)"
         fi
     fi
     if test x"$with_external_ffmpeg" = x"yes"; then
         echo "   - ffmpeg (external library)"
     else
-        echo "   - ffmpeg (internal library):"
+        echo "   - ffmpeg (*INTERNAL* library):"
         echo "     - Windows Media Audio v1/v2"
         echo "     - DV            - logarithmic PCM"
         echo "     - 14k4          - 28k8"

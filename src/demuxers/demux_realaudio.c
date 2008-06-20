@@ -110,7 +110,7 @@ static int open_ra_file(demux_ra_t *this) {
   }
     
   /* allocate for and read header data */
-  this->header = xine_xmalloc(this->header_size);
+  this->header = malloc(this->header_size);
   
   if (!this->header || _x_demux_read_header(this->input, this->header, this->header_size) != this->header_size) {
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_realaudio: unable to read header\n");
@@ -243,12 +243,10 @@ static int demux_ra_send_chunk(demux_plugin_t *this_gen) {
   }
 
   if (this->audio_type == BUF_AUDIO_28_8 || this->audio_type == BUF_AUDIO_SIPRO) {
-    int x;
     uint8_t * buffer;
 
     buffer = this->frame_buffer;
     if (this->audio_type == BUF_AUDIO_SIPRO) {
-      int n;
       int len = this->h * this->w;
       if(this->input->read(this->input, this->frame_buffer, len) < len) {
 	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
@@ -395,7 +393,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_ra_t     *this;
 
-  this         = xine_xmalloc (sizeof (demux_ra_t));
+  this         = calloc(1, sizeof(demux_ra_t));
   this->stream = stream;
   this->input  = input;
   this->frame_buffer = NULL;
@@ -436,7 +434,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 void *demux_realaudio_init_plugin (xine_t *xine, void *data) {
   demux_ra_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_ra_class_t));
+  this = calloc(1, sizeof(demux_ra_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.description     = N_("RealAudio file demux plugin");

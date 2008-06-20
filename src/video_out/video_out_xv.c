@@ -206,7 +206,7 @@ static vo_frame_t *xv_alloc_frame (vo_driver_t *this_gen) {
   /* xv_driver_t  *this = (xv_driver_t *) this_gen; */
   xv_frame_t   *frame ;
 
-  frame = (xv_frame_t *) xine_xmalloc (sizeof (xv_frame_t));
+  frame = (xv_frame_t *) calloc(1, sizeof(xv_frame_t));
   if (!frame)
     return NULL;
   
@@ -720,8 +720,8 @@ static void xv_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
   if( factor > 1 )
   {
-    lprintf( "%s PutImage %dX interval (%fs)\n",
-        log_line_prefix(), factor, elapse_time );
+    lprintf( "%s PutImage %dX interval (%fs)\n", 
+             LOG_MODULE, factor, elapse_time );
   }
   }
 
@@ -1220,7 +1220,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
   unsigned int          adaptor_num;
   xv_prefertype		prefer_type;
 
-  this = (xv_driver_t *) xine_xmalloc (sizeof (xv_driver_t));
+  this = (xv_driver_t *) calloc(1, sizeof(xv_driver_t));
   if (!this)
     return NULL;
 
@@ -1532,7 +1532,7 @@ static vo_driver_t *open_plugin_old (video_driver_class_t *class_gen, const void
  * class functions
  */
 static void *init_class (xine_t *xine, void *visual_gen) {
-  xv_class_t        *this = (xv_class_t *) xine_xmalloc (sizeof (xv_class_t));
+  xv_class_t        *this = (xv_class_t *) calloc(1, sizeof(xv_class_t));
 
   this->driver_class.open_plugin     = open_plugin_old;
   this->driver_class.identifier      = "Xv";

@@ -591,7 +591,7 @@ static void find_moov_atom(input_plugin_t *input, off_t *moov_offset,
 static qt_info *create_qt_info(void) {
   qt_info *info;
 
-  info = (qt_info *)xine_xmalloc(sizeof(qt_info));
+  info = (qt_info *)calloc(1, sizeof(qt_info));
 
   if (!info)
     return NULL;
@@ -1263,10 +1263,11 @@ static qt_error parse_trak_atom (qt_trak *trak,
             if (_X_BE_32(&trak_atom[atom_pos + 0x2C]))
               trak->stsd_atoms[k].audio.bytes_per_sample = 
                 _X_BE_32(&trak_atom[atom_pos + 0x2C]);
-            trak->stsd_atoms[k].audio.samples_per_frame =
-              (trak->stsd_atoms[k].audio.bytes_per_frame / 
-               trak->stsd_atoms[k].audio.bytes_per_packet) *
-               trak->stsd_atoms[k].audio.samples_per_packet;
+            if (trak->stsd_atoms[k].audio.bytes_per_packet)
+              trak->stsd_atoms[k].audio.samples_per_frame =
+                (trak->stsd_atoms[k].audio.bytes_per_frame / 
+                 trak->stsd_atoms[k].audio.bytes_per_packet) *
+                 trak->stsd_atoms[k].audio.samples_per_packet;
           }
 
           /* see if the trak deserves a promotion to VBR */
@@ -3046,7 +3047,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
-  this         = xine_xmalloc (sizeof (demux_qt_t));
+  this         = calloc(1, sizeof(demux_qt_t));
   this->stream = stream;
   this->input  = input;
 
@@ -3132,7 +3133,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   demux_qt_class_t     *this;
 
-  this         = xine_xmalloc (sizeof (demux_qt_class_t));
+  this         = calloc(1, sizeof(demux_qt_class_t));
   this->config = xine->config;
   this->xine   = xine;
 
@@ -3143,7 +3144,9 @@ static void *init_plugin (xine_t *xine, void *data) {
     "video/quicktime: mov,qt: Quicktime animation;"
     "video/x-quicktime: mov,qt: Quicktime animation;"
     "audio/x-m4a: m4a,m4b: MPEG-4 audio;"
-    "application/x-quicktimeplayer: qtl: Quicktime list;";
+    "application/x-quicktimeplayer: qtl: Quicktime list;"
+    "video/mp4: mp4,mpg4: MPEG-4 video;"
+    "audio/mp4: mp4,mpg4: MPEG-4 audio;";
   this->demux_class.extensions      = "mov qt mp4 m4a m4b";
   this->demux_class.dispose         = default_demux_class_dispose;
 

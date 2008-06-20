@@ -98,6 +98,9 @@ struct xine_s {
 #ifdef XINE_ENGINE_INTERNAL
   xine_ticket_t             *port_ticket;
   pthread_mutex_t            log_lock;
+
+  xine_log_cb_t              log_cb;
+  void                      *log_cb_user_data;
 #endif
 };
 
@@ -376,26 +379,6 @@ int _x_message(xine_stream_t *stream, int type, ...) XINE_SENTINEL XINE_PROTECTE
 /* flush the message queues */
 
 void _x_flush_events_queues (xine_stream_t *stream) XINE_PROTECTED;
-
-
-/* find and instantiate input and demux plugins */
-
-input_plugin_t *_x_find_input_plugin (xine_stream_t *stream, const char *mrl) XINE_PROTECTED;
-demux_plugin_t *_x_find_demux_plugin (xine_stream_t *stream, input_plugin_t *input) XINE_PROTECTED;
-demux_plugin_t *_x_find_demux_plugin_by_name (xine_stream_t *stream, const char *name, input_plugin_t *input) XINE_PROTECTED;
-demux_plugin_t *_x_find_demux_plugin_last_probe(xine_stream_t *stream, const char *last_demux_name, input_plugin_t *input) XINE_PROTECTED;
-input_plugin_t *_x_rip_plugin_get_instance (xine_stream_t *stream, const char *filename) XINE_PROTECTED;
-input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream, int readahead_size) XINE_PROTECTED;
-void _x_free_input_plugin (xine_stream_t *stream, input_plugin_t *input) XINE_PROTECTED;
-void _x_free_demux_plugin (xine_stream_t *stream, demux_plugin_t *demux) XINE_PROTECTED;
-
-/* create decoder fifos and threads */
-
-int _x_video_decoder_init           (xine_stream_t *stream) XINE_PROTECTED;
-void _x_video_decoder_shutdown      (xine_stream_t *stream) XINE_PROTECTED;
-
-int _x_audio_decoder_init           (xine_stream_t *stream) XINE_PROTECTED;
-void _x_audio_decoder_shutdown      (xine_stream_t *stream) XINE_PROTECTED;
 
 /* extra_info operations */
 void _x_extra_info_reset( extra_info_t *extra_info ) XINE_PROTECTED;

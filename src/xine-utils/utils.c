@@ -236,7 +236,25 @@ static const lang_locale_t lang_locales[] = {
   { "" }
 };
 
-
+/**
+ * @brief Allocate and clean memory size_t 'size', then return the
+ *        pointer to the allocated memory.
+ * @param size Size of the memory area to allocate.
+ *
+ * @return A pointer to the allocated memory area, or NULL in case of
+ *         error.
+ *
+ * The behaviour of this function differs from standard malloc() as
+ * xine_xmalloc(0) will not return a NULL pointer, but rather a
+ * pointer to a memory area of size 1 byte.
+ *
+ * The NULL value is only ever returned in case of an error in
+ * malloc(), and is reported to stderr stream.
+ *
+ * @deprecated This function has been deprecated, as the behaviour of
+ *             allocating a 1 byte memory area on zero size is almost
+ *             never desired, and the function is thus mostly misused.
+ */
 void *xine_xmalloc(size_t size) {
   void *ptr;
 
@@ -393,6 +411,20 @@ static void xine_get_rootdir(char *rootdir, size_t maxlen) {
   if ((s = strrchr(rootdir, XINE_DIRECTORY_SEPARATOR_CHAR))) *s = '\0';
 }
 
+const char *xine_get_pluginroot(void) {
+  static char pluginroot[1024] = {0, };
+
+  if (!pluginroot[0]) {
+    char *sep, *sep2;
+    strcpy (pluginroot, xine_get_plugindir ());
+    sep = strrchr (pluginroot, '/');
+    sep2 = strrchr (pluginroot, '\\');
+    *(sep < sep2 ? sep : sep2) = 0;
+  }
+
+  return pluginroot;
+}
+
 const char *xine_get_plugindir(void) {
   static char plugindir[1024] = {0, };
 
@@ -481,7 +513,7 @@ void xine_usec_sleep(unsigned usec) {
 void xine_hexdump (const void *buf_gen, int length) {
   static const char separator[70] = "---------------------------------------------------------------------";
 
-  const uint8_t *const buf = (const uint8_t*)buf;
+  const uint8_t *const buf = (const uint8_t*)buf_gen;
   int j = 0;
 
   /* printf ("Hexdump: %i Bytes\n", length);*/
@@ -500,11 +532,7 @@ void xine_hexdump (const void *buf_gen, int length) {
     }
 
     for (i=j; i < imax; i++) {
-      uint8_t c = buf[i];
-      if ((c>=32) && (c<127))
-	c = '.';
-
-      fputc(c, stdout);
+      fputc ((buf[i] >= 32 && buf[i] <= 126) ? buf[i] : '.', stdout);
     }
     j=i;
 
@@ -517,7 +545,7 @@ void xine_hexdump (const void *buf_gen, int length) {
 
 static const lang_locale_t *_get_first_lang_locale(const char *lcal) {
   const lang_locale_t *llocale;
-  int lang_len;
+  size_t lang_len;
   char *mod;
 
   if(lcal && *lcal) {
@@ -683,4 +711,12 @@ int xine_monotonic_clock(struct timeval *tv, struct timezone *tz)
   return gettimeofday(tv, tz);
 
 #endif
+}
+
+char *xine_strcat_realloc (char **dest, char *append)
+{
+  char *newstr = realloc (*dest, (*dest ? strlen (*dest) : 0) + strlen (append) + 1);
+  if (newstr)
+    strcat (*dest = newstr, append);
+  return newstr;
 }

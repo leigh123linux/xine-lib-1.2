@@ -325,7 +325,7 @@ static void faad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   if( !this->faac_dec && (buf->decoder_flags & BUF_FLAG_SPECIAL) &&
       buf->decoder_info[1] == BUF_SPECIAL_DECODER_CONFIG ) {
     
-    this->dec_config = xine_xmalloc(buf->decoder_info[2]);
+    this->dec_config = malloc(buf->decoder_info[2]);
     this->dec_config_size = buf->decoder_info[2];
     memcpy(this->dec_config, buf->decoder_info_ptr[2], buf->decoder_info[2]);
     
@@ -346,7 +346,7 @@ static void faad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       xine_waveformatex *wavex = (xine_waveformatex *) buf->content;
 
       if( wavex->cbSize > 0 ) {
-        this->dec_config = xine_xmalloc(wavex->cbSize);
+        this->dec_config = malloc(wavex->cbSize);
         this->dec_config_size = wavex->cbSize;
         memcpy(this->dec_config, buf->content + sizeof(xine_waveformatex),
                wavex->cbSize);
@@ -422,7 +422,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   faad_decoder_t *this ;
 
-  this = (faad_decoder_t *) xine_xmalloc (sizeof (faad_decoder_t));
+  this = calloc(1, sizeof (faad_decoder_t));
 
   this->audio_decoder.decode_data         = faad_decode_data;
   this->audio_decoder.reset               = faad_reset;
@@ -451,7 +451,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   faad_class_t *this ;
 
-  this = (faad_class_t *) xine_xmalloc (sizeof (faad_class_t));
+  this = calloc(1, sizeof (faad_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "FAAD";

@@ -4,9 +4,9 @@ dnl ---------------------------
 AC_DEFUN([XINE_DECODER_PLUGINS], [
     dnl a52dec (optional; enabled by default; external version allowed)
     AC_ARG_ENABLE([a52dec],
-                  [AS_HELP_STRING([--enable-a52dec], [Enable support for a52dec decoding library (default: enabled, external: use external copy)])])
+                  [AS_HELP_STRING([--enable-a52dec], [Enable support for a52dec decoding library (default: enabled, internal: use internal copy)])])
     if test x"$enable_a52dec" != x"no"; then
-        if test x"$enable_a52dec" == x"external"; then
+        if test x"$enable_a52dec" != x"internal"; then
             AC_CHECK_LIB([a52], [a52_init],
                          [AC_CHECK_HEADERS([a52dec/a52.h a52dec/a52_internal.h], [have_external_a52dec=yes], [have_external_a52dec=no],
                                            [#ifdef HAVE_SYS_TYPES_H
@@ -56,9 +56,9 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
 
     dnl FAAD (optional; enabled by default)
     AC_ARG_ENABLE([faad],
-                  [AS_HELP_STRING([--enable-faad], [Enable support for FAAD decoder (default: enabled, external: use external copy)])])
+                  [AS_HELP_STRING([--enable-faad], [Enable support for FAAD decoder (default: enabled, internal: use internal copy)])])
     if test x"$enable_faad" != x"no"; then
-        if test x"$enable_faad" == x"external"; then
+        if test x"$enable_faad" != x"internal"; then
             AC_CHECK_LIB([faad], [NeAACDecInit],
                          [AC_CHECK_HEADERS([neaacdec.h], [have_external_faad=yes], [have_external_faad=no],
                                            [#include <neaacdec.h>])], [have_external_faad=no], [-lm])
@@ -122,9 +122,9 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
 
     dnl libdts (optional; enabled by default; external version allowed)
     AC_ARG_ENABLE([dts],
-                  [AS_HELP_STRING([--enable-dts], [Enable support for DTS decoding library (default: enabled, external: use external copy)])])
+                  [AS_HELP_STRING([--enable-dts], [Enable support for DTS decoding library (default: enabled, internal: use internal copy)])])
     if test x"$enable_dts" != x"no"; then
-        if test x"$enable_dts" == x"external"; then
+        if test x"$enable_dts" != x"internal"; then
             PKG_CHECK_MODULES([LIBDTS], [libdts], [have_external_dts=yes], [have_external_dts=no])
             if test x"$have_external_dts" != x"yes"; then
                 AC_MSG_RESULT([*** no usable version of libdts found, using internal copy ***])
@@ -213,9 +213,9 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
 
     dnl libmad (optional; enabled by default; external version allowed)
     AC_ARG_ENABLE([mad],
-                  [AS_HELP_STRING([--enable-mad], [Enable support for MAD decoding library (default: enabled, external: use external copy)])])
+                  [AS_HELP_STRING([--enable-mad], [Enable support for MAD decoding library (default: enabled, internal: use external copy)])])
     if test x"$enable_mad" != x"no"; then
-        if test x"$enable_mad" == x"external"; then
+        if test x"$enable_mad" != x"internal"; then
             PKG_CHECK_MODULES([LIBMAD], [mad],
                               [AC_CHECK_HEADERS([mad.h], [have_external_libmad=yes], [have_external_libmad=no])],
                               [have_external_libmad=no])
@@ -225,7 +225,7 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
         else
             AC_MSG_RESULT([Using included libmad support])
         fi
-        if test x"$have_external_libmad" != x"no"; then
+        if test x"$have_external_libmad" != x"yes"; then
             case "$host_or_hostalias" in
                 i?86-* | k?-* | athlon-* | pentium*-)
                     AC_DEFINE([FPM_INTEL], 1, [Define to select libmad fixed point arithmetic implementation])
@@ -258,8 +258,6 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
                     AC_DEFINE([FPM_DEFAULT], 1, [Define to select libmad fixed point arithmetic implementation])
                     ;;
             esac
-        fi
-        if test x"$have_external_libmad" != x"yes"; then
             LIBMAD_CFLAGS='-I$(top_srcdir)/contrib/libmad'
             LIBMAD_LIBS='$(top_builddir)/contrib/libmad/libmad.la'
             LIBMAD_DEPS='$(top_builddir)/contrib/libmad/libmad.la'
@@ -287,9 +285,9 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
 
     dnl libmpcdec (optional; enabled by default; external version allowed)
     AC_ARG_ENABLE([musepack],
-                  [AS_HELP_STRING([--enable-musepack], [Enable support for Musepack decoding (default: enabled, external: use external copy)])])
+                  [AS_HELP_STRING([--enable-musepack], [Enable support for Musepack decoding (default: enabled, internal: use external copy)])])
     if test x"$enable_musepack" != x"no"; then
-        if test x"$enable_musepack" == x"external"; then
+        if test x"$enable_musepack" != x"internal"; then
             AC_CHECK_LIB([mpcdec], [mpc_decoder_decode],
                          [AC_CHECK_HEADERS([mpcdec/mpcdec.h], [have_external_libmpcdec=yes], [have_external_libmpcdec=no])],
                          [have_external_libmpcdec=no])

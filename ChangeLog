@@ -68,7 +68,39 @@ xine-lib (1.1.90) (Unreleased)
   * Report more video output capabilities via (port)->get_capabilities():
     colour controls, zooming, colour keying.
 
-xine-lib (1.1.12) 2008-??-??
+xine-lib (1.1.14) 2008-??-??
+  * DVB changes:
+    - Reacquire PIDs whenever a PMT is parsed. (Some channels' PIDs are
+      changed on a regular basis.)
+    - Recognise more stream formats (as defined in the broadcast PMT).
+    - Allow automatic detection of more DVB tuning parameters.
+    - Allow the GUI to be disabled.
+    - Allow configuration of the location of channels.conf.
+  * V4L: allow TV standard selection.
+  * Allow input plugins to report MIME type information.
+    This is used for demuxer plugin selection immediately before testing the
+    filename extension (so it won't work when demuxer selection is done by
+    stream content only). [Bug #120]
+  * Allow input plugins to ask for a specific demuxer, overriding the normal
+    demuxer selection methods. (Most won't need this.)
+
+xine-lib (1.1.13) 2008-06-15
+  * Security fixes:
+    - Buffer overflow in the NSF demuxer which may allow remote attackers to
+      cause a denial of service (crash) or possibly execute arbitrary code
+      via an NSF file with a long title or copyright message. (CVE-2008-1878)
+    - For extra safety against possible Integer overflows like the ones found
+      in CVE-2008-1482, backport more calloc usage from 1.2 branch.
+  * Improved JACK output plugin.
+  * Added MIME types and .mpp for musepack.
+  * Fixed display of some MJPEG streams (YUVJ420P).
+  * Deprecate xine_xmalloc() function, see src/xine-utils/utils.c for more
+    information about the reason.
+  * Provide a useful implementation of xine_register_log_cb().
+
+xine-lib (1.1.12) 2008-04-14
+  * Security fixes:
+    - Insufficient boundary check in speex audio decoder. (CVE-2008-1686)
   * Fixed and improved the PulseAudio driver.
   * Fixed a regression in 1.1.11.1 which broke Quicktime container handling.
   * And another, this time in the Matroska demuxer.
@@ -77,6 +109,7 @@ xine-lib (1.1.12) 2008-??-??
   * Various Real codec improvements, including:
     - RV20 no longer causes segfaults (observed on amd64);
     - Cook is now handled by ffmpeg.
+  * Added a video output plugin intended for passing raw data to the front end.
 
 xine-lib (1.1.11.1) 2008-03-30
   * Security fixes:

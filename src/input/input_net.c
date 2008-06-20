@@ -481,7 +481,7 @@ static input_plugin_t *net_class_get_instance (input_class_t *cls_gen, xine_stre
     return NULL;
   }
 
-  this = xine_xmalloc(sizeof(net_input_plugin_t));
+  this = calloc(1, sizeof(net_input_plugin_t));
   this->mrl           = strdup(mrl);
   this->host_port     = strdup(filename);
   this->stream        = stream;
@@ -515,7 +515,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   net_input_class_t  *this;
 
-  this         = (net_input_class_t *) xine_xmalloc(sizeof(net_input_class_t));
+  this         = calloc(1, sizeof(net_input_class_t));
   this->config = xine->config;
   this->xine   = xine;
 

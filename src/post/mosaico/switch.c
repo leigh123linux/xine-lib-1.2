@@ -98,7 +98,7 @@ static int            switch_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 static void *switch_init_plugin(xine_t *xine, void *data)
 {
-  post_class_switch_t *this = (post_class_switch_t *)xine_xmalloc(sizeof(post_class_switch_t));
+  post_class_switch_t *this = calloc(1, sizeof(post_class_switch_t));
 
   if (!this)
     return NULL;
@@ -116,7 +116,7 @@ static post_plugin_t *switch_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target)
 {
-  post_switch_t     *this = (post_switch_t *)xine_xmalloc(sizeof(post_switch_t));
+  post_switch_t     *this = calloc(1, sizeof(post_switch_t));
   post_in_t         *input;
   xine_post_in_t    *input_api;
   post_out_t        *output;

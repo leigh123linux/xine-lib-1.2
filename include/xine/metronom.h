@@ -218,7 +218,7 @@ struct metronom_s {
 #define METRONOM_VPTS_OFFSET      6
 #define METRONOM_PREBUFFER        7
 
-metronom_t *_x_metronom_init (int have_video, int have_audio, xine_t *xine) XINE_PROTECTED;
+metronom_t *_x_metronom_init (int have_video, int have_audio, xine_t *xine) XINE_MALLOC XINE_PROTECTED;
 
 /* FIXME: reorder this structure on the next cleanup to remove the dummies */
 struct metronom_clock_s {
@@ -314,7 +314,7 @@ struct metronom_clock_s {
 #endif
 };
 
-metronom_clock_t *_x_metronom_clock_init(xine_t *xine) XINE_PROTECTED;
+metronom_clock_t *_x_metronom_clock_init(xine_t *xine) XINE_MALLOC XINE_PROTECTED;
 
 /*
  * clock options

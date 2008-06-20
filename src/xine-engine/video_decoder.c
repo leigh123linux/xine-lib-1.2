@@ -37,6 +37,7 @@
 
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
+#include "xine_private.h"
 #include <sched.h>
 
 #define SPU_SLEEP_INTERVAL (90000/2)

@@ -83,6 +83,8 @@ typedef struct {
   char             preview[MAX_PREVIEW_SIZE];
   off_t            preview_size;
 
+  char            *mime_type;
+  
   char            *proto;
   char            *user;
   char            *password;
@@ -556,17 +558,20 @@ static const char* http_plugin_get_mrl (input_plugin_t *this_gen) {
 }
 
 static int http_plugin_get_optional_data (input_plugin_t *this_gen,
-					  void *data, int data_type) {
+					  void *const data, int data_type) {
 
+  void **const ptr = (void **const) data;
   http_input_plugin_t *this = (http_input_plugin_t *) this_gen;
 
   switch (data_type) {
   case INPUT_OPTIONAL_DATA_PREVIEW:
-
     memcpy (data, this->preview, this->preview_size);
     return this->preview_size;
 
-    break;
+  case INPUT_OPTIONAL_DATA_MIME_TYPE:
+    *ptr = this->mime_type;
+  case INPUT_OPTIONAL_DATA_DEMUX_MIME_TYPE:
+    return *this->mime_type ? INPUT_OPTIONAL_SUCCESS : INPUT_OPTIONAL_UNSUPPORTED;
   }
 
   return INPUT_OPTIONAL_UNSUPPORTED;
@@ -615,11 +620,13 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   int                  done, len, linenum;
   int                  httpcode;
   int                  res;
-  int                  buflen;
+  size_t               buflen;
   int                  use_proxy;
   int                  proxyport;
   int                  mpegurl_redirect = 0;
-  
+  char                 mime_type[256];
+
+  mime_type[0] = 0;
   use_proxy = this_class->proxyhost && strlen(this_class->proxyhost);
   
   if (!_x_parse_url(this->mrl, &this->proto, &this->host, &this->port,
@@ -661,9 +668,8 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   
   this->curpos = 0;
   
-  if (this->fh == -1) {
+  if (this->fh == -1)
     return -2;
-  }
 
   {  
     uint32_t         timeout, progress;
@@ -887,7 +893,11 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   
         /* content type */
         if (!strncasecmp(this->buf, TAG_CONTENT_TYPE, sizeof(TAG_CONTENT_TYPE) - 1)) {
-          if (!strncasecmp(this->buf + sizeof(TAG_CONTENT_TYPE) - 1, "video/nsv", 9)) {
+          const char *type = this->buf + sizeof (TAG_CONTENT_TYPE) - 1;
+          while (isspace (*type))
+            ++type;
+          sprintf (mime_type, "%.255s", type);
+          if (!strncasecmp (type, "video/nsv", 9)) {
             lprintf("shoutcast nsv detected\n");
             this->is_nsv = 1;
           }
@@ -962,6 +972,8 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   
   lprintf("preview_size=%"PRId64"\n", this->preview_size);
   this->curpos = 0;
+  if (*mime_type)
+    this->mime_type = strdup (mime_type);
   
   return 1;
 }
@@ -979,11 +991,10 @@ static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_str
       strncasecmp (mrl, "peercast://pls/", 15)) {
     return NULL;
   }
-  this = (http_input_plugin_t *) xine_xmalloc(sizeof(http_input_plugin_t));
+  this = calloc(1, sizeof(http_input_plugin_t));
 
   if (!strncasecmp (mrl, "peercast://pls/", 15)) {
-    this->mrl = xine_xmalloc (30 + strlen(mrl) - 15);
-    sprintf (this->mrl, "http://127.0.0.1:7144/stream/%s", mrl+15);
+    asprintf (&this->mrl, "http://127.0.0.1:7144/stream/%s", mrl+15);
   } else {    
     this->mrl = strdup (mrl);
   }
@@ -1021,7 +1032,7 @@ static void *init_class (xine_t *xine, void *data) {
   config_values_t     *config;
   char                *proxy_env;
 
-  this = (http_input_class_t *) xine_xmalloc (sizeof (http_input_class_t));
+  this = calloc(1, sizeof (http_input_class_t));
 
   this->xine   = xine;
   this->config = xine->config;
@@ -1038,25 +1049,21 @@ static void *init_class (xine_t *xine, void *data) {
   /* 
    * honour http_proxy envvar 
    */
-  if((proxy_env = getenv("http_proxy")) && (strlen(proxy_env))) {
+  if((proxy_env = getenv("http_proxy")) && *proxy_env) {
     int    proxy_port = DEFAULT_HTTP_PORT;
-    char  *http_proxy = xine_xmalloc(strlen(proxy_env) + 1);
     char  *p;
     
     if(!strncmp(proxy_env, "http://", 7))
       proxy_env += 7;
+
+    this->proxyhost_env = strdup(proxy_env);
     
-    sprintf(http_proxy, "%s", proxy_env);
-    
-    if((p = strrchr(&http_proxy[0], ':')) && (strlen(p) > 1)) {
+    if((p = strrchr(this->proxyhost_env, ':')) && (strlen(p) > 1)) {
       *p++ = '\0';
       proxy_port = (int) strtol(p, &p, 10);
     }
     
-    this->proxyhost_env = strdup(http_proxy);
     this->proxyport_env = proxy_port;
-    
-    free(http_proxy);
   }
   else
     proxy_env = NULL; /* proxy_env can be "" */

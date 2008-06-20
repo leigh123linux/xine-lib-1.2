@@ -319,11 +319,11 @@ static void config_insert(config_values_t *this, cfg_entry_t *new_entry) {
     this->first = new_entry;
 }
 
-static cfg_entry_t *config_add (config_values_t *this, const char *key, int exp_level) {
+static cfg_entry_t *XINE_MALLOC config_add (config_values_t *this, const char *key, int exp_level) {
 
   cfg_entry_t *entry;
 
-  entry = (cfg_entry_t *) xine_xmalloc (sizeof (cfg_entry_t));
+  entry = calloc (1, sizeof (cfg_entry_t));
   entry->config        = this;
   entry->key           = strdup(key);
   entry->type          = XINE_CONFIG_TYPE_UNKNOWN;
@@ -369,8 +369,7 @@ static const char *config_translate_key (const char *key) {
    */
   if (!strncmp (key, "decoder.", 8) &&
       !strcmp (key + (trans = strlen (key)) - 9, "_priority")) {
-    newkey = realloc (newkey, trans + 27 - 17); /* diff. in string lengths */
-    sprintf (newkey, "engine.decoder_priorities.%.*s", trans - 17, key + 8);
+    asprintf (&newkey, "engine.decoder_priorities.%.*s", trans - 17, key + 8);
     return newkey;
   }
 
@@ -1015,7 +1014,7 @@ void xine_config_save (xine_t *xine, const char *filename) {
       char    *buf = NULL;
       size_t   rlen;
       
-      buf = (char *) xine_xmalloc(config_stat.st_size + 1);
+      buf = (char *) malloc(config_stat.st_size + 1);
       if((rlen = fread(buf, 1, config_stat.st_size, f_config)) && ((off_t)rlen == config_stat.st_size)) {
 	(void) fwrite(buf, 1, rlen, f_backup);
       }
@@ -1537,7 +1536,7 @@ config_values_t *_x_config_init (void) {
   config_values_t *this;
   pthread_mutexattr_t attr;
 
-  if (!(this = xine_xmalloc(sizeof(config_values_t)))) {
+  if (!(this = calloc(1, sizeof(config_values_t)))) {
 
     printf ("configfile: could not allocate config object\n");
     _x_abort();

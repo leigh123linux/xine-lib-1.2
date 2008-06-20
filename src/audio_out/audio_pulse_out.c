@@ -217,8 +217,12 @@ static void __xine_pa_sink_info_callback(pa_context *c, const pa_sink_input_info
       return;
 
   this->cvolume = info->volume;
-  this->swvolume = pa_sw_volume_to_linear(pa_cvolume_avg(&info->volume));
+  this->swvolume = pa_cvolume_avg(&info->volume);
+#ifdef HAVE_PULSEAUDIO_0_9_7
   this->muted = info->mute;
+#else
+  this->muted = pa_cvolume_is_muted (&this->cvolume);
+#endif
 }
 
 static int connect_context(pulse_driver_t *this) {
@@ -661,9 +665,27 @@ static int ao_pulse_set_property (ao_driver_t *this_gen, int property, int value
 
       this->muted = value;
 
+#ifdef HAVE_PULSEAUDIO_0_9_7
       o = pa_context_set_sink_input_mute(this->context, pa_stream_get_index(this->stream),
                                            value, __xine_pa_context_success_callback, this);
+#else
+      /* Get the current volume, so we can restore it properly. */
+      o = pa_context_get_sink_input_info(this->context, pa_stream_get_index(this->stream),
+                                         __xine_pa_sink_info_callback, this);
 
+      if (o) {
+        wait_for_operation(this, o);
+        pa_operation_unref(o);
+      }
+
+      if ( value )
+        pa_cvolume_mute(&this->cvolume, pa_stream_get_sample_spec(this->stream)->channels);
+      else
+        pa_cvolume_set(&this->cvolume, pa_stream_get_sample_spec(this->stream)->channels, this->swvolume);
+
+      o = pa_context_set_sink_input_volume(this->context, pa_stream_get_index(this->stream),
+                                           &this->cvolume, __xine_pa_context_success_callback, this);
+#endif
       result = value;
   }
 
@@ -723,7 +745,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 
   lprintf ("audio_pulse_out: open_plugin called\n");
 
-  this = (pulse_driver_t *) xine_xmalloc (sizeof (pulse_driver_t));
+  this = calloc(1, sizeof (pulse_driver_t));
   if (!this)
     return NULL;
 
@@ -826,7 +848,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   lprintf ("audio_pulse_out: init class\n");
 
-  this = (pulse_class_t *) xine_xmalloc (sizeof (pulse_class_t));
+  this = calloc(1, sizeof (pulse_class_t));
   if (!this)
     return NULL;
 

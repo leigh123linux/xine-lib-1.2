@@ -701,7 +701,6 @@ fprintf(stderr, "--- CLEAR(%d%c)\n", data->n, data->s ? 'b' : 'a');
 
       if (this->trick_speed_mode != data->on)
       {
-fprintf(stderr, "ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß\n");
         this->trick_speed_mode = data->on;
       
         _x_demux_seek(this->stream, 0, 0, 0);
@@ -964,53 +963,47 @@ fprintf(stderr, "ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß\n");
       READ_DATA_OR_FAIL(grab_image, lprintf("got GRABIMAGE\n"));
 
       {
-        off_t ret_val = -1;
-        
-        uint8_t *img   = 0;
-        int frame_size = 0;
-        int width      = 0;
-        int height     = 0;       
-        int ratio_code = 0;
-        int format     = 0;
+        off_t ret_val   = -1;
+        xine_current_frame_data_t frame;
  
-        if (xine_get_current_frame_alloc(this->stream, &width, &height, &ratio_code, &format, &img, &frame_size))
+        if (xine_get_current_frame_data(this->stream, &frame, XINE_FRAME_DATA_ALLOCATE_IMG))
         {
-          if (ratio_code == XINE_VO_ASPECT_SQUARE)
-            ratio_code = 10000;
-          else if (ratio_code == XINE_VO_ASPECT_4_3)
-            ratio_code = 13333;
-          else if (ratio_code == XINE_VO_ASPECT_ANAMORPHIC)
-            ratio_code = 17778;
-          else if (ratio_code == XINE_VO_ASPECT_DVB)
-            ratio_code = 21100;
+          if (frame.ratio_code == XINE_VO_ASPECT_SQUARE)
+            frame.ratio_code = 10000;
+          else if (frame.ratio_code == XINE_VO_ASPECT_4_3)
+            frame.ratio_code = 13333;
+          else if (frame.ratio_code == XINE_VO_ASPECT_ANAMORPHIC)
+            frame.ratio_code = 17778;
+          else if (frame.ratio_code == XINE_VO_ASPECT_DVB)
+            frame.ratio_code = 21100;
         }
 
-        if (!img)
+        if (!frame.img)
         {
-          frame_size = 0,
-          width      = 0;
-          height     = 0;
-          ratio_code = 0;
+          frame.img_size   = 0,
+          frame.width      = 0;
+          frame.height     = 0;
+          frame.ratio_code = 0;
         }          
         
         {
           result_grab_image_t result_grab_image;
           result_grab_image.header.func = data->header.func;
-          result_grab_image.header.len = sizeof (result_grab_image) + frame_size;
+          result_grab_image.header.len = sizeof (result_grab_image) + frame.img_size;
           
-          result_grab_image.width  = width;
-          result_grab_image.height = height;
-          result_grab_image.ratio  = ratio_code;
-          result_grab_image.format = format;
+          result_grab_image.width  = frame.width;
+          result_grab_image.height = frame.height;
+          result_grab_image.ratio  = frame.ratio_code;
+          result_grab_image.format = frame.format;
           
           if (sizeof (result_grab_image) == vdr_write(this->fh_result, &result_grab_image, sizeof (result_grab_image)))
           {
-            if (!frame_size || (frame_size == vdr_write(this->fh_result, img, frame_size)))
+            if (!frame.img_size || (frame.img_size == vdr_write(this->fh_result, frame.img, frame.img_size)))
               ret_val = 0;
           }
         }
         
-        free(img);
+        free(frame.img);
         
         if (ret_val != 0)
           return ret_val;

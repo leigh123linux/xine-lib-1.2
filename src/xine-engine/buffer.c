@@ -501,7 +501,7 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
   int            i;
   unsigned char *multi_buffer = NULL;
 
-  this = xine_xmalloc (sizeof (fifo_buffer_t));
+  this = calloc(1, sizeof(fifo_buffer_t));
 
   this->first               = NULL;
   this->last                = NULL;
@@ -548,7 +548,7 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
   for (i = 0; i<num_buffers; i++) {
     buf_element_t *buf;
 
-    buf = xine_xmalloc (sizeof (buf_element_t));
+    buf = calloc(1, sizeof(buf_element_t));
 
     buf->mem = multi_buffer;
     multi_buffer += buf_size;

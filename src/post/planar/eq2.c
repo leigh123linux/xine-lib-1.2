@@ -424,7 +424,7 @@ static post_plugin_t *eq2_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target)
 {
-  post_plugin_eq2_t *this = (post_plugin_eq2_t *)xine_xmalloc(sizeof(post_plugin_eq2_t));
+  post_plugin_eq2_t *this = calloc(1, sizeof(post_plugin_eq2_t));
   post_in_t         *input;
   xine_post_in_t    *input_api;
   post_out_t        *output;
@@ -439,26 +439,15 @@ static post_plugin_t *eq2_open_plugin(post_class_t *class_gen, int inputs,
   
   _x_post_init(&this->post, 0, 1);
 
-  eq2 = &this->eq2;
-  for (i = 0; i < 3; i++) {
-    eq2->buf[i] = NULL;
-    eq2->buf_w[i] = 0;
-    eq2->buf_h[i] = 0;
+  memset(&this->eq2, 0, sizeof(this->eq2));
 
-    eq2->param[i].adjust = NULL;
-    eq2->param[i].c = 1.0;
-    eq2->param[i].b = 0.0;
-    eq2->param[i].g = 1.0;
-    eq2->param[i].lut_clean = 0;
-  }
-
-  eq2->gamma = this->params.gamma = 1.0;
-  eq2->contrast = this->params.contrast = 1.0;
-  eq2->brightness = this->params.brightness = 0.0;
-  eq2->saturation = this->params.saturation = 1.0;
-  eq2->rgamma = this->params.rgamma = 1.0;
-  eq2->ggamma = this->params.ggamma = 1.0;
-  eq2->bgamma = this->params.bgamma = 1.0;
+  this->eq2.gamma = this->params.gamma = 1.0;
+  this->eq2.contrast = this->params.contrast = 1.0;
+  this->eq2.brightness = this->params.brightness = 0.0;
+  this->eq2.saturation = this->params.saturation = 1.0;
+  this->eq2.rgamma = this->params.rgamma = 1.0;
+  this->eq2.ggamma = this->params.ggamma = 1.0;
+  this->eq2.bgamma = this->params.bgamma = 1.0;
 
   pthread_mutex_init(&this->lock, NULL);
   

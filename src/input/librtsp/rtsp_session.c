@@ -78,7 +78,7 @@ static const char *const rtsp_bandwidth_strs[]={"14.4 Kbps (Modem)", "19.2 Kbps 
 
 rtsp_session_t *rtsp_session_start(xine_stream_t *stream, char *mrl) {
 
-  rtsp_session_t *rtsp_session = xine_xmalloc(sizeof(rtsp_session_t));
+  rtsp_session_t *rtsp_session = calloc(1, sizeof(rtsp_session_t));
   xine_t *xine = stream->xine;
   char *server;
   char *mrl_line=strdup(mrl);

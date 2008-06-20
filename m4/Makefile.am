@@ -18,6 +18,7 @@ EXTRA_DIST = \
 	gas.m4 \
 	input.m4 \
 	macosx.m4 \
+	misc.m4 \
 	objc.m4 \
 	pkg.m4 \
 	programs.m4 \

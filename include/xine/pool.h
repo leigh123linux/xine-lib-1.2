@@ -36,7 +36,7 @@ xine_pool_t *xine_pool_new(size_t object_size,
                            void (create_object)(void *object),
                            void (prepare_object)(void *object),
                            void (return_object)(void *object),
-                           void (delete_object)(void *object)) XINE_PROTECTED;
+                           void (delete_object)(void *object)) XINE_MALLOC XINE_PROTECTED;
 
 /* Deletes a pool */
 void xine_pool_delete(xine_pool_t *pool) XINE_PROTECTED;

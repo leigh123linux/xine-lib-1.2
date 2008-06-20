@@ -11,6 +11,7 @@ dnl Initialize autoconf, autoheader, and automake
 AC_INIT([xine-lib], XINE_VERSION_SPEC, [xine-bugs@lists.sourceforge.net])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/xine-engine/xine.c])
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_LIBOBJ_DIR([lib])
 AC_CONFIG_HEADERS([include/configure.h])
 AM_MAINTAINER_MODE
@@ -178,16 +179,15 @@ AC_CHECK_TOOL([STRINGS], [strings], [false])
 
 PKG_PROG_PKG_CONFIG
 
-dnl libtool
-m4_undefine([AC_PROG_F77])
-m4_defun([AC_PROG_F77],[])
+dnl ---------------------------------------------
+dnl Libtool
+dnl ---------------------------------------------
 
 AC_DISABLE_STATIC
 AC_LIBTOOL_DLOPEN
 AC_LIBTOOL_WIN32_DLL
 AC_PATH_MAGIC
 AC_PROG_LIBTOOL
-AC_PROG_LIBTOOL_SANITYCHECK
 
 
 dnl --------------------
@@ -215,6 +215,7 @@ if test x"$enable_iconvtest" != x"no"; then
 fi
 
 AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.16.1])
 AC_PROG_GMSGFMT_PLURAL
 
 AC_CHECK_LIB([c], [dlopen], [DYNAMIC_LD_LIBS=""],
@@ -236,12 +237,14 @@ AC_ARG_WITH([external-libxdg-basedir],
 
 if test x"$with_external_libxdg_basedir" = x"yes"; then
     PKG_CHECK_MODULES([XDG_BASEDIR], [libxdg-basedir >= 0.1.3])
+    XDG_BASEDIR_REQUIRES="libxdg-basedir"
 else
     XDG_BASEDIR_CPPFLAGS='-I$(top_srcdir)/contrib/libxdg-basedir'
     XDG_BASEDIR_LIBS='$(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la'
     XDG_BASEDIR_DEPS='$(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la'
 fi
 
+AC_SUBST([XDG_BASEDIR_REQUIRES])
 AC_SUBST([XDG_BASEDIR_CPPFLAGS])
 AC_SUBST([XDG_BASEDIR_LIBS])
 AC_SUBST([XDG_BASEDIR_DEPS])
@@ -430,15 +433,10 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[asm(".align 3");]])],
 
 CC_ATTRIBUTE_ALIGNED
 
-CC_ATTRIBUTE_PACKED([XINE_PACKED='__attribute__((packed))'],
-                    [AC_MSG_WARN([Your compiler doesn't support __attribute__((packed)); xine might not work as expected.])])
-AC_DEFINE_UNQUOTED([XINE_PACKED], [$XINE_PACKED], [Mark a structure as being packed])
-
-CC_ATTRIBUTE_MALLOC
-
 CC_ATTRIBUTE_VISIBILITY([protected],
                         [visibility_export="protected"],
                         [CC_ATTRIBUTE_VISIBILITY([default], [visibility_export="default"])])
+CC_ATTRIBUTE_VISIBILITY([internal])
 
 if test x"$visibility_export" != x""; then
     CC_FLAG_VISIBILITY([VISIBILITY_FLAG="-fvisibility=hidden"
@@ -450,6 +448,13 @@ AC_SUBST([VISIBILITY_FLAG])
 CC_ATTRIBUTE_SENTINEL
 CC_ATTRIBUTE_FORMAT
 CC_ATTRIBUTE_FORMAT_ARG
+CC_ATTRIBUTE_DEPRECATED
+CC_ATTRIBUTE_UNUSED
+CC_ATTRIBUTE_MALLOC
+
+CC_ATTRIBUTE_PACKED([],
+  [AC_MSG_WARN([Your compiler doesn't support __attribute__((packed)); xine might not work as expected.])])
+CC_ATTRIBUTE_CONST
 
 CC_CHECK_CFLAGS([-pipe], [miscflags="$miscflags -pipe"])
 
@@ -581,12 +586,19 @@ dnl initialize arch_86 as it is later tested for != "no"
 arch_x86=no
 
 case "$host_or_hostalias" in
-    alphaev56-*)    cpuflags="-mcpu=ev56 -mieee $cpuflags" ;;
-    alpha*)         cpuflags="-mieee $cpuflags" ;;
+    alphaev56-*)
+        cpuflags="-mcpu=ev56 -mieee $cpuflags"
+        AC_DEFINE([ARCH_ALPHA], [], [Define this if you're running Alpha architecture])
+        ;;
+    alpha*)
+        cpuflags="-mieee $cpuflags"
+        AC_DEFINE([ARCH_ALPHA], [], [Define this if you're running Alpha architecture])
+        ;;
 
     armv4l-*-linux*)
         cpuflags="-mcpu=strongarm1100 -ffast-math -fsigned-char $cpuflags"
         DEFAULT_OCFLAGS='$(O2_CFLAGS)'
+        AC_DEFINE([ARCH_ARM], [], [Define this if you're running ARM architecture])
         ;;
 
     sparc*-*-linux*)
@@ -893,6 +905,11 @@ AC_CHECK_FUNC([opendir],
                    AC_MSG_ERROR([dirent is needed (opendir, readdir, ...)])
                fi])
 
+XINE_CHECK_MINMAX([], [
+    AC_DEFINE([MIN(x, y)], [(x > y) ? y : x], [Get the minimum value between two])
+    AC_DEFINE([MAX(x, y)], [(x > y) ? x : y], [Get the maximum value between two])
+  ])
+
 AC_LIBSOURCE([timedlock.c])
 ac_save_LIBS="$LIBS" LIBS="$LIBS $PTHREAD_LIBS"
 AC_CHECK_FUNCS([pthread_mutex_timedlock],
@@ -1192,6 +1209,7 @@ misc/libxine.pc
 misc/relchk.sh
 misc/xine-config
 misc/xine-lib.spec
+po/Makevars.extra
 po/Makefile.in
 src/Makefile
 src/audio_out/Makefile

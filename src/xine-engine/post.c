@@ -217,7 +217,7 @@ static int post_video_rewire(xine_post_out_t *output_gen, void *data) {
 
 post_video_port_t *_x_post_intercept_video_port(post_plugin_t *post, xine_video_port_t *original,
 						post_in_t **input, post_out_t **output) {
-  post_video_port_t *port = (post_video_port_t *)xine_xmalloc(sizeof(post_video_port_t));
+  post_video_port_t *port = calloc(1, sizeof(post_video_port_t));
   
   if (!port)
     return NULL;
@@ -246,7 +246,7 @@ post_video_port_t *_x_post_intercept_video_port(post_plugin_t *post, xine_video_
   pthread_mutex_init(&port->free_frames_lock, NULL);
   
   if (input) {
-    *input = (post_in_t *)xine_xmalloc(sizeof(post_in_t));
+    *input = calloc(1, sizeof(post_in_t));
     if (!*input) return port;
     (*input)->xine_in.name = "video in";
     (*input)->xine_in.type = XINE_POST_DATA_VIDEO;
@@ -256,7 +256,7 @@ post_video_port_t *_x_post_intercept_video_port(post_plugin_t *post, xine_video_
   }
   
   if (output) {
-    *output = (post_out_t *)xine_xmalloc(sizeof(post_out_t));
+    *output = calloc(1, sizeof(post_out_t));
     if (!*output) return port;
     (*output)->xine_out.name = "video out";
     (*output)->xine_out.type = XINE_POST_DATA_VIDEO;
@@ -364,7 +364,7 @@ vo_frame_t *_x_post_intercept_video_frame(vo_frame_t *frame, post_video_port_t *
     new_frame = port->free_frame_slots;
     port->free_frame_slots = new_frame->next;
   } else {
-    new_frame = (vo_frame_t *)xine_xmalloc(sizeof(vo_frame_t));
+    new_frame = calloc(1, sizeof(vo_frame_t));
   }
   pthread_mutex_unlock(&port->free_frames_lock);
   
@@ -730,7 +730,7 @@ static int post_audio_rewire(xine_post_out_t *output_gen, void *data) {
 
 post_audio_port_t *_x_post_intercept_audio_port(post_plugin_t *post, xine_audio_port_t *original,
 						post_in_t **input, post_out_t **output) {
-  post_audio_port_t *port = (post_audio_port_t *)xine_xmalloc(sizeof(post_audio_port_t));
+  post_audio_port_t *port = calloc(1, sizeof(post_audio_port_t));
   
   if (!port)
     return NULL;
@@ -753,7 +753,7 @@ post_audio_port_t *_x_post_intercept_audio_port(post_plugin_t *post, xine_audio_
   pthread_mutex_init(&port->usage_lock, NULL);
   
   if (input) {
-    *input = (post_in_t *)xine_xmalloc(sizeof(post_in_t));
+    *input = calloc(1, sizeof(post_in_t));
     if (!*input) return port;
     (*input)->xine_in.name = "audio in";
     (*input)->xine_in.type = XINE_POST_DATA_AUDIO;
@@ -763,7 +763,7 @@ post_audio_port_t *_x_post_intercept_audio_port(post_plugin_t *post, xine_audio_
   }
   
   if (output) {
-    *output = (post_out_t *)xine_xmalloc(sizeof(post_out_t));
+    *output = calloc(1, sizeof(post_out_t));
     if (!*output) return port;
     (*output)->xine_out.name = "audio out";
     (*output)->xine_out.type = XINE_POST_DATA_AUDIO;

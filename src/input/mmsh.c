@@ -190,11 +190,9 @@ struct mmsh_s {
 };
 
 static int send_command (mmsh_t *this, char *cmd)  {
-  int length;
-
   lprintf ("send_command:\n%s\n", cmd);
 
-  length = strlen(cmd);
+  const size_t length = strlen(cmd);
   if (_x_io_tcp_write(this->stream, this->s, cmd, length) != length) {
     xprintf (this->stream->xine, XINE_LOG_MSG, _("libmmsh: send error\n"));
     return 0;
@@ -636,7 +634,7 @@ mmsh_t *mmsh_connect (xine_stream_t *stream, const char *url, int bandwidth) {
 
   report_progress (stream, 0);
 
-  this = (mmsh_t*) xine_xmalloc (sizeof (mmsh_t));
+  this = calloc(1, sizeof (mmsh_t));
 
   this->stream          = stream;
   this->url             = strdup(url);

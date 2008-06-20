@@ -238,75 +238,75 @@ msgstr ""
 "formati che si vogliono riprodurre."
 
 #: src/audio_out/audio_alsa_out.c:1500
-msgid "audio_alsa_out : supported modes are "
-msgstr "audio_alsa_out : i modi supportati sono "
+msgid "audio_alsa_out : supported modes are"
+msgstr "audio_alsa_out : i modi supportati sono"
 
-#: src/audio_out/audio_alsa_out.c:1503
-msgid "8bit "
-msgstr "8-bit "
+#: src/audio_out/audio_alsa_out.c:1504
+msgid " 8bit"
+msgstr " 8-bit"
 
-#: src/audio_out/audio_alsa_out.c:1508
-msgid "16bit "
-msgstr "16-bit "
+#: src/audio_out/audio_alsa_out.c:1509
+msgid " 16bit"
+msgstr " 16-bit"
 
-#: src/audio_out/audio_alsa_out.c:1512
-msgid "24bit "
-msgstr "24-bit"
+#: src/audio_out/audio_alsa_out.c:1513
+msgid " 24bit"
+msgstr " 24-bit"
 
-#: src/audio_out/audio_alsa_out.c:1516
-msgid "32bit "
-msgstr "32-bit"
+#: src/audio_out/audio_alsa_out.c:1517
+msgid " 32bit"
+msgstr " 32-bit"
 
-#: src/audio_out/audio_alsa_out.c:1527
-msgid "mono "
-msgstr "mono "
+#: src/audio_out/audio_alsa_out.c:1530 src/audio_out/audio_oss_out.c:963
+msgid " mono"
+msgstr " mono"
 
-#: src/audio_out/audio_alsa_out.c:1531
-msgid "stereo "
-msgstr "stereo "
+#: src/audio_out/audio_alsa_out.c:1534 src/audio_out/audio_oss_out.c:969
+msgid " stereo"
+msgstr " stereo"
 
-#: src/audio_out/audio_alsa_out.c:1536
-msgid "4-channel "
-msgstr "4-canali "
+#: src/audio_out/audio_alsa_out.c:1539 src/audio_out/audio_oss_out.c:976
+msgid " 4-channel"
+msgstr " 4-canali"
 
-#: src/audio_out/audio_alsa_out.c:1539
-msgid "(4-channel not enabled in xine config) "
-msgstr "(4-canali non abilitato nella configurazione di xine) "
-
-#: src/audio_out/audio_alsa_out.c:1544
-msgid "4.1-channel "
-msgstr "4.1-canali "
+#: src/audio_out/audio_alsa_out.c:1542 src/audio_out/audio_oss_out.c:979
+msgid " (4-channel not enabled in xine config)"
+msgstr " (4-canali non abilitato nella configurazione di xine)"
 
 #: src/audio_out/audio_alsa_out.c:1547
-msgid "(4.1-channel not enabled in xine config) "
-msgstr "(4.1-canali non abilitati nella configurazione di xine) "
+msgid " 4.1-channel"
+msgstr " 4.1-canali"
 
-#: src/audio_out/audio_alsa_out.c:1552
-msgid "5-channel "
-msgstr "5-canali "
+#: src/audio_out/audio_alsa_out.c:1550
+msgid " (4.1-channel not enabled in xine config)"
+msgstr " (4.1-canali non abilitati nella configurazione di xine)"
 
-#: src/audio_out/audio_alsa_out.c:1555
-msgid "(5-channel not enabled in xine config) "
-msgstr "(5-canali non abilitati nella configurazione di xine) "
+#: src/audio_out/audio_alsa_out.c:1555 src/audio_out/audio_oss_out.c:986
+msgid " 5-channel"
+msgstr " 5-canali"
 
-#: src/audio_out/audio_alsa_out.c:1560
-msgid "5.1-channel "
-msgstr "5.1-canali "
+#: src/audio_out/audio_alsa_out.c:1558 src/audio_out/audio_oss_out.c:989
+msgid " (5-channel not enabled in xine config)"
+msgstr " (5-canali non abilitati nella configurazione di xine)"
 
-#: src/audio_out/audio_alsa_out.c:1563
-msgid "(5.1-channel not enabled in xine config) "
-msgstr "(5.1-canali non abilitati nella configurazione di xine) "
+#: src/audio_out/audio_alsa_out.c:1563 src/audio_out/audio_oss_out.c:996
+msgid " 5.1-channel"
+msgstr " 5.1-canali"
 
-#: src/audio_out/audio_alsa_out.c:1586
-msgid "a/52 and DTS pass-through\n"
-msgstr "passaggio diretto a/52 e DTS\n"
+#: src/audio_out/audio_alsa_out.c:1566 src/audio_out/audio_oss_out.c:999
+msgid " (5.1-channel not enabled in xine config)"
+msgstr " (5.1-canali non abilitati nella configurazione di xine)"
 
 #: src/audio_out/audio_alsa_out.c:1589
-msgid "(a/52 and DTS pass-through not enabled in xine config)\n"
-msgstr ""
-"(passaggio diretto a/53 e DTS non abilitato nella configurazione di xine)\n"
+msgid " a/52 and DTS pass-through"
+msgstr " passaggio diretto a/52 e DTS"
 
-#: src/audio_out/audio_alsa_out.c:1596
+#: src/audio_out/audio_alsa_out.c:1592
+msgid " (a/52 and DTS pass-through not enabled in xine config)"
+msgstr ""
+" (passaggio diretto a/52 e DTS non abilitato nella configurazione di xine)"
+
+#: src/audio_out/audio_alsa_out.c:1602
 msgid "alsa mixer device"
 msgstr "dispositivo mixer di alsa"
 
@@ -587,12 +587,11 @@ msgstr ""
 msgid "xine audio output plugin using IRIX libaudio"
 msgstr "plugin di uscita audio per xine utilizzante libaudio IRIX"
 
-#: src/audio_out/audio_jack_out.c:408
-#, fuzzy
+#: src/audio_out/audio_jack_out.c:406
 msgid "xine output plugin for JACK Audio Connection Kit"
-msgstr "plugin di uscita audio per xine per Coreaudio/Max OS X"
+msgstr "plugin di uscita audio per xine per JACK Audio Connection Kit"
 
-#: src/audio_out/audio_none_out.c:229
+#: src/audio_out/audio_none_out.c:223
 msgid "xine dummy audio output plugin"
 msgstr "pluging output audio dummy di xine"
 
@@ -750,24 +749,34 @@ msgstr ""
 msgid "OSS audio output latency (adjust a/v sync)"
 msgstr "latenza nell'uscita audio OSS (calibra sincronia audio/video)"
 
-#: src/audio_out/audio_oss_out.c:877
-msgid ""
-"audio_oss_out: Audio driver realtime sync disabled...\n"
-"audio_oss_out: ...probing output buffer size: "
-msgstr ""
-"audio_oss_out: driver audio real time con sincronizzazione disabilitato...\n"
-"audio_oss_out: ...si sta provando la dimensione del buffer di output: "
-
 #: src/audio_out/audio_oss_out.c:894
 #, c-format
 msgid ""
-"%d bytes\n"
+"audio_oss_out: Audio driver realtime sync disabled...\n"
+"audio_oss_out: ...probing output buffer size: %d bytes\n"
 "audio_oss_out: ...there may be audio/video synchronization issues\n"
 msgstr ""
-"%d byte\n"
+"audio_oss_out: driver audio real time con sincronizzazione disabilitato...\n"
+"audio_oss_out: ...si sta provando la dimensione del buffer di output: %d "
+"byte\n"
 "audio_oss_out: ... potrebbe essereci sincronizzazione audio/video\n"
 
-#: src/audio_out/audio_oss_out.c:1023
+#: src/audio_out/audio_oss_out.c:958
+msgid "audio_oss_out: supported modes are"
+msgstr "audio_oss_out: i modi supportati sono"
+
+#: src/audio_out/audio_oss_out.c:1009
+#, fuzzy
+msgid " a/52 pass-through"
+msgstr " passaggio diretto a/52"
+
+#: src/audio_out/audio_oss_out.c:1012
+#, fuzzy
+msgid " (a/52 pass-through not enabled in xine config)"
+msgstr ""
+" (passaggio diretto a/52 non abilitato nella configurazione di xine)"
+
+#: src/audio_out/audio_oss_out.c:1027
 msgid "OSS audio mixer number, -1 for none"
 msgstr "Numero del mixer audio OSS, -1 per nessuno."
 
@@ -798,21 +807,20 @@ msgstr ""
 "plugin output audio di xine che usa i dispositivi/driver audio compiacenti "
 "di oss"
 
-#: src/audio_out/audio_pulse_out.c:548
-#, fuzzy
+#: src/audio_out/audio_pulse_out.c:549
 msgid "device used for pulseaudio"
-msgstr "dispositivo utilizzato per CD audio"
+msgstr "dispositivo utilizzato per PulseAudio"
 
 #: src/audio_out/audio_pulse_out.c:549
 msgid "use 'server[:sink]' for setting the pulseaudio sink device."
 msgstr ""
+"Si usi 'server[:sink]' per impostare il dispositivo sink di PulseAudio."
 
-#: src/audio_out/audio_pulse_out.c:603
-#, fuzzy
+#: src/audio_out/audio_pulse_out.c:583
 msgid "xine audio output plugin using pulseaudio sound server"
-msgstr "pluging output audio di xine che usa esound"
+msgstr "plugin di output audio di xine che usa il server sonoro PulseAudio"
 
-#: src/audio_out/audio_sun_out.c:455 src/audio_out/audio_sun_out.c:948
+#: src/audio_out/audio_sun_out.c:457 src/audio_out/audio_sun_out.c:950
 #, c-format
 msgid "audio_sun_out: opening audio device %s failed: %s\n"
 msgstr "audio_sun_out: apertura dispositivo audio %s non riuscita: %s\n"

@@ -240,7 +240,7 @@ static void real_parse_index(demux_real_t *this) {
 
       if(index && entries)
         /* Allocate memory for index */
-        *index = xine_xcalloc(entries, sizeof(real_index_entry_t));
+        *index = calloc(entries, sizeof(real_index_entry_t));
         
       if(index && entries && *index) {
         /* Read index */
@@ -434,7 +434,7 @@ static void real_parse_headers (demux_real_t *this) {
     case CONT_TAG:
 
       chunk_size -= PREAMBLE_SIZE;
-      chunk_buffer = xine_xmalloc(chunk_size);
+      chunk_buffer = malloc(chunk_size);
       if (this->input->read(this->input, chunk_buffer, chunk_size) !=
 	  chunk_size) {
 	free (chunk_buffer);
@@ -769,7 +769,7 @@ unknown:
                          this->video_stream->mdpr->avg_bit_rate);
                          
     /* Allocate fragment offset table */
-    this->fragment_tab = xine_xcalloc(FRAGMENT_TAB_SIZE, sizeof(uint32_t));
+    this->fragment_tab = calloc(FRAGMENT_TAB_SIZE, sizeof(uint32_t));
     this->fragment_tab_max = FRAGMENT_TAB_SIZE;
   }
 
@@ -1386,7 +1386,7 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
       frames = (stream_read_word(this) & 0xf0) >> 4;
       
       /* 2 bytes per frame size */
-      sizes = xine_xcalloc(frames, sizeof(int));
+      sizes = calloc(frames, sizeof(int));
       for(i = 0; i < frames; i++)
         sizes[i] = stream_read_word(this);
         
@@ -1737,7 +1737,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   }
 
 
-  this         = xine_xmalloc (sizeof (demux_real_t));
+  this         = calloc(1, sizeof(demux_real_t));
   this->stream = stream;
   this->input  = input;
 
@@ -1770,7 +1770,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 static void *init_class (xine_t *xine, void *data) {
   demux_real_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_real_class_t));
+  this = calloc(1, sizeof(demux_real_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.description     = N_("RealMedia file demux plugin");

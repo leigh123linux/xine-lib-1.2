@@ -3491,9 +3491,9 @@ static HANDLE WINAPI expCreateFileA(LPCSTR cs1,DWORD i1,DWORD i2,
     if(strstr(cs1, ".qtx"))
     {
 	int result;
-	char* tmp=(char*)malloc(strlen(win32_def_path)+250);
 	char* x=strrchr(cs1,'\\');
-	sprintf(tmp,"%s/%s",win32_def_path,x?(x+1):cs1);
+	char* tmp;
+	asprintf(&tmp,"%s/%s",win32_def_path,x?(x+1):cs1);
 //	printf("### Open: %s -> %s\n",cs1,tmp);
 	result=open(tmp, O_RDONLY);
 	free(tmp);

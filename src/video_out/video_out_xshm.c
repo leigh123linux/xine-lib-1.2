@@ -280,7 +280,7 @@ static XImage *create_ximage (xshm_driver_t *this, XShmSegmentInfo *shminfo,
     this->bytes_per_pixel = this->bpp / 8;
     this->image_byte_order = myimage->byte_order;
 
-    myimage->data = xine_xcalloc (width * height, this->bytes_per_pixel);
+    myimage->data = calloc (width * height, this->bytes_per_pixel);
   }
 
   return myimage;
@@ -391,7 +391,7 @@ static vo_frame_t *xshm_alloc_frame (vo_driver_t *this_gen) {
   xshm_frame_t  *frame;
   xshm_driver_t *this = (xshm_driver_t *) this_gen;
 
-  frame = (xshm_frame_t *) xine_xmalloc (sizeof (xshm_frame_t));
+  frame = (xshm_frame_t *) calloc(1, sizeof(xshm_frame_t));
   if (!frame)
     return NULL;
 
@@ -1074,7 +1074,7 @@ static vo_driver_t *xshm_open_plugin_2 (video_driver_class_t *class_gen, const v
   int			cpu_byte_order;
   XColor                dummy;
   
-  this = (xshm_driver_t *) xine_xmalloc (sizeof (xshm_driver_t));
+  this = (xshm_driver_t *) calloc(1, sizeof(xshm_driver_t));
 
   if (!this)
     return NULL;
@@ -1286,7 +1286,7 @@ static vo_driver_t *xshm_open_plugin_old (video_driver_class_t *class_gen, const
  * class functions
  */
 static void *xshm_init_class (xine_t *xine, void *visual_gen) {
-  xshm_class_t	       *this = (xshm_class_t *) xine_xmalloc (sizeof (xshm_class_t));
+  xshm_class_t	       *this = (xshm_class_t *) calloc(1, sizeof(xshm_class_t));
 
   this->driver_class.open_plugin     = xshm_open_plugin_old;
   this->driver_class.identifier      = "XShm";

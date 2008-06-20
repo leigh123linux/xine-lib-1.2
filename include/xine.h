@@ -158,6 +158,7 @@ void xine_close_video_driver (xine_t *self, xine_video_port_t  *driver) XINE_PRO
 #define XINE_VISUAL_TYPE_CACA              8
 #define XINE_VISUAL_TYPE_MACOSX            9
 #define XINE_VISUAL_TYPE_XCB              11
+#define XINE_VISUAL_TYPE_RAW              12
 
 /*
  * free all resources, close all plugins, close engine.
@@ -234,22 +235,6 @@ int xine_open (xine_stream_t *stream, const char *mrl) XINE_PROTECTED;
  * returns 1 if OK, 0 on error (use xine_get_error for details)
  */
 int  xine_play (xine_stream_t *stream, int start_pos, int start_time) XINE_PROTECTED;
-
-/*
- * set xine to a trick mode for fast forward, backwards playback,
- * low latency seeking. Please note that this works only with some
- * input plugins. mode constants see below.
- *
- * returns 1 if OK, 0 on error (use xine_get_error for details)
- */
-int  xine_trick_mode (xine_stream_t *stream, int mode, int value) XINE_PROTECTED;
-
-/* trick modes */
-#define XINE_TRICK_MODE_OFF                0
-#define XINE_TRICK_MODE_SEEK_TO_POSITION   1
-#define XINE_TRICK_MODE_SEEK_TO_TIME       2
-#define XINE_TRICK_MODE_FAST_FORWARD       3
-#define XINE_TRICK_MODE_FAST_REWIND        4
 
 /*
  * stop stream playback
@@ -413,8 +398,13 @@ int  xine_get_param (xine_stream_t *stream, int param) XINE_PROTECTED;
  * image data into a too small buffer.
  *
  * xine_get_current_frame_alloc() takes care of allocating
- * a buffer on it's own, so image data can be retrieved by
+ * a buffer on its own, so image data can be retrieved by
  * a single call without the need to pause the stream.
+ * 
+ * xine_get_current_frame_data() passes the parameters of the
+ * previously mentioned functions plus further information in
+ * a structure and can work like the _s or _alloc function
+ * respectively depending on the passed flags.
  *
  * all functions return 1 on success, 0 failure.
  */
@@ -426,12 +416,33 @@ int  xine_get_current_frame (xine_stream_t *stream,
 int  xine_get_current_frame_s (xine_stream_t *stream,
 			     int *width, int *height,
 			     int *ratio_code, int *format,
-			     uint8_t *img, int *size) XINE_PROTECTED;
+			     uint8_t *img, int *img_size) XINE_PROTECTED;
 
 int  xine_get_current_frame_alloc (xine_stream_t *stream,
 			     int *width, int *height,
 			     int *ratio_code, int *format,
-			     uint8_t **img, int *size) XINE_PROTECTED;
+			     uint8_t **img, int *img_size) XINE_PROTECTED;
+
+typedef struct {
+
+  int      width;
+  int      height;
+  int      crop_left;
+  int      crop_right;
+  int      crop_top;
+  int      crop_bottom;
+  int      ratio_code;
+  int      interlaced;
+  int      format;
+  int      img_size;
+  uint8_t *img;
+} xine_current_frame_data_t;
+
+#define XINE_FRAME_DATA_ALLOCATE_IMG (1<<0)
+
+int  xine_get_current_frame_data (xine_stream_t *stream,
+			     xine_current_frame_data_t *data,
+			     int flags) XINE_PROTECTED;
 
 /* xine image formats */
 #define XINE_IMGFMT_YV12 (('2'<<24)|('1'<<16)|('V'<<8)|'Y')
@@ -510,20 +521,6 @@ int xine_get_next_audio_frame (xine_audio_port_t *port,
 			       xine_audio_frame_t *frame) XINE_PROTECTED;
 
 void xine_free_audio_frame (xine_audio_port_t *port, xine_audio_frame_t *frame) XINE_PROTECTED;
-
-  /*
-   * maybe future aproach:
-   */
-
-int xine_get_video_frame (xine_stream_t *stream,
-			  int timestamp, /* msec */
-			  int *width, int *height,
-			  int *ratio_code, 
-			  int *duration, /* msec */
-			  int *format,
-			  uint8_t *img) XINE_PROTECTED;
-
-/* TODO: xine_get_audio_frame */
 
 #endif
 
@@ -1053,6 +1050,8 @@ const char *xine_get_post_plugin_description  (xine_t *self,
 /* get lists of available audio and video output plugins */
 const char *const *xine_list_audio_output_plugins (xine_t *self) XINE_PROTECTED;
 const char *const *xine_list_video_output_plugins (xine_t *self) XINE_PROTECTED;
+/* typemask is (1ULL << XINE_VISUAL_TYPE_FOO) | ... */
+const char *const *xine_list_video_output_plugins_typed (xine_t *self, uint64_t typemask) XINE_PROTECTED;
 
 /* get list of available demultiplexor plugins */
 const char *const *xine_list_demuxer_plugins(xine_t *self) XINE_PROTECTED;
@@ -1107,7 +1106,7 @@ typedef struct {
    *
    * this will be called by the video driver to find out
    * how big the video output area size will be for a
-   * given video size. The ui should _not_ adjust it's
+   * given video size. The ui should _not_ adjust its
    * video out area, just do some calculations and return
    * the size. This will be called for every frame, ui
    * implementation should be fast.
@@ -1131,12 +1130,12 @@ typedef struct {
    * frame output callback
    *
    * this will be called by the video driver for every frame
-   * it's about to draw. ui can adapt it's size if necessary
+   * it's about to draw. ui can adapt its size if necessary
    * here.
    * note: the ui doesn't have to adjust itself to this
    * size, this is just to be taken as a hint.
    * ui must return the actual size of the video output
-   * area and the video output driver will do it's best
+   * area and the video output driver will do its best
    * to adjust the video frames to that size (while
    * preserving aspect ratio and stuff).
    *    dest_x, dest_y: offset inside window
@@ -1207,7 +1206,7 @@ typedef struct {
    *
    * this will be called by the video driver to find out
    * how big the video output area size will be for a
-   * given video size. The ui should _not_ adjust it's
+   * given video size. The ui should _not_ adjust its
    * video out area, just do some calculations and return
    * the size. This will be called for every frame, ui
    * implementation should be fast.
@@ -1231,12 +1230,12 @@ typedef struct {
    * frame output callback
    *
    * this will be called by the video driver for every frame
-   * it's about to draw. ui can adapt it's size if necessary
+   * it's about to draw. ui can adapt its size if necessary
    * here.
    * note: the ui doesn't have to adjust itself to this
    * size, this is just to be taken as a hint.
    * ui must return the actual size of the video output
-   * area and the video output driver will do it's best
+   * area and the video output driver will do its best
    * to adjust the video frames to that size (while
    * preserving aspect ratio and stuff).
    *    dest_x, dest_y: offset inside window
@@ -1261,6 +1260,73 @@ typedef struct {
 			   int *win_x, int *win_y);
 
 } xcb_visual_t;
+
+/**************************************************
+ * XINE_VO_RAW struct definitions
+ *************************************************/
+/*  frame_format definitions */
+#define XINE_VORAW_YV12 1
+#define XINE_VORAW_YUY2 2
+#define XINE_VORAW_RGB 4
+
+/*  maximum number of overlays the raw driver can handle */
+#define XINE_VORAW_MAX_OVL 16
+
+/* raw_overlay_t struct used in raw_overlay_cb callback */
+typedef struct {
+  uint8_t *ovl_rgba;
+  int ovl_w, ovl_h; /* overlay's width and height */
+  int ovl_x, ovl_y; /* overlay's top-left display position */
+} raw_overlay_t;
+
+/* this is the visual data struct any raw gui
+ * must supply to the xine_open_video_driver call
+ * ("data" parameter)
+ */
+typedef struct {
+  void *user_data;
+
+  /* OR'ed frame_format
+   * Unsupported frame formats are converted to rgb.
+   * XINE_VORAW_RGB is always assumed by the driver, even if not set.
+   * So a frontend must at least support rgb.
+   * Be aware that rgb requires more cpu than yuv,
+   * so avoid its usage for video playback.
+   * However, it's useful for single frame capture (e.g. thumbs)
+   */
+  int supported_formats;
+
+  /* raw output callback
+   * this will be called by the video driver for every frame
+   *
+   * If frame_format==XINE_VORAW_YV12, data0 points to frame_width*frame_height Y values
+   *                                   data1 points to (frame_width/2)*(frame_height/2) U values
+   *                                   data2 points to (frame_width/2)*(frame_height/2) V values
+   *
+   * If frame_format==XINE_VORAW_YUY2, data0 points to frame_width*frame_height*2 YU/Y²V values
+   *                                   data1 is NULL
+   *                                   data2 is NULL
+   *
+   * If frame_format==XINE_VORAW_RGB, data0 points to frame_width*frame_height*3 RGB values
+   *                                  data1 is NULL
+   *                                  data2 is NULL
+   */
+  void (*raw_output_cb) (void *user_data, int frame_format,
+                        int frame_width, int frame_height,
+			double frame_aspect,
+			void *data0, void *data1, void *data2);
+
+  /* raw overlay callback
+   * this will be called by the video driver for every new overlay state
+   * overlays_array points to an array of num_ovl raw_overlay_t
+   * Note that num_ovl can be 0, meaning "end of overlay display"
+   * num_ovl is at most XINE_VORAW_MAX_OVL */
+  void (*raw_overlay_cb) (void *user_data, int num_ovl,
+                         raw_overlay_t *overlays_array);
+} raw_visual_t;
+/**********************************************
+ * end of vo_raw defs
+ *********************************************/
 
 /*
  * this is the visual data struct any fb gui
@@ -1520,7 +1586,7 @@ int  xine_config_lookup_entry (xine_t *self, const char *key,
 /*
  * update a config entry (which was returned from lookup_entry() )
  *
- * xine will make a deep copy of the data in the entry into it's internal
+ * xine will make a deep copy of the data in the entry into its internal
  * config database.
  */
 void xine_config_update_entry (xine_t *self,
@@ -1916,8 +1982,8 @@ typedef struct {
  * This is the mechanism to report async errors from engine.
  *
  * If frontend knows about the XINE_MSG_xxx type it may safely 
- * ignore the 'explanation' field and provide it's own custom
- * dialog to the 'parameters'.
+ * ignore the 'explanation' field and provide its own custom
+ * dialogue to the 'parameters'.
  *
  * right column specifies the usual parameters.
  */

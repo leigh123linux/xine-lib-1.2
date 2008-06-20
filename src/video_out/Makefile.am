@@ -108,6 +108,7 @@ xineplug_LTLIBRARIES = $(xshm_module) $(xv_module) $(xvmc_module) \
 		  $(xxmc_module) \
 		  $(xcbshm_module) \
 		  $(xcbxv_module) \
+                  xineplug_vo_out_raw.la \
                   xineplug_vo_out_none.la
 
 xineplug_vo_out_xcbshm_la_SOURCES = video_out_xcbshm.c $(XCBOSD)
@@ -182,7 +183,7 @@ xineplug_vo_out_sdl_la_SOURCES = video_out_sdl.c
 xineplug_vo_out_sdl_la_LIBADD = $(XINE_LIB) $(SDL_LIBS) $(X_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_sdl_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) $(SDL_CFLAGS)
 
-xineplug_vo_out_stk_la_SOURCES = video_out_stk.c 
+xineplug_vo_out_stk_la_SOURCES = video_out_stk.c
 xineplug_vo_out_stk_la_LIBADD = $(XINE_LIB) $(LIBSTK_LIBS) $(PTHREAD_LIBS)
 xineplug_vo_out_stk_la_CFLAGS = $(AM_CFLAGS) $(LIBSTK_CFLAGS)
 
@@ -192,6 +193,10 @@ xineplug_vo_out_directx_la_CPPFLAGS = $(AM_CPPFLAGS) $(DIRECTX_CPPFLAGS)
 
 xineplug_vo_out_none_la_SOURCES =  video_out_none.c
 xineplug_vo_out_none_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
+
+xineplug_vo_out_raw_la_SOURCES = video_out_raw.c
+xineplug_vo_out_raw_la_LIBADD = libyuv2rgb.la $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) $(AVUTIL_LIBS)
+xineplug_vo_out_raw_la_CFLAGS = $(AM_CFLAGS) $(AVUTIL_CFLAGS)
 
 xineplug_vo_out_macosx_la_SOURCES = video_out_macosx.m
 xineplug_vo_out_macosx_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS)

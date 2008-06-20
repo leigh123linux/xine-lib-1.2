@@ -553,7 +553,7 @@ static audio_decoder_t *qta_open_plugin (audio_decoder_class_t *class_gen,
 
   qta_decoder_t *this ;
 
-  this = (qta_decoder_t *) xine_xmalloc (sizeof (qta_decoder_t));
+  this = (qta_decoder_t *) calloc(1, sizeof(qta_decoder_t));
 
   this->audio_decoder.decode_data         = qta_decode_data;
   this->audio_decoder.reset               = qta_reset;
@@ -579,7 +579,7 @@ static void *qta_init_class (xine_t *xine, void *data) {
 
   pthread_once (&once_control, init_routine);
 
-  this = (qta_class_t *) xine_xmalloc (sizeof (qta_class_t));
+  this = (qta_class_t *) calloc(1, sizeof(qta_class_t));
 
   this->decoder_class.open_plugin     = qta_open_plugin;
   this->decoder_class.identifier      = "qta";
@@ -1050,7 +1050,7 @@ static video_decoder_t *qtv_open_plugin (video_decoder_class_t *class_gen,
   qtv_class_t   *cls = (qtv_class_t *) class_gen;
   qtv_decoder_t *this ;
 
-  this = (qtv_decoder_t *) xine_xmalloc (sizeof (qtv_decoder_t));
+  this = (qtv_decoder_t *) calloc(1, sizeof(qtv_decoder_t));
 
   this->video_decoder.decode_data         = qtv_decode_data;
   this->video_decoder.flush               = qtv_flush;
@@ -1091,7 +1091,7 @@ static void *qtv_init_class (xine_t *xine, void *data) {
 
   pthread_once (&once_control, init_routine);
 
-  this = (qtv_class_t *) xine_xmalloc (sizeof (qtv_class_t));
+  this = (qtv_class_t *) calloc(1, sizeof(qtv_class_t));
 
   this->decoder_class.open_plugin     = qtv_open_plugin;
   this->decoder_class.identifier      = "qtvdec";

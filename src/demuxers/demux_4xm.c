@@ -158,7 +158,7 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
 
   /* read the whole header */
   header_size = _X_LE_32(&preview[4]) - 4;
-  header = xine_xmalloc(header_size);
+  header = malloc(header_size);
   if (!header || fourxm->input->read(fourxm->input, header, header_size) != header_size) {
     free(header);
     return 0;
@@ -466,7 +466,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_fourxm_t    *this;
 
-  this         = xine_xmalloc (sizeof (demux_fourxm_t));
+  this         = calloc(1, sizeof(demux_fourxm_t));
   this->stream = stream;
   this->input  = input;
 
@@ -506,7 +506,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 void *demux_fourxm_init_plugin (xine_t *xine, void *data) {
   demux_fourxm_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_fourxm_class_t));
+  this = calloc(1, sizeof(demux_fourxm_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.description     = N_("4X Technologies (4xm) demux plugin");

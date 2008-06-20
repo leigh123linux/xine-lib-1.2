@@ -20,6 +20,10 @@
  * plugin for ffmpeg libpostprocess
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <config.h>
 
 #include <xine/xine_internal.h>
@@ -163,7 +167,7 @@ static post_plugin_t *pp_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target)
 {
-  post_plugin_pp_t  *this = (post_plugin_pp_t *)xine_xmalloc(sizeof(post_plugin_pp_t));
+  post_plugin_pp_t  *this = calloc(1, sizeof(post_plugin_pp_t));
   post_in_t         *input;
   xine_post_in_t    *input_api;
   post_out_t        *output;

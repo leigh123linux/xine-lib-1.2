@@ -113,7 +113,7 @@ extern "C" {
 #define MM_SSE                  MM_ACCEL_X86_SSE
 #define MM_SSE2                 MM_ACCEL_X86_SSE2
 
-uint32_t xine_mm_accel (void) XINE_PROTECTED;
+uint32_t xine_mm_accel (void) XINE_CONST XINE_PROTECTED;
 
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
 
@@ -587,12 +587,6 @@ typedef	union {
 
 extern void *(* xine_fast_memcpy)(void *to, const void *from, size_t len) XINE_PROTECTED;
 
-#ifdef HAVE_XINE_INTERNAL_H
-/* Benchmark available memcpy methods */
-void xine_probe_fast_memcpy(xine_t *xine) XINE_PROTECTED;
-#endif
-
-
 /*
  * Debug stuff
  */
@@ -609,7 +603,7 @@ void xine_profiler_print_results (void) XINE_PROTECTED;
  * Allocate and clean memory size_t 'size', then return the pointer
  * to the allocated memory.
  */
-void *xine_xmalloc(size_t size) XINE_MALLOC XINE_PROTECTED;
+void *xine_xmalloc(size_t size) XINE_MALLOC XINE_DEPRECATED XINE_PROTECTED;
 
 void *xine_xcalloc(size_t nmemb, size_t size) XINE_MALLOC XINE_PROTECTED;
 
@@ -628,6 +622,7 @@ const char *xine_get_homedir(void) XINE_PROTECTED;
 /*
  * Get other xine directories.
  */
+const char *xine_get_pluginroot(void) XINE_PROTECTED;
 const char *xine_get_plugindir(void) XINE_PROTECTED;
 const char *xine_get_fontdir(void) XINE_PROTECTED;
 const char *xine_get_localedir(void) XINE_PROTECTED;
@@ -648,6 +643,13 @@ void xine_usec_sleep(unsigned usec) XINE_PROTECTED;
 #define xine_strpbrk(S, ACCEPT) strpbrk((S), (ACCEPT))
 #define xine_strsep(STRINGP, DELIM) strsep((STRINGP), (DELIM))
 #define xine_setenv(NAME, VAL, XX) setenv((NAME), (VAL), (XX))
+
+/**
+ * append to a string, reallocating
+ * normally, updates & returns *dest
+ * on error, *dest is unchanged & NULL is returned.
+ */
+char *xine_strcat_realloc (char **dest, char *append) XINE_PROTECTED;
 
 /*
  * Color Conversion Utility Functions
@@ -929,7 +931,7 @@ void xine_xprintf(xine_t *xine, int verbose, const char *fmt, ...);
 /**
  * get encoding of current locale
  */
-char *xine_get_system_encoding(void) XINE_PROTECTED;
+char *xine_get_system_encoding(void) XINE_MALLOC XINE_PROTECTED;
 
 /*
  * guess default encoding for the subtitles

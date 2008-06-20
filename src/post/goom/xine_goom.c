@@ -185,7 +185,7 @@ static void csc_method_changed_cb(void *data, xine_cfg_entry_t *cfg) {
 
 static void *goom_init_plugin(xine_t *xine, void *data)
 {
-  post_class_goom_t *this = (post_class_goom_t *)xine_xmalloc(sizeof(post_class_goom_t));
+  post_class_goom_t *this = calloc(1, sizeof(post_class_goom_t));
   config_values_t   *cfg;
 
   if (!this)
@@ -232,7 +232,7 @@ static post_plugin_t *goom_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target)
 {
-  post_plugin_goom_t *this  = (post_plugin_goom_t *)xine_xmalloc(sizeof(post_plugin_goom_t));
+  post_plugin_goom_t *this  = calloc(1, sizeof(post_plugin_goom_t));
   post_class_goom_t  *class = (post_class_goom_t*) class_gen;
   post_in_t          *input;
   post_out_t         *output;

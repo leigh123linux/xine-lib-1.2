@@ -921,7 +921,7 @@ static spu_decoder_t *dvb_spu_class_open_plugin (spu_decoder_class_t * class_gen
   dvb_spu_decoder_t *this;
   dvb_spu_class_t *class = (dvb_spu_class_t *) class_gen;
 
-  this = (dvb_spu_decoder_t *) xine_xmalloc (sizeof (dvb_spu_decoder_t));
+  this = calloc(1, sizeof (dvb_spu_decoder_t));
 
   this->spu_decoder.decode_data = spudec_decode_data;
   this->spu_decoder.reset = spudec_reset;
@@ -933,10 +933,10 @@ static spu_decoder_t *dvb_spu_class_open_plugin (spu_decoder_class_t * class_gen
   this->class = class;
   this->stream = stream;
 
-  this->pes_pkt = xine_xmalloc (1024*65);
-  this->spu_descriptor = xine_xmalloc(sizeof(spu_dvb_descriptor_t));
+  this->pes_pkt = calloc(65, 1024);
+  this->spu_descriptor = calloc(1, sizeof(spu_dvb_descriptor_t));
   
-  this->dvbsub = xine_xmalloc (sizeof (dvbsub_func_t));
+  this->dvbsub = calloc(1, sizeof (dvbsub_func_t));
 
   for (i = 0; i < MAX_REGIONS; i++) {
     this->dvbsub->page.regions[i].is_visible = 0;
@@ -970,7 +970,7 @@ static void *init_spu_decoder_plugin (xine_t * xine, void *data)
 {
 
   dvb_spu_class_t *this;
-  this = (dvb_spu_class_t *) xine_xmalloc (sizeof (dvb_spu_class_t));
+  this = calloc(1, sizeof (dvb_spu_class_t));
 
   this->class.open_plugin = dvb_spu_class_open_plugin;
   this->class.identifier  = "spudvb";

@@ -26,13 +26,6 @@
 #include <xine/xineutils.h>
 #include <pthread.h>
 
-#ifndef MIN
-#define        MIN(a,b) (((a)<(b))?(a):(b))
-#endif
-#ifndef MAX
-#define        MAX(a,b) (((a)>(b))?(a):(b))
-#endif
-
 /*===========================================================================*/
 
 #define MIN_MATRIX_SIZE 3
@@ -284,7 +277,7 @@ static post_plugin_t *unsharp_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target)
 {
-  post_plugin_unsharp_t *this = (post_plugin_unsharp_t *)xine_xmalloc(sizeof(post_plugin_unsharp_t));
+  post_plugin_unsharp_t *this = calloc(1, sizeof(post_plugin_unsharp_t));
   post_in_t             *input;
   xine_post_in_t        *input_api;
   post_out_t            *output;

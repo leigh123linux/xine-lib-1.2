@@ -652,7 +652,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   lprintf ("open_plugin called\n");
 
-  this = (a52dec_decoder_t *) xine_xmalloc (sizeof (a52dec_decoder_t));
+  this = calloc(1, sizeof (a52dec_decoder_t));
 
   this->audio_decoder.decode_data         = a52dec_decode_data;
   this->audio_decoder.reset               = a52dec_reset;
@@ -789,7 +789,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   a52dec_class_t *this;
   config_values_t *cfg;
 
-  this = (a52dec_class_t *) xine_xmalloc (sizeof (a52dec_class_t));
+  this = calloc(1, sizeof (a52dec_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "a/52dec";

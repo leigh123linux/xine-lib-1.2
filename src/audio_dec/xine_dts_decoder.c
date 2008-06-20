@@ -466,7 +466,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   lprintf("open_plugin\n");
 
-  this = (dts_decoder_t *) xine_xmalloc (sizeof (dts_decoder_t));
+  this = calloc(1, sizeof (dts_decoder_t));
 
   this->audio_decoder.decode_data         = dts_decode_data;
   this->audio_decoder.reset               = dts_reset;
@@ -560,7 +560,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   lprintf("init_plugin\n");
 
-  this = (dts_class_t *) xine_xmalloc (sizeof (dts_class_t));
+  this = calloc(1, sizeof (dts_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "DTS";

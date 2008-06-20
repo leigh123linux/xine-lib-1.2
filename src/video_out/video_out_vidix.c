@@ -370,7 +370,7 @@ static vo_frame_t *vidix_alloc_frame (vo_driver_t *this_gen) {
   /* vidix_driver_t  *this = (vidix_driver_t *) this_gen; */
   vidix_frame_t   *frame ;
 
-  frame = (vidix_frame_t *) xine_xmalloc (sizeof (vidix_frame_t));
+  frame = (vidix_frame_t *) calloc(1, sizeof(vidix_frame_t));
   if (!frame)
     return NULL;
 
@@ -947,7 +947,7 @@ static vidix_driver_t *open_plugin (video_driver_class_t *class_gen) {
   vidix_driver_t       *this;
   int                   err;
     
-  this = (vidix_driver_t *) xine_xmalloc (sizeof (vidix_driver_t));
+  this = (vidix_driver_t *) calloc(1, sizeof(vidix_driver_t));
   if (!this)
     return NULL;
 
@@ -1093,7 +1093,7 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   vidix_class_t        *this;
   int                   err;
   
-  this = (vidix_class_t *) xine_xmalloc (sizeof (vidix_class_t));
+  this = (vidix_class_t *) calloc(1, sizeof(vidix_class_t));
   if (!this)
     return NULL;
   

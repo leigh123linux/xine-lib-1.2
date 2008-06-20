@@ -34,6 +34,7 @@
 */
 
 #include <xine/xine_internal.h>
+#include "xine_private.h"
 #include <assert.h>
 
 #define DEFAULT_BUFFER_SIZE 1024
@@ -345,7 +346,7 @@ static void cache_plugin_dispose(input_plugin_t *this_gen) {
 /* 
  * create self instance, 
  */
-input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream, int readahead_size) {
+input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream) {
   cache_input_plugin_t *this;
   input_plugin_t *main_plugin = stream->input_plugin;
 
@@ -357,7 +358,7 @@ input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream, int readahe
 
   lprintf("mrl: %s\n", main_plugin->get_mrl(main_plugin));
 
-  this = (cache_input_plugin_t *)xine_xmalloc(sizeof(cache_input_plugin_t));
+  this = calloc(1, sizeof(cache_input_plugin_t));
   if (!this)
     return NULL;
   
@@ -387,7 +388,7 @@ input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream, int readahe
     this->buf_size = DEFAULT_BUFFER_SIZE;
   }
 
-  this->buf = (char *)xine_xmalloc(this->buf_size);
+  this->buf = calloc(1, this->buf_size);
   if (!this->buf) {
     free (this);
     return NULL;

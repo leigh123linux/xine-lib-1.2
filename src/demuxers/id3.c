@@ -329,9 +329,9 @@ static int id3v22_interp_frame(input_plugin_t *input,
 }
 
 
-int id3v22_parse_tag(input_plugin_t *input,
-                     xine_stream_t *stream,
-                     uint32_t id3_signature) {
+static int id3v22_parse_tag(input_plugin_t *input,
+                            xine_stream_t *stream,
+                            uint32_t id3_signature) {
   id3v2_header_t tag_header;
   id3v22_frame_header_t tag_frame_header;
   int pos = 0;
@@ -514,9 +514,9 @@ static int id3v23_interp_frame(input_plugin_t *input,
   }
 }
 
-int id3v23_parse_tag(input_plugin_t *input,
-                     xine_stream_t *stream,
-                     uint32_t id3_signature) {
+static int id3v23_parse_tag(input_plugin_t *input,
+                            xine_stream_t *stream,
+                            uint32_t id3_signature) {
   id3v2_header_t tag_header;
   id3v23_frame_header_t tag_frame_header;
   id3v23_frame_ext_header_t tag_frame_ext_header;
@@ -759,9 +759,9 @@ static int id3v24_interp_frame(input_plugin_t *input,
   }
 }
 
-int id3v24_parse_tag(input_plugin_t *input,
-                     xine_stream_t *stream,
-                     uint32_t id3_signature) {
+static int id3v24_parse_tag(input_plugin_t *input,
+                            xine_stream_t *stream,
+                            uint32_t id3_signature) {
   id3v2_header_t tag_header;
   id3v24_frame_header_t tag_frame_header;
   id3v24_frame_ext_header_t tag_frame_ext_header;
@@ -849,6 +849,6 @@ int id3v2_parse_tag(input_plugin_t *input,
   default:
     xprintf(stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": Unknown ID3v2 signature: 0x%08x.\n", be2me_32(id3_signature));
   }
-  
+
   return 0;
 }

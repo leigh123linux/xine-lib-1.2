@@ -547,7 +547,7 @@ static vo_frame_t *xvmc_alloc_frame (vo_driver_t *this_gen) {
 
   lprintf ("xvmc_alloc_frame\n");
 
-  frame = (xvmc_frame_t *) xine_xmalloc (sizeof (xvmc_frame_t));
+  frame = calloc(1, sizeof (xvmc_frame_t));
 
   if (!frame)
     return NULL;
@@ -587,8 +587,8 @@ static cxid_t *xvmc_set_context (xvmc_driver_t *this,
   
   /* initialize block & macro block pointers first time */
   if(macroblocks->blocks == NULL ||  macroblocks->macro_blocks == NULL) {
-    macroblocks->blocks       = xine_xmalloc(sizeof(XvMCBlockArray));
-    macroblocks->macro_blocks = xine_xmalloc(sizeof(XvMCMacroBlockArray));
+    macroblocks->blocks       = calloc(1, sizeof(XvMCBlockArray));
+    macroblocks->macro_blocks = calloc(1, sizeof(XvMCMacroBlockArray));
     
     lprintf("macroblocks->blocks %lx ->macro_blocks %lx\n",
 	    macroblocks->blocks,macroblocks->macro_blocks);
@@ -1309,7 +1309,8 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   
   lprintf ("open_plugin\n");
   
-  this = (xvmc_driver_t *) xine_xmalloc (sizeof (xvmc_driver_t));
+  /* TODO ???  */
+  this = calloc(1, sizeof (xvmc_driver_t));
   
   if (!this)
     return NULL;

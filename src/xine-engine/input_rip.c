@@ -65,6 +65,7 @@
 #endif
 
 #include <xine/xine_internal.h>
+#include "xine_private.h"
 
 #ifndef HAVE_FSEEKO
 #  define fseeko fseek
@@ -518,10 +519,9 @@ static void rip_plugin_dispose(input_plugin_t *this_gen) {
  * returns non-zero, if there was enough space
  */
 static int dir_file_concat(char *target, size_t maxlen, const char *dir, const char *name) {
-  size_t len_dir, len_name, pos_name = 0;
-
-  len_name = strlen(name);
-  len_dir = strlen(dir);
+  size_t len_name = strlen(name);
+  size_t len_dir = strlen(dir);
+  size_t pos_name = 0;
 
   /* remove slashes */
   if (dir[len_dir - 1] == '/') len_dir--;
@@ -586,7 +586,7 @@ input_plugin_t *_x_rip_plugin_get_instance (xine_stream_t *stream, const char *f
     return NULL;
   }
 
-  this = (rip_input_plugin_t *)xine_xmalloc(sizeof(rip_input_plugin_t));
+  this = calloc(1, sizeof(rip_input_plugin_t));
   this->main_input_plugin = main_plugin;
   this->stream            = stream;
   this->curpos  = 0;

@@ -29,7 +29,6 @@
 #include <xine/xineutils.h>
 #else
 #define lprintf(...)
-#define xine_xmalloc malloc
 #endif
 #include <xine/xmllexer.h>
 #include <stdio.h>
@@ -592,7 +591,7 @@ static struct {
 
 char *lexer_decode_entities (const char *tok)
 {
-  char *buf = xine_xmalloc (strlen (tok) + 1);
+  char *buf = calloc (strlen (tok) + 1, sizeof(char));
   char *bp = buf;
   char c;
 

@@ -790,7 +790,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   audiox_class_t  *class = (audiox_class_t *) class_gen;
   ao_directx_t    *ao_directx;
   
-  ao_directx = ( ao_directx_t * ) xine_xmalloc( sizeof( ao_directx_t ) );
+  ao_directx = calloc(1, sizeof(ao_directx_t));
   if (!ao_directx)
     return NULL;
   
@@ -827,7 +827,7 @@ static void *init_class (xine_t *xine, void *data) {
   /*
    * from this point on, nothing should go wrong anymore
    */
-  audiox = (audiox_class_t *) xine_xmalloc (sizeof (audiox_class_t));
+  audiox = calloc(1, sizeof (audiox_class_t));
   if (!audiox)
     return NULL;
   

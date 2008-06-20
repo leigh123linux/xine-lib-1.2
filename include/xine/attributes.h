@@ -34,6 +34,27 @@
 
 #ifdef XINE_COMPILE
 # include "configure.h"
+#else
+# if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95 )
+#  define SUPPORT_ATTRIBUTE_PACKED 1
+# endif
+
+# if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3 )
+#  define SUPPORT_ATTRIBUTE_DEPRECATED 1
+#  define SUPPORT_ATTRIBUTE_FORMAT 1
+#  define SUPPORT_ATTRIBUTE_FORMAT_ARG 1
+#  define SUPPORT_ATTRIBUTE_MALLOC 1
+#  define SUPPORT_ATTRIBUTE_UNUSED 1
+#  define SUPPORT_ATTRIBUTE_CONST 1
+# endif
+  
+# if __GNUC__ >= 4
+#  define SUPPORT_ATTRIBUTE_VISIBILITY_DEFAULT 1
+#  if __ELF__
+#   define SUPPORT_ATTRIBUTE_VISIBILITY_PROTECTED 1
+#  endif
+#  define SUPPORT_ATTRIBUTE_SENTINEL 1
+# endif
 #endif
 
 /* Export protected only for libxine functions */
@@ -49,6 +70,12 @@
 # define XINE_SENTINEL __attribute__((__sentinel__))
 #else
 # define XINE_SENTINEL
+#endif
+
+#ifdef SUPPORT_ATTRIBUTE_DEPRECATED
+# define XINE_DEPRECATED __attribute__((__deprecated__))
+#else
+# define XINE_DEPRECATED
 #endif
 
 #ifndef __attr_unused
@@ -71,16 +98,22 @@
 # define XINE_FORMAT_PRINTF_ARG(fmt)
 #endif
 
-#ifdef SUPPORT_ATTRIBUTE_PACKED
-# define XINE_PACKED __attribute__((packed))
-#else
-# define XINE_PACKED
-#endif
-
 #ifdef SUPPORT_ATTRIBUTE_MALLOC
 # define XINE_MALLOC __attribute__((__malloc__))
 #else
 # define XINE_MALLOC
+#endif
+
+#ifdef SUPPORT_ATTRIBUTE_PACKED
+# define XINE_PACKED __attribute__((__packed__))
+#else
+# define XINE_PACKED
+#endif
+
+#ifdef SUPPORT_ATTRIBUTE_CONST
+# define XINE_CONST __attribute__((__const__))
+#else
+# define XINE_CONST
 #endif
 
 #endif /* ATTRIBUTE_H_ */

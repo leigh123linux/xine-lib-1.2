@@ -318,7 +318,7 @@ static post_plugin_t *oscope_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_video_port_t **video_target)
 {
   post_class_oscope_t  *class = (post_class_oscope_t *)class_gen;
-  post_plugin_oscope_t *this  = (post_plugin_oscope_t *)xine_xmalloc(sizeof(post_plugin_oscope_t));
+  post_plugin_oscope_t *this  = calloc(1, sizeof(post_plugin_oscope_t));
   post_in_t            *input;
   post_out_t           *output;
   post_out_t           *outputv;

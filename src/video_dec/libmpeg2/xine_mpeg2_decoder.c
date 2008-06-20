@@ -117,7 +117,7 @@ static void mpeg2dec_dispose (video_decoder_t *this_gen) {
 static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stream_t *stream) {
   mpeg2dec_decoder_t *this ;
 
-  this = (mpeg2dec_decoder_t *) xine_xmalloc (sizeof (mpeg2dec_decoder_t));
+  this = (mpeg2dec_decoder_t *) calloc(1, sizeof(mpeg2dec_decoder_t));
 
   this->video_decoder.decode_data         = mpeg2dec_decode_data;
   this->video_decoder.flush               = mpeg2dec_flush;
@@ -142,7 +142,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   mpeg2_class_t *this;
 
-  this = (mpeg2_class_t *) xine_xmalloc (sizeof (mpeg2_class_t));
+  this = (mpeg2_class_t *) calloc(1, sizeof(mpeg2_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "mpeg2dec";

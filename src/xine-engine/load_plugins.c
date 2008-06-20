@@ -42,8 +42,6 @@
 
 #include <basedir.h>
 
-#include "load_plugins.h"
-
 #define LOG_MODULE "load_plugins"
 #define LOG_VERBOSE
 
@@ -65,6 +63,8 @@
 #include <xine/configfile.h>
 #include <xine/xineutils.h>
 #include <xine/compat.h>
+
+#include "xine_private.h"
 
 #define LINE_MAX_LENGTH   (1024 * 32)  /* 32 KiB */
 
@@ -99,7 +99,7 @@ static void remove_segv_handler(void){
 #endif
 #endif /* 0 */
 
-#define CACHE_CATALOG_VERSION 3
+#define CACHE_CATALOG_VERSION 4
 
 static const int plugin_iface_versions[] = {
   INPUT_PLUGIN_IFACE_VERSION,
@@ -333,8 +333,8 @@ static void _insert_node (xine_t *this,
     return;
   }
 
-  entry = xine_xmalloc(sizeof(plugin_node_t));
-  entry->info         = xine_xmalloc(sizeof(plugin_info_t));
+  entry = calloc(1, sizeof(plugin_node_t));
+  entry->info         = calloc(1, sizeof(plugin_info_t));
   *(entry->info)      = *info;
   entry->info->id     = strdup(info->id);
   entry->info->init   = info->init;
@@ -348,7 +348,7 @@ static void _insert_node (xine_t *this,
 
   case PLUGIN_VIDEO_OUT:
     vo_old = info->special_info;
-    vo_new = xine_xmalloc(sizeof(vo_info_t));
+    vo_new = calloc(1, sizeof(vo_info_t));
     entry->priority = vo_new->priority = vo_old->priority;
     vo_new->visual_type = vo_old->visual_type;
     entry->info->special_info = vo_new;
@@ -356,7 +356,7 @@ static void _insert_node (xine_t *this,
 
   case PLUGIN_AUDIO_OUT:
     ao_old = info->special_info;
-    ao_new = xine_xmalloc(sizeof(ao_info_t));
+    ao_new = calloc(1, sizeof(ao_info_t));
     entry->priority = ao_new->priority = ao_old->priority;
     entry->info->special_info = ao_new;
     break;
@@ -365,7 +365,7 @@ static void _insert_node (xine_t *this,
   case PLUGIN_VIDEO_DECODER:
   case PLUGIN_SPU_DECODER:
     decoder_old = info->special_info;
-    decoder_new = xine_xmalloc(sizeof(decoder_info_t));
+    decoder_new = calloc(1, sizeof(decoder_info_t));
     if (decoder_old == NULL) {
       if (file)
 	xprintf (this, XINE_VERBOSITY_DEBUG,
@@ -377,12 +377,13 @@ static void _insert_node (xine_t *this,
 		 info->id);
       _x_abort();
     }
-    for (i=0; decoder_old->supported_types[i] != 0; ++i);
-    types = xine_xmalloc((i+1)*sizeof(uint32_t));
-    for (i=0; decoder_old->supported_types[i] != 0; ++i){
-      types[i] = decoder_old->supported_types[i];
+    {
+      size_t supported_types_size;
+      for (supported_types_size=0; decoder_old->supported_types[supported_types_size] != 0; ++supported_types_size);
+      types = calloc((supported_types_size+1), sizeof(uint32_t));
+      memcpy(types, decoder_old->supported_types, supported_types_size*sizeof(uint32_t));
+      decoder_new->supported_types = types;
     }
-    decoder_new->supported_types = types;
     entry->priority = decoder_new->priority = decoder_old->priority;
     
     snprintf(key, sizeof(key), "engine.decoder_priorities.%s", info->id);
@@ -406,14 +407,14 @@ static void _insert_node (xine_t *this,
   
   case PLUGIN_POST:
     post_old = info->special_info;
-    post_new = xine_xmalloc(sizeof(post_info_t));
+    post_new = calloc(1, sizeof(post_info_t));
     post_new->type = post_old->type;
     entry->info->special_info = post_new;
     break;
     
   case PLUGIN_DEMUX:
     demux_old = info->special_info;
-    demux_new = xine_xmalloc(sizeof(demuxer_info_t));
+    demux_new = calloc(1, sizeof(demuxer_info_t));
     
     if (demux_old) {
       entry->priority = demux_new->priority = demux_old->priority;
@@ -430,7 +431,7 @@ static void _insert_node (xine_t *this,
 
   case PLUGIN_INPUT:
     input_old = info->special_info;
-    input_new = xine_xmalloc(sizeof(input_info_t));
+    input_new = calloc(1, sizeof(input_info_t));
     
     if (input_old) {
       entry->priority = input_new->priority = input_old->priority;
@@ -467,12 +468,12 @@ static int _plugin_node_comparator(void *a, void *b) {
   }
 }
 
-static plugin_catalog_t *_new_catalog(void){
+static plugin_catalog_t *XINE_MALLOC _new_catalog(void){
 
   plugin_catalog_t *catalog;
   int i;
 
-  catalog = xine_xmalloc(sizeof(plugin_catalog_t));
+  catalog = calloc(1, sizeof(plugin_catalog_t));
 
   for (i = 0; i < PLUGIN_TYPE_MAX; i++) {
     catalog->plugin_lists[i] = xine_sarray_new(0, _plugin_node_comparator);
@@ -562,26 +563,21 @@ static void collect_plugins(xine_t *this, char *path){
   dir = opendir(path);
   if (dir) {
     struct dirent *pEntry;
-    size_t path_len, str_size;
-    char *str = NULL;
 
-    path_len = strlen(path);
-    str_size = path_len * 2 + 2; /* +2 for '/' and '\0' */
-    str = malloc(str_size);
-    xine_fast_memcpy(str, path, path_len);
-    str[path_len] = '/';
-    str[path_len + 1] = '\0';
+    size_t path_len = strlen(path);
+    size_t str_size = path_len * 2 + 2; /* +2 for '/' and '\0' */
+    char *str = malloc(str_size);
+    sprintf(str, "%s/", path);
 
     while ((pEntry = readdir (dir)) != NULL) {
-      size_t new_str_size, d_len;
       void *lib = NULL;
       plugin_info_t *info = NULL;
       plugin_node_t *node = NULL;
       
       struct stat statbuffer;
 
-      d_len = strlen(pEntry->d_name);
-      new_str_size = path_len + d_len + 2;
+      size_t d_len = strlen(pEntry->d_name);
+      size_t new_str_size = path_len + d_len + 2;
       if (str_size < new_str_size) {
 	str_size = new_str_size + new_str_size / 2;
 	str = realloc(str, str_size);
@@ -1005,11 +1001,11 @@ static void load_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *plugins) {
       if( node ) {
         xine_sarray_add (plugins, node);
       }
-      node                = xine_xmalloc(sizeof(plugin_node_t));
-      file                = xine_xmalloc(sizeof(plugin_file_t));
+      node                = calloc(1, sizeof(plugin_node_t));
+      file                = calloc(1, sizeof(plugin_file_t));
       node->file          = file;
       file->filename      = strdup(line+1);
-      node->info          = xine_xcalloc(2, sizeof(plugin_info_t));
+      node->info          = calloc(2, sizeof(plugin_info_t));
       node->info[1].type  = PLUGIN_NONE;
       decoder_info        = NULL;
       vo_info             = NULL;
@@ -1045,36 +1041,36 @@ static void load_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *plugins) {
           
             case PLUGIN_VIDEO_OUT:
               node->info->special_info = vo_info =
-                        xine_xmalloc(sizeof(vo_info_t));
+		calloc(1, sizeof(vo_info_t));
               break;
           
             case PLUGIN_AUDIO_OUT:
               node->info->special_info = ao_info =
-		             xine_xmalloc(sizeof(ao_info_t));
+		calloc(1, sizeof(ao_info_t));
               break;
           
             case PLUGIN_DEMUX:
               node->info->special_info = demuxer_info =
-		             xine_xmalloc(sizeof(demuxer_info_t));
+		calloc(1, sizeof(demuxer_info_t));
               break;
 
             case PLUGIN_INPUT:
               node->info->special_info = input_info =
-		           xine_xmalloc(sizeof(input_info_t));
+		calloc(1, sizeof(input_info_t));
               break;
 
             case PLUGIN_AUDIO_DECODER:
             case PLUGIN_VIDEO_DECODER:
             case PLUGIN_SPU_DECODER:
               node->info->special_info = decoder_info =
-                             xine_xmalloc(sizeof(decoder_info_t));
+		calloc(1, sizeof(decoder_info_t));
               break;
 	    
-            case PLUGIN_POST:
-              node->info->special_info = post_info =
-              xine_xmalloc(sizeof(post_info_t));
-              break;
-          }
+	    case PLUGIN_POST:
+	      node->info->special_info = post_info =
+		calloc(1, sizeof(post_info_t));
+	      break;
+          }        
           
         } else if( !strcmp("api",line) ) {
           sscanf(value," %d",&i);
@@ -1094,7 +1090,7 @@ static void load_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *plugins) {
           for( s = value, i = 0; s && sscanf(s," %lu",&lu) > 0; i++ ) {
             s = strchr(s+1, ' ');
           }
-          supported_types = xine_xcalloc((i+1), sizeof(uint32_t));
+          supported_types = calloc((i+1), sizeof(uint32_t));
           for( s = value, i = 0; s && sscanf(s," %"SCNu32,&supported_types[i]) > 0; i++ ) {
             s = strchr(s+1, ' ');
           }
@@ -1350,6 +1346,26 @@ void _x_free_input_plugin (xine_stream_t *stream, input_plugin_t *input) {
   }
 }
 
+static int probe_mime_type (xine_t *self, plugin_node_t *node, const char *mime_type)
+{
+  /* catalog->lock is expected to be locked */
+  if (node->plugin_class || _load_plugin_class(self, node, NULL))
+  {
+    const unsigned int mime_type_len = strlen (mime_type);
+    demux_class_t *cls = (demux_class_t *)node->plugin_class;
+    const char *mime = cls->mimetypes;
+    while (mime)
+    {
+      while (*mime == ';' || isspace (*mime))
+        ++mime;
+      if (!strncasecmp (mime, mime_type, mime_type_len) &&
+          (!mime[mime_type_len] || mime[mime_type_len] == ':' || mime[mime_type_len] == ';'))
+        return 1;
+      mime = strchr (mime, ';');
+    }
+  }
+  return 0;
+}
 
 static demux_plugin_t *probe_demux (xine_stream_t *stream, int method1, int method2,
 				    input_plugin_t *input) {
@@ -1372,8 +1388,6 @@ static demux_plugin_t *probe_demux (xine_stream_t *stream, int method1, int meth
   while (methods[i] != -1 && !plugin) {
     int list_id, list_size;
 
-    stream->content_detection_method = methods[i];
-
     pthread_mutex_lock (&catalog->lock);
 
     list_size = xine_sarray_size(catalog->plugin_lists[PLUGIN_DEMUX - 1]);
@@ -1385,6 +1399,25 @@ static demux_plugin_t *probe_demux (xine_stream_t *stream, int method1, int meth
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "load_plugins: probing demux '%s'\n", node->info->id);
 
       if (node->plugin_class || _load_plugin_class(stream->xine, node, NULL)) {
+        const char *mime_type;
+
+        /* If detecting by MRL, try the MIME type first (but not text/plain)... */
+        stream->content_detection_method = METHOD_EXPLICIT;
+        if (methods[i] == METHOD_BY_MRL &&
+            stream->input_plugin->get_optional_data &&
+            stream->input_plugin->get_optional_data (stream->input_plugin, NULL, INPUT_OPTIONAL_DATA_DEMUX_MIME_TYPE) != INPUT_OPTIONAL_UNSUPPORTED &&
+            stream->input_plugin->get_optional_data (stream->input_plugin, &mime_type, INPUT_OPTIONAL_DATA_MIME_TYPE) != INPUT_OPTIONAL_UNSUPPORTED &&
+            mime_type && strcasecmp (mime_type, "text/plain") &&
+            probe_mime_type (stream->xine, node, mime_type) &&
+            (plugin = ((demux_class_t *)node->plugin_class)->open_plugin (node->plugin_class, stream, input)))
+        {
+          inc_node_ref(node);
+          plugin->node = node;
+          break;
+        }
+
+        /* ... then try the extension */
+        stream->content_detection_method = methods[i];
 	if ( stream->content_detection_method == METHOD_BY_MRL && 
 	     ! _x_demux_check_extension(input->get_mrl(input),
 					 ((demux_class_t *)node->plugin_class)->extensions)
@@ -1799,6 +1832,36 @@ const char *const *xine_list_video_output_plugins (xine_t *xine) {
   _build_list_typed_plugins(&catalog, catalog->plugin_lists[PLUGIN_VIDEO_OUT - 1]);
   pthread_mutex_unlock (&catalog->lock);
 
+  return catalog->ids;
+}
+
+const char *const *xine_list_video_output_plugins_typed(xine_t *xine, uint64_t typemask)
+{
+  plugin_catalog_t *catalog = xine->plugin_catalog;
+  plugin_node_t    *node;
+  int               list_id, list_size, i;
+  
+  pthread_mutex_lock (&catalog->lock);
+
+  list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_VIDEO_OUT - 1]);
+
+  for (list_id = i = 0; list_id < list_size; list_id++)
+  {
+    node = xine_sarray_get (catalog->plugin_lists[PLUGIN_VIDEO_OUT - 1], list_id);
+    if (typemask & (1ULL << ((vo_info_t *)node->info->special_info)->visual_type))
+    {
+      const char *id = node->info->id;
+      int j = i;
+      while (--j >= 0)
+        if (!strcmp (catalog->ids[j], id))
+          goto ignore; /* already listed */
+      catalog->ids[i++] = id;
+    }
+    ignore: ;
+  }
+  catalog->ids[i] = NULL;
+
+  pthread_mutex_unlock (&catalog->lock);
   return catalog->ids;
 }
 
@@ -2527,6 +2590,32 @@ void xine_post_dispose(xine_t *xine, xine_post_t *post_gen) {
    * their disposal if they are still in use => post.c handles the counting for us */
 }
 
+/**
+ * @brief Concantenates an array of strings into a single
+ *        string separated with a given string.
+ *
+ * @param strings Array of strings to concatenate.
+ * @param count Number of elements in the @p strings array.
+ * @param joining String to use to join the various strings together.
+ * @param final_length The pre-calculated final length of the string.
+ */
+static char *_x_concatenate_with_string(char **strings, size_t count, char *joining, size_t final_length) {
+  size_t i;
+  char *const result = malloc(final_length+1); /* Better be safe */
+  char *str = result;
+
+  size_t pos = 0;
+  for(i = 0; i < count; i++, strings++) {
+    if ( *strings ) {
+      int offset = snprintf(str, final_length, "%s%s", *strings, joining);
+      str += offset;
+      final_length -= offset;
+    }
+  }
+
+  return result;
+}
+
 /* get a list of file extensions for file types supported by xine
  * the list is separated by spaces 
  *
@@ -2534,65 +2623,35 @@ void xine_post_dispose(xine_t *xine, xine_post_t *post_gen) {
 char *xine_get_file_extensions (xine_t *self) {
 
   plugin_catalog_t *catalog = self->plugin_catalog;
-  int               len, pos;
-  plugin_node_t    *node;
-  char             *str;
-  int               list_id, list_size;
-  const char       *exts;
+  int               list_id;
 
   pthread_mutex_lock (&catalog->lock);
 
-  /* calc length of output */
+  /* calc length of output string and create an array of strings to
+     concatenate */
+  size_t len = 0;
+  const int list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
+  const char **extensions = calloc(list_size, sizeof(char*));
 
-  len = 0; 
-  list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
   for (list_id = 0; list_id < list_size; list_id++) {
-    demux_class_t *cls;
-
-    node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
+    plugin_node_t *const node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
     if (node->plugin_class || _load_plugin_class(self, node, NULL)) {
-
-      cls = (demux_class_t *)node->plugin_class;
-
-      if( (exts = cls->extensions) && *exts )
-	len += strlen(exts) + 1;
+      demux_class_t *const cls = (demux_class_t *)node->plugin_class;
+      if( (extensions[list_id] = cls->extensions) != NULL )
+	len += strlen(extensions[list_id]) +1;
     }
   }
 
-  /* create output */
-  str = malloc (len); /* '\0' space is already counted in the previous loop */
-  pos = 0;
-
-  list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
-  for (list_id = 0; list_id < list_size; list_id++) {
-    demux_class_t *cls;
-    int            l;
-    
-    node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
-    if (node->plugin_class || _load_plugin_class(self, node, NULL)) {
-
-      cls = (demux_class_t *)node->plugin_class;
-
-      if((exts = cls->extensions) && *exts) {
-	l = strlen(exts);
-	memcpy (&str[pos], exts, l);
-      
-	pos += l;
-
-	/* Don't add ' ' char at the end of str */
-	if((pos + 1) < len) {
-	  str[pos] = ' ';
-	  pos++;
-	}
-      }
-    }
-  }
-
-  str[pos] = 0;
+  /* create output string */
+  char *const result = _x_concatenate_with_string(extensions, list_size, " ", len);
+  free(extensions);
   
+  /* Drop the last whitespace */
+  result[len-1] = '\0';
+
   pthread_mutex_unlock (&catalog->lock);
 
-  return str;
+  return result;
 }
 
 /* get a list of mime types supported by xine
@@ -2601,60 +2660,34 @@ char *xine_get_file_extensions (xine_t *self) {
 char *xine_get_mime_types (xine_t *self) {
 
   plugin_catalog_t *catalog = self->plugin_catalog;
-  int               len, pos;
-  plugin_node_t    *node;
-  char             *str;
-  int               list_id, list_size;
+  int               list_id;
 
   pthread_mutex_lock (&catalog->lock);
 
   /* calc length of output */
 
-  len = 0;
-  list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
+  /* calc length of output string and create an array of strings to
+     concatenate */
+  size_t len = 0; 
+  const int list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
+  const char **mimetypes = calloc(list_size, sizeof(char*));
 
   for (list_id = 0; list_id < list_size; list_id++) {
-    demux_class_t *cls;
-
-    node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
+    plugin_node_t *const node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
     if (node->plugin_class || _load_plugin_class(self, node, NULL)) {
-
-      cls = (demux_class_t *)node->plugin_class;
-
-      if ( cls->mimetypes )
-	len += strlen(cls->mimetypes);
+      demux_class_t *const cls = (demux_class_t *)node->plugin_class;
+      if( (mimetypes[list_id] = cls->mimetypes) != NULL )
+	len += strlen(mimetypes[list_id]);
     }
   }
 
-  /* create output */
+  /* create output string */
+  char *const result = _x_concatenate_with_string(mimetypes, list_size, "", len);
+  free(mimetypes);
 
-  str = malloc (len+1);
-  pos = 0;
-
-  list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
-
-  for (list_id = 0; list_id < list_size; list_id++) {
-    demux_class_t *cls;
-
-    node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
-    if (node->plugin_class || _load_plugin_class(self, node, NULL)) {
-
-      cls = (demux_class_t *)node->plugin_class;
-
-      if (cls->mimetypes) {
-	const size_t l = strlen(cls->mimetypes);
-	memcpy (&str[pos], cls->mimetypes, l);
-
-	pos += l;
-      }
-    }
-  }
-
-  str[pos] = 0;
-  
   pthread_mutex_unlock (&catalog->lock);
 
-  return str;
+  return result;
 }
 
 
@@ -2674,15 +2707,12 @@ char *xine_get_demux_for_mime_type (xine_t *self, const char *mime_type) {
   list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_DEMUX - 1]);
 
   for (list_id = 0; (list_id < list_size) && !id; list_id++) {
-    demux_class_t *cls;
 
     node = xine_sarray_get (catalog->plugin_lists[PLUGIN_DEMUX - 1], list_id);
-    if (node->plugin_class || _load_plugin_class(self, node, NULL)) {
-
-      cls = (demux_class_t *)node->plugin_class;
-      
-      if (cls->mimetypes && strcasestr(cls->mimetypes, mime_type) )
-	  id = strdup(node->info->id);
+    if (probe_mime_type (self, node, mime_type))
+    {
+      free (id);
+      id = strdup(node->info->id);
     }
   }
 
