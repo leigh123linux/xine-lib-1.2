@@ -11,6 +11,8 @@ xine-lib (1.1.14) 2008-??-??
     This is used for demuxer plugin selection immediately before testing the
     filename extension (so it won't work when demuxer selection is done by
     stream content only). [Bug #120]
+  * Allow input plugins to ask for a specific demuxer, overriding the normal
+    demuxer selection methods. (Most won't need this.)
 
 xine-lib (1.1.13) 2008-06-15
   * Security fixes:

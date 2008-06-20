@@ -311,6 +311,8 @@ struct input_plugin_s {
 #define INPUT_OPTIONAL_DATA_MIME_TYPE 8
 /* buffer is unused; true if the demuxer should be determined by the MIME type */
 #define INPUT_OPTIONAL_DATA_DEMUX_MIME_TYPE 9
+/* buffer is a const char **; the string is static or freed by the input plugin. */
+#define INPUT_OPTIONAL_DATA_DEMUXER   10
 
 #define MAX_MRL_ENTRIES 255
 #define MAX_PREVIEW_SIZE 4096
