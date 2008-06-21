@@ -1,3 +1,19 @@
+xine-lib (1.1.14) 2008-??-??
+  * DVB changes:
+    - Reacquire PIDs whenever a PMT is parsed. (Some channels' PIDs are
+      changed on a regular basis.)
+    - Recognise more stream formats (as defined in the broadcast PMT).
+    - Allow automatic detection of more DVB tuning parameters.
+    - Allow the GUI to be disabled.
+    - Allow configuration of the location of channels.conf.
+  * V4L: allow TV standard selection.
+  * Allow input plugins to report MIME type information.
+    This is used for demuxer plugin selection immediately before testing the
+    filename extension (so it won't work when demuxer selection is done by
+    stream content only). [Bug #120]
+  * Allow input plugins to ask for a specific demuxer, overriding the normal
+    demuxer selection methods. (Most won't need this.)
+
 xine-lib (1.1.13) 2008-06-15
   * Security fixes:
     - Buffer overflow in the NSF demuxer which may allow remote attackers to
