@@ -291,6 +291,7 @@ typedef struct {
   int 		    numchannels;
 
   char		   *autoplaylist[MAX_AUTOCHANNELS];
+  char             *default_channels_conf_filename;
 } dvb_input_class_t;
 
 typedef struct {
@@ -331,6 +332,9 @@ typedef struct {
   /* scratch buffer for forward seeking */
   char                seek_buf[BUFSIZE];
 
+  /* Is the GUI enabled at all? */
+  int                 dvb_gui_enabled;
+
   /* simple vcr-like functionality */
   int                 record_fd;
   int		      record_paused;
@@ -369,6 +373,7 @@ static const Param bw_list [] = {
 	{ "BANDWIDTH_6_MHZ", BANDWIDTH_6_MHZ },
 	{ "BANDWIDTH_7_MHZ", BANDWIDTH_7_MHZ },
 	{ "BANDWIDTH_8_MHZ", BANDWIDTH_8_MHZ },
+	{ "BANDWIDTH_AUTO", BANDWIDTH_AUTO },
         { NULL, 0 }
 };
 
@@ -391,6 +396,7 @@ static const Param guard_list [] = {
 	{"GUARD_INTERVAL_1_32", GUARD_INTERVAL_1_32},
 	{"GUARD_INTERVAL_1_4", GUARD_INTERVAL_1_4},
 	{"GUARD_INTERVAL_1_8", GUARD_INTERVAL_1_8},
+	{"GUARD_INTERVAL_AUTO", GUARD_INTERVAL_AUTO},
         { NULL, 0 }
 };
 
@@ -399,6 +405,7 @@ static const Param hierarchy_list [] = {
 	{ "HIERARCHY_2", HIERARCHY_2 },
 	{ "HIERARCHY_4", HIERARCHY_4 },
 	{ "HIERARCHY_NONE", HIERARCHY_NONE },
+	{ "HIERARCHY_AUTO", HIERARCHY_AUTO },
         { NULL, 0 }
 };
 
@@ -417,12 +424,14 @@ static const Param qam_list [] = {
 	{ "QAM_256", QAM_256 },
 	{ "QAM_32", QAM_32 },
 	{ "QAM_64", QAM_64 },
+	{ "QAM_AUTO", QAM_AUTO },
         { NULL, 0 }
 };
 
 static const Param transmissionmode_list [] = {
 	{ "TRANSMISSION_MODE_2K", TRANSMISSION_MODE_2K },
 	{ "TRANSMISSION_MODE_8K", TRANSMISSION_MODE_8K },
+	{ "TRANSMISSION_MODE_AUTO", TRANSMISSION_MODE_AUTO },
         { NULL, 0 }
 };
 
@@ -880,13 +889,15 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
 
   FILE      *f;
   char       str[BUFSIZE];
-  char       filename[BUFSIZE];
   channel_t *channels = NULL;
   int        num_channels = 0;
   int        num_alloc = 0;
   struct stat st;
-  
-  snprintf(filename, BUFSIZE, "%s/.xine/channels.conf", xine_get_homedir());
+  xine_cfg_entry_t channels_conf;
+  char      *filename;
+
+  xine_config_lookup_entry(xine, "media.dvb.channels_conf", &channels_conf);
+  filename = channels_conf.str_value; 
 
   f = fopen(filename, "r");
   if (!f) {
@@ -1141,6 +1152,8 @@ static void parse_pmt(dvb_input_plugin_t *this, const unsigned char *buf, int se
     switch (buf[0]) {
       case 0x01:
       case 0x02:
+      case 0x10:
+      case 0x1b:
         if(!has_video) {
           xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"input_dvb: Adding VIDEO     : PID 0x%04x\n", elementary_pid);
 	  dvb_set_pidfilter(this, VIDFILTER, elementary_pid, DMX_PES_VIDEO, DMX_OUT_TS_TAP);
@@ -1150,6 +1163,8 @@ static void parse_pmt(dvb_input_plugin_t *this, const unsigned char *buf, int se
 	
       case 0x03:
       case 0x04:
+      case 0x0f:
+      case 0x11:
         if(!has_audio) {
 	  xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"input_dvb: Adding AUDIO     : PID 0x%04x\n", elementary_pid);
 	  dvb_set_pidfilter(this, AUDFILTER, elementary_pid, DMX_PES_AUDIO, DMX_OUT_TS_TAP);
@@ -2492,7 +2507,8 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
 
   if (!this->tuned_in)
       return 0;
-  dvb_event_handler (this);
+  if (this->dvb_gui_enabled)
+      dvb_event_handler (this);
 #ifdef LOG_READS
   xprintf(this->class->xine,XINE_VERBOSITY_DEBUG,
 	  "input_dvb: reading %" PRIdMAX " bytes...\n", (intmax_t)len);
@@ -2754,7 +2770,12 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     xine_cfg_entry_t zoomdvb;
     xine_cfg_entry_t adapter;
     xine_cfg_entry_t lastchannel;
+    xine_cfg_entry_t gui_enabled;
     
+    xine_config_lookup_entry(this->stream->xine, "media.dvb.gui_enabled", &gui_enabled);
+    this->dvb_gui_enabled = gui_enabled.num_value;
+    xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("input_dvb: DVB GUI %s\n"), this->dvb_gui_enabled ? "enabled" : "disabled");
+
     xine_config_lookup_entry(this->stream->xine, "media.dvb.adapter", &adapter);
 
     if (!(tuner = tuner_init(this->class->xine,adapter.num_value))) {
@@ -2980,15 +3001,16 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     this->event_queue = xine_event_new_queue(this->stream);
 
 #ifdef EPG_UPDATE_IN_BACKGROUND
-    /* Start the EPG updater thread. */
-    this->epg_updater_stop = 0;
-    if (pthread_create(&this->epg_updater_thread, NULL, 
-		       epg_data_updater, this) != 0) {
-	xprintf(
-	    this->class->xine, XINE_VERBOSITY_LOG,
-	    _("input_dvb: cannot create EPG updater thread\n"));
-	return 0;
-
+    if (this->dvb_gui_enabled) {
+      /* Start the EPG updater thread. */
+      this->epg_updater_stop = 0;
+      if (pthread_create(&this->epg_updater_thread, NULL, 
+		         epg_data_updater, this) != 0) {
+	  xprintf(
+	      this->class->xine, XINE_VERBOSITY_LOG,
+	      _("input_dvb: cannot create EPG updater thread\n"));
+	  return 0;
+      }
     } 
 #endif
     /*
@@ -3154,6 +3176,8 @@ static void dvb_class_dispose(input_class_t * this_gen)
 {
     dvb_input_class_t *class = (dvb_input_class_t *) this_gen;
     int x;
+
+    free(class->default_channels_conf_filename);
     
     for(x=0;x<class->numchannels;x++)
        free(class->autoplaylist[x]);
@@ -3263,6 +3287,10 @@ static void *init_class (xine_t *xine, void *data) {
   this->mrls[3] = "dvbt://";
   this->mrls[4] = "dvba://";
   this->mrls[5] = 0;
+  
+  asprintf(&this->default_channels_conf_filename,
+           "%s/.xine/channels.conf",
+           xine_get_homedir());
 
   xprintf(this->xine,XINE_VERBOSITY_DEBUG,"init class succeeded\n");
 
@@ -3296,7 +3324,19 @@ static void *init_class (xine_t *xine, void *data) {
 			 "in your system."),
 		       0, NULL, (void *) this);
     
-
+  /* set to 0 to turn off the GUI built into this input plugin */
+  config->register_bool(config, "media.dvb.gui_enabled",
+			1,
+			_("Enable the DVB GUI"),
+			_("Enable the DVB GUI, mouse controlled recording and channel switching."),
+			21, NULL, NULL);
+  /* Override the default channels file */
+  config->register_filename(config, "media.dvb.channels_conf",
+			this->default_channels_conf_filename,
+                        XINE_CONFIG_STRING_IS_FILENAME,
+			_("DVB Channels config file"),
+			_("DVB Channels config file to use instead of the ~/.xine/channels.conf file."),
+			21, NULL, NULL);
   return this;
 }
 
