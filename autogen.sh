@@ -227,6 +227,11 @@ run_aclocal () {
     echo
   fi
   
+  echo $_echo_n " + Running autopoint: $_echo_c"
+  
+  autopoint
+  echo "done." 
+
   echo $_echo_n " + Running aclocal: $_echo_c"
 
   aclocal -I m4 -I m4/gettext

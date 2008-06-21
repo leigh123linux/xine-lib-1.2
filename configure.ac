@@ -188,7 +188,7 @@ AC_LIBTOOL_DLOPEN
 AC_LIBTOOL_WIN32_DLL
 AC_PATH_MAGIC
 AC_PROG_LIBTOOL
-
+AC_PROG_LIBTOOL_SANITYCHECK
 
 dnl --------------------
 dnl checks for libraries
