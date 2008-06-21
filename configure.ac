@@ -1201,7 +1201,6 @@ include/Makefile
 include/xine/version.h
 lib/Makefile
 m4/Makefile
-m4/gettext/Makefile
 misc/Makefile
 misc/SlackBuild
 misc/build_rpms.sh

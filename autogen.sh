@@ -234,7 +234,7 @@ run_aclocal () {
 
   echo $_echo_n " + Running aclocal: $_echo_c"
 
-  aclocal -I m4 -I m4/gettext
+  aclocal -I m4
   echo "done." 
 }
 

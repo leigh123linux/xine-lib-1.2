@@ -1,7 +1,5 @@
 include $(top_srcdir)/misc/Makefile.common
 
-SUBDIRS = gettext
-
 if INSTALL_M4
 m4datadir = $(ACLOCAL_DIR)
 else
