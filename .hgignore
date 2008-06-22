@@ -80,12 +80,14 @@ m4/iconv.m4
 m4/intmax.m4
 m4/inttypes-pri.m4
 m4/inttypes_h.m4
+m4/lib-ld.m4
 m4/lib-link.m4
 m4/lib-prefix.m4
 m4/longdouble.m4
 m4/longlong.m4
 m4/nls.m4
 m4/po.m4
+m4/progtest.m4
 m4/size_max.m4
 m4/stdint_h.m4
 m4/ulonglong.m4
@@ -109,6 +111,7 @@ misc/xine-fontconv
 misc/xine-list-*
 misc/cdda_server
 
+po/Makevars.extra
 po/POTFILES
 po/*.gmo
 po/stamp-po
