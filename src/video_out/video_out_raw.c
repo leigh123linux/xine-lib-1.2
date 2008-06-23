@@ -54,7 +54,11 @@
 #include "yuv2rgb.h"
 #include <xine/xineutils.h>
 
-#include <mem.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
 
 typedef struct {
   vo_frame_t         vo_frame;

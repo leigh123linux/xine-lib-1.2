@@ -36,7 +36,11 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include <mem.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
 
 /********** logging **********/
 #define LOG_MODULE "buffer"

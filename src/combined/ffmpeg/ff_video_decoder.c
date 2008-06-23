@@ -44,7 +44,11 @@
 #include "ffmpeg_decoder.h"
 #include "ff_mpeg_parser.h"
 
-#include <postprocess.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <postprocess.h>
+#else
+#  include <libpostproc/postprocess.h>
+#endif
 
 #define VIDEOBUFSIZE        (128*1024)
 #define SLICE_BUFFER_SIZE   (1194*1024)

@@ -40,7 +40,11 @@
 
 #include <sys/time.h>
 
-#include <base64.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <base64.h>
+#else
+#  include <libavutil/base64.h>
+#endif
 
 #define LOG_MODULE "input_http"
 #define LOG_VERBOSE

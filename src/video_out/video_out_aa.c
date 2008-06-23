@@ -35,7 +35,11 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 
-#include <mem.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
 
 #include <aalib.h>
 

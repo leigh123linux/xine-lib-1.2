@@ -62,7 +62,11 @@
 #include <xine/buffer.h>
 #include <xine/xineutils.h>
 
-#include <crc.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <crc.h>
+#else
+#  include <libavutil/crc.h>
+#endif
 
 #undef DEBUG_A52
 #ifdef DEBUG_A52

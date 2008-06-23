@@ -100,7 +100,11 @@
 #endif
 #include <ctype.h>
 
-#include <crc.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <crc.h>
+#else
+#  include <libavutil/crc.h>
+#endif
 
 /* XDG */
 #include <basedir.h>

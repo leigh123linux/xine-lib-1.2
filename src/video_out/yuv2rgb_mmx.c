@@ -31,7 +31,11 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include <mem.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
 
 #include "yuv2rgb.h"
 #include <xine/xineutils.h>

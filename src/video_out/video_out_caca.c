@@ -37,7 +37,11 @@
 #include <cucul.h>
 #include <caca.h>
 
-#include <mem.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
 
 #include "xine.h"
 #include <xine/video_out.h>

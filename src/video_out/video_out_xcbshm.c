@@ -50,7 +50,11 @@
 #include <pthread.h>
 #include <netinet/in.h>
 
-#include <mem.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
 
 #define LOG_MODULE "video_out_xcbshm"
 #define LOG_VERBOSE

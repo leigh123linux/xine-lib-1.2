@@ -66,7 +66,11 @@
 #include "dxr3.h"
 #include "video_out_dxr3.h"
 
-#include <mem.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
 
 /* the amount of extra time we give the card for decoding */
 #define DECODE_PIPE_PREBUFFER 10000

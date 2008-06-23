@@ -58,8 +58,13 @@
 
 #include <basedir.h>
 
-#include <base64.h>
-#include <sha1.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <base64.h>
+#  include <sha1.h>
+#else
+#  include <libavutil/base64.h>
+#  include <libavutil/sha1.h>
+#endif
 
 #define LOG_MODULE "input_cdda"
 #define LOG_VERBOSE

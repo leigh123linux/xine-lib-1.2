@@ -47,7 +47,11 @@
 #include <ctype.h>
 #include <pthread.h>
 
-#include <mem.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
 
 /* defines for debugging extensions only */
 /* #define GL_GLEXT_LEGACY */

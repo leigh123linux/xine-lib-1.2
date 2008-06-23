@@ -37,7 +37,11 @@
 #define LOG
 */
 
-#include <mem.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
 
 #include <xine/xine_internal.h>
 #include <xine/video_out.h>

@@ -44,7 +44,11 @@
 #include <math.h>
 #include <unistd.h>
 
-#include <mem.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
 
 #define LOG_MODULE "dxr3_mpeg_encoder"
 /* #define LOG_VERBOSE */

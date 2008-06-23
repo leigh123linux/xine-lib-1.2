@@ -31,7 +31,11 @@
 #include "sdpplin.h"
 #include <xine/xineutils.h>
 
-#include <base64.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <base64.h>
+#else
+#  include <libavutil/base64.h>
+#endif
 
 static char *nl(char *data) {
 

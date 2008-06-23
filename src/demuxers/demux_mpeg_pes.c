@@ -35,7 +35,11 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <mem.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
 
 #define LOG_MODULE "demux_mpeg_pes"
 #define LOG_VERBOSE

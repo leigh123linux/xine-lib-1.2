@@ -33,7 +33,11 @@
 #include <unistd.h>
 #include <xine/configfile.h>
 #include "bswap.h"
-#include <base64.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <base64.h>
+#else
+#  include <libavutil/base64.h>
+#endif
 
 #define LOG_MODULE "configfile"
 #define LOG_VERBOSE
