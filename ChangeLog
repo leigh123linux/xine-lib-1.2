@@ -83,6 +83,14 @@ xine-lib (1.1.14) 2008-??-??
     stream content only). [Bug #120]
   * Allow input plugins to ask for a specific demuxer, overriding the normal
     demuxer selection methods. (Most won't need this.)
+  * The Xv and XxMC video output plugins now support Xv port selection via
+    two methods: port number and port type (currently "any", "overlay" and
+    "textured video"). Port number takes precedence; the plugins will fall
+    back on another port of the same type (if a type was specified) then on
+    whatever they can find.
+    XvMC does not support port selection at present.
+    (Backported from the 1.2 branch.)
+  * Fix MPEG TS audio stream problems introduced in 1.1.13.
 
 xine-lib (1.1.13) 2008-06-15
   * Security fixes:
