@@ -751,12 +751,13 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
      * we check the descriptor tag first because some stations
      * do not include any of the ac3 header info in their audio tracks
      * these "raw" streams may begin with a byte that looks like a stream type.
+     * For audio streams, m->type already contains the stream no.
      */
     if((m->descriptor_tag == STREAM_AUDIO_AC3) ||    /* ac3 - raw */ 
        (p[0] == 0x0B && p[1] == 0x77)) { /* ac3 - syncword */
       m->content   = p;
       m->size = packet_len;
-      m->type = BUF_AUDIO_A52;
+      m->type |= BUF_AUDIO_A52;
       return 1;
 
     } else if (m->descriptor_tag == ISO_13818_PES_PRIVATE
@@ -766,7 +767,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
 
       m->content = p;
       m->size = packet_len;
-      m->type = BUF_SPU_DVB;
+      m->type |= BUF_SPU_DVB;
       m->buf->decoder_info[2] = payload_len;
       return 1;
     } else if ((p[0] & 0xE0) == 0x20) {
@@ -780,7 +781,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
 
       m->content   = p+4;
       m->size      = packet_len - 4;
-      m->type      = BUF_AUDIO_A52;
+      m->type      |= BUF_AUDIO_A52;
       return 1;
 
     } else if ((p[0]&0xf0) == 0xa0) {
@@ -796,7 +797,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
 
       m->content   = p+pcm_offset;
       m->size      = packet_len-pcm_offset;
-      m->type      = BUF_AUDIO_LPCM_BE;
+      m->type      |= BUF_AUDIO_LPCM_BE;
       return 1;
     }
 
@@ -834,16 +835,16 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
     case  ISO_11172_AUDIO: 
     case  ISO_13818_AUDIO:
       lprintf ("demux_ts: found MPEG audio track.\n");
-      m->type      = BUF_AUDIO_MPEG;
+      m->type      |= BUF_AUDIO_MPEG;
       break;
     case  ISO_13818_PART7_AUDIO:
     case  ISO_14496_PART3_AUDIO:
       lprintf ("demux_ts: found AAC audio track.\n");
-      m->type      = BUF_AUDIO_AAC;
+      m->type      |= BUF_AUDIO_AAC;
       break;
     default:
       lprintf ("demux_ts: unknown audio type: %d, defaulting to MPEG.\n", m->descriptor_tag);
-      m->type      = BUF_AUDIO_MPEG;
+      m->type      |= BUF_AUDIO_MPEG;
       break;
     }
     return 1;
@@ -1876,6 +1877,7 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
                xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
                         "demux_ts: auto-detected audio pid 0x%.4x\n", pid);
 #endif
+               /* store PID, index and stream no. */
                this->audio_tracks[this->audio_tracks_count].pid = pid;
                this->audio_tracks[this->audio_tracks_count].media_index = this->media_num;
                this->media[this->media_num].type = this->audio_tracks_count;

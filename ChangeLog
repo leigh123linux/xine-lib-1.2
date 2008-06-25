@@ -20,6 +20,7 @@ xine-lib (1.1.14) 2008-??-??
     whatever they can find.
     XvMC does not support port selection at present.
     (Backported from the 1.2 branch.)
+  * Fix MPEG TS audio stream problems introduced in 1.1.13.
 
 xine-lib (1.1.13) 2008-06-15
   * Security fixes:
