@@ -274,7 +274,7 @@ struct audio_driver_class_s {
  *
  * @internal
  */
-xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver, int grab_only);
+xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver, int grab_only) XINE_MALLOC;
 
 /*
  * audio output modes + capabilities

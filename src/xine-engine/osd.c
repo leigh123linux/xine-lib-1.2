@@ -83,17 +83,6 @@
 #  define UCS2_ENCODING "UCS-2LE"
 #endif
 
-#ifdef MAX
-#undef MAX
-#endif
-#define MAX(a,b) ( (a) > (b) ) ? (a) : (b)
-
-#ifdef MIN
-#undef MIN
-#endif
-#define MIN(a,b) ( (a) < (b) ) ? (a) : (b)
-
-
 #if (FREETYPE_MAJOR > 2) || \
     (FREETYPE_MAJOR == 2 && FREETYPE_MINOR > 1) || \
     (FREETYPE_MAJOR == 2 && FREETYPE_MINOR == 1 && FREETYPE_PATCH >= 3)
@@ -237,7 +226,7 @@ struct osd_ft2context_s {
  * for the sake of simplicity)
  */
 
-static osd_object_t *osd_new_object (osd_renderer_t *this, int width, int height) {
+static osd_object_t *XINE_MALLOC osd_new_object (osd_renderer_t *this, int width, int height) {
      
   osd_object_t *osd;
   

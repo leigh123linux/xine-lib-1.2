@@ -338,7 +338,7 @@ static void ticket_dispose(xine_ticket_t *this) {
   free(this);
 }
 
-static xine_ticket_t *ticket_init(void) {
+static xine_ticket_t *XINE_MALLOC ticket_init(void) {
   xine_ticket_t *port_ticket;
   
   port_ticket = calloc(1, sizeof(xine_ticket_t));
@@ -1227,6 +1227,27 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
   if( !no_cache )
     /* enable buffered input plugin (request optimizer) */
     stream->input_plugin = _x_cache_plugin_get_instance(stream);
+
+  /* Let the plugin request a specific demuxer (if the user hasn't).
+   * This overrides find-by-content & find-by-extension.
+   */
+  if (!stream->demux_plugin)
+  {
+    char *default_demux = NULL;
+    stream->input_plugin->get_optional_data (stream->input_plugin, &default_demux, INPUT_OPTIONAL_DATA_DEMUXER);
+    if (default_demux)
+    {
+      stream->demux_plugin = _x_find_demux_plugin_by_name (stream, default_demux, stream->input_plugin);
+      if (stream->demux_plugin)
+      {
+        lprintf ("demux and input plugin found\n");
+        _x_meta_info_set_utf8 (stream, XINE_META_INFO_SYSTEMLAYER,
+                               stream->demux_plugin->demux_class->identifier);
+      }
+      else
+        xine_log (stream->xine, XINE_LOG_MSG, _("xine: couldn't load plugin-specified demux %s for >%s<\n"), default_demux, mrl);
+    }
+  }
 
   if (!stream->demux_plugin) {
 
@@ -2278,6 +2299,9 @@ void xine_log (xine_t *this, int buf, const char *format, ...) {
     printf("%s", buffer);
     va_end (argp);
   }  
+
+  if (this->log_cb)
+    this->log_cb (this->log_cb_user_data, buf);
 }
 
 void xine_vlog(xine_t *this, int buf, const char *format, 
@@ -2286,6 +2310,9 @@ void xine_vlog(xine_t *this, int buf, const char *format,
   check_log_alloc (this, buf);
 
   this->log_buffers[buf]->scratch_printf(this->log_buffers[buf], format, args);
+
+  if (this->log_cb)
+    this->log_cb (this->log_cb_user_data, buf);
 }
 
 char *const *xine_get_log (xine_t *this, int buf) {
@@ -2297,6 +2324,11 @@ char *const *xine_get_log (xine_t *this, int buf) {
     return this->log_buffers[buf]->get_content (this->log_buffers[buf]);
   else
     return NULL;
+}
+
+void xine_register_log_cb (xine_t *this, xine_log_cb_t cb, void *user_data) {
+  this->log_cb = cb;
+  this->log_cb_user_data = user_data;
 }
 
 int xine_get_error (xine_stream_t *stream) {

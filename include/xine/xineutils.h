@@ -113,7 +113,7 @@ extern "C" {
 #define MM_SSE                  MM_ACCEL_X86_SSE
 #define MM_SSE2                 MM_ACCEL_X86_SSE2
 
-uint32_t xine_mm_accel (void) XINE_PROTECTED;
+uint32_t xine_mm_accel (void) XINE_CONST XINE_PROTECTED;
 
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
 
@@ -608,13 +608,6 @@ void *xine_xmalloc(size_t size) XINE_MALLOC XINE_DEPRECATED XINE_PROTECTED;
 void *xine_xcalloc(size_t nmemb, size_t size) XINE_MALLOC XINE_PROTECTED;
 
 /*
- * Same as above, but memory is aligned to 'alignement'.
- * **base is used to return pointer to un-aligned memory, use
- * this to free the mem chunk
- */
-void *xine_xmalloc_aligned(size_t alignment, size_t size, void **base) XINE_PROTECTED;
-
-/*
  * Copy blocks of memory.
  */
 void *xine_memdup (const void *src, size_t length) XINE_MALLOC XINE_PROTECTED;
@@ -650,6 +643,13 @@ void xine_usec_sleep(unsigned usec) XINE_PROTECTED;
 #define xine_strpbrk(S, ACCEPT) strpbrk((S), (ACCEPT))
 #define xine_strsep(STRINGP, DELIM) strsep((STRINGP), (DELIM))
 #define xine_setenv(NAME, VAL, XX) setenv((NAME), (VAL), (XX))
+
+/**
+ * append to a string, reallocating
+ * normally, updates & returns *dest
+ * on error, *dest is unchanged & NULL is returned.
+ */
+char *xine_strcat_realloc (char **dest, char *append) XINE_PROTECTED;
 
 /*
  * Color Conversion Utility Functions
@@ -931,7 +931,7 @@ void xine_xprintf(xine_t *xine, int verbose, const char *fmt, ...);
 /**
  * get encoding of current locale
  */
-char *xine_get_system_encoding(void) XINE_PROTECTED;
+char *xine_get_system_encoding(void) XINE_MALLOC XINE_PROTECTED;
 
 /*
  * guess default encoding for the subtitles
@@ -943,11 +943,6 @@ const char *xine_guess_spu_encoding(void) XINE_PROTECTED;
  * note: it will be a monotonic clock, if available.
  */
 int xine_monotonic_clock(struct timeval *tv, struct timezone *tz) XINE_PROTECTED;
-
-/**
- * CRC functions
- */
-uint32_t _x_compute_crc32 (const uint8_t * data, int32_t length, uint32_t crc32) XINE_PROTECTED;
 
 /**
  * Unknown FourCC reporting functions

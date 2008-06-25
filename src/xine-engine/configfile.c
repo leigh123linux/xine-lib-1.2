@@ -33,7 +33,11 @@
 #include <unistd.h>
 #include <xine/configfile.h>
 #include "bswap.h"
-#include "base64.h"
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <base64.h>
+#else
+#  include <libavutil/base64.h>
+#endif
 
 #define LOG_MODULE "configfile"
 #define LOG_VERBOSE
@@ -319,7 +323,7 @@ static void config_insert(config_values_t *this, cfg_entry_t *new_entry) {
     this->first = new_entry;
 }
 
-static cfg_entry_t *config_add (config_values_t *this, const char *key, int exp_level) {
+static cfg_entry_t *XINE_MALLOC config_add (config_values_t *this, const char *key, int exp_level) {
 
   cfg_entry_t *entry;
 
@@ -1341,7 +1345,12 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
     }
 
     /* and now the output encoding */
-    output = _x_base64_encode (buffer, total_len, &output_len);
+    /* We're going to encode total_len bytes in base64
+     * libavutil's base64 encoding functions want the size to
+     * be at least len * 4 / 3 + 12, so let's use that!
+     */
+    output = malloc(total_len * 4 / 3 + 12);
+    av_base64_encode(output, total_len * 4 / 3 + 12, buffer, total_len);
 
     free(buffer);
   }
@@ -1409,11 +1418,13 @@ static char* config_register_serialized_entry (config_values_t *this, const char
   int    bytes;
   int    pos;
   void  *output = NULL;
-  unsigned long output_len;
+  size_t output_len;
   int    value_count = 0;
   int    i;
   
-  output = _x_base64_decode (value, strlen(value), &output_len);
+  output_len = strlen(value) * 3 / 4 + 1;
+  output = malloc(output_len);
+  av_base64_decode(output, value, output_len);
   
   pos = 0;
   pos += bytes = get_int(output, output_len, pos, &type);

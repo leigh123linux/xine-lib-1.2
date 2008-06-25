@@ -16,12 +16,9 @@ endif
 endif
 
 libxineutils_la_SOURCES = $(pppc_files) \
-	base64.h \
-	base64.c \
 	cpu_accel.c \
 	color.c \
 	copy.c \
-	crc.c \
 	list.c \
 	memcpy.c \
 	monitor.c \

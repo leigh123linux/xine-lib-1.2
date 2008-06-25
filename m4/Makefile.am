@@ -1,7 +1,5 @@
 include $(top_srcdir)/misc/Makefile.common
 
-SUBDIRS = gettext
-
 if INSTALL_M4
 m4datadir = $(ACLOCAL_DIR)
 else
@@ -18,6 +16,7 @@ EXTRA_DIST = \
 	gas.m4 \
 	input.m4 \
 	macosx.m4 \
+	misc.m4 \
 	objc.m4 \
 	pkg.m4 \
 	programs.m4 \

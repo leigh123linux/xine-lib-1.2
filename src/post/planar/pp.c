@@ -29,13 +29,12 @@
 #include <xine/xine_internal.h>
 #include <xine/post.h>
 #include <xine/xineutils.h>
-#include <pthread.h>
-
 #ifdef HAVE_FFMPEG_AVUTIL_H
 #  include <postprocess.h>
 #else
 #  include <libpostproc/postprocess.h>
 #endif
+#include <pthread.h>
 
 #define PP_STRING_SIZE 256 /* size of pp mode string (including all options) */
 

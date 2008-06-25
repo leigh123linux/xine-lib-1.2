@@ -98,6 +98,9 @@ struct xine_s {
 #ifdef XINE_ENGINE_INTERNAL
   xine_ticket_t             *port_ticket;
   pthread_mutex_t            log_lock;
+
+  xine_log_cb_t              log_cb;
+  void                      *log_cb_user_data;
 #endif
 };
 

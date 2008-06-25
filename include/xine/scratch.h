@@ -51,6 +51,6 @@ struct scratch_buffer_s {
   pthread_mutex_t lock;
 };
 
-scratch_buffer_t *_x_new_scratch_buffer (int num_lines) XINE_PROTECTED;
+scratch_buffer_t *_x_new_scratch_buffer (int num_lines) XINE_MALLOC XINE_PROTECTED;
 
 #endif

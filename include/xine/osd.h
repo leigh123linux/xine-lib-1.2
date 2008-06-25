@@ -219,7 +219,7 @@ struct osd_renderer_s {
 /*
  *   initialize the osd rendering engine
  */
-osd_renderer_t *_x_osd_renderer_init( xine_stream_t *stream );
+osd_renderer_t *_x_osd_renderer_init( xine_stream_t *stream ) XINE_MALLOC;
 
 
 /*

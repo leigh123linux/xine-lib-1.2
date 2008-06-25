@@ -4,6 +4,7 @@ AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
 EXTRA_DIST = fooaudio.c
+noinst_HEADERS = ff_dvdata.h
 
 if ENABLE_MUSEPACK
 musepack_module = xineplug_decode_mpc.la
@@ -46,6 +47,7 @@ $(top_builddir)/contrib/gsm610/libgsm610.la:
 xineplug_LTLIBRARIES = \
 	xineplug_decode_gsm610.la \
 	xineplug_decode_lpcm.la \
+	xineplug_decode_dvaudio.la \
 	$(musepack_module) \
 	$(dts_module) \
 	$(mad_module) \
@@ -76,10 +78,14 @@ xineplug_decode_mad_la_CFLAGS = $(AM_CFLAGS) $(LIBMAD_CFLAGS)
 
 xineplug_decode_a52_la_SOURCES = xine_a52_decoder.c
 xineplug_decode_a52_la_DEPENDENCIES = $(A52DEC_DEPS)
-xineplug_decode_a52_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(A52DEC_LIBS) -lm
-xineplug_decode_a52_la_CFLAGS = $(AM_CFLAGS) $(A52DEC_CFLAGS)
+xineplug_decode_a52_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(A52DEC_LIBS) $(AVUTIL_LIBS) -lm
+xineplug_decode_a52_la_CFLAGS = $(AM_CFLAGS) $(A52DEC_CFLAGS) $(AVUTIL_CFLAGS)
 
 xineplug_decode_faad_la_SOURCES = xine_faad_decoder.c
 xineplug_decode_faad_la_DEPENDENCIES = $(FAAD_DEPS)
 xineplug_decode_faad_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(FAAD_LIBS) -lm
 xineplug_decode_faad_la_CFLAGS = $(FAAD_CFLAGS)
+
+xineplug_decode_dvaudio_la_SOURCES  = ff_dvaudio_decoder.c
+xineplug_decode_dvaudio_la_LIBADD   = $(XINE_LIB) $(LTLIBINTL)
+xineplug_decode_dvaudio_la_CPPFLAGS = $(AM_CPPFLAGS) $(FFMPEG_CFLAGS)

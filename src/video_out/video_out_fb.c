@@ -68,6 +68,12 @@
 #include <pthread.h>
 #include <netinet/in.h>
 
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
+
 #include <linux/fb.h>
 #include <linux/kd.h>
 #include <linux/vt.h>
@@ -91,8 +97,6 @@ typedef struct fb_frame_s
   int                flags;
   
   vo_scale_t         sc;
-
-  uint8_t           *chunk[3]; /* mem alloc by xmalloc_aligned           */
 
   yuv2rgb_t         *yuv2rgb;  /* yuv2rgb converter for this frame */
   uint8_t           *rgb_dst;
@@ -324,10 +328,9 @@ static void setup_colorspace_converter(fb_frame_t *frame, int flags)
 static void frame_reallocate(fb_driver_t *this, fb_frame_t *frame,
 			     uint32_t width, uint32_t height, int format)
 {
-  free(frame->chunk[0]);
-  free(frame->chunk[1]);
-  free(frame->chunk[2]);
-  memset(frame->chunk, 0, sizeof(frame->chunk[0])*3);
+  av_freep(&frame->vo_frame.base[0]);
+  av_freep(&frame->vo_frame.base[1]);
+  av_freep(&frame->vo_frame.base[2]);
       
   if(this->use_zero_copy)
   {
@@ -349,35 +352,15 @@ static void frame_reallocate(fb_driver_t *this, fb_frame_t *frame,
       frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
       frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
 		
-    frame->vo_frame.base[0] =
-      xine_xmalloc_aligned(16,
-			   frame->vo_frame.pitches[0] *
-			   height,
-                                                      (void **)&frame->chunk[0]);
-		
-    frame->vo_frame.base[1] =
-      xine_xmalloc_aligned(16,
-			   frame->vo_frame.pitches[1] *
-			   ((height+1)/2),
-                                                      (void **)&frame->chunk[1]);
-		
-    frame->vo_frame.base[2] =
-      xine_xmalloc_aligned(16,
-			   frame->vo_frame.pitches[2] *
-			   ((height+1)/2),
-                                                      (void **)&frame->chunk[2]);
+      frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
+      frame->vo_frame.base[1] = av_mallocz(frame->vo_frame.pitches[1] * ((height+1)/2));
+      frame->vo_frame.base[2] = av_mallocz(frame->vo_frame.pitches[2] * ((height+1)/2));
   }
   else
   {
     frame->vo_frame.pitches[0] = 8 * ((width + 3) / 4);
 		
-    frame->vo_frame.base[0] =
-      xine_xmalloc_aligned(16,
-			   frame->vo_frame.pitches[0] *
-			   height,
-                                                      (void **)&frame->chunk[0]);
-      frame->chunk[1] = NULL;
-      frame->chunk[2] = NULL;
+    frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
   }
 }
     

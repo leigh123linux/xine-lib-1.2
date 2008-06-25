@@ -12,7 +12,6 @@ updates (the word 'maintainer' is intentionally avoided here).
 project				version			mediator
 -----------------------------------------------------------------------
 
-ffmpeg				51.29.0			Mike Melanson
 goom				2k4-0
 gsm610				1.0.10			Mike Melanson
 liba52				0.7.4

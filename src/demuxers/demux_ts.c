@@ -141,6 +141,12 @@
 #include <unistd.h>
 #include <string.h>
 
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <crc.h>
+#else
+#  include <libavutil/crc.h>
+#endif
+
 #define LOG_MODULE "demux_ts"
 #define LOG_VERBOSE
 /*
@@ -185,9 +191,6 @@
 #define INVALID_PROGRAM ((unsigned int)(-1))
 #define INVALID_CC ((unsigned int)(-1))
 
-#define	MIN(a,b)   (((a)<(b))?(a):(b))
-#define	MAX(a,b)   (((a)>(b))?(a):(b))
-
 #define PROG_STREAM_MAP  0xBC
 #define PRIVATE_STREAM1  0xBD
 #define PADDING_STREAM   0xBE
@@ -220,7 +223,9 @@
       ISO_13818_PART7_AUDIO = 0x0f,     /* ISO/IEC 13818-7 Audio with ADTS transport sytax */
       ISO_14496_PART2_VIDEO = 0x10,     /* ISO/IEC 14496-2 Visual (MPEG-4) */
       ISO_14496_PART3_AUDIO = 0x11,     /* ISO/IEC 14496-3 Audio with LATM transport syntax */
-      ISO_14496_PART10_VIDEO = 0x1b     /* ISO/IEC 14496-10 Video (MPEG-4 part 10/AVC, aka H.264) */
+      ISO_14496_PART10_VIDEO = 0x1b,    /* ISO/IEC 14496-10 Video (MPEG-4 part 10/AVC, aka H.264) */
+      STREAM_VIDEO_MPEG = 0x80,
+      STREAM_AUDIO_AC3 = 0x81,
     } streamType;
 
 #define WRAP_THRESHOLD       270000
@@ -246,7 +251,7 @@ typedef struct {
   int64_t          pts;
   buf_element_t   *buf;
   unsigned int     counter;
-  uint8_t          descriptor_tag;
+  uint16_t         descriptor_tag; /* +0x100 for PES stream IDs (no available TS descriptor tag?) */
   int64_t          packet_count;
   int              corrupted_pes;
   uint32_t         buffered_bytes;
@@ -272,6 +277,18 @@ typedef struct {
 } demux_ts_audio_track;
 
 typedef struct {
+
+  demux_class_t     demux_class;
+
+  /* class-wide, global variables here */
+
+  xine_t           *xine;
+  config_values_t  *config;
+
+  const AVCRC      *av_crc;
+} demux_ts_class_t;
+
+typedef struct {
   /*
    * The first field must be the "base class" for the plugin!
    */
@@ -285,6 +302,8 @@ typedef struct {
   fifo_buffer_t   *video_fifo;
 
   input_plugin_t  *input;
+
+  demux_ts_class_t *class;
 
   int              status;
 
@@ -343,17 +362,6 @@ typedef struct {
   int numPreview;
 
 } demux_ts_t;
-
-typedef struct {
-
-  demux_class_t     demux_class;
-
-  /* class-wide, global variables here */
-
-  xine_t           *xine;
-  config_values_t  *config;
-} demux_ts_class_t;
-
 
 /* redefine abs as macro to handle 64-bit diffs.
    i guess llabs may not be available everywhere */
@@ -573,7 +581,7 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
   }
 
   /* Check CRC. */
-  calc_crc32 = _x_compute_crc32 (pkt+5, section_length+3-4, 0xffffffff);
+  calc_crc32 = av_crc(this->class->av_crc, 0xffffffff, pkt+5, section_length+3-4);
   if (crc32 != calc_crc32) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
 	     "demux_ts: demux error! PAT with invalid CRC32: packet_crc32: %.8x calc_crc32: %.8x\n",
@@ -728,15 +736,16 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
      * we check the descriptor tag first because some stations
      * do not include any of the ac3 header info in their audio tracks
      * these "raw" streams may begin with a byte that looks like a stream type.
+     * For audio streams, m->type already contains the stream no.
      */
-    if((m->descriptor_tag == 0x81) ||    /* ac3 - raw */ 
+    if((m->descriptor_tag == STREAM_AUDIO_AC3) ||    /* ac3 - raw */ 
        (p[0] == 0x0B && p[1] == 0x77)) { /* ac3 - syncword */
       m->content   = p;
       m->size = packet_len;
       m->type |= BUF_AUDIO_A52;
       return 1;
 
-    } else if (m->descriptor_tag == 0x06
+    } else if (m->descriptor_tag == ISO_13818_PES_PRIVATE
 	     && p[0] == 0x20 && p[1] == 0x00) {
       /* DVBSUB */
       long payload_len = ((buf[4] << 8) | buf[5]) - header_len - 3;
@@ -784,6 +793,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
     switch (m->descriptor_tag) {
     case ISO_11172_VIDEO:
     case ISO_13818_VIDEO:
+    case STREAM_VIDEO_MPEG:
       lprintf ("demux_ts: found MPEG video type.\n");
       m->type      = BUF_VIDEO_MPEG;
       break;
@@ -958,7 +968,7 @@ static void demux_ts_pes_new(demux_ts_t*this,
                              unsigned int mediaIndex,
                              unsigned int pid,
                              fifo_buffer_t *fifo,
-			     uint8_t descriptor) {
+			     uint16_t descriptor) {
 
   demux_ts_media *m = &this->media[mediaIndex];
 
@@ -1188,8 +1198,9 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
   crc32 |= (uint32_t) this->pmt[program_count][section_length+3-1] ;
 
   /* Check CRC. */
-  calc_crc32 = _x_compute_crc32 (this->pmt[program_count],
-                                 section_length+3-4, 0xffffffff);
+  calc_crc32 = av_crc(this->class->av_crc, 0xffffffff,
+		      this->pmt[program_count], section_length+3-4);
+
   if (crc32 != calc_crc32) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
 	     "demux_ts: demux error! PMT with invalid CRC32: packet_crc32: %#.8x calc_crc32: %#.8x\n",
@@ -1214,6 +1225,15 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
     }
   }
 
+  /*
+   * Forget the current video, audio and subtitle PIDs; if the PMT has not
+   * changed, we'll pick them up again when we parse this PMT, while if the
+   * PMT has changed (e.g. an IPTV streamer that's just changed its source),
+   * we'll get new PIDs that we should follow.
+   */
+  this->audio_tracks_count = 0;
+  this->videoPid = INVALID_PID;
+  this->spu_pid = INVALID_PID;
 
   /*
    * ES definitions start here...we are going to learn upto one video
@@ -1327,7 +1347,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
             printf ("demux_ts: PMT AC3 audio pid 0x%.4x type %2.2x\n", pid, stream[0]);
 #endif
           demux_ts_pes_new(this, this->media_num, pid,
-                           this->audio_fifo, 0x81);
+                           this->audio_fifo, STREAM_AUDIO_AC3);
 
           this->audio_tracks[this->audio_tracks_count].pid = pid;
           this->audio_tracks[this->audio_tracks_count].media_index = this->media_num;
@@ -1820,7 +1840,7 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
         } else if (!found) {
 	  this->videoPid = pid;
 	  this->videoMedia = this->media_num;
-	  demux_ts_pes_new(this, this->media_num++, pid, this->video_fifo, pes_stream_id);
+	  demux_ts_pes_new(this, this->media_num++, pid, this->video_fifo, 0x100 + pes_stream_id);
         }
         
         if (this->videoPid != INVALID_PID) {
@@ -1842,11 +1862,12 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
                xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
                         "demux_ts: auto-detected audio pid 0x%.4x\n", pid);
 #endif
+               /* store PID, index and stream no. */
                this->audio_tracks[this->audio_tracks_count].pid = pid;
                this->audio_tracks[this->audio_tracks_count].media_index = this->media_num;
                this->media[this->media_num].type = this->audio_tracks_count;
                demux_ts_pes_new(this, this->media_num++, pid,
-                                this->audio_fifo,pes_stream_id);
+                                this->audio_fifo, 0x100 + pes_stream_id);
                this->audio_tracks_count++;
 	   }
        }
@@ -2186,6 +2207,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   this            = calloc(1, sizeof(*this));
   this->stream    = stream;
   this->input     = input;
+  this->class     = class_gen;
   this->blockSize = PKT_SIZE;
 
   this->demux_plugin.send_headers      = demux_ts_send_headers;
@@ -2259,6 +2281,8 @@ static void *init_class (xine_t *xine, void *data) {
    */
   this->demux_class.extensions      = "ts m2t trp dvb:// dvbs:// dvbc:// dvbt://";
   this->demux_class.dispose         = default_demux_class_dispose;
+
+  this->av_crc = av_crc_get_table(AV_CRC_32_IEEE);
 
   return this;
 }

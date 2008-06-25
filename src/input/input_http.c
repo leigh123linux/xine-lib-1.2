@@ -40,6 +40,12 @@
 
 #include <sys/time.h>
 
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <base64.h>
+#else
+#  include <libavutil/base64.h>
+#endif
+
 #define LOG_MODULE "input_http"
 #define LOG_VERBOSE
 /*
@@ -81,6 +87,8 @@ typedef struct {
   char             preview[MAX_PREVIEW_SIZE];
   off_t            preview_size;
 
+  char            *mime_type;
+  
   char            *proto;
   char            *user;
   char            *password;
@@ -227,51 +235,15 @@ static int _x_use_proxy(http_input_class_t *this, const char *host) {
   return 1;
 }
 
-static int http_plugin_basicauth (const char *user, const char *password, char* dest, int len) {
-  static const char enctable[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-  char        *tmp;
-  char        *sptr;
-  char        *dptr;
-  size_t       count;
-  int          enclen;
-  
-  count = asprintf(&tmp, "%s:%s", user, (password != NULL) ? password : "");
+static void http_plugin_basicauth (const char *user, const char *password, char** dest) {
+  const size_t totlen = strlen(user) + (password ? strlen(password) : 0) + 1;
+  const size_t enclen = ((totlen + 2) * 4 ) / 3 + 12;
+  char         tmp[totlen + 1];
 
-  enclen = ((count + 2) / 3 ) * 4 + 1;
-  
-  if (len < enclen)
-    return -1;
+  snprintf(tmp, totlen + 1, "%s:%s", user, password ? : "");
 
-  sptr = tmp;
-  dptr = dest;
-  while (count >= 3) {
-    dptr[0] = enctable[(sptr[0] & 0xFC) >> 2];
-    dptr[1] = enctable[((sptr[0] & 0x3) << 4) | ((sptr[1] & 0xF0) >> 4)];
-    dptr[2] = enctable[((sptr[1] & 0x0F) << 2) | ((sptr[2] & 0xC0) >> 6)];
-    dptr[3] = enctable[sptr[2] & 0x3F];
-    count -= 3;
-    sptr += 3;
-    dptr += 4;
-  }
-  
-  if (count > 0) {
-    dptr[0] = enctable[(sptr[0] & 0xFC) >> 2];
-    dptr[1] = enctable[(sptr[0] & 0x3) << 4];
-    dptr[2] = '=';
-    
-    if (count > 1) {
-      dptr[1] = enctable[((sptr[0] & 0x3) << 4) | ((sptr[1] & 0xF0) >> 4)];
-      dptr[2] = enctable[(sptr[1] & 0x0F) << 2];
-    }
-    
-    dptr[3] = '=';
-    dptr += 4;
-  }
-  
-  dptr[0] = '\0';
-  
-  free(tmp);
-  return 0;
+  *dest = malloc(enclen);
+  av_base64_encode(*dest, enclen, tmp, totlen);
 }
 
 static int http_plugin_read_metainf (http_input_plugin_t *this) {
@@ -590,17 +562,20 @@ static const char* http_plugin_get_mrl (input_plugin_t *this_gen) {
 }
 
 static int http_plugin_get_optional_data (input_plugin_t *this_gen,
-					  void *data, int data_type) {
+					  void *const data, int data_type) {
 
+  void **const ptr = (void **const) data;
   http_input_plugin_t *this = (http_input_plugin_t *) this_gen;
 
   switch (data_type) {
   case INPUT_OPTIONAL_DATA_PREVIEW:
-
     memcpy (data, this->preview, this->preview_size);
     return this->preview_size;
 
-    break;
+  case INPUT_OPTIONAL_DATA_MIME_TYPE:
+    *ptr = this->mime_type;
+  case INPUT_OPTIONAL_DATA_DEMUX_MIME_TYPE:
+    return *this->mime_type ? INPUT_OPTIONAL_SUCCESS : INPUT_OPTIONAL_UNSUPPORTED;
   }
 
   return INPUT_OPTIONAL_UNSUPPORTED;
@@ -653,22 +628,10 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   int                  use_proxy;
   int                  proxyport;
   int                  mpegurl_redirect = 0;
-  char                 auth[BUFSIZE];
-  char                 proxyauth[BUFSIZE];
-  
+  char                 mime_type[256];
+
+  mime_type[0] = 0;
   use_proxy = this_class->proxyhost && strlen(this_class->proxyhost);
-  
-  if (use_proxy) {
-    if (this_class->proxyuser && strlen(this_class->proxyuser)) {
-      if (http_plugin_basicauth (this_class->proxyuser,
-			         this_class->proxypassword,
-				 proxyauth, BUFSIZE)) {
-	_x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "proxy error", NULL);
-	return 0;
-      }
-    }
-  }
-  
   
   if (!_x_parse_url(this->mrl, &this->proto, &this->host, &this->port,
                     &this->user, &this->password, &this->uri)) {
@@ -679,13 +642,6 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 
   if (this->port == 0)
     this->port = DEFAULT_HTTP_PORT;
-  
-  if (this->user && strlen(this->user)) {
-    if (http_plugin_basicauth (this->user, this->password, auth, BUFSIZE)) {
-      _x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "basic auth error", NULL);
-      return -1;
-    }
-  }
   
   if (this_class->proxyport == 0)
     proxyport = DEFAULT_HTTP_PORT;
@@ -743,38 +699,52 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 
   if (use_proxy) {
     if (this->port != DEFAULT_HTTP_PORT) {
-      buflen = snprintf (this->buf, BUFSIZE, "GET http://%s:%d%s HTTP/1.0\015\012",
-			 this->host, this->port, this->uri);
+      snprintf (this->buf, BUFSIZE, "GET http://%s:%d%s HTTP/1.0\015\012",
+	       this->host, this->port, this->uri);
     } else {
-      buflen = snprintf (this->buf, BUFSIZE, "GET http://%s%s HTTP/1.0\015\012",
-			 this->host, this->uri);
+      snprintf (this->buf, BUFSIZE, "GET http://%s%s HTTP/1.0\015\012",
+	       this->host, this->uri);
     }
   } 
   else
-    buflen = snprintf (this->buf, BUFSIZE, "GET %s HTTP/1.0\015\012", this->uri);
+    snprintf (this->buf, BUFSIZE, "GET %s HTTP/1.0\015\012", this->uri);
   
+  buflen = strlen(this->buf);
   if (this->port != DEFAULT_HTTP_PORT)
-    buflen += snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s:%d\015\012",
-			this->host, this->port);
+    snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s:%d\015\012",
+	     this->host, this->port);
   else
-    buflen += snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s\015\012",
-			this->host);
+    snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s\015\012",
+	     this->host);
   
-  if (this_class->proxyuser && strlen(this_class->proxyuser)) {
-    buflen += snprintf (this->buf + buflen, BUFSIZE - buflen,
-			"Proxy-Authorization: Basic %s\015\012", proxyauth);
+  buflen = strlen(this->buf);
+  if (use_proxy && this_class->proxyuser && strlen(this_class->proxyuser)) {
+    char *proxyauth;
+    http_plugin_basicauth (this_class->proxyuser, this_class->proxypassword,
+			   &proxyauth);
+
+    snprintf (this->buf + buflen, BUFSIZE - buflen,
+              "Proxy-Authorization: Basic %s\015\012", proxyauth);
+    buflen = strlen(this->buf);
+    free(proxyauth);
   }
   if (this->user && strlen(this->user)) {
-    buflen += snprintf (this->buf + buflen, BUFSIZE - buflen,
-			"Authorization: Basic %s\015\012", auth);
+    char *auth;
+    http_plugin_basicauth (this->user, this->password, &auth);
+
+    snprintf (this->buf + buflen, BUFSIZE - buflen,
+              "Authorization: Basic %s\015\012", auth);
+    buflen = strlen(this->buf);
+    free(auth);
   }
   
-  buflen += snprintf(this->buf + buflen, BUFSIZE - buflen,
-		     "User-Agent: xine/%s\015\012"
-		     "Accept: */*\015\012"
-		     "Icy-MetaData: 1\015\012"
-		     "\015\012",
-		     VERSION);
+  snprintf(this->buf + buflen, BUFSIZE - buflen,
+           "User-Agent: xine/%s\015\012"
+           "Accept: */*\015\012"
+           "Icy-MetaData: 1\015\012"
+           "\015\012",
+           VERSION);
+  buflen = strlen(this->buf);
   if (_x_io_tcp_write (this->stream, this->fh, this->buf, buflen) != buflen) {
     _x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "couldn't send request", NULL);
     xprintf(this_class->xine, XINE_VERBOSITY_DEBUG, "input_http: couldn't send request\n");
@@ -927,7 +897,11 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   
         /* content type */
         if (!strncasecmp(this->buf, TAG_CONTENT_TYPE, sizeof(TAG_CONTENT_TYPE) - 1)) {
-          if (!strncasecmp(this->buf + sizeof(TAG_CONTENT_TYPE) - 1, "video/nsv", 9)) {
+          const char *type = this->buf + sizeof (TAG_CONTENT_TYPE) - 1;
+          while (isspace (*type))
+            ++type;
+          sprintf (mime_type, "%.255s", type);
+          if (!strncasecmp (type, "video/nsv", 9)) {
             lprintf("shoutcast nsv detected\n");
             this->is_nsv = 1;
           }
@@ -1002,6 +976,8 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   
   lprintf("preview_size=%"PRId64"\n", this->preview_size);
   this->curpos = 0;
+  if (*mime_type)
+    this->mime_type = strdup (mime_type);
   
   return 1;
 }

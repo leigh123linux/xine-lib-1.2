@@ -44,6 +44,12 @@
 #include <math.h>
 #include <unistd.h>
 
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
+
 #define LOG_MODULE "dxr3_mpeg_encoder"
 /* #define LOG_VERBOSE */
 /* #define LOG */
@@ -99,20 +105,13 @@ typedef struct {
   char              *buffer;  /* temporary buffer for mpeg data */
                               /* temporary buffer for YUY2->YV12 conversion */
   uint8_t           *out[3];  /* aligned buffer for YV12 data */
-  uint8_t           *buf;     /* unaligned YV12 buffer */
+  uint8_t           *buf;     /* base address of YV12 buffer */
 } fame_data_t;
 
 /* helper function */
 static int fame_prepare_frame(fame_data_t *this, dxr3_driver_t *drv, 
                               dxr3_frame_t *frame);
 #endif
-
-/* initialization function */
-int        dxr3_lavc_init(dxr3_driver_t *drv, plugin_node_t *node);
-
-/* close function from encoder api */
-static int lavc_on_close(dxr3_driver_t *drv);
-
 
 #ifdef HAVE_LIBRTE
 int dxr3_rte_init(dxr3_driver_t *drv)
@@ -337,8 +336,7 @@ static int fame_on_update_format(dxr3_driver_t *drv, dxr3_frame_t *frame)
   fame_parameters_t init_fp = FAME_PARAMETERS_INITIALIZER;
   double fps;
 
-  if (this->buf) free(this->buf);  
-  this->buf = 0;
+  av_freep(&this->buf);  
   this->out[0] = this->out[1] = this->out[2] = 0;
   
   /* if YUY2 and dimensions changed, we need to re-allocate the
@@ -346,8 +344,7 @@ static int fame_on_update_format(dxr3_driver_t *drv, dxr3_frame_t *frame)
   if (frame->vo_frame.format == XINE_IMGFMT_YUY2) {
     int image_size = frame->vo_frame.width * frame->oheight;
 
-    this->out[0] = xine_xmalloc_aligned(16, image_size * 3/2, 
-      (void *)&this->buf);
+    this->out[0] = this->buf = av_mallocz(image_size * 3/2);
     this->out[1] = this->out[0] + image_size; 
     this->out[2] = this->out[1] + image_size/4; 
 
@@ -537,33 +534,3 @@ static int fame_prepare_frame(fame_data_t *this, dxr3_driver_t *drv, dxr3_frame_
   return 1;
 }
 #endif
-
-
-int dxr3_lavc_init(dxr3_driver_t *drv, plugin_node_t *node)
-{
-  void *ffmpeg;
-  int (*init)(dxr3_driver_t *);
-  int result;
-  
-  ffmpeg = dlopen(node->file->filename, RTLD_LAZY);
-  if (!ffmpeg) return 0;
-  
-  init = dlsym(ffmpeg, "dxr3_encoder_init");
-  if (!init) return 0;
-  
-  result = init(drv);
-  /* the close function is implemented here, because it will call dlclose()
-   * and that should not be done be the library we are closing... */
-  drv->enc->on_close = lavc_on_close;
-  drv->enc->handle   = ffmpeg;
-  return result;
-}
-
-static int lavc_on_close(dxr3_driver_t *drv)
-{
-  drv->enc->on_unneeded(drv);
-  dlclose(drv->enc->handle);
-  free(drv->enc);
-  drv->enc = NULL;
-  return 1;
-}

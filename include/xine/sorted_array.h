@@ -63,7 +63,7 @@ typedef struct xine_sarray_s xine_sarray_t;
 typedef int (*xine_sarray_comparator_t)(void*, void*);
 
 /* Constructor */
-xine_sarray_t *xine_sarray_new(size_t initial_size, xine_sarray_comparator_t comparator) XINE_PROTECTED;
+xine_sarray_t *xine_sarray_new(size_t initial_size, xine_sarray_comparator_t comparator) XINE_MALLOC XINE_PROTECTED;
 
 /* Destructor */
 void xine_sarray_delete(xine_sarray_t *sarray) XINE_PROTECTED;

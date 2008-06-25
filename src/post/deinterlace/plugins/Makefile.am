@@ -20,7 +20,7 @@ include $(top_srcdir)/misc/Makefile.common
 # libpostproc is here so we can use their nice mangle.h
 AM_CFLAGS   = $(VISIBILITY_FLAG)
 AM_CPPFLAGS = -I$(top_srcdir)/src/post/deinterlace \
-	      -I$(top_srcdir)/src/xine-utils
+              -I$(top_srcdir)/src/xine-utils
 
 EXTRA_DIST = greedy2frame_template.c greedyh.asm \
 	tomsmocomp/SearchLoop0A.inc tomsmocomp/SearchLoopBottom.inc \
@@ -54,5 +54,5 @@ libdeinterlaceplugins_la_SOURCES = double.c greedy.c linear.c linearblend.c \
 				   vfir.c weave.c scalerbob.c kdetv_tomsmocomp.c \
 				   $(nodebug_sources)
 libdeinterlaceplugins_la_LIBADD  = $(XINE_LIB) libdeinterlacepluginsO1.la
-libdeinterlaceplugins_la_CFLAGS  = $(DEFAULT_OCFLAGS) $(AM_CFLAGS)
+libdeinterlaceplugins_la_CFLAGS  = $(DEFAULT_OCFLAGS) $(AM_CFLAGS) $(AVUTIL_CFLAGS)
 libdeinterlaceplugins_la_LDFLAGS = $(AM_LDFLAGS) $(xineplug_ldflags)

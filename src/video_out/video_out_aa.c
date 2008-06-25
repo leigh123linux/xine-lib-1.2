@@ -35,6 +35,12 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
+
 #include <aalib.h>
 
 #include "xine.h"
@@ -51,7 +57,6 @@ typedef struct aa_frame_s {
   vo_frame_t    vo_frame;
 
   int           width, height;
-  uint8_t      *mem[3];
 
   double        ratio;
 
@@ -87,9 +92,9 @@ static uint32_t aa_get_capabilities (vo_driver_t *this) {
 static void aa_dispose_frame (vo_frame_t *vo_img) {
   aa_frame_t *frame = (aa_frame_t *)vo_img;
   
-  free (frame->mem[0]);
-  free (frame->mem[1]);
-  free (frame->mem[2]);
+  av_free (frame->vo_frame.base[0]);
+  av_free (frame->vo_frame.base[1]);
+  av_free (frame->vo_frame.base[2]);
 
   free (frame);
 }
@@ -129,9 +134,9 @@ static void aa_update_frame_format (vo_driver_t *this_gen, vo_frame_t *img,
   if ((frame->width != width) || (frame->height != height) 
       || (frame->format != format)) {
 
-    free (frame->mem[0]); frame->mem[0] = NULL;
-    free (frame->mem[1]); frame->mem[1] = NULL;
-    free (frame->mem[2]); frame->mem[2] = NULL;
+    av_freep (&frame->vo_frame.base[0]);
+    av_freep (&frame->vo_frame.base[1]);
+    av_freep (&frame->vo_frame.base[2]);
 
     frame->width  = width;
     frame->height = height;
@@ -142,15 +147,15 @@ static void aa_update_frame_format (vo_driver_t *this_gen, vo_frame_t *img,
       frame->vo_frame.pitches[0] = 8*((width + 7) / 8);
       frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
       frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
-      frame->vo_frame.base[0] = xine_xmalloc_aligned(16, frame->vo_frame.pitches[0] * height, (void**) &frame->mem[0]);
-      frame->vo_frame.base[1] = xine_xmalloc_aligned(16, frame->vo_frame.pitches[1] * ((height+1)/2), (void**) &frame->mem[1]);
-      frame->vo_frame.base[2] = xine_xmalloc_aligned(16, frame->vo_frame.pitches[2] * ((height+1)/2), (void**) &frame->mem[2]);
+      frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
+      frame->vo_frame.base[1] = av_mallocz(frame->vo_frame.pitches[1] * ((height+1)/2));
+      frame->vo_frame.base[2] = av_mallocz(frame->vo_frame.pitches[2] * ((height+1)/2));
 
       /* printf ("allocated yuv memory for %d x %d image\n", width, height); */
 
     } else if (format == XINE_IMGFMT_YUY2) {
       frame->vo_frame.pitches[0] = 8*((width + 3) / 4);
-      frame->vo_frame.base[0] = xine_xmalloc_aligned(16, frame->vo_frame.pitches[0] * height, (void**) &frame->mem[0]);
+      frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
     } else {
       xprintf (this->xine, XINE_VERBOSITY_DEBUG, "alert! unsupported image format %04x\n", format);
       _x_abort();

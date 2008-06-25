@@ -100,6 +100,12 @@
 #endif
 #include <ctype.h>
 
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <crc.h>
+#else
+#  include <libavutil/crc.h>
+#endif
+
 /* XDG */
 #include <basedir.h>
 
@@ -295,6 +301,8 @@ typedef struct {
   int 		    numchannels;
 
   char		   *autoplaylist[MAX_AUTOCHANNELS];
+
+  const AVCRC      *av_crc;
 } dvb_input_class_t;
 
 typedef struct {
@@ -373,6 +381,7 @@ static const Param bw_list [] = {
 	{ "BANDWIDTH_6_MHZ", BANDWIDTH_6_MHZ },
 	{ "BANDWIDTH_7_MHZ", BANDWIDTH_7_MHZ },
 	{ "BANDWIDTH_8_MHZ", BANDWIDTH_8_MHZ },
+	{ "BANDWIDTH_AUTO", BANDWIDTH_AUTO },
         { NULL, 0 }
 };
 
@@ -395,6 +404,7 @@ static const Param guard_list [] = {
 	{"GUARD_INTERVAL_1_32", GUARD_INTERVAL_1_32},
 	{"GUARD_INTERVAL_1_4", GUARD_INTERVAL_1_4},
 	{"GUARD_INTERVAL_1_8", GUARD_INTERVAL_1_8},
+	{"GUARD_INTERVAL_AUTO", GUARD_INTERVAL_AUTO},
         { NULL, 0 }
 };
 
@@ -403,6 +413,7 @@ static const Param hierarchy_list [] = {
 	{ "HIERARCHY_2", HIERARCHY_2 },
 	{ "HIERARCHY_4", HIERARCHY_4 },
 	{ "HIERARCHY_NONE", HIERARCHY_NONE },
+	{ "HIERARCHY_AUTO", HIERARCHY_AUTO },
         { NULL, 0 }
 };
 
@@ -421,12 +432,14 @@ static const Param qam_list [] = {
 	{ "QAM_256", QAM_256 },
 	{ "QAM_32", QAM_32 },
 	{ "QAM_64", QAM_64 },
+	{ "QAM_AUTO", QAM_AUTO },
         { NULL, 0 }
 };
 
 static const Param transmissionmode_list [] = {
 	{ "TRANSMISSION_MODE_2K", TRANSMISSION_MODE_2K },
 	{ "TRANSMISSION_MODE_8K", TRANSMISSION_MODE_8K },
+	{ "TRANSMISSION_MODE_AUTO", TRANSMISSION_MODE_AUTO },
         { NULL, 0 }
 };
 
@@ -554,7 +567,7 @@ static void tuner_dispose(tuner_t * this)
 }
 
 
-static tuner_t *tuner_init(xine_t * xine, int adapter)
+static tuner_t *XINE_MALLOC tuner_init(xine_t * xine, int adapter)
 {
 
     tuner_t *this;
@@ -2454,7 +2467,7 @@ static void ts_rewrite_packets (dvb_input_plugin_t *this, unsigned char * origin
       originalPkt[11]=(this->channels[this->channel].pmtpid >> 8) & 0xff;
       originalPkt[12]=this->channels[this->channel].pmtpid & 0xff;
 
-      crc= _x_compute_crc32 (originalPkt+1, 12, 0xffffffff);
+      crc = av_crc(this->class->av_crc, 0xffffffff, originalPkt+1, 12);
       
       originalPkt[13]=(crc>>24) & 0xff;
       originalPkt[14]=(crc>>16) & 0xff;
@@ -2750,7 +2763,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     xine_config_lookup_entry(this->stream->xine, "media.dvb.gui_enabled", &gui_enabled);
     this->dvb_gui_enabled = gui_enabled.num_value;
     xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("input_dvb: DVB GUI %s\n"), this->dvb_gui_enabled ? "enabled" : "disabled");
-    
+
     xine_config_lookup_entry(this->stream->xine, "media.dvb.adapter", &adapter);
 
     if (!(tuner = tuner_init(this->class->xine,adapter.num_value))) {
@@ -3249,6 +3262,8 @@ static void *init_class (xine_t *xine, void *data) {
   this->mrls[3] = "dvbt://";
   this->mrls[4] = "dvba://";
   this->mrls[5] = 0;
+
+  this->av_crc = av_crc_get_table(AV_CRC_32_IEEE);
 
   xprintf(this->xine,XINE_VERBOSITY_DEBUG,"init class succeeded\n");
 

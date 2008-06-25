@@ -292,18 +292,6 @@ void *xine_xcalloc(size_t nmemb, size_t size) {
   return ptr;
 }
 
-void *xine_xmalloc_aligned(size_t alignment, size_t size, void **base) {
-
-  char *ptr;
-  
-  *base = ptr = calloc(1, size+alignment);
-  
-  while ((size_t) ptr % alignment)
-    ptr++;
-    
-  return ptr;
-}
-
 void *xine_memdup (const void *src, size_t length)
 {
   void *dst = malloc (length);
@@ -525,7 +513,7 @@ void xine_usec_sleep(unsigned usec) {
 void xine_hexdump (const void *buf_gen, int length) {
   static const char separator[70] = "---------------------------------------------------------------------";
 
-  const uint8_t *const buf = (const uint8_t*)buf;
+  const uint8_t *const buf = (const uint8_t*)buf_gen;
   int j = 0;
 
   /* printf ("Hexdump: %i Bytes\n", length);*/
@@ -544,11 +532,7 @@ void xine_hexdump (const void *buf_gen, int length) {
     }
 
     for (i=j; i < imax; i++) {
-      uint8_t c = buf[i];
-      if ((c>=32) && (c<127))
-	c = '.';
-
-      fputc(c, stdout);
+      fputc ((buf[i] >= 32 && buf[i] <= 126) ? buf[i] : '.', stdout);
     }
     j=i;
 
@@ -727,4 +711,12 @@ int xine_monotonic_clock(struct timeval *tv, struct timezone *tz)
   return gettimeofday(tv, tz);
 
 #endif
+}
+
+char *xine_strcat_realloc (char **dest, char *append)
+{
+  char *newstr = realloc (*dest, (*dest ? strlen (*dest) : 0) + strlen (append) + 1);
+  if (newstr)
+    strcat (*dest = newstr, append);
+  return newstr;
 }

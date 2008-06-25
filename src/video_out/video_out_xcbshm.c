@@ -50,6 +50,12 @@
 #include <pthread.h>
 #include <netinet/in.h>
 
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
+
 #define LOG_MODULE "video_out_xcbshm"
 #define LOG_VERBOSE
 /*
@@ -75,8 +81,6 @@ typedef struct {
   uint8_t           *image;
   int                bytes_per_line;
   xcb_shm_seg_t      shmseg;
-
-  uint8_t           *chunk[3]; /* mem alloc by xmalloc_aligned           */
 
   yuv2rgb_t         *yuv2rgb; /* yuv2rgb converter set up for this frame */
   uint8_t           *rgb_dst;
@@ -287,9 +291,9 @@ static void xshm_frame_dispose (vo_frame_t *vo_img) {
 
   frame->yuv2rgb->dispose (frame->yuv2rgb);
 
-  free (frame->chunk[0]);
-  free (frame->chunk[1]);
-  free (frame->chunk[2]);
+  av_free (frame->vo_frame.base[0]);
+  av_free (frame->vo_frame.base[1]);
+  av_free (frame->vo_frame.base[2]);
   free (frame);
 }
 
@@ -437,18 +441,9 @@ static void xshm_update_frame_format (vo_driver_t *this_gen,
 
       dispose_ximage(this, frame);
 
-      if (frame->chunk[0]){
-	free (frame->chunk[0]);
-	frame->chunk[0] = NULL;
-      }
-      if (frame->chunk[1]) {
-	free (frame->chunk[1]);
-	frame->chunk[1] = NULL;
-      }
-      if (frame->chunk[2]) {
-	free (frame->chunk[2]);
-	frame->chunk[2] = NULL;
-      }
+      av_freep(&frame->vo_frame.base[0]);
+      av_freep(&frame->vo_frame.base[1]);
+      av_freep(&frame->vo_frame.base[2]);
     }
 
     create_ximage(this, frame, frame->sc.output_width, frame->sc.output_height);
@@ -459,14 +454,12 @@ static void xshm_update_frame_format (vo_driver_t *this_gen,
       frame->vo_frame.pitches[0] = 8*((width + 7) / 8);
       frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
       frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
-      frame->vo_frame.base[0] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[0] * height,  (void **) &frame->chunk[0]);
-      frame->vo_frame.base[1] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[1] * ((height+1)/2), (void **) &frame->chunk[1]);
-      frame->vo_frame.base[2] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[2] * ((height+1)/2), (void **) &frame->chunk[2]);
+      frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
+      frame->vo_frame.base[1] = av_mallocz(frame->vo_frame.pitches[1] * ((height+1)/2));
+      frame->vo_frame.base[2] = av_mallocz(frame->vo_frame.pitches[2] * ((height+1)/2));
     } else {
       frame->vo_frame.pitches[0] = 8*((width + 3) / 4);
-      frame->vo_frame.base[0] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[0] * height, (void **) &frame->chunk[0]);
-      frame->chunk[1] = NULL;
-      frame->chunk[2] = NULL;
+      frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
     }
 
     lprintf ("stripe out_ht=%i, deliv_ht=%i\n",

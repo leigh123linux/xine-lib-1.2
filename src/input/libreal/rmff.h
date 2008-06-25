@@ -32,10 +32,10 @@
 #include <string.h>
 #include <inttypes.h>
 
-
 #ifndef HAVE_RMFF_H
 #define HAVE_RMFF_H
 
+#include <xine/attributes.h>
 
 #define RMFF_HEADER_SIZE 0x12
 
@@ -220,7 +220,7 @@ rmff_data_t *rmff_new_dataheader(
 /*
  * reads header infos from data and returns a newly allocated header struct
  */
-rmff_header_t *rmff_scan_header(const char *data);
+rmff_header_t *rmff_scan_header(const char *data) XINE_MALLOC;
 
 #if 0
 /*
@@ -232,7 +232,7 @@ void rmff_scan_pheader(rmff_pheader_t *h, char *data);
 /*
  * reads header infos from stream and returns a newly allocated header struct
  */
-rmff_header_t *rmff_scan_header_stream(int fd);
+rmff_header_t *rmff_scan_header_stream(int fd) XINE_MALLOC;
 
 /*
  * prints header information in human readible form to stdout

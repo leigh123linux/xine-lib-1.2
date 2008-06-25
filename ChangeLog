@@ -8,9 +8,6 @@ xine-lib (1.1.90) (Unreleased)
   * Remove the buttons array from video_overlay, as the feature linked to that
     was never implemented. This change reduces by 10MB the memory usage of
     xine-lib during playback (1/3 of the memory used while playing an mp3).
-  * Use FFmpeg's own build system rather than wrapping automake around its
-    sources; this allows easy enabling or disabling of FFmpeg features and
-    proper support for --disable-ffmpeg-(uncommon|popular)-codecs.
   * Update libmpcdec (formerly libmusepack) to version 1.2.6 (newer than the
     previous Subversion snapshot) and contextually move it to
     contrib/libmpcdec to separate from xine's own code.
@@ -52,6 +49,13 @@ xine-lib (1.1.90) (Unreleased)
     for specific input protocols.
   * Check for supported extensions before opening the plugin and remove
     redundant core from plugins.
+  * Use libavutil-provided implementations for CRC, SHA1 and BASE64 algorithms,
+    this makes use of libavutil even outside the FFmpeg decoding plugin,
+    but avoid duplication of algorithms between different plugins.
+  * Use av_mallocz() when xine_xmalloc_aligned() wouldn't be needed.
+  * FFmpeg is now required as an external dependency; if you want to build
+    xine-lib from source, please download a copy of FFmpeg from their SVN
+    server.
   * Remove SyncFB video output plugin, the kernel module needed is no more
     active and thus it's no more usable. If you were using SyncFB somehow,
     please use DirectFB or VIDIX instead.
@@ -64,17 +68,43 @@ xine-lib (1.1.90) (Unreleased)
   * Report more video output capabilities via (port)->get_capabilities():
     colour controls, zooming, colour keying.
 
-xine-lib (1.1.12.1) 2008-??-??
+xine-lib (1.1.14) 2008-??-??
+  * DVB changes:
+    - Reacquire PIDs whenever a PMT is parsed. (Some channels' PIDs are
+      changed on a regular basis.)
+    - Recognise more stream formats (as defined in the broadcast PMT).
+    - Allow automatic detection of more DVB tuning parameters.
+    - Allow the GUI to be disabled.
+    - Allow configuration of the location of channels.conf.
+  * V4L: allow TV standard selection.
+  * Allow input plugins to report MIME type information.
+    This is used for demuxer plugin selection immediately before testing the
+    filename extension (so it won't work when demuxer selection is done by
+    stream content only). [Bug #120]
+  * Allow input plugins to ask for a specific demuxer, overriding the normal
+    demuxer selection methods. (Most won't need this.)
+  * The Xv and XxMC video output plugins now support Xv port selection via
+    two methods: port number and port type (currently "any", "overlay" and
+    "textured video"). Port number takes precedence; the plugins will fall
+    back on another port of the same type (if a type was specified) then on
+    whatever they can find.
+    XvMC does not support port selection at present.
+    (Backported from the 1.2 branch.)
+  * Fix MPEG TS audio stream problems introduced in 1.1.13.
+
+xine-lib (1.1.13) 2008-06-15
   * Security fixes:
     - Buffer overflow in the NSF demuxer which may allow remote attackers to
       cause a denial of service (crash) or possibly execute arbitrary code
       via an NSF file with a long title or copyright message. (CVE-2008-1878)
     - For extra safety against possible Integer overflows like the ones found
       in CVE-2008-1482, backport more calloc usage from 1.2 branch.
+  * Improved JACK output plugin.
   * Added MIME types and .mpp for musepack.
   * Fixed display of some MJPEG streams (YUVJ420P).
   * Deprecate xine_xmalloc() function, see src/xine-utils/utils.c for more
     information about the reason.
+  * Provide a useful implementation of xine_register_log_cb().
 
 xine-lib (1.1.12) 2008-04-14
   * Security fixes:

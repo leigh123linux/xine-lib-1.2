@@ -172,7 +172,7 @@ static void unixscr_exit (scr_plugin_t *scr) {
   free(this);
 }
 
-static scr_plugin_t* unixscr_init () {
+static scr_plugin_t *XINE_MALLOC unixscr_init () {
   unixscr_t *this;
 
   this = calloc(1, sizeof(unixscr_t));

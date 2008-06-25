@@ -99,23 +99,24 @@ xineplug_inp_rtp_la_SOURCES = input_rtp.c net_buf_ctrl.c
 xineplug_inp_rtp_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 
 xineplug_inp_http_la_SOURCES = input_http.c net_buf_ctrl.c http_helper.c
-xineplug_inp_http_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
+xineplug_inp_http_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) $(AVUTIL_LIBS)
+xineplug_inp_http_la_CPPFLAGS = $(AM_CPPFLAGS) $(AVUTIL_CFLAGS)
 
 xineplug_inp_pnm_la_SOURCES = input_pnm.c net_buf_ctrl.c pnm.c
 xineplug_inp_pnm_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
 
 xineplug_inp_dvb_la_SOURCES = input_dvb.c net_buf_ctrl.c
 xineplug_inp_dvb_la_DEPS = $(XDG_BASEDIR_DEPS)
-xineplug_inp_dvb_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) $(XDG_BASEDIR_LIBS)
-xineplug_inp_dvb_la_CPPFLAGS = $(AM_CPPFLAGS) $(XDG_BASEDIR_CPPFLAGS)
+xineplug_inp_dvb_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) $(XDG_BASEDIR_LIBS) $(AVUTIL_LIBS)
+xineplug_inp_dvb_la_CPPFLAGS = $(AM_CPPFLAGS) $(XDG_BASEDIR_CPPFLAGS) $(AVUTIL_CFLAGS)
 
 xineplug_inp_rtsp_la_SOURCES = input_rtsp.c net_buf_ctrl.c
 xineplug_inp_rtsp_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) libreal/libreal.la librtsp/librtsp.la
 
-xineplug_inp_cdda_la_SOURCES = input_cdda.c media_helper.c sha1.c sha1.h
+xineplug_inp_cdda_la_SOURCES = input_cdda.c media_helper.c
 xineplug_inp_cdda_la_DEPS = $(XDG_BASEDIR_DEPS)
-xineplug_inp_cdda_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(XDG_BASEDIR_LIBS)
-xineplug_inp_cdda_la_CPPFLAGS = $(AM_CPPFLAGS) $(XDG_BASEDIR_CPPFLAGS)
+xineplug_inp_cdda_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(XDG_BASEDIR_LIBS) $(AVUTIL_LIBS)
+xineplug_inp_cdda_la_CPPFLAGS = $(AM_CPPFLAGS) $(XDG_BASEDIR_CPPFLAGS) $(AVUTIL_CFLAGS)
 
 xineplug_inp_v4l_la_SOURCES = input_v4l.c
 xineplug_inp_v4l_la_LIBADD = $(XINE_LIB) $(ALSA_LIBS) $(LTLIBINTL)

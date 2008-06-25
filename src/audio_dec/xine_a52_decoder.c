@@ -62,7 +62,11 @@
 #include <xine/buffer.h>
 #include <xine/xineutils.h>
 
-#include "../../contrib/a52dec/crc.c"
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <crc.h>
+#else
+#  include <libavutil/crc.h>
+#endif
 
 #undef DEBUG_A52
 #ifdef DEBUG_A52
@@ -77,6 +81,7 @@ typedef struct {
   int              disable_dynrng_compress;
   int              enable_surround_downmix;
   
+  const AVCRC     *av_crc;
 } a52dec_class_t;
 
 typedef struct a52dec_decoder_s {
@@ -420,8 +425,6 @@ static void a52dec_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   uint8_t          *end = buf->content + buf->size;
   uint8_t           byte;
   int32_t	n;
-  uint16_t          crc16;
-  uint16_t          crc16_result;
 
   lprintf ("decode data %d bytes of type %08x, pts=%"PRId64"\n",
 	   buf->size, buf->type, buf->pts);
@@ -587,17 +590,16 @@ static void a52dec_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	    this->sync_state = 3;
           } else break;
       
-    case 3:  /* Ready for decode */
-	  crc16 = (uint16_t) ((this->frame_buffer[2] << 8) |  this->frame_buffer[3]) ;
-	  crc16_result = crc16_block(&this->frame_buffer[2], this->frame_length - 2) ; /* frame_length */
-	  if (crc16_result != 0) { /* CRC16 failed */
-	    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "liba52:a52 frame failed crc16 checksum.\n");
-	    current = sync_start;
-            this->pts = 0;
-	    this->syncword = 0;
-	    this->sync_state = 0;
-	    break;
-	  }
+    case 3:  { /* Ready for decode */
+      if (av_crc(this->class->av_crc, 0, &this->frame_buffer[2], this->frame_length - 2) != 0) { /* CRC16 failed */
+	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "liba52:a52 frame failed crc16 checksum.\n");
+	current = sync_start;
+	this->pts = 0;
+	this->syncword = 0;
+	this->sync_state = 0;
+	break;
+      }
+    }
 #if 0
           a52dec_decode_frame (this, this->pts_list[0], buf->decoder_flags & BUF_FLAG_PREVIEW);
 #else
@@ -797,6 +799,8 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->decoder_class.identifier      = "a/52dec";
   this->decoder_class.description     = N_("liba52 based a52 audio decoder plugin");
   this->decoder_class.dispose         = default_audio_decoder_class_dispose;
+
+  this->av_crc = av_crc_get_table(AV_CRC_16_ANSI);
 
   cfg = this->config = xine->config;
 

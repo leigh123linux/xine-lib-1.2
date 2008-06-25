@@ -58,18 +58,24 @@
 
 #include <basedir.h>
 
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <base64.h>
+#  include <sha1.h>
+#else
+#  include <libavutil/base64.h>
+#  include <libavutil/sha1.h>
+#endif
+
 #define LOG_MODULE "input_cdda"
 #define LOG_VERBOSE
 /*
 #define LOG
 */
 
-#include "sha1.h"
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
 #include <xine/input_plugin.h>
 #include "media_helper.h"
-#include "base64.h"
 
 #if defined(__sun)
 #define	DEFAULT_CDDA_DEVICE	"/vol/dev/aliases/cdrom0"
@@ -1896,39 +1902,42 @@ static unsigned long _cdda_calc_cddb_id(cdda_input_plugin_t *this) {
  */
 static void _cdda_cdindex(cdda_input_plugin_t *this, cdrom_toc *toc) {
   char temp[10];
-  SHA_INFO sha;
-  unsigned char digest[33], *base64;
+  struct AVSHA1 *sha_ctx = malloc(av_sha1_size);
+  unsigned char digest[20];
+  /* We're going to encode 20 bytes in base64, which will become
+   * 6 * 32 / 8 = 24 bytes.
+   * libavutil's base64 encoding functions, though, wants the size to
+   * be at least len * 4 / 3 + 12, so let's use 39.
+   */
+  char base64[39];
   int i;
-  unsigned long size;
 
-  sha_init(&sha);
+  av_sha1_init(sha_ctx);
 
   sprintf(temp, "%02X", toc->first_track);
-  sha_update(&sha, (unsigned char*) temp, strlen(temp));
+  av_sha1_update(sha_ctx, (unsigned char*) temp, strlen(temp));
 
   sprintf(temp, "%02X", toc->last_track - toc->ignore_last_track);
-  sha_update(&sha, (unsigned char*) temp, strlen(temp));
+  av_sha1_update(sha_ctx, (unsigned char*) temp, strlen(temp));
 
   sprintf (temp, "%08X", toc->leadout_track.first_frame);// + 150);
-  sha_update(&sha, (unsigned char*) temp, strlen(temp));
+  av_sha1_update(sha_ctx, (unsigned char*) temp, strlen(temp));
 
   for (i = toc->first_track; i <= toc->last_track - toc->ignore_last_track; i++) {
     sprintf(temp, "%08X", toc->toc_entries[i - 1].first_frame);
-    sha_update(&sha, (unsigned char*) temp, strlen(temp));
+    av_sha1_update(sha_ctx, (unsigned char*) temp, strlen(temp));
   }
 
   for (i = toc->last_track - toc->ignore_last_track + 1; i < 100; i++) {
-    sha_update(&sha, (unsigned char*) temp, strlen(temp));
+    av_sha1_update(sha_ctx, (unsigned char*) temp, strlen(temp));
   }
 
-  sha_final(digest, &sha);
+  av_sha1_final(sha_ctx, digest);
+  free(sha_ctx);
 
-  base64 = _x_rfc822_binary(digest, 20, &size);
-  base64[size] = 0;
+  av_base64_encode(base64, 39, digest, 20);
 
   _x_meta_info_set_utf8(this->stream, XINE_META_INFO_CDINDEX_DISCID, base64);
-
-  free (base64);
 }
 
 /*

@@ -84,49 +84,16 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
     AM_CONDITIONAL([ENABLE_FAAD], [test x"$enable_faad" != x"no"])
     AM_CONDITIONAL([WITH_EXTERNAL_FAAD], [test x"$have_external_faad" = x"yes"])
 
-    dnl ffmpeg (required; external version allowed)
-    AC_ARG_WITH([external-ffmpeg],
-                [AS_HELP_STRING([--with-external-ffmpeg], [use external ffmpeg library])],
-                [], [with_external_ffmpeg="no"])
-    AC_ARG_ENABLE([ffmpeg_uncommon_codecs],
-                  [AS_HELP_STRING([--disable-ffmpeg-uncommon-codecs], [don't build uncommon ffmpeg codecs])],
-                  [test x"$enableval" != x"no" && enable_ffmpeg_uncommon_codecs="yes"])
-    AC_ARG_ENABLE([ffmpeg_popular_codecs],
-                  [AS_HELP_STRING([--disable-ffmpeg-popular-codecs], [don't build popular ffmpeg codecs])],
-                  [test x"$enableval" != x"no" && enable_ffmpeg_popular_codecs="yes"])
-    case x"$with_external_ffmpeg" in
-        x"no") with_external_ffmpeg=no ;;
-        x"soft")
-            PKG_CHECK_MODULES([FFMPEG], [libavcodec >= 51.20.0], [with_external_ffmpeg=yes], [with_external_ffmpeg=no])
-            ;;
-        x*)
-            PKG_CHECK_MODULES([FFMPEG], [libavcodec >= 51.20.0], [with_external_ffmpeg=yes])
-            ;;
-    esac
-    if test x"$with_external_ffmpeg" != x"no"; then
-        PKG_CHECK_MODULES([FFMPEG_POSTPROC], [libpostproc])
-        AC_DEFINE([HAVE_FFMPEG], 1, [Define this if you have ffmpeg library])
-   
+    dnl ffmpeg external version required
+    PKG_CHECK_MODULES([FFMPEG], [libavcodec >= 51.20.0])
+    PKG_CHECK_MODULES([AVUTIL], [libavutil >= 49.6.0])
+    PKG_CHECK_MODULES([FFMPEG_POSTPROC], [libpostproc])
+    AC_DEFINE([HAVE_FFMPEG], 1, [Define this if you have ffmpeg library])
+
 	dnl Check presence of ffmpeg/avutil.h to see if it's old or new
 	dnl style for headers. The new style would be preferred actually...
 	AC_CHECK_HEADERS([ffmpeg/avutil.h])
    
-        AC_MSG_RESULT([Using external ffmpeg])
-    else
-        AC_MSG_NOTICE([
-*********************************************************************
-xine-lib is configured to use internal ffmpeg.
- 
-This copy of ffmpeg is old. You are strongly advised to install a
-newer version (including development files) and to reconfigure
-xine-lib to use it.
-*********************************************************************])
-    fi
-    AM_CONDITIONAL([FFMPEG_DISABLE_UNCOMMON_CODECS], [test x"$enable_ffmpeg_uncommon_codecs" = x"no"])
-    AM_CONDITIONAL([FFMPEG_DISABLE_POPULAR_CODECS], [test x"$enable_ffmpeg_popular_codecs" = x"no"])
-    AM_CONDITIONAL([WITH_EXTERNAL_FFMPEG], [test x"$with_external_ffmpeg" != x"no"])
-
-
     dnl gdk-pixbuf (optional; enabled by default)
     AC_ARG_ENABLE([gdkpixbuf],
                   [AS_HELP_STRING([--enable-gdkpixbuf], [Enable GdkPixbuf support (default: enabled)])],

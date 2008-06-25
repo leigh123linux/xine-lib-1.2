@@ -33,7 +33,7 @@ extern "C" {
 
 typedef struct broadcaster_s broadcaster_t;
 
-broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port) XINE_PROTECTED;
+broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port) XINE_MALLOC XINE_PROTECTED;
 void _x_close_broadcaster(broadcaster_t *this) XINE_PROTECTED;
 int _x_get_broadcaster_port(broadcaster_t *this) XINE_PROTECTED;
 

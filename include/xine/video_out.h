@@ -475,7 +475,7 @@ struct video_overlay_manager_s {
  *
  * @internal
  */
-xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabonly);
+xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabonly) XINE_MALLOC;
 
 #ifdef __cplusplus
 }

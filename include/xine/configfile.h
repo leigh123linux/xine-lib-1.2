@@ -227,7 +227,7 @@ struct config_values_s {
  * @brief allocate and init a new xine config object
  * @internal
  */
-config_values_t *_x_config_init (void);
+config_values_t *_x_config_init (void) XINE_MALLOC;
 
 /**
  * @brief interpret stream_setup part of mrls for config value changes

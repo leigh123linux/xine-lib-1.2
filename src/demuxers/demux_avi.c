@@ -719,7 +719,7 @@ static void reset_idx(demux_avi_t *this, avi_t *AVI) {
   }
 }
 
-static avi_t *AVI_init(demux_avi_t *this) {
+static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
 
   avi_t *AVI;
   int i, j, idx_type;
