@@ -751,6 +751,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
      * we check the descriptor tag first because some stations
      * do not include any of the ac3 header info in their audio tracks
      * these "raw" streams may begin with a byte that looks like a stream type.
+     * For audio streams, m->type already contains the stream no.
      */
     if((m->descriptor_tag == STREAM_AUDIO_AC3) ||    /* ac3 - raw */ 
        (p[0] == 0x0B && p[1] == 0x77)) { /* ac3 - syncword */
@@ -1867,6 +1868,7 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
                xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
                         "demux_ts: auto-detected audio pid 0x%.4x\n", pid);
 #endif
+               /* store PID, index and stream no. */
                this->audio_tracks[this->audio_tracks_count].pid = pid;
                this->audio_tracks[this->audio_tracks_count].media_index = this->media_num;
                this->media[this->media_num].type = this->audio_tracks_count;
