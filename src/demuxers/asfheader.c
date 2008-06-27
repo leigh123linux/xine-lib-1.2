@@ -511,6 +511,61 @@ static int asf_header_parse_stream_bitrate_properties(asf_header_t *header_pub, 
   return 1;
 }
 
+static int asf_header_parse_metadata(asf_header_t *header_pub, uint8_t *buffer, int buffer_len)
+{
+  asf_header_internal_t *header = (asf_header_internal_t *)header_pub;
+  asf_reader_t reader;
+  uint16_t i, records_count;
+  iconv_t iconv_cd;
+
+  if (buffer_len < 2)
+    return 0;
+
+  if ((iconv_cd = iconv_open ("UTF-8", "UCS-2LE")) == (iconv_t)-1)
+    return 0;
+
+  asf_reader_init(&reader, buffer, buffer_len);
+  asf_reader_get_16(&reader, &records_count);
+
+  for (i = 0; i < records_count; i++)
+  {
+    uint16_t index, stream, name_len = 0, data_type;
+    uint32_t data_len = 0;
+    int stream_id;
+
+    asf_reader_get_16 (&reader, &index); 
+    asf_reader_get_16 (&reader, &stream); 
+    stream &= 0x7f;
+    asf_reader_get_16 (&reader, &name_len); 
+    asf_reader_get_16 (&reader, &data_type); 
+    asf_reader_get_32 (&reader, &data_len); 
+
+    stream_id = asf_header_get_stream_id (&header->pub, stream);
+
+    if (data_len >= 4)
+    {
+      char *name = asf_reader_get_string (&reader, name_len, iconv_cd);
+      if (!strcmp (name, "AspectRatioX"))
+      {
+        asf_reader_get_32 (&reader, &header->pub.aspect_ratios[stream_id].x);
+        data_len -= 4;
+      }
+      else if (!strcmp (name, "AspectRatioY"))
+      {
+        asf_reader_get_32 (&reader, &header->pub.aspect_ratios[stream_id].y);
+        data_len -= 4;
+      }
+      free (name);
+      asf_reader_skip (&reader, data_len);
+    }
+    else
+      asf_reader_skip (&reader, data_len + name_len);
+  }
+
+  iconv_close (iconv_cd);
+  return 1;
+}
+
 static int asf_header_parse_header_extension(asf_header_t *header, uint8_t *buffer, int buffer_len) {
   asf_reader_t reader;
 
@@ -549,12 +604,14 @@ static int asf_header_parse_header_extension(asf_header_t *header, uint8_t *buff
       case GUID_EXTENDED_STREAM_PROPERTIES:
         asf_header_parse_stream_extended_properties(header, asf_reader_get_buffer(&reader), object_data_length);
         break;
+      case GUID_METADATA:
+        asf_header_parse_metadata(header, asf_reader_get_buffer(&reader), object_data_length);
+        break;
       case GUID_ADVANCED_MUTUAL_EXCLUSION:
       case GUID_GROUP_MUTUAL_EXCLUSION:
       case GUID_STREAM_PRIORITIZATION:
       case GUID_BANDWIDTH_SHARING:
       case GUID_LANGUAGE_LIST:
-      case GUID_METADATA:
       case GUID_METADATA_LIBRARY:
       case GUID_INDEX_PARAMETERS:
       case GUID_MEDIA_OBJECT_INDEX_PARAMETERS:

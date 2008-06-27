@@ -351,6 +351,14 @@ static void asf_send_video_header (demux_asf_t *this, int stream) {
                          BUF_FLAG_FRAME_END;
   
   buf->decoder_info[0] = 0;
+
+  if (this->asf_header->aspect_ratios[stream].x && this->asf_header->aspect_ratios[stream].y)
+  {
+    buf->decoder_flags  |= BUF_FLAG_ASPECT;
+    buf->decoder_info[1] = bih->biWidth  * this->asf_header->aspect_ratios[stream].x;
+    buf->decoder_info[2] = bih->biHeight * this->asf_header->aspect_ratios[stream].y;
+  }
+
   buf->size = asf_stream->private_data_length - 11;
   memcpy (buf->content, bih, buf->size);
   buf->type = this->streams[stream].buf_type;

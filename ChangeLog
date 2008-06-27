@@ -21,6 +21,7 @@ xine-lib (1.1.14) 2008-??-??
     XvMC does not support port selection at present.
     (Backported from the 1.2 branch.)
   * Fix MPEG TS audio stream problems introduced in 1.1.13.
+  * Add basic aspect ratio detection for Windows Media Video streams.
 
 xine-lib (1.1.13) 2008-06-15
   * Security fixes:
