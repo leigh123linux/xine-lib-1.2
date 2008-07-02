@@ -48,7 +48,6 @@ AC_DEFUN([CC_PTHREAD_FLAGS], [
     [ac_save_CFLAGS="$CFLAGS"
      ac_save_LIBS="$LIBS"
      CFLAGS="$CFLAGS $cc_cv_werror $PTHREAD_CFLAGS"
-     
      LIBS="$LIBS $PTHREAD_LIBS"
      AC_LINK_IFELSE(
        [AC_LANG_PROGRAM(
@@ -79,7 +78,9 @@ AC_DEFUN([CC_PTHREAD_RECURSIVE_MUTEX], [
   AC_CACHE_CHECK(
     [for recursive mutex support in pthread],
     [cc_cv_pthread_recursive_mutex],
-    [ac_save_LIBS="$LIBS"
+    [ac_save_CFLAGS="$CFLAGS"
+     ac_save_LIBS="$LIBS"
+     CFLAGS="$CFLAGS $cc_cv_werror $PTHREAD_CFLAGS"
      LIBS="$LIBS $PTHREAD_LIBS"
      AC_COMPILE_IFELSE(
        [AC_LANG_PROGRAM([
@@ -94,6 +95,7 @@ int main() {
 	  ],
 	  [cc_cv_pthread_recursive_mutex=yes],
 	  [cc_cv_pthread_recursive_mutex=no])
+     CFLAGS="$ac_save_CFLAGS"
      LIBS="$ac_save_LIBS"
     ])
 

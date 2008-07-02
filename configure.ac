@@ -227,28 +227,7 @@ dnl threads and OS specific stuff
 dnl ---------------------------------------------
 
 CC_PTHREAD_FLAGS(, [AC_MSG_ERROR([Pthread support is needed])])
-
-dnl
-AC_MSG_CHECKING(for recursive mutex support in pthread)
-ac_save_LIBS="$LIBS"
-LIBS="$LIBS $PTHREAD_LIBS"
-
-have_recursive_mutex=no
-AC_COMPILE_IFELSE(AC_LANG_SOURCE([#include <pthread.h>
-
-int main() {
-  pthread_mutexattr_t attr;
-  pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-  return 0;
-}
-	]),[
-	    have_recursive_mutex=yes
-	],[
-	    AC_MSG_ERROR(recursive mutex support is needed - please report)
-	])
-LIBS="$ac_save_LIBS"
-
-AC_MSG_RESULT($have_recursive_mutex)
+CC_PTHREAD_RECURSIVE_MUTEX(, [AC_MSG_ERROR([recursive mutex support is needed - please report])])
 
 AC_CHECK_DECL(sysi86,[
 	AC_DEFINE(HAVE_SYSI86,1,[Define this if the 'sysi86' function is declared in sys/sysi86.h])
