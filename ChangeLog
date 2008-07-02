@@ -1,4 +1,5 @@
 xine-lib (1.1.15) 2008-??-??
+  * V4L: Don't segfault if asked for an input that doesn't exist
 
 xine-lib (1.1.14) 2008-06-29
   * DVB changes:

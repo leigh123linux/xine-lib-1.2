@@ -1608,7 +1608,8 @@ static void v4l_plugin_dispose (input_plugin_t *this_gen) {
      data. */
   free(this->audio_content_base);
   free(this->video_content_base);
-  free(this->frames_base->extra_info);
+  if (this->frames_base)
+    free(this->frames_base->extra_info);
   free(this->frames_base);
 
 #ifdef LOG
