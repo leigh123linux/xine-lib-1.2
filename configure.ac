@@ -1439,7 +1439,9 @@ if test "x$enable_oss" != "xno"; then
      #endif
    ])
 
-   AC_IOCTL_REQUEST
+   if test "x$have_ossaudio" = "xyes"; then
+      AC_IOCTL_REQUEST
+   fi
 fi
 
 AM_CONDITIONAL(HAVE_OSS, test "x$have_ossaudio" = "xyes")
