@@ -1,3 +1,5 @@
+xine-lib (1.1.15) 2008-??-??
+
 xine-lib (1.1.14) 2008-06-29
   * DVB changes:
     - Reacquire PIDs whenever a PMT is parsed. (Some channels' PIDs are
