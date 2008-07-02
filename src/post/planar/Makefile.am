@@ -4,7 +4,7 @@ POSTPROC_INT_LIB = $(top_builddir)/src/libffmpeg/libavcodec/libpostproc/libpostp
 
 if HAVE_FFMPEG
 postproc_lib = $(FFMPEG_POSTPROC_LIBS)
-ff_cflags = $(FFMPEG_POSTPROC_CFLAGS)
+ff_cflags = $(FFMPEG_CFLAGS) $(FFMPEG_POSTPROC_CFLAGS)
 else
 ff_cflags = -I$(top_srcdir)/src/libffmpeg/libavcodec
 postproc_lib = $(POSTPROC_INT_LIB)
