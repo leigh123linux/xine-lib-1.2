@@ -68,7 +68,10 @@ xine-lib (1.1.90) (Unreleased)
   * Report more video output capabilities via (port)->get_capabilities():
     colour controls, zooming, colour keying.
 
-xine-lib (1.1.14) 2008-??-??
+xine-lib (1.1.15) 2008-??-??
+  * V4L: Don't segfault if asked for an input that doesn't exist
+
+xine-lib (1.1.14) 2008-06-29
   * DVB changes:
     - Reacquire PIDs whenever a PMT is parsed. (Some channels' PIDs are
       changed on a regular basis.)

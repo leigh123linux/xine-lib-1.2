@@ -129,6 +129,13 @@ const char *xine_private_hstrerror(int err);
 int xine_private_setenv(const char *name, const char *value);
 #endif
 
+/* replacement of strcasestr */
+#ifndef HAVE_STRCASESTR
+#define HAVE_STRCASESTR
+#define strcasestr(HAYSTACK, NEEDLE) xine_private_strcasestr((HAYSTACK), (NEEDLE))
+char *xine_private_strcasestr(const char *haystack, const char *needle);
+#endif
+
 /* replacement of strtok_r */
 #ifndef HAVE_STRTOK_R
 #define HAVE_STRTOK_R

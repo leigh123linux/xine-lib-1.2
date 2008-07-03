@@ -320,6 +320,7 @@ struct asf_header_s {
   asf_stream_t           *streams[ASF_MAX_NUM_STREAMS];
   asf_stream_extension_t *stream_extensions[ASF_MAX_NUM_STREAMS];
   uint32_t                bitrates[ASF_MAX_NUM_STREAMS];
+  struct { uint32_t x, y; } aspect_ratios[ASF_MAX_NUM_STREAMS];
 };
 
 struct asf_file_s {

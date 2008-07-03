@@ -1,7 +1,7 @@
 include $(top_srcdir)/misc/Makefile.common
 
 AM_CFLAGS   = $(DEFAULT_OCFLAGS) $(X_CFLAGS) $(VISIBILITY_FLAG)
-AM_CPPFLAGS = -DXINE_LIBRARY_COMPILE
+AM_CPPFLAGS = $(PTHREAD_CFLAGS) -DXINE_LIBRARY_COMPILE
 
 EXTRA_DIST = ppcasm_string.S ppc_asm.tmpl
 
