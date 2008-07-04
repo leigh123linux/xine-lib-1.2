@@ -143,7 +143,7 @@ static int demux_aud_send_chunk(demux_plugin_t *this_gen) {
   }
 
   /* validate the chunk */
-  if (_X_LE_32(&chunk_preamble[4]) != 0x0000DEAF) {
+  if (!_x_is_fourcc(&chunk_preamble[4], "\xAF\xDE\x00\x00")) {
     this->status = DEMUX_FINISHED;
     return this->status;
   }

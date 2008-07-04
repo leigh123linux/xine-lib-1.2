@@ -141,9 +141,9 @@ static int open_film_file(demux_film_t *film) {
     return 0;
 
   /* FILM signature correct? */
-  if (strncmp(scratch, "FILM", 4)) {
+  if (!_x_is_fourcc(scratch, "FILM"))
     return 0;
-  }
+
   llprintf(DEBUG_FILM_LOAD, "found 'FILM' signature\n");
 
   /* file is qualified; skip over the header bytes in the stream */

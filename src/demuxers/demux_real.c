@@ -174,18 +174,6 @@ typedef struct {
   demux_class_t     demux_class;
 } demux_real_class_t;
 
-static int is_indx_tag(const void *ptr) {
-  return memcmp(ptr, "INDX", 4) == 0;
-}
-
-static int is_data_tag(const void *ptr) {
-  return memcmp(ptr, "DATA", 4) == 0;
-}
-
-static int is_rmf_tag(const void *ptr) {
-  return memcmp(ptr, ".RMF", 4) == 0;
-}
-
 static void real_parse_index(demux_real_t *this) {
 
   off_t                next_index_chunk = this->index_start;
@@ -208,7 +196,7 @@ static void real_parse_index(demux_real_t *this) {
     }
 
     /* Check chunk is actually an index chunk */
-    if(!is_indx_tag(&index_chunk_header[0])) {
+    if(!_x_is_fourcc(&index_chunk_header[0], "INDX")) {
       lprintf("expected index chunk found chunk type: %.4s\n", &index_chunk_header[0]);
       break;
     }
@@ -402,7 +390,7 @@ static void real_parse_headers (demux_real_t *this) {
       return;
     }
     
-    if ( !is_rmf_tag(signature) ) {
+    if ( !_x_is_fourcc(signature, ".RMF") ) {
       this->status = DEMUX_FINISHED;
       lprintf ("signature not found '%.4s'\n", signature);
       return;
@@ -686,7 +674,7 @@ static void real_parse_headers (demux_real_t *this) {
       int      i;
       
       /* Check for end of the data chunk */
-      if (is_indx_tag(&search_buffer[offset]) || is_data_tag(&search_buffer[offset]))
+      if (_x_is_fourcc(&search_buffer[offset], "INDX") || _x_is_fourcc(&search_buffer[offset], "DATA"))
 	break;
       
       const int stream = _X_BE_16(&search_buffer[offset + 4]);
@@ -1058,7 +1046,7 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
   }
 
   /* Check to see if we've gone past the end of the data chunk */
-  if (is_indx_tag(&header[0]) || is_data_tag(&header[0])) {
+  if (_x_is_fourcc(&header[0], "INDX") || _x_is_fourcc(&header[0], "DATA")) {
     lprintf("finished reading data chunk\n");
     this->status = DEMUX_FINISHED;
     return this->status;

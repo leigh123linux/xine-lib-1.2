@@ -115,8 +115,8 @@ static int open_aiff_file(demux_aiff_t *this) {
     return 0;
 
   /* check the signature */
-  if ((_X_BE_32(&signature[0]) != FORM_TAG) ||
-      (_X_BE_32(&signature[8]) != AIFF_TAG))
+  if( !_x_is_fourcc(&signature[0], "FORM") ||
+      !_x_is_fourcc(&signature[8], "AIFF") )
     return 0;
 
   /* file is qualified; skip over the header bytes in the stream */
