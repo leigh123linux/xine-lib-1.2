@@ -30,13 +30,10 @@
 
 
 void _x_post_init(post_plugin_t *post, int num_audio_inputs, int num_video_inputs) {
-  int audio_inputs_size = (num_audio_inputs + 1) * sizeof(xine_audio_port_t *);
-  int video_inputs_size = (num_video_inputs + 1) * sizeof(xine_video_port_t *);
-  
   post->input  = xine_list_new();
   post->output = xine_list_new();
-  post->xine_post.audio_input = (xine_audio_port_t **)xine_xmalloc(audio_inputs_size);
-  post->xine_post.video_input = (xine_video_port_t **)xine_xmalloc(video_inputs_size);
+  post->xine_post.audio_input = calloc(num_audio_inputs + 1, sizeof(xine_audio_port_t *));
+  post->xine_post.audio_input = calloc(num_video_inputs + 1, sizeof(xine_video_port_t *));
 }
 
 
