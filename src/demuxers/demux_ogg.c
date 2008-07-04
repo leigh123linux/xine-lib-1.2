@@ -1020,7 +1020,7 @@ static void decode_dshow_header (demux_ogg_t *this, const int stream_num, ogg_pa
 
   this->si[stream_num]->headers = 0; /* header is sent below */
 
-  if ( (_X_LE_32(&op->packet[96]) == 0x05589f80) && (op->bytes >= 184)) {
+  if ( _x_is_fourcc(&op->packet[96], "\x05\x58\x9f\x80") && (op->bytes >= 184)) {
 
     buf_element_t    *buf;
     xine_bmiheader    bih;
@@ -1079,7 +1079,7 @@ static void decode_dshow_header (demux_ogg_t *this, const int stream_num, ogg_pa
 
     this->ignore_keyframes = 1;
 
-  } else if (_X_LE_32(&op->packet[96]) == 0x05589F81) {
+  } else if (_x_is_fourcc(&op->packet[96], "\x05\x58\x9f\x81")) {
 
 #if 0
     /* FIXME: no test streams */
@@ -1198,22 +1198,22 @@ static void decode_flac_header (demux_ogg_t *this, const int stream_num, ogg_pac
   buf_element_t *buf;
   xine_waveformatex wave;
 
-  /* Packet type */
-  _x_assert(op->packet[0] == 0x7F);
+  static const uint8_t flac_signature_1[] =
+    {
+      /* Packet type */
+      0x7F,
+      /* OggFLAC signature */
+      'F', 'L', 'A', 'C',
+      /* Version: only 1.0 supported */
+      1, 0
+    };
+  static const uint8_t flac_signature_2[] = "fLaC";
 
-  /* OggFLAC signature */
-  _x_assert(op->packet[1] == 'F'); _x_assert(op->packet[2] == 'L');
-  _x_assert(op->packet[3] == 'A'); _x_assert(op->packet[4] == 'C');
-
-  /* Version: supported only 1.0 */
-  _x_assert(op->packet[5] == 1); _x_assert(op->packet[6] == 0);
+  _x_assert(memcmp(&op->packet[0], flac_signature_1, sizeof(flac_signature_1)) == 0);
+  _x_assert(memcmp(&op->packet[9], flac_signature_2, sizeof(flac_signature_2)) == 0);
 
   /* Header count */
   this->si[stream_num]->headers = 0/*_X_BE_16(&op->packet[7]) +1*/;
-
-  /* fLaC signature */
-  _x_assert(op->packet[9] == 'f'); _x_assert(op->packet[10] == 'L');
-  _x_assert(op->packet[11] == 'a'); _x_assert(op->packet[12] == 'C');
 
   _x_parse_flac_metadata_header(&op->packet[13], &header);
 
@@ -1929,11 +1929,7 @@ static int detect_ogg_content (int detection_method, demux_class_t *class_gen,
       if (_x_demux_read_header(input, buf, 4) != 4)
         return 0;
 
-      if ((buf[0] == 'O') && (buf[1] == 'g') && (buf[2] == 'g') &&
-          (buf[3] == 'S'))
-        return 1;
-      else
-        return 0;
+      return _x_is_fourcc(buf, "OggS");
     }
 
     case METHOD_BY_EXTENSION: {
