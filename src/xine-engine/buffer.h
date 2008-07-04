@@ -39,6 +39,7 @@ extern "C" {
 #include "config.h"
 #endif
 
+#include <string.h>
 #include <stdio.h>
 #include <pthread.h>
 #include <sys/types.h>
@@ -671,6 +672,10 @@ void _x_bmiheader_le2me( xine_bmiheader *bih ) XINE_PROTECTED;
 
 /* convert xine_waveformatex struct from little endian */
 void _x_waveformatex_le2me( xine_waveformatex *wavex ) XINE_PROTECTED;
+
+static inline _x_is_fourcc(void *ptr, void *tag) {
+  return memcmp(ptr, tag, 4) == 0;
+}
 
 #ifdef __cplusplus
 }
