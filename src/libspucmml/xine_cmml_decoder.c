@@ -88,14 +88,13 @@ static void video_frame_format_change_callback (void *user_data, const xine_even
 
 
 static void update_font_size (spucmml_decoder_t *this) {
-  static int sizes[SUBTITLE_SIZE_NUM][4] = {
+  static const int sizes[SUBTITLE_SIZE_NUM][4] = {
     { 16, 16, 16, 20 }, /* SUBTITLE_SIZE_SMALL  */
     { 16, 16, 20, 24 }, /* SUBTITLE_SIZE_NORMAL */
     { 16, 20, 24, 32 }, /* SUBTITLE_SIZE_LARGE  */
   };
 
-  int *vec = sizes[this->subtitle_size];
-  int  y;
+  const int *const vec = sizes[this->subtitle_size];
 
   if( this->cached_width >= 512 )
     this->font_size = vec[3];
@@ -108,7 +107,7 @@ static void update_font_size (spucmml_decoder_t *this) {
   
   this->line_height = this->font_size + 10;
 
-  y = this->cached_height - (SUB_MAX_TEXT * this->line_height) - 5;
+  int y = this->cached_height - (SUB_MAX_TEXT * this->line_height) - 5;
   
   if(((y - this->vertical_offset) >= 0) && ((y - this->vertical_offset) <= this->cached_height))
     y -= this->vertical_offset;
@@ -137,83 +136,80 @@ static void update_font_size (spucmml_decoder_t *this) {
 }
 
 static int get_width(spucmml_decoder_t *this, char* text) {
-  size_t i=0;
-  int width=0,w,dummy;
-  char letter[2]={0, 0};
+  int width=0;
+  
+  while (1)
+    switch (*text) {
+    case '\0':
+      llprintf(LOG_WIDTH, "get_width returning width of %d\n", width);
+      return width;
 
-  while (i<=strlen(text)) {
-    switch (text[i]) {
     case '<':
-      if (!strncmp("<b>", text+i, 3)) {
+      if (!strncmp("<b>", text, 3)) {
         /*Do somethink to enable BOLD typeface*/
-        i=i+3;
+	text += 3;
         break;
-      } else if (!strncmp("</b>", text+i, 3)) {
+      } else if (!strncmp("</b>", text, 3)) {
         /*Do somethink to disable BOLD typeface*/
-        i=i+4;
+	text += 4;
         break;
-      } else if (!strncmp("<i>", text+i, 3)) {  
+      } else if (!strncmp("<i>", text, 3)) {  
         /*Do somethink to enable italics typeface*/
-        i=i+3;
+	text += 3;
         break;
-      } else if (!strncmp("</i>", text+i, 3)) {
+      } else if (!strncmp("</i>", text, 3)) {
         /*Do somethink to disable italics typeface*/
-        i=i+4;
+	text += 4;
         break;
-      } else if (!strncmp("<font>", text+i, 3)) {       
+      } else if (!strncmp("<font>", text, 3)) {       
         /*Do somethink to disable typing
           fixme - no teststreams*/
-        i=i+6;
+	text += 6;
         break;
-      } else if (!strncmp("</font>", text+i, 3)) {
+      } else if (!strncmp("</font>", text, 3)) {
         /*Do somethink to enable typing
           fixme - no teststreams*/
-        i=i+7;
+	text += 7;
         break;
       } 
     default:
-      letter[0]=text[i];
-      this->stream->osd_renderer->get_text_size(this->osd, letter, &w, &dummy);
-      width=width+w;
-      i++;
+      {
+	int w, dummy;
+	const char letter[2] = { *text, '\0' };
+	this->stream->osd_renderer->get_text_size(this->osd, letter, &w, &dummy);
+	width += w;
+	text++;
+      }
     }
-  }
-
-  llprintf(LOG_WIDTH, "get_width returning width of %d\n", width);
-
-  return width;
 }
 
 static void render_line(spucmml_decoder_t *this, int x, int y, char* text) {
-  size_t i=0;
-  int w,dummy;
-  char letter[2]={0,0};
+  while (*text != '\0') {
+    int w, dummy;
+    const char letter[2] = { *text, '\0' };
 
-  while (i<=strlen(text)) {
-    letter[0]=text[i];
     this->stream->osd_renderer->render_text(this->osd, x, y, letter, OSD_TEXT1);
     this->stream->osd_renderer->get_text_size(this->osd, letter, &w, &dummy);
-    x=x+w;
-    i++;
+    x += w;
+    text++;
   }
 }
 
 static void draw_subtitle(spucmml_decoder_t *this, int64_t sub_start) {
 
-  int line, y;
-  int font_size;
-
   this->stream->osd_renderer->filled_rect (this->osd, 0, 0,
       this->cached_width-1, this->line_height * SUB_MAX_TEXT - 1, 0);
 
-  y = (SUB_MAX_TEXT - this->lines) * this->line_height;
-  font_size = this->font_size;
+  const int y = (SUB_MAX_TEXT - this->lines) * this->line_height;
+  int font_size = this->font_size;
   this->stream->osd_renderer->set_encoding(this->osd, this->class->src_encoding);
 
+  int line;
+
   for (line=0; line<this->lines; line++) {
-    int w,x;
+    int x;
     while(1) {
-      w=get_width( this, this->text[line]);
+      const int w = get_width( this, this->text[line]);
       x = (this->cached_width - w) / 2;
 
       if( w > this->cached_width && font_size > 16 ) {
@@ -242,14 +238,13 @@ static void draw_subtitle(spucmml_decoder_t *this, int64_t sub_start) {
 static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
 
   spucmml_decoder_t *this = (spucmml_decoder_t *) this_gen;
-  char *str;
 
   xml_node_t *packet_xml_root;
   char * anchor_text = NULL;
 
   lprintf("CMML packet seen\n");
 
-  str = (char *) buf->content;
+  char *str = (char *) buf->content;
 
   /* parse the CMML */
 
@@ -440,11 +435,8 @@ static void update_osd_font(void *this_gen, xine_cfg_entry_t *entry)
 }
 
 static spu_decoder_t *spucmml_class_open_plugin (spu_decoder_class_t *class_gen, xine_stream_t *stream) {
-
   spucmml_class_t *class = (spucmml_class_t *)class_gen;
-  spucmml_decoder_t *this ;
-
-  this = (spucmml_decoder_t *) calloc(1, sizeof(spucmml_decoder_t));
+  spucmml_decoder_t *this = (spucmml_decoder_t *) calloc(1, sizeof(spucmml_decoder_t));
 
   this->spu_decoder.decode_data         = spudec_decode_data;
   this->spu_decoder.reset               = spudec_reset;
@@ -454,7 +446,7 @@ static spu_decoder_t *spucmml_class_open_plugin (spu_decoder_class_t *class_gen,
   this->spu_decoder.set_button          = NULL;
   this->spu_decoder.dispose             = spudec_dispose;
 
-  this->class  = class;
+  this->class  = class_gen;
   this->stream = stream;
 
   this->event_queue = xine_event_new_queue (this->stream);
@@ -505,10 +497,7 @@ static void update_src_encoding(void *this_gen, xine_cfg_entry_t *entry)
 }
 
 static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
-
-  spucmml_class_t *this ;
-
-  this = (spucmml_class_t *) calloc(1, sizeof(spucmml_class_t));
+  spucmml_class_t *this = (spucmml_class_t *) calloc(1, sizeof(spucmml_class_t));
 
   this->class.open_plugin      = spucmml_class_open_plugin;
   this->class.get_identifier   = spucmml_class_get_identifier;
