@@ -95,8 +95,7 @@ static int open_aac_file(demux_aac_t *this) {
     return 0;
 
   /* Check for an ADIF header - should be at the start of the file */
-  if ((peak[0] == 'A') && (peak[1] == 'D') &&
-      (peak[2] == 'I') && (peak[3] == 'F')) {
+  if (_x_is_fourcc(peak, "AIDF")) {
     lprintf("found ADIF header\n");
     return 1;
   }
@@ -134,9 +133,7 @@ static int open_aac_file(demux_aac_t *this) {
     if ((frame_size > 0) &&
         (data_start+frame_size < MAX_PREVIEW_SIZE-1) &&
         /* first 28 bits must be identical */
-        (peak[data_start  ]   ==peak[data_start+frame_size  ]) &&
-        (peak[data_start+1]   ==peak[data_start+frame_size+1]) &&
-        (peak[data_start+2]   ==peak[data_start+frame_size+2]) &&
+	memcmp(&peak[data_start], &peak[data_start+frame_size], 4) == 0 &&
         (peak[data_start+3]>>4==peak[data_start+frame_size+3]>>4))
     {
       lprintf("found second ADTS header\n");
