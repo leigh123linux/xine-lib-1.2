@@ -33,7 +33,7 @@ void _x_post_init(post_plugin_t *post, int num_audio_inputs, int num_video_input
   post->input  = xine_list_new();
   post->output = xine_list_new();
   post->xine_post.audio_input = calloc(num_audio_inputs + 1, sizeof(xine_audio_port_t *));
-  post->xine_post.audio_input = calloc(num_video_inputs + 1, sizeof(xine_video_port_t *));
+  post->xine_post.video_input = calloc(num_video_inputs + 1, sizeof(xine_video_port_t *));
 }
 
 
