@@ -228,6 +228,8 @@ dnl ---------------------------------------------
 
 CC_PTHREAD_FLAGS(, [AC_MSG_ERROR([Pthread support is needed])])
 CC_PTHREAD_RECURSIVE_MUTEX(, [AC_MSG_ERROR([recursive mutex support is needed - please report])])
+dnl <pthread.h> is implicitly included by xine-internals.h, so the include dir is needed everywhere
+CPPFLAGS="$CPPFLAGS $PTHREAD_CFLAGS"
 
 AC_CHECK_DECL(sysi86,[
 	AC_DEFINE(HAVE_SYSI86,1,[Define this if the 'sysi86' function is declared in sys/sysi86.h])

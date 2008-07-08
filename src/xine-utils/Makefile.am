@@ -12,7 +12,7 @@ endif
 endif
 
 AM_CFLAGS = $(X_CFLAGS) $(VISIBILITY_FLAG)
-AM_CPPFLAGS= $(PTHREAD_CFLAGS) -DXINE_LIBRARY_COMPILE
+AM_CPPFLAGS= -DXINE_LIBRARY_COMPILE
 
 libxineutils_la_SOURCES = $(pppc_files) \
 	cpu_accel.c \
