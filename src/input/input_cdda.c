@@ -44,6 +44,7 @@
 #  include <sys/ioctl.h>
 #else
 /* for WIN32 */
+#  include <windef.h>
 #  include <winioctl.h>
 #endif
 
