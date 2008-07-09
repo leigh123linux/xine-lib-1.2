@@ -592,7 +592,7 @@ static void collect_plugins(xine_t *this, char *path){
 #if defined(__hpux)
 	  if(!strstr(str, ".sl")
 #elif defined(__CYGWIN__) || defined(WIN32)
-	  if(!strstr(str, ".dll")
+          if(!strstr(str, ".dll") || strstr(str, ".dll.a")
 #else
 	  if(!strstr(str, ".so")
 #endif
