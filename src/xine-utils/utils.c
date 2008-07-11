@@ -393,11 +393,8 @@ const char *xine_get_pluginroot(void) {
   static char pluginroot[1024] = {0, };
 
   if (!pluginroot[0]) {
-    char *sep, *sep2;
-    strcpy (pluginroot, xine_get_plugindir ());
-    sep = strrchr (pluginroot, '/');
-    sep2 = strrchr (pluginroot, '\\');
-    *(sep < sep2 ? sep : sep2) = 0;
+    xine_get_rootdir(pluginroot, sizeof(pluginroot) - strlen(XINE_REL_PLUGINROOT) - 1);
+    strcat(pluginroot, XINE_DIRECTORY_SEPARATOR_STRING XINE_REL_PLUGINROOT);
   }
 
   return pluginroot;
