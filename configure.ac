@@ -328,7 +328,7 @@ case "x$with_external_ffmpeg" in
 			[AC_MSG_RESULT(no); with_external_ffmpeg=no])
       ;;
 esac
-if test "x$with_external_ffmpeg" = "xyes"; then
+if test "x$with_external_ffmpeg" != "xno"; then
    PKG_CHECK_MODULES([FFMPEG_POSTPROC], [libpostproc])
    AC_SUBST([FFMPEG_CFLAGS])
    AC_SUBST([FFMPEG_LIBS])
