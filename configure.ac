@@ -319,10 +319,12 @@ AC_SUBST(LIBMPEG2_CFLAGS)
 AC_ARG_WITH([external-ffmpeg], AS_HELP_STRING([--with-external-ffmpeg], [use external ffmpeg library]))
 
 case "x$with_external_ffmpeg" in
+   xno)
+      ;;
    xyes)
       PKG_CHECK_MODULES([FFMPEG], [libavcodec >= 51.20.0])
       ;;
-   xsoft)
+   *)
       with_external_ffmpeg=yes
       PKG_CHECK_MODULES([FFMPEG], [libavcodec >= 51.20.0], [],
 			[AC_MSG_RESULT(no); with_external_ffmpeg=no])
