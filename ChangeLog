@@ -1,6 +1,7 @@
 xine-lib (1.1.15) 2008-??-??
   * Use external ffmpeg by default.
   * V4L: Don't segfault if asked for an input that doesn't exist
+  * Recognise AMR audio (normally found in 3GP files).
 
 xine-lib (1.1.14) 2008-06-29
   * DVB changes:

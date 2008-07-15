@@ -1145,6 +1145,20 @@ static const audio_db_t audio_db[] = {
   BUF_AUDIO_WAVPACK,
   "Wavpack"
 },
+{
+  {
+    ME_FOURCC('s', 'a', 'm', 'r'),
+  },
+  BUF_AUDIO_AMR_NB,
+  "AMR narrow band"
+},
+{
+  {
+    ME_FOURCC('s', 'a', 'w', 'b'),
+  },
+  BUF_AUDIO_AMR_WB,
+  "AMR wide band"
+},
 { { 0 }, 0, "last entry" }
 };
 
