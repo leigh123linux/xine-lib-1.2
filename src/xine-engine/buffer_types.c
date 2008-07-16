@@ -1140,7 +1140,7 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    0
+    ME_FOURCC('W', 'V', 'P', 'K'),
   },
   BUF_AUDIO_WAVPACK,
   "Wavpack"
