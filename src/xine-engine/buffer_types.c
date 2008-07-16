@@ -1159,6 +1159,13 @@ static const audio_db_t audio_db[] = {
   BUF_AUDIO_AMR_WB,
   "AMR wide band"
 },
+{
+  {
+    ME_FOURCC('T', 'T', 'A', '1'),
+  },
+  BUF_AUDIO_TTA,
+  "True Audio Lossless"
+},
 { { 0 }, 0, "last entry" }
 };
 
