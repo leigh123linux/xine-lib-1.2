@@ -192,6 +192,7 @@ extern "C" {
 #define BUF_VIDEO_THEORA_RAW	0x02640000
 #define BUF_VIDEO_VC1		0x02650000
 #define BUF_VIDEO_VMNC		0x02660000
+#define BUF_VIDEO_SNOW		0x02670000
 
 /* audio buffer types:  (please keep in sync with buffer_types.c) */
 

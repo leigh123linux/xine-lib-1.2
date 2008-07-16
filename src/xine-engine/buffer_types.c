@@ -779,6 +779,14 @@ static const video_db_t video_db[] = {
   BUF_VIDEO_VMNC,
   "VMware Screen Codec"
 },
+{
+  {
+    ME_FOURCC('S','N','O','W'),
+    0
+  },
+  BUF_VIDEO_SNOW,
+  "Snow"
+},
 { { 0 }, 0, "last entry" }
 };
 
