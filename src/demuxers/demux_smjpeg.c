@@ -55,7 +55,6 @@
 #define vidD_TAG FOURCC_TAG('v', 'i', 'd', 'D')
 #define APCM_TAG FOURCC_TAG('A', 'P', 'C', 'M')
 
-#define SMJPEG_SIGNATURE_SIZE 8
 /* 16 is the max size of a header chunk (the video header) */
 #define SMJPEG_VIDEO_HEADER_SIZE 16
 #define SMJPEG_AUDIO_HEADER_SIZE 12
@@ -98,23 +97,18 @@ static int open_smjpeg_file(demux_smjpeg_t *this) {
   unsigned char header_chunk[SMJPEG_HEADER_CHUNK_MAX_SIZE];
   unsigned int  audio_codec = 0;
 
-  if (_x_demux_read_header(this->input, signature, SMJPEG_SIGNATURE_SIZE) !=
-      SMJPEG_SIGNATURE_SIZE)
+  static const uint8_t SMJPEG_SIGNATURE[8] =
+    { 0x00, 0x0A, 'S', 'M', 'J', 'P', 'E', 'G' };
+
+  if (_x_demux_read_header(this->input, signature, sizeof(SMJPEG_SIGNATURE)) !=
+      sizeof(SMJPEG_SIGNATURE))
     return 0;
 
-  /* check for the SMJPEG signature */
-  if ((signature[0] != 0x00) ||
-      (signature[1] != 0x0A) ||
-      (signature[2] != 'S') ||
-      (signature[3] != 'M') ||
-      (signature[4] != 'J') ||
-      (signature[5] != 'P') ||
-      (signature[6] != 'E') ||
-      (signature[7] != 'G'))
+  if (memcmp(signature, SMJPEG_SIGNATURE, sizeof(SMJPEG_SIGNATURE)) != 0)
     return 0;
 
   /* file is qualified; jump over the header + version to the duration */
-  this->input->seek(this->input, SMJPEG_SIGNATURE_SIZE + 4, SEEK_SET);
+  this->input->seek(this->input, sizeof(SMJPEG_SIGNATURE) + 4, SEEK_SET);
   if (this->input->read(this->input, header_chunk, 4) != 4)
     return 0;
   this->duration = _X_BE_32(&header_chunk[0]);

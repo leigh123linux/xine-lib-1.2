@@ -86,11 +86,8 @@ AC_DEFUN([CC_PTHREAD_RECURSIVE_MUTEX], [
        [AC_LANG_PROGRAM([
 #include <pthread.h>
           ], [
-int main() {
     pthread_mutexattr_t attr;
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-    return 0;
-}
            ])
 	  ],
 	  [cc_cv_pthread_recursive_mutex=yes],

@@ -33,6 +33,9 @@
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #endif
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
 
 #define LOG_MODULE "demux_dts"
 #define LOG_VERBOSE

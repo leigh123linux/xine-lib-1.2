@@ -50,7 +50,6 @@
 #define FOURCC_TAG BE_FOURCC
 #define NSVf_TAG       FOURCC_TAG('N', 'S', 'V', 'f')
 #define NSVs_TAG       FOURCC_TAG('N', 'S', 'V', 's')
-#define NONE_TAG       FOURCC_TAG('N', 'O', 'N', 'E')
 
 #define BEEF 0xEFBE
 
@@ -256,17 +255,11 @@ static int open_nsv_file(demux_nsv_t *this) {
     return 0;
 
   /* check for a 'NSV' signature */
-  if ((preview[0] != 'N') ||
-      (preview[1] != 'S') ||
-      (preview[2] != 'V'))
-  {
-    if ((preview[0] != 'Z') ||
-        (preview[1] != 0)   ||
-	(preview[2] != '9'))
-      return 0;
+  if ( memcmp(preview, "Z\09", 3) == 0) {
     this->is_ultravox = preview[3];
     this->ultravox_first = 1;
-  }
+  } else if ( memcmp(preview, "NSV", 3) != 0 )
+    return 0;
 
   lprintf("NSV file detected, ultravox=%d\n", this->is_ultravox);
 
@@ -302,7 +295,7 @@ static int open_nsv_file(demux_nsv_t *this) {
 	return 0;
       
       this->video_fourcc = _X_ME_32(&preview[4]);
-      if (_X_BE_32(&preview[4]) == NONE_TAG)
+      if (_x_is_fourcc(&preview[4], "NONE"))
 	this->video_type = 0;
       else
       {
@@ -312,7 +305,7 @@ static int open_nsv_file(demux_nsv_t *this) {
       }
       
       this->audio_fourcc = _X_ME_32(&preview[8]);
-      if (_X_BE_32(&preview[8]) == NONE_TAG)
+      if (_x_is_fourcc(&preview[8], "NONE"))
 	this->audio_type = 0;
       else
       {

@@ -42,8 +42,6 @@
 
 #define SND_HEADER_SIZE 24
 #define PCM_BLOCK_ALIGN 1024
-/* this is the big-endian hex value '.snd' */
-#define snd_TAG 0x2E736E64
 
 typedef struct {
   demux_plugin_t       demux_plugin;
@@ -83,7 +81,7 @@ static int open_snd_file(demux_snd_t *this) {
     return 0;
 
   /* check the signature */
-  if (_X_BE_32(&header[0]) != snd_TAG)
+  if ( !_x_is_fourcc(&header[0], ".snd") )
     return 0;
 
   /* file is qualified; skip over the header bytes in the stream */

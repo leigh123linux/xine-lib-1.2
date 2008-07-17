@@ -2,8 +2,8 @@ include $(top_srcdir)/misc/Makefile.common
 include $(top_srcdir)/lib/Makefile.common
 
 AM_CFLAGS   = $(DEFAULT_OCFLAGS) $(X_CFLAGS) $(FT2_CFLAGS) $(FONTCONFIG_CFLAGS) \
-              $(AVUTIL_CFLAGS) $(PTHREAD_CFLAGS) $(VISIBILITY_FLAG)
-AM_CPPFLAGS = $(XDG_BASEDIR_CPPFLAGS) $(ZLIB_CPPFLAGS) $(PTHREAD_CFLAGS) -DXINE_LIBRARY_COMPILE
+              $(AVUTIL_CFLAGS) $(VISIBILITY_FLAG)
+AM_CPPFLAGS = $(XDG_BASEDIR_CPPFLAGS) $(ZLIB_CPPFLAGS) -DXINE_LIBRARY_COMPILE
 
 XINEUTILS_LIB = $(top_builddir)/src/xine-utils/libxineutils.la
 

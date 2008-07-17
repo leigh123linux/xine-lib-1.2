@@ -398,6 +398,8 @@ CC_CHECK_WERROR
 
 CC_PTHREAD_FLAGS([], [AC_MSG_ERROR([Pthread support is needed])])
 CC_PTHREAD_RECURSIVE_MUTEX([], [AC_MSG_ERROR([recursive mutex support is needed - please report])])
+dnl <pthread.h> is implicitly included by xine-internals.h, so the include dir is needed everywhere
+CPPFLAGS="$CPPFLAGS $PTHREAD_CFLAGS"
 
 dnl REVISIT: AC_C_ALWAYS_INLINE removal allows ffmpeg to be more widely buildable
 AC_C_BIGENDIAN
@@ -905,10 +907,10 @@ AC_CHECK_FUNC([opendir],
                    AC_MSG_ERROR([dirent is needed (opendir, readdir, ...)])
                fi])
 
-XINE_CHECK_MINMAX([], [
-    AC_DEFINE([MIN(x, y)], [(x > y) ? y : x], [Get the minimum value between two])
-    AC_DEFINE([MAX(x, y)], [(x > y) ? x : y], [Get the maximum value between two])
-  ])
+XINE_CHECK_MINMAX([
+    AC_DEFINE(HAVE_MAX_MACRO, 1, [Define to 1 if you have 'MAX' macro in sys/param.h])
+    AC_DEFINE(HAVE_MIN_MACRO, 1, [Define to 1 if you have 'MIN' macro in sys/param.h])
+  ],[])
 
 AC_LIBSOURCE([timedlock.c])
 ac_save_LIBS="$LIBS" LIBS="$LIBS $PTHREAD_LIBS"
@@ -1062,7 +1064,8 @@ else
     AC_DEFINE_UNQUOTED([XINE_FONTDIR],   ["$XINE_FONTPATH"],   [Define this to osd fonts dir location])
     AC_DEFINE_UNQUOTED([XINE_LOCALEDIR], ["$XINE_LOCALEPATH"], [Path where catalog files will be.])
 fi
-AC_DEFINE_UNQUOTED([XINE_REL_PLUGINDIR], ["$XINE_REL_PLUGINDIR"], [Define this to plugin directory relative to execution prefix])
+AC_DEFINE_UNQUOTED([XINE_REL_PLUGINDIR], ["$XINE_REL_PLUGINDIR"], [Define this to specific plugin directory relative to execution prefix])
+AC_DEFINE_UNQUOTED([XINE_REL_PLUGINROOT],["$XINE_REL_PLUGINROOT"],[Define this to general plugin directory relative to execution prefix])
 AC_DEFINE_UNQUOTED([XINE_REL_FONTDIR],   ["$XINE_REL_FONTDIR"],   [Define this to font directory relative to prefix])
 AC_DEFINE_UNQUOTED([XINE_REL_LOCALEDIR], ["$XINE_REL_LOCALEDIR"], [Define this to font directory relative to prefix])
 AC_SUBST(XINE_CONFIG_PREFIX)

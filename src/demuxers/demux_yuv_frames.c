@@ -70,8 +70,6 @@ static int demux_yuv_frames_get_status (demux_plugin_t *this_gen) {
 }
 
 static int switch_buf(demux_yuv_frames_t *this , buf_element_t *buf){
-  int result = 0;
-
   if (!buf)
     return 0;
 
@@ -88,8 +86,7 @@ static int switch_buf(demux_yuv_frames_t *this , buf_element_t *buf){
     case BUF_VIDEO_I420:
     case BUF_VIDEO_YUY2:
       this->video_fifo->put(this->video_fifo, buf);
-      result = 1;	/* 1, we still should read audio */
-      break;
+      return 1;	/* 1, we still should read audio */
     case BUF_AUDIO_LPCM_LE:
       if (!_x_stream_info_get(this->stream, XINE_STREAM_INFO_HAS_VIDEO))
         _x_demux_control_newpts(this->stream, buf->pts, 0);
@@ -100,7 +97,7 @@ static int switch_buf(demux_yuv_frames_t *this , buf_element_t *buf){
       buf->free_buffer(buf);
   }
 
-  return result;
+  return 0;
 }
 
 static int demux_yuv_frames_send_chunk (demux_plugin_t *this_gen){

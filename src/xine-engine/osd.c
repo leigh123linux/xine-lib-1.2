@@ -239,7 +239,7 @@ static osd_object_t *XINE_MALLOC osd_new_object (osd_renderer_t *this, int width
   
   osd->width = width;
   osd->height = height;
-  osd->area = xine_xmalloc( width * height );
+  osd->area = calloc(width, height);
   
   osd->x1 = width;
   osd->y1 = height;

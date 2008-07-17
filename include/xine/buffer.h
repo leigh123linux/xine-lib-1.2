@@ -39,6 +39,7 @@ extern "C" {
 #include "config.h"
 #endif
 
+#include <string.h>
 #include <stdio.h>
 #include <pthread.h>
 #include <sys/types.h>
@@ -193,6 +194,7 @@ extern "C" {
 #define BUF_VIDEO_THEORA_RAW	0x02640000
 #define BUF_VIDEO_VC1		0x02650000
 #define BUF_VIDEO_VMNC		0x02660000
+#define BUF_VIDEO_SNOW		0x02670000
 /*@}*/
 
 /**
@@ -265,6 +267,8 @@ extern "C" {
 #define BUF_AUDIO_FLVADPCM	0x033C0000
 #define BUF_AUDIO_WAVPACK	0x033D0000
 #define BUF_AUDIO_MP3ADU	0x033E0000
+#define BUF_AUDIO_AMR_NB	0x033F0000
+#define BUF_AUDIO_AMR_WB	0x03400000
 /*@}*/
 
 /**
@@ -707,6 +711,10 @@ void _x_bmiheader_le2me( xine_bmiheader *bih ) XINE_PROTECTED;
 
 /** Convert xine_waveformatex struct from little endian */
 void _x_waveformatex_le2me( xine_waveformatex *wavex ) XINE_PROTECTED;
+
+static inline _x_is_fourcc(void *ptr, void *tag) {
+  return memcmp(ptr, tag, 4) == 0;
+}
 
 #ifdef __cplusplus
 }

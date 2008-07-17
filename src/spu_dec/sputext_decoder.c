@@ -185,7 +185,7 @@ static inline char *get_font (sputext_class_t *class)
 }
 
 static void update_font_size (sputext_decoder_t *this, int force_update) {
-  static int sizes[SUBTITLE_SIZE_NUM] = { 16, 20, 24, 32, 48, 64 };
+  static const int sizes[SUBTITLE_SIZE_NUM] = { 16, 20, 24, 32, 48, 64 };
 
   if ((this->subtitle_size != this->class->subtitle_size) ||
       (this->vertical_offset != this->class->vertical_offset) ||
@@ -214,11 +214,9 @@ static void update_font_size (sputext_decoder_t *this, int force_update) {
 }
 
 static void update_output_size (sputext_decoder_t *this) {
-  int unscaled;
-
-  unscaled = this->class->use_unscaled &&
-             (this->stream->video_out->get_capabilities(this->stream->video_out) &
-              VO_CAP_UNSCALED_OVERLAY);
+  const int unscaled = this->class->use_unscaled &&
+    (this->stream->video_out->get_capabilities(this->stream->video_out) &
+     VO_CAP_UNSCALED_OVERLAY);
 
   if( unscaled != this->unscaled ) {
     this->unscaled = unscaled;
@@ -330,13 +328,8 @@ static int parse_utf8_size(const void *buf)
 
 static int ogm_render_line_internal(sputext_decoder_t *this, int x, int y, const char *text, int render)
 {
-  int i = 0, w, value;
-  char* end;
-  char letter[5]={0, 0, 0, 0, 0};
-  const char *encoding = this->buf_encoding ? this->buf_encoding
-                                            : this->class->src_encoding;
-  int shift, isutf8 = !strcmp(encoding, "utf-8");
-  size_t length = strlen (text);
+  const size_t length = strlen (text);
+  size_t i = 0;
 
   while (i <= length) {
 
@@ -380,6 +373,7 @@ static int ogm_render_line_internal(sputext_decoder_t *this, int x, int y, const
     if (text[i] == '{') {
 
       if (!strncmp("{\\", text+i, 2)) {
+	int value;
 
         if (sscanf(text+i, "{\\b%d}", &value) == 1) {
           if (render) {
@@ -396,7 +390,7 @@ static int ogm_render_line_internal(sputext_decoder_t *this, int x, int y, const
               this->current_osd_text = OSD_TEXT1;
           }
         }
-        end = strstr(text+i+2, "}");
+        char *const end = strstr(text+i+2, "}");
         if (end) {
           i=end-text+1;
           continue;
@@ -404,15 +398,20 @@ static int ogm_render_line_internal(sputext_decoder_t *this, int x, int y, const
       }
     }
 
-    shift = isutf8 ? parse_utf8_size (&text[i]) : 1;
+    char letter[5];
+    const char *const encoding = this->buf_encoding ? : this->class->src_encoding;
+    const int isutf8 = !strcmp(encoding, "utf-8");
+    const size_t shift = isutf8 ? parse_utf8_size (&text[i]) : 1;
     memcpy(letter,&text[i],shift);
     letter[shift]=0;
       
     if (render)
       this->renderer->render_text(this->osd, x, y, letter, this->current_osd_text);
-    this->renderer->get_text_size(this->osd, letter, &w, &value);
-    x=x+w;
-    i+=shift;
+
+    int w, dummy;
+    this->renderer->get_text_size(this->osd, letter, &w, &dummy);
+    x += w;
+    i += shift;
   }
 
   return x;
@@ -548,15 +547,9 @@ static int is_cjk_encoding(const char *enc) {
 
 static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t sub_end ) {
   
-  int line, y;
-  int font_size;
-  char *font;
-  const char *encoding = (this->buf_encoding)?this->buf_encoding:
-                                        this->class->src_encoding;
+  int y;
   int sub_x, sub_y, max_width;
   int alignment;
-  int rebuild_all;
-
 
   _x_assert(this->renderer != NULL);
   if ( ! this->renderer )
@@ -566,21 +559,20 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
 
   update_font_size(this, 0);
   
-  font = get_font (this->class);
+  const char *const font = get_font (this->class);
   if( strcmp(this->font, font) ) {
     strncpy(this->font, font, FILENAME_MAX);
     this->font[FILENAME_MAX - 1] = '\0';
     this->renderer->set_font (this->osd, font, this->font_size);
   }
 
-  font_size = this->font_size;
-  if (this->buf_encoding)
-    this->renderer->set_encoding(this->osd, this->buf_encoding);
-  else
-    this->renderer->set_encoding(this->osd, this->class->src_encoding);
+  int font_size = this->font_size;
 
+  const char *const encoding = this->buf_encoding ? : this->class->src_encoding;
+  this->renderer->set_encoding(this->osd, encoding);
 
-  rebuild_all = 0;
+  int rebuild_all = 0;
+  int line;
   for (line = 0; line < this->lines; line++) {
     int line_width = ogm_get_width(this, this->text[line]);
 
@@ -638,30 +630,27 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
 
   /* regenerate all the lines to find something that better fits */
   if (rebuild_all) {
-    int line, line_width;
-    char *stream, *current_cut, *best_cut;
-    char buf[SUB_BUFSIZE * SUB_MAX_TEXT];
+    char buf[SUB_BUFSIZE * SUB_MAX_TEXT] = { 0, };
 
-    buf[0] = 0;
+    int line;
     for(line = 0; line < this->lines; line++) {
-      size_t len = strlen(buf);
-      if (len) {
+      const size_t len = strlen(buf);
+      if (len)
         buf[len] = ' ';
-        len++;
-      }
-      strncpy(buf + len, this->text[line], SUB_BUFSIZE);
-      *(buf + len + SUB_BUFSIZE) = 0;
+
+      strncat(buf, this->text[line], SUB_BUFSIZE-len-1);
     }
 
-    stream = buf;
+    char *stream = buf;
     this->lines = 0;
 
+    char *current_cut, *best_cut;
     do {
 
       if (this->lines + 1 < SUB_MAX_TEXT) {
       
         /* find the longest sequence witch fit */
-        line_width = 0;
+        int line_width = 0;
         current_cut = stream;
         best_cut = NULL;
         while (line_width < max_width) {

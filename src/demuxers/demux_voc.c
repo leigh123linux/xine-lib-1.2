@@ -85,7 +85,7 @@ static int open_voc_file(demux_voc_t *this) {
     return 0;
 
   /* check the signature */
-  if (memcmp(header, VOC_SIGNATURE, strlen(VOC_SIGNATURE)) != 0)
+  if (memcmp(header, VOC_SIGNATURE, sizeof(VOC_SIGNATURE)-1) != 0)
     return 0;
 
   /* file is qualified */
@@ -106,7 +106,7 @@ static int open_voc_file(demux_voc_t *this) {
   }
 
   /* assemble 24-bit, little endian length */
-  this->data_size = preamble[1] | (preamble[2] << 8) | (preamble[3] << 16);
+  this->data_size = _X_LE_24(&preamble[1]);
 
   /* get the next 2 bytes (re-use preamble bytes) */
   if (this->input->read(this->input, preamble, 2) != 2)

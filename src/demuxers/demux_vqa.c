@@ -96,8 +96,8 @@ static int open_vqa_file(demux_vqa_t *this) {
     return 0;
 
   /* check for the VQA signatures */
-  if ((_X_BE_32(&scratch[0]) != FORM_TAG) ||
-      (_X_BE_32(&scratch[8]) != WVQA_TAG))
+  if (!_x_is_fourcc(&scratch[0], "FORM") ||
+      !_x_is_fourcc(&scratch[8], "WVQA") )
     return 0;
 
   /* file is qualified; skip to the start of the VQA header */

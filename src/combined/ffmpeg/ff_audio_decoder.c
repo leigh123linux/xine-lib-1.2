@@ -107,6 +107,8 @@ static const ff_codec_t ff_audio_lookup[] = {
   {BUF_AUDIO_SMACKER,    CODEC_ID_SMACKAUDIO,     "Smacker (ffmpeg)"},
   {BUF_AUDIO_FLVADPCM,   CODEC_ID_ADPCM_SWF,	  "Flash ADPCM (ffmpeg)"},
   {BUF_AUDIO_WAVPACK,	 CODEC_ID_WAVPACK,	  "WavPack (ffmpeg)"},
+  {BUF_AUDIO_AMR_NB,	 CODEC_ID_AMR_NB,	  "AMR narrow band (ffmpeg)"},
+  {BUF_AUDIO_AMR_WB,	 CODEC_ID_AMR_WB,	  "AMR wide band (ffmpeg)"},
 };
 
 
@@ -519,7 +521,8 @@ static const uint32_t supported_audio_types[] = {
   BUF_AUDIO_SMACKER,
   BUF_AUDIO_FLVADPCM,
   BUF_AUDIO_WAVPACK,
-  
+  BUF_AUDIO_AMR_NB,
+  BUF_AUDIO_AMR_WB,
   0
 };
 

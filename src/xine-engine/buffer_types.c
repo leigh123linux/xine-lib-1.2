@@ -781,6 +781,14 @@ static const video_db_t video_db[] = {
   BUF_VIDEO_VMNC,
   "VMware Screen Codec"
 },
+{
+  {
+    ME_FOURCC('S','N','O','W'),
+    0
+  },
+  BUF_VIDEO_SNOW,
+  "Snow"
+},
 { { 0 }, 0, "last entry" }
 };
 
@@ -1142,10 +1150,31 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    0
+    ME_FOURCC('W', 'V', 'P', 'K'),
   },
   BUF_AUDIO_WAVPACK,
   "Wavpack"
+},
+{
+  {
+    ME_FOURCC('s', 'a', 'm', 'r'),
+  },
+  BUF_AUDIO_AMR_NB,
+  "AMR narrow band"
+},
+{
+  {
+    ME_FOURCC('s', 'a', 'w', 'b'),
+  },
+  BUF_AUDIO_AMR_WB,
+  "AMR wide band"
+},
+{
+  {
+    ME_FOURCC('T', 'T', 'A', '1'),
+  },
+  BUF_AUDIO_TTA,
+  "True Audio Lossless"
 },
 { { 0 }, 0, "last entry" }
 };

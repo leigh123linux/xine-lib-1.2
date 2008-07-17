@@ -100,6 +100,13 @@
 #  define XINE_DIRECTORY_SEPARATOR_CHAR '/'
 #endif
 
+/* replacement of min/max macros */
+#ifndef HAVE_MAX_MACRO
+#define	MAX(a,b) (((a)>(b))?(a):(b))
+#endif
+#ifndef HAVE_MIN_MACRO
+#define	MIN(a,b) (((a)<(b))?(a):(b))
+#endif
 
 /* replacement of strndup */
 #ifndef HAVE_STRNDUP

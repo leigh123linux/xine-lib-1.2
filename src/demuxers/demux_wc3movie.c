@@ -357,9 +357,9 @@ static int open_mve_file(demux_mve_t *this) {
   if (_x_demux_read_header(this->input, header, WC3_HEADER_SIZE) != WC3_HEADER_SIZE)
     return 0;
 
-  if ((_X_BE_32(&header[0]) != FORM_TAG) ||
-      (_X_BE_32(&header[8]) != MOVE_TAG) ||
-      (_X_BE_32(&header[12]) != PC_TAG))
+  if ( !_x_is_fourcc(&header[0], "FORM") ||
+       !_x_is_fourcc(&header[8], "MOVE") ||
+       !_x_is_fourcc(&header[12], "_PC_") )
     return 0;
 
   /* file is qualified */
@@ -402,8 +402,8 @@ static int open_mve_file(demux_mve_t *this) {
       return 0;
     }
 
-    if ((_X_BE_32(&preamble[0]) != PALT_TAG) || 
-        (_X_BE_32(&preamble[4]) != PALETTE_CHUNK_SIZE)) {
+    if ( !_x_is_fourcc(&preamble[0], "PALT") ||
+	 (_X_BE_32(&preamble[4]) != PALETTE_CHUNK_SIZE)) {
       xine_log(this->stream->xine, XINE_LOG_MSG,
 	       _("demux_wc3movie: There was a problem while loading palette chunks\n"));
       free (this->palettes);

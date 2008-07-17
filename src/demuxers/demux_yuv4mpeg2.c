@@ -197,21 +197,13 @@ static int open_yuv4mpeg2_file(demux_yuv4mpeg2_t *this) {
   this->frame_pts_inc = (90000 * this->fps_d) / this->fps_n;  
   
   /* finally, look for the first frame */
-  while ((header_ptr - header) < (Y4M_HEADER_BYTES - 4)) {
-    if((header_ptr[0] == 'F') &&
-       (header_ptr[1] == 'R') &&
-       (header_ptr[2] == 'A') &&
-       (header_ptr[3] == 'M') &&
-       (header_ptr[4] == 'E')) {
-      this->data_start = header_ptr - header;
-      break;
-    } else 
-      header_ptr++;
-  }
-  
+  char *data_start_ptr = memmem(header_ptr, Y4M_HEADER_BYTES, "FRAME", 5);
+
   /* make sure the first frame was found */
-  if(!this->data_start)
+  if ( !data_start_ptr )
     return 0;
+
+  this->data_start = data_start_ptr - header;
   
   /* compute size of all frames */
   if (INPUT_IS_SEEKABLE(this->input)) {
@@ -228,29 +220,26 @@ static int open_yuv4mpeg2_file(demux_yuv4mpeg2_t *this) {
 static int demux_yuv4mpeg2_send_chunk(demux_plugin_t *this_gen) {
   demux_yuv4mpeg2_t *this = (demux_yuv4mpeg2_t *) this_gen;
 
-  buf_element_t *buf = NULL;
-  unsigned char preamble[Y4M_FRAME_SIGNATURE_SIZE];
-  int bytes_remaining;
-  off_t current_file_pos;
-  int64_t pts;
-
   /* validate that this is an actual frame boundary */
-  if (this->input->read(this->input, preamble, Y4M_FRAME_SIGNATURE_SIZE) !=
-    Y4M_FRAME_SIGNATURE_SIZE) {
-    this->status = DEMUX_FINISHED;
-    return this->status;
-  }
-  if (memcmp(preamble, Y4M_FRAME_SIGNATURE, Y4M_FRAME_SIGNATURE_SIZE) !=
-    0) {
-    this->status = DEMUX_FINISHED;
-    return this->status;
+  {
+    uint8_t preamble[Y4M_FRAME_SIGNATURE_SIZE];
+    if (this->input->read(this->input, preamble, Y4M_FRAME_SIGNATURE_SIZE) !=
+	Y4M_FRAME_SIGNATURE_SIZE) {
+      this->status = DEMUX_FINISHED;
+      return this->status;
+    }
+    if (memcmp(preamble, Y4M_FRAME_SIGNATURE, Y4M_FRAME_SIGNATURE_SIZE) !=
+	0) {
+      this->status = DEMUX_FINISHED;
+      return this->status;
+    }
   }
 
   /* load and dispatch the raw frame */
-  bytes_remaining = this->frame_size;
-  current_file_pos =
+  int bytes_remaining = this->frame_size;
+  off_t current_file_pos =
     this->input->get_current_pos(this->input) - this->data_start;
-  pts = current_file_pos;
+  int64_t pts = current_file_pos;
   pts /= (this->frame_size + Y4M_FRAME_SIGNATURE_SIZE);
   pts *= this->frame_pts_inc;
 
@@ -261,17 +250,14 @@ static int demux_yuv4mpeg2_send_chunk(demux_plugin_t *this_gen) {
   }
 
   while(bytes_remaining) {
-    buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
+    buf_element_t *buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
     buf->type = BUF_VIDEO_I420;
     if( this->data_size )
       buf->extra_info->input_normpos = (int)((double) current_file_pos * 65535 / this->data_size);
     buf->extra_info->input_time = pts / 90;
     buf->pts = pts;
 
-    if (bytes_remaining > buf->max_size)
-      buf->size = buf->max_size;
-    else
-      buf->size = bytes_remaining;
+    buf->size = MIN(bytes_remaining, buf->max_size);
     bytes_remaining -= buf->size;
 
     if (this->input->read(this->input, buf->content, buf->size) !=
@@ -291,7 +277,6 @@ static int demux_yuv4mpeg2_send_chunk(demux_plugin_t *this_gen) {
 
 static void demux_yuv4mpeg2_send_headers(demux_plugin_t *this_gen) {
   demux_yuv4mpeg2_t *this = (demux_yuv4mpeg2_t *) this_gen;
-  buf_element_t *buf;
 
   this->video_fifo  = this->stream->video_fifo;
   this->audio_fifo  = this->stream->audio_fifo;
@@ -310,7 +295,7 @@ static void demux_yuv4mpeg2_send_headers(demux_plugin_t *this_gen) {
   _x_demux_control_start(this->stream);
 
   /* send init info to decoders */
-  buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
+  buf_element_t *buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
   buf->decoder_flags = BUF_FLAG_HEADER|BUF_FLAG_STDHEADER|BUF_FLAG_FRAMERATE|
                        BUF_FLAG_FRAME_END;
   buf->decoder_info[0] = this->frame_pts_inc;  /* initial video step */
@@ -394,10 +379,7 @@ static int demux_yuv4mpeg2_get_optional_data(demux_plugin_t *this_gen,
 
 static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *stream,
                                     input_plugin_t *input) {
-
-  demux_yuv4mpeg2_t *this;
-
-  this         = calloc(1, sizeof(demux_yuv4mpeg2_t));
+  demux_yuv4mpeg2_t *this = calloc(1, sizeof(demux_yuv4mpeg2_t));
   this->stream = stream;
   this->input  = input;
 

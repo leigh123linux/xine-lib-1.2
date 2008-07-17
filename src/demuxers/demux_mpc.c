@@ -47,6 +47,7 @@
 #include <xine/buffer.h>
 #include "bswap.h"
 #include "group_audio.h"
+#include "id3.h"
 
 /* Note that the header is actually 25 bytes long, so we'd only read 28
  * (because of byte swapping we have to round up to nearest multiple of 4)
@@ -89,17 +90,13 @@ static int open_mpc_file(demux_mpc_t *this) {
   /* TODO: non-seeking version */
   if (INPUT_IS_SEEKABLE(this->input)) {
     /* Check for id3v2 tag */
-    if ((this->header[0] == 'I') ||
-        (this->header[1] == 'D') ||
-        (this->header[2] == '3')) {
+    if (id3v2_istag(this->header)) {
       
       lprintf("found id3v2 header\n");
   
       /* Read tag size */
-      id3v2_size = (this->header[6] << 21) +
-                   (this->header[7] << 14) +
-                   (this->header[8] <<  7) +
-                   this->header[9] + 10;
+      
+      id3v2_size = _X_BE_32_synchsafe(&this->header[6]) + 10;
      
       /* Add footer size if one is present */
       if (this->header[5] & 0x10)
@@ -118,9 +115,7 @@ static int open_mpc_file(demux_mpc_t *this) {
   }
   
   /* Validate signature - We only support SV 7.x at the moment */
-  if ((this->header[0] != 'M') ||
-      (this->header[1] != 'P') ||
-      (this->header[2] != '+') ||
+  if ( memcmp(this->header, "MP+", 3) != 0 ||
       ((this->header[3]&0x0f) != 0x07))
     return 0;
     
