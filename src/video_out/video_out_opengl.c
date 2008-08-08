@@ -1970,6 +1970,7 @@ static int opengl_verify_direct (x11_visual_t *vis) {
   if (!vis || !vis->display ||
       ! (root = RootWindow (vis->display, vis->screen))) {
       fprintf (stderr, "[videoout_opengl]: Don't have a root window to verify\n");
+      return 0;
   }
   if (! (visinfo = glXChooseVisual (vis->display, vis->screen, attribs)))
       return 0;
