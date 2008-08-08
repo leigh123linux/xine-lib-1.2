@@ -317,6 +317,8 @@ typedef struct {
                                       getIndex==0, but an operation has been
                                       performed that needs an index */
 
+#define AVI_ERR_BAD_SIZE    14     /* A chunk has an invalid size */
+
 #define AVI_HEADER_UNKNOWN  -1
 #define AVI_HEADER_AUDIO     0
 #define AVI_HEADER_VIDEO     1
@@ -780,7 +782,7 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
     lprintf("chunk: %c%c%c%c, size: %" PRId64 "\n",
             data[0], data[1], data[2], data[3], (int64_t)n);
     
-    if((strncasecmp(data,"LIST",4) == 0) && (n >= 4)) {
+    if (n >= 4 && strncasecmp(data,"LIST",4) == 0) {
       if( this->input->read(this->input, data,4) != 4 ) ERR_EXIT(AVI_ERR_READ);
       n -= 4;
       
@@ -835,6 +837,8 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
   /* Interpret the header list */
 
   for (i = 0; i < hdrl_len;) {
+    const int old_i = i;
+
     /* List tags are completly ignored */
     lprintf("tag: %c%c%c%c\n",
             hdrl_data[i], hdrl_data[i+1], hdrl_data[i+2], hdrl_data[i+3]);
@@ -1081,6 +1085,8 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
       lasttag = 0;
     }
     i += n;
+    if (i <= old_i)
+      ERR_EXIT(AVI_ERR_BAD_SIZE);
   }
 
   if( hdrl_data )

@@ -1,7 +1,7 @@
 xine-lib (1.1.15) 2008-??-??
   * Security fixes:
-    - Fix crashes with corrupted Ogg files. (CVE-2008-3231)
-    - Fix crashes with fuzzed Windows Media files.
+    - Fix crashes with various corrupted media files, including Ogg.
+      (CVE-2008-3231)
     - Delay V4L video frame preallocation until we know how large they'll be.
   * Use external ffmpeg by default.
   * V4L: Don't segfault if asked for an input that doesn't exist.
