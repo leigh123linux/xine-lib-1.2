@@ -2493,6 +2493,134 @@ static int cdda_plugin_open (input_plugin_t *this_gen ) {
   return 1;
 }
 
+static xine_mrl_t** cdda_class_get_dir(input_class_t *this_gen, 
+				       const char *filename, 
+				       int *num_files) {
+  cdda_input_class_t *this = (cdda_input_class_t *) this_gen;
+  cdda_input_plugin_t *ip;
+  cdrom_toc *toc;
+  char *base_mrl;
+  int len, frame;
+  const char * device;
+  int fd, i, err = -1;
+  int num_tracks;
+
+  if (filename && *filename) {
+    device = filename;
+    if (strncasecmp(device,"cdda:/",6) == 0) {
+      device += 6;
+      while ('/' == *device)
+	device++;
+      device--;
+    }
+  }
+  else {
+    device = this->cdda_device;
+  }
+  lprintf("cdda_class_get_dir for >%s<\n", device);
+
+  /* get the CD TOC */
+  toc = init_cdrom_toc();
+
+  fd = -1;
+
+  /* we create a new instance because getting a directory of a cd
+   * should not affect another cd that might be playing. */
+  ip = (cdda_input_plugin_t *)xine_xmalloc(sizeof(cdda_input_plugin_t));
+  ip->stream = NULL;
+  ip->fd = -1;
+  ip->net_fd = -1;
+
+#ifndef WIN32
+  if( strchr(device,':') ) {
+    fd = network_connect(ip->stream, device);
+    if( fd != -1 ) {
+      err = network_read_cdrom_toc(ip->stream, fd, toc);
+    }
+  }
+#endif
+
+  if (fd == -1) {
+    if (cdda_open(ip, device, toc, &fd) == -1) {
+      lprintf("cdda_class_get_dir: opening >%s< failed %s\n",
+              device, strerror(errno));
+      free(ip);
+      return NULL;
+    }
+
+#ifndef WIN32
+    err = read_cdrom_toc(fd, toc);
+#else
+    err = read_cdrom_toc(ip, toc);
+#endif /* WIN32 */
+  }
+
+#ifdef LOG
+  print_cdrom_toc(toc);
+#endif
+
+  cdda_close(ip);  
+  
+  if ( err < 0 ) {
+    free(ip);
+    return NULL;
+  }
+
+  num_tracks = toc->last_track - toc->first_track + 1;
+
+  /* this could be done in read_cdrom_toc, but it seems other code doesn't use it */
+  frame = toc->leadout_track.first_frame;
+  for ( i = num_tracks-1 ; i >= 0 ; i--) {
+    toc->toc_entries[i].total_frames = frame - toc->toc_entries[i].first_frame;
+    frame = toc->toc_entries[i].first_frame;
+  }
+
+  if (toc->ignore_last_track)
+    num_tracks--;
+
+  len = strlen(device) + 5;
+  base_mrl = xine_xmalloc(len+1);
+  sprintf(base_mrl, "cdda:%s", device);
+
+  /* allocate space for the mrls's if needed.  */
+  if (num_tracks+1 > this->mrls_allocated_entries) {
+    this->mrls = realloc(this->mrls, (num_tracks+1) * sizeof(xine_mrl_t*));
+  }
+  for (i = 0 ; i < num_tracks ; i++) {
+    if (i < this->mrls_allocated_entries) {
+      if (this->mrls[i]->origin) 
+	free(this->mrls[i]->origin);
+      if (this->mrls[i]->mrl)
+	free(this->mrls[i]->mrl);
+      if (this->mrls[i]->link) {
+	free(this->mrls[i]->link);
+	this->mrls[i]->link = NULL;
+      }
+    }
+    else {
+      this->mrls[i] = (xine_mrl_t *) xine_xmalloc(sizeof(xine_mrl_t));
+      this->mrls[i]->link = NULL;
+      this->mrls_allocated_entries++;
+    }
+    this->mrls[i]->origin = strdup(base_mrl);
+    this->mrls[i]->mrl = xine_xmalloc(len+4);
+    sprintf( this->mrls[i]->mrl, "%s/%d", base_mrl, i+toc->first_track);
+    this->mrls[i]->type = mrl_cda | mrl_file_blockdev;
+    this->mrls[i]->size = toc->toc_entries[i].total_frames * CD_RAW_FRAME_SIZE;
+  }
+  /* Clean up */
+  while(this->mrls_allocated_entries > num_tracks) {
+    MRL_ZERO(this->mrls[this->mrls_allocated_entries - 1]);
+    free(this->mrls[this->mrls_allocated_entries--]);
+  }
+  free_cdrom_toc(toc);
+  free(ip);
+
+  this->mrls[num_tracks] = NULL;
+  *num_files = num_tracks;
+  return this->mrls;
+}
+
 static char ** cdda_class_get_autoplay_list (input_class_t *this_gen, 
 					    int *num_files) {
 
@@ -2717,8 +2845,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->input_class.get_instance       = cdda_class_get_instance;
   this->input_class.get_identifier     = cdda_class_get_identifier;
   this->input_class.get_description    = cdda_class_get_description;
-  /* this->input_class.get_dir            = cdda_class_get_dir; */
-  this->input_class.get_dir            = NULL;
+  this->input_class.get_dir            = cdda_class_get_dir;
   this->input_class.get_autoplay_list  = cdda_class_get_autoplay_list;
   this->input_class.dispose            = cdda_class_dispose;
   this->input_class.eject_media        = cdda_class_eject_media;
