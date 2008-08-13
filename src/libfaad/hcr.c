@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2004 G.C. Pascutto, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -19,10 +19,13 @@
 ** Any non-GPL usage of this software or parts of this software is strictly
 ** forbidden.
 **
-** Commercial non-GPL licensing of this software is possible.
-** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+** The "appropriate copyright message" mentioned in section 2c of the GPLv2
+** must read: "Code from FAAD2 is copyright (c) Nero AG, www.nero.com"
 **
-** $Id: hcr.c,v 1.7 2005/10/29 23:57:06 tmmm Exp $
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
+**
+** $Id: hcr.c,v 1.24 2007/11/01 12:33:30 menno Exp $
 **/
 
 #include "common.h"
@@ -222,6 +225,7 @@ uint8_t reordered_spectral_data(NeAACDecHandle hDecoder, ic_stream *ics,
 
     uint16_t sp_offset[8];
     uint16_t g, i, sortloop, set, bitsread;
+    uint16_t bitsleft, codewordsleft;
     uint8_t w_idx, sfb, this_CB, last_CB, this_sec_CB; 
     
     const uint16_t nshort = hDecoder->frameLength/8;
@@ -236,7 +240,7 @@ uint8_t reordered_spectral_data(NeAACDecHandle hDecoder, ic_stream *ics,
     /* since there is spectral data, at least one codeword has nonzero length */
     if (ics->length_of_longest_codeword == 0)
         return 10;
-    
+
     if (sp_data_len < ics->length_of_longest_codeword)
         return 10; 
 
@@ -272,7 +276,7 @@ uint8_t reordered_spectral_data(NeAACDecHandle hDecoder, ic_stream *ics,
         for (sfb = 0; sfb < ics->max_sfb; sfb++)
         {
             /* loop over all in this sfb, 4 lines per loop */
-            for (w_idx = 0; 4*w_idx < (ics->swb_offset[sfb+1] - ics->swb_offset[sfb]); w_idx++)
+            for (w_idx = 0; 4*w_idx < (min(ics->swb_offset[sfb+1], ics->swb_offset_max) - ics->swb_offset[sfb]); w_idx++)
             {
                 for(g = 0; g < ics->num_window_groups; g++)
                 {
@@ -404,6 +408,25 @@ uint8_t reordered_spectral_data(NeAACDecHandle hDecoder, ic_stream *ics,
             rewrev_bits(&segment[i]);
     }
 
+#if 0 // Seems to give false errors
+    bitsleft = 0;    
+        
+    for (i = 0; i < numberOfSegments && !bitsleft; i++)
+        bitsleft += segment[i].len;
+
+    if (bitsleft) return 10;
+
+    codewordsleft = 0;
+
+    for (i = 0; (i < numberOfCodewords - numberOfSegments) && (!codewordsleft); i++)    
+        if (!codeword[i].decoded)            
+                codewordsleft++; 
+
+    if (codewordsleft) return 10;
+#endif
+
+
     return 0;
+
 }
 #endif

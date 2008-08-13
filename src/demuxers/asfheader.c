@@ -545,12 +545,12 @@ static int asf_header_parse_metadata(asf_header_t *header_pub, uint8_t *buffer, 
     if (data_len >= 4)
     {
       char *name = asf_reader_get_string (&reader, name_len, iconv_cd);
-      if (!strcmp (name, "AspectRatioX"))
+      if (name && !strcmp (name, "AspectRatioX"))
       {
         asf_reader_get_32 (&reader, &header->pub.aspect_ratios[stream_id].x);
         data_len -= 4;
       }
-      else if (!strcmp (name, "AspectRatioY"))
+      else if (name && !strcmp (name, "AspectRatioY"))
       {
         asf_reader_get_32 (&reader, &header->pub.aspect_ratios[stream_id].y);
         data_len -= 4;

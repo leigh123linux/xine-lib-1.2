@@ -1959,7 +1959,27 @@ dnl FAAD build can be optional
 dnl ---------------------------------------------
 
 AC_ARG_ENABLE([faad], AS_HELP_STRING([--disable-faad], [do not build FAAD decoder]))
+AC_ARG_WITH(external-libfaad, AS_HELP_STRING([--with-external-libfaad], [use external libfaad (recommended)]),
+            [external_libfaad="$withval"], [external_libfaad="yes"])
+
+have_faad=no
+if test "x$enable_faad" = "xno"; then
+  AC_MSG_RESULT([faad support disabled])
+elif test "x$with_external_libfaad" != "xno"; then
+  AC_CHECK_LIB([faad], [NeAACDecInit], [have_faad=yes])
+  if test "x$have_faad" = xyes; then 
+    AC_CHECK_HEADERS([faad.h], , [have_faad=no])
+    if test "x$have_faad" != "xyes"; then
+      AC_MSG_ERROR([Unable to find libfaad])
+    fi
+    AC_DEFINE([EXTERNAL_LIBFAAD], [1], [Define if external libfaad is used])
+  fi
+else
+  AC_MSG_RESULT([Use included libfaad])
+fi
+
 AM_CONDITIONAL(BUILD_FAAD, test "x$enable_faad" != "xno")
+AM_CONDITIONAL(EXTERNAL_LIBFAAD, test "x$have_faad" = "xyes")
 
 dnl ---------------------------------------------
 dnl Optional and external libdts

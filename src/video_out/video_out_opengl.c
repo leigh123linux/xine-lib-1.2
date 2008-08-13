@@ -1953,6 +1953,52 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
  * class functions
  */
 
+static int opengl_verify_direct (x11_visual_t *vis) {
+  int attribs[] = {
+    GLX_RGBA,
+    GLX_RED_SIZE, 1,
+    GLX_GREEN_SIZE, 1,
+    GLX_BLUE_SIZE, 1,
+    None
+  };
+  Window        root, win;
+  XVisualInfo  *visinfo;
+  GLXContext    ctx;
+  XSetWindowAttributes xattr;
+  int           ret = 0;
+
+  if (!vis || !vis->display ||
+      ! (root = RootWindow (vis->display, vis->screen))) {
+      fprintf (stderr, "[videoout_opengl]: Don't have a root window to verify\n");
+      return 0;
+  }
+  if (! (visinfo = glXChooseVisual (vis->display, vis->screen, attribs)))
+      return 0;
+  if (! (ctx = glXCreateContext (vis->display, visinfo, NULL, 1)))
+      return 0;
+  memset (&xattr, 0, sizeof (xattr));
+  xattr.colormap = XCreateColormap(vis->display, root, visinfo->visual, AllocNone);
+  xattr.event_mask = StructureNotifyMask | ExposureMask;
+  if ( (win = XCreateWindow (vis->display, root, 0, 0, 1, 1, 0, visinfo->depth,
+			     InputOutput, visinfo->visual,
+			     CWBackPixel | CWBorderPixel | CWColormap | CWEventMask,
+			     &xattr))) {
+      if (glXMakeCurrent (vis->display, win, ctx)) {
+	  const char *renderer = (const char *) glGetString(GL_RENDERER);
+	  if (glXIsDirect (vis->display, ctx) &&
+	      ! strstr (renderer, "Software") &&
+	      ! strstr (renderer, "Indirect"))
+	      ret = 1;
+	  glXMakeCurrent (vis->display, None, NULL);
+      }
+      XDestroyWindow (vis->display, win);
+  }
+  glXDestroyContext (vis->display, ctx);
+  XFreeColormap     (vis->display, xattr.colormap);
+
+  return ret;
+}
+
 static char* opengl_get_identifier (video_driver_class_t *this_gen) {
   return "opengl";
 }
@@ -1968,7 +2014,18 @@ static void opengl_dispose_class (video_driver_class_t *this_gen) {
 }
 
 static void *opengl_init_class (xine_t *xine, void *visual_gen) {
-  opengl_class_t	       *this = (opengl_class_t *) calloc(1, sizeof(opengl_class_t));
+
+  opengl_class_t *this;
+
+  xprintf (xine, XINE_VERBOSITY_LOG,
+	   "video_out_opengl: Testing for hardware accelerated direct rendering visual\n");
+  if (! opengl_verify_direct ((x11_visual_t *)visual_gen)) {
+      xprintf (xine, XINE_VERBOSITY_LOG,
+	       "video_out_opengl: Didn't find any\n");
+      return NULL;
+  }
+
+  this = (opengl_class_t *) calloc (1, sizeof(opengl_class_t));
 
   this->driver_class.open_plugin     = opengl_open_plugin;
   this->driver_class.get_identifier  = opengl_get_identifier;

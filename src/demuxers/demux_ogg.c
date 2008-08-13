@@ -1357,7 +1357,7 @@ static void send_header (demux_ogg_t *this) {
   this->ignore_keyframes = 0;
 
   while (!done) {
-    if (!read_ogg_packet(this)) {
+    if (!read_ogg_packet(this) || !this->og.header || !this->og.body) {
       return;
     }
     /* now we've got at least one new page */
@@ -1478,6 +1478,12 @@ static int demux_ogg_send_chunk (demux_plugin_t *this_gen) {
   llprintf(DEBUG_PACKETS, "send package...\n");
 
   if (!read_ogg_packet(this)) {
+    this->status = DEMUX_FINISHED;
+    lprintf ("EOF\n");
+    return this->status;
+  }
+
+  if (!this->og.header || !this->og.body) {
     this->status = DEMUX_FINISHED;
     lprintf ("EOF\n");
     return this->status;

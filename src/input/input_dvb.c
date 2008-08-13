@@ -1664,21 +1664,22 @@ static void load_epg_data(dvb_input_plugin_t *this)
 }
 
 /* Prints text to an area, tries to cut the lines in between words. */
-static void render_text_area(osd_renderer_t* renderer, osd_object_t* osd, char* text,
+static void render_text_area(osd_renderer_t* renderer, osd_object_t* osd, const char* text,
 			     int x, int y, int row_space, 
 			     int max_x, int max_y, int* height, int color_base) {
 
   /* The position of the text to be printed. */
-  char* cursor = text;
+  const char* cursor = text;
+  const char *const text_end = text + strlen(text);
 
   /* The line to be printed next. */
   char text_line[512];
   int text_width, text_height;
   size_t old_line_length, line_cursor;
-  char* bound, *old_bound;
+  const char* bound, *old_bound;
   
   *height = 0;
-  while (cursor < text + strlen(text)) {
+  while (cursor < text_end) {
     bound = cursor;
     line_cursor = 0;
     text_line[0] = '\0';
@@ -1735,7 +1736,7 @@ static void render_text_area(osd_renderer_t* renderer, osd_object_t* osd, char* 
       }
   
       /* OK, it did fit, let's try to fit some more. */
-    } while (bound < text + strlen(text));
+    } while (bound < text_end);
     
     if (y + text_height + row_space > max_y) {
 	break;

@@ -42,7 +42,7 @@ AC_DEFUN([CC_CHECK_CFLAGS_SILENT], [
      CFLAGS="$ac_save_CFLAGS"
     ])
 
-  AS_IF([test x$]AS_TR_SH([cc_cv_cflags_$1])[ = xyes],
+  AS_IF([eval test x$]AS_TR_SH([cc_cv_cflags_$1])[ = xyes],
     [$2], [$3])
 ])
 
@@ -52,7 +52,7 @@ AC_DEFUN([CC_CHECK_CFLAGS], [
     CC_CHECK_CFLAGS_SILENT([$1]) dnl Don't execute actions here!
   )
 
-  AS_IF([test x$]AS_TR_SH([cc_cv_cflags_$1])[ = xyes],
+  AS_IF([eval test x$]AS_TR_SH([cc_cv_cflags_$1])[ = xyes],
     [$2], [$3])
 ])
 
@@ -67,7 +67,7 @@ AC_DEFUN([CC_CHECK_LDFLAGS], [
      LDFLAGS="$ac_save_LDFLAGS"
     ])
 
-  AS_IF([test x$]AS_TR_SH([cc_cv_ldflags_$1])[ = xyes],
+  AS_IF([eval test x$]AS_TR_SH([cc_cv_ldflags_$1])[ = xyes],
     [$2], [$3])
 ])
 
@@ -100,7 +100,7 @@ AC_DEFUN([CC_CHECK_ATTRIBUTE], [
      CFLAGS="$ac_save_CFLAGS"
     ])
 
-  AS_IF([test x$]AS_TR_SH([cc_cv_attribute_$1])[ = xyes],
+  AS_IF([eval test x$]AS_TR_SH([cc_cv_attribute_$1])[ = xyes],
     [AC_DEFINE(
        AS_TR_CPP([SUPPORT_ATTRIBUTE_$1]), 1,
          [Define this if the compiler supports __attribute__(( ifelse([$2], , [$1], [$2]) ))]

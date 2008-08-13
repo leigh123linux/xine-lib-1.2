@@ -549,6 +549,12 @@ static int set_frequency(v4l_input_plugin_t *this, unsigned long frequency)
     fd = this->radio_fd;
   
   if (frequency != 0) {
+    /* FIXME: Don't assume tuner 0 ? */
+    this->tuner = 0;
+    ret = ioctl(fd, VIDIOCSTUNER, &this->tuner);
+    lprintf("(%d) Response on set tuner to %d\n", ret, this->tuner);
+    this->video_tuner.tuner = this->tuner;
+
     if (this->video_tuner.flags & VIDEO_TUNER_LOW) {
       this->calc_frequency = frequency * 16;
     } else {
@@ -683,16 +689,6 @@ static int search_by_channel(v4l_input_plugin_t *this, char *input_source)
         ret = ioctl(fd, VIDIOCSCHAN, &this->input);
     
     lprintf("(%d) Set channel to %d\n", ret, this->input);
-    
-    /* FIXME: Don't assume tuner 0 ? */
-    
-    this->tuner = 0;
-    
-    ret = ioctl(fd, VIDIOCSTUNER, &this->tuner);
-    
-    lprintf("(%d) Response on set tuner to %d\n", ret, this->tuner);
-    
-    this->video_tuner.tuner = this->tuner;
   } else {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
             "input_v4l: Not setting video source. No source given\n");
@@ -892,10 +888,6 @@ static int open_video_capture_device(v4l_input_plugin_t *this)
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 1);
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 1);
   
-  /* Pre-allocate some frames for audio and video so it doesn't have to be 
-   * done during capture */
-  allocate_frames(this, 1);
-  
   /* Unmute audio off video capture device */
   unmute_audio(this);
   
@@ -1004,7 +996,11 @@ static int open_video_capture_device(v4l_input_plugin_t *this)
   
   xine_set_param(this->stream, XINE_PARAM_VO_ZOOM_X, 103);
   xine_set_param(this->stream, XINE_PARAM_VO_ZOOM_Y, 103);
-  
+
+  /* Pre-allocate some frames for audio and video so it doesn't have to be 
+   * done during capture */
+  allocate_frames(this, 1);
+
   /* If we made it here, everything went ok */ 
   this->audio_only = 0;
   if (tuner_found)

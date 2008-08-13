@@ -131,7 +131,7 @@ uint32_t _x_stream_info_get_public(xine_stream_t *stream, int info) {
  * at the end of the string
  */
 static void meta_info_chomp(char *str) {
-  size_t i, len;
+  ssize_t i, len;
 
   len = strlen(str);
   if (!len)

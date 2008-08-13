@@ -20,7 +20,7 @@ typedef char Motif[CONV_MOTIF_W][CONV_MOTIF_W];
 
 #define NB_THETA 512
 
-#define MAX 2.0f
+//#define MAX 2.0f
 
 typedef struct _CONV_DATA{
   PluginParam light;

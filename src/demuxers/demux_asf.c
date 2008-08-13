@@ -70,6 +70,7 @@
 #define ASF_MODE_HTTP_REF          2
 #define ASF_MODE_ASF_REF           3
 #define ASF_MODE_ENCRYPTED_CONTENT 4
+#define ASF_MODE_NO_CONTENT        5
 
 typedef struct {
   int                 seq;
@@ -442,6 +443,17 @@ static int asf_read_header (demux_asf_t *this) {
   for (i = 0; i < this->asf_header->stream_count; i++) {
     asf_stream_t *asf_stream = this->asf_header->streams[i];
     asf_demux_stream_t *demux_stream = &this->streams[i];
+
+    if (!asf_stream) {
+      if (this->mode != ASF_MODE_NO_CONTENT) {
+	xine_log(this->stream->xine, XINE_LOG_MSG,
+		 _("demux_asf: warning: A stream appears to be missing.\n"));
+	_x_message(this->stream, XINE_MSG_READ_ERROR,
+		   _("Media stream missing?"), NULL);
+	this->mode = ASF_MODE_NO_CONTENT;
+      }
+      return 0;
+    }
 
     if (asf_stream->encrypted_flag) {
       if (this->mode != ASF_MODE_ENCRYPTED_CONTENT) {
@@ -1679,6 +1691,7 @@ static int demux_asf_send_chunk (demux_plugin_t *this_gen) {
       return demux_asf_parse_asf_references(this);
 
     case ASF_MODE_ENCRYPTED_CONTENT:
+    case ASF_MODE_NO_CONTENT:
       this->status = DEMUX_FINISHED;
       return this->status;
 

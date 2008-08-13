@@ -60,7 +60,8 @@ static char *b64_decode(const char *in, char *out, int *size)
   k=0;
   
   /*CONSTANTCONDITION*/
-  for (j=0; j<strlen(in); j+=4)
+  const size_t in_len = strlen(in);
+  for (j=0; j<in_len; j+=4)
   {
     char a[4], b[4];
 
