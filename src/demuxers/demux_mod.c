@@ -134,7 +134,11 @@ static int open_mod_file(demux_mod_t *this) {
   /* Get size and create buffer */
   this->filesize = this->input->get_length(this->input);
   this->buffer = (char *)malloc(this->filesize);
-  
+  if(!this->buffer) {
+    xine_log(this->stream->xine, XINE_LOG_PLUGIN, "modplug - allocation failure\n");
+    return 0;
+  }
+
   /* Seek to beginning */
   this->input->seek(this->input, 0, SEEK_SET);
   

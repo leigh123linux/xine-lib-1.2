@@ -365,6 +365,10 @@ static void real_parse_audio_specific_data (demux_real_t *this,
   stream->frame_num_bytes = 0;
   stream->sub_packet_cnt = 0;
 
+  if (!stream->frame_buffer)
+    xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
+	     "demux_real: failed to allocate the audio frame buffer!\n");
+
   xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
            "demux_real: buf type 0x%08x frame size %zu block align %d\n", stream->buf_type,
 	   stream->frame_size, stream->block_align);
@@ -1372,6 +1376,11 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
       int spc = this->audio_stream->sub_packet_cnt;
       int x;
       off_t pos;
+
+      if (!buffer) {
+        this->status = DEMUX_FINISHED;
+        return this->status;
+      }
 
       switch (this->audio_stream->buf_type) {
       case BUF_AUDIO_28_8:
