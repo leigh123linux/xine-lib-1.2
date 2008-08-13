@@ -67,7 +67,7 @@ typedef struct {
   uint32_t             cfs;
   uint16_t             w, h;
   int                  frame_len;
-  int                  frame_size;
+  size_t               frame_size;
   uint8_t             *frame_buffer;
 
   unsigned char       *header;

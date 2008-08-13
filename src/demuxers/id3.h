@@ -103,22 +103,22 @@ typedef struct {
   uint32_t  id;
   uint8_t   revision;
   uint8_t   flags;
-  uint32_t  size;
+  size_t    size;
 } id3v2_header_t;
 
 typedef struct {
   uint32_t  id;
-  uint32_t  size;
+  size_t    size;
 } id3v22_frame_header_t;
 
 typedef struct {
   uint32_t  id;
-  uint32_t  size;
+  size_t    size;
   uint16_t  flags;
 } id3v23_frame_header_t;
 
 typedef struct {
-  uint32_t  size;
+  size_t    size;
   uint16_t  flags;
   uint32_t  padding_size;
   uint32_t  crc;
@@ -128,12 +128,12 @@ typedef id3v2_header_t id3v24_footer_t;
 
 typedef struct {
   uint32_t  id;
-  uint32_t  size;
+  size_t    size;
   uint16_t  flags;
 } id3v24_frame_header_t;
 
 typedef struct {
-  uint32_t  size;
+  size_t    size;
   uint8_t   flags;
   uint32_t  crc;
   uint8_t   restrictions;

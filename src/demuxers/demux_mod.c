@@ -73,7 +73,7 @@ typedef struct {
   char                *title;
   char                *artist;
   char                *copyright;
-  off_t                filesize;
+  size_t               filesize;
   
   char                *buffer;
 

@@ -90,11 +90,11 @@ typedef struct {
   uint32_t   start_time;
   uint32_t   preroll;
   uint32_t   duration;
-  char       stream_name_size;
+  size_t     stream_name_size;
   char      *stream_name;
-  char       mime_type_size;
+  size_t     mime_type_size;
   char      *mime_type;
-  uint32_t   type_specific_len;
+  size_t     type_specific_len;
   char      *type_specific_data;
 } mdpr_t;
 
@@ -115,7 +115,7 @@ typedef struct {
   mdpr_t              *mdpr;
   int                  sps, cfs, w, h;
   int                  block_align;
-  int                  frame_size;
+  size_t               frame_size;
   uint8_t             *frame_buffer;
   uint32_t             frame_num_bytes;
   uint32_t             sub_packet_cnt;
@@ -366,7 +366,7 @@ static void real_parse_audio_specific_data (demux_real_t *this,
   stream->sub_packet_cnt = 0;
 
   xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-           "demux_real: buf type 0x%08x frame size %dblock align %d\n", stream->buf_type,
+           "demux_real: buf type 0x%08x frame size %zu block align %d\n", stream->buf_type,
 	   stream->frame_size, stream->block_align);
 
 }
@@ -1370,7 +1370,8 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
       int cfs = this->audio_stream->cfs;
       int w = this->audio_stream->w;
       int spc = this->audio_stream->sub_packet_cnt;
-      int x, pos;
+      int x;
+      off_t pos;
 
       switch (this->audio_stream->buf_type) {
       case BUF_AUDIO_28_8:
