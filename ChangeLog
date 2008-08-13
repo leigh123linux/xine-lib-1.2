@@ -2,6 +2,7 @@ xine-lib (1.1.15) 2008-??-??
   * Security fixes:
     - Fix crashes with various corrupted media files, including Ogg.
       (CVE-2008-3231)
+      This includes a libfaad update from the 1.2 branch.
     - Delay V4L video frame preallocation until we know how large they'll be.
   * Use external ffmpeg by default.
   * V4L: Don't segfault if asked for an input that doesn't exist.
