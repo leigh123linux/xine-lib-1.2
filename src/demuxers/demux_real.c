@@ -1376,6 +1376,7 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
       int spc = this->audio_stream->sub_packet_cnt;
       int x;
       off_t pos;
+      const size_t fs = this->audio_stream->frame_size;
 
       if (!buffer) {
         this->status = DEMUX_FINISHED;
@@ -1386,7 +1387,7 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
       case BUF_AUDIO_28_8:
 	for (x = 0; x < sph / 2; x++) {
 	  pos = x * 2 * w + spc * cfs;
-	  if(this->input->read(this->input, buffer + pos, cfs) < cfs) {
+	  if(pos + cfs > fs || this->input->read(this->input, buffer + pos, cfs) < cfs) {
 	    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
 		    "demux_real: failed to read audio chunk\n");
 	    
@@ -1399,7 +1400,7 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
       case BUF_AUDIO_ATRK:
 	for (x = 0; x < w / sps; x++) {
 	  pos = sps * (sph * x + ((sph + 1) / 2) * (spc & 1) + (spc >> 1));
-	  if(this->input->read(this->input, buffer + pos, sps) < sps) {
+	  if(pos + sps > fs || this->input->read(this->input, buffer + pos, sps) < sps) {
 	    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
 		    "demux_real: failed to read audio chunk\n");
 	    
@@ -1410,7 +1411,7 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
 	break;
       case BUF_AUDIO_SIPRO:
 	pos = spc * w;
-	if(this->input->read(this->input, buffer + pos, w) < w) {
+	if(pos + w > fs || this->input->read(this->input, buffer + pos, w) < w) {
 	  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
 		  "demux_real: failed to read audio chunk\n");
 	    
