@@ -10,8 +10,10 @@ xineplug_LTLIBRARIES = $(faad_module)
 
 VPATH = @srcdir@:@srcdir@/codebook:
 
-xineplug_decode_faad_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS) -fno-strict-aliasing
-xineplug_decode_faad_la_SOURCES = \
+if EXTERNAL_LIBFAAD
+libfaad_sources =
+else
+libfaad_sources = \
 	bits.c \
 	cfft.c \
 	common.c \
@@ -49,11 +51,21 @@ xineplug_decode_faad_la_SOURCES = \
 	ssr_fb.c \
 	ssr_ipqf.c \
 	syntax.c \
-	tns.c \
+	tns.c
+endif
+
+xineplug_decode_faad_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS) -fno-strict-aliasing
+xineplug_decode_faad_la_SOURCES = \
+	$(libfaad_sources) \
 	xine_faad_decoder.c
 
 xineplug_decode_faad_la_LDFLAGS = $(xineplug_ldflags)
+if EXTERNAL_LIBFAAD
+xineplug_decode_faad_la_LIBADD = $(XINE_LIB) -lfaad -lm $(LTLIBINTL)
+else
 xineplug_decode_faad_la_LIBADD = $(XINE_LIB) -lm $(LTLIBINTL)
+endif
+
 
 noinst_HEADERS = \
 	analysis.h \
@@ -104,7 +116,6 @@ noinst_HEADERS = \
 	structs.h \
 	syntax.h \
 	tns.h \
-	neaacdec.h \
 	codebook/hcb.h \
 	codebook/hcb_1.h \
 	codebook/hcb_2.h \
