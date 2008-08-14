@@ -90,11 +90,11 @@ typedef struct {
   uint32_t   start_time;
   uint32_t   preroll;
   uint32_t   duration;
-  char       stream_name_size;
+  size_t     stream_name_size;
   char      *stream_name;
-  char       mime_type_size;
+  size_t     mime_type_size;
   char      *mime_type;
-  uint32_t   type_specific_len;
+  size_t     type_specific_len;
   char      *type_specific_data;
 } mdpr_t;
 
@@ -115,7 +115,7 @@ typedef struct {
   mdpr_t              *mdpr;
   int                  sps, cfs, w, h;
   int                  block_align;
-  int                  frame_size;
+  size_t               frame_size;
   uint8_t             *frame_buffer;
   uint32_t             frame_num_bytes;
   uint32_t             sub_packet_cnt;
@@ -359,8 +359,12 @@ static void real_parse_audio_specific_data (demux_real_t *this,
   stream->frame_num_bytes = 0;
   stream->sub_packet_cnt = 0;
 
+  if (!stream->frame_buffer)
+    xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
+	     "demux_real: failed to allocate the audio frame buffer!\n");
+
   xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-           "demux_real: buf type 0x%08x frame size %dblock align %d\n", stream->buf_type,
+           "demux_real: buf type 0x%08x frame size %zu block align %d\n", stream->buf_type,
 	   stream->frame_size, stream->block_align);
 
 }
@@ -1370,13 +1374,20 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
       int cfs = this->audio_stream->cfs;
       int w = this->audio_stream->w;
       int spc = this->audio_stream->sub_packet_cnt;
-      int x, pos;
+      int x;
+      off_t pos;
+      const size_t fs = this->audio_stream->frame_size;
+
+      if (!buffer) {
+        this->status = DEMUX_FINISHED;
+        return this->status;
+      }
 
       switch (this->audio_stream->buf_type) {
       case BUF_AUDIO_28_8:
 	for (x = 0; x < sph / 2; x++) {
 	  pos = x * 2 * w + spc * cfs;
-	  if(this->input->read(this->input, buffer + pos, cfs) < cfs) {
+	  if(pos + cfs > fs || this->input->read(this->input, buffer + pos, cfs) < cfs) {
 	    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
 		    "demux_real: failed to read audio chunk\n");
 	    
@@ -1389,7 +1400,7 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
       case BUF_AUDIO_ATRK:
 	for (x = 0; x < w / sps; x++) {
 	  pos = sps * (sph * x + ((sph + 1) / 2) * (spc & 1) + (spc >> 1));
-	  if(this->input->read(this->input, buffer + pos, sps) < sps) {
+	  if(pos + sps > fs || this->input->read(this->input, buffer + pos, sps) < sps) {
 	    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
 		    "demux_real: failed to read audio chunk\n");
 	    
@@ -1400,7 +1411,7 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
 	break;
       case BUF_AUDIO_SIPRO:
 	pos = spc * w;
-	if(this->input->read(this->input, buffer + pos, w) < w) {
+	if(pos + w > fs || this->input->read(this->input, buffer + pos, w) < w) {
 	  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
 		  "demux_real: failed to read audio chunk\n");
 	    

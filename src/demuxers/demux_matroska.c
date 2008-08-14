@@ -106,7 +106,7 @@ typedef struct {
 
   /* block */
   uint8_t             *block_data;
-  int                  block_data_size;
+  size_t               block_data_size;
 
   /* current tracks */
   matroska_track_t    *video_track;   /* to remove */
@@ -875,7 +875,7 @@ static void init_codec_vobsub(demux_matroska_t *this,
 
 static void handle_realvideo (demux_plugin_t *this_gen, matroska_track_t *track,
                               int decoder_flags,
-                              uint8_t *data, int data_len,
+                              uint8_t *data, size_t data_len,
                               int64_t data_pts, int data_duration,
                               int input_normpos, int input_time) {
   demux_matroska_t *this = (demux_matroska_t *) this_gen;
@@ -924,7 +924,7 @@ static void handle_realvideo (demux_plugin_t *this_gen, matroska_track_t *track,
 
 static void handle_sub_ssa (demux_plugin_t *this_gen, matroska_track_t *track,
                             int decoder_flags,
-                            uint8_t *data, int data_len,
+                            uint8_t *data, size_t data_len,
                             int64_t data_pts, int data_duration,
                             int input_normpos, int input_time) {
   buf_element_t *buf;
@@ -999,7 +999,7 @@ static void handle_sub_ssa (demux_plugin_t *this_gen, matroska_track_t *track,
 
 static void handle_sub_utf8 (demux_plugin_t *this_gen, matroska_track_t *track,
                              int decoder_flags,
-                             uint8_t *data, int data_len,
+                             uint8_t *data, size_t data_len,
                              int64_t data_pts, int data_duration,
                              int input_normpos, int input_time) {
   demux_matroska_t *this = (demux_matroska_t *) this_gen;
@@ -1046,7 +1046,7 @@ static void handle_sub_utf8 (demux_plugin_t *this_gen, matroska_track_t *track,
  */
 static void handle_vobsub (demux_plugin_t *this_gen, matroska_track_t *track,
                            int decoder_flags,
-                           uint8_t *data, int data_len,
+                           uint8_t *data, size_t data_len,
                            int64_t data_pts, int data_duration,
                            int input_normpos, int input_time) {
   demux_matroska_t *this = (demux_matroska_t *) this_gen;
@@ -1735,7 +1735,7 @@ static int parse_tags(demux_matroska_t *this) {
   return 1;
 }
 
-static void alloc_block_data (demux_matroska_t *this, int len) {
+static void alloc_block_data (demux_matroska_t *this, size_t len) {
   /* memory management */
   if (this->block_data_size < len) {
     this->block_data = realloc(this->block_data, len);
@@ -1804,7 +1804,7 @@ static int find_track_by_id(demux_matroska_t *this, int track_num,
 }
 
 
-static int read_block_data (demux_matroska_t *this, int len) {
+static int read_block_data (demux_matroska_t *this, size_t len) {
   alloc_block_data(this, len);
 
   /* block datas */
@@ -1827,7 +1827,7 @@ static int parse_int16(uint8_t *data) {
   return value;
 }
 
-static int parse_block (demux_matroska_t *this, uint64_t block_size,
+static int parse_block (demux_matroska_t *this, size_t block_size,
                         uint64_t cluster_timecode, uint64_t block_duration,
                         int normpos, int is_key) {
   matroska_track_t *track;
@@ -1893,7 +1893,7 @@ static int parse_block (demux_matroska_t *this, uint64_t block_size,
   }
 
   if (lacing == MATROSKA_NO_LACING) {
-    int block_size_left;
+    size_t block_size_left;
     lprintf("no lacing\n");
 
     block_size_left = (this->block_data + block_size) - data;
@@ -1913,9 +1913,9 @@ static int parse_block (demux_matroska_t *this, uint64_t block_size,
     }
   } else {
 
-    int block_size_left;
+    size_t block_size_left;
     uint8_t lace_num;
-    int frame[MAX_FRAMES];
+    size_t frame[MAX_FRAMES];
     int i;
 
     /* number of laced frames */
@@ -2056,7 +2056,7 @@ static int parse_block_group(demux_matroska_t *this,
   off_t block_pos         = 0;
   off_t file_len          = 0;
   int normpos             = 0;
-  int block_len           = 0;
+  size_t block_len        = 0;
   int is_key              = 1;
 
   while (next_level == 3) {

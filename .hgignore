@@ -18,6 +18,7 @@ Makefile
 Makefile.in
 
 ABOUT-NLS
+INSTALL
 aclocal.m4
 compile
 configure

@@ -116,7 +116,9 @@ static mng_bool mymng_process_header(mng_handle mngh, mng_uint32 width, mng_uint
   this->bih.biHeight = height;
   this->left_edge = (this->bih.biWidth - width) / 2;
 
-  this->image = malloc(this->bih.biWidth * height * 3);
+  this->image = malloc((mng_size_t)this->bih.biWidth * (mng_size_t)height * 3);
+  if (!this->image)
+    return MNG_FALSE;
 
   mng_set_canvasstyle(mngh, MNG_CANVAS_RGB8);
 

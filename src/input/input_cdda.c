@@ -1454,7 +1454,7 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
 	    if (sscanf(buffer, "DTITLE=%s", &buf[0]) == 1) {
 	      char *pt, *artist, *title;
 
-	      pt = strrchr(buffer, '=');
+	      pt = strchr(buffer, '=');
 	      if (pt) {
 		pt++;
 
@@ -1494,7 +1494,7 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
 	    else if (sscanf(buffer, "TTITLE%d=%s", &tnum, &buf[0]) == 2) {
 	      char *pt;
 
-	      pt = strrchr(buffer, '=');
+	      pt = strchr(buffer, '=');
 	      if (pt)
 		pt++;
 	      if (this->cddb.track[tnum].title == NULL)
@@ -2438,15 +2438,31 @@ static int cdda_plugin_open (input_plugin_t *this_gen ) {
   }
 
   if(this->cddb.track[this->track].title) {
-    lprintf("Track %d Title: %s\n", this->track+1, this->cddb.track[this->track].title);
+    /* Check for track 'titles' of the form <artist> / <title>. */ 
+    char *pt;
+    pt = strstr(this->cddb.track[this->track].title, " / ");
+    if (pt != NULL) {
+      char *track_artist;
+      track_artist = strdup(this->cddb.track[this->track].title);
+      track_artist[pt - this->cddb.track[this->track].title] = 0;
+      lprintf("Track %d Artist: %s\n", this->track+1, track_artist);
 
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_TITLE, this->cddb.track[this->track].title);
-  }
+      _x_meta_info_set_utf8(this->stream, XINE_META_INFO_ARTIST, track_artist);
+      free(track_artist);
+      pt += 3;
+    }
+    else {
+      if(this->cddb.disc_artist) {
+	lprintf("Disc Artist: %s\n", this->cddb.disc_artist);
+	
+	_x_meta_info_set_utf8(this->stream, XINE_META_INFO_ARTIST, this->cddb.disc_artist);
+      }
   
-  if(this->cddb.disc_artist) {
-    lprintf("Disc Artist: %s\n", this->cddb.disc_artist);
+      pt = this->cddb.track[this->track].title;
+    }
+    lprintf("Track %d Title: %s\n", this->track+1, pt);
 
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_ARTIST, this->cddb.disc_artist);
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_TITLE, pt);
   }
   
   if(this->cddb.disc_category) {
