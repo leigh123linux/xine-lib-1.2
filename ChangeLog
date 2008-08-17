@@ -1,3 +1,5 @@
+xine-lib (1.1.16) 2008-??-??
+
 xine-lib (1.1.15) 2008-08-14
   * Security fixes:
     - Fix crashes with various corrupted media files, including Ogg.
