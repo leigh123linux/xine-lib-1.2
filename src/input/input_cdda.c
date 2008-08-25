@@ -136,7 +136,7 @@ typedef struct {
     char              *disc_category;
 
     int                fd;
-    unsigned long      disc_id;
+    uint32_t           disc_id;
 
     int                disc_length;
     trackinfo_t       *track;
@@ -1902,7 +1902,7 @@ static unsigned int _cdda_cddb_sum(int n) {
   }
   return ret;
 }
-static unsigned long _cdda_calc_cddb_id(cdda_input_plugin_t *this) {
+static uint32_t _cdda_calc_cddb_id(cdda_input_plugin_t *this) {
   int i, tsum = 0;
   
   if(this == NULL || (this->cddb.num_tracks <= 0))
@@ -1959,7 +1959,7 @@ static void _cdda_cdindex(cdda_input_plugin_t *this, cdrom_toc *toc) {
 /*
  * return cbbd disc id.
  */
-static unsigned long _cdda_get_cddb_id(cdda_input_plugin_t *this) {
+static uint32_t _cdda_get_cddb_id(cdda_input_plugin_t *this) {
 
   if(this == NULL || (this->cddb.num_tracks <= 0))
     return 0;

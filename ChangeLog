@@ -1,5 +1,6 @@
 xine-lib (1.1.16) 2008-??-??
   * Fix reported compilation failures (with C++ programs).
+  * Fix CDDB access in 64-bit builds.
 
 xine-lib (1.1.15) 2008-08-14
   * Security fixes:
