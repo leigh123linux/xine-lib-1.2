@@ -322,7 +322,7 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 
     if (!this->output_open) {
       if (!this->audio_bits || !this->audio_sample_rate || !this->audio_channels) {
-        avcodec_decode_audio (this->context,
+        avcodec_decode_audio2 (this->context,
                               (int16_t *)this->decode_buffer,
                               &decode_buffer_size,
                               &this->buf[0],
