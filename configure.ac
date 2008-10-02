@@ -728,7 +728,7 @@ if test "x$no_x" = "x" && test "x$enable_xvmc" != "xno"; then
 
 AC_ARG_WITH(xxmc-path, AS_HELP_STRING([--with-xxmc-path=path], [where libXvMC libraries for the
 	xxmc plugin are  installed. Defalts to the default X library path.]),
-	xxmc_path="$withval", xxmc_path="$x_libraries")
+	xxmc_path="$withval", xxmc_path="${x_libraries:-/usr/lib}")
 AC_ARG_WITH(xxmc-lib, AS_HELP_STRING([--with-xxmc-lib=XXXX], [The name of the XvMC library 
 	libXXXX.so for the xxmc plugin.]),xxmc_stub="$withval", 
 	xxmc_stub="XvMCW")
@@ -819,7 +819,7 @@ if test "x$no_x" = "x" && test "x$enable_xvmc" != "xno"; then
 
 AC_ARG_WITH(xvmc-path, AS_HELP_STRING([--with-xvmc-path=path], [where libXvMC libraries for the
 	xvmc plugin are  installed. Defalts to the default X library path.]),
-	xvmc_path="$withval", xvmc_path="$x_libraries")
+	xvmc_path="$withval", xvmc_path="${x_libraries:-/usr/lib}")
 AC_ARG_WITH(xvmc-lib, AS_HELP_STRING([--with-xvmc-lib=XXXX], [The name of the XvMC library 
 	libXXXX.so for the xvmc plugin.]),xvmc_stub="$withval", 
 	xvmc_stub="XvMCW")
