@@ -5,7 +5,7 @@ xine-lib-1.2 (1.2.0~hg-0) experimental; urgency=low
 
  -- Darren Salt <linux@youmustbejoking.demon.co.uk>  Tue, 17 Apr 2007 16:50:37 +0100
 
-xine-lib (1.1.14~hg-0) unstable; urgency=low
+xine-lib (1.1.16~hg-0) unstable; urgency=low
 
   [ Darren Salt ]
   * Hg snapshot.
@@ -14,7 +14,7 @@ xine-lib (1.1.14~hg-0) unstable; urgency=low
   * remove gs from build-dependencies
   * change the maintainer field to xine-devel@lists.sourceforge.net.
 
- -- Darren Salt <linux@youmustbejoking.demon.co.uk>  Thu, 26 Jun 2008 20:32:42 +0100
+ -- Darren Salt <linux@youmustbejoking.demon.co.uk>  Fri, 15 Aug 2008 18:24:52 +0100
 
 xine-lib (1.1.5~cvs-0) unstable; urgency=low
 

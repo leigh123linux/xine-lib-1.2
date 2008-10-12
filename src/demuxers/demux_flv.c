@@ -319,7 +319,7 @@ static int parse_flv_var(demux_flv_t *this,
         if (!this->index || this->num_indices != num) {
           if (this->index)
             free(this->index);
-          this->index = xine_xcalloc(num, sizeof(flv_index_entry_t));
+          this->index = calloc(num, sizeof(flv_index_entry_t));
           if (!this->index)
             return 0;
           this->num_indices = num;
@@ -337,7 +337,7 @@ static int parse_flv_var(demux_flv_t *this,
         if (!this->index || this->num_indices != num) {
           if (this->index)
             free(this->index);
-          this->index = xine_xcalloc(num, sizeof(flv_index_entry_t));
+          this->index = calloc(num, sizeof(flv_index_entry_t));
           if (!this->index)
             return 0;
           this->num_indices = num;

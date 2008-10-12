@@ -68,6 +68,12 @@ xine-lib (1.1.90) (Unreleased)
   * Report more video output capabilities via (port)->get_capabilities():
     colour controls, zooming, colour keying.
 
+xine-lib (1.1.16) 2008-??-??
+  * Fix reported compilation failures (with C++ programs).
+  * Fix CDDB access in 64-bit builds.
+  * Fix seeking FLV clips that don't specify the movie length in the headers.
+  * Support H.264 and AAC streams within FLV.
+
 xine-lib (1.1.15) 2008-08-14
   * Security fixes:
     - Fix crashes with various corrupted media files, including Ogg.
