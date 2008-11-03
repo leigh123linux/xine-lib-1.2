@@ -125,6 +125,8 @@ struct osd_ft2context_s {
 static void osd_free_ft2 (osd_object_t *osd)
 {
   if( osd->ft2 ) {
+    if ( osd->ft2->face )
+      FT_Done_Face (osd->ft2->face);
     if ( osd->ft2->library )
       FT_Done_FreeType(osd->ft2->library);
     free( osd->ft2 );
@@ -827,6 +829,11 @@ static int osd_set_font_freetype2( osd_object_t *osd, const char *fontname, int 
       osd->ft2 = NULL;
       return 0;
     }
+  }
+
+  if (osd->ft2->face) {
+      FT_Done_Face (osd->ft2->face);
+      osd->ft2->face = NULL;
   }
    
 #ifdef HAVE_FONTCONFIG
