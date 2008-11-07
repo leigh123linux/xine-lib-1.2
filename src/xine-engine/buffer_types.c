@@ -659,6 +659,8 @@ static const video_db_t video_db[] = {
     ME_FOURCC('a','v','c','1'),
     ME_FOURCC('h','2','6','4'),
     ME_FOURCC('H','2','6','4'),
+    ME_FOURCC('x','2','6','4'),
+    ME_FOURCC('X','2','6','4'),
     0
   },
   BUF_VIDEO_H264,
