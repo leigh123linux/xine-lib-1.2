@@ -1140,15 +1140,23 @@ void _x_scan_plugins (xine_t *this) {
   load_cached_catalog (this);
 
   if ((pluginpath = getenv("XINE_PLUGIN_PATH")) != NULL && *pluginpath) {
-    char *p = pluginpath - 1;
-    while (p[1])
+    char *p = pluginpath;
+    while (p && p[0])
     {
-      char *dir, *q = p;
-      p = strchr (p + 1, XINE_PATH_SEPARATOR_CHAR);
+      size_t len;
+      char *dir, *q;
+
+      q = p;
+      p = strchr (p, XINE_PATH_SEPARATOR_CHAR);
+      if (p) {
+        p++;
+        len = p - q;
+      } else
+        len = strlen(q);
       if (q[0] == '~' && q[1] == '/')
-	asprintf (&dir, "%s%.*s", homedir, (int)(p - q - 1), q + 1);
+	asprintf (&dir, "%s%.*s", homedir, (int)(len - 1), q + 1);
       else
-	dir = strndup (q, p - q);
+	dir = strndup (q, len);
       push_if_dir (plugindirs, dir); /* store or free it */
     }
   } else {
@@ -1393,7 +1401,6 @@ demux_plugin_t *_x_find_demux_plugin_last_probe(xine_stream_t *stream, const cha
   i = 0;
   while (methods[i] != -1 && !plugin) {
     int list_id, list_size;
-    const char *mime_type;
 
     stream->content_detection_method = methods[i];
 
@@ -2461,7 +2468,6 @@ static char *_x_concatenate_with_string(char **strings, size_t count, char *join
   char *const result = malloc(final_length+1); /* Better be safe */
   char *str = result;
 
-  size_t pos = 0;
   for(i = 0; i < count; i++, strings++) {
     if ( *strings ) {
       int offset = snprintf(str, final_length, "%s%s", *strings, joining);
