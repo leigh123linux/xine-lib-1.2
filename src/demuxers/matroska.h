@@ -235,7 +235,7 @@ struct matroska_track_s {
   void                   (*handle_content) (demux_plugin_t *this_gen,
                                             matroska_track_t *track,
 		                            int decoder_flags,
-                                            uint8_t *data, int data_len,
+                                            uint8_t *data, size_t data_len,
                                             int64_t data_pts, int data_duration,
                                             int input_normpos, int input_time);
 };
