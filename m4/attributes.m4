@@ -99,6 +99,31 @@ AC_DEFUN([CC_CHECK_LDFLAGS], [
     [$2], [$3])
 ])
 
+dnl define the LDFLAGS_NOUNDEFINED variable with the correct value for
+dnl the current linker to avoid undefined references in a shared object.
+AC_DEFUN([CC_NOUNDEFINED], [
+  dnl We check $host for which systems to enable this for.
+  AC_REQUIRE([AC_CANONICAL_HOST])
+
+  case $host in
+     dnl FreeBSD (et al.) does not complete linking for shared objects when pthreads
+     dnl are requested, as different implementations are present; to avoid problems
+     dnl use -Wl,-z,defs only for those platform not behaving this way.
+     *-freebsd*) ;;
+     *)
+        dnl First of all check for the --no-undefined variant of GNU ld. This allows
+        dnl for a much more readable commandline, so that people can understand what
+        dnl it does without going to look for what the heck -z defs does.
+   	for possible_flags in "-Wl,--no-undefined" "-Wl,-z,defs"; do
+          CC_CHECK_LDFLAGS([$possible_flags], [LDFLAGS_NOUNDEFINED="$possible_flags"])
+	  break
+        done
+	;;
+  esac
+
+  AC_SUBST([LDFLAGS_NOUNDEFINED])
+])
+
 dnl Check for a -Werror flag or equivalent. -Werror is the GCC
 dnl and ICC flag that tells the compiler to treat all the warnings
 dnl as fatal. We usually need this option to make sure that some

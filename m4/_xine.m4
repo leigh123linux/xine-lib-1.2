@@ -157,21 +157,6 @@ AC_DEFUN([AC_TRY_CFLAGS],
         ifelse([$3],[],[:],[$3])
     fi])
 
-dnl AC_TRY_LDFLAGS (CFLAGS, [ACTION-IF-WORKS], [ACTION-IF-FAILS])
-dnl check if $CC supports a given set of ldflags
-AC_DEFUN([AC_TRY_LDFLAGS],
-    [AC_MSG_CHECKING([if $CC supports $1 flags])
-    SAVE_LDFLAGS="$LDFLAGS"
-    LDFLAGS="$1"
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[ac_cv_try_ldflags_ok=yes],[ac_cv_try_ldflags_ok=no])
-    LDFLAGS="$SAVE_LDFLAGS"
-    AC_MSG_RESULT([$ac_cv_try_ldflags_ok])
-    if test x"$ac_cv_try_ldflags_ok" = x"yes"; then
-        ifelse([$2],[],[:],[$2])
-    else
-        ifelse([$3],[],[:],[$3])
-    fi])
-
 dnl AC_CHECK_GENERATE_INTTYPES_H (INCLUDE-DIRECTORY)
 dnl generate a default inttypes.h if the header file does not exist already
 AC_DEFUN([AC_CHECK_GENERATE_INTTYPES],

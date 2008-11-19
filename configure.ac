@@ -2634,17 +2634,7 @@ CC_CHECK_CFLAGS_APPEND([-Wstrict-aliasing=2 -Wstrict-aliasing], [break;])
 dnl This *has* to stay at the end as it can break some autoconf tests.
 CC_CHECK_CFLAGS_APPEND([-Werror=implicit-function-declaration -Werror-implicit-function-declaration], [break;])
 
-case $host in
-     dnl FreeBSD (et al.) does not complete linking for shared objects when pthreads
-     dnl are requested, as different implementations are present; to avoid problems
-     dnl use -Wl,-z,defs only for those platform not behaving this way.
-     *-freebsd*) ;;
-     *)
-	AC_TRY_LDFLAGS([-Wl,-z,defs], [NOUNDEF="-Wl,-z,defs"])
-	;;
-esac
-AC_SUBST([NOUNDEF])
-
+CC_NOUNDEFINED
 
 dnl signal FreeBSD have also FreeBSD based kernel.
 dnl 
