@@ -2620,20 +2620,19 @@ AM_CONDITIONAL([BUILD_DMX_IMAGE], [test "x$have_imagemagick" = "xyes" -o "x$no_g
 dnl Important warnings we _don't_ want to skip
 dnl Don't put these under conditional for optimisations, because these
 dnl need always to be enabled.
-CC_CHECK_CFLAGS([-Wformat=2], [wformat="-Wformat=2"],
-  [CC_CHECK_CFLAGS([-Wformat], [wformat="-Wformat"])])
+CC_CHECK_CFLAGS_APPEND([-Wformat=2 -Wformat],
+  [CC_CHECK_CFLAGS_APPEND([-Wno-format-zero-length])
+   break;
+  ])
 
-test "x$wformat" != "x" && \
-   CC_CHECK_CFLAGS([-Wno-format-zero-length], [wformat="$wformat -Wno-format-zero-length"])
+CC_CHECK_CFLAGS_APPEND([-Wmissing-format-attribute])
 
-CC_CHECK_CFLAGS([-Wmissing-format-attribute], [wformat="$wformat -Wmissing-format-attribute"])
-warnflags="$warnflags $wformat"
+dnl check for strict aliasing problem, get the highest between =2 and
+dnl normal.
+CC_CHECK_CFLAGS_APPEND([-Wstrict-aliasing=2 -Wstrict-aliasing], [break;])
 
 dnl This *has* to stay at the end as it can break some autoconf tests.
-CC_CHECK_CFLAGS([-Werror-implicit-function-declaration], [warnflags="$warnflags -Werror-implicit-function-declaration"])
-
-CC_CHECK_CFLAGS([-Wstrict-aliasing=2], [warnflags="$warnflags -Wstrict-aliasing=2"],
-  [CC_CHECK_CFLAGS([-Wstrict-aliasing], [warnflags="$warnflags -Wstrict-aliasing"])])
+CC_CHECK_CFLAGS_APPEND([-Werror=implicit-function-declaration -Werror-implicit-function-declaration], [break;])
 
 case $host in
      dnl FreeBSD (et al.) does not complete linking for shared objects when pthreads
@@ -2665,7 +2664,7 @@ AH_BOTTOM([
 
 
 dnl Common cflags for all platforms
-CFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE \$(MULTIPASS_CFLAGS) $warnflags $CFLAGS"
+CFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE \$(MULTIPASS_CFLAGS) $CFLAGS"
 DEBUG_CFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE $DEBUG_CFLAGS"
 
 if test "x$enable_debug" = "xyes"; then
