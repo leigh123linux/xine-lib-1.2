@@ -1157,8 +1157,35 @@ static int win32_gui_data_exchange( vo_driver_t * vo_driver, int data_type, void
 
   switch( data_type )
     {
+
     case GUI_WIN32_MOVED_OR_RESIZED:
       UpdateRect( win32_driver->win32_visual );
+      DisplayFrame( win32_driver );
+      break;
+
+    case XINE_GUI_SEND_DRAWABLE_CHANGED:
+	{
+      HRESULT result;
+	  HWND newWndHnd = (HWND) data;
+	  
+	  /* set cooperative level */
+	  result = IDirectDraw_SetCooperativeLevel( win32_driver->ddobj, newWndHnd, DDSCL_NORMAL );
+      if( result != DD_OK )
+      {
+        Error( 0, "SetCooperativeLevel : error 0x%lx", result );
+        return 0;
+      }
+      /* associate our clipper with new window */
+	  result = IDirectDrawClipper_SetHWnd( win32_driver->ddclipper, 0, newWndHnd );
+      if( result != DD_OK )
+      {
+        Error( 0, "ddclipper->SetHWnd : error 0x%lx", result );
+        return 0;
+      }
+      /* store our objects in our visual struct */
+	  win32_driver->win32_visual->WndHnd = newWndHnd;
+	  /* update video area and redraw current frame */
+      UdateRect( win32_driver->win32_visual );
       DisplayFrame( win32_driver );
       break;
     }
