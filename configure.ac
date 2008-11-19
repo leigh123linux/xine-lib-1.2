@@ -2617,22 +2617,27 @@ _AM_DEPENDENCIES([OBJC])
 
 AM_CONDITIONAL([BUILD_DMX_IMAGE], [test "x$have_imagemagick" = "xyes" -o "x$no_gdkpixbuf" != "xyes"])
 
-dnl Important warnings we _don't_ want to skip
-dnl Don't put these under conditional for optimisations, because these
-dnl need always to be enabled.
+dnl We check for warnings here rather than with optimisations since we
+dnl want them to be _always_ enabled, to make sure the code is sane
+dnl enough.
+
+CC_CHECK_CFLAGS_APPEND([-Wall -Wchar-subscripts dnl
+			-Wnested-externs -Wcast-align dnl
+			-Wmissing-declarations -Wmissing-prototypes dnl
+			-Wmissing-format-attribute])
+
 CC_CHECK_CFLAGS_APPEND([-Wformat=2 -Wformat],
   [CC_CHECK_CFLAGS_APPEND([-Wno-format-zero-length])
    break;
   ])
-
-CC_CHECK_CFLAGS_APPEND([-Wmissing-format-attribute])
 
 dnl check for strict aliasing problem, get the highest between =2 and
 dnl normal.
 CC_CHECK_CFLAGS_APPEND([-Wstrict-aliasing=2 -Wstrict-aliasing], [break;])
 
 dnl This *has* to stay at the end as it can break some autoconf tests.
-CC_CHECK_CFLAGS_APPEND([-Werror=implicit-function-declaration -Werror-implicit-function-declaration], [break;])
+CC_CHECK_CFLAGS_APPEND([-Werror=implicit-function-declaration dnl
+                        -Werror-implicit-function-declaration], [break;])
 
 CC_NOUNDEFINED
 

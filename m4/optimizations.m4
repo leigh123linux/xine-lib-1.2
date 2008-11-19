@@ -43,11 +43,6 @@ AC_DEFUN([AC_OPTIMIZATIONS], [
         CC_CHECK_CFLAGS([-fbranch-probabilities], PASS2_CFLAGS="-fbranch-probabilities $PASS2_CFLAGS",)
         AC_SUBST(PASS1_CFLAGS)
         AC_SUBST(PASS2_CFLAGS)
-        dnl
-        dnl Warnings
-        dnl
-        CFLAGS="-Wchar-subscripts -Wmissing-declarations -Wmissing-prototypes $CFLAGS"
-        CFLAGS="-Wnested-externs -Wcast-align $CFLAGS"
         dnl some combinations of gcc+glibc produce useless warnings on memset
         dnl when compiling with -Wpointer-arith, so we check for this first
         AC_MSG_CHECKING(for sane -Wpointer-arith)
@@ -67,9 +62,6 @@ AC_DEFUN([AC_OPTIMIZATIONS], [
         AC_MSG_RESULT(${newGCC:-no - assuming bugginess in -finline-functions})
         test "$newGCC" = yes || INLINE_FUNCTIONS=-fno-inline-functions
     fi
-
-    dnl Flags not supported by all *cc* variants
-    CC_CHECK_CFLAGS([-Wall], wall="-Wall", wall="")
 
     CFLAGS="$wall ${CFLAGS}"
     DEBUG_CFLAGS="$wall ${DEBUG_CFLAGS}"
