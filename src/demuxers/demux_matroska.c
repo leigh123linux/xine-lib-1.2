@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2007 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -676,7 +676,11 @@ static void init_codec_aac(demux_matroska_t *this, matroska_track_t *track) {
 
   /* Create a DecoderSpecificInfo for initialising libfaad */
   sr_index = aac_get_sr_index(atrack->sampling_freq);
-  if (!strncmp (&track->codec_id[12], "MAIN", 4))
+  /* newer specification with appended CodecPrivate */
+  if (strlen(track->codec_id) <= 12)
+    profile = 3;
+  /* older specification */
+  else if (!strncmp (&track->codec_id[12], "MAIN", 4))
     profile = 0;
   else if (!strncmp (&track->codec_id[12], "LC", 2))
     profile = 1;

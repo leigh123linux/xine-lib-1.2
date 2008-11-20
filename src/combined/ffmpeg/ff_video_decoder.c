@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2007 the xine project
+ * Copyright (C) 2001-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -1530,10 +1530,10 @@ static void ff_dispose (video_decoder_t *this_gen) {
     free_yuv_planes(&this->yuv);
   
   if( this->context )
-    free( this->context );
+    av_free( this->context );
 
   if( this->av_frame )
-    free( this->av_frame );
+    av_free( this->av_frame );
   
   if (this->buf)
     free(this->buf);
