@@ -1093,7 +1093,7 @@ static int xv_gui_data_exchange (vo_driver_t *this_gen,
   return 0;
 }
 
-static void xv_store_port_attribute(xv_driver_t *this, char *name) {
+static void xv_store_port_attribute(xv_driver_t *this, const char *name) {
   Atom                 atom;
   xv_portattribute_t  *attr;
   

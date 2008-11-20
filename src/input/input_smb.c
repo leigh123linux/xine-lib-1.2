@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004 the xine project
+ * Copyright (C) 2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -51,7 +51,7 @@ typedef struct {
 	xine_stream_t *stream;
 
 	/* File */
-	char *mrl;
+	const char *mrl;
 	int fd;
 } smb_input_t;
 
@@ -138,7 +138,7 @@ smb_plugin_get_length (input_plugin_t *this_gen)
 	return st.st_size;
 }
 
-static char*
+static const char*
 smb_plugin_get_mrl (input_plugin_t *this_gen)
 {
 	smb_input_t *this = (smb_input_t *) this_gen;
@@ -150,7 +150,7 @@ static uint32_t smb_plugin_get_blocksize (input_plugin_t *this_gen) {
   return 0;
 }
 
-static char
+static const char
 *smb_class_get_description (input_class_t *this_gen)
 {
 	return _("CIFS/SMB input plugin based on libsmbclient");
@@ -280,7 +280,7 @@ static xine_mrl_t **smb_class_get_dir (input_class_t *this_gen,
 				dir_files[num_dir_files].link   = NULL;
 				dir_files[num_dir_files].type   = mrl_file | mrl_file_directory;
 				dir_files[num_dir_files].origin = strdup("smb:/");
-				asprintf(*(dir_files[num_dir_files].mrl), "%s/%s", "smb:/", pdirent->name);
+				asprintf(&(dir_files[num_dir_files].mrl), "%s/%s", "smb:/", pdirent->name);
 				dir_files[num_dir_files].size   = pdirent->dirlen;
 				num_dir_files ++;
 			} else if (pdirent->smbc_type == SMBC_FILE_SHARE){
@@ -423,7 +423,7 @@ smb_plugin_dispose (input_plugin_t *this_gen )
 	if (this->fd>=0)
 		smbc_close(this->fd);
 	if (this->mrl)
-		free (this->mrl);
+		free ((char *)this->mrl);
 	free (this);
 }
 

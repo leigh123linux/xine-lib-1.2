@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2004 the xine project
+ * Copyright (C) 2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -515,7 +515,6 @@ static void process_object_data_segment (dvb_spu_decoder_t * this)
   dvbsub->i += 2;
   const uint16_t segment_length = _X_BE_16(&dvbsub->buf[dvbsub->i]);
   dvbsub->i += 2;
-  const int j = dvbsub->i + segment_length;
 
   const uint16_t object_id = _X_BE_16(&dvbsub->buf[dvbsub->i]);
   dvbsub->i += 2;
@@ -779,7 +778,6 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
 
   this->dvbsub->buf = this->pes_pkt;
 
-  int PES_header_data_length = 0;
   this->dvbsub->i = 0;
 
   const uint8_t data_identifier = this->dvbsub->buf[this->dvbsub->i++];
@@ -875,6 +873,7 @@ static void spudec_dispose (spu_decoder_t * this_gen)
 static spu_decoder_t *dvb_spu_class_open_plugin (spu_decoder_class_t * class_gen, xine_stream_t * stream)
 {
   dvb_spu_decoder_t *this = calloc(1, sizeof (dvb_spu_decoder_t));
+  dvb_spu_class_t *class = (dvb_spu_class_t *)class_gen;
 
   this->spu_decoder.decode_data = spudec_decode_data;
   this->spu_decoder.reset = spudec_reset;
@@ -883,7 +882,7 @@ static spu_decoder_t *dvb_spu_class_open_plugin (spu_decoder_class_t * class_gen
   this->spu_decoder.get_interact_info = NULL;
   this->spu_decoder.set_button = NULL;
 
-  this->class = class_gen;
+  this->class = class;
   this->stream = stream;
 
   this->pes_pkt = calloc(65, 1024);

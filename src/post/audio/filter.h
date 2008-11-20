@@ -55,7 +55,7 @@ extern int design_pfir(unsigned int n, unsigned int k, _ftype_t* w, _ftype_t** p
 extern void prewarp(_ftype_t* a, _ftype_t fc, _ftype_t fs);
 void bilinear(_ftype_t* a, _ftype_t* b, _ftype_t* k, _ftype_t fs, _ftype_t *coef);
 
-extern int szxform(_ftype_t* a, _ftype_t* b, _ftype_t Q, _ftype_t fc, _ftype_t fs, _ftype_t *k, _ftype_t *coef);
+extern int szxform(const _ftype_t* a, const _ftype_t* b, _ftype_t Q, _ftype_t fc, _ftype_t fs, _ftype_t *k, _ftype_t *coef);
 
 /* Add new data to circular queue designed to be used with a FIR
  * filter. xq is the circular queue, in pointing at the new sample, xi

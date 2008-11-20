@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2000-2006 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -939,7 +939,6 @@ static void vcd_filelist_dispose(vcd_input_class_t *this) {
 static void vcd_class_dispose (input_class_t *this_gen) {
 
   vcd_input_class_t  *this = (vcd_input_class_t *) this_gen;
-  int                 i;
   config_values_t *config = this->xine->config;
 
   config->unregister_callback(config, "media.vcd.device");
@@ -1068,7 +1067,6 @@ static void *init_class (xine_t *xine, void *data) {
 
   vcd_input_class_t  *this;
   config_values_t    *config = xine->config;
-  int                 i;
 
   this = calloc(1, sizeof (vcd_input_class_t));
 

@@ -1,5 +1,5 @@
  /*
- * Copyright (C) 2001 the xine project
+ * Copyright (C) 2001-2008 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -41,15 +41,6 @@ void deinterlace_yuv( uint8_t *pdst, uint8_t *psrc[],
 #define DEINTERLACE_ONEFIELDXV  5
 #define DEINTERLACE_LINEARBLEND 6
 
-static const char *deinterlace_methods[] = {
-  "none", 
-  "bob",
-  "weave",
-  "greedy",
-  "onefield",
-  "onefield_xv",
-  "linearblend",
-  NULL
-};
+extern const char *deinterlace_methods[];
 
 #endif

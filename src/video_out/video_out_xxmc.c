@@ -159,7 +159,6 @@ static void xxmc_xvmc_dump_subpictures(xxmc_driver_t *this)
 
 static void xxmc_xvmc_surface_handler_construct(xxmc_driver_t *this) 
 {
-  int i;
   xvmc_surface_handler_t *handler = &this->xvmc_surf_handler;
 
   pthread_mutex_init(&handler->mutex,NULL);
@@ -1608,8 +1607,8 @@ static void xxmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
    * other than 100 %, so let's disable deinterlacing at all for this frame
    */
   if (this->deinterlace_enabled && this->bob) {
-    disable_deinterlace = this->disable_bob_for_progressive_frames && frame->vo_frame.progressive_frame
-      || this->disable_bob_for_scaled_osd && this->scaled_osd_active
+    disable_deinterlace = (this->disable_bob_for_progressive_frames && frame->vo_frame.progressive_frame)
+      || (this->disable_bob_for_scaled_osd && this->scaled_osd_active)
       || !frame->vo_frame.stream
       || xine_get_param(frame->vo_frame.stream, XINE_PARAM_FINE_SPEED) != XINE_FINE_SPEED_NORMAL;
     if (!disable_deinterlace) {
@@ -2406,7 +2405,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   x11_visual_t         *visual = (x11_visual_t *) visual_gen;
   XColor                dummy;
   XvImage              *myimage;
-  unsigned int          adaptors, j;
+  unsigned int          adaptors;
   unsigned int          ver,rel,req,ev,err;
   XShmSegmentInfo       myshminfo;
   XvPortID              xv_port;

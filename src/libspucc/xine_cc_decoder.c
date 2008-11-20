@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2003 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -32,6 +32,12 @@
 /*
 #define LOG_DEBUG 1
 */
+
+const char *cc_schemes[NUM_CC_PALETTES + 1] = {
+  "White/Gray/Translucent",
+  "White/Black/Solid",
+  NULL
+};
 
 typedef struct spucc_decoder_s {
   spu_decoder_t      spu_decoder;
@@ -193,7 +199,7 @@ static void spucc_register_cfg_vars(spucc_class_t *this,
   
   cc_vars->cc_scheme = xine_cfg->register_enum(xine_cfg,
 					       "subtitles.closedcaption.scheme", 0,
-					       cc_schemes,
+					       (char **)cc_schemes,
 					       _("closed-captioning foreground/background scheme"),
 					       _("Choose your favourite rendering of the closed "
 					         "captions."),

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2005 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -3196,7 +3196,6 @@ static char **dvb_class_get_autoplay_list(input_class_t * this_gen,
 {
     dvb_input_class_t *class = (dvb_input_class_t *) this_gen;
     channel_t *channels=NULL;
-    char foobuffer[BUFSIZE];
     int ch, apch, num_channels = 0;
     int default_channel = -1;
     xine_cfg_entry_t lastchannel_enable = {0};

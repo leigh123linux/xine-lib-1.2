@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2006 the xine project
+ * Copyright (C) 2000-2008 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -2463,7 +2463,7 @@ void xine_post_dispose(xine_t *xine, xine_post_t *post_gen) {
  * @param joining String to use to join the various strings together.
  * @param final_length The pre-calculated final length of the string.
  */
-static char *_x_concatenate_with_string(char **strings, size_t count, char *joining, size_t final_length) {
+static char *_x_concatenate_with_string(char const **strings, size_t count, char *joining, size_t final_length) {
   size_t i;
   char *const result = malloc(final_length+1); /* Better be safe */
   char *str = result;

@@ -1,7 +1,7 @@
 /*
  * attributes.h
  * Copyright (C) 1999-2000 Aaron Holtzman <aholtzma@ess.engr.uvic.ca>
- * Copyright (C) 2001-2007 xine developers
+ * Copyright (C) 2001-2008 xine developers
  *
  * This file was originally part of mpeg2dec, a free MPEG-2 video stream
  * decoder.
@@ -72,7 +72,7 @@
 # define XINE_SENTINEL
 #endif
 
-#ifdef SUPPORT_ATTRIBUTE_DEPRECATED
+#if defined(SUPPORT_ATTRIBUTE_DEPRECATED) && !defined(XINE_COMPILE)
 # define XINE_DEPRECATED __attribute__((__deprecated__))
 #else
 # define XINE_DEPRECATED
@@ -89,8 +89,10 @@
 /* Format attributes */
 #ifdef SUPPORT_ATTRIBUTE_FORMAT
 # define XINE_FORMAT_PRINTF(fmt,var) __attribute__((__format__(__printf__, fmt, var)))
+# define XINE_FORMAT_SCANF(fmt,var) __attribute__((__format__(__scanf__, fmt, var)))
 #else
 # define XINE_FORMAT_PRINTF(fmt,var)
+# define XINE_FORMAT_SCANF(fmt,var)
 #endif
 #ifdef SUPPORT_ATTRIBUTE_FORMAT_ARG
 # define XINE_FORMAT_PRINTF_ARG(fmt) __attribute__((__format_arg__(fmt)))

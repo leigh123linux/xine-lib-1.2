@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2003 the xine project
+ * Copyright (C) 2000-2008 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -139,8 +139,7 @@
 
 #define CD_RAW_SECTOR_SIZE 2352
 
-static const uint8_t STR_MAGIC =
-  { 0x60, 0x01, 0x01, 0x80 };
+#define STR_MAGIC "\x60\x01\x01\x80"
 #define STR_MAX_CHANNELS 32
 
 #define CDXA_TYPE_MASK     0x0E

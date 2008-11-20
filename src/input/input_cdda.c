@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2005 the xine project
+ * Copyright (C) 2000-2008 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -1033,13 +1033,13 @@ network_command( xine_stream_t *stream, int socket, char *data_buf, char *msg, .
 
 
 #ifndef WIN32
-static int network_connect(xine_stream_t *stream,  char *url )
+static int network_connect(xine_stream_t *stream, const char *got_url )
 {
-  char *host;
+  char *host, *url;
   int port;
   int fd;
 
-  url = strdup(url);
+  url = strdup(got_url);
   parse_url(url, &host, &port);
 
   if( !host || !strlen(host) || !port )
@@ -1450,7 +1450,7 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
     while((pdir = readdir(dir)) != NULL) {
       char discid[9];
       
-      snprintf(discid, sizeof(discid), "%08lx", this->cddb.disc_id);
+      snprintf(discid, sizeof(discid), "%08" PRIx32, this->cddb.disc_id);
      
       if(!strcasecmp(pdir->d_name, discid)) {
 	FILE *fd;
@@ -1549,7 +1549,7 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
       }
     }
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-      "input_cdda: cached entry for disc ID %08lx not found.\n", this->cddb.disc_id);
+      "input_cdda: cached entry for disc ID %08" PRIx32 " not found.\n", this->cddb.disc_id);
     closedir(dir);
   }
   
@@ -1573,7 +1573,7 @@ static void _cdda_save_cached_cddb_infos(cdda_input_plugin_t *this, char *fileco
   
   _cdda_mkdir_recursive_safe(this->stream->xine, cfile);
   
-  snprintf(cfile, sizeof(cfile), "%s/%08lx", this->cddb.cache_dir, this->cddb.disc_id);
+  snprintf(cfile, sizeof(cfile), "%s/%08" PRIx32 , this->cddb.cache_dir, this->cddb.disc_id);
   
   if((fd = fopen(cfile, "w")) == NULL) {
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
@@ -1712,7 +1712,7 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
 
     /* Send query command */
     memset(&buffer, 0, sizeof(buffer));
-    size_t size = sprintf(buffer, "cddb query %08lx %d ", this->cddb.disc_id, this->cddb.num_tracks);
+    size_t size = sprintf(buffer, "cddb query %08" PRIx32 " %d ", this->cddb.disc_id, this->cddb.num_tracks);
     for (i = 0; i < this->cddb.num_tracks; i++) {
       size += snprintf(buffer + size, sizeof(buffer) - size, "%d ", this->cddb.track[i].start);
     }
@@ -2004,7 +2004,7 @@ static void _cdda_free_cddb_info(cdda_input_plugin_t *this) {
  */
 
 static int cdda_open(cdda_input_plugin_t *this_gen,
-					 char *cdda_device, cdrom_toc *toc, int *fdd) {
+					 const char *cdda_device, cdrom_toc *toc, int *fdd) {
 #ifndef WIN32
   int fd = -1;
 
