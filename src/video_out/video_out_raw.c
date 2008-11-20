@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 the xine project
+ * Copyright (C) 2007-2008 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -212,7 +212,7 @@ static void raw_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img)
   if ( !this->ovl_changed )
     return;
 
-  this->raw_overlay_cb( this->user_data, this->ovl_changed-1, &this->overlays );
+  this->raw_overlay_cb( this->user_data, this->ovl_changed-1, this->overlays );
 
   this->ovl_changed = 0;
 }
