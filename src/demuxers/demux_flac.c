@@ -393,12 +393,13 @@ static int demux_flac_seek (demux_plugin_t *this_gen,
   demux_flac_t *this = (demux_flac_t *) this_gen;
   int seekpoint_index = 0;
   int64_t start_pts;
+  unsigned char buf[4];
   
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->data_size );
 
   /* if thread is not running, initialize demuxer */
-  if( !playing ) {
+  if( !playing && !start_pos) {
 
     /* send new pts */
     _x_demux_control_newpts(this->stream, 0, 0);
@@ -406,28 +407,39 @@ static int demux_flac_seek (demux_plugin_t *this_gen,
     this->status = DEMUX_OK;
   } else {
 
-    if (this->seekpoints == NULL) {
+    if (this->seekpoints == NULL && !start_pos) {
       /* cannot seek if there is no seekpoints */
       this->status = DEMUX_OK;
       return this->status;
     }
 
-    /* do a lazy, linear seek based on the assumption that there are not
-     * that many seek points */
+    /* Don't use seekpoints if start_pos != 0. This allows smooth seeking */
     if (start_pos) {
       /* offset-based seek */
-      if (start_pos < this->seekpoints[0].offset)
-        seekpoint_index = 0;
-      else {
-        for (seekpoint_index = 0; seekpoint_index < this->seekpoint_count - 1;
-          seekpoint_index++) {
-          if (start_pos < this->seekpoints[seekpoint_index + 1].offset) {
-            break;
-          }
-        }
+      this->status = DEMUX_OK;
+      start_pos += this->data_start;
+      this->input->seek(this->input, start_pos, SEEK_SET);
+      while(1){ /* here we try to find something that resembles a frame header */
+
+	if (this->input->read(this->input, buf, 2) != 2){
+	  this->status = DEMUX_FINISHED; /* we sought past the end of stream ? */
+	  break;
+	}
+
+	if (buf[0] == 0xff && buf[1] == 0xf8)
+	  break; /* this might be the frame header... or it may be not. We pass it to the decoder
+		  * to decide, but this way we reduce the number of warnings */
+	start_pos +=2;
       }
+
+      _x_demux_flush_engine(this->stream);
+      this->input->seek(this->input, start_pos, SEEK_SET);
+      _x_demux_control_newpts(this->stream, 0, BUF_FLAG_SEEK);
+      return this->status;
+
     } else {
-      /* time-based seek */
+      /* do a lazy, linear seek based on the assumption that there are not
+       * that many seek points; time-based seek */
       start_pts = start_time;
       start_pts *= 90;
       if (start_pts < this->seekpoints[0].pts)
