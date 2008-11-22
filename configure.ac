@@ -331,6 +331,7 @@ case "x$with_external_ffmpeg" in
       ;;
 esac
 if test "x$with_external_ffmpeg" != "xno"; then
+   PKG_CHECK_MODULES([FFMPEG_UTIL], [libavutil])
    PKG_CHECK_MODULES([FFMPEG_POSTPROC], [libpostproc])
    AC_SUBST([FFMPEG_CFLAGS])
    AC_SUBST([FFMPEG_LIBS])
