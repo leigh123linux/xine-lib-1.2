@@ -1434,7 +1434,7 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
       if(!strcasecmp(pdir->d_name, discid)) {
 	FILE *fd;
 	
-	snprintf(cdir + cdir_size, 10, "/%s", discid);
+	snprintf(cdir + cdir_size - 12, 10, "/%s", discid);
 	if((fd = fopen(cdir, "r")) == NULL) {
 	  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 		  "input_cdda: fopen(%s) failed: %s.\n", cdir, strerror(errno));
