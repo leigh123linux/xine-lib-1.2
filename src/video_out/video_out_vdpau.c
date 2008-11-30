@@ -107,9 +107,11 @@ typedef struct {
   VdpVideoSurface soft_surface;
   uint32_t             soft_surface_width;
   uint32_t             soft_surface_height;
-  int                      soft_surface_format;
+  int                  soft_surface_format;
 
   VdpOutputSurface output_surface;
+  uint32_t             output_surface_width;
+  uint32_t             output_surface_height;
 
   VdpVideoMixer video_mixer;
 
@@ -347,6 +349,13 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
 
 static int vdpau_redraw_needed (vo_driver_t *this_gen)
 {
+  vdpau_driver_t  *this = (vdpau_driver_t *) this_gen;
+
+  _x_vo_scale_compute_ideal_size( &this->sc );
+  if ( _x_vo_scale_redraw_needed( &this->sc ) ) {
+    _x_vo_scale_compute_output_size( &this->sc );
+    return 1;
+  }
   return 0;
 }
 
@@ -357,44 +366,70 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
   vdpau_frame_t   *frame = (vdpau_frame_t *) frame_gen;
   VdpStatus st;
+  VdpChromaType chroma = ( frame->format==XINE_IMGFMT_YV12 )? VDP_CHROMA_TYPE_420 : VDP_CHROMA_TYPE_422;
 
-  if ( frame->width != this->soft_surface_width || frame->height != this->soft_surface_height || frame->format != this->soft_surface_format ) {
-    /* recreate the surface to match frame changes */
-    vdp_video_surface_destroy( this->soft_surface );
-    VdpChromaType chroma = ( frame->format==XINE_IMGFMT_YV12 )? VDP_CHROMA_TYPE_420 : VDP_CHROMA_TYPE_422;
-    vdp_video_surface_create( vdp_device, chroma, frame->width, frame->height, &this->soft_surface );
-    this->soft_surface_format = frame->format;
+  if ( (frame->width != this->sc.delivered_width) || (frame->height != this->sc.delivered_height) || (frame->ratio != this->sc.delivered_ratio) ) {
+    this->sc.force_redraw = 1;    /* trigger re-calc of output size */
+  }
+
+  this->sc.delivered_height = frame->height;
+  this->sc.delivered_width  = frame->width;
+  this->sc.delivered_ratio  = frame->ratio;
+  this->sc.crop_left        = frame->vo_frame.crop_left;
+  this->sc.crop_right       = frame->vo_frame.crop_right;
+  this->sc.crop_top         = frame->vo_frame.crop_top;
+  this->sc.crop_bottom      = frame->vo_frame.crop_bottom;
+
+  vdpau_redraw_needed( this_gen );
+
+  if ( (frame->width > this->soft_surface_width) | (frame->height > this->soft_surface_height) || (frame->format != this->soft_surface_format) ) {
+    printf( "vo_vdpau: soft_surface size update\n" );
+    /* recreate surface and mixer to match frame changes */
     this->soft_surface_width = frame->width;
     this->soft_surface_height = frame->height;
-    printf( "vo_vdpau: soft_surface redim\n" );
+    this->soft_surface_format = frame->format;
 
-    /* recreate video mixer to match video surface */
+    vdp_video_surface_destroy( this->soft_surface );
+    vdp_video_surface_create( vdp_device, chroma, this->soft_surface_width, this->soft_surface_height, &this->soft_surface );
+
     vdp_video_mixer_destroy( this->video_mixer );
     VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE };
     void const *param_values[] = { &this->soft_surface_width, &this->soft_surface_height, &chroma };
-    st = vdp_video_mixer_create( vdp_device, 0, 0, 3, params, param_values, &this->video_mixer );
+    vdp_video_mixer_create( vdp_device, 0, 0, 3, params, param_values, &this->video_mixer );
+  }
+
+  if ( (this->sc.gui_width > this->output_surface_width) || (this->sc.gui_height > this->output_surface_height) ) {
+    /* recreate output surface to match window size */
+    printf( "vo_vdpau: output_surface size update\n" );
+    this->output_surface_width = this->sc.gui_width;
+    this->output_surface_height = this->sc.gui_height;
+
+    vdp_output_surface_destroy( this->output_surface );
+    vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width, this->output_surface_height, &this->output_surface );
   }
 
   /* FIXME: have to swap U and V planes to get correct colors !! nvidia ? */
   uint32_t pitches[] = { frame->vo_frame.pitches[0], frame->vo_frame.pitches[2], frame->vo_frame.pitches[1] };
   void* data[] = { frame->vo_frame.base[0], frame->vo_frame.base[2], frame->vo_frame.base[1] };
   if ( frame->format==XINE_IMGFMT_YV12 ) {
-    st = vdp_video_surface_putbits_ycbcr( this->soft_surface, VDP_YCBCR_FORMAT_YV12, &data, &pitches );
+    st = vdp_video_surface_putbits_ycbcr( this->soft_surface, VDP_YCBCR_FORMAT_YV12, &data, pitches );
     if ( st != VDP_STATUS_OK )
       printf( "vo_vdpau: vdp_video_surface_putbits_ycbcr YV12 error : %s\n", vdp_get_error_string( st ) );
   }
   else if ( frame->format==XINE_IMGFMT_YUY2 ){
-    st = vdp_video_surface_putbits_ycbcr( this->soft_surface, VDP_YCBCR_FORMAT_YUYV, &data, &pitches );
+    st = vdp_video_surface_putbits_ycbcr( this->soft_surface, VDP_YCBCR_FORMAT_YUYV, &data, pitches );
     if ( st != VDP_STATUS_OK )
       printf( "vo_vdpau: vdp_video_surface_putbits_ycbcr YUY2 error : %s\n", vdp_get_error_string( st ) );
   }
 
-  VdpRect rect;
-  rect.x0 = 0;
-  rect.y0 = 0;
-  rect.x1 = 800;
-  rect.y1 = 600;
-  st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME, 0, 0, this->soft_surface, 0, 0, 0, this->output_surface, &rect, &rect, 0, 0 );
+  VdpRect vid_source = { this->sc.crop_left, this->sc.crop_top, this->sc.delivered_width-this->sc.crop_right, this->sc.delivered_height-this->sc.crop_bottom };
+  VdpRect out_dest = { 0, 0, this->sc.gui_width, this->sc.gui_height };
+  VdpRect vid_dest = { this->sc.output_xoffset, this->sc.output_yoffset, this->sc.output_xoffset+this->sc.output_width, this->sc.output_yoffset+this->sc.output_height };
+
+  /*printf( "out_dest = %d %d %d %d - vid_dest = %d %d %d %d\n", out_dest.x0, out_dest.y0, out_dest.x1, out_dest.y1, vid_dest.x0, vid_dest.y0, vid_dest.x1, vid_dest.y1 );*/
+
+  st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME,
+                               0, 0, this->soft_surface, 0, 0, &vid_source, this->output_surface, &out_dest, &vid_dest, 0, 0 );
   if ( st != VDP_STATUS_OK )
     printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
@@ -433,6 +468,25 @@ static int vdpau_get_property (vo_driver_t *this_gen, int property)
 
 static int vdpau_set_property (vo_driver_t *this_gen, int property, int value)
 {
+  vdpau_driver_t *this = (vdpau_driver_t*)this_gen;
+
+  /*switch (property) {
+    case VO_PROP_ZOOM_X:
+      if ((value >= XINE_VO_ZOOM_MIN) && (value <= XINE_VO_ZOOM_MAX)) {
+        this->sc.zoom_factor_x = (double)value / (double)XINE_VO_ZOOM_STEP;
+        _x_vo_scale_compute_ideal_size( &this->sc );
+        this->sc.force_redraw = 1;    /* trigger re-calc of output size */
+      /*}
+      break;
+    case VO_PROP_ZOOM_Y:
+      if ((value >= XINE_VO_ZOOM_MIN) && (value <= XINE_VO_ZOOM_MAX)) {
+        this->sc.zoom_factor_y = (double)value / (double)XINE_VO_ZOOM_STEP;
+        _x_vo_scale_compute_ideal_size( &this->sc );
+        this->sc.force_redraw = 1;    /* trigger re-calc of output size */
+      /*}
+      break;
+  }*/
+
   return value;
 }
 
@@ -448,6 +502,108 @@ static void vdpau_get_property_min_max (vo_driver_t *this_gen, int property, int
 
 static int vdpau_gui_data_exchange (vo_driver_t *this_gen, int data_type, void *data)
 {
+  vdpau_driver_t *this = (vdpau_driver_t*)this_gen;
+
+  switch (data_type) {
+#ifndef XINE_DISABLE_DEPRECATED_FEATURES
+  case XINE_GUI_SEND_COMPLETION_EVENT:
+    break;
+#endif
+
+  case XINE_GUI_SEND_EXPOSE_EVENT: {
+    /* XExposeEvent * xev = (XExposeEvent *) data; */
+
+    /*if (this->cur_frame) {
+      int i;
+
+      LOCK_DISPLAY(this);
+
+      if (this->use_shm) {
+  XvShmPutImage(this->display, this->xv_port,
+          this->drawable, this->gc, this->cur_frame->image,
+          this->sc.displayed_xoffset, this->sc.displayed_yoffset,
+          this->sc.displayed_width, this->sc.displayed_height,
+          this->sc.output_xoffset, this->sc.output_yoffset,
+          this->sc.output_width, this->sc.output_height, True);
+      } else {
+  XvPutImage(this->display, this->xv_port,
+       this->drawable, this->gc, this->cur_frame->image,
+       this->sc.displayed_xoffset, this->sc.displayed_yoffset,
+       this->sc.displayed_width, this->sc.displayed_height,
+       this->sc.output_xoffset, this->sc.output_yoffset,
+       this->sc.output_width, this->sc.output_height);
+      }
+
+      XSetForeground (this->display, this->gc, this->black.pixel);
+
+      for( i = 0; i < 4; i++ ) {
+  if( this->sc.border[i].w && this->sc.border[i].h ) {
+    XFillRectangle(this->display, this->drawable, this->gc,
+       this->sc.border[i].x, this->sc.border[i].y,
+       this->sc.border[i].w, this->sc.border[i].h);
+  }
+      }
+
+      if(this->xoverlay)
+  x11osd_expose(this->xoverlay);
+
+      XSync(this->display, False);
+      UNLOCK_DISPLAY(this);
+    }*/
+  }
+  break;
+
+  case XINE_GUI_SEND_DRAWABLE_CHANGED: {
+    VdpStatus st;
+    XLockDisplay( this->display );
+    this->drawable = (Drawable) data;
+    vdp_queue_destroy( vdp_queue );
+    vdp_queue_target_destroy( vdp_queue_target );
+    st = vdp_queue_target_create_x11( vdp_device, this->drawable, &vdp_queue_target );
+    if ( st != VDP_STATUS_OK ) {
+      printf( "vo_vdpau: FATAL !! Can't recreate presentation queue target after drawable change !!\n" );
+      break;
+    }
+    st = vdp_queue_create( vdp_device, vdp_queue_target, &vdp_queue );
+    if ( st != VDP_STATUS_OK ) {
+      printf( "vo_vdpau: FATAL !! Can't recreate presentation queue after drawable change !!\n" );
+      break;
+    }
+    VdpColor backColor;
+    backColor.red = backColor.green = backColor.blue = 0;
+    backColor.alpha = 1;
+    vdp_queue_set_backgroung_color( vdp_queue, &backColor );
+    XUnlockDisplay( this->display );
+    this->sc.force_redraw = 1;
+    break;
+  }
+
+  case XINE_GUI_SEND_TRANSLATE_GUI_TO_VIDEO:
+    /*{
+      int x1, y1, x2, y2;
+      x11_rectangle_t *rect = data;
+
+      _x_vo_scale_translate_gui2video(&this->sc, rect->x, rect->y,
+           &x1, &y1);
+      _x_vo_scale_translate_gui2video(&this->sc, rect->x + rect->w, rect->y + rect->h,
+           &x2, &y2);
+      rect->x = x1;
+      rect->y = y1;
+      rect->w = x2-x1;
+      rect->h = y2-y1;
+
+      /* onefield_xv divide by 2 the number of lines */
+      /*if (this->deinterlace_enabled
+          && (this->deinterlace_method == DEINTERLACE_ONEFIELDXV)
+          && (this->cur_frame->format == XINE_IMGFMT_YV12)) {
+        rect->y = rect->y * 2;
+        rect->h = rect->h * 2;
+      }
+
+    }*/
+    break;
+  }
+
   return 0;
 }
 
@@ -505,7 +661,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->screen        = visual->screen;
   this->drawable      = visual->d;
 
-  _x_vo_scale_init (&this->sc, 0, 0, config);
+  _x_vo_scale_init(&this->sc, 1, 0, config);
   this->sc.frame_output_cb  = visual->frame_output_cb;
   this->sc.dest_size_cb     = visual->dest_size_cb;
   this->sc.user_data        = visual->user_data;
@@ -659,20 +815,22 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   backColor.alpha = 1;
   vdp_queue_set_backgroung_color( vdp_queue, &backColor );
 
-  this->soft_surface_width = 800;
-  this->soft_surface_height = 600;
+  this->soft_surface_width = 720;
+  this->soft_surface_height = 576;
   this->soft_surface_format = XINE_IMGFMT_YV12;
-  st = vdp_video_surface_create( vdp_device, VDP_CHROMA_TYPE_420, this->soft_surface_width, this->soft_surface_height, &this->soft_surface );
+  VdpChromaType chroma = VDP_CHROMA_TYPE_420;
+  st = vdp_video_surface_create( vdp_device, chroma, this->soft_surface_width, this->soft_surface_height, &this->soft_surface );
   if ( vdpau_init_error( st, "Can't create video surface !!", &this->vo_driver, 1 ) )
     return NULL;
 
-  st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, 800, 600, &this->output_surface );
+  this->output_surface_width = 720;
+  this->output_surface_height = 576;
+  st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width, this->output_surface_height, &this->output_surface );
   if ( vdpau_init_error( st, "Can't create output surface !!", &this->vo_driver, 1 ) ) {
     vdp_video_surface_destroy( this->soft_surface );
     return NULL;
   }
 
-  VdpChromaType chroma = VDP_CHROMA_TYPE_420;
   VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE };
   void const *param_values[] = { &this->soft_surface_width, &this->soft_surface_height, &chroma };
   st = vdp_video_mixer_create( vdp_device, 0, 0, 3, params, param_values, &this->video_mixer );
