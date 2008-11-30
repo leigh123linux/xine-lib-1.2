@@ -193,8 +193,9 @@ struct nal_parser {
     int found_sps;
     int found_pps;
     int last_nal_res;
-    int field; // 0=top, 1=bottom, -1=both
+    int field; /* 0=top, 1=bottom, -1=both */
     int slice;
+    int slice_cnt;
     int have_top;
     int have_frame;
     struct nal_unit *nal0;

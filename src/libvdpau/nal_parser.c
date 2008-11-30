@@ -463,6 +463,7 @@ struct nal_parser* init_parser()
 
     parser->last_nal_res = 0;
     parser->slice = 0;
+    parser->slice_cnt = 0;
     parser->field = -1;
     parser->have_top = 0;
 
@@ -477,7 +478,7 @@ void free_parser(struct nal_parser *parser)
 }
 
 int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
-                uint8_t **ret_buf, int *ret_len)
+                uint8_t **ret_buf, int *ret_len, int *ret_slice_cnt)
 {
     int next_nal;
     int parsed_len = 0;
@@ -504,10 +505,12 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
             *ret_buf = malloc(parser->buf_len);
             xine_fast_memcpy(*ret_buf, parser->buf, parser->buf_len);
             *ret_len = parser->buf_len;
+            *ret_slice_cnt = parser->slice_cnt;
 
             //memset(parser->buf, 0x00, parser->buf_len);
             parser->buf_len = 0;
             parser->last_nal_res = 0;
+            parser->slice_cnt = 0;
             return parsed_len;
         }
 
@@ -583,13 +586,13 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
             ret = 1;
         }
         if(nal->sps && nal->slc && last_nal->slc &&
-           (nal->sps->pic_order_cnt_type == 0 &&
+           (nal->sps->pic_order_cnt_type == 0 && last_nal->sps->pic_order_cnt_type == 0 &&
                 (nal->slc->pic_order_cnt_lsb != last_nal->slc->pic_order_cnt_lsb ||
                  nal->slc->delta_pic_order_cnt_bottom != last_nal->slc->delta_pic_order_cnt_bottom))) {
             ret = 1;
         }
         if(nal->slc && last_nal->slc &&
-           (nal->sps->pic_order_cnt_type == 1 &&
+           (nal->sps->pic_order_cnt_type == 1 && last_nal->sps->pic_order_cnt_type == 1 &&
                 (nal->slc->delta_pic_order_cnt[0] != last_nal->slc->delta_pic_order_cnt[0] ||
                 nal->slc->delta_pic_order_cnt[1] != last_nal->slc->delta_pic_order_cnt[1]))) {
             ret = 1;
@@ -612,6 +615,7 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
             parser->current_nal = parser->nal0;
             parser->last_nal = parser->nal1;
         }
+
         if(parser->current_nal->sps == NULL)
             parser->current_nal->sps = parser->last_nal->sps;
         if(parser->current_nal->pps == NULL)
@@ -625,7 +629,12 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
             parser->slice = 0;
             return ret;
         }*/
-        return 0;
+
+        /* increase the slice_cnt until a new frame is detected */
+        if(!ret)
+          parser->slice_cnt++;
+
+        return ret;
     } else if(res == NAL_PPS || res == NAL_SPS) {
         return 1;
     } else if (res == NAL_AU_DELIMITER || res == NAL_SEI ||
