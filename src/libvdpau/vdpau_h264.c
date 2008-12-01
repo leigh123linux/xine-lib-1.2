@@ -285,7 +285,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this = (vdpau_h264_decoder_t *) calloc(1, sizeof(vdpau_h264_decoder_t));
 
   /* the videoout must be vdpau-capable to support this decoder */
-  if(!stream->video_driver->get_capabilities(stream->video_driver) & VO_CAP_VDPAU_H264)
+  if ( !(stream->video_driver->get_capabilities(stream->video_driver) & VO_CAP_VDPAU_H264) )
 	  return NULL;
 
   this->video_decoder.decode_data         = vdpau_h264_decode_data;
