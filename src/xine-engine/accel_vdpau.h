@@ -49,12 +49,6 @@ typedef struct {
 
   VdpVideoSurface surface;
 
-  union _VdpPictureInfo {
-    VdpPictureInfoMPEG1Or2 mpeg;
-    VdpPictureInfoH264     h264;
-    VdpPictureInfoVC1       vc1;
-  } info;
-
 } vdpau_accel_t;
 
 #ifdef __cplusplus
