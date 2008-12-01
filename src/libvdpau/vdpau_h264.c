@@ -232,13 +232,11 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           /* create surface if needed */
           if(this->vdpau_accel->surface == VDP_INVALID_HANDLE) {
             VdpStatus status = this->vdpau_accel->vdp_video_surface_create(this->vdpau_accel->vdp_device,
-                VDP_YCBCR_FORMAT_YV12, this->width, this->height,
+                VDP_CHROMA_TYPE_420, this->width, this->height,
                 &this->vdpau_accel->surface);
 
             if(status != VDP_STATUS_OK)
               xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Surface creation failed\n");
-            else
-              printf("surface cerated");
           }
 
           VdpStatus status = this->vdpau_accel->vdp_decoder_render(this->decoder,
