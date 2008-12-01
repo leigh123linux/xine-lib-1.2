@@ -911,10 +911,15 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
 
   this->capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP;
   ok = 0;
-  uint32_t dummy;
-  vdp_decoder_query_capabilities( vdp_device, VDP_DECODER_PROFILE_H264_BASELINE, &ok, &dummy, &dummy, &dummy, &dummy );
-  if ( ok )
+  uint32_t mw, mh, ml, mr;
+  st = vdp_decoder_query_capabilities( vdp_device, VDP_DECODER_PROFILE_H264_MAIN, &ok, &ml, &mr, &mw, &mh );
+  if ( st != VDP_STATUS_OK  )
+    printf( "vo_vdpau: getting h264_supported failed! : %s\n", vdp_get_error_string( st ) );
+  else if ( !ok )
+    printf( "vo_vdpau: no support for h264 ! : no ok\n" );
+  else
     this->capabilities |= VO_CAP_VDPAU_H264;
+
 
   return &this->vo_driver;
 }
