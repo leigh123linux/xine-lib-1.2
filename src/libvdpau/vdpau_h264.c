@@ -168,6 +168,8 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
          else
            this->decoder_initialized = 1;
 
+         img->free(img);
+
          /*if(!is_supported)
            xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: ERROR: Profile not supported by VDPAU decoder.\n");
 
@@ -175,56 +177,79 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
            xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: ERROR: Image size not supported by VDPAU decoder.\n");*/
       }
 
-      if(this->nal_parser->current_nal->slc != NULL &&
-          this->nal_parser->current_nal->sps != NULL &&
-          this->nal_parser->current_nal->pps != NULL) {
+      if(this->decoder_initialized) {
+        if(this->nal_parser->current_nal->slc != NULL &&
+            this->nal_parser->current_nal->sps != NULL &&
+            this->nal_parser->current_nal->pps != NULL) {
 
-        struct pic_parameter_set_rbsp *pps = this->nal_parser->current_nal->pps;
-        struct seq_parameter_set_rbsp *sps = this->nal_parser->current_nal->sps;
-        struct slice_header *slc = this->nal_parser->current_nal->slc;
+          img = this->stream->video_out->get_frame (this->stream->video_out,
+                                            this->width, this->height,
+                                            this->ratio,
+                                            XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS);
+          this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
 
-        /* go and decode a frame */
-        VdpPictureInfoH264 pic;
+          struct pic_parameter_set_rbsp *pps = this->nal_parser->current_nal->pps;
+          struct seq_parameter_set_rbsp *sps = this->nal_parser->current_nal->sps;
+          struct slice_header *slc = this->nal_parser->current_nal->slc;
 
-        pic.slice_count = slice_count;
-        pic.field_order_cnt[0] = 0; // FIXME
-        pic.is_reference = 1; // FIXME
-        pic.frame_num = slc->frame_num;
-        pic.field_pic_flag = slc->field_pic_flag;
-        pic.bottom_field_flag = slc->bottom_field_flag;
-        pic.num_ref_frames = sps->num_ref_frames;
-        pic.mb_adaptive_frame_field_flag = sps->mb_adaptive_frame_field_flag;
-        pic.constrained_intra_pred_flag = pps->constrained_intra_pred_flag;
-        pic.weighted_pred_flag = pps->weighted_pred_flag;
-        pic.weighted_bipred_idc = pps->weighted_bipred_idc;
-        pic.frame_mbs_only_flag = sps->frame_mbs_only_flag;
-        pic.transform_8x8_mode_flag = pps->transform_8x8_mode_flag;
-        pic.chroma_qp_index_offset = pps->chroma_qp_index_offset;
-        pic.second_chroma_qp_index_offset = pps->second_chroma_qp_index_offset;
-        pic.pic_init_qp_minus26 = pps->pic_init_qp_minus26;
-        pic.num_ref_idx_l0_active_minus1 = pps->num_ref_idx_l0_active_minus1;
-        pic.num_ref_idx_l1_active_minus1 = pps->num_ref_idx_l1_active_minus1;
-        pic.log2_max_frame_num_minus4 = sps->log2_max_frame_num_minus4;
-        pic.pic_order_cnt_type = sps->pic_order_cnt_type;
-        pic.log2_max_pic_order_cnt_lsb_minus4 = sps->log2_max_pic_order_cnt_lsb_minus4;
-        pic.delta_pic_order_always_zero_flag = sps->delta_pic_order_always_zero_flag;
-        pic.direct_8x8_inference_flag = sps->direct_8x8_inference_flag;
-        pic.entropy_coding_mode_flag = pps->entropy_coding_mode_flag;
-        pic.pic_order_present_flag = pps->pic_order_present_flag;
-        pic.deblocking_filter_control_present_flag = pps->deblocking_filter_control_present_flag;
-        pic.redundant_pic_cnt_present_flag = pps->redundant_pic_cnt_present_flag;
-        memcpy(pic.scaling_lists_4x4, pps->scaling_lists_4x4, 6*16);
-        memcpy(pic.scaling_lists_8x8, pps->scaling_lists_8x8, 2*64);
+          /* go and decode a frame */
+          VdpPictureInfoH264 pic;
 
-        img->duration  = this->video_step;
-        img->pts       = buf->pts;
-        img->bad_frame = 0;
+          pic.slice_count = slice_count;
+          pic.field_order_cnt[0] = 0; // FIXME
+          pic.is_reference = 1; // FIXME
+          pic.frame_num = slc->frame_num;
+          pic.field_pic_flag = slc->field_pic_flag;
+          pic.bottom_field_flag = slc->bottom_field_flag;
+          pic.num_ref_frames = sps->num_ref_frames;
+          pic.mb_adaptive_frame_field_flag = sps->mb_adaptive_frame_field_flag;
+          pic.constrained_intra_pred_flag = pps->constrained_intra_pred_flag;
+          pic.weighted_pred_flag = pps->weighted_pred_flag;
+          pic.weighted_bipred_idc = pps->weighted_bipred_idc;
+          pic.frame_mbs_only_flag = sps->frame_mbs_only_flag;
+          pic.transform_8x8_mode_flag = pps->transform_8x8_mode_flag;
+          pic.chroma_qp_index_offset = pps->chroma_qp_index_offset;
+          pic.second_chroma_qp_index_offset = pps->second_chroma_qp_index_offset;
+          pic.pic_init_qp_minus26 = pps->pic_init_qp_minus26;
+          pic.num_ref_idx_l0_active_minus1 = pps->num_ref_idx_l0_active_minus1;
+          pic.num_ref_idx_l1_active_minus1 = pps->num_ref_idx_l1_active_minus1;
+          pic.log2_max_frame_num_minus4 = sps->log2_max_frame_num_minus4;
+          pic.pic_order_cnt_type = sps->pic_order_cnt_type;
+          pic.log2_max_pic_order_cnt_lsb_minus4 = sps->log2_max_pic_order_cnt_lsb_minus4;
+          pic.delta_pic_order_always_zero_flag = sps->delta_pic_order_always_zero_flag;
+          pic.direct_8x8_inference_flag = sps->direct_8x8_inference_flag;
+          pic.entropy_coding_mode_flag = pps->entropy_coding_mode_flag;
+          pic.pic_order_present_flag = pps->pic_order_present_flag;
+          pic.deblocking_filter_control_present_flag = pps->deblocking_filter_control_present_flag;
+          pic.redundant_pic_cnt_present_flag = pps->redundant_pic_cnt_present_flag;
+          memcpy(pic.scaling_lists_4x4, pps->scaling_lists_4x4, 6*16);
+          memcpy(pic.scaling_lists_8x8, pps->scaling_lists_8x8, 2*64);
 
-        this->vdpau_accel->vdp_decoder_render(this->vdpau_accel->vdp_device,
-            this->vdpau_accel->surface, &pic, 1, (VdpPictureInfo*)&vdp_buffer);
+          img->duration  = this->video_step;
+          img->pts       = buf->pts;
+          img->bad_frame = 0;
 
-        img->draw(img, this->stream);
-        img->free(img);
+          /* create surface if needed */
+          if(this->vdpau_accel->surface == 0) {
+            VdpStatus status = this->vdpau_accel->vdp_video_surface_create(this->vdpau_accel->vdp_device,
+                VDP_YCBCR_FORMAT_YV12, this->width, this->height,
+                &this->vdpau_accel->surface);
+
+            if(status != VDP_STATUS_OK)
+              xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Surface creation failed\n");
+            else
+              printf("surface cerated");
+          }
+
+          VdpStatus status = this->vdpau_accel->vdp_decoder_render(this->decoder,
+              this->vdpau_accel->surface, &pic, 1, (VdpPictureInfo*)&vdp_buffer);
+
+          if(status != VDP_STATUS_OK)
+            xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %d\n", status);
+
+          img->draw(img, this->stream);
+          img->free(img);
+        }
       }
     }
 
@@ -285,8 +310,8 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this = (vdpau_h264_decoder_t *) calloc(1, sizeof(vdpau_h264_decoder_t));
 
   /* the videoout must be vdpau-capable to support this decoder */
-  if ( !(stream->video_driver->get_capabilities(stream->video_driver) & VO_CAP_VDPAU_H264) )
-	  return NULL;
+  /*if ( !(stream->video_driver->get_capabilities(stream->video_driver) & VO_CAP_VDPAU_H264) )
+	  return NULL;*/
 
   this->video_decoder.decode_data         = vdpau_h264_decode_data;
   this->video_decoder.flush               = vdpau_h264_flush;
