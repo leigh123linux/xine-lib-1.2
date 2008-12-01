@@ -111,9 +111,8 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) { /* need to initialize */
     return;
-  }
+  } else {
 
-  if (!this->decoder_ok) {
     /* parse the first nal packages to retrieve profile type */
     int len = 0;
     uint32_t slice_count;
@@ -122,8 +121,8 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
       len += parse_frame(this->nal_parser, buf->content + len, buf->size - len,
           (void*)&vdp_buffer.bitstream, &vdp_buffer.bitstream_bytes, &slice_count);
 
-      if(this->nal_parser->current_nal->sps != NULL) {
-        printf("SPS PARSED\n");
+      if(!this->decoder_initialized &&
+          this->nal_parser->current_nal->sps != NULL) {
 
         this->width = this->nal_parser->current_nal->sps->pic_width;
         this->height = this->nal_parser->current_nal->sps->pic_height;
@@ -157,12 +156,17 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
          /*VdpBool is_supported;
          uint32_t max_level, max_references, max_width, max_height;*/
+         xprintf(this->xine, XINE_VERBOSITY_LOG,
+             "Create decoder: vdp_device: %d, profile: %d, res: %dx%d\n",
+             this->vdpau_accel->vdp_device, this->profile, this->width, this->height);
 
          VdpStatus status = this->vdpau_accel->vdp_decoder_create(this->vdpau_accel->vdp_device,
              this->profile, this->width, this->height, &this->decoder);
 
          if(status != VDP_STATUS_OK)
            xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: ERROR: VdpDecoderCreate returned status != OK (%d)\n", status);
+         else
+           this->decoder_initialized = 1;
 
          /*if(!is_supported)
            xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: ERROR: Profile not supported by VDPAU decoder.\n");
@@ -171,40 +175,59 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
            xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: ERROR: Image size not supported by VDPAU decoder.\n");*/
       }
 
+      if(this->nal_parser->current_nal->slc != NULL &&
+          this->nal_parser->current_nal->sps != NULL &&
+          this->nal_parser->current_nal->pps != NULL) {
+
+        struct pic_parameter_set_rbsp *pps = this->nal_parser->current_nal->pps;
+        struct seq_parameter_set_rbsp *sps = this->nal_parser->current_nal->sps;
+        struct slice_header *slc = this->nal_parser->current_nal->slc;
+
+        /* go and decode a frame */
+        VdpPictureInfoH264 pic;
+
+        pic.slice_count = slice_count;
+        pic.field_order_cnt[0] = 0; // FIXME
+        pic.is_reference = 1; // FIXME
+        pic.frame_num = slc->frame_num;
+        pic.field_pic_flag = slc->field_pic_flag;
+        pic.bottom_field_flag = slc->bottom_field_flag;
+        pic.num_ref_frames = sps->num_ref_frames;
+        pic.mb_adaptive_frame_field_flag = sps->mb_adaptive_frame_field_flag;
+        pic.constrained_intra_pred_flag = pps->constrained_intra_pred_flag;
+        pic.weighted_pred_flag = pps->weighted_pred_flag;
+        pic.weighted_bipred_idc = pps->weighted_bipred_idc;
+        pic.frame_mbs_only_flag = sps->frame_mbs_only_flag;
+        pic.transform_8x8_mode_flag = pps->transform_8x8_mode_flag;
+        pic.chroma_qp_index_offset = pps->chroma_qp_index_offset;
+        pic.second_chroma_qp_index_offset = pps->second_chroma_qp_index_offset;
+        pic.pic_init_qp_minus26 = pps->pic_init_qp_minus26;
+        pic.num_ref_idx_l0_active_minus1 = pps->num_ref_idx_l0_active_minus1;
+        pic.num_ref_idx_l1_active_minus1 = pps->num_ref_idx_l1_active_minus1;
+        pic.log2_max_frame_num_minus4 = sps->log2_max_frame_num_minus4;
+        pic.pic_order_cnt_type = sps->pic_order_cnt_type;
+        pic.log2_max_pic_order_cnt_lsb_minus4 = sps->log2_max_pic_order_cnt_lsb_minus4;
+        pic.delta_pic_order_always_zero_flag = sps->delta_pic_order_always_zero_flag;
+        pic.direct_8x8_inference_flag = sps->direct_8x8_inference_flag;
+        pic.entropy_coding_mode_flag = pps->entropy_coding_mode_flag;
+        pic.pic_order_present_flag = pps->pic_order_present_flag;
+        pic.deblocking_filter_control_present_flag = pps->deblocking_filter_control_present_flag;
+        pic.redundant_pic_cnt_present_flag = pps->redundant_pic_cnt_present_flag;
+        memcpy(pic.scaling_lists_4x4, pps->scaling_lists_4x4, 6*16);
+        memcpy(pic.scaling_lists_8x8, pps->scaling_lists_8x8, 2*64);
+
+        img->duration  = this->video_step;
+        img->pts       = buf->pts;
+        img->bad_frame = 0;
+
+        this->vdpau_accel->vdp_decoder_render(this->vdpau_accel->vdp_device,
+            this->vdpau_accel->surface, &pic, 1, (VdpPictureInfo*)&vdp_buffer);
+
+        img->draw(img, this->stream);
+        img->free(img);
+      }
     }
 
-  }
-
-  if (this->decoder_ok) {
-
-    if (this->size + buf->size > this->bufsize) {
-      this->bufsize = this->size + 2 * buf->size;
-      this->buf = realloc (this->buf, this->bufsize);
-    }
-
-    xine_fast_memcpy (&this->buf[this->size], buf->content, buf->size);
-
-    this->size += buf->size;
-
-    if (buf->decoder_flags & BUF_FLAG_FRAME_END) {
-
-      img = this->stream->video_out->get_frame (this->stream->video_out,
-                                        this->width, this->height,
-                                        this->ratio,
-                                        XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS);
-
-      img->duration  = this->video_step;
-      img->pts       = buf->pts;
-      img->bad_frame = 0;
-
-      memset(img->base[0], 0,
-        this->width * this->height * 2);
-
-      img->draw(img, this->stream);
-      img->free(img);
-
-      this->size = 0;
-    }
   }
 }
 
