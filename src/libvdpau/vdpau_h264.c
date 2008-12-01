@@ -230,7 +230,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           img->bad_frame = 0;
 
           /* create surface if needed */
-          if(this->vdpau_accel->surface == 0) {
+          if(this->vdpau_accel->surface == VDP_INVALID_HANDLE) {
             VdpStatus status = this->vdpau_accel->vdp_video_surface_create(this->vdpau_accel->vdp_device,
                 VDP_YCBCR_FORMAT_YV12, this->width, this->height,
                 &this->vdpau_accel->surface);
