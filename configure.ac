@@ -2744,6 +2744,7 @@ src/libmad/Makefile
 src/libmpeg2/Makefile
 src/libmusepack/Makefile
 src/libmusepack/musepack/Makefile
+src/libvdpau/Makefile
 src/libspudec/Makefile
 src/libspucc/Makefile
 src/libspucmml/Makefile
