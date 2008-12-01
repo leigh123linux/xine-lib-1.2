@@ -22,26 +22,6 @@ enum nal_unit_types {
     NAL_SPS_EXT
 };
 
-/* default scaling_lists according to Table 7-2 */
-uint8_t default_4x4_intra[16] =
-	{ 6, 13, 13, 20, 20, 20, 28, 28, 28, 28, 32, 32, 32, 37, 37, 42 };
-
-uint8_t default_4x4_inter[16] =
-	{ 10, 14, 14, 20, 20, 20, 24, 24, 24, 24, 27, 27, 27, 30, 30, 34};
-
-uint8_t default_8x8_intra[64] =
-	{ 6, 10, 10, 13, 11, 13, 16, 16, 16, 16, 18, 18, 18, 18, 18, 32,
-	  23, 23, 24, 24, 24, 25, 25, 25, 25, 25, 25, 25, 27, 27, 27, 27,
-	  27, 27, 27, 27, 29, 29, 29, 29, 29, 29, 29, 31, 31, 31, 31, 31,
-	  31, 33, 33, 33, 33, 33, 36, 36, 36, 36, 38, 38, 38, 40, 40, 42 };
-
-uint8_t default_8x8_inter[64] =
-	{ 9, 13, 13, 15, 13, 15, 17, 17, 17, 17, 19, 19, 19, 19, 19, 21,
-	  21, 21, 21, 21, 21, 22, 22, 22, 22, 22, 22, 22, 24, 24, 24, 24,
-	  24, 24, 24, 24, 25, 25, 25, 25, 25, 25, 25, 27, 27, 27, 27, 27,
-	  27, 28, 28, 28, 28, 28, 30, 30, 30, 30, 32, 32, 32, 33, 33, 35 };
-
-
 struct nal_unit {
     uint8_t     nal_ref_idc;    // 0x03
     uint8_t     nal_unit_type;  // 0x1f
@@ -64,12 +44,11 @@ struct seq_parameter_set_rbsp {
     uint8_t     seq_scaling_matrix_present_flag;
 
     /* if(seq_scaling_matrix_present_flag) */
-	{
 		uint8_t 	seq_scaling_list_present_flag[8];
 
 		uint8_t		scaling_lists_4x4[6][16];
 		uint8_t		scaling_lists_8x8[2][64];
-	}
+		/* endif */
 
     uint32_t    log2_max_frame_num_minus4;
     uint32_t    pic_order_cnt_type;
@@ -110,32 +89,22 @@ struct pic_parameter_set_rbsp {
     uint32_t	num_slice_groups_minus1;
 
     /* num_slice_groups_minus1 > 0 */
-    {
-        uint32_t	slice_group_map_type;
+      uint32_t	slice_group_map_type;
 
 		/* slice_group_map_type == 1 */
-		{
 			uint32_t	run_length_minus1[64];
-		}
 
 		/* slice_group_map_type == 2 */
-		{
 			uint32_t	top_left[64];
 			uint32_t	bottom_right[64];
-		}
 
 		/* slice_group_map_type == 3,4,5 */
-		{
 			uint8_t		slice_group_change_direction_flag;
 			uint32_t	slice_group_change_rate_minus1;
-		}
 
 		/* slice_group_map_type == 6 */
-		{
 			uint32_t	pic_size_in_map_units_minus1;
 			uint8_t		slice_group_id[64];
-		}
-    }
 
     uint32_t	num_ref_idx_l0_active_minus1;
     uint32_t	num_ref_idx_l1_active_minus1;
@@ -153,14 +122,12 @@ struct pic_parameter_set_rbsp {
     uint8_t		pic_scaling_matrix_present_flag;
 
     /* if(pic_scaling_matrix_present_flag) */
-    {
     	uint8_t 	pic_scaling_list_present_flag[8];
 
     	uint8_t		scaling_lists_4x4[6][16];
     	uint8_t		scaling_lists_8x8[2][64];
 
     	int32_t		second_chroma_qp_index_offset;
-    }
 };
 
 struct slice_header {
@@ -211,6 +178,6 @@ int seek_for_nal(uint8_t *buf, int buf_len);
 struct nal_parser* init_parser();
 void free_parser(struct nal_parser *parser);
 int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
-                uint8_t **ret_buf, int *ret_len);
+                uint8_t **ret_buf, uint32_t *ret_len, uint32_t *ret_slice_cnt);
 
 #endif

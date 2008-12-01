@@ -37,6 +37,7 @@
 #include "xineutils.h"
 #include "bswap.h"
 #include "accel_vdpau.h"
+#include "nal_parser.h"
 
 #define VIDEOBUFSIZE 128*1024
 
@@ -67,11 +68,13 @@ typedef struct vdpau_h264_decoder_s {
 
   struct nal_parser *nal_parser;  /* h264 nal parser. extracts stream data for vdpau */
 
+  VdpDecoder        decoder;
+
   VdpDecoderProfile profile;
   VdpPictureInfoH264 vdp_picture_info;
   vdpau_accel_t     *vdpau_accel;
 
-  xine_t            *xine
+  xine_t            *xine;
 
 } vdpau_h264_decoder_t;
 
@@ -113,10 +116,11 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
   if (!this->decoder_ok) {
     /* parse the first nal packages to retrieve profile type */
     int len = 0;
+    uint32_t slice_count;
 
     while(len < buf->size) {
-      len += parse_frame(this->parser, buf->content + len, buf->size - len,
-          &vdp_buffer.bitstream, &vdp_buffer.bitstream_bytes);
+      len += parse_frame(this->nal_parser, buf->content + len, buf->size - len,
+          (void*)&vdp_buffer.bitstream, &vdp_buffer.bitstream_bytes, &slice_count);
 
       if(this->nal_parser->current_nal->sps != NULL) {
         printf("SPS PARSED\n");
@@ -151,21 +155,20 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
          this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
 
-         VdpBool is_supported;
-         uint32_t max_level, max_references, max_width, max_height;
+         /*VdpBool is_supported;
+         uint32_t max_level, max_references, max_width, max_height;*/
 
          VdpStatus status = this->vdpau_accel->vdp_decoder_create(this->vdpau_accel->vdp_device,
-             this->profile, &is_supported, &max_level, &max_references,
-             &max_width, &max_height);
+             this->profile, this->width, this->height, &this->decoder);
 
-         if(status != OK)
+         if(status != VDP_STATUS_OK)
            xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: ERROR: VdpDecoderCreate returned status != OK (%d)\n", status);
 
-         if(!is_supported)
+         /*if(!is_supported)
            xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: ERROR: Profile not supported by VDPAU decoder.\n");
 
          if(max_width < this->width || max_height < this->height)
-           xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: ERROR: Image size not supported by VDPAU decoder.\n");
+           xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: ERROR: Image size not supported by VDPAU decoder.\n");*/
       }
 
     }
@@ -194,9 +197,8 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
       img->pts       = buf->pts;
       img->bad_frame = 0;
 
-      memset(img->base[0], this->current_yuv_byte,
+      memset(img->base[0], 0,
         this->width * this->height * 2);
-      this->current_yuv_byte += 3;
 
       img->draw(img, this->stream);
       img->free(img);
@@ -260,7 +262,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this = (vdpau_h264_decoder_t *) calloc(1, sizeof(vdpau_h264_decoder_t));
 
   /* the videoout must be vdpau-capable to support this decoder */
-  if(!stream->video_driver->get_capabilities() & VO_CAP_VDPAU_H264)
+  if(!stream->video_driver->get_capabilities(stream->video_driver) & VO_CAP_VDPAU_H264)
 	  return NULL;
 
   this->video_decoder.decode_data         = vdpau_h264_decode_data;

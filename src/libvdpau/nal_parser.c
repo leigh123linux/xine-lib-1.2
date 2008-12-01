@@ -4,6 +4,26 @@
 
 #include "nal_parser.h"
 
+/* default scaling_lists according to Table 7-2 */
+uint8_t default_4x4_intra[16] =
+  { 6, 13, 13, 20, 20, 20, 28, 28, 28, 28, 32, 32, 32, 37, 37, 42 };
+
+uint8_t default_4x4_inter[16] =
+  { 10, 14, 14, 20, 20, 20, 24, 24, 24, 24, 27, 27, 27, 30, 30, 34};
+
+uint8_t default_8x8_intra[64] =
+  { 6, 10, 10, 13, 11, 13, 16, 16, 16, 16, 18, 18, 18, 18, 18, 32,
+    23, 23, 24, 24, 24, 25, 25, 25, 25, 25, 25, 25, 27, 27, 27, 27,
+    27, 27, 27, 27, 29, 29, 29, 29, 29, 29, 29, 31, 31, 31, 31, 31,
+    31, 33, 33, 33, 33, 33, 36, 36, 36, 36, 38, 38, 38, 40, 40, 42 };
+
+uint8_t default_8x8_inter[64] =
+  { 9, 13, 13, 15, 13, 15, 17, 17, 17, 17, 19, 19, 19, 19, 19, 21,
+    21, 21, 21, 21, 21, 22, 22, 22, 22, 22, 22, 22, 24, 24, 24, 24,
+    24, 24, 24, 24, 25, 25, 25, 25, 25, 25, 25, 27, 27, 27, 27, 27,
+    27, 28, 28, 28, 28, 28, 30, 30, 30, 30, 32, 32, 32, 33, 33, 35 };
+
+
 struct buf_reader {
     uint8_t *buf;
     uint8_t *cur_pos;
@@ -15,6 +35,7 @@ static inline uint32_t read_bits(struct buf_reader *buf, int len);
 uint32_t read_exp_golomb(struct buf_reader *buf);
 int32_t read_exp_golomb_s(struct buf_reader *buf);
 void skip_scaling_list(struct buf_reader *buf, int size);
+void parse_scaling_list(struct buf_reader *buf, uint8_t *scaling_list, int length, int index);
 int parse_nal_header(struct buf_reader *buf, struct nal_unit *nal);
 uint8_t parse_sps(struct buf_reader *buf, struct seq_parameter_set_rbsp *sps);
 uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps);
@@ -105,8 +126,8 @@ static inline uint8_t rbsp_trailing_bits(struct buf_reader *buf)
 
 	uint8_t rbsp_trailing_bits = 1;
 
-	offset = buf->cur_offset;
-	pos = buf->cur_pos;
+	last_offset = buf->cur_offset;
+	last_pos = buf->cur_pos;
 
 	if(read_bits(buf, 1) == 1)
 	{
@@ -116,8 +137,8 @@ static inline uint8_t rbsp_trailing_bits(struct buf_reader *buf)
 	}
 
 	// revert buffer
-	buf->cur_offset = offset;
-	buf->cur_pos = pos;
+	buf->cur_offset = last_offset;
+	buf->cur_pos = last_pos;
 
 	return rbsp_trailing_bits;
 }
@@ -225,8 +246,8 @@ void parse_scaling_list(struct buf_reader *buf, uint8_t *scaling_list, int lengt
 				break;
 			}
 		}
-		scaling_list = (next_scale == 0) ? last_scale : next_scale;
-		last_scale = scaling_list->scaling_list[i];
+		scaling_list[i] = (next_scale == 0) ? last_scale : next_scale;
+		last_scale = scaling_list[i];
 	}
 
 	if(use_default_scaling_matrix_flag) {
@@ -234,18 +255,18 @@ void parse_scaling_list(struct buf_reader *buf, uint8_t *scaling_list, int lengt
 			case 0:
 			case 1:
 			case 2:
-				memcpy(scaling_list, length, default_4x4_intra);
+				memcpy(scaling_list, default_4x4_intra, length);
 				break;
 			case 3:
 			case 4:
 			case 5:
-				memcpy(scaling_list, length, default_4x4_inter);
+				memcpy(scaling_list, default_4x4_inter, length);
 				break;
 			case 6:
-				memcpy(scaling_list, length, default_8x8_intra);
+				memcpy(scaling_list, default_8x8_intra, length);
 				break;
 			case 7:
-				memcpy(scaling_list, length, default_8x8_inter);
+				memcpy(scaling_list, default_8x8_inter, length);
 				break;
 		}
 	}
@@ -341,7 +362,7 @@ uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps)
     pps->entropy_coding_mode_flag = read_bits(buf, 1);
     pps->pic_order_present_flag = read_bits(buf, 1);
 
-    pps->num_slice_groups_minus1 = read_exp_golomp(buf);
+    pps->num_slice_groups_minus1 = read_exp_golomb(buf);
     if(pps->num_slice_groups_minus1 > 0) {
     	pps->slice_group_map_type = read_exp_golomb(buf);
     	if(pps->slice_group_map_type == 0) {
@@ -364,7 +385,7 @@ uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps)
     		int i_group;
     		for(i_group = 0; i_group <= pps->num_slice_groups_minus1; i_group++) {
     			pps->slice_group_id[i_group] =
-    				read_bits(buf, ceil(log2(pps->num_slice_groups_minus1 + 1)));
+    				read_bits(buf, ceil(log(pps->num_slice_groups_minus1 + 1)));
     		}
     	}
     }
@@ -372,7 +393,7 @@ uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps)
     pps->num_ref_idx_l0_active_minus1 = read_exp_golomb(buf);
     pps->num_ref_idx_l1_active_minus1 = read_exp_golomb(buf);
     pps->weighted_pred_flag = read_bits(buf, 1);
-    pps->weighted_bipred_flag = read_bits(buf, 2);
+    pps->weighted_bipred_idc = read_bits(buf, 2);
     pps->pic_init_qp_minus26 = read_exp_golomb_s(buf);
     pps->pic_init_qs_minus26 = read_exp_golomb_s(buf);
     pps->chroma_qp_index_offset = read_exp_golomb_s(buf);
@@ -478,7 +499,7 @@ void free_parser(struct nal_parser *parser)
 }
 
 int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
-                uint8_t **ret_buf, int *ret_len, int *ret_slice_cnt)
+                uint8_t **ret_buf, uint32_t *ret_len, uint32_t *ret_slice_cnt)
 {
     int next_nal;
     int parsed_len = 0;
