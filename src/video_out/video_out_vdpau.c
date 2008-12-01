@@ -48,6 +48,7 @@
 #include "xineutils.h"
 
 #include <vdpau/vdpau_x11.h>
+#include "accel_vdpau.h"
 
 
 
@@ -80,6 +81,11 @@ VdpPresentationQueueDestroy *vdp_queue_destroy;
 VdpPresentationQueueDisplay *vdp_queue_display;
 VdpPresentationQueueSetBackgroundColor *vdp_queue_set_backgroung_color;
 
+VdpDecoderQueryCapabilities *vdp_decoder_query_capabilities;
+VdpDecoderCreate *vdp_decoder_create;
+VdpDecoderDestroy *vdp_decoder_destroy;
+VdpDecoderRender *vdp_decoder_render;
+
 
 typedef struct {
   vo_frame_t         vo_frame;
@@ -87,6 +93,8 @@ typedef struct {
   int                width, height, format, flags;
   double             ratio;
   uint8_t           *chunk[3]; /* mem alloc by xmalloc_aligned           */
+
+  vdpau_accel_t     vdpau_accel_data;
 } vdpau_frame_t;
 
 
@@ -289,6 +297,8 @@ static vo_frame_t *vdpau_alloc_frame (vo_driver_t *this_gen)
   if (!frame)
     return NULL;
 
+  frame->vo_frame.accel_data = &frame->vdpau_accel_data;
+
   pthread_mutex_init (&frame->vo_frame.mutex, NULL);
 
   /*
@@ -299,6 +309,14 @@ static vo_frame_t *vdpau_alloc_frame (vo_driver_t *this_gen)
   frame->vo_frame.field      = vdpau_frame_field;
   frame->vo_frame.dispose    = vdpau_frame_dispose;
   frame->vo_frame.driver     = this_gen;
+
+  frame->vdpau_accel_data.vdp_device = vdp_device;
+  frame->vdpau_accel_data.surface = 0;
+  frame->vdpau_accel_data.vdp_video_surface_create = vdp_video_surface_create;
+  frame->vdpau_accel_data.vdp_video_surface_destroy = vdp_video_surface_destroy;
+  frame->vdpau_accel_data.vdp_decoder_create = vdp_decoder_create;
+  frame->vdpau_accel_data.vdp_decoder_destroy = vdp_decoder_destroy;
+  frame->vdpau_accel_data.vdp_decoder_render = vdp_decoder_render;
 
   frame->width = frame->height = 0;
 
@@ -421,6 +439,10 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     if ( st != VDP_STATUS_OK )
       printf( "vo_vdpau: vdp_video_surface_putbits_ycbcr YUY2 error : %s\n", vdp_get_error_string( st ) );
   }
+  else {
+    frame->vo_frame.free( &frame->vo_frame );
+    return;
+  }
 
   VdpRect vid_source = { this->sc.crop_left, this->sc.crop_top, this->sc.delivered_width-this->sc.crop_right, this->sc.delivered_height-this->sc.crop_bottom };
   VdpRect out_dest = { 0, 0, this->sc.gui_width, this->sc.gui_height };
@@ -429,7 +451,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   /*printf( "out_dest = %d %d %d %d - vid_dest = %d %d %d %d\n", out_dest.x0, out_dest.y0, out_dest.x1, out_dest.y1, vid_dest.x0, vid_dest.y0, vid_dest.x1, vid_dest.y1 );*/
 
   st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME,
-                               0, 0, this->soft_surface, 0, 0, &vid_source, this->output_surface, &out_dest, &vid_dest, 0, 0 );
+                               0, 0, this->soft_surface, 1, &this->soft_surface, &vid_source, this->output_surface, &out_dest, &vid_dest, 0, 0 );
   if ( st != VDP_STATUS_OK )
     printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
@@ -800,6 +822,22 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
 
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_PRESENTATION_QUEUE_SET_BACKGROUND_COLOR , (void*)&vdp_queue_set_backgroung_color );
   if ( vdpau_init_error( st, "Can't get PRESENTATION_QUEUE_SET_BACKGROUND_COLOR proc address !!", &this->vo_driver, 1 ) )
+    return NULL;
+
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_DECODER_QUERY_CAPABILITIES , (void*)&vdp_decoder_query_capabilities );
+  if ( vdpau_init_error( st, "Can't get DECODER_QUERY_CAPABILITIES proc address !!", &this->vo_driver, 1 ) )
+    return NULL;
+
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_DECODER_CREATE , (void*)&vdp_decoder_create );
+  if ( vdpau_init_error( st, "Can't get DECODER_CREATE proc address !!", &this->vo_driver, 1 ) )
+    return NULL;
+
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_DECODER_DESTROY , (void*)&vdp_decoder_destroy );
+  if ( vdpau_init_error( st, "Can't get DECODER_DESTROY proc address !!", &this->vo_driver, 1 ) )
+    return NULL;
+
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_DECODER_RENDER , (void*)&vdp_decoder_render );
+  if ( vdpau_init_error( st, "Can't get DECODER_RENDER proc address !!", &this->vo_driver, 1 ) )
     return NULL;
 
   st = vdp_queue_target_create_x11( vdp_device, this->drawable, &vdp_queue_target );
