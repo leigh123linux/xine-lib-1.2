@@ -22,6 +22,19 @@ enum nal_unit_types {
     NAL_SPS_EXT
 };
 
+/* slice types repeat from 5-9, we
+ * need a helper function for comparison
+ */
+enum slice_types {
+  SLICE_P = 0,
+  SLICE_B,
+  SLICE_I,
+  SLICE_SP,
+  SLICE_SI
+};
+
+static inline uint32_t slice_type(uint32_t slice_type) { return (slice_type < 10 ? slice_type % 5 : slice_type); }
+
 struct nal_unit {
     uint8_t     nal_ref_idc;    // 0x03
     uint8_t     nal_unit_type;  // 0x1f
@@ -145,10 +158,73 @@ struct slice_header {
     /* sps->pic_order_cnt_type == 1 && !sps->delta_pic_order_always_zero_flag */
     int32_t     delta_pic_order_cnt[2];
 
-    /* not needed for packetizing */
-    /*int32_t     redundant_pic_cnt;
-    uint8_t     direct_spatial_mv_pred_flag;*/
+    /* pps->redundant_pic_cnt_present_flag == 1 */
+    int32_t     redundant_pic_cnt;
 
+    /* slice_type == B */
+    uint8_t     direct_spatial_mv_pred_flag;
+
+    /* slice_type == P, SP, B */
+    uint8_t     num_ref_idx_active_override_flag;
+    /* num_ref_idx_active_override_flag == 1 */
+    uint32_t    num_ref_idx_l0_active_minus1;
+      /* slice type == B */
+      uint32_t  num_ref_idx_l1_active_minus1;
+
+    /* ref_pic_list_reordering */
+    union {
+      /* slice_type != I && slice_type != SI */
+      uint8_t ref_pic_list_reordering_flag_l0;
+
+      /* slice_type == B */
+      uint8_t ref_pic_list_reordering_flag_l1;
+
+        /* ref_pic_list_reordering_flag_l0 == 1 */
+        uint32_t  reordering_of_pic_nums_idc;
+
+        /* reordering_of_pic_nums_idc == 0, 1 */
+        uint32_t  abs_diff_pic_num_minus1;
+
+        /* reordering_of_pic_nums_idc == 2) */
+        uint32_t  long_term_pic_num;
+    } ref_pic_list_reordering;
+
+    /* pred_weight_table */
+    union {
+      uint32_t  luma_log2_weight_denom;
+
+      /* chroma_format_idc != 0 */
+      uint32_t  chroma_log2_weight_denom;
+
+      int32_t   luma_weight_l0[31];
+      int32_t   luma_offset_l0[31];
+
+      int32_t   chroma_weight_l0[31][2];
+      int32_t   chroma_offset_l0[31][2];
+
+      int32_t   luma_weight_l1[31];
+      int32_t   luma_offset_l1[31];
+
+      int32_t   chroma_weight_l1[31][2];
+      int32_t   chroma_offset_l1[31][2];
+    } pred_weight_table;
+
+    /* def_rec_pic_marking */
+    union {
+
+      /* nal_unit_type == NAL_SLICE_IDR */
+      uint8_t   no_output_of_prior_pics_flag;
+      uint8_t   long_term_reference_flag;
+
+      /* else */
+      uint8_t   adaptive_ref_pic_marking_mode_flag;
+      uint32_t  memory_management_control_operation;
+
+      uint32_t  difference_of_pic_nums_minus1;
+      uint32_t  long_term_pic_num;
+      uint32_t  long_term_frame_idx;
+      uint32_t  max_long_term_frame_idx_plus1;
+    } dec_ref_pic_marking;
 };
 
 

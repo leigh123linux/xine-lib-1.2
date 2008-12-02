@@ -40,7 +40,9 @@ int parse_nal_header(struct buf_reader *buf, struct nal_unit *nal);
 uint8_t parse_sps(struct buf_reader *buf, struct seq_parameter_set_rbsp *sps);
 uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps);
 uint8_t parse_slice_header(struct buf_reader *buf, struct nal_unit *nal);
-
+void parse_ref_pic_list_reordering(struct buf_reader *buf, struct nal_unit *nal);
+void parse_pred_weight_table(struct buf_reader *buf, struct nal_unit *nal);
+void parse_dec_ref_pic_marking(struct buf_reader *buf, struct nal_unit *nal);
 
 static void decode_nal(uint8_t **ret, int *len_ret, uint8_t *buf, int buf_len)
 {
@@ -433,7 +435,8 @@ uint8_t parse_slice_header(struct buf_reader *buf, struct nal_unit *nal)
         return -1;
 
     slc->first_mb_in_slice = read_exp_golomb(buf);
-    slc->slice_type = read_exp_golomb(buf);
+    /* we do some parsing on the slice type, because the list is doubled */
+    slc->slice_type = slice_type(read_exp_golomb(buf));
     slc->pic_parameter_set_id = read_exp_golomb(buf);
     slc->frame_num = read_bits(buf, sps->log2_max_frame_num_minus4 + 4);
     if(!sps->frame_mbs_only_flag) {
@@ -459,11 +462,182 @@ uint8_t parse_slice_header(struct buf_reader *buf, struct nal_unit *nal)
         if(pps->pic_order_present_flag && !slc->field_pic_flag)
             slc->delta_pic_order_cnt[1] = read_exp_golomb_s(buf);
     }
-    /* do not need more information for packetizing */
+
+    if(pps->redundant_pic_cnt_present_flag == 1) {
+      slc->redundant_pic_cnt = read_exp_golomb(buf);
+    }
+
+    if(slc->slice_type == SLICE_B)
+      slc->direct_spatial_mv_pred_flag = read_bits(buf, 1);
+
+    if(slc->slice_type == SLICE_P ||
+        slc->slice_type == SLICE_SP ||
+        slc->slice_type == SLICE_B) {
+      slc->num_ref_idx_active_override_flag = read_bits(buf, 1);
+
+      if(slc->num_ref_idx_active_override_flag == 1) {
+        slc->num_ref_idx_l0_active_minus1 = read_exp_golomb(buf);
+
+        if(slc->slice_type == SLICE_B) {
+          slc->num_ref_idx_l1_active_minus1 = read_exp_golomb(buf);
+        }
+      }
+    }
+
+    /* --- ref_pic_list_reordering --- */
+    parse_ref_pic_list_reordering(buf, nal);
+
+    /* --- pred_weight_table --- */
+    if((pps->weighted_pred_flag &&
+        (slc->slice_type == SLICE_P || slc->slice_type == SLICE_SP)) ||
+        (pps->weighted_bipred_idc == 1 && slc->slice_type == SLICE_B)) {
+      parse_pred_weight_table(buf, nal);
+    }
+
+    /* --- dec_ref_pic_marking --- */
+    if(nal->nal_ref_idc != 0)
+      parse_dec_ref_pic_marking(buf, nal);
 
     return 0;
 }
 
+void parse_ref_pic_list_reordering(struct buf_reader *buf, struct nal_unit *nal)
+{
+  struct seq_parameter_set_rbsp *sps = nal->sps;
+  struct pic_parameter_set_rbsp *pps = nal->pps;
+  struct slice_header *slc = nal->slc;
+  if(!sps || !pps)
+      return;
+
+  if(slc->slice_type != SLICE_I && slc->slice_type != SLICE_SI) {
+    slc->ref_pic_list_reordering.ref_pic_list_reordering_flag_l0 = read_bits(buf, 1);
+
+    if(slc->ref_pic_list_reordering.ref_pic_list_reordering_flag_l0 == 1) {
+      do {
+        slc->ref_pic_list_reordering.reordering_of_pic_nums_idc = read_exp_golomb(buf);
+
+        if(slc->ref_pic_list_reordering.reordering_of_pic_nums_idc == 0 ||
+            slc->ref_pic_list_reordering.reordering_of_pic_nums_idc == 1) {
+          slc->ref_pic_list_reordering.abs_diff_pic_num_minus1 = read_exp_golomb(buf);
+        } else if (slc->ref_pic_list_reordering.reordering_of_pic_nums_idc == 2) {
+          slc->ref_pic_list_reordering.long_term_pic_num = read_exp_golomb(buf);
+        }
+      } while (slc->ref_pic_list_reordering.reordering_of_pic_nums_idc != 3);
+    }
+  }
+
+  if(slc->slice_type == SLICE_B) {
+    slc->ref_pic_list_reordering.ref_pic_list_reordering_flag_l1 = read_bits(buf, 1);
+
+    if(slc->ref_pic_list_reordering.ref_pic_list_reordering_flag_l1 == 1) {
+      do {
+        slc->ref_pic_list_reordering.reordering_of_pic_nums_idc = read_exp_golomb(buf);
+
+        if(slc->ref_pic_list_reordering.reordering_of_pic_nums_idc == 0 ||
+            slc->ref_pic_list_reordering.reordering_of_pic_nums_idc == 1) {
+          slc->ref_pic_list_reordering.abs_diff_pic_num_minus1 = read_exp_golomb(buf);
+        } else if (slc->ref_pic_list_reordering.reordering_of_pic_nums_idc == 2) {
+          slc->ref_pic_list_reordering.long_term_pic_num = read_exp_golomb(buf);
+        }
+      } while (slc->ref_pic_list_reordering.reordering_of_pic_nums_idc != 3);
+    }
+  }
+}
+
+void parse_pred_weight_table(struct buf_reader *buf, struct nal_unit *nal)
+{
+  struct seq_parameter_set_rbsp *sps = nal->sps;
+  struct pic_parameter_set_rbsp *pps = nal->pps;
+  struct slice_header *slc = nal->slc;
+  if(!sps || !pps)
+      return;
+
+  nal->slc->pred_weight_table.luma_log2_weight_denom = read_exp_golomb(buf);
+
+  if(sps->chroma_format_idc != 0)
+    nal->slc->pred_weight_table.chroma_log2_weight_denom = read_exp_golomb(buf);
+
+  int i;
+  for(i = 0; i <= pps->num_ref_idx_l0_active_minus1; i++) {
+    uint8_t luma_weight_l0_flag = read_bits(buf, 1);
+
+    if(luma_weight_l0_flag == 1 ) {
+      nal->slc->pred_weight_table.luma_weight_l0[i] = read_exp_golomb_s(buf);
+      nal->slc->pred_weight_table.luma_offset_l0[i] = read_exp_golomb_s(buf);
+    }
+
+    if(sps->chroma_format_idc != 0) {
+      uint8_t chroma_weight_l0_flag = read_bits(buf, 1);
+
+      if(chroma_weight_l0_flag == 1 ) {
+        int j;
+        for(j = 0; j < 2 ; j++) {
+          nal->slc->pred_weight_table.chroma_weight_l0[i][j] = read_exp_golomb_s(buf);
+          nal->slc->pred_weight_table.chroma_offset_l0[i][j] = read_exp_golomb_s(buf);
+        }
+      }
+    }
+  }
+
+  if(slc->slice_type == SLICE_B) {
+    for(i = 0; i <= pps->num_ref_idx_l1_active_minus1; i++) {
+      uint8_t luma_weight_l1_flag = read_bits(buf, 1);
+
+      if(luma_weight_l1_flag == 1 ) {
+        nal->slc->pred_weight_table.luma_weight_l1[i] = read_exp_golomb_s(buf);
+        nal->slc->pred_weight_table.luma_offset_l1[i] = read_exp_golomb_s(buf);
+      }
+
+      if(sps->chroma_format_idc != 0) {
+        uint8_t chroma_weight_l1_flag = read_bits(buf, 1);
+
+        if(chroma_weight_l1_flag == 1 ) {
+          int j;
+          for(j = 0; j < 2 ; j++) {
+            nal->slc->pred_weight_table.chroma_weight_l1[i][j] = read_exp_golomb_s(buf);
+            nal->slc->pred_weight_table.chroma_offset_l1[i][j] = read_exp_golomb_s(buf);
+          }
+        }
+      }
+    }
+  }
+}
+
+void parse_dec_ref_pic_marking(struct buf_reader *buf, struct nal_unit *nal)
+{
+  struct seq_parameter_set_rbsp *sps = nal->sps;
+  struct pic_parameter_set_rbsp *pps = nal->pps;
+  struct slice_header *slc = nal->slc;
+  if(!sps || !pps)
+      return;
+
+  if(nal->nal_unit_type == NAL_SLICE_IDR) {
+    slc->dec_ref_pic_marking.no_output_of_prior_pics_flag = read_bits(buf, 1);
+    slc->dec_ref_pic_marking.long_term_reference_flag = read_bits(buf, 1);
+  } else {
+    slc->dec_ref_pic_marking.adaptive_ref_pic_marking_mode_flag = read_bits(buf, 1);
+
+    if(slc->dec_ref_pic_marking.adaptive_ref_pic_marking_mode_flag) {
+      do {
+        slc->dec_ref_pic_marking.memory_management_control_operation = read_exp_golomb(buf);
+
+        if(slc->dec_ref_pic_marking.memory_management_control_operation == 1 ||
+            slc->dec_ref_pic_marking.memory_management_control_operation == 3)
+          slc->dec_ref_pic_marking.difference_of_pic_nums_minus1 = read_exp_golomb(buf);
+
+        if(slc->dec_ref_pic_marking.memory_management_control_operation == 2)
+          slc->dec_ref_pic_marking.long_term_pic_num = read_exp_golomb(buf);
+
+        if(slc->dec_ref_pic_marking.memory_management_control_operation == 3 ||
+            slc->dec_ref_pic_marking.memory_management_control_operation == 6)
+          slc->dec_ref_pic_marking.long_term_frame_idx = read_exp_golomb(buf);
+
+        if(slc->dec_ref_pic_marking.memory_management_control_operation == 4)
+          slc->dec_ref_pic_marking.max_long_term_frame_idx_plus1 = read_exp_golomb(buf);
+      } while(slc->dec_ref_pic_marking.memory_management_control_operation != 0);
+    }
+  }
+}
 
 
 /* ----------------- NAL parser ----------------- */
@@ -641,15 +815,6 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
             parser->current_nal->sps = parser->last_nal->sps;
         if(parser->current_nal->pps == NULL)
             parser->current_nal->pps = parser->last_nal->pps;
-
-        /*if(ret)
-            parser->slice = 0;*/
-        /*if(parser->slice && parser->have_top && parser->field != 0) {
-            parser->have_frame = 1;
-            parser->have_top = 0;
-            parser->slice = 0;
-            return ret;
-        }*/
 
         /* increase the slice_cnt until a new frame is detected */
         if(!ret)
