@@ -178,7 +178,8 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
       }
 
       if(this->decoder_initialized) {
-        if(this->nal_parser->current_nal->slc != NULL &&
+        if(vdp_buffer.bitstream_bytes > 0 &&
+            this->nal_parser->current_nal->slc != NULL &&
             this->nal_parser->current_nal->sps != NULL &&
             this->nal_parser->current_nal->pps != NULL) {
 
@@ -197,7 +198,8 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
           pic.slice_count = slice_count;
           pic.field_order_cnt[0] = 0; // FIXME
-          pic.is_reference = 1; // FIXME
+          pic.is_reference =
+            (this->nal_parser->current_nal->nal_ref_idc != 0) ? VDP_TRUE : VDP_FALSE;
           pic.frame_num = slc->frame_num;
           pic.field_pic_flag = slc->field_pic_flag;
           pic.bottom_field_flag = slc->bottom_field_flag;
@@ -229,6 +231,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           img->pts       = buf->pts;
           img->bad_frame = 0;
 
+          printf("Decode pts: %lld, %d\n", img->pts, vdp_buffer.bitstream_bytes);
           /* create surface if needed */
           if(this->vdpau_accel->surface == VDP_INVALID_HANDLE) {
             VdpStatus status = this->vdpau_accel->vdp_video_surface_create(this->vdpau_accel->vdp_device,
@@ -240,17 +243,18 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           }
 
           VdpStatus status = this->vdpau_accel->vdp_decoder_render(this->decoder,
-              this->vdpau_accel->surface, &pic, 1, (VdpPictureInfo*)&vdp_buffer);
+              this->vdpau_accel->surface, (VdpPictureInfo*)&pic, 1, &vdp_buffer);
 
           if(status != VDP_STATUS_OK)
             xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %d\n", status);
+          else
+            printf("DECODING SUCCESS\n");
 
           img->draw(img, this->stream);
           img->free(img);
         }
       }
     }
-
   }
 }
 

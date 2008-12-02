@@ -33,6 +33,27 @@ enum slice_types {
   SLICE_SI
 };
 
+enum aspect_ratio {
+  ASPECT_UNSPECIFIED = 0,
+  ASPECT_1_1,
+  ASPECT_12_11,
+  ASPECT_10_11,
+  ASPECT_16_11,
+  ASPECT_40_33,
+  ASPECT_24_11,
+  ASPECT_20_11,
+  ASPECT_32_11,
+  ASPECT_80_33,
+  ASPECT_18_11,
+  ASPECT_15_11,
+  ASPECT_64_33,
+  ASPECT_160_99,
+  ASPECT_4_3,
+  ASPECT_3_2,
+  ASPECT_2_1,
+  ASPECT_RESERVED
+};
+
 static inline uint32_t slice_type(uint32_t slice_type) { return (slice_type < 10 ? slice_type % 5 : slice_type); }
 
 struct nal_unit {
@@ -42,6 +63,21 @@ struct nal_unit {
     struct seq_parameter_set_rbsp   *sps;
     struct pic_parameter_set_rbsp   *pps;
     struct slice_header             *slc;
+};
+
+struct hrd_parameters {
+  uint32_t  cpb_cnt_minus1;
+  uint8_t   bit_rate_scale;
+  uint8_t   cpb_size_scale;
+
+  uint32_t  bit_rate_value_minus1[32];
+  uint32_t  cpb_size_value_minus1[32];
+  uint8_t   cbr_flag[32];
+
+  uint8_t   initial_cpb_removal_delay_length_minus1;
+  uint8_t   cpb_removal_delay_length_minus1;
+  uint8_t   dpb_output_delay_length_minus1;
+  uint8_t   time_offset_length;
 };
 
 struct seq_parameter_set_rbsp {
@@ -89,7 +125,61 @@ struct seq_parameter_set_rbsp {
     uint32_t    frame_crop_top_offset;
     uint32_t    frame_crop_bottom_offset;
     uint8_t     vui_parameters_present_flag;
-    // TODO: add vui_parameters, rtbsp_trailing_bits
+
+    /* vui_parameters */
+    union {
+      uint8_t   aspect_ration_info_present_flag;
+
+      /* aspect_ration_info_present_flag == 1 */
+      uint8_t   aspect_ratio_idc;
+      uint16_t  sar_width;
+      uint16_t  sar_height;
+
+      uint8_t   overscan_info_present_flag;
+      /* overscan_info_present_flag == 1 */
+      uint8_t   overscan_appropriate_flag;
+
+      uint8_t   video_signal_type_present_flag;
+      /* video_signal_type_present_flag == 1 */
+      uint8_t   video_format;
+      uint8_t   video_full_range_flag;
+      uint8_t   colour_description_present;
+      /* colour_description_present == 1 */
+      uint8_t   colour_primaries;
+      uint8_t   transfer_characteristics;
+      uint8_t   matrix_coefficients;
+
+      uint8_t   chroma_loc_info_present_flag;
+      /* chroma_loc_info_present_flag == 1 */
+      uint8_t   chroma_sample_loc_type_top_field;
+      uint8_t   chroma_sample_loc_type_bottom_field;
+
+      uint8_t   timing_info_present_flag;
+      /* timing_info_present_flag == 1 */
+      uint32_t  num_units_in_tick;
+      uint32_t  time_scale;
+      uint8_t   fixed_frame_rate_flag;
+
+      uint8_t   nal_hrd_parameters_present_flag;
+      struct hrd_parameters nal_hrd_parameters;
+
+      uint8_t   vc1_hrd_parameters_present_flag;
+      struct hrd_parameters vc1_hrd_parameters;
+
+      uint8_t   low_delay_hrd_flag;
+
+      uint8_t   pic_struct_present_flag;
+      uint8_t   bitstream_restriction_flag;
+
+      /* bitstream_restriction_flag == 1 */
+      uint8_t   motion_vectors_over_pic_boundaries;
+      uint32_t  max_bytes_per_pic_denom;
+      uint32_t  max_bits_per_mb_denom;
+      uint32_t  log2_max_mv_length_horizontal;
+      uint32_t  log2_max_mv_length_vertical;
+      uint32_t  num_reorder_frames;
+      uint32_t  max_dec_frame_buffering;
+    } vui_parameters;
 
 };
 
@@ -196,17 +286,17 @@ struct slice_header {
       /* chroma_format_idc != 0 */
       uint32_t  chroma_log2_weight_denom;
 
-      int32_t   luma_weight_l0[31];
-      int32_t   luma_offset_l0[31];
+      int32_t   luma_weight_l0[32];
+      int32_t   luma_offset_l0[32];
 
-      int32_t   chroma_weight_l0[31][2];
-      int32_t   chroma_offset_l0[31][2];
+      int32_t   chroma_weight_l0[32][2];
+      int32_t   chroma_offset_l0[32][2];
 
-      int32_t   luma_weight_l1[31];
-      int32_t   luma_offset_l1[31];
+      int32_t   luma_weight_l1[32];
+      int32_t   luma_offset_l1[32];
 
-      int32_t   chroma_weight_l1[31][2];
-      int32_t   chroma_offset_l1[31][2];
+      int32_t   chroma_weight_l1[32][2];
+      int32_t   chroma_offset_l1[32][2];
     } pred_weight_table;
 
     /* def_rec_pic_marking */
@@ -236,15 +326,29 @@ struct nal_parser {
     int found_sps;
     int found_pps;
     int last_nal_res;
+
     int field; /* 0=top, 1=bottom, -1=both */
     int slice;
     int slice_cnt;
     int have_top;
     int have_frame;
+
     struct nal_unit *nal0;
     struct nal_unit *nal1;
     struct nal_unit *current_nal;
     struct nal_unit *last_nal;
+
+    /* pic_order_cnt */
+    int32_t top_field_order_cnt;
+    int32_t bottom_field_oder_cnt;
+    int32_t prev_pic_order_cnt_msb;
+    int32_t prev_pic_order_cnt_lsb;
+};
+
+/* Decoded Picture Buffer */
+struct dpb {
+  uint32_t max_frame_number;
+
 };
 
 int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser);

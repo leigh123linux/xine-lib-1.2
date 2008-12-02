@@ -34,10 +34,14 @@ struct buf_reader {
 static inline uint32_t read_bits(struct buf_reader *buf, int len);
 uint32_t read_exp_golomb(struct buf_reader *buf);
 int32_t read_exp_golomb_s(struct buf_reader *buf);
+
+void calculate_pic_order(struct nal_parser *parser);
 void skip_scaling_list(struct buf_reader *buf, int size);
 void parse_scaling_list(struct buf_reader *buf, uint8_t *scaling_list, int length, int index);
 int parse_nal_header(struct buf_reader *buf, struct nal_unit *nal);
 uint8_t parse_sps(struct buf_reader *buf, struct seq_parameter_set_rbsp *sps);
+void parse_vui_parameters(struct buf_reader *buf, struct seq_parameter_set_rbsp *sps);
+void parse_hrd_parameters(struct buf_reader *buf, struct hrd_parameters *hrd);
 uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps);
 uint8_t parse_slice_header(struct buf_reader *buf, struct nal_unit *nal);
 void parse_ref_pic_list_reordering(struct buf_reader *buf, struct nal_unit *nal);
@@ -223,6 +227,27 @@ int parse_nal_header(struct buf_reader *buf, struct nal_unit *nal)
     return ret;
 }
 
+void calculate_pic_order(struct nal_parser *parser)
+{
+  struct nal_unit *nal = parser->current_nal;
+
+  struct seq_parameter_set_rbsp *sps = nal->sps;
+  struct pic_parameter_set_rbsp *pps = nal->pps;
+  struct slice_header *slc = nal->slc;
+  if(!sps || !pps)
+      return;
+
+  if(sps->pic_order_cnt_type == 0) {
+    if(nal->nal_unit_type == NAL_SLICE_IDR) {
+      parser->prev_pic_order_cnt_lsb = 0;
+      parser->prev_pic_order_cnt_msb = 0;
+    } else {
+
+    }
+  }
+
+}
+
 void skip_scaling_list(struct buf_reader *buf, int size)
 {
     int i;
@@ -351,10 +376,97 @@ uint8_t parse_sps(struct buf_reader *buf, struct seq_parameter_set_rbsp *sps)
         sps->frame_crop_bottom_offset = read_exp_golomb(buf);
     }
     sps->vui_parameters_present_flag = read_bits(buf, 1);
-    /*if(sps->vui_parameters_present_flag)
-        printf("ERROR: vui_parameters is not implemented\n");*/
+    if(sps->vui_parameters_present_flag) {
+        parse_vui_parameters(buf, sps);
+    }
 
     return 0;
+}
+
+void parse_vui_parameters(struct buf_reader *buf, struct seq_parameter_set_rbsp *sps)
+{
+  sps->vui_parameters.aspect_ration_info_present_flag = read_bits(buf, 1);
+  if(sps->vui_parameters.aspect_ration_info_present_flag == 1) {
+    sps->vui_parameters.aspect_ratio_idc = read_bits(buf, 8);
+    if(sps->vui_parameters.aspect_ratio_idc == ASPECT_RESERVED) {
+      sps->vui_parameters.sar_width = read_bits(buf, 16);
+      sps->vui_parameters.sar_height = read_bits(buf, 16);
+    }
+  }
+
+  sps->vui_parameters.overscan_info_present_flag = read_bits(buf, 1);
+  if(sps->vui_parameters.overscan_info_present_flag) {
+    sps->vui_parameters.overscan_appropriate_flag = read_bits(buf, 1);
+  }
+
+  sps->vui_parameters.video_signal_type_present_flag = read_bits(buf, 1);
+  if(sps->vui_parameters.video_signal_type_present_flag) {
+    sps->vui_parameters.video_format = read_bits(buf, 3);
+    sps->vui_parameters.video_full_range_flag = read_bits(buf, 1);
+    sps->vui_parameters.colour_description_present = read_bits(buf, 1);
+    if(sps->vui_parameters.colour_description_present) {
+      sps->vui_parameters.colour_primaries = read_bits(buf, 8);
+      sps->vui_parameters.transfer_characteristics = read_bits(buf, 8);
+      sps->vui_parameters.matrix_coefficients = read_bits(buf, 8);
+    }
+  }
+
+  sps->vui_parameters.chroma_loc_info_present_flag = read_bits(buf, 1);
+  if(sps->vui_parameters.chroma_loc_info_present_flag) {
+    sps->vui_parameters.chroma_sample_loc_type_top_field = read_exp_golomb(buf);
+    sps->vui_parameters.chroma_sample_loc_type_bottom_field = read_exp_golomb(buf);
+  }
+
+  sps->vui_parameters.timing_info_present_flag = read_bits(buf, 1);
+  if(sps->vui_parameters.timing_info_present_flag) {
+    sps->vui_parameters.num_units_in_tick = read_bits(buf, 32);
+    sps->vui_parameters.time_scale = read_bits(buf, 32);
+    sps->vui_parameters.fixed_frame_rate_flag = read_bits(buf, 1);
+  }
+
+  sps->vui_parameters.nal_hrd_parameters_present_flag = read_bits(buf, 1);
+  if(sps->vui_parameters.nal_hrd_parameters_present_flag)
+    parse_hrd_parameters(buf, &sps->vui_parameters.nal_hrd_parameters);
+
+  sps->vui_parameters.vc1_hrd_parameters_present_flag = read_bits(buf, 1);
+  if(sps->vui_parameters.vc1_hrd_parameters_present_flag)
+    parse_hrd_parameters(buf, &sps->vui_parameters.vc1_hrd_parameters);
+
+  if(sps->vui_parameters.nal_hrd_parameters_present_flag ||
+      sps->vui_parameters.vc1_hrd_parameters_present_flag)
+    sps->vui_parameters.low_delay_hrd_flag = read_bits(buf, 1);
+
+  sps->vui_parameters.pic_struct_present_flag = read_bits(buf, 1);
+  sps->vui_parameters.bitstream_restriction_flag = read_bits(buf, 1);
+
+  if(sps->vui_parameters.bitstream_restriction_flag) {
+    sps->vui_parameters.motion_vectors_over_pic_boundaries = read_bits(buf, 1);
+    sps->vui_parameters.max_bytes_per_pic_denom = read_exp_golomb(buf);
+    sps->vui_parameters.max_bits_per_mb_denom = read_exp_golomb(buf);
+    sps->vui_parameters.log2_max_mv_length_horizontal = read_exp_golomb(buf);
+    sps->vui_parameters.log2_max_mv_length_vertical = read_exp_golomb(buf);
+    sps->vui_parameters.num_reorder_frames = read_exp_golomb(buf);
+    sps->vui_parameters.max_dec_frame_buffering = read_exp_golomb(buf);
+  }
+}
+
+void parse_hrd_parameters(struct buf_reader *buf, struct hrd_parameters *hrd)
+{
+  hrd->cpb_cnt_minus1 = read_exp_golomb(buf);
+  hrd->bit_rate_scale = read_bits(buf, 4);
+  hrd->cpb_size_scale = read_bits(buf, 4);
+
+  int i;
+  for(i = 0; i <= hrd->cpb_cnt_minus1; i++) {
+    hrd->bit_rate_value_minus1[i] = read_exp_golomb(buf);
+    hrd->cpb_size_value_minus1[i] = read_exp_golomb(buf);
+    hrd->cbr_flag[i] = read_bits(buf, 1);
+  }
+
+  hrd->initial_cpb_removal_delay_length_minus1 = read_bits(buf, 5);
+  hrd->cpb_removal_delay_length_minus1 = read_bits(buf, 5);
+  hrd->dpb_output_delay_length_minus1 = read_bits(buf, 5);
+  hrd->time_offset_length = read_bits(buf, 5);
 }
 
 uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps)
@@ -740,6 +852,8 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
 
     int res = parse_nal_header(&bufr, nal);
 
+    calculate_pic_order(parser);
+
     if(res >= NAL_SLICE && res <= NAL_SLICE_IDR) {
         // now detect if it's a new frame!
         int ret = 0;
@@ -822,14 +936,14 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
 
         return ret;
     } else if(res == NAL_PPS || res == NAL_SPS) {
-        return 1;
+        return 0;
     } else if (res == NAL_AU_DELIMITER || res == NAL_SEI ||
                (res >= 13 && res <= 18)) {
         //printf("New Frame\n");
-        return 1;
+        return 0;
     }
 
-    return 0;
+    return 1;
 }
 
 int seek_for_nal(uint8_t *buf, int buf_len)
