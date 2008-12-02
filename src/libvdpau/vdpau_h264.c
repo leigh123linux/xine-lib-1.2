@@ -53,7 +53,7 @@ typedef struct vdpau_h264_decoder_s {
 
   /* these are traditional variables in a video decoder object */
   uint64_t          video_step;  /* frame duration in pts units */
-  int               decoder_ok;  /* current decoder status */
+  int               decoder_started;  /* current decoder status */
   int               decoder_initialized; /* vdpau init state */
   int               skipframes;
 
@@ -73,6 +73,9 @@ typedef struct vdpau_h264_decoder_s {
   VdpDecoderProfile profile;
   VdpPictureInfoH264 vdp_picture_info;
   vdpau_accel_t     *vdpau_accel;
+
+  VdpReferenceFrameH264 reference_frames[16];
+  int reference_frames_used;
 
   xine_t            *xine;
 
@@ -169,12 +172,6 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
            this->decoder_initialized = 1;
 
          img->free(img);
-
-         /*if(!is_supported)
-           xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: ERROR: Profile not supported by VDPAU decoder.\n");
-
-         if(max_width < this->width || max_height < this->height)
-           xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: ERROR: Image size not supported by VDPAU decoder.\n");*/
       }
 
       if(this->decoder_initialized) {
@@ -182,12 +179,6 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             this->nal_parser->current_nal->slc != NULL &&
             this->nal_parser->current_nal->sps != NULL &&
             this->nal_parser->current_nal->pps != NULL) {
-
-          img = this->stream->video_out->get_frame (this->stream->video_out,
-                                            this->width, this->height,
-                                            this->ratio,
-                                            XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS);
-          this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
 
           struct pic_parameter_set_rbsp *pps = this->nal_parser->current_nal->pps;
           struct seq_parameter_set_rbsp *sps = this->nal_parser->current_nal->sps;
@@ -231,27 +222,24 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           img->pts       = buf->pts;
           img->bad_frame = 0;
 
-          printf("Decode pts: %lld, %d\n", img->pts, vdp_buffer.bitstream_bytes);
-          /* create surface if needed */
-          if(this->vdpau_accel->surface == VDP_INVALID_HANDLE) {
-            VdpStatus status = this->vdpau_accel->vdp_video_surface_create(this->vdpau_accel->vdp_device,
-                VDP_CHROMA_TYPE_420, this->width, this->height,
-                &this->vdpau_accel->surface);
 
-            if(status != VDP_STATUS_OK)
-              xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Surface creation failed\n");
-          }
+          VdpVideoSurface surface;
+          VdpStatus status = this->vdpau_accel->vdp_video_surface_create(this->vdpau_accel->vdp_device,
+              VDP_CHROMA_TYPE_420, this->width, this->height,
+              &surface);
 
-          VdpStatus status = this->vdpau_accel->vdp_decoder_render(this->decoder,
-              this->vdpau_accel->surface, (VdpPictureInfo*)&pic, 1, &vdp_buffer);
+          if(status != VDP_STATUS_OK)
+            xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Surface creation failed\n");
+
+          status = this->vdpau_accel->vdp_decoder_render(this->decoder,
+              surface, (VdpPictureInfo*)&pic, 1, &vdp_buffer);
 
           if(status != VDP_STATUS_OK)
             xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %d\n", status);
           else
             printf("DECODING SUCCESS\n");
 
-          img->draw(img, this->stream);
-          img->free(img);
+          this->vdpau_accel->vdp_video_surface_destroy(surface);
         }
       }
     }
@@ -293,8 +281,8 @@ static void vdpau_h264_dispose (video_decoder_t *this_gen) {
     this->buf = NULL;
   }
 
-  if (this->decoder_ok) {
-    this->decoder_ok = 0;
+  if (this->decoder_initialized) {
+    this->decoder_initialized = 0;
     this->stream->video_out->close(this->stream->video_out, this->stream);
   }
 
@@ -326,10 +314,13 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->xine                              = stream->xine;
   this->class                             = (vdpau_h264_class_t *) class_gen;
 
-  this->decoder_ok    = 0;
+  this->decoder_started    = 0;
   this->decoder_initialized = 0;
   this->nal_parser = init_parser();
   this->buf           = NULL;
+
+  memset(this->reference_frames, 0x00, sizeof(this->reference_frames));
+  this->reference_frames_used = 0;
 
   return &this->video_decoder;
 }

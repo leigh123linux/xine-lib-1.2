@@ -229,13 +229,45 @@ int parse_nal_header(struct buf_reader *buf, struct nal_unit *nal)
 
 void calculate_pic_order(struct nal_parser *parser)
 {
+  return;
+
+
   struct nal_unit *nal = parser->current_nal;
+  struct dpb *dpb = parser->dpb;
 
   struct seq_parameter_set_rbsp *sps = nal->sps;
   struct pic_parameter_set_rbsp *pps = nal->pps;
   struct slice_header *slc = nal->slc;
   if(!sps || !pps)
       return;
+
+  uint32_t max_frame_num = pow(2, sps->log2_max_frame_num_minus4+4);
+  if(dpb->max_frame_num == 0)
+    dpb->max_frame_num = max_frame_num;
+
+  if(dpb->max_frame_num != max_frame_num && dpb->max_frame_num != 0)
+    printf("ERROR, FIXME, max_frame_num changed");
+
+  /* calculate frame_num based stuff */
+  if(nal->nal_unit_type == NAL_SLICE_IDR) {
+    dpb->prev_ref_frame_number = 0;
+  } else {
+    // FIXME: understand p92 in h264 spec
+  }
+
+  if(slc->frame_num != dpb->prev_ref_frame_number) {
+    memset(dpb->non_existing_pictures, 0, 32);
+    int i = 0;
+    dpb->unused_short_term_frame_num = (dpb->prev_ref_frame_number + 1) % dpb->max_frame_num;
+    dpb->non_existing_pictures[i] = dpb->unused_short_term_frame_num;
+    i++;
+
+    while(dpb->unused_short_term_frame_num != slc->frame_num) {
+      dpb->unused_short_term_frame_num = (dpb->unused_short_term_frame_num + 1) % dpb->max_frame_num;
+      dpb->non_existing_pictures[i] = dpb->unused_short_term_frame_num;
+      i++;
+    }
+  }
 
   if(sps->pic_order_cnt_type == 0) {
     if(nal->nal_unit_type == NAL_SLICE_IDR) {
@@ -809,6 +841,9 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
         if((parser->last_nal_res = parse_nal(inbuf+4, inbuf_len-parsed_len, parser)) == 1
             && parser->buf_len>0) {
             // parse_nal returned 1 --> detected a frame_boundary
+            // do the extended parsing stuff...
+            calculate_pic_order(parser);
+
             *ret_buf = malloc(parser->buf_len);
             xine_fast_memcpy(*ret_buf, parser->buf, parser->buf_len);
             *ret_len = parser->buf_len;
@@ -851,8 +886,6 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
     struct nal_unit *last_nal = parser->last_nal;
 
     int res = parse_nal_header(&bufr, nal);
-
-    calculate_pic_order(parser);
 
     if(res >= NAL_SLICE && res <= NAL_SLICE_IDR) {
         // now detect if it's a new frame!

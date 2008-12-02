@@ -318,6 +318,22 @@ struct slice_header {
 };
 
 
+struct decoded_picture {
+  //VdpReferenceFrameH264 surface;
+  struct nal_unit *nal;
+};
+
+/* Decoded Picture Buffer */
+struct dpb {
+  uint32_t max_frame_num;
+
+  uint32_t prev_ref_frame_number;
+  uint32_t unused_short_term_frame_num;
+  uint32_t non_existing_pictures[32];
+
+  struct decoded_picture *pictures;
+};
+
 #define MAX_FRAME_SIZE  1024*1024
 
 struct nal_parser {
@@ -343,12 +359,8 @@ struct nal_parser {
     int32_t bottom_field_oder_cnt;
     int32_t prev_pic_order_cnt_msb;
     int32_t prev_pic_order_cnt_lsb;
-};
 
-/* Decoded Picture Buffer */
-struct dpb {
-  uint32_t max_frame_number;
-
+    struct dpb *dpb;
 };
 
 int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser);
