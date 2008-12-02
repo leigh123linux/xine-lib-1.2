@@ -394,7 +394,6 @@ uint8_t parse_sps(struct buf_reader *buf, struct seq_parameter_set_rbsp *sps)
     sps->pic_height = (2-sps->frame_mbs_only_flag) * sps->pic_height;
     if(sps->pic_height == 1088)
       sps->pic_height = 1080;
-    //printf("res: %dx%d\n", sps->pic_width, sps->pic_height);
 
     if(!sps->frame_mbs_only_flag)
         sps->mb_adaptive_frame_field_flag = read_bits(buf, 1);

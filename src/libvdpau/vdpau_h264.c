@@ -189,6 +189,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
           pic.slice_count = slice_count;
           pic.field_order_cnt[0] = 0; // FIXME
+          pic.field_order_cnt[0] = 0;
           pic.is_reference =
             (this->nal_parser->current_nal->nal_ref_idc != 0) ? VDP_TRUE : VDP_FALSE;
           pic.frame_num = slc->frame_num;
@@ -217,29 +218,31 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           pic.redundant_pic_cnt_present_flag = pps->redundant_pic_cnt_present_flag;
           memcpy(pic.scaling_lists_4x4, pps->scaling_lists_4x4, 6*16);
           memcpy(pic.scaling_lists_8x8, pps->scaling_lists_8x8, 2*64);
+          memcpy(pic.referenceFrames, this->reference_frames, sizeof(this->reference_frames));
 
-          img->duration  = this->video_step;
-          img->pts       = buf->pts;
-          img->bad_frame = 0;
+          if(this->decoder_started || pic.is_reference) {
+            if(!this->decoder_started)
+              this->decoder_started = 1;
 
+            VdpVideoSurface surface;
+            VdpStatus status = this->vdpau_accel->vdp_video_surface_create(this->vdpau_accel->vdp_device,
+                VDP_CHROMA_TYPE_420, this->width, this->height,
+                &surface);
 
-          VdpVideoSurface surface;
-          VdpStatus status = this->vdpau_accel->vdp_video_surface_create(this->vdpau_accel->vdp_device,
-              VDP_CHROMA_TYPE_420, this->width, this->height,
-              &surface);
+            if(status != VDP_STATUS_OK)
+              xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Surface creation failed\n");
 
-          if(status != VDP_STATUS_OK)
-            xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Surface creation failed\n");
+            printf("Decode: NUM: %d, REF: %d\n", pic.frame_num, pic.is_reference);
+            status = this->vdpau_accel->vdp_decoder_render(this->decoder,
+                surface, (VdpPictureInfo*)&pic, 1, &vdp_buffer);
 
-          status = this->vdpau_accel->vdp_decoder_render(this->decoder,
-              surface, (VdpPictureInfo*)&pic, 1, &vdp_buffer);
+            if(status != VDP_STATUS_OK)
+              xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %d\n", status);
+            else
+              printf("DECODING SUCCESS\n");
 
-          if(status != VDP_STATUS_OK)
-            xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %d\n", status);
-          else
-            printf("DECODING SUCCESS\n");
-
-          this->vdpau_accel->vdp_video_surface_destroy(surface);
+            this->vdpau_accel->vdp_video_surface_destroy(surface);
+          }
         }
       }
     }
