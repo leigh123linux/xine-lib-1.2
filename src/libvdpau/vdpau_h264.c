@@ -234,20 +234,20 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
       if(this->decoder_initialized) {
         if(vdp_buffer.bitstream_bytes > 0 &&
-            this->nal_parser->last_nal->slc != NULL &&
-            this->nal_parser->last_nal->sps != NULL &&
-            this->nal_parser->last_nal->pps != NULL) {
+            this->nal_parser->current_nal->slc != NULL &&
+            this->nal_parser->current_nal->sps != NULL &&
+            this->nal_parser->current_nal->pps != NULL) {
 
-          struct pic_parameter_set_rbsp *pps = this->nal_parser->last_nal->pps;
-          struct seq_parameter_set_rbsp *sps = this->nal_parser->last_nal->sps;
-          struct slice_header *slc = this->nal_parser->last_nal->slc;
+          struct pic_parameter_set_rbsp *pps = this->nal_parser->current_nal->pps;
+          struct seq_parameter_set_rbsp *sps = this->nal_parser->current_nal->sps;
+          struct slice_header *slc = this->nal_parser->current_nal->slc;
 
           /* go and decode a frame */
           VdpPictureInfoH264 pic;
 
           pic.slice_count = slice_count;
-          pic.field_order_cnt[0] = 0; // FIXME
-          pic.field_order_cnt[1] = 0;
+          pic.field_order_cnt[0] = this->nal_parser->top_field_order_cnt;
+          pic.field_order_cnt[1] = this->nal_parser->bottom_field_order_cnt;
           pic.is_reference =
             (this->nal_parser->current_nal->nal_ref_idc != 0) ? VDP_TRUE : VDP_FALSE;
           pic.frame_num = slc->frame_num;
@@ -304,7 +304,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Surface creation failed\n");
             }
 
-            //printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer.bitstream_bytes, buf->pts);
+            printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer.bitstream_bytes, buf->pts);
             VdpStatus status = this->vdpau_accel->vdp_decoder_render(this->decoder,
                 surface, (VdpPictureInfo*)&pic, 1, &vdp_buffer);
 

@@ -357,7 +357,8 @@ struct nal_parser {
 
     /* pic_order_cnt */
     int32_t top_field_order_cnt;
-    int32_t bottom_field_oder_cnt;
+    int32_t bottom_field_order_cnt;
+    int32_t pic_order_cnt_msb;
     int32_t prev_pic_order_cnt_msb;
     int32_t prev_pic_order_cnt_lsb;
 

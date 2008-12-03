@@ -38,13 +38,13 @@ int32_t read_exp_golomb_s(struct buf_reader *buf);
 void calculate_pic_order(struct nal_parser *parser);
 void skip_scaling_list(struct buf_reader *buf, int size);
 void parse_scaling_list(struct buf_reader *buf, uint8_t *scaling_list, int length, int index);
-int parse_nal_header(struct buf_reader *buf, struct nal_unit *nal);
+int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser);
 uint8_t parse_sps(struct buf_reader *buf, struct seq_parameter_set_rbsp *sps);
 void parse_vui_parameters(struct buf_reader *buf, struct seq_parameter_set_rbsp *sps);
 void parse_hrd_parameters(struct buf_reader *buf, struct hrd_parameters *hrd);
 uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps,
     struct seq_parameter_set_rbsp *sps);
-uint8_t parse_slice_header(struct buf_reader *buf, struct nal_unit *nal);
+uint8_t parse_slice_header(struct buf_reader *buf, struct nal_parser *parser);
 void parse_ref_pic_list_reordering(struct buf_reader *buf, struct nal_unit *nal);
 void parse_pred_weight_table(struct buf_reader *buf, struct nal_unit *nal);
 void parse_dec_ref_pic_marking(struct buf_reader *buf, struct nal_unit *nal);
@@ -168,11 +168,13 @@ int32_t read_exp_golomb_s(struct buf_reader *buf)
     return code;
 }
 
-int parse_nal_header(struct buf_reader *buf, struct nal_unit *nal)
+int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
 {
     if(buf->len < 1)
         return -1;
     int ret = -1;
+
+    struct nal_unit *nal = parser->current_nal;
 
     nal->nal_ref_idc = (buf->buf[0] >> 5) & 0x03;
     nal->nal_unit_type = buf->buf[0] & 0x1f;
@@ -216,7 +218,7 @@ int parse_nal_header(struct buf_reader *buf, struct nal_unit *nal)
                 else
                     memset(nal->slc, 0x00, sizeof(struct slice_header));
 
-                parse_slice_header(buf, nal);
+                parse_slice_header(buf, parser);
                 ret = nal->nal_unit_type;
             }
             break;
@@ -230,26 +232,23 @@ int parse_nal_header(struct buf_reader *buf, struct nal_unit *nal)
 
 void calculate_pic_order(struct nal_parser *parser)
 {
-  return;
-
-
   struct nal_unit *nal = parser->current_nal;
   struct dpb *dpb = parser->dpb;
 
   struct seq_parameter_set_rbsp *sps = nal->sps;
   struct pic_parameter_set_rbsp *pps = nal->pps;
   struct slice_header *slc = nal->slc;
-  if(!sps || !pps)
+  if(!sps || !pps || !slc)
       return;
 
-  uint32_t max_frame_num = pow(2, sps->log2_max_frame_num_minus4+4);
+  /*uint32_t max_frame_num = pow(2, sps->log2_max_frame_num_minus4+4);
   if(dpb->max_frame_num == 0)
     dpb->max_frame_num = max_frame_num;
 
   if(dpb->max_frame_num != max_frame_num && dpb->max_frame_num != 0)
     printf("ERROR, FIXME, max_frame_num changed");
 
-  /* calculate frame_num based stuff */
+  /  * calculate frame_num based stuff * /
   if(nal->nal_unit_type == NAL_SLICE_IDR) {
     dpb->prev_ref_frame_number = 0;
   } else {
@@ -268,14 +267,32 @@ void calculate_pic_order(struct nal_parser *parser)
       dpb->non_existing_pictures[i] = dpb->unused_short_term_frame_num;
       i++;
     }
-  }
+  }*/
 
   if(sps->pic_order_cnt_type == 0) {
     if(nal->nal_unit_type == NAL_SLICE_IDR) {
       parser->prev_pic_order_cnt_lsb = 0;
       parser->prev_pic_order_cnt_msb = 0;
     } else {
+        const int max_poc_lsb = 1<<(sps->log2_max_pic_order_cnt_lsb_minus4+4);
 
+        if(slc->pic_order_cnt_lsb < parser->prev_pic_order_cnt_lsb &&
+            parser->prev_pic_order_cnt_lsb - slc->pic_order_cnt_lsb >= max_poc_lsb/2)
+          parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb + max_poc_lsb;
+        else if(slc->pic_order_cnt_lsb > parser->prev_pic_order_cnt_lsb &&
+            parser->prev_pic_order_cnt_lsb - slc->pic_order_cnt_lsb < -max_poc_lsb/2)
+          parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb - max_poc_lsb;
+        else
+          parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb;
+
+        if(!slc->bottom_field_flag) {
+          parser->top_field_order_cnt = parser->pic_order_cnt_msb + slc->pic_order_cnt_lsb;
+          parser->bottom_field_order_cnt = 0;
+        } else
+          parser->bottom_field_order_cnt = parser->pic_order_cnt_msb + slc->pic_order_cnt_lsb;
+
+        if(parser->field == -1)
+          parser->bottom_field_order_cnt += slc->delta_pic_order_cnt_bottom;
     }
   }
 
@@ -581,8 +598,10 @@ uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps,
     return 0;
 }
 
-uint8_t parse_slice_header(struct buf_reader *buf, struct nal_unit *nal)
+uint8_t parse_slice_header(struct buf_reader *buf, struct nal_parser *parser)
 {
+    struct nal_unit *nal = parser->current_nal;
+
     struct seq_parameter_set_rbsp *sps = nal->sps;
     struct pic_parameter_set_rbsp *pps = nal->pps;
     struct slice_header *slc = nal->slc;
@@ -818,6 +837,11 @@ struct nal_parser* init_parser()
     parser->field = -1;
     parser->have_top = 0;
 
+    /* no idea why we do that. inspired by libavcodec,
+     * as we couldn't figure in the specs....
+     */
+    parser->prev_pic_order_cnt_msb = 1<<16;
+
     return parser;
 }
 
@@ -856,23 +880,24 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
         parser->last_nal_res = parse_nal(inbuf+4, inbuf_len-parsed_len, parser);
         if(parser->last_nal_res == 1
             && parser->buf_len>0) {
-            // parse_nal returned 1 --> detected a frame_boundary
-            // do the extended parsing stuff...
-            calculate_pic_order(parser);
-
             *ret_buf = malloc(parser->buf_len);
             xine_fast_memcpy(*ret_buf, parser->buf, parser->buf_len);
             *ret_len = parser->buf_len;
             *ret_slice_cnt = parser->slice_cnt;
 
+            calculate_pic_order(parser);
+
             //memset(parser->buf, 0x00, parser->buf_len);
             parser->buf_len = 0;
             parser->last_nal_res = 0;
             parser->slice_cnt = 0;
+
+            /*if(parser->current_nal->nal_ref_idc) {
+              if(parser->current_nal->slc != NULL)
+                parser->prev_pic_order_cnt_lsb = parser->current_nal->slc->pic_order_cnt_lsb;
+              parser->prev_pic_order_cnt_msb = parser->pic_order_cnt_msb;
+            }*/
             return parsed_len;
-        } else if (parser->last_nal_res == 2) {
-          /* this is a nal_unit != SLICE, cut this out */
-          //parser->buf_len -= (next_nal+search_offset);
         }
 
         search_offset = 4;
@@ -902,7 +927,7 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
     struct nal_unit *nal = parser->current_nal;
     struct nal_unit *last_nal = parser->last_nal;
 
-    int res = parse_nal_header(&bufr, nal);
+    int res = parse_nal_header(&bufr, parser);
     if(res == NAL_SLICE_IDR)
       parser->is_idr = 1;
 
