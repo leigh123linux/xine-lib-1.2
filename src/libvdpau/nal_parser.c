@@ -800,6 +800,7 @@ struct nal_parser* init_parser()
     parser->last_nal = parser->nal1;
 
     parser->last_nal_res = 0;
+    parser->is_idr = 0;
     parser->slice = 0;
     parser->slice_cnt = 0;
     parser->field = -1;
@@ -885,6 +886,9 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
     struct nal_unit *last_nal = parser->last_nal;
 
     int res = parse_nal_header(&bufr, nal);
+    printf("type: %d\n", res);
+    if(res == NAL_SLICE_IDR)
+      parser->is_idr = 1;
 
     if(res >= NAL_SLICE && res <= NAL_SLICE_IDR) {
         // now detect if it's a new frame!

@@ -478,7 +478,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   /*printf( "out_dest = %d %d %d %d - vid_dest = %d %d %d %d\n", out_dest.x0, out_dest.y0, out_dest.x1, out_dest.y1, vid_dest.x0, vid_dest.y0, vid_dest.x1, vid_dest.y1 );*/
 
   st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME,
-                               0, 0, surface, 0, 0, &vid_source, this->output_surface, &out_dest, &vid_dest, 0, 0 );
+                               0, VDP_INVALID_HANDLE, surface, 0, VDP_INVALID_HANDLE, &vid_source, this->output_surface, &out_dest, &vid_dest, 0, 0 );
   if ( st != VDP_STATUS_OK )
     printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 

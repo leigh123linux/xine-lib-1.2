@@ -221,6 +221,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           memcpy(pic.referenceFrames, this->reference_frames, sizeof(this->reference_frames));
 
           if(this->decoder_started || pic.is_reference) {
+            this->nal_parser->is_idr = 0;
             if(!this->decoder_started)
               this->decoder_started = 1;
 
@@ -238,8 +239,23 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
             if(status != VDP_STATUS_OK)
               xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %d\n", status);
-            else
+            else {
               printf("DECODING SUCCESS\n");
+              img = this->stream->video_out->get_frame (this->stream->video_out,
+                                                        this->width, this->height,
+                                                        this->ratio,
+                                                        XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS);
+
+              this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
+              this->vdpau_accel->surface = surface;
+
+              img->duration  = this->video_step;
+              img->pts       = buf->pts;
+              img->bad_frame = 0;
+
+              img->draw(img, this->stream);
+              img->free(img);
+            }
 
             this->vdpau_accel->vdp_video_surface_destroy(surface);
           }
@@ -322,7 +338,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->nal_parser = init_parser();
   this->buf           = NULL;
 
-  memset(this->reference_frames, 0x00, sizeof(this->reference_frames));
+  memset(this->reference_frames, VDP_INVALID_HANDLE, sizeof(this->reference_frames));
   this->reference_frames_used = 0;
 
   return &this->video_decoder;
@@ -391,7 +407,7 @@ static const uint32_t video_types[] = {
  */
 static const decoder_info_t dec_info_video = {
   video_types,         /* supported types */
-  5                    /* priority        */
+  7                    /* priority        */
 };
 
 /*
