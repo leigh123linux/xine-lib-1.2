@@ -172,6 +172,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
            this->decoder_initialized = 1;
 
          img->free(img);
+         img = NULL;
       }
 
       if(this->decoder_initialized) {
@@ -225,29 +226,33 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             if(!this->decoder_started)
               this->decoder_started = 1;
 
-            VdpVideoSurface surface;
-            VdpStatus status = this->vdpau_accel->vdp_video_surface_create(this->vdpau_accel->vdp_device,
-                VDP_CHROMA_TYPE_420, this->width, this->height,
-                &surface);
+            if(img == NULL) {
+              img = this->stream->video_out->get_frame (this->stream->video_out,
+                                                        this->width, this->height,
+                                                        this->ratio,
+                                                        XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS);
+              this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
+            }
 
-            if(status != VDP_STATUS_OK)
-              xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Surface creation failed\n");
+            VdpVideoSurface surface = this->vdpau_accel->surface;
+
+            if(surface == VDP_INVALID_HANDLE) {
+              VdpStatus status = this->vdpau_accel->vdp_video_surface_create(this->vdpau_accel->vdp_device,
+                  VDP_CHROMA_TYPE_420, this->width, this->height,
+                  &surface);
+              this->vdpau_accel->surface = surface;
+              if(status != VDP_STATUS_OK)
+                xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Surface creation failed\n");
+            }
 
             printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer.bitstream_bytes, buf->pts);
-            status = this->vdpau_accel->vdp_decoder_render(this->decoder,
+            VdpStatus status = this->vdpau_accel->vdp_decoder_render(this->decoder,
                 surface, (VdpPictureInfo*)&pic, 1, &vdp_buffer);
 
             if(status != VDP_STATUS_OK)
               xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %d\n", status);
             else {
               printf("DECODING SUCCESS\n");
-              img = this->stream->video_out->get_frame (this->stream->video_out,
-                                                        this->width, this->height,
-                                                        this->ratio,
-                                                        XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS);
-
-              this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
-              this->vdpau_accel->surface = surface;
 
               img->duration  = this->video_step;
               img->pts       = buf->pts;
@@ -255,9 +260,10 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
               img->draw(img, this->stream);
               img->free(img);
+              img = NULL;
             }
 
-            this->vdpau_accel->vdp_video_surface_destroy(surface);
+            //this->vdpau_accel->vdp_video_surface_destroy(surface);
           }
         }
       }

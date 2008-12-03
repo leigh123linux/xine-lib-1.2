@@ -831,14 +831,15 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
             *ret_buf = NULL;
             return parsed_len;
         }
-        //if(parser->last_nal_res != 1) {
-            xine_fast_memcpy(&parser->buf[parser->buf_len], inbuf, next_nal+search_offset);
-            parser->buf_len += next_nal+search_offset;
-        //}
+
+        xine_fast_memcpy(&parser->buf[parser->buf_len], inbuf, next_nal+search_offset);
+        parser->buf_len += next_nal+search_offset;
+
         inbuf += next_nal+search_offset;
         parsed_len += next_nal+search_offset;
 
-        if((parser->last_nal_res = parse_nal(inbuf+4, inbuf_len-parsed_len, parser)) == 1
+        parser->last_nal_res = parse_nal(inbuf+4, inbuf_len-parsed_len, parser);
+        if(parser->last_nal_res == 1
             && parser->buf_len>0) {
             // parse_nal returned 1 --> detected a frame_boundary
             // do the extended parsing stuff...
@@ -854,6 +855,9 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
             parser->last_nal_res = 0;
             parser->slice_cnt = 0;
             return parsed_len;
+        } else if (parser->last_nal_res == 2) {
+          /* this is a nal_unit != SLICE, cut this out */
+          parser->buf_len -= (next_nal+search_offset);
         }
 
         search_offset = 4;
@@ -886,7 +890,6 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
     struct nal_unit *last_nal = parser->last_nal;
 
     int res = parse_nal_header(&bufr, nal);
-    printf("type: %d\n", res);
     if(res == NAL_SLICE_IDR)
       parser->is_idr = 1;
 
@@ -982,11 +985,10 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
 
         return ret;
     } else if(res == NAL_PPS || res == NAL_SPS) {
-        return 0;
-    } else if (res == NAL_AU_DELIMITER || res == NAL_SEI ||
-               (res >= 13 && res <= 18)) {
+        return 2;
+    } else if (res >= NAL_SEI) {
         //printf("New Frame\n");
-        return 0;
+        return 2;
     }
 
     return 1;
