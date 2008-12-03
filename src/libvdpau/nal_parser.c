@@ -42,7 +42,8 @@ int parse_nal_header(struct buf_reader *buf, struct nal_unit *nal);
 uint8_t parse_sps(struct buf_reader *buf, struct seq_parameter_set_rbsp *sps);
 void parse_vui_parameters(struct buf_reader *buf, struct seq_parameter_set_rbsp *sps);
 void parse_hrd_parameters(struct buf_reader *buf, struct hrd_parameters *hrd);
-uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps);
+uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps,
+    struct seq_parameter_set_rbsp *sps);
 uint8_t parse_slice_header(struct buf_reader *buf, struct nal_unit *nal);
 void parse_ref_pic_list_reordering(struct buf_reader *buf, struct nal_unit *nal);
 void parse_pred_weight_table(struct buf_reader *buf, struct nal_unit *nal);
@@ -188,8 +189,8 @@ int parse_nal_header(struct buf_reader *buf, struct nal_unit *nal)
             ibuf.cur_pos = ibuf.buf;
             if(!nal->sps)
                 nal->sps = malloc(sizeof(struct seq_parameter_set_rbsp));
-            else
-                memset(nal->sps, 0x00, sizeof(struct seq_parameter_set_rbsp));
+
+            memset(nal->sps, 0x00, sizeof(struct seq_parameter_set_rbsp));
 
             parse_sps(&ibuf, nal->sps);
             free(ibuf.buf);
@@ -198,10 +199,10 @@ int parse_nal_header(struct buf_reader *buf, struct nal_unit *nal)
         case NAL_PPS:
             if(!nal->pps)
                 nal->pps = malloc(sizeof(struct pic_parameter_set_rbsp));
-            else
-                memset(nal->pps, 0x00, sizeof(struct pic_parameter_set_rbsp));
 
-            parse_pps(buf, nal->pps);
+            memset(nal->pps, 0x00, sizeof(struct pic_parameter_set_rbsp));
+
+            parse_pps(buf, nal->pps, nal->sps);
             ret = NAL_PPS;
             break;
         case NAL_SLICE:
@@ -352,16 +353,19 @@ uint8_t parse_sps(struct buf_reader *buf, struct seq_parameter_set_rbsp *sps)
         sps->seq_scaling_matrix_present_flag = read_bits(buf, 1);
         if(sps->seq_scaling_matrix_present_flag) {
         	int i;
-			for(i = 0; i < 8; i++) {
-				sps->seq_scaling_list_present_flag[i] = read_bits(buf, 1);
+            for(i = 0; i < 8; i++) {
+              sps->seq_scaling_list_present_flag[i] = read_bits(buf, 1);
 
-				if(sps->seq_scaling_list_present_flag[i]) {
-					if(i < 6)
-						parse_scaling_list(buf, sps->scaling_lists_4x4[i], 16, i);
-					else
-						parse_scaling_list(buf, sps->scaling_lists_8x8[i-6], 64, i);
-				}
-			}
+              if(sps->seq_scaling_list_present_flag[i]) {
+                if(i < 6)
+                  parse_scaling_list(buf, sps->scaling_lists_4x4[i], 16, i);
+                else
+                  parse_scaling_list(buf, sps->scaling_lists_8x8[i-6], 64, i);
+              }
+            }
+        } else {
+          memset(sps->scaling_lists_4x4, 16, sizeof(sps->scaling_lists_4x4));
+          memset(sps->scaling_lists_8x8, 16, sizeof(sps->scaling_lists_4x4));
         }
     }
 
@@ -500,7 +504,8 @@ void parse_hrd_parameters(struct buf_reader *buf, struct hrd_parameters *hrd)
   hrd->time_offset_length = read_bits(buf, 5);
 }
 
-uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps)
+uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps,
+    struct seq_parameter_set_rbsp *sps)
 {
     pps->pic_parameter_set_id = read_exp_golomb(buf);
     pps->seq_parameter_set_id = read_exp_golomb(buf);
@@ -547,23 +552,30 @@ uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps)
     pps->redundant_pic_cnt_present_flag = read_bits(buf, 1);
 
     if(!rbsp_trailing_bits(buf)) {
-		pps->transform_8x8_mode_flag = read_bits(buf, 1);
-		pps->pic_scaling_matrix_present_flag = read_bits(buf, 1);
-		if(pps->pic_scaling_matrix_present_flag) {
-			int i;
-			for(i = 0; i < 6 + 2 * pps->transform_8x8_mode_flag; i++) {
-				pps->pic_scaling_list_present_flag[i] = read_bits(buf, 1);
+      printf("PARSE 8x8\n");
+      pps->transform_8x8_mode_flag = read_bits(buf, 1);
+      pps->pic_scaling_matrix_present_flag = read_bits(buf, 1);
+      if(pps->pic_scaling_matrix_present_flag) {
+        int i;
+        for(i = 0; i < 6 + 2 * pps->transform_8x8_mode_flag; i++) {
+          pps->pic_scaling_list_present_flag[i] = read_bits(buf, 1);
 
-				if(pps->pic_scaling_list_present_flag[i]) {
-					if(i < 6)
-						parse_scaling_list(buf, pps->scaling_lists_4x4[i], 16, i);
-					else
-						parse_scaling_list(buf, pps->scaling_lists_8x8[i-6], 64, i);
-				}
-			}
-		}
+          if(pps->pic_scaling_list_present_flag[i]) {
+            if(i < 6)
+              parse_scaling_list(buf, pps->scaling_lists_4x4[i], 16, i);
+            else
+              parse_scaling_list(buf, pps->scaling_lists_8x8[i-6], 64, i);
+          }
+        }
+      }
 
-		pps->second_chroma_qp_index_offset = read_exp_golomb_s(buf);
+      pps->second_chroma_qp_index_offset = read_exp_golomb_s(buf);
+    }
+
+
+    if(!pps->pic_scaling_matrix_present_flag) {
+      memcpy(pps->scaling_lists_4x4, sps->scaling_lists_4x4, sizeof(pps->scaling_lists_4x4));
+      memcpy(pps->scaling_lists_8x8, sps->scaling_lists_8x8, sizeof(pps->scaling_lists_8x8));
     }
 
     return 0;
@@ -832,8 +844,11 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
             return parsed_len;
         }
 
-        xine_fast_memcpy(&parser->buf[parser->buf_len], inbuf, next_nal+search_offset);
-        parser->buf_len += next_nal+search_offset;
+        if(parser->last_nal_res != 2) {
+          /* this is a nal_unit != SLICE, cut this out */
+          xine_fast_memcpy(&parser->buf[parser->buf_len], inbuf, next_nal+search_offset);
+          parser->buf_len += next_nal+search_offset;
+        }
 
         inbuf += next_nal+search_offset;
         parsed_len += next_nal+search_offset;
@@ -857,7 +872,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
             return parsed_len;
         } else if (parser->last_nal_res == 2) {
           /* this is a nal_unit != SLICE, cut this out */
-          parser->buf_len -= (next_nal+search_offset);
+          //parser->buf_len -= (next_nal+search_offset);
         }
 
         search_offset = 4;
@@ -865,10 +880,8 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
 
     // no further NAL found, copy the rest of the stream
     // into the buffer
-//    if(parser->last_nal_res != 1) {
-        xine_fast_memcpy(&parser->buf[parser->buf_len], inbuf, inbuf_len-parsed_len);
-        parser->buf_len += inbuf_len-parsed_len;
-//    }
+    xine_fast_memcpy(&parser->buf[parser->buf_len], inbuf, inbuf_len-parsed_len);
+    parser->buf_len += inbuf_len-parsed_len;
 
     parsed_len += (inbuf_len-parsed_len);
     *ret_len = 0;

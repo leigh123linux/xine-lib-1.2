@@ -89,6 +89,63 @@ typedef struct vdpau_h264_decoder_s {
  * xine video plugin functions
  *************************************************************************/
 
+
+static inline void dump_pictureinfo_h264(VdpPictureInfoH264 *pic)
+{
+  printf("slice_count: %d\n", pic->slice_count);
+  printf("field_order_cnt[0]: %d\n", pic->field_order_cnt[0]);
+  printf("field_order_cnt[1]: %d\n", pic->field_order_cnt[1]);
+  printf("is_reference: %d\n", pic->is_reference);
+  printf("frame_num: %d\n", pic->frame_num);
+  printf("field_pic_flag: %d\n", pic->field_pic_flag);
+  printf("bottom_field_flag: %d\n", pic->bottom_field_flag);
+  printf("num_ref_frames: %d\n", pic->num_ref_frames);
+  printf("mb_adaptive_frame_field_flag: %d\n", pic->mb_adaptive_frame_field_flag);
+  printf("constrained_intra_pred_flag: %d\n", pic->constrained_intra_pred_flag);
+  printf("weighted_pred_flag: %d\n", pic->weighted_pred_flag);
+  printf("weighted_bipred_idc: %d\n", pic->weighted_bipred_idc);
+  printf("frame_mbs_only_flag: %d\n", pic->frame_mbs_only_flag);
+  printf("transform_8x8_mode_flag: %d\n", pic->transform_8x8_mode_flag);
+  printf("chroma_qp_index_offset: %d\n", pic->chroma_qp_index_offset);
+  printf("second_chroma_qp_index_offset: %d\n", pic->second_chroma_qp_index_offset);
+  printf("pic_init_qp_minus26: %d\n", pic->pic_init_qp_minus26);
+  printf("num_ref_idx_l0_active_minus1: %d\n", pic->num_ref_idx_l0_active_minus1);
+  printf("num_ref_idx_l1_active_minus1: %d\n", pic->num_ref_idx_l1_active_minus1);
+  printf("log2_max_frame_num_minus4: %d\n", pic->log2_max_frame_num_minus4);
+  printf("pic_order_cnt_type: %d\n", pic->pic_order_cnt_type);
+  printf("log2_max_pic_order_cnt_lsb_minus4: %d\n", pic->log2_max_pic_order_cnt_lsb_minus4);
+  printf("delta_pic_order_always_zero_flag: %d\n", pic->delta_pic_order_always_zero_flag);
+  printf("direct_8x8_inference_flag: %d\n", pic->direct_8x8_inference_flag);
+  printf("entropy_coding_mode_flag: %d\n", pic->entropy_coding_mode_flag);
+  printf("pic_order_present_flag: %d\n", pic->pic_order_present_flag);
+  printf("deblocking_filter_control_present_flag: %d\n", pic->deblocking_filter_control_present_flag);
+  printf("redundant_pic_cnt_present_flag: %d\n", pic->redundant_pic_cnt_present_flag);
+
+  int i, j;
+  for(i = 0; i < 6; i++) {
+    printf("scalint_list4x4[%d]: ", i);
+    for(j = 0; j < 16; j++) {
+      printf("[%d] ", pic->scaling_lists_4x4[i][j]);
+      if(j%8 == 0)
+        printf("\n");
+    }
+    printf("\n");
+  }
+  for(i = 0; i < 2; i++) {
+    printf("scalint_list4x4[%d]: ", i);
+    for(j = 0; j < 64; j++) {
+      printf("[%d] ", pic->scaling_lists_4x4[i][j]);
+      if(j%8 == 0)
+        printf("\n");
+    }
+    printf("\n");
+  }
+  /*memcpy(pic.scaling_lists_4x4, pps->scaling_lists_4x4, 6*16);
+  memcpy(pic.scaling_lists_8x8, pps->scaling_lists_8x8, 2*64);
+  memcpy(pic.referenceFrames, this->reference_frames, sizeof(this->reference_frames));*/
+
+}
+
 /*
  * This function receives a buffer of data from the demuxer layer and
  * figures out how to handle it based on its header flags.
@@ -177,9 +234,9 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
       if(this->decoder_initialized) {
         if(vdp_buffer.bitstream_bytes > 0 &&
-            this->nal_parser->current_nal->slc != NULL &&
-            this->nal_parser->current_nal->sps != NULL &&
-            this->nal_parser->current_nal->pps != NULL) {
+            this->nal_parser->last_nal->slc != NULL &&
+            this->nal_parser->last_nal->sps != NULL &&
+            this->nal_parser->last_nal->pps != NULL) {
 
           struct pic_parameter_set_rbsp *pps = this->nal_parser->last_nal->pps;
           struct seq_parameter_set_rbsp *sps = this->nal_parser->last_nal->sps;
@@ -190,7 +247,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
           pic.slice_count = slice_count;
           pic.field_order_cnt[0] = 0; // FIXME
-          pic.field_order_cnt[0] = 0;
+          pic.field_order_cnt[1] = 0;
           pic.is_reference =
             (this->nal_parser->current_nal->nal_ref_idc != 0) ? VDP_TRUE : VDP_FALSE;
           pic.frame_num = slc->frame_num;
@@ -217,14 +274,16 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           pic.pic_order_present_flag = pps->pic_order_present_flag;
           pic.deblocking_filter_control_present_flag = pps->deblocking_filter_control_present_flag;
           pic.redundant_pic_cnt_present_flag = pps->redundant_pic_cnt_present_flag;
-          memcpy(pic.scaling_lists_4x4, pps->scaling_lists_4x4, 6*16);
+          memcpy(pic.scaling_lists_4x4, pps->scaling_lists_4x4, sizeof(pic.scaling_lists_4x4));
           memcpy(pic.scaling_lists_8x8, pps->scaling_lists_8x8, 2*64);
-          memcpy(pic.referenceFrames, this->reference_frames, sizeof(this->reference_frames));
+          memcpy(pic.referenceFrames, this->reference_frames, sizeof(pic.scaling_lists_8x8));
 
           if(this->decoder_started || pic.is_reference) {
             this->nal_parser->is_idr = 0;
             if(!this->decoder_started)
               this->decoder_started = 1;
+
+            //dump_pictureinfo_h264(&pic);
 
             if(img == NULL) {
               img = this->stream->video_out->get_frame (this->stream->video_out,
@@ -245,7 +304,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Surface creation failed\n");
             }
 
-            printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer.bitstream_bytes, buf->pts);
+            //printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer.bitstream_bytes, buf->pts);
             VdpStatus status = this->vdpau_accel->vdp_decoder_render(this->decoder,
                 surface, (VdpPictureInfo*)&pic, 1, &vdp_buffer);
 
