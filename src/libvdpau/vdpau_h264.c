@@ -275,8 +275,8 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           pic.deblocking_filter_control_present_flag = pps->deblocking_filter_control_present_flag;
           pic.redundant_pic_cnt_present_flag = pps->redundant_pic_cnt_present_flag;
           memcpy(pic.scaling_lists_4x4, pps->scaling_lists_4x4, sizeof(pic.scaling_lists_4x4));
-          memcpy(pic.scaling_lists_8x8, pps->scaling_lists_8x8, 2*64);
-          memcpy(pic.referenceFrames, this->reference_frames, sizeof(pic.scaling_lists_8x8));
+          memcpy(pic.scaling_lists_8x8, pps->scaling_lists_8x8, sizeof(pic.scaling_lists_8x8));
+          memcpy(pic.referenceFrames, this->reference_frames, sizeof(pic.referenceFrames));
 
           if(this->decoder_started || pic.is_reference) {
             this->nal_parser->is_idr = 0;
