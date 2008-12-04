@@ -869,8 +869,8 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
         }
 
         if(parser->last_nal_res != 2) {
-          /* this is a nal_unit != SLICE, cut this out */
-          xine_fast_memcpy(&parser->buf[parser->buf_len], inbuf, next_nal+search_offset);
+          /* this is not nal_unit != SLICE, keep it in the buffer */
+          xine_fast_memcpy(parser->buf + parser->buf_len, inbuf, next_nal+search_offset);
           parser->buf_len += next_nal+search_offset;
         }
 
@@ -889,7 +889,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
 
             //memset(parser->buf, 0x00, parser->buf_len);
             parser->buf_len = 0;
-            parser->last_nal_res = 0;
+            parser->last_nal_res = 1;
             parser->slice_cnt = 0;
 
             /*if(parser->current_nal->nal_ref_idc) {

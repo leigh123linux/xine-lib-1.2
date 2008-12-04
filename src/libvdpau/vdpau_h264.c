@@ -285,6 +285,21 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
             //dump_pictureinfo_h264(&pic);
 
+            int i;
+            printf("Decode data: \n");
+            for(i = 0; i < ((vdp_buffer.bitstream_bytes < 20) ? vdp_buffer.bitstream_bytes : 20); i++) {
+              printf("%02x ", ((uint8_t*)vdp_buffer.bitstream)[i]);
+              if((i+1) % 10 == 0)
+                printf("\n");
+            }
+            printf("\n...\n");
+            for(i = vdp_buffer.bitstream_bytes - 20; i < vdp_buffer.bitstream_bytes; i++) {
+              printf("%02x ", ((uint8_t*)vdp_buffer.bitstream)[i]);
+              if((i+1) % 10 == 0)
+                printf("\n");
+            }
+
+
             if(img == NULL) {
               img = this->stream->video_out->get_frame (this->stream->video_out,
                                                         this->width, this->height,
