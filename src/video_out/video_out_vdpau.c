@@ -75,6 +75,7 @@ VdpVideoSurfaceQueryGetPutBitsYCbCrCapabilities *vdp_video_surface_query_get_put
 VdpVideoSurfaceCreate *vdp_video_surface_create;
 VdpVideoSurfaceDestroy *vdp_video_surface_destroy;
 VdpVideoSurfacePutBitsYCbCr *vdp_video_surface_putbits_ycbcr;
+VdpVideoSurfaceGetBitsYCbCr *vdp_video_surface_getbits_ycbcr;
 
 VdpOutputSurfaceCreate *vdp_output_surface_create;
 VdpOutputSurfaceDestroy *vdp_output_surface_destroy;
@@ -147,7 +148,7 @@ typedef struct {
   int                  soft_surface_format;
 
   VdpOutputSurface output_surface[2];
-  uint32_t             current_output_surface;
+  uint8_t              current_output_surface;
   uint32_t             output_surface_width[2];
   uint32_t             output_surface_height[2];
   uint8_t              init_queue;
@@ -159,6 +160,7 @@ typedef struct {
 
   uint32_t          capabilities;
   xine_t            *xine;
+  int               gotimage;
 } vdpau_driver_t;
 
 
@@ -359,13 +361,6 @@ static void vdpau_frame_proc_slice (vo_frame_t *vo_img, uint8_t **src)
   vdpau_frame_t  *frame = (vdpau_frame_t *) vo_img ;
 
   vo_img->proc_called = 1;
-
-  if( frame->vo_frame.crop_left || frame->vo_frame.crop_top ||
-      frame->vo_frame.crop_right || frame->vo_frame.crop_bottom )
-  {
-    /* TODO: ?!? */
-    return;
-  }
 }
 
 
@@ -383,9 +378,9 @@ static void vdpau_frame_dispose (vo_frame_t *vo_img)
   free (frame->chunk[0]);
   free (frame->chunk[1]);
   free (frame->chunk[2]);
-  free (frame);
   if ( frame->vdpau_accel_data.surface != VDP_INVALID_HANDLE )
     vdp_video_surface_destroy( frame->vdpau_accel_data.surface );
+  free (frame);
 }
 
 
@@ -458,6 +453,7 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
 
     if ( frame->vdpau_accel_data.surface != VDP_INVALID_HANDLE  ) {
       if ( (frame->width != width) || (frame->height != height) || (frame->format != XINE_IMGFMT_VDPAU) ) {
+        printf("vo_vdpau: update_frame - destroy surface\n");
         vdp_video_surface_destroy( frame->vdpau_accel_data.surface );
         frame->vdpau_accel_data.surface = VDP_INVALID_HANDLE;
       }
@@ -499,6 +495,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   uint32_t mix_w = this->video_mixer_width;
   uint32_t mix_h = this->video_mixer_height;
 
+
   if ( (frame->width != this->sc.delivered_width) || (frame->height != this->sc.delivered_height) || (frame->ratio != this->sc.delivered_ratio) ) {
     this->sc.force_redraw = 1;    /* trigger re-calc of output size */
   }
@@ -514,9 +511,10 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   vdpau_redraw_needed( this_gen );
 
   if ( (frame->format == XINE_IMGFMT_YV12) || (frame->format == XINE_IMGFMT_YUY2) ) {
+    printf( "vo_vdpau: got a yuv image -------------\n" );
     surface = this->soft_surface;
     chroma = ( frame->format==XINE_IMGFMT_YV12 )? VDP_CHROMA_TYPE_420 : VDP_CHROMA_TYPE_422;
-    if ( (frame->width > this->soft_surface_width) | (frame->height > this->soft_surface_height) || (frame->format != this->soft_surface_format) ) {
+    if ( (frame->width > this->soft_surface_width) || (frame->height > this->soft_surface_height) || (frame->format != this->soft_surface_format) ) {
       printf( "vo_vdpau: soft_surface size update\n" );
       /* recreate surface and mixer to match frame changes */
       mix_w = this->soft_surface_width = frame->width;
@@ -540,13 +538,37 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     }
   }
   else if (frame->format == XINE_IMGFMT_VDPAU) {
+    printf( "vo_vdpau: got a vdpau image -------------\n" );
     surface = frame->vdpau_accel_data.surface;
+    /*if ( !this->gotimage ) {
+      printf( "vo_vdpau: mallocing yuv ......\n" );
+      uint32_t pitches[] = { 8*((frame->width + 7) / 8), 8*((frame->width + 15) / 16), 8*((frame->width + 15) / 16) };
+      uint8_t *mem_y = (uint8_t*)malloc(frame->width*frame->height);
+      uint8_t *mem_u = (uint8_t*)malloc(frame->width*frame->height);
+      uint8_t *mem_v = (uint8_t*)malloc(frame->width*frame->height);
+      uint8_t* planes[] = { mem_y, mem_u, mem_v };
+      ++this->gotimage;
+      st = vdp_video_surface_getbits_ycbcr( surface, VDP_YCBCR_FORMAT_YV12, planes, pitches);
+      if ( st != VDP_STATUS_OK )
+        printf( " vo_vdpau: can't get yv12 bbits !!!!!!!!!!!! : %s\n", vdp_get_error_string( st ) );
+      else {
+      fprintf(stderr,"P5\n%d %d\n255\n",frame->width, frame->height);
+      int j;
+      uint8_t red, green, blue;
+      for ( j=0; j<(frame->width*frame->height); j++ ) {
+        fprintf(stderr,"%d ", mem_y[j] );
+      }
+      fprintf(stderr, "\n");
+      printf( "vo_vdpau: ...........got surface bits\n" );
+      }
+    }*/
     mix_w = frame->width;
     mix_h = frame->height;
     chroma = VDP_CHROMA_TYPE_420;
   }
   else {
     /* unknown format */
+    printf( "vo_vdpau: got an unknown image -------------\n" );
     frame->vo_frame.free( &frame->vo_frame );
     return;
   }
@@ -576,7 +598,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
   XLockDisplay( this->display );
 
-  if ( this->init_queue ) {
+  if ( this->init_queue>1 ) {
     int previous = this->current_output_surface ^ 1;
     VdpTime time;
     vdp_queue_block( vdp_queue, this->output_surface[previous], &time );
@@ -605,8 +627,9 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdp_queue_display( vdp_queue, this->overlay_output, 0, 0, 0 );
   else*/
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, 0 );
+  printf( "vo_vdpau: image displayed\n" );
 
-  if ( !this->init_queue )
+  if ( this->init_queue<2 )
     ++this->init_queue;
 
   this->current_output_surface ^= 1;
@@ -898,6 +921,9 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_SURFACE_PUT_BITS_Y_CB_CR , (void*)&vdp_video_surface_putbits_ycbcr );
   if ( vdpau_init_error( st, "Can't get VIDEO_SURFACE_PUT_BITS_Y_CB_CR proc address !!", &this->vo_driver, 1 ) )
     return NULL;
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_SURFACE_GET_BITS_Y_CB_CR , (void*)&vdp_video_surface_getbits_ycbcr );
+  if ( vdpau_init_error( st, "Can't get VIDEO_SURFACE_GET_BITS_Y_CB_CR proc address !!", &this->vo_driver, 1 ) )
+    return NULL;
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_OUTPUT_SURFACE_CREATE , (void*)&vdp_output_surface_create );
   if ( vdpau_init_error( st, "Can't get OUTPUT_SURFACE_CREATE proc address !!", &this->vo_driver, 1 ) )
     return NULL;
@@ -969,22 +995,19 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   if ( vdpau_init_error( st, "Can't create presentation queue !!", &this->vo_driver, 1 ) )
     return NULL;
 
-
-  VdpColor backColor;
-  backColor.red = backColor.green = backColor.blue = 0;
-  backColor.alpha = 1;
+  VdpColor backColor = { 0, 0, 0, 1 };
   vdp_queue_set_backgroung_color( vdp_queue, &backColor );
 
-  this->soft_surface_width = 720;
-  this->soft_surface_height = 576;
+  this->soft_surface_width = 1280;
+  this->soft_surface_height = 720;
   this->soft_surface_format = XINE_IMGFMT_YV12;
   VdpChromaType chroma = VDP_CHROMA_TYPE_420;
   st = vdp_video_surface_create( vdp_device, chroma, this->soft_surface_width, this->soft_surface_height, &this->soft_surface );
   if ( vdpau_init_error( st, "Can't create video surface !!", &this->vo_driver, 1 ) )
     return NULL;
 
-  this->output_surface_width[0] = this->output_surface_width[1] = 720;
-  this->output_surface_height[0] = this->output_surface_height[1] = 576;
+  this->output_surface_width[0] = this->output_surface_width[1] = 1280;
+  this->output_surface_height[0] = this->output_surface_height[1] = 720;
   this->current_output_surface = 0;
   this->init_queue = 0;
   st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[0], this->output_surface_height[0], &this->output_surface[0] );
@@ -1023,7 +1046,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   else
     this->capabilities |= VO_CAP_VDPAU_H264;
 
-
+  this->gotimage = 0;
   return &this->vo_driver;
 }
 
