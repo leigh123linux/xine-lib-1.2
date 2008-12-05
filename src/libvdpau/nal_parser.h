@@ -238,8 +238,8 @@ struct slice_header {
     uint32_t    slice_type;
     uint32_t    pic_parameter_set_id;
     uint32_t    frame_num;
-    int8_t      field_pic_flag;
-    int8_t      bottom_field_flag;
+    uint8_t      field_pic_flag;
+    uint8_t      bottom_field_flag;
     uint32_t    idr_pic_id;
 
     /* sps->pic_order_cnt_type == 0 */
