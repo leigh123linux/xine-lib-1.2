@@ -37,7 +37,8 @@
 #include "xineutils.h"
 #include "bswap.h"
 #include "accel_vdpau.h"
-#include "nal_parser.h"
+#include "h264_parser.h"
+#include "dpb.h"
 
 #define VIDEOBUFSIZE 128*1024
 
@@ -246,8 +247,8 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           VdpPictureInfoH264 pic;
 
           pic.slice_count = slice_count;
-          pic.field_order_cnt[0] = this->nal_parser->top_field_order_cnt;
-          pic.field_order_cnt[1] = this->nal_parser->bottom_field_order_cnt;
+          pic.field_order_cnt[0] = this->nal_parser->current_nal->top_field_order_cnt;
+          pic.field_order_cnt[1] = this->nal_parser->current_nal->bottom_field_order_cnt;
           pic.is_reference =
             (this->nal_parser->current_nal->nal_ref_idc != 0) ? VDP_TRUE : VDP_FALSE;
           pic.frame_num = slc->frame_num;
@@ -277,6 +278,8 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           memcpy(pic.scaling_lists_4x4, pps->scaling_lists_4x4, sizeof(pic.scaling_lists_4x4));
           memcpy(pic.scaling_lists_8x8, pps->scaling_lists_8x8, sizeof(pic.scaling_lists_8x8));
           memcpy(pic.referenceFrames, this->reference_frames, sizeof(pic.referenceFrames));
+          memset(pic.referenceFrames, VDP_INVALID_HANDLE, sizeof(pic.referenceFrames));
+          fill_vdpau_reference_list(&(this->nal_parser->dpb), pic.referenceFrames);
 
           if(this->decoder_started || pic.is_reference) {
             this->nal_parser->is_idr = 0;
@@ -327,6 +330,11 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
               xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %d\n", status);
             else {
               printf("DECODING SUCCESS\n");
+
+              if(pic.is_reference) {
+                struct decoded_picture *pic = init_decoded_picture(this->nal_parser->current_nal, surface);
+                dpb_add_picture(&(this->nal_parser->dpb), pic);
+              }
 
               img->duration  = this->video_step;
               img->pts       = buf->pts;

@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "nal_parser.h"
+#include "h264_parser.h"
+#include "nal.h"
 
 /* default scaling_lists according to Table 7-2 */
 uint8_t default_4x4_intra[16] = { 6, 13, 13, 20, 20, 20, 28, 28, 28, 28, 32,
@@ -47,8 +48,12 @@ uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps,
 uint8_t parse_slice_header(struct buf_reader *buf, struct nal_parser *parser);
 void
     parse_ref_pic_list_reordering(struct buf_reader *buf, struct nal_unit *nal);
+void decode_ref_pic_marking(uint32_t memory_management_control_operation,
+    struct nal_parser *parser);
 void parse_pred_weight_table(struct buf_reader *buf, struct nal_unit *nal);
-void parse_dec_ref_pic_marking(struct buf_reader *buf, struct nal_unit *nal);
+void parse_dec_ref_pic_marking(struct buf_reader *buf, struct nal_parser *parser);
+
+/* here goes the parser implementation */
 
 static void decode_nal(uint8_t **ret, int *len_ret, uint8_t *buf, int buf_len)
 {
@@ -70,23 +75,6 @@ static void decode_nal(uint8_t **ret, int *len_ret, uint8_t *buf, int buf_len)
 
   *len_ret = pos - *ret;
 }
-
-/*uint32_t read_bits(struct buf_reader *buf, int len)
- {
- uint32_t bits = 0x00;
- int i, j;
- for(i=0, j=0; i<len; i++) {
- while(buf->cur_offset >= 8) {
- buf->cur_pos++;
- buf->cur_offset -= 8;
- }
- uint8_t bit = (*buf->cur_pos >> (7 - buf->cur_offset)) & 0x01;
- bits |= ((uint32_t)bit) << i;
- buf->cur_offset++;
- }
- printf("ret: 0x%08x\n", bits);
- return bits;
- }*/
 
 static inline uint32_t read_bits(struct buf_reader *buf, int len)
 {
@@ -185,8 +173,6 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
     case NAL_SPS:
       decode_nal(&ibuf.buf, &ibuf.len, buf->cur_pos, buf->len - 1);
       ibuf.cur_pos = ibuf.buf;
-      if (!nal->sps)
-        nal->sps = malloc(sizeof(struct seq_parameter_set_rbsp));
 
       memset(nal->sps, 0x00, sizeof(struct seq_parameter_set_rbsp));
 
@@ -195,9 +181,6 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
       ret = NAL_SPS;
       break;
     case NAL_PPS:
-      if (!nal->pps)
-        nal->pps = malloc(sizeof(struct pic_parameter_set_rbsp));
-
       memset(nal->pps, 0x00, sizeof(struct pic_parameter_set_rbsp));
 
       parse_pps(buf, nal->pps, nal->sps);
@@ -209,10 +192,7 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
     case NAL_PART_C:
     case NAL_SLICE_IDR:
       if (nal->sps && nal->pps) {
-        if (!nal->slc)
-          nal->slc = malloc(sizeof(struct slice_header));
-        else
-          memset(nal->slc, 0x00, sizeof(struct slice_header));
+        memset(nal->slc, 0x00, sizeof(struct slice_header));
 
         parse_slice_header(buf, parser);
         ret = nal->nal_unit_type;
@@ -229,41 +209,12 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
 void calculate_pic_order(struct nal_parser *parser)
 {
   struct nal_unit *nal = parser->current_nal;
-  struct dpb *dpb = parser->dpb;
 
   struct seq_parameter_set_rbsp *sps = nal->sps;
   struct pic_parameter_set_rbsp *pps = nal->pps;
   struct slice_header *slc = nal->slc;
   if (!sps || !pps || !slc)
     return;
-
-  /*uint32_t max_frame_num = pow(2, sps->log2_max_frame_num_minus4+4);
-   if(dpb->max_frame_num == 0)
-   dpb->max_frame_num = max_frame_num;
-
-   if(dpb->max_frame_num != max_frame_num && dpb->max_frame_num != 0)
-   printf("ERROR, FIXME, max_frame_num changed");
-
-   /  * calculate frame_num based stuff * /
-   if(nal->nal_unit_type == NAL_SLICE_IDR) {
-   dpb->prev_ref_frame_number = 0;
-   } else {
-   // FIXME: understand p92 in h264 spec
-   }
-
-   if(slc->frame_num != dpb->prev_ref_frame_number) {
-   memset(dpb->non_existing_pictures, 0, 32);
-   int i = 0;
-   dpb->unused_short_term_frame_num = (dpb->prev_ref_frame_number + 1) % dpb->max_frame_num;
-   dpb->non_existing_pictures[i] = dpb->unused_short_term_frame_num;
-   i++;
-
-   while(dpb->unused_short_term_frame_num != slc->frame_num) {
-   dpb->unused_short_term_frame_num = (dpb->unused_short_term_frame_num + 1) % dpb->max_frame_num;
-   dpb->non_existing_pictures[i] = dpb->unused_short_term_frame_num;
-   i++;
-   }
-   }*/
 
   if (sps->pic_order_cnt_type == 0) {
     if (nal->nal_unit_type == NAL_SLICE_IDR) {
@@ -287,16 +238,20 @@ void calculate_pic_order(struct nal_parser *parser)
         parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb;
 
       if (!slc->bottom_field_flag) {
-        parser->top_field_order_cnt = parser->pic_order_cnt_msb
+        nal->top_field_order_cnt = parser->pic_order_cnt_msb
             + slc->pic_order_cnt_lsb;
-        parser->bottom_field_order_cnt = 0;
+
+        if (!slc->field_pic_flag)
+          nal->bottom_field_order_cnt = nal->top_field_order_cnt;
+        else
+          nal->bottom_field_order_cnt = 0;
       }
       else
-        parser->bottom_field_order_cnt = parser->pic_order_cnt_msb
+        nal->bottom_field_order_cnt = parser->pic_order_cnt_msb
             + slc->pic_order_cnt_lsb;
 
       if (parser->field == -1)
-        parser->bottom_field_order_cnt += slc->delta_pic_order_cnt_bottom;
+        nal->bottom_field_order_cnt += slc->delta_pic_order_cnt_bottom;
     }
   }
 
@@ -362,8 +317,8 @@ uint8_t parse_sps(struct buf_reader *buf, struct seq_parameter_set_rbsp *sps)
 
   buf->cur_pos = buf->buf + 3;
   sps->seq_parameter_set_id = read_exp_golomb(buf);
-  if (sps->profile_idc == 100 || sps->profile_idc == 110 ||
-      sps->profile_idc == 122 || sps->profile_idc == 144) {
+  if (sps->profile_idc == 100 || sps->profile_idc == 110 || sps->profile_idc
+      == 122 || sps->profile_idc == 144) {
     sps->chroma_format_idc = read_exp_golomb(buf);
     if (sps->chroma_format_idc == 3) {
       sps->residual_colour_transform_flag = read_bits(buf, 1);
@@ -641,6 +596,11 @@ uint8_t parse_slice_header(struct buf_reader *buf, struct nal_parser *parser)
     slc->bottom_field_flag = 0;
   }
 
+  if (slc->field_pic_flag == 0)
+    nal->curr_pic_num = slc->frame_num;
+  else
+    nal->curr_pic_num = 2 * slc->frame_num + 1;
+
   if (nal->nal_unit_type == NAL_SLICE_IDR)
     slc->idr_pic_id = read_exp_golomb(buf);
 
@@ -688,7 +648,7 @@ uint8_t parse_slice_header(struct buf_reader *buf, struct nal_parser *parser)
 
   /* --- dec_ref_pic_marking --- */
   if (nal->nal_ref_idc != 0)
-    parse_dec_ref_pic_marking(buf, nal);
+    parse_dec_ref_pic_marking(buf, parser);
 
   return 0;
 }
@@ -807,8 +767,102 @@ void parse_pred_weight_table(struct buf_reader *buf, struct nal_unit *nal)
   }
 }
 
-void parse_dec_ref_pic_marking(struct buf_reader *buf, struct nal_unit *nal)
+void decode_ref_pic_marking(uint32_t memory_management_control_operation,
+    struct nal_parser *parser)
 {
+  struct nal_unit *nal = parser->current_nal;
+  struct seq_parameter_set_rbsp *sps = nal->sps;
+  struct pic_parameter_set_rbsp *pps = nal->pps;
+  struct slice_header *slc = nal->slc;
+  struct dpb *dpb = &parser->dpb;
+  if (!sps || !pps || !slc)
+    return;
+
+  if (memory_management_control_operation == 1) {
+    // short-term -> unused for reference
+    uint32_t pic_num_x = nal->curr_pic_num
+        - (slc->dec_ref_pic_marking.difference_of_pic_nums_minus1 + 1);
+    struct decoded_picture* pic = dpb_get_picture(dpb, pic_num_x);
+    if (pic != NULL) {
+      if (pic->nal->slc->field_pic_flag == 0)
+        dpb_remove_picture(dpb, pic_num_x);
+      else {
+        dpb_remove_picture(dpb, pic_num_x);
+        printf("FIXME: We might need do delete more from the DPB...\n");
+        // FIXME: some more handling needed here?! See 8.2.5.4.1, p. 120
+      }
+    }
+  }
+  else if (memory_management_control_operation == 2) {
+    // long-term -> unused for reference
+    struct decoded_picture* pic = dpb_get_picture_by_ltpn(dpb,
+        slc->dec_ref_pic_marking.long_term_pic_num);
+    if (pic != NULL) {
+      if (pic->nal->slc->field_pic_flag == 0)
+        dpb_remove_picture_by_ltpn(dpb,
+            slc->dec_ref_pic_marking.long_term_pic_num);
+      else {
+        dpb_remove_picture_by_ltpn(dpb,
+            slc->dec_ref_pic_marking.long_term_pic_num);
+        printf("FIXME: We might need do delete more from the DPB...\n");
+      }
+    }
+  }
+  else if (memory_management_control_operation == 3) {
+    // short-term -> long-term, set long-term frame index
+    uint32_t pic_num_x = nal->curr_pic_num
+        - (slc->dec_ref_pic_marking.difference_of_pic_nums_minus1 + 1);
+    struct decoded_picture* pic = dpb_get_picture_by_ltidx(dpb,
+        slc->dec_ref_pic_marking.long_term_pic_num);
+    if (pic != NULL)
+      dpb_remove_picture_by_ltidx(dpb,
+          slc->dec_ref_pic_marking.long_term_frame_idx);
+
+    if (pic->nal->slc->field_pic_flag == 0) {
+      pic = dpb_get_picture(dpb, pic_num_x);
+      pic->nal->long_term_frame_idx
+          = slc->dec_ref_pic_marking.long_term_frame_idx;
+    }
+    else
+      printf("FIXME: B Set frame %d to long-term ref\n", pic_num_x);
+  }
+  else if (memory_management_control_operation == 4) {
+    // set max-long-term frame index,
+    // mark all long-term pictures with long-term frame idx
+    // greater max-long-term farme idx as unused for ref
+    if (slc->dec_ref_pic_marking.max_long_term_frame_idx_plus1 == 0)
+      dpb_remove_ltidx_gt(dpb, 0);
+    else
+      dpb_remove_ltidx_gt(dpb,
+          slc->dec_ref_pic_marking.max_long_term_frame_idx_plus1 - 1);
+  }
+  else if (memory_management_control_operation == 5) {
+    // mark all ref pics as unused for reference,
+    // set max-long-term frame index = no long-term frame idxs
+    dpb_flush(dpb);
+  }
+  else if (memory_management_control_operation == 6) {
+    // mark current picture as used for long-term ref,
+    // assing long-term frame idx to it
+    struct decoded_picture* pic = dpb_get_picture_by_ltidx(dpb,
+        slc->dec_ref_pic_marking.long_term_frame_idx);
+    if (pic != NULL)
+      dpb_remove_picture_by_ltidx(dpb,
+          slc->dec_ref_pic_marking.long_term_frame_idx);
+
+    nal->long_term_frame_idx = slc->dec_ref_pic_marking.long_term_frame_idx;
+
+    if (slc->field_pic_flag == 0) {
+      nal->used_for_long_term_ref = 1;
+    }
+    else
+      printf("FIXME: BY Set frame to long-term ref\n");
+  }
+}
+
+void parse_dec_ref_pic_marking(struct buf_reader *buf, struct nal_parser *parser)
+{
+  struct nal_unit *nal = parser->current_nal;
   struct seq_parameter_set_rbsp *sps = nal->sps;
   struct pic_parameter_set_rbsp *pps = nal->pps;
   struct slice_header *slc = nal->slc;
@@ -845,6 +899,9 @@ void parse_dec_ref_pic_marking(struct buf_reader *buf, struct nal_unit *nal)
         if (slc->dec_ref_pic_marking.memory_management_control_operation == 4)
           slc->dec_ref_pic_marking.max_long_term_frame_idx_plus1
               = read_exp_golomb(buf);
+
+        decode_ref_pic_marking(
+            slc->dec_ref_pic_marking.memory_management_control_operation, parser);
       } while (slc->dec_ref_pic_marking.memory_management_control_operation
           != 0);
     }
@@ -860,10 +917,8 @@ struct nal_parser* init_parser()
   parser->buf_len = 0;
   parser->found_sps = 0;
   parser->found_pps = 0;
-  parser->nal0 = malloc(sizeof(struct nal_unit));
-  memset(parser->nal0, 0x00, sizeof(struct nal_unit));
-  parser->nal1 = malloc(sizeof(struct nal_unit));
-  memset(parser->nal1, 0x00, sizeof(struct nal_unit));
+  parser->nal0 = init_nal_unit();
+  parser->nal1 = init_nal_unit();
   parser->current_nal = parser->nal0;
   parser->last_nal = parser->nal1;
 
@@ -985,33 +1040,26 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
     parser->slice = 1;
 
     if (nal->slc == NULL || last_nal->slc == NULL) {
-      printf("A\n");
       ret = 1;
     }
     if (nal->slc && last_nal->slc && (nal->slc->frame_num
         != last_nal->slc->frame_num)) {
-      printf("B\n");
       ret = 1;
     }
     if (nal->slc && last_nal->slc && (nal->slc->pic_parameter_set_id
         != last_nal->slc->pic_parameter_set_id)) {
-      printf("C\n");
       ret = 1;
     }
     if (nal->slc && last_nal->slc && (nal->slc->field_pic_flag
         != last_nal->slc->field_pic_flag)) {
-      printf("D\n");
       ret = 1;
     }
-    if (nal->slc && last_nal->slc && (nal->slc->bottom_field_flag != -1
-        && last_nal->slc->bottom_field_flag != -1
-        && nal->slc->bottom_field_flag != last_nal->slc->bottom_field_flag)) {
-      printf("E\n");
+    if (nal->slc && last_nal->slc && nal->slc->bottom_field_flag
+        != last_nal->slc->bottom_field_flag) {
       ret = 1;
     }
     if (nal->nal_ref_idc != last_nal->nal_ref_idc && (nal->nal_ref_idc == 0
         || last_nal->nal_ref_idc == 0)) {
-      printf("F\n");
       ret = 1;
     }
     if (nal->sps && nal->slc && last_nal->slc && (nal->sps->pic_order_cnt_type
@@ -1019,7 +1067,6 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
         && (nal->slc->pic_order_cnt_lsb != last_nal->slc->pic_order_cnt_lsb
             || nal->slc->delta_pic_order_cnt_bottom
                 != last_nal->slc->delta_pic_order_cnt_bottom))) {
-      printf("G\n");
       ret = 1;
     }
     if (nal->slc && last_nal->slc && (nal->sps->pic_order_cnt_type == 1
@@ -1028,18 +1075,15 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
             != last_nal->slc->delta_pic_order_cnt[0]
             || nal->slc->delta_pic_order_cnt[1]
                 != last_nal->slc->delta_pic_order_cnt[1]))) {
-      printf("H\n");
       ret = 1;
     }
     if (nal->nal_unit_type != last_nal->nal_unit_type && (nal->nal_unit_type
         == 5 || last_nal->nal_unit_type == 5)) {
-      printf("I\n");
       ret = 1;
     }
     if (nal->slc && last_nal->slc && (nal->nal_unit_type == 5
         && last_nal->nal_unit_type == 5 && nal->slc->idr_pic_id
         != last_nal->slc->idr_pic_id)) {
-      printf("J\n");
       ret = 1;
     }
 
@@ -1067,7 +1111,6 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
     return 2;
   }
   else if (res >= NAL_SEI) {
-    //printf("New Frame\n");
     return 2;
   }
 

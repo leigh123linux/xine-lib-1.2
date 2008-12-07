@@ -10,6 +10,6 @@ endif
 
 xineplug_LTLIBRARIES = $(vdpau_h264_module)
 
-xineplug_decode_vdpau_h264_la_SOURCES = nal_parser.c vdpau_h264.c
+xineplug_decode_vdpau_h264_la_SOURCES = nal.c dpb.c h264_parser.c vdpau_h264.c
 xineplug_decode_vdpau_h264_la_CFLAGS = $(AM_CFLAGS) $(VDPAU_CFLAGS)
 xineplug_decode_vdpau_h264_la_LIBADD = $(XINE_LIB) $(DYNAMIC_LD_LIBS)
