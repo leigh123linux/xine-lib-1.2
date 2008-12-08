@@ -649,6 +649,8 @@ static int vdpau_get_property (vo_driver_t *this_gen, int property)
   int ret=-1;
 
   switch (property) {
+    case VO_PROP_MAX_NUM_FRAMES:
+      return 20;
     case VO_PROP_WINDOW_WIDTH:
       ret = this->sc.gui_width;
       break;
