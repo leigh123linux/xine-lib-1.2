@@ -961,12 +961,13 @@ void free_parser(struct nal_parser *parser)
 int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
     uint8_t **ret_buf, uint32_t *ret_len, uint32_t *ret_slice_cnt)
 {
-  int next_nal;
+  int next_nal, second_next_nal;
   int parsed_len = 0;
   int search_offset = 0;
 
   while ((next_nal
-      = seek_for_nal(inbuf + search_offset, inbuf_len - parsed_len)) >= 0) {
+      = seek_for_nal(inbuf + search_offset, inbuf_len - parsed_len)) >= 0 &&
+      (second_next_nal = seek_for_nal(inbuf + next_nal + 3, inbuf_len - parsed_len - next_nal - 3)) >= 0) {
     // save buffer up to the nal-start
     if (parser->buf_len + next_nal + search_offset > MAX_FRAME_SIZE) {
       printf("buf underrun!!\n");
