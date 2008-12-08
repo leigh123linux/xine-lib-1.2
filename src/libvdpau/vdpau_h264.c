@@ -240,7 +240,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
              this->profile, this->width, this->height, &this->decoder);
 
          if(status != VDP_STATUS_OK)
-           xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: ERROR: VdpDecoderCreate returned status != OK (%d)\n", status);
+           xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: ERROR: VdpDecoderCreate returned status != OK (%s)\n", this->vdpau_accel->vdp_get_error_string(status));
          else
            this->decoder_initialized = 1;
 
@@ -334,7 +334,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                   &surface);
               this->vdpau_accel->surface = surface;
               if(status != VDP_STATUS_OK)
-                xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Surface creation failed\n");
+                xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Surface creation failed: %s\n", this->vdpau_accel->vdp_get_error_string(status));
             }
 
             printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer.bitstream_bytes, buf->pts);
@@ -342,21 +342,22 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 surface, (VdpPictureInfo*)&pic, 1, &vdp_buffer);
 
             if(status != VDP_STATUS_OK)
-              xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %d\n", status);
+              xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %s\n",  this->vdpau_accel->vdp_get_error_string(status));
             else {
               printf("DECODING SUCCESS\n");
-
-              if(pic.is_reference) {
-                struct decoded_picture *pic = init_decoded_picture(this->nal_parser->current_nal, surface);
-                dpb_add_picture(&(this->nal_parser->dpb), pic);
-              }
 
               img->duration  = this->video_step;
               img->pts       = buf->pts;
               img->bad_frame = 0;
 
               img->draw(img, this->stream);
-              img->free(img);
+
+              if(pic.is_reference) {
+                struct decoded_picture *pic = init_decoded_picture(this->nal_parser->current_nal, surface, img);
+                dpb_add_picture(&(this->nal_parser->dpb), pic);
+              } else {
+                img->free(img);
+              }
               img = NULL;
             }
 

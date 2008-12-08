@@ -10,14 +10,16 @@
 #include <string.h>
 
 #include "dpb.h"
+#include "video_out.h"
 
 struct decoded_picture* init_decoded_picture(struct nal_unit *src_nal,
-    VdpVideoSurface surface)
+    VdpVideoSurface surface, vo_frame_t *img)
 {
   struct decoded_picture *pic = malloc(sizeof(struct decoded_picture));
   pic->nal = init_nal_unit();
   copy_nal_unit(pic->nal, src_nal);
   pic->surface = surface;
+  pic->img = img;
   pic->next = NULL;
 
   return pic;
@@ -25,6 +27,7 @@ struct decoded_picture* init_decoded_picture(struct nal_unit *src_nal,
 
 void free_decoded_picture(struct decoded_picture *pic)
 {
+  pic->img->free(pic->img);
   free_nal_unit(pic->nal);
 }
 

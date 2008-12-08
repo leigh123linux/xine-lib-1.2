@@ -9,9 +9,12 @@
 #define DPB_H_
 
 #include "nal.h"
+#include "video_out.h"
 
 struct decoded_picture {
   VdpVideoSurface surface;
+  vo_frame_t *img; /* this is the image we block, to make sure
+                    * the surface is not double-used */
   struct nal_unit *nal;
 
   struct decoded_picture *next;
@@ -23,7 +26,7 @@ struct dpb {
 };
 
 struct decoded_picture* init_decoded_picture(struct nal_unit *src_nal,
-    VdpVideoSurface surface);
+    VdpVideoSurface surface, vo_frame_t *img);
 void free_decoded_picture(struct decoded_picture *pic);
 
 struct decoded_picture* dpb_get_picture(struct dpb *dpb, uint32_t picnum);
