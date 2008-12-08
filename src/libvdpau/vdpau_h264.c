@@ -122,7 +122,7 @@ static inline void dump_pictureinfo_h264(VdpPictureInfoH264 *pic)
   printf("deblocking_filter_control_present_flag: %d\n", pic->deblocking_filter_control_present_flag);
   printf("redundant_pic_cnt_present_flag: %d\n", pic->redundant_pic_cnt_present_flag);
 
-  int i, j;
+  /*int i, j;
   for(i = 0; i < 6; i++) {
     printf("scalint_list4x4[%d]: ", i);
     for(j = 0; j < 16; j++) {
@@ -141,6 +141,18 @@ static inline void dump_pictureinfo_h264(VdpPictureInfoH264 *pic)
     }
     printf("\n");
   }
+
+  for(i = 0; i < 16; i++) {
+    printf("-------------------\n");
+    printf("Reference Frame %d:\n", i);
+    printf("frame_idx: %d\n", pic->referenceFrames[i].frame_idx);
+    printf("field_order_cnt[0]: %d\n", pic->referenceFrames[i].field_order_cnt[0]);
+    printf("field_order_cnt[1]: %d\n", pic->referenceFrames[i].field_order_cnt[0]);
+    printf("is_long_term: %d\n", pic->referenceFrames[i].is_long_term);
+    printf("top_is_reference: %d\n", pic->referenceFrames[i].top_is_reference);
+    printf("bottom_is_reference: %d\n", pic->referenceFrames[i].bottom_is_reference);
+    printf("-------------------\n");
+  }*/
   /*memcpy(pic.scaling_lists_4x4, pps->scaling_lists_4x4, 6*16);
   memcpy(pic.scaling_lists_8x8, pps->scaling_lists_8x8, 2*64);
   memcpy(pic.referenceFrames, this->reference_frames, sizeof(this->reference_frames));*/
@@ -183,7 +195,10 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           (void*)&vdp_buffer.bitstream, &vdp_buffer.bitstream_bytes, &slice_count);
 
       if(!this->decoder_initialized &&
-          this->nal_parser->current_nal->sps != NULL) {
+          this->nal_parser->current_nal != NULL &&
+          this->nal_parser->current_nal->sps != NULL &&
+          this->nal_parser->current_nal->sps->pic_width > 0 &&
+          this->nal_parser->current_nal->sps->pic_height > 0) {
 
         this->width = this->nal_parser->current_nal->sps->pic_width;
         this->height = this->nal_parser->current_nal->sps->pic_height;
@@ -277,9 +292,9 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           pic.redundant_pic_cnt_present_flag = pps->redundant_pic_cnt_present_flag;
           memcpy(pic.scaling_lists_4x4, pps->scaling_lists_4x4, sizeof(pic.scaling_lists_4x4));
           memcpy(pic.scaling_lists_8x8, pps->scaling_lists_8x8, sizeof(pic.scaling_lists_8x8));
-          memcpy(pic.referenceFrames, this->reference_frames, sizeof(pic.referenceFrames));
-          memset(pic.referenceFrames, VDP_INVALID_HANDLE, sizeof(pic.referenceFrames));
+
           fill_vdpau_reference_list(&(this->nal_parser->dpb), pic.referenceFrames);
+          //memcpy(pic.referenceFrames, this->reference_frames, sizeof(pic.referenceFrames));
 
           if(this->decoder_started || pic.is_reference) {
             this->nal_parser->is_idr = 0;

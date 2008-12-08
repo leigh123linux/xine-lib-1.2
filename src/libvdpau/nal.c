@@ -17,9 +17,12 @@ struct nal_unit* init_nal_unit()
   struct nal_unit *nal = malloc(sizeof(struct nal_unit));
   memset(nal, 0x00, sizeof(struct nal_unit));
 
-  nal->sps = malloc(sizeof(struct seq_parameter_set_rbsp));
+  /*nal->sps = malloc(sizeof(struct seq_parameter_set_rbsp));
+  memset(nal->sps, 0x00, sizeof(struct seq_parameter_set_rbsp));
   nal->pps = malloc(sizeof(struct pic_parameter_set_rbsp));
+  memset(nal->pps, 0x00, sizeof(struct pic_parameter_set_rbsp));
   nal->slc = malloc(sizeof(struct slice_header));
+  memset(nal->slc, 0x00, sizeof(struct slice_header));*/
 
   return nal;
 }
@@ -39,6 +42,10 @@ void copy_nal_unit(struct nal_unit *dest, struct nal_unit *src)
       - sizeof(struct pic_parameter_set_rbsp*) - sizeof(struct slice_header*);
 
   xine_fast_memcpy(dest, src, size);
+
+  dest->sps = malloc(sizeof(struct seq_parameter_set_rbsp));
+  dest->pps = malloc(sizeof(struct pic_parameter_set_rbsp));
+  dest->slc = malloc(sizeof(struct slice_header));
 
   xine_fast_memcpy(dest->sps, src->sps, sizeof(struct seq_parameter_set_rbsp));
   xine_fast_memcpy(dest->pps, src->pps, sizeof(struct pic_parameter_set_rbsp));

@@ -219,4 +219,18 @@ void fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist)
       }
       last_pic = pic;
     } while ((pic = pic->next) != NULL && i < 16);
+
+  printf("Used ref-frames: %d\n", i);
+
+  // fill all other frames with invalid handles
+  while(i < 16) {
+    reflist[i].bottom_is_reference = VDP_FALSE;
+    reflist[i].top_is_reference = VDP_FALSE;
+    reflist[i].frame_idx = VDP_INVALID_HANDLE;
+    reflist[i].is_long_term = VDP_FALSE;
+    reflist[i].surface = VDP_INVALID_HANDLE;
+    reflist[i].field_order_cnt[0] = 0;
+    reflist[i].field_order_cnt[1] = 0;
+    i++;
+  }
 }

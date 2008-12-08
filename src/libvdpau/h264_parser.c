@@ -174,6 +174,9 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
       decode_nal(&ibuf.buf, &ibuf.len, buf->cur_pos, buf->len - 1);
       ibuf.cur_pos = ibuf.buf;
 
+      if(!nal->sps)
+        nal->sps = malloc(sizeof(struct seq_parameter_set_rbsp));
+
       memset(nal->sps, 0x00, sizeof(struct seq_parameter_set_rbsp));
 
       parse_sps(&ibuf, nal->sps);
@@ -181,6 +184,8 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
       ret = NAL_SPS;
       break;
     case NAL_PPS:
+      if(!nal->pps)
+        nal->pps = malloc(sizeof(struct pic_parameter_set_rbsp));
       memset(nal->pps, 0x00, sizeof(struct pic_parameter_set_rbsp));
 
       parse_pps(buf, nal->pps, nal->sps);
@@ -192,6 +197,9 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
     case NAL_PART_C:
     case NAL_SLICE_IDR:
       if (nal->sps && nal->pps) {
+        if(!nal->slc)
+          nal->slc = malloc(sizeof(struct slice_header));
+
         memset(nal->slc, 0x00, sizeof(struct slice_header));
 
         parse_slice_header(buf, parser);
@@ -818,13 +826,19 @@ void decode_ref_pic_marking(uint32_t memory_management_control_operation,
       dpb_remove_picture_by_ltidx(dpb,
           slc->dec_ref_pic_marking.long_term_frame_idx);
 
-    if (pic->nal->slc->field_pic_flag == 0) {
-      pic = dpb_get_picture(dpb, pic_num_x);
-      pic->nal->long_term_frame_idx
-          = slc->dec_ref_pic_marking.long_term_frame_idx;
+    pic = dpb_get_picture(dpb, pic_num_x);
+    if(pic) {
+      if (pic->nal->slc->field_pic_flag == 0) {
+        pic = dpb_get_picture(dpb, pic_num_x);
+        pic->nal->long_term_frame_idx
+            = slc->dec_ref_pic_marking.long_term_frame_idx;
+      }
+      else
+        printf("FIXME: B Set frame %d to long-term ref\n", pic_num_x);
+    } else {
+      printf("memory_management_control_operation: 3 failed. No such picture.");
     }
-    else
-      printf("FIXME: B Set frame %d to long-term ref\n", pic_num_x);
+
   }
   else if (memory_management_control_operation == 4) {
     // set max-long-term frame index,
@@ -985,11 +999,11 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
       parser->last_nal_res = 1;
       parser->slice_cnt = 0;
 
-      /*if(parser->current_nal->nal_ref_idc) {
-       if(parser->current_nal->slc != NULL)
-       parser->prev_pic_order_cnt_lsb = parser->current_nal->slc->pic_order_cnt_lsb;
-       parser->prev_pic_order_cnt_msb = parser->pic_order_cnt_msb;
-       }*/
+      if(parser->last_nal->nal_ref_idc) {
+        if(parser->last_nal->slc != NULL)
+          parser->prev_pic_order_cnt_lsb = parser->last_nal->slc->pic_order_cnt_lsb;
+          parser->prev_pic_order_cnt_msb = parser->pic_order_cnt_msb;
+      }
       return parsed_len;
     }
 
