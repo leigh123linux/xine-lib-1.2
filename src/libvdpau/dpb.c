@@ -195,9 +195,8 @@ int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_r
         free_decoded_picture(pic);
         pic = last_pic;
         dpb->used--;
-      } else
-        last_pic = pic;
-        last_pic = pic;
+      }
+      last_pic = pic;
     } while ((pic = pic->next) != NULL);
   }
 
@@ -207,18 +206,17 @@ int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_r
 int dpb_flush(struct dpb *dpb)
 {
   struct decoded_picture *pic = dpb->pictures;
-  struct decoded_picture *last_pic = NULL;
 
   if (pic != NULL)
     do {
-      //FIXME: free the picture
-      free_decoded_picture(last_pic);
-      last_pic = pic;
-    } while ((pic = pic->next) != NULL);
+      dpb->pictures = pic->next;
+      free_decoded_picture(pic);
+      pic = dpb->pictures;
+      dpb->used--;
+    } while (dpb->pictures != NULL);
 
-  free_decoded_picture(last_pic);
   dpb->pictures = NULL;
-  dpb->used = NULL;
+  dpb->used = 0;
 
   return 0;
 }
@@ -236,9 +234,9 @@ void fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist)
         reflist[i].surface = pic->surface;
         reflist[i].is_long_term = pic->nal->used_for_long_term_ref;
         if(reflist[i].is_long_term)
-          reflist[i].frame_idx = pic->nal->long_term_frame_idx;
+          reflist[i].frame_idx = pic->nal->slc->frame_num; //pic->nal->long_term_frame_idx;
         else
-          reflist[i].frame_idx = pic->nal->curr_pic_num;
+          reflist[i].frame_idx = pic->nal->slc->frame_num; //pic->nal->curr_pic_num;
         reflist[i].top_is_reference = pic->nal->slc->field_pic_flag
             ? (pic->nal->slc->bottom_field_flag ? 0 : 1) : 1;
         reflist[i].bottom_is_reference = pic->nal->slc->field_pic_flag

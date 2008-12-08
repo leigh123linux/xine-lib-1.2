@@ -260,6 +260,15 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           struct seq_parameter_set_rbsp *sps = this->nal_parser->current_nal->sps;
           struct slice_header *slc = this->nal_parser->current_nal->slc;
 
+          /* flush the DPB if this frame was an IDR */
+          //printf("is_idr: %d\n", this->nal_parser->is_idr);
+          if(this->nal_parser->current_nal->nal_unit_type == NAL_SLICE_IDR) {
+            printf("IDR Slice, flush\n");
+            dpb_flush(&(this->nal_parser->dpb));
+            printf("Emtpy: %s", this->nal_parser->dpb.pictures == NULL ? "Yes" : "No");
+          }
+          this->nal_parser->is_idr = 0;
+
           /* go and decode a frame */
           VdpPictureInfoH264 pic;
 
@@ -299,7 +308,6 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           //memcpy(pic.referenceFrames, this->reference_frames, sizeof(pic.referenceFrames));
 
           if(this->decoder_started || pic.is_reference) {
-            this->nal_parser->is_idr = 0;
             if(!this->decoder_started)
               this->decoder_started = 1;
 

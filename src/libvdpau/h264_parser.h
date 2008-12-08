@@ -16,7 +16,8 @@ struct nal_parser {
     int found_pps;
     int last_nal_res;
 
-    int is_idr;
+    uint8_t is_idr;
+
     int field; /* 0=top, 1=bottom, -1=both */
     int slice;
     int slice_cnt;

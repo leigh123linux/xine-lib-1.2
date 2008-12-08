@@ -226,41 +226,41 @@ void calculate_pic_order(struct nal_parser *parser)
 
   if (sps->pic_order_cnt_type == 0) {
     if (nal->nal_unit_type == NAL_SLICE_IDR) {
+      printf("IDR SLICE\n");
       parser->prev_pic_order_cnt_lsb = 0;
       parser->prev_pic_order_cnt_msb = 0;
     }
-    else {
-      const int max_poc_lsb = 1 << (sps->log2_max_pic_order_cnt_lsb_minus4 + 4);
 
-      if (slc->pic_order_cnt_lsb < parser->prev_pic_order_cnt_lsb
-          && parser->prev_pic_order_cnt_lsb - slc->pic_order_cnt_lsb
-              >= max_poc_lsb / 2)
-        parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb
-            + max_poc_lsb;
-      else if (slc->pic_order_cnt_lsb > parser->prev_pic_order_cnt_lsb
-          && parser->prev_pic_order_cnt_lsb - slc->pic_order_cnt_lsb
-              < -max_poc_lsb / 2)
-        parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb
-            - max_poc_lsb;
+    const int max_poc_lsb = 1 << (sps->log2_max_pic_order_cnt_lsb_minus4 + 4);
+
+    if (slc->pic_order_cnt_lsb < parser->prev_pic_order_cnt_lsb
+        && parser->prev_pic_order_cnt_lsb - slc->pic_order_cnt_lsb
+            >= max_poc_lsb / 2)
+      parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb
+          + max_poc_lsb;
+    else if (slc->pic_order_cnt_lsb > parser->prev_pic_order_cnt_lsb
+        && parser->prev_pic_order_cnt_lsb - slc->pic_order_cnt_lsb
+            < -max_poc_lsb / 2)
+      parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb
+          - max_poc_lsb;
+    else
+      parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb;
+
+    if (!slc->bottom_field_flag) {
+      nal->top_field_order_cnt = parser->pic_order_cnt_msb
+          + slc->pic_order_cnt_lsb;
+
+      if (!slc->field_pic_flag)
+        nal->bottom_field_order_cnt = nal->top_field_order_cnt;
       else
-        parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb;
-
-      if (!slc->bottom_field_flag) {
-        nal->top_field_order_cnt = parser->pic_order_cnt_msb
-            + slc->pic_order_cnt_lsb;
-
-        if (!slc->field_pic_flag)
-          nal->bottom_field_order_cnt = nal->top_field_order_cnt;
-        else
-          nal->bottom_field_order_cnt = 0;
-      }
-      else
-        nal->bottom_field_order_cnt = parser->pic_order_cnt_msb
-            + slc->pic_order_cnt_lsb;
-
-      if (parser->field == -1)
-        nal->bottom_field_order_cnt += slc->delta_pic_order_cnt_bottom;
+        nal->bottom_field_order_cnt = 0;
     }
+    else
+      nal->bottom_field_order_cnt = parser->pic_order_cnt_msb
+          + slc->pic_order_cnt_lsb;
+
+    if (parser->field == -1)
+      nal->bottom_field_order_cnt += slc->delta_pic_order_cnt_bottom;
   }
 
 }
@@ -1035,8 +1035,9 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
   struct nal_unit *last_nal = parser->last_nal;
 
   int res = parse_nal_header(&bufr, parser);
-  if (res == NAL_SLICE_IDR)
+  if (res == NAL_SLICE_IDR) {
     parser->is_idr = 1;
+  }
 
   if (res >= NAL_SLICE && res <= NAL_SLICE_IDR) {
     // now detect if it's a new frame!
