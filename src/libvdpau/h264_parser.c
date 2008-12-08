@@ -976,7 +976,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
     }
 
     if (parser->last_nal_res != 2) {
-      /* this is not nal_unit != SLICE, keep it in the buffer */
+      /* this is a SLICE, keep it in the buffer */
       xine_fast_memcpy(parser->buf + parser->buf_len, inbuf, next_nal
           + search_offset);
       parser->buf_len += next_nal + search_offset;
@@ -1042,6 +1042,7 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
   if (res >= NAL_SLICE && res <= NAL_SLICE_IDR) {
     // now detect if it's a new frame!
     int ret = 0;
+    uint8_t reason = 0;
     if (nal->slc->field_pic_flag == 1)
       parser->field = nal->slc->bottom_field_flag;
     else {
@@ -1056,26 +1057,32 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
 
     if (nal->slc == NULL || last_nal->slc == NULL) {
       ret = 1;
+      reason++;
     }
     if (nal->slc && last_nal->slc && (nal->slc->frame_num
         != last_nal->slc->frame_num)) {
       ret = 1;
+      reason++;
     }
     if (nal->slc && last_nal->slc && (nal->slc->pic_parameter_set_id
         != last_nal->slc->pic_parameter_set_id)) {
       ret = 1;
+      reason++;
     }
     if (nal->slc && last_nal->slc && (nal->slc->field_pic_flag
         != last_nal->slc->field_pic_flag)) {
       ret = 1;
+      reason++;
     }
     if (nal->slc && last_nal->slc && nal->slc->bottom_field_flag
         != last_nal->slc->bottom_field_flag) {
       ret = 1;
+      reason++;
     }
     if (nal->nal_ref_idc != last_nal->nal_ref_idc && (nal->nal_ref_idc == 0
         || last_nal->nal_ref_idc == 0)) {
       ret = 1;
+      reason++;
     }
     if (nal->sps && nal->slc && last_nal->slc && (nal->sps->pic_order_cnt_type
         == 0 && last_nal->sps->pic_order_cnt_type == 0
@@ -1083,6 +1090,8 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
             || nal->slc->delta_pic_order_cnt_bottom
                 != last_nal->slc->delta_pic_order_cnt_bottom))) {
       ret = 1;
+      reason++;
+      printf("C: Reason: %d, %d, %d\n", res, nal->slc->pic_order_cnt_lsb, last_nal->slc->pic_order_cnt_lsb);
     }
     if (nal->slc && last_nal->slc && (nal->sps->pic_order_cnt_type == 1
         && last_nal->sps->pic_order_cnt_type == 1
@@ -1091,15 +1100,18 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
             || nal->slc->delta_pic_order_cnt[1]
                 != last_nal->slc->delta_pic_order_cnt[1]))) {
       ret = 1;
+      reason++;
     }
     if (nal->nal_unit_type != last_nal->nal_unit_type && (nal->nal_unit_type
         == 5 || last_nal->nal_unit_type == 5)) {
       ret = 1;
+      reason++;
     }
     if (nal->slc && last_nal->slc && (nal->nal_unit_type == 5
         && last_nal->nal_unit_type == 5 && nal->slc->idr_pic_id
         != last_nal->slc->idr_pic_id)) {
       ret = 1;
+      reason++;
     }
 
     if (parser->current_nal == parser->nal0) {
@@ -1129,7 +1141,7 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
     return 2;
   }
 
-  return 1;
+  return 0;
 }
 
 int seek_for_nal(uint8_t *buf, int buf_len)

@@ -75,9 +75,6 @@ typedef struct vdpau_h264_decoder_s {
   VdpPictureInfoH264 vdp_picture_info;
   vdpau_accel_t     *vdpau_accel;
 
-  VdpReferenceFrameH264 reference_frames[16];
-  int reference_frames_used;
-
   xine_t            *xine;
 
 } vdpau_h264_decoder_t;
@@ -93,34 +90,34 @@ typedef struct vdpau_h264_decoder_s {
 
 static inline void dump_pictureinfo_h264(VdpPictureInfoH264 *pic)
 {
-  printf("slice_count: %d\n", pic->slice_count);
-  printf("field_order_cnt[0]: %d\n", pic->field_order_cnt[0]);
-  printf("field_order_cnt[1]: %d\n", pic->field_order_cnt[1]);
-  printf("is_reference: %d\n", pic->is_reference);
-  printf("frame_num: %d\n", pic->frame_num);
-  printf("field_pic_flag: %d\n", pic->field_pic_flag);
-  printf("bottom_field_flag: %d\n", pic->bottom_field_flag);
-  printf("num_ref_frames: %d\n", pic->num_ref_frames);
-  printf("mb_adaptive_frame_field_flag: %d\n", pic->mb_adaptive_frame_field_flag);
-  printf("constrained_intra_pred_flag: %d\n", pic->constrained_intra_pred_flag);
-  printf("weighted_pred_flag: %d\n", pic->weighted_pred_flag);
-  printf("weighted_bipred_idc: %d\n", pic->weighted_bipred_idc);
-  printf("frame_mbs_only_flag: %d\n", pic->frame_mbs_only_flag);
-  printf("transform_8x8_mode_flag: %d\n", pic->transform_8x8_mode_flag);
-  printf("chroma_qp_index_offset: %d\n", pic->chroma_qp_index_offset);
-  printf("second_chroma_qp_index_offset: %d\n", pic->second_chroma_qp_index_offset);
-  printf("pic_init_qp_minus26: %d\n", pic->pic_init_qp_minus26);
-  printf("num_ref_idx_l0_active_minus1: %d\n", pic->num_ref_idx_l0_active_minus1);
-  printf("num_ref_idx_l1_active_minus1: %d\n", pic->num_ref_idx_l1_active_minus1);
-  printf("log2_max_frame_num_minus4: %d\n", pic->log2_max_frame_num_minus4);
-  printf("pic_order_cnt_type: %d\n", pic->pic_order_cnt_type);
-  printf("log2_max_pic_order_cnt_lsb_minus4: %d\n", pic->log2_max_pic_order_cnt_lsb_minus4);
-  printf("delta_pic_order_always_zero_flag: %d\n", pic->delta_pic_order_always_zero_flag);
-  printf("direct_8x8_inference_flag: %d\n", pic->direct_8x8_inference_flag);
-  printf("entropy_coding_mode_flag: %d\n", pic->entropy_coding_mode_flag);
-  printf("pic_order_present_flag: %d\n", pic->pic_order_present_flag);
-  printf("deblocking_filter_control_present_flag: %d\n", pic->deblocking_filter_control_present_flag);
-  printf("redundant_pic_cnt_present_flag: %d\n", pic->redundant_pic_cnt_present_flag);
+  printf("C: slice_count: %d\n", pic->slice_count);
+  printf("C: field_order_cnt[0]: %d\n", pic->field_order_cnt[0]);
+  printf("C: field_order_cnt[1]: %d\n", pic->field_order_cnt[1]);
+  printf("C: is_reference: %d\n", pic->is_reference);
+  printf("C: frame_num: %d\n", pic->frame_num);
+  printf("C: field_pic_flag: %d\n", pic->field_pic_flag);
+  printf("C: bottom_field_flag: %d\n", pic->bottom_field_flag);
+  printf("C: num_ref_frames: %d\n", pic->num_ref_frames);
+  printf("C: mb_adaptive_frame_field_flag: %d\n", pic->mb_adaptive_frame_field_flag);
+  printf("C: constrained_intra_pred_flag: %d\n", pic->constrained_intra_pred_flag);
+  printf("C: weighted_pred_flag: %d\n", pic->weighted_pred_flag);
+  printf("C: weighted_bipred_idc: %d\n", pic->weighted_bipred_idc);
+  printf("C: frame_mbs_only_flag: %d\n", pic->frame_mbs_only_flag);
+  printf("C: transform_8x8_mode_flag: %d\n", pic->transform_8x8_mode_flag);
+  printf("C: chroma_qp_index_offset: %d\n", pic->chroma_qp_index_offset);
+  printf("C: second_chroma_qp_index_offset: %d\n", pic->second_chroma_qp_index_offset);
+  printf("C: pic_init_qp_minus26: %d\n", pic->pic_init_qp_minus26);
+  printf("C: num_ref_idx_l0_active_minus1: %d\n", pic->num_ref_idx_l0_active_minus1);
+  printf("C: num_ref_idx_l1_active_minus1: %d\n", pic->num_ref_idx_l1_active_minus1);
+  printf("C: log2_max_frame_num_minus4: %d\n", pic->log2_max_frame_num_minus4);
+  printf("C: pic_order_cnt_type: %d\n", pic->pic_order_cnt_type);
+  printf("C: log2_max_pic_order_cnt_lsb_minus4: %d\n", pic->log2_max_pic_order_cnt_lsb_minus4);
+  printf("C: delta_pic_order_always_zero_flag: %d\n", pic->delta_pic_order_always_zero_flag);
+  printf("C: direct_8x8_inference_flag: %d\n", pic->direct_8x8_inference_flag);
+  printf("C: entropy_coding_mode_flag: %d\n", pic->entropy_coding_mode_flag);
+  printf("C: pic_order_present_flag: %d\n", pic->pic_order_present_flag);
+  printf("C: deblocking_filter_control_present_flag: %d\n", pic->deblocking_filter_control_present_flag);
+  printf("C: redundant_pic_cnt_present_flag: %d\n", pic->redundant_pic_cnt_present_flag);
 
   /*int i, j;
   for(i = 0; i < 6; i++) {
@@ -145,16 +142,17 @@ static inline void dump_pictureinfo_h264(VdpPictureInfoH264 *pic)
   int i;
   for(i = 0; i < 16; i++) {
     if(pic->referenceFrames[i].surface != VDP_INVALID_HANDLE) {
-    printf("-------------------\n");
-      printf("Reference Frame %d:\n", i);
-    printf("frame_idx: %d\n", pic->referenceFrames[i].frame_idx);
-    printf("field_order_cnt[0]: %d\n", pic->referenceFrames[i].field_order_cnt[0]);
-    printf("field_order_cnt[1]: %d\n", pic->referenceFrames[i].field_order_cnt[0]);
-    printf("is_long_term: %d\n", pic->referenceFrames[i].is_long_term);
-    printf("top_is_reference: %d\n", pic->referenceFrames[i].top_is_reference);
-    printf("bottom_is_reference: %d\n", pic->referenceFrames[i].bottom_is_reference);
+    printf("C: -------------------\n");
+      printf("C: Reference Frame %d:\n", i);
+    printf("C: frame_idx: %d\n", pic->referenceFrames[i].frame_idx);
+    printf("C: field_order_cnt[0]: %d\n", pic->referenceFrames[i].field_order_cnt[0]);
+    printf("C: field_order_cnt[1]: %d\n", pic->referenceFrames[i].field_order_cnt[0]);
+    printf("C: is_long_term: %d\n", pic->referenceFrames[i].is_long_term);
+    printf("C: top_is_reference: %d\n", pic->referenceFrames[i].top_is_reference);
+    printf("C: bottom_is_reference: %d\n", pic->referenceFrames[i].bottom_is_reference);
     }
   }
+  printf("C: ---------------------------------------------------------------\n");
   /*memcpy(pic.scaling_lists_4x4, pps->scaling_lists_4x4, 6*16);
   memcpy(pic.scaling_lists_8x8, pps->scaling_lists_8x8, 2*64);
   memcpy(pic.referenceFrames, this->reference_frames, sizeof(this->reference_frames));*/
@@ -305,7 +303,6 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           memcpy(pic.scaling_lists_8x8, pps->scaling_lists_8x8, sizeof(pic.scaling_lists_8x8));
 
           fill_vdpau_reference_list(&(this->nal_parser->dpb), pic.referenceFrames);
-          //memcpy(pic.referenceFrames, this->reference_frames, sizeof(pic.referenceFrames));
 
           if(this->decoder_started || pic.is_reference) {
             if(!this->decoder_started)
@@ -454,9 +451,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->decoder_initialized = 0;
   this->nal_parser = init_parser();
   this->buf           = NULL;
-
-  memset(this->reference_frames, VDP_INVALID_HANDLE, sizeof(this->reference_frames));
-  this->reference_frames_used = 0;
 
   return &this->video_decoder;
 }
