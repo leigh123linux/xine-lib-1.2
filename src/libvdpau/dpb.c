@@ -197,6 +197,7 @@ int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_r
         dpb->used--;
       } else
         last_pic = pic;
+        last_pic = pic;
     } while ((pic = pic->next) != NULL);
   }
 
@@ -234,6 +235,10 @@ void fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist)
       if (pic->nal->nal_ref_idc != 0) {
         reflist[i].surface = pic->surface;
         reflist[i].is_long_term = pic->nal->used_for_long_term_ref;
+        if(reflist[i].is_long_term)
+          reflist[i].frame_idx = pic->nal->long_term_frame_idx;
+        else
+          reflist[i].frame_idx = pic->nal->curr_pic_num;
         reflist[i].top_is_reference = pic->nal->slc->field_pic_flag
             ? (pic->nal->slc->bottom_field_flag ? 0 : 1) : 1;
         reflist[i].bottom_is_reference = pic->nal->slc->field_pic_flag
@@ -251,7 +256,7 @@ void fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist)
   while(i < 16) {
     reflist[i].bottom_is_reference = VDP_FALSE;
     reflist[i].top_is_reference = VDP_FALSE;
-    reflist[i].frame_idx = VDP_INVALID_HANDLE;
+    reflist[i].frame_idx = 0;
     reflist[i].is_long_term = VDP_FALSE;
     reflist[i].surface = VDP_INVALID_HANDLE;
     reflist[i].field_order_cnt[0] = 0;
