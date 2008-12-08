@@ -88,6 +88,7 @@ int dpb_remove_picture(struct dpb *dpb, uint32_t picnum)
           dpb->pictures = pic->next;
 
         free_decoded_picture(pic);
+        dpb->used--;
         return 0;
       }
 
@@ -113,6 +114,7 @@ int dpb_remove_picture_by_ltpn(struct dpb *dpb, uint32_t longterm_picnum)
           dpb->pictures = pic->next;
 
         free_decoded_picture(pic);
+        dpb->used--;
         return 0;
       }
 
@@ -138,6 +140,7 @@ int dpb_remove_picture_by_ltidx(struct dpb *dpb, uint32_t longterm_idx)
           dpb->pictures = pic->next;
 
         free_decoded_picture(pic);
+        dpb->used--;
         return 0;
       }
 
@@ -163,7 +166,7 @@ int dpb_remove_ltidx_gt(struct dpb *dpb, uint32_t longterm_max)
 
 
         free_decoded_picture(pic);
-
+        dpb->used--;
         /* don't increase last_pic to current pic
          * in case we delete current pic */
         continue;
@@ -175,10 +178,27 @@ int dpb_remove_ltidx_gt(struct dpb *dpb, uint32_t longterm_max)
   return 0;
 }
 
-int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic)
+int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_ref_frames)
 {
+  int i = 0;
+  struct decoded_picture *last_pic;
+
   pic->next = dpb->pictures;
   dpb->pictures = pic;
+  dpb->used++;
+
+  if(dpb->used > num_ref_frames) {
+    do {
+      i++;
+      if(i>num_ref_frames) {
+        last_pic->next = pic->next;
+        free_decoded_picture(pic);
+        pic = last_pic;
+        dpb->used--;
+      } else
+        last_pic = pic;
+    } while ((pic = pic->next) != NULL);
+  }
 
   return 0;
 }
@@ -191,11 +211,13 @@ int dpb_flush(struct dpb *dpb)
   if (pic != NULL)
     do {
       //FIXME: free the picture
-
+      free_decoded_picture(last_pic);
       last_pic = pic;
     } while ((pic = pic->next) != NULL);
 
+  free_decoded_picture(last_pic);
   dpb->pictures = NULL;
+  dpb->used = NULL;
 
   return 0;
 }

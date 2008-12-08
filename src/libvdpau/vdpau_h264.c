@@ -140,19 +140,21 @@ static inline void dump_pictureinfo_h264(VdpPictureInfoH264 *pic)
         printf("\n");
     }
     printf("\n");
-  }
+  }*/
 
+  int i;
   for(i = 0; i < 16; i++) {
+    if(pic->referenceFrames[i].surface != VDP_INVALID_HANDLE) {
     printf("-------------------\n");
-    printf("Reference Frame %d:\n", i);
+      printf("Reference Frame %d:\n", i);
     printf("frame_idx: %d\n", pic->referenceFrames[i].frame_idx);
     printf("field_order_cnt[0]: %d\n", pic->referenceFrames[i].field_order_cnt[0]);
     printf("field_order_cnt[1]: %d\n", pic->referenceFrames[i].field_order_cnt[0]);
     printf("is_long_term: %d\n", pic->referenceFrames[i].is_long_term);
     printf("top_is_reference: %d\n", pic->referenceFrames[i].top_is_reference);
     printf("bottom_is_reference: %d\n", pic->referenceFrames[i].bottom_is_reference);
-    printf("-------------------\n");
-  }*/
+    }
+  }
   /*memcpy(pic.scaling_lists_4x4, pps->scaling_lists_4x4, 6*16);
   memcpy(pic.scaling_lists_8x8, pps->scaling_lists_8x8, 2*64);
   memcpy(pic.referenceFrames, this->reference_frames, sizeof(this->reference_frames));*/
@@ -301,7 +303,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             if(!this->decoder_started)
               this->decoder_started = 1;
 
-            //dump_pictureinfo_h264(&pic);
+            dump_pictureinfo_h264(&pic);
 
             /*int i;
             printf("Decode data: \n");
@@ -319,10 +321,13 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
 
             if(img == NULL) {
+              printf("Acquire image: ");
+              fflush(stdout);
               img = this->stream->video_out->get_frame (this->stream->video_out,
                                                         this->width, this->height,
                                                         this->ratio,
                                                         XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS);
+              printf("OK\n");
               this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
             }
 
@@ -354,7 +359,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
               if(pic.is_reference) {
                 struct decoded_picture *pic = init_decoded_picture(this->nal_parser->current_nal, surface, img);
-                dpb_add_picture(&(this->nal_parser->dpb), pic);
+                dpb_add_picture(&(this->nal_parser->dpb), pic, sps->num_ref_frames);
               } else {
                 img->free(img);
               }
