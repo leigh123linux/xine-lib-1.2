@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 the xine project
+ * Copyright (C) 2008 Christophe Thommeret <hftom@free.fr>
  *
  * This file is part of xine, a free video player.
  *
@@ -20,7 +20,6 @@
  *
  * video_out_vdpau.c, a video output plugin using VDPAU (Video Decode and Presentation Api for Unix)
  *
- * Christophe Thommeret <hftom@free.fr>
  *
  */
 
@@ -390,6 +389,8 @@ static vo_frame_t *vdpau_alloc_frame (vo_driver_t *this_gen)
   vdpau_frame_t  *frame;
   vdpau_driver_t *this = (vdpau_driver_t *) this_gen;
 
+  printf( "vo_vdpau: vdpau_alloc_frame\n" );
+
   frame = (vdpau_frame_t *) calloc(1, sizeof(vdpau_frame_t));
 
   if (!frame)
@@ -415,6 +416,7 @@ static vo_frame_t *vdpau_alloc_frame (vo_driver_t *this_gen)
   frame->vdpau_accel_data.vdp_decoder_create = vdp_decoder_create;
   frame->vdpau_accel_data.vdp_decoder_destroy = vdp_decoder_destroy;
   frame->vdpau_accel_data.vdp_decoder_render = vdp_decoder_render;
+  frame->vdpau_accel_data.vdp_get_error_string = vdp_get_error_string;
 
   frame->width = frame->height = 0;
 
@@ -1045,6 +1047,14 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     printf( "vo_vdpau: no support for h264 ! : no ok\n" );
   else
     this->capabilities |= VO_CAP_VDPAU_H264;
+
+  st = vdp_decoder_query_capabilities( vdp_device, VDP_DECODER_PROFILE_MPEG2_MAIN, &ok, &ml, &mr, &mw, &mh );
+  if ( st != VDP_STATUS_OK  )
+    printf( "vo_vdpau: getting mpeg12_supported failed! : %s\n", vdp_get_error_string( st ) );
+  else if ( !ok )
+    printf( "vo_vdpau: no support for mpeg1/2 ! : no ok\n" );
+  else
+    this->capabilities |= VO_CAP_VDPAU_MPEG12;
 
   this->gotimage = 0;
   return &this->vo_driver;

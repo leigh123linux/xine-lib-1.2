@@ -281,6 +281,7 @@ struct xine_video_port_s {
 #define VO_CAP_CROP                   0x00000020 /* driver can crop */
 #define VO_CAP_XXMC                   0x00000040 /* driver can use extended XvMC */
 #define VO_CAP_VDPAU_H264             0x00000080 /* driver can use Nvidia VDPAU for H264 */
+#define VO_CAP_VDPAU_MPEG12           0x00000100 /* driver can use Nvidia VDPAU for mpeg1/2 */
 
 
 /*
