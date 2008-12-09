@@ -112,6 +112,7 @@ typedef struct {
 
   picture_t   picture;
   vo_frame_t  *forward_ref;
+  vo_frame_t  *backward_ref;
 
   int64_t    pts;
 } sequence_t;
@@ -122,7 +123,7 @@ typedef struct {
 } vdpau_mpeg12_class_t;
 
 
-typedef struct foovideo_decoder_s {
+typedef struct vdpau_mpeg12_decoder_s {
   video_decoder_t         video_decoder;  /* parent video decoder structure */
 
   vdpau_mpeg12_class_t    *class;
@@ -166,6 +167,9 @@ static void reset_sequence( sequence_t *sequence )
   if ( sequence->forward_ref )
     sequence->forward_ref->free( sequence->forward_ref );
   sequence->forward_ref = 0;
+  if ( sequence->backward_ref )
+    sequence->backward_ref->free( sequence->backward_ref );
+  sequence->backward_ref = 0;
 }
 
 
@@ -229,8 +233,8 @@ static void sequence_header( sequence_t *sequence, uint8_t *buf, int len )
 static void picture_header( sequence_t *sequence, uint8_t *buf, int len )
 {
   int i = get_bits( buf,10,3 );
-  printf( "!!!!!!!!!!!!!!! picture type : %d !!!!!!!!!!!!!!!!!!!!!!!!!!\n", i );
-  if ( (i!=I_FRAME && i!=P_FRAME) || sequence->picture.state!=WANT_HEADER )
+  //printf( "!!!!!!!!!!!!!!! picture type : %d !!!!!!!!!!!!!!!!!!!!!!!!!!\n", i );
+  if ( /*i==B_FRAME ||*/ sequence->picture.state!=WANT_HEADER )
     return;
   reset_picture( &sequence->picture );
   sequence->picture.vdp_infos.picture_coding_type = i;
@@ -247,7 +251,7 @@ static void picture_header( sequence_t *sequence, uint8_t *buf, int len )
 
 static void sequence_extension( uint8_t *buf, int len )
 {
-  printf( "extension_start_code_identifier: %d\n", get_bits( buf,0,4 ) );
+  /*printf( "extension_start_code_identifier: %d\n", get_bits( buf,0,4 ) );
   printf( "profile_and_level_indication: %d\n", get_bits( buf,4,8 ) );
   printf( "progressive_sequence: %d\n", get_bits( buf,12,1 ) );
   printf( "chroma_format: %d\n", get_bits( buf,13,2 ) );
@@ -258,7 +262,7 @@ static void sequence_extension( uint8_t *buf, int len )
   printf( "vbv_buffer_size_extension: %d\n", get_bits( buf+4,0,8 ) );
   printf( "low_delay: %d\n", get_bits( buf+5,0,1 ) );
   printf( "frame_rate_extension_n: %d\n", get_bits( buf+5,1,2 ) );
-  printf( "frame_rate_extension_d: %d\n", get_bits( buf+5,3,5 ) );
+  printf( "frame_rate_extension_d: %d\n", get_bits( buf+5,3,5 ) );*/
 }
 
 
@@ -338,42 +342,42 @@ static int parse_code( sequence_t *sequence, uint8_t *buf, int len )
 
   switch ( buf[3] ) {
     case sequence_header_code:
-      printf( " ----------- sequence_header_code\n" );
+      //printf( " ----------- sequence_header_code\n" );
       sequence_header( sequence, buf+4, len-4 );
       break;
     case extension_start_code: {
       switch ( get_bits( buf+4,0,4 ) ) {
         case 1:
-          printf( " ----------- sequence_extension_start_code\n" );
+          //printf( " ----------- sequence_extension_start_code\n" );
           sequence_extension( buf+4, len-4 );
           break;
         case 3:
-          printf( " ----------- quant_matrix_extension_start_code\n" );
+          //printf( " ----------- quant_matrix_extension_start_code\n" );
           quant_matrix_extension( buf+4, len-4 );
           break;
         case 8:
-          printf( " ----------- picture_coding_extension_start_code\n" );
+          //printf( " ----------- picture_coding_extension_start_code\n" );
           picture_coding_extension( sequence, buf+4, len-4 );
           break;
       }
       break;
       }
     case user_data_start_code:
-      printf( " ----------- user_data_start_code\n" );
+      //printf( " ----------- user_data_start_code\n" );
       break;
     case group_start_code:
-      printf( " ----------- group_start_code\n" );
+      //printf( " ----------- group_start_code\n" );
       break;
     case picture_start_code:
-      printf( " ----------- picture_start_code\n" );
+      //printf( " ----------- picture_start_code\n" );
       //slice_count = 0;
       picture_header( sequence, buf+4, len-4 );
       break;
     case sequence_error_code:
-      printf( " ----------- sequence_error_code\n" );
+      //printf( " ----------- sequence_error_code\n" );
       break;
     case sequence_end_code:
-      printf( " ----------- sequence_end_code\n" );
+      //printf( " ----------- sequence_end_code\n" );
       break;
   }
   return 0;
@@ -385,11 +389,26 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
 {
   sequence_t *seq = (sequence_t*)&vd->sequence;
   picture_t *pic = (picture_t*)&seq->picture;
+  vdpau_accel_t *ref_accel;
 
-  if ( seq->forward_ref && pic->vdp_infos.picture_coding_type==P_FRAME ) {
-    vdpau_accel_t *back_accel = (vdpau_accel_t*)seq->forward_ref->accel_data;
-    pic->vdp_infos.forward_reference = back_accel->surface;
+  if ( pic->vdp_infos.picture_coding_type==P_FRAME ) {
+    if ( seq->backward_ref )
+      ref_accel = (vdpau_accel_t*)seq->backward_ref->accel_data;
+    else
+      ref_accel = (vdpau_accel_t*)seq->forward_ref->accel_data;
+    pic->vdp_infos.forward_reference = ref_accel->surface;
   }
+  else if ( pic->vdp_infos.picture_coding_type==B_FRAME ) {
+    if ( seq->forward_ref ) {
+      ref_accel = (vdpau_accel_t*)seq->forward_ref->accel_data;
+      pic->vdp_infos.forward_reference = ref_accel->surface;
+    }
+    if ( seq->backward_ref ) {
+      ref_accel = (vdpau_accel_t*)seq->backward_ref->accel_data;
+      pic->vdp_infos.backward_reference = ref_accel->surface;
+    }
+  }
+
   pic->vdp_infos.slice_count = pic->slices_count;
   xine_fast_memcpy( &pic->vdp_infos.intra_quantizer_matrix, &seq->intra_quant_matrix, 64 );
   xine_fast_memcpy( &pic->vdp_infos.non_intra_quantizer_matrix, &seq->non_intra_quant_matrix, 64 );
@@ -416,16 +435,24 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
   if ( st!=VDP_STATUS_OK )
     printf( "vdpau_mpeg12: decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
   else
-    printf( "vdpau_mpeg12: DECODER SUCCESS !! \n" );
+    printf( "vdpau_mpeg12: DECODER SUCCESS : frame_type:%d, forwref:%d, backref:%d, pts:%lld\n", pic->vdp_infos.picture_coding_type, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->pts );
+
+  //printf( "vdpau_meg12:  forwref:%d, backref:%d\n", seq->forward_ref, seq->backward_ref );
 
   //img->duration = 3600;
   img->pts = seq->pts;
   img->bad_frame = 0;
-  img->draw( img, vd->stream );
+  //if ( pic->vdp_infos.picture_coding_type==B_FRAME )
+    img->draw( img, vd->stream );
 
-  if ( seq->forward_ref )
-    seq->forward_ref->free( seq->forward_ref );
-  seq->forward_ref = img;
+  if ( pic->vdp_infos.picture_coding_type!=B_FRAME ) {
+    if ( seq->forward_ref )
+      seq->forward_ref->free( seq->forward_ref );
+    seq->forward_ref = seq->backward_ref;
+    seq->backward_ref = img;
+  }
+  else
+    img->free( img );
 }
 
 
@@ -457,7 +484,7 @@ static void vdpau_mpeg12_decode_data (video_decoder_t *this_gen, buf_element_t *
   if ( seq->bufsize < size ) {
     seq->bufsize = size+1024;
     seq->buf = realloc( seq->buf, seq->bufsize );
-    printf("sequence buffer realloced = %d\n", seq->bufsize );
+    //printf("sequence buffer realloced = %d\n", seq->bufsize );
   }
   xine_fast_memcpy( seq->buf+seq->bufpos, buf->content, buf->size );
   seq->bufpos += buf->size;
@@ -559,6 +586,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->sequence.bufsize = 1024;
   this->sequence.buf = (uint8_t*)malloc(this->sequence.bufsize);
   this->sequence.forward_ref = 0;
+  this->sequence.backward_ref = 0;
   reset_sequence( &this->sequence );
 
   init_picture( &this->sequence.picture );
