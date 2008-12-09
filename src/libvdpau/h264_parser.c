@@ -51,7 +51,8 @@ void
 void decode_ref_pic_marking(uint32_t memory_management_control_operation,
     struct nal_parser *parser);
 void parse_pred_weight_table(struct buf_reader *buf, struct nal_unit *nal);
-void parse_dec_ref_pic_marking(struct buf_reader *buf, struct nal_parser *parser);
+void parse_dec_ref_pic_marking(struct buf_reader *buf,
+    struct nal_parser *parser);
 
 /* here goes the parser implementation */
 
@@ -162,6 +163,7 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
 
   nal->nal_ref_idc = (buf->buf[0] >> 5) & 0x03;
   nal->nal_unit_type = buf->buf[0] & 0x1f;
+  printf("Unit: %d\n", nal->nal_unit_type);
 
   buf->cur_pos = buf->buf + 1;
   //printf("NAL: %d\n", nal->nal_unit_type);
@@ -174,7 +176,7 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
       decode_nal(&ibuf.buf, &ibuf.len, buf->cur_pos, buf->len - 1);
       ibuf.cur_pos = ibuf.buf;
 
-      if(!nal->sps)
+      if (!nal->sps)
         nal->sps = malloc(sizeof(struct seq_parameter_set_rbsp));
 
       memset(nal->sps, 0x00, sizeof(struct seq_parameter_set_rbsp));
@@ -184,7 +186,7 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
       ret = NAL_SPS;
       break;
     case NAL_PPS:
-      if(!nal->pps)
+      if (!nal->pps)
         nal->pps = malloc(sizeof(struct pic_parameter_set_rbsp));
       memset(nal->pps, 0x00, sizeof(struct pic_parameter_set_rbsp));
 
@@ -197,7 +199,7 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
     case NAL_PART_C:
     case NAL_SLICE_IDR:
       if (nal->sps && nal->pps) {
-        if(!nal->slc)
+        if (!nal->slc)
           nal->slc = malloc(sizeof(struct slice_header));
 
         memset(nal->slc, 0x00, sizeof(struct slice_header));
@@ -236,13 +238,11 @@ void calculate_pic_order(struct nal_parser *parser)
     if (slc->pic_order_cnt_lsb < parser->prev_pic_order_cnt_lsb
         && parser->prev_pic_order_cnt_lsb - slc->pic_order_cnt_lsb
             >= max_poc_lsb / 2)
-      parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb
-          + max_poc_lsb;
+      parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb + max_poc_lsb;
     else if (slc->pic_order_cnt_lsb > parser->prev_pic_order_cnt_lsb
         && parser->prev_pic_order_cnt_lsb - slc->pic_order_cnt_lsb
             < -max_poc_lsb / 2)
-      parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb
-          - max_poc_lsb;
+      parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb - max_poc_lsb;
     else
       parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb;
 
@@ -827,7 +827,7 @@ void decode_ref_pic_marking(uint32_t memory_management_control_operation,
           slc->dec_ref_pic_marking.long_term_frame_idx);
 
     pic = dpb_get_picture(dpb, pic_num_x);
-    if(pic) {
+    if (pic) {
       if (pic->nal->slc->field_pic_flag == 0) {
         pic = dpb_get_picture(dpb, pic_num_x);
         pic->nal->long_term_frame_idx
@@ -835,7 +835,8 @@ void decode_ref_pic_marking(uint32_t memory_management_control_operation,
       }
       else
         printf("FIXME: B Set frame %d to long-term ref\n", pic_num_x);
-    } else {
+    }
+    else {
       printf("memory_management_control_operation: 3 failed. No such picture.");
     }
 
@@ -874,7 +875,8 @@ void decode_ref_pic_marking(uint32_t memory_management_control_operation,
   }
 }
 
-void parse_dec_ref_pic_marking(struct buf_reader *buf, struct nal_parser *parser)
+void parse_dec_ref_pic_marking(struct buf_reader *buf,
+    struct nal_parser *parser)
 {
   struct nal_unit *nal = parser->current_nal;
   struct seq_parameter_set_rbsp *sps = nal->sps;
@@ -915,7 +917,8 @@ void parse_dec_ref_pic_marking(struct buf_reader *buf, struct nal_parser *parser
               = read_exp_golomb(buf);
 
         decode_ref_pic_marking(
-            slc->dec_ref_pic_marking.memory_management_control_operation, parser);
+            slc->dec_ref_pic_marking.memory_management_control_operation,
+            parser);
       } while (slc->dec_ref_pic_marking.memory_management_control_operation
           != 0);
     }
@@ -928,7 +931,12 @@ struct nal_parser* init_parser()
 {
   struct nal_parser *parser = malloc(sizeof(struct nal_parser));
   memset(parser->buf, 0x00, MAX_FRAME_SIZE);
+  memset(parser->prebuf, 0x00, MAX_FRAME_SIZE);
   parser->buf_len = 0;
+  parser->prebuf_len = 0;
+  parser->incomplete_nal = 0;
+  parser->next_nal_position = 0;
+
   parser->found_sps = 0;
   parser->found_pps = 0;
   parser->nal0 = init_nal_unit();
@@ -961,65 +969,98 @@ void free_parser(struct nal_parser *parser)
 int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
     uint8_t **ret_buf, uint32_t *ret_len, uint32_t *ret_slice_cnt)
 {
-  int next_nal, second_next_nal;
+  int32_t next_nal = 0;
   int parsed_len = 0;
   int search_offset = 0;
+  uint8_t completed_nal = 0;
 
-  while ((next_nal
-      = seek_for_nal(inbuf + search_offset, inbuf_len - parsed_len)) >= 0 &&
-      (second_next_nal = seek_for_nal(inbuf + next_nal + 3, inbuf_len - parsed_len - next_nal - 3)) >= 0) {
-    // save buffer up to the nal-start
-    if (parser->buf_len + next_nal + search_offset > MAX_FRAME_SIZE) {
-      printf("buf underrun!!\n");
-      *ret_len = 0;
-      *ret_buf = NULL;
-      return parsed_len;
-    }
+  uint8_t *prebuf = parser->prebuf;
+  while ((next_nal = seek_for_nal(inbuf+search_offset, inbuf_len-parsed_len-search_offset)) >= 0) {
+    next_nal += search_offset;
 
-    if (parser->last_nal_res != 2) {
-      /* this is a SLICE, keep it in the buffer */
-      xine_fast_memcpy(parser->buf + parser->buf_len, inbuf, next_nal
-          + search_offset);
-      parser->buf_len += next_nal + search_offset;
-    }
+    if(parser->incomplete_nal || completed_nal || next_nal == 0) {
 
-    inbuf += next_nal + search_offset;
-    parsed_len += next_nal + search_offset;
-
-    parser->last_nal_res = parse_nal(inbuf + 3, inbuf_len - parsed_len, parser);
-    if (parser->last_nal_res == 1 && parser->buf_len > 0) {
-      *ret_buf = malloc(parser->buf_len);
-      xine_fast_memcpy(*ret_buf, parser->buf, parser->buf_len);
-      *ret_len = parser->buf_len;
-      *ret_slice_cnt = parser->slice_cnt;
-
-      calculate_pic_order(parser);
-
-      //memset(parser->buf, 0x00, parser->buf_len);
-      parser->buf_len = 0;
-      parser->last_nal_res = 1;
-      parser->slice_cnt = 0;
-
-      if(parser->last_nal->nal_ref_idc) {
-        if(parser->last_nal->slc != NULL)
-          parser->prev_pic_order_cnt_lsb = parser->last_nal->slc->pic_order_cnt_lsb;
-          parser->prev_pic_order_cnt_msb = parser->pic_order_cnt_msb;
+      if (parser->prebuf_len + next_nal > MAX_FRAME_SIZE) {
+        printf("buf underrun!!\n");
+        *ret_len = 0;
+        *ret_buf = NULL;
+        return parsed_len;
       }
-      return parsed_len;
+
+      xine_fast_memcpy(parser->prebuf + parser->prebuf_len, inbuf, next_nal);
+      parser->prebuf_len += next_nal;
+      parser->incomplete_nal = 0;
+
+      parsed_len += next_nal;
+      inbuf += next_nal;
+
+      /*int i;
+      for(i=0; i<5; i++)
+        printf("0x%02x ", (prebuf+3)[i]);
+      printf("\n");*/
+      parser->last_nal_res = parse_nal(prebuf+3, parser->prebuf_len-3, parser);
+      if (parser->last_nal_res == 1 && parser->buf_len > 0) {
+        printf("Frame complete: %d bytes\n", parser->buf_len);
+        *ret_buf = malloc(parser->buf_len);
+        xine_fast_memcpy(*ret_buf, parser->buf, parser->buf_len);
+        *ret_len = parser->buf_len;
+        *ret_slice_cnt = parser->slice_cnt;
+
+        calculate_pic_order(parser);
+
+        //memset(parser->buf, 0x00, parser->buf_len);
+        parser->buf_len = 0;
+        parser->last_nal_res = 1;
+        parser->slice_cnt = 1;
+
+        /* this is a SLICE, keep it in the buffer */
+        xine_fast_memcpy(parser->buf + parser->buf_len, prebuf, parser->prebuf_len);
+        parser->buf_len += parser->prebuf_len;
+        parser->prebuf_len = 0;
+
+        if (parser->last_nal->nal_ref_idc) {
+          if (parser->last_nal->slc != NULL)
+            parser->prev_pic_order_cnt_lsb
+                = parser->last_nal->slc->pic_order_cnt_lsb;
+          parser->prev_pic_order_cnt_msb = parser->pic_order_cnt_msb;
+        }
+        return parsed_len;
+      }
+
+      if (parser->last_nal_res != 2) {
+        /* this is a SLICE, keep it in the buffer */
+        xine_fast_memcpy(parser->buf + parser->buf_len, prebuf, parser->prebuf_len);
+        parser->buf_len += parser->prebuf_len;
+      }
+
+      parser->prebuf_len = 0;
+      completed_nal = 1;
+
+    } else {
+      /* most likely we are at the beginning of the stream here
+       * which starts not with a nal-boundardy but with some garbage
+       * -> throw it away
+       */
+      parsed_len += next_nal;
+      inbuf += next_nal;
     }
+
 
     search_offset = 3;
   }
 
-  // no further NAL found, copy the rest of the stream
-  // into the buffer
-  xine_fast_memcpy(&parser->buf[parser->buf_len], inbuf, inbuf_len - parsed_len);
-  parser->buf_len += inbuf_len - parsed_len;
+  /* if inbuf does not end with the start of a new nal
+   * copy the left data into prebuf
+   */
+  if(parsed_len < inbuf_len) {
+    parser->incomplete_nal = 1;
+    xine_fast_memcpy(parser->prebuf + parser->prebuf_len, inbuf, inbuf_len-parsed_len);
+    parser->prebuf_len += inbuf_len-parsed_len;
+    parsed_len += inbuf_len-parsed_len;
+  }
 
-  parsed_len += (inbuf_len - parsed_len);
   *ret_len = 0;
   *ret_buf = NULL;
-
   return parsed_len;
 }
 
@@ -1092,7 +1133,8 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
                 != last_nal->slc->delta_pic_order_cnt_bottom))) {
       ret = 1;
       reason++;
-      printf("C: Reason: %d, %d, %d\n", res, nal->slc->pic_order_cnt_lsb, last_nal->slc->pic_order_cnt_lsb);
+      printf("C: Reason: %d, %d, %d\n", res, nal->slc->pic_order_cnt_lsb,
+          last_nal->slc->pic_order_cnt_lsb);
     }
     if (nal->slc && last_nal->slc && (nal->sps->pic_order_cnt_type == 1
         && last_nal->sps->pic_order_cnt_type == 1

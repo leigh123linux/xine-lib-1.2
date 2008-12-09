@@ -11,18 +11,26 @@
 
 struct nal_parser {
     uint8_t buf[MAX_FRAME_SIZE];
-    int buf_len;
-    int found_sps;
-    int found_pps;
-    int last_nal_res;
+    uint32_t buf_len;
+
+    /* prebuf is a ringbuffer */
+    uint8_t prebuf[MAX_FRAME_SIZE];
+    uint32_t prebuf_len;
+    uint32_t next_nal_position;
+    uint8_t incomplete_nal;
+
+    uint8_t found_sps;
+    uint8_t found_pps;
+    uint8_t last_nal_res;
 
     uint8_t is_idr;
 
     int field; /* 0=top, 1=bottom, -1=both */
     int slice;
     int slice_cnt;
-    int have_top;
-    int have_frame;
+
+    uint8_t have_top;
+    uint8_t have_frame;
 
     struct nal_unit *nal0;
     struct nal_unit *nal1;
