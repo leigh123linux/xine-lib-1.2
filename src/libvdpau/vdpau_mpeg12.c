@@ -484,12 +484,12 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
     }
     seq->backward_ref = img;
 
-    if ( seq->nframes==0 ) {
+    /*if ( seq->nframes==0 ) {
       img->pts = seq->seq_pts;
       img->draw( img, vd->stream );
       ++img->drawn;
       //printf( "vdpau_mpeg12: drawn reference image with pts=%lld\n", img->pts );
-    }
+    }*/
   }
   else {
     img->pts = seq->seq_pts;
@@ -565,6 +565,7 @@ static void vdpau_mpeg12_decode_data (video_decoder_t *this_gen, buf_element_t *
  * This function is called when xine needs to flush the system.
  */
 static void vdpau_mpeg12_flush (video_decoder_t *this_gen) {
+  printf( "vdpau_mpeg12: vdpau_mpeg12_flush\n" );
 }
 
 /*
@@ -572,6 +573,8 @@ static void vdpau_mpeg12_flush (video_decoder_t *this_gen) {
  */
 static void vdpau_mpeg12_reset (video_decoder_t *this_gen) {
   vdpau_mpeg12_decoder_t *this = (vdpau_mpeg12_decoder_t *) this_gen;
+
+  printf( "vdpau_mpeg12: vdpau_mpeg12_reset\n" );
 
   //this->size = 0;
 }
@@ -582,6 +585,8 @@ static void vdpau_mpeg12_reset (video_decoder_t *this_gen) {
 static void vdpau_mpeg12_discontinuity (video_decoder_t *this_gen) {
   vdpau_mpeg12_decoder_t *this = (vdpau_mpeg12_decoder_t *) this_gen;
 
+  printf( "vdpau_mpeg12: vdpau_mpeg12_discontinuity\n" );
+
 }
 
 /*
@@ -590,6 +595,8 @@ static void vdpau_mpeg12_discontinuity (video_decoder_t *this_gen) {
 static void vdpau_mpeg12_dispose (video_decoder_t *this_gen) {
 
   vdpau_mpeg12_decoder_t *this = (vdpau_mpeg12_decoder_t *) this_gen;
+
+  printf( "vdpau_mpeg12: vdpau_mpeg12_dispose\n" );
 
   /*if (this->buf) {
     free (this->buf);
