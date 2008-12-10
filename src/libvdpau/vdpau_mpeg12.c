@@ -114,7 +114,9 @@ typedef struct {
   vo_frame_t  *forward_ref;
   vo_frame_t  *backward_ref;
 
-  int64_t    pts;
+  int64_t    seq_pts;
+	int64_t    cur_pts;
+	int				 nframes;
 } sequence_t;
 
 
@@ -162,6 +164,10 @@ static void reset_sequence( sequence_t *sequence )
   sequence->bufpos = 0;
   sequence->bufseek = 0;
   sequence->start = -1;
+	sequence->seq_pts = sequence->cur_pts = 0;
+	sequence->nframes = -1;
+	sequence->ratio = 1.0;
+	sequence->video_step = 3600;
   xine_fast_memcpy( sequence->intra_quant_matrix, &default_intra_quantizer_matrix, 64 );
   memset( sequence->non_intra_quant_matrix, 16, 64 );
   if ( sequence->forward_ref )
@@ -198,6 +204,11 @@ static uint32_t get_bits( uint8_t *b, int offbits, int nbits )
 static void sequence_header( sequence_t *sequence, uint8_t *buf, int len )
 {
   int i, j, off=0;
+	if ( sequence->cur_pts ) {
+		sequence->seq_pts = sequence->cur_pts;
+		sequence->nframes = -1;
+	}
+
   sequence->coded_width = get_bits( buf,0,12 );
   sequence->coded_height = get_bits( buf,12,12 );
   switch ( get_bits( buf+3,0,4 ) ) {
@@ -391,6 +402,8 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
   picture_t *pic = (picture_t*)&seq->picture;
   vdpau_accel_t *ref_accel;
 
+  ++seq->nframes;
+
   if ( pic->vdp_infos.picture_coding_type==P_FRAME ) {
     if ( seq->backward_ref ) {
       ref_accel = (vdpau_accel_t*)seq->backward_ref->accel_data;
@@ -424,8 +437,12 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
   xine_fast_memcpy( &pic->vdp_infos.intra_quantizer_matrix, &seq->intra_quant_matrix, 64 );
   xine_fast_memcpy( &pic->vdp_infos.non_intra_quantizer_matrix, &seq->non_intra_quant_matrix, 64 );
   pic->state = WANT_HEADER;
+
+  //printf("vdpau_mpeg12: get image ..\n");
   vo_frame_t *img = vd->stream->video_out->get_frame( vd->stream->video_out, seq->coded_width, seq->coded_height,
                                                       seq->ratio, XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS);
+  //printf("vdpau_mpeg12: .. got image %d\n", img);
+
   vdpau_accel_t *accel = (vdpau_accel_t*)img->accel_data;
   VdpStatus st;
   if ( vd->decoder==VDP_INVALID_HANDLE ) {
@@ -445,25 +462,44 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
   st = accel->vdp_decoder_render( vd->decoder, accel->surface, (VdpPictureInfo*)&pic->vdp_infos, 1, &vbit );
   if ( st!=VDP_STATUS_OK )
     printf( "vdpau_mpeg12: decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
-  else
-    printf( "vdpau_mpeg12: DECODER SUCCESS : frame_type:%d, forwref:%d, backref:%d, pts:%lld\n", pic->vdp_infos.picture_coding_type, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->pts );
+  //else
+    //printf( "vdpau_mpeg12: DECODER SUCCESS : frame_type:%d, forwref:%d, backref:%d, pts:%lld\n", pic->vdp_infos.picture_coding_type, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->seq_pts );
 
   //printf( "vdpau_meg12:  forwref:%d, backref:%d\n", seq->forward_ref, seq->backward_ref );
 
-  //img->duration = 3600;
-  img->pts = seq->pts;
   img->bad_frame = 0;
-  //if ( pic->vdp_infos.picture_coding_type==B_FRAME )
-    img->draw( img, vd->stream );
+  img->duration = seq->video_step;
 
   if ( pic->vdp_infos.picture_coding_type!=B_FRAME ) {
-    if ( seq->forward_ref )
+    if ( seq->forward_ref ) {
+      seq->forward_ref->drawn = 0;
       seq->forward_ref->free( seq->forward_ref );
+      //printf("vdpau_mpeg12: freed image %d\n", seq->forward_ref );
+    }
     seq->forward_ref = seq->backward_ref;
+    if ( seq->forward_ref && !seq->forward_ref->drawn ) {
+      seq->forward_ref->pts = seq->seq_pts;
+      seq->forward_ref->draw( seq->forward_ref, vd->stream );
+      //printf( "vdpau_mpeg12: drawn reference image with pts=%lld\n", seq->forward_ref->pts );
+    }
     seq->backward_ref = img;
+
+    if ( seq->nframes==0 ) {
+      img->pts = seq->seq_pts;
+      img->draw( img, vd->stream );
+      ++img->drawn;
+      //printf( "vdpau_mpeg12: drawn reference image with pts=%lld\n", img->pts );
+    }
   }
-  else
+  else {
+    img->pts = seq->seq_pts;
+    img->draw( img, vd->stream );
+    //printf( "vdpau_mpeg12: drawn image with pts=%lld\n", img->pts );
     img->free( img );
+    //printf("vdpau_mpeg12: freed B image %d\n", img );
+  }
+
+  seq->seq_pts +=seq->video_step;
 }
 
 
@@ -486,10 +522,9 @@ static void vdpau_mpeg12_decode_data (video_decoder_t *this_gen, buf_element_t *
     //_x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->video_step);
   }
 
-  if ( buf->pts ) {
-    seq->pts = buf->pts;
-    //printf("vdpau_mpeg12_decode_data: new pts : %lld\n", buf->pts );
-  }
+  seq->cur_pts = buf->pts;
+  //printf("vdpau_mpeg12_decode_data: new pts : %lld\n", buf->pts );
+
 
   int size = seq->bufpos+buf->size;
   if ( seq->bufsize < size ) {
