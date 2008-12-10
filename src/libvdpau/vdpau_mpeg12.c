@@ -232,12 +232,12 @@ static void sequence_header( sequence_t *sequence, uint8_t *buf, int len )
 
 static void picture_header( sequence_t *sequence, uint8_t *buf, int len )
 {
-  int i = get_bits( buf,10,3 );
+  //int i = get_bits( buf,10,3 );
   //printf( "!!!!!!!!!!!!!!! picture type : %d !!!!!!!!!!!!!!!!!!!!!!!!!!\n", i );
   if ( /*i==B_FRAME ||*/ sequence->picture.state!=WANT_HEADER )
     return;
   reset_picture( &sequence->picture );
-  sequence->picture.vdp_infos.picture_coding_type = i;
+  sequence->picture.vdp_infos.picture_coding_type = get_bits( buf,10,3 );
   sequence->picture.vdp_infos.forward_reference = VDP_INVALID_HANDLE;
   sequence->picture.vdp_infos.backward_reference = VDP_INVALID_HANDLE;
   sequence->picture.vdp_infos.full_pel_forward_vector = 0;
@@ -392,20 +392,31 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
   vdpau_accel_t *ref_accel;
 
   if ( pic->vdp_infos.picture_coding_type==P_FRAME ) {
-    if ( seq->backward_ref )
+    if ( seq->backward_ref ) {
       ref_accel = (vdpau_accel_t*)seq->backward_ref->accel_data;
-    else
-      ref_accel = (vdpau_accel_t*)seq->forward_ref->accel_data;
-    pic->vdp_infos.forward_reference = ref_accel->surface;
+      pic->vdp_infos.forward_reference = ref_accel->surface;
+    }
+    else {
+      pic->state = WANT_HEADER;
+      return;
+    }
   }
   else if ( pic->vdp_infos.picture_coding_type==B_FRAME ) {
     if ( seq->forward_ref ) {
       ref_accel = (vdpau_accel_t*)seq->forward_ref->accel_data;
       pic->vdp_infos.forward_reference = ref_accel->surface;
     }
+    else {
+      pic->state = WANT_HEADER;
+      return;
+    }
     if ( seq->backward_ref ) {
       ref_accel = (vdpau_accel_t*)seq->backward_ref->accel_data;
       pic->vdp_infos.backward_reference = ref_accel->surface;
+    }
+    else {
+      pic->state = WANT_HEADER;
+      return;
     }
   }
 
@@ -461,8 +472,8 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
  * This function receives a buffer of data from the demuxer layer and
  * figures out how to handle it based on its header flags.
  */
-static void vdpau_mpeg12_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
-
+static void vdpau_mpeg12_decode_data (video_decoder_t *this_gen, buf_element_t *buf)
+{
   vdpau_mpeg12_decoder_t *this = (vdpau_mpeg12_decoder_t *) this_gen;
   sequence_t *seq = (sequence_t*)&this->sequence;
 
