@@ -513,7 +513,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   vdpau_redraw_needed( this_gen );
 
   if ( (frame->format == XINE_IMGFMT_YV12) || (frame->format == XINE_IMGFMT_YUY2) ) {
-    printf( "vo_vdpau: got a yuv image -------------\n" );
+    //printf( "vo_vdpau: got a yuv image -------------\n" );
     surface = this->soft_surface;
     chroma = ( frame->format==XINE_IMGFMT_YV12 )? VDP_CHROMA_TYPE_420 : VDP_CHROMA_TYPE_422;
     if ( (frame->width > this->soft_surface_width) || (frame->height > this->soft_surface_height) || (frame->format != this->soft_surface_format) ) {
@@ -540,7 +540,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     }
   }
   else if (frame->format == XINE_IMGFMT_VDPAU) {
-    printf( "vo_vdpau: got a vdpau image -------------\n" );
+    //printf( "vo_vdpau: got a vdpau image -------------\n" );
     surface = frame->vdpau_accel_data.surface;
     /*if ( !this->gotimage ) {
       printf( "vo_vdpau: mallocing yuv ......\n" );
@@ -629,7 +629,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdp_queue_display( vdp_queue, this->overlay_output, 0, 0, 0 );
   else*/
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, 0 );
-  printf( "vo_vdpau: image displayed\n" );
+  //printf( "vo_vdpau: image displayed\n" );
 
   if ( this->init_queue<2 )
     ++this->init_queue;
