@@ -412,7 +412,6 @@ static vo_frame_t *vdpau_alloc_frame (vo_driver_t *this_gen)
   frame->vdpau_accel_data.vdp_device = vdp_device;
   frame->vdpau_accel_data.surface = VDP_INVALID_HANDLE;
   frame->vdpau_accel_data.vdp_video_surface_create = vdp_video_surface_create;
-  frame->vdpau_accel_data.vdp_video_surface_destroy = vdp_video_surface_destroy;
   frame->vdpau_accel_data.vdp_decoder_create = vdp_decoder_create;
   frame->vdpau_accel_data.vdp_decoder_destroy = vdp_decoder_destroy;
   frame->vdpau_accel_data.vdp_decoder_render = vdp_decoder_render;
@@ -722,8 +721,8 @@ static int vdpau_gui_data_exchange (vo_driver_t *this_gen, int data_type, void *
 
     case XINE_GUI_SEND_EXPOSE_EVENT: {
       if ( this->init_queue ) {
-        int previous = this->current_output_surface ^ 1;
         XLockDisplay( this->display );
+        int previous = this->current_output_surface ^ 1;
         vdp_queue_display( vdp_queue, this->output_surface[previous], 0, 0, 0 );
         XUnlockDisplay( this->display );
       }
@@ -739,11 +738,13 @@ static int vdpau_gui_data_exchange (vo_driver_t *this_gen, int data_type, void *
       st = vdp_queue_target_create_x11( vdp_device, this->drawable, &vdp_queue_target );
       if ( st != VDP_STATUS_OK ) {
         printf( "vo_vdpau: FATAL !! Can't recreate presentation queue target after drawable change !!\n" );
+        XUnlockDisplay( this->display );
         break;
       }
       st = vdp_queue_create( vdp_device, vdp_queue_target, &vdp_queue );
       if ( st != VDP_STATUS_OK ) {
         printf( "vo_vdpau: FATAL !! Can't recreate presentation queue after drawable change !!\n" );
+        XUnlockDisplay( this->display );
         break;
       }
       VdpColor backColor;

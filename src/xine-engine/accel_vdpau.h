@@ -43,7 +43,6 @@ typedef struct {
 
   VdpGetErrorString *vdp_get_error_string;
   VdpVideoSurfaceCreate *vdp_video_surface_create;
-  VdpVideoSurfaceDestroy *vdp_video_surface_destroy;
   VdpDecoderCreate *vdp_decoder_create;
   VdpDecoderDestroy *vdp_decoder_destroy;
   VdpDecoderRender *vdp_decoder_render;
