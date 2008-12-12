@@ -13,7 +13,8 @@ struct nal_parser {
     uint8_t buf[MAX_FRAME_SIZE];
     uint32_t buf_len;
 
-    /* prebuf is a ringbuffer */
+    /* prebuf is used to store the currently
+     * processed nal unit */
     uint8_t prebuf[MAX_FRAME_SIZE];
     uint32_t prebuf_len;
     uint32_t next_nal_position;
@@ -42,6 +43,9 @@ struct nal_parser {
     uint32_t prev_pic_order_cnt_lsb;
     uint32_t prev_pic_order_cnt_msb;
 
+    /* this is dpb used for reference frame
+     * heading to vdpau + unordered frames
+     */
     struct dpb dpb;
 };
 

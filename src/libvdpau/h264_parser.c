@@ -472,6 +472,7 @@ void parse_vui_parameters(struct buf_reader *buf,
     sps->vui_parameters.log2_max_mv_length_vertical = read_exp_golomb(buf);
     sps->vui_parameters.num_reorder_frames = read_exp_golomb(buf);
     sps->vui_parameters.max_dec_frame_buffering = read_exp_golomb(buf);
+    printf("Max_dec_frame_buffering: %d\n", sps->vui_parameters.max_dec_frame_buffering);
   }
 }
 
@@ -543,7 +544,6 @@ uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps,
   pps->redundant_pic_cnt_present_flag = read_bits(buf, 1);
 
   if (!rbsp_trailing_bits(buf)) {
-    printf("PARSE 8x8\n");
     pps->transform_8x8_mode_flag = read_bits(buf, 1);
     pps->pic_scaling_matrix_present_flag = read_bits(buf, 1);
     if (pps->pic_scaling_matrix_present_flag) {
@@ -1133,8 +1133,8 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
                 != last_nal->slc->delta_pic_order_cnt_bottom))) {
       ret = 1;
       reason++;
-      printf("C: Reason: %d, %d, %d\n", res, nal->slc->pic_order_cnt_lsb,
-          last_nal->slc->pic_order_cnt_lsb);
+      /*printf("C: Reason: %d, %d, %d\n", res, nal->slc->pic_order_cnt_lsb,
+          last_nal->slc->pic_order_cnt_lsb);*/
     }
     if (nal->slc && last_nal->slc && (nal->sps->pic_order_cnt_type == 1
         && last_nal->sps->pic_order_cnt_type == 1

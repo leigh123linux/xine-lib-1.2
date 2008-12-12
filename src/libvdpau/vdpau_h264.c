@@ -351,6 +351,12 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             VdpStatus status = this->vdpau_accel->vdp_decoder_render(this->decoder,
                 surface, (VdpPictureInfo*)&pic, 1, &vdp_buffer);
 
+            // FIXME: do we really hit all cases here?
+            if(((uint8_t*)vdp_buffer.bitstream) != NULL) {
+              free(vdp_buffer.bitstream);
+              printf("Freed vdp_buffer.bitstream\n");
+            }
+
             if(status != VDP_STATUS_OK)
               xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %s\n",  this->vdpau_accel->vdp_get_error_string(status));
             else {

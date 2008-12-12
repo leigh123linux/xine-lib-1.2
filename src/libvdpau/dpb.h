@@ -17,6 +17,8 @@ struct decoded_picture {
                     * the surface is not double-used */
   struct nal_unit *nal;
 
+  uint8_t used_for_reference;
+
   struct decoded_picture *next;
 };
 
