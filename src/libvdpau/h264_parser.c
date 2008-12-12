@@ -855,6 +855,9 @@ void decode_ref_pic_marking(uint32_t memory_management_control_operation,
     // mark all ref pics as unused for reference,
     // set max-long-term frame index = no long-term frame idxs
     dpb_flush(dpb);
+    printf("MMC RESET\n");
+    parser->pic_order_cnt_lsb = parser->prev_pic_order_cnt_lsb = 0;
+    parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb = 0;
   }
   else if (memory_management_control_operation == 6) {
     // mark current picture as used for long-term ref,
@@ -954,7 +957,7 @@ struct nal_parser* init_parser()
   /* no idea why we do that. inspired by libavcodec,
    * as we couldn't figure in the specs....
    */
-  parser->prev_pic_order_cnt_msb = 1 << 16;
+  parser->prev_pic_order_cnt_msb = parser->pic_order_cnt_lsb = 1 << 16;
 
   return parser;
 }

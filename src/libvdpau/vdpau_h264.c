@@ -68,6 +68,8 @@ typedef struct vdpau_h264_decoder_s {
 
 
   struct nal_parser *nal_parser;  /* h264 nal parser. extracts stream data for vdpau */
+  uint8_t           wait_for_bottom_field;
+  struct decoded_picture *last_ref_pic;
 
   VdpDecoder        decoder;
 
@@ -326,13 +328,11 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
 
             if(img == NULL) {
-              printf("Acquire image: ");
               fflush(stdout);
               img = this->stream->video_out->get_frame (this->stream->video_out,
                                                         this->width, this->height,
                                                         this->ratio,
                                                         XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS);
-              printf("OK\n");
               this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
             }
 
@@ -353,28 +353,41 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
             // FIXME: do we really hit all cases here?
             if(((uint8_t*)vdp_buffer.bitstream) != NULL) {
-              free(vdp_buffer.bitstream);
-              printf("Freed vdp_buffer.bitstream\n");
             }
 
             if(status != VDP_STATUS_OK)
               xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %s\n",  this->vdpau_accel->vdp_get_error_string(status));
             else {
-              printf("DECODING SUCCESS\n");
 
               img->duration  = this->video_step;
               img->pts       = buf->pts;
               img->bad_frame = 0;
 
-              img->draw(img, this->stream);
-
               if(pic.is_reference) {
-                struct decoded_picture *pic = init_decoded_picture(this->nal_parser->current_nal, surface, img);
-                dpb_add_picture(&(this->nal_parser->dpb), pic, sps->num_ref_frames);
-              } else {
-                img->free(img);
+                if(!this->wait_for_bottom_field) {
+                  struct decoded_picture *pic = init_decoded_picture(this->nal_parser->current_nal, surface, img);
+                  this->last_ref_pic = pic;
+                  dpb_add_picture(&(this->nal_parser->dpb), pic, sps->num_ref_frames);
+                } else {
+                  if(this->last_ref_pic) {
+                    this->last_ref_pic->bottom_is_reference = 1;
+                  }
+                }
               }
-              img = NULL;
+
+              if(!slc->field_pic_flag ||
+                  (slc->field_pic_flag && slc->bottom_field_flag && this->wait_for_bottom_field)) {
+                img->draw(img, this->stream);
+                this->wait_for_bottom_field = 0;
+
+                if(!pic.is_reference)
+                  img->free(img);
+
+                img = NULL;
+              } else if(slc->field_pic_flag && !slc->bottom_field_flag) {
+                // don't draw yet, second field is missing.
+                this->wait_for_bottom_field = 1;
+              }
             }
 
             //this->vdpau_accel->vdp_video_surface_destroy(surface);
@@ -457,6 +470,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->decoder_initialized = 0;
   this->nal_parser = init_parser();
   this->buf           = NULL;
+  this->wait_for_bottom_field = 0;
 
   return &this->video_decoder;
 }

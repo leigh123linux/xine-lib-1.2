@@ -18,6 +18,8 @@ struct decoded_picture {
   struct nal_unit *nal;
 
   uint8_t used_for_reference;
+  uint8_t top_is_reference;
+  uint8_t bottom_is_reference;
 
   struct decoded_picture *next;
 };

@@ -18,6 +18,9 @@ struct decoded_picture* init_decoded_picture(struct nal_unit *src_nal,
   struct decoded_picture *pic = malloc(sizeof(struct decoded_picture));
   pic->nal = init_nal_unit();
   copy_nal_unit(pic->nal, src_nal);
+  pic->top_is_reference = pic->nal->slc->field_pic_flag
+        ? (pic->nal->slc->bottom_field_flag ? 0 : 1) : 1;
+  pic->bottom_is_reference = 0;
   pic->surface = surface;
   pic->img = img;
   pic->next = NULL;
@@ -237,10 +240,10 @@ void fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist)
           reflist[i].frame_idx = pic->nal->slc->frame_num; //pic->nal->long_term_frame_idx;
         else
           reflist[i].frame_idx = pic->nal->slc->frame_num; //pic->nal->curr_pic_num;
-        reflist[i].top_is_reference = pic->nal->slc->field_pic_flag
-            ? (pic->nal->slc->bottom_field_flag ? 0 : 1) : 1;
-        reflist[i].bottom_is_reference = pic->nal->slc->field_pic_flag
-            ? (pic->nal->slc->bottom_field_flag ? 1 : 0) : 1;
+        reflist[i].top_is_reference = pic->top_is_reference; /*pic->nal->slc->field_pic_flag
+            ? (pic->nal->slc->bottom_field_flag ? 0 : 1) : 1;*/
+        reflist[i].bottom_is_reference = pic->bottom_is_reference; /*pic->nal->slc->field_pic_flag
+            ? (pic->nal->slc->bottom_field_flag ? 1 : 0) : 1;*/
         reflist[i].field_order_cnt[0] = pic->nal->top_field_order_cnt;
         reflist[i].field_order_cnt[1] = pic->nal->bottom_field_order_cnt;
         i++;
