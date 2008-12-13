@@ -85,6 +85,26 @@ static const uint8_t default_intra_quantizer_matrix[64] = {
     83
 };
 
+uint8_t mpeg2_scan_norm[64] = {
+    /* Zig-Zag scan pattern */
+     0, 1, 8,16, 9, 2, 3,10,
+    17,24,32,25,18,11, 4, 5,
+    12,19,26,33,40,48,41,34,
+    27,20,13, 6, 7,14,21,28,
+    35,42,49,56,57,50,43,36,
+    29,22,15,23,30,37,44,51,
+    58,59,52,45,38,31,39,46,
+    53,60,61,54,47,55,62,63
+};
+
+uint8_t mpeg2_scan_alt[64] = {
+    /* Alternate scan pattern */
+    0,8,16,24,1,9,2,10,17,25,32,40,48,56,57,49,
+    41,33,26,18,3,11,4,12,19,27,34,42,50,58,35,43,
+    51,59,20,28,5,13,6,14,21,29,36,44,52,60,37,45,
+    53,61,22,30,7,15,23,31,38,46,54,62,39,47,55,63
+};
+
 
 typedef struct {
   VdpPictureInfoMPEG1Or2  vdp_infos; /* first field, also used for frame */
@@ -157,10 +177,6 @@ static void reset_picture( picture_t *pic )
   pic->slices_count = 0;
   pic->slices_pos = 0;
   pic->state = WANT_HEADER;
-  xine_fast_memcpy( &pic->vdp_infos.intra_quantizer_matrix, &default_intra_quantizer_matrix, 64 );
-  memset( &pic->vdp_infos.non_intra_quantizer_matrix, 16, 64 );
-  xine_fast_memcpy( &pic->vdp_infos2.intra_quantizer_matrix, &default_intra_quantizer_matrix, 64 );
-  memset( &pic->vdp_infos2.non_intra_quantizer_matrix, 16, 64 );
 }
 
 
@@ -185,10 +201,10 @@ static void reset_sequence( sequence_t *sequence )
 	sequence->video_step = 3600;
   if ( sequence->forward_ref )
     sequence->forward_ref->free( sequence->forward_ref );
-  sequence->forward_ref = 0;
+  sequence->forward_ref = NULL;
   if ( sequence->backward_ref )
     sequence->backward_ref->free( sequence->backward_ref );
-  sequence->backward_ref = 0;
+  sequence->backward_ref = NULL;
 }
 
 
@@ -253,24 +269,33 @@ static void sequence_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int
   //printf( "load_intra_quantizer_matrix: %d\n", i );
   if ( i ) {
     for ( j=0; j<64; ++j ) {
-      sequence->picture.vdp_infos.intra_quantizer_matrix[j] = get_bits( buf+7+j,7,8 );
+      sequence->picture.vdp_infos.intra_quantizer_matrix[mpeg2_scan_norm[j]] = get_bits( buf+7+j,7,8 );
     }
     off = 64;
   }
+  else {
+    for ( j=0; j<64; ++j ) {
+      sequence->picture.vdp_infos.intra_quantizer_matrix[mpeg2_scan_norm[j]] = default_intra_quantizer_matrix[j];
+    }
+  }
+
   i = get_bits( buf+7+off,7,1 );
   //printf( "load_non_intra_quantizer_matrix: %d\n", i );
   if ( i ) {
     for ( j=0; j<64; ++j ) {
-      sequence->picture.vdp_infos.non_intra_quantizer_matrix[j] = get_bits( buf+8+off+j,0,8 );
+      sequence->picture.vdp_infos.non_intra_quantizer_matrix[mpeg2_scan_norm[j]] = get_bits( buf+8+off+j,0,8 );
     }
   }
+  else
+    memset( sequence->picture.vdp_infos.non_intra_quantizer_matrix, 16, 64 );
+
   if ( !sequence->have_header ) {
     sequence->have_header = 1;
     _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_VIDEO_WIDTH, sequence->coded_width );
     _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_VIDEO_HEIGHT, sequence->coded_height );
     _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_VIDEO_RATIO, ((double)10000*sequence->ratio) );
     _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_FRAME_DURATION, sequence->video_step );
-    _x_meta_info_set_utf8( this_gen->stream, XINE_META_INFO_VIDEOCODEC, "MPEG (vdpau)" );
+    _x_meta_info_set_utf8( this_gen->stream, XINE_META_INFO_VIDEOCODEC, "MPEG1/2 (vdpau)" );
     xine_event_t event;
     xine_format_change_data_t data;
     event.type = XINE_EVENT_FRAME_FORMAT_CHANGE;
@@ -341,7 +366,7 @@ static void picture_coding_extension( sequence_t *sequence, uint8_t *buf, int le
   sequence->picture.vdp_infos.intra_dc_precision = get_bits( buf,20,2 );
   //printf( "intra_dc_precision: %d\n", get_bits( buf,20,2 ) );
   sequence->picture.vdp_infos.picture_structure = get_bits( buf,22,2 );
-  //printf( "picture_structure: %d\n", get_bits( buf,22,2 ) );
+  printf( "picture_structure: %d\n", get_bits( buf,22,2 ) );
   sequence->picture.vdp_infos.top_field_first = get_bits( buf,24,1 );
   //printf( "top_field_first: %d\n", get_bits( buf,24,1 ) );
   sequence->picture.vdp_infos.frame_pred_frame_dct = get_bits( buf,25,1 );
@@ -353,7 +378,7 @@ static void picture_coding_extension( sequence_t *sequence, uint8_t *buf, int le
   sequence->picture.vdp_infos.intra_vlc_format = get_bits( buf,28,1 );
   //printf( "intra_vlc_format: %d\n", get_bits( buf,28,1 ) );
   sequence->picture.vdp_infos.alternate_scan = get_bits( buf,29,1 );
-  //printf( "alternate_scan: %d\n", get_bits( buf,29,1 ) );
+  printf( "alternate_scan: %d\n", get_bits( buf,29,1 ) );
   //printf( "repeat_first_field: %d\n", get_bits( buf,30,1 ) );
   //printf( "chroma_420_type: %d\n", get_bits( buf,31,1 ) );
   //printf( "progressive_frame: %d\n", get_bits( buf,32,1 ) );
@@ -378,6 +403,7 @@ static void copy_slice( sequence_t *sequence, uint8_t *buf, int len )
 
 static void quant_matrix_extension( uint8_t *buf, int len )
 {
+  printf("quant_matrix_extension >>>>>>>>>>>>>>>>>>>>>>>>>\n");
 }
 
 
@@ -500,7 +526,7 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
       accel->vdp_decoder_destroy( vd->decoder );
       vd->decoder = VDP_INVALID_HANDLE;
     }
-    st = accel->vdp_decoder_create( accel->vdp_device, seq->profile, seq->coded_width, seq->coded_height, &vd->decoder);
+    st = accel->vdp_decoder_create( accel->vdp_device, seq->profile, seq->coded_width, seq->coded_height, 2, &vd->decoder);
     if ( st!=VDP_STATUS_OK )
       printf( "vdpau_mpeg12: failed to create decoder !! %s\n", accel->vdp_get_error_string( st ) );
     else {
@@ -514,10 +540,11 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
     if ( st!=VDP_STATUS_OK )
       printf( "vdpau_mpeg12: failed to create surface !! %s\n", accel->vdp_get_error_string( st ) );
   }
+
   VdpBitstreamBuffer vbit;
   vbit.struct_version = VDP_BITSTREAM_BUFFER_VERSION;
-  vbit.bitstream = seq->picture.slices;
-  vbit.bitstream_bytes = seq->picture.slices_pos;
+  vbit.bitstream = pic->slices;
+  vbit.bitstream_bytes = pic->slices_pos;
   st = accel->vdp_decoder_render( vd->decoder, accel->surface, (VdpPictureInfo*)&pic->vdp_infos, 1, &vbit );
   if ( st!=VDP_STATUS_OK )
     printf( "vdpau_mpeg12: decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
