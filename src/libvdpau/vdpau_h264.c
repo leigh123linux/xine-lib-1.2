@@ -353,6 +353,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
             // FIXME: do we really hit all cases here?
             if(((uint8_t*)vdp_buffer.bitstream) != NULL) {
+              free(vdp_buffer.bitstream);
             }
 
             if(status != VDP_STATUS_OK)
@@ -364,11 +365,11 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
               img->bad_frame = 0;
 
               if(pic.is_reference) {
-                if(!this->wait_for_bottom_field) {
+                if(!slc->field_pic_flag || !this->wait_for_bottom_field) {
                   struct decoded_picture *pic = init_decoded_picture(this->nal_parser->current_nal, surface, img);
                   this->last_ref_pic = pic;
                   dpb_add_picture(&(this->nal_parser->dpb), pic, sps->num_ref_frames);
-                } else {
+                } else if(slc->field_pic_flag && this->wait_for_bottom_field) {
                   if(this->last_ref_pic) {
                     this->last_ref_pic->bottom_is_reference = 1;
                   }

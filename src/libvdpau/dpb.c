@@ -20,7 +20,8 @@ struct decoded_picture* init_decoded_picture(struct nal_unit *src_nal,
   copy_nal_unit(pic->nal, src_nal);
   pic->top_is_reference = pic->nal->slc->field_pic_flag
         ? (pic->nal->slc->bottom_field_flag ? 0 : 1) : 1;
-  pic->bottom_is_reference = 0;
+  pic->bottom_is_reference = pic->nal->slc->field_pic_flag
+        ? (pic->nal->slc->bottom_field_flag ? 1 : 0) : 1;
   pic->surface = surface;
   pic->img = img;
   pic->next = NULL;
