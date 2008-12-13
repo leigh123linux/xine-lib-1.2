@@ -1031,6 +1031,14 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
       }
 
       if (parser->last_nal_res != 2) {
+        if (parser->buf_len + parser->prebuf_len > MAX_FRAME_SIZE) {
+          printf("buf underrun!!\n");
+          parser->buf_len = 0;
+          *ret_len = 0;
+          *ret_buf = NULL;
+          return parsed_len;
+        }
+
         /* this is a SLICE, keep it in the buffer */
         xine_fast_memcpy(parser->buf + parser->buf_len, prebuf, parser->prebuf_len);
         parser->buf_len += parser->prebuf_len;
