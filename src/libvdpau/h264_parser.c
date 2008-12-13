@@ -155,15 +155,17 @@ int32_t read_exp_golomb_s(struct buf_reader *buf)
 
 int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
 {
-  if (buf->len < 1)
+  if (buf->len < 1) {
+    printf("ERROR: Empty buffer passed\n");
     return -1;
+  }
   int ret = -1;
 
   struct nal_unit *nal = parser->current_nal;
 
   nal->nal_ref_idc = (buf->buf[0] >> 5) & 0x03;
   nal->nal_unit_type = buf->buf[0] & 0x1f;
-  printf("Unit: %d\n", nal->nal_unit_type);
+  //printf("Unit: %d\n", nal->nal_unit_type);
 
   buf->cur_pos = buf->buf + 1;
   //printf("NAL: %d\n", nal->nal_unit_type);
@@ -969,6 +971,11 @@ void free_parser(struct nal_parser *parser)
   free(parser);
 }
 
+void parse_prebuf()
+{
+
+}
+
 int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
     uint8_t **ret_buf, uint32_t *ret_len, uint32_t *ret_slice_cnt)
 {
@@ -997,10 +1004,6 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
       parsed_len += next_nal;
       inbuf += next_nal;
 
-      /*int i;
-      for(i=0; i<5; i++)
-        printf("0x%02x ", (prebuf+3)[i]);
-      printf("\n");*/
       parser->last_nal_res = parse_nal(prebuf+3, parser->prebuf_len-3, parser);
       if (parser->last_nal_res == 1 && parser->buf_len > 0) {
         printf("Frame complete: %d bytes\n", parser->buf_len);
@@ -1017,9 +1020,11 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
         parser->slice_cnt = 1;
 
         /* this is a SLICE, keep it in the buffer */
+        printf("slice %d size: %d\n", parser->slice_cnt-1, parser->prebuf_len);
         xine_fast_memcpy(parser->buf + parser->buf_len, prebuf, parser->prebuf_len);
         parser->buf_len += parser->prebuf_len;
         parser->prebuf_len = 0;
+        parser->incomplete_nal = 0;
 
         if (parser->last_nal->nal_ref_idc) {
           if (parser->last_nal->slc != NULL)
@@ -1039,6 +1044,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
           return parsed_len;
         }
 
+        printf("slice %d size: %d\n", parser->slice_cnt-1, parser->prebuf_len);
         /* this is a SLICE, keep it in the buffer */
         xine_fast_memcpy(parser->buf + parser->buf_len, prebuf, parser->prebuf_len);
         parser->buf_len += parser->prebuf_len;
@@ -1068,7 +1074,19 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
     xine_fast_memcpy(parser->prebuf + parser->prebuf_len, inbuf, inbuf_len-parsed_len);
     parser->prebuf_len += inbuf_len-parsed_len;
     parsed_len += inbuf_len-parsed_len;
+    inbuf += inbuf_len-parsed_len;
+
+    /* now check if prebuf contains a second slice header
+     * this might happen if the nal start sequence is split
+     * over the buf-boundary - if this is the case we
+     */
+    if((next_nal = seek_for_nal(prebuf+3, parser->prebuf_len)) >= 0) {
+      inbuf -= parser->prebuf_len-next_nal-3;
+      parsed_len -= parser->prebuf_len-next_nal-3;
+      parser->prebuf_len = next_nal+3;
+    }
   }
+
 
   *ret_len = 0;
   *ret_buf = NULL;

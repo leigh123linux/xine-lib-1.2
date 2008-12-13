@@ -239,7 +239,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
              this->vdpau_accel->vdp_device, this->profile, this->width, this->height);
 
          VdpStatus status = this->vdpau_accel->vdp_decoder_create(this->vdpau_accel->vdp_device,
-             this->profile, this->width, this->height, &this->decoder);
+             this->profile, this->width, this->height, 16, &this->decoder);
 
          if(status != VDP_STATUS_OK)
            xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: ERROR: VdpDecoderCreate returned status != OK (%s)\n", this->vdpau_accel->vdp_get_error_string(status));
