@@ -47,14 +47,11 @@ struct decoded_picture* dpb_get_picture_by_ltidx(struct dpb *dpb, uint32_t longt
 int dpb_set_unused_ref_picture(struct dpb *dpb, uint32_t picnum);
 int dpb_set_unused_ref_picture_byltpn(struct dpb *dpb, uint32_t longterm_picnum);
 int dpb_set_unused_ref_picture_bylidx(struct dpb *dpb, uint32_t longterm_idx);
+int dpb_set_unused_ref_picture_lidx_gt(struct dpb *dpb, uint32_t longterm_idx);
 
 int dpb_set_output_picture(struct dpb *dpb, struct decoded_picture *outpic);
 
 int dpb_remove_picture(struct dpb *dpb, struct decoded_picture *rempic);
-int dpb_remove_picture_by_picnum(struct dpb *dpb, uint32_t picnum);
-int dpb_remove_picture_by_ltpn(struct dpb *dpb, uint32_t longterm_picnum);
-int dpb_remove_picture_by_ltidx(struct dpb *dpb, uint32_t longterm_idx);
-int dpb_remove_ltidx_gt(struct dpb *dpb, uint32_t longterm_max);
 int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_ref_frames);
 int dpb_flush(struct dpb *dpb);
 
