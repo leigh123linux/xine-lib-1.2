@@ -156,10 +156,9 @@ int32_t read_exp_golomb_s(struct buf_reader *buf)
 
 int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
 {
-  if (buf->len < 1) {
-    printf("ERROR: Empty buffer passed\n");
+  if (buf->len < 1)
     return -1;
-  }
+
   int ret = -1;
 
   struct nal_unit *nal = parser->current_nal;
@@ -828,7 +827,6 @@ void decode_ref_pic_marking(uint32_t memory_management_control_operation,
     return;
 
   if (memory_management_control_operation == 1) {
-    printf("MMC 1\n");
     // short-term -> unused for reference
     uint32_t pic_num_x = nal->curr_pic_num
         - (slc->dec_ref_pic_marking.difference_of_pic_nums_minus1 + 1);
@@ -844,7 +842,6 @@ void decode_ref_pic_marking(uint32_t memory_management_control_operation,
     }
   }
   else if (memory_management_control_operation == 2) {
-    printf("MMC 2\n");
     // long-term -> unused for reference
     struct decoded_picture* pic = dpb_get_picture_by_ltpn(dpb,
         slc->dec_ref_pic_marking.long_term_pic_num);
@@ -860,7 +857,6 @@ void decode_ref_pic_marking(uint32_t memory_management_control_operation,
     }
   }
   else if (memory_management_control_operation == 3) {
-    printf("MMC 3\n");
     // short-term -> long-term, set long-term frame index
     uint32_t pic_num_x = nal->curr_pic_num
         - (slc->dec_ref_pic_marking.difference_of_pic_nums_minus1 + 1);
@@ -886,7 +882,6 @@ void decode_ref_pic_marking(uint32_t memory_management_control_operation,
 
   }
   else if (memory_management_control_operation == 4) {
-    printf("MMC 4\n");
     // set max-long-term frame index,
     // mark all long-term pictures with long-term frame idx
     // greater max-long-term farme idx as unused for ref
@@ -897,16 +892,13 @@ void decode_ref_pic_marking(uint32_t memory_management_control_operation,
           slc->dec_ref_pic_marking.max_long_term_frame_idx_plus1 - 1);
   }
   else if (memory_management_control_operation == 5) {
-    printf("MMC 5\n");
     // mark all ref pics as unused for reference,
     // set max-long-term frame index = no long-term frame idxs
     dpb_flush(dpb);
-    printf("MMC RESET\n");
     parser->pic_order_cnt_lsb = parser->prev_pic_order_cnt_lsb = 0;
     parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb = 0;
   }
   else if (memory_management_control_operation == 6) {
-    printf("MMC 6\n");
     // mark current picture as used for long-term ref,
     // assing long-term frame idx to it
     struct decoded_picture* pic = dpb_get_picture_by_ltidx(dpb,
@@ -1053,7 +1045,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
 
       parser->last_nal_res = parse_nal(prebuf+3, parser->prebuf_len-3, parser);
       if (parser->last_nal_res == 1 && parser->buf_len > 0) {
-        printf("Frame complete: %d bytes\n", parser->buf_len);
+        //printf("Frame complete: %d bytes\n", parser->buf_len);
         *ret_buf = malloc(parser->buf_len);
         xine_fast_memcpy(*ret_buf, parser->buf, parser->buf_len);
         *ret_len = parser->buf_len;
@@ -1067,7 +1059,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
         parser->slice_cnt = 1;
 
         /* this is a SLICE, keep it in the buffer */
-        printf("slice %d size: %d\n", parser->slice_cnt-1, parser->prebuf_len);
+        //printf("slice %d size: %d\n", parser->slice_cnt-1, parser->prebuf_len);
         xine_fast_memcpy(parser->buf + parser->buf_len, prebuf, parser->prebuf_len);
         parser->buf_len += parser->prebuf_len;
         parser->prebuf_len = 0;

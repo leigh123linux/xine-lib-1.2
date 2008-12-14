@@ -42,8 +42,6 @@ struct decoded_picture* dpb_get_next_out_picture(struct dpb *dpb)
   struct decoded_picture *pic = dpb->pictures;
   struct decoded_picture *outpic = pic;
 
-  printf("dpb used: %d\n", dpb->used);
-
   if(dpb->used < MAX_DPB_SIZE)
     return NULL;
 
@@ -102,7 +100,6 @@ struct decoded_picture* dpb_get_picture_by_ltidx(struct dpb *dpb,
 int dpb_set_unused_ref_picture(struct dpb *dpb, uint32_t picnum)
 {
   struct decoded_picture *pic = dpb->pictures;
-printf("UNUSED 1\n");
   if (pic != NULL)
     do {
       if (pic->nal->curr_pic_num == picnum) {
@@ -119,7 +116,6 @@ printf("UNUSED 1\n");
 int dpb_set_unused_ref_picture_byltpn(struct dpb *dpb, uint32_t longterm_picnum)
 {
   struct decoded_picture *pic = dpb->pictures;
-  printf("UNUSED 2\n");
   if (pic != NULL)
     do {
       if (pic->nal->long_term_pic_num == longterm_picnum) {
@@ -136,7 +132,6 @@ int dpb_set_unused_ref_picture_byltpn(struct dpb *dpb, uint32_t longterm_picnum)
 int dpb_set_unused_ref_picture_bylidx(struct dpb *dpb, uint32_t longterm_idx)
 {
   struct decoded_picture *pic = dpb->pictures;
-  printf("UNUSED 3\n");
   if (pic != NULL)
     do {
       if (pic->nal->long_term_frame_idx == longterm_idx) {
@@ -153,7 +148,6 @@ int dpb_set_unused_ref_picture_bylidx(struct dpb *dpb, uint32_t longterm_idx)
 int dpb_set_unused_ref_picture_lidx_gt(struct dpb *dpb, uint32_t longterm_idx)
 {
   struct decoded_picture *pic = dpb->pictures;
-  printf("UNUSED 4\n");
   if (pic != NULL)
     do {
       if (pic->nal->long_term_frame_idx >= longterm_idx) {
@@ -174,11 +168,9 @@ int dpb_set_unused_ref_picture_lidx_gt(struct dpb *dpb, uint32_t longterm_idx)
 int dpb_set_output_picture(struct dpb *dpb, struct decoded_picture *outpic)
 {
   struct decoded_picture *pic = dpb->pictures;
-printf("DPB set output pic\n");
   if (pic != NULL)
     do {
       if (pic == outpic) {
-        printf("DPB pic num %d output, refuse: %d\n", pic->nal->curr_pic_num, pic->used_for_reference);
         pic->delayed_output = 0;
         if(!pic->used_for_reference)
           dpb_remove_picture(dpb, pic);
@@ -193,11 +185,10 @@ int dpb_remove_picture(struct dpb *dpb, struct decoded_picture *rempic)
 {
   struct decoded_picture *pic = dpb->pictures;
   struct decoded_picture *last_pic = NULL;
-printf("DPB remove pic\n");
+
   if (pic != NULL)
     do {
       if (pic == rempic) {
-        printf("DPB found rempic\n");
         // FIXME: free the picture....
 
         if (last_pic != NULL)
@@ -206,7 +197,6 @@ printf("DPB remove pic\n");
           dpb->pictures = pic->next;
         free_decoded_picture(pic);
         dpb->used--;
-        printf("DPB Used: %d\n", dpb->used);
         return 0;
       }
 
@@ -241,13 +231,12 @@ int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_r
   pic->next = dpb->pictures;
   dpb->pictures = pic;
   dpb->used++;
-printf("ADD: Used: %d\n", dpb->used);
+
   if(dpb->used > num_ref_frames) {
     do {
       if(pic->used_for_reference) {
         i++;
         if(i>num_ref_frames) {
-          printf("DPB REMOVE REF FRAME\n");
           pic->used_for_reference = 0;
           if(!pic->delayed_output)
             dpb_remove_picture(dpb, pic);
@@ -305,8 +294,6 @@ void fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist)
       }
       last_pic = pic;
     } while ((pic = pic->next) != NULL && i < 16);
-
-  printf("Used ref-frames: %d\n", i);
 
   // fill all other frames with invalid handles
   while(i < 16) {

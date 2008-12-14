@@ -310,7 +310,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             if(!this->decoder_started)
               this->decoder_started = 1;
 
-            dump_pictureinfo_h264(&pic);
+            //dump_pictureinfo_h264(&pic);
 
             /*int i;
             printf("Decode data: \n");
@@ -369,7 +369,6 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 if(!slc->field_pic_flag || !this->wait_for_bottom_field) {
                   decoded_pic = init_decoded_picture(this->nal_parser->current_nal, surface, img);
                   this->last_ref_pic = decoded_pic;
-                  printf("Add ref pic: %d\n", decoded_pic->nal->slc->frame_num);
                   decoded_pic->used_for_reference = 1;
                   dpb_add_picture(&(this->nal_parser->dpb), decoded_pic, sps->num_ref_frames);
                 } else if(slc->field_pic_flag && this->wait_for_bottom_field) {
@@ -403,6 +402,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
                 this->wait_for_bottom_field = 0;*/
 
+                printf("pts: %lld\n", buf->pts);
                 img->draw(img, this->stream);
                 this->wait_for_bottom_field = 0;
 
