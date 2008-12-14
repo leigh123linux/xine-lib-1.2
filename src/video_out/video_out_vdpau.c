@@ -625,9 +625,9 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
   XLockDisplay( this->display );
-  /*if ( this->overlay_output_width )
+  if ( this->overlay_output_width )
     vdp_queue_display( vdp_queue, this->overlay_output, 0, 0, 0 );
-  else*/
+  else
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, 0 );
   //if ( layer_count )
     //printf( "vo_vdpau: overlay count=%d, surface=%d\n", layer_count, layer[0].source_surface );
