@@ -8,6 +8,8 @@
 #ifndef DPB_H_
 #define DPB_H_
 
+#define MAX_DPB_SIZE 10
+
 #include "nal.h"
 #include "video_out.h"
 
@@ -20,6 +22,8 @@ struct decoded_picture {
   uint8_t used_for_reference;
   uint8_t top_is_reference;
   uint8_t bottom_is_reference;
+
+  uint8_t delayed_output;
 
   struct decoded_picture *next;
 };
@@ -34,10 +38,20 @@ struct decoded_picture* init_decoded_picture(struct nal_unit *src_nal,
     VdpVideoSurface surface, vo_frame_t *img);
 void free_decoded_picture(struct decoded_picture *pic);
 
+struct decoded_picture* dpb_get_next_out_picture(struct dpb *dpb);
+
 struct decoded_picture* dpb_get_picture(struct dpb *dpb, uint32_t picnum);
 struct decoded_picture* dpb_get_picture_by_ltpn(struct dpb *dpb, uint32_t longterm_picnum);
 struct decoded_picture* dpb_get_picture_by_ltidx(struct dpb *dpb, uint32_t longterm_idx);
-int dpb_remove_picture(struct dpb *dpb, uint32_t picnum);
+
+int dpb_set_unused_ref_picture(struct dpb *dpb, uint32_t picnum);
+int dpb_set_unused_ref_picture_byltpn(struct dpb *dpb, uint32_t longterm_picnum);
+int dpb_set_unused_ref_picture_bylidx(struct dpb *dpb, uint32_t longterm_idx);
+
+int dpb_set_output_picture(struct dpb *dpb, struct decoded_picture *outpic);
+
+int dpb_remove_picture(struct dpb *dpb, struct decoded_picture *rempic);
+int dpb_remove_picture_by_picnum(struct dpb *dpb, uint32_t picnum);
 int dpb_remove_picture_by_ltpn(struct dpb *dpb, uint32_t longterm_picnum);
 int dpb_remove_picture_by_ltidx(struct dpb *dpb, uint32_t longterm_idx);
 int dpb_remove_ltidx_gt(struct dpb *dpb, uint32_t longterm_max);

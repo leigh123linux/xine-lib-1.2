@@ -63,24 +63,6 @@ static inline uint32_t slice_type(uint32_t slice_type)
   return (slice_type < 10 ? slice_type % 5 : slice_type);
 }
 
-struct nal_unit
-{
-  uint8_t nal_ref_idc; // 0x03
-  uint8_t nal_unit_type; // 0x1f
-
-  uint32_t curr_pic_num;
-  uint8_t used_for_long_term_ref;
-  uint32_t long_term_pic_num;
-  uint32_t long_term_frame_idx;
-
-  uint32_t top_field_order_cnt;
-  uint32_t bottom_field_order_cnt;
-
-  struct seq_parameter_set_rbsp *sps;
-  struct pic_parameter_set_rbsp *pps;
-  struct slice_header *slc;
-};
-
 struct hrd_parameters
 {
   uint32_t cpb_cnt_minus1;
@@ -253,6 +235,27 @@ struct pic_parameter_set_rbsp
   int32_t second_chroma_qp_index_offset;
 };
 
+/* sei contains several additional info, we do
+ * only care for pic_timing, to handle display
+ * reordering
+ */
+struct sei_message
+{
+  uint32_t payload_type;
+  uint8_t last_payload_type_byte;
+  uint32_t payload_size;
+  uint8_t last_payload_size_byte;
+
+  union
+  {
+    /* cpb_dpb_delays_present_flag == 1 */
+    uint8_t cpb_removal_delay;
+    uint8_t dpb_output_delay;
+
+    /* ignore the rest */
+  } pic_timing;
+};
+
 struct slice_header
 {
   uint32_t first_mb_in_slice;
@@ -341,10 +344,28 @@ struct slice_header
   } dec_ref_pic_marking;
 };
 
+struct nal_unit
+{
+  uint8_t nal_ref_idc; // 0x03
+  uint8_t nal_unit_type; // 0x1f
+
+  uint32_t curr_pic_num;
+  uint8_t used_for_long_term_ref;
+  uint32_t long_term_pic_num;
+  uint32_t long_term_frame_idx;
+
+  uint32_t top_field_order_cnt;
+  uint32_t bottom_field_order_cnt;
+
+  struct sei_message sei;
+
+  struct seq_parameter_set_rbsp *sps;
+  struct pic_parameter_set_rbsp *pps;
+  struct slice_header *slc;
+};
 
 struct nal_unit* init_nal_unit();
 void free_nal_unit(struct nal_unit *nal);
 void copy_nal_unit(struct nal_unit *dest, struct nal_unit *src);
-
 
 #endif /* NAL_H_ */

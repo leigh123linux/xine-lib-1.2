@@ -38,6 +38,8 @@ struct nal_parser {
     struct nal_unit *current_nal;
     struct nal_unit *last_nal;
 
+    uint8_t cpb_dpb_delays_present_flag;
+
     uint32_t pic_order_cnt_lsb;
     uint32_t pic_order_cnt_msb;
     uint32_t prev_pic_order_cnt_lsb;

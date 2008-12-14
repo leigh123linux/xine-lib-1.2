@@ -18,6 +18,8 @@ struct decoded_picture* init_decoded_picture(struct nal_unit *src_nal,
   struct decoded_picture *pic = malloc(sizeof(struct decoded_picture));
   pic->nal = init_nal_unit();
   copy_nal_unit(pic->nal, src_nal);
+  pic->used_for_reference = 0;
+  pic->delayed_output = 0;
   pic->top_is_reference = pic->nal->slc->field_pic_flag
         ? (pic->nal->slc->bottom_field_flag ? 0 : 1) : 1;
   pic->bottom_is_reference = pic->nal->slc->field_pic_flag
@@ -33,6 +35,27 @@ void free_decoded_picture(struct decoded_picture *pic)
 {
   pic->img->free(pic->img);
   free_nal_unit(pic->nal);
+}
+
+struct decoded_picture* dpb_get_next_out_picture(struct dpb *dpb)
+{
+  struct decoded_picture *pic = dpb->pictures;
+  struct decoded_picture *outpic = pic;
+
+  printf("dpb used: %d\n", dpb->used);
+
+  if(dpb->used < MAX_DPB_SIZE)
+    return NULL;
+
+  if (pic != NULL)
+    do {
+      if (pic->img->pts < outpic->img->pts)
+        outpic = pic;
+    } while ((pic = pic->next) != NULL);
+
+  if(outpic)
+    printf("OUTPUT: %lld\n", outpic->img->pts);
+  return outpic;
 }
 
 struct decoded_picture* dpb_get_picture(struct dpb *dpb, uint32_t picnum)
@@ -76,7 +99,124 @@ struct decoded_picture* dpb_get_picture_by_ltidx(struct dpb *dpb,
   return NULL;
 }
 
-int dpb_remove_picture(struct dpb *dpb, uint32_t picnum)
+int dpb_set_unused_ref_picture(struct dpb *dpb, uint32_t picnum)
+{
+  struct decoded_picture *pic = dpb->pictures;
+printf("UNUSED 1\n");
+  if (pic != NULL)
+    do {
+      if (pic->nal->curr_pic_num == picnum) {
+        pic->used_for_reference = 0;
+        if(!pic->delayed_output)
+          dpb_remove_picture(dpb, pic);
+        return 0;
+      }
+    } while ((pic = pic->next) != NULL);
+
+  return -1;
+}
+
+int dpb_set_unused_ref_picture_byltpn(struct dpb *dpb, uint32_t longterm_picnum)
+{
+  struct decoded_picture *pic = dpb->pictures;
+  printf("UNUSED 2\n");
+  if (pic != NULL)
+    do {
+      if (pic->nal->long_term_pic_num == longterm_picnum) {
+        pic->used_for_reference = 0;
+        if(!pic->delayed_output)
+          dpb_remove_picture(dpb, pic);
+        return 0;
+      }
+    } while ((pic = pic->next) != NULL);
+
+  return -1;
+}
+
+int dpb_set_unused_ref_picture_bylidx(struct dpb *dpb, uint32_t longterm_idx)
+{
+  struct decoded_picture *pic = dpb->pictures;
+  printf("UNUSED 3\n");
+  if (pic != NULL)
+    do {
+      if (pic->nal->long_term_frame_idx == longterm_idx) {
+        pic->used_for_reference = 0;
+        if(!pic->delayed_output)
+          dpb_remove_picture(dpb, pic);
+        return 0;
+      }
+    } while ((pic = pic->next) != NULL);
+
+  return -1;
+}
+
+int dpb_set_unused_ref_picture_lidx_gt(struct dpb *dpb, uint32_t longterm_idx)
+{
+  struct decoded_picture *pic = dpb->pictures;
+  printf("UNUSED 4\n");
+  if (pic != NULL)
+    do {
+      if (pic->nal->long_term_frame_idx >= longterm_idx) {
+        pic->used_for_reference = 0;
+        if(!pic->delayed_output) {
+          struct decoded_picture *next_pic = pic->next;
+          dpb_remove_picture(dpb, pic);
+          pic = next_pic;
+          continue;
+        }
+      }
+    } while ((pic = pic->next) != NULL);
+
+  return -1;
+}
+
+
+int dpb_set_output_picture(struct dpb *dpb, struct decoded_picture *outpic)
+{
+  struct decoded_picture *pic = dpb->pictures;
+printf("DPB set output pic\n");
+  if (pic != NULL)
+    do {
+      if (pic == outpic) {
+        printf("DPB pic num %d output, refuse: %d\n", pic->nal->curr_pic_num, pic->used_for_reference);
+        pic->delayed_output = 0;
+        if(!pic->used_for_reference)
+          dpb_remove_picture(dpb, pic);
+        return 0;
+      }
+    } while ((pic = pic->next) != NULL);
+
+  return -1;
+}
+
+int dpb_remove_picture(struct dpb *dpb, struct decoded_picture *rempic)
+{
+  struct decoded_picture *pic = dpb->pictures;
+  struct decoded_picture *last_pic = NULL;
+printf("DPB remove pic\n");
+  if (pic != NULL)
+    do {
+      if (pic == rempic) {
+        printf("DPB found rempic\n");
+        // FIXME: free the picture....
+
+        if (last_pic != NULL)
+          last_pic->next = pic->next;
+        else
+          dpb->pictures = pic->next;
+        free_decoded_picture(pic);
+        dpb->used--;
+        printf("DPB Used: %d\n", dpb->used);
+        return 0;
+      }
+
+      last_pic = pic;
+    } while ((pic = pic->next) != NULL);
+
+  return -1;
+}
+
+int dpb_remove_picture_by_picnum(struct dpb *dpb, uint32_t picnum)
 {
   struct decoded_picture *pic = dpb->pictures;
   struct decoded_picture *last_pic = NULL;
@@ -84,102 +224,13 @@ int dpb_remove_picture(struct dpb *dpb, uint32_t picnum)
   if (pic != NULL)
     do {
       if (pic->nal->curr_pic_num == picnum) {
-        // FIXME: free the picture....
-
-        if (last_pic != NULL)
-          last_pic->next = pic->next;
-        else
-          dpb->pictures = pic->next;
-
-        free_decoded_picture(pic);
-        dpb->used--;
-        return 0;
+        dpb_remove_picture(dpb, pic);
       }
 
       last_pic = pic;
     } while ((pic = pic->next) != NULL);
 
   return -1;
-}
-
-int dpb_remove_picture_by_ltpn(struct dpb *dpb, uint32_t longterm_picnum)
-{
-  struct decoded_picture *pic = dpb->pictures;
-  struct decoded_picture *last_pic = NULL;
-
-  if (pic != NULL)
-    do {
-      if (pic->nal->long_term_pic_num == longterm_picnum) {
-        // FIXME: free the picture....
-
-        if (last_pic != NULL)
-          last_pic->next = pic->next;
-        else
-          dpb->pictures = pic->next;
-
-        free_decoded_picture(pic);
-        dpb->used--;
-        return 0;
-      }
-
-      last_pic = pic;
-    } while ((pic = pic->next) != NULL);
-
-  return -1;
-}
-
-int dpb_remove_picture_by_ltidx(struct dpb *dpb, uint32_t longterm_idx)
-{
-  struct decoded_picture *pic = dpb->pictures;
-  struct decoded_picture *last_pic = NULL;
-
-  if (pic != NULL)
-    do {
-      if (pic->nal->long_term_frame_idx == longterm_idx) {
-        // FIXME: free the picture....
-
-        if (last_pic != NULL)
-          last_pic->next = pic->next;
-        else
-          dpb->pictures = pic->next;
-
-        free_decoded_picture(pic);
-        dpb->used--;
-        return 0;
-      }
-
-      last_pic = pic;
-    } while ((pic = pic->next) != NULL);
-
-  return -1;
-}
-
-int dpb_remove_ltidx_gt(struct dpb *dpb, uint32_t longterm_max)
-{
-  struct decoded_picture *pic = dpb->pictures;
-  struct decoded_picture *last_pic = NULL;
-
-  if (pic != NULL)
-    do {
-      if (pic->nal->long_term_frame_idx > longterm_max) {
-        // FIXME: free the picture....
-        if (last_pic != NULL)
-          last_pic->next = pic->next;
-        else
-          dpb->pictures = pic->next;
-
-
-        free_decoded_picture(pic);
-        dpb->used--;
-        /* don't increase last_pic to current pic
-         * in case we delete current pic */
-        continue;
-      }
-
-      last_pic = pic;
-    } while ((pic = pic->next) != NULL);
-
-  return 0;
 }
 
 int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_ref_frames)
@@ -190,17 +241,20 @@ int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_r
   pic->next = dpb->pictures;
   dpb->pictures = pic;
   dpb->used++;
-
+printf("ADD: Used: %d\n", dpb->used);
   if(dpb->used > num_ref_frames) {
     do {
-      i++;
-      if(i>num_ref_frames) {
-        last_pic->next = pic->next;
-        free_decoded_picture(pic);
-        pic = last_pic;
-        dpb->used--;
+      if(pic->used_for_reference) {
+        i++;
+        if(i>num_ref_frames) {
+          printf("DPB REMOVE REF FRAME\n");
+          pic->used_for_reference = 0;
+          if(!pic->delayed_output)
+            dpb_remove_picture(dpb, pic);
+          pic = last_pic;
+        }
+        last_pic = pic;
       }
-      last_pic = pic;
     } while ((pic = pic->next) != NULL);
   }
 
@@ -234,7 +288,7 @@ void fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist)
 
   if (pic != NULL)
     do {
-      if (pic->nal->nal_ref_idc != 0) {
+      if (pic->used_for_reference) {
         reflist[i].surface = pic->surface;
         reflist[i].is_long_term = pic->nal->used_for_long_term_ref;
         if(reflist[i].is_long_term)

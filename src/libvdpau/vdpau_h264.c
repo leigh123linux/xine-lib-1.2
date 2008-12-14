@@ -353,7 +353,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
             // FIXME: do we really hit all cases here?
             if(((uint8_t*)vdp_buffer.bitstream) != NULL) {
-              free(vdp_buffer.bitstream);
+              free((uint8_t*)vdp_buffer.bitstream);
             }
 
             if(status != VDP_STATUS_OK)
@@ -364,13 +364,17 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
               img->pts       = buf->pts;
               img->bad_frame = 0;
 
+              struct decoded_picture *decoded_pic = NULL;
               if(pic.is_reference) {
                 if(!slc->field_pic_flag || !this->wait_for_bottom_field) {
-                  struct decoded_picture *pic = init_decoded_picture(this->nal_parser->current_nal, surface, img);
-                  this->last_ref_pic = pic;
-                  dpb_add_picture(&(this->nal_parser->dpb), pic, sps->num_ref_frames);
+                  decoded_pic = init_decoded_picture(this->nal_parser->current_nal, surface, img);
+                  this->last_ref_pic = decoded_pic;
+                  printf("Add ref pic: %d\n", decoded_pic->nal->slc->frame_num);
+                  decoded_pic->used_for_reference = 1;
+                  dpb_add_picture(&(this->nal_parser->dpb), decoded_pic, sps->num_ref_frames);
                 } else if(slc->field_pic_flag && this->wait_for_bottom_field) {
                   if(this->last_ref_pic) {
+                    decoded_pic = this->last_ref_pic;
                     this->last_ref_pic->bottom_is_reference = 1;
                   }
                 }
@@ -378,20 +382,38 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
               if(!slc->field_pic_flag ||
                   (slc->field_pic_flag && slc->bottom_field_flag && this->wait_for_bottom_field)) {
+                /*if(!decoded_pic) {
+                  decoded_pic = init_decoded_picture(this->nal_parser->current_nal, surface, img);
+                  decoded_pic->delayed_output = 1;
+                  dpb_add_picture(&(this->nal_parser->dpb), decoded_pic, sps->num_ref_frames);
+                } else
+                  decoded_pic->delayed_output = 1;
+
+                img = NULL;
+
+                / * now retrieve the next output frame * /
+                decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb));
+                if(decoded_pic) {
+                  printf("DRAW AN IMAGE\n");
+                  decoded_pic->img->draw(decoded_pic->img, this->stream);
+
+                  dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
+                } else
+                  printf("NO IMAGE THIS TIME\n");
+
+                this->wait_for_bottom_field = 0;*/
+
                 img->draw(img, this->stream);
                 this->wait_for_bottom_field = 0;
 
                 if(!pic.is_reference)
                   img->free(img);
-
                 img = NULL;
               } else if(slc->field_pic_flag && !slc->bottom_field_flag) {
                 // don't draw yet, second field is missing.
                 this->wait_for_bottom_field = 1;
               }
             }
-
-            //this->vdpau_accel->vdp_video_surface_destroy(surface);
           }
         }
       }

@@ -39,12 +39,13 @@ void skip_scaling_list(struct buf_reader *buf, int size);
 void parse_scaling_list(struct buf_reader *buf, uint8_t *scaling_list,
     int length, int index);
 int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser);
-uint8_t parse_sps(struct buf_reader *buf, struct seq_parameter_set_rbsp *sps);
+uint8_t parse_sps(struct buf_reader *buf, struct nal_parser *parser);
 void parse_vui_parameters(struct buf_reader *buf,
     struct seq_parameter_set_rbsp *sps);
 void parse_hrd_parameters(struct buf_reader *buf, struct hrd_parameters *hrd);
 uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps,
     struct seq_parameter_set_rbsp *sps);
+void parse_sei(struct buf_reader *buf, struct nal_parser *parser);
 uint8_t parse_slice_header(struct buf_reader *buf, struct nal_parser *parser);
 void
     parse_ref_pic_list_reordering(struct buf_reader *buf, struct nal_unit *nal);
@@ -165,7 +166,6 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
 
   nal->nal_ref_idc = (buf->buf[0] >> 5) & 0x03;
   nal->nal_unit_type = buf->buf[0] & 0x1f;
-  //printf("Unit: %d\n", nal->nal_unit_type);
 
   buf->cur_pos = buf->buf + 1;
   //printf("NAL: %d\n", nal->nal_unit_type);
@@ -183,7 +183,7 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
 
       memset(nal->sps, 0x00, sizeof(struct seq_parameter_set_rbsp));
 
-      parse_sps(&ibuf, nal->sps);
+      parse_sps(&ibuf, parser);
       free(ibuf.buf);
       ret = NAL_SPS;
       break;
@@ -210,6 +210,10 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
         ret = nal->nal_unit_type;
       }
       break;
+    case NAL_SEI:
+      parse_sei(buf, parser);
+      ret = nal->nal_unit_type;
+      break;
     default:
       ret = nal->nal_unit_type;
       break;
@@ -230,7 +234,7 @@ void calculate_pic_order(struct nal_parser *parser)
 
   if (sps->pic_order_cnt_type == 0) {
     if (nal->nal_unit_type == NAL_SLICE_IDR) {
-      printf("IDR SLICE\n");
+      //printf("IDR SLICE\n");
       parser->prev_pic_order_cnt_lsb = 0;
       parser->prev_pic_order_cnt_msb = 0;
     }
@@ -319,8 +323,9 @@ void parse_scaling_list(struct buf_reader *buf, uint8_t *scaling_list,
   }
 }
 
-uint8_t parse_sps(struct buf_reader *buf, struct seq_parameter_set_rbsp *sps)
+uint8_t parse_sps(struct buf_reader *buf, struct nal_parser *parser)
 {
+  struct seq_parameter_set_rbsp *sps = parser->current_nal->sps;
   sps->profile_idc = buf->buf[0];
   sps->constraint_setN_flag = (buf->buf[1] >> 4) & 0x0f;
   sps->level_idc = buf->buf[2];
@@ -339,7 +344,6 @@ uint8_t parse_sps(struct buf_reader *buf, struct seq_parameter_set_rbsp *sps)
     sps->qpprime_y_zero_transform_bypass_flag = read_bits(buf, 1);
     sps->seq_scaling_matrix_present_flag = read_bits(buf, 1);
     if (sps->seq_scaling_matrix_present_flag) {
-      printf("SCALING LIST PRESENT\n");
       int i;
       for (i = 0; i < 8; i++) {
         sps->seq_scaling_list_present_flag[i] = read_bits(buf, 1);
@@ -403,9 +407,44 @@ uint8_t parse_sps(struct buf_reader *buf, struct seq_parameter_set_rbsp *sps)
   sps->vui_parameters_present_flag = read_bits(buf, 1);
   if (sps->vui_parameters_present_flag) {
     parse_vui_parameters(buf, sps);
-  }
+    if(sps->vui_parameters.nal_hrd_parameters_present_flag ||
+        sps->vui_parameters.vc1_hrd_parameters_present_flag) {
+      parser->cpb_dpb_delays_present_flag = 1;
+    } else
+      parser->cpb_dpb_delays_present_flag = 0;
+  } else
+    parser->cpb_dpb_delays_present_flag = 0;
 
   return 0;
+}
+
+void parse_sei(struct buf_reader *buf, struct nal_parser *parser)
+{
+  struct sei_message *sei = &(parser->current_nal->sei);
+  uint8_t tmp;
+
+  sei->payload_type = 0;
+  while((tmp = read_bits(buf, 8)) == 0xff) {
+    sei->payload_type += 255;
+  }
+  sei->last_payload_type_byte = tmp;
+  sei->payload_type += sei->last_payload_type_byte;
+
+  sei->payload_size = 0;
+  while((tmp = read_bits(buf, 8)) == 0xff) {
+    sei->payload_size += 255;
+  }
+  sei->last_payload_size_byte = tmp;
+  sei->payload_size += sei->last_payload_size_byte;
+
+  /* pic_timing */
+  if(sei->payload_type == 1) {
+    if(parser->cpb_dpb_delays_present_flag) {
+      sei->pic_timing.cpb_removal_delay = read_bits(buf, 5);
+      sei->pic_timing.dpb_output_delay = read_bits(buf, 5);
+      printf("output delay: %d\n", sei->pic_timing.dpb_output_delay);
+    }
+  }
 }
 
 void parse_vui_parameters(struct buf_reader *buf,
@@ -566,15 +605,15 @@ uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps,
   }
 
   if (!pps->pic_scaling_matrix_present_flag && sps != NULL) {
-    printf("MEMCPY SCALING LIST\n");
+    //printf("MEMCPY SCALING LIST\n");
     memcpy(pps->scaling_lists_4x4, sps->scaling_lists_4x4,
         sizeof(pps->scaling_lists_4x4));
     memcpy(pps->scaling_lists_8x8, sps->scaling_lists_8x8,
         sizeof(pps->scaling_lists_8x8));
   }
-  else if (sps == NULL) {
+  /*else if (sps == NULL) {
     printf("sPS MISSING\n");
-  }
+  }*/
 
   return 0;
 }
@@ -789,43 +828,46 @@ void decode_ref_pic_marking(uint32_t memory_management_control_operation,
     return;
 
   if (memory_management_control_operation == 1) {
+    printf("MMC 1\n");
     // short-term -> unused for reference
     uint32_t pic_num_x = nal->curr_pic_num
         - (slc->dec_ref_pic_marking.difference_of_pic_nums_minus1 + 1);
     struct decoded_picture* pic = dpb_get_picture(dpb, pic_num_x);
     if (pic != NULL) {
       if (pic->nal->slc->field_pic_flag == 0)
-        dpb_remove_picture(dpb, pic_num_x);
+        dpb_set_unused_ref_picture(dpb, pic_num_x);
       else {
-        dpb_remove_picture(dpb, pic_num_x);
+        dpb_set_unused_ref_picture(dpb, pic_num_x);
         printf("FIXME: We might need do delete more from the DPB...\n");
         // FIXME: some more handling needed here?! See 8.2.5.4.1, p. 120
       }
     }
   }
   else if (memory_management_control_operation == 2) {
+    printf("MMC 2\n");
     // long-term -> unused for reference
     struct decoded_picture* pic = dpb_get_picture_by_ltpn(dpb,
         slc->dec_ref_pic_marking.long_term_pic_num);
     if (pic != NULL) {
       if (pic->nal->slc->field_pic_flag == 0)
-        dpb_remove_picture_by_ltpn(dpb,
+        dpb_set_unused_ref_picture(dpb,
             slc->dec_ref_pic_marking.long_term_pic_num);
       else {
-        dpb_remove_picture_by_ltpn(dpb,
+        dpb_set_unused_ref_picture(dpb,
             slc->dec_ref_pic_marking.long_term_pic_num);
         printf("FIXME: We might need do delete more from the DPB...\n");
       }
     }
   }
   else if (memory_management_control_operation == 3) {
+    printf("MMC 3\n");
     // short-term -> long-term, set long-term frame index
     uint32_t pic_num_x = nal->curr_pic_num
         - (slc->dec_ref_pic_marking.difference_of_pic_nums_minus1 + 1);
     struct decoded_picture* pic = dpb_get_picture_by_ltidx(dpb,
         slc->dec_ref_pic_marking.long_term_pic_num);
     if (pic != NULL)
-      dpb_remove_picture_by_ltidx(dpb,
+      dpb_set_unused_ref_picture_bylidx(dpb,
           slc->dec_ref_pic_marking.long_term_frame_idx);
 
     pic = dpb_get_picture(dpb, pic_num_x);
@@ -844,16 +886,18 @@ void decode_ref_pic_marking(uint32_t memory_management_control_operation,
 
   }
   else if (memory_management_control_operation == 4) {
+    printf("MMC 4\n");
     // set max-long-term frame index,
     // mark all long-term pictures with long-term frame idx
     // greater max-long-term farme idx as unused for ref
     if (slc->dec_ref_pic_marking.max_long_term_frame_idx_plus1 == 0)
-      dpb_remove_ltidx_gt(dpb, 0);
+      dpb_set_unused_ref_picture_lidx_gt(dpb, 0);
     else
-      dpb_remove_ltidx_gt(dpb,
+      dpb_set_unused_ref_picture_lidx_gt(dpb,
           slc->dec_ref_pic_marking.max_long_term_frame_idx_plus1 - 1);
   }
   else if (memory_management_control_operation == 5) {
+    printf("MMC 5\n");
     // mark all ref pics as unused for reference,
     // set max-long-term frame index = no long-term frame idxs
     dpb_flush(dpb);
@@ -862,12 +906,13 @@ void decode_ref_pic_marking(uint32_t memory_management_control_operation,
     parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb = 0;
   }
   else if (memory_management_control_operation == 6) {
+    printf("MMC 6\n");
     // mark current picture as used for long-term ref,
     // assing long-term frame idx to it
     struct decoded_picture* pic = dpb_get_picture_by_ltidx(dpb,
         slc->dec_ref_pic_marking.long_term_frame_idx);
     if (pic != NULL)
-      dpb_remove_picture_by_ltidx(dpb,
+      dpb_set_unused_ref_picture_bylidx(dpb,
           slc->dec_ref_pic_marking.long_term_frame_idx);
 
     nal->long_term_frame_idx = slc->dec_ref_pic_marking.long_term_frame_idx;
@@ -961,6 +1006,8 @@ struct nal_parser* init_parser()
    */
   parser->prev_pic_order_cnt_msb = parser->pic_order_cnt_lsb = 1 << 16;
 
+  parser->cpb_dpb_delays_present_flag = 0;
+
   return parser;
 }
 
@@ -1044,7 +1091,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
           return parsed_len;
         }
 
-        printf("slice %d size: %d\n", parser->slice_cnt-1, parser->prebuf_len);
+        //printf("slice %d size: %d\n", parser->slice_cnt-1, parser->prebuf_len);
         /* this is a SLICE, keep it in the buffer */
         xine_fast_memcpy(parser->buf + parser->buf_len, prebuf, parser->prebuf_len);
         parser->buf_len += parser->prebuf_len;
