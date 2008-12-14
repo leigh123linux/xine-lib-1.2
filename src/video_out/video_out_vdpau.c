@@ -214,20 +214,21 @@ static int vdpau_process_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overlay )
   ovl->ovl_h = overlay->height;
   ovl->ovl_x = overlay->x;
   ovl->ovl_y = overlay->y;
-  uint8_t *buf = (uint8_t*)malloc(ovl->ovl_w*ovl->ovl_h*4);
+  uint32_t *buf = (uint32_t*)malloc(ovl->ovl_w*ovl->ovl_h*4);
   if ( !buf )
     return 0;
 
   int num_rle = overlay->num_rle;
   rle_elem_t *rle = overlay->rle;
-  uint8_t *rgba = buf;
+  uint32_t *rgba = buf;
+  uint32_t red, green,blue, alpha;
   clut_t *low_colors = (clut_t*)overlay->color;
   clut_t *hili_colors = (clut_t*)overlay->hili_color;
   uint8_t *low_trans = overlay->trans;
   uint8_t *hili_trans = overlay->hili_trans;
   clut_t *colors;
   uint8_t *trans;
-  uint8_t alpha;
+  uint8_t src_alpha;
   int rlelen = 0;
   uint8_t clr = 0;
   int i, pos=0, x, y;
@@ -245,13 +246,14 @@ static int vdpau_process_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overlay )
     }
     rlelen = rle->len;
     clr = rle->color;
-    alpha = trans[clr];
+    src_alpha = trans[clr];
     for ( i=0; i<rlelen; ++i ) {
-      rgba[2] = colors[clr].y; /* red */
-      rgba[1] = colors[clr].cr; /* green */
-      rgba[0] = colors[clr].cb; /* blue */
-      rgba[3] = 0;/*alpha*255/15;*/
-      rgba+= 4;
+      red = colors[clr].y; /* red */
+      green = colors[clr].cr; /* green */
+      blue = colors[clr].cb; /* blue */
+      alpha = src_alpha*255/15;
+      *rgba = (alpha<<24) | (red<<16) | (green<<8) | blue;
+      rgba++;//= 4;
       ++pos;
     }
     ++rle;
@@ -272,16 +274,16 @@ static void vdpau_overlay_begin (vo_driver_t *this_gen, vo_frame_t *frame_gen, i
 {
   vdpau_driver_t  *this = (vdpau_driver_t *) this_gen;
 
-  /*if ( !changed )
+  if ( !changed )
     return;
 
-  ++this->ovl_changed;*/
+  ++this->ovl_changed;
 }
 
 
 static void vdpau_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen, vo_overlay_t *overlay)
 {
-  /*vdpau_driver_t  *this = (vdpau_driver_t *) this_gen;
+  vdpau_driver_t  *this = (vdpau_driver_t *) this_gen;
   vdpau_frame_t *frame = (vdpau_frame_t *) frame_gen;
 
   if ( !this->ovl_changed || this->ovl_changed>XINE_VORAW_MAX_OVL )
@@ -292,13 +294,13 @@ static void vdpau_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen, v
       vdpau_overlay_clut_yuv2rgb (this, overlay, frame);
     if ( vdpau_process_ovl( this, overlay ) )
       ++this->ovl_changed;
-  }*/
+  }
 }
 
 
 static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img)
 {
-  /*vdpau_driver_t  *this = (vdpau_driver_t *) this_gen;
+  vdpau_driver_t  *this = (vdpau_driver_t *) this_gen;
   int i;
   VdpStatus st;
 
@@ -351,7 +353,7 @@ static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img)
       printf( "vdpau_overlay_end: vdp_output_surface_render_bitmap_surface failed : %s\n", vdp_get_error_string(st) );
     }
   }
-  this->ovl_changed = 0;*/
+  this->ovl_changed = 0;
 }
 
 
@@ -595,9 +597,8 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   VdpRect out_dest = { 0, 0, this->sc.gui_width, this->sc.gui_height };
   VdpRect vid_dest = { this->sc.output_xoffset, this->sc.output_yoffset, this->sc.output_xoffset+this->sc.output_width, this->sc.output_yoffset+this->sc.output_height };
 
-  /*printf( "out_dest = %d %d %d %d - vid_dest = %d %d %d %d\n", out_dest.x0, out_dest.y0, out_dest.x1, out_dest.y1, vid_dest.x0, vid_dest.y0, vid_dest.x1, vid_dest.y1 );*/
+  //printf( "out_dest = %d %d %d %d - vid_dest = %d %d %d %d\n", out_dest.x0, out_dest.y0, out_dest.x1, out_dest.y1, vid_dest.x0, vid_dest.y0, vid_dest.x1, vid_dest.y1 );
 
-  XLockDisplay( this->display );
 
   if ( this->init_queue>1 ) {
     int previous = this->current_output_surface ^ 1;
@@ -606,29 +607,30 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   }
 
   uint32_t layer_count;
-  VdpLayer lay, *layer;
+  VdpLayer layer[1];
   VdpRect layersrc;
   if ( this->overlay_output_width ) {
-    printf("vdpau_display_frame: overlay should be visible !\n");
+    //printf("vdpau_display_frame: overlay should be visible !\n");
     layer_count = 1;
     layersrc.x0 = 0; layersrc.y0 = 0; layersrc.x1 = this->overlay_output_width; layersrc.y1 = this->overlay_output_height;
-    lay.struct_version = VDP_LAYER_VERSION; lay.source_surface = this->overlay_output; lay.source_rect = &layersrc; lay.destination_rect = &vid_dest;
-    layer = &lay;
+    layer[0].struct_version = VDP_LAYER_VERSION; layer[0].source_surface = this->overlay_output; layer[0].source_rect = &layersrc; layer[0].destination_rect = &layersrc;//&vid_dest;
+    //printf( "layersrc = %d %d %d %d \n", layersrc.x0, layersrc.y0, layersrc.x1, layersrc.y1 );
   }
   else {
     layer_count = 0;
-    layer = 0;
   }
   st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME,
-                               0, 0, surface, 0, 0, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer );
+                               0, 0, surface, 0, 0, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
   if ( st != VDP_STATUS_OK )
     printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
+  XLockDisplay( this->display );
   /*if ( this->overlay_output_width )
     vdp_queue_display( vdp_queue, this->overlay_output, 0, 0, 0 );
   else*/
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, 0 );
-  //printf( "vo_vdpau: image displayed\n" );
+  //if ( layer_count )
+    //printf( "vo_vdpau: overlay count=%d, surface=%d\n", layer_count, layer[0].source_surface );
 
   if ( this->init_queue<2 )
     ++this->init_queue;
