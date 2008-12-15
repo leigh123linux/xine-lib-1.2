@@ -78,6 +78,15 @@ static void decode_nal(uint8_t **ret, int *len_ret, uint8_t *buf, int buf_len)
   *len_ret = pos - *ret;
 }
 
+static inline dump_bits(uint32_t bits)
+{
+  int i;
+  printf("0b");
+  for(i=0; i < 32; i++)
+    printf("%d", (bits >> 31-i) & 0x01);
+  printf("\n");
+}
+
 static inline uint32_t read_bits(struct buf_reader *buf, int len)
 {
   static uint32_t i_mask[33] = { 0x00, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f,
@@ -97,10 +106,12 @@ static inline uint32_t read_bits(struct buf_reader *buf, int len)
         buf->cur_pos++;
         buf->cur_offset = 8;
       }
+      //dump_bits(bits);
       return bits;
     }
     else {
       bits |= (*buf->cur_pos & i_mask[buf->cur_offset]) << -i_shr;
+      //dump_bits(bits);
       len -= buf->cur_offset;
       buf->cur_pos++;
       buf->cur_offset = 8;
@@ -452,6 +463,7 @@ void parse_vui_parameters(struct buf_reader *buf,
   sps->vui_parameters.aspect_ration_info_present_flag = read_bits(buf, 1);
   if (sps->vui_parameters.aspect_ration_info_present_flag == 1) {
     sps->vui_parameters.aspect_ratio_idc = read_bits(buf, 8);
+    printf("Aspect idc: %d\n", sps->vui_parameters.aspect_ratio_idc);
     if (sps->vui_parameters.aspect_ratio_idc == ASPECT_RESERVED) {
       sps->vui_parameters.sar_width = read_bits(buf, 16);
       sps->vui_parameters.sar_height = read_bits(buf, 16);
@@ -485,8 +497,16 @@ void parse_vui_parameters(struct buf_reader *buf,
   sps->vui_parameters.timing_info_present_flag = read_bits(buf, 1);
   if (sps->vui_parameters.timing_info_present_flag) {
     sps->vui_parameters.num_units_in_tick = read_bits(buf, 32);
+    printf("Framerate\n");
     sps->vui_parameters.time_scale = read_bits(buf, 32);
+    printf("Time scale: %d\n", sps->vui_parameters.time_scale);
+    printf("Time scale: %d\n", sps->vui_parameters.time_scale);
     sps->vui_parameters.fixed_frame_rate_flag = read_bits(buf, 1);
+    printf("Time scale: %d\n", sps->vui_parameters.time_scale);
+    printf("Framerate fixed: %d\n", sps->vui_parameters.fixed_frame_rate_flag);
+    printf("Framerate: %d/%d = %f\n", sps->vui_parameters.num_units_in_tick,
+        sps->vui_parameters.time_scale,
+        (double)sps->vui_parameters.num_units_in_tick/(double)sps->vui_parameters.time_scale);
   }
 
   sps->vui_parameters.nal_hrd_parameters_present_flag = read_bits(buf, 1);
@@ -630,6 +650,7 @@ uint8_t parse_slice_header(struct buf_reader *buf, struct nal_parser *parser)
   slc->first_mb_in_slice = read_exp_golomb(buf);
   /* we do some parsing on the slice type, because the list is doubled */
   slc->slice_type = slice_type(read_exp_golomb(buf));
+  print_slice_type(slc->slice_type);
   slc->pic_parameter_set_id = read_exp_golomb(buf);
   slc->frame_num = read_bits(buf, sps->log2_max_frame_num_minus4 + 4);
   if (!sps->frame_mbs_only_flag) {

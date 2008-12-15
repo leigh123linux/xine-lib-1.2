@@ -47,7 +47,7 @@ struct decoded_picture* dpb_get_next_out_picture(struct dpb *dpb)
 
   if (pic != NULL)
     do {
-      if (pic->img->pts < outpic->img->pts)
+      if (pic->nal->top_field_order_cnt < outpic->nal->top_field_order_cnt)
         outpic = pic;
     } while ((pic = pic->next) != NULL);
 
@@ -95,6 +95,22 @@ struct decoded_picture* dpb_get_picture_by_ltidx(struct dpb *dpb,
     } while ((pic = pic->next) != NULL);
 
   return NULL;
+}
+
+int dpb_set_unused_ref_picture_a(struct dpb *dpb, struct decoded_picture *refpic)
+{
+  struct decoded_picture *pic = dpb->pictures;
+    if (pic != NULL)
+      do {
+        if (pic == refpic) {
+          pic->used_for_reference = 0;
+          if(!pic->delayed_output)
+            dpb_remove_picture(dpb, pic);
+          return 0;
+        }
+      } while ((pic = pic->next) != NULL);
+
+    return -1;
 }
 
 int dpb_set_unused_ref_picture(struct dpb *dpb, uint32_t picnum)
@@ -256,14 +272,14 @@ int dpb_flush(struct dpb *dpb)
 
   if (pic != NULL)
     do {
-      dpb->pictures = pic->next;
-      free_decoded_picture(pic);
-      pic = dpb->pictures;
-      dpb->used--;
-    } while (dpb->pictures != NULL);
+      struct decoded_picture *next_pic = pic->next;
+      dpb_set_unused_ref_picture_a(dpb, pic);
+      pic = next_pic;
+    } while (pic != NULL);
 
-  dpb->pictures = NULL;
-  dpb->used = 0;
+  printf("Flushed, used: %d\n", dpb->used);
+  //dpb->pictures = NULL;
+  //dpb->used = 0;
 
   return 0;
 }

@@ -63,6 +63,29 @@ static inline uint32_t slice_type(uint32_t slice_type)
   return (slice_type < 10 ? slice_type % 5 : slice_type);
 }
 
+static inline void print_slice_type(uint32_t slice_type)
+{
+  switch(slice_type) {
+    case SLICE_P:
+      printf("SLICE_P\n");
+      break;
+    case SLICE_B:
+      printf("SLICE_B\n");
+      break;
+    case SLICE_I:
+      printf("SLICE_I\n");
+      break;
+    case SLICE_SP:
+      printf("SLICE_SP\n");
+      break;
+    case SLICE_SI:
+      printf("SLICE_SI\n");
+      break;
+    default:
+      printf("Unknown SLICE\n");
+  }
+}
+
 struct hrd_parameters
 {
   uint32_t cpb_cnt_minus1;

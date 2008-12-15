@@ -79,6 +79,8 @@ typedef struct vdpau_h264_decoder_s {
 
   xine_t            *xine;
 
+  int64_t           last_pts;
+
 } vdpau_h264_decoder_t;
 
 /**************************************************************************
@@ -266,6 +268,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             printf("IDR Slice, flush\n");
             dpb_flush(&(this->nal_parser->dpb));
             printf("Emtpy: %s", this->nal_parser->dpb.pictures == NULL ? "Yes" : "No");
+            this->last_pts = buf->pts;
           }
           this->nal_parser->is_idr = 0;
 
@@ -402,7 +405,6 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
                 this->wait_for_bottom_field = 0;*/
 
-                printf("pts: %lld\n", buf->pts);
                 img->draw(img, this->stream);
                 this->wait_for_bottom_field = 0;
 
