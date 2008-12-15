@@ -324,7 +324,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             if(!this->decoder_started)
               this->decoder_started = 1;
 
-            dump_pictureinfo_h264(&pic);
+            //dump_pictureinfo_h264(&pic);
 
             /*int i;
             printf("Decode data: \n");
@@ -392,9 +392,9 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 } else if(slc->field_pic_flag && this->wait_for_bottom_field) {
                   if(this->last_ref_pic) {
                     decoded_pic = this->last_ref_pic;
-                    free_nal_unit(decoded_pic->nal);
-                    decoded_pic->nal = init_nal_unit();
-                    copy_nal_unit(decoded_pic->nal, this->nal_parser->current_nal);
+                    //copy_nal_unit(decoded_pic->nal, this->nal_parser->current_nal);
+                    decoded_pic->nal->top_field_order_cnt = this->nal_parser->current_nal->top_field_order_cnt;
+                    decoded_pic->nal->bottom_field_order_cnt = this->nal_parser->current_nal->bottom_field_order_cnt;
                     this->last_ref_pic->bottom_is_reference = 1;
                   }
                 }
