@@ -496,12 +496,11 @@ void parse_vui_parameters(struct buf_reader *buf,
 
   sps->vui_parameters.timing_info_present_flag = read_bits(buf, 1);
   if (sps->vui_parameters.timing_info_present_flag) {
-    sps->vui_parameters.num_units_in_tick = read_bits(buf, 32);
-    sps->vui_parameters.time_scale = read_bits(buf, 32);
+    uint32_t num_units_in_tick = read_bits(buf, 32);
+    uint32_t time_scale = read_bits(buf, 32);
+    sps->vui_parameters.num_units_in_tick = num_units_in_tick;
+    sps->vui_parameters.time_scale = time_scale;
     sps->vui_parameters.fixed_frame_rate_flag = read_bits(buf, 1);
-    printf("Framerate: %d/%d = %f\n", sps->vui_parameters.num_units_in_tick,
-        sps->vui_parameters.time_scale,
-        (double)sps->vui_parameters.num_units_in_tick/(double)sps->vui_parameters.time_scale);
   }
 
   sps->vui_parameters.nal_hrd_parameters_present_flag = read_bits(buf, 1);

@@ -150,7 +150,7 @@ struct seq_parameter_set_rbsp
   uint8_t vui_parameters_present_flag;
 
   /* vui_parameters */
-  union
+  struct
   {
     uint8_t aspect_ration_info_present_flag;
 
@@ -269,7 +269,7 @@ struct sei_message
   uint32_t payload_size;
   uint8_t last_payload_size_byte;
 
-  union
+  struct
   {
     /* cpb_dpb_delays_present_flag == 1 */
     uint8_t cpb_removal_delay;
@@ -309,7 +309,7 @@ struct slice_header
   uint32_t num_ref_idx_l1_active_minus1;
 
   /* ref_pic_list_reordering */
-  union
+  struct
   {
     /* slice_type != I && slice_type != SI */
     uint8_t ref_pic_list_reordering_flag_l0;
@@ -328,7 +328,7 @@ struct slice_header
   } ref_pic_list_reordering;
 
   /* pred_weight_table */
-  union
+  struct
   {
     uint32_t luma_log2_weight_denom;
 
@@ -349,7 +349,7 @@ struct slice_header
   } pred_weight_table;
 
   /* def_rec_pic_marking */
-  union
+  struct
   {
 
     /* nal_unit_type == NAL_SLICE_IDR */

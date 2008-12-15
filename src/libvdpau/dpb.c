@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "dpb.h"
+#include "nal.h"
 #include "video_out.h"
 
 struct decoded_picture* init_decoded_picture(struct nal_unit *src_nal,
@@ -49,12 +50,11 @@ struct decoded_picture* dpb_get_next_out_picture(struct dpb *dpb)
     do {
       if (pic->delayed_output &&
           (outpic == NULL ||
-              pic->nal->top_field_order_cnt < outpic->nal->top_field_order_cnt))
+              pic->nal->top_field_order_cnt < outpic->nal->top_field_order_cnt ||
+              outpic->nal->nal_unit_type == NAL_SLICE_IDR))
         outpic = pic;
     } while ((pic = pic->next) != NULL);
 
-  if(outpic)
-    printf("OUTPUT: %lld\n", outpic->img->pts);
   return outpic;
 }
 
@@ -256,8 +256,9 @@ int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_r
         i++;
         if(i>num_ref_frames) {
           pic->used_for_reference = 0;
-          if(!pic->delayed_output)
+          if(!pic->delayed_output) {
             dpb_remove_picture(dpb, pic);
+          }
           pic = last_pic;
         }
         last_pic = pic;

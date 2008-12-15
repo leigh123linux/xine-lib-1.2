@@ -80,6 +80,7 @@ typedef struct vdpau_h264_decoder_s {
   xine_t            *xine;
 
   int64_t           last_pts;
+  int64_t           last_idr_pts;
 
 } vdpau_h264_decoder_t;
 
@@ -259,17 +260,24 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             this->nal_parser->current_nal->sps != NULL &&
             this->nal_parser->current_nal->pps != NULL) {
 
-          if(this->last_pts = -1)
+          if(this->last_pts == 0)
             this->last_pts = buf->pts;
 
           struct pic_parameter_set_rbsp *pps = this->nal_parser->current_nal->pps;
           struct seq_parameter_set_rbsp *sps = this->nal_parser->current_nal->sps;
           struct slice_header *slc = this->nal_parser->current_nal->slc;
 
+          if(sps->vui_parameters_present_flag &&
+              sps->vui_parameters.timing_info_present_flag &&
+              this->video_step == 0) {
+            this->video_step = 90000/(1/((double)sps->vui_parameters.num_units_in_tick/(double)sps->vui_parameters.time_scale));
+            printf("Videostep: %d\n", this->video_step);
+          }
+
           /* flush the DPB if this frame was an IDR */
           //printf("is_idr: %d\n", this->nal_parser->is_idr);
           if(this->nal_parser->current_nal->nal_unit_type == NAL_SLICE_IDR) {
-            this->last_pts = buf->pts;
+            this->last_idr_pts = buf->pts;
             printf("IDR Slice, flush\n");
             dpb_flush(&(this->nal_parser->dpb));
             printf("Emtpy: %s", this->nal_parser->dpb.pictures == NULL ? "Yes" : "No");
@@ -355,7 +363,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Surface creation failed: %s\n", this->vdpau_accel->vdp_get_error_string(status));
             }
 
-            printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer.bitstream_bytes, this->last_pts);
+            printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer.bitstream_bytes, buf->pts);
             VdpStatus status = this->vdpau_accel->vdp_decoder_render(this->decoder,
                 surface, (VdpPictureInfo*)&pic, 1, &vdp_buffer);
 
@@ -368,9 +376,8 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
               xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %s\n",  this->vdpau_accel->vdp_get_error_string(status));
             else {
 
-              img->duration  = this->video_step;
-              img->pts       = this->last_pts;
-              this->last_pts += this->video_step;
+              img->duration  = (!slc->field_pic_flag*2)*this->video_step;
+              img->pts       = 0;
               img->bad_frame = 0;
 
               struct decoded_picture *decoded_pic = NULL;
@@ -388,6 +395,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 }
               }
 
+              printf("field_pic_flag: %d\n", slc->field_pic_flag);
               if(!slc->field_pic_flag ||
                   (slc->field_pic_flag && slc->bottom_field_flag && this->wait_for_bottom_field)) {
                 if(!decoded_pic) {
@@ -402,7 +410,12 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 /* now retrieve the next output frame */
                 decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb));
                 if(decoded_pic) {
-                  printf("DRAW AN IMAGE\n");
+                  if(decoded_pic->nal->nal_unit_type == NAL_SLICE_IDR)
+                    this->last_pts = this->last_idr_pts;
+
+                  decoded_pic->img->pts = this->last_pts;
+                  this->last_pts += (this->wait_for_bottom_field*2)*this->video_step;
+                  printf("poc: %d, %d\n", decoded_pic->nal->top_field_order_cnt, decoded_pic->nal->bottom_field_order_cnt);
                   decoded_pic->img->draw(decoded_pic->img, this->stream);
 
                   dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
@@ -502,7 +515,8 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->nal_parser = init_parser();
   this->buf           = NULL;
   this->wait_for_bottom_field = 0;
-  this->video_step = 1800;
+  this->video_step = 0;
+  this->last_idr_pts = this->last_pts = 0;
 
   return &this->video_decoder;
 }

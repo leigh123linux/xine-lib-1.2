@@ -8,7 +8,7 @@
 #ifndef DPB_H_
 #define DPB_H_
 
-#define MAX_DPB_SIZE 10
+#define MAX_DPB_SIZE 16
 
 #include "nal.h"
 #include "video_out.h"
