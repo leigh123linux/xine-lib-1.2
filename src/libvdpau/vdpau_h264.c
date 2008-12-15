@@ -70,6 +70,7 @@ typedef struct vdpau_h264_decoder_s {
   struct nal_parser *nal_parser;  /* h264 nal parser. extracts stream data for vdpau */
   uint8_t           wait_for_bottom_field;
   struct decoded_picture *last_ref_pic;
+  uint32_t          last_top_field_order_cnt;
 
   VdpDecoder        decoder;
 
@@ -337,7 +338,6 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           if(this->nal_parser->current_nal->nal_unit_type == NAL_SLICE_IDR) {
             printf("IDR Slice, flush\n");
             dpb_flush(&(this->nal_parser->dpb));
-            printf("Emtpy: %s", this->nal_parser->dpb.pictures == NULL ? "Yes" : "No");
           }
           this->nal_parser->is_idr = 0;
 
@@ -451,7 +451,6 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                   if(this->last_ref_pic) {
                     decoded_pic = this->last_ref_pic;
                     //copy_nal_unit(decoded_pic->nal, this->nal_parser->current_nal);
-                    decoded_pic->nal->top_field_order_cnt = this->nal_parser->current_nal->top_field_order_cnt;
                     decoded_pic->nal->bottom_field_order_cnt = this->nal_parser->current_nal->bottom_field_order_cnt;
                     this->last_ref_pic->bottom_is_reference = 1;
                   }
@@ -464,9 +463,13 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                   decoded_pic = init_decoded_picture(this->nal_parser->current_nal, surface, img);
                   decoded_pic->delayed_output = 1;
                   dpb_add_picture(&(this->nal_parser->dpb), decoded_pic, sps->num_ref_frames);
+                  if(decoded_pic->nal->slc->bottom_field_flag)
+                    decoded_pic->nal->top_field_order_cnt = this->last_top_field_order_cnt;
                 } else
                   decoded_pic->delayed_output = 1;
 
+                if(this->wait_for_bottom_field && slc->bottom_field_flag)
+                  decoded_pic->nal->bottom_field_order_cnt = this->nal_parser->current_nal->bottom_field_order_cnt;
                 img = NULL;
 
                 /* now retrieve the next output frame */
@@ -480,11 +483,10 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                   decoded_pic->img->pts = this->last_pts;
                   this->tmp_pts = decoded_pic->img->pts;
                   this->last_pts += this->video_step;
-                  printf("poc: %d, %d, pts: %lld\n", decoded_pic->nal->top_field_order_cnt, decoded_pic->nal->bottom_field_order_cnt, decoded_pic->img->pts);
+                  //printf("poc: %d, %d, pts: %lld\n", decoded_pic->nal->top_field_order_cnt, decoded_pic->nal->bottom_field_order_cnt, decoded_pic->img->pts);
                   decoded_pic->img->draw(decoded_pic->img, this->stream);
                   dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
-                } else
-                  printf("NO IMAGE THIS TIME\n");
+                }
 
                 this->wait_for_bottom_field = 0;
 
@@ -496,6 +498,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 img = NULL;*/
               } else if(slc->field_pic_flag && !slc->bottom_field_flag) {
                 // don't draw yet, second field is missing.
+                this->last_top_field_order_cnt = this->nal_parser->current_nal->top_field_order_cnt;
                 this->wait_for_bottom_field = 1;
               }
             }

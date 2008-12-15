@@ -262,7 +262,7 @@ void calculate_pic_order(struct nal_parser *parser)
     else
       parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb;
 
-    if (!slc->bottom_field_flag) {
+    /*if (!slc->bottom_field_flag) {
       nal->top_field_order_cnt = parser->pic_order_cnt_msb
           + slc->pic_order_cnt_lsb;
 
@@ -277,6 +277,19 @@ void calculate_pic_order(struct nal_parser *parser)
 
     if (parser->field == -1)
       nal->bottom_field_order_cnt += slc->delta_pic_order_cnt_bottom;
+    */
+
+    if(!slc->field_pic_flag || !slc->bottom_field_flag)
+      nal->top_field_order_cnt = parser->pic_order_cnt_msb + slc->pic_order_cnt_lsb;
+
+    if(!slc->field_pic_flag)
+      nal->bottom_field_order_cnt = nal->top_field_order_cnt + slc->delta_pic_order_cnt_bottom;
+    else
+      nal->bottom_field_order_cnt = parser->pic_order_cnt_msb + slc->pic_order_cnt_lsb;
+
+
+  } else {
+    printf("FIXME: Unsupported poc_type\n");
   }
 
 }
@@ -910,8 +923,8 @@ void decode_ref_pic_marking(uint32_t memory_management_control_operation,
     // mark all ref pics as unused for reference,
     // set max-long-term frame index = no long-term frame idxs
     dpb_flush(dpb);
-    parser->pic_order_cnt_lsb = parser->prev_pic_order_cnt_lsb = 0;
-    parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb = 0;
+    parser->prev_pic_order_cnt_lsb = 0;
+    parser->prev_pic_order_cnt_msb = 0;
   }
   else if (memory_management_control_operation == 6) {
     // mark current picture as used for long-term ref,
