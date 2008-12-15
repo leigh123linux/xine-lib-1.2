@@ -1132,13 +1132,13 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
      * this might happen if the nal start sequence is split
      * over the buf-boundary - if this is the case we
      */
-    if((next_nal = seek_for_nal(prebuf+3, parser->prebuf_len)) >= 0) {
+    if(parsed_len > 2 &&
+        (next_nal = seek_for_nal(prebuf+3, parser->prebuf_len)) >= 0) {
       inbuf -= parser->prebuf_len-next_nal-3;
       parsed_len -= parser->prebuf_len-next_nal-3;
       parser->prebuf_len = next_nal+3;
     }
   }
-
 
   *ret_len = 0;
   *ret_buf = NULL;

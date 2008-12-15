@@ -80,6 +80,7 @@ typedef struct vdpau_h264_decoder_s {
   xine_t            *xine;
 
   int64_t           last_pts;
+  int64_t           tmp_pts;
 
 } vdpau_h264_decoder_t;
 
@@ -342,11 +343,13 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
             if(img == NULL) {
               fflush(stdout);
+              //printf("Acquire Image\n");
               img = this->stream->video_out->get_frame (this->stream->video_out,
                                                         this->width, this->height,
                                                         this->ratio,
                                                         XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS);
               this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
+              //printf("OK\n");
             }
 
             VdpVideoSurface surface = this->vdpau_accel->surface;
@@ -360,7 +363,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Surface creation failed: %s\n", this->vdpau_accel->vdp_get_error_string(status));
             }
 
-            printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer.bitstream_bytes, buf->pts);
+            //printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer.bitstream_bytes, buf->pts);
             VdpStatus status = this->vdpau_accel->vdp_decoder_render(this->decoder,
                 surface, (VdpPictureInfo*)&pic, 1, &vdp_buffer);
 
@@ -396,7 +399,6 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 }
               }
 
-              printf("field_pic_flag: %d\n", slc->field_pic_flag);
               if(!slc->field_pic_flag ||
                   (slc->field_pic_flag && slc->bottom_field_flag && this->wait_for_bottom_field)) {
                 if(!decoded_pic) {
@@ -411,15 +413,17 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 /* now retrieve the next output frame */
                 decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb));
                 if(decoded_pic) {
-                  if(decoded_pic->nal->nal_unit_type == NAL_SLICE_IDR) {
+                  if(decoded_pic->nal->nal_unit_type == NAL_SLICE_IDR &&
+                      decoded_pic->img->pts != 0) {
                     this->last_pts = decoded_pic->img->pts;
                   }
 
+                  printf("pts diff: %d\n", this->last_pts - this->tmp_pts);
                   decoded_pic->img->pts = this->last_pts;
-                  this->last_pts += (this->wait_for_bottom_field+1)*this->video_step;
-                  printf("poc: %d, %d, pts: %lld\n\n", decoded_pic->nal->top_field_order_cnt, decoded_pic->nal->bottom_field_order_cnt, decoded_pic->img->pts);
+                  this->tmp_pts = decoded_pic->img->pts;
+                  this->last_pts += this->video_step;
+                  printf("poc: %d, %d, pts: %lld\n", decoded_pic->nal->top_field_order_cnt, decoded_pic->nal->bottom_field_order_cnt, decoded_pic->img->pts);
                   decoded_pic->img->draw(decoded_pic->img, this->stream);
-
                   dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
                 } else
                   printf("NO IMAGE THIS TIME\n");
@@ -519,6 +523,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->wait_for_bottom_field = 0;
   this->video_step = 0;
   this->last_pts = 0;
+  this->tmp_pts = 0;
 
   return &this->video_decoder;
 }

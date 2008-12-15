@@ -48,8 +48,6 @@ struct decoded_picture* dpb_get_next_out_picture(struct dpb *dpb)
 
   if (pic != NULL)
     do {
-      if(outpic)
-        printf("select: %d, %d\n", pic->nal->top_field_order_cnt, outpic->nal->top_field_order_cnt);
       if (pic->delayed_output &&
           (outpic == NULL ||
               (pic->nal->top_field_order_cnt <= outpic->nal->top_field_order_cnt &&
