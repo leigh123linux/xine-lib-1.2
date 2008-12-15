@@ -388,6 +388,7 @@ uint8_t parse_sps(struct buf_reader *buf, struct nal_parser *parser)
       sps->offset_for_ref_frame[i] = read_exp_golomb_s(buf);
     }
   }
+
   sps->num_ref_frames = read_exp_golomb(buf);
   sps->gaps_in_frame_num_value_allowed_flag = read_bits(buf, 1);
 
@@ -463,7 +464,6 @@ void parse_vui_parameters(struct buf_reader *buf,
   sps->vui_parameters.aspect_ration_info_present_flag = read_bits(buf, 1);
   if (sps->vui_parameters.aspect_ration_info_present_flag == 1) {
     sps->vui_parameters.aspect_ratio_idc = read_bits(buf, 8);
-    printf("Aspect idc: %d\n", sps->vui_parameters.aspect_ratio_idc);
     if (sps->vui_parameters.aspect_ratio_idc == ASPECT_RESERVED) {
       sps->vui_parameters.sar_width = read_bits(buf, 16);
       sps->vui_parameters.sar_height = read_bits(buf, 16);
@@ -497,13 +497,8 @@ void parse_vui_parameters(struct buf_reader *buf,
   sps->vui_parameters.timing_info_present_flag = read_bits(buf, 1);
   if (sps->vui_parameters.timing_info_present_flag) {
     sps->vui_parameters.num_units_in_tick = read_bits(buf, 32);
-    printf("Framerate\n");
     sps->vui_parameters.time_scale = read_bits(buf, 32);
-    printf("Time scale: %d\n", sps->vui_parameters.time_scale);
-    printf("Time scale: %d\n", sps->vui_parameters.time_scale);
     sps->vui_parameters.fixed_frame_rate_flag = read_bits(buf, 1);
-    printf("Time scale: %d\n", sps->vui_parameters.time_scale);
-    printf("Framerate fixed: %d\n", sps->vui_parameters.fixed_frame_rate_flag);
     printf("Framerate: %d/%d = %f\n", sps->vui_parameters.num_units_in_tick,
         sps->vui_parameters.time_scale,
         (double)sps->vui_parameters.num_units_in_tick/(double)sps->vui_parameters.time_scale);
@@ -650,7 +645,7 @@ uint8_t parse_slice_header(struct buf_reader *buf, struct nal_parser *parser)
   slc->first_mb_in_slice = read_exp_golomb(buf);
   /* we do some parsing on the slice type, because the list is doubled */
   slc->slice_type = slice_type(read_exp_golomb(buf));
-  print_slice_type(slc->slice_type);
+  //print_slice_type(slc->slice_type);
   slc->pic_parameter_set_id = read_exp_golomb(buf);
   slc->frame_num = read_bits(buf, sps->log2_max_frame_num_minus4 + 4);
   if (!sps->frame_mbs_only_flag) {
@@ -1072,8 +1067,6 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
         *ret_len = parser->buf_len;
         *ret_slice_cnt = parser->slice_cnt;
 
-        calculate_pic_order(parser);
-
         //memset(parser->buf, 0x00, parser->buf_len);
         parser->buf_len = 0;
         parser->last_nal_res = 1;
@@ -1169,6 +1162,8 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
   if (res == NAL_SLICE_IDR) {
     parser->is_idr = 1;
   }
+
+  calculate_pic_order(parser);
 
   if (res >= NAL_SLICE && res <= NAL_SLICE_IDR) {
     // now detect if it's a new frame!

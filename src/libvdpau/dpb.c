@@ -40,14 +40,16 @@ void free_decoded_picture(struct decoded_picture *pic)
 struct decoded_picture* dpb_get_next_out_picture(struct dpb *dpb)
 {
   struct decoded_picture *pic = dpb->pictures;
-  struct decoded_picture *outpic = pic;
+  struct decoded_picture *outpic = NULL;
 
   if(dpb->used < MAX_DPB_SIZE)
     return NULL;
 
   if (pic != NULL)
     do {
-      if (pic->nal->top_field_order_cnt < outpic->nal->top_field_order_cnt)
+      if (pic->delayed_output &&
+          (outpic == NULL ||
+              pic->nal->top_field_order_cnt < outpic->nal->top_field_order_cnt))
         outpic = pic;
     } while ((pic = pic->next) != NULL);
 
