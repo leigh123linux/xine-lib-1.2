@@ -324,7 +324,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             if(!this->decoder_started)
               this->decoder_started = 1;
 
-            //dump_pictureinfo_h264(&pic);
+            dump_pictureinfo_h264(&pic);
 
             /*int i;
             printf("Decode data: \n");
@@ -374,11 +374,11 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
               xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %s\n",  this->vdpau_accel->vdp_get_error_string(status));
             else {
 
-              img->duration  = 0; //this->video_step;
-              //if(this->nal_parser->current_nal->nal_unit_type == NAL_SLICE_IDR)
+              img->duration  = this->video_step;
+              if(this->nal_parser->current_nal->nal_unit_type == NAL_SLICE_IDR)
                 img->pts = buf->pts;
-              //else
-              //  img->pts       = 0;
+              else
+                img->pts       = 0;
 
               img->bad_frame = 0;
 
@@ -392,6 +392,9 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 } else if(slc->field_pic_flag && this->wait_for_bottom_field) {
                   if(this->last_ref_pic) {
                     decoded_pic = this->last_ref_pic;
+                    free_nal_unit(decoded_pic->nal);
+                    decoded_pic->nal = init_nal_unit();
+                    copy_nal_unit(decoded_pic->nal, this->nal_parser->current_nal);
                     this->last_ref_pic->bottom_is_reference = 1;
                   }
                 }
@@ -416,8 +419,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                     this->last_pts = decoded_pic->img->pts;
                   }
 
-                  printf("pts diff: %d\n", this->last_pts - this->tmp_pts);
-                  //decoded_pic->img->pts = this->last_pts;
+                  decoded_pic->img->pts = this->last_pts;
                   this->tmp_pts = decoded_pic->img->pts;
                   this->last_pts += this->video_step;
                   printf("poc: %d, %d, pts: %lld\n", decoded_pic->nal->top_field_order_cnt, decoded_pic->nal->bottom_field_order_cnt, decoded_pic->img->pts);
