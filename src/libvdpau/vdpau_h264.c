@@ -343,13 +343,11 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
             if(img == NULL) {
               fflush(stdout);
-              //printf("Acquire Image\n");
               img = this->stream->video_out->get_frame (this->stream->video_out,
                                                         this->width, this->height,
                                                         this->ratio,
                                                         XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS);
               this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
-              //printf("OK\n");
             }
 
             VdpVideoSurface surface = this->vdpau_accel->surface;
@@ -376,11 +374,11 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
               xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %s\n",  this->vdpau_accel->vdp_get_error_string(status));
             else {
 
-              img->duration  = this->video_step;
-              if(this->nal_parser->current_nal->nal_unit_type == NAL_SLICE_IDR)
+              img->duration  = 0; //this->video_step;
+              //if(this->nal_parser->current_nal->nal_unit_type == NAL_SLICE_IDR)
                 img->pts = buf->pts;
-              else
-                img->pts       = 0;
+              //else
+              //  img->pts       = 0;
 
               img->bad_frame = 0;
 
@@ -419,7 +417,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                   }
 
                   printf("pts diff: %d\n", this->last_pts - this->tmp_pts);
-                  decoded_pic->img->pts = this->last_pts;
+                  //decoded_pic->img->pts = this->last_pts;
                   this->tmp_pts = decoded_pic->img->pts;
                   this->last_pts += this->video_step;
                   printf("poc: %d, %d, pts: %lld\n", decoded_pic->nal->top_field_order_cnt, decoded_pic->nal->bottom_field_order_cnt, decoded_pic->img->pts);
