@@ -464,7 +464,7 @@ void parse_vui_parameters(struct buf_reader *buf,
   sps->vui_parameters.aspect_ration_info_present_flag = read_bits(buf, 1);
   if (sps->vui_parameters.aspect_ration_info_present_flag == 1) {
     sps->vui_parameters.aspect_ratio_idc = read_bits(buf, 8);
-    if (sps->vui_parameters.aspect_ratio_idc == ASPECT_RESERVED) {
+    if (sps->vui_parameters.aspect_ratio_idc == ASPECT_EXTENDED_SAR) {
       sps->vui_parameters.sar_width = read_bits(buf, 16);
       sps->vui_parameters.sar_height = read_bits(buf, 16);
     }

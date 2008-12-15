@@ -55,7 +55,8 @@ enum aspect_ratio
   ASPECT_4_3,
   ASPECT_3_2,
   ASPECT_2_1,
-  ASPECT_RESERVED
+  ASPECT_RESERVED,
+  ASPECT_EXTENDED_SAR=255
 };
 
 static inline uint32_t slice_type(uint32_t slice_type)

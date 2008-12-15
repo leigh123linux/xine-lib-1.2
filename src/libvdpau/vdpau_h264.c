@@ -213,6 +213,64 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
          * support anamorph codings...
          */
         this->ratio = (double)this->width / (double)this->height;
+        if(this->nal_parser->current_nal->sps->vui_parameters.aspect_ration_info_present_flag) {
+          switch(this->nal_parser->current_nal->sps->vui_parameters.aspect_ratio_idc) {
+            case ASPECT_1_1:
+              this->ratio = 1 * this->ratio;
+              break;
+            case ASPECT_12_11:
+              this->ratio *= 12.0/11.0;
+              break;
+            case ASPECT_10_11:
+              this->ratio *= 10.0/11.0;
+              break;
+            case ASPECT_16_11:
+              this->ratio *= 16.0/11.0;
+              break;
+            case ASPECT_40_33:
+              this->ratio *= 40.0/33.0;
+              break;
+            case ASPECT_24_11:
+              this->ratio *= 24.0/11.0;
+              break;
+            case ASPECT_20_11:
+              this->ratio *= 20.0/11.0;
+              break;
+            case ASPECT_32_11:
+              this->ratio *= 32.0/11.0;
+              break;
+            case ASPECT_80_33:
+              this->ratio *= 80.0/33.0;
+              break;
+            case ASPECT_18_11:
+              this->ratio *= 18.0/11.0;
+              break;
+            case ASPECT_15_11:
+              this->ratio *= 15.0/11.0;
+              break;
+            case ASPECT_64_33:
+              this->ratio *= 64.0/33.0;
+              break;
+            case ASPECT_160_99:
+              this->ratio *= 160.0/99.0;
+              break;
+            case ASPECT_4_3:
+              this->ratio *= 4.0/3.0;
+              break;
+            case ASPECT_3_2:
+              this->ratio *= 3.0/2.0;
+              break;
+            case ASPECT_2_1:
+              this->ratio *= 2.0/1.0;
+              break;
+            case ASPECT_EXTENDED_SAR:
+              this->ratio *=
+                (double)this->nal_parser->current_nal->sps->vui_parameters.sar_width/
+                (double)this->nal_parser->current_nal->sps->vui_parameters.sar_height;
+              break;
+          }
+        }
+
 
         switch(this->nal_parser->current_nal->sps->profile_idc) {
           case 100:
