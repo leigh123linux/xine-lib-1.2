@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2000-2003 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -666,7 +666,7 @@ static int probe_audio_devices(oss_driver_t *this) {
   int base_num, i;
   int audio_fd, rate;
   int best_rate;
-  char *devname[30];
+  char devname[30];
 
   strcpy(this->audio_dev, "auto");
 

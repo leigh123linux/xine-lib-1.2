@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2003 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * Copyright (C) Christian Vogler 
  *               cvogler@gradient.cis.upenn.edu - December 2001
@@ -31,12 +31,6 @@ typedef struct cc_decoder_s cc_decoder_t;
 typedef struct cc_renderer_s cc_renderer_t;
 
 #define NUM_CC_PALETTES 2
-static const char *const cc_schemes[NUM_CC_PALETTES + 1] = {
-  "White/Gray/Translucent",
-  "White/Black/Solid",
-  NULL
-};
-
 #define CC_FONT_MAX 256
 
 typedef struct cc_config_s {

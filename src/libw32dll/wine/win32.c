@@ -1430,7 +1430,7 @@ static void WINAPI expDeleteCriticalSection(CRITICAL_SECTION *c)
 }
 static int WINAPI expGetCurrentThreadId()
 {
-    dbgprintf("GetCurrentThreadId() => %ld\n", pthread_self());
+    dbgprintf("GetCurrentThreadId() => %ld\n", (long int)pthread_self());
     return (int)pthread_self();
 }
 static int WINAPI expGetCurrentProcess()
@@ -2134,7 +2134,6 @@ static const char* WINAPI expGetCommandLineA()
     dbgprintf("GetCommandLineA() => \"c:\\aviplay.exe\"\n");
     return "c:\\aviplay.exe";
 }
-static short envs[]={'p', 'a', 't', 'h', ' ', 'c', ':', '\\', 0, 0};
 static LPWSTR WINAPI expGetEnvironmentStringsW()
 {
     dbgprintf("GetEnvironmentStringsW() => 0\n");
@@ -3998,7 +3997,7 @@ static int XINE_FORMAT_PRINTF(2, 3) expsprintf(char* str, const char* format, ..
     va_end(args);
     return r;
 }
-static int XINE_FORMAT_PRINTF(2, 3) expsscanf(const char* str, const char* format, ...)
+static int XINE_FORMAT_SCANF(2, 3) expsscanf(const char* str, const char* format, ...)
 {
     va_list args;
     int r;
@@ -4162,7 +4161,7 @@ static void* expmemset(void* dest, int c, size_t n)
 static time_t exptime(time_t* t)
 {
     time_t result = time(t);
-    dbgprintf("time(%p) => %ld\n", t, result);
+    dbgprintf("time(%p) => %ld\n", t, (long int)result);
     return result;
 }
 

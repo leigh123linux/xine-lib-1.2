@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004 the xine project
+ * Copyright (C) 2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -139,7 +139,7 @@ smb_plugin_get_length (input_plugin_t *this_gen)
 	return st.st_size;
 }
 
-static char*
+static const char*
 smb_plugin_get_mrl (input_plugin_t *this_gen)
 {
 	smb_input_t *this = (smb_input_t *) this_gen;
@@ -269,7 +269,7 @@ static xine_mrl_t **smb_class_get_dir (input_class_t *this_gen,
 				dir_files[num_dir_files].link   = NULL;
 				dir_files[num_dir_files].type   = mrl_file | mrl_file_directory;
 				dir_files[num_dir_files].origin = strdup("smb:/");
-				asprintf(*(dir_files[num_dir_files].mrl), "%s/%s", "smb:/", pdirent->name);
+				asprintf(&(dir_files[num_dir_files].mrl), "%s/%s", "smb:/", pdirent->name);
 				dir_files[num_dir_files].size   = pdirent->dirlen;
 				num_dir_files ++;
 			} else if (pdirent->smbc_type == SMBC_FILE_SHARE){

@@ -1130,6 +1130,29 @@ dnl ---------------------------------------------
 INCLUDES='-I$(top_srcdir) -I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/src -I$(top_builddir)/src/xine-engine -I$(top_srcdir)/src/xine-engine -I$(top_srcdir)/src/xine-utils $(INTLDIR) -I$(top_builddir)/src/input -I$(top_srcdir)/src/input $(WIN32_INCLUDES) -I$(top_builddir)/lib -I$(top_srcdir)/lib'
 AC_SUBST(INCLUDES)
 
+dnl We check for warnings here rather than with optimisations since we
+dnl want them to be _always_ enabled, to make sure the code is sane
+dnl enough.
+
+CC_CHECK_CFLAGS_APPEND([-Wall -Wchar-subscripts dnl
+			-Wnested-externs -Wcast-align dnl
+			-Wmissing-declarations -Wmissing-prototypes dnl
+			-Wmissing-format-attribute])
+
+CC_CHECK_CFLAGS_APPEND([-Wformat=2 -Wformat],
+  [CC_CHECK_CFLAGS_APPEND([-Wno-format-zero-length])
+   break;
+  ])
+
+dnl check for strict aliasing problem, get the highest between =2 and
+dnl normal.
+CC_CHECK_CFLAGS_APPEND([-Wstrict-aliasing=2 -Wstrict-aliasing], [break;])
+
+dnl This *has* to stay at the end as it can break some autoconf tests.
+CC_CHECK_CFLAGS_APPEND([-Werror=implicit-function-declaration dnl
+                        -Werror-implicit-function-declaration], [break;])
+
+CC_NOUNDEFINED
 
 dnl signal FreeBSD have also FreeBSD based kernel.
 dnl 
@@ -1151,7 +1174,6 @@ dnl Common cflags for all platforms
 CFLAGS="$UNIVERSAL_CFLAGS \$(MULTIPASS_CFLAGS) $miscflags $warnflags $CFLAGS"
 LDFLAGS="$UNIVERSAL_LDFLAGS $LDFLAGS"
 OBJCFLAGS="$UNIVERSAL_CFLAGS $miscflags $warnflags $OBJCFLAGS"
-
 
 dnl Some informations about xine-lib compilation for xine-config
 XINE_BUILD_CC="`$CC -v 2>&1 | tail -1 2>/dev/null`"

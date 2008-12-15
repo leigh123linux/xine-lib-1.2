@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2006 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -429,8 +429,6 @@ static post_plugin_t *eq2_open_plugin(post_class_t *class_gen, int inputs,
   xine_post_in_t    *input_api;
   post_out_t        *output;
   post_video_port_t *port;
-  vf_eq2_t          *eq2;
-  int i;
   
   if (!this || !video_target || !video_target[0]) {
     free(this);

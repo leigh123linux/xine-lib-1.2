@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2004 the xine project
+ * Copyright (C) 2003-2008 the xine project
  * Copyright (C) 2003 J.Asselman <j.asselman@itsec-ps.nl>
  * 
  * This file is part of xine, a free video player.
@@ -865,7 +865,7 @@ static int open_video_capture_device(v4l_input_plugin_t *this)
 {
   int          found       = 0;
   int          tuner_found = 0;
-  int          i, ret;
+  int          ret;
   unsigned int j;
   cfg_entry_t *entry;
   

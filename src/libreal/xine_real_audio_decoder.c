@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2000-2003 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -497,7 +497,6 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
 void *init_realadec (xine_t *xine, void *data) {
 
   real_class_t       *this;
-  config_values_t    *config = xine->config;
 
   this = (real_class_t *) calloc(1, sizeof(real_class_t));
 

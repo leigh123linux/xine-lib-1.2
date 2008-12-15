@@ -3,7 +3,7 @@ XINE_LIB = $(top_builddir)/src/xine-engine/libxine.la
 xineincludedir = $(includedir)/xine
 
 xineplugdir = $(XINE_PLUGINDIR)
-xineplug_ldflags = $(NOUNDEF) $(GCSECTIONS) -avoid-version -module
+xineplug_ldflags = $(LDFLAGS_NOUNDEFINED) $(GCSECTIONS) -avoid-version -module
 
 xinepostdir = $(XINE_PLUGINDIR)/post
 vidixdir = $(XINE_PLUGINDIR)/vidix

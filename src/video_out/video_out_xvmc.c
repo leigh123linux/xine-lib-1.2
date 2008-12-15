@@ -692,6 +692,7 @@ static cxid_t *xvmc_set_context (xvmc_driver_t *this,
   return NULL;
 }
 
+#if 0
 static XvImage *create_ximage (xvmc_driver_t *this, XShmSegmentInfo *shminfo,
 			       int width, int height, int format) {
   unsigned int  xvmc_format;
@@ -747,6 +748,7 @@ static void dispose_ximage (xvmc_driver_t *this,
   lprintf ("dispose_ximage\n");
   XFree(myimage);
 }
+#endif
 
 static void xvmc_update_frame_format (vo_driver_t *this_gen,
 				      vo_frame_t *frame_gen,

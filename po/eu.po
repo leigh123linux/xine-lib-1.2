@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib-1\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-01-06 21:08+0000\n"
+"POT-Creation-Date: 2008-12-15 18:51+0100\n"
 "PO-Revision-Date: 2005-02-17 14:29+0100\n"
 "Last-Translator: Piarres Beobide <pi@beobide.net>\n"
 "Language-Team: lubrezale <librezale@librezale.org>\n"
@@ -173,11 +173,13 @@ msgstr "snd_pcm_open()-ek huts egin du:%d:%s\n"
 msgid ">>> Check if another program already uses PCM <<<\n"
 msgstr ">>> Egiaztatu beste programa batek PCM darabilkien<<<\n"
 
-#: src/audio_out/audio_alsa_out.c:1470 src/audio_out/audio_oss_out.c:926
+#: src/audio_out/audio_alsa_out.c:1470 src/audio_out/audio_jack_out.c:755
+#: src/audio_out/audio_oss_out.c:927
 msgid "speaker arrangement"
 msgstr "bozgorailu ordenamendua"
 
-#: src/audio_out/audio_alsa_out.c:1471 src/audio_out/audio_oss_out.c:927
+#: src/audio_out/audio_alsa_out.c:1471 src/audio_out/audio_jack_out.c:756
+#: src/audio_out/audio_oss_out.c:928
 msgid ""
 "Select how your speakers are arranged, this determines which speakers xine "
 "uses for sound output. The individual values are:\n"
@@ -308,7 +310,7 @@ msgstr " (a/52 eta DTS pass-through ez daude gaiturik xine konfiguraketan)"
 msgid "alsa mixer device"
 msgstr "alsa nahasle gailua"
 
-#: src/audio_out/audio_alsa_out.c:1597
+#: src/audio_out/audio_alsa_out.c:1603
 msgid ""
 "xine will use this alsa mixer device to change the volume.\n"
 "See the alsa documentation for information on alsa devices."
@@ -316,7 +318,7 @@ msgstr ""
 "xinek alsa nahaslea erabiliko du bolumena aldatzeko.\n"
 "Begiratu alsa dokumentazioa alsa gailueri buruzko argibideentzat."
 
-#: src/audio_out/audio_alsa_out.c:1675
+#: src/audio_out/audio_alsa_out.c:1681
 msgid "xine audio output plugin using alsa-compliant audio devices/drivers"
 msgstr ""
 "xine audio irteera plugina alsa-konpilaturiko audio gailu/kontrolatzailea "
@@ -425,107 +427,89 @@ msgstr ""
 msgid "Could not set direct sound cooperative level."
 msgstr ""
 
-#: src/audio_out/audio_directx2_out.c:281
+#: src/audio_out/audio_directx2_out.c:279
 msgid "Unable to create secondary direct sound buffer"
 msgstr ""
 
-#: src/audio_out/audio_directx2_out.c:305
-#, c-format
-msgid "Unable to create buffer position events."
-msgstr ""
-
-#: src/audio_out/audio_directx2_out.c:313
-msgid "Unable to get notification interface"
-msgstr ""
-
-#: src/audio_out/audio_directx2_out.c:318
-msgid "Unable to set notification positions"
-msgstr ""
-
-#: src/audio_out/audio_directx2_out.c:338
+#: src/audio_out/audio_directx2_out.c:299
 msgid "Couldn't play sound buffer"
 msgstr ""
 
-#: src/audio_out/audio_directx2_out.c:350
+#: src/audio_out/audio_directx2_out.c:311
 msgid "Couldn't stop sound buffer"
 msgstr ""
 
-#: src/audio_out/audio_directx2_out.c:363
+#: src/audio_out/audio_directx2_out.c:324
 msgid "Can't get buffer position"
 msgstr ""
 
-#: src/audio_out/audio_directx2_out.c:377
+#: src/audio_out/audio_directx2_out.c:338
 msgid "Can't set buffer position"
 msgstr ""
 
-#: src/audio_out/audio_directx2_out.c:409
+#: src/audio_out/audio_directx2_out.c:369
 msgid "Can't set sound volume"
 msgstr ""
 
-#: src/audio_out/audio_directx2_out.c:427
+#: src/audio_out/audio_directx2_out.c:387
 #, c-format
 msgid ": buffer lost, tryig to restore\n"
 msgstr ""
 
-#: src/audio_out/audio_directx2_out.c:431
+#: src/audio_out/audio_directx2_out.c:391
 msgid "Couldn't lock direct sound buffer"
 msgstr ""
 
-#: src/audio_out/audio_directx2_out.c:442
+#: src/audio_out/audio_directx2_out.c:404
 msgid "Couldn't unlock direct sound buffer"
 msgstr ""
 
-#: src/audio_out/audio_directx2_out.c:539
+#: src/audio_out/audio_directx2_out.c:495
 #, c-format
 msgid "Unable to create primary direct sound buffer."
 msgstr ""
 
-#: src/audio_out/audio_directx2_out.c:632
+#: src/audio_out/audio_directx2_out.c:593
 #, c-format
-msgid ": play cursor overran, flushing buffers\n"
+msgid ": play cursor overran (data %u, min %u), flushing buffers\n"
 msgstr ""
 
-#: src/audio_out/audio_directx2_out.c:650
-#, c-format
-msgid ": delayed by %ld msec\n"
-msgstr ""
-
-#: src/audio_out/audio_directx2_out.c:754
+#: src/audio_out/audio_directx2_out.c:696
 #, fuzzy, c-format
 msgid ": can't create pthread condition: %s\n"
 msgstr "input_rtp: Ezin da hari berria sortu (%s)\n"
 
-#: src/audio_out/audio_directx2_out.c:758
+#: src/audio_out/audio_directx2_out.c:700
 #, fuzzy, c-format
 msgid ": can't create pthread mutex: %s\n"
 msgstr "input_rtp: Ezin da hari berria sortu (%s)\n"
 
-#: src/audio_out/audio_directx2_out.c:765
+#: src/audio_out/audio_directx2_out.c:707
 #, fuzzy, c-format
 msgid ": can't create buffer pthread: %s\n"
 msgstr "input_rtp: Ezin da hari berria sortu (%s)\n"
 
-#: src/audio_out/audio_directx2_out.c:872
+#: src/audio_out/audio_directx2_out.c:822
 #, fuzzy, c-format
 msgid ": can't destroy buffer pthread: %s\n"
 msgstr "input_rtp: Ezin da hari berria sortu (%s)\n"
 
-#: src/audio_out/audio_directx2_out.c:879
+#: src/audio_out/audio_directx2_out.c:829
 #, c-format
 msgid ": can't destroy pthread condition: %s\n"
 msgstr ""
 
-#: src/audio_out/audio_directx2_out.c:882
+#: src/audio_out/audio_directx2_out.c:832
 #, c-format
 msgid ": can't destroy pthread mutex: %s\n"
 msgstr ""
 
-#: src/audio_out/audio_directx2_out.c:942
+#: src/audio_out/audio_directx2_out.c:887
 #, fuzzy, c-format
 msgid ": unknown control command %d\n"
 msgstr "iff-ilbm: konpresio ezezaguna: %d\n"
 
-#: src/audio_out/audio_directx2_out.c:1002
+#: src/audio_out/audio_directx2_out.c:947
 #, fuzzy
 msgid "second xine audio output plugin using directx"
 msgstr "xine audio irteera plugina win32-arentzat directx erabiliaz"
@@ -552,7 +536,7 @@ msgstr "audio_esd_out: ezin da %s ESD zerbitzarira konektatu: %s\n"
 msgid "esd audio output latency (adjust a/v sync)"
 msgstr "esd audio irteera atzerapena (a/b sinkronia ezarri)"
 
-#: src/audio_out/audio_esd_out.c:540 src/audio_out/audio_oss_out.c:864
+#: src/audio_out/audio_esd_out.c:540 src/audio_out/audio_oss_out.c:869
 msgid ""
 "If you experience audio being not in sync with the video, you can enter a "
 "fixed offset here to compensate.\n"
@@ -589,7 +573,18 @@ msgstr ""
 msgid "xine audio output plugin using IRIX libaudio"
 msgstr "xine audio irteera plugina IRIX libaudio erabiliaz"
 
-#: src/audio_out/audio_jack_out.c:408
+#: src/audio_out/audio_jack_out.c:743
+#, fuzzy
+msgid "JACK audio device name"
+msgstr "OSS audio gailu izena"
+
+#: src/audio_out/audio_jack_out.c:744
+msgid ""
+"Specifies the jack audio device name, leave blank for the default physical "
+"output port."
+msgstr ""
+
+#: src/audio_out/audio_jack_out.c:921
 #, fuzzy
 msgid "xine output plugin for JACK Audio Connection Kit"
 msgstr "xine irteera plugina Coreaudio/Mac OS X-entzat"
@@ -616,22 +611,22 @@ msgstr ""
 msgid "audio_oss_out: audio rate : %d requested, %d provided by device\n"
 msgstr "audio_oss_out: audio abiadura : %d eskaturik, %d gailuak hornitua\n"
 
-#: src/audio_out/audio_oss_out.c:743
+#: src/audio_out/audio_oss_out.c:745
 msgid "OSS audio device name"
 msgstr "OSS audio gailu izena"
 
-#: src/audio_out/audio_oss_out.c:744
+#: src/audio_out/audio_oss_out.c:746
 msgid ""
 "Specifies the base part of the audio device name, to which the OSS device "
 "number is appended to get the full device name.\n"
 "Select \"auto\" if you want xine to auto detect the corret setting."
 msgstr ""
 
-#: src/audio_out/audio_oss_out.c:751
+#: src/audio_out/audio_oss_out.c:753
 msgid "OSS audio device number, -1 for none"
 msgstr "OSS audio gailu zenbakia, -1 batez"
 
-#: src/audio_out/audio_oss_out.c:752
+#: src/audio_out/audio_oss_out.c:754
 msgid ""
 "The full audio device name is created by concatenating the OSS device name "
 "and the audio device number.\n"
@@ -646,21 +641,21 @@ msgstr ""
 "balio honen muga -1 eta 0-15 artean dago. Ezarpena hau alde batetar utziko "
 "da OSS audio gailu izena\"auto\" bezala ezarririk badago."
 
-#: src/audio_out/audio_oss_out.c:761
+#: src/audio_out/audio_oss_out.c:763
 msgid "audio_oss_out: audio.device.oss_device_name = auto, probing devs\n"
 msgstr ""
 "audio_oss_out: audio.device.oss_device_name = auto, gailuak frogatzen\n"
 
-#: src/audio_out/audio_oss_out.c:764
+#: src/audio_out/audio_oss_out.c:766
 msgid "audio_oss_out: Auto probe for audio device failed\n"
 msgstr "audio_oss_out: Audio gailu auto-frogak huts egin du\n"
 
-#: src/audio_out/audio_oss_out.c:780
+#: src/audio_out/audio_oss_out.c:782
 #, c-format
 msgid "audio_oss_out: using device >%s<\n"
 msgstr "audio_oss_out: Erabilitako gailua >%s<\n"
 
-#: src/audio_out/audio_oss_out.c:786 src/audio_out/audio_oss_out.c:901
+#: src/audio_out/audio_oss_out.c:788 src/audio_out/audio_oss_out.c:902
 #, c-format
 msgid ""
 "audio_oss_out: opening audio device %s failed:\n"
@@ -669,11 +664,11 @@ msgstr ""
 "audio_oss_out: huts %s audio gailua irekitzerakoan:\n"
 "%s\n"
 
-#: src/audio_out/audio_oss_out.c:807
+#: src/audio_out/audio_oss_out.c:809
 msgid "a/v sync method to use by OSS"
 msgstr "OSS-k erabilitako a/b sinkronimo metodoa"
 
-#: src/audio_out/audio_oss_out.c:808
+#: src/audio_out/audio_oss_out.c:810
 msgid ""
 "xine can use different methods to keep audio and video synchronized. Which "
 "setting works best depends on the OSS driver and sound hardware you are "
@@ -730,7 +725,7 @@ msgstr ""
 "kontrolatzailerik onartzen eta erreprodukzio luzeetan sinkronismo arazoak "
 "badituzu"
 
-#: src/audio_out/audio_oss_out.c:856
+#: src/audio_out/audio_oss_out.c:861
 msgid ""
 "audio_oss_out: Audio driver realtime sync disabled...\n"
 "audio_oss_out: ...will use system real-time clock for soft-sync instead\n"
@@ -742,7 +737,7 @@ msgstr ""
 "sinkronismoaren ordez\n"
 "audio_oss_out: ...audio/bideo sinkronismo arazoak egon daitezke\n"
 
-#: src/audio_out/audio_oss_out.c:863
+#: src/audio_out/audio_oss_out.c:868
 msgid "OSS audio output latency (adjust a/v sync)"
 msgstr "OSS audio irteera atzerapena(a/b synk ezarri)"
 
@@ -775,7 +770,7 @@ msgstr " (a/52 pass-through ez daude gaiturik xine konfiguraketan)"
 msgid "OSS audio mixer number, -1 for none"
 msgstr "OSS audio nahasle zenbakia, -1 ez erabiltzeko"
 
-#: src/audio_out/audio_oss_out.c:1024
+#: src/audio_out/audio_oss_out.c:1028
 msgid ""
 "The full mixer device name is created by taking the OSS device name, "
 "replacing \"dsp\" with \"mixer\" and adding the mixer number.\n"
@@ -791,26 +786,26 @@ msgstr ""
 "Balio honen eremua -1 eta 1-15 artekoa da. OSS gailu izena \"auto\" bezala "
 "ezarririk dagoenean ezarpen hau alde batetara utziko da."
 
-#: src/audio_out/audio_oss_out.c:1075
+#: src/audio_out/audio_oss_out.c:1079
 #, c-format
 msgid "audio_oss_out: open() mixer %s failed: %s\n"
 msgstr "audio_oss_out: huts %s nahaslea abiaraztean: %s\n"
 
-#: src/audio_out/audio_oss_out.c:1152
+#: src/audio_out/audio_oss_out.c:1156
 msgid "xine audio output plugin using oss-compliant audio devices/drivers"
 msgstr ""
 "xine audio irteera plugina oss-kompilaturiko audio gailu/kontrolatzailea"
 
-#: src/audio_out/audio_pulse_out.c:548
+#: src/audio_out/audio_pulse_out.c:763
 #, fuzzy
 msgid "device used for pulseaudio"
 msgstr "CD audio-k erabiliko duen gailua"
 
-#: src/audio_out/audio_pulse_out.c:549
+#: src/audio_out/audio_pulse_out.c:764
 msgid "use 'server[:sink]' for setting the pulseaudio sink device."
 msgstr ""
 
-#: src/audio_out/audio_pulse_out.c:603
+#: src/audio_out/audio_pulse_out.c:861
 #, fuzzy
 msgid "xine audio output plugin using pulseaudio sound server"
 msgstr "xine audio irteera plugina esound erabiliz"
@@ -853,47 +848,56 @@ msgstr ""
 "ogg: vorbis audio pista esan da baina ez da vorbis korronte bururik "
 "aurkitu.\n"
 
-#: src/combined/xine_ogg_demuxer.c:2080
+#: src/combined/xine_ogg_demuxer.c:2094
 msgid "Annodex demux plugin"
 msgstr ""
 
-#: src/combined/xine_ogg_demuxer.c:2098
+#: src/combined/xine_ogg_demuxer.c:2118
 msgid "OGG demux plugin"
 msgstr ""
 
-#: src/demuxers/demux_asf.c:426
+#: src/demuxers/demux_asf.c:450
+#, fuzzy, c-format
+msgid "demux_asf: warning: A stream appears to be missing.\n"
+msgstr "demux_asf: abisua: id=%d korrontea enkriptaturik dago.\n"
+
+#: src/demuxers/demux_asf.c:452
+msgid "Media stream missing?"
+msgstr ""
+
+#: src/demuxers/demux_asf.c:461
 #, c-format
 msgid "demux_asf: warning: The stream id=%d is encrypted.\n"
 msgstr "demux_asf: abisua: id=%d korrontea enkriptaturik dago.\n"
 
-#: src/demuxers/demux_asf.c:428
+#: src/demuxers/demux_asf.c:463
 msgid "Media stream scrambled/encrypted"
 msgstr "Medioa korrontea nahasi/enkriptaturik"
 
-#: src/demuxers/demux_asf.c:2091
+#: src/demuxers/demux_asf.c:2123
 msgid "ASF demux plugin"
 msgstr ""
 
-#: src/demuxers/demux_avi.c:528 src/demuxers/demux_avi.c:642
+#: src/demuxers/demux_avi.c:530 src/demuxers/demux_avi.c:644
 msgid "Restoring index..."
 msgstr "Indizea bersortzen..."
 
-#: src/demuxers/demux_avi.c:628 src/demuxers/demux_avi.c:1683
+#: src/demuxers/demux_avi.c:630 src/demuxers/demux_avi.c:1697
 #, fuzzy, c-format
 msgid "demux_avi: invalid avi chunk \"%c%c%c%c\" at pos %<PRIdMAX>\n"
 msgstr "demux_avi: \"%c%c%c%c\" baliogabeko avi zatia %lld kokalekuan\n"
 
-#: src/demuxers/demux_avi.c:823
+#: src/demuxers/demux_avi.c:824
 #, c-format
 msgid "demux_avi: avi index is broken\n"
 msgstr "demux_avi: avi indizea hautsirik dago\n"
 
-#: src/demuxers/demux_avi.c:831
+#: src/demuxers/demux_avi.c:832
 #, fuzzy, c-format
 msgid "demux_avi: failed to seek to the next chunk (pos %<PRIdMAX>)\n"
 msgstr "demux_avi: huts hurrengo zatira pasatzekoan (%lld kokalekua)\n"
 
-#: src/demuxers/demux_avi.c:2309
+#: src/demuxers/demux_avi.c:2330
 msgid "AVI/RIFF demux plugin"
 msgstr ""
 
@@ -902,25 +906,30 @@ msgstr ""
 msgid "invalid FILM chunk size\n"
 msgstr "baliogabeko FILMA zati tamaina\n"
 
-#: src/demuxers/demux_film.c:338
+#: src/demuxers/demux_film.c:345
 #, c-format
 msgid "unrecognized FILM chunk\n"
 msgstr "FILMA zati ezezaguna\n"
 
-#: src/demuxers/demux_film.c:896
+#: src/demuxers/demux_film.c:904
 msgid "FILM (CPK) demux plugin"
 msgstr ""
 
-#: src/demuxers/demux_flv.c:178
+#: src/demuxers/demux_flv.c:184
 #, c-format
 msgid "unsupported FLV version (%d).\n"
 msgstr ""
 
-#: src/demuxers/demux_flv.c:185
+#: src/demuxers/demux_flv.c:191
 msgid "neither video nor audio stream in this file.\n"
 msgstr ""
 
-#: src/demuxers/demux_flv.c:879
+#: src/demuxers/demux_flv.c:552 src/demuxers/demux_flv.c:694
+#, c-format
+msgid "sequence header too big (%u bytes)!\n"
+msgstr ""
+
+#: src/demuxers/demux_flv.c:993
 #, fuzzy
 msgid "Flash Video file demux plugin"
 msgstr "Bideoa CD sarrera plugina"
@@ -940,19 +949,19 @@ msgstr "iff-ilbm: konpresio ezezaguna: %d\n"
 msgid "iff: unknown Chunk: %s\n"
 msgstr "iff: Zati ezezaguna: %s\n"
 
-#: src/demuxers/demux_iff.c:1217
+#: src/demuxers/demux_iff.c:1225
 msgid "IFF demux plugin"
 msgstr ""
 
-#: src/demuxers/demux_mpc.c:210
+#: src/demuxers/demux_mpc.c:205
 msgid "demux_mpc: frame too big for buffer"
 msgstr ""
 
-#: src/demuxers/demux_mpc.c:363
+#: src/demuxers/demux_mpc.c:358
 msgid "Musepack demux plugin"
 msgstr ""
 
-#: src/demuxers/demux_mpeg_block.c:294
+#: src/demuxers/demux_mpeg_block.c:299
 #, c-format
 msgid ""
 "xine-lib:demux_mpeg_block: Unrecognised stream_id 0x%02x. Please report this "
@@ -961,19 +970,19 @@ msgstr ""
 "xine-lib:demux_mpeg_block: 0x%02x korronte_id-a. Mesedez berri eman xine "
 "garatzaileei.\n"
 
-#: src/demuxers/demux_mpeg_block.c:305
+#: src/demuxers/demux_mpeg_block.c:310
 msgid ""
 "demux_mpeg_block: error! freeing. Please report this to xine developers.\n"
 msgstr ""
 "demux_mpeg_block: errorea! askatzen. Mesedez abisua eman xine garatzaileei.\n"
 
-#: src/demuxers/demux_mpeg_block.c:637
+#: src/demuxers/demux_mpeg_block.c:642
 #, c-format
 msgid "demux_mpeg_block: warning: PES header reserved 10 bits not found\n"
 msgstr ""
 "demux_mpeg_block: abisua: PES buarentzat gorderiko 10 bit ez dira aurkitu\n"
 
-#: src/demuxers/demux_mpeg_block.c:647
+#: src/demuxers/demux_mpeg_block.c:652
 #, c-format
 msgid ""
 "demux_mpeg_block: warning: PES header indicates that this stream may be "
@@ -982,11 +991,11 @@ msgstr ""
 "demux_mpeg_block: kontuz: PES goiburuak korrontea enkriptaturik dagoela "
 "ezartzen du (enkriptazioa %d modua)\n"
 
-#: src/demuxers/demux_mpeg_block.c:1493
+#: src/demuxers/demux_mpeg_block.c:1498
 msgid "DVD/VOB demux plugin"
 msgstr ""
 
-#: src/demuxers/demux_mpeg_pes.c:415
+#: src/demuxers/demux_mpeg_pes.c:418
 #, c-format
 msgid ""
 "xine-lib:demux_mpeg_pes: Unrecognised stream_id 0x%02x. Please report this "
@@ -995,19 +1004,19 @@ msgstr ""
 "xine-lib:demux_mpeg_pes: 0x%02x korronte_id ezezaguna. MEsedez honen berri "
 "eman xine garatzaileei.\n"
 
-#: src/demuxers/demux_mpeg_pes.c:424
+#: src/demuxers/demux_mpeg_pes.c:427
 #, c-format
 msgid "demux_mpeg_pes: warning: PACK stream id=0x%x decode failed.\n"
 msgstr ""
 "demux_mpeg_pes: kontuz: PACK korronte -aid=0x%x dekodifikatzerakoan huts.\n"
 
-#: src/demuxers/demux_mpeg_pes.c:806
+#: src/demuxers/demux_mpeg_pes.c:809
 #, c-format
 msgid "demux_mpeg_pes: warning: PES header reserved 10 bits not found\n"
 msgstr ""
 "demux_mpeg_pes: abisua: PES buruarentzat gorderiko 10 bit ez dira aurkitu\n"
 
-#: src/demuxers/demux_mpeg_pes.c:816
+#: src/demuxers/demux_mpeg_pes.c:819
 #, c-format
 msgid ""
 "demux_mpeg_pes: warning: PES header indicates that this stream may be "
@@ -1016,7 +1025,7 @@ msgstr ""
 "demux_mpeg_pes: abisua: PES buruak korronte hau enkriptaturik dagoela "
 "adierazten du (enkriptazio mota: %d)\n"
 
-#: src/demuxers/demux_mpeg_pes.c:1090
+#: src/demuxers/demux_mpeg_pes.c:1093
 #, c-format
 msgid ""
 "demux_mpeg_pes:Unrecognised private stream 1 0x%02x. Please report this to "
@@ -1025,21 +1034,21 @@ msgstr ""
 "demux_mpeg_pes:1 0x%02x korronte pribatu ezezaguna. Mesedez berri eman xine "
 "garatzaileei.\n"
 
-#: src/demuxers/demux_mpeg_pes.c:1754
+#: src/demuxers/demux_mpeg_pes.c:1757
 msgid "mpeg pes demux plugin"
 msgstr ""
 
-#: src/demuxers/demux_snd.c:102
+#: src/demuxers/demux_snd.c:100
 #, c-format
 msgid "demux_snd: bad header parameters\n"
 msgstr "demux_snd: okerreko goiburu parametroa\n"
 
-#: src/demuxers/demux_snd.c:147
+#: src/demuxers/demux_snd.c:145
 #, c-format
 msgid "demux_snd: unsupported audio type: %d\n"
 msgstr "demux_snd: onartzen ez den audio mota: %d\n"
 
-#: src/demuxers/demux_snd.c:358
+#: src/demuxers/demux_snd.c:356
 #, fuzzy
 msgid "SND/AU file demux plugin"
 msgstr "fitxategi sarrera plugina"
@@ -1077,12 +1086,12 @@ msgstr "fitxategi sarrera plugina"
 msgid "demux_wc3movie: SHOT chunk referenced invalid palette (%d >= %d)\n"
 msgstr ""
 
-#: src/demuxers/demux_wc3movie.c:402
+#: src/demuxers/demux_wc3movie.c:408
 #, c-format
 msgid "demux_wc3movie: There was a problem while loading palette chunks\n"
 msgstr "demux_wc3movie: Arazo bat dago paleta zatiak kargatzerakoan\n"
 
-#: src/demuxers/demux_wc3movie.c:711
+#: src/demuxers/demux_wc3movie.c:718
 msgid "Wing Commander III Movie (MVE) demux plugin"
 msgstr ""
 
@@ -1217,11 +1226,11 @@ msgstr ""
 "Zure ordenagailuan DXR3 gailu bat baino gehiago izan ezkero zein erabili "
 "nahi duzun ezarri dezakezu."
 
-#: src/dxr3/dxr3_mpeg_encoders.c:123
+#: src/dxr3/dxr3_mpeg_encoders.c:122
 msgid "dxr3_mpeg_encoder: failed to init librte\n"
 msgstr "dxr3_mpeg_encoder: huts librte abiaraztean\n"
 
-#: src/dxr3/dxr3_mpeg_encoders.c:158
+#: src/dxr3/dxr3_mpeg_encoders.c:157
 msgid ""
 "dxr3_mpeg_encoder: rte only handles video dimensions which are multiples of "
 "16\n"
@@ -1229,19 +1238,19 @@ msgstr ""
 "dxr3_mpeg_encoder: rte-ek 16-en multiploak diren bideo dimentsioak kudea "
 "ditzake\n"
 
-#: src/dxr3/dxr3_mpeg_encoders.c:168
+#: src/dxr3/dxr3_mpeg_encoders.c:167
 msgid "dxr3_mpeg_encoder: failed to get rte context.\n"
 msgstr "dxr3_mpeg_encoder: huts rte contestua eskuratzerakoan.\n"
 
-#: src/dxr3/dxr3_mpeg_encoders.c:179
+#: src/dxr3/dxr3_mpeg_encoders.c:178
 msgid "dxr3_mpeg_encoder: could not create codec.\n"
 msgstr "dxr3_mpeg_encoder: Ezin da kodeka sortu.\n"
 
-#: src/dxr3/dxr3_mpeg_encoders.c:187
+#: src/dxr3/dxr3_mpeg_encoders.c:186
 msgid "rte mpeg output bitrate (kbit/s)"
 msgstr "rte mpeg irteera bit tasa (kbit/s)"
 
-#: src/dxr3/dxr3_mpeg_encoders.c:188
+#: src/dxr3/dxr3_mpeg_encoders.c:187
 msgid ""
 "The bitrate the mpeg encoder library librte should use for DXR3's encoding "
 "mode. Higher values will increase quality and CPU usage."
@@ -1249,25 +1258,25 @@ msgstr ""
 "DXR3 kodeketa motarako mpeg kodeketa liburutegiak erabili behar dun bit "
 "abiadura. Balio handiek CPU erabilera handiagoa egiten dute."
 
-#: src/dxr3/dxr3_mpeg_encoders.c:232
+#: src/dxr3/dxr3_mpeg_encoders.c:231
 #, c-format
 msgid "dxr3_mpeg_encoder: cannot init the context: %s\n"
 msgstr "dxr3_mpeg_encoder: ezin da kontestua abiarazi: %s\n"
 
-#: src/dxr3/dxr3_mpeg_encoders.c:240
+#: src/dxr3/dxr3_mpeg_encoders.c:239
 #, c-format
 msgid "dxr3_mpeg_encoder: cannot start encoding: %s\n"
 msgstr "dxr3_mpeg_encoder: ezin kodifikazioa abiarazi: %s\n"
 
-#: src/dxr3/dxr3_mpeg_encoders.c:370
+#: src/dxr3/dxr3_mpeg_encoders.c:367
 msgid "dxr3_mpeg_encoder: Couldn't start the FAME library\n"
 msgstr "dxr3_mpeg_encoder: Ezin da FAME liburutegia abiarazi\n"
 
-#: src/dxr3/dxr3_mpeg_encoders.c:385
+#: src/dxr3/dxr3_mpeg_encoders.c:382
 msgid "fame mpeg encoding quality"
 msgstr "mpeg kodifikazio kalitate famatua"
 
-#: src/dxr3/dxr3_mpeg_encoders.c:386
+#: src/dxr3/dxr3_mpeg_encoders.c:383
 msgid ""
 "The encoding quality of the libfame mpeg encoder library. Lower is faster "
 "but gives noticeable artifacts. Higher is better but slower."
@@ -1289,15 +1298,15 @@ msgstr ""
 "erabiliko dute. 5 baino balio handiagoek DXR3-arne barne erlojua erabiliko "
 "dute sinkronia jatorri bezala."
 
-#: src/dxr3/video_out_dxr3.c:178
+#: src/dxr3/video_out_dxr3.c:184
 msgid "video output plugin displaying images through your DXR3 decoder card"
 msgstr ""
 
-#: src/dxr3/video_out_dxr3.c:249
+#: src/dxr3/video_out_dxr3.c:255
 msgid "swap odd and even lines"
 msgstr "aldatu lerro bakoiti eta bikoitiarrak"
 
-#: src/dxr3/video_out_dxr3.c:250
+#: src/dxr3/video_out_dxr3.c:256
 msgid ""
 "Swaps the even and odd field of the image.\n"
 "Enable this option for non-MPEG material which produces a vertical jitter on "
@@ -1307,11 +1316,11 @@ msgstr ""
 "Aukera hau ez-MPEG diren eta materialak pantailan \"jitter\" bertikal bat "
 "sortzean."
 
-#: src/dxr3/video_out_dxr3.c:254
+#: src/dxr3/video_out_dxr3.c:260
 msgid "add black bars to correct aspect ratio"
 msgstr "Barra beltzak gehitu itxura proportzioa konpontzeko"
 
-#: src/dxr3/video_out_dxr3.c:255
+#: src/dxr3/video_out_dxr3.c:261
 msgid ""
 "Adds black bars when the image has an aspect ratio the card cannot handle "
 "natively. This is needed to maintain proper image proportions."
@@ -1319,32 +1328,32 @@ msgstr ""
 "Gehitu barra beltzak irudiari itxura biadura ezin denean behar bezala "
 "kudeatu, Hau beharrezkoa da irudien proportzio zuzenak mantentzeko."
 
-#: src/dxr3/video_out_dxr3.c:260
+#: src/dxr3/video_out_dxr3.c:266
 msgid "use smooth play mode for mpeg encoder playback"
 msgstr "erabili erreprodukzio modu leuna mpeg kodeketa erreproduzitzerakoan"
 
-#: src/dxr3/video_out_dxr3.c:261
+#: src/dxr3/video_out_dxr3.c:267
 msgid ""
 "Enabling this option will utilise a smoother play mode for non-MPEG content."
 msgstr ""
 "Aukera hau gaituaz erreprodukzio modu leuna erabiliko da ez-MPEG edukia "
 "erreprduzitzeko"
 
-#: src/dxr3/video_out_dxr3.c:269
+#: src/dxr3/video_out_dxr3.c:275
 #, c-format
 msgid "video_out_dxr3: Failed to open control device %s (%s)\n"
 msgstr "video_out_dxr3: Huts %s (%s) kontrol gailua irekitzerakoan\n"
 
-#: src/dxr3/video_out_dxr3.c:277
+#: src/dxr3/video_out_dxr3.c:283
 #, c-format
 msgid "video_out_dxr3: Failed to open video device %s (%s)\n"
 msgstr "video_out_dxr3: Huts %s (%s) bideo gailua irekitzerakoan\n"
 
-#: src/dxr3/video_out_dxr3.c:323
+#: src/dxr3/video_out_dxr3.c:316
 msgid "encoder for non mpeg content"
 msgstr "kodetzailea mpeg ez den edukientzat"
 
-#: src/dxr3/video_out_dxr3.c:324
+#: src/dxr3/video_out_dxr3.c:317
 #, fuzzy
 msgid ""
 "Content other than MPEG has to pass an additional reencoding stage, because "
@@ -1369,19 +1378,19 @@ msgstr ""
 "\"fame\" eta \"rte\" aukerak daude baina xineren hauetariko onespena "
 "zaharkiturik dago beraz exkeutatzean huts egin dezalekete."
 
-#: src/dxr3/video_out_dxr3.c:335
+#: src/dxr3/video_out_dxr3.c:328
 msgid "video_out_dxr3: Mpeg encoder libavcodec failed to init.\n"
 msgstr "video_out_dxr3: Mpeg kodetzaile libavcodec huts abiaraztean.\n"
 
-#: src/dxr3/video_out_dxr3.c:341
+#: src/dxr3/video_out_dxr3.c:334
 msgid "video_out_dxr3: Mpeg encoder rte failed to init.\n"
 msgstr "video_out_dxr3: Mpeg kodetzaile rte huts abiaraztean.\n"
 
-#: src/dxr3/video_out_dxr3.c:348
+#: src/dxr3/video_out_dxr3.c:341
 msgid "video_out_dxr3: Mpeg encoder fame failed to init.\n"
 msgstr "video_out_dxr3: Mpeg kodetzaile fame huts abiaraztean.\n"
 
-#: src/dxr3/video_out_dxr3.c:354
+#: src/dxr3/video_out_dxr3.c:347
 msgid ""
 "video_out_dxr3: Mpeg encoding disabled.\n"
 "video_out_dxr3: that's ok, you don't need it for mpeg video like DVDs, but\n"
@@ -1397,7 +1406,7 @@ msgstr ""
 "video_out_dxr3: kontrolatzaile honekin.begiratu README.dxr3 kodeatzaile "
 "konfigurazioa.\n"
 
-#: src/dxr3/video_out_dxr3.c:360
+#: src/dxr3/video_out_dxr3.c:353
 msgid ""
 "video_out_dxr3: No mpeg encoder compiled in.\n"
 "video_out_dxr3: that's ok, you don't need it for mpeg video like DVDs, but\n"
@@ -1413,11 +1422,11 @@ msgstr ""
 "erabiliaz\n"
 "video_out_dxr3: ikusteko gai izango. README.dxr3 begiratu xehetasunentzat.\n"
 
-#: src/dxr3/video_out_dxr3.c:375
+#: src/dxr3/video_out_dxr3.c:368
 msgid "video output mode (TV or overlay)"
 msgstr "bideo irteera modua (Telebista edo Gainjarri)"
 
-#: src/dxr3/video_out_dxr3.c:376
+#: src/dxr3/video_out_dxr3.c:369
 #, fuzzy
 msgid ""
 "The way the DXR3 outputs the final video can be set here. The individual "
@@ -1456,22 +1465,22 @@ msgstr ""
 "Bideoa telebista irteerara bakarrik bideali. Modu hau 4:3 estandar telebista "
 "eza"
 
-#: src/dxr3/video_out_dxr3.c:423
+#: src/dxr3/video_out_dxr3.c:416
 msgid "overlay colour key value"
 msgstr "Gainjarri koloretekla balioa"
 
-#: src/dxr3/video_out_dxr3.c:423
+#: src/dxr3/video_out_dxr3.c:416
 msgid ""
 "Hexadecimal RGB value of the key colour.\n"
 "You can try different values, if you experience windows becoming transparent "
 "when using DXR3 overlay mode."
 msgstr ""
 
-#: src/dxr3/video_out_dxr3.c:428
+#: src/dxr3/video_out_dxr3.c:421
 msgid "overlay colour key tolerance"
 msgstr "Gainjarri koloretekla tolerantzia"
 
-#: src/dxr3/video_out_dxr3.c:428
+#: src/dxr3/video_out_dxr3.c:421
 msgid ""
 "A greater value widens the tolerance for the overlay key colour.\n"
 "You can try lower values, if you experience windows becoming transparent "
@@ -1479,11 +1488,11 @@ msgid ""
 "when using a too low setting."
 msgstr ""
 
-#: src/dxr3/video_out_dxr3.c:434
+#: src/dxr3/video_out_dxr3.c:427
 msgid "crop the overlay area at top and bottom"
 msgstr "Txikitu gainjarpena area goi eta behetik"
 
-#: src/dxr3/video_out_dxr3.c:435
+#: src/dxr3/video_out_dxr3.c:428
 msgid ""
 "Removes one pixel line from the top and bottom of the overlay. Enable this, "
 "if you see green lines at the top or bottom of the overlay."
@@ -1491,15 +1500,15 @@ msgstr ""
 "Gainjarpenaren goi eta beheko aldetik pixel lerro bat ezabatzen du. Hau "
 "gaitu gainjarpen goi eta beheko aldean lerro orlegiak ikusi ezkero."
 
-#: src/dxr3/video_out_dxr3.c:439
+#: src/dxr3/video_out_dxr3.c:432
 msgid "video_out_dxr3: please run autocal, overlay disabled\n"
 msgstr "video_out_dxr3: mesedez autocal abiarazi, gainjarpena ezgaiturik\n"
 
-#: src/dxr3/video_out_dxr3.c:449
+#: src/dxr3/video_out_dxr3.c:442
 msgid "preferred tv mode"
 msgstr "gogoko telebista modua"
 
-#: src/dxr3/video_out_dxr3.c:449
+#: src/dxr3/video_out_dxr3.c:442
 msgid ""
 "Selects the TV mode to be used by the DXR3. The values mean:\n"
 "\n"
@@ -1515,11 +1524,11 @@ msgstr ""
 "pal60: PAL - 60Hz\n"
 "default: mantendu txartel ezarpenak"
 
-#: src/dxr3/video_out_dxr3.c:471
+#: src/dxr3/video_out_dxr3.c:464
 msgid "video_out_dxr3: setting video mode failed.\n"
 msgstr "video_out_dxr3: bideo modu ezarpenak huts egin du.\n"
 
-#: src/dxr3/video_out_dxr3.c:701
+#: src/dxr3/video_out_dxr3.c:691
 msgid ""
 "video_out_dxr3: Need an mpeg encoder to play non-mpeg videos on dxr3\n"
 "video_out_dxr3: Read the README.dxr3 for details.\n"
@@ -1528,13 +1537,13 @@ msgstr ""
 "bistaratzeko\n"
 "video_out_dxr3: README.dxr3 begiratu xehetasunentzat.\n"
 
-#: src/dxr3/video_out_dxr3.c:1360
+#: src/dxr3/video_out_dxr3.c:1342
 msgid "video_out_dxr3: ERROR Reading overlay init file. Run autocal!\n"
 msgstr ""
 "video_out_dxr3: ERROREA gainjarri abiarazte fitxategia irakurtzeab. Run "
 "abiarazi!\n"
 
-#: src/input/input_cdda.c:1586
+#: src/input/input_cdda.c:1584
 #, c-format
 msgid "%s: can't connect to %s:%d\n"
 msgstr "%s: Ezin da %s-ra konektatu: %d\n"
@@ -1549,15 +1558,15 @@ msgstr "input_cdda: arrakastatsuki konektaturik cddb zerbitzarira'%s:%d'.\n"
 msgid "input_cdda: failed to connect to cddb server '%s:%d' (%s).\n"
 msgstr "input_cdda: huts cddb zerbitzarira konektatzerakoan '%s:%d' (%s).\n"
 
-#: src/input/input_cdda.c:2687
+#: src/input/input_cdda.c:2695
 msgid "CD Digital Audio (aka. CDDA)"
 msgstr "CD Audio Digitala (hemen. CDDA)"
 
-#: src/input/input_cdda.c:2700
+#: src/input/input_cdda.c:2708
 msgid "device used for CD audio"
 msgstr "CD audio-k erabiliko duen gailua"
 
-#: src/input/input_cdda.c:2701
+#: src/input/input_cdda.c:2709
 msgid ""
 "The path to the device, usually a CD or DVD drive, which you intend to use "
 "for playing audio CDs."
@@ -1565,11 +1574,11 @@ msgstr ""
 "Gailuaren bidea, arruntean audio CD erreproduzitzeko erabili nahi duzun CD "
 "edo DVD gailua."
 
-#: src/input/input_cdda.c:2707
+#: src/input/input_cdda.c:2715
 msgid "query CDDB"
 msgstr "CDDB galderak"
 
-#: src/input/input_cdda.c:2707
+#: src/input/input_cdda.c:2715
 msgid ""
 "Enables CDDB queries, which will give you convenient title and track names "
 "for your audio CDs.\n"
@@ -1582,11 +1591,11 @@ msgstr ""
 "Izan kontutan zuk ez baduzu CDDB zerbitzari pribatu bat, informazio hau zure "
 "ohiturak grabatuko dituen internet ostalari batetatik jasoko da."
 
-#: src/input/input_cdda.c:2715
+#: src/input/input_cdda.c:2723
 msgid "CDDB server name"
 msgstr "CDDB zerbitzari izena"
 
-#: src/input/input_cdda.c:2715
+#: src/input/input_cdda.c:2723
 msgid ""
 "The CDDB server used to retrieve the title and track information from.\n"
 "This setting is security critical, because the sever will receive "
@@ -1598,20 +1607,20 @@ msgstr ""
 "entzuteko ohituraz informazioa jaso eta erantzun zitalekin erantzun bait "
 "dezake. Ziurtatu konfidantza duzun zerbitzari bat izatea."
 
-#: src/input/input_cdda.c:2723
+#: src/input/input_cdda.c:2731
 msgid "CDDB server port"
 msgstr "CDDB zerbitzari ataka"
 
-#: src/input/input_cdda.c:2723
+#: src/input/input_cdda.c:2731
 msgid "The server port used to retrieve the title and track information from."
 msgstr ""
 "Izenburu eta pista informazioa jasotzeko erabiliko den zerbitzari ataka."
 
-#: src/input/input_cdda.c:2729
+#: src/input/input_cdda.c:2737
 msgid "slow down disc drive to this speed factor"
 msgstr "gutxitu diska gailua abiadura faktore honetara"
 
-#: src/input/input_cdda.c:2730
+#: src/input/input_cdda.c:2738
 msgid ""
 "Since some CD or DVD drives make some really loud noises because of the fast "
 "disc rotation, xine will try to slow them down. With standard CD or DVD "
@@ -1625,68 +1634,68 @@ msgstr ""
 "geldoarazteak ez du ezertan txikiagotzen erreprodukzio kalitatea.\n"
 "Zero balioa poliagotzea ezgaitzen da."
 
-#: src/input/input_dvb.c:883
+#: src/input/input_dvb.c:894
 #, fuzzy, c-format
 msgid "input_dvb: failed to open dvb channel file '%s': %s\n"
 msgstr "input_dvb: huts '%s' dvb kanal fitxategia irekitzerakoan\n"
 
-#: src/input/input_dvb.c:889
+#: src/input/input_dvb.c:900
 #, fuzzy, c-format
 msgid "input_dvb: dvb channel file '%s' is not a plain file\n"
 msgstr "input_dvb: huts '%s' dvb kanal fitxategia irekitzerakoan\n"
 
-#: src/input/input_dvb.c:2127 src/input/input_dvb.c:2967
+#: src/input/input_dvb.c:2134 src/input/input_dvb.c:2971
 msgid "input_dvb: tuner_set_channel failed\n"
 msgstr "input_dvb: irrati_ezarpen_kanalak huts egin du\n"
 
-#: src/input/input_dvb.c:2762
+#: src/input/input_dvb.c:2766
 #, c-format
 msgid "input_dvb: DVB GUI %s\n"
 msgstr ""
 
-#: src/input/input_dvb.c:2767 src/input/input_dvb.c:3183
+#: src/input/input_dvb.c:2771 src/input/input_dvb.c:3186
 msgid "input_dvb: cannot open dvb device\n"
 msgstr "input_dvb: ezin da dvb gailua ireki\n"
 
-#: src/input/input_dvb.c:2791
+#: src/input/input_dvb.c:2795
 #, c-format
 msgid "input_dvb: channel %d out of range, defaulting to 0\n"
 msgstr "input_dvb: %d kanala eremutik kanpo, 0-ra lehenesten\n"
 
-#: src/input/input_dvb.c:2802
+#: src/input/input_dvb.c:2806
 #, c-format
 msgid "input_dvb: searching for channel %s\n"
 msgstr "input_dvb: %s kanala bilatzen\n"
 
-#: src/input/input_dvb.c:2825
+#: src/input/input_dvb.c:2829
 #, c-format
 msgid "input_dvb: exact match for %s not found: trying partial matches\n"
 msgstr ""
 "input_dvb: ez da %s-ren parekatze zehatzik aurkitu: parekatze hurbilduak "
 "saiatzen\n"
 
-#: src/input/input_dvb.c:2832
+#: src/input/input_dvb.c:2836
 #, c-format
 msgid "input_dvb: found matching channel %s\n"
 msgstr "input_dvb: %s kanal parekatzea aurkiturik\n"
 
-#: src/input/input_dvb.c:2845
+#: src/input/input_dvb.c:2849
 #, fuzzy, c-format
 msgid "input_dvb: channel %s not found in channels.conf, defaulting.\n"
 msgstr "input_dvb: %s kanala ez da kanaletan aurkitu, 0 kanalera lehenesten\n"
 
-#: src/input/input_dvb.c:2851
+#: src/input/input_dvb.c:2855
 #, fuzzy
 msgid ""
 "input_dvb: invalid channel specification, defaulting to last viewed "
 "channel.\n"
 msgstr "input_dvb: baliogabeko kanal ezarpena, 0 kanalera lehenesten\n"
 
-#: src/input/input_dvb.c:2857
+#: src/input/input_dvb.c:2861
 msgid "input_dvb: invalid channel specification, defaulting to channel 0\n"
 msgstr "input_dvb: baliogabeko kanal ezarpena, 0 kanalera lehenesten\n"
 
-#: src/input/input_dvb.c:2869
+#: src/input/input_dvb.c:2873
 msgid ""
 "input_dvb: dvbs mrl specified but the tuner doesn't appear to be QPSK (DVB-"
 "S)\n"
@@ -1694,7 +1703,7 @@ msgstr ""
 "input_dvb: dvbs mrl ezarririk baina sintonizatzailea ez dirudu QPSK (DVB-S) "
 "dagoenik\n"
 
-#: src/input/input_dvb.c:2889
+#: src/input/input_dvb.c:2893
 msgid ""
 "input_dvb: dvbt mrl specified but the tuner doesn't appear to be OFDM (DVB-"
 "T)\n"
@@ -1702,7 +1711,7 @@ msgstr ""
 "input_dvb: dvbt mrl ezarririk baina sintonizatzailea ez dirudu OFDM (DVB-T) "
 "dagoenik\n"
 
-#: src/input/input_dvb.c:2912
+#: src/input/input_dvb.c:2916
 msgid ""
 "input_dvb: dvbc mrl specified but the tuner doesn't appear to be QAM (DVB-"
 "C)\n"
@@ -1710,7 +1719,7 @@ msgstr ""
 "input_dvb: dvbc mrl ezarririk baina sintonizatzailea ez dirudu QAM (DVB-C) "
 "dagoenik\n"
 
-#: src/input/input_dvb.c:2938
+#: src/input/input_dvb.c:2942
 #, fuzzy
 msgid ""
 "input_dvb: dvba mrl specified but the tuner doesn't appear to be ATSC (DVB-"
@@ -1719,21 +1728,21 @@ msgstr ""
 "input_dvb: dvbc mrl ezarririk baina sintonizatzailea ez dirudu QAM (DVB-C) "
 "dagoenik\n"
 
-#: src/input/input_dvb.c:2973
+#: src/input/input_dvb.c:2977
 #, c-format
 msgid "input_dvb: cannot open dvr device '%s'\n"
 msgstr "input_dvb: ezin da '%s' dvr gailua ireki\n"
 
-#: src/input/input_dvb.c:2996
+#: src/input/input_dvb.c:3000
 #, fuzzy
 msgid "input_dvb: cannot create EPG updater thread\n"
 msgstr "input_rtp: Ezin da hari berria sortu (%s)\n"
 
-#: src/input/input_dvb.c:3058
+#: src/input/input_dvb.c:3062
 msgid "use DVB 'center cutout' (zoom)"
 msgstr ""
 
-#: src/input/input_dvb.c:3059
+#: src/input/input_dvb.c:3063
 msgid ""
 "This will allow fullscreen playback of 4:3 content transmitted in a 16:9 "
 "frame."
@@ -1741,79 +1750,79 @@ msgstr ""
 "Honek pantaila osoko erreprdukzioa 4:3 formatu edukiak 16:9 markotan "
 "transmititzea gaitzen du."
 
-#: src/input/input_dvb.c:3252
+#: src/input/input_dvb.c:3253
 msgid "DVB (Digital TV) input plugin"
 msgstr "DVB (Telebista Digitala) sarrera plugina"
 
-#: src/input/input_dvb.c:3270
+#: src/input/input_dvb.c:3273
 msgid "Remember last DVB channel watched"
 msgstr ""
 
-#: src/input/input_dvb.c:3271
+#: src/input/input_dvb.c:3274
 msgid ""
 "On autoplay, xine will remember and switch to the channel indicated in media."
 "dvb.last_channel. "
 msgstr ""
 
-#: src/input/input_dvb.c:3278
+#: src/input/input_dvb.c:3281
 #, fuzzy
 msgid "Last DVB channel viewed"
 msgstr "bistaratu DVB kanal izena"
 
-#: src/input/input_dvb.c:3279
+#: src/input/input_dvb.c:3282
 msgid "If enabled xine will remember and switch to this channel. "
 msgstr ""
 
-#: src/input/input_dvb.c:3284
+#: src/input/input_dvb.c:3287
 msgid "Number of seconds until tuning times out."
 msgstr ""
 
-#: src/input/input_dvb.c:3285
+#: src/input/input_dvb.c:3288
 msgid ""
 "Leave at 0 means try forever. Greater than 0 means wait that many seconds to "
 "get a lock. Minimum is 5 seconds."
 msgstr ""
 
-#: src/input/input_dvb.c:3292
+#: src/input/input_dvb.c:3295
 msgid "Enable the DVB GUI"
 msgstr ""
 
-#: src/input/input_dvb.c:3293
+#: src/input/input_dvb.c:3296
 msgid "Enable the DVB GUI, mouse controlled recording and channel switching."
 msgstr ""
 
-#: src/input/input_dvb.c:3298
+#: src/input/input_dvb.c:3301
 #, fuzzy
 msgid "Number of dvb card to use."
 msgstr "audio buffer kopurua"
 
-#: src/input/input_dvb.c:3299
+#: src/input/input_dvb.c:3302
 msgid ""
 "Leave this at zero unless you really have more than 1 card in your system."
 msgstr ""
 
-#: src/input/input_dvd.c:591
+#: src/input/input_dvd.c:584
 msgid "input_dvd: values of \\beta will give rise to dom!\n"
 msgstr ""
 
-#: src/input/input_dvd.c:610
+#: src/input/input_dvd.c:603
 #, c-format
 msgid "input_dvd: Error getting next block from DVD (%s)\n"
 msgstr "input_dvd: Errorea DVD-tik hurrengo blokea eskuratzerakoan (%s)\n"
 
-#: src/input/input_dvd.c:1498
+#: src/input/input_dvd.c:1491
 msgid "input_dvd: Error opening DVD device\n"
 msgstr "input_dvd: Errorea DVD gailua irekitzerakoan\n"
 
-#: src/input/input_dvd.c:1759
+#: src/input/input_dvd.c:1752
 msgid "DVD Navigator"
 msgstr ""
 
-#: src/input/input_dvd.c:1776
+#: src/input/input_dvd.c:1769
 msgid "device used for DVD playback"
 msgstr "DVD-a erreproduzitzeko erabiliko den gailua"
 
-#: src/input/input_dvd.c:1777
+#: src/input/input_dvd.c:1770
 msgid ""
 "The path to the device, usually a DVD drive, which you intend to use for "
 "playing DVDs."
@@ -1821,11 +1830,11 @@ msgstr ""
 "DVD-ak erreproduzitzeko erabli nahi duzun, arruntean DVD gailu bat, gaiuaren "
 "bidea."
 
-#: src/input/input_dvd.c:1794
+#: src/input/input_dvd.c:1787
 msgid "raw device set up for DVD access"
 msgstr "DVD irakurleantzat gailu gordin (raw) ezarpenak"
 
-#: src/input/input_dvd.c:1795
+#: src/input/input_dvd.c:1788
 msgid ""
 "If this points to a raw device connected to your DVD device, xine will use "
 "the raw device for playback. This has the advantage of being slightly faster "
@@ -1836,22 +1845,22 @@ msgid ""
 "See the documentation on raw device setup (man raw) for further information."
 msgstr ""
 
-#: src/input/input_dvd.c:1808
+#: src/input/input_dvd.c:1801
 msgid "CSS decryption method"
 msgstr "CSS desenkriptazio metodoa"
 
-#: src/input/input_dvd.c:1809
+#: src/input/input_dvd.c:1802
 msgid ""
 "Selects the decryption method libdvdcss will use to descramble copy "
 "protected DVDs. Try the various methods, if you have problems playing "
 "scrambled DVDs."
 msgstr ""
 
-#: src/input/input_dvd.c:1824
+#: src/input/input_dvd.c:1817
 msgid "region the DVD player claims to be in (1 to 8)"
 msgstr "DVD erreproduktorean eskatzen duen erregioa (1 - 8)"
 
-#: src/input/input_dvd.c:1825
+#: src/input/input_dvd.c:1818
 msgid ""
 "This only needs to be changed if your DVD jumps to a screen complaining "
 "about a wrong region code. It has nothing to do with the region code set in "
@@ -1861,11 +1870,11 @@ msgstr ""
 "bakarrik behar da hau. Honek ez du zerikusirik DVD gailuetan ezarritako "
 "erregio kodearekin, hau software hutsa da."
 
-#: src/input/input_dvd.c:1831
+#: src/input/input_dvd.c:1824
 msgid "default language for DVD playback"
 msgstr "DVD erreprodukzioaren lehenetsirako hizkuntza"
 
-#: src/input/input_dvd.c:1832
+#: src/input/input_dvd.c:1825
 msgid ""
 "xine tries to use this language as a default for DVD playback. As far as the "
 "DVD supports it, menus and audio tracks will be presented in this language.\n"
@@ -1876,22 +1885,22 @@ msgstr ""
 "hizkuntza honetan emango dira.\n"
 "Balioak bi karaktereko ISO639 kode bat izan behar da."
 
-#: src/input/input_dvd.c:1838
+#: src/input/input_dvd.c:1831
 msgid "read-ahead caching"
 msgstr "irakuketa-goiburu gordetzea"
 
-#: src/input/input_dvd.c:1839
+#: src/input/input_dvd.c:1832
 msgid ""
 "xine can use a read ahead cache for DVD drive access.\n"
 "This may lead to jerky playback on slow drives, but it improves the impact "
 "of the DVD layer change on faster drives."
 msgstr ""
 
-#: src/input/input_dvd.c:1845
+#: src/input/input_dvd.c:1838
 msgid "unit for the skip action"
 msgstr "Ekintza egingo ez den unitatea"
 
-#: src/input/input_dvd.c:1846
+#: src/input/input_dvd.c:1839
 msgid ""
 "You can configure the behaviour when issuing a skip command (using the skip "
 "buttons for example). The individual values mean:\n"
@@ -1910,11 +1919,11 @@ msgid ""
 "features on the DVD"
 msgstr ""
 
-#: src/input/input_dvd.c:1861
+#: src/input/input_dvd.c:1854
 msgid "unit for seeking"
 msgstr "Bilatuko den untitatea"
 
-#: src/input/input_dvd.c:1862
+#: src/input/input_dvd.c:1855
 msgid ""
 "You can configure the domain spanned by the seek slider. The individual "
 "values mean:\n"
@@ -1928,11 +1937,11 @@ msgid ""
 "chapter of the current feature"
 msgstr ""
 
-#: src/input/input_dvd.c:1873
+#: src/input/input_dvd.c:1866
 msgid "play mode when title/chapter is given"
 msgstr ""
 
-#: src/input/input_dvd.c:1874
+#: src/input/input_dvd.c:1867
 msgid ""
 "You can configure the behaviour when playing a dvd from a given title/"
 "chapter (eg. using MRL 'dvd:/1.2'). The individual values mean:\n"
@@ -1964,24 +1973,24 @@ msgstr "input_file: Fitxategia ez da aurkitu: >%s<\n"
 msgid "input_file: File empty: >%s<\n"
 msgstr "input_file: Fitxategia ez da aurkitu: >%s<\n"
 
-#: src/input/input_file.c:967
+#: src/input/input_file.c:957
 msgid "file input plugin"
 msgstr "fitxategi sarrera plugina"
 
-#: src/input/input_file.c:984
+#: src/input/input_file.c:974
 msgid "file browsing start location"
 msgstr "fitxategi kudeatzailearen abiarazte kokalekua"
 
-#: src/input/input_file.c:985
+#: src/input/input_file.c:975
 msgid "The browser to select the file to play will start at this location."
 msgstr ""
 "Erreproduzitzeko fitxategi kudeatzailea kokaleu horretan abiaraziko da."
 
-#: src/input/input_file.c:992
+#: src/input/input_file.c:982
 msgid "list hidden files"
 msgstr "bistaratu ezkutatuako fitxategiak"
 
-#: src/input/input_file.c:993
+#: src/input/input_file.c:983
 msgid ""
 "If enabled, the browser to select the file to play will also show hidden "
 "files."
@@ -1993,88 +2002,88 @@ msgstr ""
 msgid "gnome-vfs input plugin as shipped with xine"
 msgstr "gnome-vfs sarrera plugina, xinerekin banatzen dena"
 
-#: src/input/input_http.c:173
+#: src/input/input_http.c:181
 #, c-format
 msgid "input_http: gethostbyname(%s) failed: %s\n"
 msgstr "input_http: gethostbyname(%s)-ek huts egin du: %s\n"
 
-#: src/input/input_http.c:418 src/input/input_http.c:1014
+#: src/input/input_http.c:380 src/input/input_http.c:973
 #, c-format
 msgid "input_http: read error %d\n"
 msgstr "input_http: irekurketa errorea %d\n"
 
-#: src/input/input_http.c:646
+#: src/input/input_http.c:611
 msgid "Connecting HTTP server..."
 msgstr "HTTP zerbitzarira konektatzen..."
 
-#: src/input/input_http.c:840
+#: src/input/input_http.c:795
 #, c-format
 msgid "input_http: invalid http answer\n"
 msgstr "input_http: http erantzun baliogabea\n"
 
-#: src/input/input_http.c:846
+#: src/input/input_http.c:801
 #, c-format
 msgid "input_http: 3xx redirection: >%d %s<\n"
 msgstr "input_http: 3xx birbideratzea: >%d %s<\n"
 
-#: src/input/input_http.c:851 src/input/input_http.c:856
-#: src/input/input_http.c:862 src/input/input_http.c:869
+#: src/input/input_http.c:806 src/input/input_http.c:811
+#: src/input/input_http.c:817 src/input/input_http.c:824
 #, c-format
 msgid "input_http: http status not 2xx: >%d %s<\n"
 msgstr "input_http: http egoera ez da 2xx: >%d %s<\n"
 
-#: src/input/input_http.c:879
+#: src/input/input_http.c:834
 #, fuzzy, c-format
 msgid "input_http: content length = %<PRIdMAX> bytes\n"
 msgstr "input_http: eduki luzera = %Ld bite\n"
 
-#: src/input/input_http.c:965
+#: src/input/input_http.c:924
 #, fuzzy, c-format
 msgid "input_http: buffer exhausted after %d bytes."
 msgstr "input_http: irekurketa errorea %d\n"
 
-#: src/input/input_http.c:1087
+#: src/input/input_http.c:1047
 msgid "http input plugin"
 msgstr "http sarrera plugina"
 
-#: src/input/input_http.c:1124
+#: src/input/input_http.c:1080
 msgid "HTTP proxy host"
 msgstr "HTTP proxy ostalaria"
 
-#: src/input/input_http.c:1124
+#: src/input/input_http.c:1080
 msgid "The hostname of the HTTP proxy."
 msgstr "HTTP proxy-aren ostalari izena."
 
-#: src/input/input_http.c:1128
+#: src/input/input_http.c:1084
 msgid "HTTP proxy port"
 msgstr "HTTP proxy ataka"
 
-#: src/input/input_http.c:1128
+#: src/input/input_http.c:1084
 msgid "The port number of the HTTP proxy."
 msgstr "HTTP proxy-aren ataka zenbakia."
 
-#: src/input/input_http.c:1138
+#: src/input/input_http.c:1094
 msgid "HTTP proxy username"
 msgstr "HTTP proxy erabiltzailea"
 
-#: src/input/input_http.c:1139
+#: src/input/input_http.c:1095
 msgid "The user name for the HTTP proxy."
 msgstr "HTTP proxy-aren erabiltzaile izena"
 
-#: src/input/input_http.c:1142
+#: src/input/input_http.c:1098
 msgid "HTTP proxy password"
 msgstr "HTTP proxy pasahitza"
 
-#: src/input/input_http.c:1143
+#: src/input/input_http.c:1099
 msgid "The password for the HTTP proxy."
 msgstr "HRRP proxy-aren pasahitza."
 
-#: src/input/input_http.c:1146
+#: src/input/input_http.c:1102
 #, fuzzy
 msgid "Domains for which to ignore the HTTP proxy"
 msgstr "Domeinuak, non ez den HTTP proxy-a erabiliko"
 
-#: src/input/input_http.c:1147
+#: src/input/input_http.c:1103
 msgid ""
 "A comma-separated list of domain names for which the proxy is to be "
 "ignored.\n"
@@ -2132,51 +2141,51 @@ msgstr "input_net: ezin da '%s' ebatzi.\n"
 msgid "input_net: unable to connect to '%s'.\n"
 msgstr "input_net: ezin da '%s'-ra konektatzen.\n"
 
-#: src/input/input_net.c:517
+#: src/input/input_net.c:523
 msgid "net input plugin as shipped with xine"
 msgstr "sare sarrera plugina, xinerekin anatzen dena"
 
-#: src/input/input_pnm.c:272
+#: src/input/input_pnm.c:270
 msgid "pnm streaming input plugin"
 msgstr "pnm korronte sarrera plugina"
 
-#: src/input/input_pvr.c:593
+#: src/input/input_pvr.c:587
 #, c-format
 msgid "input_pvr: error creating pvr file (%s)\n"
 msgstr "input_pvr: erroreaÂ¡pvr fitxategia (%s) sortzerakoan\n"
 
-#: src/input/input_pvr.c:750
+#: src/input/input_pvr.c:744
 #, c-format
 msgid "input_pvr: error opening pvr file (%s)\n"
 msgstr "input_pvr: erroreaÂ¡pvr fitxategia (%s) irekitzerakoan\n"
 
-#: src/input/input_pvr.c:826
+#: src/input/input_pvr.c:820
 #, c-format
 msgid "input_pvr: read error (%s)\n"
 msgstr "input_pvr: irakurketa errorea (%s)\n"
 
-#: src/input/input_pvr.c:1142 src/input/input_pvr.c:1395
+#: src/input/input_pvr.c:1159 src/input/input_pvr.c:1412
 #, c-format
 msgid "input_pvr: error opening device %s\n"
 msgstr "input_pvr: errorea %s gailua irekitzerakoan\n"
 
-#: src/input/input_pvr.c:1148 src/input/input_pvr.c:1401
+#: src/input/input_pvr.c:1165 src/input/input_pvr.c:1418
 msgid "input_pvr: IVTV_IOC_G_CODEC failed, maybe API changed?\n"
 msgstr "input_pvr: IVTV_IOC_G_CODEC-ak huts egin du, agian API-a aldatu da?\n"
 
-#: src/input/input_pvr.c:1156 src/input/input_pvr.c:1410
+#: src/input/input_pvr.c:1173 src/input/input_pvr.c:1427
 msgid "input_pvr: IVTV_IOC_S_CODEC failed, maybe API changed?\n"
 msgstr "input_pvr: IVTV_IOC_S_CODEC-ak huts egin du, agian API-a aldatu da?\n"
 
-#: src/input/input_pvr.c:1528
+#: src/input/input_pvr.c:1545
 msgid "device used for WinTV-PVR 250/350 (pvr plugin)"
 msgstr "WinTV-PVR 250/350 (pvr plugin)-ek erabiliko duen gailua"
 
-#: src/input/input_pvr.c:1529
+#: src/input/input_pvr.c:1546
 msgid "The path to the device of your WinTV card."
 msgstr "WinTV txartelaren gailuaren bidea."
 
-#: src/input/input_pvr.c:1535
+#: src/input/input_pvr.c:1552
 msgid "WinTV-PVR 250/350 input plugin"
 msgstr "WinTV-PVR 250/350 sarrera plugina"
 
@@ -2251,11 +2260,11 @@ msgstr "input_rtp: Ezin da hari berria sortu (%s)\n"
 msgid "RTP and UDP input plugin as shipped with xine"
 msgstr "RTP eta UDP sarrera plugina, xinerekin banatzen dena"
 
-#: src/input/input_rtsp.c:292
+#: src/input/input_rtsp.c:289
 msgid "rtsp streaming input plugin"
 msgstr "rtsp korronte sarrera plugina"
 
-#: src/input/input_smb.c:503
+#: src/input/input_smb.c:489
 msgid "CIFS/SMB input plugin based on libsmbclient"
 msgstr ""
 
@@ -2273,41 +2282,54 @@ msgstr "stdin: ezin da '%s' ireki\n"
 msgid "stdin streaming input plugin"
 msgstr "stdin korronte sarrera plugina"
 
-#: src/input/input_v4l.c:402
+#: src/input/input_v4l.c:409
 msgid "Buffer underrun..."
 msgstr "Buffer gainditzea..."
 
-#: src/input/input_v4l.c:406
+#: src/input/input_v4l.c:413
 msgid "Buffer overrun..."
 msgstr "Buffer askieza..."
 
-#: src/input/input_v4l.c:409
+#: src/input/input_v4l.c:416
 msgid "Adjusting..."
 msgstr "Egokitzen..."
 
-#: src/input/input_v4l.c:683
+#: src/input/input_v4l.c:696
 msgid "Tuner name not found\n"
 msgstr "sintonizatzaile izena ez da aurkitu\n"
 
-#: src/input/input_v4l.c:1914
+#: src/input/input_v4l.c:1908
 msgid "v4l tv input plugin"
 msgstr "v4l tv sarrera plugina"
 
-#: src/input/input_v4l.c:1922
+#: src/input/input_v4l.c:1916
 msgid "v4l video device"
 msgstr "v4l bideo gailua"
 
-#: src/input/input_v4l.c:1923
+#: src/input/input_v4l.c:1917
 msgid "The path to your Video4Linux video device."
 msgstr "Video4Linux bideo gailuaren bidea."
 
-#: src/input/input_v4l.c:1927
+#: src/input/input_v4l.c:1922
+#, fuzzy
+msgid "v4l ALSA audio input device"
+msgstr "v4l irrati gailua"
+
+#: src/input/input_v4l.c:1923
+#, fuzzy
+msgid ""
+"The name of the audio device which corresponds to your Video4Linux video "
+"device."
+msgstr "Video4Linux bideo gailuaren bidea."
+
+#: src/input/input_v4l.c:1928
 msgid "v4l TV standard"
 msgstr ""
 
-#: src/input/input_v4l.c:1928
+#: src/input/input_v4l.c:1929
 msgid ""
-"Selects the TV standard of the input signals. Either: PAL, NTSC and SECAM. "
+"Selects the TV standard of the input signals. Either: AUTO, PAL, NTSC or "
+"SECAM. "
 msgstr ""
 
 #: src/input/input_v4l.c:1946
@@ -2331,36 +2353,36 @@ msgstr "input_vcd: gaikieraturiko MRL-a. vcdo:/<pista #> erbili\n"
 msgid "input_vcd: invalid track %d (valid range: 0 .. %d)\n"
 msgstr "input_vcd: %d pista baliogabea (baliozko eremua: 0 .. %d)\n"
 
-#: src/input/input_vcd.c:959
+#: src/input/input_vcd.c:968
 #, c-format
 msgid "unable to open %s: %s.\n"
 msgstr "Ezin da %s ireki: %s.\n"
 
-#: src/input/input_vcd.c:1035
+#: src/input/input_vcd.c:1030
 #, c-format
 msgid "input_vcd: unable to open %s: %s.\n"
 msgstr "input_vcd: Ezin da %s ireki: %s.\n"
 
-#: src/input/input_vcd.c:1082
+#: src/input/input_vcd.c:1071
 msgid "Video CD input plugin"
 msgstr "Bideoa CD sarrera plugina"
 
-#: src/input/input_vcd.c:1089
+#: src/input/input_vcd.c:1078
 msgid "device used for VCD playback"
 msgstr "VCD erreproduzitzeko erabiliko den gailua"
 
-#: src/input/input_vcd.c:1090
+#: src/input/input_vcd.c:1079
 msgid ""
 "The path to the device, usually a CD or DVD drive, you intend to play your "
 "VideoCDs with."
 msgstr "BideoCD-ak erreproduzitzeko erabili nahi duzun gailuaren bidea."
 
-#: src/input/librtsp/rtsp.c:435
+#: src/input/librtsp/rtsp.c:437
 #, c-format
 msgid "rtsp: bad mrl: %s\n"
 msgstr "rtsp: okerreko mrl-a: %s\n"
 
-#: src/input/librtsp/rtsp.c:493
+#: src/input/librtsp/rtsp.c:495
 #, c-format
 msgid "rtsp: failed to connect to '%s'\n"
 msgstr "rtsp: huts '%s'-ra konektatzerakoan\n"
@@ -2374,7 +2396,14 @@ msgstr "rtsp_session: huts %s zerbitzarira konektatzerakoan\n"
 msgid "rtsp_session: session can not be established.\n"
 msgstr "rtsp_session: ezin da saioa sortu.\n"
 
-#: src/input/librtsp/rtsp_session.c:159
+#: src/input/librtsp/rtsp_session.c:153
+#, fuzzy
+msgid ""
+"rtsp_session: rtsp server returned overly-large headers, session can not be "
+"established.\n"
+msgstr "rtsp_session: ezin da saioa sortu.\n"
+
+#: src/input/librtsp/rtsp_session.c:164
 #, c-format
 msgid "rtsp_session: rtsp server type '%s' not supported yet. sorry.\n"
 msgstr ""
@@ -2387,44 +2416,44 @@ msgstr ""
 "input_dvd: %s gailuak huts egin du ateratzen ari den bitartean "
 "irekitzerakoan\n"
 
-#: src/input/mms.c:559
+#: src/input/mms.c:561
 msgid "Connecting MMS server (over tcp)..."
 msgstr "MMS zerbitzarira konektatzen (tcp bidez),,,"
 
-#: src/input/mmsh.c:199
+#: src/input/mmsh.c:197
 msgid "libmmsh: send error\n"
 msgstr "libmmsh: bidalketa errorea\n"
 
-#: src/input/mmsh.c:244
+#: src/input/mmsh.c:242
 #, c-format
 msgid "libmmsh: bad response format\n"
 msgstr "libmmsh: okerreko erantzun formatua\n"
 
-#: src/input/mmsh.c:250
+#: src/input/mmsh.c:248
 #, c-format
 msgid "libmmsh: 3xx redirection not implemented: >%d %s<\n"
 msgstr "libmmsh: 3xx berbideraketa ez da onartzen: >%d %s<\n"
 
-#: src/input/mmsh.c:257
+#: src/input/mmsh.c:255
 #, c-format
 msgid "libmmsh: http status not 2xx: >%d %s<\n"
 msgstr "libmmsh: http egoera ez da 2xx: >%d %s<\n"
 
-#: src/input/mmsh.c:265
+#: src/input/mmsh.c:263
 #, c-format
 msgid "libmmsh: Location redirection not implemented\n"
 msgstr "libmmsh: Kokaleku nbirbideratzea ez da onartzen\n"
 
-#: src/input/mmsh.c:474
+#: src/input/mmsh.c:472
 msgid "Connecting MMS server (over http)..."
 msgstr "MMS zerbitzarira konektatzen (http bidez)..."
 
-#: src/input/mmsh.c:655
+#: src/input/mmsh.c:653
 #, c-format
 msgid "invalid url\n"
 msgstr "url baliogabea\n"
 
-#: src/input/mmsh.c:660
+#: src/input/mmsh.c:658
 #, c-format
 msgid "unsupported protocol\n"
 msgstr "onartzen ez den protokoloa\n"
@@ -2433,7 +2462,7 @@ msgstr "onartzen ez den protokoloa\n"
 msgid "Buffering..."
 msgstr "Bufferra betetzen..."
 
-#: src/input/pnm.c:617
+#: src/input/pnm.c:621
 #, c-format
 msgid ""
 "input_pnm: got message from server while reading stream:\n"
@@ -2442,12 +2471,12 @@ msgstr ""
 "input_pnm: zerbitzariritik mezua bat jaso da korrontea irakurtzerakoan:\n"
 "%s\n"
 
-#: src/input/pnm.c:753
+#: src/input/pnm.c:754
 #, c-format
 msgid "input_pnm: failed to connect '%s'\n"
 msgstr "input_pnm: ezin da '%s' konektatu\n"
 
-#: src/input/pnm.c:764
+#: src/input/pnm.c:765
 msgid "input_pnm: failed to set up stream\n"
 msgstr "input_pnm: huts korrotea ezartzerakoan\n"
 
@@ -2674,105 +2703,105 @@ msgstr "ffmpeg_audio_dec: bufferra%d-ra handitzen askieza sahiesteko.\n"
 msgid "ffmpeg_audio_dec: couldn't find ffmpeg decoder for buf type 0x%X\n"
 msgstr ""
 
-#: src/combined/ffmpeg/ff_audio_decoder.c:255
+#: src/combined/ffmpeg/ff_audio_decoder.c:298
 #, fuzzy
 msgid "ffmpeg_audio_dec: trying to open null codec\n"
 msgstr "ffmpeg_audio_dec: ezin da deskodetzailea ireki\n"
 
-#: src/combined/ffmpeg/ff_audio_decoder.c:264
+#: src/combined/ffmpeg/ff_audio_decoder.c:307
 msgid "ffmpeg_audio_dec: couldn't open decoder\n"
 msgstr "ffmpeg_audio_dec: ezin da deskodetzailea ireki\n"
 
-#: src/combined/ffmpeg/ff_audio_decoder.c:426
+#: src/combined/ffmpeg/ff_audio_decoder.c:482
 msgid "ffmpeg based audio decoder plugin"
 msgstr ""
 
-#: src/combined/ffmpeg/ff_dvaudio_decoder.c:277
+#: src/audio_dec/ff_dvaudio_decoder.c:258
 #, c-format
 msgid "dvaudio: increasing buffer to %d to avoid overflow.\n"
 msgstr "dvaudio: bufeera %d -ra handitzen askieza sahiesteko.\n"
 
-#: src/combined/ffmpeg/ff_dvaudio_decoder.c:388
+#: src/audio_dec/ff_dvaudio_decoder.c:369
 #, fuzzy
 msgid "dv audio decoder plugin"
 msgstr "v4l irrati sarrera plugina"
 
-#: src/combined/ffmpeg/ffmpeg_encoder.c:161
+#: src/dxr3/ffmpeg_encoder.c:170
 msgid "libavcodec mpeg output bitrate (kbit/s)"
 msgstr "libavcodec mpeg irteera bit tasa (kbit/s)"
 
-#: src/combined/ffmpeg/ffmpeg_encoder.c:162
+#: src/dxr3/ffmpeg_encoder.c:171
 msgid ""
 "The bitrate the libavcodec mpeg encoder should use for DXR3's encoding mode. "
 "Higher values will increase quality and CPU usage.\n"
 "This setting is only considered, when constant quality mode is disabled."
 msgstr ""
 
-#: src/combined/ffmpeg/ffmpeg_encoder.c:169
+#: src/dxr3/ffmpeg_encoder.c:178
 msgid "constant quality mode"
 msgstr "kalitate modu iraunkorra"
 
-#: src/combined/ffmpeg/ffmpeg_encoder.c:170
+#: src/dxr3/ffmpeg_encoder.c:179
 msgid ""
 "When enabled, libavcodec will use a constant quality mode by dynamically "
 "compressing the images based on their complexity. When disabled, libavcodec "
 "will use constant bitrate mode."
 msgstr ""
 
-#: src/combined/ffmpeg/ffmpeg_encoder.c:177
+#: src/dxr3/ffmpeg_encoder.c:186
 msgid "minimum compression"
 msgstr "konpresio txikiena"
 
-#: src/combined/ffmpeg/ffmpeg_encoder.c:178
+#: src/dxr3/ffmpeg_encoder.c:187
 msgid "The minimum compression to apply to an image in constant quality mode."
 msgstr ""
 "Kalitate iraunkorreko kalitate moduko ezarriko den gutxienezko konpresioa."
 
-#: src/combined/ffmpeg/ffmpeg_encoder.c:183
+#: src/dxr3/ffmpeg_encoder.c:192
 msgid "maximum quantizer"
 msgstr ""
 
-#: src/combined/ffmpeg/ffmpeg_encoder.c:184
+#: src/dxr3/ffmpeg_encoder.c:193
 msgid "The maximum compression to apply to an image in constant quality mode."
 msgstr ""
 "Kalitate iraunkorreko kalitate moduko ezarriko den gehinezko konpresioa."
 
-#: src/combined/ffmpeg/ff_video_decoder.c:154
+#: src/combined/ffmpeg/ff_video_decoder.c:161
 msgid "ffmpeg_video_dec: unsupported frame format, DR1 disabled.\n"
 msgstr "ffmpeg_video_dec: marko formatu onartezina, DR1 ezgaiturik.\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:172
+#: src/combined/ffmpeg/ff_video_decoder.c:179
 #, fuzzy
 msgid "ffmpeg_video_dec: unsupported frame dimensions, DR1 disabled.\n"
 msgstr "ffmpeg_video_dec: marko formatu onartezina, DR1 ezgaiturik.\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:336
+#: src/combined/ffmpeg/ff_video_decoder.c:363
 #, c-format
 msgid "ffmpeg_video_dec: couldn't find ffmpeg decoder for buf type 0x%X\n"
 msgstr ""
 
-#: src/combined/ffmpeg/ff_video_decoder.c:365
+#: src/combined/ffmpeg/ff_video_decoder.c:395
 msgid "ffmpeg_video_dec: couldn't open decoder\n"
 msgstr "ffmpeg_video_dec: ezin da deskodetzailea ireki\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:406
+#: src/combined/ffmpeg/ff_video_decoder.c:438
 msgid "ffmpeg_video_dec: direct rendering enabled\n"
 msgstr "ffmpeg_video_dec: direct reenderizazioa gaiturik\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:834
+#: src/combined/ffmpeg/ff_video_decoder.c:883
 #, c-format
 msgid "ffmpeg_video_dec: increasing buffer to %d to avoid overflow.\n"
 msgstr "ffmpeg_video_dec: bufferra %d -ra handitzen askieza saiesteko.\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1536
+#: src/combined/ffmpeg/ff_video_decoder.c:1609
 msgid "ffmpeg based video decoder plugin"
 msgstr ""
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1548
+#: src/combined/ffmpeg/ff_video_decoder.c:1621
 msgid "MPEG-4 postprocessing quality"
 msgstr "MPEG-4 postprozesatze kalitatea"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1549
+#: src/combined/ffmpeg/ff_video_decoder.c:1622
 msgid ""
 "You can adjust the amount of post processing applied to MPEG-4 video.\n"
 "Higher values result in better quality, but need more CPU. Lower values may "
@@ -2781,11 +2810,11 @@ msgid ""
 "much."
 msgstr ""
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1557
+#: src/combined/ffmpeg/ff_video_decoder.c:1630
 msgid "FFmpeg video decoding thread count"
 msgstr ""
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1558
+#: src/combined/ffmpeg/ff_video_decoder.c:1631
 msgid ""
 "You can adjust the number of video decoding threads which FFmpeg may use.\n"
 "Higher values should speed up decoding but it depends on the codec used "
@@ -2794,11 +2823,11 @@ msgid ""
 "A change of this setting will take effect with playing the next stream."
 msgstr ""
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1605
+#: src/combined/ffmpeg/ff_video_decoder.c:1640
 msgid "Skip loop filter"
 msgstr ""
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1606
+#: src/combined/ffmpeg/ff_video_decoder.c:1641
 msgid ""
 "You can control for which frames the loop filter shall be skipped after "
 "decoding.\n"
@@ -2808,11 +2837,11 @@ msgid ""
 "A change of this setting will take effect with playing the next stream."
 msgstr ""
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1615
+#: src/combined/ffmpeg/ff_video_decoder.c:1650
 msgid "Choose speed over specification compliance"
 msgstr ""
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1616
+#: src/combined/ffmpeg/ff_video_decoder.c:1651
 msgid ""
 "You may want to allow speed cheats which violate codec specification.\n"
 "Cheating may speed up decoding but can also lead to decoding artefacts.\n"
@@ -2838,87 +2867,87 @@ msgstr ""
 "dekodifikatzeko. Begiratu XINE FAQ dokumentua kodek horiek nola instalaturi "
 "buruzko argibide gehiagorako."
 
-#: src/libreal/xine_real_audio_decoder.c:128
+#: src/libreal/xine_real_audio_decoder.c:130
 #, c-format
 msgid "libareal: (audio) Cannot resolve symbols - incompatible dll: %s\n"
 msgstr "libareal: (audio) Ezin dira sinboloak ebatzi - dll bateraezina: %s\n"
 
-#: src/libreal/xine_real_audio_decoder.c:285
+#: src/libreal/xine_real_audio_decoder.c:288
 #, c-format
 msgid "libareal: decoder init failed, error code: 0x%x\n"
 msgstr "libareal: huts deskodetzailea abiaraztekoan, errore kodea: 0x%x\n"
 
-#: src/libreal/xine_real_audio_decoder.c:299
+#: src/libreal/xine_real_audio_decoder.c:302
 #, c-format
 msgid "libareal: decoder flavor setup failed, error code: 0x%x\n"
 msgstr ""
 "libareal: deskodetzaile zapore konfigurazio hutsa, errore kodea: 0x%x\n"
 
-#: src/libreal/xine_real_audio_decoder.c:336
+#: src/libreal/xine_real_audio_decoder.c:339
 msgid "libareal: oups, real can do more than 2 channels ?\n"
 msgstr ""
 
-#: src/libreal/xine_real_audio_decoder.c:594
+#: src/libreal/xine_real_audio_decoder.c:505
 msgid "real binary-only codec based audio decoder plugin"
 msgstr ""
 
-#: src/libreal/xine_real_video_decoder.c:162
+#: src/libreal/xine_real_video_decoder.c:170
 msgid "libreal: Error resolving symbols! (version incompatibility?)\n"
 msgstr ""
 "libreal: Errorea sinboloak ebazterakoan! (bertsio bateragarritasun eza?)\n"
 
-#: src/libreal/xine_real_video_decoder.c:522
+#: src/libreal/xine_real_video_decoder.c:528
 msgid "real binary-only codec based video decoder plugin"
 msgstr ""
 
-#: src/spu_dec/xine_cc_decoder.c:189
+#: src/spu_dec/xine_cc_decoder.c:195
 msgid "display closed captions in MPEG-2 streams"
 msgstr "bistaratu itxitako izenburuak MPEG-2 korronteetan"
 
-#: src/spu_dec/xine_cc_decoder.c:190
+#: src/spu_dec/xine_cc_decoder.c:196
 msgid ""
 "Closed Captions are subtitles mostly meant to help the hearing impaired."
 msgstr ""
 "Itxitako Tituluak (closed caption) normalean entzumen arazoak dituztenei "
 "laguntzeko azpitituluak dira."
 
-#: src/spu_dec/xine_cc_decoder.c:197
+#: src/spu_dec/xine_cc_decoder.c:203
 msgid "closed-captioning foreground/background scheme"
 msgstr "Itxitako-tituluen atzealdeko eskema"
 
-#: src/spu_dec/xine_cc_decoder.c:198
+#: src/spu_dec/xine_cc_decoder.c:204
 msgid "Choose your favourite rendering of the closed captions."
 msgstr "Aukeratu itxitako tituluentzat gustoko duzun errendarizatzailea."
 
-#: src/spu_dec/xine_cc_decoder.c:204
+#: src/spu_dec/xine_cc_decoder.c:210
 msgid "standard closed captioning font"
 msgstr "Lehenetsitako itxitako titulu letra-tipoa"
 
-#: src/spu_dec/xine_cc_decoder.c:205
+#: src/spu_dec/xine_cc_decoder.c:211
 msgid "Choose the font for standard closed captions text."
 msgstr "Aukeratu ixtitako titulu testuarentzat lehenetsitako letra-tipoa."
 
-#: src/spu_dec/xine_cc_decoder.c:211
+#: src/spu_dec/xine_cc_decoder.c:217
 msgid "italic closed captioning font"
 msgstr "etzandako itxitako izenburu letra-tipoa"
 
-#: src/spu_dec/xine_cc_decoder.c:212
+#: src/spu_dec/xine_cc_decoder.c:218
 msgid "Choose the font for italic closed captions text."
 msgstr "Aukeratu etzandako itxitako tituluen letra-tipoa."
 
-#: src/spu_dec/xine_cc_decoder.c:218
+#: src/spu_dec/xine_cc_decoder.c:224
 msgid "closed captioning font size"
 msgstr "Itxitako izenburuen letra-tamaina"
 
-#: src/spu_dec/xine_cc_decoder.c:219
+#: src/spu_dec/xine_cc_decoder.c:225
 msgid "Choose the font size for closed captions text."
 msgstr "Aukeratuko itxitako tituluen letra tamaina"
 
-#: src/spu_dec/xine_cc_decoder.c:223
+#: src/spu_dec/xine_cc_decoder.c:229
 msgid "center-adjust closed captions"
 msgstr "erdira-doitu itxitako tituluak"
 
-#: src/spu_dec/xine_cc_decoder.c:224
+#: src/spu_dec/xine_cc_decoder.c:230
 msgid ""
 "When enabled, closed captions will be positioned by the center of the "
 "individual lines."
@@ -2926,36 +2955,36 @@ msgstr ""
 "Gaiturik daudenean, itxitako titulu testua lerro bakoitzean erdiratu egingo "
 "da."
 
-#: src/spu_dec/xine_cc_decoder.c:330
+#: src/spu_dec/xine_cc_decoder.c:336
 #, fuzzy
 msgid "closed caption decoder plugin"
 msgstr "Itxitako izenburuen letra-tamaina"
 
-#: src/spu_dec/cmml_decoder.c:477
+#: src/spu_dec/cmml_decoder.c:463
 msgid "font for external subtitles"
 msgstr "Kanpo azpitituluen letra-tipoa"
 
-#: src/spu_dec/cmml_decoder.c:483
+#: src/spu_dec/cmml_decoder.c:469
 msgid "subtitle vertical offset (relative window size)"
 msgstr "azpititulu kokapen bertikala (panataila tamainaren arabera)"
 
-#: src/spu_dec/cmml_decoder.c:509
+#: src/spu_dec/cmml_decoder.c:492
 msgid "CMML subtitle decoder plugin"
 msgstr ""
 
-#: src/spu_dec/cmml_decoder.c:517
+#: src/spu_dec/cmml_decoder.c:500
 msgid "encoding of subtitles"
 msgstr "Apititulu kodifikatzea"
 
-#: src/spu_dec/sputext_demuxer.c:1461
+#: src/spu_dec/sputext_demuxer.c:1429
 msgid "sputext demuxer plugin"
 msgstr ""
 
-#: src/spu_dec/sputext_demuxer.c:1476
+#: src/spu_dec/sputext_demuxer.c:1444
 msgid "default duration of subtitle display in seconds"
 msgstr "azpititulu bistaratze denbora segundutan"
 
-#: src/spu_dec/sputext_demuxer.c:1477
+#: src/spu_dec/sputext_demuxer.c:1445
 msgid ""
 "Some subtitle formats do not explicitly give a duration for each subtitle. "
 "For these, you can set a default duration here. Setting to zero will result "
@@ -2965,15 +2994,15 @@ msgstr ""
 "Hauentzat lehenetsitako iraupena ezarri dezakezu hemen. Zero bezala "
 "ezartzean azpititulu bakoizta hurrengo azpititulu arte bistaraziko da."
 
-#: src/spu_dec/sputext_decoder.c:912
+#: src/spu_dec/sputext_decoder.c:1124
 msgid "external subtitle decoder plugin"
 msgstr ""
 
-#: src/spu_dec/sputext_decoder.c:921
+#: src/spu_dec/sputext_decoder.c:1133
 msgid "subtitle size"
 msgstr "azpititulu tamaina"
 
-#: src/spu_dec/sputext_decoder.c:922
+#: src/spu_dec/sputext_decoder.c:1134
 msgid ""
 "You can adjust the subtitle size here. The setting will be evaluated "
 "relative to the window size."
@@ -2981,11 +3010,11 @@ msgstr ""
 "Azpititulu tamaina ezarri dezakezi hemen. Ezarpenak panatailaren tamainaren "
 "arabera ulertuko dira."
 
-#: src/spu_dec/sputext_decoder.c:928
+#: src/spu_dec/sputext_decoder.c:1140
 msgid "subtitle vertical offset"
 msgstr "azpititulu mugimetu bertikala"
 
-#: src/spu_dec/sputext_decoder.c:929
+#: src/spu_dec/sputext_decoder.c:1141
 msgid ""
 "You can adjust the vertical position of the subtitle. The setting will be "
 "evaluated relative to the window size."
@@ -2993,32 +3022,32 @@ msgstr ""
 "Azpitituluen kokapen bertikala ezarri dezakezu hemen.Ezarpenak panatailaren "
 "tamainaren arabera ulertuko dira."
 
-#: src/spu_dec/sputext_decoder.c:935 src/spu_dec/sputext_decoder.c:944
+#: src/spu_dec/sputext_decoder.c:1147 src/spu_dec/sputext_decoder.c:1156
 msgid "font for subtitles"
 msgstr "Azpitituluen letra-tipoa"
 
-#: src/spu_dec/sputext_decoder.c:936
+#: src/spu_dec/sputext_decoder.c:1148
 msgid "A font from the xine font directory to be used for the subtitle text."
 msgstr ""
 "Xine letra-tipo karpetako letra-tipo bat erabili daiteke azpititulu "
 "testuetarako."
 
-#: src/spu_dec/sputext_decoder.c:945
+#: src/spu_dec/sputext_decoder.c:1157
 #, fuzzy
 msgid "An outline font file (e.g. a .ttf) to be used for the subtitle text."
 msgstr ""
 "Xine letra-tipo karpetako letra-tipo bat erabili daiteke azpititulu "
 "testuetarako."
 
-#: src/spu_dec/sputext_decoder.c:951
+#: src/spu_dec/sputext_decoder.c:1163
 msgid "whether to use a freetype font"
 msgstr ""
 
-#: src/spu_dec/sputext_decoder.c:958
+#: src/spu_dec/sputext_decoder.c:1170
 msgid "encoding of the subtitles"
 msgstr "azpitituluen kodifikazioa"
 
-#: src/spu_dec/sputext_decoder.c:959
+#: src/spu_dec/sputext_decoder.c:1171
 msgid ""
 "The encoding of the subtitle text in the stream. This setting is used to "
 "render non-ASCII characters correctly. If non-ASCII characters are not "
@@ -3030,11 +3059,11 @@ msgstr ""
 "badira zuk espero bezala bistaratzen, galdetu azpititulu sortzaileari zein "
 "kodeketa erabiltzen duen."
 
-#: src/spu_dec/sputext_decoder.c:967
+#: src/spu_dec/sputext_decoder.c:1179
 msgid "use unscaled OSD if possible"
 msgstr "erabili eskalagabeko OSD posible bada"
 
-#: src/spu_dec/sputext_decoder.c:968
+#: src/spu_dec/sputext_decoder.c:1180
 msgid ""
 "The unscaled OSD will be rendered independently of the video frame and will "
 "always be sharp, even if the video is magnified. This will look better, but "
@@ -3134,19 +3163,19 @@ msgstr ""
 msgid "win32 binary audio codec plugin"
 msgstr "xine fitxategi audio irteera plugina"
 
-#: src/audio_dec/xine_a52_decoder.c:757 src/audio_dec/xine_dts_decoder.c:524
+#: src/audio_dec/xine_a52_decoder.c:759 src/audio_dec/xine_dts_decoder.c:532
 msgid "HELP! a mono-only audio driver?!\n"
 msgstr "LAGUNTZA! mono bakarrik audio kontrolatzailea?\n"
 
-#: src/audio_dec/xine_a52_decoder.c:798
+#: src/audio_dec/xine_a52_decoder.c:800
 msgid "liba52 based a52 audio decoder plugin"
 msgstr ""
 
-#: src/audio_dec/xine_a52_decoder.c:805
+#: src/audio_dec/xine_a52_decoder.c:809
 msgid "A/52 volume"
 msgstr "A/52 bolumena"
 
-#: src/audio_dec/xine_a52_decoder.c:806
+#: src/audio_dec/xine_a52_decoder.c:810
 msgid ""
 "With A/52 audio, you can modify the volume at the decoder level. This has "
 "the advantage of the audio being already decoded for the specified volume, "
@@ -3154,22 +3183,22 @@ msgid ""
 "the given volume."
 msgstr ""
 
-#: src/audio_dec/xine_a52_decoder.c:814
+#: src/audio_dec/xine_a52_decoder.c:818
 msgid "use A/52 dynamic range compression"
 msgstr "A/52 bitarte dinamiko konpresioa"
 
-#: src/audio_dec/xine_a52_decoder.c:815
+#: src/audio_dec/xine_a52_decoder.c:819
 msgid ""
 "Dynamic range compression limits the dynamic range of the audio. This means "
 "making the loud sounds softer, and the soft sounds louder, so you can more "
 "easily listen to the audio in a noisy environment without disturbing anyone."
 msgstr ""
 
-#: src/audio_dec/xine_a52_decoder.c:822
+#: src/audio_dec/xine_a52_decoder.c:826
 msgid "downmix audio to 2 channel surround stereo"
 msgstr ""
 
-#: src/audio_dec/xine_a52_decoder.c:823
+#: src/audio_dec/xine_a52_decoder.c:827
 msgid ""
 "When you want to listen to multichannel surround sound, but you have only "
 "two speakers or a surround decoder or amplifier which does some sort of "
@@ -3177,7 +3206,7 @@ msgid ""
 "that the additional channels are mixed into the stereo signal."
 msgstr ""
 
-#: src/audio_dec/xine_dts_decoder.c:559
+#: src/audio_dec/xine_dts_decoder.c:567
 msgid "DTS passthru audio format decoder plugin"
 msgstr ""
 
@@ -3196,7 +3225,7 @@ msgstr "libfaad: libfaad faacDecInit2-ek huts egin du.\n"
 msgid "libfaad: libfaad NeAACDecInit failed.\n"
 msgstr "libfaad: libfaad faacDecInit-ek huts egin du.\n"
 
-#: src/audio_dec/xine_faad_decoder.c:458
+#: src/audio_dec/xine_faad_decoder.c:483
 msgid "Freeware Advanced Audio Decoder"
 msgstr ""
 
@@ -3228,27 +3257,27 @@ msgstr ""
 msgid "bitplane: error doing ByteRun1 decompression\n"
 msgstr "bitplane: errorea ByteRun1 dekonpresioa egiterakoan\n"
 
-#: src/video_dec/bitplane.c:1328
+#: src/video_dec/bitplane.c:1320
 #, c-format
 msgid "bitplane: Anim Opt 1 is not supported at the moment\n"
 msgstr "bitplane: Anim Opt 1 ez da onartzen momentuz\n"
 
-#: src/video_dec/bitplane.c:1335
+#: src/video_dec/bitplane.c:1327
 #, c-format
 msgid "bitplane: Anim Opt 2 is not supported at the moment\n"
 msgstr "bitplane: Anim Opt 2 ez da onartzen momentuz\n"
 
-#: src/video_dec/bitplane.c:1385
+#: src/video_dec/bitplane.c:1377
 #, c-format
 msgid "bitplane: Anim ASCIIJ is not supported at the moment\n"
 msgstr "bitplane: Anim ASCIIJ ez da onartzen momentuz\n"
 
-#: src/video_dec/bitplane.c:1391
+#: src/video_dec/bitplane.c:1383
 #, c-format
 msgid "bitplane: This anim-type is not supported at the moment\n"
 msgstr "bitplane: Animazio-mota ahu ez da onartzen momentu honetan\n"
 
-#: src/video_dec/bitplane.c:1529
+#: src/video_dec/bitplane.c:1521
 msgid "Raw bitplane video decoder plugin"
 msgstr ""
 
@@ -3321,7 +3350,7 @@ msgid ""
 "the variations via the standard weighted mean over past samples.\n"
 msgstr ""
 
-#: src/post/audio/volnorm.c:460
+#: src/post/audio/volnorm.c:458
 msgid "Normalize volume"
 msgstr ""
 
@@ -3428,11 +3457,11 @@ msgid ""
 "The available selections should be self-explaining."
 msgstr ""
 
-#: src/post/mosaico/mosaico.c:129
+#: src/post/mosaico/mosaico.c:133
 msgid "Mosaico is a picture in picture (pip) post plugin"
 msgstr ""
 
-#: src/post/mosaico/mosaico.c:252
+#: src/post/mosaico/mosaico.c:255
 msgid ""
 "Mosaico does simple picture in picture effects.\n"
 "\n"
@@ -3582,7 +3611,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/post/planar/noise.c:400
+#: src/post/planar/noise.c:402
 msgid ""
 "Adds random noise to the video.\n"
 "\n"
@@ -3600,11 +3629,11 @@ msgid ""
 "* mplayer's noise (C) Michael Niedermayer\n"
 msgstr ""
 
-#: src/post/planar/noise.c:452
+#: src/post/planar/noise.c:454
 msgid "Adds noise"
 msgstr ""
 
-#: src/post/planar/pp.c:111
+#: src/post/planar/pp.c:119
 msgid ""
 "FFmpeg libpostprocess plugin.\n"
 "\n"
@@ -3616,7 +3645,7 @@ msgstr ""
 "Parametroak\n"
 "\n"
 
-#: src/post/planar/pp.c:116
+#: src/post/planar/pp.c:124
 msgid ""
 "\n"
 "* libpostprocess (C) Michael Niedermayer\n"
@@ -3624,11 +3653,11 @@ msgstr ""
 "\n"
 "* libpostprocess (C) Michael Niedermayer\n"
 
-#: src/post/planar/pp.c:155
+#: src/post/planar/pp.c:163
 msgid "plugin for ffmpeg libpostprocess"
 msgstr ""
 
-#: src/post/planar/unsharp.c:218
+#: src/post/planar/unsharp.c:211
 msgid ""
 "Unsharp mask / gaussian blur\n"
 "It is possible to set the width and height of the matrix, odd sized in both "
@@ -3656,99 +3685,99 @@ msgid ""
 "* mplayer's unsharp (C) 2002 Remi Guyomarch\n"
 msgstr ""
 
-#: src/post/planar/unsharp.c:276
+#: src/post/planar/unsharp.c:269
 msgid "unsharp mask & gaussian blur"
 msgstr ""
 
-#: src/vdr/input_vdr.c:183 src/vdr/input_vdr.c:223 src/vdr/input_vdr.c:2442
-#: src/vdr/input_vdr.c:2540
+#: src/vdr/input_vdr.c:197 src/vdr/input_vdr.c:237 src/vdr/input_vdr.c:1891
+#: src/vdr/input_vdr.c:1989
 #, fuzzy, c-format
 msgid "%s: input event write: %s.\n"
 msgstr "input_rip: bilaketak huts egin du: %s\n"
 
-#: src/vdr/input_vdr.c:713 src/vdr/input_vdr.c:1137
+#: src/vdr/input_vdr.c:732 src/vdr/input_vdr.c:1122
 #, c-format
 msgid "%s: buffer_pool_alloc() failed!\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:782
+#: src/vdr/input_vdr.c:801
 #, c-format
 msgid "%s: flush buffers (vb: %d, ab: %d, vf: %d, af: %d) %s.\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:1476
+#: src/vdr/input_vdr.c:1508
 #, c-format
 msgid "%s: shutting down rpc thread (timeout: %d ms) ...\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:1500
+#: src/vdr/input_vdr.c:1532
 #, fuzzy, c-format
 msgid "%s: cancelling rpc thread in function %d...\n"
 msgstr "input_rtp: Ezin da hari berria sortu (%s)\n"
 
-#: src/vdr/input_vdr.c:1507
+#: src/vdr/input_vdr.c:1539
 #, fuzzy, c-format
 msgid "%s: joining rpc thread ...\n"
 msgstr "RTP: geratu irakurketa haria...\n"
 
-#: src/vdr/input_vdr.c:1509
+#: src/vdr/input_vdr.c:1541
 #, fuzzy, c-format
 msgid "%s: rpc thread joined.\n"
 msgstr "RTP: hari irakurketa amaiturik\n"
 
-#: src/vdr/input_vdr.c:2145 src/vdr/input_vdr.c:2159 src/vdr/input_vdr.c:2177
-#: src/vdr/input_vdr.c:2199 src/vdr/input_vdr.c:2221
+#: src/vdr/input_vdr.c:1624 src/vdr/input_vdr.c:1638 src/vdr/input_vdr.c:1662
+#: src/vdr/input_vdr.c:1684 src/vdr/input_vdr.c:1706
 #, fuzzy, c-format
 msgid "%s: failed to open '%s' (%s)\n"
 msgstr "stdin: ezin da '%s' ireki\n"
 
-#: src/vdr/input_vdr.c:2161
+#: src/vdr/input_vdr.c:1640
 msgid "timeout expired during setup phase"
 msgstr ""
 
-#: src/vdr/input_vdr.c:2246
+#: src/vdr/input_vdr.c:1731
 #, fuzzy, c-format
 msgid "%s: failed to create socket for port %d (%s)\n"
 msgstr "stdin: ezin da '%s' ireki\n"
 
-#: src/vdr/input_vdr.c:2260
+#: src/vdr/input_vdr.c:1745
 #, fuzzy, c-format
 msgid "%s: failed to connect to port %d (%s)\n"
 msgstr "rtsp: huts '%s'-ra konektatzerakoan\n"
 
-#: src/vdr/input_vdr.c:2267
+#: src/vdr/input_vdr.c:1752
 #, c-format
 msgid "%s: socket opening (port %d) successful, fd = %d\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:2295
+#: src/vdr/input_vdr.c:1780
 #, fuzzy, c-format
 msgid "%s: connecting to vdr.\n"
 msgstr "%s: Ezin da %s-ra konektatu: %d\n"
 
-#: src/vdr/input_vdr.c:2300
+#: src/vdr/input_vdr.c:1785
 #, fuzzy, c-format
 msgid "%s: failed to resolve hostname '%s' (%s)\n"
 msgstr "stdin: ezin da '%s' ireki\n"
 
-#: src/vdr/input_vdr.c:2323
+#: src/vdr/input_vdr.c:1808
 #, c-format
 msgid "%s: connecting to all sockets (port %d .. %d) was successful.\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:2363
+#: src/vdr/input_vdr.c:1848
 #, c-format
 msgid ""
 "%s: MRL (%s) invalid! MRL should start with vdr://path/to/fifo/stream or "
 "netvdr://host:port where ':port' is optional.\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:2373
+#: src/vdr/input_vdr.c:1858
 #, fuzzy, c-format
 msgid "%s: can't create new thread (%s)\n"
 msgstr "input_rtp: Ezin da hari berria sortu (%s)\n"
 
-#: src/vdr/input_vdr.c:2654
+#: src/vdr/input_vdr.c:2182
 msgid "VDR display device plugin"
 msgstr ""
 
@@ -3761,165 +3790,163 @@ msgstr ""
 msgid ": osd: (%d, %d)-(%d, %d)@%lg\n"
 msgstr ""
 
-#: src/video_out/video_out_aa.c:298
+#: src/video_out/video_out_aa.c:303
 msgid "xine video output plugin using the ascii-art library"
 msgstr "xine bideo irteera plugina AsCii Arte liburutegia erabiliaz"
 
-#: src/video_out/video_out_caca.c:302
+#: src/video_out/video_out_caca.c:309
 msgid "xine video output plugin using the Color AsCii Art library"
 msgstr "xine bideo irteera plugina Kolore AsCii Arte liburutegia erabiliaz"
 
-#: src/video_out/video_out_directfb.c:1341
+#: src/video_out/video_out_directfb.c:1337
 msgid "video layer buffering mode"
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1342
+#: src/video_out/video_out_directfb.c:1338
 msgid ""
 "Select the buffering mode of the output layer. Double or triple buffering "
 "give a smoother playback, but consume more video memory."
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1349
+#: src/video_out/video_out_directfb.c:1345
 msgid "wait for vertical retrace"
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1350
+#: src/video_out/video_out_directfb.c:1346
 msgid ""
 "Enable synchronizing the update of the video image to the repainting of the "
 "entire screen (\"vertical retrace\")."
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1357
+#: src/video_out/video_out_directfb.c:1353
 msgid "enable video colour key"
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1358
+#: src/video_out/video_out_directfb.c:1354
 msgid ""
 "Enable using a colour key to tell the graphics card where to overlay the "
 "video image."
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1364
+#: src/video_out/video_out_directfb.c:1360
 msgid "video colour key"
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1365
-#: src/video_out/video_out_vidix.c:1148 src/video_out/video_out_vidix.c:1155
-#: src/video_out/video_out_vidix.c:1162 src/video_out/video_out_xcbxv.c:1267
-#: src/video_out/video_out_xv.c:1320 src/video_out/video_out_xvmc.c:1415
-#: src/video_out/video_out_xxmc.c:2562
+#: src/video_out/video_out_directfb.c:1361
+#: src/video_out/video_out_vidix.c:1164 src/video_out/video_out_vidix.c:1171
+#: src/video_out/video_out_vidix.c:1178 src/video_out/xv_common.h:25
 msgid ""
 "The colour key is used to tell the graphics card where to overlay the video "
 "image. Try different values, if you experience windows becoming transparent."
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1374
+#: src/video_out/video_out_directfb.c:1370
 msgid "flicker filtering"
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1375
+#: src/video_out/video_out_directfb.c:1371
 msgid "Enable Flicker Filetring for a smooth output on an interlaced display."
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1382
+#: src/video_out/video_out_directfb.c:1378
 msgid "field parity"
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1383
+#: src/video_out/video_out_directfb.c:1379
 msgid ""
 "For an interlaced display, enable controlling the field parity (\"none"
 "\"=disabled)."
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1516
+#: src/video_out/video_out_directfb.c:1512
 msgid "video_out_directfb: using hardware subpicture acceleration.\n"
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1530
+#: src/video_out/video_out_directfb.c:1526
 #, fuzzy
 msgid "video_out_directfb: layer supports video output.\n"
 msgstr "video_out_vidix: egokigailuak yuy2 formatua onartzen du\n"
 
-#: src/video_out/video_out_directfb.c:1539
+#: src/video_out/video_out_directfb.c:1535
 #, fuzzy
 msgid "video_out_directfb: layer doesn't support YV12!\n"
 msgstr "video_out_syncfb: info. (SyncFB moduluak YUY2 onartzen du)\n"
 
-#: src/video_out/video_out_directfb.c:1546
+#: src/video_out/video_out_directfb.c:1542
 #, fuzzy
 msgid "video_out_directfb: layer doesn't support YUY2!\n"
 msgstr "video_out_syncfb: info. (SyncFB moduluak YUY2 onartzen du)\n"
 
-#: src/video_out/video_out_directfb.c:1557
+#: src/video_out/video_out_directfb.c:1553
 msgid ""
 "video_out_directfb:need at least DirectFB 0.9.25 to play on this layer!\n"
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1592
+#: src/video_out/video_out_directfb.c:1588
 #, c-format
 msgid "video_out_directfb: layer doesn't support buffermode %d!\n"
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1598
+#: src/video_out/video_out_directfb.c:1594
 #, c-format
 msgid "video_out_directfb: layer doesn't support options 0x%08x!\n"
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1692
+#: src/video_out/video_out_directfb.c:1688
 msgid "video_out_directfb: using hardware accelerated image scaling.\n"
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1704
+#: src/video_out/video_out_directfb.c:1700
 msgid ""
 "video_out_directfb: image scaling with deinterlacing is hardware "
 "accelerated.\n"
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1782
+#: src/video_out/video_out_directfb.c:1792
 #, fuzzy
 msgid "video layer id (auto: -1)"
 msgstr "bideo saturazioa"
 
-#: src/video_out/video_out_directfb.c:1783
+#: src/video_out/video_out_directfb.c:1793
 msgid "Select the video output layer by its id."
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:1804
-#: src/video_out/video_out_directfb.c:2001
+#: src/video_out/video_out_directfb.c:1814
+#: src/video_out/video_out_directfb.c:2011
 #, fuzzy, c-format
 msgid "video_out_directfb: using display layer #%d.\n"
 msgstr "video_out_vidix: erabilitako kontrolatzailea: %s, %s-rena\n"
 
-#: src/video_out/video_out_directfb.c:1901
+#: src/video_out/video_out_directfb.c:1911
 #, fuzzy
 msgid "xine video output plugin using DirectFB."
 msgstr "xine bideo irteera plugina DirectFB liburutegia erabiliaz"
 
-#: src/video_out/video_out_directfb.c:1994
+#: src/video_out/video_out_directfb.c:2004
 msgid "video_out_directfb: no usable display layer was found!\n"
 msgstr ""
 
-#: src/video_out/video_out_directfb.c:2106
+#: src/video_out/video_out_directfb.c:2116
 #, fuzzy
 msgid "xine video output plugin using DirectFB under XDirectFB."
 msgstr "xine bideo irteera plugina DirectFB liburutegia erabiliaz"
 
-#: src/video_out/video_out_directx.c:1241
+#: src/video_out/video_out_directx.c:1247
 msgid "xine video output plugin for win32 using directx"
 msgstr "xine bideo irteera plugina win32-rentzat directx erabiliaz"
 
-#: src/video_out/video_out_fb.c:746
+#: src/video_out/video_out_fb.c:741
 #, c-format
 msgid ""
 "video_out_fb: only packed truecolour/directcolour is supported (%d).\n"
 "     Check 'fbset -i' or try 'fbset -depth 16'.\n"
 msgstr ""
 
-#: src/video_out/video_out_fb.c:806 src/video_out/video_out_vidix.c:1220
+#: src/video_out/video_out_fb.c:801 src/video_out/video_out_vidix.c:1236
 msgid "framebuffer device name"
 msgstr "framebuffer gailu izena"
 
-#: src/video_out/video_out_fb.c:807 src/video_out/video_out_vidix.c:1221
+#: src/video_out/video_out_fb.c:802 src/video_out/video_out_vidix.c:1237
 msgid ""
 "Specifies the file name for the framebuffer device to be used.\n"
 "This setting is security critical, because when changed to a different file, "
@@ -3931,17 +3958,17 @@ msgstr ""
 "xinek fitxategia eduki arbitrario bat erabiliaz bete bait dezake. Beraz "
 "balioaegiazko framebuffer gailu bat dela ziurtatu behar duzu."
 
-#: src/video_out/video_out_fb.c:881
+#: src/video_out/video_out_fb.c:876
 #, fuzzy, c-format
 msgid "%s: Your video mode was not recognized, sorry.\n"
 msgstr "video_out_fb: Bideo modua ez da ezagutzen, barkatu.\n"
 
-#: src/video_out/video_out_fb.c:938
+#: src/video_out/video_out_fb.c:933
 #, fuzzy, c-format
 msgid "%s: %d video RAM buffers are available.\n"
 msgstr "video_out_fb: %d bideo RAM buffer eskuragarri dira.\n"
 
-#: src/video_out/video_out_fb.c:944
+#: src/video_out/video_out_fb.c:939
 #, c-format
 msgid ""
 "WARNING: %s: Zero copy buffers are DISABLED because only %d buffers\n"
@@ -3949,14 +3976,14 @@ msgid ""
 "     the frame buffer resolution might help.\n"
 msgstr ""
 
-#: src/video_out/video_out_fb.c:955
+#: src/video_out/video_out_fb.c:950
 #, c-format
 msgid ""
 "WARNING: %s: Zero copy buffers are DISABLED because kernel driver\n"
 "     do not support screen panning (used for frame flips).\n"
 msgstr ""
 
-#: src/video_out/video_out_fb.c:1024
+#: src/video_out/video_out_fb.c:1019
 #, c-format
 msgid ""
 "WARNING: %s: current display depth is %d. For better performance\n"
@@ -3964,7 +3991,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/video_out/video_out_fb.c:1055
+#: src/video_out/video_out_fb.c:1050
 msgid "Xine video output plugin using the Linux frame buffer device"
 msgstr "Xine bideo irteera plugina Linux framebuffer gailua erabiliaz"
 
@@ -4015,9 +4042,8 @@ msgid ""
 "Ignored for static render routines.\n"
 msgstr ""
 
-#: src/video_out/video_out_opengl.c:1915 src/video_out/video_out_vidix.c:1012
-#: src/video_out/video_out_xcbxv.c:1299 src/video_out/video_out_xv.c:1352
-#: src/video_out/video_out_xvmc.c:1429 src/video_out/video_out_xxmc.c:2594
+#: src/video_out/video_out_opengl.c:1915 src/video_out/video_out_vidix.c:1028
+#: src/video_out/xv_common.h:46
 msgid "enable double buffering"
 msgstr "gaitu buffer bikoitza"
 
@@ -4028,7 +4054,7 @@ msgid ""
 "It should not have any performance impact."
 msgstr ""
 
-#: src/video_out/video_out_opengl.c:1962
+#: src/video_out/video_out_opengl.c:2020
 #, fuzzy
 msgid "xine video output plugin using the OpenGL 3D graphics API"
 msgstr "xine bideo irteera OpenGL - TNG erabiliaz"
@@ -4087,52 +4113,50 @@ msgstr ""
 msgid "video_out_pgx64: Error: unable to set window properties\n"
 msgstr "video_out_pgx64: Errorea: ezin dira leiho propietateak ezarri\n"
 
-#: src/video_out/video_out_pgx64.c:808
+#: src/video_out/video_out_pgx64.c:807
 msgid "video_out_pgx64: Warning: low video memory, multi-buffering disabled\n"
 msgstr ""
 "video_out_pgx64: Abisua: bideo memoria baxua, buffer-anitza ezgaiturik\n"
 
-#: src/video_out/video_out_pgx64.c:840
+#: src/video_out/video_out_pgx64.c:839
 msgid "video_out_pgx64: Error: insuffucient video memory\n"
 msgstr "video_out_pgx64: Errorea: Bideo memoria askieza\n"
 
-#: src/video_out/video_out_pgx64.c:856
+#: src/video_out/video_out_pgx64.c:855
 msgid "video_out_pgx64: Warning: low video memory, double-buffering disabled\n"
 msgstr ""
 "video_out_pgx64: Abisua: bideo memoria baxua, buffer-bikoitza ezgaiturik\n"
 
-#: src/video_out/video_out_pgx64.c:1386
+#: src/video_out/video_out_pgx64.c:1385
 msgid "video_out_pgx64: Error: ioctl failed (FBIOGATTR)\n"
 msgstr "video_out_pgx64: Errorea: ioctl hutsa (FBIOGATTR)\n"
 
-#: src/video_out/video_out_pgx64.c:1453 src/video_out/video_out_xcbxv.c:1266
-#: src/video_out/video_out_xv.c:1319 src/video_out/video_out_xvmc.c:1414
-#: src/video_out/video_out_xxmc.c:2561
+#: src/video_out/video_out_pgx64.c:1452 src/video_out/xv_common.h:24
 msgid "video overlay colour key"
 msgstr ""
 
-#: src/video_out/video_out_pgx64.c:1454
+#: src/video_out/video_out_pgx64.c:1453
 msgid ""
 "The colour key is used to tell the graphics card where it can overlay the "
 "video image. Try using different values if you see the video showing through "
 "other windows."
 msgstr ""
 
-#: src/video_out/video_out_pgx64.c:1461
+#: src/video_out/video_out_pgx64.c:1460
 msgid "enable chroma keying"
 msgstr ""
 
-#: src/video_out/video_out_pgx64.c:1462
+#: src/video_out/video_out_pgx64.c:1461
 msgid ""
 "Draw OSD graphics on top of the overlay colour key rather than blend them "
 "into each frame."
 msgstr ""
 
-#: src/video_out/video_out_pgx64.c:1465
+#: src/video_out/video_out_pgx64.c:1464
 msgid "enable multi-buffering"
 msgstr "gaitu buffer-anitzak"
 
-#: src/video_out/video_out_pgx64.c:1466
+#: src/video_out/video_out_pgx64.c:1465
 msgid ""
 "Multi buffering increases performance at the expense of using more graphics "
 "memory."
@@ -4140,17 +4164,17 @@ msgstr ""
 "Buffer anitzek performantzia betzen dute baina memoria grafiko gehiago "
 "erabiliaz."
 
-#: src/video_out/video_out_pgx64.c:1487
+#: src/video_out/video_out_pgx64.c:1486
 #, fuzzy
 msgid "xine video output plugin for Sun XVR100/PGX64/PGX24 framebuffers"
 msgstr ""
 "xine bideo irteera plugina libvidix Linux Frame buffer-arentzat erabiliaz"
 
-#: src/video_out/video_out_sdl.c:480
+#: src/video_out/video_out_sdl.c:490
 msgid "use hardware acceleration if available"
 msgstr "Erabili hardware azelerazioa eskuragarri badago"
 
-#: src/video_out/video_out_sdl.c:481
+#: src/video_out/video_out_sdl.c:491
 msgid ""
 "When your system supports it, hardware acceleration provided by your "
 "graphics hardware will be used. This might not work, so you can disable it, "
@@ -4160,16 +4184,16 @@ msgstr ""
 "azelerazioa erbailikiko da. Honek agian ez du funtzionatzen, beraz zerbait "
 "oker joan ezkero ezgaitu ezazu."
 
-#: src/video_out/video_out_sdl.c:523
+#: src/video_out/video_out_sdl.c:537
 msgid "sdl has to emulate a 16 bit surfaces, that will slow things down.\n"
 msgstr ""
 "sdl-ek ez ditu 16 bit gainazalak emulatu, honek gauzak geldot ditzake.\n"
 
-#: src/video_out/video_out_sdl.c:560
+#: src/video_out/video_out_sdl.c:574
 msgid "video_out_sdl: fullscreen mode is NOT supported\n"
 msgstr "video_out_sdl: pantaila osoko modua EZ da onartzen\n"
 
-#: src/video_out/video_out_sdl.c:582
+#: src/video_out/video_out_sdl.c:596
 msgid "xine video output plugin using the Simple Direct Media Layer"
 msgstr "xine video irteera plugina \"Simple Direct Media Layer\" erabiliaz"
 
@@ -4177,192 +4201,111 @@ msgstr "xine video irteera plugina \"Simple Direct Media Layer\" erabiliaz"
 msgid "xine video output plugin using the Libstk Surface Set-top Toolkit"
 msgstr "xine video output plugina \"Libstk Surface Set-top Toolkit\" erabiliaz"
 
-#: src/video_out/video_out_syncfb.c:280
-msgid "video_out_syncfb: error. (YUY2 not supported by your graphic card)\n"
-msgstr "video_out_syncfb: errorea. (txartela grafikoak ez du YUY2 onartzen)\n"
-
-#: src/video_out/video_out_syncfb.c:296
-msgid "video_out_syncfb: error. (YV12 not supported by your graphic card)\n"
-msgstr "video_out_syncfb: errorea. (txartela grafikoak ez du YV12 onartzen)\n"
-
-#: src/video_out/video_out_syncfb.c:938
-msgid "video_out_syncfb: info. (SyncFB module supports YUV 4:2:0 (3 plane))\n"
-msgstr ""
-"video_out_syncfb: info. (SyncFB moduluak YUV 4:2:0 (3 plano) onartzen du)\n"
-
-#: src/video_out/video_out_syncfb.c:943
-msgid "video_out_syncfb: info. (SyncFB module supports YUV 4:2:0 (2 plane))\n"
-msgstr ""
-"video_out_syncfb: info. (SyncFB moduluak YUV 4:2:0 (2 plano) onartzen du)\n"
-
-#: src/video_out/video_out_syncfb.c:948
-msgid "video_out_syncfb: info. (SyncFB module supports YUV 4:2:2)\n"
-msgstr "video_out_syncfb: info. (SyncFB moduluak YUV 4:2:2 onartzen du)\n"
-
-#: src/video_out/video_out_syncfb.c:954
-msgid "video_out_syncfb: info. (SyncFB module supports YUY2)\n"
-msgstr "video_out_syncfb: info. (SyncFB moduluak YUY2 onartzen du)\n"
-
-#: src/video_out/video_out_syncfb.c:961
-msgid "video_out_syncfb: info. (SyncFB module supports RGB565)\n"
-msgstr "video_out_syncfb: info. (SyncFB moduluak RGB565 onartzen du)\n"
-
-#: src/video_out/video_out_syncfb.c:966
-msgid ""
-"video_out_syncfb: aborting. (SyncFB module does not support YV12, YUY2 nor "
-"RGB565)\n"
-msgstr ""
-"video_out_syncfb: uzten. (SyncFB moduluak ez du YV12, YUY2 edo RGB565 "
-"onartzen)\n"
-
-#: src/video_out/video_out_syncfb.c:985
-msgid ""
-"video_out_syncfb: info. (brightness/contrast control won't be available "
-"because your SyncFB kernel module seems to be outdated. Please refer to "
-"README.syncfb for informations on how to update it.)\n"
-msgstr ""
-
-#: src/video_out/video_out_syncfb.c:1009
-msgid "default number of frame repetitions"
-msgstr "marko errepikatze lehenetsiriko kopurua"
-
-#: src/video_out/video_out_syncfb.c:1010
-msgid ""
-"This specifies how many times a single video frame will be displayed "
-"consecutively."
-msgstr ""
-"Bideo marko bat gelditu gabe zenbat aldiz errepikatu behar den ezartzen du."
-
-#: src/video_out/video_out_syncfb.c:1060
-msgid "SyncFB device name"
-msgstr "SyncFB gailu izena"
-
-#: src/video_out/video_out_syncfb.c:1061
-msgid ""
-"Specifies the file name for the SyncFB (TeleTux) device to be used.\n"
-"This setting is security critical, because when changed to a different file, "
-"xine can be used to fill this file with arbitrary content. So you should be "
-"careful that the value you enter really is a proper framebuffer device."
-msgstr ""
-"Erabiliko den SynFB (TeleTux) gailuarne fitxategi izena ezartzen du,\n"
-"Ezarpen hau seguratsun kritikokoa da, fitxategi ezberdin batetara aldatzean, "
-"xinek fitxategia eduki arbitrario bat erabiliaz bete bait dezake. Beraz "
-"balioaegiazko framebuffer gailu bat dela ziurtatu behar duzu."
-
-#: src/video_out/video_out_syncfb.c:1084
-msgid ""
-"xine video output plugin using the SyncFB module for Matrox G200/G400 cards"
-msgstr ""
-"xine bideo irteera plugina Matrox G200/G400 txartelen SyncFB modulua "
-"erabiliaz"
-
-#: src/video_out/video_out_vidix.c:990
+#: src/video_out/video_out_vidix.c:1006
 msgid "red intensity"
 msgstr "intentsitate gorria"
 
-#: src/video_out/video_out_vidix.c:990
+#: src/video_out/video_out_vidix.c:1006
 msgid "The intensity of the red colour components."
 msgstr "Gorri koloreko osagaien intentsitatea."
 
-#: src/video_out/video_out_vidix.c:995
+#: src/video_out/video_out_vidix.c:1011
 msgid "green intensity"
 msgstr "intentsitate berdea"
 
-#: src/video_out/video_out_vidix.c:995
+#: src/video_out/video_out_vidix.c:1011
 msgid "The intensity of the green colour components."
 msgstr "Berde koloreko osagaien intentsitatea."
 
-#: src/video_out/video_out_vidix.c:1000
+#: src/video_out/video_out_vidix.c:1016
 msgid "blue intensity"
 msgstr "Intentsitate urdina"
 
-#: src/video_out/video_out_vidix.c:1000
+#: src/video_out/video_out_vidix.c:1016
 msgid "The intensity of the blue colour components."
 msgstr "Urdin koloreko osagaien intentsitatea."
 
-#: src/video_out/video_out_vidix.c:1013 src/video_out/video_out_xcbxv.c:1300
-#: src/video_out/video_out_xv.c:1353 src/video_out/video_out_xvmc.c:1430
-#: src/video_out/video_out_xxmc.c:2595
+#: src/video_out/video_out_vidix.c:1029 src/video_out/xv_common.h:47
 msgid ""
 "Double buffering will synchronize the update of the video image to the "
 "repainting of the entire screen (\"vertical retrace\"). This eliminates "
 "flickering and tearing artifacts, but will use more graphics memory."
 msgstr ""
 
-#: src/video_out/video_out_vidix.c:1060
+#: src/video_out/video_out_vidix.c:1076
 msgid "video_out_vidix: adaptor supports the yuy2 format\n"
 msgstr "video_out_vidix: egokigailuak yuy2 formatua onartzen du\n"
 
-#: src/video_out/video_out_vidix.c:1071
+#: src/video_out/video_out_vidix.c:1087
 msgid "video_out_vidix: adaptor supports the yv12 format\n"
 msgstr "video_out_vidix: egokigailuak yv12 formatua onartzen du\n"
 
-#: src/video_out/video_out_vidix.c:1087
+#: src/video_out/video_out_vidix.c:1103
 msgid "video_out_vidix: You have wrong version of VIDIX library\n"
 msgstr "video_out_vidix: VIDIX liburutegiaren okerreko bertsio bat duzu\n"
 
-#: src/video_out/video_out_vidix.c:1095
+#: src/video_out/video_out_vidix.c:1111
 msgid "video_out_vidix: Couldn't find working VIDIX driver\n"
 msgstr "video_out_vidix: Ezin da dabilen VIDIX kontrolatzailerik\n"
 
-#: src/video_out/video_out_vidix.c:1108
+#: src/video_out/video_out_vidix.c:1124
 #, c-format
 msgid "video_out_vidix: using driver: %s by %s\n"
 msgstr "video_out_vidix: erabilitako kontrolatzailea: %s, %s-rena\n"
 
-#: src/video_out/video_out_vidix.c:1147
+#: src/video_out/video_out_vidix.c:1163
 msgid "video overlay colour key red component"
 msgstr "bideo ingurune kolore teklaren gorri osagaia"
 
-#: src/video_out/video_out_vidix.c:1154
+#: src/video_out/video_out_vidix.c:1170
 msgid "video overlay colour key green component"
 msgstr "bideo ingurune kolore teklaren berde osagaia"
 
-#: src/video_out/video_out_vidix.c:1161
+#: src/video_out/video_out_vidix.c:1177
 msgid "video overlay colour key blue component"
 msgstr "bideo ingurune kolore teklaren urdin osagaia"
 
-#: src/video_out/video_out_vidix.c:1195
+#: src/video_out/video_out_vidix.c:1211
 msgid "xine video output plugin using libvidix for x11"
 msgstr "xine bideo irteera plugina libvidix X11-rentzat erabiliaz"
 
-#: src/video_out/video_out_vidix.c:1269
+#: src/video_out/video_out_vidix.c:1285
 msgid "xine video output plugin using libvidix for linux frame buffer"
 msgstr ""
 "xine bideo irteera plugina libvidix Linux Frame buffer-arentzat erabiliaz"
 
-#: src/video_out/video_out_xcbshm.c:150 src/video_out/video_out_xshm.c:211
+#: src/video_out/video_out_xcbshm.c:154 src/video_out/video_out_xshm.c:215
 #, c-format
 msgid "%s: %s: allocating image\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbshm.c:152 src/video_out/video_out_xcbshm.c:162
-#: src/video_out/video_out_xcbshm.c:174 src/video_out/video_out_xcbxv.c:260
-#: src/video_out/video_out_xcbxv.c:270 src/video_out/video_out_xcbxv.c:280
-#: src/video_out/video_out_xcbxv.c:292 src/video_out/video_out_xshm.c:196
-#: src/video_out/video_out_xshm.c:213 src/video_out/video_out_xshm.c:224
-#: src/video_out/video_out_xshm.c:243 src/video_out/video_out_xv.c:288
-#: src/video_out/video_out_xv.c:315 src/video_out/video_out_xv.c:324
-#: src/video_out/video_out_xv.c:360 src/video_out/video_out_xxmc.c:642
+#: src/video_out/video_out_xcbshm.c:156 src/video_out/video_out_xcbshm.c:166
+#: src/video_out/video_out_xcbshm.c:178 src/video_out/video_out_xcbxv.c:263
+#: src/video_out/video_out_xcbxv.c:273 src/video_out/video_out_xcbxv.c:283
+#: src/video_out/video_out_xcbxv.c:295 src/video_out/video_out_xshm.c:200
+#: src/video_out/video_out_xshm.c:217 src/video_out/video_out_xshm.c:228
+#: src/video_out/video_out_xshm.c:247 src/video_out/video_out_xv.c:291
+#: src/video_out/video_out_xv.c:318 src/video_out/video_out_xv.c:327
+#: src/video_out/video_out_xv.c:363 src/video_out/video_out_xxmc.c:642
 #: src/video_out/video_out_xxmc.c:653 src/video_out/video_out_xxmc.c:662
 #: src/video_out/video_out_xxmc.c:698
 #, c-format
 msgid "%s: => not using MIT Shared Memory extension.\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbshm.c:160 src/video_out/video_out_xshm.c:222
+#: src/video_out/video_out_xcbshm.c:164 src/video_out/video_out_xshm.c:226
 #, c-format
 msgid "%s: shared memory error (address error) when allocating image \n"
 msgstr ""
 
-#: src/video_out/video_out_xcbshm.c:172 src/video_out/video_out_xcbxv.c:290
-#: src/video_out/video_out_xshm.c:241 src/video_out/video_out_xv.c:358
+#: src/video_out/video_out_xcbshm.c:176 src/video_out/video_out_xcbxv.c:293
+#: src/video_out/video_out_xshm.c:245 src/video_out/video_out_xv.c:361
 #: src/video_out/video_out_xxmc.c:696
 #, c-format
 msgid "%s: x11 error during shared memory XImage creation\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbshm.c:1096 src/video_out/video_out_xshm.c:1153
+#: src/video_out/video_out_xcbshm.c:1095 src/video_out/video_out_xshm.c:1152
 #, c-format
 msgid ""
 "\n"
@@ -4372,46 +4315,52 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbshm.c:1109 src/video_out/video_out_xshm.c:1166
+#: src/video_out/video_out_xcbshm.c:1108 src/video_out/video_out_xshm.c:1165
 #, fuzzy, c-format
 msgid "%s: MIT shared memory extension not present on display.\n"
 msgstr ""
 "video_out_xshm: MIT partekatutako memoria luzapena ez dago pantailan.\n"
 
-#: src/video_out/video_out_xcbshm.c:1208 src/video_out/video_out_xshm.c:1250
+#: src/video_out/video_out_xcbshm.c:1207 src/video_out/video_out_xshm.c:1249
 #, fuzzy, c-format
 msgid "%s: your video mode was not recognized, sorry :-(\n"
 msgstr "video_out_fb: Bideo modua ez da ezagutzen, barkatu.\n"
 
-#: src/video_out/video_out_xcbshm.c:1237 src/video_out/video_out_xshm.c:1298
+#: src/video_out/video_out_xcbshm.c:1236 src/video_out/video_out_xshm.c:1297
 msgid "xine video output plugin using the MIT X shared memory extension"
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:258 src/video_out/video_out_xv.c:313
+#: src/video_out/video_out_xcbxv.c:261 src/video_out/video_out_xv.c:316
 #: src/video_out/video_out_xxmc.c:651
 #, c-format
 msgid "%s: XvShmCreateImage returned a zero size\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:268 src/video_out/video_out_xv.c:322
+#: src/video_out/video_out_xcbxv.c:271 src/video_out/video_out_xv.c:325
 #: src/video_out/video_out_xxmc.c:660
 #, c-format
 msgid "%s: shared memory error in shmget: %s\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:278
+#: src/video_out/video_out_xcbxv.c:281
 #, c-format
 msgid "%s: shared memory error (address error)\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:1120 src/video_out/video_out_xv.c:1167
-#: src/video_out/video_out_xxmc.c:2412
+#: src/video_out/video_out_xcbxv.c:1211 src/video_out/video_out_xv.c:1244
+#: src/video_out/video_out_xxmc.c:2471
 #, fuzzy, c-format
 msgid "%s: Xv extension not present.\n"
 msgstr "video_out_xv: Xv luzapena ez dago.\n"
 
-#: src/video_out/video_out_xcbxv.c:1162 src/video_out/video_out_xv.c:1204
-#: src/video_out/video_out_xxmc.c:2449
+#: src/video_out/video_out_xcbxv.c:1238 src/video_out/video_out_xv.c:1269
+#: src/video_out/video_out_xxmc.c:2496
+#, c-format
+msgid "%s: could not open Xv port %d - autodetecting\n"
+msgstr ""
+
+#: src/video_out/video_out_xcbxv.c:1251 src/video_out/video_out_xv.c:1282
+#: src/video_out/video_out_xxmc.c:2509
 #, fuzzy, c-format
 msgid ""
 "%s: Xv extension is present but I couldn't find a usable yuv12 port.\n"
@@ -4421,183 +4370,150 @@ msgstr ""
 "erabilgarririkaurkitu.\n"
 "              Dirudienez zure txartela grafikoak ez du Xv onartzen?!\n"
 
-#: src/video_out/video_out_xcbxv.c:1171
+#: src/video_out/video_out_xcbxv.c:1260
 #, c-format
 msgid ""
 "%s: using Xv port %d from adaptor %s for hardware colour space conversion "
 "and scaling.\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:1275 src/video_out/video_out_xv.c:1328
-#: src/video_out/video_out_xvmc.c:1423 src/video_out/video_out_xxmc.c:2570
-msgid "autopaint colour key"
+#: src/video_out/video_out_xcbxv.c:1383 src/video_out/video_out_xv.c:1425
+msgid "enable vblank sync"
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:1276 src/video_out/video_out_xv.c:1329
-#: src/video_out/video_out_xvmc.c:1424 src/video_out/video_out_xxmc.c:2571
-msgid "Make Xv autopaint its colour key."
-msgstr ""
-
-#: src/video_out/video_out_xcbxv.c:1283 src/video_out/video_out_xv.c:1336
-#: src/video_out/video_out_xxmc.c:2578
-msgid "bilinear scaling mode"
-msgstr "eskalatze modu bilinearra"
-
-#: src/video_out/video_out_xcbxv.c:1284 src/video_out/video_out_xv.c:1337
-#: src/video_out/video_out_xxmc.c:2579
+#: src/video_out/video_out_xcbxv.c:1384 src/video_out/video_out_xv.c:1426
 msgid ""
-"Selects the bilinear scaling mode for Permedia cards. The individual values "
-"are:\n"
-"\n"
-"Permedia 2\n"
-"0 - disable bilinear filtering\n"
-"1 - enable bilinear filtering\n"
-"\n"
-"Permedia 3\n"
-"0 - disable bilinear filtering\n"
-"1 - horizontal linear filtering\n"
-"2 - enable full bilinear filtering"
+"This option will synchronize the update of the video image to the repainting "
+"of the entire screen (\"vertical retrace\"). This eliminates flickering and "
+"tearing artifacts. On nvidia cards one may also need to run \"nvidia-settings"
+"\" and choose which display device to sync to under the XVideo Settings tab"
 msgstr ""
 
-#: src/video_out/video_out_xcbxv.c:1336 src/video_out/video_out_xv.c:1386
-#: src/video_out/video_out_xxmc.c:2635
+#: src/video_out/video_out_xcbxv.c:1423 src/video_out/video_out_xcbxv.c:1429
+#: src/video_out/video_out_xv.c:1462 src/video_out/video_out_xv.c:1468
+#: src/video_out/video_out_xvmc.c:1473 src/video_out/video_out_xvmc.c:1479
+#: src/video_out/video_out_xxmc.c:2681 src/video_out/video_out_xxmc.c:2687
 #, fuzzy, c-format
-msgid "%s: this adaptor supports the yv12 format.\n"
+msgid "%s: this adaptor supports the %s format.\n"
 msgstr "video_out_xv: adaptadoreak yv12 formatua onartzen du.\n"
 
-#: src/video_out/video_out_xcbxv.c:1341 src/video_out/video_out_xv.c:1391
-#: src/video_out/video_out_xxmc.c:2640
-#, fuzzy, c-format
-msgid "%s: this adaptor supports the yuy2 format.\n"
-msgstr "video_out_xv: adaptadoreak yuy2 formatua onartzen du.\n"
-
-#: src/video_out/video_out_xcbxv.c:1349 src/video_out/video_out_xv.c:1413
-#: src/video_out/video_out_xxmc.c:2663
-msgid "pitch alignment workaround"
-msgstr ""
-
-#: src/video_out/video_out_xcbxv.c:1350 src/video_out/video_out_xv.c:1414
-#: src/video_out/video_out_xxmc.c:2664
-msgid "Some buggy video drivers need a workaround to function properly."
-msgstr ""
-
-#: src/video_out/video_out_xcbxv.c:1377 src/video_out/video_out_xv.c:1460
-#: src/video_out/video_out_xxmc.c:2757
+#: src/video_out/video_out_xcbxv.c:1467 src/video_out/video_out_xv.c:1539
+#: src/video_out/video_out_xxmc.c:2806
 msgid "xine video output plugin using the MIT X video extension"
 msgstr "xine bideo irteera plugina MIT X bideo luzapena erabiltzen"
 
-#: src/video_out/video_out_xshm.c:194
+#: src/video_out/video_out_xshm.c:198
 #, c-format
 msgid "%s: shared memory error when allocating image\n"
 msgstr ""
 
-#: src/video_out/video_out_xv.c:286 src/video_out/video_out_xxmc.c:640
+#: src/video_out/video_out_xv.c:289 src/video_out/video_out_xxmc.c:640
 #, c-format
 msgid "%s: XvShmCreateImage failed\n"
 msgstr ""
 
-#: src/video_out/video_out_xv.c:1214 src/video_out/video_out_xxmc.c:2459
+#: src/video_out/video_out_xv.c:1292 src/video_out/video_out_xxmc.c:2519
 #, c-format
 msgid ""
 "%s: using Xv port %ld from adaptor %s for hardware colour space conversion "
 "and scaling.\n"
 msgstr ""
 
-#: src/video_out/video_out_xvmc.c:1540
+#: src/video_out/video_out_xvmc.c:1551
 msgid "video_out_xvmc: XvMC extension not present.\n"
 msgstr "video_out_xvmc: XvMC luzapena ez dago.\n"
 
-#: src/video_out/video_out_xvmc.c:1638
+#: src/video_out/video_out_xvmc.c:1649
 msgid ""
 "video_out_xvmc: Xv extension is present but I couldn't find a usable yuv12 "
 "port.\n"
 msgstr ""
 
-#: src/video_out/video_out_xvmc.c:1647
+#: src/video_out/video_out_xvmc.c:1658
 #, c-format
 msgid ""
 "video_out_xvmc: using Xv port %ld from adaptor %s\n"
 "                for hardware colour space conversion and scaling\n"
 msgstr ""
 
-#: src/video_out/video_out_xvmc.c:1652
+#: src/video_out/video_out_xvmc.c:1663
 msgid "                idct and motion compensation acceleration \n"
 msgstr ""
 
-#: src/video_out/video_out_xvmc.c:1654
+#: src/video_out/video_out_xvmc.c:1665
 msgid "                motion compensation acceleration only\n"
 msgstr ""
 
-#: src/video_out/video_out_xvmc.c:1656
+#: src/video_out/video_out_xvmc.c:1667
 msgid "                no XvMC support \n"
 msgstr "                ez da XvMC onartzen \n"
 
-#: src/video_out/video_out_xvmc.c:1657
+#: src/video_out/video_out_xvmc.c:1668
 #, c-format
 msgid "                With Overlay = %d; UnsignedIntra = %d.\n"
 msgstr ""
 
-#: src/video_out/video_out_xvmc.c:1670
+#: src/video_out/video_out_xvmc.c:1681
 msgid "xine video output plugin using the XvMC X video extension"
 msgstr "xineo bideo irteera plugina XvMC X bideo luzapena erabiltzen"
 
-#: src/video_out/video_out_xxmc.c:2669
+#: src/video_out/video_out_xxmc.c:2718
 msgid "Make XvMC allocate more frames for better buffering."
 msgstr ""
 
-#: src/video_out/video_out_xxmc.c:2670
+#: src/video_out/video_out_xxmc.c:2719
 msgid ""
 "Some XvMC implementations allow more than 8 frames.\n"
 "This option, when turned on, makes the driver try to\n"
 "allocate 15 frames. A must for unichrome and live VDR.\n"
 msgstr ""
 
-#: src/video_out/video_out_xxmc.c:2676
+#: src/video_out/video_out_xxmc.c:2725
 msgid "Unichrome cpu save"
 msgstr ""
 
-#: src/video_out/video_out_xxmc.c:2677
+#: src/video_out/video_out_xxmc.c:2726
 msgid ""
 "Saves CPU time by sleeping while decoder works.\n"
 "Only for Linux kernel 2.6 series or 2.4 with multimedia patch.\n"
 "Experimental.\n"
 msgstr ""
 
-#: src/video_out/video_out_xxmc.c:2683
+#: src/video_out/video_out_xxmc.c:2732
 msgid "Fix buggy NVIDIA XvMC subpicture colours"
 msgstr ""
 
-#: src/video_out/video_out_xxmc.c:2684
+#: src/video_out/video_out_xxmc.c:2733
 msgid ""
 "There's a bug in NVIDIA's XvMC lib that makes red OSD colours\n"
 "look blue and vice versa. This option provides a workaround.\n"
 msgstr ""
 
-#: src/video_out/video_out_xxmc.c:2689
+#: src/video_out/video_out_xxmc.c:2738
 msgid "Use bob as accelerated deinterlace method."
 msgstr ""
 
-#: src/video_out/video_out_xxmc.c:2690
+#: src/video_out/video_out_xxmc.c:2739
 msgid ""
 "When interlacing is enabled for hardware accelerated frames,\n"
 "alternate between top and bottom field at double the frame rate.\n"
 msgstr ""
 
-#: src/video_out/video_out_xxmc.c:2696
+#: src/video_out/video_out_xxmc.c:2745
 msgid "Don't use bob deinterlacing for progressive frames."
 msgstr ""
 
-#: src/video_out/video_out_xxmc.c:2697
+#: src/video_out/video_out_xxmc.c:2746
 msgid ""
 "Progressive frames don't need deinterlacing, so disabling it on\n"
 "demand should result in a better picture.\n"
 msgstr ""
 
-#: src/video_out/video_out_xxmc.c:2703
+#: src/video_out/video_out_xxmc.c:2752
 msgid "Don't use bob deinterlacing while a scaled OSD is active."
 msgstr ""
 
-#: src/video_out/video_out_xxmc.c:2704
+#: src/video_out/video_out_xxmc.c:2753
 msgid ""
 "Bob deinterlacing adds some noise to horizontal lines, so disabling it\n"
 "on demand should result in a better OSD picture.\n"
@@ -4623,6 +4539,61 @@ msgstr ""
 #, c-format
 msgid "x11osd: unscaled overlay created (%s mode).\n"
 msgstr "x11osd: eskala gabeko gainjarria sorturik (%s modua).\n"
+
+#: src/video_out/xv_common.h:30
+msgid "autopaint colour key"
+msgstr ""
+
+#: src/video_out/xv_common.h:31
+msgid "Make Xv autopaint its colour key."
+msgstr ""
+
+#: src/video_out/xv_common.h:34
+msgid "bilinear scaling mode"
+msgstr "eskalatze modu bilinearra"
+
+#: src/video_out/xv_common.h:35
+msgid ""
+"Selects the bilinear scaling mode for Permedia cards. The individual values "
+"are:\n"
+"\n"
+"Permedia 2\n"
+"0 - disable bilinear filtering\n"
+"1 - enable bilinear filtering\n"
+"\n"
+"Permedia 3\n"
+"0 - disable bilinear filtering\n"
+"1 - horizontal linear filtering\n"
+"2 - enable full bilinear filtering"
+msgstr ""
+
+#: src/video_out/xv_common.h:53
+#, fuzzy
+msgid "Xv port number"
+msgstr "sarrera zenbaki okerra"
+
+#: src/video_out/xv_common.h:54
+msgid "Selects the Xv port number to use (0 to autodetect)."
+msgstr ""
+
+#: src/video_out/xv_common.h:57
+msgid "pitch alignment workaround"
+msgstr ""
+
+#: src/video_out/xv_common.h:58
+msgid "Some buggy video drivers need a workaround to function properly."
+msgstr ""
+
+#: src/video_out/xv_common.h:66
+msgid "video display method preference"
+msgstr ""
+
+#: src/video_out/xv_common.h:67
+msgid ""
+"Selects which video output method is preferred. Detection is done using the "
+"reported Xv adaptor names.\n"
+"(Only applies when auto-detecting which Xv port to use.)"
+msgstr ""
 
 #: src/xine-engine/alphablend.c:2146
 msgid "disable exact alpha blending of overlays"
@@ -4658,35 +4629,35 @@ msgid ""
 "increased latency and memory consumption."
 msgstr ""
 
-#: src/xine-engine/audio_out.c:1111
+#: src/xine-engine/audio_out.c:1112
 msgid ""
 "audio_out: delay calculation impossible with an unavailable audio device\n"
 msgstr ""
 "audio_out: atzerapena kalkulatzea ezinezko audio gailu eskuraezin batekin\n"
 
-#: src/xine-engine/audio_out.c:1250
+#: src/xine-engine/audio_out.c:1251
 #, fuzzy
 msgid "write to sound card failed. Assuming the device was unplugged.\n"
 msgstr ""
 "Hus soinu txartelan idazterakoan. Konektatu gabeko USB gailu bat ote?\n"
 
-#: src/xine-engine/audio_out.c:1422
+#: src/xine-engine/audio_out.c:1423
 msgid "8 bits not supported by driver, converting to 16 bits.\n"
 msgstr "kontrolatzaileak ez du 8bit onartzen, 16bit-era bihurtzen.\n"
 
-#: src/xine-engine/audio_out.c:1430
+#: src/xine-engine/audio_out.c:1431
 msgid "mono not supported by driver, converting to stereo.\n"
 msgstr "kontrolatzaileak ez du mono onartzen, estereo-ra bihurtzen.\n"
 
-#: src/xine-engine/audio_out.c:1436
+#: src/xine-engine/audio_out.c:1437
 msgid "stereo not supported by driver, converting to mono.\n"
 msgstr "kontrolatzaileak ez du estereo onartzen, mono-ra bihurtzen.\n"
 
-#: src/xine-engine/audio_out.c:2095
+#: src/xine-engine/audio_out.c:2100
 msgid "method to sync audio and video"
 msgstr "audioa eta bideoa sinkronizatzeko metodoa"
 
-#: src/xine-engine/audio_out.c:2096
+#: src/xine-engine/audio_out.c:2101
 msgid ""
 "When playing audio and video, there are at least two clocks involved: The "
 "system clock, to which video frames are synchronized and the clock in your "
@@ -4709,11 +4680,11 @@ msgid ""
 "form."
 msgstr ""
 
-#: src/xine-engine/audio_out.c:2124
+#: src/xine-engine/audio_out.c:2129
 msgid "enable resampling"
 msgstr ""
 
-#: src/xine-engine/audio_out.c:2125
+#: src/xine-engine/audio_out.c:2130
 msgid ""
 "When the sample rate of the decoded audio does not match the capabilities of "
 "your sound hardware, an adaptation called \"resampling\" is required. Here "
@@ -4721,33 +4692,33 @@ msgid ""
 "automatically when necessary."
 msgstr ""
 
-#: src/xine-engine/audio_out.c:2132
+#: src/xine-engine/audio_out.c:2137
 msgid "always resample to this rate (0 to disable)"
 msgstr ""
 
-#: src/xine-engine/audio_out.c:2133
+#: src/xine-engine/audio_out.c:2138
 msgid ""
 "Some audio drivers do not correctly announce the capabilities of the audio "
 "hardware. By setting a value other than zero here, you can force the audio "
 "stream to be resampled to the given rate."
 msgstr ""
 
-#: src/xine-engine/audio_out.c:2142
+#: src/xine-engine/audio_out.c:2147
 msgid "offset for digital passthrough"
 msgstr ""
 
-#: src/xine-engine/audio_out.c:2143
+#: src/xine-engine/audio_out.c:2148
 msgid ""
 "If you use an external surround decoder and audio is ahead or behind video, "
 "you can enter a fixed offset here to compensate.\n"
 "The unit of the value is one PTS tick, which is the 90000th part of a second."
 msgstr ""
 
-#: src/xine-engine/audio_out.c:2152
+#: src/xine-engine/audio_out.c:2157
 msgid "play audio even on slow/fast speeds"
 msgstr ""
 
-#: src/xine-engine/audio_out.c:2153
+#: src/xine-engine/audio_out.c:2158
 msgid ""
 "If you enable this option, the audio will be heard even when playback speed "
 "is different than 1X. Of course, it will sound distorted (lower/higher "
@@ -4755,68 +4726,68 @@ msgid ""
 "audio post plugin instead."
 msgstr ""
 
-#: src/xine-engine/audio_out.c:2226
+#: src/xine-engine/audio_out.c:2231
 msgid "startup audio volume"
 msgstr "abiarazterakoan audio bolumena"
 
-#: src/xine-engine/audio_out.c:2227
+#: src/xine-engine/audio_out.c:2232
 msgid "The overall audio volume set at xine startup."
 msgstr "Xine abiaraztean ezarriko den audio bolumena."
 
-#: src/xine-engine/audio_out.c:2230
+#: src/xine-engine/audio_out.c:2235
 msgid "restore volume level at startup"
 msgstr "berezarri tamaina maila abiaraztean"
 
-#: src/xine-engine/audio_out.c:2231
+#: src/xine-engine/audio_out.c:2236
 msgid "If disabled, xine will not modify any mixer settings at startup."
 msgstr ""
 "ezgaiturik badago, xine-k ez ditu nahasle ezarpenak aldatuko abiaraztean."
 
-#: src/xine-engine/audio_out.c:2261
+#: src/xine-engine/audio_out.c:2266
 msgid "audio_out: sorry, this should not happen. please restart xine.\n"
 msgstr ""
 "audio_out: barkatu, hau ez zen gertatu beharko. mesedez xine berrabiarazi.\n"
 
-#: src/xine-engine/buffer.c:64
+#: src/xine-engine/buffer.c:70
 #, c-format
 msgid "xine-lib: buffer.c: There has been a fatal error: TOO MANY FREE's\n"
 msgstr ""
 
-#: src/xine-engine/configfile.c:933
+#: src/xine-engine/configfile.c:952
 #, c-format
 msgid "The current config file has been modified by a newer version of xine."
 msgstr ""
 "Konfigurazio fitxategia xine-ren bertsio berriagobategatik aldatua izan da."
 
-#: src/xine-engine/configfile.c:1038
+#: src/xine-engine/configfile.c:1059
 #, c-format
 msgid "configfile: WARNING: backing up configfile to %s failed\n"
 msgstr ""
 "configfile: ABISUA: %s-en konfigurazio fitxategia segurtasun kopia egiten\n"
 
-#: src/xine-engine/configfile.c:1039
+#: src/xine-engine/configfile.c:1060
 msgid "configfile: WARNING: your configuration will not be saved\n"
 msgstr "configfile: ABISUA: zure konfigurazioa ezin da gorde\n"
 
-#: src/xine-engine/configfile.c:1138
+#: src/xine-engine/configfile.c:1160
 #, c-format
 msgid "configfile: WARNING: writing configuration to %s failed\n"
 msgstr "configfile: ABISUA: huts %s konfigurazioa gordetzerakoan\n"
 
-#: src/xine-engine/configfile.c:1139
+#: src/xine-engine/configfile.c:1161
 #, c-format
 msgid "configfile: WARNING: removing possibly broken config file %s\n"
 msgstr ""
 "configfile: ABISUA: agian apurturiko %s konfigurazio fitxategia ezabatzen\n"
 
-#: src/xine-engine/configfile.c:1140
+#: src/xine-engine/configfile.c:1162
 #, c-format
 msgid "configfile: WARNING: you should check the backup file %s\n"
 msgstr ""
 "configfile: ABISUA: zuk segurtasun kopia %s fitxategia egiaztatu beharko "
 "zenuke\n"
 
-#: src/xine-engine/configfile.c:1275
+#: src/xine-engine/configfile.c:1624
 #, c-format
 msgid "configfile: entry '%s' mustn't be modified from MRL\n"
 msgstr "configfile: Â¡'%s' sarrera ezin MRL-tik aldatu\n"
@@ -4832,48 +4803,48 @@ msgid ""
 "info_helper: unsupported conversion %s -> UTF-8, no conversion performed\n"
 msgstr "osd: ez da moldatzea onartzen: %s -> %s, ez da moldatuko\n"
 
-#: src/xine-engine/input_cache.c:171
+#: src/xine-engine/input_cache.c:172
 #, fuzzy, c-format
 msgid ": open() function should never be called\n"
 msgstr "input_rip: open() funtzioa ez zen inoiz deitu beharko\n"
 
-#: src/xine-engine/input_cache.c:354
+#: src/xine-engine/input_cache.c:355
 #, fuzzy, c-format
 msgid ": input plugin not defined!\n"
 msgstr "input_rip: sarrera pluginia ez ezarririk!\n"
 
-#: src/xine-engine/input_rip.c:139 src/xine-engine/input_rip.c:259
+#: src/xine-engine/input_rip.c:140 src/xine-engine/input_rip.c:260
 #, c-format
 msgid "input_rip: reading of saved data failed: %s\n"
 msgstr "input_rip: huts grabatutako datuak irakurtzerkaoan: %s\n"
 
-#: src/xine-engine/input_rip.c:154
+#: src/xine-engine/input_rip.c:155
 #, c-format
 msgid "input_rip: reading by input plugin failed\n"
 msgstr "input_rip: huts sarrera pluginetik irakirtzerakoan\n"
 
-#: src/xine-engine/input_rip.c:162 src/xine-engine/input_rip.c:291
+#: src/xine-engine/input_rip.c:163 src/xine-engine/input_rip.c:292
 #: src/xine-engine/input_rip.c:657
 #, fuzzy, c-format
 msgid "input_rip: error writing to file %<PRIdMAX> bytes: %s\n"
 msgstr "input_rip: errorea %lld fitxategian idazterakoan, byte-ak: %s\n"
 
-#: src/xine-engine/input_rip.c:183
+#: src/xine-engine/input_rip.c:184
 #, c-format
 msgid "input_rip: open() function should never be called\n"
 msgstr "input_rip: open() funtzioa ez zen inoiz deitu beharko\n"
 
-#: src/xine-engine/input_rip.c:314 src/xine-engine/input_rip.c:419
+#: src/xine-engine/input_rip.c:315 src/xine-engine/input_rip.c:420
 #, c-format
 msgid "input_rip: seeking failed\n"
 msgstr "input_rip: bilaketak huts egin du\n"
 
-#: src/xine-engine/input_rip.c:371 src/xine-engine/input_rip.c:389
+#: src/xine-engine/input_rip.c:372 src/xine-engine/input_rip.c:390
 #, c-format
 msgid "input_rip: seeking failed: %s\n"
 msgstr "input_rip: bilaketak huts egin du: %s\n"
 
-#: src/xine-engine/input_rip.c:397
+#: src/xine-engine/input_rip.c:398
 #, fuzzy, c-format
 msgid "input_rip: %<PRIdMAX> bytes dropped\n"
 msgstr "input_rip: %lld byte alde batetara utzirik\n"
@@ -4950,12 +4921,12 @@ msgstr "io_helper: Fitxategia ez da aurkitu\n"
 msgid "io_helper: Connection Refused\n"
 msgstr "io_helper: Konexioa Ukaturik\n"
 
-#: src/xine-engine/load_plugins.c:213
+#: src/xine-engine/load_plugins.c:216
 #, c-format
 msgid "map_decoder_list: no space for decoder, skipped.\n"
 msgstr ""
 
-#: src/xine-engine/load_plugins.c:327
+#: src/xine-engine/load_plugins.c:331
 #, c-format
 msgid ""
 "load_plugins: ignoring plugin %s, wrong iface version %d (should be %d)\n"
@@ -4963,68 +4934,68 @@ msgstr ""
 "load_plugins: %s plugina alde batetara utzi, okerreko iface bertsioa %d (%d "
 "espero zen)\n"
 
-#: src/xine-engine/load_plugins.c:385
+#: src/xine-engine/load_plugins.c:391
 #, c-format
 msgid "priority for %s decoder"
 msgstr "%s deskodetzailearen lehentasuna"
 
-#: src/xine-engine/load_plugins.c:390
+#: src/xine-engine/load_plugins.c:396
 msgid ""
 "The priority provides a ranking in case some media can be handled by more "
 "than one decoder.\n"
 "A priority of 0 enables the decoder's default priority."
 msgstr ""
 
-#: src/xine-engine/load_plugins.c:418
+#: src/xine-engine/load_plugins.c:424
 #, c-format
 msgid ""
 "load_plugins: demuxer plugin %s does not provide a priority, xine-lib will "
 "use the default priority.\n"
 msgstr ""
 
-#: src/xine-engine/load_plugins.c:435
+#: src/xine-engine/load_plugins.c:441
 #, c-format
 msgid ""
 "load_plugins: input plugin %s does not provide a priority, xine-lib will use "
 "the default priority.\n"
 msgstr ""
 
-#: src/xine-engine/load_plugins.c:491
+#: src/xine-engine/load_plugins.c:498
 #, c-format
 msgid "load_plugins: plugin %s found\n"
 msgstr "load_plugins: %s plugin aurkitu dira\n"
 
-#: src/xine-engine/load_plugins.c:494
+#: src/xine-engine/load_plugins.c:501
 #, fuzzy, c-format
 msgid "load_plugins: static plugin found\n"
 msgstr "load_plugins: %s plugin aurkitu dira\n"
 
-#: src/xine-engine/load_plugins.c:501
+#: src/xine-engine/load_plugins.c:508
 #, c-format
 msgid "load_plugins: plugin limit reached, %s could not be loaded\n"
 msgstr "load_plugins: plugin muga gainditu da, %s ezin da kargatu\n"
 
-#: src/xine-engine/load_plugins.c:504
+#: src/xine-engine/load_plugins.c:511
 #, fuzzy, c-format
 msgid "load_plugins: plugin limit reached, static plugin could not be loaded\n"
 msgstr "load_plugins: plugin muga gainditu da, %s ezin da kargatu\n"
 
-#: src/xine-engine/load_plugins.c:521
+#: src/xine-engine/load_plugins.c:528
 #, c-format
 msgid "load_plugins: unknown plugin type %d in %s\n"
 msgstr "load_plugins: %d plugin mota ezezaguna %s-n\n"
 
-#: src/xine-engine/load_plugins.c:525
+#: src/xine-engine/load_plugins.c:532
 #, fuzzy, c-format
 msgid "load_plugins: unknown statically linked plugin type %d\n"
 msgstr "load_plugins: %d plugin mota ezezaguna %s-n\n"
 
-#: src/xine-engine/load_plugins.c:585
+#: src/xine-engine/load_plugins.c:589
 #, c-format
 msgid "load_plugins: unable to stat %s\n"
 msgstr "load_plugins: ezin da %s identifikatu\n"
 
-#: src/xine-engine/load_plugins.c:626
+#: src/xine-engine/load_plugins.c:631
 #, c-format
 msgid ""
 "load_plugins: cannot open plugin lib %s:\n"
@@ -5033,7 +5004,7 @@ msgstr ""
 "load_plugins: ezin da %s plugin liburutegia ireki:\n"
 "%s\n"
 
-#: src/xine-engine/load_plugins.c:641
+#: src/xine-engine/load_plugins.c:646
 #, c-format
 msgid ""
 "load_plugins: can't get plugin info from %s:\n"
@@ -5042,44 +5013,44 @@ msgstr ""
 "load_plugins: ezin da %s-eko plugin informazio eskuratu:\n"
 "%s\n"
 
-#: src/xine-engine/load_plugins.c:659
+#: src/xine-engine/load_plugins.c:664
 #, c-format
 msgid "load_plugins: skipping unreadable plugin directory %s.\n"
 msgstr "load_plugins: alde batetara uzten %s plugin karpeta irakurtezina.\n"
 
-#: src/xine-engine/load_plugins.c:708
+#: src/xine-engine/load_plugins.c:732
 #, c-format
 msgid ""
 "load_plugins: cannot (stage 2) open plugin lib %s:\n"
 "%s\n"
 msgstr ""
 
-#: src/xine-engine/load_plugins.c:734
+#: src/xine-engine/load_plugins.c:766
 #, c-format
 msgid "load_plugins: Yikes! %s doesn't contain plugin info.\n"
 msgstr ""
 
-#: src/xine-engine/load_plugins.c:1097 src/xine-engine/load_plugins.c:1106
+#: src/xine-engine/load_plugins.c:1170 src/xine-engine/load_plugins.c:1179
 #, fuzzy, c-format
 msgid "Unable to create %s directory: %s\n"
 msgstr "Ezin da %s ireki: %s.\n"
 
-#: src/xine-engine/load_plugins.c:1343
+#: src/xine-engine/load_plugins.c:1469
 #, c-format
 msgid "load_plugins: unknown content detection strategy %d\n"
 msgstr "load_plugins: %d eduki atzemate estrategia ezezaguna\n"
 
-#: src/xine-engine/load_plugins.c:1468
+#: src/xine-engine/load_plugins.c:1594
 #, c-format
 msgid "load_plugins: using demuxer '%s'\n"
 msgstr ""
 
-#: src/xine-engine/load_plugins.c:1763 src/xine-engine/load_plugins.c:1810
+#: src/xine-engine/load_plugins.c:1921 src/xine-engine/load_plugins.c:1968
 #, c-format
 msgid "load_plugins: failed to load audio output plugin <%s>\n"
 msgstr "load_plugins: huts <%s> audio irteera plugina kargatzerakoan\n"
 
-#: src/xine-engine/load_plugins.c:1813
+#: src/xine-engine/load_plugins.c:1971
 msgid ""
 "load_plugins: audio output auto-probing didn't find any usable audio "
 "driver.\n"
@@ -5087,7 +5058,7 @@ msgstr ""
 "load_plugins: audio irteera auto-frogak ez du adio kontrolatzailerik "
 "aurkitu.\n"
 
-#: src/xine-engine/load_plugins.c:2116
+#: src/xine-engine/load_plugins.c:2275
 #, fuzzy, c-format
 msgid ""
 "load_plugins: cannot unload plugin lib %s:\n"
@@ -5096,94 +5067,94 @@ msgstr ""
 "load_plugins: ezin da %s plugin liburutegia ireki:\n"
 "%s\n"
 
-#: src/xine-engine/osd.c:829
+#: src/xine-engine/osd.c:818
 #, c-format
 msgid "font '%s-%d' already loaded, weird.\n"
 msgstr "'%s-%d' letra-tipoa dagoeneko kargaturik, bitxia.\n"
 
-#: src/xine-engine/osd.c:841
+#: src/xine-engine/osd.c:830
 #, c-format
 msgid "font '%s' loading failed (%d < %d)\n"
 msgstr "huts '%s' letra tipoa kargatzerakoan (%d < %d)\n"
 
-#: src/xine-engine/osd.c:851
+#: src/xine-engine/osd.c:840
 #, c-format
 msgid "wrong version for font '%s'. expected %d found %d.\n"
 msgstr ""
 "'%s' letra tipoaren okerreko bertsioa. %d espero zen baina %d aurkitu da.\n"
 
-#: src/xine-engine/osd.c:938
+#: src/xine-engine/osd.c:927
 #, c-format
 msgid "osd: error matching font %s with FontConfig"
 msgstr ""
 
-#: src/xine-engine/osd.c:952
+#: src/xine-engine/osd.c:941
 #, fuzzy, c-format
 msgid "osd: error loading font %s with FontConfig"
 msgstr "osd: errorea glyph %i kargatzerakoan\n"
 
-#: src/xine-engine/osd.c:956
+#: src/xine-engine/osd.c:945
 #, c-format
 msgid "osd: error looking up font %s with FontConfig"
 msgstr ""
 
-#: src/xine-engine/osd.c:996
+#: src/xine-engine/osd.c:985
 #, fuzzy, c-format
 msgid "osd: error loading font %s with in XDG data directories.\n"
 msgstr "osd: errorea glyph %i kargatzerakoan\n"
 
-#: src/xine-engine/osd.c:1005
+#: src/xine-engine/osd.c:994
 msgid "osd: cannot initialize ft2 library\n"
 msgstr "osd: ezin da ft2 liburutegia abiarazi\n"
 
-#: src/xine-engine/osd.c:1027
+#: src/xine-engine/osd.c:1016
 msgid "osd: error setting font size (no scalable font?)\n"
 msgstr ""
 "osd: errorea letra-tipo tamaina ezarpenean (letra-tipo ez eskalagarria?)\n"
 
-#: src/xine-engine/osd.c:1143
+#: src/xine-engine/osd.c:1132
 #, c-format
 msgid ""
 "osd: unknown sequence starting with byte 0x%02X in encoding \"%s\", "
 "skipping\n"
 msgstr ""
 
-#: src/xine-engine/osd.c:1199
+#: src/xine-engine/osd.c:1188
 msgid "osd: can't find out current locale character set\n"
 msgstr "osd: ezin da irteera karaktere jokoa aurkitu\n"
 
-#: src/xine-engine/osd.c:1209
+#: src/xine-engine/osd.c:1198
 #, c-format
 msgid "osd: unsupported conversion %s -> %s, no conversion performed\n"
 msgstr "osd: ez da moldatzea onartzen: %s -> %s, ez da moldatuko\n"
 
-#: src/xine-engine/osd.c:1264 src/xine-engine/osd.c:1432
+#: src/xine-engine/osd.c:1253 src/xine-engine/osd.c:1421
 msgid "osd: font isn't defined\n"
 msgstr "osd: letra-tipoa ez dago ezarririk\n"
 
-#: src/xine-engine/osd.c:1303
+#: src/xine-engine/osd.c:1292
 msgid "osd: error loading glyph\n"
 msgstr "osd: errorea glyph kargatzerkaoan\n"
 
-#: src/xine-engine/osd.c:1309
+#: src/xine-engine/osd.c:1298
 msgid "osd: error in rendering glyph\n"
 msgstr "osd: errorea glyph reenderizatzerakoan\n"
 
-#: src/xine-engine/osd.c:1469
+#: src/xine-engine/osd.c:1458
 #, c-format
 msgid "osd: error loading glyph %i\n"
 msgstr "osd: errorea glyph %i kargatzerakoan\n"
 
-#: src/xine-engine/osd.c:1476
+#: src/xine-engine/osd.c:1465
 msgid "osd: error in rendering\n"
 msgstr "osd: errorea reenderizatzerakoan\n"
 
-#: src/xine-engine/osd.c:1742
+#: src/xine-engine/osd.c:1728
 msgid "palette (foreground-border-background) to use for subtitles and OSD"
 msgstr ""
 "OSD eta azpitituluetan erabiliko den paleta (aurreko-ertza-atzeko koloreak)"
 
-#: src/xine-engine/osd.c:1743
+#: src/xine-engine/osd.c:1729
 msgid ""
 "The palette for on-screen-display and some subtitle formats that do not "
 "specify any colouring themselves. The palettes are listed in the form: "
@@ -5198,21 +5169,21 @@ msgstr ""
 msgid "opacity for the colour parts of bitmapped subtitles"
 msgstr ""
 
-#: src/xine-engine/video_decoder.c:387
+#: src/xine-engine/video_decoder.c:388
 #, c-format
 msgid "video_decoder: no plugin available to handle '%s'\n"
 msgstr "video_decoder: ez dago pluginik '%s' kudeatzeko\n"
 
-#: src/xine-engine/video_decoder.c:466
+#: src/xine-engine/video_decoder.c:467
 #, c-format
 msgid "video_decoder: error, unknown buffer type: %08x\n"
 msgstr "video_decoder: errorea, buffer mota ezezaguna: %08x\n"
 
-#: src/xine-engine/video_decoder.c:502
+#: src/xine-engine/video_decoder.c:503
 msgid "number of video buffers"
 msgstr "bideo buffer kopurua"
 
-#: src/xine-engine/video_decoder.c:503
+#: src/xine-engine/video_decoder.c:504
 msgid ""
 "The number of video buffers (each is 8k in size) xine uses in its internal "
 "queue. Higher values mean smoother playback for unreliable inputs, but also "
@@ -5267,11 +5238,11 @@ msgid "video_out: sorry, this should not happen. please restart xine.\n"
 msgstr ""
 "video_out: barkatu, hau ez zen gertatu beharko. mesedez xine berrabiarazi.\n"
 
-#: src/xine-engine/vo_scale.c:387
+#: src/xine-engine/vo_scale.c:380
 msgid "horizontal image position in the output window"
 msgstr "irudi horizontal kokalekua irteera lehoan"
 
-#: src/xine-engine/vo_scale.c:388
+#: src/xine-engine/vo_scale.c:381
 msgid ""
 "If the video window's horizontal size is bigger than the actual image to "
 "show, you can adjust the position where the image will be placed.\n"
@@ -5279,11 +5250,11 @@ msgid ""
 "\", while 0 means \"at the very left\" and 100 \"at the very right\"."
 msgstr ""
 
-#: src/xine-engine/vo_scale.c:395
+#: src/xine-engine/vo_scale.c:388
 msgid "vertical image position in the output window"
 msgstr "irudi bertikal kokalekua irteera lehoan"
 
-#: src/xine-engine/vo_scale.c:396
+#: src/xine-engine/vo_scale.c:389
 msgid ""
 "If the video window's vertical size is bigger than the actual image to show, "
 "you can adjust the position where the image will be placed.\n"
@@ -5291,11 +5262,11 @@ msgid ""
 "\", while 0 means \"at the top\" and 100 \"at the bottom\"."
 msgstr ""
 
-#: src/xine-engine/vo_scale.c:403
+#: src/xine-engine/vo_scale.c:396
 msgid "disable all video scaling"
 msgstr "bideo eskalatze guztiak ezgaitu"
 
-#: src/xine-engine/vo_scale.c:404
+#: src/xine-engine/vo_scale.c:397
 msgid ""
 "If you want the video image to be always shown at its original resolution, "
 "you can disable all image scaling here.\n"
@@ -5306,135 +5277,140 @@ msgid ""
 "accelerated, this can dramatically reduce CPU usage."
 msgstr ""
 
-#: src/xine-engine/xine.c:831 src/xine-engine/xine.c:939
-#: src/xine-engine/xine.c:978 src/xine-engine/xine.c:1014
-#: src/xine-engine/xine.c:1026 src/xine-engine/xine.c:1039
-#: src/xine-engine/xine.c:1052 src/xine-engine/xine.c:1065
-#: src/xine-engine/xine.c:1091 src/xine-engine/xine.c:1116
-#: src/xine-engine/xine.c:1151
+#: src/xine-engine/xine.c:847 src/xine-engine/xine.c:969
+#: src/xine-engine/xine.c:1009 src/xine-engine/xine.c:1045
+#: src/xine-engine/xine.c:1057 src/xine-engine/xine.c:1070
+#: src/xine-engine/xine.c:1083 src/xine-engine/xine.c:1096
+#: src/xine-engine/xine.c:1122 src/xine-engine/xine.c:1147
+#: src/xine-engine/xine.c:1184
 msgid "xine: error while parsing mrl\n"
 msgstr "xine: errorea mrl analizatzerakoan\n"
 
-#: src/xine-engine/xine.c:873
+#: src/xine-engine/xine.c:906
 #, c-format
 msgid "xine: found input plugin  : %s\n"
 msgstr "xine: input plugin-a aurkiturik  : %s\n"
 
-#: src/xine-engine/xine.c:891
+#: src/xine-engine/xine.c:923
 #, c-format
 msgid "xine: input plugin cannot open MRL [%s]\n"
 msgstr "xine: sarrera pluginak ezin du MRL-a [%s] ireki\n"
 
-#: src/xine-engine/xine.c:902
+#: src/xine-engine/xine.c:932
 #, c-format
 msgid "xine: cannot find input plugin for MRL [%s]\n"
 msgstr "xine: ezin da [%s] MRL-aren plugina aurkitu\n"
 
-#: src/xine-engine/xine.c:928
+#: src/xine-engine/xine.c:958
 #, c-format
 msgid "xine: specified demuxer %s failed to start\n"
 msgstr ""
 
-#: src/xine-engine/xine.c:964
+#: src/xine-engine/xine.c:995
 #, c-format
 msgid "xine: join rip input plugin\n"
 msgstr ""
 
-#: src/xine-engine/xine.c:971
+#: src/xine-engine/xine.c:1002
 msgid "xine: error opening rip input plugin instance\n"
 msgstr ""
 
-#: src/xine-engine/xine.c:1002
+#: src/xine-engine/xine.c:1033
 #, c-format
 msgid "xine: last_probed demuxer %s failed to start\n"
 msgstr ""
 
-#: src/xine-engine/xine.c:1031
+#: src/xine-engine/xine.c:1062
 msgid "ignoring video\n"
 msgstr "bidoa alde batetara uzten\n"
 
-#: src/xine-engine/xine.c:1044
+#: src/xine-engine/xine.c:1075
 msgid "ignoring audio\n"
 msgstr "audioa alde batetara uzten\n"
 
-#: src/xine-engine/xine.c:1057
+#: src/xine-engine/xine.c:1088
 msgid "ignoring subpicture\n"
 msgstr "azpi-irudia alde batetara uzten\n"
 
-#: src/xine-engine/xine.c:1070
+#: src/xine-engine/xine.c:1101
 msgid "input cache plugin disabled\n"
 msgstr ""
 
-#: src/xine-engine/xine.c:1141
+#: src/xine-engine/xine.c:1174
 #, c-format
 msgid "subtitle mrl opened '%s'\n"
 msgstr "'%s' azpititulu mrl-a irekirik\n"
 
-#: src/xine-engine/xine.c:1145
+#: src/xine-engine/xine.c:1178
 msgid "xine: error opening subtitle mrl\n"
 msgstr "xine: errorea azpititulu mrl-a irekitzerakoan\n"
 
-#: src/xine-engine/xine.c:1177
+#: src/xine-engine/xine.c:1210
 #, c-format
 msgid "xine: error while parsing MRL\n"
 msgstr "xine: errorea MRL-analizatzerakoan\n"
 
-#: src/xine-engine/xine.c:1184
+#: src/xine-engine/xine.c:1217
 #, c-format
 msgid "xine: changing option '%s' from MRL isn't permitted\n"
 msgstr "xine: MRL-ko '%s' aukera aldaketa ez da onartzen\n"
 
-#: src/xine-engine/xine.c:1204
+#: src/xine-engine/xine.c:1248
+#, c-format
+msgid "xine: couldn't load plugin-specified demux %s for >%s<\n"
+msgstr ""
+
+#: src/xine-engine/xine.c:1258
 #, c-format
 msgid "xine: couldn't find demux for >%s<\n"
 msgstr ""
 
-#: src/xine-engine/xine.c:1220
+#: src/xine-engine/xine.c:1274
 #, c-format
 msgid "xine: found demuxer plugin: %s\n"
 msgstr ""
 
-#: src/xine-engine/xine.c:1242
+#: src/xine-engine/xine.c:1296
 #, c-format
 msgid "xine: demuxer is already done. that was fast!\n"
 msgstr ""
 
-#: src/xine-engine/xine.c:1244
+#: src/xine-engine/xine.c:1298
 #, c-format
 msgid "xine: demuxer failed to start\n"
 msgstr ""
 
-#: src/xine-engine/xine.c:1310
+#: src/xine-engine/xine.c:1364
 #, c-format
 msgid "xine_play: no demux available\n"
 msgstr ""
 
-#: src/xine-engine/xine.c:1380
+#: src/xine-engine/xine.c:1435
 #, c-format
 msgid "xine_play: demux failed to start\n"
 msgstr ""
 
-#: src/xine-engine/xine.c:1657
+#: src/xine-engine/xine.c:1713
 #, c-format
 msgid "xine: The specified save_dir \"%s\" might be a security risk.\n"
 msgstr ""
 "xine: Ezarritako \"%s\" gordetze karpeta (save_dir) segurtasun arrisku bat "
 "izan daiteke.\n"
 
-#: src/xine-engine/xine.c:1662
+#: src/xine-engine/xine.c:1718
 msgid "The specified save_dir might be a security risk."
 msgstr ""
 "Ezarritako gordetze karpeta (save_dir) segurtasun arrisku bat izan daiteke."
 
-#: src/xine-engine/xine.c:1690
+#: src/xine-engine/xine.c:1752
 msgid "xine: locale not supported by C library\n"
 msgstr "xine: lokala ez du C liburutegiak onartzen\n"
 
-#: src/xine-engine/xine.c:1699
+#: src/xine-engine/xine.c:1761
 msgid "media format detection strategy"
 msgstr "medio formatu atzemate modua"
 
-#: src/xine-engine/xine.c:1700
+#: src/xine-engine/xine.c:1762
 msgid ""
 "xine offers various methods to detect the media format of input to play. The "
 "individual values are:\n"
@@ -5463,11 +5439,11 @@ msgstr ""
 "extension\n"
 "Izen luzapen bidez bakarrik atzemna.\n"
 
-#: src/xine-engine/xine.c:1718
+#: src/xine-engine/xine.c:1780
 msgid "directory for saving streams"
 msgstr "korronteak gordetzeko karpeta"
 
-#: src/xine-engine/xine.c:1719
+#: src/xine-engine/xine.c:1781
 msgid ""
 "When using the stream save feature, files will be written only into this "
 "directory.\n"
@@ -5477,11 +5453,11 @@ msgid ""
 "content in any file."
 msgstr ""
 
-#: src/xine-engine/xine.c:1730
+#: src/xine-engine/xine.c:1792
 msgid "allow implicit changes to the configuration (e.g. by MRL)"
 msgstr "Onartu aldaketa inplizitoak konfiguraketan (adib. MRL bidez)"
 
-#: src/xine-engine/xine.c:1731
+#: src/xine-engine/xine.c:1793
 msgid ""
 "If enabled, you allow xine to change your configuration without explicit "
 "actions from your side. For example configuration changes demanded by MRLs "
@@ -5491,101 +5467,174 @@ msgid ""
 "configuration, you might end with a totally messed up xine."
 msgstr ""
 
-#: src/xine-engine/xine.c:1745
+#: src/xine-engine/xine.c:1807
 msgid "Timeout for network stream reading (in seconds)"
 msgstr ""
 
-#: src/xine-engine/xine.c:1746
+#: src/xine-engine/xine.c:1808
 msgid ""
 "Specifies the timeout when reading from network streams, in seconds. Too low "
 "values might stop streaming when the source is slow or the bandwidth is "
 "occupied, too high values will freeze the player if the connection is lost."
 msgstr ""
 
-#: src/xine-engine/xine.c:2098
+#: src/xine-engine/xine.c:2265
 msgid "messages"
 msgstr "mezuak"
 
-#: src/xine-engine/xine.c:2099
+#: src/xine-engine/xine.c:2266
 msgid "plugin"
 msgstr "plugina"
 
-#: src/xine-engine/xine.c:2100
+#: src/xine-engine/xine.c:2267
 msgid "trace"
 msgstr "aztarna"
 
-#: src/xine-engine/xine_interface.c:946
+#: src/xine-engine/xine_interface.c:948
 msgid "Warning:"
 msgstr ""
 
-#: src/xine-engine/xine_interface.c:947
+#: src/xine-engine/xine_interface.c:949
 #, fuzzy
 msgid "Unknown host:"
 msgstr "ostalari ezezaguna"
 
-#: src/xine-engine/xine_interface.c:948
+#: src/xine-engine/xine_interface.c:950
 #, fuzzy
 msgid "Unknown device:"
 msgstr "gertaera mota ezezaguna: "
 
-#: src/xine-engine/xine_interface.c:949
+#: src/xine-engine/xine_interface.c:951
 msgid "Network unreachable"
 msgstr ""
 
-#: src/xine-engine/xine_interface.c:950
+#: src/xine-engine/xine_interface.c:952
 #, fuzzy
 msgid "Connection refused:"
 msgstr "io_helper: Konexioa Ukaturik\n"
 
-#: src/xine-engine/xine_interface.c:951
+#: src/xine-engine/xine_interface.c:953
 #, fuzzy
 msgid "File not found:"
 msgstr "io_helper: Fitxategia ez da aurkitu\n"
 
-#: src/xine-engine/xine_interface.c:952
+#: src/xine-engine/xine_interface.c:954
 msgid "Read error from:"
 msgstr ""
 
-#: src/xine-engine/xine_interface.c:953
+#: src/xine-engine/xine_interface.c:955
 #, fuzzy
 msgid "Error loading library:"
 msgstr "osd: errorea glyph kargatzerkaoan\n"
 
-#: src/xine-engine/xine_interface.c:954
+#: src/xine-engine/xine_interface.c:956
 msgid "Encrypted media stream detected"
 msgstr ""
 
-#: src/xine-engine/xine_interface.c:955
+#: src/xine-engine/xine_interface.c:957
 msgid "Security message:"
 msgstr ""
 
-#: src/xine-engine/xine_interface.c:956
+#: src/xine-engine/xine_interface.c:958
 #, fuzzy
 msgid "Audio device unavailable"
 msgstr "Sun audio gailu izena"
 
-#: src/xine-engine/xine_interface.c:957
+#: src/xine-engine/xine_interface.c:959
 msgid "Permission error"
 msgstr ""
 
-#: src/xine-engine/xine_interface.c:958
+#: src/xine-engine/xine_interface.c:960
 msgid "File is empty:"
 msgstr ""
 
-#: src/xine-utils/memcpy.c:479
+#: src/xine-utils/memcpy.c:478
 msgid "memcopy method used by xine"
 msgstr "xinek erabiltzen duen memoria kopia metodoa"
 
-#: src/xine-utils/memcpy.c:480
+#: src/xine-utils/memcpy.c:479
 msgid ""
 "The copying of large memory blocks is one of the most expensive operations "
 "on todays computers. Therefore xine provides various tuned methods to do "
 "this copying. Usually, the best method is detected automatically."
 msgstr ""
 
-#: src/xine-utils/memcpy.c:507
+#: src/xine-utils/memcpy.c:506
 msgid "Benchmarking memcpy methods (smaller is better):\n"
 msgstr "memcpy metodoak frogatzen (txeikiena obea da)\n"
+
+#~ msgid "video_out_syncfb: error. (YUY2 not supported by your graphic card)\n"
+#~ msgstr ""
+#~ "video_out_syncfb: errorea. (txartela grafikoak ez du YUY2 onartzen)\n"
+
+#~ msgid "video_out_syncfb: error. (YV12 not supported by your graphic card)\n"
+#~ msgstr ""
+#~ "video_out_syncfb: errorea. (txartela grafikoak ez du YV12 onartzen)\n"
+
+#~ msgid ""
+#~ "video_out_syncfb: info. (SyncFB module supports YUV 4:2:0 (3 plane))\n"
+#~ msgstr ""
+#~ "video_out_syncfb: info. (SyncFB moduluak YUV 4:2:0 (3 plano) onartzen "
+#~ "du)\n"
+
+#~ msgid ""
+#~ "video_out_syncfb: info. (SyncFB module supports YUV 4:2:0 (2 plane))\n"
+#~ msgstr ""
+#~ "video_out_syncfb: info. (SyncFB moduluak YUV 4:2:0 (2 plano) onartzen "
+#~ "du)\n"
+
+#~ msgid "video_out_syncfb: info. (SyncFB module supports YUV 4:2:2)\n"
+#~ msgstr "video_out_syncfb: info. (SyncFB moduluak YUV 4:2:2 onartzen du)\n"
+
+#~ msgid "video_out_syncfb: info. (SyncFB module supports YUY2)\n"
+#~ msgstr "video_out_syncfb: info. (SyncFB moduluak YUY2 onartzen du)\n"
+
+#~ msgid "video_out_syncfb: info. (SyncFB module supports RGB565)\n"
+#~ msgstr "video_out_syncfb: info. (SyncFB moduluak RGB565 onartzen du)\n"
+
+#~ msgid ""
+#~ "video_out_syncfb: aborting. (SyncFB module does not support YV12, YUY2 "
+#~ "nor RGB565)\n"
+#~ msgstr ""
+#~ "video_out_syncfb: uzten. (SyncFB moduluak ez du YV12, YUY2 edo RGB565 "
+#~ "onartzen)\n"
+
+#~ msgid "default number of frame repetitions"
+#~ msgstr "marko errepikatze lehenetsiriko kopurua"
+
+#~ msgid ""
+#~ "This specifies how many times a single video frame will be displayed "
+#~ "consecutively."
+#~ msgstr ""
+#~ "Bideo marko bat gelditu gabe zenbat aldiz errepikatu behar den ezartzen "
+#~ "du."
+
+#~ msgid "SyncFB device name"
+#~ msgstr "SyncFB gailu izena"
+
+#~ msgid ""
+#~ "Specifies the file name for the SyncFB (TeleTux) device to be used.\n"
+#~ "This setting is security critical, because when changed to a different "
+#~ "file, xine can be used to fill this file with arbitrary content. So you "
+#~ "should be careful that the value you enter really is a proper framebuffer "
+#~ "device."
+#~ msgstr ""
+#~ "Erabiliko den SynFB (TeleTux) gailuarne fitxategi izena ezartzen du,\n"
+#~ "Ezarpen hau seguratsun kritikokoa da, fitxategi ezberdin batetara "
+#~ "aldatzean, xinek fitxategia eduki arbitrario bat erabiliaz bete bait "
+#~ "dezake. Beraz balioaegiazko framebuffer gailu bat dela ziurtatu behar "
+#~ "duzu."
+
+#~ msgid ""
+#~ "xine video output plugin using the SyncFB module for Matrox G200/G400 "
+#~ "cards"
+#~ msgstr ""
+#~ "xine bideo irteera plugina Matrox G200/G400 txartelen SyncFB modulua "
+#~ "erabiliaz"
+
+#, fuzzy
+#~ msgid "%s: this adaptor supports the yuy2 format.\n"
+#~ msgstr "video_out_xv: adaptadoreak yuy2 formatua onartzen du.\n"
 
 #~ msgid "demux_asf: Wrong ASX version: %s\n"
 #~ msgstr "demux_asf: Okerreko ASX bertsioa: %s\n"

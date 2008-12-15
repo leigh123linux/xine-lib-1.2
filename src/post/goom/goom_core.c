@@ -76,6 +76,10 @@ PluginInfo *goom_init (guint32 resx, guint32 resy)
     goomInfo->tentacles_fx = tentacle_fx_create();
     goomInfo->tentacles_fx.init(&goomInfo->tentacles_fx, goomInfo);
     
+    goomInfo->screen.width = resx;
+    goomInfo->screen.height = resy;
+    goomInfo->screen.size = resx * resy;
+    
     goomInfo->convolve_fx = convolve_create();
     goomInfo->convolve_fx.init(&goomInfo->convolve_fx, goomInfo);
     
@@ -83,10 +87,6 @@ PluginInfo *goom_init (guint32 resx, guint32 resy)
     plugin_info_add_visual (goomInfo, 1, &goomInfo->tentacles_fx);
     plugin_info_add_visual (goomInfo, 2, &goomInfo->star_fx);
     plugin_info_add_visual (goomInfo, 3, &goomInfo->convolve_fx);
-    
-    goomInfo->screen.width = resx;
-    goomInfo->screen.height = resy;
-    goomInfo->screen.size = resx * resy;
     
     init_buffers(goomInfo, goomInfo->screen.size);
     goomInfo->gRandom = goom_random_init((uintptr_t)goomInfo->pixel);

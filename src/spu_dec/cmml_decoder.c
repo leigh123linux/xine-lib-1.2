@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2003 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -446,7 +446,7 @@ static spu_decoder_t *spucmml_class_open_plugin (spu_decoder_class_t *class_gen,
   this->spu_decoder.set_button          = NULL;
   this->spu_decoder.dispose             = spudec_dispose;
 
-  this->class  = class_gen;
+  this->class  = class;
   this->stream = stream;
 
   this->event_queue = xine_event_new_queue (this->stream);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2006 the xine project
+ * Copyright (C) 2000-2008 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -1261,15 +1261,23 @@ void _x_scan_plugins (xine_t *this) {
   XINE_PROFILE(load_cached_catalog (this));
 
   if ((pluginpath = getenv("XINE_PLUGIN_PATH")) != NULL && *pluginpath) {
-    char *p = pluginpath - 1;
-    while (p[1])
+    char *p = pluginpath;
+    while (p && p[0])
     {
-      char *dir, *q = p;
-      p = strchr (p + 1, XINE_PATH_SEPARATOR_CHAR);
+      size_t len;
+      char *dir, *q;
+
+      q = p;
+      p = strchr (p, XINE_PATH_SEPARATOR_CHAR);
+      if (p) {
+        p++;
+        len = p - q;
+      } else
+        len = strlen(q);
       if (q[0] == '~' && q[1] == '/')
-	asprintf (&dir, "%s%.*s", homedir, (int)(p - q - 1), q + 1);
+	asprintf (&dir, "%s%.*s", homedir, (int)(len - 1), q + 1);
       else
-	dir = strndup (q, p - q);
+	dir = strndup (q, len);
       push_if_dir (plugindirs, dir); /* store or free it */
     }
   } else {
@@ -2599,12 +2607,11 @@ void xine_post_dispose(xine_t *xine, xine_post_t *post_gen) {
  * @param joining String to use to join the various strings together.
  * @param final_length The pre-calculated final length of the string.
  */
-static char *_x_concatenate_with_string(char **strings, size_t count, char *joining, size_t final_length) {
+static char *_x_concatenate_with_string(char const **strings, size_t count, char *joining, size_t final_length) {
   size_t i;
   char *const result = malloc(final_length+1); /* Better be safe */
   char *str = result;
 
-  size_t pos = 0;
   for(i = 0; i < count; i++, strings++) {
     if ( *strings ) {
       int offset = snprintf(str, final_length, "%s%s", *strings, joining);

@@ -244,7 +244,7 @@ static void demux_fli_send_headers(demux_plugin_t *this_gen) {
                        BUF_FLAG_FRAME_END;
   buf->decoder_info[0] = this->frame_pts_inc;  /* initial video_step */
   buf->size = this->bih.biSize;
-  memcpy(buf->content, &this->bih, sizeof(xine_bmiheader) + this->bih.biSize);
+  memcpy(buf->content, &this->bih, this->bih.biSize);
   buf->type = BUF_VIDEO_FLI;
   this->video_fifo->put (this->video_fifo, buf);
 }

@@ -117,7 +117,7 @@ typedef struct {
   yuv2rgb_t               *yuv2rgb;         /* used for format conversion */
   int			   mode;	    /* rgb mode */
   int		           bytespp;	    /* rgb bits per pixel */
-
+  DDPIXELFORMAT primary_pixel_format;
   alphablend_t             alphablend_extra_data;
 } win32_driver_t;
 
@@ -367,8 +367,9 @@ static boolean CreateSecondary( win32_driver_t * win32_driver, int width, int he
   lprintf("CreateSecondary() - Falling back to back buffer same as primary\n");
   lprintf("CreateSecondary() - act_format = (NATIVE) %d\n", IMGFMT_NATIVE);
 
-  ddsd.dwFlags        = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+  ddsd.dwFlags        = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
   ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY;
+  ddsd.ddpfPixelFormat = win32_driver->primary_pixel_format;
   win32_driver->act_format = IMGFMT_NATIVE;
 
   if( IDirectDraw_CreateSurface( win32_driver->ddobj, &ddsd, &win32_driver->secondary, 0 ) == DD_OK )
@@ -429,6 +430,10 @@ static boolean CheckPixelFormat( win32_driver_t * win32_driver )
       Error( 0, "IDirectDrawSurface_GetPixelFormat ( CheckPixelFormat ) : error 0x%lx", result );
       return 0;
     }
+	
+  /* store pixel format for CreateSecondary */
+
+  win32_driver->primary_pixel_format = ddpf;
 
   /* TODO : support paletized video modes */
 
@@ -478,6 +483,7 @@ static boolean CheckPixelFormat( win32_driver_t * win32_driver )
 	win32_driver->mode = MODE_15_BGR;
     }
 
+	lprintf("win32 mode: %u\n", win32_driver->mode);
   return TRUE;
 }
 

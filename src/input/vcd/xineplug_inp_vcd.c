@@ -966,7 +966,7 @@ vcd_class_eject_media (input_class_t *this_gen)
  * From spec:
  * return current MRL
  */
-static char * 
+static const char * 
 vcd_plugin_get_mrl (input_plugin_t *this_gen) 
 {
   vcd_input_plugin_t *t         = (vcd_input_plugin_t *) this_gen;
@@ -987,7 +987,7 @@ vcd_plugin_get_mrl (input_plugin_t *this_gen)
     /* Bad type. */
     LOG_ERR("%s %d", _("Invalid current entry type"), 
                   vcdplayer->play_item.type);
-    return strdup("");
+    return "";
   } else {
     n += offset;
     if (n < t->class->num_mrls) {
@@ -995,7 +995,7 @@ vcd_plugin_get_mrl (input_plugin_t *this_gen)
                 t->class->mrls[n]->mrl);
       return t->class->mrls[n]->mrl;
     } else {
-      return strdup("");
+      return "";
     }
   }
 }

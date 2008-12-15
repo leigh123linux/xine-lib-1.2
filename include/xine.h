@@ -946,6 +946,7 @@ const char *xine_get_meta_info   (xine_stream_t *stream, int info) XINE_PROTECTE
 #define XINE_META_INFO_INPUT_PLUGIN        9
 #define XINE_META_INFO_CDINDEX_DISCID      10
 #define XINE_META_INFO_TRACK_NUMBER        11
+#define XINE_META_INFO_COMPOSER            12
 
 
 /*********************************************************************

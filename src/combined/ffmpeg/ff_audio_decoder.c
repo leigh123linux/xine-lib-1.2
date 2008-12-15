@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2005 the xine project
+ * Copyright (C) 2001-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -442,7 +442,7 @@ static void ff_audio_dispose (audio_decoder_t *this_gen) {
     free(this->context->extradata);
 
   if(this->context)
-    free(this->context);
+    av_free(this->context);
 
   free (this_gen);
 }

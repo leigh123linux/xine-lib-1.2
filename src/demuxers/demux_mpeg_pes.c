@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2006 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -262,7 +262,6 @@ static void demux_mpeg_pes_parse_pack (demux_mpeg_pes_t *this, int preview_mode)
   uint8_t       *p;
   int32_t        result;
   off_t          i;
-  int32_t        n;
   uint8_t        buf6[ 6 ];
   
   this->scr = 0;

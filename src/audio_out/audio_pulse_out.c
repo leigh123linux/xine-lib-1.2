@@ -218,7 +218,8 @@ static void __xine_pa_sink_info_callback(pa_context *c, const pa_sink_input_info
 
   this->cvolume = info->volume;
   this->swvolume = pa_cvolume_avg(&info->volume);
-#ifdef HAVE_PULSEAUDIO_0_9_7
+#if PA_PROTOCOL_VERSION >= 11
+  /* PulseAudio 0.9.7 and newer */
   this->muted = info->mute;
 #else
   this->muted = pa_cvolume_is_muted (&this->cvolume);
@@ -665,7 +666,8 @@ static int ao_pulse_set_property (ao_driver_t *this_gen, int property, int value
 
       this->muted = value;
 
-#ifdef HAVE_PULSEAUDIO_0_9_7
+#if PA_PROTOCOL_VERSION >= 11
+      /* PulseAudio 0.9.7 and newer */
       o = pa_context_set_sink_input_mute(this->context, pa_stream_get_index(this->stream),
                                            value, __xine_pa_context_success_callback, this);
 #else

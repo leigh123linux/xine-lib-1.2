@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2004 the xine project
+ * Copyright (C) 2000-2008 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -360,21 +360,22 @@ static char *config_xlate_internal (const char *key, const xine_config_entry_tra
   return NULL;
 }
 
-static const char *config_translate_key (const char *key) {
+static const char *config_translate_key (const char *key, char **tmp) {
   /* Returns translated key or, if no translation found, NULL.
    * Translated key may be in a static buffer allocated within this function.
    * NOT re-entrant; assumes that config_lock is held.
    */
   unsigned trans;
-  static char *newkey = NULL;
+  const char *newkey = NULL;
 
   /* first, special-case the decoder entries (so that new ones can be added
    * without requiring modification of the translation table)
    */
+  *tmp = NULL;
   if (!strncmp (key, "decoder.", 8) &&
       !strcmp (key + (trans = strlen (key)) - 9, "_priority")) {
-    asprintf (&newkey, "engine.decoder_priorities.%.*s", trans - 17, key + 8);
-    return newkey;
+    asprintf (tmp, "engine.decoder_priorities.%.*s", trans - 17, key + 8);
+    return *tmp;
   }
 
   /* search the translation table... */
@@ -389,6 +390,7 @@ static void config_lookup_entry_int (config_values_t *this, const char *key,
 				       cfg_entry_t **entry, cfg_entry_t **prev) {
 
   int trans;
+  char *tmp = NULL;
 
   /* try twice at most (second time with translation from old key name) */
   for (trans = 2; trans; --trans) {
@@ -400,14 +402,18 @@ static void config_lookup_entry_int (config_values_t *this, const char *key,
       *entry = (*entry)->next;
     }
   
-    if (*entry)
+    if (*entry) {
+      free(tmp);
       return;
+    }
 
     /* we did not find a match, maybe this is an old config entry name
      * trying to translate */
-    key = config_translate_key(key);
-    if (!key)
+    key = config_translate_key(key, &tmp);
+    if (!key) {
+      free(tmp);
       return;
+    }
   }
 }
 
@@ -761,7 +767,7 @@ static int config_register_enum (config_values_t *this,
   entry->type = XINE_CONFIG_TYPE_ENUM;
 
   if (entry->unknown_value)
-    entry->num_value = config_parse_enum (entry->unknown_value, values);
+    entry->num_value = config_parse_enum (entry->unknown_value, (const char **)values);
   else
     entry->num_value = def_value;
   
@@ -769,14 +775,14 @@ static int config_register_enum (config_values_t *this,
   entry->num_default = def_value;
 
   /* allocate and copy the enum values */
-  value_src = values;
+  value_src = (const char **)values;
   value_count = 0;
   while (*value_src) {
     value_src++;
     value_count++;
   }
   entry->enum_values = malloc (sizeof(char*) * (value_count + 1));
-  value_src = values;
+  value_src = (const char **)values;
   value_dest = entry->enum_values;
   while (*value_src) {
     *value_dest = strdup(*value_src);
@@ -875,7 +881,7 @@ static void config_update_string (config_values_t *this,
   /* if an enum is updated with a string, we convert the string to
    * its index and use update number */
   if (entry->type == XINE_CONFIG_TYPE_ENUM) {
-    config_update_num(this, key, config_parse_enum(value, entry->enum_values));
+    config_update_num(this, key, config_parse_enum(value, (const char **)entry->enum_values));
     return;
   }
 
@@ -957,15 +963,17 @@ void xine_config_load (xine_t *xine, const char *filename) {
 
 	if (!(entry = config_lookup_entry(this, line))) {
 	  const char *key = line;
+	  char *tmp = NULL;
 	  pthread_mutex_lock(&this->config_lock);
 	  if (this->current_version < CONFIG_FILE_VERSION) {
 	    /* old config file -> let's see if we have to rename this one */
-	    key = config_translate_key(key);
+	    key = config_translate_key(key, &tmp);
 	    if (!key)
 	      key = line; /* no translation? fall back on untranslated key */
 	  }
 	  entry = config_add (this, key, 50);
 	  entry->unknown_value = strdup(value);
+	  free(tmp);
 	  pthread_mutex_unlock(&this->config_lock);
 	} else {
           switch (entry->type) {

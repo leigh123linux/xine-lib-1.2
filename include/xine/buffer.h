@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2004 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -655,7 +655,7 @@ uint32_t _x_fourcc_to_buf_video( uint32_t fourcc_int ) XINE_PROTECTED;
  * @param buf_type One of the \ref buffer_video "BUF_VIDEO_xxx" values.
  * @sa _x_buf_audio_name
  */
-const char *_x_buf_video_name( uint32_t buf_type ) XINE_PROTECTED;
+const char * _x_buf_video_name( uint32_t buf_type ) XINE_PROTECTED;
 
 /**
  * @brief Returns the \ref buffer_audio "BUF_AUDIO_xxx" for the given formattag.
@@ -669,7 +669,7 @@ uint32_t _x_formattag_to_buf_audio( uint32_t formattag ) XINE_PROTECTED;
  * @param buf_type One of the \ref buffer_audio "BUF_AUDIO_xxx" values.
  * @sa _x_buf_video_name
  */
-const char *_x_buf_audio_name( uint32_t buf_type ) XINE_PROTECTED;
+const char * _x_buf_audio_name( uint32_t buf_type ) XINE_PROTECTED;
 
 
 /**
