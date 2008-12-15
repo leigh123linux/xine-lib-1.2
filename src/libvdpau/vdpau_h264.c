@@ -376,7 +376,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
               xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %s\n",  this->vdpau_accel->vdp_get_error_string(status));
             else {
 
-              img->duration  = 0;
+              img->duration  = this->video_step;
               if(this->nal_parser->current_nal->nal_unit_type == NAL_SLICE_IDR)
                 img->pts = buf->pts;
               else
