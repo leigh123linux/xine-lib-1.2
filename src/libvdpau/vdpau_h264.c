@@ -545,9 +545,11 @@ static void vdpau_h264_dispose (video_decoder_t *this_gen) {
   }
 
   if (this->decoder_initialized) {
+    this->vdpau_accel->vdp_decoder_destroy( this->decoder );
     this->decoder_initialized = 0;
-    this->stream->video_out->close(this->stream->video_out, this->stream);
   }
+
+  this->stream->video_out->close( this->stream->video_out, this->stream );
 
   free (this_gen);
 }
@@ -560,11 +562,11 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
   vdpau_h264_decoder_t  *this ;
 
-  this = (vdpau_h264_decoder_t *) calloc(1, sizeof(vdpau_h264_decoder_t));
-
   /* the videoout must be vdpau-capable to support this decoder */
   if ( !(stream->video_driver->get_capabilities(stream->video_driver) & VO_CAP_VDPAU_H264) )
 	  return NULL;
+
+  this = (vdpau_h264_decoder_t *) calloc(1, sizeof(vdpau_h264_decoder_t));
 
   this->video_decoder.decode_data         = vdpau_h264_decode_data;
   this->video_decoder.flush               = vdpau_h264_flush;
@@ -585,6 +587,8 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->video_step = 0;
   this->last_pts = 0;
   this->tmp_pts = 0;
+
+  (stream->video_out->open)(stream->video_out, stream);
 
   return &this->video_decoder;
 }

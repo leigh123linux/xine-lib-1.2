@@ -21,7 +21,7 @@
  *
  */
 
-//#define LOG
+#define LOG
 #define LOG_MODULE "vdpau_mpeg12"
 
 
@@ -197,11 +197,13 @@ static void init_picture( picture_t *pic )
 
 static void reset_sequence( sequence_t *sequence )
 {
+  lprintf( "reset_sequence\n" );
   sequence->have_header = 0;
   sequence->bufpos = 0;
   sequence->bufseek = 0;
   sequence->start = -1;
 	sequence->seq_pts = sequence->cur_pts = 0;
+  sequence->profile = VDP_DECODER_PROFILE_MPEG1;
 	//sequence->ratio = 1.0;
 	sequence->video_step = 3600;
   if ( sequence->forward_ref )
@@ -274,13 +276,13 @@ static void sequence_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int
   lprintf( "load_intra_quantizer_matrix: %d\n", i );
   if ( i ) {
     for ( j=0; j<64; ++j ) {
-      sequence->picture.vdp_infos.intra_quantizer_matrix[mpeg2_scan_norm[j]] = get_bits( buf+7+j,7,8 );
+      sequence->picture.vdp_infos2.intra_quantizer_matrix[mpeg2_scan_norm[j]] = sequence->picture.vdp_infos.intra_quantizer_matrix[mpeg2_scan_norm[j]] = get_bits( buf+7+j,7,8 );
     }
     off = 64;
   }
   else {
     for ( j=0; j<64; ++j ) {
-      sequence->picture.vdp_infos.intra_quantizer_matrix[mpeg2_scan_norm[j]] = default_intra_quantizer_matrix[j];
+      sequence->picture.vdp_infos2.intra_quantizer_matrix[mpeg2_scan_norm[j]] = sequence->picture.vdp_infos.intra_quantizer_matrix[mpeg2_scan_norm[j]] = default_intra_quantizer_matrix[j];
     }
   }
 
@@ -288,11 +290,13 @@ static void sequence_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int
   lprintf( "load_non_intra_quantizer_matrix: %d\n", i );
   if ( i ) {
     for ( j=0; j<64; ++j ) {
-      sequence->picture.vdp_infos.non_intra_quantizer_matrix[mpeg2_scan_norm[j]] = get_bits( buf+8+off+j,0,8 );
+      sequence->picture.vdp_infos2.non_intra_quantizer_matrix[mpeg2_scan_norm[j]] = sequence->picture.vdp_infos.non_intra_quantizer_matrix[mpeg2_scan_norm[j]] = get_bits( buf+8+off+j,0,8 );
     }
   }
-  else
+  else {
     memset( sequence->picture.vdp_infos.non_intra_quantizer_matrix, 16, 64 );
+    memset( sequence->picture.vdp_infos2.non_intra_quantizer_matrix, 16, 64 );
+  }
 
   if ( !sequence->have_header ) {
     sequence->have_header = 1;
@@ -338,9 +342,22 @@ static void picture_header( sequence_t *sequence, uint8_t *buf, int len )
   lprintf( "picture_coding_type: %d\n", get_bits( buf,10,3 ) );
   infos->forward_reference = VDP_INVALID_HANDLE;
   infos->backward_reference = VDP_INVALID_HANDLE;
-  infos->full_pel_forward_vector = 0;
-  infos->full_pel_backward_vector = 0;
-  sequence->picture.state = WANT_EXT;
+  if ( infos->picture_coding_type>2 ) {
+    infos->full_pel_forward_vector = get_bits( buf+2,13,1 );
+    infos->f_code[0][0] = infos->f_code[0][1] = get_bits( buf+2,14,3 );
+    if ( infos->picture_coding_type==3 ) {
+      infos->full_pel_forward_vector = get_bits( buf+2,17,1 );
+      infos->f_code[1][0] = infos->f_code[1][1] = get_bits( buf+2,18,3 );
+    }
+  }
+  else {
+    infos->full_pel_forward_vector = 0;
+    infos->full_pel_backward_vector = 0;
+  }
+  if ( sequence->profile==VDP_DECODER_PROFILE_MPEG1 )
+    sequence->picture.state = WANT_SLICE;
+  else
+    sequence->picture.state = WANT_EXT;
 }
 
 
@@ -543,8 +560,8 @@ static void decode_render( vdpau_mpeg12_decoder_t *vd, vdpau_accel_t *accel )
   if ( st!=VDP_STATUS_OK )
     lprintf( "decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
   else
-    lprintf( "DECODER SUCCESS : frame_type:%d, slices=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
-              pic->vdp_infos.picture_coding_type, pic->vdp_infos.slice_count, accel->surface, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->seq_pts );
+    lprintf( "DECODER SUCCESS : frame_type:%d, slices=%d, slices_bytes=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
+              pic->vdp_infos.picture_coding_type, pic->vdp_infos.slice_count, vbit.bitstream_bytes, accel->surface, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->seq_pts );
 
   if ( pic->vdp_infos.picture_structure != PICTURE_FRAME ) {
     if ( pic->vdp_infos2.picture_coding_type==P_FRAME )
@@ -576,6 +593,9 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
   vdpau_accel_t *ref_accel;
 
   pic->state = WANT_HEADER;
+
+  if ( seq->profile == VDP_DECODER_PROFILE_MPEG1 )
+    pic->vdp_infos.picture_structure=PICTURE_FRAME;
 
   if ( pic->vdp_infos.picture_structure!=PICTURE_FRAME && !pic->slices_count2 ) {
     lprintf("********************* no slices_count2 **********************\n");
