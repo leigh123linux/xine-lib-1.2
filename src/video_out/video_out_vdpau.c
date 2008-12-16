@@ -687,8 +687,8 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   }
 
   if ( frame->vo_frame.duration>2500 && frame->format==XINE_IMGFMT_VDPAU ) {
-    VdpTime now = 0;
-    vdp_queue_get_time( vdp_queue, &now );
+    VdpTime current_time = 0;
+    vdp_queue_get_time( vdp_queue, &current_time );
     VdpVideoSurface past[2];
     VdpVideoSurface future[1];
     past[1] = past[0] = (this->back_frame[0] && (this->back_frame[0]->format==XINE_IMGFMT_VDPAU)) ? this->back_frame[0]->vdpau_accel_data.surface : VDP_INVALID_HANDLE;
@@ -698,7 +698,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     if ( st != VDP_STATUS_OK )
       printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
-    vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, now );
+    vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, current_time );
     if ( this->init_queue<2 ) ++this->init_queue;
     this->current_output_surface ^= 1;
     if ( this->init_queue>1 )
@@ -706,14 +706,14 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
     past[0] = surface;
     past[1] = (this->back_frame[0] && (this->back_frame[0]->format==XINE_IMGFMT_VDPAU)) ? this->back_frame[0]->vdpau_accel_data.surface : VDP_INVALID_HANDLE;
-    future[0] = surface;//VDP_INVALID_HANDLE;
+    future[0] = VDP_INVALID_HANDLE;
     st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD,
                                2, past, surface, 1, future, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
     if ( st != VDP_STATUS_OK )
       printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
-    now += frame->vo_frame.duration*100000/18;
-    vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, now );
+    current_time += frame->vo_frame.duration*100000/18;
+    vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, current_time );
     if ( this->init_queue<2 ) ++this->init_queue;
     this->current_output_surface ^= 1;
   }
