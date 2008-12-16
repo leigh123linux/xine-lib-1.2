@@ -49,11 +49,13 @@
 #include <vdpau/vdpau_x11.h>
 #include "accel_vdpau.h"
 
+#define NUM_FRAMES_BACK 2
+
 
 VdpOutputSurfaceRenderBlendState blend = { VDP_OUTPUT_SURFACE_RENDER_BLEND_STATE_VERSION,
           VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ONE ,
-          VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ZERO,
-          VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_SRC_ALPHA,
+          VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ONE_MINUS_SRC_COLOR,
+          VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ONE,
           VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
           VDP_OUTPUT_SURFACE_RENDER_BLEND_EQUATION_ADD,
           VDP_OUTPUT_SURFACE_RENDER_BLEND_EQUATION_ADD };
@@ -109,6 +111,7 @@ typedef struct {
   uint32_t  bitmap_width, bitmap_height;
   int ovl_w, ovl_h; /* overlay's width and height */
   int ovl_x, ovl_y; /* overlay's top-left display position */
+  int unscaled;
 } vdpau_overlay_t;
 
 
@@ -140,6 +143,12 @@ typedef struct {
   VdpOutputSurface    overlay_output;
   uint32_t            overlay_output_width;
   uint32_t            overlay_output_height;
+  int                 has_overlay;
+
+  VdpOutputSurface    overlay_unscaled;
+  uint32_t            overlay_unscaled_width;
+  uint32_t            overlay_unscaled_height;
+  int                 has_unscaled;
 
   VdpVideoSurface soft_surface;
   uint32_t             soft_surface_width;
@@ -157,9 +166,11 @@ typedef struct {
   uint32_t             video_mixer_width;
   uint32_t             video_mixer_height;
 
+  vdpau_frame_t        *back_frame[ NUM_FRAMES_BACK ];
+
   uint32_t          capabilities;
   xine_t            *xine;
-  int               gotimage;
+
 } vdpau_driver_t;
 
 
@@ -214,6 +225,7 @@ static int vdpau_process_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overlay )
   ovl->ovl_h = overlay->height;
   ovl->ovl_x = overlay->x;
   ovl->ovl_y = overlay->y;
+  ovl->unscaled = overlay->unscaled;
   uint32_t *buf = (uint32_t*)malloc(ovl->ovl_w*ovl->ovl_h*4);
   if ( !buf )
     return 0;
@@ -221,7 +233,7 @@ static int vdpau_process_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overlay )
   int num_rle = overlay->num_rle;
   rle_elem_t *rle = overlay->rle;
   uint32_t *rgba = buf;
-  uint32_t red, green,blue, alpha;
+  uint32_t red, green, blue, alpha;
   clut_t *low_colors = (clut_t*)overlay->color;
   clut_t *hili_colors = (clut_t*)overlay->hili_color;
   uint8_t *low_trans = overlay->trans;
@@ -253,7 +265,7 @@ static int vdpau_process_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overlay )
       blue = colors[clr].cb; /* blue */
       alpha = src_alpha*255/15;
       *rgba = (alpha<<24) | (red<<16) | (green<<8) | blue;
-      rgba++;//= 4;
+      rgba++;
       ++pos;
     }
     ++rle;
@@ -298,7 +310,7 @@ static void vdpau_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen, v
 }
 
 
-static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img)
+static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame)
 {
   vdpau_driver_t  *this = (vdpau_driver_t *) this_gen;
   int i;
@@ -307,17 +319,20 @@ static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img)
   if ( !this->ovl_changed )
     return;
 
-  this->overlay_output_width = this->overlay_output_height = 0;
+  int w=0, h=0;
   for ( i=0; i<this->ovl_changed-1; ++i ) {
-    int w = this->overlays[i].ovl_x+this->overlays[i].ovl_w;
-    int h = this->overlays[i].ovl_y+this->overlays[i].ovl_h;
-    if ( w > this->overlay_output_width )
-      this->overlay_output_width = w;
-    if ( h > this->overlay_output_height )
-      this->overlay_output_height = h;
+    if ( this->overlays[i].unscaled )
+      continue;
+    if ( w < (this->overlays[i].ovl_x+this->overlays[i].ovl_w) )
+      w = this->overlays[i].ovl_x+this->overlays[i].ovl_w;
+    if ( h < (this->overlays[i].ovl_y+this->overlays[i].ovl_h) )
+      h = this->overlays[i].ovl_y+this->overlays[i].ovl_h;
   }
-  printf( "vdpau_overlay_end: output_overlay size = %dx%d\n", this->overlay_output_width, this->overlay_output_height );
-  if ( this->overlay_output != VDP_INVALID_HANDLE ) {
+
+  int out_w = (w>frame->width) ? w : frame->width;
+  int out_h = (h>frame->height) ? h : frame->height;
+
+  if ( (this->overlay_output_width!=out_w || this->overlay_output_height!=out_h) && this->overlay_output != VDP_INVALID_HANDLE ) {
     st = vdp_output_surface_destroy( this->overlay_output );
     if ( st != VDP_STATUS_OK ) {
       printf( "vdpau_overlay_end: vdp_output_surface_destroy failed : %s\n", vdp_get_error_string(st) );
@@ -325,34 +340,77 @@ static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img)
     this->overlay_output = VDP_INVALID_HANDLE;
   }
 
+  w = 0; h = 0;
+  for ( i=0; i<this->ovl_changed-1; ++i ) {
+    if ( !this->overlays[i].unscaled )
+      continue;
+    if ( w < (this->overlays[i].ovl_x+this->overlays[i].ovl_w) )
+      w = this->overlays[i].ovl_x+this->overlays[i].ovl_w;
+    if ( h < (this->overlays[i].ovl_y+this->overlays[i].ovl_h) )
+      h = this->overlays[i].ovl_y+this->overlays[i].ovl_h;
+  }
+
+  if ( (this->overlay_unscaled_width!=w || this->overlay_unscaled_height!=h) && this->overlay_unscaled != VDP_INVALID_HANDLE ) {
+    st = vdp_output_surface_destroy( this->overlay_unscaled );
+    if ( st != VDP_STATUS_OK ) {
+      printf( "vdpau_overlay_end: vdp_output_surface_destroy failed : %s\n", vdp_get_error_string(st) );
+    }
+    this->overlay_unscaled = VDP_INVALID_HANDLE;
+  }
+
   if ( !(this->ovl_changed-1) ) {
     this->ovl_changed = 0;
+    this->has_overlay = 0;
     return;
   }
 
-  st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->overlay_output_width, this->overlay_output_height, &this->overlay_output );
-  if ( st != VDP_STATUS_OK ) {
-    printf( "vdpau_overlay_end: vdp_output_surface_create failed : %s\n", vdp_get_error_string(st) );
+  this->overlay_unscaled_width = w;
+  this->overlay_unscaled_height = h;
+
+  if ( this->overlay_unscaled == VDP_INVALID_HANDLE ) {
+    st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->overlay_unscaled_width, this->overlay_unscaled_height, &this->overlay_unscaled );
+    if ( st != VDP_STATUS_OK )
+      printf( "vdpau_overlay_end: vdp_output_surface_create failed : %s\n", vdp_get_error_string(st) );
   }
 
-  uint32_t *buf = (uint32_t*)malloc(this->overlay_output_width*this->overlay_output_height*4);
-  uint32_t pitch = this->overlay_output_width*4;
+  this->overlay_output_width = out_w;
+  this->overlay_output_height = out_h;
+
+  if ( this->overlay_output == VDP_INVALID_HANDLE ) {
+    st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->overlay_output_width, this->overlay_output_height, &this->overlay_output );
+    if ( st != VDP_STATUS_OK )
+      printf( "vdpau_overlay_end: vdp_output_surface_create failed : %s\n", vdp_get_error_string(st) );
+  }
+
+  w = (this->overlay_unscaled_width>this->overlay_output_width) ? this->overlay_unscaled_width : this->overlay_output_width;
+  h = (this->overlay_unscaled_height>this->overlay_output_height) ? this->overlay_unscaled_height : this->overlay_output_height;
+
+  uint32_t *buf = (uint32_t*)malloc(w*h*4);
+  uint32_t pitch = w*4;
+  memset( buf, 0, w*h*4 );
   VdpRect clear = { 0, 0, this->overlay_output_width, this->overlay_output_height };
-  memset( buf, 0, this->overlay_output_width*this->overlay_output_height*4 );
   st = vdp_output_surface_put_bits( this->overlay_output, &buf, &pitch, &clear );
+  if ( st != VDP_STATUS_OK ) {
+    printf( "vdpau_overlay_end: vdp_output_surface_put_bits (clear) failed : %s\n", vdp_get_error_string(st) );
+  }
+  clear.x1 = this->overlay_unscaled_width; clear.y1 = this->overlay_unscaled_height;
+  st = vdp_output_surface_put_bits( this->overlay_unscaled, &buf, &pitch, &clear );
   if ( st != VDP_STATUS_OK ) {
     printf( "vdpau_overlay_end: vdp_output_surface_put_bits (clear) failed : %s\n", vdp_get_error_string(st) );
   }
   free(buf);
 
+  VdpOutputSurface *surface;
   for ( i=0; i<this->ovl_changed-1; ++i ) {
     VdpRect dest = { this->overlays[i].ovl_x, this->overlays[i].ovl_y, this->overlays[i].ovl_x+this->overlays[i].ovl_w, this->overlays[i].ovl_y+this->overlays[i].ovl_h };
     VdpRect src = { 0, 0, this->overlays[i].ovl_w, this->overlays[i].ovl_h };
-    st = vdp_output_surface_render_bitmap_surface( this->overlay_output, &dest, this->overlays[i].ovl_bitmap, &src, 0, &blend, 0 );
+    surface = (this->overlays[i].unscaled) ? &this->overlay_unscaled : &this->overlay_output;
+    st = vdp_output_surface_render_bitmap_surface( *surface, &dest, this->overlays[i].ovl_bitmap, &src, 0, &blend, 0 );
     if ( st != VDP_STATUS_OK ) {
       printf( "vdpau_overlay_end: vdp_output_surface_render_bitmap_surface failed : %s\n", vdp_get_error_string(st) );
     }
   }
+  this->has_overlay = 1;
   this->ovl_changed = 0;
 }
 
@@ -488,6 +546,20 @@ static int vdpau_redraw_needed (vo_driver_t *this_gen)
 
 
 
+static void vdpau_release_back_frames( vo_driver_t *this_gen )
+{
+  vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
+  int i;
+
+  for ( i=0; i<NUM_FRAMES_BACK; ++i ) {
+    if ( this->back_frame[ i ])
+      this->back_frame[ i ]->vo_frame.free( &this->back_frame[ i ]->vo_frame );
+    this->back_frame[ i ] = NULL;
+  }
+}
+
+
+
 static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 {
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
@@ -526,7 +598,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
       vdp_video_surface_destroy( this->soft_surface );
       vdp_video_surface_create( vdp_device, chroma, this->soft_surface_width, this->soft_surface_height, &this->soft_surface );
     }
-    /* FIXME: have to swap U and V planes to get correct colors !! nvidia ? */
+    /* FIXME: have to swap U and V planes to get correct colors !! */
     uint32_t pitches[] = { frame->vo_frame.pitches[0], frame->vo_frame.pitches[2], frame->vo_frame.pitches[1] };
     void* data[] = { frame->vo_frame.base[0], frame->vo_frame.base[2], frame->vo_frame.base[1] };
     if ( frame->format==XINE_IMGFMT_YV12 ) {
@@ -543,28 +615,6 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   else if (frame->format == XINE_IMGFMT_VDPAU) {
     //printf( "vo_vdpau: got a vdpau image -------------\n" );
     surface = frame->vdpau_accel_data.surface;
-    /*if ( !this->gotimage ) {
-      printf( "vo_vdpau: mallocing yuv ......\n" );
-      uint32_t pitches[] = { 8*((frame->width + 7) / 8), 8*((frame->width + 15) / 16), 8*((frame->width + 15) / 16) };
-      uint8_t *mem_y = (uint8_t*)malloc(frame->width*frame->height);
-      uint8_t *mem_u = (uint8_t*)malloc(frame->width*frame->height);
-      uint8_t *mem_v = (uint8_t*)malloc(frame->width*frame->height);
-      uint8_t* planes[] = { mem_y, mem_u, mem_v };
-      ++this->gotimage;
-      st = vdp_video_surface_getbits_ycbcr( surface, VDP_YCBCR_FORMAT_YV12, planes, pitches);
-      if ( st != VDP_STATUS_OK )
-        printf( " vo_vdpau: can't get yv12 bbits !!!!!!!!!!!! : %s\n", vdp_get_error_string( st ) );
-      else {
-      fprintf(stderr,"P5\n%d %d\n255\n",frame->width, frame->height);
-      int j;
-      uint8_t red, green, blue;
-      for ( j=0; j<(frame->width*frame->height); j++ ) {
-        fprintf(stderr,"%d ", mem_y[j] );
-      }
-      fprintf(stderr, "\n");
-      printf( "vo_vdpau: ...........got surface bits\n" );
-      }
-    }*/
     mix_w = frame->width;
     mix_h = frame->height;
     chroma = VDP_CHROMA_TYPE_420;
@@ -577,10 +627,12 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   }
 
   if ( (mix_w != this->video_mixer_width) || (mix_h != this->video_mixer_height) || (chroma != this->video_mixer_chroma) ) {
+    vdpau_release_back_frames( this_gen ); /* empty past frames array */
     vdp_video_mixer_destroy( this->video_mixer );
-    VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE };
-    void const *param_values[] = { &mix_w, &mix_h, &chroma };
-    vdp_video_mixer_create( vdp_device, 0, 0, 3, params, param_values, &this->video_mixer );
+    VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
+    int num_layers = 2;
+    void const *param_values[] = { &mix_w, &mix_h, &chroma, &num_layers };
+    vdp_video_mixer_create( vdp_device, 0, 0, 4, params, param_values, &this->video_mixer );
   }
 
   if ( (this->sc.gui_width > this->output_surface_width[this->current_output_surface]) || (this->sc.gui_height > this->output_surface_height[this->current_output_surface]) ) {
@@ -607,27 +659,30 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   }
 
   uint32_t layer_count;
-  VdpLayer layer[1];
-  VdpRect layersrc;
-  if ( this->overlay_output_width ) {
+  VdpLayer layer[2];
+  VdpRect layersrc, unscaledsrc;
+  if ( this->has_overlay ) {
     //printf("vdpau_display_frame: overlay should be visible !\n");
-    layer_count = 1;
+    layer_count = 2;
     layersrc.x0 = 0; layersrc.y0 = 0; layersrc.x1 = this->overlay_output_width; layersrc.y1 = this->overlay_output_height;
-    layer[0].struct_version = VDP_LAYER_VERSION; layer[0].source_surface = this->overlay_output; layer[0].source_rect = &layersrc; layer[0].destination_rect = &layersrc;//&vid_dest;
+    layer[0].struct_version = VDP_LAYER_VERSION; layer[0].source_surface = this->overlay_output; layer[0].source_rect = &layersrc; layer[0].destination_rect = &vid_dest;
+    unscaledsrc.x0 = 0; unscaledsrc.y0 = 0; unscaledsrc.x1 = this->overlay_unscaled_width; unscaledsrc.y1 = this->overlay_unscaled_height;
+    layer[1].struct_version = VDP_LAYER_VERSION; layer[1].source_surface = this->overlay_unscaled; layer[1].source_rect = &unscaledsrc; layer[1].destination_rect = &unscaledsrc;
     //printf( "layersrc = %d %d %d %d \n", layersrc.x0, layersrc.y0, layersrc.x1, layersrc.y1 );
   }
   else {
     layer_count = 0;
   }
+
   st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME,
                                0, 0, surface, 0, 0, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
   if ( st != VDP_STATUS_OK )
     printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
   XLockDisplay( this->display );
-  if ( this->overlay_output_width )
-    vdp_queue_display( vdp_queue, this->overlay_output, 0, 0, 0 );
-  else
+  /*if ( this->overlay_output_width )
+    vdp_queue_display( vdp_queue, this->overlay_unscaled, 0, 0, 0 );
+  else*/
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, 0 );
   //if ( layer_count )
     //printf( "vo_vdpau: overlay count=%d, surface=%d\n", layer_count, layer[0].source_surface );
@@ -639,7 +694,13 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
   XUnlockDisplay( this->display );
 
-  frame->vo_frame.free( &frame->vo_frame );
+  int i;
+  if ( this->back_frame[NUM_FRAMES_BACK-1]) {
+    this->back_frame[NUM_FRAMES_BACK-1]->vo_frame.free (&this->back_frame[NUM_FRAMES_BACK-1]->vo_frame);
+  }
+  for ( i=NUM_FRAMES_BACK-1; i>0; i-- )
+    this->back_frame[i] = this->back_frame[i-1];
+  this->back_frame[0] = frame;
 }
 
 
@@ -651,7 +712,7 @@ static int vdpau_get_property (vo_driver_t *this_gen, int property)
 
   switch (property) {
     case VO_PROP_MAX_NUM_FRAMES:
-      return 20;
+      return 22;
     case VO_PROP_WINDOW_WIDTH:
       ret = this->sc.gui_width;
       break;
@@ -801,6 +862,19 @@ static void vdpau_dispose (vo_driver_t *this_gen)
       vdp_bitmap_destroy( this->overlays[i].ovl_bitmap );
   }
 
+  if ( this->overlay_unscaled!=VDP_INVALID_HANDLE )
+    vdp_output_surface_destroy( this->overlay_unscaled );
+  if ( this->overlay_output!=VDP_INVALID_HANDLE )
+    vdp_output_surface_destroy( this->overlay_output );
+  if ( this->output_surface[0]!=VDP_INVALID_HANDLE )
+    vdp_video_surface_destroy( this->output_surface[0] );
+  if ( this->output_surface[1]!=VDP_INVALID_HANDLE )
+    vdp_video_surface_destroy( this->output_surface[1] );
+
+  for ( i=0; i<NUM_FRAMES_BACK; i++ )
+    if ( this->back_frame[i] )
+      this->back_frame[i]->vo_frame.dispose( &this->back_frame[i]->vo_frame );
+
   free (this);
 }
 
@@ -868,7 +942,11 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     this->overlays[i].ovl_x = this->overlays[i].ovl_y = 0;
   }
   this->overlay_output = VDP_INVALID_HANDLE;
+  this->overlay_output_width = this->overlay_output_height = 0;
+  this->overlay_unscaled = VDP_INVALID_HANDLE;
+  this->overlay_unscaled_width = this->overlay_unscaled_height = 0;
   this->ovl_changed = 0;
+  this->has_overlay = 0;
 
   /*  overlay converter */
   this->yuv2rgb_factory = yuv2rgb_factory_init (MODE_24_BGR, 0, NULL);
@@ -1032,9 +1110,10 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->video_mixer_chroma = chroma;
   this->video_mixer_width = this->soft_surface_width;
   this->video_mixer_height = this->soft_surface_height;
-  VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE };
-  void const *param_values[] = { &this->video_mixer_width, &this->video_mixer_height, &chroma };
-  st = vdp_video_mixer_create( vdp_device, 0, 0, 3, params, param_values, &this->video_mixer );
+  VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
+  int num_layers = 2;
+  void const *param_values[] = { &this->video_mixer_width, &this->video_mixer_height, &chroma, &num_layers };
+  st = vdp_video_mixer_create( vdp_device, 0, 0, 4, params, param_values, &this->video_mixer );
   if ( vdpau_init_error( st, "Can't create video mixer !!", &this->vo_driver, 1 ) ) {
     vdp_video_surface_destroy( this->soft_surface );
     vdp_output_surface_destroy( this->output_surface[0] );
@@ -1061,7 +1140,11 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   else
     this->capabilities |= VO_CAP_VDPAU_MPEG12;
 
-  this->gotimage = 0;
+  this->capabilities |= VO_CAP_UNSCALED_OVERLAY;
+
+  for ( i=0; i<NUM_FRAMES_BACK; i++)
+    this->back_frame[i] = NULL;
+
   return &this->vo_driver;
 }
 
