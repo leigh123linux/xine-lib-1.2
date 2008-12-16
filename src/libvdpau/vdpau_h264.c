@@ -17,11 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * foovideo.c: This is a reference video decoder for the xine multimedia
- * player. It really works too! It will output frames of packed YUY2 data
- * where each byte in the map is the same value, which is 3 larger than the
- * value from the last frame. This creates a slowly rotating solid color
- * frame when the frames are played in succession.
+ * vdpau_h264.c: H264 Video Decoder utilizing nvidia VDPAU engine
  */
 
 #include <stdio.h>
