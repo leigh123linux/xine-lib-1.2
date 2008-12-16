@@ -647,6 +647,16 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[this->current_output_surface], this->output_surface_height[this->current_output_surface], &this->output_surface[this->current_output_surface] );
   }
 
+  if ( (this->sc.gui_width > this->output_surface_width[this->current_output_surface^1]) || (this->sc.gui_height > this->output_surface_height[this->current_output_surface^1]) ) {
+    /* recreate output surface to match window size */
+    printf( "vo_vdpau: output_surface size update\n" );
+    this->output_surface_width[this->current_output_surface^1] = this->sc.gui_width;
+    this->output_surface_height[this->current_output_surface^1] = this->sc.gui_height;
+
+    vdp_output_surface_destroy( this->output_surface[this->current_output_surface^1] );
+    vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[this->current_output_surface^1], this->output_surface_height[this->current_output_surface^1], &this->output_surface[this->current_output_surface^1] );
+  }
+
   VdpRect vid_source = { this->sc.crop_left, this->sc.crop_top, this->sc.delivered_width-this->sc.crop_right, this->sc.delivered_height-this->sc.crop_bottom };
   VdpRect out_dest = { 0, 0, this->sc.gui_width, this->sc.gui_height };
   VdpRect vid_dest = { this->sc.output_xoffset, this->sc.output_yoffset, this->sc.output_xoffset+this->sc.output_width, this->sc.output_yoffset+this->sc.output_height };
@@ -676,10 +686,9 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     layer_count = 0;
   }
 
-  if ( frame->vo_frame.duration>2000 ) {
+  if ( frame->vo_frame.duration>2500 && frame->format==XINE_IMGFMT_VDPAU ) {
     VdpTime now = 0;
     vdp_queue_get_time( vdp_queue, &now );
-    now += frame->vo_frame.duration*100000/9;
     VdpVideoSurface past[2];
     VdpVideoSurface future[1];
     past[1] = past[0] = (this->back_frame[0] && (this->back_frame[0]->format==XINE_IMGFMT_VDPAU)) ? this->back_frame[0]->vdpau_accel_data.surface : VDP_INVALID_HANDLE;
@@ -689,7 +698,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     if ( st != VDP_STATUS_OK )
       printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
-    vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, 0 );
+    vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, now );
     if ( this->init_queue<2 ) ++this->init_queue;
     this->current_output_surface ^= 1;
     if ( this->init_queue>1 )
@@ -703,6 +712,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     if ( st != VDP_STATUS_OK )
       printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
+    now += frame->vo_frame.duration*100000/18;
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, now );
     if ( this->init_queue<2 ) ++this->init_queue;
     this->current_output_surface ^= 1;
