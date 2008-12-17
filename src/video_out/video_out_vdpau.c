@@ -635,6 +635,9 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     int num_layers = 2;
     void const *param_values[] = { &mix_w, &mix_h, &chroma, &num_layers };
     vdp_video_mixer_create( vdp_device, 2, features, 4, params, param_values, &this->video_mixer );
+    this->video_mixer_chroma = chroma;
+    this->video_mixer_width = mix_w;
+    this->video_mixer_height = mix_h;
   }
 
   if ( (this->sc.gui_width > this->output_surface_width[this->current_output_surface]) || (this->sc.gui_height > this->output_surface_height[this->current_output_surface]) ) {
@@ -665,10 +668,10 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
   XLockDisplay( this->display );
 
-  VdpTime time;
+  VdpTime last_time;
 
   if ( this->init_queue>1 )
-    vdp_queue_block( vdp_queue, this->output_surface[this->current_output_surface ^ 1], &time );
+    vdp_queue_block( vdp_queue, this->output_surface[this->current_output_surface ^ 1], &last_time );
 
   uint32_t layer_count;
   VdpLayer layer[2];
@@ -688,7 +691,6 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
   if ( frame->vo_frame.duration>2500 && frame->format==XINE_IMGFMT_VDPAU ) {
     VdpTime current_time = 0;
-    vdp_queue_get_time( vdp_queue, &current_time );
     VdpVideoSurface past[2];
     VdpVideoSurface future[1];
     past[1] = past[0] = (this->back_frame[0] && (this->back_frame[0]->format==XINE_IMGFMT_VDPAU)) ? this->back_frame[0]->vdpau_accel_data.surface : VDP_INVALID_HANDLE;
@@ -698,14 +700,14 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     if ( st != VDP_STATUS_OK )
       printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
+    vdp_queue_get_time( vdp_queue, &current_time );
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, current_time );
     if ( this->init_queue<2 ) ++this->init_queue;
     this->current_output_surface ^= 1;
     if ( this->init_queue>1 )
-      vdp_queue_block( vdp_queue, this->output_surface[this->current_output_surface ^ 1], &time );
+      vdp_queue_block( vdp_queue, this->output_surface[this->current_output_surface ^ 1], &last_time );
 
     past[0] = surface;
-    past[1] = (this->back_frame[0] && (this->back_frame[0]->format==XINE_IMGFMT_VDPAU)) ? this->back_frame[0]->vdpau_accel_data.surface : VDP_INVALID_HANDLE;
     future[0] = VDP_INVALID_HANDLE;
     st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD,
                                2, past, surface, 1, future, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
@@ -727,8 +729,6 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     if ( this->init_queue<2 ) ++this->init_queue;
     this->current_output_surface ^= 1;
   }
-
-
 
   XUnlockDisplay( this->display );
 
@@ -908,6 +908,8 @@ static void vdpau_dispose (vo_driver_t *this_gen)
     vdp_video_surface_destroy( this->output_surface[0] );
   if ( this->output_surface[1]!=VDP_INVALID_HANDLE )
     vdp_video_surface_destroy( this->output_surface[1] );
+  vdp_queue_destroy( vdp_queue );
+  vdp_queue_target_destroy( vdp_queue_target );
 
   for ( i=0; i<NUM_FRAMES_BACK; i++ )
     if ( this->back_frame[i] )
