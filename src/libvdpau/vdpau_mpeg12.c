@@ -549,8 +549,8 @@ static void decode_render( vdpau_mpeg12_decoder_t *vd, vdpau_accel_t *accel )
       lprintf( "failed to create surface !! %s\n", accel->vdp_get_error_string( st ) );
   }
 
-  if ( pic->vdp_infos.picture_structure!=PICTURE_FRAME && pic->vdp_infos.picture_coding_type==B_FRAME )
-    pic->vdp_infos.forward_reference = pic->vdp_infos.backward_reference;
+  /*if ( pic->vdp_infos.picture_structure!=PICTURE_FRAME && pic->vdp_infos.picture_coding_type==B_FRAME )
+    pic->vdp_infos.forward_reference = pic->vdp_infos.backward_reference;*/
 
   VdpBitstreamBuffer vbit;
   vbit.struct_version = VDP_BITSTREAM_BUFFER_VERSION;
@@ -564,12 +564,19 @@ static void decode_render( vdpau_mpeg12_decoder_t *vd, vdpau_accel_t *accel )
               pic->vdp_infos.picture_coding_type, pic->vdp_infos.slice_count, vbit.bitstream_bytes, accel->surface, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->seq_pts );
 
   if ( pic->vdp_infos.picture_structure != PICTURE_FRAME ) {
-    if ( pic->vdp_infos2.picture_coding_type==P_FRAME )
-      pic->vdp_infos2.forward_reference = accel->surface;
-    else if ( pic->vdp_infos2.picture_coding_type==B_FRAME )
+    pic->vdp_infos2.backward_reference = VDP_INVALID_HANDLE;
+    pic->vdp_infos2.forward_reference = VDP_INVALID_HANDLE;
+    if ( pic->vdp_infos2.picture_coding_type==P_FRAME ) {
+      pic->vdp_infos2.backward_reference = VDP_INVALID_HANDLE;
+      if ( pic->vdp_infos.picture_coding_type==I_FRAME )
+        pic->vdp_infos2.forward_reference = accel->surface;
+      else
+        pic->vdp_infos2.forward_reference = pic->vdp_infos.forward_reference;
+    }
+    else if ( pic->vdp_infos.picture_coding_type==B_FRAME ) {
       pic->vdp_infos2.forward_reference = pic->vdp_infos.forward_reference;
-    else
-      pic->vdp_infos2.forward_reference = VDP_INVALID_HANDLE;
+      pic->vdp_infos2.backward_reference = pic->vdp_infos.backward_reference;
+    }
     vbit.struct_version = VDP_BITSTREAM_BUFFER_VERSION;
     vbit.bitstream = pic->slices+pic->slices_pos_top;
     vbit.bitstream_bytes = pic->slices_pos-pic->slices_pos_top;
@@ -578,7 +585,7 @@ static void decode_render( vdpau_mpeg12_decoder_t *vd, vdpau_accel_t *accel )
       lprintf( "decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
     else
       lprintf( "DECODER SUCCESS : frame_type:%d, slices=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
-                pic->vdp_infos2.picture_coding_type, pic->vdp_infos2.slice_count, accel->surface, pic->vdp_infos2.forward_reference, pic->vdp_infos.backward_reference, seq->seq_pts );
+                pic->vdp_infos2.picture_coding_type, pic->vdp_infos2.slice_count, accel->surface, pic->vdp_infos2.forward_reference, pic->vdp_infos2.backward_reference, seq->seq_pts );
   }
 
   //printf( "vdpau_meg12:  forwref:%d, backref:%d\n", seq->forward_ref, seq->backward_ref );
