@@ -21,7 +21,7 @@
  *
  */
 
-#define LOG
+//#define LOG
 #define LOG_MODULE "vdpau_mpeg12"
 
 
