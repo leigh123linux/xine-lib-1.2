@@ -1,0 +1,72 @@
+xine-vdpau README:
+------------------------------------------------------------------------------
+
+So, you want to give it a try, but wonder which steps are required.
+Ok, so here it is:
+
+1) get the sources:
+svn co svn://jusst.de/xine-vdpau
+
+2) compile the sources:
+cd xine-vdpau
+./autogen.sh
+./configure
+make
+make install (as root)
+    **(make sure that no other xine-lib installation will conflict with this one)
+
+3) edit your xine configuration
+nano $HOME/.xine/config (if it does not exist, first run "xine --no-logo" then quit.
+search for "engine.buffers.video_num_frames" and set it to 22
+
+4) running the beast:
+xine --no-logo --verbose /path/to/a/working/sample
+    ** the --no-logo will tell xine to not play its crappy mpv logo (which, atm, doesn't work with vdpau_mpeg12)
+    ** --verbose will print some usefull things in your console (in case of problems, that are very likely to happen,
+        the developers will ask you to give this output, at least)
+    ** You can find working h264 samples at http://hftom.free.fr/video_samples/
+    ** MKV or MOV WON'T WORK, at that moment. (we are concentrating on TS streams, but yes, it will work in the future)
+    ** most mpeg2 should work, if you have a non working one, please provide a sample.
+
+5) update your svn copy quite often
+
+6) don't blame us if it crashes, burn you gpu (unlikely:) or anything else.
+
+
+------------------------------------------------------------------------------
+
+FAQ:
+
+Q:
+  Why my file plays fine with mplayer-vdpau and not with xine-vdpau?
+A:
+  We are not using the nvidia's libavcodec patch.
+  We are writing decoders from scratch.
+  So don't expect them to be as mature as ffmpeg ones. Not yet.
+
+Q:
+  Why mpeg2 doesn't use less cpu than software decoder?
+A:
+  Because at that moment it does a lot of memcpy. This will be fixed soon, but that's not
+  a priority. Stability is our focus.
+
+Q:
+  Is deinterlacing working?
+A:
+  Yes. It's already quite good (doing 50i->50p), but could even be better in the future.
+
+Q:
+  How do i get it working with VDR, Kaffeine, whatever.
+A:
+  Ask VDR, Kaffeine, whatever developers.
+    (Note: for kaffeine you are lucky, i'm going to tell you the tip.
+     Build kaffeine like that: ./configure --without-xcb && make && make install)
+
+Q:
+  How can i contact you?
+A:
+  IRC: #xine-vdpau on freenode
+  MAIL: http://lists.kafic.ba/mailman/listinfo/xine-vdpau
+  Eventually, nvnews.
+
+----------------------------------------------------------------------------
