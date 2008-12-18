@@ -908,6 +908,8 @@ static int xv_set_property (vo_driver_t *this_gen,
 			    int property, int value) {
   xv_driver_t *this = (xv_driver_t *) this_gen;
 
+  printf("xv_set_property: property=%d, value=%d\n", property, value );
+
   if (this->props[property].atom != None) {
 
     /* value is out of bound */

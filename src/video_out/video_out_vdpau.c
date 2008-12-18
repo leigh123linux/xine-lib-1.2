@@ -86,6 +86,9 @@ VdpOutputSurfacePutBitsNative *vdp_output_surface_put_bits;
 VdpVideoMixerCreate *vdp_video_mixer_create;
 VdpVideoMixerDestroy *vdp_video_mixer_destroy;
 VdpVideoMixerRender *vdp_video_mixer_render;
+VdpVideoMixerSetAttributeValues *vdp_video_mixer_set_attribute_values;
+
+VdpGenerateCSCMatrix *vdp_generate_csc_matrix;
 
 VdpPresentationQueueTargetCreateX11 *vdp_queue_target_create_x11;
 VdpPresentationQueueTargetDestroy *vdp_queue_target_destroy;
@@ -171,6 +174,11 @@ typedef struct {
 
   uint32_t          capabilities;
   xine_t            *xine;
+
+  int               hue;
+  int               saturation;
+  int               brightness;
+  int               contrast;
 
 } vdpau_driver_t;
 
@@ -435,9 +443,12 @@ static void vdpau_frame_dispose (vo_frame_t *vo_img)
 {
   vdpau_frame_t  *frame = (vdpau_frame_t *) vo_img ;
 
-  free (frame->chunk[0]);
-  free (frame->chunk[1]);
-  free (frame->chunk[2]);
+  if ( frame->chunk[0] )
+    free (frame->chunk[0]);
+  if ( frame->chunk[1] )
+    free (frame->chunk[1]);
+  if ( frame->chunk[2] )
+    free (frame->chunk[2]);
   if ( frame->vdpau_accel_data.surface != VDP_INVALID_HANDLE )
     vdp_video_surface_destroy( frame->vdpau_accel_data.surface );
   free (frame);
@@ -456,6 +467,9 @@ static vo_frame_t *vdpau_alloc_frame (vo_driver_t *this_gen)
 
   if (!frame)
     return NULL;
+
+  frame->chunk[0] = frame->chunk[1] = frame->chunk[2] = NULL;
+  frame->width = frame->height = frame->format = frame->flags = 0;
 
   frame->vo_frame.accel_data = &frame->vdpau_accel_data;
 
@@ -478,8 +492,6 @@ static vo_frame_t *vdpau_alloc_frame (vo_driver_t *this_gen)
   frame->vdpau_accel_data.vdp_decoder_render = vdp_decoder_render;
   frame->vdpau_accel_data.vdp_get_error_string = vdp_get_error_string;
 
-  frame->width = frame->height = 0;
-
   return (vo_frame_t *) frame;
 }
 
@@ -491,13 +503,17 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
   vdpau_frame_t   *frame = (vdpau_frame_t *) frame_gen;
 
   /* Check frame size and format and reallocate if necessary */
-  if ( (frame->width != width) || (frame->height != height) || (frame->format != format) || (frame->flags  != flags)) {
+  if ( (frame->width != width) || (frame->height != height) || (frame->format != format) ) {
     /*lprintf ("updating frame to %d x %d (ratio=%g, format=%08x)\n", width, height, ratio, format); */
 
     /* (re-) allocate render space */
-    free (frame->chunk[0]);
-    free (frame->chunk[1]);
-    free (frame->chunk[2]);
+    if ( frame->chunk[0] )
+      free (frame->chunk[0]);
+    if ( frame->chunk[1] )
+      free (frame->chunk[1]);
+    if ( frame->chunk[2] )
+      free (frame->chunk[2]);
+    frame->chunk[0] = frame->chunk[1] = frame->chunk[2] = NULL;
 
     if (format == XINE_IMGFMT_YV12) {
       frame->vo_frame.pitches[0] = 8*((width + 7) / 8);
@@ -524,6 +540,7 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
     frame->width = width;
     frame->height = height;
     frame->format = format;
+    frame->flags = flags;
 
     vdpau_frame_field ((vo_frame_t *)frame, flags);
   }
@@ -650,16 +667,6 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[this->current_output_surface], this->output_surface_height[this->current_output_surface], &this->output_surface[this->current_output_surface] );
   }
 
-  if ( (this->sc.gui_width > this->output_surface_width[this->current_output_surface^1]) || (this->sc.gui_height > this->output_surface_height[this->current_output_surface^1]) ) {
-    /* recreate output surface to match window size */
-    printf( "vo_vdpau: output_surface size update\n" );
-    this->output_surface_width[this->current_output_surface^1] = this->sc.gui_width;
-    this->output_surface_height[this->current_output_surface^1] = this->sc.gui_height;
-
-    vdp_output_surface_destroy( this->output_surface[this->current_output_surface^1] );
-    vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[this->current_output_surface^1], this->output_surface_height[this->current_output_surface^1], &this->output_surface[this->current_output_surface^1] );
-  }
-
   VdpRect vid_source = { this->sc.crop_left, this->sc.crop_top, this->sc.delivered_width-this->sc.crop_right, this->sc.delivered_height-this->sc.crop_bottom };
   VdpRect out_dest = { 0, 0, this->sc.gui_width, this->sc.gui_height };
   VdpRect vid_dest = { this->sc.output_xoffset, this->sc.output_yoffset, this->sc.output_xoffset+this->sc.output_width, this->sc.output_yoffset+this->sc.output_height };
@@ -707,6 +714,16 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     if ( this->init_queue>1 )
       vdp_queue_block( vdp_queue, this->output_surface[this->current_output_surface ^ 1], &last_time );
 
+    if ( (this->sc.gui_width > this->output_surface_width[this->current_output_surface]) || (this->sc.gui_height > this->output_surface_height[this->current_output_surface]) ) {
+      /* recreate output surface to match window size */
+      printf( "vo_vdpau: output_surface size update\n" );
+      this->output_surface_width[this->current_output_surface] = this->sc.gui_width;
+      this->output_surface_height[this->current_output_surface] = this->sc.gui_height;
+
+      vdp_output_surface_destroy( this->output_surface[this->current_output_surface] );
+      vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[this->current_output_surface], this->output_surface_height[this->current_output_surface], &this->output_surface[this->current_output_surface] );
+    }
+
     past[0] = surface;
     future[0] = VDP_INVALID_HANDLE;
     st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD,
@@ -746,32 +763,59 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 static int vdpau_get_property (vo_driver_t *this_gen, int property)
 {
   vdpau_driver_t *this = (vdpau_driver_t*)this_gen;
-  int ret=-1;
 
   switch (property) {
     case VO_PROP_MAX_NUM_FRAMES:
       return 22;
     case VO_PROP_WINDOW_WIDTH:
-      ret = this->sc.gui_width;
-      break;
+      return this->sc.gui_width;
     case VO_PROP_WINDOW_HEIGHT:
-      ret = this->sc.gui_height;
-      break;
+      return this->sc.gui_height;
     case VO_PROP_OUTPUT_WIDTH:
-      ret = this->sc.output_width;
-      break;
+      return this->sc.output_width;
     case VO_PROP_OUTPUT_HEIGHT:
-      ret = this->sc.output_height;
-      break;
+      return this->sc.output_height;
     case VO_PROP_OUTPUT_XOFFSET:
-      ret = this->sc.output_xoffset;
-      break;
+      return this->sc.output_xoffset;
     case VO_PROP_OUTPUT_YOFFSET:
-      ret = this->sc.output_yoffset;
-      break;
+      return this->sc.output_yoffset;
+    case VO_PROP_HUE:
+      return 0;
+    case VO_PROP_SATURATION:
+      return 100;
+    case VO_PROP_CONTRAST:
+      return 100;
+    case VO_PROP_BRIGHTNESS:
+      return 0;
   }
 
-  return ret;
+  return -1;
+}
+
+
+
+static void vdpau_update_csc( vdpau_driver_t *this_gen )
+{
+  /*float hue = this_gen->hue/100.0;
+  float saturation = this_gen->saturation/100.0;
+  float contrast = this_gen->contrast/100.0;
+  float brightness = this_gen->brightness/100.0;
+
+  printf( "vo_vdpau: vdpau_update_csc: hue=%f, saturation=%f, contrast=%f, brightness=%f\n", hue, saturation, contrast, brightness );
+
+  VdpCSCMatrix matrix;
+  VdpProcamp procamp = { VDP_PROCAMP_VERSION, brightness, contrast, saturation, hue };
+
+  VdpStatus st = vdp_generate_csc_matrix( &procamp, VDP_COLOR_STANDARD_ITUR_BT_601, &matrix );
+  if ( st != VDP_STATUS_OK ) {
+    printf( "vo_vdpau: error, can't generate csc matrix !!\n" );
+    return;
+  }
+  VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_CSC_MATRIX };
+  void* attribute_values[] = { &matrix };
+  st = vdp_video_mixer_set_attribute_values( this_gen->video_mixer, 1, attributes, attribute_values );
+  if ( st != VDP_STATUS_OK )
+    printf( "vo_vdpau: error, can't set csc matrix !!\n" );*/
 }
 
 
@@ -780,22 +824,28 @@ static int vdpau_set_property (vo_driver_t *this_gen, int property, int value)
 {
   vdpau_driver_t *this = (vdpau_driver_t*)this_gen;
 
-  /*switch (property) {
-    case VO_PROP_ZOOM_X:
+  printf("vdpau_set_property: property=%d, value=%d\n", property, value );
+
+  switch (property) {
+    /*case VO_PROP_ZOOM_X:
       if ((value >= XINE_VO_ZOOM_MIN) && (value <= XINE_VO_ZOOM_MAX)) {
         this->sc.zoom_factor_x = (double)value / (double)XINE_VO_ZOOM_STEP;
         _x_vo_scale_compute_ideal_size( &this->sc );
-        this->sc.force_redraw = 1;    /* trigger re-calc of output size */
-      /*}
+        this->sc.force_redraw = 1;    //* trigger re-calc of output size
+      }
       break;
     case VO_PROP_ZOOM_Y:
       if ((value >= XINE_VO_ZOOM_MIN) && (value <= XINE_VO_ZOOM_MAX)) {
         this->sc.zoom_factor_y = (double)value / (double)XINE_VO_ZOOM_STEP;
         _x_vo_scale_compute_ideal_size( &this->sc );
-        this->sc.force_redraw = 1;    /* trigger re-calc of output size */
-      /*}
-      break;
-  }*/
+        this->sc.force_redraw = 1;    //* trigger re-calc of output size
+      }
+      break;*/
+    case VO_PROP_HUE: this->hue = value; vdpau_update_csc( this ); break;
+    case VO_PROP_SATURATION: this->saturation = value; vdpau_update_csc( this ); break;
+    case VO_PROP_CONTRAST: this->contrast = value; vdpau_update_csc( this ); break;
+    case VO_PROP_BRIGHTNESS: this->brightness = value; vdpau_update_csc( this ); break;
+  }
 
   return value;
 }
@@ -804,8 +854,18 @@ static int vdpau_set_property (vo_driver_t *this_gen, int property, int value)
 
 static void vdpau_get_property_min_max (vo_driver_t *this_gen, int property, int *min, int *max)
 {
-  *min = 0;
-  *max = 0;
+  switch ( property ) {
+    case VO_PROP_HUE:
+      *max = 314; *min = -314; break;
+    case VO_PROP_SATURATION:
+      *max = 1000; *min = 0; break;
+    case VO_PROP_CONTRAST:
+      *max = 1000; *min = 0; break;
+    case VO_PROP_BRIGHTNESS:
+      *max = 100; *min = -100; break;
+    default:
+      *max = 0; *min = 0;
+  }
 }
 
 
@@ -905,9 +965,11 @@ static void vdpau_dispose (vo_driver_t *this_gen)
   if ( this->overlay_output!=VDP_INVALID_HANDLE )
     vdp_output_surface_destroy( this->overlay_output );
   if ( this->output_surface[0]!=VDP_INVALID_HANDLE )
-    vdp_video_surface_destroy( this->output_surface[0] );
+    vdp_output_surface_destroy( this->output_surface[0] );
   if ( this->output_surface[1]!=VDP_INVALID_HANDLE )
-    vdp_video_surface_destroy( this->output_surface[1] );
+    vdp_output_surface_destroy( this->output_surface[1] );
+  if ( this->soft_surface != VDP_INVALID_HANDLE )
+    vdp_video_surface_destroy( this->soft_surface );
   vdp_queue_destroy( vdp_queue );
   vdp_queue_target_destroy( vdp_queue_target );
 
@@ -1070,6 +1132,12 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_MIXER_RENDER , (void*)&vdp_video_mixer_render );
   if ( vdpau_init_error( st, "Can't get VIDEO_MIXER_RENDER proc address !!", &this->vo_driver, 1 ) )
     return NULL;
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_MIXER_SET_ATTRIBUTE_VALUES , (void*)&vdp_video_mixer_set_attribute_values );
+  if ( vdpau_init_error( st, "Can't get VIDEO_MIXER_SET_ATTRIBUTE_VALUES proc address !!", &this->vo_driver, 1 ) )
+    return NULL;
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_GENERATE_CSC_MATRIX , (void*)&vdp_generate_csc_matrix );
+  if ( vdpau_init_error( st, "Can't get GENERATE_CSC_MATRIX proc address !!", &this->vo_driver, 1 ) )
+    return NULL;
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_PRESENTATION_QUEUE_TARGET_CREATE_X11 , (void*)&vdp_queue_target_create_x11 );
   if ( vdpau_init_error( st, "Can't get PRESENTATION_QUEUE_TARGET_CREATE_X11 proc address !!", &this->vo_driver, 1 ) )
     return NULL;
@@ -1188,6 +1256,11 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
 
   for ( i=0; i<NUM_FRAMES_BACK; i++)
     this->back_frame[i] = NULL;
+
+  this->hue = 0;
+  this->saturation = 100;
+  this->contrast = 100;
+  this->brightness = 0;
 
   return &this->vo_driver;
 }
