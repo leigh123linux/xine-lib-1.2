@@ -4,6 +4,8 @@ xine-vdpau README:
 So, you want to give it a try, but wonder which steps are required.
 Ok, so here it is:
 
+0) you need nvidia's driver 180.16 or later.
+
 1) get the sources:
 svn co svn://jusst.de/xine-vdpau
 
