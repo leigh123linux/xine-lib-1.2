@@ -177,6 +177,13 @@ typedef struct vdpau_mpeg12_decoder_s {
 static void reset_picture( picture_t *pic )
 {
   pic->vdp_infos.picture_structure = 0;
+  pic->vdp_infos2.intra_dc_precision = pic->vdp_infos.intra_dc_precision = 0;
+  pic->vdp_infos2.frame_pred_frame_dct = pic->vdp_infos.frame_pred_frame_dct = 1;
+  pic->vdp_infos2.concealment_motion_vectors = pic->vdp_infos.concealment_motion_vectors = 0;
+  pic->vdp_infos2.intra_vlc_format = pic->vdp_infos.intra_vlc_format = 0;
+  pic->vdp_infos2.alternate_scan = pic->vdp_infos.alternate_scan = 0;
+  pic->vdp_infos2.q_scale_type = pic->vdp_infos.q_scale_type = 0;
+  pic->vdp_infos2.top_field_first = pic->vdp_infos.top_field_first = 0;
   pic->slices_count = 0;
   pic->slices_count2 = 0;
   pic->slices_pos = 0;
@@ -324,6 +331,9 @@ static void picture_header( sequence_t *sequence, uint8_t *buf, int len )
 {
   if ( sequence->picture.state!=WANT_HEADER )
     return;
+
+  if ( sequence->profile==VDP_DECODER_PROFILE_MPEG1 )
+    sequence->picture.vdp_infos.picture_structure = PICTURE_FRAME;
 
   VdpPictureInfoMPEG1Or2 *infos = &sequence->picture.vdp_infos;
 
