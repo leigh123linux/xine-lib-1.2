@@ -517,7 +517,23 @@ static void vdpau_h264_flush (video_decoder_t *this_gen) {
 static void vdpau_h264_reset (video_decoder_t *this_gen) {
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *) this_gen;
 
+  printf("vdpau_h264_reset\n");
+
   this->size = 0;
+
+  dpb_flush( &(this->nal_parser->dpb) );
+
+  if (this->decoder_initialized)
+    this->vdpau_accel->vdp_decoder_destroy( this->decoder );
+
+  this->decoder_started    = 0;
+  this->decoder_initialized = 0;
+  this->nal_parser = init_parser();
+  this->buf           = NULL;
+  this->wait_for_bottom_field = 0;
+  this->video_step = 0;
+  this->last_pts = 0;
+  this->tmp_pts = 0;
 }
 
 /*
@@ -539,6 +555,8 @@ static void vdpau_h264_dispose (video_decoder_t *this_gen) {
     free (this->buf);
     this->buf = NULL;
   }
+
+  dpb_flush( &(this->nal_parser->dpb) );
 
   if (this->decoder_initialized) {
     this->vdpau_accel->vdp_decoder_destroy( this->decoder );
