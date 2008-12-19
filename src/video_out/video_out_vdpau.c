@@ -605,13 +605,12 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
   if ( (frame->format == XINE_IMGFMT_YV12) || (frame->format == XINE_IMGFMT_YUY2) ) {
     //printf( "vo_vdpau: got a yuv image -------------\n" );
-    surface = this->soft_surface;
     chroma = ( frame->format==XINE_IMGFMT_YV12 )? VDP_CHROMA_TYPE_420 : VDP_CHROMA_TYPE_422;
     if ( (frame->width > this->soft_surface_width) || (frame->height > this->soft_surface_height) || (frame->format != this->soft_surface_format) ) {
       printf( "vo_vdpau: soft_surface size update\n" );
       /* recreate surface and mixer to match frame changes */
-      mix_w = this->soft_surface_width = frame->width;
-      mix_h = this->soft_surface_height = frame->height;
+      this->soft_surface_width = frame->width;
+      this->soft_surface_height = frame->height;
       this->soft_surface_format = frame->format;
       vdp_video_surface_destroy( this->soft_surface );
       vdp_video_surface_create( vdp_device, chroma, this->soft_surface_width, this->soft_surface_height, &this->soft_surface );
@@ -629,6 +628,9 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
       if ( st != VDP_STATUS_OK )
         printf( "vo_vdpau: vdp_video_surface_putbits_ycbcr YUY2 error : %s\n", vdp_get_error_string( st ) );
     }
+    surface = this->soft_surface;
+    mix_w = this->soft_surface_width;
+    mix_h = this->soft_surface_height;
   }
   else if (frame->format == XINE_IMGFMT_VDPAU) {
     //printf( "vo_vdpau: got a vdpau image -------------\n" );
