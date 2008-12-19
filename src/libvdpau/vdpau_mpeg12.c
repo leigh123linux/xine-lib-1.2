@@ -176,6 +176,7 @@ typedef struct vdpau_mpeg12_decoder_s {
 
 static void reset_picture( picture_t *pic )
 {
+  printf( "reset_picture\n" );
   pic->vdp_infos.picture_structure = 0;
   pic->vdp_infos2.intra_dc_precision = pic->vdp_infos.intra_dc_precision = 0;
   pic->vdp_infos2.frame_pred_frame_dct = pic->vdp_infos.frame_pred_frame_dct = 1;
@@ -352,7 +353,7 @@ static void picture_header( sequence_t *sequence, uint8_t *buf, int len )
   lprintf( "picture_coding_type: %d\n", get_bits( buf,10,3 ) );
   infos->forward_reference = VDP_INVALID_HANDLE;
   infos->backward_reference = VDP_INVALID_HANDLE;
-  if ( infos->picture_coding_type>2 ) {
+  if ( infos->picture_coding_type>1 ) {
     infos->full_pel_forward_vector = get_bits( buf+2,13,1 );
     infos->f_code[0][0] = infos->f_code[0][1] = get_bits( buf+2,14,3 );
     if ( infos->picture_coding_type==3 ) {
@@ -569,9 +570,12 @@ static void decode_render( vdpau_mpeg12_decoder_t *vd, vdpau_accel_t *accel )
   st = accel->vdp_decoder_render( vd->decoder, accel->surface, (VdpPictureInfo*)&pic->vdp_infos, 1, &vbit );
   if ( st!=VDP_STATUS_OK )
     lprintf( "decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
-  else
-    lprintf( "DECODER SUCCESS : frame_type:%d, slices=%d, slices_bytes=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
+  else {
+    printf( "DECODER SUCCESS : frame_type:%d, slices=%d, slices_bytes=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
               pic->vdp_infos.picture_coding_type, pic->vdp_infos.slice_count, vbit.bitstream_bytes, accel->surface, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->seq_pts );
+    VdpPictureInfoMPEG1Or2 *info = &pic->vdp_infos;
+    printf("%d %d %d %d %d %d %d %d %d %d %d %d %d\n", info->intra_dc_precision, info->frame_pred_frame_dct, info->concealment_motion_vectors, info->intra_vlc_format, info->alternate_scan, info->q_scale_type, info->top_field_first, info->full_pel_forward_vector, info->full_pel_backward_vector, info->f_code[0][0], info->f_code[0][1], info->f_code[1][0], info->f_code[1][1] );
+  }
 
   if ( pic->vdp_infos.picture_structure != PICTURE_FRAME ) {
     pic->vdp_infos2.backward_reference = VDP_INVALID_HANDLE;
