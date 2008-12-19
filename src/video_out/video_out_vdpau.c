@@ -680,7 +680,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   VdpTime last_time;
 
   if ( this->init_queue>1 )
-    vdp_queue_block( vdp_queue, this->output_surface[this->current_output_surface ^ 1], &last_time );
+    vdp_queue_block( vdp_queue, this->output_surface[this->current_output_surface], &last_time );
 
   uint32_t layer_count;
   VdpLayer layer[2];
@@ -714,7 +714,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     if ( this->init_queue<2 ) ++this->init_queue;
     this->current_output_surface ^= 1;
     if ( this->init_queue>1 )
-      vdp_queue_block( vdp_queue, this->output_surface[this->current_output_surface ^ 1], &last_time );
+      vdp_queue_block( vdp_queue, this->output_surface[this->current_output_surface], &last_time );
 
     if ( (this->sc.gui_width > this->output_surface_width[this->current_output_surface]) || (this->sc.gui_height > this->output_surface_height[this->current_output_surface]) ) {
       /* recreate output surface to match window size */
