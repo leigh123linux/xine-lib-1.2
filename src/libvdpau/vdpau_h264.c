@@ -293,7 +293,10 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             break;
           case 66:
           default:
-            this->profile = VDP_DECODER_PROFILE_H264_BASELINE;
+            // nvidia's VDPAU doesn't support BASELINE. But most (every?) streams marked BASELINE do not use BASELINE specifics,
+            // so, just force MAIN.
+            //this->profile = VDP_DECODER_PROFILE_H264_BASELINE;
+            this->profile = VDP_DECODER_PROFILE_H264_MAIN;
             break;
         }
 
