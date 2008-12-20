@@ -1314,8 +1314,6 @@ static xcb_xv_port_t xv_autodetect_port(xv_driver_t *this,
                                         xcb_xv_port_t base,
 					xv_prefertype prefer_type)
 {
-  xcb_xv_adaptor_info_iterator_t *start = adaptor_it;
-
   for (; adaptor_it->rem; xcb_xv_adaptor_info_next(adaptor_it))
     if (adaptor_it->data->type & XCB_XV_TYPE_IMAGE_MASK &&
         (prefer_type == xv_prefer_none ||
