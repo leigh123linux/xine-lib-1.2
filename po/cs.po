@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib 1.0.1\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-11-08 20:10+0100\n"
+"POT-Creation-Date: 2008-11-10 15:29+0100\n"
 "PO-Revision-Date: 2008-11-10 16:33+0200\n"
 "Last-Translator: František Dvořák <valtri@civ.zcu.cz>\n"
 "Language-Team: Czech <cs@li.org>\n"
@@ -467,7 +467,8 @@ msgstr "Nepodařilo se vytvořit primární buffer direct sound."
 #: src/audio_out/audio_directx2_out.c:594
 #, c-format
 msgid ": play cursor overran (data %u, min %u), flushing buffers\n"
-msgstr ": kurzor přehrávání se předběhl (data %u, min %u), resetování bufferů\n"
+msgstr ""
+": kurzor přehrávání se předběhl (data %u, min %u), resetování bufferů\n"
 
 #: src/audio_out/audio_directx2_out.c:697
 #, c-format
@@ -575,7 +576,9 @@ msgstr "jméno zvukového zařízení JACK"
 msgid ""
 "Specifies the jack audio device name, leave blank for the default physical "
 "output port."
-msgstr "Specifikuje jméno zvukového zařízení jack, na výchozí fyzické ponechte prázdné"
+msgstr ""
+"Specifikuje jméno zvukového zařízení jack, na výchozí fyzické ponechte "
+"prázdné"
 
 #: src/audio_out/audio_jack_out.c:921
 msgid "xine output plugin for JACK Audio Connection Kit"
@@ -885,11 +888,11 @@ msgstr "ffmpeg_video_dec: přímé renderování povoleno\n"
 msgid "ffmpeg_video_dec: increasing buffer to %d to avoid overflow.\n"
 msgstr "ffmpeg_video_dec: zvětšení bufferu na %d, aby se předešlo přetečení.\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1634
+#: src/combined/ffmpeg/ff_video_decoder.c:1636
 msgid "MPEG-4 postprocessing quality"
 msgstr "kvalita dodatečného zpracování MPEG-4"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1635
+#: src/combined/ffmpeg/ff_video_decoder.c:1637
 msgid ""
 "You can adjust the amount of post processing applied to MPEG-4 video.\n"
 "Higher values result in better quality, but need more CPU. Lower values may "
@@ -904,11 +907,11 @@ msgstr ""
 "Pro vysokou kvalitu videa může příliš silné dodatečné zpracování způsobit "
 "horší obraz tím, že ho více rozmaže."
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1643
+#: src/combined/ffmpeg/ff_video_decoder.c:1645
 msgid "FFmpeg video decoding thread count"
 msgstr "Počet vláken na dekódování videa FFmpegem"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1644
+#: src/combined/ffmpeg/ff_video_decoder.c:1646
 msgid ""
 "You can adjust the number of video decoding threads which FFmpeg may use.\n"
 "Higher values should speed up decoding but it depends on the codec used "
@@ -916,13 +919,17 @@ msgid ""
 "decoding thread per logical CPU (typically 1 to 4).\n"
 "A change of this setting will take effect with playing the next stream."
 msgstr ""
-"Můžete upravit počet vláken dekódující video, které má FFmpeg používat.\nVyšší hodnoty by měly urychlit dekódování, ale záleží také na tom, jestli daný kodek podporuje paralelní dekódování. Zpravidla je dobré mít jedno dekódovací vlákno na jeden logický procesor (typicky od 1 do 4).\nZměna tohoto nastavení se projeví při přehrávání následujícího videa."
+"Můžete upravit počet vláken dekódující video, které má FFmpeg používat.\n"
+"Vyšší hodnoty by měly urychlit dekódování, ale záleží také na tom, jestli "
+"daný kodek podporuje paralelní dekódování. Zpravidla je dobré mít jedno "
+"dekódovací vlákno na jeden logický procesor (typicky od 1 do 4).\n"
+"Změna tohoto nastavení se projeví při přehrávání následujícího videa."
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1653
+#: src/combined/ffmpeg/ff_video_decoder.c:1655
 msgid "Skip loop filter"
 msgstr "Přeskakování filtru ve smyčce"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1654
+#: src/combined/ffmpeg/ff_video_decoder.c:1656
 msgid ""
 "You can control for which frames the loop filter shall be skipped after "
 "decoding.\n"
@@ -931,17 +938,19 @@ msgid ""
 "The default value leaves the decision up to the implementation.\n"
 "A change of this setting will take effect with playing the next stream."
 msgstr ""
-"Můžete řídit, pro které snímky by měl být po dekódování přeskočen filtr ve smyčce.\n"
-"Přeskakování filtru ve smyčce urychlí dekódování, ale může vést k artefaktům. Počet přeskočených snímků je od 'none' (žádné) po 'all' (všechny)."
-"Výchozí hodnota ponechává rozhodnutí na implementaci.\n"
+"Můžete řídit, pro které snímky by měl být po dekódování přeskočen filtr ve "
+"smyčce.\n"
+"Přeskakování filtru ve smyčce urychlí dekódování, ale může vést k "
+"artefaktům. Počet přeskočených snímků je od 'none' (žádné) po "
+"'all' (všechny).Výchozí hodnota ponechává rozhodnutí na implementaci.\n"
 "Změna tohoto nastavení se projeví při přehrávání následujícího videa."
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1663
+#: src/combined/ffmpeg/ff_video_decoder.c:1665
 msgid "Choose speed over specification compliance"
 msgstr "Upřednostnit rychlost před vyhověním specifikacím"
 
 # "zneuctívají specifikace kodeku" ;-)
-#: src/combined/ffmpeg/ff_video_decoder.c:1664
+#: src/combined/ffmpeg/ff_video_decoder.c:1666
 msgid ""
 "You may want to allow speed cheats which violate codec specification.\n"
 "Cheating may speed up decoding but can also lead to decoding artefacts.\n"
@@ -1850,7 +1859,8 @@ msgid ""
 "input_dvb: dvba mrl specified but the tuner doesn't appear to be ATSC (DVB-"
 "A)\n"
 msgstr ""
-"input_dvb: bylo uvedeno MRL DVBA, ale nezdá se, že by byl tuner ATSC (DVB-A)\n"
+"input_dvb: bylo uvedeno MRL DVBA, ale nezdá se, že by byl tuner ATSC (DVB-"
+"A)\n"
 
 #: src/input/input_dvb.c:2989
 #, c-format
@@ -1908,7 +1918,8 @@ msgid ""
 "Leave at 0 means try forever. Greater than 0 means wait that many seconds to "
 "get a lock. Minimum is 5 seconds."
 msgstr ""
-"Ponechání na 0 znamená zkoušet bez přestání. Více než 0 znamená čekat na získání zámku uvedený počet sekund. Minimum je 5 sekund."
+"Ponechání na 0 znamená zkoušet bez přestání. Více než 0 znamená čekat na "
+"získání zámku uvedený počet sekund. Minimum je 5 sekund."
 
 #: src/input/input_dvb.c:3322
 msgid "Number of dvb card to use."
@@ -1936,7 +1947,8 @@ msgstr "Konfigurační soubor kanálů DVB"
 #: src/input/input_dvb.c:3339
 msgid ""
 "DVB Channels config file to use instead of the ~/.xine/channels.conf file."
-msgstr "Konfigurační soubor kanálů DVB, který použít, místo ~/.xine/channels.conf."
+msgstr ""
+"Konfigurační soubor kanálů DVB, který použít, místo ~/.xine/channels.conf."
 
 #: src/input/input_dvd.c:585
 msgid "input_dvd: values of \\beta will give rise to dom!\n"
@@ -2528,7 +2540,8 @@ msgstr "TV standard v4l"
 msgid ""
 "Selects the TV standard of the input signals. Either: AUTO, PAL, NTSC or "
 "SECAM. "
-msgstr "Vybírá televizní standard vstupního signálu. Buď AUTO, PAL, NTSC nebo SECAM."
+msgstr ""
+"Vybírá televizní standard vstupního signálu. Buď AUTO, PAL, NTSC nebo SECAM."
 
 #: src/input/input_v4l.c:1948
 msgid "v4l radio device"
@@ -2596,7 +2609,9 @@ msgstr "rtsp_session: nelze zavést relaci.\n"
 msgid ""
 "rtsp_session: rtsp server returned overly-large headers, session can not be "
 "established.\n"
-msgstr "rtsp_session: rtsp server vrátil příliš velké hlavičky, nemůže být zřízeno sezení.\n"
+msgstr ""
+"rtsp_session: rtsp server vrátil příliš velké hlavičky, nemůže být zřízeno "
+"sezení.\n"
 
 #: src/input/librtsp/rtsp_session.c:164
 #, c-format
@@ -3144,7 +3159,8 @@ msgstr "Font z adresáře fontů xine, který se použije na text s titulky."
 
 #: src/libsputext/xine_sputext_decoder.c:1164
 msgid "An outline font file (e.g. a .ttf) to be used for the subtitle text."
-msgstr "Vnější font jako soubor (např. .ttf), který se použije na text s titulky."
+msgstr ""
+"Vnější font jako soubor (např. .ttf), který se použije na text s titulky."
 
 #: src/libsputext/xine_sputext_decoder.c:1170
 msgid "whether to use a freetype font"
@@ -3354,7 +3370,10 @@ msgstr ""
 "Normalizuje audio na maximální úroveň bez zkreslení zvuku.\n"
 "\n"
 "Parametry:\n"
-"  metoda 1: použít jeden vzorek na vyhlazení variací využitím standardního váženého průměru přes předchozí vzorky (výchozí); 2: použít několik vzorků na vyhlazení variací využitím standardního váženého průměru přes předchozí vzorky.\n"
+"  metoda 1: použít jeden vzorek na vyhlazení variací využitím standardního "
+"váženého průměru přes předchozí vzorky (výchozí); 2: použít několik vzorků "
+"na vyhlazení variací využitím standardního váženého průměru přes předchozí "
+"vzorky.\n"
 
 #: src/post/deinterlace/xine_plugin.c:202
 msgid ""
@@ -3665,8 +3684,8 @@ msgid ""
 "  Centre_cut_out_mode: extracts 4:3 image contained in 16:9 frame\n"
 "\n"
 msgstr ""
-"Modul expand je určen k tomu, aby bral snímky s libovolnými poměry stran "
-"a konvertoval je na jiný poměr (výchozí je 4:3) přidáním černých pruhů nahoru "
+"Modul expand je určen k tomu, aby bral snímky s libovolnými poměry stran a "
+"konvertoval je na jiný poměr (výchozí je 4:3) přidáním černých pruhů nahoru "
 "a dolů. To dovolí posunovat OSD nebo titulky tak, že nezasahují do obrazu.\n"
 "\n"
 "Parametry (FIXME: lepší nápověda)\n"
@@ -3696,11 +3715,13 @@ msgstr ""
 "Přidává do videa náhodný šum.\n"
 "\n"
 "Parametry:\n"
-"  luma_strength: intenzita šumu přidaného ke kanálu luma (0-100, výchozí: 8)\n"
-"  chroma_strength: intenzita šumu přidaného ke kanálu chroma (0-100, výchozí 5)\n"
-"  quality: úroveň kvality šumu.  fixed: konstantní vzorek šumu; "
-"temporal: vzorek šumu se mezi snímky mění; averaged temporal: "
-"vzorek šumu, který se mění mezi snímky plynule.  (výchozí: averaged temporal)\n"
+"  luma_strength: intenzita šumu přidaného ke kanálu luma (0-100, výchozí: "
+"8)\n"
+"  chroma_strength: intenzita šumu přidaného ke kanálu chroma (0-100, výchozí "
+"5)\n"
+"  quality: úroveň kvality šumu.  fixed: konstantní vzorek šumu; temporal: "
+"vzorek šumu se mezi snímky mění; averaged temporal: vzorek šumu, který se "
+"mění mezi snímky plynule.  (výchozí: averaged temporal)\n"
 "  type: typ šumu: uniform nebo gaussian.  (výchozí: gaussian)\n"
 "  pattern: míchat náhodný šum s polopravidelným vzorkem. (výchozí: False)\n"
 "\n"
@@ -3878,7 +3899,9 @@ msgstr "video_out_directfb: vrstva nepodporuje YUY2!\n"
 #: src/video_out/video_out_directfb.c:1553
 msgid ""
 "video_out_directfb:need at least DirectFB 0.9.25 to play on this layer!\n"
-msgstr "video_out_directfb: k přehrávání na této vrstvě potřeba minimálně DirectFB 0.9.25!\n"
+msgstr ""
+"video_out_directfb: k přehrávání na této vrstvě potřeba minimálně DirectFB "
+"0.9.25!\n"
 
 #: src/video_out/video_out_directfb.c:1588
 #, c-format
@@ -3923,7 +3946,8 @@ msgstr "výstupní modul videa xine použije DirectFB."
 
 #: src/video_out/video_out_directfb.c:2003
 msgid "video_out_directfb: no usable display layer was found!\n"
-msgstr "video_out_directfb: žádná použitelná obrazová vrstva nebyla nalezena!\n"
+msgstr ""
+"video_out_directfb: žádná použitelná obrazová vrstva nebyla nalezena!\n"
 
 #: src/video_out/video_out_directfb.c:2092
 msgid "xine video output plugin using DirectFB under XDirectFB."
@@ -4406,7 +4430,8 @@ msgid ""
 "image \n"
 "video_out_xcbshm: => not using MIT Shared Memory extension.\n"
 msgstr ""
-"video_out_xcbshm: chyba sdílené paměti (chyba adresy) během alokování obrázku\n"
+"video_out_xcbshm: chyba sdílené paměti (chyba adresy) během alokování "
+"obrázku\n"
 "video_out_xcbshm: => rozšíření MIT Shared Memory se nepoužije.\n"
 
 #: src/video_out/video_out_xcbshm.c:170
@@ -4474,7 +4499,7 @@ msgstr ""
 msgid "video_out_xcbxv: Xv extension not present.\n"
 msgstr "video_out_xcbxv: Rozšíření Xv není přítomno.\n"
 
-#: src/video_out/video_out_xcbxv.c:1402 src/video_out/video_out_xv.c:1438
+#: src/video_out/video_out_xcbxv.c:1402 src/video_out/video_out_xv.c:1452
 #: src/video_out/video_out_xxmc.c:2461
 #, c-format
 msgid "%s: could not open Xv port %d - autodetecting\n"
@@ -4487,8 +4512,8 @@ msgid ""
 "                 Looks like your graphics hardware driver doesn't support "
 "Xv?!\n"
 msgstr ""
-"video_out_xcbxv: Rozšíření Xv je přítomno, ale nepodařilo se nalézt použitelný "
-"port yuv12.\n"
+"video_out_xcbxv: Rozšíření Xv je přítomno, ale nepodařilo se nalézt "
+"použitelný port yuv12.\n"
 "              Vypadá to, jako by váš grafický hardwarový ovladač "
 "nepodporoval Xv?!\n"
 
@@ -4501,20 +4526,22 @@ msgstr ""
 "video_out_xcbxv: pro hardwarovou konverzi barevného prostoru a škálování se "
 "použije Xv port %d z adaptéru %s.\n"
 
-#: src/video_out/video_out_xcbxv.c:1543 src/video_out/video_out_xv.c:1590
+#: src/video_out/video_out_xcbxv.c:1543 src/video_out/video_out_xv.c:1604
 msgid "enable vblank sync"
 msgstr "povolit synchronizaci s vblank"
 
-#: src/video_out/video_out_xcbxv.c:1544 src/video_out/video_out_xv.c:1591
+#: src/video_out/video_out_xcbxv.c:1544 src/video_out/video_out_xv.c:1605
 msgid ""
 "This option will synchronize the update of the video image to the repainting "
 "of the entire screen (\"vertical retrace\"). This eliminates flickering and "
 "tearing artifacts. On nvidia cards one may also need to run \"nvidia-settings"
 "\" and choose which display device to sync to under the XVideo Settings tab"
 msgstr ""
-"Tato volba synchronizuje aktualizaci obrazu videa s překreslováním "
-"úplné obrazovky (\"vertikální zpětný běh paprsku\"). To eliminuje blikání "
-"a trhané artefakty. Na kartách nVidia může být ještě třeba spustit \"nvidia-settings\" a v kartě XVideo Settings vybrat, se kterým zařízením obrazovky synchronizovat."
+"Tato volba synchronizuje aktualizaci obrazu videa s překreslováním úplné "
+"obrazovky (\"vertikální zpětný běh paprsku\"). To eliminuje blikání a trhané "
+"artefakty. Na kartách nVidia může být ještě třeba spustit \"nvidia-settings"
+"\" a v kartě XVideo Settings vybrat, se kterým zařízením obrazovky "
+"synchronizovat."
 
 #: src/video_out/video_out_xcbxv.c:1582
 msgid "video_out_xcbxv: this adaptor supports the yv12 format.\n"
@@ -4524,12 +4551,12 @@ msgstr "video_out_xcbxv: tento adaptér podporuje formát yv12.\n"
 msgid "video_out_xcbxv: this adaptor supports the yuy2 format.\n"
 msgstr "video_out_xcbxv: tento adaptér podporuje formát yuy2.\n"
 
-#: src/video_out/video_out_xcbxv.c:1601 src/video_out/video_out_xv.c:1659
+#: src/video_out/video_out_xcbxv.c:1601 src/video_out/video_out_xv.c:1673
 #: src/video_out/video_out_xvmc.c:1529
 msgid "deinterlace method (deprecated)"
 msgstr "metoda korekce prokládání (zavrženo)"
 
-#: src/video_out/video_out_xcbxv.c:1602 src/video_out/video_out_xv.c:1660
+#: src/video_out/video_out_xcbxv.c:1602 src/video_out/video_out_xv.c:1674
 #: src/video_out/video_out_xvmc.c:1530
 msgid ""
 "This config setting is deprecated. You should use the new deinterlacing post "
@@ -4603,7 +4630,7 @@ msgstr ""
 "K odstranění hřebenových artefaktů použije lehké rozmazání. Dobré výsledky "
 "se střední zátěží CPU."
 
-#: src/video_out/video_out_xcbxv.c:1656 src/video_out/video_out_xv.c:1733
+#: src/video_out/video_out_xcbxv.c:1656 src/video_out/video_out_xv.c:1747
 #: src/video_out/video_out_xxmc.c:2763
 msgid "xine video output plugin using the MIT X video extension"
 msgstr "výstupní modul videa xine použije rozšíření MIT X video"
@@ -4650,7 +4677,7 @@ msgstr ""
 msgid "video_out_xshm: your video mode was not recognized, sorry :-(\n"
 msgstr "video_out_xshm: váš videorežim nebyl rozpoznán, bohužel :-(\n"
 
-#: src/video_out/video_out_xv.c:294
+#: src/video_out/video_out_xv.c:295
 msgid ""
 "video_out_xv: XvShmCreateImage failed\n"
 "video_out_xv: => not using MIT Shared Memory extension.\n"
@@ -4658,7 +4685,7 @@ msgstr ""
 "video_out_xv: selhalo XvShmCreateImage\n"
 "video_out_xv: => rozšíření MIT Shared Memory se nepoužije.\n"
 
-#: src/video_out/video_out_xv.c:320
+#: src/video_out/video_out_xv.c:321
 msgid ""
 "video_out_xv: XvShmCreateImage returned a zero size\n"
 "video_out_xv: => not using MIT Shared Memory extension.\n"
@@ -4666,7 +4693,7 @@ msgstr ""
 "video_out_xv: funkce XvShmCreateImage vrátila nulovou velikost\n"
 "video_out_xv: => rozšíření MIT Shared Memory se nepoužije.\n"
 
-#: src/video_out/video_out_xv.c:328
+#: src/video_out/video_out_xv.c:329
 #, c-format
 msgid ""
 "video_out_xv: shared memory error in shmget: %s\n"
@@ -4675,7 +4702,7 @@ msgstr ""
 "video_out_xv: chyba sdílené paměti v shmget: %s\n"
 "video_out_xv: => rozšíření MIT Shared Memory se nepoužije.\n"
 
-#: src/video_out/video_out_xv.c:360
+#: src/video_out/video_out_xv.c:361
 msgid ""
 "video_out_xv: x11 error during shared memory XImage creation\n"
 "video_out_xv: => not using MIT Shared Memory extension.\n"
@@ -4683,11 +4710,11 @@ msgstr ""
 "video_out_xv: chyba x11 během vytváření XImage\n"
 "video_out_xv: => rozšíření MIT Shared Memory se nepoužije.\n"
 
-#: src/video_out/video_out_xv.c:1413
+#: src/video_out/video_out_xv.c:1427
 msgid "video_out_xv: Xv extension not present.\n"
 msgstr "video_out_xv: Rozšíření Xv není přítomno.\n"
 
-#: src/video_out/video_out_xv.c:1451
+#: src/video_out/video_out_xv.c:1465
 msgid ""
 "video_out_xv: Xv extension is present but I couldn't find a usable yuv12 "
 "port.\n"
@@ -4698,7 +4725,7 @@ msgstr ""
 "              Vypadá to, jako by váš grafický hardwarový ovladač "
 "nepodporoval Xv?!\n"
 
-#: src/video_out/video_out_xv.c:1460
+#: src/video_out/video_out_xv.c:1474
 #, c-format
 msgid ""
 "video_out_xv: using Xv port %ld from adaptor %s for hardware colour space "
@@ -4707,11 +4734,11 @@ msgstr ""
 "video_out_xv: pro hardwarovou konverzi barevného prostoru a škálování se "
 "použije Xv port %ld z adaptéru %s.\n"
 
-#: src/video_out/video_out_xv.c:1626
+#: src/video_out/video_out_xv.c:1640
 msgid "video_out_xv: this adaptor supports the yv12 format.\n"
 msgstr "video_out_xv: tento adaptér podporuje formát yv12.\n"
 
-#: src/video_out/video_out_xv.c:1631
+#: src/video_out/video_out_xv.c:1645
 msgid "video_out_xv: this adaptor supports the yuy2 format.\n"
 msgstr "video_out_xv: tento adaptér podporuje formát yuy2.\n"
 
@@ -4886,7 +4913,8 @@ msgid ""
 "Progressive frames don't need deinterlacing, so disabling it on\n"
 "demand should result in a better picture.\n"
 msgstr ""
-"Postupné snímky nepotřebují korekci prokládání, takže zakázat ji podle potřeby by mělo vést k lepšímu zobrazení.\n"
+"Postupné snímky nepotřebují korekci prokládání, takže zakázat ji podle "
+"potřeby by mělo vést k lepšímu zobrazení.\n"
 
 #: src/video_out/video_out_xxmc.c:2708
 msgid "Don't use bob deinterlacing while a scaled OSD is active."
@@ -4897,7 +4925,8 @@ msgid ""
 "Bob deinterlacing adds some noise to horizontal lines, so disabling it\n"
 "on demand should result in a better OSD picture.\n"
 msgstr ""
-"Korekce prokládání bob přidává k vodorovným linkám šum, takže zakázat ji podle potřeby by mělo vést k lepšímu zobrazení OSD.\n"
+"Korekce prokládání bob přidává k vodorovným linkám šum, takže zakázat ji "
+"podle potřeby by mělo vést k lepšímu zobrazení OSD.\n"
 
 #: src/video_out/x11osd.c:274 src/video_out/xcbosd.c:268
 msgid "x11osd: XShape extension not available. unscaled overlay disabled.\n"
@@ -4984,7 +5013,8 @@ msgid ""
 "reported Xv adaptor names.\n"
 "(Only applies when auto-detecting which Xv port to use.)"
 msgstr ""
-"Vybírá, která metoda zobrazení videa je upřednostňována. Detekce se provádí použitím oznámených jmen adaptérů Xv.\n"
+"Vybírá, která metoda zobrazení videa je upřednostňována. Detekce se provádí "
+"použitím oznámených jmen adaptérů Xv.\n"
 "(Platí jen při použití autodetekce portů Xv.)"
 
 #: src/xine-engine/alphablend.c:2146
@@ -5646,7 +5676,8 @@ msgid ""
 "The default number of video frames to request from xine video out driver. "
 "Some drivers will override this setting with their own values."
 msgstr ""
-"Výchozí počet videosnímků, který se bude žádat z videovýstupního ovladače xine. Některé ovladače použijí své vlastní hodnoty místo této."
+"Výchozí počet videosnímků, který se bude žádat z videovýstupního ovladače "
+"xine. Některé ovladače použijí své vlastní hodnoty místo této."
 
 #: src/xine-engine/video_out.c:1875
 msgid "percentage of skipped frames to tolerate"
@@ -5726,10 +5757,10 @@ msgstr ""
 "Pokud chcete, aby se zobrazoval obraz videa vždy v jeho původním rozlišení, "
 "můžete zakázat veškeré změny měřítka.\n"
 "Toto samozřejmě znamená, že se obraz nebude dále přizpůsobovat velikosti "
-"okna videa a videa s poměrem stran bodu jiným než je 1:1 (např. anamorfotické "
-"DVD) se budou zobrazovat deformovaně. Ale na druhou stranu, s některými "
-"videovýstupy jako je XShm, kde není škálování obrazu hardwarově urychlováno, "
-"může toto dramaticky snížit využití CPU."
+"okna videa a videa s poměrem stran bodu jiným než je 1:1 (např. "
+"anamorfotické DVD) se budou zobrazovat deformovaně. Ale na druhou stranu, s "
+"některými videovýstupy jako je XShm, kde není škálování obrazu hardwarově "
+"urychlováno, může toto dramaticky snížit využití CPU."
 
 #: src/xine-engine/xine.c:805 src/xine-engine/xine.c:926
 #: src/xine-engine/xine.c:966 src/xine-engine/xine.c:1002
@@ -5812,7 +5843,9 @@ msgstr "xine: změna volby '%s' z MRL není povolena\n"
 #: src/xine-engine/xine.c:1205
 #, c-format
 msgid "xine: couldn't load plugin-specified demux %s for >%s<\n"
-msgstr "xine: nepodařilo se načíst demultiplexor %s požadovaný vstupním modulem pro >%s<\n"
+msgstr ""
+"xine: nepodařilo se načíst demultiplexor %s požadovaný vstupním modulem pro >"
+"%s<\n"
 
 #: src/xine-engine/xine.c:1215
 #, c-format
@@ -5945,7 +5978,9 @@ msgid ""
 "values might stop streaming when the source is slow or the bandwidth is "
 "occupied, too high values will freeze the player if the connection is lost."
 msgstr ""
-"Specifikuje timeout při čtení dat ze sítě v sekundách. Příliš nízké hodnoty by mohly přerušovat přehrávání, pokud je zdroj pomalý nebo je zabrané pásmo, příliš vysoké hodnoty zablokují přehrávač, pokud se ztratí spojení."
+"Specifikuje timeout při čtení dat ze sítě v sekundách. Příliš nízké hodnoty "
+"by mohly přerušovat přehrávání, pokud je zdroj pomalý nebo je zabrané pásmo, "
+"příliš vysoké hodnoty zablokují přehrávač, pokud se ztratí spojení."
 
 #: src/xine-engine/xine.c:2217
 msgid "messages"
