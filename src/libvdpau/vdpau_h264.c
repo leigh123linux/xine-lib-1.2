@@ -283,7 +283,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
         }
 
         /* get the vdpau context from vo */
-        (this->stream->video_out->open) (this->stream->video_out, this->stream);
+        //(this->stream->video_out->open) (this->stream->video_out, this->stream);
         img = this->stream->video_out->get_frame (this->stream->video_out,
                                           this->width, this->height,
                                           this->ratio,
@@ -602,7 +602,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->last_pts = 0;
   this->tmp_pts = 0;
 
-  (stream->video_out->open)(stream->video_out, stream);
+  (this->stream->video_out->open) (this->stream->video_out, this->stream);
 
   return &this->video_decoder;
 }
