@@ -249,7 +249,6 @@ static int vdpau_process_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overlay )
   uint8_t *hili_trans = overlay->hili_trans;
   clut_t *colors;
   uint8_t *trans;
-  uint8_t src_alpha;
   int rlelen = 0;
   uint8_t clr = 0;
   int i, pos=0, x, y;
@@ -267,12 +266,11 @@ static int vdpau_process_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overlay )
     }
     rlelen = rle->len;
     clr = rle->color;
-    src_alpha = trans[clr];
     for ( i=0; i<rlelen; ++i ) {
       red = colors[clr].y; /* red */
       green = colors[clr].cr; /* green */
       blue = colors[clr].cb; /* blue */
-      alpha = src_alpha*255/15;
+      alpha = trans[clr]*255/15;
       *rgba = (alpha<<24) | (red<<16) | (green<<8) | blue;
       rgba++;
       ++pos;
