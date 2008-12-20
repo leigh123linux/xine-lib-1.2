@@ -268,6 +268,21 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           }
         }
 
+        _x_stream_info_set( this->stream, XINE_STREAM_INFO_VIDEO_WIDTH, this->width );
+        _x_stream_info_set( this->stream, XINE_STREAM_INFO_VIDEO_HEIGHT, this->height );
+        _x_stream_info_set( this->stream, XINE_STREAM_INFO_VIDEO_RATIO, ((double)10000*this->ratio) );
+        _x_stream_info_set( this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->video_step );
+        _x_meta_info_set_utf8( this->stream, XINE_META_INFO_VIDEOCODEC, "H264/AVC (vdpau)" );
+        xine_event_t event;
+        xine_format_change_data_t data;
+        event.type = XINE_EVENT_FRAME_FORMAT_CHANGE;
+        event.stream = this->stream;
+        event.data = &data;
+        event.data_length = sizeof(data);
+        data.width = this->width;
+        data.height = this->height;
+        data.aspect = this->ratio;
+        xine_event_send( this->stream, &event );
 
         switch(this->nal_parser->current_nal->sps->profile_idc) {
           case 100:
