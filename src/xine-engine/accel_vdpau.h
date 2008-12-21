@@ -42,12 +42,12 @@ typedef struct {
   VdpDevice vdp_device;
 
   VdpGetErrorString *vdp_get_error_string;
-  VdpVideoSurfaceCreate *vdp_video_surface_create;
   VdpDecoderCreate *vdp_decoder_create;
   VdpDecoderDestroy *vdp_decoder_destroy;
   VdpDecoderRender *vdp_decoder_render;
 
   VdpVideoSurface surface;
+  VdpChromaType chroma;
 
 } vdpau_accel_t;
 
