@@ -303,6 +303,21 @@ int dpb_flush(struct dpb *dpb)
   return 0;
 }
 
+void dpb_free_all( struct dpb *dpb )
+{
+  struct decoded_picture *pic = dpb->pictures;
+
+  if (pic != NULL)
+    do {
+      struct decoded_picture *next_pic = pic->next;
+      free_decoded_picture(pic);
+      --dpb->used;
+      pic = next_pic;
+    } while (pic != NULL);
+
+  printf("dpb_free_all, used: %d\n", dpb->used);
+}
+
 void fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist)
 {
   struct decoded_picture *pic = dpb->pictures;

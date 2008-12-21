@@ -69,6 +69,7 @@ int dpb_set_output_picture(struct dpb *dpb, struct decoded_picture *outpic);
 int dpb_remove_picture(struct dpb *dpb, struct decoded_picture *rempic);
 int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_ref_frames);
 int dpb_flush(struct dpb *dpb);
+void dpb_free_all( struct dpb *dpb );
 
 void fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist);
 
