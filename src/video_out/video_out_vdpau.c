@@ -49,7 +49,7 @@
 #include <vdpau/vdpau_x11.h>
 #include "accel_vdpau.h"
 
-#define NUM_FRAMES_BACK 2
+#define NUM_FRAMES_BACK 1
 
 
 VdpOutputSurfaceRenderBlendState blend = { VDP_OUTPUT_SURFACE_RENDER_BLEND_STATE_VERSION,
@@ -179,6 +179,8 @@ typedef struct {
   int               saturation;
   int               brightness;
   int               contrast;
+
+  int               allocated_surfaces;
 
 } vdpau_driver_t;
 
@@ -484,7 +486,7 @@ static vo_frame_t *vdpau_alloc_frame (vo_driver_t *this_gen)
 
   frame->vdpau_accel_data.vdp_device = vdp_device;
   frame->vdpau_accel_data.surface = VDP_INVALID_HANDLE;
-  frame->vdpau_accel_data.vdp_video_surface_create = vdp_video_surface_create;
+  frame->vdpau_accel_data.chroma = VDP_CHROMA_TYPE_420;
   frame->vdpau_accel_data.vdp_decoder_create = vdp_decoder_create;
   frame->vdpau_accel_data.vdp_decoder_destroy = vdp_decoder_destroy;
   frame->vdpau_accel_data.vdp_decoder_render = vdp_decoder_render;
@@ -498,11 +500,14 @@ static vo_frame_t *vdpau_alloc_frame (vo_driver_t *this_gen)
 static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_gen,
       uint32_t width, uint32_t height, double ratio, int format, int flags)
 {
+  vdpau_driver_t *this = (vdpau_driver_t *) this_gen;
   vdpau_frame_t   *frame = (vdpau_frame_t *) frame_gen;
 
+  VdpChromaType chroma = (flags & VO_CHROMA_422) ? VDP_CHROMA_TYPE_422 : VDP_CHROMA_TYPE_420;
+
   /* Check frame size and format and reallocate if necessary */
-  if ( (frame->width != width) || (frame->height != height) || (frame->format != format) ) {
-    /*lprintf ("updating frame to %d x %d (ratio=%g, format=%08x)\n", width, height, ratio, format); */
+  if ( (frame->width != width) || (frame->height != height) || (frame->format != format) || (frame->format==XINE_IMGFMT_VDPAU && frame->vdpau_accel_data.chroma!=chroma) ) {
+    //printf("vo_vdpau: updating frame to %d x %d (ratio=%g, format=%08X)\n", width, height, ratio, format);
 
     /* (re-) allocate render space */
     if ( frame->chunk[0] )
@@ -528,10 +533,21 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
     }
 
     if ( frame->vdpau_accel_data.surface != VDP_INVALID_HANDLE  ) {
-      if ( (frame->width != width) || (frame->height != height) || (frame->format != XINE_IMGFMT_VDPAU) ) {
+      if ( (frame->width != width) || (frame->height != height) || (format != XINE_IMGFMT_VDPAU) || frame->vdpau_accel_data.chroma != chroma ) {
         printf("vo_vdpau: update_frame - destroy surface\n");
         vdp_video_surface_destroy( frame->vdpau_accel_data.surface );
         frame->vdpau_accel_data.surface = VDP_INVALID_HANDLE;
+        --this->allocated_surfaces;
+      }
+    }
+
+    if ( (format == XINE_IMGFMT_VDPAU) && (frame->vdpau_accel_data.surface == VDP_INVALID_HANDLE) ) {
+      VdpStatus st = vdp_video_surface_create( vdp_device, chroma, width, height, &frame->vdpau_accel_data.surface );
+      if ( st!=VDP_STATUS_OK )
+        printf( "vo_vdpau: failed to create surface !! %s\n", vdp_get_error_string( st ) );
+      else {
+        frame->vdpau_accel_data.chroma = chroma;
+        ++this->allocated_surfaces;
       }
     }
 
@@ -542,6 +558,8 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
 
     vdpau_frame_field ((vo_frame_t *)frame, flags);
   }
+
+  printf("vo_vdpau: allocated_surfaces=%d\n", this->allocated_surfaces );
 
   frame->ratio = ratio;
 }
@@ -606,7 +624,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     chroma = ( frame->format==XINE_IMGFMT_YV12 )? VDP_CHROMA_TYPE_420 : VDP_CHROMA_TYPE_422;
     if ( (frame->width > this->soft_surface_width) || (frame->height > this->soft_surface_height) || (frame->format != this->soft_surface_format) ) {
       printf( "vo_vdpau: soft_surface size update\n" );
-      /* recreate surface and mixer to match frame changes */
+      /* recreate surface to match frame changes */
       this->soft_surface_width = frame->width;
       this->soft_surface_height = frame->height;
       this->soft_surface_format = frame->format;
@@ -635,7 +653,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     surface = frame->vdpau_accel_data.surface;
     mix_w = frame->width;
     mix_h = frame->height;
-    chroma = VDP_CHROMA_TYPE_420;
+    chroma = (frame->vo_frame.flags & VO_CHROMA_422) ? VDP_CHROMA_TYPE_422 : VDP_CHROMA_TYPE_420;
   }
   else {
     /* unknown format */
@@ -646,6 +664,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
   if ( (mix_w != this->video_mixer_width) || (mix_h != this->video_mixer_height) || (chroma != this->video_mixer_chroma) ) {
     vdpau_release_back_frames( this_gen ); /* empty past frames array */
+    printf("vo_vdpau: recreate mixer to match frames: width=%d, height=%d, chroma=%d\n", mix_w, mix_h, chroma);
     vdp_video_mixer_destroy( this->video_mixer );
     VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL };
     VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
@@ -1261,6 +1280,8 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->saturation = 100;
   this->contrast = 100;
   this->brightness = 0;
+
+  this->allocated_surfaces = 0;
 
   return &this->vo_driver;
 }
