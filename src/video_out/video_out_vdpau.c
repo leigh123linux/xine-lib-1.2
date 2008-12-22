@@ -559,7 +559,7 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
     vdpau_frame_field ((vo_frame_t *)frame, flags);
   }
 
-  printf("vo_vdpau: allocated_surfaces=%d\n", this->allocated_surfaces );
+  //printf("vo_vdpau: allocated_surfaces=%d\n", this->allocated_surfaces );
 
   frame->ratio = ratio;
 }

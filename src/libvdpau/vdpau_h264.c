@@ -560,6 +560,9 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
 static void vdpau_h264_discontinuity (video_decoder_t *this_gen) {
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *) this_gen;
 
+  this->last_pts = 0;
+  this->tmp_pts = 0;
+
 }
 
 /*
