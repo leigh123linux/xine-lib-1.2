@@ -46,6 +46,8 @@ struct decoded_picture {
 /* Decoded Picture Buffer */
 struct dpb {
   struct decoded_picture *pictures;
+
+  uint32_t num_ref_frames;
   uint32_t used;
 };
 
@@ -71,6 +73,6 @@ int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_r
 int dpb_flush(struct dpb *dpb);
 void dpb_free_all( struct dpb *dpb );
 
-void fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist);
+int fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist);
 
 #endif /* DPB_H_ */

@@ -264,6 +264,7 @@ int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_r
 
   pic->next = dpb->pictures;
   dpb->pictures = pic;
+  dpb->num_ref_frames = num_ref_frames;
   dpb->used++;
 
   if(dpb->used > num_ref_frames) {
@@ -318,12 +319,13 @@ void dpb_free_all( struct dpb *dpb )
   printf("dpb_free_all, used: %d\n", dpb->used);
 }
 
-void fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist)
+int fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist)
 {
   struct decoded_picture *pic = dpb->pictures;
   struct decoded_picture *last_pic = NULL;
 
   int i = 0;
+  int used_refframes = 0;
 
   if (pic != NULL)
     do {
@@ -345,6 +347,8 @@ void fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist)
       last_pic = pic;
     } while ((pic = pic->next) != NULL && i < 16);
 
+  used_refframes = i;
+
   // fill all other frames with invalid handles
   while(i < 16) {
     reflist[i].bottom_is_reference = VDP_FALSE;
@@ -356,4 +360,6 @@ void fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist)
     reflist[i].field_order_cnt[1] = 0;
     i++;
   }
+
+  return used_refframes;
 }

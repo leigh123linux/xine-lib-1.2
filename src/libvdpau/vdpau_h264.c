@@ -390,7 +390,9 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           memcpy(pic.scaling_lists_4x4, pps->scaling_lists_4x4, sizeof(pic.scaling_lists_4x4));
           memcpy(pic.scaling_lists_8x8, pps->scaling_lists_8x8, sizeof(pic.scaling_lists_8x8));
 
-          fill_vdpau_reference_list(&(this->nal_parser->dpb), pic.referenceFrames);
+          /* set num_ref_frames to the number of actually available reference frames,
+           * if this is not set generation 3 decoders will fail. */
+          pic.num_ref_frames = fill_vdpau_reference_list(&(this->nal_parser->dpb), pic.referenceFrames);
 
           if(this->decoder_started || pic.is_reference) {
             if(!this->decoder_started)
