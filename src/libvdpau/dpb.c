@@ -297,9 +297,7 @@ int dpb_flush(struct dpb *dpb)
       pic = next_pic;
     } while (pic != NULL);
 
-  printf("Flushed, used: %d\n", dpb->used);
-  //dpb->pictures = NULL;
-  //dpb->used = 0;
+  //printf("Flushed, used: %d\n", dpb->used);
 
   return 0;
 }

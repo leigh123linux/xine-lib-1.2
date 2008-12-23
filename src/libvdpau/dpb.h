@@ -62,6 +62,7 @@ struct decoded_picture* dpb_get_picture_by_ltpn(struct dpb *dpb, uint32_t longte
 struct decoded_picture* dpb_get_picture_by_ltidx(struct dpb *dpb, uint32_t longterm_idx);
 
 int dpb_set_unused_ref_picture(struct dpb *dpb, uint32_t picnum);
+int dpb_set_unused_ref_picture_a(struct dpb *dpb, struct decoded_picture *refpic);
 int dpb_set_unused_ref_picture_byltpn(struct dpb *dpb, uint32_t longterm_picnum);
 int dpb_set_unused_ref_picture_bylidx(struct dpb *dpb, uint32_t longterm_idx);
 int dpb_set_unused_ref_picture_lidx_gt(struct dpb *dpb, uint32_t longterm_idx);

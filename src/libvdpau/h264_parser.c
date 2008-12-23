@@ -488,7 +488,6 @@ void parse_sei(struct buf_reader *buf, struct nal_parser *parser)
     if(parser->cpb_dpb_delays_present_flag) {
       sei->pic_timing.cpb_removal_delay = read_bits(buf, 5);
       sei->pic_timing.dpb_output_delay = read_bits(buf, 5);
-      printf("output delay: %d\n", sei->pic_timing.dpb_output_delay);
     }
   }
 }
