@@ -44,6 +44,9 @@ struct nal_unit* init_nal_unit()
 
 void free_nal_unit(struct nal_unit *nal)
 {
+  if(!nal)
+    return;
+
   free(nal->sps);
   free(nal->pps);
   free(nal->slc);

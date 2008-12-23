@@ -311,7 +311,7 @@ void calculate_pic_order(struct nal_parser *parser)
 
 
   } else {
-    printf("FIXME: Unsupported poc_type\n");
+    printf("FIXME: Unsupported poc_type: %d\n", sps->pic_order_cnt_type);
   }
 
 }
@@ -883,10 +883,13 @@ void decode_ref_pic_marking(uint32_t memory_management_control_operation,
     struct decoded_picture* pic = dpb_get_picture(dpb, pic_num_x);
     if (pic != NULL) {
       if (pic->nal->slc->field_pic_flag == 0)
-        dpb_set_unused_ref_picture(dpb, pic_num_x);
+        dpb_set_unused_ref_picture_a(dpb, pic);
       else {
-        dpb_set_unused_ref_picture(dpb, pic_num_x);
-        printf("FIXME: We might need do delete more from the DPB...\n");
+        if(!pic->top_is_reference)
+          dpb_set_unused_ref_picture_a(dpb, pic);
+        else
+          pic->top_is_reference = 0;
+        //printf("FIXME: We might need do delete more from the DPB...\n");
         // FIXME: some more handling needed here?! See 8.2.5.4.1, p. 120
       }
     }

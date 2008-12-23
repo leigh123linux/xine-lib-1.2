@@ -181,12 +181,14 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
   if (buf->decoder_flags & BUF_FLAG_FRAMERATE) {
     this->video_step = buf->decoder_info[0];
-    printf("Videostep: %d\n", this->video_step);
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->video_step);
   }
 
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) { /* need to initialize */
-    return;
+    xine_bmiheader *bih = (xine_bmiheader*)buf->content;
+    this->width                         = bih->biWidth;
+    this->height                        = bih->biHeight;
+
   } else {
 
     /* parse the first nal packages to retrieve profile type */
@@ -203,8 +205,10 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           this->nal_parser->current_nal->sps->pic_width > 0 &&
           this->nal_parser->current_nal->sps->pic_height > 0) {
 
-        this->width = this->nal_parser->current_nal->sps->pic_width;
-        this->height = this->nal_parser->current_nal->sps->pic_height;
+        if(this->width == 0) {
+          this->width = this->nal_parser->current_nal->sps->pic_width;
+          this->height = this->nal_parser->current_nal->sps->pic_height;
+        }
 
         /* FIXME: ratio should be calculated in some other way to
          * support anamorph codings...
@@ -344,13 +348,11 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
               sps->vui_parameters.timing_info_present_flag &&
               this->video_step == 0) {
             this->video_step = 2*90000/(1/((double)sps->vui_parameters.num_units_in_tick/(double)sps->vui_parameters.time_scale));
-            printf("Videostep: %d\n", this->video_step);
           }
 
           /* flush the DPB if this frame was an IDR */
           //printf("is_idr: %d\n", this->nal_parser->is_idr);
           if(this->nal_parser->current_nal->nal_unit_type == NAL_SLICE_IDR) {
-            printf("IDR Slice, flush\n");
             dpb_flush(&(this->nal_parser->dpb));
           }
           this->nal_parser->is_idr = 0;
@@ -366,7 +368,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           pic.frame_num = slc->frame_num;
           pic.field_pic_flag = slc->field_pic_flag;
           pic.bottom_field_flag = slc->bottom_field_flag;
-          pic.num_ref_frames = sps->num_ref_frames;
+          //pic.num_ref_frames = sps->num_ref_frames;
           pic.mb_adaptive_frame_field_flag = sps->mb_adaptive_frame_field_flag;
           pic.constrained_intra_pred_flag = pps->constrained_intra_pred_flag;
           pic.weighted_pred_flag = pps->weighted_pred_flag;
@@ -416,7 +418,6 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
 
             if(img == NULL) {
-              fflush(stdout);
               img = this->stream->video_out->get_frame (this->stream->video_out,
                                                         this->width, this->height,
                                                         this->ratio,
@@ -425,15 +426,6 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             }
 
             VdpVideoSurface surface = this->vdpau_accel->surface;
-
-            /*if(surface == VDP_INVALID_HANDLE) {
-              VdpStatus status = this->vdpau_accel->vdp_video_surface_create(this->vdpau_accel->vdp_device,
-                  VDP_CHROMA_TYPE_420, this->width, this->height,
-                  &surface);
-              this->vdpau_accel->surface = surface;
-              if(status != VDP_STATUS_OK)
-                xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Surface creation failed: %s\n", this->vdpau_accel->vdp_get_error_string(status));
-            }*/
 
             //printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer.bitstream_bytes, buf->pts);
             VdpStatus status = this->vdpau_accel->vdp_decoder_render(this->decoder,
@@ -506,12 +498,6 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
                 this->wait_for_bottom_field = 0;
 
-                /*img->draw(img, this->stream);
-                this->wait_for_bottom_field = 0;
-
-                if(!pic.is_reference)
-                  img->free(img);
-                img = NULL;*/
               } else if(slc->field_pic_flag && !slc->bottom_field_flag) {
                 // don't draw yet, second field is missing.
                 this->last_top_field_order_cnt = this->nal_parser->current_nal->top_field_order_cnt;
@@ -624,6 +610,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->video_step = 0;
   this->last_pts = 0;
   this->tmp_pts = 0;
+  this->width = this->height = 0;
 
   (this->stream->video_out->open) (this->stream->video_out, this->stream);
 
