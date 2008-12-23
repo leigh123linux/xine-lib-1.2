@@ -666,7 +666,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdpau_release_back_frames( this_gen ); /* empty past frames array */
     printf("vo_vdpau: recreate mixer to match frames: width=%d, height=%d, chroma=%d\n", mix_w, mix_h, chroma);
     vdp_video_mixer_destroy( this->video_mixer );
-    VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL };
+    VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL, VDP_VIDEO_MIXER_FEATURE_INVERSE_TELECINE, VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION };
     VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
     int num_layers = 2;
     void const *param_values[] = { &mix_w, &mix_h, &chroma, &num_layers };
@@ -1240,7 +1240,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->video_mixer_chroma = chroma;
   this->video_mixer_width = this->soft_surface_width;
   this->video_mixer_height = this->soft_surface_height;
-  VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL };
+  VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL, VDP_VIDEO_MIXER_FEATURE_INVERSE_TELECINE, VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION };
   VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
   int num_layers = 2;
   void const *param_values[] = { &this->video_mixer_width, &this->video_mixer_height, &chroma, &num_layers };
