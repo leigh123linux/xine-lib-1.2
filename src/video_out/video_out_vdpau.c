@@ -715,7 +715,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     layer_count = 0;
   }
 
-  if ( frame->vo_frame.duration>2500 && frame->format==XINE_IMGFMT_VDPAU ) {
+  if ( frame->vo_frame.duration>2500 && !frame->vo_frame.progressive_frame && frame->format==XINE_IMGFMT_VDPAU ) {
     VdpTime current_time = 0;
     VdpVideoSurface past[2];
     VdpVideoSurface future[1];

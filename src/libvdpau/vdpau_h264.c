@@ -448,6 +448,11 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
               img->bad_frame = 0;
 
+              if(!pic.field_pic_flag && !pic.mb_adaptive_frame_field_flag)
+                img->progressive_frame = 1;
+              else
+                img->progressive_frame = 0;
+
               struct decoded_picture *decoded_pic = NULL;
               if(pic.is_reference) {
                 if(!slc->field_pic_flag || !this->wait_for_bottom_field) {
