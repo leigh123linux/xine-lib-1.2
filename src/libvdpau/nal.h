@@ -380,7 +380,8 @@ struct slice_header
     uint32_t long_term_pic_num;
     uint32_t long_term_frame_idx;
     uint32_t max_long_term_frame_idx_plus1;
-  } dec_ref_pic_marking;
+  } dec_ref_pic_marking[10];
+  uint32_t dec_ref_pic_marking_count;
 };
 
 struct nal_unit

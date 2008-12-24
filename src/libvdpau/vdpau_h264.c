@@ -579,6 +579,7 @@ static void vdpau_h264_dispose (video_decoder_t *this_gen) {
 
   this->stream->video_out->close( this->stream->video_out, this->stream );
 
+  free (this->nal_parser);
   free (this_gen);
 }
 
