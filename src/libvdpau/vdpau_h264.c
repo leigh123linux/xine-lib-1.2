@@ -337,8 +337,9 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             this->nal_parser->current_nal->sps != NULL &&
             this->nal_parser->current_nal->pps != NULL) {
 
-          if(this->last_pts == 0)
-            this->last_pts = buf->pts;
+          if(this->last_pts == 0 || this->tmp_pts == 0) {
+            this->tmp_pts = this->last_pts = buf->pts;
+          }
 
           struct pic_parameter_set_rbsp *pps = this->nal_parser->current_nal->pps;
           struct seq_parameter_set_rbsp *sps = this->nal_parser->current_nal->sps;
@@ -490,11 +491,10 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 if(decoded_pic) {
                   if(decoded_pic->nal->nal_unit_type == NAL_SLICE_IDR &&
                       decoded_pic->img->pts != 0) {
-                    this->last_pts = decoded_pic->img->pts;
+                    this->last_pts = this->tmp_pts = decoded_pic->img->pts;
                   }
 
                   decoded_pic->img->pts = this->last_pts;
-                  this->tmp_pts = decoded_pic->img->pts;
                   this->last_pts += this->video_step;
                   //printf("poc: %d, %d, pts: %lld\n", decoded_pic->nal->top_field_order_cnt, decoded_pic->nal->bottom_field_order_cnt, decoded_pic->img->pts);
                   decoded_pic->img->draw(decoded_pic->img, this->stream);
