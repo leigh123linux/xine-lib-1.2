@@ -140,6 +140,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <arpa/inet.h>
 
 #ifdef HAVE_FFMPEG_AVUTIL_H
 #  include <crc.h>
@@ -582,7 +583,7 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
   }
 
   /* Check CRC. */
-  calc_crc32 = av_crc(this->class->av_crc, 0xffffffff, pkt+5, section_length+3-4);
+  calc_crc32 = htonl(av_crc(this->class->av_crc, 0xffffffff, pkt+5, section_length+3-4));
   if (crc32 != calc_crc32) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
 	     "demux_ts: demux error! PAT with invalid CRC32: packet_crc32: %.8x calc_crc32: %.8x\n",
@@ -941,7 +942,7 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
       m->buf->content = m->buf->mem;
       m->buf->size = m->buffered_bytes;
       m->buf->type = m->type;
-      m->buf->pts = m->pts;
+      m->buf->pts = 0; /* m->pts */
       m->buf->decoder_info[0] = 1;
       if( this->input->get_length (this->input) )
         m->buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) * 
@@ -1201,8 +1202,8 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
   crc32 |= (uint32_t) this->pmt[program_count][section_length+3-1] ;
 
   /* Check CRC. */
-  calc_crc32 = av_crc(this->class->av_crc, 0xffffffff,
-		      this->pmt[program_count], section_length+3-4);
+  calc_crc32 = htonl(av_crc(this->class->av_crc, 0xffffffff,
+			    this->pmt[program_count], section_length+3-4));
 
   if (crc32 != calc_crc32) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
