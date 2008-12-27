@@ -754,7 +754,7 @@ static void vdpau_mpeg12_decode_data (video_decoder_t *this_gen, buf_element_t *
   xine_fast_memcpy( seq->buf+seq->bufpos, buf->content, buf->size );
   seq->bufpos += buf->size;
 
-  while ( seq->bufseek < seq->bufpos-4 ) {
+  while ( seq->bufseek <= seq->bufpos-4 ) {
     uint8_t *buf = seq->buf+seq->bufseek;
     if ( buf[0]==0 && buf[1]==0 && buf[2]==1 ) {
       if ( seq->start<0 ) {
@@ -777,6 +777,14 @@ static void vdpau_mpeg12_decode_data (video_decoder_t *this_gen, buf_element_t *
     ++seq->bufseek;
   }
 
+  /* still image detection -- don't wait for further data if buffer ends in sequence end code */
+  if (seq->start >= 0 && seq->buf[seq->start + 3] == sequence_end_code) {
+    if (parse_code(this, seq->buf+seq->start, 4)) {
+      decode_picture(this);
+      parse_code(this, seq->buf+seq->start, 4);
+    }
+    seq->start = -1;
+  }
 }
 
 /*
@@ -786,7 +794,8 @@ static void vdpau_mpeg12_flush (video_decoder_t *this_gen) {
   vdpau_mpeg12_decoder_t *this = (vdpau_mpeg12_decoder_t *) this_gen;
 
   printf( "vdpau_mpeg12: vdpau_mpeg12_flush\n" );
-  reset_sequence( &this->sequence );
+// incorrect: see libmpeg2, mpeg2_flush()
+//  reset_sequence( &this->sequence );
 }
 
 /*
