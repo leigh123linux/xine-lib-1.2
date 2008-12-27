@@ -79,6 +79,8 @@ typedef struct vdpau_h264_decoder_s {
   int64_t           last_pts;
   int64_t           tmp_pts;
 
+  vo_frame_t        *last_img;
+
 } vdpau_h264_decoder_t;
 
 /**************************************************************************
@@ -173,7 +175,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
   VdpBitstreamBuffer vdp_buffer;
   vdp_buffer.struct_version = VDP_BITSTREAM_BUFFER_VERSION;
 
-  vo_frame_t *img; /* video out frame */
+  vo_frame_t *img = this->last_img; /* video out frame */
 
   /* a video decoder does not care about this flag (?) */
   if (buf->decoder_flags & BUF_FLAG_PREVIEW)
@@ -484,7 +486,8 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
                 if(this->wait_for_bottom_field && slc->bottom_field_flag)
                   decoded_pic->nal->bottom_field_order_cnt = this->nal_parser->current_nal->bottom_field_order_cnt;
-                img = NULL;
+
+                this->last_img = img = NULL;
 
                 /* now retrieve the next output frame */
                 decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb));
@@ -507,6 +510,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 // don't draw yet, second field is missing.
                 this->last_top_field_order_cnt = this->nal_parser->current_nal->top_field_order_cnt;
                 this->wait_for_bottom_field = 1;
+                this->last_img = img;
               }
             }
           }
