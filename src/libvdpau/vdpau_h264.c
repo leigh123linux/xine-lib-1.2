@@ -78,6 +78,7 @@ typedef struct vdpau_h264_decoder_s {
 
   int64_t           last_pts;
   int64_t           tmp_pts;
+  int64_t           next_pts;
 
   vo_frame_t        *last_img;
 
@@ -196,6 +197,9 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
     /* parse the first nal packages to retrieve profile type */
     int len = 0;
     uint32_t slice_count;
+
+    if(this->next_pts == 0)
+      this->next_pts = buf->pts;
 
     while(len < buf->size) {
       len += parse_frame(this->nal_parser, buf->content + len, buf->size - len,
@@ -444,10 +448,12 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             else {
 
               img->duration  = this->video_step;
-              if(this->nal_parser->current_nal->nal_unit_type == NAL_SLICE_IDR)
+              /*if(this->nal_parser->current_nal->nal_unit_type == NAL_SLICE_IDR)
                 img->pts = buf->pts;
               else
-                img->pts       = 0;
+                img->pts       = 0;*/
+              img->pts = this->next_pts;
+              this->next_pts = buf->pts;
 
               img->bad_frame = 0;
 
@@ -492,7 +498,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 /* now retrieve the next output frame */
                 decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb));
                 if(decoded_pic) {
-                  if(decoded_pic->nal->nal_unit_type == NAL_SLICE_IDR &&
+                  if(//decoded_pic->nal->nal_unit_type == NAL_SLICE_IDR &&
                       decoded_pic->img->pts != 0) {
                     this->last_pts = this->tmp_pts = decoded_pic->img->pts;
                   }
@@ -620,6 +626,9 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->video_step = 0;
   this->last_pts = 0;
   this->tmp_pts = 0;
+  this->next_pts = 0;
+
+  this->last_img = NULL;
   this->width = this->height = 0;
 
   (this->stream->video_out->open) (this->stream->video_out, this->stream);
