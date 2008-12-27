@@ -448,11 +448,11 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             else {
 
               img->duration  = this->video_step;
-              /*if(this->nal_parser->current_nal->nal_unit_type == NAL_SLICE_IDR)
+              if(this->nal_parser->current_nal->nal_unit_type == NAL_SLICE_IDR)
                 img->pts = buf->pts;
               else
-                img->pts       = 0;*/
-              img->pts = this->next_pts;
+                img->pts       = 0;
+              //img->pts = this->next_pts;
               this->next_pts = buf->pts;
 
               img->bad_frame = 0;
