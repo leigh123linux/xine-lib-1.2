@@ -906,6 +906,12 @@ static int vdpau_set_property (vo_driver_t *this_gen, int property, int value)
         this->sc.force_redraw = 1;    //* trigger re-calc of output size
       }
       break;*/
+    case VO_PROP_ASPECT_RATIO:
+      if ( value>=XINE_VO_ASPECT_NUM_RATIOS )
+        value = XINE_VO_ASPECT_AUTO;
+      this->sc.user_ratio = value;
+      this->sc.force_redraw = 1;    /* trigger re-calc of output size */
+      break;
     case VO_PROP_HUE: this->hue = value; vdpau_update_csc( this ); break;
     case VO_PROP_SATURATION: this->saturation = value; vdpau_update_csc( this ); break;
     case VO_PROP_CONTRAST: this->contrast = value; vdpau_update_csc( this ); break;
