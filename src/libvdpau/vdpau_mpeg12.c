@@ -118,6 +118,7 @@ typedef struct {
   int                     slices_size;
   int                     slices_pos, slices_pos_top;
 
+  int                     progressive_frame;
   int                     state;
 } picture_t;
 
@@ -435,6 +436,7 @@ static void picture_coding_extension( sequence_t *sequence, uint8_t *buf, int le
   lprintf( "alternate_scan: %d\n", get_bits( buf,29,1 ) );
   lprintf( "repeat_first_field: %d\n", get_bits( buf,30,1 ) );
   lprintf( "chroma_420_type: %d\n", get_bits( buf,31,1 ) );
+  sequence->picture.progressive_frame = get_bits( buf,32,1 );
   lprintf( "progressive_frame: %d\n", get_bits( buf,32,1 ) );
   sequence->picture.state = WANT_SLICE;
 }
@@ -687,6 +689,8 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
 
   img->bad_frame = 0;
   img->duration = seq->video_step;
+  img->top_field_first = pic->vdp_infos.top_field_first;
+  // progressive_frame is unreliable with most mpeg2 streams //img->progressive_frame = pic->progressive_frame;
 
   if ( pic->vdp_infos.picture_coding_type!=B_FRAME ) {
     if ( pic->vdp_infos.picture_coding_type==I_FRAME && !seq->backward_ref ) {

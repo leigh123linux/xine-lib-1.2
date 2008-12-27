@@ -96,7 +96,7 @@ VdpPresentationQueueCreate *vdp_queue_create;
 VdpPresentationQueueDestroy *vdp_queue_destroy;
 VdpPresentationQueueDisplay *vdp_queue_display;
 VdpPresentationQueueBlockUntilSurfaceIdle *vdp_queue_block;
-VdpPresentationQueueSetBackgroundColor *vdp_queue_set_backgroung_color;
+VdpPresentationQueueSetBackgroundColor *vdp_queue_set_background_color;
 VdpPresentationQueueGetTime *vdp_queue_get_time;
 
 VdpBitmapSurfacePutBitsNative *vdp_bitmap_put_bits;
@@ -107,6 +107,62 @@ VdpDecoderQueryCapabilities *vdp_decoder_query_capabilities;
 VdpDecoderCreate *vdp_decoder_create;
 VdpDecoderDestroy *vdp_decoder_destroy;
 VdpDecoderRender *vdp_decoder_render;
+
+
+
+static VdpVideoSurfaceCreate *orig_vdp_video_surface_create;
+static VdpVideoSurfaceDestroy *orig_vdp_video_surface_destroy;
+
+static VdpDecoderCreate *orig_vdp_decoder_create;
+static VdpDecoderDestroy *orig_vdp_decoder_destroy;
+static VdpDecoderRender *orig_vdp_decoder_render;
+
+static Display *guarded_display;
+
+static VdpStatus guarded_vdp_video_surface_create(VdpDevice device, VdpChromaType chroma_type, uint32_t width, uint32_t height,VdpVideoSurface *surface)
+{
+  VdpStatus r;
+  XLockDisplay(guarded_display);
+  r = orig_vdp_video_surface_create(device, chroma_type, width, height, surface);
+  XUnlockDisplay(guarded_display);
+  return r;
+}
+
+static VdpStatus guarded_vdp_video_surface_destroy(VdpVideoSurface surface)
+{
+  VdpStatus r;
+//  XLockDisplay(guarded_display);
+  r = orig_vdp_video_surface_destroy(surface);
+//  XUnlockDisplay(guarded_display);
+  return r;
+}
+
+static VdpStatus guarded_vdp_decoder_create(VdpDevice device, VdpDecoderProfile profile, uint32_t width, uint32_t height, uint32_t max_references, VdpDecoder *decoder)
+{
+  VdpStatus r;
+  XLockDisplay(guarded_display);
+  r = orig_vdp_decoder_create(device, profile, width, height, max_references, decoder);
+  XUnlockDisplay(guarded_display);
+  return r;
+}
+
+static VdpStatus guarded_vdp_decoder_destroy(VdpDecoder decoder)
+{
+  VdpStatus r;
+  XLockDisplay(guarded_display);
+  r = orig_vdp_decoder_destroy(decoder);
+  XUnlockDisplay(guarded_display);
+  return r;
+}
+
+static VdpStatus guarded_vdp_decoder_render(VdpDecoder decoder, VdpVideoSurface target, VdpPictureInfo const *picture_info, uint32_t bitstream_buffer_count, VdpBitstreamBuffer const *bitstream_buffers)
+{
+  VdpStatus r;
+  XLockDisplay(guarded_display);
+  r = orig_vdp_decoder_render(decoder, target, picture_info, bitstream_buffer_count, bitstream_buffers);
+  XUnlockDisplay(guarded_display);
+  return r;
+}
 
 
 
@@ -175,6 +231,8 @@ typedef struct {
   uint32_t             video_mixer_width;
   uint32_t             video_mixer_height;
 
+  VdpColor             back_color;
+
   vdpau_frame_t        *back_frame[ NUM_FRAMES_BACK ];
 
   uint32_t          capabilities;
@@ -217,6 +275,8 @@ static void vdpau_overlay_clut_yuv2rgb(vdpau_driver_t  *this, vo_overlay_t *over
   }
 }
 
+
+
 static int vdpau_process_argb_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overlay )
 {
   vdpau_driver_t  *this = (vdpau_driver_t *) this_gen;
@@ -246,6 +306,8 @@ static int vdpau_process_argb_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overl
 
   return 1;
 }
+
+
 
 static int vdpau_process_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overlay )
 {
@@ -514,6 +576,7 @@ static vo_frame_t *vdpau_alloc_frame (vo_driver_t *this_gen)
   /*
    * supply required functions/fields
    */
+  frame->vo_frame.proc_duplicate_frame_data = NULL;
   frame->vo_frame.proc_slice = vdpau_frame_proc_slice;
   frame->vo_frame.proc_frame = NULL;
   frame->vo_frame.field      = vdpau_frame_field;
@@ -529,6 +592,51 @@ static vo_frame_t *vdpau_alloc_frame (vo_driver_t *this_gen)
   frame->vdpau_accel_data.vdp_get_error_string = vdp_get_error_string;
 
   return (vo_frame_t *) frame;
+}
+
+
+
+static void vdpau_duplicate_frame_data (vo_frame_t *this_gen, vo_frame_t *original)
+{
+  vdpau_frame_t *this = (vdpau_frame_t *)this_gen;
+  vdpau_frame_t *orig = (vdpau_frame_t *)original;
+  VdpStatus st;
+  VdpYCbCrFormat format;
+
+  if (orig->vo_frame.format != XINE_IMGFMT_VDPAU) {
+    fprintf(stderr, "vdpau_duplicate_frame_data: unexpected frame format 0x%08x!\n", orig->vo_frame.format);
+    return;
+  }
+
+  if (!(orig->flags & VO_CHROMA_422)) {
+    this->vo_frame.pitches[0] = 8*((orig->vo_frame.width + 7) / 8);
+    this->vo_frame.pitches[1] = 8*((orig->vo_frame.width + 15) / 16);
+    this->vo_frame.pitches[2] = 8*((orig->vo_frame.width + 15) / 16);
+    this->vo_frame.base[0] = xine_xmalloc_aligned(16, this->vo_frame.pitches[0] * orig->vo_frame.height, (void **)&this->chunk[0]);
+    this->vo_frame.base[1] = xine_xmalloc_aligned(16, this->vo_frame.pitches[1] * ((orig->vo_frame.height+1)/2), (void **)&this->chunk[1]);
+    this->vo_frame.base[2] = xine_xmalloc_aligned(16, this->vo_frame.pitches[2] * ((orig->vo_frame.height+1)/2), (void **)&this->chunk[2]);
+    format = VDP_YCBCR_FORMAT_YV12;
+  } else {
+    this->vo_frame.pitches[0] = 8*((orig->vo_frame.width + 3) / 4);
+    this->vo_frame.base[0] = xine_xmalloc_aligned(16, this->vo_frame.pitches[0] * orig->vo_frame.height, (void **)&this->chunk[0]);
+    format = VDP_YCBCR_FORMAT_YUYV;
+  }
+
+  st = vdp_video_surface_getbits_ycbcr(orig->vdpau_accel_data.surface, format, this->vo_frame.base, this->vo_frame.pitches);
+  if (st != VDP_STATUS_OK)
+    printf("vo_vdpau: failed to get surface bits !! %s\n", vdp_get_error_string(st));
+
+  st = vdp_video_surface_putbits_ycbcr(this->vdpau_accel_data.surface, format, this->vo_frame.base, this->vo_frame.pitches);
+  if (st != VDP_STATUS_OK)
+    printf("vo_vdpau: failed to put surface bits !! %s\n", vdp_get_error_string(st));
+
+  if (this->chunk[0])
+    free(this->chunk[0]);
+  if (this->chunk[1])
+    free(this->chunk[1]);
+  if (this->chunk[2])
+    free(this->chunk[2]);
+  this->chunk[0] = this->chunk[1] = this->chunk[2] = NULL;
 }
 
 
@@ -574,6 +682,7 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
         vdp_video_surface_destroy( frame->vdpau_accel_data.surface );
         frame->vdpau_accel_data.surface = VDP_INVALID_HANDLE;
         --this->allocated_surfaces;
+        frame->vo_frame.proc_duplicate_frame_data = NULL;
       }
     }
 
@@ -584,6 +693,7 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
       else {
         frame->vdpau_accel_data.chroma = chroma;
         ++this->allocated_surfaces;
+        frame->vo_frame.proc_duplicate_frame_data = vdpau_duplicate_frame_data;
       }
     }
 
@@ -639,6 +749,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   VdpChromaType chroma = this->video_mixer_chroma;
   uint32_t mix_w = this->video_mixer_width;
   uint32_t mix_h = this->video_mixer_height;
+  VdpTime stream_speed;
 
 
   if ( (frame->width != this->sc.delivered_width) || (frame->height != this->sc.delivered_height) || (frame->ratio != this->sc.delivered_ratio) ) {
@@ -729,12 +840,22 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
   //printf( "out_dest = %d %d %d %d - vid_dest = %d %d %d %d\n", out_dest.x0, out_dest.y0, out_dest.x1, out_dest.y1, vid_dest.x0, vid_dest.y0, vid_dest.x1, vid_dest.y1 );
 
-  XLockDisplay( this->display );
+  /* prepare field delay calculation to not run into a deadlock while display locked */
+  stream_speed = frame->vo_frame.stream ? xine_get_param(frame->vo_frame.stream, XINE_PARAM_FINE_SPEED) : 0;
+  if (stream_speed != 0) {
+    int vo_bufs_in_fifo = 0;
+    _x_query_buffer_usage(frame->vo_frame.stream, NULL, NULL, &vo_bufs_in_fifo, NULL);
+    //fprintf(stderr, "vo_bufs: %d\n", vo_bufs_in_fifo);
+    if (vo_bufs_in_fifo <= 0)
+      stream_speed = 0; /* still image -> no delay */
+  }
 
   VdpTime last_time;
 
   if ( this->init_queue>1 )
     vdp_queue_block( vdp_queue, this->output_surface[this->current_output_surface], &last_time );
+
+  XLockDisplay( this->display );
 
   uint32_t layer_count;
   VdpLayer layer[3];
@@ -767,7 +888,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     VdpVideoSurface future[1];
     past[1] = past[0] = (this->back_frame[0] && (this->back_frame[0]->format==XINE_IMGFMT_VDPAU)) ? this->back_frame[0]->vdpau_accel_data.surface : VDP_INVALID_HANDLE;
     future[0] = surface;
-    st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD,
+    st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, frame->vo_frame.progressive_frame || frame->vo_frame.top_field_first ? VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD : VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD,
                                2, past, surface, 1, future, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
     if ( st != VDP_STATUS_OK )
       printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
@@ -776,8 +897,11 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, current_time );
     if ( this->init_queue<2 ) ++this->init_queue;
     this->current_output_surface ^= 1;
-    if ( this->init_queue>1 )
+    if ( this->init_queue>1 ) {
+      XUnlockDisplay(this->display);
       vdp_queue_block( vdp_queue, this->output_surface[this->current_output_surface], &last_time );
+      XLockDisplay(this->display);
+    }
 
     if ( (this->sc.gui_width > this->output_surface_width[this->current_output_surface]) || (this->sc.gui_height > this->output_surface_height[this->current_output_surface]) ) {
       /* recreate output surface to match window size */
@@ -791,12 +915,17 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
     past[0] = surface;
     future[0] = VDP_INVALID_HANDLE;
-    st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD,
+    st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, frame->vo_frame.progressive_frame || frame->vo_frame.top_field_first ? VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD : VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD,
                                2, past, surface, 1, future, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
     if ( st != VDP_STATUS_OK )
       printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
-    current_time += frame->vo_frame.duration*100000/18;
+    /* calculate delay for second field: there should be no delay for still images otherwise, take replay speed into account */
+    if (stream_speed > 0)
+      current_time += frame->vo_frame.duration * 100000ull * XINE_FINE_SPEED_NORMAL / (18 * stream_speed);
+    else
+      current_time = 0; /* immediately i. e. no delay */
+
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, current_time );
     if ( this->init_queue<2 ) ++this->init_queue;
     this->current_output_surface ^= 1;
@@ -979,10 +1108,7 @@ static int vdpau_gui_data_exchange (vo_driver_t *this_gen, int data_type, void *
         XUnlockDisplay( this->display );
         break;
       }
-      VdpColor backColor;
-      backColor.red = backColor.green = backColor.blue = 0;
-      backColor.alpha = 1;
-      vdp_queue_set_backgroung_color( vdp_queue, &backColor );
+      vdp_queue_set_background_color( vdp_queue, &this->back_color );
       XUnlockDisplay( this->display );
       this->sc.force_redraw = 1;
       break;
@@ -1081,6 +1207,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   if (!this)
     return NULL;
 
+  guarded_display     = visual->display;
   this->display       = visual->display;
   this->screen        = visual->screen;
   this->drawable      = visual->d;
@@ -1174,10 +1301,10 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     vdpau_dispose( &this->vo_driver );
     return NULL;
   }
-  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_SURFACE_CREATE , (void*)&vdp_video_surface_create );
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_SURFACE_CREATE , (void*)&orig_vdp_video_surface_create ); vdp_video_surface_create = guarded_vdp_video_surface_create;
   if ( vdpau_init_error( st, "Can't get VIDEO_SURFACE_CREATE proc address !!", &this->vo_driver, 1 ) )
     return NULL;
-  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_SURFACE_DESTROY , (void*)&vdp_video_surface_destroy );
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_SURFACE_DESTROY , (void*)&orig_vdp_video_surface_destroy ); vdp_video_surface_destroy = guarded_vdp_video_surface_destroy;
   if ( vdpau_init_error( st, "Can't get VIDEO_SURFACE_DESTROY proc address !!", &this->vo_driver, 1 ) )
     return NULL;
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_SURFACE_PUT_BITS_Y_CB_CR , (void*)&vdp_video_surface_putbits_ycbcr );
@@ -1231,7 +1358,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_PRESENTATION_QUEUE_BLOCK_UNTIL_SURFACE_IDLE , (void*)&vdp_queue_block );
   if ( vdpau_init_error( st, "Can't get PRESENTATION_QUEUE_BLOCK_UNTIL_SURFACE_IDLE proc address !!", &this->vo_driver, 1 ) )
     return NULL;
-  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_PRESENTATION_QUEUE_SET_BACKGROUND_COLOR , (void*)&vdp_queue_set_backgroung_color );
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_PRESENTATION_QUEUE_SET_BACKGROUND_COLOR , (void*)&vdp_queue_set_background_color );
   if ( vdpau_init_error( st, "Can't get PRESENTATION_QUEUE_SET_BACKGROUND_COLOR proc address !!", &this->vo_driver, 1 ) )
     return NULL;
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_PRESENTATION_QUEUE_GET_TIME , (void*)&vdp_queue_get_time );
@@ -1240,13 +1367,13 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_DECODER_QUERY_CAPABILITIES , (void*)&vdp_decoder_query_capabilities );
   if ( vdpau_init_error( st, "Can't get DECODER_QUERY_CAPABILITIES proc address !!", &this->vo_driver, 1 ) )
     return NULL;
-  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_DECODER_CREATE , (void*)&vdp_decoder_create );
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_DECODER_CREATE , (void*)&orig_vdp_decoder_create ); vdp_decoder_create = guarded_vdp_decoder_create;
   if ( vdpau_init_error( st, "Can't get DECODER_CREATE proc address !!", &this->vo_driver, 1 ) )
     return NULL;
-  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_DECODER_DESTROY , (void*)&vdp_decoder_destroy );
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_DECODER_DESTROY , (void*)&orig_vdp_decoder_destroy ); vdp_decoder_destroy = guarded_vdp_decoder_destroy;
   if ( vdpau_init_error( st, "Can't get DECODER_DESTROY proc address !!", &this->vo_driver, 1 ) )
     return NULL;
-  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_DECODER_RENDER , (void*)&vdp_decoder_render );
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_DECODER_RENDER , (void*)&orig_vdp_decoder_render ); vdp_decoder_render = guarded_vdp_decoder_render;
   if ( vdpau_init_error( st, "Can't get DECODER_RENDER proc address !!", &this->vo_driver, 1 ) )
     return NULL;
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_BITMAP_SURFACE_CREATE , (void*)&vdp_bitmap_create );
@@ -1266,8 +1393,12 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   if ( vdpau_init_error( st, "Can't create presentation queue !!", &this->vo_driver, 1 ) )
     return NULL;
 
-  VdpColor backColor = { 0, 0, 0, 1 };
-  vdp_queue_set_backgroung_color( vdp_queue, &backColor );
+  /* choose almost magenta as backcolor for color keying */
+  this->back_color.red = 0.98;
+  this->back_color.green = 0.01;
+  this->back_color.blue = 0.99;
+  this->back_color.alpha = 1;
+  vdp_queue_set_background_color( vdp_queue, &this->back_color );
 
   this->soft_surface_width = 1280;
   this->soft_surface_height = 720;

@@ -444,7 +444,12 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             }
 
             if(status != VDP_STATUS_OK)
+            {
               xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %s\n",  this->vdpau_accel->vdp_get_error_string(status));
+              img->bad_frame = 1;
+              img->draw(img, this->stream);
+              this->last_img = 0;
+            }
             else {
 
               img->duration  = this->video_step;
