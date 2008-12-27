@@ -2200,6 +2200,13 @@ void        xine_osd_get_palette   (xine_osd_t *self, uint32_t *color,
 void        xine_osd_set_palette   (xine_osd_t *self,
 				    const uint32_t *const color,
 				    const uint8_t *const trans ) XINE_PROTECTED;
+
+/*
+ * set an argb buffer to be blended into video
+ * this is currently only supported with vdpau
+ */
+void xine_osd_set_argb_buffer(xine_osd_t *self, uint32_t *argb_buffer) XINE_PROTECTED;
+
 /*
  * close osd rendering engine
  * loaded fonts are unloaded

@@ -65,6 +65,13 @@ struct osd_object_s {
   
   osd_font_t *font;
   osd_ft2context_t *ft2;
+
+
+  /* this holds an optional ARGB overlay, which
+   * is only be used by supported video_out modules.
+   * right now this is only vdpau */
+  uint32_t *argb_buffer;
+
 };
 
 /* this one is public */
@@ -211,6 +218,12 @@ struct osd_renderer_s {
    */
   uint32_t (*get_capabilities) (osd_object_t *osd);
   
+  /*
+   * set a buffer to an argb buffer
+   */
+  void (*set_argb_buffer) (osd_object_t *osd, uint32_t *argb_buffer);
+
+
   /* private stuff */
 
   pthread_mutex_t             osd_mutex;

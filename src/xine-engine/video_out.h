@@ -419,6 +419,8 @@ struct vo_overlay_s {
   int               hili_rgb_clut; /* true if clut was converted to rgb */
   
   int               unscaled;      /* true if it should be blended unscaled */
+
+  uint32_t         *argb_buffer;
 };
 
 

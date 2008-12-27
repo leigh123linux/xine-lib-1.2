@@ -152,6 +152,8 @@ static osd_object_t *XINE_MALLOC osd_new_object (osd_renderer_t *this, int width
   osd->x2 = 0;
   osd->y2 = 0;
 
+  osd->argb_buffer = NULL;
+
   memcpy(osd->color, textpalettes_color[0], sizeof(textpalettes_color[0])); 
   memcpy(osd->trans, textpalettes_trans[0], sizeof(textpalettes_trans[0])); 
 
@@ -228,6 +230,9 @@ static int _osd_show (osd_object_t *osd, int64_t vpts, int unscaled ) {
     this->event.object.handle = osd->handle;
 
     memset( this->event.object.overlay, 0, sizeof(*this->event.object.overlay) );
+
+    this->event.object.overlay->argb_buffer = osd->argb_buffer;
+
     this->event.object.overlay->unscaled = unscaled;
     this->event.object.overlay->x = osd->display_x + osd->x1;
     this->event.object.overlay->y = osd->display_y + osd->y1;
@@ -1537,6 +1542,15 @@ static void osd_draw_bitmap(osd_object_t *osd, uint8_t *bitmap,
   }
 }
 
+static void osd_set_argb_buffer(osd_object_t *osd, uint32_t *argb_buffer)
+{
+  osd->argb_buffer = argb_buffer;
+  osd->x2 = osd->width;
+  osd->x1 = 0;
+  osd->y2 = osd->height;
+  osd->y1 = 0;
+}
+
 static uint32_t osd_get_capabilities (osd_object_t *osd) {
      
   osd_renderer_t *this = osd->renderer;
@@ -1612,6 +1626,7 @@ osd_renderer_t *_x_osd_renderer_init( xine_stream_t *stream ) {
   this->get_text_size      = osd_get_text_size;
   this->close              = osd_renderer_close;
   this->draw_bitmap        = osd_draw_bitmap;
+  this->set_argb_buffer    = osd_set_argb_buffer;
   this->show_unscaled      = osd_show_unscaled;
   this->get_capabilities   = osd_get_capabilities;
 

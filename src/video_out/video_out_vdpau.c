@@ -154,6 +154,11 @@ typedef struct {
   uint32_t            overlay_unscaled_height;
   int                 has_unscaled;
 
+  VdpOutputSurface    argb_overlay;
+  uint32_t            argb_overlay_width;
+  uint32_t            argb_overlay_height;
+  int                 has_argb_overlay;
+
   VdpVideoSurface soft_surface;
   uint32_t             soft_surface_width;
   uint32_t             soft_surface_height;
@@ -212,7 +217,35 @@ static void vdpau_overlay_clut_yuv2rgb(vdpau_driver_t  *this, vo_overlay_t *over
   }
 }
 
+static int vdpau_process_argb_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overlay )
+{
+  vdpau_driver_t  *this = (vdpau_driver_t *) this_gen;
 
+  if(overlay->argb_buffer == NULL)
+    return 0;
+
+  if ( (this->argb_overlay_width != overlay->width ) || (this->argb_overlay_height != overlay->height) || (this->argb_overlay == VDP_INVALID_HANDLE) ) {
+    if (this->argb_overlay != VDP_INVALID_HANDLE) {
+      vdp_output_surface_destroy( this->argb_overlay );
+    }
+    VdpStatus st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, overlay->width, overlay->height, &this->argb_overlay );
+    if ( st != VDP_STATUS_OK ) {
+      printf( "vdpau_process_argb_ovl: vdp_output_surface_create failed : %s\n", vdp_get_error_string(st) );
+    }
+    this->argb_overlay_width = overlay->width;
+    this->argb_overlay_height = overlay->height;
+  }
+
+  uint32_t pitch = this->argb_overlay_width*4;
+  VdpRect dest = { 0, 0, this->argb_overlay_width, this->argb_overlay_height };
+  VdpStatus st = vdp_output_surface_put_bits( this->argb_overlay, (void*)&(overlay->argb_buffer), &pitch, &dest );
+  if ( st != VDP_STATUS_OK ) {
+    printf( "vdpau_process_argb_ovl: vdp_output_surface_put_bits_native failed : %s\n", vdp_get_error_string(st) );
+  } else
+    this->has_argb_overlay = 1;
+
+  return 1;
+}
 
 static int vdpau_process_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overlay )
 {
@@ -316,6 +349,9 @@ static void vdpau_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen, v
     if ( vdpau_process_ovl( this, overlay ) )
       ++this->ovl_changed;
   }
+
+  if(overlay->argb_buffer)
+    vdpau_process_argb_ovl( this, overlay );
 }
 
 
@@ -667,9 +703,10 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     printf("vo_vdpau: recreate mixer to match frames: width=%d, height=%d, chroma=%d\n", mix_w, mix_h, chroma);
     vdp_video_mixer_destroy( this->video_mixer );
     VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL, VDP_VIDEO_MIXER_FEATURE_INVERSE_TELECINE, VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION };
-    VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
-    int num_layers = 2;
-    void const *param_values[] = { &mix_w, &mix_h, &chroma, &num_layers };
+    VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS, VDP_VIDEO_MIXER_ATTRIBUTE_NOISE_REDUCTION_LEVEL };
+    int num_layers = 3;
+    float noise_reduction_level = 1.0;
+    void const *param_values[] = { &mix_w, &mix_h, &chroma, &num_layers, &noise_reduction_level };
     vdp_video_mixer_create( vdp_device, 2, features, 4, params, param_values, &this->video_mixer );
     this->video_mixer_chroma = chroma;
     this->video_mixer_width = mix_w;
@@ -700,7 +737,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdp_queue_block( vdp_queue, this->output_surface[this->current_output_surface], &last_time );
 
   uint32_t layer_count;
-  VdpLayer layer[2];
+  VdpLayer layer[3];
   VdpRect layersrc, unscaledsrc;
   if ( this->has_overlay ) {
     //printf("vdpau_display_frame: overlay should be visible !\n");
@@ -713,6 +750,15 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   }
   else {
     layer_count = 0;
+  }
+
+  VdpRect argb_rect = {0, 0, this->argb_overlay_width, this->argb_overlay_height };
+  if( this->has_argb_overlay ) {
+    layer_count++;
+    layer[layer_count-1].destination_rect = &vid_dest;
+    layer[layer_count-1].source_rect = &argb_rect;
+    layer[layer_count-1].source_surface = this->argb_overlay;
+    layer[layer_count-1].struct_version = VDP_LAYER_VERSION;
   }
 
   if ( frame->vo_frame.duration>2500 && !frame->vo_frame.progressive_frame && frame->format==XINE_IMGFMT_VDPAU ) {
@@ -1069,6 +1115,10 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->ovl_changed = 0;
   this->has_overlay = 0;
 
+  this->argb_overlay = VDP_INVALID_HANDLE;
+  this->argb_overlay_width = this->argb_overlay_height = 0;
+  this->has_argb_overlay = 0;
+
   /*  overlay converter */
   this->yuv2rgb_factory = yuv2rgb_factory_init (MODE_24_BGR, 0, NULL);
   this->ovl_yuv2rgb = this->yuv2rgb_factory->create_converter( this->yuv2rgb_factory );
@@ -1241,9 +1291,10 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->video_mixer_width = this->soft_surface_width;
   this->video_mixer_height = this->soft_surface_height;
   VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL, VDP_VIDEO_MIXER_FEATURE_INVERSE_TELECINE, VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION };
-  VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
-  int num_layers = 2;
-  void const *param_values[] = { &this->video_mixer_width, &this->video_mixer_height, &chroma, &num_layers };
+  VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS, VDP_VIDEO_MIXER_ATTRIBUTE_NOISE_REDUCTION_LEVEL };
+  int num_layers = 3;
+  float noise_reduction_level = 1.0;
+  void const *param_values[] = { &this->video_mixer_width, &this->video_mixer_height, &chroma, &num_layers, &noise_reduction_level };
   st = vdp_video_mixer_create( vdp_device, 2, features, 4, params, param_values, &this->video_mixer );
   if ( vdpau_init_error( st, "Can't create video mixer !!", &this->vo_driver, 1 ) ) {
     vdp_video_surface_destroy( this->soft_surface );
