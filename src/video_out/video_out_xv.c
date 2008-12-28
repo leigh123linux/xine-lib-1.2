@@ -166,9 +166,9 @@ typedef struct {
 
 static int gX11Fail;
 
-static const char *const prefer_types[] = VIDEO_DEVICE_XV_PREFER_TYPES;
-static const char *const bicubic_types[] = VIDEO_DEVICE_XV_BICUBIC_TYPES;
-static const char *const sync_atoms[] = VIDEO_DEVICE_XV_VSYNC_ATOMS;
+VIDEO_DEVICE_XV_DECL_BICUBIC_TYPES;
+VIDEO_DEVICE_XV_DECL_PREFER_TYPES;
+VIDEO_DEVICE_XV_DECL_SYNC_ATOMS;
 
 static uint32_t xv_get_capabilities (vo_driver_t *this_gen) {
   xv_driver_t *this = (xv_driver_t *) this_gen;
@@ -1178,7 +1178,7 @@ static XvPortID xv_autodetect_port(xv_driver_t *this,
   for (an = 0; an < adaptors; an++)
     if (adaptor_info[an].type & XvImageMask &&
         (prefer_type == xv_prefer_none ||
-         strcasestr (adaptor_info[an].name, prefer_types[prefer_type])))
+         strcasestr (adaptor_info[an].name, prefer_substrings[prefer_type])))
       for (j = 0; j < adaptor_info[an].num_ports; j++) {
 	XvPortID port = adaptor_info[an].base_id + j;
 	if (port >= base && xv_open_port(this, port)) {
@@ -1250,7 +1250,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
 				  VIDEO_DEVICE_XV_PORT_HELP,
 				  20, NULL, NULL);
   prefer_type = config->register_enum (config, "video.device.xv_preferred_method", 0,
-				       prefer_types, VIDEO_DEVICE_XV_PREFER_TYPE_HELP,
+				       prefer_labels, VIDEO_DEVICE_XV_PREFER_TYPE_HELP,
 				       10, NULL, NULL);
 
   if (xv_port != 0) {
@@ -1265,7 +1265,13 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
   if (!xv_port)
     xv_port = xv_autodetect_port(this, adaptors, adaptor_info, &adaptor_num, 0, prefer_type);
   if (!xv_port)
+  {
+    if (prefer_type)
+      xprintf(class->xine, XINE_VERBOSITY_NONE,
+	      _("%s: no available ports of type \"%s\", defaulting...\n"),
+	      LOG_MODULE, prefer_labels[prefer_type]);
     xv_port = xv_autodetect_port(this, adaptors, adaptor_info, &adaptor_num, 0, xv_prefer_none);
+  }
 
   if (!xv_port) {
     xprintf(class->xine, XINE_VERBOSITY_LOG,

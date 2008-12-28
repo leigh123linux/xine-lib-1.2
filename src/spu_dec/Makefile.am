@@ -26,7 +26,7 @@ internal_dvdnav_sources = nav_read.c
 endif
 
 xineplug_decode_spu_la_SOURCES = $(internal_dvdnav_sources) spudec.c spudec.h spu_decoder.c
-xineplug_decode_spu_la_LIBADD  = $(XINE_LIB) $(external_dvdnav_libs) $(PTHREAD_LIBS)
+xineplug_decode_spu_la_LIBADD  = $(XINE_LIB) $(external_dvdnav_libs) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_decode_spu_la_CFLAGS  = $(AM_CFLAGS) $(DVDNAV_CFLAGS) -I$(top_srcdir)/src/input/libdvdnav
 
 xineplug_decode_spudvb_la_SOURCES = spudvb_decoder.c

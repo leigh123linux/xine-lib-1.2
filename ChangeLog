@@ -82,6 +82,9 @@ xine-lib (1.1.16) 2008-??-??
   * Fix some XCB Xv attribute configuration breakage.
   * Add a configuration option for Xv bicubic filtering, implemented in
     xf86-video-ati 6.9.1.
+  * Recognise Xv "blitter" adaptors for port selection purposes.
+    NOTE: you will need to remove ~/.xine/catalog.cache when upgrading from
+          xine-lib 1.1.15 or older if you wish to use this extra option.
 
 xine-lib (1.1.15) 2008-08-14
   * Security fixes:

@@ -523,6 +523,7 @@ case "$host_or_hostalias" in
             WIN32_INCLUDES='-I$(top_srcdir)/win32/include'
             LIBS="-lwinmm -lwsock32 $LIBS"
             GOOM_LIBS="-liberty"
+            LDFLAGS="-Wl,--enable-stdcall-fixup $LDFLAGS"
             AC_SUBST(GOOM_LIBS)
         fi
         LDFLAGS="-no-undefined $LDFLAGS"

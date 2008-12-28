@@ -92,7 +92,7 @@ xineplug_ao_out_sun_la_LIBADD = $(XINE_LIB)
 #xineplug_ao_out_irixal_la_CFLAGS = $(AM_CFLAGS) $(IRIXAL_CFLAGS)
 
 xineplug_ao_out_directx_la_SOURCES = audio_directx_out.c
-xineplug_ao_out_directx_la_LIBADD = $(XINE_LIB) $(DIRECTX_AUDIO_LIBS)
+xineplug_ao_out_directx_la_LIBADD = $(XINE_LIB) $(DIRECTX_AUDIO_LIBS) $(LTLIBINTL)
 xineplug_ao_out_directx_la_CPPFLAGS = $(AM_CPPFLAGS) $(DIRECTX_CPPFLAGS)
 
 xineplug_ao_out_coreaudio_la_SOURCES = audio_coreaudio_out.c
@@ -104,7 +104,7 @@ xineplug_ao_out_pulseaudio_la_LIBADD = $(XINE_LIB) $(PULSEAUDIO_LIBS) $(LTLIBINT
 xineplug_ao_out_pulseaudio_la_CFLAGS = $(AM_CFLAGS) $(PULSEAUDIO_CFLAGS)
 
 xineplug_ao_out_directx2_la_SOURCES = audio_directx2_out.c
-xineplug_ao_out_directx2_la_CPPFLAGS = $(AM_CPPFLAGS) $(DIRECTX_CPPFLAGS)
+xineplug_ao_out_directx2_la_CPPFLAGS = $(AM_CPPFLAGS) $(DIRECTX_CPPFLAGS) $(LTLIBINTL)
 xineplug_ao_out_directx2_la_LIBADD = $(XINE_LIB) $(DIRECTX_AUDIO_LIBS) $(PTHREAD_LIBS)
 
 xineplug_ao_out_fusionsound_la_SOURCES = audio_fusionsound_out.c

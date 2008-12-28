@@ -188,7 +188,7 @@ xineplug_vo_out_stk_la_LIBADD = $(XINE_LIB) $(LIBSTK_LIBS) $(PTHREAD_LIBS)
 xineplug_vo_out_stk_la_CFLAGS = $(AM_CFLAGS) $(LIBSTK_CFLAGS)
 
 xineplug_vo_out_directx_la_SOURCES = video_out_directx.c 
-xineplug_vo_out_directx_la_LIBADD = libyuv2rgb.la $(XINE_LIB) $(DIRECTX_VIDEO_LIBS) $(PTHREAD_LIBS)
+xineplug_vo_out_directx_la_LIBADD = libyuv2rgb.la $(XINE_LIB) $(DIRECTX_VIDEO_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_directx_la_CPPFLAGS = $(AM_CPPFLAGS) $(DIRECTX_CPPFLAGS)
 
 xineplug_vo_out_none_la_SOURCES =  video_out_none.c
