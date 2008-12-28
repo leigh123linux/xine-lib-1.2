@@ -2205,7 +2205,8 @@ void        xine_osd_set_palette   (xine_osd_t *self,
  * set an argb buffer to be blended into video
  * this is currently only supported with vdpau
  */
-void xine_osd_set_argb_buffer(xine_osd_t *self, uint32_t *argb_buffer) XINE_PROTECTED;
+void xine_osd_set_argb_buffer(xine_osd_t *self, uint32_t *argb_buffer,
+				int x, int y, int width, int height) XINE_PROTECTED;
 
 /*
  * close osd rendering engine

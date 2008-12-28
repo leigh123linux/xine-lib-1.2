@@ -1542,13 +1542,18 @@ static void osd_draw_bitmap(osd_object_t *osd, uint8_t *bitmap,
   }
 }
 
-static void osd_set_argb_buffer(osd_object_t *osd, uint32_t *argb_buffer)
+static void osd_set_argb_buffer(osd_object_t *osd, uint32_t *argb_buffer,
+    int x, int y, int width, int height)
 {
   osd->argb_buffer = argb_buffer;
-  osd->x2 = osd->width;
-  osd->x1 = 0;
-  osd->y2 = osd->height;
-  osd->y1 = 0;
+  if(osd->x1 == 0 || x < osd->x1)
+    osd->x1 = x;
+  if(osd->x2 == 0 || (x + width) > osd->x2)
+    osd->x2 = x + width;
+  if(osd->y1 == 0 || y < osd->y1)
+    osd->y1 = y;
+  if(osd->y2 == 0 || (y + height) > osd->y2)
+    osd->y2 = y + height;
 }
 
 static uint32_t osd_get_capabilities (osd_object_t *osd) {

@@ -221,7 +221,8 @@ struct osd_renderer_s {
   /*
    * set a buffer to an argb buffer
    */
-  void (*set_argb_buffer) (osd_object_t *osd, uint32_t *argb_buffer);
+  void (*set_argb_buffer) (osd_object_t *osd, uint32_t *argb_buffer,
+            int x, int y, int width, int height);
 
 
   /* private stuff */

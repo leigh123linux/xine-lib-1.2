@@ -855,8 +855,9 @@ void xine_osd_draw_bitmap(xine_osd_t *this, uint8_t *bitmap,
   this->osd.renderer->draw_bitmap(&this->osd, bitmap, x1, y1, width, height, palette_map);
 }
 
-void xine_osd_set_argb_buffer(xine_osd_t *this, uint32_t *argb_buffer) {
-  this->osd.renderer->set_argb_buffer(&this->osd, argb_buffer);
+void xine_osd_set_argb_buffer(xine_osd_t *this, uint32_t *argb_buffer,
+    int x, int y, int width, int height) {
+  this->osd.renderer->set_argb_buffer(&this->osd, argb_buffer, x, y, width, height);
 }
 
 
