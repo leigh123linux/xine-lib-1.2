@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-12-15 18:51+0100\n"
-"PO-Revision-Date: 2006-06-18 23:05+0200\n"
+"POT-Creation-Date: 2008-12-28 00:20+0000\n"
+"PO-Revision-Date: 2007-12-24 16:09+0100\n"
 "Last-Translator: Diego 'Flameeyes' Pettenò <flameeyes@gentoo.org>\n"
 "Language-Team: Italian\n"
 "MIME-Version: 1.0\n"
@@ -927,11 +927,11 @@ msgstr ""
 #: src/demuxers/demux_flv.c:184
 #, c-format
 msgid "unsupported FLV version (%d).\n"
-msgstr ""
+msgstr "Versione FLV non supportata (%d).\n"
 
 #: src/demuxers/demux_flv.c:191
 msgid "neither video nor audio stream in this file.\n"
-msgstr ""
+msgstr "Non ci sono flussi audio o video in questo file.\n"
 
 #: src/demuxers/demux_flv.c:552 src/demuxers/demux_flv.c:694
 #, c-format
@@ -1068,7 +1068,7 @@ msgstr "plugin di input del file"
 
 #: src/demuxers/demux_tta.c:85
 msgid "demux_tta: total frames count too high\n"
-msgstr ""
+msgstr "demux_tta: numero di frame totali troppo alto\n"
 
 #: src/demuxers/demux_tta.c:272
 #, fuzzy
@@ -1614,7 +1614,7 @@ msgid "%s: can't connect to %s:%d\n"
 msgstr "%s: impossibile connettersi a %s: %d\n"
 
 #: src/input/input_cdda.c:1631
-#, fuzzy, c-format
+#, c-format
 msgid "input_cdda: successfully connected to cddb server '%s:%d'.\n"
 msgstr "input_cdda: connesso al server CDDB %s:%d con successo.\n"
 
@@ -1702,14 +1702,14 @@ msgstr ""
 "Un valore pari a zero disabilita il rallentamento."
 
 #: src/input/input_dvb.c:894
-#, fuzzy, c-format
+#, c-format
 msgid "input_dvb: failed to open dvb channel file '%s': %s\n"
-msgstr "input_dvb: apertura file di canale DVB non riuscita '%s'\n"
+msgstr "input_dvb: apertura file canali DVB non riuscita '%s': %s\n"
 
 #: src/input/input_dvb.c:900
-#, fuzzy, c-format
+#, c-format
 msgid "input_dvb: dvb channel file '%s' is not a plain file\n"
-msgstr "input_dvb: apertura file di canale DVB non riuscita '%s'\n"
+msgstr "input_dvb: il file canali '%s' non è un file di testo semplice\n"
 
 #: src/input/input_dvb.c:2134 src/input/input_dvb.c:2971
 msgid "input_dvb: tuner_set_channel failed\n"
@@ -1793,13 +1793,12 @@ msgstr ""
 "essere QAM (DVB-C)\n"
 
 #: src/input/input_dvb.c:2942
-#, fuzzy
 msgid ""
 "input_dvb: dvba mrl specified but the tuner doesn't appear to be ATSC (DVB-"
 "A)\n"
 msgstr ""
-"input_dvb: è stato specificato un MRL DVB-C ma il sintonizzatore non pare "
-"essere QAM (DVB-C)\n"
+"input_dvb: è stato specificato un MRL DVB-A ma il sintonizzatore non pare "
+"essere ATSC (DVB-C)\n"
 
 #: src/input/input_dvb.c:2977
 #, c-format
@@ -1848,13 +1847,15 @@ msgstr "Se abilitato xine ricorderà e scambierà a questo canale."
 
 #: src/input/input_dvb.c:3287
 msgid "Number of seconds until tuning times out."
-msgstr ""
+msgstr "Numero di secondi prima dell'interruzione della sintonizzazione."
 
 #: src/input/input_dvb.c:3288
 msgid ""
 "Leave at 0 means try forever. Greater than 0 means wait that many seconds to "
 "get a lock. Minimum is 5 seconds."
 msgstr ""
+"Lasciandolo a 0 proverà all'infinito. Un valore maggiore a 0 significa "
+"attendi quei secondi per ricevere il controllo. Il minimo è di 5 secondi."
 
 #: src/input/input_dvb.c:3295
 msgid "Enable the DVB GUI"
@@ -2983,9 +2984,10 @@ msgstr ""
 
 #: src/combined/ffmpeg/ff_video_decoder.c:1630
 msgid "FFmpeg video decoding thread count"
-msgstr ""
+msgstr "Numero di thread di decodifica FFmpeg"
 
 #: src/combined/ffmpeg/ff_video_decoder.c:1631
+#, fuzzy
 msgid ""
 "You can adjust the number of video decoding threads which FFmpeg may use.\n"
 "Higher values should speed up decoding but it depends on the codec used "
@@ -2993,6 +2995,12 @@ msgid ""
 "decoding thread per logical CPU (typically 1 to 4).\n"
 "A change of this setting will take effect with playing the next stream."
 msgstr ""
+"Puoi impostare il numero di thread di decodifica che FFMpeg può usare.\n"
+"Valori più alti dovrebbero renere più veloce la decodifica, ma il supporto "
+"alla decodifica parallela dipende dal codec utilizzato. Una buona regola "
+"pratica è di avere un thread di decodifica per ogni CPU virtuale "
+"(tipicamente da 1 a 4). La modifica avrà effetto alla riproduzione del "
+"prossimo flusso."
 
 #: src/combined/ffmpeg/ff_video_decoder.c:1640
 msgid "Skip loop filter"
@@ -3024,7 +3032,6 @@ msgid "path to RealPlayer codecs"
 msgstr "percorso ai codecs RealPlayer"
 
 #: src/libreal/real_common.c:140
-#, fuzzy
 msgid ""
 "If you have RealPlayer installed, specify the path to its codec directory "
 "here. You can easily find the codec directory by looking for a file named "
@@ -3033,10 +3040,10 @@ msgid ""
 "information on how to install the codecs."
 msgstr ""
 "Se si ha RealPlayer installato, si specifichi il percorso ai sui codec qui. "
-"Si possono individuare facilmente i codec cercando un file chiamato \"drv3."
-"so.6.0\". Se xine può trovare i codec RealPlayer li utilizzerà per "
-"decodificare contenuto RealPlayer. Si consulti la FAQ per maggiori "
-"informazioni su come installare i codec."
+"Si possono individuare facilmente i codec cercando un file chiamato \"drvc.so"
+"\". Se xine può trovare i codec RealPlayer li utilizzerà per decodificare "
+"contenuto RealPlayer. Si consultino le FAQ per maggiori informazioni su come "
+"installare i codec."
 
 #: src/libreal/xine_real_audio_decoder.c:130
 #, c-format
@@ -3208,15 +3215,13 @@ msgstr ""
 "del sottotitolo."
 
 #: src/spu_dec/sputext_decoder.c:1157
-#, fuzzy
 msgid "An outline font file (e.g. a .ttf) to be used for the subtitle text."
 msgstr ""
-"Un carattere della directory di caratteri di xine da utilizzare per il testo "
-"del sottotitolo."
+"Un font grafico (es. un .ttf) da utilizzare per il testo dei sottotitoli."
 
 #: src/spu_dec/sputext_decoder.c:1163
 msgid "whether to use a freetype font"
-msgstr ""
+msgstr "se utilizzare un font FreeType"
 
 #: src/spu_dec/sputext_decoder.c:1170
 msgid "encoding of the subtitles"
@@ -3253,12 +3258,10 @@ msgstr ""
 "risoluzione a pieno schermo, ma funziona con tutte le schede grafiche."
 
 #: src/libw32dll/common.c:17
-#, fuzzy
 msgid "path to Win32 codecs"
-msgstr "percorso ai codecs RealPlayer"
+msgstr "percorso ai codecs Win32"
 
 #: src/libw32dll/common.c:18
-#, fuzzy
 msgid ""
 "If you have the Windows or Apple Quicktime codec packs installed, specify "
 "the path the codec directory here. If xine can find the Windows or Apple "
@@ -3266,10 +3269,10 @@ msgid ""
 "Quicktime streams for you. Consult the xine FAQ for more information on how "
 "to install the codecs."
 msgstr ""
-"Se si ha RealPlayer installato, si specifichi il percorso ai sui codec qui. "
-"Si possono individuare facilmente i codec cercando un file chiamato \"drv3."
-"so.6.0\". Se xine può trovare i codec RealPlayer li utilizzerà per "
-"decodificare contenuto RealPlayer. Si consulti la FAQ per maggiori "
+"Se si hanno i pacchetti di codec Windows o Apple QuickTime installati, si "
+"specifichi il percorso alla directory dei codec. Se xine può trovare i codec "
+"Windows o Apple QuickTime li utilizzerà per decodificare vari formati che "
+"non sono attualmente implementati. Si consultino le FAQ per maggiori "
 "informazioni su come installare i codec."
 
 #: src/libw32dll/w32codec.c:585
@@ -3844,7 +3847,6 @@ msgid ""
 msgstr ""
 
 #: src/post/planar/expand.c:232
-#, fuzzy
 msgid ""
 "The expand plugin is meant to take frames of arbitrary aspect ratio and "
 "converts them to a different aspect (4:3 by default) by adding black bars on "
@@ -3863,11 +3865,12 @@ msgstr ""
 "aggiungendo barre nere sopra e sotto il frame. Questo permette di inserire "
 "le sovrimpressioni dentro all'area nera in modo che non coprano l'immagine.\n"
 "\n"
-"Parametri (DA CORREGGERE: miglior aiuto)\n"
+"Parametri (DA CORREGGERE: migliorare il testo informativo)\n"
 "  Enable_automatic_shift: Abilita lo spostamento automatico delle "
 "sovraimpressioni\n"
 "  Overlay_y_offset: Sposta manualmente le sovraimpressioni veticalmente\n"
 "  aspect: La proporzione destinazione (default 4:3)\n"
+"  Centre_cut_out_mode: estrae l'immagine 4:3 contenuta in un frame 16:9\n"
 "\n"
 
 #: src/post/planar/noise.c:402
@@ -4171,40 +4174,38 @@ msgstr ""
 "(\"none\" = disabilitato)."
 
 #: src/video_out/video_out_directfb.c:1512
-#, fuzzy
 msgid "video_out_directfb: using hardware subpicture acceleration.\n"
 msgstr ""
-"video_out_directfb: utilizzando il ridimensionamento accelerato hardware.\n"
+"video_out_directfb: si utilizza l'accelerazione sottotitoli hardware.\n"
 
 #: src/video_out/video_out_directfb.c:1526
-#, fuzzy
 msgid "video_out_directfb: layer supports video output.\n"
-msgstr "video_out_vidix: il dispositivo supporta il formato yuv2\n"
+msgstr "video_out_vidix: lo strato supporta l'output video.\n"
 
 #: src/video_out/video_out_directfb.c:1535
-#, fuzzy
 msgid "video_out_directfb: layer doesn't support YV12!\n"
-msgstr "video_out_syncfb: informazione. (il modulo SyncFB supporta YUY2)\n"
+msgstr "video_out_syncfb: lo strato non supporta YV12!\n"
 
 #: src/video_out/video_out_directfb.c:1542
-#, fuzzy
 msgid "video_out_directfb: layer doesn't support YUY2!\n"
-msgstr "video_out_syncfb: informazione. (il modulo SyncFB supporta YUY2)\n"
+msgstr "video_out_directfb: lo strato non supporta YUY2!\n"
 
 #: src/video_out/video_out_directfb.c:1553
 msgid ""
 "video_out_directfb:need at least DirectFB 0.9.25 to play on this layer!\n"
 msgstr ""
+"video_out_directfb: è necessario almeno DirectFB 0.9.25 per riprodurre su "
+"questo strato!\n"
 
 #: src/video_out/video_out_directfb.c:1588
-#, fuzzy, c-format
+#, c-format
 msgid "video_out_directfb: layer doesn't support buffermode %d!\n"
-msgstr "video_out_directfb: nessuno strato di uscita utilizzabile trovato.\n"
+msgstr "video_out_directfb: lo strato non supporta l'impostazione buffer %d!\n"
 
 #: src/video_out/video_out_directfb.c:1594
 #, c-format
 msgid "video_out_directfb: layer doesn't support options 0x%08x!\n"
-msgstr ""
+msgstr "video_out_directfb: lo strato non supporta le opzioni 0x%08x!\n"
 
 #: src/video_out/video_out_directfb.c:1688
 msgid "video_out_directfb: using hardware accelerated image scaling.\n"
@@ -4220,9 +4221,8 @@ msgstr ""
 "deinterlacciamento è accelerato hardware.\n"
 
 #: src/video_out/video_out_directfb.c:1792
-#, fuzzy
 msgid "video layer id (auto: -1)"
-msgstr "id dello strato video"
+msgstr "id dello strato video (auto: -1)"
 
 #: src/video_out/video_out_directfb.c:1793
 msgid "Select the video output layer by its id."
@@ -4230,20 +4230,18 @@ msgstr "Selezionate lo strato di uscita video tramite id."
 
 #: src/video_out/video_out_directfb.c:1814
 #: src/video_out/video_out_directfb.c:2011
-#, fuzzy, c-format
+#, c-format
 msgid "video_out_directfb: using display layer #%d.\n"
-msgstr ""
-"video_out_directfb: nessuno strato di sovrimpressione utilizzabile trovato.\n"
+msgstr "video_out_directfb: si utilizza lo strato di visualizzazione #%d.\n"
 
 #: src/video_out/video_out_directfb.c:1911
 msgid "xine video output plugin using DirectFB."
 msgstr "plugin di output video per xine utilizzante DirectFB"
 
 #: src/video_out/video_out_directfb.c:2004
-#, fuzzy
 msgid "video_out_directfb: no usable display layer was found!\n"
 msgstr ""
-"video_out_directfb: nessuno strato di sovrimpressione utilizzabile trovato.\n"
+"video_out_directfb: nessuno strato di visualizzazione utilizzabile trovato!\n"
 
 #: src/video_out/video_out_directfb.c:2116
 msgid "xine video output plugin using DirectFB under XDirectFB."
@@ -4902,8 +4900,7 @@ msgstr ""
 msgid "Use bob as accelerated deinterlace method."
 msgstr "Utilizza bob come metodo di deinterlacciamento accelerato."
 
-#: src/video_out/video_out_xxmc.c:2739
-#, fuzzy
+#: src/video_out/video_out_xxmc.c:2742
 msgid ""
 "When interlacing is enabled for hardware accelerated frames,\n"
 "alternate between top and bottom field at double the frame rate.\n"
@@ -4911,25 +4908,32 @@ msgstr ""
 "Quando l'interlacciamento è abilitato per i frame accelerati hardware, "
 "alterna i campi superiore e inferiori al doppio del frame rate.\n"
 
-#: src/video_out/video_out_xxmc.c:2745
+#: src/video_out/video_out_xxmc.c:2748
 msgid "Don't use bob deinterlacing for progressive frames."
-msgstr ""
+msgstr "Non utilizzare il deinterlacciamento bob per frame progressivi."
 
-#: src/video_out/video_out_xxmc.c:2746
+#: src/video_out/video_out_xxmc.c:2749
 msgid ""
 "Progressive frames don't need deinterlacing, so disabling it on\n"
 "demand should result in a better picture.\n"
 msgstr ""
+"I frame progressivi non devono essere deinterlacciati, quindi disabilitarlo\n"
+"a richiesta dovrebbe fornire una migliore immagine.\n"
 
-#: src/video_out/video_out_xxmc.c:2752
+#: src/video_out/video_out_xxmc.c:2755
 msgid "Don't use bob deinterlacing while a scaled OSD is active."
 msgstr ""
+"Non utilizzare il deinterlacciamento bob quando è attivo un OSD "
+"ridimensionato."
 
-#: src/video_out/video_out_xxmc.c:2753
+#: src/video_out/video_out_xxmc.c:2756
 msgid ""
 "Bob deinterlacing adds some noise to horizontal lines, so disabling it\n"
 "on demand should result in a better OSD picture.\n"
 msgstr ""
+"Il deinterlacciamento bob aggiunge del rumore alle righe orizzontali, "
+"quindi\n"
+"disabilitarlo a richiesta dovrebbe fornire una migliore immagine OSD.\n"
 
 #: src/video_out/x11osd.c:274 src/video_out/xcbosd.c:268
 msgid "x11osd: XShape extension not available. unscaled overlay disabled.\n"
@@ -5022,6 +5026,17 @@ msgid ""
 "(Only applies when auto-detecting which Xv port to use.)"
 msgstr ""
 
+#: src/video_out/xv_common.h:77
+#, fuzzy
+msgid "bicubic filtering"
+msgstr "filtro sfarfallio"
+
+#: src/video_out/xv_common.h:78
+msgid ""
+"This option controls bicubic filtering of the video image. It may be used "
+"instead of, or as well as, xine's deinterlacers."
+msgstr ""
+
 #: src/xine-engine/alphablend.c:2146
 msgid "disable exact alpha blending of overlays"
 msgstr "disabilita la trasparenza esatta per gli overlay"
@@ -5071,10 +5086,10 @@ msgstr ""
 "disponibile.\n"
 
 #: src/xine-engine/audio_out.c:1251
-#, fuzzy
 msgid "write to sound card failed. Assuming the device was unplugged.\n"
 msgstr ""
-"scrittura sulla scheda audio fallita. È stato rimosso un dispositivo USB?\n"
+"scrittura sulla scheda audio fallita. Si suppone il dispositivo sia stato "
+"scollegato.\n"
 
 #: src/xine-engine/audio_out.c:1423
 msgid "8 bits not supported by driver, converting to 16 bits.\n"
@@ -5225,7 +5240,7 @@ msgstr ""
 #: src/xine-engine/buffer.c:70
 #, c-format
 msgid "xine-lib: buffer.c: There has been a fatal error: TOO MANY FREE's\n"
-msgstr ""
+msgstr "xine-lib: buffer.c: C'è stato un errore fatale: TROPPI FREE\n"
 
 #: src/xine-engine/configfile.c:952
 #, c-format
@@ -5404,7 +5419,7 @@ msgstr "io_helper: Connessionr rifiutata\n"
 #: src/xine-engine/load_plugins.c:216
 #, c-format
 msgid "map_decoder_list: no space for decoder, skipped.\n"
-msgstr ""
+msgstr "map_decoder_list: niente spazio per il decoder, ignorato.\n"
 
 #: src/xine-engine/load_plugins.c:331
 #, c-format
@@ -5576,19 +5591,19 @@ msgid "wrong version for font '%s'. expected %d found %d.\n"
 msgstr "versione del font '%s' errata. Richiesto %d trovato %d.\n"
 
 #: src/xine-engine/osd.c:927
-#, fuzzy, c-format
+#, c-format
 msgid "osd: error matching font %s with FontConfig"
-msgstr "osd: errore nel caricamento del carattere %s con ft2\n"
+msgstr "osd: errore nel trovare il caratter carattere %s con FontConfig"
 
 #: src/xine-engine/osd.c:941
-#, fuzzy, c-format
+#, c-format
 msgid "osd: error loading font %s with FontConfig"
-msgstr "osd: errore nel caricamento del carattere %s con ft2\n"
+msgstr "osd: errore nel caricamento del carattere %s con FontConfig"
 
 #: src/xine-engine/osd.c:945
-#, fuzzy, c-format
+#, c-format
 msgid "osd: error looking up font %s with FontConfig"
-msgstr "osd: errore nel caricamento del carattere %s con ft2\n"
+msgstr "osd: errore nella ricerca del carattere %s con FontConfig"
 
 #: src/xine-engine/osd.c:985
 #, fuzzy, c-format
@@ -5707,15 +5722,16 @@ msgstr ""
 "%<PRId64>).\n"
 
 #: src/xine-engine/video_out.c:1862
-#, fuzzy
 msgid "default number of video frames"
-msgstr "numero predefinito di ripetizioni dei frame"
+msgstr "numero predefinito di frame video"
 
 #: src/xine-engine/video_out.c:1863
 msgid ""
 "The default number of video frames to request from xine video out driver. "
 "Some drivers will override this setting with their own values."
 msgstr ""
+"Il numero predefinito di frame video da richiedere dal driver di uscita "
+"video. Alcuni driver rimpiazzeranno questa impostazione con il loro valore."
 
 #: src/xine-engine/video_out.c:1920
 msgid "percentage of skipped frames to tolerate"
@@ -5897,9 +5913,9 @@ msgid "xine: found demuxer plugin: %s\n"
 msgstr "xine: trovato plugin demuxer: %s\n"
 
 #: src/xine-engine/xine.c:1296
-#, fuzzy, c-format
+#, c-format
 msgid "xine: demuxer is already done. that was fast!\n"
-msgstr "xine: avvio del demuxer fallito.\n"
+msgstr "xine: avvio del demuxer completo. veloce!\n"
 
 #: src/xine-engine/xine.c:1298
 #, c-format
@@ -6015,7 +6031,7 @@ msgstr ""
 
 #: src/xine-engine/xine.c:1807
 msgid "Timeout for network stream reading (in seconds)"
-msgstr ""
+msgstr "Timeout per la lettura dei flussi via rete (in secondi)"
 
 #: src/xine-engine/xine.c:1808
 msgid ""
@@ -6023,6 +6039,10 @@ msgid ""
 "values might stop streaming when the source is slow or the bandwidth is "
 "occupied, too high values will freeze the player if the connection is lost."
 msgstr ""
+"Specifica il timeout durante la lettura dei flussi di rete, in secondi. "
+"Valori troppo bassi possono fermare la riproduzione quando la sorgente è "
+"lenta o la banda è occupata, valori troppo alti congeleranno il player se la "
+"connessione viene persa."
 
 #: src/xine-engine/xine.c:2265
 msgid "messages"
@@ -6105,431 +6125,3 @@ msgstr ""
 #: src/xine-utils/memcpy.c:506
 msgid "Benchmarking memcpy methods (smaller is better):\n"
 msgstr "Test di velocità dei metodi memcpy (più piccolo è migliore):\n"
-
-#~ msgid "Unable to create buffer position events."
-#~ msgstr "Impossibile creare gli eventi di posizione del buffer."
-
-#~ msgid "Unable to get notification interface"
-#~ msgstr "Impossibile leggere l'interfaccia di notifica."
-
-#~ msgid "Unable to set notification positions"
-#~ msgstr "Impossibile impostare le posizioni di notifica"
-
-#~ msgid ": delayed by %ld msec\n"
-#~ msgstr ": ritardato di %ld msec\n"
-
-#~ msgid "video_out_syncfb: error. (YUY2 not supported by your graphic card)\n"
-#~ msgstr ""
-#~ "video_out_syncfb: errore. (YUV2 non supportato dalla scheda grafica)\n"
-
-#~ msgid "video_out_syncfb: error. (YV12 not supported by your graphic card)\n"
-#~ msgstr ""
-#~ "video_out_syncfb: errore. (YV12 non supportato dalla scheda grafica)\n"
-
-#~ msgid ""
-#~ "video_out_syncfb: info. (SyncFB module supports YUV 4:2:0 (3 plane))\n"
-#~ msgstr ""
-#~ "video_out_syncfb: informazione. (il modulo SyncFB supporta YUV 4:2:0 (3 "
-#~ "piani))\n"
-
-#~ msgid ""
-#~ "video_out_syncfb: info. (SyncFB module supports YUV 4:2:0 (2 plane))\n"
-#~ msgstr ""
-#~ "video_out_syncfb: informazione. (il modulo SyncFB supporta YUV 4:2:0 (2 "
-#~ "piani))\n"
-
-#~ msgid "video_out_syncfb: info. (SyncFB module supports YUV 4:2:2)\n"
-#~ msgstr ""
-#~ "video_out_syncfb: informazione. (il modulo SyncFB supporta YUV 4:2:2)\n"
-
-#~ msgid "video_out_syncfb: info. (SyncFB module supports YUY2)\n"
-#~ msgstr "video_out_syncfb: informazione. (il modulo SyncFB supporta YUY2)\n"
-
-#~ msgid "video_out_syncfb: info. (SyncFB module supports RGB565)\n"
-#~ msgstr ""
-#~ "video_out_syncfb: informazione. (il modulo SyncFB supporta RGB565)\n"
-
-#~ msgid ""
-#~ "video_out_syncfb: aborting. (SyncFB module does not support YV12, YUY2 "
-#~ "nor RGB565)\n"
-#~ msgstr ""
-#~ "video_out_syncfb: annullamento. (il modulo non supporta YV12, YUY2 o "
-#~ "RGB565)\n"
-
-#~ msgid ""
-#~ "video_out_syncfb: info. (brightness/contrast control won't be available "
-#~ "because your SyncFB kernel module seems to be outdated. Please refer to "
-#~ "README.syncfb for informations on how to update it.)\n"
-#~ msgstr ""
-#~ "video_out_syncfb: informazione. (il controllo luminosità/contrasto non "
-#~ "sarà disponibile perché il modulo SyncFB sembra obsoleto. Riferirsi a "
-#~ "README.syncfb per informazioni su come aggiornarlo.)\n"
-
-#~ msgid "default number of frame repetitions"
-#~ msgstr "numero predefinito di ripetizioni dei frame"
-
-#~ msgid ""
-#~ "This specifies how many times a single video frame will be displayed "
-#~ "consecutively."
-#~ msgstr ""
-#~ "Specifica quante volte un singolo frame video sarà visualizzato "
-#~ "consecutivamente."
-
-#~ msgid "SyncFB device name"
-#~ msgstr "nome del dispositivo SyncFB"
-
-#~ msgid ""
-#~ "Specifies the file name for the SyncFB (TeleTux) device to be used.\n"
-#~ "This setting is security critical, because when changed to a different "
-#~ "file, xine can be used to fill this file with arbitrary content. So you "
-#~ "should be careful that the value you enter really is a proper framebuffer "
-#~ "device."
-#~ msgstr ""
-#~ "Specifica il nome del file per il dispositivo SyncFB (TeleTux) da "
-#~ "utilizzare.\n"
-#~ "Questa impostazione è critica perché quando cambiato ad un file diverso "
-#~ "xine può essere utilizzato per riempire questo file con contenuto "
-#~ "arbitrario. Ci si accerti che il valore inserito sia veramente un "
-#~ "dispositivo framebuffer."
-
-#~ msgid ""
-#~ "xine video output plugin using the SyncFB module for Matrox G200/G400 "
-#~ "cards"
-#~ msgstr ""
-#~ "plugin di uscita video per xine utilizzante il modulo SyncFB per schede "
-#~ "Matrox G200/G400"
-
-#, fuzzy
-#~ msgid "%s: this adaptor supports the yuy2 format.\n"
-#~ msgstr "video_out_xv: questo dispositivo supporta il formato yuv2.\n"
-
-#~ msgid "demux_asf: Wrong ASX version: %s\n"
-#~ msgstr "demux_asf: versione ASX errata: %s\n"
-
-#~ msgid "xine audio output plugin using kde artsd"
-#~ msgstr "plugin output audio di xine che usa artsd di KDE"
-
-#~ msgid "dvbsub: cannot create timer thread\n"
-#~ msgstr "dvbsub: impossibile creare thread timer\n"
-
-#~ msgid "deinterlace method (deprecated)"
-#~ msgstr "metodo di deinterlacciamento (deprecato)"
-
-#~ msgid ""
-#~ "This config setting is deprecated. You should use the new deinterlacing "
-#~ "post processing settings instead.\n"
-#~ "\n"
-#~ "From the old days of analog television, where the even and odd numbered "
-#~ "lines of a video frame would be displayed at different times comes the "
-#~ "idea to increase motion smoothness by also recording the lines at "
-#~ "different times. This is called \"interlacing\". But unfortunately, "
-#~ "todays displays show the even and odd numbered lines as one complete "
-#~ "frame all at the same time (called \"progressive display\"), which "
-#~ "results in ugly frame errors known as comb artifacts. Software "
-#~ "deinterlacing is an approach to reduce these artifacts. The individual "
-#~ "values are:\n"
-#~ "\n"
-#~ "none\n"
-#~ "Disables software deinterlacing.\n"
-#~ "\n"
-#~ "bob\n"
-#~ "Interpolates between the lines for moving parts of the image.\n"
-#~ "\n"
-#~ "weave\n"
-#~ "Similar to bob, but with a tendency to preserve the full resolution, "
-#~ "better for high detail in low movement scenes.\n"
-#~ "\n"
-#~ "greedy\n"
-#~ "Very good adaptive deinterlacer, but needs a lot of CPU power.\n"
-#~ "\n"
-#~ "onefield\n"
-#~ "Always interpolates and reduces vertical resolution.\n"
-#~ "\n"
-#~ "onefieldxv\n"
-#~ "Same as onefield, but does the interpolation in hardware.\n"
-#~ "\n"
-#~ "linearblend\n"
-#~ "Applies a slight vertical blur to remove the comb artifacts. Good results "
-#~ "with medium CPU usage."
-#~ msgstr ""
-#~ "Questa impostazione è deprecata, si dovrebbe utilizzare la nuova "
-#~ "impostazione per il deinterlacciamento in post elaborazione invece. \n"
-#~ "\n"
-#~ "Dai vecchi giorni della TV analogica, dove le linee pari e dispari del "
-#~ "frame erano visualizzate in momenti diversi proviene l'idea di migliorare "
-#~ "la scioltezza dei movimenti anche registrando le linee in momenti "
-#~ "diversi, e praticando il cosiddetto \"interlacciamento\". Sfortunatamente "
-#~ "i video moderni visualizzano le linee pari e dispari come un solo frame "
-#~ "(display progrssivo), portando alla visualizzazione di brutti errori "
-#~ "conosciuti come artefatti di comb. Il deinterlacciamento software è un "
-#~ "approccio alla riduzione di tali artefatti. I singoli valori sono:\n"
-#~ "\n"
-#~ "none\n"
-#~ "Disabilita il deinterlacciamento software.\n"
-#~ "\n"
-#~ "bob\n"
-#~ "Interpola le linee tra le parti in movimenti dell'immagine.\n"
-#~ "\n"
-#~ "weave\n"
-#~ "Simile a bob, ma con la tendenza di preservare la risoluzione completa, "
-#~ "migliore per un maggior dettaglio su scene dal movimento lento.\n"
-#~ "\n"
-#~ "greedy\n"
-#~ "Deinterlacciatore adattante molto buono, ma che richiede molta potenza di "
-#~ "CPU.\n"
-#~ "\n"
-#~ "onefield\n"
-#~ "Interopola e riduce sempre la risoluzione verticale.\n"
-#~ "\n"
-#~ "onefieldxv\n"
-#~ "Come onefield, ma effettua l'interpolazione in hardware.\n"
-#~ "\n"
-#~ "linearblend\n"
-#~ "Applica un leggero sfocamento verticale per rimuovere gli artefatti di "
-#~ "comb. Buoni risultati con un uso di CPU medio."
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbshm: %s: allocating image\n"
-#~ "video_out_xcbshm: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xshm: %s: riservando l'immagine\n"
-#~ "video_out_xshm: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbshm: shared memory error (address error) when allocating "
-#~ "image \n"
-#~ "video_out_xcbshm: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xshm: errore nella memoria condivisa (errore d'indirizzo) "
-#~ "riservando l'immagine \n"
-#~ "video_out_xshm: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbshm: x11 error during shared memory XImage creation\n"
-#~ "video_out_xcbshm: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_Out_xshm: errore X11 durante la creazione dell'oggetto XImage "
-#~ "condiviso\n"
-#~ "video_out_xshm: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbshm: MIT shared memory extension not present on display.\n"
-#~ msgstr ""
-#~ "video_out_xshm: l'estensione MIT Shared Meory non è presente sul "
-#~ "display.\n"
-
-#, fuzzy
-#~ msgid "video_out_xcbshm: your video mode was not recognized, sorry :-(\n"
-#~ msgstr "video_out_xshm: modalità video non riconosciuta.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbxv: XvShmCreateImage returned a zero size\n"
-#~ "video_out_xcbxv: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xv: XvShmCreateImage ha restituito una dimensione pari a zero.\n"
-#~ "video_out_xv: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbxv: shared memory error in shmget: %s\n"
-#~ "video_out_xcbxv: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xv: errore nella memoria condivisa in shmget: %s\n"
-#~ "video_out_xv: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbxv: x11 error during shared memory XImage creation\n"
-#~ "video_out_xcbxv: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xv: errore X11 durante la creazione dell'oggetto XImage in "
-#~ "memoria condivisa.\n"
-#~ "video_out_xv: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
-
-#, fuzzy
-#~ msgid "video_out_xcbxv: Xv extension not present.\n"
-#~ msgstr "video_out_xv: estensione Xv non presente.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbxv: Xv extension is present but I couldn't find a usable "
-#~ "yuv12 port.\n"
-#~ "                 Looks like your graphics hardware driver doesn't support "
-#~ "Xv?!\n"
-#~ msgstr ""
-#~ "video_out_xv: estensione XV presente ma non è stato possibile trovare una "
-#~ "porta yuv12 utilizzabile.               sembrerebbe che l'hardware "
-#~ "grafico non supporti Xv.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbxv: using Xv port %d from adaptor %s for hardware colorspace "
-#~ "conversion and scaling.\n"
-#~ msgstr ""
-#~ "video_out_xv: utilizzando la porta Xv %ld dal dispositivo %s per la "
-#~ "conversione di colori e il ridimensionamento hardware.\n"
-
-#, fuzzy
-#~ msgid "video_out_xcbxv: this adaptor supports the yv12 format.\n"
-#~ msgstr "video_out_xv: questo dispositivo supporta il formato yv12\n"
-
-#, fuzzy
-#~ msgid "video_out_xcbxv: this adaptor supports the yuy2 format.\n"
-#~ msgstr "video_out_xv: questo dispositivo supporta il formato yuv2.\n"
-
-#~ msgid ""
-#~ "video_out_xshm: shared memory error when allocating image\n"
-#~ "video_out_xshm: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xshm: errore nella memoria condivisa riservando l'immagine:\n"
-#~ "video_out_xshm: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
-
-#~ msgid ""
-#~ "video_out_xshm: %s: allocating image\n"
-#~ "video_out_xshm: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xshm: %s: riservando l'immagine\n"
-#~ "video_out_xshm: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
-
-#~ msgid ""
-#~ "video_out_xshm: x11 error during shared memory XImage creation\n"
-#~ "video_out_xshm: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_Out_xshm: errore X11 durante la creazione dell'oggetto XImage "
-#~ "condiviso\n"
-#~ "video_out_xshm: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
-
-#~ msgid "video_out_xshm: your video mode was not recognized, sorry :-(\n"
-#~ msgstr "video_out_xshm: modalità video non riconosciuta.\n"
-
-#~ msgid ""
-#~ "video_out_xv: XvShmCreateImage failed\n"
-#~ "video_out_xv: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xv: XvShmCreateImage fallita.\n"
-#~ "video_out_xv: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
-
-#~ msgid ""
-#~ "video_out_xv: XvShmCreateImage returned a zero size\n"
-#~ "video_out_xv: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xv: XvShmCreateImage ha restituito una dimensione pari a zero.\n"
-#~ "video_out_xv: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
-
-#~ msgid ""
-#~ "video_out_xv: shared memory error in shmget: %s\n"
-#~ "video_out_xv: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xv: errore nella memoria condivisa in shmget: %s\n"
-#~ "video_out_xv: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
-
-#~ msgid ""
-#~ "video_out_xv: x11 error during shared memory XImage creation\n"
-#~ "video_out_xv: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xv: errore X11 durante la creazione dell'oggetto XImage in "
-#~ "memoria condivisa.\n"
-#~ "video_out_xv: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
-
-#~ msgid ""
-#~ "video_out_xxmc: XvShmCreateImage failed\n"
-#~ "video_out_xxmc: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xxmc: XvShmCreateImage fallita.\n"
-#~ "video_out_xxmc: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
-
-#~ msgid ""
-#~ "video_out_xxmc: XvShmCreateImage returned a zero size\n"
-#~ "video_out_xxmc: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xxmc: XvShmCreateImage ha restituito una dimensione pari a "
-#~ "zero.\n"
-#~ "video_out_xxmc: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
-
-#~ msgid ""
-#~ "video_out_xxmc: shared memory error in shmget: %s\n"
-#~ "video_out_xxmc: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xxmc: errore nella memoria condivisa in shmget: %s\n"
-#~ "video_out_xxmc: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
-
-#~ msgid ""
-#~ "video_out_xxmc: x11 error during shared memory XImage creation\n"
-#~ "video_out_xxmc: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xxmc: errore X11 durante la creazione dell'oggetto XImage in "
-#~ "memoria condivisa.\n"
-#~ "video_out_xxmc: => l'estensione MIT Shared Memory non sarà utilizzata.\n"
-
-#~ msgid "video_out_xxmc: Xv extension not present.\n"
-#~ msgstr "video_out_xxmc: estensione Xv non presente.\n"
-
-#~ msgid ""
-#~ "video_out_xxmc: Xv extension is present but I couldn't find a usable "
-#~ "yuv12 port.\n"
-#~ "              Looks like your graphics hardware driver doesn't support "
-#~ "Xv?!\n"
-#~ msgstr ""
-#~ "video_out_xmmc: estensione XV presente ma non è stato possibile trovare "
-#~ "una porta yuv12 utilizzabile.               sembrerebbe che l'hardware "
-#~ "grafico non supporti Xv.\n"
-
-#~ msgid ""
-#~ "video_out_xxmc: using Xv port %ld from adaptor %s for hardware colorspace "
-#~ "conversion and scaling.\n"
-#~ msgstr ""
-#~ "video_out_xxmc: utilizzando la porta Xv %ld dal dispositivo %s per la "
-#~ "conversione di colori e il ridimensionamento hardware.\n"
-
-#~ msgid "video_out_xxmc: this adaptor supports the yv12 format.\n"
-#~ msgstr "video_out_xxmc: questo dispositivo supporta il formato yv12\n"
-
-#~ msgid "video_out_xxmc: this adaptor supports the yuy2 format.\n"
-#~ msgstr "video_out_xxmc: questo dispositivo supporta il formato yuv2.\n"
-
-#~ msgid "CDDB cache directory"
-#~ msgstr "directory cache CDDB"
-
-#~ msgid ""
-#~ "The replies from the CDDB server will be cached in this directory.\n"
-#~ "This setting is security critical, because files with uncontrollable "
-#~ "names will be created in this directory. Be sure to use a dedicated "
-#~ "directory not used for anything but CDDB caching."
-#~ msgstr ""
-#~ "Le risposte dal server CDDB saranno salvate in questa directory.\n"
-#~ "Questa impostazione è critica, perché in questa directory saranno creati "
-#~ "file con nomi incontrollati. Assicurative di utilizzare una directory "
-#~ "dedicata non utilizzata per altro oltre al caching CDDB. "
-
-#~ msgid "path to the title key cache"
-#~ msgstr "percorso alla cache delle chiavi dei titoli"
-
-#~ msgid ""
-#~ "Since cracking the copy protection of scrambled DVDs can be quite time "
-#~ "consuming, libdvdcss will cache the cracked keys in this directory.\n"
-#~ "This setting is security critical, because files with uncontrollable "
-#~ "names will be created in this directory. Be sure to use a dedicated "
-#~ "directory not used for anything but DVD key caching."
-#~ msgstr ""
-#~ "Poiché rompere la protezione da copia dei DVD cifrati può richiedere "
-#~ "diverso tempo, libdvdcss memorizzerà le chiavi decifrate in questa "
-#~ "directory.\n"
-#~ "Questa impostazione è critica, poiché file con nomi incontrollabili "
-#~ "saranno creati in questa directory. Assicuratevi di utilizzare una "
-#~ "directory dedicata non utilizzata per altri scopi oltre alla "
-#~ "memorizzazioni delle chiavi DVD."
-
-#~ msgid ""
-#~ "WARNING: video_out_fb: current display depth is %d. For better "
-#~ "performance\n"
-#~ "     a depth of 16 bpp is recommended!\n"
-#~ "\n"
-#~ msgstr ""
-#~ "ATTENZIONE: video_out_fb: la profondità di colore corrente è %d.\n"
-#~ "     per prestazioni migliori è raccomandata una profondità di 16bpp.\n"
-#~ "\n"

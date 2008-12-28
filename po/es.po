@@ -1,18 +1,18 @@
-# translation of xine-lib-1.2.hg.po to Spanish
-# Spanish .po file for xine-lib.
+# translation of xine-lib.hg.po to Spanish
+# Spanish es.po file for xine-lib.
 # Copyright (C) YEAR Copyright (C) 2000-2006 the xine project
 # Copyright (C) 2002, 2006, 2007, 2008 Free Software Foundation, Inc.
 #
 # Juan Manuel García Molina <juanma_gm@wanadoo.es>, 2002.
-# Carlos E. R M. <carloser@users.sourceforge.net>, 2006, 2007, 2008.
+# Carlos E. R. M. <carloser@users.sourceforge.net>, 2006, 2007, 2008.
 # Cer:  <<== marcas de revision.
 msgid ""
 msgstr ""
-"Project-Id-Version: xine-lib-1.2.hg\n"
+"Project-Id-Version: xine-lib.hg\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-12-15 18:51+0100\n"
-"PO-Revision-Date: 2008-04-02 01:24+0200\n"
-"Last-Translator: Carlos E. R M. <carloser@users.sourceforge.net>\n"
+"POT-Creation-Date: 2008-12-28 00:20+0000\n"
+"PO-Revision-Date: 2008-04-02 01:05+0200\n"
+"Last-Translator: Carlos E. R. M. <carloser@users.sourceforge.net>\n"
 "Language-Team: Spanish <none>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1055,8 +1055,8 @@ msgid ""
 "demux_mpeg_pes:Unrecognised private stream 1 0x%02x. Please report this to "
 "xine developers.\n"
 msgstr ""
-"demux_mpeg_pes:flujo de bits privado no reconocido 1 0x%02x. Por favor, "
-"repórtelo a los desarrolladores de xine.\n"
+"demux_mpeg_pes:flujo de bits privado 1 0x%02x. Por favor, repórtelo a los "
+"desarrolladores de xine.\n"
 
 #: src/demuxers/demux_mpeg_pes.c:1757
 msgid "mpeg pes demux plugin"
@@ -5186,6 +5186,17 @@ msgstr ""
 "usando los nombres reportados del adaptador Xv.\n"
 "(Sólo aplica al detectar qué puerto Xv a usar.)"
 
+#: src/video_out/xv_common.h:77
+#, fuzzy
+msgid "bicubic filtering"
+msgstr "filtro de parpadeo"
+
+#: src/video_out/xv_common.h:78
+msgid ""
+"This option controls bicubic filtering of the video image. It may be used "
+"instead of, or as well as, xine's deinterlacers."
+msgstr ""
+
 #: src/xine-engine/alphablend.c:2146
 msgid "disable exact alpha blending of overlays"
 msgstr "desactivar la mezcla alfa exacta de superposiciones"
@@ -6277,15 +6288,3 @@ msgstr ""
 #: src/xine-utils/memcpy.c:506
 msgid "Benchmarking memcpy methods (smaller is better):\n"
 msgstr "Evaluando métodos \"memcpy\" (menor es mejor):\n"
-
-#~ msgid "Unable to create buffer position events."
-#~ msgstr "Incapaz de crear eventos posicionales de búfer."
-
-#~ msgid "Unable to get notification interface"
-#~ msgstr "Incapaz de conseguir interfase de notificación"
-
-#~ msgid "Unable to set notification positions"
-#~ msgstr "Incapaz de poner posiciones de notificación"
-
-#~ msgid ": delayed by %ld msec\n"
-#~ msgstr ": retrasado en %ld msec\n"

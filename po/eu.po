@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib-1\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-12-15 18:51+0100\n"
+"POT-Creation-Date: 2008-12-28 00:20+0000\n"
 "PO-Revision-Date: 2005-02-17 14:29+0100\n"
 "Last-Translator: Piarres Beobide <pi@beobide.net>\n"
 "Language-Team: lubrezale <librezale@librezale.org>\n"
@@ -1549,7 +1549,7 @@ msgid "%s: can't connect to %s:%d\n"
 msgstr "%s: Ezin da %s-ra konektatu: %d\n"
 
 #: src/input/input_cdda.c:1631
-#, fuzzy, c-format
+#, c-format
 msgid "input_cdda: successfully connected to cddb server '%s:%d'.\n"
 msgstr "input_cdda: arrakastatsuki konektaturik cddb zerbitzarira'%s:%d'.\n"
 
@@ -4595,6 +4595,16 @@ msgid ""
 "(Only applies when auto-detecting which Xv port to use.)"
 msgstr ""
 
+#: src/video_out/xv_common.h:77
+msgid "bicubic filtering"
+msgstr ""
+
+#: src/video_out/xv_common.h:78
+msgid ""
+"This option controls bicubic filtering of the video image. It may be used "
+"instead of, or as well as, xine's deinterlacers."
+msgstr ""
+
 #: src/xine-engine/alphablend.c:2146
 msgid "disable exact alpha blending of overlays"
 msgstr ""
@@ -5562,216 +5572,3 @@ msgstr ""
 #: src/xine-utils/memcpy.c:506
 msgid "Benchmarking memcpy methods (smaller is better):\n"
 msgstr "memcpy metodoak frogatzen (txeikiena obea da)\n"
-
-#~ msgid "video_out_syncfb: error. (YUY2 not supported by your graphic card)\n"
-#~ msgstr ""
-#~ "video_out_syncfb: errorea. (txartela grafikoak ez du YUY2 onartzen)\n"
-
-#~ msgid "video_out_syncfb: error. (YV12 not supported by your graphic card)\n"
-#~ msgstr ""
-#~ "video_out_syncfb: errorea. (txartela grafikoak ez du YV12 onartzen)\n"
-
-#~ msgid ""
-#~ "video_out_syncfb: info. (SyncFB module supports YUV 4:2:0 (3 plane))\n"
-#~ msgstr ""
-#~ "video_out_syncfb: info. (SyncFB moduluak YUV 4:2:0 (3 plano) onartzen "
-#~ "du)\n"
-
-#~ msgid ""
-#~ "video_out_syncfb: info. (SyncFB module supports YUV 4:2:0 (2 plane))\n"
-#~ msgstr ""
-#~ "video_out_syncfb: info. (SyncFB moduluak YUV 4:2:0 (2 plano) onartzen "
-#~ "du)\n"
-
-#~ msgid "video_out_syncfb: info. (SyncFB module supports YUV 4:2:2)\n"
-#~ msgstr "video_out_syncfb: info. (SyncFB moduluak YUV 4:2:2 onartzen du)\n"
-
-#~ msgid "video_out_syncfb: info. (SyncFB module supports YUY2)\n"
-#~ msgstr "video_out_syncfb: info. (SyncFB moduluak YUY2 onartzen du)\n"
-
-#~ msgid "video_out_syncfb: info. (SyncFB module supports RGB565)\n"
-#~ msgstr "video_out_syncfb: info. (SyncFB moduluak RGB565 onartzen du)\n"
-
-#~ msgid ""
-#~ "video_out_syncfb: aborting. (SyncFB module does not support YV12, YUY2 "
-#~ "nor RGB565)\n"
-#~ msgstr ""
-#~ "video_out_syncfb: uzten. (SyncFB moduluak ez du YV12, YUY2 edo RGB565 "
-#~ "onartzen)\n"
-
-#~ msgid "default number of frame repetitions"
-#~ msgstr "marko errepikatze lehenetsiriko kopurua"
-
-#~ msgid ""
-#~ "This specifies how many times a single video frame will be displayed "
-#~ "consecutively."
-#~ msgstr ""
-#~ "Bideo marko bat gelditu gabe zenbat aldiz errepikatu behar den ezartzen "
-#~ "du."
-
-#~ msgid "SyncFB device name"
-#~ msgstr "SyncFB gailu izena"
-
-#~ msgid ""
-#~ "Specifies the file name for the SyncFB (TeleTux) device to be used.\n"
-#~ "This setting is security critical, because when changed to a different "
-#~ "file, xine can be used to fill this file with arbitrary content. So you "
-#~ "should be careful that the value you enter really is a proper framebuffer "
-#~ "device."
-#~ msgstr ""
-#~ "Erabiliko den SynFB (TeleTux) gailuarne fitxategi izena ezartzen du,\n"
-#~ "Ezarpen hau seguratsun kritikokoa da, fitxategi ezberdin batetara "
-#~ "aldatzean, xinek fitxategia eduki arbitrario bat erabiliaz bete bait "
-#~ "dezake. Beraz balioaegiazko framebuffer gailu bat dela ziurtatu behar "
-#~ "duzu."
-
-#~ msgid ""
-#~ "xine video output plugin using the SyncFB module for Matrox G200/G400 "
-#~ "cards"
-#~ msgstr ""
-#~ "xine bideo irteera plugina Matrox G200/G400 txartelen SyncFB modulua "
-#~ "erabiliaz"
-
-#, fuzzy
-#~ msgid "%s: this adaptor supports the yuy2 format.\n"
-#~ msgstr "video_out_xv: adaptadoreak yuy2 formatua onartzen du.\n"
-
-#~ msgid "demux_asf: Wrong ASX version: %s\n"
-#~ msgstr "demux_asf: Okerreko ASX bertsioa: %s\n"
-
-#~ msgid "xine audio output plugin using kde artsd"
-#~ msgstr "xine audio irteera plugina kde artsd erabiliaz"
-
-#, fuzzy
-#~ msgid "dvbsub: cannot create timer thread\n"
-#~ msgstr "input_rtp: Ezin da hari berria sortu (%s)\n"
-
-#~ msgid "deinterlace method (deprecated)"
-#~ msgstr "ez-elkarlituriko metodoa (zaharkiturik)"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbshm: MIT shared memory extension not present on display.\n"
-#~ msgstr ""
-#~ "video_out_xshm: MIT partekatutako memoria luzapena ez dago pantailan.\n"
-
-#, fuzzy
-#~ msgid "video_out_xcbshm: your video mode was not recognized, sorry :-(\n"
-#~ msgstr "video_out_xshm: bideo modua ez da ezagutzen, barkatu :-(\n"
-
-#, fuzzy
-#~ msgid "video_out_xcbxv: Xv extension not present.\n"
-#~ msgstr "video_out_xv: Xv luzapena ez dago.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbxv: Xv extension is present but I couldn't find a usable "
-#~ "yuv12 port.\n"
-#~ "                 Looks like your graphics hardware driver doesn't support "
-#~ "Xv?!\n"
-#~ msgstr ""
-#~ "video_out_xv: Xv luzapena dago baina ez da yuv12 ataka "
-#~ "erabilgarririkaurkitu.\n"
-#~ "              Dirudienez zure txartela grafikoak ez du Xv onartzen?!\n"
-
-#, fuzzy
-#~ msgid "video_out_xcbxv: this adaptor supports the yv12 format.\n"
-#~ msgstr "video_out_xv: adaptadoreak yv12 formatua onartzen du.\n"
-
-#, fuzzy
-#~ msgid "video_out_xcbxv: this adaptor supports the yuy2 format.\n"
-#~ msgstr "video_out_xv: adaptadoreak yuy2 formatua onartzen du.\n"
-
-#~ msgid "video_out_xshm: your video mode was not recognized, sorry :-(\n"
-#~ msgstr "video_out_xshm: bideo modua ez da ezagutzen, barkatu :-(\n"
-
-#, fuzzy
-#~ msgid "video_out_xxmc: Xv extension not present.\n"
-#~ msgstr "video_out_xvmc: XvMC luzapena ez dago.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xxmc: Xv extension is present but I couldn't find a usable "
-#~ "yuv12 port.\n"
-#~ "              Looks like your graphics hardware driver doesn't support "
-#~ "Xv?!\n"
-#~ msgstr ""
-#~ "video_out_xv: Xv luzapena dago baina ez da yuv12 ataka "
-#~ "erabilgarririkaurkitu.\n"
-#~ "              Dirudienez zure txartela grafikoak ez du Xv onartzen?!\n"
-
-#, fuzzy
-#~ msgid "video_out_xxmc: this adaptor supports the yv12 format.\n"
-#~ msgstr "video_out_xv: adaptadoreak yv12 formatua onartzen du.\n"
-
-#, fuzzy
-#~ msgid "video_out_xxmc: this adaptor supports the yuy2 format.\n"
-#~ msgstr "video_out_xv: adaptadoreak yuy2 formatua onartzen du.\n"
-
-#~ msgid "CDDB cache directory"
-#~ msgstr "CDDB katxe karpeta"
-
-#~ msgid ""
-#~ "The replies from the CDDB server will be cached in this directory.\n"
-#~ "This setting is security critical, because files with uncontrollable "
-#~ "names will be created in this directory. Be sure to use a dedicated "
-#~ "directory not used for anything but CDDB caching."
-#~ msgstr ""
-#~ "CDDB zarbitzariaren erantzunak karpeta honetan gordeko dira.\n"
-#~ "Ezarpena segurtasun aldetik kritikoa da, kontrolatugabeko fitxategi "
-#~ "izenak sortuko bait dira. Ziurtatu erabiliko den karpeta ez dela honetaz "
-#~ "beste ezertarako erabiliko."
-
-#~ msgid "avcodec_find_decoder (CODEC_ID_MPEG1VIDEO) failed.\n"
-#~ msgstr "avcodec_find_decoder (CODEC_ID_MPEG1VIDEO) hutsa.\n"
-
-#~ msgid "video brightness"
-#~ msgstr "bideo distira"
-
-#~ msgid "The brightness of the video image."
-#~ msgstr "Bideo imagenaren distira."
-
-#~ msgid "The saturation of the video image."
-#~ msgstr "Bideo irudiaren saturazioa"
-
-#~ msgid "brightness correction"
-#~ msgstr "distira zuzentzea"
-
-#~ msgid ""
-#~ "The brightness correction can be used to lighten or darken the image. It "
-#~ "changes the blacklevel without modifying the contrast, but it limits the "
-#~ "tonal range."
-#~ msgstr ""
-#~ "Distira zuzenketa irudia argitu edo iluntzeko erabili daiteke. Berauk "
-#~ "kontrastea aldatu gabe beltz maila aldatzen du, baina tonalitate eremua "
-#~ "murrizten du."
-
-#~ msgid "Do we use read-ahead caching?"
-#~ msgstr "Irakurketa-goiburu katxea erabili nahi al duzu?"
-
-#~ msgid "audio_oss_out: open() %s failed: %s\n"
-#~ msgstr "audio_oss_out: open() %s huts egin du: %s\n"
-
-#~ msgid ""
-#~ "This will display the current channel name in xine's on-screen-display. "
-#~ "Menu button 7 will disable this temporarily."
-#~ msgstr ""
-#~ "Honek erreproduzitzen aru den kanal izen xine leihoan bistaratuko du. "
-#~ "Menuko 7 botoiak hau denbora batez ezgaituko du."
-
-#~ msgid ""
-#~ "A Comma separated list of domain names, where the proxy is to be ignored."
-#~ msgstr ""
-#~ "Domeinu izenen gakoz bereizitako zarrenda, non proxy zerbitzaria ez den "
-#~ "erabiliko."
-
-#~ msgid "selection has no DEFAULT entry"
-#~ msgstr "Aukerak ez du LEHENETSIRIKO sarrerarik"
-
-#~ msgid ""
-#~ "You can disable video scaling globally. The image will then no longer "
-#~ "adapt to the size of the video window, which can dramatically reduce CPU "
-#~ "usage."
-#~ msgstr ""
-#~ "Bideo eskalatzea orokorrean ezgaitu dezakezu. Irudia ez da gehiago bideo "
-#~ "leihoaren tamainaren arabera aldatuko, CPU erabilera asko murriztuz."

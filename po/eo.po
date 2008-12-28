@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eo\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-12-15 18:51+0100\n"
+"POT-Creation-Date: 2008-12-28 00:20+0000\n"
 "PO-Revision-Date: 2007-05-24 17:57+0200\n"
 "Last-Translator: Antonio C. Codazzi <f_sophia@libero.it>\n"
 "Language-Team:  <it@li.org>\n"
@@ -1388,7 +1388,7 @@ msgid "%s: can't connect to %s:%d\n"
 msgstr "%s: estas neeble konektigi %s:%d\n"
 
 #: src/input/input_cdda.c:1631
-#, fuzzy, c-format
+#, c-format
 msgid "input_cdda: successfully connected to cddb server '%s:%d'.\n"
 msgstr "input_cdda: sukcesa konekto kun cddb servilo '%s:%d'.\n"
 
@@ -4389,6 +4389,17 @@ msgid ""
 "(Only applies when auto-detecting which Xv port to use.)"
 msgstr ""
 
+#: src/video_out/xv_common.h:77
+#, fuzzy
+msgid "bicubic filtering"
+msgstr "filtrilo kontraŭ tremo"
+
+#: src/video_out/xv_common.h:78
+msgid ""
+"This option controls bicubic filtering of the video image. It may be used "
+"instead of, or as well as, xine's deinterlacers."
+msgstr ""
+
 #: src/xine-engine/alphablend.c:2146
 msgid "disable exact alpha blending of overlays"
 msgstr "malebligu precizan alfa-miksadon de surmetoj"
@@ -5344,304 +5355,3 @@ msgstr ""
 #: src/xine-utils/memcpy.c:506
 msgid "Benchmarking memcpy methods (smaller is better):\n"
 msgstr "Testo de rapideco por medoto de memorkopio (pli eta estas pli bona):\n"
-
-#~ msgid "xine audio output plugin using kde artsd"
-#~ msgstr "kde-artsd-uzanta kromaĵo de aŭdeligo de xine"
-
-#~ msgid "Unable to create buffer position events."
-#~ msgstr "Mi estas nekapabla krei eventojn de bufrolokado"
-
-#~ msgid "Unable to get notification interface"
-#~ msgstr "Mi estas nekapabla havigi interfacon de komuniko"
-
-#~ msgid "Unable to set notification positions"
-#~ msgstr "Mi estas nekapabla agordi lokojn de komuniko"
-
-#~ msgid ": delayed by %ld msec\n"
-#~ msgstr ": malfruita je %ld msek\n"
-
-#~ msgid "demux_asf: Wrong ASX version: %s\n"
-#~ msgstr "demux_asf: Erara versio de ASX: %s\n"
-
-#~ msgid "CDDB cache directory"
-#~ msgstr "Dosierujo de kaŝmemoro de CDDB"
-
-#~ msgid "path to the title key cache"
-#~ msgstr "raŭto por kaŝmemoro de ŝlosiloj de titoloj"
-
-#~ msgid "dvbsub: cannot create timer thread\n"
-#~ msgstr "dvbsub: estas neeble krei fadenon de komuna aliro\n"
-
-#~ msgid ""
-#~ "WARNING: video_out_fb: current display depth is %d. For better "
-#~ "performance\n"
-#~ "     a depth of 16 bpp is recommended!\n"
-#~ "\n"
-#~ msgstr ""
-#~ "WARNING: video_out_fb: la profundeco de nuna ekranbloko estas je %d. Por "
-#~ "havi\n"
-#~ "     pli bona performanco, oni rekomendas profundecon je 16 bpp!\n"
-#~ "\n"
-
-#~ msgid "video_out_syncfb: error. (YUY2 not supported by your graphic card)\n"
-#~ msgstr ""
-#~ "video_out_syncfb: eraro. (YUY2 ne estas subtenita de via grafika karto)\n"
-
-#~ msgid "video_out_syncfb: error. (YV12 not supported by your graphic card)\n"
-#~ msgstr ""
-#~ "video_out_syncfb: eraro. (YV12 ne estas subtenita de via grafika karto)\n"
-
-#~ msgid ""
-#~ "video_out_syncfb: info. (SyncFB module supports YUV 4:2:0 (3 plane))\n"
-#~ msgstr ""
-#~ "video_out_syncfb: informo. (SyncFB-modjulo subtenas YUV 4:2:0 (3 plano))\n"
-
-#~ msgid ""
-#~ "video_out_syncfb: info. (SyncFB module supports YUV 4:2:0 (2 plane))\n"
-#~ msgstr ""
-#~ "video_out_syncfb: informo. (SyncFB-modjulo subtenas YUV 4:2:0 (2 plano))\n"
-
-#~ msgid "video_out_syncfb: info. (SyncFB module supports YUV 4:2:2)\n"
-#~ msgstr "video_out_syncfb: informo. (SyncFB-modjulo subtenas YUV 4:2:2)\n"
-
-#~ msgid "video_out_syncfb: info. (SyncFB module supports YUY2)\n"
-#~ msgstr "video_out_syncfb: informo. (SyncFB-modjulo subtenas YUY2))\n"
-
-#~ msgid "video_out_syncfb: info. (SyncFB module supports RGB565)\n"
-#~ msgstr "video_out_syncfb: informo. (SyncFB-modjulo subtenas RGB565)\n"
-
-#~ msgid ""
-#~ "video_out_syncfb: aborting. (SyncFB module does not support YV12, YUY2 "
-#~ "nor RGB565)\n"
-#~ msgstr ""
-#~ "video_out_syncfb: ĉesigo. (SyncFB-modjulo ne subtenas YV12, YUY2 aŭ "
-#~ "RGB565)\n"
-
-#~ msgid ""
-#~ "video_out_syncfb: info. (brightness/contrast control won't be available "
-#~ "because your SyncFB kernel module seems to be outdated. Please refer to "
-#~ "README.syncfb for informations on how to update it.)\n"
-#~ msgstr ""
-#~ "video_out_syncfb: informoj. (stirado de heleco/kontrasto ne estas "
-#~ "disponebla ĉar via SyncFB-kernomodjulo ŝajnas kadukiĝinta. Bonvolu legi "
-#~ "README.syncfb por informoj pri ĝisdatigo de ĝi.)\n"
-
-#~ msgid "default number of frame repetitions"
-#~ msgstr "defaŭlta nombro da ripetoj de filmeroj"
-
-#~ msgid ""
-#~ "This specifies how many times a single video frame will be displayed "
-#~ "consecutively."
-#~ msgstr "Tio difinas kiom da fojoj estos unu filmero estos vidigita sekve."
-
-#~ msgid ""
-#~ "xine video output plugin using the SyncFB module for Matrox G200/G400 "
-#~ "cards"
-#~ msgstr ""
-#~ "videoeliga kromaĵo de xine estas uzanta la SyncFB-modjulon por Matrox "
-#~ "G200/G400 kartoj"
-
-#~ msgid "SyncFB device name"
-#~ msgstr "Nomo de SyncFB-aparato"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbshm: %s: allocating image\n"
-#~ "video_out_xcbshm: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xshm: %s: nomumante bildon\n"
-#~ "video_out_xshm: => ne uzante etendilon de MIT Shared Memory.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbshm: shared memory error (address error) when allocating "
-#~ "image \n"
-#~ "video_out_xcbshm: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xshm: eraro de opuza memoro (eraro de adreso) kiam oni nomumas "
-#~ "bildon \n"
-#~ "video_out_xshm: => ne uzante etendilon de MIT Shared Memory.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbshm: x11 error during shared memory XImage creation\n"
-#~ "video_out_xcbshm: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xshm: eraro de x11 dum kreado de XImage en opuza memoro\n"
-#~ "video_out_xshm: => ne uzante etendilon de MIT Shared Memory.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbshm: MIT shared memory extension not present on display.\n"
-#~ msgstr ""
-#~ "video_out_xshm: MIT-etendilo por opuza memoro neĉeestas en ekranbloko.\n"
-
-#, fuzzy
-#~ msgid "video_out_xcbshm: your video mode was not recognized, sorry :-(\n"
-#~ msgstr "video_out_xshm: videomoduso ne estis rekonita, mi bedaŭras :-(\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbxv: XvShmCreateImage returned a zero size\n"
-#~ "video_out_xcbxv: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xv: XvShmCreateImage revenigis nulan grandon\n"
-#~ "video_out_xv: => ne uzante etendilon de MIT Shared Memory.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbxv: shared memory error in shmget: %s\n"
-#~ "video_out_xcbxv: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xv: eraro de opuza memoro en shmget: %s\n"
-#~ "video_out_xv: => ne uzante etendilon de MIT Shared Memory.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbxv: x11 error during shared memory XImage creation\n"
-#~ "video_out_xcbxv: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xv: eraro de x11 dum kreado de XImage en opuza memoro\n"
-#~ "video_out_xv: => ne uzante etendilon de MIT Shared Memory.\n"
-
-#, fuzzy
-#~ msgid "video_out_xcbxv: Xv extension not present.\n"
-#~ msgstr "video_out_xv: Xv-etendilo neĉeestas.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbxv: Xv extension is present but I couldn't find a usable "
-#~ "yuv12 port.\n"
-#~ "                 Looks like your graphics hardware driver doesn't support "
-#~ "Xv?!\n"
-#~ msgstr ""
-#~ "video_out_xxmc: Xv-etendilo ĉeestas sed estas neeble trovi uzeblan yuv12 "
-#~ "pordon.\n"
-#~ "              Ŝajnas ke la zorgilo de la grafika hardvaro ne subtenas "
-#~ "Xv!\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "video_out_xcbxv: using Xv port %d from adaptor %s for hardware colour "
-#~ "space conversion and scaling.\n"
-#~ msgstr ""
-#~ "video_out_xxmc: uzante Xv-pordon %ld el adaptilo %s por konverto de "
-#~ "hardvara kolorspaco kaj skalado.\n"
-
-#, fuzzy
-#~ msgid "video_out_xcbxv: this adaptor supports the yv12 format.\n"
-#~ msgstr "video_out_xv: tiu ĉi adaptilo subtenas formaton yv12.\n"
-
-#, fuzzy
-#~ msgid "video_out_xcbxv: this adaptor supports the yuy2 format.\n"
-#~ msgstr "video_out_xv: tiu ĉi adaptilo subtenas formaton yuy2.\n"
-
-#~ msgid "deinterlace method (deprecated)"
-#~ msgstr "metodo de malplektado (evitinda)"
-
-#~ msgid ""
-#~ "video_out_xshm: shared memory error when allocating image\n"
-#~ "video_out_xshm: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xshm: eraro de opuza memoro kiam oni nomumas bildon\n"
-#~ "video_out_xshm: => ne uzante etendilon de MIT Shared Memory.\n"
-
-#~ msgid ""
-#~ "video_out_xshm: %s: allocating image\n"
-#~ "video_out_xshm: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xshm: %s: nomumante bildon\n"
-#~ "video_out_xshm: => ne uzante etendilon de MIT Shared Memory.\n"
-
-#~ msgid ""
-#~ "video_out_xshm: x11 error during shared memory XImage creation\n"
-#~ "video_out_xshm: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xshm: eraro de x11 dum kreado de XImage en opuza memoro\n"
-#~ "video_out_xshm: => ne uzante etendilon de MIT Shared Memory.\n"
-
-#~ msgid ""
-#~ "video_out_xv: XvShmCreateImage failed\n"
-#~ "video_out_xv: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xv: XvShmCreateImage malsukcesis\n"
-#~ "video_out_xv: => ne uzante etendilon de MIT Shared Memory.\n"
-
-#~ msgid ""
-#~ "video_out_xv: XvShmCreateImage returned a zero size\n"
-#~ "video_out_xv: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xv: XvShmCreateImage revenigis nulan grandon\n"
-#~ "video_out_xv: => ne uzante etendilon de MIT Shared Memory.\n"
-
-#~ msgid ""
-#~ "video_out_xv: shared memory error in shmget: %s\n"
-#~ "video_out_xv: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xv: eraro de opuza memoro en shmget: %s\n"
-#~ "video_out_xv: => ne uzante etendilon de MIT Shared Memory.\n"
-
-#~ msgid ""
-#~ "video_out_xv: x11 error during shared memory XImage creation\n"
-#~ "video_out_xv: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xv: eraro de x11 dum kreado de XImage en opuza memoro\n"
-#~ "video_out_xv: => ne uzante etendilon de MIT Shared Memory.\n"
-
-#~ msgid "video_out_xv: this adaptor supports the yuy2 format.\n"
-#~ msgstr "video_out_xv: tiu ĉi adaptilo subtenas formaton yuy2.\n"
-
-#~ msgid ""
-#~ "video_out_xxmc: XvShmCreateImage failed\n"
-#~ "video_out_xxmc: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xxmc: XvShmCreateImage malsukcesis\n"
-#~ "video_out_xxmc: => ne uzante etendilon de MIT Shared Memory.\n"
-
-#~ msgid ""
-#~ "video_out_xxmc: XvShmCreateImage returned a zero size\n"
-#~ "video_out_xxmc: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xxmc: XvShmCreateImage revenigis nulan grandon\n"
-#~ "video_out_xxmc: => ne uzante etendilon de MIT Shared Memory.\n"
-
-#~ msgid ""
-#~ "video_out_xxmc: shared memory error in shmget: %s\n"
-#~ "video_out_xxmc: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xxmc: eraro de opuza memoro en shmget: %s\n"
-#~ "video_out_xxmc: => ne uzante etendilon de MIT Shared Memory.\n"
-
-#~ msgid ""
-#~ "video_out_xxmc: x11 error during shared memory XImage creation\n"
-#~ "video_out_xxmc: => not using MIT Shared Memory extension.\n"
-#~ msgstr ""
-#~ "video_out_xxmc: eraro de x11dum kreado de opuza memoro por XImage\n"
-#~ "video_out_xxmc: => ne uzante etendilon de MIT Shared Memory.\n"
-
-#~ msgid "video_out_xxmc: Xv extension not present.\n"
-#~ msgstr "video_out_xxmc: etendilo de Xv neĉeestas.\n"
-
-#~ msgid ""
-#~ "video_out_xxmc: Xv extension is present but I couldn't find a usable "
-#~ "yuv12 port.\n"
-#~ "              Looks like your graphics hardware driver doesn't support "
-#~ "Xv?!\n"
-#~ msgstr ""
-#~ "video_out_xxmc: Xv-etendilo ĉeestas sed estas neeble trovi uzeblan yuv12 "
-#~ "pordon.\n"
-#~ "              Ŝajnas ke la zorgilo de la grafika hardvaro ne subtenas "
-#~ "Xv!\n"
-
-#~ msgid ""
-#~ "video_out_xxmc: using Xv port %ld from adaptor %s for hardware colour "
-#~ "space conversion and scaling.\n"
-#~ msgstr ""
-#~ "video_out_xxmc: uzante Xv-pordon %ld el adaptilo %s por konverto de "
-#~ "hardvara kolorspaco kaj skalado.\n"
-
-#~ msgid "video_out_xxmc: this adaptor supports the yv12 format.\n"
-#~ msgstr "video_out_xxmc: tiu ĉi adaptilo subtenas formaton yv12.\n"
-
-#~ msgid "video_out_xxmc: this adaptor supports the yuy2 format.\n"
-#~ msgstr "video_out_xxmc: tiu ĉi adaptilo subtenas formaton yuy2.\n"

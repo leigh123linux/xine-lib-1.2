@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pl_PL\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2008-12-15 18:51+0100\n"
+"POT-Creation-Date: 2008-12-28 00:20+0000\n"
 "PO-Revision-Date: 2003-05-24 12:36+0200\n"
 "Last-Translator: Bartłomiej Muryn <_4ever_@irc.pl>\n"
 "Language-Team: Polish <pl@li.org>\n"
@@ -1434,11 +1434,10 @@ msgstr ""
 msgid "%s: can't connect to %s:%d\n"
 msgstr "http: nie mogę się podłączyć do >%s<\n"
 
-# src/input/input_net.c:138
 #: src/input/input_cdda.c:1631
-#, fuzzy, c-format
+#, c-format
 msgid "input_cdda: successfully connected to cddb server '%s:%d'.\n"
-msgstr "input_net: nie mogę podłączyć się do '%s'.\n"
+msgstr ""
 
 # src/input/input_net.c:138
 #: src/input/input_cdda.c:1636
@@ -4468,6 +4467,16 @@ msgid ""
 "(Only applies when auto-detecting which Xv port to use.)"
 msgstr ""
 
+#: src/video_out/xv_common.h:77
+msgid "bicubic filtering"
+msgstr ""
+
+#: src/video_out/xv_common.h:78
+msgid ""
+"This option controls bicubic filtering of the video image. It may be used "
+"instead of, or as well as, xine's deinterlacers."
+msgstr ""
+
 #: src/xine-engine/alphablend.c:2146
 msgid "disable exact alpha blending of overlays"
 msgstr ""
@@ -5462,315 +5471,3 @@ msgstr ""
 #: src/xine-utils/memcpy.c:506
 msgid "Benchmarking memcpy methods (smaller is better):\n"
 msgstr ""
-
-# src/video_out/video_out_syncfb.c:1170
-#~ msgid ""
-#~ "xine video output plugin using the SyncFB module for Matrox G200/G400 "
-#~ "cards"
-#~ msgstr ""
-#~ "wtyczka wyjścia obrazu xine używająca modułu SyncFB dla kart Matrox G200/"
-#~ "G400"
-
-# src/audio_out/audio_esd_out.c:441
-#~ msgid "xine audio output plugin using kde artsd"
-#~ msgstr "wtyczka wyjścia dźwięku używająca kde artsd"
-
-# src/xine-engine/video_out.c:890
-#, fuzzy
-#~ msgid "dvbsub: cannot create timer thread\n"
-#~ msgstr "video_out: nie mogę utworzyć wątku (%s)\n"
-
-# src/input/input_vcd.c:1184
-#, fuzzy
-#~ msgid "path to the title key cache"
-#~ msgstr "ścieżka dostępu do pliku lokalnego urządzenia vcd"
-
-# src/audio_out/audio_alsa_out.c:211 src/audio_out/audio_alsa_out.c:934
-#, fuzzy
-#~ msgid "device used for 5+ channel output"
-#~ msgstr "urządzenie użyte do wyjścia 5-kanałowego"
-
-# src/audio_out/audio_alsa_out.c:1009 src/audio_out/audio_alsa_out.c:1022
-# src/audio_out/audio_alsa_out.c:1035 src/audio_out/audio_alsa_out.c:1053
-#~ msgid "used to inform xine about what the sound card can do"
-#~ msgstr "używane do informowania xine o możliwościach karty dźwiękowej"
-
-# src/audio_out/audio_oss_out.c:775
-#~ msgid "Adjust a/v sync for OSS softsync"
-#~ msgstr "regulacja synchronizacji a/v dla softsync OSS"
-
-# src/audio_out/audio_oss_out.c:776
-#~ msgid "Use this to manually adjust a/v sync if you're using softsync"
-#~ msgstr "manualna regulacja sychronizacji a/v z wykożystaniem softsync"
-
-# src/audio_out/audio_oss_out.c:802
-#~ msgid "Enable 4.0 channel analog surround output"
-#~ msgstr "włącz 4-kanałowe, analogowe wyjście dźwięku surround"
-
-# src/audio_out/audio_oss_out.c:813
-#~ msgid "Enable 5.0 channel analog surround output"
-#~ msgstr "włącz 5-kanałowe, analogowe wyjście dźwięku surround"
-
-# src/audio_out/audio_oss_out.c:824
-#~ msgid "Enable 5.1 channel analog surround output"
-#~ msgstr "włącz 5.1-kanałowe, analogowe wyjście dźwięku surround"
-
-# src/audio_out/audio_oss_out.c:851
-#, fuzzy
-#~ msgid "OSS mixer device"
-#~ msgstr "urządzenie miksera oss"
-
-# src/audio_out/audio_sun_out.c:664
-#~ msgid "device used for audio output with the 'Sun' audio plugin"
-#~ msgstr "urządzenie używane do wyjścia dźwięku z wtyczką dźwięku 'Sun'"
-
-# src/dxr3/dxr3.h:34
-#~ msgid "The device file of the dxr3 mpeg decoder card control device."
-#~ msgstr "plik urządzenia karty dekodującej dxr3"
-
-# src/dxr3/dxr3_decode_video.c:177
-#~ msgid "This is relevant for progressive video only (most PAL films)."
-#~ msgstr ""
-#~ "to jest związane tylko z progresywnym obrazem (większość filmów PAL)"
-
-# src/dxr3/dxr3_decode_video.c:185
-#~ msgid "Enable this for streams with wrong frame durations."
-#~ msgstr "włącz to dla strumieni z błędnymi długościami ramek"
-
-# src/dxr3/dxr3_mpeg_encoders.c:390
-#~ msgid "The encoding quality of the libfame mpeg encoder library."
-#~ msgstr "jakość kodowania przez bibliotekę kodera libfame"
-
-# src/dxr3/dxr3_scr.c:82
-#~ msgid "Scr priorities greater 5 make the dxr3 xine's master clock."
-#~ msgstr "priorytet SCR większy od 5 robi dxr3 głównym zegarem xine"
-
-# src/dxr3/video_out_dxr3.c:157
-#~ msgid "If disabled, will assume source has 4:3 aspect ratio."
-#~ msgstr "jeśli wyłączone, przyjmie że źródło ma proporcje 4:3"
-
-# src/dxr3/video_out_dxr3.c:222
-#~ msgid ""
-#~ "Content other than mpeg has to pass an additional reencoding stage, "
-#~ "because the dxr3 handles mpeg only."
-#~ msgstr ""
-#~ "zawartość inna niż mpeg musi przejść etap ponownego kodowania, ponieważ "
-#~ "karty dxr3 wspierają tylko format mpeg"
-
-# src/dxr3/video_out_dxr3.c:291
-#~ msgid "A greater value widens the tolerance for the overlay keycolor"
-#~ msgstr "większa wartość zwiększa tolerancję dla koloru kluczowego overlay"
-
-# src/input/input_http.c:107
-#, fuzzy
-#~ msgid "input_cdda: cannot connect to host.\n"
-#~ msgstr "input_http: nie mogę podłączyć się do hosta\n"
-
-# src/input/input_net.c:126
-#, fuzzy
-#~ msgid "input_cdda: unable to resolve '%s'.\n"
-#~ msgstr "input_net: nie mogę znaleźć IP dla '%s'.\n"
-
-# src/input/input_net.c:138
-#, fuzzy
-#~ msgid "input_cdda: unable to connect to '%s'.\n"
-#~ msgstr "input_net: nie mogę podłączyć się do '%s'.\n"
-
-# src/input/input_vcd.c:1184
-#~ msgid "path to your local vcd device file"
-#~ msgstr "ścieżka dostępu do pliku lokalnego urządzenia vcd"
-
-# src/liba52/xine_decoder.c:574
-#~ msgid "a/52 volume control"
-#~ msgstr "kontrola głośności a/52"
-
-# src/libdivx4/xine_decoder.c:569
-#~ msgid "Relative path to libdivxdecore.so to open"
-#~ msgstr "wzgędna ścieżka do otwarcia libdivxdecore.so"
-
-# src/libdivx4/xine_decoder.c:599
-#~ msgid "the postprocessing level, 0 = none and fast, 6 = all and slow"
-#~ msgstr "poziom post-przetwarzania, 0 = brak i szybki, 6 = pełny ale powolny"
-
-# src/libdivx4/xine_decoder.c:607
-#~ msgid "Divx version to check for (set to 0 (default) if unsure)"
-#~ msgstr ""
-#~ "wersja divx której ma szukać xine (ustwić na 0 (domyślnie) jeśli brak "
-#~ "pewności)"
-
-# src/dxr3/dxr3_mpeg_encoders.c:183
-#, fuzzy
-#~ msgid ""
-#~ "The bitrate the libavcodec mpeg encoder should use for dxr3's encoding "
-#~ "mode"
-#~ msgstr ""
-#~ "częstotliwość jaką biblioteka librte powinna użyć dla trybu kodowania dxr3"
-
-# src/libsputext/xine_decoder.c:1084
-#, fuzzy
-#~ msgid "Subtitle size (relative window size)"
-#~ msgstr "rozmiar napisów (względny rozmiar okna)"
-
-# src/libxvid/xine_decoder.c:236
-#~ msgid ""
-#~ "xvid: there is mismatch between API used by currently installed XviD\n"
-#~ "xvid: library (%d.%d) and library used to compile this plugin (%d.%d).\n"
-#~ "xvid: Compiling this plugin against current XviD library should help.\n"
-#~ msgstr ""
-#~ "xvid: wystąpiła niezgodność między obecnie używaną biblioteką XviD\n"
-#~ "xvid:(%d.%d) a biblioteką użytą do kompilacji tej wtyczki (%d.%d).\n"
-#~ "xvid: rekompilacja tej wtyczki z obecną biblioteką XviD powinna pomóc.\n"
-
-# src/video_out/video_out_opengl.c:1106
-#~ msgid "gamma correction for OpenGL driver"
-#~ msgstr "korekta gamma dla sterownika OpenGL"
-
-# src/video_out/video_out_syncfb.c:995
-#~ msgid "syncfb (teletux) device node"
-#~ msgstr "węzeł urządzenia syncfb (teletux)"
-
-# src/video_out/video_out_xshm.c:1426
-#~ msgid "gamma correction for XShm driver"
-#~ msgstr "korekta gamma dla sterownika XShm"
-
-#~ msgid "Colorkey used for Xv video overlay"
-#~ msgstr "Kolor-klucz użyty dla wyjścia obrazu Xv overlay."
-
-# src/video_out/video_out_xv.c:1414
-#~ msgid "double buffer to sync video to the retrace"
-#~ msgstr "podwójny pufor do synchronizacji obrazu do powrotu plamki"
-
-#~ msgid "workaround for some (buggy) XVideo drivers"
-#~ msgstr "obejście problemu niektórych (popsutych) sterowników XVideo"
-
-# src/video_out/video_out_xv.c:1463
-#~ msgid "Software deinterlace method (Key I toggles deinterlacer on/off)"
-#~ msgstr ""
-#~ "metoda korekty przeplotu (klawisz I włącza/wyłacza korekte przeplotu)"
-
-#~ msgid ""
-#~ "'resample' might be better if you use a DXR3/H+ card and (analog) audio "
-#~ "is processed by your sound card"
-#~ msgstr ""
-#~ "'resample' mogło by być lepsze jeśli użyjesz karty DXR3/H+ i "
-#~ "(analogowego) dźwięku przetwarzanego przez Twoją kartę dźwiękową"
-
-# src/xine-engine/audio_out.c:825
-#~ msgid "adjust whether resampling is done or not"
-#~ msgstr "włączeni/wyłączenie ponownego próbkowania"
-
-#~ msgid "adjust if audio is offsync"
-#~ msgstr "Dopasuj jeśli dźwięk nie jest zsynchronizowany"
-
-# src/xine-utils/memcpy.c:439
-#~ msgid "Memcopy method to use in xine for large data chunks."
-#~ msgstr "metoda kopiowania pamięci używana dla dużych porcji danych"
-
-# src/audio_out/audio_oss_out.c:640
-#~ msgid "/dev/dsp# device to use for oss output, -1 => auto_detect"
-#~ msgstr "/dev/dsp# urządzenie używane dla wyjścia oss, - 1 => auto_detect"
-
-# src/demuxers/demux_mpeg_block.c:345
-#~ msgid ""
-#~ "demux_mpeg_block: too many errors, stopping playback. Maybe this stream "
-#~ "is scrambled?\n"
-#~ msgstr ""
-#~ "demux_mpeg_block: zbyt wiele błędów, zatrzymanie odtwarzania Może "
-#~ "strumień jest zaszyfrowany?\n"
-
-#, fuzzy
-#~ msgid "input not seekable, can not handle!\n"
-#~ msgstr "demux_roq.c: wejście nie przeszukiwalne, nie wspierane!\n"
-
-# src/demuxers/demux_pes.c:532 src/demuxers/demux_pes.c:620
-#~ msgid "valid mrls for pes demuxer"
-#~ msgstr "prawidłowe mrls dla demultipleksera pes"
-
-# src/demuxers/demux_pes.c:562 src/demuxers/demux_pes.c:624
-#~ msgid "valid mrls ending for pes demuxer"
-#~ msgstr "prawidłowe rozszerzenia plików dla demultipleksera pes"
-
-#~ msgid "RTP: waiting for preview data\n"
-#~ msgstr "RTP: oczekiwanie na zapowiedź danych\n"
-
-#~ msgid "RTP: waiting for preview data: timeout\n"
-#~ msgstr "RTP: oczekiwanie na zapowiedź danych: timeout\n"
-
-# src/input/input_rtp.c:311
-#~ msgid "Opening >%s<\n"
-#~ msgstr "Otwieram >%s<\n"
-
-# src/libsputext/xine_decoder.c:1084
-#~ msgid "subtitle size (relative window size)"
-#~ msgstr "rozmiar napisów (względny rozmiar okna)"
-
-#~ msgid ""
-#~ "FLI: in chunk FLI_COPY : source data (%d bytes) bigger than image, "
-#~ "skipping chunk\n"
-#~ msgstr ""
-#~ "FLI: in chunk FLI_COPY : źródło danych (%d bajtów) większe niż obraz, "
-#~ "opuszczam fragment\n"
-
-# src/demuxers/demux_film.c:254
-#~ msgid "FLI: Unrecognized chunk type: %d\n"
-#~ msgstr "FLI nie rozpoznany typ fragmentu %d\n"
-
-#~ msgid ""
-#~ "  warning: processed FLI chunk where chunk size = %d\n"
-#~ "  and final chunk ptr = %d\n"
-#~ msgstr ""
-#~ "  uwaga: obrobiony fragment FLI gdzie rozmiar fragmentu = %d\n"
-#~ "  a końcowy fragment ptr = %d\n"
-
-#~ msgid "MS RLE: stream ptr just went out of bounds (1)\n"
-#~ msgstr "MS RLE: strumień ptr właśnie wyszedł poza granice (1)\n"
-
-#~ msgid "MS RLE: frame ptr just went out of bounds (1)\n"
-#~ msgstr "MS RLE: ramka ptr właśnie wykroczyła poza granice (1)\n"
-
-#~ msgid "MS RLE: stream ptr just went out of bounds (2)\n"
-#~ msgstr "MS RLE: ramka ptr właśnie wykroczyła poza granice (2)\n"
-
-#~ msgid "MS RLE: frame ptr just went out of bounds (2)\n"
-#~ msgstr "MS RLE: ramka ptr właśnie wykroczyła poza granice (2)\n"
-
-#~ msgid "MS RLE: ended frame decode with bytes left over (%d < %d)\n"
-#~ msgstr ""
-#~ "MS RLE: zakończono dekodowanie ramki z pozostałymi bajtami (%d < %d)\n"
-
-# src/audio_out/audio_oss_out.c:835
-#~ msgid "Enable A52 / AC5 digital audio output via spdif"
-#~ msgstr "włącz cyfrowe wyjście dźwięku a52/ac5 przez spdif"
-
-#~ msgid "demux_fli.c: input not seekable, can not handle!\n"
-#~ msgstr "demux_fli.c: wejście nie przeszukiwalne, nie wspierane!\n"
-
-#~ msgid "demux_smjpeg.c: input not seekable, can not handle!\n"
-#~ msgstr "demux_smjpeg.c: wejście nie przeszukiwalne, nie wspierane!\n"
-
-# src/demuxers/demux_film.c:606
-#~ msgid "demux_wc3movie: encountered unknown chunk: %c%c%c%c\n"
-#~ msgstr "demux_wc3movie: napotkano nieznany fragment %c%c%c%c\n"
-
-# src/input/input_http.c:122
-#~ msgid "input_http: unable to resolve >%s<\n"
-#~ msgstr "input_http: nie mogę rozwiązać adresu >%s<\n"
-
-# src/input/input_http.c:416 src/input/input_http.c:537
-#~ msgid "input_http: timeout\n"
-#~ msgstr "input_http: timeout\n"
-
-# src/input/input_http.c:334
-#~ msgid "input_http: opening >/%s< on host >%s<"
-#~ msgstr "input_http: otwieram >/%s< na hoście >%s<"
-
-# src/input/input_http.c:337
-#~ msgid "%s via proxy >%s<"
-#~ msgstr "%s via proxy >%s<"
-
-# src/input/input_http.c:413 src/input/input_http.c:534
-#~ msgid "input_http: EAGAIN\n"
-#~ msgstr "input_http: EAGAIN\n"
-
-#~ msgid "NVidia TV-Out support."
-#~ msgstr "Wsparcie dla wyjścia TV kart NVidia."
