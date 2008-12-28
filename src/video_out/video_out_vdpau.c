@@ -284,7 +284,7 @@ static int vdpau_process_argb_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overl
   if(overlay->argb_buffer == NULL)
     return 0;
 
-  if ( (this->argb_overlay_width != overlay->width ) || (this->argb_overlay_height != overlay->height) || (this->argb_overlay == VDP_INVALID_HANDLE) ) {
+  if ( (this->argb_overlay_width < overlay->width ) || (this->argb_overlay_height < overlay->height) || (this->argb_overlay == VDP_INVALID_HANDLE) ) {
     if (this->argb_overlay != VDP_INVALID_HANDLE) {
       vdp_output_surface_destroy( this->argb_overlay );
     }
@@ -297,8 +297,11 @@ static int vdpau_process_argb_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overl
   }
 
   uint32_t pitch = this->argb_overlay_width*4;
-  VdpRect dest = { 0, 0, this->argb_overlay_width, this->argb_overlay_height };
-  VdpStatus st = vdp_output_surface_put_bits( this->argb_overlay, (void*)&(overlay->argb_buffer), &pitch, &dest );
+  VdpRect dest = { 0, overlay->y, this->argb_overlay_width, overlay->y + overlay->height };
+  printf("Update ARGB: %d, %d - %dx%d\n", dest.x0, dest.y0, dest.x1, dest.y1);
+  printf("buf offset: %d\n", overlay->y*this->argb_overlay_width);
+  uint32_t *buffer_start = overlay->argb_buffer + overlay->y*this->argb_overlay_width;
+  VdpStatus st = vdp_output_surface_put_bits( this->argb_overlay, (void*)&(buffer_start), &pitch, &dest );
   if ( st != VDP_STATUS_OK ) {
     printf( "vdpau_process_argb_ovl: vdp_output_surface_put_bits_native failed : %s\n", vdp_get_error_string(st) );
   } else
@@ -393,6 +396,7 @@ static void vdpau_overlay_begin (vo_driver_t *this_gen, vo_frame_t *frame_gen, i
   if ( !changed )
     return;
 
+  this->has_argb_overlay = 0;
   ++this->ovl_changed;
 }
 
