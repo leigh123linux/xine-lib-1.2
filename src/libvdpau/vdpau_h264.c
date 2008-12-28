@@ -76,8 +76,7 @@ typedef struct vdpau_h264_decoder_s {
 
   xine_t            *xine;
 
-  int64_t           last_pts;
-  int64_t           tmp_pts;
+  int64_t           curr_pts;
   int64_t           next_pts;
 
   vo_frame_t        *last_img;
@@ -198,7 +197,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
     int len = 0;
     uint32_t slice_count;
 
-    if(this->next_pts == 0)
+    if(buf->pts != 0)
       this->next_pts = buf->pts;
 
     while(len < buf->size) {
@@ -210,6 +209,9 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           this->nal_parser->current_nal->sps != NULL &&
           this->nal_parser->current_nal->sps->pic_width > 0 &&
           this->nal_parser->current_nal->sps->pic_height > 0) {
+
+        this->curr_pts = this->next_pts;
+        this->next_pts = 0;
 
         if(this->width == 0) {
           this->width = this->nal_parser->current_nal->sps->pic_width;
@@ -343,10 +345,6 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             this->nal_parser->current_nal->sps != NULL &&
             this->nal_parser->current_nal->pps != NULL) {
 
-          if(this->last_pts == 0 || this->tmp_pts == 0) {
-            this->tmp_pts = this->last_pts = buf->pts;
-          }
-
           struct pic_parameter_set_rbsp *pps = this->nal_parser->current_nal->pps;
           struct seq_parameter_set_rbsp *sps = this->nal_parser->current_nal->sps;
           struct slice_header *slc = this->nal_parser->current_nal->slc;
@@ -430,11 +428,14 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                                                         this->ratio,
                                                         XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS);
               this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
+
+              img->duration  = this->video_step;
+              img->pts       = this->curr_pts;
             }
 
             VdpVideoSurface surface = this->vdpau_accel->surface;
 
-            //printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer.bitstream_bytes, buf->pts);
+            //printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer.bitstream_bytes, this->curr_pts);
             VdpStatus status = this->vdpau_accel->vdp_decoder_render(this->decoder,
                 surface, (VdpPictureInfo*)&pic, 1, &vdp_buffer);
 
@@ -443,23 +444,19 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
               free((uint8_t*)vdp_buffer.bitstream);
             }
 
+            this->curr_pts = this->next_pts;
+            this->next_pts = 0;
+
             if(status != VDP_STATUS_OK)
             {
               xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %s\n",  this->vdpau_accel->vdp_get_error_string(status));
               img->bad_frame = 1;
+              if (img->pts)
+                fprintf(stderr, "===== img->pts: %lld\n", img->pts);
               img->draw(img, this->stream);
-              this->last_img = 0;
+              this->last_img = NULL;
             }
             else {
-
-              img->duration  = this->video_step;
-              if(this->nal_parser->current_nal->nal_unit_type == NAL_SLICE_IDR)
-                img->pts = buf->pts;
-              else
-                img->pts       = 0;
-              //img->pts = this->next_pts;
-              this->next_pts = buf->pts;
-
               img->bad_frame = 0;
 
               if(!pic.field_pic_flag && !pic.mb_adaptive_frame_field_flag)
@@ -503,14 +500,6 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 /* now retrieve the next output frame */
                 decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb));
                 if(decoded_pic) {
-                  if(//decoded_pic->nal->nal_unit_type == NAL_SLICE_IDR &&
-                      decoded_pic->img->pts != 0) {
-                    this->last_pts = this->tmp_pts = decoded_pic->img->pts;
-                  }
-
-                  decoded_pic->img->pts = this->last_pts;
-                  this->last_pts += this->video_step;
-                  //printf("poc: %d, %d, pts: %lld\n", decoded_pic->nal->top_field_order_cnt, decoded_pic->nal->bottom_field_order_cnt, decoded_pic->img->pts);
                   decoded_pic->img->draw(decoded_pic->img, this->stream);
                   dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
                 }
@@ -558,8 +547,13 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
   this->buf           = NULL;
   this->wait_for_bottom_field = 0;
   this->video_step = 0;
-  this->last_pts = 0;
-  this->tmp_pts = 0;
+  this->curr_pts = 0;
+  this->next_pts = 0;
+
+  if (this->last_img) {
+    this->last_img->free(this->last_img);
+    this->last_img = NULL;
+  }
 }
 
 /*
@@ -568,8 +562,8 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
 static void vdpau_h264_discontinuity (video_decoder_t *this_gen) {
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *) this_gen;
 
-  this->last_pts = 0;
-  this->tmp_pts = 0;
+  this->curr_pts = 0;
+  this->next_pts = 0;
 
 }
 
@@ -579,6 +573,11 @@ static void vdpau_h264_discontinuity (video_decoder_t *this_gen) {
 static void vdpau_h264_dispose (video_decoder_t *this_gen) {
 
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *) this_gen;
+
+  if (this->last_img) {
+    this->last_img->free(this->last_img);
+    this->last_img = NULL;
+  }
 
   if (this->buf) {
     free (this->buf);
@@ -629,8 +628,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->buf           = NULL;
   this->wait_for_bottom_field = 0;
   this->video_step = 0;
-  this->last_pts = 0;
-  this->tmp_pts = 0;
+  this->curr_pts = 0;
   this->next_pts = 0;
 
   this->last_img = NULL;
