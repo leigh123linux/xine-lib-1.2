@@ -79,6 +79,9 @@ xine-lib (1.1.16) 2008-??-??
   * Correct AAC channel ordering for multi-channel audio, at least for FLAC
     when using ALSA or PulseAudio. (Needs a proper fix.)
   * Add position-based seeking independent from seekpoints.
+  * Fix some XCB Xv attribute configuration breakage.
+  * Add a configuration option for Xv bicubic filtering, implemented in
+    xf86-video-ati 6.9.1.
 
 xine-lib (1.1.15) 2008-08-14
   * Security fixes:

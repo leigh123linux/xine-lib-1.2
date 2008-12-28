@@ -296,7 +296,7 @@ typedef struct {
 
   xine_t           *xine;
 
-  const char       *mrls[5];
+  const char       *mrls[6];
 
   int 		    numchannels;
 

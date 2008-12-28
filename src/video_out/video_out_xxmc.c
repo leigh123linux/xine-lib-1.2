@@ -46,6 +46,7 @@ static void dispose_ximage (xxmc_driver_t *this, XShmSegmentInfo *shminfo,
 			    XvImage *myimage);
 
 static const char *const prefer_types[] = VIDEO_DEVICE_XV_PREFER_TYPES;
+static const char *const bicubic_types[] = VIDEO_DEVICE_XV_BICUBIC_TYPES;
 
 /*
  * Acceleration level priority. Static for now. It may well turn out that IDCT
@@ -2169,36 +2170,32 @@ static void xxmc_check_capability (xxmc_driver_t *this,
     this->props[property].value  = int_default;
 }
 
-static void xxmc_update_XV_FILTER(void *this_gen, xine_cfg_entry_t *entry) {
+static void xxmc_update_attr (void *this_gen, xine_cfg_entry_t *entry,
+			    const char *atomstr, const char *debugstr)
+{
   xxmc_driver_t *this = (xxmc_driver_t *) this_gen;
   Atom atom;
-  int xv_filter;
-
-  xv_filter = entry->num_value;
 
   XLockDisplay(this->display);
-  atom = XInternAtom (this->display, "XV_FILTER", False);
-  XvSetPortAttribute (this->display, this->xv_port, atom, xv_filter);
+  atom = XInternAtom (this->display, atomstr, False);
+  XvSetPortAttribute (this->display, this->xv_port, atom, entry->num_value);
   XUnlockDisplay(this->display);
 
   xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-	  LOG_MODULE ": bilinear scaling mode (XV_FILTER) = %d\n",xv_filter);
+	  LOG_MODULE ": %s = %d\n", debugstr, entry->num_value);
+}
+
+static void xxmc_update_XV_FILTER(void *this_gen, xine_cfg_entry_t *entry) {
+  xxmc_update_attr (this_gen, entry, "XV_FILTER", "bilinear scaling mode");
 }
 
 static void xxmc_update_XV_DOUBLE_BUFFER(void *this_gen, xine_cfg_entry_t *entry) {
-  xxmc_driver_t *this = (xxmc_driver_t *) this_gen;
-  Atom         atom;
-  int          xv_double_buffer;
+  xxmc_update_attr (this_gen, entry, "XV_DOUBLE_BUFFER", "double buffering mode");
+}
 
-  xv_double_buffer = entry->num_value;
-
-  XLockDisplay(this->display);
-  atom = XInternAtom (this->display, "XV_DOUBLE_BUFFER", False);
-  XvSetPortAttribute (this->display, this->xv_port, atom, xv_double_buffer);
-  XUnlockDisplay(this->display);
-
-  xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-	  LOG_MODULE ": double buffering mode = %d\n", xv_double_buffer);
+static void xxmc_update_XV_BICUBIC(void *this_gen, xine_cfg_entry_t *entry)
+{
+  xxmc_update_attr (this_gen, entry, "XV_BICUBIC", "bicubic filtering mode");
 }
 
 static void xxmc_update_xv_pitch_alignment(void *this_gen, xine_cfg_entry_t *entry) {
@@ -2642,6 +2639,12 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 				   VIDEO_DEVICE_XV_DOUBLE_BUFFER_HELP,
 				   20, xxmc_update_XV_DOUBLE_BUFFER, this);
 	  config->update_num(config,"video.device.xv_double_buffer",xv_double_buffer);
+	} else if(!strcmp(name, "XV_BICUBIC")) {
+	  int xv_bicubic =
+	    config->register_enum (config, "video.device.xv_bicubic", 2,
+				   bicubic_types, VIDEO_DEVICE_XV_BICUBIC_HELP,
+				   20, xxmc_update_XV_BICUBIC, this);
+	  config->update_num(config,"video.device.xv_bicubic",xv_bicubic);
 	}
       }
     }

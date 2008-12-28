@@ -1137,7 +1137,7 @@ dnl enough.
 CC_CHECK_CFLAGS_APPEND([-Wall -Wchar-subscripts dnl
 			-Wnested-externs -Wcast-align dnl
 			-Wmissing-declarations -Wmissing-prototypes dnl
-			-Wmissing-format-attribute])
+			-Wmissing-format-attribute -Wno-pointer-sign])
 
 CC_CHECK_CFLAGS_APPEND([-Wformat=2 -Wformat],
   [CC_CHECK_CFLAGS_APPEND([-Wno-format-zero-length])
