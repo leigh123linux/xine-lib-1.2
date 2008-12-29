@@ -804,7 +804,7 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
     const uint8_t data_identifier = this->dvbsub->buf[this->dvbsub->i];
     const uint8_t subtitle_stream_id = this->dvbsub->buf[this->dvbsub->i+1];
   */
-  this->dvbsub += 2;
+  this->dvbsub->i += 2;
 
   while (this->dvbsub->i <= (PES_packet_length)) {
     /* SUBTITLING SEGMENT */
