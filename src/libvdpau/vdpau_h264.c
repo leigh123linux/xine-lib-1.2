@@ -80,6 +80,7 @@ typedef struct vdpau_h264_decoder_s {
   int64_t           next_pts;
 
   vo_frame_t        *last_img;
+  vo_frame_t        *dangling_img;
 
 } vdpau_h264_decoder_t;
 
@@ -446,6 +447,8 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
               img->duration  = this->video_step;
               img->pts       = this->curr_pts;
+
+              this->dangling_img = img;
             }
 
             VdpVideoSurface surface = this->vdpau_accel->surface;
@@ -468,6 +471,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
               img->bad_frame = 1;
               img->draw(img, this->stream);
               this->last_img = NULL;
+              this->dangling_img = NULL;
             }
             else {
               img->bad_frame = 0;
@@ -484,6 +488,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                   this->last_ref_pic = decoded_pic;
                   decoded_pic->used_for_reference = 1;
                   dpb_add_picture(&(this->nal_parser->dpb), decoded_pic, sps->num_ref_frames);
+                  this->dangling_img = NULL;
                 } else if(slc->field_pic_flag && this->wait_for_bottom_field) {
                   if(this->last_ref_pic) {
                     decoded_pic = this->last_ref_pic;
@@ -500,6 +505,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                   decoded_pic = init_decoded_picture(this->nal_parser->current_nal, surface, img);
                   decoded_pic->delayed_output = 1;
                   dpb_add_picture(&(this->nal_parser->dpb), decoded_pic, sps->num_ref_frames);
+                  this->dangling_img = NULL;
                   if(decoded_pic->nal->slc->bottom_field_flag)
                     decoded_pic->nal->top_field_order_cnt = this->last_top_field_order_cnt;
                 } else
@@ -564,9 +570,9 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
   this->curr_pts = 0;
   this->next_pts = 0;
 
-  if (this->last_img) {
-    this->last_img->free(this->last_img);
-    this->last_img = NULL;
+  if (this->dangling_img) {
+    this->dangling_img->free(this->dangling_img);
+    this->dangling_img = NULL;
   }
 }
 
@@ -588,9 +594,9 @@ static void vdpau_h264_dispose (video_decoder_t *this_gen) {
 
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *) this_gen;
 
-  if (this->last_img) {
-    this->last_img->free(this->last_img);
-    this->last_img = NULL;
+  if (this->dangling_img) {
+    this->dangling_img->free(this->dangling_img);
+    this->dangling_img = NULL;
   }
 
   if (this->buf) {
@@ -646,6 +652,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->next_pts = 0;
 
   this->last_img = NULL;
+  this->dangling_img = NULL;
   this->width = this->height = 0;
 
   (this->stream->video_out->open) (this->stream->video_out, this->stream);
