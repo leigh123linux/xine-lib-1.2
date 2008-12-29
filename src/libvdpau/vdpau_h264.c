@@ -451,8 +451,6 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             {
               xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %s\n",  this->vdpau_accel->vdp_get_error_string(status));
               img->bad_frame = 1;
-              if (img->pts)
-                fprintf(stderr, "===== img->pts: %lld\n", img->pts);
               img->draw(img, this->stream);
               this->last_img = NULL;
             }
@@ -500,6 +498,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 /* now retrieve the next output frame */
                 decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb));
                 if(decoded_pic) {
+                  decoded_pic->img->top_field_first = (decoded_pic->nal->top_field_order_cnt <= decoded_pic->nal->bottom_field_order_cnt);
                   decoded_pic->img->draw(decoded_pic->img, this->stream);
                   dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
                 }
