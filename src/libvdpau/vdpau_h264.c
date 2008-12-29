@@ -312,6 +312,21 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             break;
         }
 
+        // Level 4.1 limits:
+        int ref_frames = 0;
+        if(this->nal_parser->current_nal->sps->num_ref_frames) {
+          ref_frames = this->nal_parser->current_nal->sps->num_ref_frames;
+        } else {
+          uint32_t round_width = (this->width + 15) & ~15;
+          uint32_t round_height = (this->height + 15) & ~15;
+          uint32_t surf_size = (round_width * round_height * 3) / 2;
+          ref_frames = (12 * 1024 * 1024) / surf_size;
+        }
+
+        if (ref_frames > 16) {
+            ref_frames = 16;
+        }
+
         /* get the vdpau context from vo */
         //(this->stream->video_out->open) (this->stream->video_out, this->stream);
         img = this->stream->video_out->get_frame (this->stream->video_out,
