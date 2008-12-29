@@ -931,7 +931,7 @@ static vo_frame_t *get_next_frame (vos_t *this, int64_t cur_vpts,
         /* extra info of the backup is thrown away, because it is not up to date */
         _x_extra_info_reset(img->extra_info);
       }
-        
+      img->future_frame = NULL;
       return img;
 
     } else {
@@ -989,6 +989,11 @@ static vo_frame_t *get_next_frame (vos_t *this, int64_t cur_vpts,
     /*
      * remove frame from display queue and show it
      */
+
+    if ( img->next )
+      img->future_frame = img->next;
+    else
+      img->future_frame = NULL;
     
     img = vo_remove_from_img_buf_queue_int (this->display_img_buf_queue, 1, 0, 0, 0, 0, 0);
     pthread_mutex_unlock(&this->display_img_buf_queue->mutex);

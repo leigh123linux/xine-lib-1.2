@@ -149,6 +149,9 @@ struct vo_frame_s {
   
   /* displacement for overlays */
   int                       overlay_offset_x, overlay_offset_y;
+
+  /* pointer to the next frame in display order, used by some vo deint */
+  struct vo_frame_s         *future_frame;
   
   /* 
    * that part is used only by video_out.c for frame management

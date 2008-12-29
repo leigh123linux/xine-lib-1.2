@@ -49,7 +49,7 @@
 #include <vdpau/vdpau_x11.h>
 #include "accel_vdpau.h"
 
-#define NUM_FRAMES_BACK 1
+#define NUM_FRAMES_BACK 2
 
 
 VdpOutputSurfaceRenderBlendState blend = { VDP_OUTPUT_SURFACE_RENDER_BLEND_STATE_VERSION,
@@ -712,6 +712,7 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
   //printf("vo_vdpau: allocated_surfaces=%d\n", this->allocated_surfaces );
 
   frame->ratio = ratio;
+  frame->vo_frame.future_frame = NULL;
 }
 
 
@@ -740,6 +741,22 @@ static void vdpau_release_back_frames( vo_driver_t *this_gen )
       this->back_frame[ i ]->vo_frame.free( &this->back_frame[ i ]->vo_frame );
     this->back_frame[ i ] = NULL;
   }
+}
+
+
+
+static void vdpau_backup_frame( vo_driver_t *this_gen, vo_frame_t *frame_gen )
+{
+  vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
+  vdpau_frame_t   *frame = (vdpau_frame_t *) frame_gen;
+
+  int i;
+  if ( this->back_frame[NUM_FRAMES_BACK-1]) {
+    this->back_frame[NUM_FRAMES_BACK-1]->vo_frame.free (&this->back_frame[NUM_FRAMES_BACK-1]->vo_frame);
+  }
+  for ( i=NUM_FRAMES_BACK-1; i>0; i-- )
+    this->back_frame[i] = this->back_frame[i-1];
+  this->back_frame[0] = frame;
 }
 
 
@@ -896,6 +913,8 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
                                2, past, surface, 1, future, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
     if ( st != VDP_STATUS_OK )
       printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
+    else
+      printf( "vo_vdpau: vdp_video_mixer_render: top_field, past1=%d, past0=%d, current=%d, future=%d\n", past[1], past[0], surface, future[0] );
 
     vdp_queue_get_time( vdp_queue, &current_time );
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, current_time );
@@ -918,11 +937,17 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     }
 
     past[0] = surface;
-    future[0] = VDP_INVALID_HANDLE;
+    if ( frame->vo_frame.future_frame!=NULL )
+      future[0] = ((vdpau_frame_t*)(frame->vo_frame.future_frame))->vdpau_accel_data.surface;
+    else
+      future[0] = VDP_INVALID_HANDLE;
+
     st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, frame->vo_frame.progressive_frame || frame->vo_frame.top_field_first ? VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD : VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD,
                                2, past, surface, 1, future, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
     if ( st != VDP_STATUS_OK )
       printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
+    else
+      printf( "vo_vdpau: vdp_video_mixer_render: bottom_field, past1=%d, past0=%d, current=%d, future=%d\n", past[1], past[0], surface, future[0] );
 
     /* calculate delay for second field: there should be no delay for still images otherwise, take replay speed into account */
     if (stream_speed > 0)
@@ -947,13 +972,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
   XUnlockDisplay( this->display );
 
-  int i;
-  if ( this->back_frame[NUM_FRAMES_BACK-1]) {
-    this->back_frame[NUM_FRAMES_BACK-1]->vo_frame.free (&this->back_frame[NUM_FRAMES_BACK-1]->vo_frame);
-  }
-  for ( i=NUM_FRAMES_BACK-1; i>0; i-- )
-    this->back_frame[i] = this->back_frame[i-1];
-  this->back_frame[0] = frame;
+  vdpau_backup_frame( this_gen, frame_gen );
 }
 
 

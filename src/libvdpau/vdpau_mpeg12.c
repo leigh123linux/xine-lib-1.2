@@ -127,8 +127,7 @@ typedef struct {
 typedef struct {
   uint32_t    coded_width;
   uint32_t    coded_height;
-  uint32_t    display_width;
-  uint32_t    display_height;
+
   uint64_t    video_step; /* frame duration in pts units */
   double      ratio;
   VdpDecoderProfile profile;
