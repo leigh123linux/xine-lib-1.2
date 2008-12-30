@@ -328,6 +328,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             ref_frames = 16;
         }
 
+        printf("Allocate %d reference frames\n", ref_frames);
         /* get the vdpau context from vo */
         //(this->stream->video_out->open) (this->stream->video_out, this->stream);
         img = this->stream->video_out->get_frame (this->stream->video_out,
@@ -468,10 +469,8 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             if(status != VDP_STATUS_OK)
             {
               xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %s\n",  this->vdpau_accel->vdp_get_error_string(status));
-              img->bad_frame = 1;
-              img->draw(img, this->stream);
-              this->last_img = NULL;
-              this->dangling_img = NULL;
+              img->free(img);
+              img = this->last_img = this->dangling_img = NULL;
             }
             else {
               img->bad_frame = 0;
@@ -517,8 +516,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
                 this->last_img = img = NULL;
 
                 /* now retrieve the next output frame */
-                decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb));
-                if(decoded_pic) {
+                if ((decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb))) != NULL) {
                   decoded_pic->img->top_field_first = (decoded_pic->nal->top_field_order_cnt <= decoded_pic->nal->bottom_field_order_cnt);
                   decoded_pic->img->draw(decoded_pic->img, this->stream);
                   dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
@@ -560,6 +558,8 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
 
   if (this->decoder_initialized)
     this->vdpau_accel->vdp_decoder_destroy( this->decoder );
+
+  free_parser(this->nal_parser);
 
   this->decoder_started    = 0;
   this->decoder_initialized = 0;
@@ -613,7 +613,7 @@ static void vdpau_h264_dispose (video_decoder_t *this_gen) {
 
   this->stream->video_out->close( this->stream->video_out, this->stream );
 
-  free (this->nal_parser);
+  free_parser (this->nal_parser);
   free (this_gen);
 }
 
@@ -636,24 +636,12 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->video_decoder.reset               = vdpau_h264_reset;
   this->video_decoder.discontinuity       = vdpau_h264_discontinuity;
   this->video_decoder.dispose             = vdpau_h264_dispose;
-  this->size                              = 0;
 
   this->stream                            = stream;
   this->xine                              = stream->xine;
   this->class                             = (vdpau_h264_class_t *) class_gen;
 
-  this->decoder_started    = 0;
-  this->decoder_initialized = 0;
   this->nal_parser = init_parser();
-  this->buf           = NULL;
-  this->wait_for_bottom_field = 0;
-  this->video_step = 0;
-  this->curr_pts = 0;
-  this->next_pts = 0;
-
-  this->last_img = NULL;
-  this->dangling_img = NULL;
-  this->width = this->height = 0;
 
   (this->stream->video_out->open) (this->stream->video_out, this->stream);
 

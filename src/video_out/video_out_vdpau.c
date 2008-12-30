@@ -1178,6 +1178,7 @@ static void vdpau_dispose (vo_driver_t *this_gen)
   vdpau_driver_t *this = (vdpau_driver_t *) this_gen;
   int i;
 
+  this->ovl_yuv2rgb->dispose(this->ovl_yuv2rgb);
   this->yuv2rgb_factory->dispose (this->yuv2rgb_factory);
 
   for ( i=0; i<XINE_VORAW_MAX_OVL; ++i ) {
@@ -1185,6 +1186,8 @@ static void vdpau_dispose (vo_driver_t *this_gen)
       vdp_bitmap_destroy( this->overlays[i].ovl_bitmap );
   }
 
+  if ( this->video_mixer!=VDP_INVALID_HANDLE )
+    vdp_video_mixer_destroy( this->video_mixer );
   if ( this->overlay_unscaled!=VDP_INVALID_HANDLE )
     vdp_output_surface_destroy( this->overlay_unscaled );
   if ( this->overlay_output!=VDP_INVALID_HANDLE )

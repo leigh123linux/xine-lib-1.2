@@ -31,18 +31,15 @@
 struct decoded_picture* init_decoded_picture(struct nal_unit *src_nal,
     VdpVideoSurface surface, vo_frame_t *img)
 {
-  struct decoded_picture *pic = malloc(sizeof(struct decoded_picture));
+  struct decoded_picture *pic = calloc(1, sizeof(struct decoded_picture));
   pic->nal = init_nal_unit();
   copy_nal_unit(pic->nal, src_nal);
-  pic->used_for_reference = 0;
-  pic->delayed_output = 0;
   pic->top_is_reference = pic->nal->slc->field_pic_flag
         ? (pic->nal->slc->bottom_field_flag ? 0 : 1) : 1;
   pic->bottom_is_reference = pic->nal->slc->field_pic_flag
         ? (pic->nal->slc->bottom_field_flag ? 1 : 0) : 1;
   pic->surface = surface;
   pic->img = img;
-  pic->next = NULL;
 
   return pic;
 }
@@ -51,6 +48,7 @@ void free_decoded_picture(struct decoded_picture *pic)
 {
   pic->img->free(pic->img);
   free_nal_unit(pic->nal);
+  free(pic);
 }
 
 struct decoded_picture* dpb_get_next_out_picture(struct dpb *dpb)
@@ -315,6 +313,7 @@ void dpb_free_all( struct dpb *dpb )
     } while (pic != NULL);
 
   printf("dpb_free_all, used: %d\n", dpb->used);
+  dpb->pictures = NULL;
 }
 
 int fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist)

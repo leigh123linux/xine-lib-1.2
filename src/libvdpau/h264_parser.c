@@ -102,12 +102,12 @@ static void decode_nal(uint8_t **ret, int *len_ret, uint8_t *buf, int buf_len)
   *len_ret = pos - *ret;
 }
 
-static inline dump_bits(uint32_t bits)
+static inline void dump_bits(uint32_t bits)
 {
   int i;
   printf("0b");
   for(i=0; i < 32; i++)
-    printf("%d", (bits >> 31-i) & 0x01);
+    printf("%d", (bits >> (31-i)) & 0x01);
   printf("\n");
 }
 
@@ -213,9 +213,9 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
       ibuf.cur_pos = ibuf.buf;
 
       if (!nal->sps)
-        nal->sps = malloc(sizeof(struct seq_parameter_set_rbsp));
-
-      memset(nal->sps, 0x00, sizeof(struct seq_parameter_set_rbsp));
+        nal->sps = calloc(1, sizeof(struct seq_parameter_set_rbsp));
+      else
+        memset(nal->sps, 0x00, sizeof(struct seq_parameter_set_rbsp));
 
       parse_sps(&ibuf, parser);
       free(ibuf.buf);
@@ -223,8 +223,9 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
       break;
     case NAL_PPS:
       if (!nal->pps)
-        nal->pps = malloc(sizeof(struct pic_parameter_set_rbsp));
-      memset(nal->pps, 0x00, sizeof(struct pic_parameter_set_rbsp));
+        nal->pps = calloc(1, sizeof(struct pic_parameter_set_rbsp));
+      else
+        memset(nal->pps, 0x00, sizeof(struct pic_parameter_set_rbsp));
 
       parse_pps(buf, nal->pps, nal->sps);
       ret = NAL_PPS;
@@ -236,9 +237,9 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
     case NAL_SLICE_IDR:
       if (nal->sps && nal->pps) {
         if (!nal->slc)
-          nal->slc = malloc(sizeof(struct slice_header));
-
-        memset(nal->slc, 0x00, sizeof(struct slice_header));
+          nal->slc = calloc(1, sizeof(struct slice_header));
+        else
+          memset(nal->slc, 0x00, sizeof(struct slice_header));
 
         parse_slice_header(buf, parser);
         ret = nal->nal_unit_type;
@@ -1036,42 +1037,26 @@ void parse_dec_ref_pic_marking(struct buf_reader *buf,
 
 struct nal_parser* init_parser()
 {
-  struct nal_parser *parser = malloc(sizeof(struct nal_parser));
-  memset(parser->buf, 0x00, MAX_FRAME_SIZE);
-  memset(parser->prebuf, 0x00, MAX_FRAME_SIZE);
-  parser->buf_len = 0;
-  parser->prebuf_len = 0;
-  parser->incomplete_nal = 0;
-  parser->next_nal_position = 0;
-
-  parser->found_sps = 0;
-  parser->found_pps = 0;
+  struct nal_parser *parser = calloc(1, sizeof(struct nal_parser));
   parser->nal0 = init_nal_unit();
   parser->nal1 = init_nal_unit();
   parser->current_nal = parser->nal0;
   parser->last_nal = parser->nal1;
 
-  parser->last_nal_res = 0;
-  parser->is_idr = 0;
-  parser->slice = 0;
-  parser->slice_cnt = 0;
   parser->field = -1;
-  parser->have_top = 0;
 
   /* no idea why we do that. inspired by libavcodec,
    * as we couldn't figure in the specs....
    */
   parser->prev_pic_order_cnt_msb = parser->pic_order_cnt_lsb = 1 << 16;
 
-  parser->cpb_dpb_delays_present_flag = 0;
-
   return parser;
 }
 
 void free_parser(struct nal_parser *parser)
 {
-  free(parser->nal0);
-  free(parser->nal1);
+  free_nal_unit(parser->nal0);
+  free_nal_unit(parser->nal1);
   free(parser);
 }
 
@@ -1312,10 +1297,15 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
       parser->last_nal = parser->nal1;
     }
 
-    if (parser->current_nal->sps == NULL)
-      parser->current_nal->sps = parser->last_nal->sps;
-    if (parser->current_nal->pps == NULL)
-      parser->current_nal->pps = parser->last_nal->pps;
+    if(!parser->current_nal->sps && parser->last_nal->sps) {
+      parser->current_nal->sps = malloc(sizeof(struct seq_parameter_set_rbsp));
+      xine_fast_memcpy(parser->current_nal->sps, parser->last_nal->sps, sizeof(struct seq_parameter_set_rbsp));
+    }
+
+    if(!parser->current_nal->pps && parser->last_nal->pps) {
+      parser->current_nal->pps = malloc(sizeof(struct pic_parameter_set_rbsp));
+      xine_fast_memcpy(parser->current_nal->pps, parser->last_nal->pps, sizeof(struct pic_parameter_set_rbsp));
+    }
 
     /* increase the slice_cnt until a new frame is detected */
     if (!ret)
