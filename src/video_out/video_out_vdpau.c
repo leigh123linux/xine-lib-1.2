@@ -87,6 +87,8 @@ VdpVideoMixerCreate *vdp_video_mixer_create;
 VdpVideoMixerDestroy *vdp_video_mixer_destroy;
 VdpVideoMixerRender *vdp_video_mixer_render;
 VdpVideoMixerSetAttributeValues *vdp_video_mixer_set_attribute_values;
+VdpVideoMixerSetFeatureEnables *vdp_video_mixer_set_feature_enables;
+VdpVideoMixerGetFeatureEnables *vdp_video_mixer_get_feature_enables;
 
 VdpGenerateCSCMatrix *vdp_generate_csc_matrix;
 
@@ -835,10 +837,15 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     printf("vo_vdpau: recreate mixer to match frames: width=%d, height=%d, chroma=%d\n", mix_w, mix_h, chroma);
     vdp_video_mixer_destroy( this->video_mixer );
     VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL };
+    VdpBool feature_enables[] = { 1, 1 };
     VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
     int num_layers = 3;
     void const *param_values[] = { &mix_w, &mix_h, &chroma, &num_layers };
     vdp_video_mixer_create( vdp_device, 2, features, 4, params, param_values, &this->video_mixer );
+    vdp_video_mixer_set_feature_enables( this->video_mixer, 2, features, feature_enables );
+    printf("vo_vdpau: asked features: temporal=%d, temporal_spatial=%d\n", feature_enables[0], feature_enables[1] );
+    vdp_video_mixer_get_feature_enables( this->video_mixer, 2, features, feature_enables );
+    printf("vo_vdpau: enabled features: temporal=%d, temporal_spatial=%d\n", feature_enables[0], feature_enables[1] );
     this->video_mixer_chroma = chroma;
     this->video_mixer_width = mix_w;
     this->video_mixer_height = mix_h;
@@ -1369,6 +1376,12 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_MIXER_SET_ATTRIBUTE_VALUES , (void*)&vdp_video_mixer_set_attribute_values );
   if ( vdpau_init_error( st, "Can't get VIDEO_MIXER_SET_ATTRIBUTE_VALUES proc address !!", &this->vo_driver, 1 ) )
     return NULL;
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_MIXER_SET_FEATURE_ENABLES , (void*)&vdp_video_mixer_set_feature_enables );
+  if ( vdpau_init_error( st, "Can't get VIDEO_MIXER_SET_FEATURE_ENABLES proc address !!", &this->vo_driver, 1 ) )
+    return NULL;
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_MIXER_GET_FEATURE_ENABLES , (void*)&vdp_video_mixer_get_feature_enables );
+  if ( vdpau_init_error( st, "Can't get VIDEO_MIXER_GET_FEATURE_ENABLES proc address !!", &this->vo_driver, 1 ) )
+    return NULL;
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_GENERATE_CSC_MATRIX , (void*)&vdp_generate_csc_matrix );
   if ( vdpau_init_error( st, "Can't get GENERATE_CSC_MATRIX proc address !!", &this->vo_driver, 1 ) )
     return NULL;
@@ -1470,6 +1483,8 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     vdp_output_surface_destroy( this->output_surface[1] );
     return NULL;
   }
+  VdpBool feature_enables[] = { 0, 1 };
+  vdp_video_mixer_set_feature_enables( this->video_mixer, 2, features, feature_enables );
 
   this->capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP | VO_CAP_UNSCALED_OVERLAY;
   ok = 0;
