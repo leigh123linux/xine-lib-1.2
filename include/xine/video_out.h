@@ -66,6 +66,14 @@ struct vo_frame_s {
    * member functions
    */
 
+  /* Provide a copy of the frame's image in an image format already known to xine. data's member */
+  /* have already been intialized to frame's content on entry, so it's usually only necessary to */
+  /* change format and img_size. In case img is set, it will point to a memory block of suitable */
+  /* size (size has been determined by a previous call with img == NULL). img content and img_size */
+  /* must adhere to the specification of _x_get_current_frame_data(). */
+  /* Currently this is needed for all image formats except XINE_IMGFMT_YV12 and XINE_IMGFMT_YUY2. */
+  void (*proc_provide_standard_frame_data) (vo_frame_t *vo_img, xine_current_frame_data_t *data);
+
   /* Duplicate picture data and acceleration specific data of a frame. */
   /* if the image format isn't already known by Xine. Currently this is needed */
   /* For all image formats except XINE_IMGFMT_YV12 and XINE_IMGFMT_YUY2 */
