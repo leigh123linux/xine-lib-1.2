@@ -101,13 +101,6 @@ uint8_t mpeg2_scan_norm[64] = {
     53,60,61,54,47,55,62,63
 };
 
-uint8_t mpeg2_scan_alt[64] = {
-    /* Alternate scan pattern */
-    0,8,16,24,1,9,2,10,17,25,32,40,48,56,57,49,
-    41,33,26,18,3,11,4,12,19,27,34,42,50,58,35,43,
-    51,59,20,28,5,13,6,14,21,29,36,44,52,60,37,45,
-    53,61,22,30,7,15,23,31,38,46,54,62,39,47,55,63
-};
 
 
 typedef struct {
@@ -153,9 +146,11 @@ typedef struct {
 } sequence_t;
 
 
+
 typedef struct {
   video_decoder_class_t   decoder_class;
 } vdpau_mpeg12_class_t;
+
 
 
 typedef struct vdpau_mpeg12_decoder_s {
@@ -585,11 +580,6 @@ static void decode_render( vdpau_mpeg12_decoder_t *vd, vdpau_accel_t *accel )
       vd->decoder_height = seq->coded_height;
     }
   }
-  /*if ( accel->surface==VDP_INVALID_HANDLE ) {
-    st = accel->vdp_video_surface_create( accel->vdp_device, VDP_CHROMA_TYPE_420, seq->coded_width, seq->coded_height, &accel->surface);
-    if ( st!=VDP_STATUS_OK )
-      lprintf( "failed to create surface !! %s\n", accel->vdp_get_error_string( st ) );
-  }*/
 
   VdpBitstreamBuffer vbit;
   vbit.struct_version = VDP_BITSTREAM_BUFFER_VERSION;
@@ -688,7 +678,11 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
 
   img->bad_frame = 0;
   img->duration = seq->video_step;
-  img->top_field_first = pic->vdp_infos.top_field_first;
+  if ( pic->vdp_infos.top_field_first || pic->vdp_infos.picture_structure==PICTURE_FRAME )
+    img->top_field_first = 1;
+  else
+    img->top_field_first = 0;
+
   // progressive_frame is unreliable with most mpeg2 streams //img->progressive_frame = pic->progressive_frame;
 
   if ( pic->vdp_infos.picture_coding_type!=B_FRAME ) {

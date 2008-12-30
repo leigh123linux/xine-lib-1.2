@@ -49,7 +49,7 @@
 #include <vdpau/vdpau_x11.h>
 #include "accel_vdpau.h"
 
-#define NUM_FRAMES_BACK 2
+#define NUM_FRAMES_BACK 1
 
 
 VdpOutputSurfaceRenderBlendState blend = { VDP_OUTPUT_SURFACE_RENDER_BLEND_STATE_VERSION,
@@ -855,11 +855,12 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[this->current_output_surface], this->output_surface_height[this->current_output_surface], &this->output_surface[this->current_output_surface] );
   }
 
-  VdpRect vid_source = { this->sc.crop_left, this->sc.crop_top, this->sc.delivered_width-this->sc.crop_right, this->sc.delivered_height-this->sc.crop_bottom };
+  VdpRect vid_source = { this->sc.displayed_xoffset, this->sc.displayed_yoffset, this->sc.displayed_width+this->sc.displayed_xoffset, this->sc.displayed_height+this->sc.displayed_yoffset };
   VdpRect out_dest = { 0, 0, this->sc.gui_width, this->sc.gui_height };
   VdpRect vid_dest = { this->sc.output_xoffset, this->sc.output_yoffset, this->sc.output_xoffset+this->sc.output_width, this->sc.output_yoffset+this->sc.output_height };
 
-  //printf( "out_dest = %d %d %d %d - vid_dest = %d %d %d %d\n", out_dest.x0, out_dest.y0, out_dest.x1, out_dest.y1, vid_dest.x0, vid_dest.y0, vid_dest.x1, vid_dest.y1 );
+  //printf( "vid_src = %d %d %d %d - out_dest = %d %d %d %d - vid_dest = %d %d %d %d\n",
+          //vid_source.x0, vid_source.y0, vid_source.x1, vid_source.y1, out_dest.x0, out_dest.y0, out_dest.x1, out_dest.y1, vid_dest.x0, vid_dest.y0, vid_dest.x1, vid_dest.y1 );
 
   /* prepare field delay calculation to not run into a deadlock while display locked */
   stream_speed = frame->vo_frame.stream ? xine_get_param(frame->vo_frame.stream, XINE_PARAM_FINE_SPEED) : 0;
@@ -907,14 +908,18 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     VdpTime current_time = 0;
     VdpVideoSurface past[2];
     VdpVideoSurface future[1];
-    past[1] = past[0] = (this->back_frame[0] && (this->back_frame[0]->format==XINE_IMGFMT_VDPAU)) ? this->back_frame[0]->vdpau_accel_data.surface : VDP_INVALID_HANDLE;
-    future[0] = surface;
-    st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, frame->vo_frame.progressive_frame || frame->vo_frame.top_field_first ? VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD : VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD,
+	VdpVideoMixerPictureStructure picture_structure;
+
+	past[1] = past[0] = (this->back_frame[0] && (this->back_frame[0]->format==XINE_IMGFMT_VDPAU)) ? this->back_frame[0]->vdpau_accel_data.surface : VDP_INVALID_HANDLE;
+	future[0] = surface;
+	picture_structure = ( frame->vo_frame.top_field_first ) ? VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD : VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD;
+
+    st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, picture_structure,
                                2, past, surface, 1, future, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
     if ( st != VDP_STATUS_OK )
       printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
-    else
-      printf( "vo_vdpau: vdp_video_mixer_render: top_field, past1=%d, past0=%d, current=%d, future=%d\n", past[1], past[0], surface, future[0] );
+    //else
+      //printf( "vo_vdpau: vdp_video_mixer_render: top_field, past1=%d, past0=%d, current=%d, future=%d\n", past[1], past[0], surface, future[0] );
 
     vdp_queue_get_time( vdp_queue, &current_time );
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, current_time );
@@ -941,13 +946,14 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
       future[0] = ((vdpau_frame_t*)(frame->vo_frame.future_frame))->vdpau_accel_data.surface;
     else
       future[0] = VDP_INVALID_HANDLE;
+	picture_structure = ( frame->vo_frame.top_field_first ) ? VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD : VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD;
 
-    st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, frame->vo_frame.progressive_frame || frame->vo_frame.top_field_first ? VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD : VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD,
+    st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, picture_structure,
                                2, past, surface, 1, future, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
     if ( st != VDP_STATUS_OK )
       printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
-    else
-      printf( "vo_vdpau: vdp_video_mixer_render: bottom_field, past1=%d, past0=%d, current=%d, future=%d\n", past[1], past[0], surface, future[0] );
+    //else
+      //printf( "vo_vdpau: vdp_video_mixer_render: bottom_field, past1=%d, past0=%d, current=%d, future=%d\n", past[1], past[0], surface, future[0] );
 
     /* calculate delay for second field: there should be no delay for still images otherwise, take replay speed into account */
     if (stream_speed > 0)
@@ -1044,20 +1050,20 @@ static int vdpau_set_property (vo_driver_t *this_gen, int property, int value)
   printf("vdpau_set_property: property=%d, value=%d\n", property, value );
 
   switch (property) {
-    /*case VO_PROP_ZOOM_X:
+    case VO_PROP_ZOOM_X:
       if ((value >= XINE_VO_ZOOM_MIN) && (value <= XINE_VO_ZOOM_MAX)) {
         this->sc.zoom_factor_x = (double)value / (double)XINE_VO_ZOOM_STEP;
         _x_vo_scale_compute_ideal_size( &this->sc );
-        this->sc.force_redraw = 1;    //* trigger re-calc of output size
+        this->sc.force_redraw = 1;    /* trigger re-calc of output size */
       }
       break;
     case VO_PROP_ZOOM_Y:
       if ((value >= XINE_VO_ZOOM_MIN) && (value <= XINE_VO_ZOOM_MAX)) {
         this->sc.zoom_factor_y = (double)value / (double)XINE_VO_ZOOM_STEP;
         _x_vo_scale_compute_ideal_size( &this->sc );
-        this->sc.force_redraw = 1;    //* trigger re-calc of output size
+        this->sc.force_redraw = 1;    /* trigger re-calc of output size */
       }
-      break;*/
+      break;
     case VO_PROP_ASPECT_RATIO:
       if ( value>=XINE_VO_ASPECT_NUM_RATIOS )
         value = XINE_VO_ASPECT_AUTO;
