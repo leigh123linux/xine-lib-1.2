@@ -215,12 +215,12 @@ typedef struct {
   uint32_t            argb_overlay_height;
   int                 has_argb_overlay;
 
-  VdpVideoSurface soft_surface;
+  VdpVideoSurface      soft_surface;
   uint32_t             soft_surface_width;
   uint32_t             soft_surface_height;
   int                  soft_surface_format;
 
-  VdpOutputSurface output_surface[2];
+  VdpOutputSurface     output_surface[2];
   uint8_t              current_output_surface;
   uint32_t             output_surface_width[2];
   uint32_t             output_surface_height[2];
@@ -396,6 +396,7 @@ static void vdpau_overlay_begin (vo_driver_t *this_gen, vo_frame_t *frame_gen, i
   if ( !changed )
     return;
 
+  this->has_overlay = this->has_unscaled = 0;
   this->has_argb_overlay = 0;
   ++this->ovl_changed;
 }
@@ -433,6 +434,7 @@ static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame)
   if ( !(this->ovl_changed-1) ) {
     this->ovl_changed = 0;
     this->has_overlay = 0;
+    this->has_unscaled = 0;
     return;
   }
 
@@ -1276,6 +1278,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->overlay_unscaled_width = this->overlay_unscaled_height = 0;
   this->ovl_changed = 0;
   this->has_overlay = 0;
+  this->has_unscaled = 0;
 
   this->argb_overlay = VDP_INVALID_HANDLE;
   this->argb_overlay_width = this->argb_overlay_height = 0;
@@ -1469,7 +1472,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     return NULL;
   }
 
-  this->capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP;
+  this->capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP | VO_CAP_UNSCALED_OVERLAY;
   ok = 0;
   uint32_t mw, mh, ml, mr;
   st = vdp_decoder_query_capabilities( vdp_device, VDP_DECODER_PROFILE_H264_MAIN, &ok, &ml, &mr, &mw, &mh );
@@ -1487,8 +1490,6 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     printf( "vo_vdpau: no support for mpeg1/2 ! : no ok\n" );
   else
     this->capabilities |= VO_CAP_VDPAU_MPEG12;
-
-  this->capabilities |= VO_CAP_UNSCALED_OVERLAY;
 
   for ( i=0; i<NUM_FRAMES_BACK; i++)
     this->back_frame[i] = NULL;
