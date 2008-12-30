@@ -298,9 +298,7 @@ static int vdpau_process_argb_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overl
 
   uint32_t pitch = this->argb_overlay_width*4;
   VdpRect dest = { 0, overlay->y, this->argb_overlay_width, overlay->y + overlay->height };
-  printf("Update ARGB: %d, %d - %dx%d\n", dest.x0, dest.y0, dest.x1, dest.y1);
   uint32_t *buffer_start = overlay->argb_buffer + overlay->y*this->argb_overlay_width;
-  printf("buf offset: %d, %p -> %p\n", overlay->y*this->argb_overlay_width, overlay->argb_buffer, buffer_start);
   VdpStatus st = vdp_output_surface_put_bits( this->argb_overlay, (void*)&(buffer_start), &pitch, &dest );
   if ( st != VDP_STATUS_OK ) {
     printf( "vdpau_process_argb_ovl: vdp_output_surface_put_bits_native failed : %s\n", vdp_get_error_string(st) );
