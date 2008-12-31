@@ -244,6 +244,7 @@ typedef struct {
   int               saturation;
   int               brightness;
   int               contrast;
+  int               deinterlace;
 
   int               allocated_surfaces;
 
@@ -763,6 +764,24 @@ static void vdpau_backup_frame( vo_driver_t *this_gen, vo_frame_t *frame_gen )
 
 
 
+static void vdpau_set_deinterlace( vo_driver_t *this_gen )
+{
+  vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
+
+  VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL };
+  VdpBool feature_enables[2];
+  if ( this->deinterlace )
+    feature_enables[0] = feature_enables[1] = 1;
+  else
+    feature_enables[0] = feature_enables[1] = 0;
+  vdp_video_mixer_set_feature_enables( this->video_mixer, 2, features, feature_enables );
+  printf("vo_vdpau: asked features: temporal=%d, temporal_spatial=%d\n", feature_enables[0], feature_enables[1] );
+  vdp_video_mixer_get_feature_enables( this->video_mixer, 2, features, feature_enables );
+  printf("vo_vdpau: enabled features: temporal=%d, temporal_spatial=%d\n", feature_enables[0], feature_enables[1] );
+}
+
+
+
 static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 {
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
@@ -842,10 +861,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     int num_layers = 3;
     void const *param_values[] = { &mix_w, &mix_h, &chroma, &num_layers };
     vdp_video_mixer_create( vdp_device, 2, features, 4, params, param_values, &this->video_mixer );
-    vdp_video_mixer_set_feature_enables( this->video_mixer, 2, features, feature_enables );
-    printf("vo_vdpau: asked features: temporal=%d, temporal_spatial=%d\n", feature_enables[0], feature_enables[1] );
-    vdp_video_mixer_get_feature_enables( this->video_mixer, 2, features, feature_enables );
-    printf("vo_vdpau: enabled features: temporal=%d, temporal_spatial=%d\n", feature_enables[0], feature_enables[1] );
+    vdpau_set_deinterlace( this_gen );
     this->video_mixer_chroma = chroma;
     this->video_mixer_width = mix_w;
     this->video_mixer_height = mix_h;
@@ -910,7 +926,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     layer[layer_count-1].struct_version = VDP_LAYER_VERSION;
   }
 
-  if ( frame->vo_frame.duration>2500 && !frame->vo_frame.progressive_frame && frame->format==XINE_IMGFMT_VDPAU ) {
+  if ( this->deinterlace && !frame->vo_frame.progressive_frame && frame->format==XINE_IMGFMT_VDPAU ) {
     VdpTime current_time = 0;
     VdpVideoSurface past[2];
     VdpVideoSurface future[1];
@@ -1056,6 +1072,10 @@ static int vdpau_set_property (vo_driver_t *this_gen, int property, int value)
   printf("vdpau_set_property: property=%d, value=%d\n", property, value );
 
   switch (property) {
+    case VO_PROP_INTERLACED:
+      this->deinterlace = value;
+      vdpau_set_deinterlace( this_gen );
+      break;
     case VO_PROP_ZOOM_X:
       if ((value >= XINE_VO_ZOOM_MIN) && (value <= XINE_VO_ZOOM_MAX)) {
         this->sc.zoom_factor_x = (double)value / (double)XINE_VO_ZOOM_STEP;
@@ -1483,8 +1503,6 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     vdp_output_surface_destroy( this->output_surface[1] );
     return NULL;
   }
-  VdpBool feature_enables[] = { 0, 1 };
-  vdp_video_mixer_set_feature_enables( this->video_mixer, 2, features, feature_enables );
 
   this->capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP | VO_CAP_UNSCALED_OVERLAY;
   ok = 0;
@@ -1512,6 +1530,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->saturation = 100;
   this->contrast = 100;
   this->brightness = 0;
+  this->deinterlace = 0;
 
   this->allocated_surfaces = 0;
 
