@@ -1917,7 +1917,7 @@ typedef struct {
 typedef struct {
   int                 alternative; /* alternative playlist number, usually 0 */
   char                mrl[1]; /* might (will) be longer */
-} xine_mrl_reference_data_t;
+} xine_mrl_reference_data_t XINE_DEPRECATED;
 
 typedef struct {
   int                 alternative; /* as above */
