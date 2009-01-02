@@ -1963,6 +1963,8 @@ static int _x_get_current_frame_data (xine_stream_t *stream,
 
   stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
   frame = stream->video_out->get_last_frame (stream->video_out);
+  if (frame)
+    frame->lock(frame);
   stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
   
   if (!frame) {
@@ -1994,6 +1996,30 @@ static int _x_get_current_frame_data (xine_stream_t *stream,
 
   switch (frame->format) {
 
+  default:
+    if (frame->proc_provide_standard_frame_data) {
+      uint8_t *img = data->img;
+      size_t img_size = data->img_size;
+      data->img = 0;
+      data->img_size = 0;
+
+      /* ask frame implementation for required img buffer size */
+      frame->proc_provide_standard_frame_data(frame, data);
+      required_size = data->img_size;
+
+      data->img = img;
+      data->img_size = img_size;
+      break;
+    }
+
+    if (!data->img && !(flags & XINE_FRAME_DATA_ALLOCATE_IMG))
+      break; /* not interested in image data */
+
+    xprintf (stream->xine, XINE_VERBOSITY_DEBUG,
+	     "xine: error, snapshot function not implemented for format 0x%x\n", frame->format);
+    /* fall though and provide "green" YV12 image */
+    data->format = XINE_IMGFMT_YV12;
+
   case XINE_IMGFMT_YV12:
     required_size = frame->width * frame->height
                   + ((frame->width + 1) / 2) * ((frame->height + 1) / 2)
@@ -2006,26 +2032,21 @@ static int _x_get_current_frame_data (xine_stream_t *stream,
                   + ((frame->width + 1) / 2) * frame->height;
     break;
 
-  default:
-    if (data->img || (flags & XINE_FRAME_DATA_ALLOCATE_IMG)) {
-      xprintf (stream->xine, XINE_VERBOSITY_DEBUG, 
-	       "xine: error, snapshot function not implemented for format 0x%x\n", frame->format);
-      _x_abort ();
-    }
-
-    required_size = 0;
   }
 
   if (flags & XINE_FRAME_DATA_ALLOCATE_IMG) {
     /* return allocated buffer size */
     data->img_size = required_size;
     /* allocate img or fail */
-    if (!(data->img = calloc(1, required_size)))
+    if (!(data->img = calloc(1, required_size))) {
+      frame->free(frame);
       return 0;
+    }
   } else {
     /* fail if supplied buffer is to small */
     if (data->img && !img_size_unknown && data->img_size < required_size) {
       data->img_size = required_size;
+      frame->free(frame);
       return 0;
     }
     /* return used buffer size */
@@ -2061,11 +2082,14 @@ static int _x_get_current_frame_data (xine_stream_t *stream,
       break;
 
     default:
-      xprintf (stream->xine, XINE_VERBOSITY_DEBUG, 
-	       "xine: error, snapshot function not implemented for format 0x%x\n", frame->format);
-      _x_abort ();
+      if (frame->proc_provide_standard_frame_data)
+        frame->proc_provide_standard_frame_data(frame, data);
+      else if (!(flags & XINE_FRAME_DATA_ALLOCATE_IMG))
+        memset(data->img, 0, data->img_size);
     }
   }
+
+  frame->free(frame);
   return 1;
 }
 
