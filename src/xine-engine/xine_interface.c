@@ -846,6 +846,16 @@ void xine_osd_draw_bitmap(xine_osd_t *this, uint8_t *bitmap,
   this->osd.renderer->draw_bitmap(&this->osd, bitmap, x1, y1, width, height, palette_map);
 }
 
+void xine_osd_set_argb_buffer(xine_osd_t *this, uint32_t *argb_buffer,
+    int dirty_x, int dirty_y, int dirty_width, int dirty_height) {
+  this->osd.renderer->set_argb_buffer(&this->osd, argb_buffer, dirty_x, dirty_y, dirty_width, dirty_height);
+}
+
+void xine_osd_set_extent(xine_osd_t *this, int extent_width, int extent_height) {
+  this->osd.renderer->set_extent(&this->osd, extent_width, extent_height);
+}
+
+
 const char *const *xine_post_list_inputs(xine_post_t *this_gen) {
   post_plugin_t *this = (post_plugin_t *)this_gen;
   return this->input_ids;

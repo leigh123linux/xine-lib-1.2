@@ -2077,8 +2077,10 @@ void xine_event_send (xine_stream_t *stream, const xine_event_t *event) XINE_PRO
 /* yellow text, black border, transparent background */
 #define XINE_TEXTPALETTE_YELLOW_BLACK_TRANSPARENT   3
 
-#define XINE_OSD_CAP_FREETYPE2 0x0001 /* freetype2 support compiled in     */
-#define XINE_OSD_CAP_UNSCALED  0x0002 /* unscaled overlays supp. by vo drv */
+#define XINE_OSD_CAP_FREETYPE2     0x0001 /* freetype2 support compiled in     */
+#define XINE_OSD_CAP_UNSCALED      0x0002 /* unscaled overlays supp. by vo drv */
+#define XINE_OSD_CAP_CUSTOM_EXTENT 0x0004 /* hardware scaled to match video output window */ 
+#define XINE_OSD_CAP_ARGB_LAYER    0x0008 /* supports separate true color layer */
 
 typedef struct xine_osd_s xine_osd_t;
 
@@ -2143,6 +2145,28 @@ void        xine_osd_get_palette   (xine_osd_t *self, uint32_t *color,
 void        xine_osd_set_palette   (xine_osd_t *self,
 				    const uint32_t *const color,
 				    const uint8_t *const trans ) XINE_PROTECTED;
+				    
+/*
+ * set an argb buffer to be blended into video
+ * the buffer must exactly match the osd dimensions
+ * and stay valid while the osd is on screen. pass
+ * a NULL pointer to safely remove the buffer from
+ * the osd layer. only the dirty area  will be
+ * updated on screen. for convinience the whole
+ * osd object will be considered dirty when setting
+ * a different buffer pointer.
+ * see also XINE_OSD_CAP_ARGB_LAYER
+ */
+void xine_osd_set_argb_buffer(xine_osd_t *self, uint32_t *argb_buffer,
+                              int dirty_x, int dirty_y, int dirty_width, int dirty_height) XINE_PROTECTED;
+
+/*
+ * define extent of reference coordinate system
+ * for video resolution independent osds.
+ * see also XINE_OSD_CAP_CUSTOM_EXTENT
+ */
+void xine_osd_set_extent(xine_osd_t *self, int extent_width, int extent_height) XINE_PROTECTED;
+
 /*
  * close osd rendering engine
  * loaded fonts are unloaded

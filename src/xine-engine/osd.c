@@ -236,15 +236,20 @@ static osd_object_t *XINE_MALLOC osd_new_object (osd_renderer_t *this, int width
   osd->renderer = this;
   osd->next = this->osds;
   this->osds = osd;
-  
+
+  osd->extent_width = 0;
+  osd->extent_height = 0;  
   osd->width = width;
   osd->height = height;
   osd->area = calloc(width, height);
+  osd->area_touched = 0;
   
-  osd->x1 = width;
-  osd->y1 = height;
-  osd->x2 = 0;
-  osd->y2 = 0;
+  osd->x1 = osd->argb_layer.x1 = width;
+  osd->y1 = osd->argb_layer.y1 = height;
+  osd->x2 = osd->argb_layer.x2 = 0;
+  osd->y2 = osd->argb_layer.y2 = 0;
+
+  pthread_mutex_init(&osd->argb_layer.mutex, NULL);
 
   memcpy(osd->color, textpalettes_color[0], sizeof(textpalettes_color[0])); 
   memcpy(osd->trans, textpalettes_trans[0], sizeof(textpalettes_trans[0])); 
@@ -261,6 +266,18 @@ static osd_object_t *XINE_MALLOC osd_new_object (osd_renderer_t *this, int width
   lprintf("osd=%p size: %dx%d\n", osd, width, height);
   
   return osd;
+}
+
+/*
+ * osd extent must be set to achive video resolution independent osds
+ * both sizes must be > 0 to take effect. otherwise, video resolution
+ * will still be used. the extent defines the reference coordinate
+ * system which is matched to the video output area.
+ */
+static void osd_set_extent (osd_object_t *osd, int extent_width, int extent_height) {
+
+  osd->extent_width  = extent_width;
+  osd->extent_height = extent_height;
 }
 
 
@@ -322,11 +339,17 @@ static int _osd_show (osd_object_t *osd, int64_t vpts, int unscaled ) {
     this->event.object.handle = osd->handle;
 
     memset( this->event.object.overlay, 0, sizeof(*this->event.object.overlay) );
+
+    this->event.object.overlay->argb_layer = &osd->argb_layer;
+
     this->event.object.overlay->unscaled = unscaled;
     this->event.object.overlay->x = osd->display_x + osd->x1;
     this->event.object.overlay->y = osd->display_y + osd->y1;
     this->event.object.overlay->width = osd->x2 - osd->x1;
     this->event.object.overlay->height = osd->y2 - osd->y1;
+
+    this->event.object.overlay->extent_width  = osd->extent_width;
+    this->event.object.overlay->extent_height = osd->extent_height;
  
     this->event.object.overlay->hili_top    = 0;
     this->event.object.overlay->hili_bottom = this->event.object.overlay->height;
@@ -335,53 +358,59 @@ static int _osd_show (osd_object_t *osd, int64_t vpts, int unscaled ) {
    
     /* there will be at least that many rle objects (one for each row) */
     this->event.object.overlay->num_rle = 0;
-    /* We will never need more rle objects than columns in any row
-       Rely on lazy page allocation to avoid us actually taking up
-       this much RAM */
-    this->event.object.overlay->data_size = osd->width * osd->height;
-    rle_p = this->event.object.overlay->rle = 
-       malloc(this->event.object.overlay->data_size * sizeof(rle_elem_t) );
+    if (!osd->area_touched) {
+      /* avoid rle encoding when only argb_layer is modified */
+      this->event.object.overlay->data_size = 0;
+      rle_p = this->event.object.overlay->rle = NULL;
+    } else {
+      /* We will never need more rle objects than columns in any row
+         Rely on lazy page allocation to avoid us actually taking up
+         this much RAM */
+      this->event.object.overlay->data_size = osd->width * osd->height;
+      rle_p = this->event.object.overlay->rle = 
+         malloc(this->event.object.overlay->data_size * sizeof(rle_elem_t) );
     
-    for( y = osd->y1; y < osd->y2; y++ ) {
+      for( y = osd->y1; y < osd->y2; y++ ) {
 #ifdef DEBUG_RLE      
-      lprintf("osd_show %p y = %d: ", osd, y);
+        lprintf("osd_show %p y = %d: ", osd, y);
 #endif      
-      c = osd->area + y * osd->width + osd->x1;
+        c = osd->area + y * osd->width + osd->x1;
 
-      /* initialize a rle object with the first pixel's color */
-      rle.len = 1;
-      rle.color = *c++;
+        /* initialize a rle object with the first pixel's color */
+        rle.len = 1;
+        rle.color = *c++;
 
-      /* loop over the remaining pixels in the row */
-      for( x = osd->x1 + rle.len; x < osd->x2; x++, c++ ) {
-        if( rle.color != *c ) {
+        /* loop over the remaining pixels in the row */
+        for( x = osd->x1 + rle.len; x < osd->x2; x++, c++ ) {
+          if( rle.color != *c ) {
 #ifdef DEBUG_RLE          
-          lprintf("(%d, %d), ", rle.len, rle.color);
+            lprintf("(%d, %d), ", rle.len, rle.color);
 #endif
-          *rle_p++ = rle;
-          this->event.object.overlay->num_rle++;            
+            *rle_p++ = rle;
+            this->event.object.overlay->num_rle++;            
 
-          rle.color = *c;
-          rle.len = 1;
-        } else {
-          rle.len++;
-        }  
+            rle.color = *c;
+            rle.len = 1;
+          } else {
+            rle.len++;
+          }  
+        }
+#ifdef DEBUG_RLE
+        lprintf("(%d, %d)\n", rle.len, rle.color);
+#endif
+        *rle_p++ = rle;
+        this->event.object.overlay->num_rle++;
       }
 #ifdef DEBUG_RLE
-      lprintf("(%d, %d)\n", rle.len, rle.color);
+      lprintf("osd_show %p rle ends\n", osd);
 #endif
-      *rle_p++ = rle;
-      this->event.object.overlay->num_rle++;
-    }
-#ifdef DEBUG_RLE
-    lprintf("osd_show %p rle ends\n", osd);
-#endif
-    lprintf("num_rle = %d\n", this->event.object.overlay->num_rle);
+      lprintf("num_rle = %d\n", this->event.object.overlay->num_rle);
   
-    memcpy(this->event.object.overlay->hili_color, osd->color, sizeof(osd->color)); 
-    memcpy(this->event.object.overlay->hili_trans, osd->trans, sizeof(osd->trans)); 
-    memcpy(this->event.object.overlay->color, osd->color, sizeof(osd->color)); 
-    memcpy(this->event.object.overlay->trans, osd->trans, sizeof(osd->trans)); 
+      memcpy(this->event.object.overlay->hili_color, osd->color, sizeof(osd->color)); 
+      memcpy(this->event.object.overlay->hili_trans, osd->trans, sizeof(osd->trans)); 
+      memcpy(this->event.object.overlay->color, osd->color, sizeof(osd->color)); 
+      memcpy(this->event.object.overlay->trans, osd->trans, sizeof(osd->trans)); 
+    }
   
     this->event.event_type = OVERLAY_EVENT_SHOW;
     this->event.vpts = vpts;
@@ -465,11 +494,14 @@ static int osd_hide (osd_object_t *osd, int64_t vpts) {
 static void osd_clear (osd_object_t *osd) {
   lprintf("osd=%p\n",osd);
 
-  memset(osd->area, 0, osd->width * osd->height);
-  osd->x1 = osd->width;
-  osd->y1 = osd->height;
-  osd->x2 = 0;
-  osd->y2 = 0;
+  if (osd->area_touched) {
+    osd->area_touched = 0;
+    memset(osd->area, 0, osd->width * osd->height);
+  }
+  osd->x1 = osd->argb_layer.x1 = osd->width;
+  osd->y1 = osd->argb_layer.y1 = osd->height;
+  osd->x2 = osd->argb_layer.x2 = 0;
+  osd->y2 = osd->argb_layer.y2 = 0;
 }
 
 /*
@@ -491,6 +523,7 @@ static void osd_point (osd_object_t *osd, int x, int y, int color) {
   osd->x2 = MAX(osd->x2, (x + 1));
   osd->y1 = MIN(osd->y1, y);
   osd->y2 = MAX(osd->y2, (y + 1));
+  osd->area_touched = 1;
 
   c = osd->area + y * osd->width + x;
   *c = color;
@@ -550,7 +583,8 @@ static void osd_line (osd_object_t *osd,
   osd->x2 = MAX( osd->x2, x2 );
   osd->y1 = MIN( osd->y1, y1 );
   osd->y2 = MAX( osd->y2, y2 );
-  
+  osd->area_touched = 1;
+ 
   dx = x2 - x1;
   dy = y2 - y1;
   
@@ -663,6 +697,7 @@ static void osd_filled_rect (osd_object_t *osd,
   osd->x2 = MAX( osd->x2, dx );
   osd->y1 = MIN( osd->y1, y );
   osd->y2 = MAX( osd->y2, dy );
+  osd->area_touched = 1;
 
   dx -= x;
   dy -= y;
@@ -1258,6 +1293,7 @@ static int osd_render_text (osd_object_t *osd, int x1, int y1,
 
   if( x1 < osd->x1 ) osd->x1 = x1;
   if( y1 < osd->y1 ) osd->y1 = y1;
+  osd->area_touched = 1;
 
   inbuf = text;
   inbytesleft = strlen(text);
@@ -1606,6 +1642,7 @@ static void osd_free_object (osd_object_t *osd_to_close) {
       else
         this->osds = osd->next;
 
+      pthread_mutex_destroy(&osd->argb_layer.mutex);
       free( osd );
       break;
     }
@@ -1651,6 +1688,7 @@ static void osd_draw_bitmap(osd_object_t *osd, uint8_t *bitmap,
   osd->x2 = MAX( osd->x2, x1+width );
   osd->y1 = MIN( osd->y1, y1 );
   osd->y2 = MAX( osd->y2, y1+height );
+  osd->area_touched = 1;
 
   for( y=0; y<height; y++ ) {
     if ( palette_map ) {
@@ -1669,21 +1707,58 @@ static void osd_draw_bitmap(osd_object_t *osd, uint8_t *bitmap,
   }
 }
 
+static void osd_set_argb_buffer(osd_object_t *osd, uint32_t *argb_buffer,
+    int dirty_x, int dirty_y, int dirty_width, int dirty_height)
+{
+  if (osd->argb_layer.buffer != argb_buffer) {
+    dirty_x = 0;
+    dirty_y = 0;
+    dirty_width = osd->width;
+    dirty_height = osd->height;
+  }
+
+  /* keep osd_object clipping behavior */
+  osd->x1 = MIN( osd->x1, dirty_x );
+  osd->x2 = MAX( osd->x2, dirty_x + dirty_width );
+  osd->y1 = MIN( osd->y1, dirty_y );
+  osd->y2 = MAX( osd->y2, dirty_y + dirty_height );
+
+  pthread_mutex_lock(&osd->argb_layer.mutex);
+
+  /* argb layer update area accumulation */
+  osd->argb_layer.x1 = MIN( osd->argb_layer.x1, dirty_x );
+  osd->argb_layer.x2 = MAX( osd->argb_layer.x2, dirty_x + dirty_width );
+  osd->argb_layer.y1 = MIN( osd->argb_layer.y1, dirty_y );
+  osd->argb_layer.y2 = MAX( osd->argb_layer.y2, dirty_y + dirty_height );
+
+  osd->argb_layer.buffer = argb_buffer;
+
+  pthread_mutex_unlock(&osd->argb_layer.mutex);
+}
+
 static uint32_t osd_get_capabilities (osd_object_t *osd) {
      
   osd_renderer_t *this = osd->renderer;
   uint32_t capabilities = 0;
+  uint32_t vo_capabilities;
 
 #ifdef HAVE_FT2
   capabilities |= XINE_OSD_CAP_FREETYPE2;
 #endif
 
   this->stream->xine->port_ticket->acquire(this->stream->xine->port_ticket, 1);
-  if( this->stream->video_out->get_capabilities(this->stream->video_out) &
-      VO_CAP_UNSCALED_OVERLAY)
-    capabilities |= XINE_OSD_CAP_UNSCALED;
+  vo_capabilities = this->stream->video_out->get_capabilities(this->stream->video_out);
   this->stream->xine->port_ticket->release(this->stream->xine->port_ticket, 1);
+
+  if (vo_capabilities & VO_CAP_UNSCALED_OVERLAY)
+    capabilities |= XINE_OSD_CAP_UNSCALED;
+
+  if (vo_capabilities & VO_CAP_CUSTOM_EXTENT_OVERLAY)
+    capabilities |= XINE_OSD_CAP_CUSTOM_EXTENT;
  
+  if (vo_capabilities & VO_CAP_ARGB_LAYER_OVERLAY)
+    capabilities |= XINE_OSD_CAP_ARGB_LAYER;
+
   return capabilities; 
 }
 
@@ -1753,8 +1828,10 @@ osd_renderer_t *_x_osd_renderer_init( xine_stream_t *stream ) {
   this->get_text_size      = osd_get_text_size;
   this->close              = osd_renderer_close;
   this->draw_bitmap        = osd_draw_bitmap;
+  this->set_argb_buffer    = osd_set_argb_buffer;
   this->show_unscaled      = osd_show_unscaled;
   this->get_capabilities   = osd_get_capabilities;
+  this->set_extent         = osd_set_extent;
 
   return this;
 }

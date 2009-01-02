@@ -298,6 +298,8 @@ struct xine_video_port_s {
 #define VO_CAP_AUTOPAINT_COLORKEY     0x00200000
 #define VO_CAP_ZOOM_X                 0x00400000
 #define VO_CAP_ZOOM_Y                 0x00800000
+#define VO_CAP_CUSTOM_EXTENT_OVERLAY  0x01000000 /* driver can blend custom extent overlay to output extent */
+#define VO_CAP_ARGB_LAYER_OVERLAY     0x02000000 /* driver supports true color overlay */
 
 /*
  * vo_driver_s contains the functions every display driver
@@ -426,6 +428,14 @@ typedef struct rle_elem_s {
   uint16_t color;
 } rle_elem_t;
 
+typedef struct argb_layer_s {
+  pthread_mutex_t  mutex;
+  uint32_t        *buffer;
+  /* dirty area */
+  int x1, y1;
+  int x2, y2;
+} argb_layer_t;
+
 struct vo_overlay_s {
 
   rle_elem_t       *rle;           /* rle code buffer                  */
@@ -435,6 +445,10 @@ struct vo_overlay_s {
   int               y;             /* y start of subpicture area       */
   int               width;         /* width of subpicture area         */
   int               height;        /* height of subpicture area        */
+
+  /* extent of reference coordinate system */
+  int               extent_width;
+  int               extent_height;
   
   uint32_t          color[OVL_PALETTE_SIZE];  /* color lookup table     */
   uint8_t           trans[OVL_PALETTE_SIZE];  /* mixer key table        */
@@ -450,6 +464,9 @@ struct vo_overlay_s {
   int               hili_rgb_clut; /* true if clut was converted to rgb */
   
   int               unscaled;      /* true if it should be blended unscaled */
+
+
+  argb_layer_t     *argb_layer;
 };
 
 
