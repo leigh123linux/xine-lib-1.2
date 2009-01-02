@@ -367,6 +367,11 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
         /* dispatch the decoded audio */
         out = 0;
         while (out < decode_buffer_size) {
+          int stream_status = xine_get_status(this->stream);
+
+          if (stream_status == XINE_STATUS_QUIT || stream_status == XINE_STATUS_STOP)
+            return;
+
           audio_buffer = 
             this->stream->audio_out->get_buffer (this->stream->audio_out);
           if (audio_buffer->mem_size == 0) {
