@@ -85,6 +85,9 @@ xine-lib (1.1.16) 2008-??-??
   * Recognise Xv "blitter" adaptors for port selection purposes.
     NOTE: you will need to remove ~/.xine/catalog.cache when upgrading from
           xine-lib 1.1.15 or older if you wish to use this extra option.
+  * Fix MMS media requests where the URI contains %-encoded characters.
+  * Fix two hangs related to stopping playback of broken audio streams where
+    no audio data is sent to the output thread.
 
 xine-lib (1.1.15) 2008-08-14
   * Security fixes:

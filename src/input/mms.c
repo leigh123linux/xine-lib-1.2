@@ -290,7 +290,7 @@ static int send_command (mms_t *this, int command,
 
 #ifdef USE_ICONV
 static iconv_t string_utf16_open() {
-    return iconv_open("UTF-16LE", nl_langinfo(CODESET));
+    return iconv_open("UTF-16LE", "UTF-8");
 }
 
 static void string_utf16_close(iconv_t url_conv) {
@@ -771,10 +771,17 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   /* command 0x5 */
   {
     mms_buffer_t command_buffer;
-    char *path = this->uri;
-    size_t pathlen = strlen(path);
+    char *path, *unescaped;
+    size_t pathlen;
+
+    unescaped = strdup (this->uri);
+    if (!unescaped)
+      goto fail;
+    _x_mrl_unescape (unescaped);
 
     /* remove the first '/' */
+    path = unescaped;
+    pathlen = strlen (path);
     if (pathlen > 1) {
       path++;
       pathlen--;
@@ -785,6 +792,7 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
     mms_buffer_put_32 (&command_buffer, 0x00000000); /* ?? */
     mms_buffer_put_32 (&command_buffer, 0x00000000); /* ?? */
     string_utf16 (url_conv, this->scmd_body + command_buffer.pos, path, pathlen);
+    free (unescaped);
     if (!send_command (this, 5, 1, 0xffffffff, pathlen * 2 + 12))
       goto fail;
   }
