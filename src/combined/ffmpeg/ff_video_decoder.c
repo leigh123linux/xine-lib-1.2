@@ -1198,6 +1198,13 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
     this->size = 0;
   }
 
+  if (this->size == 0) {
+    /* take over pts when we are about to buffer a frame */
+    this->av_frame->reordered_opaque = this->pts;
+    this->context->reordered_opaque = this->pts;
+    this->pts = 0;
+  }
+
   /* data accumulation */
   if (buf->size > 0) {
     if ((this->size == 0) &&
@@ -1250,6 +1257,10 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
         len = avcodec_decode_video (this->context, this->av_frame,
                                     &got_picture, &chunk_buf[offset],
                                     this->size);
+
+        /* reset consumed pts value */
+        this->context->reordered_opaque = 0;
+
         lprintf("consumed size: %d, got_picture: %d\n", len, got_picture);
         if ((len <= 0) || (len > this->size)) {
           xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
@@ -1265,6 +1276,11 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
             ff_check_bufsize(this, this->size);
             memmove (this->buf, &chunk_buf[offset], this->size);
             chunk_buf = this->buf;
+
+            /* take over pts for next access unit */
+            this->av_frame->reordered_opaque = this->pts;
+            this->context->reordered_opaque = this->pts;
+            this->pts = 0;
           }
         }
       }
@@ -1359,8 +1375,8 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
           ff_convert_frame(this, img);
         }
 
-        img->pts  = this->pts;
-        this->pts = 0;
+        img->pts  = this->av_frame->reordered_opaque;
+        this->av_frame->reordered_opaque = 0;
 
         /* workaround for weird 120fps streams */
         if( video_step_to_use == 750 ) {
@@ -1400,8 +1416,8 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
                                                 this->output_format,
                                                 VO_BOTH_FIELDS|this->frame_flags);
       /* set PTS to allow early syncing */
-      img->pts       = this->pts;
-      this->pts      = 0;
+      img->pts       = this->av_frame->reordered_opaque;
+      this->av_frame->reordered_opaque = 0;
 
       img->duration  = video_step_to_use;
 
