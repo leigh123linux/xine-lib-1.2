@@ -209,11 +209,16 @@ static int demux_wav_send_chunk(demux_plugin_t *this_gen) {
       buf->size = remaining_sample_bytes;
     remaining_sample_bytes -= buf->size;
 
-    if (this->input->read(this->input, buf->content, buf->size) !=
+    off_t read;
+    if ((read = this->input->read(this->input, buf->content, buf->size)) !=
       buf->size) {
-      buf->free_buffer(buf);
-      this->status = DEMUX_FINISHED;
-      break;
+      if (read == 0) {
+        buf->free_buffer(buf);
+        this->status = DEMUX_FINISHED;
+        break;
+      } else {
+        buf->size = read;
+      }
     }
 
 #if 0
