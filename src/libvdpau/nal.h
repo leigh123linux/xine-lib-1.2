@@ -43,6 +43,19 @@ enum nal_unit_types
   NAL_SPS_EXT
 };
 
+enum pic_struct {
+  DISP_FRAME = 0,
+  DISP_TOP,
+  DISP_BOTTOM,
+  DISP_TOP_BOTTOM,
+  DISP_BOTTOM_TOP,
+  DISP_TOP_BOTTOM_TOP,
+  DISP_TOP_TOP_BOTTOM,
+  DISP_BOTTOM_TOP_BOTTOM,
+  DISP_FRAME_DOUBLING,
+  DISP_FRAME_TRIPLING
+};
+
 /* slice types repeat from 5-9, we
  * need a helper function for comparison
  */
@@ -274,6 +287,16 @@ struct pic_parameter_set_rbsp
   int32_t second_chroma_qp_index_offset;
 };
 
+/*struct clock_timestamp {
+  uint8_t ct_type;
+  uint8_t nuit_fiel_based_flag;
+  uint8_t counting_type;
+  uint8_t full_timestamp_flag;
+  uint8_t discontinuity_flag;
+  uint8_t cnt_dropped_flag;
+  uint8_t n_frames
+};*/
+
 /* sei contains several additional info, we do
  * only care for pic_timing, to handle display
  * reordering
@@ -291,7 +314,8 @@ struct sei_message
     uint8_t cpb_removal_delay;
     uint8_t dpb_output_delay;
 
-    /* ignore the rest */
+    uint8_t pic_struct;
+    //uint8_t clock_timestamp_flag[3];
   } pic_timing;
 };
 
@@ -396,6 +420,9 @@ struct nal_unit
 
   uint32_t top_field_order_cnt;
   uint32_t bottom_field_order_cnt;
+
+  uint8_t interlaced;
+  uint8_t repeat_pic;
 
   struct sei_message sei;
 

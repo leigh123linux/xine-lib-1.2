@@ -475,10 +475,18 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
             else {
               img->bad_frame = 0;
 
-              if(!pic.field_pic_flag && !pic.mb_adaptive_frame_field_flag)
+              if((sps->vui_parameters_present_flag &&
+                  sps->vui_parameters.pic_struct_present_flag &&
+                  !this->nal_parser->current_nal->interlaced) ||
+                  !pic.field_pic_flag && !pic.mb_adaptive_frame_field_flag)
                 img->progressive_frame = 1;
               else
                 img->progressive_frame = 0;
+
+              if(!img->progressive_frame && this->nal_parser->current_nal->repeat_pic)
+                img->repeat_first_field = 1;
+              else if(img->progressive_frame && this->nal_parser->current_nal->repeat_pic)
+                img->duration *= this->nal_parser->current_nal->repeat_pic;
 
               struct decoded_picture *decoded_pic = NULL;
               if(pic.is_reference) {

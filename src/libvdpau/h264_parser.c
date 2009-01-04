@@ -246,6 +246,7 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
       }
       break;
     case NAL_SEI:
+      memset(&(nal->sei), 0x00, sizeof(struct sei_message));
       parse_sei(buf, parser);
       ret = nal->nal_unit_type;
       break;
@@ -470,6 +471,7 @@ uint8_t parse_sps(struct buf_reader *buf, struct nal_parser *parser)
 void parse_sei(struct buf_reader *buf, struct nal_parser *parser)
 {
   struct sei_message *sei = &(parser->current_nal->sei);
+  struct seq_parameter_set_rbsp *sps = parser->current_nal->sps;
   uint8_t tmp;
 
   sei->payload_type = 0;
@@ -491,6 +493,35 @@ void parse_sei(struct buf_reader *buf, struct nal_parser *parser)
     if(parser->cpb_dpb_delays_present_flag) {
       sei->pic_timing.cpb_removal_delay = read_bits(buf, 5);
       sei->pic_timing.dpb_output_delay = read_bits(buf, 5);
+    }
+
+    if(sps && sps->vui_parameters_present_flag &&
+        sps->vui_parameters.pic_struct_present_flag) {
+      sei->pic_timing.pic_struct = read_bits(buf, 4);
+      switch(sei->pic_timing.pic_struct) {
+        case DISP_FRAME:
+          parser->current_nal->interlaced = 0;
+          parser->current_nal->repeat_pic = 0;
+          break;
+        case DISP_TOP:
+        case DISP_BOTTOM:
+        case DISP_TOP_BOTTOM:
+        case DISP_BOTTOM_TOP:
+          parser->current_nal->interlaced = 1;
+          break;
+        case DISP_TOP_BOTTOM_TOP:
+        case DISP_BOTTOM_TOP_BOTTOM:
+          parser->current_nal->interlaced = 1;
+          parser->current_nal->repeat_pic = 1;
+          break;
+        case DISP_FRAME_DOUBLING:
+          parser->current_nal->interlaced = 0;
+          parser->current_nal->repeat_pic = 2;
+          break;
+        case DISP_FRAME_TRIPLING:
+          parser->current_nal->interlaced = 0;
+          parser->current_nal->repeat_pic = 3;
+      }
     }
   }
 }
