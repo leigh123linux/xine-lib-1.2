@@ -584,7 +584,7 @@ static void vdpau_h264_discontinuity (video_decoder_t *this_gen) {
 
   this->curr_pts = 0;
   this->next_pts = 0;
-
+  dpb_clear_all_pts(&this->nal_parser->dpb);
 }
 
 /*

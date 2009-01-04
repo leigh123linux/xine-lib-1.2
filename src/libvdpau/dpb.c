@@ -316,6 +316,16 @@ void dpb_free_all( struct dpb *dpb )
   dpb->pictures = NULL;
 }
 
+void dpb_clear_all_pts( struct dpb *dpb )
+{
+  struct decoded_picture *pic = dpb->pictures;
+
+  while (pic != NULL) {
+    pic->img->pts = 0;
+    pic = pic->next;
+  }
+}
+
 int fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist)
 {
   struct decoded_picture *pic = dpb->pictures;
