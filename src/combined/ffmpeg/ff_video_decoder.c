@@ -77,6 +77,9 @@ struct ff_video_decoder_s {
 
   xine_stream_t    *stream;
   int64_t           pts;
+  uint64_t          pts_tag_mask;
+  uint64_t          pts_tag;
+  int               pts_tag_counter;
   int               video_step;
 
   uint8_t           decoder_ok:1;
@@ -1173,6 +1176,42 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
   }
 }
 
+static uint64_t ff_tag_pts(ff_video_decoder_t *this, uint64_t pts)
+{
+  return pts | this->pts_tag;
+}
+
+static uint64_t ff_untag_pts(ff_video_decoder_t *this, uint64_t pts)
+{
+  if (this->pts_tag_mask == 0)
+    return pts; /* pts tagging inactive */
+
+  if (this->pts_tag != 0 && (pts & this->pts_tag_mask) != this->pts_tag)
+    return 0; /* reset pts if outdated while waiting for first pass (see below) */
+
+  return pts & ~this->pts_tag_mask;
+}
+
+static void ff_check_pts_tagging(ff_video_decoder_t *this, uint64_t pts)
+{
+  if (this->pts_tag_mask == 0)
+    return; /* pts tagging inactive */
+
+  if ((pts & this->pts_tag_mask) != this->pts_tag)
+    return; /* pts still outdated */
+
+  if (this->pts_tag != 0) {
+    /* first pass: reset pts_tag */
+    this->pts_tag = 0;
+  } else if (pts == 0)
+    return; /* cannot detect second pass */
+  else {
+    /* second pass: reset pts_tag_mask and pts_tag_counter */
+    this->pts_tag_mask = 0;
+    this->pts_tag_counter = 0;
+  }
+}
+
 static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
   uint8_t *chunk_buf = this->buf;
   AVRational avr00 = {0, 1};
@@ -1195,6 +1234,13 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
   if (buf->decoder_flags & BUF_FLAG_FRAME_START) {
     lprintf("BUF_FLAG_FRAME_START\n");
     this->size = 0;
+  }
+
+  if (this->size == 0) {
+    /* take over pts when we are about to buffer a frame */
+    this->av_frame->reordered_opaque = ff_tag_pts(this, this->pts);
+    this->context->reordered_opaque = ff_tag_pts(this, this->pts);
+    this->pts = 0;
   }
 
   /* data accumulation */
@@ -1249,6 +1295,10 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
         len = avcodec_decode_video (this->context, this->av_frame,
                                     &got_picture, &chunk_buf[offset],
                                     this->size);
+
+        /* reset consumed pts value */
+        this->context->reordered_opaque = ff_tag_pts(this, 0);
+
         lprintf("consumed size: %d, got_picture: %d\n", len, got_picture);
         if ((len <= 0) || (len > this->size)) {
           xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
@@ -1264,6 +1314,11 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
             ff_check_bufsize(this, this->size);
             memmove (this->buf, &chunk_buf[offset], this->size);
             chunk_buf = this->buf;
+
+            /* take over pts for next access unit */
+            this->av_frame->reordered_opaque = ff_tag_pts(this, this->pts);
+            this->context->reordered_opaque = ff_tag_pts(this, this->pts);
+            this->pts = 0;
           }
         }
       }
@@ -1358,8 +1413,9 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
           ff_convert_frame(this, img);
         }
 
-        img->pts  = this->pts;
-        this->pts = 0;
+        img->pts  = ff_untag_pts(this, this->av_frame->reordered_opaque);
+        ff_check_pts_tagging(this, this->av_frame->reordered_opaque); /* only check for valid frames */
+        this->av_frame->reordered_opaque = 0;
 
         /* workaround for weird 120fps streams */
         if( video_step_to_use == 750 ) {
@@ -1399,8 +1455,8 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
                                                 this->output_format,
                                                 VO_BOTH_FIELDS|this->frame_flags);
       /* set PTS to allow early syncing */
-      img->pts       = this->pts;
-      this->pts      = 0;
+      img->pts       = ff_untag_pts(this, this->av_frame->reordered_opaque);
+      this->av_frame->reordered_opaque = 0;
 
       img->duration  = video_step_to_use;
 
@@ -1485,6 +1541,10 @@ static void ff_reset (video_decoder_t *this_gen) {
   
   if (this->is_mpeg12)
     mpeg_parser_reset(this->mpeg_parser);
+
+  this->pts_tag_mask = 0;
+  this->pts_tag = 0;
+  this->pts_tag_counter = 0;
 }
 
 static void ff_discontinuity (video_decoder_t *this_gen) {
@@ -1492,6 +1552,37 @@ static void ff_discontinuity (video_decoder_t *this_gen) {
   
   lprintf ("ff_discontinuity\n");
   this->pts = 0;
+
+  /*
+   * there is currently no way to reset all the pts which are stored in the decoder.
+   * therefore, we add a unique tag (generated from pts_tag_counter) to pts (see 
+   * ff_tag_pts()) and wait for it to appear on returned frames.
+   * until then, any retrieved pts value will be reset to 0 (see ff_untag_pts()).
+   * when we see the tag returned, pts_tag will be reset to 0. from now on, any
+   * untagged pts value is valid already.
+   * when tag 0 appears too, there are no tags left in the decoder so pts_tag_mask
+   * and pts_tag_counter will be reset to 0 too (see ff_check_pts_tagging()).
+   */
+  this->pts_tag_counter++;
+  this->pts_tag_mask = 0;
+  this->pts_tag = 0;
+  {
+    /* pts values typically don't use the uppermost bits. therefore we put the tag there */
+    int counter_mask = 1;
+    uint64_t tag_mask = 0x8000000000000000ull;
+    while (this->pts_tag_counter >= counter_mask)
+    {
+      /*
+       * mirror the counter into the uppermost bits. this allows us to enlarge mask as
+       * necessary and while previous taggings can still be detected to be outdated.
+       */
+      if (this->pts_tag_counter & counter_mask)
+        this->pts_tag |= tag_mask;
+      this->pts_tag_mask |= tag_mask;
+      tag_mask >>= 1;
+      counter_mask <<= 1;
+    }
+  }
 }
 
 static void ff_dispose (video_decoder_t *this_gen) {
