@@ -730,11 +730,17 @@ static int is_qt_file(input_plugin_t *qt_file) {
   }
 }
 
-static char *parse_data_atom(const uint8_t *data_atom) {
-  const uint32_t data_atom_size = _X_BE_32(&data_atom[0]);
+static char *parse_data_atom(const uint8_t *data_atom, uint32_t max_size) {
+  uint32_t data_atom_size = _X_BE_32(&data_atom[0]);
   
   static const int data_atom_max_version = 0;
   const int data_atom_version = data_atom[8];
+
+  if (data_atom_size < 8)
+    return NULL; /* too small */
+
+  if (data_atom_size > max_size)
+    data_atom_size = max_size;
 
   const size_t alloc_size = data_atom_size - 8 + 1;
   char *alloc_str = NULL;
@@ -803,7 +809,7 @@ static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
 	const uint8_t *const sub_atom = &meta_atom[j];
 	const qt_atom sub_atom_code = _X_BE_32(&sub_atom[4]);
 	const uint32_t sub_atom_size = _X_BE_32(&sub_atom[0]);
-	char *const data_atom = parse_data_atom(&sub_atom[8]);
+	char *const data_atom = parse_data_atom(&sub_atom[8], current_atom_size - j);
 
 	switch(sub_atom_code) {
 	case ART_ATOM:
