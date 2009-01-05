@@ -474,6 +474,8 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
     stream->xine->verbosity = value;
     break;
 
+  case XINE_PARAM_VO_SHARPNESS:
+  case XINE_PARAM_VO_NOISE_REDUCTION:
   case XINE_PARAM_VO_HUE:
   case XINE_PARAM_VO_SATURATION:
   case XINE_PARAM_VO_CONTRAST:
@@ -635,6 +637,8 @@ int xine_get_param (xine_stream_t *stream, int param) {
     ret = stream->xine->verbosity;
     break;
 
+  case XINE_PARAM_VO_SHARPNESS:
+  case XINE_PARAM_VO_NOISE_REDUCTION:
   case XINE_PARAM_VO_HUE:
   case XINE_PARAM_VO_SATURATION:
   case XINE_PARAM_VO_CONTRAST:

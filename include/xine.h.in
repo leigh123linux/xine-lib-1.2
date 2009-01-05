@@ -375,11 +375,12 @@ int  xine_get_param (xine_stream_t *stream, int param) XINE_PROTECTED;
 #define XINE_PARAM_VO_TVMODE               0x0100000a /* ???                */
 #define XINE_PARAM_VO_WINDOW_WIDTH         0x0100000f /* readonly           */
 #define XINE_PARAM_VO_WINDOW_HEIGHT        0x01000010 /* readonly           */
+#define XINE_PARAM_VO_SHARPNESS            0x01000018 /* 0..65535           */
+#define XINE_PARAM_VO_NOISE_REDUCTION      0x01000019 /* 0..65535           */
 #define XINE_PARAM_VO_CROP_LEFT            0x01000020 /* crop frame pixels  */
 #define XINE_PARAM_VO_CROP_RIGHT           0x01000021 /* crop frame pixels  */
 #define XINE_PARAM_VO_CROP_TOP             0x01000022 /* crop frame pixels  */
 #define XINE_PARAM_VO_CROP_BOTTOM          0x01000023 /* crop frame pixels  */
-
 
 #define XINE_VO_ZOOM_STEP                  100
 #define XINE_VO_ZOOM_MAX                   400

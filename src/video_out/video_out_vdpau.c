@@ -258,8 +258,11 @@ typedef struct {
   int               saturation;
   int               brightness;
   int               contrast;
+  int               sharpness;
+  int               noise;
   int               deinterlace;
   int               deinterlace_method;
+  int               honnor_progressive;
 
   int               allocated_surfaces;
 
@@ -939,6 +942,93 @@ static void vdpau_update_deinterlace_method( void *this_gen, xine_cfg_entry_t *e
 
 
 
+static void vdpau_honnor_progressive_flag( void *this_gen, xine_cfg_entry_t *entry )
+{
+  vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
+
+  this->honnor_progressive = entry->num_value;
+}
+
+
+
+static void vdpau_update_noise( vdpau_driver_t *this_gen )
+{
+  float value = this_gen->noise/100.0;
+  if ( value==0 ) {
+    VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION };
+    VdpBool feature_enables[] = { 0 };
+    vdp_video_mixer_set_feature_enables( this_gen->video_mixer, 1, features, feature_enables );
+    printf( "vo_vdpau: disable noise reduction !!\n" );
+    return;
+  }
+  else {
+    VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION };
+    VdpBool feature_enables[] = { 1 };
+    vdp_video_mixer_set_feature_enables( this_gen->video_mixer, 1, features, feature_enables );
+    printf( "vo_vdpau: enable noise reduction !!\n" );
+  }
+
+  VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_NOISE_REDUCTION_LEVEL };
+  void* attribute_values[] = { &value };
+  VdpStatus st = vdp_video_mixer_set_attribute_values( this_gen->video_mixer, 1, attributes, attribute_values );
+  if ( st != VDP_STATUS_OK )
+    printf( "vo_vdpau: error, can't set noise reduction level !!\n" );
+}
+
+
+
+static void vdpau_update_sharpness( vdpau_driver_t *this_gen )
+{
+  float value = this_gen->sharpness/100.0;
+  if ( value==0 ) {
+    VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_SHARPNESS  };
+    VdpBool feature_enables[] = { 0 };
+    vdp_video_mixer_set_feature_enables( this_gen->video_mixer, 1, features, feature_enables );
+    printf( "vo_vdpau: disable sharpness !!\n" );
+    return;
+  }
+  else {
+    VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_SHARPNESS  };
+    VdpBool feature_enables[] = { 1 };
+    vdp_video_mixer_set_feature_enables( this_gen->video_mixer, 1, features, feature_enables );
+    printf( "vo_vdpau: enable sharpness !!\n" );
+  }
+
+  VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_SHARPNESS_LEVEL };
+  void* attribute_values[] = { &value };
+  VdpStatus st = vdp_video_mixer_set_attribute_values( this_gen->video_mixer, 1, attributes, attribute_values );
+  if ( st != VDP_STATUS_OK )
+    printf( "vo_vdpau: error, can't set sharpness level !!\n" );
+}
+
+
+
+static void vdpau_update_csc( vdpau_driver_t *this_gen )
+{
+  float hue = this_gen->hue/100.0;
+  float saturation = this_gen->saturation/100.0;
+  float contrast = this_gen->contrast/100.0;
+  float brightness = this_gen->brightness/100.0;
+
+  printf( "vo_vdpau: vdpau_update_csc: hue=%f, saturation=%f, contrast=%f, brightness=%f\n", hue, saturation, contrast, brightness );
+
+  VdpCSCMatrix matrix;
+  VdpProcamp procamp = { VDP_PROCAMP_VERSION, brightness, contrast, saturation, hue };
+
+  VdpStatus st = vdp_generate_csc_matrix( &procamp, VDP_COLOR_STANDARD_ITUR_BT_601, &matrix );
+  if ( st != VDP_STATUS_OK ) {
+    printf( "vo_vdpau: error, can't generate csc matrix !!\n" );
+    return;
+  }
+  VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_CSC_MATRIX };
+  void* attribute_values[] = { &matrix };
+  st = vdp_video_mixer_set_attribute_values( this_gen->video_mixer, 1, attributes, attribute_values );
+  if ( st != VDP_STATUS_OK )
+    printf( "vo_vdpau: error, can't set csc matrix !!\n" );
+}
+
+
+
 static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 {
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
@@ -1012,15 +1102,19 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdpau_release_back_frames( this_gen ); /* empty past frames array */
     printf("vo_vdpau: recreate mixer to match frames: width=%d, height=%d, chroma=%d\n", mix_w, mix_h, chroma);
     vdp_video_mixer_destroy( this->video_mixer );
-    VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL };
-    VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
+    VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION, VDP_VIDEO_MIXER_FEATURE_SHARPNESS,
+          VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL };
+    VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT,
+          VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
     int num_layers = 3;
     void const *param_values[] = { &mix_w, &mix_h, &chroma, &num_layers };
-    vdp_video_mixer_create( vdp_device, 2, features, 4, params, param_values, &this->video_mixer );
+    vdp_video_mixer_create( vdp_device, 4, features, 4, params, param_values, &this->video_mixer );
     this->video_mixer_chroma = chroma;
     this->video_mixer_width = mix_w;
     this->video_mixer_height = mix_h;
     vdpau_set_deinterlace( this_gen );
+    vdpau_update_noise( this );
+    vdpau_update_sharpness( this );
   }
 
   if ( (this->sc.gui_width > this->output_surface_width[this->current_output_surface]) || (this->sc.gui_height > this->output_surface_height[this->current_output_surface]) ) {
@@ -1082,7 +1176,8 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     layer[layer_count-1].struct_version = VDP_LAYER_VERSION;
   }
 
-  if ( this->deinterlace && !frame->vo_frame.progressive_frame && frame->format==XINE_IMGFMT_VDPAU ) {
+  int non_progressive = (this->honnor_progressive && !frame->vo_frame.progressive_frame) || !this->honnor_progressive;
+  if ( frame->vo_frame.duration>2500 && this->deinterlace && non_progressive && frame->format==XINE_IMGFMT_VDPAU ) {
     VdpTime current_time = 0;
     VdpVideoSurface past[2];
     VdpVideoSurface future[1];
@@ -1181,42 +1276,20 @@ static int vdpau_get_property (vo_driver_t *this_gen, int property)
     case VO_PROP_OUTPUT_YOFFSET:
       return this->sc.output_yoffset;
     case VO_PROP_HUE:
-      return 0;
+      return this->hue;
     case VO_PROP_SATURATION:
-      return 100;
+      return this->saturation;
     case VO_PROP_CONTRAST:
-      return 100;
+      return this->contrast;
     case VO_PROP_BRIGHTNESS:
-      return 0;
+      return this->brightness;
+    case VO_PROP_SHARPNESS:
+      return this->sharpness;
+    case VO_PROP_NOISE_REDUCTION:
+      return this->noise;
   }
 
   return -1;
-}
-
-
-
-static void vdpau_update_csc( vdpau_driver_t *this_gen )
-{
-  /*float hue = this_gen->hue/100.0;
-  float saturation = this_gen->saturation/100.0;
-  float contrast = this_gen->contrast/100.0;
-  float brightness = this_gen->brightness/100.0;
-
-  printf( "vo_vdpau: vdpau_update_csc: hue=%f, saturation=%f, contrast=%f, brightness=%f\n", hue, saturation, contrast, brightness );
-
-  VdpCSCMatrix matrix;
-  VdpProcamp procamp = { VDP_PROCAMP_VERSION, brightness, contrast, saturation, hue };
-
-  VdpStatus st = vdp_generate_csc_matrix( &procamp, VDP_COLOR_STANDARD_ITUR_BT_601, &matrix );
-  if ( st != VDP_STATUS_OK ) {
-    printf( "vo_vdpau: error, can't generate csc matrix !!\n" );
-    return;
-  }
-  VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_CSC_MATRIX };
-  void* attribute_values[] = { &matrix };
-  st = vdp_video_mixer_set_attribute_values( this_gen->video_mixer, 1, attributes, attribute_values );
-  if ( st != VDP_STATUS_OK )
-    printf( "vo_vdpau: error, can't set csc matrix !!\n" );*/
 }
 
 
@@ -1256,6 +1329,8 @@ static int vdpau_set_property (vo_driver_t *this_gen, int property, int value)
     case VO_PROP_SATURATION: this->saturation = value; vdpau_update_csc( this ); break;
     case VO_PROP_CONTRAST: this->contrast = value; vdpau_update_csc( this ); break;
     case VO_PROP_BRIGHTNESS: this->brightness = value; vdpau_update_csc( this ); break;
+    case VO_PROP_SHARPNESS: this->sharpness = value; vdpau_update_sharpness( this ); break;
+    case VO_PROP_NOISE_REDUCTION: this->noise = value; vdpau_update_noise( this ); break;
   }
 
   return value;
@@ -1274,6 +1349,10 @@ static void vdpau_get_property_min_max (vo_driver_t *this_gen, int property, int
       *max = 1000; *min = 0; break;
     case VO_PROP_BRIGHTNESS:
       *max = 100; *min = -100; break;
+    case VO_PROP_SHARPNESS:
+      *max = 100; *min = -100; break;
+    case VO_PROP_NOISE_REDUCTION:
+      *max = 100; *min = 0; break;
     default:
       *max = 0; *min = 0;
   }
@@ -1648,11 +1727,12 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->video_mixer_chroma = chroma;
   this->video_mixer_width = this->soft_surface_width;
   this->video_mixer_height = this->soft_surface_height;
-  VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL };
+  VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION, VDP_VIDEO_MIXER_FEATURE_SHARPNESS,
+        VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL };
   VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
   int num_layers = 3;
   void const *param_values[] = { &this->video_mixer_width, &this->video_mixer_height, &chroma, &num_layers };
-  st = vdp_video_mixer_create( vdp_device, 2, features, 4, params, param_values, &this->video_mixer );
+  st = vdp_video_mixer_create( vdp_device, 4, features, 4, params, param_values, &this->video_mixer );
   if ( vdpau_init_error( st, "Can't create video mixer !!", &this->vo_driver, 1 ) ) {
     vdp_video_surface_destroy( this->soft_surface );
     vdp_output_surface_destroy( this->output_surface[0] );
@@ -1660,15 +1740,21 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     return NULL;
   }
 
-  this->deinterlace_method = config->register_enum (config, "video.output.vdpau_deinterlace_method", 1,
-         vdpau_deinterlace_methods, _("vdpau HD deinterlace method"),
+  this->deinterlace_method = config->register_enum( config, "video.output.vdpau_deinterlace_method", 1,
+         vdpau_deinterlace_methods, _("vdpau: HD deinterlace method"),
          _("bob\n"
            "Basic deinterlacing, doing 50i->50p.\n\n"
            "temporal\n"
            "Very good, 50i->50p\n\n"
            "temporal_spatial\n"
            "The best, but very GPU intensive.\n\n"),
-         10, vdpau_update_deinterlace_method, this);
+         10, vdpau_update_deinterlace_method, this );
+
+  this->honnor_progressive = config->register_bool( config, "video.output.vdpau_honnor_progressive", 0,
+        _("vdpau: disable deinterlacing when progressive_frame flag is set"),
+        _("Set to true if you want to trust the progressive_frame stream's flag.\n"
+          "This flag is not always reliable.\n\n"),
+        10, vdpau_honnor_progressive_flag, this );
 
   this->capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP | VO_CAP_UNSCALED_OVERLAY | VO_CAP_CUSTOM_EXTENT_OVERLAY | VO_CAP_ARGB_LAYER_OVERLAY;
   ok = 0;
@@ -1696,6 +1782,8 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->saturation = 100;
   this->contrast = 100;
   this->brightness = 0;
+  this->sharpness = 0;
+  this->noise = 0;
   this->deinterlace = 0;
 
   this->allocated_surfaces = 0;

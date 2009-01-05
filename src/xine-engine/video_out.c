@@ -1434,6 +1434,8 @@ static int vo_get_property (xine_video_port_t *this_gen, int property) {
     ret = this->crop_bottom;
     break;
   
+  case XINE_PARAM_VO_SHARPNESS:
+  case XINE_PARAM_VO_NOISE_REDUCTION:
   case XINE_PARAM_VO_HUE:
   case XINE_PARAM_VO_SATURATION:
   case XINE_PARAM_VO_CONTRAST:
@@ -1523,6 +1525,8 @@ static int vo_set_property (xine_video_port_t *this_gen, int property, int value
     ret = this->crop_bottom = value;
     break;
   
+  case XINE_PARAM_VO_SHARPNESS:
+  case XINE_PARAM_VO_NOISE_REDUCTION:
   case XINE_PARAM_VO_HUE:
   case XINE_PARAM_VO_SATURATION:
   case XINE_PARAM_VO_CONTRAST:
