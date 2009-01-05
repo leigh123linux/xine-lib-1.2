@@ -1183,7 +1183,12 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       break;
         
       case MATROSKA_ID_TR_CODECPRIVATE: {
-        uint8_t *codec_private = malloc (elem.len);
+        uint8_t *codec_private;
+	if (elem.len >= 0x80000000)
+	  return 0;
+        codec_private = malloc (elem.len);
+	if (! codec_private)
+	  return 0;
         lprintf("CodecPrivate\n");
         if (!ebml_read_binary(ebml, &elem, codec_private)) {
 	  free(codec_private);
@@ -1287,14 +1292,16 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
     if (!strcmp(track->codec_id, MATROSKA_CODEC_ID_V_VFW_FOURCC)) {
       xine_bmiheader *bih;
 
-      lprintf("MATROSKA_CODEC_ID_V_VFW_FOURCC\n");
-      bih = (xine_bmiheader*)track->codec_private;
-      _x_bmiheader_le2me(bih);
+      if (track->codec_private_len >= sizeof(xine_bmiheader)) {
+        lprintf("MATROSKA_CODEC_ID_V_VFW_FOURCC\n");
+        bih = (xine_bmiheader*)track->codec_private;
+        _x_bmiheader_le2me(bih);
 
-      track->buf_type = _x_fourcc_to_buf_video(bih->biCompression);
-      if (!track->buf_type)
-        _x_report_video_fourcc (this->stream->xine, LOG_MODULE, bih->biCompression);
-      init_codec = init_codec_video;
+        track->buf_type = _x_fourcc_to_buf_video(bih->biCompression);
+        if (!track->buf_type)
+          _x_report_video_fourcc (this->stream->xine, LOG_MODULE, bih->biCompression);
+        init_codec = init_codec_video;
+      }
 
     } else if (!strcmp(track->codec_id, MATROSKA_CODEC_ID_V_UNCOMPRESSED)) {
     } else if ((!strcmp(track->codec_id, MATROSKA_CODEC_ID_V_MPEG4_SP)) ||
@@ -1400,13 +1407,15 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       xine_waveformatex *wfh;
       lprintf("MATROSKA_CODEC_ID_A_ACM\n");
 
-      wfh = (xine_waveformatex*)track->codec_private;
-      _x_waveformatex_le2me(wfh);
+      if (track->codec_private_len >= sizeof(xine_waveformatex)) {
+        wfh = (xine_waveformatex*)track->codec_private;
+        _x_waveformatex_le2me(wfh);
 
-      track->buf_type = _x_formattag_to_buf_audio(wfh->wFormatTag);
-      if (!track->buf_type)
-        _x_report_audio_format_tag (this->stream->xine, LOG_MODULE, wfh->wFormatTag);
-      init_codec = init_codec_audio;
+        track->buf_type = _x_formattag_to_buf_audio(wfh->wFormatTag);
+        if (!track->buf_type)
+          _x_report_audio_format_tag (this->stream->xine, LOG_MODULE, wfh->wFormatTag);
+        init_codec = init_codec_audio;
+      }
     } else if (!strncmp(track->codec_id, MATROSKA_CODEC_ID_A_AAC,
                         sizeof(MATROSKA_CODEC_ID_A_AAC) - 1)) {
       lprintf("MATROSKA_CODEC_ID_A_AAC\n");
@@ -1487,9 +1496,14 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
           break;
       }
 
-      if (init_codec)
+      if (init_codec) {
+	if (! track->fifo) {
+	  xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+		  "demux_matroska: Error: fifo not set up for track of type type %" PRIu32 "\n", track->track_type);
+	  return 0;
+        }
         init_codec(this, track);
-      
+      }
     }
   }
   

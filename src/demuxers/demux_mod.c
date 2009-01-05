@@ -127,9 +127,16 @@ static int probe_mod_file(demux_mod_t *this) {
 /* returns 1 if the MOD file was opened successfully, 0 otherwise */
 static int open_mod_file(demux_mod_t *this) {
   int total_read;
+  off_t input_length;
   
   /* Get size and create buffer */
-  this->filesize = this->input->get_length(this->input);
+  input_length = this->input->get_length(this->input);
+  /* Avoid potential issues with signed variables and e.g. read() returning -1 */
+  if (input_length > 0x7FFFFFFF || input_length < 0) {
+    xine_log(this->stream->xine, XINE_LOG_PLUGIN, "modplug - size overflow\n");
+    return 0;
+  }
+  this->filesize = input_length; 
   this->buffer = (char *)malloc(this->filesize);
   if(!this->buffer) {
     xine_log(this->stream->xine, XINE_LOG_PLUGIN, "modplug - allocation failure\n");

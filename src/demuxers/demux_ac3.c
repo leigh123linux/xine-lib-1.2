@@ -311,13 +311,7 @@ static int demux_ac3_send_chunk (demux_plugin_t *this_gen) {
                                   this->frame_size);
   }
 
-  if (buf->size == 0) {
-    buf->free_buffer(buf);
-    this->status = DEMUX_FINISHED;
-    return this->status;
-  }
-
-  if (buf->size == 0) {
+  if (buf->size <= 0) {
     buf->free_buffer(buf);
     this->status = DEMUX_FINISHED;
     return this->status;

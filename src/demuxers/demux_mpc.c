@@ -209,7 +209,7 @@ static int demux_mpc_send_chunk(demux_plugin_t *this_gen) {
   
   /* Read data */
   bytes_read = this->input->read(this->input, buf->content, bytes_to_read);
-  if(bytes_read == 0) {
+  if(bytes_read <= 0) {
     buf->free_buffer(buf);
     this->status = DEMUX_FINISHED;
     return this->status;

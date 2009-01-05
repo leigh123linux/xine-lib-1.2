@@ -125,6 +125,10 @@ static int demux_tta_send_chunk(demux_plugin_t *this_gen) {
     /* buf->extra_info->input_time = this->current_sample / this->samplerate; */
 
     bytes_read = this->input->read(this->input, buf->content, ( bytes_to_read > buf->max_size ) ? buf->max_size : bytes_to_read);
+    if (bytes_read < 0) {
+      this->status = DEMUX_FINISHED;
+      break;
+    }
 
     buf->size = bytes_read;
 

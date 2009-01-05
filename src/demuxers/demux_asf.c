@@ -734,7 +734,10 @@ static void asf_send_buffer_nodefrag (demux_asf_t *this, asf_demux_stream_t *str
       bufsize = stream->fifo->buffer_pool_buf_size;
 
     buf = stream->fifo->buffer_pool_alloc (stream->fifo);
-    this->input->read (this->input, buf->content, bufsize);
+    if (this->input->read (this->input, buf->content, bufsize) != bufsize) {
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_asf: input buffer starved\n");
+      return ;
+    }
 
     lprintf ("data: %d %d %d %d\n", buf->content[0], buf->content[1], buf->content[2], buf->content[3]);
 
@@ -813,7 +816,10 @@ static void asf_send_buffer_defrag (demux_asf_t *this, asf_demux_stream_t *strea
   if( stream->frag_offset + frag_len > DEFRAG_BUFSIZE ) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_asf: buffer overflow on defrag!\n");
   } else {
-    this->input->read (this->input, &stream->buffer[stream->frag_offset], frag_len);
+    if (this->input->read (this->input, &stream->buffer[stream->frag_offset], frag_len) != frag_len) {
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_asf: input buffer starved\n");
+      return ;
+    }
     stream->frag_offset += frag_len;
   }
 

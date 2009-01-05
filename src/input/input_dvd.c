@@ -851,6 +851,9 @@ static off_t dvd_plugin_read (input_plugin_t *this_gen, void *buf_gen, off_t len
 /*  dvd_input_plugin_t *this = (dvd_input_plugin_t*)this_gen; */
   char *ch_buf = (char *)buf_gen;
 
+  if (len < 4)
+    return -1;
+
   /* FIXME: Tricking the demux_mpeg_block plugin */
   ch_buf[0] = 0;
   ch_buf[1] = 0;

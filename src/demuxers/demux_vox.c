@@ -77,7 +77,7 @@ static int demux_vox_send_chunk (demux_plugin_t *this_gen) {
   buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
   buf->type = BUF_AUDIO_DIALOGIC_IMA;
   bytes_read = this->input->read(this->input, buf->content, buf->max_size);
-  if (bytes_read == 0) {
+  if (bytes_read <= 0) {
     buf->free_buffer(buf);
     this->status = DEMUX_FINISHED;
     return this->status;

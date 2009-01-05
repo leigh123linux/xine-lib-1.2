@@ -248,6 +248,8 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 
               if (extradata + data_len > this->size)
                 break; /* abort early - extradata length is bad */
+              if (extradata > INT_MAX - data_len)
+                break;/*integer overflow*/
 
 	      this->context->extradata_size = data_len;
 	      this->context->extradata      = malloc(this->context->extradata_size +

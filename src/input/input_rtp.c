@@ -454,6 +454,9 @@ static off_t rtp_plugin_read (input_plugin_t *this_gen,
   struct timespec timeout;
   off_t copied = 0; 
   
+  if (length < 0)
+    return -1;
+
   while(length > 0) {
 
     off_t n;
@@ -525,6 +528,10 @@ static buf_element_t *rtp_plugin_read_block (input_plugin_t *this_gen,
   buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
   int                   total_bytes;
 
+  if (todo < 0 || todo > buf->size) {
+    buf->free_buffer (buf);
+    return NULL;
+  }
 
   buf->content = buf->mem;
   buf->type    = BUF_DEMUX_BLOCK;
@@ -610,11 +617,14 @@ static int rtp_plugin_get_optional_data (input_plugin_t *this_gen,
   if (data_type == INPUT_OPTIONAL_DATA_PREVIEW) {
     if (!this->preview_read_done) {
       this->preview_size = rtp_plugin_read(this_gen, this->preview, MAX_PREVIEW_SIZE);
+      if (this->preview_size < 0)
+	this->preview_size = 0;
       lprintf("Preview data length = %d\n", this->preview_size);
 
       this->preview_read_done = 1;
     }
-    memcpy(data, this->preview, this->preview_size);
+    if (this->preview_size)
+      memcpy(data, this->preview, this->preview_size);
     return this->preview_size;
   }
   else {

@@ -240,7 +240,7 @@ static int read_ogg_packet (demux_ogg_t *this) {
   while (ogg_sync_pageout(&this->oy,&this->og)!=1) {
     buffer = ogg_sync_buffer(&this->oy, CHUNKSIZE);
     bytes  = this->input->read(this->input, buffer, CHUNKSIZE);
-    if (bytes == 0) {
+    if (bytes <= 0) {
       if (total == 0) {
         lprintf("read_ogg_packet read nothing\n");
         return 0;

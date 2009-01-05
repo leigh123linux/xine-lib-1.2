@@ -1000,7 +1000,11 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
       /* allocate space for each of the properties unions */
       trak->stsd_atoms_count = _X_BE_32(&trak_atom[i + 8]);
-      trak->stsd_atoms = xine_xcalloc(trak->stsd_atoms_count, sizeof(properties_t));
+      if (trak->stsd_atoms_count <= 0) {
+        last_error = QT_HEADER_TROUBLE;
+        goto free_trak;
+      }
+      trak->stsd_atoms = calloc(trak->stsd_atoms_count, sizeof(properties_t));
       if (!trak->stsd_atoms) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1011,6 +1015,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
       for (k = 0; k < trak->stsd_atoms_count; k++) {
 
         const uint32_t current_stsd_atom_size = _X_BE_32(&trak_atom[atom_pos - 4]);      
+        if (current_stsd_atom_size < 4) {
+          last_error = QT_HEADER_TROUBLE;
+          goto free_trak;
+        }
 
         if (trak->type == MEDIA_VIDEO) {
 	  /* for palette traversal */
@@ -1632,6 +1640,9 @@ static qt_error parse_reference_atom (reference_t *ref,
   int i, j;
   const unsigned int ref_atom_size = _X_BE_32(&ref_atom[0]);
 
+  if (ref_atom_size >= 0x80000000)
+    return QT_NOT_A_VALID_FILE;
+
   /* initialize reference atom */
   ref->url = NULL;
   ref->data_rate = 0;
@@ -2246,7 +2257,7 @@ static qt_error open_qt_file(qt_info *info, input_plugin_t *input,
   }
 
   /* check if moov is compressed */
-  if (_X_BE_32(&moov_atom[12]) == CMOV_ATOM) {
+  if (_X_BE_32(&moov_atom[12]) == CMOV_ATOM && moov_atom_size >= 0x28) {
 
     info->compressed_header = 1;
 

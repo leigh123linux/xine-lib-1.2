@@ -425,6 +425,9 @@ static off_t pvr_plugin_read (input_plugin_t *this_gen, void *buf_gen, off_t len
   /*pvr_input_plugin_t *this = (pvr_input_plugin_t *) this_gen;*/
   char *buf = (char *)buf_gen;
 
+  if (len < 4)
+    return -1;
+
   /* FIXME: Tricking the demux_mpeg_block plugin */
   buf[0] = 0;
   buf[1] = 0;
