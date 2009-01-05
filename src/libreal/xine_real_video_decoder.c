@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2004 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -533,7 +533,6 @@ static void dispose_class (video_decoder_class_t *this) {
 void *init_realvdec (xine_t *xine, void *data) {
 
   real_class_t       *this;
-  config_values_t    *config = xine->config;
 
   this = (real_class_t *) calloc(1, sizeof(real_class_t));
 

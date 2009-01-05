@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2004 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -622,13 +622,13 @@ fifo_buffer_t *_x_dummy_fifo_buffer_new (int num_buffers, uint32_t buf_size) XIN
 uint32_t _x_fourcc_to_buf_video( uint32_t fourcc_int ) XINE_PROTECTED;
 
 /* return codec name given BUF_VIDEO_xxx */
-char * _x_buf_video_name( uint32_t buf_type ) XINE_PROTECTED;
+const char * _x_buf_video_name( uint32_t buf_type ) XINE_PROTECTED;
 
 /* return BUF_AUDIO_xxx given the formattag */
 uint32_t _x_formattag_to_buf_audio( uint32_t formattag ) XINE_PROTECTED;
 
 /* return codec name given BUF_AUDIO_xxx */
-char * _x_buf_audio_name( uint32_t buf_type ) XINE_PROTECTED;
+const char * _x_buf_audio_name( uint32_t buf_type ) XINE_PROTECTED;
 
 
 #ifndef SUPPORT_ATTRIBUTE_PACKED

@@ -275,7 +275,32 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
 
       lprintf("decoded %d/%d output %ld\n",
               used, this->size, this->faac_finfo.samples );
-      
+
+      /* Performing necessary channel reordering because aac uses a different
+       * layout than alsa:
+       *
+       *  aac 5.1 channel layout: c l r ls rs lfe
+       * alsa 5.1 channel layout: l r ls rs c lfe
+       *
+       * Reordering is only necessary for 5.0 and above. Currently only 5.0
+       * and 5.1 is being taken care of, the rest will stay in the wrong order
+       * for now.
+       *
+       * WARNING: the following needs a output format of 16 bits per sample.
+       *    TODO: - reorder while copying (in the while() loop) and optimizing
+       */
+      if(this->num_channels == 5 || this->num_channels == 6)
+      {
+        int i         = 0;
+        uint16_t* buf = (uint16_t*)(sample_buffer);
+
+        for(; i < this->faac_finfo.samples; i += this->num_channels) {
+          uint16_t center         = buf[i];
+          *((uint64_t*)(buf + i)) = *((uint64_t*)(buf + i + 1));
+          buf[i + 4]              = center;
+        }
+      }
+
       while( decoded ) {
         audio_buffer = this->stream->audio_out->get_buffer (this->stream->audio_out);
         

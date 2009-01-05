@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 the xine project
+ * Copyright (C) 2005-2008 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -198,6 +198,12 @@ static int open_dts_file(demux_dts_t *this) {
               ((peak[this->data_start+9] & 0x3c) >> 2)) + 1;
       sfreq = peak[this->data_start+8] & 0x0f;
       break;
+
+    default:
+      xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
+               LOG_MODULE ": unsupported DTS bitstream encoding %d\n",
+               dts_version);
+      return 0;
 
     }
 

@@ -12,6 +12,25 @@ xine-lib (1.1.16) 2008-??-??
     - Avoid underflow (compressed atoms) in the Qt demuxer.
   * Fix reported compilation failures (with C++ programs).
   * Fix CDDB access in 64-bit builds.
+  * Fix seeking FLV clips that don't specify the movie length in the headers.
+  * Support H.264 and AAC streams within FLV.
+  * Fix timing issues (broken audio) on mingw.
+  * Add ID3 tag TDRC to replace/complement the deprecated tag TYER.
+  * Add a new meta-tag, "Composer", and use it in the FLAC demuxer.
+  * Correct AAC channel ordering for multi-channel audio, at least for FLAC
+    when using ALSA or PulseAudio. (Needs a proper fix.)
+  * Add position-based seeking independent from seekpoints.
+  * Fix some XCB Xv attribute configuration breakage.
+  * Add a configuration option for Xv bicubic filtering, implemented in
+    xf86-video-ati 6.9.1.
+  * Recognise Xv "blitter" adaptors for port selection purposes.
+    NOTE: you will need to remove ~/.xine/catalog.cache when upgrading from
+          xine-lib 1.1.15 or older if you wish to use this extra option.
+  * Fix MMS media requests where the URI contains %-encoded characters.
+  * Fix two hangs related to stopping playback of broken audio streams where
+    no audio data is sent to the output thread.
+  * Fix WAV demuxer to send the last frames when they don't fit perfectly into
+    the buffer
 
 xine-lib (1.1.15) 2008-08-14
   * Security fixes:

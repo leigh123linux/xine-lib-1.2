@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2000-2003 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -38,7 +38,6 @@ static long profiler_calls[MAX_ID] ;
 static const char *profiler_label[MAX_ID] ;
 
 void xine_profiler_init () {
-  int i;
   memset(profiler_times, 0, sizeof(profiler_times));
   memset(profiler_start, 0, sizeof(profiler_start));
   memset(profiler_calls, 0, sizeof(profiler_calls));

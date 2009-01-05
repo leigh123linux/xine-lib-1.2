@@ -110,7 +110,7 @@ xineplug_ao_out_arts_la_LDFLAGS = -avoid-version -module
 
 xineplug_ao_out_directx_la_SOURCES = audio_directx_out.c
 xineplug_ao_out_directx_la_CPPFLAGS = $(DIRECTX_CPPFLAGS)
-xineplug_ao_out_directx_la_LIBADD = $(XINE_LIB) $(DIRECTX_AUDIO_LIBS)
+xineplug_ao_out_directx_la_LIBADD = $(XINE_LIB) $(DIRECTX_AUDIO_LIBS) $(LTLIBINTL)
 xineplug_ao_out_directx_la_CFLAGS = $(VISIBILITY_FLAG)
 xineplug_ao_out_directx_la_LDFLAGS = -avoid-version -module
 
@@ -131,7 +131,7 @@ xineplug_ao_out_pulseaudio_la_LDFLAGS = -avoid-version -module
 
 xineplug_ao_out_directx2_la_SOURCES = audio_directx2_out.c
 xineplug_ao_out_directx2_la_CPPFLAGS = $(DIRECTX_CPPFLAGS)
-xineplug_ao_out_directx2_la_LIBADD = $(XINE_LIB) $(DIRECTX_AUDIO_LIBS) $(PTHREAD_LIBS)
+xineplug_ao_out_directx2_la_LIBADD = $(XINE_LIB) $(DIRECTX_AUDIO_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_ao_out_directx2_la_CFLAGS = $(VISIBILITY_FLAG)
 xineplug_ao_out_directx2_la_LDFLAGS = -avoid-version -module
 

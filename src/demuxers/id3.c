@@ -767,6 +767,7 @@ static int id3v24_interp_frame(input_plugin_t *input,
         break;
 
       case ( FOURCC_TAG('T', 'Y', 'E', 'R') ):
+      case ( FOURCC_TAG('T', 'D', 'R', 'C') ):
         _x_meta_info_set_generic(stream, XINE_META_INFO_YEAR, buf + 1, id3_encoding[enc]);
         break;
 

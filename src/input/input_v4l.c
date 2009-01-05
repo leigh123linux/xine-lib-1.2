@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2004 the xine project
+ * Copyright (C) 2003-2008 the xine project
  * Copyright (C) 2003 J.Asselman <j.asselman@itsec-ps.nl>
  * 
  * This file is part of xine, a free video player.
@@ -99,10 +99,6 @@ static const resolution_t resolutions[] = {
 
 static char *tv_standard_names[] = { "AUTO", "PAL", "NTSC", "SECAM", "OLD", NULL };
 static int tv_standard_values[] = { VIDEO_MODE_AUTO, VIDEO_MODE_PAL, VIDEO_MODE_NTSC, VIDEO_MODE_SECAM, -1 };
-
-#if !defined(NDELAY) && defined(O_NDELAY)
-#define FNDELAY O_NDELAY
-#endif
 
 typedef struct pvrscr_s pvrscr_t;
 
@@ -844,7 +840,7 @@ static int open_video_capture_device(v4l_input_plugin_t *this)
 {
   int          found       = 0;
   int          tuner_found = 0;
-  int          i, ret;
+  int          ret;
   unsigned int j;
   cfg_entry_t *entry;
   
@@ -1870,11 +1866,11 @@ static input_plugin_t *v4l_class_get_radio_instance (input_class_t *cls_gen,
  * v4l input plugin class stuff
  */
 
-static char *v4l_class_get_video_description (input_class_t *this_gen) {
+static const char *v4l_class_get_video_description (input_class_t *this_gen) {
   return _("v4l tv input plugin");
 }
 
-static char *v4l_class_get_radio_description (input_class_t *this_gen) {
+static const char *v4l_class_get_radio_description (input_class_t *this_gen) {
   return _("v4l radio input plugin");
 }
 

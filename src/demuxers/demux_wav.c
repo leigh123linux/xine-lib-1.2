@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2005 the xine project
+ * Copyright (C) 2001-2008 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -112,6 +112,7 @@ static int find_chunk_by_tag(demux_wav_t *this, const uint32_t given_chunk_tag,
 static int open_wav_file(demux_wav_t *this) {
   uint8_t signature[WAV_SIGNATURE_SIZE];
   off_t wave_pos;
+  uint32_t wave_size;
 
   /* check the signature */
   if (_x_demux_read_header(this->input, signature, WAV_SIGNATURE_SIZE) != WAV_SIGNATURE_SIZE)
@@ -122,8 +123,9 @@ static int open_wav_file(demux_wav_t *this) {
 
   /* search for the 'fmt ' chunk first */
   wave_pos = 0;
-  if (find_chunk_by_tag(this, fmt_TAG, &this->wave_size, &wave_pos)==0)
+  if (find_chunk_by_tag(this, fmt_TAG, &wave_size, &wave_pos)==0)
     return 0;
+  this->wave_size = wave_size;
 
   this->input->seek(this->input, wave_pos, SEEK_SET);
   this->wave = malloc( this->wave_size );
@@ -146,7 +148,7 @@ static int open_wav_file(demux_wav_t *this) {
 
   /* search for the 'data' chunk */
   this->data_start = this->data_size = 0;
-  if (find_chunk_by_tag(this, data_TAG, &this->data_size, &this->data_start)==0)
+  if (find_chunk_by_tag(this, data_TAG, NULL, &this->data_start)==0)
   {
     free (this->wave);
     return 0;
@@ -207,11 +209,16 @@ static int demux_wav_send_chunk(demux_plugin_t *this_gen) {
       buf->size = remaining_sample_bytes;
     remaining_sample_bytes -= buf->size;
 
-    if (this->input->read(this->input, buf->content, buf->size) !=
+    off_t read;
+    if ((read = this->input->read(this->input, buf->content, buf->size)) !=
       buf->size) {
-      buf->free_buffer(buf);
-      this->status = DEMUX_FINISHED;
-      break;
+      if (read == 0) {
+        buf->free_buffer(buf);
+        this->status = DEMUX_FINISHED;
+        break;
+      } else {
+        buf->size = read;
+      }
     }
 
 #if 0

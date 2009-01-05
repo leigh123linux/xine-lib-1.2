@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2005 the xine project
+ * Copyright (C) 2001-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -324,7 +324,7 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 
     if (!this->output_open) {
       if (!this->audio_bits || !this->audio_sample_rate || !this->audio_channels) {
-        avcodec_decode_audio (this->context,
+        avcodec_decode_audio2 (this->context,
                               (int16_t *)this->decode_buffer,
                               &decode_buffer_size,
                               &this->buf[0],
@@ -369,6 +369,11 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
         /* dispatch the decoded audio */
         out = 0;
         while (out < decode_buffer_size) {
+          int stream_status = xine_get_status(this->stream);
+
+          if (stream_status == XINE_STATUS_QUIT || stream_status == XINE_STATUS_STOP)
+            return;
+
           audio_buffer = 
             this->stream->audio_out->get_buffer (this->stream->audio_out);
           if (audio_buffer->mem_size == 0) {
@@ -445,7 +450,7 @@ static void ff_audio_dispose (audio_decoder_t *this_gen) {
     free(this->context->extradata);
 
   if(this->context)
-    free(this->context);
+    av_free(this->context);
 
   free (this_gen);
 }

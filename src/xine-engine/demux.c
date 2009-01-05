@@ -138,6 +138,28 @@ void _x_demux_control_newpts( xine_stream_t *stream, int64_t pts, uint32_t flags
   pthread_mutex_unlock(&stream->demux_mutex);  
 }
 
+/* avoid ao_loop being stuck in a pthread_cond_wait, waiting for data;
+ * return 1 if the stream is stopped
+ * (better fix wanted!)
+ */
+static int demux_unstick_ao_loop (xine_stream_t *stream)
+{
+  if (!stream->audio_thread_created)
+    return 0;
+
+  int status = xine_get_status (stream);
+  if (status != XINE_STATUS_QUIT && status != XINE_STATUS_STOP)
+    return 0;
+
+  /* right, stream is stopped... */
+  audio_buffer_t *buf = stream->audio_out->get_buffer (stream->audio_out);
+  buf->num_frames = 0;
+  buf->stream = NULL;
+  stream->audio_out->put_buffer (stream->audio_out, buf, stream);
+
+  return 1;
+}
+
 /* sync with decoder fifos, making sure everything gets processed */
 void _x_demux_control_headers_done (xine_stream_t *stream) {
 
@@ -190,6 +212,9 @@ void _x_demux_control_headers_done (xine_stream_t *stream) {
     ts.tv_nsec = tv.tv_usec * 1000;
     /* use timedwait to workaround buggy pthread broadcast implementations */
     pthread_cond_timedwait (&stream->counter_changed, &stream->counter_lock, &ts);
+
+    if (demux_unstick_ao_loop (stream))
+      break;
   }
 
   stream->demux_action_pending = 0;
@@ -347,6 +372,9 @@ static void *demux_loop (void *stream_gen) {
          (stream->finished_count_video < finished_count_video)) {
     lprintf ("waiting for finisheds.\n");
     pthread_cond_wait (&stream->counter_changed, &stream->counter_lock);
+
+    if (demux_unstick_ao_loop (stream))
+      break;
   }
   pthread_mutex_unlock (&stream->counter_lock);
   

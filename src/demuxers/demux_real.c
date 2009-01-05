@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2005 the xine project
+ * Copyright (C) 2000-2008 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -1088,7 +1088,7 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
   
   /* read the packet information */
   const uint16_t stream   = _X_BE_16(&header[4]);
-  const off_t offset   = this->input->get_current_pos(this->input);
+  const off_t offset __attr_unused = this->input->get_current_pos(this->input);
   uint16_t size     = _X_BE_16(&header[2]) - DATA_PACKET_HEADER_SIZE;
   const uint32_t timestamp= _X_BE_32(&header[6]);
   int64_t pts      = (int64_t) timestamp * 90;
@@ -1132,7 +1132,7 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
 	 * seems to be a very short header
 	 * 2 bytes, purpose of the second byte yet unknown
 	 */
-	 const int bummer = stream_read_char (this);
+	 const int bummer __attr_unused = stream_read_char (this);
 	 lprintf ("bummer == %02X\n",bummer);
 
 	 vpkg_offset = 0;

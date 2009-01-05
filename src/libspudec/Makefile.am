@@ -7,7 +7,7 @@ if HAVE_DVDNAV
 xineplug_decode_spu_la_SOURCES = \
 	spu.c \
 	xine_spu_decoder.c
-xineplug_decode_spu_la_LIBADD = $(XINE_LIB) $(DVDNAV_LIBS) $(PTHREAD_LIBS)
+xineplug_decode_spu_la_LIBADD = $(XINE_LIB) $(DVDNAV_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 
 else
 
@@ -16,7 +16,7 @@ xineplug_decode_spu_la_SOURCES = \
 	spu.c \
 	xine_spu_decoder.c
 AM_CPPFLAGS = -I$(top_srcdir)/src/input/libdvdnav
-xineplug_decode_spu_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS)
+xineplug_decode_spu_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
 
 endif
 

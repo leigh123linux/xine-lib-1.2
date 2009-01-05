@@ -263,6 +263,7 @@ case "$host" in
       WIN32_CPPFLAGS='-I$(top_srcdir)/win32/include'
       LIBS="-lwinmm -lwsock32 $LIBS"
       GOOM_LIBS="-liberty"
+      LDFLAGS="-Wl,--enable-stdcall-fixup $LDFLAGS"
     fi
     LDFLAGS="-no-undefined $LDFLAGS"
     ;;
@@ -331,6 +332,7 @@ case "x$with_external_ffmpeg" in
       ;;
 esac
 if test "x$with_external_ffmpeg" != "xno"; then
+   PKG_CHECK_MODULES([FFMPEG_UTIL], [libavutil])
    PKG_CHECK_MODULES([FFMPEG_POSTPROC], [libpostproc])
    AC_SUBST([FFMPEG_CFLAGS])
    AC_SUBST([FFMPEG_LIBS])
@@ -728,7 +730,7 @@ if test "x$no_x" = "x" && test "x$enable_xvmc" != "xno"; then
 
 AC_ARG_WITH(xxmc-path, AS_HELP_STRING([--with-xxmc-path=path], [where libXvMC libraries for the
 	xxmc plugin are  installed. Defalts to the default X library path.]),
-	xxmc_path="$withval", xxmc_path="$x_libraries")
+	xxmc_path="$withval", xxmc_path="${x_libraries:-/usr/lib}")
 AC_ARG_WITH(xxmc-lib, AS_HELP_STRING([--with-xxmc-lib=XXXX], [The name of the XvMC library 
 	libXXXX.so for the xxmc plugin.]),xxmc_stub="$withval", 
 	xxmc_stub="XvMCW")
@@ -819,7 +821,7 @@ if test "x$no_x" = "x" && test "x$enable_xvmc" != "xno"; then
 
 AC_ARG_WITH(xvmc-path, AS_HELP_STRING([--with-xvmc-path=path], [where libXvMC libraries for the
 	xvmc plugin are  installed. Defalts to the default X library path.]),
-	xvmc_path="$withval", xvmc_path="$x_libraries")
+	xvmc_path="$withval", xvmc_path="${x_libraries:-/usr/lib}")
 AC_ARG_WITH(xvmc-lib, AS_HELP_STRING([--with-xvmc-lib=XXXX], [The name of the XvMC library 
 	libXXXX.so for the xvmc plugin.]),xvmc_stub="$withval", 
 	xvmc_stub="XvMCW")
@@ -1081,18 +1083,11 @@ AC_ARG_WITH([pulseaudio],
 
 if test "x$with_pulseaudio" != "xno"; then
    PKG_CHECK_MODULES([PULSEAUDIO], [libpulse], [have_pulseaudio="yes"], [have_pulseaudio="no"])
-   if test x"$have_pulseaudio" = xyes; then
-      AC_MSG_CHECKING([for pulseaudio >= 0.9.7])
-      PKG_CHECK_EXISTS([libpulse >= 0.9.7],
-        [have_pulseaudio_0_9_7="yes"],
-        [have_pulseaudio_0_9_7="no"])
-      AC_MSG_RESULT([$have_pulseaudio_0_9_7])
-      if test x"$have_pulseaudio_0_9_7" = xyes; then
-         AC_DEFINE([HAVE_PULSEAUDIO_0_9_7], 1, [define this if you have pulseaudio >= 0.9.7])
-      fi
-   fi
 fi
+
 AM_CONDITIONAL(HAVE_PULSEAUDIO, [test "x$have_pulseaudio" = x"yes"])
+AC_SUBST([PULSEAUDIO_CFLAGS])
+AC_SUBST([PULSEAUDIO_LIBS])
 
 dnl ---------------------------------------------
 dnl check for DirectX
@@ -2449,11 +2444,6 @@ XINE_REL_FONTDIR="`makeexpand "$XINE_FONTDIR" | sed -e "s,^${prefix}/,,"`"
 XINE_REL_LOCALEDIR="`makeexpand "$XINE_LOCALEDIR" | sed -e "s,^${prefix}/,,"`"
 XINE_PKGCONFIG_DIR="`makeexpand "$pkgconfigdir"`"
 if test "x$SYS" = "xmingw32" -o "x$SYS" = "xcygwin"; then
-  dnl polish paths (MinGW runtime accepts both \ and / anyway)
-  XINE_REL_PLUGINROOT="`echo "$XINE_REL_PLUGINROOT" | sed -e 's/\\//\\\\\\\\/g'`"
-  XINE_REL_PLUGINDIR="$XINE_REL_PLUGINROOT.$XINE_LT_AGE"
-  XINE_REL_FONTDIR="`echo "$XINE_REL_FONTDIR" | sed -e 's/\\//\\\\\\\\/g'`"
-  XINE_REL_LOCALEDIR="`echo "$XINE_REL_LOCALEDIR" | sed -e 's/\\//\\\\\\\\/g'`"
   dnl prefix in xine-config
   XINE_CONFIG_PREFIX="\$(cd \$(dirname \$0)/..; pwd)"
   dnl installation directories (in xine-config)
@@ -2629,35 +2619,29 @@ _AM_DEPENDENCIES([OBJC])
 
 AM_CONDITIONAL([BUILD_DMX_IMAGE], [test "x$have_imagemagick" = "xyes" -o "x$no_gdkpixbuf" != "xyes"])
 
-dnl Important warnings we _don't_ want to skip
-dnl Don't put these under conditional for optimisations, because these
-dnl need always to be enabled.
-CC_CHECK_CFLAGS([-Wformat=2], [wformat="-Wformat=2"],
-  [CC_CHECK_CFLAGS([-Wformat], [wformat="-Wformat"])])
+dnl We check for warnings here rather than with optimisations since we
+dnl want them to be _always_ enabled, to make sure the code is sane
+dnl enough.
 
-test "x$wformat" != "x" && \
-   CC_CHECK_CFLAGS([-Wno-format-zero-length], [wformat="$wformat -Wno-format-zero-length"])
+CC_CHECK_CFLAGS_APPEND([-Wall -Wchar-subscripts dnl
+			-Wnested-externs -Wcast-align dnl
+			-Wmissing-declarations -Wmissing-prototypes dnl
+			-Wmissing-format-attribute -Wno-pointer-sign])
 
-CC_CHECK_CFLAGS([-Wmissing-format-attribute], [wformat="$wformat -Wmissing-format-attribute"])
-warnflags="$warnflags $wformat"
+CC_CHECK_CFLAGS_APPEND([-Wformat=2 -Wformat],
+  [CC_CHECK_CFLAGS_APPEND([-Wno-format-zero-length])
+   break;
+  ])
+
+dnl check for strict aliasing problem, get the highest between =2 and
+dnl normal.
+CC_CHECK_CFLAGS_APPEND([-Wstrict-aliasing=2 -Wstrict-aliasing], [break;])
 
 dnl This *has* to stay at the end as it can break some autoconf tests.
-CC_CHECK_CFLAGS([-Werror-implicit-function-declaration], [warnflags="$warnflags -Werror-implicit-function-declaration"])
+CC_CHECK_CFLAGS_APPEND([-Werror=implicit-function-declaration dnl
+                        -Werror-implicit-function-declaration], [break;])
 
-CC_CHECK_CFLAGS([-Wstrict-aliasing=2], [warnflags="$warnflags -Wstrict-aliasing=2"],
-  [CC_CHECK_CFLAGS([-Wstrict-aliasing], [warnflags="$warnflags -Wstrict-aliasing"])])
-
-case $host in
-     dnl FreeBSD (et al.) does not complete linking for shared objects when pthreads
-     dnl are requested, as different implementations are present; to avoid problems
-     dnl use -Wl,-z,defs only for those platform not behaving this way.
-     *-freebsd*) ;;
-     *)
-	AC_TRY_LDFLAGS([-Wl,-z,defs], [NOUNDEF="-Wl,-z,defs"])
-	;;
-esac
-AC_SUBST([NOUNDEF])
-
+CC_NOUNDEFINED
 
 dnl signal FreeBSD have also FreeBSD based kernel.
 dnl 
@@ -2677,7 +2661,7 @@ AH_BOTTOM([
 
 
 dnl Common cflags for all platforms
-CFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE \$(MULTIPASS_CFLAGS) $warnflags $CFLAGS"
+CFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE \$(MULTIPASS_CFLAGS) $CFLAGS"
 DEBUG_CFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE $DEBUG_CFLAGS"
 
 if test "x$enable_debug" = "xyes"; then

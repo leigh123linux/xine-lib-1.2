@@ -71,7 +71,10 @@ ifeq (,$(findstring optimize,$(DEB_BUILD_OPTIONS)))
 endif
 
 # --mandir - remove after etch released (autoconf >= 2.59c gets it right)
-CONFIGURE_FLAGS := --prefix=/usr \
+CONFIGURE_FLAGS := \
+	--build $(DEB_BUILD_GNU_TYPE) \
+	--host $(DEB_HOST_GNU_TYPE) \
+	--prefix=/usr \
 	--mandir=\$${prefix}/share/man \
 	--with-external-libmad \
 	--with-external-a52dec \

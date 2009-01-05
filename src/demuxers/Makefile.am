@@ -70,10 +70,10 @@ xineplug_dmx_mpeg_pes_la_SOURCES = demux_mpeg_pes.c
 xineplug_dmx_mpeg_pes_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineplug_dmx_mpeg_ts_la_SOURCES = demux_ts.c
-xineplug_dmx_mpeg_ts_la_LIBADD = $(XINE_LIB)
+xineplug_dmx_mpeg_ts_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineplug_dmx_qt_la_SOURCES = demux_qt.c
-xineplug_dmx_qt_la_LIBADD = $(XINE_LIB) $(ZLIB_LIBS)
+xineplug_dmx_qt_la_LIBADD = $(XINE_LIB) $(ZLIB_LIBS) $(LTLIBINTL)
 xineplug_dmx_qt_la_CPPFLAGS = $(ZLIB_CPPFLAGS)
 
 xineplug_dmx_asf_la_SOURCES = demux_asf.c asfheader.c
@@ -130,7 +130,7 @@ xineplug_dmx_nsv_la_SOURCES = demux_nsv.c
 xineplug_dmx_nsv_la_LIBADD = $(XINE_LIB)
 
 xineplug_dmx_matroska_la_SOURCES = demux_matroska.c ebml.c
-xineplug_dmx_matroska_la_LIBADD = $(XINE_LIB) $(ZLIB_LIBS)
+xineplug_dmx_matroska_la_LIBADD = $(XINE_LIB) $(ZLIB_LIBS) $(LTLIBINTL)
 xineplug_dmx_matroska_la_CPPFLAGS = $(ZLIB_CPPFLAGS)
 xineplug_dmx_matroska_la_CFLAGS = $(AM_CFLAGS) -fno-strict-aliasing
 

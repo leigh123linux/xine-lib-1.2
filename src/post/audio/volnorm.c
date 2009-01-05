@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2005 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -412,7 +412,6 @@ static post_plugin_t *volnorm_open_plugin(post_class_t *class_gen, int inputs,
     post_out_t            *output;
     xine_post_in_t        *input_api;
     post_audio_port_t     *port;
-    int i;
     
     if (!this || !audio_target || !audio_target[0] ) {
         free(this);

@@ -456,23 +456,22 @@ char *xine_chomp(char *str) {
  * a thread-safe usecond sleep
  */
 void xine_usec_sleep(unsigned usec) {
-#if 0
-#if HAVE_NANOSLEEP
+#ifdef WIN32
+  /* select does not work on win32 */
+  Sleep(usec / 1000);
+#else
+#  if 0
+#    if HAVE_NANOSLEEP
   /* nanosleep is prefered on solaris, because it's mt-safe */
   struct timespec ts, remaining;
-
   ts.tv_sec =   usec / 1000000;
   ts.tv_nsec = (usec % 1000000) * 1000;
   while (nanosleep (&ts, &remaining) == -1 && errno == EINTR)
     ts = remaining;
-#else
-#  if WIN32
-  Sleep(usec / 1000);
-#  else
+#    else
   usleep(usec);
-#  endif
-#endif
-#else
+#    endif
+#  else
   if (usec < 10000) {
       usec = 10000;
   }
@@ -480,6 +479,7 @@ void xine_usec_sleep(unsigned usec) {
   tm.tv_sec  = usec / 1000000;
   tm.tv_usec = usec % 1000000;
   select(0, 0, 0, 0, &tm);
+#  endif
 #endif
 }
 

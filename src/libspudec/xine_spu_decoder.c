@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2004 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * Copyright (C) James Courtier-Dutton James@superbug.demon.co.uk - July 2001
  *
@@ -70,7 +70,6 @@ static const clut_t default_clut[] = {
 static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
   spudec_decoder_t *this = (spudec_decoder_t *) this_gen;
   const uint8_t stream_id = buf->type & 0x1f ;
-  spudec_seq_t *cur_seq = &this->spudec_stream_state[stream_id].ra_seq;
 
 #ifdef LOG_DEBUG
   printf("libspudec:got buffer type = %x\n", buf->type);

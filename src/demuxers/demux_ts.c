@@ -249,6 +249,7 @@ typedef struct {
   int64_t          packet_count;
   int              corrupted_pes;
   uint32_t         buffered_bytes;
+  int              autodetected;
 
 } demux_ts_media;
 
@@ -932,9 +933,11 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
       m->buf->free_buffer(m->buf);
       m->buf = NULL;
       
-      if (m->corrupted_pes > CORRUPT_PES_THRESHOLD) {
-        if (this->videoPid == m->pid)
+      if (m->corrupted_pes > CORRUPT_PES_THRESHOLD && m->autodetected) {
+        if (this->videoPid == m->pid) {
           this->videoPid = INVALID_PID;
+          this->last_pmt_crc = 0;
+        }
       } else {
         m->corrupted_pes++;
         xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
@@ -1855,6 +1858,7 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
         } else if (!found) {
 	  this->videoPid = pid;
 	  this->videoMedia = this->media_num;
+	  this->media[this->videoMedia].autodetected = 1;
 	  demux_ts_pes_new(this, this->media_num++, pid, this->video_fifo, 0x100 + pes_stream_id);
         }
         
@@ -2269,6 +2273,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   for (i = 0; i < MAX_PIDS; i++) {
     this->media[i].pid = INVALID_PID;
     this->media[i].buf = NULL;
+    this->media[i].autodetected = 0;
   }
 
   for (i = 0; i < MAX_PMTS; i++) {

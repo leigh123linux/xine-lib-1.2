@@ -583,7 +583,7 @@ open_plugin (demux_class_t *class_gen,
         }
         break;
         case METHOD_BY_EXTENSION: {
-            char *ending, *mrl;
+            const char *ending, *mrl;
     
             mrl = input->get_mrl (input);
     
@@ -715,22 +715,22 @@ open_plugin (demux_class_t *class_gen,
 
 /* FLAC Demuxer class */
 
-static char *
+static const char *
 get_description (demux_class_t *this_gen) {
     return "FLAC demux plugin";
 }
  
-static char *
+static const char *
 get_identifier (demux_class_t *this_gen) {
     return "FLAC";
 }
 
-static char *
+static const char *
 get_extensions (demux_class_t *this_gen) {
     return "flac";
 }
 
-static char *
+static const char *
 get_mimetypes (demux_class_t *this_gen) {
     return "audio/x-flac: flac: FLAC Audio;"
 	"audio/flac: flac: FLAC Audio;";

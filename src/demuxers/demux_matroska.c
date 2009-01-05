@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2007 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -680,7 +680,11 @@ static void init_codec_aac(demux_matroska_t *this, matroska_track_t *track) {
 
   /* Create a DecoderSpecificInfo for initialising libfaad */
   sr_index = aac_get_sr_index(atrack->sampling_freq);
-  if (!strncmp (&track->codec_id[12], "MAIN", 4))
+  /* newer specification with appended CodecPrivate */
+  if (strlen(track->codec_id) <= 12)
+    profile = 3;
+  /* older specification */
+  else if (!strncmp (&track->codec_id[12], "MAIN", 4))
     profile = 0;
   else if (!strncmp (&track->codec_id[12], "LC", 2))
     profile = 1;
@@ -1312,7 +1316,7 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
         track->codec_private_len = 0x7fffffff - sizeof(xine_bmiheader);
       
       /* create a bitmap info header struct for MPEG 4 */
-      bih = malloc(sizeof(xine_bmiheader) + track->codec_private_len);
+      bih = calloc(1, sizeof(xine_bmiheader) + track->codec_private_len);
       bih->biSize = sizeof(xine_bmiheader) + track->codec_private_len;
       bih->biCompression = ME_FOURCC('M', 'P', '4', 'S');
       bih->biWidth = track->video_track->pixel_width;
@@ -1336,7 +1340,7 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
         track->codec_private_len = 0x7fffffff - sizeof(xine_bmiheader);
       
       /* create a bitmap info header struct for h264 */
-      bih = malloc(sizeof(xine_bmiheader) + track->codec_private_len);
+      bih = calloc(1, sizeof(xine_bmiheader) + track->codec_private_len);
       bih->biSize = sizeof(xine_bmiheader) + track->codec_private_len;
       bih->biCompression = ME_FOURCC('a', 'v', 'c', '1');
       bih->biWidth = track->video_track->pixel_width;
@@ -1925,7 +1929,7 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
     lprintf("no lacing\n");
 
     block_size_left = (this->block_data + block_size) - data;
-    lprintf("size: %d, block_size: %" PRIu64 "\n", block_size_left, block_size);
+    lprintf("size: %d, block_size: %u\n", block_size_left, block_size);
 
     if (track->handle_content != NULL) {
       track->handle_content((demux_plugin_t *)this, track,

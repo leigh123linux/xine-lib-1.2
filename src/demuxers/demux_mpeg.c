@@ -342,7 +342,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
     if((this->dummy_space[0] & 0xf0) == 0x80) {
 
       /* read rest of header - AC3 */
-      i = this->input->read (this->input, this->dummy_space+1, 3);
+      this->input->read (this->input, this->dummy_space+1, 3);
 
       /* contents */
       for (i = len - 4; i > 0; i -= (this->audio_fifo)
@@ -447,7 +447,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
       header_len -= 5 ;
     }
 
-    i = this->input->read (this->input, this->dummy_space, header_len);
+    this->input->read (this->input, this->dummy_space, header_len);
 
     for (i = len; i > 0; i -= (this->audio_fifo) 
 	   ? this->audio_fifo->buffer_pool_buf_size : this->video_fifo->buffer_pool_buf_size) {
@@ -519,7 +519,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
     } 
 
     /* read rest of header */
-    i = this->input->read (this->input, this->dummy_space, header_len);
+    this->input->read (this->input, this->dummy_space, header_len);
 
     /* contents */
 
