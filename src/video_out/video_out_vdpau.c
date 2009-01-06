@@ -262,7 +262,8 @@ typedef struct {
   int               noise;
   int               deinterlace;
   int               deinterlace_method;
-  int               honnor_progressive;
+  int               enable_inverse_telecine;
+  int               honor_progressive;
 
   int               allocated_surfaces;
 
@@ -714,10 +715,10 @@ static void vdpau_provide_standard_frame_data (vo_frame_t *this_gen, xine_curren
         this->vo_frame.base[0], this->vo_frame.pitches[0],
         data->img, this->vo_frame.width,
        /* U */
-        this->vo_frame.base[1], this->vo_frame.pitches[1],
+        this->vo_frame.base[2], this->vo_frame.pitches[2],
         data->img+this->vo_frame.width*this->vo_frame.height, this->vo_frame.width/2,
        /* V */
-        this->vo_frame.base[2], this->vo_frame.pitches[2],
+        this->vo_frame.base[1], this->vo_frame.pitches[1],
         data->img+this->vo_frame.width*this->vo_frame.height+this->vo_frame.width*this->vo_frame.height/4, this->vo_frame.width/2,
        /* width x height */
         this->vo_frame.width, this->vo_frame.height);
@@ -929,7 +930,21 @@ static void vdpau_set_deinterlace( vo_driver_t *this_gen )
   printf("vo_vdpau: enabled features: temporal=%d, temporal_spatial=%d\n", feature_enables[0], feature_enables[1] );
 }
 
+static void vdpau_set_inverse_telecine( vo_driver_t *this_gen )
+{
+  vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
 
+  VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_INVERSE_TELECINE };
+  VdpBool feature_enables[1];
+  if ( this->deinterlace && this->enable_inverse_telecine )
+    feature_enables[0] = 1;
+  else
+    feature_enables[0] = 0;
+
+  vdp_video_mixer_set_feature_enables( this->video_mixer, 1, features, feature_enables );
+  vdp_video_mixer_get_feature_enables( this->video_mixer, 1, features, feature_enables );
+  printf("vo_vdpau: enabled features: inverse_telecine=%d\n", feature_enables[0] );
+}
 
 static void vdpau_update_deinterlace_method( void *this_gen, xine_cfg_entry_t *entry )
 {
@@ -940,13 +955,20 @@ static void vdpau_update_deinterlace_method( void *this_gen, xine_cfg_entry_t *e
   vdpau_set_deinterlace( (vo_driver_t*)this_gen );
 }
 
-
-
-static void vdpau_honnor_progressive_flag( void *this_gen, xine_cfg_entry_t *entry )
+static void vdpau_update_enable_inverse_telecine( void *this_gen, xine_cfg_entry_t *entry )
 {
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
 
-  this->honnor_progressive = entry->num_value;
+  this->enable_inverse_telecine = entry->num_value;
+  printf( "vo_vdpau: enable inverse_telecine=%d\n", this->enable_inverse_telecine );
+  vdpau_set_inverse_telecine( (vo_driver_t*)this_gen );
+}
+
+static void vdpau_honor_progressive_flag( void *this_gen, xine_cfg_entry_t *entry )
+{
+  vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
+
+  this->honor_progressive = entry->num_value;
 }
 
 
@@ -1176,7 +1198,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     layer[layer_count-1].struct_version = VDP_LAYER_VERSION;
   }
 
-  int non_progressive = (this->honnor_progressive && !frame->vo_frame.progressive_frame) || !this->honnor_progressive;
+  int non_progressive = (this->honor_progressive && !frame->vo_frame.progressive_frame) || !this->honor_progressive;
   if ( frame->vo_frame.duration>2500 && this->deinterlace && non_progressive && frame->format==XINE_IMGFMT_VDPAU ) {
     VdpTime current_time = 0;
     VdpVideoSurface past[2];
@@ -1750,11 +1772,17 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
            "The best, but very GPU intensive.\n\n"),
          10, vdpau_update_deinterlace_method, this );
 
-  this->honnor_progressive = config->register_bool( config, "video.output.vdpau_honnor_progressive", 0,
+  this->enable_inverse_telecine = config->register_bool( config, "video.output.vdpau_enable_inverse_telecine", 1,
+      _("vdpau: Try to recreatea progressive frames pulldown material"),
+      _("Enable this to detect bad-flagged progressive content to which\n"
+        "a 2:2 or 3:2 pulldown was applied.\n\n"),
+        10, vdpau_update_enable_inverse_telecine, this );
+
+  this->honor_progressive = config->register_bool( config, "video.output.vdpau_honor_progressive", 0,
         _("vdpau: disable deinterlacing when progressive_frame flag is set"),
         _("Set to true if you want to trust the progressive_frame stream's flag.\n"
           "This flag is not always reliable.\n\n"),
-        10, vdpau_honnor_progressive_flag, this );
+        10, vdpau_honor_progressive_flag, this );
 
   this->capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP | VO_CAP_UNSCALED_OVERLAY | VO_CAP_CUSTOM_EXTENT_OVERLAY | VO_CAP_ARGB_LAYER_OVERLAY;
   ok = 0;
