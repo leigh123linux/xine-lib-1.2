@@ -1,3 +1,5 @@
+xine-lib (1.1.17) 2009-??-??
+
 xine-lib (1.1.16) 2009-01-07
   * Security fixes:
     - Heap overflow in Quicktime atom parsing.                 (CVE-2008-5234)
