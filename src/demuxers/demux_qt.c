@@ -730,11 +730,17 @@ static int is_qt_file(input_plugin_t *qt_file) {
   }
 }
 
-static char *parse_data_atom(const uint8_t *data_atom) {
-  const uint32_t data_atom_size = _X_BE_32(&data_atom[0]);
+static char *parse_data_atom(const uint8_t *data_atom, uint32_t max_size) {
+  uint32_t data_atom_size = _X_BE_32(&data_atom[0]);
   
   static const int data_atom_max_version = 0;
   const int data_atom_version = data_atom[8];
+
+  if (data_atom_size < 8)
+    return NULL; /* too small */
+
+  if (data_atom_size > max_size)
+    data_atom_size = max_size;
 
   const size_t alloc_size = data_atom_size - 8 + 1;
   char *alloc_str = NULL;
@@ -803,7 +809,7 @@ static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
 	const uint8_t *const sub_atom = &meta_atom[j];
 	const qt_atom sub_atom_code = _X_BE_32(&sub_atom[4]);
 	const uint32_t sub_atom_size = _X_BE_32(&sub_atom[0]);
-	char *const data_atom = parse_data_atom(&sub_atom[8]);
+	char *const data_atom = parse_data_atom(&sub_atom[8], current_atom_size - j);
 
 	switch(sub_atom_code) {
 	case ART_ATOM:
@@ -994,7 +1000,11 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
       /* allocate space for each of the properties unions */
       trak->stsd_atoms_count = _X_BE_32(&trak_atom[i + 8]);
-      trak->stsd_atoms = xine_xcalloc(trak->stsd_atoms_count, sizeof(properties_t));
+      if (trak->stsd_atoms_count <= 0) {
+        last_error = QT_HEADER_TROUBLE;
+        goto free_trak;
+      }
+      trak->stsd_atoms = calloc(trak->stsd_atoms_count, sizeof(properties_t));
       if (!trak->stsd_atoms) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1005,6 +1015,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
       for (k = 0; k < trak->stsd_atoms_count; k++) {
 
         const uint32_t current_stsd_atom_size = _X_BE_32(&trak_atom[atom_pos - 4]);      
+        if (current_stsd_atom_size < 4) {
+          last_error = QT_HEADER_TROUBLE;
+          goto free_trak;
+        }
 
         if (trak->type == MEDIA_VIDEO) {
 	  /* for palette traversal */
@@ -1626,6 +1640,9 @@ static qt_error parse_reference_atom (reference_t *ref,
   int i, j;
   const unsigned int ref_atom_size = _X_BE_32(&ref_atom[0]);
 
+  if (ref_atom_size >= 0x80000000)
+    return QT_NOT_A_VALID_FILE;
+
   /* initialize reference atom */
   ref->url = NULL;
   ref->data_rate = 0;
@@ -2240,7 +2257,7 @@ static qt_error open_qt_file(qt_info *info, input_plugin_t *input,
   }
 
   /* check if moov is compressed */
-  if (_X_BE_32(&moov_atom[12]) == CMOV_ATOM) {
+  if (_X_BE_32(&moov_atom[12]) == CMOV_ATOM && moov_atom_size >= 0x28) {
 
     info->compressed_header = 1;
 

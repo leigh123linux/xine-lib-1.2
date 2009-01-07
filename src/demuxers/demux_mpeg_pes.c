@@ -1691,7 +1691,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     if (((input->get_capabilities(input) & INPUT_CAP_SEEKABLE) != 0) ) {
 
       input->seek(input, 0, SEEK_SET);
-      if (input->read(input, (char *)this->scratch, 6)) {
+      if (input->read(input, (char *)this->scratch, 6) == 6) {
 	lprintf("open_plugin:read worked\n");
 
         if (this->scratch[0] || this->scratch[1]

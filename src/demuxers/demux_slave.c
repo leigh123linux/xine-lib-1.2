@@ -90,10 +90,11 @@ static int demux_slave_next (demux_slave_t *this) {
   /* fill the scratch buffer */
   n = this->input->read(this->input, &this->scratch[this->scratch_used],
                         SCRATCH_SIZE - this->scratch_used);
-  this->scratch_used += n;
+  if (n > 0)
+    this->scratch_used += n;
   this->scratch[this->scratch_used] = '\0';
 
-  if( !n ) {
+  if (n <= 0) {
     lprintf("connection closed\n");
     this->status = DEMUX_FINISHED;
     return 0;

@@ -2590,6 +2590,10 @@ static buf_element_t *dvb_plugin_read_block (input_plugin_t *this_gen,
   buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
   int                   total_bytes;
 
+  if (todo < 0 || todo > buf->size) {
+    buf->free_buffer (buf);
+    return NULL;
+  }
 
   buf->content = buf->mem;
   buf->type    = BUF_DEMUX_BLOCK;
