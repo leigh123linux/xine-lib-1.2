@@ -37,12 +37,13 @@ case `echo -n` in
 *)      _echo_n=-n _echo_c=;;
 esac
 
+srcdir="`dirname "$0"`"
+
 detect_configure_ac() {
 
-  srcdir=`dirname $0`
   test -z "$srcdir" && srcdir=.
 
-  (test -f $srcdir/configure.ac) || {
+  (test -f "$srcdir"/configure.ac) || {
     echo $_echo_n "*** Error ***: Directory "\`$srcdir\`" does not look like the"
     echo " top-level directory"
     exit 1
@@ -248,7 +249,11 @@ run_configure () {
     echo "   ** If you wish to pass arguments to ./configure, please"
     echo "   ** specify them on the command line."
   fi
-  ./configure "$@" 
+  if test -f configure; then
+    ./configure "$@"
+  else
+    "$srcdir"/configure "$@"
+  fi
 }
 
 
@@ -256,6 +261,7 @@ run_configure () {
 # MAIN
 #---------------
 detect_configure_ac
+cd "$srcdir"
 detect_autoconf
 detect_libtool
 detect_automake
@@ -295,6 +301,8 @@ case "$1" in
     run_autoheader
     run_automake
     run_autoconf
+    # return to our original directory
+    cd - >/dev/null
     run_configure "$@"
     ;;
 esac
