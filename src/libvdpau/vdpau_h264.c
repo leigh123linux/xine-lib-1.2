@@ -66,6 +66,7 @@ typedef struct vdpau_h264_decoder_s {
   uint32_t          last_top_field_order_cnt;
 
   VdpDecoder        decoder;
+  int               decoder_started;
 
   VdpDecoderProfile profile;
   vdpau_accel_t     *vdpau_accel;
@@ -370,6 +371,14 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *)this_gen;
   vo_frame_t *img = this->last_img;
 
+  VdpPictureInfoH264 pic;
+  fill_vdpau_pictureinfo_h264(this_gen, slice_count, &pic);
+
+  if(!this->decoder_started && !pic.is_reference)
+    return;
+
+  this->decoder_started = 1;
+
   struct seq_parameter_set_rbsp *sps = this->nal_parser->current_nal->sps;
   struct slice_header *slc = this->nal_parser->current_nal->slc;
 
@@ -387,8 +396,6 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
   this->nal_parser->is_idr = 0;
 
   /* go and decode a frame */
-  VdpPictureInfoH264 pic;
-  fill_vdpau_pictureinfo_h264(this_gen, slice_count, &pic);
 
   //dump_pictureinfo_h264(&pic);
 
@@ -423,6 +430,7 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
   if(this->vdp_runtime_nr != *(this->vdpau_accel->current_vdp_runtime_nr)) {
     printf("VDPAU was preempted. Reinitialise the decoder.\n");
     this->decoder = VDP_INVALID_HANDLE;
+    this->decoder_started = 0;
     this->vdp_runtime_nr = this->vdpau_accel->vdp_runtime_nr;
     this->last_img = NULL;
     this->last_ref_pic = NULL;
@@ -538,7 +546,6 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
   VdpBitstreamBuffer vdp_buffer;
   vdp_buffer.struct_version = VDP_BITSTREAM_BUFFER_VERSION;
-
 
   /* a video decoder does not care about this flag (?) */
   if (buf->decoder_flags & BUF_FLAG_PREVIEW)
@@ -691,6 +698,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->class                             = (vdpau_h264_class_t *) class_gen;
 
   this->decoder                           = VDP_INVALID_HANDLE;
+  this->decoder_started                   = 0;
   this->vdp_runtime_nr                    = 1;
 
   this->nal_parser = init_parser();
