@@ -120,7 +120,9 @@ VdpDecoderCreate *vdp_decoder_create;
 VdpDecoderDestroy *vdp_decoder_destroy;
 VdpDecoderRender *vdp_decoder_render;
 
-
+VdpPreemptionCallbackRegister *vdp_preemption_callback_register;
+static void vdp_preemption_callback( VdpDevice device, void *context );
+static void vdpau_reinit( vo_driver_t *this_gen );
 
 static VdpVideoSurfaceCreate *orig_vdp_video_surface_create;
 static VdpVideoSurfaceDestroy *orig_vdp_video_surface_destroy;
@@ -199,6 +201,7 @@ typedef struct {
 
 
 typedef struct {
+
   vo_driver_t        vo_driver;
   vo_scale_t         sc;
 
@@ -264,6 +267,9 @@ typedef struct {
   int               deinterlace_method;
   int               enable_inverse_telecine;
   int               honor_progressive;
+
+  int               vdp_runtime_nr;
+  int               reinit_needed;
 
   int               allocated_surfaces;
 
@@ -661,6 +667,8 @@ static vo_frame_t *vdpau_alloc_frame (vo_driver_t *this_gen)
   frame->vdpau_accel_data.vdp_decoder_destroy = vdp_decoder_destroy;
   frame->vdpau_accel_data.vdp_decoder_render = vdp_decoder_render;
   frame->vdpau_accel_data.vdp_get_error_string = vdp_get_error_string;
+  frame->vdpau_accel_data.vdp_runtime_nr = this->vdp_runtime_nr;
+  frame->vdpau_accel_data.current_vdp_runtime_nr = &this->vdp_runtime_nr;
 
   return (vo_frame_t *) frame;
 }
@@ -796,7 +804,8 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
   VdpChromaType chroma = (flags & VO_CHROMA_422) ? VDP_CHROMA_TYPE_422 : VDP_CHROMA_TYPE_420;
 
   /* Check frame size and format and reallocate if necessary */
-  if ( (frame->width != width) || (frame->height != height) || (frame->format != format) || (frame->format==XINE_IMGFMT_VDPAU && frame->vdpau_accel_data.chroma!=chroma) ) {
+  if ( (frame->width != width) || (frame->height != height) || (frame->format != format) || (frame->format==XINE_IMGFMT_VDPAU && frame->vdpau_accel_data.chroma!=chroma) ||
+        (frame->vdpau_accel_data.vdp_runtime_nr != this->vdp_runtime_nr)) {
     //printf("vo_vdpau: updating frame to %d x %d (ratio=%g, format=%08X)\n", width, height, ratio, format);
 
     /* (re-) allocate render space */
@@ -831,6 +840,12 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
         frame->vo_frame.proc_duplicate_frame_data = NULL;
         frame->vo_frame.proc_provide_standard_frame_data = NULL;
       }
+    }
+
+    if ( frame->vdpau_accel_data.vdp_runtime_nr != this->vdp_runtime_nr ) {
+      frame->vdpau_accel_data.surface = VDP_INVALID_HANDLE;
+      frame->vdpau_accel_data.vdp_runtime_nr = this->vdp_runtime_nr;
+      frame->vdpau_accel_data.vdp_device = vdp_device;
     }
 
     if ( (format == XINE_IMGFMT_VDPAU) && (frame->vdpau_accel_data.surface == VDP_INVALID_HANDLE) ) {
@@ -1062,6 +1077,9 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   uint32_t mix_h = this->video_mixer_height;
   VdpTime stream_speed;
 
+
+  if(this->reinit_needed)
+    vdpau_reinit(this_gen);
 
   if ( (frame->width != this->sc.delivered_width) || (frame->height != this->sc.delivered_height) || (frame->ratio != this->sc.delivered_ratio) ) {
     this->sc.force_redraw = 1;    /* trigger re-calc of output size */
@@ -1507,7 +1525,81 @@ static int vdpau_init_error( VdpStatus st, const char *msg, vo_driver_t *driver,
   return 0;
 }
 
+static void vdpau_reinit( vo_driver_t *this_gen )
+{
+  printf("VDPAU was pre-empted. Reinit.\n");
+  vdpau_driver_t *this = (vdpau_driver_t *)this_gen;
 
+  XLockDisplay(guarded_display);
+  vdpau_release_back_frames(this_gen);
+
+  VdpStatus st = vdp_device_create_x11( this->display, this->screen, &vdp_device, &vdp_get_proc_address );
+
+  if ( st != VDP_STATUS_OK ) {
+    printf( "vo_vdpau: Can't create vdp device : " );
+    if ( st == VDP_STATUS_NO_IMPLEMENTATION )
+      printf( "No vdpau implementation.\n" );
+    else
+      printf( "unsupported GPU?\n" );
+    vdpau_dispose( &this->vo_driver );
+    return;
+  }
+
+  st = vdp_queue_target_create_x11( vdp_device, this->drawable, &vdp_queue_target );
+  if ( vdpau_init_error( st, "Can't create presentation queue target !!", &this->vo_driver, 1 ) )
+    return;
+  st = vdp_queue_create( vdp_device, vdp_queue_target, &vdp_queue );
+  if ( vdpau_init_error( st, "Can't create presentation queue !!", &this->vo_driver, 1 ) )
+    return;
+
+
+  VdpChromaType chroma = VDP_CHROMA_TYPE_420;
+  st = orig_vdp_video_surface_create( vdp_device, chroma, this->soft_surface_width, this->soft_surface_height, &this->soft_surface );
+  if ( vdpau_init_error( st, "Can't create video surface !!", &this->vo_driver, 1 ) )
+    return;
+
+  this->current_output_surface = 0;
+  this->init_queue = 0;
+  st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[0], this->output_surface_height[0], &this->output_surface[0] );
+  if ( vdpau_init_error( st, "Can't create first output surface !!", &this->vo_driver, 1 ) ) {
+    orig_vdp_video_surface_destroy( this->soft_surface );
+    return;
+  }
+  st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[0], this->output_surface_height[0], &this->output_surface[1] );
+  if ( vdpau_init_error( st, "Can't create second output surface !!", &this->vo_driver, 1 ) ) {
+    orig_vdp_video_surface_destroy( this->soft_surface );
+    vdp_output_surface_destroy( this->output_surface[0] );
+    return;
+  }
+
+  this->video_mixer_chroma = chroma;
+  VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION, VDP_VIDEO_MIXER_FEATURE_SHARPNESS,
+        VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL };
+  VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
+  int num_layers = 3;
+  void const *param_values[] = { &this->video_mixer_width, &this->video_mixer_height, &chroma, &num_layers };
+  st = vdp_video_mixer_create( vdp_device, 4, features, 4, params, param_values, &this->video_mixer );
+  if ( vdpau_init_error( st, "Can't create video mixer !!", &this->vo_driver, 1 ) ) {
+    orig_vdp_video_surface_destroy( this->soft_surface );
+    vdp_output_surface_destroy( this->output_surface[0] );
+    vdp_output_surface_destroy( this->output_surface[1] );
+    return;
+  }
+
+  vdp_preemption_callback_register(vdp_device, &vdp_preemption_callback, (void*)this);
+
+  XUnlockDisplay(guarded_display);
+  printf("Reinit done.\n");
+  this->vdp_runtime_nr++;
+  this->reinit_needed = 0;
+}
+
+static void vdp_preemption_callback(VdpDevice device, void *context)
+{
+  printf("VDPAU preemption callback\n");
+  vdpau_driver_t *this = (vdpau_driver_t *)context;
+  this->reinit_needed = 1;
+}
 
 static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const void *visual_gen)
 {
@@ -1707,6 +1799,13 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_BITMAP_SURFACE_PUT_BITS_NATIVE , (void*)&vdp_bitmap_put_bits );
   if ( vdpau_init_error( st, "Can't get BITMAP_SURFACE_PUT_BITS_NATIVE proc address !!", &this->vo_driver, 1 ) )
     return NULL;
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_PREEMPTION_CALLBACK_REGISTER, (void*)&vdp_preemption_callback_register );
+  if ( vdpau_init_error( st, "Can't get PREEMPTION_CALLBACK_REGISTER proc address !!", &this->vo_driver, 1 ) )
+      return NULL;
+
+  st = vdp_preemption_callback_register(vdp_device, &vdp_preemption_callback, (void*)this);
+  if ( vdpau_init_error( st, "Can't register preemption callback !!", &this->vo_driver, 1 ) )
+        return NULL;
 
   st = vdp_queue_target_create_x11( vdp_device, this->drawable, &vdp_queue_target );
   if ( vdpau_init_error( st, "Can't create presentation queue target !!", &this->vo_driver, 1 ) )
@@ -1815,6 +1914,8 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->deinterlace = 0;
 
   this->allocated_surfaces = 0;
+
+  this->vdp_runtime_nr = 1;
 
   return &this->vo_driver;
 }

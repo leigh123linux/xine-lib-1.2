@@ -49,6 +49,9 @@ typedef struct {
   VdpVideoSurface surface;
   VdpChromaType chroma;
 
+  int vdp_runtime_nr; /* this is used to keep in sync on preemptions */
+  int *current_vdp_runtime_nr;
+
 } vdpau_accel_t;
 
 #ifdef __cplusplus

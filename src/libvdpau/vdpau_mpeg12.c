@@ -143,6 +143,8 @@ typedef struct {
 
   vdpau_accel_t *accel_vdpau;
 
+  int         vdp_runtime_nr;
+
 } sequence_t;
 
 
@@ -578,6 +580,7 @@ static void decode_render( vdpau_mpeg12_decoder_t *vd, vdpau_accel_t *accel )
       vd->decoder_profile = seq->profile;
       vd->decoder_width = seq->coded_width;
       vd->decoder_height = seq->coded_height;
+      seq->vdp_runtime_nr = accel->vdp_runtime_nr;
     }
   }
 
@@ -671,6 +674,16 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
   if ( !seq->accel_vdpau )
     seq->accel_vdpau = accel;
 
+  if( seq->vdp_runtime_nr != *(seq->accel_vdpau->current_vdp_runtime_nr) ) {
+    seq->accel_vdpau = accel;
+    if ( seq->forward_ref )
+      seq->forward_ref->free( seq->forward_ref );
+    seq->forward_ref = NULL;
+    if ( seq->backward_ref )
+      seq->backward_ref->free( seq->backward_ref );
+    seq->backward_ref = NULL;
+    vd->decoder = VDP_INVALID_HANDLE;
+  }
   img->drawn = 0;
   //printf("vdpau_mpeg12: .. got image %d\n", img);
 
@@ -870,6 +883,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->sequence.buf = (uint8_t*)malloc(this->sequence.bufsize);
   this->sequence.forward_ref = 0;
   this->sequence.backward_ref = 0;
+  this->sequence.vdp_runtime_nr = 1;
   reset_sequence( &this->sequence );
 
   init_picture( &this->sequence.picture );
