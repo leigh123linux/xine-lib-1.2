@@ -50,9 +50,6 @@ typedef struct vdpau_h264_decoder_s {
 
   /* these are traditional variables in a video decoder object */
   uint64_t          video_step;  /* frame duration in pts units */
-  int               decoder_started;  /* current decoder status */
-  int               decoder_initialized; /* vdpau init state */
-  int               skipframes;
 
   unsigned char    *buf;         /* the accumulated buffer data */
   int               bufsize;     /* the maximum size of buf */
@@ -71,7 +68,6 @@ typedef struct vdpau_h264_decoder_s {
   VdpDecoder        decoder;
 
   VdpDecoderProfile profile;
-  VdpPictureInfoH264 vdp_picture_info;
   vdpau_accel_t     *vdpau_accel;
 
   xine_t            *xine;
@@ -166,6 +162,371 @@ static inline void dump_pictureinfo_h264(VdpPictureInfoH264 *pic)
 
 }
 
+static void set_ratio(video_decoder_t *this_gen)
+{
+  vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *)this_gen;
+
+  this->ratio = (double)this->width / (double)this->height;
+  if(this->nal_parser->current_nal->sps->vui_parameters.aspect_ration_info_present_flag) {
+    switch(this->nal_parser->current_nal->sps->vui_parameters.aspect_ratio_idc) {
+      case ASPECT_1_1:
+        this->ratio = 1 * this->ratio;
+        break;
+      case ASPECT_12_11:
+        this->ratio *= 12.0/11.0;
+        break;
+      case ASPECT_10_11:
+        this->ratio *= 10.0/11.0;
+        break;
+      case ASPECT_16_11:
+        this->ratio *= 16.0/11.0;
+        break;
+      case ASPECT_40_33:
+        this->ratio *= 40.0/33.0;
+        break;
+      case ASPECT_24_11:
+        this->ratio *= 24.0/11.0;
+        break;
+      case ASPECT_20_11:
+        this->ratio *= 20.0/11.0;
+        break;
+      case ASPECT_32_11:
+        this->ratio *= 32.0/11.0;
+        break;
+      case ASPECT_80_33:
+        this->ratio *= 80.0/33.0;
+        break;
+      case ASPECT_18_11:
+        this->ratio *= 18.0/11.0;
+        break;
+      case ASPECT_15_11:
+        this->ratio *= 15.0/11.0;
+        break;
+      case ASPECT_64_33:
+        this->ratio *= 64.0/33.0;
+        break;
+      case ASPECT_160_99:
+        this->ratio *= 160.0/99.0;
+        break;
+      case ASPECT_4_3:
+        this->ratio *= 4.0/3.0;
+        break;
+      case ASPECT_3_2:
+        this->ratio *= 3.0/2.0;
+        break;
+      case ASPECT_2_1:
+        this->ratio *= 2.0/1.0;
+        break;
+      case ASPECT_EXTENDED_SAR:
+        this->ratio *=
+          (double)this->nal_parser->current_nal->sps->vui_parameters.sar_width/
+          (double)this->nal_parser->current_nal->sps->vui_parameters.sar_height;
+        break;
+    }
+  }
+}
+
+static void fill_vdpau_pictureinfo_h264(video_decoder_t *this_gen, uint32_t slice_count, VdpPictureInfoH264 *pic)
+{
+  vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *)this_gen;
+
+  struct pic_parameter_set_rbsp *pps = this->nal_parser->current_nal->pps;
+  struct seq_parameter_set_rbsp *sps = this->nal_parser->current_nal->sps;
+  struct slice_header *slc = this->nal_parser->current_nal->slc;
+
+  pic->slice_count = slice_count;
+  pic->field_order_cnt[0] = this->nal_parser->current_nal->top_field_order_cnt;
+  pic->field_order_cnt[1] = this->nal_parser->current_nal->bottom_field_order_cnt;
+  pic->is_reference =
+    (this->nal_parser->current_nal->nal_ref_idc != 0) ? VDP_TRUE : VDP_FALSE;
+  pic->frame_num = slc->frame_num;
+  pic->field_pic_flag = slc->field_pic_flag;
+  pic->bottom_field_flag = slc->bottom_field_flag;
+  //pic->num_ref_frames = sps->num_ref_frames;
+  pic->mb_adaptive_frame_field_flag = sps->mb_adaptive_frame_field_flag;
+  pic->constrained_intra_pred_flag = pps->constrained_intra_pred_flag;
+  pic->weighted_pred_flag = pps->weighted_pred_flag;
+  pic->weighted_bipred_idc = pps->weighted_bipred_idc;
+  pic->frame_mbs_only_flag = sps->frame_mbs_only_flag;
+  pic->transform_8x8_mode_flag = pps->transform_8x8_mode_flag;
+  pic->chroma_qp_index_offset = pps->chroma_qp_index_offset;
+  pic->second_chroma_qp_index_offset = pps->second_chroma_qp_index_offset;
+  pic->pic_init_qp_minus26 = pps->pic_init_qp_minus26;
+  pic->num_ref_idx_l0_active_minus1 = pps->num_ref_idx_l0_active_minus1;
+  pic->num_ref_idx_l1_active_minus1 = pps->num_ref_idx_l1_active_minus1;
+  pic->log2_max_frame_num_minus4 = sps->log2_max_frame_num_minus4;
+  pic->pic_order_cnt_type = sps->pic_order_cnt_type;
+  pic->log2_max_pic_order_cnt_lsb_minus4 = sps->log2_max_pic_order_cnt_lsb_minus4;
+  pic->delta_pic_order_always_zero_flag = sps->delta_pic_order_always_zero_flag;
+  pic->direct_8x8_inference_flag = sps->direct_8x8_inference_flag;
+  pic->entropy_coding_mode_flag = pps->entropy_coding_mode_flag;
+  pic->pic_order_present_flag = pps->pic_order_present_flag;
+  pic->deblocking_filter_control_present_flag = pps->deblocking_filter_control_present_flag;
+  pic->redundant_pic_cnt_present_flag = pps->redundant_pic_cnt_present_flag;
+  memcpy(pic->scaling_lists_4x4, pps->scaling_lists_4x4, sizeof(pic->scaling_lists_4x4));
+  memcpy(pic->scaling_lists_8x8, pps->scaling_lists_8x8, sizeof(pic->scaling_lists_8x8));
+
+  /* set num_ref_frames to the number of actually available reference frames,
+   * if this is not set generation 3 decoders will fail. */
+  pic->num_ref_frames = fill_vdpau_reference_list(&(this->nal_parser->dpb), pic->referenceFrames);
+
+}
+
+static int vdpau_decoder_init(video_decoder_t *this_gen)
+{
+  vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *)this_gen;
+  vo_frame_t *img;
+
+  this->curr_pts = this->next_pts;
+  this->next_pts = 0;
+
+  if(this->width == 0) {
+    this->width = this->nal_parser->current_nal->sps->pic_width;
+    this->height = this->nal_parser->current_nal->sps->pic_height;
+  }
+
+  set_ratio(this_gen);
+
+  _x_stream_info_set( this->stream, XINE_STREAM_INFO_VIDEO_WIDTH, this->width );
+  _x_stream_info_set( this->stream, XINE_STREAM_INFO_VIDEO_HEIGHT, this->height );
+  _x_stream_info_set( this->stream, XINE_STREAM_INFO_VIDEO_RATIO, ((double)10000*this->ratio) );
+  _x_stream_info_set( this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->video_step );
+  _x_meta_info_set_utf8( this->stream, XINE_META_INFO_VIDEOCODEC, "H264/AVC (vdpau)" );
+  xine_event_t event;
+  xine_format_change_data_t data;
+  event.type = XINE_EVENT_FRAME_FORMAT_CHANGE;
+  event.stream = this->stream;
+  event.data = &data;
+  event.data_length = sizeof(data);
+  data.width = this->width;
+  data.height = this->height;
+  data.aspect = this->ratio;
+  xine_event_send( this->stream, &event );
+
+  switch(this->nal_parser->current_nal->sps->profile_idc) {
+    case 100:
+      this->profile = VDP_DECODER_PROFILE_H264_HIGH;
+      break;
+    case 77:
+      this->profile = VDP_DECODER_PROFILE_H264_MAIN;
+      break;
+    case 66:
+    default:
+      // nvidia's VDPAU doesn't support BASELINE. But most (every?) streams marked BASELINE do not use BASELINE specifics,
+      // so, just force MAIN.
+      //this->profile = VDP_DECODER_PROFILE_H264_BASELINE;
+      this->profile = VDP_DECODER_PROFILE_H264_MAIN;
+      break;
+  }
+
+  // Level 4.1 limits:
+  int ref_frames = 0;
+  if(this->nal_parser->current_nal->sps->num_ref_frames) {
+    ref_frames = this->nal_parser->current_nal->sps->num_ref_frames;
+  } else {
+    uint32_t round_width = (this->width + 15) & ~15;
+    uint32_t round_height = (this->height + 15) & ~15;
+    uint32_t surf_size = (round_width * round_height * 3) / 2;
+    ref_frames = (12 * 1024 * 1024) / surf_size;
+  }
+
+  if (ref_frames > 16) {
+      ref_frames = 16;
+  }
+
+  printf("Allocate %d reference frames\n", ref_frames);
+  /* get the vdpau context from vo */
+  //(this->stream->video_out->open) (this->stream->video_out, this->stream);
+  img = this->stream->video_out->get_frame (this->stream->video_out,
+                                    this->width, this->height,
+                                    this->ratio,
+                                    XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS);
+
+   this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
+
+   /*VdpBool is_supported;
+   uint32_t max_level, max_references, max_width, max_height;*/
+   if(this->vdpau_accel->vdp_runtime_nr > 0) {
+     xprintf(this->xine, XINE_VERBOSITY_LOG,
+         "Create decoder: vdp_device: %d, profile: %d, res: %dx%d\n",
+         this->vdpau_accel->vdp_device, this->profile, this->width, this->height);
+
+     VdpStatus status = this->vdpau_accel->vdp_decoder_create(this->vdpau_accel->vdp_device,
+         this->profile, this->width, this->height, 16, &this->decoder);
+
+     if(status != VDP_STATUS_OK) {
+       xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: ERROR: VdpDecoderCreate returned status != OK (%s)\n", this->vdpau_accel->vdp_get_error_string(status));
+       return 0;
+     }
+   }
+   this->last_img = img;
+   this->dangling_img = img;
+
+   return 1;
+}
+
+static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *vdp_buffer, uint32_t slice_count)
+{
+  vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *)this_gen;
+  vo_frame_t *img = this->last_img;
+
+  struct seq_parameter_set_rbsp *sps = this->nal_parser->current_nal->sps;
+  struct slice_header *slc = this->nal_parser->current_nal->slc;
+
+  if(sps->vui_parameters_present_flag &&
+      sps->vui_parameters.timing_info_present_flag &&
+      this->video_step == 0) {
+    this->video_step = 2*90000/(1/((double)sps->vui_parameters.num_units_in_tick/(double)sps->vui_parameters.time_scale));
+  }
+
+  /* flush the DPB if this frame was an IDR */
+  //printf("is_idr: %d\n", this->nal_parser->is_idr);
+  if(this->nal_parser->current_nal->nal_unit_type == NAL_SLICE_IDR) {
+    dpb_flush(&(this->nal_parser->dpb));
+  }
+  this->nal_parser->is_idr = 0;
+
+  /* go and decode a frame */
+  VdpPictureInfoH264 pic;
+  fill_vdpau_pictureinfo_h264(this_gen, slice_count, &pic);
+
+  //dump_pictureinfo_h264(&pic);
+
+  /*int i;
+  printf("Decode data: \n");
+  for(i = 0; i < ((vdp_buffer.bitstream_bytes < 20) ? vdp_buffer.bitstream_bytes : 20); i++) {
+    printf("%02x ", ((uint8_t*)vdp_buffer.bitstream)[i]);
+    if((i+1) % 10 == 0)
+      printf("\n");
+  }
+  printf("\n...\n");
+  for(i = vdp_buffer.bitstream_bytes - 20; i < vdp_buffer.bitstream_bytes; i++) {
+    printf("%02x ", ((uint8_t*)vdp_buffer.bitstream)[i]);
+    if((i+1) % 10 == 0)
+      printf("\n");
+  }*/
+
+
+  if(img == NULL) {
+    img = this->stream->video_out->get_frame (this->stream->video_out,
+                                              this->width, this->height,
+                                              this->ratio,
+                                              XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS);
+    this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
+
+    img->duration  = this->video_step;
+    img->pts       = this->curr_pts;
+
+    this->dangling_img = img;
+  }
+
+  if(this->vdp_runtime_nr != *(this->vdpau_accel->current_vdp_runtime_nr)) {
+    printf("VDPAU was preempted. Reinitialise the decoder.\n");
+    this->decoder = VDP_INVALID_HANDLE;
+    this->vdp_runtime_nr = this->vdpau_accel->vdp_runtime_nr;
+    this->last_img = NULL;
+    this->last_ref_pic = NULL;
+    dpb_free_all(&this->nal_parser->dpb);
+    free_parser(this->nal_parser);
+    this->nal_parser = init_parser();
+    if(img) {
+      img->free(img);
+      img = NULL;
+    }
+    return 0;
+  }
+
+  VdpVideoSurface surface = this->vdpau_accel->surface;
+
+  //printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer.bitstream_bytes, this->curr_pts);
+  VdpStatus status = this->vdpau_accel->vdp_decoder_render(this->decoder,
+      surface, (VdpPictureInfo*)&pic, 1, vdp_buffer);
+
+  // FIXME: do we really hit all cases here?
+  if(((uint8_t*)vdp_buffer->bitstream) != NULL) {
+    free((uint8_t*)vdp_buffer->bitstream);
+  }
+
+  this->curr_pts = this->next_pts;
+  this->next_pts = 0;
+
+  if(status != VDP_STATUS_OK)
+  {
+    xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %s\n",  this->vdpau_accel->vdp_get_error_string(status));
+    img->free(img);
+    img = this->last_img = this->dangling_img = NULL;
+  }
+  else {
+    img->bad_frame = 0;
+
+    if((sps->vui_parameters_present_flag &&
+        sps->vui_parameters.pic_struct_present_flag &&
+        !this->nal_parser->current_nal->interlaced) ||
+        (!pic.field_pic_flag && !pic.mb_adaptive_frame_field_flag))
+      img->progressive_frame = 1;
+    else
+      img->progressive_frame = 0;
+
+    if(!img->progressive_frame && this->nal_parser->current_nal->repeat_pic)
+      img->repeat_first_field = 1;
+    else if(img->progressive_frame && this->nal_parser->current_nal->repeat_pic)
+      img->duration *= this->nal_parser->current_nal->repeat_pic;
+
+    struct decoded_picture *decoded_pic = NULL;
+    if(pic.is_reference) {
+      if(!slc->field_pic_flag || !this->wait_for_bottom_field) {
+        decoded_pic = init_decoded_picture(this->nal_parser->current_nal, surface, img);
+        this->last_ref_pic = decoded_pic;
+        decoded_pic->used_for_reference = 1;
+        dpb_add_picture(&(this->nal_parser->dpb), decoded_pic, sps->num_ref_frames);
+        this->dangling_img = NULL;
+      } else if(slc->field_pic_flag && this->wait_for_bottom_field) {
+        if(this->last_ref_pic) {
+          decoded_pic = this->last_ref_pic;
+          //copy_nal_unit(decoded_pic->nal, this->nal_parser->current_nal);
+          decoded_pic->nal->bottom_field_order_cnt = this->nal_parser->current_nal->bottom_field_order_cnt;
+          this->last_ref_pic->bottom_is_reference = 1;
+        }
+      }
+    }
+
+    if(!slc->field_pic_flag ||
+        (slc->field_pic_flag && slc->bottom_field_flag && this->wait_for_bottom_field)) {
+      if(!decoded_pic) {
+        decoded_pic = init_decoded_picture(this->nal_parser->current_nal, surface, img);
+        decoded_pic->delayed_output = 1;
+        dpb_add_picture(&(this->nal_parser->dpb), decoded_pic, sps->num_ref_frames);
+        this->dangling_img = NULL;
+        if(decoded_pic->nal->slc->bottom_field_flag)
+          decoded_pic->nal->top_field_order_cnt = this->last_top_field_order_cnt;
+      } else
+        decoded_pic->delayed_output = 1;
+
+      if(this->wait_for_bottom_field && slc->bottom_field_flag)
+        decoded_pic->nal->bottom_field_order_cnt = this->nal_parser->current_nal->bottom_field_order_cnt;
+
+      this->last_img = img = NULL;
+
+      /* now retrieve the next output frame */
+      if ((decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb))) != NULL) {
+        decoded_pic->img->top_field_first = (decoded_pic->nal->top_field_order_cnt <= decoded_pic->nal->bottom_field_order_cnt);
+        decoded_pic->img->draw(decoded_pic->img, this->stream);
+        dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
+      }
+
+      this->wait_for_bottom_field = 0;
+
+    } else if(slc->field_pic_flag && !slc->bottom_field_flag) {
+      // don't draw yet, second field is missing.
+      this->last_top_field_order_cnt = this->nal_parser->current_nal->top_field_order_cnt;
+      this->wait_for_bottom_field = 1;
+      this->last_img = img;
+    }
+  }
+
+  return 1;
+}
+
 /*
  * This function receives a buffer of data from the demuxer layer and
  * figures out how to handle it based on its header flags.
@@ -178,7 +539,6 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
   VdpBitstreamBuffer vdp_buffer;
   vdp_buffer.struct_version = VDP_BITSTREAM_BUFFER_VERSION;
 
-  vo_frame_t *img = this->last_img; /* video out frame */
 
   /* a video decoder does not care about this flag (?) */
   if (buf->decoder_flags & BUF_FLAG_PREVIEW)
@@ -188,384 +548,43 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
     this->video_step = buf->decoder_info[0];
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->video_step);
   }
+
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) { /* need to initialize */
     xine_bmiheader *bih = (xine_bmiheader*)buf->content;
     this->width                         = bih->biWidth;
     this->height                        = bih->biHeight;
 
-  } else {
+  }
 
-    /* parse the first nal packages to retrieve profile type */
-    int len = 0;
-    int write_start_seq = 0;
-    uint32_t slice_count;
+  /* parse the first nal packages to retrieve profile type */
+  int len = 0;
+  uint32_t slice_count;
 
-    if(buf->pts != 0)
-      this->next_pts = buf->pts;
+  if(buf->pts != 0)
+    this->next_pts = buf->pts;
 
-    while(len < buf->size || write_start_seq == 1) {
-      if(!write_start_seq) {
-        len += parse_frame(this->nal_parser, buf->content + len, buf->size - len,
-            (void*)&vdp_buffer.bitstream, &vdp_buffer.bitstream_bytes, &slice_count);
-      }
+  while(len < buf->size) {
+    len += parse_frame(this->nal_parser, buf->content + len, buf->size - len,
+        (void*)&vdp_buffer.bitstream, &vdp_buffer.bitstream_bytes, &slice_count);
 
-      if(!this->decoder_initialized &&
-          this->nal_parser->current_nal != NULL &&
-          this->nal_parser->current_nal->sps != NULL &&
-          this->nal_parser->current_nal->sps->pic_width > 0 &&
-          this->nal_parser->current_nal->sps->pic_height > 0) {
+    if(this->decoder == VDP_INVALID_HANDLE &&
+        this->nal_parser->current_nal->sps != NULL &&
+        this->nal_parser->current_nal->sps->pic_width > 0 &&
+        this->nal_parser->current_nal->sps->pic_height > 0) {
 
-        this->curr_pts = this->next_pts;
-        this->next_pts = 0;
+      vdpau_decoder_init(this_gen);
+    }
 
-        if(this->width == 0) {
-          this->width = this->nal_parser->current_nal->sps->pic_width;
-          this->height = this->nal_parser->current_nal->sps->pic_height;
-        }
-
-        /* FIXME: ratio should be calculated in some other way to
-         * support anamorph codings...
-         */
-        this->ratio = (double)this->width / (double)this->height;
-        if(this->nal_parser->current_nal->sps->vui_parameters.aspect_ration_info_present_flag) {
-          switch(this->nal_parser->current_nal->sps->vui_parameters.aspect_ratio_idc) {
-            case ASPECT_1_1:
-              this->ratio = 1 * this->ratio;
-              break;
-            case ASPECT_12_11:
-              this->ratio *= 12.0/11.0;
-              break;
-            case ASPECT_10_11:
-              this->ratio *= 10.0/11.0;
-              break;
-            case ASPECT_16_11:
-              this->ratio *= 16.0/11.0;
-              break;
-            case ASPECT_40_33:
-              this->ratio *= 40.0/33.0;
-              break;
-            case ASPECT_24_11:
-              this->ratio *= 24.0/11.0;
-              break;
-            case ASPECT_20_11:
-              this->ratio *= 20.0/11.0;
-              break;
-            case ASPECT_32_11:
-              this->ratio *= 32.0/11.0;
-              break;
-            case ASPECT_80_33:
-              this->ratio *= 80.0/33.0;
-              break;
-            case ASPECT_18_11:
-              this->ratio *= 18.0/11.0;
-              break;
-            case ASPECT_15_11:
-              this->ratio *= 15.0/11.0;
-              break;
-            case ASPECT_64_33:
-              this->ratio *= 64.0/33.0;
-              break;
-            case ASPECT_160_99:
-              this->ratio *= 160.0/99.0;
-              break;
-            case ASPECT_4_3:
-              this->ratio *= 4.0/3.0;
-              break;
-            case ASPECT_3_2:
-              this->ratio *= 3.0/2.0;
-              break;
-            case ASPECT_2_1:
-              this->ratio *= 2.0/1.0;
-              break;
-            case ASPECT_EXTENDED_SAR:
-              this->ratio *=
-                (double)this->nal_parser->current_nal->sps->vui_parameters.sar_width/
-                (double)this->nal_parser->current_nal->sps->vui_parameters.sar_height;
-              break;
-          }
-        }
-
-        _x_stream_info_set( this->stream, XINE_STREAM_INFO_VIDEO_WIDTH, this->width );
-        _x_stream_info_set( this->stream, XINE_STREAM_INFO_VIDEO_HEIGHT, this->height );
-        _x_stream_info_set( this->stream, XINE_STREAM_INFO_VIDEO_RATIO, ((double)10000*this->ratio) );
-        _x_stream_info_set( this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->video_step );
-        _x_meta_info_set_utf8( this->stream, XINE_META_INFO_VIDEOCODEC, "H264/AVC (vdpau)" );
-        xine_event_t event;
-        xine_format_change_data_t data;
-        event.type = XINE_EVENT_FRAME_FORMAT_CHANGE;
-        event.stream = this->stream;
-        event.data = &data;
-        event.data_length = sizeof(data);
-        data.width = this->width;
-        data.height = this->height;
-        data.aspect = this->ratio;
-        xine_event_send( this->stream, &event );
-
-        switch(this->nal_parser->current_nal->sps->profile_idc) {
-          case 100:
-            this->profile = VDP_DECODER_PROFILE_H264_HIGH;
-            break;
-          case 77:
-            this->profile = VDP_DECODER_PROFILE_H264_MAIN;
-            break;
-          case 66:
-          default:
-            // nvidia's VDPAU doesn't support BASELINE. But most (every?) streams marked BASELINE do not use BASELINE specifics,
-            // so, just force MAIN.
-            //this->profile = VDP_DECODER_PROFILE_H264_BASELINE;
-            this->profile = VDP_DECODER_PROFILE_H264_MAIN;
-            break;
-        }
-
-        // Level 4.1 limits:
-        int ref_frames = 0;
-        if(this->nal_parser->current_nal->sps->num_ref_frames) {
-          ref_frames = this->nal_parser->current_nal->sps->num_ref_frames;
-        } else {
-          uint32_t round_width = (this->width + 15) & ~15;
-          uint32_t round_height = (this->height + 15) & ~15;
-          uint32_t surf_size = (round_width * round_height * 3) / 2;
-          ref_frames = (12 * 1024 * 1024) / surf_size;
-        }
-
-        if (ref_frames > 16) {
-            ref_frames = 16;
-        }
-
-        printf("Allocate %d reference frames\n", ref_frames);
-        /* get the vdpau context from vo */
-        //(this->stream->video_out->open) (this->stream->video_out, this->stream);
-        img = this->stream->video_out->get_frame (this->stream->video_out,
-                                          this->width, this->height,
-                                          this->ratio,
-                                          XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS);
-
-         this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
-
-         /*VdpBool is_supported;
-         uint32_t max_level, max_references, max_width, max_height;*/
-         if(this->vdpau_accel->vdp_runtime_nr > 0) {
-           xprintf(this->xine, XINE_VERBOSITY_LOG,
-               "Create decoder: vdp_device: %d, profile: %d, res: %dx%d\n",
-               this->vdpau_accel->vdp_device, this->profile, this->width, this->height);
-
-           VdpStatus status = this->vdpau_accel->vdp_decoder_create(this->vdpau_accel->vdp_device,
-               this->profile, this->width, this->height, 16, &this->decoder);
-
-           if(status != VDP_STATUS_OK)
-             xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: ERROR: VdpDecoderCreate returned status != OK (%s)\n", this->vdpau_accel->vdp_get_error_string(status));
-           else
-             this->decoder_initialized = 1;
-         }
-         img->free(img);
-         img = NULL;
-      }
-
-      if(this->decoder_initialized) {
-        if(vdp_buffer.bitstream_bytes > 0 &&
-            this->nal_parser->current_nal->slc != NULL &&
-            this->nal_parser->current_nal->sps != NULL &&
-            this->nal_parser->current_nal->pps != NULL) {
-          struct pic_parameter_set_rbsp *pps = this->nal_parser->current_nal->pps;
-          struct seq_parameter_set_rbsp *sps = this->nal_parser->current_nal->sps;
-          struct slice_header *slc = this->nal_parser->current_nal->slc;
-
-          if(sps->vui_parameters_present_flag &&
-              sps->vui_parameters.timing_info_present_flag &&
-              this->video_step == 0) {
-            this->video_step = 2*90000/(1/((double)sps->vui_parameters.num_units_in_tick/(double)sps->vui_parameters.time_scale));
-          }
-
-          /* flush the DPB if this frame was an IDR */
-          //printf("is_idr: %d\n", this->nal_parser->is_idr);
-          if(this->nal_parser->current_nal->nal_unit_type == NAL_SLICE_IDR) {
-            dpb_flush(&(this->nal_parser->dpb));
-          }
-          this->nal_parser->is_idr = 0;
-
-          /* go and decode a frame */
-          VdpPictureInfoH264 pic;
-
-          pic.slice_count = slice_count;
-          pic.field_order_cnt[0] = this->nal_parser->current_nal->top_field_order_cnt;
-          pic.field_order_cnt[1] = this->nal_parser->current_nal->bottom_field_order_cnt;
-          pic.is_reference =
-            (this->nal_parser->current_nal->nal_ref_idc != 0) ? VDP_TRUE : VDP_FALSE;
-          pic.frame_num = slc->frame_num;
-          pic.field_pic_flag = slc->field_pic_flag;
-          pic.bottom_field_flag = slc->bottom_field_flag;
-          //pic.num_ref_frames = sps->num_ref_frames;
-          pic.mb_adaptive_frame_field_flag = sps->mb_adaptive_frame_field_flag;
-          pic.constrained_intra_pred_flag = pps->constrained_intra_pred_flag;
-          pic.weighted_pred_flag = pps->weighted_pred_flag;
-          pic.weighted_bipred_idc = pps->weighted_bipred_idc;
-          pic.frame_mbs_only_flag = sps->frame_mbs_only_flag;
-          pic.transform_8x8_mode_flag = pps->transform_8x8_mode_flag;
-          pic.chroma_qp_index_offset = pps->chroma_qp_index_offset;
-          pic.second_chroma_qp_index_offset = pps->second_chroma_qp_index_offset;
-          pic.pic_init_qp_minus26 = pps->pic_init_qp_minus26;
-          pic.num_ref_idx_l0_active_minus1 = pps->num_ref_idx_l0_active_minus1;
-          pic.num_ref_idx_l1_active_minus1 = pps->num_ref_idx_l1_active_minus1;
-          pic.log2_max_frame_num_minus4 = sps->log2_max_frame_num_minus4;
-          pic.pic_order_cnt_type = sps->pic_order_cnt_type;
-          pic.log2_max_pic_order_cnt_lsb_minus4 = sps->log2_max_pic_order_cnt_lsb_minus4;
-          pic.delta_pic_order_always_zero_flag = sps->delta_pic_order_always_zero_flag;
-          pic.direct_8x8_inference_flag = sps->direct_8x8_inference_flag;
-          pic.entropy_coding_mode_flag = pps->entropy_coding_mode_flag;
-          pic.pic_order_present_flag = pps->pic_order_present_flag;
-          pic.deblocking_filter_control_present_flag = pps->deblocking_filter_control_present_flag;
-          pic.redundant_pic_cnt_present_flag = pps->redundant_pic_cnt_present_flag;
-          memcpy(pic.scaling_lists_4x4, pps->scaling_lists_4x4, sizeof(pic.scaling_lists_4x4));
-          memcpy(pic.scaling_lists_8x8, pps->scaling_lists_8x8, sizeof(pic.scaling_lists_8x8));
-
-          /* set num_ref_frames to the number of actually available reference frames,
-           * if this is not set generation 3 decoders will fail. */
-          pic.num_ref_frames = fill_vdpau_reference_list(&(this->nal_parser->dpb), pic.referenceFrames);
-
-          if(this->decoder_started || pic.is_reference) {
-            if(!this->decoder_started)
-              this->decoder_started = 1;
-
-            //dump_pictureinfo_h264(&pic);
-
-            /*int i;
-            printf("Decode data: \n");
-            for(i = 0; i < ((vdp_buffer.bitstream_bytes < 20) ? vdp_buffer.bitstream_bytes : 20); i++) {
-              printf("%02x ", ((uint8_t*)vdp_buffer.bitstream)[i]);
-              if((i+1) % 10 == 0)
-                printf("\n");
-            }
-            printf("\n...\n");
-            for(i = vdp_buffer.bitstream_bytes - 20; i < vdp_buffer.bitstream_bytes; i++) {
-              printf("%02x ", ((uint8_t*)vdp_buffer.bitstream)[i]);
-              if((i+1) % 10 == 0)
-                printf("\n");
-            }*/
-
-
-            if(img == NULL) {
-              img = this->stream->video_out->get_frame (this->stream->video_out,
-                                                        this->width, this->height,
-                                                        this->ratio,
-                                                        XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS);
-              this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
-
-              img->duration  = this->video_step;
-              img->pts       = this->curr_pts;
-
-              this->dangling_img = img;
-            }
-
-            if(this->vdp_runtime_nr != *(this->vdpau_accel->current_vdp_runtime_nr)) {
-              printf("VDPAU was preempted. Reinitialise the decoder.\n");
-              this->decoder_initialized = 0;
-              this->decoder_started = 0;
-              this->vdp_runtime_nr = this->vdpau_accel->vdp_runtime_nr;
-              this->last_img = NULL;
-              this->last_ref_pic = NULL;
-              dpb_free_all(&this->nal_parser->dpb);
-              free_parser(this->nal_parser);
-              this->nal_parser = init_parser();
-              if(img) {
-                img->free(img);
-                img = NULL;
-              }
-              continue;
-            }
-
-            VdpVideoSurface surface = this->vdpau_accel->surface;
-
-            //printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer.bitstream_bytes, this->curr_pts);
-            VdpStatus status = this->vdpau_accel->vdp_decoder_render(this->decoder,
-                surface, (VdpPictureInfo*)&pic, 1, &vdp_buffer);
-
-            // FIXME: do we really hit all cases here?
-            if(((uint8_t*)vdp_buffer.bitstream) != NULL) {
-              free((uint8_t*)vdp_buffer.bitstream);
-            }
-
-            this->curr_pts = this->next_pts;
-            this->next_pts = 0;
-
-            if(status != VDP_STATUS_OK)
-            {
-              xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %s\n",  this->vdpau_accel->vdp_get_error_string(status));
-              img->free(img);
-              img = this->last_img = this->dangling_img = NULL;
-            }
-            else {
-              img->bad_frame = 0;
-
-              if((sps->vui_parameters_present_flag &&
-                  sps->vui_parameters.pic_struct_present_flag &&
-                  !this->nal_parser->current_nal->interlaced) ||
-                  !pic.field_pic_flag && !pic.mb_adaptive_frame_field_flag)
-                img->progressive_frame = 1;
-              else
-                img->progressive_frame = 0;
-
-              if(!img->progressive_frame && this->nal_parser->current_nal->repeat_pic)
-                img->repeat_first_field = 1;
-              else if(img->progressive_frame && this->nal_parser->current_nal->repeat_pic)
-                img->duration *= this->nal_parser->current_nal->repeat_pic;
-
-              struct decoded_picture *decoded_pic = NULL;
-              if(pic.is_reference) {
-                if(!slc->field_pic_flag || !this->wait_for_bottom_field) {
-                  decoded_pic = init_decoded_picture(this->nal_parser->current_nal, surface, img);
-                  this->last_ref_pic = decoded_pic;
-                  decoded_pic->used_for_reference = 1;
-                  dpb_add_picture(&(this->nal_parser->dpb), decoded_pic, sps->num_ref_frames);
-                  this->dangling_img = NULL;
-                } else if(slc->field_pic_flag && this->wait_for_bottom_field) {
-                  if(this->last_ref_pic) {
-                    decoded_pic = this->last_ref_pic;
-                    //copy_nal_unit(decoded_pic->nal, this->nal_parser->current_nal);
-                    decoded_pic->nal->bottom_field_order_cnt = this->nal_parser->current_nal->bottom_field_order_cnt;
-                    this->last_ref_pic->bottom_is_reference = 1;
-                  }
-                }
-              }
-
-              if(!slc->field_pic_flag ||
-                  (slc->field_pic_flag && slc->bottom_field_flag && this->wait_for_bottom_field)) {
-                if(!decoded_pic) {
-                  decoded_pic = init_decoded_picture(this->nal_parser->current_nal, surface, img);
-                  decoded_pic->delayed_output = 1;
-                  dpb_add_picture(&(this->nal_parser->dpb), decoded_pic, sps->num_ref_frames);
-                  this->dangling_img = NULL;
-                  if(decoded_pic->nal->slc->bottom_field_flag)
-                    decoded_pic->nal->top_field_order_cnt = this->last_top_field_order_cnt;
-                } else
-                  decoded_pic->delayed_output = 1;
-
-                if(this->wait_for_bottom_field && slc->bottom_field_flag)
-                  decoded_pic->nal->bottom_field_order_cnt = this->nal_parser->current_nal->bottom_field_order_cnt;
-
-                this->last_img = img = NULL;
-
-                /* now retrieve the next output frame */
-                if ((decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb))) != NULL) {
-                  decoded_pic->img->top_field_first = (decoded_pic->nal->top_field_order_cnt <= decoded_pic->nal->bottom_field_order_cnt);
-                  decoded_pic->img->draw(decoded_pic->img, this->stream);
-                  dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
-                }
-
-                this->wait_for_bottom_field = 0;
-
-              } else if(slc->field_pic_flag && !slc->bottom_field_flag) {
-                // don't draw yet, second field is missing.
-                this->last_top_field_order_cnt = this->nal_parser->current_nal->top_field_order_cnt;
-                this->wait_for_bottom_field = 1;
-                this->last_img = img;
-              }
-            }
-          }
-        }
-      }
+    if(this->decoder != VDP_INVALID_HANDLE &&
+        vdp_buffer.bitstream_bytes > 0 &&
+        this->nal_parser->current_nal->slc != NULL &&
+        this->nal_parser->current_nal->sps != NULL &&
+        this->nal_parser->current_nal->pps != NULL) {
+      vdpau_decoder_render(this_gen, &vdp_buffer, slice_count);
     }
 
   }
+
 }
 
 /*
@@ -586,13 +605,13 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
 
   dpb_free_all( &(this->nal_parser->dpb) );
 
-  if (this->decoder_initialized)
+  if (this->decoder != VDP_INVALID_HANDLE) {
     this->vdpau_accel->vdp_decoder_destroy( this->decoder );
+    this->decoder = VDP_INVALID_HANDLE;
+  }
 
   free_parser(this->nal_parser);
 
-  this->decoder_started    = 0;
-  this->decoder_initialized = 0;
   this->nal_parser = init_parser();
   this->buf           = NULL;
   this->wait_for_bottom_field = 0;
@@ -636,9 +655,9 @@ static void vdpau_h264_dispose (video_decoder_t *this_gen) {
 
   dpb_free_all( &(this->nal_parser->dpb) );
 
-  if (this->decoder_initialized) {
+  if (this->decoder != VDP_INVALID_HANDLE) {
     this->vdpau_accel->vdp_decoder_destroy( this->decoder );
-    this->decoder_initialized = 0;
+    this->decoder = VDP_INVALID_HANDLE;
   }
 
   this->stream->video_out->close( this->stream->video_out, this->stream );
@@ -671,6 +690,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->xine                              = stream->xine;
   this->class                             = (vdpau_h264_class_t *) class_gen;
 
+  this->decoder                           = VDP_INVALID_HANDLE;
   this->vdp_runtime_nr                    = 1;
 
   this->nal_parser = init_parser();
