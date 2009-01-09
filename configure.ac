@@ -952,7 +952,9 @@ AC_ARG_WITH([caca],
   AS_HELP_STRING([--without-caca], [Do not build CACA support]))
 
 if test "x$with_caca" != "xno"; then
-   PKG_CHECK_MODULES([CACA], [caca >= 0.99beta15 cucul >= 0.99beta15 ], [have_caca="yes"], [have_caca="no"])
+   have_caca=yes
+   PKG_CHECK_MODULES([CACA], [caca >= 0.99beta14 cucul >= 0.99beta14 ],
+		     [], [AC_MSG_RESULT(no); have_caca="no"])
    if test "x$with_caca" = "xyes" && test "x$have_caca" = "xno"; then
       AC_MSG_ERROR([CACA support requested, but libcaca 0.99 not found])
    fi
