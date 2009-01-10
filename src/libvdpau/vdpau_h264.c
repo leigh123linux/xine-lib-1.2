@@ -345,27 +345,30 @@ static int vdpau_decoder_init(video_decoder_t *this_gen)
                                     this->ratio,
                                     XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS);
 
-   this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
+  img->duration = this->video_step;
+  img->pts = this->curr_pts;
 
-   /*VdpBool is_supported;
-   uint32_t max_level, max_references, max_width, max_height;*/
-   if(this->vdpau_accel->vdp_runtime_nr > 0) {
-     xprintf(this->xine, XINE_VERBOSITY_LOG,
-         "Create decoder: vdp_device: %d, profile: %d, res: %dx%d\n",
-         this->vdpau_accel->vdp_device, this->profile, this->width, this->height);
+  this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
 
-     VdpStatus status = this->vdpau_accel->vdp_decoder_create(this->vdpau_accel->vdp_device,
-         this->profile, this->width, this->height, 16, &this->decoder);
+  /*VdpBool is_supported;
+  uint32_t max_level, max_references, max_width, max_height;*/
+  if(this->vdpau_accel->vdp_runtime_nr > 0) {
+   xprintf(this->xine, XINE_VERBOSITY_LOG,
+       "Create decoder: vdp_device: %d, profile: %d, res: %dx%d\n",
+       this->vdpau_accel->vdp_device, this->profile, this->width, this->height);
 
-     if(status != VDP_STATUS_OK) {
-       xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: ERROR: VdpDecoderCreate returned status != OK (%s)\n", this->vdpau_accel->vdp_get_error_string(status));
-       return 0;
-     }
+   VdpStatus status = this->vdpau_accel->vdp_decoder_create(this->vdpau_accel->vdp_device,
+       this->profile, this->width, this->height, 16, &this->decoder);
+
+   if(status != VDP_STATUS_OK) {
+     xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: ERROR: VdpDecoderCreate returned status != OK (%s)\n", this->vdpau_accel->vdp_get_error_string(status));
+     return 0;
    }
-   this->last_img = img;
-   this->dangling_img = img;
+  }
+  this->last_img = img;
+  this->dangling_img = img;
 
-   return 1;
+  return 1;
 }
 
 static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *vdp_buffer, uint32_t slice_count)
