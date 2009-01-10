@@ -1689,8 +1689,8 @@ static int vdr_plugin_get_optional_data(input_plugin_t *this_gen,
   {
   case INPUT_OPTIONAL_DATA_PREVIEW:
     /* just fake what mpeg_pes demuxer expects */
-    memcpy (data, "\x00\x00\x01\xe0\x00\x00", 6);
-    return 6;
+    memcpy (data, "\x00\x00\x01\xe0\x00\x03\x80\x00\x00", 9);
+    return 9;
   }
   return INPUT_OPTIONAL_UNSUPPORTED;
 }
