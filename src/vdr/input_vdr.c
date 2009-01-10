@@ -1685,6 +1685,7 @@ static int vdr_plugin_get_optional_data(input_plugin_t *this_gen,
                                         void *data, int data_type)
 {
   vdr_input_plugin_t *this = (vdr_input_plugin_t *)this_gen;
+  (void)this;
   switch (data_type)
   {
   case INPUT_OPTIONAL_DATA_PREVIEW:
@@ -1710,10 +1711,10 @@ static inline const char *mrl_to_host (const char *mrl)
 static int vdr_plugin_open_fifo_mrl(input_plugin_t *this_gen)
 {
   vdr_input_plugin_t *this = (vdr_input_plugin_t *)this_gen;
-  char *filename = mrl_to_fifo (this->mrl);
+  char *filename = (char *)mrl_to_fifo (this->mrl);
 
   if(!strcmp(filename, "/")) {
-	  filename = VDR_ABS_FIFO_DIR "/stream";
+	  filename = (char *)VDR_ABS_FIFO_DIR "/stream";
   }
 
   filename = strdup(filename);
