@@ -831,6 +831,14 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
       frame->chunk[2] = NULL;
     }
 
+    if ( frame->vdpau_accel_data.vdp_runtime_nr != this->vdp_runtime_nr ) {
+      frame->vdpau_accel_data.surface = VDP_INVALID_HANDLE;
+      frame->vdpau_accel_data.vdp_runtime_nr = this->vdp_runtime_nr;
+      frame->vdpau_accel_data.vdp_device = vdp_device;
+      frame->vo_frame.proc_duplicate_frame_data = NULL;
+      frame->vo_frame.proc_provide_standard_frame_data = NULL;
+    }
+
     if ( frame->vdpau_accel_data.surface != VDP_INVALID_HANDLE  ) {
       if ( (frame->width != width) || (frame->height != height) || (format != XINE_IMGFMT_VDPAU) || frame->vdpau_accel_data.chroma != chroma ) {
         printf("vo_vdpau: update_frame - destroy surface\n");
@@ -840,12 +848,6 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
         frame->vo_frame.proc_duplicate_frame_data = NULL;
         frame->vo_frame.proc_provide_standard_frame_data = NULL;
       }
-    }
-
-    if ( frame->vdpau_accel_data.vdp_runtime_nr != this->vdp_runtime_nr ) {
-      frame->vdpau_accel_data.surface = VDP_INVALID_HANDLE;
-      frame->vdpau_accel_data.vdp_runtime_nr = this->vdp_runtime_nr;
-      frame->vdpau_accel_data.vdp_device = vdp_device;
     }
 
     if ( (format == XINE_IMGFMT_VDPAU) && (frame->vdpau_accel_data.surface == VDP_INVALID_HANDLE) ) {
@@ -945,6 +947,8 @@ static void vdpau_set_deinterlace( vo_driver_t *this_gen )
   printf("vo_vdpau: enabled features: temporal=%d, temporal_spatial=%d\n", feature_enables[0], feature_enables[1] );
 }
 
+
+
 static void vdpau_set_inverse_telecine( vo_driver_t *this_gen )
 {
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
@@ -961,6 +965,8 @@ static void vdpau_set_inverse_telecine( vo_driver_t *this_gen )
   printf("vo_vdpau: enabled features: inverse_telecine=%d\n", feature_enables[0] );
 }
 
+
+
 static void vdpau_update_deinterlace_method( void *this_gen, xine_cfg_entry_t *entry )
 {
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
@@ -970,6 +976,8 @@ static void vdpau_update_deinterlace_method( void *this_gen, xine_cfg_entry_t *e
   vdpau_set_deinterlace( (vo_driver_t*)this_gen );
 }
 
+
+
 static void vdpau_update_enable_inverse_telecine( void *this_gen, xine_cfg_entry_t *entry )
 {
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
@@ -978,6 +986,8 @@ static void vdpau_update_enable_inverse_telecine( void *this_gen, xine_cfg_entry
   printf( "vo_vdpau: enable inverse_telecine=%d\n", this->enable_inverse_telecine );
   vdpau_set_inverse_telecine( (vo_driver_t*)this_gen );
 }
+
+
 
 static void vdpau_honor_progressive_flag( void *this_gen, xine_cfg_entry_t *entry )
 {
@@ -1153,8 +1163,10 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     this->video_mixer_width = mix_w;
     this->video_mixer_height = mix_h;
     vdpau_set_deinterlace( this_gen );
+    vdpau_set_inverse_telecine( this_gen );
     vdpau_update_noise( this );
     vdpau_update_sharpness( this );
+    vdpau_update_csc( this );
   }
 
   if ( (this->sc.gui_width > this->output_surface_width[this->current_output_surface]) || (this->sc.gui_height > this->output_surface_height[this->current_output_surface]) ) {
@@ -1525,6 +1537,8 @@ static int vdpau_init_error( VdpStatus st, const char *msg, vo_driver_t *driver,
   return 0;
 }
 
+
+
 static void vdpau_reinit( vo_driver_t *this_gen )
 {
   printf("VDPAU was pre-empted. Reinit.\n");
@@ -1594,12 +1608,16 @@ static void vdpau_reinit( vo_driver_t *this_gen )
   this->reinit_needed = 0;
 }
 
+
+
 static void vdp_preemption_callback(VdpDevice device, void *context)
 {
   printf("VDPAU preemption callback\n");
   vdpau_driver_t *this = (vdpau_driver_t *)context;
   this->reinit_needed = 1;
 }
+
+
 
 static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const void *visual_gen)
 {
@@ -1872,7 +1890,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
          10, vdpau_update_deinterlace_method, this );
 
   this->enable_inverse_telecine = config->register_bool( config, "video.output.vdpau_enable_inverse_telecine", 1,
-      _("vdpau: Try to recreatea progressive frames pulldown material"),
+      _("vdpau: Try to recreate progressive frames from pulldown material"),
       _("Enable this to detect bad-flagged progressive content to which\n"
         "a 2:2 or 3:2 pulldown was applied.\n\n"),
         10, vdpau_update_enable_inverse_telecine, this );

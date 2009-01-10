@@ -640,6 +640,7 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
     pic->vdp_infos.picture_structure=PICTURE_FRAME;
 
   if ( pic->vdp_infos.picture_structure!=PICTURE_FRAME && !pic->slices_count2 ) {
+    /* waiting second field */
     lprintf("********************* no slices_count2 **********************\n");
     return;
   }
