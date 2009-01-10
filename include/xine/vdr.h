@@ -343,6 +343,7 @@ data_start_t;
 typedef struct __attribute__((packed)) data_wait_s
 {
   data_header_t header;
+  uint8_t id;
 }
 data_wait_t;
 

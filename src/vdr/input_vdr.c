@@ -124,6 +124,7 @@ struct vdr_input_plugin_s
   int                 rpc_thread_shutdown;
   pthread_mutex_t     rpc_thread_shutdown_lock;
   pthread_cond_t      rpc_thread_shutdown_cond;
+  int                 startup_phase;
 
   xine_event_queue_t *event_queue;
   xine_event_queue_t *event_queue_external;
@@ -992,6 +993,9 @@ fprintf(stderr, "--- CLEAR(%d%c)\n", data->n, data->s ? 'b' : 'a');
           
         if (sizeof (result_wait) != vdr_write(this->fh_result, &result_wait, sizeof (result_wait)))
           return -1;
+
+        if (data->id == 1)
+          this->startup_phase = 0;
       }
     }
     break;
@@ -1259,9 +1263,11 @@ static void *vdr_rpc_thread_loop(void *arg)
   vdr_input_plugin_t *this = (vdr_input_plugin_t *)arg;
   int frontend_lock_failures = 0;
   int failed = 0;
+  int was_startup_phase = this->startup_phase;
   
   while (!failed
-    && !this->rpc_thread_shutdown)
+    && !this->rpc_thread_shutdown
+    && was_startup_phase == this->startup_phase)
   {
     struct timeval timeout;
     fd_set rset;
@@ -1303,6 +1309,9 @@ static void *vdr_rpc_thread_loop(void *arg)
       }
     }
   }
+
+  if (!failed && was_startup_phase)
+    return (void *)1;
 
   /* close control and result channel here to have vdr-xine initiate a disconnect for the above error case ... */
   close(this->fh_control);
@@ -1947,6 +1956,12 @@ static int vdr_plugin_open(input_plugin_t *this_gen)
     }
 
     this->rpc_thread_shutdown = 0;
+
+    /* let this thread handle rpc commands in startup phase */
+    this->startup_phase = 1;
+    if (0 == vdr_rpc_thread_loop(this))
+      return 0;
+
     if ((err = pthread_create(&this->rpc_thread, NULL,
                               vdr_rpc_thread_loop, (void *)this)) != 0)
     {
