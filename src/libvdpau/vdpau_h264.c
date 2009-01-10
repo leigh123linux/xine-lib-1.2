@@ -83,6 +83,8 @@ typedef struct vdpau_h264_decoder_s {
 
 } vdpau_h264_decoder_t;
 
+static void vdpau_h264_reset (video_decoder_t *this_gen);
+
 /**************************************************************************
  * vdpau_h264 specific decode functions
  *************************************************************************/
@@ -429,18 +431,9 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
 
   if(this->vdp_runtime_nr != *(this->vdpau_accel->current_vdp_runtime_nr)) {
     printf("VDPAU was preempted. Reinitialise the decoder.\n");
-    this->decoder = VDP_INVALID_HANDLE;
-    this->decoder_started = 0;
+    vdpau_h264_reset(this_gen);
     this->vdp_runtime_nr = this->vdpau_accel->vdp_runtime_nr;
     this->last_img = NULL;
-    this->last_ref_pic = NULL;
-    dpb_free_all(&this->nal_parser->dpb);
-    free_parser(this->nal_parser);
-    this->nal_parser = init_parser();
-    if(img) {
-      img->free(img);
-      img = NULL;
-    }
     return 0;
   }
 
@@ -698,7 +691,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->class                             = (vdpau_h264_class_t *) class_gen;
 
   this->decoder                           = VDP_INVALID_HANDLE;
-  this->decoder_started                   = 0;
   this->vdp_runtime_nr                    = 1;
 
   this->nal_parser = init_parser();
