@@ -1139,7 +1139,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
 
       parser->last_nal_res = parse_nal(prebuf+3, parser->prebuf_len-3, parser);
       if (parser->last_nal_res == 1 && parser->buf_len > 0) {
-        printf("Frame complete: %d bytes\n", parser->buf_len);
+        //printf("Frame complete: %d bytes\n", parser->buf_len);
         *ret_buf = malloc(parser->buf_len);
         xine_fast_memcpy(*ret_buf, parser->buf, parser->buf_len);
         *ret_len = parser->buf_len;
