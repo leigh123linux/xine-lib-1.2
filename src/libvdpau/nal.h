@@ -418,8 +418,8 @@ struct nal_unit
   uint32_t long_term_pic_num;
   uint32_t long_term_frame_idx;
 
-  uint32_t top_field_order_cnt;
-  uint32_t bottom_field_order_cnt;
+  int32_t top_field_order_cnt;
+  int32_t bottom_field_order_cnt;
 
   uint8_t interlaced;
   uint8_t repeat_pic;

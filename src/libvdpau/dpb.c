@@ -65,6 +65,8 @@ struct decoded_picture* dpb_get_next_out_picture(struct dpb *dpb)
           (outpic == NULL ||
               (pic->nal->top_field_order_cnt <= outpic->nal->top_field_order_cnt &&
                   pic->nal->bottom_field_order_cnt <= outpic->nal->bottom_field_order_cnt)||
+              (outpic->nal->top_field_order_cnt < 0 && pic->nal->top_field_order_cnt > 0 &&
+                  outpic->nal->bottom_field_order_cnt < 0 && pic->nal->bottom_field_order_cnt > 0)||
               outpic->nal->nal_unit_type == NAL_SLICE_IDR))
         outpic = pic;
     } while ((pic = pic->next) != NULL);
