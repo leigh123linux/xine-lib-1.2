@@ -19,7 +19,7 @@ XINE_MAJOR=1
 XINE_MINOR=1
 XINE_SUB=16
 dnl XINE_PATCH should be left empty or set to ".1" or ".2" or something similar
-XINE_PATCH=
+XINE_PATCH=.1
 dnl Release series number (usually $XINE_MAJOR.$XINE_MINOR)
 XINE_SERIES=1.1
 

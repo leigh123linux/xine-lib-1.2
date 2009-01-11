@@ -1,4 +1,4 @@
-xine-lib (1.1.17) 2009-??-??
+xine-lib (1.1.16.1) 2009-01-11
   * Fix build with older ffmpeg, both internal and in Debian 5.0.
   * Add version check for CACA library and disable CACA plugin if needed
   * Fix playback of some H.264 files (broken in 1.1.16).
