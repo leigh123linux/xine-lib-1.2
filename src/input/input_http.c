@@ -421,6 +421,9 @@ static off_t http_plugin_read (input_plugin_t *this_gen,
 
   num_bytes = 0;
 
+  if (nlen < 0)
+    return -1;
+
   if (this->curpos < this->preview_size) {
 
     if (nlen > (this->preview_size - this->curpos))
@@ -437,7 +440,7 @@ static off_t http_plugin_read (input_plugin_t *this_gen,
 
   n = nlen - num_bytes;
 
-  if (n) {
+  if (n > 0) {
     int read_bytes;
     read_bytes = http_plugin_read_int (this, &buf[num_bytes], n);
     
@@ -503,6 +506,11 @@ static buf_element_t *http_plugin_read_block (input_plugin_t *this_gen, fifo_buf
   off_t                 total_bytes;
   buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
 
+  if (todo < 0 || todo > buf->size) {
+    buf->free_buffer (buf);
+    return NULL;
+  }
+
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
 
@@ -554,7 +562,7 @@ static off_t http_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin
   if ((origin == SEEK_CUR) && (offset >= 0)) {
 
     for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-      if( !this_gen->read (this_gen, this->seek_buf, BUFSIZE) )
+      if( this_gen->read (this_gen, this->seek_buf, BUFSIZE) <= 0 )
         return this->curpos;
     }
 
@@ -576,7 +584,7 @@ static off_t http_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin
       offset -= this->curpos;
 
       for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-        if( !this_gen->read (this_gen, this->seek_buf, BUFSIZE) )
+        if( this_gen->read (this_gen, this->seek_buf, BUFSIZE) <= 0 )
           return this->curpos;
       }
 
@@ -996,6 +1004,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
     this->preview_size = http_plugin_read_int (this, this->preview, MAX_PREVIEW_SIZE);
   }
   if (this->preview_size < 0) {
+    this->preview_size = 0;
     xine_log (this->stream->xine, XINE_LOG_MSG, _("input_http: read error %d\n"), errno);
     return -12;
   }

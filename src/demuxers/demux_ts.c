@@ -1576,7 +1576,7 @@ static unsigned char * demux_synchronise(demux_ts_t* this) {
     do {
       read_length = this->input->read(this->input, this->buf,
 				      PKT_SIZE * NPKT_PER_READ);
-      if (read_length % PKT_SIZE) {
+      if (read_length < 0 || read_length % PKT_SIZE) {
 	xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
 		 "demux_ts: read returned %d bytes (not a multiple of %d!)\n",
 		 read_length, PKT_SIZE);

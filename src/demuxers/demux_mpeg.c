@@ -279,6 +279,10 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
     if((this->dummy_space[0] & 0xE0) == 0x20) {
 
       buf = this->input->read_block (this->input, this->video_fifo, len-1);
+      if (! buf) {
+	this->status = DEMUX_FINISHED;
+	return;
+      }
 
       track = (this->dummy_space[0] & 0x1f);
 
@@ -298,6 +302,10 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
       int spu_id = this->dummy_space[1] & 0x03;
 
       buf = this->input->read_block (this->input, this->video_fifo, len-1);
+      if (! buf) {
+	this->status = DEMUX_FINISHED;
+	return;
+      }
 
       buf->type      = BUF_SPU_SVCD + spu_id;
       buf->pts       = pts;
@@ -318,6 +326,10 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
     if((this->dummy_space[0] & 0xfc) == 0x00) {
 
       buf = this->input->read_block (this->input, this->video_fifo, len-1);
+      if (! buf) {
+	this->status = DEMUX_FINISHED;
+	return;
+      }
 
       buf->type      = BUF_SPU_CVD + (this->dummy_space[0] & 0x03);
       buf->pts       = pts;
@@ -376,6 +388,10 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
       i = this->input->read (this->input, this->dummy_space+1, 6);
 
       buf = this->input->read_block (this->input, this->video_fifo, len-7);
+      if (! buf) {
+	this->status = DEMUX_FINISHED;
+	return;
+      }
 
       buf->type      = BUF_AUDIO_LPCM_BE + track;
       buf->decoder_flags |= BUF_FLAG_SPECIAL;
@@ -920,7 +936,7 @@ static void demux_mpeg_resync (demux_mpeg_t *this, uint32_t buf) {
       if (pos == len) {
 	len = this->input->read(this->input, dummy_buf, sizeof(dummy_buf));
         pos = 0;
-        if (len == 0) {
+        if (len <= 0) {
           this->status = DEMUX_FINISHED;
 	  break;
 	}

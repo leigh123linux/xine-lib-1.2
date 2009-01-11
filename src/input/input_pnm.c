@@ -83,7 +83,8 @@ static off_t pnm_plugin_read (input_plugin_t *this_gen,
   lprintf ("pnm_plugin_read: %"PRId64" bytes ...\n", len);
 
   n = pnm_read (this->pnm, buf, len);
-  this->curpos += n;
+  if (n >= 0)
+    this->curpos += n;
 
   return n;
 }
@@ -95,6 +96,11 @@ static buf_element_t *pnm_plugin_read_block (input_plugin_t *this_gen,
   int                   total_bytes;
 
   lprintf ("pnm_plugin_read_block: %"PRId64" bytes...\n", todo);
+
+  if (todo < 0 || todo > buf->size) {
+    buf->free_buffer (buf);
+    return NULL;
+  }
 
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
@@ -123,10 +129,16 @@ static off_t pnm_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin
   if ((origin == SEEK_CUR) && (offset >= 0)) {
 
     for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-      this->curpos += pnm_plugin_read (this_gen, this->scratch, BUFSIZE);
+      off_t n = pnm_plugin_read (this_gen, this->scratch, BUFSIZE);
+      if (n <= 0)
+	return this->curpos;
+      this->curpos += n;
     }
 
-    this->curpos += pnm_plugin_read (this_gen, this->scratch, offset);
+    off_t n = pnm_plugin_read (this_gen, this->scratch, offset);
+    if (n <= 0)
+      return this->curpos;
+    this->curpos += n;
   }
 
   return this->curpos;

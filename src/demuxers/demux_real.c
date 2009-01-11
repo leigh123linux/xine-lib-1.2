@@ -318,9 +318,15 @@ static void real_free_mdpr (mdpr_t *mdpr) {
 }
 
 static void real_parse_audio_specific_data (demux_real_t *this,
-					    real_stream_t * stream,
-					    uint8_t * data)
+					    real_stream_t * stream)
 {
+  if (stream->mdpr->type_specific_len < 46) {
+    xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
+	     "demux_real: audio data size smaller than header length!\n");
+    return;
+  }
+
+  uint8_t * data = stream->mdpr->type_specific_data;
   const uint32_t coded_frame_size  = _X_BE_32 (data+24);
   const uint16_t codec_data_length = _X_BE_16 (data+40);
   const uint16_t coded_frame_size2 = _X_BE_16 (data+42);
@@ -359,9 +365,14 @@ static void real_parse_audio_specific_data (demux_real_t *this,
    *   stream->frame_size      = stream->w / stream->sps * stream->h * stream->sps;
    * but it looks pointless? the compiler will probably optimise it away, I suppose?
    */
-  stream->frame_size = stream->w * stream->h;
+  if (stream->w < 32768 && stream->h < 32768) {
+    stream->frame_size = stream->w * stream->h;
+    stream->frame_buffer = calloc(stream->frame_size, 1);
+  } else {
+    stream->frame_size = 0;
+    stream->frame_buffer = NULL;
+  }
 
-  stream->frame_buffer = calloc(stream->frame_size, 1);
   stream->frame_num_bytes = 0;
   stream->sub_packet_cnt = 0;
 
@@ -430,9 +441,14 @@ static void real_parse_headers (demux_real_t *this) {
     case MDPR_TAG:
     case CONT_TAG:
       {
+	if (chunk_size < PREAMBLE_SIZE+1) {
+	  this->status = DEMUX_FINISHED;
+	  return;
+	}
 	chunk_size -= PREAMBLE_SIZE;
 	uint8_t *const chunk_buffer = malloc(chunk_size);
-	if (this->input->read(this->input, chunk_buffer, chunk_size) !=
+	if (! chunk_buffer ||
+	    this->input->read(this->input, chunk_buffer, chunk_size) !=
 	    chunk_size) {
 	  free (chunk_buffer);
 	  this->status = DEMUX_FINISHED;
@@ -487,7 +503,8 @@ static void real_parse_headers (demux_real_t *this) {
 	    this->audio_streams[this->num_audio_streams].index = NULL;
 	    this->audio_streams[this->num_audio_streams].mdpr = mdpr;
 	    this->num_audio_streams++;
-	  } else if(_X_BE_32(mdpr->type_specific_data) == RA_TAG) {
+	  } else if(_X_BE_32(mdpr->type_specific_data) == RA_TAG &&
+		    mdpr->type_specific_len >= 6) {
 	    if(this->num_audio_streams == MAX_AUDIO_STREAMS) {
 	      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 		      "demux_real: maximum number of audio stream exceeded\n");
@@ -498,26 +515,30 @@ static void real_parse_headers (demux_real_t *this) {
 
 	    lprintf("audio version %d detected\n", version);
 
-	    char *fourcc_ptr = NULL;
+	    char *fourcc_ptr = "\0\0\0";
 	    switch(version) {
             case 3:
               /* Version 3 header stores fourcc after meta info - cheat by reading backwards from the 
                * end of the header instead of having to parse it all */
-              fourcc_ptr = mdpr->type_specific_data + mdpr->type_specific_len - 5;
+	      if (mdpr->type_specific_len >= 5)
+                fourcc_ptr = mdpr->type_specific_data + mdpr->type_specific_len - 5;
               break;
 	    case 4: {
-	      const uint8_t len = *(mdpr->type_specific_data + 56);
-	      fourcc_ptr = mdpr->type_specific_data + 58 + len;
+	      if (mdpr->type_specific_len >= 57) {
+	        const uint8_t len = *(mdpr->type_specific_data + 56);
+	        if (mdpr->type_specific_len >= 62 + len)
+	          fourcc_ptr = mdpr->type_specific_data + 58 + len;
+	      }
 	    }
               break;
             case 5:
-              fourcc_ptr = mdpr->type_specific_data + 66;
+	      if (mdpr->type_specific_len >= 70)
+                fourcc_ptr = mdpr->type_specific_data + 66;
               break;
             default:
               lprintf("unsupported audio header version %d\n", version);
               goto unknown;
 	    }
-
 	    lprintf("fourcc = %.4s\n", fourcc_ptr);
 
 	    const uint32_t fourcc = _X_ME_32(fourcc_ptr);
@@ -528,11 +549,11 @@ static void real_parse_headers (demux_real_t *this) {
 	    this->audio_streams[this->num_audio_streams].mdpr = mdpr;
 
 	    real_parse_audio_specific_data (this,
-					    &this->audio_streams[this->num_audio_streams], 
-					    mdpr->type_specific_data);
+					    &this->audio_streams[this->num_audio_streams]);
 	    this->num_audio_streams++;
 
-	  } else if(_X_BE_32(mdpr->type_specific_data + 4) == VIDO_TAG) {
+	  } else if(_X_BE_32(mdpr->type_specific_data + 4) == VIDO_TAG &&
+		    mdpr->type_specific_len >= 34) {
 
 	    if(this->num_video_streams == MAX_VIDEO_STREAMS) {
 	      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,

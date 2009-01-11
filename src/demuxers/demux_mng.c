@@ -104,13 +104,21 @@ static mng_bool mymng_close_stream(mng_handle mngh){
 static mng_bool mymng_read_stream(mng_handle mngh, mng_ptr buffer, mng_uint32 size, mng_uint32 *bytesread){
   demux_mng_t *this = (demux_mng_t*)mng_get_userdata(mngh);
 
-  *bytesread = this->input->read(this->input, buffer, size);
+  off_t n = this->input->read(this->input, buffer, size);
+  if (n < 0) {
+	*bytesread = 0;
+	return MNG_FALSE;
+  }
+  *bytesread = n;
 
   return MNG_TRUE;
 }
 
 static mng_bool mymng_process_header(mng_handle mngh, mng_uint32 width, mng_uint32 height){
   demux_mng_t *this = (demux_mng_t*)mng_get_userdata(mngh);
+
+  if (width > 0x8000 || height > 0x8000)
+      return MNG_FALSE;
 
   this->bih.biWidth = (width + 7) & ~7;
   this->bih.biHeight = height;

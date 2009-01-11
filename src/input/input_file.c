@@ -145,6 +145,9 @@ static int check_mmap_file(file_input_plugin_t *this) {
 static off_t file_plugin_read (input_plugin_t *this_gen, char *buf, off_t len) {
   file_input_plugin_t *this = (file_input_plugin_t *) this_gen;
 
+  if (len < 0)
+    return -1;
+
 #ifdef HAVE_MMAP
   if ( check_mmap_file(this) ) {
     off_t l = len;
@@ -165,6 +168,11 @@ static buf_element_t *file_plugin_read_block (input_plugin_t *this_gen, fifo_buf
 
   file_input_plugin_t  *this = (file_input_plugin_t *) this_gen;
   buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
+
+  if (todo < 0 || todo > buf->size) {
+    buf->free_buffer (buf);
+    return NULL;
+  }
 
   buf->type = BUF_DEMUX_BLOCK;
 

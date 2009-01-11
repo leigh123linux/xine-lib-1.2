@@ -480,6 +480,12 @@ static int process_commands( int socket )
 
         sscanf(cmd,"%*s %d %d", &start_frame, &num_frames);
 
+        if (num_frames > INT_MAX / CD_RAW_FRAME_SIZE)
+        {
+          printf ("fatal error: integer overflow\n");
+          exit (1);
+        }
+
         n = num_frames * CD_RAW_FRAME_SIZE;
         buf = malloc( n );
         if( !buf )
@@ -556,6 +562,11 @@ static int process_commands( int socket )
         char *buf;
 
         sscanf(cmd,"%*s %d %d", &blocks, &flags);
+        if (blocks > INT_MAX / DVD_BLOCK_SIZE)
+        {
+          printf ("fatal error: integer overflow\n");
+          exit (1);
+        }
 
         n = blocks * DVD_BLOCK_SIZE;
         buf = malloc( n );
