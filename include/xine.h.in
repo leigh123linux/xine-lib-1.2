@@ -1789,6 +1789,7 @@ void xine_config_reset (xine_t *self) XINE_PROTECTED;
 #define XINE_EVENT_VDR_SELECTAUDIO      352
 #define XINE_EVENT_VDR_TRICKSPEEDMODE   353
 #define XINE_EVENT_VDR_PLUGINSTARTED    354
+#define XINE_EVENT_VDR_DISCONTINUITY    355
 
 /* events generated from post plugins */
 #define XINE_EVENT_POST_TVTIME_FILMMODE_CHANGE   400
