@@ -1701,7 +1701,7 @@
     <para>
      Looks like some colours on your GUI match the colour key which Xv uses. You can
      change the colour key value to avoid this. There should be a line like:
-     <programlisting>&nbsp;&nbsp;&nbsp;video.XV_COLORKEY:2110</programlisting>
+     <programlisting>&nbsp;&nbsp;&nbsp;video.device.xv_colorkey:2110</programlisting>
      in your <filename>~/.xine/config</filename> file where you can change the colour that's used
      by xine for the video overlay.
     </para>
