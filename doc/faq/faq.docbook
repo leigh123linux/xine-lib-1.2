@@ -868,18 +868,13 @@
       xine.
      </para>
     <para>
-     Possibly the most convenient way to get the Real codecs is to download
-     them from the MPlayer website
-     <ulink url="http://www.mplayerhq.hu/design7/dload.html">
-      http://www.mplayerhq.hu/design7/dload.html
-     </ulink>.
-     The package is called "essential". Unpack it and move everything you
-     find inside to <filename>/usr/lib/codecs</filename> and set the
-     <parameter>decoder.external.real_codecs_path</parameter> in your xine config file
-     to <filename>/usr/lib/codecs</filename> (actually you can place them
-     anywhere you want, e.g. someplace in your home directory, but then you'll
-     have to set <parameter>decoder.external.real_codecs_path</parameter> accordingly).
-     Restart xine then and you should be able to watch Real files/streams.
+     Possibly the most convenient way to get the Real codecs is to install
+     RealPlayer 9 or RealPlayer 10 and set the
+     <parameter>decoder.external.real_codecs_path</parameter> in your xine
+     config file to the name of the directory which contains the codecs
+     (look for drvc.so); it's probably something like
+     <filename>/opt/real/RealPlayer/codecs/</filename>.  Restart xine then
+     and you should be able to watch Real files/streams.
     </para>
     </sect3>
     <sect3 id="realnetworkstreams">

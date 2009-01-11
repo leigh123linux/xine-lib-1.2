@@ -74,7 +74,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
                 [test x"$withval" != x"no" && with_caca="yes"],
                 [test $default_with_caca = without && with_caca=no])
     if test x"$with_caca" != x"no"; then
-        PKG_CHECK_MODULES([CACA], [caca cucul], [have_caca="yes"], [have_caca="no"])
+        PKG_CHECK_MODULES([CACA], [caca >= 0.99beta14 cucul >= 0.99beta14], [have_caca="yes"], [have_caca="no"])
         if test x"$with_caca" = x"yes" && test x"$have_caca" != x"yes"; then
             AC_MSG_ERROR([CACA support requested, but libcaca 0.99 not found])
         fi
