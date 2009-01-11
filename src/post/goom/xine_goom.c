@@ -48,7 +48,7 @@
 #define GOOM_HEIGHT 240
 
 /* colorspace conversion methods */
-static const char const * goom_csc_methods[]={
+static const char* goom_csc_methods[]={
   "Fast but not photorealistic",
   "Slow but looks better",
   NULL

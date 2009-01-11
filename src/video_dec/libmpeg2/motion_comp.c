@@ -68,7 +68,7 @@ void mpeg2_mc_init (uint32_t mm_accel)
 	mpeg2_mc = mpeg2_mc_altivec;
     } else
 #endif
-#ifdef ARCH_SPARC
+#if defined(ARCH_SPARC) && defined(ENABLE_VIS)
     if (mm_accel & MM_ACCEL_SPARC_VIS) {
 #ifdef LOG
 	fprintf (stderr, "Using VIS for motion compensation\n");
