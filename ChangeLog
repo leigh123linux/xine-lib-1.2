@@ -1,5 +1,6 @@
 xine-lib (1.1.17) 2009-??-??
   * Fix build with older ffmpeg, both internal and in Debian 5.0.
+  * Add version check for CACA library and disable CACA plugin if needed
 
 xine-lib (1.1.16) 2009-01-07
   * Security fixes:

@@ -88,6 +88,7 @@ struct ff_video_decoder_s {
   uint64_t          pts_tag_mask;
   uint64_t          pts_tag;
   int               pts_tag_counter;
+  int               pts_tag_stable_counter;
 #endif /* AVCODEC_HAS_REORDERED_OPAQUE */
   int               video_step;
 
@@ -1210,19 +1211,29 @@ static void ff_check_pts_tagging(ff_video_decoder_t *this, uint64_t pts)
 {
   if (this->pts_tag_mask == 0)
     return; /* pts tagging inactive */
-
-  if ((pts & this->pts_tag_mask) != this->pts_tag)
+  if ((pts & this->pts_tag_mask) != this->pts_tag) {
+    this->pts_tag_stable_counter = 0;
     return; /* pts still outdated */
+  }
+
+  /* the tag should be stable for 100 frames */
+  this->pts_tag_stable_counter++;
 
   if (this->pts_tag != 0) {
-    /* first pass: reset pts_tag */
-    this->pts_tag = 0;
+    if (this->pts_tag_stable_counter >= 100) {
+      /* first pass: reset pts_tag */
+      this->pts_tag = 0;
+      this->pts_tag_stable_counter = 0;
+    }
   } else if (pts == 0)
     return; /* cannot detect second pass */
   else {
-    /* second pass: reset pts_tag_mask and pts_tag_counter */
-    this->pts_tag_mask = 0;
-    this->pts_tag_counter = 0;
+    if (this->pts_tag_stable_counter >= 100) {
+      /* second pass: reset pts_tag_mask and pts_tag_counter */
+      this->pts_tag_mask = 0;
+      this->pts_tag_counter = 0;
+      this->pts_tag_stable_counter = 0;
+    }
   }
 }
 
@@ -1577,6 +1588,7 @@ static void ff_reset (video_decoder_t *this_gen) {
   this->pts_tag_mask = 0;
   this->pts_tag = 0;
   this->pts_tag_counter = 0;
+  this->pts_tag_stable_counter = 0;
 #endif /* AVCODEC_HAS_REORDERED_OPAQUE */
 }
 
@@ -1600,9 +1612,11 @@ static void ff_discontinuity (video_decoder_t *this_gen) {
   this->pts_tag_counter++;
   this->pts_tag_mask = 0;
   this->pts_tag = 0;
+  this->pts_tag_stable_counter = 0;
   {
     /* pts values typically don't use the uppermost bits. therefore we put the tag there */
     int counter_mask = 1;
+    int counter = 2 * this->pts_tag_counter + 1; /* always set the uppermost bit in tag_mask */
     uint64_t tag_mask = 0x8000000000000000ull;
     while (this->pts_tag_counter >= counter_mask)
     {
@@ -1610,7 +1624,7 @@ static void ff_discontinuity (video_decoder_t *this_gen) {
        * mirror the counter into the uppermost bits. this allows us to enlarge mask as
        * necessary and while previous taggings can still be detected to be outdated.
        */
-      if (this->pts_tag_counter & counter_mask)
+      if (counter & counter_mask)
         this->pts_tag |= tag_mask;
       this->pts_tag_mask |= tag_mask;
       tag_mask >>= 1;
