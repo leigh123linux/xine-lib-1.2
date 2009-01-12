@@ -260,7 +260,7 @@ int dpb_remove_picture_by_picnum(struct dpb *dpb, uint32_t picnum)
 int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_ref_frames)
 {
   int i = 0;
-  struct decoded_picture *last_pic;
+  struct decoded_picture *last_pic = dpb->pictures;
 
   pic->next = dpb->pictures;
   dpb->pictures = pic;
@@ -273,10 +273,15 @@ int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_r
         i++;
         if(i>num_ref_frames) {
           pic->used_for_reference = 0;
+          if(pic == dpb->pictures)
+            last_pic = pic->next;
+
           if(!pic->delayed_output) {
             dpb_remove_picture(dpb, pic);
           }
           pic = last_pic;
+          if(pic == dpb->pictures)
+            continue;
         }
         last_pic = pic;
       }
