@@ -86,6 +86,8 @@ uninstall-hook:
 install-data-hook:
 	@rm -f $(DESTDIR)$(XINE_PLUGINDIR)/*.la
 	@rm -f $(DESTDIR)$(XINE_PLUGINDIR)/*/*.la
+	@rm -f $(DESTDIR)$(XINE_PLUGINDIR)/*.dll.a
+	@rm -f $(DESTDIR)$(XINE_PLUGINDIR)/*/*.dll.a
 	@if test -x "$(top_srcdir)/post-install.sh" ; then \
 	  $(top_srcdir)/post-install.sh ; \
 	fi
