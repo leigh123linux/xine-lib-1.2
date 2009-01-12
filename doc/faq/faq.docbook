@@ -1711,9 +1711,42 @@
     <para>
      Looks like some colours on your GUI match the colour key which Xv uses. You can
      change the colour key value to avoid this. There should be a line like:
-     <programlisting>&nbsp;&nbsp;&nbsp;video.XV_COLORKEY:2110</programlisting>
+     <programlisting>&nbsp;&nbsp;&nbsp;video.device.xv_colorkey:2110</programlisting>
      in your <filename>~/.xine/config</filename> file where you can change the colour that's used
      by xine for the video overlay.
+    </para>
+   </sect2>
+
+   <sect2 id="texturedvideo">
+    <title>How do I get Xv working with compiz?</title>
+    <para>
+     Tell xine to prefer textured video. There should be a line like:
+     <programlisting>&nbsp;&nbsp;&nbsp;video.device.xv_preferred_method:Any</programlisting>
+     in your <filename>~/.xine/config</filename> file where you can change the preferred method
+     used by xine for the video overlay.
+    </para>
+    <para>
+     It may be that your graphics card or driver doesn't have the necessary
+     support for textured video, or the video is rendered too slowly.
+    </para>
+    <itemizedlist>
+     <listitem><para>
+      ATI: you are likely to need xf86-video-ati later than 6.8.0; 6.9.0.91
+      or newer is recommended for slower/older hardware (&lt; X1300) because
+      the rendering speed has been improved a lot.
+     </para></listitem>
+     <listitem><para>
+      Intel: 945 and later, at least, should be fine with xf86-video-intel
+      2.0 or later. Certainly with 2.2 or later.
+     </para></listitem>
+     <listitem><para>
+      nVidia: will probably be fine. (FIXME)
+     </para></listitem>
+    </itemizedlist>
+    <para>
+     If you find that textured video is significantly slower or isn't
+     supported, you should either not use compiz or tell xine to use the
+     xshm video output driver.
     </para>
    </sect2>
 
