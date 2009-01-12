@@ -55,21 +55,33 @@ typedef unsigned char boolean;
  * the linking stage.
  *****************************************************************************/
 #if 1
-static const GUID IID_IDirectDraw = {
+static const GUID xine_IID_IDirectDraw = {
 	0x6C14DB80,0xA733,0x11CE,{0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60}
 };
+#ifdef IID_IDirectDraw
+#  undef IID_IDirectDraw
+#endif
+#define IID_IDirectDraw xine_IID_IDirectDraw
 #endif
 
 #if 0
 static const GUID IID_IDirectDraw2 = {
 	0xB3A6F3E0,0x2B43,0x11CF,{0xA2,0xDE,0x00,0xAA,0x00,0xB9,0x33,0x56}
 };
+#ifdef IID_IDirectDraw2
+#  undef IID_IDirectDraw2
+#endif
+#define IID_IDirectDraw2 xine_IID_IDirectDraw2
 #endif
 
 #if 0
 static const GUID IID_IDirectDraw4 = {
 	0x9C59509A,0x39BD,0x11D1,{0x8C,0x4A,0x00,0xC0,0x4F,0xD9,0x30,0xC5}
 };
+#ifdef IID_IDirectDraw4
+#  undef IID_IDirectDraw4
+#endif
+#define IID_IDirectDraw4 xine_IID_IDirectDraw4
 #endif
 
 /* -----------------------------------------
@@ -488,6 +500,7 @@ static boolean CheckPixelFormat( win32_driver_t * win32_driver )
   return TRUE;
 }
 
+#if 0
 /* Create a Direct draw surface from
  * a bitmap resource..
  *
@@ -553,6 +566,7 @@ static LPDIRECTDRAWSURFACE CreateBMP( win32_driver_t * win32_driver, int resourc
 
   return bmp_surf;
 }
+#endif
 
 /* Merge overlay with the current primary 
  * surface. This funtion is only used when
@@ -1162,11 +1176,10 @@ static int win32_gui_data_exchange( vo_driver_t * vo_driver, int data_type, void
       UpdateRect( win32_driver->win32_visual );
       DisplayFrame( win32_driver );
       break;
-
     case XINE_GUI_SEND_DRAWABLE_CHANGED:
-	{
+    {
       HRESULT result;
-	  HWND newWndHnd = (HWND) data;
+      HWND newWndHnd = (HWND) data;
 	  
 	  /* set cooperative level */
 	  result = IDirectDraw_SetCooperativeLevel( win32_driver->ddobj, newWndHnd, DDSCL_NORMAL );
@@ -1185,10 +1198,11 @@ static int win32_gui_data_exchange( vo_driver_t * vo_driver, int data_type, void
       /* store our objects in our visual struct */
 	  win32_driver->win32_visual->WndHnd = newWndHnd;
 	  /* update video area and redraw current frame */
-      UdateRect( win32_driver->win32_visual );
+      UpdateRect( win32_driver->win32_visual );
       DisplayFrame( win32_driver );
       break;
     }
+  }
 
   return 0;
 }
