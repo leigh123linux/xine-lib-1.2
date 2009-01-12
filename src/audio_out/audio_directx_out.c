@@ -60,9 +60,13 @@ typedef unsigned char boolean;
  * the linking stage.
  *****************************************************************************/
 #if 1
-static const GUID IID_IDirectSoundNotify = {
+static const GUID xine_IID_IDirectSoundNotify = {
 	0xB0210783,0x89CD,0x11D0,{0xAF,0x08,0x00,0xA0,0xC9,0x25,0xCD,0x16}
 };
+#ifdef IID_IDirectSoundNotify
+#  undef IID_IDirectSoundNotify
+#endif
+#define IID_IDirectSoundNotify xine_IID_IDirectSoundNotify
 #endif
 
 

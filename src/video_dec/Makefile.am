@@ -1,4 +1,6 @@
-SUBDIRS = libmpeg2
+SUBDIRS = \
+	libmpeg2 \
+	libmpeg2new
 
 include $(top_srcdir)/misc/Makefile.common
 

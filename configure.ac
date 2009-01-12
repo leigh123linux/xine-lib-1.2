@@ -1039,29 +1039,16 @@ if test "x$WIN32_SYS" = "xmingw32" -o "x$WIN32_SYS" = "xcygwin"; then
     XINE_REL_PLUGINDIR="$XINE_REL_PLUGINROOT.$XINE_LT_AGE"
     XINE_REL_FONTDIR="`echo "$XINE_REL_FONTDIR" | sed -e 's/\\//\\\\\\\\/g'`"
     XINE_REL_LOCALEDIR="`echo "$XINE_REL_LOCALEDIR" | sed -e 's/\\//\\\\\\\\/g'`"
-    dnl prefix in xine-config
-    XINE_CONFIG_PREFIX="\$(cd \$(dirname \$0)/..; pwd)"
-    dnl installation directories (in xine-config)
-    XINE_PLUGINROOTPATH="$XINE_CONFIG_PREFIX/$XINE_REL_PLUGINROOT"
-    XINE_PLUGINPATH="$XINE_PLUGINROOTPATH.$XINE_LT_AGE"
-    XINE_FONTPATH="$XINE_CONFIG_PREFIX/$XINE_REL_FONTDIR"
-    XINE_LOCALEPATH="$XINE_CONFIG_PREFIX/$XINE_REL_LOCALEDIR"
-    dnl runtime directories
     AC_DEFINE([XINE_PLUGINROOT],[xine_get_pluginroot()],[Define this to general plugins directory location])
     AC_DEFINE([XINE_PLUGINDIR], [xine_get_plugindir()], [Define this to specific plugins directory location])
     AC_DEFINE([XINE_FONTDIR],   [xine_get_fontdir()],   [Define this to osd fonts dir location])
     AC_DEFINE([XINE_LOCALEDIR], [xine_get_localedir()], [Path where catalog files will be.])
 else
-    dnl prefix in xine-config
-    XINE_CONFIG_PREFIX="`makeexpand "${prefix}"`"
-    dnl directories from xine-config and runtime directories
     XINE_PLUGINROOTPATH="`makeexpand "$XINE_PLUGINROOT"`"
-    XINE_PLUGINPATH="$XINE_PLUGINROOTPATH.$XINE_LT_AGE"
     XINE_FONTPATH="`makeexpand "$XINE_FONTDIR"`"
     XINE_LOCALEPATH="`makeexpand "$XINE_LOCALEDIR"`"
-    dnl defining runtime directories
     AC_DEFINE_UNQUOTED([XINE_PLUGINROOT],["$XINE_PLUGINROOTPATH"], [Define this to general plugins directory location])
-    AC_DEFINE_UNQUOTED([XINE_PLUGINDIR], ["$XINE_PLUGINPATH"], [Define this to soecific plugins directory location])
+    AC_DEFINE_UNQUOTED([XINE_PLUGINDIR], ["$XINE_PLUGINROOTPATH.$XINE_LT_AGE"], [Define this to soecific plugins directory location])
     AC_DEFINE_UNQUOTED([XINE_FONTDIR],   ["$XINE_FONTPATH"],   [Define this to osd fonts dir location])
     AC_DEFINE_UNQUOTED([XINE_LOCALEDIR], ["$XINE_LOCALEPATH"], [Path where catalog files will be.])
 fi
@@ -1069,10 +1056,6 @@ AC_DEFINE_UNQUOTED([XINE_REL_PLUGINDIR], ["$XINE_REL_PLUGINDIR"], [Define this t
 AC_DEFINE_UNQUOTED([XINE_REL_PLUGINROOT],["$XINE_REL_PLUGINROOT"],[Define this to general plugin directory relative to execution prefix])
 AC_DEFINE_UNQUOTED([XINE_REL_FONTDIR],   ["$XINE_REL_FONTDIR"],   [Define this to font directory relative to prefix])
 AC_DEFINE_UNQUOTED([XINE_REL_LOCALEDIR], ["$XINE_REL_LOCALEDIR"], [Define this to font directory relative to prefix])
-AC_SUBST(XINE_CONFIG_PREFIX)
-AC_SUBST(XINE_PLUGINPATH)
-AC_SUBST(XINE_FONTPATH)
-AC_SUBST(XINE_LOCALEPATH)
 AC_SUBST(XINE_PLUGINDIR)
 AC_SUBST(XINE_FONTDIR)
 AC_SUBST(XINE_LOCALEDIR)
@@ -1266,6 +1249,9 @@ src/post/deinterlace/plugins/Makefile
 src/spu_dec/Makefile
 src/video_dec/Makefile
 src/video_dec/libmpeg2/Makefile
+src/video_dec/libmpeg2new/Makefile
+src/video_dec/libmpeg2new/include/Makefile
+src/video_dec/libmpeg2new/libmpeg2/Makefile
 src/video_out/Makefile
 src/video_out/macosx/Makefile
 src/xine-utils/Makefile

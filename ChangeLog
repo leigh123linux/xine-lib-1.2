@@ -68,6 +68,10 @@ xine-lib (1.1.90) (Unreleased)
   * Report more video output capabilities via (port)->get_capabilities():
     colour controls, zooming, colour keying.
 
+xine-lib (1.1.17) 2009-??-??
+  * Enable libmpeg2new. This is not yet production code; the old mpeg2
+    decoder remains the default.
+
 xine-lib (1.1.16.1) 2009-01-11
   * Fix build with older ffmpeg, both internal and in Debian 5.0.
   * Add version check for CACA library and disable CACA plugin if needed

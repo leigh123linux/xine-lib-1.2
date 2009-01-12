@@ -2058,9 +2058,9 @@ static int cdda_open(cdda_input_plugin_t *this_gen,
       hASPI = LoadLibrary( "wnaspi32.dll" );
       if( hASPI != NULL )
 	{
-	  (FARPROC) lpGetSupport = GetProcAddress( hASPI,
+	  lpGetSupport = GetProcAddress( hASPI,
 						   "GetASPI32SupportInfo" );
-	  (FARPROC) lpSendCommand = GetProcAddress( hASPI,
+	  lpSendCommand = GetProcAddress( hASPI,
 						    "SendASPI32Command" );
 	}
       
