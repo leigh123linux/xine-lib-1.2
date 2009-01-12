@@ -1,4 +1,4 @@
-xine-lib (1.1.16~hg-0) unstable; urgency=low
+xine-lib (1.1.17~hg-0) unstable; urgency=low
 
   [ Darren Salt ]
   * Hg snapshot.
@@ -7,7 +7,7 @@ xine-lib (1.1.16~hg-0) unstable; urgency=low
   * remove gs from build-dependencies
   * change the maintainer field to xine-devel@lists.sourceforge.net.
 
- -- Darren Salt <linux@youmustbejoking.demon.co.uk>  Fri, 15 Aug 2008 18:24:52 +0100
+ -- Darren Salt <linux@youmustbejoking.demon.co.uk>  Mon, 12 Jan 2009 19:36:45 +0000
 
 xine-lib (1.1.5~cvs-0) unstable; urgency=low
 
