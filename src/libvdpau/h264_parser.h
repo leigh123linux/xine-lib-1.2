@@ -55,6 +55,9 @@ struct nal_parser {
     uint8_t have_top;
     uint8_t have_frame;
 
+    uint8_t nal_size_length;
+    uint32_t next_nal_size;
+
     struct nal_unit *nal0;
     struct nal_unit *nal1;
     struct nal_unit *current_nal;
@@ -75,11 +78,13 @@ struct nal_parser {
 
 int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser);
 
-int seek_for_nal(uint8_t *buf, int buf_len);
+int seek_for_nal(uint8_t *buf, int buf_len, struct nal_parser *parser);
 
 struct nal_parser* init_parser();
 void free_parser(struct nal_parser *parser);
 int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
                 uint8_t **ret_buf, uint32_t *ret_len, uint32_t *ret_slice_cnt);
+
+void parse_codec_private(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len);
 
 #endif

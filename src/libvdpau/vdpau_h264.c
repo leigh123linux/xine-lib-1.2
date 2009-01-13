@@ -371,16 +371,17 @@ static int vdpau_decoder_init(video_decoder_t *this_gen)
   return 1;
 }
 
-static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *vdp_buffer, uint32_t slice_count)
+static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *vdp_buffer, uint32_t slice_count, int use_vdp_buffers)
 {
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *)this_gen;
   vo_frame_t *img = this->last_img;
 
   VdpPictureInfoH264 pic;
+
   fill_vdpau_pictureinfo_h264(this_gen, slice_count, &pic);
 
   if(!this->decoder_started && !pic.is_reference)
-    return;
+    return 0;
 
   this->decoder_started = 1;
 
@@ -406,14 +407,14 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
 
   /*int i;
   printf("Decode data: \n");
-  for(i = 0; i < ((vdp_buffer.bitstream_bytes < 20) ? vdp_buffer.bitstream_bytes : 20); i++) {
-    printf("%02x ", ((uint8_t*)vdp_buffer.bitstream)[i]);
+  for(i = 0; i < ((vdp_buffer[use_vdp_buffers-1].bitstream_bytes < 20) ? vdp_buffer[use_vdp_buffers-1].bitstream_bytes : 20); i++) {
+    printf("%02x ", ((uint8_t*)vdp_buffer[use_vdp_buffers-1].bitstream)[i]);
     if((i+1) % 10 == 0)
       printf("\n");
   }
   printf("\n...\n");
-  for(i = vdp_buffer.bitstream_bytes - 20; i < vdp_buffer.bitstream_bytes; i++) {
-    printf("%02x ", ((uint8_t*)vdp_buffer.bitstream)[i]);
+  for(i = vdp_buffer[use_vdp_buffers-1].bitstream_bytes - 20; i < vdp_buffer[use_vdp_buffers-1].bitstream_bytes; i++) {
+    printf("%02x ", ((uint8_t*)vdp_buffer[use_vdp_buffers-1].bitstream)[i]);
     if((i+1) % 10 == 0)
       printf("\n");
   }*/
@@ -444,11 +445,12 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
 
   //printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer.bitstream_bytes, this->curr_pts);
   VdpStatus status = this->vdpau_accel->vdp_decoder_render(this->decoder,
-      surface, (VdpPictureInfo*)&pic, 1, vdp_buffer);
+      surface, (VdpPictureInfo*)&pic, use_vdp_buffers, vdp_buffer);
 
-  // FIXME: do we really hit all cases here?
-  if(((uint8_t*)vdp_buffer->bitstream) != NULL) {
-    free((uint8_t*)vdp_buffer->bitstream);
+  /* only free the actual data, as the start seq is only
+   * locally allocated anyway. */
+  if(((uint8_t*)vdp_buffer[use_vdp_buffers-1].bitstream) != NULL) {
+    free((uint8_t*)vdp_buffer[use_vdp_buffers-1].bitstream);
   }
 
   this->curr_pts = this->next_pts;
@@ -540,8 +542,16 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *) this_gen;
 
-  VdpBitstreamBuffer vdp_buffer;
-  vdp_buffer.struct_version = VDP_BITSTREAM_BUFFER_VERSION;
+  VdpBitstreamBuffer vdp_buffer[2];
+  uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
+  vdp_buffer[0].struct_version = vdp_buffer[1].struct_version = VDP_BITSTREAM_BUFFER_VERSION;
+  int use_vdp_buffers = 1;
+
+  if(this->nal_parser->nal_size_length > 0) {
+    vdp_buffer[0].bitstream_bytes = 3;
+    vdp_buffer[0].bitstream = start_seq;
+    use_vdp_buffers = 2;
+  }
 
   /* a video decoder does not care about this flag (?) */
   if (buf->decoder_flags & BUF_FLAG_PREVIEW)
@@ -557,37 +567,40 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
     this->width                         = bih->biWidth;
     this->height                        = bih->biHeight;
 
-  }
+    uint8_t *codec_private = buf->content + sizeof(xine_bmiheader);
+    uint32_t codec_private_len = bih->biSize - sizeof(xine_bmiheader);
 
-  /* parse the first nal packages to retrieve profile type */
-  int len = 0;
-  uint32_t slice_count;
+    parse_codec_private(this->nal_parser, codec_private, codec_private_len);
+  } else {
+    /* parse the first nal packages to retrieve profile type */
+    int len = 0;
+    uint32_t slice_count;
 
-  if(buf->pts != 0)
-    this->next_pts = buf->pts;
+    if(buf->pts != 0)
+      this->next_pts = buf->pts;
 
-  while(len < buf->size) {
-    len += parse_frame(this->nal_parser, buf->content + len, buf->size - len,
-        (void*)&vdp_buffer.bitstream, &vdp_buffer.bitstream_bytes, &slice_count);
+    while(len < buf->size) {
+      len += parse_frame(this->nal_parser, buf->content + len, buf->size - len,
+          (void*)&vdp_buffer[use_vdp_buffers-1].bitstream, &vdp_buffer[use_vdp_buffers-1].bitstream_bytes, &slice_count);
 
-    if(this->decoder == VDP_INVALID_HANDLE &&
-        this->nal_parser->current_nal->sps != NULL &&
-        this->nal_parser->current_nal->sps->pic_width > 0 &&
-        this->nal_parser->current_nal->sps->pic_height > 0) {
+      if(this->decoder == VDP_INVALID_HANDLE &&
+          this->nal_parser->current_nal->sps != NULL &&
+          this->nal_parser->current_nal->sps->pic_width > 0 &&
+          this->nal_parser->current_nal->sps->pic_height > 0) {
 
-      vdpau_decoder_init(this_gen);
+        vdpau_decoder_init(this_gen);
+      }
+
+      if(this->decoder != VDP_INVALID_HANDLE &&
+          vdp_buffer[use_vdp_buffers-1].bitstream_bytes > 0 &&
+          this->nal_parser->current_nal->slc != NULL &&
+          this->nal_parser->current_nal->sps != NULL &&
+          this->nal_parser->current_nal->pps != NULL) {
+        vdpau_decoder_render(this_gen, vdp_buffer, slice_count, use_vdp_buffers);
+      }
+
     }
-
-    if(this->decoder != VDP_INVALID_HANDLE &&
-        vdp_buffer.bitstream_bytes > 0 &&
-        this->nal_parser->current_nal->slc != NULL &&
-        this->nal_parser->current_nal->sps != NULL &&
-        this->nal_parser->current_nal->pps != NULL) {
-      vdpau_decoder_render(this_gen, &vdp_buffer, slice_count);
-    }
-
   }
-
 }
 
 /*
@@ -613,9 +626,14 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
     this->decoder = VDP_INVALID_HANDLE;
   }
 
-  free_parser(this->nal_parser);
+  /* only reset the parser for continous streams
+   * like ts or pes
+   */
+  if(!this->nal_parser->nal_size_length) {
+    free_parser(this->nal_parser);
+    this->nal_parser = init_parser();
+  }
 
-  this->nal_parser = init_parser();
   this->buf           = NULL;
   this->wait_for_bottom_field = 0;
   this->video_step = 0;

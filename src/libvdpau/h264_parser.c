@@ -1073,6 +1073,7 @@ struct nal_parser* init_parser()
   parser->nal1 = init_nal_unit();
   parser->current_nal = parser->nal0;
   parser->last_nal = parser->nal1;
+  parser->slice_cnt = 1;
 
   parser->field = -1;
 
@@ -1091,10 +1092,66 @@ void free_parser(struct nal_parser *parser)
   free(parser);
 }
 
-void parse_prebuf()
+void parse_codec_private(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len)
 {
+  struct buf_reader bufr;
 
+  bufr.buf = inbuf;
+  bufr.cur_pos = inbuf;
+  bufr.cur_offset = 8;
+  bufr.len = inbuf_len;
+
+  struct nal_unit *nal = parser->current_nal;
+  struct nal_unit *nal1 = parser->last_nal;
+
+  if (!nal->sps)
+    nal->sps = calloc(1, sizeof(struct seq_parameter_set_rbsp));
+  else
+    memset(nal->sps, 0x00, sizeof(struct seq_parameter_set_rbsp));
+
+  /* reserved */
+  read_bits(&bufr, 8);
+  nal->sps->profile_idc = read_bits(&bufr, 8);
+  read_bits(&bufr, 8);
+  nal->sps->level_idc = read_bits(&bufr, 8);
+  read_bits(&bufr, 6);
+
+  parser->nal_size_length = read_bits(&bufr, 2) + 1;
+  read_bits(&bufr, 3);
+  uint8_t sps_count = read_bits(&bufr, 5);
+
+  inbuf += 6;
+  inbuf_len -= 6;
+  int i;
+  for(i = 0; i < sps_count; i++) {
+    uint16_t sps_size = read_bits(&bufr, 16);
+    inbuf += 2;
+    inbuf_len -= 2;
+    parse_nal(inbuf, sps_size, parser);
+    inbuf += sps_size;
+    inbuf_len -= sps_size;
+  }
+
+  bufr.buf = inbuf;
+  bufr.cur_pos = inbuf;
+  bufr.cur_offset = 8;
+  bufr.len = inbuf_len;
+
+  uint8_t pps_count = read_bits(&bufr, 8);
+  inbuf += 1;
+  for(i = 0; i < pps_count; i++) {
+    uint16_t pps_size = read_bits(&bufr, 16);
+    inbuf += 2;
+    inbuf_len -= 2;
+    parse_nal(inbuf, pps_size, parser);
+    inbuf += pps_size;
+    inbuf_len -= pps_size;
+  }
+
+  copy_nal_unit(nal1, nal);
+  printf("done parsing extradata\n");
 }
+
 
 int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
     uint8_t **ret_buf, uint32_t *ret_len, uint32_t *ret_slice_cnt)
@@ -1102,9 +1159,13 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
   int32_t next_nal = 0;
   int parsed_len = 0;
   int search_offset = 0;
+  int start_seq_len = 3;
   uint8_t completed_nal = 0;
 
   uint8_t *prebuf = parser->prebuf;
+
+  if(parser->nal_size_length > 0)
+    start_seq_len = 4;
 
   if(parser->last_nal_res == 1 && parser->current_nal &&
       parser->current_nal->slc) {
@@ -1117,8 +1178,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
           parser);
     }
   }
-
-  while ((next_nal = seek_for_nal(inbuf+search_offset, inbuf_len-parsed_len-search_offset)) >= 0) {
+  while ((next_nal = seek_for_nal(inbuf+search_offset, inbuf_len-parsed_len-search_offset, parser)) >= 0) {
     next_nal += search_offset;
 
     if(parser->incomplete_nal || completed_nal || next_nal == 0) {
@@ -1137,12 +1197,16 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
       parsed_len += next_nal;
       inbuf += next_nal;
 
-      parser->last_nal_res = parse_nal(prebuf+3, parser->prebuf_len-3, parser);
+      parser->last_nal_res = parse_nal(prebuf+start_seq_len, parser->prebuf_len-start_seq_len, parser);
       if (parser->last_nal_res == 1 && parser->buf_len > 0) {
-        //printf("Frame complete: %d bytes\n", parser->buf_len);
-        *ret_buf = malloc(parser->buf_len);
-        xine_fast_memcpy(*ret_buf, parser->buf, parser->buf_len);
-        *ret_len = parser->buf_len;
+        int offset = 0;
+        if(parser->nal_size_length > 0)
+          offset = start_seq_len;
+
+        //printf("Frame complete: %d bytes\n", parser->buf_len-offset);
+        *ret_len = parser->buf_len-offset;
+        *ret_buf = malloc(*ret_len);
+        xine_fast_memcpy(*ret_buf, parser->buf+offset, *ret_len);
         *ret_slice_cnt = parser->slice_cnt;
 
         //memset(parser->buf, 0x00, parser->buf_len);
@@ -1193,8 +1257,8 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
       inbuf += next_nal;
     }
 
-
-    search_offset = 3;
+    if(!parser->nal_size_length)
+      search_offset = start_seq_len;
   }
 
   /* if inbuf does not end with the start of a new nal
@@ -1218,11 +1282,11 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
      * this might happen if the nal start sequence is split
      * over the buf-boundary - if this is the case we
      */
-    if(parsed_len > 2 &&
-        (next_nal = seek_for_nal(prebuf+3, parser->prebuf_len)) >= 0) {
-      inbuf -= parser->prebuf_len-next_nal-3;
-      parsed_len -= parser->prebuf_len-next_nal-3;
-      parser->prebuf_len = next_nal+3;
+    if(!parser->nal_size_length && parsed_len > 2 &&
+        (next_nal = seek_for_nal(prebuf+start_seq_len, parser->prebuf_len, parser)) >= 0) {
+      inbuf -= parser->prebuf_len-next_nal-start_seq_len;
+      parsed_len -= parser->prebuf_len-next_nal-start_seq_len;
+      parser->prebuf_len = next_nal+start_seq_len;
     }
   }
 
@@ -1361,8 +1425,34 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
   return 0;
 }
 
-int seek_for_nal(uint8_t *buf, int buf_len)
+int seek_for_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
 {
+  if(parser->nal_size_length > 0) {
+
+    if(buf_len <= 0)
+      return -1;
+
+    int next_nal = parser->next_nal_position;
+    if(!next_nal) {
+      struct buf_reader bufr;
+
+      bufr.buf = buf;
+      bufr.cur_pos = buf;
+      bufr.cur_offset = 8;
+      bufr.len = buf_len;
+
+      next_nal = read_bits(&bufr, parser->nal_size_length*8)+4;
+    }
+
+    if(next_nal > buf_len) {
+      parser->next_nal_position = next_nal-buf_len;
+      return -1;
+    } else
+      parser->next_nal_position = 0;
+
+    return next_nal;
+  }
+
   int i;
   for (i = 0; i < buf_len - 2; i++) {
     if (buf[i] == 0x00 && buf[i + 1] == 0x00 && buf[i + 2] == 0x01) {
