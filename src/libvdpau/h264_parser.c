@@ -111,6 +111,15 @@ static inline void dump_bits(uint32_t bits)
   printf("\n");
 }
 
+static inline uint32_t bits_read(struct buf_reader *buf)
+{
+  int bits_read = 0;
+  bits_read = (buf->cur_pos - buf->buf)*8;
+  bits_read += (8-buf->cur_offset);
+
+  return bits_read;
+}
+
 static inline uint32_t read_bits(struct buf_reader *buf, int len)
 {
   static uint32_t i_mask[33] = { 0x00, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f,
@@ -145,29 +154,26 @@ static inline uint32_t read_bits(struct buf_reader *buf, int len)
 }
 
 /* determines if following bits are rtsb_trailing_bits */
-static inline uint8_t rbsp_trailing_bits(struct buf_reader *buf)
+static inline int rbsp_trailing_bits(uint8_t *buf, int buf_len)
 {
-  // store the offset and pos in buffer
-  // to revert this afterwards.
-  int last_offset;
-  uint8_t *last_pos;
+  uint8_t *cur_buf = buf+(buf_len-1);
+  uint8_t cur_val;
+  int parsed_bits = 0;
+  int i;
 
-  uint8_t rbsp_trailing_bits = 1;
-
-  last_offset = buf->cur_offset;
-  last_pos = buf->cur_pos;
-
-  if (read_bits(buf, 1) == 1) {
-    while (buf->cur_offset != 8)
-      if (read_bits(buf, 1) == 1)
-        rbsp_trailing_bits = 0;
+  while(buf_len > 0) {
+    cur_val = *cur_buf;
+    for(i = 0; i < 9; i++) {
+      if (cur_val&1)
+        return parsed_bits+i;
+      cur_val>>=1;
+    }
+    parsed_bits += 8;
+    cur_buf--;
   }
 
-  // revert buffer
-  buf->cur_offset = last_offset;
-  buf->cur_pos = last_pos;
-
-  return rbsp_trailing_bits;
+  printf("rbsp trailing bits could not be found\n");
+  return 0;
 }
 
 uint32_t read_exp_golomb(struct buf_reader *buf)
@@ -665,7 +671,11 @@ uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps,
   pps->constrained_intra_pred_flag = read_bits(buf, 1);
   pps->redundant_pic_cnt_present_flag = read_bits(buf, 1);
 
-  if (!rbsp_trailing_bits(buf)) {
+  int bit_length = (buf->len*8)-rbsp_trailing_bits(buf->buf, buf->len);
+  int bit_read = bits_read(buf);
+
+  if (bit_length-bit_read > 1) {
+    printf("Read transform 8x8\n");
     pps->transform_8x8_mode_flag = read_bits(buf, 1);
     pps->pic_scaling_matrix_present_flag = read_bits(buf, 1);
     if (pps->pic_scaling_matrix_present_flag) {
