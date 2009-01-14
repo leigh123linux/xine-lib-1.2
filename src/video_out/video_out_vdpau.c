@@ -460,6 +460,7 @@ static int vdpau_process_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overlay )
 }
 
 
+
 static void vdpau_overlay_begin (vo_driver_t *this_gen, vo_frame_t *frame_gen, int changed)
 {
   vdpau_driver_t  *this = (vdpau_driver_t *) this_gen;
@@ -471,6 +472,7 @@ static void vdpau_overlay_begin (vo_driver_t *this_gen, vo_frame_t *frame_gen, i
   this->has_argb_overlay = 0;
   ++this->ovl_changed;
 }
+
 
 
 static void vdpau_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen, vo_overlay_t *overlay)
@@ -491,6 +493,7 @@ static void vdpau_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen, v
   if(overlay->argb_layer)
     vdpau_process_argb_ovl( this, frame_gen, overlay );
 }
+
 
 
 static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame)
@@ -597,6 +600,7 @@ static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame)
   this->has_overlay = 1;
   this->ovl_changed = 0;
 }
+
 
 
 static void vdpau_frame_proc_slice (vo_frame_t *vo_img, uint8_t **src)
@@ -1005,14 +1009,14 @@ static void vdpau_update_noise( vdpau_driver_t *this_gen )
     VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION };
     VdpBool feature_enables[] = { 0 };
     vdp_video_mixer_set_feature_enables( this_gen->video_mixer, 1, features, feature_enables );
-    printf( "vo_vdpau: disable noise reduction !!\n" );
+    printf( "vo_vdpau: disable noise reduction.\n" );
     return;
   }
   else {
     VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION };
     VdpBool feature_enables[] = { 1 };
     vdp_video_mixer_set_feature_enables( this_gen->video_mixer, 1, features, feature_enables );
-    printf( "vo_vdpau: enable noise reduction !!\n" );
+    printf( "vo_vdpau: enable noise reduction.\n" );
   }
 
   VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_NOISE_REDUCTION_LEVEL };
@@ -1031,14 +1035,14 @@ static void vdpau_update_sharpness( vdpau_driver_t *this_gen )
     VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_SHARPNESS  };
     VdpBool feature_enables[] = { 0 };
     vdp_video_mixer_set_feature_enables( this_gen->video_mixer, 1, features, feature_enables );
-    printf( "vo_vdpau: disable sharpness !!\n" );
+    printf( "vo_vdpau: disable sharpness.\n" );
     return;
   }
   else {
     VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_SHARPNESS  };
     VdpBool feature_enables[] = { 1 };
     vdp_video_mixer_set_feature_enables( this_gen->video_mixer, 1, features, feature_enables );
-    printf( "vo_vdpau: enable sharpness !!\n" );
+    printf( "vo_vdpau: enable sharpness.\n" );
   }
 
   VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_SHARPNESS_LEVEL };
@@ -1819,11 +1823,11 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     return NULL;
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_PREEMPTION_CALLBACK_REGISTER, (void*)&vdp_preemption_callback_register );
   if ( vdpau_init_error( st, "Can't get PREEMPTION_CALLBACK_REGISTER proc address !!", &this->vo_driver, 1 ) )
-      return NULL;
+    return NULL;
 
   st = vdp_preemption_callback_register(vdp_device, &vdp_preemption_callback, (void*)this);
   if ( vdpau_init_error( st, "Can't register preemption callback !!", &this->vo_driver, 1 ) )
-        return NULL;
+    return NULL;
 
   st = vdp_queue_target_create_x11( vdp_device, this->drawable, &vdp_queue_target );
   if ( vdpau_init_error( st, "Can't create presentation queue target !!", &this->vo_driver, 1 ) )
@@ -1832,10 +1836,10 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   if ( vdpau_init_error( st, "Can't create presentation queue !!", &this->vo_driver, 1 ) )
     return NULL;
 
-  /* choose almost magenta as backcolor for color keying */
-  this->back_color.red = 0.02;//0.98;
-  this->back_color.green = 0.01;//0.01;
-  this->back_color.blue = 0.03;//0.99;
+  /* choose almost black as backcolor for color keying */
+  this->back_color.red = 0.02;
+  this->back_color.green = 0.01;
+  this->back_color.blue = 0.03;
   this->back_color.alpha = 1;
   vdp_queue_set_background_color( vdp_queue, &this->back_color );
 
