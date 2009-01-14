@@ -50,6 +50,15 @@
 #include <xine/xineutils.h>
 #include "bswap.h"
 
+/* In 6.4.5.4 MagickGetImagePixels changed to MagickGetAuthenticPixels 
+ * But upstream did not update their deprecated compat stuff.
+ * So do a fun hack to make it work.
+ * - 2008/11/26 Robin H. Johnson <robbat2@gentoo.org>
+ */
+#if MagickLibVersion >= 0x645
+#define MagickGetImagePixels MagickGetAuthenticPixels
+#endif
+
 typedef struct {
   video_decoder_class_t   decoder_class;
 
@@ -88,7 +97,7 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
   
   if (buf->decoder_flags & BUF_FLAG_FRAME_END) {
     int                width, height, i;
-    MagickBooleanType  status;
+    int                status;
     MagickWand        *wand;
     uint8_t           *img_buf, *img_buf_ptr;
     yuv_planes_t       yuv_planes;
@@ -101,7 +110,7 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     status = MagickReadImageBlob(wand, this->image, this->index);
     this->index = 0;
 
-    if (status == MagickFalse) {
+    if (!status) {
       DestroyMagickWand(wand);
       lprintf("error loading image\n");
       return;

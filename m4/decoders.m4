@@ -113,6 +113,9 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
                 [test x"$withval" != x"no" && with_imagemagick="yes"])
     if test x"$with_imagemagick" != x"no"; then
         PKG_CHECK_MODULES([WAND], [Wand], [have_imagemagick=yes], [have_imagemagick=no])
+        if test "x$with_imagemagick" = 'xno'; then
+            PKG_CHECK_MODULES([WAND], [MagickWand], [have_imagemagick=yes], [have_imagemagick=no])
+        fi
         if test x"$with_imagemagick" = x"yes" && test x"$have_imagemagick" = x"no"; then
             AC_MSG_ERROR([ImageMagick support requested, but ImageMagick not found])
         fi

@@ -493,7 +493,7 @@ static void _register_plugins_internal(xine_t *this, plugin_file_t *file,
 
   while ( info && info->type != PLUGIN_NONE ) {
 
-    if (file)
+    if (file && file->filename)
       xine_log (this, XINE_LOG_PLUGIN,
 		_("load_plugins: plugin %s found\n"), file->filename);
     else
