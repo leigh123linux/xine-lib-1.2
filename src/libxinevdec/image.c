@@ -50,6 +50,15 @@
 #include "xineutils.h"
 #include "bswap.h"
 
+/* In 6.4.5.4 MagickGetImagePixels changed to MagickGetAuthenticPixels 
+ * But upstream did not update their deprecated compat stuff.
+ * So do a fun hack to make it work.
+ * - 2008/11/26 Robin H. Johnson <robbat2@gentoo.org>
+ */
+#if MagickLibVersion >= 0x645
+#define MagickGetImagePixels MagickGetAuthenticPixels
+#endif
+
 typedef struct {
   video_decoder_class_t   decoder_class;
 
