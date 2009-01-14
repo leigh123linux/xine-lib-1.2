@@ -70,7 +70,8 @@ uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps,
 void parse_sei(struct buf_reader *buf, struct nal_parser *parser);
 uint8_t parse_slice_header(struct buf_reader *buf, struct nal_parser *parser);
 void
-    parse_ref_pic_list_reordering(struct buf_reader *buf, struct nal_unit *nal);
+    parse_ref_pic_list_reordering(struct buf_reader *buf, struct nal_unit *nal,
+        struct nal_parser *parser);
 void decode_ref_pic_marking(struct nal_unit *nal,
     uint32_t memory_management_control_operation,
     uint32_t marking_nr,
@@ -722,6 +723,7 @@ uint8_t parse_slice_header(struct buf_reader *buf, struct nal_parser *parser)
   slc->first_mb_in_slice = read_exp_golomb(buf);
   /* we do some parsing on the slice type, because the list is doubled */
   slc->slice_type = slice_type(read_exp_golomb(buf));
+
   //print_slice_type(slc->slice_type);
   slc->pic_parameter_set_id = read_exp_golomb(buf);
   slc->frame_num = read_bits(buf, sps->log2_max_frame_num_minus4 + 4);
@@ -778,7 +780,7 @@ uint8_t parse_slice_header(struct buf_reader *buf, struct nal_parser *parser)
   }
 
   /* --- ref_pic_list_reordering --- */
-  parse_ref_pic_list_reordering(buf, nal);
+  parse_ref_pic_list_reordering(buf, nal, parser);
 
   /* --- pred_weight_table --- */
   if ((pps->weighted_pred_flag && (slc->slice_type == SLICE_P
@@ -796,7 +798,7 @@ uint8_t parse_slice_header(struct buf_reader *buf, struct nal_parser *parser)
   return 0;
 }
 
-void parse_ref_pic_list_reordering(struct buf_reader *buf, struct nal_unit *nal)
+void parse_ref_pic_list_reordering(struct buf_reader *buf, struct nal_unit *nal, struct nal_parser *parser)
 {
   struct seq_parameter_set_rbsp *sps = nal->sps;
   struct pic_parameter_set_rbsp *pps = nal->pps;
@@ -1127,6 +1129,7 @@ void parse_codec_private(struct nal_parser *parser, uint8_t *inbuf, int inbuf_le
   read_bits(&bufr, 6);
 
   parser->nal_size_length = read_bits(&bufr, 2) + 1;
+  parser->nal_size_length_buf = calloc(1, parser->nal_size_length);
   read_bits(&bufr, 3);
   uint8_t sps_count = read_bits(&bufr, 5);
 
@@ -1175,7 +1178,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
   uint8_t *prebuf = parser->prebuf;
 
   if(parser->nal_size_length > 0)
-    start_seq_len = 4;
+    start_seq_len = 4-parser->have_nal_size_length_buf;
 
   if(parser->last_nal_res == 1 && parser->current_nal &&
       parser->current_nal->slc) {
@@ -1188,10 +1191,14 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
           parser);
     }
   }
+
   while ((next_nal = seek_for_nal(inbuf+search_offset, inbuf_len-parsed_len-search_offset, parser)) >= 0) {
     next_nal += search_offset;
+    if(parser->nal_size_length > 0)
+        start_seq_len = 4-parser->have_nal_size_length_buf;
 
-    if(parser->incomplete_nal || completed_nal || next_nal == 0) {
+    if(parser->incomplete_nal || completed_nal || next_nal == 0 ||
+        parser->nal_size_length) {
 
       if (parser->prebuf_len + next_nal > MAX_FRAME_SIZE) {
         printf("buf underrun!!\n");
@@ -1209,25 +1216,29 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
 
       parser->last_nal_res = parse_nal(prebuf+start_seq_len, parser->prebuf_len-start_seq_len, parser);
       if (parser->last_nal_res == 1 && parser->buf_len > 0) {
-        int offset = 0;
-        if(parser->nal_size_length > 0)
-          offset = start_seq_len;
 
-        //printf("Frame complete: %d bytes\n", parser->buf_len-offset);
-        *ret_len = parser->buf_len-offset;
+        //printf("Frame complete: %d bytes\n", parser->buf_len);
+        *ret_len = parser->buf_len;
         *ret_buf = malloc(*ret_len);
-        xine_fast_memcpy(*ret_buf, parser->buf+offset, *ret_len);
+        xine_fast_memcpy(*ret_buf, parser->buf, *ret_len);
         *ret_slice_cnt = parser->slice_cnt;
 
-        //memset(parser->buf, 0x00, parser->buf_len);
-        parser->buf_len = 0;
-        parser->last_nal_res = 1;
         parser->slice_cnt = 1;
+        parser->buf_len = 0;
 
         /* this is a SLICE, keep it in the buffer */
         //printf("slice %d size: %d\n", parser->slice_cnt-1, parser->prebuf_len);
-        xine_fast_memcpy(parser->buf + parser->buf_len, prebuf, parser->prebuf_len);
-        parser->buf_len += parser->prebuf_len;
+        if(parser->nal_size_length > 0) {
+          uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
+          xine_fast_memcpy(parser->buf, start_seq, 3);
+          parser->buf_len += 3;
+        }
+
+        int offset = 0;
+        if(parser->nal_size_length > 0)
+          offset = start_seq_len;
+        xine_fast_memcpy(parser->buf+parser->buf_len, prebuf+offset, parser->prebuf_len-offset);
+        parser->buf_len += parser->prebuf_len-offset;
         parser->prebuf_len = 0;
         parser->incomplete_nal = 0;
 
@@ -1242,7 +1253,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
 
       if (parser->last_nal_res != 2) {
         if (parser->buf_len + parser->prebuf_len > MAX_FRAME_SIZE) {
-          printf("buf underrun!!\n");
+          printf("buf underrun 1!!\n");
           parser->buf_len = 0;
           *ret_len = 0;
           *ret_buf = NULL;
@@ -1251,8 +1262,18 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
 
         //printf("slice %d size: %d\n", parser->slice_cnt-1, parser->prebuf_len);
         /* this is a SLICE, keep it in the buffer */
-        xine_fast_memcpy(parser->buf + parser->buf_len, prebuf, parser->prebuf_len);
-        parser->buf_len += parser->prebuf_len;
+        if(parser->nal_size_length > 0) {
+          uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
+          xine_fast_memcpy(parser->buf + parser->buf_len, start_seq, 3);
+          parser->buf_len += 3;
+        }
+
+        int offset = 0;
+        if(parser->nal_size_length > 0)
+          offset = start_seq_len;
+
+        xine_fast_memcpy(parser->buf + parser->buf_len, prebuf+offset, parser->prebuf_len-offset);
+        parser->buf_len += (parser->prebuf_len-offset);
       }
 
       parser->prebuf_len = 0;
@@ -1276,7 +1297,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
    */
   if(parsed_len < inbuf_len) {
     if (inbuf_len-parsed_len + parser->prebuf_len > MAX_FRAME_SIZE) {
-      printf("buf underrun!!\n");
+      printf("buf underrun 0!!\n");
       parser->prebuf_len = 0;
       *ret_len = 0;
       *ret_buf = NULL;
@@ -1438,20 +1459,46 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
 int seek_for_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
 {
   if(parser->nal_size_length > 0) {
-
-    if(buf_len <= 0)
+    if(buf_len <= 0 ||
+        (buf_len < parser->nal_size_length &&
+        (parser->next_nal_position == 0 ||
+            parser->next_nal_position > buf_len))) {
+      /* if we have less than nal_size_length bytes
+       * left in the buffer we need to store them, so
+       * that the next length calculation will be correct
+       */
+      if(!parser->next_nal_position) {
+        memcpy(parser->nal_size_length_buf, buf, buf_len);
+        parser->have_nal_size_length_buf = buf_len;
+      }
       return -1;
+    }
 
-    int next_nal = parser->next_nal_position;
+    uint32_t next_nal = parser->next_nal_position;
     if(!next_nal) {
-      struct buf_reader bufr;
+      if(parser->have_nal_size_length_buf > 0) {
+        memcpy(parser->nal_size_length_buf+parser->have_nal_size_length_buf, buf, parser->nal_size_length-parser->have_nal_size_length_buf);
 
-      bufr.buf = buf;
-      bufr.cur_pos = buf;
-      bufr.cur_offset = 8;
-      bufr.len = buf_len;
+        struct buf_reader bufr;
 
-      next_nal = read_bits(&bufr, parser->nal_size_length*8)+4;
+        bufr.buf = parser->nal_size_length_buf;
+        bufr.cur_pos = parser->nal_size_length_buf;
+        bufr.cur_offset = 8;
+        bufr.len = parser->nal_size_length;
+
+        next_nal = read_bits(&bufr, parser->nal_size_length*8)+4-parser->have_nal_size_length_buf;
+
+        parser->have_nal_size_length_buf = 0;
+      } else {
+        struct buf_reader bufr;
+
+        bufr.buf = buf;
+        bufr.cur_pos = buf;
+        bufr.cur_offset = 8;
+        bufr.len = buf_len;
+
+        next_nal = read_bits(&bufr, parser->nal_size_length*8)+4;
+      }
     }
 
     if(next_nal > buf_len) {

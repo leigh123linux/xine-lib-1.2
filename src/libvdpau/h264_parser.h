@@ -57,6 +57,8 @@ struct nal_parser {
 
     uint8_t nal_size_length;
     uint32_t next_nal_size;
+    uint8_t *nal_size_length_buf;
+    uint8_t have_nal_size_length_buf;
 
     struct nal_unit *nal0;
     struct nal_unit *nal1;

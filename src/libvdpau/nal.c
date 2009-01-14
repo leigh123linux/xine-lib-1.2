@@ -58,13 +58,13 @@ void copy_nal_unit(struct nal_unit *dest, struct nal_unit *src)
   xine_fast_memcpy(dest, src, size);
 
   if(!dest->sps)
-    dest->sps = malloc(sizeof(struct seq_parameter_set_rbsp));
+    dest->sps = calloc(1, sizeof(struct seq_parameter_set_rbsp));
 
   if(!dest->pps)
-    dest->pps = malloc(sizeof(struct pic_parameter_set_rbsp));
+    dest->pps = calloc(1, sizeof(struct pic_parameter_set_rbsp));
 
   if(!dest->slc)
-    dest->slc = malloc(sizeof(struct slice_header));
+    dest->slc = calloc(1, sizeof(struct slice_header));
 
   if(src->sps)
     xine_fast_memcpy(dest->sps, src->sps, sizeof(struct seq_parameter_set_rbsp));

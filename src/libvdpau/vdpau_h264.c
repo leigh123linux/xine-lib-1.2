@@ -51,10 +51,6 @@ typedef struct vdpau_h264_decoder_s {
   /* these are traditional variables in a video decoder object */
   uint64_t          video_step;  /* frame duration in pts units */
 
-  unsigned char    *buf;         /* the accumulated buffer data */
-  int               bufsize;     /* the maximum size of buf */
-  int               size;        /* the current size of buf */
-
   int               width;       /* the width of a video frame */
   int               height;      /* the height of a video frame */
   double            ratio;       /* the width to height ratio */
@@ -371,7 +367,7 @@ static int vdpau_decoder_init(video_decoder_t *this_gen)
   return 1;
 }
 
-static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *vdp_buffer, uint32_t slice_count, int use_vdp_buffers)
+static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *vdp_buffer, uint32_t slice_count)
 {
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *)this_gen;
   vo_frame_t *img = this->last_img;
@@ -407,14 +403,14 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
 
   /*int i;
   printf("Decode data: \n");
-  for(i = 0; i < ((vdp_buffer[use_vdp_buffers-1].bitstream_bytes < 20) ? vdp_buffer[use_vdp_buffers-1].bitstream_bytes : 20); i++) {
-    printf("%02x ", ((uint8_t*)vdp_buffer[use_vdp_buffers-1].bitstream)[i]);
+  for(i = 0; i < ((vdp_buffer->bitstream_bytes < 20) ? vdp_buffer->bitstream_bytes : 20); i++) {
+    printf("%02x ", ((uint8_t*)vdp_buffer->bitstream)[i]);
     if((i+1) % 10 == 0)
       printf("\n");
   }
   printf("\n...\n");
-  for(i = vdp_buffer[use_vdp_buffers-1].bitstream_bytes - 20; i < vdp_buffer[use_vdp_buffers-1].bitstream_bytes; i++) {
-    printf("%02x ", ((uint8_t*)vdp_buffer[use_vdp_buffers-1].bitstream)[i]);
+  for(i = vdp_buffer->bitstream_bytes - 20; i < vdp_buffer->bitstream_bytes; i++) {
+    printf("%02x ", ((uint8_t*)vdp_buffer->bitstream)[i]);
     if((i+1) % 10 == 0)
       printf("\n");
   }*/
@@ -435,6 +431,7 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
 
   if(this->vdp_runtime_nr != *(this->vdpau_accel->current_vdp_runtime_nr)) {
     printf("VDPAU was preempted. Reinitialise the decoder.\n");
+    this->decoder = VDP_INVALID_HANDLE;
     vdpau_h264_reset(this_gen);
     this->vdp_runtime_nr = this->vdpau_accel->vdp_runtime_nr;
     this->last_img = NULL;
@@ -445,12 +442,12 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
 
   //printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer.bitstream_bytes, this->curr_pts);
   VdpStatus status = this->vdpau_accel->vdp_decoder_render(this->decoder,
-      surface, (VdpPictureInfo*)&pic, use_vdp_buffers, vdp_buffer);
+      surface, (VdpPictureInfo*)&pic, 1, vdp_buffer);
 
   /* only free the actual data, as the start seq is only
    * locally allocated anyway. */
-  if(((uint8_t*)vdp_buffer[use_vdp_buffers-1].bitstream) != NULL) {
-    free((uint8_t*)vdp_buffer[use_vdp_buffers-1].bitstream);
+  if(((uint8_t*)vdp_buffer->bitstream) != NULL) {
+    free((uint8_t*)vdp_buffer->bitstream);
   }
 
   this->curr_pts = this->next_pts;
@@ -542,16 +539,8 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *) this_gen;
 
-  VdpBitstreamBuffer vdp_buffer[2];
-  uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
-  vdp_buffer[0].struct_version = vdp_buffer[1].struct_version = VDP_BITSTREAM_BUFFER_VERSION;
-  int use_vdp_buffers = 1;
-
-  if(this->nal_parser->nal_size_length > 0) {
-    vdp_buffer[0].bitstream_bytes = 3;
-    vdp_buffer[0].bitstream = start_seq;
-    use_vdp_buffers = 2;
-  }
+  VdpBitstreamBuffer vdp_buffer;
+  vdp_buffer.struct_version = VDP_BITSTREAM_BUFFER_VERSION;
 
   /* a video decoder does not care about this flag (?) */
   if (buf->decoder_flags & BUF_FLAG_PREVIEW)
@@ -570,7 +559,21 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
     uint8_t *codec_private = buf->content + sizeof(xine_bmiheader);
     uint32_t codec_private_len = bih->biSize - sizeof(xine_bmiheader);
 
-    parse_codec_private(this->nal_parser, codec_private, codec_private_len);
+    if(codec_private_len > 0) {
+      parse_codec_private(this->nal_parser, codec_private, codec_private_len);
+      vdpau_decoder_init(this_gen);
+    }
+  } else if (buf->decoder_flags & BUF_FLAG_SPECIAL) {
+    if(buf->decoder_info[1] == BUF_SPECIAL_DECODER_CONFIG) {
+      uint8_t *codec_private = buf->decoder_info_ptr[2];
+      uint32_t codec_private_len = buf->decoder_info[2];
+
+      if(codec_private_len > 0) {
+        parse_codec_private(this->nal_parser, codec_private, codec_private_len);
+        vdpau_decoder_init(this_gen);
+      }
+    }
+
   } else {
     /* parse the first nal packages to retrieve profile type */
     int len = 0;
@@ -581,7 +584,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
     while(len < buf->size) {
       len += parse_frame(this->nal_parser, buf->content + len, buf->size - len,
-          (void*)&vdp_buffer[use_vdp_buffers-1].bitstream, &vdp_buffer[use_vdp_buffers-1].bitstream_bytes, &slice_count);
+          (void*)&vdp_buffer.bitstream, &vdp_buffer.bitstream_bytes, &slice_count);
 
       if(this->decoder == VDP_INVALID_HANDLE &&
           this->nal_parser->current_nal->sps != NULL &&
@@ -592,11 +595,11 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
       }
 
       if(this->decoder != VDP_INVALID_HANDLE &&
-          vdp_buffer[use_vdp_buffers-1].bitstream_bytes > 0 &&
+          vdp_buffer.bitstream_bytes > 0 &&
           this->nal_parser->current_nal->slc != NULL &&
           this->nal_parser->current_nal->sps != NULL &&
           this->nal_parser->current_nal->pps != NULL) {
-        vdpau_decoder_render(this_gen, vdp_buffer, slice_count, use_vdp_buffers);
+        vdpau_decoder_render(this_gen, &vdp_buffer, slice_count);
       }
 
     }
@@ -617,8 +620,6 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
 
   printf("vdpau_h264_reset\n");
 
-  this->size = 0;
-
   dpb_free_all( &(this->nal_parser->dpb) );
 
   if (this->decoder != VDP_INVALID_HANDLE) {
@@ -634,7 +635,6 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
     this->nal_parser = init_parser();
   }
 
-  this->buf           = NULL;
   this->wait_for_bottom_field = 0;
   this->video_step = 0;
   this->curr_pts = 0;
@@ -669,10 +669,6 @@ static void vdpau_h264_dispose (video_decoder_t *this_gen) {
     this->dangling_img = NULL;
   }
 
-  if (this->buf) {
-    free (this->buf);
-    this->buf = NULL;
-  }
 
   dpb_free_all( &(this->nal_parser->dpb) );
 
