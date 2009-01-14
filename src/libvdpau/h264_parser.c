@@ -967,7 +967,7 @@ void decode_ref_pic_marking(struct nal_unit *nal,
         printf("FIXME: B Set frame %d to long-term ref\n", pic_num_x);
     }
     else {
-      printf("memory_management_control_operation: 3 failed. No such picture.");
+      printf("memory_management_control_operation: 3 failed. No such picture.\n");
     }
 
   }

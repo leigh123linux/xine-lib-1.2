@@ -441,7 +441,7 @@ static void picture_coding_extension( sequence_t *sequence, uint8_t *buf, int le
 
 static void quant_matrix_extension( sequence_t *sequence, uint8_t *buf, int len )
 {
-  int i, j, off;
+  int i, j, off=0;
 
   i = get_bits( buf,4,1 );
   lprintf( "load_intra_quantizer_matrix: %d\n", i );
