@@ -262,8 +262,8 @@ static void fill_vdpau_pictureinfo_h264(video_decoder_t *this_gen, uint32_t slic
   pic->pic_order_present_flag = pps->pic_order_present_flag;
   pic->deblocking_filter_control_present_flag = pps->deblocking_filter_control_present_flag;
   pic->redundant_pic_cnt_present_flag = pps->redundant_pic_cnt_present_flag;
-  memcpy(pic->scaling_lists_4x4, pps->scaling_lists_4x4, sizeof(pic->scaling_lists_4x4));
-  memcpy(pic->scaling_lists_8x8, pps->scaling_lists_8x8, sizeof(pic->scaling_lists_8x8));
+  memcpy(pic->scaling_lists_4x4, sps->scaling_lists_4x4, sizeof(pic->scaling_lists_4x4));
+  memcpy(pic->scaling_lists_8x8, sps->scaling_lists_8x8, sizeof(pic->scaling_lists_8x8));
 
   /* set num_ref_frames to the number of actually available reference frames,
    * if this is not set generation 3 decoders will fail. */
@@ -572,7 +572,10 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
         parse_codec_private(this->nal_parser, codec_private, codec_private_len);
         vdpau_decoder_init(this_gen);
       }
-    }
+    } else if (buf->decoder_info[1] == BUF_SPECIAL_PALETTE) {
+      printf("SPECIAL PALETTE is not yet handled\n");
+    } else
+      printf("UNKNOWN SPECIAL HEADER\n");
 
   } else {
     /* parse the first nal packages to retrieve profile type */
