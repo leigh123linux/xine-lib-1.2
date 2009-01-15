@@ -344,6 +344,8 @@ void parse_scaling_list(struct buf_reader *buf, uint8_t *scaling_list,
   uint8_t use_default_scaling_matrix_flag = 0;
   int i;
 
+  uint8_t *zigzag = (length==64) ? zigzag_8x8 : zigzag_4x4;
+
   for (i = 0; i < length; i++) {
     if (next_scale != 0) {
       delta_scale = read_exp_golomb_s(buf);
@@ -353,8 +355,7 @@ void parse_scaling_list(struct buf_reader *buf, uint8_t *scaling_list,
         break;
       }
     }
-    scaling_list[i] = (next_scale == 0) ? last_scale : next_scale;
-    last_scale = scaling_list[i];
+    scaling_list[zigzag[i]] = last_scale = (next_scale == 0) ? last_scale : next_scale;
   }
 
   if (use_default_scaling_matrix_flag) {
@@ -388,6 +389,9 @@ uint8_t parse_sps(struct buf_reader *buf, struct nal_parser *parser)
 
   buf->cur_pos = buf->buf + 3;
   sps->seq_parameter_set_id = read_exp_golomb(buf);
+
+  memset(sps->scaling_lists_4x4, 16, sizeof(sps->scaling_lists_4x4));
+  memset(sps->scaling_lists_8x8, 16, sizeof(sps->scaling_lists_4x4));
   if (sps->profile_idc == 100 || sps->profile_idc == 110 || sps->profile_idc
       == 122 || sps->profile_idc == 144) {
     sps->chroma_format_idc = read_exp_golomb(buf);
@@ -412,11 +416,6 @@ uint8_t parse_sps(struct buf_reader *buf, struct nal_parser *parser)
         }
       }
     }
-  }
-
-  if (!sps->seq_scaling_matrix_present_flag) {
-    memset(sps->scaling_lists_4x4, 16, sizeof(sps->scaling_lists_4x4));
-    memset(sps->scaling_lists_8x8, 16, sizeof(sps->scaling_lists_4x4));
   }
 
   sps->log2_max_frame_num_minus4 = read_exp_golomb(buf);
@@ -675,6 +674,8 @@ uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps,
   int bit_length = (buf->len*8)-rbsp_trailing_bits(buf->buf, buf->len);
   int bit_read = bits_read(buf);
 
+  memset(pps->scaling_lists_4x4, 16, sizeof(pps->scaling_lists_4x4));
+  memset(pps->scaling_lists_8x8, 16, sizeof(pps->scaling_lists_4x4));
   if (bit_length-bit_read > 1) {
     printf("Read transform 8x8\n");
     pps->transform_8x8_mode_flag = read_bits(buf, 1);

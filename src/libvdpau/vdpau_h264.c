@@ -123,22 +123,22 @@ static inline void dump_pictureinfo_h264(VdpPictureInfoH264 *pic)
 
   /*int i, j;
   for(i = 0; i < 6; i++) {
-    printf("scalint_list4x4[%d]: ", i);
+    printf("C: scalint_list4x4[%d]:\nC:", i);
     for(j = 0; j < 16; j++) {
-      printf("[%d] ", pic->scaling_lists_4x4[i][j]);
+      printf(" [%d]", pic->scaling_lists_4x4[i][j]);
       if(j%8 == 0)
-        printf("\n");
+        printf("\nC:");
     }
-    printf("\n");
+    printf("C: \n");
   }
   for(i = 0; i < 2; i++) {
-    printf("scalint_list4x4[%d]: ", i);
+    printf("C: scalint_list8x8[%d]:\nC:", i);
     for(j = 0; j < 64; j++) {
-      printf("[%d] ", pic->scaling_lists_4x4[i][j]);
+      printf(" [%d] ", pic->scaling_lists_8x8[i][j]);
       if(j%8 == 0)
-        printf("\n");
+        printf("\nC:");
     }
-    printf("\n");
+    printf("C: \n");
   }*/
 
   int i;
@@ -262,8 +262,9 @@ static void fill_vdpau_pictureinfo_h264(video_decoder_t *this_gen, uint32_t slic
   pic->pic_order_present_flag = pps->pic_order_present_flag;
   pic->deblocking_filter_control_present_flag = pps->deblocking_filter_control_present_flag;
   pic->redundant_pic_cnt_present_flag = pps->redundant_pic_cnt_present_flag;
-  memcpy(pic->scaling_lists_4x4, sps->scaling_lists_4x4, sizeof(pic->scaling_lists_4x4));
-  memcpy(pic->scaling_lists_8x8, sps->scaling_lists_8x8, sizeof(pic->scaling_lists_8x8));
+
+  memcpy(pic->scaling_lists_4x4, pps->scaling_lists_4x4, sizeof(pic->scaling_lists_4x4));
+  memcpy(pic->scaling_lists_8x8, pps->scaling_lists_8x8, sizeof(pic->scaling_lists_8x8));
 
   /* set num_ref_frames to the number of actually available reference frames,
    * if this is not set generation 3 decoders will fail. */
