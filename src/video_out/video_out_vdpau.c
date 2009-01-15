@@ -1528,14 +1528,10 @@ static void vdpau_dispose (vo_driver_t *this_gen)
 
 
 
-static int vdpau_init_error( VdpStatus st, const char *msg, vo_driver_t *driver, int error_string )
+static int vdpau_reinit_error( VdpStatus st, const char *msg )
 {
   if ( st != VDP_STATUS_OK ) {
-    if ( error_string )
-      printf( "vo_vdpau: %s : %s\n", msg, vdp_get_error_string( st ) );
-    else
-      printf( "vo_vdpau: %s\n", msg );
-    vdpau_dispose( driver );
+    printf( "vo_vdpau: %s : %s\n", msg, vdp_get_error_string( st ) );
     return 1;
   }
   return 0;
@@ -1545,7 +1541,7 @@ static int vdpau_init_error( VdpStatus st, const char *msg, vo_driver_t *driver,
 
 static void vdpau_reinit( vo_driver_t *this_gen )
 {
-  printf("VDPAU was pre-empted. Reinit.\n");
+  printf("vo_vdpau: VDPAU was pre-empted. Reinit.\n");
   vdpau_driver_t *this = (vdpau_driver_t *)this_gen;
 
   XLockDisplay(guarded_display);
@@ -1559,32 +1555,31 @@ static void vdpau_reinit( vo_driver_t *this_gen )
       printf( "No vdpau implementation.\n" );
     else
       printf( "unsupported GPU?\n" );
-    vdpau_dispose( &this->vo_driver );
     return;
   }
 
   st = vdp_queue_target_create_x11( vdp_device, this->drawable, &vdp_queue_target );
-  if ( vdpau_init_error( st, "Can't create presentation queue target !!", &this->vo_driver, 1 ) )
+  if ( vdpau_reinit_error( st, "Can't create presentation queue target !!" ) )
     return;
   st = vdp_queue_create( vdp_device, vdp_queue_target, &vdp_queue );
-  if ( vdpau_init_error( st, "Can't create presentation queue !!", &this->vo_driver, 1 ) )
+  if ( vdpau_reinit_error( st, "Can't create presentation queue !!" ) )
     return;
 
 
   VdpChromaType chroma = VDP_CHROMA_TYPE_420;
   st = orig_vdp_video_surface_create( vdp_device, chroma, this->soft_surface_width, this->soft_surface_height, &this->soft_surface );
-  if ( vdpau_init_error( st, "Can't create video surface !!", &this->vo_driver, 1 ) )
+  if ( vdpau_reinit_error( st, "Can't create video surface !!" ) )
     return;
 
   this->current_output_surface = 0;
   this->init_queue = 0;
   st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[0], this->output_surface_height[0], &this->output_surface[0] );
-  if ( vdpau_init_error( st, "Can't create first output surface !!", &this->vo_driver, 1 ) ) {
+  if ( vdpau_reinit_error( st, "Can't create first output surface !!" ) ) {
     orig_vdp_video_surface_destroy( this->soft_surface );
     return;
   }
   st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[0], this->output_surface_height[0], &this->output_surface[1] );
-  if ( vdpau_init_error( st, "Can't create second output surface !!", &this->vo_driver, 1 ) ) {
+  if ( vdpau_reinit_error( st, "Can't create second output surface !!" ) ) {
     orig_vdp_video_surface_destroy( this->soft_surface );
     vdp_output_surface_destroy( this->output_surface[0] );
     return;
@@ -1597,7 +1592,7 @@ static void vdpau_reinit( vo_driver_t *this_gen )
   int num_layers = 3;
   void const *param_values[] = { &this->video_mixer_width, &this->video_mixer_height, &chroma, &num_layers };
   st = vdp_video_mixer_create( vdp_device, 4, features, 4, params, param_values, &this->video_mixer );
-  if ( vdpau_init_error( st, "Can't create video mixer !!", &this->vo_driver, 1 ) ) {
+  if ( vdpau_reinit_error( st, "Can't create video mixer !!" ) ) {
     orig_vdp_video_surface_destroy( this->soft_surface );
     vdp_output_surface_destroy( this->output_surface[0] );
     vdp_output_surface_destroy( this->output_surface[1] );
@@ -1607,7 +1602,7 @@ static void vdpau_reinit( vo_driver_t *this_gen )
   vdp_preemption_callback_register(vdp_device, &vdp_preemption_callback, (void*)this);
 
   XUnlockDisplay(guarded_display);
-  printf("Reinit done.\n");
+  printf("vo_vdpau: Reinit done.\n");
   this->vdp_runtime_nr++;
   this->reinit_needed = 0;
 }
@@ -1616,9 +1611,24 @@ static void vdpau_reinit( vo_driver_t *this_gen )
 
 static void vdp_preemption_callback(VdpDevice device, void *context)
 {
-  printf("VDPAU preemption callback\n");
+  printf("vo_vdpau: VDPAU preemption callback\n");
   vdpau_driver_t *this = (vdpau_driver_t *)context;
   this->reinit_needed = 1;
+}
+
+
+
+static int vdpau_init_error( VdpStatus st, const char *msg, vo_driver_t *driver, int error_string )
+{
+  if ( st != VDP_STATUS_OK ) {
+    if ( error_string )
+      printf( "vo_vdpau: %s : %s\n", msg, vdp_get_error_string( st ) );
+    else
+      printf( "vo_vdpau: %s\n", msg );
+    vdpau_dispose( driver );
+    return 1;
+  }
+  return 0;
 }
 
 
