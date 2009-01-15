@@ -64,7 +64,7 @@
      <para>
       support for multiple plugin directories
       (<filename>$prefix/lib/xine/plugins</filename>,
-      <filename>$HOME/.xine/plugins</filename>, ...)
+      <filename>$HOME/.xine/plugins</filename>, &hellip;)
      </para>
     </listitem>
     <listitem>
@@ -124,7 +124,7 @@
 &nbsp;&nbsp;&nbsp;      demux_mpeg_block.so
 &nbsp;&nbsp;&nbsp;      decode_mpeg.so
 &nbsp;&nbsp;&nbsp;      video_out_xv.so
-&nbsp;&nbsp;&nbsp;      ...
+&nbsp;&nbsp;&nbsp;      &hellip;
 &nbsp;&nbsp;&nbsp;  xine-vcdnav-0.9.11
 &nbsp;&nbsp;&nbsp;      input_vcdnav.so
 &nbsp;&nbsp;&nbsp;  xine-lib-1.2
@@ -135,21 +135,21 @@
 &nbsp;&nbsp;&nbsp;      demuxers
 &nbsp;&nbsp;&nbsp;          fli.so
 &nbsp;&nbsp;&nbsp;          avi.so
-&nbsp;&nbsp;&nbsp;          ...
+&nbsp;&nbsp;&nbsp;          &hellip;
 &nbsp;&nbsp;&nbsp;      decoders
 &nbsp;&nbsp;&nbsp;          ffmpeg.so
 &nbsp;&nbsp;&nbsp;          mpeg.so (may contain mpeg 1/2 audio and video decoders)
 &nbsp;&nbsp;&nbsp;          pcm.so
-&nbsp;&nbsp;&nbsp;          ...
+&nbsp;&nbsp;&nbsp;          &hellip;
 &nbsp;&nbsp;&nbsp;      output
 &nbsp;&nbsp;&nbsp;          video_xv.so
 &nbsp;&nbsp;&nbsp;          audio_oss.so
-&nbsp;&nbsp;&nbsp;          ...
+&nbsp;&nbsp;&nbsp;          &hellip;
 &nbsp;&nbsp;&nbsp;  xine-lib-3.0
 &nbsp;&nbsp;&nbsp;          avi.so (avi demuxer)
 &nbsp;&nbsp;&nbsp;          mpeg.so (contains mpeg demuxers and audio/video decoders)
 &nbsp;&nbsp;&nbsp;          video_out_xv.so (Xv video out)
-&nbsp;&nbsp;&nbsp;          ...</screen>
+&nbsp;&nbsp;&nbsp;          &hellip;</screen>
    </para>
    <para>
     As you can see, every package is free to organize plugins at will
@@ -244,12 +244,12 @@
     13, found in xine-lib 2.13.7 would then define this plugin list:
     <programlisting>
 &nbsp;&nbsp;&nbsp;#include &lt;xine/plugin.h&gt;
-&nbsp;&nbsp;&nbsp;...
+&nbsp;&nbsp;&nbsp;&hellip;
 &nbsp;&nbsp;&nbsp;plugin_t *init_api12(void) {
 &nbsp;&nbsp;&nbsp;  input_plugin_t *this;
 &nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;  this = malloc(sizeof(input_plugin_t));
-&nbsp;&nbsp;&nbsp;  ...
+&nbsp;&nbsp;&nbsp;  &hellip;
 &nbsp;&nbsp;&nbsp;  return (plugin_t *)this;
 &nbsp;&nbsp;&nbsp;}
 &nbsp;&nbsp;&nbsp;/* same thing, with different initialization for API 13 */
@@ -380,7 +380,7 @@
   <para>
    Another problem xine must handle is the sound card clock drift. vpts are
    compared to the system clock (or even to a different clock provided by a scr plugin)
-   for presentation but sound card is sampling audio by it's own clocking
+   for presentation but sound card is sampling audio by its own clocking
    mechanism, so a small drift may occur. As the playback goes on this
    error will accumulate possibly resulting in audio gaps or audio drops. To avoid that
    annoying effect, two countermeasures are available (switchable with xine config
@@ -396,7 +396,7 @@
 &nbsp;&nbsp;&nbsp; * smoothing algorithms to correct sound card clock drifts.
 &nbsp;&nbsp;&nbsp; * obs: previously this error was added to xine scr.
 &nbsp;&nbsp;&nbsp; *
-&nbsp;&nbsp;&nbsp; * audio buf ---> metronom --> audio fifo --> (buf->vpts - hw_vpts)
+&nbsp;&nbsp;&nbsp; * audio buf ---&gt; metronom --&gt; audio fifo --&gt; (buf-&gt;vpts - hw_vpts)
 &nbsp;&nbsp;&nbsp; *           (vpts_offset + error)                     gap
 &nbsp;&nbsp;&nbsp; *                    &lt;---------- control --------------|
 &nbsp;&nbsp;&nbsp; *
@@ -448,7 +448,7 @@
    In order to optimize to the most common case, xine's internal format for screen overlays
    is a similar representation to the 'spu' data. This brings not only performance 
    benefit (since blending functions may skip large image areas due to RLE) but also
-   compatibility: it's possible to reencode any xine overlay to the original spu format
+   compatibility: it's possible to re-encode any xine overlay to the original spu format
    for displaying with mpeg hardware decoders like DXR3.
   </para>
   <para>
@@ -486,38 +486,38 @@
     <programlisting>
 &nbsp;&nbsp;&nbsp;video_overlay_event_t       event;
 &nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;event.object.handle = this->video_overlay->get_handle(this->video_overlay,0);
+&nbsp;&nbsp;&nbsp;event.object.handle = this-&gt;video_overlay-&gt;get_handle(this-&gt;video_overlay,0);
 &nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;memset(this->event.object.overlay, 0, sizeof(*this->event.object.overlay));
+&nbsp;&nbsp;&nbsp;memset(this-&gt;event.object.overlay, 0, sizeof(*this-&gt;event.object.overlay));
 &nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;/* set position and size for this overlay */
-&nbsp;&nbsp;&nbsp;event.object.overlay->x = 0;
-&nbsp;&nbsp;&nbsp;event.object.overlay->y = 0;
-&nbsp;&nbsp;&nbsp;event.object.overlay->width = 100;
-&nbsp;&nbsp;&nbsp;event.object.overlay->height = 100;
+&nbsp;&nbsp;&nbsp;event.object.overlay-&gt;x = 0;
+&nbsp;&nbsp;&nbsp;event.object.overlay-&gt;y = 0;
+&nbsp;&nbsp;&nbsp;event.object.overlay-&gt;width = 100;
+&nbsp;&nbsp;&nbsp;event.object.overlay-&gt;height = 100;
 &nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;/* clipping region is mostly used by dvd menus for highlighting buttons */ 
-&nbsp;&nbsp;&nbsp;event.object.overlay->clip_top    = 0;
-&nbsp;&nbsp;&nbsp;event.object.overlay->clip_bottom = image_height;
-&nbsp;&nbsp;&nbsp;event.object.overlay->clip_left   = 0;
-&nbsp;&nbsp;&nbsp;event.object.overlay->clip_right  = image_width;
+&nbsp;&nbsp;&nbsp;event.object.overlay-&gt;clip_top    = 0;
+&nbsp;&nbsp;&nbsp;event.object.overlay-&gt;clip_bottom = image_height;
+&nbsp;&nbsp;&nbsp;event.object.overlay-&gt;clip_left   = 0;
+&nbsp;&nbsp;&nbsp;event.object.overlay-&gt;clip_right  = image_width;
 &nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;/* the hard part: provide a RLE image */   
-&nbsp;&nbsp;&nbsp;event.object.overlay->rle = your_rle;
-&nbsp;&nbsp;&nbsp;event.object.overlay->data_size = your_size;
-&nbsp;&nbsp;&nbsp;event.object.overlay->num_rle = your_rle_count;
+&nbsp;&nbsp;&nbsp;event.object.overlay-&gt;rle = your_rle;
+&nbsp;&nbsp;&nbsp;event.object.overlay-&gt;data_size = your_size;
+&nbsp;&nbsp;&nbsp;event.object.overlay-&gt;num_rle = your_rle_count;
 &nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;/* palette must contain YUV values for each color index */
-&nbsp;&nbsp;&nbsp;memcpy(event.object.overlay->clip_color, color, sizeof(color));
+&nbsp;&nbsp;&nbsp;memcpy(event.object.overlay-&gt;clip_color, color, sizeof(color));
 &nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;/* this table contains transparency levels for each color index.
 &nbsp;&nbsp;&nbsp;   0 = completely transparent, 15 - completely opaque */
-&nbsp;&nbsp;&nbsp;memcpy(event.object.overlay->clip_trans, trans, sizeof(trans)); 
+&nbsp;&nbsp;&nbsp;memcpy(event.object.overlay-&gt;clip_trans, trans, sizeof(trans)); 
 &nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;/* set the event type and time for displaying */
 &nbsp;&nbsp;&nbsp;event.event_type = EVENT_SHOW_SPU;
 &nbsp;&nbsp;&nbsp;event.vpts = 0; /* zero is a special vpts value, it means 'now' */
-&nbsp;&nbsp;&nbsp;video_overlay->add_event(video_overlay, &amp;event);</programlisting>
+&nbsp;&nbsp;&nbsp;video_overlay-&gt;add_event(video_overlay, &amp;event);</programlisting>
    </para>
   </sect2>
   <sect2>
@@ -535,7 +535,7 @@
    <programlisting>
 &nbsp;&nbsp;&nbsp;osd_object_t osd;
 &nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;osd = this->osd_renderer->new_object(osd_renderer, 300, 200);</programlisting>
+&nbsp;&nbsp;&nbsp;osd = this-&gt;osd_renderer-&gt;new_object(osd_renderer, 300, 200);</programlisting>
    <para>
     Now we may want to set font and color for text rendering. Although we will
     refer to fonts over this document, in fact the OSD can be any kind of bitmap. Font
@@ -547,22 +547,22 @@
    </para>
    <programlisting>
 &nbsp;&nbsp;&nbsp;/* set sans serif 24 font */
-&nbsp;&nbsp;&nbsp;osd_renderer->set_font(osd, "sans", 24);
+&nbsp;&nbsp;&nbsp;osd_renderer-&gt;set_font(osd, "sans", 24);
 &nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;/* copy pre-defined colors for white, black border, transparent background to
 &nbsp;&nbsp;&nbsp;   starting at the index used by the first text palette */
-&nbsp;&nbsp;&nbsp;osd_renderer->set_text_palette(osd, TEXTPALETTE_WHITE_BLACK_TRANSPARENT, OSD_TEXT1);
+&nbsp;&nbsp;&nbsp;osd_renderer-&gt;set_text_palette(osd, TEXTPALETTE_WHITE_BLACK_TRANSPARENT, OSD_TEXT1);
 &nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;/* copy pre-defined colors for white, no border, translucid background to
 &nbsp;&nbsp;&nbsp;   starting at the index used by the second text palette */
-&nbsp;&nbsp;&nbsp;osd_renderer->set_text_palette(osd, TEXTPALETTE_WHITE_NONE_TRANSLUCID, OSD_TEXT2);</programlisting>
+&nbsp;&nbsp;&nbsp;osd_renderer-&gt;set_text_palette(osd, TEXTPALETTE_WHITE_NONE_TRANSLUCID, OSD_TEXT2);</programlisting>
    <para>
     Now render the text and show it:
     <programlisting>
-&nbsp;&nbsp;&nbsp;osd_renderer->render_text(osd, 0, 0, "white text, black border", OSD_TEXT1);
-&nbsp;&nbsp;&nbsp;osd_renderer->render_text(osd, 0, 30, "white text, no border", OSD_TEXT2);
+&nbsp;&nbsp;&nbsp;osd_renderer-&gt;render_text(osd, 0, 0, "white text, black border", OSD_TEXT1);
+&nbsp;&nbsp;&nbsp;osd_renderer-&gt;render_text(osd, 0, 30, "white text, no border", OSD_TEXT2);
 &nbsp;&nbsp;&nbsp;      
-&nbsp;&nbsp;&nbsp;osd_renderer->show(osd, 0); /* 0 stands for 'now' */</programlisting>
+&nbsp;&nbsp;&nbsp;osd_renderer-&gt;show(osd, 0); /* 0 stands for 'now' */</programlisting>
    </para>
    <para>
     There's a 1:1 mapping between OSD objects and overlays, therefore the
@@ -572,11 +572,11 @@
    </para>
    <programlisting>
 &nbsp;&nbsp;&nbsp;for( i=0; i &lt; 100; i+=10 ) {
-&nbsp;&nbsp;&nbsp;  osd_renderer->set_position(osd, i, i );
-&nbsp;&nbsp;&nbsp;  osd_renderer->show(osd, 0);
+&nbsp;&nbsp;&nbsp;  osd_renderer-&gt;set_position(osd, i, i );
+&nbsp;&nbsp;&nbsp;  osd_renderer-&gt;show(osd, 0);
 &nbsp;&nbsp;&nbsp;  sleep(1);
 &nbsp;&nbsp;&nbsp;}
-&nbsp;&nbsp;&nbsp;osd_renderer->hide(osd, 0);</programlisting>
+&nbsp;&nbsp;&nbsp;osd_renderer-&gt;hide(osd, 0);</programlisting>
    <para>
     For additional functions please check osd.h or the public header.
    </para>
@@ -618,13 +618,13 @@
     </para>
     <programlisting>
 &nbsp;&nbsp;&nbsp;/* obtains size the text will occupy */
-&nbsp;&nbsp;&nbsp;renderer->get_text_size(osd, text, &amp;width, &amp;height);
+&nbsp;&nbsp;&nbsp;renderer-&gt;get_text_size(osd, text, &amp;width, &amp;height);
 &nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;/* draws a box using font background color (translucid) */
-&nbsp;&nbsp;&nbsp;renderer->filled_rect(osd, x1, y1, x1+width, y1+height, OSD_TEXT2 + 1);
+&nbsp;&nbsp;&nbsp;renderer-&gt;filled_rect(osd, x1, y1, x1+width, y1+height, OSD_TEXT2 + 1);
 &nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;/* render text */     
-&nbsp;&nbsp;&nbsp;renderer->render_text(osd, x1, y1, text, OSD_TEXT2);</programlisting>
+&nbsp;&nbsp;&nbsp;renderer-&gt;render_text(osd, x1, y1, text, OSD_TEXT2);</programlisting>
    </sect3>
    <sect3>
     <title>OSD text and palette FAQ</title>
