@@ -39,6 +39,7 @@
 
 #include "yuv2rgb.h"
 #include <xine/xineutils.h>
+#include "xine_mmx.h"
 
 #define CPU_MMXEXT 0
 #define CPU_MMX 1

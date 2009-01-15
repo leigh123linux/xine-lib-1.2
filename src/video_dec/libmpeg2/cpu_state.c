@@ -28,6 +28,7 @@
 
 #include "mpeg2_internal.h"
 #include <xine/xineutils.h>
+#include "xine_mmx.h"
 
 void (* mpeg2_cpu_state_save) (cpu_state_t * state) = NULL;
 void (* mpeg2_cpu_state_restore) (cpu_state_t * state) = NULL;

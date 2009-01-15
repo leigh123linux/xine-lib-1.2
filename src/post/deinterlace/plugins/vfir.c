@@ -36,6 +36,7 @@
 
 #include <xine/attributes.h>
 #include <xine/xineutils.h>
+#include "xine_mmx.h"
 #include "speedy.h"
 #include "deinterlace.h"
 #include "plugins.h"

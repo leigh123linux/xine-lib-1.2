@@ -29,6 +29,7 @@
 
 #include "mpeg2_internal.h"
 #include <xine/xineutils.h>
+#include "xine_mmx.h"
 
 #define ROW_SHIFT 11
 #define COL_SHIFT 6

@@ -63,6 +63,7 @@
  */
 
 #include <xine/xine_internal.h>
+#include "xine_mmx.h"
 
 /*
  * In search of the perfect colorspace conversion formulae...
