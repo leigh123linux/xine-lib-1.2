@@ -333,7 +333,7 @@
      In case that you have a fresh CVS checkout, you will need to do the
      following first in order to get a tarball release out of it which you
      can later use with the <command>rpmbuild -ta</command> command above:
-     <screen>&nbsp;&nbsp;&nbsp;<command>./autogen.sh &amp;&amp; make clean && make dist</command></screen>
+     <screen>&nbsp;&nbsp;&nbsp;<command>./autogen.sh &amp;&amp; make clean &amp;&amp; make dist</command></screen>
     </para>
     <para>
      In any case, please keep in mind that you have to build and install
@@ -364,7 +364,7 @@
      <screen>
 &nbsp;&nbsp;&nbsp;<command>cd ..</command>
 &nbsp;&nbsp;&nbsp;<command>ls *.deb</command>
-&nbsp;&nbsp;&nbsp;<command>su - -c 'cd '"`pwd`"' && dpkg -i &lt;DEB_PACKAGES&gt;'</command>
+&nbsp;&nbsp;&nbsp;<command>su - -c 'cd '"`pwd`"' &amp;&amp; dpkg -i &lt;DEB_PACKAGES&gt;'</command>
      </screen>
      Ubuntu users will probably want to use this instead of that <command>su</command>:
      <screen>
