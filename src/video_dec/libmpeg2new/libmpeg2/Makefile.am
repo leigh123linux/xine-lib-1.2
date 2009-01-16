@@ -12,3 +12,5 @@ libmpeg2arch_la_SOURCES = motion_comp_mmx.c idct_mmx.c \
                           motion_comp_alpha.c idct_alpha.c \
                           motion_comp_vis.c \
                           cpu_accel.c cpu_state.c
+
+EXTRA_DIST = mpeg2_internal.h vlc.h
