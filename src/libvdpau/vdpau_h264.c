@@ -661,6 +661,11 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
   this->nal_parser = init_parser();
   if(this->codec_private_len > 0) {
     parse_codec_private(this->nal_parser, this->codec_private, this->codec_private_len);
+
+    /* if the stream does not contain frame boundary marks we
+     * have to hope that the next nal will start with the next
+     * incoming buf... seems to work, though...
+     */
     this->wait_for_frame_start = this->have_frame_boundary_marks;
   }
 
