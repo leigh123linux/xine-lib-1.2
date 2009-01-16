@@ -267,7 +267,7 @@ int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_r
   dpb->num_ref_frames = num_ref_frames;
   dpb->used++;
 
-  if(dpb->used > num_ref_frames) {
+  if(pic != NULL && dpb->used > num_ref_frames) {
     do {
       if(pic->used_for_reference) {
         i++;
@@ -285,7 +285,7 @@ int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_r
         }
         last_pic = pic;
       }
-    } while ((pic = pic->next) != NULL);
+    } while (pic != NULL && (pic = pic->next) != NULL);
   }
 
   return 0;
