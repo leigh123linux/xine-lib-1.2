@@ -40,6 +40,8 @@ struct decoded_picture {
 
   uint8_t delayed_output;
 
+  uint8_t misses_references;
+
   struct decoded_picture *next;
 };
 

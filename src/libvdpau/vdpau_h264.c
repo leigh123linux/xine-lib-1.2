@@ -61,6 +61,9 @@ typedef struct vdpau_h264_decoder_s {
   struct decoded_picture *last_ref_pic;
   uint32_t          last_top_field_order_cnt;
 
+  int               have_frame_boundary_marks;
+  int               wait_for_frame_start;
+
   VdpDecoder        decoder;
   int               decoder_started;
 
@@ -74,6 +77,9 @@ typedef struct vdpau_h264_decoder_s {
 
   vo_frame_t        *last_img;
   vo_frame_t        *dangling_img;
+
+  uint8_t           *codec_private;
+  uint32_t          codec_private_len;
 
   int               vdp_runtime_nr;
 
@@ -482,6 +488,8 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
         decoded_pic = init_decoded_picture(this->nal_parser->current_nal, surface, img);
         this->last_ref_pic = decoded_pic;
         decoded_pic->used_for_reference = 1;
+        if(pic.num_ref_frames < this->nal_parser->current_nal->sps->num_ref_frames)
+          decoded_pic->misses_references = 1;
         dpb_add_picture(&(this->nal_parser->dpb), decoded_pic, sps->num_ref_frames);
         this->dangling_img = NULL;
       } else if(slc->field_pic_flag && this->wait_for_bottom_field) {
@@ -514,7 +522,10 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
       /* now retrieve the next output frame */
       if ((decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb))) != NULL) {
         decoded_pic->img->top_field_first = (decoded_pic->nal->top_field_order_cnt <= decoded_pic->nal->bottom_field_order_cnt);
-        decoded_pic->img->draw(decoded_pic->img, this->stream);
+        if(!decoded_pic->misses_references)
+          decoded_pic->img->draw(decoded_pic->img, this->stream);
+        else
+          printf("skip frame, it misses references!");
         dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
       }
 
@@ -547,31 +558,42 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
   if (buf->decoder_flags & BUF_FLAG_PREVIEW)
     return;
 
+  if(buf->decoder_flags & BUF_FLAG_FRAME_START || buf->decoder_flags & BUF_FLAG_FRAME_END)
+    this->have_frame_boundary_marks = 1;
+
   if (buf->decoder_flags & BUF_FLAG_FRAMERATE) {
     this->video_step = buf->decoder_info[0];
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->video_step);
   }
 
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) { /* need to initialize */
+    this->have_frame_boundary_marks = 0;
+
     xine_bmiheader *bih = (xine_bmiheader*)buf->content;
     this->width                         = bih->biWidth;
     this->height                        = bih->biHeight;
 
     uint8_t *codec_private = buf->content + sizeof(xine_bmiheader);
     uint32_t codec_private_len = bih->biSize - sizeof(xine_bmiheader);
+    this->codec_private_len = codec_private_len;
+    this->codec_private = malloc(codec_private_len);
+    memcpy(this->codec_private, codec_private, codec_private_len);
 
     if(codec_private_len > 0) {
       parse_codec_private(this->nal_parser, codec_private, codec_private_len);
-      vdpau_decoder_init(this_gen);
     }
   } else if (buf->decoder_flags & BUF_FLAG_SPECIAL) {
+    this->have_frame_boundary_marks = 0;
+
     if(buf->decoder_info[1] == BUF_SPECIAL_DECODER_CONFIG) {
       uint8_t *codec_private = buf->decoder_info_ptr[2];
       uint32_t codec_private_len = buf->decoder_info[2];
+      this->codec_private_len = codec_private_len;
+      this->codec_private = malloc(codec_private_len);
+      memcpy(this->codec_private, codec_private, codec_private_len);
 
       if(codec_private_len > 0) {
         parse_codec_private(this->nal_parser, codec_private, codec_private_len);
-        vdpau_decoder_init(this_gen);
       }
     } else if (buf->decoder_info[1] == BUF_SPECIAL_PALETTE) {
       printf("SPECIAL PALETTE is not yet handled\n");
@@ -586,7 +608,8 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
     if(buf->pts != 0)
       this->next_pts = buf->pts;
 
-    while(len < buf->size) {
+    while(len < buf->size && !(this->wait_for_frame_start && !(buf->decoder_flags & BUF_FLAG_FRAME_START))) {
+      this->wait_for_frame_start = 0;
       len += parse_frame(this->nal_parser, buf->content + len, buf->size - len,
           (void*)&vdp_buffer.bitstream, &vdp_buffer.bitstream_bytes, &slice_count);
 
@@ -608,6 +631,9 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
 
     }
   }
+
+  if(buf->decoder_flags & BUF_FLAG_FRAME_END)
+    this->wait_for_frame_start = 0;
 }
 
 /*
@@ -626,17 +652,16 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
 
   dpb_free_all( &(this->nal_parser->dpb) );
 
-  if (this->decoder != VDP_INVALID_HANDLE) {
+  /*if (this->decoder != VDP_INVALID_HANDLE) {
     this->vdpau_accel->vdp_decoder_destroy( this->decoder );
     this->decoder = VDP_INVALID_HANDLE;
-  }
+  }*/
 
-  /* only reset the parser for continous streams
-   * like ts or pes
-   */
-  if(!this->nal_parser->nal_size_length) {
-    free_parser(this->nal_parser);
-    this->nal_parser = init_parser();
+  free_parser(this->nal_parser);
+  this->nal_parser = init_parser();
+  if(this->codec_private_len > 0) {
+    parse_codec_private(this->nal_parser, this->codec_private, this->codec_private_len);
+    this->wait_for_frame_start = this->have_frame_boundary_marks;
   }
 
   this->wait_for_bottom_field = 0;
