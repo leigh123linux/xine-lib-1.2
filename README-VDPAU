@@ -4,7 +4,7 @@ xine-vdpau README:
 So, you want to give it a try, but wonder which steps are required.
 Ok, so here it is:
 
-0) you need nvidia's driver 180.16 or later.
+0) you need nvidia's driver 180.22 or later.
 
 1) get the sources:
 svn co svn://jusst.de/xine-vdpau
@@ -22,13 +22,9 @@ nano $HOME/.xine/config (if it does not exist, first run "xine --no-logo" then q
 search for "engine.buffers.video_num_frames" and set it to 22
 
 4) running the beast:
-xine --no-logo --verbose /path/to/a/working/sample
-    ** the --no-logo will tell xine to not play its crappy mpv logo (which, atm, doesn't work with vdpau_mpeg12)
-    ** --verbose will print some usefull things in your console (in case of problems, that are very likely to happen,
+xine -verbose /path/to/a/working/sample
+    ** --verbose will print some usefull things in your console (in case of problems,
         the developers will ask you to give this output, at least)
-    ** You can find working h264 samples at http://hftom.free.fr/video_samples/
-    ** MKV or MOV WON'T WORK, at that moment. (we are concentrating on TS streams, but yes, it will work in the future)
-    ** most mpeg2 should work, if you have a non working one, please provide a sample.
 
 5) update your svn copy quite often
 
