@@ -175,6 +175,12 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_AWK
 
+AC_PATH_PROG([PERL], [perl], [no])
+if test "$PERL" = no; then
+  AC_MSG_ERROR([perl not found])
+fi
+AC_SUBST([PERL])
+     
 AC_CHECK_TOOL([STRINGS], [strings], [false])
 
 PKG_PROG_PKG_CONFIG

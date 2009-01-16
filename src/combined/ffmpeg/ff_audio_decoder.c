@@ -72,45 +72,7 @@ typedef struct ff_audio_decoder_s {
 } ff_audio_decoder_t;
 
 
-static const ff_codec_t ff_audio_lookup[] = {
-  {BUF_AUDIO_WMAV1,      CODEC_ID_WMAV1,          "MS Windows Media Audio 1 (ffmpeg)"},
-  {BUF_AUDIO_WMAV2,      CODEC_ID_WMAV2,          "MS Windows Media Audio 2 (ffmpeg)"},
-  {BUF_AUDIO_14_4,       CODEC_ID_RA_144,         "Real 14.4 (ffmpeg)"},
-  {BUF_AUDIO_28_8,       CODEC_ID_RA_288,         "Real 28.8 (ffmpeg)"},
-  {BUF_AUDIO_MPEG,       CODEC_ID_MP3,            "MP3 (ffmpeg)"},
-  {BUF_AUDIO_MP3ADU,     CODEC_ID_MP3ADU,         "MPEG-3 adu (ffmpeg)"},
-  {BUF_AUDIO_MSADPCM,    CODEC_ID_ADPCM_MS,       "MS ADPCM (ffmpeg)"},
-  {BUF_AUDIO_QTIMAADPCM, CODEC_ID_ADPCM_IMA_QT,   "QT IMA ADPCM (ffmpeg)"},
-  {BUF_AUDIO_MSIMAADPCM, CODEC_ID_ADPCM_IMA_WAV,  "MS IMA ADPCM (ffmpeg)"},
-  {BUF_AUDIO_DK3ADPCM,   CODEC_ID_ADPCM_IMA_DK3,  "Duck DK3 ADPCM (ffmpeg)"},
-  {BUF_AUDIO_DK4ADPCM,   CODEC_ID_ADPCM_IMA_DK4,  "Duck DK4 ADPCM (ffmpeg)"},
-  {BUF_AUDIO_VQA_IMA,    CODEC_ID_ADPCM_IMA_WS,   "Westwood Studios IMA (ffmpeg)"},
-  {BUF_AUDIO_SMJPEG_IMA, CODEC_ID_ADPCM_IMA_SMJPEG, "SMJPEG IMA (ffmpeg)"},
-  {BUF_AUDIO_XA_ADPCM,   CODEC_ID_ADPCM_XA,       "CD-ROM/XA ADPCM (ffmpeg)"},
-  {BUF_AUDIO_4X_ADPCM,   CODEC_ID_ADPCM_4XM,      "4X ADPCM (ffmpeg)"},
-  {BUF_AUDIO_EA_ADPCM,   CODEC_ID_ADPCM_EA,       "Electronic Arts ADPCM (ffmpeg)"},
-  {BUF_AUDIO_MULAW,      CODEC_ID_PCM_MULAW,      "mu-law logarithmic PCM (ffmpeg)"},
-  {BUF_AUDIO_ALAW,       CODEC_ID_PCM_ALAW,       "A-law logarithmic PCM (ffmpeg)"},
-  {BUF_AUDIO_ROQ,        CODEC_ID_ROQ_DPCM,       "RoQ DPCM (ffmpeg)"},
-  {BUF_AUDIO_INTERPLAY,  CODEC_ID_INTERPLAY_DPCM, "Interplay DPCM (ffmpeg)"},
-  {BUF_AUDIO_MAC3,       CODEC_ID_MACE3,          "MACE 3:1 (ffmpeg)"},
-  {BUF_AUDIO_MAC6,       CODEC_ID_MACE6,          "MACE 6:1 (ffmpeg)"},
-  {BUF_AUDIO_XAN_DPCM,   CODEC_ID_XAN_DPCM,       "Origin Xan DPCM (ffmpeg)"},
-  {BUF_AUDIO_VMD,        CODEC_ID_VMDAUDIO,       "Sierra VMD Audio (ffmpeg)"},
-  {BUF_AUDIO_FLAC,       CODEC_ID_FLAC,           "FLAC (ffmpeg)"},
-  {BUF_AUDIO_SHORTEN,    CODEC_ID_SHORTEN,        "Shorten (ffmpeg)"},
-  {BUF_AUDIO_ALAC,       CODEC_ID_ALAC,           "ALAC (ffmpeg)"},
-  {BUF_AUDIO_QDESIGN2,   CODEC_ID_QDM2,           "QDesign (ffmpeg)"},
-  {BUF_AUDIO_COOK,       CODEC_ID_COOK,           "RealAudio Cooker (ffmpeg)"},
-  {BUF_AUDIO_TRUESPEECH, CODEC_ID_TRUESPEECH,     "TrueSpeech (ffmpeg)"},
-  {BUF_AUDIO_TTA,        CODEC_ID_TTA,            "True Audio Lossless (ffmpeg)"},
-  {BUF_AUDIO_SMACKER,    CODEC_ID_SMACKAUDIO,     "Smacker (ffmpeg)"},
-  {BUF_AUDIO_FLVADPCM,   CODEC_ID_ADPCM_SWF,	  "Flash ADPCM (ffmpeg)"},
-  {BUF_AUDIO_WAVPACK,	 CODEC_ID_WAVPACK,	  "WavPack (ffmpeg)"},
-  {BUF_AUDIO_AMR_NB,	 CODEC_ID_AMR_NB,	  "AMR narrow band (ffmpeg)"},
-  {BUF_AUDIO_AMR_WB,	 CODEC_ID_AMR_WB,	  "AMR wide band (ffmpeg)"},
-};
-
+#include "ff_audio_list.h"
 
  static void ff_audio_ensure_buffer_size(ff_audio_decoder_t *this, int size) {
   if (size > this->bufsize) {
@@ -493,45 +455,6 @@ void *init_audio_plugin (xine_t *xine, void *data) {
 
   return this;
 }
-
-static const uint32_t supported_audio_types[] = { 
-  BUF_AUDIO_WMAV1,
-  BUF_AUDIO_WMAV2,
-  BUF_AUDIO_14_4,
-  BUF_AUDIO_28_8,
-  BUF_AUDIO_MPEG,
-  BUF_AUDIO_MSADPCM,
-  BUF_AUDIO_QTIMAADPCM,
-  BUF_AUDIO_MSIMAADPCM,
-  BUF_AUDIO_DK3ADPCM,
-  BUF_AUDIO_DK4ADPCM,
-  BUF_AUDIO_VQA_IMA,
-  BUF_AUDIO_SMJPEG_IMA,
-  BUF_AUDIO_XA_ADPCM,
-  BUF_AUDIO_4X_ADPCM,
-  BUF_AUDIO_EA_ADPCM,
-  BUF_AUDIO_MULAW,
-  BUF_AUDIO_ALAW,
-  BUF_AUDIO_ROQ,
-  BUF_AUDIO_INTERPLAY,
-  BUF_AUDIO_MAC3,
-  BUF_AUDIO_MAC6,
-  BUF_AUDIO_XAN_DPCM,
-  BUF_AUDIO_VMD,
-  BUF_AUDIO_FLAC,
-  BUF_AUDIO_SHORTEN,
-  BUF_AUDIO_ALAC,
-  BUF_AUDIO_QDESIGN2,
-  BUF_AUDIO_COOK,
-  BUF_AUDIO_TRUESPEECH,
-  BUF_AUDIO_TTA,
-  BUF_AUDIO_SMACKER,
-  BUF_AUDIO_FLVADPCM,
-  BUF_AUDIO_WAVPACK,
-  BUF_AUDIO_AMR_NB,
-  BUF_AUDIO_AMR_WB,
-  0
-};
 
 decoder_info_t dec_info_ffmpeg_audio = {
   supported_audio_types,   /* supported types */
