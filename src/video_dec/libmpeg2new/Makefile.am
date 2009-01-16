@@ -3,7 +3,7 @@ include $(top_srcdir)/misc/Makefile.common
 AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
-SUBDIRS = libmpeg2
+SUBDIRS = include libmpeg2
 
 xineplug_LTLIBRARIES = xineplug_decode_mpeg2new.la
 
