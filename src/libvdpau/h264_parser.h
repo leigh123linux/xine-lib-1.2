@@ -71,6 +71,7 @@ struct nal_parser {
     uint32_t pic_order_cnt_msb;
     uint32_t prev_pic_order_cnt_lsb;
     uint32_t prev_pic_order_cnt_msb;
+    uint32_t frame_num_offset;
 
     /* this is dpb used for reference frame
      * heading to vdpau + unordered frames

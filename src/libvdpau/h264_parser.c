@@ -275,12 +275,13 @@ void calculate_pic_order(struct nal_parser *parser)
   if (!sps || !pps || !slc)
     return;
 
+  if (nal->nal_unit_type == NAL_SLICE_IDR) {
+    parser->prev_pic_order_cnt_lsb = 0;
+    parser->prev_pic_order_cnt_msb = 0;
+    parser->frame_num_offset = 0;
+  }
+
   if (sps->pic_order_cnt_type == 0) {
-    if (nal->nal_unit_type == NAL_SLICE_IDR) {
-      //printf("IDR SLICE\n");
-      parser->prev_pic_order_cnt_lsb = 0;
-      parser->prev_pic_order_cnt_msb = 0;
-    }
 
     const int max_poc_lsb = 1 << (sps->log2_max_pic_order_cnt_lsb_minus4 + 4);
 
@@ -295,23 +296,6 @@ void calculate_pic_order(struct nal_parser *parser)
     else
       parser->pic_order_cnt_msb = parser->prev_pic_order_cnt_msb;
 
-    /*if (!slc->bottom_field_flag) {
-      nal->top_field_order_cnt = parser->pic_order_cnt_msb
-          + slc->pic_order_cnt_lsb;
-
-      if (!slc->field_pic_flag)
-        nal->bottom_field_order_cnt = nal->top_field_order_cnt;
-      else
-        nal->bottom_field_order_cnt = 0;
-    }
-    else
-      nal->bottom_field_order_cnt = parser->pic_order_cnt_msb
-          + slc->pic_order_cnt_lsb;
-
-    if (parser->field == -1)
-      nal->bottom_field_order_cnt += slc->delta_pic_order_cnt_bottom;
-    */
-
     if(!slc->field_pic_flag || !slc->bottom_field_flag)
       nal->top_field_order_cnt = parser->pic_order_cnt_msb + slc->pic_order_cnt_lsb;
 
@@ -320,6 +304,33 @@ void calculate_pic_order(struct nal_parser *parser)
     else
       nal->bottom_field_order_cnt = parser->pic_order_cnt_msb + slc->pic_order_cnt_lsb;
 
+
+  } else if (sps->pic_order_cnt_type == 2) {
+    uint32_t prev_frame_num = parser->last_nal->slc->frame_num;
+    uint32_t prev_frame_num_offset = parser->frame_num_offset;
+    uint32_t max_frame_num = 1 << (sps->log2_max_frame_num_minus4+4);
+    uint32_t temp_pic_order_cnt = 0;
+
+    if (parser->is_idr)
+      parser->frame_num_offset = 0;
+    else if (prev_frame_num > slc->frame_num)
+      parser->frame_num_offset = prev_frame_num_offset + max_frame_num;
+    else
+      parser->frame_num_offset = prev_frame_num_offset;
+
+    if(parser->is_idr)
+      temp_pic_order_cnt = 0;
+    else if(nal->nal_ref_idc == 0)
+      temp_pic_order_cnt = 2 * (parser->frame_num_offset + slc->frame_num)-1;
+    else
+      temp_pic_order_cnt = 2 * (parser->frame_num_offset + slc->frame_num);
+
+    if(!slc->field_pic_flag)
+      nal->top_field_order_cnt = nal->bottom_field_order_cnt = temp_pic_order_cnt;
+    else if(slc->bottom_field_flag)
+      nal->bottom_field_order_cnt = temp_pic_order_cnt;
+    else
+      nal->top_field_order_cnt = temp_pic_order_cnt;
 
   } else {
     printf("FIXME: Unsupported poc_type: %d\n", sps->pic_order_cnt_type);
