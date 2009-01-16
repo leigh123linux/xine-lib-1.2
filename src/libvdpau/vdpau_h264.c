@@ -652,10 +652,10 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
 
   dpb_free_all( &(this->nal_parser->dpb) );
 
-  /*if (this->decoder != VDP_INVALID_HANDLE) {
+  if (this->decoder != VDP_INVALID_HANDLE) {
     this->vdpau_accel->vdp_decoder_destroy( this->decoder );
     this->decoder = VDP_INVALID_HANDLE;
-  }*/
+  }
 
   free_parser(this->nal_parser);
   this->nal_parser = init_parser();
