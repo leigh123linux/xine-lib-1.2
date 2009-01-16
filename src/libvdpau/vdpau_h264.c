@@ -488,8 +488,6 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
         decoded_pic = init_decoded_picture(this->nal_parser->current_nal, surface, img);
         this->last_ref_pic = decoded_pic;
         decoded_pic->used_for_reference = 1;
-        if(pic.num_ref_frames < this->nal_parser->current_nal->sps->num_ref_frames)
-          decoded_pic->misses_references = 1;
         dpb_add_picture(&(this->nal_parser->dpb), decoded_pic, sps->num_ref_frames);
         this->dangling_img = NULL;
       } else if(slc->field_pic_flag && this->wait_for_bottom_field) {
@@ -522,10 +520,7 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
       /* now retrieve the next output frame */
       if ((decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb))) != NULL) {
         decoded_pic->img->top_field_first = (decoded_pic->nal->top_field_order_cnt <= decoded_pic->nal->bottom_field_order_cnt);
-        if(!decoded_pic->misses_references)
-          decoded_pic->img->draw(decoded_pic->img, this->stream);
-        else
-          printf("skip frame, it misses references!");
+        decoded_pic->img->draw(decoded_pic->img, this->stream);
         dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
       }
 
