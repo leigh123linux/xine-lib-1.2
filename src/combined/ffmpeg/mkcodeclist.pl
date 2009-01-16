@@ -80,7 +80,7 @@ if ($w) {
       print LIST "  #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT($a)\n  BUF_${Type}_$line->[0],\n  #endif\n" or die $!;
     }
   }
-  print LIST "};\n" or die $!;
+  print LIST "  0,\n};\n" or die $!;
   close LIST or die $!;
 }
 else {
