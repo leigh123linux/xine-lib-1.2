@@ -383,6 +383,8 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
 
   fill_vdpau_pictureinfo_h264(this_gen, slice_count, &pic);
 
+  //printf("next decode: %d, %d\n", pic.field_order_cnt[0], pic.field_order_cnt[1]);
+
   if(!this->decoder_started && !pic.is_reference)
     return 0;
 
@@ -520,6 +522,7 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
       /* now retrieve the next output frame */
       if ((decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb))) != NULL) {
         decoded_pic->img->top_field_first = (decoded_pic->nal->top_field_order_cnt <= decoded_pic->nal->bottom_field_order_cnt);
+        //printf("draw pts: %lld\n", decoded_pic->img->pts);
         decoded_pic->img->draw(decoded_pic->img, this->stream);
         dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
       }
@@ -600,9 +603,6 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
     int len = 0;
     uint32_t slice_count;
 
-    if(buf->pts != 0)
-      this->next_pts = buf->pts;
-
     while(len < buf->size && !(this->wait_for_frame_start && !(buf->decoder_flags & BUF_FLAG_FRAME_START))) {
       this->wait_for_frame_start = 0;
       len += parse_frame(this->nal_parser, buf->content + len, buf->size - len,
@@ -619,11 +619,14 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
       if(this->decoder != VDP_INVALID_HANDLE &&
           vdp_buffer.bitstream_bytes > 0 &&
           this->nal_parser->current_nal->slc != NULL &&
-          this->nal_parser->current_nal->sps != NULL &&
           this->nal_parser->current_nal->pps != NULL) {
         vdpau_decoder_render(this_gen, &vdp_buffer, slice_count);
       }
+    }
 
+    if(buf->pts != 0 && buf->pts != this->next_pts) {
+      //printf("next pts: %lld\n", buf->pts);
+      this->next_pts = buf->pts;
     }
   }
 
