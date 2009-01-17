@@ -107,6 +107,7 @@ run_autoconf () {
 
   echo $_echo_n " + Running autoconf: $_echo_c";
     autoconf;
+    sed -i -e '/gnu_ld/,/;;/ s/--rpath \${wl}/--rpath,/' configure
   echo "done."
 }
 

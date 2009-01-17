@@ -110,3 +110,6 @@ maintainer-clean-generic:
 
 maintainer-clean-generic-hook: 
 	rm -f config.status
+
+$(top_srcdir)/configure:  $(am__configure_deps)
+	cd $(srcdir) && $(AUTOCONF) && $(SED) -i -e '/gnu_ld/,/;;/ s/--rpath \$${wl}/--rpath,/' $@
