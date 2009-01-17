@@ -1208,6 +1208,12 @@ static buf_element_t *pvr_plugin_read_block (input_plugin_t *this_gen, fifo_buff
     return NULL;  
   }
 
+  buf = fifo->buffer_pool_alloc (fifo);
+  if (todo < 0 || todo > buf->size) {
+    buf->free_buffer(buf);
+    return NULL;
+  }
+
   if( this->scr_tunning == -2 )
     speed = this->speed_before_pause;
 
@@ -1231,7 +1237,6 @@ static buf_element_t *pvr_plugin_read_block (input_plugin_t *this_gen, fifo_buff
 
   pvr_event_handler(this);
   
-  buf = fifo->buffer_pool_alloc (fifo);
   buf->content = buf->mem;
     
   pthread_mutex_lock(&this->lock);

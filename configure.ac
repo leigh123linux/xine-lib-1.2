@@ -1067,6 +1067,12 @@ AC_SUBST(XINE_FONTDIR)
 AC_SUBST(XINE_LOCALEDIR)
 AC_SUBST(XINE_PKGCONFIG_DIR)
 
+LIBTOOL_DESTDIR_DEFAULT=
+if test "x$SYS" != "xmingw32" -a "x$SYS" != "xcygwin"; then
+  LIBTOOL_DESTDIR_DEFAULT=/
+fi
+AC_SUBST([LIBTOOL_DESTDIR_DEFAULT])
+
 dnl Where aclocal m4 files should be installed
 xine_acflags='-I ${datarootdir}/aclocal'
 XINE_ACFLAGS="-I ${datarootdir}/aclocal"
@@ -1217,6 +1223,7 @@ include/xine/version.h
 lib/Makefile
 m4/Makefile
 misc/Makefile
+misc/Makefile.plugins
 misc/SlackBuild
 misc/build_rpms.sh
 misc/libxine.pc

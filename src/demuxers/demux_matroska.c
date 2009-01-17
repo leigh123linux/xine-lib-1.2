@@ -1853,7 +1853,7 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
   uint8_t          *data;
   uint8_t           flags;
   int               gap, lacing, num_len;
-  int               timecode_diff;
+  int16_t           timecode_diff;
   int64_t           pts, xduration;
   int               decoder_flags = 0;
 
@@ -1863,7 +1863,7 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
   data += num_len;
 
   /* timecode_diff is signed */
-  timecode_diff = parse_int16(data);
+  timecode_diff = (int16_t)parse_int16(data);
   data += 2;
 
   flags = *data;
