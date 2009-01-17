@@ -1,3 +1,4 @@
+include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
 POSTPROC_INT_LIB = $(top_builddir)/src/libffmpeg/libavcodec/libpostproc/libpostprocess.la

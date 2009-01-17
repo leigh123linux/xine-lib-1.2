@@ -13,6 +13,7 @@ EXTRA_DIST = build_rpms.sh \
 	xine-lib.spec \
 	libxine.pc.in \
 	libdvdcss-1.2.6-network.patch \
+	Makefile.plugins.in \
 	Makefile.common
 
 bin_SCRIPTS = xine-config

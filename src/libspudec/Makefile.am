@@ -1,3 +1,4 @@
+include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
 xineplug_LTLIBRARIES = xineplug_decode_spu.la

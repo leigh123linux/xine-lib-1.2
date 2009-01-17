@@ -1,3 +1,4 @@
+include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
 EXTRA_DIST = input_dvd.c input_vcd.c input_gnome_vfs.c input_rtp.c
