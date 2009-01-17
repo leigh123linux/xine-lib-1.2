@@ -85,7 +85,7 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
     AM_CONDITIONAL([WITH_EXTERNAL_FAAD], [test x"$have_external_faad" = x"yes"])
 
     dnl ffmpeg external version required
-    PKG_CHECK_MODULES([FFMPEG], [libavcodec >= 51.20.0])
+    PKG_CHECK_MODULES([FFMPEG], [libavcodec >= 51.68.0])
     PKG_CHECK_MODULES([AVUTIL], [libavutil >= 49.6.0])
     PKG_CHECK_MODULES([FFMPEG_POSTPROC], [libpostproc])
     AC_DEFINE([HAVE_FFMPEG], 1, [Define this if you have ffmpeg library])
