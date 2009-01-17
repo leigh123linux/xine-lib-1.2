@@ -272,7 +272,8 @@ typedef struct {
   int               reinit_needed;
 
   int               allocated_surfaces;
-
+  int		            zoom_x;
+  int		            zoom_y;
 } vdpau_driver_t;
 
 
@@ -1343,6 +1344,10 @@ static int vdpau_get_property (vo_driver_t *this_gen, int property)
       return this->sharpness;
     case VO_PROP_NOISE_REDUCTION:
       return this->noise;
+    case VO_PROP_ZOOM_X:
+      return this->zoom_x;
+    case VO_PROP_ZOOM_Y:
+      return this->zoom_y;
   }
 
   return -1;
@@ -1363,6 +1368,7 @@ static int vdpau_set_property (vo_driver_t *this_gen, int property, int value)
       break;
     case VO_PROP_ZOOM_X:
       if ((value >= XINE_VO_ZOOM_MIN) && (value <= XINE_VO_ZOOM_MAX)) {
+        this->zoom_x = value;
         this->sc.zoom_factor_x = (double)value / (double)XINE_VO_ZOOM_STEP;
         _x_vo_scale_compute_ideal_size( &this->sc );
         this->sc.force_redraw = 1;    /* trigger re-calc of output size */
@@ -1370,6 +1376,7 @@ static int vdpau_set_property (vo_driver_t *this_gen, int property, int value)
       break;
     case VO_PROP_ZOOM_Y:
       if ((value >= XINE_VO_ZOOM_MIN) && (value <= XINE_VO_ZOOM_MAX)) {
+        this->zoom_y = value;
         this->sc.zoom_factor_y = (double)value / (double)XINE_VO_ZOOM_STEP;
         _x_vo_scale_compute_ideal_size( &this->sc );
         this->sc.force_redraw = 1;    /* trigger re-calc of output size */
@@ -1656,6 +1663,8 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->sc.dest_size_cb     = visual->dest_size_cb;
   this->sc.user_data        = visual->user_data;
   this->sc.user_ratio       = XINE_VO_ASPECT_AUTO;
+  this->zoom_x              = 100;
+  this->zoom_y              = 100;
 
   this->xine                    = class->xine;
   this->config                  = config;
