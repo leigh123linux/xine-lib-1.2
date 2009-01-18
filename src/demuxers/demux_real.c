@@ -265,8 +265,12 @@ static void real_parse_index(demux_real_t *this) {
   this->input->seek(this->input, original_pos, SEEK_SET);
 }
 
-static mdpr_t *real_parse_mdpr(const char *data) {
-  mdpr_t *mdpr=malloc(sizeof(mdpr_t));
+static mdpr_t *real_parse_mdpr(const char *data, const unsigned int size)
+{
+  if (size < 38)
+    return NULL;
+
+  mdpr_t *mdpr=calloc(sizeof(mdpr_t), 1);
 
   mdpr->stream_number=_X_BE_16(&data[2]);
   mdpr->max_bit_rate=_X_BE_32(&data[4]);
@@ -278,17 +282,29 @@ static mdpr_t *real_parse_mdpr(const char *data) {
   mdpr->duration=_X_BE_32(&data[28]);
 
   mdpr->stream_name_size=data[32];
+  if (size < 38 + mdpr->stream_name_size)
+    goto fail;
   mdpr->stream_name=malloc(mdpr->stream_name_size+1);
+  if (!mdpr->stream_name)
+    goto fail;
   memcpy(mdpr->stream_name, &data[33], mdpr->stream_name_size);
   mdpr->stream_name[(int)mdpr->stream_name_size]=0;
 
   mdpr->mime_type_size=data[33+mdpr->stream_name_size];
+  if (size < 38 + mdpr->stream_name_size + mdpr->mime_type_size)
+    goto fail;
   mdpr->mime_type=malloc(mdpr->mime_type_size+1);
+  if (!mdpr->mime_type)
+    goto fail;
   memcpy(mdpr->mime_type, &data[34+mdpr->stream_name_size], mdpr->mime_type_size);
   mdpr->mime_type[(int)mdpr->mime_type_size]=0;
 
   mdpr->type_specific_len=_X_BE_32(&data[34+mdpr->stream_name_size+mdpr->mime_type_size]);
+  if (size < 38 + mdpr->stream_name_size + mdpr->mime_type_size + mdpr->type_specific_data)
+    goto fail;
   mdpr->type_specific_data=malloc(mdpr->type_specific_len);
+  if (!mdpr->type_specific_data)
+    goto fail;
   memcpy(mdpr->type_specific_data,
       &data[38+mdpr->stream_name_size+mdpr->mime_type_size], mdpr->type_specific_len);
 
@@ -308,6 +324,13 @@ static mdpr_t *real_parse_mdpr(const char *data) {
 #endif
 
   return mdpr;
+
+fail:
+  free (mdpr->stream_name);
+  free (mdpr->mime_type);
+  free (mdpr->type_specific_data);
+  free (mdpr);
+  return NULL;
 }
 
 static void real_free_mdpr (mdpr_t *mdpr) {
@@ -491,9 +514,14 @@ static void real_parse_headers (demux_real_t *this) {
 	    continue;
 	  }
                 
-	  mdpr_t *const mdpr = real_parse_mdpr (chunk_buffer);
+	  mdpr_t *const mdpr = real_parse_mdpr (chunk_buffer, chunk_size);
 
 	  lprintf ("parsing type specific data...\n");
+	  if (!mdpr) {
+	    free (chunk_buffer);
+	    this->status = DEMUX_FINISHED;
+	    return;
+	  }
 	  if(!strcmp(mdpr->mime_type, "audio/X-MP3-draft-00")) {
 	    lprintf ("mpeg layer 3 audio detected...\n");
 
