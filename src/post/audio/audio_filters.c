@@ -20,6 +20,9 @@
  * catalog for audio filter plugins
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>

@@ -21,6 +21,10 @@
  *   by Thibaut Mattern (tmattern@noos.fr)
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <math.h>
 

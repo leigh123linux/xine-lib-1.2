@@ -20,10 +20,6 @@
 #ifndef HAVE_REFCOUNTER_H
 #define HAVE_REFCOUNTER_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <pthread.h>
 
 typedef struct {

@@ -24,6 +24,10 @@
  * E.g. Converts Stereo into Surround 5.1
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 
 #include <xine/xine_internal.h>

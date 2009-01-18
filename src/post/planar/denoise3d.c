@@ -21,6 +21,10 @@
  * Copyright (C) 2003 Daniel Moreno <comac@comac.darktech.org>
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <xine/xine_internal.h>
 #include <xine/post.h>
 #include <xine/xineutils.h>

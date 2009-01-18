@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <config.h>
+#include "config.h"
 
 #ifdef HAVE_MAD_H
 #include <mad.h>

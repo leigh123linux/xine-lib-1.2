@@ -20,6 +20,10 @@
  * stuff needed to turn libmpeg2 into a xine decoder plugin
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 
 #include <stdlib.h>
 #include <string.h>

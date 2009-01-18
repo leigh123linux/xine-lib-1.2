@@ -29,10 +29,6 @@
 extern "C" {
 #endif
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <xine/configfile.h>
 
 typedef struct {

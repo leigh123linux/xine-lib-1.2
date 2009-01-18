@@ -21,6 +21,10 @@
  * by Matthew Grooms <elon@altavista.com>
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 typedef unsigned char boolean;
 
 #include <windows.h>

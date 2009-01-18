@@ -22,6 +22,10 @@
  * code inspired by work from Florian Schneider for the MPlayer Project 
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 
 #include <stdlib.h>
 #include <string.h>

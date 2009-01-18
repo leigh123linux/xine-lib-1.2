@@ -21,6 +21,10 @@
  * is copyright 2002 Michael Niedermayer <michaelni@gmx.at>
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <xine/xine_internal.h>
 #include <xine/post.h>
 #include <xine/xineutils.h>

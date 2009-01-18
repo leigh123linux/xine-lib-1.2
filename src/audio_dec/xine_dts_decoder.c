@@ -26,6 +26,10 @@
  * @author James Courtier-Dutton (2001-12-09)
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef __sun
 /* required for swab() */
 #define _XOPEN_SOURCE 500

@@ -6,6 +6,10 @@
 
 /* $Header: /nfshome/cvs/xine-lib/src/libxineadec/gsm610/long_term.c,v 1.3 2003/12/07 15:34:30 f1rmb Exp $ */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <xine/xineutils.h>
 

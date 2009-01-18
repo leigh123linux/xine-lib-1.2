@@ -19,6 +19,10 @@
  *
  * sdp/sdpplin parser.
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
  
 #define LOG_MODULE "sdpplin"
 #define LOG_VERBOSE

@@ -25,6 +25,10 @@
  * Richard Felker (original MMX contrast/brightness code (vf_eq.c))
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <xine/xine_internal.h>
 #include <xine/post.h>
 #include <xine/xineutils.h>

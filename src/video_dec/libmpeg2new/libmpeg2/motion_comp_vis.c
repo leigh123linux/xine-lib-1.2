@@ -22,7 +22,7 @@
 
 #include "config.h"
 
-#ifdef ARCH_SPARC
+#if defined(ARCH_SPARC) && defined(ENABLE_VIS)
 
 #include <inttypes.h>
 
@@ -2058,4 +2058,4 @@ static void MC_avg_xy_8_vis (uint8_t * dest, const uint8_t * _ref,
 
 MPEG2_MC_EXTERN(vis);
 
-#endif  /* !(ARCH_SPARC) */
+#endif  /* defined(ARCH_SPARC) && defined(ENABLE_VIS) */

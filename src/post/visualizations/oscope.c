@@ -21,6 +21,10 @@
  *   by Mike Melanson (melanson@pcisys.net)
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 
 #include <xine/xine_internal.h>

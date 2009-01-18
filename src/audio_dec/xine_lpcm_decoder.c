@@ -25,6 +25,10 @@
  * @date 2001-08-31 Added LPCM rate sensing
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef __sun
 #define _XOPEN_SOURCE 500
 #endif
