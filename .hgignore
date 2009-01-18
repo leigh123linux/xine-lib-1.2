@@ -102,6 +102,7 @@ m4/ltsugar.m4
 m4/ltversion.m4
 m4/lt~obsolete.m4
 
+misc/Makefile.plugins
 misc/SlackBuild
 misc/build_rpms.sh
 misc/libxine.pc
@@ -119,4 +120,11 @@ po/stamp-po
 po/insert-header.sed
 po/remove-potcdate.sed
 
+src/combined/ffmpeg/avcodec_*.list
+src/combined/ffmpeg/ff_*_list.h
+src/libffmpeg/ffmpeg_config.h
+src/video_out/libdha/pci_dev_ids.c
+src/video_out/libdha/pci_ids.h
+src/video_out/libdha/pci_names.[ch]
+src/video_out/libdha/pci_vendors.h
 src/xine-utils/xmltest
