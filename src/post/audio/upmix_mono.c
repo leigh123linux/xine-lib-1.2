@@ -23,6 +23,10 @@
  * It simply converts Mono into Stereo.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 
 #define LOG_MODULE "upmix_mono"

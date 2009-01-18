@@ -21,6 +21,10 @@
  * DirectShow support by Miguel Freitas (Nov/2001)
  * DMO support (Dez/2002)
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
                    
 #include <stdlib.h>
 #include <stdio.h>

@@ -17,6 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
  
 /* dxr3 spu decoder plugin.
  * Accepts the spu data from xine and sends it directly to the

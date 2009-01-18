@@ -17,6 +17,10 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "xine_internal.h"
 #include "video_out.h"
 #include "mpeg2.h"

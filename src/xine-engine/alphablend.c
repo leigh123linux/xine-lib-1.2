@@ -23,6 +23,10 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 /*
 #define LOG_BLEND_YUV
 #define LOG_BLEND_RGB16

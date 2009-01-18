@@ -25,6 +25,10 @@
 #define LOG
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifdef XINE_COMPILE
 #include "xineutils.h"
 #else

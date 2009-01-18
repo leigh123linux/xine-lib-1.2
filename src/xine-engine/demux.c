@@ -21,6 +21,9 @@
  * hide some xine engine details from demuxers and reduce code duplication
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <string.h>

@@ -67,7 +67,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 /* pthread.h must be included first so rest of the headers are imported

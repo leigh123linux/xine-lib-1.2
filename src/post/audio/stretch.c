@@ -20,6 +20,10 @@
  * Time stretch by a given factor, optionally preserving pitch
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 
 #include "xine_internal.h"

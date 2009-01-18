@@ -21,6 +21,10 @@
  * Inspired by tta libavformat demuxer by Alex Beregszaszi
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #define LOG_MODULE "demux_tta"
 #define LOG_VERBOSE
 

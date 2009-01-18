@@ -27,10 +27,6 @@
 extern "C" {
 #endif
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 typedef struct broadcaster_s broadcaster_t;
 
 broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port) XINE_MALLOC XINE_PROTECTED;

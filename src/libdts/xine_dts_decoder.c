@@ -21,6 +21,10 @@
  * 09-12-2001 DTS passthrough inprovements (C) James Courtier-Dutton
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef __sun
 /* required for swab() */
 #define _XOPEN_SOURCE 500
