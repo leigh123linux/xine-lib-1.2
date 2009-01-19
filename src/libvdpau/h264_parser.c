@@ -61,6 +61,8 @@ void skip_scaling_list(struct buf_reader *buf, int size);
 void parse_scaling_list(struct buf_reader *buf, uint8_t *scaling_list,
     int length, int index);
 int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser);
+static void sps_scaling_list_fallback(struct seq_parameter_set_rbsp *sps, int i);
+static void pps_scaling_list_fallback(struct seq_parameter_set_rbsp *sps, struct pic_parameter_set_rbsp *pps, int i);
 uint8_t parse_sps(struct buf_reader *buf, struct nal_parser *parser);
 void parse_vui_parameters(struct buf_reader *buf,
     struct seq_parameter_set_rbsp *sps);
@@ -374,22 +376,69 @@ void parse_scaling_list(struct buf_reader *buf, uint8_t *scaling_list,
       case 0:
       case 1:
       case 2:
-        memcpy(scaling_list, default_4x4_intra, length);
+        memcpy(scaling_list, default_4x4_intra, sizeof(default_4x4_intra));
         break;
       case 3:
       case 4:
       case 5:
-        memcpy(scaling_list, default_4x4_inter, length);
+        memcpy(scaling_list, default_4x4_inter, sizeof(default_4x4_inter));
         break;
       case 6:
-        memcpy(scaling_list, default_8x8_intra, length);
+        memcpy(scaling_list, default_8x8_intra, sizeof(default_8x8_intra));
         break;
       case 7:
-        memcpy(scaling_list, default_8x8_inter, length);
+        memcpy(scaling_list, default_8x8_inter, sizeof(default_8x8_inter));
         break;
     }
   }
 }
+
+static void sps_scaling_list_fallback(struct seq_parameter_set_rbsp *sps, int i)
+{
+  switch (i) {
+    case 0:
+      memcpy(sps->scaling_lists_4x4[i], default_4x4_intra, sizeof(sps->scaling_lists_4x4[i]));
+      break;
+    case 3:
+      memcpy(sps->scaling_lists_4x4[i], default_4x4_inter, sizeof(sps->scaling_lists_4x4[i]));
+      break;
+    case 1:
+    case 2:
+    case 4:
+    case 5:
+      memcpy(sps->scaling_lists_4x4[i], sps->scaling_lists_4x4[i-1], sizeof(sps->scaling_lists_4x4[i]));
+      break;
+    case 6:
+      memcpy(sps->scaling_lists_8x8[i-6], default_8x8_intra, sizeof(sps->scaling_lists_8x8[i-6]));
+      break;
+    case 7:
+      memcpy(sps->scaling_lists_8x8[i-6], default_8x8_inter, sizeof(sps->scaling_lists_8x8[i-6]));
+      break;
+
+  }
+}
+
+static void pps_scaling_list_fallback(struct seq_parameter_set_rbsp *sps, struct pic_parameter_set_rbsp *pps, int i)
+{
+  switch (i) {
+    case 0:
+    case 3:
+      memcpy(pps->scaling_lists_4x4[i], sps->scaling_lists_4x4[i], sizeof(pps->scaling_lists_4x4[i]));
+      break;
+    case 1:
+    case 2:
+    case 4:
+    case 5:
+      memcpy(pps->scaling_lists_4x4[i], pps->scaling_lists_4x4[i-1], sizeof(sps->scaling_lists_4x4[i]));
+      break;
+    case 6:
+    case 7:
+      memcpy(pps->scaling_lists_8x8[i-6], sps->scaling_lists_8x8[i-6], sizeof(pps->scaling_lists_8x8[i-6]));
+      break;
+
+  }
+}
+
 
 uint8_t parse_sps(struct buf_reader *buf, struct nal_parser *parser)
 {
@@ -424,6 +473,8 @@ uint8_t parse_sps(struct buf_reader *buf, struct nal_parser *parser)
             parse_scaling_list(buf, sps->scaling_lists_4x4[i], 16, i);
           else
             parse_scaling_list(buf, sps->scaling_lists_8x8[i - 6], 64, i);
+        } else {
+          sps_scaling_list_fallback(sps, i);
         }
       }
     }
@@ -701,6 +752,8 @@ uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps,
             parse_scaling_list(buf, pps->scaling_lists_4x4[i], 16, i);
           else
             parse_scaling_list(buf, pps->scaling_lists_8x8[i - 6], 64, i);
+        } else {
+          pps_scaling_list_fallback(sps, pps, i);
         }
       }
     }
