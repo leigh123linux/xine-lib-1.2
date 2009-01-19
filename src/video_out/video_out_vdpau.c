@@ -1319,7 +1319,7 @@ static int vdpau_get_property (vo_driver_t *this_gen, int property)
 
   switch (property) {
     case VO_PROP_MAX_NUM_FRAMES:
-      return 22;
+      return 30;
     case VO_PROP_WINDOW_WIDTH:
       return this->sc.gui_width;
     case VO_PROP_WINDOW_HEIGHT:
@@ -1925,6 +1925,19 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
         _("Set to true if you want to trust the progressive_frame stream's flag.\n"
           "This flag is not always reliable.\n\n"),
         10, vdpau_honor_progressive_flag, this );
+
+  /* number of video frames from config - register it with the default value. */
+  int frame_num = config->register_num (config, "engine.buffers.video_num_frames", 15, /* default */
+       _("default number of video frames"),
+       _("The default number of video frames to request "
+         "from xine video out driver. Some drivers will "
+         "override this setting with their own values."),
+      20, NULL, this);
+
+  /* now make sure we have at least 22 frames, to prevent
+   * locks with vdpau_h264 */
+  if(frame_num < 22)
+    config->update_num(config,"engine.buffers.video_num_frames",22);
 
   this->capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP | VO_CAP_UNSCALED_OVERLAY | VO_CAP_CUSTOM_EXTENT_OVERLAY | VO_CAP_ARGB_LAYER_OVERLAY;
   ok = 0;
