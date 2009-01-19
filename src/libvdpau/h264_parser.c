@@ -402,7 +402,7 @@ uint8_t parse_sps(struct buf_reader *buf, struct nal_parser *parser)
   sps->seq_parameter_set_id = read_exp_golomb(buf);
 
   memset(sps->scaling_lists_4x4, 16, sizeof(sps->scaling_lists_4x4));
-  memset(sps->scaling_lists_8x8, 16, sizeof(sps->scaling_lists_4x4));
+  memset(sps->scaling_lists_8x8, 16, sizeof(sps->scaling_lists_8x8));
   if (sps->profile_idc == 100 || sps->profile_idc == 110 || sps->profile_idc
       == 122 || sps->profile_idc == 144) {
     sps->chroma_format_idc = read_exp_golomb(buf);
@@ -686,7 +686,7 @@ uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps,
   int bit_read = bits_read(buf);
 
   memset(pps->scaling_lists_4x4, 16, sizeof(pps->scaling_lists_4x4));
-  memset(pps->scaling_lists_8x8, 16, sizeof(pps->scaling_lists_4x4));
+  memset(pps->scaling_lists_8x8, 16, sizeof(pps->scaling_lists_8x8));
   if (bit_length-bit_read > 1) {
     printf("Read transform 8x8\n");
     pps->transform_8x8_mode_flag = read_bits(buf, 1);

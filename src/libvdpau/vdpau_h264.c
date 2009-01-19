@@ -127,7 +127,7 @@ static inline void dump_pictureinfo_h264(VdpPictureInfoH264 *pic)
   printf("C: deblocking_filter_control_present_flag: %d\n", pic->deblocking_filter_control_present_flag);
   printf("C: redundant_pic_cnt_present_flag: %d\n", pic->redundant_pic_cnt_present_flag);
 
-  /*int i, j;
+  int i, j;
   for(i = 0; i < 6; i++) {
     printf("C: scalint_list4x4[%d]:\nC:", i);
     for(j = 0; j < 16; j++) {
@@ -145,9 +145,9 @@ static inline void dump_pictureinfo_h264(VdpPictureInfoH264 *pic)
         printf("\nC:");
     }
     printf("C: \n");
-  }*/
+  }
 
-  int i;
+  //int i;
   for(i = 0; i < 16; i++) {
     if(pic->referenceFrames[i].surface != VDP_INVALID_HANDLE) {
     printf("C: -------------------\n");
@@ -379,6 +379,10 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *)this_gen;
   vo_frame_t *img = this->last_img;
 
+  if(this->nal_parser->current_nal->nal_unit_type == NAL_SLICE_IDR) {
+    dpb_flush(&(this->nal_parser->dpb));
+  }
+
   VdpPictureInfoH264 pic;
 
   fill_vdpau_pictureinfo_h264(this_gen, slice_count, &pic);
@@ -401,9 +405,6 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
 
   /* flush the DPB if this frame was an IDR */
   //printf("is_idr: %d\n", this->nal_parser->is_idr);
-  if(this->nal_parser->current_nal->nal_unit_type == NAL_SLICE_IDR) {
-    dpb_flush(&(this->nal_parser->dpb));
-  }
   this->nal_parser->is_idr = 0;
 
   /* go and decode a frame */
@@ -481,8 +482,8 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
 
     if(!img->progressive_frame && this->nal_parser->current_nal->repeat_pic)
       img->repeat_first_field = 1;
-    else if(img->progressive_frame && this->nal_parser->current_nal->repeat_pic)
-      img->duration *= this->nal_parser->current_nal->repeat_pic;
+    //else if(img->progressive_frame && this->nal_parser->current_nal->repeat_pic)
+    //  img->duration *= this->nal_parser->current_nal->repeat_pic;
 
     struct decoded_picture *decoded_pic = NULL;
     if(pic.is_reference) {
