@@ -1348,6 +1348,8 @@ static int vdpau_get_property (vo_driver_t *this_gen, int property)
       return this->zoom_x;
     case VO_PROP_ZOOM_Y:
       return this->zoom_y;
+    case VO_PROP_ASPECT_RATIO:
+      return this->sc.user_ratio;
   }
 
   return -1;
