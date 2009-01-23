@@ -332,6 +332,10 @@ static void picture_header( sequence_t *sequence, uint8_t *buf, int len )
   if ( sequence->picture.state!=WANT_HEADER )
     return;
 
+  if ( sequence->cur_pts ) {
+    sequence->seq_pts = sequence->cur_pts;
+  }
+
   if ( sequence->profile==VDP_DECODER_PROFILE_MPEG1 )
     sequence->picture.vdp_infos.picture_structure = PICTURE_FRAME;
 
@@ -685,6 +689,7 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
     seq->backward_ref = NULL;
     vd->decoder = VDP_INVALID_HANDLE;
   }
+
   img->drawn = 0;
   //printf("vdpau_mpeg12: .. got image %d\n", img);
 
