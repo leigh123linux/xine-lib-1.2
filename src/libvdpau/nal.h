@@ -439,6 +439,7 @@ struct nal_unit
   uint8_t nal_ref_idc; // 0x03
   uint8_t nal_unit_type; // 0x1f
 
+  uint32_t max_pic_num;
   uint32_t curr_pic_num;
   uint8_t used_for_long_term_ref;
   uint32_t long_term_pic_num;

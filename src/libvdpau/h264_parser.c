@@ -799,10 +799,13 @@ uint8_t parse_slice_header(struct buf_reader *buf, struct nal_parser *parser)
     slc->bottom_field_flag = 0;
   }
 
-  if (slc->field_pic_flag == 0)
+  if (slc->field_pic_flag == 0) {
+    nal->max_pic_num = 1 << (sps->log2_max_frame_num_minus4+4);
     nal->curr_pic_num = slc->frame_num;
-  else
+  } else {
     nal->curr_pic_num = 2 * slc->frame_num + 1;
+    nal->max_pic_num = 2 * (1 << (sps->log2_max_frame_num_minus4+4));
+  }
 
   if (nal->nal_unit_type == NAL_SLICE_IDR)
     slc->idr_pic_id = read_exp_golomb(buf);
@@ -986,10 +989,10 @@ void decode_ref_pic_marking(struct nal_unit *nal,
 
   if (memory_management_control_operation == 1) {
     // short-term -> unused for reference
-    uint32_t pic_num_x = nal->curr_pic_num
-        - (slc->dec_ref_pic_marking[marking_nr].difference_of_pic_nums_minus1 + 1);
-    struct decoded_picture* pic = dpb_get_picture(dpb, pic_num_x);
-    if (pic != NULL) {
+    uint32_t pic_num_x = (nal->curr_pic_num
+        - (slc->dec_ref_pic_marking[marking_nr].difference_of_pic_nums_minus1 + 1))%nal->max_pic_num;
+    struct decoded_picture* pic = NULL;
+    if ((pic = dpb_get_picture(dpb, pic_num_x)) != NULL) {
       if (pic->nal->slc->field_pic_flag == 0) {
         printf("Set %d as unused for ref\n", pic_num_x);
         dpb_set_unused_ref_picture_a(dpb, pic);
@@ -1001,9 +1004,9 @@ void decode_ref_pic_marking(struct nal_unit *nal,
         //printf("FIXME: We might need do delete more from the DPB...\n");
         // FIXME: some more handling needed here?! See 8.2.5.4.1, p. 120
       }
-    }
-  }
-  else if (memory_management_control_operation == 2) {
+    } else
+      printf("Can't set %d as unused for ref\n", pic_num_x);
+  } else if (memory_management_control_operation == 2) {
     // long-term -> unused for reference
     struct decoded_picture* pic = dpb_get_picture_by_ltpn(dpb,
         slc->dec_ref_pic_marking[marking_nr].long_term_pic_num);
@@ -1017,8 +1020,7 @@ void decode_ref_pic_marking(struct nal_unit *nal,
         printf("FIXME: We might need do delete more from the DPB...\n");
       }
     }
-  }
-  else if (memory_management_control_operation == 3) {
+  } else if (memory_management_control_operation == 3) {
     // short-term -> long-term, set long-term frame index
     uint32_t pic_num_x = nal->curr_pic_num
         - (slc->dec_ref_pic_marking[marking_nr].difference_of_pic_nums_minus1 + 1);
@@ -1042,8 +1044,7 @@ void decode_ref_pic_marking(struct nal_unit *nal,
       printf("memory_management_control_operation: 3 failed. No such picture.\n");
     }
 
-  }
-  else if (memory_management_control_operation == 4) {
+  } else if (memory_management_control_operation == 4) {
     // set max-long-term frame index,
     // mark all long-term pictures with long-term frame idx
     // greater max-long-term farme idx as unused for ref
@@ -1052,8 +1053,7 @@ void decode_ref_pic_marking(struct nal_unit *nal,
     else
       dpb_set_unused_ref_picture_lidx_gt(dpb,
           slc->dec_ref_pic_marking[marking_nr].max_long_term_frame_idx_plus1 - 1);
-  }
-  else if (memory_management_control_operation == 5) {
+  } else if (memory_management_control_operation == 5) {
     // mark all ref pics as unused for reference,
     // set max-long-term frame index = no long-term frame idxs
     dpb_flush(dpb);
@@ -1061,8 +1061,7 @@ void decode_ref_pic_marking(struct nal_unit *nal,
     parser->pic_order_cnt_msb = 0;
     parser->prev_pic_order_cnt_lsb = 0;
     parser->prev_pic_order_cnt_msb = 0;
-  }
-  else if (memory_management_control_operation == 6) {
+  } else if (memory_management_control_operation == 6) {
     // mark current picture as used for long-term ref,
     // assing long-term frame idx to it
     struct decoded_picture* pic = dpb_get_picture_by_ltidx(dpb,
@@ -1079,6 +1078,7 @@ void decode_ref_pic_marking(struct nal_unit *nal,
     else
       printf("FIXME: BY Set frame to long-term ref\n");
   }
+  /* FIXME: Do we need to care about MMC=0? */
 }
 
 void parse_dec_ref_pic_marking(struct buf_reader *buf,
@@ -1252,6 +1252,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
           i,
           parser);
     }
+
     if (parser->last_nal->slc != NULL)
       parser->prev_pic_order_cnt_lsb
           = parser->last_nal->slc->pic_order_cnt_lsb;
