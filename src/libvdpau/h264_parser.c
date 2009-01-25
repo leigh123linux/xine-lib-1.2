@@ -994,7 +994,6 @@ void decode_ref_pic_marking(struct nal_unit *nal,
     struct decoded_picture* pic = NULL;
     if ((pic = dpb_get_picture(dpb, pic_num_x)) != NULL) {
       if (pic->nal->slc->field_pic_flag == 0) {
-        printf("Set %d as unused for ref\n", pic_num_x);
         dpb_set_unused_ref_picture_a(dpb, pic);
       } else {
         if(!pic->top_is_reference)
@@ -1004,8 +1003,7 @@ void decode_ref_pic_marking(struct nal_unit *nal,
         //printf("FIXME: We might need do delete more from the DPB...\n");
         // FIXME: some more handling needed here?! See 8.2.5.4.1, p. 120
       }
-    } else
-      printf("Can't set %d as unused for ref\n", pic_num_x);
+    }
   } else if (memory_management_control_operation == 2) {
     // long-term -> unused for reference
     struct decoded_picture* pic = dpb_get_picture_by_ltpn(dpb,
