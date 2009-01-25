@@ -186,6 +186,8 @@ typedef struct {
   int ovl_w, ovl_h; /* overlay's width and height */
   int ovl_x, ovl_y; /* overlay's top-left display position */
   int unscaled;
+  int expected_overlay_width; /*if >0 scale to video width*/
+  int expected_overlay_height; /* if >0 sccale to video height */
 } vdpau_overlay_t;
 
 
@@ -407,6 +409,8 @@ static int vdpau_process_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overlay )
   ovl->ovl_x = overlay->x;
   ovl->ovl_y = overlay->y;
   ovl->unscaled = overlay->unscaled;
+  ovl->expected_overlay_width = overlay->extent_width;
+  ovl->expected_overlay_height = overlay->extent_height;
   uint32_t *buf = (uint32_t*)malloc(ovl->ovl_w*ovl->ovl_h*4);
   if ( !buf )
     return 0;
@@ -514,6 +518,7 @@ static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame)
   }
 
   int w=0, h=0;
+  int scaler = 0;
   for ( i=0; i<this->ovl_changed-1; ++i ) {
     if ( this->overlays[i].unscaled )
       continue;
@@ -521,6 +526,15 @@ static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame)
       w = this->overlays[i].ovl_x+this->overlays[i].ovl_w;
     if ( h < (this->overlays[i].ovl_y+this->overlays[i].ovl_h) )
       h = this->overlays[i].ovl_y+this->overlays[i].ovl_h;
+    if ( this->overlays[i].expected_overlay_width )
+      scaler = 1;
+    if ( this->overlays[i].expected_overlay_height )
+      scaler = 1;
+  }
+
+  if ( scaler ) {
+    w = this->video_mixer_width;
+    h = this->video_mixer_height;
   }
 
   int out_w = (w>frame->width) ? w : frame->width;
@@ -573,9 +587,8 @@ static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame)
   w = (this->overlay_unscaled_width>this->overlay_output_width) ? this->overlay_unscaled_width : this->overlay_output_width;
   h = (this->overlay_unscaled_height>this->overlay_output_height) ? this->overlay_unscaled_height : this->overlay_output_height;
 
-  uint32_t *buf = (uint32_t*)malloc(w*h*4);
+  uint32_t *buf = (uint32_t*)calloc(w*4,h);
   uint32_t pitch = w*4;
-  memset( buf, 0, w*h*4 );
   VdpRect clear = { 0, 0, this->overlay_output_width, this->overlay_output_height };
   st = vdp_output_surface_put_bits( this->overlay_output, &buf, &pitch, &clear );
   if ( st != VDP_STATUS_OK ) {
@@ -591,6 +604,12 @@ static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame)
   VdpOutputSurface *surface;
   for ( i=0; i<this->ovl_changed-1; ++i ) {
     VdpRect dest = { this->overlays[i].ovl_x, this->overlays[i].ovl_y, this->overlays[i].ovl_x+this->overlays[i].ovl_w, this->overlays[i].ovl_y+this->overlays[i].ovl_h };
+    if ( this->overlays[i].expected_overlay_width ) {
+      double rx = (double)this->overlay_output_width/(double)this->overlays[i].expected_overlay_width;
+      double ry = (double)this->overlay_output_height/(double)this->overlays[i].expected_overlay_height;
+      dest.x0 *= rx; dest.y0 *= ry; dest.x1 *=rx; dest.y1 *= ry;
+      printf( "vdpau_overlay_end: overlay_width=%d overlay_height=%d rx=%f ry=%f\n", this->overlay_output_width, this->overlay_output_height, rx, ry );
+    }
     VdpRect src = { 0, 0, this->overlays[i].ovl_w, this->overlays[i].ovl_h };
     surface = (this->overlays[i].unscaled) ? &this->overlay_unscaled : &this->overlay_output;
     st = vdp_output_surface_render_bitmap_surface( *surface, &dest, this->overlays[i].ovl_bitmap, &src, 0, &blend, 0 );
@@ -1946,15 +1965,25 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   if ( st != VDP_STATUS_OK  )
     printf( "vo_vdpau: getting h264_supported failed! : %s\n", vdp_get_error_string( st ) );
   else if ( !ok )
-    printf( "vo_vdpau: no support for h264 ! : no ok\n" );
+    printf( "vo_vdpau: this hardware doesn't support h264.\n" );
   else
     this->capabilities |= VO_CAP_VDPAU_H264;
+
+  /*st = vdp_decoder_query_capabilities( vdp_device, VDP_DECODER_PROFILE_VC1_MAIN, &ok, &ml, &mr, &mw, &mh );
+  if ( st != VDP_STATUS_OK  )
+    printf( "vo_vdpau: getting vc1_supported failed! : %s\n", vdp_get_error_string( st ) );
+  else if ( !ok )
+    printf( "vo_vdpau: this hardware doesn't support vc1.\n" );
+  else
+    this->capabilities |= VO_CAP_VDPAU_VC1;
+
+  this->capabilities |= VO_CAP_VDPAU_VC1;*/
 
   st = vdp_decoder_query_capabilities( vdp_device, VDP_DECODER_PROFILE_MPEG2_MAIN, &ok, &ml, &mr, &mw, &mh );
   if ( st != VDP_STATUS_OK  )
     printf( "vo_vdpau: getting mpeg12_supported failed! : %s\n", vdp_get_error_string( st ) );
   else if ( !ok )
-    printf( "vo_vdpau: no support for mpeg1/2 ! : no ok\n" );
+    printf( "vo_vdpau: this hardware doesn't support mpeg1/2.\n" );
   else
     this->capabilities |= VO_CAP_VDPAU_MPEG12;
 
