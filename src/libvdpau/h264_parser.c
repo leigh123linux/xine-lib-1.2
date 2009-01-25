@@ -272,9 +272,8 @@ void calculate_pic_order(struct nal_parser *parser)
   struct nal_unit *nal = parser->current_nal;
 
   struct seq_parameter_set_rbsp *sps = nal->sps;
-  struct pic_parameter_set_rbsp *pps = nal->pps;
   struct slice_header *slc = nal->slc;
-  if (!sps || !pps || !slc)
+  if (!sps || !slc)
     return;
 
   if (nal->nal_unit_type == NAL_SLICE_IDR) {
@@ -762,15 +761,11 @@ uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps,
   }
 
   if (!pps->pic_scaling_matrix_present_flag && sps != NULL) {
-    //printf("MEMCPY SCALING LIST\n");
     memcpy(pps->scaling_lists_4x4, sps->scaling_lists_4x4,
         sizeof(pps->scaling_lists_4x4));
     memcpy(pps->scaling_lists_8x8, sps->scaling_lists_8x8,
         sizeof(pps->scaling_lists_8x8));
   }
-  /*else if (sps == NULL) {
-    printf("sPS MISSING\n");
-  }*/
 
   return 0;
 }
@@ -1062,6 +1057,8 @@ void decode_ref_pic_marking(struct nal_unit *nal,
     // mark all ref pics as unused for reference,
     // set max-long-term frame index = no long-term frame idxs
     dpb_flush(dpb);
+    parser->pic_order_cnt_lsb = 0;
+    parser->pic_order_cnt_msb = 0;
     parser->prev_pic_order_cnt_lsb = 0;
     parser->prev_pic_order_cnt_msb = 0;
   }
@@ -1255,6 +1252,10 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
           i,
           parser);
     }
+    if (parser->last_nal->slc != NULL)
+      parser->prev_pic_order_cnt_lsb
+          = parser->last_nal->slc->pic_order_cnt_lsb;
+    parser->prev_pic_order_cnt_msb = parser->pic_order_cnt_msb;
   }
 
   while ((next_nal = seek_for_nal(inbuf+search_offset, inbuf_len-parsed_len-search_offset, parser)) >= 0) {
@@ -1307,12 +1308,6 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
         parser->prebuf_len = 0;
         parser->incomplete_nal = 0;
 
-        if (parser->last_nal->nal_ref_idc) {
-          if (parser->last_nal->slc != NULL)
-            parser->prev_pic_order_cnt_lsb
-                = parser->last_nal->slc->pic_order_cnt_lsb;
-          parser->prev_pic_order_cnt_msb = parser->pic_order_cnt_msb;
-        }
         return parsed_len;
       }
 
