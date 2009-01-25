@@ -485,6 +485,20 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
     //else if(img->progressive_frame && this->nal_parser->current_nal->repeat_pic)
     //  img->duration *= this->nal_parser->current_nal->repeat_pic;
 
+    /* only bt601 and bt701 handled so far. others seem to be rarely used */
+    if(sps->vui_parameters.colour_description_present) {
+      switch (sps->vui_parameters.colour_primaries) {
+        case 1:
+          this->vdpau_accel->color_standard = VDP_COLOR_STANDARD_ITUR_BT_709;
+          break;
+        case 5:
+        case 6:
+        default:
+          this->vdpau_accel->color_standard = VDP_COLOR_STANDARD_ITUR_BT_601;
+          break;
+      }
+    }
+
     struct decoded_picture *decoded_pic = NULL;
     if(pic.is_reference) {
       if(!slc->field_pic_flag || !this->wait_for_bottom_field) {

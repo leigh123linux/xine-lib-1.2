@@ -251,6 +251,7 @@ typedef struct {
   VdpChromaType        video_mixer_chroma;
   uint32_t             video_mixer_width;
   uint32_t             video_mixer_height;
+  VdpColorStandard     color_standard;
 
   VdpColor             back_color;
 
@@ -687,6 +688,7 @@ static vo_frame_t *vdpau_alloc_frame (vo_driver_t *this_gen)
   frame->vdpau_accel_data.vdp_device = vdp_device;
   frame->vdpau_accel_data.surface = VDP_INVALID_HANDLE;
   frame->vdpau_accel_data.chroma = VDP_CHROMA_TYPE_420;
+  frame->vdpau_accel_data.color_standard = this->color_standard;
   frame->vdpau_accel_data.vdp_decoder_create = vdp_decoder_create;
   frame->vdpau_accel_data.vdp_decoder_destroy = vdp_decoder_destroy;
   frame->vdpau_accel_data.vdp_decoder_render = vdp_decoder_render;
@@ -1081,12 +1083,12 @@ static void vdpau_update_csc( vdpau_driver_t *this_gen )
   float contrast = this_gen->contrast/100.0;
   float brightness = this_gen->brightness/100.0;
 
-  printf( "vo_vdpau: vdpau_update_csc: hue=%f, saturation=%f, contrast=%f, brightness=%f\n", hue, saturation, contrast, brightness );
+  printf( "vo_vdpau: vdpau_update_csc: hue=%f, saturation=%f, contrast=%f, brightness=%f, color_standard=%d\n", hue, saturation, contrast, brightness, this_gen->color_standard );
 
   VdpCSCMatrix matrix;
   VdpProcamp procamp = { VDP_PROCAMP_VERSION, brightness, contrast, saturation, hue };
 
-  VdpStatus st = vdp_generate_csc_matrix( &procamp, VDP_COLOR_STANDARD_ITUR_BT_601, &matrix );
+  VdpStatus st = vdp_generate_csc_matrix( &procamp, this_gen->color_standard, &matrix );
   if ( st != VDP_STATUS_OK ) {
     printf( "vo_vdpau: error, can't generate csc matrix !!\n" );
     return;
@@ -1107,6 +1109,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   VdpStatus st;
   VdpVideoSurface surface;
   VdpChromaType chroma = this->video_mixer_chroma;
+  VdpColorStandard color_standard = this->color_standard;
   uint32_t mix_w = this->video_mixer_width;
   uint32_t mix_h = this->video_mixer_height;
   VdpTime stream_speed;
@@ -1164,6 +1167,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     mix_w = frame->width;
     mix_h = frame->height;
     chroma = (frame->vo_frame.flags & VO_CHROMA_422) ? VDP_CHROMA_TYPE_422 : VDP_CHROMA_TYPE_420;
+    color_standard = frame->vdpau_accel_data.color_standard;
   }
   else {
     /* unknown format */
@@ -1172,7 +1176,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     return;
   }
 
-  if ( (mix_w != this->video_mixer_width) || (mix_h != this->video_mixer_height) || (chroma != this->video_mixer_chroma) ) {
+  if ( (mix_w != this->video_mixer_width) || (mix_h != this->video_mixer_height) || (chroma != this->video_mixer_chroma) || (color_standard != this->color_standard)) {
     vdpau_release_back_frames( this_gen ); /* empty past frames array */
     printf("vo_vdpau: recreate mixer to match frames: width=%d, height=%d, chroma=%d\n", mix_w, mix_h, chroma);
     vdp_video_mixer_destroy( this->video_mixer );
@@ -1186,6 +1190,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     this->video_mixer_chroma = chroma;
     this->video_mixer_width = mix_w;
     this->video_mixer_height = mix_h;
+    this->color_standard = color_standard;
     vdpau_set_deinterlace( this_gen );
     vdpau_set_inverse_telecine( this_gen );
     vdpau_update_noise( this );
@@ -1907,6 +1912,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     return NULL;
   }
 
+  this->color_standard = VDP_COLOR_STANDARD_ITUR_BT_601;
   this->video_mixer_chroma = chroma;
   this->video_mixer_width = this->soft_surface_width;
   this->video_mixer_height = this->soft_surface_height;
