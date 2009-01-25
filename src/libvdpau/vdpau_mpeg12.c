@@ -695,6 +695,7 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
 
   decode_render( vd, accel );
 
+  img->pts = seq->seq_pts;
   img->bad_frame = 0;
   img->duration = seq->video_step;
   if ( pic->vdp_infos.top_field_first || pic->vdp_infos.picture_structure==PICTURE_FRAME )
@@ -717,16 +718,16 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
     }
     seq->forward_ref = seq->backward_ref;
     if ( seq->forward_ref && !seq->forward_ref->drawn ) {
-      seq->forward_ref->pts = seq->seq_pts;
+      //seq->forward_ref->pts = seq->seq_pts;
       seq->forward_ref->draw( seq->forward_ref, vd->stream );
-      //printf( "vdpau_mpeg12: drawn reference image with pts=%lld\n", seq->forward_ref->pts );
+      printf( "vdpau_mpeg12: drawn reference image with pts=%lld\n", seq->forward_ref->pts );
     }
     seq->backward_ref = img;
   }
   else {
-    img->pts = seq->seq_pts;
+    //img->pts = seq->seq_pts;
     img->draw( img, vd->stream );
-    //printf( "vdpau_mpeg12: drawn image with pts=%lld\n", img->pts );
+    printf( "vdpau_mpeg12: drawn image with pts=%lld\n", img->pts );
     img->free( img );
     //printf("vdpau_mpeg12: freed B image %d\n", img );
   }
