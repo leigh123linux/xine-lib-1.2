@@ -67,6 +67,7 @@ typedef struct vdpau_h264_decoder_s {
   VdpDecoder        decoder;
   int               decoder_started;
 
+  VdpColorStandard  color_standard;
   VdpDecoderProfile profile;
   vdpau_accel_t     *vdpau_accel;
 
@@ -490,15 +491,17 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
     if(sps->vui_parameters.colour_description_present) {
       switch (sps->vui_parameters.colour_primaries) {
         case 1:
-          this->vdpau_accel->color_standard = VDP_COLOR_STANDARD_ITUR_BT_709;
+          this->color_standard = VDP_COLOR_STANDARD_ITUR_BT_709;
           break;
         case 5:
         case 6:
         default:
-          this->vdpau_accel->color_standard = VDP_COLOR_STANDARD_ITUR_BT_601;
+          this->color_standard = VDP_COLOR_STANDARD_ITUR_BT_601;
           break;
       }
     }
+
+    this->vdpau_accel->color_standard = this->color_standard;
 
     struct decoded_picture *decoded_pic = NULL;
     if(pic.is_reference) {
@@ -672,6 +675,13 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
   }
 
   free_parser(this->nal_parser);
+
+  this->color_standard = VDP_COLOR_STANDARD_ITUR_BT_601;
+  this->wait_for_bottom_field = 0;
+  this->video_step = 0;
+  this->curr_pts = 0;
+  this->next_pts = 0;
+
   this->nal_parser = init_parser();
   if(this->codec_private_len > 0) {
     parse_codec_private(this->nal_parser, this->codec_private, this->codec_private_len);
@@ -682,11 +692,6 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
      */
     this->wait_for_frame_start = this->have_frame_boundary_marks;
   }
-
-  this->wait_for_bottom_field = 0;
-  this->video_step = 0;
-  this->curr_pts = 0;
-  this->next_pts = 0;
 
   if (this->dangling_img) {
     this->dangling_img->free(this->dangling_img);
@@ -757,6 +762,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
   this->decoder                           = VDP_INVALID_HANDLE;
   this->vdp_runtime_nr                    = 1;
+  this->color_standard                    = VDP_COLOR_STANDARD_ITUR_BT_601;
 
   this->nal_parser = init_parser();
 

@@ -898,6 +898,7 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
 
   //printf("vo_vdpau: allocated_surfaces=%d\n", this->allocated_surfaces );
 
+  frame->vdpau_accel_data.color_standard = VDP_COLOR_STANDARD_ITUR_BT_601;
   frame->ratio = ratio;
   frame->vo_frame.future_frame = NULL;
 }
@@ -1176,7 +1177,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     return;
   }
 
-  if ( (mix_w != this->video_mixer_width) || (mix_h != this->video_mixer_height) || (chroma != this->video_mixer_chroma) || (color_standard != this->color_standard)) {
+  if ( (mix_w != this->video_mixer_width) || (mix_h != this->video_mixer_height) || (chroma != this->video_mixer_chroma)) {
     vdpau_release_back_frames( this_gen ); /* empty past frames array */
     printf("vo_vdpau: recreate mixer to match frames: width=%d, height=%d, chroma=%d\n", mix_w, mix_h, chroma);
     vdp_video_mixer_destroy( this->video_mixer );
@@ -1190,11 +1191,15 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     this->video_mixer_chroma = chroma;
     this->video_mixer_width = mix_w;
     this->video_mixer_height = mix_h;
-    this->color_standard = color_standard;
     vdpau_set_deinterlace( this_gen );
     vdpau_set_inverse_telecine( this_gen );
     vdpau_update_noise( this );
     vdpau_update_sharpness( this );
+  }
+
+  if (color_standard != this->color_standard) {
+    printf("vo_vdpau: update color_standard: %d\n", color_standard);
+    this->color_standard = color_standard;
     vdpau_update_csc( this );
   }
 
