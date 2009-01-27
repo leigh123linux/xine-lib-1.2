@@ -748,6 +748,19 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   if ( !(stream->video_driver->get_capabilities(stream->video_driver) & VO_CAP_VDPAU_H264) )
 	  return NULL;
 
+  /* now check if vdpau has free decoder resource */
+  vo_frame_t *img = stream->video_out->get_frame( stream->video_out, 1920, 1080, 1, XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS );
+  vdpau_accel_t *accel = (vdpau_accel_t*)img->accel_data;
+  img->free(img);
+  VdpDecoder decoder;
+  VdpStatus st = accel->vdp_decoder_create( accel->vdp_device, VDP_DECODER_PROFILE_H264_MAIN, 1920, 1080, 16, &decoder );
+  if ( st!=VDP_STATUS_OK ) {
+    lprintf( "can't create vdpau decoder.\n" );
+    return NULL;
+  }
+
+  accel->vdp_decoder_destroy( decoder );
+
   this = (vdpau_h264_decoder_t *) calloc(1, sizeof(vdpau_h264_decoder_t));
 
   this->video_decoder.decode_data         = vdpau_h264_decode_data;

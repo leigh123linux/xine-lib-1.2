@@ -21,7 +21,7 @@
  *
  */
 
-//#define LOG
+/*#define LOG*/
 #define LOG_MODULE "vdpau_mpeg12"
 
 
@@ -38,8 +38,6 @@
 #include "accel_vdpau.h"
 
 #include <vdpau/vdpau.h>
-
-
 
 #define sequence_header_code    0xb3
 #define sequence_error_code     0xb4
@@ -809,7 +807,7 @@ static void vdpau_mpeg12_decode_data (video_decoder_t *this_gen, buf_element_t *
 static void vdpau_mpeg12_flush (video_decoder_t *this_gen) {
   vdpau_mpeg12_decoder_t *this = (vdpau_mpeg12_decoder_t *) this_gen;
 
-  printf( "vdpau_mpeg12: vdpau_mpeg12_flush\n" );
+  lprintf( "vdpau_mpeg12_flush\n" );
 // incorrect: see libmpeg2, mpeg2_flush()
 //  reset_sequence( &this->sequence );
 }
@@ -820,7 +818,7 @@ static void vdpau_mpeg12_flush (video_decoder_t *this_gen) {
 static void vdpau_mpeg12_reset (video_decoder_t *this_gen) {
   vdpau_mpeg12_decoder_t *this = (vdpau_mpeg12_decoder_t *) this_gen;
 
-  printf( "vdpau_mpeg12: vdpau_mpeg12_reset\n" );
+  lprintf( "vdpau_mpeg12_reset\n" );
   reset_sequence( &this->sequence );
 
   //this->size = 0;
@@ -832,7 +830,7 @@ static void vdpau_mpeg12_reset (video_decoder_t *this_gen) {
 static void vdpau_mpeg12_discontinuity (video_decoder_t *this_gen) {
   vdpau_mpeg12_decoder_t *this = (vdpau_mpeg12_decoder_t *) this_gen;
 
-  printf( "vdpau_mpeg12: vdpau_mpeg12_discontinuity\n" );
+  lprintf( "vdpau_mpeg12_discontinuity\n" );
   reset_sequence( &this->sequence );
 
 }
@@ -844,7 +842,7 @@ static void vdpau_mpeg12_dispose (video_decoder_t *this_gen) {
 
   vdpau_mpeg12_decoder_t *this = (vdpau_mpeg12_decoder_t *) this_gen;
 
-  printf( "vdpau_mpeg12: vdpau_mpeg12_dispose\n" );
+  lprintf( "vdpau_mpeg12_dispose\n" );
 
   if ( this->decoder!=VDP_INVALID_HANDLE && this->sequence.accel_vdpau ) {
       this->sequence.accel_vdpau->vdp_decoder_destroy( this->decoder );
@@ -868,11 +866,24 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
   vdpau_mpeg12_decoder_t  *this ;
 
+  lprintf( "open_plugin\n" );
+
   /* the videoout must be vdpau-capable to support this decoder */
   if ( !(stream->video_driver->get_capabilities(stream->video_driver) & VO_CAP_VDPAU_MPEG12) )
     return NULL;
 
-  printf( "vdpau_mpeg12: open_plugin\n" );
+  /* now check if vdpau has free decoder resource */
+  vo_frame_t *img = stream->video_out->get_frame( stream->video_out, 1920, 1080, 1, XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS );
+  vdpau_accel_t *accel = (vdpau_accel_t*)img->accel_data;
+  img->free(img);
+  VdpDecoder decoder;
+  VdpStatus st = accel->vdp_decoder_create( accel->vdp_device, VDP_DECODER_PROFILE_MPEG2_MAIN, 1920, 1080, 2, &decoder );
+  if ( st!=VDP_STATUS_OK ) {
+    lprintf( "can't create vdpau decoder.\n" );
+    return NULL;
+  }
+
+  accel->vdp_decoder_destroy( decoder );
 
   this = (vdpau_mpeg12_decoder_t *) calloc(1, sizeof(vdpau_mpeg12_decoder_t));
 
