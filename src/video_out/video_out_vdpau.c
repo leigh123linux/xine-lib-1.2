@@ -788,6 +788,11 @@ static void vdpau_duplicate_frame_data (vo_frame_t *this_gen, vo_frame_t *origin
     return;
   }
 
+  if(orig->vdpau_accel_data.vdp_runtime_nr != this->vdpau_accel_data.vdp_runtime_nr) {
+    fprintf(stderr, "vdpau_duplicate_frame_data: called with invalid frame\n");
+    return;
+  }
+
   if (!(orig->flags & VO_CHROMA_422)) {
     this->vo_frame.pitches[0] = 8*((orig->vo_frame.width + 7) / 8);
     this->vo_frame.pitches[1] = 8*((orig->vo_frame.width + 15) / 16);
@@ -1623,6 +1628,19 @@ static void vdpau_reinit( vo_driver_t *this_gen )
     return;
   }
 
+  // osd overlays need to be recreated
+  this->overlay_output = VDP_INVALID_HANDLE;
+  this->overlay_output_width = this->overlay_output_height = 0;
+  this->overlay_unscaled = VDP_INVALID_HANDLE;
+  this->overlay_unscaled_width = this->overlay_unscaled_height = 0;
+  this->ovl_changed = 0;
+  this->has_overlay = 0;
+  this->has_unscaled = 0;
+
+  this->argb_overlay = VDP_INVALID_HANDLE;
+  this->argb_overlay_width = this->argb_overlay_height = 0;
+  this->has_argb_overlay = 0;
+
   this->video_mixer_chroma = chroma;
   VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION, VDP_VIDEO_MIXER_FEATURE_SHARPNESS,
         VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL };
@@ -1639,10 +1657,10 @@ static void vdpau_reinit( vo_driver_t *this_gen )
 
   vdp_preemption_callback_register(vdp_device, &vdp_preemption_callback, (void*)this);
 
-  XUnlockDisplay(guarded_display);
-  printf("vo_vdpau: Reinit done.\n");
   this->vdp_runtime_nr++;
   this->reinit_needed = 0;
+  XUnlockDisplay(guarded_display);
+  printf("vo_vdpau: Reinit done.\n");
 }
 
 

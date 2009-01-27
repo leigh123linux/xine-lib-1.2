@@ -446,7 +446,8 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
     this->decoder = VDP_INVALID_HANDLE;
     vdpau_h264_reset(this_gen);
     this->vdp_runtime_nr = this->vdpau_accel->vdp_runtime_nr;
-    this->last_img = NULL;
+    img->free(img);
+    img = this->last_img = NULL;
     return 0;
   }
 
