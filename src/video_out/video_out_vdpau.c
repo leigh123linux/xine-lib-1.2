@@ -444,10 +444,15 @@ static int vdpau_process_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overlay )
     rlelen = rle->len;
     clr = rle->color;
     for ( i=0; i<rlelen; ++i ) {
-      red = colors[clr].y; /* red */
-      green = colors[clr].cr; /* green */
-      blue = colors[clr].cb; /* blue */
-      alpha = trans[clr]*255/15;
+      if ( trans[clr] == 0 ) {
+        alpha = red = green = blue = 0;
+      }
+      else {
+        red = colors[clr].y; /* red */
+        green = colors[clr].cr; /* green */
+        blue = colors[clr].cb; /* blue */
+        alpha = trans[clr]*255/15;
+      }
       *rgba = (alpha<<24) | (red<<16) | (green<<8) | blue;
       rgba++;
       ++pos;
