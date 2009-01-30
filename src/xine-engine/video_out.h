@@ -296,6 +296,7 @@ struct xine_video_port_s {
 #define VO_CAP_XXMC                   0x00000040 /* driver can use extended XvMC */
 #define VO_CAP_VDPAU_H264             0x00000080 /* driver can use VDPAU for H264 */
 #define VO_CAP_VDPAU_MPEG12           0x00000100 /* driver can use VDPAU for mpeg1/2 */
+#define VO_CAP_VDPAU_VC1              0x00000200 /* driver can use VDPAU for mpeg1/2 */
 #define VO_CAP_CUSTOM_EXTENT_OVERLAY  0x01000000 /* driver can blend custom extent overlay to output extent */
 #define VO_CAP_ARGB_LAYER_OVERLAY     0x02000000 /* driver supports true color overlay */
 
