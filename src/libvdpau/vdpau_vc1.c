@@ -151,7 +151,7 @@ static void init_sequence( sequence_t *sequence )
   sequence->bufpos = 0;
   sequence->seq_pts = sequence->cur_pts = 0;
   sequence->profile = VDP_DECODER_PROFILE_VC1_SIMPLE;
-  sequence->ratio = 0;
+  //sequence->ratio = 0;
   sequence->video_step = 0;
   if ( sequence->forward_ref )
     sequence->forward_ref->free( sequence->forward_ref );
@@ -312,7 +312,6 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
 {
   sequence_t *seq = (sequence_t*)&vd->sequence;
 
-  seq->picture.vdp_infos.picture_type = 1;
   VdpPictureInfoVC1 *info = &(seq->picture.vdp_infos);
   info->forward_reference = VDP_INVALID_HANDLE;
   info->backward_reference = VDP_INVALID_HANDLE;
