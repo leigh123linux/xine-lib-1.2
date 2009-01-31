@@ -164,7 +164,7 @@ struct seq_parameter_set_rbsp
   uint8_t level_idc; // 0xff
   uint32_t seq_parameter_set_id;
   uint32_t chroma_format_idc;
-  uint8_t residual_colour_transform_flag; // 0x01
+  uint8_t separate_colour_plane_flag; // 0x01
   uint32_t bit_depth_luma_minus8;
   uint32_t bit_depth_chroma_minus8;
   uint8_t qpprime_y_zero_transform_bypass_flag;
@@ -350,6 +350,7 @@ struct slice_header
   uint32_t first_mb_in_slice;
   uint32_t slice_type;
   uint32_t pic_parameter_set_id;
+  uint8_t colour_plane_id;
   uint32_t frame_num;
   uint8_t field_pic_flag;
   uint8_t bottom_field_flag;

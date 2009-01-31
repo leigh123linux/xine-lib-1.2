@@ -442,11 +442,11 @@ static void pps_scaling_list_fallback(struct seq_parameter_set_rbsp *sps, struct
 uint8_t parse_sps(struct buf_reader *buf, struct nal_parser *parser)
 {
   struct seq_parameter_set_rbsp *sps = parser->current_nal->sps;
-  sps->profile_idc = buf->buf[0];
-  sps->constraint_setN_flag = (buf->buf[1] >> 4) & 0x0f;
-  sps->level_idc = buf->buf[2];
+  sps->profile_idc = read_bits(buf, 8);
+  sps->constraint_setN_flag = read_bits(buf, 4);
+  read_bits(buf, 4);
+  sps->level_idc = read_bits(buf, 8);
 
-  buf->cur_pos = buf->buf + 3;
   sps->seq_parameter_set_id = read_exp_golomb(buf);
 
   memset(sps->scaling_lists_4x4, 16, sizeof(sps->scaling_lists_4x4));
@@ -455,7 +455,7 @@ uint8_t parse_sps(struct buf_reader *buf, struct nal_parser *parser)
       == 122 || sps->profile_idc == 144) {
     sps->chroma_format_idc = read_exp_golomb(buf);
     if (sps->chroma_format_idc == 3) {
-      sps->residual_colour_transform_flag = read_bits(buf, 1);
+      sps->separate_colour_plane_flag = read_bits(buf, 1);
     }
 
     sps->bit_depth_luma_minus8 = read_exp_golomb(buf);
@@ -484,7 +484,7 @@ uint8_t parse_sps(struct buf_reader *buf, struct nal_parser *parser)
   sps->pic_order_cnt_type = read_exp_golomb(buf);
   if (!sps->pic_order_cnt_type)
     sps->log2_max_pic_order_cnt_lsb_minus4 = read_exp_golomb(buf);
-  else {
+  else if(sps->pic_order_cnt_type == 1) {
     sps->delta_pic_order_always_zero_flag = read_bits(buf, 1);
     sps->offset_for_non_ref_pic = read_exp_golomb_s(buf);
     sps->offset_for_top_to_bottom_field = read_exp_golomb_s(buf);
@@ -661,7 +661,6 @@ void parse_vui_parameters(struct buf_reader *buf,
     sps->vui_parameters.log2_max_mv_length_vertical = read_exp_golomb(buf);
     sps->vui_parameters.num_reorder_frames = read_exp_golomb(buf);
     sps->vui_parameters.max_dec_frame_buffering = read_exp_golomb(buf);
-    printf("Max_dec_frame_buffering: %d\n", sps->vui_parameters.max_dec_frame_buffering);
   }
 }
 
@@ -738,7 +737,6 @@ uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps,
   memset(pps->scaling_lists_4x4, 16, sizeof(pps->scaling_lists_4x4));
   memset(pps->scaling_lists_8x8, 16, sizeof(pps->scaling_lists_8x8));
   if (bit_length-bit_read > 1) {
-    printf("Read transform 8x8\n");
     pps->transform_8x8_mode_flag = read_bits(buf, 1);
     pps->pic_scaling_matrix_present_flag = read_bits(buf, 1);
     if (pps->pic_scaling_matrix_present_flag) {
@@ -786,6 +784,9 @@ uint8_t parse_slice_header(struct buf_reader *buf, struct nal_parser *parser)
 
   //print_slice_type(slc->slice_type);
   slc->pic_parameter_set_id = read_exp_golomb(buf);
+  if(sps->separate_colour_plane_flag)
+    slc->colour_plane_id = read_bits(buf, 2);
+
   slc->frame_num = read_bits(buf, sps->log2_max_frame_num_minus4 + 4);
   if (!sps->frame_mbs_only_flag) {
     slc->field_pic_flag = read_bits(buf, 1);
@@ -816,7 +817,8 @@ uint8_t parse_slice_header(struct buf_reader *buf, struct nal_parser *parser)
     if (pps->pic_order_present_flag && !slc->field_pic_flag)
       slc->delta_pic_order_cnt_bottom = read_exp_golomb_s(buf);
   }
-  else if (sps->pic_order_cnt_type == 1) {
+
+  if (sps->pic_order_cnt_type == 1 && !sps->delta_pic_order_always_zero_flag) {
     slc->delta_pic_order_cnt[0] = read_exp_golomb_s(buf);
     if (pps->pic_order_present_flag && !slc->field_pic_flag)
       slc->delta_pic_order_cnt[1] = read_exp_golomb_s(buf);
@@ -863,11 +865,7 @@ uint8_t parse_slice_header(struct buf_reader *buf, struct nal_parser *parser)
 
 void parse_ref_pic_list_reordering(struct buf_reader *buf, struct nal_unit *nal, struct nal_parser *parser)
 {
-  struct seq_parameter_set_rbsp *sps = nal->sps;
-  struct pic_parameter_set_rbsp *pps = nal->pps;
   struct slice_header *slc = nal->slc;
-  if (!sps || !pps)
-    return;
 
   if (slc->slice_type != SLICE_I && slc->slice_type != SLICE_SI) {
     slc->ref_pic_list_reordering.ref_pic_list_reordering_flag_l0 = read_bits(
@@ -922,7 +920,11 @@ void parse_pred_weight_table(struct buf_reader *buf, struct nal_unit *nal)
 
   nal->slc->pred_weight_table.luma_log2_weight_denom = read_exp_golomb(buf);
 
-  if (sps->chroma_format_idc != 0)
+  uint32_t ChromaArrayType = sps->chroma_format_idc;
+  if(sps->separate_colour_plane_flag)
+    ChromaArrayType = 0;
+
+  if (ChromaArrayType != 0)
     nal->slc->pred_weight_table.chroma_log2_weight_denom = read_exp_golomb(buf);
 
   int i;
@@ -934,7 +936,7 @@ void parse_pred_weight_table(struct buf_reader *buf, struct nal_unit *nal)
       nal->slc->pred_weight_table.luma_offset_l0[i] = read_exp_golomb_s(buf);
     }
 
-    if (sps->chroma_format_idc != 0) {
+    if (ChromaArrayType != 0) {
       uint8_t chroma_weight_l0_flag = read_bits(buf, 1);
 
       if (chroma_weight_l0_flag == 1) {
@@ -958,7 +960,7 @@ void parse_pred_weight_table(struct buf_reader *buf, struct nal_unit *nal)
         nal->slc->pred_weight_table.luma_offset_l1[i] = read_exp_golomb_s(buf);
       }
 
-      if (sps->chroma_format_idc != 0) {
+      if (ChromaArrayType != 0) {
         uint8_t chroma_weight_l1_flag = read_bits(buf, 1);
 
         if (chroma_weight_l1_flag == 1) {
@@ -980,17 +982,15 @@ void decode_ref_pic_marking(struct nal_unit *nal,
     uint32_t marking_nr,
     struct nal_parser *parser)
 {
-  struct seq_parameter_set_rbsp *sps = nal->sps;
-  struct pic_parameter_set_rbsp *pps = nal->pps;
   struct slice_header *slc = nal->slc;
   struct dpb *dpb = &parser->dpb;
-  if (!sps || !pps || !slc)
+  if (!slc)
     return;
 
   if (memory_management_control_operation == 1) {
     // short-term -> unused for reference
     uint32_t pic_num_x = (nal->curr_pic_num
-        - (slc->dec_ref_pic_marking[marking_nr].difference_of_pic_nums_minus1 + 1))%nal->max_pic_num;
+        - (slc->dec_ref_pic_marking[marking_nr].difference_of_pic_nums_minus1 + 1))%(nal->max_pic_num+1);
     struct decoded_picture* pic = NULL;
     if ((pic = dpb_get_picture(dpb, pic_num_x)) != NULL) {
       if (pic->nal->slc->field_pic_flag == 0) {
@@ -1083,10 +1083,9 @@ void parse_dec_ref_pic_marking(struct buf_reader *buf,
     struct nal_parser *parser)
 {
   struct nal_unit *nal = parser->current_nal;
-  struct seq_parameter_set_rbsp *sps = nal->sps;
-  struct pic_parameter_set_rbsp *pps = nal->pps;
   struct slice_header *slc = nal->slc;
-  if (!sps || !pps)
+
+  if (!slc)
     return;
 
   slc->dec_ref_pic_marking_count = 0;
@@ -1095,8 +1094,7 @@ void parse_dec_ref_pic_marking(struct buf_reader *buf,
   if (nal->nal_unit_type == NAL_SLICE_IDR) {
     slc->dec_ref_pic_marking[i].no_output_of_prior_pics_flag = read_bits(buf, 1);
     slc->dec_ref_pic_marking[i].long_term_reference_flag = read_bits(buf, 1);
-  }
-  else {
+  } else {
     slc->dec_ref_pic_marking[i].adaptive_ref_pic_marking_mode_flag = read_bits(
         buf, 1);
 
@@ -1133,7 +1131,7 @@ void parse_dec_ref_pic_marking(struct buf_reader *buf,
     }
   }
 
-  slc->dec_ref_pic_marking_count = i;
+  slc->dec_ref_pic_marking_count = (i>0) ? (i-1) : 0;
 }
 
 /* ----------------- NAL parser ----------------- */
@@ -1238,17 +1236,19 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
   uint8_t *prebuf = parser->prebuf;
 
   if(parser->nal_size_length > 0)
-    start_seq_len = 4-parser->have_nal_size_length_buf;
+    start_seq_len = parser->nal_size_length-parser->have_nal_size_length_buf;
 
   if(parser->last_nal_res == 1 && parser->current_nal &&
       parser->current_nal->slc) {
     int i;
     for(i = 0; i < parser->current_nal->slc->dec_ref_pic_marking_count; i++) {
-      decode_ref_pic_marking(
-          parser->current_nal,
-          parser->current_nal->slc->dec_ref_pic_marking[i].memory_management_control_operation,
-          i,
-          parser);
+      if(parser->current_nal->slc->dec_ref_pic_marking[i].adaptive_ref_pic_marking_mode_flag) {
+        decode_ref_pic_marking(
+            parser->current_nal,
+            parser->current_nal->slc->dec_ref_pic_marking[i].memory_management_control_operation,
+            i,
+            parser);
+      }
     }
 
     if (parser->last_nal->slc != NULL)
@@ -1260,7 +1260,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
   while ((next_nal = seek_for_nal(inbuf+search_offset, inbuf_len-parsed_len-search_offset, parser)) >= 0) {
     next_nal += search_offset;
     if(parser->nal_size_length > 0)
-        start_seq_len = 4-parser->have_nal_size_length_buf;
+        start_seq_len = parser->nal_size_length-parser->have_nal_size_length_buf;
 
     if(parser->incomplete_nal || completed_nal || next_nal == 0 ||
         parser->nal_size_length) {

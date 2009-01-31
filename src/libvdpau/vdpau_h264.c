@@ -626,7 +626,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
     while(len < buf->size && !(this->wait_for_frame_start && !(buf->decoder_flags & BUF_FLAG_FRAME_START))) {
       this->wait_for_frame_start = 0;
       len += parse_frame(this->nal_parser, buf->content + len, buf->size - len,
-          (void*)&vdp_buffer.bitstream, &vdp_buffer.bitstream_bytes, &slice_count);
+          (uint8_t*)&vdp_buffer.bitstream, &vdp_buffer.bitstream_bytes, &slice_count);
 
       if(this->decoder == VDP_INVALID_HANDLE &&
           this->nal_parser->current_nal->sps != NULL &&

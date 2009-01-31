@@ -347,13 +347,11 @@ int fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist)
         reflist[i].surface = pic->surface;
         reflist[i].is_long_term = pic->nal->used_for_long_term_ref;
         if(reflist[i].is_long_term)
-          reflist[i].frame_idx = pic->nal->slc->frame_num; //pic->nal->long_term_frame_idx;
+          reflist[i].frame_idx = pic->nal->slc->frame_num;
         else
-          reflist[i].frame_idx = pic->nal->slc->frame_num; //pic->nal->curr_pic_num;
-        reflist[i].top_is_reference = pic->top_is_reference; /*pic->nal->slc->field_pic_flag
-            ? (pic->nal->slc->bottom_field_flag ? 0 : 1) : 1;*/
-        reflist[i].bottom_is_reference = pic->bottom_is_reference; /*pic->nal->slc->field_pic_flag
-            ? (pic->nal->slc->bottom_field_flag ? 1 : 0) : 1;*/
+          reflist[i].frame_idx = pic->nal->slc->frame_num;
+        reflist[i].top_is_reference = pic->top_is_reference;
+        reflist[i].bottom_is_reference = pic->bottom_is_reference;
         reflist[i].field_order_cnt[0] = pic->nal->top_field_order_cnt;
         reflist[i].field_order_cnt[1] = pic->nal->bottom_field_order_cnt;
         i++;
