@@ -2002,15 +2002,13 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   else
     this->capabilities |= VO_CAP_VDPAU_H264;
 
-  /*st = vdp_decoder_query_capabilities( vdp_device, VDP_DECODER_PROFILE_VC1_MAIN, &ok, &ml, &mr, &mw, &mh );
+  st = vdp_decoder_query_capabilities( vdp_device, VDP_DECODER_PROFILE_VC1_MAIN, &ok, &ml, &mr, &mw, &mh );
   if ( st != VDP_STATUS_OK  )
     printf( "vo_vdpau: getting vc1_supported failed! : %s\n", vdp_get_error_string( st ) );
   else if ( !ok )
     printf( "vo_vdpau: this hardware doesn't support vc1.\n" );
   else
     this->capabilities |= VO_CAP_VDPAU_VC1;
-
-  this->capabilities |= VO_CAP_VDPAU_VC1;*/
 
   st = vdp_decoder_query_capabilities( vdp_device, VDP_DECODER_PROFILE_MPEG2_MAIN, &ok, &ml, &mr, &mw, &mh );
   if ( st != VDP_STATUS_OK  )

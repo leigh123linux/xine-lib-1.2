@@ -163,11 +163,16 @@ static int raw_process_ovl( raw_driver_t *this_gen, vo_overlay_t *overlay )
     clr = rle->color;
     alpha = trans[clr];
     for ( i=0; i<rlelen; ++i ) {
-    	rgba[0] = colors[clr].y;
-    	rgba[1] = colors[clr].cr;
-    	rgba[2] = colors[clr].cb;
-    	rgba[3] = alpha*255/15;
-    	rgba+= 4;
+      if ( alpha == 0 ) {
+        rgba[0] = rgba[1] = rgba[2] = rgba[3] = 0;
+      }
+      else {
+        rgba[0] = colors[clr].y;
+        rgba[1] = colors[clr].cr;
+        rgba[2] = colors[clr].cb;
+        rgba[3] = alpha*255/15;
+      }
+      rgba+= 4;
     	++pos;
     }
     ++rle;
