@@ -835,6 +835,10 @@ uint8_t parse_slice_header(struct buf_reader *buf, struct nal_parser *parser)
   if (slc->slice_type == SLICE_B)
     slc->direct_spatial_mv_pred_flag = read_bits(buf, 1);
 
+  /* take default values in case they are not set here */
+  slc->num_ref_idx_l0_active_minus1 = pps->num_ref_idx_l0_active_minus1;
+  slc->num_ref_idx_l1_active_minus1 = pps->num_ref_idx_l1_active_minus1;
+
   if (slc->slice_type == SLICE_P || slc->slice_type == SLICE_SP
       || slc->slice_type == SLICE_B) {
     slc->num_ref_idx_active_override_flag = read_bits(buf, 1);
@@ -932,10 +936,7 @@ void parse_pred_weight_table(struct buf_reader *buf, struct nal_unit *nal)
     nal->slc->pred_weight_table.chroma_log2_weight_denom = read_exp_golomb(buf);
 
   int i;
-  /* FIXME: Being spec-compliant here and loop to num_ref_idx_l0_active_minus1
-   * will break Divx7 files. Keep this in mind if any other streams are broken
-   */
-  for (i = 0; i <= 1 /*pps->num_ref_idx_l0_active_minus1*/; i++) {
+  for (i = 0; i <= pps->num_ref_idx_l0_active_minus1; i++) {
     uint8_t luma_weight_l0_flag = read_bits(buf, 1);
 
     if (luma_weight_l0_flag == 1) {
@@ -962,7 +963,7 @@ void parse_pred_weight_table(struct buf_reader *buf, struct nal_unit *nal)
     /* FIXME: Being spec-compliant here and loop to num_ref_idx_l0_active_minus1
      * will break Divx7 files. Keep this in mind if any other streams are broken
      */
-    for (i = 0; i <= 1 /*pps->num_ref_idx_l1_active_minus1*/; i++) {
+    for (i = 0; i <= pps->num_ref_idx_l1_active_minus1; i++) {
       uint8_t luma_weight_l1_flag = read_bits(buf, 1);
 
       if (luma_weight_l1_flag == 1) {
