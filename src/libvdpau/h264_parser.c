@@ -105,14 +105,19 @@ static void decode_nal(uint8_t **ret, int *len_ret, uint8_t *buf, int buf_len)
   *len_ret = pos - *ret;
 }
 
-static inline void dump_bits(uint32_t bits)
+#if 0
+static inline void dump_bits(const char *label, const struct buf_reader *buf, int bits)
 {
+  struct buf_reader lbuf;
+  memcpy(&lbuf, buf, sizeof(struct buf_reader));
+
   int i;
-  printf("0b");
-  for(i=0; i < 32; i++)
-    printf("%d", (bits >> (31-i)) & 0x01);
+  printf("%s: 0b", label);
+  for(i=0; i < bits; i++)
+    printf("%d", read_bits(&lbuf, 1));
   printf("\n");
 }
+#endif
 
 static inline uint32_t bits_read(struct buf_reader *buf)
 {
@@ -142,12 +147,10 @@ static inline uint32_t read_bits(struct buf_reader *buf, int len)
         buf->cur_pos++;
         buf->cur_offset = 8;
       }
-      //dump_bits(bits);
       return bits;
     }
     else {
       bits |= (*buf->cur_pos & i_mask[buf->cur_offset]) << -i_shr;
-      //dump_bits(bits);
       len -= buf->cur_offset;
       buf->cur_pos++;
       buf->cur_offset = 8;
@@ -452,7 +455,8 @@ uint8_t parse_sps(struct buf_reader *buf, struct nal_parser *parser)
   memset(sps->scaling_lists_4x4, 16, sizeof(sps->scaling_lists_4x4));
   memset(sps->scaling_lists_8x8, 16, sizeof(sps->scaling_lists_8x8));
   if (sps->profile_idc == 100 || sps->profile_idc == 110 || sps->profile_idc
-      == 122 || sps->profile_idc == 144) {
+      == 122 || sps->profile_idc == 244 || sps->profile_idc == 44 ||
+      sps->profile_idc == 83 || sps->profile_idc == 86) {
     sps->chroma_format_idc = read_exp_golomb(buf);
     if (sps->chroma_format_idc == 3) {
       sps->separate_colour_plane_flag = read_bits(buf, 1);
@@ -928,7 +932,10 @@ void parse_pred_weight_table(struct buf_reader *buf, struct nal_unit *nal)
     nal->slc->pred_weight_table.chroma_log2_weight_denom = read_exp_golomb(buf);
 
   int i;
-  for (i = 0; i <= pps->num_ref_idx_l0_active_minus1; i++) {
+  /* FIXME: Being spec-compliant here and loop to num_ref_idx_l0_active_minus1
+   * will break Divx7 files. Keep this in mind if any other streams are broken
+   */
+  for (i = 0; i <= 1 /*pps->num_ref_idx_l0_active_minus1*/; i++) {
     uint8_t luma_weight_l0_flag = read_bits(buf, 1);
 
     if (luma_weight_l0_flag == 1) {
@@ -952,7 +959,10 @@ void parse_pred_weight_table(struct buf_reader *buf, struct nal_unit *nal)
   }
 
   if (slc->slice_type == SLICE_B) {
-    for (i = 0; i <= pps->num_ref_idx_l1_active_minus1; i++) {
+    /* FIXME: Being spec-compliant here and loop to num_ref_idx_l0_active_minus1
+     * will break Divx7 files. Keep this in mind if any other streams are broken
+     */
+    for (i = 0; i <= 1 /*pps->num_ref_idx_l1_active_minus1*/; i++) {
       uint8_t luma_weight_l1_flag = read_bits(buf, 1);
 
       if (luma_weight_l1_flag == 1) {
