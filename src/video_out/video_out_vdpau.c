@@ -191,6 +191,15 @@ typedef struct {
 
 
 typedef struct {
+  int                 x;
+  int                 y;
+  int                 w;
+  int                 h;
+}
+argb_ovl_data_t;
+
+
+typedef struct {
   vo_frame_t         vo_frame;
 
   int                width, height, format, flags;
@@ -230,10 +239,10 @@ typedef struct {
   uint32_t            argb_overlay_width;
   uint32_t            argb_overlay_height;
   int                 has_argb_overlay;
-  int                 argb_osd_x;
-  int                 argb_osd_y;
-  int                 argb_osd_w;
-  int                 argb_osd_h;
+  int                 argb_ovl_count;
+  vo_overlay_t       *argb_ovl[XINE_VORAW_MAX_OVL];
+  int                 argb_ovl_data_count;
+  argb_ovl_data_t     argb_ovl_data[XINE_VORAW_MAX_OVL];
 
   VdpVideoSurface      soft_surface;
   uint32_t             soft_surface_width;
@@ -308,80 +317,124 @@ static void vdpau_overlay_clut_yuv2rgb(vdpau_driver_t  *this, vo_overlay_t *over
 
 
 
-static int vdpau_process_argb_ovl( vdpau_driver_t *this_gen, vo_frame_t *frame_gen, vo_overlay_t *overlay )
+static void vdpau_process_argb_ovls(vdpau_driver_t *this_gen, vo_frame_t *frame_gen)
 {
   vdpau_driver_t  *this = (vdpau_driver_t *) this_gen;
+  int i, k;
 
-  if(overlay->argb_layer == NULL)
-    return 0;
+  vo_overlay_t *ovl[XINE_VORAW_MAX_OVL];
+  argb_ovl_data_t ovl_data[XINE_VORAW_MAX_OVL];
+  int ovl_data_count = 0;
 
-  pthread_mutex_lock(&overlay->argb_layer->mutex);
+  int total_extent_width = 0, total_extent_height = 0;
 
-  if (overlay->argb_layer->buffer != NULL) {
-    int extent_width = overlay->extent_width;
-    int extent_height = overlay->extent_height;
-    if (extent_width <= 0 || extent_height <= 0) {
-      extent_width  = frame_gen->width;
-      extent_height = frame_gen->height;
-    }
+  /* lock layers while processing and determine extent */
+  for (i = 0; i < this->argb_ovl_count; i++) {
+    pthread_mutex_lock(&this->argb_ovl[i]->argb_layer->mutex);
 
-    if (extent_width > 0 && extent_height > 0) {
-      if ( (this->argb_overlay_width != extent_width ) || (this->argb_overlay_height != extent_height) || (this->argb_overlay == VDP_INVALID_HANDLE) ) {
-        if (this->argb_overlay != VDP_INVALID_HANDLE) {
-          vdp_output_surface_destroy( this->argb_overlay );
-        }
-        VdpStatus st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, extent_width, extent_height, &this->argb_overlay );
-        if ( st != VDP_STATUS_OK ) {
-          printf( "vdpau_process_argb_ovl: vdp_output_surface_create failed : %s\n", vdp_get_error_string(st) );
-        }
-        this->argb_overlay_width  = extent_width;
-        this->argb_overlay_height = extent_height;
-
-        /* set stored osd location to extent as any smaller osd requires to clear the surface first */
-        this->argb_osd_x = 0;
-        this->argb_osd_y = 0;
-        this->argb_osd_w = extent_width;
-        this->argb_osd_h = extent_height;
+    if (this->argb_ovl[i]->argb_layer->buffer != NULL) {
+      int extent_width  = this->argb_ovl[i]->extent_width;
+      int extent_height = this->argb_ovl[i]->extent_height;
+      if (extent_width <= 0 || extent_height <= 0) {
+        extent_width  = frame_gen->width;
+        extent_height = frame_gen->height;
       }
-
-      /* wipe surface if osd layout changed */
-      if (overlay->x != this->argb_osd_x || overlay->y != this->argb_osd_y || overlay->width != this->argb_osd_w || overlay->height != this->argb_osd_h) {
-        this->argb_osd_x = overlay->x;
-        this->argb_osd_y = overlay->y;
-        this->argb_osd_w = overlay->width;
-        this->argb_osd_h = overlay->height;
-
-        uint32_t *zeros = calloc(4 * extent_width, extent_height);
-        if (zeros) {
-          uint32_t pitch = extent_width * 4;
-          VdpRect dest = { 0, 0, extent_width, extent_height };
-          VdpStatus st = vdp_output_surface_put_bits( this->argb_overlay, (void*)&(zeros), &pitch, &dest );
-          if ( st != VDP_STATUS_OK )
-            printf( "vdpau_process_argb_ovl: vdp_output_surface_put_bits_native failed : %s\n", vdp_get_error_string(st) );
-          free(zeros);
-        }
+      if (extent_width > 0 && extent_height > 0) {
+        if (total_extent_width < extent_width)
+          total_extent_width = extent_width;
+        if (total_extent_height < extent_height)
+          total_extent_height = extent_height;
+        ovl_data[ovl_data_count].x = this->argb_ovl[i]->x;
+        ovl_data[ovl_data_count].y = this->argb_ovl[i]->y;
+        ovl_data[ovl_data_count].w = this->argb_ovl[i]->width;
+        ovl_data[ovl_data_count].h = this->argb_ovl[i]->height;
+        ovl[ovl_data_count++] = this->argb_ovl[i];
       }
-
-      /* set destination area according to dirty area of argb layer and reset dirty area */
-      uint32_t pitch = overlay->width * 4;
-      uint32_t *buffer_start = overlay->argb_layer->buffer + overlay->argb_layer->y1 * overlay->width + overlay->argb_layer->x1;
-      VdpRect dest = { overlay->x + overlay->argb_layer->x1, overlay->y + overlay->argb_layer->y1, overlay->x + overlay->argb_layer->x2, overlay->y + overlay->argb_layer->y2 };
-      overlay->argb_layer->x1 = overlay->width;
-      overlay->argb_layer->y1 = overlay->height;
-      overlay->argb_layer->x2 = 0;
-      overlay->argb_layer->y2 = 0;
-
-      VdpStatus st = vdp_output_surface_put_bits( this->argb_overlay, (void*)&(buffer_start), &pitch, &dest );
-      if ( st != VDP_STATUS_OK ) {
-        printf( "vdpau_process_argb_ovl: vdp_output_surface_put_bits_native failed : %s\n", vdp_get_error_string(st) );
-      } else
-        this->has_argb_overlay = 1;
     }
   }
 
-  pthread_mutex_unlock(&overlay->argb_layer->mutex);
+  /* adjust surface */
+  if (total_extent_width > 0 && total_extent_height > 0) {
+    if (this->argb_overlay_width != total_extent_width || this->argb_overlay_height != total_extent_height || this->argb_overlay == VDP_INVALID_HANDLE) {
+      if (this->argb_overlay != VDP_INVALID_HANDLE)
+        vdp_output_surface_destroy(this->argb_overlay);
 
-  return 1;
+      VdpStatus st = vdp_output_surface_create(vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, total_extent_width, total_extent_height, &this->argb_overlay);
+      if (st != VDP_STATUS_OK)
+        printf("vdpau_process_argb_ovl: vdp_output_surface_create failed : %s\n", vdp_get_error_string(st));
+
+      this->argb_overlay_width  = total_extent_width;
+      this->argb_overlay_height = total_extent_height;
+
+      /* change argb_ovl_data to wipe complete surface */
+      this->argb_ovl_data_count = 1;
+      this->argb_ovl_data[0].x = 0;
+      this->argb_ovl_data[0].y = 0;
+      this->argb_ovl_data[0].w = total_extent_width;
+      this->argb_ovl_data[0].h = total_extent_height;
+
+      /* extend dirty areas to maximum for filling wiped surface */
+      for (i = 0; i < ovl_data_count; i++) {
+        ovl[i]->argb_layer->x1 = 0;
+        ovl[i]->argb_layer->y1 = 0;
+        ovl[i]->argb_layer->x2 = ovl[i]->width;
+        ovl[i]->argb_layer->y2 = ovl[i]->height;
+      }
+    }
+  }
+
+  /* wipe surface for gone overlays */
+  if (this->argb_overlay != VDP_INVALID_HANDLE) {
+    uint32_t *zeros = NULL;
+    for (i = 0; i < this->argb_ovl_data_count; i++) {
+      argb_ovl_data_t *curr_ovl_data = &this->argb_ovl_data[i];
+      int ovl_gone = 1;
+      for (k = 0; k < ovl_data_count; k++) {
+        if (0 == memcmp(curr_ovl_data, &ovl_data[k], sizeof (*curr_ovl_data))) {
+          ovl_gone = 0;
+          break;
+        }
+      }
+      if (!ovl_gone)
+        continue;
+      if (!zeros)
+        zeros = calloc(4, this->argb_overlay_width * this->argb_overlay_height);
+      if (zeros) {
+        uint32_t pitch = curr_ovl_data->w * 4;
+        VdpRect dest = { curr_ovl_data->x, curr_ovl_data->y, curr_ovl_data->x + curr_ovl_data->w, curr_ovl_data->y + curr_ovl_data->h };
+        VdpStatus st = vdp_output_surface_put_bits(this->argb_overlay, (void *)&zeros, &pitch, &dest);
+        if (st != VDP_STATUS_OK)
+          printf("vdpau_process_argb_ovl: vdp_output_surface_put_bits_native failed : %s\n", vdp_get_error_string(st));
+      this->has_argb_overlay = 1;
+      }
+    }
+    free(zeros);
+  }
+
+  /* set destination area according to dirty area of argb layer and reset dirty area */
+  for (i = 0; i < ovl_data_count; i++) {
+    uint32_t pitch = ovl[i]->width * 4;
+    uint32_t *buffer_start = ovl[i]->argb_layer->buffer + ovl[i]->argb_layer->y1 * ovl[i]->width + ovl[i]->argb_layer->x1;
+    VdpRect dest = { ovl[i]->x + ovl[i]->argb_layer->x1, ovl[i]->y + ovl[i]->argb_layer->y1, ovl[i]->x + ovl[i]->argb_layer->x2, ovl[i]->y + ovl[i]->argb_layer->y2 };
+    ovl[i]->argb_layer->x1 = ovl[i]->width;
+    ovl[i]->argb_layer->y1 = ovl[i]->height;
+    ovl[i]->argb_layer->x2 = 0;
+    ovl[i]->argb_layer->y2 = 0;
+
+    VdpStatus st = vdp_output_surface_put_bits(this->argb_overlay, (void *)&buffer_start, &pitch, &dest);
+    if (st != VDP_STATUS_OK)
+      printf( "vdpau_process_argb_ovl: vdp_output_surface_put_bits_native failed : %s\n", vdp_get_error_string(st));
+    else
+      this->has_argb_overlay = 1;
+  }
+
+  /* store ovl_data */
+  memcpy(this->argb_ovl_data, ovl_data, sizeof (ovl_data));
+  this->argb_ovl_data_count = ovl_data_count;
+
+  /* unlock layers */
+  for (i = 0; i < this->argb_ovl_count; i++)
+    pthread_mutex_unlock(&this->argb_ovl[i]->argb_layer->mutex);
 }
 
 
@@ -480,6 +533,7 @@ static void vdpau_overlay_begin (vo_driver_t *this_gen, vo_frame_t *frame_gen, i
 
   this->has_overlay = this->has_unscaled = 0;
   this->has_argb_overlay = 0;
+  this->argb_ovl_count = 0;
   ++this->ovl_changed;
 }
 
@@ -490,18 +544,23 @@ static void vdpau_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen, v
   vdpau_driver_t  *this = (vdpau_driver_t *) this_gen;
   vdpau_frame_t *frame = (vdpau_frame_t *) frame_gen;
 
-  if ( !this->ovl_changed || this->ovl_changed>XINE_VORAW_MAX_OVL )
+  if (!this->ovl_changed)
     return;
 
   if (overlay->rle) {
+    if (this->ovl_changed >= XINE_VORAW_MAX_OVL)
+      return;
     if (!overlay->rgb_clut || !overlay->hili_rgb_clut)
       vdpau_overlay_clut_yuv2rgb (this, overlay, frame);
     if ( vdpau_process_ovl( this, overlay ) )
       ++this->ovl_changed;
   }
 
-  if(overlay->argb_layer)
-    vdpau_process_argb_ovl( this, frame_gen, overlay );
+  if (overlay->argb_layer) {
+    if (this->argb_ovl_count >= XINE_VORAW_MAX_OVL)
+      return;
+    this->argb_ovl[this->argb_ovl_count++] = overlay;
+  }
 }
 
 
@@ -514,6 +573,9 @@ static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame)
 
   if ( !this->ovl_changed )
     return;
+
+  if (this->argb_ovl_count || this->argb_ovl_data_count)
+    vdpau_process_argb_ovls(this, frame);
 
   if ( !(this->ovl_changed-1) ) {
     this->ovl_changed = 0;
