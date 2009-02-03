@@ -21,7 +21,7 @@
  *
  */
 
-#define LOG
+//#define LOG
 #define LOG_MODULE "vdpau_vc1"
 
 
@@ -62,6 +62,8 @@
 
 typedef struct {
   VdpPictureInfoVC1       vdp_infos;
+  int                     hrd_param_flag;
+  int                     hrd_num_leaky_buckets;
   int                     type;
 } picture_t;
 
@@ -168,6 +170,7 @@ static void init_sequence( sequence_t *sequence )
   sequence->profile = VDP_DECODER_PROFILE_VC1_SIMPLE;
   sequence->ratio = 0;
   sequence->video_step = 0;
+  sequence->picture.hrd_param_flag = 0;
   reset_sequence( sequence );
 }
 
@@ -194,21 +197,96 @@ static uint32_t get_bits( uint8_t *b, int offbits, int nbits )
 
 
 
+static void update_metadata( vdpau_vc1_decoder_t *this_gen )
+{
+  sequence_t *sequence = (sequence_t*)&this_gen->sequence;
+
+  if ( !sequence->have_header ) {
+    sequence->have_header = 1;
+    _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_VIDEO_WIDTH, sequence->coded_width );
+    _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_VIDEO_HEIGHT, sequence->coded_height );
+    _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_VIDEO_RATIO, ((double)10000*sequence->ratio) );
+    _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_FRAME_DURATION, sequence->video_step );
+    _x_meta_info_set_utf8( this_gen->stream, XINE_META_INFO_VIDEOCODEC, "VC1/WMV9 (vdpau)" );
+    xine_event_t event;
+    xine_format_change_data_t data;
+    event.type = XINE_EVENT_FRAME_FORMAT_CHANGE;
+    event.stream = this_gen->stream;
+    event.data = &data;
+    event.data_length = sizeof(data);
+    data.width = sequence->coded_width;
+    data.height = sequence->coded_height;
+    data.aspect = sequence->ratio;
+    xine_event_send( this_gen->stream, &event );
+  }
+}
+
+
+
 static void sequence_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len )
 {
   lprintf( "sequence_header_advanced\n" );
+  sequence_t *sequence = (sequence_t*)&this_gen->sequence;
+
+  if ( len < 5 )
+    return;
+
+  sequence->profile = VDP_DECODER_PROFILE_VC1_ADVANCED;
+  lprintf("VDP_DECODER_PROFILE_VC1_ADVANCED\n");
+  int off = 15;
+  sequence->picture.vdp_infos.postprocflag = get_bits(buf,off++,1);
+  sequence->coded_width = (get_bits(buf,off,12)+1)<<1;
+  off += 12;
+  sequence->coded_height = (get_bits(buf,off,12)+1)<<1;
+  off += 12;
+  ++off;
+  sequence->picture.vdp_infos.interlace = get_bits(buf,off++,1);
+  sequence->picture.vdp_infos.tfcntrflag = get_bits(buf,off++,1);
+  sequence->picture.vdp_infos.finterpflag = get_bits(buf,off++,1);
+  ++off;
+  sequence->picture.vdp_infos.psf = get_bits(buf,off++,1);
+  sequence->picture.vdp_infos.maxbframes = 7;
+  if ( get_bits(buf,off++,1) ) {
+    int w, h, ar=0;
+    w = get_bits(buf,off,14)+1;
+    off += 14;
+    h = get_bits(buf,off,14)+1;
+    off += 14;
+    if ( get_bits(buf,off++,1) ) {
+      ar = get_bits(buf,off,4);
+      off += 4;
+    }
+    if ( ar==15 ) {
+      w = get_bits(buf,off,8);
+      off += 8;
+      h = get_bits(buf,off,8);
+      off += 8;
+    }
+    if ( get_bits(buf,off++,1) ) {
+      if ( get_bits(buf,off++,1) )
+        off += 16;
+      else
+        off += 12;
+    }
+    if ( get_bits(buf,off++,1) )
+      off += 24;
+  }
+  sequence->picture.hrd_param_flag = get_bits(buf,off++,1);
+  if ( sequence->picture.hrd_param_flag )
+    sequence->picture.hrd_num_leaky_buckets = get_bits(buf,off,5);
+
+  update_metadata( this_gen );
 }
 
 
 
 static void sequence_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len )
 {
+  lprintf( "sequence_header\n" );
   sequence_t *sequence = (sequence_t*)&this_gen->sequence;
 
   if ( len < 4 )
     return;
-
-  lprintf( "sequence_header\n" );
 
   switch ( get_bits(buf,0,2) ) {
     case 0: sequence->profile = VDP_DECODER_PROFILE_VC1_SIMPLE; lprintf("VDP_DECODER_PROFILE_VC1_SIMPLE\n"); break;
@@ -230,23 +308,54 @@ static void sequence_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int le
   sequence->picture.vdp_infos.quantizer = get_bits(buf,28,2);
   sequence->picture.vdp_infos.finterpflag = get_bits(buf,30,1);
 
-  if ( !sequence->have_header ) {
-    sequence->have_header = 1;
-    _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_VIDEO_WIDTH, sequence->coded_width );
-    _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_VIDEO_HEIGHT, sequence->coded_height );
-    _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_VIDEO_RATIO, ((double)10000*sequence->ratio) );
-    _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_FRAME_DURATION, sequence->video_step );
-    _x_meta_info_set_utf8( this_gen->stream, XINE_META_INFO_VIDEOCODEC, "VC1/WMV9 (vdpau)" );
-    xine_event_t event;
-    xine_format_change_data_t data;
-    event.type = XINE_EVENT_FRAME_FORMAT_CHANGE;
-    event.stream = this_gen->stream;
-    event.data = &data;
-    event.data_length = sizeof(data);
-    data.width = sequence->coded_width;
-    data.height = sequence->coded_height;
-    data.aspect = sequence->ratio;
-    xine_event_send( this_gen->stream, &event );
+  update_metadata( this_gen );
+}
+
+
+
+static void entry_point( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len )
+{
+  lprintf( "entry_point\n" );
+  sequence_t *sequence = (sequence_t*)&this_gen->sequence;
+  int off=2;
+
+  sequence->picture.vdp_infos.panscan_flag = get_bits(buf,off++,1);
+  sequence->picture.vdp_infos.refdist_flag = get_bits(buf,off++,1);
+  sequence->picture.vdp_infos.loopfilter = get_bits(buf,off++,1);
+  sequence->picture.vdp_infos.fastuvmc = get_bits(buf,off++,1);
+  sequence->picture.vdp_infos.extended_mv = get_bits(buf,off++,1);
+  sequence->picture.vdp_infos.dquant = get_bits(buf,off,2);
+  off += 2;
+  sequence->picture.vdp_infos.vstransform = get_bits(buf,off++,1);
+  sequence->picture.vdp_infos.overlap = get_bits(buf,off++,1);
+  sequence->picture.vdp_infos.quantizer = get_bits(buf,off,2);
+  off += 2;
+
+  if ( sequence->picture.hrd_param_flag ) {
+    int i;
+    for ( i=0; i<sequence->picture.hrd_num_leaky_buckets; ++i )
+      off += 8;
+  }
+
+  if ( get_bits(buf,off++,1) ) {
+    sequence->coded_width = (get_bits(buf,off,12)+1)<<1;
+    off += 12;
+    sequence->coded_height = (get_bits(buf,off,12)+1)<<1;
+    off += 12;
+  }
+
+  if ( sequence->picture.vdp_infos.extended_mv )
+    sequence->picture.vdp_infos.extended_dmv = get_bits(buf,off++,1);
+
+  sequence->picture.vdp_infos.range_mapy_flag = get_bits(buf,off++,1);
+  if ( sequence->picture.vdp_infos.range_mapy_flag ) {
+    sequence->picture.vdp_infos.range_mapy = get_bits(buf,off,3);
+    off += 3;
+  }
+  sequence->picture.vdp_infos.range_mapuv_flag = get_bits(buf,off++,1);
+  if ( sequence->picture.vdp_infos.range_mapuv_flag ) {
+    sequence->picture.vdp_infos.range_mapuv = get_bits(buf,off,3);
+    off += 3;
   }
 }
 
@@ -287,6 +396,27 @@ static void picture_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len
       off += 2;
     }
   }
+}
+
+
+
+static void parse_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len )
+{
+  sequence_t *sequence = (sequence_t*)&this_gen->sequence;
+  int off=0;
+
+  while ( off < (len-4) ) {
+    uint8_t *buffer = buf+off;
+    if ( buffer[0]==0 && buffer[1]==0 && buffer[2]==1 ) {
+      switch ( buffer[3] ) {
+        case sequence_header_code: sequence_header( this_gen, buf+off+4, len-off-4 ); break;
+        case entry_point_code: entry_point( this_gen, buf+off+4, len-off-4 ); break;
+      }
+    }
+    ++off;
+  }
+  if ( !sequence->have_header )
+    sequence_header( this_gen, buf, len );
 }
 
 
@@ -338,7 +468,7 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
   picture_header( vd, seq->buf, seq->bufpos );
 
   VdpPictureInfoVC1 *info = &(seq->picture.vdp_infos);
-  printf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n\n", info->slice_count, pic->type, info->picture_type, info->frame_coding_mode, info->postprocflag, info->pulldown, info->interlace, info->tfcntrflag, info->finterpflag, info->psf, info->dquant, info->panscan_flag, info->refdist_flag, info->quantizer, info->extended_mv, info->extended_dmv, info->overlap, info->vstransform, info->loopfilter, info->fastuvmc, info->range_mapy_flag, info->range_mapy, info->range_mapuv_flag, info->range_mapuv, info->multires, info->syncmarker, info->rangered, info->maxbframes, info->deblockEnable, info->pquant );
+  printf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n\n", info->slice_count, info->picture_type, info->frame_coding_mode, info->postprocflag, info->pulldown, info->interlace, info->tfcntrflag, info->finterpflag, info->psf, info->dquant, info->panscan_flag, info->refdist_flag, info->quantizer, info->extended_mv, info->extended_dmv, info->overlap, info->vstransform, info->loopfilter, info->fastuvmc, info->range_mapy_flag, info->range_mapy, info->range_mapuv_flag, info->range_mapuv, info->multires, info->syncmarker, info->rangered, info->maxbframes, info->deblockEnable, info->pquant );
 
   pic->vdp_infos.forward_reference = VDP_INVALID_HANDLE;
   pic->vdp_infos.backward_reference = VDP_INVALID_HANDLE;
@@ -467,7 +597,7 @@ static void vdpau_vc1_decode_data (video_decoder_t *this_gen, buf_element_t *buf
     seq->coded_height = bih->biHeight;
     lprintf( "width=%d height=%d\n", bih->biWidth, bih->biHeight );
     if ( buf->size > bs ) {
-      sequence_header( this, buf->content+bs, buf->size-bs );
+      parse_header( this, buf->content+bs, buf->size-bs );
     }
     int i;
     for ( i=0; i<buf->size; ++i )
