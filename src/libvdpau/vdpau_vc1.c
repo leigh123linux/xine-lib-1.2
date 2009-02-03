@@ -21,7 +21,7 @@
  *
  */
 
-//#define LOG
+#define LOG
 #define LOG_MODULE "vdpau_vc1"
 
 
@@ -50,9 +50,10 @@
 #define PICTURE_FRAME_INTERLACE  2
 #define PICTURE_FIELD_INTERLACE  3
 
-#define I_FRAME 1
-#define P_FRAME 2
+#define I_FRAME 0
+#define P_FRAME 1
 #define B_FRAME 3
+#define BI_FRAME 4
 
 #define WANT_HEADER 1
 #define WANT_EXT    2
@@ -64,7 +65,6 @@ typedef struct {
   VdpPictureInfoVC1       vdp_infos;
   int                     hrd_param_flag;
   int                     hrd_num_leaky_buckets;
-  int                     type;
 } picture_t;
 
 
@@ -239,7 +239,7 @@ static void sequence_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *bu
   off += 12;
   sequence->coded_height = (get_bits(buf,off,12)+1)<<1;
   off += 12;
-  ++off;
+  sequence->picture.vdp_infos.pulldown = get_bits(buf,off++,1);
   sequence->picture.vdp_infos.interlace = get_bits(buf,off++,1);
   sequence->picture.vdp_infos.tfcntrflag = get_bits(buf,off++,1);
   sequence->picture.vdp_infos.finterpflag = get_bits(buf,off++,1);
@@ -368,34 +368,42 @@ static void picture_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len
   VdpPictureInfoVC1 *info = &(sequence->picture.vdp_infos);
 
   int off=2;
+  int tmp;
 
   if ( info->finterpflag )
     ++off;
   if ( info->rangered )
     ++off;
   if ( !info->maxbframes ) {
-    info->picture_type = get_bits( buf,off,1 );
-    if ( info->picture_type )
-      pic->type = P_FRAME;
+    if ( get_bits( buf,off++,1 ) )
+      info->picture_type = P_FRAME;
     else
-      pic->type = I_FRAME;
+      info->picture_type = I_FRAME;
   }
   else {
-    int ptype = get_bits( buf,off,1 );
-    if ( ptype ) {
-      info->picture_type = ptype;
-      pic->type = P_FRAME;
-      ++off;
-    }
+    if ( get_bits( buf,off++,1 ) )
+      info->picture_type = P_FRAME;
     else {
-      info->picture_type = get_bits( buf,off,2 );
-      if ( info->picture_type )
-        pic->type = I_FRAME;
+      if ( get_bits( buf,off++,1 ) )
+        info->picture_type = I_FRAME;
       else
-        pic->type = B_FRAME;
-      off += 2;
+        info->picture_type = B_FRAME;
     }
   }
+  if ( info->picture_type == B_FRAME ) {
+    tmp = get_bits(buf,off,3);
+    if ( tmp==7 ) {
+      tmp = get_bits(buf,off,7);
+      off += 7;
+      if ( tmp==127 )
+        info->picture_type = BI_FRAME;
+    }
+    else
+      off += 3;
+  }
+  if ( info->picture_type==I_FRAME || info->picture_type==BI_FRAME )
+    off += 7;
+  tmp = get_bits(buf,off,5);
 }
 
 
@@ -473,7 +481,7 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
   pic->vdp_infos.forward_reference = VDP_INVALID_HANDLE;
   pic->vdp_infos.backward_reference = VDP_INVALID_HANDLE;
 
-  if ( pic->type==P_FRAME ) {
+  if ( pic->vdp_infos.picture_type==P_FRAME ) {
     if ( seq->backward_ref ) {
       ref_accel = (vdpau_accel_t*)seq->backward_ref->accel_data;
       pic->vdp_infos.forward_reference = ref_accel->surface;
@@ -481,7 +489,7 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
     else
       return;
   }
-  else if ( pic->type==B_FRAME ) {
+  else if ( pic->vdp_infos.picture_type>=B_FRAME ) {
     if ( seq->forward_ref ) {
       ref_accel = (vdpau_accel_t*)seq->forward_ref->accel_data;
       pic->vdp_infos.forward_reference = ref_accel->surface;
@@ -519,8 +527,8 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
   img->bad_frame = 0;
   img->duration = seq->video_step;
 
-  if ( pic->type!=B_FRAME ) {
-    if ( pic->type==I_FRAME && !seq->backward_ref ) {
+  if ( pic->vdp_infos.picture_type<B_FRAME ) {
+    if ( pic->vdp_infos.picture_type==I_FRAME && !seq->backward_ref ) {
       img->pts = 0;
       img->draw( img, vd->stream );
       ++img->drawn;
