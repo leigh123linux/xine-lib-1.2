@@ -366,9 +366,9 @@ static void picture_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len
   sequence_t *sequence = (sequence_t*)&this_gen->sequence;
   picture_t *pic = (picture_t*)&sequence->picture;
   VdpPictureInfoVC1 *info = &(sequence->picture.vdp_infos);
+  int tmp;
 
   int off=2;
-  int tmp;
 
   if ( info->finterpflag )
     ++off;
@@ -404,6 +404,35 @@ static void picture_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len
   if ( info->picture_type==I_FRAME || info->picture_type==BI_FRAME )
     off += 7;
   tmp = get_bits(buf,off,5);
+}
+
+
+
+static void picture_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len )
+{
+  sequence_t *sequence = (sequence_t*)&this_gen->sequence;
+  picture_t *pic = (picture_t*)&sequence->picture;
+  VdpPictureInfoVC1 *info = &(sequence->picture.vdp_infos);
+  int off=0;
+
+  if ( info->interlace )
+    return; // not yet supported
+  if ( !get_bits(buf,off++,1) )
+    info->picture_type = P_FRAME;
+  else {
+    if ( !get_bits(buf,off++,1) )
+      info->picture_type = B_FRAME;
+    else {
+      if ( !get_bits(buf,off++,1) )
+        info->picture_type = I_FRAME;
+      else {
+        if ( !get_bits(buf,off++,1) )
+          info->picture_type = BI_FRAME;
+        else
+          info->picture_type = P_FRAME; // TODO: skipped frame
+      }
+    }
+  }
 }
 
 
@@ -473,7 +502,10 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
   picture_t *pic = (picture_t*)&seq->picture;
   vdpau_accel_t *ref_accel;
 
-  picture_header( vd, seq->buf, seq->bufpos );
+  if ( seq->profile==VDP_DECODER_PROFILE_VC1_ADVANCED )
+    picture_header_advanced( vd, seq->buf, seq->bufpos );
+  else
+    picture_header( vd, seq->buf, seq->bufpos );
 
   VdpPictureInfoVC1 *info = &(seq->picture.vdp_infos);
   printf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n\n", info->slice_count, info->picture_type, info->frame_coding_mode, info->postprocflag, info->pulldown, info->interlace, info->tfcntrflag, info->finterpflag, info->psf, info->dquant, info->panscan_flag, info->refdist_flag, info->quantizer, info->extended_mv, info->extended_dmv, info->overlap, info->vstransform, info->loopfilter, info->fastuvmc, info->range_mapy_flag, info->range_mapy, info->range_mapuv_flag, info->range_mapuv, info->multires, info->syncmarker, info->rangered, info->maxbframes, info->deblockEnable, info->pquant );
