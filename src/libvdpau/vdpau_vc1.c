@@ -21,7 +21,7 @@
  *
  */
 
-#define LOG
+//#define LOG
 #define LOG_MODULE "vdpau_vc1"
 
 
@@ -58,6 +58,25 @@
 #define WANT_HEADER 1
 #define WANT_EXT    2
 #define WANT_SLICE  3
+
+
+
+const double aspect_ratio[] = {
+  0.0,
+  1.0,
+  12./11.,
+  10./11.,
+  16./11.,
+  40./33.,
+  24./11.,
+  20./11.,
+  32./11.,
+  80./33.,
+  18./11.,
+  15./11.,
+  64./33.,
+  160./99.
+};
 
 
 
@@ -243,6 +262,9 @@ static void sequence_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *bu
       h = get_bits(buf,off,8);
       off += 8;
     }
+    else if ( ar && ar<14 )
+      sequence->ratio = aspect_ratio[ar];
+
     if ( get_bits(buf,off++,1) ) {
       if ( get_bits(buf,off++,1) )
         off += 16;
@@ -509,7 +531,7 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
     pic->skipped = 1;
 
   VdpPictureInfoVC1 *info = &(seq->picture.vdp_infos);
-  printf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n\n", info->slice_count, info->picture_type, info->frame_coding_mode, info->postprocflag, info->pulldown, info->interlace, info->tfcntrflag, info->finterpflag, info->psf, info->dquant, info->panscan_flag, info->refdist_flag, info->quantizer, info->extended_mv, info->extended_dmv, info->overlap, info->vstransform, info->loopfilter, info->fastuvmc, info->range_mapy_flag, info->range_mapy, info->range_mapuv_flag, info->range_mapuv, info->multires, info->syncmarker, info->rangered, info->maxbframes, info->deblockEnable, info->pquant );
+  lprintf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n\n", info->slice_count, info->picture_type, info->frame_coding_mode, info->postprocflag, info->pulldown, info->interlace, info->tfcntrflag, info->finterpflag, info->psf, info->dquant, info->panscan_flag, info->refdist_flag, info->quantizer, info->extended_mv, info->extended_dmv, info->overlap, info->vstransform, info->loopfilter, info->fastuvmc, info->range_mapy_flag, info->range_mapy, info->range_mapuv_flag, info->range_mapuv, info->multires, info->syncmarker, info->rangered, info->maxbframes, info->deblockEnable, info->pquant );
 
   pic->vdp_infos.forward_reference = VDP_INVALID_HANDLE;
   pic->vdp_infos.backward_reference = VDP_INVALID_HANDLE;
