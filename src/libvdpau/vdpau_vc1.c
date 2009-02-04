@@ -65,6 +65,7 @@ typedef struct {
   VdpPictureInfoVC1       vdp_infos;
   int                     hrd_param_flag;
   int                     hrd_num_leaky_buckets;
+  int                     skipped;
 } picture_t;
 
 
@@ -121,29 +122,9 @@ typedef struct vdpau_vc1_decoder_s {
 
 
 
-static void reset_picture( picture_t *pic )
-{
-  lprintf( "reset_picture\n" );
-  /*pic->vdp_infos.picture_structure = 0;
-  pic->vdp_infos2.intra_dc_precision = pic->vdp_infos.intra_dc_precision = 0;
-  pic->vdp_infos2.frame_pred_frame_dct = pic->vdp_infos.frame_pred_frame_dct = 1;
-  pic->vdp_infos2.concealment_motion_vectors = pic->vdp_infos.concealment_motion_vectors = 0;
-  pic->vdp_infos2.intra_vlc_format = pic->vdp_infos.intra_vlc_format = 0;
-  pic->vdp_infos2.alternate_scan = pic->vdp_infos.alternate_scan = 0;
-  pic->vdp_infos2.q_scale_type = pic->vdp_infos.q_scale_type = 0;
-  pic->vdp_infos2.top_field_first = pic->vdp_infos.top_field_first = 0;
-  pic->slices_count = 0;
-  pic->slices_count2 = 0;
-  pic->slices_pos = 0;
-  pic->slices_pos_top = 0;
-  pic->state = WANT_HEADER;*/
-}
-
-
-
 static void init_picture( picture_t *pic )
 {
-  reset_picture( pic );
+  memset( pic, 0, sizeof( picture_t ) );
 }
 
 
@@ -401,9 +382,9 @@ static void picture_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len
     else
       off += 3;
   }
-  if ( info->picture_type==I_FRAME || info->picture_type==BI_FRAME )
+  /*if ( info->picture_type==I_FRAME || info->picture_type==BI_FRAME )
     off += 7;
-  tmp = get_bits(buf,off,5);
+  tmp = get_bits(buf,off,5);*/
 }
 
 
@@ -428,8 +409,10 @@ static void picture_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *buf
       else {
         if ( !get_bits(buf,off++,1) )
           info->picture_type = BI_FRAME;
-        else
-          info->picture_type = P_FRAME; // TODO: skipped frame
+        else {
+          info->picture_type = P_FRAME;
+          pic->skipped = 1;
+        }
       }
     }
   }
@@ -454,6 +437,19 @@ static void parse_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len )
   }
   if ( !sequence->have_header )
     sequence_header( this_gen, buf, len );
+}
+
+
+
+static void duplicate_image( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel, vo_frame_t *dst )
+{
+  sequence_t *seq = (sequence_t*)&vd->sequence;
+  picture_t *pic = (picture_t*)&seq->picture;
+
+  if ( !seq->backward_ref ) // Should not happen!
+    return;
+
+  dst->proc_duplicate_frame_data( dst, seq->backward_ref );
 }
 
 
@@ -502,10 +498,15 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
   picture_t *pic = (picture_t*)&seq->picture;
   vdpau_accel_t *ref_accel;
 
+  pic->skipped = 0;
+
   if ( seq->profile==VDP_DECODER_PROFILE_VC1_ADVANCED )
     picture_header_advanced( vd, seq->buf, seq->bufpos );
   else
     picture_header( vd, seq->buf, seq->bufpos );
+
+  if ( seq->bufpos<2 )
+    pic->skipped = 1;
 
   VdpPictureInfoVC1 *info = &(seq->picture.vdp_infos);
   printf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n\n", info->slice_count, info->picture_type, info->frame_coding_mode, info->postprocflag, info->pulldown, info->interlace, info->tfcntrflag, info->finterpflag, info->psf, info->dquant, info->panscan_flag, info->refdist_flag, info->quantizer, info->extended_mv, info->extended_dmv, info->overlap, info->vstransform, info->loopfilter, info->fastuvmc, info->range_mapy_flag, info->range_mapy, info->range_mapuv_flag, info->range_mapuv, info->multires, info->syncmarker, info->rangered, info->maxbframes, info->deblockEnable, info->pquant );
@@ -553,7 +554,10 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
     vd->decoder = VDP_INVALID_HANDLE;
   }
 
-  decode_render( vd, accel );
+  if ( pic->skipped )
+    duplicate_image( vd, accel, img );
+  else
+    decode_render( vd, accel );
 
   img->pts = seq->seq_pts;
   img->bad_frame = 0;
