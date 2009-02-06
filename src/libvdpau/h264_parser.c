@@ -936,7 +936,7 @@ void parse_pred_weight_table(struct buf_reader *buf, struct nal_unit *nal)
     nal->slc->pred_weight_table.chroma_log2_weight_denom = read_exp_golomb(buf);
 
   int i;
-  for (i = 0; i <= pps->num_ref_idx_l0_active_minus1; i++) {
+  for (i = 0; i <= slc->num_ref_idx_l0_active_minus1; i++) {
     uint8_t luma_weight_l0_flag = read_bits(buf, 1);
 
     if (luma_weight_l0_flag == 1) {
@@ -963,7 +963,7 @@ void parse_pred_weight_table(struct buf_reader *buf, struct nal_unit *nal)
     /* FIXME: Being spec-compliant here and loop to num_ref_idx_l0_active_minus1
      * will break Divx7 files. Keep this in mind if any other streams are broken
      */
-    for (i = 0; i <= pps->num_ref_idx_l1_active_minus1; i++) {
+    for (i = 0; i <= slc->num_ref_idx_l1_active_minus1; i++) {
       uint8_t luma_weight_l1_flag = read_bits(buf, 1);
 
       if (luma_weight_l1_flag == 1) {
@@ -1001,7 +1001,7 @@ void decode_ref_pic_marking(struct nal_unit *nal,
   if (memory_management_control_operation == 1) {
     // short-term -> unused for reference
     uint32_t pic_num_x = (nal->curr_pic_num
-        - (slc->dec_ref_pic_marking[marking_nr].difference_of_pic_nums_minus1 + 1))%(nal->max_pic_num+1);
+        - (slc->dec_ref_pic_marking[marking_nr].difference_of_pic_nums_minus1 + 1))%nal->max_pic_num;
     struct decoded_picture* pic = NULL;
     if ((pic = dpb_get_picture(dpb, pic_num_x)) != NULL) {
       if (pic->nal->slc->field_pic_flag == 0) {
@@ -1094,9 +1094,10 @@ void parse_dec_ref_pic_marking(struct buf_reader *buf,
     struct nal_parser *parser)
 {
   struct nal_unit *nal = parser->current_nal;
+  struct pic_parameter_set_rbsp *pps = parser->current_nal->pps;
   struct slice_header *slc = nal->slc;
 
-  if (!slc)
+  if (!slc || !pps)
     return;
 
   slc->dec_ref_pic_marking_count = 0;
@@ -1253,13 +1254,11 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
       parser->current_nal->slc) {
     int i;
     for(i = 0; i < parser->current_nal->slc->dec_ref_pic_marking_count; i++) {
-      if(parser->current_nal->slc->dec_ref_pic_marking[i].adaptive_ref_pic_marking_mode_flag) {
-        decode_ref_pic_marking(
-            parser->current_nal,
-            parser->current_nal->slc->dec_ref_pic_marking[i].memory_management_control_operation,
-            i,
-            parser);
-      }
+      decode_ref_pic_marking(
+          parser->current_nal,
+          parser->current_nal->slc->dec_ref_pic_marking[i].memory_management_control_operation,
+          i,
+          parser);
     }
 
     if (parser->last_nal->slc != NULL)
