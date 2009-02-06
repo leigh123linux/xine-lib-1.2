@@ -1266,6 +1266,8 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdpau_set_inverse_telecine( this_gen );
     vdpau_update_noise( this );
     vdpau_update_sharpness( this );
+    this->color_standard = color_standard;
+    vdpau_update_csc( this );
   }
 
   if (color_standard != this->color_standard) {
