@@ -246,6 +246,8 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
 
   len = read_bytes(this, 2);
 
+  //printf( "parse_mpeg2_packet: stream_id=%X\n", stream_id);
+
   if (stream_id==0xbd) {
 
     int track;
@@ -467,7 +469,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
 
     }
 
-  } else if ((stream_id >= 0xbc) && ((stream_id & 0xf0) == 0xe0)) {
+  } else if ( ((stream_id >= 0xbc) && ((stream_id & 0xf0) == 0xe0)) || stream_id==0xfd ) {
 
     w = read_bytes(this, 1);
     flags = read_bytes(this, 1);
@@ -516,7 +518,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
 	return;
       }
 
-      buf->type = BUF_VIDEO_MPEG;
+      buf->type = (stream_id==0xfd) ? BUF_VIDEO_VC1 : BUF_VIDEO_MPEG;
       buf->pts  = pts;
       buf->decoder_info[0] = pts - dts;
       check_newpts( this, pts, PTS_VIDEO );
