@@ -769,8 +769,8 @@ static void vdpau_mpeg12_decode_data (video_decoder_t *this_gen, buf_element_t *
   seq->bufpos += buf->size;
 
   while ( seq->bufseek <= seq->bufpos-4 ) {
-    uint8_t *buf = seq->buf+seq->bufseek;
-    if ( buf[0]==0 && buf[1]==0 && buf[2]==1 ) {
+    uint8_t *buffer = seq->buf+seq->bufseek;
+    if ( buffer[0]==0 && buffer[1]==0 && buffer[2]==1 ) {
       if ( seq->start<0 ) {
         seq->start = seq->bufseek;
       }
@@ -880,7 +880,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   VdpStatus st = accel->vdp_decoder_create( accel->vdp_device, VDP_DECODER_PROFILE_MPEG2_MAIN, 1920, 1080, 2, &decoder );
   if ( st!=VDP_STATUS_OK ) {
     lprintf( "can't create vdpau decoder.\n" );
-    return NULL;
+    return 1;
   }
 
   accel->vdp_decoder_destroy( decoder );

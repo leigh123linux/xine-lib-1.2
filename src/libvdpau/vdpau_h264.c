@@ -757,7 +757,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   VdpStatus st = accel->vdp_decoder_create( accel->vdp_device, VDP_DECODER_PROFILE_H264_MAIN, 1920, 1080, 16, &decoder );
   if ( st!=VDP_STATUS_OK ) {
     lprintf( "can't create vdpau decoder.\n" );
-    return NULL;
+    return 1;
   }
 
   accel->vdp_decoder_destroy( decoder );

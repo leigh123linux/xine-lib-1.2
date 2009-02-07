@@ -21,7 +21,7 @@
  *
  */
 
-//#define LOG
+#define LOG
 #define LOG_MODULE "vdpau_vc1"
 
 
@@ -55,9 +55,8 @@
 #define B_FRAME 3
 #define BI_FRAME 4
 
-#define WANT_HEADER 1
-#define WANT_EXT    2
-#define WANT_SLICE  3
+#define MODE_STARTCODE 0
+#define MODE_FRAME     1
 
 
 
@@ -84,6 +83,8 @@ typedef struct {
   VdpPictureInfoVC1       vdp_infos;
   int                     hrd_param_flag;
   int                     hrd_num_leaky_buckets;
+  int                     repeat_first_field;
+  int                     top_field_first;
   int                     skipped;
 } picture_t;
 
@@ -97,9 +98,13 @@ typedef struct {
   double      ratio;
   VdpDecoderProfile profile;
 
+  int         mode;
   int         have_header;
 
   uint8_t     *buf; /* accumulate data */
+  int         bufseek;
+  int         start;
+  int         code_start;
   uint32_t    bufsize;
   uint32_t    bufpos;
 
@@ -148,10 +153,19 @@ static void init_picture( picture_t *pic )
 
 
 
+static void reset_picture( picture_t *pic )
+{
+}
+
+
+
 static void reset_sequence( sequence_t *sequence )
 {
   lprintf( "reset_sequence\n" );
   sequence->bufpos = 0;
+  sequence->bufseek = 0;
+  sequence->start = -1;
+  sequence->code_start = 0;
   sequence->seq_pts = sequence->cur_pts = 0;
   if ( sequence->forward_ref )
     sequence->forward_ref->free( sequence->forward_ref );
@@ -159,6 +173,7 @@ static void reset_sequence( sequence_t *sequence )
   if ( sequence->backward_ref )
     sequence->backward_ref->free( sequence->backward_ref );
   sequence->backward_ref = NULL;
+  reset_picture( &sequence->picture );
 }
 
 
@@ -247,10 +262,13 @@ static void sequence_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *bu
   sequence->picture.vdp_infos.psf = get_bits(buf,off++,1);
   sequence->picture.vdp_infos.maxbframes = 7;
   if ( get_bits(buf,off++,1) ) {
-    int w, h, ar=0;
+    double w, h;
+    int ar=0;
     w = get_bits(buf,off,14)+1;
+    lprintf("width=%fd\n", w);
     off += 14;
     h = get_bits(buf,off,14)+1;
+    lprintf("height=%f\n", h);
     off += 14;
     if ( get_bits(buf,off++,1) ) {
       ar = get_bits(buf,off,4);
@@ -261,15 +279,40 @@ static void sequence_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *bu
       off += 8;
       h = get_bits(buf,off,8);
       off += 8;
+      sequence->ratio = w/h;
+      lprintf("aspect_ratio (w/h) = %f\n", sequence->ratio);
     }
-    else if ( ar && ar<14 )
-      sequence->ratio = aspect_ratio[ar];
+    else if ( ar && ar<14 ) {
+      sequence->ratio = w*aspect_ratio[ar]/h;
+      lprintf("aspect_ratio = %f\n", sequence->ratio);
+    }
 
     if ( get_bits(buf,off++,1) ) {
-      if ( get_bits(buf,off++,1) )
+      if ( get_bits(buf,off++,1) ) {
+        int exp = get_bits(buf,off,16);
+        lprintf("framerate exp = %d\n", exp);
         off += 16;
-      else
-        off += 12;
+      }
+      else {
+        int nr = get_bits(buf,off,8);
+        switch (nr) {
+          case 1: nr = 24000; break;
+          case 2: nr = 25000; break;
+          case 3: nr = 30000; break;
+          case 4: nr = 50000; break;
+          case 5: nr = 60000; break;
+          default: nr = 0;
+        }
+        off += 8;
+        int dr = get_bits(buf,off,4);
+        switch (dr) {
+          case 2: dr = 1001; break;
+          default: dr = 1000;
+        }
+        off += 4;
+        sequence->video_step = 90000/(nr/dr);
+        lprintf("framerate = %d video_step = %d\n", nr/dr, sequence->video_step);
+      }
     }
     if ( get_bits(buf,off++,1) )
       off += 24;
@@ -294,6 +337,7 @@ static void sequence_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int le
   switch ( get_bits(buf,0,2) ) {
     case 0: sequence->profile = VDP_DECODER_PROFILE_VC1_SIMPLE; lprintf("VDP_DECODER_PROFILE_VC1_SIMPLE\n"); break;
     case 1: sequence->profile = VDP_DECODER_PROFILE_VC1_MAIN; lprintf("VDP_DECODER_PROFILE_VC1_MAIN\n"); break;
+    case 2: sequence->profile = VDP_DECODER_PROFILE_VC1_MAIN; lprintf("vc1_complex profile not supported by vdpau, trying vc1_main.\n"); break;
     case 3: return sequence_header_advanced( this_gen, buf, len ); break;
     default: return; /* illegal value, broken header? */
   }
@@ -371,6 +415,8 @@ static void picture_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len
   VdpPictureInfoVC1 *info = &(sequence->picture.vdp_infos);
   int tmp;
 
+  lprintf("picture_header\n");
+
   int off=2;
 
   if ( info->finterpflag )
@@ -418,8 +464,25 @@ static void picture_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *buf
   VdpPictureInfoVC1 *info = &(sequence->picture.vdp_infos);
   int off=0;
 
-  if ( info->interlace )
-    return; // not yet supported
+  lprintf("picture_header_advanced\n");
+
+  if ( info->interlace ) {
+    lprintf("frame->interlace=1\n");
+    if ( !get_bits(buf,off++,1) ) {
+      lprintf("progressive frame\n");
+      info->frame_coding_mode = 0;
+    }
+    else {
+      if ( !get_bits(buf,off++,1) ) {
+        lprintf("frame interlaced\n");
+        info->frame_coding_mode = 2;
+      }
+      else {
+        lprintf("field interlaced\n");
+        info->frame_coding_mode = 3;
+      }
+    }
+  }
   if ( !get_bits(buf,off++,1) )
     info->picture_type = P_FRAME;
   else {
@@ -437,6 +500,12 @@ static void picture_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *buf
         }
       }
     }
+  }
+  if ( info->tfcntrflag )
+    off += 8;
+  if ( info->pulldown && info->interlace ) {
+    pic->top_field_first = get_bits(buf,off++,1);
+    pic->repeat_first_field = get_bits(buf,off++,1);
   }
 }
 
@@ -463,7 +532,44 @@ static void parse_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len )
 
 
 
-static void duplicate_image( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel, vo_frame_t *dst )
+static int parse_code( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len )
+{
+  sequence_t *sequence = (sequence_t*)&this_gen->sequence;
+
+  if ( !sequence->have_header && buf[3]!=sequence_header_code )
+    return 0;
+
+  if ( sequence->code_start == frame_start_code )
+    return 1; /* frame complete, decode */
+
+  switch ( buf[3] ) {
+    case sequence_header_code:
+      lprintf("sequence_header_code\n");
+      sequence_header( this_gen, buf+4, len-4 );
+      break;
+    case entry_point_code:
+      lprintf("entry_point_code\n");
+      entry_point( this_gen, buf+4, len-4 );
+      break;
+    case sequence_end_code:
+      lprintf("sequence_end_code\n");
+      break;
+    case frame_start_code:
+      lprintf("frame_start_code\n");
+      break;
+    case field_start_code:
+      lprintf("field_start_code\n");
+      break;
+    case slice_start_code:
+      lprintf("slice_start_code\n");
+      break;
+  }
+  return 0;
+}
+
+
+
+static void duplicate_image( vdpau_vc1_decoder_t *vd, vo_frame_t *dst )
 {
   sequence_t *seq = (sequence_t*)&vd->sequence;
   picture_t *pic = (picture_t*)&seq->picture;
@@ -476,7 +582,7 @@ static void duplicate_image( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel, vo_f
 
 
 
-static void decode_render( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel )
+static void decode_render( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel, uint8_t *buf, int len )
 {
   sequence_t *seq = (sequence_t*)&vd->sequence;
   picture_t *pic = (picture_t*)&seq->picture;
@@ -501,8 +607,8 @@ static void decode_render( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel )
 
   VdpBitstreamBuffer vbit;
   vbit.struct_version = VDP_BITSTREAM_BUFFER_VERSION;
-  vbit.bitstream = seq->buf;
-  vbit.bitstream_bytes = seq->bufpos;
+  vbit.bitstream = buf;
+  vbit.bitstream_bytes = len;
   st = accel->vdp_decoder_render( vd->decoder, accel->surface, (VdpPictureInfo*)&pic->vdp_infos, 1, &vbit );
   if ( st!=VDP_STATUS_OK )
     lprintf( "decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
@@ -520,18 +626,42 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
   picture_t *pic = (picture_t*)&seq->picture;
   vdpau_accel_t *ref_accel;
 
+  uint8_t *buf;
+  int len;
+
   pic->skipped = 0;
 
-  if ( seq->profile==VDP_DECODER_PROFILE_VC1_ADVANCED )
-    picture_header_advanced( vd, seq->buf, seq->bufpos );
-  else
-    picture_header( vd, seq->buf, seq->bufpos );
+  if ( seq->mode == MODE_FRAME ) {
+    buf = seq->buf;
+    len = seq->bufpos;
+    if ( seq->profile==VDP_DECODER_PROFILE_VC1_ADVANCED )
+      picture_header_advanced( vd, seq->buf, seq->bufpos );
+    else
+      picture_header( vd, seq->buf, seq->bufpos );
 
-  if ( seq->bufpos<2 )
-    pic->skipped = 1;
+    if ( seq->bufpos<2 )
+      pic->skipped = 1;
+  }
+  else {
+    seq->picture.vdp_infos.slice_count = 1;
+    buf = seq->buf+seq->start+4;
+    len = seq->bufseek-seq->start-4;
+    if ( seq->profile==VDP_DECODER_PROFILE_VC1_ADVANCED )
+      picture_header_advanced( vd, seq->buf+seq->start+4, seq->bufseek-seq->start-4 );
+    else
+      picture_header( vd, seq->buf+seq->start+4, seq->bufseek-seq->start-4 );
+
+    if ( (seq->bufseek-seq->start-4) < 2 )
+      pic->skipped = 1;
+  }
 
   VdpPictureInfoVC1 *info = &(seq->picture.vdp_infos);
   lprintf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n\n", info->slice_count, info->picture_type, info->frame_coding_mode, info->postprocflag, info->pulldown, info->interlace, info->tfcntrflag, info->finterpflag, info->psf, info->dquant, info->panscan_flag, info->refdist_flag, info->quantizer, info->extended_mv, info->extended_dmv, info->overlap, info->vstransform, info->loopfilter, info->fastuvmc, info->range_mapy_flag, info->range_mapy, info->range_mapuv_flag, info->range_mapuv, info->multires, info->syncmarker, info->rangered, info->maxbframes, info->deblockEnable, info->pquant );
+
+  int i;
+  for ( i=0; i<22; ++i )
+      printf("%02X ", buf[i-4] );
+    printf("\n\n");
 
   pic->vdp_infos.forward_reference = VDP_INVALID_HANDLE;
   pic->vdp_infos.backward_reference = VDP_INVALID_HANDLE;
@@ -577,10 +707,18 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
   }
 
   if ( pic->skipped )
-    duplicate_image( vd, accel, img );
+    duplicate_image( vd, img );
   else
-    decode_render( vd, accel );
+    decode_render( vd, accel, buf, len );
 
+  if ( pic->vdp_infos.interlace && pic->vdp_infos.frame_coding_mode ) {
+    img->progressive_frame = 0;
+    img->top_field_first = pic->top_field_first;
+  }
+  else {
+    img->progressive_frame = 1;
+    img->top_field_first = 1;
+  }
   img->pts = seq->seq_pts;
   img->bad_frame = 0;
   img->duration = seq->video_step;
@@ -623,7 +761,6 @@ static void vdpau_vc1_decode_data (video_decoder_t *this_gen, buf_element_t *buf
   /* a video decoder does not care about this flag (?) */
   if (buf->decoder_flags & BUF_FLAG_PREVIEW) {
     lprintf("BUF_FLAG_PREVIEW\n");
-    return;
   }
 
   if (buf->decoder_flags & BUF_FLAG_FRAMERATE) {
@@ -663,6 +800,7 @@ static void vdpau_vc1_decode_data (video_decoder_t *this_gen, buf_element_t *buf
     seq->coded_height = bih->biHeight;
     lprintf( "width=%d height=%d\n", bih->biWidth, bih->biHeight );
     if ( buf->size > bs ) {
+      seq->mode = MODE_FRAME;
       parse_header( this, buf->content+bs, buf->size-bs );
     }
     int i;
@@ -681,25 +819,47 @@ static void vdpau_vc1_decode_data (video_decoder_t *this_gen, buf_element_t *buf
   xine_fast_memcpy( seq->buf+seq->bufpos, buf->content, buf->size );
   seq->bufpos += buf->size;
 
-  if (buf->decoder_flags & BUF_FLAG_FRAME_END) {
-    lprintf("BUF_FLAG_FRAME_END\n");
-    seq->picture.vdp_infos.slice_count = 1;
-    decode_picture( this );
-    seq->bufpos = 0;
+  if ( seq->mode == MODE_FRAME ) {
+    if (buf->decoder_flags & BUF_FLAG_FRAME_END) {
+      lprintf("BUF_FLAG_FRAME_END\n");
+      seq->picture.vdp_infos.slice_count = 1;
+      decode_picture( this );
+      seq->bufpos = 0;
+    }
   }
-
-
-  /*int i;
-  for ( i=0; i<buf->size; ++i )
-    printf("%02X ", buf->content[i] );
-  printf("\n\n");
-
-  uint8_t *buffer = buf->content;
-  for ( i=0; i<buf->size-4; ++i ) {
-    if ( buffer[i]==0 && buffer[i+1]==0 && buffer[i+2]==1 )
-      printf("start code\n");
-  }*/
+  else {
+    while ( seq->bufseek <= seq->bufpos-4 ) {
+      uint8_t *buffer = seq->buf+seq->bufseek;
+      if ( buffer[0]==0 && buffer[1]==0 && buffer[2]==1 ) {
+        if ( seq->start<0 ) {
+          seq->start = seq->bufseek;
+          seq->code_start = buffer[3];
+          if ( seq->cur_pts )
+            seq->seq_pts = seq->cur_pts;
+        }
+        else {
+          if ( parse_code( this, seq->buf+seq->start, seq->bufseek-seq->start ) ) {
+            decode_picture( this );
+            parse_code( this, seq->buf+seq->start, seq->bufseek-seq->start );
+          }
+          uint8_t *tmp = (uint8_t*)malloc(seq->bufsize);
+          xine_fast_memcpy( tmp, seq->buf+seq->bufseek, seq->bufpos-seq->bufseek );
+          seq->bufpos -= seq->bufseek;
+          seq->start = -1;
+          seq->bufseek = -1;
+          free( seq->buf );
+          seq->buf = tmp;
+        }
+      }
+      ++seq->bufseek;
+    }
+    /*int i;
+    for ( i=0; i<buf->size; ++i )
+      printf("%02X ", buf->content[i] );
+    printf("\n\n");*/
+  }
 }
+
 
 
 /*
@@ -778,7 +938,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   VdpStatus st = accel->vdp_decoder_create( accel->vdp_device, VDP_DECODER_PROFILE_VC1_MAIN, 1920, 1080, 2, &decoder );
   if ( st!=VDP_STATUS_OK ) {
     lprintf( "can't create vdpau decoder.\n" );
-    return NULL;
+    return 1;
   }
 
   accel->vdp_decoder_destroy( decoder );
@@ -805,6 +965,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
   this->decoder = VDP_INVALID_HANDLE;
   this->sequence.accel_vdpau = NULL;
+  this->sequence.mode = MODE_STARTCODE;
 
   (stream->video_out->open)(stream->video_out, stream);
 
