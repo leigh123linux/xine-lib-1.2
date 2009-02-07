@@ -265,10 +265,8 @@ static void sequence_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *bu
     double w, h;
     int ar=0;
     w = get_bits(buf,off,14)+1;
-    lprintf("width=%fd\n", w);
     off += 14;
     h = get_bits(buf,off,14)+1;
-    lprintf("height=%f\n", h);
     off += 14;
     if ( get_bits(buf,off++,1) ) {
       ar = get_bits(buf,off,4);
@@ -283,7 +281,7 @@ static void sequence_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *bu
       lprintf("aspect_ratio (w/h) = %f\n", sequence->ratio);
     }
     else if ( ar && ar<14 ) {
-      sequence->ratio = w*aspect_ratio[ar]/h;
+      sequence->ratio = sequence->coded_width*aspect_ratio[ar]/sequence->coded_height;
       lprintf("aspect_ratio = %f\n", sequence->ratio);
     }
 
@@ -294,8 +292,8 @@ static void sequence_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *bu
         off += 16;
       }
       else {
-        int nr = get_bits(buf,off,8);
-        switch (nr) {
+        double nr = get_bits(buf,off,8);
+        switch ((int)nr) {
           case 1: nr = 24000; break;
           case 2: nr = 25000; break;
           case 3: nr = 30000; break;
@@ -304,18 +302,20 @@ static void sequence_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *bu
           default: nr = 0;
         }
         off += 8;
-        int dr = get_bits(buf,off,4);
-        switch (dr) {
+        double dr = get_bits(buf,off,4);
+        switch ((int)dr) {
           case 2: dr = 1001; break;
           default: dr = 1000;
         }
         off += 4;
         sequence->video_step = 90000/(nr/dr);
-        lprintf("framerate = %d video_step = %d\n", nr/dr, sequence->video_step);
+        lprintf("framerate = %f video_step = %d\n", nr/dr, sequence->video_step);
       }
     }
-    if ( get_bits(buf,off++,1) )
+    if ( get_bits(buf,off++,1) ) {
+      lprintf("color_standard = %d\n", get_bits(buf,off,8));
       off += 24;
+    }
   }
   sequence->picture.hrd_param_flag = get_bits(buf,off++,1);
   if ( sequence->picture.hrd_param_flag )
@@ -658,11 +658,6 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
   VdpPictureInfoVC1 *info = &(seq->picture.vdp_infos);
   lprintf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n\n", info->slice_count, info->picture_type, info->frame_coding_mode, info->postprocflag, info->pulldown, info->interlace, info->tfcntrflag, info->finterpflag, info->psf, info->dquant, info->panscan_flag, info->refdist_flag, info->quantizer, info->extended_mv, info->extended_dmv, info->overlap, info->vstransform, info->loopfilter, info->fastuvmc, info->range_mapy_flag, info->range_mapy, info->range_mapuv_flag, info->range_mapuv, info->multires, info->syncmarker, info->rangered, info->maxbframes, info->deblockEnable, info->pquant );
 
-  int i;
-  for ( i=0; i<22; ++i )
-      printf("%02X ", buf[i-4] );
-    printf("\n\n");
-
   pic->vdp_infos.forward_reference = VDP_INVALID_HANDLE;
   pic->vdp_infos.backward_reference = VDP_INVALID_HANDLE;
 
@@ -722,6 +717,7 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
   img->pts = seq->seq_pts;
   img->bad_frame = 0;
   img->duration = seq->video_step;
+  accel->color_standard = VDP_COLOR_STANDARD_ITUR_BT_709;
 
   if ( pic->vdp_infos.picture_type<B_FRAME ) {
     if ( pic->vdp_infos.picture_type==I_FRAME && !seq->backward_ref ) {
