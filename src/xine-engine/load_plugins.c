@@ -1959,7 +1959,13 @@ video_decoder_t *_x_get_video_decoder (xine_stream_t *stream, uint8_t stream_typ
 
     vd = ((video_decoder_class_t *)node->plugin_class)->open_plugin(node->plugin_class, stream);
 
-    if (vd) {
+    if (vd == 1) {
+      /* HACK: plugin failed to instantiate because required resources are unavailable at that time,
+         but may be available later, so don't remove this plugin from catalog. */
+      xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
+          "load_plugins: plugin %s failed to instantiate, resources temporarily unavailable.\n", node->info->id);
+    }
+    else if (vd) {
       inc_node_ref(node);
       vd->node = node;
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
