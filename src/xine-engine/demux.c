@@ -377,7 +377,7 @@ static void *demux_loop (void *stream_gen) {
     pthread_cond_wait (&stream->counter_changed, &stream->counter_lock);
 
     if (demux_unstick_ao_loop (stream))
-      break;
+      /* break amarok */;
   }
   pthread_mutex_unlock (&stream->counter_lock);
   

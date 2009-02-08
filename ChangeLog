@@ -1,6 +1,8 @@
 xine-lib (1.1.17) 2009-??-??
   * Build fixes related to ImageMagick 6.4 & later.
   * Fix an error in Matroska PTS calculation.
+  * Some front ends hang due to the hang fixes in 1.1.16. Fix this by
+    removing a break statement.
   * Enable libmpeg2new. This is not yet production code; the old mpeg2
     decoder remains the default.
   * Fix a broken size check in the pvr input plugin (ref. CVE-2008-5239).
