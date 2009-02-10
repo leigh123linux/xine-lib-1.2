@@ -123,7 +123,9 @@ static buf_element_t *stdin_plugin_read_block (input_plugin_t *this_gen, fifo_bu
   /* stdin_input_plugin_t  *this = (stdin_input_plugin_t *) this_gen; */
   buf_element_t         *buf = fifo->buffer_pool_alloc (fifo);
 
-  if (todo < 0 || todo > buf->size) {
+  if (todo > buf->max_size)
+    todo = buf->max_size;
+  if (todo < 0) {
     buf->free_buffer (buf);
     return NULL;
   }
