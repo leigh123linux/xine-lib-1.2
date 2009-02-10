@@ -1,4 +1,4 @@
-xine-lib (1.1.17) 2009-??-??
+xine-lib (1.1.16.2) 2009-02-10
   * Build fixes related to ImageMagick 6.4 & later.
   * Fix an error in Matroska PTS calculation.
   * Some front ends hang due to the hang fixes in 1.1.16. Fix this by
