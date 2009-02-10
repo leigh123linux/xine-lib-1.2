@@ -60,6 +60,7 @@ char *vdpau_deinterlace_methods[] = {
   NULL
 };
 
+
 VdpOutputSurfaceRenderBlendState blend = { VDP_OUTPUT_SURFACE_RENDER_BLEND_STATE_VERSION,
           VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ONE,
           VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ONE_MINUS_SRC_COLOR,
@@ -144,9 +145,9 @@ static VdpStatus guarded_vdp_video_surface_create(VdpDevice device, VdpChromaTyp
 static VdpStatus guarded_vdp_video_surface_destroy(VdpVideoSurface surface)
 {
   VdpStatus r;
-//  XLockDisplay(guarded_display);
+  /*XLockDisplay(guarded_display);*/
   r = orig_vdp_video_surface_destroy(surface);
-//  XUnlockDisplay(guarded_display);
+  /*XUnlockDisplay(guarded_display);*/
   return r;
 }
 
@@ -905,7 +906,6 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
   /* Check frame size and format and reallocate if necessary */
   if ( (frame->width != width) || (frame->height != height) || (frame->format != format) || (frame->format==XINE_IMGFMT_VDPAU && frame->vdpau_accel_data.chroma!=chroma) ||
         (frame->vdpau_accel_data.vdp_runtime_nr != this->vdp_runtime_nr)) {
-    //printf("vo_vdpau: updating frame to %d x %d (ratio=%g, format=%08X)\n", width, height, ratio, format);
 
     /* (re-) allocate render space */
     if ( frame->chunk[0] )
@@ -968,8 +968,6 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
 
     vdpau_frame_field ((vo_frame_t *)frame, flags);
   }
-
-  //printf("vo_vdpau: allocated_surfaces=%d\n", this->allocated_surfaces );
 
   frame->vdpau_accel_data.color_standard = VDP_COLOR_STANDARD_ITUR_BT_601;
   frame->ratio = ratio;
@@ -1207,7 +1205,6 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   vdpau_redraw_needed( this_gen );
 
   if ( (frame->format == XINE_IMGFMT_YV12) || (frame->format == XINE_IMGFMT_YUY2) ) {
-    //printf( "vo_vdpau: got a yuv image -------------\n" );
     chroma = ( frame->format==XINE_IMGFMT_YV12 )? VDP_CHROMA_TYPE_420 : VDP_CHROMA_TYPE_422;
     if ( (frame->width > this->soft_surface_width) || (frame->height > this->soft_surface_height) || (frame->format != this->soft_surface_format) ) {
       printf( "vo_vdpau: soft_surface size update\n" );
@@ -1236,7 +1233,6 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     mix_h = this->soft_surface_height;
   }
   else if (frame->format == XINE_IMGFMT_VDPAU) {
-    //printf( "vo_vdpau: got a vdpau image -------------\n" );
     surface = frame->vdpau_accel_data.surface;
     mix_w = frame->width;
     mix_h = frame->height;
@@ -1297,7 +1293,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   if (stream_speed != 0) {
     int vo_bufs_in_fifo = 0;
     _x_query_buffer_usage(frame->vo_frame.stream, NULL, NULL, &vo_bufs_in_fifo, NULL);
-    //fprintf(stderr, "vo_bufs: %d\n", vo_bufs_in_fifo);
+    /* fprintf(stderr, "vo_bufs: %d\n", vo_bufs_in_fifo); */
     if (vo_bufs_in_fifo <= 0)
       stream_speed = 0; /* still image -> no delay */
   }
@@ -1313,13 +1309,11 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   VdpLayer layer[3];
   VdpRect layersrc, unscaledsrc;
   if ( this->has_overlay ) {
-    //printf("vdpau_display_frame: overlay should be visible !\n");
     layer_count = 2;
     layersrc.x0 = 0; layersrc.y0 = 0; layersrc.x1 = this->overlay_output_width; layersrc.y1 = this->overlay_output_height;
     layer[0].struct_version = VDP_LAYER_VERSION; layer[0].source_surface = this->overlay_output; layer[0].source_rect = &layersrc; layer[0].destination_rect = &vid_dest;
     unscaledsrc.x0 = 0; unscaledsrc.y0 = 0; unscaledsrc.x1 = this->overlay_unscaled_width; unscaledsrc.y1 = this->overlay_unscaled_height;
     layer[1].struct_version = VDP_LAYER_VERSION; layer[1].source_surface = this->overlay_unscaled; layer[1].source_rect = &unscaledsrc; layer[1].destination_rect = &unscaledsrc;
-    //printf( "layersrc = %d %d %d %d \n", layersrc.x0, layersrc.y0, layersrc.x1, layersrc.y1 );
   }
   else {
     layer_count = 0;
@@ -1350,8 +1344,6 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
                                2, past, surface, 1, future, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
     if ( st != VDP_STATUS_OK )
       printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
-    //else
-      //printf( "vo_vdpau: vdp_video_mixer_render: top_field, past1=%d, past0=%d, current=%d, future=%d\n", past[1], past[0], surface, future[0] );
 
     vdp_queue_get_time( vdp_queue, &current_time );
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, current_time );
@@ -1384,8 +1376,6 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
                                2, past, surface, 1, future, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
     if ( st != VDP_STATUS_OK )
       printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
-    //else
-      //printf( "vo_vdpau: vdp_video_mixer_render: bottom_field, past1=%d, past0=%d, current=%d, future=%d\n", past[1], past[0], surface, future[0] );
 
     /* calculate delay for second field: there should be no delay for still images otherwise, take replay speed into account */
     if (stream_speed > 0)
@@ -1696,7 +1686,7 @@ static void vdpau_reinit( vo_driver_t *this_gen )
     return;
   }
 
-  // osd overlays need to be recreated
+  /* osd overlays need to be recreated */
   this->overlay_output = VDP_INVALID_HANDLE;
   this->overlay_output_width = this->overlay_output_height = 0;
   this->overlay_unscaled = VDP_INVALID_HANDLE;
