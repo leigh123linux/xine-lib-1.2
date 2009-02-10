@@ -209,7 +209,6 @@ static void reset_sequence( sequence_t *sequence )
 	sequence->seq_pts = sequence->cur_pts = 0;
   sequence->profile = VDP_DECODER_PROFILE_MPEG1;
   sequence->chroma = 0;
-	//sequence->ratio = 1.0;
 	sequence->video_step = 3600;
   if ( sequence->forward_ref )
     sequence->forward_ref->free( sequence->forward_ref );
@@ -533,7 +532,6 @@ static int parse_code( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int len )
           break;
         case sequence_display_ext_sc:
           lprintf( " ----------- sequence_display_extension_start_code\n" );
-          //sequence_display_extension( sequence, buf+4, len-4 );
           break;
       }
       break;
@@ -546,7 +544,6 @@ static int parse_code( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int len )
       break;
     case picture_start_code:
       lprintf( " ----------- picture_start_code\n" );
-      //slice_count = 0;
       picture_header( sequence, buf+4, len-4 );
       break;
     case sequence_error_code:
@@ -604,7 +601,6 @@ static void decode_render( vdpau_mpeg12_decoder_t *vd, vdpau_accel_t *accel )
     pic->vdp_infos2.backward_reference = VDP_INVALID_HANDLE;
     pic->vdp_infos2.forward_reference = VDP_INVALID_HANDLE;
     if ( pic->vdp_infos2.picture_coding_type==P_FRAME ) {
-      pic->vdp_infos2.backward_reference = VDP_INVALID_HANDLE;
       if ( pic->vdp_infos.picture_coding_type==I_FRAME )
         pic->vdp_infos2.forward_reference = accel->surface;
       else
@@ -624,8 +620,6 @@ static void decode_render( vdpau_mpeg12_decoder_t *vd, vdpau_accel_t *accel )
       lprintf( "DECODER SUCCESS : frame_type:%d, slices=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
                 pic->vdp_infos2.picture_coding_type, pic->vdp_infos2.slice_count, accel->surface, pic->vdp_infos2.forward_reference, pic->vdp_infos2.backward_reference, seq->seq_pts );
   }
-
-  //printf( "vdpau_meg12:  forwref:%d, backref:%d\n", seq->forward_ref, seq->backward_ref );
 }
 
 
@@ -670,7 +664,6 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
       return;
   }
 
-  //printf("vdpau_mpeg12: get image ..\n");
   vo_frame_t *img = vd->stream->video_out->get_frame( vd->stream->video_out, seq->coded_width, seq->coded_height,
                                                       seq->ratio, XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS|seq->chroma );
   vdpau_accel_t *accel = (vdpau_accel_t*)img->accel_data;
@@ -688,11 +681,9 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
     vd->decoder = VDP_INVALID_HANDLE;
   }
 
-  img->drawn = 0;
-  //printf("vdpau_mpeg12: .. got image %d\n", img);
-
   decode_render( vd, accel );
 
+  img->drawn = 0;
   img->pts = seq->seq_pts;
   img->bad_frame = 0;
   img->duration = seq->video_step;
@@ -701,7 +692,9 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
   else
     img->top_field_first = 0;
 
-  // progressive_frame is unreliable with most mpeg2 streams //img->progressive_frame = pic->progressive_frame;
+  /* progressive_frame is unreliable with most mpeg2 streams
+  img->progressive_frame = pic->progressive_frame;*/
+  img->progressive_frame = 0;
 
   if ( pic->vdp_infos.picture_coding_type!=B_FRAME ) {
     if ( pic->vdp_infos.picture_coding_type==I_FRAME && !seq->backward_ref ) {
@@ -712,21 +705,16 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
     if ( seq->forward_ref ) {
       seq->forward_ref->drawn = 0;
       seq->forward_ref->free( seq->forward_ref );
-      //printf("vdpau_mpeg12: freed image %d\n", seq->forward_ref );
     }
     seq->forward_ref = seq->backward_ref;
     if ( seq->forward_ref && !seq->forward_ref->drawn ) {
-      //seq->forward_ref->pts = seq->seq_pts;
       seq->forward_ref->draw( seq->forward_ref, vd->stream );
-      //printf( "vdpau_mpeg12: drawn reference image with pts=%lld\n", seq->forward_ref->pts );
     }
     seq->backward_ref = img;
   }
   else {
     img->draw( img, vd->stream );
-    //printf( "vdpau_mpeg12: drawn image with pts=%lld\n", img->pts );
     img->free( img );
-    //printf("vdpau_mpeg12: freed B image %d\n", img );
   }
 
   seq->seq_pts +=seq->video_step;
@@ -743,27 +731,20 @@ static void vdpau_mpeg12_decode_data (video_decoder_t *this_gen, buf_element_t *
   vdpau_mpeg12_decoder_t *this = (vdpau_mpeg12_decoder_t *) this_gen;
   sequence_t *seq = (sequence_t*)&this->sequence;
 
-  /* a video decoder does not care about this flag (?) */
-  if (buf->decoder_flags & BUF_FLAG_PREVIEW) {
-    return;
-  }
-
   if (buf->decoder_flags & BUF_FLAG_FRAMERATE) {
-    //this->video_step = buf->decoder_info[0];
-    //_x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->video_step);
+    this->video_step = buf->decoder_info[0];
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->video_step);
   }
 
   if ( !buf->size )
     return;
 
   seq->cur_pts = buf->pts;
-  //printf("vdpau_mpeg12_decode_data: new pts : %lld\n", buf->pts );
 
   int size = seq->bufpos+buf->size;
   if ( seq->bufsize < size ) {
     seq->bufsize = size+1024;
     seq->buf = realloc( seq->buf, seq->bufsize );
-    //printf("sequence buffer realloced = %d\n", seq->bufsize );
   }
   xine_fast_memcpy( seq->buf+seq->bufpos, buf->content, buf->size );
   seq->bufpos += buf->size;
@@ -808,8 +789,6 @@ static void vdpau_mpeg12_flush (video_decoder_t *this_gen) {
   vdpau_mpeg12_decoder_t *this = (vdpau_mpeg12_decoder_t *) this_gen;
 
   lprintf( "vdpau_mpeg12_flush\n" );
-// incorrect: see libmpeg2, mpeg2_flush()
-//  reset_sequence( &this->sequence );
 }
 
 /*
@@ -820,8 +799,6 @@ static void vdpau_mpeg12_reset (video_decoder_t *this_gen) {
 
   lprintf( "vdpau_mpeg12_reset\n" );
   reset_sequence( &this->sequence );
-
-  //this->size = 0;
 }
 
 /*
@@ -902,6 +879,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->sequence.backward_ref = 0;
   this->sequence.vdp_runtime_nr = 1;
   reset_sequence( &this->sequence );
+  this->sequence.ratio = 1;
 
   init_picture( &this->sequence.picture );
 
