@@ -53,7 +53,7 @@
 
 
 
-const char *vdpau_deinterlace_methods[] = {
+char *vdpau_deinterlace_methods[] = {
   "bob",
   "temporal",
   "temporal_spatial",
@@ -881,6 +881,8 @@ static void vdpau_duplicate_frame_data (vo_frame_t *this_gen, vo_frame_t *origin
   if (st != VDP_STATUS_OK)
     printf("vo_vdpau: failed to put surface bits !! %s\n", vdp_get_error_string(st));
 
+  this->vdpau_accel_data.color_standard = orig->vdpau_accel_data.color_standard;
+
   if (this->chunk[0])
     free(this->chunk[0]);
   if (this->chunk[1])
@@ -1290,9 +1292,6 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   VdpRect out_dest = { 0, 0, this->sc.gui_width, this->sc.gui_height };
   VdpRect vid_dest = { this->sc.output_xoffset, this->sc.output_yoffset, this->sc.output_xoffset+this->sc.output_width, this->sc.output_yoffset+this->sc.output_height };
 
-  //printf( "vid_src = %d %d %d %d - out_dest = %d %d %d %d - vid_dest = %d %d %d %d\n",
-          //vid_source.x0, vid_source.y0, vid_source.x1, vid_source.y1, out_dest.x0, out_dest.y0, out_dest.x1, out_dest.y1, vid_dest.x0, vid_dest.y0, vid_dest.x1, vid_dest.y1 );
-
   /* prepare field delay calculation to not run into a deadlock while display locked */
   stream_speed = frame->vo_frame.stream ? xine_get_param(frame->vo_frame.stream, XINE_PARAM_FINE_SPEED) : 0;
   if (stream_speed != 0) {
@@ -1336,7 +1335,8 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   }
 
   int non_progressive = (this->honor_progressive && !frame->vo_frame.progressive_frame) || !this->honor_progressive;
-  if ( stream_speed && frame->vo_frame.duration>2500 && this->deinterlace && non_progressive && frame->format==XINE_IMGFMT_VDPAU ) {
+  int frame_duration = (frame->vo_frame.duration>0) ? frame->vo_frame.duration : 3000; /* unknown frame duration should not lead to no deint! */
+  if ( stream_speed && frame_duration>2500 && this->deinterlace && non_progressive && frame->format==XINE_IMGFMT_VDPAU ) {
     VdpTime current_time = 0;
     VdpVideoSurface past[2];
     VdpVideoSurface future[1];
