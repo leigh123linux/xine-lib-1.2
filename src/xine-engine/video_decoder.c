@@ -161,7 +161,7 @@ static void *video_decoder_loop (void *stream_gen) {
       
       running_ticket->release(running_ticket, 0);
       
-      if( !stream->gapless_switch )
+      if( !(buf->decoder_flags & BUF_FLAG_GAPLESS_SW) )
         stream->metronom->handle_video_discontinuity (stream->metronom, 
 						      DISC_STREAMSTART, 0);
       

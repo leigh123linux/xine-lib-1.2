@@ -292,7 +292,9 @@ static buf_element_t *net_plugin_read_block (input_plugin_t *this_gen,
   buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
   off_t                 total_bytes;
 
-  if (todo < 0 || todo > buf->size) {
+  if (todo > buf->max_size)
+    todo = buf->max_size;
+  if (todo < 0) {
     buf->free_buffer (buf);
     return NULL;
   }

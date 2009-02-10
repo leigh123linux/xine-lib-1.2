@@ -69,12 +69,18 @@ xine-lib (1.1.90) (Unreleased)
     colour controls, zooming, colour keying.
 
 xine-lib (1.1.17) 2009-??-??
-  * Build fixes related to ImageMagick 6.4 & later.
-  * Fix an error in Matroska PTS calculation.
   * Enable libmpeg2new. This is not yet production code; the old mpeg2
     decoder remains the default.
-  * Fix a broken size check in the pvr input plugin (ref. CVE-2008-5239).
+
+xine-lib (1.1.16.2) 2009-02-10
+  * Build fixes related to ImageMagick 6.4 & later.
+  * Fix an error in Matroska PTS calculation.
+  * Some front ends hang due to the hang fixes in 1.1.16. Fix this by
+    removing a break statement.
+  * Fix broken size checks in various input plugins (ref. CVE-2008-5239).
   * More malloc checking (ref. CVE-2008-5240).
+  * Fix race conditions in gapless_switch (ref. kde bug #180339)
+  * Fix a possible integer overflow in the 4XM demuxer. (TKADV2009-004.txt)
 
 xine-lib (1.1.16.1) 2009-01-11
   * Fix build with older ffmpeg, both internal and in Debian 5.0.

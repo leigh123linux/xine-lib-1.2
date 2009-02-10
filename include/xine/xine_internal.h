@@ -260,6 +260,7 @@ struct xine_stream_s {
                                                       *  layers as they cannot call xine_stop. */
   uint32_t                   early_finish_event:1;   /*< do not wait fifos get empty before sending event */
   uint32_t                   gapless_switch:1;       /*< next stream switch will be gapless */
+  uint32_t                   keep_ao_driver_open:1;
 
   input_class_t             *eject_class;
   demux_plugin_t            *demux_plugin;

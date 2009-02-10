@@ -391,6 +391,9 @@ struct buf_element_s {
  * decoder_info[2] carries denominator for display aspect ratio       */
 #define BUF_FLAG_ASPECT      0x0800
 
+/* represent the state of gapless_switch at the time buf was enqueued */
+#define BUF_FLAG_GAPLESS_SW  0x1000
+
 
 /**
  * \defgroup buffer_special Special buffer types:

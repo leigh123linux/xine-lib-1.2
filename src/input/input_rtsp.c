@@ -98,7 +98,9 @@ static buf_element_t *rtsp_plugin_read_block (input_plugin_t *this_gen,
 
   lprintf ("rtsp_plugin_read_block: %"PRId64" bytes...\n", todo);
 
-  if (todo < 0 || todo > buf->size) {
+  if (todo > buf->max_size)
+    todo = buf->max_size;
+  if (todo < 0) {
     buf->free_buffer (buf);
     return NULL;
   }
