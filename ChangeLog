@@ -8,6 +8,7 @@ xine-lib (1.1.17) 2009-??-??
   * Fix broken size checks in various input plugins (ref. CVE-2008-5239).
   * More malloc checking (ref. CVE-2008-5240).
   * Fix race conditions in gapless_switch (ref. kde bug #180339)
+  * Fix a possible integer overflow in the 4XM demuxer. (TKADV2009-004.txt)
 
 xine-lib (1.1.16.1) 2009-01-11
   * Fix build with older ffmpeg, both internal and in Debian 5.0.
