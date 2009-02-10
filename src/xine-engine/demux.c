@@ -231,15 +231,18 @@ void _x_demux_control_headers_done (xine_stream_t *stream) {
 void _x_demux_control_start( xine_stream_t *stream ) {
 
   buf_element_t *buf;
+  uint32_t flags = (stream->gapless_switch) ? BUF_FLAG_GAPLESS_SW : 0;
 
   pthread_mutex_lock(&stream->demux_mutex);  
 
   buf = stream->video_fifo->buffer_pool_alloc (stream->video_fifo);
   buf->type = BUF_CONTROL_START;
+  buf->decoder_flags = flags;
   stream->video_fifo->put (stream->video_fifo, buf);
 
   buf = stream->audio_fifo->buffer_pool_alloc (stream->audio_fifo);
   buf->type = BUF_CONTROL_START;
+  buf->decoder_flags = flags;
   stream->audio_fifo->put (stream->audio_fifo, buf);
 
   pthread_mutex_unlock(&stream->demux_mutex);  

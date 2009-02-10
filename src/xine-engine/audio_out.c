@@ -1609,7 +1609,7 @@ static void ao_close(xine_audio_port_t *this_gen, xine_stream_t *stream) {
   pthread_mutex_unlock(&this->streams_lock);
 
   /* close driver if no streams left */
-  if (!ite && !this->grab_only && !stream->gapless_switch) {
+  if (!ite && !this->grab_only && !stream->keep_ao_driver_open) {
     xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_out: no streams left, closing driver\n");
 
     if (this->audio_loop_running) {

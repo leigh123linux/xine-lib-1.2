@@ -419,6 +419,7 @@ void xine_stop (xine_stream_t *stream) {
 static void close_internal (xine_stream_t *stream) {
 
   int i ;
+  int gapless_switch = stream->gapless_switch;
 
   if( stream->slave ) {
     xine_close( stream->slave );
@@ -429,7 +430,7 @@ static void close_internal (xine_stream_t *stream) {
     }
   }
 
-  if( !stream->gapless_switch ) {
+  if( !gapless_switch ) {
     /* make sure that other threads cannot change the speed, especially pauseing the stream */
     pthread_mutex_lock(&stream->speed_change_lock);
     stream->ignore_speed_change = 1;
@@ -445,7 +446,7 @@ static void close_internal (xine_stream_t *stream) {
   
   stop_internal( stream );
   
-  if( !stream->gapless_switch ) {
+  if( !gapless_switch ) {
     if (stream->video_out)
       stream->video_out->set_property(stream->video_out, VO_PROP_DISCARD_FRAMES, 0);  
     if (stream->audio_out)
@@ -596,6 +597,7 @@ xine_stream_t *xine_stream_new (xine_t *this,
   stream->early_finish_event     = 0;
   stream->delay_finish_event     = 0;
   stream->gapless_switch         = 0;
+  stream->keep_ao_driver_open    = 0;
 
   stream->video_out              = vo;
   if (vo)

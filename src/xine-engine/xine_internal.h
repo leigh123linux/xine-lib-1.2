@@ -361,6 +361,7 @@ struct xine_stream_s {
   int                        early_finish_event; /* do not wait fifos get empty before sending event */
   int                        gapless_switch;     /* next stream switch will be gapless */
   int                        delay_finish_event; /* delay event in 1/10 sec units. 0=>no delay, -1=>forever */
+  int                        keep_ao_driver_open;
 #endif
 };
 

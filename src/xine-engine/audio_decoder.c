@@ -89,16 +89,18 @@ static void *audio_decoder_loop (void *stream_gen) {
       if (stream->audio_decoder_plugin) {
 
 	lprintf ("close old decoder\n");
-
+      
+	stream->keep_ao_driver_open = !!(buf->decoder_flags & BUF_FLAG_GAPLESS_SW);
 	_x_free_audio_decoder (stream, stream->audio_decoder_plugin);
 	stream->audio_decoder_plugin = NULL;
 	stream->audio_track_map_entries = 0;
 	stream->audio_type = 0;
+	stream->keep_ao_driver_open = 0;
       }
       
       running_ticket->release(running_ticket, 0);
       
-      if( !stream->gapless_switch )
+      if( !(buf->decoder_flags & BUF_FLAG_GAPLESS_SW) )
         stream->metronom->handle_audio_discontinuity (stream->metronom, DISC_STREAMSTART, 0);
       
       buftype_unknown = 0;
