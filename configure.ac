@@ -2731,9 +2731,6 @@ src/libffmpeg/libavcodec/libpostproc/Makefile
 src/libffmpeg/libavutil/Makefile
 src/libmad/Makefile
 src/libmpeg2/Makefile
-src/libmpeg2new/Makefile
-src/libmpeg2new/libmpeg2/Makefile
-src/libmpeg2new/include/Makefile
 src/libmusepack/Makefile
 src/libmusepack/musepack/Makefile
 src/libspudec/Makefile
