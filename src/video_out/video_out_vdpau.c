@@ -1328,8 +1328,14 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     layer[layer_count-1].struct_version = VDP_LAYER_VERSION;
   }
 
+  /* try to get frame duration from previous img->pts when frame->duration is 0 */
+  int frame_duration = frame->vo_frame.duration;
+  if ( !frame_duration && this->back_frame[0] ) {
+    int duration = frame->vo_frame.pts - this->back_frame[0]->vo_frame.pts;
+    if ( duration>0 && duration<4000 )
+      frame_duration = duration;
+  }
   int non_progressive = (this->honor_progressive && !frame->vo_frame.progressive_frame) || !this->honor_progressive;
-  int frame_duration = (frame->vo_frame.duration>0) ? frame->vo_frame.duration : 3000; /* unknown frame duration should not lead to no deint! */
   if ( stream_speed && frame_duration>2500 && this->deinterlace && non_progressive && frame->format==XINE_IMGFMT_VDPAU ) {
     VdpTime current_time = 0;
     VdpVideoSurface past[2];
