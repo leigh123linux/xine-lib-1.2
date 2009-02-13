@@ -12,10 +12,12 @@ my $line;
 # Read in the ffmpeg codec IDs
 my %codecs;
 open LIST, "< $ffmpeg" or die $!;
-while (defined ($line = <LIST>)) {
+$line = <LIST>;
+while (defined $line) {
   chomp $line;
   $line =~ s/^CODEC_ID_//o;
   $codecs{$line} = 0;
+  $line = <LIST>;
 }
 close LIST or die $!;
 

@@ -64,8 +64,7 @@ avcodec_video.list: AV_CODECS:=/CODEC_ID_MPEG1VIDEO/,/CODEC_ID_PCM_S16LE/
 
 avcodec_audio.list avcodec_video.list:
 	echo '#include "$(srcdir)/ffmpeg_decoder.h"' | $(AV_CPP) - |\
-	  sed -e $(AV_CODECS)'! d; s/^\s*//; s/[=,].*//; /^$$/ d' |\
-	  head -n -1 >$@
+	  sed -e $(AV_CODECS)'! d; s/^[ \t]*//; s/[=,].*//; /^$$/ d' >$@
 
 # Generate the mappings. These are #included where needed.
 ff_%_list.h: $(srcdir)/mkcodeclist.pl avcodec_%.list $(srcdir)/xine_%.list
