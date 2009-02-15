@@ -732,8 +732,8 @@ static void vdpau_mpeg12_decode_data (video_decoder_t *this_gen, buf_element_t *
   sequence_t *seq = (sequence_t*)&this->sequence;
 
   if (buf->decoder_flags & BUF_FLAG_FRAMERATE) {
-    seq->video_step = buf->decoder_info[0];
-    _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, seq->video_step);
+    /*seq->video_step = buf->decoder_info[0];
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, seq->video_step);*/
   }
 
   if ( !buf->size )

@@ -562,6 +562,40 @@ static void parse_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len )
 
 
 
+static void remove_emulation_prevention( uint8_t *src, uint8_t *dst, int src_len, int *dst_len )
+{
+  int i;
+  int len = 0;
+  int removed = 0;
+
+  for ( i=0; i<src_len; ++i )
+    printf("%02X ", src[i]);
+  printf("\n");
+
+  for ( i=0; i<src_len-3; ++i ) {
+    if ( src[i]==0 && src[i+1]==0 && src[i+2]==3 ) {
+      lprintf("removed emulation prevention byte\n");
+      dst[len++] = src[i];
+      dst[len++] = src[i+1];
+      i += 2;
+      ++removed;
+    }
+    else {
+      memcpy( dst+len, src+i, 4 );
+      ++len;
+    }
+  }
+  for ( ; i<src_len; ++i )
+    dst[len++] = src[i];
+  *dst_len = src_len-removed;
+
+  for ( i=0; i<*dst_len; ++i )
+    printf("%02X ", dst[i]);
+  printf("\n");
+}
+
+
+
 static int parse_code( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len )
 {
   sequence_t *sequence = (sequence_t*)&this_gen->sequence;
@@ -569,17 +603,28 @@ static int parse_code( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len )
   if ( !sequence->have_header && buf[3]!=sequence_header_code )
     return 0;
 
-  if ( sequence->code_start == frame_start_code )
+  if ( sequence->code_start == frame_start_code ) {
+    if ( buf[3]==field_start_code || buf[3]==slice_start_code )
+      return -1;
     return 1; /* frame complete, decode */
+  }
 
   switch ( buf[3] ) {
+    int dst_len;
+    uint8_t *tmp;
     case sequence_header_code:
       lprintf("sequence_header_code\n");
-      sequence_header( this_gen, buf+4, len-4 );
+      tmp = malloc( len );
+      remove_emulation_prevention( buf, tmp, len, &dst_len );
+      sequence_header( this_gen, tmp+4, dst_len-4 );
+      free( tmp );
       break;
     case entry_point_code:
       lprintf("entry_point_code\n");
-      entry_point( this_gen, buf+4, len-4 );
+      tmp = malloc( len );
+      remove_emulation_prevention( buf, tmp, len, &dst_len );
+      entry_point( this_gen, tmp+4, dst_len-4 );
+      free( tmp );
       break;
     case sequence_end_code:
       lprintf("sequence_end_code\n");
@@ -733,25 +778,30 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
 
     if ( len < 2 )
       pic->skipped = 1;
-
-    if ( pic->vdp_infos.interlace && pic->vdp_infos.frame_coding_mode == PICTURE_FIELD_INTERLACE ) {
-      if ( !(field = search_field( vd, buf, len )) )
-        lprintf("error, no fields found!\n");
-      else
-        pic->field = field;
-    }
   }
   else {
     seq->picture.vdp_infos.slice_count = 1;
     buf = seq->buf+seq->start+4;
     len = seq->bufseek-seq->start-4;
-    if ( seq->profile==VDP_DECODER_PROFILE_VC1_ADVANCED )
-      picture_header_advanced( vd, buf, len );
+    if ( seq->profile==VDP_DECODER_PROFILE_VC1_ADVANCED ) {
+      int tmplen = (len>50) ? 50 : len;
+      uint8_t *tmp = malloc( tmplen );
+      remove_emulation_prevention( buf, tmp, tmplen, &tmplen );
+      picture_header_advanced( vd, tmp, tmplen );
+      free( tmp );
+    }
     else
       picture_header( vd, buf, len );
 
     if ( len < 2 )
       pic->skipped = 1;
+  }
+
+  if ( pic->vdp_infos.interlace && pic->vdp_infos.frame_coding_mode == PICTURE_FIELD_INTERLACE ) {
+    if ( !(field = search_field( vd, buf, len )) )
+      lprintf("error, no fields found!\n");
+    else
+      pic->field = field;
   }
 
   VdpPictureInfoVC1 *info = &(seq->picture.vdp_infos);
@@ -922,6 +972,7 @@ static void vdpau_vc1_decode_data (video_decoder_t *this_gen, buf_element_t *buf
     }
   }
   else {
+    int res;
     while ( seq->bufseek <= seq->bufpos-4 ) {
       uint8_t *buffer = seq->buf+seq->bufseek;
       if ( buffer[0]==0 && buffer[1]==0 && buffer[2]==1 ) {
@@ -932,17 +983,20 @@ static void vdpau_vc1_decode_data (video_decoder_t *this_gen, buf_element_t *buf
             seq->seq_pts = seq->cur_pts;
         }
         else {
-          if ( parse_code( this, seq->buf+seq->start, seq->bufseek-seq->start ) ) {
+          res = parse_code( this, seq->buf+seq->start, seq->bufseek-seq->start );
+          if ( res==1 ) {
             decode_picture( this );
             parse_code( this, seq->buf+seq->start, seq->bufseek-seq->start );
           }
-          uint8_t *tmp = (uint8_t*)malloc(seq->bufsize);
-          xine_fast_memcpy( tmp, seq->buf+seq->bufseek, seq->bufpos-seq->bufseek );
-          seq->bufpos -= seq->bufseek;
-          seq->start = -1;
-          seq->bufseek = -1;
-          free( seq->buf );
-          seq->buf = tmp;
+          if ( res!=-1 ) {
+            uint8_t *tmp = (uint8_t*)malloc(seq->bufsize);
+            xine_fast_memcpy( tmp, seq->buf+seq->bufseek, seq->bufpos-seq->bufseek );
+            seq->bufpos -= seq->bufseek;
+            seq->start = -1;
+            seq->bufseek = -1;
+            free( seq->buf );
+            seq->buf = tmp;
+          }
         }
       }
       ++seq->bufseek;
