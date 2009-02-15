@@ -48,7 +48,8 @@ xineplug_LTLIBRARIES = $(ogg_module) $(asf_module) $(mng_module) $(image_module)
 	xineplug_dmx_nsv.la \
 	xineplug_dmx_matroska.la \
 	xineplug_dmx_iff.la \
-	xineplug_dmx_flv.la 
+	xineplug_dmx_flv.la \
+	xineplug_dmx_vc1_es.la
 
 xineplug_dmx_ogg_la_SOURCES = demux_ogg.c
 xineplug_dmx_ogg_la_LIBADD = $(XINE_LIB) $(VORBIS_LIBS) $(SPEEX_LIBS) $(THEORA_LIBS) $(OGG_LIBS) $(LTLIBINTL)
@@ -65,6 +66,9 @@ xineplug_dmx_mpeg_la_LIBADD = $(XINE_LIB)
 
 xineplug_dmx_mpeg_elem_la_SOURCES = demux_elem.c
 xineplug_dmx_mpeg_elem_la_LIBADD = $(XINE_LIB)
+
+xineplug_dmx_vc1_es_la_SOURCES = demux_vc1es.c
+xineplug_dmx_vc1_es_la_LIBADD = $(XINE_LIB)
 
 xineplug_dmx_mpeg_pes_la_SOURCES = demux_mpeg_pes.c
 xineplug_dmx_mpeg_pes_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
