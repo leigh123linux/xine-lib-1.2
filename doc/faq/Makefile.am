@@ -23,7 +23,7 @@ distclean-local: clean-docs
 
 if HAVE_XMLTO
 faq.html: faq.docbook
-	xmlto html-nochunks $^
+	xmlto xhtml-nochunks $^
 
 faq.txt: faq.docbook
 	xmlto txt $^
