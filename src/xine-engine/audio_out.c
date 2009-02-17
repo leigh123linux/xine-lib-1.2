@@ -243,6 +243,7 @@ typedef struct {
   audio_fifo_t   *free_fifo;
   audio_fifo_t   *out_fifo;
   int64_t         last_audio_vpts;
+  pthread_mutex_t current_speed_lock;
   uint32_t        current_speed;        /* the current playback speed */
   /* FIXME: replace all this->clock->speed with this->current_speed. we should make
    * sure nobody will change speed without going through xine.c:set_speed_internal */
@@ -1040,6 +1041,7 @@ static void *ao_loop (void *this_gen) {
      * we must process/free buffers otherwise the entire engine will stop.
      */
     
+    pthread_mutex_lock(&this->current_speed_lock);
     if ( this->audio_loop_running && 
          (this->clock->speed == XINE_SPEED_PAUSE || 
           (this->clock->speed != XINE_FINE_SPEED_NORMAL && 
@@ -1055,6 +1057,7 @@ static void *ao_loop (void *this_gen) {
 	    _x_refcounter_dec(in_buf->stream->refcounter);
 	  fifo_append (this->free_fifo, in_buf);
 	  in_buf = NULL;
+	  pthread_mutex_unlock(&this->current_speed_lock);
 	  continue;
 	}
 
@@ -1065,6 +1068,7 @@ static void *ao_loop (void *this_gen) {
       }
 
       lprintf ("loop:pause: I feel sleepy (%d buffers).\n", this->out_fifo->num_buffers);
+      pthread_mutex_unlock(&this->current_speed_lock);
       xine_usec_sleep (10000);
       lprintf ("loop:pause: I wake up.\n");
       continue;
@@ -1274,6 +1278,7 @@ static void *ao_loop (void *this_gen) {
       fifo_append (this->free_fifo, in_buf);
       in_buf = NULL;
     }
+    pthread_mutex_unlock(&this->current_speed_lock);
 
     /* Give other threads a chance to use functions which require this->driver_lock to
      * be available. This is needed when using NPTL on Linux (and probably PThreads
@@ -1684,6 +1689,7 @@ static void ao_exit(xine_audio_port_t *this_gen) {
   free (this->frame_buf[1]);
   free (this->zero_space);
   
+  pthread_mutex_destroy(&this->current_speed_lock);
   pthread_mutex_destroy(&this->flush_audio_driver_lock);
   pthread_cond_destroy(&this->flush_audio_driver_reached);
 
@@ -1910,8 +1916,15 @@ static int ao_set_property (xine_audio_port_t *this_gen, int property, int value
     if (value != XINE_FINE_SPEED_NORMAL && value != XINE_SPEED_PAUSE && !this->slow_fast_audio )
       this->ao.control(&this->ao, AO_CTRL_FLUSH_BUFFERS, NULL);
 
-    this->ao.control(&this->ao,
-      	             (value == XINE_SPEED_PAUSE) ? AO_CTRL_PLAY_PAUSE : AO_CTRL_PLAY_RESUME, NULL);
+    if( value == XINE_SPEED_PAUSE ) {
+      /* current_speed_lock is here to make sure the ao_loop will pause in a safe place.
+       * that is, we cannot pause writing to device, filling gaps etc. */
+      pthread_mutex_lock(&this->current_speed_lock);
+      this->ao.control(&this->ao, AO_CTRL_PLAY_PAUSE, NULL);
+      pthread_mutex_unlock(&this->current_speed_lock);
+    } else {
+      this->ao.control(&this->ao, AO_CTRL_PLAY_RESUME, NULL);
+    }
     this->current_speed = value;
     if( this->slow_fast_audio )
       ao_update_resample_factor(this);
@@ -2056,6 +2069,7 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
   this->driver                = driver;
   this->xine                  = xine;
   this->clock                 = xine->clock;
+  this->current_speed         = xine->clock->speed;
   this->streams               = xine_list_new();
     
   /* warning: driver_lock is a recursive mutex. it must NOT be
@@ -2087,6 +2101,7 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
   this->discard_buffers        = 0;
   this->zero_space             = calloc (1, ZERO_BUF_SIZE * 4 * 6); /* MAX as 32bit, 6 channels. */
   
+  pthread_mutex_init( &this->current_speed_lock, NULL );
   pthread_mutex_init( &this->flush_audio_driver_lock, NULL );
   pthread_cond_init( &this->flush_audio_driver_reached, NULL );
 
