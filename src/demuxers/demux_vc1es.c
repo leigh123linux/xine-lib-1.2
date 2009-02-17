@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2008 the xine project
  * Copyright (C) 2008 Christophe Thommeret <hftom@free.fr>
  *
  * This file is part of xine, a free video player.
@@ -57,6 +58,7 @@
 #include "xine_internal.h"
 #include "xineutils.h"
 #include "compat.h"
+#include "bswap.h"
 #include "demux.h"
 
 #define SCRATCH_SIZE 36
@@ -105,8 +107,8 @@ static int demux_vc1_es_next_smp( demux_vc1_es_t *this )
   }
 
   done = this->input->read( this->input, head, 8 );
-  frame_size = head[2]<<16 | head[1]<<8 | head[0];
-  pts = head[7]<<24 | head[6]<<16 | head[5]<<8 | head[4];
+  frame_size = _X_LE_24( head );
+  pts = _X_LE_32( head+4 );
 
   done = 0;
   while ( frame_size>0 ) {
@@ -361,7 +363,7 @@ static demux_plugin_t *open_plugin( demux_class_t *class_gen, xine_stream_t *str
     xine_fast_memcpy( this->private+4, scratch+16, 4 ); /* width */
     xine_fast_memcpy( this->private+40, scratch+8, 4 ); /* sequence header */
   }
-  this->video_step = scratch[35]<<24 | scratch[34]<<16 | scratch[33]<<8 | scratch[32];
+  this->video_step = _X_LE_32( scratch+32 );
   this->stream = stream;
   this->input  = input;
 
