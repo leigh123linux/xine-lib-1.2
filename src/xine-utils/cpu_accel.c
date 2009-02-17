@@ -40,6 +40,10 @@
 
 #include "xineutils.h"
 
+#if defined(PIC) && ! defined(__PIC__)
+#define __PIC__
+#endif
+
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
 
 static jmp_buf sigill_return;
