@@ -115,6 +115,9 @@
 /* There really isn't a default on Windows! */
 #define DVD_PATH "d:\\"
 #define RDVD_PATH "d:\\"
+#elif defined(__OpenBSD__)
+#define DVD_PATH "/dev/rcd0c"
+#define RDVD_PATH "/dev/rcd0c"
 #else
 #define DVD_PATH "/dev/dvd"
 #define RDVD_PATH "/dev/rdvd"
