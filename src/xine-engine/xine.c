@@ -367,17 +367,20 @@ static xine_ticket_t *XINE_MALLOC ticket_init(void) {
 
 static void set_speed_internal (xine_stream_t *stream, int speed) {
   xine_t *xine = stream->xine;
+  int old_speed = xine->clock->speed;
 
-  if (xine->clock->speed != XINE_SPEED_PAUSE && speed == XINE_SPEED_PAUSE)
+  if (old_speed != XINE_SPEED_PAUSE && speed == XINE_SPEED_PAUSE)
     /* get all decoder and post threads in a state where they agree to be blocked */
     xine->port_ticket->revoke(xine->port_ticket, 0);
   
-  if (xine->clock->speed == XINE_SPEED_PAUSE && speed != XINE_SPEED_PAUSE)
+  if (old_speed == XINE_SPEED_PAUSE && speed != XINE_SPEED_PAUSE)
     /* all decoder and post threads may continue now */
     xine->port_ticket->issue(xine->port_ticket, 0);
   
-  stream->xine->clock->set_fine_speed (stream->xine->clock, speed);
-
+  if (old_speed != XINE_SPEED_PAUSE && speed == XINE_SPEED_PAUSE)
+    /* set master clock so audio_out loop can pause in a safe place */
+    stream->xine->clock->set_fine_speed (stream->xine->clock, speed);
+  
   /* see coment on audio_out loop about audio_paused */
   if( stream->audio_out ) {
     xine->port_ticket->acquire(xine->port_ticket, 1);
@@ -387,6 +390,10 @@ static void set_speed_internal (xine_stream_t *stream, int speed) {
     
     xine->port_ticket->release(xine->port_ticket, 1);
   }
+  
+  if (old_speed == XINE_SPEED_PAUSE || speed != XINE_SPEED_PAUSE)
+    /* master clock is set after resuming the audio device (audio_out loop may continue) */
+    stream->xine->clock->set_fine_speed (stream->xine->clock, speed);
 }
 
 

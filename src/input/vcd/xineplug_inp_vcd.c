@@ -20,7 +20,7 @@
 /* 
   These are plugin routines called by the xine engine. See
   Chapter 4. Extending xine's input
-  http://xinehq.de/index.php/hackersguide/index.php?resource=5.3&action=default#INPUT
+  http://www.xine-project.org/hackersguide#INPUT
   and the comments in input_plugin.h
 
   This is what is referred to below a "the xine plugin spec"
