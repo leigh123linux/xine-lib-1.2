@@ -173,7 +173,6 @@ static int demux_vc1_es_next_ap( demux_vc1_es_t *this )
 static int demux_vc1_es_send_chunk( demux_plugin_t *this_gen )
 {
   demux_vc1_es_t *this = (demux_vc1_es_t *) this_gen;
-  //printf ("demux_vc1_es_send_chunk\n");
 
   if ( this->mode==MODE_SMP ) {
     if (!demux_vc1_es_next_smp(this))
@@ -362,8 +361,8 @@ static demux_plugin_t *open_plugin( demux_class_t *class_gen, xine_stream_t *str
     xine_fast_memcpy( this->private+8, scratch+12, 4 ); /* height */
     xine_fast_memcpy( this->private+4, scratch+16, 4 ); /* width */
     xine_fast_memcpy( this->private+40, scratch+8, 4 ); /* sequence header */
+    this->video_step = _X_LE_32( scratch+32 );
   }
-  this->video_step = _X_LE_32( scratch+32 );
   this->stream = stream;
   this->input  = input;
 
