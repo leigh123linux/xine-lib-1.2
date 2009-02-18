@@ -1564,6 +1564,28 @@ AM_CONDITIONAL([HAVE_JACK], [test "x$have_jack" = "xyes"])
 
 
 dnl ---------------------------------------------
+dnl sndio support
+dnl ---------------------------------------------
+
+AC_ARG_WITH([sndio],
+	AS_HELP_STRING([--without-sndio], [Build without sndio support]))
+
+if test "x$with_sndio" != "xno"; then
+   AC_CHECK_LIB(sndio, sio_open, [SNDIO_LIBS=-lsndio; have_sndio=yes],
+     [have_sndio=no])
+
+   if test "x$with_sndio" = "xyes" && test "x$have_sndio" = "xno"; then
+      AC_MSG_ERROR([sndio support requested, but sndio not found])
+   fi
+fi
+
+AM_CONDITIONAL([HAVE_SNDIO], [test "x$have_sndio" = "xyes"])
+
+AC_SUBST([SNDIO_CFLAGS])
+AC_SUBST([SNDIO_LIBS])
+
+
+dnl ---------------------------------------------
 dnl gnome-vfs support
 dnl ---------------------------------------------
 
@@ -3170,6 +3192,9 @@ if test "x$have_pulseaudio" = "xyes"; then
 fi
 if test "x$have_jack" = "xyes"; then
   echo "   - Jack"
+fi
+if test "x$have_sndio" = "xyes"; then
+  echo "   - sndio"
 fi
 echo "---"
 
