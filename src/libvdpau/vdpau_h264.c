@@ -752,6 +752,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   /* now check if vdpau has free decoder resource */
   vo_frame_t *img = stream->video_out->get_frame( stream->video_out, 1920, 1080, 1, XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS );
   vdpau_accel_t *accel = (vdpau_accel_t*)img->accel_data;
+  int runtime_nr = accel->vdp_runtime_nr;
   img->free(img);
   VdpDecoder decoder;
   VdpStatus st = accel->vdp_decoder_create( accel->vdp_device, VDP_DECODER_PROFILE_H264_MAIN, 1920, 1080, 16, &decoder );
@@ -775,7 +776,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->class                             = (vdpau_h264_class_t *) class_gen;
 
   this->decoder                           = VDP_INVALID_HANDLE;
-  this->vdp_runtime_nr                    = 1;
+  this->vdp_runtime_nr                    = runtime_nr;
   this->color_standard                    = VDP_COLOR_STANDARD_ITUR_BT_601;
 
   this->nal_parser = init_parser();
