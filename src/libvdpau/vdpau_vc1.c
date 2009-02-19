@@ -1073,6 +1073,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   /* now check if vdpau has free decoder resource */
   vo_frame_t *img = stream->video_out->get_frame( stream->video_out, 1920, 1080, 1, XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS );
   vdpau_accel_t *accel = (vdpau_accel_t*)img->accel_data;
+  int runtime_nr = accel->vdp_runtime_nr;
   img->free(img);
   VdpDecoder decoder;
   VdpStatus st = accel->vdp_decoder_create( accel->vdp_device, VDP_DECODER_PROFILE_VC1_MAIN, 1920, 1080, 2, &decoder );
@@ -1098,7 +1099,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->sequence.buf = (uint8_t*)malloc(this->sequence.bufsize);
   this->sequence.forward_ref = 0;
   this->sequence.backward_ref = 0;
-  this->sequence.vdp_runtime_nr = 1;
+  this->sequence.vdp_runtime_nr = runtime_nr;
   init_sequence( &this->sequence );
 
   init_picture( &this->sequence.picture );
