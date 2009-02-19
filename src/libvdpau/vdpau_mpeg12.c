@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2008 the xine project
  * Copyright (C) 2008 Christophe Thommeret <hftom@free.fr>
  *
  * This file is part of xine, a free video player.
@@ -185,6 +186,7 @@ static void reset_picture( picture_t *pic )
   pic->slices_count2 = 0;
   pic->slices_pos = 0;
   pic->slices_pos_top = 0;
+  pic->progressive_frame = 0;
   pic->state = WANT_HEADER;
 }
 
@@ -692,9 +694,11 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
   else
     img->top_field_first = 0;
 
-  /* progressive_frame is unreliable with most mpeg2 streams
-  img->progressive_frame = pic->progressive_frame;*/
-  img->progressive_frame = 0;
+  /* progressive_frame is unreliable with most mpeg2 streams */
+  if ( pic->vdp_infos.picture_structure!=PICTURE_FRAME )
+    img->progressive_frame = 0;
+  else
+    img->progressive_frame = pic->progressive_frame;
 
   if ( pic->vdp_infos.picture_coding_type!=B_FRAME ) {
     if ( pic->vdp_infos.picture_coding_type==I_FRAME && !seq->backward_ref ) {
@@ -730,11 +734,6 @@ static void vdpau_mpeg12_decode_data (video_decoder_t *this_gen, buf_element_t *
 {
   vdpau_mpeg12_decoder_t *this = (vdpau_mpeg12_decoder_t *) this_gen;
   sequence_t *seq = (sequence_t*)&this->sequence;
-
-  if (buf->decoder_flags & BUF_FLAG_FRAMERATE) {
-    /*seq->video_step = buf->decoder_info[0];
-    _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, seq->video_step);*/
-  }
 
   if ( !buf->size )
     return;
