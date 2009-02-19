@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2008 the xine project
  * Copyright (C) 2008 Christophe Thommeret <hftom@free.fr>
  *
  * This file is part of xine, a free video player.
@@ -1303,8 +1304,6 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   if ( this->init_queue>1 )
     vdp_queue_block( vdp_queue, this->output_surface[this->current_output_surface], &last_time );
 
-  XLockDisplay( this->display );
-
   uint32_t layer_count;
   VdpLayer layer[3];
   VdpRect layersrc, unscaledsrc;
@@ -1336,6 +1335,9 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
       frame_duration = duration;
   }
   int non_progressive = (this->honor_progressive && !frame->vo_frame.progressive_frame) || !this->honor_progressive;
+
+  XLockDisplay( this->display );
+
   if ( stream_speed && frame_duration>2500 && this->deinterlace && non_progressive && frame->format==XINE_IMGFMT_VDPAU ) {
     VdpTime current_time = 0;
     VdpVideoSurface past[2];
@@ -1376,7 +1378,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
       future[0] = ((vdpau_frame_t*)(frame->vo_frame.future_frame))->vdpau_accel_data.surface;
     else
       future[0] = VDP_INVALID_HANDLE;
-    picture_structure = ( frame->vo_frame.top_field_first ) ? VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD : VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD;
+    picture_structure = ( frame->vo_frame.top_field_first ) ? VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD : VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD;
 
     st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, picture_structure,
                                2, past, surface, 1, future, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
