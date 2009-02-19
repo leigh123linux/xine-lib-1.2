@@ -1695,6 +1695,13 @@ static void vdpau_reinit( vo_driver_t *this_gen )
   }
 
   /* osd overlays need to be recreated */
+
+  int i;
+  for ( i=0; i<XINE_VORAW_MAX_OVL; ++i ) {
+    this->overlays[i].ovl_bitmap = VDP_INVALID_HANDLE;
+    this->overlays[i].bitmap_width = 0;
+    this->overlays[i].bitmap_height = 0;
+  }
   this->overlay_output = VDP_INVALID_HANDLE;
   this->overlay_output_width = this->overlay_output_height = 0;
   this->overlay_unscaled = VDP_INVALID_HANDLE;
