@@ -1673,6 +1673,7 @@ static void vdpau_reinit( vo_driver_t *this_gen )
   st = vdp_queue_create( vdp_device, vdp_queue_target, &vdp_queue );
   if ( vdpau_reinit_error( st, "Can't create presentation queue !!" ) )
     return;
+  vdp_queue_set_background_color( vdp_queue, &this->back_color );
 
 
   VdpChromaType chroma = VDP_CHROMA_TYPE_420;
