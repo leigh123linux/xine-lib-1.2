@@ -1093,6 +1093,7 @@ static void vdpau_honor_progressive_flag( void *this_gen, xine_cfg_entry_t *entr
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
 
   this->honor_progressive = entry->num_value;
+  printf( "vo_vdpau: honor_progressive=%d\n", this->honor_progressive );
 }
 
 
@@ -1378,7 +1379,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
       future[0] = ((vdpau_frame_t*)(frame->vo_frame.future_frame))->vdpau_accel_data.surface;
     else
       future[0] = VDP_INVALID_HANDLE;
-    picture_structure = ( frame->vo_frame.top_field_first ) ? VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD : VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD;
+    picture_structure = ( frame->vo_frame.top_field_first ) ? VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD : VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD;
 
     st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, picture_structure,
                                2, past, surface, 1, future, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
