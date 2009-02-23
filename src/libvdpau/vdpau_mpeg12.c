@@ -181,7 +181,7 @@ static void reset_picture( picture_t *pic )
   pic->vdp_infos2.intra_vlc_format = pic->vdp_infos.intra_vlc_format = 0;
   pic->vdp_infos2.alternate_scan = pic->vdp_infos.alternate_scan = 0;
   pic->vdp_infos2.q_scale_type = pic->vdp_infos.q_scale_type = 0;
-  pic->vdp_infos2.top_field_first = pic->vdp_infos.top_field_first = 0;
+  pic->vdp_infos2.top_field_first = pic->vdp_infos.top_field_first = 1;
   pic->slices_count = 0;
   pic->slices_count2 = 0;
   pic->slices_pos = 0;
@@ -689,10 +689,7 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
   img->pts = seq->seq_pts;
   img->bad_frame = 0;
   img->duration = seq->video_step;
-  if ( pic->vdp_infos.top_field_first || pic->vdp_infos.picture_structure==PICTURE_FRAME )
-    img->top_field_first = 1;
-  else
-    img->top_field_first = 0;
+  img->top_field_first = pic->vdp_infos.top_field_first;
 
   /* progressive_frame is unreliable with most mpeg2 streams */
   if ( pic->vdp_infos.picture_structure!=PICTURE_FRAME )
