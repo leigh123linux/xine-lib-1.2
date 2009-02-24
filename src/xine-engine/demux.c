@@ -120,7 +120,7 @@ void _x_demux_flush_engine (xine_stream_t *stream) {
 }
 
 
-struct timespec _x_compute_interval(unsigned int millisecs) {
+static struct timespec _x_compute_interval(unsigned int millisecs) {
   struct timespec ts;
   clock_gettime(CLOCK_REALTIME, &ts);
   uint64_t ttimer = (uint64_t)ts.tv_sec*1000 + ts.tv_nsec/1000000 + millisecs;
