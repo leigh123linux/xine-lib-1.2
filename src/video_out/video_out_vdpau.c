@@ -188,7 +188,7 @@ typedef struct {
   int ovl_x, ovl_y; /* overlay's top-left display position */
   int unscaled;
   int expected_overlay_width; /*if >0 scale to video width*/
-  int expected_overlay_height; /* if >0 sccale to video height */
+  int expected_overlay_height; /* if >0 scale to video height */
 } vdpau_overlay_t;
 
 
@@ -280,6 +280,7 @@ typedef struct {
   int               deinterlace_method;
   int               enable_inverse_telecine;
   int               honor_progressive;
+  int               skip_chroma;
 
   int               vdp_runtime_nr;
   int               reinit_needed;
@@ -1176,6 +1177,28 @@ static void vdpau_update_csc( vdpau_driver_t *this_gen )
 
 
 
+static void vdpau_update_skip_chroma( vdpau_driver_t *this_gen )
+{
+  VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_SKIP_CHROMA_DEINTERLACE };
+  void* attribute_values[] = { &(this_gen->skip_chroma) };
+  VdpStatus st = vdp_video_mixer_set_attribute_values( this_gen->video_mixer, 1, attributes, attribute_values );
+  if ( st != VDP_STATUS_OK )
+    printf( "vo_vdpau: error, can't set skip_chroma !!\n" );
+  else
+    printf( "vo_vdpau: skip_chroma = %d\n", this_gen->skip_chroma );
+}
+
+
+
+static void vdpau_set_skip_chroma( void *this_gen, xine_cfg_entry_t *entry )
+{
+  vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
+  this->skip_chroma = entry->num_value;
+  vdpau_update_skip_chroma( this );
+}
+
+
+
 static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 {
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
@@ -1268,6 +1291,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdpau_update_sharpness( this );
     this->color_standard = color_standard;
     vdpau_update_csc( this );
+    vdpau_update_skip_chroma( this );
   }
 
   if (color_standard != this->color_standard) {
@@ -2003,7 +2027,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     vdp_video_surface_destroy( this->soft_surface );
     return NULL;
   }
-  st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[0], this->output_surface_height[0], &this->output_surface[1] );
+  st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[1], this->output_surface_height[1], &this->output_surface[1] );
   if ( vdpau_init_error( st, "Can't create second output surface !!", &this->vo_driver, 1 ) ) {
     vdp_video_surface_destroy( this->soft_surface );
     vdp_output_surface_destroy( this->output_surface[0] );
@@ -2048,6 +2072,11 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
         _("Set to true if you want to trust the progressive_frame stream's flag.\n"
           "This flag is not always reliable.\n\n"),
         10, vdpau_honor_progressive_flag, this );
+
+  this->skip_chroma = config->register_bool( config, "video.output.vdpau_skip_chroma_deinterlace", 0,
+        _("vdpau: disable advanced deinterlacers chroma filter"),
+        _("Setting to true may help if your video card isn't able to run advanced deinterlacers.\n\n"),
+        10, vdpau_set_skip_chroma, this );
 
   /* number of video frames from config - register it with the default value. */
   int frame_num = config->register_num (config, "engine.buffers.video_num_frames", 15, /* default */
