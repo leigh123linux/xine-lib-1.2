@@ -21,7 +21,7 @@
  *
  */
 
-#define LOG
+/*#define LOG*/
 #define LOG_MODULE "vdpau_vc1"
 
 
@@ -570,9 +570,9 @@ static void remove_emulation_prevention( uint8_t *src, uint8_t *dst, int src_len
   int len = 0;
   int removed = 0;
 
-  for ( i=0; i<src_len; ++i )
+  /*for ( i=0; i<src_len; ++i )
     printf("%02X ", src[i]);
-  printf("\n");
+  printf("\n");*/
 
   for ( i=0; i<src_len-3; ++i ) {
     if ( src[i]==0 && src[i+1]==0 && src[i+2]==3 ) {
@@ -591,9 +591,9 @@ static void remove_emulation_prevention( uint8_t *src, uint8_t *dst, int src_len
     dst[len++] = src[i];
   *dst_len = src_len-removed;
 
-  for ( i=0; i<*dst_len; ++i )
+  /*for ( i=0; i<*dst_len; ++i )
     printf("%02X ", dst[i]);
-  printf("\n");
+  printf("\n");*/
 }
 
 
@@ -695,9 +695,9 @@ static void decode_render( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel, uint8_
     lprintf( "DECODER SUCCESS : slices=%d, slices_bytes=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
               pic->vdp_infos.slice_count, vbit.bitstream_bytes, accel->surface, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->seq_pts );
     int i;
-    for ( i=0; i<20; ++i )
+    /*for ( i=0; i<20; ++i )
       printf("%02X ", buf[i]);
-    printf("\n");
+    printf("\n");*/
   }
 
   if ( pic->field ) {
@@ -729,9 +729,9 @@ static void decode_render( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel, uint8_
       lprintf( "DECODER SUCCESS : slices=%d, slices_bytes=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
                 pic->vdp_infos.slice_count, vbit.bitstream_bytes, accel->surface, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->seq_pts );
       int i;
-    for ( i=0; i<20; ++i )
+    /*for ( i=0; i<20; ++i )
       printf("%02X ", buf[pic->field+4+i] );
-    printf("\n");
+    printf("\n");*/
     }
     VdpPictureInfoVC1 *info = &(seq->picture.vdp_infos);
     lprintf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n\n", info->slice_count, info->picture_type, info->frame_coding_mode, info->postprocflag, info->pulldown, info->interlace, info->tfcntrflag, info->finterpflag, info->psf, info->dquant, info->panscan_flag, info->refdist_flag, info->quantizer, info->extended_mv, info->extended_dmv, info->overlap, info->vstransform, info->loopfilter, info->fastuvmc, info->range_mapy_flag, info->range_mapy, info->range_mapuv_flag, info->range_mapuv, info->multires, info->syncmarker, info->rangered, info->maxbframes, info->deblockEnable, info->pquant );
@@ -950,9 +950,9 @@ static void vdpau_vc1_decode_data (video_decoder_t *this_gen, buf_element_t *buf
       parse_header( this, buf->content+bs, buf->size-bs );
     }
     int i;
-    for ( i=0; i<buf->size; ++i )
+    /*for ( i=0; i<buf->size; ++i )
       printf("%02X ", buf->content[i] );
-    printf("\n\n");
+    printf("\n\n");*/
     return;
   }
 
