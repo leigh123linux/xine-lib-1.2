@@ -433,8 +433,10 @@ static void picture_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len
 
   if ( info->finterpflag )
     ++off;
-  if ( info->rangered )
-    ++off;
+  if ( info->rangered ) {
+    info->rangered &= ~2;
+    info->rangered |= get_bits( buf,off++,1 ) << 1;
+  }
   if ( !info->maxbframes ) {
     if ( get_bits( buf,off++,1 ) )
       info->picture_type = P_FRAME;
