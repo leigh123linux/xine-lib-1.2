@@ -1245,7 +1245,31 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
   int start_seq_len = 3;
   uint8_t completed_nal = 0;
 
-  uint8_t *prebuf = parser->prebuf;
+  /* seek for nal start sequences split across buffer boundaries */
+  if(!parser->nal_size_length) {
+    if(parser->prebuf_len >= 2 && inbuf_len >= 1 &&
+        parser->prebuf[parser->prebuf_len-2] == 0x00 &&
+        parser->prebuf[parser->prebuf_len-1] == 0x00 &&
+        inbuf[0] == 0x01) {
+      parsed_len = 1;
+    } else if (parser->prebuf_len >= 1 && inbuf_len >= 1 &&
+        parser->prebuf[parser->prebuf_len-1] == 0x00 &&
+        inbuf[0] == 0x00 &&
+        inbuf[1] == 0x01) {
+      parsed_len = 2;
+    }
+
+    /* in case a start seq was splitted call ourself with just a start
+     * sequences and strip incomplete start seq parts from the buffer
+     * before.
+     */
+    if(parsed_len > 0) {
+      static const uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
+      parser->prebuf_len -= start_seq_len - parsed_len;
+      parse_frame(parser, start_seq, start_seq_len, ret_buf, ret_len, ret_slice_cnt);
+      return parsed_len;
+    }
+  }
 
   if(parser->nal_size_length > 0)
     start_seq_len = parser->nal_size_length-parser->have_nal_size_length_buf;
@@ -1289,7 +1313,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
       parsed_len += next_nal;
       inbuf += next_nal;
 
-      parser->last_nal_res = parse_nal(prebuf+start_seq_len, parser->prebuf_len-start_seq_len, parser);
+      parser->last_nal_res = parse_nal(parser->prebuf+start_seq_len, parser->prebuf_len-start_seq_len, parser);
       if (parser->last_nal_res == 1 && parser->buf_len > 0) {
 
         //printf("Frame complete: %d bytes\n", parser->buf_len);
@@ -1304,7 +1328,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
         /* this is a SLICE, keep it in the buffer */
         //printf("slice %d size: %d\n", parser->slice_cnt-1, parser->prebuf_len);
         if(parser->nal_size_length > 0) {
-          uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
+          static const uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
           xine_fast_memcpy(parser->buf, start_seq, 3);
           parser->buf_len += 3;
         }
@@ -1312,8 +1336,8 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
         int offset = 0;
         if(parser->nal_size_length > 0)
           offset = start_seq_len;
-        xine_fast_memcpy(parser->buf+parser->buf_len, prebuf+offset, parser->prebuf_len-offset);
-        parser->buf_len += parser->prebuf_len-offset;
+        xine_fast_memcpy(parser->buf+parser->buf_len, parser->prebuf+offset, parser->prebuf_len-offset);
+        parser->buf_len += (parser->prebuf_len-offset);
         parser->prebuf_len = 0;
         parser->incomplete_nal = 0;
 
@@ -1332,7 +1356,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
         //printf("slice %d size: %d\n", parser->slice_cnt-1, parser->prebuf_len);
         /* this is a SLICE, keep it in the buffer */
         if(parser->nal_size_length > 0) {
-          uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
+          static const uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
           xine_fast_memcpy(parser->buf + parser->buf_len, start_seq, 3);
           parser->buf_len += 3;
         }
@@ -1341,7 +1365,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
         if(parser->nal_size_length > 0)
           offset = start_seq_len;
 
-        xine_fast_memcpy(parser->buf + parser->buf_len, prebuf+offset, parser->prebuf_len-offset);
+        xine_fast_memcpy(parser->buf + parser->buf_len, parser->prebuf+offset, parser->prebuf_len-offset);
         parser->buf_len += (parser->prebuf_len-offset);
       }
 
@@ -1372,22 +1396,12 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
       *ret_buf = NULL;
       return parsed_len;
     }
+
     parser->incomplete_nal = 1;
     xine_fast_memcpy(parser->prebuf + parser->prebuf_len, inbuf, inbuf_len-parsed_len);
     parser->prebuf_len += inbuf_len-parsed_len;
     parsed_len += inbuf_len-parsed_len;
     inbuf += inbuf_len-parsed_len;
-
-    /* now check if prebuf contains a second slice header
-     * this might happen if the nal start sequence is split
-     * over the buf-boundary - if this is the case we
-     */
-    if(!parser->nal_size_length && parsed_len > 2 &&
-        (next_nal = seek_for_nal(prebuf+start_seq_len, parser->prebuf_len, parser)) >= 0) {
-      inbuf -= parser->prebuf_len-next_nal-start_seq_len;
-      parsed_len -= parser->prebuf_len-next_nal-start_seq_len;
-      parser->prebuf_len = next_nal+start_seq_len;
-    }
   }
 
   *ret_len = 0;
