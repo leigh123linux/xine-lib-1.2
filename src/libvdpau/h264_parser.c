@@ -1245,32 +1245,6 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
   int start_seq_len = 3;
   uint8_t completed_nal = 0;
 
-  /* seek for nal start sequences split across buffer boundaries */
-  if(!parser->nal_size_length) {
-    if(parser->prebuf_len >= 2 && inbuf_len >= 1 &&
-        parser->prebuf[parser->prebuf_len-2] == 0x00 &&
-        parser->prebuf[parser->prebuf_len-1] == 0x00 &&
-        inbuf[0] == 0x01) {
-      parsed_len = 1;
-    } else if (parser->prebuf_len >= 1 && inbuf_len >= 1 &&
-        parser->prebuf[parser->prebuf_len-1] == 0x00 &&
-        inbuf[0] == 0x00 &&
-        inbuf[1] == 0x01) {
-      parsed_len = 2;
-    }
-
-    /* in case a start seq was splitted call ourself with just a start
-     * sequences and strip incomplete start seq parts from the buffer
-     * before.
-     */
-    if(parsed_len > 0) {
-      static const uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
-      parser->prebuf_len -= start_seq_len - parsed_len;
-      parse_frame(parser, start_seq, start_seq_len, ret_buf, ret_len, ret_slice_cnt);
-      return parsed_len;
-    }
-  }
-
   if(parser->nal_size_length > 0)
     start_seq_len = parser->nal_size_length-parser->have_nal_size_length_buf;
 
@@ -1289,6 +1263,39 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
       parser->prev_pic_order_cnt_lsb
           = parser->last_nal->slc->pic_order_cnt_lsb;
     parser->prev_pic_order_cnt_msb = parser->pic_order_cnt_msb;
+  }
+
+  /* seek for nal start sequences split across buffer boundaries */
+  if(!parser->nal_size_length) {
+    if(parser->prebuf_len >= 2 && inbuf_len >= 1 &&
+        parser->prebuf[parser->prebuf_len-2] == 0x00 &&
+        parser->prebuf[parser->prebuf_len-1] == 0x00 &&
+        inbuf[0] == 0x01) {
+      parsed_len = 1;
+    } else if (parser->prebuf_len >= 1 && inbuf_len >= 2 &&
+        parser->prebuf[parser->prebuf_len-1] == 0x00 &&
+        inbuf[0] == 0x00 &&
+        inbuf[1] == 0x01) {
+      parsed_len = 2;
+    }
+
+    /* in case a start seq was splitted call ourself with just a start
+     * sequences and strip incomplete start seq parts from the buffer
+     * before.
+     */
+    if(parsed_len > 0) {
+      static const uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
+      parser->prebuf_len -= start_seq_len - parsed_len;
+
+      /* loop this until the start_seq was really parsed, else it might
+       * be dropped in case we are just at a frame boundary
+       */
+      int int_parsed = 0;
+      do {
+        int_parsed += parse_frame(parser, start_seq, start_seq_len, ret_buf, ret_len, ret_slice_cnt);
+      } while(int_parsed < 3);
+      return parsed_len;
+    }
   }
 
   while ((next_nal = seek_for_nal(inbuf+search_offset, inbuf_len-parsed_len-search_offset, parser)) >= 0) {
