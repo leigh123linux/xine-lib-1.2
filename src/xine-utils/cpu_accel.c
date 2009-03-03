@@ -41,6 +41,10 @@
 
 #include <xine/xineutils.h>
 
+#if defined(PIC) && ! defined(__PIC__)
+#define __PIC__
+#endif
+
 #if defined(__i386__) || defined(__x86_64__)
 
 #ifndef __x86_64__

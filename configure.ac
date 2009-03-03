@@ -1174,7 +1174,7 @@ OBJCFLAGS="$UNIVERSAL_CFLAGS $miscflags $warnflags $OBJCFLAGS"
 dnl Some informations about xine-lib compilation for xine-config
 XINE_BUILD_CC="`$CC -v 2>&1 | tail -1 2>/dev/null`"
 XINE_BUILD_OS="`uname -s -r -m`"
-XINE_BUILD_DATE="`date \"+%a %d %b %Y %T\"`"
+XINE_BUILD_DATE="`date "+%a %d %b %Y %T"`"
 AC_SUBST(XINE_BUILD_CC)
 AC_SUBST(XINE_BUILD_OS)
 AC_SUBST(XINE_BUILD_DATE)
