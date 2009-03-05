@@ -88,6 +88,11 @@ void free_parser(struct nal_parser *parser);
 int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
                 uint8_t **ret_buf, uint32_t *ret_len, uint32_t *ret_slice_cnt);
 
+/* this has to be called after decoding the frame delivered by parse_frame,
+ * but before adding a decoded frame to the dpb.
+ */
+void process_mmc_operations(struct nal_parser *parser);
+
 void parse_codec_private(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len);
 
 #endif

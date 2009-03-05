@@ -466,6 +466,8 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
   this->curr_pts = this->next_pts;
   this->next_pts = 0;
 
+  process_mmc_operations(this->nal_parser);
+
   if(status != VDP_STATUS_OK)
   {
     xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %s\n",  this->vdpau_accel->vdp_get_error_string(status));

@@ -1011,6 +1011,7 @@ void decode_ref_pic_marking(struct nal_unit *nal,
           dpb_set_unused_ref_picture_a(dpb, pic);
         else
           pic->top_is_reference = 0;
+
         //printf("FIXME: We might need do delete more from the DPB...\n");
         // FIXME: some more handling needed here?! See 8.2.5.4.1, p. 120
       }
@@ -1235,21 +1236,10 @@ void parse_codec_private(struct nal_parser *parser, uint8_t *inbuf, int inbuf_le
   printf("done parsing extradata\n");
 }
 
-
-int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
-    uint8_t **ret_buf, uint32_t *ret_len, uint32_t *ret_slice_cnt)
+void process_mmc_operations(struct nal_parser *parser)
 {
-  int32_t next_nal = 0;
-  int parsed_len = 0;
-  int search_offset = 0;
-  int start_seq_len = 3;
-  uint8_t completed_nal = 0;
-
-  if(parser->nal_size_length > 0)
-    start_seq_len = parser->nal_size_length-parser->have_nal_size_length_buf;
-
   if(parser->last_nal_res == 1 && parser->current_nal &&
-      parser->current_nal->slc) {
+        parser->current_nal->slc) {
     int i;
     for(i = 0; i < parser->current_nal->slc->dec_ref_pic_marking_count; i++) {
       decode_ref_pic_marking(
@@ -1264,6 +1254,19 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
           = parser->last_nal->slc->pic_order_cnt_lsb;
     parser->prev_pic_order_cnt_msb = parser->pic_order_cnt_msb;
   }
+}
+
+int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
+    uint8_t **ret_buf, uint32_t *ret_len, uint32_t *ret_slice_cnt)
+{
+  int32_t next_nal = 0;
+  int parsed_len = 0;
+  int search_offset = 0;
+  int start_seq_len = 3;
+  uint8_t completed_nal = 0;
+
+  if(parser->nal_size_length > 0)
+    start_seq_len = parser->nal_size_length-parser->have_nal_size_length_buf;
 
   /* seek for nal start sequences split across buffer boundaries */
   if(!parser->nal_size_length) {
@@ -1407,8 +1410,8 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
     parser->incomplete_nal = 1;
     xine_fast_memcpy(parser->prebuf + parser->prebuf_len, inbuf, inbuf_len-parsed_len);
     parser->prebuf_len += inbuf_len-parsed_len;
-    parsed_len += inbuf_len-parsed_len;
     inbuf += inbuf_len-parsed_len;
+    parsed_len += inbuf_len-parsed_len;
   }
 
   *ret_len = 0;
