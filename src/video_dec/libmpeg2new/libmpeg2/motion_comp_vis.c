@@ -26,10 +26,10 @@
 
 #include <inttypes.h>
 
-#include "mpeg2.h"
-#include <xine/attributes.h>
+#include "../include/mpeg2.h"
+#include "../include/attributes.h"
 #include "mpeg2_internal.h"
-#include "vis.h"
+#include "../include/vis.h"
 
 /* The trick used in some of this file is the formula from the MMX
  * motion comp code, which is:
