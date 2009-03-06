@@ -1754,6 +1754,7 @@ static void vdpau_reinit( vo_driver_t *this_gen )
     return;
   }
 
+  vdpau_set_deinterlace(this_gen);
   vdp_preemption_callback_register(vdp_device, &vdp_preemption_callback, (void*)this);
 
   this->vdp_runtime_nr++;
