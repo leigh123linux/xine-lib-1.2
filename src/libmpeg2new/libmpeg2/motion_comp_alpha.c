@@ -26,10 +26,10 @@
 
 #include <inttypes.h>
 
-#include "mpeg2.h"
-#include "attributes.h"
+#include "../include/mpeg2.h"
+#include "../include/attributes.h"
 #include "mpeg2_internal.h"
-#include "alpha_asm.h"
+#include "../include/alpha_asm.h"
 
 static inline uint64_t avg2 (uint64_t a, uint64_t b)
 {
