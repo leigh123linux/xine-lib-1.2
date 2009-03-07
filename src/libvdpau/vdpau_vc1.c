@@ -719,7 +719,7 @@ static void decode_render( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel, uint8_
     vbit.bitstream_bytes = len-pic->field-4;
     st = accel->vdp_decoder_render( vd->decoder, accel->surface, (VdpPictureInfo*)&pic->vdp_infos, 1, &vbit );
     if ( st!=VDP_STATUS_OK )
-      lprintf( "decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
+      printf( "vdpau_vc1: decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
     else {
       lprintf( "DECODER SUCCESS (second field): slices=%d, slices_bytes=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
                 pic->vdp_infos.slice_count, vbit.bitstream_bytes, accel->surface, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->seq_pts );
