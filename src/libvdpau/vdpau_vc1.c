@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2008 the xine project
  * Copyright (C) 2008 Christophe Thommeret <hftom@free.fr>
  *
  * This file is part of xine, a free video player.
@@ -434,8 +435,9 @@ static void picture_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len
   if ( info->finterpflag )
     ++off;
   if ( info->rangered ) {
-    info->rangered &= ~2;
-    info->rangered |= get_bits( buf,off++,1 ) << 1;
+    /*info->rangered &= ~2;
+    info->rangered |= get_bits( buf,off++,1 ) << 1;*/
+    info->rangered = (get_bits( buf,off++,1 ) << 1) +1;
   }
   if ( !info->maxbframes ) {
     if ( get_bits( buf,off++,1 ) )
@@ -494,7 +496,7 @@ static void picture_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *buf
       }
     }
   }
-  if ( info->frame_coding_mode == PICTURE_FIELD_INTERLACE ) {
+  if ( info->interlace && info->frame_coding_mode == PICTURE_FIELD_INTERLACE ) {
     pic->fptype = get_bits(buf,off,3);
     switch ( pic->fptype ) {
       case FIELDS_I_I:
@@ -570,10 +572,6 @@ static void remove_emulation_prevention( uint8_t *src, uint8_t *dst, int src_len
   int len = 0;
   int removed = 0;
 
-  /*for ( i=0; i<src_len; ++i )
-    printf("%02X ", src[i]);
-  printf("\n");*/
-
   for ( i=0; i<src_len-3; ++i ) {
     if ( src[i]==0 && src[i+1]==0 && src[i+2]==3 ) {
       lprintf("removed emulation prevention byte\n");
@@ -590,10 +588,6 @@ static void remove_emulation_prevention( uint8_t *src, uint8_t *dst, int src_len
   for ( ; i<src_len; ++i )
     dst[len++] = src[i];
   *dst_len = src_len-removed;
-
-  /*for ( i=0; i<*dst_len; ++i )
-    printf("%02X ", dst[i]);
-  printf("\n");*/
 }
 
 
@@ -672,7 +666,7 @@ static void decode_render( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel, uint8_
     }
     st = accel->vdp_decoder_create( accel->vdp_device, seq->profile, seq->coded_width, seq->coded_height, 2, &vd->decoder);
     if ( st!=VDP_STATUS_OK )
-      lprintf( "failed to create decoder !! %s\n", accel->vdp_get_error_string( st ) );
+      printf( "vdpau_vc1: failed to create decoder !! %s\n", accel->vdp_get_error_string( st ) );
     else {
       lprintf( "decoder created.\n" );
       vd->decoder_profile = seq->profile;
@@ -690,15 +684,16 @@ static void decode_render( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel, uint8_
     vbit.bitstream_bytes = pic->field;
   st = accel->vdp_decoder_render( vd->decoder, accel->surface, (VdpPictureInfo*)&pic->vdp_infos, 1, &vbit );
   if ( st!=VDP_STATUS_OK )
-    lprintf( "decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
+    printf( "vdpau_vc1: decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
   else {
     lprintf( "DECODER SUCCESS : slices=%d, slices_bytes=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
               pic->vdp_infos.slice_count, vbit.bitstream_bytes, accel->surface, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->seq_pts );
-    int i;
-    /*for ( i=0; i<20; ++i )
-      printf("%02X ", buf[i]);
-    printf("\n");*/
   }
+  VdpPictureInfoVC1 *info = &(seq->picture.vdp_infos);
+  lprintf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", info->slice_count, info->picture_type, info->frame_coding_mode,
+           info->postprocflag, info->pulldown, info->interlace, info->tfcntrflag, info->finterpflag, info->psf, info->dquant, info->panscan_flag, info->refdist_flag,
+           info->quantizer, info->extended_mv, info->extended_dmv, info->overlap, info->vstransform, info->loopfilter, info->fastuvmc, info->range_mapy_flag, info->range_mapy,
+           info->range_mapuv_flag, info->range_mapuv, info->multires, info->syncmarker, info->rangered, info->maxbframes, info->deblockEnable, info->pquant );
 
   if ( pic->field ) {
     int old_type = pic->vdp_infos.picture_type;
@@ -726,15 +721,14 @@ static void decode_render( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel, uint8_
     if ( st!=VDP_STATUS_OK )
       lprintf( "decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
     else {
-      lprintf( "DECODER SUCCESS : slices=%d, slices_bytes=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
+      lprintf( "DECODER SUCCESS (second field): slices=%d, slices_bytes=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
                 pic->vdp_infos.slice_count, vbit.bitstream_bytes, accel->surface, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->seq_pts );
-      int i;
-    /*for ( i=0; i<20; ++i )
-      printf("%02X ", buf[pic->field+4+i] );
-    printf("\n");*/
     }
     VdpPictureInfoVC1 *info = &(seq->picture.vdp_infos);
-    lprintf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n\n", info->slice_count, info->picture_type, info->frame_coding_mode, info->postprocflag, info->pulldown, info->interlace, info->tfcntrflag, info->finterpflag, info->psf, info->dquant, info->panscan_flag, info->refdist_flag, info->quantizer, info->extended_mv, info->extended_dmv, info->overlap, info->vstransform, info->loopfilter, info->fastuvmc, info->range_mapy_flag, info->range_mapy, info->range_mapuv_flag, info->range_mapuv, info->multires, info->syncmarker, info->rangered, info->maxbframes, info->deblockEnable, info->pquant );
+    lprintf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", info->slice_count, info->picture_type, info->frame_coding_mode,
+             info->postprocflag, info->pulldown, info->interlace, info->tfcntrflag, info->finterpflag, info->psf, info->dquant, info->panscan_flag, info->refdist_flag,
+             info->quantizer, info->extended_mv, info->extended_dmv, info->overlap, info->vstransform, info->loopfilter, info->fastuvmc, info->range_mapy_flag, info->range_mapy,
+             info->range_mapuv_flag, info->range_mapuv, info->multires, info->syncmarker, info->rangered, info->maxbframes, info->deblockEnable, info->pquant );
 
     pic->vdp_infos.picture_type = old_type;
   }
@@ -805,9 +799,6 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
     else
       pic->field = field;
   }
-
-  VdpPictureInfoVC1 *info = &(seq->picture.vdp_infos);
-  lprintf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n\n", info->slice_count, info->picture_type, info->frame_coding_mode, info->postprocflag, info->pulldown, info->interlace, info->tfcntrflag, info->finterpflag, info->psf, info->dquant, info->panscan_flag, info->refdist_flag, info->quantizer, info->extended_mv, info->extended_dmv, info->overlap, info->vstransform, info->loopfilter, info->fastuvmc, info->range_mapy_flag, info->range_mapy, info->range_mapuv_flag, info->range_mapuv, info->multires, info->syncmarker, info->rangered, info->maxbframes, info->deblockEnable, info->pquant );
 
   pic->vdp_infos.forward_reference = VDP_INVALID_HANDLE;
   pic->vdp_infos.backward_reference = VDP_INVALID_HANDLE;
@@ -949,10 +940,6 @@ static void vdpau_vc1_decode_data (video_decoder_t *this_gen, buf_element_t *buf
       seq->mode = MODE_FRAME;
       parse_header( this, buf->content+bs, buf->size-bs );
     }
-    int i;
-    /*for ( i=0; i<buf->size; ++i )
-      printf("%02X ", buf->content[i] );
-    printf("\n\n");*/
     return;
   }
 
