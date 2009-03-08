@@ -3,7 +3,11 @@ include $(top_srcdir)/misc/Makefile.common
 
 SUBDIRS = include libmpeg2
 
-xineplug_LTLIBRARIES = xineplug_decode_mpeg2new.la
+if ENABLE_MPEG2NEW
+mpeg2new_module = xineplug_decode_mpeg2new.la
+endif
+
+xineplug_LTLIBRARIES = $(mpeg2new_module)
 
 xineplug_decode_mpeg2new_la_SOURCES = \
 	xine_mpeg2new_decoder.c

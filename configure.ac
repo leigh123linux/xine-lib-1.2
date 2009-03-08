@@ -323,6 +323,10 @@ dnl ---------------------------------------------
 
 AC_SUBST(LIBMPEG2_CFLAGS)
 
+AC_ARG_ENABLE([libmpeg2new],
+	AS_HELP_STRING([--enable-libmpeg2new], [build the newer MPEG2 decoder (buggy)]))
+AM_CONDITIONAL(ENABLE_MPEG2NEW, test "x$enable_libmpeg2new" = "xyes")
+
 AC_ARG_WITH([external-ffmpeg], AS_HELP_STRING([--with-external-ffmpeg], [use external ffmpeg library]))
 
 case "x$with_external_ffmpeg" in
