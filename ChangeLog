@@ -5,6 +5,7 @@ xine-lib (1.1.17) 2009-??-??
   * Fix a build failure on *BSD due to some rather useful GNUisms.
   * Protect audio loop so it cannot write to a paused device (fix
     pause/resume freeze with pulseaudio).
+  * Fix build with libavutil >= 50.0.0.
 
 xine-lib (1.1.16.2) 2009-02-10
   * Build fixes related to ImageMagick 6.4 & later.
