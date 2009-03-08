@@ -1740,7 +1740,6 @@ static void vdpau_reinit( vo_driver_t *this_gen )
   this->argb_overlay_width = this->argb_overlay_height = 0;
   this->has_argb_overlay = 0;
 
-  this->video_mixer_chroma = chroma;
   VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION, VDP_VIDEO_MIXER_FEATURE_SHARPNESS,
         VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL };
   VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
@@ -1753,8 +1752,14 @@ static void vdpau_reinit( vo_driver_t *this_gen )
     vdp_output_surface_destroy( this->output_surface[1] );
     return;
   }
+  this->video_mixer_chroma = chroma;
+  vdpau_set_deinterlace( this_gen );
+  vdpau_set_inverse_telecine( this_gen );
+  vdpau_update_noise( this );
+  vdpau_update_sharpness( this );
+  vdpau_update_csc( this );
+  vdpau_update_skip_chroma( this );
 
-  vdpau_set_deinterlace(this_gen);
   vdp_preemption_callback_register(vdp_device, &vdp_preemption_callback, (void*)this);
 
   this->vdp_runtime_nr++;
