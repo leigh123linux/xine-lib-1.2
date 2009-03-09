@@ -1417,7 +1417,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       }
 
       input->seek(input, 0, SEEK_SET);
-      if (input->read(input, this->scratch, this->blocksize) == this->blocksize) {
+      memset (this->scratch, 255, 5); /* result of input->read() won't matter */
+      if (input->read(input, this->scratch, this->blocksize)) {
 	lprintf("open_plugin:read worked\n");
 
         if (this->scratch[0] || this->scratch[1]
