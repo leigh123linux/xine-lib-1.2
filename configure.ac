@@ -353,6 +353,10 @@ if test "x$with_external_ffmpeg" != "xno"; then
    dnl Check presence of ffmpeg/avutil.h to see if it's old or new
    dnl style for headers. The new style would be preferred actually...
    AC_CHECK_HEADERS([ffmpeg/avutil.h])
+   AC_CHECK_HEADERS([libavutil/avutil.h])
+   if test "$ac_cv_header_ffmpeg_avutil_h" = "yes" && test "$ac_cv_header_libavutil_avutil_h" = "yes"; then
+     AC_MSG_ERROR([old & new ffmpeg headers found - you need to clean up!])
+   fi
    
    AC_MSG_RESULT([using external ffmpeg])
 else
