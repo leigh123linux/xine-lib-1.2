@@ -215,6 +215,7 @@ typedef struct {
   int                  num_driver_actions; /* number of threads, that wish to call
                                             * functions needing driver_lock */
   pthread_mutex_t      driver_action_lock; /* protects num_driver_actions */
+  pthread_cond_t       driver_action_cond; /* informs about num_driver_actions-- */
 
   metronom_clock_t    *clock;
   xine_t              *xine;
@@ -1283,8 +1284,15 @@ static void *ao_loop (void *this_gen) {
     /* Give other threads a chance to use functions which require this->driver_lock to
      * be available. This is needed when using NPTL on Linux (and probably PThreads
      * on Solaris as well). */
-    if (this->num_driver_actions > 0)
-      sched_yield();
+    if (this->num_driver_actions > 0) {
+      /* calling sched_yield() is not sufficient on multicore systems */
+      /* sched_yield(); */
+      /* instead wait for the other thread to acquire this->driver_lock */
+      pthread_mutex_lock(&this->driver_action_lock);
+      if (this->num_driver_actions > 0)
+        pthread_cond_wait(&this->driver_action_cond, &this->driver_action_lock);
+      pthread_mutex_unlock(&this->driver_action_lock);
+    }
   }
 
   if (in_buf) {
@@ -1475,6 +1483,8 @@ static inline void dec_num_driver_actions(aos_t *this) {
 
   pthread_mutex_lock(&this->driver_action_lock);
   this->num_driver_actions--;
+  /* indicate the change to ao_loop() */
+  pthread_cond_broadcast(&this->driver_action_cond);
   pthread_mutex_unlock(&this->driver_action_lock);
 }
 
@@ -1677,6 +1687,7 @@ static void ao_exit(xine_audio_port_t *this_gen) {
   }
 
   pthread_mutex_destroy(&this->driver_lock);
+  pthread_cond_destroy(&this->driver_action_cond);
   pthread_mutex_destroy(&this->driver_action_lock);
   pthread_mutex_destroy(&this->streams_lock);
   xine_list_delete(this->streams);
@@ -2081,6 +2092,7 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
   pthread_mutex_init( &this->streams_lock, NULL );
   pthread_mutex_init( &this->driver_lock, &attr );
   pthread_mutex_init( &this->driver_action_lock, NULL );
+  pthread_cond_init( &this->driver_action_cond, NULL );
 
   this->ao.open                   = ao_open;
   this->ao.get_buffer             = ao_get_buffer;
