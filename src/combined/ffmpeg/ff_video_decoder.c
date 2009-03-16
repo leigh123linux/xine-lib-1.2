@@ -579,7 +579,7 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
       img->width,
       this->bih.biHeight);
 
-  } else if (this->context->pix_fmt == PIX_FMT_RGBA32) {
+  } else if (this->context->pix_fmt == PIX_FMT_RGB32) {
           
     int x, plane_ptr = 0;
     uint32_t *argb_pixels;
@@ -1287,7 +1287,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
 
 	  /* initialize the colorspace converter */
 	  if (!this->cs_convert_init) {
-	    if ((this->context->pix_fmt == PIX_FMT_RGBA32) ||
+	    if ((this->context->pix_fmt == PIX_FMT_RGB32) ||
 	        (this->context->pix_fmt == PIX_FMT_RGB565) ||
 	        (this->context->pix_fmt == PIX_FMT_RGB555) ||
 	        (this->context->pix_fmt == PIX_FMT_BGR24) ||

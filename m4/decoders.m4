@@ -93,7 +93,11 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
 	dnl Check presence of ffmpeg/avutil.h to see if it's old or new
 	dnl style for headers. The new style would be preferred actually...
 	AC_CHECK_HEADERS([ffmpeg/avutil.h])
-   
+	AC_CHECK_HEADERS([libavutil/avutil.h])
+	if test "$ac_cv_header_ffmpeg_avutil_h" = "yes" && test "$ac_cv_header_libavutil_avutil_h" = "yes"; then
+	    AC_MSG_ERROR([old & new ffmpeg headers found - you need to clean up!])
+	fi
+
     dnl gdk-pixbuf (optional; enabled by default)
     AC_ARG_ENABLE([gdkpixbuf],
                   [AS_HELP_STRING([--enable-gdkpixbuf], [Enable GdkPixbuf support (default: enabled)])],
@@ -284,6 +288,12 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
         fi
     fi
     AM_CONDITIONAL([ENABLE_MODPLUG], [test x"$have_modplug" = x"yes"])
+
+
+    dnl libmpeg2new (optional; disabled by default)
+    AC_ARG_ENABLE([libmpeg2new],
+	AS_HELP_STRING([--enable-libmpeg2new], [build the newer MPEG2 decoder (buggy)]))
+    AM_CONDITIONAL([ENABLE_MPEG2NEW], [test "x$enable_libmpeg2new" = "xyes"])
 
 
     dnl libmpcdec (optional; enabled by default; external version allowed)
