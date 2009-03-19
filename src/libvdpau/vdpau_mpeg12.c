@@ -201,23 +201,38 @@ static void init_picture( picture_t *pic )
 
 
 
-static void reset_sequence( sequence_t *sequence )
+static void reset_sequence( sequence_t *sequence, int free_refs )
 {
-  lprintf( "reset_sequence\n" );
-  sequence->have_header = 0;
   sequence->bufpos = 0;
   sequence->bufseek = 0;
   sequence->start = -1;
-	sequence->seq_pts = sequence->cur_pts = 0;
-  sequence->profile = VDP_DECODER_PROFILE_MPEG1;
-  sequence->chroma = 0;
-	sequence->video_step = 3600;
+  sequence->seq_pts = sequence->cur_pts = 0;
+  if ( sequence->forward_ref )
+    sequence->forward_ref->pts = 0;
+  if ( sequence->backward_ref )
+    sequence->backward_ref->pts = 0;
+
+  if ( !free_refs )
+    return;
+
   if ( sequence->forward_ref )
     sequence->forward_ref->free( sequence->forward_ref );
   sequence->forward_ref = NULL;
   if ( sequence->backward_ref )
     sequence->backward_ref->free( sequence->backward_ref );
   sequence->backward_ref = NULL;
+}
+
+
+
+static void free_sequence( sequence_t *sequence )
+{
+  lprintf( "init_sequence\n" );
+  sequence->have_header = 0;
+  sequence->profile = VDP_DECODER_PROFILE_MPEG1;
+  sequence->chroma = 0;
+	sequence->video_step = 3600;
+  reset_sequence( sequence, 1 );
 }
 
 
@@ -496,8 +511,10 @@ static int parse_code( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int len )
 {
   sequence_t *sequence = (sequence_t*)&this_gen->sequence;
 
-  if ( !sequence->have_header && buf[3]!=sequence_header_code )
+  if ( !sequence->have_header && buf[3]!=sequence_header_code ) {
+    lprintf( " ----------- no sequence header yet.\n" );
     return 0;
+  }
 
   if ( (buf[3] >= begin_slice_start_code) && (buf[3] <= end_slice_start_code) ) {
     lprintf( " ----------- slice_start_code\n" );
@@ -732,6 +749,10 @@ static void vdpau_mpeg12_decode_data (video_decoder_t *this_gen, buf_element_t *
   vdpau_mpeg12_decoder_t *this = (vdpau_mpeg12_decoder_t *) this_gen;
   sequence_t *seq = (sequence_t*)&this->sequence;
 
+  /* preview buffers shall not be decoded and drawn -- use them only to supply stream information */
+  if (buf->decoder_flags & BUF_FLAG_PREVIEW)
+    return;
+
   if ( !buf->size )
     return;
 
@@ -794,7 +815,7 @@ static void vdpau_mpeg12_reset (video_decoder_t *this_gen) {
   vdpau_mpeg12_decoder_t *this = (vdpau_mpeg12_decoder_t *) this_gen;
 
   lprintf( "vdpau_mpeg12_reset\n" );
-  reset_sequence( &this->sequence );
+  reset_sequence( &this->sequence, 1 );
 }
 
 /*
@@ -804,8 +825,7 @@ static void vdpau_mpeg12_discontinuity (video_decoder_t *this_gen) {
   vdpau_mpeg12_decoder_t *this = (vdpau_mpeg12_decoder_t *) this_gen;
 
   lprintf( "vdpau_mpeg12_discontinuity\n" );
-  reset_sequence( &this->sequence );
-
+  reset_sequence( &this->sequence, 0 );
 }
 
 /*
@@ -822,7 +842,7 @@ static void vdpau_mpeg12_dispose (video_decoder_t *this_gen) {
       this->decoder = VDP_INVALID_HANDLE;
     }
 
-  reset_sequence( &this->sequence );
+  free_sequence( &this->sequence );
 
   this->stream->video_out->close( this->stream->video_out, this->stream );
 
@@ -875,7 +895,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->sequence.forward_ref = 0;
   this->sequence.backward_ref = 0;
   this->sequence.vdp_runtime_nr = runtime_nr;
-  reset_sequence( &this->sequence );
+  free_sequence( &this->sequence );
   this->sequence.ratio = 1;
 
   init_picture( &this->sequence.picture );
