@@ -353,6 +353,13 @@ static int vdpau_decoder_init(video_decoder_t *this_gen)
   img->duration = this->video_step;
   img->pts = this->curr_pts;
 
+  if (this->dangling_img) {
+    fprintf(stderr, "broken stream: current img wasn't processed -- freeing it\n!");
+    this->dangling_img->free(this->dangling_img);
+  }
+  this->dangling_img = img;
+  this->last_img = img;
+
   this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
 
   /*VdpBool is_supported;
@@ -370,9 +377,6 @@ static int vdpau_decoder_init(video_decoder_t *this_gen)
      return 0;
    }
   }
-  this->last_img = img;
-  this->dangling_img = img;
-
   return 1;
 }
 
@@ -438,6 +442,10 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
     img->duration  = this->video_step;
     img->pts       = this->curr_pts;
 
+    if (this->dangling_img) {
+      fprintf(stderr, "broken stream: current img wasn't processed -- freeing it\n!");
+      this->dangling_img->free(this->dangling_img);
+    }
     this->dangling_img = img;
   }
 
@@ -446,8 +454,6 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
     this->decoder = VDP_INVALID_HANDLE;
     vdpau_h264_reset(this_gen);
     this->vdp_runtime_nr = this->vdpau_accel->vdp_runtime_nr;
-    img->free(img);
-    img = this->last_img = NULL;
     return 0;
   }
 
@@ -471,7 +477,8 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
   if(status != VDP_STATUS_OK)
   {
     xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %s\n",  this->vdpau_accel->vdp_get_error_string(status));
-    img->free(img);
+    if (this->dangling_img)
+      this->dangling_img->free(this->dangling_img);
     img = this->last_img = this->dangling_img = NULL;
   }
   else {
@@ -700,6 +707,8 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
     this->dangling_img->free(this->dangling_img);
     this->dangling_img = NULL;
   }
+
+  this->last_img = NULL;
 }
 
 /*
@@ -724,7 +733,6 @@ static void vdpau_h264_dispose (video_decoder_t *this_gen) {
     this->dangling_img->free(this->dangling_img);
     this->dangling_img = NULL;
   }
-
 
   dpb_free_all( &(this->nal_parser->dpb) );
 

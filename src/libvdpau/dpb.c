@@ -240,6 +240,31 @@ int dpb_remove_picture(struct dpb *dpb, struct decoded_picture *rempic)
   return -1;
 }
 
+static int dpb_remove_picture_by_img(struct dpb *dpb, vo_frame_t *remimg)
+{
+  struct decoded_picture *pic = dpb->pictures;
+  struct decoded_picture *last_pic = NULL;
+
+  if (pic != NULL)
+    do {
+      if (pic->img == remimg) {
+        // FIXME: free the picture....
+
+        if (last_pic != NULL)
+          last_pic->next = pic->next;
+        else
+          dpb->pictures = pic->next;
+        free_decoded_picture(pic);
+        dpb->used--;
+        return 0;
+      }
+
+      last_pic = pic;
+    } while ((pic = pic->next) != NULL);
+
+  return -1;
+}
+
 int dpb_remove_picture_by_picnum(struct dpb *dpb, uint32_t picnum)
 {
   struct decoded_picture *pic = dpb->pictures;
@@ -259,6 +284,12 @@ int dpb_remove_picture_by_picnum(struct dpb *dpb, uint32_t picnum)
 
 int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_ref_frames)
 {
+  pic->img->lock(pic->img);
+  if (0 == dpb_remove_picture_by_img(dpb, pic->img))
+    fprintf(stderr, "broken stream: current img was already in dpb -- freed it\n");
+  else
+    pic->img->free(pic->img);
+
   int i = 0;
   struct decoded_picture *last_pic = dpb->pictures;
 
