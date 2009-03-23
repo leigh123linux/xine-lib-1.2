@@ -303,11 +303,12 @@ void calculate_pic_order(struct nal_parser *parser)
     if(!slc->field_pic_flag || !slc->bottom_field_flag)
       nal->top_field_order_cnt = parser->pic_order_cnt_msb + slc->pic_order_cnt_lsb;
 
+    nal->bottom_field_order_cnt = 0;
+
     if(!slc->field_pic_flag)
       nal->bottom_field_order_cnt = nal->top_field_order_cnt + slc->delta_pic_order_cnt_bottom;
-    else
+    else if(slc->bottom_field_flag)
       nal->bottom_field_order_cnt = parser->pic_order_cnt_msb + slc->pic_order_cnt_lsb;
-
 
   } else if (sps->pic_order_cnt_type == 2) {
     uint32_t prev_frame_num = parser->last_nal->slc->frame_num;
@@ -1007,10 +1008,10 @@ void decode_ref_pic_marking(struct nal_unit *nal,
       if (pic->nal->slc->field_pic_flag == 0) {
         dpb_set_unused_ref_picture_a(dpb, pic);
       } else {
-        if(!pic->top_is_reference)
+        //if(!pic->top_is_reference)
           dpb_set_unused_ref_picture_a(dpb, pic);
-        else
-          pic->top_is_reference = 0;
+        /*else
+          pic->top_is_reference = 0;*/
 
         //printf("FIXME: We might need do delete more from the DPB...\n");
         // FIXME: some more handling needed here?! See 8.2.5.4.1, p. 120

@@ -249,7 +249,7 @@ static void fill_vdpau_pictureinfo_h264(video_decoder_t *this_gen, uint32_t slic
   pic->field_pic_flag = slc->field_pic_flag;
   pic->bottom_field_flag = slc->bottom_field_flag;
   pic->num_ref_frames = sps->num_ref_frames;
-  pic->mb_adaptive_frame_field_flag = sps->mb_adaptive_frame_field_flag;
+  pic->mb_adaptive_frame_field_flag = sps->mb_adaptive_frame_field_flag && !slc->field_pic_flag;
   pic->constrained_intra_pred_flag = pps->constrained_intra_pred_flag;
   pic->weighted_pred_flag = pps->weighted_pred_flag;
   pic->weighted_bipred_idc = pps->weighted_bipred_idc;
