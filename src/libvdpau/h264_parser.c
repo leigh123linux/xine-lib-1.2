@@ -1287,17 +1287,24 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
      * sequences and strip incomplete start seq parts from the buffer
      * before.
      */
+
     if(parsed_len > 0) {
       static const uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
       parser->prebuf_len -= start_seq_len - parsed_len;
 
-      /* loop this until the start_seq was really parsed, else it might
-       * be dropped in case we are just at a frame boundary
+      /* if we are just at a frame boundary the sequence wouldn't
+       * be taken over but we would just be notified about a new
+       * completed frame.
+       * so in this case we have to send the start sequence another
+       * time to get it into the prebuf again.
        */
-      int int_parsed = 0;
-      do {
-        int_parsed += parse_frame(parser, start_seq, start_seq_len, ret_buf, ret_len, ret_slice_cnt);
-      } while(int_parsed < 3);
+      uint8_t *tmp_ret_buf;
+      uint32_t tmp_ret_len;
+      uint32_t tmp_slice_cnt;
+
+      if(parse_frame(parser, start_seq, start_seq_len, ret_buf, ret_len, ret_slice_cnt) == 0)
+        parse_frame(parser, start_seq, start_seq_len, &tmp_ret_buf, &tmp_ret_len, &tmp_slice_cnt);
+
       return parsed_len;
     }
   }
