@@ -379,7 +379,19 @@ static const char *get_extensions (demux_class_t *this_gen) {
 }
 
 static const char *get_mimetypes (demux_class_t *this_gen) {
-  return NULL;
+  return "audio/x-mod: mod: SoundTracker/NoiseTracker/ProTracker Module;"
+         "audio/mod: mod: SoundTracker/NoiseTracker/ProTracker Module;"
+         "audio/it: it: ImpulseTracker Module;"
+         "audio/x-it: it: ImpulseTracker Module;"
+         "audio/x-stm: stm: ScreamTracker 2 Module;"
+         "audio/x-s3m: s3m: ScreamTracker 3 Module;"
+         "audio/s3m: s3m: ScreamTracker 3 Module;"
+         "application/playerpro: 669: 669 Tracker Module;"
+         "application/adrift; amf: ADRIFT Module File;"
+         "audio/med; med; Amiga MED/OctaMED Tracker Module Sound File;"
+         "audio/x-amf; amf: ADRIFT Module File;"
+         "audio/x-xm; xm: FastTracker II Audio;"
+         "audio/xm; xm: FastTracker II Audio;";
 }
 
 static void class_dispose (demux_class_t *this_gen) {
