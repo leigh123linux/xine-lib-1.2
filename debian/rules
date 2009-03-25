@@ -144,6 +144,8 @@ binary-arch: build install
 	mv debian/tmp/usr/share/doc/xine-lib debian/tmp/usr/share/doc/libxine${major}
 #	build libxine${major} package by moving files from libxine-dev
 	dh_install --autodest --sourcedir=debian/tmp --list-missing
+	install -m755 debian/dh_xine debian/libxine-dev/usr/bin
+	dh_installman -plibxine-dev debian/dh_xine.1
 	dh_installdocs
 	dh_installchangelogs -k ChangeLog
 	dh_link
