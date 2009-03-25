@@ -357,7 +357,20 @@ static void *demux_mod_init_plugin (xine_t *xine, void *data) {
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.description     = N_("ModPlug Amiga MOD Music file demux plugin");
   this->demux_class.identifier      = "mod";
-  this->demux_class.mimetypes       = NULL;
+  this->demux_class.mimetypes       =
+	 "audio/x-mod: mod: SoundTracker/NoiseTracker/ProTracker Module;"
+         "audio/mod: mod: SoundTracker/NoiseTracker/ProTracker Module;"
+         "audio/it: it: ImpulseTracker Module;"
+         "audio/x-it: it: ImpulseTracker Module;"
+         "audio/x-stm: stm: ScreamTracker 2 Module;"
+         "audio/x-s3m: s3m: ScreamTracker 3 Module;"
+         "audio/s3m: s3m: ScreamTracker 3 Module;"
+         "application/playerpro: 669: 669 Tracker Module;"
+         "application/adrift; amf: ADRIFT Module File;"
+         "audio/med; med; Amiga MED/OctaMED Tracker Module Sound File;"
+         "audio/x-amf; amf: ADRIFT Module File;"
+         "audio/x-xm; xm: FastTracker II Audio;"
+         "audio/xm; xm: FastTracker II Audio;";
   this->demux_class.extensions      = "mod it stm s3m 669 amf med mdl xm";
   this->demux_class.dispose         = default_demux_class_dispose;
 

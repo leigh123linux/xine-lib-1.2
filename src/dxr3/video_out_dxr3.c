@@ -21,7 +21,7 @@
 /* mpeg1 encoding video out plugin for the dxr3.  
  *
  * modifications to the original dxr3 video out plugin by 
- * Mike Lampard <mike at web2u.com.au>
+ * Mike Lampard <mlampard at users.sourceforge.net>
  * this first standalone version by 
  * Harm van der Heijden <hrm at users.sourceforge.net>
  */
