@@ -91,6 +91,7 @@ struct ff_video_decoder_s {
   int               pts_tag_stable_counter;
 #endif /* AVCODEC_HAS_REORDERED_OPAQUE */
   int               video_step;
+  int               reported_video_step;
 
   uint8_t           decoder_ok:1;
   uint8_t           decoder_init_mode:1;
@@ -1381,7 +1382,10 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
           /* fallback to the VIDEO_PTS_MODE */
           video_step_to_use = 0;
         }
-        
+
+        if (video_step_to_use && video_step_to_use != this->reported_video_step)
+          _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, (this->reported_video_step = video_step_to_use));
+
         if (this->av_frame->repeat_pict)
           img->duration = video_step_to_use * 3 / 2;
         else
@@ -1445,7 +1449,7 @@ static void ff_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 
   if (buf->decoder_flags & BUF_FLAG_FRAMERATE) {
     this->video_step = buf->decoder_info[0];
-    _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->video_step);
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, (this->reported_video_step = this->video_step));
   }
 
   if (buf->decoder_flags & BUF_FLAG_PREVIEW) {
