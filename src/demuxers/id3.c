@@ -373,7 +373,7 @@ static int id3v22_parse_tag(input_plugin_t *input,
     while ((pos + ID3V22_FRAME_HEADER_SIZE) <= tag_header.size) {
       if (id3v22_parse_frame_header(input, &tag_frame_header)) {
         pos += ID3V22_FRAME_HEADER_SIZE;
-        if (tag_frame_header.id && tag_frame_header.size) {
+        if (tag_frame_header.id) {
           if ((pos + tag_frame_header.size) <= tag_header.size) {
             if (!id3v22_interp_frame(input, stream, &tag_frame_header)) {
               xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
@@ -570,7 +570,7 @@ static int id3v23_parse_tag(input_plugin_t *input,
     while ((pos + ID3V23_FRAME_HEADER_SIZE) <= tag_header.size) {
       if (id3v23_parse_frame_header(input, &tag_frame_header)) {
         pos += ID3V23_FRAME_HEADER_SIZE;
-        if (tag_frame_header.id && tag_frame_header.size) {
+        if (tag_frame_header.id) {
           if ((pos + tag_frame_header.size) <= tag_header.size) {
             if (!id3v23_interp_frame(input, stream, &tag_frame_header)) {
               xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
@@ -826,7 +826,7 @@ static int id3v24_parse_tag(input_plugin_t *input,
     while ((pos + ID3V24_FRAME_HEADER_SIZE) <= tag_header.size) {
       if (id3v24_parse_frame_header(input, &tag_frame_header)) {
         pos += ID3V24_FRAME_HEADER_SIZE;
-        if (tag_frame_header.id && tag_frame_header.size) {
+        if (tag_frame_header.id) {
           if ((pos + tag_frame_header.size) <= tag_header.size) {
             if (!id3v24_interp_frame(input, stream, &tag_frame_header)) {
               xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 

@@ -8,6 +8,7 @@ xine-lib (1.1.17) 2009-??-??
   * Fix build with libavutil >= 50.0.0.
   * Fix segfaults when playing VCDs.
   * Fix calculation of frame duration for ffmpeg-decoded formats.
+  * Don't assume that ID3v2 tags with no content mean "end of ID3 data".
 
 xine-lib (1.1.16.2) 2009-02-10
   * Build fixes related to ImageMagick 6.4 & later.
