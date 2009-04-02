@@ -225,6 +225,11 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
 
   av_frame->type= FF_BUFFER_TYPE_USER;
 
+#ifdef AVCODEC_HAS_REORDERED_OPAQUE
+  /* take over pts for this frame to have it reordered */
+  av_frame->reordered_opaque = context->reordered_opaque;
+#endif
+
   xine_list_push_back(this->dr1_frames, av_frame);
 
   return 0;
