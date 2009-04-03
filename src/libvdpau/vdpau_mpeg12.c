@@ -137,7 +137,7 @@ typedef struct {
   vo_frame_t  *forward_ref;
   vo_frame_t  *backward_ref;
 
-  int64_t    cur_pts;
+  int64_t    cur_pts, seq_pts;
 
   vdpau_accel_t *accel_vdpau;
 
@@ -205,7 +205,7 @@ static void reset_sequence( sequence_t *sequence, int free_refs )
   sequence->bufpos = 0;
   sequence->bufseek = 0;
   sequence->start = -1;
-  sequence->cur_pts = 0;
+  sequence->cur_pts = sequence->seq_pts = 0;
   if ( sequence->forward_ref )
     sequence->forward_ref->pts = 0;
   if ( sequence->backward_ref )
@@ -262,6 +262,10 @@ static void sequence_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int
   sequence_t *sequence = (sequence_t*)&this_gen->sequence;
 
   int i, j, off=0;
+
+  if ( sequence->cur_pts ) {
+    sequence->seq_pts = sequence->cur_pts;
+  }
 
   sequence->coded_width = get_bits( buf,0,12 );
   lprintf( "coded_width: %d\n", get_bits( buf,0,12 ) );
@@ -342,6 +346,10 @@ static void picture_header( sequence_t *sequence, uint8_t *buf, int len )
 {
   if ( sequence->picture.state!=WANT_HEADER )
     return;
+
+  if ( sequence->cur_pts ) {
+    sequence->seq_pts = sequence->cur_pts;
+  }
 
   if ( sequence->profile==VDP_DECODER_PROFILE_MPEG1 )
     sequence->picture.vdp_infos.picture_structure = PICTURE_FRAME;
@@ -696,7 +704,7 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
   decode_render( vd, accel );
 
   img->drawn = 0;
-  img->pts = seq->cur_pts;
+  img->pts = (pic->vdp_infos.picture_coding_type==I_FRAME) ? seq->seq_pts : 0;
   img->bad_frame = 0;
   img->duration = seq->video_step;
   img->top_field_first = pic->vdp_infos.top_field_first;
