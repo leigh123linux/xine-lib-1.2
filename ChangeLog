@@ -68,7 +68,11 @@ xine-lib (1.1.90) (Unreleased)
   * Report more video output capabilities via (port)->get_capabilities():
     colour controls, zooming, colour keying.
 
-xine-lib (1.1.17) 2009-??-??
+xine-lib (1.1.16.3) 2009-04-03
+  * Security fixes:
+    - Fix another possible int overflow in the 4XM demuxer.
+      (ref. TKADV2009-004, CVE-2009-0385)
+    - Fix an integer overflow in the Quicktime demuxer.
   * Enable libmpeg2new (if configured with --enable-libmpeg2new).
     This is not yet production code; the old mpeg2 decoder remains the default.
   * Add support for OpenBSD.
@@ -77,6 +81,8 @@ xine-lib (1.1.17) 2009-??-??
     pause/resume freeze with pulseaudio).
   * Fix build with libavutil >= 50.0.0.
   * Fix segfaults when playing VCDs.
+  * Fix calculation of frame duration for ffmpeg-decoded formats.
+  * Don't assume that ID3v2 tags with no content mean "end of ID3 data".
 
 xine-lib (1.1.16.2) 2009-02-10
   * Build fixes related to ImageMagick 6.4 & later.
@@ -86,7 +92,8 @@ xine-lib (1.1.16.2) 2009-02-10
   * Fix broken size checks in various input plugins (ref. CVE-2008-5239).
   * More malloc checking (ref. CVE-2008-5240).
   * Fix race conditions in gapless_switch (ref. kde bug #180339)
-  * Fix a possible integer overflow in the 4XM demuxer. (TKADV2009-004.txt)
+  * Fix a possible integer overflow in the 4XM demuxer.
+    (TKADV2009-004, CVE-2009-0385)
 
 xine-lib (1.1.16.1) 2009-01-11
   * Fix build with older ffmpeg, both internal and in Debian 5.0.

@@ -1581,7 +1581,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
     case STTS_ATOM:
       /* there should only be one of these atoms */
-      if (trak->time_to_sample_table) {
+      if (trak->time_to_sample_table
+          || current_atom_size < 12 || current_atom_size >= UINT_MAX) {
         last_error = QT_HEADER_TROUBLE;
         goto free_trak;
       }
@@ -1590,6 +1591,11 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
       debug_atom_load("    qt stts atom (time-to-sample atom): %d entries\n",
         trak->time_to_sample_count);
+
+      if (trak->time_to_sample_count > (current_atom_size - 12) / 8) {
+        last_error = QT_HEADER_TROUBLE;
+        goto free_trak;
+      }
 
       trak->time_to_sample_table = calloc(trak->time_to_sample_count+1, sizeof(time_to_sample_table_t));
       if (!trak->time_to_sample_table) {

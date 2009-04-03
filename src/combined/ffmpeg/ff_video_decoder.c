@@ -82,6 +82,7 @@ struct ff_video_decoder_s {
   int               pts_tag_counter;
   int               pts_tag_stable_counter;
   int               video_step;
+  int               reported_video_step;
 
   uint8_t           decoder_ok:1;
   uint8_t           decoder_init_mode:1;
@@ -214,6 +215,9 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
   av_frame->age = 256*256*256*64;
 
   av_frame->type= FF_BUFFER_TYPE_USER;
+
+  /* take over pts for this frame to have it reordered */
+  av_frame->reordered_opaque = context->reordered_opaque;
 
   xine_list_push_back(this->dr1_frames, av_frame);
 
@@ -1261,7 +1265,11 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
       }
 
       /* use externally provided video_step or fall back to stream's time_base otherwise */
-      video_step_to_use = (this->video_step || !this->context->time_base.den) ? this->video_step : (int)(90000ll * this->context->time_base.num / this->context->time_base.den);
+      video_step_to_use = (this->video_step || !this->context->time_base.den)
+                        ? this->video_step
+                        : (int)(90000ll
+                                * this->context->ticks_per_frame
+                                * this->context->time_base.num / this->context->time_base.den);
 
       /* aspect ratio provided by ffmpeg, override previous setting */
       if ((this->aspect_ratio_prio < 2) &&
@@ -1359,7 +1367,10 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
           /* fallback to the VIDEO_PTS_MODE */
           video_step_to_use = 0;
         }
-        
+
+        if (video_step_to_use && video_step_to_use != this->reported_video_step)
+          _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, (this->reported_video_step = video_step_to_use));
+
         if (this->av_frame->repeat_pict)
           img->duration = video_step_to_use * 3 / 2;
         else
@@ -1418,7 +1429,7 @@ static void ff_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 
   if (buf->decoder_flags & BUF_FLAG_FRAMERATE) {
     this->video_step = buf->decoder_info[0];
-    _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->video_step);
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, (this->reported_video_step = this->video_step));
   }
 
   if (buf->decoder_flags & BUF_FLAG_PREVIEW) {
