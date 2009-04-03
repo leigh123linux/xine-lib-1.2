@@ -137,8 +137,7 @@ typedef struct {
   vo_frame_t  *forward_ref;
   vo_frame_t  *backward_ref;
 
-  int64_t    seq_pts;
-	int64_t    cur_pts;
+  int64_t    cur_pts;
 
   vdpau_accel_t *accel_vdpau;
 
@@ -206,7 +205,7 @@ static void reset_sequence( sequence_t *sequence, int free_refs )
   sequence->bufpos = 0;
   sequence->bufseek = 0;
   sequence->start = -1;
-  sequence->seq_pts = sequence->cur_pts = 0;
+  sequence->cur_pts = 0;
   if ( sequence->forward_ref )
     sequence->forward_ref->pts = 0;
   if ( sequence->backward_ref )
@@ -263,9 +262,7 @@ static void sequence_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int
   sequence_t *sequence = (sequence_t*)&this_gen->sequence;
 
   int i, j, off=0;
-	if ( sequence->cur_pts ) {
-		sequence->seq_pts = sequence->cur_pts;
-	}
+
   sequence->coded_width = get_bits( buf,0,12 );
   lprintf( "coded_width: %d\n", get_bits( buf,0,12 ) );
   sequence->coded_height = get_bits( buf,12,12 );
@@ -345,10 +342,6 @@ static void picture_header( sequence_t *sequence, uint8_t *buf, int len )
 {
   if ( sequence->picture.state!=WANT_HEADER )
     return;
-
-  if ( sequence->cur_pts ) {
-    sequence->seq_pts = sequence->cur_pts;
-  }
 
   if ( sequence->profile==VDP_DECODER_PROFILE_MPEG1 )
     sequence->picture.vdp_infos.picture_structure = PICTURE_FRAME;
@@ -611,7 +604,7 @@ static void decode_render( vdpau_mpeg12_decoder_t *vd, vdpau_accel_t *accel )
     lprintf( "decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
   else {
     lprintf( "DECODER SUCCESS : frame_type:%d, slices=%d, slices_bytes=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
-              pic->vdp_infos.picture_coding_type, pic->vdp_infos.slice_count, vbit.bitstream_bytes, accel->surface, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->seq_pts );
+              pic->vdp_infos.picture_coding_type, pic->vdp_infos.slice_count, vbit.bitstream_bytes, accel->surface, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->cur_pts );
     VdpPictureInfoMPEG1Or2 *info = &pic->vdp_infos;
     lprintf("%d %d %d %d %d %d %d %d %d %d %d %d %d\n", info->intra_dc_precision, info->frame_pred_frame_dct, info->concealment_motion_vectors, info->intra_vlc_format, info->alternate_scan, info->q_scale_type, info->top_field_first, info->full_pel_forward_vector, info->full_pel_backward_vector, info->f_code[0][0], info->f_code[0][1], info->f_code[1][0], info->f_code[1][1] );
   }
@@ -637,7 +630,7 @@ static void decode_render( vdpau_mpeg12_decoder_t *vd, vdpau_accel_t *accel )
       lprintf( "decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
     else
       lprintf( "DECODER SUCCESS : frame_type:%d, slices=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
-                pic->vdp_infos2.picture_coding_type, pic->vdp_infos2.slice_count, accel->surface, pic->vdp_infos2.forward_reference, pic->vdp_infos2.backward_reference, seq->seq_pts );
+                pic->vdp_infos2.picture_coding_type, pic->vdp_infos2.slice_count, accel->surface, pic->vdp_infos2.forward_reference, pic->vdp_infos2.backward_reference, seq->cur_pts );
   }
 }
 
@@ -703,7 +696,7 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
   decode_render( vd, accel );
 
   img->drawn = 0;
-  img->pts = seq->seq_pts;
+  img->pts = seq->cur_pts;
   img->bad_frame = 0;
   img->duration = seq->video_step;
   img->top_field_first = pic->vdp_infos.top_field_first;
@@ -734,8 +727,6 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
     img->draw( img, vd->stream );
     img->free( img );
   }
-
-  seq->seq_pts +=seq->video_step;
 }
 
 
