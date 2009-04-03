@@ -1,4 +1,4 @@
-xine-lib (1.1.17) 2009-??-??
+xine-lib (1.1.16.3) 2009-04-03
   * Security fixes:
     - Fix another possible int overflow in the 4XM demuxer.
       (ref. TKADV2009-004, CVE-2009-0385)

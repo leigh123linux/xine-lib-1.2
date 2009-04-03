@@ -17,9 +17,9 @@ dnl   XINE_SUB += 1; XINE_PATCH = ''; continue with XINE_LT_* values below
 dnl
 XINE_MAJOR=1
 XINE_MINOR=1
-XINE_SUB=17
+XINE_SUB=16
 dnl XINE_PATCH should be left empty or set to ".1" or ".2" or something similar
-XINE_PATCH=
+XINE_PATCH=.3
 dnl Release series number (usually $XINE_MAJOR.$XINE_MINOR)
 XINE_SERIES=1.1
 
@@ -55,7 +55,7 @@ dnl  * in Linux, the library will be named
 dnl    libname.so.(XINE_LT_CURRENT - XINE_LT_AGE).XINE_LT_AGE.XINE_LT_REVISION
 
 XINE_LT_CURRENT=27
-XINE_LT_REVISION=0
+XINE_LT_REVISION=1
 XINE_LT_AGE=26
 
 dnl for a release tarball do "rm .cvsversion" before "make dist"
