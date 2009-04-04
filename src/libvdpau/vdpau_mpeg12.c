@@ -704,7 +704,8 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
   decode_render( vd, accel );
 
   img->drawn = 0;
-  img->pts = (pic->vdp_infos.picture_coding_type==I_FRAME) ? seq->seq_pts : 0;
+  img->pts = seq->seq_pts;
+  seq->seq_pts = 0; /* reset */
   img->bad_frame = 0;
   img->duration = seq->video_step;
   img->top_field_first = pic->vdp_infos.top_field_first;
