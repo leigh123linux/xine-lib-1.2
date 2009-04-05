@@ -202,9 +202,6 @@ static void init_picture( picture_t *pic )
 
 static void reset_sequence( sequence_t *sequence, int free_refs )
 {
-  sequence->bufpos = 0;
-  sequence->bufseek = 0;
-  sequence->start = -1;
   sequence->cur_pts = sequence->seq_pts = 0;
   if ( sequence->forward_ref )
     sequence->forward_ref->pts = 0;
@@ -214,6 +211,9 @@ static void reset_sequence( sequence_t *sequence, int free_refs )
   if ( !free_refs )
     return;
 
+  sequence->bufpos = 0;
+  sequence->bufseek = 0;
+  sequence->start = -1;
   if ( sequence->forward_ref )
     sequence->forward_ref->free( sequence->forward_ref );
   sequence->forward_ref = NULL;
