@@ -4,6 +4,7 @@ xine-lib (1.1.17) 2009-??-??
   * Correct invalid MIME info in the MOD demuxer.
   * Fix a resource leak in libdvdnav.
   * Properly NUL-terminate when reading ID3v2.2 tag content.
+  * Fix handling of the length of UTF-16 content sourced from, e.g., ID3 tags.
 
 xine-lib (1.1.16.3) 2009-04-03
   * Security fixes:

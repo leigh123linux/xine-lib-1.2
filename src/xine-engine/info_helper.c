@@ -251,7 +251,15 @@ static void meta_info_set_unlocked_encoding(xine_stream_t *stream, int info, con
         size_t inbytesleft, outbytesleft;
 
         inbuf = (ICONV_CONST char *)value;
-        inbytesleft = strlen(value);
+        if (!strncmp (enc, "UTF-16", 6) || !strncmp (enc, "UCS-2", 5))
+        {
+          /* strlen() won't work with UTF-16* or UCS-2* */
+          inbytesleft = 0;
+          while (value[inbytesleft] || value[inbytesleft + 1])
+            inbytesleft += 2;
+        } /* ... do we need to handle UCS-4? Probably not. */
+        else
+          inbytesleft = strlen(value);
         outbytesleft = 4 * inbytesleft; /* estimative (max) */
         outbuf = utf8_value = malloc(outbytesleft+1);
 
