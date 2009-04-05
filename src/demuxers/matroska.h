@@ -62,6 +62,7 @@
 #define MATROSKA_ID_CL_BLOCKGROUP                 0xA0
 #define MATROSKA_ID_CL_BLOCK                      0xA1
 #define MATROSKA_ID_CL_BLOCKVIRTUAL               0xA2
+#define MATROSKA_ID_CL_SIMPLEBLOCK                0xA3
 #define MATROSKA_ID_CL_BLOCKADDITIONS             0x75A1
 #define MATROSKA_ID_CL_BLOCKMORE                  0xA6
 #define MATROSKA_ID_CL_BLOCKADDID                 0xEE

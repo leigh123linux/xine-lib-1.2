@@ -2064,6 +2064,31 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
   return 1;
 }
 
+static int parse_simpleblock(demux_matroska_t *this, size_t block_len, uint64_t cluster_timecode, uint64_t block_duration)
+{
+  int has_block           = 0;
+  off_t block_pos         = 0;
+  off_t file_len          = 0;
+  int normpos             = 0;
+  int is_key              = 1;
+
+  lprintf("simpleblock\n");
+  block_pos = this->input->get_current_pos(this->input);
+  file_len = this->input->get_length(this->input);
+  if( file_len )
+    normpos = (int) ( (double) block_pos * 65535 / file_len );
+  
+  if (!read_block_data(this, block_len))
+    return 0;
+  
+  has_block = 1;
+    /* we have the duration, we can parse the block now */
+  if (!parse_block(this, block_len, cluster_timecode, block_duration,
+                   normpos, is_key))
+    return 0;
+  return 1;
+}
+
 static int parse_block_group(demux_matroska_t *this,
                              uint64_t cluster_timecode,
                              uint64_t cluster_duration) {
@@ -2128,7 +2153,8 @@ static int parse_block_group(demux_matroska_t *this,
 
 static int parse_cluster(demux_matroska_t *this) {
   ebml_parser_t *ebml = this->ebml;
-  int next_level = 2;
+  int this_level = ebml->level;
+  int next_level = this_level;
   uint64_t timecode = 0;
   uint64_t duration = 0;
 
@@ -2145,7 +2171,7 @@ static int parse_cluster(demux_matroska_t *this) {
     this->first_cluster_found = 1;
   }
 
-  while (next_level == 2) {
+  while (next_level == this_level) {
     ebml_elem_t elem;
 
     if (!ebml_read_elem_head(ebml, &elem))
@@ -2167,6 +2193,11 @@ static int parse_cluster(demux_matroska_t *this) {
         if (!ebml_read_master (ebml, &elem))
           return 0;
         if ((elem.len > 0) && !parse_block_group(this, timecode, duration))
+          return 0;
+        break;
+      case MATROSKA_ID_CL_SIMPLEBLOCK:
+        lprintf("simpleblock\n");
+        if (!parse_simpleblock(this, elem.len, timecode, duration))
           return 0;
         break;
       case MATROSKA_ID_CL_BLOCK:
@@ -2315,6 +2346,7 @@ static int parse_top_level_head(demux_matroska_t *this, int *next_level) {
   ebml_elem_t elem;
   int ret_value = 1;
   off_t current_pos;
+
   
   current_pos = this->input->get_current_pos(this->input);
   lprintf("current_pos: %" PRIdMAX "\n", (intmax_t)current_pos);

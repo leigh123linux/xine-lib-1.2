@@ -216,6 +216,7 @@ remap_t* remap_loadmap( char *title) {
 	    remap_add_node( map, tmp);
 	}
     }
+    close (fp); /* ignoring errors... */
 
     if (map->nblocks == 0 && map->debug == 0) return NULL;
     return map;

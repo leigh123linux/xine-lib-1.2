@@ -274,6 +274,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     test x"$have_oss" = x"yes"          && echo "   - oss (Open Sound System)"
     test x"$have_pulseaudio" = x"yes"   && echo "   - pulseaudio (PulseAudio sound server)"
     test x"$have_sunaudio" = x"yes"     && echo "   - sun (Sun audio interface)"
+    test "x$have_sndio" = "xyes"	&& echo "   - sndio"
     echo "---"
 
 

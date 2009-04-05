@@ -227,4 +227,21 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
         fi
     fi
     AM_CONDITIONAL([ENABLE_SUNAUDIO], [test x"$have_sunaudio" = x"yes"])
+
+
+    dnl sndio support
+    AC_ARG_ENABLE([sndio],
+		  [AS_HELP_STRING([--without-sndio], [Build without sndio support])],
+                  [test x"$enableval" != x"no" && enable_sndio="yes"],
+                  [test $default_enable_sndio = disable && enable_sndio="no"])
+    if test "x$enable_sndio" != "xno"; then
+	AC_CHECK_LIB([sndio], [sio_open], [SNDIO_LIBS=-lsndio; have_sndio=yes],
+		     [have_sndio=no])
+	if test "x$enable_sndio" = "xyes" && test "x$have_sndio" = "xno"; then
+	    AC_MSG_ERROR([sndio support requested, but sndio not found])
+	fi
+    fi
+    AM_CONDITIONAL([ENABLE_SNDIO], [test "x$have_sndio" = "xyes"])
+    AC_SUBST([SNDIO_CFLAGS])
+    AC_SUBST([SNDIO_LIBS])
 ])dnl XINE_AUDIO_OUT_PLUGINS

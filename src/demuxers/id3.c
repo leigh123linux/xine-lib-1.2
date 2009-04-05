@@ -273,11 +273,12 @@ static int id3v22_parse_frame_header(input_plugin_t *input,
 static int id3v22_interp_frame(input_plugin_t *input,
                                xine_stream_t *stream,
                                id3v22_frame_header_t *frame_header) {
-  char buf[frame_header->size + 1];
+  char buf[frame_header->size + 2];
   int enc;
   
   if (input->read (input, buf, frame_header->size) == frame_header->size) {
     buf[frame_header->size] = 0;
+    buf[frame_header->size + 1] = 0;
     enc = buf[0];
     if( enc >= ID3_ENCODING_COUNT )
       enc = 0;
@@ -459,11 +460,12 @@ static int id3v23_parse_frame_ext_header(input_plugin_t *input,
 static int id3v23_interp_frame(input_plugin_t *input,
                                xine_stream_t *stream,
                                id3v23_frame_header_t *frame_header) {
-  char buf[frame_header->size + 1];
+  char buf[frame_header->size + 2];
   int enc;
 
   if (input->read (input, buf, frame_header->size) == frame_header->size) {
     buf[frame_header->size] = 0;
+    buf[frame_header->size + 1] = 0;
     enc = buf[0];
     if( enc >= ID3_ENCODING_COUNT )
       enc = 0;
@@ -702,11 +704,12 @@ static int id3v24_parse_ext_header(input_plugin_t *input,
 static int id3v24_interp_frame(input_plugin_t *input,
                                xine_stream_t *stream,
                                id3v24_frame_header_t *frame_header) {
-  char buf[frame_header->size + 1];
+  char buf[frame_header->size + 2];
   int enc;
 
   if (input->read (input, buf, frame_header->size) == frame_header->size) {
     buf[frame_header->size] = 0;
+    buf[frame_header->size + 1] = 0;
     enc = buf[0];
     if( enc >= ID3_ENCODING_COUNT )
       enc = 0;

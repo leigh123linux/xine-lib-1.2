@@ -366,11 +366,11 @@ static void *demux_mod_init_plugin (xine_t *xine, void *data) {
          "audio/x-s3m: s3m: ScreamTracker 3 Module;"
          "audio/s3m: s3m: ScreamTracker 3 Module;"
          "application/playerpro: 669: 669 Tracker Module;"
-         "application/adrift; amf: ADRIFT Module File;"
-         "audio/med; med; Amiga MED/OctaMED Tracker Module Sound File;"
-         "audio/x-amf; amf: ADRIFT Module File;"
-         "audio/x-xm; xm: FastTracker II Audio;"
-         "audio/xm; xm: FastTracker II Audio;";
+         "application/adrift: amf: ADRIFT Module File;"
+         "audio/med: med: Amiga MED/OctaMED Tracker Module Sound File;"
+         "audio/x-amf: amf: ADRIFT Module File;"
+         "audio/x-xm: xm: FastTracker II Audio;"
+         "audio/xm: xm: FastTracker II Audio;";
   this->demux_class.extensions      = "mod it stm s3m 669 amf med mdl xm";
   this->demux_class.dispose         = default_demux_class_dispose;
 
