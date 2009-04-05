@@ -3,6 +3,7 @@ xine-lib (1.1.17) 2009-??-??
   * Add support for sndio (OpenBSD sound API).
   * Correct invalid MIME info in the MOD demuxer.
   * Fix a resource leak in libdvdnav.
+  * Properly NUL-terminate when reading ID3v2.2 tag content.
 
 xine-lib (1.1.16.3) 2009-04-03
   * Security fixes:

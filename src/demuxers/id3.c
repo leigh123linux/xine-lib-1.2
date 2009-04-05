@@ -286,6 +286,7 @@ static int id3v22_interp_frame(input_plugin_t *input,
   }
 
   if (input->read (input, buf, frame_header->size) == frame_header->size) {
+    buf[frame_header->size] = 0;
     enc = buf[0];
     if( enc >= ID3_ENCODING_COUNT )
       enc = 0;
