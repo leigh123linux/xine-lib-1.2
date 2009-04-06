@@ -276,7 +276,7 @@ static int id3v22_interp_frame(input_plugin_t *input,
   char *buf;
   int enc;
   const size_t bufsize = frame_header->size + 2;
-  if ( bufsize <= 3 ) /* frames has to be _at least_ 1 byte */
+  if ( bufsize < 3 ) /* frames has to be _at least_ 1 byte */
     return 0;
   
   buf = malloc(bufsize);
@@ -474,7 +474,7 @@ static int id3v23_interp_frame(input_plugin_t *input,
   char *buf;
   int enc;
   const size_t bufsize = frame_header->size + 2;
-  if ( bufsize <= 3 ) /* frames has to be _at least_ 1 byte */
+  if ( bufsize < 3 ) /* frames has to be _at least_ 1 byte */
     return 0;
   
   buf = malloc(bufsize);
@@ -729,7 +729,7 @@ static int id3v24_interp_frame(input_plugin_t *input,
   char *buf;
   int enc;
   const size_t bufsize = frame_header->size + 2;
-  if ( bufsize <= 3 ) /* frames has to be _at least_ 1 byte */
+  if ( bufsize < 3 ) /* frames has to be _at least_ 1 byte */
     return 0;
   
   buf = malloc(bufsize);
