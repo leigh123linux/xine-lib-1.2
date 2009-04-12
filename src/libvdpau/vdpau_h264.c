@@ -533,15 +533,18 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
 
     if(!slc->field_pic_flag ||
         (slc->field_pic_flag && slc->bottom_field_flag && this->wait_for_bottom_field)) {
+
       if(!decoded_pic) {
         decoded_pic = init_decoded_picture(this->nal_parser->current_nal, surface, img);
-        decoded_pic->delayed_output = 1;
+        //decoded_pic->nal->top_field_order_cnt = this->last_top_field_order_cnt;
         dpb_add_picture(&(this->nal_parser->dpb), decoded_pic, sps->num_ref_frames);
         this->dangling_img = NULL;
+
         if(decoded_pic->nal->slc->bottom_field_flag)
           decoded_pic->nal->top_field_order_cnt = this->last_top_field_order_cnt;
-      } else
-        decoded_pic->delayed_output = 1;
+      }
+
+      decoded_pic->delayed_output = 1;
 
       if(this->wait_for_bottom_field && slc->bottom_field_flag)
         decoded_pic->nal->bottom_field_order_cnt = this->nal_parser->current_nal->bottom_field_order_cnt;

@@ -310,6 +310,9 @@ void calculate_pic_order(struct nal_parser *parser)
     else if(slc->bottom_field_flag)
       nal->bottom_field_order_cnt = parser->pic_order_cnt_msb + slc->pic_order_cnt_lsb;
 
+    /*if(slc->bottom_field_flag)
+      nal->top_field_order_cnt = parser->last_nal->top_field_order_cnt;*/
+
   } else if (sps->pic_order_cnt_type == 2) {
     uint32_t prev_frame_num = parser->last_nal->slc->frame_num;
     uint32_t prev_frame_num_offset = parser->frame_num_offset;
@@ -1261,172 +1264,106 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
     uint8_t **ret_buf, uint32_t *ret_len, uint32_t *ret_slice_cnt)
 {
   int32_t next_nal = 0;
-  int parsed_len = 0;
-  int search_offset = 0;
+  int32_t offset = 0;
   int start_seq_len = 3;
-  uint8_t completed_nal = 0;
 
   if(parser->nal_size_length > 0)
-    start_seq_len = parser->nal_size_length-parser->have_nal_size_length_buf;
+    start_seq_len = offset = parser->nal_size_length;
 
-  /* seek for nal start sequences split across buffer boundaries */
-  if(!parser->nal_size_length) {
-    if(parser->prebuf_len >= 2 && inbuf_len >= 1 &&
-        parser->prebuf[parser->prebuf_len-2] == 0x00 &&
-        parser->prebuf[parser->prebuf_len-1] == 0x00 &&
-        inbuf[0] == 0x01) {
-      parsed_len = 1;
-    } else if (parser->prebuf_len >= 1 && inbuf_len >= 2 &&
-        parser->prebuf[parser->prebuf_len-1] == 0x00 &&
-        inbuf[0] == 0x00 &&
-        inbuf[1] == 0x01) {
-      parsed_len = 2;
-    }
-
-    /* in case a start seq was splitted call ourself with just a start
-     * sequences and strip incomplete start seq parts from the buffer
-     * before.
-     */
-
-    if(parsed_len > 0) {
-      static const uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
-      parser->prebuf_len -= start_seq_len - parsed_len;
-
-      /* if we are just at a frame boundary the sequence wouldn't
-       * be taken over but we would just be notified about a new
-       * completed frame.
-       * so in this case we have to send the start sequence another
-       * time to get it into the prebuf again.
-       */
-      uint8_t *tmp_ret_buf;
-      uint32_t tmp_ret_len;
-      uint32_t tmp_slice_cnt;
-
-      if(parse_frame(parser, start_seq, start_seq_len, ret_buf, ret_len, ret_slice_cnt) == 0)
-        parse_frame(parser, start_seq, start_seq_len, &tmp_ret_buf, &tmp_ret_len, &tmp_slice_cnt);
-
-      return parsed_len;
-    }
+  if (parser->prebuf_len + inbuf_len > MAX_FRAME_SIZE) {
+    printf("buf underrun!!\n");
+    *ret_len = 0;
+    *ret_buf = NULL;
+    parser->prebuf_len = 0;
+    return inbuf_len;
   }
 
-  while ((next_nal = seek_for_nal(inbuf+search_offset, inbuf_len-parsed_len-search_offset, parser)) >= 0) {
-    next_nal += search_offset;
-    if(parser->nal_size_length > 0)
-        start_seq_len = parser->nal_size_length-parser->have_nal_size_length_buf;
+  /* copy the whole inbuf to the prebuf,
+   * then search for a nal-start sequence in the prebuf,
+   * if it's in there, parse the nal and append to parser->buf
+   * or return a frame */
 
-    if(parser->incomplete_nal || completed_nal || next_nal == 0 ||
-        parser->nal_size_length) {
+  xine_fast_memcpy(parser->prebuf + parser->prebuf_len, inbuf, inbuf_len);
+  parser->prebuf_len += inbuf_len;
 
-      if (parser->prebuf_len + next_nal > MAX_FRAME_SIZE) {
-        printf("buf underrun!!\n");
+  while((next_nal = seek_for_nal(parser->prebuf+start_seq_len-offset, parser->prebuf_len-2*start_seq_len+(2*offset), parser)) > 0) {
+
+    if(!parser->nal_size_length &&
+        (parser->prebuf[0] != 0x00 || parser->prebuf[1] != 0x00 || parser->prebuf[2] != 0x01)) {
+      printf("Broken NAL, skip it.\n");
+      parser->last_nal_res = 2;
+    } else
+      parser->last_nal_res = parse_nal(parser->prebuf+start_seq_len, next_nal, parser);
+
+    if (parser->last_nal_res == 1 && parser->buf_len > 0) {
+
+      //printf("Frame complete: %d bytes\n", parser->buf_len);
+      *ret_len = parser->buf_len;
+      *ret_buf = malloc(*ret_len);
+      xine_fast_memcpy(*ret_buf, parser->buf, parser->buf_len);
+      *ret_slice_cnt = parser->slice_cnt;
+
+      parser->slice_cnt = 1;
+      parser->buf_len = 0;
+
+      /* this is a SLICE, keep it in the buffer */
+
+      if(parser->nal_size_length > 0) {
+        static const uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
+        xine_fast_memcpy(parser->buf, start_seq, 3);
+        parser->buf_len += 3;
+      }
+
+      xine_fast_memcpy(parser->buf+parser->buf_len, parser->prebuf+offset, next_nal+start_seq_len-2*offset);
+      parser->buf_len += next_nal+start_seq_len-2*offset;
+
+      memmove(parser->prebuf, parser->prebuf+(next_nal+start_seq_len-offset), parser->prebuf_len-(next_nal+start_seq_len-offset));
+      parser->prebuf_len -= next_nal+start_seq_len-offset;
+
+      return inbuf_len;
+    }
+
+    /* got a new nal, which is part of the current
+     * coded picture. add it to buf
+     */
+    if (parser->last_nal_res != 2) {
+      if (parser->buf_len + next_nal+start_seq_len-offset > MAX_FRAME_SIZE) {
+        printf("buf underrun 1!!\n");
+        parser->buf_len = 0;
         *ret_len = 0;
         *ret_buf = NULL;
-        return parsed_len;
+        return inbuf_len;
       }
 
-      xine_fast_memcpy(parser->prebuf + parser->prebuf_len, inbuf, next_nal);
-      parser->prebuf_len += next_nal;
-      parser->incomplete_nal = 0;
-
-      parsed_len += next_nal;
-      inbuf += next_nal;
-
-      parser->last_nal_res = parse_nal(parser->prebuf+start_seq_len, parser->prebuf_len-start_seq_len, parser);
-      if (parser->last_nal_res == 1 && parser->buf_len > 0) {
-
-        //printf("Frame complete: %d bytes\n", parser->buf_len);
-        *ret_len = parser->buf_len;
-        *ret_buf = malloc(*ret_len);
-        xine_fast_memcpy(*ret_buf, parser->buf, *ret_len);
-        *ret_slice_cnt = parser->slice_cnt;
-
-        parser->slice_cnt = 1;
-        parser->buf_len = 0;
-
-        /* this is a SLICE, keep it in the buffer */
-        //printf("slice %d size: %d\n", parser->slice_cnt-1, parser->prebuf_len);
-        if(parser->nal_size_length > 0) {
-          static const uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
-          xine_fast_memcpy(parser->buf, start_seq, 3);
-          parser->buf_len += 3;
-        }
-
-        int offset = 0;
-        if(parser->nal_size_length > 0)
-          offset = start_seq_len;
-        xine_fast_memcpy(parser->buf+parser->buf_len, parser->prebuf+offset, parser->prebuf_len-offset);
-        parser->buf_len += (parser->prebuf_len-offset);
-        parser->prebuf_len = 0;
-        parser->incomplete_nal = 0;
-
-        return parsed_len;
+      if(parser->nal_size_length > 0) {
+        static const uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
+        xine_fast_memcpy(parser->buf, start_seq, 3);
+        parser->buf_len += 3;
       }
 
-      if (parser->last_nal_res != 2) {
-        if (parser->buf_len + parser->prebuf_len > MAX_FRAME_SIZE) {
-          printf("buf underrun 1!!\n");
-          parser->buf_len = 0;
-          *ret_len = 0;
-          *ret_buf = NULL;
-          return parsed_len;
-        }
+      xine_fast_memcpy(parser->buf+parser->buf_len, parser->prebuf+offset, next_nal+start_seq_len-2*offset);
+      parser->buf_len += next_nal+start_seq_len-2*offset;
 
-        //printf("slice %d size: %d\n", parser->slice_cnt-1, parser->prebuf_len);
-        /* this is a SLICE, keep it in the buffer */
-        if(parser->nal_size_length > 0) {
-          static const uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
-          xine_fast_memcpy(parser->buf + parser->buf_len, start_seq, 3);
-          parser->buf_len += 3;
-        }
-
-        int offset = 0;
-        if(parser->nal_size_length > 0)
-          offset = start_seq_len;
-
-        xine_fast_memcpy(parser->buf + parser->buf_len, parser->prebuf+offset, parser->prebuf_len-offset);
-        parser->buf_len += (parser->prebuf_len-offset);
-      }
-
-      parser->prebuf_len = 0;
-      completed_nal = 1;
-
+      memmove(parser->prebuf, parser->prebuf+(next_nal+start_seq_len-offset), parser->prebuf_len-(next_nal+start_seq_len-offset));
+      parser->prebuf_len -= next_nal+start_seq_len-offset;
     } else {
-      /* most likely we are at the beginning of the stream here
-       * which starts not with a nal-boundardy but with some garbage
-       * -> throw it away
-       */
-      parsed_len += next_nal;
-      inbuf += next_nal;
+      /* got a non-relevant nal, just remove it */
+      memmove(parser->prebuf, parser->prebuf+(next_nal+start_seq_len-offset), parser->prebuf_len-(next_nal+start_seq_len-offset));
+      parser->prebuf_len -= next_nal+start_seq_len-offset;
     }
-
-    if(!parser->nal_size_length)
-      search_offset = start_seq_len;
   }
 
-  /* if inbuf does not end with the start of a new nal
-   * copy the left data into prebuf
-   */
-  if(parsed_len < inbuf_len) {
-    if (inbuf_len-parsed_len + parser->prebuf_len > MAX_FRAME_SIZE) {
-      printf("buf underrun 0!!\n");
-      parser->prebuf_len = 0;
-      *ret_len = 0;
-      *ret_buf = NULL;
-      return parsed_len;
-    }
-
-    parser->incomplete_nal = 1;
-    xine_fast_memcpy(parser->prebuf + parser->prebuf_len, inbuf, inbuf_len-parsed_len);
-    parser->prebuf_len += inbuf_len-parsed_len;
-    inbuf += inbuf_len-parsed_len;
-    parsed_len += inbuf_len-parsed_len;
-  }
-
-  *ret_len = 0;
   *ret_buf = NULL;
-  return parsed_len;
+  *ret_len = 0;
+  return inbuf_len;
 }
 
+
+/**
+ * @return 0: NAL is part of coded picture
+ *         2: NAL is not part of coded picture
+ *         1: NAL is the beginning of a new coded picture
+ */
 int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
 {
   struct buf_reader bufr;
@@ -1561,49 +1498,24 @@ int seek_for_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
 {
   if(parser->nal_size_length > 0) {
     if(buf_len <= 0 ||
-        (buf_len < parser->nal_size_length &&
-        (parser->next_nal_position == 0 ||
-            parser->next_nal_position > buf_len))) {
-      /* if we have less than nal_size_length bytes
-       * left in the buffer we need to store them, so
-       * that the next length calculation will be correct
-       */
-      if(!parser->next_nal_position) {
-        memcpy(parser->nal_size_length_buf, buf, buf_len);
-        parser->have_nal_size_length_buf = buf_len;
-      }
+        buf_len < parser->nal_size_length) {
       return -1;
     }
 
     uint32_t next_nal = parser->next_nal_position;
     if(!next_nal) {
-      if(parser->have_nal_size_length_buf > 0) {
-        memcpy(parser->nal_size_length_buf+parser->have_nal_size_length_buf, buf, parser->nal_size_length-parser->have_nal_size_length_buf);
+      struct buf_reader bufr;
 
-        struct buf_reader bufr;
+      bufr.buf = buf;
+      bufr.cur_pos = buf;
+      bufr.cur_offset = 8;
+      bufr.len = buf_len;
 
-        bufr.buf = parser->nal_size_length_buf;
-        bufr.cur_pos = parser->nal_size_length_buf;
-        bufr.cur_offset = 8;
-        bufr.len = parser->nal_size_length;
-
-        next_nal = read_bits(&bufr, parser->nal_size_length*8)+4-parser->have_nal_size_length_buf;
-
-        parser->have_nal_size_length_buf = 0;
-      } else {
-        struct buf_reader bufr;
-
-        bufr.buf = buf;
-        bufr.cur_pos = buf;
-        bufr.cur_offset = 8;
-        bufr.len = buf_len;
-
-        next_nal = read_bits(&bufr, parser->nal_size_length*8)+4;
-      }
+      next_nal = read_bits(&bufr, parser->nal_size_length*8)+parser->nal_size_length;
     }
 
     if(next_nal > buf_len) {
-      parser->next_nal_position = next_nal-buf_len;
+      parser->next_nal_position = next_nal;
       return -1;
     } else
       parser->next_nal_position = 0;
