@@ -22,7 +22,7 @@
 #define __VDR_H
 
 
-#define XINE_VDR_VERSION 900
+#define XINE_VDR_VERSION 901
 
 
 enum funcs
@@ -441,6 +441,7 @@ result_grab_image_t;
 typedef struct __attribute__((packed)) data_get_pts_s
 {
   data_header_t header;
+  int32_t ms_timeout;
 }
 data_get_pts_t;
 
@@ -451,6 +452,7 @@ typedef struct __attribute__((packed)) result_get_pts_s
   result_header_t header;
 
   int64_t pts;
+  int8_t queued;
 }
 result_get_pts_t;
 
