@@ -307,7 +307,7 @@ void calculate_pic_order(struct nal_parser *parser)
 
     if(!slc->field_pic_flag)
       nal->bottom_field_order_cnt = nal->top_field_order_cnt + slc->delta_pic_order_cnt_bottom;
-    else if(slc->bottom_field_flag)
+    else //if(slc->bottom_field_flag) TODO: this is not spec compliant, but works...
       nal->bottom_field_order_cnt = parser->pic_order_cnt_msb + slc->pic_order_cnt_lsb;
 
     /*if(slc->bottom_field_flag)
