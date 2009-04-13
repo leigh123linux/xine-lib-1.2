@@ -1062,20 +1062,21 @@ static void load_plugin_list(FILE *fp, xine_sarray_t *plugins) {
 static void save_catalog (xine_t *this) {
 
   FILE       *fp;
-  char       *cachefile, *dirfile; 
+  char       *cachefile, *cachefile_new, *dirfile;
   const char *relname = CACHE_CATALOG_FILE;
   const char *dirname = CACHE_CATALOG_DIR;
 
   const char *const homedir = xine_get_homedir();
     
   asprintf(&cachefile, "%s/%s", homedir, relname);
+  asprintf(&cachefile_new, "%s.new", cachefile);
   
   /* make sure homedir (~/.xine) exists */
   asprintf(&dirfile, "%s/%s", homedir, dirname);
   mkdir (dirfile, 0755);
   free (dirfile);
 
-  if( (fp = fopen(cachefile,"w")) != NULL ) {
+  if( (fp = fopen(cachefile_new,"w")) != NULL ) {
     int i;
   
     fprintf(fp, "# this file is automatically created by xine, do not edit.\n\n");
@@ -1084,9 +1085,29 @@ static void save_catalog (xine_t *this) {
     for (i = 0; i < PLUGIN_TYPE_MAX; i++) {
       save_plugin_list (fp, this->plugin_catalog->plugin_lists[i]);
     }
-    fclose(fp);
+    if (fclose(fp))
+    {
+      const char *err = strerror (errno);
+      xine_log (this, XINE_LOG_MSG,
+		_("failed to save catalogue cache: %s\n"), err);
+      goto do_unlink;
+    }
+    else if (rename (cachefile_new, cachefile))
+    {
+      const char *err = strerror (errno);
+      xine_log (this, XINE_LOG_MSG,
+		_("failed to replace catalogue cache: %s\n"), err);
+      do_unlink:
+      if (unlink (cachefile_new) && errno != ENOENT)
+      {
+	err = strerror (errno);
+	xine_log (this, XINE_LOG_MSG,
+		  _("failed to remove new catalogue cache: %s\n"), err);
+      }
+    }
   }
   free(cachefile);
+  free(cachefile_new);
 }
 
 /*

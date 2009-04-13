@@ -5,6 +5,8 @@ xine-lib (1.1.17) 2009-??-??
   * Fix a resource leak in libdvdnav.
   * Properly NUL-terminate when reading ID3v2.2 tag content.
   * Fix handling of the length of UTF-16 content sourced from, e.g., ID3 tags.
+  * Make ~/.xine/catalog.cache writing safer: write a new file & atomically
+    replace the old one.
 
 xine-lib (1.1.16.3) 2009-04-03
   * Security fixes:
