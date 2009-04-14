@@ -1295,7 +1295,6 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
     } else
       parser->last_nal_res = parse_nal(parser->prebuf+start_seq_len, next_nal, parser);
 
-    printf("nal res: %d\n", parser->last_nal_res);
     if ((parser->last_nal_res == 1 || parser->last_nal_res == 3) && parser->buf_len > 0) {
 
       //printf("Frame complete: %d bytes\n", parser->buf_len);
@@ -1320,7 +1319,6 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
         parser->buf_len += next_nal+start_seq_len-2*offset;
       }
 
-      printf("move %d bytes\n", parser->prebuf_len-(next_nal+start_seq_len-offset));
       memmove(parser->prebuf, parser->prebuf+(next_nal+start_seq_len-offset), parser->prebuf_len-(next_nal+start_seq_len-offset));
       parser->prebuf_len -= next_nal+start_seq_len-offset;
 
@@ -1352,7 +1350,6 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
       parser->prebuf_len -= next_nal+start_seq_len-offset;
     } else {
       /* got a non-relevant nal, just remove it */
-      printf("move: %d bytes\n", parser->prebuf_len-(next_nal+start_seq_len-offset));
       memmove(parser->prebuf, parser->prebuf+(next_nal+start_seq_len-offset), parser->prebuf_len-(next_nal+start_seq_len-offset));
       parser->prebuf_len -= next_nal+start_seq_len-offset;
     }
