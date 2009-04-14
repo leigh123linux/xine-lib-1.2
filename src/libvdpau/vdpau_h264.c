@@ -460,7 +460,7 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
 
   VdpVideoSurface surface = this->vdpau_accel->surface;
 
-  //printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer.bitstream_bytes, this->curr_pts);
+  //printf("Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer->bitstream_bytes, this->curr_pts);
   VdpStatus status = this->vdpau_accel->vdp_decoder_render(this->decoder,
       surface, (VdpPictureInfo*)&pic, 1, vdp_buffer);
 

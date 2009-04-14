@@ -1339,7 +1339,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
 
       if(parser->nal_size_length > 0) {
         static const uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
-        xine_fast_memcpy(parser->buf, start_seq, 3);
+        xine_fast_memcpy(parser->buf+parser->buf_len, start_seq, 3);
         parser->buf_len += 3;
       }
 
@@ -1537,8 +1537,9 @@ int seek_for_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
     return next_nal;
   }
 
-  /* NAL_END_OF_SEQUENCE */
-  if(buf[0] == 0x0a)
+  /* NAL_END_OF_SEQUENCE has only 1 byte, so
+   * we do not need to search for the next start sequence */
+  if(buf[0] == NAL_END_OF_SEQUENCE)
     return 1;
 
   int i;
