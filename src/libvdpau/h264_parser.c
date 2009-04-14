@@ -1286,7 +1286,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
   xine_fast_memcpy(parser->prebuf + parser->prebuf_len, inbuf, inbuf_len);
   parser->prebuf_len += inbuf_len;
 
-  while((next_nal = seek_for_nal(parser->prebuf+start_seq_len-offset, parser->prebuf_len-2*start_seq_len+(2*offset), parser)) > 0) {
+  while((next_nal = seek_for_nal(parser->prebuf+start_seq_len-offset, parser->prebuf_len-start_seq_len+offset, parser)) > 0) {
 
     if(!parser->nal_size_length &&
         (parser->prebuf[0] != 0x00 || parser->prebuf[1] != 0x00 || parser->prebuf[2] != 0x01)) {
@@ -1295,7 +1295,8 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
     } else
       parser->last_nal_res = parse_nal(parser->prebuf+start_seq_len, next_nal, parser);
 
-    if (parser->last_nal_res == 1 && parser->buf_len > 0) {
+    printf("nal res: %d\n", parser->last_nal_res);
+    if ((parser->last_nal_res == 1 || parser->last_nal_res == 3) && parser->buf_len > 0) {
 
       //printf("Frame complete: %d bytes\n", parser->buf_len);
       *ret_len = parser->buf_len;
@@ -1308,15 +1309,18 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
 
       /* this is a SLICE, keep it in the buffer */
 
-      if(parser->nal_size_length > 0) {
-        static const uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
-        xine_fast_memcpy(parser->buf, start_seq, 3);
-        parser->buf_len += 3;
+      if(parser->last_nal_res != 3) {
+        if(parser->nal_size_length > 0) {
+          static const uint8_t start_seq[3] = { 0x00, 0x00, 0x01 };
+          xine_fast_memcpy(parser->buf, start_seq, 3);
+          parser->buf_len += 3;
+        }
+
+        xine_fast_memcpy(parser->buf+parser->buf_len, parser->prebuf+offset, next_nal+start_seq_len-2*offset);
+        parser->buf_len += next_nal+start_seq_len-2*offset;
       }
 
-      xine_fast_memcpy(parser->buf+parser->buf_len, parser->prebuf+offset, next_nal+start_seq_len-2*offset);
-      parser->buf_len += next_nal+start_seq_len-2*offset;
-
+      printf("move %d bytes\n", parser->prebuf_len-(next_nal+start_seq_len-offset));
       memmove(parser->prebuf, parser->prebuf+(next_nal+start_seq_len-offset), parser->prebuf_len-(next_nal+start_seq_len-offset));
       parser->prebuf_len -= next_nal+start_seq_len-offset;
 
@@ -1326,7 +1330,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
     /* got a new nal, which is part of the current
      * coded picture. add it to buf
      */
-    if (parser->last_nal_res != 2) {
+    if (parser->last_nal_res < 2) {
       if (parser->buf_len + next_nal+start_seq_len-offset > MAX_FRAME_SIZE) {
         printf("buf underrun 1!!\n");
         parser->buf_len = 0;
@@ -1348,6 +1352,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
       parser->prebuf_len -= next_nal+start_seq_len-offset;
     } else {
       /* got a non-relevant nal, just remove it */
+      printf("move: %d bytes\n", parser->prebuf_len-(next_nal+start_seq_len-offset));
       memmove(parser->prebuf, parser->prebuf+(next_nal+start_seq_len-offset), parser->prebuf_len-(next_nal+start_seq_len-offset));
       parser->prebuf_len -= next_nal+start_seq_len-offset;
     }
@@ -1363,6 +1368,7 @@ int parse_frame(struct nal_parser *parser, uint8_t *inbuf, int inbuf_len,
  * @return 0: NAL is part of coded picture
  *         2: NAL is not part of coded picture
  *         1: NAL is the beginning of a new coded picture
+ *         3: NAL is marked as END_OF_SEQUENCE
  */
 int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
 {
@@ -1483,11 +1489,20 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
       parser->slice_cnt++;
 
     return ret;
-  }
-  else if (res == NAL_PPS || res == NAL_SPS) {
+  } else if (res == NAL_PPS || res == NAL_SPS) {
     return 2;
-  }
-  else if (res >= NAL_SEI) {
+  } else if (res == NAL_END_OF_SEQUENCE) {
+    if (parser->current_nal == parser->nal0) {
+      parser->current_nal = parser->nal1;
+      parser->last_nal = parser->nal0;
+    }
+    else {
+      parser->current_nal = parser->nal0;
+      parser->last_nal = parser->nal1;
+    }
+
+    return 3;
+  } else if (res >= NAL_SEI) {
     return 2;
   }
 
@@ -1496,9 +1511,11 @@ int parse_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
 
 int seek_for_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
 {
+  if(buf_len <= 0)
+    return -1;
+
   if(parser->nal_size_length > 0) {
-    if(buf_len <= 0 ||
-        buf_len < parser->nal_size_length) {
+    if(buf_len < parser->nal_size_length) {
       return -1;
     }
 
@@ -1522,6 +1539,10 @@ int seek_for_nal(uint8_t *buf, int buf_len, struct nal_parser *parser)
 
     return next_nal;
   }
+
+  /* NAL_END_OF_SEQUENCE */
+  if(buf[0] == 0x0a)
+    return 1;
 
   int i;
   for (i = 0; i < buf_len - 2; i++) {

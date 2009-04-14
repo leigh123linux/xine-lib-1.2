@@ -51,12 +51,12 @@ void free_decoded_picture(struct decoded_picture *pic)
   free(pic);
 }
 
-struct decoded_picture* dpb_get_next_out_picture(struct dpb *dpb)
+struct decoded_picture* dpb_get_next_out_picture(struct dpb *dpb, int do_flush)
 {
   struct decoded_picture *pic = dpb->pictures;
   struct decoded_picture *outpic = NULL;
 
-  if(dpb->used < MAX_DPB_SIZE)
+  if(!do_flush && dpb->used < MAX_DPB_SIZE)
     return NULL;
 
   if (pic != NULL)

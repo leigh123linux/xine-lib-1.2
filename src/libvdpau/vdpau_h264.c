@@ -87,6 +87,7 @@ typedef struct vdpau_h264_decoder_s {
 } vdpau_h264_decoder_t;
 
 static void vdpau_h264_reset (video_decoder_t *this_gen);
+static void vdpau_h264_flush (video_decoder_t *this_gen);
 
 /**************************************************************************
  * vdpau_h264 specific decode functions
@@ -552,7 +553,7 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
       this->last_img = img = NULL;
 
       /* now retrieve the next output frame */
-      if ((decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb))) != NULL) {
+      if ((decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb), 0)) != NULL) {
         decoded_pic->img->top_field_first = (decoded_pic->nal->top_field_order_cnt <= decoded_pic->nal->bottom_field_order_cnt);
         //printf("draw pts: %lld\n", decoded_pic->img->pts);
         decoded_pic->img->draw(decoded_pic->img, this->stream);
@@ -654,6 +655,12 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           this->nal_parser->current_nal->pps != NULL) {
         vdpau_decoder_render(this_gen, &vdp_buffer, slice_count);
       }
+
+      /* in case the last nal was detected as END_OF_SEQUENCE
+       * we will flush the dpb, so that all pictures get drawn
+       */
+      if(this->nal_parser->last_nal_res == 3)
+        vdpau_h264_flush(this_gen);
     }
 
     if(buf->pts != 0 && buf->pts != this->next_pts) {
@@ -670,6 +677,15 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
  * This function is called when xine needs to flush the system.
  */
 static void vdpau_h264_flush (video_decoder_t *this_gen) {
+  vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t*) this_gen;
+  struct decoded_picture *decoded_pic = NULL;
+
+  while ((decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb), 1)) != NULL) {
+    decoded_pic->img->top_field_first = (decoded_pic->nal->top_field_order_cnt <= decoded_pic->nal->bottom_field_order_cnt);
+    printf("FLUSH draw pts: %lld\n", decoded_pic->img->pts);
+    decoded_pic->img->draw(decoded_pic->img, this->stream);
+    dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
+  }
 }
 
 /*
