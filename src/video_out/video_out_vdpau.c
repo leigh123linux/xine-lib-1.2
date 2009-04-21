@@ -1371,11 +1371,10 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
   uint32_t layer_count;
   VdpLayer layer[3];
-  VdpRect layersrc, unscaledsrc;
+  VdpRect unscaledsrc;
   if ( this->has_overlay ) {
     layer_count = 2;
-    layersrc.x0 = 0; layersrc.y0 = 0; layersrc.x1 = this->overlay_output_width; layersrc.y1 = this->overlay_output_height;
-    layer[0].struct_version = VDP_LAYER_VERSION; layer[0].source_surface = this->overlay_output; layer[0].source_rect = &layersrc; layer[0].destination_rect = &vid_dest;
+    layer[0].struct_version = VDP_LAYER_VERSION; layer[0].source_surface = this->overlay_output; layer[0].source_rect = &vid_source; layer[0].destination_rect = &vid_dest;
     unscaledsrc.x0 = 0; unscaledsrc.y0 = 0; unscaledsrc.x1 = this->overlay_unscaled_width; unscaledsrc.y1 = this->overlay_unscaled_height;
     layer[1].struct_version = VDP_LAYER_VERSION; layer[1].source_surface = this->overlay_unscaled; layer[1].source_rect = &unscaledsrc; layer[1].destination_rect = &unscaledsrc;
   }
@@ -1403,7 +1402,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
   XLockDisplay( this->display );
 
-  if ( stream_speed && frame_duration>2500 && this->deinterlace && non_progressive && frame->format==XINE_IMGFMT_VDPAU ) {
+  if ( frame->format==XINE_IMGFMT_VDPAU && this->deinterlace && non_progressive && stream_speed && frame_duration>2500 ) {
     VdpTime current_time = 0;
     VdpVideoSurface past[2];
     VdpVideoSurface future[1];
@@ -1419,7 +1418,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
       printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
     vdp_queue_get_time( vdp_queue, &current_time );
-    vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, current_time );
+    vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, 0 ); /* display _now_ */
     if ( this->init_queue<2 ) ++this->init_queue;
     this->current_output_surface ^= 1;
     if ( this->init_queue>1 ) {
@@ -1439,7 +1438,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     }
 
     past[0] = surface;
-    if ( frame->vo_frame.future_frame!=NULL )
+    if ( frame->vo_frame.future_frame!=NULL && ((vdpau_frame_t*)(frame->vo_frame.future_frame))->format==XINE_IMGFMT_VDPAU )
       future[0] = ((vdpau_frame_t*)(frame->vo_frame.future_frame))->vdpau_accel_data.surface;
     else
       future[0] = VDP_INVALID_HANDLE;
