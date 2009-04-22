@@ -122,10 +122,22 @@ void _x_demux_flush_engine (xine_stream_t *stream) {
 
 static struct timespec _x_compute_interval(unsigned int millisecs) {
   struct timespec ts;
+#ifdef WIN32
+  FILETIME ft;
+  ULARGE_INTEGER ui;
+
+  GetSystemTimeAsFileTime(&ft);
+  ui.u.LowPart  = ft.dwLowDateTime;
+  ui.u.HighPart = ft.dwHighDateTime;
+  ui.QuadPart  += millisecs * 10000;
+  ts.tv_sec = ui.QuadPart / 10000000;
+  ts.tv_sec = (ui.QuadPart % 10000000)*100;
+#else
   clock_gettime(CLOCK_REALTIME, &ts);
   uint64_t ttimer = (uint64_t)ts.tv_sec*1000 + ts.tv_nsec/1000000 + millisecs;
   ts.tv_sec = ttimer/1000;
   ts.tv_nsec = (ttimer%1000)*1000000;
+#endif
   return ts;
 }
 
