@@ -75,6 +75,13 @@ xine-lib (1.1.17) 2009-??-??
   * Fix a resource leak in libdvdnav.
   * Properly NUL-terminate when reading ID3v2.2 tag content.
   * Fix handling of the length of UTF-16 content sourced from, e.g., ID3 tags.
+  * Make ~/.xine/catalog.cache writing safer: write a new file & atomically
+    replace the old one.
+  * Initial parsing of Xing header LAME extension.
+  * Fixes for gapless playback.
+  * Added padding delay to the first and last frames (MPEG audio).
+  * Fixed buggy discontinuity handling when playing short streams and using the gapless switch. The current time should not be used here.
+  * Added audio padding handling. (New buffer flag for this.)
 
 xine-lib (1.1.16.3) 2009-04-03
   * Security fixes:

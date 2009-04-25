@@ -394,6 +394,13 @@ struct buf_element_s {
 /* represent the state of gapless_switch at the time buf was enqueued */
 #define BUF_FLAG_GAPLESS_SW  0x1000
 
+/* Amount of audio padding added by encoder (mp3, aac). These empty
+ * audio frames are causing a gap when switching between mp3 files.
+ * decoder_info[1] carries amount of audio frames padded at the
+ * beginning of the buffer
+ * decoder_info[2] carries amount of audio frames padded at the end of
+ * the buffer                                                         */
+#define BUF_FLAG_AUDIO_PADDING 0x2000
 
 /**
  * \defgroup buffer_special Special buffer types:
