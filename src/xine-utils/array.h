@@ -27,7 +27,7 @@
 typedef struct xine_array_s xine_array_t;
 
 /* Constructor */
-xine_array_t *xine_array_new(size_t initial_size) XINE_PROTECTED;
+xine_array_t *xine_array_new(size_t initial_size) XINE_MALLOC XINE_PROTECTED;
 
 /* Destructor */
 void xine_array_delete(xine_array_t *array) XINE_PROTECTED;

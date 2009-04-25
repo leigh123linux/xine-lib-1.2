@@ -83,17 +83,6 @@
 #  define UCS2_ENCODING "UCS-2LE"
 #endif
 
-#ifdef MAX
-#undef MAX
-#endif
-#define MAX(a,b) ( (a) > (b) ) ? (a) : (b)
-
-#ifdef MIN
-#undef MIN
-#endif
-#define MIN(a,b) ( (a) < (b) ) ? (a) : (b)
-
-
 #if (FREETYPE_MAJOR > 2) || \
     (FREETYPE_MAJOR == 2 && FREETYPE_MINOR > 1) || \
     (FREETYPE_MAJOR == 2 && FREETYPE_MINOR == 1 && FREETYPE_PATCH >= 3)
@@ -132,6 +121,20 @@ struct osd_ft2context_s {
   FT_Face    face;
   int        size;
 };
+
+static void osd_free_ft2 (osd_object_t *osd)
+{
+  if( osd->ft2 ) {
+    if ( osd->ft2->face )
+      FT_Done_Face (osd->ft2->face);
+    if ( osd->ft2->library )
+      FT_Done_FreeType(osd->ft2->library);
+    free( osd->ft2 );
+    osd->ft2 = NULL;
+  }
+}
+#else
+static inline void osd_free_ft2 (osd_object_t *osd __attr_unused) {}
 #endif
 
 /*
@@ -143,20 +146,20 @@ struct osd_ft2context_s {
  * for the sake of simplicity)
  */
 
-static osd_object_t *osd_new_object (osd_renderer_t *this, int width, int height) {
+static osd_object_t *XINE_MALLOC osd_new_object (osd_renderer_t *this, int width, int height) {
      
   osd_object_t *osd;
   
   pthread_mutex_lock (&this->osd_mutex);  
   
-  osd = xine_xmalloc( sizeof(osd_object_t) );
+  osd = calloc(1, sizeof(osd_object_t));
   osd->renderer = this;
   osd->next = this->osds;
   this->osds = osd;
   
   osd->width = width;
   osd->height = height;
-  osd->area = xine_xmalloc( width * height );
+  osd->area = calloc(width, height);
   
   osd->x1 = width;
   osd->y1 = height;
@@ -670,7 +673,7 @@ static int osd_renderer_load_font(osd_renderer_t *this, char *filename) {
   /* fixme: check for all read errors... */
   if( (fp = gzopen(filename,"rb")) != NULL ) {
 
-    font = xine_xmalloc( sizeof(osd_font_t) );
+    font = calloc(1, sizeof(osd_font_t));
 
     gzread(fp, font->name, sizeof(font->name) );
     font->version = gzread_i16(fp);
@@ -818,7 +821,7 @@ static int osd_renderer_unload_font(osd_renderer_t *this, char *fontname ) {
 #ifdef HAVE_FT2
 static int osd_set_font_freetype2( osd_object_t *osd, const char *fontname, int size ) {
   if (!osd->ft2) {
-    osd->ft2 = xine_xmalloc(sizeof(osd_ft2context_t));
+    osd->ft2 = calloc(1, sizeof(osd_ft2context_t));
     if(FT_Init_FreeType( &osd->ft2->library )) {
       xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG,
 	      _("osd: cannot initialize ft2 library\n"));
@@ -826,6 +829,11 @@ static int osd_set_font_freetype2( osd_object_t *osd, const char *fontname, int 
       osd->ft2 = NULL;
       return 0;
     }
+  }
+
+  if (osd->ft2->face) {
+      FT_Done_Face (osd->ft2->face);
+      osd->ft2->face = NULL;
   }
    
 #ifdef HAVE_FONTCONFIG
@@ -885,16 +893,14 @@ static int osd_set_font_freetype2( osd_object_t *osd, const char *fontname, int 
 	    _("osd: error loading font %s with ft2\n"), fontname);
   }
 
-  free(osd->ft2);
-  osd->ft2 = NULL;
+  osd_free_ft2 (osd);
   return 0;
 
  end:
   if (FT_Set_Pixel_Sizes(osd->ft2->face, 0, size)) {
     xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG,
 	    _("osd: error setting font size (no scalable font?)\n"));
-    free(osd->ft2);
-    osd->ft2 = NULL;
+    osd_free_ft2 (osd);
     return 0;
   }
 
@@ -1410,10 +1416,9 @@ static void osd_preload_fonts (osd_renderer_t *this, char *path) {
 
         if( p ) {
 	  osd_font_t  *font;
-	  char        *pathname;
 
           *p++ = '\0';
-          font = xine_xmalloc( sizeof(osd_font_t) );
+          font = calloc(1, sizeof(osd_font_t) );
           
           strncpy(font->name, s, sizeof(font->name));
           font->size = atoi(p);
@@ -1421,9 +1426,7 @@ static void osd_preload_fonts (osd_renderer_t *this, char *path) {
           lprintf("font '%s' size %d is preloaded\n", 
                   font->name, font->size);
 
-          pathname = (char *) xine_xmalloc(strlen(path) + strlen(entry->d_name) + 2);
-          sprintf (pathname, "%s/%s", path, entry->d_name);
-          font->filename = pathname;
+          asprintf (&font->filename, "%s/%s", path, entry->d_name);
           
           font->next = this->fonts;
           this->fonts = font;
@@ -1472,15 +1475,7 @@ static void osd_free_object (osd_object_t *osd_to_close) {
     if ( osd == osd_to_close ) {
       free( osd->area );
 
-#ifdef HAVE_FT2
-      if( osd->ft2 ) {
-	if ( osd->ft2->library )
-	  FT_Done_FreeType(osd->ft2->library);
-
-	free( osd->ft2 );
-      }
-#endif
-
+      osd_free_ft2 (osd);
       osd_free_encoding(osd);
       
       if( last )
@@ -1579,9 +1574,9 @@ osd_renderer_t *_x_osd_renderer_init( xine_stream_t *stream ) {
   osd_renderer_t *this;
   char str[1024];
 
-  this = xine_xmalloc(sizeof(osd_renderer_t)); 
+  this = calloc(1, sizeof(osd_renderer_t)); 
   this->stream = stream;
-  this->event.object.overlay = xine_xmalloc( sizeof(vo_overlay_t) );
+  this->event.object.overlay = calloc(1, sizeof(vo_overlay_t));
 
   pthread_mutex_init (&this->osd_mutex, NULL);
 

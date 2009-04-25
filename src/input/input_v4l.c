@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2004 the xine project
+ * Copyright (C) 2003-2008 the xine project
  * Copyright (C) 2003 J.Asselman <j.asselman@itsec-ps.nl>
  * 
  * This file is part of xine, a free video player.
@@ -91,12 +91,14 @@ static const resolution_t resolutions[] = {
 };
 
 #define NUM_RESOLUTIONS  (sizeof(resolutions)/sizeof(resolutions[0]))
-#define RADIO_DEV        "/dev/v4l/radio0"
-#define VIDEO_DEV        "/dev/v4l/video0"
-
-#if !defined(NDELAY) && defined(O_NDELAY)
-#define FNDELAY O_NDELAY
+#define RADIO_DEV        "/dev/radio0"
+#define VIDEO_DEV        "/dev/video0"
+#ifdef HAVE_ALSA
+#define AUDIO_DEV	 "plughw:0,0"
 #endif
+
+static char *tv_standard_names[] = { "AUTO", "PAL", "NTSC", "SECAM", "OLD", NULL };
+static int tv_standard_values[] = { VIDEO_MODE_AUTO, VIDEO_MODE_PAL, VIDEO_MODE_NTSC, VIDEO_MODE_SECAM, -1 };
 
 typedef struct pvrscr_s pvrscr_t;
 
@@ -117,6 +119,10 @@ typedef struct {
   int		           old_zoomx;
   int		           old_zoomy;
   int		           audio_only;
+
+  buf_element_t           *frames_base;
+  void                    *audio_content_base;
+  void                    *video_content_base;
   
   /* Audio */
   buf_element_t           *aud_frames;
@@ -342,11 +348,11 @@ static void pvrscr_exit (scr_plugin_t *scr)
    free(this);
 }
 
-static pvrscr_t* pvrscr_init (void)
+static pvrscr_t *XINE_MALLOC pvrscr_init (void)
 {
    pvrscr_t *this;
    
-   this = (pvrscr_t *) xine_xmalloc(sizeof(pvrscr_t));
+   this = calloc(1, sizeof(pvrscr_t));
    
    this->scr.interface_version = 3;
    this->scr.get_priority      = pvrscr_get_priority;
@@ -539,6 +545,12 @@ static int set_frequency(v4l_input_plugin_t *this, unsigned long frequency)
     fd = this->radio_fd;
   
   if (frequency != 0) {
+    /* FIXME: Don't assume tuner 0 ? */
+    this->tuner = 0;
+    ret = ioctl(fd, VIDIOCSTUNER, &this->tuner);
+    lprintf("(%d) Response on set tuner to %d\n", ret, this->tuner);
+    this->video_tuner.tuner = this->tuner;
+
     if (this->video_tuner.flags & VIDEO_TUNER_LOW) {
       this->calc_frequency = frequency * 16;
     } else {
@@ -624,6 +636,7 @@ static int search_by_channel(v4l_input_plugin_t *this, char *input_source)
 {
   int  ret = 0;
   int  fd  = 0;
+  cfg_entry_t *tv_standard_entry;
 
   lprintf("input_source: %s\n", input_source);
   
@@ -659,20 +672,19 @@ static int search_by_channel(v4l_input_plugin_t *this, char *input_source)
       return -1;
     }
     
+    tv_standard_entry = this->stream->xine->config->lookup_entry(this->stream->xine->config,
+                                                   "media.video4linux.tv_standard");
     this->tuner_name = input_source;
-    ret              = ioctl(fd, VIDIOCSCHAN, &this->input);
+    if (tv_standard_entry->num_value != 0) {
+      this->video_channel.norm = tv_standard_values[ tv_standard_entry->num_value ];
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              "input_v4l: TV Standard configured as STD %s (%d)\n", 
+              tv_standard_names[ tv_standard_entry->num_value ], this->video_channel.norm );
+        ret = ioctl(fd, VIDIOCSCHAN, &this->video_channel);
+    } else
+        ret = ioctl(fd, VIDIOCSCHAN, &this->input);
     
     lprintf("(%d) Set channel to %d\n", ret, this->input);
-    
-    /* FIXME: Don't assume tuner 0 ? */
-    
-    this->tuner = 0;
-    
-    ret = ioctl(fd, VIDIOCSTUNER, &this->tuner);
-    
-    lprintf("(%d) Response on set tuner to %d\n", ret, this->tuner);
-    
-    this->video_tuner.tuner = this->tuner;
   } else {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
             "input_v4l: Not setting video source. No source given\n");
@@ -708,23 +720,50 @@ static int search_by_channel(v4l_input_plugin_t *this, char *input_source)
   return 1;   
 }
 
-static void allocate_audio_frames(v4l_input_plugin_t *this)
+static void allocate_frames(v4l_input_plugin_t *this, unsigned dovideo)
 {
+  const size_t framescount = dovideo ? 2*NUM_FRAMES : NUM_FRAMES;
+
+  /* Allocate a single memory area for both audio and video frames */
+  buf_element_t *frames = this->frames_base =
+    calloc(framescount, sizeof(buf_element_t));
+  extra_info_t  *infos  =
+    calloc(framescount, sizeof(extra_info_t));
+
   int i;
-  
+
+  uint8_t *audio_content = this->audio_content_base =
+    calloc(NUM_FRAMES, this->periodsize);
+
+  /* Set up audio frames */
   for (i = 0; i < NUM_FRAMES; i++) {
-    buf_element_t *frame;
-    
     /* Audio frame */
-    frame = xine_xmalloc(sizeof(buf_element_t));
+    frames[i].content     = audio_content;
+    frames[i].type	   = BUF_AUDIO_LPCM_LE;
+    frames[i].source      = this;
+    frames[i].free_buffer = store_aud_frame;
+    frames[i].extra_info  = &infos[i];
     
-    frame->content         = xine_xmalloc(this->periodsize);
-    frame->type	           = BUF_AUDIO_LPCM_LE;
-    frame->source          = this;
-    frame->free_buffer     = store_aud_frame;
-    frame->extra_info      = xine_xmalloc(sizeof(extra_info_t));
-    
-    store_aud_frame(frame);
+    audio_content += this->periodsize;
+    store_aud_frame(&frames[i]);
+  }
+
+  if ( dovideo ) {
+    uint8_t *video_content = this->video_content_base =
+      calloc(NUM_FRAMES, this->frame_size);
+
+    /* Set up video frames */
+    for (i = NUM_FRAMES; i < 2*NUM_FRAMES; i++) {
+      /* Video frame */
+      frames[i].content     = video_content;
+      frames[i].type	     = this->frame_format;
+      frames[i].source      = this;
+      frames[i].free_buffer = store_vid_frame;
+      frames[i].extra_info  = &infos[i];
+
+      video_content += this->frame_size;
+      store_vid_frame(&frames[i]);
+    }
   }
 }
 
@@ -775,7 +814,7 @@ static int open_radio_capture_device(v4l_input_plugin_t *this)
   
   /* Pre-allocate some frames for audio so it doesn't have to be done during
    * capture */
-  allocate_audio_frames(this);
+  allocate_frames(this, 0);
   
   this->audio_only = 1;
   
@@ -801,7 +840,7 @@ static int open_video_capture_device(v4l_input_plugin_t *this)
 {
   int          found       = 0;
   int          tuner_found = 0;
-  int          i, ret;
+  int          ret;
   unsigned int j;
   cfg_entry_t *entry;
   
@@ -844,10 +883,6 @@ static int open_video_capture_device(v4l_input_plugin_t *this)
   
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 1);
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 1);
-  
-  /* Pre-allocate some frames for audio and video so it doesn't have to be 
-   * done during capture */
-  allocate_audio_frames(this);
   
   /* Unmute audio off video capture device */
   unmute_audio(this);
@@ -951,27 +986,17 @@ static int open_video_capture_device(v4l_input_plugin_t *this)
     break;
   }
   
-  for (i = 0; i < NUM_FRAMES; i++) {
-    buf_element_t *frame;
-      
-    frame = xine_xmalloc (sizeof (buf_element_t));
-    
-    frame->content         = xine_xmalloc (this->frame_size);
-    frame->type            = this->frame_format;
-    frame->source          = this;
-    frame->free_buffer     = store_vid_frame;
-    frame->extra_info      = xine_xmalloc(sizeof(extra_info_t));
-    
-    store_vid_frame(frame);
-  }
-  
   /* Strip the vbi / sync signal from the image by zooming in */ 
   this->old_zoomx = xine_get_param(this->stream, XINE_PARAM_VO_ZOOM_X);
   this->old_zoomy = xine_get_param(this->stream, XINE_PARAM_VO_ZOOM_Y);
   
   xine_set_param(this->stream, XINE_PARAM_VO_ZOOM_X, 103);
   xine_set_param(this->stream, XINE_PARAM_VO_ZOOM_Y, 103);
-  
+
+  /* Pre-allocate some frames for audio and video so it doesn't have to be 
+   * done during capture */
+  allocate_frames(this, 1);
+
   /* If we made it here, everything went ok */ 
   this->audio_only = 0;
   if (tuner_found)
@@ -1566,52 +1591,19 @@ static void v4l_plugin_dispose (input_plugin_t *this_gen) {
   
   if (this->event_queue)
     xine_event_dispose_queue (this->event_queue);
-  
-  lprintf("Freeing allocated audio frames");
-  if (this->aud_frames) {
-    buf_element_t *cur_frame  = this->aud_frames;
-    
-    while (cur_frame != NULL) {
-      buf_element_t *next_frame = cur_frame->next;
-#ifdef LOG
-      printf(".");
-#endif
 
-      if (cur_frame->content)
-	free(cur_frame->content);
-      
-      if (cur_frame->extra_info)
-	free(cur_frame->extra_info);
-      
-      free(cur_frame);
-      cur_frame = next_frame;
-    }
-  }
-#ifdef LOG
-  printf("\n");
-#endif
+  /* All the frames, both video and audio, are allocated in a single
+     memory area pointed by the frames_base pointer. The content of
+     the frames is divided in two areas, one pointed by
+     audio_content_base and the other by video_content_base. The
+     extra_info structures are all allocated in the first frame
+     data. */
+  free(this->audio_content_base);
+  free(this->video_content_base);
+  if (this->frames_base)
+    free(this->frames_base->extra_info);
+  free(this->frames_base);
 
-  
-  lprintf("Freeing allocated video frames");
-  if (this->vid_frames) {
-    buf_element_t *cur_frame  = this->vid_frames;
-    
-    while (cur_frame != NULL) {
-      buf_element_t *next_frame = cur_frame->next;
-#ifdef LOG
-      printf(".");
-#endif
-
-      if (cur_frame->content)
-	free(cur_frame->content);
-      
-      if (cur_frame->extra_info)
-	free(cur_frame->extra_info);
-      
-      free(cur_frame);
-      cur_frame = next_frame;
-    }
-  }
 #ifdef LOG
   printf("\n");
 #endif
@@ -1701,6 +1693,9 @@ static input_plugin_t *v4l_class_get_instance (input_class_t *cls_gen,
 {
   /* v4l_input_class_t  *cls = (v4l_input_class_t *) cls_gen; */
   v4l_input_plugin_t *this;
+#ifdef HAVE_ALSA
+  cfg_entry_t        *entry;
+#endif
   char               *mrl     = strdup(data);
   
   /* Example mrl:  v4l:/Television/62500 */
@@ -1709,7 +1704,7 @@ static input_plugin_t *v4l_class_get_instance (input_class_t *cls_gen,
     return NULL;
   }
   
-  this = (v4l_input_plugin_t *) xine_xmalloc (sizeof (v4l_input_plugin_t));
+  this = calloc(1, sizeof (v4l_input_plugin_t));
     
   extract_mrl(this, mrl);
   
@@ -1721,13 +1716,14 @@ static input_plugin_t *v4l_class_get_instance (input_class_t *cls_gen,
   this->event_queue   = NULL;
   this->scr           = NULL;
 #ifdef HAVE_ALSA
-  this->pcm_name      = NULL;
   this->pcm_data      = NULL;
   this->pcm_hwparams  = NULL;
   
   /* Audio */
   this->pcm_stream    = SND_PCM_STREAM_CAPTURE;
-  this->pcm_name      = strdup("plughw:0,0");
+  entry = this->stream->xine->config->lookup_entry(this->stream->xine->config,
+                                                   "media.video4linux.audio_device");
+  this->pcm_name      = strdup (entry->str_value);
   this->audio_capture = 1;
 #endif
   this->rate          = 44100;
@@ -1870,11 +1866,11 @@ static input_plugin_t *v4l_class_get_radio_instance (input_class_t *cls_gen,
  * v4l input plugin class stuff
  */
 
-static char *v4l_class_get_video_description (input_class_t *this_gen) {
+static const char *v4l_class_get_video_description (input_class_t *this_gen) {
   return _("v4l tv input plugin");
 }
 
-static char *v4l_class_get_radio_description (input_class_t *this_gen) {
+static const char *v4l_class_get_radio_description (input_class_t *this_gen) {
   return _("v4l radio input plugin");
 }
 
@@ -1893,7 +1889,7 @@ static void *init_video_class (xine_t *xine, void *data)
   v4l_input_class_t  *this;
   config_values_t    *config = xine->config;
   
-  this = (v4l_input_class_t *) xine_xmalloc (sizeof (v4l_input_class_t));
+  this = calloc(1, sizeof (v4l_input_class_t));
   
   this->xine                           = xine;
   
@@ -1910,7 +1906,19 @@ static void *init_video_class (xine_t *xine, void *data)
 			   _("v4l video device"),
 			   _("The path to your Video4Linux video device."),
 			   10, NULL, NULL);
-  
+#ifdef HAVE_ALSA
+  config->register_filename (config, "media.video4linux.audio_device",
+			   AUDIO_DEV, 0,
+			   _("v4l ALSA audio input device"),
+			   _("The name of the audio device which corresponds "
+			     "to your Video4Linux video device."),
+			   10, NULL, NULL);
+#endif
+  config->register_enum (config, "media.video4linux.tv_standard", 4 /* old */,
+                        tv_standard_names, _("v4l TV standard"),
+                        _("Selects the TV standard of the input signals. "
+                        "Either: AUTO, PAL, NTSC or SECAM. "), 20, NULL, NULL);
+
   return this;
 }
 
@@ -1919,7 +1927,7 @@ static void *init_radio_class (xine_t *xine, void *data)
   v4l_input_class_t  *this;
   config_values_t    *config = xine->config;
   
-  this = (v4l_input_class_t *) xine_xmalloc (sizeof (v4l_input_class_t));
+  this = calloc(1, sizeof (v4l_input_class_t));
   
   this->xine                           = xine;
   

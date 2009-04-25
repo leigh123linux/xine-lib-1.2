@@ -45,8 +45,10 @@ static xine_t *my_xine = NULL;
 void 
 xine_vlog_msg(xine_t *this, int buf, const char *format, va_list args)
 {
+  va_list copy;
+  va_copy (copy, args);
   xine_vlog(this, buf, format, args);
-  vfprintf(stdout, format, args);
+  vfprintf(stdout, format, copy);
 }
 
 /*! This routine is like xine_log, except it takes a va_list instead
@@ -59,8 +61,10 @@ xine_vlog_msg(xine_t *this, int buf, const char *format, va_list args)
 void 
 xine_vlog_err(xine_t *this, int buf, const char *format, va_list args)
 {
+  va_list copy;
+  va_copy (copy, args);
   xine_vlog(this, buf, format, args);
-  vfprintf(stderr, format, args);
+  vfprintf(stderr, format, copy);
 }
 
 /*! Call this before calling any of the xine_log_msg or xine_log_err
@@ -116,8 +120,8 @@ xine_log_err(const char *format, ...)
 {
   va_list args;
 
-  va_start(args, format);
   if (NULL == my_xine) return false;
+  va_start(args, format);
   xine_vlog_err(my_xine, XINE_LOG_MSG, format, args);
   va_end(args);
   return true;

@@ -78,16 +78,16 @@ typedef struct {
  */
 
 static uint32_t read_arbitary(input_plugin_t *input){
-  uint8_t size, byte;
-  int i;
-  uint32_t word;
+  uint8_t size;
 
   if (input->read(input, (void*)&size, 1) != 1) {
     return 0;
   }
 
-  word = 0;
+  uint32_t word = 0;
+  int i;
   for (i=0;i<size;i++) {
+    uint8_t byte;
     if (input->read(input, (void*)&byte, 1) != 1) {
       return 0;
     }
@@ -104,33 +104,25 @@ static uint32_t read_arbitary(input_plugin_t *input){
  */
 
 static int process_header(demux_eawve_t *this){
-  int inHeader;
-  uint32_t blockid, size;
+  uint8_t header[12];
 
   if (this->input->get_current_pos(this->input) != 0)
     this->input->seek(this->input, 0, SEEK_SET);
 
-  if (this->input->read(this->input, (void*)&blockid, 4) != 4) {
+  if (this->input->read(this->input, header, sizeof(header)) != sizeof(header))
     return 0;
-  }
-  if (be2me_32(blockid) != FOURCC_TAG('S', 'C', 'H', 'l')) {
-    return 0;
-  }
 
-  if (this->input->read(this->input, (void*)&size, 4) != 4) {
+  if (!_x_is_fourcc(&header[0], "SCHl"))
     return 0;
-  }
-  size = le2me_32(size);
 
-  if (this->input->read(this->input, (void*)&blockid, 4) != 4) {
-    return 0;
-  }
-  if (be2me_32(blockid) != FOURCC_TAG('P', 'T', '\0', '\0')) {
+  if (!_x_is_fourcc(&header[8], "PT\0\0")) {
     lprintf("PT header missing\n");
     return 0;
   }
 
-  inHeader = 1;
+  const uint32_t size = _X_LE_32(&header[4]);
+
+  int inHeader = 1;
   while (inHeader) {
     int inSubheader;
     uint8_t byte;
@@ -349,7 +341,7 @@ static demux_plugin_t* open_plugin(demux_class_t *class_gen, xine_stream_t *stre
   if (!INPUT_IS_SEEKABLE(input))
     return NULL;
 
-  this         = xine_xmalloc(sizeof(demux_eawve_t));
+  this         = calloc(1, sizeof(demux_eawve_t));
   this->stream = stream;
   this->input  = input;
 
@@ -421,7 +413,7 @@ static void class_dispose(demux_class_t *this){
 void *demux_eawve_init_plugin(xine_t *xine, void *data) {
   demux_eawve_class_t     *this;
 
-  this = xine_xmalloc(sizeof(demux_eawve_class_t));
+  this = calloc(1, sizeof(demux_eawve_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

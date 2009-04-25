@@ -127,15 +127,19 @@ hands.
     (also make sure it gets immediately approved by the xine-announce
      moderator!)
 
-12) write the announcement for xinehq:
-    You need to login on xinehq and use your admin privileges to create a
-    news article in the "New Releases" section. Include a link to the
-    SourceForge Release notes/Changelog page and one to the download page.
+12) write the announcement for xine-project.org:
+    You need to have an account on alioth.debian.org and a checked-out copy
+    of ssh://hg.debian.org//hg/xine-lib/xine-project-www/ (using Mercurial). 
+    Add the new news item near the top of pages/news/items.xml (use the
+    provided template), run update.sh (requires xsltproc; if this fails,
+    re-edit), check that it looks fine in a convenient browser, then commit
+    and push the change. At present, you will need to request a web site
+    update via #xine on irc.oftc.net or by contacting a site admin.
 
-    Warning: triple-check that you get the HTML correct! If you have
-             unmatched quotes, you might break the whole website so that it
-             can only be repaired by manually fiddling with mysql to get the
-             HTML right!
+    You should include a link to the SourceForge Release notes/Changelog
+    page and one to the download page.
+
+    Warning: triple-check that you get the XML correct!
 
 13) write the Freshmeat announcement:
     use your freshmeat account to log into their website, if you aren't

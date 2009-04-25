@@ -138,7 +138,7 @@ static vo_frame_t *sdl_alloc_frame (vo_driver_t *this_gen) {
   /* sdl_driver_t    *this = (sdl_driver_t *) this_gen; */
   sdl_frame_t     *frame ;
 
-  frame = (sdl_frame_t *) xine_xmalloc (sizeof (sdl_frame_t));
+  frame = (sdl_frame_t *) calloc(1, sizeof(sdl_frame_t));
 
   if (!frame)
     return NULL;
@@ -469,13 +469,15 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   sdl_driver_t         *this;
 
   const SDL_VideoInfo  *vidInfo;
-#ifdef HAVE_X11
+#if defined(HAVE_X11) || defined(WIN32)
   static char           SDL_windowhack[32];
   x11_visual_t         *visual = (x11_visual_t *) visual_gen;
+#endif
+#ifdef HAVE_X11
   XWindowAttributes     window_attributes;
 #endif
   
-  this = (sdl_driver_t *) xine_xmalloc (sizeof (sdl_driver_t));
+  this = (sdl_driver_t *) calloc(1, sizeof(sdl_driver_t));
   if (!this)
     return NULL;
 
@@ -502,12 +504,16 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   _x_vo_scale_init( &this->sc, 0, 0, config);
   this->sc.frame_output_cb   = visual->frame_output_cb;
   this->sc.user_data         = visual->user_data;
-
-  /* set SDL to use our existing X11 window */
-  sprintf(SDL_windowhack,"SDL_WINDOWID=0x%x", (uint32_t) this->drawable );
-  putenv(SDL_windowhack);
 #else
   _x_vo_scale_init( &this->sc, 0, 0, config );
+#endif
+
+#if defined(HAVE_X11) || defined(WIN32)
+  /* set SDL to use our existing X11/win32 window */
+  if (visual->d){
+    sprintf(SDL_windowhack,"SDL_WINDOWID=0x%x", (uint32_t) visual->d);
+    putenv(SDL_windowhack);
+  }
 #endif
 
   if ((SDL_Init (SDL_INIT_VIDEO)) < 0) {
@@ -596,7 +602,7 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   }
   SDL_QuitSubSystem (SDL_INIT_VIDEO);
 
-  this = (sdl_class_t*) xine_xmalloc (sizeof (sdl_class_t));
+  this = (sdl_class_t*) calloc(1, sizeof(sdl_class_t));
    
   this->driver_class.open_plugin      = open_plugin;
   this->driver_class.get_identifier   = get_identifier;

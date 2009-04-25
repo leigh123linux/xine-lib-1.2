@@ -20,6 +20,11 @@
  * 31-8-2001 Added LPCM rate sensing.
  *   (c) 2001 James Courtier-Dutton James@superbug.demon.co.uk
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef __sun
 #define _XOPEN_SOURCE 500
 #endif
@@ -187,18 +192,34 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     uint8_t *d = (uint8_t *)audio_buffer->mem;
     int n = buf->size;
 
-    while (n >= 0) {
+    while (n >= 3) {
       if ( stream_be ) {
-	*d++ = s[0];
-	*d++ = s[1];
+	  if ( stream_be == this->cpu_be ) {
+	      *d++ = s[0];
+	      *d++ = s[1];
+	  } else {
+	      *d++ = s[1];
+	      *d++ = s[0];
+	  }
       } else {
-	*d++ = s[1];
-	*d++ = s[2];
+	  if ( stream_be == this->cpu_be ) {
+	      *d++ = s[1];
+	      *d++ = s[2];
+	  }
+	  else
+	  {
+	      *d++ = s[2];
+	      *d++ = s[1];
+	  }
       }
 
       s += 3;
       n -= 3;
     }
+
+    if ( (d - (uint8_t*)audio_buffer->mem)/2*3 < buf->size )
+	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "lpcm_decoder: lost %i bytes\n", (int)(buf->size - (d - (uint8_t*)audio_buffer->mem))/2*3);
+
   } else {
     memcpy (audio_buffer->mem, sample_buffer, buf->size);
   }
@@ -224,7 +245,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   lpcm_decoder_t *this ;
 
-  this = (lpcm_decoder_t *) xine_xmalloc (sizeof (lpcm_decoder_t));
+  this = (lpcm_decoder_t *) calloc(1, sizeof(lpcm_decoder_t));
 
   this->audio_decoder.decode_data         = lpcm_decode_data;
   this->audio_decoder.reset               = lpcm_reset;
@@ -259,7 +280,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   lpcm_class_t *this ;
 
-  this = (lpcm_class_t *) xine_xmalloc (sizeof (lpcm_class_t));
+  this = (lpcm_class_t *) calloc(1, sizeof(lpcm_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;

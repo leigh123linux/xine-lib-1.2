@@ -1,3 +1,4 @@
+include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
 AM_CFLAGS = -I$(srcdir)/wine -DWIN32_PATH=\"@w32_path@\" $(VISIBILITY_FLAG)

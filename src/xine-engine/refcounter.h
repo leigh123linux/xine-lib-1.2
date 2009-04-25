@@ -20,10 +20,6 @@
 #ifndef HAVE_REFCOUNTER_H
 #define HAVE_REFCOUNTER_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <pthread.h>
 
 typedef struct {
@@ -35,7 +31,7 @@ typedef struct {
 
 typedef void (*refcounter_destructor)(void*);
 
-refcounter_t* _x_new_refcounter(void *object, refcounter_destructor destructor) XINE_PROTECTED;
+refcounter_t* _x_new_refcounter(void *object, refcounter_destructor destructor) XINE_MALLOC XINE_PROTECTED;
 
 int _x_refcounter_inc(refcounter_t *refcounter) XINE_PROTECTED;
 

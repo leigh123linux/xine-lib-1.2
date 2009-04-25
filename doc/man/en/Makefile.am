@@ -1,5 +1,13 @@
 include $(top_srcdir)/misc/Makefile.common
 
-man_MANS = xine-config.1 xine.5
+STATICMANS = xine-config.1 xine.5
+DYNAMICMANS = xine-list-@XINE_SERIES@.1
 
-EXTRA_DIST = $(man_MANS)
+man_MANS = $(STATICMANS) $(DYNAMICMANS)
+
+BUILT_SOURCES = $(DYNAMICMANS)
+DISTCLEANFILES = $(DYNAMICMANS)
+EXTRA_DIST = $(STATICMANS) xine-list.1.in
+
+xine-list-@XINE_SERIES@.1: xine-list.1.in
+	(echo '.ds xl xine\-list\-@XINE_SERIES@'; cat $<) >$@

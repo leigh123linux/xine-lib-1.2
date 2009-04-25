@@ -4,6 +4,7 @@ dnl
 
 AC_INIT
 AC_CONFIG_SRCDIR([src/xine-engine/xine.c])
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_LIBOBJ_DIR([lib])
 
 dnl
@@ -16,15 +17,17 @@ dnl   XINE_SUB += 1; XINE_PATCH = ''; continue with XINE_LT_* values below
 dnl
 XINE_MAJOR=1
 XINE_MINOR=1
-XINE_SUB=9
-# XINE_PATCH should be left empty or set to ".1" or ".2" or something similar
-XINE_PATCH=.1
+XINE_SUB=16
+dnl XINE_PATCH should be left empty or set to ".1" or ".2" or something similar
+XINE_PATCH=.3
+dnl Release series number (usually $XINE_MAJOR.$XINE_MINOR)
+XINE_SERIES=1.1
 
-#if test $XINE_SUB -eq 0 ; then
-#  XINE_SUBPART="";
-#else
+dnl if test $XINE_SUB -eq 0 ; then
+dnl  XINE_SUBPART="";
+dnl else
   XINE_SUBPART=".$XINE_SUB$XINE_PATCH"
-#fi
+dnl fi
 
 dnl The libtool version numbers (XINE_LT_*); Don't even think about faking this!
 dnl 
@@ -51,9 +54,9 @@ dnl    are platform dependent
 dnl  * in Linux, the library will be named
 dnl    libname.so.(XINE_LT_CURRENT - XINE_LT_AGE).XINE_LT_AGE.XINE_LT_REVISION
 
-XINE_LT_CURRENT=20
-XINE_LT_REVISION=0
-XINE_LT_AGE=19
+XINE_LT_CURRENT=27
+XINE_LT_REVISION=1
+XINE_LT_AGE=26
 
 dnl for a release tarball do "rm .cvsversion" before "make dist"
 if test -f "${srcdir-.}/.cvsversion"; then
@@ -65,6 +68,8 @@ fi
 AC_SUBST(XINE_MAJOR)
 AC_SUBST(XINE_MINOR)
 AC_SUBST(XINE_SUB)
+AC_SUBST(XINE_PATCH)
+AC_SUBST(XINE_SERIES)
 AC_SUBST(XINE_IFACE_AGE)
 AC_SUBST(XINE_BIN_AGE)
 
@@ -76,6 +81,9 @@ AC_DEFINE_UNQUOTED(XINE_PATCH, $XINE_PATCH, [xine patch version number])
 AC_SUBST(XINE_LT_CURRENT)
 AC_SUBST(XINE_LT_REVISION)
 AC_SUBST(XINE_LT_AGE)
+
+AC_DEFINE_UNQUOTED(XINE_LT_CURRENT, $XINE_LT_CURRENT, [xine interface version number])
+AC_DEFINE_UNQUOTED(XINE_LT_AGE, $XINE_LT_AGE, [xine interface version age])
 
 SPEC_VERSION=$XINE_MAJOR.$XINE_MINOR${XINE_SUBPART}$XINE_PRE
 TAR_NAME="xine-lib-"$SPEC_VERSION
@@ -140,14 +148,17 @@ AC_PROG_LN_S
 AC_PROG_AWK
 AC_C_INLINE
 
+AC_PATH_PROG([PERL], [perl], [no])
+if test "$PERL" = no; then
+  AC_MSG_ERROR([perl not found])
+fi
+AC_SUBST([PERL])
+     
 AC_CHECK_TOOL([STRINGS], [strings], [false])
 
 dnl ---------------------------------------------
 dnl Libtool
 dnl ---------------------------------------------
-
-m4_undefine([AC_PROG_F77])
-m4_defun([AC_PROG_F77],[])
 
 AC_LIBTOOL_DLOPEN
 AC_DISABLE_STATIC
@@ -196,6 +207,7 @@ if test "x$enable_iconvtest" != xno; then
 fi
 
 AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.16.1])
 AC_PROG_GMSGFMT_PLURAL
 
 AC_CHECK_FUNCS([nl_langinfo])
@@ -221,34 +233,17 @@ dnl threads and OS specific stuff
 dnl ---------------------------------------------
 
 CC_PTHREAD_FLAGS(, [AC_MSG_ERROR([Pthread support is needed])])
-
-dnl
-AC_MSG_CHECKING(for recursive mutex support in pthread)
-ac_save_LIBS="$LIBS"
-LIBS="$LIBS $PTHREAD_LIBS"
-
-have_recursive_mutex=no
-AC_COMPILE_IFELSE(AC_LANG_SOURCE([#include <pthread.h>
-
-int main() {
-  pthread_mutexattr_t attr;
-  pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-  return 0;
-}
-	]),[
-	    have_recursive_mutex=yes
-	],[
-	    AC_MSG_ERROR(recursive mutex support is needed - please report)
-	])
-LIBS="$ac_save_LIBS"
-
-AC_MSG_RESULT($have_recursive_mutex)
+CC_PTHREAD_RECURSIVE_MUTEX(, [AC_MSG_ERROR([recursive mutex support is needed - please report])])
+dnl <pthread.h> is implicitly included by xine-internals.h, so the include dir is needed everywhere
+CPPFLAGS="$CPPFLAGS $PTHREAD_CFLAGS"
 
 AC_CHECK_DECL(sysi86,[
 	AC_DEFINE(HAVE_SYSI86,1,[Define this if the 'sysi86' function is declared in sys/sysi86.h])
       ],,[
 #include <sys/sysi86.h>
 ])
+
+AC_GETOPT_LONG
 
 dnl ---------------------------------------------
 dnl Windows ports checks
@@ -274,6 +269,7 @@ case "$host" in
       WIN32_CPPFLAGS='-I$(top_srcdir)/win32/include'
       LIBS="-lwinmm -lwsock32 $LIBS"
       GOOM_LIBS="-liberty"
+      LDFLAGS="-Wl,--enable-stdcall-fixup $LDFLAGS"
     fi
     LDFLAGS="-no-undefined $LDFLAGS"
     ;;
@@ -327,36 +323,51 @@ dnl ---------------------------------------------
 
 AC_SUBST(LIBMPEG2_CFLAGS)
 
+AC_ARG_ENABLE([libmpeg2new],
+	AS_HELP_STRING([--enable-libmpeg2new], [build the newer MPEG2 decoder (buggy)]))
+AM_CONDITIONAL(ENABLE_MPEG2NEW, test "x$enable_libmpeg2new" = "xyes")
+
 AC_ARG_WITH([external-ffmpeg], AS_HELP_STRING([--with-external-ffmpeg], [use external ffmpeg library]))
 
 case "x$with_external_ffmpeg" in
+   xno)
+      ;;
    xyes)
       PKG_CHECK_MODULES([FFMPEG], [libavcodec >= 51.20.0])
       ;;
-   xsoft)
+   *)
       with_external_ffmpeg=yes
       PKG_CHECK_MODULES([FFMPEG], [libavcodec >= 51.20.0], [],
 			[AC_MSG_RESULT(no); with_external_ffmpeg=no])
       ;;
 esac
-if test "x$with_external_ffmpeg" = "xyes"; then
+if test "x$with_external_ffmpeg" != "xno"; then
+   PKG_CHECK_MODULES([FFMPEG_UTIL], [libavutil])
    PKG_CHECK_MODULES([FFMPEG_POSTPROC], [libpostproc])
    AC_SUBST([FFMPEG_CFLAGS])
    AC_SUBST([FFMPEG_LIBS])
    AC_SUBST([FFMPEG_POSTPROC_CFLAGS])
    AC_SUBST([FFMPEG_POSTPROC_LIBS])
    AC_DEFINE([HAVE_FFMPEG], [1], [Define this if you have ffmpeg library])
-   
-   AC_MSG_NOTICE([
-*********************************************************************
-xine is configured with external ffmpeg.
 
-This requires the same version of ffmpeg what is included in xine and
-you should know what you do. If some problems occur, please try to
-use internal ffmpeg.
-*********************************************************************])
+   dnl Check presence of ffmpeg/avutil.h to see if it's old or new
+   dnl style for headers. The new style would be preferred actually...
+   AC_CHECK_HEADERS([ffmpeg/avutil.h])
+   AC_CHECK_HEADERS([libavutil/avutil.h])
+   if test "$ac_cv_header_ffmpeg_avutil_h" = "yes" && test "$ac_cv_header_libavutil_avutil_h" = "yes"; then
+     AC_MSG_ERROR([old & new ffmpeg headers found - you need to clean up!])
+   fi
+   
+   AC_MSG_RESULT([using external ffmpeg])
 else
-  AC_MSG_RESULT([using included ffmpeg])
+  AC_MSG_NOTICE([
+*********************************************************************
+xine-lib is configured to use internal ffmpeg.
+
+This copy of ffmpeg is old. You are strongly advised to install a
+newer version (including development files) and to reconfigure
+xine-lib to use it.
+*********************************************************************])
   LIBFFMPEG_CPPFLAGS="-DHAVE_AV_CONFIG_H -DRUNTIME_CPUDETECT -DXINE_MPEG_ENCODER -D_ISOC9X_SOURCE -DCONFIG_DECODERS"
   AC_CHECK_TYPES(int_fast8_t, [], [LIBFFMPEG_CPPFLAGS="$LIBFFMPEG_CPPFLAGS -DEMULATE_FAST_INT"])
   AC_SUBST([LIBFFMPEG_CPPFLAGS])
@@ -733,7 +744,7 @@ if test "x$no_x" = "x" && test "x$enable_xvmc" != "xno"; then
 
 AC_ARG_WITH(xxmc-path, AS_HELP_STRING([--with-xxmc-path=path], [where libXvMC libraries for the
 	xxmc plugin are  installed. Defalts to the default X library path.]),
-	xxmc_path="$withval", xxmc_path="$x_libraries")
+	xxmc_path="$withval", xxmc_path="${x_libraries:-/usr/lib}")
 AC_ARG_WITH(xxmc-lib, AS_HELP_STRING([--with-xxmc-lib=XXXX], [The name of the XvMC library 
 	libXXXX.so for the xxmc plugin.]),xxmc_stub="$withval", 
 	xxmc_stub="XvMCW")
@@ -824,7 +835,7 @@ if test "x$no_x" = "x" && test "x$enable_xvmc" != "xno"; then
 
 AC_ARG_WITH(xvmc-path, AS_HELP_STRING([--with-xvmc-path=path], [where libXvMC libraries for the
 	xvmc plugin are  installed. Defalts to the default X library path.]),
-	xvmc_path="$withval", xvmc_path="$x_libraries")
+	xvmc_path="$withval", xvmc_path="${x_libraries:-/usr/lib}")
 AC_ARG_WITH(xvmc-lib, AS_HELP_STRING([--with-xvmc-lib=XXXX], [The name of the XvMC library 
 	libXXXX.so for the xvmc plugin.]),xvmc_stub="$withval", 
 	xvmc_stub="XvMCW")
@@ -955,7 +966,9 @@ AC_ARG_WITH([caca],
   AS_HELP_STRING([--without-caca], [Do not build CACA support]))
 
 if test "x$with_caca" != "xno"; then
-   PKG_CHECK_MODULES([CACA], [caca cucul], [have_caca="yes"], [have_caca="no"])
+   have_caca=yes
+   PKG_CHECK_MODULES([CACA], [caca >= 0.99beta14 cucul >= 0.99beta14 ],
+		     [], [AC_MSG_RESULT(no); have_caca="no"])
    if test "x$with_caca" = "xyes" && test "x$have_caca" = "xno"; then
       AC_MSG_ERROR([CACA support requested, but libcaca 0.99 not found])
    fi
@@ -1087,7 +1100,10 @@ AC_ARG_WITH([pulseaudio],
 if test "x$with_pulseaudio" != "xno"; then
    PKG_CHECK_MODULES([PULSEAUDIO], [libpulse], [have_pulseaudio="yes"], [have_pulseaudio="no"])
 fi
+
 AM_CONDITIONAL(HAVE_PULSEAUDIO, [test "x$have_pulseaudio" = x"yes"])
+AC_SUBST([PULSEAUDIO_CFLAGS])
+AC_SUBST([PULSEAUDIO_LIBS])
 
 dnl ---------------------------------------------
 dnl check for DirectX
@@ -1368,8 +1384,11 @@ AC_ARG_WITH([imagemagick],
 
 if test "x$with_imagemagick" != "xno"; then
    PKG_CHECK_MODULES([WAND], [Wand], [have_imagemagick=yes], [have_imagemagick=no])
+   if test "x$with_imagemagick" = 'xno'; then
+      PKG_CHECK_MODULES([WAND], [MagickWand], [have_imagemagick=yes], [have_imagemagick=no])
+   fi
    if test "x$with_imagemagick" = "xyes" && test "x$have_imagemagick" = "xno"; then
-      AC_MSG_ERROR([ImageMagick support requested, but Wand not found])
+      AC_MSG_ERROR([ImageMagick support requested, but neither Wand nor MagickWand were found])
    elif test "x$have_imagemagick" = "xyes"; then
       AC_DEFINE([HAVE_WAND], [1], [Define this if you have ImageMagick installed])
    fi
@@ -1438,7 +1457,9 @@ if test "x$enable_oss" != "xno"; then
      #endif
    ])
 
-   AC_IOCTL_REQUEST
+   if test "x$have_ossaudio" = "xyes"; then
+      AC_IOCTL_REQUEST
+   fi
 fi
 
 AM_CONDITIONAL(HAVE_OSS, test "x$have_ossaudio" = "xyes")
@@ -1540,6 +1561,28 @@ if test "x$with_jack" != "xno"; then
 fi
 
 AM_CONDITIONAL([HAVE_JACK], [test "x$have_jack" = "xyes"])
+
+
+dnl ---------------------------------------------
+dnl sndio support
+dnl ---------------------------------------------
+
+AC_ARG_WITH([sndio],
+	AS_HELP_STRING([--without-sndio], [Build without sndio support]))
+
+if test "x$with_sndio" != "xno"; then
+   AC_CHECK_LIB(sndio, sio_open, [SNDIO_LIBS=-lsndio; have_sndio=yes],
+     [have_sndio=no])
+
+   if test "x$with_sndio" = "xyes" && test "x$have_sndio" = "xno"; then
+      AC_MSG_ERROR([sndio support requested, but sndio not found])
+   fi
+fi
+
+AM_CONDITIONAL([HAVE_SNDIO], [test "x$have_sndio" = "xyes"])
+
+AC_SUBST([SNDIO_CFLAGS])
+AC_SUBST([SNDIO_LIBS])
 
 
 dnl ---------------------------------------------
@@ -1952,7 +1995,27 @@ dnl FAAD build can be optional
 dnl ---------------------------------------------
 
 AC_ARG_ENABLE([faad], AS_HELP_STRING([--disable-faad], [do not build FAAD decoder]))
+AC_ARG_WITH(external-libfaad, AS_HELP_STRING([--with-external-libfaad], [use external libfaad (recommended)]),
+            [external_libfaad="$withval"], [external_libfaad="yes"])
+
+have_faad=no
+if test "x$enable_faad" = "xno"; then
+  AC_MSG_RESULT([faad support disabled])
+elif test "x$with_external_libfaad" != "xno"; then
+  AC_CHECK_LIB([faad], [NeAACDecInit], [have_faad=yes])
+  if test "x$have_faad" = xyes; then 
+    AC_CHECK_HEADERS([faad.h], , [have_faad=no])
+    if test "x$have_faad" != "xyes"; then
+      AC_MSG_ERROR([Unable to find libfaad])
+    fi
+    AC_DEFINE([EXTERNAL_LIBFAAD], [1], [Define if external libfaad is used])
+  fi
+else
+  AC_MSG_RESULT([Use included libfaad])
+fi
+
 AM_CONDITIONAL(BUILD_FAAD, test "x$enable_faad" != "xno")
+AM_CONDITIONAL(EXTERNAL_LIBFAAD, test "x$have_faad" = "xyes")
 
 dnl ---------------------------------------------
 dnl Optional and external libdts
@@ -2113,7 +2176,7 @@ dnl ---------------------------------------------
 
 AC_SYS_LARGEFILE
 AC_CHECK_LIB(posix4, sched_get_priority_min)
-AC_CHECK_FUNCS([vsscanf sigaction sigset getpwuid_r nanosleep lstat memset readlink strchr va_copy])
+AC_CHECK_FUNCS([vsscanf sigaction sigset getpwuid_r nanosleep lstat memset readlink strchr tzset va_copy])
 AC_CHECK_FUNCS([snprintf _snprintf], [some_snprintf="yes"; break])
 AC_CHECK_FUNCS([vsnprintf _vsnprintf], [some_vsnprintf="yes"; break])
 AC_CHECK_FUNCS([strcasecmp _stricmp], [some_strcasecmp="yes"; break])
@@ -2126,7 +2189,7 @@ if test "x$some_snprintf" != "xyes" -o \
 fi
 AC_FUNC_FSEEKO
 AC_CHECK_HEADERS(assert.h byteswap.h malloc.h execinfo.h ucontext.h sys/mman.h sys/mixer.h libgen.h netdb.h dirent.h sys/times.h sys/ioctl.h sys/param.h alloca.h)
-AC_REPLACE_FUNCS(asprintf basename gettimeofday setenv strndup strpbrk strsep strtok_r timegm unsetenv memmem)
+AC_REPLACE_FUNCS(asprintf basename gettimeofday setenv strcasestr strndup strpbrk strsep strtok_r timegm unsetenv memmem)
 
 AC_LIBSOURCE(hstrerror.c)
 AC_LINK_IFELSE([#include <netdb.h>
@@ -2154,6 +2217,10 @@ AC_CHECK_FUNC(opendir,
     AC_MSG_ERROR([dirent is needed (opendir, readdir, ...)])
   fi])
 
+XINE_CHECK_MINMAX([
+    AC_DEFINE(HAVE_MAX_MACRO, 1, [Define to 1 if you have 'MAX' macro in sys/param.h])
+    AC_DEFINE(HAVE_MIN_MACRO, 1, [Define to 1 if you have 'MIN' macro in sys/param.h])
+  ],[])
 
 dnl ---------------------------------------------
 dnl cflags and debug cflags
@@ -2192,6 +2259,11 @@ AC_SUBST([VISIBILITY_FLAG])
 CC_ATTRIBUTE_SENTINEL
 CC_ATTRIBUTE_FORMAT
 CC_ATTRIBUTE_FORMAT_ARG
+CC_ATTRIBUTE_DEPRECATED
+CC_ATTRIBUTE_UNUSED
+CC_ATTRIBUTE_MALLOC
+CC_ATTRIBUTE_PACKED
+CC_ATTRIBUTE_CONST
 
 AC_OPTIMIZATIONS
 
@@ -2208,7 +2280,7 @@ case "$host_or_hostalias" in
     dnl
     AC_DEFINE_UNQUOTED(ARCH_X86_32,,[Define this if you're running x86 architecture 32 bits])
     AC_DEFINE(FPM_INTEL,1,[Define to select libmad fixed point arithmetic implementation])
-    arch_x86="yes"
+    arch_x86="32"
     enable_impure_text="yes"
 
     case "$host_or_hostalias" in
@@ -2220,7 +2292,7 @@ case "$host_or_hostalias" in
   x86_64-*)
     AC_DEFINE_UNQUOTED(ARCH_X86_64,,[Define this if you're running x86 architecture 64 bits])
     AC_DEFINE(FPM_64BIT,1,[Define to select libmad fixed point arithmetic implementation])
-    arch_x86="yes"
+    arch_x86="64"
     ;;
   powerpc-*-darwin*)
     dnl avoid ppc compilation crash
@@ -2270,19 +2342,21 @@ case "$host_or_hostalias" in
       esac
   
       AC_DEFINE_UNQUOTED(FPM_SPARC,,[Define to select libmad fixed point arithmetic implementation])
-      AC_DEFINE_UNQUOTED(ARCH_SPARC,,[Define this if you're running SPARC architecture])
     else
       AC_DEFINE_UNQUOTED(FPM_64BIT,,[Define to select libmad fixed point arithmetic implementation])
     fi
+    AC_DEFINE_UNQUOTED(ARCH_SPARC,,[Define this if you're running SPARC architecture])
     ;;
   mips-*)
     AC_DEFINE_UNQUOTED(FPM_MIPS,,[Define to select libmad fixed point arithmetic implementation])
     ;;
   alphaev56-* | alpha* | ia64-* | hppa*-linux-*)
     AC_DEFINE_UNQUOTED(FPM_64BIT,,[Define to select libmad fixed point arithmetic implementation])
+    AC_DEFINE_UNQUOTED(ARCH_ALPHA,,[Define this if you're running Alpha architecture])
     ;;
   armv4l-*-linux*)
     AC_DEFINE_UNQUOTED(FPM_ARM,,[Define to select libmad fixed point arithmetic implementation])
+    AC_DEFINE_UNQUOTED(ARCH_ARM,,[Define this if you're running ARM architecture])
     enable_armv4l="yes"
     ;;
   *)
@@ -2299,12 +2373,14 @@ if test "x$has_vis" = "xyes"; then
 fi
 AM_CONDITIONAL(ENABLE_VIS, test "x$has_vis" = "xyes")
 
-if test "x$arch_x86" = "xyes"; then
+if test "x$arch_x86" != "xno"; then
    AC_DEFINE_UNQUOTED(ARCH_X86,,[Define this if you're running x86 architecture])
    AC_DEFINE_UNQUOTED(HAVE_MMX,,[Define this if you can compile MMX asm instructions])
 fi
-AM_CONDITIONAL(ARCH_X86, test "x$arch_x86" = "xyes")
-AM_CONDITIONAL(HAVE_MMX, test "x$arch_x86" = "xyes")
+AM_CONDITIONAL(ARCH_X86, test "x$arch_x86" != "xno")
+AM_CONDITIONAL(ARCH_X86_32, test "x$arch_x86" = "x32")
+AM_CONDITIONAL(ARCH_X86_64, test "x$arch_x86" = "x64")
+AM_CONDITIONAL(HAVE_MMX, test "x$arch_x86" != "xno")
 
 case $host_os in
   darwin*)
@@ -2391,62 +2467,64 @@ makeexpand () {
   echo "$i"
 }
 
-XINE_PLUGINDIR="$libdir/xine/plugins/$XINE_MAJOR.$XINE_MINOR.$XINE_SUB$XINE_PATCH"
-XINE_FONTDIR="${datadir}/xine/libxine$XINE_MAJOR/fonts"
-XINE_LOCALEDIR="${datadir}/locale"
-XINE_REL_PLUGINDIR="`makeexpand "$XINE_PLUGINDIR"`"
-XINE_REL_PLUGINDIR="`makeexpand "$XINE_REL_PLUGINDIR" | sed -e "s,^${prefix}/,,"`"
+xinelibdir='${libdir}/xine'
+xinedatadir='${datadir}/xine'
+pkgconfigdir='${libdir}/pkgconfig'
+AC_SUBST(xinelibdir)
+AC_SUBST(xinedatadir)
+AC_SUBST(pkgconfigdir)
+
+XINE_PLUGINROOT="\${xinelibdir}/plugins/$(($XINE_LT_CURRENT-$XINE_LT_AGE))"
+XINE_PLUGINDIR="$XINE_PLUGINROOT.$XINE_LT_AGE"
+XINE_FONTDIR="\${xinedatadir}/libxine$XINE_MAJOR/fonts"
+XINE_LOCALEDIR='${datadir}/locale'
+XINE_REL_PLUGINROOT="`makeexpand "$XINE_PLUGINROOT"`"
+XINE_REL_PLUGINROOT="`makeexpand "$XINE_REL_PLUGINROOT" | sed -e "s,^${prefix}/,,"`"
+XINE_REL_PLUGINDIR="$XINE_REL_PLUGINROOT.$XINE_LT_AGE"
 XINE_REL_FONTDIR="`makeexpand "$XINE_FONTDIR" | sed -e "s,^${prefix}/,,"`"
 XINE_REL_LOCALEDIR="`makeexpand "$XINE_LOCALEDIR" | sed -e "s,^${prefix}/,,"`"
+XINE_PKGCONFIG_DIR="`makeexpand "$pkgconfigdir"`"
+dnl platform specific runtime directories
 if test "x$SYS" = "xmingw32" -o "x$SYS" = "xcygwin"; then
-  dnl polish paths (MinGW runtime accepts both \ and / anyway)
-  XINE_REL_PLUGINDIR="`echo "$XINE_REL_PLUGINDIR" | sed -e 's/\\//\\\\\\\\/g'`"
-  XINE_REL_FONTDIR="`echo "$XINE_REL_FONTDIR" | sed -e 's/\\//\\\\\\\\/g'`"
-  XINE_REL_LOCALEDIR="`echo "$XINE_REL_LOCALEDIR" | sed -e 's/\\//\\\\\\\\/g'`"
-  dnl prefix in xine-config
-  XINE_CONFIG_PREFIX="\$(cd \$(dirname \$0)/..; pwd)"
-  dnl installation directories (in xine-config)
-  XINE_PLUGINPATH="$XINE_CONFIG_PREFIX/$XINE_REL_PLUGINDIR"
-  XINE_FONTPATH="$XINE_CONFIG_PREFIX/$XINE_REL_FONTDIR"
-  XINE_LOCALEPATH="$XINE_CONFIG_PREFIX/$XINE_REL_LOCALEDIR"
-  dnl runtime directories
-  AC_DEFINE(XINE_PLUGINDIR,[xine_get_plugindir()],[Define this to plugins directory location])
+  AC_DEFINE(XINE_PLUGINROOT,[xine_get_pluginroot()],[Define this to general plugins directory location])
+  AC_DEFINE(XINE_PLUGINDIR,[xine_get_plugindir()],[Define this to specific plugins directory location])
   AC_DEFINE(XINE_FONTDIR,[xine_get_fontdir()],[Define this to osd fonts dir location])
   AC_DEFINE(XINE_LOCALEDIR,[xine_get_localedir()],[Path where catalog files will be.])
 else
-  dnl prefix in xine-config
-  XINE_CONFIG_PREFIX="`makeexpand "${prefix}"`"
-  dnl directories from xine-config and runtime directories
-  XINE_PLUGINPATH="`makeexpand "$XINE_PLUGINDIR"`"
+  XINE_PLUGINROOTPATH="`makeexpand "$XINE_PLUGINROOT"`"
   XINE_FONTPATH="`makeexpand "$XINE_FONTDIR"`"
   XINE_LOCALEPATH="`makeexpand "$XINE_LOCALEDIR"`"
-  dnl defining runtime directories
-  AC_DEFINE_UNQUOTED(XINE_PLUGINDIR,"$XINE_PLUGINPATH",[Define this to plugins directory location])
+  AC_DEFINE_UNQUOTED(XINE_PLUGINROOT,"$XINE_PLUGINROOTPATH",[Define this to general plugins directory location])
+  AC_DEFINE_UNQUOTED(XINE_PLUGINDIR,"$XINE_PLUGINROOTPATH.$XINE_LT_AGE",[Define this to specific plugins directory location])
   AC_DEFINE_UNQUOTED(XINE_FONTDIR,"$XINE_FONTPATH",[Define this to osd fonts dir location])
   AC_DEFINE_UNQUOTED(XINE_LOCALEDIR, "$XINE_LOCALEPATH",[Path where catalog files will be.])
 fi
-AC_DEFINE_UNQUOTED(XINE_REL_PLUGINDIR,"$XINE_REL_PLUGINDIR",[Define this to plugin directory relative to execution prefix])
+AC_DEFINE_UNQUOTED(XINE_REL_PLUGINDIR,"$XINE_REL_PLUGINDIR",[Define this to specific plugin directory relative to execution prefix])
+AC_DEFINE_UNQUOTED(XINE_REL_PLUGINROOT,"$XINE_REL_PLUGINROOT",[Define this to general plugin directory relative to execution prefix])
 AC_DEFINE_UNQUOTED(XINE_REL_FONTDIR,"$XINE_REL_FONTDIR",[Define this to font directory relative to prefix])
 AC_DEFINE_UNQUOTED(XINE_REL_LOCALEDIR,"$XINE_REL_LOCALEDIR",[Define this to font directory relative to prefix])
-AC_SUBST(XINE_CONFIG_PREFIX)
-AC_SUBST(XINE_PLUGINPATH)
-AC_SUBST(XINE_FONTPATH)
-AC_SUBST(XINE_LOCALEPATH)
 AC_SUBST(XINE_PLUGINDIR)
 AC_SUBST(XINE_FONTDIR)
 AC_SUBST(XINE_LOCALEDIR)
+AC_SUBST(XINE_PKGCONFIG_DIR)
+
+LIBTOOL_DESTDIR_DEFAULT=
+if test "x$SYS" != "xmingw32" -a "x$SYS" != "xcygwin"; then
+  LIBTOOL_DESTDIR_DEFAULT=/
+fi
+AC_SUBST([LIBTOOL_DESTDIR_DEFAULT])
 
 dnl Where aclocal m4 files should be installed
-XINE_ACFLAGS="-I `makeexpand "${datarootdir}/aclocal"`"
+XINE_ACFLAGS="-I ${datarootdir}/aclocal"
 AC_DEFINE_UNQUOTED(XINE_ACFLAGS, "$XINE_ACFLAGS", [Path where aclocal m4 files will be.])
 AC_SUBST(XINE_ACFLAGS)
 
 dnl Where architecture independent data (e.g. logo) will/should be installed
-XINE_DATADIR="`makeexpand "${datarootdir}/xine"`"
+XINE_DATADIR="\${xinedatadir}"
 AC_SUBST(XINE_DATADIR)
 
 dnl Where scripts will/should be installed.
-eval XINE_SCRIPTPATH="$XINE_DATADIR/xine/scripts"
+XINE_SCRIPTPATH="\${xinedatadir}/scripts"
 AC_SUBST(XINE_SCRIPTPATH)
 
 
@@ -2456,7 +2534,7 @@ dnl ---------------------------------------------
 
 XINE_BUILD_CC="`$CC -v 2>&1 | tail -1 2>/dev/null`"
 XINE_BUILD_OS="`uname -s -r -m`"
-XINE_BUILD_DATE="`date \"+%a %d %b %Y %T\"`"
+XINE_BUILD_DATE="`date "+%a %d %b %Y %T"`"
 AC_SUBST(XINE_BUILD_CC)
 AC_SUBST(XINE_BUILD_OS)
 AC_SUBST(XINE_BUILD_DATE)
@@ -2572,35 +2650,29 @@ _AM_DEPENDENCIES([OBJC])
 
 AM_CONDITIONAL([BUILD_DMX_IMAGE], [test "x$have_imagemagick" = "xyes" -o "x$no_gdkpixbuf" != "xyes"])
 
-dnl Important warnings we _don't_ want to skip
-dnl Don't put these under conditional for optimisations, because these
-dnl need always to be enabled.
-CC_CHECK_CFLAGS([-Wformat=2], [wformat="-Wformat=2"],
-  [CC_CHECK_CFLAGS([-Wformat], [wformat="-Wformat"])])
+dnl We check for warnings here rather than with optimisations since we
+dnl want them to be _always_ enabled, to make sure the code is sane
+dnl enough.
 
-test "x$wformat" != "x" && \
-   CC_CHECK_CFLAGS([-Wno-format-zero-length], [wformat="$wformat -Wno-format-zero-length"])
+CC_CHECK_CFLAGS_APPEND([-Wall -Wchar-subscripts dnl
+			-Wnested-externs -Wcast-align dnl
+			-Wmissing-declarations -Wmissing-prototypes dnl
+			-Wmissing-format-attribute -Wno-pointer-sign])
 
-CC_CHECK_CFLAGS([-Wmissing-format-attribute], [wformat="$wformat -Wmissing-format-attribute"])
-warnflags="$warnflags $wformat"
+CC_CHECK_CFLAGS_APPEND([-Wformat=2 -Wformat],
+  [CC_CHECK_CFLAGS_APPEND([-Wno-format-zero-length])
+   break;
+  ])
+
+dnl check for strict aliasing problem, get the highest between =2 and
+dnl normal.
+CC_CHECK_CFLAGS_APPEND([-Wstrict-aliasing=2 -Wstrict-aliasing], [break;])
 
 dnl This *has* to stay at the end as it can break some autoconf tests.
-CC_CHECK_CFLAGS([-Werror-implicit-function-declaration], [warnflags="$warnflags -Werror-implicit-function-declaration"])
+CC_CHECK_CFLAGS_APPEND([-Werror=implicit-function-declaration dnl
+                        -Werror-implicit-function-declaration], [break;])
 
-CC_CHECK_CFLAGS([-Wstrict-aliasing=2], [warnflags="$warnflags -Wstrict-aliasing=2"],
-  [CC_CHECK_CFLAGS([-Wstrict-aliasing], [warnflags="$warnflags -Wstrict-aliasing"])])
-
-case $host in
-     dnl FreeBSD (et al.) does not complete linking for shared objects when pthreads
-     dnl are requested, as different implementations are present; to avoid problems
-     dnl use -Wl,-z,defs only for those platform not behaving this way.
-     *-freebsd*) ;;
-     *)
-	AC_TRY_LDFLAGS([-Wl,-z,defs], [NOUNDEF="-Wl,-z,defs"])
-	;;
-esac
-AC_SUBST([NOUNDEF])
-
+CC_NOUNDEFINED
 
 dnl signal FreeBSD have also FreeBSD based kernel.
 dnl 
@@ -2620,7 +2692,7 @@ AH_BOTTOM([
 
 
 dnl Common cflags for all platforms
-CFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE \$(MULTIPASS_CFLAGS) $warnflags $CFLAGS"
+CFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE \$(MULTIPASS_CFLAGS) $CFLAGS"
 DEBUG_CFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -DXINE_COMPILE $DEBUG_CFLAGS"
 
 if test "x$enable_debug" = "xyes"; then
@@ -2645,6 +2717,7 @@ include/xine.h
 lib/Makefile
 m4/Makefile
 misc/Makefile
+misc/Makefile.plugins
 misc/SlackBuild
 misc/build_rpms.sh
 misc/fonts/Makefile
@@ -2652,10 +2725,12 @@ misc/libxine.pc
 misc/relchk.sh
 misc/xine-config
 misc/xine-lib.spec
+po/Makevars.extra
 po/Makefile.in
 src/Makefile
 src/audio_out/Makefile
 src/combined/Makefile
+src/combined/ffmpeg/Makefile
 src/demuxers/Makefile
 src/dxr3/Makefile
 src/input/Makefile
@@ -2686,6 +2761,9 @@ src/libffmpeg/libavcodec/libpostproc/Makefile
 src/libffmpeg/libavutil/Makefile
 src/libmad/Makefile
 src/libmpeg2/Makefile
+src/libmpeg2new/Makefile
+src/libmpeg2new/libmpeg2/Makefile
+src/libmpeg2new/include/Makefile
 src/libmusepack/Makefile
 src/libmusepack/musepack/Makefile
 src/libspudec/Makefile
@@ -3004,7 +3082,7 @@ if test "x$no_x" != "xyes"; then
     echo "   - XvMC (XVideo motion compensation)"
   fi
   if test "x$ac_have_opengl" = "xyes" -a "x$ac_have_glut" = "xyes" -o \
-	  x$"ac_have_opengl" = "xyes" -a "x$ac_have_glu" = "xyes"; then	
+	  "x$ac_have_opengl" = "xyes" -a "x$ac_have_glu" = "xyes"; then	
     echo "   - OpenGL"
   fi
   if test "x$ac_have_sunfb" = "xyes"; then
@@ -3114,6 +3192,9 @@ if test "x$have_pulseaudio" = "xyes"; then
 fi
 if test "x$have_jack" = "xyes"; then
   echo "   - Jack"
+fi
+if test "x$have_sndio" = "xyes"; then
+  echo "   - sndio"
 fi
 echo "---"
 

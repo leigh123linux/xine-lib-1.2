@@ -124,7 +124,7 @@ int dxr3_rte_init(dxr3_driver_t *drv)
     return 0;
   }
   
-  this = xine_xmalloc(sizeof(rte_data_t));
+  this = calloc(1, sizeof(rte_data_t));
   if (!this) return 0;
   
   this->encoder_data.type             = ENC_RTE;
@@ -316,7 +316,7 @@ int dxr3_fame_init(dxr3_driver_t *drv)
 {
   fame_data_t *this;
   
-  this = xine_xmalloc(sizeof(fame_data_t));
+  this = calloc(1, sizeof(fame_data_t));
   if (!this) return 0;
   
   this->encoder_data.type             = ENC_FAME;

@@ -97,18 +97,14 @@ static int open_nsf_file(demux_nsf_t *this) {
     return 0;
 
   /* check for the signature */
-  if ((header[0] != 'N') ||
-      (header[1] != 'E') ||
-      (header[2] != 'S') ||
-      (header[3] != 'M') ||
-      (header[4] != 0x1A))
+  if (memcmp(header, "NESM\x1A", 5) != 0)
     return 0;
 
   this->total_songs = header[6];
   this->current_song = header[7];
-  this->title = strdup(&header[0x0E]);
-  this->artist = strdup(&header[0x2E]);
-  this->copyright = strdup(&header[0x4E]);
+  this->title = strndup((char*)&header[0x0E], 0x20);
+  this->artist = strndup((char*)&header[0x2E], 0x20);
+  this->copyright = strndup((char*)&header[0x4E], 0x20);
 
   this->filesize = this->input->get_length(this->input);
 
@@ -128,7 +124,7 @@ static int demux_nsf_send_chunk(demux_plugin_t *this_gen) {
     buf->type = BUF_AUDIO_NSF;
     bytes_read = this->input->read(this->input, buf->content, buf->max_size);
 
-    if (bytes_read == 0) {
+    if (bytes_read <= 0) {
       /* the file has been completely loaded, free the buffer and start
        * sending control buffers */
       buf->free_buffer(buf);
@@ -303,7 +299,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
-  this         = xine_xmalloc (sizeof (demux_nsf_t));
+  this         = calloc(1, sizeof(demux_nsf_t));
   this->stream = stream;
   this->input  = input;
 
@@ -377,7 +373,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_nsf_init_plugin (xine_t *xine, void *data) {
   demux_nsf_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_nsf_class_t));
+  this = calloc(1, sizeof(demux_nsf_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2005 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -659,6 +659,8 @@ static const video_db_t video_db[] = {
     ME_FOURCC('a','v','c','1'),
     ME_FOURCC('h','2','6','4'),
     ME_FOURCC('H','2','6','4'),
+    ME_FOURCC('x','2','6','4'),
+    ME_FOURCC('X','2','6','4'),
     0
   },
   BUF_VIDEO_H264,
@@ -779,6 +781,14 @@ static const video_db_t video_db[] = {
   BUF_VIDEO_VMNC,
   "VMware Screen Codec"
 },
+{
+  {
+    ME_FOURCC('S','N','O','W'),
+    0
+  },
+  BUF_VIDEO_SNOW,
+  "Snow"
+},
 { { 0 }, 0, "last entry" }
 };
 
@@ -803,6 +813,14 @@ static const audio_db_t audio_db[] = {
   },
   BUF_AUDIO_MPEG,
   "MPEG layer 2/3"
+},
+{
+  {
+    ME_FOURCC('a', 'd', 'u', 0x55),
+    0
+  },
+  BUF_AUDIO_MP3ADU,
+  "MPEG layer-3 adu"
 },
 {
   {
@@ -1132,10 +1150,31 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    0
+    ME_FOURCC('W', 'V', 'P', 'K'),
   },
   BUF_AUDIO_WAVPACK,
   "Wavpack"
+},
+{
+  {
+    ME_FOURCC('s', 'a', 'm', 'r'),
+  },
+  BUF_AUDIO_AMR_NB,
+  "AMR narrow band"
+},
+{
+  {
+    ME_FOURCC('s', 'a', 'w', 'b'),
+  },
+  BUF_AUDIO_AMR_WB,
+  "AMR wide band"
+},
+{
+  {
+    ME_FOURCC('T', 'T', 'A', '1'),
+  },
+  BUF_AUDIO_TTA,
+  "True Audio Lossless"
 },
 { { 0 }, 0, "last entry" }
 };
@@ -1161,7 +1200,7 @@ static uint32_t cached_buf_type=0;
   return 0;
 }
 
-char * _x_buf_video_name( uint32_t buf_type ) {
+const char * _x_buf_video_name( uint32_t buf_type ) {
 int i;
   
   buf_type &= 0xffff0000;
@@ -1195,7 +1234,7 @@ static uint32_t cached_buf_type=0;
   return 0;
 }
 
-char * _x_buf_audio_name( uint32_t buf_type ) {
+const char * _x_buf_audio_name( uint32_t buf_type ) {
 int i;
   
   buf_type &= 0xffff0000;

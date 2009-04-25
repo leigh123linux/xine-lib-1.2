@@ -20,6 +20,10 @@
  * a image video decoder
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 
 #include <stdlib.h>
 #include <string.h>
@@ -88,7 +92,7 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
   
   if (buf->decoder_flags & BUF_FLAG_FRAME_END) {
     int                width, height, i;
-    MagickBooleanType  status;
+    int                status;
     MagickWand        *wand;
     uint8_t           *img_buf, *img_buf_ptr;
     yuv_planes_t       yuv_planes;
@@ -101,7 +105,7 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     status = MagickReadImageBlob(wand, this->image, this->index);
     this->index = 0;
 
-    if (status == MagickFalse) {
+    if (!status) {
       DestroyMagickWand(wand);
       lprintf("error loading image\n");
       return;
@@ -212,7 +216,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
 
   lprintf("opened\n");
 
-  this = (image_decoder_t *) xine_xmalloc (sizeof (image_decoder_t));
+  this = (image_decoder_t *) calloc(1, sizeof(image_decoder_t));
 
   this->video_decoder.decode_data         = image_decode_data;
   this->video_decoder.flush               = image_flush;
@@ -255,7 +259,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   image_class_t       *this;
 
-  this = (image_class_t *) xine_xmalloc (sizeof (image_class_t));
+  this = (image_class_t *) calloc(1, sizeof(image_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;

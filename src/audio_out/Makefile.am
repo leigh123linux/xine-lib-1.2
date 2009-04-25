@@ -1,3 +1,4 @@
+include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
 AM_CPPFLAGS = -DXINE_COMPILE
@@ -49,6 +50,10 @@ if HAVE_JACK
 jack_module = xineplug_ao_out_jack.la
 endif
 
+if HAVE_SNDIO
+sndio_module = xineplug_ao_out_sndio.la
+endif
+
 ##
 # IMPORTANT:
 # ---------
@@ -66,7 +71,8 @@ xineplug_LTLIBRARIES = xineplug_ao_out_none.la xineplug_ao_out_file.la \
 	$(pulseaudio_module) \
 	$(directx2_module)	\
 	$(fusionsound_module) \
-	$(jack_module)
+	$(jack_module) \
+	$(sndio_module)
 
 xineplug_ao_out_none_la_SOURCES = audio_none_out.c
 xineplug_ao_out_none_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
@@ -110,7 +116,7 @@ xineplug_ao_out_arts_la_LDFLAGS = -avoid-version -module
 
 xineplug_ao_out_directx_la_SOURCES = audio_directx_out.c
 xineplug_ao_out_directx_la_CPPFLAGS = $(DIRECTX_CPPFLAGS)
-xineplug_ao_out_directx_la_LIBADD = $(XINE_LIB) $(DIRECTX_AUDIO_LIBS)
+xineplug_ao_out_directx_la_LIBADD = $(XINE_LIB) $(DIRECTX_AUDIO_LIBS) $(LTLIBINTL)
 xineplug_ao_out_directx_la_CFLAGS = $(VISIBILITY_FLAG)
 xineplug_ao_out_directx_la_LDFLAGS = -avoid-version -module
 
@@ -131,7 +137,7 @@ xineplug_ao_out_pulseaudio_la_LDFLAGS = -avoid-version -module
 
 xineplug_ao_out_directx2_la_SOURCES = audio_directx2_out.c
 xineplug_ao_out_directx2_la_CPPFLAGS = $(DIRECTX_CPPFLAGS)
-xineplug_ao_out_directx2_la_LIBADD = $(XINE_LIB) $(DIRECTX_AUDIO_LIBS) $(PTHREAD_LIBS)
+xineplug_ao_out_directx2_la_LIBADD = $(XINE_LIB) $(DIRECTX_AUDIO_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_ao_out_directx2_la_CFLAGS = $(VISIBILITY_FLAG)
 xineplug_ao_out_directx2_la_LDFLAGS = -avoid-version -module
 
@@ -144,3 +150,8 @@ xineplug_ao_out_jack_la_SOURCES = audio_jack_out.c
 xineplug_ao_out_jack_la_LIBADD = $(XINE_LIB) $(JACK_LIBS) $(LTLIBINTL)
 xineplug_ao_out_jack_la_CFLAGS = $(VISIBILITY_FLAG) $(JACK_CFLAGS)
 xineplug_ao_out_jack_la_LDFLAGS = -avoid-version -module
+
+xineplug_ao_out_sndio_la_SOURCES = audio_sndio_out.c
+xineplug_ao_out_sndio_la_LIBADD = $(XINE_LIB) $(SNDIO_LIBS)
+xineplug_ao_out_sndio_la_CFLAGS = $(VISIBILITY_FLAG) $(SNDIO_CFLAGS)
+xineplug_ao_out_sndio_la_LDFLAGS = -avoid-version -module

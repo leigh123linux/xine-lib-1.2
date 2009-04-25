@@ -21,6 +21,10 @@
  * 09-12-2001 DTS passthrough inprovements (C) James Courtier-Dutton
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef __sun
 /* required for swab() */
 #define _XOPEN_SOURCE 500
@@ -207,19 +211,27 @@ static void dts_decode_frame (dts_decoder_t *this, int64_t pts, int preview_mode
 
       audio_buffer->num_frames = this->ac5_pcm_length;
 
-      data_out[0] = 0x72; data_out[1] = 0xf8;	/* spdif syncword    */
-      data_out[2] = 0x1f; data_out[3] = 0x4e;	/* ..............    */
-      data_out[4] = ac5_spdif_type;		/* DTS data          */
-      data_out[5] = 0;		                /* Unknown */
-      data_out[6] = (this->ac5_length << 3) & 0xff;   /* ac5_length * 8   */
-      data_out[7] = ((this->ac5_length ) >> 5) & 0xff;
+      // Checking if AC5 data plus IEC958 header will fit into frames samples data
+      if ( this->ac5_length + 8 <= this->ac5_pcm_length * 2 * 2 ) {
+        data_out[0] = 0x72; data_out[1] = 0xf8;	/* spdif syncword    */
+        data_out[2] = 0x1f; data_out[3] = 0x4e;	/* ..............    */
+        data_out[4] = ac5_spdif_type;		/* DTS data          */
+        data_out[5] = 0;		                /* Unknown */
+        data_out[6] = (this->ac5_length << 3) & 0xff;   /* ac5_length * 8   */
+        data_out[7] = ((this->ac5_length ) >> 5) & 0xff;
 
-      if( this->ac5_pcm_length ) {
-        if( this->ac5_pcm_length % 2) {
-          swab(data_in, &data_out[8], this->ac5_length );
-        } else {
-          swab(data_in, &data_out[8], this->ac5_length + 1);
+        if( this->ac5_pcm_length ) {
+          if( this->ac5_pcm_length % 2) {
+            swab(data_in, &data_out[8], this->ac5_length );
+          } else {
+            swab(data_in, &data_out[8], this->ac5_length + 1);
+          }
         }
+      // Transmit it without header otherwise, receivers will autodetect DTS
+      } else {
+        lprintf("AC5 data is too large (%i > %i), sending without IEC958 header\n",
+                this->ac5_length + 8, this->ac5_pcm_length * 2 * 2);
+        memcpy(data_out, data_in, this->ac5_length);
       }
     } else {
       /* Software decode */
@@ -481,7 +493,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   lprintf("open_plugin\n");
 
-  this = (dts_decoder_t *) xine_xmalloc (sizeof (dts_decoder_t));
+  this = calloc(1, sizeof (dts_decoder_t));
 
   this->audio_decoder.decode_data         = dts_decode_data;
   this->audio_decoder.reset               = dts_reset;
@@ -590,7 +602,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   lprintf("init_plugin\n");
 
-  this = (dts_class_t *) xine_xmalloc (sizeof (dts_class_t));
+  this = calloc(1, sizeof (dts_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;

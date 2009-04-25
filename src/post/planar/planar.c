@@ -20,6 +20,10 @@
  * catalog for planar post plugins
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "xine_internal.h"
 #include "post.h"
 #include "xineutils.h"

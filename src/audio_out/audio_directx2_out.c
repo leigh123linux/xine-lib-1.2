@@ -31,6 +31,9 @@
  *
  * Authors:
  *   - Frantisek Dvorak <valtri@atlas.cz>
+ *     - Original version with slotted ring buffer
+ *   - Matthias Ringald <mringwal@inf.ethz.ch>
+ *     - non-slotted simpler version for ring buffer handling
  *
  * Inspiration:
  *   - mplayer for workarounding -lguid idea
@@ -55,8 +58,8 @@
 #define LOG_MODULE "audio_directx2_out"
 #define LOG_VERBOSE
 /*
-#define LOG
-*/
+ #define LOG
+ */
 
 #include "xine_internal.h"
 #include "audio_out.h"
@@ -64,29 +67,33 @@
 
 #define AO_OUT_DIRECTX2_IFACE_VERSION 8
 
+
+/*
+ * If GAP_TOLERANCE is lower than AO_MAX_GAP, xine will
+ * try to smooth playback without skipping frames or 
+ * inserting silence.
+ */
+#define GAP_TOLERANCE        (AO_MAX_GAP/3)
+
 /* 
  * buffer size in miliseconds 
  * (one second takes 11-192 KB) 
  */
 #define BUFFER_MS 1000
 
-/* 
- * number of parts in the buffer,
- * one is always locked for playing
+/*
+ * buffer below this threshold is considered a buffer underrun
  */
-#define PARTS 3
+#define BUFFER_MIN_MS 200
 
 /* 
  * base power factor for volume remapping
  */
 #define FACTOR 60.0
 
-
-/* experiments */
-/*#define EXACT_WAIT*/
-/*#define EXACT_SLEEP*/
-/*#define PANIC_OVERRUN*/
-
+/*
+ * buffer handler status
+ */
 #define STATUS_START 0
 #define STATUS_WAIT 1
 #define STATUS_RUNNING 2
@@ -108,12 +115,14 @@ typedef struct {
 
   LPDIRECTSOUND ds;                /* DirectSound device */
   LPDIRECTSOUNDBUFFER dsbuffer;    /* DirectSound buffer */
-  DSBPOSITIONNOTIFY events[PARTS]; /* position events */
-  LPDIRECTSOUNDNOTIFY notify;      /* notify interface */
 
   size_t buffer_size;              /* size of the buffer */
-  size_t part_size;                /* second half of buffer */
-  size_t read_size;                /* size of prepared data */
+  size_t write_pos;                /* positition in ring buffer for writing*/ 
+	
+  int status;                      /* current status of the driver */
+  int paused;                      /* paused mode */
+  int finished;                    /* driver finished */
+  int failed;                      /* don't open modal dialog again */
 
   uint32_t bits;
   uint32_t rate;
@@ -122,12 +131,6 @@ typedef struct {
   int channels;
   int volume;
   int muted;
-
-  int status;                      /* current status of the driver */
-  int paused;                      /* paused mode */
-  int finished;                    /* driver finished */
-  int failed;                      /* don't open modal dialog again */
-  int count;                       /* current free part number */
 
   pthread_t buffer_service;        /* service thread for operating with DSB */
   pthread_cond_t data_cond;        /* signals on data */
@@ -140,17 +143,19 @@ typedef struct {
  * Defining them here allows us to get rid of the dxguid library during
  * the linking stage.
  *****************************************************************************/
-static const GUID IID_IDirectSoundNotify = {
-  0xB0210783, 0x89CD, 0x11D0, {0xAF, 0x08, 0x00, 0xA0, 0xC9, 0x25, 0xCD, 0x16}
+static const GUID xine_IID_IDirectSoundNotify = {
+0xB0210783, 0x89CD, 0x11D0, {0xAF, 0x08, 0x00, 0xA0, 0xC9, 0x25, 0xCD, 0x16}
 };
+#ifdef IID_IDirectSoundNotify
+#  undef IID_IDirectSoundNotify
+#endif
+#define IID_IDirectSoundNotify xine_IID_IDirectSoundNotify
 
-
-static int buffer_ready(dx2_driver_t *this);
 
 
 /* popup a dialog with error */
 static void XINE_FORMAT_PRINTF(1, 2)
-	    error_message(const char *fmt, ...) {
+error_message(const char *fmt, ...) {
   char message[256];
   va_list ap;
 
@@ -214,7 +219,7 @@ static LPDIRECTSOUND dsound_create() {
 
 /* destroy direct sound object */
 static void dsound_destroy(LPDIRECTSOUND ds) {
-  IDirectSound_Release(ds);  
+  IDirectSound_Release(ds);
 }
 
 
@@ -266,12 +271,10 @@ static int audio_create_buffers(dx2_driver_t *this) {
   HRESULT err;
   size_t buffer_size;
 
-  buffer_size = this->rate * this->frame_size * BUFFER_MS / 1000;
+  buffer_size = this->rate * BUFFER_MS / 1000 * this->frame_size;
   if (buffer_size > DSBSIZE_MAX) buffer_size = DSBSIZE_MAX;
   if (buffer_size < DSBSIZE_MIN) buffer_size = DSBSIZE_MIN;
-  this->part_size = (buffer_size / PARTS / this->frame_size) * this->frame_size;
-  if (!this->part_size) this->part_size = this->frame_size;
-  this->buffer_size = this->part_size * PARTS;
+  this->buffer_size = buffer_size;
 
   flags = DSBCAPS_GLOBALFOCUS | DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY;
   dsound_fill_wfx(&wfx, this->bits, this->rate, this->channels, this->frame_size);
@@ -282,7 +285,7 @@ static int audio_create_buffers(dx2_driver_t *this) {
     return 0;
   }
 
-  lprintf("created direct sound buffer, size = %u, part = %u\n", this->buffer_size, this->part_size);
+  lprintf("created direct sound buffer, size = %u\n", this->buffer_size);
   return 1;
 }
 
@@ -290,43 +293,6 @@ static int audio_create_buffers(dx2_driver_t *this) {
 /* destroy the sound buffer */
 static void audio_destroy_buffers(dx2_driver_t *this) {
   IDirectSoundBuffer_Release(this->dsbuffer);
-}
-
-
-/* create position events */
-static int audio_create_events(dx2_driver_t *this) {
-  HANDLE handle[PARTS];
-  HRESULT err;
-  int i;
-
-  for (i = 0; i < PARTS; i++) {
-    handle[i] = CreateEvent(NULL, FALSE, FALSE, NULL);
-    if (!handle[i]) {
-      error_message(_("Unable to create buffer position events."));
-      return 0;
-    }
-    this->events[i].dwOffset = i * this->part_size;
-    this->events[i].hEventNotify = handle[i];
-  }
-
-  if ((err = IDirectSoundBuffer_QueryInterface(this->dsbuffer, &IID_IDirectSoundNotify, (void **)&this->notify)) != DS_OK) {
-    audio_error(this, err, _("Unable to get notification interface"));
-    return 0;
-  }
-
-  if ((err = IDirectSoundNotify_SetNotificationPositions(this->notify, PARTS, this->events)) != DS_OK) {
-    audio_error(this, err, _("Unable to set notification positions"));
-    IDirectSoundNotify_Release(this->notify);
-    return 0;
-  }
-
-  return 1;
-}
-
-
-/* destroy notification interface */
-static void audio_destroy_events(dx2_driver_t *this) {
-  IDirectSoundNotify_Release(this->notify);
 }
 
 
@@ -385,8 +351,7 @@ static int audio_seek(dx2_driver_t *this, size_t pos) {
 /* flush audio buffers */
 static int audio_flush(dx2_driver_t *this) {
   this->status = STATUS_WAIT;
-  this->count = 0;
-  this->read_size = 0;
+  this->write_pos = 0;
   return audio_seek(this, 0);
 }
 
@@ -421,12 +386,12 @@ static int audio_fill(dx2_driver_t *this, char *data, size_t size) {
   HRESULT err;
 
   /* lock a part of the buffer, begin position on free space */
-  err = IDirectSoundBuffer_Lock(this->dsbuffer, (this->count * this->part_size + this->read_size) % this->buffer_size, size, &ptr1, &size1, &ptr2, &size2, 0);
+  err = IDirectSoundBuffer_Lock(this->dsbuffer, this->write_pos, size, &ptr1, &size1, &ptr2, &size2, 0);
   /* try to restore the buffer, if necessary */
   if (err == DSERR_BUFFERLOST) {
     xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": buffer lost, tryig to restore\n"));
     IDirectSoundBuffer_Restore(this->dsbuffer);
-    err = IDirectSoundBuffer_Lock(this->dsbuffer, (this->count * this->part_size + this->read_size) % this->buffer_size, size, &ptr1, &size1, &ptr2, &size2, 0);  }
+  err = IDirectSoundBuffer_Lock(this->dsbuffer, this->write_pos, size, &ptr1, &size1, &ptr2, &size2, 0);  }
   if (err != DS_OK) {
     audio_error(this, err, _("Couldn't lock direct sound buffer"));
     return 0;
@@ -436,17 +401,13 @@ static int audio_fill(dx2_driver_t *this, char *data, size_t size) {
   if (ptr1 && size1) xine_fast_memcpy(ptr1, data, size1);
   if (ptr2 && size2) xine_fast_memcpy(ptr2, data + size1, size2);
 
-  this->read_size += size;
+  // this->read_size += size;
+  this->write_pos = (this->write_pos + size ) % this->buffer_size;
+  lprintf("size %u, write_pos %u\n", size, this->write_pos);	
 
   if ((err = IDirectSoundBuffer_Unlock(this->dsbuffer, ptr1, size1, ptr2, size2)) != DS_OK) {
     audio_error(this, err, _("Couldn't unlock direct sound buffer"));
     return 0;
-  }
-
-  /* signal, if are waiting and need wake up */
-  if ((this->status == STATUS_WAIT) && buffer_ready(this)) {
-    lprintf("buffer ready, waking up\n");
-    pthread_cond_signal(&this->data_cond);
   }
 
   return 1;
@@ -458,28 +419,28 @@ static int mode2channels(uint32_t mode) {
   int channels;
 
   switch(mode) {
-  case AO_CAP_MODE_MONO:
-    channels = 1;
-    break;
+    case AO_CAP_MODE_MONO:
+      channels = 1;
+      break;
 
-  case AO_CAP_MODE_STEREO:
-    channels = 2;
-    break;
+    case AO_CAP_MODE_STEREO:
+      channels = 2;
+      break;
 
-  case AO_CAP_MODE_4CHANNEL:
-    channels = 4;
-    break;
-  
-  case AO_CAP_MODE_5CHANNEL:
-    channels = 5;
-    break;
+    case AO_CAP_MODE_4CHANNEL:
+      channels = 4;
+      break;
 
-  case AO_CAP_MODE_5_1CHANNEL:
-    channels = 6;
-    break;
+    case AO_CAP_MODE_5CHANNEL:
+      channels = 5;
+      break;
 
-  default:
-    return 0;
+    case AO_CAP_MODE_5_1CHANNEL:
+      channels = 6;
+      break;
+
+    default:
+      return 0;
   }
 
   return channels;
@@ -556,109 +517,94 @@ static int test_capabilities(dx2_driver_t *this) {
 
 /* size of free space in the ring buffer */
 static size_t buffer_free_size(dx2_driver_t *this) {
-  size_t used_full_size;
+	
+  int ret;
+  size_t play_pos;
+	size_t free_space;
 
-  used_full_size = this->read_size + ((this->status != STATUS_WAIT) ? this->part_size : 0);
-  _x_assert(used_full_size <= this->buffer_size);
-  return this->buffer_size - used_full_size;
+  // get current play pos
+	ret = audio_tell(this, &play_pos);
+	if (!ret)
+		return 0;
+	
+	// calc free space (-1)
+	free_space = (this->buffer_size + play_pos - this->write_pos - 1) % this->buffer_size;
+	
+	return free_space;
 }
 
 
-/* enough data in the ring buffer for playing next part? */
-static int buffer_ready(dx2_driver_t *this) {
-  return this->read_size >= this->part_size;
+/* size of occupied space in the ring buffer */
+static size_t buffer_occupied_size(dx2_driver_t *this) {
+  int ret;
+  size_t play_pos;
+	size_t used_space;
+
+  // get current play pos
+	ret = audio_tell(this, &play_pos);
+	if (!ret) return 0;
+	
+	// calc used space
+	used_space = (this->buffer_size + this->write_pos - play_pos) % this->buffer_size;
+	
+	return used_space;
 }
 
 
 /* service thread working with direct sound buffer */
 static void *buffer_service(void *data) {
   dx2_driver_t *this = (dx2_driver_t *)data;
-  HANDLE handles[PARTS];
-  DWORD ret;
-  int i;
-#if defined(EXACT_SLEEP) || defined(EXACT_WAIT)
-  size_t play_pos, req_delay;
-#endif
+  size_t buffer_min;
+  size_t data_in_buffer;
 
   /* prepare empty buffer */
   audio_flush(this);
 
-  for (i = 0; i < PARTS; i++) handles[i] = this->events[i].hEventNotify;
-  
+  /* prepare min buffer fill */
+  buffer_min = BUFFER_MIN_MS * this->rate / 1000 * this->frame_size;
+
   /* we live! */
   pthread_mutex_lock(&this->data_mutex);
   pthread_cond_signal(&this->data_cond);
   pthread_mutex_unlock(&this->data_mutex);
 
   while (!this->finished) {
+
     pthread_mutex_lock(&this->data_mutex);
-    if (!buffer_ready(this)) {
-      if (!audio_stop(this)) goto fail;
-      lprintf("no data (count=%d,free=%" PRIsizet ",avail=%" PRIsizet "), sleeping...\n", this->count, buffer_free_size(this), this->read_size);
-      this->status = STATUS_WAIT;
-      pthread_cond_wait(&this->data_cond, &this->data_mutex);
-      lprintf("wake up (count=%d,free=%" PRIsizet "--,avail=%" PRIsizet ")\n", this->count, buffer_free_size(this), this->read_size);
-      if (this->finished) goto finished;
-      if (!audio_seek(this, this->count * this->part_size)) goto fail;
-      if (!this->paused) {
-        if (!audio_play(this)) goto fail;
-      }
-      this->status = STATUS_RUNNING;
-      this->count = (this->count + 1) % PARTS;
-      this->read_size -= this->part_size;
-      pthread_mutex_unlock(&this->data_mutex);
-      lprintf("wait for playback (newcount=%d,free=%" PRIsizet ",avail=%" PRIsizet ")\n", this->count, buffer_free_size(this), this->read_size);
-      do {
-        ret = WaitForMultipleObjects(PARTS, handles, FALSE, 250) - WAIT_OBJECT_0;
+    switch( this->status){
+
+			case STATUS_WAIT:
+
+        // pre: stop/buffer flushed
+        lprintf("no data, sleeping...\n");
+        pthread_cond_wait(&this->data_cond, &this->data_mutex);
+        lprintf("woke up (write_pos=%d,free=%" PRIsizet")\n", this->write_pos, buffer_free_size(this));
         if (this->finished) goto finished;
-      } while (ret > PARTS);
-      lprintf("playback started (newcount=%d,ev=%d,free=%" PRIsizet ",avail=%" PRIsizet ")\n", this->count, ret, buffer_free_size(this), this->read_size);
-      _x_assert(ret == ((PARTS + this->count - 1) % PARTS));
-    } else {
-      this->count = (this->count + 1) % PARTS;
-      this->read_size -= this->part_size;
-      pthread_mutex_unlock(&this->data_mutex);
-    }
-    lprintf("waiting for sound event(count=%d,free=%" PRIsizet ",avail=%" PRIsizet ")...\n", this->count, buffer_free_size(this), this->read_size);
-    do {
-      ret = WaitForMultipleObjects(PARTS, handles, FALSE, 250) - WAIT_OBJECT_0;
-      if (this->finished) goto finished;
-    } while (ret > PARTS);
-    lprintf("end wait(ev=%" PRIdword ",count=%d,free=%" PRIsizet ",avail=%" PRIsizet ")\n", ret, this->count, buffer_free_size(this), this->read_size);
-#ifdef PANIC_OVERRUN
-    _x_abort(ret == this->count);
-#else
-    if (ret != this->count) {
-      xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": play cursor overran, flushing buffers\n"));
-      pthread_mutex_lock(&this->data_mutex);
-      if (!audio_stop(this)) goto fail;
-      if (!audio_flush(this)) goto fail;
-      pthread_mutex_unlock(&this->data_mutex);
-    }
-#endif
-    
-#if defined(EXACT_SLEEP) || defined(EXACT_WAIT)
-    /* ugly hack: wait for right time, + little over for sure */
-    pthread_mutex_lock(&this->data_mutex);
-    if (!audio_tell(this, &play_pos)) goto fail;
-    req_delay = (this->buffer_size + play_pos - this->count * this->part_size) % this->buffer_size;
-    pthread_mutex_unlock(&this->data_mutex);
-    if (req_delay > (this->buffer_size >> 1)) {
-      long delay;
+        if (!audio_seek(this, 0)) goto fail;
+        if (!this->paused) {
+					if (!audio_play(this)) goto fail;
+        }
+        this->status = STATUS_RUNNING;
+        pthread_mutex_unlock(&this->data_mutex);
+				break;
 
-      delay = 1000 * (this->buffer_size - req_delay) / (this->frame_size * this->rate) + 1 + BUFFER_MS / PARTS / 4;
-      xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": delayed by %ld msec\n"), delay);
-      printf("should be delayed %ld msec\n", delay);
-#ifdef EXACT_SLEEP
-      xine_usec_sleep(delay * 1000);
-#endif
-#ifdef EXACT_WAIT
-      WaitForMultipleObjects(PARTS, handles, FALSE, delay);
-#endif
+      case STATUS_RUNNING:
+
+        // check for buffer underrun
+        data_in_buffer =  buffer_occupied_size(this);
+        if ( data_in_buffer < buffer_min){
+          xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": play cursor overran (data %u, min %u), flushing buffers\n"),
+                   data_in_buffer, buffer_min);
+          if (!audio_stop(this)) goto fail;
+          if (!audio_flush(this)) goto fail;
+        }
+        pthread_mutex_unlock(&this->data_mutex);
+
+        // just wait BUFFER_MIN_MS before next check
+        xine_usec_sleep(BUFFER_MIN_MS * 1000);
+				break;
     }
-#endif
   }
-
   return NULL;
 
 fail:
@@ -683,15 +629,15 @@ static int ao_dx2_get_property(ao_driver_t *this_gen, int property) {
 
   switch(property) {
 
-  case AO_PROP_MIXER_VOL:
-  case AO_PROP_PCM_VOL:
-    return this->volume;
+    case AO_PROP_MIXER_VOL:
+    case AO_PROP_PCM_VOL:
+      return this->volume;
 
-  case AO_PROP_MUTE_VOL:
-    return this->muted;
+    case AO_PROP_MUTE_VOL:
+      return this->muted;
 
-  default:
-    return 0;
+    default:
+      return 0;
 
   }
 }
@@ -702,26 +648,26 @@ static int ao_dx2_set_property(ao_driver_t *this_gen, int property, int value) {
 
   switch(property) {
 
-  case AO_PROP_MIXER_VOL:
-  case AO_PROP_PCM_VOL:
-    lprintf("set volume to %d\n", value);
-    pthread_mutex_lock(&this->data_mutex);
-    if (!this->muted) {
-      if (this->dsbuffer && !audio_set_volume(this, value)) return ~value;
-    }
-    this->volume = value;
-    pthread_mutex_unlock(&this->data_mutex);
-    break;
+    case AO_PROP_MIXER_VOL:
+    case AO_PROP_PCM_VOL:
+      lprintf("set volume to %d\n", value);
+      pthread_mutex_lock(&this->data_mutex);
+      if (!this->muted) {
+        if (this->dsbuffer && !audio_set_volume(this, value)) return ~value;
+      }
+      this->volume = value;
+      pthread_mutex_unlock(&this->data_mutex);
+      break;
 
-  case AO_PROP_MUTE_VOL:
-    pthread_mutex_lock(&this->data_mutex);
-    if (this->dsbuffer && !audio_set_volume(this, value ? 0 : this->volume)) return ~value;
-    this->muted = value;
-    pthread_mutex_unlock(&this->data_mutex);
-    break;
+    case AO_PROP_MUTE_VOL:
+      pthread_mutex_lock(&this->data_mutex);
+      if (this->dsbuffer && !audio_set_volume(this, value ? 0 : this->volume)) return ~value;
+      this->muted = value;
+      pthread_mutex_unlock(&this->data_mutex);
+      break;
 
-  default:
-    return ~value;
+    default:
+      return ~value;
 
   }
 
@@ -747,18 +693,17 @@ static int ao_dx2_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate, int 
   this->status = STATUS_START;
 
   if (!audio_create_buffers(this)) return 0;
-  if (!audio_create_events(this)) goto fail_buffers;
-  if (!audio_set_volume(this, this->volume)) goto fail_events;
+  if (!audio_set_volume(this, this->volume)) goto fail_buffers;
 
   if (pthread_cond_init(&this->data_cond, NULL) != 0) {
     xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": can't create pthread condition: %s\n"), strerror(errno));
-    goto fail_events;
+    goto fail_buffers;
   }
   if (pthread_mutex_init(&this->data_mutex, NULL) != 0) {
     xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": can't create pthread mutex: %s\n"), strerror(errno));
     goto fail_cond;
   }
-  
+
   /* creating the service thread and waiting for its signal */
   pthread_mutex_lock(&this->data_mutex);
   if (pthread_create(&this->buffer_service, NULL, buffer_service, this) != 0) {
@@ -775,8 +720,6 @@ fail_mutex:
   pthread_mutex_destroy(&this->data_mutex);
 fail_cond:
   pthread_cond_destroy(&this->data_cond);
-fail_events:
-  audio_destroy_events(this);
 fail_buffers:
   audio_destroy_buffers(this);
   return 0;
@@ -803,22 +746,26 @@ static int ao_dx2_bytes_per_frame(ao_driver_t *this_gen) {
 
 static int ao_dx2_delay(ao_driver_t *this_gen) {
   dx2_driver_t *this = (dx2_driver_t *)this_gen;
-  int frames;
-  size_t final_pos, play_pos;
-
-  if (this->status != STATUS_RUNNING) return this->read_size / this->frame_size;
+  int frames = 0;
+  int ret;
+  size_t play_pos;
 
   pthread_mutex_lock(&this->data_mutex);
-  if (!audio_tell(this, &play_pos)) {
-    pthread_mutex_unlock(&this->data_mutex);
-    return 0;
-  }
-  final_pos = this->read_size + (((PARTS + this->count - 1) % PARTS) + 1) * this->part_size - 1;
-  frames = (this->buffer_size + final_pos - play_pos) % this->buffer_size / this->frame_size;
+
+  if (this->status != STATUS_RUNNING){
+    frames = this->write_pos / this->frame_size;
+  } else {
+    ret = audio_tell(this, &play_pos);
+    if (ret){
+      frames = buffer_occupied_size(this) / this->frame_size;
+    }
+  }	
+
   pthread_mutex_unlock(&this->data_mutex);
 
 #ifdef LOG
-  if ((rand() % 10) == 0) lprintf("frames=%d, play_pos=%" PRIdword ", block=%" PRIsizet "..%" PRIsizet "\n", frames, play_pos, final_pos - this->part_size + 1, final_pos);
+  if ((rand() % 10) == 0)
+    lprintf("frames=%d, play_pos=%" PRIdword ", write_pos=%u\n", frames, play_pos, this->write_pos);
 #endif
 
   return frames;
@@ -840,7 +787,7 @@ static int ao_dx2_write(ao_driver_t *this_gen, int16_t* audio_data, uint32_t num
     while (((free_size = buffer_free_size(this)) == 0) && !this->finished) {
       lprintf("buffer full, waiting\n");
       pthread_mutex_unlock(&this->data_mutex);
-      xine_usec_sleep(1000 * BUFFER_MS / PARTS / 5);
+      xine_usec_sleep(1000 * BUFFER_MS / 10);
       pthread_mutex_lock(&this->data_mutex);
     }
     if (free_size >= input_size) size = input_size;
@@ -854,6 +801,12 @@ static int ao_dx2_write(ao_driver_t *this_gen, int16_t* audio_data, uint32_t num
     pthread_mutex_unlock(&this->data_mutex);
     read_pos += size;
     input_size -= size;
+  }
+
+  /* signal, if are waiting and need wake up */
+  if ((this->status == STATUS_WAIT) && (buffer_occupied_size(this) > BUFFER_MIN_MS * this->rate / 1000 * this->frame_size)) {
+    lprintf("buffer ready, waking up\n");
+    pthread_cond_signal(&this->data_cond);
   }
 
   return 1;
@@ -881,7 +834,6 @@ static void ao_dx2_close(ao_driver_t *this_gen) {
   if (pthread_mutex_destroy(&this->data_mutex) != 0) {
     xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": can't destroy pthread mutex: %s\n"), strerror(errno));
   }
-  audio_destroy_events(this);
   audio_destroy_buffers(this);
 }
 
@@ -896,12 +848,8 @@ static void ao_dx2_exit(ao_driver_t *this_gen) {
 }
 
 
-/* 
- * TODO: check
- */
 static int ao_dx2_get_gap_tolerance(ao_driver_t *this_gen) {
-  /* half of part of the buffer in pts (1 msec = 90 pts) */
-  return (90 * (BUFFER_MS / PARTS)) >> 1;
+  return GAP_TOLERANCE;
 }
 
 
@@ -910,36 +858,36 @@ static int ao_dx2_control(ao_driver_t *this_gen, int cmd, ...) {
 
   switch(cmd) {
 
-  case AO_CTRL_PLAY_PAUSE:
-    lprintf("control pause\n");
-    pthread_mutex_lock(&this->data_mutex);
-    if (!this->paused) {
+    case AO_CTRL_PLAY_PAUSE:
+      lprintf("control pause\n");
+      pthread_mutex_lock(&this->data_mutex);
+      if (!this->paused) {
+        audio_stop(this);
+        this->paused = 1;
+      }
+      pthread_mutex_unlock(&this->data_mutex);
+      break;
+
+    case AO_CTRL_PLAY_RESUME:
+      lprintf("control resume\n");
+      pthread_mutex_lock(&this->data_mutex);
+      if (this->paused) {
+        if (this->status != STATUS_WAIT) audio_play(this);
+        this->paused = 0;
+      }
+      pthread_mutex_unlock(&this->data_mutex);
+      break;
+
+    case AO_CTRL_FLUSH_BUFFERS:
+      lprintf("control flush\n");
+      pthread_mutex_lock(&this->data_mutex);
       audio_stop(this);
-      this->paused = 1;
-    }
-    pthread_mutex_unlock(&this->data_mutex);
-    break;
+      audio_flush(this);
+      pthread_mutex_unlock(&this->data_mutex);
+      break;
 
-  case AO_CTRL_PLAY_RESUME:
-    lprintf("control resume\n");
-    pthread_mutex_lock(&this->data_mutex);
-    if (this->paused) {
-      if (this->status != STATUS_WAIT) audio_play(this);
-      this->paused = 0;
-    }
-    pthread_mutex_unlock(&this->data_mutex);
-    break;
-    
-  case AO_CTRL_FLUSH_BUFFERS:
-    lprintf("control flush\n");
-    pthread_mutex_lock(&this->data_mutex);
-    audio_stop(this);
-    audio_flush(this);
-    pthread_mutex_unlock(&this->data_mutex);
-    break;
-
-  default:
-    xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": unknown control command %d\n"), cmd);
+    default:
+      xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": unknown control command %d\n"), cmd);
 
   }
 
@@ -955,7 +903,7 @@ static ao_driver_t *open_plugin(audio_driver_class_t *class_gen, const void *dat
 
   lprintf("open plugin called\n");
 
-  this = (dx2_driver_t *)xine_xmalloc(sizeof(dx2_driver_t));
+  this = calloc(1, sizeof(dx2_driver_t));
   if (!this)
     return NULL;
 
@@ -1009,7 +957,7 @@ static void *init_class(xine_t *xine, void *data) {
 
   lprintf("init class\n");
 
-  this = (dx2_class_t *)xine_xmalloc(sizeof(dx2_class_t));
+  this = calloc(1, sizeof(dx2_class_t));
   if (!this)
     return NULL;
 

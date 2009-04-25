@@ -414,7 +414,7 @@ void bilinear(_ftype_t* a, _ftype_t* b, _ftype_t* k, _ftype_t fs, _ftype_t *coef
  *
  * return -1 if fail 0 if success.
  */
-int szxform(_ftype_t* a, _ftype_t* b, _ftype_t Q, _ftype_t fc, _ftype_t fs, _ftype_t *k, _ftype_t *coef)
+int szxform(const _ftype_t* a, const _ftype_t* b, _ftype_t Q, _ftype_t fc, _ftype_t fs, _ftype_t *k, _ftype_t *coef)
 {
   _ftype_t at[3];
   _ftype_t bt[3];

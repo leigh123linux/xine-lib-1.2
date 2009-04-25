@@ -2,9 +2,15 @@
 #
 #
 
-prefix=@XINE_CONFIG_PREFIX@
-exec_prefix=@exec_prefix@
-exec_prefix_set=no
+unset prefix
+unset exec_prefix
+unset args
+
+PKG_CONFIG_PATH="`cat <<'EOF'
+@XINE_PKGCONFIG_DIR@
+EOF
+`${PKG_CONFIG_PATH:+:}$PKG_CONFIG_PATH"
+export PKG_CONFIG_PATH
 
 usage()
 {
@@ -17,10 +23,12 @@ Options:
         [--libs]
 	[--acflags]
 	[--cflags]
+	[--bindir]
 	[--plugindir]
 	[--datadir]
 	[--scriptdir]
 	[--localedir]
+	[--xine-list]
 	[--objcflags]
 EOF
 	exit $1
@@ -32,53 +40,34 @@ fi
 
 while test $# -gt 0; do
   case "$1" in
-  -*=*) optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
+  -*=*) optarg="${1#--*=}" ;;
   *) optarg= ;;
   esac
 
-  case $1 in
+  case "$1" in
     --prefix=*)
-      prefix=$optarg
-      if test $exec_prefix_set = no ; then
-        exec_prefix=$optarg
+      prefix="$optarg"
+      if [ "$exec_prefix" = '' ]; then
+        exec_prefix="$optarg"
       fi
       ;;
-    --prefix)
-      echo_prefix=yes
-      ;;
     --exec-prefix=*)
-      exec_prefix=$optarg
-      exec_prefix_set=yes
-      ;;
-    --exec-prefix)
-      echo_exec_prefix=yes
+      exec_prefix="$optarg"
       ;;
     --version)
-      echo @XINE_MAJOR@.@XINE_MINOR@.@XINE_SUB@
+      args="$args${args+ }--modversion"
       ;;
-    --acflags)
-      echo_acflags=yes
+    --cflags|--libs)
+      args="$args${args+ }$1"
       ;;
-    --cflags)
-      echo_cflags=yes
+    --prefix|--acflags|--bindir|--plugindir|--datadir|--scriptdir|--localedir|--objcflags)
+      args="$args${args+ }--variable=${1#--}"
       ;;
-    --libs)
-      echo_libs=yes
+    --xine-list)
+      args="$args${args+ }--variable=xine_list"
       ;;
-    --plugindir)
-      echo_plugindir=yes
-      ;;
-    --datadir)
-      echo_datadir=yes
-      ;;
-    --scriptdir)
-      echo_scriptdir=yes
-      ;;
-    --localedir)
-      echo_localedir=yes
-      ;;
-    --objcflags)
-      echo_objcflags=yes
+    --exec-prefix)
+      args="$args${args+ }--variable=exec_prefix"
       ;;
     *)
       usage 1 1>&2
@@ -87,37 +76,6 @@ while test $# -gt 0; do
   shift
 done
 
-if test "$echo_prefix" = "yes"; then
-	echo $prefix
-fi
-
-if test "$echo_exec_prefix" = "yes"; then
-	echo $exec_prefix
-fi
-
-if test "$echo_acflags" = "yes"; then
-      echo "@XINE_ACFLAGS@"
-fi
-
-if test "$echo_cflags" = "yes"; then
-      echo -I@includedir@ @PTHREAD_CFLAGS@
-fi
-
-if test "$echo_libs" = "yes"; then
-      echo -L@libdir@ -lxine @ZLIB_LIBS@ @NET_LIBS@ @PTHREAD_LIBS@ @LIBICONV@ @RT_LIBS@
-fi      
-if test "$echo_plugindir" = "yes"; then
-      echo "@XINE_PLUGINPATH@"
-fi      
-if test "$echo_datadir" = "yes"; then
-      echo "@XINE_DATADIR@"
-fi      
-if test "$echo_scriptdir" = "yes"; then
-      echo "@XINE_SCRIPTPATH@"
-fi
-if test "$echo_localedir" = "yes"; then
-      echo "@XINE_LOCALEPATH@"
-fi
-if test "$echo_objcflags" = "yes"; then
-      echo "@OBJCFLAGS@"
-fi
+exec pkg-config "${prefix+--define-variable=prefix=}$prefix" \
+		"${exec_prefix+--define-variable=exec_prefix=}$exec_prefix" \
+		$args libxine

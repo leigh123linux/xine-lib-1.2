@@ -17,6 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #define LOG_MODULE "refcounter"
 #define LOG_VERBOSE
 /*
@@ -30,7 +35,7 @@ refcounter_t* _x_new_refcounter(void *object, void (*destructor)(void *))
 {
   refcounter_t *new_refcounter;
 
-  new_refcounter = (refcounter_t *) xine_xmalloc (sizeof (refcounter_t));
+  new_refcounter = (refcounter_t *) calloc(1, sizeof(refcounter_t));
   new_refcounter->count      = 1;
   new_refcounter->object     = object;
   new_refcounter->destructor = destructor;

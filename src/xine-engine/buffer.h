@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2004 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -35,10 +35,7 @@
 extern "C" {
 #endif
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
+#include <string.h>
 #include <stdio.h>
 #include <pthread.h>
 #include <sys/types.h>
@@ -191,6 +188,7 @@ extern "C" {
 #define BUF_VIDEO_THEORA_RAW	0x02640000
 #define BUF_VIDEO_VC1		0x02650000
 #define BUF_VIDEO_VMNC		0x02660000
+#define BUF_VIDEO_SNOW		0x02670000
 
 /* audio buffer types:  (please keep in sync with buffer_types.c) */
 
@@ -258,6 +256,9 @@ extern "C" {
 #define BUF_AUDIO_SMACKER	0x033B0000
 #define BUF_AUDIO_FLVADPCM	0x033C0000
 #define BUF_AUDIO_WAVPACK	0x033D0000
+#define BUF_AUDIO_MP3ADU	0x033E0000
+#define BUF_AUDIO_AMR_NB	0x033F0000
+#define BUF_AUDIO_AMR_WB	0x03400000
 
 /* spu buffer types:    */
 
@@ -373,13 +374,16 @@ struct buf_element_s {
  * decoder_info[2] carries denominator for display aspect ratio       */
 #define BUF_FLAG_ASPECT      0x0800
 
+/* represent the state of gapless_switch at the time buf was enqueued */
+#define BUF_FLAG_GAPLESS_SW  0x1000
+
 /* Amount of audio padding added by encoder (mp3, aac). These empty
  * audio frames are causing a gap when switching between mp3 files.
  * decoder_info[1] carries amount of audio frames padded at the
  * beginning of the buffer
  * decoder_info[2] carries amount of audio frames padded at the end of
  * the buffer                                                         */
-#define BUF_FLAG_AUDIO_PADDING 0x1000
+#define BUF_FLAG_AUDIO_PADDING 0x2000
 
 /* Special buffer types:
  * Sometimes there is a need to relay special information from a demuxer
@@ -613,8 +617,8 @@ struct fifo_buffer_s
  * allocate num_buffers of buf_size bytes each
  */
 
-fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) XINE_PROTECTED;
-fifo_buffer_t *_x_dummy_fifo_buffer_new (int num_buffers, uint32_t buf_size) XINE_PROTECTED;
+fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) XINE_MALLOC XINE_PROTECTED;
+fifo_buffer_t *_x_dummy_fifo_buffer_new (int num_buffers, uint32_t buf_size) XINE_MALLOC XINE_PROTECTED;
 
 
 /* return BUF_VIDEO_xxx given the fourcc
@@ -624,16 +628,16 @@ fifo_buffer_t *_x_dummy_fifo_buffer_new (int num_buffers, uint32_t buf_size) XIN
 uint32_t _x_fourcc_to_buf_video( uint32_t fourcc_int ) XINE_PROTECTED;
 
 /* return codec name given BUF_VIDEO_xxx */
-char * _x_buf_video_name( uint32_t buf_type ) XINE_PROTECTED;
+const char * _x_buf_video_name( uint32_t buf_type ) XINE_PROTECTED;
 
 /* return BUF_AUDIO_xxx given the formattag */
 uint32_t _x_formattag_to_buf_audio( uint32_t formattag ) XINE_PROTECTED;
 
 /* return codec name given BUF_AUDIO_xxx */
-char * _x_buf_audio_name( uint32_t buf_type ) XINE_PROTECTED;
+const char * _x_buf_audio_name( uint32_t buf_type ) XINE_PROTECTED;
 
 
-#ifndef ATTRIBUTE_PACKED
+#ifndef SUPPORT_ATTRIBUTE_PACKED
 /* no attribute packed? let's try with pragma pack as a last resort */
 #pragma pack(2)
 #endif
@@ -642,7 +646,7 @@ char * _x_buf_audio_name( uint32_t buf_type ) XINE_PROTECTED;
  * - will always use machine endian format, so demuxers reading
  *   stuff from win32 formats must use the function below.
  */
-typedef struct __attribute__((__packed__)) {
+typedef struct XINE_PACKED {
     int32_t        biSize;
     int32_t        biWidth;
     int32_t        biHeight;
@@ -659,7 +663,7 @@ typedef struct __attribute__((__packed__)) {
 /* this is xine version of WAVEFORMATEX 
  * (the same comments from xine_bmiheader)
  */
-typedef struct __attribute__((__packed__)) {
+typedef struct XINE_PACKED {
   int16_t   wFormatTag;
   int16_t   nChannels;
   int32_t   nSamplesPerSec;
@@ -668,7 +672,7 @@ typedef struct __attribute__((__packed__)) {
   int16_t   wBitsPerSample;
   int16_t   cbSize;
 } xine_waveformatex;
-#ifndef ATTRIBUTE_PACKED
+#ifndef SUPPORT_ATTRIBUTE_PACKED
 #pragma pack()
 #endif
 
@@ -677,6 +681,10 @@ void _x_bmiheader_le2me( xine_bmiheader *bih ) XINE_PROTECTED;
 
 /* convert xine_waveformatex struct from little endian */
 void _x_waveformatex_le2me( xine_waveformatex *wavex ) XINE_PROTECTED;
+
+static __inline int _x_is_fourcc(void *ptr, void *tag) {
+  return memcmp(ptr, tag, 4) == 0;
+}
 
 #ifdef __cplusplus
 }

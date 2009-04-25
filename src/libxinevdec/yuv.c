@@ -22,6 +22,10 @@
  * a way that xine can display them.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -321,7 +325,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
   yuv_decoder_t  *this ;
 
-  this = (yuv_decoder_t *) xine_xmalloc (sizeof (yuv_decoder_t));
+  this = (yuv_decoder_t *) calloc(1, sizeof(yuv_decoder_t));
 
   this->video_decoder.decode_data         = yuv_decode_data;
   this->video_decoder.flush               = yuv_flush;
@@ -355,7 +359,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   yuv_class_t *this;
 
-  this = (yuv_class_t *) xine_xmalloc (sizeof (yuv_class_t));
+  this = (yuv_class_t *) calloc(1, sizeof(yuv_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;

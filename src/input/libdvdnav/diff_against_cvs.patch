@@ -323,7 +323,7 @@ diff -u -p -u -r1.5 dvd_reader.h
  
 -#ifdef _MSC_VER
 +#ifdef HAVE_CONFIG_H
- #include <config.h>
+ #include "config.h"
 +#endif
  
 +#ifdef _MSC_VER

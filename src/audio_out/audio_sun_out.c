@@ -909,7 +909,7 @@ static ao_driver_t *ao_sun_open_plugin (audio_driver_class_t *class_gen, const v
   int                  status;
   audio_info_t	       info;
 
-  this = (sun_driver_t *) xine_xmalloc (sizeof (sun_driver_t));
+  this = calloc(1, sizeof (sun_driver_t));
   if (!this)
     return NULL;
 
@@ -1032,7 +1032,7 @@ static void ao_sun_dispose_class (audio_driver_class_t *this_gen) {
 static void *ao_sun_init_class (xine_t *xine, void *data) {
   sun_class_t         *this;
 
-  this = (sun_class_t *) xine_xmalloc (sizeof (sun_class_t));
+  this = calloc(1, sizeof (sun_class_t));
   if (!this)
     return NULL;
 

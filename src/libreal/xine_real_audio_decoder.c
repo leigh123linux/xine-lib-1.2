@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2000-2003 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -21,6 +21,10 @@
  *
  * code inspired by work from Florian Schneider for the MPlayer Project 
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 
 #include <stdlib.h>
@@ -51,6 +55,8 @@ typedef struct {
   /* empty so far */
 } real_class_t;
 
+typedef void * ra_codec_t;
+
 typedef struct realdec_decoder_s {
   audio_decoder_t  audio_decoder;
 
@@ -60,18 +66,18 @@ typedef struct realdec_decoder_s {
 
   void            *ra_handle;
 
-  unsigned long  (*raCloseCodec)(void*);
-  unsigned long  (*raDecode)(void*, char*,unsigned long,char*,unsigned int*,long);
-  unsigned long  (*raFlush)(unsigned long,unsigned long,unsigned long);
-  unsigned long  (*raFreeDecoder)(void*);
-  void*          (*raGetFlavorProperty)(void*,unsigned long,unsigned long,int*);
-  unsigned long  (*raInitDecoder)(void*, void*);
-  unsigned long  (*raOpenCodec2)(void*);
-  unsigned long  (*raSetFlavor)(void*,unsigned long);
-  void           (*raSetDLLAccessPath)(char*);
-  void           (*raSetPwd)(char*,char*);
+  uint32_t       (*raCloseCodec)(ra_codec_t);
+  uint32_t       (*raDecode)(ra_codec_t, char *, uint32_t, char *, uint32_t *, uint32_t);
+  uint32_t       (*raFlush)(ra_codec_t, char *, uint32_t *);
+  uint32_t       (*raFreeDecoder)(ra_codec_t);
+  void *         (*raGetFlavorProperty)(ra_codec_t, uint16_t, uint16_t, uint16_t *);
+  uint32_t       (*raInitDecoder)(ra_codec_t, void *);
+  uint32_t       (*raOpenCodec2)(ra_codec_t *, const char *);
+  uint32_t       (*raSetFlavor)(ra_codec_t, uint16_t);
+  void           (*raSetDLLAccessPath)(char *);
+  void           (*raSetPwd)(ra_codec_t, char *);
 
-  void            *context;
+  ra_codec_t       context;
 
   int              sps, w, h;
   int              block_align;
@@ -92,14 +98,14 @@ typedef struct realdec_decoder_s {
 } realdec_decoder_t;
 
 typedef struct {
-    int    samplerate;
-    short  bits;
-    short  channels;
-    int    unk1;
-    int    subpacket_size;
-    int    coded_frame_size;
-    int    codec_data_length;
-    void  *extras;
+    uint32_t  samplerate;
+    uint16_t  bits;
+    uint16_t  channels;
+    uint16_t  quality;
+    uint32_t  subpacket_size;
+    uint32_t  coded_frame_size;
+    uint32_t  codec_data_length;
+    void      *extras;
 } ra_init_t;
 
 static int load_syms_linux (realdec_decoder_t *this, const char *const codec_name, const char *const codec_alternate) {
@@ -216,13 +222,14 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
     _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, "Cook");
     if (!load_syms_linux (this, "cook.so", "cook.so.6.0"))
       return 0;
+    this->block_align = subpacket_size;
     break;
     
   case BUF_AUDIO_ATRK:
     _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, "Atrac");
     if (!load_syms_linux (this, "atrc.so", "atrc.so.6.0"))
       return 0;
-    this->block_align = 384;
+    this->block_align = subpacket_size;
     break;
 
   case BUF_AUDIO_14_4:
@@ -254,7 +261,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
    * init codec
    */
 
-  result = this->raOpenCodec2 (&this->context);
+  result = this->raOpenCodec2 (&this->context, NULL);
   if (result) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libareal: error in raOpenCodec2: %d\n", result);
     return 0;
@@ -266,7 +273,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
     init_data.samplerate = samples_per_sec;
     init_data.bits = bits_per_sample;
     init_data.channels = num_channels;
-    init_data.unk1 = 100; /* ??? */
+    init_data.quality = 100; /* ??? */
     init_data.subpacket_size = subpacket_size; /* subpacket size */
     init_data.coded_frame_size = coded_frame_size; /* coded frame size */
     init_data.codec_data_length = data_len; /* codec data length */
@@ -307,14 +314,14 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
   if (this->sps) {
 
     this->frame_size      = this->w/this->sps*this->h*this->sps;
-    this->frame_buffer    = xine_xmalloc (this->frame_size);
-    this->frame_reordered = xine_xmalloc (this->frame_size);
+    this->frame_buffer    = calloc (1, this->frame_size);
+    this->frame_reordered = calloc (1, this->frame_size);
     this->frame_num_bytes = 0;
 
   } else {
 
     this->frame_size      = this->w*this->h;
-    this->frame_buffer    = xine_xmalloc (this->frame_size);
+    this->frame_buffer    = calloc (this->w, this->h);
     this->frame_reordered = this->frame_buffer;
     this->frame_num_bytes = 0;
 
@@ -350,13 +357,6 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
   return 1;
 }
 
-static unsigned char sipr_swaps[38][2]={
-    {0,63},{1,22},{2,44},{3,90},{5,81},{7,31},{8,86},{9,58},{10,36},{12,68},
-    {13,39},{14,73},{15,53},{16,69},{17,57},{19,88},{20,34},{21,71},{24,46},
-    {25,94},{26,54},{28,75},{29,50},{32,70},{33,92},{35,74},{38,85},{40,56},
-    {42,87},{43,65},{45,59},{48,79},{49,93},{51,89},{55,95},{61,76},{67,83},
-    {77,80} };
-
 static void realdec_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   realdec_decoder_t *this = (realdec_decoder_t *) this_gen;
 
@@ -383,116 +383,32 @@ static void realdec_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) 
       this->pts = buf->pts;
 
     size = buf->size;
-
     while (size) {
+      int need;
 
-      int needed;
-
-      needed = this->frame_size - this->frame_num_bytes;
-
-      if (needed>size) {
-	
-	memcpy (this->frame_buffer+this->frame_num_bytes, buf->content, size);
+      need = this->frame_size - this->frame_num_bytes;
+      if (size < need) {
+	memcpy (this->frame_buffer + this->frame_num_bytes,
+		buf->content + buf->size - size, size);
 	this->frame_num_bytes += size;
-
-	lprintf ("buffering %d/%d bytes\n", this->frame_num_bytes, this->frame_size);
-
 	size = 0;
-
       } else {
-
-	int result;
-	int len     =-1;
-	int n;
-	int sps     = this->sps;
-	int w       = this->w;
-	int h       = this->h;
 	audio_buffer_t *audio_buffer;
+	int n, len;
+	int result;
 
-	lprintf ("buffering %d bytes\n", needed);
-
-	memcpy (this->frame_buffer+this->frame_num_bytes, buf->content, needed);
-
-	size -= needed;
+	memcpy (this->frame_buffer + this->frame_num_bytes,
+		buf->content + buf->size - size, need);
+	size -= need;
 	this->frame_num_bytes = 0;
 
-	lprintf ("frame completed. reordering...\n");
-	lprintf ("bs=%d  sps=%d  w=%d h=%d \n",/*sh->wf->nBlockAlign*/-1,sps,w,h);
-
-	if (!sps) {
-
-	  int            j,n;
-	  int            bs=h*w*2/96; /* nibbles per subpacket */
-	  unsigned char *p=this->frame_buffer;
-	  
-	  /* 'sipr' way */
-	  /* demux_read_data(sh->ds, p, h*w); */
-	  for (n=0;n<38;n++){
-	    int i=bs*sipr_swaps[n][0];
-	    int o=bs*sipr_swaps[n][1];
-	    /* swap nibbles of block 'i' with 'o'      TODO: optimize */
-	    for (j=0;j<bs;j++) {
-	      int x=(i&1) ? (p[(i>>1)]>>4) : (p[(i>>1)]&15);
-	      int y=(o&1) ? (p[(o>>1)]>>4) : (p[(o>>1)]&15);
-	      if (o&1) 
-		p[(o>>1)]=(p[(o>>1)]&0x0F)|(x<<4);
-	      else  
-		p[(o>>1)]=(p[(o>>1)]&0xF0)|x;
-
-	      if (i&1) 
-		p[(i>>1)]=(p[(i>>1)]&0x0F)|(y<<4);
-	      else  
-		p[(i>>1)]=(p[(i>>1)]&0xF0)|y;
-
-	      ++i;
-	      ++o;
-	    }
-	  }
-	  /*
-	  sh->a_in_buffer_size=
-	    sh->a_in_buffer_len=w*h;
-	  */
-
-	} else {
-	  int      x, y;
-	  uint8_t *s;
-	  
-	  /*  'cook' way */
-	  
-	  w /= sps; s = this->frame_buffer;
-	  
-	  for (y=0; y<h; y++)
-	    
-	    for (x=0; x<w; x++) {
-	      
-	      lprintf ("x=%d, y=%d, off %d\n",
-		       x, y, sps*(h*x+((h+1)/2)*(y&1)+(y>>1)));
-	      
-	      memcpy (this->frame_reordered+sps*(h*x+((h+1)/2)*(y&1)+(y>>1)),
-		      s, sps);
-	      s+=sps;
-	      
-	      /* demux_read_data(sh->ds, sh->a_in_buffer+sps*(h*x+((h+1)/2)*(y&1)+(y>>1)), 
-		 sps); */
-	      
-	    }
-	  /*
-	    sh->a_in_buffer_size=
-	    sh->a_in_buffer_len=w*h*sps;
-	  */
-	}
-
-#ifdef LOG
-	xine_hexdump (this->frame_reordered, buf->size);
-#endif
-  
 	n = 0;
-	while (n<this->frame_size) {
+	while (n < this->frame_size) {
 
 	  audio_buffer = this->stream->audio_out->get_buffer (this->stream->audio_out);
 
 	  result = this->raDecode (this->context, 
-				   this->frame_reordered+n,
+				   this->frame_buffer + n,
 				   this->block_align,
 				   (char *) audio_buffer->mem, &len, -1);
 
@@ -506,7 +422,7 @@ static void realdec_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) 
 	  
 	  this->stream->audio_out->put_buffer (this->stream->audio_out, 
 					       audio_buffer, this->stream);
-	  n+=this->block_align;
+	  n += this->block_align;
 	}
       }
     }
@@ -565,7 +481,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
   real_class_t      *cls = (real_class_t *) class_gen;
   realdec_decoder_t *this ;
 
-  this = (realdec_decoder_t *) xine_xmalloc (sizeof (realdec_decoder_t));
+  this = (realdec_decoder_t *) calloc(1, sizeof(realdec_decoder_t));
 
   this->audio_decoder.decode_data         = realdec_decode_data;
   this->audio_decoder.reset               = realdec_reset;
@@ -598,9 +514,8 @@ static void dispose_class (audio_decoder_class_t *this) {
 void *init_realadec (xine_t *xine, void *data) {
 
   real_class_t       *this;
-  config_values_t    *config = xine->config;
 
-  this = (real_class_t *) xine_xmalloc (sizeof (real_class_t));
+  this = (real_class_t *) calloc(1, sizeof(real_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;
@@ -622,5 +537,5 @@ static uint32_t audio_types[] = {
 
 const decoder_info_t dec_info_realaudio = {
   audio_types,         /* supported types */
-  7                    /* priority        */
+  6                    /* priority        */
 };

@@ -527,6 +527,9 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
   
   case XINE_PARAM_GAPLESS_SWITCH:
     stream->gapless_switch = !!value;
+    if( stream->gapless_switch && !stream->early_finish_event ) {
+      xprintf (stream->xine, XINE_VERBOSITY_DEBUG, "frontend possibly buggy: gapless_switch without early_finish_event\n");
+    }
     break;
     
   default:
@@ -739,6 +742,8 @@ uint32_t xine_get_stream_info (xine_stream_t *stream, int info) {
   case XINE_STREAM_INFO_IGNORE_AUDIO:
   case XINE_STREAM_INFO_IGNORE_SPU:
   case XINE_STREAM_INFO_VIDEO_HAS_STILL:
+  case XINE_STREAM_INFO_SKIPPED_FRAMES:
+  case XINE_STREAM_INFO_DISCARDED_FRAMES:
   case XINE_STREAM_INFO_VIDEO_AFD:
   case XINE_STREAM_INFO_DVD_TITLE_NUMBER:
   case XINE_STREAM_INFO_DVD_TITLE_COUNT:
@@ -945,7 +950,7 @@ int _x_message(xine_stream_t *stream, int type, ...) {
   xine_ui_message_data_t *data;
   xine_event_t            event;
   const char              *explanation;
-  int                     size;
+  size_t                  size;
   int                     n;
   va_list                 ap;
   char                   *s, *params;
@@ -990,7 +995,7 @@ int _x_message(xine_stream_t *stream, int type, ...) {
   args[n] = NULL;
   
   size += sizeof(xine_ui_message_data_t) + 1;
-  data = xine_xmalloc( size );
+  data = calloc(1, size );
 
   strcpy(data->compatibility.str, "Upgrade your frontend to see the error messages");
   data->type           = type;

@@ -15,6 +15,10 @@ src/audio_out/audio_none_out.c
 src/audio_out/audio_oss_out.c
 src/audio_out/audio_pulse_out.c
 src/audio_out/audio_sun_out.c
+src/combined/ffmpeg/ff_audio_decoder.c
+src/combined/ffmpeg/ff_dvaudio_decoder.c
+src/combined/ffmpeg/ff_video_decoder.c
+src/combined/ffmpeg/ffmpeg_encoder.c
 src/demuxers/demux_asf.c
 src/demuxers/demux_avi.c
 src/demuxers/demux_film.c
@@ -64,10 +68,6 @@ src/input/vcd/xineplug_inp_vcd.c
 src/liba52/xine_a52_decoder.c
 src/libdts/xine_dts_decoder.c
 src/libfaad/xine_faad_decoder.c
-src/libffmpeg/ff_audio_decoder.c
-src/libffmpeg/ff_dvaudio_decoder.c
-src/libffmpeg/ff_video_decoder.c
-src/libffmpeg/ffmpeg_encoder.c
 src/libmusepack/requant.c
 src/libmusepack/synth_filter.c
 src/libmusepack/xine_musepack_decoder.c
@@ -119,6 +119,7 @@ src/video_out/video_out_xvmc.c
 src/video_out/video_out_xxmc.c
 src/video_out/x11osd.c
 src/video_out/xcbosd.c
+src/video_out/xv_common.h
 src/xine-engine/alphablend.c
 src/xine-engine/audio_decoder.c
 src/xine-engine/audio_out.c

@@ -194,7 +194,7 @@ static int get_stream (demux_ogg_t *this, int serno) {
 static int new_stream_info (demux_ogg_t *this, const int cur_serno) {
   int stream_num;
 
-  this->si[this->num_streams] = (stream_info_t *)xine_xmalloc(sizeof(stream_info_t));
+  this->si[this->num_streams] = (stream_info_t *)calloc(1, sizeof(stream_info_t));
   ogg_stream_init(&this->si[this->num_streams]->oss, cur_serno);
   stream_num = this->num_streams;
   this->si[stream_num]->buf_types = 0;
@@ -237,7 +237,7 @@ static int read_ogg_packet (demux_ogg_t *this) {
   while (ogg_sync_pageout(&this->oy,&this->og)!=1) {
     buffer = ogg_sync_buffer(&this->oy, CHUNKSIZE);
     bytes  = this->input->read(this->input, buffer, CHUNKSIZE);
-    if (bytes == 0) {
+    if (bytes <= 0) {
       if (total == 0) {
         lprintf("read_ogg_packet read nothing\n");
         return 0;
@@ -304,10 +304,10 @@ static void send_ogg_packet (demux_ogg_t *this,
   buf_element_t *buf;
 
   int done=0,todo=op->bytes;
-  int op_size = sizeof(ogg_packet);
+  const size_t op_size = sizeof(ogg_packet);
 
   while (done<todo) {
-    int offset=0;
+    size_t offset=0;
     buf = fifo->buffer_pool_alloc (fifo);
     buf->decoder_flags = decoder_flags;
     if (done==0) {
@@ -498,7 +498,7 @@ static void read_chapter_comment (demux_ogg_t *this, ogg_packet *op) {
         lprintf("time: %d %d %d %d\n", hour, min,sec,msec);
 
         if (!this->chapter_info) {
-          this->chapter_info = (chapter_info_t *)xine_xmalloc(sizeof(chapter_info_t));
+          this->chapter_info = (chapter_info_t *)calloc(1, sizeof(chapter_info_t));
           this->chapter_info->current_chapter = -1;
         }
         this->chapter_info->max_chapter = chapter_no;
@@ -531,34 +531,34 @@ static void update_chapter_display (demux_ogg_t *this, int stream_num, ogg_packe
   chapter--;
 
   if (chapter != this->chapter_info->current_chapter){
-    xine_event_t uevent;
-    xine_ui_data_t data;
-    int title_len;
-    char *title;
+    xine_ui_data_t data = {
+      .str = { 0, },
+      .str_len = 0
+    };
+    xine_event_t uevent = {
+      .type = XINE_EVENT_UI_SET_TITLE,
+      .stream = this->stream,
+      .data = &data,
+      .data_length = sizeof(data)
+    };
 
     this->chapter_info->current_chapter = chapter;
+
     if (chapter >= 0) {
-      char t_title[256];
-
       if (this->title) {
-        snprintf(t_title, sizeof (t_title), "%s / %s", this->title, this->chapter_info->entries[chapter].name);
+        data.str_len = snprintf(data.str, sizeof(data.str), "%s / %s", this->title, this->chapter_info->entries[chapter].name);
       } else {
-        snprintf(t_title, sizeof (t_title), "%s", this->chapter_info->entries[chapter].name);
+	strncpy(data.str, this->chapter_info->entries[chapter].name, sizeof(data.str)-1);
       }
-      title = t_title;
     } else {
-      title = this->title;
+      strncpy(data.str, this->title, sizeof(data.str));
     }
-    _x_meta_info_set(this->stream, XINE_META_INFO_TITLE, title);
-    lprintf("new TITLE: %s\n", title);
+    if ( data.str_len == 0 )
+      data.str_len = strlen(data.str);
 
-    uevent.type = XINE_EVENT_UI_SET_TITLE;
-    uevent.stream = this->stream;
-    uevent.data = &data;
-    uevent.data_length = sizeof(data);
-    title_len = strlen(title) + 1;
-    memcpy(data.str, title, title_len);
-    data.str_len = title_len;
+    _x_meta_info_set(this->stream, XINE_META_INFO_TITLE, data.str);
+    lprintf("new TITLE: %s\n", data.str);
+
     xine_event_send(this->stream, &uevent);
   }
 }
@@ -1020,7 +1020,7 @@ static void decode_dshow_header (demux_ogg_t *this, const int stream_num, ogg_pa
 
   this->si[stream_num]->headers = 0; /* header is sent below */
 
-  if ( (_X_LE_32(&op->packet[96]) == 0x05589f80) && (op->bytes >= 184)) {
+  if ( _x_is_fourcc(&op->packet[96], "\x05\x58\x9f\x80") && (op->bytes >= 184)) {
 
     buf_element_t    *buf;
     xine_bmiheader    bih;
@@ -1079,7 +1079,7 @@ static void decode_dshow_header (demux_ogg_t *this, const int stream_num, ogg_pa
 
     this->ignore_keyframes = 1;
 
-  } else if (_X_LE_32(&op->packet[96]) == 0x05589F81) {
+  } else if (_x_is_fourcc(&op->packet[96], "\x05\x58\x9f\x81")) {
 
 #if 0
     /* FIXME: no test streams */
@@ -1194,26 +1194,26 @@ static void decode_theora_header (demux_ogg_t *this, const int stream_num, ogg_p
 
 static void decode_flac_header (demux_ogg_t *this, const int stream_num, ogg_packet *op) {
   xine_flac_metadata_header header;
-  xine_flac_streaminfo_block streaminfo;
+  xine_flac_streaminfo_block streaminfo = {};
   buf_element_t *buf;
   xine_waveformatex wave;
 
-  /* Packet type */
-  _x_assert(op->packet[0] == 0x7F);
+  static const uint8_t flac_signature_1[] =
+    {
+      /* Packet type */
+      0x7F,
+      /* OggFLAC signature */
+      'F', 'L', 'A', 'C',
+      /* Version: only 1.0 supported */
+      1, 0
+    };
+  static const uint8_t flac_signature_2[] = "fLaC";
 
-  /* OggFLAC signature */
-  _x_assert(op->packet[1] == 'F'); _x_assert(op->packet[2] == 'L');
-  _x_assert(op->packet[3] == 'A'); _x_assert(op->packet[4] == 'C');
-
-  /* Version: supported only 1.0 */
-  _x_assert(op->packet[5] == 1); _x_assert(op->packet[6] == 0);
+  _x_assert(memcmp(&op->packet[0], flac_signature_1, sizeof(flac_signature_1)) == 0);
+  _x_assert(memcmp(&op->packet[9], flac_signature_2, sizeof(flac_signature_2)) == 0);
 
   /* Header count */
   this->si[stream_num]->headers = 0/*_X_BE_16(&op->packet[7]) +1*/;
-
-  /* fLaC signature */
-  _x_assert(op->packet[9] == 'f'); _x_assert(op->packet[10] == 'L');
-  _x_assert(op->packet[11] == 'a'); _x_assert(op->packet[12] == 'C');
 
   _x_parse_flac_metadata_header(&op->packet[13], &header);
 
@@ -1267,8 +1267,8 @@ static void decode_annodex_header (demux_ogg_t *this, const int stream_num, ogg_
 static void decode_anxdata_header (demux_ogg_t *this, const int stream_num, ogg_packet *op) {
   int64_t granule_rate_n, granule_rate_d;
   uint32_t secondary_headers;
-  char content_type[1024];
-  int content_type_length;
+  const char *content_type = "";
+  size_t content_type_length = 0;
 
   lprintf("AnxData stream detected\n");
 
@@ -1280,11 +1280,16 @@ static void decode_anxdata_header (demux_ogg_t *this, const int stream_num, ogg_
   lprintf("granule_rate %" PRId64 "/%" PRId64 ", %d secondary headers\n",
       granule_rate_n, granule_rate_d, secondary_headers);
 
-  /* read "Content-Tyoe" MIME header */
-  sscanf(&op->packet[28], "Content-Type: %1023s\r\n", content_type);
-  content_type_length = strlen(content_type);
+  /* read "Content-Type" MIME header */
+  const char *startline = &op->packet[28];
+  const char *endline;
+  if ( strcmp(&op->packet[28], "Content-Type: ") == 0 &&
+       (endline = strstr(startline, "\r\n")) ) {
+    content_type = startline + sizeof("Content-Type: ");
+    content_type_length = startline - endline;
+  }
 
-  lprintf("Content-Type: %s (length:%d)\n", content_type, content_type_length);
+  lprintf("Content-Type: %s (length:%td)\n", content_type, content_type_length);
 
   /* how many header packets in the AnxData stream? */
   this->si[stream_num]->headers = secondary_headers + 1;
@@ -1352,7 +1357,7 @@ static void send_header (demux_ogg_t *this) {
   this->ignore_keyframes = 0;
 
   while (!done) {
-    if (!read_ogg_packet(this)) {
+    if (!read_ogg_packet(this) || !this->og.header || !this->og.body) {
       return;
     }
     /* now we've got at least one new page */
@@ -1473,6 +1478,12 @@ static int demux_ogg_send_chunk (demux_plugin_t *this_gen) {
   llprintf(DEBUG_PACKETS, "send package...\n");
 
   if (!read_ogg_packet(this)) {
+    this->status = DEMUX_FINISHED;
+    lprintf ("EOF\n");
+    return this->status;
+  }
+
+  if (!this->og.header || !this->og.body) {
     this->status = DEMUX_FINISHED;
     lprintf ("EOF\n");
     return this->status;
@@ -1924,11 +1935,7 @@ static int detect_ogg_content (int detection_method, demux_class_t *class_gen,
       if (_x_demux_read_header(input, buf, 4) != 4)
         return 0;
 
-      if ((buf[0] == 'O') && (buf[1] == 'g') && (buf[2] == 'g') &&
-          (buf[3] == 'S'))
-        return 1;
-      else
-        return 0;
+      return _x_is_fourcc(buf, "OggS");
     }
 
     case METHOD_BY_EXTENSION: {
@@ -2026,8 +2033,7 @@ static demux_plugin_t *anx_open_plugin (demux_class_t *class_gen,
    * if we reach this point, the input has been accepted.
    */
 
-  this         = xine_xmalloc (sizeof (demux_ogg_t));
-  memset (this, 0, sizeof(demux_ogg_t));
+  this         = calloc(1, sizeof(demux_ogg_t));
   this->stream = stream;
   this->input  = input;
 
@@ -2072,8 +2078,7 @@ static demux_plugin_t *ogg_open_plugin (demux_class_t *class_gen,
    * if we reach this point, the input has been accepted.
    */
 
-  this         = xine_xmalloc (sizeof (demux_ogg_t));
-  memset (this, 0, sizeof(demux_ogg_t));
+  this         = calloc(1, sizeof(demux_ogg_t));
   this->stream = stream;
   this->input  = input;
 
@@ -2118,7 +2123,12 @@ static const char *anx_get_extensions (demux_class_t *this_gen) {
 }
 
 static const char *anx_get_mimetypes (demux_class_t *this_gen) {
-  return "application/x-annodex: ogg: Annodex media;";
+  return "application/annodex: anx: Annodex media;"
+         "application/x-annodex: anx: Annodex media;"
+         "audio/annodex: axa: Annodex audio;"
+         "audio/x-annodex: axa: Annodex audio;"
+         "video/annodex: axv: Annodex video;"
+         "video/x-annodex: axv: Annodex video;";
 }
 
 static void anx_class_dispose (demux_class_t *this_gen) {
@@ -2130,7 +2140,7 @@ static void anx_class_dispose (demux_class_t *this_gen) {
 static void *anx_init_class (xine_t *xine, void *data) {
   demux_anx_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_anx_class_t));
+  this = calloc(1, sizeof(demux_anx_class_t));
 
   this->demux_class.open_plugin     = anx_open_plugin;
   this->demux_class.get_description = anx_get_description;
@@ -2155,14 +2165,19 @@ static const char *ogg_get_identifier (demux_class_t *this_gen) {
 }
 
 static const char *ogg_get_extensions (demux_class_t *this_gen) {
-  return "ogg ogm spx";
+  return "ogx ogv oga ogg spx ogm";
 }
 
 static const char *ogg_get_mimetypes (demux_class_t *this_gen) {
-  return "audio/x-ogg: ogg: OggVorbis Audio;"
-         "audio/x-speex: ogg: Speex Audio;"
-         "application/x-ogg: ogg: Ogg Stream;"
-         "application/ogg: ogg: Ogg Stream;";
+  return "application/ogg: ogx: Ogg Stream;"
+         "application/x-ogg: ogx: Ogg Stream;"
+         "application/x-ogm: ogx: Ogg Stream;"
+         "application/x-ogm-audio: oga: Ogg Audio;"
+         "application/x-ogm-video: ogv: Ogg Video;"
+         "audio/ogg: oga: Ogg Audio;"
+         "audio/x-ogg: oga: Ogg Audio;"
+         "video/ogg: ogv: Ogg Video;"
+         "video/x-ogg: ogv: Ogg Video;";
 }
 
 static void ogg_class_dispose (demux_class_t *this_gen) {
@@ -2174,7 +2189,7 @@ static void ogg_class_dispose (demux_class_t *this_gen) {
 static void *ogg_init_class (xine_t *xine, void *data) {
   demux_ogg_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_ogg_class_t));
+  this = calloc(1, sizeof(demux_ogg_class_t));
 
   this->demux_class.open_plugin     = ogg_open_plugin;
   this->demux_class.get_description = ogg_get_description;

@@ -55,7 +55,7 @@ struct xine_pool_s {
 /* Allocates a new chunk of n elements
  * One malloc call is used to allocate the struct and the elements.
  */
-static xine_pool_chunk_t *xine_pool_alloc_chunk(size_t object_size, size_t object_count) {
+static xine_pool_chunk_t *XINE_MALLOC xine_pool_alloc_chunk(size_t object_size, size_t object_count) {
   xine_pool_chunk_t *new_chunk;
   size_t chunk_mem_size;;
 

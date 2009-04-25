@@ -22,7 +22,7 @@
 typedef struct xine_ring_buffer_s xine_ring_buffer_t;
 
 /* Creates a new ring buffer */
-xine_ring_buffer_t *xine_ring_buffer_new(size_t size) XINE_PROTECTED;
+xine_ring_buffer_t *xine_ring_buffer_new(size_t size) XINE_MALLOC XINE_PROTECTED;
 
 /* Deletes a ring buffer */
 void xine_ring_buffer_delete(xine_ring_buffer_t *ring_buffer) XINE_PROTECTED;

@@ -1,5 +1,5 @@
  /*
- * Copyright (C) 2001 the xine project
+ * Copyright (C) 2001-2008 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -30,11 +30,27 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include "xine_internal.h"
 #include "deinterlace.h"
 #include "xineutils.h"
+
+
+const char *deinterlace_methods[] = {
+  "none", 
+  "bob",
+  "weave",
+  "greedy",
+  "onefield",
+  "onefield_xv",
+  "linearblend",
+  NULL
+};
 
 
 /*

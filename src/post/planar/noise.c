@@ -21,6 +21,10 @@
  * is copyright 2002 Michael Niedermayer <michaelni@gmx.at>
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "xine_internal.h"
 #include "post.h"
 #include "xineutils.h"
@@ -471,7 +475,7 @@ static post_plugin_t *noise_open_plugin(post_class_t *class_gen, int inputs,
                      xine_audio_port_t **audio_target,
                      xine_video_port_t **video_target)
 {
-    post_plugin_noise_t *this = (post_plugin_noise_t *)xine_xmalloc(sizeof(post_plugin_noise_t));
+    post_plugin_noise_t *this = calloc(1, sizeof(post_plugin_noise_t));
     post_in_t         *input;
     xine_post_in_t    *input_api;
     post_out_t        *output;

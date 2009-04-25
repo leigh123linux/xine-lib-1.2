@@ -25,7 +25,7 @@
 
 typedef struct rtsp_session_s rtsp_session_t;
 
-rtsp_session_t *rtsp_session_start(xine_stream_t *stream, char *mrl);
+rtsp_session_t *rtsp_session_start(xine_stream_t *stream, char *mrl) XINE_MALLOC;
 
 void rtsp_session_set_start_time(rtsp_session_t *this, int start_time);
 

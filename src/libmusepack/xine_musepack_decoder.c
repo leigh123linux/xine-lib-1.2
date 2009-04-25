@@ -24,6 +24,10 @@
  *   Seeking??
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -214,7 +218,7 @@ static void mpc_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     this->file_size = buf->decoder_info[0];
     
     /* Initialise the data accumulation buffer */
-    this->buf     = xine_xmalloc(INIT_BUFSIZE);
+    this->buf     = calloc(1, INIT_BUFSIZE);
     this->buf_max = INIT_BUFSIZE;
     this->read    = 0;
     this->size    = 0;
@@ -396,7 +400,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   mpc_decoder_t *this ;
 
-  this = (mpc_decoder_t *) xine_xmalloc (sizeof (mpc_decoder_t));
+  this = (mpc_decoder_t *) calloc(1, sizeof(mpc_decoder_t));
 
   /* connect the member functions */
   this->audio_decoder.decode_data         = mpc_decode_data;
@@ -441,7 +445,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   mpc_class_t *this ;
 
-  this = (mpc_class_t *) xine_xmalloc (sizeof (mpc_class_t));
+  this = (mpc_class_t *) calloc(1, sizeof(mpc_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;

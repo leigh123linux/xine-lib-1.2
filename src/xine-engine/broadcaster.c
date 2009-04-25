@@ -32,6 +32,10 @@
  *    'xine -V none -A none'
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -323,7 +327,7 @@ broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port)
    
   signal( SIGPIPE, SIG_IGN );
 
-  this = xine_xmalloc(sizeof(broadcaster_t));
+  this = calloc(1, sizeof(broadcaster_t));
   this->port = port;
   this->stream = stream;
   this->msock = msock;

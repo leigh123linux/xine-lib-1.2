@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2003 the xine project
+ * Copyright (C) 2000-2008 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -139,19 +139,14 @@
 
 #define CD_RAW_SECTOR_SIZE 2352
 
+#define STR_MAGIC "\x60\x01\x01\x80"
 #define STR_MAX_CHANNELS 32
-
-#define STR_MAGIC (0x80010160)
 
 #define CDXA_TYPE_MASK     0x0E
 #define CDXA_TYPE_DATA     0x08
 #define CDXA_TYPE_AUDIO    0x04
 #define CDXA_TYPE_VIDEO    0x02
 #define CDXA_SUBMODE_EOF   0x80 /* set if EOF */
-
-#define FOURCC_TAG BE_FOURCC
-#define RIFF_TAG FOURCC_TAG('R', 'I', 'F', 'F')
-#define CDXA_TAG FOURCC_TAG('C', 'D', 'X', 'A')
 
 /* FIXME */
 #define FRAME_DURATION 45000
@@ -188,9 +183,7 @@ static int open_str_file(demux_str_t *this) {
   unsigned char check_bytes[STR_CHECK_BYTES];
   int local_offset, sector, channel;
 
-  for (channel = 0; channel < STR_MAX_CHANNELS; channel++) {
-    this->channel_type[channel] = 0;
-  }
+  memset(this->channel_type, 0, sizeof(this->channel_type));
 
   this->input->seek(this->input, 0, SEEK_SET);
   if (this->input->read(this->input, check_bytes, STR_CHECK_BYTES) !=
@@ -200,8 +193,8 @@ static int open_str_file(demux_str_t *this) {
   }
 
   /* check for STR with a RIFF header */
-  if ((_X_BE_32(&check_bytes[0]) == RIFF_TAG) &&
-      (_X_BE_32(&check_bytes[8]) == CDXA_TAG))
+  if ( _x_is_fourcc(&check_bytes[0], "RIFF") &&
+       _x_is_fourcc(&check_bytes[8], "CDXA") )
     local_offset = 0x2C;
   else
     local_offset = 0;
@@ -218,16 +211,20 @@ static int open_str_file(demux_str_t *this) {
             check_bytes[local_offset + 0x13]);
 
     /* check for 12-byte sync marker */
-    if ((_X_BE_32(&check_bytes[local_offset + 0]) != 0x00FFFFFF) ||
-	(_X_BE_32(&check_bytes[local_offset + 4]) != 0xFFFFFFFF) ||
-	(_X_BE_32(&check_bytes[local_offset + 8]) != 0xFFFFFF00)) {
+    static const uint8_t sync_marker[12] =
+      { 0x00, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF,
+	0x00, 0xFF, 0xFF, 0X00
+      };
+    if ( memcmp(&check_bytes[local_offset],
+		sync_marker, sizeof(sync_marker)) != 0 ) {
       lprintf("sector %d sync error\n", sector);
       return 0;
     }
 
     /* the 32 bits starting at 0x10 and at 0x14 should be the same */
-    if (_X_BE_32(&check_bytes[local_offset + 0x10]) !=
-	_X_BE_32(&check_bytes[local_offset + 0x14])) {
+    if (memcmp(&check_bytes[local_offset + 0x10],
+	       &check_bytes[local_offset + 0x14], 4) != 0) {
       lprintf("sector %d control bits copy error\n", sector);
       return 0;
     }
@@ -246,7 +243,7 @@ static int open_str_file(demux_str_t *this) {
     case CDXA_TYPE_VIDEO:
       /* first time we have seen video/data in this channel? */
       if ((!(this->channel_type[channel] & CDXA_TYPE_DATA)) &&
-	  (_X_LE_32(&check_bytes[local_offset + 0x18]) == STR_MAGIC)) {
+	  (_x_is_fourcc(&check_bytes[local_offset + 0x18], STR_MAGIC))) {
 
 	/* mark this channel as having video data */
 	this->channel_type[channel] |= CDXA_TYPE_VIDEO;
@@ -347,7 +344,7 @@ static int demux_str_send_chunk(demux_plugin_t *this_gen) {
   case CDXA_TYPE_DATA:
     /* video chunk */
 
-    if (_X_LE_32(&sector[0x18]) != STR_MAGIC ||
+    if (!_x_is_fourcc(&sector[0x18], STR_MAGIC) ||
 	channel != this->default_video_channel) {
       return 0;
     }
@@ -555,7 +552,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
-  this         = xine_xmalloc (sizeof (demux_str_t));
+  this         = calloc(1, sizeof(demux_str_t));
   this->stream = stream;
   this->input  = input;
 
@@ -628,7 +625,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_str_init_plugin (xine_t *xine, void *data) {
   demux_str_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_str_class_t));
+  this = calloc(1, sizeof(demux_str_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

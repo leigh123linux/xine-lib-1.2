@@ -22,7 +22,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #ifdef _MSC_VER
@@ -170,6 +170,8 @@ ssize_t DVDReadBlocks( dvd_file_t *, int, size_t, unsigned char * );
  * offset_set = DVDFileSeek(dvd_file, seek_offset);
  */
 int32_t DVDFileSeek( dvd_file_t *, int32_t );
+
+int32_t DVDFileSeekForce( dvd_file_t *, int, int );
 
 /**
  * Reads the given number of bytes from the file.  This call can only be used

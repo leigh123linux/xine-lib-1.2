@@ -98,6 +98,6 @@ typedef struct video_overlay_event_s {
   video_overlay_object_t   object; /* The image data. */
 } video_overlay_event_t;
 
-video_overlay_manager_t *_x_video_overlay_new_manager(xine_t *) XINE_PROTECTED;
+video_overlay_manager_t *_x_video_overlay_new_manager(xine_t *) XINE_MALLOC XINE_PROTECTED;
 
 #endif

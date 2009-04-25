@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -19,10 +19,13 @@
 ** Any non-GPL usage of this software or parts of this software is strictly
 ** forbidden.
 **
-** Commercial non-GPL licensing of this software is possible.
-** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+** The "appropriate copyright message" mentioned in section 2c of the GPLv2
+** must read: "Code from FAAD2 is copyright (c) Nero AG, www.nero.com"
 **
-** $Id: syntax.h,v 1.10 2005/10/29 23:57:07 tmmm Exp $
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
+**
+** $Id: syntax.h,v 1.58 2007/11/01 12:33:40 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -114,9 +117,10 @@ void raw_data_block(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
                     bitfile *ld, program_config *pce, drc_info *drc);
 uint8_t reordered_spectral_data(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *ld,
                                 int16_t *spectral_data);
-void aac_scalable_main_element(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
-                               bitfile *ld, program_config *pce, drc_info *drc);
-
+#ifdef DRM
+void DRM_aac_scalable_main_element(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
+                                   bitfile *ld, program_config *pce, drc_info *drc);
+#endif
 
 #ifdef __cplusplus
 }

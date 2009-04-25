@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 the xine project
+ * Copyright (C) 2005-2008 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -32,6 +32,9 @@
 #include <ctype.h>
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
+#endif
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
 #endif
 
 #define LOG_MODULE "demux_dts"
@@ -140,29 +143,69 @@ static int open_dts_file(demux_dts_t *this) {
     }
   }
 
+  /* DTS bitstream encoding version
+   * -1 - not detected
+   *  0 - 16 bits and big endian
+   *  1 - 16 bits and low endian (detection not implemented)
+   *  2 - 14 bits and big endian (detection not implemented)
+   *  3 - 14 bits and low endian
+   */
+  int dts_version = -1;
+
   /* Look for a valid DTS syncword */
   for (i=offset; i<peak_size-1; i++) {
+    /* 16 bits and big endian bitstream */
+    if (syncword == 0x7ffe8001) {
+	dts_version = 0;
+	break;
+    }
     /* 14 bits and little endian bitstream */
-    if ((syncword == 0xff1f00e8) && 
-        ((peak[i] & 0xf0) == 0xf0) && (peak[i+1] == 0x07)) {
-      this->data_start = i-4;
-      lprintf("found DTS syncword at offset %d\n", i-4);
-      break;
+    else if ((syncword == 0xff1f00e8) && 
+             ((peak[i] & 0xf0) == 0xf0) && (peak[i+1] == 0x07)) {
+	dts_version = 3;
+	break;
     }
 
     syncword = (syncword << 8) | peak[i];
   }
 
+  if (dts_version == -1) {
+    xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
+             LOG_MODULE ": unsupported DTS stream type, or not a DTS stream\n");
+    return 0;
+  }
+
+  this->data_start = i-4;
+  lprintf("found DTS syncword at offset %d\n", i-4);
+
   if (i < peak_size-9) {
     unsigned int nblks, fsize, sfreq;
+    switch (dts_version)
+    {
+    case 0: /* BE16 */
+      nblks = ((peak[this->data_start+4] & 0x01) << 6) |
+               ((peak[this->data_start+5] & 0xfc) >> 2);
+      fsize = (((peak[this->data_start+5] & 0x03) << 12) |(peak[this->data_start+6] << 4) |
+               ((peak[this->data_start+7] & 0xf0) >> 4)) + 1;
+      sfreq = (peak[this->data_start+8] & 0x3c) >> 2;
+      break;
 
-    /* 14 bits and little endian bitstream */
-    nblks = ((peak[this->data_start+4] & 0x07) << 4) |
-             ((peak[this->data_start+7] & 0x3c) >> 2);
-    fsize = (((peak[this->data_start+7] & 0x03) << 12) |
-              (peak[this->data_start+6] << 4) |
-             ((peak[this->data_start+9] & 0x3c) >> 2)) + 1;
-    sfreq = peak[this->data_start+8] & 0x0f;
+    case 3: /* LE14 */
+      nblks = ((peak[this->data_start+4] & 0x07) << 4) |
+               ((peak[this->data_start+7] & 0x3c) >> 2);
+      fsize = (((peak[this->data_start+7] & 0x03) << 12) |
+               (peak[this->data_start+6] << 4) |
+              ((peak[this->data_start+9] & 0x3c) >> 2)) + 1;
+      sfreq = peak[this->data_start+8] & 0x0f;
+      break;
+
+    default:
+      xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
+               LOG_MODULE ": unsupported DTS bitstream encoding %d\n",
+               dts_version);
+      return 0;
+
+    }
 
     if ((sfreq > sizeof(dts_sample_rates)/sizeof(int)) ||
         (dts_sample_rates[sfreq] == 0))
@@ -170,7 +213,19 @@ static int open_dts_file(demux_dts_t *this) {
 
     /* Big assumption - this is CBR data */
     this->samples_per_frame = (nblks + 1) * 32;
-    this->frame_size = fsize * 8 / 14 * 2;
+
+    switch (dts_version)
+    {
+    case 0: /* BE16 */
+    case 1: /* LE16 */
+    	this->frame_size = fsize * 8 / 16 * 2;
+    	break;
+    case 2: /* BE14 */
+    case 3: /* LE14 */
+	this->frame_size = fsize * 8 / 14 * 2;
+	break;
+    }
+
     this->sample_rate = dts_sample_rates[sfreq];
 
     lprintf("samples per frame: %d\n", this->samples_per_frame);
@@ -223,7 +278,7 @@ static int demux_dts_send_chunk (demux_plugin_t *this_gen) {
                                   this->frame_size);
   }
 
-  if (buf->size == 0) {
+  if (buf->size <= 0) {
     buf->free_buffer(buf);
     this->status = DEMUX_FINISHED;
     return this->status;
@@ -346,7 +401,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_dts_t   *this;
 
-  this         = xine_xmalloc (sizeof (demux_dts_t));
+  this         = calloc(1, sizeof(demux_dts_t));
   this->stream = stream;
   this->input  = input;
 
@@ -418,7 +473,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_dts_init_plugin (xine_t *xine, void *data) {
   demux_dts_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_dts_class_t));
+  this = calloc(1, sizeof(demux_dts_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

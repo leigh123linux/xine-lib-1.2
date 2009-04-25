@@ -18,6 +18,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -199,7 +203,7 @@ static void video_overlay_reset (video_overlay_t *this) {
   pthread_mutex_lock (&this->events_mutex);
   for (i=0; i < MAX_EVENTS; i++) {
     if (this->events[i].event == NULL) {
-      this->events[i].event = xine_xmalloc (sizeof(video_overlay_event_t));
+      this->events[i].event = calloc(1, sizeof(video_overlay_event_t));
 #ifdef LOG_DEBUG
       printf ("video_overlay: MALLOC2: this->events[%d].event %p, len=%d\n",
 	      i,
@@ -293,7 +297,7 @@ static int32_t video_overlay_add_event(video_overlay_manager_t *this_gen,  void 
 	  event->object.overlay->hili_trans[i] = OVL_MAX_OPACITY;
       }
 
-      this->events[new_event].event->object.overlay = xine_xmalloc (sizeof(vo_overlay_t));
+      this->events[new_event].event->object.overlay = calloc(1, sizeof(vo_overlay_t));
       xine_fast_memcpy(this->events[new_event].event->object.overlay, 
            event->object.overlay, sizeof(vo_overlay_t));
 
@@ -587,7 +591,7 @@ video_overlay_manager_t *_x_video_overlay_new_manager (xine_t *xine) {
 
   video_overlay_t *this;
 
-  this = (video_overlay_t *) xine_xmalloc (sizeof (video_overlay_t));
+  this = (video_overlay_t *) calloc(1, sizeof(video_overlay_t));
 
   this->xine                              = xine;
   this->video_overlay.init                = video_overlay_init;

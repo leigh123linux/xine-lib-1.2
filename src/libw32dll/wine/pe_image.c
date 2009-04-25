@@ -900,7 +900,7 @@ void PE_UnloadLibrary(WINE_MODREF *wm)
  */
 static void extend_stack_for_dll_alloca(void)
 {
-#ifndef __FreeBSD__
+#if !defined(__FreeBSD__) && !defined(__OpenBSD__)
     void* mem=alloca(0x20000);
     *(int*)mem=0x1234;
 #endif

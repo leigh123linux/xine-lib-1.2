@@ -83,10 +83,9 @@ static off_t rtsp_plugin_read (input_plugin_t *this_gen,
 
   lprintf ("rtsp_plugin_read: %"PRId64" bytes ...\n", len);
 
-  nbc_check_buffers (this->nbc);
-
   n = rtsp_session_read (this->rtsp, buf, len);
-  this->curpos += n;
+  if (n > 0)
+    this->curpos += n;
 
   return n;
 }
@@ -98,6 +97,13 @@ static buf_element_t *rtsp_plugin_read_block (input_plugin_t *this_gen,
   int                   total_bytes;
 
   lprintf ("rtsp_plugin_read_block: %"PRId64" bytes...\n", todo);
+
+  if (todo > buf->max_size)
+    todo = buf->max_size;
+  if (todo < 0) {
+    buf->free_buffer (buf);
+    return NULL;
+  }
 
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
@@ -125,10 +131,16 @@ static off_t rtsp_plugin_seek (input_plugin_t *this_gen, off_t offset, int origi
   if ((origin == SEEK_CUR) && (offset >= 0)) {
 
     for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-      this->curpos += rtsp_plugin_read (this_gen, this->scratch, BUFSIZE);
+      off_t n = rtsp_plugin_read (this_gen, this->scratch, BUFSIZE);
+      if (n <= 0)
+	return this->curpos;
+      this->curpos += n;
     }
 
-    this->curpos += rtsp_plugin_read (this_gen, this->scratch, offset);
+    off_t n = rtsp_plugin_read (this_gen, this->scratch, offset);
+    if (n <= 0)
+      return this->curpos;
+    this->curpos += n;
   }
 
   return this->curpos;
@@ -246,7 +258,7 @@ static input_plugin_t *rtsp_class_get_instance (input_class_t *cls_gen, xine_str
   if (strncasecmp (mrl, "rtsp://", 6))
     return NULL;
 
-  this = (rtsp_input_plugin_t *) xine_xmalloc (sizeof (rtsp_input_plugin_t));
+  this = calloc(1, sizeof (rtsp_input_plugin_t));
 
   this->stream  = stream;
   this->rtsp    = NULL;
@@ -254,8 +266,7 @@ static input_plugin_t *rtsp_class_get_instance (input_class_t *cls_gen, xine_str
   /* since we handle only real streams yet, we can savely add
    * an .rm extention to force handling by demux_real.
    */
-  this->public_mrl = xine_xmalloc (sizeof (char)*(strlen(this->mrl)+10));
-  sprintf(this->public_mrl, "%s.rm", this->mrl);
+  asprintf(&this->public_mrl, "%s.rm", this->mrl);
   
   this->nbc     = nbc_init (stream);
 
@@ -298,7 +309,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   rtsp_input_class_t  *this;
 
-  this = (rtsp_input_class_t *) xine_xmalloc (sizeof (rtsp_input_class_t));
+  this = calloc(1, sizeof (rtsp_input_class_t));
 
   this->xine   = xine;
 

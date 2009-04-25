@@ -62,6 +62,7 @@
 #define MATROSKA_ID_CL_BLOCKGROUP                 0xA0
 #define MATROSKA_ID_CL_BLOCK                      0xA1
 #define MATROSKA_ID_CL_BLOCKVIRTUAL               0xA2
+#define MATROSKA_ID_CL_SIMPLEBLOCK                0xA3
 #define MATROSKA_ID_CL_BLOCKADDITIONS             0x75A1
 #define MATROSKA_ID_CL_BLOCKMORE                  0xA6
 #define MATROSKA_ID_CL_BLOCKADDID                 0xEE
@@ -235,7 +236,7 @@ struct matroska_track_s {
   void                   (*handle_content) (demux_plugin_t *this_gen,
                                             matroska_track_t *track,
 		                            int decoder_flags,
-                                            uint8_t *data, int data_len,
+                                            uint8_t *data, size_t data_len,
                                             int64_t data_pts, int data_duration,
                                             int input_normpos, int input_time);
 };

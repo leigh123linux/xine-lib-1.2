@@ -236,7 +236,25 @@ static const lang_locale_t lang_locales[] = {
   { NULL,       NULL,          NULL,          NULL       }
 };
 
-
+/**
+ * @brief Allocate and clean memory size_t 'size', then return the
+ *        pointer to the allocated memory.
+ * @param size Size of the memory area to allocate.
+ *
+ * @return A pointer to the allocated memory area, or NULL in case of
+ *         error.
+ *
+ * The behaviour of this function differs from standard malloc() as
+ * xine_xmalloc(0) will not return a NULL pointer, but rather a
+ * pointer to a memory area of size 1 byte.
+ *
+ * The NULL value is only ever returned in case of an error in
+ * malloc(), and is reported to stderr stream.
+ *
+ * @deprecated This function has been deprecated, as the behaviour of
+ *             allocating a 1 byte memory area on zero size is almost
+ *             never desired, and the function is thus mostly misused.
+ */
 void *xine_xmalloc(size_t size) {
   void *ptr;
 
@@ -257,7 +275,7 @@ void *xine_xmalloc_aligned(size_t alignment, size_t size, void **base) {
 
   char *ptr;
   
-  *base = ptr = xine_xmalloc (size+alignment);
+  *base = ptr = calloc(1, size+alignment);
   
   while ((size_t) ptr % alignment)
     ptr++;
@@ -324,21 +342,17 @@ const char *xine_get_homedir(void) {
   char *s;
   int len;
 
-  if (!homedir[0]) {
-    len = xine_strcpy_command(GetCommandLine(), homedir, sizeof(homedir));
-    s = strdup(homedir);
-    GetFullPathName(s, sizeof(homedir), homedir, NULL);
-    free(s);
-    if ((s = strrchr(homedir, '\\'))) *s = '\0';
-  }
+  len = xine_strcpy_command(GetCommandLine(), homedir, sizeof(homedir));
+  s = strdup(homedir);
+  GetFullPathName(s, sizeof(homedir), homedir, NULL);
+  free(s);
+  if ((s = strrchr(homedir, '\\')))
+    *s = '\0';
 
   return homedir;
 #else
   struct passwd pwd, *pw = NULL;
   static char homedir[BUFSIZ] = {0,};
-
-  if(homedir[0])
-    return homedir;
 
 #ifdef HAVE_GETPWUID_R
   if(getpwuid_r(getuid(), &pwd, homedir, sizeof(homedir), &pw) != 0 || pw == NULL) {
@@ -373,6 +387,17 @@ static void xine_get_rootdir(char *rootdir, size_t maxlen) {
   strncpy(rootdir, xine_get_homedir(), maxlen - 1);
   rootdir[maxlen - 1] = '\0';
   if ((s = strrchr(rootdir, XINE_DIRECTORY_SEPARATOR_CHAR))) *s = '\0';
+}
+
+const char *xine_get_pluginroot(void) {
+  static char pluginroot[1024] = {0, };
+
+  if (!pluginroot[0]) {
+    xine_get_rootdir(pluginroot, sizeof(pluginroot) - strlen(XINE_REL_PLUGINROOT) - 1);
+    strcat(pluginroot, XINE_DIRECTORY_SEPARATOR_STRING XINE_REL_PLUGINROOT);
+  }
+
+  return pluginroot;
 }
 
 const char *xine_get_plugindir(void) {
@@ -431,23 +456,22 @@ char *xine_chomp(char *str) {
  * a thread-safe usecond sleep
  */
 void xine_usec_sleep(unsigned usec) {
-#if 0
-#if HAVE_NANOSLEEP
+#ifdef WIN32
+  /* select does not work on win32 */
+  Sleep(usec / 1000);
+#else
+#  if 0
+#    if HAVE_NANOSLEEP
   /* nanosleep is prefered on solaris, because it's mt-safe */
   struct timespec ts, remaining;
-
   ts.tv_sec =   usec / 1000000;
   ts.tv_nsec = (usec % 1000000) * 1000;
   while (nanosleep (&ts, &remaining) == -1 && errno == EINTR)
     ts = remaining;
-#else
-#  if WIN32
-  Sleep(usec / 1000);
-#  else
+#    else
   usleep(usec);
-#  endif
-#endif
-#else
+#    endif
+#  else
   if (usec < 10000) {
       usec = 10000;
   }
@@ -455,6 +479,7 @@ void xine_usec_sleep(unsigned usec) {
   tm.tv_sec  = usec / 1000000;
   tm.tv_usec = usec % 1000000;
   select(0, 0, 0, 0, &tm);
+#  endif
 #endif
 }
 
@@ -497,7 +522,7 @@ void xine_hexdump (const char *buf, int length) {
 
 static const lang_locale_t *_get_first_lang_locale(const char *lcal) {
   const lang_locale_t *llocale;
-  int lang_len;
+  size_t lang_len;
   char *mod;
 
   if(lcal && *lcal) {
@@ -663,4 +688,12 @@ int xine_monotonic_clock(struct timeval *tv, struct timezone *tz)
   return gettimeofday(tv, tz);
 
 #endif
+}
+
+char *xine_strcat_realloc (char **dest, char *append)
+{
+  char *newstr = realloc (*dest, (*dest ? strlen (*dest) : 0) + strlen (append) + 1);
+  if (newstr)
+    strcat (*dest = newstr, append);
+  return newstr;
 }

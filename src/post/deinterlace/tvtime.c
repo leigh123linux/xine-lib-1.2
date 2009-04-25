@@ -38,14 +38,6 @@
 #include "tvtime.h"
 
 /**
- * This is how many frames to wait until deciding if the pulldown phase
- * has changed or if we've really found a pulldown sequence.  This is
- * currently set to about 1 second, that is, we won't go into film mode
- * until we've seen a pulldown sequence successfully for 1 second.
- */
-#define PULLDOWN_ERROR_WAIT     60
-
-/**
  * This is how many predictions have to be incorrect before we fall back to
  * video mode.  Right now, if we mess up, we jump to video mode immediately.
  */
@@ -192,13 +184,13 @@ int tvtime_build_deinterlaced_frame( tvtime_t *tvtime, uint8_t *output,
             if( !tvtime->pdoffset ) {
                 /* No pulldown offset applies, drop out of pulldown immediately. */
                 tvtime->pdlastbusted = 0;
-                tvtime->pderror = PULLDOWN_ERROR_WAIT;
+                tvtime->pderror = tvtime->pulldown_error_wait;
             } else if( tvtime->pdoffset != predicted ) {
                 if( tvtime->pdlastbusted ) {
                     tvtime->pdlastbusted--;
                     tvtime->pdoffset = predicted;
                 } else {
-                    tvtime->pderror = PULLDOWN_ERROR_WAIT;
+                    tvtime->pderror = tvtime->pulldown_error_wait;
                 }
             } else {
                 if( tvtime->pderror ) {
@@ -437,7 +429,7 @@ void tvtime_reset_context( tvtime_t *tvtime )
   tvtime->last_botdiff = 0;
 
   tvtime->pdoffset = PULLDOWN_SEQ_AA;
-  tvtime->pderror = PULLDOWN_ERROR_WAIT;
+  tvtime->pderror = tvtime->pulldown_error_wait;
   tvtime->pdlastbusted = 0;
   tvtime->filmmode = 0;
 }

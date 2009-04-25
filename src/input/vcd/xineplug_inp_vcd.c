@@ -20,7 +20,7 @@
 /* 
   These are plugin routines called by the xine engine. See
   Chapter 4. Extending xine's input
-  http://xinehq.de/index.php/hackersguide/index.php?resource=5.3&action=default#INPUT
+  http://www.xine-project.org/hackersguide#INPUT
   and the comments in input_plugin.h
 
   This is what is referred to below a "the xine plugin spec"
@@ -272,11 +272,9 @@ vcd_add_mrl_slot(vcd_input_class_t *this, const char *mrl, off_t size,
   this->mrls[*i]->type   = mrl_vcd;
   this->mrls[*i]->size   = size * M2F2_SECTOR_SIZE;
   
-  this->mrls[*i]->mrl = (char *) malloc(strlen(mrl) + 1);
+  this->mrls[*i]->mrl = strdup(mrl);
   if (NULL==this->mrls[*i]->mrl) {
     LOG_ERR("Can't malloc %zu bytes for MRL name %s", sizeof(xine_mrl_t), mrl);
-  } else {
-    sprintf(this->mrls[*i]->mrl, "%s", mrl);
   }
   (*i)++;
 }
@@ -968,7 +966,7 @@ vcd_class_eject_media (input_class_t *this_gen)
  * From spec:
  * return current MRL
  */
-static char * 
+static const char * 
 vcd_plugin_get_mrl (input_plugin_t *this_gen) 
 {
   vcd_input_plugin_t *t         = (vcd_input_plugin_t *) this_gen;
@@ -989,7 +987,7 @@ vcd_plugin_get_mrl (input_plugin_t *this_gen)
     /* Bad type. */
     LOG_ERR("%s %d", _("Invalid current entry type"), 
                   vcdplayer->play_item.type);
-    return strdup("");
+    return "";
   } else {
     n += offset;
     if (n < t->class->num_mrls) {
@@ -997,7 +995,7 @@ vcd_plugin_get_mrl (input_plugin_t *this_gen)
                 t->class->mrls[n]->mrl);
       return t->class->mrls[n]->mrl;
     } else {
-      return strdup("");
+      return "";
     }
   }
 }
@@ -1007,7 +1005,7 @@ vcd_plugin_get_mrl (input_plugin_t *this_gen)
   
   return human readable (verbose = 1 line) description for this plugin
 */
-static char *
+static const char *
 vcd_class_get_description (input_class_t *this_gen) 
 {
   dbg_print((INPUT_DBG_CALL|INPUT_DBG_EXT), "called\n");
@@ -1767,7 +1765,7 @@ vcd_init (xine_t *xine, void *data)
 
   dbg_print(INPUT_DBG_CALL, "Called\n");
 
-  class = (vcd_input_class_t *) xine_xmalloc (sizeof (vcd_input_class_t));
+  class = calloc(1, sizeof (vcd_input_class_t));
 
   class->xine   = xine;
   class->config = config = xine->config;

@@ -583,7 +583,7 @@ open_plugin (demux_class_t *class_gen,
         }
         break;
         case METHOD_BY_EXTENSION: {
-            char *ending, *mrl;
+            const char *ending, *mrl;
     
             mrl = input->get_mrl (input);
     
@@ -607,7 +607,7 @@ open_plugin (demux_class_t *class_gen,
     * if we reach this point, the input has been accepted.
     */
 
-    this         = xine_xmalloc (sizeof (demux_flac_t));
+    this         = calloc(1, sizeof (demux_flac_t));
     this->stream = stream;
     this->input  = input;
 
@@ -715,24 +715,25 @@ open_plugin (demux_class_t *class_gen,
 
 /* FLAC Demuxer class */
 
-static char *
+static const char *
 get_description (demux_class_t *this_gen) {
     return "FLAC demux plugin";
 }
  
-static char *
+static const char *
 get_identifier (demux_class_t *this_gen) {
     return "FLAC";
 }
 
-static char *
+static const char *
 get_extensions (demux_class_t *this_gen) {
     return "flac";
 }
 
-static char *
+static const char *
 get_mimetypes (demux_class_t *this_gen) {
-    return "application/x-flac: flac: FLAC Audio;";
+    return "audio/x-flac: flac: FLAC Audio;"
+	"audio/flac: flac: FLAC Audio;";
 }
 
 static void 
@@ -751,7 +752,7 @@ demux_flac_init_class (xine_t *xine, void *data) {
   
     lprintf("demux_flac_init_class\n");
 
-    this         = xine_xmalloc (sizeof (demux_flac_class_t));
+    this         = calloc(1, sizeof (demux_flac_class_t));
     this->config = xine->config;
     this->xine   = xine;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2004 the xine project
+ * Copyright (C) 2000-2004, 2008 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -75,6 +75,7 @@
 
 #include "xineutils.h"
 #include "vo_scale.h"
+#include "xv_common.h"
 
 /* #define LOG1 */
 /* #define DLOG */
@@ -225,8 +226,6 @@ typedef struct {
   Display             *display;
   config_values_t     *config;
   XvPortID             xv_port;
-  XvAdaptorInfo       *adaptor_info;
-  unsigned int         adaptor_num;
 
   int                  surface_type_id;
   unsigned int         max_surface_width;
@@ -556,7 +555,7 @@ static vo_frame_t *xvmc_alloc_frame (vo_driver_t *this_gen) {
 
   lprintf ("xvmc_alloc_frame\n");
 
-  frame = (xvmc_frame_t *) xine_xmalloc (sizeof (xvmc_frame_t));
+  frame = calloc(1, sizeof (xvmc_frame_t));
 
   if (!frame)
     return NULL;
@@ -595,8 +594,8 @@ static cxid_t *xvmc_set_context (xvmc_driver_t *this,
   
   /* initialize block & macro block pointers first time */
   if(macroblocks->blocks == NULL ||  macroblocks->macro_blocks == NULL) {
-    macroblocks->blocks       = xine_xmalloc(sizeof(XvMCBlockArray));
-    macroblocks->macro_blocks = xine_xmalloc(sizeof(XvMCMacroBlockArray));
+    macroblocks->blocks       = calloc(1, sizeof(XvMCBlockArray));
+    macroblocks->macro_blocks = calloc(1, sizeof(XvMCMacroBlockArray));
     
     lprintf("macroblocks->blocks %lx ->macro_blocks %lx\n",
 	    macroblocks->blocks,macroblocks->macro_blocks);
@@ -700,6 +699,7 @@ static cxid_t *xvmc_set_context (xvmc_driver_t *this,
   return NULL;
 }
 
+#if 0
 static XvImage *create_ximage (xvmc_driver_t *this, XShmSegmentInfo *shminfo,
 			       int width, int height, int format) {
   unsigned int  xvmc_format;
@@ -755,6 +755,7 @@ static void dispose_ximage (xvmc_driver_t *this,
   lprintf ("dispose_ximage\n");
   XFree(myimage);
 }
+#endif
 
 static void xvmc_update_frame_format (vo_driver_t *this_gen,
 				      vo_frame_t *frame_gen,
@@ -1252,13 +1253,13 @@ static void xvmc_dispose (vo_driver_t *this_gen) {
 
 /* called xlocked */
 static void xvmc_check_capability (xvmc_driver_t *this,
-				   int property, XvAttribute attr,
-				   int base_id, char *str_prop,
-				   char *config_name,
-				   char *config_desc,
-				   char *config_help) {
+				   int property, XvAttribute attr, int base_id,
+				   const char *config_name,
+				   const char *config_desc,
+				   const char *config_help) {
   int          int_default;
   cfg_entry_t *entry;
+  const char  *str_prop = attr.name;
 
   /*
    * some Xv drivers (Gatos ATI) report some ~0 as max values, this is confusing.
@@ -1281,13 +1282,13 @@ static void xvmc_check_capability (xvmc_driver_t *this,
     if ((attr.min_value == 0) && (attr.max_value == 1)) {
       this->config->register_bool (this->config, config_name, int_default,
 				   config_desc,
-				   NULL, 20, xvmc_property_callback, &this->props[property]);
+				   config_help, 20, xvmc_property_callback, &this->props[property]);
       
     } else {
       this->config->register_range (this->config, config_name, int_default,
 				    this->props[property].min, this->props[property].max,
 				    config_desc,
-				    NULL, 20, xvmc_property_callback, &this->props[property]);
+				    config_help, 20, xvmc_property_callback, &this->props[property]);
     }
 
     entry = this->config->lookup_entry (this->config, config_name);
@@ -1333,7 +1334,6 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   xvmc_class_t         *class   = (xvmc_class_t *) class_gen;
   config_values_t      *config  = class->config;
   xvmc_driver_t        *this    = NULL;
-  Display              *display = NULL;
   unsigned int          i, formats;
   XvPortID              xv_port = class->xv_port;
   XvAttribute          *attr;
@@ -1341,14 +1341,13 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   int                   nattr;
   x11_visual_t         *visual  = (x11_visual_t *) visual_gen;
   XColor                dummy;
+  XvAdaptorInfo        *adaptor_info;
+  unsigned int          adaptor_num;
   /* XvImage              *myimage; */
   
   lprintf ("open_plugin\n");
   
-  display = visual->display;
-  
-  /* TODO ???  */
-  this = (xvmc_driver_t *) xine_xmalloc (sizeof (xvmc_driver_t));
+  this = calloc(1, sizeof (xvmc_driver_t));
   
   if (!this)
     return NULL;
@@ -1430,56 +1429,47 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
     this->capabilities |= VO_CAP_XVMC_IDCT;
   
   XLockDisplay(this->display);
-  attr = XvQueryPortAttributes(display, xv_port, &nattr);
+  attr = XvQueryPortAttributes(this->display, xv_port, &nattr);
   if(attr && nattr) {
     int k;
 
     for(k = 0; k < nattr; k++) {
       if((attr[k].flags & XvSettable) && (attr[k].flags & XvGettable)) {
-	if(!strcmp(attr[k].name, "XV_HUE")) {
-	  xvmc_check_capability (this, VO_PROP_HUE, attr[k],
-				 class->adaptor_info[class->adaptor_num].base_id, "XV_HUE",
-				 NULL, NULL, NULL);
-
-	} else if(!strcmp(attr[k].name, "XV_SATURATION")) {
+	const char *const name = attr[k].name;
+	if(!strcmp(name, "XV_HUE")) {
+	  if (!strncmp(adaptor_info[adaptor_num].name, "NV", 2)) {
+            xprintf (this->xine, XINE_VERBOSITY_NONE, LOG_MODULE ": ignoring broken XV_HUE settings on NVidia cards\n");
+	  } else {
+	    xvmc_check_capability (this, VO_PROP_HUE, attr[k],
+				   adaptor_info[adaptor_num].base_id,
+				   NULL, NULL, NULL);
+	  }
+	} else if(!strcmp(name, "XV_SATURATION")) {
 	  xvmc_check_capability (this, VO_PROP_SATURATION, attr[k],
-				 class->adaptor_info[class->adaptor_num].base_id, "XV_SATURATION",
+				 adaptor_info[adaptor_num].base_id,
 				 NULL, NULL, NULL);
-
 	} else if(!strcmp(attr[k].name, "XV_BRIGHTNESS")) {
 	  xvmc_check_capability (this, VO_PROP_BRIGHTNESS, attr[k],
-				 class->adaptor_info[class->adaptor_num].base_id, "XV_BRIGHTNESS",
+				 adaptor_info[adaptor_num].base_id,
 				 NULL, NULL, NULL);
-
-	} else if(!strcmp(attr[k].name, "XV_CONTRAST")) {
+	} else if(!strcmp(name, "XV_CONTRAST")) {
 	  xvmc_check_capability (this, VO_PROP_CONTRAST, attr[k],
-				 class->adaptor_info[class->adaptor_num].base_id, "XV_CONTRAST",
+				 adaptor_info[adaptor_num].base_id,
 				 NULL, NULL, NULL);
-
-	} else if(!strcmp(attr[k].name, "XV_COLORKEY")) {
+	} else if(!strcmp(name, "XV_COLORKEY")) {
 	  xvmc_check_capability (this, VO_PROP_COLORKEY, attr[k],
-				 class->adaptor_info[class->adaptor_num].base_id, "XV_COLORKEY",
+				 adaptor_info[adaptor_num].base_id,
 				 "video.device.xv_colorkey",
-				 _("video overlay colour key"),
-			         _("The colour key is used to tell the graphics card where to "
-				   "overlay the video image. Try different values, if you experience "
-				   "windows becoming transparent."));
-
-	} else if(!strcmp(attr[k].name, "XV_AUTOPAINT_COLORKEY")) {
+				 VIDEO_DEVICE_XV_COLORKEY_HELP);
+	} else if(!strcmp(name, "XV_AUTOPAINT_COLORKEY")) {
 	  xvmc_check_capability (this, VO_PROP_AUTOPAINT_COLORKEY, attr[k],
-				 class->adaptor_info[class->adaptor_num].base_id, "XV_AUTOPAINT_COLORKEY",
+				 adaptor_info[adaptor_num].base_id,
 				 "video.device.xv_autopaint_colorkey",
-				 _("autopaint colour key"),
-				 _("Make Xv autopaint its colour key."));
-
-	} else if(!strcmp(attr[k].name, "XV_DOUBLE_BUFFER")) {
-	  int xvmc_double_buffer;
-	  xvmc_double_buffer = config->register_bool (config, "video.device.xv_double_buffer", 1,
-	    _("enable double buffering"),
-	    _("Double buffering will synchronize the update of the video image to the "
-	      "repainting of the entire screen (\"vertical retrace\"). This eliminates "
-	      "flickering and tearing artifacts, but will use more graphics memory."),
-	    20, xvmc_update_XV_DOUBLE_BUFFER, this);
+				 VIDEO_DEVICE_XV_AUTOPAINT_COLORKEY_HELP);
+	} else if(!strcmp(name, "XV_DOUBLE_BUFFER")) {
+	  int xvmc_double_buffer = config->register_bool (config, "video.device.xv_double_buffer", 1,
+				   VIDEO_DEVICE_XV_DOUBLE_BUFFER_HELP,
+				   20, xvmc_update_XV_DOUBLE_BUFFER, this);
 	  config->update_num(config,"video.device.xv_double_buffer",xvmc_double_buffer);
 	}
       }
@@ -1494,7 +1484,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   /*
    * check supported image formats
    */
-  fo = XvListImageFormats(display, this->xv_port, (int*)&formats);
+  fo = XvListImageFormats(this->display, this->xv_port, (int*)&formats);
   XUnlockDisplay(this->display);
 
   this->xvmc_format_yv12 = 0;
@@ -1613,10 +1603,6 @@ static char* get_description (video_driver_class_t *this_gen) {
 static void dispose_class (video_driver_class_t *this_gen) {
   xvmc_class_t        *this = (xvmc_class_t *) this_gen;
 
-  XLockDisplay(this->display);
-  XvFreeAdaptorInfo (this->adaptor_info);
-  XUnlockDisplay(this->display);
-  
   free (this);
 }
 
@@ -1789,8 +1775,6 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   this->display                      = display;
   this->config                       = xine->config;
   this->xv_port                      = xv_port;
-  this->adaptor_info                 = adaptor_info;
-  this->adaptor_num                  = adaptor_num;
   this->surface_type_id              = surface_type;
   this->max_surface_width            = max_width;
   this->max_surface_height           = max_height;

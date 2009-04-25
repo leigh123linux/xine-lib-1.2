@@ -21,6 +21,10 @@
  * by Matthew Grooms <elon@altavista.com>
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 typedef unsigned char boolean;
 
 #include <windows.h>
@@ -55,21 +59,33 @@ typedef unsigned char boolean;
  * the linking stage.
  *****************************************************************************/
 #if 1
-static const GUID IID_IDirectDraw = {
+static const GUID xine_IID_IDirectDraw = {
 	0x6C14DB80,0xA733,0x11CE,{0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60}
 };
+#ifdef IID_IDirectDraw
+#  undef IID_IDirectDraw
+#endif
+#define IID_IDirectDraw xine_IID_IDirectDraw
 #endif
 
 #if 0
 static const GUID IID_IDirectDraw2 = {
 	0xB3A6F3E0,0x2B43,0x11CF,{0xA2,0xDE,0x00,0xAA,0x00,0xB9,0x33,0x56}
 };
+#ifdef IID_IDirectDraw2
+#  undef IID_IDirectDraw2
+#endif
+#define IID_IDirectDraw2 xine_IID_IDirectDraw2
 #endif
 
 #if 0
 static const GUID IID_IDirectDraw4 = {
 	0x9C59509A,0x39BD,0x11D1,{0x8C,0x4A,0x00,0xC0,0x4F,0xD9,0x30,0xC5}
 };
+#ifdef IID_IDirectDraw4
+#  undef IID_IDirectDraw4
+#endif
+#define IID_IDirectDraw4 xine_IID_IDirectDraw4
 #endif
 
 /* -----------------------------------------
@@ -117,7 +133,8 @@ typedef struct {
   yuv2rgb_t               *yuv2rgb;         /* used for format conversion */
   int			   mode;	    /* rgb mode */
   int		           bytespp;	    /* rgb bits per pixel */
-
+  DDPIXELFORMAT primary_pixel_format;
+  DDSURFACEDESC	ddsd; /* set by Lock(), used during display_frame */
   alphablend_t             alphablend_extra_data;
 } win32_driver_t;
 
@@ -367,8 +384,9 @@ static boolean CreateSecondary( win32_driver_t * win32_driver, int width, int he
   lprintf("CreateSecondary() - Falling back to back buffer same as primary\n");
   lprintf("CreateSecondary() - act_format = (NATIVE) %d\n", IMGFMT_NATIVE);
 
-  ddsd.dwFlags        = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+  ddsd.dwFlags        = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
   ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY;
+  ddsd.ddpfPixelFormat = win32_driver->primary_pixel_format;
   win32_driver->act_format = IMGFMT_NATIVE;
 
   if( IDirectDraw_CreateSurface( win32_driver->ddobj, &ddsd, &win32_driver->secondary, 0 ) == DD_OK )
@@ -429,6 +447,10 @@ static boolean CheckPixelFormat( win32_driver_t * win32_driver )
       Error( 0, "IDirectDrawSurface_GetPixelFormat ( CheckPixelFormat ) : error 0x%lx", result );
       return 0;
     }
+	
+  /* store pixel format for CreateSecondary */
+
+  win32_driver->primary_pixel_format = ddpf;
 
   /* TODO : support paletized video modes */
 
@@ -478,9 +500,11 @@ static boolean CheckPixelFormat( win32_driver_t * win32_driver )
 	win32_driver->mode = MODE_15_BGR;
     }
 
+	lprintf("win32 mode: %u\n", win32_driver->mode);
   return TRUE;
 }
 
+#if 0
 /* Create a Direct draw surface from
  * a bitmap resource..
  *
@@ -546,6 +570,7 @@ static LPDIRECTDRAWSURFACE CreateBMP( win32_driver_t * win32_driver, int resourc
 
   return bmp_surf;
 }
+#endif
 
 /* Merge overlay with the current primary 
  * surface. This funtion is only used when
@@ -755,23 +780,22 @@ static boolean DisplayFrame( win32_driver_t * win32_driver )
 
 /* Lock our back buffer to update its contents. */
 
-static void * Lock( void * surface )
+static void * Lock( win32_driver_t * win32_driver, void * surface )
 {
   LPDIRECTDRAWSURFACE	lock_surface = ( LPDIRECTDRAWSURFACE ) surface;
-  DDSURFACEDESC	ddsd;
   HRESULT		result;
 
   if( !surface )
     return 0;
 
-  memset( &ddsd, 0, sizeof( ddsd ) );
-  ddsd.dwSize = sizeof( ddsd );
+  memset( &win32_driver->ddsd, 0, sizeof( win32_driver->ddsd ) );
+  win32_driver->ddsd.dwSize = sizeof( win32_driver->ddsd );
 
-  result = IDirectDrawSurface_Lock( lock_surface, 0, &ddsd, DDLOCK_WAIT | DDLOCK_NOSYSLOCK, 0 );
+  result = IDirectDrawSurface_Lock( lock_surface, 0, &win32_driver->ddsd, DDLOCK_WAIT | DDLOCK_NOSYSLOCK, 0 );
   if( result == DDERR_SURFACELOST )
     {
       IDirectDrawSurface_Restore( lock_surface );
-      result = IDirectDrawSurface_Lock( lock_surface, 0, &ddsd, DDLOCK_WAIT | DDLOCK_NOSYSLOCK, 0 );
+      result = IDirectDrawSurface_Lock( lock_surface, 0, &win32_driver->ddsd, DDLOCK_WAIT | DDLOCK_NOSYSLOCK, 0 );
 
       if( result != DD_OK )
 	return 0;
@@ -786,7 +810,7 @@ static void * Lock( void * surface )
 	}
     }
 
-  return ddsd.lpSurface;
+  return win32_driver->ddsd.lpSurface;
 }
 
 /* Unlock our back buffer to prepair for display. */
@@ -863,7 +887,7 @@ static vo_frame_t * win32_alloc_frame( vo_driver_t * vo_driver )
 {
   win32_frame_t  *win32_frame;
 
-  win32_frame = ( win32_frame_t * ) xine_xmalloc( sizeof( win32_frame_t ) );
+  win32_frame = calloc(1, sizeof(win32_frame_t));
   if (!win32_frame)
     return NULL;
 
@@ -946,8 +970,6 @@ static void win32_display_frame( vo_driver_t * vo_driver, vo_frame_t * vo_frame 
 {
   win32_driver_t  *win32_driver = ( win32_driver_t * ) vo_driver;
   win32_frame_t   *win32_frame  = ( win32_frame_t * ) vo_frame;
-  int              offset;
-  int              size;
 
 
   /* if the required width, height or format has changed
@@ -966,7 +988,7 @@ static void win32_display_frame( vo_driver_t * vo_driver, vo_frame_t * vo_frame 
 
   /* lock our surface to update its contents */
 
-  win32_driver->contents = Lock( win32_driver->secondary );
+  win32_driver->contents = Lock( win32_driver, win32_driver->secondary );
 
   /* surface unavailable, skip frame render */
 
@@ -1051,37 +1073,47 @@ static void win32_display_frame( vo_driver_t * vo_driver, vo_frame_t * vo_frame 
       /* the actual format is identical to our
        * stream format. we just need to copy it */
 
-      switch(win32_frame->format)
+    int line;
+    uint8_t * src;
+    vo_frame_t * frame = vo_frame;
+    uint8_t * dst = (uint8_t *)win32_driver->contents;
+
+    switch(win32_frame->format)
 	{
-	case XINE_IMGFMT_YV12:
-	  {
-	    vo_frame_t  *frame;
-	    uint8_t     *img;
-
-	    frame = vo_frame;
-	    img   = (uint8_t *)win32_driver->contents;
-
-	    offset = 0;
-	    size   = frame->pitches[0] * frame->height;
-	    xine_fast_memcpy( img+offset, frame->base[0], size);
-
-	    offset += size;
-	    size   = frame->pitches[2]* frame->height / 2;
-	    xine_fast_memcpy( img+offset, frame->base[2], size);
-				
-	    offset += size;
-	    size   = frame->pitches[1] * frame->height / 2;
-	    xine_fast_memcpy( img+offset, frame->base[1], size);
+      case XINE_IMGFMT_YV12:
+        src = frame->base[0];
+        for (line = 0; line < frame->height ; line++){
+          xine_fast_memcpy( dst, src, frame->width);
+          src += vo_frame->pitches[0];
+          dst += win32_driver->ddsd.lPitch;
+        }
+        
+        src = frame->base[2];
+        for (line = 0; line < frame->height/2 ; line++){
+          xine_fast_memcpy( dst, src, frame->width/2);
+          src += vo_frame->pitches[2];
+          dst += win32_driver->ddsd.lPitch/2;
+        }
+        
+        src = frame->base[1];
+        for (line = 0; line < frame->height/2 ; line++){
+          xine_fast_memcpy( dst, src, frame->width/2);
+          src += vo_frame->pitches[1];
+          dst += win32_driver->ddsd.lPitch/2;
+        }
+	  break;
+	  
+	case XINE_IMGFMT_YUY2:
+	default:
+      src = frame->base[0];	
+      for (line = 0; line < frame->height ; line++){
+	    xine_fast_memcpy( dst, src, frame->width*2);
+	    src += vo_frame->pitches[0];
+	    dst += win32_driver->ddsd.lPitch;
 	  }
 	  break;
-	case XINE_IMGFMT_YUY2:
-	  xine_fast_memcpy( win32_driver->contents, win32_frame->vo_frame.base[0], win32_frame->vo_frame.pitches[0] * win32_frame->vo_frame.height * 2);
-	  break;
-	default:
-	  xine_fast_memcpy( win32_driver->contents, win32_frame->vo_frame.base[0], win32_frame->vo_frame.pitches[0] * win32_frame->vo_frame.height * 2);
-	  break;
 	}
-    }
+  }
 
   /* unlock the surface  */
 
@@ -1143,11 +1175,38 @@ static int win32_gui_data_exchange( vo_driver_t * vo_driver, int data_type, void
 
   switch( data_type )
     {
+
     case GUI_WIN32_MOVED_OR_RESIZED:
       UpdateRect( win32_driver->win32_visual );
       DisplayFrame( win32_driver );
       break;
+    case XINE_GUI_SEND_DRAWABLE_CHANGED:
+    {
+      HRESULT result;
+      HWND newWndHnd = (HWND) data;
+	  
+	  /* set cooperative level */
+	  result = IDirectDraw_SetCooperativeLevel( win32_driver->ddobj, newWndHnd, DDSCL_NORMAL );
+      if( result != DD_OK )
+      {
+        Error( 0, "SetCooperativeLevel : error 0x%lx", result );
+        return 0;
+      }
+      /* associate our clipper with new window */
+	  result = IDirectDrawClipper_SetHWnd( win32_driver->ddclipper, 0, newWndHnd );
+      if( result != DD_OK )
+      {
+        Error( 0, "ddclipper->SetHWnd : error 0x%lx", result );
+        return 0;
+      }
+      /* store our objects in our visual struct */
+	  win32_driver->win32_visual->WndHnd = newWndHnd;
+	  /* update video area and redraw current frame */
+      UpdateRect( win32_driver->win32_visual );
+      DisplayFrame( win32_driver );
+      break;
     }
+  }
 
   return 0;
 }
@@ -1183,7 +1242,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *wi
      /*vo_driver_t *init_video_out_plugin( config_values_t * config, void * win32_visual )*/
 {
   directx_class_t *class = (directx_class_t *)class_gen;
-  win32_driver_t  *win32_driver = ( win32_driver_t * ) xine_xmalloc ( sizeof( win32_driver_t ) );
+  win32_driver_t  *win32_driver = calloc(1, sizeof(win32_driver_t));
 
 
   _x_alphablend_init(&win32_driver->alphablend_extra_data, class->xine);
@@ -1249,7 +1308,7 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   /*
    * from this point on, nothing should go wrong anymore
    */
-  directx = (directx_class_t *) xine_xmalloc (sizeof (directx_class_t));
+  directx = calloc(1, sizeof (directx_class_t));
 
   directx->driver_class.open_plugin     = open_plugin;
   directx->driver_class.get_identifier  = get_identifier;

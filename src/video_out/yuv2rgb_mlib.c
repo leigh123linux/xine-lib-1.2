@@ -38,8 +38,6 @@
 #include "xineutils.h"
 #include "yuv2rgb.h"
 
-#define	MIN(a, b) (((a) < (b)) ? (a) : (b))
-
 static void mlib_yuv420_rgb24(yuv2rgb_t *this,
 			      uint8_t * image, uint8_t * py,
 			      uint8_t * pu, uint8_t * pv)

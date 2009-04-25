@@ -6,7 +6,7 @@
   <title>The xine engine FAQ</title>
   <titleabbrev>xine FAQ</titleabbrev>
   <copyright>
-   <year>2001-2003</year>
+   <year>2001-2008</year>
    <holder>the xine project team</holder>
   </copyright>
  </bookinfo>
@@ -43,7 +43,7 @@
    </sect2>
 
    <sect2 id="wheretogethelp">
-    <title>My question is not yet covered here - where can I ask for help?</title>
+    <title>My question is not yet covered here &ndash; where can I ask for help?</title>
     <para>
      First of all be sure that your question is really not covered here and
      that you haven't just been a bit too lazy to read through all of this
@@ -52,7 +52,7 @@
      <command>totem</command>).
     </para>
     <para>
-     That said - you are welcome to mail to our user mailing list:
+     That said &ndash; you are welcome to mail to our user mailing list:
      <email>xine-user@lists.sourceforge.net</email>
      Please provide some info about your setup so people have a chance to
      help you, e.g. include information about your audio/video hardware
@@ -75,7 +75,7 @@
    </sect2>
 
    <sect2 id="modules">
-    <title>What are those xine-lib, xine-ui, gnome-xine, ... modules in cvs for?</title>
+    <title>What are those xine-lib, xine-ui, gnome-xine, &hellip; modules in cvs for?</title>
     <para>
      Some time ago xine just became too complex to be just one big program.
      Therefore it was split into two major parts.
@@ -86,7 +86,7 @@
      is covered in this FAQ.)
     </para>
     <para>
-     Then there are frontends - applications that use xine. The most
+     Then there are frontends &ndash; applications that use xine. The most
      common frontend is that of a media player. There are currently
      two frontends being developed in the xine project, xine-ui (skinned
      dvd-player style frontend directly based on xlib) and gxine,
@@ -152,7 +152,7 @@
     <para>
      First, make sure that you're using a current development version
      (see above) or at least the current release version. Then, once you're
-     ready to send the patch...
+     ready to send the patch&hellip;
     </para>
     <para>
      Generate your patch using either <command>cvs diff -u &gt;
@@ -162,17 +162,17 @@
      patch. Your patch should be applicable using <command>patch -p0 -i
      my.patch</command> or, preferably, <command>patch -p1 -i
      my.patch</command> from the top-level directory in the source tree
-     (i.e. where configure.ac is) - this is fairly important for our
+     (i.e. where configure.ac is) &ndash; this is fairly important for our
      Mercurial-based repositories since it makes importing your patch that
      much easier (hg import defaults to -p1).
     </para>
     <para>
      Alternatively, if you've been hacking away at a module which is
-     maintained using mercurial, you can make them available as diffs - use
+     maintained using mercurial, you can make them available as diffs &ndash; use
      <command>hg export</command> or, if you have several patches, you could
      use <command>hg bundle</command> instead (both require extra
      parameters; <command>hg help export</command> and <command>hg help
-     bundle</command> for more details) - or via HTTP by using <command>hg
+     bundle</command> for more details) &ndash; or via HTTP by using <command>hg
      serve</command>. In the latter case, you'll need to post a URL from
      which a developer can pull the changes.
     </para>
@@ -194,12 +194,12 @@
     <para>
      The xine project does not provide pre-compiled binaries for legal
      reasons (some parts of xine may be covered by patents in some countries).
-     Some OS projects/vendors (e.g. debian, freebsd, ...) offer binaries
-     for their distributions - please contact them or use their package search
+     Some OS projects/vendors (e.g. Debian, FreeBSD, &hellip;) offer binaries
+     for their distributions &ndash; please contact them or use their package search
      tools for further info.
      You can also find links to third parties providing xine RPMs on
      the xine homepage at
-     <ulink url="http://xinehq.de/index.php/releases">http://xinehq.de/index.php/releases</ulink>.
+     <ulink url="http://www.xine-project.org/releases">http://www.xine-project.org/releases</ulink>.
     </para>
     <para>
      See the next section of this FAQ for instructions on how to build xine
@@ -221,13 +221,13 @@
     </para>
     <para>
      Furthermore you'll have to use GNU make to compile xine. On most GNU/Linux
-     systems "make" is GNU make - on other platforms use "gmake" instead.
+     systems "make" is GNU make &ndash; on other platforms use "gmake" instead.
      Also, zlib is required (including the appropriate header files, which are
      often found in a package called zlib-devel or similar.)
     </para>
     <para>
      If you want to compile xine from CVS, you'll need to have the autobuild tools
-     installed (automake, autoconf and libtool - in recent versions).
+     installed (automake, autoconf and libtool &ndash; in recent versions).
     </para>
     <para>
      Frontends might need additional libraries, e.g. for gxine you'll need to have
@@ -274,7 +274,7 @@
       <screen>&nbsp;&nbsp;&nbsp;<command>ldconfig</command></screen>
      </para>
      <para>
-      Now unpack your frontend (gxine or xine-ui or ...), then:
+      Now unpack your frontend (gxine or xine-ui or &hellip;), then:
       <screen>
 &nbsp;&nbsp;&nbsp;<command>./configure</command>
 &nbsp;&nbsp;&nbsp;<command>make install</command></screen>
@@ -292,7 +292,7 @@
      <para>
       If you have installed xine-lib to a non-standard prefix, make sure
       that you have <filename>$prefix/bin</filename> in your PATH and that your linker finds
-      libs in <filename>$prefix/lib</filename> - otherwise trying to build modules that
+      libs in <filename>$prefix/lib</filename> &ndash; otherwise trying to build modules that
       rely on xine-lib will fail with configure complaining about not
       finding certain parts of libxine. Using bash you can do something like:
       <screen>
@@ -304,7 +304,7 @@
       Last but not least. Here the build instructions. As stated earlier,
       those are the same for every xine module.
       <screen>
-&nbsp;&nbsp;&nbsp;<command>./autogen.sh</command> [-> *only* if you checked your sources out of CVS]
+&nbsp;&nbsp;&nbsp;<command>./autogen.sh</command> [&rarr; <emphasis>only</emphasis> if you checked your sources out of CVS]
 &nbsp;&nbsp;&nbsp;<command>./configure</command>
 &nbsp;&nbsp;&nbsp;<command>make</command>
 &nbsp;&nbsp;&nbsp;<command>make install</command></screen>
@@ -331,7 +331,7 @@
      In case that you have a fresh CVS checkout, you will need to do the
      following first in order to get a tarball release out of it which you
      can later use with the <command>rpmbuild -ta</command> command above:
-     <screen>&nbsp;&nbsp;&nbsp;<command>./autogen.sh &amp;&amp; make clean && make dist</command></screen>
+     <screen>&nbsp;&nbsp;&nbsp;<command>./autogen.sh &amp;&amp; make clean &amp;&amp; make dist</command></screen>
     </para>
     <para>
      In any case, please keep in mind that you have to build and install
@@ -362,7 +362,7 @@
      <screen>
 &nbsp;&nbsp;&nbsp;<command>cd ..</command>
 &nbsp;&nbsp;&nbsp;<command>ls *.deb</command>
-&nbsp;&nbsp;&nbsp;<command>su - -c 'cd '"`pwd`"' && dpkg -i &lt;DEB_PACKAGES&gt;'</command>
+&nbsp;&nbsp;&nbsp;<command>su - -c 'cd '"`pwd`"' &amp;&amp; dpkg -i &lt;DEB_PACKAGES&gt;'</command>
      </screen>
      Ubuntu users will probably want to use this instead of that <command>su</command>:
      <screen>
@@ -477,7 +477,7 @@
    </sect2>
 
    <sect2>
-    <title>Build problems in frontends (gxine/xine-ui/...)</title>
+    <title>Build problems in frontends (gxine/xine-ui/&hellip;)</title>
     <sect3 id="xinelibnotfound">
      <title>I have installed xine-lib but the frontend complains about not finding it!</title>
      <para>
@@ -504,7 +504,7 @@
      <screen>&nbsp;&nbsp;&nbsp;<command>mkdir ~/xine</command></screen>
     </para>
     <para>
-     Then you have to set a few environment variables - it's probably a good
+     Then you have to set a few environment variables &ndash; it's probably a good
      idea to add this to your <filename>~/.bashrc</filename> (or somewhere similar):
      <screen>
 &nbsp;&nbsp;&nbsp;<command>export PATH="$HOME/xine/bin:$PATH"</command>
@@ -561,7 +561,7 @@
       check out you boot/kernel logs (or run <command>cdrecord -scanbus</command>)
       to find out which device it got mapped to and set the
       symlink accordingly (should be something like <filename>/dev/scd0</filename>,
-      <filename>/dev/scd1</filename>, ... in that case).
+      <filename>/dev/scd1</filename>, &hellip; in that case).
       Also make sure you (as a user) have sufficient (read and write) permissions
       on your DVD drive. This could mean you either have to change the device
       permissions or add your user to a special group 
@@ -866,8 +866,16 @@
       xine.
      </para>
     <para>
-     Possibly the most convenient way to get the Real codecs is to download
-     them from the MPlayer website
+     Possibly the most convenient way to get the Real codecs is to install
+     RealPlayer 9 or RealPlayer 10 and set the
+     <parameter>decoder.external.real_codecs_path</parameter> in your xine
+     config file to the name of the directory which contains the codecs
+     (look for drvc.so); it's probably something like
+     <filename>/opt/real/RealPlayer/codecs/</filename>.  Restart xine then
+     and you should be able to watch Real files/streams.
+    </para>
+    <para>
+     Another way to get the Real codecs is to download them from the MPlayer website
      <ulink url="http://www.mplayerhq.hu/design7/dload.html">
       http://www.mplayerhq.hu/design7/dload.html
      </ulink>.
@@ -946,7 +954,7 @@
      Latest xine-lib modules (1-beta3 or newer) support external subtitles
      for any media file, not only AVI. In order to use it you can pass a
      special MRL construction like:
-     <screen>&nbsp;&nbsp;&nbsp;<command>xine test.mpg#subtitle:file.sub</command></screen>
+     <screen>&nbsp;&nbsp;&nbsp;<command>xine file://path/to/test.mpg#subtitle:/path/to/file.sub</command></screen>
      The external subtitles support can also be used by any xine frontend.
      Currently xine-ui and kaffeine implement this feature with a subtitle
      selection dialog.
@@ -959,7 +967,7 @@
    <title>Running xine</title>
 
    <sect2 id="speedup">
-    <title>I have a lot of dropped frames - what can I do?</title>
+    <title>I have a lot of dropped frames &ndash; what can I do?</title>
     <para>
      Your hardware might be too slow for xine. Make sure you turn on all
      speed optimizing options. A few things you should check (in order of
@@ -1067,7 +1075,7 @@
         be enough (use a recent kernel!).
        </para>
        <para>
-        Try a <command>cat /proc/mtrr</command> - if the file exists and you find an entry
+        Try a <command>cat /proc/mtrr</command> &ndash; if the file exists and you find an entry
         corresponding to the amount of graphics memory you have, everything
         should be fine.
        </para>
@@ -1082,7 +1090,7 @@
        <para>
         Use the "top" utility and verify under the "NI" column if
         the X process has a negative value, this indicates a higher priority.
-        See "The X Window User HOWTO - Performance considerations" for 
+        See "The X Window User HOWTO &ndash; Performance considerations" for 
         further instructions 
         <ulink url="http://www.tldp.org/HOWTO/XWindow-User-HOWTO/performance.html">
          http://www.tldp.org/HOWTO/XWindow-User-HOWTO/performance.html
@@ -1199,7 +1207,7 @@
    </sect2>
 
    <sect2 id="ports">
-    <title>I have problems when using xine on FreeBSD, Solaris, ... !</title>
+    <title>I have problems when using xine on FreeBSD, Solaris, &hellip; !</title>
     <para>
      Check out the the corresponding README files in the directory <filename>xine-lib/doc</filename>.
     </para>
@@ -1210,7 +1218,7 @@
     <para>
      aalib is an ascii art library. xine comes with an aalib video output
      plugin so you can watch movies in your xterm, on the console or on your
-     old vt100 - very cool ;> ... another nice option is to preview movies
+     old vt100 &ndash; very cool ;> &hellip; another nice option is to preview movies
      on a remote server in your shell over ssh.
     </para>
     <para>
@@ -1245,7 +1253,7 @@
     <para>
      Currently xine support audio output via OSS (kernel audio drivers),
      ALSA 0.9.x (ALSA 0.5.x is no longer supported), arts (KDE's sound daemon)
-     and esound (esd, gnome's sound daemon - not recommended because it has
+     and esound (esd, gnome's sound daemon &ndash; not recommended because it has
      serious issues with a/v sync).
     </para>
    </sect2>
@@ -1289,7 +1297,7 @@
     <para>
      If this happens with any video, first try a different audio driver
      (<command>gxine -A oss</command>, <command>gxine -A arts</command>,
-     <command>xine -A alsa</command> ...). 
+     <command>xine -A alsa</command> &hellip;). 
     </para>
     <para>
      If this problem only occurs with one specific stream, maybe switching to
@@ -1511,8 +1519,8 @@
     </para>
     <para>
      Another, whole different possibility is that you have some background
-     process running which is messing with the clock (like some ntp client -
-     chronny, ntpd, ...).
+     process running which is messing with the clock (like some ntp client &ndash;
+     chrony, ntpd, &hellip;).
     </para>
     <para>
      Occasional messages of "fixing sound card drift" may happen on start and
@@ -1550,9 +1558,9 @@
    <title>Video related questions</title>
 
    <sect2 id="novideo">
-    <title>I can hear the audio - but I don't see a picture!</title>
+    <title>I can hear the audio &ndash; but I don't see a picture!</title>
     <para>
-     Probably your hardware is simply too slow - see above for some
+     Probably your hardware is simply too slow &ndash; see above for some
      hints on how to speed things up.
     </para>
     <para>
@@ -1706,9 +1714,42 @@
     <para>
      Looks like some colours on your GUI match the colour key which Xv uses. You can
      change the colour key value to avoid this. There should be a line like:
-     <programlisting>&nbsp;&nbsp;&nbsp;video.XV_COLORKEY:2110</programlisting>
+     <programlisting>&nbsp;&nbsp;&nbsp;video.device.xv_colorkey:2110</programlisting>
      in your <filename>~/.xine/config</filename> file where you can change the colour that's used
      by xine for the video overlay.
+    </para>
+   </sect2>
+
+   <sect2 id="texturedvideo">
+    <title>How do I get Xv working with compiz?</title>
+    <para>
+     Tell xine to prefer textured video. There should be a line like:
+     <programlisting>&nbsp;&nbsp;&nbsp;video.device.xv_preferred_method:Any</programlisting>
+     in your <filename>~/.xine/config</filename> file where you can change the preferred method
+     used by xine for the video overlay.
+    </para>
+    <para>
+     It may be that your graphics card or driver doesn't have the necessary
+     support for textured video, or the video is rendered too slowly.
+    </para>
+    <itemizedlist>
+     <listitem><para>
+      ATI: you are likely to need xf86-video-ati later than 6.8.0; 6.9.0.91
+      or newer is recommended for slower/older hardware (&lt; X1300) because
+      the rendering speed has been improved a lot.
+     </para></listitem>
+     <listitem><para>
+      Intel: 945 and later, at least, should be fine with xf86-video-intel
+      2.0 or later. Certainly with 2.2 or later.
+     </para></listitem>
+     <listitem><para>
+      nVidia: will probably be fine. (FIXME)
+     </para></listitem>
+    </itemizedlist>
+    <para>
+     If you find that textured video is significantly slower or isn't
+     supported, you should either not use compiz or tell xine to use the
+     xshm video output driver.
     </para>
    </sect2>
 
@@ -1818,7 +1859,7 @@
     </para>
     <para>
      Drivers that access hardware directly includes VIDIX (warning: requires 
-     root priviledges or kernel helper) and SyncFB (requires kernel helper - Matrox only).
+     root priviledges or kernel helper) and SyncFB (requires kernel helper &ndash; Matrox only).
      User may try one of those, but should be warned that with root access
      they can cause the system to crash hard. The support is also limited to
      a couple of graphics cards only.
@@ -1967,7 +2008,7 @@
     <para>
      The font for text subtitles is selected via config option
      <parameter>subtitles.separate.font</parameter>. You can specify xine font name
-     (<parameter>sans</parameter>, <parameter>serif</parameter>, ...)
+     (<parameter>sans</parameter>, <parameter>serif</parameter>, &hellip;)
      or file name of the TTF font. The directories
      <filename>$prefix/share/xine/libxine1/fonts</filename> and
      <filename>~/.xine/fonts</filename> are searched for the fonts, with
@@ -2004,7 +2045,7 @@
     </para>
     <para>
      Syntax is:
-     <screen>&nbsp;&nbsp;&nbsp;<command>./xine-fontconf font.ttf font_name [encoding1 [encoding2 [...]]]</command></screen>
+     <screen>&nbsp;&nbsp;&nbsp;<command>./xine-fontconf font.ttf font_name [encoding1 [encoding2 [&hellip;]]]</command></screen>
     </para>
     <para>
      For example default font <filename>sans</filename> was generated with
@@ -2101,9 +2142,9 @@
     <title>"Unable to open dvd drive (/dev/dvd)"</title>
     <para>
      You probably don't have /dev/dvd (check that). If so, simply create a
-     link /dev/dvd that points to your DVD device. Something like...
+     link /dev/dvd that points to your DVD device. Something like&hellip;
      <screen>&nbsp;&nbsp;&nbsp;<command>ln -s hdc /dev/dvd</command></screen>
-     ...should do the job. Also make sure you have read and write access on
+     &hellip; should do the job. Also make sure you have read and write access on
      the device the symlink points to.
      See the <link linkend="dvdplayback">dvd playback section</link>
      for more information.
@@ -2155,7 +2196,7 @@
      standby" or just kill it. Then xine will use OSS audio output. The other
      method is to make xine use ESD for audio output with:      
      <screen>&nbsp;&nbsp;&nbsp;<command>gxine -A esd</command></screen>
-     This may result in worse playback - exact syncronization is not possible
+     This may result in worse playback &ndash; exact syncronization is not possible
      with esd, so using oss should be preferred.
     </para>
     <para>
@@ -2169,7 +2210,7 @@
      your aRts control. (recommended)
     </para>
     <para>
-     Newer versions of arts have an auto-suspend mode - this can lead to
+     Newer versions of arts have an auto-suspend mode &ndash; this can lead to
      some nondeterministic behaviour of xine if it is set up to use
      the audio device directly. Using arts is recommended in that case;
      however, you will lose the ability to do four/five channel audio output.
@@ -2208,12 +2249,12 @@
    </sect2>
 
    <sect2 id="xinecrashed">
-    <title>xine just crashed on me - i didn't get any error message</title>
+    <title>xine just crashed on me &ndash; i didn't get any error message</title>
     <para>
      OK, yes, that shouldn't happen and you're upset. We can understand that.
      But, to help you and of course to fix this, we need some information.
      So, let's go through the checklist and maybe prepare a nice bug report
-     for the xine-user mailing list:
+     for the <ulink url="http://bugs.xine-project.org/">xine bug tracker</ulink>:
      <itemizedlist>
       <listitem>
        <para>
@@ -2259,11 +2300,10 @@
         still under heavy development (nice excuse, isn't it? *grin*).
        </para>
        <para>
-        If you write to the xine user mailing list 
-        <email>xine-user@lists.sourceforge.net</email>
+        If you write to the <ulink url="http://bugs.xine-project.org/">xine bug tracker</ulink>
         make sure you include a the above information (when applicable)
         and also some information about your machine (operating system, cpu type and
-        speed, gfx card, sound card, ...) and please use a meaningfull subject
+        speed, gfx card, sound card, &hellip;) and please use a meaningfull subject
         line ("xine bug" is bad, "xine fails to play this quicktime trailer in fullscreen mode"
         ist much better).
        </para>

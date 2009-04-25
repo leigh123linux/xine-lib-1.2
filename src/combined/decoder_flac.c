@@ -166,6 +166,7 @@ flac_write_callback (const FLAC__StreamDecoder *decoder,
     return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
 }
 
+#ifdef LEGACY_FLAC
 static void
 flac_metadata_callback (const FLAC__StreamDecoder *decoder,
                         const FLAC__StreamMetadata *metadata,
@@ -188,6 +189,7 @@ flac_metadata_callback (const FLAC__StreamDecoder *decoder,
 
   return;
 }
+#endif
 
 static void
 flac_error_callback (const FLAC__StreamDecoder *decoder,
@@ -335,7 +337,7 @@ static audio_decoder_t *
 open_plugin (audio_decoder_class_t *class_gen, xine_stream_t *stream) {
     flac_decoder_t *this ;
 
-    this = (flac_decoder_t *) xine_xmalloc (sizeof (flac_decoder_t));
+    this = calloc(1, sizeof (flac_decoder_t));
 
     this->audio_decoder.decode_data         = flac_decode_data;
     this->audio_decoder.reset               = flac_reset;
@@ -407,7 +409,7 @@ static void *
 init_plugin (xine_t *xine, void *data) {
     flac_class_t *this;
   
-    this = (flac_class_t *) xine_xmalloc (sizeof (flac_class_t));
+    this = calloc(1, sizeof (flac_class_t));
 
     this->decoder_class.open_plugin     = open_plugin;
     this->decoder_class.get_identifier  = get_identifier;

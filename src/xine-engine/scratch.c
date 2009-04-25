@@ -50,12 +50,11 @@ static void __attribute__((__format__(__printf__, 2, 0)))
   localtime_r (&t, &tm);
 
   if ( ! this->lines[this->cur] )
-    this->lines[this->cur] = xine_xmalloc(SCRATCH_LINE_LEN_MAX+1);
+    this->lines[this->cur] = malloc(SCRATCH_LINE_LEN_MAX+1);
   if ( ! this->lines[this->cur] )
     return;
 
-  strftime (this->lines[this->cur], SCRATCH_LINE_LEN_MAX, "%X: ", &tm);
-  l = strlen (this->lines[this->cur]);
+  l = strftime (this->lines[this->cur], SCRATCH_LINE_LEN_MAX, "%X: ", &tm);
   vsnprintf (this->lines[this->cur] + l, SCRATCH_LINE_LEN_MAX - l, format, argp);
 
   lprintf ("printing format %s to line %d\n", format, this->cur);
@@ -105,15 +104,11 @@ static void scratch_dispose (scratch_buffer_t *this) {
 
 scratch_buffer_t *_x_new_scratch_buffer (int num_lines) {
   scratch_buffer_t *this;
-  int               i;
 
-  this = xine_xmalloc (sizeof (scratch_buffer_t));
+  this = calloc(1, sizeof(scratch_buffer_t));
 
-  this->lines   = xine_xmalloc (sizeof (char *) * (num_lines + 1));
-  this->ordered = xine_xmalloc (sizeof (char *) * (num_lines + 1));
-
-  for (i = 0; i <= num_lines; i++)
-    this->lines[i] = this->ordered[i] = NULL;
+  this->lines   = calloc ((num_lines + 1), sizeof(char*));
+  this->ordered = calloc ((num_lines + 1), sizeof(char*));
 
   this->scratch_printf = scratch_printf;
   this->get_content    = scratch_get_content;

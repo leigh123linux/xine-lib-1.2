@@ -143,7 +143,7 @@ static int demux_aud_send_chunk(demux_plugin_t *this_gen) {
   }
 
   /* validate the chunk */
-  if (_X_LE_32(&chunk_preamble[4]) != 0x0000DEAF) {
+  if (!_x_is_fourcc(&chunk_preamble[4], "\xAF\xDE\x00\x00")) {
     this->status = DEMUX_FINISHED;
     return this->status;
   }
@@ -270,7 +270,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_aud_t    *this;
 
-  this         = xine_xmalloc (sizeof (demux_aud_t));
+  this         = calloc(1, sizeof(demux_aud_t));
   this->stream = stream;
   this->input  = input;
 
@@ -343,7 +343,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_aud_init_plugin (xine_t *xine, void *data) {
   demux_aud_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_aud_class_t));
+  this = calloc(1, sizeof(demux_aud_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

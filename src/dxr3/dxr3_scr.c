@@ -70,7 +70,7 @@ dxr3_scr_t *dxr3_scr_init(xine_t *xine)
   int devnum;
   char tmpstr[128];
   
-  this = (dxr3_scr_t *)xine_xmalloc(sizeof(dxr3_scr_t));
+  this = calloc(1, sizeof(dxr3_scr_t));
   
   devnum = xine->config->register_num(xine->config,
     CONF_KEY, 0, CONF_NAME, CONF_HELP, 10, NULL, NULL);

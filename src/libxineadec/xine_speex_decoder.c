@@ -170,16 +170,16 @@ void read_metadata (speex_decoder_t *this, char * comments, int length)
 #endif
 
     for (i = 0; speex_comment_keys[i].key != NULL; i++) {
+      size_t keylen = strlen(speex_comment_keys[i].key);
 
       if ( !strncasecmp (speex_comment_keys[i].key, c,
-			 strlen(speex_comment_keys[i].key)) ) {
-	int keylen = strlen(speex_comment_keys[i].key);
+			 keylen) ) {
 	char meta_info[(len - keylen) + 1];
 	
 	lprintf ("known metadata %d %d\n",
 		 i, speex_comment_keys[i].xine_metainfo_index);
 	
-	snprintf(meta_info, (len - keylen), "%s", c + keylen);
+	strncpy(meta_info, &c[keylen], len-keylen);
 	_x_meta_info_set_utf8(this->stream, speex_comment_keys[i].xine_metainfo_index, meta_info);
       }
     }
@@ -204,7 +204,7 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       if (!this->st) {
 	SpeexMode * spx_mode;
 	SpeexHeader * spx_header;
-	int modeID;
+	unsigned int modeID;
 	int bitrate;
 
 	speex_bits_init (&this->bits);
@@ -216,7 +216,12 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	  return;
 	}
 
-	modeID = spx_header->mode;
+	modeID = (unsigned int)spx_header->mode;
+	if (modeID >= SPEEX_NB_MODES) {
+	  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": invalid mode ID %u\n", modeID);
+	  return;
+	}
+	
 	spx_mode = (SpeexMode *) speex_mode_list[modeID];
 
 	if (spx_mode->bitstream_version != spx_header->mode_bitstream_version) {
@@ -280,7 +285,7 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     }
     
   } else if (this->output_open) {
-    int i, j;
+    int j;
 
     audio_buffer_t *audio_buffer;
 
@@ -350,7 +355,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
   speex_decoder_t *this ;
   static SpeexStereoState init_stereo = SPEEX_STEREO_STATE_INIT;
 
-  this = (speex_decoder_t *) xine_xmalloc (sizeof (speex_decoder_t));
+  this = (speex_decoder_t *) calloc(1, sizeof(speex_decoder_t));
 
   this->audio_decoder.decode_data         = speex_decode_data;
   this->audio_decoder.reset               = speex_reset;
@@ -391,7 +396,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   speex_class_t *this;
   
-  this = (speex_class_t *) xine_xmalloc (sizeof (speex_class_t));
+  this = (speex_class_t *) calloc(1, sizeof(speex_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;

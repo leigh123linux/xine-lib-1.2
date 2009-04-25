@@ -1,3 +1,4 @@
+include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
 AM_CFLAGS = $(X_CFLAGS) $(LIBFAME_CFLAGS)

@@ -69,11 +69,11 @@ AC_ARG_ENABLE(xinetest,
       XINE_LIBS=`$XINE_CONFIG $xine_config_args --libs`
       XINE_ACFLAGS=`$XINE_CONFIG $xine_config_args --acflags`
       xine_config_major_version=`$XINE_CONFIG $xine_config_args --version | \
-             sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
+             sed -n 's/^\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\).*$/\1/p'`
       xine_config_minor_version=`$XINE_CONFIG $xine_config_args --version | \
-             sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
+             sed -n 's/^\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\).*$/\2/p'`
       xine_config_sub_version=`$XINE_CONFIG $xine_config_args --version | \
-             sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
+             sed -n 's/^\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\).*$/\3/p'`
       xine_data_dir=`$XINE_CONFIG $xine_config_args --datadir`
       xine_script_dir=`$XINE_CONFIG $xine_config_args --scriptdir`
       xine_plugin_dir=`$XINE_CONFIG $xine_config_args --plugindir`

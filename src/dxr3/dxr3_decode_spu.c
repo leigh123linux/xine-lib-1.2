@@ -17,6 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
  
 /* dxr3 spu decoder plugin.
  * Accepts the spu data from xine and sends it directly to the
@@ -198,7 +202,7 @@ static void *dxr3_spudec_init_plugin(xine_t *xine, void* data)
 {
   dxr3_spudec_class_t *this;
   
-  this = (dxr3_spudec_class_t *)xine_xmalloc(sizeof(dxr3_spudec_class_t));
+  this = calloc(1, sizeof(dxr3_spudec_class_t));
   if (!this) return NULL;
   
   this->spu_decoder_class.open_plugin     = dxr3_spudec_open_plugin;
@@ -221,7 +225,7 @@ static spu_decoder_t *dxr3_spudec_open_plugin(spu_decoder_class_t *class_gen, xi
   if (class->instance) return NULL;
   if (!dxr3_present(stream)) return NULL;
   
-  this = (dxr3_spudec_t *)xine_xmalloc(sizeof(dxr3_spudec_t));
+  this = calloc(1, sizeof(dxr3_spudec_t));
   if (!this) return NULL;
   
   this->spu_decoder.decode_data       = dxr3_spudec_decode_data;
@@ -374,7 +378,7 @@ static void dxr3_spudec_decode_data(spu_decoder_t *this_gen, buf_element_t *buf)
 	  printf("dxr3_decode_spu: DEBUG: allocating new PCI node for hli_s_ptm %d\n", pci.hli.hl_gi.hli_s_ptm);
 	  /* append PCI at the end of the list */
 	  while (node->next) node = node->next;
-	  node->next = (pci_node_t *)xine_xmalloc(sizeof(pci_node_t));
+	  node->next = calloc(1, sizeof(pci_node_t));
 	  node->next->vpts = this->stream->metronom->got_spu_packet(this->stream->metronom, pci.hli.hl_gi.hli_s_ptm);
 	  node->next->next = NULL;
 	  xine_fast_memcpy(&node->next->pci, &pci, sizeof(pci_t));

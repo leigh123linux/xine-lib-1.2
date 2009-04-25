@@ -20,6 +20,10 @@
  * Time stretch by a given factor, optionally preserving pitch
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 
 #include "xine_internal.h"
@@ -152,10 +156,10 @@ static void stretchscr_exit (scr_plugin_t *scr) {
   free(this);
 }
 
-static stretchscr_t* stretchscr_init (double *stretch_factor) {
+static stretchscr_t *XINE_MALLOC stretchscr_init (double *stretch_factor) {
   stretchscr_t *this;
 
-  this = (stretchscr_t *) xine_xmalloc(sizeof(stretchscr_t));
+  this = calloc(1, sizeof(stretchscr_t));
 
   this->scr.interface_version = 3;
   this->scr.get_priority      = stretchscr_get_priority;
@@ -620,7 +624,7 @@ static post_plugin_t *stretch_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target)
 {
-  post_plugin_stretch_t *this  = (post_plugin_stretch_t *)xine_xmalloc(sizeof(post_plugin_stretch_t));
+  post_plugin_stretch_t *this  = calloc(1, sizeof(post_plugin_stretch_t));
   post_in_t            *input;
   post_out_t           *output;
   xine_post_in_t       *input_api;

@@ -131,7 +131,7 @@ uint32_t _x_stream_info_get_public(xine_stream_t *stream, int info) {
  * at the end of the string
  */
 static void meta_info_chomp(char *str) {
-  int i, len;
+  ssize_t i, len;
 
   len = strlen(str);
   if (!len)
@@ -251,7 +251,15 @@ static void meta_info_set_unlocked_encoding(xine_stream_t *stream, int info, con
         size_t inbytesleft, outbytesleft;
 
         inbuf = (ICONV_CONST char *)value;
-        inbytesleft = strlen(value);
+        if (!strncmp (enc, "UTF-16", 6) || !strncmp (enc, "UCS-2", 5))
+        {
+          /* strlen() won't work with UTF-16* or UCS-2* */
+          inbytesleft = 0;
+          while (value[inbytesleft] || value[inbytesleft + 1])
+            inbytesleft += 2;
+        } /* ... do we need to handle UCS-4? Probably not. */
+        else
+          inbytesleft = strlen(value);
         outbytesleft = 4 * inbytesleft; /* estimative (max) */
         outbuf = utf8_value = malloc(outbytesleft+1);
 
@@ -340,11 +348,10 @@ void _x_meta_info_set_utf8(xine_stream_t *stream, int info, const char *str) {
 void _x_meta_info_n_set(xine_stream_t *stream, int info, const char *buf, int len) {
   pthread_mutex_lock(&stream->meta_mutex);
   if(meta_valid(info) && len) {
-    char *str = xine_xmalloc(len + 1);
+    char *str = strndup(buf, len);
     
-    snprintf(str, len + 1 , "%s", buf);
-    meta_info_set_unlocked(stream, info, (const char *) &str[0]);
-	free(str);
+    meta_info_set_unlocked(stream, info, str);
+    free(str);
   }
   pthread_mutex_unlock(&stream->meta_mutex);
 }
@@ -359,7 +366,7 @@ void _x_meta_info_set_multi(xine_stream_t *stream, int info, ...) {
     va_list   ap;
     char     *args[1025];
     char     *buf;
-    int       n, len;
+    size_t    n, len;
     
     len = n = 0;
 
@@ -376,7 +383,7 @@ void _x_meta_info_set_multi(xine_stream_t *stream, int info, ...) {
     if(len) {
       char *p, *meta;
       
-      p = meta = (char *) xine_xmalloc(len + 1);
+      p = meta = (char *) malloc(len + 1);
       
       n = 0;
       while(args[n]) {

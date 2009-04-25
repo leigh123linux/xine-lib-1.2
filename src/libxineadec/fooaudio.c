@@ -22,6 +22,10 @@
  * place of the data it should actually send.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -91,7 +95,7 @@ static void fooaudio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
     this->channels = buf->decoder_info[3];
 
     /* initialize the data accumulation buffer */
-    this->buf = xine_xmalloc(AUDIOBUFSIZE);
+    this->buf = calloc(1, AUDIOBUFSIZE);
     this->bufsize = AUDIOBUFSIZE;
     this->size = 0;
 
@@ -255,7 +259,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   fooaudio_decoder_t *this ;
 
-  this = (fooaudio_decoder_t *) xine_xmalloc (sizeof (fooaudio_decoder_t));
+  this = (fooaudio_decoder_t *) calloc(1, sizeof(fooaudio_decoder_t));
 
   /* connect the member functions */
   this->audio_decoder.decode_data         = fooaudio_decode_data;

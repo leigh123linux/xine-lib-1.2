@@ -19,6 +19,10 @@
  *
  * sdp/sdpplin parser.
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
  
 #define LOG_MODULE "sdpplin"
 #define LOG_VERBOSE
@@ -60,7 +64,8 @@ static char *b64_decode(const char *in, char *out, int *size)
   k=0;
   
   /*CONSTANTCONDITION*/
-  for (j=0; j<strlen(in); j+=4)
+  const size_t in_len = strlen(in);
+  for (j=0; j<in_len; j+=4)
   {
     char a[4], b[4];
 
@@ -99,7 +104,7 @@ static char *nl(char *data) {
 
 static int filter(const char *in, const char *filter, char **out) {
 
-  int flen=strlen(filter);
+  size_t flen=strlen(filter);
   size_t len;
   
   if (!in)
@@ -120,9 +125,9 @@ static int filter(const char *in, const char *filter, char **out) {
   
   return 0;
 }
-static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
+static sdpplin_stream_t *XINE_MALLOC sdpplin_parse_stream(char **data) {
 
-  sdpplin_stream_t *desc = xine_xmalloc(sizeof(sdpplin_stream_t));
+  sdpplin_stream_t *desc = calloc(1, sizeof(sdpplin_stream_t));
   char      *buf=xine_buffer_init(32);
   char      *decoded=xine_buffer_init(32);
   int       handled;
@@ -143,7 +148,14 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
     handled=0;
     
     if(filter(*data,"a=control:streamid=",&buf)) {
-      desc->stream_id=atoi(buf);
+      /* This way negative values are mapped to unfeasibly high
+       * values, and will be discarded afterward
+       */
+      unsigned long tmp = strtoul(buf, NULL, 10);
+      if ( tmp > UINT16_MAX )
+	lprintf("stream id out of bound: %lu\n", tmp);
+      else
+	desc->stream_id=tmp;
       handled=1;
       *data=nl(*data);
     }
@@ -199,7 +211,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
     if(filter(*data,"a=OpaqueData:buffer;",&buf)) {
       decoded = b64_decode(buf, decoded, &(desc->mlti_data_size));
       if ( decoded != NULL ) {
-	desc->mlti_data = malloc(sizeof(char)*desc->mlti_data_size);
+	desc->mlti_data = malloc(desc->mlti_data_size);
 	memcpy(desc->mlti_data, decoded, desc->mlti_data_size);
 	handled=1;
 	*data=nl(*data);
@@ -232,7 +244,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
 
 sdpplin_t *sdpplin_parse(char *data) {
 
-  sdpplin_t        *desc = xine_xmalloc(sizeof(sdpplin_t));
+  sdpplin_t        *desc = calloc(1, sizeof(sdpplin_t));
   sdpplin_stream_t *stream;
   char             *buf=xine_buffer_init(32);
   char             *decoded=xine_buffer_init(32);
@@ -252,7 +264,10 @@ sdpplin_t *sdpplin_parse(char *data) {
       }
       stream=sdpplin_parse_stream(&data);
       lprintf("got data for stream id %u\n", stream->stream_id);
-      desc->stream[stream->stream_id]=stream;
+      if ( stream->stream_id >= desc->stream_count )
+	lprintf("stream id %u is greater than stream count %u\n", stream->stream_id, desc->stream_count);
+      else
+	desc->stream[stream->stream_id]=stream;
       continue;
     }
 
@@ -293,8 +308,15 @@ sdpplin_t *sdpplin_parse(char *data) {
     }
     
     if(filter(data,"a=StreamCount:integer;",&buf)) {
-      desc->stream_count=atoi(buf);
-      desc->stream = malloc(sizeof(sdpplin_stream_t*)*desc->stream_count);
+      /* This way negative values are mapped to unfeasibly high
+       * values, and will be discarded afterward
+       */
+      unsigned long tmp = strtoul(buf, NULL, 10);
+      if ( tmp > UINT16_MAX )
+	lprintf("stream count out of bound: %lu\n", tmp);
+      else
+	desc->stream_count = tmp;
+      desc->stream = calloc(desc->stream_count, sizeof(sdpplin_stream_t*));
       handled=1;
       data=nl(data);
     }

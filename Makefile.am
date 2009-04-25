@@ -13,24 +13,20 @@ DEBFILES = debian/README.Debian debian/changelog debian/control \
 	debian/shlibdeps.sh debian/libxine-dev.install debian/libxine1.install
 
 EXTRA_DIST = config.rpath autogen.sh \
-	     ChangeLog \
 	     configure \
 	     config.guess \
 	     config.sub \
-	     COPYING \
 	     INSTALL \
 	     install-sh \
 	     libtool \
 	     ltmain.sh \
 	     missing \
-	     NEWS \
-	     README \
-	     TODO \
 	     depcomp \
-	     CREDITS \
 	     @DEPCOMP@
 
 CONFIG_CLEAN_FILES = libtool
+
+dist_doc_DATA = COPYING NEWS README TODO CREDITS ChangeLog
 
 docs:
 	@cd doc && $(MAKE) $@
@@ -90,6 +86,8 @@ uninstall-hook:
 install-data-hook:
 	@rm -f $(DESTDIR)$(XINE_PLUGINDIR)/*.la
 	@rm -f $(DESTDIR)$(XINE_PLUGINDIR)/*/*.la
+	@rm -f $(DESTDIR)$(XINE_PLUGINDIR)/*.dll.a
+	@rm -f $(DESTDIR)$(XINE_PLUGINDIR)/*/*.dll.a
 	@if test -x "$(top_srcdir)/post-install.sh" ; then \
 	  $(top_srcdir)/post-install.sh ; \
 	fi
@@ -112,3 +110,6 @@ maintainer-clean-generic:
 
 maintainer-clean-generic-hook: 
 	rm -f config.status
+
+$(top_srcdir)/configure:  $(am__configure_deps)
+	cd $(srcdir) && $(AUTOCONF) && $(SED) -i -e '/gnu_ld/,/;;/ s/--rpath \$${wl}/--rpath,/' $@

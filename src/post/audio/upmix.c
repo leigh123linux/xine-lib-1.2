@@ -24,6 +24,10 @@
  * E.g. Converts Stereo into Surround 5.1
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 
 #include "xine_internal.h"
@@ -181,7 +185,7 @@ static int upmix_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream,
   }
 
   pthread_mutex_lock (&this->lock);
-  this->sub = xine_xmalloc(sizeof(af_sub_t));
+  this->sub = calloc(1, sizeof(af_sub_t));
   if (!this->sub) {
     pthread_mutex_unlock (&this->lock);
     return 0;
@@ -379,7 +383,7 @@ static post_plugin_t *upmix_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target)
 {
-  post_plugin_upmix_t *this  = (post_plugin_upmix_t *)xine_xmalloc(sizeof(post_plugin_upmix_t));
+  post_plugin_upmix_t *this  = calloc(1, sizeof(post_plugin_upmix_t));
   post_in_t            *input;
   post_out_t           *output;
   xine_post_in_t       *input_api;

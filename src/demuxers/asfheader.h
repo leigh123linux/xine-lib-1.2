@@ -320,6 +320,7 @@ struct asf_header_s {
   asf_stream_t           *streams[ASF_MAX_NUM_STREAMS];
   asf_stream_extension_t *stream_extensions[ASF_MAX_NUM_STREAMS];
   uint32_t                bitrates[ASF_MAX_NUM_STREAMS];
+  struct { uint32_t x, y; } aspect_ratios[ASF_MAX_NUM_STREAMS];
 };
 
 struct asf_file_s {
@@ -389,7 +390,7 @@ struct asf_stream_extension_s {
 int asf_find_object_id (GUID *g);
 void asf_get_guid (uint8_t *buffer, GUID *value);
 
-asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len);
+asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len) XINE_MALLOC;
 void asf_header_choose_streams (asf_header_t *header, uint32_t bandwidth,
                                 int *video_id, int *audio_id);
 void asf_header_disable_streams (asf_header_t *header,

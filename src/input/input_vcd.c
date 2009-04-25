@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2000-2006 the xine project
+ * Copyright (C) 2000-2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -84,7 +84,7 @@ typedef struct {
 
   const char            *device;
 
-  char                  *filelist[100];
+  char                 **filelist;
 
   int                    mrls_allocated_entries;
   xine_mrl_t           **mrls;
@@ -92,7 +92,7 @@ typedef struct {
 #if defined (__linux__) || defined(__sun)
   struct cdrom_tochdr    tochdr;
   struct cdrom_tocentry  tocent[100];
-#elif defined (__FreeBSD_kernel__)
+#elif defined (__FreeBSD_kernel__) || defined (__OpenBSD__)
   struct ioc_toc_header  tochdr;
   struct cd_toc_entry    *tocent;
   off_t                  cur_sec;
@@ -117,7 +117,7 @@ typedef struct {
 
   int                    cur_track;
 
-#if defined (__linux__) || defined(__sun) || defined (__FreeBSD_kernel__)
+#if defined (__linux__) || defined(__sun) || defined (__FreeBSD_kernel__) || defined (__OpenBSD__)
   uint8_t                cur_min, cur_sec, cur_frame;
 #endif
 
@@ -177,7 +177,7 @@ static int input_vcd_read_toc (vcd_input_class_t *this, int fd) {
 
   return 0;
 }
-#elif defined (__FreeBSD_kernel__)
+#elif defined (__FreeBSD_kernel__) || defined (__OpenBSD__)
 static int input_vcd_read_toc (vcd_input_class_t *this, int fd) {
 
   struct ioc_read_toc_entry te;
@@ -393,7 +393,7 @@ static off_t vcd_plugin_read (input_plugin_t *this_gen,
   memcpy (buf, data.data, VCDSECTORSIZE); /* FIXME */
   return VCDSECTORSIZE;
 }
-#elif defined (__FreeBSD_kernel__)
+#elif defined (__FreeBSD_kernel__) || defined (__OpenBSD__)
 static off_t vcd_plugin_read (input_plugin_t *this_gen, 
 				char *buf, off_t nlen) {
   vcd_input_plugin_t *this = (vcd_input_plugin_t *) this_gen;
@@ -531,7 +531,7 @@ static buf_element_t *vcd_plugin_read_block (input_plugin_t *this_gen,
   memcpy (buf->mem, data.data, VCDSECTORSIZE); /* FIXME */
   return buf;
 }
-#elif defined (__FreeBSD_kernel__)
+#elif defined (__FreeBSD_kernel__) || defined (__OpenBSD__)
 static buf_element_t *vcd_plugin_read_block (input_plugin_t *this_gen, 
 					     fifo_buffer_t *fifo, off_t nlen) {
   
@@ -690,7 +690,7 @@ static off_t vcd_plugin_seek (input_plugin_t *this_gen,
 
   return offset ; /* FIXME */
 }
-#elif defined (__FreeBSD_kernel__)
+#elif defined (__FreeBSD_kernel__) || defined (__OpenBSD__)
 static off_t vcd_plugin_seek (input_plugin_t *this_gen, 
 				off_t offset, int origin) {
 
@@ -764,7 +764,7 @@ static off_t vcd_plugin_get_length (input_plugin_t *this_gen) {
 
   return (off_t) 0;
 }
-#elif defined (__FreeBSD_kernel__)
+#elif defined (__FreeBSD_kernel__) || defined (__OpenBSD__)
 static off_t vcd_plugin_get_length (input_plugin_t *this_gen) {
   vcd_input_plugin_t *this = (vcd_input_plugin_t *) this_gen;
   off_t len ;
@@ -859,6 +859,10 @@ static int vcd_plugin_open (input_plugin_t *this_gen) {
   this->cur_min   = this->cls->tocent[this->cur_track].cdte_addr.msf.minute;
   this->cur_sec   = this->cls->tocent[this->cur_track].cdte_addr.msf.second;
   this->cur_frame = this->cls->tocent[this->cur_track].cdte_addr.msf.frame;
+#elif defined (__OpenBSD__)
+  this->cur_min   = this->cls->tocent[this->cur_track + 1 - this->cls->tochdr.starting_track].addr.msf.minute;
+  this->cur_sec   = this->cls->tocent[this->cur_track + 1 - this->cls->tochdr.starting_track].addr.msf.second;
+  this->cur_frame = this->cls->tocent[this->cur_track + 1 - this->cls->tochdr.starting_track].addr.msf.frame;
 #elif defined (__FreeBSD_kernel__)
   {
     int bsize = 2352;
@@ -889,7 +893,7 @@ static input_plugin_t *vcd_class_get_instance (input_class_t *cls_gen, xine_stre
     return 0;
   }
     
-  this = (vcd_input_plugin_t *) xine_xmalloc(sizeof(vcd_input_plugin_t));
+  this = calloc(1, sizeof(vcd_input_plugin_t));
 
   this->stream = stream;
   this->mrl    = mrl;
@@ -924,17 +928,26 @@ static const char *vcd_class_get_identifier (input_class_t *this_gen) {
   return "vcdo";
 }
 
+static void vcd_filelist_dispose(vcd_input_class_t *this) {
+  if ( this->filelist == NULL ) return;
+
+  char **entry = this->filelist;
+
+  while(*(entry)) {
+    free(*(entry++));
+  }
+
+  free(this->filelist);
+}
+
 static void vcd_class_dispose (input_class_t *this_gen) {
 
   vcd_input_class_t  *this = (vcd_input_class_t *) this_gen;
-  int                 i;
   config_values_t *config = this->xine->config;
 
   config->unregister_callback(config, "media.vcd.device");
 
-  for (i = 0; i < 100; i++)
-    free (this->filelist[i]);
-
+  vcd_filelist_dispose(this);
   free (this->mrls);
   free (this);
 }
@@ -982,33 +995,19 @@ static xine_mrl_t **vcd_class_get_dir (input_class_t *this_gen, const char *file
   /* printf ("%d tracks\n", this->total_tracks); */
 
   for (i=1; i<this->total_tracks; i++) { /* FIXME: check if track 0 contains valid data */
-    char mrl[1024];
-    
-    memset(&mrl, 0, sizeof (mrl));
-    sprintf(mrl, "vcdo:/%d",i);
-    
     if((i-1) >= this->mrls_allocated_entries) {
       ++this->mrls_allocated_entries;
       /* note: 1 extra pointer for terminating NULL */
       this->mrls = realloc(this->mrls, (this->mrls_allocated_entries+1) * sizeof(xine_mrl_t*));
-      this->mrls[(i-1)] = (xine_mrl_t *) xine_xmalloc(sizeof(xine_mrl_t));
+      this->mrls[(i-1)] = calloc(1, sizeof(xine_mrl_t));
     }
     else {
       memset(this->mrls[(i-1)], 0, sizeof(xine_mrl_t));
     }
     
-    if(this->mrls[(i-1)]->mrl) {
-      this->mrls[(i-1)]->mrl = (char *)
-	realloc(this->mrls[(i-1)]->mrl, strlen(mrl) + 1);
-    }
-    else {
-      this->mrls[(i-1)]->mrl = (char *) xine_xmalloc(strlen(mrl) + 1);
-    }
-    
-    this->mrls[i-1]->origin = NULL;
-    sprintf(this->mrls[i-1]->mrl, "%s", mrl);
-    this->mrls[i-1]->link = NULL;
-    this->mrls[i-1]->type = (0 | mrl_vcd);
+    asprintf(&(this->mrls[i-1]->mrl), "vcdo:/%d", i);
+   
+    this->mrls[i-1]->type = mrl_vcd;
 
     /* hack */
     this->mrls[i-1]->size = vcd_plugin_get_length ((input_plugin_t *) this);
@@ -1055,20 +1054,15 @@ static char ** vcd_class_get_autoplay_list (input_class_t *this_gen, int *num_fi
   fd = -1;
 
   *num_files = this->total_tracks - 1;
-  
+
+  vcd_filelist_dispose(this);
+  this->filelist = calloc(this->total_tracks+1, sizeof(char*));
+
+  /* FIXME: check if track 0 contains valid data */
+  for (i = 1; i < this->total_tracks; i++)
+    asprintf(&this->filelist[i-1], "vcdo:/%d", i);
+
   /* printf ("%d tracks\n", this->total_tracks); */
-
-  for (i = 1; i < this->total_tracks; i++) { /* FIXME: check if track 0 contains valid data */
-
-    if(this->filelist[i - 1] == NULL)
-      this->filelist[i - 1] = (char *) realloc(this->filelist[i - 1], sizeof(char *) * 256);
-
-    sprintf (this->filelist[i - 1], "vcdo:/%d",i);
-    /* printf ("list[%d] : %d %s\n", i, this->filelist[i-1], this->filelist[i-1]);   */
-  }
-
-  this->filelist[i - 1] = (char *) realloc(this->filelist[i-1], sizeof(char *));
-  this->filelist[i - 1] = NULL;
 
   return this->filelist;
 }
@@ -1077,9 +1071,8 @@ static void *init_class (xine_t *xine, void *data) {
 
   vcd_input_class_t  *this;
   config_values_t    *config = xine->config;
-  int                 i;
 
-  this = (vcd_input_class_t *) xine_xmalloc (sizeof (vcd_input_class_t));
+  this = calloc(1, sizeof (vcd_input_class_t));
 
   this->xine   = xine;
 
@@ -1097,13 +1090,9 @@ static void *init_class (xine_t *xine, void *data) {
 					    "you intend to play your VideoCDs with."),
 					  10, device_change_cb, (void *)this);
 
-  this->mrls = (xine_mrl_t **) xine_xmalloc(sizeof(xine_mrl_t*));
+  this->mrls = calloc(1, sizeof(xine_mrl_t*));
   this->mrls_allocated_entries = 0;
 
-  for (i = 0; i < 100; i++) {
-    this->filelist[i]       = (char *) xine_xmalloc(sizeof(char *) * 256);
-  }
-  
   return this;
 }
 

@@ -21,6 +21,10 @@
  * DirectShow support by Miguel Freitas (Nov/2001)
  * DMO support (Dez/2002)
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
                    
 #include <stdlib.h>
 #include <stdio.h>
@@ -1550,7 +1554,7 @@ static video_decoder_t *open_video_decoder_plugin (video_decoder_class_t *class_
 
   w32v_decoder_t *this ;
 
-  this = (w32v_decoder_t *) xine_xmalloc (sizeof (w32v_decoder_t));
+  this = (w32v_decoder_t *) calloc(1, sizeof(w32v_decoder_t));
 
   this->video_decoder.decode_data         = w32v_decode_data;
   this->video_decoder.flush               = w32v_flush;
@@ -1593,7 +1597,7 @@ static void *init_video_decoder_class (xine_t *xine, void *data) {
   cfg = xine->config;
   if ((win32_def_path = get_win32_codecs_path(cfg)) == NULL) return NULL;
 
-  this = (w32v_class_t *) xine_xmalloc (sizeof (w32v_class_t));
+  this = (w32v_class_t *) calloc(1, sizeof(w32v_class_t));
 
   this->decoder_class.open_plugin     = open_video_decoder_plugin;
   this->decoder_class.get_identifier  = get_video_identifier;
@@ -1614,7 +1618,7 @@ static audio_decoder_t *open_audio_decoder_plugin (audio_decoder_class_t *class_
 
   w32a_decoder_t *this ;
 
-  this = (w32a_decoder_t *) xine_xmalloc (sizeof (w32a_decoder_t));
+  this = (w32a_decoder_t *) calloc(1, sizeof(w32a_decoder_t));
 
   this->audio_decoder.decode_data         = w32a_decode_data;
   this->audio_decoder.reset               = w32a_reset;
@@ -1655,7 +1659,7 @@ static void *init_audio_decoder_class (xine_t *xine, void *data) {
   cfg = xine->config;
   if ((win32_def_path = get_win32_codecs_path(cfg)) == NULL) return NULL;
 
-  this = (w32a_class_t *) xine_xmalloc (sizeof (w32a_class_t));
+  this = (w32a_class_t *) calloc(1, sizeof(w32a_class_t));
 
   this->decoder_class.open_plugin     = open_audio_decoder_plugin;
   this->decoder_class.get_identifier  = get_identifier;

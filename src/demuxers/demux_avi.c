@@ -317,6 +317,8 @@ typedef struct {
                                       getIndex==0, but an operation has been
                                       performed that needs an index */
 
+#define AVI_ERR_BAD_SIZE    14     /* A chunk has an invalid size */
+
 #define AVI_HEADER_UNKNOWN  -1
 #define AVI_HEADER_AUDIO     0
 #define AVI_HEADER_VIDEO     1
@@ -719,7 +721,7 @@ static void reset_idx(demux_avi_t *this, avi_t *AVI) {
   }
 }
 
-static avi_t *AVI_init(demux_avi_t *this) {
+static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
 
   avi_t *AVI;
   int i, j, idx_type;
@@ -739,7 +741,7 @@ static avi_t *AVI_init(demux_avi_t *this) {
   /* Create avi_t structure */
   lprintf("start\n");
 
-  AVI = (avi_t *) xine_xmalloc(sizeof(avi_t));
+  AVI = (avi_t *) calloc(1, sizeof(avi_t));
   if(AVI==NULL) {
     this->AVI_errno = AVI_ERR_NO_MEM;
     return 0;
@@ -780,7 +782,7 @@ static avi_t *AVI_init(demux_avi_t *this) {
     lprintf("chunk: %c%c%c%c, size: %" PRId64 "\n",
             data[0], data[1], data[2], data[3], (int64_t)n);
     
-    if((strncasecmp(data,"LIST",4) == 0) && (n >= 4)) {
+    if (n >= 4 && strncasecmp(data,"LIST",4) == 0) {
       if( this->input->read(this->input, data,4) != 4 ) ERR_EXIT(AVI_ERR_READ);
       n -= 4;
       
@@ -790,7 +792,7 @@ static avi_t *AVI_init(demux_avi_t *this) {
       if(strncasecmp(data,"hdrl",4) == 0) {
 
         hdrl_len = n;
-        hdrl_data = (unsigned char *) xine_xmalloc(n);
+        hdrl_data = (unsigned char *) malloc(n);
         if(hdrl_data==0)
           ERR_EXIT(AVI_ERR_NO_MEM);
         if (this->input->read(this->input, hdrl_data,n) != n )
@@ -812,9 +814,8 @@ static avi_t *AVI_init(demux_avi_t *this) {
       break if this is not the case */
 
       AVI->n_idx = AVI->max_idx = n / 16;
-      if (AVI->idx)
-        free(AVI->idx);  /* On the off chance there are multiple index chunks */
-      AVI->idx = (unsigned char((*)[16])) xine_xmalloc(n);
+      free(AVI->idx);  /* On the off chance there are multiple index chunks */
+      AVI->idx = (unsigned char((*)[16])) malloc(n);
       if (AVI->idx == 0)
         ERR_EXIT(AVI_ERR_NO_MEM);
 
@@ -836,6 +837,8 @@ static avi_t *AVI_init(demux_avi_t *this) {
   /* Interpret the header list */
 
   for (i = 0; i < hdrl_len;) {
+    const int old_i = i;
+
     /* List tags are completly ignored */
     lprintf("tag: %c%c%c%c\n",
             hdrl_data[i], hdrl_data[i+1], hdrl_data[i+2], hdrl_data[i+3]);
@@ -877,12 +880,11 @@ static avi_t *AVI_init(demux_avi_t *this) {
                 
       } else if (strncasecmp (hdrl_data+i,"auds",4) ==0 /* && ! auds_strh_seen*/) {
         if(AVI->n_audio < MAX_AUDIO_STREAMS) {
-          avi_audio_t *a = (avi_audio_t *) xine_xmalloc(sizeof(avi_audio_t));
+          avi_audio_t *a = (avi_audio_t *) calloc(1, sizeof(avi_audio_t));
           if(a==NULL) {
             this->AVI_errno = AVI_ERR_NO_MEM;
             return 0;
           }
-          memset((void *)a,0,sizeof(avi_audio_t));
           AVI->audio[AVI->n_audio] = a;
 
           a->audio_strn      = num_stream;
@@ -922,7 +924,7 @@ static avi_t *AVI_init(demux_avi_t *this) {
       if(lasttag == 1) {
         /* lprintf ("size : %d\n",sizeof(AVI->bih)); */
         AVI->bih = (xine_bmiheader *)
-          xine_xmalloc((n < sizeof(xine_bmiheader)) ? sizeof(xine_bmiheader) : n);
+          malloc((n < sizeof(xine_bmiheader)) ? sizeof(xine_bmiheader) : n);
         if(AVI->bih == NULL) {
           this->AVI_errno = AVI_ERR_NO_MEM;
           return 0;
@@ -973,6 +975,10 @@ static avi_t *AVI_init(demux_avi_t *this) {
         xine_waveformatex *wavex;
         
         wavex = (xine_waveformatex *)malloc(n);
+        if (!wavex) {
+          this->AVI_errno = AVI_ERR_NO_MEM;
+          return 0;
+        }
         memcpy((void *)wavex, hdrl_data+i, n);
         _x_waveformatex_le2me( wavex );
 
@@ -1079,6 +1085,8 @@ static avi_t *AVI_init(demux_avi_t *this) {
       lasttag = 0;
     }
     i += n;
+    if (i <= old_i)
+      ERR_EXIT(AVI_ERR_BAD_SIZE);
   }
 
   if( hdrl_data )
@@ -1237,6 +1245,9 @@ static avi_t *AVI_init(demux_avi_t *this) {
           /* read from file */
           chunk_start = en = malloc (AVI->video_superindex->aIndex[j].dwSize+hdrl_len);
 
+          if (!chunk_start)
+             ERR_EXIT(AVI_ERR_NO_MEM);
+
           if (this->input->seek(this->input, AVI->video_superindex->aIndex[j].qwOffset, SEEK_SET) == (off_t)-1) {
              lprintf("cannot seek to 0x%" PRIx64 "\n", AVI->video_superindex->aIndex[j].qwOffset);
              free(chunk_start);
@@ -1307,6 +1318,9 @@ static avi_t *AVI_init(demux_avi_t *this) {
 
           /* read from file */
           chunk_start = en = malloc (audio->audio_superindex->aIndex[j].dwSize+hdrl_len);
+
+          if (!chunk_start)
+            ERR_EXIT(AVI_ERR_NO_MEM);
 
           if (this->input->seek(this->input, audio->audio_superindex->aIndex[j].qwOffset, SEEK_SET) == (off_t)-1) {
             lprintf("cannot seek to 0x%" PRIx64 "\n", audio->audio_superindex->aIndex[j].qwOffset);
@@ -2271,7 +2285,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
-  this         = xine_xmalloc (sizeof (demux_avi_t));
+  this         = calloc(1, sizeof(demux_avi_t));
 
   this->stream = stream;
   this->input  = input;
@@ -2337,7 +2351,7 @@ static void class_dispose (demux_class_t *this_gen) {
 static void *init_class (xine_t *xine, void *data) {
   demux_avi_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_avi_class_t));
+  this = calloc(1, sizeof(demux_avi_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

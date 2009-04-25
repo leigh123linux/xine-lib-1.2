@@ -70,6 +70,7 @@
 #define ASF_MODE_HTTP_REF          2
 #define ASF_MODE_ASF_REF           3
 #define ASF_MODE_ENCRYPTED_CONTENT 4
+#define ASF_MODE_NO_CONTENT        5
 
 typedef struct {
   int                 seq;
@@ -351,6 +352,14 @@ static void asf_send_video_header (demux_asf_t *this, int stream) {
                          BUF_FLAG_FRAME_END;
   
   buf->decoder_info[0] = 0;
+
+  if (this->asf_header->aspect_ratios[stream].x && this->asf_header->aspect_ratios[stream].y)
+  {
+    buf->decoder_flags  |= BUF_FLAG_ASPECT;
+    buf->decoder_info[1] = bih->biWidth  * this->asf_header->aspect_ratios[stream].x;
+    buf->decoder_info[2] = bih->biHeight * this->asf_header->aspect_ratios[stream].y;
+  }
+
   buf->size = asf_stream->private_data_length - 11;
   memcpy (buf->content, bih, buf->size);
   buf->type = this->streams[stream].buf_type;
@@ -379,10 +388,21 @@ static int asf_read_header (demux_asf_t *this) {
   char *asf_header_buffer = NULL;
 
   asf_header_len = get_le64(this);
-  asf_header_buffer = alloca(asf_header_len);
+  if (asf_header_len > 4 * 1024 * 1024)
+  {
+    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+	    "demux_asf: asf_read_header: overly-large header? (%"PRIu64" bytes)\n",
+	    asf_header_len);
+    return 0;
+  }
+
+  asf_header_buffer = malloc (asf_header_len);
 
   if (this->input->read (this->input, asf_header_buffer, asf_header_len) != asf_header_len)
+  {
+    free (asf_header_buffer);
     return 0;
+  }
 
   /* delete previous header */
   if (this->asf_header) {
@@ -395,7 +415,11 @@ static int asf_read_header (demux_asf_t *this) {
    */
   this->asf_header = asf_header_new(asf_header_buffer, asf_header_len);
   if (!this->asf_header)
+  {
+    free (asf_header_buffer);
     return 0;
+  }
+  free (asf_header_buffer);
 
   lprintf("asf header parsing ok\n");
 
@@ -419,6 +443,17 @@ static int asf_read_header (demux_asf_t *this) {
   for (i = 0; i < this->asf_header->stream_count; i++) {
     asf_stream_t *asf_stream = this->asf_header->streams[i];
     asf_demux_stream_t *demux_stream = &this->streams[i];
+
+    if (!asf_stream) {
+      if (this->mode != ASF_MODE_NO_CONTENT) {
+	xine_log(this->stream->xine, XINE_LOG_MSG,
+		 _("demux_asf: warning: A stream appears to be missing.\n"));
+	_x_message(this->stream, XINE_MSG_READ_ERROR,
+		   _("Media stream missing?"), NULL);
+	this->mode = ASF_MODE_NO_CONTENT;
+      }
+      return 0;
+    }
 
     if (asf_stream->encrypted_flag) {
       if (this->mode != ASF_MODE_ENCRYPTED_CONTENT) {
@@ -703,7 +738,10 @@ static void asf_send_buffer_nodefrag (demux_asf_t *this, asf_demux_stream_t *str
       bufsize = stream->fifo->buffer_pool_buf_size;
 
     buf = stream->fifo->buffer_pool_alloc (stream->fifo);
-    this->input->read (this->input, buf->content, bufsize);
+    if (this->input->read (this->input, buf->content, bufsize) != bufsize) {
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_asf: input buffer starved\n");
+      return ;
+    }
 
     lprintf ("data: %d %d %d %d\n", buf->content[0], buf->content[1], buf->content[2], buf->content[3]);
 
@@ -723,6 +761,9 @@ static void asf_send_buffer_nodefrag (demux_asf_t *this, asf_demux_stream_t *str
     buf->size       = bufsize;
     timestamp       = 0;
 
+    if (stream->frag_offset == 0)
+      buf->decoder_flags |= BUF_FLAG_FRAME_START;
+
     stream->frag_offset += bufsize;
     frag_len -= bufsize;
 
@@ -733,10 +774,6 @@ static void asf_send_buffer_nodefrag (demux_asf_t *this, asf_demux_stream_t *str
     else
       check_newpts (this, buf->pts, PTS_AUDIO, package_done);
 
-      
-    if (frag_offset == 0)
-      buf->decoder_flags |= BUF_FLAG_FRAME_START;
-      
     /* test if whole packet read */
     if (package_done) {
       buf->decoder_flags |= BUF_FLAG_FRAME_END;
@@ -783,7 +820,10 @@ static void asf_send_buffer_defrag (demux_asf_t *this, asf_demux_stream_t *strea
   if( stream->frag_offset + frag_len > DEFRAG_BUFSIZE ) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_asf: buffer overflow on defrag!\n");
   } else {
-    this->input->read (this->input, &stream->buffer[stream->frag_offset], frag_len);
+    if (this->input->read (this->input, &stream->buffer[stream->frag_offset], frag_len) != frag_len) {
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_asf: input buffer starved\n");
+      return ;
+    }
     stream->frag_offset += frag_len;
   }
 
@@ -1657,6 +1697,7 @@ static int demux_asf_send_chunk (demux_plugin_t *this_gen) {
       return demux_asf_parse_asf_references(this);
 
     case ASF_MODE_ENCRYPTED_CONTENT:
+    case ASF_MODE_NO_CONTENT:
       this->status = DEMUX_FINISHED;
       return this->status;
 
@@ -2059,7 +2100,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
     return NULL;
   }
 
-  this         = xine_xmalloc (sizeof (demux_asf_t));
+  this         = calloc(1, sizeof(demux_asf_t));
   this->stream = stream;
   this->input  = input;
 
@@ -2134,7 +2175,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   demux_asf_class_t     *this;
 
-  this         = xine_xmalloc (sizeof (demux_asf_class_t));
+  this         = calloc(1, sizeof(demux_asf_class_t));
   this->config = xine->config;
   this->xine   = xine;
 

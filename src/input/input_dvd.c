@@ -115,6 +115,9 @@
 /* There really isn't a default on Windows! */
 #define DVD_PATH "d:\\"
 #define RDVD_PATH "d:\\"
+#elif defined(__OpenBSD__)
+#define DVD_PATH "/dev/rcd0c"
+#define RDVD_PATH "/dev/rcd0c"
 #else
 #define DVD_PATH "/dev/dvd"
 #define RDVD_PATH "/dev/rdvd"
@@ -352,11 +355,14 @@ static void send_mouse_enter_leave_event(dvd_input_plugin_t *this, int direction
 }
  
 static int update_title_display(dvd_input_plugin_t *this) {
-  char ui_title[MAX_STR_LEN + 1];
-  xine_event_t uevent;
   xine_ui_data_t data;
+  xine_event_t uevent = {
+    .type = XINE_EVENT_UI_SET_TITLE,
+    .stream = this->stream,
+    .data = &data,
+    .data_length = sizeof(data)
+  };
   int tt=-1, pr=-1;
-  size_t ui_str_length=0;
   int num_tt = 0;
 
   if(!this || !(this->stream)) 
@@ -386,15 +392,15 @@ static int update_title_display(dvd_input_plugin_t *this) {
     dvdnav_get_number_of_parts(this->dvdnav, tt, &num_part);
     dvdnav_get_angle_info(this->dvdnav, &cur_angle, &num_angle);
     if(num_angle > 1) {
-      snprintf(ui_title, MAX_STR_LEN,
-               "Title %i, Chapter %i, Angle %i of %i",
-               tt,pr,cur_angle, num_angle); 
+      data.str_len = snprintf(data.str, sizeof(data.str),
+			       "Title %i, Chapter %i, Angle %i of %i",
+			       tt,pr,cur_angle, num_angle); 
        _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_ANGLE_NUMBER,cur_angle);
        _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_ANGLE_COUNT,num_angle);
     } else {
-      snprintf(ui_title, MAX_STR_LEN, 
-	       "Title %i, Chapter %i",
-	       tt,pr);
+      data.str_len = snprintf(data.str, sizeof(data.str), 
+			       "Title %i, Chapter %i",
+			       tt,pr);
        _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_ANGLE_NUMBER,0);
        _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_ANGLE_COUNT,0);
     }
@@ -403,9 +409,9 @@ static int update_title_display(dvd_input_plugin_t *this) {
     _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_CHAPTER_NUMBER,pr);
     _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_CHAPTER_COUNT,num_part);
   } else if (tt == 0 && dvdnav_menu_table[pr]) {
-    snprintf(ui_title, MAX_STR_LEN,
-             "DVD %s Menu",
-             dvdnav_menu_table[pr]);
+    data.str_len = snprintf(data.str, sizeof(data.str),
+			     "DVD %s Menu",
+			     dvdnav_menu_table[pr]);
      _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_TITLE_NUMBER,tt);
      _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_TITLE_COUNT,num_tt);
      _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_CHAPTER_NUMBER,0);
@@ -413,7 +419,8 @@ static int update_title_display(dvd_input_plugin_t *this) {
      _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_ANGLE_NUMBER,0);
      _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_ANGLE_COUNT,0);
   } else {
-    strcpy(ui_title, "DVD Menu");
+    strcpy(data.str, "DVD Menu");
+    data.str_len = strlen(data.str);
     _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_TITLE_NUMBER,0);
     _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_TITLE_COUNT,num_tt);
     _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_CHAPTER_NUMBER,0);
@@ -421,22 +428,15 @@ static int update_title_display(dvd_input_plugin_t *this) {
     _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_ANGLE_NUMBER,0);
     _x_stream_info_set(this->stream,XINE_STREAM_INFO_DVD_ANGLE_COUNT,0);
   }
-  ui_str_length = strlen(ui_title);
   
   if (this->dvd_name && this->dvd_name[0] &&
-      (ui_str_length + strlen(this->dvd_name) < MAX_STR_LEN)) {
-    snprintf(ui_title+ui_str_length, MAX_STR_LEN - ui_str_length, 
-	     ", %s", this->dvd_name);
+      (data.str_len + strlen(this->dvd_name) < sizeof(data.str))) {
+    data.str_len += snprintf(data.str+data.str_len, sizeof(data.str) - data.str_len, 
+			      ", %s", this->dvd_name);
   }
 #ifdef INPUT_DEBUG
-  printf("input_dvd: Changing title to read '%s'\n", ui_title);
+  printf("input_dvd: Changing title to read '%s'\n", data.str);
 #endif
-  uevent.type = XINE_EVENT_UI_SET_TITLE;
-  uevent.stream = this->stream;
-  uevent.data = &data;
-  uevent.data_length = sizeof(data);;
-  memcpy(data.str, ui_title, strlen(ui_title) + 1);
-  data.str_len = strlen(ui_title) + 1;
   xine_event_send(this->stream, &uevent);
 
   return 1;
@@ -852,6 +852,9 @@ static buf_element_t *dvd_plugin_read_block (input_plugin_t *this_gen,
 
 static off_t dvd_plugin_read (input_plugin_t *this_gen, char *ch_buf, off_t len) {
 /*  dvd_input_plugin_t *this = (dvd_input_plugin_t*)this_gen; */
+
+  if (len < 4)
+    return -1;
 
   /* FIXME: Tricking the demux_mpeg_block plugin */
   ch_buf[0] = 0;
@@ -1313,7 +1316,7 @@ static int dvd_plugin_get_optional_data (input_plugin_t *this_gen,
     if(this && this->stream && this->dvdnav) {
 
       if(!(dvdnav_is_domain_vts(this->dvdnav))) {
-	sprintf(data, "%s", "menu");
+	strcpy(data, "menu");
 	if (channel <= 0)
 	  return INPUT_OPTIONAL_SUCCESS;
 	else
@@ -1336,7 +1339,7 @@ static int dvd_plugin_get_optional_data (input_plugin_t *this_gen,
 	return INPUT_OPTIONAL_SUCCESS;
       } else {
 	if(channel == -1) {
-	  sprintf(data, "%s", "none");
+	  strcpy(data, "none");
 	  return INPUT_OPTIONAL_SUCCESS;
 	}
       }
@@ -1369,10 +1372,7 @@ check_solaris_vold_device(dvd_input_class_t *this)
       (volume_action = getenv("VOLUME_ACTION")) != NULL &&
       strcmp(volume_action, "insert") == 0) {
 
-    device = malloc(strlen(volume_device) + strlen(volume_name) + 2);
-    if (device == NULL)
-      return;
-    sprintf(device, "%s/%s", volume_device, volume_name);
+    asprintf(&device, "%s/%s", volume_device, volume_name);
     if (stat(device, &stb) != 0 || !S_ISCHR(stb.st_mode)) {
       free(device);
       return;
@@ -1625,14 +1625,14 @@ static input_plugin_t *dvd_class_get_instance (input_class_t *class_gen, xine_st
   if (strncasecmp (data, handled_mrl, strlen(handled_mrl) ) != 0)
     return NULL;
 
-  this = (dvd_input_plugin_t *) xine_xmalloc (sizeof (dvd_input_plugin_t));
+  this = calloc(1, sizeof (dvd_input_plugin_t));
   if (!this) {
     return NULL;
   }
 
   this->mem_stack     = 0;
   this->mem_stack_max = 1024;
-  this->mem           = xine_xmalloc(sizeof(unsigned char *) * this->mem_stack_max);
+  this->mem           = calloc(this->mem_stack_max, sizeof(unsigned char *));
   if (!this->mem) {
     free(this);
     return NULL;
@@ -1758,7 +1758,7 @@ static void *init_class (xine_t *xine, void *data) {
   printf("input_dvd.c: config = %p\n", config);
 #endif
 
-  this = (dvd_input_class_t *) xine_xmalloc (sizeof (dvd_input_class_t));
+  this = (dvd_input_class_t *) calloc(1, sizeof (dvd_input_class_t));
   if (!this)
     return NULL;
   
@@ -1820,8 +1820,7 @@ static void *init_class (xine_t *xine, void *data) {
 				   "playing scrambled DVDs."), 20, NULL, NULL);
     xine_setenv("DVDCSS_METHOD", decrypt_modes[mode], 0);
     
-    css_cache_default = (char *)malloc(strlen(xine_get_homedir()) + 10);
-    sprintf(css_cache_default, "%s/.dvdcss/", xine_get_homedir());
+    asprintf(&css_cache_default, "%s/.dvdcss/", xine_get_homedir());
     css_cache = config->register_filename(config, "media.dvd.css_cache_path", css_cache_default, XINE_CONFIG_STRING_IS_DIRECTORY_NAME,
 					_("path to the title key cache"),
 					_("Since cracking the copy protection of scrambled DVDs can "

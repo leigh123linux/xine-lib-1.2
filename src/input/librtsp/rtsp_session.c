@@ -20,6 +20,10 @@
  * high level interface to rtsp servers.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -78,7 +82,7 @@ const char *rtsp_bandwidth_strs[]={"14.4 Kbps (Modem)", "19.2 Kbps (Modem)",
 
 rtsp_session_t *rtsp_session_start(xine_stream_t *stream, char *mrl) {
 
-  rtsp_session_t *rtsp_session = xine_xmalloc(sizeof(rtsp_session_t));
+  rtsp_session_t *rtsp_session = calloc(1, sizeof(rtsp_session_t));
   xine_t *xine = stream->xine;
   char *server;
   char *mrl_line=strdup(mrl);
@@ -148,6 +152,11 @@ connect:
 	
 	  rtsp_session->header_left = 
     rtsp_session->header_len  = rmff_dump_header(h,rtsp_session->header,HEADER_SIZE);
+    if (rtsp_session->header_len < 0) {
+      xprintf (stream->xine, XINE_VERBOSITY_LOG,
+	       _("rtsp_session: rtsp server returned overly-large headers, session can not be established.\n"));
+      goto session_abort;
+    }
 
     xine_buffer_copyin(rtsp_session->recv, 0, rtsp_session->header, rtsp_session->header_len);
     rtsp_session->recv_size = rtsp_session->header_len;
@@ -157,6 +166,7 @@ connect:
   {
     xprintf(stream->xine, XINE_VERBOSITY_LOG,
 	    _("rtsp_session: rtsp server type '%s' not supported yet. sorry.\n"), server);
+    session_abort:
     rtsp_close(rtsp_session->s);
     free(server);
     xine_buffer_free(rtsp_session->recv);

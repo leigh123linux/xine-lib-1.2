@@ -6,7 +6,8 @@ endif
 
 include_HEADERS = xine.h
 
-noinst_HEADERS = config.h configure.h
+noinst_HEADERS = config.h
+nodist_noinst_HEADERS = configure.h
 
 CONFIG_CLEAN_FILES = xine.h $(inttypes_h)
 

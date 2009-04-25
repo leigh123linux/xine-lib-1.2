@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <config.h>
+#include "config.h"
 
 #ifdef HAVE_MAD_H
 #include <mad.h>
@@ -47,6 +47,20 @@
 #endif
 
 #define INPUT_BUF_SIZE  16384
+
+/* According to Rob Leslie (libmad author) :
+ * The absolute theoretical maximum frame size is 2881 bytes: MPEG 2.5 Layer II,
+ * 8000 Hz @ 160 kbps, with a padding slot. (Such a frame is unlikely, but it was
+ * a useful exercise to compute all possible frame sizes.) Add to this an 8 byte
+ * MAD_BUFFER_GUARD, and the minimum buffer size you should be streaming to
+ * libmad in the general case is 2889 bytes.
+
+ * Theoretical frame sizes for Layer III range from 24 to 1441 bytes, but there
+ * is a "soft" limit imposed by the standard of 960 bytes. Nonetheless MAD can
+ * decode frames of any size as long as they fit entirely in the buffer you pass,
+ * not including the MAD_BUFFER_GUARD bytes.
+ */
+#define MAD_MIN_SIZE 2889
 
 typedef struct {
   audio_decoder_class_t   decoder_class;
@@ -101,7 +115,7 @@ static void mad_reset (audio_decoder_t *this_gen) {
 static void mad_discontinuity (audio_decoder_t *this_gen) {
 
   mad_decoder_t *this = (mad_decoder_t *) this_gen;
-
+  
   this->pts = 0;
 }
 
@@ -141,16 +155,17 @@ static int head_check(mad_decoder_t *this) {
 static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
   mad_decoder_t *this = (mad_decoder_t *) this_gen;
+  int bytes_in_buffer_at_pts;
 
-  lprintf ("decode data, decoder_flags: 0x%08X\n", buf->decoder_flags);
-  
+  lprintf ("decode data, size: %d, decoder_flags: %d\n", buf->size, buf->decoder_flags);
+
   if (buf->size>(INPUT_BUF_SIZE-this->bytes_in_buffer)) {
     xprintf (this->xstream->xine, XINE_VERBOSITY_DEBUG,
 	     "libmad: ALERT input buffer too small (%d bytes, %d avail)!\n",
 	     buf->size, INPUT_BUF_SIZE-this->bytes_in_buffer);
     buf->size = INPUT_BUF_SIZE-this->bytes_in_buffer;
   }
-
+  
   if ((buf->decoder_flags & BUF_FLAG_HEADER) == 0) {
 
     /* reset decoder on leaving preview mode */
@@ -162,6 +177,8 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       this->preview_mode = 1;
     }
 
+    bytes_in_buffer_at_pts = this->bytes_in_buffer;
+
     xine_fast_memcpy (&this->buffer[this->bytes_in_buffer], 
                         buf->content, buf->size);
     this->bytes_in_buffer += buf->size;
@@ -172,6 +189,9 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
     mad_stream_buffer (&this->stream, this->buffer, 
 		       this->bytes_in_buffer);
+
+    if (this->bytes_in_buffer < MAD_MIN_SIZE)
+      return;
 
     if (!this->needs_more_data) {
       this->pts = buf->pts;
@@ -206,6 +226,7 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	  return;
 
 	default: 
+	  lprintf ("error 0x%04X, mad_stream_buffer %d bytes\n", this->stream.error, this->bytes_in_buffer);
 	  mad_stream_buffer (&this->stream, this->buffer, 
 			     this->bytes_in_buffer);
 	}
@@ -266,13 +287,14 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	mad_synth_frame (&this->synth, &this->frame);
 
 	if ( (buf->decoder_flags & BUF_FLAG_PREVIEW) == 0 ) {
- 
+        
 	  unsigned int         nchannels, nsamples;
 	  mad_fixed_t const   *left_ch, *right_ch;
 	  struct mad_pcm      *pcm = &this->synth.pcm;
 	  audio_buffer_t      *audio_buffer;
 	  uint16_t            *output;
-
+          int                  bitrate;
+          int                  pts_offset;
 
 	  audio_buffer = this->xstream->audio_out->get_buffer (this->xstream->audio_out);
 	  output = audio_buffer->mem;
@@ -281,7 +303,7 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	  nsamples  = pcm->length;
 	  left_ch   = pcm->samples[0];
 	  right_ch  = pcm->samples[1];
- 
+
 	  /* padding */
 	  if (this->start_padding || this->end_padding) {
 	    /* check padding validity */
@@ -298,7 +320,7 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	  }
 	  audio_buffer->num_frames = nsamples;
 	  audio_buffer->vpts       = this->pts;
-	
+
 	  while (nsamples--) {
 	    /* output sample(s) in 16-bit signed little-endian PCM */
 	    
@@ -309,8 +331,24 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
 	  }
 
+	  audio_buffer->num_frames = pcm->length;
 
-	  lprintf ("audio_out->put_buffer, samples=%d, pts=%"PRId64"\n", audio_buffer->num_frames, audio_buffer->vpts);
+          /* pts computing */
+          if (this->frame.header.bitrate > 0) {
+            bitrate = this->frame.header.bitrate;
+          } else {
+            bitrate = _x_stream_info_get(this->xstream, XINE_STREAM_INFO_AUDIO_BITRATE);
+            lprintf("offset %d bps\n", bitrate);
+          }
+          audio_buffer->vpts = buf->pts;
+          if (audio_buffer->vpts && (bitrate > 0)) {
+            pts_offset = (bytes_in_buffer_at_pts * 8 * 90) / (bitrate / 1000);
+            lprintf("pts: %"PRId64", offset: %d pts, %d bytes\n", buf->pts, pts_offset, bytes_in_buffer_at_pts);
+            if (audio_buffer->vpts < pts_offset)
+              pts_offset = audio_buffer->vpts;
+            audio_buffer->vpts -= pts_offset;
+          }
+
 	  this->xstream->audio_out->put_buffer (this->xstream->audio_out, audio_buffer, this->xstream);
 
 	  this->pts = buf->pts;
@@ -351,7 +389,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   mad_decoder_t *this ;
 
-  this = (mad_decoder_t *) xine_xmalloc (sizeof (mad_decoder_t));
+  this = (mad_decoder_t *) calloc(1, sizeof(mad_decoder_t));
 
   this->audio_decoder.decode_data         = mad_decode_data;
   this->audio_decoder.reset               = mad_reset;
@@ -395,7 +433,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   mad_class_t *this;
   
-  this = (mad_class_t *) xine_xmalloc (sizeof (mad_class_t));
+  this = (mad_class_t *) calloc(1, sizeof(mad_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;
@@ -411,7 +449,7 @@ static uint32_t audio_types[] = {
 
 static const decoder_info_t dec_info_audio = {
   audio_types,         /* supported types */
-  7                    /* priority        */
+  8                    /* priority        */
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {

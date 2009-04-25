@@ -37,6 +37,14 @@
 
 #define XVMC_THREAD_SAFE
 
+/*
+ * some implementations are not aware of the display having been locked
+ * already before calling the xvmc function and may therefore deadlock.
+ */
+/*
+#define XVMC_LOCKDISPLAY_SAFE
+*/
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -171,7 +179,7 @@ typedef struct context_lock_s {
     return;							\
   }
 
-#ifdef XVMC_THREAD_SAFE
+#if defined(XVMC_THREAD_SAFE) && defined(XVMC_LOCKDISPLAY_SAFE)
 #define XVMCLOCKDISPLAY(display) 	  
 #define XVMCUNLOCKDISPLAY(display) 
 #else

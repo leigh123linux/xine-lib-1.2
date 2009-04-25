@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2004 the xine project
+ * Copyright (C) 2000-2004, 2008 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -70,6 +70,7 @@
 #include "xineutils.h"
 #include "vo_scale.h"
 #include "x11osd.h"
+#include "xv_common.h"
 
 #define LOCK_DISPLAY(this) {if(this->lock_display) this->lock_display(this->user_data); \
                             else XLockDisplay(this->display);}
@@ -142,6 +143,8 @@ struct xv_driver_s {
   int                use_colorkey;
   uint32_t           colorkey;
 
+  int                sync_is_vsync;
+
   /* hold initial port attributes values to restore on exit */
   xine_list_t       *port_attributes;
 
@@ -167,6 +170,10 @@ typedef struct {
 } xv_class_t;
 
 static int gX11Fail;
+
+VIDEO_DEVICE_XV_DECL_BICUBIC_TYPES;
+VIDEO_DEVICE_XV_DECL_PREFER_TYPES;
+VIDEO_DEVICE_XV_DECL_SYNC_ATOMS;
 
 static uint32_t xv_get_capabilities (vo_driver_t *this_gen) {
   xv_driver_t *this = (xv_driver_t *) this_gen;
@@ -208,7 +215,7 @@ static vo_frame_t *xv_alloc_frame (vo_driver_t *this_gen) {
   /* xv_driver_t  *this = (xv_driver_t *) this_gen; */
   xv_frame_t   *frame ;
 
-  frame = (xv_frame_t *) xine_xmalloc (sizeof (xv_frame_t));
+  frame = (xv_frame_t *) calloc(1, sizeof(xv_frame_t));
   if (!frame)
     return NULL;
   
@@ -521,7 +528,7 @@ static void xv_deinterlace_frame (xv_driver_t *this) {
     for( i = 0; i < VO_NUM_RECENT_FRAMES; i++ )
       if( this->recent_frames[i] && this->recent_frames[i]->width == frame->width &&
           this->recent_frames[i]->height == frame->height )
-        recent_bitmaps[i] = this->recent_frames[i]->image->data + frame->width*frame->height;
+        recent_bitmaps[i] = this->recent_frames[i]->image->data + this->deinterlace_frame.image->width*frame->height;
       else
         recent_bitmaps[i] = NULL;
 
@@ -851,8 +858,8 @@ static void xv_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
   if( factor > 1 )
   {
-    lprintf( "%s PutImage %dX interval (%fs)\n",
-        log_line_prefix(), factor, elapse_time );
+    lprintf( "%s PutImage %dX interval (%fs)\n", 
+             LOG_MODULE, factor, elapse_time );
   }
   }
 
@@ -1090,7 +1097,7 @@ static int xv_gui_data_exchange (vo_driver_t *this_gen,
   return 0;
 }
 
-static void xv_store_port_attribute(xv_driver_t *this, char *name) {
+static void xv_store_port_attribute(xv_driver_t *this, const char *name) {
   Atom                 atom;
   xv_portattribute_t  *attr;
   
@@ -1190,14 +1197,13 @@ static int xv_check_yv12 (Display *display, XvPortID port) {
 
 /* called xlocked */
 static void xv_check_capability (xv_driver_t *this,
-				 int property, XvAttribute attr,
-				 int base_id,
+				 int property, XvAttribute attr, int base_id,
 				 char *config_name,
 				 char *config_desc,
 				 char *config_help) {
   int          int_default;
   cfg_entry_t *entry;
-  char        *str_prop = attr.name;
+  const char  *str_prop = attr.name;
    
   /*
    * some Xv drivers (Gatos ATI) report some ~0 as max values, this is confusing.
@@ -1267,42 +1273,90 @@ static void xv_update_deinterlace(void *this_gen, xine_cfg_entry_t *entry) {
   this->deinterlace_method = entry->num_value;
 }
 
-static void xv_update_XV_FILTER(void *this_gen, xine_cfg_entry_t *entry) {
+static void xv_update_attr (void *this_gen, xine_cfg_entry_t *entry,
+			    const char *atomstr, const char *debugstr)
+{
   xv_driver_t *this = (xv_driver_t *) this_gen;
   Atom atom;
-  int xv_filter;
-
-  xv_filter = entry->num_value;
 
   LOCK_DISPLAY(this);
-  atom = XInternAtom (this->display, "XV_FILTER", False);
-  XvSetPortAttribute (this->display, this->xv_port, atom, xv_filter);
+  atom = XInternAtom (this->display, atomstr, False);
+  XvSetPortAttribute (this->display, this->xv_port, atom, entry->num_value);
   UNLOCK_DISPLAY(this);
 
   xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-	  "video_out_xv: bilinear scaling mode (XV_FILTER) = %d\n",xv_filter);
+	  LOG_MODULE ": %s = %d\n", debugstr, entry->num_value);
+}
+
+static void xv_update_XV_FILTER(void *this_gen, xine_cfg_entry_t *entry) {
+  xv_update_attr (this_gen, entry, "XV_FILTER", "bilinear scaling mode");
 }
 
 static void xv_update_XV_DOUBLE_BUFFER(void *this_gen, xine_cfg_entry_t *entry) {
-  xv_driver_t *this = (xv_driver_t *) this_gen;
-  Atom         atom;
-  int          xv_double_buffer;
+  xv_update_attr (this_gen, entry, "XV_DOUBLE_BUFFER", "double buffering mode");
+}
 
-  xv_double_buffer = entry->num_value;
+static void xv_update_XV_SYNC_TO_VBLANK(void *this_gen, xine_cfg_entry_t *entry) {
+  xv_update_attr (this_gen, entry,
+		  sync_atoms[((xv_driver_t *)this_gen)->sync_is_vsync],
+		  "sync to vblank");
+}
 
-  LOCK_DISPLAY(this);
-  atom = XInternAtom (this->display, "XV_DOUBLE_BUFFER", False);
-  XvSetPortAttribute (this->display, this->xv_port, atom, xv_double_buffer);
-  UNLOCK_DISPLAY(this);
-
-  xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-	  "video_out_xv: double buffering mode = %d\n", xv_double_buffer);
+static void xv_update_XV_BICUBIC(void *this_gen, xine_cfg_entry_t *entry)
+{
+  xv_update_attr (this_gen, entry, "XV_BICUBIC", "bicubic filtering mode");
 }
 
 static void xv_update_xv_pitch_alignment(void *this_gen, xine_cfg_entry_t *entry) {
   xv_driver_t *this = (xv_driver_t *) this_gen;
 
   this->use_pitch_alignment = entry->num_value;
+}
+
+static int xv_open_port (xv_driver_t *this, XvPortID port) {
+  int ret;
+  x11_InstallXErrorHandler (this);
+  ret = ! xv_check_yv12(this->display, port)
+    && XvGrabPort(this->display, port, 0) == Success;
+  x11_DeInstallXErrorHandler (this);
+  return ret;
+}
+
+static unsigned int
+xv_find_adaptor_by_port (int port, unsigned int adaptors,
+			 XvAdaptorInfo *adaptor_info)
+{
+  unsigned int an;
+  for (an = 0; an < adaptors; an++)
+    if (adaptor_info[an].type & XvImageMask)
+      if (port >= adaptor_info[an].base_id &&
+	  port < adaptor_info[an].base_id + adaptor_info[an].num_ports)
+	return an;
+  return 0; /* shouldn't happen */
+}
+
+static XvPortID xv_autodetect_port(xv_driver_t *this,
+				   unsigned int adaptors,
+				   XvAdaptorInfo *adaptor_info,
+				   unsigned int *adaptor_num,
+				   XvPortID base,
+				   xv_prefertype prefer_type)
+{
+  unsigned int an, j;
+
+  for (an = 0; an < adaptors; an++)
+    if (adaptor_info[an].type & XvImageMask &&
+        (prefer_type == xv_prefer_none ||
+         strcasestr (adaptor_info[an].name, prefer_substrings[prefer_type])))
+      for (j = 0; j < adaptor_info[an].num_ports; j++) {
+	XvPortID port = adaptor_info[an].base_id + j;
+	if (port >= base && xv_open_port(this, port)) {
+	  *adaptor_num = an;
+	  return port;
+	}
+      }
+
+  return 0;
 }
 
 /* expects XINE_VISUAL_TYPE_X11_2 with configurable locking */
@@ -1317,14 +1371,15 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
   x11_visual_t         *visual = (x11_visual_t *) visual_gen;
   XColor                dummy;
   XvImage              *myimage;
-  unsigned int          adaptors, j;
+  unsigned int          adaptors;
   unsigned int          ver,rel,req,ev,err;
   XShmSegmentInfo       myshminfo;
   XvPortID              xv_port;
   XvAdaptorInfo        *adaptor_info;
   unsigned int          adaptor_num;
+  xv_prefertype		prefer_type;
 
-  this = (xv_driver_t *) xine_xmalloc (sizeof (xv_driver_t));
+  this = (xv_driver_t *) calloc(1, sizeof(xv_driver_t));
   if (!this)
     return NULL;
 
@@ -1360,24 +1415,31 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
     return NULL;
   }
 
-  xv_port = 0;
+  xv_port = config->register_num (config, "video.device.xv_port", 0,
+				  VIDEO_DEVICE_XV_PORT_HELP,
+				  20, NULL, NULL);
+  prefer_type = config->register_enum (config, "video.device.xv_preferred_method", 0,
+				       prefer_labels, VIDEO_DEVICE_XV_PREFER_TYPE_HELP,
+				       10, NULL, NULL);
 
-  for ( adaptor_num = 0; (adaptor_num < adaptors) && !xv_port; adaptor_num++ ) {
-
-    if (adaptor_info[adaptor_num].type & XvImageMask) {
-
-      for (j = 0; j < adaptor_info[adaptor_num].num_ports && !xv_port; j++)
-        if (( !(xv_check_yv12 (this->display,
-			       adaptor_info[adaptor_num].base_id + j)))
-            && (XvGrabPort (this->display,
-			    adaptor_info[adaptor_num].base_id + j,
-			    0) == Success)) {
-          xv_port = adaptor_info[adaptor_num].base_id + j;
-        }
-      
-      if( xv_port )
-        break;
-    }
+  if (xv_port != 0) {
+    if (! xv_open_port(this, xv_port)) {
+      xprintf(class->xine, XINE_VERBOSITY_NONE,
+	      _("%s: could not open Xv port %"PRId32" - autodetecting\n"),
+	      LOG_MODULE, xv_port);
+      xv_port = xv_autodetect_port(this, adaptors, adaptor_info, &adaptor_num, xv_port, prefer_type);
+    } else
+      adaptor_num = xv_find_adaptor_by_port (xv_port, adaptors, adaptor_info);
+  }
+  if (!xv_port)
+    xv_port = xv_autodetect_port(this, adaptors, adaptor_info, &adaptor_num, 0, prefer_type);
+  if (!xv_port)
+  {
+    if (prefer_type)
+      xprintf(class->xine, XINE_VERBOSITY_NONE,
+	      _("%s: no available ports of type \"%s\", defaulting...\n"),
+	      LOG_MODULE, prefer_labels[prefer_type]);
+    xv_port = xv_autodetect_port(this, adaptors, adaptor_info, &adaptor_num, 0, xv_prefer_none);
   }
 
   if (!xv_port) {
@@ -1469,10 +1531,11 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
 
     for(k = 0; k < nattr; k++) {
       if((attr[k].flags & XvSettable) && (attr[k].flags & XvGettable)) {
+	const char *const name = attr[k].name;
 	/* store initial port attribute value */
-	xv_store_port_attribute(this, attr[k].name);
+	xv_store_port_attribute(this, name);
 	
-	if(!strcmp(attr[k].name, "XV_HUE")) {
+	if(!strcmp(name, "XV_HUE")) {
 	  if (!strncmp(adaptor_info[adaptor_num].name, "NV", 2)) {
             xprintf (this->xine, XINE_VERBOSITY_NONE, "video_out_xv: ignoring broken XV_HUE settings on NVidia cards\n");
 	  } else {
@@ -1480,64 +1543,61 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
 			         adaptor_info[adaptor_num].base_id,
 			         NULL, NULL, NULL);
 	  }
-	} else if(!strcmp(attr[k].name, "XV_SATURATION")) {
+	} else if(!strcmp(name, "XV_SATURATION")) {
 	  xv_check_capability (this, VO_PROP_SATURATION, attr[k],
 			       adaptor_info[adaptor_num].base_id,
 			       NULL, NULL, NULL);
-
-	} else if(!strcmp(attr[k].name, "XV_BRIGHTNESS")) {
+	} else if(!strcmp(name, "XV_BRIGHTNESS")) {
 	  xv_check_capability (this, VO_PROP_BRIGHTNESS, attr[k],
 			       adaptor_info[adaptor_num].base_id,
 			       NULL, NULL, NULL);
-
-	} else if(!strcmp(attr[k].name, "XV_CONTRAST")) {
+	} else if(!strcmp(name, "XV_CONTRAST")) {
 	  xv_check_capability (this, VO_PROP_CONTRAST, attr[k],
 			       adaptor_info[adaptor_num].base_id,
 			       NULL, NULL, NULL);
-
-	} else if(!strcmp(attr[k].name, "XV_COLORKEY")) {
+	} else if(!strcmp(name, "XV_COLORKEY")) {
 	  xv_check_capability (this, VO_PROP_COLORKEY, attr[k],
 			       adaptor_info[adaptor_num].base_id,
 			       "video.device.xv_colorkey",
-			       _("video overlay colour key"),
-			       _("The colour key is used to tell the graphics card where to "
-				 "overlay the video image. Try different values, if you experience "
-				 "windows becoming transparent."));
-
-	} else if(!strcmp(attr[k].name, "XV_AUTOPAINT_COLORKEY")) {
+			       VIDEO_DEVICE_XV_COLORKEY_HELP);
+	} else if(!strcmp(name, "XV_AUTOPAINT_COLORKEY")) {
 	  xv_check_capability (this, VO_PROP_AUTOPAINT_COLORKEY, attr[k],
 			       adaptor_info[adaptor_num].base_id,
 			       "video.device.xv_autopaint_colorkey",
-			       _("autopaint colour key"),
-			       _("Make Xv autopaint its colour key."));
-
-	} else if(!strcmp(attr[k].name, "XV_FILTER")) {
+			       VIDEO_DEVICE_XV_AUTOPAINT_COLORKEY_HELP);
+	} else if(!strcmp(name, "XV_FILTER")) {
 	  int xv_filter;
 	  /* This setting is specific to Permedia 2/3 cards. */
 	  xv_filter = config->register_range (config, "video.device.xv_filter", 0,
 					      attr[k].min_value, attr[k].max_value,
-					      _("bilinear scaling mode"),
-					      _("Selects the bilinear scaling mode for Permedia cards. "
-						"The individual values are:\n\n"
-						"Permedia 2\n"
-						"0 - disable bilinear filtering\n"
-						"1 - enable bilinear filtering\n\n"
-						"Permedia 3\n"
-						"0 - disable bilinear filtering\n"
-						"1 - horizontal linear filtering\n"
-						"2 - enable full bilinear filtering"),
+					      VIDEO_DEVICE_XV_FILTER_HELP,
 					      20, xv_update_XV_FILTER, this);
 	  config->update_num(config,"video.device.xv_filter",xv_filter);
-	} else if(!strcmp(attr[k].name, "XV_DOUBLE_BUFFER")) {
-	  int xv_double_buffer;
-	  xv_double_buffer = 
+	} else if(!strcmp(name, "XV_DOUBLE_BUFFER")) {
+	  int xv_double_buffer =
 	    config->register_bool (config, "video.device.xv_double_buffer", 1,
-	      _("enable double buffering"),
-	      _("Double buffering will synchronize the update of the video image to the "
-		"repainting of the entire screen (\"vertical retrace\"). This eliminates "
-		"flickering and tearing artifacts, but will use more graphics memory."),
-	      20, xv_update_XV_DOUBLE_BUFFER, this);
+				   VIDEO_DEVICE_XV_DOUBLE_BUFFER_HELP,
+				   20, xv_update_XV_DOUBLE_BUFFER, this);
 	  config->update_num(config,"video.device.xv_double_buffer",xv_double_buffer);
+	} else if(((this->sync_is_vsync = 0), !strcmp(name, sync_atoms[0])) ||
+		  ((this->sync_is_vsync = 1), !strcmp(name, sync_atoms[1]))) {
+	  int xv_sync_to_vblank;
+	  xv_sync_to_vblank = 
+	    config->register_bool (config, "video.device.xv_sync_to_vblank", 1,
+	      _("enable vblank sync"),
+	      _("This option will synchronize the update of the video image to the "
+		"repainting of the entire screen (\"vertical retrace\"). This eliminates "
+		"flickering and tearing artifacts. On nvidia cards one may also "
+		"need to run \"nvidia-settings\" and choose which display device to "
+		"sync to under the XVideo Settings tab"),
+	      20, xv_update_XV_SYNC_TO_VBLANK, this);
+	  config->update_num(config,"video.device.xv_sync_to_vblank",xv_sync_to_vblank);
+	} else if(!strcmp(name, "XV_BICUBIC")) {
+	  int xv_bicubic =
+	    config->register_enum (config, "video.device.xv_bicubic", 2,
+				   bicubic_types, VIDEO_DEVICE_XV_BICUBIC_HELP,
+				   20, xv_update_XV_BICUBIC, this);
+	  config->update_num(config,"video.device.xv_bicubic",xv_bicubic);
 	}
       }
     }
@@ -1593,8 +1653,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
 
   this->use_pitch_alignment = 
     config->register_bool (config, "video.device.xv_pitch_alignment", 0,
-			   _("pitch alignment workaround"),
-			   _("Some buggy video drivers need a workaround to function properly."),
+			   VIDEO_DEVICE_XV_PITCH_ALIGNMENT_HELP,
 			   10, xv_update_xv_pitch_alignment, this);
 
   this->deinterlace_method = 
@@ -1684,7 +1743,7 @@ static void dispose_class (video_driver_class_t *this_gen) {
 }
 
 static void *init_class (xine_t *xine, void *visual_gen) {
-  xv_class_t        *this = (xv_class_t *) xine_xmalloc (sizeof (xv_class_t));
+  xv_class_t        *this = (xv_class_t *) calloc(1, sizeof(xv_class_t));
 
   this->driver_class.open_plugin     = open_plugin_old;
   this->driver_class.get_identifier  = get_identifier;

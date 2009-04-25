@@ -32,6 +32,10 @@
 
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -95,7 +99,7 @@ typedef struct {
 
 } asmrp_t;
 
-static asmrp_t *asmrp_new () {
+static asmrp_t *XINE_MALLOC asmrp_new () {
 
   asmrp_t *p;
 

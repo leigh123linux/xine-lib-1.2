@@ -460,7 +460,7 @@
       <para>
        Contains various video output driver plugins. Video output drivers
        are thin abstraction layers over various video output platforms
-       (e.g. X11, directfb, directX,...). Video output driver plugins
+       (e.g. X11, directfb, directX, &hellip;). Video output driver plugins
        provide functions like frame allocation and drawing and handle
        stuff like hardware acceleration, scaling and colorspace conversion
        if necessary. They do not handle a/v sync since this is done
@@ -497,7 +497,7 @@
      <term><filename>xine-engine</filename></term>
      <listitem>
       <para>
-       The heart of xine - it's engine. Contains code to
+       The heart of xine &ndash; its engine. Contains code to
        load and handle all the plugins, the configuration repository
        as well as the generic decoding loops and code for synchronized output.
        A lot of helper functions for plugins to use live here as well.
@@ -573,7 +573,7 @@
    <programlisting>
 &nbsp;&nbsp;&nbsp;static void push (my_stack_t *this_gen, int i) {
 &nbsp;&nbsp;&nbsp;  intstack_t *this = (intstack_t *)this_gen;
-&nbsp;&nbsp;&nbsp;  this->values[MAX_STACK_SIZE - ++this->stack_size] = i;
+&nbsp;&nbsp;&nbsp;  this-&gt;values[MAX_STACK_SIZE - ++this-&gt;stack_size] = i;
 &nbsp;&nbsp;&nbsp;}</programlisting>
   </para>
   <para>
@@ -613,15 +613,15 @@
 &nbsp;&nbsp;&nbsp;  this = malloc(sizeof(intstack_t));
 &nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;  /* fill in methods */
-&nbsp;&nbsp;&nbsp;  this->push = push;
-&nbsp;&nbsp;&nbsp;  this->add  = add;
-&nbsp;&nbsp;&nbsp;  this->pop  = pop;
+&nbsp;&nbsp;&nbsp;  this-&gt;push = push;
+&nbsp;&nbsp;&nbsp;  this-&gt;add  = add;
+&nbsp;&nbsp;&nbsp;  this-&gt;pop  = pop;
 &nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;  /* init data fields */
-&nbsp;&nbsp;&nbsp;  this->stack_size = 0;
+&nbsp;&nbsp;&nbsp;  this-&gt;stack_size = 0;
 &nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;  /* return public part */
-&nbsp;&nbsp;&nbsp;  return &amp;this->stack;
+&nbsp;&nbsp;&nbsp;  return &amp;this-&gt;stack;
 &nbsp;&nbsp;&nbsp;}</programlisting>
   </para>
   <sect2>
@@ -686,7 +686,7 @@
     <listitem> 
      <para>
       use something like
-      <programlisting>&nbsp;&nbsp;&nbsp;printf("module: ..."[,...]);</programlisting>
+      <programlisting>&nbsp;&nbsp;&nbsp;printf("module: ..."[,&hellip;]);</programlisting>
       for console output. All console output goes to stdout and
       must be prefixed by the module name which generates the
       output (see example above).
@@ -714,7 +714,7 @@
    <para>
     Output which is done thru this function will be
     displayed for the end user by the frontend.
-    If <varname>xine->verbosity</varname> is not 0 the messages will also
+    If <varname>xine-&gt;verbosity</varname> is not 0 the messages will also
     be displayed on the console. Ideally these strings
     are translated.
     This function is for information which the user should
@@ -727,7 +727,7 @@
   <sect2>
    <title>xprintf</title>
    <para>
-    This macro uses the <varname>xine->verbosity</varname> value to decide
+    This macro uses the <varname>xine-&gt;verbosity</varname> value to decide
     if the string should be printed to the console. Possible
     values are XINE_VERBOSITY_NONE, XINE_VERBOSITY_LOG or
     XINE_VERBOSITY_DEBUG. By default nothing is printed.
@@ -805,6 +805,32 @@
    before you hear any comments on your work (developers may be
    working on other parts of the code or are simply busy at
    the moment).
+  </para>
+  <para>
+   We prefer to receive patches in a format which is immediately
+   committable. This normally means that we want your name and email address
+   (we're not keen on pseudonyms), a subject line which provides a
+   convenient summary of your changes, and body text which provides a longer
+   description (if needed). Patches must be generated using <command>hg
+   diff</command> or <command>cvs -z9 diff</command>, depending on which is
+   used for the repository, and always from within the top level of the
+   checked-out source.
+  </para>
+  <para>
+   If your patch is intended for a Mercurial-format repository, then
+   committing it locally and using
+   <command>hg export <parameter>.</parameter> &gt;<filename>foo.patch</filename></command>
+   to create the file to be attached is acceptable (but note that the first
+   line &ndash; up to the first line feed &ndash; of the commit message is regarded as
+   the patch summary; if you're not sure, check with
+   <command>hg log -r<parameter>.</parameter></command>.
+   Alternatively, use <token>From:</token> and <token>Subject:</token> lines
+   in the patch file itself; this is useful when forwarding.
+  </para>
+  <para>
+   Patches should normally be included as attachments. Some mail clients and
+   webmail services are known to mangle whitespace or wrap lines, either of
+   which is enough to render a patch potentially useless.
   </para>
  </sect1>
 

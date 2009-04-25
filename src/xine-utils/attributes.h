@@ -1,7 +1,7 @@
 /*
  * attributes.h
  * Copyright (C) 1999-2000 Aaron Holtzman <aholtzma@ess.engr.uvic.ca>
- * Copyright (C) 2001-2007 xine developers
+ * Copyright (C) 2001-2008 xine developers
  *
  * This file was originally part of mpeg2dec, a free MPEG-2 video stream
  * decoder.
@@ -32,20 +32,29 @@
 #define ATTR_ALIGN(align)
 #endif
 
-/* disable GNU __attribute__ extension, when not compiling with GNU C */
-#if defined(__GNUC__) || defined (__ICC)
-#ifndef ATTRIBUTE_PACKED
-#define	ATTRIBUTE_PACKED 1
-#endif 
-#else
-#undef	ATTRIBUTE_PACKED
-#ifndef __attribute__
-#define	__attribute__(x)	/**/
-#endif /* __attribute __*/
-#endif
-
 #ifdef XINE_COMPILE
 # include "configure.h"
+#else
+# if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95 )
+#  define SUPPORT_ATTRIBUTE_PACKED 1
+# endif
+
+# if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3 )
+#  define SUPPORT_ATTRIBUTE_DEPRECATED 1
+#  define SUPPORT_ATTRIBUTE_FORMAT 1
+#  define SUPPORT_ATTRIBUTE_FORMAT_ARG 1
+#  define SUPPORT_ATTRIBUTE_MALLOC 1
+#  define SUPPORT_ATTRIBUTE_UNUSED 1
+#  define SUPPORT_ATTRIBUTE_CONST 1
+# endif
+  
+# if __GNUC__ >= 4
+#  define SUPPORT_ATTRIBUTE_VISIBILITY_DEFAULT 1
+#  if __ELF__
+#   define SUPPORT_ATTRIBUTE_VISIBILITY_PROTECTED 1
+#  endif
+#  define SUPPORT_ATTRIBUTE_SENTINEL 1
+# endif
 #endif
 
 /* Export protected only for libxine functions */
@@ -63,6 +72,12 @@
 # define XINE_SENTINEL
 #endif
 
+#if defined(SUPPORT_ATTRIBUTE_DEPRECATED) && !defined(XINE_COMPILE)
+# define XINE_DEPRECATED __attribute__((__deprecated__))
+#else
+# define XINE_DEPRECATED
+#endif
+
 #ifndef __attr_unused
 # ifdef SUPPORT_ATTRIBUTE_UNUSED
 #  define __attr_unused __attribute__((__unused__))
@@ -74,13 +89,33 @@
 /* Format attributes */
 #ifdef SUPPORT_ATTRIBUTE_FORMAT
 # define XINE_FORMAT_PRINTF(fmt,var) __attribute__((__format__(__printf__, fmt, var)))
+# define XINE_FORMAT_SCANF(fmt,var) __attribute__((__format__(__scanf__, fmt, var)))
 #else
 # define XINE_FORMAT_PRINTF(fmt,var)
+# define XINE_FORMAT_SCANF(fmt,var)
 #endif
 #ifdef SUPPORT_ATTRIBUTE_FORMAT_ARG
 # define XINE_FORMAT_PRINTF_ARG(fmt) __attribute__((__format_arg__(fmt)))
 #else
 # define XINE_FORMAT_PRINTF_ARG(fmt)
+#endif
+
+#ifdef SUPPORT_ATTRIBUTE_MALLOC
+# define XINE_MALLOC __attribute__((__malloc__))
+#else
+# define XINE_MALLOC
+#endif
+
+#ifdef SUPPORT_ATTRIBUTE_PACKED
+# define XINE_PACKED __attribute__((__packed__))
+#else
+# define XINE_PACKED
+#endif
+
+#ifdef SUPPORT_ATTRIBUTE_CONST
+# define XINE_CONST __attribute__((__const__))
+#else
+# define XINE_CONST
 #endif
 
 #endif /* ATTRIBUTE_H_ */

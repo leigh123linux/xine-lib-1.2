@@ -125,25 +125,15 @@ static float get_le_float(unsigned char *buffer)
  * This function is called from the _open() function of this demuxer.
  * It returns 1 if 4xm file was opened successfully. */
 static int open_fourxm_file(demux_fourxm_t *fourxm) {
-
   unsigned char preview[12];
-  int header_size;
-  unsigned char *header;
-  int i;
-  unsigned int fourcc_tag;
-  unsigned int size;
-  unsigned int current_track;
-  unsigned int audio_type;
-  unsigned int total_frames;
-  float fps;
 
   /* the file signature will be in the first 12 bytes */
   if (_x_demux_read_header(fourxm->input, preview, 12) != 12)
     return 0;
 
   /* check for the signature tags */
-  if ((_X_LE_32(&preview[0]) !=  RIFF_TAG) ||
-      (_X_LE_32(&preview[8]) != _4XMV_TAG))
+  if (!_x_is_fourcc(&preview[0], "RIFF") ||
+      !_x_is_fourcc(&preview[8], "4XMV"))
     return 0;
 
   /* file is qualified; skip over the header bytes in the stream */
@@ -152,14 +142,14 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
   /* fetch the LIST-HEAD header */
   if (fourxm->input->read(fourxm->input, preview, 12) != 12)
     return 0;
-  if ((_X_LE_32(&preview[0]) != LIST_TAG) ||
-      (_X_LE_32(&preview[8]) != HEAD_TAG))
+  if (!_x_is_fourcc(&preview[0], "LIST") ||
+      !_x_is_fourcc(&preview[8], "HEAD") )
     return 0;
 
   /* read the whole header */
-  header_size = _X_LE_32(&preview[4]) - 4;
-  header = xine_xmalloc(header_size);
-  if (fourxm->input->read(fourxm->input, header, header_size) != header_size) {
+  const uint32_t header_size = _X_LE_32(&preview[4]) - 4;
+  uint8_t *const header = malloc(header_size);
+  if (!header || fourxm->input->read(fourxm->input, header, header_size) != header_size) {
     free(header);
     return 0;
   }
@@ -171,12 +161,13 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
   fourxm->video_pts_inc = 0;
 
   /* take the lazy approach and search for any and all vtrk and strk chunks */
+  int i;
   for (i = 0; i < header_size - 8; i++) {
-    fourcc_tag = _X_LE_32(&header[i]);
-    size = _X_LE_32(&header[i + 4]);
+    const uint32_t fourcc_tag = _X_LE_32(&header[i]);
+    const uint32_t size = _X_LE_32(&header[i + 4]);
 
     if (fourcc_tag == std__TAG) {
-      fps = get_le_float(&header[i + 12]);
+      const float fps = get_le_float(&header[i + 12]);
       fourxm->video_pts_inc = (int64_t)(90000.0 / fps);
     } else if (fourcc_tag == vtrk_TAG) {
       /* check that there is enough data */
@@ -184,7 +175,7 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
         free(header);
         return 0;
       }
-      total_frames = _X_LE_32(&header[i + 24]);
+      const uint32_t total_frames = _X_LE_32(&header[i + 24]);
       fourxm->duration_in_ms = total_frames;
       fourxm->duration_in_ms *= fourxm->video_pts_inc;
       fourxm->duration_in_ms /= 90000;
@@ -198,9 +189,13 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
         free(header);
         return 0;
       }
-      current_track = _X_LE_32(&header[i + 8]);
-      if (current_track + 1 > fourxm->track_count) {
+      const uint32_t current_track = _X_LE_32(&header[i + 8]);
+      if (current_track >= fourxm->track_count) {
         fourxm->track_count = current_track + 1;
+        if (!fourxm->track_count || fourxm->track_count >= UINT_MAX / sizeof(audio_track_t)) {
+          free(header);
+          return 0;
+        }
         fourxm->tracks = realloc(fourxm->tracks,
           fourxm->track_count * sizeof(audio_track_t));
         if (!fourxm->tracks) {
@@ -212,7 +207,7 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
       fourxm->tracks[current_track].channels = _X_LE_32(&header[i + 36]);
       fourxm->tracks[current_track].sample_rate = _X_LE_32(&header[i + 40]);
       fourxm->tracks[current_track].bits = _X_LE_32(&header[i + 44]);
-      audio_type = _X_LE_32(&header[i + 12]);
+      const uint32_t audio_type = _X_LE_32(&header[i + 12]);
       if (audio_type == 0)
           fourxm->tracks[current_track].audio_type = BUF_AUDIO_LPCM_LE;
       else if (audio_type == 1)
@@ -239,20 +234,18 @@ static int demux_fourxm_send_chunk(demux_plugin_t *this_gen) {
   demux_fourxm_t *this = (demux_fourxm_t *) this_gen;
 
   buf_element_t *buf = NULL;
-  unsigned int fourcc_tag;
-  unsigned int size;
-  unsigned char header[8];
   unsigned int remaining_bytes;
   unsigned int current_track;
 
   /* read the next header */
+  uint8_t header[8];
   if (this->input->read(this->input, header, 8) != 8) {
     this->status = DEMUX_FINISHED;
     return this->status;
   }
 
-  fourcc_tag = _X_LE_32(&header[0]);
-  size = _X_LE_32(&header[4]);
+  const uint32_t fourcc_tag = _X_LE_32(&header[0]);
+  const uint32_t size = _X_LE_32(&header[4]);
 
   switch (fourcc_tag) {
 
@@ -472,7 +465,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_fourxm_t    *this;
 
-  this         = xine_xmalloc (sizeof (demux_fourxm_t));
+  this         = calloc(1, sizeof(demux_fourxm_t));
   this->stream = stream;
   this->input  = input;
 
@@ -491,10 +484,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   switch (stream->content_detection_method) {
 
   case METHOD_BY_EXTENSION: {
-    const char *extensions, *mrl;
-
-    mrl = input->get_mrl (input);
-    extensions = class_gen->get_extensions (class_gen);
+    const char *const mrl = input->get_mrl (input);
+    const char *const extensions = class_gen->get_extensions (class_gen);
 
     if (!_x_demux_check_extension (mrl, extensions)) {
       free (this);
@@ -546,7 +537,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_fourxm_init_plugin (xine_t *xine, void *data) {
   demux_fourxm_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_fourxm_class_t));
+  this = calloc(1, sizeof(demux_fourxm_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

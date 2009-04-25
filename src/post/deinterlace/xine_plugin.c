@@ -23,6 +23,10 @@
  * heavily based on tvtime.sf.net by Billy Biggs
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 /*
 #define LOG
 */
@@ -69,6 +73,7 @@ typedef struct deinterlace_parameters_s {
   int method;
   int enabled;
   int pulldown;
+  int pulldown_error_wait;
   int framerate_mode;
   int judder_correction;
   int use_progressive_frame_flag;
@@ -87,6 +92,8 @@ PARAM_ITEM( POST_PARAM_TYPE_BOOL, enabled, NULL, 0, 1, 0,
             "enable/disable" )
 PARAM_ITEM( POST_PARAM_TYPE_INT, pulldown, enum_pulldown, 0, 0, 0, 
             "pulldown algorithm" )
+PARAM_ITEM( POST_PARAM_TYPE_INT, pulldown_error_wait, NULL, 0, 0, 0, 
+            "number of frames of telecine pattern sync required before mode change" )
 PARAM_ITEM( POST_PARAM_TYPE_INT, framerate_mode, enum_framerate, 0, 0, 0, 
             "framerate output mode" )
 PARAM_ITEM( POST_PARAM_TYPE_BOOL, judder_correction, NULL, 0, 1, 0,
@@ -165,6 +172,7 @@ static int set_parameters (xine_post_t *this_gen, void *param_gen) {
   this->enabled = param->enabled;
 
   this->pulldown = param->pulldown;
+  this->tvtime->pulldown_error_wait = param->pulldown_error_wait;
   this->framerate_mode = param->framerate_mode;
   this->judder_correction = param->judder_correction;
   this->use_progressive_frame_flag = param->use_progressive_frame_flag;
@@ -185,6 +193,7 @@ static int get_parameters (xine_post_t *this_gen, void *param_gen) {
   param->method = this->cur_method;
   param->enabled = this->enabled;
   param->pulldown = this->pulldown;
+  param->pulldown_error_wait = this->tvtime->pulldown_error_wait;
   param->framerate_mode = this->framerate_mode;
   param->judder_correction = this->judder_correction;
   param->use_progressive_frame_flag = this->use_progressive_frame_flag;
@@ -211,6 +220,9 @@ static char * get_static_help (void) {
            "explanation of each method.\n"
            "\n"
            "  Enabled: Enable/disable the plugin.\n"
+           "\n"
+           "  Pulldown_error_wait: Ensures that the telecine pattern has been "
+           "locked for this many frames before changing to filmmode.\n"
            "\n"
            "  Pulldown: Choose the 2-3 pulldown detection algorithm. 24 FPS films "
            "that have being converted to NTSC can be detected and intelligently "
@@ -291,7 +303,7 @@ static int            deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
 
 static void *deinterlace_init_plugin(xine_t *xine, void *data)
 {
-  post_class_deinterlace_t *class = (post_class_deinterlace_t *)xine_xmalloc(sizeof(post_class_deinterlace_t));
+  post_class_deinterlace_t *class = calloc(1, sizeof(post_class_deinterlace_t));
   uint32_t config_flags = xine_mm_accel();
   int i;
 
@@ -350,6 +362,7 @@ static void *deinterlace_init_plugin(xine_t *xine, void *data)
   class->init_param.method                     = 1; /* First (plugin) method available */
   class->init_param.enabled                    = 1;
   class->init_param.pulldown                   = 1; /* vektor */
+  class->init_param.pulldown_error_wait        = 60; /* about one second */
   class->init_param.framerate_mode             = 0; /* full */
   class->init_param.judder_correction          = 1; 
   class->init_param.use_progressive_frame_flag = 1;
@@ -364,7 +377,7 @@ static post_plugin_t *deinterlace_open_plugin(post_class_t *class_gen, int input
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target)
 {
-  post_plugin_deinterlace_t *this = (post_plugin_deinterlace_t *)xine_xmalloc(sizeof(post_plugin_deinterlace_t));
+  post_plugin_deinterlace_t *this = calloc(1, sizeof(post_plugin_deinterlace_t));
   post_in_t                 *input;
   xine_post_in_t            *input_api;
   post_out_t                *output;

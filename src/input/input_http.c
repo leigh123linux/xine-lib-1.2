@@ -82,6 +82,8 @@ typedef struct {
 
   char             auth[BUFSIZE];
   char             proxyauth[BUFSIZE];
+
+  char            *mime_type;
   
   char            *proto;
   char            *user;
@@ -235,26 +237,16 @@ static int http_plugin_basicauth (const char *user, const char *password, char* 
   char        *tmp;
   char        *sptr;
   char        *dptr;
-  int          totlen;
+  size_t       count;
   int          enclen;
-  int          count;
   
-  totlen = strlen (user) + 1;
-  if(password != NULL)
-    totlen += strlen (password);
-  
-  enclen = ((totlen + 2) / 3 ) * 4 + 1;
+  count = asprintf(&tmp, "%s:%s", user, (password != NULL) ? password : "");
+
+  enclen = ((count + 2) / 3 ) * 4 + 1;
   
   if (len < enclen)
     return -1;
-  
-  tmp = malloc (sizeof(char) * (totlen + 1));
-  strcpy (tmp, user);
-  strcat (tmp, ":");
-  if (password != NULL)
-    strcat (tmp, password);  
-  
-  count = strlen(tmp);
+
   sptr = tmp;
   dptr = dest;
   while (count >= 3) {
@@ -429,6 +421,9 @@ static off_t http_plugin_read (input_plugin_t *this_gen,
 
   num_bytes = 0;
 
+  if (nlen < 0)
+    return -1;
+
   if (this->curpos < this->preview_size) {
 
     if (nlen > (this->preview_size - this->curpos))
@@ -445,7 +440,7 @@ static off_t http_plugin_read (input_plugin_t *this_gen,
 
   n = nlen - num_bytes;
 
-  if (n) {
+  if (n > 0) {
     int read_bytes;
     read_bytes = http_plugin_read_int (this, &buf[num_bytes], n);
     
@@ -511,6 +506,13 @@ static buf_element_t *http_plugin_read_block (input_plugin_t *this_gen, fifo_buf
   off_t                 total_bytes;
   buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
 
+  if (todo > buf->max_size)
+    todo = buf->max_size;
+  if (todo < 0) {
+    buf->free_buffer (buf);
+    return NULL;
+  }
+
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
 
@@ -562,7 +564,7 @@ static off_t http_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin
   if ((origin == SEEK_CUR) && (offset >= 0)) {
 
     for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-      if( !this_gen->read (this_gen, this->seek_buf, BUFSIZE) )
+      if( this_gen->read (this_gen, this->seek_buf, BUFSIZE) <= 0 )
         return this->curpos;
     }
 
@@ -584,7 +586,7 @@ static off_t http_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin
       offset -= this->curpos;
 
       for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-        if( !this_gen->read (this_gen, this->seek_buf, BUFSIZE) )
+        if( this_gen->read (this_gen, this->seek_buf, BUFSIZE) <= 0 )
           return this->curpos;
       }
 
@@ -602,17 +604,20 @@ static const char* http_plugin_get_mrl (input_plugin_t *this_gen) {
 }
 
 static int http_plugin_get_optional_data (input_plugin_t *this_gen,
-					  void *data, int data_type) {
+					  void *const data, int data_type) {
 
+  void **const ptr = (void **const) data;
   http_input_plugin_t *this = (http_input_plugin_t *) this_gen;
 
   switch (data_type) {
   case INPUT_OPTIONAL_DATA_PREVIEW:
-
     memcpy (data, this->preview, this->preview_size);
     return this->preview_size;
 
-    break;
+  case INPUT_OPTIONAL_DATA_MIME_TYPE:
+    *ptr = this->mime_type;
+  case INPUT_OPTIONAL_DATA_DEMUX_MIME_TYPE:
+    return *this->mime_type ? INPUT_OPTIONAL_SUCCESS : INPUT_OPTIONAL_UNSUPPORTED;
   }
 
   return INPUT_OPTIONAL_UNSUPPORTED;
@@ -637,6 +642,7 @@ static void http_plugin_dispose (input_plugin_t *this_gen ) {
   if (this->user) free(this->user);
   if (this->password) free(this->password);
   if (this->uri) free(this->uri);
+  if (this->mime_type) free(this->mime_type);
   free (this);
 }
 
@@ -661,11 +667,13 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   int                  done, len, linenum;
   int                  httpcode;
   int                  res;
-  int                  buflen;
+  size_t               buflen;
   int                  use_proxy;
   int                  proxyport;
   int                  mpegurl_redirect = 0;
-  
+  char                 mime_type[256];
+
+  mime_type[0] = 0;
   use_proxy = this_class->proxyhost && strlen(this_class->proxyhost);
   
   if (use_proxy) {
@@ -753,43 +761,38 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 
   if (use_proxy) {
     if (this->port != DEFAULT_HTTP_PORT) {
-      snprintf (this->buf, BUFSIZE, "GET http://%s:%d%s HTTP/1.0\015\012",
-	       this->host, this->port, this->uri);
+      buflen = snprintf (this->buf, BUFSIZE, "GET http://%s:%d%s HTTP/1.0\015\012",
+			 this->host, this->port, this->uri);
     } else {
-      snprintf (this->buf, BUFSIZE, "GET http://%s%s HTTP/1.0\015\012",
-	       this->host, this->uri);
+      buflen = snprintf (this->buf, BUFSIZE, "GET http://%s%s HTTP/1.0\015\012",
+			 this->host, this->uri);
     }
   } 
   else
-    snprintf (this->buf, BUFSIZE, "GET %s HTTP/1.0\015\012", this->uri);
+    buflen = snprintf (this->buf, BUFSIZE, "GET %s HTTP/1.0\015\012", this->uri);
   
-  buflen = strlen(this->buf);
   if (this->port != DEFAULT_HTTP_PORT)
-    snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s:%d\015\012",
-	     this->host, this->port);
+    buflen += snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s:%d\015\012",
+			this->host, this->port);
   else
-    snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s\015\012",
-	     this->host);
+    buflen += snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s\015\012",
+			this->host);
   
-  buflen = strlen(this->buf);
   if (this_class->proxyuser && strlen(this_class->proxyuser)) {
-    snprintf (this->buf + buflen, BUFSIZE - buflen,
-              "Proxy-Authorization: Basic %s\015\012", this->proxyauth);
-    buflen = strlen(this->buf);
+    buflen += snprintf (this->buf + buflen, BUFSIZE - buflen,
+			"Proxy-Authorization: Basic %s\015\012", this->proxyauth);
   }
   if (this->user && strlen(this->user)) {
-    snprintf (this->buf + buflen, BUFSIZE - buflen,
-              "Authorization: Basic %s\015\012", this->auth);
-    buflen = strlen(this->buf);
+    buflen += snprintf (this->buf + buflen, BUFSIZE - buflen,
+			"Authorization: Basic %s\015\012", this->auth);
   }
   
-  snprintf(this->buf + buflen, BUFSIZE - buflen,
-           "User-Agent: xine/%s\015\012"
-           "Accept: */*\015\012"
-           "Icy-MetaData: 1\015\012"
-           "\015\012",
-           VERSION);
-  buflen = strlen(this->buf);
+  buflen += snprintf(this->buf + buflen, BUFSIZE - buflen,
+		     "User-Agent: xine/%s\015\012"
+		     "Accept: */*\015\012"
+		     "Icy-MetaData: 1\015\012"
+		     "\015\012",
+		     VERSION);
   if (_x_io_tcp_write (this->stream, this->fh, this->buf, buflen) != buflen) {
     _x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "couldn't send request", NULL);
     xprintf(this_class->xine, XINE_VERBOSITY_DEBUG, "input_http: couldn't send request\n");
@@ -934,7 +937,11 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   
         /* content type */
         if (!strncasecmp(this->buf, TAG_CONTENT_TYPE, sizeof(TAG_CONTENT_TYPE) - 1)) {
-          if (!strncasecmp(this->buf + sizeof(TAG_CONTENT_TYPE) - 1, "video/nsv", 9)) {
+          const char *type = this->buf + sizeof (TAG_CONTENT_TYPE) - 1;
+          while (isspace (*type))
+            ++type;
+          sprintf (mime_type, "%.255s", type);
+          if (!strncasecmp (type, "video/nsv", 9)) {
             lprintf("shoutcast nsv detected\n");
             this->is_nsv = 1;
           }
@@ -999,12 +1006,15 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
     this->preview_size = http_plugin_read_int (this, this->preview, MAX_PREVIEW_SIZE);
   }
   if (this->preview_size < 0) {
+    this->preview_size = 0;
     xine_log (this->stream->xine, XINE_LOG_MSG, _("input_http: read error %d\n"), errno);
     return -12;
   }
   
   lprintf("preview_size=%"PRId64"\n", this->preview_size);
   this->curpos = 0;
+  if (*mime_type)
+    this->mime_type = strdup (mime_type);
   
   return 1;
 }
@@ -1022,11 +1032,10 @@ static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_str
       strncasecmp (mrl, "peercast://pls/", 15)) {
     return NULL;
   }
-  this = (http_input_plugin_t *) xine_xmalloc(sizeof(http_input_plugin_t));
+  this = calloc(1, sizeof(http_input_plugin_t));
 
   if (!strncasecmp (mrl, "peercast://pls/", 15)) {
-    this->mrl = xine_xmalloc (30 + strlen(mrl) - 15);
-    sprintf (this->mrl, "http://127.0.0.1:7144/stream/%s", mrl+15);
+    asprintf (&this->mrl, "http://127.0.0.1:7144/stream/%s", mrl+15);
   } else {    
     this->mrl = strdup (mrl);
   }
@@ -1073,7 +1082,7 @@ static void *init_class (xine_t *xine, void *data) {
   config_values_t     *config;
   char                *proxy_env;
 
-  this = (http_input_class_t *) xine_xmalloc (sizeof (http_input_class_t));
+  this = calloc(1, sizeof (http_input_class_t));
 
   this->xine   = xine;
   this->config = xine->config;
@@ -1090,25 +1099,21 @@ static void *init_class (xine_t *xine, void *data) {
   /* 
    * honour http_proxy envvar 
    */
-  if((proxy_env = getenv("http_proxy")) && (strlen(proxy_env))) {
+  if((proxy_env = getenv("http_proxy")) && *proxy_env) {
     int    proxy_port = DEFAULT_HTTP_PORT;
-    char  *http_proxy = xine_xmalloc(strlen(proxy_env) + 1);
     char  *p;
     
     if(!strncmp(proxy_env, "http://", 7))
       proxy_env += 7;
+
+    this->proxyhost_env = strdup(proxy_env);
     
-    sprintf(http_proxy, "%s", proxy_env);
-    
-    if((p = strrchr(&http_proxy[0], ':')) && (strlen(p) > 1)) {
+    if((p = strrchr(this->proxyhost_env, ':')) && (strlen(p) > 1)) {
       *p++ = '\0';
       proxy_port = (int) strtol(p, &p, 10);
     }
     
-    this->proxyhost_env = strdup(http_proxy);
     this->proxyport_env = proxy_port;
-    
-    free(http_proxy);
   }
   else
     proxy_env = NULL; /* proxy_env can be "" */

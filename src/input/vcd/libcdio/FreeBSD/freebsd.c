@@ -29,11 +29,11 @@
 
 static const char _rcsid[] = "$Id: freebsd.c,v 1.1 2005/01/01 02:43:57 rockyb Exp $";
 
-#include <arpa/inet.h>
 #include "freebsd.h"
 
 #ifdef HAVE_FREEBSD_CDROM
 
+#include <arpa/inet.h>
 #include <cdio/sector.h>
 
 static access_mode_t 

@@ -117,6 +117,9 @@ struct xine_s {
 #ifdef XINE_ENGINE_INTERNAL
   xine_ticket_t             *port_ticket;
   pthread_mutex_t            log_lock;
+
+  xine_log_cb_t              log_cb;
+  void                      *log_cb_user_data;
 #endif
 };
 
@@ -333,6 +336,7 @@ struct xine_stream_s {
   int                        demux_thread_running;
   pthread_mutex_t            demux_lock;
   int                        demux_action_pending;
+  pthread_cond_t             demux_resume;
   pthread_mutex_t            demux_mutex; /* used in _x_demux_... functions to synchronize order of pairwise A/V buffer operations */
 
   extra_info_t              *current_extra_info;
@@ -357,6 +361,7 @@ struct xine_stream_s {
   int                        early_finish_event; /* do not wait fifos get empty before sending event */
   int                        gapless_switch;     /* next stream switch will be gapless */
   int                        delay_finish_event; /* delay event in 1/10 sec units. 0=>no delay, -1=>forever */
+  int                        keep_ao_driver_open;
 #endif
 };
 
@@ -388,8 +393,8 @@ input_plugin_t *_x_find_input_plugin (xine_stream_t *stream, const char *mrl) XI
 demux_plugin_t *_x_find_demux_plugin (xine_stream_t *stream, input_plugin_t *input) XINE_PROTECTED;
 demux_plugin_t *_x_find_demux_plugin_by_name (xine_stream_t *stream, const char *name, input_plugin_t *input) XINE_PROTECTED;
 demux_plugin_t *_x_find_demux_plugin_last_probe(xine_stream_t *stream, const char *last_demux_name, input_plugin_t *input) XINE_PROTECTED;
-input_plugin_t *_x_rip_plugin_get_instance (xine_stream_t *stream, const char *filename) XINE_PROTECTED;
-input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream, int readahead_size) XINE_PROTECTED;
+input_plugin_t *_x_rip_plugin_get_instance (xine_stream_t *stream, const char *filename) XINE_MALLOC XINE_PROTECTED;
+input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream, int readahead_size) XINE_MALLOC XINE_PROTECTED;
 void _x_free_input_plugin (xine_stream_t *stream, input_plugin_t *input) XINE_PROTECTED;
 void _x_free_demux_plugin (xine_stream_t *stream, demux_plugin_t *demux) XINE_PROTECTED;
 

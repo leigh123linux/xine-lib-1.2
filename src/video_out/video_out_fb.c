@@ -221,7 +221,7 @@ static vo_frame_t *fb_alloc_frame(vo_driver_t *this_gen)
      this->total_num_native_buffers <= this->used_num_buffers)
     return 0;
 
-  frame = (fb_frame_t *)xine_xmalloc(sizeof(fb_frame_t));
+  frame = calloc(1, sizeof(fb_frame_t));
   if(!frame)
     return NULL;
 
@@ -324,21 +324,10 @@ static void setup_colorspace_converter(fb_frame_t *frame, int flags)
 static void frame_reallocate(fb_driver_t *this, fb_frame_t *frame,
 			     uint32_t width, uint32_t height, int format)
 {
-  if(frame->chunk[0])
-  {
-    free(frame->chunk[0]);
-        frame->chunk[0] = NULL;
-  }
-  if(frame->chunk[1])
-  {
-    free(frame->chunk[1]);
-        frame->chunk[1] = NULL;
-  }
-  if(frame->chunk[2])
-  {
-    free(frame->chunk[2]);
-        frame->chunk[2] = NULL;
-  }
+  free(frame->chunk[0]);
+  free(frame->chunk[1]);
+  free(frame->chunk[2]);
+  memset(frame->chunk, 0, sizeof(frame->chunk[0])*3);
       
   if(this->use_zero_copy)
   {
@@ -348,10 +337,9 @@ static void frame_reallocate(fb_driver_t *this, fb_frame_t *frame,
   }
   else
   {
-    if(frame->data)
-      free(frame->data);
-    frame->data = xine_xmalloc(frame->sc.output_width *
-			       frame->sc.output_height *
+    free(frame->data);
+    frame->data = calloc(frame->sc.output_width *
+			       frame->sc.output_height,
 			       this->bytes_per_pixel);
   }
 
@@ -1004,7 +992,7 @@ static vo_driver_t *fb_open_plugin(video_driver_class_t *class_gen,
   config = class->config;
 
   /* allocate plugin struct */
-  this = (fb_driver_t *) xine_xmalloc(sizeof(fb_driver_t));
+  this = calloc(1, sizeof(fb_driver_t));
   if(!this)
     return NULL;
 
@@ -1087,7 +1075,7 @@ static void fb_dispose_class(video_driver_class_t *this_gen)
 
 static void *fb_init_class(xine_t *xine, void *visual_gen)
 {
-  fb_class_t *this = (fb_class_t *)xine_xmalloc(sizeof(fb_class_t));
+  fb_class_t *this = calloc(1, sizeof(fb_class_t));
 
   this->driver_class.open_plugin     = fb_open_plugin;
   this->driver_class.get_identifier  = fb_get_identifier;

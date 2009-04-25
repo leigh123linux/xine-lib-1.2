@@ -82,10 +82,9 @@ static off_t pnm_plugin_read (input_plugin_t *this_gen,
 
   lprintf ("pnm_plugin_read: %"PRId64" bytes ...\n", len);
 
-  nbc_check_buffers (this->nbc);
-
   n = pnm_read (this->pnm, buf, len);
-  this->curpos += n;
+  if (n >= 0)
+    this->curpos += n;
 
   return n;
 }
@@ -97,6 +96,13 @@ static buf_element_t *pnm_plugin_read_block (input_plugin_t *this_gen,
   int                   total_bytes;
 
   lprintf ("pnm_plugin_read_block: %"PRId64" bytes...\n", todo);
+
+  if (todo > buf->max_size)
+    todo = buf->max_size;
+  if (todo < 0) {
+    buf->free_buffer (buf);
+    return NULL;
+  }
 
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
@@ -125,10 +131,16 @@ static off_t pnm_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin
   if ((origin == SEEK_CUR) && (offset >= 0)) {
 
     for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-      this->curpos += pnm_plugin_read (this_gen, this->scratch, BUFSIZE);
+      off_t n = pnm_plugin_read (this_gen, this->scratch, BUFSIZE);
+      if (n <= 0)
+	return this->curpos;
+      this->curpos += n;
     }
 
-    this->curpos += pnm_plugin_read (this_gen, this->scratch, offset);
+    off_t n = pnm_plugin_read (this_gen, this->scratch, offset);
+    if (n <= 0)
+      return this->curpos;
+    this->curpos += n;
   }
 
   return this->curpos;
@@ -231,7 +243,7 @@ static input_plugin_t *pnm_class_get_instance (input_class_t *cls_gen, xine_stre
     return NULL;
   }
 
-  this = (pnm_input_plugin_t *) xine_xmalloc (sizeof (pnm_input_plugin_t));
+  this = calloc(1, sizeof (pnm_input_plugin_t));
 
   this->stream = stream;
   this->pnm    = NULL;
@@ -276,7 +288,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   pnm_input_class_t  *this;
 
-  this = (pnm_input_class_t *) xine_xmalloc (sizeof (pnm_input_class_t));
+  this = calloc(1, sizeof (pnm_input_class_t));
 
   this->xine   = xine;
 

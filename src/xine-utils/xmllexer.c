@@ -25,11 +25,14 @@
 #define LOG
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifdef XINE_COMPILE
 #include "xineutils.h"
 #else
 #define lprintf(...)
-#define xine_xmalloc malloc
 #endif
 #include "xmllexer.h"
 #include <stdio.h>
@@ -411,6 +414,8 @@ int lexer_get_token_d(char ** _tok, int * _tok_size, int fixed) {
 	  case '\"': /* " */
 	  case ' ':
 	  case '\t':
+	  case '\n':
+	  case '\r':
 	  case '=':
 	  case '/':
 	    tok[tok_pos] = '\0';
@@ -532,7 +537,7 @@ static struct {
 
 char *lexer_decode_entities (const char *tok)
 {
-  char *buf = xine_xmalloc (strlen (tok) + 1);
+  char *buf = calloc (strlen (tok) + 1, sizeof(char));
   char *bp = buf;
   char c;
 

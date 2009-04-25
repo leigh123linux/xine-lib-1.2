@@ -27,6 +27,10 @@
  * available at http://sourceforge.net/projects/ccdecoder/.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -215,8 +219,6 @@ static const uint8_t *const cc_alpha_palettes[NUM_CC_PALETTES] = {
 
 #define TRANSP_SPACE 0x19   /* code for transparent space, essentially 
 			       arbitrary */
-
-#define MAX(a, b) ((a) > (b)? (a) : (b))
 
 /* mapping from PAC row code to actual CC row */
 static const int  rowdata[] = {10, -1, 0, 1, 2, 3, 11, 12, 13, 14, 4, 5, 6,
@@ -922,7 +924,7 @@ cc_renderer_t *cc_renderer_open(osd_renderer_t *osd_renderer,
 				metronom_t *metronom, cc_state_t *cc_state,
 				int video_width, int video_height)
 {
-  cc_renderer_t *this = (cc_renderer_t *) xine_xmalloc(sizeof (cc_renderer_t));
+  cc_renderer_t *this = calloc(1, sizeof (cc_renderer_t));
 
   this->osd_renderer = osd_renderer;
   this->metronom = metronom;
@@ -1439,7 +1441,7 @@ void decode_cc(cc_decoder_t *this, uint8_t *buffer, uint32_t buf_len,
 
 cc_decoder_t *cc_decoder_open(cc_state_t *cc_state)
 {
-  cc_decoder_t *this = (cc_decoder_t *) xine_xmalloc(sizeof (cc_decoder_t));
+  cc_decoder_t *this = calloc(1, sizeof (cc_decoder_t));
   /* configfile stuff */
   this->cc_state = cc_state;
 

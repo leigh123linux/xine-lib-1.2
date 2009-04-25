@@ -1,3 +1,4 @@
+include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
 xineplug_LTLIBRARIES = xineplug_decode_mpeg2.la
@@ -22,7 +23,7 @@ xineplug_decode_mpeg2_la_SOURCES = \
 	xine_mpeg2_decoder.c \
 	libmpeg2_accel.c
 
-xineplug_decode_mpeg2_la_LIBADD = $(XINE_LIB) $(MLIB_LIBS) -lm
+xineplug_decode_mpeg2_la_LIBADD = $(XINE_LIB) $(MLIB_LIBS) $(LTLIBINTL) -lm
 xineplug_decode_mpeg2_la_CFLAGS = $(VISIBILITY_FLAG) $(LIBMPEG2_CFLAGS)
 xineplug_decode_mpeg2_la_LDFLAGS = $(xineplug_ldflags)
 

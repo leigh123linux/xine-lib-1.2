@@ -238,7 +238,7 @@ xcbosd *xcbosd_create(xine_t *xine, xcb_connection_t *connection, xcb_screen_t *
   xcb_void_cookie_t generic_cookie;
   xcb_generic_error_t *generic_error;
 
-  osd = xine_xmalloc (sizeof (xcbosd));
+  osd = calloc(1, sizeof(xcbosd));
   if (!osd)
     return NULL;
 

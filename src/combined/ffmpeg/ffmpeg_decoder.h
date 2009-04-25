@@ -25,10 +25,16 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_FFMPEG
+#ifdef HAVE_FFMPEG_AVUTIL_H
 #  include <avcodec.h>
+#elif defined HAVE_FFMPEG
+#  include <libavcodec/avcodec.h>
 #else
-#  include "libavcodec/avcodec.h"
+#  include "../../libffmpeg/libavcodec/avcodec.h"
+#endif
+
+#if LIBAVCODEC_VERSION_MAJOR > 51
+#define bits_per_sample bits_per_coded_sample
 #endif
 
 typedef struct ff_codec_s {

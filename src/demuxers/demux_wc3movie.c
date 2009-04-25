@@ -102,7 +102,7 @@ typedef struct {
 } demux_mve_class_t;
 
 /* bizarre palette lookup table */
-const unsigned char wc3_pal_lookup[] = {
+static const unsigned char wc3_pal_lookup[] = {
 0x00, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0E, 0x10, 0x12, 0x13, 0x15, 0x16,
 0x18, 0x19, 0x1A,
 0x1C, 0x1D, 0x1F, 0x20, 0x21, 0x23, 0x24, 0x25, 0x27, 0x28, 0x29, 0x2A, 0x2C,
@@ -357,9 +357,9 @@ static int open_mve_file(demux_mve_t *this) {
   if (_x_demux_read_header(this->input, header, WC3_HEADER_SIZE) != WC3_HEADER_SIZE)
     return 0;
 
-  if ((_X_BE_32(&header[0]) != FORM_TAG) ||
-      (_X_BE_32(&header[8]) != MOVE_TAG) ||
-      (_X_BE_32(&header[12]) != PC_TAG))
+  if ( !_x_is_fourcc(&header[0], "FORM") ||
+       !_x_is_fourcc(&header[8], "MOVE") ||
+       !_x_is_fourcc(&header[12], "_PC_") )
     return 0;
 
   /* file is qualified */
@@ -378,17 +378,21 @@ static int open_mve_file(demux_mve_t *this) {
   this->number_of_shots = _X_LE_32(&preamble[0]);
   
   /* allocate space for the shot offset index and set offsets to 0 */
-  this->shot_offsets = xine_xmalloc(this->number_of_shots * sizeof(off_t));
+  this->shot_offsets = calloc(this->number_of_shots, sizeof(off_t));
   this->current_shot = 0;
-  for (i = 0; i < this->number_of_shots; i++)
-    this->shot_offsets[i] = 0;
 
   /* skip the SOND chunk */
   this->input->seek(this->input, 12, SEEK_CUR);
 
   /* load the palette chunks */
-  this->palettes = xine_xmalloc(this->number_of_shots * PALETTE_SIZE *
+  this->palettes = calloc(this->number_of_shots, PALETTE_SIZE *
     sizeof(palette_entry_t));
+
+  if (!this->shot_offsets || !this->palettes) {
+    free (this->shot_offsets);
+    return 0;
+  }
+
   for (i = 0; i < this->number_of_shots; i++) {
     /* make sure there was a valid palette chunk preamble */
     if (this->input->read(this->input, preamble, PREAMBLE_SIZE) !=
@@ -398,8 +402,8 @@ static int open_mve_file(demux_mve_t *this) {
       return 0;
     }
 
-    if ((_X_BE_32(&preamble[0]) != PALT_TAG) || 
-        (_X_BE_32(&preamble[4]) != PALETTE_CHUNK_SIZE)) {
+    if ( !_x_is_fourcc(&preamble[0], "PALT") ||
+	 (_X_BE_32(&preamble[4]) != PALETTE_CHUNK_SIZE)) {
       xine_log(this->stream->xine, XINE_LOG_MSG,
 	       _("demux_wc3movie: There was a problem while loading palette chunks\n"));
       free (this->palettes);
@@ -460,8 +464,9 @@ static int open_mve_file(demux_mve_t *this) {
 
       case BNAM_TAG:
         /* load the name into the stream attributes */
-        title = realloc (title, chunk_size);
-        if (this->input->read(this->input, title, chunk_size) != chunk_size) {
+        free (title);
+        title = malloc (chunk_size);
+        if (!title || this->input->read(this->input, title, chunk_size) != chunk_size) {
           free (title);
           free (this->palettes);
           free (this->shot_offsets);
@@ -667,7 +672,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_mve_t    *this;
 
-  this         = xine_xmalloc (sizeof (demux_mve_t));
+  this         = calloc(1, sizeof(demux_mve_t));
   this->stream = stream;
   this->input  = input;
 
@@ -741,7 +746,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_wc3movie_init_plugin (xine_t *xine, void *data) {
   demux_mve_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_mve_class_t));
+  this = calloc(1, sizeof(demux_mve_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

@@ -1190,14 +1190,14 @@ static int demux_mpeg_detect_blocksize(demux_mpeg_block_t *this,
 				       input_plugin_t *input)
 {
   input->seek(input, 2048, SEEK_SET);
-  if (!input->read(input, this->scratch, 4))
+  if (input->read(input, this->scratch, 4) != 4)
     return 0;
 
   if (this->scratch[0] || this->scratch[1]
       || (this->scratch[2] != 0x01) || (this->scratch[3] != 0xba)) {
 
     input->seek(input, 2324, SEEK_SET);
-    if (!input->read(input, this->scratch, 4))
+    if (input->read(input, this->scratch, 4) != 4)
       return 0;
     if (this->scratch[0] || this->scratch[1] 
         || (this->scratch[2] != 0x01) || (this->scratch[3] != 0xba)) 
@@ -1371,7 +1371,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   input_plugin_t     *input = (input_plugin_t *) input_gen;
   demux_mpeg_block_t *this;
 
-  this         = xine_xmalloc (sizeof (demux_mpeg_block_t));
+  this         = calloc(1, sizeof(demux_mpeg_block_t));
   this->stream = stream;
   this->input  = input;
   
@@ -1417,6 +1417,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       }
 
       input->seek(input, 0, SEEK_SET);
+      memset (this->scratch, 255, 5); /* result of input->read() won't matter */
       if (input->read(input, this->scratch, this->blocksize)) {
 	lprintf("open_plugin:read worked\n");
 
@@ -1540,7 +1541,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   demux_mpeg_block_class_t     *this;
 
-  this         = xine_xmalloc (sizeof (demux_mpeg_block_class_t));
+  this         = calloc(1, sizeof(demux_mpeg_block_class_t));
   this->config = xine->config;
   this->xine   = xine;
 

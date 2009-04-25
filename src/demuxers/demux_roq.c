@@ -47,7 +47,6 @@
 #include "bswap.h"
 #include "group_games.h"
 
-#define RoQ_MAGIC_NUMBER 0x1084
 #define RoQ_CHUNK_PREAMBLE_SIZE 8
 #define RoQ_AUDIO_SAMPLE_RATE 22050
 
@@ -93,8 +92,9 @@ static int open_roq_file(demux_roq_t *this) {
     return 0;
 
   /* check for the RoQ magic numbers */
-  if ((_X_LE_16(&preamble[0]) != RoQ_MAGIC_NUMBER) ||
-      (_X_LE_32(&preamble[2]) != 0xFFFFFFFF))
+  static const uint8_t RoQ_MAGIC_STRING[] = 
+    { 0x10, 0x84, 0xFF, 0xFF, 0xFF, 0xFF };
+  if( memcmp(preamble, RoQ_MAGIC_STRING, sizeof(RoQ_MAGIC_STRING)) != 0 )
     return 0;
     
   this->bih.biSize = sizeof(xine_bmiheader);
@@ -411,7 +411,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
-  this         = xine_xmalloc (sizeof (demux_roq_t));
+  this         = calloc(1, sizeof(demux_roq_t));
   this->stream = stream;
   this->input  = input;
 
@@ -485,7 +485,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_roq_init_plugin (xine_t *xine, void *data) {
   demux_roq_class_t     *this;
 
-  this  = xine_xmalloc (sizeof (demux_roq_class_t));
+  this  = calloc(1, sizeof(demux_roq_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

@@ -60,9 +60,13 @@ typedef unsigned char boolean;
  * the linking stage.
  *****************************************************************************/
 #if 1
-static const GUID IID_IDirectSoundNotify = {
+static const GUID xine_IID_IDirectSoundNotify = {
 	0xB0210783,0x89CD,0x11D0,{0xAF,0x08,0x00,0xA0,0xC9,0x25,0xCD,0x16}
 };
+#ifdef IID_IDirectSoundNotify
+#  undef IID_IDirectSoundNotify
+#endif
+#define IID_IDirectSoundNotify xine_IID_IDirectSoundNotify
 #endif
 
 
@@ -790,7 +794,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   audiox_class_t  *class = (audiox_class_t *) class_gen;
   ao_directx_t    *ao_directx;
   
-  ao_directx = ( ao_directx_t * ) xine_xmalloc( sizeof( ao_directx_t ) );
+  ao_directx = calloc(1, sizeof(ao_directx_t));
   if (!ao_directx)
     return NULL;
   
@@ -841,7 +845,7 @@ static void *init_class (xine_t *xine, void *data) {
   /*
    * from this point on, nothing should go wrong anymore
    */
-  audiox = (audiox_class_t *) xine_xmalloc (sizeof (audiox_class_t));
+  audiox = calloc(1, sizeof (audiox_class_t));
   if (!audiox)
     return NULL;
   

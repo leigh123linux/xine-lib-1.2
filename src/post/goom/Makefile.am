@@ -1,3 +1,4 @@
+include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
 EXTRA_DIST = mmx.c xmmx.c ppc_drawings.s ppc_zoom_ultimate.s diff_against_release.patch \

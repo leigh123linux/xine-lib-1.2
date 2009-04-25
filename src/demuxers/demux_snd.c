@@ -42,8 +42,6 @@
 
 #define SND_HEADER_SIZE 24
 #define PCM_BLOCK_ALIGN 1024
-/* this is the big-endian hex value '.snd' */
-#define snd_TAG 0x2E736E64
 
 typedef struct {
   demux_plugin_t       demux_plugin;
@@ -83,7 +81,7 @@ static int open_snd_file(demux_snd_t *this) {
     return 0;
 
   /* check the signature */
-  if (_X_BE_32(&header[0]) != snd_TAG)
+  if ( !_x_is_fourcc(&header[0], ".snd") )
     return 0;
 
   /* file is qualified; skip over the header bytes in the stream */
@@ -318,7 +316,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_snd_t    *this;
 
-  this         = xine_xmalloc (sizeof (demux_snd_t));
+  this         = calloc(1, sizeof(demux_snd_t));
   this->stream = stream;
   this->input  = input;
 
@@ -395,7 +393,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_snd_init_plugin (xine_t *xine, void *data) {
   demux_snd_class_t     *this;
 
-  this  = xine_xmalloc (sizeof (demux_snd_class_t));
+  this  = calloc(1, sizeof(demux_snd_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

@@ -20,6 +20,10 @@
  * stuff needed to turn libmpeg2 into a xine decoder plugin
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 
 #include <stdlib.h>
 #include <string.h>
@@ -35,13 +39,14 @@
 #include "video_out.h"
 #include "buffer.h"
 
-
-
+/*
 #define LOG
 #define LOG_FRAME_ALLOC_FREE
 #define LOG_ENTRY
 #define LOG_FRAME_COUNTER
+*/
 
+#define _x_abort() do {} while (0)
 
 typedef struct {
   video_decoder_class_t   decoder_class;
@@ -66,7 +71,9 @@ typedef struct mpeg2_video_decoder_s {
   
 } mpeg2_video_decoder_t;
 
-
+#ifndef LOG_FRAME_ALLOC_FREE
+inline static void mpeg2_video_print_bad_state(img_state_t * img_state) {}
+#else
 static void mpeg2_video_print_bad_state(img_state_t * img_state) {
   int32_t n,m;
   m=0;
@@ -79,6 +86,7 @@ static void mpeg2_video_print_bad_state(img_state_t * img_state) {
   if (m > 3) _x_abort();
   if (m == 0) printf("NO FRAMES\n");
 } 
+#endif
 
 static void mpeg2_video_free_all(img_state_t * img_state) {
   int32_t n,m;
@@ -153,7 +161,7 @@ static void mpeg2_video_decode_data (video_decoder_t *this_gen, buf_element_t *b
         _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_WIDTH,     info->sequence->picture_width);
         _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_HEIGHT,    info->sequence->picture_height);
         _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION,  info->sequence->frame_period / 300);
-        if (this->force_aspect) info->sequence->pixel_width = this->force_aspect;
+        if (this->force_aspect) ((mpeg2_sequence_t *)info->sequence)->pixel_width = this->force_aspect; /* ugly... */
         switch (info->sequence->pixel_width) {
 	case 3:
 	  this->ratio = 16.0 / 9.0;
@@ -449,7 +457,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   mpeg2_video_decoder_t *this ;
   int32_t n;
 
-  this = (mpeg2_video_decoder_t *) xine_xmalloc (sizeof (mpeg2_video_decoder_t));
+  this = (mpeg2_video_decoder_t *) calloc(1, sizeof(mpeg2_video_decoder_t));
 
   this->video_decoder.decode_data         = mpeg2_video_decode_data;
   this->video_decoder.flush               = mpeg2_video_flush;
@@ -490,7 +498,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   mpeg2_class_t *this;
 
-  this = (mpeg2_class_t *) xine_xmalloc (sizeof (mpeg2_class_t));
+  this = (mpeg2_class_t *) calloc(1, sizeof(mpeg2_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;
@@ -503,14 +511,14 @@ static void *init_plugin (xine_t *xine, void *data) {
  * exported plugin catalog entry
  */
 
-static uint32_t supported_types[] = { BUF_VIDEO_MPEG, 0 };
+static const uint32_t supported_types[] = { BUF_VIDEO_MPEG, 0 };
 
-static decoder_info_t dec_info_mpeg2 = {
+static const decoder_info_t dec_info_mpeg2 = {
   supported_types,     /* supported types */
   6                    /* priority        */
 };
 
-plugin_info_t xine_plugin_info[] = {
+const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
   { PLUGIN_VIDEO_DECODER, 18, "mpeg2new", XINE_VERSION_CODE, &dec_info_mpeg2, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }

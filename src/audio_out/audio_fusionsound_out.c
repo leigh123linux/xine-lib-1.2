@@ -389,11 +389,11 @@ static ao_driver_t* open_plugin(audio_driver_class_t *ao_class,
   fusionsound_class_t  *class  = (fusionsound_class_t *) ao_class;
   fusionsound_driver_t *this;
   const char           *args[] = { "xine", "--dfb:no-sighandler", "--fs:no-banner" };
-  int                   argn   = sizeof(args) / sizeof(args[0]);
+  const size_t          argn   = sizeof(args) / sizeof(args[0]);
   char                **argp   = (char **) args;
   DFBResult             ret;
 
-  this = (fusionsound_driver_t *) xine_xmalloc (sizeof(fusionsound_driver_t));
+  this = calloc(1, sizeof(fusionsound_driver_t));
   if (!this) {
     xprintf (class->xine, XINE_VERBOSITY_LOG,
              "audio_fusionsound_out: driver interface allocation failed!\n");
@@ -460,7 +460,7 @@ static void* init_class(xine_t *xine, void *data) {
     return NULL;
   }
 
-  class = (fusionsound_class_t *) xine_xmalloc (sizeof( fusionsound_class_t));
+  class = calloc(1, sizeof( fusionsound_class_t));
   if (!class) {
     xprintf (xine, XINE_VERBOSITY_LOG,
              "audio_fusionsound_out: class interface allocation failed!\n");

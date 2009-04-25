@@ -1,3 +1,4 @@
+usr/bin/xine-list*
 usr/lib/libxine*.so.*
 usr/lib/xine/plugins/*/post/*.so
 usr/lib/xine/plugins/*/*.so
@@ -6,3 +7,4 @@ usr/share/locale
 usr/share/xine
 usr/share/doc/libxine1/hackersguide/*
 usr/share/bug/libxine1/presubj
+usr/share/man/man1/xine-list*.1

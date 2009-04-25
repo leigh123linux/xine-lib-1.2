@@ -70,8 +70,6 @@ static int demux_yuv_frames_get_status (demux_plugin_t *this_gen) {
 }
 
 static int switch_buf(demux_yuv_frames_t *this , buf_element_t *buf){
-  int result = 0;
-
   if (!buf)
     return 0;
 
@@ -88,8 +86,7 @@ static int switch_buf(demux_yuv_frames_t *this , buf_element_t *buf){
     case BUF_VIDEO_I420:
     case BUF_VIDEO_YUY2:
       this->video_fifo->put(this->video_fifo, buf);
-      result = 1;	/* 1, we still should read audio */
-      break;
+      return 1;	/* 1, we still should read audio */
     case BUF_AUDIO_LPCM_LE:
       if (!_x_stream_info_get(this->stream, XINE_STREAM_INFO_HAS_VIDEO))
         _x_demux_control_newpts(this->stream, buf->pts, 0);
@@ -100,7 +97,7 @@ static int switch_buf(demux_yuv_frames_t *this , buf_element_t *buf){
       buf->free_buffer(buf);
   }
 
-  return result;
+  return 0;
 }
 
 static int demux_yuv_frames_send_chunk (demux_plugin_t *this_gen){
@@ -129,13 +126,19 @@ static void demux_yuv_frames_send_headers (demux_plugin_t *this_gen){
   if(_x_stream_info_get(this->stream, XINE_STREAM_INFO_HAS_AUDIO)) {
     buf = this->input->read_block(this->input, this->audio_fifo, 0);
     
-    this->audio_fifo->put(this->audio_fifo, buf);
+    if (buf)
+      this->audio_fifo->put(this->audio_fifo, buf);
+    else
+      this->status = DEMUX_FINISHED;
   }
   
   if(_x_stream_info_get(this->stream, XINE_STREAM_INFO_HAS_VIDEO)) {
     buf = this->input->read_block(this->input, this->video_fifo, 0);
     
-    this->video_fifo->put(this->video_fifo, buf);
+    if (buf)
+      this->video_fifo->put(this->video_fifo, buf);
+    else
+      this->status = DEMUX_FINISHED;
   }
   
   this->status = DEMUX_OK;
@@ -203,7 +206,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
    * if we reach this point, the input has been accepted.
    */
 
-  this         = xine_xmalloc (sizeof (demux_yuv_frames_t));
+  this         = calloc(1, sizeof(demux_yuv_frames_t));
   this->stream = stream;
   this->input  = input;
 
@@ -253,7 +256,7 @@ static void class_dispose (demux_class_t *this_gen) {
 static void *init_class (xine_t *xine, void *data) {
   demux_yuv_frames_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_yuv_frames_class_t));
+  this = calloc(1, sizeof(demux_yuv_frames_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

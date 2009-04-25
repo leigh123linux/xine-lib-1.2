@@ -1,3 +1,4 @@
+include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
 EXTRA_DIST = fooaudio.c
@@ -39,7 +40,7 @@ xineplug_decode_lpcm_la_CFLAGS = $(VISIBILITY_FLAG)
 xineplug_decode_lpcm_la_LIBADD = $(XINE_LIB)
 
 xineplug_decode_vorbis_la_SOURCES = xine_vorbis_decoder.c
-xineplug_decode_vorbis_la_LIBADD = $(XINE_LIB) $(VORBIS_LIBS) $(OGG_LIBS)
+xineplug_decode_vorbis_la_LIBADD = $(XINE_LIB) $(VORBIS_LIBS) $(OGG_LIBS) $(LTLIBINTL)
 xineplug_decode_vorbis_la_CFLAGS = $(VISIBILITY_FLAG) $(VORBIS_CFLAGS)
 
 xineplug_decode_speex_la_SOURCES = xine_speex_decoder.c

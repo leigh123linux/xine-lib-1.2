@@ -65,7 +65,7 @@ typedef struct ebml_parser_s {
 } ebml_parser_t;
 
 
-ebml_parser_t *new_ebml_parser (xine_t *xine, input_plugin_t *input);
+ebml_parser_t *new_ebml_parser (xine_t *xine, input_plugin_t *input) XINE_MALLOC;
 
 void dispose_ebml_parser (ebml_parser_t *ebml);
 
@@ -90,6 +90,8 @@ int ebml_read_float(ebml_parser_t *ebml, ebml_elem_t  *elem, double *val);
 int ebml_read_ascii(ebml_parser_t *ebml, ebml_elem_t *elem, char *str);
 
 int ebml_read_utf8(ebml_parser_t *ebml, ebml_elem_t *elem, char *str);
+
+char *ebml_alloc_read_ascii(ebml_parser_t *ebml, ebml_elem_t *elem);
 
 int ebml_read_date(ebml_parser_t *ebml, ebml_elem_t *elem, int64_t *date);
 

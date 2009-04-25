@@ -26,7 +26,7 @@
 #define __SPU_H__
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #include <inttypes.h>

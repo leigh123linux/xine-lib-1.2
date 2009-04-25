@@ -134,7 +134,7 @@ typedef unsigned int qt_atom;
 #define MAX_PTS_DIFF 100000
 
 /* network bandwidth, cribbed from src/input/input_mms.c */
-const int64_t bandwidths[]={14400,19200,28800,33600,34430,57600,
+static const int64_t bandwidths[]={14400,19200,28800,33600,34430,57600,
                             115200,262200,393216,524300,1544000,10485800};
 
 /* these are things that can go wrong */
@@ -581,7 +581,7 @@ static void find_moov_atom(input_plugin_t *input, off_t *moov_offset,
 static qt_info *create_qt_info(void) {
   qt_info *info;
 
-  info = (qt_info *)xine_xmalloc(sizeof(qt_info));
+  info = (qt_info *)calloc(1, sizeof(qt_info));
 
   if (!info)
     return NULL;
@@ -738,39 +738,67 @@ static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
 
     if (current_atom == ART_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
+      if (string_size <= 0)
+        continue;
       info->artist = xine_xmalloc(string_size);
-      strncpy(info->artist, &meta_atom[i + 20], string_size - 1);
-      info->artist[string_size - 1] = 0;
+      if (info->artist) {
+        strncpy(info->artist, &meta_atom[i + 20], string_size - 1);
+        info->artist[string_size - 1] = 0;
+      }
     } else if (current_atom == NAM_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
+      if (string_size <= 0)
+        continue;
       info->name = xine_xmalloc(string_size);
-      strncpy(info->name, &meta_atom[i + 20], string_size - 1);
-      info->name[string_size - 1] = 0;
+      if (info->name) {
+        strncpy(info->name, &meta_atom[i + 20], string_size - 1);
+        info->name[string_size - 1] = 0;
+      }
     } else if (current_atom == ALB_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
+      if (string_size <= 0)
+        continue;
       info->album = xine_xmalloc(string_size);
-      strncpy(info->album, &meta_atom[i + 20], string_size - 1);
-      info->album[string_size - 1] = 0;
+      if (info->album) {
+        strncpy(info->album, &meta_atom[i + 20], string_size - 1);
+        info->album[string_size - 1] = 0;
+      }
     } else if (current_atom == GEN_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
+      if (string_size <= 0)
+        continue;
       info->genre = xine_xmalloc(string_size);
-      strncpy(info->genre, &meta_atom[i + 20], string_size - 1);
-      info->genre[string_size - 1] = 0;
+      if (info->genre) {
+        strncpy(info->genre, &meta_atom[i + 20], string_size - 1);
+        info->genre[string_size - 1] = 0;
+      }
     } else if (current_atom == TOO_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
+      if (string_size <= 0)
+        continue;
       info->comment = xine_xmalloc(string_size);
-      strncpy(info->comment, &meta_atom[i + 20], string_size - 1);
-      info->comment[string_size - 1] = 0;
+      if (info->comment) {
+        strncpy(info->comment, &meta_atom[i + 20], string_size - 1);
+        info->comment[string_size - 1] = 0;
+      }
     } else if (current_atom == WRT_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
+      if (string_size <= 0)
+        continue;
       info->composer = xine_xmalloc(string_size);
-      strncpy(info->composer, &meta_atom[i + 20], string_size - 1);
-      info->composer[string_size - 1] = 0;
+      if (info->composer) {
+        strncpy(info->composer, &meta_atom[i + 20], string_size - 1);
+        info->composer[string_size - 1] = 0;
+      }
     } else if (current_atom == DAY_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
+      if (string_size <= 0)
+        continue;
       info->year = xine_xmalloc(string_size);
-      strncpy(info->year, &meta_atom[i + 20], string_size - 1);
-      info->year[string_size - 1] = 0;
+      if (info->year) {
+        strncpy(info->year, &meta_atom[i + 20], string_size - 1);
+        info->year[string_size - 1] = 0;
+      }
     }
   }
 
@@ -897,8 +925,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
       debug_atom_load("    qt elst atom (edit list atom): %d entries\n",
         trak->edit_list_count);
 
-      trak->edit_list_table = (edit_list_table_t *)xine_xmalloc(
-        trak->edit_list_count * sizeof(edit_list_table_t));
+      trak->edit_list_table = (edit_list_table_t *)calloc(
+        trak->edit_list_count, sizeof(edit_list_table_t));
       if (!trak->edit_list_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -933,18 +961,25 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
       /* allocate space for each of the properties unions */
       trak->stsd_atoms_count = _X_BE_32(&trak_atom[i + 8]);
-      trak->stsd_atoms = xine_xmalloc(trak->stsd_atoms_count * sizeof(properties_t));
+      if (trak->stsd_atoms_count <= 0) {
+        last_error = QT_HEADER_TROUBLE;
+        goto free_trak;
+      }
+      trak->stsd_atoms = calloc(trak->stsd_atoms_count, sizeof(properties_t));
       if (!trak->stsd_atoms) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
       }
-      memset(trak->stsd_atoms, 0, trak->stsd_atoms_count * sizeof(properties_t));
 
       atom_pos = i + 0x10;
       properties_offset = 0x0C;
       for (k = 0; k < trak->stsd_atoms_count; k++) {
 
         current_stsd_atom_size = _X_BE_32(&trak_atom[atom_pos - 4]);      
+        if (current_stsd_atom_size < 4) {
+          last_error = QT_HEADER_TROUBLE;
+          goto free_trak;
+        }
 
         if (trak->type == MEDIA_VIDEO) {
 
@@ -955,6 +990,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
           trak->stsd_atoms[k].video.properties_atom_size = current_stsd_atom_size - 4;
           trak->stsd_atoms[k].video.properties_atom = 
             xine_xmalloc(trak->stsd_atoms[k].video.properties_atom_size);
+          if (!trak->stsd_atoms[k].video.properties_atom) {
+            last_error = QT_NO_MEMORY;
+            goto free_trak;
+          }
           memcpy(trak->stsd_atoms[k].video.properties_atom, &trak_atom[atom_pos],
             trak->stsd_atoms[k].video.properties_atom_size);
 
@@ -1094,6 +1133,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
           trak->stsd_atoms[k].audio.properties_atom_size = current_stsd_atom_size - 4;
           trak->stsd_atoms[k].audio.properties_atom = 
             xine_xmalloc(trak->stsd_atoms[k].audio.properties_atom_size);
+          if (!trak->stsd_atoms[k].audio.properties_atom) {
+            last_error = QT_NO_MEMORY;
+            goto free_trak;
+          }
           memcpy(trak->stsd_atoms[k].audio.properties_atom, &trak_atom[atom_pos],
             trak->stsd_atoms[k].audio.properties_atom_size);
 
@@ -1185,10 +1228,11 @@ static qt_error parse_trak_atom (qt_trak *trak,
             if (_X_BE_32(&trak_atom[atom_pos + 0x2C]))
               trak->stsd_atoms[k].audio.bytes_per_sample = 
                 _X_BE_32(&trak_atom[atom_pos + 0x2C]);
-            trak->stsd_atoms[k].audio.samples_per_frame =
-              (trak->stsd_atoms[k].audio.bytes_per_frame / 
-               trak->stsd_atoms[k].audio.bytes_per_packet) *
-               trak->stsd_atoms[k].audio.samples_per_packet;
+            if (trak->stsd_atoms[k].audio.bytes_per_packet)
+              trak->stsd_atoms[k].audio.samples_per_frame =
+                (trak->stsd_atoms[k].audio.bytes_per_frame / 
+                 trak->stsd_atoms[k].audio.bytes_per_packet) *
+                 trak->stsd_atoms[k].audio.samples_per_packet;
           }
 
           /* see if the trak deserves a promotion to VBR */
@@ -1210,6 +1254,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
             trak->stsd_atoms[k].audio.properties_atom_size = 36;
             trak->stsd_atoms[k].audio.properties_atom = 
               xine_xmalloc(trak->stsd_atoms[k].audio.properties_atom_size);
+            if (!trak->stsd_atoms[k].audio.properties_atom) {
+              last_error = QT_NO_MEMORY;
+              goto free_trak;
+            }
             memcpy(trak->stsd_atoms[k].audio.properties_atom, 
               &trak_atom[atom_pos + 0x20],
               trak->stsd_atoms[k].audio.properties_atom_size);
@@ -1231,6 +1279,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
                 (current_atom_size >= (0x4C + wave_size))) {
               trak->stsd_atoms[k].audio.wave_size = wave_size;
               trak->stsd_atoms[k].audio.wave = xine_xmalloc(wave_size);
+              if (!trak->stsd_atoms[k].audio.wave) {
+                last_error = QT_NO_MEMORY;
+                goto free_trak;
+              }
               memcpy(trak->stsd_atoms[k].audio.wave, &trak_atom[atom_pos + 0x4C],
                      wave_size);
               _x_waveformatex_le2me(trak->stsd_atoms[k].audio.wave);
@@ -1300,8 +1352,16 @@ static qt_error parse_trak_atom (qt_trak *trak,
             j += mp4_read_descr_len( &trak_atom[j], &len );
             debug_atom_load("      decoder config is %d (0x%X) bytes long\n",
               len, len);
+            if (len > current_atom_size - (j - i)) {
+              last_error = QT_NOT_A_VALID_FILE;
+              goto free_trak;
+            }
             trak->decoder_config = realloc(trak->decoder_config, len);
             trak->decoder_config_len = len;
+            if (!trak->decoder_config) {
+              last_error = QT_NO_MEMORY;
+              goto free_trak;
+            }
             memcpy(trak->decoder_config,&trak_atom[j],len);
           }
         }
@@ -1331,8 +1391,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
       /* allocate space and load table only if sample size is 0 */
       if (trak->sample_size == 0) {
-        trak->sample_size_table = (unsigned int *)malloc(
-          trak->sample_size_count * sizeof(unsigned int));
+        trak->sample_size_table = (unsigned int *)calloc(
+          trak->sample_size_count, sizeof(unsigned int));
         if (!trak->sample_size_table) {
           last_error = QT_NO_MEMORY;
           goto free_trak;
@@ -1362,8 +1422,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
       debug_atom_load("    qt stss atom (sample sync atom): %d sync samples\n",
         trak->sync_sample_count);
 
-      trak->sync_sample_table = (unsigned int *)malloc(
-        trak->sync_sample_count * sizeof(unsigned int));
+      trak->sync_sample_table = (unsigned int *)calloc(
+        trak->sync_sample_count, sizeof(unsigned int));
       if (!trak->sync_sample_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1391,8 +1451,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
       debug_atom_load("    qt stco atom (32-bit chunk offset atom): %d chunk offsets\n",
         trak->chunk_offset_count);
 
-      trak->chunk_offset_table = (int64_t *)malloc(
-        trak->chunk_offset_count * sizeof(int64_t));
+      trak->chunk_offset_table = (int64_t *)calloc(
+        trak->chunk_offset_count, sizeof(int64_t));
       if (!trak->chunk_offset_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1419,8 +1479,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
       debug_atom_load("    qt co64 atom (64-bit chunk offset atom): %d chunk offsets\n",
         trak->chunk_offset_count);
 
-      trak->chunk_offset_table = (int64_t *)malloc(
-        trak->chunk_offset_count * sizeof(int64_t));
+      trak->chunk_offset_table = (int64_t *)calloc(
+        trak->chunk_offset_count, sizeof(int64_t));
       if (!trak->chunk_offset_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1450,8 +1510,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
       debug_atom_load("    qt stsc atom (sample-to-chunk atom): %d entries\n",
         trak->sample_to_chunk_count);
 
-      trak->sample_to_chunk_table = (sample_to_chunk_table_t *)malloc(
-        trak->sample_to_chunk_count * sizeof(sample_to_chunk_table_t));
+      trak->sample_to_chunk_table = (sample_to_chunk_table_t *)calloc(
+        trak->sample_to_chunk_count, sizeof(sample_to_chunk_table_t));
       if (!trak->sample_to_chunk_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1475,7 +1535,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
     } else if (current_atom == STTS_ATOM) {
 
       /* there should only be one of these atoms */
-      if (trak->time_to_sample_table) {
+      if (trak->time_to_sample_table
+          || current_atom_size < 12 || current_atom_size >= UINT_MAX) {
         last_error = QT_HEADER_TROUBLE;
         goto free_trak;
       }
@@ -1485,8 +1546,13 @@ static qt_error parse_trak_atom (qt_trak *trak,
       debug_atom_load("    qt stts atom (time-to-sample atom): %d entries\n",
         trak->time_to_sample_count);
 
-      trak->time_to_sample_table = (time_to_sample_table_t *)malloc(
-        (trak->time_to_sample_count+1) * sizeof(time_to_sample_table_t));
+      if (trak->time_to_sample_count > (current_atom_size - 12) / 8) {
+        last_error = QT_HEADER_TROUBLE;
+        goto free_trak;
+      }
+
+      trak->time_to_sample_table = (time_to_sample_table_t *)calloc(
+        trak->time_to_sample_count+1, sizeof(time_to_sample_table_t));
       if (!trak->time_to_sample_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
@@ -1537,44 +1603,46 @@ static qt_error parse_reference_atom (reference_t *ref,
   qt_atom current_atom;
   unsigned int current_atom_size;
 
+  if (ref_atom_size >= 0x80000000)
+    return QT_NOT_A_VALID_FILE;
+
   /* initialize reference atom */
   ref->url = NULL;
   ref->data_rate = 0;
   ref->qtim_version = 0;
 
   /* traverse through the atom looking for the key atoms */
-  for (i = ATOM_PREAMBLE_SIZE; i < ref_atom_size - 4; i++) {
+  for (i = ATOM_PREAMBLE_SIZE; i + 4 < ref_atom_size; i++) {
 
     current_atom_size = _X_BE_32(&ref_atom[i - 4]);
     current_atom = _X_BE_32(&ref_atom[i]);
 
     if (current_atom == RDRF_ATOM) {
+      size_t string_size = _X_BE_32(&ref_atom[i + 12]);
+      size_t url_offset = 0;
+
+      if (string_size >= current_atom_size || string_size >= ref_atom_size - i)
+        return QT_NOT_A_VALID_FILE;
 
       /* if the URL starts with "http://", copy it */
-      if (strncmp(&ref_atom[i + 16], "http://", 7) == 0
-        || strncmp(&ref_atom[i + 16], "rtsp://", 7) == 0) {
+      if ( memcmp(&ref_atom[i + 16], "http://", 7) &&
+	   memcmp(&ref_atom[i + 16], "rtsp://", 7) &&
+	   base_mrl )
+	url_offset = strlen(base_mrl);
+      if (url_offset >= 0x80000000)
+        return QT_NOT_A_VALID_FILE;
 
-        /* URL is spec'd to terminate with a NULL; don't trust it */
-        ref->url = xine_xmalloc(_X_BE_32(&ref_atom[i + 12]) + 1);
-        strncpy(ref->url, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
-        ref->url[_X_BE_32(&ref_atom[i + 12]) - 1] = '\0';
+      /* otherwise, append relative URL to base MRL */
+      string_size += url_offset;
 
-      } else {
+      ref->url = xine_xmalloc(string_size + 1);
 
-        int string_size;
+      if ( url_offset )
+	strcpy(ref->url, base_mrl);
 
-	if (base_mrl)
-          string_size = strlen(base_mrl) + _X_BE_32(&ref_atom[i + 12]) + 1;
-	else
-          string_size = _X_BE_32(&ref_atom[i + 12]) + 1;
+      memcpy(ref->url + url_offset, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
 
-        /* otherwise, append relative URL to base MRL */
-        ref->url = xine_xmalloc(string_size);
-	if (base_mrl)
-          strcpy(ref->url, base_mrl);
-        strncat(ref->url, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
-        ref->url[string_size - 1] = '\0';
-      }
+      ref->url[string_size] = '\0';
 
       debug_atom_load("    qt rdrf URL reference:\n      %s\n", ref->url);
 
@@ -1686,8 +1754,7 @@ static qt_error build_frame_table(qt_trak *trak,
     /* in this case, the total number of frames is equal to the number of
      * entries in the sample size table */
     trak->frame_count = trak->sample_size_count;
-    trak->frames = (qt_frame *)malloc(
-      trak->frame_count * sizeof(qt_frame));
+    trak->frames = (qt_frame *)calloc(trak->frame_count, sizeof(qt_frame));
     if (!trak->frames)
       return QT_NO_MEMORY;
     trak->current_frame = 0;
@@ -1699,10 +1766,9 @@ static qt_error build_frame_table(qt_trak *trak,
     pts_index_countdown =
       trak->time_to_sample_table[pts_index].count;
 
-    media_id_counts = xine_xmalloc(trak->stsd_atoms_count * sizeof(int));
+    media_id_counts = calloc(trak->stsd_atoms_count, sizeof(int));
     if (!media_id_counts)
       return QT_NO_MEMORY;
-    memset(media_id_counts, 0, trak->stsd_atoms_count * sizeof(int));
 
     /* iterate through each start chunk in the stsc table */
     for (i = 0; i < trak->sample_to_chunk_count; i++) {
@@ -1837,8 +1903,7 @@ static qt_error build_frame_table(qt_trak *trak,
     /* in this case, the total number of frames is equal to the number of
      * chunks */
     trak->frame_count = trak->chunk_offset_count;
-    trak->frames = (qt_frame *)malloc(
-      trak->frame_count * sizeof(qt_frame));
+    trak->frames = (qt_frame *)calloc(trak->frame_count, sizeof(qt_frame));
     if (!trak->frames)
       return QT_NO_MEMORY;
 
@@ -1993,8 +2058,12 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
       info->references = (reference_t *)realloc(info->references,
         info->reference_count * sizeof(reference_t));
 
-      parse_reference_atom(&info->references[info->reference_count - 1],
-        &moov_atom[i - 4], info->base_mrl);
+      error = parse_reference_atom(&info->references[info->reference_count - 1],
+                                   &moov_atom[i - 4], info->base_mrl);
+      if (error != QT_OK) {
+        info->last_error = error;
+        return;
+      }
 
     } else {
       debug_atom_load("  qt: unknown atom into the moov atom (0x%08X)\n", current_atom);
@@ -2145,7 +2214,7 @@ static qt_error open_qt_file(qt_info *info, input_plugin_t *input,
   }
 
   /* check if moov is compressed */
-  if (_X_BE_32(&moov_atom[12]) == CMOV_ATOM) {
+  if (_X_BE_32(&moov_atom[12]) == CMOV_ATOM && moov_atom_size >= 0x28) {
 
     info->compressed_header = 1;
 
@@ -2944,7 +3013,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
-  this         = xine_xmalloc (sizeof (demux_qt_t));
+  this         = calloc(1, sizeof(demux_qt_t));
   this->stream = stream;
   this->input  = input;
 
@@ -3059,7 +3128,9 @@ static const char *get_mimetypes (demux_class_t *this_gen) {
   return "video/quicktime: mov,qt: Quicktime animation;"
          "video/x-quicktime: mov,qt: Quicktime animation;"
          "audio/x-m4a: m4a,m4b: MPEG-4 audio;"
-         "application/x-quicktimeplayer: qtl: Quicktime list;";
+         "application/x-quicktimeplayer: qtl: Quicktime list;"
+         "video/mp4: mp4,mpg4: MPEG-4 video;"
+         "audio/mp4: mp4,mpg4: MPEG-4 audio;";
 }
 
 static void class_dispose (demux_class_t *this_gen) {
@@ -3073,7 +3144,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   demux_qt_class_t     *this;
 
-  this         = xine_xmalloc (sizeof (demux_qt_class_t));
+  this         = calloc(1, sizeof(demux_qt_class_t));
   this->config = xine->config;
   this->xine   = xine;
 

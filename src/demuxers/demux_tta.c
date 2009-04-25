@@ -21,6 +21,10 @@
  * Inspired by tta libavformat demuxer by Alex Beregszaszi
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #define LOG_MODULE "demux_tta"
 #define LOG_VERBOSE
 
@@ -72,7 +76,7 @@ static int open_tta_file(demux_tta_t *this) {
   if (_x_demux_read_header(this->input, peek, 4) != 4)
       return 0;
 
-  if ( _X_BE_32(peek) != FOURCC_32('T', 'T', 'A', '1') )
+  if ( !_x_is_fourcc(peek, "TTA1") )
     return 0;
 
   if ( this->input->read(this->input, this->header.buffer, sizeof(this->header)) != sizeof(this->header) )
@@ -87,7 +91,7 @@ static int open_tta_file(demux_tta_t *this) {
     return 0;
   }
 
-  this->seektable = xine_xmalloc(sizeof(uint32_t)*this->totalframes);
+  this->seektable = calloc(this->totalframes, sizeof(uint32_t));
   this->input->read(this->input, this->seektable, sizeof(uint32_t)*this->totalframes);
 
   /* Skip the CRC32 */
@@ -126,6 +130,10 @@ static int demux_tta_send_chunk(demux_plugin_t *this_gen) {
     /* buf->extra_info->input_time = this->current_sample / this->samplerate; */
 
     bytes_read = this->input->read(this->input, buf->content, ( bytes_to_read > buf->max_size ) ? buf->max_size : bytes_to_read);
+    if (bytes_read < 0) {
+      this->status = DEMUX_FINISHED;
+      break;
+    }
 
     buf->size = bytes_read;
 
@@ -233,7 +241,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_tta_t    *this;
 
-  this         = xine_xmalloc (sizeof (demux_tta_t));
+  this         = calloc(1, sizeof(demux_tta_t));
   this->stream = stream;
   this->input  = input;
 
@@ -307,7 +315,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_tta_init_plugin (xine_t *xine, void *data) {
   demux_tta_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_tta_class_t));
+  this = calloc(1, sizeof(demux_tta_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

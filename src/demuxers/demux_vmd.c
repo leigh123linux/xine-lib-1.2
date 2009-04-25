@@ -168,7 +168,7 @@ static int open_vmd_file(demux_vmd_t *this) {
     return 0;
   }
 
-  this->frame_table = xine_xmalloc(this->frame_count * sizeof(vmd_frame_t));
+  this->frame_table = calloc(this->frame_count, sizeof(vmd_frame_t));
 
   current_offset = this->data_start = _X_LE_32(&vmd_header[20]);
   this->data_size = toc_offset - this->data_start;
@@ -421,7 +421,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_vmd_t    *this;
 
-  this         = xine_xmalloc (sizeof (demux_vmd_t));
+  this         = calloc(1, sizeof(demux_vmd_t));
   this->stream = stream;
   this->input  = input;
 
@@ -495,7 +495,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_vmd_init_plugin (xine_t *xine, void *data) {
   demux_vmd_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_vmd_class_t));
+  this = calloc(1, sizeof(demux_vmd_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

@@ -34,6 +34,18 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 	BUILD_TARGET := debug
 endif
 
+ifneq (,$(findstring mips,$(DEB_HOST_GNU_TYPE)))
+	DEB_BUILD_CONFIG_OPTIONS += PTHREAD_LIBS="-lpthread"
+endif
+
+# taken from the qemu package
+# Support multiple makes at once
+ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+NJOBS := $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+else
+NJOBS := 1
+endif
+
 # note also "noauto" to inhibit running of autogen.sh
 
 # the "optimize" flag disables compatibility hacks
@@ -59,7 +71,10 @@ ifeq (,$(findstring optimize,$(DEB_BUILD_OPTIONS)))
 endif
 
 # --mandir - remove after etch released (autoconf >= 2.59c gets it right)
-CONFIGURE_FLAGS := --prefix=/usr \
+CONFIGURE_FLAGS := \
+	--build $(DEB_BUILD_GNU_TYPE) \
+	--host $(DEB_HOST_GNU_TYPE) \
+	--prefix=/usr \
 	--mandir=\$${prefix}/share/man \
 	--with-external-libmad \
 	--with-external-a52dec \
@@ -67,6 +82,7 @@ CONFIGURE_FLAGS := --prefix=/usr \
 	--with-external-ffmpeg \
 	--with-freetype \
 	--with-wavpack \
+	--enable-ipv6 \
 	$(DEB_BUILD_CONFIG_OPTIONS) \
 	CFLAGS="$(CFLAGS)"
 
@@ -87,7 +103,7 @@ endif
 build: configure-stamp build-stamp
 build-stamp:
 	dh_testdir
-	$(MAKE)
+	$(MAKE) -j $(NJOBS)
 	touch build-stamp
 
 update-config-sub-guess:
@@ -100,11 +116,11 @@ clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp configure-stamp po/*.gmo po/stamp-po
-	-$(MAKE) distclean
-	# remove more cruft leftover by autohell
-	rm -f doc/faq/faq.html doc/faq/faq.txt doc/hackersguide/hackersguide.html m4/caca.m4
-	-test -f .noauto || find . -name Makefile.in -print | xargs -r rm
-	test -f .noauto || rm -rf compile config.guess configure depcomp install-sh ltmain.sh missing aclocal.m4 include/configure.h.in
+	if test -f .noauto; then \
+	    [ ! -f Makefile ] || $(MAKE) distclean; \
+	  else \
+	    [ ! -f Makefile ] || $(MAKE) maintainer-clean; \
+	  fi
 	dh_clean
 
 install: build
@@ -128,6 +144,8 @@ binary-arch: build install
 	mv debian/tmp/usr/share/doc/xine-lib debian/tmp/usr/share/doc/libxine${major}
 #	build libxine${major} package by moving files from libxine-dev
 	dh_install --autodest --sourcedir=debian/tmp --list-missing
+	install -m755 debian/dh_xine debian/libxine-dev/usr/bin
+	dh_installman -plibxine-dev debian/dh_xine.1
 	dh_installdocs
 	dh_installchangelogs -k ChangeLog
 	dh_link

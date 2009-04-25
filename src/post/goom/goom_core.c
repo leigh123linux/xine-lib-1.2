@@ -76,6 +76,10 @@ PluginInfo *goom_init (guint32 resx, guint32 resy)
     goomInfo->tentacles_fx = tentacle_fx_create();
     goomInfo->tentacles_fx.init(&goomInfo->tentacles_fx, goomInfo);
     
+    goomInfo->screen.width = resx;
+    goomInfo->screen.height = resy;
+    goomInfo->screen.size = resx * resy;
+    
     goomInfo->convolve_fx = convolve_create();
     goomInfo->convolve_fx.init(&goomInfo->convolve_fx, goomInfo);
     
@@ -83,10 +87,6 @@ PluginInfo *goom_init (guint32 resx, guint32 resy)
     plugin_info_add_visual (goomInfo, 1, &goomInfo->tentacles_fx);
     plugin_info_add_visual (goomInfo, 2, &goomInfo->star_fx);
     plugin_info_add_visual (goomInfo, 3, &goomInfo->convolve_fx);
-    
-    goomInfo->screen.width = resx;
-    goomInfo->screen.height = resy;
-    goomInfo->screen.size = resx * resy;
     
     init_buffers(goomInfo, goomInfo->screen.size);
     goomInfo->gRandom = goom_random_init((uintptr_t)goomInfo->pixel);
@@ -841,7 +841,7 @@ void update_message (PluginInfo *goomInfo, char *message) {
     
     if (message) {
         int i=1,j=0;
-        sprintf (goomInfo->update_message.message, "%s", message);
+	strcpy(goomInfo->update_message.message, message);
         for (j=0;goomInfo->update_message.message[j];j++)
             if (goomInfo->update_message.message[j]=='\n')
                 i++;
@@ -855,8 +855,8 @@ void update_message (PluginInfo *goomInfo, char *message) {
         char *ptr = msg;
         int pos;
         float ecart;
+	strncpy(msg, goomInfo->update_message.message, goomInfo->update_message.longueur);
         message = msg;
-        sprintf (msg, "%s", goomInfo->update_message.message);
         
         while (!fin) {
             while (1) {
