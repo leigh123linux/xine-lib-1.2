@@ -354,7 +354,7 @@ static void metronom_handle_discontinuity (metronom_t *this, int type,
     this->vpts_offset = this->video_vpts - disc_off;
     break;
   }
-
+  
   this->last_video_pts = 0;
   this->last_audio_pts = 0;
 }
