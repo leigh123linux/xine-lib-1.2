@@ -113,7 +113,7 @@ typedef struct _cdrom_toc {
  *************************************************************************/
 
 #define MAX_TRACKS     99
-#define CACHED_FRAMES  500
+#define CACHED_FRAMES  100
 
 typedef struct {
   int                  start;
