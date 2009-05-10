@@ -1433,6 +1433,68 @@ static int _cdda_cddb_handle_code(char *buf) {
   return err;
 }
 
+static inline char *_cdda_append (/*const*/ char *first, const char *second)
+{
+  if (!first)
+    return strdup (second);
+
+  char *result = (char *) realloc (first, strlen (first) + strlen (second) + 1);
+  strcat (result, second);
+  return result;
+}
+
+static void _cdda_parse_cddb_info (cdda_input_plugin_t *this, char *buffer, char **dtitle)
+{
+  /* buffer should be no more than 2048 bytes... */
+  char buf[2048];
+  int track_no;
+
+  if (sscanf (buffer, "DTITLE=%s", &buf[0]) == 1) {
+    char *pt = strchr (buffer, '=');
+    if (pt) {
+      ++pt;
+
+      *dtitle = _cdda_append (*dtitle, pt);
+      pt = strdup (*dtitle);
+
+      char *title = strstr (pt, " / ");
+      if (title)
+      {
+	*title = 0;
+	title += 3;
+	free (this->cddb.disc_artist);
+	this->cddb.disc_artist = strdup (pt);
+      }
+      else
+	title = pt;
+
+      free (this->cddb.disc_title);
+      this->cddb.disc_title = strdup (title);
+
+      free (pt);
+    }
+  }
+  else if (sscanf (buffer, "DYEAR=%s", &buf[0]) == 1) {
+    char *pt = strrchr (buffer, '=');
+    if (pt && strlen (pt) == 5)
+      this->cddb.disc_year = strdup (pt + 1);
+  }
+  else if (sscanf (buffer, "TTITLE%d=%s", &track_no, &buf[0]) == 2) {
+    char *pt = strchr(buffer, '=');
+    this->cddb.track[track_no].title = _cdda_append (this->cddb.track[track_no].title, pt + 1);
+  }
+  else if (!strncmp (buffer, "EXTD=", 5))
+  {
+    if (!this->cddb.disc_year)
+    {
+      int nyear;
+      char *y = strstr (buffer, "YEAR:");
+      if (y && sscanf (y + 5, "%4d", &nyear) == 1)
+	asprintf (&this->cddb.disc_year, "%d", nyear);
+    }
+  }
+}
+
 /*
  * Try to load cached cddb infos
  */
@@ -1465,82 +1527,16 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
 	  return 0;
 	}
 	else {
-	  char buffer[256], *ln;
-	  char buf[256];
-	  int  tnum;
+	  char buffer[2048], *ln;
 	  char *dtitle = NULL;
 	  
-	  while ((ln = fgets(buffer, 255, fd)) != NULL) {
+	  while ((ln = fgets(buffer, sizeof (buffer) - 1, fd)) != NULL) {
 
-	    buffer[strlen(buffer) - 1] = '\0';
-	    
-	    if (sscanf(buffer, "DTITLE=%s", &buf[0]) == 1) {
-	      char *pt, *artist, *title;
+	    int length = strlen (buffer);
+	    if (length && buffer[length - 1] == '\n')
+	      buffer[length - 1] = '\0';
 
-	      pt = strchr(buffer, '=');
-	      if (pt) {
-		pt++;
-
-	        if (dtitle != NULL)
-	        {
-		  dtitle = (char *) realloc(dtitle, strlen(dtitle) + strlen(pt) + 1);
-		  strcat(dtitle, pt);
-		  pt = dtitle;
-	        }
-	        dtitle = strdup(pt);
- 
-	        artist = pt;
-	        title = strstr(pt, " / ");
-	        if (title) {
-		  *title++ = '\0';
-		  title += 2;
-	        }
-	        else {
-		  title = artist;
-		  artist = NULL;
-	        }
-
-	        if (artist)
-		  this->cddb.disc_artist = strdup(artist);
-
-	        this->cddb.disc_title = strdup(title);
-	      }
-	    }
-	    else if (sscanf(buffer, "DYEAR=%s", &buf[0]) == 1) {
-	      char *pt;
-
-	      pt = strrchr(buffer, '=');
-	      pt++;
-	      if (pt != NULL && strlen(pt) == 4)
-		this->cddb.disc_year = strdup(pt);
-	    }
-	    else if (sscanf(buffer, "TTITLE%d=%s", &tnum, &buf[0]) == 2) {
-	      char *pt;
-
-	      pt = strchr(buffer, '=');
-	      if (pt)
-		pt++;
-	      if (this->cddb.track[tnum].title == NULL)
-		this->cddb.track[tnum].title = strdup(pt); 
-	      else
-	      {
-		this->cddb.track[tnum].title
-		  = (char *) realloc(this->cddb.track[tnum].title, strlen(this->cddb.track[tnum].title) + strlen(pt) + 1);
-		strcat(this->cddb.track[tnum].title, pt);
-	      }
-	    }
-	    else {
-	      if (!strncmp(buffer, "EXTD=", 5)) {
-		char *y;
-		int   nyear;
-		
-		y = strstr(buffer, "YEAR:");
-		if (y && this->cddb.disc_year == NULL) {
-		  if (sscanf(y+5, "%4d", &nyear) == 1)
-		    asprintf(&this->cddb.disc_year, "%d", nyear);
-		}
-	      }
-	    }
+	    _cdda_parse_cddb_info (this, buffer, &dtitle);
 	  }
 	  fclose(fd);
 	  free(dtitle);
@@ -1803,82 +1799,13 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
     memset(&buffercache, 0, sizeof(buffercache));
 
     while (strcmp(buffer, ".")) {
-      char buf[2048];
-      int tnum;
       size_t bufsize = strlen(buffercache);
 
       memset(&buffer, 0, sizeof(buffer));
       _cdda_cddb_socket_read(this, buffer, sizeof(buffer) - 1);
       snprintf(buffercache + bufsize, sizeof(buffercache) - bufsize, "%s\n", buffer);
 
-      if (sscanf(buffer, "DTITLE=%s", &buf[0]) == 1) {
-        char *pt, *artist, *title;
-
-        pt = strrchr(buffer, '=');
-        if (pt) {
-          pt++;
-
-          if (dtitle != NULL)
-          {
-            dtitle = (char *) realloc(dtitle, strlen(dtitle) + strlen(pt) + 1);
-            strcat(dtitle, pt);
-            pt = dtitle;
-          }
-          dtitle = strdup(pt);
-
-          artist = pt;
-          title = strstr(pt, " / ");
-          if (title) {
-            *title++ = '\0';
-            title += 2;
-          }
-          else {
-            title = artist;
-            artist = NULL;
-          }
-			    
-          if (artist) {
-            this->cddb.disc_artist = strdup(artist);
-          }
-          this->cddb.disc_title = strdup(title);
-        }
-      }
-      else if(sscanf(buffer, "DYEAR=%s", &buf[0]) == 1) {
-        char *pt;
-
-        pt = strrchr(buffer, '=');
-        pt++;
-        if (pt != NULL && strlen(pt) == 4)
-          this->cddb.disc_year = strdup(pt);
-      }
-      else if (sscanf(buffer, "TTITLE%d=%s", &tnum, &buf[0]) == 2) {
-        char *pt;
-
-        pt = strrchr(buffer, '=');
-        if (pt) {
-	  pt++;
-          if (this->cddb.track[tnum].title == NULL)
-            this->cddb.track[tnum].title = strdup(pt);
-          else
-          {
-            this->cddb.track[tnum].title
-              = (char *) realloc(this->cddb.track[tnum].title, strlen(this->cddb.track[tnum].title) + strlen(pt) + 1);
-            strcat(this->cddb.track[tnum].title, pt);
-          }
-        }
-      }
-      else {
-        if (!strncmp(buffer, "EXTD=", 5)) {
-          char *y;
-          int   nyear;
-
-          y = strstr(buffer, "YEAR:");
-          if (y && this->cddb.disc_year == NULL) {
-            if (sscanf(y+5, "%4d", &nyear) == 1)
-	      asprintf(&this->cddb.disc_year, "%d", nyear);
-          }
-        }
-      }
+      _cdda_parse_cddb_info (this, buffer, &dtitle);
     }
     free(dtitle);
     
