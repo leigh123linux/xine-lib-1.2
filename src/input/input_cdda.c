@@ -1475,12 +1475,12 @@ static void _cdda_parse_cddb_info (cdda_input_plugin_t *this, char *buffer, char
     }
   }
   else if (sscanf (buffer, "DYEAR=%s", &buf[0]) == 1) {
-    char *pt = strrchr (buffer, '=');
+    char *pt = strchr (buffer, '=');
     if (pt && strlen (pt) == 5)
       this->cddb.disc_year = strdup (pt + 1);
   }
   else if(sscanf(buffer, "DGENRE=%s", &buf[0]) == 1) {
-    char *pt = strrchr(buffer, '=');
+    char *pt = strchr(buffer, '=');
     if (pt)
       this->cddb.disc_category = strdup (pt + 1);
   }
