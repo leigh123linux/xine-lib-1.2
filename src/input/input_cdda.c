@@ -1479,6 +1479,11 @@ static void _cdda_parse_cddb_info (cdda_input_plugin_t *this, char *buffer, char
     if (pt && strlen (pt) == 5)
       this->cddb.disc_year = strdup (pt + 1);
   }
+  else if(sscanf(buffer, "DGENRE=%s", &buf[0]) == 1) {
+    char *pt = strrchr(buffer, '=');
+    if (pt)
+      this->cddb.disc_category = strdup (pt + 1);
+  }
   else if (sscanf (buffer, "TTITLE%d=%s", &track_no, &buf[0]) == 2) {
     char *pt = strchr(buffer, '=');
     this->cddb.track[track_no].title = _cdda_append (this->cddb.track[track_no].title, pt + 1);
@@ -2418,6 +2423,9 @@ static int cdda_plugin_open (input_plugin_t *this_gen ) {
     }
     lprintf("Track %d Title: %s\n", this->track+1, pt);
 
+    char tracknum[4];
+    snprintf(tracknum, 4, "%d", this->track+1);
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_TRACK_NUMBER, tracknum);
     _x_meta_info_set_utf8(this->stream, XINE_META_INFO_TITLE, pt);
   }
   
