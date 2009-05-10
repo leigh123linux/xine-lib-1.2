@@ -744,7 +744,7 @@ if test "x$no_x" = "x" && test "x$enable_xvmc" != "xno"; then
 
 AC_ARG_WITH(xxmc-path, AS_HELP_STRING([--with-xxmc-path=path], [where libXvMC libraries for the
 	xxmc plugin are  installed. Defalts to the default X library path.]),
-	xxmc_path="$withval", xxmc_path="${x_libraries:-/usr/lib}")
+	xxmc_path="$withval", xxmc_path="$x_libraries")
 AC_ARG_WITH(xxmc-lib, AS_HELP_STRING([--with-xxmc-lib=XXXX], [The name of the XvMC library 
 	libXXXX.so for the xxmc plugin.]),xxmc_stub="$withval", 
 	xxmc_stub="XvMCW")
@@ -755,7 +755,7 @@ if test "x$x_includes" != "x"; then
 	CPPFLAGS="$CPPFLAGS -I$x_includes"
 fi
 
-XXMC_LIBS="-L$xxmc_path -l$xxmc_stub"
+XXMC_LIBS="${xxmc_path:+-L}$xxmc_path -l$xxmc_stub"
 AC_MSG_CHECKING(whether to enable the xxmc plugin with vld extensions)
 AC_MSG_RESULT()
 dnl Check if vld "extended" XvMC is available
@@ -764,7 +764,7 @@ if test "x$xxmc_stub" == "xXvMCW" && test "x$ac_have_xv" == "xyes"; then
              	     ac_have_xxmc="yes",
 	             [ac_have_xxmc="no"
               	        AC_MSG_RESULT([*** Could not link with -l$xxmc_stub for vld extensions.])],
-                     [-L$xxmc_path $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
+                     [${xxmc_path:+-L}$xxmc_path $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
 else
     if test "x$ac_have_xv" = "xyes"; then 
       AC_CHECK_LIB($xxmc_stub, XvMCPutSlice,
@@ -772,7 +772,7 @@ else
 	             XXMC_LIBS="$XXMC_LIBS -lXvMC"],
                    [ac_have_xxmc="no"
 		     AC_MSG_RESULT([*** Could not link with -l$xxmc_stub -lXvMC for vld extensions.])],
-                   [-L$xxmc_path -lXvMC $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
+                   [${xxmc_path:+-L}$xxmc_path -lXvMC $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
     else 
       ac_have_xxmc="no",
     fi  
@@ -794,7 +794,7 @@ if test "x$ac_have_xxmc" = "xno"; then
                ac_have_xxmc="yes",
 	       [ac_have_xxmc="no"
                 AC_MSG_RESULT([*** Could not link with -l$xxmc_stub for standard XvMC.])],
-               [-L$xxmc_path $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
+               [${xxmc_path:+-L}$xxmc_path $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
   else
       if test "x$ac_have_xv" = "xyes"; then 
         AC_CHECK_LIB($xxmc_stub, XvMCCreateContext,
@@ -802,7 +802,7 @@ if test "x$ac_have_xxmc" = "xno"; then
 		      XXMC_LIBS="$XXMC_LIBS -lXvMC"],
                      [ac_have_xxmc="no"
 		      AC_MSG_RESULT([*** Could not link with -lXvMC for standard XvMC.])],
-                     [-L$xxmc_path -lXvMC $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
+                     [${xxmc_path:+-L}$xxmc_path -lXvMC $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
       else 
         ac_have_xxmc="no",
       fi  
@@ -835,12 +835,12 @@ if test "x$no_x" = "x" && test "x$enable_xvmc" != "xno"; then
 
 AC_ARG_WITH(xvmc-path, AS_HELP_STRING([--with-xvmc-path=path], [where libXvMC libraries for the
 	xvmc plugin are  installed. Defalts to the default X library path.]),
-	xvmc_path="$withval", xvmc_path="${x_libraries:-/usr/lib}")
+	xvmc_path="$withval", xvmc_path="$x_libraries")
 AC_ARG_WITH(xvmc-lib, AS_HELP_STRING([--with-xvmc-lib=XXXX], [The name of the XvMC library 
 	libXXXX.so for the xvmc plugin.]),xvmc_stub="$withval", 
 	xvmc_stub="XvMCW")
 saved_libs="$LIBS"
-XVMC_LIBS="-L$xvmc_path -l$xvmc_stub"
+XVMC_LIBS="${xvmc_path:+-L}$xvmc_path -l$xvmc_stub"
 AC_MSG_CHECKING(whether to enable the xvmc plugin)
 AC_MSG_RESULT()
 if test "x$xvmc_stub" == "xXvMCW"; then
@@ -848,7 +848,7 @@ if test "x$xvmc_stub" == "xXvMCW"; then
              ac_have_xvmc="yes",
 	     [ac_have_xvmc="no"
               AC_MSG_RESULT([*** Could not link with -l$xvmc_stub.])],
-             [-L$xvmc_path $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
+             [${xvmc_path:+-L}$xvmc_path $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
 else
     if test "x$ac_have_xv" = "xyes"; then 
       AC_CHECK_LIB($xvmc_stub, XvMCCreateContext,
@@ -856,7 +856,7 @@ else
 		    XVMC_LIBS="$XVMC_LIBS -lXvMC"],
                    [ac_have_xvmc="no"
 		    AC_MSG_RESULT([*** Could not link with -lXvMC.])],
-                   [-L$xvmc_path -lXvMC $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
+                   [${xvmc_path:+-L}$xvmc_path -lXvMC $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
     else 
       ac_have_xvmc="no",
     fi  
