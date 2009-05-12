@@ -68,6 +68,12 @@
 #define MODE_STARTCODE  0
 #define MODE_FRAME      1
 
+/*#define MAKE_DAT*/ /*do NOT define this, unless you know what you do */
+#ifdef MAKE_DAT
+static int nframes;
+static FILE *outfile;
+#endif
+
 
 
 const double aspect_ratio[] = {
@@ -91,6 +97,7 @@ const double aspect_ratio[] = {
 
 typedef struct {
   VdpPictureInfoVC1       vdp_infos;
+  int                     slices;
   int                     fptype;
   int                     field;
   int                     header_size;
@@ -117,7 +124,7 @@ typedef struct {
   uint8_t     *buf; /* accumulate data */
   int         bufseek;
   int         start;
-  int         code_start;
+  int         code_start, current_code;
   uint32_t    bufsize;
   uint32_t    bufpos;
 
@@ -168,6 +175,7 @@ static void init_picture( picture_t *pic )
 
 static void reset_picture( picture_t *pic )
 {
+  pic->slices = 1;
 }
 
 
@@ -178,7 +186,7 @@ static void reset_sequence( sequence_t *sequence )
   sequence->bufpos = 0;
   sequence->bufseek = 0;
   sequence->start = -1;
-  sequence->code_start = 0;
+  sequence->code_start = sequence->current_code = 0;
   sequence->seq_pts = sequence->cur_pts = 0;
   if ( sequence->forward_ref )
     sequence->forward_ref->free( sequence->forward_ref );
@@ -600,8 +608,10 @@ static int parse_code( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len )
     return 0;
 
   if ( sequence->code_start == frame_start_code ) {
-    if ( buf[3]==field_start_code || buf[3]==slice_start_code )
+    if ( sequence->current_code==field_start_code || sequence->current_code==slice_start_code ) {
+	  sequence->picture.slices++;
       return -1;
+	}
     return 1; /* frame complete, decode */
   }
 
@@ -626,13 +636,13 @@ static int parse_code( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len )
       lprintf("sequence_end_code\n");
       break;
     case frame_start_code:
-      lprintf("frame_start_code\n");
+      lprintf("frame_start_code, len=%d\n", len);
       break;
     case field_start_code:
       lprintf("field_start_code\n");
       break;
     case slice_start_code:
-      lprintf("slice_start_code\n");
+      lprintf("slice_start_code, len=%d\n", len);
       break;
   }
   return 0;
@@ -642,6 +652,7 @@ static int parse_code( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len )
 
 static void duplicate_image( vdpau_vc1_decoder_t *vd, vo_frame_t *dst )
 {
+  lprintf("duplicate_image\n");
   sequence_t *seq = (sequence_t*)&vd->sequence;
   picture_t *pic = (picture_t*)&seq->picture;
 
@@ -776,7 +787,7 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
       pic->skipped = 1;
   }
   else {
-    seq->picture.vdp_infos.slice_count = 1;
+    seq->picture.vdp_infos.slice_count = seq->picture.slices;
     buf = seq->buf+seq->start+4;
     len = seq->bufseek-seq->start-4;
     if ( seq->profile==VDP_DECODER_PROFILE_VC1_ADVANCED ) {
@@ -808,22 +819,28 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
       ref_accel = (vdpau_accel_t*)seq->backward_ref->accel_data;
       pic->vdp_infos.forward_reference = ref_accel->surface;
     }
-    else
+    else {
+	  reset_picture( &seq->picture );
       return;
+	}
   }
   else if ( pic->vdp_infos.picture_type>=B_FRAME ) {
     if ( seq->forward_ref ) {
       ref_accel = (vdpau_accel_t*)seq->forward_ref->accel_data;
       pic->vdp_infos.forward_reference = ref_accel->surface;
     }
-    else
+    else {
+	  reset_picture( &seq->picture );
       return;
+	}
     if ( seq->backward_ref ) {
       ref_accel = (vdpau_accel_t*)seq->backward_ref->accel_data;
       pic->vdp_infos.backward_reference = ref_accel->surface;
     }
-    else
+    else {
+	  reset_picture( &seq->picture );
       return;
+	}
   }
 
   vo_frame_t *img = vd->stream->video_out->get_frame( vd->stream->video_out, seq->coded_width, seq->coded_height,
@@ -847,6 +864,23 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
     duplicate_image( vd, img );
   else
     decode_render( vd, accel, buf, len );
+
+
+#ifdef MAKE_DAT
+  if ( nframes==0 ) {
+	fwrite( &seq->coded_width, 1, sizeof(seq->coded_width), outfile );
+	fwrite( &seq->coded_height, 1, sizeof(seq->coded_height), outfile );
+	fwrite( &seq->ratio, 1, sizeof(seq->ratio), outfile );
+	fwrite( &seq->profile, 1, sizeof(seq->profile), outfile );
+  }
+
+  if ( nframes++ < 25 ) {
+	fwrite( &pic->vdp_infos, 1, sizeof(pic->vdp_infos), outfile );
+	fwrite( &len, 1, sizeof(len), outfile );
+	fwrite( buf, 1, len, outfile );
+	printf( "picture_type = %d\n", pic->vdp_infos.picture_type);
+  }
+#endif
 
   if ( pic->vdp_infos.interlace && pic->vdp_infos.frame_coding_mode ) {
     img->progressive_frame = 0;
@@ -883,6 +917,8 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
   }
 
   seq->seq_pts +=seq->video_step;
+
+  reset_picture( &seq->picture );
 }
 
 
@@ -965,9 +1001,12 @@ static void vdpau_vc1_decode_data (video_decoder_t *this_gen, buf_element_t *buf
     while ( seq->bufseek <= seq->bufpos-4 ) {
       uint8_t *buffer = seq->buf+seq->bufseek;
       if ( buffer[0]==0 && buffer[1]==0 && buffer[2]==1 ) {
+		seq->current_code = buffer[3];
+		lprintf("current_code = %d\n", seq->current_code);
         if ( seq->start<0 ) {
           seq->start = seq->bufseek;
           seq->code_start = buffer[3];
+		  lprintf("code_start = %d\n", seq->code_start);
           if ( seq->cur_pts )
             seq->seq_pts = seq->cur_pts;
         }
@@ -1098,6 +1137,11 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->sequence.mode = MODE_STARTCODE;
 
   (stream->video_out->open)(stream->video_out, stream);
+
+#ifdef MAKE_DAT
+  outfile = fopen( "/home/cris/qvdpautest/mpg.dat","w");
+  nframes = 0;
+#endif
 
   return &this->video_decoder;
 }
