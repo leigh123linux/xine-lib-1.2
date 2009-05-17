@@ -419,13 +419,13 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
                   [test $default_enable_xvmc = disable && enable_xvmc="no"])
     AC_ARG_WITH([xvmc-path],
                 [AS_HELP_STRING([--with-xvmc-path=PATH], [where libXvMC for the xvmc plugin are installed])],
-                [], [with_xvmc_path="${x_libraries:-/usr/lib}"])
+                [], [with_xvmc_path="$x_libraries"])
     AC_ARG_WITH([xvmc-lib],
                 [AS_HELP_STRING([--with-xvmc-lib=LIBNAME], [The name of the XvMC library libLIBNAME.so for the xvmc plugin])],
                 [], [with_xvmc_lib="XvMCW"])
     AC_ARG_WITH([xxmc-path],
                 [AS_HELP_STRING([--with-xxmc-path=PATH], [Where libXvMC for the xxmc plugin are installed])],
-                [], [with_xxmc_path="${x_libraries:-/usr/lib}"])
+                [], [with_xxmc_path="$x_libraries"])
     AC_ARG_WITH([xxmc-lib],
                 [AS_HELP_STRING([--with-xxmc-lib=LIBNAME], [The name of the XvMC library libLIBNAME.so for the xxmc plugin])],
                 [], [with_xxmc_lib="XvMCW"])

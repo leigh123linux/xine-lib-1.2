@@ -60,6 +60,7 @@ typedef struct {
   input_plugin_t      *input;
   int                  status;
 
+  int                  send_newpts;
   int                  seek_flag;  /* this is set when a seek just occurred */
 } demux_cdda_t;
 
@@ -91,9 +92,9 @@ static int demux_cdda_send_chunk (demux_plugin_t *this_gen) {
   buf->extra_info->input_time = buf->pts / 90;
   buf->decoder_flags |= BUF_FLAG_FRAME_END;
 
-  if (this->seek_flag) {
-    _x_demux_control_newpts(this->stream, buf->pts, BUF_FLAG_SEEK);
-    this->seek_flag = 0;
+  if (this->send_newpts) {
+    _x_demux_control_newpts(this->stream, buf->pts, this->seek_flag);
+    this->send_newpts = this->seek_flag = 0;
   }
 
   this->audio_fifo->put (this->audio_fifo, buf);
@@ -146,9 +147,14 @@ static int demux_cdda_seek (demux_plugin_t *this_gen, off_t start_pos, int start
     this->input->seek(this->input, start_pos & ~3, SEEK_SET);
   else
     this->input->seek(this->input, start_time * CD_BYTES_PER_SECOND, SEEK_SET);
-  this->seek_flag = 1;
+
   this->status = DEMUX_OK;
-  _x_demux_flush_engine (this->stream);
+
+  this->send_newpts = 1;
+  if (playing) {
+    this->seek_flag = BUF_FLAG_SEEK;
+    _x_demux_flush_engine (this->stream);
+  }
 
   return this->status;
 }
