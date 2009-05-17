@@ -207,7 +207,7 @@ if test "x$enable_iconvtest" != xno; then
 fi
 
 AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION([0.16.1])
+AM_GNU_GETTEXT_VERSION([0.17])
 AC_PROG_GMSGFMT_PLURAL
 
 AC_CHECK_FUNCS([nl_langinfo])
