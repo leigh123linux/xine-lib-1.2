@@ -101,7 +101,7 @@ endif
 	touch configure-stamp
 
 build: configure-stamp build-stamp
-build-stamp:
+build-stamp: configure-stamp
 	dh_testdir
 	$(MAKE) -j $(NJOBS)
 	touch build-stamp
