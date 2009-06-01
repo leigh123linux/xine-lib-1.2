@@ -12,6 +12,7 @@ xine-lib (1.1.17) 2009-??-??
   * Added padding delay to the first and last frames (MPEG audio).
   * Fixed buggy discontinuity handling when playing short streams and using the gapless switch. The current time should not be used here.
   * Added audio padding handling. (New buffer flag for this.)
+  * Fix seeking in large raw DV files.
 
 xine-lib (1.1.16.3) 2009-04-03
   * Security fixes:
