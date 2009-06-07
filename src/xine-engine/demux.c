@@ -132,9 +132,15 @@ static struct timespec _x_compute_interval(unsigned int millisecs) {
   ui.QuadPart  += millisecs * 10000;
   ts.tv_sec = ui.QuadPart / 10000000;
   ts.tv_sec = (ui.QuadPart % 10000000)*100;
-#else
+#elif _POSIX_TIMERS > 0
   clock_gettime(CLOCK_REALTIME, &ts);
   uint64_t ttimer = (uint64_t)ts.tv_sec*1000 + ts.tv_nsec/1000000 + millisecs;
+  ts.tv_sec = ttimer/1000;
+  ts.tv_nsec = (ttimer%1000)*1000000;
+#else
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  uint64_t ttimer = (uint64_t)tv.tv_sec*1000 + tv.tv_usec/1000 + millisecs;
   ts.tv_sec = ttimer/1000;
   ts.tv_nsec = (ttimer%1000)*1000000;
 #endif
