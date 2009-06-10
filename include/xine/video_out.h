@@ -296,6 +296,7 @@ struct xine_video_port_s {
 #define VO_CAP_ZOOM_Y                 0x00800000
 #define VO_CAP_CUSTOM_EXTENT_OVERLAY  0x01000000 /* driver can blend custom extent overlay to output extent */
 #define VO_CAP_ARGB_LAYER_OVERLAY     0x02000000 /* driver supports true color overlay */
+#define VO_CAP_VIDEO_WINDOW_OVERLAY   0x04000000 /* driver can scale video to an area within overlay */
 
 /*
  * vo_driver_s contains the functions every display driver
@@ -441,6 +442,12 @@ struct vo_overlay_s {
   int               y;             /* y start of subpicture area       */
   int               width;         /* width of subpicture area         */
   int               height;        /* height of subpicture area        */
+
+  /* area within osd extent to scale video to */
+  int               video_window_x;
+  int               video_window_y;
+  int               video_window_width;
+  int               video_window_height;
 
   /* extent of reference coordinate system */
   int               extent_width;

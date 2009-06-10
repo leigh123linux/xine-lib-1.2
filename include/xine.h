@@ -2082,6 +2082,7 @@ void xine_event_send (xine_stream_t *stream, const xine_event_t *event) XINE_PRO
 #define XINE_OSD_CAP_UNSCALED      0x0002 /* unscaled overlays supp. by vo drv */
 #define XINE_OSD_CAP_CUSTOM_EXTENT 0x0004 /* hardware scaled to match video output window */ 
 #define XINE_OSD_CAP_ARGB_LAYER    0x0008 /* supports separate true color layer */
+#define XINE_OSD_CAP_VIDEO_WINDOW  0x0010 /* can scale video to an area within osd extent */ 
 
 typedef struct xine_osd_s xine_osd_t;
 
@@ -2167,6 +2168,13 @@ void xine_osd_set_argb_buffer(xine_osd_t *self, uint32_t *argb_buffer,
  * see also XINE_OSD_CAP_CUSTOM_EXTENT
  */
 void xine_osd_set_extent(xine_osd_t *self, int extent_width, int extent_height) XINE_PROTECTED;
+
+/*
+ * define area within osd extent to output
+ * video to while osd is on screen
+ * see also XINE_OSD_CAP_VIDEO_WINDOW
+ */
+void xine_osd_set_video_window(xine_osd_t *self, int window_x, int window_y, int window_width, int window_height) XINE_PROTECTED;
 
 /*
  * close osd rendering engine
