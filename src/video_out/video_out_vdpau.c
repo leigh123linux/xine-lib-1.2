@@ -52,10 +52,14 @@
 
 #define NUM_FRAMES_BACK 1
 
+/*#define LOCKDISPLAY*/ /*define this if you have a buggy libX11/libX11xcb*/
+
 
 
 char *vdpau_deinterlace_methods[] = {
   "bob",
+  "half temporal",
+  "half temporal_spatial",
   "temporal",
   "temporal_spatial",
   NULL
@@ -137,9 +141,13 @@ static Display *guarded_display;
 static VdpStatus guarded_vdp_video_surface_create(VdpDevice device, VdpChromaType chroma_type, uint32_t width, uint32_t height,VdpVideoSurface *surface)
 {
   VdpStatus r;
+#ifdef LOCKDISPLAY
   XLockDisplay(guarded_display);
+#endif
   r = orig_vdp_video_surface_create(device, chroma_type, width, height, surface);
+#ifdef LOCKDISPLAY
   XUnlockDisplay(guarded_display);
+#endif
   return r;
 }
 
@@ -155,27 +163,39 @@ static VdpStatus guarded_vdp_video_surface_destroy(VdpVideoSurface surface)
 static VdpStatus guarded_vdp_decoder_create(VdpDevice device, VdpDecoderProfile profile, uint32_t width, uint32_t height, uint32_t max_references, VdpDecoder *decoder)
 {
   VdpStatus r;
+#ifdef LOCKDISPLAY
   XLockDisplay(guarded_display);
+#endif
   r = orig_vdp_decoder_create(device, profile, width, height, max_references, decoder);
+#ifdef LOCKDISPLAY
   XUnlockDisplay(guarded_display);
+#endif
   return r;
 }
 
 static VdpStatus guarded_vdp_decoder_destroy(VdpDecoder decoder)
 {
   VdpStatus r;
+#ifdef LOCKDISPLAY
   XLockDisplay(guarded_display);
+#endif
   r = orig_vdp_decoder_destroy(decoder);
+#ifdef LOCKDISPLAY
   XUnlockDisplay(guarded_display);
+#endif
   return r;
 }
 
 static VdpStatus guarded_vdp_decoder_render(VdpDecoder decoder, VdpVideoSurface target, VdpPictureInfo const *picture_info, uint32_t bitstream_buffer_count, VdpBitstreamBuffer const *bitstream_buffers)
 {
   VdpStatus r;
+#ifdef LOCKDISPLAY
   XLockDisplay(guarded_display);
+#endif
   r = orig_vdp_decoder_render(decoder, target, picture_info, bitstream_buffer_count, bitstream_buffers);
+#ifdef LOCKDISPLAY
   XUnlockDisplay(guarded_display);
+#endif
   return r;
 }
 
@@ -846,6 +866,8 @@ static void vdpau_provide_standard_frame_data (vo_frame_t *this_gen, xine_curren
   }
 }
 
+
+
 static void vdpau_duplicate_frame_data (vo_frame_t *this_gen, vo_frame_t *original)
 {
   vdpau_frame_t *this = (vdpau_frame_t *)this_gen;
@@ -1074,8 +1096,10 @@ static void vdpau_set_deinterlace( vo_driver_t *this_gen )
     else {
       switch ( this->deinterlace_method ) {
         case 0: feature_enables[0] = feature_enables[1] = 0; break; /* bob */
-        case 1: feature_enables[0] = 1; feature_enables[1] = 0; break; /* temporal */
-        case 2: feature_enables[0] = feature_enables[1] = 1; break; /* temporal_spatial */
+        case 1:
+		case 3: feature_enables[0] = 1; feature_enables[1] = 0; break; /* temporal */
+        case 2:
+		case 4: feature_enables[0] = feature_enables[1] = 1; break; /* temporal_spatial */
       }
     }
   }
@@ -1400,7 +1424,9 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   }
   int non_progressive = (this->honor_progressive && !frame->vo_frame.progressive_frame) || !this->honor_progressive;
 
+#ifdef LOCKDISPLAY
   XLockDisplay( this->display );
+#endif
 
   if ( frame->format==XINE_IMGFMT_VDPAU && this->deinterlace && non_progressive && stream_speed && frame_duration>2500 ) {
     VdpTime current_time = 0;
@@ -1421,43 +1447,50 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, 0 ); /* display _now_ */
     if ( this->init_queue<2 ) ++this->init_queue;
     this->current_output_surface ^= 1;
-    if ( this->init_queue>1 ) {
-      XUnlockDisplay(this->display);
-      vdp_queue_block( vdp_queue, this->output_surface[this->current_output_surface], &last_time );
-      XLockDisplay(this->display);
+
+	if ( (this->deinterlace_method != 1) && (this->deinterlace_method != 2) ) {  /* process second field */
+      if ( this->init_queue>1 ) {
+#ifdef LOCKDISPLAY
+        XUnlockDisplay(this->display);
+#endif
+        vdp_queue_block( vdp_queue, this->output_surface[this->current_output_surface], &last_time );
+#ifdef LOCKDISPLAY
+        XLockDisplay(this->display);
+#endif
     }
 
-    if ( (this->sc.gui_width > this->output_surface_width[this->current_output_surface]) || (this->sc.gui_height > this->output_surface_height[this->current_output_surface]) ) {
-      /* recreate output surface to match window size */
-      printf( "vo_vdpau: output_surface size update\n" );
-      this->output_surface_width[this->current_output_surface] = this->sc.gui_width;
-      this->output_surface_height[this->current_output_surface] = this->sc.gui_height;
+      if ( (this->sc.gui_width > this->output_surface_width[this->current_output_surface]) || (this->sc.gui_height > this->output_surface_height[this->current_output_surface]) ) {
+        /* recreate output surface to match window size */
+        printf( "vo_vdpau: output_surface size update\n" );
+        this->output_surface_width[this->current_output_surface] = this->sc.gui_width;
+        this->output_surface_height[this->current_output_surface] = this->sc.gui_height;
 
-      vdp_output_surface_destroy( this->output_surface[this->current_output_surface] );
-      vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[this->current_output_surface], this->output_surface_height[this->current_output_surface], &this->output_surface[this->current_output_surface] );
-    }
+        vdp_output_surface_destroy( this->output_surface[this->current_output_surface] );
+        vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[this->current_output_surface], this->output_surface_height[this->current_output_surface], &this->output_surface[this->current_output_surface] );
+      }
 
-    past[0] = surface;
-    if ( frame->vo_frame.future_frame!=NULL && ((vdpau_frame_t*)(frame->vo_frame.future_frame))->format==XINE_IMGFMT_VDPAU )
-      future[0] = ((vdpau_frame_t*)(frame->vo_frame.future_frame))->vdpau_accel_data.surface;
-    else
-      future[0] = VDP_INVALID_HANDLE;
-    picture_structure = ( frame->vo_frame.top_field_first ) ? VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD : VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD;
+      past[0] = surface;
+      if ( frame->vo_frame.future_frame!=NULL && ((vdpau_frame_t*)(frame->vo_frame.future_frame))->format==XINE_IMGFMT_VDPAU )
+        future[0] = ((vdpau_frame_t*)(frame->vo_frame.future_frame))->vdpau_accel_data.surface;
+      else
+        future[0] = VDP_INVALID_HANDLE;
+      picture_structure = ( frame->vo_frame.top_field_first ) ? VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD : VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD;
 
-    st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, picture_structure,
+      st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, picture_structure,
                                2, past, surface, 1, future, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
-    if ( st != VDP_STATUS_OK )
-      printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
+      if ( st != VDP_STATUS_OK )
+        printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
-    /* calculate delay for second field: there should be no delay for still images otherwise, take replay speed into account */
-    if (stream_speed > 0)
-      current_time += frame->vo_frame.duration * 100000ull * XINE_FINE_SPEED_NORMAL / (18 * stream_speed);
-    else
-      current_time = 0; /* immediately i. e. no delay */
+      /* calculate delay for second field: there should be no delay for still images otherwise, take replay speed into account */
+      if (stream_speed > 0)
+        current_time += frame->vo_frame.duration * 100000ull * XINE_FINE_SPEED_NORMAL / (18 * stream_speed);
+      else
+        current_time = 0; /* immediately i. e. no delay */
 
-    vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, current_time );
-    if ( this->init_queue<2 ) ++this->init_queue;
-    this->current_output_surface ^= 1;
+      vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, current_time );
+      if ( this->init_queue<2 ) ++this->init_queue;
+      this->current_output_surface ^= 1;
+	}
   }
   else {
     st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME,
@@ -1470,7 +1503,9 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     this->current_output_surface ^= 1;
   }
 
+#ifdef LOCKDISPLAY
   XUnlockDisplay( this->display );
+#endif
 
   vdpau_backup_frame( this_gen, frame_gen );
 }
@@ -1601,34 +1636,46 @@ static int vdpau_gui_data_exchange (vo_driver_t *this_gen, int data_type, void *
 
     case XINE_GUI_SEND_EXPOSE_EVENT: {
       if ( this->init_queue ) {
+#ifdef LOCKDISPLAY
         XLockDisplay( this->display );
+#endif
         int previous = this->current_output_surface ^ 1;
         vdp_queue_display( vdp_queue, this->output_surface[previous], 0, 0, 0 );
+#ifdef LOCKDISPLAY
         XUnlockDisplay( this->display );
+#endif
       }
       break;
     }
 
     case XINE_GUI_SEND_DRAWABLE_CHANGED: {
       VdpStatus st;
+#ifdef LOCKDISPLAY
       XLockDisplay( this->display );
+#endif
       this->drawable = (Drawable) data;
       vdp_queue_destroy( vdp_queue );
       vdp_queue_target_destroy( vdp_queue_target );
       st = vdp_queue_target_create_x11( vdp_device, this->drawable, &vdp_queue_target );
       if ( st != VDP_STATUS_OK ) {
         printf( "vo_vdpau: FATAL !! Can't recreate presentation queue target after drawable change !!\n" );
+#ifdef LOCKDISPLAY
         XUnlockDisplay( this->display );
+#endif
         break;
       }
       st = vdp_queue_create( vdp_device, vdp_queue_target, &vdp_queue );
       if ( st != VDP_STATUS_OK ) {
         printf( "vo_vdpau: FATAL !! Can't recreate presentation queue after drawable change !!\n" );
+#ifdef LOCKDISPLAY
         XUnlockDisplay( this->display );
+#endif
         break;
       }
       vdp_queue_set_background_color( vdp_queue, &this->back_color );
+#ifdef LOCKDISPLAY
       XUnlockDisplay( this->display );
+#endif
       this->sc.force_redraw = 1;
       break;
     }
@@ -1717,7 +1764,9 @@ static void vdpau_reinit( vo_driver_t *this_gen )
   printf("vo_vdpau: VDPAU was pre-empted. Reinit.\n");
   vdpau_driver_t *this = (vdpau_driver_t *)this_gen;
 
+#ifdef LOCKDISPLAY
   XLockDisplay(guarded_display);
+#endif
   vdpau_release_back_frames(this_gen);
 
   VdpStatus st = vdp_device_create_x11( this->display, this->screen, &vdp_device, &vdp_get_proc_address );
@@ -1803,7 +1852,9 @@ static void vdpau_reinit( vo_driver_t *this_gen )
 
   this->vdp_runtime_nr++;
   this->reinit_needed = 0;
+#ifdef LOCKDISPLAY
   XUnlockDisplay(guarded_display);
+#endif
   printf("vo_vdpau: Reinit done.\n");
 }
 
@@ -2096,10 +2147,12 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     return NULL;
   }
 
-  this->deinterlace_method = config->register_enum( config, "video.output.vdpau_deinterlace_method", 1,
+  this->deinterlace_method = config->register_enum( config, "video.output.vdpau_deinterlace_method", 3,
          vdpau_deinterlace_methods, _("vdpau: HD deinterlace method"),
          _("bob\n"
            "Basic deinterlacing, doing 50i->50p.\n\n"
+		   "half temporal, half temporal_spatial\n"
+		   "Displays first field only, doing 50i->25p\n\n"
            "temporal\n"
            "Very good, 50i->50p\n\n"
            "temporal_spatial\n"
