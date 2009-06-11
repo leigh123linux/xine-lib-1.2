@@ -868,6 +868,10 @@ void xine_osd_set_extent(xine_osd_t *this, int extent_width, int extent_height) 
   this->osd.renderer->set_extent(&this->osd, extent_width, extent_height);
 }
 
+void xine_osd_set_video_window(xine_osd_t *this, int window_x, int window_y, int window_width, int window_height) {
+  this->osd.renderer->set_video_window(&this->osd, window_x, window_y, window_width, window_height);
+}
+
 
 const char *const *xine_post_list_inputs(xine_post_t *this_gen) {
   post_plugin_t *this = (post_plugin_t *)this_gen;

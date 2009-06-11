@@ -50,6 +50,10 @@ struct osd_object_s {
   int area_touched;     /* work area was used for painting */
   int display_x,display_y;  /* where to display it in screen */
   
+  /* video output area within osd extent */
+  int video_window_x, video_window_y;
+  int video_window_width, video_window_height;
+
   /* extent of reference coordinate system */
   int extent_width, extent_height;
 
@@ -243,6 +247,13 @@ struct osd_renderer_s {
   void (*set_argb_buffer) (osd_object_t *osd, uint32_t *argb_buffer,
                            int dirty_x, int dirty_y, int dirty_width, int dirty_height);
 
+  /*
+   * osd video window defines an area withing osd extent where the
+   * video shall be scaled to while an osd is displayed on screen.
+   * both width and height must be > 0 to take effect.
+   */
+  void (*set_video_window) (osd_object_t *osd,
+                            int window_x, int window_y, int window_width, int window_height);
 
   /* private stuff */
 

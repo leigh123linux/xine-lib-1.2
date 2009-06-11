@@ -143,6 +143,10 @@ static osd_object_t *XINE_MALLOC osd_new_object (osd_renderer_t *this, int width
   osd->next = this->osds;
   this->osds = osd;
   
+  osd->video_window_x = 0;
+  osd->video_window_y = 0;
+  osd->video_window_width = 0;
+  osd->video_window_height = 0;
   osd->extent_width = 0;
   osd->extent_height = 0;
   osd->width = width;
@@ -184,6 +188,19 @@ static void osd_set_extent (osd_object_t *osd, int extent_width, int extent_heig
 
   osd->extent_width  = extent_width;
   osd->extent_height = extent_height;
+}
+
+/*
+ * osd video window defines an area withing osd extent where the
+ * video shall be scaled to while an osd is displayed on screen.
+ * both width and height must be > 0 to take effect.
+ */
+static void osd_set_video_window (osd_object_t *osd, int window_x, int window_y, int window_width, int window_height) {
+
+  osd->video_window_x      = window_x;
+  osd->video_window_y      = window_y;
+  osd->video_window_width  = window_width;
+  osd->video_window_height = window_height;
 }
 
 
@@ -254,6 +271,11 @@ static int _osd_show (osd_object_t *osd, int64_t vpts, int unscaled ) {
     this->event.object.overlay->width = osd->x2 - osd->x1;
     this->event.object.overlay->height = osd->y2 - osd->y1;
  
+    this->event.object.overlay->video_window_x      = osd->video_window_x;
+    this->event.object.overlay->video_window_y      = osd->video_window_y;
+    this->event.object.overlay->video_window_width  = osd->video_window_width;
+    this->event.object.overlay->video_window_height = osd->video_window_height;
+
     this->event.object.overlay->extent_width  = osd->extent_width;
     this->event.object.overlay->extent_height = osd->extent_height;
 
@@ -1627,6 +1649,9 @@ static uint32_t osd_get_capabilities (osd_object_t *osd) {
   if (vo_capabilities & VO_CAP_ARGB_LAYER_OVERLAY)
     capabilities |= XINE_OSD_CAP_ARGB_LAYER;
  
+  if (vo_capabilities & VO_CAP_VIDEO_WINDOW_OVERLAY)
+    capabilities |= XINE_OSD_CAP_VIDEO_WINDOW;
+
   return capabilities; 
 }
 
@@ -1691,6 +1716,7 @@ osd_renderer_t *_x_osd_renderer_init( xine_stream_t *stream ) {
   this->show_unscaled      = osd_show_unscaled;
   this->get_capabilities   = osd_get_capabilities;
   this->set_extent         = osd_set_extent;
+  this->set_video_window   = osd_set_video_window;
 
   return this;
 }
