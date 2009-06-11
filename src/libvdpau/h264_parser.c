@@ -210,6 +210,7 @@ int parse_nal_header(struct buf_reader *buf, struct nal_parser *parser)
 
   struct nal_unit *nal = parser->current_nal;
 
+  memset(nal, 0x00, sizeof(struct nal_unit) - sizeof(struct seq_parameter_set_rbsp*) - sizeof(struct pic_parameter_set_rbsp*) - sizeof(struct slice_header*));
   nal->nal_ref_idc = (buf->buf[0] >> 5) & 0x03;
   nal->nal_unit_type = buf->buf[0] & 0x1f;
 
@@ -485,7 +486,8 @@ uint8_t parse_sps(struct buf_reader *buf, struct nal_parser *parser)
         }
       }
     }
-  }
+  } else
+    sps->chroma_format_idc = 1;
 
   sps->log2_max_frame_num_minus4 = read_exp_golomb(buf);
 
@@ -783,6 +785,7 @@ uint8_t parse_slice_header(struct buf_reader *buf, struct nal_parser *parser)
   struct seq_parameter_set_rbsp *sps = nal->sps;
   struct pic_parameter_set_rbsp *pps = nal->pps;
   struct slice_header *slc = nal->slc;
+  memset(slc, 0x00, sizeof(struct slice_header));
   if (!sps || !pps)
     return -1;
 
@@ -963,7 +966,7 @@ void parse_pred_weight_table(struct buf_reader *buf, struct nal_unit *nal)
     }
   }
 
-  if (slc->slice_type == SLICE_B) {
+  if ((slc->slice_type % 5) == SLICE_B) {
     /* FIXME: Being spec-compliant here and loop to num_ref_idx_l0_active_minus1
      * will break Divx7 files. Keep this in mind if any other streams are broken
      */

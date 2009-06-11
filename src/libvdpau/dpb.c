@@ -169,6 +169,7 @@ int dpb_set_unused_ref_picture_bylidx(struct dpb *dpb, uint32_t longterm_idx)
   if (pic != NULL)
     do {
       if (pic->nal->long_term_frame_idx == longterm_idx) {
+        pic->nal->used_for_long_term_ref = 0;
         pic->used_for_reference = 0;
         if(!pic->delayed_output)
           dpb_remove_picture(dpb, pic);
