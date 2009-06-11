@@ -437,20 +437,6 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
   int            frames_to_skip;
   int            duration;
 
-  /*if (1) {
-    static int64_t pts = 0;
-    fprintf(stderr, "img->pts: %lld, pts: %lld, img->duration: %d", img->pts, pts, img->duration);
-    if (img->pts) {
-      if (pts != img->pts)
-        fprintf(stderr, " ERROR: %12ld", img->pts - pts);
-      pts = img->pts + img->duration;
-    }
-    else {
-      pts += img->duration;
-    }
-    fprintf(stderr, "\n");
-  }*/
-
   /* handle anonymous streams like NULL for easy checking */
   if (stream == XINE_ANON_STREAM) stream = NULL;
   
