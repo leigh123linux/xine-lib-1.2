@@ -1173,7 +1173,7 @@ static int32_t parse_video_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_elemen
         b->size          = 0;
         b->pts           = 0;
         b->type          = buf_type;
-        b->decoder_flags = BUF_FLAG_FRAME_END;
+        b->decoder_flags = BUF_FLAG_FRAME_END | (this->preview_mode ? BUF_FLAG_PREVIEW : 0);
         this->video_fifo->put (this->video_fifo, b);
       }
     }
@@ -1187,7 +1187,7 @@ static int32_t parse_video_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_elemen
     if (this->mpeg12_h264_detected & 1) {
       uint8_t *t = buf->content + buf->size;
       if (buf->size >=4 && t[-1] == 10 && t[-2] == 0x01 && t[-3] == 0x00 && t[-4] == 0x00) /* end of sequence */
-        buf->decoder_flags = BUF_FLAG_FRAME_END;
+        buf->decoder_flags = BUF_FLAG_FRAME_END | (this->preview_mode ? BUF_FLAG_PREVIEW : 0);
     }
   } else {
     buf->size    = buf->max_size - result;
@@ -1225,7 +1225,7 @@ static int32_t parse_video_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_elemen
     if ((this->mpeg12_h264_detected & 1) && todo_length <= 0) {
       uint8_t *t = buf->content + buf->size;
       if (buf->size >= 4 && t[-1] == 10 && t[-2] == 0x01 && t[-3] == 0x00 && t[-4] == 0x00) /* end of sequence */
-        buf->decoder_flags = BUF_FLAG_FRAME_END;
+        buf->decoder_flags = BUF_FLAG_FRAME_END | (this->preview_mode ? BUF_FLAG_PREVIEW : 0);
     }
 
     this->video_fifo->put (this->video_fifo, buf);
