@@ -55,13 +55,29 @@
 /*#define LOCKDISPLAY*/ /*define this if you have a buggy libX11/libX11xcb*/
 
 
+#define DEINT_BOB                    1
+#define DEINT_HALF_TEMPORAL          2
+#define DEINT_HALF_TEMPORAL_SPATIAL  3
+#define DEINT_TEMPORAL               4
+#define DEINT_TEMPORAL_SPATIAL       5
 
-char *vdpau_deinterlace_methods[] = {
+#define NUMBER_OF_DEINTERLACERS 5
+
+char *vdpau_deinterlacer_name[] = {
   "bob",
   "half temporal",
   "half temporal_spatial",
   "temporal",
   "temporal_spatial",
+  NULL
+};
+
+char* vdpau_deinterlacer_description [] = {
+  "bob\nBasic deinterlacing, doing 50i->50p.\n\n",
+  "half temporal\nDisplays first field only, doing 50i->25p\n\n",
+  "half temporal_spatial\nDisplays first field only, doing 50i->25p\n\n",
+  "temporal\nVery good, 50i->50p\n\n",
+  "temporal_spatial\nThe best, but very GPU intensive.\n\n",
   NULL
 };
 
@@ -106,6 +122,11 @@ VdpVideoMixerRender *vdp_video_mixer_render;
 VdpVideoMixerSetAttributeValues *vdp_video_mixer_set_attribute_values;
 VdpVideoMixerSetFeatureEnables *vdp_video_mixer_set_feature_enables;
 VdpVideoMixerGetFeatureEnables *vdp_video_mixer_get_feature_enables;
+VdpVideoMixerQueryFeatureSupport *vdp_video_mixer_query_feature_support;
+VdpVideoMixerQueryParameterSupport *vdp_video_mixer_query_parameter_support;
+VdpVideoMixerQueryAttributeSupport *vdp_video_mixer_query_attribute_support;
+VdpVideoMixerQueryParameterValueRange *vdp_video_mixer_query_parameter_value_range;
+VdpVideoMixerQueryAttributeValueRange *vdp_video_mixer_query_attribute_value_range;
 
 VdpGenerateCSCMatrix *vdp_generate_csc_matrix;
 
@@ -128,6 +149,7 @@ VdpDecoderDestroy *vdp_decoder_destroy;
 VdpDecoderRender *vdp_decoder_render;
 
 VdpPreemptionCallbackRegister *vdp_preemption_callback_register;
+
 static void vdp_preemption_callback( VdpDevice device, void *context );
 static void vdpau_reinit( vo_driver_t *this_gen );
 
@@ -289,6 +311,15 @@ typedef struct {
   uint32_t             video_mixer_width;
   uint32_t             video_mixer_height;
   VdpColorStandard     color_standard;
+  VdpBool              temporal_spatial_is_supported;
+  VdpBool              temporal_is_supported;
+  VdpBool              noise_reduction_is_supported;
+  VdpBool              sharpness_is_supported;
+  VdpBool              inverse_telecine_is_supported;
+  VdpBool              skip_chroma_is_supported;
+
+  char*                deinterlacers_name[NUMBER_OF_DEINTERLACERS+1];
+  int                  deinterlacers_method[NUMBER_OF_DEINTERLACERS];
 
   VdpColor             back_color;
 
@@ -716,7 +747,7 @@ static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame)
       double rx = (double)this->overlay_output_width/(double)this->overlays[i].expected_overlay_width;
       double ry = (double)this->overlay_output_height/(double)this->overlays[i].expected_overlay_height;
       dest.x0 *= rx; dest.y0 *= ry; dest.x1 *=rx; dest.y1 *= ry;
-      printf( "vdpau_overlay_end: overlay_width=%d overlay_height=%d rx=%f ry=%f\n", this->overlay_output_width, this->overlay_output_height, rx, ry );
+      lprintf( "vdpau_overlay_end: overlay_width=%d overlay_height=%d rx=%f ry=%f\n", this->overlay_output_width, this->overlay_output_height, rx, ry );
     }
     VdpRect src = { 0, 0, this->overlays[i].ovl_w, this->overlays[i].ovl_h };
     surface = (this->overlays[i].unscaled) ? &this->overlay_unscaled : &this->overlay_output;
@@ -768,7 +799,7 @@ static vo_frame_t *vdpau_alloc_frame (vo_driver_t *this_gen)
   vdpau_frame_t  *frame;
   vdpau_driver_t *this = (vdpau_driver_t *) this_gen;
 
-  printf( "vo_vdpau: vdpau_alloc_frame\n" );
+  lprintf( "vo_vdpau: vdpau_alloc_frame\n" );
 
   frame = (vdpau_frame_t *) calloc(1, sizeof(vdpau_frame_t));
 
@@ -992,7 +1023,7 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
 
     if ( frame->vdpau_accel_data.surface != VDP_INVALID_HANDLE  ) {
       if ( (frame->width != width) || (frame->height != height) || (format != XINE_IMGFMT_VDPAU) || frame->vdpau_accel_data.chroma != chroma ) {
-        printf("vo_vdpau: update_frame - destroy surface\n");
+        lprintf("vo_vdpau: update_frame - destroy surface\n");
         vdp_video_surface_destroy( frame->vdpau_accel_data.surface );
         frame->vdpau_accel_data.surface = VDP_INVALID_HANDLE;
         --this->allocated_surfaces;
@@ -1112,12 +1143,15 @@ static void vdpau_set_deinterlace( vo_driver_t *this_gen )
     if ( this->video_mixer_width<800 )
       feature_enables[0] = feature_enables[1] = 1;
     else {
-      switch ( this->deinterlace_method ) {
-        case 0: feature_enables[0] = feature_enables[1] = 0; break; /* bob */
-        case 1:
-		case 3: feature_enables[0] = 1; feature_enables[1] = 0; break; /* temporal */
-        case 2:
-		case 4: feature_enables[0] = feature_enables[1] = 1; break; /* temporal_spatial */
+      switch ( this->deinterlacers_method[this->deinterlace_method] ) {
+        case DEINT_BOB:
+		  feature_enables[0] = feature_enables[1] = 0; break; /* bob */
+        case DEINT_HALF_TEMPORAL:
+		case DEINT_TEMPORAL:
+		  feature_enables[0] = 1; feature_enables[1] = 0; break; /* temporal */
+        case DEINT_HALF_TEMPORAL_SPATIAL:
+		case DEINT_TEMPORAL_SPATIAL:
+		  feature_enables[0] = feature_enables[1] = 1; break; /* temporal_spatial */
       }
     }
   }
@@ -1134,6 +1168,9 @@ static void vdpau_set_deinterlace( vo_driver_t *this_gen )
 static void vdpau_set_inverse_telecine( vo_driver_t *this_gen )
 {
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
+
+  if ( !this->inverse_telecine_is_supported )
+    return;
 
   VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_INVERSE_TELECINE };
   VdpBool feature_enables[1];
@@ -1183,6 +1220,9 @@ static void vdpau_honor_progressive_flag( void *this_gen, xine_cfg_entry_t *entr
 
 static void vdpau_update_noise( vdpau_driver_t *this_gen )
 {
+  if ( !this_gen->noise_reduction_is_supported )
+    return;
+
   float value = this_gen->noise/100.0;
   if ( value==0 ) {
     VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION };
@@ -1209,6 +1249,9 @@ static void vdpau_update_noise( vdpau_driver_t *this_gen )
 
 static void vdpau_update_sharpness( vdpau_driver_t *this_gen )
 {
+  if ( !this_gen->sharpness_is_supported )
+    return;
+
   float value = this_gen->sharpness/100.0;
   if ( value==0 ) {
     VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_SHARPNESS  };
@@ -1261,6 +1304,9 @@ static void vdpau_update_csc( vdpau_driver_t *this_gen )
 
 static void vdpau_update_skip_chroma( vdpau_driver_t *this_gen )
 {
+  if ( !this_gen->skip_chroma_is_supported )
+    return;
+
   VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_SKIP_CHROMA_DEINTERLACE };
   void* attribute_values[] = { &(this_gen->skip_chroma) };
   VdpStatus st = vdp_video_mixer_set_attribute_values( this_gen->video_mixer, 1, attributes, attribute_values );
@@ -1277,6 +1323,34 @@ static void vdpau_set_skip_chroma( void *this_gen, xine_cfg_entry_t *entry )
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
   this->skip_chroma = entry->num_value;
   vdpau_update_skip_chroma( this );
+}
+
+
+
+static void vdpau_shift_queue( vo_driver_t *this_gen )
+{
+  vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
+
+  if ( this->init_queue<2 )
+    ++this->init_queue;
+  this->current_output_surface ^= 1;
+}
+
+
+
+static void vdpau_check_output_size( vo_driver_t *this_gen )
+{
+  vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
+
+  if ( (this->sc.gui_width > this->output_surface_width[this->current_output_surface]) || (this->sc.gui_height > this->output_surface_height[this->current_output_surface]) ) {
+    /* recreate output surface to match window size */
+    lprintf( "vo_vdpau: output_surface size update\n" );
+    this->output_surface_width[this->current_output_surface] = this->sc.gui_width;
+    this->output_surface_height[this->current_output_surface] = this->sc.gui_height;
+
+    vdp_output_surface_destroy( this->output_surface[this->current_output_surface] );
+    vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[this->current_output_surface], this->output_surface_height[this->current_output_surface], &this->output_surface[this->current_output_surface] );
+  }
 }
 
 
@@ -1314,7 +1388,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   if ( (frame->format == XINE_IMGFMT_YV12) || (frame->format == XINE_IMGFMT_YUY2) ) {
     chroma = ( frame->format==XINE_IMGFMT_YV12 )? VDP_CHROMA_TYPE_420 : VDP_CHROMA_TYPE_422;
     if ( (frame->width > this->soft_surface_width) || (frame->height > this->soft_surface_height) || (frame->format != this->soft_surface_format) ) {
-      printf( "vo_vdpau: soft_surface size update\n" );
+      lprintf( "vo_vdpau: soft_surface size update\n" );
       /* recreate surface to match frame changes */
       this->soft_surface_width = frame->width;
       this->soft_surface_height = frame->height;
@@ -1355,15 +1429,35 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
   if ( (mix_w != this->video_mixer_width) || (mix_h != this->video_mixer_height) || (chroma != this->video_mixer_chroma)) {
     vdpau_release_back_frames( this_gen ); /* empty past frames array */
-    printf("vo_vdpau: recreate mixer to match frames: width=%d, height=%d, chroma=%d\n", mix_w, mix_h, chroma);
+    lprintf("vo_vdpau: recreate mixer to match frames: width=%d, height=%d, chroma=%d\n", mix_w, mix_h, chroma);
     vdp_video_mixer_destroy( this->video_mixer );
-    VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION, VDP_VIDEO_MIXER_FEATURE_SHARPNESS,
-          VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL };
+	VdpVideoMixerFeature features[5];
+    int features_count = 0;
+    if ( this->noise_reduction_is_supported ) {
+      features[features_count] = VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION;
+	  ++features_count;
+    }
+    if ( this->sharpness_is_supported ) {
+      features[features_count] = VDP_VIDEO_MIXER_FEATURE_SHARPNESS;
+	  ++features_count;
+    }
+    if ( this->temporal_is_supported ) {
+      features[features_count] = VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL;
+      ++features_count;
+    }
+    if ( this->temporal_spatial_is_supported ) {
+      features[features_count] = VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL;
+      ++features_count;
+    }
+    if ( this->inverse_telecine_is_supported ) {
+      features[features_count] = VDP_VIDEO_MIXER_FEATURE_INVERSE_TELECINE;
+      ++features_count;
+    }
     VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT,
           VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
     int num_layers = 3;
     void const *param_values[] = { &mix_w, &mix_h, &chroma, &num_layers };
-    vdp_video_mixer_create( vdp_device, 4, features, 4, params, param_values, &this->video_mixer );
+    vdp_video_mixer_create( vdp_device, features_count, features, 4, params, param_values, &this->video_mixer );
     this->video_mixer_chroma = chroma;
     this->video_mixer_width = mix_w;
     this->video_mixer_height = mix_h;
@@ -1377,20 +1471,12 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   }
 
   if (color_standard != this->color_standard) {
-    printf("vo_vdpau: update color_standard: %d\n", color_standard);
+    lprintf("vo_vdpau: update color_standard: %d\n", color_standard);
     this->color_standard = color_standard;
     vdpau_update_csc( this );
   }
 
-  if ( (this->sc.gui_width > this->output_surface_width[this->current_output_surface]) || (this->sc.gui_height > this->output_surface_height[this->current_output_surface]) ) {
-    /* recreate output surface to match window size */
-    printf( "vo_vdpau: output_surface size update\n" );
-    this->output_surface_width[this->current_output_surface] = this->sc.gui_width;
-    this->output_surface_height[this->current_output_surface] = this->sc.gui_height;
-
-    vdp_output_surface_destroy( this->output_surface[this->current_output_surface] );
-    vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[this->current_output_surface], this->output_surface_height[this->current_output_surface], &this->output_surface[this->current_output_surface] );
-  }
+  vdpau_check_output_size( this_gen );
 
   VdpRect vid_source = { this->sc.displayed_xoffset, this->sc.displayed_yoffset, this->sc.displayed_width+this->sc.displayed_xoffset, this->sc.displayed_height+this->sc.displayed_yoffset };
   VdpRect out_dest = { 0, 0, this->sc.gui_width, this->sc.gui_height };
@@ -1473,8 +1559,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
     vdp_queue_get_time( vdp_queue, &current_time );
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, 0 ); /* display _now_ */
-    if ( this->init_queue<2 ) ++this->init_queue;
-    this->current_output_surface ^= 1;
+    vdpau_shift_queue( this_gen );
 
 	if ( (this->deinterlace_method != 1) && (this->deinterlace_method != 2) ) {  /* process second field */
       if ( this->init_queue>1 ) {
@@ -1487,15 +1572,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 #endif
       }
 
-      if ( (this->sc.gui_width > this->output_surface_width[this->current_output_surface]) || (this->sc.gui_height > this->output_surface_height[this->current_output_surface]) ) {
-        /* recreate output surface to match window size */
-        printf( "vo_vdpau: output_surface size update\n" );
-        this->output_surface_width[this->current_output_surface] = this->sc.gui_width;
-        this->output_surface_height[this->current_output_surface] = this->sc.gui_height;
-
-        vdp_output_surface_destroy( this->output_surface[this->current_output_surface] );
-        vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[this->current_output_surface], this->output_surface_height[this->current_output_surface], &this->output_surface[this->current_output_surface] );
-      }
+      vdpau_check_output_size( this_gen );
 
       past[0] = surface;
       if ( frame->vo_frame.future_frame!=NULL && ((vdpau_frame_t*)(frame->vo_frame.future_frame))->format==XINE_IMGFMT_VDPAU )
@@ -1516,8 +1593,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
         current_time = 0; /* immediately i. e. no delay */
 
       vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, current_time );
-      if ( this->init_queue<2 ) ++this->init_queue;
-      this->current_output_surface ^= 1;
+      vdpau_shift_queue( this_gen );
 	}
   }
   else {
@@ -1527,8 +1603,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
       printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, 0 );
-    if ( this->init_queue<2 ) ++this->init_queue;
-    this->current_output_surface ^= 1;
+    vdpau_shift_queue( this_gen );
   }
 
 #ifdef LOCKDISPLAY
@@ -1867,12 +1942,32 @@ static void vdpau_reinit( vo_driver_t *this_gen )
   this->argb_overlay_width = this->argb_overlay_height = 0;
   this->has_argb_overlay = 0;
 
-  VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION, VDP_VIDEO_MIXER_FEATURE_SHARPNESS,
-        VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL };
+  VdpVideoMixerFeature features[5];
+  int features_count = 0;
+  if ( this->noise_reduction_is_supported ) {
+    features[features_count] = VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION;
+    ++features_count;
+  }
+  if ( this->sharpness_is_supported ) {
+    features[features_count] = VDP_VIDEO_MIXER_FEATURE_SHARPNESS;
+	++features_count;
+  }
+  if ( this->temporal_is_supported ) {
+    features[features_count] = VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL;
+    ++features_count;
+  }
+  if ( this->temporal_spatial_is_supported ) {
+    features[features_count] = VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL;
+    ++features_count;
+  }
+  if ( this->inverse_telecine_is_supported ) {
+    features[features_count] = VDP_VIDEO_MIXER_FEATURE_INVERSE_TELECINE;
+    ++features_count;
+  }
   VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
   int num_layers = 3;
   void const *param_values[] = { &this->video_mixer_width, &this->video_mixer_height, &chroma, &num_layers };
-  st = vdp_video_mixer_create( vdp_device, 4, features, 4, params, param_values, &this->video_mixer );
+  st = vdp_video_mixer_create( vdp_device, features_count, features, 4, params, param_values, &this->video_mixer );
   if ( vdpau_reinit_error( st, "Can't create video mixer !!" ) ) {
     orig_vdp_video_surface_destroy( this->soft_surface );
     vdp_output_surface_destroy( this->output_surface[0] );
@@ -1976,6 +2071,13 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
 
   vdp_output_surface_destroy = NULL,
   vdp_device_destroy = NULL;
+
+  this->sharpness_is_supported = 0;
+  this->noise_reduction_is_supported = 0;
+  this->temporal_is_supported = 0;
+  this->temporal_spatial_is_supported = 0;
+  this->inverse_telecine_is_supported = 0;
+  this->skip_chroma_is_supported = 0;
 
   for ( i=0; i<XINE_VORAW_MAX_OVL; ++i ) {
     this->overlays[i].ovl_w = this->overlays[i].ovl_h = 0;
@@ -2089,6 +2191,21 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_MIXER_GET_FEATURE_ENABLES , (void*)&vdp_video_mixer_get_feature_enables );
   if ( vdpau_init_error( st, "Can't get VIDEO_MIXER_GET_FEATURE_ENABLES proc address !!", &this->vo_driver, 1 ) )
     return NULL;
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_MIXER_QUERY_FEATURE_SUPPORT , (void*)&vdp_video_mixer_query_feature_support );
+  if ( vdpau_init_error( st, "Can't get VIDEO_MIXER_QUERY_FEATURE_SUPPORT proc address !!", &this->vo_driver, 1 ) )
+    return NULL;
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_MIXER_QUERY_PARAMETER_SUPPORT , (void*)&vdp_video_mixer_query_parameter_support );
+  if ( vdpau_init_error( st, "Can't get VIDEO_MIXER_QUERY_PARAMETER_SUPPORT proc address !!", &this->vo_driver, 1 ) )
+    return NULL;
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_MIXER_QUERY_ATTRIBUTE_SUPPORT , (void*)&vdp_video_mixer_query_attribute_support );
+  if ( vdpau_init_error( st, "Can't get VIDEO_MIXER_QUERY_ATTRIBUTE_SUPPORT proc address !!", &this->vo_driver, 1 ) )
+    return NULL;
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_MIXER_QUERY_PARAMETER_VALUE_RANGE , (void*)&vdp_video_mixer_query_parameter_value_range );
+  if ( vdpau_init_error( st, "Can't get VIDEO_MIXER_QUERY_PARAMETER_VALUE_RANGE proc address !!", &this->vo_driver, 1 ) )
+    return NULL;
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_MIXER_QUERY_ATTRIBUTE_VALUE_RANGE , (void*)&vdp_video_mixer_query_attribute_value_range );
+  if ( vdpau_init_error( st, "Can't get VIDEO_MIXER_QUERY_ATTRIBUTE_VALUE_RANGE proc address !!", &this->vo_driver, 1 ) )
+    return NULL;
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_GENERATE_CSC_MATRIX , (void*)&vdp_generate_csc_matrix );
   if ( vdpau_init_error( st, "Can't get GENERATE_CSC_MATRIX proc address !!", &this->vo_driver, 1 ) )
     return NULL;
@@ -2183,16 +2300,44 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     return NULL;
   }
 
+  vdp_video_mixer_query_feature_support( vdp_device, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, &this->temporal_is_supported );
+  vdp_video_mixer_query_feature_support( vdp_device, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL, &this->temporal_spatial_is_supported );
+  vdp_video_mixer_query_feature_support( vdp_device, VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION, &this->noise_reduction_is_supported );
+  vdp_video_mixer_query_feature_support( vdp_device, VDP_VIDEO_MIXER_FEATURE_SHARPNESS, &this->sharpness_is_supported );
+  vdp_video_mixer_query_feature_support( vdp_device, VDP_VIDEO_MIXER_FEATURE_INVERSE_TELECINE, &this->inverse_telecine_is_supported );
+  vdp_video_mixer_query_attribute_support( vdp_device, VDP_VIDEO_MIXER_ATTRIBUTE_SKIP_CHROMA_DEINTERLACE, &this->skip_chroma_is_supported );
+
   this->color_standard = VDP_COLOR_STANDARD_ITUR_BT_601;
   this->video_mixer_chroma = chroma;
   this->video_mixer_width = this->soft_surface_width;
   this->video_mixer_height = this->soft_surface_height;
-  VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION, VDP_VIDEO_MIXER_FEATURE_SHARPNESS,
-        VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL };
-  VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
+  VdpVideoMixerFeature features[5];
+  int features_count = 0;
+  if ( this->noise_reduction_is_supported ) {
+    features[features_count] = VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION;
+	++features_count;
+  }
+  if ( this->sharpness_is_supported ) {
+    features[features_count] = VDP_VIDEO_MIXER_FEATURE_SHARPNESS;
+	++features_count;
+  }
+  if ( this->temporal_is_supported ) {
+    features[features_count] = VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL;
+    ++features_count;
+  }
+  if ( this->temporal_spatial_is_supported ) {
+    features[features_count] = VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL;
+    ++features_count;
+  }
+  if ( this->inverse_telecine_is_supported ) {
+    features[features_count] = VDP_VIDEO_MIXER_FEATURE_INVERSE_TELECINE;
+    ++features_count;
+  }
+  VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT,
+        VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
   int num_layers = 3;
   void const *param_values[] = { &this->video_mixer_width, &this->video_mixer_height, &chroma, &num_layers };
-  st = vdp_video_mixer_create( vdp_device, 4, features, 4, params, param_values, &this->video_mixer );
+  st = vdp_video_mixer_create( vdp_device, features_count, features, 4, params, param_values, &this->video_mixer );
   if ( vdpau_init_error( st, "Can't create video mixer !!", &this->vo_driver, 1 ) ) {
     vdp_video_surface_destroy( this->soft_surface );
     vdp_output_surface_destroy( this->output_surface[0] );
@@ -2200,23 +2345,53 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     return NULL;
   }
 
-  this->deinterlace_method = config->register_enum( config, "video.output.vdpau_deinterlace_method", 3,
-         vdpau_deinterlace_methods, _("vdpau: HD deinterlace method"),
-         _("bob\n"
-           "Basic deinterlacing, doing 50i->50p.\n\n"
-		   "half temporal, half temporal_spatial\n"
-		   "Displays first field only, doing 50i->25p\n\n"
-           "temporal\n"
-           "Very good, 50i->50p\n\n"
-           "temporal_spatial\n"
-           "The best, but very GPU intensive.\n\n"),
-         10, vdpau_update_deinterlace_method, this );
+  char deinterlacers_description[1024];
+  memset( deinterlacers_description, 0, 1024 );
+  int deint_count = 0;
+  int deint_default = 0;
+  this->deinterlacers_name[deint_count] = vdpau_deinterlacer_name[0];
+  this->deinterlacers_method[deint_count] = DEINT_BOB;
+  strcat( deinterlacers_description, vdpau_deinterlacer_description[0] );
+  ++deint_count;
+  if ( this->temporal_is_supported ) {
+    this->deinterlacers_name[deint_count] = vdpau_deinterlacer_name[1];
+    this->deinterlacers_method[deint_count] = DEINT_HALF_TEMPORAL;
+	strcat( deinterlacers_description, vdpau_deinterlacer_description[1] );
+	++deint_count;
+  }
+  if ( this->temporal_spatial_is_supported ) {
+    this->deinterlacers_name[deint_count] = vdpau_deinterlacer_name[2];
+    this->deinterlacers_method[deint_count] = DEINT_HALF_TEMPORAL_SPATIAL;
+	strcat( deinterlacers_description, vdpau_deinterlacer_description[2] );
+	++deint_count;
+  }
+  if ( this->temporal_is_supported ) {
+    this->deinterlacers_name[deint_count] = vdpau_deinterlacer_name[3];
+    this->deinterlacers_method[deint_count] = DEINT_TEMPORAL;
+	strcat( deinterlacers_description, vdpau_deinterlacer_description[3] );
+	deint_default = deint_count;
+	++deint_count;
+  }
+  if ( this->temporal_spatial_is_supported ) {
+    this->deinterlacers_name[deint_count] = vdpau_deinterlacer_name[4];
+    this->deinterlacers_method[deint_count] = DEINT_TEMPORAL_SPATIAL;
+	strcat( deinterlacers_description, vdpau_deinterlacer_description[4] );
+	++deint_count;
+  }
+  this->deinterlacers_name[deint_count] = NULL;
 
-  this->enable_inverse_telecine = config->register_bool( config, "video.output.vdpau_enable_inverse_telecine", 1,
+  this->deinterlace_method = config->register_enum( config, "video.output.vdpau_deinterlace_method", deint_default,
+         this->deinterlacers_name, _("vdpau: HD deinterlace method"),
+         deinterlacers_description,
+		 10, vdpau_update_deinterlace_method, this );
+
+  if ( this->inverse_telecine_is_supported ) {
+    this->enable_inverse_telecine = config->register_bool( config, "video.output.vdpau_enable_inverse_telecine", 1,
       _("vdpau: Try to recreate progressive frames from pulldown material"),
       _("Enable this to detect bad-flagged progressive content to which\n"
         "a 2:2 or 3:2 pulldown was applied.\n\n"),
         10, vdpau_update_enable_inverse_telecine, this );
+  }
 
   this->honor_progressive = config->register_bool( config, "video.output.vdpau_honor_progressive", 0,
         _("vdpau: disable deinterlacing when progressive_frame flag is set"),
@@ -2224,10 +2399,12 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
           "This flag is not always reliable.\n\n"),
         10, vdpau_honor_progressive_flag, this );
 
-  this->skip_chroma = config->register_bool( config, "video.output.vdpau_skip_chroma_deinterlace", 0,
+  if ( this->skip_chroma_is_supported ) {
+    this->skip_chroma = config->register_bool( config, "video.output.vdpau_skip_chroma_deinterlace", 0,
         _("vdpau: disable advanced deinterlacers chroma filter"),
         _("Setting to true may help if your video card isn't able to run advanced deinterlacers.\n\n"),
         10, vdpau_set_skip_chroma, this );
+  }
 
   /* number of video frames from config - register it with the default value. */
   int frame_num = config->register_num (config, "engine.buffers.video_num_frames", 15, /* default */
