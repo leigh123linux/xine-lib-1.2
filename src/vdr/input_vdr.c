@@ -164,6 +164,9 @@ struct vdr_input_plugin_s
   pthread_mutex_t     vpts_offset_queue_lock;
   pthread_cond_t      vpts_offset_queue_changed_cond;
   int                 vpts_offset_queue_changes;
+
+  int                         video_window_active;
+  vdr_set_video_window_data_t video_window_event_data;
 };
 
 
@@ -453,6 +456,13 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
       
       if (0 != this->osd[ data->window ].window)
       {
+#ifdef XINE_OSD_CAP_VIDEO_WINDOW
+        xine_osd_set_video_window(this->osd[ data->window ].window
+          , this->video_window_active ? this->video_window_event_data.x : 0
+          , this->video_window_active ? this->video_window_event_data.y : 0
+          , this->video_window_active ? this->video_window_event_data.w : 0
+          , this->video_window_active ? this->video_window_event_data.h : 0);
+#endif
         if (this->osd_unscaled_blending)
           xine_osd_show_unscaled(this->osd[ data->window ].window, 0);
         else
@@ -471,12 +481,7 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
         return -1;
       
       if (0 != this->osd[ data->window ].window)
-      {
-        if (this->osd_unscaled_blending)
-          xine_osd_show_unscaled(this->osd[ data->window ].window, 0);
-        else
-          xine_osd_show(this->osd[ data->window ].window, 0);
-      }
+        xine_osd_hide(this->osd[ data->window ].window, 0);
     }
     break;
     
@@ -758,18 +763,22 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
 */    
       {
         xine_event_t event;
-        vdr_set_video_window_data_t event_data;
+
+        this->video_window_active = (data->x != 0
+          || data->y != 0
+          || data->w != data->w_ref
+          || data->h != data->h_ref);
         
-        event_data.x = data->x;
-        event_data.y = data->y;
-        event_data.w = data->w;
-        event_data.h = data->h;
-        event_data.w_ref = data->w_ref;
-        event_data.h_ref = data->h_ref;
+        this->video_window_event_data.x = data->x;
+        this->video_window_event_data.y = data->y;
+        this->video_window_event_data.w = data->w;
+        this->video_window_event_data.h = data->h;
+        this->video_window_event_data.w_ref = data->w_ref;
+        this->video_window_event_data.h_ref = data->h_ref;
         
         event.type = XINE_EVENT_VDR_SETVIDEOWINDOW;
-        event.data = &event_data;
-        event.data_length = sizeof (event_data);
+        event.data = &this->video_window_event_data;
+        event.data_length = sizeof (this->video_window_event_data);
         
         xine_event_send(this->stream, &event);
       }
