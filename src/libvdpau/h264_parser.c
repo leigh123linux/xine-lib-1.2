@@ -766,7 +766,8 @@ uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *pps,
     }
 
     pps->second_chroma_qp_index_offset = read_exp_golomb_s(buf);
-  }
+  } else
+    pps->second_chroma_qp_index_offset = pps->chroma_qp_index_offset;
 
   if (!pps->pic_scaling_matrix_present_flag && sps != NULL) {
     memcpy(pps->scaling_lists_4x4, sps->scaling_lists_4x4,
