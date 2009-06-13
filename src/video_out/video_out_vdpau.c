@@ -52,7 +52,7 @@
 
 #define NUM_FRAMES_BACK 1
 
-/*#define LOCKDISPLAY*/ /*define this if you have a buggy libX11/libX11xcb*/
+/*#define LOCKDISPLAY*/ /*define this if you have a buggy libX11/xcb*/
 
 
 #define DEINT_BOB                    1
@@ -1137,30 +1137,42 @@ static void vdpau_set_deinterlace( vo_driver_t *this_gen )
 {
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
 
-  VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL };
+  VdpVideoMixerFeature features[2];
   VdpBool feature_enables[2];
+  int features_count = 0;
+  if ( this->temporal_is_supported ) {
+    features[features_count] = VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL;
+    ++features_count;
+  }
+  if ( this->temporal_spatial_is_supported ) {
+    features[features_count] = VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL;
+    ++features_count;
+  }
+
+  if ( !features_count )
+    return;
+
   if ( this->deinterlace ) {
-    if ( this->video_mixer_width<800 )
+    if ( this->video_mixer_width<800 ) {
       feature_enables[0] = feature_enables[1] = 1;
+    }
     else {
       switch ( this->deinterlacers_method[this->deinterlace_method] ) {
         case DEINT_BOB:
-		  feature_enables[0] = feature_enables[1] = 0; break; /* bob */
+          feature_enables[0] = feature_enables[1] = 0; break; /* bob */
         case DEINT_HALF_TEMPORAL:
-		case DEINT_TEMPORAL:
-		  feature_enables[0] = 1; feature_enables[1] = 0; break; /* temporal */
+        case DEINT_TEMPORAL:
+          feature_enables[0] = 1; feature_enables[1] = 0; break; /* temporal */
         case DEINT_HALF_TEMPORAL_SPATIAL:
-		case DEINT_TEMPORAL_SPATIAL:
-		  feature_enables[0] = feature_enables[1] = 1; break; /* temporal_spatial */
+        case DEINT_TEMPORAL_SPATIAL:
+          feature_enables[0] = feature_enables[1] = 1; break; /* temporal_spatial */
       }
     }
   }
   else
     feature_enables[0] = feature_enables[1] = 0;
 
-  vdp_video_mixer_set_feature_enables( this->video_mixer, 2, features, feature_enables );
-  vdp_video_mixer_get_feature_enables( this->video_mixer, 2, features, feature_enables );
-  printf("vo_vdpau: enabled features: temporal=%d, temporal_spatial=%d\n", feature_enables[0], feature_enables[1] );
+  vdp_video_mixer_set_feature_enables( this->video_mixer, features_count, features, feature_enables );
 }
 
 
@@ -1561,7 +1573,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, 0 ); /* display _now_ */
     vdpau_shift_queue( this_gen );
 
-	if ( (this->deinterlace_method != 1) && (this->deinterlace_method != 2) ) {  /* process second field */
+	if ( (this->deinterlacers_method[this->deinterlace_method] != DEINT_HALF_TEMPORAL) && (this->deinterlacers_method[this->deinterlace_method] != DEINT_HALF_TEMPORAL_SPATIAL) ) {  /* process second field */
       if ( this->init_queue>1 ) {
 #ifdef LOCKDISPLAY
         XUnlockDisplay(this->display);
