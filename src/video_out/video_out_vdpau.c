@@ -1399,13 +1399,14 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
   if ( (frame->format == XINE_IMGFMT_YV12) || (frame->format == XINE_IMGFMT_YUY2) ) {
     chroma = ( frame->format==XINE_IMGFMT_YV12 )? VDP_CHROMA_TYPE_420 : VDP_CHROMA_TYPE_422;
-    if ( (frame->width > this->soft_surface_width) || (frame->height > this->soft_surface_height) || (frame->format != this->soft_surface_format) ) {
+    if ( (frame->width != this->soft_surface_width) || (frame->height != this->soft_surface_height) || (frame->format != this->soft_surface_format) ) {
       lprintf( "vo_vdpau: soft_surface size update\n" );
       /* recreate surface to match frame changes */
       this->soft_surface_width = frame->width;
       this->soft_surface_height = frame->height;
       this->soft_surface_format = frame->format;
       vdp_video_surface_destroy( this->soft_surface );
+      this->soft_surface = VDP_INVALID_HANDLE;
       vdp_video_surface_create( vdp_device, chroma, this->soft_surface_width, this->soft_surface_height, &this->soft_surface );
     }
     /* FIXME: have to swap U and V planes to get correct colors !! */
@@ -2327,11 +2328,11 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   int features_count = 0;
   if ( this->noise_reduction_is_supported ) {
     features[features_count] = VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION;
-	++features_count;
+    ++features_count;
   }
   if ( this->sharpness_is_supported ) {
     features[features_count] = VDP_VIDEO_MIXER_FEATURE_SHARPNESS;
-	++features_count;
+    ++features_count;
   }
   if ( this->temporal_is_supported ) {
     features[features_count] = VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL;
@@ -2368,34 +2369,34 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   if ( this->temporal_is_supported ) {
     this->deinterlacers_name[deint_count] = vdpau_deinterlacer_name[1];
     this->deinterlacers_method[deint_count] = DEINT_HALF_TEMPORAL;
-	strcat( deinterlacers_description, vdpau_deinterlacer_description[1] );
-	++deint_count;
+    strcat( deinterlacers_description, vdpau_deinterlacer_description[1] );
+    ++deint_count;
   }
   if ( this->temporal_spatial_is_supported ) {
     this->deinterlacers_name[deint_count] = vdpau_deinterlacer_name[2];
     this->deinterlacers_method[deint_count] = DEINT_HALF_TEMPORAL_SPATIAL;
-	strcat( deinterlacers_description, vdpau_deinterlacer_description[2] );
-	++deint_count;
+    strcat( deinterlacers_description, vdpau_deinterlacer_description[2] );
+    ++deint_count;
   }
   if ( this->temporal_is_supported ) {
     this->deinterlacers_name[deint_count] = vdpau_deinterlacer_name[3];
     this->deinterlacers_method[deint_count] = DEINT_TEMPORAL;
-	strcat( deinterlacers_description, vdpau_deinterlacer_description[3] );
-	deint_default = deint_count;
-	++deint_count;
+    strcat( deinterlacers_description, vdpau_deinterlacer_description[3] );
+    deint_default = deint_count;
+    ++deint_count;
   }
   if ( this->temporal_spatial_is_supported ) {
     this->deinterlacers_name[deint_count] = vdpau_deinterlacer_name[4];
     this->deinterlacers_method[deint_count] = DEINT_TEMPORAL_SPATIAL;
-	strcat( deinterlacers_description, vdpau_deinterlacer_description[4] );
-	++deint_count;
+    strcat( deinterlacers_description, vdpau_deinterlacer_description[4] );
+    ++deint_count;
   }
   this->deinterlacers_name[deint_count] = NULL;
 
   this->deinterlace_method = config->register_enum( config, "video.output.vdpau_deinterlace_method", deint_default,
          this->deinterlacers_name, _("vdpau: HD deinterlace method"),
          deinterlacers_description,
-		 10, vdpau_update_deinterlace_method, this );
+         10, vdpau_update_deinterlace_method, this );
 
   if ( this->inverse_telecine_is_supported ) {
     this->enable_inverse_telecine = config->register_bool( config, "video.output.vdpau_enable_inverse_telecine", 1,
