@@ -19,7 +19,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
  *
- * video_out_vdpau.c, a video output plugin using VDPAU (Video Decode and Presentation Api for Unix)
+ * video_out_vdpau.c, a video output plugin
+ * using VDPAU (Video Decode and Presentation Api for Unix)
  *
  *
  */
@@ -82,14 +83,16 @@ char* vdpau_deinterlacer_description [] = {
 };
 
 
-VdpOutputSurfaceRenderBlendState blend = { VDP_OUTPUT_SURFACE_RENDER_BLEND_STATE_VERSION,
-          VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ONE,
-          VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ONE_MINUS_SRC_COLOR,
-          VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ONE,
-          VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-          VDP_OUTPUT_SURFACE_RENDER_BLEND_EQUATION_ADD,
-          VDP_OUTPUT_SURFACE_RENDER_BLEND_EQUATION_ADD,
-          0 };
+VdpOutputSurfaceRenderBlendState blend = {
+  VDP_OUTPUT_SURFACE_RENDER_BLEND_STATE_VERSION,
+  VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ONE,
+  VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ONE_MINUS_SRC_COLOR,
+  VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ONE,
+  VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+  VDP_OUTPUT_SURFACE_RENDER_BLEND_EQUATION_ADD,
+  VDP_OUTPUT_SURFACE_RENDER_BLEND_EQUATION_ADD,
+  0
+};
 
 
 
@@ -521,6 +524,7 @@ static int vdpau_process_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overlay )
   if ( (ovl->bitmap_width < overlay->width ) || (ovl->bitmap_height < overlay->height) || (ovl->ovl_bitmap == VDP_INVALID_HANDLE) ) {
     if (ovl->ovl_bitmap != VDP_INVALID_HANDLE) {
       vdp_bitmap_destroy( ovl->ovl_bitmap );
+      ovl->ovl_bitmap = VDP_INVALID_HANDLE;
     }
     VdpStatus st = vdp_bitmap_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, overlay->width, overlay->height, 0, &ovl->ovl_bitmap );
     if ( st != VDP_STATUS_OK ) {
@@ -1444,15 +1448,16 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdpau_release_back_frames( this_gen ); /* empty past frames array */
     lprintf("vo_vdpau: recreate mixer to match frames: width=%d, height=%d, chroma=%d\n", mix_w, mix_h, chroma);
     vdp_video_mixer_destroy( this->video_mixer );
-	VdpVideoMixerFeature features[5];
+    this->video_mixer = VDP_INVALID_HANDLE;
+    VdpVideoMixerFeature features[5];
     int features_count = 0;
     if ( this->noise_reduction_is_supported ) {
       features[features_count] = VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION;
-	  ++features_count;
+      ++features_count;
     }
     if ( this->sharpness_is_supported ) {
       features[features_count] = VDP_VIDEO_MIXER_FEATURE_SHARPNESS;
-	  ++features_count;
+      ++features_count;
     }
     if ( this->temporal_is_supported ) {
       features[features_count] = VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL;
@@ -1574,7 +1579,8 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, 0 ); /* display _now_ */
     vdpau_shift_queue( this_gen );
 
-	if ( (this->deinterlacers_method[this->deinterlace_method] != DEINT_HALF_TEMPORAL) && (this->deinterlacers_method[this->deinterlace_method] != DEINT_HALF_TEMPORAL_SPATIAL) ) {  /* process second field */
+    int dm = this->deinterlacers_method[this->deinterlace_method];
+    if ( (dm != DEINT_HALF_TEMPORAL) && (dm != DEINT_HALF_TEMPORAL_SPATIAL) ) {  /* process second field */
       if ( this->init_queue>1 ) {
 #ifdef LOCKDISPLAY
         XUnlockDisplay(this->display);
@@ -1863,12 +1869,12 @@ static void vdpau_dispose (vo_driver_t *this_gen)
   if ( vdp_queue_target != VDP_INVALID_HANDLE )
     vdp_queue_target_destroy( vdp_queue_target );
 
-  if ( (vdp_device != VDP_INVALID_HANDLE) && vdp_device_destroy )
-    vdp_device_destroy( vdp_device );
-
   for ( i=0; i<NUM_FRAMES_BACK; i++ )
     if ( this->back_frame[i] )
       this->back_frame[i]->vo_frame.dispose( &this->back_frame[i]->vo_frame );
+
+  if ( (vdp_device != VDP_INVALID_HANDLE) && vdp_device_destroy )
+    vdp_device_destroy( vdp_device );
 
   free (this);
 }
