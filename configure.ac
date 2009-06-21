@@ -245,11 +245,20 @@ AC_CHECK_DECL(sysi86,[
 
 AC_GETOPT_LONG
 
+
 dnl ---------------------------------------------
-dnl Windows ports checks
+dnl Windows & Hurd ports checks
 dnl ---------------------------------------------
+have_supported_dvb=yes
+SYS=other
+
 case "$host" in
+  *-gnu*.*)
+    have_supported_dvb=no
+    SYS=hurd
+    ;;
   *-*-mingw* | *-*-cygwin*)
+    have_supported_dvb=no
     dnl check if we are using the cygwin, mingw or cygwin with mno-cygwin mode
     dnl in which case we are actually dealing with a mingw32 compiler
     case "$host" in
@@ -277,6 +286,8 @@ esac
 AC_SUBST(GOOM_LIBS)
 AC_SUBST(WIN32_CPPFLAGS)
 AM_CONDITIONAL(WIN32, test "x$SYS" = "xmingw32")
+AM_CONDITIONAL([HURD], [test "x$SYS" = "xhurd"])
+AM_CONDITIONAL([DVB], [test "$have_supported_DVB" = "yes"])
 
 
 dnl ---------------------------------------------
@@ -2843,7 +2854,9 @@ echo "   - file          - net"
 echo "   - stdin_fifo    - rtp"
 echo "   - http          - mms"
 echo "   - pnm           - rtsp"
-echo "   - dvb"
+if test "$have_supported_dvb" = yes; then
+  echo "   - dvb"
+fi
 if test "x$external_dvdnav" = "xyes"; then
   echo "   - dvd (external libs)"
 else
