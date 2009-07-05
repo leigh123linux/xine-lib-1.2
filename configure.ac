@@ -287,7 +287,7 @@ AC_SUBST(GOOM_LIBS)
 AC_SUBST(WIN32_CPPFLAGS)
 AM_CONDITIONAL(WIN32, test "x$SYS" = "xmingw32")
 AM_CONDITIONAL([HURD], [test "x$SYS" = "xhurd"])
-AM_CONDITIONAL([DVB], [test "$have_supported_DVB" = "yes"])
+AM_CONDITIONAL([DVB], [test "$have_supported_dvb" = "yes"])
 
 
 dnl ---------------------------------------------
