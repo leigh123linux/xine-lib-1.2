@@ -1580,7 +1580,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdpau_shift_queue( this_gen );
 
     int dm = this->deinterlacers_method[this->deinterlace_method];
-    if ( (dm != DEINT_HALF_TEMPORAL) && (dm != DEINT_HALF_TEMPORAL_SPATIAL) ) {  /* process second field */
+    if ( (dm != DEINT_HALF_TEMPORAL) && (dm != DEINT_HALF_TEMPORAL_SPATIAL) && frame->vo_frame.future_frame ) {  /* process second field */
       if ( this->init_queue>1 ) {
 #ifdef LOCKDISPLAY
         XUnlockDisplay(this->display);
@@ -1593,12 +1593,12 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
       vdpau_check_output_size( this_gen );
 
+      picture_structure = ( frame->vo_frame.top_field_first ) ? VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD : VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD;
       past[0] = surface;
       if ( frame->vo_frame.future_frame!=NULL && ((vdpau_frame_t*)(frame->vo_frame.future_frame))->format==XINE_IMGFMT_VDPAU )
         future[0] = ((vdpau_frame_t*)(frame->vo_frame.future_frame))->vdpau_accel_data.surface;
       else
         future[0] = VDP_INVALID_HANDLE;
-      picture_structure = ( frame->vo_frame.top_field_first ) ? VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD : VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD;
 
       st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, picture_structure,
                                2, past, surface, 1, future, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
@@ -1613,7 +1613,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
       vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, current_time );
       vdpau_shift_queue( this_gen );
-	}
+    }
   }
   else {
     st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME,
@@ -2088,7 +2088,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   vdp_queue_target = VDP_INVALID_HANDLE;
   vdp_device = VDP_INVALID_HANDLE;
 
-  vdp_output_surface_destroy = NULL,
+  vdp_output_surface_destroy = NULL;
   vdp_device_destroy = NULL;
 
   this->sharpness_is_supported = 0;
