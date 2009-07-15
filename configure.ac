@@ -1352,8 +1352,10 @@ AC_ARG_WITH([external-libmpcdec], AS_HELP_STRING([--with-external-libmpcdec], [U
 if test "x$enable_musepack" = "xno"; then
    AC_MSG_RESULT([musepack support disabled])
 elif test "x$with_external_libmpcdec" = "xyes"; then
-   AC_CHECK_LIB([mpcdec], [mpc_decoder_decode], [have_mpcdec=yes])
-   AC_CHECK_HEADERS([mpcdec/mpcdec.h], , [have_mpcdec=no])
+   AC_CHECK_LIB([mpcdec], [mpc_demux_decode], [have_mpcdec=yes],
+   [AC_CHECK_LIB([mpcdec], [mpc_decoder_decode], [have_mpcdec=yes])])
+   AC_CHECK_HEADERS([mpc/mpcdec.h], [],
+   [AC_CHECK_HEADERS([mpcdec/mpcdec.h], [], [have_mpcdec=no])])
    if test "x$have_mpcdec" != "xyes"; then
       AC_MSG_ERROR([Unable to find mpcdec])
    fi
