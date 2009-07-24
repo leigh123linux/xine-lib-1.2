@@ -124,11 +124,15 @@ struct vdr_input_plugin_s
   uint8_t             osd_supports_argb_layer;
 
   uint8_t             audio_channels;
-  uint8_t             trick_speed_mode;
   uint8_t             mute_mode;
   uint8_t             volume_mode;
   int                 last_volume;
   vdr_frame_size_changed_data_t frame_size;
+  
+  uint8_t             trick_speed_mode;
+  uint8_t             trick_speed_mode_blocked;
+  pthread_mutex_t     trick_speed_mode_lock;
+  pthread_cond_t      trick_speed_mode_cond;
   
   pthread_t           rpc_thread;
   int                 rpc_thread_shutdown;
@@ -812,7 +816,14 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
 
       if (this->trick_speed_mode != data->on)
       {
+        pthread_mutex_lock(&this->trick_speed_mode_lock);
+
+        while (this->trick_speed_mode_blocked)
+          pthread_cond_wait(&this->trick_speed_mode_cond, &this->trick_speed_mode_lock);
+
         this->trick_speed_mode = data->on;
+
+        pthread_mutex_unlock(&this->trick_speed_mode_lock);
       
         _x_demux_seek(this->stream, 0, 0, 0);
 
@@ -1801,6 +1812,9 @@ static void vdr_plugin_dispose(input_plugin_t *this_gen)
   pthread_cond_destroy(&this->metronom_thread_request_cond);
   pthread_cond_destroy(&this->metronom_thread_reply_cond);
 
+  pthread_mutex_destroy(&this->trick_speed_mode_lock);
+  pthread_cond_destroy(&this->trick_speed_mode_cond);
+
   pthread_mutex_destroy(&this->find_sync_point_lock);
   pthread_mutex_destroy(&this->adjust_zoom_lock);
   
@@ -2089,6 +2103,8 @@ static int vdr_plugin_open_socket_mrl(input_plugin_t *this_gen)
   return 1;
 }
 
+static void vdr_metronom_handle_audio_discontinuity_impl(metronom_t *self, int type, int64_t disc_off);
+
 static void *vdr_metronom_thread_loop(void *arg)
 {
   vdr_input_plugin_t *this = (vdr_input_plugin_t *)arg;
@@ -2104,7 +2120,7 @@ static void *vdr_metronom_thread_loop(void *arg)
     if (this->metronom_thread_request == -1)
       run = 0;
     else
-      this->metronom.metronom.handle_audio_discontinuity(&this->metronom.metronom, DISC_ABSOLUTE, this->metronom_thread_request);
+      vdr_metronom_handle_audio_discontinuity_impl(&this->metronom.metronom, DISC_ABSOLUTE, this->metronom_thread_request);
 
     this->metronom_thread_request = 0;
     this->metronom_thread_reply = 1;
@@ -2391,7 +2407,7 @@ fprintf(stderr, "B =============================================\n");
   }
 }
 
-static void vdr_metronom_handle_audio_discontinuity(metronom_t *self, int type, int64_t disc_off)
+static void vdr_metronom_handle_audio_discontinuity_impl(metronom_t *self, int type, int64_t disc_off)
 {
   vdr_metronom_t *this = (vdr_metronom_t *)self;
   int64_t vpts_offset = vdr_vpts_offset_queue_change_begin(this->input, type);
@@ -2401,7 +2417,48 @@ static void vdr_metronom_handle_audio_discontinuity(metronom_t *self, int type, 
  vdr_vpts_offset_queue_change_end(this->input, type, disc_off, vpts_offset);
 }
 
-static void vdr_metronom_handle_video_discontinuity(metronom_t *self, int type, int64_t disc_off)
+static void vdr_metronom_handle_audio_discontinuity(metronom_t *self, int type, int64_t disc_off)
+{
+  vdr_metronom_t *this = (vdr_metronom_t *)self;
+
+  pthread_mutex_lock(&this->input->trick_speed_mode_lock);
+
+  if (this->input->trick_speed_mode_blocked & 0x04) /* must not enter while video is leaving */
+    pthread_cond_wait(&this->input->trick_speed_mode_cond, &this->input->trick_speed_mode_lock);
+
+  this->input->trick_speed_mode_blocked |= 0x02; /* audio is in */
+
+  if (!this->input->trick_speed_mode)
+  {
+    pthread_mutex_unlock(&this->input->trick_speed_mode_lock);
+
+    vdr_metronom_handle_audio_discontinuity_impl(self, type, disc_off);
+
+    pthread_mutex_lock(&this->input->trick_speed_mode_lock);
+  }
+  else
+  {
+    if (this->input->trick_speed_mode_blocked != 0x03) /* wait for audio and video in */
+    {
+      pthread_cond_wait(&this->input->trick_speed_mode_cond, &this->input->trick_speed_mode_lock);
+      this->input->trick_speed_mode_blocked &= ~0x04; /* video left already */
+    }
+    else
+    {
+      this->input->trick_speed_mode_blocked |= 0x04; /* audio is leaving */
+      pthread_cond_broadcast(&this->input->trick_speed_mode_cond);
+    }
+  }
+
+  this->input->trick_speed_mode_blocked &= ~0x02; /* audio is out */
+
+  if (!this->input->trick_speed_mode_blocked)
+    pthread_cond_broadcast(&this->input->trick_speed_mode_cond);
+
+  pthread_mutex_unlock(&this->input->trick_speed_mode_lock);
+}
+
+static void vdr_metronom_handle_video_discontinuity_impl(metronom_t *self, int type, int64_t disc_off)
 {
   vdr_metronom_t *this = (vdr_metronom_t *)self;
   int64_t vpts_offset = vdr_vpts_offset_queue_change_begin(this->input, type);
@@ -2411,28 +2468,76 @@ static void vdr_metronom_handle_video_discontinuity(metronom_t *self, int type, 
   vdr_vpts_offset_queue_change_end(this->input, type, disc_off, vpts_offset);
 }
 
+static void vdr_metronom_handle_video_discontinuity(metronom_t *self, int type, int64_t disc_off)
+{
+  vdr_metronom_t *this = (vdr_metronom_t *)self;
+
+  pthread_mutex_lock(&this->input->trick_speed_mode_lock);
+
+  if (this->input->trick_speed_mode_blocked & 0x04) /* must not enter while audio is leaving */
+    pthread_cond_wait(&this->input->trick_speed_mode_cond, &this->input->trick_speed_mode_lock);
+
+  this->input->trick_speed_mode_blocked |= 0x01; /* video is in */
+
+  if (!this->input->trick_speed_mode)
+  {
+    pthread_mutex_unlock(&this->input->trick_speed_mode_lock);
+
+    vdr_metronom_handle_video_discontinuity_impl(self, type, disc_off);
+
+    pthread_mutex_lock(&this->input->trick_speed_mode_lock);
+  }
+  else
+  {
+    if (this->input->trick_speed_mode_blocked != 0x03) /* wait for audio and video in */
+    {
+      pthread_cond_wait(&this->input->trick_speed_mode_cond, &this->input->trick_speed_mode_lock);
+      this->input->trick_speed_mode_blocked &= ~0x04; /* audio left already */
+    }
+    else
+    {
+      this->input->trick_speed_mode_blocked |= 0x04; /* video is leaving */
+      pthread_cond_broadcast(&this->input->trick_speed_mode_cond);
+    }
+  }
+
+  this->input->trick_speed_mode_blocked &= ~0x01; /* video is out */
+
+  if (!this->input->trick_speed_mode_blocked)
+    pthread_cond_broadcast(&this->input->trick_speed_mode_cond);
+
+  pthread_mutex_unlock(&this->input->trick_speed_mode_lock);
+}
+
 static void vdr_metronom_got_video_frame(metronom_t *self, vo_frame_t *frame)
 {
   vdr_metronom_t *this = (vdr_metronom_t *)self;
 
-  if (this->input->trick_speed_mode && frame->pts)
+  if (frame->pts)
   {
-    pthread_mutex_lock(&this->input->metronom_thread_call_lock);
+    pthread_mutex_lock(&this->input->trick_speed_mode_lock);
 
-    pthread_mutex_lock(&this->input->metronom_thread_lock);
-    this->input->metronom_thread_request = frame->pts;
-    this->input->metronom_thread_reply = 0;
-    pthread_cond_broadcast(&this->input->metronom_thread_request_cond);
-    pthread_mutex_unlock(&this->input->metronom_thread_lock);
+    if (this->input->trick_speed_mode)
+    {
+      pthread_mutex_lock(&this->input->metronom_thread_call_lock);
 
-    vdr_metronom_handle_video_discontinuity(self, DISC_ABSOLUTE, frame->pts);    
+      pthread_mutex_lock(&this->input->metronom_thread_lock);
+      this->input->metronom_thread_request = frame->pts;
+      this->input->metronom_thread_reply = 0;
+      pthread_cond_broadcast(&this->input->metronom_thread_request_cond);
+      pthread_mutex_unlock(&this->input->metronom_thread_lock);
 
-    pthread_mutex_lock(&this->input->metronom_thread_lock);
-    if (!this->input->metronom_thread_reply)
-      pthread_cond_wait(&this->input->metronom_thread_reply_cond, &this->input->metronom_thread_lock);
-    pthread_mutex_unlock(&this->input->metronom_thread_lock);
+      vdr_metronom_handle_video_discontinuity_impl(self, DISC_ABSOLUTE, frame->pts);    
 
-    pthread_mutex_unlock(&this->input->metronom_thread_call_lock);
+      pthread_mutex_lock(&this->input->metronom_thread_lock);
+      if (!this->input->metronom_thread_reply)
+        pthread_cond_wait(&this->input->metronom_thread_reply_cond, &this->input->metronom_thread_lock);
+      pthread_mutex_unlock(&this->input->metronom_thread_lock);
+
+      pthread_mutex_unlock(&this->input->metronom_thread_call_lock);
+    }
+
+    pthread_mutex_unlock(&this->input->trick_speed_mode_lock);
   }
 
   this->stream_metronom->got_video_frame(this->stream_metronom, frame);
@@ -2564,6 +2669,9 @@ static input_plugin_t *vdr_class_get_instance(input_class_t *cls_gen, xine_strea
 
   pthread_mutex_init(&this->rpc_thread_shutdown_lock, 0);
   pthread_cond_init(&this->rpc_thread_shutdown_cond, 0);
+
+  pthread_mutex_init(&this->trick_speed_mode_lock, 0);
+  pthread_cond_init(&this->trick_speed_mode_cond, 0);
 
   pthread_mutex_init(&this->metronom_thread_lock, 0);
   pthread_cond_init(&this->metronom_thread_request_cond, 0);
