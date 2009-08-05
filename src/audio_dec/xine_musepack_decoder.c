@@ -48,7 +48,13 @@
 #include <xine/buffer.h>
 #include <xine/xineutils.h>
 
-#include <mpcdec/mpcdec.h>
+#ifdef HAVE_MPCDEC_MPCDEC_H
+# include <mpcdec/mpcdec.h>
+#elif defined(HAVE_MPC_MPCDEC_H)
+# include <mpc/mpcdec.h>
+#else
+# include "musepack/musepack.h"
+#endif
 
 #define MPC_DECODER_MEMSIZE  65536
 #define MPC_DECODER_MEMSIZE2 (MPC_DECODER_MEMSIZE/2)
@@ -77,7 +83,11 @@ typedef struct mpc_decoder_s {
 
   mpc_reader       reader;
   mpc_streaminfo   streaminfo;
+#ifndef HAVE_MPC_MPCDEC_H
   mpc_decoder      decoder;
+#else
+  mpc_demux       *decoder;
+#endif
   
   int              decoder_ok;
   unsigned int     current_frame;
@@ -111,8 +121,13 @@ static int32_t mpc_reader_read(void *const data, void *const ptr, int size) {
 }
  
 /* Seeks to byte position offset. */
+#ifndef HAVE_MPC_MPCDEC_H
 static mpc_bool_t mpc_reader_seek(void *const data, const int32_t offset) {
   mpc_decoder_t *const this = (mpc_decoder_t *) data;
+#else
+static mpc_bool_t mpc_reader_seek(mpc_reader *data, int32_t offset) {
+  mpc_decoder_t *const this = (mpc_decoder_t *) data->data;
+#endif
   
   lprintf("mpc_reader_seek: offset=%d\n", offset);
   
@@ -120,11 +135,19 @@ static mpc_bool_t mpc_reader_seek(void *const data, const int32_t offset) {
    * that the buffer starts at the start of the file */
   this->read = offset;
   
+#ifndef HAVE_MPC_MPCDEC_H
   return TRUE;
+#else
+  return MPC_TRUE;
+#endif
 }
 
 /* Returns the current byte offset in the stream. */
+#ifndef HAVE_MPC_MPCDEC_H
 static int32_t mpc_reader_tell(void *const data) {
+#else
+static int32_t mpc_reader_tell(mpc_reader *const data) {
+#endif
   lprintf("mpc_reader_tell\n");
   
   /* Tell isn't used so just return 0 */
@@ -132,8 +155,13 @@ static int32_t mpc_reader_tell(void *const data) {
 }
 
 /* Returns the total length of the source stream, in bytes. */
+#ifndef HAVE_MPC_MPCDEC_H
 static int32_t mpc_reader_get_size(void *const data) {
   mpc_decoder_t *const this = (mpc_decoder_t *) data;
+#else
+static int32_t mpc_reader_get_size(mpc_reader *const data) {
+  mpc_decoder_t *const this = (mpc_decoder_t *) data->data;
+#endif
   
   lprintf("mpc_reader_get_size\n");
   
@@ -141,10 +169,17 @@ static int32_t mpc_reader_get_size(void *const data) {
 }
 
 /* True if the stream is a seekable stream. */
+#ifndef HAVE_MPC_MPCDEC_H
 static mpc_bool_t mpc_reader_canseek(void *data) {
   lprintf("mpc_reader_canseek\n");
   
   return TRUE;
+#else
+static mpc_bool_t mpc_reader_canseek(mpc_reader *data) {
+
+  lprintf("mpc_reader_canseek\n");
+  return MPC_TRUE;
+#endif
 }
 
 /**
@@ -175,10 +210,19 @@ static inline void float_to_int(const float *const _f, int16_t *const s16, const
 static int mpc_decode_frame (mpc_decoder_t *this) {
   float buffer[MPC_DECODER_BUFFER_LENGTH];
   uint32_t frames;
+#ifdef HAVE_MPC_MPCDEC_H
+  mpc_frame_info frame;
+#endif
   
   lprintf("mpd_decode_frame\n");
   
+#ifndef HAVE_MPC_MPCDEC_H
   frames = mpc_decoder_decode(&this->decoder, buffer, 0, 0);
+#else
+  frame.buffer = buffer;
+  mpc_demux_decode(this->decoder, &frame);
+  frames = frame.samples;
+#endif
   
   if (frames > 0) {
     audio_buffer_t *audio_buffer;  
@@ -245,6 +289,16 @@ static void mpc_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     xine_fast_memcpy(this->buf, buf->content, buf->size);
     this->size = buf->size;
     
+#ifdef HAVE_MPC_MPCDEC_H
+    this->decoder = mpc_demux_init(&this->reader);
+    if (!this->decoder) {
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+	      _("libmusepack: mpc_demux_init failed.\n"));
+      _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_HANDLED, 0);
+      return;
+    }
+    mpc_demux_get_info(this->decoder, &this->streaminfo);
+#else
     /* Initialise and read stream info */
     mpc_streaminfo_init(&this->streaminfo);
     
@@ -255,6 +309,7 @@ static void mpc_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_HANDLED, 0);
       return;
     }
+#endif
     
     this->sample_rate     = this->streaminfo.sample_freq;
     this->channels        = this->streaminfo.channels;
@@ -269,7 +324,9 @@ static void mpc_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     this->current_frame = 0;
         
     /* Setup the decoder */
+#ifndef HAVE_MPC_MPCDEC_H
     mpc_decoder_setup(&this->decoder, &this->reader);
+#endif
     this->decoder_ok = 0;
 
     /* Take this opportunity to initialize stream/meta information */
@@ -322,7 +379,11 @@ static void mpc_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   /* Time to decode */
   if (buf->decoder_flags & BUF_FLAG_FRAME_END)  {
     /* Increment frame count */
+#ifndef HAVE_MPC_MPCDEC_H
     if (this->current_frame++ == this->streaminfo.frames) {
+#else
+    if (this->current_frame++ == this->streaminfo.samples) {
+#endif
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
               _("libmusepack: data after last frame ignored\n"));
       return;
@@ -333,7 +394,11 @@ static void mpc_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       if ((this->size - this->read) >= MPC_DECODER_MEMSIZE) {
         lprintf("initialise");
       
+#ifndef HAVE_MPC_MPCDEC_H
         if (!mpc_decoder_initialize(&this->decoder, &this->streaminfo)) {
+#else
+        if (!this->decoder) {
+#endif
           xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
                   _("libmusepack: mpc_decoder_initialise failed\n"));        
           
@@ -364,7 +429,11 @@ static void mpc_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     
     /* If we are at the end of the stream we decode the remaining frames as we
      * know we'll have enough data */
+#ifndef HAVE_MPC_MPCDEC_H
     if (this->current_frame == this->streaminfo.frames) {
+#else
+    if (this->current_frame == this->streaminfo.samples) {
+#endif
       lprintf("flushing buffers\n");
       
       do {
@@ -397,9 +466,14 @@ static void mpc_dispose (audio_decoder_t *this_gen) {
   /* close the audio output */
   if (this->output_open)
     this->stream->audio_out->close (this->stream->audio_out, this->stream);
+  this->output_open = 0;
 
   /* free anything that was allocated during operation */
   free(this->buf);
+#ifdef HAVE_MPC_MPCDEC_H
+  if (this->decoder)
+    mpc_demux_exit(this->decoder);
+#endif
   
   free(this);
 }

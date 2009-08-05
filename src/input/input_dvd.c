@@ -53,7 +53,9 @@
 #include <dlfcn.h>
 
 #ifndef WIN32
+#if ! defined(__GNU__)
 #include <sys/mount.h>
+#endif
 #include <sys/wait.h>
 
 #include <sys/poll.h>

@@ -302,7 +302,8 @@ static int demux_raw_dv_seek (demux_plugin_t *this_gen,
   }
 
   if( !start_pos && start_time ) {
-    start_pos = (start_time * 90 / this->duration) * this->frame_size;
+    /* Upcast start_time in case sizeof(off_t) > sizeof(int) */
+    start_pos = ((off_t) start_time * 90 / this->duration) * this->frame_size;
   }
   
   start_pos = start_pos - (start_pos % this->frame_size);  

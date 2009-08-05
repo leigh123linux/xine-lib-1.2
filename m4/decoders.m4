@@ -301,9 +301,11 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
                   [AS_HELP_STRING([--enable-musepack], [Enable support for Musepack decoding (default: enabled, internal: use external copy)])])
     if test x"$enable_musepack" != x"no"; then
         if test x"$enable_musepack" != x"internal"; then
-            AC_CHECK_LIB([mpcdec], [mpc_decoder_decode],
-                         [AC_CHECK_HEADERS([mpcdec/mpcdec.h], [have_external_libmpcdec=yes], [have_external_libmpcdec=no])],
-                         [have_external_libmpcdec=no])
+	    AC_CHECK_LIB([mpcdec], [mpc_demux_decode],
+			 [AC_CHECK_HEADERS([mpc/mpcdec.h], [have_external_libmpcdec=yes], [have_external_libmpcdec=no])],
+			 [AC_CHECK_LIB([mpcdec], [mpc_decoder_decode],
+				       [AC_CHECK_HEADERS([mpcdec/mpcdec.h], [have_external_libmpcdec=yes], [have_external_libmpcdec=no])],
+							 [have_external_libmpcdec=no])])
             if test x"$have_external_libmpcdec" != x"yes"; then
                 AC_MSG_RESULT([*** no usable version of libmpcdec found, using internal copy ***])
             else
