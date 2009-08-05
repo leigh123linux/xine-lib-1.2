@@ -2158,26 +2158,18 @@ static int cdda_close(cdda_input_plugin_t *this_gen) {
 
 static uint32_t cdda_plugin_get_capabilities (input_plugin_t *this_gen) {
 
-  return INPUT_CAP_SEEKABLE | INPUT_CAP_BLOCK;
+  return INPUT_CAP_SEEKABLE;
 }
 
 
 static off_t cdda_plugin_read (input_plugin_t *this_gen, char *buf, off_t len) {
 
-  /* only allow reading in block-sized chunks */
-
-  return 0;
-}
-
-static buf_element_t *cdda_plugin_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo, 
-  off_t nlen) {
-
   cdda_input_plugin_t *this = (cdda_input_plugin_t *) this_gen;
-  buf_element_t *buf;
-  unsigned char frame_data[CD_RAW_FRAME_SIZE];
   int err = 0;
 
-  if (nlen != CD_RAW_FRAME_SIZE)
+  /* only allow reading in block-sized chunks */
+
+  if (len != CD_RAW_FRAME_SIZE)
     return 0;
 
   if (this->current_frame > this->last_frame)
@@ -2211,14 +2203,26 @@ static buf_element_t *cdda_plugin_read_block (input_plugin_t *this_gen, fifo_buf
   if( err < 0 )
     return 0;
     
-  memcpy(frame_data, this->cache[this->current_frame-this->cache_first], CD_RAW_FRAME_SIZE);
+  memcpy(buf, this->cache[this->current_frame-this->cache_first], CD_RAW_FRAME_SIZE);
   this->current_frame++;
+
+  return CD_RAW_FRAME_SIZE;
+}
+
+static buf_element_t *cdda_plugin_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo,
+  off_t nlen) {
+
+  buf_element_t *buf;
 
   buf = fifo->buffer_pool_alloc(fifo);
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
-  buf->size = CD_RAW_FRAME_SIZE;
-  memcpy(buf->mem, frame_data, CD_RAW_FRAME_SIZE);
+
+  buf->size = cdda_plugin_read(this_gen, buf->content, nlen);
+  if (buf->size == 0) {
+    buf->free_buffer(buf);
+    buf = NULL;
+  }
 
   return buf;
 }
@@ -2256,7 +2260,7 @@ static off_t cdda_plugin_get_length (input_plugin_t *this_gen) {
 
 static uint32_t cdda_plugin_get_blocksize (input_plugin_t *this_gen) {
 
-  return CD_RAW_FRAME_SIZE;
+  return 0;
 }
 
 static const char* cdda_plugin_get_mrl (input_plugin_t *this_gen) {
