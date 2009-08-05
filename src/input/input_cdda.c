@@ -1729,7 +1729,7 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
 
     memset(&buffer, 0, sizeof(buffer));
     err = _cdda_cddb_socket_read(this, buffer, sizeof(buffer) - 1);
-    if (err < 0 || (((err = _cdda_cddb_handle_code(buffer)) != 200) && (err != 210))) {
+    if (err < 0 || (((err = _cdda_cddb_handle_code(buffer)) != 200) && (err != 210) && (err != 211))) {
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	      "input_cdda: cddb query command returned error code '%03d'.\n", err);
       _cdda_cddb_socket_close(this);
@@ -1750,7 +1750,7 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
       }
     }
     
-    if (err == 210) {
+    if ((err == 210) || (err == 211)) {
       memset(&buffer, 0, sizeof(buffer));
       err = _cdda_cddb_socket_read(this, buffer, sizeof(buffer) - 1);
       if (err < 0) {
