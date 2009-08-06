@@ -1159,22 +1159,44 @@ static void vdpau_set_deinterlace( vo_driver_t *this_gen )
   if ( this->deinterlace ) {
     if ( this->video_mixer_width<800 ) {
       feature_enables[0] = feature_enables[1] = 1;
+	    if ( this->temporal_is_supported ) {
+	      if ( this->temporal_spatial_is_supported )
+	        printf("vo_vdpau: deinterlace: temporal_spatial\n" );
+		    else
+		      printf("vo_vdpau: deinterlace: temporal\n" );
+      }
+      else
+        printf("vo_vdpau: deinterlace: bob\n" );
     }
     else {
       switch ( this->deinterlacers_method[this->deinterlace_method] ) {
         case DEINT_BOB:
-          feature_enables[0] = feature_enables[1] = 0; break; /* bob */
+          feature_enables[0] = feature_enables[1] = 0;
+          printf("vo_vdpau: deinterlace: bob\n" );
+          break;
         case DEINT_HALF_TEMPORAL:
+          feature_enables[0] = 1; feature_enables[1] = 0;
+          printf("vo_vdpau: deinterlace: half_temporal\n" );
+          break;
         case DEINT_TEMPORAL:
-          feature_enables[0] = 1; feature_enables[1] = 0; break; /* temporal */
+          feature_enables[0] = 1; feature_enables[1] = 0;
+          printf("vo_vdpau: deinterlace: temporal\n" );
+          break;
         case DEINT_HALF_TEMPORAL_SPATIAL:
+          feature_enables[0] = feature_enables[1] = 1;
+          printf("vo_vdpau: deinterlace: half_temporal_spatial\n" );
+          break;
         case DEINT_TEMPORAL_SPATIAL:
-          feature_enables[0] = feature_enables[1] = 1; break; /* temporal_spatial */
+          feature_enables[0] = feature_enables[1] = 1;
+          printf("vo_vdpau: deinterlace: temporal_spatial\n" );
+          break;
       }
     }
   }
-  else
+  else {
     feature_enables[0] = feature_enables[1] = 0;
+    printf("vo_vdpau: deinterlace: none\n" );
+  }
 
   vdp_video_mixer_set_feature_enables( this->video_mixer, features_count, features, feature_enables );
 }
