@@ -37,6 +37,7 @@
 #include "buffer.h"
 #include "xineutils.h"
 #include "accel_vdpau.h"
+#include "bits_reader.h"
 
 #include <vdpau/vdpau.h>
 
@@ -137,6 +138,8 @@ typedef struct {
 
   vdpau_accel_t *accel_vdpau;
 
+  bits_reader_t br;
+
   int         vdp_runtime_nr;
 
 } sequence_t;
@@ -212,7 +215,7 @@ static void init_sequence( sequence_t *sequence )
 
 
 
-static uint32_t get_bits( uint8_t *b, int offbits, int nbits )
+/*static uint32_t get_bits( uint8_t *b, int offbits, int nbits )
 {
   int i, nbytes;
   uint32_t ret = 0;
@@ -229,7 +232,7 @@ static uint32_t get_bits( uint8_t *b, int offbits, int nbits )
   ret = ((ret<<i)>>i)>>((nbytes*8)-nbits-offbits);
 
   return ret;
-}
+}*/
 
 
 
@@ -269,35 +272,29 @@ static void sequence_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *bu
 
   sequence->profile = VDP_DECODER_PROFILE_VC1_ADVANCED;
   lprintf("VDP_DECODER_PROFILE_VC1_ADVANCED\n");
-  int off = 15;
-  sequence->picture.vdp_infos.postprocflag = get_bits(buf,off++,1);
-  sequence->coded_width = (get_bits(buf,off,12)+1)<<1;
-  off += 12;
-  sequence->coded_height = (get_bits(buf,off,12)+1)<<1;
-  off += 12;
-  sequence->picture.vdp_infos.pulldown = get_bits(buf,off++,1);
-  sequence->picture.vdp_infos.interlace = get_bits(buf,off++,1);
-  sequence->picture.vdp_infos.tfcntrflag = get_bits(buf,off++,1);
-  sequence->picture.vdp_infos.finterpflag = get_bits(buf,off++,1);
-  ++off;
-  sequence->picture.vdp_infos.psf = get_bits(buf,off++,1);
+  bits_reader_set( &sequence->br, buf );
+  read_bits( &sequence->br, 15 );
+  sequence->picture.vdp_infos.postprocflag = read_bits( &sequence->br, 1 );
+  sequence->coded_width = read_bits( &sequence->br, 12 )<<1;
+  sequence->coded_height = (read_bits( &sequence->br, 12 )+1)<<1;
+  sequence->picture.vdp_infos.pulldown = read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.interlace = read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.tfcntrflag = read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.finterpflag = read_bits( &sequence->br, 1 );
+  read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.psf = read_bits( &sequence->br, 1 );
   sequence->picture.vdp_infos.maxbframes = 7;
-  if ( get_bits(buf,off++,1) ) {
+  if ( read_bits( &sequence->br, 1 ) ) {
     double w, h;
     int ar=0;
-    w = get_bits(buf,off,14)+1;
-    off += 14;
-    h = get_bits(buf,off,14)+1;
-    off += 14;
-    if ( get_bits(buf,off++,1) ) {
-      ar = get_bits(buf,off,4);
-      off += 4;
+    w = read_bits( &sequence->br, 14 )+1;
+    h = read_bits( &sequence->br, 14 )+1;
+    if ( read_bits( &sequence->br, 1 ) ) {
+      ar = read_bits( &sequence->br, 4 );
     }
     if ( ar==15 ) {
-      w = get_bits(buf,off,8);
-      off += 8;
-      h = get_bits(buf,off,8);
-      off += 8;
+      w = read_bits( &sequence->br, 8 );
+      h = read_bits( &sequence->br, 8 );
       sequence->ratio = w/h;
       lprintf("aspect_ratio (w/h) = %f\n", sequence->ratio);
     }
@@ -306,14 +303,13 @@ static void sequence_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *bu
       lprintf("aspect_ratio = %f\n", sequence->ratio);
     }
 
-    if ( get_bits(buf,off++,1) ) {
-      if ( get_bits(buf,off++,1) ) {
-        int exp = get_bits(buf,off,16);
+    if ( read_bits( &sequence->br, 1 ) ) {
+      if ( read_bits( &sequence->br, 1 ) ) {
+        int exp = read_bits( &sequence->br, 16 );
         lprintf("framerate exp = %d\n", exp);
-        off += 16;
       }
       else {
-        double nr = get_bits(buf,off,8);
+        double nr = read_bits( &sequence->br, 8 );
         switch ((int)nr) {
           case 1: nr = 24000; break;
           case 2: nr = 25000; break;
@@ -322,25 +318,23 @@ static void sequence_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *bu
           case 5: nr = 60000; break;
           default: nr = 0;
         }
-        off += 8;
-        double dr = get_bits(buf,off,4);
+        double dr = read_bits( &sequence->br, 4 );
         switch ((int)dr) {
           case 2: dr = 1001; break;
           default: dr = 1000;
         }
-        off += 4;
         sequence->video_step = 90000/(nr/dr);
         lprintf("framerate = %f video_step = %d\n", nr/dr, sequence->video_step);
       }
     }
-    if ( get_bits(buf,off++,1) ) {
-      lprintf("color_standard = %d\n", get_bits(buf,off,8));
-      off += 24;
+    if ( read_bits( &sequence->br, 1 ) ) {
+      lprintf("color_standard = %d\n", read_bits( &sequence->br, 8 ));
+      read_bits( &sequence->br, 16 );
     }
   }
-  sequence->picture.hrd_param_flag = get_bits(buf,off++,1);
+  sequence->picture.hrd_param_flag = read_bits( &sequence->br, 1 );
   if ( sequence->picture.hrd_param_flag )
-    sequence->picture.hrd_num_leaky_buckets = get_bits(buf,off,5);
+    sequence->picture.hrd_num_leaky_buckets = read_bits( &sequence->br, 5 );
 
   update_metadata( this_gen );
 }
@@ -355,26 +349,30 @@ static void sequence_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int le
   if ( len < 4 )
     return;
 
-  switch ( get_bits(buf,0,2) ) {
+  bits_reader_set( &sequence->br, buf );
+  switch ( read_bits( &sequence->br, 2 ) ) {
     case 0: sequence->profile = VDP_DECODER_PROFILE_VC1_SIMPLE; lprintf("VDP_DECODER_PROFILE_VC1_SIMPLE\n"); break;
     case 1: sequence->profile = VDP_DECODER_PROFILE_VC1_MAIN; lprintf("VDP_DECODER_PROFILE_VC1_MAIN\n"); break;
     case 2: sequence->profile = VDP_DECODER_PROFILE_VC1_MAIN; lprintf("vc1_complex profile not supported by vdpau, trying vc1_main.\n"); break;
     case 3: return sequence_header_advanced( this_gen, buf, len ); break;
     default: return; /* illegal value, broken header? */
   }
-
-  sequence->picture.vdp_infos.loopfilter = get_bits(buf,12,1);
-  sequence->picture.vdp_infos.multires = get_bits(buf,14,1);
-  sequence->picture.vdp_infos.fastuvmc = get_bits(buf,16,1);
-  sequence->picture.vdp_infos.extended_mv = get_bits(buf,17,1);
-  sequence->picture.vdp_infos.dquant = get_bits(buf,18,2);
-  sequence->picture.vdp_infos.vstransform = get_bits(buf,20,1);
-  sequence->picture.vdp_infos.overlap = get_bits(buf,22,1);
-  sequence->picture.vdp_infos.syncmarker = get_bits(buf,23,1);
-  sequence->picture.vdp_infos.rangered = get_bits(buf,24,1);
-  sequence->picture.vdp_infos.maxbframes = get_bits(buf,25,3);
-  sequence->picture.vdp_infos.quantizer = get_bits(buf,28,2);
-  sequence->picture.vdp_infos.finterpflag = get_bits(buf,30,1);
+  read_bits( &sequence->br, 10 );
+  sequence->picture.vdp_infos.loopfilter = read_bits( &sequence->br, 1 );
+  read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.multires = read_bits( &sequence->br, 1 );
+  read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.fastuvmc = read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.extended_mv = read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.dquant = read_bits( &sequence->br, 2 );
+  sequence->picture.vdp_infos.vstransform = read_bits( &sequence->br, 1 );
+  read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.overlap = read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.syncmarker = read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.rangered = read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.maxbframes = read_bits( &sequence->br, 3 );
+  sequence->picture.vdp_infos.quantizer = read_bits( &sequence->br, 2 );
+  sequence->picture.vdp_infos.finterpflag = read_bits( &sequence->br, 1 );
 
   update_metadata( this_gen );
 }
@@ -385,45 +383,40 @@ static void entry_point( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len )
 {
   lprintf( "entry_point\n" );
   sequence_t *sequence = (sequence_t*)&this_gen->sequence;
-  int off=2;
 
-  sequence->picture.vdp_infos.panscan_flag = get_bits(buf,off++,1);
-  sequence->picture.vdp_infos.refdist_flag = get_bits(buf,off++,1);
-  sequence->picture.vdp_infos.loopfilter = get_bits(buf,off++,1);
-  sequence->picture.vdp_infos.fastuvmc = get_bits(buf,off++,1);
-  sequence->picture.vdp_infos.extended_mv = get_bits(buf,off++,1);
-  sequence->picture.vdp_infos.dquant = get_bits(buf,off,2);
-  off += 2;
-  sequence->picture.vdp_infos.vstransform = get_bits(buf,off++,1);
-  sequence->picture.vdp_infos.overlap = get_bits(buf,off++,1);
-  sequence->picture.vdp_infos.quantizer = get_bits(buf,off,2);
-  off += 2;
+  bits_reader_set( &sequence->br, buf );
+  read_bits( &sequence->br, 2 );
+  sequence->picture.vdp_infos.panscan_flag = read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.refdist_flag = read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.loopfilter = read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.fastuvmc = read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.extended_mv = read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.dquant = read_bits( &sequence->br, 2 );
+  sequence->picture.vdp_infos.vstransform = read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.overlap = read_bits( &sequence->br, 1 );
+  sequence->picture.vdp_infos.quantizer = read_bits( &sequence->br, 2 );
 
   if ( sequence->picture.hrd_param_flag ) {
     int i;
     for ( i=0; i<sequence->picture.hrd_num_leaky_buckets; ++i )
-      off += 8;
+      read_bits( &sequence->br, 8 );
   }
 
-  if ( get_bits(buf,off++,1) ) {
-    sequence->coded_width = (get_bits(buf,off,12)+1)<<1;
-    off += 12;
-    sequence->coded_height = (get_bits(buf,off,12)+1)<<1;
-    off += 12;
+  if ( read_bits( &sequence->br, 1 ) ) {
+    sequence->coded_width = (read_bits( &sequence->br, 12 )+1)<<1;
+    sequence->coded_height = (read_bits( &sequence->br, 12 )+1)<<1;
   }
 
   if ( sequence->picture.vdp_infos.extended_mv )
-    sequence->picture.vdp_infos.extended_dmv = get_bits(buf,off++,1);
+    sequence->picture.vdp_infos.extended_dmv = read_bits( &sequence->br, 1 );
 
-  sequence->picture.vdp_infos.range_mapy_flag = get_bits(buf,off++,1);
+  sequence->picture.vdp_infos.range_mapy_flag = read_bits( &sequence->br, 1 );
   if ( sequence->picture.vdp_infos.range_mapy_flag ) {
-    sequence->picture.vdp_infos.range_mapy = get_bits(buf,off,3);
-    off += 3;
+    sequence->picture.vdp_infos.range_mapy = read_bits( &sequence->br, 3 );
   }
-  sequence->picture.vdp_infos.range_mapuv_flag = get_bits(buf,off++,1);
+  sequence->picture.vdp_infos.range_mapuv_flag = read_bits( &sequence->br, 1 );
   if ( sequence->picture.vdp_infos.range_mapuv_flag ) {
-    sequence->picture.vdp_infos.range_mapuv = get_bits(buf,off,3);
-    off += 3;
+    sequence->picture.vdp_infos.range_mapuv = read_bits( &sequence->br, 3 );
   }
 }
 
@@ -438,41 +431,39 @@ static void picture_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len
 
   lprintf("picture_header\n");
 
-  int off=2;
+  bits_reader_set( &sequence->br, buf );
+  read_bits( &sequence->br, 2 );
 
   if ( info->finterpflag )
-    ++off;
+    read_bits( &sequence->br, 1 );
   if ( info->rangered ) {
     /*info->rangered &= ~2;
     info->rangered |= get_bits( buf,off++,1 ) << 1;*/
-    info->rangered = (get_bits( buf,off++,1 ) << 1) +1;
+    info->rangered = (read_bits( &sequence->br, 1 ) << 1) +1;
   }
   if ( !info->maxbframes ) {
-    if ( get_bits( buf,off++,1 ) )
+    if ( read_bits( &sequence->br, 1 ) )
       info->picture_type = P_FRAME;
     else
       info->picture_type = I_FRAME;
   }
   else {
-    if ( get_bits( buf,off++,1 ) )
+    if ( read_bits( &sequence->br, 1 ) )
       info->picture_type = P_FRAME;
     else {
-      if ( get_bits( buf,off++,1 ) )
+      if ( read_bits( &sequence->br, 1 ) )
         info->picture_type = I_FRAME;
       else
         info->picture_type = B_FRAME;
     }
   }
   if ( info->picture_type == B_FRAME ) {
-    tmp = get_bits(buf,off,3);
+    tmp = read_bits( &sequence->br, 3 );
     if ( tmp==7 ) {
-      tmp = get_bits(buf,off,7);
-      off += 7;
+      tmp = read_bits( &sequence->br, 7 );
       if ( tmp==127 )
         info->picture_type = BI_FRAME;
     }
-    else
-      off += 3;
   }
 }
 
@@ -483,18 +474,19 @@ static void picture_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *buf
   sequence_t *sequence = (sequence_t*)&this_gen->sequence;
   picture_t *pic = (picture_t*)&sequence->picture;
   VdpPictureInfoVC1 *info = &(sequence->picture.vdp_infos);
-  int off=0;
 
   lprintf("picture_header_advanced\n");
 
+  bits_reader_set( &sequence->br, buf );
+
   if ( info->interlace ) {
     lprintf("frame->interlace=1\n");
-    if ( !get_bits(buf,off++,1) ) {
+    if ( !read_bits( &sequence->br, 1 ) ) {
       lprintf("progressive frame\n");
       info->frame_coding_mode = PICTURE_FRAME;
     }
     else {
-      if ( !get_bits(buf,off++,1) ) {
+      if ( !read_bits( &sequence->br, 1 ) ) {
         lprintf("frame interlaced\n");
         info->frame_coding_mode = PICTURE_FRAME_INTERLACE;
       }
@@ -505,7 +497,7 @@ static void picture_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *buf
     }
   }
   if ( info->interlace && info->frame_coding_mode == PICTURE_FIELD_INTERLACE ) {
-    pic->fptype = get_bits(buf,off,3);
+    pic->fptype = read_bits( &sequence->br, 3 );
     switch ( pic->fptype ) {
       case FIELDS_I_I:
       case FIELDS_I_P:
@@ -519,19 +511,18 @@ static void picture_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *buf
       default:
         info->picture_type = BI_FRAME;
     }
-    off += 3;
   }
   else {
-    if ( !get_bits(buf,off++,1) )
+    if ( !read_bits( &sequence->br, 1 ) )
       info->picture_type = P_FRAME;
     else {
-      if ( !get_bits(buf,off++,1) )
+      if ( !read_bits( &sequence->br, 1 ) )
         info->picture_type = B_FRAME;
       else {
-        if ( !get_bits(buf,off++,1) )
+        if ( !read_bits( &sequence->br, 1 ) )
           info->picture_type = I_FRAME;
         else {
-          if ( !get_bits(buf,off++,1) )
+          if ( !read_bits( &sequence->br, 1 ) )
             info->picture_type = BI_FRAME;
           else {
             info->picture_type = P_FRAME;
@@ -543,11 +534,11 @@ static void picture_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *buf
   }
   if ( info->tfcntrflag ) {
     lprintf("tfcntrflag=1\n");
-    off += 8;
+    read_bits( &sequence->br, 8 );
   }
   if ( info->pulldown && info->interlace ) {
-    pic->top_field_first = get_bits(buf,off++,1);
-    pic->repeat_first_field = get_bits(buf,off++,1);
+    pic->top_field_first = read_bits( &sequence->br, 1 );
+    pic->repeat_first_field = read_bits( &sequence->br, 1 );
   }
 }
 
@@ -1139,7 +1130,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   (stream->video_out->open)(stream->video_out, stream);
 
 #ifdef MAKE_DAT
-  outfile = fopen( "/home/cris/qvdpautest/mpg.dat","w");
+  outfile = fopen( "/tmp/vc1.dat","w");
   nframes = 0;
 #endif
 

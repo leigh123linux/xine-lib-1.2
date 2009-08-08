@@ -37,6 +37,7 @@
 #include "buffer.h"
 #include "xineutils.h"
 #include "accel_vdpau.h"
+#include "bits_reader.h"
 
 #include <vdpau/vdpau.h>
 
@@ -66,6 +67,12 @@
 #define WANT_HEADER 1
 #define WANT_EXT    2
 #define WANT_SLICE  3
+
+/*#define MAKE_DAT*/ /*do NOT define this, unless you know what you do */
+#ifdef MAKE_DAT
+static int nframes;
+static FILE *outfile;
+#endif
 
 
 
@@ -140,6 +147,8 @@ typedef struct {
   int64_t    cur_pts, seq_pts;
 
   vdpau_accel_t *accel_vdpau;
+
+  bits_reader_t  br;
 
   int         vdp_runtime_nr;
 
@@ -236,50 +245,32 @@ static void free_sequence( sequence_t *sequence )
 
 
 
-static uint32_t get_bits( uint8_t *b, int offbits, int nbits )
-{
-  int i, nbytes;
-  uint32_t ret = 0;
-  uint8_t *buf;
-
-  buf = b+(offbits/8);
-  offbits %=8;
-  nbytes = (offbits+nbits)/8;
-  if ( ((offbits+nbits)%8)>0 )
-    nbytes++;
-  for ( i=0; i<nbytes; i++ )
-    ret += buf[i]<<((nbytes-i-1)*8);
-  i = (4-nbytes)*8+offbits;
-  ret = ((ret<<i)>>i)>>((nbytes*8)-nbits-offbits);
-
-  return ret;
-}
-
-
-
 static void sequence_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int len )
 {
   sequence_t *sequence = (sequence_t*)&this_gen->sequence;
 
-  int i, j, off=0;
+  int i, j;
 
   if ( sequence->cur_pts ) {
     sequence->seq_pts = sequence->cur_pts;
   }
 
-  sequence->coded_width = get_bits( buf,0,12 );
-  lprintf( "coded_width: %d\n", get_bits( buf,0,12 ) );
-  sequence->coded_height = get_bits( buf,12,12 );
-  lprintf( "coded_height: %d\n", get_bits( buf,12,12 ) );
-  switch ( get_bits( buf+3,0,4 ) ) {
+  bits_reader_set( &sequence->br, buf );
+  sequence->coded_width = read_bits( &sequence->br, 12 );
+  lprintf( "coded_width: %d\n", sequence->coded_width );
+  sequence->coded_height = read_bits( &sequence->br, 12 );
+  lprintf( "coded_height: %d\n", sequence->coded_height );
+  int rt = read_bits( &sequence->br, 4 );
+  switch ( rt ) {
     case 1: sequence->ratio = 1.0; break;
     case 2: sequence->ratio = 4.0/3.0; break;
     case 3: sequence->ratio = 16.0/9.0; break;
     case 4: sequence->ratio = 2.21; break;
     default: sequence->ratio = (double)sequence->coded_width/(double)sequence->coded_height;
   }
-  lprintf( "ratio: %d\n", get_bits( buf+3,0,4 ) );
-  switch ( get_bits( buf+3,4,4 ) ) {
+  lprintf( "ratio: %d\n", rt );
+  int fr = read_bits( &sequence->br, 4 );
+  switch ( fr ) {
     case 1: sequence->video_step = 3913; break; /* 23.976.. */
     case 2: sequence->video_step = 3750; break; /* 24 */
     case 3: sequence->video_step = 3600; break; /* 25 */
@@ -289,18 +280,22 @@ static void sequence_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int
     case 7: sequence->video_step = 1525; break; /* 59.94.. */
     case 8: sequence->video_step = 1509; break; /* 60 */
   }
-  lprintf( "frame_rate: %d\n", get_bits( buf+3,4,4 ) );
-  lprintf( "bit_rate_value: %d\n", get_bits( buf+4,0,18 ) );
-  lprintf( "marker_bit: %d\n", get_bits( buf+6,2,1 ) );
-  lprintf( "vbv_buffer_size_value: %d\n", get_bits( buf+6,3,10 ) );
-  lprintf( "constrained_parameters_flag: %d\n", get_bits( buf+7,5,1 ) );
-  i = get_bits( buf+7,6,1 );
+  lprintf( "frame_rate: %d\n", fr );
+  int tmp;
+  tmp = read_bits( &sequence->br, 18 );
+  lprintf( "bit_rate_value: %d\n", tmp );
+  tmp = read_bits( &sequence->br, 1 );
+  lprintf( "marker_bit: %d\n", tmp );
+  tmp = read_bits( &sequence->br, 10 );
+  lprintf( "vbv_buffer_size_value: %d\n", tmp );
+  tmp = read_bits( &sequence->br, 1 );
+  lprintf( "constrained_parameters_flag: %d\n", tmp );
+  i = read_bits( &sequence->br, 1 );
   lprintf( "load_intra_quantizer_matrix: %d\n", i );
   if ( i ) {
     for ( j=0; j<64; ++j ) {
-      sequence->picture.vdp_infos2.intra_quantizer_matrix[mpeg2_scan_norm[j]] = sequence->picture.vdp_infos.intra_quantizer_matrix[mpeg2_scan_norm[j]] = get_bits( buf+7+j,7,8 );
+      sequence->picture.vdp_infos2.intra_quantizer_matrix[mpeg2_scan_norm[j]] = sequence->picture.vdp_infos.intra_quantizer_matrix[mpeg2_scan_norm[j]] = read_bits( &sequence->br, 8 );
     }
-    off = 64;
   }
   else {
     for ( j=0; j<64; ++j ) {
@@ -308,11 +303,11 @@ static void sequence_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int
     }
   }
 
-  i = get_bits( buf+7+off,7,1 );
+  i = read_bits( &sequence->br, 1 );
   lprintf( "load_non_intra_quantizer_matrix: %d\n", i );
   if ( i ) {
     for ( j=0; j<64; ++j ) {
-      sequence->picture.vdp_infos2.non_intra_quantizer_matrix[mpeg2_scan_norm[j]] = sequence->picture.vdp_infos.non_intra_quantizer_matrix[mpeg2_scan_norm[j]] = get_bits( buf+8+off+j,0,8 );
+      sequence->picture.vdp_infos2.non_intra_quantizer_matrix[mpeg2_scan_norm[j]] = sequence->picture.vdp_infos.non_intra_quantizer_matrix[mpeg2_scan_norm[j]] = read_bits( &sequence->br, 8 );
     }
   }
   else {
@@ -366,17 +361,20 @@ static void picture_header( sequence_t *sequence, uint8_t *buf, int len )
     infos = &sequence->picture.vdp_infos2;
   }
 
-  lprintf( "temporal_reference: %d\n", get_bits( buf,0,10 ) );
-  infos->picture_coding_type = get_bits( buf,10,3 );
-  lprintf( "picture_coding_type: %d\n", get_bits( buf,10,3 ) );
+  bits_reader_set( &sequence->br, buf );
+  int tmp = read_bits( &sequence->br, 10 );
+  lprintf( "temporal_reference: %d\n", tmp );
+  infos->picture_coding_type = read_bits( &sequence->br, 3 );
+  lprintf( "picture_coding_type: %d\n", infos->picture_coding_type );
   infos->forward_reference = VDP_INVALID_HANDLE;
   infos->backward_reference = VDP_INVALID_HANDLE;
+  read_bits( &sequence->br, 16 );
   if ( infos->picture_coding_type > I_FRAME ) {
-    infos->full_pel_forward_vector = get_bits( buf+2,13,1 );
-    infos->f_code[0][0] = infos->f_code[0][1] = get_bits( buf+2,14,3 );
+    infos->full_pel_forward_vector = read_bits( &sequence->br, 1 );
+    infos->f_code[0][0] = infos->f_code[0][1] = read_bits( &sequence->br, 3 );
     if ( infos->picture_coding_type==B_FRAME ) {
-      infos->full_pel_backward_vector = get_bits( buf+2,17,1 );
-      infos->f_code[1][0] = infos->f_code[1][1] = get_bits( buf+2,18,3 );
+      infos->full_pel_backward_vector = read_bits( &sequence->br, 1 );
+      infos->f_code[1][0] = infos->f_code[1][1] = read_bits( &sequence->br, 3 );
     }
   }
   else {
@@ -393,24 +391,35 @@ static void picture_header( sequence_t *sequence, uint8_t *buf, int len )
 
 static void sequence_extension( sequence_t *sequence, uint8_t *buf, int len )
 {
-  lprintf( "extension_start_code_identifier: %d\n", get_bits( buf,0,4 ) );
-  switch ( get_bits( buf,5,3 ) ) {
+  bits_reader_set( &sequence->br, buf );
+  int tmp = read_bits( &sequence->br, 4 );
+  lprintf( "extension_start_code_identifier: %d\n", tmp );
+  read_bits( &sequence->br, 1 );
+  switch ( read_bits( &sequence->br, 3 ) ) {
     case 5: sequence->profile = VDP_DECODER_PROFILE_MPEG2_SIMPLE; break;
     default: sequence->profile = VDP_DECODER_PROFILE_MPEG2_MAIN;
   }
-  lprintf( "profile_and_level_indication: %d\n", get_bits( buf,4,8 ) );
-  lprintf( "progressive_sequence: %d\n", get_bits( buf,12,1 ) );
-  if ( get_bits( buf,13,2 )==2 )
+  read_bits( &sequence->br, 4 );
+  tmp = read_bits( &sequence->br, 1 );
+  lprintf( "progressive_sequence: %d\n", tmp );
+  if ( read_bits( &sequence->br, 2 ) == 2 )
     sequence->chroma = VO_CHROMA_422;
-  lprintf( "chroma_format: %d\n", get_bits( buf,13,2 ) );
-  lprintf( "horizontal_size_extension: %d\n", get_bits( buf,15,2 ) );
-  lprintf( "vertical_size_extension: %d\n", get_bits( buf,17,2 ) );
-  lprintf( "bit_rate_extension: %d\n", get_bits( buf,19,12 ) );
-  lprintf( "marker_bit: %d\n", get_bits( buf,31,1 ) );
-  lprintf( "vbv_buffer_size_extension: %d\n", get_bits( buf+4,0,8 ) );
-  lprintf( "low_delay: %d\n", get_bits( buf+5,0,1 ) );
-  lprintf( "frame_rate_extension_n: %d\n", get_bits( buf+5,1,2 ) );
-  lprintf( "frame_rate_extension_d: %d\n", get_bits( buf+5,3,5 ) );
+  tmp = read_bits( &sequence->br, 2 );
+  lprintf( "horizontal_size_extension: %d\n", tmp );
+  tmp = read_bits( &sequence->br, 2 );
+  lprintf( "vertical_size_extension: %d\n", tmp );
+  tmp = read_bits( &sequence->br, 12 );
+  lprintf( "bit_rate_extension: %d\n", tmp );
+  tmp = read_bits( &sequence->br, 1 );
+  lprintf( "marker_bit: %d\n", tmp );
+  tmp = read_bits( &sequence->br, 8 );
+  lprintf( "vbv_buffer_size_extension: %d\n", tmp );
+  tmp = read_bits( &sequence->br, 1 );
+  lprintf( "low_delay: %d\n", tmp );
+  tmp = read_bits( &sequence->br, 2 );
+  lprintf( "frame_rate_extension_n: %d\n", tmp );
+  tmp = read_bits( &sequence->br, 5 );
+  lprintf( "frame_rate_extension_d: %d\n", tmp );
 }
 
 
@@ -424,35 +433,39 @@ static void picture_coding_extension( sequence_t *sequence, uint8_t *buf, int le
   if ( infos->picture_structure && infos->picture_structure!=PICTURE_FRAME )
     infos = &sequence->picture.vdp_infos2;
 
-  infos->f_code[0][0] = get_bits( buf,4,4 );
-  infos->f_code[0][1] = get_bits( buf,8,4 );
-  infos->f_code[1][0] = get_bits( buf,12,4 );
-  infos->f_code[1][1] = get_bits( buf,16,4 );
-  lprintf( "extension_start_code_identifier: %d\n", get_bits( buf,0,4 ) );
-  lprintf( "f_code_0_0: %d\n", get_bits( buf,4,4 ) );
-  lprintf( "f_code_0_1: %d\n", get_bits( buf,8,4 ) );
-  lprintf( "f_code_1_0: %d\n", get_bits( buf,12,4 ) );
-  lprintf( "f_code_1_1: %d\n", get_bits( buf,16,4 ) );
-  infos->intra_dc_precision = get_bits( buf,20,2 );
-  lprintf( "intra_dc_precision: %d\n", get_bits( buf,20,2 ) );
-  infos->picture_structure = get_bits( buf,22,2 );
-  lprintf( "picture_structure: %d\n", get_bits( buf,22,2 ) );
-  infos->top_field_first = get_bits( buf,24,1 );
-  lprintf( "top_field_first: %d\n", get_bits( buf,24,1 ) );
-  infos->frame_pred_frame_dct = get_bits( buf,25,1 );
-  lprintf( "frame_pred_frame_dct: %d\n", get_bits( buf,25,1 ) );
-  infos->concealment_motion_vectors = get_bits( buf,26,1 );
-  lprintf( "concealment_motion_vectors: %d\n", get_bits( buf,26,1 ) );
-  infos->q_scale_type = get_bits( buf,27,1 );
-  lprintf( "q_scale_type: %d\n", get_bits( buf,27,1 ) );
-  infos->intra_vlc_format = get_bits( buf,28,1 );
-  lprintf( "intra_vlc_format: %d\n", get_bits( buf,28,1 ) );
-  infos->alternate_scan = get_bits( buf,29,1 );
-  lprintf( "alternate_scan: %d\n", get_bits( buf,29,1 ) );
-  lprintf( "repeat_first_field: %d\n", get_bits( buf,30,1 ) );
-  lprintf( "chroma_420_type: %d\n", get_bits( buf,31,1 ) );
-  sequence->picture.progressive_frame = get_bits( buf,32,1 );
-  lprintf( "progressive_frame: %d\n", get_bits( buf,32,1 ) );
+  bits_reader_set( &sequence->br, buf );
+  int tmp = read_bits( &sequence->br, 4 );
+  lprintf( "extension_start_code_identifier: %d\n", tmp );
+  infos->f_code[0][0] = read_bits( &sequence->br, 4 );
+  infos->f_code[0][1] = read_bits( &sequence->br, 4 );
+  infos->f_code[1][0] = read_bits( &sequence->br, 4 );
+  infos->f_code[1][1] = read_bits( &sequence->br, 4 );
+  lprintf( "f_code_0_0: %d\n", infos->f_code[0][0] );
+  lprintf( "f_code_0_1: %d\n", infos->f_code[0][1] );
+  lprintf( "f_code_1_0: %d\n", infos->f_code[1][0] );
+  lprintf( "f_code_1_1: %d\n", infos->f_code[1][1] );
+  infos->intra_dc_precision = read_bits( &sequence->br, 2 );
+  lprintf( "intra_dc_precision: %d\n", infos->intra_dc_precision );
+  infos->picture_structure = read_bits( &sequence->br, 2 );
+  lprintf( "picture_structure: %d\n", infos->picture_structure );
+  infos->top_field_first = read_bits( &sequence->br, 1 );
+  lprintf( "top_field_first: %d\n", infos->top_field_first );
+  infos->frame_pred_frame_dct = read_bits( &sequence->br, 1 );
+  lprintf( "frame_pred_frame_dct: %d\n", infos->frame_pred_frame_dct );
+  infos->concealment_motion_vectors = read_bits( &sequence->br, 1 );
+  lprintf( "concealment_motion_vectors: %d\n", infos->concealment_motion_vectors );
+  infos->q_scale_type = read_bits( &sequence->br, 1 );
+  lprintf( "q_scale_type: %d\n", infos->q_scale_type );
+  infos->intra_vlc_format = read_bits( &sequence->br, 1 );
+  lprintf( "intra_vlc_format: %d\n", infos->intra_vlc_format );
+  infos->alternate_scan = read_bits( &sequence->br, 1 );
+  lprintf( "alternate_scan: %d\n", infos->alternate_scan );
+  tmp = read_bits( &sequence->br, 1 );
+  lprintf( "repeat_first_field: %d\n", tmp );
+  tmp = read_bits( &sequence->br, 1 );
+  lprintf( "chroma_420_type: %d\n", tmp );
+  sequence->picture.progressive_frame = read_bits( &sequence->br, 1 );
+  lprintf( "progressive_frame: %d\n", sequence->picture.progressive_frame );
   sequence->picture.state = WANT_SLICE;
 }
 
@@ -460,15 +473,16 @@ static void picture_coding_extension( sequence_t *sequence, uint8_t *buf, int le
 
 static void quant_matrix_extension( sequence_t *sequence, uint8_t *buf, int len )
 {
-  int i, j, off=0;
+  int i, j;
 
-  i = get_bits( buf,4,1 );
+  bits_reader_set( &sequence->br, buf );
+  read_bits( &sequence->br, 4 );
+  i = read_bits( &sequence->br, 1 );
   lprintf( "load_intra_quantizer_matrix: %d\n", i );
   if ( i ) {
     for ( j=0; j<64; ++j ) {
-      sequence->picture.vdp_infos2.intra_quantizer_matrix[mpeg2_scan_norm[j]] = sequence->picture.vdp_infos.intra_quantizer_matrix[mpeg2_scan_norm[j]] = get_bits( buf+j,5,8 );
+      sequence->picture.vdp_infos2.intra_quantizer_matrix[mpeg2_scan_norm[j]] = sequence->picture.vdp_infos.intra_quantizer_matrix[mpeg2_scan_norm[j]] = read_bits( &sequence->br, 8 );
     }
-    off = 64;
   }
   else {
     for ( j=0; j<64; ++j ) {
@@ -476,11 +490,11 @@ static void quant_matrix_extension( sequence_t *sequence, uint8_t *buf, int len 
     }
   }
 
-  i = get_bits( buf+off,5,1 );
+  i = read_bits( &sequence->br, 1 );
   lprintf( "load_non_intra_quantizer_matrix: %d\n", i );
   if ( i ) {
     for ( j=0; j<64; ++j ) {
-      sequence->picture.vdp_infos2.non_intra_quantizer_matrix[mpeg2_scan_norm[j]] = sequence->picture.vdp_infos.non_intra_quantizer_matrix[mpeg2_scan_norm[j]] = get_bits( buf+off+j,6,8 );
+      sequence->picture.vdp_infos2.non_intra_quantizer_matrix[mpeg2_scan_norm[j]] = sequence->picture.vdp_infos.non_intra_quantizer_matrix[mpeg2_scan_norm[j]] = read_bits( &sequence->br, 8 );
     }
   }
   else {
@@ -537,7 +551,7 @@ static int parse_code( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int len )
       sequence_header( this_gen, buf+4, len-4 );
       break;
     case extension_start_code: {
-      switch ( get_bits( buf+4,0,4 ) ) {
+      switch ( buf[4]>>4 ) {
         case sequence_ext_sc:
           lprintf( " ----------- sequence_extension_start_code\n" );
           sequence_extension( sequence, buf+4, len-4 );
@@ -702,6 +716,21 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
   }
 
   decode_render( vd, accel );
+
+#ifdef MAKE_DAT
+  if ( nframes==0 ) {
+	fwrite( &seq->coded_width, 1, sizeof(seq->coded_width), outfile );
+	fwrite( &seq->coded_height, 1, sizeof(seq->coded_height), outfile );
+	fwrite( &seq->ratio, 1, sizeof(seq->ratio), outfile );
+	fwrite( &seq->profile, 1, sizeof(seq->profile), outfile );
+  }
+
+  if ( nframes++ < 25 ) {
+	fwrite( &pic->vdp_infos, 1, sizeof(pic->vdp_infos), outfile );
+	fwrite( &pic->slices_pos, 1, sizeof(pic->slices_pos), outfile );
+	fwrite( pic->slices, 1, pic->slices_pos, outfile );
+  }
+#endif
 
   img->drawn = 0;
   img->pts = seq->seq_pts;
@@ -904,6 +933,11 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->sequence.accel_vdpau = NULL;
 
   (stream->video_out->open)(stream->video_out, stream);
+
+#ifdef MAKE_DAT
+  outfile = fopen( "/tmp/mpg.dat","w");
+  nframes = 0;
+#endif
 
   return &this->video_decoder;
 }
