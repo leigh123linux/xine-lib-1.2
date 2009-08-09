@@ -215,27 +215,6 @@ static void init_sequence( sequence_t *sequence )
 
 
 
-/*static uint32_t get_bits( uint8_t *b, int offbits, int nbits )
-{
-  int i, nbytes;
-  uint32_t ret = 0;
-  uint8_t *buf;
-
-  buf = b+(offbits/8);
-  offbits %=8;
-  nbytes = (offbits+nbits)/8;
-  if ( ((offbits+nbits)%8)>0 )
-    nbytes++;
-  for ( i=0; i<nbytes; i++ )
-    ret += buf[i]<<((nbytes-i-1)*8);
-  i = (4-nbytes)*8+offbits;
-  ret = ((ret<<i)>>i)>>((nbytes*8)-nbits-offbits);
-
-  return ret;
-}*/
-
-
-
 static void update_metadata( vdpau_vc1_decoder_t *this_gen )
 {
   sequence_t *sequence = (sequence_t*)&this_gen->sequence;
