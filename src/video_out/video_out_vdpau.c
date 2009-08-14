@@ -1582,7 +1582,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   XLockDisplay( this->display );
 #endif
 
-  if ( frame->format==XINE_IMGFMT_VDPAU && this->deinterlace && non_progressive && stream_speed && frame_duration>2500 ) {
+  if ( frame->format==XINE_IMGFMT_VDPAU && this->deinterlace && non_progressive /*&& stream_speed*/ && frame_duration>2500 ) {
     VdpTime current_time = 0;
     VdpVideoSurface past[2];
     VdpVideoSurface future[1];
@@ -1651,7 +1651,10 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   XUnlockDisplay( this->display );
 #endif
 
-  vdpau_backup_frame( this_gen, frame_gen );
+  if ( stream_speed ) /* do not release past frame if paused, it will be used for redrawing */
+    vdpau_backup_frame( this_gen, frame_gen );
+  else
+    frame->vo_frame.free( &frame->vo_frame );
 }
 
 
