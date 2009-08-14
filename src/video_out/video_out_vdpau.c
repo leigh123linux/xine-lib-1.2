@@ -53,7 +53,7 @@
 
 #define NUM_FRAMES_BACK 1
 
-/*#define LOCKDISPLAY*/ /*define this if you have a buggy libX11/xcb*/
+#define LOCKDISPLAY /*define this if you have a buggy libX11/xcb*/
 
 
 #define DEINT_BOB                    1
