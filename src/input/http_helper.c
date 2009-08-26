@@ -29,8 +29,18 @@
 #include "xine_internal.h"
 #include "http_helper.h"
 
+
+const char *_x_url_user_agent (const char *url)
+{
+  if (!strncasecmp (url, "qthttp://", 9))
+    return "QuickTime"; /* needed for Apple trailers */
+  return NULL;
+}
+
 int _x_parse_url (char *url, char **proto, char** host, int *port,
-                         char **user, char **password, char **uri) {
+                  char **user, char **password, char **uri,
+                  const char **user_agent)
+{
   char   *start      = NULL;
   char   *authcolon  = NULL;
   char	 *at         = NULL;
@@ -62,6 +72,9 @@ int _x_parse_url (char *url, char **proto, char** host, int *port,
   
   end  = start + strlen(start) - 1;
   *proto = strndup(url, start - url);
+
+  if (user_agent)
+    *user_agent = _x_url_user_agent (url);
 
   /* user:password */
   start += 3;
@@ -257,7 +270,7 @@ static int check_url(char *url, int ok) {
   printf("--------------------------------\n");
   printf("url=%s\n", url);
   res = _x_parse_url (url,
-                      &proto, &host, &port, &user, &password, &uri);
+                      &proto, &host, &port, &user, &password, &uri, NULL);
   if (res) {
     printf("proto=%s, host=%s, port=%d, user=%s, password=%s, uri=%s\n",
            proto, host, port, user, password, uri);

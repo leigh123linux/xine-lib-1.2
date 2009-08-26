@@ -91,6 +91,8 @@ typedef struct {
   char            *host;
   int              port;
   char            *uri;
+
+  const char      *user_agent;
   
   char             preview[MAX_PREVIEW_SIZE];
   off_t            preview_size;
@@ -689,7 +691,8 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   
   
   if (!_x_parse_url(this->mrl, &this->proto, &this->host, &this->port,
-                    &this->user, &this->password, &this->uri)) {
+                    &this->user, &this->password, &this->uri,
+                    &this->user_agent)) {
     _x_message(this->stream, XINE_MSG_GENERAL_WARNING, "malformed url", NULL);
     return 0;
   }
@@ -788,10 +791,12 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   }
   
   buflen += snprintf(this->buf + buflen, BUFSIZE - buflen,
-		     "User-Agent: xine/%s\015\012"
+		     "User-Agent: %s%sxine/%s\015\012"
 		     "Accept: */*\015\012"
 		     "Icy-MetaData: 1\015\012"
 		     "\015\012",
+		     this->user_agent ? this->user_agent : "",
+		     this->user_agent ? " " : "",
 		     VERSION);
   if (_x_io_tcp_write (this->stream, this->fh, this->buf, buflen) != buflen) {
     _x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "couldn't send request", NULL);
@@ -1029,7 +1034,8 @@ static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_str
   
   if (strncasecmp (mrl, "http://", 7) && 
       strncasecmp (mrl, "unsv://", 7) &&
-      strncasecmp (mrl, "peercast://pls/", 15)) {
+      strncasecmp (mrl, "peercast://pls/", 15) &&
+      !_x_url_user_agent (mrl) /* user agent hacks */) {
     return NULL;
   }
   this = calloc(1, sizeof(http_input_plugin_t));

@@ -1620,6 +1620,7 @@ static qt_error parse_reference_atom (reference_t *ref,
     if (current_atom == RDRF_ATOM) {
       size_t string_size = _X_BE_32(&ref_atom[i + 12]);
       size_t url_offset = 0;
+      int http = 0;
 
       if (string_size >= current_atom_size || string_size >= ref_atom_size - i)
         return QT_NOT_A_VALID_FILE;
@@ -1628,7 +1629,11 @@ static qt_error parse_reference_atom (reference_t *ref,
       if ( memcmp(&ref_atom[i + 16], "http://", 7) &&
 	   memcmp(&ref_atom[i + 16], "rtsp://", 7) &&
 	   base_mrl )
-	url_offset = strlen(base_mrl);
+      {
+	/* We need a "qt" prefix hack for Apple trailers */
+        http = !strncasecmp (base_mrl, "http://", 7);
+	url_offset = strlen(base_mrl) + 2 * http;
+      }
       if (url_offset >= 0x80000000)
         return QT_NOT_A_VALID_FILE;
 
@@ -1638,7 +1643,7 @@ static qt_error parse_reference_atom (reference_t *ref,
       ref->url = xine_xmalloc(string_size + 1);
 
       if ( url_offset )
-	strcpy(ref->url, base_mrl);
+	sprintf (ref->url, "%s%s", http ? "qt" : "", base_mrl);
 
       memcpy(ref->url + url_offset, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
 
