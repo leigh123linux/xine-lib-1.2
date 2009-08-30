@@ -271,6 +271,7 @@ extern "C" {
 #define BUF_SPU_CVD             0x04050000
 #define BUF_SPU_OGM             0x04060000
 #define BUF_SPU_CMML            0x04070000
+#define BUF_SPU_HDMV            0x04080000
 
 /* demuxer block types: */
 
