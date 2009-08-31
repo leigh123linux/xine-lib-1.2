@@ -460,12 +460,12 @@ static void check_newpts( demux_ts_t *this, int64_t pts, int video )
 }
 
 /* Send a BUF_SPU_DVB to let xine know of that channel. */
-static void demux_send_special_spu_buf( demux_ts_t *this, int spu_channel )
+static void demux_send_special_spu_buf( demux_ts_t *this, uint32_t spu_type, int spu_channel )
 {
   buf_element_t *buf;
 
   buf = this->video_fifo->buffer_pool_alloc( this->video_fifo );
-  buf->type = BUF_SPU_DVB|spu_channel;
+  buf->type = spu_type|spu_channel;
   buf->content = buf->mem;
   buf->size = 0;
   this->video_fifo->put( this->video_fifo, buf );
@@ -1427,7 +1427,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
 		lang->media_index = this->media_num;
 		this->media[this->media_num].type = no;
 		demux_ts_pes_new(this, this->media_num, pid, this->video_fifo, stream[0]);
-		demux_send_special_spu_buf( this, no );
+		demux_send_special_spu_buf( this, BUF_SPU_DVB, no );
 #ifdef TS_LOG
 		printf("demux_ts: DVBSUB: pid 0x%.4x: %s  page %ld %ld type %2.2x\n",
 		       pid, lang->desc.lang,
