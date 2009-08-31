@@ -288,6 +288,8 @@ typedef struct {
 
   int              status;
 
+  int              pkt_size;   /* TS packet size */
+
   int              blockSize;
   int              rate;
   int              media_num;
@@ -1512,10 +1514,10 @@ static int sync_correct(demux_ts_t*this, uint8_t *buf, int32_t npkt_read) {
   xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_ts: about to resync!\n");
 
   for (p=0; p < npkt_read; p++) {
-    for(n=0; n < PKT_SIZE; n++) {
+    for(n=0; n < this->pkt_size; n++) {
       sync_ok = 1;
       for (i=0; i < MIN(MIN_SYNCS, npkt_read - p); i++) {
-	if (buf[n + ((i+p) * PKT_SIZE)] != SYNC_BYTE) {
+	if (buf[n + ((i+p) * this->pkt_size)] != SYNC_BYTE) {
 	  sync_ok = 0;
 	  break;
 	}
@@ -1527,13 +1529,13 @@ static int sync_correct(demux_ts_t*this, uint8_t *buf, int32_t npkt_read) {
 
   if (sync_ok) {
     /* Found sync, fill in */
-    memmove(&buf[0], &buf[n + p * PKT_SIZE],
-	    ((PKT_SIZE * (npkt_read - p)) - n));
+    memmove(&buf[0], &buf[n + p * this->pkt_size],
+	    ((this->pkt_size * (npkt_read - p)) - n));
     read_length = this->input->read(this->input,
-				    &buf[(PKT_SIZE * (npkt_read - p)) - n],
-				    n + p * PKT_SIZE);
+				    &buf[(this->pkt_size * (npkt_read - p)) - n],
+				    n + p * this->pkt_size);
     /* FIXME: when read_length is not as required... we now stop demuxing */
-    if (read_length != (n + p * PKT_SIZE)) {
+    if (read_length != (n + p * this->pkt_size)) {
       xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
 	       "demux_ts_tsync_correct: sync found, but read failed\n");
       return 0;
@@ -1575,15 +1577,15 @@ static unsigned char * demux_synchronise(demux_ts_t* this) {
     /* NEW: handle read returning less packets than NPKT_PER_READ... */
     do {
       read_length = this->input->read(this->input, this->buf,
-				      PKT_SIZE * NPKT_PER_READ);
-      if (read_length < 0 || read_length % PKT_SIZE) {
+				      this->pkt_size * NPKT_PER_READ);
+      if (read_length < 0 || read_length % this->pkt_size) {
 	xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
 		 "demux_ts: read returned %d bytes (not a multiple of %d!)\n",
-		 read_length, PKT_SIZE);
+		 read_length, this->pkt_size);
 	this->status = DEMUX_FINISHED;
 	return NULL;
       }
-      this->npkt_read = read_length / PKT_SIZE;
+      this->npkt_read = read_length / this->pkt_size;
 
 #ifdef TS_READ_STATS
       this->rstat[this->npkt_read]++;
@@ -1610,7 +1612,7 @@ static unsigned char * demux_synchronise(demux_ts_t* this) {
       return NULL;
     }
   }
-  return_pointer = &(this->buf)[PKT_SIZE * this->packet_number];
+  return_pointer = &(this->buf)[this->pkt_size * this->packet_number];
   this->packet_number++;
   return return_pointer;
 }
@@ -2305,7 +2307,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 
   /* dvb */
   this->event_queue = xine_event_new_queue (this->stream);
-  
+
+  this->pkt_size   = PKT_SIZE;
+
   this->numPreview=0;
   
   return &this->demux_plugin;
