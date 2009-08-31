@@ -755,7 +755,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   p += header_len + 9;
   packet_len -= header_len + 3;
 
-  if (stream_id == 0xbd) {
+  if (stream_id == 0xbd || stream_id == 0xfd /* HDMV */) {
 
     int spu_id;
       
