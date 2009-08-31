@@ -33,6 +33,11 @@
  * Date        Author
  * ----        ------
  *
+ *  8-Apr-2009 Petri Hintukainen <phi@sdf-eu.org>
+ *                  - support for 192-byte packets (HDMV/BluRay)
+ *                  - support for audio inside PES PID 0xfd (HDMV/BluRay)
+ *                  - demux HDMV/BluRay bitmap subtitles
+ *
  * 28-Nov-2004 Mike Lampard <mlampard>
  *                  - Added support for PMT sections larger than 1 ts packet 
  *
@@ -172,9 +177,9 @@
 #define SYNC_BYTE   0x47
 
 #define MIN_SYNCS 3
-#define NPKT_PER_READ 100
+#define NPKT_PER_READ 96  // 96*188 = 94*192
 
-#define BUF_SIZE (NPKT_PER_READ * PKT_SIZE)
+#define BUF_SIZE (NPKT_PER_READ * (PKT_SIZE + 4))
 
 #define MAX_PES_BUF_SIZE 2048
 
@@ -226,6 +231,11 @@
 
 #define PTS_AUDIO 0
 #define PTS_VIDEO 1
+
+#undef  MIN
+#define MIN(a,b) ((a)<(b)?(a):(b))
+#undef  MAX
+#define MAX(a,b) ((a)>(b)?(a):(b))
 
 /*
 **
@@ -288,7 +298,9 @@ typedef struct {
 
   int              status;
 
+  int              hdmv;       /* -1 = unknown, 0 = mpeg-ts, 1 = hdmv/m2ts */
   int              pkt_size;   /* TS packet size */
+  int              pkt_offset; /* TS packet offset */
 
   int              blockSize;
   int              rate;
@@ -1517,7 +1529,7 @@ static int sync_correct(demux_ts_t*this, uint8_t *buf, int32_t npkt_read) {
     for(n=0; n < this->pkt_size; n++) {
       sync_ok = 1;
       for (i=0; i < MIN(MIN_SYNCS, npkt_read - p); i++) {
-	if (buf[n + ((i+p) * this->pkt_size)] != SYNC_BYTE) {
+	if (buf[this->pkt_offset + n + ((i+p) * this->pkt_size)] != SYNC_BYTE) {
 	  sync_ok = 0;
 	  break;
 	}
@@ -1553,6 +1565,32 @@ static int sync_detect(demux_ts_t*this, uint8_t *buf, int32_t npkt_read) {
   int i, sync_ok;
 
   sync_ok = 1;
+
+  if (this->hdmv) {
+    this->pkt_size   = PKT_SIZE + 4;
+    this->pkt_offset = 4;
+    for (i=0; i < MIN(MIN_SYNCS, npkt_read - 3); i++) {
+      if (buf[this->pkt_offset + i * this->pkt_size] != SYNC_BYTE) {
+	sync_ok = 0;
+	break;
+      }
+    }
+    if (sync_ok) {
+      if (this->hdmv < 0) {
+        /* fix npkt_read (packet size is 192, not 188) */
+        this->npkt_read = npkt_read * PKT_SIZE / this->pkt_size;
+      }
+      this->hdmv = 1;
+      return sync_ok;
+    }
+    if (this->hdmv > 0)
+      return sync_correct(this, buf, npkt_read);
+
+    /* plain ts */
+    this->hdmv       = 0;
+    this->pkt_size   = PKT_SIZE;
+    this->pkt_offset = 0;
+  }
 
   for (i=0; i < MIN(MIN_SYNCS, npkt_read); i++) {
     if (buf[i * PKT_SIZE] != SYNC_BYTE) {
@@ -1612,7 +1650,7 @@ static unsigned char * demux_synchronise(demux_ts_t* this) {
       return NULL;
     }
   }
-  return_pointer = &(this->buf)[this->pkt_size * this->packet_number];
+  return_pointer = &(this->buf)[this->pkt_offset + this->pkt_size * this->packet_number];
   this->packet_number++;
   return return_pointer;
 }
@@ -2205,6 +2243,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   
   demux_ts_t *this;
   int         i;
+  int         hdmv = -1;
 
   switch (stream->content_detection_method) {
 
@@ -2214,13 +2253,22 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
     if (!_x_demux_read_header(input, buf, sizeof(buf)))
       return NULL;
 
-    if (! detect_ts(buf, sizeof(buf), PKT_SIZE))
+    if (detect_ts(buf, sizeof(buf), PKT_SIZE))
+      hdmv = 0;
+    else if (detect_ts(buf, sizeof(buf), PKT_SIZE+4)) 
+      hdmv = 1;
+    else 
       return NULL;
   }
     break;
 
   case METHOD_BY_EXTENSION: {
     const char *const mrl = input->get_mrl (input);
+
+    if (_x_demux_check_extension (mrl, "m2ts mts"))
+      hdmv = 1;
+    else
+      hdmv = 0;
 
     /* check extension */
     const char *const extensions = class_gen->get_extensions (class_gen);
@@ -2308,7 +2356,10 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   /* dvb */
   this->event_queue = xine_event_new_queue (this->stream);
 
-  this->pkt_size   = PKT_SIZE;
+  /* HDMV */
+  this->hdmv       = hdmv;
+  this->pkt_offset = (hdmv > 0) ? 4 : 0;
+  this->pkt_size   = PKT_SIZE + this->pkt_offset;
 
   this->numPreview=0;
   
