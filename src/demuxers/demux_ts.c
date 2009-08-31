@@ -223,8 +223,9 @@
       ISO_14496_PART2_VIDEO = 0x10,     /* ISO/IEC 14496-2 Visual (MPEG-4) */
       ISO_14496_PART3_AUDIO = 0x11,     /* ISO/IEC 14496-3 Audio with LATM transport syntax */
       ISO_14496_PART10_VIDEO = 0x1b,    /* ISO/IEC 14496-10 Video (MPEG-4 part 10/AVC, aka H.264) */
-      STREAM_VIDEO_MPEG = 0x80,
-      STREAM_AUDIO_AC3 = 0x81,
+      STREAM_VIDEO_MPEG      = 0x80,
+      STREAM_AUDIO_AC3       = 0x81,
+      STREAM_SPU_BITMAP_HDMV = 0x90,
     } streamType;
 
 #define WRAP_THRESHOLD       270000
@@ -754,6 +755,17 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
 
   p += header_len + 9;
   packet_len -= header_len + 3;
+
+  if (m->descriptor_tag == STREAM_SPU_BITMAP_HDMV) {
+    long payload_len = ((buf[4] << 8) | buf[5]) - header_len - 3;
+
+    m->content = p;
+    m->size = packet_len;
+    m->type |= BUF_SPU_HDMV;
+    m->buf->decoder_info[2] = payload_len;
+    return 1;
+
+  } else
 
   if (stream_id == 0xbd || stream_id == 0xfd /* HDMV */) {
 
@@ -1440,6 +1452,29 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
       }
       break;
 
+    case STREAM_SPU_BITMAP_HDMV:
+      if (this->hdmv > 0) {
+	if (pid >= 0x1200 && pid < 0x1300) {
+	  /* HDMV Presentation Graphics / SPU */
+	  demux_ts_spu_lang *lang = &this->spu_langs[this->spu_langs_count];
+
+	  memset(lang->desc.lang, 0, sizeof(lang->desc.lang));
+	  /*memcpy(lang->desc.lang, &stream[pos], 3);*/
+	  /*lang->desc.lang[3] = 0;*/
+	  lang->pid = pid;
+	  lang->media_index = this->media_num;
+	  this->media[this->media_num].type = this->spu_langs_count;
+	  demux_ts_pes_new(this, this->media_num, pid, this->video_fifo, stream[0]);
+	  demux_send_special_spu_buf( this, BUF_SPU_HDMV, this->spu_langs_count );
+	  this->spu_langs_count++;
+#ifdef TS_PMT_LOG
+	  printf("demux_ts: HDMV subtitle stream_type: 0x%.2x pid: 0x%.4x\n",
+		 stream[0], pid);
+#endif
+	  break;
+	}
+      }
+      /* fall thru */
     default:
 
 /* This following section handles all the cases where the audio track info is stored in PMT user info with stream id >= 0x80
