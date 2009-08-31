@@ -1758,7 +1758,7 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
   /*
    * Discard packets that are obviously bad.
    */
-  if (sync_byte != 0x47) {
+  if (sync_byte != SYNC_BYTE) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
 	     "demux error! invalid ts sync byte %.2x\n", sync_byte);
     return;
@@ -2170,6 +2170,32 @@ static int demux_ts_get_optional_data(demux_plugin_t *this_gen,
     }
 }
 
+static int detect_ts(uint8_t *buf, size_t len, int ts_size)
+{
+  int    i, j;
+  int    try_again, ts_detected = 0;
+  size_t packs = len / ts_size - 2;
+
+  for (i = 0; i < ts_size; i++) {
+    try_again = 0;
+    if (buf[i] == SYNC_BYTE) {
+      for (j = 1; j < packs; j++) {
+	if (buf[i + j*ts_size] != SYNC_BYTE) {
+	  try_again = 1;
+	  break;
+	}
+      }
+      if (try_again == 0) {
+#ifdef TS_LOG
+	printf ("demux_ts: found 0x47 pattern at offset %d\n", i);
+#endif
+	ts_detected = 1;
+      }
+    }
+  }
+
+  return ts_detected;
+}
 
 static demux_plugin_t *open_plugin (demux_class_t *class_gen, 
 				    xine_stream_t *stream, 
@@ -2182,33 +2208,11 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 
   case METHOD_BY_CONTENT: {
     uint8_t buf[2069];
-    int     i, j;
-    int     try_again, ts_detected;
 
-    if (!_x_demux_read_header(input, buf, 2069))
+    if (!_x_demux_read_header(input, buf, sizeof(buf)))
       return NULL;
 
-    ts_detected = 0;
-
-    for (i = 0; i < 188; i++) {
-      try_again = 0;
-      if (buf[i] == 0x47) {
-	for (j = 1; j <= 10; j++) {
-	  if (buf[i + j*188] != 0x47) {
-	    try_again = 1;
-	    break;
-	  }
-	}
-	if (try_again == 0) {
-#ifdef TS_LOG
-	  printf ("demux_ts: found 0x47 pattern at offset %d\n", i);
-#endif
-	  ts_detected = 1;
-	}
-      }
-    }
-
-    if (!ts_detected)
+    if (! detect_ts(buf, sizeof(buf), PKT_SIZE))
       return NULL;
   }
     break;
