@@ -519,6 +519,10 @@ static void demux_ts_update_spu_channel(demux_ts_t *this)
 #endif
     }
 
+ if ((this->media[this->spu_media].type & BUF_MAJOR_MASK) == BUF_SPU_HDMV) {
+   buf->type = BUF_SPU_HDMV;
+ }
+
   this->video_fifo->put(this->video_fifo, buf);
 }
 
