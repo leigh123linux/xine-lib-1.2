@@ -324,6 +324,9 @@ typedef struct {
   char*                deinterlacers_name[NUMBER_OF_DEINTERLACERS+1];
   int                  deinterlacers_method[NUMBER_OF_DEINTERLACERS];
 
+  int                  scaling_level_max;
+  int                  scaling_level_current;
+
   VdpColor             back_color;
 
   vdpau_frame_t        *back_frame[ NUM_FRAMES_BACK ];
@@ -1235,6 +1238,42 @@ static void vdpau_update_deinterlace_method( void *this_gen, xine_cfg_entry_t *e
 
 
 
+static void vdpau_set_scaling_level( vo_driver_t *this_gen )
+{
+  vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
+  int i;
+  VdpVideoMixerFeature features[9];
+  VdpBool feature_enables[9];
+#ifdef VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L1
+  for ( i=0; i<this->scaling_level_max; ++i ) {
+    features[i] = VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L1 + i;
+    feature_enables[i] = 0;
+  }
+  vdp_video_mixer_set_feature_enables( this->video_mixer, this->scaling_level_max, features, feature_enables );
+
+  if ( this->scaling_level_current ) {
+    features[0] = VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L1 - 1 + this->scaling_level_current;
+    feature_enables[0] = 1;
+    vdp_video_mixer_set_feature_enables( this->video_mixer, 1, features, feature_enables );
+  }
+
+  printf( "vo_vdpau: set_scaling_level=%d\n", this->scaling_level_current );
+#endif
+}
+
+
+
+static void vdpau_update_scaling_level( void *this_gen, xine_cfg_entry_t *entry )
+{
+  vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
+
+  this->scaling_level_current = entry->num_value;
+  printf( "vo_vdpau: scaling_quality=%d\n", this->scaling_level_current );
+  vdpau_set_scaling_level( (vo_driver_t*)this_gen );
+}
+
+
+
 static void vdpau_update_enable_inverse_telecine( void *this_gen, xine_cfg_entry_t *entry )
 {
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
@@ -1471,7 +1510,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     lprintf("vo_vdpau: recreate mixer to match frames: width=%d, height=%d, chroma=%d\n", mix_w, mix_h, chroma);
     vdp_video_mixer_destroy( this->video_mixer );
     this->video_mixer = VDP_INVALID_HANDLE;
-    VdpVideoMixerFeature features[5];
+    VdpVideoMixerFeature features[15];
     int features_count = 0;
     if ( this->noise_reduction_is_supported ) {
       features[features_count] = VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION;
@@ -1493,6 +1532,13 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
       features[features_count] = VDP_VIDEO_MIXER_FEATURE_INVERSE_TELECINE;
       ++features_count;
     }
+    int i;
+#ifdef VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L1
+    for ( i=0; i<this->scaling_level_max; ++i ) {
+     features[features_count] = VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L1 + i;
+      ++features_count;
+    }
+#endif
     VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT,
           VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
     int num_layers = 3;
@@ -1502,6 +1548,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     this->video_mixer_width = mix_w;
     this->video_mixer_height = mix_h;
     vdpau_set_deinterlace( this_gen );
+    vdpau_set_scaling_level( this_gen );
     vdpau_set_inverse_telecine( this_gen );
     vdpau_update_noise( this );
     vdpau_update_sharpness( this );
@@ -1986,7 +2033,7 @@ static void vdpau_reinit( vo_driver_t *this_gen )
   this->argb_overlay_width = this->argb_overlay_height = 0;
   this->has_argb_overlay = 0;
 
-  VdpVideoMixerFeature features[5];
+  VdpVideoMixerFeature features[15];
   int features_count = 0;
   if ( this->noise_reduction_is_supported ) {
     features[features_count] = VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION;
@@ -2008,6 +2055,12 @@ static void vdpau_reinit( vo_driver_t *this_gen )
     features[features_count] = VDP_VIDEO_MIXER_FEATURE_INVERSE_TELECINE;
     ++features_count;
   }
+#ifdef VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L1
+  for ( i=0; i<this->scaling_level_max; ++i ) {
+    features[features_count] = VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L1 + i;
+    ++features_count;
+  }
+#endif
   VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT, VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
   int num_layers = 3;
   void const *param_values[] = { &this->video_mixer_width, &this->video_mixer_height, &chroma, &num_layers };
@@ -2020,6 +2073,7 @@ static void vdpau_reinit( vo_driver_t *this_gen )
   }
   this->video_mixer_chroma = chroma;
   vdpau_set_deinterlace( this_gen );
+  vdpau_set_scaling_level( this_gen );
   vdpau_set_inverse_telecine( this_gen );
   vdpau_update_noise( this );
   vdpau_update_sharpness( this );
@@ -2344,6 +2398,22 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     return NULL;
   }
 
+  this->scaling_level_max = this->scaling_level_current = 0;
+#ifdef VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L1
+  VdpBool hqscaling;
+  for ( i=0; i<9; ++i ) {
+    st = vdp_video_mixer_query_feature_support( vdp_device, VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L1 + i, &hqscaling );
+    if ( ( st != VDP_STATUS_OK ) || !hqscaling ) {
+      //printf("unsupported scaling quality=%d\n", i);
+      break;
+    }
+    else {
+      //printf("supported scaling quality=%d\n", i);
+      ++this->scaling_level_max;
+    }
+  }
+#endif
+
   vdp_video_mixer_query_feature_support( vdp_device, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL, &this->temporal_is_supported );
   vdp_video_mixer_query_feature_support( vdp_device, VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL, &this->temporal_spatial_is_supported );
   vdp_video_mixer_query_feature_support( vdp_device, VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION, &this->noise_reduction_is_supported );
@@ -2355,7 +2425,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->video_mixer_chroma = chroma;
   this->video_mixer_width = this->soft_surface_width;
   this->video_mixer_height = this->soft_surface_height;
-  VdpVideoMixerFeature features[5];
+  VdpVideoMixerFeature features[15];
   int features_count = 0;
   if ( this->noise_reduction_is_supported ) {
     features[features_count] = VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION;
@@ -2377,6 +2447,12 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     features[features_count] = VDP_VIDEO_MIXER_FEATURE_INVERSE_TELECINE;
     ++features_count;
   }
+#ifdef VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L1
+  for ( i=0; i<this->scaling_level_max; ++i ) {
+    features[features_count] = VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L1 + i;
+    ++features_count;
+  }
+#endif
   VdpVideoMixerParameter params[] = { VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH, VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT,
         VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE, VDP_VIDEO_MIXER_PARAMETER_LAYERS };
   int num_layers = 3;
@@ -2423,6 +2499,13 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     ++deint_count;
   }
   this->deinterlacers_name[deint_count] = NULL;
+
+  if ( this->scaling_level_max ) {
+    this->scaling_level_current = config->register_range( config, "video.output.vdpau_scaling_quality", 0,
+           0, this->scaling_level_max, _("vdpau: Scaling Quality"),
+           _("Scaling Quality Level"),
+           10, vdpau_update_scaling_level, this );
+  }
 
   this->deinterlace_method = config->register_enum( config, "video.output.vdpau_deinterlace_method", deint_default,
          this->deinterlacers_name, _("vdpau: HD deinterlace method"),
