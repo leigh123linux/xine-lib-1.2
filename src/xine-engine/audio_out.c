@@ -1887,6 +1887,7 @@ static int ao_set_property (xine_audio_port_t *this_gen, int property, int value
 
   case AO_PROP_DISCARD_BUFFERS:
     /* recursive discard buffers setting */
+    pthread_mutex_lock(&this->flush_audio_driver_lock);
     if(value)
       this->discard_buffers++;
     else if (this->discard_buffers)
@@ -1894,6 +1895,7 @@ static int ao_set_property (xine_audio_port_t *this_gen, int property, int value
     else
       xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 	       "ao_set_property: discard_buffers is already zero\n");
+    pthread_mutex_unlock(&this->flush_audio_driver_lock);
 
     ret = this->discard_buffers;
 
