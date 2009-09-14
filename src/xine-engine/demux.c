@@ -200,7 +200,7 @@ void _x_demux_control_headers_done (xine_stream_t *stream) {
   buf_element_t *buf_video, *buf_audio;
 
   /* we use demux_action_pending to wake up sleeping spu decoders */
-  stream->demux_action_pending = 1;
+  _x_action_raise(stream);
 
   /* allocate the buffers before grabbing the lock to prevent cyclic wait situations */
   buf_video = stream->video_fifo->buffer_pool_alloc (stream->video_fifo);
@@ -252,7 +252,7 @@ void _x_demux_control_headers_done (xine_stream_t *stream) {
     }
   }
 
-  stream->demux_action_pending = 0;
+  _x_action_lower(stream);
   pthread_cond_signal(&stream->demux_resume);
 
   lprintf ("headers processed.\n");
@@ -342,7 +342,7 @@ static void *demux_loop (void *stream_gen) {
       status = stream->demux_plugin->send_chunk(stream->demux_plugin);
 
       /* someone may want to interrupt us */
-      if( stream->demux_action_pending ) {
+      if (_x_action_pending(stream)) {
         struct timeval tv;
         struct timespec ts;
 
@@ -434,9 +434,9 @@ int _x_demux_start_thread (xine_stream_t *stream) {
 
   lprintf ("start thread called\n");
 
-  stream->demux_action_pending = 1;
+  _x_action_raise(stream);
   pthread_mutex_lock( &stream->demux_lock );
-  stream->demux_action_pending = 0;
+  _x_action_lower(stream);
   pthread_cond_signal(&stream->demux_resume);
 
   if( !stream->demux_thread_running ) {
@@ -465,10 +465,10 @@ int _x_demux_stop_thread (xine_stream_t *stream) {
 
   lprintf ("stop thread called\n");
 
-  stream->demux_action_pending = 1;
+  _x_action_raise(stream);
   pthread_mutex_lock( &stream->demux_lock );
   stream->demux_thread_running = 0;
-  stream->demux_action_pending = 0;
+  _x_action_lower(stream);
   pthread_cond_signal(&stream->demux_resume);
 
   /* At that point, the demuxer has sent the last audio/video buffer,
@@ -585,7 +585,7 @@ off_t _x_read_abort (xine_stream_t *stream, int fd, char *buf, off_t todo) {
         /* aborts current read if action pending. otherwise xine
          * cannot be stopped when no more data is available.
          */
-        if( stream->demux_action_pending )
+        if (_x_action_pending(stream))
           return total;
       } else {
         break;
@@ -624,6 +624,22 @@ off_t _x_read_abort (xine_stream_t *stream, int fd, char *buf, off_t todo) {
 
 int _x_action_pending (xine_stream_t *stream) {
   return stream->demux_action_pending;
+}
+
+/* set demux_action_pending in a thread-safe way */
+void _x_action_raise (xine_stream_t *stream)
+{
+  pthread_mutex_lock(&stream->demux_action_lock);
+  stream->demux_action_pending++;
+  pthread_mutex_unlock(&stream->demux_action_lock);
+}
+
+/* reset demux_action_pending in a thread-safe way */
+void _x_action_lower (xine_stream_t *stream)
+{
+  pthread_mutex_lock(&stream->demux_action_lock);
+  stream->demux_action_pending--;
+  pthread_mutex_unlock(&stream->demux_action_lock);
 }
 
 /*

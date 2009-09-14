@@ -334,6 +334,7 @@ struct xine_stream_s {
   /* demux thread stuff */
   pthread_t                  demux_thread;
   pthread_mutex_t            demux_lock;
+  pthread_mutex_t            demux_action_lock;
   pthread_cond_t             demux_resume;
   pthread_mutex_t            demux_mutex; /* used in _x_demux_... functions to synchronize order of pairwise A/V buffer operations */
 
@@ -420,6 +421,9 @@ int _x_demux_check_extension       (const char *mrl, const char *extensions);
 off_t _x_read_abort (xine_stream_t *stream, int fd, char *buf, off_t todo) XINE_PROTECTED;
 
 int _x_action_pending (xine_stream_t *stream) XINE_PROTECTED;
+
+void _x_action_raise (xine_stream_t *stream) XINE_PROTECTED;
+void _x_action_lower (xine_stream_t *stream) XINE_PROTECTED;
 
 void _x_demux_send_data(fifo_buffer_t *fifo, uint8_t *data, int size,
                         int64_t pts, uint32_t type, uint32_t decoder_flags,

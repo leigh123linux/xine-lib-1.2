@@ -244,7 +244,7 @@ int _x_io_select (xine_stream_t *stream, int fd, int state, int timeout_msec) {
            *   aborts current read if action pending. otherwise xine
            *   cannot be stopped when no more data is available.
            */
-          if (stream && stream->demux_action_pending)
+          if (stream && _x_action_pending(stream))
             return XIO_ABORTED;
           break;
         case WAIT_ABANDONED:
@@ -288,7 +288,7 @@ int _x_io_select (xine_stream_t *stream, int fd, int state, int timeout_msec) {
      *   aborts current read if action pending. otherwise xine
      *   cannot be stopped when no more data is available.
      */
-    if (stream && stream->demux_action_pending)
+    if (stream && _x_action_pending(stream))
       return XIO_ABORTED;
 
     total_time_usec += XIO_POLLING_INTERVAL;

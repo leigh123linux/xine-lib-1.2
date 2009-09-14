@@ -679,6 +679,7 @@ xine_stream_t *xine_stream_new (xine_t *this,
   pthread_mutex_init (&stream->info_mutex, NULL);
   pthread_mutex_init (&stream->meta_mutex, NULL);
   pthread_mutex_init (&stream->demux_lock, NULL);
+  pthread_mutex_init (&stream->demux_action_lock, NULL);
   pthread_mutex_init (&stream->demux_mutex, NULL);
   pthread_cond_init  (&stream->demux_resume, NULL);
   pthread_mutex_init (&stream->event_queues_lock, NULL);
@@ -1378,7 +1379,7 @@ static int play_internal (xine_stream_t *stream, int start_pos, int start_time) 
   }
 
   /* hint demuxer thread we want to interrupt it */
-  stream->demux_action_pending = 1;
+  _x_action_raise(stream);
 
   /* set normal speed */
   if (_x_get_speed(stream) != XINE_SPEED_NORMAL)
@@ -1397,7 +1398,7 @@ static int play_internal (xine_stream_t *stream, int start_pos, int start_time) 
 
   pthread_mutex_lock( &stream->demux_lock );
   /* demux_lock taken. now demuxer is suspended */
-  stream->demux_action_pending = 0;
+  _x_action_lower(stream);
   pthread_cond_signal(&stream->demux_resume);
 
   /* set normal speed again (now that demuxer/input pair is suspended)
@@ -1526,6 +1527,7 @@ static void xine_dispose_internal (xine_stream_t *stream) {
   pthread_cond_destroy  (&stream->counter_changed);
   pthread_mutex_destroy (&stream->demux_mutex);
   pthread_cond_destroy  (&stream->demux_resume);
+  pthread_mutex_destroy (&stream->demux_action_lock);
   pthread_mutex_destroy (&stream->demux_lock);
   pthread_mutex_destroy (&stream->first_frame_lock);
   pthread_cond_destroy  (&stream->first_frame_reached);

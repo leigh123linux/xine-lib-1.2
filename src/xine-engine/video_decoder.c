@@ -92,7 +92,7 @@ int _x_spu_decoder_sleep(xine_stream_t *stream, int64_t next_spu_vpts)
       thread_vacant = (stream->video_fifo->first->type != BUF_CONTROL_FLUSH_DECODER);
     /* we have to return if the demuxer needs us to release a buffer */
     if (thread_vacant)
-      thread_vacant = !stream->demux_action_pending;
+      thread_vacant = !_x_action_pending(stream);
 
   } while (wait == SPU_SLEEP_INTERVAL && thread_vacant);
 
