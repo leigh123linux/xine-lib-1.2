@@ -307,7 +307,8 @@ static void sequence_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *bu
       }
     }
     if ( read_bits( &sequence->br, 1 ) ) {
-      lprintf("color_standard = %d\n", read_bits( &sequence->br, 8 ));
+	  int col = read_bits( &sequence->br, 8 );
+      lprintf("color_standard = %d\n", col);
       read_bits( &sequence->br, 16 );
     }
   }
@@ -439,7 +440,7 @@ static void picture_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len
   if ( info->picture_type == B_FRAME ) {
     tmp = read_bits( &sequence->br, 3 );
     if ( tmp==7 ) {
-      tmp = read_bits( &sequence->br, 7 );
+      tmp = (tmp<<3) | read_bits( &sequence->br, 4 );
       if ( tmp==127 )
         info->picture_type = BI_FRAME;
     }
