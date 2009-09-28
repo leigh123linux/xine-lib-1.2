@@ -18,6 +18,7 @@ xine-lib (1.1.17) 2009-??-??
   * Allow reading of non-block-sized chunks from audio CDs.
   * Add a user agent & protocol hack ("qthttp://...") to allow direct
     viewing of Apple film trailers.
+  * Fixed int-to-float conversion in the JACK output plugin.
 
 xine-lib (1.1.16.3) 2009-04-03
   * Security fixes:

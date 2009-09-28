@@ -163,7 +163,7 @@ static int write_buffer_16 (jack_driver_t *this, unsigned char *data, int len)
   for (i = 0; i < samples; i++) {
     /* Read in 16bits, write out floats */
     p_write = (float *) (&(this->buffer[write_pos]));
-    *p_write = ((float) (p_read[i])) / 32767.0f;
+    *p_write = ((float) (p_read[i])) / 32768.0f;
     write_pos = (write_pos + sizeof (float)) % BUFFSIZE;
   }
   this->write_pos = write_pos;
