@@ -131,6 +131,7 @@ typedef struct {
   double      ratio;
   VdpDecoderProfile profile;
   int         chroma;
+  int         top_field_first;
 
   int         have_header;
 
@@ -229,6 +230,7 @@ static void reset_sequence( sequence_t *sequence, int free_refs )
   if ( sequence->backward_ref )
     sequence->backward_ref->free( sequence->backward_ref );
   sequence->backward_ref = NULL;
+  sequence->top_field_first = 0;
 }
 
 
@@ -737,7 +739,14 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
   seq->seq_pts = 0; /* reset */
   img->bad_frame = 0;
   img->duration = seq->video_step;
-  img->top_field_first = pic->vdp_infos.top_field_first;
+
+  /* trying to deal with (french) buggy streams that randomly set bottom_field_first
+     while stream is top_field_first. So we assume that when top_field_first
+     is set one time, the stream _is_ top_field_first. */
+  //printf("pic->vdp_infos.top_field_first = %d\n", pic->vdp_infos.top_field_first);
+  if ( pic->vdp_infos.top_field_first )
+    seq->top_field_first = 1;
+  img->top_field_first = seq->top_field_first;
 
   /* progressive_frame is unreliable with most mpeg2 streams */
   if ( pic->vdp_infos.picture_structure!=PICTURE_FRAME )
