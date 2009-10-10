@@ -21,6 +21,7 @@ xine-lib (1.1.17) 2009-??-??
   * Fixed int-to-float conversion in the JACK output plugin.
   * Work around MOD files with reported length == 0.
   * Reworked Matroska demuxer. Now reads files created by mkvmerge 2.7.0.
+  * Support BluRay/HDMV streams & subtitles.
 
 xine-lib (1.1.16.3) 2009-04-03
   * Security fixes:
