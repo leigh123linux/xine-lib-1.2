@@ -9,7 +9,7 @@ AM_LDFLAGS = $(xineplug_ldflags)
 # ---------
 # All of xine demuxer plugins should be named like the scheme "xineplug_dmx_"
 
-noinst_HEADERS = asfheader.h qtpalette.h group_games.h group_audio.h id3.h ebml.h matroska.h iff.h flacutils.h  real_common.h
+noinst_HEADERS = asfheader.h qtpalette.h group_games.h group_audio.h id3.h ebml.h matroska.h demux_matroska.h iff.h flacutils.h  real_common.h
 
 if ENABLE_ASF
 asf_module = xineplug_dmx_asf.la 
@@ -134,7 +134,7 @@ xineplug_dmx_image_la_LIBADD = $(XINE_LIB)
 xineplug_dmx_nsv_la_SOURCES = demux_nsv.c
 xineplug_dmx_nsv_la_LIBADD = $(XINE_LIB)
 
-xineplug_dmx_matroska_la_SOURCES = demux_matroska.c ebml.c
+xineplug_dmx_matroska_la_SOURCES = demux_matroska.c demux_matroska-chapters.c ebml.c
 xineplug_dmx_matroska_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(ZLIB_LIBS)
 xineplug_dmx_matroska_la_CFLAGS = $(AM_CFLAGS) -fno-strict-aliasing
 xineplug_dmx_matroska_la_CPPFLAGS = $(AM_CPPFLAGS) $(ZLIB_CPPFLAGS)
