@@ -175,6 +175,8 @@ static int open_mod_file(demux_mod_t *this) {
   this->copyright = strdup("");
   
   this->mod_length = ModPlug_GetLength(this->mpfile);
+  if (this->mod_length < 1)
+    this->mod_length = 1; /* avoids -ve & div-by-0 */
     
   return 1;
 }

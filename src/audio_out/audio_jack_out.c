@@ -163,7 +163,7 @@ static int write_buffer_16 (jack_driver_t *this, unsigned char *data, int len)
   for (i = 0; i < samples; i++) {
     /* Read in 16bits, write out floats */
     p_write = (float *) (&(this->buffer[write_pos]));
-    *p_write = ((float) (p_read[i])) / 32767.0f;
+    *p_write = ((float) (p_read[i])) / 32768.0f;
     write_pos = (write_pos + sizeof (float)) % BUFFSIZE;
   }
   this->write_pos = write_pos;
@@ -308,19 +308,11 @@ static int jack_open_device (ao_driver_t *this_gen, char *jack_device,
 	     num_channels);
     goto err_out;
   }
-  /* Try to create a client called "xine" */
-  if ((client = jack_client_new ("xine")) == 0) {
-    /* If that doesn't work it could be because running two copies of xine - try using a unique name */
-    char client_name[20];
-    sprintf (client_name, "xine (%d)", (int) getpid ());
-
-    if ((client = jack_client_new (client_name)) == 0) {
-      xprintf (this->xine, XINE_VERBOSITY_LOG,
-	       "\njack_open_device: Error: Failed to connect to JACK server\n");
-      xprintf (this->xine, XINE_VERBOSITY_LOG,
-	       "jack_open_device: (did you start 'jackd' server?)\n");
-      goto err_out;
-    }
+  /* Try to create a client called "xine[-NN]" */
+  if ((client = jack_client_open ("xine", JackNullOption, NULL)) == 0) {
+    xprintf (this->xine, XINE_VERBOSITY_LOG,
+	     "\njack_open_device: Error: Failed to connect to JACK server\n");
+    goto err_out;
   }
 
   /* Save the new client */
@@ -718,19 +710,11 @@ static ao_driver_t *open_jack_plugin (audio_driver_class_t *class_gen,
 #define A52_PASSTHRU	12
   int speakers;
 
-  /* Try to create a client called "xine" */
-  if ((client = jack_client_new ("xine")) == 0) {
-    /* If that doesn't work it could be because running two copies of xine - try using a unique name */
-    char name[20];
-    sprintf (name, "xine (%d)", (int) getpid ());
-
-    if ((client = jack_client_new (name)) == 0) {
-      xprintf (class->xine, XINE_VERBOSITY_LOG,
-	       "\nopen_jack_plugin: Error: Failed to connect to JACK server\n");
-      xprintf (class->xine, XINE_VERBOSITY_LOG,
-	       "open_jack_plugin: (did you start 'jackd' server?)\n");
-      return 0;
-    }
+  /* Try to create a client called "xine[-NN]" */
+  if ((client = jack_client_open ("xine", JackNullOption, NULL)) == 0) {
+    xprintf (class->xine, XINE_VERBOSITY_LOG,
+	     "\nopen_jack_plugin: Error: Failed to connect to JACK server\n");
+    return 0;
   }
 
   this = calloc(1, sizeof (jack_driver_t));

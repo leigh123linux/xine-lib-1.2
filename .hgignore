@@ -94,6 +94,7 @@ m4/stdint_h.m4
 m4/ulonglong.m4
 m4/intl.m4
 m4/intldir.m4
+m4/intlmacosx.m4
 m4/lock.m4
 m4/visibility.m4
 m4/libtool.m4
