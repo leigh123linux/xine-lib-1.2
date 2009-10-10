@@ -649,7 +649,7 @@ mmsh_t *mmsh_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   report_progress (stream, 0);
   
   if (!_x_parse_url (this->url, &this->proto, &this->host, &this->port,
-                     &this->user, &this->password, &this->uri)) {
+                     &this->user, &this->password, &this->uri, NULL)) {
     xine_log (this->stream->xine, XINE_LOG_MSG, _("invalid url\n"));
     goto fail;
   }

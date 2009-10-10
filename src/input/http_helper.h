@@ -24,6 +24,16 @@
 #define HTTP_HELPER_H
 
 /*
+ * user agent finder, using modified protcol names
+ * {proto}://...
+ * e.g. "qthttp://example.com/foo.mov" → "QuickTime"
+ *
+ * return:
+ *   NULL or user agent prefix
+ */
+const char *_x_url_user_agent (const char *url);
+
+/*
  * url parser
  * {proto}://{user}:{password}@{host}:{port}{uri}
  * {proto}://{user}:{password}@{[host]}:{port}{uri}
@@ -33,7 +43,8 @@
  *   1  valid url
  */
 int _x_parse_url (char *url, char **proto, char** host, int *port,
-                  char **user, char **password, char **uri);
+                  char **user, char **password, char **uri,
+                  const char **user_agent);
 
 /*
  * canonicalise url, given base

@@ -80,6 +80,7 @@ CONFIGURE_FLAGS := \
 	--with-external-libdts \
 	--with-external-faad \
 	--with-external-ffmpeg=soft \
+	--with-external-libmpcdec \
 	--with-freetype \
 	--with-wavpack \
 	--enable-ipv6 \

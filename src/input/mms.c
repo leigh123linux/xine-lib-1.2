@@ -698,7 +698,7 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   report_progress (stream, 0);
   
   if (!_x_parse_url (this->url, &this->proto, &this->host, &this->port,
-                     &this->user, &this->password, &this->uri)) {
+                     &this->user, &this->password, &this->uri, NULL)) {
     lprintf ("invalid url\n");
     goto fail;
   }
