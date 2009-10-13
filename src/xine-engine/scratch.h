@@ -32,10 +32,7 @@ typedef struct scratch_buffer_s scratch_buffer_t;
 
 struct scratch_buffer_s {
 
-  void
-#if __GNUC__ >= 3
-               __attribute__((__format__(__printf__, 2, 0)))
-#endif
+  void         XINE_FORMAT_PRINTF(2, 0)
                (*scratch_printf) (scratch_buffer_t *this, const char *format, va_list ap);
 
   char       **(*get_content) (scratch_buffer_t *this);

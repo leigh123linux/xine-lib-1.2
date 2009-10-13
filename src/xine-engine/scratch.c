@@ -37,7 +37,7 @@
 #include "xineutils.h"
 #include "scratch.h"
 
-static void __attribute__((__format__(__printf__, 2, 0)))
+static void XINE_FORMAT_PRINTF(2, 0)
   scratch_printf (scratch_buffer_t *this, const char *format, va_list argp)
 {
   time_t t;

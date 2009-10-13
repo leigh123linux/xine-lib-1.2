@@ -33,6 +33,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
 
 #define LOG_MODULE "demux_flac"
 #define LOG_VERBOSE
