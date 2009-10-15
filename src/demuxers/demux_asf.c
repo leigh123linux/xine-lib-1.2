@@ -1544,6 +1544,7 @@ static int demux_asf_parse_asx_references( demux_asf_t *this) {
   int             buf_used = 0;
   int             len;
   xml_node_t     *xml_tree, *asx_entry, *asx_ref;
+  xml_parser_t   *xml_parser;
   int             result;
 
 
@@ -1566,9 +1567,13 @@ static int demux_asf_parse_asx_references( demux_asf_t *this) {
   if(buf_used)
     buf[buf_used] = '\0';
 
-  xml_parser_init(buf, buf_used, XML_PARSER_CASE_INSENSITIVE);
-  if((result = xml_parser_build_tree(&xml_tree)) != XML_PARSER_OK)
+  xml_parser = xml_parser_init_r(buf, buf_used, XML_PARSER_CASE_INSENSITIVE);
+  if((result = xml_parser_build_tree_r(xml_parser, &xml_tree)) != XML_PARSER_OK) {
+    xml_parser_finalize_r(xml_parser);
     goto failure;
+  }
+
+  xml_parser_finalize_r(xml_parser);
 
   if(!strcasecmp(xml_tree->name, "ASX")) {
     /* Attributes: VERSION, PREVIEWMODE, BANNERBAR

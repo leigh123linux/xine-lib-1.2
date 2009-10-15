@@ -239,6 +239,7 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
 
   spucmml_decoder_t *this = (spucmml_decoder_t *) this_gen;
 
+  xml_parser_t *xml_parser;
   xml_node_t *packet_xml_root;
   char * anchor_text = NULL;
 
@@ -248,11 +249,14 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
 
   /* parse the CMML */
 
-  xml_parser_init (str, strlen (str), XML_PARSER_CASE_INSENSITIVE);
-  if (xml_parser_build_tree(&packet_xml_root) != XML_PARSER_OK) {
+  xml_parser = xml_parser_init_r (str, strlen (str), XML_PARSER_CASE_INSENSITIVE);
+  if (xml_parser_build_tree_r(xml_parser, &packet_xml_root) != XML_PARSER_OK) {
     lprintf ("warning: invalid XML packet detected in CMML track\n");
+    xml_parser_finalize_r(xml_parser);
     return;
   }
+
+  xml_parser_finalize_r(xml_parser);
 
   if (strcasecmp(packet_xml_root->name, "head") == 0) {
     /* found a <head>...</head> packet: need to parse the title */
