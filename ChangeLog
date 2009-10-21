@@ -23,6 +23,8 @@ xine-lib (1.1.17) 2009-??-??
   * Reworked Matroska demuxer. Now reads files created by mkvmerge 2.7.0.
   * Support BluRay/HDMV streams & subtitles.
   * The XML parser & lexer code now has re-entrancy.
+  * Fixed a bug which prevented "dvb://" (no channel specified) working with
+    the default configuration.
 
 xine-lib (1.1.16.3) 2009-04-03
   * Security fixes:

@@ -2875,6 +2875,8 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
                 if (lastchannel.num_value) {
                   if (xine_config_lookup_entry(this->class->xine, "media.dvb.last_channel", &lastchannel)){
                     this->channel = lastchannel.num_value -1;
+                    if (this->channel < 0 || this->channel >= num_channels)
+                      this->channel = 0; /* out of range? default */
                   }else{
                     xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("input_dvb: invalid channel specification, defaulting to channel 0\n"));
                     this->channel = 0;
