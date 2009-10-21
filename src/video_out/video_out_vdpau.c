@@ -141,6 +141,7 @@ VdpPresentationQueueDisplay *vdp_queue_display;
 VdpPresentationQueueBlockUntilSurfaceIdle *vdp_queue_block;
 VdpPresentationQueueSetBackgroundColor *vdp_queue_set_background_color;
 VdpPresentationQueueGetTime *vdp_queue_get_time;
+VdpPresentationQueueQuerySurfaceStatus *vdp_queue_query_surface_status;
 
 VdpBitmapSurfacePutBitsNative *vdp_bitmap_put_bits;
 VdpBitmapSurfaceCreate  *vdp_bitmap_create;
@@ -303,10 +304,11 @@ typedef struct {
   uint32_t             soft_surface_height;
   int                  soft_surface_format;
 
-  VdpOutputSurface     output_surface[2];
+#define NOUTPUTSURFACE 2
+  VdpOutputSurface     output_surface[NOUTPUTSURFACE];
   uint8_t              current_output_surface;
-  uint32_t             output_surface_width[2];
-  uint32_t             output_surface_height[2];
+  uint32_t             output_surface_width[NOUTPUTSURFACE];
+  uint32_t             output_surface_height[NOUTPUTSURFACE];
   uint8_t              init_queue;
 
   VdpVideoMixer        video_mixer;
@@ -1410,7 +1412,9 @@ static void vdpau_shift_queue( vo_driver_t *this_gen )
 
   if ( this->init_queue<2 )
     ++this->init_queue;
-  this->current_output_surface ^= 1;
+  ++this->current_output_surface;
+  if ( this->current_output_surface > (NOUTPUTSURFACE-1) )
+    this->current_output_surface = 0;
 }
 
 
@@ -1563,11 +1567,15 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdpau_update_csc( this );
   }
 
-  vdpau_check_output_size( this_gen );
+  VdpRect vid_source, out_dest, vid_dest;
 
-  VdpRect vid_source = { this->sc.displayed_xoffset, this->sc.displayed_yoffset, this->sc.displayed_width+this->sc.displayed_xoffset, this->sc.displayed_height+this->sc.displayed_yoffset };
-  VdpRect out_dest = { 0, 0, this->sc.gui_width, this->sc.gui_height };
-  VdpRect vid_dest = { this->sc.output_xoffset, this->sc.output_yoffset, this->sc.output_xoffset+this->sc.output_width, this->sc.output_yoffset+this->sc.output_height };
+  vdpau_check_output_size( this_gen );
+  vid_source.x0 = this->sc.displayed_xoffset; vid_source.y0 = this->sc.displayed_yoffset;
+  vid_source.x1 = this->sc.displayed_width+this->sc.displayed_xoffset; vid_source.y1 = this->sc.displayed_height+this->sc.displayed_yoffset;
+  out_dest.x0 = out_dest.y0 = 0;
+  out_dest.x1 = this->sc.gui_width; out_dest.y1 = this->sc.gui_height;
+  vid_dest.x0 = this->sc.output_xoffset; vid_dest.y0 = this->sc.output_yoffset;
+  vid_dest.x1 = this->sc.output_xoffset+this->sc.output_width; vid_dest.y1 = this->sc.output_yoffset+this->sc.output_height;
 
   /* prepare field delay calculation to not run into a deadlock while display locked */
   stream_speed = frame->vo_frame.stream ? xine_get_param(frame->vo_frame.stream, XINE_PARAM_FINE_SPEED) : 0;
@@ -1676,10 +1684,12 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
       /* calculate delay for second field: there should be no delay for still images otherwise, take replay speed into account */
       if (stream_speed > 0)
-        current_time += frame->vo_frame.duration * 100000ull * XINE_FINE_SPEED_NORMAL / (18 * stream_speed);
+        current_time += frame->vo_frame.duration * 1000000ull * XINE_FINE_SPEED_NORMAL / (180 * stream_speed);
       else
         current_time = 0; /* immediately i. e. no delay */
 
+      //current_time = 0;
+      //printf( "vo_vdpau: deint delay = %d\n", frame_duration *1ull * XINE_FINE_SPEED_NORMAL / (180 * stream_speed) );
       vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, current_time );
       vdpau_shift_queue( this_gen );
     }
@@ -1833,7 +1843,9 @@ static int vdpau_gui_data_exchange (vo_driver_t *this_gen, int data_type, void *
 #ifdef LOCKDISPLAY
         XLockDisplay( this->display );
 #endif
-        int previous = this->current_output_surface ^ 1;
+        int previous = this->current_output_surface - 1;
+        if ( previous < 0 )
+          previous = NOUTPUTSURFACE - 1;
         vdp_queue_display( vdp_queue, this->output_surface[previous], 0, 0, 0 );
 #ifdef LOCKDISPLAY
         XUnlockDisplay( this->display );
@@ -1930,10 +1942,10 @@ static void vdpau_dispose (vo_driver_t *this_gen)
       vdp_output_surface_destroy( this->overlay_unscaled );
     if ( this->overlay_output!=VDP_INVALID_HANDLE )
       vdp_output_surface_destroy( this->overlay_output );
-    if ( this->output_surface[0]!=VDP_INVALID_HANDLE )
-      vdp_output_surface_destroy( this->output_surface[0] );
-    if ( this->output_surface[1]!=VDP_INVALID_HANDLE )
-      vdp_output_surface_destroy( this->output_surface[1] );
+    for ( i=0; i<NOUTPUTSURFACE; ++i ) {
+      if ( this->output_surface[i]!=VDP_INVALID_HANDLE )
+        vdp_output_surface_destroy( this->output_surface[i] );
+	}
   }
 
   if ( vdp_queue != VDP_INVALID_HANDLE )
@@ -2001,21 +2013,19 @@ static void vdpau_reinit( vo_driver_t *this_gen )
 
   this->current_output_surface = 0;
   this->init_queue = 0;
-  st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[0], this->output_surface_height[0], &this->output_surface[0] );
-  if ( vdpau_reinit_error( st, "Can't create first output surface !!" ) ) {
-    orig_vdp_video_surface_destroy( this->soft_surface );
-    return;
-  }
-  st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[0], this->output_surface_height[0], &this->output_surface[1] );
-  if ( vdpau_reinit_error( st, "Can't create second output surface !!" ) ) {
-    orig_vdp_video_surface_destroy( this->soft_surface );
-    vdp_output_surface_destroy( this->output_surface[0] );
-    return;
+  int i;
+  for ( i=0; i<NOUTPUTSURFACE; ++i ) {
+    st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[i], this->output_surface_height[i], &this->output_surface[i] );
+    if ( vdpau_reinit_error( st, "Can't create output surface !!" ) ) {
+      int j;
+      for ( j=0; j<i; ++j )
+        vdp_output_surface_destroy( this->output_surface[j] );
+      vdp_video_surface_destroy( this->soft_surface );
+      return;
+    }
   }
 
   /* osd overlays need to be recreated */
-
-  int i;
   for ( i=0; i<XINE_VORAW_MAX_OVL; ++i ) {
     this->overlays[i].ovl_bitmap = VDP_INVALID_HANDLE;
     this->overlays[i].bitmap_width = 0;
@@ -2067,8 +2077,8 @@ static void vdpau_reinit( vo_driver_t *this_gen )
   st = vdp_video_mixer_create( vdp_device, features_count, features, 4, params, param_values, &this->video_mixer );
   if ( vdpau_reinit_error( st, "Can't create video mixer !!" ) ) {
     orig_vdp_video_surface_destroy( this->soft_surface );
-    vdp_output_surface_destroy( this->output_surface[0] );
-    vdp_output_surface_destroy( this->output_surface[1] );
+    for ( i=0; i<NOUTPUTSURFACE; ++i )
+      vdp_output_surface_destroy( this->output_surface[i] );
     return;
   }
   this->video_mixer_chroma = chroma;
@@ -2119,7 +2129,7 @@ static int vdpau_init_error( VdpStatus st, const char *msg, vo_driver_t *driver,
 static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const void *visual_gen)
 {
   vdpau_class_t       *class   = (vdpau_class_t *) class_gen;
-  x11_visual_t         *visual  = (x11_visual_t *) visual_gen;
+  x11_visual_t        *visual  = (x11_visual_t *) visual_gen;
   vdpau_driver_t      *this;
   config_values_t      *config  = class->xine->config;
   int i;
@@ -2139,6 +2149,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->sc.dest_size_cb     = visual->dest_size_cb;
   this->sc.user_data        = visual->user_data;
   this->sc.user_ratio       = XINE_VO_ASPECT_AUTO;
+
   this->zoom_x              = 100;
   this->zoom_y              = 100;
 
@@ -2160,8 +2171,8 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->vo_driver.redraw_needed        = vdpau_redraw_needed;
 
   this->video_mixer = VDP_INVALID_HANDLE;
-  this->output_surface[0] = VDP_INVALID_HANDLE;
-  this->output_surface[1] = VDP_INVALID_HANDLE;
+  for ( i=0; i<NOUTPUTSURFACE; ++i )
+    this->output_surface[i] = VDP_INVALID_HANDLE;
   this->soft_surface = VDP_INVALID_HANDLE;
   vdp_queue = VDP_INVALID_HANDLE;
   vdp_queue_target = VDP_INVALID_HANDLE;
@@ -2331,6 +2342,9 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_PRESENTATION_QUEUE_GET_TIME , (void*)&vdp_queue_get_time );
   if ( vdpau_init_error( st, "Can't get PRESENTATION_QUEUE_GET_TIME proc address !!", &this->vo_driver, 1 ) )
     return NULL;
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_PRESENTATION_QUEUE_QUERY_SURFACE_STATUS , (void*)&vdp_queue_query_surface_status );
+  if ( vdpau_init_error( st, "Can't get PRESENTATION_QUEUE_QUERY_SURFACE_STATUS proc address !!", &this->vo_driver, 1 ) )
+    return NULL;
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_DECODER_QUERY_CAPABILITIES , (void*)&vdp_decoder_query_capabilities );
   if ( vdpau_init_error( st, "Can't get DECODER_QUERY_CAPABILITIES proc address !!", &this->vo_driver, 1 ) )
     return NULL;
@@ -2382,20 +2396,21 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   if ( vdpau_init_error( st, "Can't create video surface !!", &this->vo_driver, 1 ) )
     return NULL;
 
-  this->output_surface_width[0] = this->output_surface_width[1] = 320;
-  this->output_surface_height[0] = this->output_surface_height[1] = 240;
+  for ( i=0; i<NOUTPUTSURFACE; ++i ) {
+    this->output_surface_width[i] = 320;
+    this->output_surface_height[i] = 240;
+  }
   this->current_output_surface = 0;
   this->init_queue = 0;
-  st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[0], this->output_surface_height[0], &this->output_surface[0] );
-  if ( vdpau_init_error( st, "Can't create first output surface !!", &this->vo_driver, 1 ) ) {
-    vdp_video_surface_destroy( this->soft_surface );
-    return NULL;
-  }
-  st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[1], this->output_surface_height[1], &this->output_surface[1] );
-  if ( vdpau_init_error( st, "Can't create second output surface !!", &this->vo_driver, 1 ) ) {
-    vdp_video_surface_destroy( this->soft_surface );
-    vdp_output_surface_destroy( this->output_surface[0] );
-    return NULL;
+  for ( i=0; i<NOUTPUTSURFACE; ++i ) {
+    st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[i], this->output_surface_height[i], &this->output_surface[i] );
+    if ( vdpau_init_error( st, "Can't create output surface !!", &this->vo_driver, 1 ) ) {
+      int j;
+      for ( j=0; j<i; ++j )
+        vdp_output_surface_destroy( this->output_surface[j] );
+      vdp_video_surface_destroy( this->soft_surface );
+      return NULL;
+    }
   }
 
   this->scaling_level_max = this->scaling_level_current = 0;
@@ -2460,8 +2475,8 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   st = vdp_video_mixer_create( vdp_device, features_count, features, 4, params, param_values, &this->video_mixer );
   if ( vdpau_init_error( st, "Can't create video mixer !!", &this->vo_driver, 1 ) ) {
     vdp_video_surface_destroy( this->soft_surface );
-    vdp_output_surface_destroy( this->output_surface[0] );
-    vdp_output_surface_destroy( this->output_surface[1] );
+    for ( i=0; i<NOUTPUTSURFACE; ++i )
+      vdp_output_surface_destroy( this->output_surface[i] );
     return NULL;
   }
 
