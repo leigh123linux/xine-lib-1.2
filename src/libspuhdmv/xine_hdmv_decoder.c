@@ -138,7 +138,7 @@ struct presentation_segment_s {
 
   composition_object_t *comp_objs;
 
-  //presentation_segment_t *next;
+  presentation_segment_t *next;
 
   int64_t pts;
   int     shown;
@@ -562,6 +562,35 @@ static composition_object_t *segbuf_decode_composition_object(segment_buffer_t *
   return cobj;
 }
 
+static presentation_segment_t *segbuf_decode_presentation_segment(segment_buffer_t *buf)
+{
+  presentation_segment_t *seg = calloc(1, sizeof(presentation_segment_t));
+  int                     index;
+
+  segbuf_decode_video_descriptor (buf);
+  segbuf_decode_composition_descriptor (buf, &seg->comp_descr);
+
+  seg->palette_update_flag  = !!((segbuf_get_u8(buf)) & 0x80);
+  seg->palette_id_ref       = segbuf_get_u8 (buf);
+  seg->object_number        = segbuf_get_u8 (buf);
+
+  TRACE("  presentation_segment: object_number %d, palette %d\n",
+        seg->object_number, seg->palette_id_ref);
+
+  for (index = 0; index < seg->object_number; index++) {
+    composition_object_t *cobj = segbuf_decode_composition_object (buf);
+    cobj->next = seg->comp_objs;
+    seg->comp_objs = cobj;
+  }
+
+  if (buf->error) {
+    free_presentation_segment(seg);
+    return NULL;
+  }
+
+  return seg;
+}
+
 static rle_elem_t *copy_crop_rle(subtitle_object_t *obj, composition_object_t *cobj)
 {
   /* TODO: cropping (w,h sized image from pos x,y) */
@@ -591,6 +620,8 @@ typedef struct spuhdmv_decoder_s {
   subtitle_clut_t        *cluts;
   subtitle_object_t      *objects;
   window_def_t           *windows;
+  presentation_segment_t *segments;
+
   int overlay_handles[MAX_OBJECTS];
 
   int64_t               pts;
@@ -629,6 +660,23 @@ static int decode_window_definition(spuhdmv_decoder_t *this)
     return 1;
 
   LIST_REPLACE (this->windows, wnd, free);
+
+  return 0;
+}
+
+static int decode_presentation_segment(spuhdmv_decoder_t *this)
+{
+  /* decode */
+  presentation_segment_t *seg = segbuf_decode_presentation_segment(this->buf);
+  if (!seg)
+    return 1;
+
+  seg->pts = this->pts;
+
+  /* replace */
+  if (this->segments)
+    LIST_DESTROY(this->segments, free_presentation_segment);
+  this->segments = seg;
 
   return 0;
 }
@@ -751,8 +799,12 @@ static void hide_overlays(spuhdmv_decoder_t *this, int64_t pts)
   }
 }
 
-static void update_overlays(spuhdmv_decoder_t *this, presentation_segment_t *pseg)
+static void update_overlays(spuhdmv_decoder_t *this)
 {
+  presentation_segment_t *pseg = this->segments;
+
+  while (pseg) {
+
     if (!pseg->comp_descr.state) {
 
       /* HIDE */
@@ -776,35 +828,9 @@ static void update_overlays(spuhdmv_decoder_t *this, presentation_segment_t *pse
     }
 
     pseg->shown = 1;
-}
 
-static int decode_presentation_segment(spuhdmv_decoder_t *this)
-{
-  presentation_segment_t p     = {};
-  segment_buffer_t      *buf   = this->buf;
-  int                    index;
-
-  segbuf_decode_video_descriptor (this->buf);
-  segbuf_decode_composition_descriptor (this->buf, &p.comp_descr);
-
-  p.palette_update_flag  = !!((segbuf_get_u8(buf)) & 0x80);
-  p.palette_id_ref       = segbuf_get_u8 (buf);
-  p.object_number        = segbuf_get_u8 (buf);
-
-  TRACE("  presentation_segment: object_number %d, palette %d\n",
-        p.object_number, p.palette_id_ref);
-
-  p.pts = this->pts; /* !! todo - use it ? */
-
-  for (index = 0; index < p.object_number; index++) {
-    composition_object_t *cobj = segbuf_decode_composition_object (this->buf);
-    cobj->next = p.comp_objs;
-    p.comp_objs = cobj;
+    pseg = pseg->next;
   }
-
-  update_overlays (this, &p);
-
-  return buf->error;
 }
 
 static void free_objs(spuhdmv_decoder_t *this)
@@ -812,6 +838,7 @@ static void free_objs(spuhdmv_decoder_t *this)
   LIST_DESTROY (this->cluts,    free);
   LIST_DESTROY (this->objects,  free_subtitle_object);
   LIST_DESTROY (this->windows,  free);
+  LIST_DESTROY (this->segments, free_presentation_segment);
 }
 
 static void decode_segment(spuhdmv_decoder_t *this)
@@ -851,6 +878,8 @@ static void decode_segment(spuhdmv_decoder_t *this)
   if (this->buf->error) {
     ERROR("*** DECODE ERROR ***\n");
   }
+
+  update_overlays (this);
 }
 
 static void close_osd(spuhdmv_decoder_t *this)
