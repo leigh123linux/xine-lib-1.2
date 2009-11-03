@@ -47,7 +47,7 @@
 
 #define TRACE(x...) printf(x)
 /*#define TRACE(x...) */
-#define ERROR(x...) fprintf(stderr, x)
+#define ERROR(x...) fprintf(stderr, "spuhdmv: " x)
 /*#define ERROR(x...) lprintf(x) */
 
 /*
@@ -111,6 +111,57 @@ struct composition_object_s {
 
   composition_object_t *next;
 };
+
+typedef struct composition_descriptor_s composition_descriptor_t;
+struct composition_descriptor_s {
+  uint16_t number;
+  uint8_t  state;
+};
+
+typedef struct presentation_segment_s presentation_segment_t;
+struct presentation_segment_s {
+  composition_descriptor_t comp_descr;
+
+  uint8_t palette_update_flag;
+  uint8_t palette_id_ref;
+  uint8_t object_number;
+
+  composition_object_t *comp_objs;
+
+  //presentation_segment_t *next;
+
+  int64_t pts;
+};
+
+/*
+ * list handling
+ */
+
+#define LIST_REPLACE(list, obj)			\
+  do {						\
+    uint id = obj->id;				\
+						\
+    /* insert to list */			\
+    obj->next = list;				\
+    list = obj;					\
+						\
+    /* remove old */				\
+    while (obj->next && obj->next->id != id)	\
+      obj = obj->next;				\
+    if (obj->next) {				\
+      void *tmp = (void*)obj->next;		\
+      obj->next = obj->next->next;		\
+      free(tmp);				\
+    }						\
+  } while (0);
+
+#define LIST_DESTROY(list)     \
+  while (list) {	       \
+    void *tmp = (void*)list;   \
+    list = list->next;	       \
+    free (tmp);		       \
+  }
+
 
 /*
  * segment_buffer_t
@@ -443,12 +494,6 @@ static int segbuf_decode_video_descriptor(segment_buffer_t *buf)
   return buf->error;
 }
 
-typedef struct composition_descriptor_s composition_descriptor_t;
-struct composition_descriptor_s {
-  uint16_t number;
-  uint8_t  state;
-};
-
 static int segbuf_decode_composition_descriptor(segment_buffer_t *buf, composition_descriptor_t *descr)
 {
   descr->number = segbuf_get_u16(buf);
@@ -492,7 +537,7 @@ static composition_object_t *segbuf_decode_composition_object(segment_buffer_t *
 
 static rle_elem_t *copy_crop_rle(subtitle_object_t *obj, composition_object_t *cobj)
 {
-  /* TODO: exec cropping here (w,h sized image from pos x,y) */
+  /* TODO: cropping (w,h sized image from pos x,y) */
 
   rle_elem_t *rle = calloc (obj->num_rle, sizeof(rle_elem_t));
   memcpy (rle, obj->rle, obj->num_rle * sizeof(rle_elem_t));
@@ -516,56 +561,14 @@ typedef struct spuhdmv_decoder_s {
 
   segment_buffer_t *buf;
 
-  subtitle_clut_t      *cluts;
-  subtitle_object_t    *objects;
-  window_def_t         *windows;
+  subtitle_clut_t        *cluts;
+  subtitle_object_t      *objects;
+  window_def_t           *windows;
   int overlay_handles[MAX_OBJECTS];
 
   int64_t               pts;
 
 } spuhdmv_decoder_t;
-
-#define LIST_REPLACE_OLD(type, list, obj) \
-  do { \
-    /* insert to list */ \
-    obj->next = list; \
-    list = obj; \
-\
-    /* remove old */ \
-    type *i = list; \
-    while (i->next && i->next->id != obj->id) \
-      i = i->next; \
-    if (i->next) { \
-      void *tmp = (void*)i->next; \
-      i->next = i->next->next; \
-      free(tmp); \
-    } \
-  } while (0);
-
-#define LIST_REPLACE(list, obj)			\
-  do {						\
-    uint id = obj->id;				\
-						\
-    /* insert to list */			\
-    obj->next = list;				\
-    list = obj;					\
-						\
-    /* remove old */				\
-    while (obj->next && obj->next->id != id)	\
-      obj = obj->next;				\
-    if (obj->next) {				\
-      void *tmp = (void*)obj->next;		\
-      obj->next = obj->next->next;		\
-      free(tmp);				\
-    }						\
-  } while (0);
-
-#define LIST_DESTROY(list)     \
-  while (list) {	       \
-    void *tmp = (void*)list;   \
-    list = list->next;	       \
-    free (tmp);		       \
-  }
 
 static int decode_palette(spuhdmv_decoder_t *this)
 {
@@ -693,21 +696,6 @@ static int show_overlay(spuhdmv_decoder_t *this, composition_object_t *cobj, uin
   return 0;
 }
 
-typedef struct presentation_segment_s presentation_segment_t;
-struct presentation_segment_s {
-  composition_descriptor_t comp_descr;
-
-  uint8_t palette_update_flag;
-  uint8_t palette_id_ref;
-  uint8_t object_number;
-
-  composition_object_t *comp_objs;
-
-  presentation_segment_t *next;
-
-  int64_t pts;
-};
-
 static void show_overlays(spuhdmv_decoder_t *this, presentation_segment_t *pseg)
 {
   composition_object_t *cobj = pseg->comp_objs;
@@ -809,12 +797,6 @@ static void decode_segment(spuhdmv_decoder_t *this)
     break;
   case 0x80:
     TRACE("  segment: END OF DISPLAY\n");
-    {
-      int64_t pts = xine_get_current_vpts(this->stream) -
-        this->stream->metronom->get_option(this->stream->metronom,
-                                           METRONOM_VPTS_OFFSET);
-      TRACE(" * current pts = %ld\n", pts);
-    }
 
     break;
   default:
@@ -828,7 +810,7 @@ static void decode_segment(spuhdmv_decoder_t *this)
 
 static void close_osd(spuhdmv_decoder_t *this)
 {
-  video_overlay_manager_t  *ovl_manager = this->stream->video_out->get_overlay_manager (this->stream->video_out);
+  video_overlay_manager_t *ovl_manager = this->stream->video_out->get_overlay_manager (this->stream->video_out);
 
   int i = 0;
   while (this->overlay_handles[i] >= 0) {
