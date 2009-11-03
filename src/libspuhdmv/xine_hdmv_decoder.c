@@ -74,9 +74,11 @@ struct subtitle_object_s {
   uint        num_rle;
   size_t      data_size;
 
+#if 0
   uint8_t    *raw_data; /* partial RLE data in HDMV format */
   size_t      raw_data_len;
   size_t      raw_data_size;
+#endif
 
   subtitle_object_t *next;
 };
@@ -619,21 +621,16 @@ static int show_overlay(spuhdmv_decoder_t *this, composition_object_t *cobj, uin
   while (clut && clut->id != palette_id_ref)
     clut = clut->next;
   if (!clut) {
-    ERROR("  fill_overlay: clut %d not found !\n", palette_id_ref);
+    TRACE("  show_overlay: clut %d not found !\n", palette_id_ref);
     return -1;
   }
-
-  /* copy palette to xine overlay */
-  overlay.rgb_clut = 0;
-  memcpy(overlay.color, clut->color, sizeof(uint32_t) * 256);
-  memcpy(overlay.trans, clut->trans, sizeof(uint8_t)  * 256);
 
   /* find RLE image */
   subtitle_object_t *obj = this->objects;
   while (obj && obj->id != cobj->object_id_ref)
     obj = obj->next;
   if (!obj) {
-    ERROR("  fill_overlay: object %d not found !\n", cobj->object_id_ref);
+    TRACE("  show_overlay: object %d not found !\n", cobj->object_id_ref);
     return -1;
   }
 
@@ -642,9 +639,14 @@ static int show_overlay(spuhdmv_decoder_t *this, composition_object_t *cobj, uin
   while (wnd && wnd->id != cobj->window_id_ref)
     wnd = wnd->next;
   if (!wnd) {
-    ERROR("  fill_overlay: window %d not found !\n", cobj->window_id_ref);
+    TRACE("  show_overlay: window %d not found !\n", cobj->window_id_ref);
     return -1;
   }
+
+  /* copy palette to xine overlay */
+  overlay.rgb_clut = 0;
+  memcpy(overlay.color, clut->color, sizeof(uint32_t) * 256);
+  memcpy(overlay.trans, clut->trans, sizeof(uint8_t)  * 256);
 
   /* copy and crop RLE image to xine overlay */
   overlay.width     = obj->width;
