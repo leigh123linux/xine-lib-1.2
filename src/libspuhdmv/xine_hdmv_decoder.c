@@ -59,6 +59,8 @@ struct subtitle_clut_s {
   uint32_t         color[256];
   uint8_t          trans[256];
   subtitle_clut_t *next;
+
+  int shown;
 };
 
 /*
@@ -81,6 +83,8 @@ struct subtitle_object_s {
 #endif
 
   subtitle_object_t *next;
+
+  int shown;
 };
 
 /*
@@ -93,6 +97,8 @@ struct window_def_s {
   uint16_t  width, height;
 
   window_def_t *next;
+
+  int shown;
 };
 
 
@@ -112,6 +118,8 @@ struct composition_object_s {
   uint16_t    crop_width, crop_height;
 
   composition_object_t *next;
+
+  int shown;
 };
 
 typedef struct composition_descriptor_s composition_descriptor_t;
@@ -133,6 +141,7 @@ struct presentation_segment_s {
   //presentation_segment_t *next;
 
   int64_t pts;
+  int     shown;
 };
 
 /*
@@ -609,7 +618,7 @@ static int decode_window_definition(spuhdmv_decoder_t *this)
 }
 
 static int show_overlay(spuhdmv_decoder_t *this, composition_object_t *cobj, uint palette_id_ref,
-			int overlay_index, int64_t pts)
+			int overlay_index, int64_t pts, int force_update)
 {
   video_overlay_manager_t *ovl_manager = this->stream->video_out->get_overlay_manager(this->stream->video_out);
   metronom_t              *metronom    = this->stream->metronom;
@@ -642,6 +651,11 @@ static int show_overlay(spuhdmv_decoder_t *this, composition_object_t *cobj, uin
     TRACE("  show_overlay: window %d not found !\n", cobj->window_id_ref);
     return -1;
   }
+
+  /* do not show again if all elements are unchanged */
+  if (!force_update && clut->shown && obj->shown && wnd->shown && cobj->shown)
+    return 0;
+  clut->shown = obj->shown = wnd->shown = cobj->shown = 1;
 
   /* copy palette to xine overlay */
   overlay.rgb_clut = 0;
@@ -707,10 +721,12 @@ static void show_overlays(spuhdmv_decoder_t *this, presentation_segment_t *pseg)
     if (!cobj) {
       ERROR("show_overlays: composition object %d missing !\n", i);
     } else {
-      show_overlay(this, cobj, pseg->palette_id_ref, i, pseg->pts);
+      show_overlay(this, cobj, pseg->palette_id_ref, i, pseg->pts, !pseg->shown);
       cobj = cobj->next;
     }
   }
+
+  pseg->shown = 1;
 }
 
 static void hide_overlays(spuhdmv_decoder_t *this, int64_t pts)
