@@ -148,7 +148,7 @@ struct presentation_segment_s {
  * list handling
  */
 
-#define LIST_REPLACE(list, obj)			\
+#define LIST_REPLACE(list, obj, FREE_FUNC)      \
   do {						\
     uint id = obj->id;				\
 						\
@@ -162,16 +162,32 @@ struct presentation_segment_s {
     if (obj->next) {				\
       void *tmp = (void*)obj->next;		\
       obj->next = obj->next->next;		\
-      free(tmp);				\
+      FREE_FUNC(tmp);				\
     }						\
   } while (0);
 
-#define LIST_DESTROY(list)     \
+#define LIST_DESTROY(list, FREE_FUNC) \
   while (list) {	       \
     void *tmp = (void*)list;   \
     list = list->next;	       \
-    free (tmp);		       \
+    FREE_FUNC(tmp);            \
   }
+
+static void free_subtitle_object(void *ptr)
+{
+  if (ptr) {
+    free(((subtitle_object_t*)ptr)->rle);
+    free(ptr);
+  }
+}
+static void free_presentation_segment(void *ptr)
+{
+  if (ptr) {
+    presentation_segment_t *seg = (presentation_segment_t*)ptr;
+    LIST_DESTROY(seg->comp_objs, free);
+    free(ptr);
+  }
+}
 
 
 /*
@@ -459,14 +475,14 @@ static subtitle_object_t *segbuf_decode_object(segment_buffer_t *buf)
     segbuf_decode_rle (buf, obj);
 
     if (buf->error) {
-      free(obj);
+      free_subtitle_object(obj);
       return NULL;
     }
 
   } else {
     ERROR("    TODO: APPEND RLE, length %d bytes\n", buf->segment_len - 4);
     /* TODO */
-    free(obj);
+    free_subtitle_object(obj);
     return NULL;
   }
 
@@ -588,7 +604,7 @@ static int decode_palette(spuhdmv_decoder_t *this)
   if (!clut)
     return 1;
 
-  LIST_REPLACE (this->cluts, clut);
+  LIST_REPLACE (this->cluts, clut, free);
 
   return 0;
 }
@@ -600,7 +616,7 @@ static int decode_object(spuhdmv_decoder_t *this)
   if (!obj)
     return 1;
 
-  LIST_REPLACE (this->objects, obj);
+  LIST_REPLACE (this->objects, obj, free_subtitle_object);
 
   return 0;
 }
@@ -612,7 +628,7 @@ static int decode_window_definition(spuhdmv_decoder_t *this)
   if (!wnd)
     return 1;
 
-  LIST_REPLACE (this->windows, wnd);
+  LIST_REPLACE (this->windows, wnd, free);
 
   return 0;
 }
@@ -707,8 +723,6 @@ static int show_overlay(spuhdmv_decoder_t *this, composition_object_t *cobj, uin
 
   ovl_manager->add_event (ovl_manager, (void *)&event);
 
-  obj->rle = NULL;
-
   return 0;
 }
 
@@ -782,10 +796,17 @@ static int decode_presentation_segment(spuhdmv_decoder_t *this)
     hide_overlays (this, this->pts);
   } else {
     show_overlays (this, &p);
-    LIST_DESTROY (p.comp_objs);
+    LIST_DESTROY (p.comp_objs, free);
   }
 
   return buf->error;
+}
+
+static void free_objs(spuhdmv_decoder_t *this)
+{
+  LIST_DESTROY (this->cluts,    free);
+  LIST_DESTROY (this->objects,  free_subtitle_object);
+  LIST_DESTROY (this->windows,  free);
 }
 
 static void decode_segment(spuhdmv_decoder_t *this)
@@ -815,7 +836,8 @@ static void decode_segment(spuhdmv_decoder_t *this)
     break;
   case 0x80:
     TRACE("  segment: END OF DISPLAY\n");
-
+    /* drop all cached objects */
+    free_objs(this);
     break;
   default:
     ERROR("  segment type 0x%x unknown, skipping\n", this->buf->segment_type);
@@ -873,9 +895,7 @@ static void spudec_reset (spu_decoder_t * this_gen)
   if (this->buf)
     segbuf_reset(this->buf);
 
-  LIST_DESTROY (this->cluts);
-  LIST_DESTROY (this->objects);
-  LIST_DESTROY (this->windows);
+  free_objs(this);
 
   close_osd(this);
 }
@@ -894,9 +914,7 @@ static void spudec_dispose (spu_decoder_t *this_gen)
   close_osd (this);
   segbuf_dispose (this->buf);
 
-  LIST_DESTROY (this->cluts);
-  LIST_DESTROY (this->objects);
-  LIST_DESTROY (this->windows);
+  free_objs(this);
 
   free (this);
 }
