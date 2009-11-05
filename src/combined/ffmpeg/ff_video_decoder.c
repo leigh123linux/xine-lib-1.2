@@ -1180,7 +1180,8 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
   if (this->size == 0) {
     /* take over pts when we are about to buffer a frame */
     this->av_frame->reordered_opaque = ff_tag_pts(this, this->pts);
-    this->context->reordered_opaque = ff_tag_pts(this, this->pts);
+    if (this->context) /* shouldn't be NULL */
+      this->context->reordered_opaque = ff_tag_pts(this, this->pts);
     this->pts = 0;
   }
 

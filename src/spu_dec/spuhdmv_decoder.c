@@ -39,7 +39,7 @@
 
 #define TRACE(x...) printf(x)
 /*#define TRACE(x...) */
-#define ERROR(x...) fprintf(stderr, x)
+#define ERROR(x...) fprintf(stderr, "spuhdmv: " x)
 /*#define ERROR(x...) lprintf(x) */
 
 /*
@@ -51,6 +51,8 @@ struct subtitle_clut_s {
   uint32_t         color[256];
   uint8_t          trans[256];
   subtitle_clut_t *next;
+
+  int shown;
 };
 
 /*
@@ -66,11 +68,15 @@ struct subtitle_object_s {
   uint        num_rle;
   size_t      data_size;
 
+#if 0
   uint8_t    *raw_data; /* partial RLE data in HDMV format */
   size_t      raw_data_len;
   size_t      raw_data_size;
+#endif
 
   subtitle_object_t *next;
+
+  int shown;
 };
 
 /*
@@ -83,6 +89,8 @@ struct window_def_s {
   uint16_t  width, height;
 
   window_def_t *next;
+
+  int shown;
 };
 
 
@@ -102,7 +110,77 @@ struct composition_object_s {
   uint16_t    crop_width, crop_height;
 
   composition_object_t *next;
+
+  int shown;
 };
+
+typedef struct composition_descriptor_s composition_descriptor_t;
+struct composition_descriptor_s {
+  uint16_t number;
+  uint8_t  state;
+};
+
+typedef struct presentation_segment_s presentation_segment_t;
+struct presentation_segment_s {
+  composition_descriptor_t comp_descr;
+
+  uint8_t palette_update_flag;
+  uint8_t palette_id_ref;
+  uint8_t object_number;
+
+  composition_object_t *comp_objs;
+
+  presentation_segment_t *next;
+
+  int64_t pts;
+  int     shown;
+};
+
+/*
+ * list handling
+ */
+
+#define LIST_REPLACE(list, obj, FREE_FUNC)      \
+  do {						\
+    uint id = obj->id;				\
+						\
+    /* insert to list */			\
+    obj->next = list;				\
+    list = obj;					\
+						\
+    /* remove old */				\
+    while (obj->next && obj->next->id != id)	\
+      obj = obj->next;				\
+    if (obj->next) {				\
+      void *tmp = (void*)obj->next;		\
+      obj->next = obj->next->next;		\
+      FREE_FUNC(tmp);				\
+    }						\
+  } while (0);
+
+#define LIST_DESTROY(list, FREE_FUNC) \
+  while (list) {	       \
+    void *tmp = (void*)list;   \
+    list = list->next;	       \
+    FREE_FUNC(tmp);            \
+  }
+
+static void free_subtitle_object(void *ptr)
+{
+  if (ptr) {
+    free(((subtitle_object_t*)ptr)->rle);
+    free(ptr);
+  }
+}
+static void free_presentation_segment(void *ptr)
+{
+  if (ptr) {
+    presentation_segment_t *seg = (presentation_segment_t*)ptr;
+    LIST_DESTROY(seg->comp_objs, free);
+    free(ptr);
+  }
+}
+
 
 /*
  * segment_buffer_t
@@ -389,14 +467,14 @@ static subtitle_object_t *segbuf_decode_object(segment_buffer_t *buf)
     segbuf_decode_rle (buf, obj);
 
     if (buf->error) {
-      free(obj);
+      free_subtitle_object(obj);
       return NULL;
     }
 
   } else {
     ERROR("    TODO: APPEND RLE, length %d bytes\n", buf->segment_len - 4);
     /* TODO */
-    free(obj);
+    free_subtitle_object(obj);
     return NULL;
   }
 
@@ -434,12 +512,6 @@ static int segbuf_decode_video_descriptor(segment_buffer_t *buf)
   TRACE("  video_descriptor: %dx%d fps %d\n", width, height, frame_rate);
   return buf->error;
 }
-
-typedef struct composition_descriptor_s composition_descriptor_t;
-struct composition_descriptor_s {
-  uint16_t number;
-  uint8_t  state;
-};
 
 static int segbuf_decode_composition_descriptor(segment_buffer_t *buf, composition_descriptor_t *descr)
 {
@@ -482,9 +554,38 @@ static composition_object_t *segbuf_decode_composition_object(segment_buffer_t *
   return cobj;
 }
 
+static presentation_segment_t *segbuf_decode_presentation_segment(segment_buffer_t *buf)
+{
+  presentation_segment_t *seg = calloc(1, sizeof(presentation_segment_t));
+  int                     index;
+
+  segbuf_decode_video_descriptor (buf);
+  segbuf_decode_composition_descriptor (buf, &seg->comp_descr);
+
+  seg->palette_update_flag  = !!((segbuf_get_u8(buf)) & 0x80);
+  seg->palette_id_ref       = segbuf_get_u8 (buf);
+  seg->object_number        = segbuf_get_u8 (buf);
+
+  TRACE("  presentation_segment: object_number %d, palette %d\n",
+        seg->object_number, seg->palette_id_ref);
+
+  for (index = 0; index < seg->object_number; index++) {
+    composition_object_t *cobj = segbuf_decode_composition_object (buf);
+    cobj->next = seg->comp_objs;
+    seg->comp_objs = cobj;
+  }
+
+  if (buf->error) {
+    free_presentation_segment(seg);
+    return NULL;
+  }
+
+  return seg;
+}
+
 static rle_elem_t *copy_crop_rle(subtitle_object_t *obj, composition_object_t *cobj)
 {
-  /* TODO: exec cropping here (w,h sized image from pos x,y) */
+  /* TODO: cropping (w,h sized image from pos x,y) */
 
   rle_elem_t *rle = calloc (obj->num_rle, sizeof(rle_elem_t));
   memcpy (rle, obj->rle, obj->num_rle * sizeof(rle_elem_t));
@@ -508,56 +609,16 @@ typedef struct spuhdmv_decoder_s {
 
   segment_buffer_t *buf;
 
-  subtitle_clut_t      *cluts;
-  subtitle_object_t    *objects;
-  window_def_t         *windows;
+  subtitle_clut_t        *cluts;
+  subtitle_object_t      *objects;
+  window_def_t           *windows;
+  presentation_segment_t *segments;
+
   int overlay_handles[MAX_OBJECTS];
 
   int64_t               pts;
 
 } spuhdmv_decoder_t;
-
-#define LIST_REPLACE_OLD(type, list, obj) \
-  do { \
-    /* insert to list */ \
-    obj->next = list; \
-    list = obj; \
-\
-    /* remove old */ \
-    type *i = list; \
-    while (i->next && i->next->id != obj->id) \
-      i = i->next; \
-    if (i->next) { \
-      void *tmp = (void*)i->next; \
-      i->next = i->next->next; \
-      free(tmp); \
-    } \
-  } while (0);
-
-#define LIST_REPLACE(list, obj)			\
-  do {						\
-    uint id = obj->id;				\
-						\
-    /* insert to list */			\
-    obj->next = list;				\
-    list = obj;					\
-						\
-    /* remove old */				\
-    while (obj->next && obj->next->id != id)	\
-      obj = obj->next;				\
-    if (obj->next) {				\
-      void *tmp = (void*)obj->next;		\
-      obj->next = obj->next->next;		\
-      free(tmp);				\
-    }						\
-  } while (0);
-
-#define LIST_DESTROY(list)     \
-  while (list) {	       \
-    void *tmp = (void*)list;   \
-    list = list->next;	       \
-    free (tmp);		       \
-  }
 
 static int decode_palette(spuhdmv_decoder_t *this)
 {
@@ -566,7 +627,7 @@ static int decode_palette(spuhdmv_decoder_t *this)
   if (!clut)
     return 1;
 
-  LIST_REPLACE (this->cluts, clut);
+  LIST_REPLACE (this->cluts, clut, free);
 
   return 0;
 }
@@ -578,7 +639,7 @@ static int decode_object(spuhdmv_decoder_t *this)
   if (!obj)
     return 1;
 
-  LIST_REPLACE (this->objects, obj);
+  LIST_REPLACE (this->objects, obj, free_subtitle_object);
 
   return 0;
 }
@@ -590,13 +651,30 @@ static int decode_window_definition(spuhdmv_decoder_t *this)
   if (!wnd)
     return 1;
 
-  LIST_REPLACE (this->windows, wnd);
+  LIST_REPLACE (this->windows, wnd, free);
+
+  return 0;
+}
+
+static int decode_presentation_segment(spuhdmv_decoder_t *this)
+{
+  /* decode */
+  presentation_segment_t *seg = segbuf_decode_presentation_segment(this->buf);
+  if (!seg)
+    return 1;
+
+  seg->pts = this->pts;
+
+  /* replace */
+  if (this->segments)
+    LIST_DESTROY(this->segments, free_presentation_segment);
+  this->segments = seg;
 
   return 0;
 }
 
 static int show_overlay(spuhdmv_decoder_t *this, composition_object_t *cobj, uint palette_id_ref,
-			int overlay_index, int64_t pts)
+			int overlay_index, int64_t pts, int force_update)
 {
   video_overlay_manager_t *ovl_manager = this->stream->video_out->get_overlay_manager(this->stream->video_out);
   metronom_t              *metronom    = this->stream->metronom;
@@ -608,21 +686,16 @@ static int show_overlay(spuhdmv_decoder_t *this, composition_object_t *cobj, uin
   while (clut && clut->id != palette_id_ref)
     clut = clut->next;
   if (!clut) {
-    ERROR("  fill_overlay: clut %d not found !\n", palette_id_ref);
+    TRACE("  show_overlay: clut %d not found !\n", palette_id_ref);
     return -1;
   }
-
-  /* copy palette to xine overlay */
-  overlay.rgb_clut = 0;
-  memcpy(overlay.color, clut->color, sizeof(uint32_t) * 256);
-  memcpy(overlay.trans, clut->trans, sizeof(uint8_t)  * 256);
 
   /* find RLE image */
   subtitle_object_t *obj = this->objects;
   while (obj && obj->id != cobj->object_id_ref)
     obj = obj->next;
   if (!obj) {
-    ERROR("  fill_overlay: object %d not found !\n", cobj->object_id_ref);
+    TRACE("  show_overlay: object %d not found !\n", cobj->object_id_ref);
     return -1;
   }
 
@@ -631,9 +704,19 @@ static int show_overlay(spuhdmv_decoder_t *this, composition_object_t *cobj, uin
   while (wnd && wnd->id != cobj->window_id_ref)
     wnd = wnd->next;
   if (!wnd) {
-    ERROR("  fill_overlay: window %d not found !\n", cobj->window_id_ref);
+    TRACE("  show_overlay: window %d not found !\n", cobj->window_id_ref);
     return -1;
   }
+
+  /* do not show again if all elements are unchanged */
+  if (!force_update && clut->shown && obj->shown && wnd->shown && cobj->shown)
+    return 0;
+  clut->shown = obj->shown = wnd->shown = cobj->shown = 1;
+
+  /* copy palette to xine overlay */
+  overlay.rgb_clut = 0;
+  memcpy(overlay.color, clut->color, sizeof(uint32_t) * 256);
+  memcpy(overlay.trans, clut->trans, sizeof(uint8_t)  * 256);
 
   /* copy and crop RLE image to xine overlay */
   overlay.width     = obj->width;
@@ -680,39 +763,7 @@ static int show_overlay(spuhdmv_decoder_t *this, composition_object_t *cobj, uin
 
   ovl_manager->add_event (ovl_manager, (void *)&event);
 
-  obj->rle = NULL;
-
   return 0;
-}
-
-typedef struct presentation_segment_s presentation_segment_t;
-struct presentation_segment_s {
-  composition_descriptor_t comp_descr;
-
-  uint8_t palette_update_flag;
-  uint8_t palette_id_ref;
-  uint8_t object_number;
-
-  composition_object_t *comp_objs;
-
-  presentation_segment_t *next;
-
-  int64_t pts;
-};
-
-static void show_overlays(spuhdmv_decoder_t *this, presentation_segment_t *pseg)
-{
-  composition_object_t *cobj = pseg->comp_objs;
-  int i;
-
-  for (i = 0; i < pseg->object_number; i++) {
-    if (!cobj) {
-      ERROR("show_overlays: composition object %d missing !\n", i);
-    } else {
-      show_overlay(this, cobj, pseg->palette_id_ref, i, pseg->pts);
-      cobj = cobj->next;
-    }
-  }
 }
 
 static void hide_overlays(spuhdmv_decoder_t *this, int64_t pts)
@@ -740,38 +791,46 @@ static void hide_overlays(spuhdmv_decoder_t *this, int64_t pts)
   }
 }
 
-static int decode_presentation_segment(spuhdmv_decoder_t *this)
+static void update_overlays(spuhdmv_decoder_t *this)
 {
-  presentation_segment_t p     = {};
-  segment_buffer_t      *buf   = this->buf;
-  int                    index;
+  presentation_segment_t *pseg = this->segments;
 
-  segbuf_decode_video_descriptor (this->buf);
-  segbuf_decode_composition_descriptor (this->buf, &p.comp_descr);
+  while (pseg) {
 
-  p.palette_update_flag  = !!((segbuf_get_u8(buf)) & 0x80);
-  p.palette_id_ref       = segbuf_get_u8 (buf);
-  p.object_number        = segbuf_get_u8 (buf);
+    if (!pseg->comp_descr.state) {
 
-  TRACE("  presentation_segment: object_number %d, palette %d\n",
-        p.object_number, p.palette_id_ref);
+      /* HIDE */
+      if (!pseg->shown)
+        hide_overlays (this, pseg->pts);
 
-  p.pts = this->pts; /* !! todo - use it ? */
+    } else {
 
-  for (index = 0; index < p.object_number; index++) {
-    composition_object_t *cobj = segbuf_decode_composition_object (this->buf);
-    cobj->next = p.comp_objs;
-    p.comp_objs = cobj;
+      /* SHOW */
+      composition_object_t *cobj = pseg->comp_objs;
+      int i;
+
+      for (i = 0; i < pseg->object_number; i++) {
+        if (!cobj) {
+          ERROR("show_overlays: composition object %d missing !\n", i);
+        } else {
+          show_overlay(this, cobj, pseg->palette_id_ref, i, pseg->pts, !pseg->shown);
+          cobj = cobj->next;
+        }
+      }
+    }
+
+    pseg->shown = 1;
+
+    pseg = pseg->next;
   }
+}
 
-  if (!p.comp_descr.state) {
-    hide_overlays (this, this->pts);
-  } else {
-    show_overlays (this, &p);
-    LIST_DESTROY (p.comp_objs);
-  }
-
-  return buf->error;
+static void free_objs(spuhdmv_decoder_t *this)
+{
+  LIST_DESTROY (this->cluts,    free);
+  LIST_DESTROY (this->objects,  free_subtitle_object);
+  LIST_DESTROY (this->windows,  free);
+  LIST_DESTROY (this->segments, free_presentation_segment);
 }
 
 static void decode_segment(spuhdmv_decoder_t *this)
@@ -801,13 +860,8 @@ static void decode_segment(spuhdmv_decoder_t *this)
     break;
   case 0x80:
     TRACE("  segment: END OF DISPLAY\n");
-    {
-      int64_t pts = xine_get_current_vpts(this->stream) -
-        this->stream->metronom->get_option(this->stream->metronom,
-                                           METRONOM_VPTS_OFFSET);
-      TRACE(" * current pts = %ld\n", pts);
-    }
-
+    /* drop all cached objects */
+    free_objs(this);
     break;
   default:
     ERROR("  segment type 0x%x unknown, skipping\n", this->buf->segment_type);
@@ -816,11 +870,13 @@ static void decode_segment(spuhdmv_decoder_t *this)
   if (this->buf->error) {
     ERROR("*** DECODE ERROR ***\n");
   }
+
+  update_overlays (this);
 }
 
 static void close_osd(spuhdmv_decoder_t *this)
 {
-  video_overlay_manager_t  *ovl_manager = this->stream->video_out->get_overlay_manager (this->stream->video_out);
+  video_overlay_manager_t *ovl_manager = this->stream->video_out->get_overlay_manager (this->stream->video_out);
 
   int i = 0;
   while (this->overlay_handles[i] >= 0) {
@@ -865,9 +921,7 @@ static void spudec_reset (spu_decoder_t * this_gen)
   if (this->buf)
     segbuf_reset(this->buf);
 
-  LIST_DESTROY (this->cluts);
-  LIST_DESTROY (this->objects);
-  LIST_DESTROY (this->windows);
+  free_objs(this);
 
   close_osd(this);
 }
@@ -886,9 +940,7 @@ static void spudec_dispose (spu_decoder_t *this_gen)
   close_osd (this);
   segbuf_dispose (this->buf);
 
-  LIST_DESTROY (this->cluts);
-  LIST_DESTROY (this->objects);
-  LIST_DESTROY (this->windows);
+  free_objs(this);
 
   free (this);
 }

@@ -42,6 +42,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
 
 #define LOG_MODULE "demux_real"
 #define LOG_VERBOSE

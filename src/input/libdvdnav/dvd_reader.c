@@ -30,7 +30,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#ifdef HAVE_DIRENT_H
 #include <dirent.h>
+#endif
 
 #ifndef HAVE_GETTIMEOFDAY
 #  ifdef WIN32
