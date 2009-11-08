@@ -198,6 +198,7 @@ int _x_parse_url (char *url, char **proto, char** host, int *port,
 	  } else
 	    *it = start[i];
 	}
+	*it = '\0';
       }
     }
   } else {
