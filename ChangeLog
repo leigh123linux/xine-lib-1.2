@@ -25,6 +25,7 @@ xine-lib (1.1.17) 2009-??-??
   * The XML parser & lexer code now has re-entrancy.
   * Fixed a bug which prevented "dvb://" (no channel specified) working with
     the default configuration.
+  * Handle VC1 extradata requirement (should fix playback).
 
 xine-lib (1.1.16.3) 2009-04-03
   * Security fixes:
