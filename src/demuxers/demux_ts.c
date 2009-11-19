@@ -268,7 +268,7 @@ typedef struct {
 } demux_ts_media;
 
 /* DVBSUB */
-#define MAX_SPU_LANGS 16
+#define MAX_SPU_LANGS 32
 
 typedef struct {
   spu_dvb_descriptor_t desc;
@@ -277,7 +277,7 @@ typedef struct {
 } demux_ts_spu_lang;
   
 /* Audio Channels */
-#define MAX_AUDIO_TRACKS 16
+#define MAX_AUDIO_TRACKS 32
 
 typedef struct {
     int pid;
