@@ -267,7 +267,7 @@
      a deep copy of the frame, because the decoder might still use the frame as
      a reference frame for future decoding. The usual procedure is:
      <programlisting>
-&nbsp;&nbsp;&nbsp;modified_frame = port-&gt;original_port-&gt;get_frame(port->original_port, ...);
+&nbsp;&nbsp;&nbsp;modified_frame = port-&gt;original_port-&gt;get_frame(port-&gt;original_port, &hellip;);
 &nbsp;&nbsp;&nbsp;_x_post_frame_copy_down(frame, modified_frame);
 &nbsp;&nbsp;&nbsp;copy_and_modify(frame, modified_frame);
 &nbsp;&nbsp;&nbsp;skip = modified_frame-&gt;draw(modified_frame, stream);

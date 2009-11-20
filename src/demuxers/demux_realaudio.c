@@ -202,11 +202,19 @@ static int open_ra_file(demux_ra_t *this) {
     this->h           = _X_BE_16 (this->header+40);
     this->cfs         = _X_BE_32 (this->header+24);
 
-    this->frame_len = this->w * this->h;
-    this->frame_size = this->frame_len * sps;
-
-    this->frame_buffer = calloc(this->frame_size, 1);
-    _x_assert(this->frame_buffer != NULL);
+    if (this->w < 0x8000 && this->h < 0x8000) {
+      uint64_t fs;
+      this->frame_len = this->w * this->h;
+      fs = (uint64_t) this->frame_len * sps;
+      if (fs < 0x80000000) {
+        this->frame_size = fs;
+        this->frame_buffer = calloc(this->frame_size, 1);
+      }
+    }
+    if (! this->frame_buffer) {
+      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_realaudio: malloc failed\n");
+      return 0;
+    }
 
     if (this->audio_type == BUF_AUDIO_28_8 || this->audio_type == BUF_AUDIO_SIPRO)
       this->block_align = this->cfs;

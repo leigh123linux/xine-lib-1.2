@@ -22,7 +22,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #include <unistd.h>
@@ -255,7 +255,7 @@ static int rtsp_get_answers(rtsp_t *s) {
         }
       } else
       {
-        lprintf("setting session id to: %s\n", buf);
+        lprintf("setting session id to: %s\n", tmp);
 
         s->session=strdup(tmp);
       }

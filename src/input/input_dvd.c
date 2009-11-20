@@ -53,7 +53,9 @@
 #include <dlfcn.h>
 
 #ifndef WIN32
+#if ! defined(__GNU__)
 #include <sys/mount.h>
+#endif
 #include <sys/wait.h>
 
 #include <sys/poll.h>
@@ -115,6 +117,9 @@
 /* There really isn't a default on Windows! */
 #define DVD_PATH "d:\\"
 #define RDVD_PATH "d:\\"
+#elif defined(__OpenBSD__)
+#define DVD_PATH "/dev/rcd0c"
+#define RDVD_PATH "/dev/rcd0c"
 #else
 #define DVD_PATH "/dev/dvd"
 #define RDVD_PATH "/dev/rdvd"
@@ -849,6 +854,9 @@ static buf_element_t *dvd_plugin_read_block (input_plugin_t *this_gen,
 
 static off_t dvd_plugin_read (input_plugin_t *this_gen, char *ch_buf, off_t len) {
 /*  dvd_input_plugin_t *this = (dvd_input_plugin_t*)this_gen; */
+
+  if (len < 4)
+    return -1;
 
   /* FIXME: Tricking the demux_mpeg_block plugin */
   ch_buf[0] = 0;

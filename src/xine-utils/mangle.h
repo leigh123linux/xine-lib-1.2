@@ -29,6 +29,10 @@
 #ifndef _XINE_MANGLE_H
 #define _XINE_MANGLE_H
 
+#if defined(PIC) && ! defined(__PIC__)
+#define __PIC__
+#endif
+
 // Use rip-relative addressing if compiling PIC code on x86-64.
 #if defined(__MINGW32__) || defined(__CYGWIN__) || defined(__DJGPP__) || \
     defined(__OS2__) || (defined (__OpenBSD__) && !defined(__ELF__))

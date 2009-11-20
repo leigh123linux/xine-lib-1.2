@@ -45,7 +45,8 @@ static void xxmc_frame_updates(xxmc_driver_t *driver, xxmc_frame_t *frame,
 static void dispose_ximage (xxmc_driver_t *this, XShmSegmentInfo *shminfo,
 			    XvImage *myimage);
 
-static const char *const prefer_types[] = VIDEO_DEVICE_XV_PREFER_TYPES;
+VIDEO_DEVICE_XV_DECL_BICUBIC_TYPES;
+VIDEO_DEVICE_XV_DECL_PREFER_TYPES;
 
 /*
  * Acceleration level priority. Static for now. It may well turn out that IDCT
@@ -2129,36 +2130,32 @@ static void xxmc_check_capability (xxmc_driver_t *this,
     this->props[property].value  = int_default;
 }
 
-static void xxmc_update_XV_FILTER(void *this_gen, xine_cfg_entry_t *entry) {
+static void xxmc_update_attr (void *this_gen, xine_cfg_entry_t *entry,
+			    const char *atomstr, const char *debugstr)
+{
   xxmc_driver_t *this = (xxmc_driver_t *) this_gen;
   Atom atom;
-  int xv_filter;
-
-  xv_filter = entry->num_value;
 
   XLockDisplay(this->display);
-  atom = XInternAtom (this->display, "XV_FILTER", False);
-  XvSetPortAttribute (this->display, this->xv_port, atom, xv_filter);
+  atom = XInternAtom (this->display, atomstr, False);
+  XvSetPortAttribute (this->display, this->xv_port, atom, entry->num_value);
   XUnlockDisplay(this->display);
 
   xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-	  "video_out_xxmc: bilinear scaling mode (XV_FILTER) = %d\n",xv_filter);
+	  LOG_MODULE ": %s = %d\n", debugstr, entry->num_value);
+}
+
+static void xxmc_update_XV_FILTER(void *this_gen, xine_cfg_entry_t *entry) {
+  xxmc_update_attr (this_gen, entry, "XV_FILTER", "bilinear scaling mode");
 }
 
 static void xxmc_update_XV_DOUBLE_BUFFER(void *this_gen, xine_cfg_entry_t *entry) {
-  xxmc_driver_t *this = (xxmc_driver_t *) this_gen;
-  Atom         atom;
-  int          xv_double_buffer;
+  xxmc_update_attr (this_gen, entry, "XV_DOUBLE_BUFFER", "double buffering mode");
+}
 
-  xv_double_buffer = entry->num_value;
-
-  XLockDisplay(this->display);
-  atom = XInternAtom (this->display, "XV_DOUBLE_BUFFER", False);
-  XvSetPortAttribute (this->display, this->xv_port, atom, xv_double_buffer);
-  XUnlockDisplay(this->display);
-
-  xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-	  "video_out_xxmc: double buffering mode = %d\n", xv_double_buffer);
+static void xxmc_update_XV_BICUBIC(void *this_gen, xine_cfg_entry_t *entry)
+{
+  xxmc_update_attr (this_gen, entry, "XV_BICUBIC", "bicubic filtering mode");
 }
 
 static void xxmc_update_xv_pitch_alignment(void *this_gen, xine_cfg_entry_t *entry) {
@@ -2231,7 +2228,7 @@ static XvPortID xxmc_autodetect_port(xxmc_driver_t *this,
   for (an = 0; an < adaptors; an++)
     if (adaptor_info[an].type & XvImageMask &&
         (prefer_type == xv_prefer_none ||
-         strcasestr (adaptor_info[an].name, prefer_types[prefer_type])))
+         strcasestr (adaptor_info[an].name, prefer_substrings[prefer_type])))
       for (j = 0; j < adaptor_info[an].num_ports; j++) {
 	XvPortID port = adaptor_info[an].base_id + j;
 	if (port >= base && xxmc_open_port(this, port)) {
@@ -2451,7 +2448,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 				  VIDEO_DEVICE_XV_PORT_HELP,
 				  20, NULL, NULL);
   prefer_type = config->register_enum (config, "video.device.xv_preferred_method", 0,
-				       prefer_types, VIDEO_DEVICE_XV_PREFER_TYPE_HELP,
+				       prefer_labels, VIDEO_DEVICE_XV_PREFER_TYPE_HELP,
 				       10, NULL, NULL);
 
   if (xv_port != 0) {
@@ -2466,7 +2463,13 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   if (!xv_port)
     xv_port = xxmc_autodetect_port(this, adaptors, adaptor_info, &adaptor_num, 0, prefer_type);
   if (!xv_port)
+  {
+    if (prefer_type)
+      xprintf(class->xine, XINE_VERBOSITY_NONE,
+	      _("%s: no available ports of type \"%s\", defaulting...\n"),
+	      LOG_MODULE, prefer_labels[prefer_type]);
     xv_port = xxmc_autodetect_port(this, adaptors, adaptor_info, &adaptor_num, 0, xv_prefer_none);
+  }
 
   if (!xv_port) {
     xprintf(class->xine, XINE_VERBOSITY_LOG,
@@ -2602,6 +2605,12 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 				   VIDEO_DEVICE_XV_DOUBLE_BUFFER_HELP,
 				   20, xxmc_update_XV_DOUBLE_BUFFER, this);
 	  config->update_num(config,"video.device.xv_double_buffer",xv_double_buffer);
+	} else if(!strcmp(name, "XV_BICUBIC")) {
+	  int xv_bicubic =
+	    config->register_enum (config, "video.device.xv_bicubic", 2,
+				   bicubic_types, VIDEO_DEVICE_XV_BICUBIC_HELP,
+				   20, xxmc_update_XV_BICUBIC, this);
+	  config->update_num(config,"video.device.xv_bicubic",xv_bicubic);
 	}
       }
     }

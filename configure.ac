@@ -19,7 +19,7 @@ XINE_MAJOR=1
 XINE_MINOR=1
 XINE_SUB=16
 dnl XINE_PATCH should be left empty or set to ".1" or ".2" or something similar
-XINE_PATCH=
+XINE_PATCH=.3
 dnl Release series number (usually $XINE_MAJOR.$XINE_MINOR)
 XINE_SERIES=1.1
 
@@ -54,9 +54,9 @@ dnl    are platform dependent
 dnl  * in Linux, the library will be named
 dnl    libname.so.(XINE_LT_CURRENT - XINE_LT_AGE).XINE_LT_AGE.XINE_LT_REVISION
 
-XINE_LT_CURRENT=26
-XINE_LT_REVISION=0
-XINE_LT_AGE=25
+XINE_LT_CURRENT=27
+XINE_LT_REVISION=1
+XINE_LT_AGE=26
 
 dnl for a release tarball do "rm .cvsversion" before "make dist"
 if test -f "${srcdir-.}/.cvsversion"; then
@@ -148,6 +148,12 @@ AC_PROG_LN_S
 AC_PROG_AWK
 AC_C_INLINE
 
+AC_PATH_PROG([PERL], [perl], [no])
+if test "$PERL" = no; then
+  AC_MSG_ERROR([perl not found])
+fi
+AC_SUBST([PERL])
+     
 AC_CHECK_TOOL([STRINGS], [strings], [false])
 
 dnl ---------------------------------------------
@@ -201,7 +207,7 @@ if test "x$enable_iconvtest" != xno; then
 fi
 
 AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION([0.16.1])
+AM_GNU_GETTEXT_VERSION([0.17])
 AC_PROG_GMSGFMT_PLURAL
 
 AC_CHECK_FUNCS([nl_langinfo])
@@ -239,11 +245,20 @@ AC_CHECK_DECL(sysi86,[
 
 AC_GETOPT_LONG
 
+
 dnl ---------------------------------------------
-dnl Windows ports checks
+dnl Windows & Hurd ports checks
 dnl ---------------------------------------------
+have_supported_dvb=yes
+SYS=other
+
 case "$host" in
+  *-gnu*.*)
+    have_supported_dvb=no
+    SYS=hurd
+    ;;
   *-*-mingw* | *-*-cygwin*)
+    have_supported_dvb=no
     dnl check if we are using the cygwin, mingw or cygwin with mno-cygwin mode
     dnl in which case we are actually dealing with a mingw32 compiler
     case "$host" in
@@ -263,6 +278,7 @@ case "$host" in
       WIN32_CPPFLAGS='-I$(top_srcdir)/win32/include'
       LIBS="-lwinmm -lwsock32 $LIBS"
       GOOM_LIBS="-liberty"
+      LDFLAGS="-Wl,--enable-stdcall-fixup $LDFLAGS"
     fi
     LDFLAGS="-no-undefined $LDFLAGS"
     ;;
@@ -270,6 +286,8 @@ esac
 AC_SUBST(GOOM_LIBS)
 AC_SUBST(WIN32_CPPFLAGS)
 AM_CONDITIONAL(WIN32, test "x$SYS" = "xmingw32")
+AM_CONDITIONAL([HURD], [test "x$SYS" = "xhurd"])
+AM_CONDITIONAL([DVB], [test "$have_supported_dvb" = "yes"])
 
 
 dnl ---------------------------------------------
@@ -316,6 +334,10 @@ dnl ---------------------------------------------
 
 AC_SUBST(LIBMPEG2_CFLAGS)
 
+AC_ARG_ENABLE([libmpeg2new],
+	AS_HELP_STRING([--enable-libmpeg2new], [build the newer MPEG2 decoder (buggy)]))
+AM_CONDITIONAL(ENABLE_MPEG2NEW, test "x$enable_libmpeg2new" = "xyes")
+
 AC_ARG_WITH([external-ffmpeg], AS_HELP_STRING([--with-external-ffmpeg], [use external ffmpeg library]))
 
 case "x$with_external_ffmpeg" in
@@ -342,6 +364,10 @@ if test "x$with_external_ffmpeg" != "xno"; then
    dnl Check presence of ffmpeg/avutil.h to see if it's old or new
    dnl style for headers. The new style would be preferred actually...
    AC_CHECK_HEADERS([ffmpeg/avutil.h])
+   AC_CHECK_HEADERS([libavutil/avutil.h])
+   if test "$ac_cv_header_ffmpeg_avutil_h" = "yes" && test "$ac_cv_header_libavutil_avutil_h" = "yes"; then
+     AC_MSG_ERROR([old & new ffmpeg headers found - you need to clean up!])
+   fi
    
    AC_MSG_RESULT([using external ffmpeg])
 else
@@ -729,7 +755,7 @@ if test "x$no_x" = "x" && test "x$enable_xvmc" != "xno"; then
 
 AC_ARG_WITH(xxmc-path, AS_HELP_STRING([--with-xxmc-path=path], [where libXvMC libraries for the
 	xxmc plugin are  installed. Defalts to the default X library path.]),
-	xxmc_path="$withval", xxmc_path="${x_libraries:-/usr/lib}")
+	xxmc_path="$withval", xxmc_path="$x_libraries")
 AC_ARG_WITH(xxmc-lib, AS_HELP_STRING([--with-xxmc-lib=XXXX], [The name of the XvMC library 
 	libXXXX.so for the xxmc plugin.]),xxmc_stub="$withval", 
 	xxmc_stub="XvMCW")
@@ -740,7 +766,7 @@ if test "x$x_includes" != "x"; then
 	CPPFLAGS="$CPPFLAGS -I$x_includes"
 fi
 
-XXMC_LIBS="-L$xxmc_path -l$xxmc_stub"
+XXMC_LIBS="${xxmc_path:+-L}$xxmc_path -l$xxmc_stub"
 AC_MSG_CHECKING(whether to enable the xxmc plugin with vld extensions)
 AC_MSG_RESULT()
 dnl Check if vld "extended" XvMC is available
@@ -749,7 +775,7 @@ if test "x$xxmc_stub" == "xXvMCW" && test "x$ac_have_xv" == "xyes"; then
              	     ac_have_xxmc="yes",
 	             [ac_have_xxmc="no"
               	        AC_MSG_RESULT([*** Could not link with -l$xxmc_stub for vld extensions.])],
-                     [-L$xxmc_path $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
+                     [${xxmc_path:+-L}$xxmc_path $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
 else
     if test "x$ac_have_xv" = "xyes"; then 
       AC_CHECK_LIB($xxmc_stub, XvMCPutSlice,
@@ -757,7 +783,7 @@ else
 	             XXMC_LIBS="$XXMC_LIBS -lXvMC"],
                    [ac_have_xxmc="no"
 		     AC_MSG_RESULT([*** Could not link with -l$xxmc_stub -lXvMC for vld extensions.])],
-                   [-L$xxmc_path -lXvMC $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
+                   [${xxmc_path:+-L}$xxmc_path -lXvMC $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
     else 
       ac_have_xxmc="no",
     fi  
@@ -779,7 +805,7 @@ if test "x$ac_have_xxmc" = "xno"; then
                ac_have_xxmc="yes",
 	       [ac_have_xxmc="no"
                 AC_MSG_RESULT([*** Could not link with -l$xxmc_stub for standard XvMC.])],
-               [-L$xxmc_path $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
+               [${xxmc_path:+-L}$xxmc_path $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
   else
       if test "x$ac_have_xv" = "xyes"; then 
         AC_CHECK_LIB($xxmc_stub, XvMCCreateContext,
@@ -787,7 +813,7 @@ if test "x$ac_have_xxmc" = "xno"; then
 		      XXMC_LIBS="$XXMC_LIBS -lXvMC"],
                      [ac_have_xxmc="no"
 		      AC_MSG_RESULT([*** Could not link with -lXvMC for standard XvMC.])],
-                     [-L$xxmc_path -lXvMC $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
+                     [${xxmc_path:+-L}$xxmc_path -lXvMC $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
       else 
         ac_have_xxmc="no",
       fi  
@@ -820,12 +846,12 @@ if test "x$no_x" = "x" && test "x$enable_xvmc" != "xno"; then
 
 AC_ARG_WITH(xvmc-path, AS_HELP_STRING([--with-xvmc-path=path], [where libXvMC libraries for the
 	xvmc plugin are  installed. Defalts to the default X library path.]),
-	xvmc_path="$withval", xvmc_path="${x_libraries:-/usr/lib}")
+	xvmc_path="$withval", xvmc_path="$x_libraries")
 AC_ARG_WITH(xvmc-lib, AS_HELP_STRING([--with-xvmc-lib=XXXX], [The name of the XvMC library 
 	libXXXX.so for the xvmc plugin.]),xvmc_stub="$withval", 
 	xvmc_stub="XvMCW")
 saved_libs="$LIBS"
-XVMC_LIBS="-L$xvmc_path -l$xvmc_stub"
+XVMC_LIBS="${xvmc_path:+-L}$xvmc_path -l$xvmc_stub"
 AC_MSG_CHECKING(whether to enable the xvmc plugin)
 AC_MSG_RESULT()
 if test "x$xvmc_stub" == "xXvMCW"; then
@@ -833,7 +859,7 @@ if test "x$xvmc_stub" == "xXvMCW"; then
              ac_have_xvmc="yes",
 	     [ac_have_xvmc="no"
               AC_MSG_RESULT([*** Could not link with -l$xvmc_stub.])],
-             [-L$xvmc_path $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
+             [${xvmc_path:+-L}$xvmc_path $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
 else
     if test "x$ac_have_xv" = "xyes"; then 
       AC_CHECK_LIB($xvmc_stub, XvMCCreateContext,
@@ -841,7 +867,7 @@ else
 		    XVMC_LIBS="$XVMC_LIBS -lXvMC"],
                    [ac_have_xvmc="no"
 		    AC_MSG_RESULT([*** Could not link with -lXvMC.])],
-                   [-L$xvmc_path -lXvMC $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
+                   [${xvmc_path:+-L}$xvmc_path -lXvMC $X_LIBS $X_PRE_LIBS $XV_LIBS -lXext $X_EXTRA_LIBS])
     else 
       ac_have_xvmc="no",
     fi  
@@ -965,7 +991,9 @@ AC_ARG_WITH([caca],
   AS_HELP_STRING([--without-caca], [Do not build CACA support]))
 
 if test "x$with_caca" != "xno"; then
-   PKG_CHECK_MODULES([CACA], [caca cucul], [have_caca="yes"], [have_caca="no"])
+   have_caca=yes
+   PKG_CHECK_MODULES([CACA], [caca >= 0.99beta14 cucul >= 0.99beta14 ],
+		     [], [AC_MSG_RESULT(no); have_caca="no"])
    if test "x$with_caca" = "xyes" && test "x$have_caca" = "xno"; then
       AC_MSG_ERROR([CACA support requested, but libcaca 0.99 not found])
    fi
@@ -1338,8 +1366,10 @@ AC_ARG_WITH([external-libmpcdec], AS_HELP_STRING([--with-external-libmpcdec], [U
 if test "x$enable_musepack" = "xno"; then
    AC_MSG_RESULT([musepack support disabled])
 elif test "x$with_external_libmpcdec" = "xyes"; then
-   AC_CHECK_LIB([mpcdec], [mpc_decoder_decode], [have_mpcdec=yes])
-   AC_CHECK_HEADERS([mpcdec/mpcdec.h], , [have_mpcdec=no])
+   AC_CHECK_LIB([mpcdec], [mpc_demux_decode], [have_mpcdec=yes],
+   [AC_CHECK_LIB([mpcdec], [mpc_decoder_decode], [have_mpcdec=yes])])
+   AC_CHECK_HEADERS([mpc/mpcdec.h], [],
+   [AC_CHECK_HEADERS([mpcdec/mpcdec.h], [], [have_mpcdec=no])])
    if test "x$have_mpcdec" != "xyes"; then
       AC_MSG_ERROR([Unable to find mpcdec])
    fi
@@ -1381,8 +1411,11 @@ AC_ARG_WITH([imagemagick],
 
 if test "x$with_imagemagick" != "xno"; then
    PKG_CHECK_MODULES([WAND], [Wand], [have_imagemagick=yes], [have_imagemagick=no])
+   if test "x$with_imagemagick" = 'xno'; then
+      PKG_CHECK_MODULES([WAND], [MagickWand], [have_imagemagick=yes], [have_imagemagick=no])
+   fi
    if test "x$with_imagemagick" = "xyes" && test "x$have_imagemagick" = "xno"; then
-      AC_MSG_ERROR([ImageMagick support requested, but Wand not found])
+      AC_MSG_ERROR([ImageMagick support requested, but neither Wand nor MagickWand were found])
    elif test "x$have_imagemagick" = "xyes"; then
       AC_DEFINE([HAVE_WAND], [1], [Define this if you have ImageMagick installed])
    fi
@@ -1555,6 +1588,28 @@ if test "x$with_jack" != "xno"; then
 fi
 
 AM_CONDITIONAL([HAVE_JACK], [test "x$have_jack" = "xyes"])
+
+
+dnl ---------------------------------------------
+dnl sndio support
+dnl ---------------------------------------------
+
+AC_ARG_WITH([sndio],
+	AS_HELP_STRING([--without-sndio], [Build without sndio support]))
+
+if test "x$with_sndio" != "xno"; then
+   AC_CHECK_LIB(sndio, sio_open, [SNDIO_LIBS=-lsndio; have_sndio=yes],
+     [have_sndio=no])
+
+   if test "x$with_sndio" = "xyes" && test "x$have_sndio" = "xno"; then
+      AC_MSG_ERROR([sndio support requested, but sndio not found])
+   fi
+fi
+
+AM_CONDITIONAL([HAVE_SNDIO], [test "x$have_sndio" = "xyes"])
+
+AC_SUBST([SNDIO_CFLAGS])
+AC_SUBST([SNDIO_LIBS])
 
 
 dnl ---------------------------------------------
@@ -2456,30 +2511,18 @@ XINE_REL_PLUGINDIR="$XINE_REL_PLUGINROOT.$XINE_LT_AGE"
 XINE_REL_FONTDIR="`makeexpand "$XINE_FONTDIR" | sed -e "s,^${prefix}/,,"`"
 XINE_REL_LOCALEDIR="`makeexpand "$XINE_LOCALEDIR" | sed -e "s,^${prefix}/,,"`"
 XINE_PKGCONFIG_DIR="`makeexpand "$pkgconfigdir"`"
+dnl platform specific runtime directories
 if test "x$SYS" = "xmingw32" -o "x$SYS" = "xcygwin"; then
-  dnl prefix in xine-config
-  XINE_CONFIG_PREFIX="\$(cd \$(dirname \$0)/..; pwd)"
-  dnl installation directories (in xine-config)
-  XINE_PLUGINROOTPATH="$XINE_CONFIG_PREFIX/$XINE_REL_PLUGINROOT"
-  XINE_PLUGINPATH="$XINE_PLUGINROOTPATH.$XINE_LT_AGE"
-  XINE_FONTPATH="$XINE_CONFIG_PREFIX/$XINE_REL_FONTDIR"
-  XINE_LOCALEPATH="$XINE_CONFIG_PREFIX/$XINE_REL_LOCALEDIR"
-  dnl runtime directories
   AC_DEFINE(XINE_PLUGINROOT,[xine_get_pluginroot()],[Define this to general plugins directory location])
   AC_DEFINE(XINE_PLUGINDIR,[xine_get_plugindir()],[Define this to specific plugins directory location])
   AC_DEFINE(XINE_FONTDIR,[xine_get_fontdir()],[Define this to osd fonts dir location])
   AC_DEFINE(XINE_LOCALEDIR,[xine_get_localedir()],[Path where catalog files will be.])
 else
-  dnl prefix in xine-config
-  XINE_CONFIG_PREFIX="`makeexpand "${prefix}"`"
-  dnl directories from xine-config and runtime directories
   XINE_PLUGINROOTPATH="`makeexpand "$XINE_PLUGINROOT"`"
-  XINE_PLUGINPATH="$XINE_PLUGINROOTPATH.$XINE_LT_AGE"
   XINE_FONTPATH="`makeexpand "$XINE_FONTDIR"`"
   XINE_LOCALEPATH="`makeexpand "$XINE_LOCALEDIR"`"
-  dnl defining runtime directories
   AC_DEFINE_UNQUOTED(XINE_PLUGINROOT,"$XINE_PLUGINROOTPATH",[Define this to general plugins directory location])
-  AC_DEFINE_UNQUOTED(XINE_PLUGINDIR,"$XINE_PLUGINPATH",[Define this to specific plugins directory location])
+  AC_DEFINE_UNQUOTED(XINE_PLUGINDIR,"$XINE_PLUGINROOTPATH.$XINE_LT_AGE",[Define this to specific plugins directory location])
   AC_DEFINE_UNQUOTED(XINE_FONTDIR,"$XINE_FONTPATH",[Define this to osd fonts dir location])
   AC_DEFINE_UNQUOTED(XINE_LOCALEDIR, "$XINE_LOCALEPATH",[Path where catalog files will be.])
 fi
@@ -2487,14 +2530,16 @@ AC_DEFINE_UNQUOTED(XINE_REL_PLUGINDIR,"$XINE_REL_PLUGINDIR",[Define this to spec
 AC_DEFINE_UNQUOTED(XINE_REL_PLUGINROOT,"$XINE_REL_PLUGINROOT",[Define this to general plugin directory relative to execution prefix])
 AC_DEFINE_UNQUOTED(XINE_REL_FONTDIR,"$XINE_REL_FONTDIR",[Define this to font directory relative to prefix])
 AC_DEFINE_UNQUOTED(XINE_REL_LOCALEDIR,"$XINE_REL_LOCALEDIR",[Define this to font directory relative to prefix])
-AC_SUBST(XINE_CONFIG_PREFIX)
-AC_SUBST(XINE_PLUGINPATH)
-AC_SUBST(XINE_FONTPATH)
-AC_SUBST(XINE_LOCALEPATH)
 AC_SUBST(XINE_PLUGINDIR)
 AC_SUBST(XINE_FONTDIR)
 AC_SUBST(XINE_LOCALEDIR)
 AC_SUBST(XINE_PKGCONFIG_DIR)
+
+LIBTOOL_DESTDIR_DEFAULT=
+if test "x$SYS" != "xmingw32" -a "x$SYS" != "xcygwin"; then
+  LIBTOOL_DESTDIR_DEFAULT=/
+fi
+AC_SUBST([LIBTOOL_DESTDIR_DEFAULT])
 
 dnl Where aclocal m4 files should be installed
 XINE_ACFLAGS="-I ${datarootdir}/aclocal"
@@ -2516,7 +2561,7 @@ dnl ---------------------------------------------
 
 XINE_BUILD_CC="`$CC -v 2>&1 | tail -1 2>/dev/null`"
 XINE_BUILD_OS="`uname -s -r -m`"
-XINE_BUILD_DATE="`date \"+%a %d %b %Y %T\"`"
+XINE_BUILD_DATE="`date "+%a %d %b %Y %T"`"
 AC_SUBST(XINE_BUILD_CC)
 AC_SUBST(XINE_BUILD_OS)
 AC_SUBST(XINE_BUILD_DATE)
@@ -2639,7 +2684,7 @@ dnl enough.
 CC_CHECK_CFLAGS_APPEND([-Wall -Wchar-subscripts dnl
 			-Wnested-externs -Wcast-align dnl
 			-Wmissing-declarations -Wmissing-prototypes dnl
-			-Wmissing-format-attribute])
+			-Wmissing-format-attribute -Wno-pointer-sign])
 
 CC_CHECK_CFLAGS_APPEND([-Wformat=2 -Wformat],
   [CC_CHECK_CFLAGS_APPEND([-Wno-format-zero-length])
@@ -2699,6 +2744,7 @@ include/xine.h
 lib/Makefile
 m4/Makefile
 misc/Makefile
+misc/Makefile.plugins
 misc/SlackBuild
 misc/build_rpms.sh
 misc/fonts/Makefile
@@ -2742,6 +2788,9 @@ src/libffmpeg/libavcodec/libpostproc/Makefile
 src/libffmpeg/libavutil/Makefile
 src/libmad/Makefile
 src/libmpeg2/Makefile
+src/libmpeg2new/Makefile
+src/libmpeg2new/libmpeg2/Makefile
+src/libmpeg2new/include/Makefile
 src/libmusepack/Makefile
 src/libmusepack/musepack/Makefile
 src/libvdpau/Makefile
@@ -2749,6 +2798,7 @@ src/libspudec/Makefile
 src/libspucc/Makefile
 src/libspucmml/Makefile
 src/libspudvb/Makefile
+src/libspuhdmv/Makefile
 src/libsputext/Makefile
 src/libw32dll/Makefile
 src/libw32dll/wine/Makefile
@@ -2822,7 +2872,9 @@ echo "   - file          - net"
 echo "   - stdin_fifo    - rtp"
 echo "   - http          - mms"
 echo "   - pnm           - rtsp"
-echo "   - dvb"
+if test "$have_supported_dvb" = yes; then
+  echo "   - dvb"
+fi
 if test "x$external_dvdnav" = "xyes"; then
   echo "   - dvd (external libs)"
 else
@@ -3174,6 +3226,9 @@ if test "x$have_pulseaudio" = "xyes"; then
 fi
 if test "x$have_jack" = "xyes"; then
   echo "   - Jack"
+fi
+if test "x$have_sndio" = "xyes"; then
+  echo "   - sndio"
 fi
 echo "---"
 

@@ -738,7 +738,10 @@ static void asf_send_buffer_nodefrag (demux_asf_t *this, asf_demux_stream_t *str
       bufsize = stream->fifo->buffer_pool_buf_size;
 
     buf = stream->fifo->buffer_pool_alloc (stream->fifo);
-    this->input->read (this->input, buf->content, bufsize);
+    if (this->input->read (this->input, buf->content, bufsize) != bufsize) {
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_asf: input buffer starved\n");
+      return ;
+    }
 
     lprintf ("data: %d %d %d %d\n", buf->content[0], buf->content[1], buf->content[2], buf->content[3]);
 
@@ -817,7 +820,10 @@ static void asf_send_buffer_defrag (demux_asf_t *this, asf_demux_stream_t *strea
   if( stream->frag_offset + frag_len > DEFRAG_BUFSIZE ) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_asf: buffer overflow on defrag!\n");
   } else {
-    this->input->read (this->input, &stream->buffer[stream->frag_offset], frag_len);
+    if (this->input->read (this->input, &stream->buffer[stream->frag_offset], frag_len) != frag_len) {
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_asf: input buffer starved\n");
+      return ;
+    }
     stream->frag_offset += frag_len;
   }
 
@@ -1538,6 +1544,7 @@ static int demux_asf_parse_asx_references( demux_asf_t *this) {
   int             buf_used = 0;
   int             len;
   xml_node_t     *xml_tree, *asx_entry, *asx_ref;
+  xml_parser_t   *xml_parser;
   int             result;
 
 
@@ -1560,9 +1567,13 @@ static int demux_asf_parse_asx_references( demux_asf_t *this) {
   if(buf_used)
     buf[buf_used] = '\0';
 
-  xml_parser_init(buf, buf_used, XML_PARSER_CASE_INSENSITIVE);
-  if((result = xml_parser_build_tree(&xml_tree)) != XML_PARSER_OK)
+  xml_parser = xml_parser_init_r(buf, buf_used, XML_PARSER_CASE_INSENSITIVE);
+  if((result = xml_parser_build_tree_r(xml_parser, &xml_tree)) != XML_PARSER_OK) {
+    xml_parser_finalize_r(xml_parser);
     goto failure;
+  }
+
+  xml_parser_finalize_r(xml_parser);
 
   if(!strcasecmp(xml_tree->name, "ASX")) {
     /* Attributes: VERSION, PREVIEWMODE, BANNERBAR

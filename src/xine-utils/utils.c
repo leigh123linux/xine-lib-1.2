@@ -564,7 +564,7 @@ char *xine_get_system_encoding(void) {
   char *codeset = NULL;
   
 #ifdef HAVE_NL_LANGINFO
-  setlocale(LC_ALL, "");
+  setlocale(LC_CTYPE, "");
   codeset = nl_langinfo(CODESET);
 #endif
   /*

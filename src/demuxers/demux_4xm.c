@@ -190,8 +190,12 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
         return 0;
       }
       const uint32_t current_track = _X_LE_32(&header[i + 8]);
-      if (current_track + 1 > fourxm->track_count) {
+      if (current_track >= fourxm->track_count) {
         fourxm->track_count = current_track + 1;
+        if (!fourxm->track_count || fourxm->track_count >= UINT_MAX / sizeof(audio_track_t)) {
+          free(header);
+          return 0;
+        }
         fourxm->tracks = realloc(fourxm->tracks,
           fourxm->track_count * sizeof(audio_track_t));
         if (!fourxm->tracks) {

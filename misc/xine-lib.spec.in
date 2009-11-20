@@ -79,8 +79,8 @@ Version:        %{version}
 Release:        %{release}
 License:        GPL
 Group:          Development/Libraries
-URL:            http://xinehq.de
-Source:         http://xinehq.de/files/@PACKAGE@-@VERSION@.tar.bz2
+URL:            http://www.xine-project.org
+Source:         http://prdownloads.sourceforge.net/xine/@PACKAGE@-@VERSION@.tar.bz2
 Packager:       Manfred Tremmel <Manfred.Tremmel@iiv.de>
 Obsoletes:      xine
 Obsoletes:      xine-lib

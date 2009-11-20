@@ -3,7 +3,7 @@ Section: libs
 Priority: optional
 Maintainer: xine Developers <xine-devel@lists.sourceforge.net>
 Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
-	automake1.9, autoconf, libtool,
+	automake1.9, autoconf, libtool, cvs,
 	libavcodec-dev (>= 0.cvs20070307-3) | libavcodeccvs-dev,
 	libavutil-dev (>= 0.cvs20070307-3) | libavutilcvs-dev,
 	libavformat-dev (>= 0.cvs20070307-3) | libavformatcvs-dev,

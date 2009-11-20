@@ -85,6 +85,8 @@ static off_t stdin_plugin_read (input_plugin_t *this_gen,
   off_t n, total;
 
   lprintf ("reading %"PRId64" bytes...\n", len);
+  if (len < 0)
+    return -1;
 
   total=0;
   if (this->curpos < this->preview_size) {
@@ -121,6 +123,13 @@ static buf_element_t *stdin_plugin_read_block (input_plugin_t *this_gen, fifo_bu
   /* stdin_input_plugin_t  *this = (stdin_input_plugin_t *) this_gen; */
   buf_element_t         *buf = fifo->buffer_pool_alloc (fifo);
 
+  if (todo > buf->max_size)
+    todo = buf->max_size;
+  if (todo < 0) {
+    buf->free_buffer (buf);
+    return NULL;
+  }
+
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
 
@@ -146,7 +155,7 @@ static off_t stdin_plugin_seek (input_plugin_t *this_gen, off_t offset, int orig
   if ((origin == SEEK_CUR) && (offset >= 0)) {
 
     for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-      if( !this_gen->read (this_gen, this->seek_buf, BUFSIZE) )
+      if( this_gen->read (this_gen, this->seek_buf, BUFSIZE) <= 0 )
         return this->curpos;
     }
 
@@ -168,7 +177,7 @@ static off_t stdin_plugin_seek (input_plugin_t *this_gen, off_t offset, int orig
       offset -= this->curpos;
 
       for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-        if( !this_gen->read (this_gen, this->seek_buf, BUFSIZE) )
+        if( this_gen->read (this_gen, this->seek_buf, BUFSIZE) <= 0 )
           return this->curpos;
       }
 
@@ -270,6 +279,8 @@ static int stdin_plugin_open (input_plugin_t *this_gen ) {
 
   this->preview_size = stdin_plugin_read (&this->input_plugin, this->preview,
 					  MAX_PREVIEW_SIZE);
+  if (this->preview_size < 0)
+    this->preview_size = 0;
   this->curpos          = 0;
 
   return 1;

@@ -1,4 +1,80 @@
-xine-lib (1.1.16) 2008-??-??
+xine-lib (1.1.17) 2009-??-??
+  * Add support for Matroska SIMPLEBLOCK.
+  * Add support for sndio (OpenBSD sound API).
+  * Correct invalid MIME info in the MOD demuxer.
+  * Fix a resource leak in libdvdnav.
+  * Properly NUL-terminate when reading ID3v2.2 tag content.
+  * Fix handling of the length of UTF-16 content sourced from, e.g., ID3 tags.
+  * Make ~/.xine/catalog.cache writing safer: write a new file & atomically
+    replace the old one.
+  * Initial parsing of Xing header LAME extension.
+  * Fixes for gapless playback.
+  * Added padding delay to the first and last frames (MPEG audio).
+  * Fixed buggy discontinuity handling when playing short streams and using the gapless switch. The current time should not be used here.
+  * Added audio padding handling. (New buffer flag for this.)
+  * Fix seeking in large raw DV files.
+  * Ported to new libmpcdec API (retaining build compat. with the old API).
+  * Cope with CDDB return code 211 (multiple entries).
+  * Allow reading of non-block-sized chunks from audio CDs.
+  * Add a user agent & protocol hack ("qthttp://...") to allow direct
+    viewing of Apple film trailers.
+  * Fixed int-to-float conversion in the JACK output plugin.
+  * Work around MOD files with reported length == 0.
+  * Reworked Matroska demuxer. Now reads files created by mkvmerge 2.7.0.
+  * Support BluRay/HDMV streams & subtitles.
+  * The XML parser & lexer code now has re-entrancy.
+  * Fixed a bug which prevented "dvb://" (no channel specified) working with
+    the default configuration.
+  * Handle VC1 extradata requirement (should fix playback).
+
+xine-lib (1.1.16.3) 2009-04-03
+  * Security fixes:
+    - Fix another possible int overflow in the 4XM demuxer.
+      (ref. TKADV2009-004, CVE-2009-0698)
+    - Fix an integer overflow in the Quicktime demuxer.
+      (TKADV2009-005, CVE-2009-1274)
+  * Enable libmpeg2new (if configured with --enable-libmpeg2new).
+    This is not yet production code; the old mpeg2 decoder remains the default.
+  * Add support for OpenBSD.
+  * Fix a build failure on *BSD due to some rather useful GNUisms.
+  * Protect audio loop so it cannot write to a paused device (fix
+    pause/resume freeze with pulseaudio).
+  * Fix build with libavutil >= 50.0.0.
+  * Fix segfaults when playing VCDs.
+  * Fix calculation of frame duration for ffmpeg-decoded formats.
+  * Don't assume that ID3v2 tags with no content mean "end of ID3 data".
+
+xine-lib (1.1.16.2) 2009-02-10
+  * Build fixes related to ImageMagick 6.4 & later.
+  * Fix an error in Matroska PTS calculation.
+  * Some front ends hang due to the hang fixes in 1.1.16. Fix this by
+    removing a break statement.
+  * Fix broken size checks in various input plugins (ref. CVE-2008-5239).
+  * More malloc checking (ref. CVE-2008-5240).
+  * Fix race conditions in gapless_switch (ref. kde bug #180339)
+  * Fix a possible integer overflow in the 4XM demuxer.
+    (TKADV2009-004, CVE-2009-0698)
+
+xine-lib (1.1.16.1) 2009-01-11
+  * Fix build with older ffmpeg, both internal and in Debian 5.0.
+  * Add version check for CACA library and disable CACA plugin if needed
+  * Fix playback of some H.264 files (broken in 1.1.16).
+  * Various other build & bug fixes.
+  * Some FAQ list updates.
+
+xine-lib (1.1.16) 2009-01-07
+  * Security fixes:
+    - Heap overflow in Quicktime atom parsing.                 (CVE-2008-5234)
+    - Multiple buffer overflows.                               (CVE-2008-5236)
+    - Multiple integer overflows.                              (CVE-2008-5237)
+    - Unchecked or incompletely-checked read function results. (CVE-2008-5239)
+    - Unchecked malloc using untrusted values.  (CVE-2008-5240, CVE-2008-5242)
+    - Integer underflow in qt compressed atom handling.        (CVE-2008-5241)
+    - Buffer indexing using untrusted or unchecked values.     (CVE-2008-5243)
+    - Integer overflows in the ffmpeg audio decoder and the CDDA server.
+    - Heap buffer overflow in the ffmpeg video decoder.
+    - Avoid segfault on invalid track type in Matroska files.
+    - Avoid underflow (compressed atoms) in the Qt demuxer.
   * Fix reported compilation failures (with C++ programs).
   * Fix CDDB access in 64-bit builds.
   * Fix seeking FLV clips that don't specify the movie length in the headers.
@@ -9,6 +85,17 @@ xine-lib (1.1.16) 2008-??-??
   * Correct AAC channel ordering for multi-channel audio, at least for FLAC
     when using ALSA or PulseAudio. (Needs a proper fix.)
   * Add position-based seeking independent from seekpoints.
+  * Fix some XCB Xv attribute configuration breakage.
+  * Add a configuration option for Xv bicubic filtering, implemented in
+    xf86-video-ati 6.9.1.
+  * Recognise Xv "blitter" adaptors for port selection purposes.
+    NOTE: you will need to remove ~/.xine/catalog.cache when upgrading from
+          xine-lib 1.1.15 or older if you wish to use this extra option.
+  * Fix MMS media requests where the URI contains %-encoded characters.
+  * Fix two hangs related to stopping playback of broken audio streams where
+    no audio data is sent to the output thread.
+  * Fix WAV demuxer to send the last frames when they don't fit perfectly into
+    the buffer
 
 xine-lib (1.1.15) 2008-08-14
   * Security fixes:
@@ -16,10 +103,16 @@ xine-lib (1.1.15) 2008-08-14
       (CVE-2008-3231)
       This includes a libfaad update from the 1.2 branch.
     - Delay V4L video frame preallocation until we know how large they'll be.
+      (CVE-2008-5245)
     - Fix an exploitable ID3 heap buffer overflow.
+      (CVE-2008-5234, vector 2)
     - Check for possible buffer overflow attempts in the Real demuxer.
+      (CVE-2008-5235)
     - Use size_t for data length variables where there may be int overflows.
     - Add some checks for memory allocation failures.
+      (CVE-2008-5233)
+    - Fix crashes with MP3 files with metadata consisting only of separators.
+      (CVE-2008-5248)
   * Use external ffmpeg and libfaad by default.
   * V4L: Don't segfault if asked for an input that doesn't exist.
   * Recognise AMR audio (normally found in 3GP files).
@@ -29,7 +122,6 @@ xine-lib (1.1.15) 2008-08-14
     others, there would be no problem.
   * V4L: only try and set the tuner if we're going to use it. Setting the tuner
     when using baseband video (CVBS, S-Video) breaks the input.
-  * Fix crashes with MP3 files with metadata consisting only of separators.
 
 xine-lib (1.1.14) 2008-06-29
   * DVB changes:

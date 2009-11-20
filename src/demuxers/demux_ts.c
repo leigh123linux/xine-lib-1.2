@@ -33,6 +33,11 @@
  * Date        Author
  * ----        ------
  *
+ *  8-Apr-2009 Petri Hintukainen <phi@sdf-eu.org>
+ *                  - support for 192-byte packets (HDMV/BluRay)
+ *                  - support for audio inside PES PID 0xfd (HDMV/BluRay)
+ *                  - demux HDMV/BluRay bitmap subtitles
+ *
  * 28-Nov-2004 Mike Lampard <mlampard>
  *                  - Added support for PMT sections larger than 1 ts packet 
  *
@@ -172,9 +177,9 @@
 #define SYNC_BYTE   0x47
 
 #define MIN_SYNCS 3
-#define NPKT_PER_READ 100
+#define NPKT_PER_READ 96  // 96*188 = 94*192
 
-#define BUF_SIZE (NPKT_PER_READ * PKT_SIZE)
+#define BUF_SIZE (NPKT_PER_READ * (PKT_SIZE + 4))
 
 #define MAX_PES_BUF_SIZE 2048
 
@@ -218,14 +223,20 @@
       ISO_14496_PART2_VIDEO = 0x10,     /* ISO/IEC 14496-2 Visual (MPEG-4) */
       ISO_14496_PART3_AUDIO = 0x11,     /* ISO/IEC 14496-3 Audio with LATM transport syntax */
       ISO_14496_PART10_VIDEO = 0x1b,    /* ISO/IEC 14496-10 Video (MPEG-4 part 10/AVC, aka H.264) */
-      STREAM_VIDEO_MPEG = 0x80,
-      STREAM_AUDIO_AC3 = 0x81,
+      STREAM_VIDEO_MPEG      = 0x80,
+      STREAM_AUDIO_AC3       = 0x81,
+      STREAM_SPU_BITMAP_HDMV = 0x90,
     } streamType;
 
 #define WRAP_THRESHOLD       270000
 
 #define PTS_AUDIO 0
 #define PTS_VIDEO 1
+
+#undef  MIN
+#define MIN(a,b) ((a)<(b)?(a):(b))
+#undef  MAX
+#define MAX(a,b) ((a)>(b)?(a):(b))
 
 /*
 **
@@ -287,6 +298,10 @@ typedef struct {
   input_plugin_t  *input;
 
   int              status;
+
+  int              hdmv;       /* -1 = unknown, 0 = mpeg-ts, 1 = hdmv/m2ts */
+  int              pkt_size;   /* TS packet size */
+  int              pkt_offset; /* TS packet offset */
 
   int              blockSize;
   int              rate;
@@ -446,12 +461,12 @@ static void check_newpts( demux_ts_t *this, int64_t pts, int video )
 }
 
 /* Send a BUF_SPU_DVB to let xine know of that channel. */
-static void demux_send_special_spu_buf( demux_ts_t *this, int spu_channel )
+static void demux_send_special_spu_buf( demux_ts_t *this, uint32_t spu_type, int spu_channel )
 {
   buf_element_t *buf;
 
   buf = this->video_fifo->buffer_pool_alloc( this->video_fifo );
-  buf->type = BUF_SPU_DVB|spu_channel;
+  buf->type = spu_type|spu_channel;
   buf->content = buf->mem;
   buf->size = 0;
   this->video_fifo->put( this->video_fifo, buf );
@@ -503,6 +518,10 @@ static void demux_ts_update_spu_channel(demux_ts_t *this)
       printf("demux_ts: DVBSUB: deselecting lang\n");
 #endif
     }
+
+ if ((this->media[this->spu_media].type & BUF_MAJOR_MASK) == BUF_SPU_HDMV) {
+   buf->type = BUF_SPU_HDMV;
+ }
 
   this->video_fifo->put(this->video_fifo, buf);
 }
@@ -741,7 +760,18 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   p += header_len + 9;
   packet_len -= header_len + 3;
 
-  if (stream_id == 0xbd) {
+  if (m->descriptor_tag == STREAM_SPU_BITMAP_HDMV) {
+    long payload_len = ((buf[4] << 8) | buf[5]) - header_len - 3;
+
+    m->content = p;
+    m->size = packet_len;
+    m->type |= BUF_SPU_HDMV;
+    m->buf->decoder_info[2] = payload_len;
+    return 1;
+
+  } else
+
+  if (stream_id == 0xbd || stream_id == 0xfd /* HDMV */) {
 
     int spu_id;
       
@@ -1413,7 +1443,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
 		lang->media_index = this->media_num;
 		this->media[this->media_num].type = no;
 		demux_ts_pes_new(this, this->media_num, pid, this->video_fifo, stream[0]);
-		demux_send_special_spu_buf( this, no );
+		demux_send_special_spu_buf( this, BUF_SPU_DVB, no );
 #ifdef TS_LOG
 		printf("demux_ts: DVBSUB: pid 0x%.4x: %s  page %ld %ld type %2.2x\n",
 		       pid, lang->desc.lang,
@@ -1426,6 +1456,29 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
       }
       break;
 
+    case STREAM_SPU_BITMAP_HDMV:
+      if (this->hdmv > 0) {
+	if (pid >= 0x1200 && pid < 0x1300) {
+	  /* HDMV Presentation Graphics / SPU */
+	  demux_ts_spu_lang *lang = &this->spu_langs[this->spu_langs_count];
+
+	  memset(lang->desc.lang, 0, sizeof(lang->desc.lang));
+	  /*memcpy(lang->desc.lang, &stream[pos], 3);*/
+	  /*lang->desc.lang[3] = 0;*/
+	  lang->pid = pid;
+	  lang->media_index = this->media_num;
+	  this->media[this->media_num].type = this->spu_langs_count;
+	  demux_ts_pes_new(this, this->media_num, pid, this->video_fifo, stream[0]);
+	  demux_send_special_spu_buf( this, BUF_SPU_HDMV, this->spu_langs_count );
+	  this->spu_langs_count++;
+#ifdef TS_PMT_LOG
+	  printf("demux_ts: HDMV subtitle stream_type: 0x%.2x pid: 0x%.4x\n",
+		 stream[0], pid);
+#endif
+	  break;
+	}
+      }
+      /* fall thru */
     default:
 
 /* This following section handles all the cases where the audio track info is stored in PMT user info with stream id >= 0x80
@@ -1512,10 +1565,10 @@ static int sync_correct(demux_ts_t*this, uint8_t *buf, int32_t npkt_read) {
   xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_ts: about to resync!\n");
 
   for (p=0; p < npkt_read; p++) {
-    for(n=0; n < PKT_SIZE; n++) {
+    for(n=0; n < this->pkt_size; n++) {
       sync_ok = 1;
       for (i=0; i < MIN(MIN_SYNCS, npkt_read - p); i++) {
-	if (buf[n + ((i+p) * PKT_SIZE)] != SYNC_BYTE) {
+	if (buf[this->pkt_offset + n + ((i+p) * this->pkt_size)] != SYNC_BYTE) {
 	  sync_ok = 0;
 	  break;
 	}
@@ -1527,13 +1580,13 @@ static int sync_correct(demux_ts_t*this, uint8_t *buf, int32_t npkt_read) {
 
   if (sync_ok) {
     /* Found sync, fill in */
-    memmove(&buf[0], &buf[n + p * PKT_SIZE],
-	    ((PKT_SIZE * (npkt_read - p)) - n));
+    memmove(&buf[0], &buf[n + p * this->pkt_size],
+	    ((this->pkt_size * (npkt_read - p)) - n));
     read_length = this->input->read(this->input,
-				    &buf[(PKT_SIZE * (npkt_read - p)) - n],
-				    n + p * PKT_SIZE);
+				    &buf[(this->pkt_size * (npkt_read - p)) - n],
+				    n + p * this->pkt_size);
     /* FIXME: when read_length is not as required... we now stop demuxing */
-    if (read_length != (n + p * PKT_SIZE)) {
+    if (read_length != (n + p * this->pkt_size)) {
       xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
 	       "demux_ts_tsync_correct: sync found, but read failed\n");
       return 0;
@@ -1551,6 +1604,32 @@ static int sync_detect(demux_ts_t*this, uint8_t *buf, int32_t npkt_read) {
   int i, sync_ok;
 
   sync_ok = 1;
+
+  if (this->hdmv) {
+    this->pkt_size   = PKT_SIZE + 4;
+    this->pkt_offset = 4;
+    for (i=0; i < MIN(MIN_SYNCS, npkt_read - 3); i++) {
+      if (buf[this->pkt_offset + i * this->pkt_size] != SYNC_BYTE) {
+	sync_ok = 0;
+	break;
+      }
+    }
+    if (sync_ok) {
+      if (this->hdmv < 0) {
+        /* fix npkt_read (packet size is 192, not 188) */
+        this->npkt_read = npkt_read * PKT_SIZE / this->pkt_size;
+      }
+      this->hdmv = 1;
+      return sync_ok;
+    }
+    if (this->hdmv > 0)
+      return sync_correct(this, buf, npkt_read);
+
+    /* plain ts */
+    this->hdmv       = 0;
+    this->pkt_size   = PKT_SIZE;
+    this->pkt_offset = 0;
+  }
 
   for (i=0; i < MIN(MIN_SYNCS, npkt_read); i++) {
     if (buf[i * PKT_SIZE] != SYNC_BYTE) {
@@ -1575,15 +1654,15 @@ static unsigned char * demux_synchronise(demux_ts_t* this) {
     /* NEW: handle read returning less packets than NPKT_PER_READ... */
     do {
       read_length = this->input->read(this->input, this->buf,
-				      PKT_SIZE * NPKT_PER_READ);
-      if (read_length % PKT_SIZE) {
+				      this->pkt_size * NPKT_PER_READ);
+      if (read_length < 0 || read_length % this->pkt_size) {
 	xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
 		 "demux_ts: read returned %d bytes (not a multiple of %d!)\n",
-		 read_length, PKT_SIZE);
+		 read_length, this->pkt_size);
 	this->status = DEMUX_FINISHED;
 	return NULL;
       }
-      this->npkt_read = read_length / PKT_SIZE;
+      this->npkt_read = read_length / this->pkt_size;
 
 #ifdef TS_READ_STATS
       this->rstat[this->npkt_read]++;
@@ -1610,7 +1689,7 @@ static unsigned char * demux_synchronise(demux_ts_t* this) {
       return NULL;
     }
   }
-  return_pointer = &(this->buf)[PKT_SIZE * this->packet_number];
+  return_pointer = &(this->buf)[this->pkt_offset + this->pkt_size * this->packet_number];
   this->packet_number++;
   return return_pointer;
 }
@@ -1758,7 +1837,7 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
   /*
    * Discard packets that are obviously bad.
    */
-  if (sync_byte != 0x47) {
+  if (sync_byte != SYNC_BYTE) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
 	     "demux error! invalid ts sync byte %.2x\n", sync_byte);
     return;
@@ -2170,6 +2249,32 @@ static int demux_ts_get_optional_data(demux_plugin_t *this_gen,
     }
 }
 
+static int detect_ts(uint8_t *buf, size_t len, int ts_size)
+{
+  int    i, j;
+  int    try_again, ts_detected = 0;
+  size_t packs = len / ts_size - 2;
+
+  for (i = 0; i < ts_size; i++) {
+    try_again = 0;
+    if (buf[i] == SYNC_BYTE) {
+      for (j = 1; j < packs; j++) {
+	if (buf[i + j*ts_size] != SYNC_BYTE) {
+	  try_again = 1;
+	  break;
+	}
+      }
+      if (try_again == 0) {
+#ifdef TS_LOG
+	printf ("demux_ts: found 0x47 pattern at offset %d\n", i);
+#endif
+	ts_detected = 1;
+      }
+    }
+  }
+
+  return ts_detected;
+}
 
 static demux_plugin_t *open_plugin (demux_class_t *class_gen, 
 				    xine_stream_t *stream, 
@@ -2177,44 +2282,32 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   
   demux_ts_t *this;
   int         i;
+  int         hdmv = -1;
 
   switch (stream->content_detection_method) {
 
   case METHOD_BY_CONTENT: {
     uint8_t buf[2069];
-    int     i, j;
-    int     try_again, ts_detected;
 
-    if (!_x_demux_read_header(input, buf, 2069))
+    if (!_x_demux_read_header(input, buf, sizeof(buf)))
       return NULL;
 
-    ts_detected = 0;
-
-    for (i = 0; i < 188; i++) {
-      try_again = 0;
-      if (buf[i] == 0x47) {
-	for (j = 1; j <= 10; j++) {
-	  if (buf[i + j*188] != 0x47) {
-	    try_again = 1;
-	    break;
-	  }
-	}
-	if (try_again == 0) {
-#ifdef TS_LOG
-	  printf ("demux_ts: found 0x47 pattern at offset %d\n", i);
-#endif
-	  ts_detected = 1;
-	}
-      }
-    }
-
-    if (!ts_detected)
+    if (detect_ts(buf, sizeof(buf), PKT_SIZE))
+      hdmv = 0;
+    else if (detect_ts(buf, sizeof(buf), PKT_SIZE+4)) 
+      hdmv = 1;
+    else 
       return NULL;
   }
     break;
 
   case METHOD_BY_EXTENSION: {
     const char *const mrl = input->get_mrl (input);
+
+    if (_x_demux_check_extension (mrl, "m2ts mts"))
+      hdmv = 1;
+    else
+      hdmv = 0;
 
     /* check extension */
     const char *const extensions = class_gen->get_extensions (class_gen);
@@ -2301,7 +2394,12 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 
   /* dvb */
   this->event_queue = xine_event_new_queue (this->stream);
-  
+
+  /* HDMV */
+  this->hdmv       = hdmv;
+  this->pkt_offset = (hdmv > 0) ? 4 : 0;
+  this->pkt_size   = PKT_SIZE + this->pkt_offset;
+
   this->numPreview=0;
   
   return &this->demux_plugin;

@@ -58,6 +58,12 @@
 
 #define ENABLE_DIRECT_RENDERING
 
+/* reordered_opaque appeared in libavcodec 51.68.0 */
+#define AVCODEC_HAS_REORDERED_OPAQUE
+#if LIBAVCODEC_VERSION_INT < 0x334400
+# undef AVCODEC_HAS_REORDERED_OPAQUE
+#endif
+
 typedef struct ff_video_decoder_s ff_video_decoder_t;
 
 typedef struct ff_video_class_s {
@@ -78,7 +84,14 @@ struct ff_video_decoder_s {
 
   xine_stream_t    *stream;
   int64_t           pts;
+#ifdef AVCODEC_HAS_REORDERED_OPAQUE
+  uint64_t          pts_tag_mask;
+  uint64_t          pts_tag;
+  int               pts_tag_counter;
+  int               pts_tag_stable_counter;
+#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
   int               video_step;
+  int               reported_video_step;
 
   uint8_t           decoder_ok:1;
   uint8_t           decoder_init_mode:1;
@@ -212,6 +225,11 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
 
   av_frame->type= FF_BUFFER_TYPE_USER;
 
+#ifdef AVCODEC_HAS_REORDERED_OPAQUE
+  /* take over pts for this frame to have it reordered */
+  av_frame->reordered_opaque = context->reordered_opaque;
+#endif
+
   xine_list_push_back(this->dr1_frames, av_frame);
 
   return 0;
@@ -244,85 +262,7 @@ static void release_buffer(struct AVCodecContext *context, AVFrame *av_frame){
 }
 #endif
 
-static const ff_codec_t ff_video_lookup[] = {
-  {BUF_VIDEO_MSMPEG4_V1,  CODEC_ID_MSMPEG4V1, "Microsoft MPEG-4 v1 (ffmpeg)"},
-  {BUF_VIDEO_MSMPEG4_V2,  CODEC_ID_MSMPEG4V2, "Microsoft MPEG-4 v2 (ffmpeg)"},
-  {BUF_VIDEO_MSMPEG4_V3,  CODEC_ID_MSMPEG4V3, "Microsoft MPEG-4 v3 (ffmpeg)"},
-  {BUF_VIDEO_WMV7,        CODEC_ID_WMV1,      "MS Windows Media Video 7 (ffmpeg)"},
-  {BUF_VIDEO_WMV8,        CODEC_ID_WMV2,      "MS Windows Media Video 8 (ffmpeg)"},
-  {BUF_VIDEO_WMV9,        CODEC_ID_WMV3,      "MS Windows Media Video 9 (ffmpeg)"},
-  {BUF_VIDEO_VC1,         CODEC_ID_VC1,       "MS Windows Media Video VC-1 (ffmpeg)"},
-  {BUF_VIDEO_MPEG4,       CODEC_ID_MPEG4,     "ISO MPEG-4 (ffmpeg)"},
-  {BUF_VIDEO_XVID,        CODEC_ID_MPEG4,     "ISO MPEG-4 (XviD, ffmpeg)"},
-  {BUF_VIDEO_DIVX5,       CODEC_ID_MPEG4,     "ISO MPEG-4 (DivX5, ffmpeg)"},
-  {BUF_VIDEO_3IVX,        CODEC_ID_MPEG4,     "ISO MPEG-4 (3ivx, ffmpeg)"},
-  {BUF_VIDEO_JPEG,        CODEC_ID_MJPEG,     "Motion JPEG (ffmpeg)"},
-  {BUF_VIDEO_MJPEG,       CODEC_ID_MJPEG,     "Motion JPEG (ffmpeg)"},
-  {BUF_VIDEO_MJPEG_B,     CODEC_ID_MJPEGB,    "Motion JPEG B (ffmpeg)"},
-  {BUF_VIDEO_I263,        CODEC_ID_H263I,     "ITU H.263 (ffmpeg)"},
-  {BUF_VIDEO_H263,        CODEC_ID_H263,      "H.263 (ffmpeg)"},
-  {BUF_VIDEO_RV10,        CODEC_ID_RV10,      "Real Video 1.0 (ffmpeg)"},
-  {BUF_VIDEO_RV20,        CODEC_ID_RV20,      "Real Video 2.0 (ffmpeg)"},
-  {BUF_VIDEO_IV31,        CODEC_ID_INDEO3,    "Indeo Video 3.1 (ffmpeg)"},
-  {BUF_VIDEO_IV32,        CODEC_ID_INDEO3,    "Indeo Video 3.2 (ffmpeg)"},
-  {BUF_VIDEO_SORENSON_V1, CODEC_ID_SVQ1,      "Sorenson Video 1 (ffmpeg)"},
-  {BUF_VIDEO_SORENSON_V3, CODEC_ID_SVQ3,      "Sorenson Video 3 (ffmpeg)"},
-  {BUF_VIDEO_DV,          CODEC_ID_DVVIDEO,   "DV (ffmpeg)"},
-  {BUF_VIDEO_HUFFYUV,     CODEC_ID_HUFFYUV,   "HuffYUV (ffmpeg)"},
-  {BUF_VIDEO_VP31,        CODEC_ID_VP3,       "On2 VP3.1 (ffmpeg)"},
-  {BUF_VIDEO_VP5,         CODEC_ID_VP5,       "On2 VP5 (ffmpeg)"},
-  {BUF_VIDEO_VP6,         CODEC_ID_VP6,       "On2 VP6 (ffmpeg)"},
-  {BUF_VIDEO_VP6F,        CODEC_ID_VP6F,      "On2 VP6 (ffmpeg)"},
-  {BUF_VIDEO_4XM,         CODEC_ID_4XM,       "4X Video (ffmpeg)"},
-  {BUF_VIDEO_CINEPAK,     CODEC_ID_CINEPAK,   "Cinepak (ffmpeg)"},
-  {BUF_VIDEO_MSVC,        CODEC_ID_MSVIDEO1,  "Microsoft Video 1 (ffmpeg)"},
-  {BUF_VIDEO_MSRLE,       CODEC_ID_MSRLE,     "Microsoft RLE (ffmpeg)"},
-  {BUF_VIDEO_RPZA,        CODEC_ID_RPZA,      "Apple Quicktime Video/RPZA (ffmpeg)"},
-  {BUF_VIDEO_CYUV,        CODEC_ID_CYUV,      "Creative YUV (ffmpeg)"},
-  {BUF_VIDEO_ROQ,         CODEC_ID_ROQ,       "Id Software RoQ (ffmpeg)"},
-  {BUF_VIDEO_IDCIN,       CODEC_ID_IDCIN,     "Id Software CIN (ffmpeg)"},
-  {BUF_VIDEO_WC3,         CODEC_ID_XAN_WC3,   "Xan (ffmpeg)"},
-  {BUF_VIDEO_VQA,         CODEC_ID_WS_VQA,    "Westwood Studios VQA (ffmpeg)"},
-  {BUF_VIDEO_INTERPLAY,   CODEC_ID_INTERPLAY_VIDEO, "Interplay MVE (ffmpeg)"},
-  {BUF_VIDEO_FLI,         CODEC_ID_FLIC,      "FLIC Video (ffmpeg)"},
-  {BUF_VIDEO_8BPS,        CODEC_ID_8BPS,      "Planar RGB (ffmpeg)"},
-  {BUF_VIDEO_SMC,         CODEC_ID_SMC,       "Apple Quicktime Graphics/SMC (ffmpeg)"},
-  {BUF_VIDEO_DUCKTM1,     CODEC_ID_TRUEMOTION1,"Duck TrueMotion v1 (ffmpeg)"},
-  {BUF_VIDEO_DUCKTM2,     CODEC_ID_TRUEMOTION2,"Duck TrueMotion v2 (ffmpeg)"},
-  {BUF_VIDEO_VMD,         CODEC_ID_VMDVIDEO,   "Sierra VMD Video (ffmpeg)"},
-  {BUF_VIDEO_ZLIB,        CODEC_ID_ZLIB,       "ZLIB Video (ffmpeg)"},
-  {BUF_VIDEO_MSZH,        CODEC_ID_MSZH,       "MSZH Video (ffmpeg)"},
-  {BUF_VIDEO_ASV1,        CODEC_ID_ASV1,       "ASV v1 Video (ffmpeg)"},
-  {BUF_VIDEO_ASV2,        CODEC_ID_ASV2,       "ASV v2 Video (ffmpeg)"},
-  {BUF_VIDEO_ATIVCR1,     CODEC_ID_VCR1,       "ATI VCR-1 (ffmpeg)"},
-  {BUF_VIDEO_FLV1,        CODEC_ID_FLV1,       "Flash Video (ffmpeg)"},
-  {BUF_VIDEO_QTRLE,       CODEC_ID_QTRLE,      "Apple Quicktime Animation/RLE (ffmpeg)"},
-  {BUF_VIDEO_H264,        CODEC_ID_H264,       "H.264/AVC (ffmpeg)"},
-  {BUF_VIDEO_H261,        CODEC_ID_H261,       "H.261 (ffmpeg)"},
-  {BUF_VIDEO_AASC,        CODEC_ID_AASC,       "Autodesk Video (ffmpeg)"},
-  {BUF_VIDEO_LOCO,        CODEC_ID_LOCO,       "LOCO (ffmpeg)"},
-  {BUF_VIDEO_QDRW,        CODEC_ID_QDRAW,      "QuickDraw (ffmpeg)"},
-  {BUF_VIDEO_QPEG,        CODEC_ID_QPEG,       "Q-Team QPEG (ffmpeg)"},
-  {BUF_VIDEO_TSCC,        CODEC_ID_TSCC,       "TechSmith Video (ffmpeg)"},
-  {BUF_VIDEO_ULTI,        CODEC_ID_ULTI,       "IBM UltiMotion (ffmpeg)"},
-  {BUF_VIDEO_WNV1,        CODEC_ID_WNV1,       "Winnow Video (ffmpeg)"},
-  {BUF_VIDEO_XL,          CODEC_ID_VIXL,       "Miro/Pinnacle VideoXL (ffmpeg)"},
-  {BUF_VIDEO_RT21,        CODEC_ID_INDEO2,     "Indeo/RealTime 2 (ffmpeg)"},
-  {BUF_VIDEO_FPS1,        CODEC_ID_FRAPS,      "Fraps (ffmpeg)"},
-  {BUF_VIDEO_MPEG,        CODEC_ID_MPEG1VIDEO, "MPEG 1/2 (ffmpeg)"},
-  {BUF_VIDEO_CSCD,        CODEC_ID_CSCD,       "CamStudio (ffmpeg)"},
-  {BUF_VIDEO_AVS,         CODEC_ID_AVS,        "AVS (ffmpeg)"},
-  {BUF_VIDEO_ALGMM,       CODEC_ID_MMVIDEO,    "American Laser Games MM (ffmpeg)"},
-  {BUF_VIDEO_ZMBV,        CODEC_ID_ZMBV,       "Zip Motion Blocks Video (ffmpeg)"},
-  {BUF_VIDEO_SMACKER,     CODEC_ID_SMACKVIDEO, "Smacker (ffmpeg)"},
-  {BUF_VIDEO_NUV,         CODEC_ID_NUV,        "NuppelVideo (ffmpeg)"},
-  {BUF_VIDEO_KMVC,        CODEC_ID_KMVC,       "Karl Morton's Video Codec (ffmpeg)"},
-  {BUF_VIDEO_FLASHSV,     CODEC_ID_FLASHSV,    "Flash Screen Video (ffmpeg)"},
-  {BUF_VIDEO_CAVS,        CODEC_ID_CAVS,       "Chinese AVS (ffmpeg)"},
-  {BUF_VIDEO_VMNC,        CODEC_ID_VMNC,       "VMware Screen Codec (ffmpeg)"},
-  {BUF_VIDEO_THEORA_RAW,  CODEC_ID_THEORA,     "Theora (ffmpeg)"},
-  {BUF_VIDEO_SNOW,        CODEC_ID_SNOW,       "Snow (ffmpeg)"},
-};
+#include "ff_video_list.h"
 
 static const char *const skip_loop_filter_enum_names[] = {
   "default", /* AVDISCARD_DEFAULT */
@@ -398,6 +338,22 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
     this->context = NULL;
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_HANDLED, 0);
     return;
+  }
+
+  if (this->codec->id == CODEC_ID_VC1 && 
+      (!this->bih.biWidth || !this->bih.biHeight)) {
+    /* VC1 codec must be re-opened with correct width and height. */
+    avcodec_close(this->context);
+
+    if (avcodec_open (this->context, this->codec) < 0) {
+      pthread_mutex_unlock(&ffmpeg_lock);
+      xprintf (this->stream->xine, XINE_VERBOSITY_LOG, 
+	       _("ffmpeg_video_dec: couldn't open decoder (pass 2)\n"));
+      free(this->context);
+      this->context = NULL;
+      _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_HANDLED, 0);
+      return;
+    }
   }
 
   if (this->class->thread_count > 1) {
@@ -606,6 +562,10 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
   su = this->av_frame->data[1];
   sv = this->av_frame->data[2];
 
+  /* Some segfaults & heap corruption have been observed with img->height,
+   * so we use this->bih.biHeight instead (which is the displayed height)
+   */
+
   if (this->context->pix_fmt == PIX_FMT_YUV410P) {
 
     yuv9_to_yv12(
@@ -626,7 +586,7 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
       img->pitches[2],
      /* width x height */
       img->width,
-      img->height);
+      this->bih.biHeight);
 
   } else if (this->context->pix_fmt == PIX_FMT_YUV411P) {
 
@@ -648,15 +608,15 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
       img->pitches[2],
      /* width x height */
       img->width,
-      img->height);
+      this->bih.biHeight);
 
-  } else if (this->context->pix_fmt == PIX_FMT_RGBA32) {
+  } else if (this->context->pix_fmt == PIX_FMT_RGB32) {
           
     int x, plane_ptr = 0;
     uint32_t *argb_pixels;
     uint32_t argb;
 
-    for(y = 0; y < img->height; y++) {
+    for(y = 0; y < this->bih.biHeight; y++) {
       argb_pixels = (uint32_t *)sy;
       for(x = 0; x < img->width; x++) {
         uint8_t r, g, b;
@@ -684,7 +644,7 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
     uint8_t *src;
     uint16_t pixel16;
 
-    for(y = 0; y < img->height; y++) {
+    for(y = 0; y < this->bih.biHeight; y++) {
       src = sy;
       for(x = 0; x < img->width; x++) {
         uint8_t r, g, b;
@@ -713,7 +673,7 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
     uint8_t *src;
     uint16_t pixel16;
             
-    for(y = 0; y < img->height; y++) {
+    for(y = 0; y < this->bih.biHeight; y++) {
       src = sy;
       for(x = 0; x < img->width; x++) {
         uint8_t r, g, b;
@@ -741,7 +701,7 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
     int x, plane_ptr = 0;
     uint8_t *src;
 
-    for(y = 0; y < img->height; y++) {
+    for(y = 0; y < this->bih.biHeight; y++) {
       src = sy;
       for(x = 0; x < img->width; x++) {
         uint8_t r, g, b;
@@ -765,7 +725,7 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
     int x, plane_ptr = 0;
     uint8_t *src;
 
-    for(y = 0; y < img->height; y++) {
+    for(y = 0; y < this->bih.biHeight; y++) {
       src = sy;
       for(x = 0; x < img->width; x++) {
         uint8_t r, g, b;
@@ -808,7 +768,7 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
       v_palette[x] = COMPUTE_V(r, g, b);
     }
 
-    for(y = 0; y < img->height; y++) {
+    for(y = 0; y < this->bih.biHeight; y++) {
       src = sy;
       for(x = 0; x < img->width; x++) {
         pixel = *src++;
@@ -825,7 +785,7 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
           
   } else {
           
-    for (y=0; y<img->height; y++) {
+    for (y = 0; y < this->bih.biHeight; y++) {
       xine_fast_memcpy (dy, sy, img->width);
   
       dy += img->pitches[0];
@@ -833,7 +793,7 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
       sy += this->av_frame->linesize[0];
     }
 
-    for (y=0; y<(img->height/2); y++) {
+    for (y = 0; y < this->bih.biHeight / 2; y++) {
       
       if (this->context->pix_fmt != PIX_FMT_YUV444P) {
         
@@ -1174,6 +1134,97 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
   }
 }
 
+#ifdef AVCODEC_HAS_REORDERED_OPAQUE
+static uint64_t ff_tag_pts(ff_video_decoder_t *this, uint64_t pts)
+{
+  return pts | this->pts_tag;
+}
+
+static uint64_t ff_untag_pts(ff_video_decoder_t *this, uint64_t pts)
+{
+  if (this->pts_tag_mask == 0)
+    return pts; /* pts tagging inactive */
+
+  if (this->pts_tag != 0 && (pts & this->pts_tag_mask) != this->pts_tag)
+    return 0; /* reset pts if outdated while waiting for first pass (see below) */
+
+  return pts & ~this->pts_tag_mask;
+}
+
+static void ff_check_pts_tagging(ff_video_decoder_t *this, uint64_t pts)
+{
+  if (this->pts_tag_mask == 0)
+    return; /* pts tagging inactive */
+  if ((pts & this->pts_tag_mask) != this->pts_tag) {
+    this->pts_tag_stable_counter = 0;
+    return; /* pts still outdated */
+  }
+
+  /* the tag should be stable for 100 frames */
+  this->pts_tag_stable_counter++;
+
+  if (this->pts_tag != 0) {
+    if (this->pts_tag_stable_counter >= 100) {
+      /* first pass: reset pts_tag */
+      this->pts_tag = 0;
+      this->pts_tag_stable_counter = 0;
+    }
+  } else if (pts == 0)
+    return; /* cannot detect second pass */
+  else {
+    if (this->pts_tag_stable_counter >= 100) {
+      /* second pass: reset pts_tag_mask and pts_tag_counter */
+      this->pts_tag_mask = 0;
+      this->pts_tag_counter = 0;
+      this->pts_tag_stable_counter = 0;
+    }
+  }
+}
+
+static int ff_vc1_find_header(ff_video_decoder_t *this, buf_element_t *buf)
+{
+  uint8_t *p = buf->content;
+
+  if (!p[0] && !p[1] && p[2] == 1 && p[3] == 0x0f) {
+    int i;
+
+    this->context->extradata = calloc(1, buf->size);
+    this->context->extradata_size = 0;
+
+    for (i = 0; i < buf->size && i < 128; i++) {
+      if (!p[i] && !p[i+1] && p[i+2]) {
+	lprintf("00 00 01 %02x at %d\n", p[i+3], i);
+	if (p[i+3] != 0x0e && p[i+3] != 0x0f)
+	  break;
+      }
+      this->context->extradata[i] = p[i];
+      this->context->extradata_size++;
+    }
+
+    lprintf("ff_video_decoder: found VC1 sequence header\n");
+    return 1;
+  }
+
+  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+	  "ffmpeg_video_dec: VC1 extradata missing !\n");
+  return 0;
+}
+
+static int ff_check_extradata(ff_video_decoder_t *this, unsigned int codec_type, buf_element_t *buf)
+{
+  if (this->context && this->context->extradata)
+    return 1;
+
+  switch (codec_type) {
+  case BUF_VIDEO_VC1:
+    return ff_vc1_find_header(this, buf);
+  default:;
+  }
+
+  return 1;
+}
+
+#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
 static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
   uint8_t *chunk_buf = this->buf;
   AVRational avr00 = {0, 1};
@@ -1183,6 +1234,9 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
   if (!this->decoder_ok) {
     if (this->decoder_init_mode) {
       int codec_type = buf->type & 0xFFFF0000;
+
+      if (!ff_check_extradata(this, codec_type, buf))
+	return;
 
       /* init ffmpeg decoder */
       init_video_codec(this, codec_type);
@@ -1197,6 +1251,16 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
     lprintf("BUF_FLAG_FRAME_START\n");
     this->size = 0;
   }
+
+#ifdef AVCODEC_HAS_REORDERED_OPAQUE
+  if (this->size == 0) {
+    /* take over pts when we are about to buffer a frame */
+    this->av_frame->reordered_opaque = ff_tag_pts(this, this->pts);
+    if (this->context) /* shouldn't be NULL */
+      this->context->reordered_opaque = ff_tag_pts(this, this->pts);
+    this->pts = 0;
+  }
+#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
 
   /* data accumulation */
   if (buf->size > 0) {
@@ -1250,6 +1314,12 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
         len = avcodec_decode_video (this->context, this->av_frame,
                                     &got_picture, &chunk_buf[offset],
                                     this->size);
+
+#ifdef AVCODEC_HAS_REORDERED_OPAQUE
+        /* reset consumed pts value */
+        this->context->reordered_opaque = ff_tag_pts(this, 0);
+#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
+
         lprintf("consumed size: %d, got_picture: %d\n", len, got_picture);
         if ((len <= 0) || (len > this->size)) {
           xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
@@ -1265,12 +1335,27 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
             ff_check_bufsize(this, this->size);
             memmove (this->buf, &chunk_buf[offset], this->size);
             chunk_buf = this->buf;
+
+#ifdef AVCODEC_HAS_REORDERED_OPAQUE
+            /* take over pts for next access unit */
+            this->av_frame->reordered_opaque = ff_tag_pts(this, this->pts);
+            this->context->reordered_opaque = ff_tag_pts(this, this->pts);
+            this->pts = 0;
+#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
           }
         }
       }
 
       /* use externally provided video_step or fall back to stream's time_base otherwise */
-      video_step_to_use = (this->video_step || !this->context->time_base.den) ? this->video_step : (int)(90000ll * this->context->time_base.num / this->context->time_base.den);
+      video_step_to_use = (this->video_step || !this->context->time_base.den)
+                        ? this->video_step
+                        : (int)(90000ll
+#if LIBAVCODEC_VERSION_INT >= 0x341400
+                                * this->context->ticks_per_frame
+#elif LIBAVCODEC_VERSION_INT >= 0x340000
+# warning Building without avcodec ticks_per_frame support; you should upgrade your libavcodec and recompile
+#endif
+                                * this->context->time_base.num / this->context->time_base.den);
 
       /* aspect ratio provided by ffmpeg, override previous setting */
       if ((this->aspect_ratio_prio < 2) &&
@@ -1296,7 +1381,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
 
 	  /* initialize the colorspace converter */
 	  if (!this->cs_convert_init) {
-	    if ((this->context->pix_fmt == PIX_FMT_RGBA32) ||
+	    if ((this->context->pix_fmt == PIX_FMT_RGB32) ||
 	        (this->context->pix_fmt == PIX_FMT_RGB565) ||
 	        (this->context->pix_fmt == PIX_FMT_RGB555) ||
 	        (this->context->pix_fmt == PIX_FMT_BGR24) ||
@@ -1359,15 +1444,24 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
           ff_convert_frame(this, img);
         }
 
+#ifndef AVCODEC_HAS_REORDERED_OPAQUE
         img->pts  = this->pts;
         this->pts = 0;
+#else /* AVCODEC_HAS_REORDERED_OPAQUE */
+        img->pts  = ff_untag_pts(this, this->av_frame->reordered_opaque);
+        ff_check_pts_tagging(this, this->av_frame->reordered_opaque); /* only check for valid frames */
+        this->av_frame->reordered_opaque = 0;
+#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
 
         /* workaround for weird 120fps streams */
         if( video_step_to_use == 750 ) {
           /* fallback to the VIDEO_PTS_MODE */
           video_step_to_use = 0;
         }
-        
+
+        if (video_step_to_use && video_step_to_use != this->reported_video_step)
+          _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, (this->reported_video_step = video_step_to_use));
+
         if (this->av_frame->repeat_pict)
           img->duration = video_step_to_use * 3 / 2;
         else
@@ -1400,8 +1494,13 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
                                                 this->output_format,
                                                 VO_BOTH_FIELDS|this->frame_flags);
       /* set PTS to allow early syncing */
+#ifndef AVCODEC_HAS_REORDERED_OPAQUE
       img->pts       = this->pts;
       this->pts      = 0;
+#else /* AVCODEC_HAS_REORDERED_OPAQUE */
+      img->pts       = ff_untag_pts(this, this->av_frame->reordered_opaque);
+      this->av_frame->reordered_opaque = 0;
+#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
 
       img->duration  = video_step_to_use;
 
@@ -1426,7 +1525,7 @@ static void ff_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 
   if (buf->decoder_flags & BUF_FLAG_FRAMERATE) {
     this->video_step = buf->decoder_info[0];
-    _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->video_step);
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, (this->reported_video_step = this->video_step));
   }
 
   if (buf->decoder_flags & BUF_FLAG_PREVIEW) {
@@ -1486,6 +1585,13 @@ static void ff_reset (video_decoder_t *this_gen) {
   
   if (this->is_mpeg12)
     mpeg_parser_reset(this->mpeg_parser);
+
+#ifdef AVCODEC_HAS_REORDERED_OPAQUE
+  this->pts_tag_mask = 0;
+  this->pts_tag = 0;
+  this->pts_tag_counter = 0;
+  this->pts_tag_stable_counter = 0;
+#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
 }
 
 static void ff_discontinuity (video_decoder_t *this_gen) {
@@ -1493,6 +1599,41 @@ static void ff_discontinuity (video_decoder_t *this_gen) {
   
   lprintf ("ff_discontinuity\n");
   this->pts = 0;
+
+#ifdef AVCODEC_HAS_REORDERED_OPAQUE
+  /*
+   * there is currently no way to reset all the pts which are stored in the decoder.
+   * therefore, we add a unique tag (generated from pts_tag_counter) to pts (see 
+   * ff_tag_pts()) and wait for it to appear on returned frames.
+   * until then, any retrieved pts value will be reset to 0 (see ff_untag_pts()).
+   * when we see the tag returned, pts_tag will be reset to 0. from now on, any
+   * untagged pts value is valid already.
+   * when tag 0 appears too, there are no tags left in the decoder so pts_tag_mask
+   * and pts_tag_counter will be reset to 0 too (see ff_check_pts_tagging()).
+   */
+  this->pts_tag_counter++;
+  this->pts_tag_mask = 0;
+  this->pts_tag = 0;
+  this->pts_tag_stable_counter = 0;
+  {
+    /* pts values typically don't use the uppermost bits. therefore we put the tag there */
+    int counter_mask = 1;
+    int counter = 2 * this->pts_tag_counter + 1; /* always set the uppermost bit in tag_mask */
+    uint64_t tag_mask = 0x8000000000000000ull;
+    while (this->pts_tag_counter >= counter_mask)
+    {
+      /*
+       * mirror the counter into the uppermost bits. this allows us to enlarge mask as
+       * necessary and while previous taggings can still be detected to be outdated.
+       */
+      if (counter & counter_mask)
+        this->pts_tag |= tag_mask;
+      this->pts_tag_mask |= tag_mask;
+      tag_mask >>= 1;
+      counter_mask <<= 1;
+    }
+  }
+#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
 }
 
 static void ff_dispose (video_decoder_t *this_gen) {
@@ -1668,237 +1809,6 @@ void *init_video_plugin (xine_t *xine, void *data) {
 
   return this;
 }
-
-static uint32_t supported_video_types[] = { 
-  #ifdef CONFIG_MSMPEG4V1_DECODER
-  BUF_VIDEO_MSMPEG4_V1,
-  #endif
-  #ifdef CONFIG_MSMPEG4V2_DECODER
-  BUF_VIDEO_MSMPEG4_V2,
-  #endif
-  #ifdef CONFIG_MSMPEG4V3_DECODER
-  BUF_VIDEO_MSMPEG4_V3,
-  #endif
-  #ifdef CONFIG_WMV1_DECODER
-  BUF_VIDEO_WMV7,
-  #endif
-  #ifdef CONFIG_WMV2_DECODER
-  BUF_VIDEO_WMV8,
-  #endif
-  #ifdef CONFIG_WMV3_DECODER
-  BUF_VIDEO_WMV9,
-  #endif
-  #ifdef CONFIG_VC1_DECODER
-  BUF_VIDEO_VC1,
-  #endif
-  #ifdef CONFIG_MPEG4_DECODER
-  BUF_VIDEO_MPEG4,
-  #endif
-  #ifdef CONFIG_MPEG4_DECODER
-  BUF_VIDEO_XVID,
-  #endif
-  #ifdef CONFIG_MPEG4_DECODER
-  BUF_VIDEO_DIVX5,
-  #endif
-  #ifdef CONFIG_MPEG4_DECODER
-  BUF_VIDEO_3IVX,
-  #endif
-  #ifdef CONFIG_MJPEG_DECODER
-  BUF_VIDEO_JPEG,
-  #endif
-  #ifdef CONFIG_MJPEG_DECODER
-  BUF_VIDEO_MJPEG,
-  #endif
-  #ifdef CONFIG_MJPEGB_DECODER
-  BUF_VIDEO_MJPEG_B,
-  #endif
-  #ifdef CONFIG_H263I_DECODER
-  BUF_VIDEO_I263,
-  #endif
-  #ifdef CONFIG_H263_DECODER
-  BUF_VIDEO_H263,
-  #endif
-  #ifdef CONFIG_RV10_DECODER
-  BUF_VIDEO_RV10,
-  #endif
-  #ifdef CONFIG_RV20_DECODER
-  BUF_VIDEO_RV20,
-  #endif
-  #ifdef CONFIG_INDEO3_DECODER
-  BUF_VIDEO_IV31,
-  #endif
-  #ifdef CONFIG_INDEO3_DECODER
-  BUF_VIDEO_IV32,
-  #endif
-  #ifdef CONFIG_SVQ1_DECODER
-  BUF_VIDEO_SORENSON_V1,
-  #endif
-  #ifdef CONFIG_SVQ3_DECODER
-  BUF_VIDEO_SORENSON_V3,
-  #endif
-  #ifdef CONFIG_DVVIDEO_DECODER
-  BUF_VIDEO_DV,
-  #endif
-  #ifdef CONFIG_HUFFYUV_DECODER
-  BUF_VIDEO_HUFFYUV,
-  #endif
-  #ifdef CONFIG_VP3_DECODER
-  BUF_VIDEO_VP31,
-  #endif
-  #ifdef CONFIG_VP5_DECODER
-  BUF_VIDEO_VP5,
-  #endif
-  #ifdef CONFIG_VP6_DECODER
-  BUF_VIDEO_VP6,
-  BUF_VIDEO_VP6F,
-  #endif
-  #ifdef CONFIG_4XM_DECODER
-  BUF_VIDEO_4XM,
-  #endif
-  #ifdef CONFIG_CINEPAK_DECODER
-  BUF_VIDEO_CINEPAK,
-  #endif
-  #ifdef CONFIG_MSVIDEO1_DECODER
-  BUF_VIDEO_MSVC,
-  #endif
-  #ifdef CONFIG_MSRLE_DECODER
-  BUF_VIDEO_MSRLE,
-  #endif
-  #ifdef CONFIG_RPZA_DECODER
-  BUF_VIDEO_RPZA,
-  #endif
-  #ifdef CONFIG_CYUV_DECODER
-  BUF_VIDEO_CYUV,
-  #endif
-  #ifdef CONFIG_ROQ_DECODER
-  BUF_VIDEO_ROQ,
-  #endif
-  #ifdef CONFIG_IDCIN_DECODER
-  BUF_VIDEO_IDCIN,
-  #endif
-  #ifdef CONFIG_XAN_WC3_DECODER
-  BUF_VIDEO_WC3,
-  #endif
-  #ifdef CONFIG_WS_VQA_DECODER
-  BUF_VIDEO_VQA,
-  #endif
-  #ifdef CONFIG_INTERPLAY_VIDEO_DECODER
-  BUF_VIDEO_INTERPLAY,
-  #endif
-  #ifdef CONFIG_FLIC_DECODER
-  BUF_VIDEO_FLI,
-  #endif
-  #ifdef CONFIG_8BPS_DECODER
-  BUF_VIDEO_8BPS,
-  #endif
-  #ifdef CONFIG_SMC_DECODER
-  BUF_VIDEO_SMC,
-  #endif
-  #ifdef CONFIG_TRUEMOTION1_DECODER
-  BUF_VIDEO_DUCKTM1,
-  #endif
-  #ifdef CONFIG_TRUEMOTION2_DECODER
-  BUF_VIDEO_DUCKTM2,
-  #endif
-  #ifdef CONFIG_VMDVIDEO_DECODER
-  BUF_VIDEO_VMD,
-  #endif
-  #ifdef CONFIG_ZLIB_DECODER
-  BUF_VIDEO_ZLIB,
-  #endif
-  #ifdef CONFIG_MSZH_DECODER
-  BUF_VIDEO_MSZH,
-  #endif
-  #ifdef CONFIG_ASV1_DECODER
-  BUF_VIDEO_ASV1,
-  #endif
-  #ifdef CONFIG_ASV2_DECODER
-  BUF_VIDEO_ASV2,
-  #endif
-  #ifdef CONFIG_VCR1_DECODER
-  BUF_VIDEO_ATIVCR1,
-  #endif
-  #ifdef CONFIG_FLV_DECODER
-  BUF_VIDEO_FLV1,
-  #endif
-  #ifdef CONFIG_QTRLE_DECODER
-  BUF_VIDEO_QTRLE,
-  #endif
-  #ifdef CONFIG_H264_DECODER
-  BUF_VIDEO_H264,
-  #endif
-  #ifdef CONFIG_H261_DECODER
-  BUF_VIDEO_H261,
-  #endif
-  #ifdef CONFIG_AASC_DECODER
-  BUF_VIDEO_AASC,
-  #endif
-  #ifdef CONFIG_LOCO_DECODER
-  BUF_VIDEO_LOCO,
-  #endif
-  #ifdef CONFIG_QDRAW_DECODER
-  BUF_VIDEO_QDRW,
-  #endif
-  #ifdef CONFIG_QPEG_DECODER
-  BUF_VIDEO_QPEG,
-  #endif
-  #ifdef CONFIG_TSCC_DECODER
-  BUF_VIDEO_TSCC,
-  #endif
-  #ifdef CONFIG_ULTI_DECODER
-  BUF_VIDEO_ULTI,
-  #endif
-  #ifdef CONFIG_WNV1_DECODER
-  BUF_VIDEO_WNV1,
-  #endif
-  #ifdef CONFIG_VIXL_DECODER
-  BUF_VIDEO_XL,
-  #endif
-  #ifdef CONFIG_INDEO2_DECODER
-  BUF_VIDEO_RT21,
-  #endif
-  #ifdef CONFIG_FRAPS_DECODER
-  BUF_VIDEO_FPS1,
-  #endif
-  #ifdef CONFIG_MPEG1VIDEO_DECODER
-  BUF_VIDEO_MPEG,
-  #endif
-  #ifdef CONFIG_CSCD_DECODER
-  BUF_VIDEO_CSCD,
-  #endif
-  #ifdef CONFIG_AVS_DECODER
-  BUF_VIDEO_AVS,
-  #endif
-  #ifdef CONFIG_MMVIDEO_DECODER
-  BUF_VIDEO_ALGMM,
-  #endif
-  #ifdef CONFIG_ZMBV_DECODER
-  BUF_VIDEO_ZMBV,
-  #endif
-  #ifdef CONFIG_SMACKVIDEO_DECODER
-  BUF_VIDEO_SMACKER,
-  #endif
-  #ifdef CONFIG_NUV_DECODER
-  BUF_VIDEO_NUV,
-  #endif
-  #ifdef CONFIG_KMVC_DECODER
-  BUF_VIDEO_KMVC,
-  #endif
-  #ifdef CONFIG_FLASHSV_DECODER
-  BUF_VIDEO_FLASHSV,
-  #endif
-  #ifdef CONFIG_CAVS_DECODER
-  BUF_VIDEO_CAVS,
-  #endif
-  #ifdef CONFIG_VMNC_DECODER
-  BUF_VIDEO_VMNC,
-  #endif
-  #ifdef CONFIG_SNOW_DECODER
-  BUF_VIDEO_SNOW,
-  #endif
-  BUF_VIDEO_THEORA_RAW,
-  0 
-};
 
 static uint32_t wmv8_video_types[] = { 
   BUF_VIDEO_WMV8,

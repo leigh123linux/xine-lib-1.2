@@ -10,4 +10,4 @@ DISTCLEANFILES = $(DYNAMICMANS)
 EXTRA_DIST = $(STATICMANS) xine-list.1.in
 
 xine-list-@XINE_SERIES@.1: xine-list.1.in
-	(echo '.ds xl xine\-list\-@XINE_SERIES@'; cat $<) >$@
+	$(SED) -e 's/@XL@/xine\-list\-@XINE_SERIES@/' $< >$@

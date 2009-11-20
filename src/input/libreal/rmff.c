@@ -21,6 +21,10 @@
  * adopted from joschkas real tools
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #define LOG_MODULE "rmff"
 #define LOG_VERBOSE
 /*
@@ -330,12 +334,14 @@ static rmff_prop_t *rmff_scan_prop(const char *data) {
   return prop;
 }
 
-static rmff_mdpr_t *rmff_scan_mdpr(const char *data) {
-
-  rmff_mdpr_t *mdpr = malloc(sizeof(rmff_mdpr_t));
+static rmff_mdpr_t *rmff_scan_mdpr(const char *data)
+{
+  rmff_mdpr_t *mdpr = calloc(sizeof(rmff_mdpr_t), 1);
 
   mdpr->object_id=_X_BE_32(data);
   mdpr->size=_X_BE_32(&data[4]);
+  if (mdpr->size < 46)
+    goto fail;
   mdpr->object_version=_X_BE_16(&data[8]);
   if (mdpr->object_version != 0)
   {
@@ -351,21 +357,40 @@ static rmff_mdpr_t *rmff_scan_mdpr(const char *data) {
   mdpr->duration=_X_BE_32(&data[36]);
   
   mdpr->stream_name_size=data[40];
+  if (mdpr->size < 46 + mdpr->stream_name_size)
+    goto fail;
   mdpr->stream_name = malloc(mdpr->stream_name_size+1);
+  if (!mdpr->stream_name)
+    goto fail;
   memcpy(mdpr->stream_name, &data[41], mdpr->stream_name_size);
   mdpr->stream_name[mdpr->stream_name_size]=0;
   
   mdpr->mime_type_size=data[41+mdpr->stream_name_size];
+  if (mdpr->size < 46 + mdpr->stream_name_size + mdpr->mime_type_size)
+    goto fail;
   mdpr->mime_type = malloc(mdpr->mime_type_size+1);
+  if (!mdpr->mime_type)
+    goto fail;
   memcpy(mdpr->mime_type, &data[42+mdpr->stream_name_size], mdpr->mime_type_size);
   mdpr->mime_type[mdpr->mime_type_size]=0;
   
   mdpr->type_specific_len=_X_BE_32(&data[42+mdpr->stream_name_size+mdpr->mime_type_size]);
+  if (mdpr->size < 46 + mdpr->stream_name_size + mdpr->mime_type_size + mdpr->type_specific_data)
+    goto fail;
   mdpr->type_specific_data = malloc(mdpr->type_specific_len);
+  if (!mdpr->type_specific_data)
+    goto fail;
   memcpy(mdpr->type_specific_data, 
       &data[46+mdpr->stream_name_size+mdpr->mime_type_size], mdpr->type_specific_len);
   
   return mdpr;
+
+fail:
+  free (mdpr->stream_name);
+  free (mdpr->mime_type);
+  free (mdpr->type_specific_data);
+  free (mdpr);
+  return NULL;
 }
 
 static rmff_cont_t *rmff_scan_cont(const char *data) {
@@ -463,8 +488,11 @@ rmff_header_t *rmff_scan_header(const char *data) {
       break;
     case MDPR_TAG:
       mdpr=rmff_scan_mdpr(ptr);
-      chunk_size=mdpr->size;
-      header->streams[mdpr->stream_number]=mdpr;
+      if (mdpr) /* FIXME: what to do if NULL? */
+      {
+        chunk_size=mdpr->size;
+        header->streams[mdpr->stream_number]=mdpr;
+      }
       break;
     case CONT_TAG:
       header->cont=rmff_scan_cont(ptr);

@@ -32,60 +32,73 @@ to read from. Valid MRLs may be plain file names or one of the following
 .TP
 \(bu CD and DVD:
 .br
-.BI dvd:/[<device_name>][/<title>.<part>]
+.BI dvd:/[ device_name ][/ title [. part ]]
 .br
-.BI dvd:/<DVD_image_file_or_directory>[/<title>.<part>]
+.BI dvd:/ DVD_image_file [/ title [. part ]]
 .br
-.BI vcd://[<CD_image>|<device_name>][@[letter]<number>]
+.BI dvd:/ DVD_directory [/ title [. part ]]
 .br
-.BI vcdo://<track_number>
+	(use the path of the directory which contains VIDEO_TS)
 .br
-.BI cdda:/[<device>][/<track-number>]
+.BI vcd://[ CD_image_or_device_name ][@[ letter ] number ]
+.br
+.BI vcdo:// track_number
+.br
+.BI cdda:/[ device ][/ track_number ]
 .LP
 .TP
 \(bu Video devices:
 .br
-.BI v4l://[<tuner_device>/<frequency>]
+.BI v4l://[ tuner_device / frequency ]
 .br
-.BI dvb://<number_or_channel_name>
+.BI dvb:// channel_number
 .br
-.BI dvbc://<channel_name>:<tuning_parameters>
+	(nth channel in your channels.conf)
 .br
-.BI dvbs://<channel_name>:<tuning_parameters>
+.BI dvb:// channel_name
 .br
-.BI dvbt://<channel_name>:<tuning_parameters>
+.BI dvbc:// channel_name : tuning_parameters
 .br
-.BI dvba://<channel_name>:<tuning_parameters>
+.BI dvbs:// channel_name : tuning_parameters
 .br
-.BR pvr:/<tmp_files_path>!<saved_files_path>!<max_page_age> " (for WinTV PVR 250 and 350)"
+.BI dvbt:// channel_name : tuning_parameters
+.br
+.BI dvba:// channel_name : tuning_parameters
+.br
+.BI pvr:/ tmp_files_path ! saved_files_path ! max_page_age
+.br
+	(for WinTV PVR 250 and 350)
 .LP
 .TP
 \(bu Network:
 .br
-.BI http://<host>...
+.BI http:// host...
 .br
-.BR tcp://<host>[:<port>] " (default port is 7658)"
+.BI tcp:// host [: port ]
 .br
-.BR udp://<host>[:<port>[?iface=<interface>]] " (default port is 7658)"
+.BI udp:// host [: port [?iface= interface ]]
 .br
-.BR rtp://<host>[:<port>[?iface=<interface>]] " (default port is 7658)"
+.BI rtp:// host [: port [?iface= interface ]]
+.br
+	(default port for tcp, udp and rtp is 7658)
 .br
 .BI smb://...
 .br
-.BI mms://<host>...
+.BI mms:// host...
 .br
-.BI pnm://<host>...
+.BI pnm:// host...
 .br
-.BR rtsp://<host>... " (requires Real codecs)"
+.BI rtsp:// host... "\fR  (requires Real codecs)"
 .br
 .LP
 Additional input plugins will provide additional MRL types. The ones listed
 above are available with stock libxine.
 
 \fBNOTE:\fP where a file name is required, the \fIfull path must be
-provided\fP - from a shell, you can use \fB"$PWD/file"\fP or
+provided\fP - from a shell, you can normally use \fB"$PWD/file"\fP or
 \fB"$(pwd)/file"\fP or \fB"\`pwd\`/file"\fP if the file is in the current
-directory. (Which one depends on your shell; all three work in bash.)
+directory. (Which one depends on your shell; all three work in bash. Also,
+normal URL encoding rules apply; `%', in particular, must be encoded as `%25'.)
 
 As of xine-lib 1.1.3, the DVD title number may be 0 (select navigation) and
 the chapter number may be 0 (full title).
@@ -333,8 +346,8 @@ stream.
 
 .br
 The programs are documented fully on the xine home page:
-.UR http://xinehq.de/
-.IR "http://xinehq.de/"
+.UR http://www.xine-project.org/
+.IR "http://www.xine-project.org/"
 .UE
 .SH AUTHOR
 This text was extracted from the xine man page by Darren Salt

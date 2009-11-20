@@ -330,17 +330,20 @@ static xine_ticket_t *XINE_MALLOC ticket_init(void) {
 
 static void set_speed_internal (xine_stream_t *stream, int speed) {
   xine_t *xine = stream->xine;
+  int old_speed = xine->clock->speed;
 
-  if (xine->clock->speed != XINE_SPEED_PAUSE && speed == XINE_SPEED_PAUSE)
+  if (old_speed != XINE_SPEED_PAUSE && speed == XINE_SPEED_PAUSE)
     /* get all decoder and post threads in a state where they agree to be blocked */
     xine->port_ticket->revoke(xine->port_ticket, 0);
   
-  if (xine->clock->speed == XINE_SPEED_PAUSE && speed != XINE_SPEED_PAUSE)
+  if (old_speed == XINE_SPEED_PAUSE && speed != XINE_SPEED_PAUSE)
     /* all decoder and post threads may continue now */
     xine->port_ticket->issue(xine->port_ticket, 0);
   
-  stream->xine->clock->set_fine_speed (stream->xine->clock, speed);
-
+  if (old_speed != XINE_SPEED_PAUSE && speed == XINE_SPEED_PAUSE)
+    /* set master clock so audio_out loop can pause in a safe place */
+    stream->xine->clock->set_fine_speed (stream->xine->clock, speed);
+  
   /* see coment on audio_out loop about audio_paused */
   if( stream->audio_out ) {
     xine->port_ticket->acquire(xine->port_ticket, 1);
@@ -350,6 +353,10 @@ static void set_speed_internal (xine_stream_t *stream, int speed) {
     
     xine->port_ticket->release(xine->port_ticket, 1);
   }
+  
+  if (old_speed == XINE_SPEED_PAUSE || speed != XINE_SPEED_PAUSE)
+    /* master clock is set after resuming the audio device (audio_out loop may continue) */
+    stream->xine->clock->set_fine_speed (stream->xine->clock, speed);
 }
 
 
@@ -419,6 +426,7 @@ void xine_stop (xine_stream_t *stream) {
 static void close_internal (xine_stream_t *stream) {
 
   int i ;
+  int gapless_switch = stream->gapless_switch;
 
   if( stream->slave ) {
     xine_close( stream->slave );
@@ -429,7 +437,7 @@ static void close_internal (xine_stream_t *stream) {
     }
   }
 
-  if( !stream->gapless_switch ) {
+  if( !gapless_switch ) {
     /* make sure that other threads cannot change the speed, especially pauseing the stream */
     pthread_mutex_lock(&stream->speed_change_lock);
     stream->ignore_speed_change = 1;
@@ -445,7 +453,7 @@ static void close_internal (xine_stream_t *stream) {
   
   stop_internal( stream );
   
-  if( !stream->gapless_switch ) {
+  if( !gapless_switch ) {
     if (stream->video_out)
       stream->video_out->set_property(stream->video_out, VO_PROP_DISCARD_FRAMES, 0);  
     if (stream->audio_out)
@@ -596,6 +604,7 @@ xine_stream_t *xine_stream_new (xine_t *this,
   stream->early_finish_event     = 0;
   stream->delay_finish_event     = 0;
   stream->gapless_switch         = 0;
+  stream->keep_ao_driver_open    = 0;
 
   stream->video_out              = vo;
   if (vo)

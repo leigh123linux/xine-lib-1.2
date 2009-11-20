@@ -424,6 +424,9 @@ static uint32_t pvr_plugin_get_capabilities (input_plugin_t *this_gen) {
 static off_t pvr_plugin_read (input_plugin_t *this_gen, char *buf, off_t len) {
   /*pvr_input_plugin_t *this = (pvr_input_plugin_t *) this_gen;*/
 
+  if (len < 4)
+    return -1;
+
   /* FIXME: Tricking the demux_mpeg_block plugin */
   buf[0] = 0;
   buf[1] = 0;
@@ -1204,6 +1207,14 @@ static buf_element_t *pvr_plugin_read_block (input_plugin_t *this_gen, fifo_buff
     return NULL;  
   }
 
+  buf = fifo->buffer_pool_alloc (fifo);
+  if (todo > buf->max_size)
+    todo = buf->max_size;
+  if (todo < 0) {
+    buf->free_buffer(buf);
+    return NULL;
+  }
+
   if( this->scr_tunning == -2 )
     speed = this->speed_before_pause;
 
@@ -1227,7 +1238,6 @@ static buf_element_t *pvr_plugin_read_block (input_plugin_t *this_gen, fifo_buff
 
   pvr_event_handler(this);
   
-  buf = fifo->buffer_pool_alloc (fifo);
   buf->content = buf->mem;
     
   pthread_mutex_lock(&this->lock);

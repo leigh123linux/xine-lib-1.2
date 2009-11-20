@@ -21,6 +21,10 @@
  * Inspired by tta libavformat demuxer by Alex Beregszaszi
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #define LOG_MODULE "demux_tta"
 #define LOG_VERBOSE
 
@@ -54,7 +58,7 @@ typedef struct {
       uint32_t samplerate;
       uint32_t data_length;
       uint32_t crc32;
-    } __attribute__((__packed__)) tta;
+    } XINE_PACKED tta;
     uint8_t buffer[22]; /* This is the size of the header */
   } header;
 } demux_tta_t;
@@ -126,6 +130,10 @@ static int demux_tta_send_chunk(demux_plugin_t *this_gen) {
     /* buf->extra_info->input_time = this->current_sample / this->samplerate; */
 
     bytes_read = this->input->read(this->input, buf->content, ( bytes_to_read > buf->max_size ) ? buf->max_size : bytes_to_read);
+    if (bytes_read < 0) {
+      this->status = DEMUX_FINISHED;
+      break;
+    }
 
     buf->size = bytes_read;
 

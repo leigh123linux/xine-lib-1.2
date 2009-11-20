@@ -738,6 +738,8 @@ static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
 
     if (current_atom == ART_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
+      if (string_size <= 0)
+        continue;
       info->artist = xine_xmalloc(string_size);
       if (info->artist) {
         strncpy(info->artist, &meta_atom[i + 20], string_size - 1);
@@ -745,6 +747,8 @@ static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
       }
     } else if (current_atom == NAM_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
+      if (string_size <= 0)
+        continue;
       info->name = xine_xmalloc(string_size);
       if (info->name) {
         strncpy(info->name, &meta_atom[i + 20], string_size - 1);
@@ -752,6 +756,8 @@ static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
       }
     } else if (current_atom == ALB_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
+      if (string_size <= 0)
+        continue;
       info->album = xine_xmalloc(string_size);
       if (info->album) {
         strncpy(info->album, &meta_atom[i + 20], string_size - 1);
@@ -759,6 +765,8 @@ static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
       }
     } else if (current_atom == GEN_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
+      if (string_size <= 0)
+        continue;
       info->genre = xine_xmalloc(string_size);
       if (info->genre) {
         strncpy(info->genre, &meta_atom[i + 20], string_size - 1);
@@ -766,6 +774,8 @@ static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
       }
     } else if (current_atom == TOO_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
+      if (string_size <= 0)
+        continue;
       info->comment = xine_xmalloc(string_size);
       if (info->comment) {
         strncpy(info->comment, &meta_atom[i + 20], string_size - 1);
@@ -773,6 +783,8 @@ static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
       }
     } else if (current_atom == WRT_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
+      if (string_size <= 0)
+        continue;
       info->composer = xine_xmalloc(string_size);
       if (info->composer) {
         strncpy(info->composer, &meta_atom[i + 20], string_size - 1);
@@ -780,6 +792,8 @@ static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
       }
     } else if (current_atom == DAY_ATOM) {
       string_size = _X_BE_32(&meta_atom[i + 4]) - 16 + 1;
+      if (string_size <= 0)
+        continue;
       info->year = xine_xmalloc(string_size);
       if (info->year) {
         strncpy(info->year, &meta_atom[i + 20], string_size - 1);
@@ -947,6 +961,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
       /* allocate space for each of the properties unions */
       trak->stsd_atoms_count = _X_BE_32(&trak_atom[i + 8]);
+      if (trak->stsd_atoms_count <= 0) {
+        last_error = QT_HEADER_TROUBLE;
+        goto free_trak;
+      }
       trak->stsd_atoms = calloc(trak->stsd_atoms_count, sizeof(properties_t));
       if (!trak->stsd_atoms) {
         last_error = QT_NO_MEMORY;
@@ -958,6 +976,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
       for (k = 0; k < trak->stsd_atoms_count; k++) {
 
         current_stsd_atom_size = _X_BE_32(&trak_atom[atom_pos - 4]);      
+        if (current_stsd_atom_size < 4) {
+          last_error = QT_HEADER_TROUBLE;
+          goto free_trak;
+        }
 
         if (trak->type == MEDIA_VIDEO) {
 
@@ -1513,7 +1535,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
     } else if (current_atom == STTS_ATOM) {
 
       /* there should only be one of these atoms */
-      if (trak->time_to_sample_table) {
+      if (trak->time_to_sample_table
+          || current_atom_size < 12 || current_atom_size >= UINT_MAX) {
         last_error = QT_HEADER_TROUBLE;
         goto free_trak;
       }
@@ -1522,6 +1545,11 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
       debug_atom_load("    qt stts atom (time-to-sample atom): %d entries\n",
         trak->time_to_sample_count);
+
+      if (trak->time_to_sample_count > (current_atom_size - 12) / 8) {
+        last_error = QT_HEADER_TROUBLE;
+        goto free_trak;
+      }
 
       trak->time_to_sample_table = (time_to_sample_table_t *)calloc(
         trak->time_to_sample_count+1, sizeof(time_to_sample_table_t));
@@ -1575,13 +1603,16 @@ static qt_error parse_reference_atom (reference_t *ref,
   qt_atom current_atom;
   unsigned int current_atom_size;
 
+  if (ref_atom_size >= 0x80000000)
+    return QT_NOT_A_VALID_FILE;
+
   /* initialize reference atom */
   ref->url = NULL;
   ref->data_rate = 0;
   ref->qtim_version = 0;
 
   /* traverse through the atom looking for the key atoms */
-  for (i = ATOM_PREAMBLE_SIZE; i < ref_atom_size - 4; i++) {
+  for (i = ATOM_PREAMBLE_SIZE; i + 4 < ref_atom_size; i++) {
 
     current_atom_size = _X_BE_32(&ref_atom[i - 4]);
     current_atom = _X_BE_32(&ref_atom[i]);
@@ -1589,15 +1620,22 @@ static qt_error parse_reference_atom (reference_t *ref,
     if (current_atom == RDRF_ATOM) {
       size_t string_size = _X_BE_32(&ref_atom[i + 12]);
       size_t url_offset = 0;
+      int http = 0;
 
-      if (string_size >= current_atom_size || i + string_size >= ref_atom_size)
+      if (string_size >= current_atom_size || string_size >= ref_atom_size - i)
         return QT_NOT_A_VALID_FILE;
 
       /* if the URL starts with "http://", copy it */
       if ( memcmp(&ref_atom[i + 16], "http://", 7) &&
 	   memcmp(&ref_atom[i + 16], "rtsp://", 7) &&
 	   base_mrl )
-	url_offset = strlen(base_mrl);
+      {
+	/* We need a "qt" prefix hack for Apple trailers */
+        http = !strncasecmp (base_mrl, "http://", 7);
+	url_offset = strlen(base_mrl) + 2 * http;
+      }
+      if (url_offset >= 0x80000000)
+        return QT_NOT_A_VALID_FILE;
 
       /* otherwise, append relative URL to base MRL */
       string_size += url_offset;
@@ -1605,7 +1643,7 @@ static qt_error parse_reference_atom (reference_t *ref,
       ref->url = xine_xmalloc(string_size + 1);
 
       if ( url_offset )
-	strcpy(ref->url, base_mrl);
+	sprintf (ref->url, "%s%s", http ? "qt" : "", base_mrl);
 
       memcpy(ref->url + url_offset, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
 
@@ -2181,7 +2219,7 @@ static qt_error open_qt_file(qt_info *info, input_plugin_t *input,
   }
 
   /* check if moov is compressed */
-  if (_X_BE_32(&moov_atom[12]) == CMOV_ATOM) {
+  if (_X_BE_32(&moov_atom[12]) == CMOV_ATOM && moov_atom_size >= 0x28) {
 
     info->compressed_header = 1;
 

@@ -121,6 +121,13 @@ gnomevfs_plugin_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo,
 	off_t total_bytes;
 	buf_element_t *buf = fifo->buffer_pool_alloc (fifo);
 
+	if (todo > buf->max_size)
+	  todo = buf->max_size;
+	if (todo < 0) {
+		buf->free_buffer (buf);
+		return NULL;
+	}
+
 	buf->content = buf->mem;
 	buf->type = BUF_DEMUX_BLOCK;
 

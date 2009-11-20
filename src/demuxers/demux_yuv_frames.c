@@ -126,13 +126,19 @@ static void demux_yuv_frames_send_headers (demux_plugin_t *this_gen){
   if(_x_stream_info_get(this->stream, XINE_STREAM_INFO_HAS_AUDIO)) {
     buf = this->input->read_block(this->input, this->audio_fifo, 0);
     
-    this->audio_fifo->put(this->audio_fifo, buf);
+    if (buf)
+      this->audio_fifo->put(this->audio_fifo, buf);
+    else
+      this->status = DEMUX_FINISHED;
   }
   
   if(_x_stream_info_get(this->stream, XINE_STREAM_INFO_HAS_VIDEO)) {
     buf = this->input->read_block(this->input, this->video_fifo, 0);
     
-    this->video_fifo->put(this->video_fifo, buf);
+    if (buf)
+      this->video_fifo->put(this->video_fifo, buf);
+    else
+      this->status = DEMUX_FINISHED;
   }
   
   this->status = DEMUX_OK;

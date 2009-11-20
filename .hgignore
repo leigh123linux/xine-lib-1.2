@@ -71,6 +71,7 @@ m4/stdint_h.m4
 m4/ulonglong.m4
 m4/intl.m4
 m4/intldir.m4
+m4/intlmacosx.m4
 m4/lock.m4
 m4/visibility.m4
 m4/libtool.m4
@@ -79,6 +80,7 @@ m4/ltsugar.m4
 m4/ltversion.m4
 m4/lt~obsolete.m4
 
+misc/Makefile.plugins
 misc/SlackBuild
 misc/build_rpms.sh
 misc/libxine.pc
@@ -87,12 +89,15 @@ misc/xine-config
 misc/xine-lib.spec
 misc/xine-list-*
 
+po/Makevars.extra
 po/POTFILES
 po/*.gmo
 po/stamp-po
 po/insert-header.sed
 po/remove-potcdate.sed
 
+src/combined/ffmpeg/avcodec_*.list
+src/combined/ffmpeg/ff_*_list.h
 src/libffmpeg/ffmpeg_config.h
 src/video_out/libdha/pci_dev_ids.c
 src/video_out/libdha/pci_ids.h

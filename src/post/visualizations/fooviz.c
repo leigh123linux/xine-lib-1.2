@@ -24,6 +24,10 @@
  * colors on each iteration.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 
 #include "xine_internal.h"

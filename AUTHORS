@@ -235,7 +235,7 @@ Marcelo Roberto Jimenez <mroberto@cetuc.puc-rio.br>
 George Staikos <staikos@0wned.org>
   xinerama bugfixes
 
-Juan Manuel Garc? Molina <juanmagm@mail.com>
+Juan Manuel García Molina <juanmagm@mail.com>
   spanish internationalization files.
 
 Jeffrey W. Baker <jwbaker@acm.org>
@@ -293,7 +293,7 @@ Andrew Patrikalakis <anrp@irulethe.net>
   powerpc assembly memcpy() implementaions with assistance from
     Rogerio Brito <rbrito@iname.com>
     Benjamin Herrenschmidt <benh@kernel.crashing.org>
-    Michel Dzer <daenzer@debian.org>
+    Michel Dänzer <daenzer@debian.org>
     Others
 
 Giovanni Baronetti and Mauro Borghi <mauro.borghi@tilab.com>
@@ -415,7 +415,7 @@ Conrad Parker <conrad@metadecks.org>
 Marcel Janssen <korgull@home.nl>
   libavcodec MPEG encoder for DXR3
 
-Dirk Meyer <dmeyer@tzi.de
+Dirk Meyer <dmeyer@tzi.de>
   stdctl patches for xine-ui and fbxine.
   post filter support for fbxine.
 

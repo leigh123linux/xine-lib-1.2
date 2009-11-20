@@ -529,6 +529,9 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
   
   case XINE_PARAM_GAPLESS_SWITCH:
     stream->gapless_switch = !!value;
+    if( stream->gapless_switch && !stream->early_finish_event ) {
+      xprintf (stream->xine, XINE_VERBOSITY_DEBUG, "frontend possibly buggy: gapless_switch without early_finish_event\n");
+    }
     break;
     
   default:

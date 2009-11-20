@@ -91,6 +91,8 @@ typedef struct {
   char            *host;
   int              port;
   char            *uri;
+
+  const char      *user_agent;
   
   char             preview[MAX_PREVIEW_SIZE];
   off_t            preview_size;
@@ -421,6 +423,9 @@ static off_t http_plugin_read (input_plugin_t *this_gen,
 
   num_bytes = 0;
 
+  if (nlen < 0)
+    return -1;
+
   if (this->curpos < this->preview_size) {
 
     if (nlen > (this->preview_size - this->curpos))
@@ -437,7 +442,7 @@ static off_t http_plugin_read (input_plugin_t *this_gen,
 
   n = nlen - num_bytes;
 
-  if (n) {
+  if (n > 0) {
     int read_bytes;
     read_bytes = http_plugin_read_int (this, &buf[num_bytes], n);
     
@@ -503,6 +508,13 @@ static buf_element_t *http_plugin_read_block (input_plugin_t *this_gen, fifo_buf
   off_t                 total_bytes;
   buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
 
+  if (todo > buf->max_size)
+    todo = buf->max_size;
+  if (todo < 0) {
+    buf->free_buffer (buf);
+    return NULL;
+  }
+
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
 
@@ -554,7 +566,7 @@ static off_t http_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin
   if ((origin == SEEK_CUR) && (offset >= 0)) {
 
     for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-      if( !this_gen->read (this_gen, this->seek_buf, BUFSIZE) )
+      if( this_gen->read (this_gen, this->seek_buf, BUFSIZE) <= 0 )
         return this->curpos;
     }
 
@@ -576,7 +588,7 @@ static off_t http_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin
       offset -= this->curpos;
 
       for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-        if( !this_gen->read (this_gen, this->seek_buf, BUFSIZE) )
+        if( this_gen->read (this_gen, this->seek_buf, BUFSIZE) <= 0 )
           return this->curpos;
       }
 
@@ -679,7 +691,8 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   
   
   if (!_x_parse_url(this->mrl, &this->proto, &this->host, &this->port,
-                    &this->user, &this->password, &this->uri)) {
+                    &this->user, &this->password, &this->uri,
+                    &this->user_agent)) {
     _x_message(this->stream, XINE_MSG_GENERAL_WARNING, "malformed url", NULL);
     return 0;
   }
@@ -778,10 +791,12 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   }
   
   buflen += snprintf(this->buf + buflen, BUFSIZE - buflen,
-		     "User-Agent: xine/%s\015\012"
+		     "User-Agent: %s%sxine/%s\015\012"
 		     "Accept: */*\015\012"
 		     "Icy-MetaData: 1\015\012"
 		     "\015\012",
+		     this->user_agent ? this->user_agent : "",
+		     this->user_agent ? " " : "",
 		     VERSION);
   if (_x_io_tcp_write (this->stream, this->fh, this->buf, buflen) != buflen) {
     _x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "couldn't send request", NULL);
@@ -996,6 +1011,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
     this->preview_size = http_plugin_read_int (this, this->preview, MAX_PREVIEW_SIZE);
   }
   if (this->preview_size < 0) {
+    this->preview_size = 0;
     xine_log (this->stream->xine, XINE_LOG_MSG, _("input_http: read error %d\n"), errno);
     return -12;
   }
@@ -1018,7 +1034,8 @@ static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_str
   
   if (strncasecmp (mrl, "http://", 7) && 
       strncasecmp (mrl, "unsv://", 7) &&
-      strncasecmp (mrl, "peercast://pls/", 15)) {
+      strncasecmp (mrl, "peercast://pls/", 15) &&
+      !_x_url_user_agent (mrl) /* user agent hacks */) {
     return NULL;
   }
   this = calloc(1, sizeof(http_input_plugin_t));

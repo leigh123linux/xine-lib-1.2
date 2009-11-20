@@ -22,11 +22,7 @@
  */
 
 /* use gcc attribs to align critical data structures */
-#ifdef ATTRIBUTE_ALIGNED_MAX
-#define ATTR_ALIGN(align) __attribute__ ((__aligned__ ((ATTRIBUTE_ALIGNED_MAX < align) ? ATTRIBUTE_ALIGNED_MAX : align)))
-#else
-#define ATTR_ALIGN(align)
-#endif
+#include "../../xine-utils/attributes.h"
 
 #ifdef HAVE_BUILTIN_EXPECT
 #define likely(x) __builtin_expect ((x) != 0, 1)

@@ -37,6 +37,7 @@ xineinclude_HEADERS = \
 	compat.h \
 	xine_buffer.h \
 	xineutils.h \
+	xine_mmx.h \
 	xmllexer.h \
 	xmlparser.h \
 	list.h \

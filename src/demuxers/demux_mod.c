@@ -130,9 +130,16 @@ static int probe_mod_file(demux_mod_t *this) {
 /* returns 1 if the MOD file was opened successfully, 0 otherwise */
 static int open_mod_file(demux_mod_t *this) {
   int total_read;
+  off_t input_length;
   
   /* Get size and create buffer */
-  this->filesize = this->input->get_length(this->input);
+  input_length = this->input->get_length(this->input);
+  /* Avoid potential issues with signed variables and e.g. read() returning -1 */
+  if (input_length > 0x7FFFFFFF || input_length < 0) {
+    xine_log(this->stream->xine, XINE_LOG_PLUGIN, "modplug - size overflow\n");
+    return 0;
+  }
+  this->filesize = input_length; 
   this->buffer = (char *)malloc(this->filesize);
   if(!this->buffer) {
     xine_log(this->stream->xine, XINE_LOG_PLUGIN, "modplug - allocation failure\n");
@@ -171,6 +178,8 @@ static int open_mod_file(demux_mod_t *this) {
   this->copyright = strdup("");
   
   this->mod_length = ModPlug_GetLength(this->mpfile);
+  if (this->mod_length < 1)
+    this->mod_length = 1; /* avoids -ve & div-by-0 */
     
   return 1;
 }
@@ -372,7 +381,19 @@ static const char *get_extensions (demux_class_t *this_gen) {
 }
 
 static const char *get_mimetypes (demux_class_t *this_gen) {
-  return NULL;
+  return "audio/x-mod: mod: SoundTracker/NoiseTracker/ProTracker Module;"
+         "audio/mod: mod: SoundTracker/NoiseTracker/ProTracker Module;"
+         "audio/it: it: ImpulseTracker Module;"
+         "audio/x-it: it: ImpulseTracker Module;"
+         "audio/x-stm: stm: ScreamTracker 2 Module;"
+         "audio/x-s3m: s3m: ScreamTracker 3 Module;"
+         "audio/s3m: s3m: ScreamTracker 3 Module;"
+         "application/playerpro: 669: 669 Tracker Module;"
+         "application/adrift: amf: ADRIFT Module File;"
+         "audio/med: med: Amiga MED/OctaMED Tracker Module Sound File;"
+         "audio/x-amf: amf: ADRIFT Module File;"
+         "audio/x-xm: xm: FastTracker II Audio;"
+         "audio/xm: xm: FastTracker II Audio;";
 }
 
 static void class_dispose (demux_class_t *this_gen) {

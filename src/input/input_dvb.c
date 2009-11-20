@@ -67,7 +67,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 /* pthread.h must be included first so rest of the headers are imported
@@ -286,7 +286,7 @@ typedef struct {
 
   xine_t           *xine;
 
-  char             *mrls[5];
+  char             *mrls[6];
 
   int 		    numchannels;
 
@@ -2602,6 +2602,12 @@ static buf_element_t *dvb_plugin_read_block (input_plugin_t *this_gen,
   buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
   int                   total_bytes;
 
+  if (todo > buf->max_size)
+    todo = buf->max_size;
+  if (todo < 0) {
+    buf->free_buffer (buf);
+    return NULL;
+  }
 
   buf->content = buf->mem;
   buf->type    = BUF_DEMUX_BLOCK;
@@ -2869,6 +2875,8 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
                 if (lastchannel.num_value) {
                   if (xine_config_lookup_entry(this->class->xine, "media.dvb.last_channel", &lastchannel)){
                     this->channel = lastchannel.num_value -1;
+                    if (this->channel < 0 || this->channel >= num_channels)
+                      this->channel = 0; /* out of range? default */
                   }else{
                     xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("input_dvb: invalid channel specification, defaulting to channel 0\n"));
                     this->channel = 0;

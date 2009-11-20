@@ -1,3 +1,4 @@
+include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
 AM_CFLAGS = $(VISIBILITY_FLAG)
@@ -43,4 +44,4 @@ xineplug_decode_gdk_pixbuf_la_LIBADD = $(XINE_LIB) $(DYNAMIC_LD_LIBS) $(GDK_PIXB
 
 xineplug_decode_theora_la_SOURCES = xine_theora_decoder.c
 xineplug_decode_theora_la_CFLAGS = $(AM_CFLAGS) $(OGG_CFLAGS) $(THEORA_CFLAGS)
-xineplug_decode_theora_la_LIBADD = $(XINE_LIB) $(OGG_LIBS) $(THEORA_LIBS)
+xineplug_decode_theora_la_LIBADD = $(XINE_LIB) $(OGG_LIBS) $(THEORA_LIBS) $(LTLIBINTL)

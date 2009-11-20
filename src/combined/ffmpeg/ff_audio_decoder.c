@@ -73,45 +73,7 @@ typedef struct ff_audio_decoder_s {
 } ff_audio_decoder_t;
 
 
-static const ff_codec_t ff_audio_lookup[] = {
-  {BUF_AUDIO_WMAV1,      CODEC_ID_WMAV1,          "MS Windows Media Audio 1 (ffmpeg)"},
-  {BUF_AUDIO_WMAV2,      CODEC_ID_WMAV2,          "MS Windows Media Audio 2 (ffmpeg)"},
-  {BUF_AUDIO_14_4,       CODEC_ID_RA_144,         "Real 14.4 (ffmpeg)"},
-  {BUF_AUDIO_28_8,       CODEC_ID_RA_288,         "Real 28.8 (ffmpeg)"},
-  {BUF_AUDIO_MPEG,       CODEC_ID_MP3,            "MP3 (ffmpeg)"},
-  {BUF_AUDIO_MP3ADU,     CODEC_ID_MP3ADU,         "MPEG-3 adu (ffmpeg)"},
-  {BUF_AUDIO_MSADPCM,    CODEC_ID_ADPCM_MS,       "MS ADPCM (ffmpeg)"},
-  {BUF_AUDIO_QTIMAADPCM, CODEC_ID_ADPCM_IMA_QT,   "QT IMA ADPCM (ffmpeg)"},
-  {BUF_AUDIO_MSIMAADPCM, CODEC_ID_ADPCM_IMA_WAV,  "MS IMA ADPCM (ffmpeg)"},
-  {BUF_AUDIO_DK3ADPCM,   CODEC_ID_ADPCM_IMA_DK3,  "Duck DK3 ADPCM (ffmpeg)"},
-  {BUF_AUDIO_DK4ADPCM,   CODEC_ID_ADPCM_IMA_DK4,  "Duck DK4 ADPCM (ffmpeg)"},
-  {BUF_AUDIO_VQA_IMA,    CODEC_ID_ADPCM_IMA_WS,   "Westwood Studios IMA (ffmpeg)"},
-  {BUF_AUDIO_SMJPEG_IMA, CODEC_ID_ADPCM_IMA_SMJPEG, "SMJPEG IMA (ffmpeg)"},
-  {BUF_AUDIO_XA_ADPCM,   CODEC_ID_ADPCM_XA,       "CD-ROM/XA ADPCM (ffmpeg)"},
-  {BUF_AUDIO_4X_ADPCM,   CODEC_ID_ADPCM_4XM,      "4X ADPCM (ffmpeg)"},
-  {BUF_AUDIO_EA_ADPCM,   CODEC_ID_ADPCM_EA,       "Electronic Arts ADPCM (ffmpeg)"},
-  {BUF_AUDIO_MULAW,      CODEC_ID_PCM_MULAW,      "mu-law logarithmic PCM (ffmpeg)"},
-  {BUF_AUDIO_ALAW,       CODEC_ID_PCM_ALAW,       "A-law logarithmic PCM (ffmpeg)"},
-  {BUF_AUDIO_ROQ,        CODEC_ID_ROQ_DPCM,       "RoQ DPCM (ffmpeg)"},
-  {BUF_AUDIO_INTERPLAY,  CODEC_ID_INTERPLAY_DPCM, "Interplay DPCM (ffmpeg)"},
-  {BUF_AUDIO_MAC3,       CODEC_ID_MACE3,          "MACE 3:1 (ffmpeg)"},
-  {BUF_AUDIO_MAC6,       CODEC_ID_MACE6,          "MACE 6:1 (ffmpeg)"},
-  {BUF_AUDIO_XAN_DPCM,   CODEC_ID_XAN_DPCM,       "Origin Xan DPCM (ffmpeg)"},
-  {BUF_AUDIO_VMD,        CODEC_ID_VMDAUDIO,       "Sierra VMD Audio (ffmpeg)"},
-  {BUF_AUDIO_FLAC,       CODEC_ID_FLAC,           "FLAC (ffmpeg)"},
-  {BUF_AUDIO_SHORTEN,    CODEC_ID_SHORTEN,        "Shorten (ffmpeg)"},
-  {BUF_AUDIO_ALAC,       CODEC_ID_ALAC,           "ALAC (ffmpeg)"},
-  {BUF_AUDIO_QDESIGN2,   CODEC_ID_QDM2,           "QDesign (ffmpeg)"},
-  {BUF_AUDIO_COOK,       CODEC_ID_COOK,           "RealAudio Cooker (ffmpeg)"},
-  {BUF_AUDIO_TRUESPEECH, CODEC_ID_TRUESPEECH,     "TrueSpeech (ffmpeg)"},
-  {BUF_AUDIO_TTA,        CODEC_ID_TTA,            "True Audio Lossless (ffmpeg)"},
-  {BUF_AUDIO_SMACKER,    CODEC_ID_SMACKAUDIO,     "Smacker (ffmpeg)"},
-  {BUF_AUDIO_FLVADPCM,   CODEC_ID_ADPCM_SWF,	  "Flash ADPCM (ffmpeg)"},
-  {BUF_AUDIO_WAVPACK,	 CODEC_ID_WAVPACK,	  "WavPack (ffmpeg)"},
-  {BUF_AUDIO_AMR_NB,	 CODEC_ID_AMR_NB,	  "AMR narrow band (ffmpeg)"},
-  {BUF_AUDIO_AMR_WB,	 CODEC_ID_AMR_WB,	  "AMR wide band (ffmpeg)"},
-};
-
+#include "ff_audio_list.h"
 
  static void ff_audio_ensure_buffer_size(ff_audio_decoder_t *this, int size) {
   if (size > this->bufsize) {
@@ -249,6 +211,8 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 
               if (extradata + data_len > this->size)
                 break; /* abort early - extradata length is bad */
+              if (extradata > INT_MAX - data_len)
+                break;/*integer overflow*/
 
 	      this->context->extradata_size = data_len;
 	      this->context->extradata      = malloc(this->context->extradata_size +
@@ -367,6 +331,13 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
         /* dispatch the decoded audio */
         out = 0;
         while (out < decode_buffer_size) {
+          int stream_status = xine_get_status(this->stream);
+
+	  if (stream_status == XINE_STATUS_QUIT || stream_status == XINE_STATUS_STOP) {
+	    this->size = 0;
+            return;
+	  }
+
           audio_buffer = 
             this->stream->audio_out->get_buffer (this->stream->audio_out);
           if (audio_buffer->mem_size == 0) {
@@ -499,115 +470,6 @@ void *init_audio_plugin (xine_t *xine, void *data) {
 
   return this;
 }
-
-static uint32_t supported_audio_types[] = { 
-  #ifdef CONFIG_WMAV1_DECODER
-  BUF_AUDIO_WMAV1,
-  #endif
-  #ifdef CONFIG_WMAV2_DECODER
-  BUF_AUDIO_WMAV2,
-  #endif
-  #ifdef CONFIG_RA_144_DECODER
-  BUF_AUDIO_14_4,
-  #endif
-  #ifdef CONFIG_RA_288_DECODER
-  BUF_AUDIO_28_8,
-  #endif
-  #ifdef CONFIG_MP3_DECODER
-  BUF_AUDIO_MPEG,
-  #endif
-  #ifdef CONFIG_ADPCM_MS_DECODER
-  BUF_AUDIO_MSADPCM,
-  #endif
-  #ifdef CONFIG_ADPCM_IMA_QT_DECODER
-  BUF_AUDIO_QTIMAADPCM,
-  #endif
-  #ifdef CONFIG_ADPCM_IMA_WAV_DECODER
-  BUF_AUDIO_MSIMAADPCM,
-  #endif
-  #ifdef CONFIG_ADPCM_IMA_DK3_DECODER
-  BUF_AUDIO_DK3ADPCM,
-  #endif
-  #ifdef CONFIG_ADPCM_IMA_DK4_DECODER
-  BUF_AUDIO_DK4ADPCM,
-  #endif
-  #ifdef CONFIG_ADPCM_IMA_WS_DECODER
-  BUF_AUDIO_VQA_IMA,
-  #endif
-  #ifdef CONFIG_ADPCM_IMA_SMJPEG_DECODER
-  BUF_AUDIO_SMJPEG_IMA,
-  #endif
-  #ifdef CONFIG_ADPCM_XA_DECODER
-  BUF_AUDIO_XA_ADPCM,
-  #endif
-  #ifdef CONFIG_ADPCM_4XM_DECODER
-  BUF_AUDIO_4X_ADPCM,
-  #endif
-  #ifdef CONFIG_ADPCM_EA_DECODER
-  BUF_AUDIO_EA_ADPCM,
-  #endif
-  #ifdef CONFIG_PCM_MULAW_DECODER
-  BUF_AUDIO_MULAW,
-  #endif
-  #ifdef CONFIG_PCM_ALAW_DECODER
-  BUF_AUDIO_ALAW,
-  #endif
-  #ifdef CONFIG_ROQ_DPCM_DECODER
-  BUF_AUDIO_ROQ,
-  #endif
-  #ifdef CONFIG_INTERPLAY_DPCM_DECODER
-  BUF_AUDIO_INTERPLAY,
-  #endif
-  #ifdef CONFIG_MACE3_DECODER
-  BUF_AUDIO_MAC3,
-  #endif
-  #ifdef CONFIG_MACE6_DECODER
-  BUF_AUDIO_MAC6,
-  #endif
-  #ifdef CONFIG_XAN_DPCM_DECODER
-  BUF_AUDIO_XAN_DPCM,
-  #endif
-  #ifdef CONFIG_VMDAUDIO_DECODER
-  BUF_AUDIO_VMD,
-  #endif
-  #ifdef CONFIG_FLAC_DECODER
-  BUF_AUDIO_FLAC,
-  #endif
-  #ifdef CONFIG_SHORTEN_DECODER
-  BUF_AUDIO_SHORTEN,
-  #endif
-  #ifdef CONFIG_ALAC_DECODER
-  BUF_AUDIO_ALAC,
-  #endif
-  #ifdef CONFIG_QDM2_DECODER
-  BUF_AUDIO_QDESIGN2,
-  #endif
-  #ifdef CONFIG_COOK_DECODER
-  BUF_AUDIO_COOK,
-  #endif
-  #ifdef CONFIG_TRUESPEECH_DECODER
-  BUF_AUDIO_TRUESPEECH,
-  #endif
-  #ifdef CONFIG_TTA_DECODER
-  BUF_AUDIO_TTA,
-  #endif
-  #ifdef CONFIG_SMACKAUDIO_DECODER
-  BUF_AUDIO_SMACKER,
-  #endif
-  #ifdef CONFIG_ADPCM_SWF_DECODER
-  BUF_AUDIO_FLVADPCM,
-  #endif
-  #ifdef CONFIG_WAVPACK_DECODER
-  BUF_AUDIO_WAVPACK,
-  #endif
-  #ifdef CONFIG_AMR_NB_DECODER
-  BUF_AUDIO_AMR_NB,
-  #endif
-  #ifdef CONFIG_AMR_WB_DECODER
-  BUF_AUDIO_AMR_WB,
-  #endif
-  0
-};
 
 decoder_info_t dec_info_ffmpeg_audio = {
   supported_audio_types,   /* supported types */

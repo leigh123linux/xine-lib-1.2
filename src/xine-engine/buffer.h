@@ -35,10 +35,6 @@
 extern "C" {
 #endif
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <string.h>
 #include <stdio.h>
 #include <pthread.h>
@@ -275,6 +271,7 @@ extern "C" {
 #define BUF_SPU_CVD             0x04050000
 #define BUF_SPU_OGM             0x04060000
 #define BUF_SPU_CMML            0x04070000
+#define BUF_SPU_HDMV            0x04080000
 
 /* demuxer block types: */
 
@@ -378,6 +375,16 @@ struct buf_element_s {
  * decoder_info[2] carries denominator for display aspect ratio       */
 #define BUF_FLAG_ASPECT      0x0800
 
+/* represent the state of gapless_switch at the time buf was enqueued */
+#define BUF_FLAG_GAPLESS_SW  0x1000
+
+/* Amount of audio padding added by encoder (mp3, aac). These empty
+ * audio frames are causing a gap when switching between mp3 files.
+ * decoder_info[1] carries amount of audio frames padded at the
+ * beginning of the buffer
+ * decoder_info[2] carries amount of audio frames padded at the end of
+ * the buffer                                                         */
+#define BUF_FLAG_AUDIO_PADDING 0x2000
 
 /* Special buffer types:
  * Sometimes there is a need to relay special information from a demuxer

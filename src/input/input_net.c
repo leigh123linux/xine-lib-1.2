@@ -253,6 +253,9 @@ static off_t net_plugin_read (input_plugin_t *this_gen,
 
   lprintf("reading %" PRIdMAX " bytes...\n", (intmax_t)len);
 
+  if (len < 0)
+    return -1;
+
   total=0;
   if (this->curpos < this->preview_size) {
     n = this->preview_size - this->curpos;
@@ -287,6 +290,13 @@ static buf_element_t *net_plugin_read_block (input_plugin_t *this_gen,
   /* net_input_plugin_t   *this = (net_input_plugin_t *) this_gen; */
   buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
   off_t                 total_bytes;
+
+  if (todo > buf->max_size)
+    todo = buf->max_size;
+  if (todo < 0) {
+    buf->free_buffer (buf);
+    return NULL;
+  }
 
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
@@ -331,7 +341,7 @@ static off_t net_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin
   if ((origin == SEEK_CUR) && (offset >= 0)) {
 
     for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-      if( !this_gen->read (this_gen, this->seek_buf, BUFSIZE) )
+      if( this_gen->read (this_gen, this->seek_buf, BUFSIZE) <= 0 )
         return this->curpos;
     }
 
@@ -353,7 +363,7 @@ static off_t net_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin
       offset -= this->curpos;
 
       for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-        if( !this_gen->read (this_gen, this->seek_buf, BUFSIZE) )
+        if( this_gen->read (this_gen, this->seek_buf, BUFSIZE) <= 0 )
           return this->curpos;
       }
 

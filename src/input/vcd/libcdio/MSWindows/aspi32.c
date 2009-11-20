@@ -162,9 +162,9 @@ have_aspi( HMODULE *hASPI,
     return false;
   }
 
-  (FARPROC) *lpGetSupport = GetProcAddress( *hASPI,
+  *lpGetSupport = (FARPROC)GetProcAddress( *hASPI,
 					    "GetASPI32SupportInfo" );
-  (FARPROC) *lpSendCommand = GetProcAddress( *hASPI,
+  *lpSendCommand = (FARPROC)GetProcAddress( *hASPI,
 					     "SendASPI32Command" );
   
   /* make sure that we've got both function addresses */

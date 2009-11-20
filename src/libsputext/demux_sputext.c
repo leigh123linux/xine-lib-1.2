@@ -147,7 +147,7 @@ static inline void trail_space(char *s) {
 static char *read_line_from_input(demux_sputext_t *this, char *line, off_t len) {
   off_t nread = 0;
   
-  if ((len - this->buflen) > 512) {
+  if ((len - this->buflen) > 512 && len < SUB_BUFSIZE) {
     if((nread = this->input->read(this->input, 
 				  &this->buf[this->buflen], len - this->buflen)) < 0) {
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "read failed.\n");

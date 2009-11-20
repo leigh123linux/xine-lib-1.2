@@ -138,6 +138,8 @@ struct xv_driver_s {
   int                use_colorkey;
   uint32_t           colorkey;
 
+  int                sync_is_vsync;
+
   /* hold initial port attributes values to restore on exit */
   xine_list_t       *port_attributes;
 
@@ -156,7 +158,9 @@ typedef struct {
   xine_t              *xine;
 } xv_class_t;
 
-static const char *const prefer_types[] = VIDEO_DEVICE_XV_PREFER_TYPES;
+VIDEO_DEVICE_XV_DECL_BICUBIC_TYPES;
+VIDEO_DEVICE_XV_DECL_PREFER_TYPES;
+VIDEO_DEVICE_XV_DECL_SYNC_ATOMS;
 
 static uint32_t xv_get_capabilities (vo_driver_t *this_gen) {
   xv_driver_t *this = (xv_driver_t *) this_gen;
@@ -1212,66 +1216,43 @@ static void xv_update_deinterlace(void *this_gen, xine_cfg_entry_t *entry) {
   this->deinterlace_method = entry->num_value;
 }
 
-static void xv_update_XV_FILTER(void *this_gen, xine_cfg_entry_t *entry) {
+static void xv_update_attr (void *this_gen, xine_cfg_entry_t *entry,
+			    const char *atomstr, const char *debugstr)
+{
   xv_driver_t *this = (xv_driver_t *) this_gen;
-  int xv_filter;
 
   xcb_intern_atom_cookie_t atom_cookie;
   xcb_intern_atom_reply_t *atom_reply;
 
-  xv_filter = entry->num_value;
-
   pthread_mutex_lock(&this->main_mutex);
-  atom_cookie = xcb_intern_atom(this->connection, 0, sizeof("XV_FILTER"), "XV_FILTER");
+  atom_cookie = xcb_intern_atom(this->connection, 0, strlen (atomstr), atomstr);
   atom_reply = xcb_intern_atom_reply(this->connection, atom_cookie, NULL);
-  xcb_xv_set_port_attribute(this->connection, this->xv_port, atom_reply->atom, xv_filter);
+  xcb_xv_set_port_attribute(this->connection, this->xv_port, atom_reply->atom, entry->num_value);
   free(atom_reply);
   pthread_mutex_unlock(&this->main_mutex);
 
   xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-	  "video_out_xcbxv: bilinear scaling mode (XV_FILTER) = %d\n",xv_filter);
+	  LOG_MODULE ": %s = %d\n", debugstr, entry->num_value);
+}
+
+static void xv_update_XV_FILTER(void *this_gen, xine_cfg_entry_t *entry) {
+  xv_update_attr (this_gen, entry, "XV_FILTER", "bilinear scaling mode");
 }
 
 static void xv_update_XV_DOUBLE_BUFFER(void *this_gen, xine_cfg_entry_t *entry) {
-  xv_driver_t *this = (xv_driver_t *) this_gen;
-  int          xv_double_buffer;
-
-  xcb_intern_atom_cookie_t atom_cookie;
-  xcb_intern_atom_reply_t *atom_reply;
-
-  xv_double_buffer = entry->num_value;
-
-  pthread_mutex_lock(&this->main_mutex);
-  atom_cookie = xcb_intern_atom(this->connection, 0, sizeof("XV_DOUBLE_BUFFER"), "XV_DOUBLE_BUFFER");
-  atom_reply = xcb_intern_atom_reply(this->connection, atom_cookie, NULL);
-  xcb_xv_set_port_attribute(this->connection, this->xv_port, atom_reply->atom, xv_double_buffer);
-  free(atom_reply);
-  pthread_mutex_unlock(&this->main_mutex);
-
-  xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-	  "video_out_xcbxv: double buffering mode = %d\n", xv_double_buffer);
+  xv_update_attr (this_gen, entry, "XV_DOUBLE_BUFFER", "double buffering mode");
 }
 
 static void xv_update_XV_SYNC_TO_VBLANK(void *this_gen, xine_cfg_entry_t *entry) {
-  xv_driver_t *this = (xv_driver_t *) this_gen;
-  int          xv_sync_to_vblank;
-
-  xcb_intern_atom_cookie_t atom_cookie;
-  xcb_intern_atom_reply_t *atom_reply;
-
-  xv_sync_to_vblank = entry->num_value;
-
-  pthread_mutex_lock(&this->main_mutex);
-  atom_cookie = xcb_intern_atom(this->connection, 0, sizeof("XV_SYNC_TO_VBLANK"), "XV_SYNC_TO_VBLANK");
-  atom_reply = xcb_intern_atom_reply(this->connection, atom_cookie, NULL);
-  xcb_xv_set_port_attribute(this->connection, this->xv_port, atom_reply->atom, xv_sync_to_vblank);
-  free(atom_reply);
-  pthread_mutex_unlock(&this->main_mutex);
-
-  xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-	  "video_out_xcbxv: sync to vblank = %d\n", xv_sync_to_vblank);
+  xv_update_attr (this_gen, entry,
+		  sync_atoms[((xv_driver_t *)this_gen)->sync_is_vsync],
+		  "sync to vblank");
 }
 
+static void xv_update_XV_BICUBIC(void *this_gen, xine_cfg_entry_t *entry)
+{
+  xv_update_attr (this_gen, entry, "XV_BICUBIC", "bicubic filtering mode");
+}
 
 static void xv_update_xv_pitch_alignment(void *this_gen, xine_cfg_entry_t *entry) {
   xv_driver_t *this = (xv_driver_t *) this_gen;
@@ -1314,12 +1295,10 @@ static xcb_xv_port_t xv_autodetect_port(xv_driver_t *this,
                                         xcb_xv_port_t base,
 					xv_prefertype prefer_type)
 {
-  xcb_xv_adaptor_info_iterator_t *start = adaptor_it;
-
   for (; adaptor_it->rem; xcb_xv_adaptor_info_next(adaptor_it))
     if (adaptor_it->data->type & XCB_XV_TYPE_IMAGE_MASK &&
         (prefer_type == xv_prefer_none ||
-         strcasestr (xcb_xv_adaptor_info_name (adaptor_it->data), prefer_types[prefer_type])))
+         strcasestr (xcb_xv_adaptor_info_name (adaptor_it->data), prefer_substrings[prefer_type])))
     {
       int j;
       for (j = 0; j < adaptor_it->data->num_ports; ++j)
@@ -1350,7 +1329,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   xcb_xv_list_image_formats_cookie_t list_formats_cookie;
   xcb_xv_list_image_formats_reply_t *list_formats_reply;
 
-  xcb_xv_adaptor_info_iterator_t adaptor_it;
+  xcb_xv_adaptor_info_iterator_t adaptor_it, adaptor_first;
   xcb_xv_image_format_info_iterator_t format_it;
 
   this = (xv_driver_t *) calloc(1, sizeof(xv_driver_t));
@@ -1388,12 +1367,12 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
     return NULL;
   }
 
-  adaptor_it = xcb_xv_query_adaptors_info_iterator(query_adaptors_reply);
+  adaptor_first = xcb_xv_query_adaptors_info_iterator(query_adaptors_reply);
   xv_port = config->register_num (config, "video.device.xv_port", 0,
 				  VIDEO_DEVICE_XV_PORT_HELP,
 				  20, NULL, NULL);
   prefer_type = config->register_enum (config, "video.device.xv_preferred_method", 0,
-				       prefer_types, VIDEO_DEVICE_XV_PREFER_TYPE_HELP,
+				       prefer_labels, VIDEO_DEVICE_XV_PREFER_TYPE_HELP,
 				       10, NULL, NULL);
 
   if (xv_port != 0) {
@@ -1401,14 +1380,25 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
       xprintf(class->xine, XINE_VERBOSITY_NONE,
 	      _("%s: could not open Xv port %d - autodetecting\n"),
 	      LOG_MODULE, xv_port);
+      adaptor_it = adaptor_first;
       xv_port = xv_autodetect_port (this, &adaptor_it, xv_port, prefer_type);
     } else
       xv_find_adaptor_by_port (xv_port, &adaptor_it);
   }
   if (!xv_port)
+  {
+    adaptor_it = adaptor_first;
     xv_port = xv_autodetect_port (this, &adaptor_it, 0, prefer_type);
+  }
   if (!xv_port)
+  {
+    if (prefer_type)
+      xprintf(class->xine, XINE_VERBOSITY_NONE,
+	      _("%s: no available ports of type \"%s\", defaulting...\n"),
+	      LOG_MODULE, prefer_labels[prefer_type]);
+    adaptor_it = adaptor_first;
     xv_port = xv_autodetect_port (this, &adaptor_it, 0, xv_prefer_none);
+  }
 
   if (!xv_port) {
     xprintf(class->xine, XINE_VERBOSITY_LOG,
@@ -1536,7 +1526,8 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 				   VIDEO_DEVICE_XV_DOUBLE_BUFFER_HELP,
 				   20, xv_update_XV_DOUBLE_BUFFER, this);
 	  config->update_num(config,"video.device.xv_double_buffer",xv_double_buffer);
-	} else if(!strcmp(xcb_xv_attribute_info_name(attribute_it.data), "XV_SYNC_TO_VBLANK")) {
+ 	} else if(!strcmp(name, sync_atoms[this->sync_is_vsync = 0]) ||
+ 		  !strcmp(name, sync_atoms[this->sync_is_vsync = 1])) {
 	  int xv_sync_to_vblank;
 	  xv_sync_to_vblank = 
 	    config->register_bool (config, "video.device.xv_sync_to_vblank", 1,
@@ -1548,6 +1539,12 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 		"sync to under the XVideo Settings tab"),
 	      20, xv_update_XV_SYNC_TO_VBLANK, this);
 	  config->update_num(config,"video.device.xv_sync_to_vblank",xv_sync_to_vblank);
+	} else if(!strcmp(name, "XV_BICUBIC")) {
+	  int xv_bicubic =
+	    config->register_enum (config, "video.device.xv_bicubic", 2,
+				   bicubic_types, VIDEO_DEVICE_XV_BICUBIC_HELP,
+				   20, xv_update_XV_BICUBIC, this);
+	  config->update_num(config,"video.device.xv_bicubic",xv_bicubic);
 	}
       }
     }

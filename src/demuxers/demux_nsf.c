@@ -124,7 +124,7 @@ static int demux_nsf_send_chunk(demux_plugin_t *this_gen) {
     buf->type = BUF_AUDIO_NSF;
     bytes_read = this->input->read(this->input, buf->content, buf->max_size);
 
-    if (bytes_read == 0) {
+    if (bytes_read <= 0) {
       /* the file has been completely loaded, free the buffer and start
        * sending control buffers */
       buf->free_buffer(buf);

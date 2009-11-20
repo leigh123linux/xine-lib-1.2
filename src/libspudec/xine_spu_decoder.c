@@ -22,6 +22,10 @@
  * stuff needed to turn libspu into a xine decoder plugin
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>

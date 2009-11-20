@@ -27,7 +27,7 @@
 /* avoid compiler warnings */
 #define _BSD_SOURCE 1
 
-#include <config.h>
+#include "config.h"
 
 #include <stdlib.h>
 #include <unistd.h>

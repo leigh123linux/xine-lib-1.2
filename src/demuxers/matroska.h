@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2007 the xine project
+ * Copyright (C) 2000-2009 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
+ *
+ * Matroska EBML stream handling
  */
 #ifndef MATROSKA_H
 #define MATROSKA_H
@@ -62,6 +64,7 @@
 #define MATROSKA_ID_CL_BLOCKGROUP                 0xA0
 #define MATROSKA_ID_CL_BLOCK                      0xA1
 #define MATROSKA_ID_CL_BLOCKVIRTUAL               0xA2
+#define MATROSKA_ID_CL_SIMPLEBLOCK                0xA3
 #define MATROSKA_ID_CL_BLOCKADDITIONS             0x75A1
 #define MATROSKA_ID_CL_BLOCKMORE                  0xA6
 #define MATROSKA_ID_CL_BLOCKADDID                 0xEE
@@ -168,10 +171,16 @@
 /* Chapters */
 #define MATROSKA_ID_CHAPTERS                      0x1043A770
 #define MATROSKA_ID_CH_EDITIONENTRY               0x45B9
+#define MATROSKA_ID_CH_ED_UID                     0x45BC
+#define MATROSKA_ID_CH_ED_HIDDEN                  0x45BD
+#define MATROSKA_ID_CH_ED_DEFAULT                 0x45DB
+#define MATROSKA_ID_CH_ED_ORDERED                 0x45DD
 #define MATROSKA_ID_CH_ATOM                       0xB6
 #define MATROSKA_ID_CH_UID                        0x73C4
 #define MATROSKA_ID_CH_TIMESTART                  0x91
 #define MATROSKA_ID_CH_TIMEEND                    0x92
+#define MATROSKA_ID_CH_HIDDEN                     0x98
+#define MATROSKA_ID_CH_ENABLED                    0x4598
 #define MATROSKA_ID_CH_TRACK                      0x8F
 #define MATROSKA_ID_CH_TRACKNUMBER                0x89
 #define MATROSKA_ID_CH_DISPLAY                    0x80
@@ -181,6 +190,46 @@
 
 /* Tags */
 #define MATROSKA_ID_TAGS                          0x1254C367
+
+/* Chapter (used in tracks) */
+typedef struct {
+  uint64_t uid;
+  uint64_t time_start;
+  uint64_t time_end;
+  /* if not 0, the chapter could e.g. be used for skipping, but not
+   * be shown in the chapter list */
+  int hidden;
+  /* disabled chapters should be skipped during playback (using this
+   * would require parsing control blocks) */
+  int enabled;
+  /* Tracks this chapter belongs to.
+   * Remember that elements can occur in any order, so in theory the
+   * chapters could become available before the tracks do.
+   * TODO: currently unused
+   */
+  /* uint64_t* tracks; */
+  /* Chapter titles and locale information
+   * TODO: chapters can have multiple sets of those, i.e. several tuples
+   *  (title, language, country). The current implementation picks from
+   *  those by the following rules:
+   *   1) remember the first element
+   *   2) overwrite with an element where language=="eng"
+   */
+  char* title;
+  char* language;
+  char* country;
+} matroska_chapter_t;
+
+/* Edition */
+typedef struct {
+  uint64_t uid;
+  unsigned int hidden;
+  unsigned int is_default;
+  unsigned int ordered;
+
+  int num_chapters, cap_chapters;
+  matroska_chapter_t** chapters;
+} matroska_edition_t;
 
 /* Matroska Track */
 typedef struct {
@@ -213,7 +262,8 @@ typedef struct {
 typedef struct matroska_track_s matroska_track_t;
 struct matroska_track_s {
   int                      track_num;
-  
+  uint64_t uid;
+
   uint32_t                 track_type;
   uint64_t                 default_duration;
   char                    *language;

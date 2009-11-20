@@ -122,6 +122,13 @@ static buf_element_t *mms_plugin_read_block (input_plugin_t *this_gen,
 
   lprintf ("mms_plugin_read_block: %"PRId64" bytes...\n", todo);
 
+  if (todo > buf->max_size)
+    todo = buf->max_size;
+  if (todo < 0) {
+    buf->free_buffer (buf);
+    return NULL;
+  }
+
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
   
