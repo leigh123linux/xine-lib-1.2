@@ -25,6 +25,8 @@
 #include "config.h"
 #endif
 
+#include <config.h>
+
 #include <unistd.h>
 #include <stdio.h>
 #include <assert.h>
@@ -47,8 +49,8 @@
 */ 
 
 #include "rtsp.h"
-#include "io_helper.h"
-#include "xineutils.h"
+#include <xine/io_helper.h>
+#include <xine/xineutils.h>
 
 #define BUF_SIZE 4096
 #define HEADER_SIZE 1024
@@ -81,7 +83,7 @@ struct rtsp_s {
  * constants
  */
 
-const char rtsp_protocol_version[]="RTSP/1.0";
+static const char rtsp_protocol_version[]="RTSP/1.0";
 
 /* server states */
 #define RTSP_CONNECTED 1
@@ -107,8 +109,7 @@ const char rtsp_protocol_version[]="RTSP/1.0";
  */
  
 static char *rtsp_get(rtsp_t *s) {
-
-  char *buffer = malloc(BUF_SIZE);
+  char buffer[BUF_SIZE];
   char *string = NULL;
     
   if ( _x_io_tcp_read_line(s->stream, s->s, buffer, BUF_SIZE) >= 0 ) {
@@ -116,7 +117,6 @@ static char *rtsp_get(rtsp_t *s) {
     string = strdup( buffer );
   }
   
-  free(buffer);
   return string;
 }
 
@@ -139,8 +139,6 @@ static void rtsp_put(rtsp_t *s, const char *string) {
   _x_io_tcp_write(s->stream, s->s, buf, len+2);
   
   lprintf("done.\n");
-
-  free(buf);
 }
 
 /*
@@ -179,7 +177,7 @@ static void rtsp_send_request(rtsp_t *s, const char *type, const char *what) {
   
   asprintf(&buf,"%s %s %s",type, what, rtsp_protocol_version);
   rtsp_put(s,buf);
-  free(buf);
+
   if (payload)
     while (*payload) {
       rtsp_put(s,*payload);
@@ -204,7 +202,6 @@ static void rtsp_schedule_standard(rtsp_t *s) {
     char *buf;
     asprintf(&buf, "Session: %s", s->session);
     rtsp_schedule_field(s, buf);
-    free(buf);
   }
 }
 /*
@@ -362,19 +359,21 @@ int rtsp_request_play(rtsp_t *s, const char *what) {
   return rtsp_get_answers(s);
 }
 
+#if 0
 int rtsp_request_tearoff(rtsp_t *s, const char *what) {
 
   rtsp_send_request(s,"TEAROFF",what);
   
   return rtsp_get_answers(s);
 }
+#endif
 
 /*
  * read opaque data from stream
  */
 
-int rtsp_read_data(rtsp_t *s, char *buffer, unsigned int size) {
-
+int rtsp_read_data(rtsp_t *s, void *buffer_gen, unsigned int size) {
+  uint8_t *buffer = buffer_gen;
   int i,seq;
 
   if (size>=4) {
@@ -560,6 +559,7 @@ char *rtsp_search_answers(rtsp_t *s, const char *tag) {
   return NULL;
 }
 
+#if 0
 /*
  * session id management
  */
@@ -577,6 +577,7 @@ char *rtsp_get_session(rtsp_t *s) {
   return s->session;
 
 }
+#endif
 
 char *rtsp_get_mrl(rtsp_t *s) {
 
@@ -600,6 +601,7 @@ void rtsp_schedule_field(rtsp_t *s, const char *string) {
   s->scheduled[i]=strdup(string);
 }
 
+#if 0
 /*
  * removes the first scheduled field which prefix matches string. 
  */
@@ -620,6 +622,7 @@ void rtsp_unschedule_field(rtsp_t *s, const char *string) {
     *(ptr-1)=*ptr;
   } while(*ptr);
 }
+#endif
 
 /*
  * unschedule all fields

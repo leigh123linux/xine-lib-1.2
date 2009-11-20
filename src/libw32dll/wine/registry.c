@@ -18,7 +18,8 @@
 #include "debugtools.h"
 
 #ifdef XINE_MAJOR
-#include "xineutils.h"
+#include <xine/xineutils.h>
+#include <basedir.h>
 #endif
 
 //#undef TRACE
@@ -302,43 +303,22 @@ static struct reg_value* insert_reg_value(int handle, const char* name, int type
 
 static void init_registry(void)
 {
+	xdgHandle tmph = xdgAllocHandle();
+	const char *const xdg_cache_home = xdgCacheHome(tmph);
+
 	TRACE("Initializing registry\n");
 	// can't be free-ed - it's static and probably thread
 	// unsafe structure which is stored in glibc
 
-#ifdef MPLAYER
-	regpathname = get_path("registry");
-	localregpathname = regpathname;
-#else
-#ifdef XINE_MAJOR
-	asprintf(&localregpathname, "%s/.xine/win32registry", xine_get_homedir());
-#else
-	// regpathname is an external pointer
-        //
-	// registry.c is holding it's own internal pointer
-	// localregpathname  - which is being allocate/deallocated
-
-	if (localregpathname == 0)
-	{
-            const char* pthn = regpathname;
-	    if (!regpathname)
-	    {
-		// avifile - for now reading data from user's home
-		struct passwd* pwent;
-		pwent = getpwuid(geteuid());
-                pthn = pwent->pw_dir;
-	    }
-
-	    localregpathname = (char*)malloc(strlen(pthn)+20);
-	    strcpy(localregpathname, pthn);
-	    strcat(localregpathname, "/.registry");
-	}
-#endif
-#endif
+	localregpathname = malloc(strlen(xdg_cache_home) + sizeof("/"PACKAGE"/win32registry"));
+	strcpy(localregpathname, xdg_cache_home);
+	strcat(localregpathname, "/"PACKAGE"/win32registry");
 
 	open_registry();
 	insert_handle(HKEY_LOCAL_MACHINE, "HKLM");
 	insert_handle(HKEY_CURRENT_USER, "HKCU");
+
+	xdgFreeHandle(tmph);
 }
 
 #if 0

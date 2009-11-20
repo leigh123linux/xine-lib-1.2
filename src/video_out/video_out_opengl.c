@@ -47,6 +47,12 @@
 #include <ctype.h>
 #include <pthread.h>
 
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
+
 /* defines for debugging extensions only */
 /* #define GL_GLEXT_LEGACY */
 #include <GL/gl.h>
@@ -88,11 +94,11 @@
 #endif
 
 #include "xine.h"
-#include "video_out.h"
+#include <xine/video_out.h>
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #include "yuv2rgb.h"
-#include "xineutils.h"
+#include <xine/xineutils.h>
 #include "x11osd.h"
 
 
@@ -140,7 +146,6 @@ typedef struct {
   int                width, height, format, flags;
   double             ratio;
 
-  uint8_t           *chunk[4]; /* mem alloc by xmalloc_aligned           */
   uint8_t           *rgb, *rgb_dst;
     
   yuv2rgb_t         *yuv2rgb; /* yuv2rgb converter set up for this frame */
@@ -1199,7 +1204,7 @@ static void *render_run (opengl_driver_t *this) {
 
 static uint32_t opengl_get_capabilities (vo_driver_t *this_gen) {
 /*   opengl_driver_t *this = (opengl_driver_t *) this_gen; */
-  uint32_t capabilities = VO_CAP_YV12 | VO_CAP_YUY2;
+  uint32_t capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_BRIGHTNESS | VO_CAP_CONTRAST | VO_CAP_SATURATION;
 
   /* TODO: somehow performance goes down during the first few frames */
 /*   if (this->xoverlay) */
@@ -1268,10 +1273,10 @@ static void opengl_frame_dispose (vo_frame_t *vo_img) {
 
   frame->yuv2rgb->dispose (frame->yuv2rgb);
 
-  free (frame->chunk[0]);
-  free (frame->chunk[1]);
-  free (frame->chunk[2]);
-  free (frame->chunk[3]);
+  av_free (frame->vo_frame.base[0]);
+  av_free (frame->vo_frame.base[1]);
+  av_free (frame->vo_frame.base[2]);
+  av_free (frame->rgb);
   free (frame);
 }
 
@@ -1349,26 +1354,23 @@ static void opengl_update_frame_format (vo_driver_t *this_gen,
     XLockDisplay (this->display);
 
     /* (re-) allocate render space */
-    free (frame->chunk[0]);
-    free (frame->chunk[1]);
-    free (frame->chunk[2]);
-    free (frame->chunk[3]);
+    av_freep(&frame->vo_frame.base[0]);
+    av_freep(&frame->vo_frame.base[1]);
+    av_freep(&frame->vo_frame.base[2]);
+    av_freep(&frame->rgb);
 
     if (format == XINE_IMGFMT_YV12) {
       frame->vo_frame.pitches[0] = 8*((width + 7) / 8);
       frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
       frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
-      frame->vo_frame.base[0] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[0] * height,  (void **) &frame->chunk[0]);
-      frame->vo_frame.base[1] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[1] * ((height+1)/2), (void **) &frame->chunk[1]);
-      frame->vo_frame.base[2] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[2] * ((height+1)/2), (void **) &frame->chunk[2]);
+      frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
+      frame->vo_frame.base[1] = av_mallocz(frame->vo_frame.pitches[1] * ((height+1)/2));
+      frame->vo_frame.base[2] = av_mallocz(frame->vo_frame.pitches[2] * ((height+1)/2));
     } else {
       frame->vo_frame.pitches[0] = 8*((width + 3) / 4);
-      frame->vo_frame.base[0] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[0] * height, (void **) &frame->chunk[0]);
-      frame->chunk[1] = NULL;
-      frame->chunk[2] = NULL;
+      frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
     }
-    frame->rgb = xine_xmalloc_aligned (16, BYTES_PER_PIXEL*width*height,
-				       (void **) &frame->chunk[3]);
+    frame->rgb = av_mallocz(BYTES_PER_PIXEL*width*height);
 
     /* set up colorspace converter */
     switch (flags) {
@@ -1612,7 +1614,7 @@ static int opengl_set_property (vo_driver_t *this_gen,
     this->sc.force_redraw = 1;    /* trigger re-calc of output size */
 
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
-	    "video_out_opengl: aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name(value));
+	    "video_out_opengl: aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name_table[value]);
     break;
   case VO_PROP_BRIGHTNESS:
     this->yuv2rgb_brightness = value;
@@ -1999,20 +2001,6 @@ static int opengl_verify_direct (x11_visual_t *vis) {
   return ret;
 }
 
-static char* opengl_get_identifier (video_driver_class_t *this_gen) {
-  return "opengl";
-}
-
-static char* opengl_get_description (video_driver_class_t *this_gen) {
-  return _("xine video output plugin using the OpenGL 3D graphics API");
-}
-
-static void opengl_dispose_class (video_driver_class_t *this_gen) {
-  opengl_class_t         *this = (opengl_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *opengl_init_class (xine_t *xine, void *visual_gen) {
 
   opengl_class_t *this;
@@ -2028,9 +2016,9 @@ static void *opengl_init_class (xine_t *xine, void *visual_gen) {
   this = (opengl_class_t *) calloc (1, sizeof(opengl_class_t));
 
   this->driver_class.open_plugin     = opengl_open_plugin;
-  this->driver_class.get_identifier  = opengl_get_identifier;
-  this->driver_class.get_description = opengl_get_description;
-  this->driver_class.dispose         = opengl_dispose_class;
+  this->driver_class.identifier      = "opengl";
+  this->driver_class.description     = N_("xine video output plugin using the OpenGL 3D graphics API");
+  this->driver_class.dispose         = default_video_driver_class_dispose;
   this->xine                         = xine;
 
   return this;
@@ -2049,6 +2037,6 @@ static const vo_info_t vo_info_opengl = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_VIDEO_OUT, 21, "opengl", XINE_VERSION_CODE, &vo_info_opengl, opengl_init_class },
+  { PLUGIN_VIDEO_OUT, 22, "opengl", XINE_VERSION_CODE, &vo_info_opengl, opengl_init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

@@ -100,8 +100,6 @@
   static int64_t qwGreedyTwoFrameThreshold;
 #endif
 
-#include <mangle.h>
-
 #if defined(IS_SSE)
 static void DeinterlaceGreedy2Frame_SSE(uint8_t *output, int outstride, 
                                  deinterlace_frame_data_t *data,

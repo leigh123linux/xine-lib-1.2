@@ -55,11 +55,11 @@
 #define LOG_MODULE "demux_vc1es"
 #define LOG_VERBOSE
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "compat.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/compat.h>
+#include <xine/demux.h>
 #include "bswap.h"
-#include "demux.h"
 
 #define SCRATCH_SIZE 36
 #define PRIVATE_SIZE 44
@@ -336,17 +336,7 @@ static demux_plugin_t *open_plugin( demux_class_t *class_gen, xine_stream_t *str
   }
   break;
 
-  case METHOD_BY_EXTENSION: {
-    const char *extensions, *mrl;
-
-    mrl = input->get_mrl (input);
-    extensions = class_gen->get_extensions (class_gen);
-
-    if (!_x_demux_check_extension (mrl, extensions))
-      return NULL;
-  }
-  break;
-
+  case METHOD_BY_MRL:
   case METHOD_EXPLICIT:
   break;
 
@@ -383,43 +373,6 @@ static demux_plugin_t *open_plugin( demux_class_t *class_gen, xine_stream_t *str
 
 
 
-static const char *get_description( demux_class_t *this_gen )
-{
-  return "VC1 elementary stream demux plugin";
-}
-
-
-
-static const char *get_identifier( demux_class_t *this_gen )
-{
-  return "VC1_ES";
-}
-
-
-
-static const char *get_extensions( demux_class_t *this_gen )
-{
-  return "";
-}
-
-
-
-static const char *get_mimetypes( demux_class_t *this_gen )
-{
-  return NULL;
-}
-
-
-
-static void class_dispose( demux_class_t *this_gen )
-{
-  demux_vc1_es_class_t *this = (demux_vc1_es_class_t *) this_gen;
-
-  free (this);
-}
-
-
-
 static void *init_plugin( xine_t *xine, void *data )
 {
   demux_vc1_es_class_t     *this;
@@ -427,11 +380,11 @@ static void *init_plugin( xine_t *xine, void *data )
   this = calloc(1, sizeof(demux_vc1_es_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("VC1 elementary stream demux plugin");
+  this->demux_class.identifier      = "VC1_ES";
+  this->demux_class.mimetypes       = NULL;
+  this->demux_class.extensions      = "";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }
@@ -448,6 +401,6 @@ static const demuxer_info_t demux_info_vc1es = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_DEMUX, 26, "vc1es", XINE_VERSION_CODE, &demux_info_vc1es, init_plugin },
+  { PLUGIN_DEMUX, 27, "vc1es", XINE_VERSION_CODE, &demux_info_vc1es, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

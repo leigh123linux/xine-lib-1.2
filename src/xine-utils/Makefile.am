@@ -1,18 +1,19 @@
 include $(top_srcdir)/misc/Makefile.common
 
-LIBTOOL = $(SHELL) $(top_builddir)/libtool
-noinst_LTLIBRARIES = libxineutils.la
+AM_CFLAGS   = $(DEFAULT_OCFLAGS) $(X_CFLAGS) $(VISIBILITY_FLAG)
+AM_CPPFLAGS = -DXINE_LIBRARY_COMPILE
 
 EXTRA_DIST = ppcasm_string.S ppc_asm.tmpl
 
-if PPC_ARCH
+noinst_HEADERS = ppcasm_string.h mangle.h xine_mmx.h
+
+noinst_LTLIBRARIES = libxineutils.la
+
+if ARCH_PPC
 if !HOST_OS_DARWIN
 pppc_files = ppcasm_string.S
 endif
 endif
-
-AM_CFLAGS = $(X_CFLAGS) $(VISIBILITY_FLAG)
-AM_CPPFLAGS= -DXINE_LIBRARY_COMPILE
 
 libxineutils_la_SOURCES = $(pppc_files) \
 	cpu_accel.c \
@@ -32,20 +33,6 @@ libxineutils_la_SOURCES = $(pppc_files) \
 	pool.c \
 	ring_buffer.c
 
-xineinclude_HEADERS = \
-	attributes.h \
-	compat.h \
-	xine_buffer.h \
-	xineutils.h \
-	xine_mmx.h \
-	xmllexer.h \
-	xmlparser.h \
-	list.h \
-	array.h \
-	sorted_array.h \
-	pool.h \
-	ring_buffer.h
-
-
-noinst_HEADERS = ppcasm_string.h mangle.h
-
+noinst_PROGRAMS = xmltest
+xmltest_SOURCES = xmllexer.c xmlparser.c
+xmltest_CFLAGS = -DLOG -DXINE_XML_PARSER_TEST $(AM_CFLAGS)

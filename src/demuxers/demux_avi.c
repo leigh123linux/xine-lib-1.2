@@ -70,9 +70,9 @@
 #define DEBUG_ODML
 #define LOG
 */
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/demux.h>
 #include "bswap.h"
 
 /*
@@ -1885,7 +1885,12 @@ static void demux_avi_send_headers (demux_plugin_t *this_gen) {
   if (!this->avi->bih->biCompression)
     this->avi->video_type = BUF_VIDEO_RGB;
   else
+  {
     this->avi->video_type = _x_fourcc_to_buf_video(this->avi->bih->biCompression);
+    if (!this->avi->video_type)
+      _x_report_video_fourcc (this->stream->xine, LOG_MODULE,
+			      this->avi->bih->biCompression);
+  }
 
   for(i=0; i < this->avi->n_audio; i++) {
     this->avi->audio[i]->audio_type = _x_formattag_to_buf_audio (this->avi->audio[i]->wavex->wFormatTag);
@@ -1898,10 +1903,10 @@ static void demux_avi_send_headers (demux_plugin_t *this_gen) {
     }
 
     if( !this->avi->audio[i]->audio_type ) {
-      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "unknown audio type 0x%x\n",
-	       this->avi->audio[i]->wavex->wFormatTag);
       this->no_audio  = 1;
       this->avi->audio[i]->audio_type     = BUF_AUDIO_UNKNOWN;
+      _x_report_audio_format_tag (this->stream->xine, LOG_MODULE,
+				  this->avi->audio[i]->wavex->wFormatTag);
     } else
       xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_avi: audio type %s (wFormatTag 0x%x)\n",
                _x_buf_audio_name(this->avi->audio[i]->audio_type),
@@ -1913,8 +1918,8 @@ static void demux_avi_send_headers (demux_plugin_t *this_gen) {
    * however, at least for this case (compressor: xvid biCompression: DIVX), the
    * xvid fourcc must prevail as it is used by ffmpeg to detect encoder bugs. [MF]
    */
-  if( _x_fourcc_to_buf_video(this->avi->compressor) == BUF_VIDEO_XVID &&
-      _x_fourcc_to_buf_video(this->avi->bih->biCompression) == BUF_VIDEO_MPEG4 ) {
+  if( this->avi->video_type == BUF_VIDEO_MPEG4 &&
+      _x_fourcc_to_buf_video(this->avi->compressor) == BUF_VIDEO_XVID ) {
     this->avi->bih->biCompression = this->avi->compressor;
     this->avi->video_type = BUF_VIDEO_XVID;
   }
@@ -1963,6 +1968,8 @@ static void demux_avi_send_headers (demux_plugin_t *this_gen) {
       this->avi->compressor = this->avi->bih->biCompression;
     } else {
       this->avi->video_type = _x_fourcc_to_buf_video(this->avi->compressor);
+      if (!this->avi->video_type)
+        _x_fourcc_to_buf_video(this->avi->bih->biCompression);
     }
 
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_FOURCC,
@@ -2267,17 +2274,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   }
   break;
 
-  case METHOD_BY_EXTENSION: {
-    const char *extensions, *mrl;
-
-    mrl = input->get_mrl (input);
-    extensions = class_gen->get_extensions (class_gen);
-
-    if (!_x_demux_check_extension (mrl, extensions))
-      return NULL;
-  }
-  /* we want to fall through here */
-
+  case METHOD_BY_MRL:
   case METHOD_EXPLICIT:
   break;
 
@@ -2324,41 +2321,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 /*
  * demux avi class
  */
-
-static const char *get_description (demux_class_t *this_gen) {
-  return "AVI/RIFF demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "AVI";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "avi";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return "video/msvideo: avi: AVI video;"
-         "video/x-msvideo: avi: AVI video;";
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-  demux_avi_class_t *this = (demux_avi_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
   demux_avi_class_t     *this;
 
   this = calloc(1, sizeof(demux_avi_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("AVI/RIFF demux plugin");
+  this->demux_class.identifier      = "AVI";
+  this->demux_class.mimetypes       = 
+    "video/msvideo: avi: AVI video;"
+    "video/x-msvideo: avi: AVI video;";
+  this->demux_class.extensions      = "avi";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }
@@ -2372,6 +2347,6 @@ static const demuxer_info_t demux_info_avi = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_DEMUX, 26, "avi", XINE_VERSION_CODE, &demux_info_avi, init_class },
+  { PLUGIN_DEMUX, 27, "avi", XINE_VERSION_CODE, &demux_info_avi, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

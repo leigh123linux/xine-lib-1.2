@@ -36,9 +36,9 @@
 #endif
 
 /* Xine includes */
-#include "xine_internal.h"
-#include "input_plugin.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/input_plugin.h>
+#include <xine/xineutils.h>
 
 /*!
   This routine is like xine_log, except it takes a va_list instead of

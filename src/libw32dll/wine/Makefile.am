@@ -1,41 +1,14 @@
 include $(top_srcdir)/misc/Makefile.common
 
-LIBTOOL = $(SHELL) $(top_builddir)/libtool
+# disable -fomit-frame-pointer, -finline-functions, and -frename-registers
+# because they cause bad behavior of wine
+AM_CFLAGS   = $(DEFAULT_OCFLAGS) $(X_CFLAGS) @W32_NO_OPTIMIZE@ \
+        -fno-omit-frame-pointer -fno-inline-functions -fno-rename-registers
+AM_CPPFLAGS = -DWIN32_PATH=\"$(w32_path)\" -I$(srcdir)/.. -D__WINE__ \
+	-Ddbg_printf=__vprintf -DTRACE=__vprintf \
+        -I$(top_srcdir)/src/xine-utils
 
 EXTRA_DIST = stubs.s wrapper.S
-
-noinst_LTLIBRARIES = $(wine_lib)
-
-AM_CFLAGS = $(X_CFLAGS) @W32_NO_OPTIMIZE@ \
-	-Wmissing-prototypes -Wimplicit-function-declaration \
-	-DWIN32_PATH=\"@w32_path@\" -I$(srcdir)/.. -D__WINE__ \
-	-Ddbg_printf=__vprintf -DTRACE=__vprintf \
-	-I$(top_srcdir)/src/xine-utils
-
-# CFLAGS is here to filter out -fomit-frame-pointer,
-# -finline-functions and -frename-registers because they cause bad
-# behavior of wine
-CFLAGS = `echo @CFLAGS@ | sed -e 's/-fomit-frame-pointer//g;s/-finline-functions//g;s/-frename-registers//g'`
-
-if HAVE_W32DLL
-wine_lib = libwine.la
-endif
-
-libwine_la_SOURCES = \
-	afl.c \
-	driver.c \
-	elfdll.c \
-	ext.c \
-	ldt_keeper.c \
-	module.c \
-	pe_image.c  \
-	pe_resource.c \
-	resource.c \
-	registry.c \
-	vfl.c \
-	win32.c \
-	stubs.s \
-	wrapper.S 
 
 noinst_HEADERS = \
 	avifmt.h \
@@ -75,3 +48,21 @@ noinst_HEADERS = \
 	winuser.h \
 	wrapper.h
 
+noinst_LTLIBRARIES = libwine.la
+
+libwine_la_SOURCES = \
+	afl.c \
+	driver.c \
+	elfdll.c \
+	ext.c \
+	ldt_keeper.c \
+	module.c \
+	pe_image.c  \
+	pe_resource.c \
+	resource.c \
+	registry.c \
+	vfl.c \
+	win32.c \
+	stubs.s \
+	wrapper.S 
+libwine_la_CPPFLAGS = $(AM_CPPFLAGS) $(XDG_BASEDIR_CPPFLAGS)

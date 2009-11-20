@@ -1,11 +1,36 @@
+For 1.3 series
+==============
+- analyse impact of breaking xine.h down in multiple public headers, and
+  rename the xine/ directory for include files in xinecore/ (for plugins
+  only), while leaving xine/ for public include files;
+
+For 1.2 series
+==============
+- Security-Related: start using xine_xcalloc rather than xine_xmalloc when
+  the number of elements is not a build-time constant.
+- mimetype-based demuxer selection, solves the effects of shoutcast's bug;
+- Doxygen API documentation for both internal and public functions;
+- removal of (deprecated) software deinterlacers from video output plugins;
+- reduction of exported symbols by hiding (-fvisibility=hidden or attribute)
+  the internal libxine-only functions;
+- move the contributed code (not developed by xine project) in the contrib/
+  directory of the source tree;
+- reduce memory footprint (e.g. variable fifo buffer sizes...);
+- handle gracefully the runtime removal of the audio output device (being
+  it a physical removal for USB devices or a missing output on a client-server
+  design like PulseAudio, ESounD or Jack);
+- review media_eject_media, possibly rewrite to use libcdio;
+- improve error reporting (for when demuxer/decoder plugins aren't found);
+- HTTPS.
+- review translable strings, try to follow a defined schema for naming and
+  error reporting;
+
 known bugs
 ==========
 
 - frame allocation problem with h264 streams using > 15 reference frames
-- our faad2 has problems with 5.1 streams. faad2 cvs is GPL incompatible.
 - dvdnav time search function does not use the time table, but interpolates
   only cell times
-- crash with RV10 streams
 - apparently, dvb:// (but not dvb://CHANNEL) is broken for ATSC
 
 
@@ -51,10 +76,6 @@ optional
   - helix streaming server support
 
 - detect broken savage drivers in health check, disable Xv in that case
-- directfb video output plugin
-- reduce memory footprint (e.g. variable fifo buffer sizes...)
-- opengl video output plugin (matthias, sopra at stuttgart university)
-- irix audio output plugin (matthias)
 
 beyond 1.0
 ----------

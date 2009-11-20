@@ -16,14 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with self program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- * 22-8-2001 James imported some useful AC3 sections from the previous alsa driver.
- *   (c) 2001 Andy Lo A Foe <andy@alsaplayer.org>
- * 20-8-2001 First implementation of Audio sync and Audio driver separation.
- *   (c) 2001 James Courtier-Dutton James@superbug.demon.co.uk
  */
- 
-/*
+
+/**
+ * @file
+ * @brief xine-lib audio output implementation
+ *
+ * @date 2001-08-20 First implementation of Audio sync and Audio driver separation.
+ *       (c) 2001 James Courtier-Dutton <james@superbug.demon.co.uk>
+ * @date 2001-08-22 James imported some useful AC3 sections from the previous
+ *       ALSA driver. (c) 2001 Andy Lo A Foe <andy@alsaplayer.org>
+ *
+ *
  * General Programming Guidelines: -
  * New concept of an "audio_frame".
  * An audio_frame consists of all the samples required to fill every
@@ -85,11 +89,11 @@
 
 #define LOG_RESAMPLE_SYNC 0
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "audio_out.h"
-#include "resample.h"
-#include "metronom.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/audio_out.h>
+#include <xine/resample.h>
+#include <xine/metronom.h>
 
 
 #define NUM_AUDIO_BUFFERS       32
@@ -589,18 +593,16 @@ static void audio_filter_compress (aos_t *this, int16_t *mem, int num_frames) {
 }
 
 static void audio_filter_amp (aos_t *this, void *buf, int num_frames) {
-
-  int    i;
-  int    num_channels;
   double amp_factor;
-
-  num_channels = _x_ao_mode2channels (this->input.mode);
-  if (!num_channels)
+  int    i;
+  const int total_frames = num_frames * _x_ao_mode2channels (this->input.mode);
+  
+  if (!total_frames)
     return;
 
   amp_factor=this->amp_factor;
   if (this->amp_mute || amp_factor == 0) {
-    memset (buf, 0, num_frames * num_channels * (this->input.bits / 8));
+    memset (buf, 0, total_frames * (this->input.bits / 8));
     return;
   }
 
@@ -608,7 +610,7 @@ static void audio_filter_amp (aos_t *this, void *buf, int num_frames) {
     int16_t test;
     int8_t *mem = (int8_t *) buf;
 
-    for (i=0; i<num_frames*num_channels; i++) {
+    for (i=0; i<total_frames; i++) {
       test = mem[i] * amp_factor;
       /* Force limit on amp_factor to prevent clipping */
       if (test < INT8_MIN) {
@@ -625,7 +627,7 @@ static void audio_filter_amp (aos_t *this, void *buf, int num_frames) {
     int32_t test;
     int16_t *mem = (int16_t *) buf;
 
-    for (i=0; i<num_frames*num_channels; i++) {
+    for (i=0; i<total_frames; i++) {
       test = mem[i] * amp_factor;
       /* Force limit on amp_factor to prevent clipping */
       if (test < INT16_MIN) {
@@ -2072,8 +2074,8 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
   int              i, err;
   pthread_attr_t   pth_attrs;
   pthread_mutexattr_t attr;
-  static const char* resample_modes[] = {"auto", "off", "on", NULL};
-  static const char* av_sync_methods[] = {"metronom feedback", "resample", NULL};
+  static const char *const resample_modes[] = {"auto", "off", "on", NULL};
+  static const char *const av_sync_methods[] = {"metronom feedback", "resample", NULL};
 
   this = calloc(1, sizeof(aos_t)) ;
 

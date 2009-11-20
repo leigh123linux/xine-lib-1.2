@@ -43,10 +43,10 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "compat.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/compat.h>
+#include <xine/demux.h>
 #include "bswap.h"
 #include "group_audio.h"
 
@@ -83,6 +83,7 @@ typedef struct {
  * It returns 1 if flac file was opened successfully. */
 static int open_flac_file(demux_flac_t *flac) {
 
+  uint32_t signature;
   unsigned char preamble[10];
   unsigned int block_length;
   unsigned char buffer[FLAC_SEEKPOINT_SIZE];
@@ -93,7 +94,7 @@ static int open_flac_file(demux_flac_t *flac) {
 
   /* fetch the file signature, 4 bytes will read both the fLaC
    * signature and the */
-  if (_x_demux_read_header(flac->input, preamble, 4) != 4)
+  if (_x_demux_read_header(flac->input, &signature, 4) != 4)
     return 0;
 
   flac->input->seek(flac->input, 4, SEEK_SET);
@@ -103,16 +104,15 @@ static int open_flac_file(demux_flac_t *flac) {
    * users use them and want them working, so check and skip the ID3
    * tag if present.
    */
-  if ( id3v2_istag(preamble) ) {
-    id3v2_parse_tag(flac->input, flac->stream, preamble);
+  if ( id3v2_istag(signature) ) {
+    id3v2_parse_tag(flac->input, flac->stream, signature);
 
-    if ( flac->input->read(flac->input, preamble, 4) != 4 )
+    if ( flac->input->read(flac->input, &signature, 4) != 4 )
       return 0;
   }
 
   /* validate signature */
-  if ((preamble[0] != 'f') || (preamble[1] != 'L') ||
-      (preamble[2] != 'a') || (preamble[3] != 'C'))
+  if ( signature != ME_FOURCC('f', 'L', 'a', 'C') )
       return 0;
 
   /* loop through the metadata blocks; use a do-while construct since there
@@ -167,8 +167,8 @@ static int open_flac_file(demux_flac_t *flac) {
     case 3:
       lprintf ("SEEKTABLE metadata, %d bytes\n", block_length);
       flac->seekpoint_count = block_length / FLAC_SEEKPOINT_SIZE;
-      flac->seekpoints = calloc(flac->seekpoint_count,
-        sizeof(flac_seekpoint_t));
+      flac->seekpoints = xine_xcalloc(flac->seekpoint_count,
+				      sizeof(flac_seekpoint_t));
       if (flac->seekpoint_count && !flac->seekpoints)
         return 0;
       for (i = 0; i < flac->seekpoint_count; i++) {
@@ -196,8 +196,7 @@ static int open_flac_file(demux_flac_t *flac) {
       {
         char comments[block_length + 1]; /* last byte for NUL termination */
         char *ptr = comments;
-        uint32_t length, user_comment_list_length;
-        int cn;
+        uint32_t length, user_comment_list_length, cn;
         char *comment;
         char c;
 
@@ -467,12 +466,6 @@ static int demux_flac_seek (demux_plugin_t *this_gen,
   return this->status;
 }
 
-static void demux_flac_dispose (demux_plugin_t *this_gen) {
-  demux_flac_t *this = (demux_flac_t *) this_gen;
-
-  free(this->seekpoints);
-}
-
 static int demux_flac_get_status (demux_plugin_t *this_gen) {
   demux_flac_t *this = (demux_flac_t *) this_gen;
 
@@ -516,7 +509,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.send_headers      = demux_flac_send_headers;
   this->demux_plugin.send_chunk        = demux_flac_send_chunk;
   this->demux_plugin.seek              = demux_flac_seek;
-  this->demux_plugin.dispose           = demux_flac_dispose;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
   this->demux_plugin.get_status        = demux_flac_get_status;
   this->demux_plugin.get_stream_length = demux_flac_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_flac_get_capabilities;
@@ -527,19 +520,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   switch (stream->content_detection_method) {
 
-  case METHOD_BY_EXTENSION: {
-    const char *extensions, *mrl;
-
-    mrl = input->get_mrl (input);
-    extensions = class_gen->get_extensions (class_gen);
-
-    if (!_x_demux_check_extension (mrl, extensions)) {
-      free (this);
-      return NULL;
-    }
-  }
-  /* falling through is intended */
-
+  case METHOD_BY_MRL:
   case METHOD_BY_CONTENT:
   case METHOD_EXPLICIT:
 
@@ -558,40 +539,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static const char *get_description (demux_class_t *this_gen) {
-  return "Free Lossless Audio Codec (flac) demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "FLAC";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "flac";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return "audio/x-flac: flac: FLAC Audio;"
-    "audio/flac: flac: FLAC Audio;";
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-  demux_flac_class_t *this = (demux_flac_class_t *) this_gen;
-
-  free (this);
-}
-
 void *demux_flac_init_plugin (xine_t *xine, void *data) {
   demux_flac_class_t     *this;
 
   this = calloc(1, sizeof(demux_flac_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("Free Lossless Audio Codec (flac) demux plugin");
+  this->demux_class.identifier      = "FLAC";
+  this->demux_class.mimetypes       =
+    "audio/x-flac: flac: FLAC Audio;"
+    "audio/flac: flac: FLAC Audio;";
+  this->demux_class.extensions      = "flac";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }

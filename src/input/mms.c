@@ -56,8 +56,8 @@
 /*
 #define LOG 
 */
-#include "xine_internal.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
 
 #include "bswap.h"
 #include "http_helper.h"
@@ -534,7 +534,7 @@ static int interp_asf_header (mms_t *this) {
   return 1;
 }
 
-static const char *const mmst_proto_s[] = { "mms", "mmst", NULL };
+static const char mmst_proto_s[][8] = { "mms", "mmst", "" };
 
 static int mmst_valid_proto (char *proto) {
   int i = 0;
@@ -544,7 +544,7 @@ static int mmst_valid_proto (char *proto) {
   if (!proto)
     return 0;
 
-  while(mmst_proto_s[i]) {
+  while(*(mmst_proto_s[i])) {
     if (!strcasecmp(proto, mmst_proto_s[i])) {
       return 1;
     }
@@ -603,7 +603,7 @@ static int mms_tcp_connect(mms_t *this) {
 }
 
 static void mms_gen_guid(char guid[]) {
-  static char digit[16] = "0123456789ABCDEF";
+  static const char digit[16] = "0123456789ABCDEF";
   int i = 0;
 
   srand(time(NULL));
@@ -744,7 +744,7 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   /* TODO: insert network timing request here */
   /* command 0x2 */
   lprintf("send command 0x02\n");
-  string_utf16 (url_conv, &this->scmd_body[8], "\002\000\\\\192.168.0.129\\TCP\\1037\0000", 28);
+  string_utf16 (url_conv, &this->scmd_body[8], (ICONV_CONST char*)"\002\000\\\\192.168.0.129\\TCP\\1037\0000", 28);
   memset (this->scmd_body, 0, 8);
   if (!send_command (this, 2, 0, 0, 28 * 2 + 8)) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,

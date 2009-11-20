@@ -42,10 +42,10 @@
 */
 
 #include "bswap.h"
-#include "xine_internal.h"
-#include "video_out.h"
-#include "buffer.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/video_out.h>
+#include <xine/buffer.h>
+#include <xine/xineutils.h>
 
 #include "real_common.h"
 
@@ -498,19 +498,6 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
 /*
  * real plugin class
  */
-
-static char *get_identifier (audio_decoder_class_t *this) {
-  return "realadec";
-}
-
-static char *get_description (audio_decoder_class_t *this) {
-  return "real binary-only codec based audio decoder plugin";
-}
-
-static void dispose_class (audio_decoder_class_t *this) {
-  free (this);
-}
-
 void *init_realadec (xine_t *xine, void *data) {
 
   real_class_t       *this;
@@ -518,9 +505,9 @@ void *init_realadec (xine_t *xine, void *data) {
   this = (real_class_t *) calloc(1, sizeof(real_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.get_identifier  = get_identifier;
-  this->decoder_class.get_description = get_description;
-  this->decoder_class.dispose         = dispose_class;
+  this->decoder_class.identifier      = "realadec";
+  this->decoder_class.description     = N_("real binary-only codec based audio decoder plugin");
+  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
 
   _x_real_codecs_init(xine);
 
@@ -531,7 +518,7 @@ void *init_realadec (xine_t *xine, void *data) {
  * exported plugin catalog entry
  */
 
-static uint32_t audio_types[] = { 
+static const uint32_t audio_types[] = { 
   BUF_AUDIO_COOK, BUF_AUDIO_ATRK, /* BUF_AUDIO_14_4, BUF_AUDIO_28_8, */ BUF_AUDIO_SIPRO, 0
  };
 

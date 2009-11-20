@@ -23,18 +23,12 @@
 #ifndef HAVE_NET_BUF_CTRL_H
 #define HAVE_NET_BUF_CTRL_H
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 typedef struct nbc_s nbc_t;
 
 nbc_t *nbc_init (xine_stream_t *xine) XINE_MALLOC;
 
-void nbc_check_buffers (nbc_t *this) XINE_DEPRECATED;
-
 void nbc_close (nbc_t *this);
-
-void nbc_set_high_water_mark(nbc_t *this, int value) XINE_DEPRECATED;
-
-void nbc_set_low_water_mark(nbc_t *this, int value) XINE_DEPRECATED;
 
 #endif

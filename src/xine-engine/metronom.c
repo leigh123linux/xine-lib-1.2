@@ -40,9 +40,9 @@
 #define METRONOM_INTERNAL
 #define METRONOM_CLOCK_INTERNAL
 
-#include "xine_internal.h"
-#include "metronom.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/metronom.h>
+#include <xine/xineutils.h>
 
 #define MAX_AUDIO_DELTA        1600
 #define AUDIO_SAMPLE_NUM      32768
@@ -829,7 +829,8 @@ static void metronom_unregister_scr (metronom_clock_t *this, scr_plugin_t *scr) 
   this->scr_master = get_master_scr(this);
 }
 
-static int metronom_sync_loop (metronom_clock_t *this) {
+static void *metronom_sync_loop (void *const this_gen) {
+  metronom_clock_t *const this = (metronom_clock_t *const)this_gen;
 
   struct timeval tv;
   struct timespec ts;
@@ -852,7 +853,7 @@ static int metronom_sync_loop (metronom_clock_t *this) {
 
     pthread_mutex_unlock (&this->lock);
   }
-  return 0;
+  return NULL;
 }
 
 static void metronom_exit (metronom_t *this) {
@@ -968,7 +969,7 @@ metronom_clock_t *_x_metronom_clock_init(xine_t *xine)
   this->thread_running       = 1;
 
   if ((err = pthread_create(&this->sync_thread, NULL,
-      			    (void*(*)(void*)) metronom_sync_loop, this)) != 0)
+      			    metronom_sync_loop, this)) != 0)
     xprintf(this->xine, XINE_VERBOSITY_NONE, "cannot create sync thread (%s)\n",
 	    strerror(err));
 

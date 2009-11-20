@@ -25,11 +25,11 @@
 PROG=xine-lib
 
 # Minimum value required to build
-WANT_AUTOMAKE_1_8=1 export WANT_AUTOMAKE_1_8
-WANT_AUTOMAKE=1.8 export WANT_AUTOMAKE
-AUTOMAKE_MIN=1.8.0
+export WANT_AUTOMAKE_1_9=1
+export WANT_AUTOMAKE=1.9
+AUTOMAKE_MIN=1.9.0
 AUTOCONF_MIN=2.59
-LIBTOOL_MIN=1.4.0
+LIBTOOL_MIN=1.5.20
 
 # Check how echo works in this /bin/sh
 case `echo -n` in
@@ -192,7 +192,7 @@ run_automake () {
 
   echo $_echo_n " + Running automake: $_echo_c";
 
-  automake --gnu --add-missing --copy;
+  automake --gnu --add-missing --copy -Wno-portability;
   echo "done."
 }
 

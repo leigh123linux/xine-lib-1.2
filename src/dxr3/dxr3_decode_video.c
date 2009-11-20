@@ -44,8 +44,8 @@
 #define LOG_VID 0
 #define LOG_PTS 0
 
-#include "xine_internal.h"
-#include "buffer.h"
+#include <xine/xine_internal.h>
+#include <xine/buffer.h>
 #include "video_out_dxr3.h"
 #include "dxr3.h"
 
@@ -69,7 +69,7 @@ static void     *dxr3_init_plugin(xine_t *xine, void *);
 
 
 /* plugin catalog information */
-static uint32_t supported_types[] = { BUF_VIDEO_MPEG, 0 };
+static const uint32_t supported_types[] = { BUF_VIDEO_MPEG, 0 };
 
 static const decoder_info_t dxr3_video_decoder_info = {
   supported_types,     /* supported types */
@@ -78,16 +78,13 @@ static const decoder_info_t dxr3_video_decoder_info = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_VIDEO_DECODER, 18, "dxr3-mpeg2", XINE_VERSION_CODE, &dxr3_video_decoder_info, &dxr3_init_plugin },
+  { PLUGIN_VIDEO_DECODER, 19, "dxr3-mpeg2", XINE_VERSION_CODE, &dxr3_video_decoder_info, &dxr3_init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 
 
 /* plugin class functions */
 static video_decoder_t *dxr3_open_plugin(video_decoder_class_t *class_gen, xine_stream_t *stream);
-static char            *dxr3_get_identifier(video_decoder_class_t *class_gen);
-static char            *dxr3_get_description(video_decoder_class_t *class_gen);
-static void             dxr3_class_dispose(video_decoder_class_t *class_gen);
 
 /* plugin instance functions */
 static void dxr3_decode_data(video_decoder_t *this_gen, buf_element_t *buf);
@@ -150,7 +147,6 @@ typedef struct dxr3_decoder_s {
 } dxr3_decoder_t;
 
 /* helper functions */
-static inline int  dxr3_present(xine_stream_t *stream);
 static inline int  dxr3_mvcommand(int fd_control, int command);
 static        void parse_mpeg_header(dxr3_decoder_t *this, uint8_t *buffer);
 static        int  get_duration(dxr3_decoder_t *this);
@@ -163,24 +159,6 @@ static void      dxr3_update_enhanced_mode(void *this_gen, xine_cfg_entry_t *ent
 static void      dxr3_update_correct_durations(void *this_gen, xine_cfg_entry_t *entry);
 
 /* inline helper implementations */
-static inline int dxr3_present(xine_stream_t *stream)
-{
-  plugin_node_t *node;
-  video_driver_class_t *vo_class;
-  int present = 0;
-  
-  if (stream->video_driver && stream->video_driver->node) {
-    node = (plugin_node_t *)stream->video_driver->node;
-    if (node->plugin_class) {
-      vo_class = (video_driver_class_t *)node->plugin_class;
-      if (vo_class->get_identifier)
-        present = (strcmp(vo_class->get_identifier(vo_class), DXR3_VO_ID) == 0);
-    }
-  }
-  llprintf(LOG_VID, "dxr3 %s\n", present ? "present" : "not present");
-  return present;
-}
-
 static inline int dxr3_mvcommand(int fd_control, int command)
 {
   em8300_register_t reg;
@@ -201,9 +179,9 @@ static void *dxr3_init_plugin(xine_t *xine, void *data)
   if (!this) return NULL;
   
   this->video_decoder_class.open_plugin     = dxr3_open_plugin;
-  this->video_decoder_class.get_identifier  = dxr3_get_identifier;
-  this->video_decoder_class.get_description = dxr3_get_description;
-  this->video_decoder_class.dispose         = dxr3_class_dispose;
+  this->video_decoder_class.identifier      = "dxr3-mpeg2";
+  this->video_decoder_class.description     = N_("MPEGI/II decoder plugin using the hardware decoding capabilities of a DXR3 decoder card.");
+  this->video_decoder_class.dispose         = default_video_decoder_class_dispose;
   
   this->instance                            = 0;
   
@@ -215,7 +193,7 @@ static void *dxr3_init_plugin(xine_t *xine, void *data)
 
 static video_decoder_t *dxr3_open_plugin(video_decoder_class_t *class_gen, xine_stream_t *stream)
 {
-  static char *panscan_types[] = { "only when forced", "use MPEG hint", "use DVB hint", NULL };
+  static const char *const panscan_types[] = { "only when forced", "use MPEG hint", "use DVB hint", NULL };
   dxr3_decoder_t *this;
   dxr3_decoder_class_t *class = (dxr3_decoder_class_t *)class_gen;
   config_values_t *cfg;
@@ -302,22 +280,6 @@ static video_decoder_t *dxr3_open_plugin(video_decoder_class_t *class_gen, xine_
   
   return &this->video_decoder;
 }
-
-static char *dxr3_get_identifier(video_decoder_class_t *class_gen)
-{
-  return "dxr3-mpeg2";
-}
-
-static char *dxr3_get_description(video_decoder_class_t *class_gen)
-{
-  return "MPEGI/II decoder plugin using the hardware decoding capabilities of a DXR3 decoder card.";
-}
-
-static void dxr3_class_dispose(video_decoder_class_t *class_gen)
-{
-  free(class_gen);
-}
- 
 
 static void dxr3_decode_data(video_decoder_t *this_gen, buf_element_t *buf)
 {
@@ -648,7 +610,7 @@ static void dxr3_flush(video_decoder_t *this_gen)
      * (the highlights won't move without), but some dvds have stills
      * with no sequence end code. Since it is very likely that flush() is called
      * in still situations, we send one here. */
-    static uint8_t end_buffer[4] = { 0x00, 0x00, 0x01, 0xb7 };
+    static const uint8_t end_buffer[4] = { 0x00, 0x00, 0x01, 0xb7 };
     write(this->fd_video, &end_buffer, 4);
     this->sequence_open = 0;
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "dxr3_decode_video: WARNING: added missing end sequence\n");

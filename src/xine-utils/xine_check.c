@@ -44,7 +44,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 #if defined(__linux__)
 

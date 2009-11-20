@@ -27,10 +27,10 @@
 #include "config.h"
 #endif
 
-#include "xineutils.h"
-#include "xineintl.h"
+#include <xine/xineutils.h>
+#include <xine/xineintl.h>
 #ifdef _MSC_VER
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #endif
 
 #include <errno.h>
@@ -57,10 +57,10 @@
 #endif
 
 typedef struct {
-  char                    *language;     /* name of the locale */
-  char                    *encoding;     /* typical encoding */
-  char                    *spu_encoding; /* default spu encoding */
-  char                    *modifier;
+  const char    language[16];     /* name of the locale */
+  const char    encoding[16];     /* typical encoding */
+  const char    spu_encoding[16]; /* default spu encoding */
+  const char    modifier[8];
 } lang_locale_t;
 
 
@@ -68,172 +68,172 @@ typedef struct {
  * information about locales used in xine
  */
 static const lang_locale_t lang_locales[] = {
-  { "af_ZA",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "ar_AE",    "iso-8859-6",  "iso-8859-6",  NULL       },
-  { "ar_BH",    "iso-8859-6",  "iso-8859-6",  NULL       },
-  { "ar_DZ",    "iso-8859-6",  "iso-8859-6",  NULL       },
-  { "ar_EG",    "iso-8859-6",  "iso-8859-6",  NULL       },
-  { "ar_IN",    "utf-8",       "utf-8",       NULL       },
-  { "ar_IQ",    "iso-8859-6",  "iso-8859-6",  NULL       },
-  { "ar_JO",    "iso-8859-6",  "iso-8859-6",  NULL       },
-  { "ar_KW",    "iso-8859-6",  "iso-8859-6",  NULL       },
-  { "ar_LB",    "iso-8859-6",  "iso-8859-6",  NULL       },
-  { "ar_LY",    "iso-8859-6",  "iso-8859-6",  NULL       },
-  { "ar_MA",    "iso-8859-6",  "iso-8859-6",  NULL       },
-  { "ar_OM",    "iso-8859-6",  "iso-8859-6",  NULL       },
-  { "ar_QA",    "iso-8859-6",  "iso-8859-6",  NULL       },
-  { "ar_SA",    "iso-8859-6",  "iso-8859-6",  NULL       },
-  { "ar_SD",    "iso-8859-6",  "iso-8859-6",  NULL       },
-  { "ar_SY",    "iso-8859-6",  "iso-8859-6",  NULL       },
-  { "ar_TN",    "iso-8859-6",  "iso-8859-6",  NULL       },
-  { "ar_YE",    "iso-8859-6",  "iso-8859-6",  NULL       },
-  { "be_BY",    "cp1251",      "cp1251",      NULL       },
-  { "bg_BG",    "cp1251",      "cp1251",      NULL       },
-  { "br_FR",    "iso-8859-1",  "iso-88591",   NULL       },
-  { "bs_BA",    "iso-8859-2",  "cp1250",      NULL       },
-  { "ca_ES",    "iso-8859-1",  "iso-88591",   NULL       },
+  { "af_ZA",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "ar_AE",    "iso-8859-6",  "iso-8859-6",  ""         },
+  { "ar_BH",    "iso-8859-6",  "iso-8859-6",  ""         },
+  { "ar_DZ",    "iso-8859-6",  "iso-8859-6",  ""         },
+  { "ar_EG",    "iso-8859-6",  "iso-8859-6",  ""         },
+  { "ar_IN",    "utf-8",       "utf-8",       ""         },
+  { "ar_IQ",    "iso-8859-6",  "iso-8859-6",  ""         },
+  { "ar_JO",    "iso-8859-6",  "iso-8859-6",  ""         },
+  { "ar_KW",    "iso-8859-6",  "iso-8859-6",  ""         },
+  { "ar_LB",    "iso-8859-6",  "iso-8859-6",  ""         },
+  { "ar_LY",    "iso-8859-6",  "iso-8859-6",  ""         },
+  { "ar_MA",    "iso-8859-6",  "iso-8859-6",  ""         },
+  { "ar_OM",    "iso-8859-6",  "iso-8859-6",  ""         },
+  { "ar_QA",    "iso-8859-6",  "iso-8859-6",  ""         },
+  { "ar_SA",    "iso-8859-6",  "iso-8859-6",  ""         },
+  { "ar_SD",    "iso-8859-6",  "iso-8859-6",  ""         },
+  { "ar_SY",    "iso-8859-6",  "iso-8859-6",  ""         },
+  { "ar_TN",    "iso-8859-6",  "iso-8859-6",  ""         },
+  { "ar_YE",    "iso-8859-6",  "iso-8859-6",  ""         },
+  { "be_BY",    "cp1251",      "cp1251",      ""         },
+  { "bg_BG",    "cp1251",      "cp1251",      ""         },
+  { "br_FR",    "iso-8859-1",  "iso-88591",   ""         },
+  { "bs_BA",    "iso-8859-2",  "cp1250",      ""         },
+  { "ca_ES",    "iso-8859-1",  "iso-88591",   ""         },
   { "ca_ES",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "cs_CZ",    "iso-8859-2",  "cp1250",      NULL       },
-  { "cy_GB",    "iso-8859-14", "iso-8859-14", NULL       },
-  { "da_DK",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "de_AT",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "cs_CZ",    "iso-8859-2",  "cp1250",      ""         },
+  { "cy_GB",    "iso-8859-14", "iso-8859-14", ""         },
+  { "da_DK",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "de_AT",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "de_AT",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "de_BE",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "de_BE",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "de_BE",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "de_CH",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "de_DE",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "de_CH",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "de_DE",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "de_DE",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "de_LU",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "de_LU",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "de_LU",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "el_GR",    "iso-8859-7",  "iso-8859-7",  NULL       },
-  { "en_AU",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "en_BW",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "en_CA",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "en_DK",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "en_GB",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "en_HK",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "en_IE",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "el_GR",    "iso-8859-7",  "iso-8859-7",  ""         },
+  { "en_AU",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "en_BW",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "en_CA",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "en_DK",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "en_GB",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "en_HK",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "en_IE",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "en_IE",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "en_IN",    "utf-8",       "utf-8",       NULL       },
-  { "en_NZ",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "en_PH",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "en_SG",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "en_US",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "en_ZA",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "en_ZW",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_AR",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_BO",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_CL",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_CO",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_CR",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_DO",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_EC",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_ES",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "en_IN",    "utf-8",       "utf-8",       ""         },
+  { "en_NZ",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "en_PH",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "en_SG",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "en_US",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "en_ZA",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "en_ZW",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_AR",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_BO",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_CL",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_CO",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_CR",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_DO",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_EC",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_ES",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "es_ES",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "es_GT",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_HN",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_MX",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_NI",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_PA",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_PE",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_PR",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_PY",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_SV",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_US",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_UY",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "es_VE",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "et_EE",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "eu_ES",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "es_GT",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_HN",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_MX",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_NI",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_PA",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_PE",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_PR",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_PY",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_SV",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_US",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_UY",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "es_VE",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "et_EE",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "eu_ES",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "eu_ES",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "fa_IR",    "utf-8",       "utf-8",       NULL       },
-  { "fi_FI",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "fa_IR",    "utf-8",       "utf-8",       ""         },
+  { "fi_FI",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "fi_FI",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "fo_FO",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "fr_BE",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "fo_FO",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "fr_BE",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "fr_BE",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "fr_CA",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "fr_CH",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "fr_FR",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "fr_CA",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "fr_CH",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "fr_FR",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "fr_FR",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "fr_LU",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "fr_LU",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "fr_LU",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "ga_IE",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "ga_IE",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "ga_IE",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "gl_ES",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "gl_ES",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "gl_ES",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "gv_GB",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "he_IL",    "iso-8859-8",  "iso-8859-8",  NULL       },
-  { "hi_IN",    "utf-8",       "utf-8",       NULL       },
-  { "hr_HR",    "iso-8859-2",  "cp1250",      NULL       },
-  { "hu_HU",    "iso-8859-2",  "cp1250",      NULL       },
-  { "id_ID",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "is_IS",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "it_CH",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "it_IT",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "gv_GB",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "he_IL",    "iso-8859-8",  "iso-8859-8",  ""         },
+  { "hi_IN",    "utf-8",       "utf-8",       ""         },
+  { "hr_HR",    "iso-8859-2",  "cp1250",      ""         },
+  { "hu_HU",    "iso-8859-2",  "cp1250",      ""         },
+  { "id_ID",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "is_IS",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "it_CH",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "it_IT",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "it_IT",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "iw_IL",    "iso-8859-8",  "iso-8859-8",  NULL       },
-  { "ja_JP",    "euc-jp",      "euc-jp",      NULL       },
-  { "ja_JP",    "ujis",        "ujis",        NULL       },
-  { "japanese", "euc",         "euc",         NULL       },
-  { "ka_GE",    "georgian-ps", "georgian-ps", NULL       },
-  { "kl_GL",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "ko_KR",    "euc-kr",      "euc-kr",      NULL       },
-  { "ko_KR",    "utf-8",       "utf-8",       NULL       },
-  { "korean",   "euc",         "euc",         NULL       },
-  { "kw_GB",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "lt_LT",    "iso-8859-13", "iso-8859-13", NULL       },
-  { "lv_LV",    "iso-8859-13", "iso-8859-13", NULL       },
-  { "mi_NZ",    "iso-8859-13", "iso-8859-13", NULL       },
-  { "mk_MK",    "iso-8859-5",  "cp1251",      NULL       },
-  { "mr_IN",    "utf-8",       "utf-8",       NULL       },
-  { "ms_MY",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "mt_MT",    "iso-8859-3",  "iso-8859-3",  NULL       },
-  { "nb_NO",    "ISO-8859-1",  "ISO-8859-1",  NULL       },
-  { "nl_BE",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "iw_IL",    "iso-8859-8",  "iso-8859-8",  ""         },
+  { "ja_JP",    "euc-jp",      "euc-jp",      ""         },
+  { "ja_JP",    "ujis",        "ujis",        ""         },
+  { "japanese", "euc",         "euc",         ""         },
+  { "ka_GE",    "georgian-ps", "georgian-ps", ""         },
+  { "kl_GL",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "ko_KR",    "euc-kr",      "euc-kr",      ""         },
+  { "ko_KR",    "utf-8",       "utf-8",       ""         },
+  { "korean",   "euc",         "euc",         ""         },
+  { "kw_GB",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "lt_LT",    "iso-8859-13", "iso-8859-13", ""         },
+  { "lv_LV",    "iso-8859-13", "iso-8859-13", ""         },
+  { "mi_NZ",    "iso-8859-13", "iso-8859-13", ""         },
+  { "mk_MK",    "iso-8859-5",  "cp1251",      ""         },
+  { "mr_IN",    "utf-8",       "utf-8",       ""         },
+  { "ms_MY",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "mt_MT",    "iso-8859-3",  "iso-8859-3",  ""         },
+  { "nb_NO",    "ISO-8859-1",  "ISO-8859-1",  ""         },
+  { "nl_BE",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "nl_BE",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "nl_NL",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "nl_NL",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "nl_NL",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "nn_NO",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "no_NO",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "oc_FR",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "pl_PL",    "iso-8859-2",  "cp1250",      NULL       },
-  { "pt_BR",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "pt_PT",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "nn_NO",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "no_NO",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "oc_FR",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "pl_PL",    "iso-8859-2",  "cp1250",      ""         },
+  { "pt_BR",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "pt_PT",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "pt_PT",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "ro_RO",    "iso-8859-2",  "cp1250",      NULL       },
-  { "ru_RU",    "iso-8859-5",  "cp1251",      NULL       },
-  { "ru_RU",    "koi8-r",      "cp1251",      NULL       },
-  { "ru_UA",    "koi8-u",      "cp1251",      NULL       },
-  { "se_NO",    "utf-8",       "utf-8",       NULL       },
-  { "sk_SK",    "iso-8859-2",  "cp1250",      NULL       },
-  { "sl_SI",    "iso-8859-2",  "cp1250",      NULL       },
-  { "sq_AL",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "sr_YU",    "iso-8859-2",  "cp1250",      NULL       },
+  { "ro_RO",    "iso-8859-2",  "cp1250",      ""         },
+  { "ru_RU",    "iso-8859-5",  "cp1251",      ""         },
+  { "ru_RU",    "koi8-r",      "cp1251",      ""         },
+  { "ru_UA",    "koi8-u",      "cp1251",      ""         },
+  { "se_NO",    "utf-8",       "utf-8",       ""         },
+  { "sk_SK",    "iso-8859-2",  "cp1250",      ""         },
+  { "sl_SI",    "iso-8859-2",  "cp1250",      ""         },
+  { "sq_AL",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "sr_YU",    "iso-8859-2",  "cp1250",      ""         },
   { "sr_YU",    "iso-8859-5",  "cp1251",      "cyrillic" },
-  { "sv_FI",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "sv_FI",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "sv_FI",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "sv_SE",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "ta_IN",    "utf-8",       "utf-8",       NULL       },
-  { "te_IN",    "utf-8",       "utf-8",       NULL       },
-  { "tg_TJ",    "koi8-t",      "cp1251",      NULL       },
-  { "th_TH",    "tis-620",     "tis-620",     NULL       },
-  { "tl_PH",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "tr_TR",    "iso-8859-9",  "iso-8859-9",  NULL       },
-  { "uk_UA",    "koi8-u",      "cp1251",      NULL       },
-  { "ur_PK",    "utf-8",       "utf-8",       NULL       },
-  { "uz_UZ",    "iso-8859-1",  "iso-8859-1",  NULL       },
-  { "vi_VN",    "tcvn",        "tcvn",        NULL       },
-  { "vi_VN",    "utf-8",       "utf-8",       NULL       },
-  { "wa_BE",    "iso-8859-1",  "iso-8859-1",  NULL       },
+  { "sv_SE",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "ta_IN",    "utf-8",       "utf-8",       ""         },
+  { "te_IN",    "utf-8",       "utf-8",       ""         },
+  { "tg_TJ",    "koi8-t",      "cp1251",      ""         },
+  { "th_TH",    "tis-620",     "tis-620",     ""         },
+  { "tl_PH",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "tr_TR",    "iso-8859-9",  "iso-8859-9",  ""         },
+  { "uk_UA",    "koi8-u",      "cp1251",      ""         },
+  { "ur_PK",    "utf-8",       "utf-8",       ""         },
+  { "uz_UZ",    "iso-8859-1",  "iso-8859-1",  ""         },
+  { "vi_VN",    "tcvn",        "tcvn",        ""         },
+  { "vi_VN",    "utf-8",       "utf-8",       ""         },
+  { "wa_BE",    "iso-8859-1",  "iso-8859-1",  ""         },
   { "wa_BE",    "iso-8859-15", "iso-8859-15", "euro"     },
-  { "yi_US",    "cp1255",      "cp1255",      NULL       },
-  { "zh_CN",    "gb18030",     "gb18030",     NULL       },
-  { "zh_CN",    "gb2312",      "gb2312",      NULL       },
-  { "zh_CN",    "gbk",         "gbk",         NULL       },
-  { "zh_HK",    "big5-hkscs",  "big5-hkscs",  NULL       },
-  { "zh_TW",    "big-5",       "big-5",       NULL       },
-  { "zh_TW",    "euc-tw",      "euc-tw",      NULL       },
-  { NULL,       NULL,          NULL,          NULL       }
+  { "yi_US",    "cp1255",      "cp1255",      ""         },
+  { "zh_CN",    "gb18030",     "gb18030",     ""         },
+  { "zh_CN",    "gb2312",      "gb2312",      ""         },
+  { "zh_CN",    "gbk",         "gbk",         ""         },
+  { "zh_HK",    "big5-hkscs",  "big5-hkscs",  ""         },
+  { "zh_TW",    "big-5",       "big-5",       ""         },
+  { "zh_TW",    "euc-tw",      "euc-tw",      ""         },
+  { "" }
 };
 
 /**
@@ -271,16 +271,38 @@ void *xine_xmalloc(size_t size) {
   return ptr;
 }
 
-void *xine_xmalloc_aligned(size_t alignment, size_t size, void **base) {
+/**
+ * @brief Wrapper around calloc() function.
+ * @param nmemb Number of elements to allocate
+ * @param size Size of each element to allocate
+ *
+ * This is a simple wrapper around calloc(), the only thing
+ * it does more than calloc() is outputting an error if
+ * the calloc fails (returning NULL).
+ */
+void *xine_xcalloc(size_t nmemb, size_t size) {
+  void *ptr;
 
-  char *ptr;
-  
-  *base = ptr = calloc(1, size+alignment);
-  
-  while ((size_t) ptr % alignment)
-    ptr++;
-    
+  if((ptr = calloc(nmemb, size)) == NULL) {
+    fprintf(stderr, "%s: calloc() failed: %s.\n",
+	    __XINE_FUNCTION__, strerror(errno));
+    return NULL;
+  }
+
   return ptr;
+}
+
+void *xine_memdup (const void *src, size_t length)
+{
+  void *dst = malloc (length);
+  return xine_fast_memcpy (dst, src, length);
+}
+
+void *xine_memdup0 (const void *src, size_t length)
+{
+  char *dst = xine_xmalloc (length + 1);
+  dst[length] = 0;
+  return xine_fast_memcpy (dst, src, length);
 }
 
 #ifdef WIN32
@@ -485,38 +507,36 @@ void xine_usec_sleep(unsigned usec) {
 
 
 /* print a hexdump of length bytes from the data given in buf */
-void xine_hexdump (const char *buf, int length) {
-  int i,j;
-  unsigned char c;
+void xine_hexdump (const void *buf_gen, int length) {
+  static const char separator[70] = "---------------------------------------------------------------------";
+
+  const uint8_t *const buf = (const uint8_t*)buf_gen;
+  int j = 0;
 
   /* printf ("Hexdump: %i Bytes\n", length);*/
-  for(j=0; j<69; j++)
-    printf ("-");
-  printf ("\n");
+  puts(separator);
 
-  j=0;
   while(j<length) {
+    int i;
+    const int imax = (j+16 < length) ? (j+16) : length;
+
     printf ("%04X ",j);
     for (i=j; i<j+16; i++) {
       if( i<length )
-        printf ("%02X ", (unsigned char) buf[i]);
+        printf ("%02X ", buf[i]);
       else
         printf("   ");
     }
-    for (i=j;i<(j+16<length?j+16:length);i++) {
-      c=buf[i];
-      if ((c>=32) && (c<127))
-        printf ("%c", c);
-      else
-        printf (".");
+
+    for (i=j; i < imax; i++) {
+      fputc ((buf[i] >= 32 && buf[i] <= 126) ? buf[i] : '.', stdout);
     }
     j=i;
-    printf("\n");
+
+    fputc('\n', stdout);
   }
 
-  for(j=0; j<69; j++)
-    printf("-");
-  printf("\n");
+  puts(separator);
 }
 
 
@@ -533,7 +553,7 @@ static const lang_locale_t *_get_first_lang_locale(const char *lcal) {
     else
       lang_len = strlen(lcal);
     
-    while(llocale->language) {
+    while(*(llocale->language)) {
       if(!strncmp(lcal, llocale->language, lang_len)) {
         if ((!mod && !llocale->modifier) || (mod && llocale->modifier && !strcmp(mod, llocale->modifier)))
 	  return llocale;

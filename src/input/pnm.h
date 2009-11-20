@@ -26,7 +26,7 @@
 #ifndef __CYGWIN__
 #include <inttypes.h>
 #endif
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 typedef struct pnm_s pnm_t;
 

@@ -47,21 +47,24 @@
 #include <ctype.h>
 #include <pthread.h>
 
-#include "xine.h"
-#include "video_out.h"
+#include <xine.h>
+#include <xine/video_out.h>
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #include "yuv2rgb.h"
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
-
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
 
 typedef struct {
   vo_frame_t         vo_frame;
 
   int                width, height, format, flags;
   double             ratio;
-  uint8_t           *chunk[4]; /* mem alloc by xmalloc_aligned           */
   uint8_t           *rgb, *rgb_dst;
   yuv2rgb_t         *yuv2rgb; /* yuv2rgb converter set up for this frame */
 
@@ -283,14 +286,10 @@ static void raw_frame_dispose (vo_frame_t *vo_img)
 
   frame->yuv2rgb->dispose (frame->yuv2rgb);
 
-  if ( frame->chunk[0] )
-    free (frame->chunk[0]);
-  if ( frame->chunk[1] )
-    free (frame->chunk[1]);
-  if ( frame->chunk[2] )
-    free (frame->chunk[2]);
-  if ( frame->chunk[3] )
-    free (frame->chunk[3]);
+  av_free (frame->vo_frame.base[0]);
+  av_free (frame->vo_frame.base[1]);
+  av_free (frame->vo_frame.base[2]);
+  av_free (frame->rgb);
   free (frame);
 }
 
@@ -306,7 +305,7 @@ static vo_frame_t *raw_alloc_frame (vo_driver_t *this_gen)
   if (!frame)
     return NULL;
 
-  frame->chunk[0] = frame->chunk[1] = frame->chunk[2] = frame->chunk[3] = NULL;
+  frame->vo_frame.base[0] = frame->vo_frame.base[1] = frame->vo_frame.base[2] = frame->rgb = NULL;
   frame->width = frame->height = frame->format = frame->flags = 0;
 
   pthread_mutex_init (&frame->vo_frame.mutex, NULL);
@@ -343,31 +342,25 @@ static void raw_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_ge
 /*     lprintf ("updating frame to %d x %d (ratio=%g, format=%08x)\n", width, height, ratio, format); */
 
     /* (re-) allocate render space */
-    if ( frame->chunk[0] )
-      free (frame->chunk[0]);
-    if ( frame->chunk[1] )
-      free (frame->chunk[1]);
-    if ( frame->chunk[2] )
-      free (frame->chunk[2]);
-    if ( frame->chunk[3] )
-      free (frame->chunk[3]);
-    frame->chunk[0] = frame->chunk[1] = frame->chunk[2] = frame->chunk[3] = NULL;
+    av_free (frame->vo_frame.base[0]);
+    av_free (frame->vo_frame.base[1]);
+    av_free (frame->vo_frame.base[2]);
+    av_free (frame->rgb);
 
     if (format == XINE_IMGFMT_YV12) {
       frame->vo_frame.pitches[0] = 8*((width + 7) / 8);
       frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
       frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
-      frame->vo_frame.base[0] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[0] * height,  (void **) &frame->chunk[0]);
-      frame->vo_frame.base[1] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[1] * ((height+1)/2), (void **) &frame->chunk[1]);
-      frame->vo_frame.base[2] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[2] * ((height+1)/2), (void **) &frame->chunk[2]);
+      frame->vo_frame.base[0] = av_mallocz (frame->vo_frame.pitches[0] * height);
+      frame->vo_frame.base[1] = av_mallocz (frame->vo_frame.pitches[1] * ((height+1)/2));
+      frame->vo_frame.base[2] = av_mallocz (frame->vo_frame.pitches[2] * ((height+1)/2));
     } else {
       frame->vo_frame.pitches[0] = 8*((width + 3) / 4);
-      frame->vo_frame.base[0] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[0] * height, (void **) &frame->chunk[0]);
-      frame->chunk[1] = NULL;
-      frame->chunk[2] = NULL;
+      frame->vo_frame.base[0] = av_mallocz (frame->vo_frame.pitches[0] * height);
+      frame->vo_frame.base[1] = NULL;
+      frame->vo_frame.base[2] = NULL;
     }
-    frame->rgb = xine_xmalloc_aligned (16, BYTES_PER_PIXEL*width*height,
-				       (void **) &frame->chunk[3]);
+    frame->rgb = av_mallocz (BYTES_PER_PIXEL*width*height);
 
     /* set up colorspace converter */
     switch (flags & VO_BOTH_FIELDS) {
@@ -572,36 +565,14 @@ static vo_driver_t *raw_open_plugin (video_driver_class_t *class_gen, const void
  * class functions
  */
 
-static char* raw_get_identifier (video_driver_class_t *this_gen)
-{
-  return "raw";
-}
-
-
-
-static char* raw_get_description (video_driver_class_t *this_gen)
-{
-  return _("xine video output plugin passing raw data to supplied callback");
-}
-
-
-
-static void raw_dispose_class (video_driver_class_t *this_gen)
-{
-  raw_class_t *this = (raw_class_t *) this_gen;
-  free (this);
-}
-
-
-
 static void *raw_init_class (xine_t *xine, void *visual_gen)
 {
   raw_class_t *this = (raw_class_t *) calloc(1, sizeof(raw_class_t));
 
   this->driver_class.open_plugin     = raw_open_plugin;
-  this->driver_class.get_identifier  = raw_get_identifier;
-  this->driver_class.get_description = raw_get_description;
-  this->driver_class.dispose         = raw_dispose_class;
+  this->driver_class.identifier      = "raw";
+  this->driver_class.description     = _("xine video output plugin passing raw data to supplied callback");
+  this->driver_class.dispose         = default_video_driver_class_dispose;
   this->xine                         = xine;
 
   return this;
@@ -621,6 +592,6 @@ static const vo_info_t vo_info_raw = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_VIDEO_OUT, 21, "raw", XINE_VERSION_CODE, &vo_info_raw, raw_init_class },
+  { PLUGIN_VIDEO_OUT, 22, "raw", XINE_VERSION_CODE, &vo_info_raw, raw_init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

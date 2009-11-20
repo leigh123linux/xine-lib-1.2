@@ -23,10 +23,10 @@
 #include "config.h"
 #endif
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "compat.h"
-#include "input_plugin.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/compat.h>
+#include <xine/input_plugin.h>
 
 #include <libsmbclient.h>
 #include <sys/types.h>
@@ -51,7 +51,7 @@ typedef struct {
 	xine_stream_t *stream;
 
 	/* File */
-	const char *mrl;
+	char *mrl;
 	int fd;
 } smb_input_t;
 
@@ -64,9 +64,10 @@ smb_plugin_get_capabilities (input_plugin_t *this_gen)
 
 
 static off_t
-smb_plugin_read (input_plugin_t *this_gen, char *buf, off_t len)
+smb_plugin_read (input_plugin_t *this_gen, void *buf_gen, off_t len)
 {
 	smb_input_t *this = (smb_input_t *) this_gen;
+	char *buf = (char *)buf_gen;
 	off_t n, num_bytes;
 
 	if (len < 0)
@@ -157,18 +158,6 @@ smb_plugin_get_mrl (input_plugin_t *this_gen)
 
 static uint32_t smb_plugin_get_blocksize (input_plugin_t *this_gen) {
   return 0;
-}
-
-static const char
-*smb_class_get_description (input_class_t *this_gen)
-{
-	return _("CIFS/SMB input plugin based on libsmbclient");
-}
-
-static const char
-*smb_class_get_identifier (input_class_t *this_gen)
-{
-	return "smb";
 }
 
 /*
@@ -432,7 +421,7 @@ smb_plugin_dispose (input_plugin_t *this_gen )
 	if (this->fd>=0)
 		smbc_close(this->fd);
 	if (this->mrl)
-		free ((char *)this->mrl);
+		free (this->mrl);
 	free (this);
 }
 
@@ -449,14 +438,6 @@ smb_plugin_open (input_plugin_t *this_gen )
 	if (this->fd<0) return 0;
 
 	return 1;
-}
-
-static void
-smb_class_dispose (input_class_t *this_gen)
-{
-	smb_input_class_t *this = (smb_input_class_t *) this_gen;
-
-	free (this);
 }
 
 static input_plugin_t *
@@ -513,11 +494,11 @@ static void
 	this->xine = xine;
 
 	this->input_class.get_instance       = smb_class_get_instance;
-	this->input_class.get_identifier     = smb_class_get_identifier;
-	this->input_class.get_description    = smb_class_get_description;
+	this->input_class.identifier         = "smb";
+	this->input_class.description        = N_("CIFS/SMB input plugin based on libsmbclient");
 	this->input_class.get_dir            = smb_class_get_dir;
 	this->input_class.get_autoplay_list  = NULL;
-	this->input_class.dispose            = smb_class_dispose;
+	this->input_class.dispose            = default_input_class_dispose;
 	this->input_class.eject_media        = NULL;
 
  _exit_error:
@@ -535,7 +516,7 @@ static const input_info_t input_info_smb = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-	{ PLUGIN_INPUT, 17, "smb", XINE_VERSION_CODE, &input_info_smb,
+	{ PLUGIN_INPUT, 18, "smb", XINE_VERSION_CODE, &input_info_smb,
 		init_input_class },
 	{ PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

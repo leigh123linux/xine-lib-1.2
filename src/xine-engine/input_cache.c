@@ -33,7 +33,8 @@
 #define LOG
 */
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
+#include "xine_private.h"
 #include <assert.h>
 
 #define DEFAULT_BUFFER_SIZE 1024
@@ -61,8 +62,9 @@ typedef struct {
 /* 
  * read data from input plugin and write it into file
  */
-static off_t cache_plugin_read(input_plugin_t *this_gen, char *buf, off_t len) {
+static off_t cache_plugin_read(input_plugin_t *this_gen, void *buf_gen, off_t len) {
   cache_input_plugin_t *this = (cache_input_plugin_t *)this_gen;
+  char *buf = (char *)buf_gen;
   off_t read_len = 0;
   off_t main_read;
 
@@ -344,7 +346,7 @@ static void cache_plugin_dispose(input_plugin_t *this_gen) {
 /* 
  * create self instance, 
  */
-input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream, int readahead_size) {
+input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream) {
   cache_input_plugin_t *this;
   input_plugin_t *main_plugin = stream->input_plugin;
 

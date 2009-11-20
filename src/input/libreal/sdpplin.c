@@ -33,68 +33,13 @@
 #include "rmff.h"
 #include "rtsp.h"
 #include "sdpplin.h"
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
-/*
- * Decodes base64 strings (based upon b64 package)
- */
-
-static char *b64_decode(const char *in, char *out, int *size)
-{
-  char dtable[256];              /* Encode / decode table */
-  int i,k;
-  size_t j;
-
-  for (i = 0; i < 255; i++) {
-    dtable[i] = 0x80;
-  }
-  for (i = 'A'; i <= 'Z'; i++) {
-    dtable[i] = 0 + (i - 'A');
-  }
-  for (i = 'a'; i <= 'z'; i++) {
-    dtable[i] = 26 + (i - 'a');
-  }
-  for (i = '0'; i <= '9'; i++) {
-    dtable[i] = 52 + (i - '0');
-  }
-  dtable['+'] = 62;
-  dtable['/'] = 63;
-  dtable['='] = 0;
-
-  k=0;
-  
-  /*CONSTANTCONDITION*/
-  const size_t in_len = strlen(in);
-  for (j=0; j<in_len; j+=4)
-  {
-    char a[4], b[4];
-
-    for (i = 0; i < 4; i++) {
-      int c = in[i+j];
-
-      if (dtable[c] & 0x80) {
-        fprintf(stderr, "Illegal character '%c' in input.\n", c);
-	*size = 0;
-	return NULL;
-      }
-      a[i] = (char) c;
-      b[i] = (char) dtable[c];
-    }
-    xine_buffer_ensure_size(out, k+3);
-    out[k++] = (b[0] << 2) | (b[1] >> 4);
-    out[k++] = (b[1] << 4) | (b[2] >> 2);
-    out[k++] = (b[2] << 6) | b[3];
-    i = a[2] == '=' ? 1 : (a[3] == '=' ? 2 : 3);
-    if (i < 3) {
-      out[k]=0;
-      *size=k;
-      return out;
-    }
-  }
-  out[k]=0;
-  *size=k;
-  return out;
-}
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <base64.h>
+#else
+#  include <libavutil/base64.h>
+#endif
 
 static char *nl(char *data) {
 
@@ -129,7 +74,6 @@ static sdpplin_stream_t *XINE_MALLOC sdpplin_parse_stream(char **data) {
 
   sdpplin_stream_t *desc = calloc(1, sizeof(sdpplin_stream_t));
   char      *buf=xine_buffer_init(32);
-  char      *decoded=xine_buffer_init(32);
   int       handled;
     
   if (filter(*data, "m=", &buf)) {
@@ -209,10 +153,10 @@ static sdpplin_stream_t *XINE_MALLOC sdpplin_parse_stream(char **data) {
     }
 
     if(filter(*data,"a=OpaqueData:buffer;",&buf)) {
-      decoded = b64_decode(buf, decoded, &(desc->mlti_data_size));
-      if ( decoded != NULL ) {
-	desc->mlti_data = malloc(desc->mlti_data_size);
-	memcpy(desc->mlti_data, decoded, desc->mlti_data_size);
+      uint8_t decoded[32];
+      desc->mlti_data_size = av_base64_decode(decoded, buf, 32);
+      if ( desc->mlti_data_size > 0 ) {
+	desc->mlti_data = xine_memdup(decoded, desc->mlti_data_size);
 	handled=1;
 	*data=nl(*data);
 	lprintf("mlti_data_size: %i\n", desc->mlti_data_size);
@@ -237,7 +181,6 @@ static sdpplin_stream_t *XINE_MALLOC sdpplin_parse_stream(char **data) {
   }
 
   xine_buffer_free(buf);
-  xine_buffer_free(decoded);
   
   return desc;
 }
@@ -247,9 +190,9 @@ sdpplin_t *sdpplin_parse(char *data) {
   sdpplin_t        *desc = calloc(1, sizeof(sdpplin_t));
   sdpplin_stream_t *stream;
   char             *buf=xine_buffer_init(32);
-  char             *decoded=xine_buffer_init(32);
   int              handled;
   int              len;
+  uint8_t          decoded[32];
 
   desc->stream = NULL;
 
@@ -272,8 +215,8 @@ sdpplin_t *sdpplin_parse(char *data) {
     }
 
     if(filter(data,"a=Title:buffer;",&buf)) {
-      decoded=b64_decode(buf, decoded, &len);
-      if ( decoded != NULL ) {
+      len = av_base64_decode(decoded, buf, 32);
+      if ( len > 0 ) {
 	desc->title=strdup(decoded);
 	handled=1;
 	data=nl(data);
@@ -281,8 +224,8 @@ sdpplin_t *sdpplin_parse(char *data) {
     }
     
     if(filter(data,"a=Author:buffer;",&buf)) {
-      decoded=b64_decode(buf, decoded, &len);
-      if ( decoded != NULL ) {
+      len = av_base64_decode(decoded, buf, 32);
+      if ( len > 0 ) {
 	desc->author=strdup(decoded);
 	handled=1;
 	data=nl(data);
@@ -290,8 +233,8 @@ sdpplin_t *sdpplin_parse(char *data) {
     }
     
     if(filter(data,"a=Copyright:buffer;",&buf)) {
-      decoded=b64_decode(buf, decoded, &len);
-      if ( decoded != NULL ) {
+      len = av_base64_decode(decoded, buf, 32);
+      if ( len > 0 ) {
 	desc->copyright=strdup(decoded);
 	handled=1;
 	data=nl(data);
@@ -299,8 +242,8 @@ sdpplin_t *sdpplin_parse(char *data) {
     }
     
     if(filter(data,"a=Abstract:buffer;",&buf)) {
-      decoded=b64_decode(buf, decoded, &len);
-      if ( decoded != NULL ) {
+      len = av_base64_decode(decoded, buf, 32);
+      if ( len > 0 ) {
 	desc->abstract=strdup(decoded);
 	handled=1;
 	data=nl(data);
@@ -339,7 +282,6 @@ sdpplin_t *sdpplin_parse(char *data) {
   }
 
   xine_buffer_free(buf);
-  xine_buffer_free(decoded);
   
   return desc;
 }

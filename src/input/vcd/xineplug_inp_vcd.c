@@ -52,8 +52,8 @@
 #define xine_config_entry_t xine_cfg_entry_t
 
 /* Xine includes */
-#include "xineutils.h"
-#include "input_plugin.h"
+#include <xine/xineutils.h>
+#include <xine/input_plugin.h>
 
 #include "xine-extra.h"
 
@@ -274,7 +274,7 @@ vcd_add_mrl_slot(vcd_input_class_t *this, const char *mrl, off_t size,
   
   this->mrls[*i]->mrl = strdup(mrl);
   if (NULL==this->mrls[*i]->mrl) {
-    LOG_ERR("Can't malloc %zu bytes for MRL name %s", sizeof(xine_mrl_t), mrl);
+    LOG_ERR("Can't strndup %zu bytes for MRL name %s", strlen(mrl), mrl);
   }
   (*i)++;
 }
@@ -998,31 +998,6 @@ vcd_plugin_get_mrl (input_plugin_t *this_gen)
       return "";
     }
   }
-}
-
-/*!
-  From xine plugin spec:
-  
-  return human readable (verbose = 1 line) description for this plugin
-*/
-static const char *
-vcd_class_get_description (input_class_t *this_gen) 
-{
-  dbg_print((INPUT_DBG_CALL|INPUT_DBG_EXT), "called\n");
-  return _("Video CD plugin with PBC and support for: (X)VCD, (X)SVCD, HQVCD, CVD ... ");
-}
-
-/*!
-  From xine plugin spec:
-
-  return short, human readable identifier for this plugin
-  this is used for GUI buttons, The identifier must have max. 4 characters
-  characters (max. 5 including terminating \0)
-*/
-static const char *
-vcd_class_get_identifier (input_class_t *this_gen) {
-  dbg_print((INPUT_DBG_CALL|INPUT_DBG_EXT), "called\n");
-  return SHORT_PLUGIN_NAME;
 }
 
 /* 
@@ -1774,8 +1749,8 @@ vcd_init (xine_t *xine, void *data)
   class->mrls   = NULL;
 
   class->input_class.get_instance        = vcd_class_get_instance;
-  class->input_class.get_identifier      = vcd_class_get_identifier;
-  class->input_class.get_description     = vcd_class_get_description;
+  class->input_class.identifier          = SHORT_PLUGIN_NAME;
+  class->input_class.description         = N_("Video CD plugin with PBC and support for: (X)VCD, (X)SVCD, HQVCD, CVD ... ");
   class->input_class.get_dir             = vcd_class_get_dir; 
   class->input_class.get_autoplay_list   = vcd_class_get_autoplay_list;
   class->input_class.dispose		 = vcd_class_dispose;
@@ -1819,13 +1794,13 @@ vcd_init (xine_t *xine, void *data)
     /*Note: these labels have to be listed in the same order as the
       enumeration vcdplayer_autoplay_t in vcdplayer.h. 
     */
-    static const char *autoplay_modes[] = 
+    static const char *const autoplay_modes[] = 
       { "MPEG track", "entry", "segment",  "playback-control item", NULL };
     
     /*Note: these labels have to be listed in the same order as the
       enumeration vcdplayer_slider_length_t in vcdplayer.h. 
     */
-    static const char *length_reporting_modes[] = 
+    static const char *const length_reporting_modes[] = 
       { "auto", "track", "entry", NULL };
     
     my_vcd.player.default_autoplay = 
@@ -2011,7 +1986,7 @@ _("For tracking down bugs in the VCD plugin. Mask values are:\n"
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 17, (char *) SHORT_PLUGIN_NAME,
+  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, (char *) SHORT_PLUGIN_NAME,
     XINE_VERSION_CODE, NULL, vcd_init },
   { PLUGIN_NONE, 0, (char *) "", 0, NULL, NULL }
 };

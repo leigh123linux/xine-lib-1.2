@@ -26,7 +26,7 @@
 
 #include <stdio.h>
 #include <sys/time.h>
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 #define MAX_ID 10
 

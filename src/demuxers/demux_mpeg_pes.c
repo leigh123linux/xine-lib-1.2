@@ -35,15 +35,21 @@
 #include <unistd.h>
 #include <string.h>
 
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
+
 #define LOG_MODULE "demux_mpeg_pes"
 #define LOG_VERBOSE
 /*
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/demux.h>
 
 #define NUM_PREVIEW_BUFFERS   250
 #define DISC_TRESHOLD       90000
@@ -73,7 +79,6 @@ typedef struct demux_mpeg_pes_s {
   char                  cur_mrl[256];
 
   uint8_t              *scratch;
-  void                 *scratch_base;
 
   int64_t               nav_last_end_pts;
   int64_t               nav_last_start_pts;
@@ -1439,7 +1444,7 @@ static void demux_mpeg_pes_dispose (demux_plugin_t *this_gen) {
 
   demux_mpeg_pes_t *this = (demux_mpeg_pes_t *) this_gen;
   
-  free (this->scratch_base);
+  av_free (this->scratch);
   free (this);
 }
 
@@ -1625,7 +1630,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.get_optional_data = demux_mpeg_pes_get_optional_data;
   this->demux_plugin.demux_class       = class_gen;
 
-  this->scratch    = xine_xmalloc_aligned (512, 4096, &this->scratch_base);
+  this->scratch    = av_mallocz(4096);
   this->status     = DEMUX_FINISHED;
   /* Don't start demuxing stream until we see a program_stream_pack_header */
   /* We need to system header in order to identify is the stream is mpeg1 or mpeg2. */
@@ -1644,7 +1649,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
     /* use demux_mpeg_block for block devices */
     if ((input->get_capabilities(input) & INPUT_CAP_BLOCK)) {
-      free (this->scratch_base);
+      av_free (this->scratch);
       free (this);
       return NULL;
     }
@@ -1660,7 +1665,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
             || (this->preview_data[2] != 0x01) ) {
 	  lprintf("open_plugin:preview_data failed\n");
 
-          free (this->scratch_base);
+          av_free (this->scratch);
           free (this);
           return NULL;
         }
@@ -1671,7 +1676,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
         case 0xbd ... 0xbe:
           break;
         default:
-          free (this->scratch_base);
+          av_free (this->scratch);
           free (this);
           return NULL;
         }
@@ -1693,7 +1698,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
             || (this->scratch[2] != 0x01) ) {
 	  lprintf("open_plugin:scratch failed\n");
 
-          free (this->scratch_base);
+          av_free (this->scratch);
           free (this);
           return NULL;
         }
@@ -1704,7 +1709,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
         case 0xbd ... 0xbe:
           break;
         default:
-          free (this->scratch_base);
+          av_free (this->scratch);
           free (this);
           return NULL;
         }
@@ -1718,31 +1723,14 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       }
     }
 
-    free (this->scratch_base);
+    av_free (this->scratch);
     free (this);
     return NULL;
   }
   break;
 
-  case METHOD_BY_EXTENSION: {
-    const char *const mrl = input->get_mrl (input);
-    const char *const ending = strrchr(mrl, '.');
-
-    if (!ending) {
-      free (this->scratch_base);
-      free (this);
-      return NULL;
-    }
-
-    if (strncasecmp(ending, ".MPEG", 5)
-        && strncasecmp (ending, ".vdr", 4)
-        && strncasecmp (ending, ".mpg", 4)) {
-      free (this->scratch_base);
-      free (this);
-      return NULL;
-    }
-  }
-  break;
+  case METHOD_BY_MRL:
+    break;
 
   case METHOD_EXPLICIT: {
 
@@ -1751,35 +1739,12 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   break;
 
   default:
-    free (this->scratch_base);
+    av_free (this->scratch);
     free (this);
     return NULL;
   }
   return &this->demux_plugin;
 }
-
-static const char *get_description (demux_class_t *this_gen) {
-  return "mpeg pes demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "MPEG_PES";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "pes";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return NULL;
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-
-  demux_mpeg_pes_class_t *this = (demux_mpeg_pes_class_t *) this_gen;
-
-  free (this);
- }
 
 static void *init_plugin (xine_t *xine, void *data) {
 
@@ -1789,11 +1754,11 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->xine   = xine;
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("mpeg pes demux plugin");
+  this->demux_class.identifier      = "MPEG_PES";
+  this->demux_class.mimetypes       = NULL;
+  this->demux_class.extensions      = "pes vdr:/ netvdr:/";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }
@@ -1807,6 +1772,6 @@ static const demuxer_info_t demux_info_mpeg_pes = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_DEMUX, 26, "mpeg_pes", XINE_VERSION_CODE, &demux_info_mpeg_pes, init_plugin },
+  { PLUGIN_DEMUX, 27, "mpeg_pes", XINE_VERSION_CODE, &demux_info_mpeg_pes, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

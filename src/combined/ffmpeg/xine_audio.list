@@ -1,5 +1,4 @@
 type=audio
-config=MP3ADU=
 
 # xine-lib BUF_AUDIO_	ffmpeg CODEC_ID_	description or comment
 # ("!"=ignore)					(quote any "s)

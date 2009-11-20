@@ -3,20 +3,14 @@ include $(top_srcdir)/misc/Makefile.common
 doc_DATA = faq.txt
 html_DATA = faq.html
 
-EXTRA_DIST = README faq.sgml $(doc_DATA) $(html_DATA)
+EXTRA_DIST = README faq.docbook $(doc_DATA) $(html_DATA)
 
-docs: $(doc_DATA) $(html_DATA)
+DISTCLEANFILES = $(doc_DATA) $(html_DATA)
 
-distclean-local: clean-docs
-
-docs-prepare: $(srcdir)/faq.sgml
-	if test "$(srcdir)" != "." -a "$(srcdir)" != "`pwd`"; then \
-	  test -f ./faq.sgml -a ./faq.sgml -nt $(srcdir)/faq.sgml || cp $^ . ; \
-	fi
+docs: $(hackersguide_DATA)
 
 clean-docs:
-	rm -f $(doc_DATA) $(html_DATA)
-	test "x$(srcdir)" = x. || rm -f faq.sgml
+	rm -f $(hackersguide_DATA)
 
 dist-hook:
 	@if test x"$(distcheck_lax)" = x ; then \
@@ -25,38 +19,23 @@ dist-hook:
 	  $(MAKE) docs ; \
 	fi
 
-if HAVE_SGMLTOOLS
-faq.html: faq.sgml
-	@$(MAKE) docs-prepare
-	$(SGMLTOOLS) -b onehtml faq.sgml;
-else
-faq.html: faq.sgml
-	@$(MAKE) docs-prepare
-	if test x"$(fail_if_missing)" = x"yes"; then \
-	  echo "Please install sgmltools-lite."; \
-	  exit 1; \
-	fi
-	if test x"$(fail_if_missing)" != x"yes"; then \
-	  touch $@; \
-	  sleep 1; \
-	  touch $(notdir $^); \
-	fi
-endif
+distclean-local: clean-docs
 
-if HAVE_SGMLTOOLS
-faq.txt: faq.sgml
-	@$(MAKE) docs-prepare
-	$(SGMLTOOLS) -b txt faq.sgml;
+if HAVE_XMLTO
+faq.html: faq.docbook
+	xmlto xhtml-nochunks $^
+
+faq.txt: faq.docbook
+	xmlto txt $^
 else
-faq.txt: faq.sgml
-	@$(MAKE) docs-prepare
+faq.html faq.txt: faq.docbook
 	if test x"$(fail_if_missing)" = x"yes"; then \
-	  echo "Please install sgmltools-lite."; \
+	  echo "Please install xmlto."; \
 	  exit 1; \
 	fi
 	if test x"$(fail_if_missing)" != x"yes"; then \
 	  touch $@; \
 	  sleep 1; \
-	  touch $(notdir $^); \
+	  touch $^; \
 	fi
 endif

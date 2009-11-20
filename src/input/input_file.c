@@ -44,10 +44,10 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "compat.h"
-#include "input_plugin.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/compat.h>
+#include <xine/input_plugin.h>
 
 #define MAXFILES      65535
 
@@ -80,8 +80,8 @@ typedef struct {
   int               fh;
 #ifdef HAVE_MMAP
   int               mmap_on;
-  void             *mmap_base;
-  void             *mmap_curr;
+  uint8_t          *mmap_base;
+  uint8_t          *mmap_curr;
   off_t             mmap_len;
 #endif
   char             *mrl;
@@ -142,7 +142,7 @@ static int check_mmap_file(file_input_plugin_t *this) {
 }
 #endif
 
-static off_t file_plugin_read (input_plugin_t *this_gen, char *buf, off_t len) {
+static off_t file_plugin_read (input_plugin_t *this_gen, void *buf, off_t len) {
   file_input_plugin_t *this = (file_input_plugin_t *) this_gen;
 
   if (len < 0)
@@ -231,7 +231,7 @@ static off_t file_plugin_seek (input_plugin_t *this_gen, off_t offset, int origi
 
 #ifdef HAVE_MMAP /* Simulate f*() library calls */
   if ( check_mmap_file(this) ) {
-    void *new_point = this->mmap_curr;
+    uint8_t *new_point = this->mmap_curr;
     switch(origin) {
     case SEEK_SET: new_point = this->mmap_base + offset; break;
     case SEEK_CUR: new_point = this->mmap_curr + offset; break;
@@ -344,9 +344,6 @@ static int file_plugin_open (input_plugin_t *this_gen ) {
   file_input_plugin_t *this = (file_input_plugin_t *) this_gen;
   char                *filename;
   struct stat          sbuf;
-#ifdef HAVE_MMAP
-  size_t	       tmp_size;
-#endif
 
   lprintf("file_plugin_open\n");
 
@@ -395,14 +392,16 @@ static int file_plugin_open (input_plugin_t *this_gen ) {
   }
 
 #ifdef HAVE_MMAP
-  tmp_size = sbuf.st_size; /* may cause truncation - if it does, DON'T mmap! */
-  if ((tmp_size == sbuf.st_size) &&
-      ( (this->mmap_base = mmap(NULL, tmp_size, PROT_READ, MAP_SHARED, this->fh, 0)) != (void*)-1 )) {
-    this->mmap_on = 1;
-    this->mmap_curr = this->mmap_base;
-    this->mmap_len = sbuf.st_size;
-  } else {
-    this->mmap_base = NULL;
+  {
+    size_t tmp_size = sbuf.st_size; /* may cause truncation - if it does, DON'T mmap! */
+    if ((tmp_size == sbuf.st_size) &&
+	( (this->mmap_base = mmap(NULL, tmp_size, PROT_READ, MAP_SHARED, this->fh, 0)) != (void*)-1 )) {
+      this->mmap_on = 1;
+      this->mmap_curr = this->mmap_base;
+      this->mmap_len = sbuf.st_size;
+    } else {
+      this->mmap_base = NULL;
+    }
   }
 #endif
 
@@ -628,14 +627,6 @@ static off_t get_file_size(char *filepathname, char *origin) {
   }
 
   return pstat.st_size;
-}
-
-static const char *file_class_get_description (input_class_t *this_gen) {
-  return _("file input plugin");
-}
-
-static const char *file_class_get_identifier (input_class_t *this_gen) {
-  return "file";
 }
 
 static xine_mrl_t **file_class_get_dir (input_class_t *this_gen, 
@@ -972,8 +963,8 @@ static void *init_plugin (xine_t *xine, void *data) {
   config       = xine->config;
   
   this->input_class.get_instance       = file_class_get_instance;
-  this->input_class.get_identifier     = file_class_get_identifier;
-  this->input_class.get_description    = file_class_get_description;
+  this->input_class.identifier         = "file";
+  this->input_class.description        = N_("file input plugin");
   this->input_class.get_dir            = file_class_get_dir;
   this->input_class.get_autoplay_list  = NULL;
   this->input_class.dispose            = file_class_dispose;
@@ -1012,6 +1003,6 @@ static void *init_plugin (xine_t *xine, void *data) {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 17, "FILE", XINE_VERSION_CODE, NULL, init_plugin },
+  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "FILE", XINE_VERSION_CODE, NULL, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

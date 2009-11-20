@@ -41,9 +41,9 @@
 */
 
 #include "bswap.h"
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "input_plugin.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/input_plugin.h>
 
 #include "mms.h"
 #include "mmsh.h"
@@ -57,15 +57,15 @@
 static const uint32_t mms_bandwidths[]={14400,19200,28800,33600,34430,57600,
 					115200,262200,393216,524300,1544000,10485800};
 
-static const char * mms_bandwidth_strs[]={"14.4 Kbps (Modem)", "19.2 Kbps (Modem)",
-					  "28.8 Kbps (Modem)", "33.6 Kbps (Modem)",
-					  "34.4 Kbps (Modem)", "57.6 Kbps (Modem)",
-					  "115.2 Kbps (ISDN)", "262.2 Kbps (Cable/DSL)",
-					  "393.2 Kbps (Cable/DSL)","524.3 Kbps (Cable/DSL)",
-					  "1.5 Mbps (T1)", "10.5 Mbps (LAN)", NULL};
+static const char *const mms_bandwidth_strs[]={"14.4 Kbps (Modem)", "19.2 Kbps (Modem)",
+					       "28.8 Kbps (Modem)", "33.6 Kbps (Modem)",
+					       "34.4 Kbps (Modem)", "57.6 Kbps (Modem)",
+					       "115.2 Kbps (ISDN)", "262.2 Kbps (Cable/DSL)",
+					       "393.2 Kbps (Cable/DSL)","524.3 Kbps (Cable/DSL)",
+					       "1.5 Mbps (T1)", "10.5 Mbps (LAN)", NULL};
 
 /* connection methods */
-static const char *mms_protocol_strs[]={"auto", "TCP", "HTTP", NULL};
+static const char *const mms_protocol_strs[]={"auto", "TCP", "HTTP", NULL};
 
 typedef struct {
   input_plugin_t   input_plugin;
@@ -96,8 +96,9 @@ typedef struct {
 } mms_input_class_t;
 
 static off_t mms_plugin_read (input_plugin_t *this_gen, 
-                              char *buf, off_t len) {
+                              void *buf_gen, off_t len) {
   mms_input_plugin_t *this = (mms_input_plugin_t *) this_gen;
+  char *buf = (char *)buf_gen;
   off_t               n = 0;
 
   lprintf ("mms_plugin_read: %"PRId64" bytes ...\n", len);
@@ -291,9 +292,7 @@ static void mms_plugin_dispose (input_plugin_t *this_gen) {
     this->nbc = NULL;
   }
   
-  if(this->mrl)
-    free(this->mrl);
-  
+  free(this->mrl);
   free (this);
 }
 
@@ -444,14 +443,6 @@ static input_plugin_t *mms_class_get_instance (input_class_t *cls_gen, xine_stre
  * mms input plugin class stuff
  */
 
-static const char *mms_class_get_description (input_class_t *this_gen) {
-  return _("mms streaming input plugin");
-}
-
-static const char *mms_class_get_identifier (input_class_t *this_gen) {
-  return "mms";
-}
-
 static void mms_class_dispose (input_class_t *this_gen) {
   mms_input_class_t  *this = (mms_input_class_t *) this_gen;
 
@@ -472,8 +463,8 @@ static void *init_class (xine_t *xine, void *data) {
   this->ip                             = NULL;
 
   this->input_class.get_instance       = mms_class_get_instance;
-  this->input_class.get_identifier     = mms_class_get_identifier;
-  this->input_class.get_description    = mms_class_get_description;
+  this->input_class.identifier         = "mms";
+  this->input_class.description        = N_("mms streaming input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
   this->input_class.dispose            = mms_class_dispose;
@@ -505,6 +496,6 @@ static void *init_class (xine_t *xine, void *data) {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 17, "mms", XINE_VERSION_CODE, NULL, init_class },
+  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "mms", XINE_VERSION_CODE, NULL, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

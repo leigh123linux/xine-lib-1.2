@@ -61,12 +61,11 @@
  #define LOG
  */
 
-#include "xine_internal.h"
-#include "audio_out.h"
+#include <xine/xine_internal.h>
+#include <xine/audio_out.h>
 
 
-#define AO_OUT_DIRECTX2_IFACE_VERSION 8
-
+#define AO_OUT_DIRECTX2_IFACE_VERSION 9
 
 /*
  * If GAP_TOLERANCE is lower than AO_MAX_GAP, xine will
@@ -936,22 +935,6 @@ static ao_driver_t *open_plugin(audio_driver_class_t *class_gen, const void *dat
   return (ao_driver_t *)this;
 }
 
-
-static char* get_identifier(audio_driver_class_t *this_gen) {
-  return "directx2";
-}
-
-
-static char *get_description(audio_driver_class_t *this_gen) {
-  return _("second xine audio output plugin using directx");
-}
-
-
-static void dispose_class(audio_driver_class_t *this_gen) {
-  free(this_gen);
-}
-
-
 static void *init_class(xine_t *xine, void *data) {
   dx2_class_t *this;
 
@@ -962,9 +945,9 @@ static void *init_class(xine_t *xine, void *data) {
     return NULL;
 
   this->driver_class.open_plugin     = open_plugin;
-  this->driver_class.get_identifier  = get_identifier;
-  this->driver_class.get_description = get_description;
-  this->driver_class.dispose         = dispose_class;
+  this->driver_class.identifier      = "directx2";
+  this->driver_class.description     = N_("second xine audio output plugin using directx");
+  this->driver_class.dispose         = default_audio_driver_class_dispose;
 
   this->xine = xine;
 

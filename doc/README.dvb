@@ -51,7 +51,7 @@ Install a channel list
 xine-lib's dvb input plugin needs a channel/transponder list that fits your
 dvb equipment. xine-lib uses the channels.conf format of szap, czap and tzap
 as appropriate for DVB-S, DVB-C and DVB-T. It will search the channel list
-file in ~/.xine/channels.conf.
+file in ~/.config/xine/channels.conf.
 
 channel list format for DVB-S: (satellite)
 -------------------------------------------
@@ -70,8 +70,8 @@ You scan for all available channels using the scan utility which comes with
 the dvb-apps package (also known as dvb-utils). See
 http://www.linuxtv.org/wiki/index.php/Scan for more information.
 
-  $ scan /usr/share/doc/dvb-utils/examples/scan/dvb-t/uk-PontopPike >~/.xine/channels.conf
-  $ scan Hotbird-13.0 >~/.xine/channels.conf
+  $ scan /usr/share/doc/dvb-utils/examples/scan/dvb-t/uk-PontopPike >~/.config/xine/channels.conf
+  $ scan Hotbird-13.0 >~/.config/xine/channels.conf
 
 This can take a while. In a DiSEqC environment, use the -s N switch to
 select different satellites to scan and paste the results in one big
@@ -134,3 +134,4 @@ top left hand corner will notify you of the status of the recording.
 Pressing MENU4 again will resume recording.
 
 Have fun.
+

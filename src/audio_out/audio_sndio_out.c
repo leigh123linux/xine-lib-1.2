@@ -362,16 +362,6 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
  * class functions
  */
 
-static char* get_identifier (audio_driver_class_t *this_gen)
-{
-  return "sndio";
-}
-
-static char* get_description (audio_driver_class_t *this_gen)
-{
-  return _("xine audio output plugin using sndio audio devices/drivers ");
-}
-
 static void dispose_class (audio_driver_class_t *this_gen)
 {
   sndio_class_t *this = (sndio_class_t *) this_gen;
@@ -390,8 +380,8 @@ static void *init_class (xine_t *xine, void *data)
     return NULL;
 
   this->driver_class.open_plugin     = open_plugin;
-  this->driver_class.get_identifier  = get_identifier;
-  this->driver_class.get_description = get_description;
+  this->driver_class.identifier      = "sndio";
+  this->driver_class.description     = N_("xine audio output plugin using sndio audio devices/drivers ");
   this->driver_class.dispose         = dispose_class;
 
   this->xine = xine;
@@ -409,6 +399,6 @@ static const ao_info_t ao_info_sndio = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_AUDIO_OUT, 8, "sndio", XINE_VERSION_CODE, &ao_info_sndio, init_class },
+  { PLUGIN_AUDIO_OUT, 9, "sndio", XINE_VERSION_CODE, &ao_info_sndio, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

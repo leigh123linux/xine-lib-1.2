@@ -24,8 +24,8 @@
 #include "config.h"
 #endif
 
-#include "xine_internal.h"
-#include "post.h"
+#include <xine/xine_internal.h>
+#include <xine/post.h>
 
 #include "visualizations.h"
 
@@ -46,8 +46,8 @@ static const post_info_t fftgraph_special_info = { XINE_POST_TYPE_AUDIO_VISUALIZ
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_POST, 9, "oscope", XINE_VERSION_CODE, &oscope_special_info, &oscope_init_plugin },
-  { PLUGIN_POST, 9, "fftscope", XINE_VERSION_CODE, &fftscope_special_info, &fftscope_init_plugin },
-  { PLUGIN_POST, 9, "fftgraph", XINE_VERSION_CODE, &fftgraph_special_info, &fftgraph_init_plugin },
+  { PLUGIN_POST, 10, "oscope", XINE_VERSION_CODE, &oscope_special_info, &oscope_init_plugin },
+  { PLUGIN_POST, 10, "fftscope", XINE_VERSION_CODE, &fftscope_special_info, &fftscope_init_plugin },
+  { PLUGIN_POST, 10, "fftgraph", XINE_VERSION_CODE, &fftgraph_special_info, &fftgraph_init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

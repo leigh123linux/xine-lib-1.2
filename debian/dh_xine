@@ -37,10 +37,10 @@ foreach my $package (@{$dh{DOPACKAGES}}) {
   my $tmp = tmpdir ($package);
 
   delsubstvar($package, 'xine-x:Depends');
-  addsubstvar ($package, 'xine-x:Depends', 'libxine1-x');
+  addsubstvar ($package, 'xine-x:Depends', 'libxine2-x');
 
   delsubstvar($package, 'xine-console:Depends');
-  addsubstvar ($package, 'xine-console:Depends', 'libxine1-console');
+  addsubstvar ($package, 'xine-console:Depends', 'libxine2-console');
 }
 
 =head1 SEE ALSO

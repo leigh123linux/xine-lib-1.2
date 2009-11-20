@@ -64,7 +64,8 @@
 #  define CLR_RST "\e[0;39m"
 #endif
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
+#include "xine_private.h"
 
 #ifndef HAVE_FSEEKO
 #  define fseeko fseek
@@ -98,8 +99,9 @@ static off_t min_off(off_t a, off_t b) {
 /* 
  * read data from input plugin and write it into file
  */
-static off_t rip_plugin_read(input_plugin_t *this_gen, char *buf, off_t len) {
+static off_t rip_plugin_read(input_plugin_t *this_gen, void *buf_gen, off_t len) {
   rip_input_plugin_t *this = (rip_input_plugin_t *)this_gen;
+  char *buf = (char *)buf_gen;
   off_t retlen, npreview, nread, nwrite, nread_orig, nread_file;
 
   lprintf("reading %"PRId64" bytes (curpos = %"PRId64", savepos = %"PRId64")\n", len, this->curpos, this->savepos);

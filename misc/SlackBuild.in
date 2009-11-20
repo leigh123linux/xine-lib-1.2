@@ -27,7 +27,7 @@ EOF
 #
 do_descr() {
 cat > package_descriptions << EOF
-@PACKAGE@: @PACKAGE@ @SPEC_VERSION@.
+@PACKAGE@: @PACKAGE@ @PACKAGE_VERSION@.
 @PACKAGE@:
 @PACKAGE@: xine-lib is the beating heart of xine (a free gpl-licensed 
 @PACKAGE@: video player for unix-like systems) which among others provides 
@@ -53,12 +53,12 @@ do_build() {
   cd $CWD
   rm -rf $TMPBUILD
   mkdir -p $TMPBUILD
-  cd $TMPBUILD && tar -xzf $CWD/@TAR_NAME@.tar.gz
+  cd $TMPBUILD && tar -xzf $CWD/@PACKAGE_TARNAME@.tar.gz
   do_install_sh;
-  cd @TAR_NAME@
+  cd @PACKAGE_TARNAME@
   DIE=1
-  echo "./configure --prefix=$PREFIX $CONFIG_OPT && make && make install-strip DESTDIR=$PKG LIBRARY_PATH=$TMPBUILD/@TAR_NAME@/src/xine-engine/.libs" && \
-  ./configure --prefix=$PREFIX $CONFIG_OPT && make && make install-strip DESTDIR=$PKG LIBRARY_PATH=$TMPBUILD/@TAR_NAME@/src/xine-engine/.libs && \
+  echo "./configure --prefix=$PREFIX $CONFIG_OPT && make && make install-strip DESTDIR=$PKG LIBRARY_PATH=$TMPBUILD/@PACKAGE_TARNAME@/src/xine-engine/.libs" && \
+  ./configure --prefix=$PREFIX $CONFIG_OPT && make && make install-strip DESTDIR=$PKG LIBRARY_PATH=$TMPBUILD/@PACKAGE_TARNAME@/src/xine-engine/.libs && \
   mkdir -p $PKG/install && cp $TMPBUILD/doinst.sh $PKG/install && \
   cd $PKG && \
   echo "n" | /sbin/makepkg $PACKAGE && \
@@ -172,7 +172,7 @@ main() {
   build_pentium
   build_k6
   build_k7
-  mv -f $CWD/@TAR_NAME@.tar.gz $SLCK
+  mv -f $CWD/@PACKAGE_TARNAME@.tar.gz $SLCK
 }
 
 
@@ -184,7 +184,7 @@ build_arch() {
       mkdir -p $SLCK
       rm -f config.cache && ./autogen.sh && make dist
       $barch
-      mv -f $CWD/@TAR_NAME@.tar.gz $SLCK
+      mv -f $CWD/@PACKAGE_TARNAME@.tar.gz $SLCK
 }
 
 case "$1" in

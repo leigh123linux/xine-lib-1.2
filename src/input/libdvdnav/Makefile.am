@@ -1,6 +1,8 @@
 include $(top_srcdir)/misc/Makefile.common
 
-AM_CPPFLAGS = -D_LARGEFILE64_SOURCE -DDVDNAV_COMPILE -DHAVE_DLFCN_H
+AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
+AM_CPPFLAGS = -DDVDNAV_COMPILE -DHAVE_DLFCN_H
+AM_LDFLAGS = $(xineplug_ldflags)
 
 noinst_LTLIBRARIES = libdvdnav.la
 
@@ -23,8 +25,6 @@ libdvdnav_la_SOURCES = \
 	dvd_input.c \
         dvd_udf.c
 libdvdnav_la_LIBADD = $(PTHREAD_LIBS)
-libdvdnav_la_CFLAGS = $(VISIBILITY_FLAG)
-libdvdnav_la_LDFLAGS = -avoid-version -module
 
 noinst_HEADERS = \
 	decoder.h \

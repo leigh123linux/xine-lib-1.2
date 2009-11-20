@@ -47,10 +47,10 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "demux.h"
-#include "buffer.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/demux.h>
+#include <xine/buffer.h>
 #include "bswap.h"
 #include "group_audio.h"
 
@@ -381,12 +381,6 @@ static int demux_ac3_seek (demux_plugin_t *this_gen,
   return this->status;
 }
 
-static void demux_ac3_dispose (demux_plugin_t *this_gen) {
-  demux_ac3_t *this = (demux_ac3_t *) this_gen;
-
-  free(this);
-}
-
 static int demux_ac3_get_status (demux_plugin_t *this_gen) {
   demux_ac3_t *this = (demux_ac3_t *) this_gen;
 
@@ -421,7 +415,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.send_headers      = demux_ac3_send_headers;
   this->demux_plugin.send_chunk        = demux_ac3_send_chunk;
   this->demux_plugin.seek              = demux_ac3_seek;
-  this->demux_plugin.dispose           = demux_ac3_dispose;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
   this->demux_plugin.get_status        = demux_ac3_get_status;
   this->demux_plugin.get_stream_length = demux_ac3_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_ac3_get_capabilities;
@@ -432,19 +426,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   switch (stream->content_detection_method) {
 
-  case METHOD_BY_EXTENSION: {
-    const char *extensions, *mrl;
-
-    mrl = input->get_mrl (input);
-    extensions = class_gen->get_extensions (class_gen);
-
-    if (!_x_demux_check_extension (mrl, extensions)) {
-      free (this);
-      return NULL;
-    }
-  }
-  /* falling through is intended */
-
+  case METHOD_BY_MRL:
   case METHOD_BY_CONTENT:
   case METHOD_EXPLICIT:
 
@@ -463,39 +445,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static const char *get_description (demux_class_t *this_gen) {
-  return "Raw AC3 demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "AC3";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "ac3";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return NULL;
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-  demux_ac3_class_t *this = (demux_ac3_class_t *) this_gen;
-
-  free (this);
-}
-
 void *demux_ac3_init_plugin (xine_t *xine, void *data) {
   demux_ac3_class_t     *this;
 
   this = calloc(1, sizeof(demux_ac3_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("Raw AC3 demux plugin");
+  this->demux_class.identifier      = "AC3";
+  this->demux_class.mimetypes       = NULL;
+  this->demux_class.extensions      = "ac3";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }

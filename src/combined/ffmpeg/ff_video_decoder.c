@@ -22,7 +22,6 @@
  
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#include "../../libffmpeg/ffmpeg_config.h"
 #endif
 
 #include <stdlib.h>
@@ -38,10 +37,10 @@
 /*
 #define LOG
 */
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #include "bswap.h"
-#include "buffer.h"
-#include "xineutils.h"
+#include <xine/buffer.h>
+#include <xine/xineutils.h>
 #include "ffmpeg_decoder.h"
 #include "ff_mpeg_parser.h"
 
@@ -57,12 +56,6 @@
 #define SLICE_OFFSET_SIZE   128
 
 #define ENABLE_DIRECT_RENDERING
-
-/* reordered_opaque appeared in libavcodec 51.68.0 */
-#define AVCODEC_HAS_REORDERED_OPAQUE
-#if LIBAVCODEC_VERSION_INT < 0x334400
-# undef AVCODEC_HAS_REORDERED_OPAQUE
-#endif
 
 typedef struct ff_video_decoder_s ff_video_decoder_t;
 
@@ -84,12 +77,10 @@ struct ff_video_decoder_s {
 
   xine_stream_t    *stream;
   int64_t           pts;
-#ifdef AVCODEC_HAS_REORDERED_OPAQUE
   uint64_t          pts_tag_mask;
   uint64_t          pts_tag;
   int               pts_tag_counter;
   int               pts_tag_stable_counter;
-#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
   int               video_step;
   int               reported_video_step;
 
@@ -225,10 +216,8 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
 
   av_frame->type= FF_BUFFER_TYPE_USER;
 
-#ifdef AVCODEC_HAS_REORDERED_OPAQUE
   /* take over pts for this frame to have it reordered */
   av_frame->reordered_opaque = context->reordered_opaque;
-#endif
 
   xine_list_push_back(this->dr1_frames, av_frame);
 
@@ -1134,7 +1123,6 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
   }
 }
 
-#ifdef AVCODEC_HAS_REORDERED_OPAQUE
 static uint64_t ff_tag_pts(ff_video_decoder_t *this, uint64_t pts)
 {
   return pts | this->pts_tag;
@@ -1224,7 +1212,6 @@ static int ff_check_extradata(ff_video_decoder_t *this, unsigned int codec_type,
   return 1;
 }
 
-#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
 static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
   uint8_t *chunk_buf = this->buf;
   AVRational avr00 = {0, 1};
@@ -1252,7 +1239,6 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
     this->size = 0;
   }
 
-#ifdef AVCODEC_HAS_REORDERED_OPAQUE
   if (this->size == 0) {
     /* take over pts when we are about to buffer a frame */
     this->av_frame->reordered_opaque = ff_tag_pts(this, this->pts);
@@ -1260,7 +1246,6 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
       this->context->reordered_opaque = ff_tag_pts(this, this->pts);
     this->pts = 0;
   }
-#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
 
   /* data accumulation */
   if (buf->size > 0) {
@@ -1315,10 +1300,8 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
                                     &got_picture, &chunk_buf[offset],
                                     this->size);
 
-#ifdef AVCODEC_HAS_REORDERED_OPAQUE
         /* reset consumed pts value */
         this->context->reordered_opaque = ff_tag_pts(this, 0);
-#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
 
         lprintf("consumed size: %d, got_picture: %d\n", len, got_picture);
         if ((len <= 0) || (len > this->size)) {
@@ -1336,12 +1319,10 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
             memmove (this->buf, &chunk_buf[offset], this->size);
             chunk_buf = this->buf;
 
-#ifdef AVCODEC_HAS_REORDERED_OPAQUE
             /* take over pts for next access unit */
             this->av_frame->reordered_opaque = ff_tag_pts(this, this->pts);
             this->context->reordered_opaque = ff_tag_pts(this, this->pts);
             this->pts = 0;
-#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
           }
         }
       }
@@ -1350,11 +1331,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
       video_step_to_use = (this->video_step || !this->context->time_base.den)
                         ? this->video_step
                         : (int)(90000ll
-#if LIBAVCODEC_VERSION_INT >= 0x341400
                                 * this->context->ticks_per_frame
-#elif LIBAVCODEC_VERSION_INT >= 0x340000
-# warning Building without avcodec ticks_per_frame support; you should upgrade your libavcodec and recompile
-#endif
                                 * this->context->time_base.num / this->context->time_base.den);
 
       /* aspect ratio provided by ffmpeg, override previous setting */
@@ -1444,14 +1421,9 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
           ff_convert_frame(this, img);
         }
 
-#ifndef AVCODEC_HAS_REORDERED_OPAQUE
-        img->pts  = this->pts;
-        this->pts = 0;
-#else /* AVCODEC_HAS_REORDERED_OPAQUE */
         img->pts  = ff_untag_pts(this, this->av_frame->reordered_opaque);
         ff_check_pts_tagging(this, this->av_frame->reordered_opaque); /* only check for valid frames */
         this->av_frame->reordered_opaque = 0;
-#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
 
         /* workaround for weird 120fps streams */
         if( video_step_to_use == 750 ) {
@@ -1494,13 +1466,8 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
                                                 this->output_format,
                                                 VO_BOTH_FIELDS|this->frame_flags);
       /* set PTS to allow early syncing */
-#ifndef AVCODEC_HAS_REORDERED_OPAQUE
-      img->pts       = this->pts;
-      this->pts      = 0;
-#else /* AVCODEC_HAS_REORDERED_OPAQUE */
       img->pts       = ff_untag_pts(this, this->av_frame->reordered_opaque);
       this->av_frame->reordered_opaque = 0;
-#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
 
       img->duration  = video_step_to_use;
 
@@ -1586,12 +1553,10 @@ static void ff_reset (video_decoder_t *this_gen) {
   if (this->is_mpeg12)
     mpeg_parser_reset(this->mpeg_parser);
 
-#ifdef AVCODEC_HAS_REORDERED_OPAQUE
   this->pts_tag_mask = 0;
   this->pts_tag = 0;
   this->pts_tag_counter = 0;
   this->pts_tag_stable_counter = 0;
-#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
 }
 
 static void ff_discontinuity (video_decoder_t *this_gen) {
@@ -1600,7 +1565,6 @@ static void ff_discontinuity (video_decoder_t *this_gen) {
   lprintf ("ff_discontinuity\n");
   this->pts = 0;
 
-#ifdef AVCODEC_HAS_REORDERED_OPAQUE
   /*
    * there is currently no way to reset all the pts which are stored in the decoder.
    * therefore, we add a unique tag (generated from pts_tag_counter) to pts (see 
@@ -1633,7 +1597,6 @@ static void ff_discontinuity (video_decoder_t *this_gen) {
       counter_mask <<= 1;
     }
   }
-#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
 }
 
 static void ff_dispose (video_decoder_t *this_gen) {
@@ -1739,18 +1702,6 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
   return &this->video_decoder;
 }
 
-static char *ff_video_get_identifier (video_decoder_class_t *this) {
-  return "ffmpeg video";
-}
-
-static char *ff_video_get_description (video_decoder_class_t *this) {
-  return "ffmpeg based video decoder plugin";
-}
-
-static void ff_video_dispose_class (video_decoder_class_t *this) {
-  free (this);
-}
-
 void *init_video_plugin (xine_t *xine, void *data) {
 
   ff_video_class_t *this;
@@ -1759,9 +1710,9 @@ void *init_video_plugin (xine_t *xine, void *data) {
   this = calloc(1, sizeof (ff_video_class_t));
 
   this->decoder_class.open_plugin     = ff_video_open_plugin;
-  this->decoder_class.get_identifier  = ff_video_get_identifier;
-  this->decoder_class.get_description = ff_video_get_description;
-  this->decoder_class.dispose         = ff_video_dispose_class;
+  this->decoder_class.identifier      = "ffmpeg video";
+  this->decoder_class.description     = N_("ffmpeg based video decoder plugin");
+  this->decoder_class.dispose         = default_video_decoder_class_dispose;
   this->xine                          = xine;
 
   pthread_once( &once_control, init_once_routine );
@@ -1810,12 +1761,12 @@ void *init_video_plugin (xine_t *xine, void *data) {
   return this;
 }
 
-static uint32_t wmv8_video_types[] = { 
+static const uint32_t wmv8_video_types[] = { 
   BUF_VIDEO_WMV8,
   0 
 };
 
-static uint32_t wmv9_video_types[] = { 
+static const uint32_t wmv9_video_types[] = { 
   BUF_VIDEO_WMV9,
   0 
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2003 the xine project and Fredrik Noring
+ * Copyright (C) 2000-2007 the xine project and Fredrik Noring
  * 
  * This file is part of xine, a free video player.
  * 
@@ -16,27 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- * video_out_fb.c, frame buffer xine driver by Miguel Freitas
- *
- * Contributors:
- *
- *     Fredrik Noring <noring@nocrew.org>:  Zero copy buffers and clean up.
- *
- * based on xine's video_out_xshm.c...
- * ...based on mpeg2dec code from
- * Aaron Holtzman <aholtzma@ess.engr.uvic.ca>
- *
- * ideas from ppmtofb - Display P?M graphics on framebuffer devices
- *            by Geert Uytterhoeven and Chris Lawrence
- *
- * Note: Use this with fbxine. It may work with the regular xine too,
- * provided the visual type is changed (see below).
- *
- * TODO: VT switching (configurable)
  */
 
-/* #define USE_X11_VISUAL */
+/**
+ * @file
+ * @brief Frame buffer xine driver
+ *
+ * @author Miguel Freitas
+ *
+ * @author Fredrik Noring <noring@nocrew.org>:
+ *         Zero copy buffers and clean up.
+ *
+ * @author Aaron Holtzman <aholtzma@ess.engr.uvic.ca>: 
+ *         Based on xine's video_out_xshm.c, based on mpeg2dec code from
+ *
+ * @author Geert Uytterhoeven and Chris Lawrence:
+ *         Ideas from ppmtofb - Display P?M graphics on framebuffer devices.
+ *
+ * @note Use this with fbxine.
+ *
+ * @todo VT Switching (configurable)
+ */
 
 #define RECOMMENDED_NUM_BUFFERS  5
 #define MAXIMUM_NUM_BUFFERS     25
@@ -55,7 +55,7 @@
 #include <fcntl.h> 
              
 #include "xine.h"
-#include "video_out.h"
+#include <xine/video_out.h>
 
 #include <errno.h>
 
@@ -68,6 +68,12 @@
 #include <pthread.h>
 #include <netinet/in.h>
 
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
+
 #include <linux/fb.h>
 #include <linux/kd.h>
 #include <linux/vt.h>
@@ -78,10 +84,10 @@
 #define LOG
 */
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #include "yuv2rgb.h"
-#include "xineutils.h"
-#include "vo_scale.h"
+#include <xine/xineutils.h>
+#include <xine/vo_scale.h>
 
 typedef struct fb_frame_s
 {
@@ -91,8 +97,6 @@ typedef struct fb_frame_s
   int                flags;
   
   vo_scale_t         sc;
-
-  uint8_t           *chunk[3]; /* mem alloc by xmalloc_aligned           */
 
   yuv2rgb_t         *yuv2rgb;  /* yuv2rgb converter for this frame */
   uint8_t           *rgb_dst;
@@ -155,7 +159,7 @@ typedef struct
 
 static uint32_t fb_get_capabilities(vo_driver_t *this_gen)
 {
-  return VO_CAP_YV12 | VO_CAP_YUY2;
+  return VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_BRIGHTNESS | VO_CAP_CONTRAST | VO_CAP_SATURATION;
 }
 
 static void fb_frame_proc_slice(vo_frame_t *vo_img, uint8_t **src)
@@ -324,10 +328,9 @@ static void setup_colorspace_converter(fb_frame_t *frame, int flags)
 static void frame_reallocate(fb_driver_t *this, fb_frame_t *frame,
 			     uint32_t width, uint32_t height, int format)
 {
-  free(frame->chunk[0]);
-  free(frame->chunk[1]);
-  free(frame->chunk[2]);
-  memset(frame->chunk, 0, sizeof(frame->chunk[0])*3);
+  av_freep(&frame->vo_frame.base[0]);
+  av_freep(&frame->vo_frame.base[1]);
+  av_freep(&frame->vo_frame.base[2]);
       
   if(this->use_zero_copy)
   {
@@ -349,35 +352,15 @@ static void frame_reallocate(fb_driver_t *this, fb_frame_t *frame,
       frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
       frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
 		
-    frame->vo_frame.base[0] =
-      xine_xmalloc_aligned(16,
-			   frame->vo_frame.pitches[0] *
-			   height,
-                                                      (void **)&frame->chunk[0]);
-		
-    frame->vo_frame.base[1] =
-      xine_xmalloc_aligned(16,
-			   frame->vo_frame.pitches[1] *
-			   ((height+1)/2),
-                                                      (void **)&frame->chunk[1]);
-		
-    frame->vo_frame.base[2] =
-      xine_xmalloc_aligned(16,
-			   frame->vo_frame.pitches[2] *
-			   ((height+1)/2),
-                                                      (void **)&frame->chunk[2]);
+      frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
+      frame->vo_frame.base[1] = av_mallocz(frame->vo_frame.pitches[1] * ((height+1)/2));
+      frame->vo_frame.base[2] = av_mallocz(frame->vo_frame.pitches[2] * ((height+1)/2));
   }
   else
   {
     frame->vo_frame.pitches[0] = 8 * ((width + 3) / 4);
 		
-    frame->vo_frame.base[0] =
-      xine_xmalloc_aligned(16,
-			   frame->vo_frame.pitches[0] *
-			   height,
-                                                      (void **)&frame->chunk[0]);
-      frame->chunk[1] = NULL;
-      frame->chunk[2] = NULL;
+    frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
   }
 }
     
@@ -428,7 +411,7 @@ static void fb_update_frame_format(vo_driver_t *this_gen,
 static void fb_overlay_clut_yuv2rgb(fb_driver_t *this,
 				    vo_overlay_t *overlay, fb_frame_t *frame)
 {
-  int i;
+  size_t i;
   clut_t* clut = (clut_t*)overlay->color;
 	
   if(!overlay->rgb_clut)
@@ -632,7 +615,7 @@ static int fb_set_property(vo_driver_t *this_gen, int property, int value)
 	value = XINE_VO_ASPECT_AUTO;
       this->sc.user_ratio = value;
       xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
-	      "video_out_fb: aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name(value));
+	      "video_out_fb: aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name_table[value]);
       break;
 
     case VO_PROP_BRIGHTNESS:
@@ -808,8 +791,8 @@ static void register_callbacks(fb_driver_t *this)
 
 static int open_fb_device(config_values_t *config, xine_t *xine)
 {
-  static char devkey[] = "video.device.fb_device";   /* Why static? */
-  char *device_name;
+  static const char devkey[] = "video.device.fb_device";
+  const char *device_name;
   int fd;
 
   /* This config entry is security critical, is it really necessary
@@ -890,7 +873,7 @@ static int mode_visual(fb_driver_t *this, config_values_t *config,
       }
   }
   
-  xprintf(this->xine, XINE_VERBOSITY_LOG, _("video_out_fb: Your video mode was not recognized, sorry.\n"));
+  xprintf(this->xine, XINE_VERBOSITY_LOG, _("%s: Your video mode was not recognized, sorry.\n"), LOG_MODULE);
   return 0;
 }
     
@@ -947,16 +930,16 @@ static void setup_buffers(fb_driver_t *this,
   this->cur_frame = this->old_frame = 0;
 	
   xprintf(this->xine, XINE_VERBOSITY_LOG,
-	  _("video_out_fb: %d video RAM buffers are available.\n"), this->total_num_native_buffers);
+	  _("%s: %d video RAM buffers are available.\n"), LOG_MODULE, this->total_num_native_buffers);
 
   if(this->total_num_native_buffers < RECOMMENDED_NUM_BUFFERS)
   {
     this->use_zero_copy = 0;
     xprintf(this->xine, XINE_VERBOSITY_LOG,
-	    _("WARNING: video_out_fb: Zero copy buffers are DISABLED because only %d buffers\n"
+	    _("WARNING: %s: Zero copy buffers are DISABLED because only %d buffers\n"
 	      "     are available which is less than the recommended %d buffers. Lowering\n"
 	      "     the frame buffer resolution might help.\n"), 
-	    this->total_num_native_buffers, RECOMMENDED_NUM_BUFFERS);
+	    LOG_MODULE, this->total_num_native_buffers, RECOMMENDED_NUM_BUFFERS);
   }
   else
   {
@@ -964,8 +947,8 @@ static void setup_buffers(fb_driver_t *this,
     this->fb_var.yoffset = this->fb_var.yres;
     if(ioctl(this->fd, FBIOPAN_DISPLAY, &this->fb_var) == -1) {
       xprintf(this->xine, XINE_VERBOSITY_LOG,
-	      _("WARNING: video_out_fb: Zero copy buffers are DISABLED because kernel driver\n"
-		"     do not support screen panning (used for frame flips).\n"));
+	      _("WARNING: %s: Zero copy buffers are DISABLED because kernel driver\n"
+		"     do not support screen panning (used for frame flips).\n"), LOG_MODULE);
     } else {
       this->fb_var.yoffset = 0;
       ioctl(this->fd, FBIOPAN_DISPLAY, &this->fb_var);
@@ -1033,12 +1016,13 @@ static vo_driver_t *fb_open_plugin(video_driver_class_t *class_gen,
 
   if(this->depth > 16)
     xprintf(this->xine, XINE_VERBOSITY_LOG,
-	    _("WARNING: video_out_fb: current display depth is %d. For better performance\n"
-	      "     a depth of 16 bpp is recommended!\n\n"), this->depth);
+	    _("WARNING: %s: current display depth is %d. For better performance\n"
+	      "     a depth of 16 bpp is recommended!\n\n"), LOG_MODULE, this->depth);
 
   xprintf(class->xine, XINE_VERBOSITY_DEBUG,
-	  "video_out_fb: video mode depth is %d (%d bpp),\n"
+	  "%s: video mode depth is %d (%d bpp),\n"
 	  "     red: %d/%d, green: %d/%d, blue: %d/%d\n",
+	  LOG_MODULE,
 	  this->depth, this->bpp,
 	  this->fb_var.red.length, this->fb_var.red.offset,
 	  this->fb_var.green.length, this->fb_var.green.offset,
@@ -1057,30 +1041,14 @@ error:
   return 0;
 }
 
-static char* fb_get_identifier(video_driver_class_t *this_gen)
-{
-  return "fb";
-}
-
-static char* fb_get_description(video_driver_class_t *this_gen)
-{
-  return _("Xine video output plugin using the Linux frame buffer device");
-}
-
-static void fb_dispose_class(video_driver_class_t *this_gen)
-{
-  fb_class_t *this = (fb_class_t *)this_gen;
-  free(this);
-}
-
 static void *fb_init_class(xine_t *xine, void *visual_gen)
 {
   fb_class_t *this = calloc(1, sizeof(fb_class_t));
 
   this->driver_class.open_plugin     = fb_open_plugin;
-  this->driver_class.get_identifier  = fb_get_identifier;
-  this->driver_class.get_description = fb_get_description;
-  this->driver_class.dispose         = fb_dispose_class;
+  this->driver_class.identifier      = "fb";
+  this->driver_class.description     = N_("Xine video output plugin using the Linux frame buffer device");
+  this->driver_class.dispose         = default_video_driver_class_dispose;
 
   this->config          = xine->config;
   this->xine            = xine;
@@ -1091,16 +1059,13 @@ static void *fb_init_class(xine_t *xine, void *visual_gen)
 static const vo_info_t vo_info_fb =
 {
   1,                    /* priority    */
-#ifdef USE_X11_VISUAL
-  XINE_VISUAL_TYPE_X11  /* visual type */
-#else
   XINE_VISUAL_TYPE_FB   /* visual type */
-#endif
 };
 
 /* exported plugin catalog entry */
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_VIDEO_OUT, 21, "fb", XINE_VERSION_CODE, &vo_info_fb, fb_init_class },
+  { PLUGIN_VIDEO_OUT, 22, "fb", XINE_VERSION_CODE, &vo_info_fb, fb_init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
+

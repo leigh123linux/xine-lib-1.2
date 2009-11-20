@@ -65,6 +65,7 @@ typedef struct xine_vld_frame_s {
 
 
 typedef struct xine_xvmc_s {
+  vo_frame_t *vo_frame;
   xine_macroblocks_t *macroblocks;
   void (*proc_macro_block)(int x,int y,int mb_type,
 			   int motion_type,int (*mv_field_sel)[2],
@@ -73,6 +74,9 @@ typedef struct xine_xvmc_s {
 			   vo_frame_t *backward_ref_frame,int picture_structure,
 			   int second_field,int (*f_mot_pmv)[2],int (*b_mot_pmv)[2]);
 } xine_xvmc_t ;
+
+#define XVMC_DATA(frame_gen)  ((frame_gen) ? (xine_xvmc_t *)(frame_gen)->accel_data : (xine_xvmc_t *)0)
+#define XVMC_FRAME(frame_gen) ((frame_gen) ? (xvmc_frame_t *)XVMC_DATA(frame_gen)->vo_frame : (xvmc_frame_t *)0)
 
 typedef struct xine_xxmc_s {
 
@@ -107,6 +111,9 @@ typedef struct xine_xxmc_s {
 				vo_frame_t *bw_frame,unsigned pc_type);
   void (*proc_xxmc_unlock) (vo_driver_t *this_gen);
 } xine_xxmc_t;
+
+#define XXMC_DATA(frame_gen)  ((frame_gen) ? (xine_xxmc_t *)(frame_gen)->accel_data : (xine_xxmc_t *)0)
+#define XXMC_FRAME(frame_gen) ((frame_gen) ? (xxmc_frame_t *)XXMC_DATA(frame_gen)->xvmc.vo_frame : (xxmc_frame_t *)0)
 
   /*
    * Register XvMC stream types here.

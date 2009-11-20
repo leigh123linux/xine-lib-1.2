@@ -2,11 +2,18 @@ syntax: glob
 *~
 *.orig
 
+xine-lib-*.tar.gz
+xine-lib-*.tar.bz2
+
+*.o
+*.a
 *.lo
 *.la
-*.o
-.libs/*
+*.so
+*.loT
+.libs
 .deps/*
+.depend
 Makefile
 Makefile.in
 
@@ -38,21 +45,35 @@ build-stamp
 configure-stamp
 debian/files
 debian/libxine-dev
-debian/libxine1
-debian/libxine1-dbg
-debian/libxine1-doc
+debian/libxine2
+debian/libxine2-dbg
+debian/libxine2-doc
 debian/tmp
 debian/*.debhelper
 debian/*.debhelper.log
 debian/*.substvars
+
+contrib/ffmpeg/*.pc
+contrib/ffmpeg/.vhookdep
+contrib/ffmpeg/config.err
+contrib/ffmpeg/config.h
+contrib/ffmpeg/config.mak
+contrib/ffmpeg/doc/*.1
+contrib/ffmpeg/doc/*.html
+contrib/ffmpeg/version.h
+contrib/libdha/pci_dev_ids.c
+contrib/libdha/pci_ids.h
+contrib/libdha/pci_names.[ch]
+contrib/libdha/pci_vendors.h
 
 doc/faq/faq.html
 doc/faq/faq.txt
 doc/hackersguide/*.png
 doc/hackersguide/hackersguide.html
 doc/man/*/xine-list-*.1
+doc/Doxyfile
 
-include/xine.h
+include/xine/version.h
 
 m4/codeset.m4
 m4/gettext.m4
@@ -60,12 +81,14 @@ m4/iconv.m4
 m4/intmax.m4
 m4/inttypes-pri.m4
 m4/inttypes_h.m4
+m4/lib-ld.m4
 m4/lib-link.m4
 m4/lib-prefix.m4
 m4/longdouble.m4
 m4/longlong.m4
 m4/nls.m4
 m4/po.m4
+m4/progtest.m4
 m4/size_max.m4
 m4/stdint_h.m4
 m4/ulonglong.m4
@@ -79,6 +102,16 @@ m4/ltoptions.m4
 m4/ltsugar.m4
 m4/ltversion.m4
 m4/lt~obsolete.m4
+m4/glibc2.m4
+m4/glibc21.m4
+m4/intdiv0.m4
+m4/intlmacosx.m4
+m4/lcmessage.m4
+m4/printf-posix.m4
+m4/uintmax_t.m4
+m4/wchar_t.m4
+m4/wint_t.m4
+m4/xsize.m4
 
 misc/Makefile.plugins
 misc/SlackBuild
@@ -87,7 +120,9 @@ misc/libxine.pc
 misc/relchk.sh
 misc/xine-config
 misc/xine-lib.spec
+misc/xine-fontconv
 misc/xine-list-*
+misc/cdda_server
 
 po/Makevars.extra
 po/POTFILES
@@ -103,3 +138,4 @@ src/video_out/libdha/pci_dev_ids.c
 src/video_out/libdha/pci_ids.h
 src/video_out/libdha/pci_names.[ch]
 src/video_out/libdha/pci_vendors.h
+src/xine-utils/xmltest

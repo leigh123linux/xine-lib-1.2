@@ -39,10 +39,10 @@ typedef unsigned char boolean;
 */
 
 #include "xine.h"
-#include "video_out.h"
-#include "xine_internal.h"
+#include <xine/video_out.h>
+#include <xine/xine_internal.h>
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #include "yuv2rgb.h"
 
 #define NEW_YUV 1
@@ -1286,21 +1286,6 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *wi
   return ( vo_driver_t * ) win32_driver;
 }
 
-
-static char* get_identifier (video_driver_class_t *this_gen) {
-  return "DirectX";
-}
-
-static char* get_description (video_driver_class_t *this_gen) {
-  return _("xine video output plugin for win32 using directx");
-}
-
-static void dispose_class (video_driver_class_t *this_gen) {
-  directx_class_t *directx = (directx_class_t *) this_gen;
-
-  free (directx);
-}
-
 static void *init_class (xine_t *xine, void *visual_gen) {
 
   directx_class_t    *directx;
@@ -1311,9 +1296,9 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   directx = calloc(1, sizeof (directx_class_t));
 
   directx->driver_class.open_plugin     = open_plugin;
-  directx->driver_class.get_identifier  = get_identifier;
-  directx->driver_class.get_description = get_description;
-  directx->driver_class.dispose         = dispose_class;
+  directx->driver_class.identifier      = "DirectX";
+  directx->driver_class.description     = N_("xine video output plugin for win32 using directx");
+  directx->driver_class.dispose         = default_video_driver_class_dispose;
 
   directx->xine                         = xine;
   directx->config                       = xine->config;
@@ -1332,6 +1317,6 @@ static const vo_info_t vo_info_win32 = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_VIDEO_OUT, 21, "vo_directx", XINE_VERSION_CODE, &vo_info_win32, init_class },
+  { PLUGIN_VIDEO_OUT, 22, "vo_directx", XINE_VERSION_CODE, &vo_info_win32, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

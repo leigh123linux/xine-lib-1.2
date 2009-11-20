@@ -24,16 +24,17 @@
 #include "config.h"
 #endif
 
-#include "xine_internal.h"
-#include "post.h"
-#include "xineutils.h"
-#include <pthread.h>
+#include <config.h>
 
+#include <xine/xine_internal.h>
+#include <xine/post.h>
+#include <xine/xineutils.h>
 #ifdef HAVE_FFMPEG_AVUTIL_H
 #  include <postprocess.h>
 #else
 #  include <libpostproc/postprocess.h>
 #endif
+#include <pthread.h>
 
 #define PP_STRING_SIZE 256 /* size of pp mode string (including all options) */
 
@@ -111,21 +112,19 @@ static xine_post_api_descr_t * get_param_descr (void) {
 }
 
 static char * get_help (void) {
-  char *help1 = 
-         _("FFmpeg libpostprocess plugin.\n"
-           "\n"
-           "Parameters\n"
-           "\n");
-   
-  char *help2 =
-         _("\n"
-           "* libpostprocess (C) Michael Niedermayer\n"
-         );
   static char *help = NULL;
 
-  if( !help )
-    asprintf(&help, "%s%s%s", help1, help2, pp_help);
-
+  if( !help ) {
+    asprintf(&help, "%s%s%s",
+	     _("FFmpeg libpostprocess plugin.\n"
+	       "\n"
+	       "Parameters\n"
+	       "\n"),
+	     pp_help,
+	     _("\n"
+	       "* libpostprocess (C) Michael Niedermayer\n")
+	     );
+  }
   return help;
 }
 
@@ -141,9 +140,6 @@ static xine_post_api_t post_api = {
 static post_plugin_t *pp_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target);
-static char          *pp_get_identifier(post_class_t *class_gen);
-static char          *pp_get_description(post_class_t *class_gen);
-static void           pp_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
 static void           pp_dispose(post_plugin_t *this_gen);
@@ -157,15 +153,15 @@ static int            pp_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 void *pp_init_plugin(xine_t *xine, void *data)
 {
-  post_class_t *class = (post_class_t *)malloc(sizeof(post_class_t));
+  post_class_t *class = (post_class_t *)xine_xmalloc(sizeof(post_class_t));
 
   if (!class)
     return NULL;
   
   class->open_plugin     = pp_open_plugin;
-  class->get_identifier  = pp_get_identifier;
-  class->get_description = pp_get_description;
-  class->dispose         = pp_class_dispose;
+  class->identifier      = "pp";
+  class->description     = N_("plugin for ffmpeg libpostprocess");
+  class->dispose         = default_post_class_dispose;
 
   return class;
 }
@@ -226,22 +222,6 @@ static post_plugin_t *pp_open_plugin(post_class_t *class_gen, int inputs,
   
   return &this->post;
 }
-
-static char *pp_get_identifier(post_class_t *class_gen)
-{
-  return "pp";
-}
-
-static char *pp_get_description(post_class_t *class_gen)
-{
-  return "plugin for ffmpeg libpostprocess";
-}
-
-static void pp_class_dispose(post_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 
 static void pp_dispose(post_plugin_t *this_gen)
 {

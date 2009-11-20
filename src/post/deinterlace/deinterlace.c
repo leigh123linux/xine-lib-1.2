@@ -31,7 +31,7 @@
 */
 
 #include "deinterlace.h"
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 typedef struct methodlist_item_s methodlist_item_t;
 

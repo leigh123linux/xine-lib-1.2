@@ -1,13 +1,13 @@
-Source: xine-lib
+Source: xine-lib-1.2
 Section: libs
 Priority: optional
 Maintainer: xine Developers <xine-devel@lists.sourceforge.net>
 Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
 	automake1.9, autoconf, libtool, cvs,
-	libavcodec-dev (>= 0.cvs20070307-3) | libavcodeccvs-dev,
-	libavutil-dev (>= 0.cvs20070307-3) | libavutilcvs-dev,
-	libavformat-dev (>= 0.cvs20070307-3) | libavformatcvs-dev,
-	libpostproc-dev (>= 0.cvs20070307-3) | libpostproccvs-dev,
+	libavcodec-dev (>= 0.cvs20080206) | libavcodeccvs-dev,
+	libavformat-dev (>= 0.cvs20080206) | libavformatcvs-dev,
+	libpostproc-dev (>= 0.cvs20080206) | libpostproccvs-dev,
+	libavutil-dev (>= 0.cvs20080206) | libavutilcvs-dev,
 	libxcb-xv0-dev | libxv-dev (<< 1:1.0.3),
 	libxcb-shm0-dev | libxv-dev (<< 1:1.0.3),
 	libxcb-shape0-dev | libxv-dev (<< 1:1.0.3),
@@ -23,17 +23,16 @@ Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
 	liblircclient-dev,
 	libdirectfb-dev (>= 0.9.22), libgtk2.0-dev,
 	libflac-dev, libsdl1.2-dev, libwavpack-dev,
-	libsmbclient-dev, libspeex-dev, libmng-dev,
-	libmad0-dev, libmpcdec-dev, libcdio-dev (>= 0.76-1),
-	zlib1g-dev, w3m, transfig, sgmltools-lite,
-	ghostscript | gs-gpl | gs
+	libsmbclient-dev, libspeex-dev, libmng-dev, 
+	libmad0-dev, libmpcdec-dev, libcdio-dev (>= 0.76-1), libvcdinfo-dev,
+	zlib1g-dev, w3m, xmlto, librsvg2-bin
 Standards-Version: 3.7.2
 
 Package: libxine-dev
 Architecture: any
 Section: libdevel
-Depends: libxine1 (= ${Source-Version}), libc6-dev, zlib1g-dev | libz-dev, libslang2-dev | slang1-dev, libfreetype6-dev, pkg-config
-Conflicts: xine-ui (<< 0.9.10), libxine2-dev
+Depends: libxine2 (= ${Source-Version}), libc6-dev, zlib1g-dev | libz-dev, libslang2-dev | slang1-dev, libfreetype6-dev, pkg-config
+Conflicts: xine-ui (<< 0.9.10), libxine-dev
 Description: the xine video player library, development packages
  This contains development files (headers, documentation and the like)
  for the xine library (libxine).
@@ -49,11 +48,12 @@ Description: the xine video player library, development packages
  The xine-ui and gxine packages each provide one for your convenience, so
  you can just start watching your VCDs ;-)
 
-Package: libxine1-doc
+Package: libxine2-doc
 Architecture: all
 Section: libdevel
 Provides: libxine-doc
-Conflicts: libxine2-doc
+Conflicts: libxine1-doc
+Replaces: libxine1-doc
 Description: the xine video player library, development packages
  This contains documentation for the xine library (libxine).
  .
@@ -64,14 +64,14 @@ Description: the xine video player library, development packages
  extensible to your heart's content via plugins for audio and video output,
  input media, demuxers (stream types), audio/video and subtitle codecs.
 
-Package: libxine1
+Package: libxine2
 Architecture: any
 Depends: ${shlibs:Depends}
 Recommends: ${shlibs:Recommends}
-Suggests: ${shlibs:Suggests}, libxine1-doc | libxine-doc
-Conflicts: libxine1-all-plugins, libxine1-bin, libxine1-console, libxine1-ffmpeg, libxine1-gnome, libxine1-misc-plugins, libxine1-plugins, libxine1-x
-Replaces: libxine1-all-plugins, libxine1-bin, libxine1-console, libxine1-ffmpeg, libxine1-gnome, libxine1-misc-plugins, libxine1-plugins, libxine1-x
-Provides: libxine1-all-plugins, libxine1-bin, libxine1-console, libxine1-ffmpeg, libxine1-gnome, libxine1-misc-plugins, libxine1-plugins, libxine1-x
+Suggests: ${shlibs:Suggests}, libxine2-doc | libxine-doc
+Conflicts: libxine2-all-plugins, libxine2-bin, libxine2-console, libxine2-ffmpeg, libxine2-gnome, libxine2-misc-plugins, libxine2-plugins, libxine2-x
+Replaces: libxine2-all-plugins, libxine2-bin, libxine2-console, libxine2-ffmpeg, libxine2-gnome, libxine2-misc-plugins, libxine2-plugins, libxine2-x
+Provides: libxine2-all-plugins, libxine2-bin, libxine2-console, libxine2-ffmpeg, libxine2-gnome, libxine2-misc-plugins, libxine2-plugins, libxine2-x
 Description: the xine video/media player library, binary files
  This is the xine media player library (libxine). 
  .
@@ -86,10 +86,10 @@ Description: the xine video/media player library, binary files
  The xine-ui and gxine packages each provide one for your convenience, so
  you can just start watching your VCDs ;-)
 
-Package: libxine1-dbg
+Package: libxine2-dbg
 Priority: extra
 Architecture: any
-Depends: libxine1 (= ${Source-Version})
+Depends: libxine2 (= ${Source-Version})
 Description: the xine video/media player library, debug data
  This is the xine media player library (libxine). 
  .

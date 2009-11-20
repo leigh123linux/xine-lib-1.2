@@ -62,15 +62,35 @@
 #define XINE_ENABLE_EXPERIMENTAL_FEATURES
 
 /********** logging **********/
-#define LOG_MODULE "input_v4l"
+/* #define LOG_MODULE "input_v4l" */
 #define LOG_VERBOSE
 /*
 #define LOG 
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "input_plugin.h"
+#ifdef LOG
+#define LOG_MODULE log_line_prefix()
+
+static char *log_line_prefix()
+{
+    static int print_timestamp = 1;
+    struct timeval now;
+    struct tm now_tm;
+    char buffer[64];
+
+    if( print_timestamp ) {
+        gettimeofday( &now, NULL );
+        localtime_r( &now.tv_sec, &now_tm );
+        strftime( buffer, sizeof( buffer ), "%Y-%m-%d %H:%M:%S", &now_tm );
+        printf( "%s.%6.6ld: ", buffer, now.tv_usec );
+    }
+    return "input_v4l";
+}
+#endif
+
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/input_plugin.h>
 
 #define NUM_FRAMES  15
 
@@ -97,8 +117,12 @@ static const resolution_t resolutions[] = {
 #define AUDIO_DEV	 "plughw:0,0"
 #endif
 
-static char *tv_standard_names[] = { "AUTO", "PAL", "NTSC", "SECAM", "OLD", NULL };
-static int tv_standard_values[] = { VIDEO_MODE_AUTO, VIDEO_MODE_PAL, VIDEO_MODE_NTSC, VIDEO_MODE_SECAM, -1 };
+static const char *const tv_standard_names[] = { "AUTO", "PAL", "NTSC", "SECAM", "OLD", NULL };
+static const int tv_standard_values[] = { VIDEO_MODE_AUTO, VIDEO_MODE_PAL, VIDEO_MODE_NTSC, VIDEO_MODE_SECAM, -1 };
+
+#if !defined(NDELAY) && defined(O_NDELAY)
+#define FNDELAY O_NDELAY
+#endif
 
 typedef struct pvrscr_s pvrscr_t;
 
@@ -559,7 +583,8 @@ static int set_frequency(v4l_input_plugin_t *this, unsigned long frequency)
     
     ret = ioctl(fd, VIDIOCSFREQ, &this->calc_frequency);
 
-    lprintf("IOCTL set frequency (%ld) returned: %d\n", frequency, ret);
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+            "input_v4l: set frequency (%ld) returned: %d\n", frequency, ret);
   } else {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
             "input_v4l: No frequency given. Expected syntax: v4l:/tuner/frequency\n"
@@ -858,7 +883,7 @@ static int open_video_capture_device(v4l_input_plugin_t *this)
   }
   
   lprintf("Device opened, tv %d\n", this->video_fd);
-  
+
   /* figure out the resolution */
   for (j = 0; j < NUM_RESOLUTIONS; j++)
     {
@@ -883,6 +908,10 @@ static int open_video_capture_device(v4l_input_plugin_t *this)
   
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 1);
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 1);
+  
+  /* Pre-allocate some frames for audio and video so it doesn't have to be 
+   * done during capture */
+  allocate_frames(this, 1);
   
   /* Unmute audio off video capture device */
   unmute_audio(this);
@@ -1217,7 +1246,7 @@ static int v4l_adjust_realtime_speed(v4l_input_plugin_t *this, fifo_buffer_t *fi
  * Plugin read.
  * This function is not supported by the plugin.
  */
-static off_t v4l_plugin_read (input_plugin_t *this_gen, char *buf, off_t len) {
+static off_t v4l_plugin_read (input_plugin_t *this_gen, void *buf, off_t len) {
   lprintf("Read not supported\n");
   return 0;
 }
@@ -1865,25 +1894,6 @@ static input_plugin_t *v4l_class_get_radio_instance (input_class_t *cls_gen,
 /*
  * v4l input plugin class stuff
  */
-
-static const char *v4l_class_get_video_description (input_class_t *this_gen) {
-  return _("v4l tv input plugin");
-}
-
-static const char *v4l_class_get_radio_description (input_class_t *this_gen) {
-  return _("v4l radio input plugin");
-}
-
-static const char *v4l_class_get_identifier (input_class_t *this_gen) {
-  return "v4l";
-}
-
-static void v4l_class_dispose (input_class_t *this_gen) {
-  v4l_input_class_t  *this = (v4l_input_class_t *) this_gen;
-  
-  free (this);
-}
-
 static void *init_video_class (xine_t *xine, void *data)
 {
   v4l_input_class_t  *this;
@@ -1894,11 +1904,11 @@ static void *init_video_class (xine_t *xine, void *data)
   this->xine                           = xine;
   
   this->input_class.get_instance       = v4l_class_get_video_instance;
-  this->input_class.get_identifier     = v4l_class_get_identifier;
-  this->input_class.get_description    = v4l_class_get_video_description;
+  this->input_class.identifier         = "v4l";
+  this->input_class.description        = N_("v4l tv input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
-  this->input_class.dispose            = v4l_class_dispose;
+  this->input_class.dispose            = default_input_class_dispose;
   this->input_class.eject_media        = NULL;
   
   config->register_filename (config, "media.video4linux.video_device",
@@ -1914,7 +1924,7 @@ static void *init_video_class (xine_t *xine, void *data)
 			     "to your Video4Linux video device."),
 			   10, NULL, NULL);
 #endif
-  config->register_enum (config, "media.video4linux.tv_standard", 4 /* old */,
+  config->register_enum (config, "media.video4linux.tv_standard", 0 /* auto */,
                         tv_standard_names, _("v4l TV standard"),
                         _("Selects the TV standard of the input signals. "
                         "Either: AUTO, PAL, NTSC or SECAM. "), 20, NULL, NULL);
@@ -1932,11 +1942,11 @@ static void *init_radio_class (xine_t *xine, void *data)
   this->xine                           = xine;
   
   this->input_class.get_instance       = v4l_class_get_radio_instance;
-  this->input_class.get_identifier     = v4l_class_get_identifier;
-  this->input_class.get_description    = v4l_class_get_radio_description;
+  this->input_class.identifier         = "v4l";
+  this->input_class.description        = N_("v4l radio input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = NULL;
-  this->input_class.dispose            = v4l_class_dispose;
+  this->input_class.dispose            = default_input_class_dispose;
   this->input_class.eject_media        = NULL;
   
   config->register_filename (config, "media.video4linux.radio_device",
@@ -1954,8 +1964,8 @@ static void *init_radio_class (xine_t *xine, void *data)
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 17, "v4l_radio", XINE_VERSION_CODE, NULL, init_radio_class },
-  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 17, "v4l_tv", XINE_VERSION_CODE, NULL, init_video_class },
+  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "v4l_radio", XINE_VERSION_CODE, NULL, init_radio_class },
+  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "v4l_tv", XINE_VERSION_CODE, NULL, init_video_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 

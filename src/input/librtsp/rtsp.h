@@ -25,7 +25,7 @@
 #define HAVE_RTSP_H
 
 /*#include <inttypes.h> */
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 #ifdef __CYGWIN__
 #define uint32_t unsigned int
@@ -47,11 +47,13 @@ int rtsp_request_describe(rtsp_t *s, const char *what);
 int rtsp_request_setup(rtsp_t *s, const char *what);
 int rtsp_request_setparameter(rtsp_t *s, const char *what);
 int rtsp_request_play(rtsp_t *s, const char *what);
+#if 0
 int rtsp_request_tearoff(rtsp_t *s, const char *what);
+#endif
 
 int rtsp_send_ok(rtsp_t *s);
 
-int rtsp_read_data(rtsp_t *s, char *buffer, unsigned int size);
+int rtsp_read_data(rtsp_t *s, void *buffer, unsigned int size);
 
 char* rtsp_search_answers(rtsp_t *s, const char *tag);
 void rtsp_add_to_payload(char **payload, const char *string);
@@ -61,15 +63,19 @@ void rtsp_free_answers(rtsp_t *this);
 int      rtsp_read (rtsp_t *this, char *data, int len);
 void     rtsp_close (rtsp_t *this);
 
+#if 0
 void  rtsp_set_session(rtsp_t *s, const char *id);
 char *rtsp_get_session(rtsp_t *s);
+#endif
 
 char *rtsp_get_mrl(rtsp_t *s);
 
 /*int      rtsp_peek_header (rtsp_t *this, char *data); */
 
 void rtsp_schedule_field(rtsp_t *s, const char *string);
+#if 0
 void rtsp_unschedule_field(rtsp_t *s, const char *string);
+#endif
 void rtsp_unschedule_all(rtsp_t *s);
 
 #endif

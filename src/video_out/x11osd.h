@@ -28,7 +28,7 @@
 #ifndef X11OSD_H
 #define X11OSD_H
 
-#include "vo_scale.h"
+#include <xine/vo_scale.h>
 
 typedef struct x11osd x11osd;
 enum x11osd_mode {X11OSD_SHAPED, X11OSD_COLORKEY};

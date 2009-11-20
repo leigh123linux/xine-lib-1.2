@@ -24,9 +24,9 @@
 #include "config.h"
 #endif
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "input_plugin.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/input_plugin.h>
 #include "net_buf_ctrl.h"
 
 #include <libgnomevfs/gnome-vfs.h>
@@ -73,8 +73,9 @@ gnomevfs_plugin_get_capabilities (input_plugin_t *this_gen)
 #define SSH_BUFFER_SIZE 256 * 1024
 
 static off_t
-gnomevfs_plugin_read (input_plugin_t *this_gen, char *buf, off_t len)
+gnomevfs_plugin_read (input_plugin_t *this_gen, void *buf_gen, off_t len)
 {
+  char *buf = (char *)buf_gen;
 	gnomevfs_input_t *this = (gnomevfs_input_t *) this_gen;
 	off_t n, num_bytes;
 
@@ -217,18 +218,6 @@ gnomevfs_plugin_get_mrl (input_plugin_t *this_gen)
 	return this->mrl;
 }
 
-static const char
-*gnomevfs_klass_get_description (input_class_t *this_gen)
-{
-	return _("gnome-vfs input plugin as shipped with xine");
-}
-
-static const char
-*gnomevfs_klass_get_identifier (input_class_t *this_gen)
-{
-	return "gnomevfs";
-}
-
 static int
 gnomevfs_plugin_get_optional_data (input_plugin_t *this_gen, 
 		void *data, int data_type)
@@ -309,7 +298,7 @@ gnomevfs_klass_dispose (input_class_t *this_gen)
 	g_free (this);
 }
 
-static const char *const ignore_scheme[] = { "cdda", "file", "http" };
+static const char ignore_scheme[][8] = { "cdda", "file", "http" };
 
 static input_plugin_t *
 gnomevfs_klass_get_instance (input_class_t *klass_gen, xine_stream_t *stream,
@@ -381,8 +370,8 @@ static void
 	this->xine = xine;
 
 	this->input_class.get_instance       = gnomevfs_klass_get_instance;
-	this->input_class.get_identifier     = gnomevfs_klass_get_identifier;
-	this->input_class.get_description    = gnomevfs_klass_get_description;
+	this->input_class.identifier         = "gnomevfs";
+	this->input_class.description        = N_("gnome-vfs input plugin as shipped with xine");
 	this->input_class.get_dir            = NULL;
 	this->input_class.get_autoplay_list  = NULL;
 	this->input_class.dispose            = gnomevfs_klass_dispose;
@@ -395,7 +384,7 @@ static input_info_t input_info_gnomevfs = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-	{ PLUGIN_INPUT | PLUGIN_NO_UNLOAD, 17, "gnomevfs", XINE_VERSION_CODE,
+	{ PLUGIN_INPUT | PLUGIN_NO_UNLOAD, 18, "gnomevfs", XINE_VERSION_CODE,
 		&input_info_gnomevfs, init_input_class },
 	{ PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

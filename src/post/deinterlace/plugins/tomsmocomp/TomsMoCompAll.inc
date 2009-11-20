@@ -21,8 +21,6 @@
 //  See www.eff.org for details
 /////////////////////////////////////////////////////////////////////////////
 
-#include <mangle.h>
-
 #if !defined(MASKS_DEFINED)
 #define MASKS_DEFINED
 static const int64_t __attribute__((__used__)) Max_Mov   = 0x0404040404040404ull;

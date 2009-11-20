@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2003 the xine project
+ * Copyright (C) 2000-2003, 2008 the xine project
  * 
  * This file is part of xine, a free video player.
  * 
@@ -35,7 +35,7 @@
 #include <math.h>
 
 #include "xine.h"
-#include "video_out.h"
+#include <xine/video_out.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -51,16 +51,22 @@
 #include <pthread.h>
 #include <netinet/in.h>
 
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
+
 #define LOG_MODULE "video_out_xshm"
 #define LOG_VERBOSE
 /*
 #define LOG
 */
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #include "yuv2rgb.h"
-#include "xineutils.h"
-#include "vo_scale.h"
+#include <xine/xineutils.h>
+#include <xine/vo_scale.h>
 #include "x11osd.h"
 
 #define LOCK_DISPLAY(this) {if(this->lock_display) this->lock_display(this->user_data); \
@@ -79,8 +85,6 @@ typedef struct {
     
   XImage            *image;
   XShmSegmentInfo    shminfo;
-
-  uint8_t           *chunk[3]; /* mem alloc by xmalloc_aligned           */
 
   yuv2rgb_t         *yuv2rgb; /* yuv2rgb converter set up for this frame */
   uint8_t           *rgb_dst;
@@ -145,7 +149,7 @@ static int HandleXError (Display *display, XErrorEvent *xevent) {
   char str [1024];
 
   XGetErrorText (display, xevent->error_code, str, 1024);
-  printf ("video_out_xshm: received X error event: %s\n", str);
+  printf (LOG_MODULE ": received X error event: %s\n", str);
   gX11Fail = 1;
 
   return 0;
@@ -191,8 +195,9 @@ static XImage *create_ximage (xshm_driver_t *this, XShmSegmentInfo *shminfo,
 
     if (myimage == NULL )  {
       xprintf(this->xine, XINE_VERBOSITY_LOG,
-	      _("video_out_xshm: shared memory error when allocating image\n"
-		"video_out_xshm: => not using MIT Shared Memory extension.\n"));
+	      _("%s: shared memory error when allocating image\n"), LOG_MODULE);
+      xprintf(this->xine, XINE_VERBOSITY_LOG,
+	      _("%s: => not using MIT Shared Memory extension.\n"), LOG_MODULE);
       this->use_shm = 0;
       goto finishShmTesting;
     }
@@ -207,8 +212,9 @@ static XImage *create_ximage (xshm_driver_t *this, XShmSegmentInfo *shminfo,
     
     if (shminfo->shmid < 0 ) {
       xprintf(this->xine, XINE_VERBOSITY_LOG,
-	      _("video_out_xshm: %s: allocating image\n"
-		"video_out_xshm: => not using MIT Shared Memory extension.\n"), strerror(errno));
+	      _("%s: %s: allocating image\n"), LOG_MODULE, strerror(errno));
+      xprintf(this->xine, XINE_VERBOSITY_LOG,
+	      _("%s: => not using MIT Shared Memory extension.\n"), LOG_MODULE);
       this->use_shm = 0;
       goto finishShmTesting;
     }
@@ -217,8 +223,9 @@ static XImage *create_ximage (xshm_driver_t *this, XShmSegmentInfo *shminfo,
   
     if (shminfo->shmaddr == ((char *) -1)) {
       xprintf(this->xine, XINE_VERBOSITY_LOG,
-	      _("video_out_xshm: shared memory error (address error) when allocating image \n"
-		"video_out_xshm: => not using MIT Shared Memory extension.\n"));
+	      _("%s: shared memory error (address error) when allocating image \n"), LOG_MODULE);
+      xprintf(this->xine, XINE_VERBOSITY_LOG,
+	      _("%s: => not using MIT Shared Memory extension.\n"), LOG_MODULE);
       shmctl (shminfo->shmid, IPC_RMID, 0);
       shminfo->shmid = -1;
       this->use_shm = 0;
@@ -233,10 +240,11 @@ static XImage *create_ximage (xshm_driver_t *this, XShmSegmentInfo *shminfo,
     XSync(this->display, False);
 
     if (gX11Fail) {
-      xprintf(this->xine, XINE_VERBOSITY_LOG,
-	      _("video_out_xshm: x11 error during shared memory XImage creation\n"
-		"video_out_xshm: => not using MIT Shared Memory extension.\n"));
       shmdt (shminfo->shmaddr);
+      xprintf(this->xine, XINE_VERBOSITY_LOG,
+	      _("%s: x11 error during shared memory XImage creation\n"), LOG_MODULE);
+      xprintf(this->xine, XINE_VERBOSITY_LOG,
+	      _("%s: => not using MIT Shared Memory extension.\n"), LOG_MODULE);
       shmctl (shminfo->shmid, IPC_RMID, 0);
       shminfo->shmid = -1;
       this->use_shm = 0;
@@ -310,7 +318,7 @@ static void dispose_ximage (xshm_driver_t *this,
 
 static uint32_t xshm_get_capabilities (vo_driver_t *this_gen) {
   xshm_driver_t *this = (xshm_driver_t *) this_gen;
-  uint32_t capabilities = VO_CAP_YV12 | VO_CAP_YUY2;
+  uint32_t capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_BRIGHTNESS | VO_CAP_CONTRAST | VO_CAP_SATURATION;
 
   if( this->xoverlay )
     capabilities |= VO_CAP_UNSCALED_OVERLAY;
@@ -376,9 +384,9 @@ static void xshm_frame_dispose (vo_frame_t *vo_img) {
 
   frame->yuv2rgb->dispose (frame->yuv2rgb);
 
-  free (frame->chunk[0]);
-  free (frame->chunk[1]);
-  free (frame->chunk[2]);
+  av_free (frame->vo_frame.base[0]);
+  av_free (frame->vo_frame.base[1]);
+  av_free (frame->vo_frame.base[2]);
   free (frame);
 }
 
@@ -526,18 +534,9 @@ static void xshm_update_frame_format (vo_driver_t *this_gen,
 
       dispose_ximage (this, &frame->shminfo, frame->image);
 
-      if (frame->chunk[0]){
-	free (frame->chunk[0]);
-	frame->chunk[0] = NULL;
-      }
-      if (frame->chunk[1]) {
-	free (frame->chunk[1]);
-	frame->chunk[1] = NULL;
-      }
-      if (frame->chunk[2]) {
-	free (frame->chunk[2]);
-	frame->chunk[2] = NULL;
-      }
+      av_freep(&frame->vo_frame.base[0]);
+      av_freep(&frame->vo_frame.base[1]);
+      av_freep(&frame->vo_frame.base[2]);
 
       frame->image = NULL;
     }
@@ -551,14 +550,12 @@ static void xshm_update_frame_format (vo_driver_t *this_gen,
       frame->vo_frame.pitches[0] = 8*((width + 7) / 8);
       frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
       frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
-      frame->vo_frame.base[0] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[0] * height,  (void **) &frame->chunk[0]);
-      frame->vo_frame.base[1] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[1] * ((height+1)/2), (void **) &frame->chunk[1]);
-      frame->vo_frame.base[2] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[2] * ((height+1)/2), (void **) &frame->chunk[2]);
+      frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
+      frame->vo_frame.base[1] = av_mallocz(frame->vo_frame.pitches[1] * ((height+1)/2));
+      frame->vo_frame.base[2] = av_mallocz(frame->vo_frame.pitches[2] * ((height+1)/2));
     } else {
       frame->vo_frame.pitches[0] = 8*((width + 3) / 4);
-      frame->vo_frame.base[0] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[0] * height, (void **) &frame->chunk[0]);
-      frame->chunk[1] = NULL;
-      frame->chunk[2] = NULL;
+      frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
     }
 
     lprintf ("stripe out_ht=%i, deliv_ht=%i\n",
@@ -825,7 +822,7 @@ static int xshm_get_property (vo_driver_t *this_gen, int property) {
     return this->cur_frame->sc.output_yoffset;
   default:
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
-	    "video_out_xshm: tried to get unsupported property %d\n", property);
+	    LOG_MODULE ": tried to get unsupported property %d\n", property);
   }
 
   return 0;
@@ -835,47 +832,45 @@ static int xshm_set_property (vo_driver_t *this_gen,
 			      int property, int value) {
   xshm_driver_t *this = (xshm_driver_t *) this_gen;
 
-  if ( property == VO_PROP_ASPECT_RATIO) {
-
+  switch (property) {
+  case VO_PROP_ASPECT_RATIO:
     if (value>=XINE_VO_ASPECT_NUM_RATIOS)
       value = XINE_VO_ASPECT_AUTO;
     this->sc.user_ratio = value;
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
-	    "video_out_xshm: aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name(value));
+	    LOG_MODULE ": aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name_table[value]);
+    break;
 
-  } else if (property == VO_PROP_BRIGHTNESS) {
-
+  case VO_PROP_BRIGHTNESS:
     this->yuv2rgb_brightness = value;
     this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					   this->yuv2rgb_brightness,
 					   this->yuv2rgb_contrast,
 					   this->yuv2rgb_saturation);
-
     this->sc.force_redraw = 1;
+    break;
 
-  } else if (property == VO_PROP_CONTRAST) {
-
+  case VO_PROP_CONTRAST:
     this->yuv2rgb_contrast = value;
     this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					   this->yuv2rgb_brightness,
 					   this->yuv2rgb_contrast,
 					   this->yuv2rgb_saturation);
-
     this->sc.force_redraw = 1;
+    break;
 
-  } else if (property == VO_PROP_SATURATION) {
-
+  case VO_PROP_SATURATION:
     this->yuv2rgb_saturation = value;
     this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					   this->yuv2rgb_brightness,
 					   this->yuv2rgb_contrast,
 					   this->yuv2rgb_saturation);
-
     this->sc.force_redraw = 1;
+    break;
 
-  } else {
+  default:
     xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
-	     "video_out_xshm: tried to set unsupported property %d\n", property);
+	     LOG_MODULE ": tried to set unsupported property %d\n", property);
   }
 
   return value;
@@ -1049,7 +1044,7 @@ static int ImlibPaletteLUTGet(xshm_driver_t *this) {
 }
 
 
-static char *visual_class_name(Visual *visual) {
+static const char *visual_class_name(Visual *visual) {
 
   switch (visual->class) {
   case StaticGray:
@@ -1167,7 +1162,7 @@ static vo_driver_t *xshm_open_plugin_2 (video_driver_class_t *class_gen, const v
   } 
   else {
     xprintf(this->xine, XINE_VERBOSITY_LOG,
-	    _("video_out_xshm: MIT shared memory extension not present on display.\n"));
+	    _("%s: MIT shared memory extension not present on display.\n"), LOG_MODULE);
     this->use_shm = 0;
   }
 
@@ -1188,8 +1183,8 @@ static vo_driver_t *xshm_open_plugin_2 (video_driver_class_t *class_gen, const v
   swapped = cpu_byte_order != this->image_byte_order;
   
   xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-	  "video_out_xshm: video mode depth is %d (%d bpp), %s, %sswapped,\n"
-	  "\tred: %08lx, green: %08lx, blue: %08lx\n",
+	  LOG_MODULE ": video mode depth is %d (%d bpp), %s, %sswapped,\n"
+	  LOG_MODULE ": red: %08lx, green: %08lx, blue: %08lx\n",
 	  this->depth, this->bpp,
 	  visual_class_name(this->visual),
 	  swapped ? "" : "not ",
@@ -1251,7 +1246,7 @@ static vo_driver_t *xshm_open_plugin_2 (video_driver_class_t *class_gen, const v
 
   if (!mode) {
     xprintf (this->xine, XINE_VERBOSITY_LOG, 
-	     _("video_out_xshm: your video mode was not recognized, sorry :-(\n"));
+	     _("%s: your video mode was not recognized, sorry :-(\n"), LOG_MODULE);
     return NULL;
   }
   
@@ -1294,28 +1289,13 @@ static vo_driver_t *xshm_open_plugin_old (video_driver_class_t *class_gen, const
 /*
  * class functions
  */
-
-static char* xshm_get_identifier (video_driver_class_t *this_gen) {
-  return "XShm";
-}
-
-static char* xshm_get_description (video_driver_class_t *this_gen) {
-  return _("xine video output plugin using the MIT X shared memory extension");
-}
-
-static void xshm_dispose_class (video_driver_class_t *this_gen) {
-  xshm_class_t         *this = (xshm_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *xshm_init_class (xine_t *xine, void *visual_gen) {
   xshm_class_t	       *this = (xshm_class_t *) calloc(1, sizeof(xshm_class_t));
 
   this->driver_class.open_plugin     = xshm_open_plugin_old;
-  this->driver_class.get_identifier  = xshm_get_identifier;
-  this->driver_class.get_description = xshm_get_description;
-  this->driver_class.dispose         = xshm_dispose_class;
+  this->driver_class.identifier      = "XShm";
+  this->driver_class.description     = N_("xine video output plugin using the MIT X shared memory extension");
+  this->driver_class.dispose         = default_video_driver_class_dispose;
   this->config                       = xine->config;
   this->xine                         = xine;
 
@@ -1348,7 +1328,7 @@ static const vo_info_t vo_info_xshm_2 = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_VIDEO_OUT, 21, "xshm", XINE_VERSION_CODE, &vo_info_xshm, xshm_init_class },
-  { PLUGIN_VIDEO_OUT, 21, "xshm", XINE_VERSION_CODE, &vo_info_xshm_2, xshm_init_class_2 },
+  { PLUGIN_VIDEO_OUT, 22, "xshm", XINE_VERSION_CODE, &vo_info_xshm, xshm_init_class },
+  { PLUGIN_VIDEO_OUT, 22, "xshm", XINE_VERSION_CODE, &vo_info_xshm_2, xshm_init_class_2 },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

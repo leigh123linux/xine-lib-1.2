@@ -31,6 +31,12 @@
 #include <string.h>
 #include <inttypes.h>
 
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
+
 #include "yuv2rgb.h"
 
 #define LOG_MODULE "yuv2rgb"
@@ -39,7 +45,7 @@
 #define LOG
 */
 
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 static int prof_scale_line = -1;
 
@@ -1261,7 +1267,7 @@ static scale_line_func_t find_scale_line_func(int step) {
     int			src_step;
     int			dest_step;
     scale_line_func_t	func;
-    char	       *desc;
+    const char	       *desc; /* FIXME: consider moving this to a char[] to avoid reloc */
   } scale_line[] = {
     { 15, 16, scale_line_15_16, "dvd 4:3(pal)" },
     { 45, 64, scale_line_45_64, "dvd 16:9(pal), fullscreen(1024x768)" },
@@ -3182,7 +3188,7 @@ static yuv2rgb_t *yuv2rgb_create_converter (yuv2rgb_factory_t *factory) {
 static void yuv2rgb_factory_dispose (yuv2rgb_factory_t *this) {
 
   free (this->table_base);
-  free (this->table_mmx_base);
+  av_free(this->table_mmx);
   free (this);
 }
 
@@ -3203,7 +3209,6 @@ yuv2rgb_factory_t* yuv2rgb_factory_init (int mode, int swapped,
   this->matrix_coefficients = 6;
   this->table_base          = NULL;
   this->table_mmx           = NULL;
-  this->table_mmx_base      = NULL;
 
 
   yuv2rgb_set_csc_levels (this, 0, 128, 128);

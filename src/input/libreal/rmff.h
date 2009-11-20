@@ -35,7 +35,7 @@
 #ifndef HAVE_RMFF_H
 #define HAVE_RMFF_H
 
-#include "attributes.h"
+#include <xine/attributes.h>
 
 #define RMFF_HEADER_SIZE 0x12
 
@@ -222,6 +222,7 @@ rmff_data_t *rmff_new_dataheader(
  */
 rmff_header_t *rmff_scan_header(const char *data) XINE_MALLOC;
 
+#if 0
 /*
  * scans a data packet header. Notice, that this function does not allocate
  * the header struct itself.
@@ -237,30 +238,35 @@ rmff_header_t *rmff_scan_header_stream(int fd) XINE_MALLOC;
  * prints header information in human readible form to stdout
  */
 void rmff_print_header(rmff_header_t *h);
+#endif
 
 /*
  * does some checks and fixes header if possible
  */
 void rmff_fix_header(rmff_header_t *h);
 
+#if 0
 /*
  * returns the size of the header (incl. first data-header)
  */
 int rmff_get_header_size(rmff_header_t *h);
+#endif
  
 /*
  * dumps the header <h> to <buffer>. <max> is the size of <buffer>
  */
-int rmff_dump_header(rmff_header_t *h, void *buf_gen, int max);
+int rmff_dump_header(rmff_header_t *h, void *buffer, int max);
 
 /*
  * dumps a packet header
  */
-void rmff_dump_pheader(rmff_pheader_t *h, char *data);
+void rmff_dump_pheader(rmff_pheader_t *h, uint8_t *data);
 
+#if 0
 /*
  * frees a header struct
  */
 void rmff_free_header(rmff_header_t *h);
+#endif
 
 #endif

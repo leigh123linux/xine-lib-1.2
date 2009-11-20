@@ -57,10 +57,10 @@
 #define LOG
 */
 
-#include "video_out.h"
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "vo_scale.h"
+#include <xine/video_out.h>
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/vo_scale.h>
 
 #ifdef HAVE_X11
 #include "x11osd.h"
@@ -733,12 +733,12 @@ static int vidix_set_property (vo_driver_t *this_gen,
   this->props[property].value = value;
   
   if ( property == VO_PROP_ASPECT_RATIO) {
-    lprintf("video_out_vidix: aspect ratio changed to %s\n",
-	    _x_vo_scale_aspect_ratio_name(value));
-    
-    if(value == XINE_VO_ASPECT_NUM_RATIOS)
+    if(value >= XINE_VO_ASPECT_NUM_RATIOS)
       value = this->props[property].value = XINE_VO_ASPECT_AUTO;
 
+    lprintf("video_out_vidix: aspect ratio changed to %s\n",
+	    _x_vo_scale_aspect_ratio_name_table[value]);
+    
     this->sc.user_ratio = value;    
     vidix_compute_ideal_size (this);
     this->sc.force_redraw = 1;
@@ -964,7 +964,7 @@ static vidix_driver_t *open_plugin (video_driver_class_t *class_gen) {
   this->config            = config;
   
   this->got_frame_data    = 0;
-  this->capabilities      = VO_CAP_CROP;
+  this->capabilities      = VO_CAP_CROP | VO_CAP_ZOOM_X | VO_CAP_ZOOM_Y;
 
   /* Find what equalizer flags are supported */
   if(this->vidix_cap.flags & FLAG_EQUALIZER) {
@@ -973,24 +973,28 @@ static vidix_driver_t *open_plugin (video_driver_class_t *class_gen) {
 	      "video_out_vidix: couldn't get equalizer capabilities: %s\n", strerror(err));
     } else {
       if(this->vidix_eq.cap & VEQ_CAP_BRIGHTNESS) {
+        this->capabilities |= VO_CAP_BRIGHTNESS;
         this->props[VO_PROP_BRIGHTNESS].value = 0;
         this->props[VO_PROP_BRIGHTNESS].min = -1000;
         this->props[VO_PROP_BRIGHTNESS].max = 1000;
      }
       
       if(this->vidix_eq.cap & VEQ_CAP_CONTRAST) {
+        this->capabilities |= VO_CAP_CONTRAST;
         this->props[VO_PROP_CONTRAST].value = 0;
         this->props[VO_PROP_CONTRAST].min = -1000;
         this->props[VO_PROP_CONTRAST].max = 1000;
       }
       
       if(this->vidix_eq.cap & VEQ_CAP_SATURATION) {
+        this->capabilities |= VO_CAP_SATURATION;
         this->props[VO_PROP_SATURATION].value = 0;
         this->props[VO_PROP_SATURATION].min = -1000;
         this->props[VO_PROP_SATURATION].max = 1000;
       }
             
       if(this->vidix_eq.cap & VEQ_CAP_HUE) {
+        this->capabilities |= VO_CAP_HUE;
         this->props[VO_PROP_HUE].value = 0;
         this->props[VO_PROP_HUE].min = -1000;
         this->props[VO_PROP_HUE].max = 1000;
@@ -1125,14 +1129,6 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   return this;
 }
 
-static void dispose_class (video_driver_class_t *this_gen) {
-  vidix_class_t        *this = (vidix_class_t *) this_gen;
-
-
-
-  free (this);
-}
-
 #ifdef HAVE_X11
 static vo_driver_t *vidix_open_plugin (video_driver_class_t *class_gen, const void *visual_gen) {
   vidix_driver_t       *this   = open_plugin(class_gen);
@@ -1205,23 +1201,15 @@ static vo_driver_t *vidix_open_plugin (video_driver_class_t *class_gen, const vo
   return &this->vo_driver;
 }
 
-static char* vidix_get_identifier (video_driver_class_t *this_gen) {
-  return "vidix";
-}
-
-static char* vidix_get_description (video_driver_class_t *this_gen) {
-  return _("xine video output plugin using libvidix for x11");
-}
-
 static void *vidix_init_class (xine_t *xine, void *visual_gen) {
 
   vidix_class_t *this = init_class (xine, visual_gen);
   
   if(this) {
     this->driver_class.open_plugin     = vidix_open_plugin;
-    this->driver_class.get_identifier  = vidix_get_identifier;
-    this->driver_class.get_description = vidix_get_description;
-    this->driver_class.dispose         = dispose_class;
+    this->driver_class.identifier      = "vidix";
+    this->driver_class.description     = N_("xine video output plugin using libvidix for x11");
+    this->driver_class.dispose         = default_video_driver_class_dispose;
   }
   
   return this;
@@ -1287,23 +1275,15 @@ static vo_driver_t *vidixfb_open_plugin (video_driver_class_t *class_gen, const 
   return &this->vo_driver;
 }
 
-static char* vidixfb_get_identifier (video_driver_class_t *this_gen) {
-  return "vidixfb";
-} 
-
-static char* vidixfb_get_description (video_driver_class_t *this_gen) {
-  return _("xine video output plugin using libvidix for linux frame buffer");
-}
-
 static void *vidixfb_init_class (xine_t *xine, void *visual_gen) {
 
   vidix_class_t *this = init_class (xine, visual_gen);
   
   if(this) {
     this->driver_class.open_plugin     = vidixfb_open_plugin;
-    this->driver_class.get_identifier  = vidixfb_get_identifier;
-    this->driver_class.get_description = vidixfb_get_description;
-    this->driver_class.dispose         = dispose_class;
+    this->driver_class.identifier      = "vidixfb";
+    this->driver_class.description     = N_("xine video output plugin using libvidix for linux frame buffer");
+    this->driver_class.dispose         = default_video_driver_class_dispose;
   }
   
   return this;
@@ -1322,10 +1302,10 @@ static const vo_info_t vo_info_vidixfb = {
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
 #ifdef HAVE_X11
-  { PLUGIN_VIDEO_OUT, 21, "vidix", XINE_VERSION_CODE, &vo_info_vidix, vidix_init_class },
+  { PLUGIN_VIDEO_OUT, 22, "vidix", XINE_VERSION_CODE, &vo_info_vidix, vidix_init_class },
 #endif
 #ifdef HAVE_FB
-  { PLUGIN_VIDEO_OUT, 21, "vidixfb", XINE_VERSION_CODE, &vo_info_vidixfb, vidixfb_init_class },
+  { PLUGIN_VIDEO_OUT, 22, "vidixfb", XINE_VERSION_CODE, &vo_info_vidixfb, vidixfb_init_class },
 #endif
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

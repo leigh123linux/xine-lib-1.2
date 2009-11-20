@@ -1,3 +1,74 @@
+xine-lib (1.1.90) (Unreleased)
+  * Add support for VDR.
+  * Add support for VDPAU.
+  * xine-config is deprecated in favour of pkg-config libxine.
+    Use "pkgconfig --variable=foo libxine" where you previously used
+    "xine-config --foo".
+  * Reorder and modify public structures to reduce the holes caused by padding
+    especially on 64-bit architectures.
+  * Remove the buttons array from video_overlay, as the feature linked to that
+    was never implemented. This change reduces by 10MB the memory usage of
+    xine-lib during playback (1/3 of the memory used while playing an mp3).
+  * Update libmpcdec (formerly libmusepack) to version 1.2.6 (newer than the
+    previous Subversion snapshot) and contextually move it to
+    contrib/libmpcdec to separate from xine's own code.
+  * Save plugins' cache in the defined cache home directory as per XDG Base
+    Directory Specification.
+  * Use XDG-defined cache home directory for cddb cache.
+  * Use XDG-defined cache home directory for win32codecs fake registry.
+  * Use XDG-defined data directories to look up fonts files both while using
+    FreeType2 and the standard bitmap fonts for OSD.
+  * Replace internal libdts 0.0.2 with libdca 0.0.5, and contextually move it
+    to contrib/libdca to separate from xine's own code.
+  * Add another message code to allow for auth prompts. Previously, it was
+    not possible to distinguish between '401 Authentication Required' and
+    '403 Forbidden'.
+  * Merge the demuxer and the decoder for NSF files in a combined plugin.
+  * Move modplug demuxing to its own plugin. This way, binary distributions
+    can make it optional as it requires quite a bit of CPU time during
+    initialisation, even for audio files that nothing have to do with modplug.
+  * Collapse the Ogg demuxer, and the Theora, Vorbis and Speex decoders in the
+    same 'xiph' plugin.
+  * Remove aRTs output plugin; ALSA's DMix can allow both xine and aRTs to
+    access the audio device at the same time for Linux, and if other
+    operating systems lack a proper software mixing facility you can
+    consider alternative daemons. Note: aRTs will not be present in KDE 4.
+  * Convert the FAQ and the Hacker's Guide from DocBook SGML to DocBook 4.4
+    XML, and the figures from fig files to SVG files.
+  * The XML parser no longer ignores <?...?> elements.
+    Such elements are handled as if they were after the XML content for
+    compatibility reasons, though they must appear before it.
+  * The XML parser handles CDATA elements.
+  * Text handling within XML is improved.
+  * DVB subtitles' opacity is now controllable.
+  * The internal copies of libcdio and libvcd are no longer present,
+    you need to use an installed copy of them if you want VCD support.
+  * Replace get_* functions for literals with direct string access.
+  * Use default dispose() functions when they just need to call free() in
+    various plugins.
+  * Rename METHOD_BY_EXTENSION to METHOD_BY_MRL as it also checks prefixes
+    for specific input protocols.
+  * Check for supported extensions before opening the plugin and remove
+    redundant core from plugins.
+  * Use libavutil-provided implementations for CRC, SHA1 and BASE64 algorithms,
+    this makes use of libavutil even outside the FFmpeg decoding plugin,
+    but avoid duplication of algorithms between different plugins.
+  * Use av_mallocz() when xine_xmalloc_aligned() wouldn't be needed.
+  * FFmpeg is now required as an external dependency; if you want to build
+    xine-lib from source, please download a copy of FFmpeg from their SVN
+    server.
+  * Remove SyncFB video output plugin, the kernel module needed is no more
+    active and thus it's no more usable. If you were using SyncFB somehow,
+    please use DirectFB or VIDIX instead.
+  * The Xv and XxMC video output plugins now support Xv port selection via
+    two methods: port number and port type (currently "any", "overlay" and
+    "textured video"). Port number takes precedence; the plugins will fall
+    back on another port of the same type (if a type was specified) then on
+    whatever they can find.
+    XvMC does not support port selection at present.
+  * Report more video output capabilities via (port)->get_capabilities():
+    colour controls, zooming, colour keying.
+
 xine-lib (1.1.17) 2009-??-??
   * Add support for Matroska SIMPLEBLOCK.
   * Add support for sndio (OpenBSD sound API).

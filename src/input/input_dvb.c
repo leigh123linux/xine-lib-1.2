@@ -71,7 +71,10 @@
 #endif
 
 /* pthread.h must be included first so rest of the headers are imported
-   thread safely (on some systems). */
+   thread safely (on some systems). 
+   However, including it before config.h causes problems with asprintf not
+   being declared (glibc 2.3.6)
+*/
 #include <pthread.h>
 
 #include <assert.h>
@@ -97,9 +100,17 @@
 #endif
 #include <ctype.h>
 
-/* These will eventually be #include <linux/dvb/...> */
-#include "dvb/dmx.h"
-#include "dvb/frontend.h"
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <crc.h>
+#else
+#  include <libavutil/crc.h>
+#endif
+
+/* XDG */
+#include <basedir.h>
+
+#include <linux/dvb/dmx.h>
+#include <linux/dvb/frontend.h>
 
 #define LOG_MODULE "input_dvb"
 #define LOG_VERBOSE
@@ -108,9 +119,9 @@
 #define LOG_READS
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "input_plugin.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/input_plugin.h>
 #include "net_buf_ctrl.h"
 
 #define BUFSIZE 16384
@@ -229,9 +240,8 @@ typedef struct {
   
   int				 adapter_num;
 
-  char				 frontend_device[100];
-  char 				 dvr_device[100];
-  char				 demux_device[100];
+  char 				*dvr_device;
+  char				*demux_device;
   
   struct dmx_pes_filter_params   pesFilterParams[MAX_FILTERS];
   struct dmx_pes_filter_params   subFilterParams[MAX_SUBTITLES];
@@ -286,12 +296,13 @@ typedef struct {
 
   xine_t           *xine;
 
-  char             *mrls[6];
+  const char       *mrls[6];
 
   int 		    numchannels;
 
   char		   *autoplaylist[MAX_AUTOCHANNELS];
-  char             *default_channels_conf_filename;
+
+  const AVCRC      *av_crc;
 } dvb_input_class_t;
 
 typedef struct {
@@ -326,15 +337,12 @@ typedef struct {
   osd_object_t	     *background;
   
   xine_event_queue_t *event_queue;
-  /* CRC table for PAT rebuilding */
-  unsigned long       crc32_table[256];
   
   /* scratch buffer for forward seeking */
   char                seek_buf[BUFSIZE];
 
   /* Is the GUI enabled at all? */
   int                 dvb_gui_enabled;
-
   /* simple vcr-like functionality */
   int                 record_fd;
   int		      record_paused;
@@ -358,7 +366,7 @@ typedef struct {
 } dvb_input_plugin_t;
 
 typedef struct {
-	char *name;
+	const char *name;
 	int value;
 } Param;
 
@@ -436,7 +444,7 @@ static const Param transmissionmode_list [] = {
 };
 
 
-time_t dvb_mjdtime (char *buf);
+static time_t dvb_mjdtime (uint8_t *buf);
 static void load_epg_data(dvb_input_plugin_t *this);
 static void show_eit(dvb_input_plugin_t *this);
 
@@ -451,28 +459,6 @@ static void print_info(const char* estring) {
     printf("input_dvb: %s\n", estring);
 }
 #endif
-
-static void ts_build_crc32_table(dvb_input_plugin_t *this) {
-  uint32_t  i, j, k;
-
-  for( i = 0 ; i < 256 ; i++ ) {
-    k = 0;
-    for (j = (i << 24) | 0x800000 ; j != 0x80000000 ; j <<= 1) {
-      k = (k << 1) ^ (((k ^ j) & 0x80000000) ? 0x04c11db7 : 0);
-    }
-    this->crc32_table[i] = k;
-  }
-}
-
-static uint32_t ts_compute_crc32(dvb_input_plugin_t *this, uint8_t *data, 
-				       uint32_t length, uint32_t crc32) {
-  uint32_t i;
-
-  for(i = 0; i < length; i++) {
-    crc32 = (crc32 << 8) ^ this->crc32_table[(crc32 >> 24) ^ data[i]];
-  }
-  return crc32;
-}
 
 
 static unsigned int getbits(unsigned char *buffer, unsigned int bitpos, unsigned int bitcount)
@@ -517,7 +503,7 @@ static int find_descriptor(uint8_t tag, const unsigned char *buf, int descriptor
 
 /* Extract UTC time and date encoded in modified julian date format and return it as a time_t.
  */
-time_t dvb_mjdtime (char *buf)
+static time_t dvb_mjdtime (uint8_t *buf)
 {
   int i;
   unsigned int year, month, day, hour, min, sec;
@@ -574,9 +560,10 @@ static void tuner_dispose(tuner_t * this)
     for (x = 0; x < MAX_SUBTITLES; x++)
       if (this->fd_subfilter[x] >= 0)
         close(this->fd_subfilter[x]);
-    
-    if(this)
-      free(this);
+
+    free(this->dvr_device);
+    free(this->demux_device);
+    free(this);
 }
 
 
@@ -586,11 +573,10 @@ static tuner_t *XINE_MALLOC tuner_init(xine_t * xine, int adapter)
     tuner_t *this;
     int x;
     int test_video;
-    char *video_device=malloc(100);
+    char *video_device = NULL;
+    char *frontend_device = NULL;
 
-    _x_assert(video_device != NULL);
-    
-    this = calloc(1, sizeof(tuner_t));
+    this = (tuner_t *) xine_xmalloc(sizeof(tuner_t));
 
     _x_assert(this != NULL);
 
@@ -601,21 +587,24 @@ static tuner_t *XINE_MALLOC tuner_init(xine_t * xine, int adapter)
     this->xine = xine;
     this->adapter_num = adapter;
     
-    snprintf(this->frontend_device,100,"/dev/dvb/adapter%i/frontend0",this->adapter_num);
-    snprintf(this->demux_device,100,"/dev/dvb/adapter%i/demux0",this->adapter_num);
-    snprintf(this->dvr_device,100,"/dev/dvb/adapter%i/dvr0",this->adapter_num);
-    snprintf(video_device,100,"/dev/dvb/adapter%i/video0",this->adapter_num);
-    
-    if ((this->fd_frontend = open(this->frontend_device, O_RDWR)) < 0) {
+    asprintf(&this->demux_device,"/dev/dvb/adapter%i/demux0",this->adapter_num);
+    asprintf(&this->dvr_device,"/dev/dvb/adapter%i/dvr0",this->adapter_num);
+    asprintf(&video_device,"/dev/dvb/adapter%i/video0",this->adapter_num);
+
+    asprintf(&frontend_device,"/dev/dvb/adapter%i/frontend0",this->adapter_num);
+    if ((this->fd_frontend = open(frontend_device, O_RDWR)) < 0) {
       xprintf(this->xine, XINE_VERBOSITY_DEBUG, "FRONTEND DEVICE: %s\n", strerror(errno));
       tuner_dispose(this);
-      return NULL;
+      this = NULL;
+      goto exit;
     }
+    free(frontend_device); frontend_device = NULL;
 
     if ((ioctl(this->fd_frontend, FE_GET_INFO, &this->feinfo)) < 0) {
       xprintf(this->xine, XINE_VERBOSITY_DEBUG, "FE_GET_INFO: %s\n", strerror(errno));
       tuner_dispose(this);
-      return NULL;
+      this = NULL;
+      goto exit;
     }
 
     for (x = 0; x < MAX_FILTERS; x++) {
@@ -623,7 +612,8 @@ static tuner_t *XINE_MALLOC tuner_init(xine_t * xine, int adapter)
       if (this->fd_pidfilter[x] < 0) {
         xprintf(this->xine, XINE_VERBOSITY_DEBUG, "DEMUX DEVICE PIDfilter: %s\n", strerror(errno));
         tuner_dispose(this);
-	return NULL;
+	this = NULL;
+	goto exit;
       }
    }
     for (x = 0; x < MAX_SUBTITLES; x++) {
@@ -655,7 +645,9 @@ static tuner_t *XINE_MALLOC tuner_init(xine_t * xine, int adapter)
        close(test_video);
   }
 
+ exit:
   free(video_device);
+  free(frontend_device);
   
   return this;
 }
@@ -889,15 +881,13 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
 
   FILE      *f;
   char       str[BUFSIZE];
+  char       filename[BUFSIZE];
   channel_t *channels = NULL;
   int        num_channels = 0;
   int        num_alloc = 0;
   struct stat st;
-  xine_cfg_entry_t channels_conf;
-  char      *filename;
 
-  xine_config_lookup_entry(xine, "media.dvb.channels_conf", &channels_conf);
-  filename = channels_conf.str_value; 
+  snprintf(filename, BUFSIZE, "%s/"PACKAGE"/channels.conf", xdgConfigHome(xine->basedir_handle));
 
   f = fopen(filename, "r");
   if (!f) {
@@ -1152,8 +1142,6 @@ static void parse_pmt(dvb_input_plugin_t *this, const unsigned char *buf, int se
     switch (buf[0]) {
       case 0x01:
       case 0x02:
-      case 0x10:
-      case 0x1b:
         if(!has_video) {
           xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"input_dvb: Adding VIDEO     : PID 0x%04x\n", elementary_pid);
 	  dvb_set_pidfilter(this, VIDFILTER, elementary_pid, DMX_PES_VIDEO, DMX_OUT_TS_TAP);
@@ -1163,8 +1151,6 @@ static void parse_pmt(dvb_input_plugin_t *this, const unsigned char *buf, int se
 	
       case 0x03:
       case 0x04:
-      case 0x0f:
-      case 0x11:
         if(!has_audio) {
 	  xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"input_dvb: Adding AUDIO     : PID 0x%04x\n", elementary_pid);
 	  dvb_set_pidfilter(this, AUDFILTER, elementary_pid, DMX_PES_AUDIO, DMX_OUT_TS_TAP);
@@ -1232,8 +1218,8 @@ static void parse_pmt(dvb_input_plugin_t *this, const unsigned char *buf, int se
 
 static void dvb_parse_si(dvb_input_plugin_t *this) {
 
-  char *tmpbuffer;
-  char *bufptr;
+  uint8_t *tmpbuffer;
+  uint8_t *bufptr;
   int 	service_id;
   int	result;
   int  	section_len;
@@ -1341,8 +1327,8 @@ static void dvb_parse_si(dvb_input_plugin_t *this) {
 
 /* Helper function for finding the channel index in the channels struct
    given the service_id. If channel is not found, -1 is returned. */
-static int channel_index(dvb_input_plugin_t* this, unsigned int service_id) {
-  unsigned int n;
+static int channel_index(dvb_input_plugin_t* this, int service_id) {
+  int n;
   for (n=0; n < this->num_channels; n++)
     if (this->channels[n].service_id == service_id) 
 	return n;
@@ -1432,8 +1418,8 @@ static void load_epg_data(dvb_input_plugin_t *this)
   int section_len = 0;
   unsigned int service_id=-1;
   int n; 
-  char *eit = NULL;
-  char *foo = NULL;
+  uint8_t *eit = NULL;
+  uint8_t *foo = NULL;
   char *seen_channels = NULL;
   int text_len;
   struct pollfd fd;
@@ -1617,7 +1603,7 @@ static void load_epg_data(dvb_input_plugin_t *this)
 
           case 0x54: {  /* Content Descriptor, riveting stuff */
               int content_bits = getbits(eit, 8, 4);
-              char *content[] = {
+              static const char *const content[] = {
 		  "UNKNOWN","MOVIE","NEWS","ENTERTAINMENT","SPORT",
 		  "CHILDRENS","MUSIC","ARTS/CULTURE","CURRENT AFFAIRS",
 		  "EDUCATIONAL","INFOTAINMENT","SPECIAL","COMEDY","DRAMA",
@@ -2482,7 +2468,7 @@ static void ts_rewrite_packets (dvb_input_plugin_t *this, unsigned char * origin
       originalPkt[11]=(this->channels[this->channel].pmtpid >> 8) & 0xff;
       originalPkt[12]=this->channels[this->channel].pmtpid & 0xff;
 
-      crc= ts_compute_crc32 (this, originalPkt+1, 12, 0xffffffff);
+      crc = av_crc(this->class->av_crc, 0xffffffff, originalPkt+1, 12);
       
       originalPkt[13]=(crc>>24) & 0xff;
       originalPkt[14]=(crc>>16) & 0xff;
@@ -2500,8 +2486,10 @@ static void ts_rewrite_packets (dvb_input_plugin_t *this, unsigned char * origin
 }
 
 static off_t dvb_plugin_read (input_plugin_t *this_gen,
-			      char *buf, off_t len) {
+			      void *buf_gen, off_t len) {
   dvb_input_plugin_t *this = (dvb_input_plugin_t *) this_gen;
+  uint8_t *buf = buf_gen;
+  
   off_t n=0, total=0;
   int have_mutex=0;
   struct pollfd pfd;
@@ -2778,7 +2766,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     xine_cfg_entry_t adapter;
     xine_cfg_entry_t lastchannel;
     xine_cfg_entry_t gui_enabled;
-    
+
     xine_config_lookup_entry(this->stream->xine, "media.dvb.gui_enabled", &gui_enabled);
     this->dvb_gui_enabled = gui_enabled.num_value;
     xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("input_dvb: DVB GUI %s\n"), this->dvb_gui_enabled ? "enabled" : "disabled");
@@ -2841,7 +2829,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 	    * by numbers...
 	    */
 	    size_t chanlen = strlen(channame);
-	    int offset = 0;
+	    size_t offset = 0;
 
 	    xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 		     _("input_dvb: exact match for %s not found: trying partial matches\n"), channame);
@@ -2858,7 +2846,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 		idx++;
               }
 	      offset++;
-	      xprintf(this->class->xine,XINE_VERBOSITY_LOG,"%d,%d,%d\n", offset, idx, num_channels);
+	      xprintf(this->class->xine,XINE_VERBOSITY_LOG,"%zd,%d,%d\n", offset, idx, num_channels);
             }
             while ((offset < 6) && (idx == num_channels));
               if (idx < num_channels) {
@@ -3100,8 +3088,6 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     snprintf(str, 256, "%s", this->channels[this->channel].name);
 
     _x_meta_info_set(this->stream, XINE_META_INFO_TITLE, str);
-    /* compute CRC table for rebuilding pat */
-    ts_build_crc32_table(this);
 
     /* Clear all pids, the pmt will tell us which to use */
     for (x = 0; x < MAX_FILTERS; x++){
@@ -3172,21 +3158,10 @@ static input_plugin_t *dvb_class_get_instance (input_class_t *class_gen,
  * dvb input plugin class stuff
  */
 
-static const char *dvb_class_get_description (input_class_t *this_gen) {
-  return _("DVB (Digital TV) input plugin");
-}
-
-static const char *dvb_class_get_identifier (input_class_t *this_gen) {
-  return "dvb";
-}
-
-
 static void dvb_class_dispose(input_class_t * this_gen)
 {
     dvb_input_class_t *class = (dvb_input_class_t *) this_gen;
     int x;
-
-    free(class->default_channels_conf_filename);
     
     for(x=0;x<class->numchannels;x++)
        free(class->autoplaylist[x]);
@@ -3282,8 +3257,8 @@ static void *init_class (xine_t *xine, void *data) {
   this->xine   = xine;
 
   this->input_class.get_instance       = dvb_class_get_instance;
-  this->input_class.get_identifier     = dvb_class_get_identifier;
-  this->input_class.get_description    = dvb_class_get_description;
+  this->input_class.identifier         = "dvb";
+  this->input_class.description        = N_("DVB (Digital TV) input plugin");
   this->input_class.get_dir            = NULL;
   this->input_class.get_autoplay_list  = dvb_class_get_autoplay_list;
   this->input_class.dispose            = dvb_class_dispose;
@@ -3295,10 +3270,8 @@ static void *init_class (xine_t *xine, void *data) {
   this->mrls[3] = "dvbt://";
   this->mrls[4] = "dvba://";
   this->mrls[5] = 0;
-  
-  asprintf(&this->default_channels_conf_filename,
-           "%s/.xine/channels.conf",
-           xine_get_homedir());
+
+  this->av_crc = av_crc_get_table(AV_CRC_32_IEEE);
 
   xprintf(this->xine,XINE_VERBOSITY_DEBUG,"init class succeeded\n");
 
@@ -3324,6 +3297,13 @@ static void *init_class (xine_t *xine, void *data) {
 			 "Greater than 0 means wait that many seconds to get a lock. Minimum is 5 seconds."),
 		       0, NULL, (void *) this);
 
+  /* set to 0 to turn off the GUI built into this input plugin */
+  config->register_bool(config, "media.dvb.gui_enabled",
+			1,
+			_("Enable the DVB GUI"),
+			_("Enable the DVB GUI, mouse controlled recording and channel switching."),
+			21, NULL, NULL);
+
   config->register_num(config, "media.dvb.adapter",
 		       0,
 		       _("Number of dvb card to use."),
@@ -3332,19 +3312,7 @@ static void *init_class (xine_t *xine, void *data) {
 			 "in your system."),
 		       0, NULL, (void *) this);
     
-  /* set to 0 to turn off the GUI built into this input plugin */
-  config->register_bool(config, "media.dvb.gui_enabled",
-			1,
-			_("Enable the DVB GUI"),
-			_("Enable the DVB GUI, mouse controlled recording and channel switching."),
-			21, NULL, NULL);
-  /* Override the default channels file */
-  config->register_filename(config, "media.dvb.channels_conf",
-			this->default_channels_conf_filename,
-                        XINE_CONFIG_STRING_IS_FILENAME,
-			_("DVB Channels config file"),
-			_("DVB Channels config file to use instead of the ~/.xine/channels.conf file."),
-			21, NULL, NULL);
+
   return this;
 }
 
@@ -3355,6 +3323,6 @@ static void *init_class (xine_t *xine, void *data) {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 17, "DVB", XINE_VERSION_CODE, NULL, init_class },
+  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "DVB", XINE_VERSION_CODE, NULL, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

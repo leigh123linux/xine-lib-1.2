@@ -34,9 +34,9 @@
 #define LOG_VERBOSE
 
 #include "xine.h"
-#include "xine_internal.h"
-#include "audio_out.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/audio_out.h>
+#include <xine/xineutils.h>
 
 #include <directfb.h>
 
@@ -47,9 +47,15 @@
 #define FUSIONSOUND_VERSION_CODE  VERSION_CODE( FUSIONSOUND_MAJOR_VERSION, \
                                                 FUSIONSOUND_MINOR_VERSION, \
                                                 FUSIONSOUND_MICRO_VERSION )
+                                                
+#if FUSIONSOUND_VERSION_CODE >= VERSION_CODE(1,1,0)
+# include <fusionsound_limits.h> /* defines FS_MAX_CHANNELS */
+#else
+# define FS_MAX_CHANNELS 2
+#endif
 
 
-#define AO_OUT_FS_IFACE_VERSION 8
+#define AO_OUT_FS_IFACE_VERSION 9
 
 #define GAP_TOLERANCE  5000
 
@@ -100,7 +106,29 @@ static int ao_fusionsound_open(ao_driver_t *ao_driver,
       break;
     case AO_CAP_MODE_STEREO:
       dsc.channels = 2;
-    break;
+      break;
+#if FS_MAX_CHANNELS > 2
+    case AO_CAP_MODE_4CHANNEL:
+      dsc.channels = 4;
+      dsc.channelmode = FSCM_SURROUND40_2F2R;
+      dsc.flags |= FSBDF_CHANNELMODE;
+      break;
+    case AO_CAP_MODE_4_1CHANNEL:
+      dsc.channels = 5;
+      dsc.channelmode = FSCM_SURROUND41_2F2R;
+      dsc.flags |= FSBDF_CHANNELMODE;
+      break;
+    case AO_CAP_MODE_5CHANNEL:
+      dsc.channels = 5;
+      dsc.channelmode = FSCM_SURROUND50;
+      dsc.flags |= FSBDF_CHANNELMODE;
+      break;
+    case AO_CAP_MODE_5_1CHANNEL:
+      dsc.channels = 6;
+      dsc.channelmode = FSCM_SURROUND51;
+      dsc.flags |= FSBDF_CHANNELMODE;
+      break;
+#endif
     default:
       xprintf (this->xine, XINE_VERBOSITY_LOG,
                "audio_fusionsound_out: mode %#x not supported\n", mode);
@@ -250,13 +278,18 @@ static void ao_fusionsound_close(ao_driver_t *ao_driver){
  */
 
 static uint32_t ao_fusionsound_get_capabilities(ao_driver_t *ao_driver) {
+  uint32_t caps = AO_CAP_MODE_MONO | AO_CAP_MODE_STEREO | 
+                  AO_CAP_MIXER_VOL | AO_CAP_MUTE_VOL    |
+                  AO_CAP_8BITS     | AO_CAP_16BITS      |
+                  AO_CAP_24BITS;       
 #if FUSIONSOUND_VERSION_CODE >= VERSION_CODE(0,9,26)
-  return (AO_CAP_MODE_MONO | AO_CAP_MODE_STEREO | AO_CAP_MIXER_VOL |
-          AO_CAP_8BITS     | AO_CAP_16BITS      | AO_CAP_24BITS    | AO_CAP_FLOAT32);
-#else
-  return (AO_CAP_MODE_MONO | AO_CAP_MODE_STEREO | AO_CAP_MIXER_VOL |
-          AO_CAP_8BITS     | AO_CAP_16BITS      | AO_CAP_24BITS);
+  caps |= AO_CAP_FLOAT32;
 #endif
+#if FS_MAX_CHANNELS > 2
+  caps |= AO_CAP_MODE_4CHANNEL | AO_CAP_MODE_4_1CHANNEL | 
+          AO_CAP_MODE_5CHANNEL | AO_CAP_MODE_5_1CHANNEL;
+#endif
+  return caps;
 }
 
 static void ao_fusionsound_exit(ao_driver_t *ao_driver) {
@@ -434,18 +467,6 @@ static ao_driver_t* open_plugin(audio_driver_class_t *ao_class,
  * class functions
  */
 
-static char* get_identifier(audio_driver_class_t *ao_class) {
-  return "FusionSound";
-}
-
-static char* get_description(audio_driver_class_t *ao_class) {
-  return "xine FusionSound audio output plugin";
-}
-
-static void dispose_class(audio_driver_class_t *ao_class) {
-  free (ao_class);
-}
-
 static void* init_class(xine_t *xine, void *data) {
   fusionsound_class_t *class;
   const char          *error;
@@ -468,9 +489,9 @@ static void* init_class(xine_t *xine, void *data) {
   }
 
   class->ao_class.open_plugin     = open_plugin;
-  class->ao_class.get_identifier  = get_identifier;
-  class->ao_class.get_description = get_description;
-  class->ao_class.dispose         = dispose_class;
+  class->ao_class.identifier      = "FunsionSound";
+  class->ao_class.description     = N_("xine FusionSound audio output plugin");
+  class->ao_class.dispose         = default_audio_driver_class_dispose;
   class->xine                     = xine;
 
   return class;

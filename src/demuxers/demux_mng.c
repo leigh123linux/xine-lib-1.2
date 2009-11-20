@@ -46,9 +46,9 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/demux.h>
 
 typedef struct {
   demux_plugin_t     demux_plugin;
@@ -295,17 +295,7 @@ static demux_plugin_t* open_plugin(demux_class_t *class_gen, xine_stream_t *stre
       }
     break;
 
-    case METHOD_BY_EXTENSION: {
-      const char *extensions, *mrl;
-
-      mrl = input->get_mrl(input);
-      extensions = class_gen->get_extensions (class_gen);
-
-      if (!_x_demux_check_extension (mrl, extensions)) {
-        free (this);
-        return NULL;
-      }
-    }
+    case METHOD_BY_MRL:
     break;
 
     default:
@@ -344,40 +334,21 @@ static demux_plugin_t* open_plugin(demux_class_t *class_gen, xine_stream_t *stre
   return &this->demux_plugin;
 }
 
-static const char *get_description(demux_class_t *this_gen){
-  return "Multiple-image Network Graphics demux plugin";
-}
-
-static const char *get_identifier(demux_class_t *this_gen){
-  return "MNG";
-}
-
-static const char *get_extensions(demux_class_t *this_gen){
-  return "png mng";
-}
-
-static const char *get_mimetypes(demux_class_t *this_gen){
-  return "image/png: png: PNG image;"
-         "image/x-png: png: PNG image;"
-         "video/mng: mng: MNG animation;"
-         "video/x-mng: mng: MNG animation;";
-}
-
-static void class_dispose(demux_class_t *this){
-  free (this);
-}
-
 static void *init_plugin(xine_t *xine, void *data){
   demux_mng_class_t     *this;
 
   this  = calloc(1, sizeof(demux_mng_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("Multiple-image Network Graphics demux plugin");
+  this->demux_class.identifier      = "MNG";
+  this->demux_class.mimetypes       =
+    "image/png: png: PNG image;"
+    "image/x-png: png: PNG image;"
+    "video/mng: mng: MNG animation;"
+    "video/x-mng: mng: MNG animation;";
+  this->demux_class.extensions      = "png mng";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }
@@ -387,6 +358,6 @@ static const demuxer_info_t demux_info_mng = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  { PLUGIN_DEMUX, 26, "mng", XINE_VERSION_CODE, &demux_info_mng, (void*)init_plugin},
+  { PLUGIN_DEMUX, 27, "mng", XINE_VERSION_CODE, &demux_info_mng, (void*)init_plugin},
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

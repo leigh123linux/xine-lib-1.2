@@ -32,8 +32,9 @@
 #include <stdint.h>
 #endif
 
-#include "attributes.h"
-#include "xineutils.h"
+#include <xine/attributes.h>
+#include <xine/xineutils.h>
+#include "xine_mmx.h"
 #include "deinterlace.h"
 #include "speedtools.h"
 #include "speedy.h"

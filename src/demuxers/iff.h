@@ -136,7 +136,7 @@ typedef struct {
   uint8_t              masking;              /* masking technique       */
   uint8_t              compression;          /* compression algoithm    */
   uint8_t              pad1;                 /* UNUSED.  For consistency, put 0 here. */
-  uint16_t             transparentColor;     /* transparent "color number" */
+  uint16_t             transparentColor;     /* transparent "colour number" */
   uint8_t              xaspect;              /* aspect ratio, a rational number x/y */
   uint8_t              yaspect;              /* aspect ratio, a rational number x/y */
   int16_t              pagewidth;            /* source "page" size in pixels */

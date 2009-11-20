@@ -11,13 +11,13 @@
 #include <unistd.h>
 #include <inttypes.h>
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "audio_out.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/audio_out.h>
 
 #include <jack/jack.h>
 
-#define AO_OUT_JACK_IFACE_VERSION 8
+#define AO_OUT_JACK_IFACE_VERSION 9
 
 #define GAP_TOLERANCE        AO_MAX_GAP
 /* maximum number of channels supported, avoids lots of mallocs */
@@ -897,38 +897,23 @@ static void jack_speaker_arrangement_cb (void *user_data,
 /*
  * class functions
  */
+static void *init_class (xine_t *xine, void *data) {
 
-static char *get_identifier (audio_driver_class_t *this_gen)
-{
-  return "jack";
-}
+    jack_class_t        *this;
 
-static char *get_description (audio_driver_class_t *this_gen)
-{
-  return _("xine output plugin for JACK Audio Connection Kit");
-}
+    this = calloc(1, sizeof (jack_class_t));
 
-static void dispose_class (audio_driver_class_t *this_gen)
-{
-  jack_class_t *this = (jack_class_t *) this_gen;
-  free (this);
-}
+    this->driver_class.open_plugin     = open_jack_plugin;
+    this->driver_class.identifier      = "jack";
+    this->driver_class.description     = N_("xine output plugin for JACK Audio Connection Kit");
+    this->driver_class.dispose         = default_audio_driver_class_dispose;
 
-static void *init_class (xine_t *xine, void *data)
-{
-  jack_class_t *this;
+    this->config = xine->config;
+    this->xine   = xine;
 
-  this = calloc(1, sizeof (jack_class_t));
+    fprintf(stderr, "jack init_class returning %p\n", (void *)this);
 
-  this->driver_class.open_plugin = open_jack_plugin;
-  this->driver_class.get_identifier = get_identifier;
-  this->driver_class.get_description = get_description;
-  this->driver_class.dispose = dispose_class;
-
-  this->config = xine->config;
-  this->xine = xine;
-
-  return this;
+    return this;
 }
 
 static ao_info_t ao_info_jack = { 6 };
@@ -938,8 +923,7 @@ static ao_info_t ao_info_jack = { 6 };
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_AUDIO_OUT, AO_OUT_JACK_IFACE_VERSION, "jack", XINE_VERSION_CODE,
-    &ao_info_jack, init_class },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+    /* type, API, "name", version, special_info, init_function */
+    { PLUGIN_AUDIO_OUT, AO_OUT_JACK_IFACE_VERSION, "jack", XINE_VERSION_CODE /* XINE_VERSION_CODE */, &ao_info_jack, init_class },
+    { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

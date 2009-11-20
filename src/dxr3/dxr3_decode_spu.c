@@ -46,9 +46,9 @@
 #define LOG_SPU 0
 #define LOG_BTN 0
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "buffer.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/buffer.h>
 #include "xine-engine/bswap.h"
 #ifdef HAVE_DVDNAV
 #  include <dvdnav/nav_types.h>
@@ -68,7 +68,7 @@ static void   *dxr3_spudec_init_plugin(xine_t *xine, void *);
 
 
 /* plugin catalog information */
-static uint32_t supported_types[] = { BUF_SPU_DVD, 0 };
+static const uint32_t supported_types[] = { BUF_SPU_DVD, 0 };
 
 static const decoder_info_t dxr3_spudec_info = {
   supported_types,     /* supported types */
@@ -77,16 +77,13 @@ static const decoder_info_t dxr3_spudec_info = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_SPU_DECODER, 16, "dxr3-spudec", XINE_VERSION_CODE, &dxr3_spudec_info, &dxr3_spudec_init_plugin },
+  { PLUGIN_SPU_DECODER, 17, "dxr3-spudec", XINE_VERSION_CODE, &dxr3_spudec_info, &dxr3_spudec_init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 
 
 /* plugin class functions */
 static spu_decoder_t *dxr3_spudec_open_plugin(spu_decoder_class_t *class_gen, xine_stream_t *stream);
-static char          *dxr3_spudec_get_identifier(spu_decoder_class_t *class_gen);
-static char          *dxr3_spudec_get_description(spu_decoder_class_t *class_gen);
-static void           dxr3_spudec_class_dispose(spu_decoder_class_t *class_gen);
 
 /* plugin instance functions */
 static void    dxr3_spudec_decode_data(spu_decoder_t *this_gen, buf_element_t *buf);
@@ -149,24 +146,6 @@ static int         dxr3_spudec_copy_nav_to_btn(dxr3_spudec_t *this, int32_t mode
 static inline void dxr3_swab_clut(int* clut);
 
 /* inline helper implementations */
-static inline int dxr3_present(xine_stream_t *stream)
-{
-  plugin_node_t *node;
-  video_driver_class_t *vo_class;
-  int present = 0;
-  
-  if (stream->video_driver && stream->video_driver->node) {
-    node = (plugin_node_t *)stream->video_driver->node;
-    if (node->plugin_class) {
-      vo_class = (video_driver_class_t *)node->plugin_class;
-      if (vo_class->get_identifier)
-        present = (strcmp(vo_class->get_identifier(vo_class), DXR3_VO_ID) == 0);
-    }
-  }
-  llprintf(LOG_SPU, "dxr3 %s\n", present ? "present" : "not present");
-  return present;
-}
-
 static inline void dxr3_spudec_clear_nav_list(dxr3_spudec_t *this)
 {
   while (this->pci_cur.next) {
@@ -206,9 +185,9 @@ static void *dxr3_spudec_init_plugin(xine_t *xine, void* data)
   if (!this) return NULL;
   
   this->spu_decoder_class.open_plugin     = dxr3_spudec_open_plugin;
-  this->spu_decoder_class.get_identifier  = dxr3_spudec_get_identifier;
-  this->spu_decoder_class.get_description = dxr3_spudec_get_description;
-  this->spu_decoder_class.dispose         = dxr3_spudec_class_dispose;
+  this->spu_decoder_class.identifier      = "dxr3-spudec";
+  this->spu_decoder_class.description     = N_("subtitle decoder plugin using the hardware decoding capabilities of a DXR3 decoder card");
+  this->spu_decoder_class.dispose         = default_spu_decoder_class_dispose;
   
   this->instance                          = 0;
   
@@ -278,22 +257,6 @@ static spu_decoder_t *dxr3_spudec_open_plugin(spu_decoder_class_t *class_gen, xi
   
   return &this->spu_decoder;
 }
-
-static char *dxr3_spudec_get_identifier(spu_decoder_class_t *class_gen)
-{
-  return "dxr3-spudec";
-}
-
-static char *dxr3_spudec_get_description(spu_decoder_class_t *class_gen)
-{
-  return "subtitle decoder plugin using the hardware decoding capabilities of a DXR3 decoder card";
-}
-
-static void dxr3_spudec_class_dispose(spu_decoder_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 
 static void dxr3_spudec_decode_data(spu_decoder_t *this_gen, buf_element_t *buf)
 {
@@ -575,7 +538,7 @@ static void dxr3_spudec_discontinuity(spu_decoder_t *this_gen)
 
 static void dxr3_spudec_dispose(spu_decoder_t *this_gen)
 {
-  uint8_t empty_spu[] = {
+  static const uint8_t empty_spu[] = {
     0x00, 0x26, 0x00, 0x08, 0x80, 0x00, 0x00, 0x80,
     0x00, 0x00, 0x00, 0x20, 0x01, 0x03, 0x00, 0x00,
     0x04, 0x00, 0x00, 0x05, 0x00, 0x00, 0x01, 0x00,

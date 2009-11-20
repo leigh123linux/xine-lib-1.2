@@ -39,10 +39,10 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "demux.h"
-#include "buffer.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/demux.h>
+#include <xine/buffer.h>
 #include "bswap.h"
 #include "group_audio.h"
 
@@ -70,28 +70,24 @@ typedef struct {
 static int open_aac_file(demux_aac_t *this) {
   int i;
   uint8_t peak[MAX_PREVIEW_SIZE];
+  uint32_t signature;
   uint16_t syncword = 0;
   uint32_t id3size = 0;
   off_t data_start = 0;
 
   _x_assert(MAX_PREVIEW_SIZE > 10);
 
-  /* Get enough data to be able to check the size of ID3 tag */
-  if (_x_demux_read_header(this->input, peak, 10) != 10)
+  if (_x_demux_read_header(this->input, &signature, 4) != 4)
       return 0;
 
   /* Check if there's an ID3v2 tag at the start */
-  if ( id3v2_istag(peak) ) {
-    id3size = _X_BE_32_synchsafe(&peak[6]);
-
+  if ( id3v2_istag(signature) ) {
     this->input->seek(this->input, 4, SEEK_SET);
 
-    id3v2_parse_tag(this->input, this->stream, peak);
-
-    lprintf("ID3v2 tag encountered, skipping %u bytes.\n", id3size);
+    id3v2_parse_tag(this->input, this->stream, signature);
   }
 
-  if ( this->input->read(this->input, peak, 4) != 4 )
+  if ( this->input->read(this->input, &signature, 4) != 4 )
     return 0;
 
   /* Check for an ADIF header - should be at the start of the file */
@@ -101,10 +97,9 @@ static int open_aac_file(demux_aac_t *this) {
   }
 
   /* Look for an ADTS header - might not be at the start of the file */
-  if ( id3size != 0 && this->input->get_capabilities(this->input) & INPUT_CAP_SEEKABLE ) {
-    lprintf("Getting a buffer of size %u starting from %u\n", MAX_PREVIEW_SIZE, id3size);
+  if ( this->input->get_capabilities(this->input) & INPUT_CAP_SEEKABLE ) {
+    lprintf("Getting a buffer of size %u\n", MAX_PREVIEW_SIZE);
 
-    this->input->seek(this->input, id3size, SEEK_SET);
     if ( this->input->read(this->input, peak, MAX_PREVIEW_SIZE) != MAX_PREVIEW_SIZE )
       return 0;
     this->input->seek(this->input, 0, SEEK_SET);
@@ -227,12 +222,6 @@ static int demux_aac_seek (demux_plugin_t *this_gen,
   return this->status;
 }
 
-static void demux_aac_dispose (demux_plugin_t *this_gen) {
-  demux_aac_t *this = (demux_aac_t *) this_gen;
-
-  free(this);
-}
-
 static int demux_aac_get_status (demux_plugin_t *this_gen) {
   demux_aac_t *this = (demux_aac_t *) this_gen;
 
@@ -266,7 +255,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.send_headers      = demux_aac_send_headers;
   this->demux_plugin.send_chunk        = demux_aac_send_chunk;
   this->demux_plugin.seek              = demux_aac_seek;
-  this->demux_plugin.dispose           = demux_aac_dispose;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
   this->demux_plugin.get_status        = demux_aac_get_status;
   this->demux_plugin.get_stream_length = demux_aac_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_aac_get_capabilities;
@@ -276,19 +265,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->status = DEMUX_FINISHED;
   switch (stream->content_detection_method) {
 
-  case METHOD_BY_EXTENSION: {
-    const char *extensions, *mrl;
-
-    mrl = input->get_mrl (input);
-    extensions = class_gen->get_extensions (class_gen);
-
-    if (!_x_demux_check_extension (mrl, extensions)) {
-      free (this);
-      return NULL;
-    }
-  }
-  /* Falling through is intended */
-
+  case METHOD_BY_MRL:
   case METHOD_BY_CONTENT:
   case METHOD_EXPLICIT:
     if (!open_aac_file(this)) {
@@ -305,39 +282,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static const char *get_description (demux_class_t *this_gen) {
-  return "ADIF/ADTS AAC demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "AAC";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "aac";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return NULL;
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-  demux_aac_class_t *this = (demux_aac_class_t *) this_gen;
-
-  free (this);
-}
-
 void *demux_aac_init_plugin (xine_t *xine, void *data) {
   demux_aac_class_t     *this;
 
   this = calloc(1, sizeof(demux_aac_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("ADIF/ADTS AAC demux plugin");
+  this->demux_class.identifier      = "AAC";
+  this->demux_class.mimetypes       = NULL;
+  this->demux_class.extensions      = "aac";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }

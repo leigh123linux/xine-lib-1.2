@@ -47,10 +47,10 @@
  * demuxer is dispatching to the engine */
 #define DEBUG_FILM_DEMUX 0
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "compat.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/compat.h>
+#include <xine/demux.h>
 #include "bswap.h"
 #include "group_games.h"
 
@@ -154,7 +154,7 @@ static int open_film_file(demux_film_t *film) {
   film_header = malloc(film_header_size);
   if (!film_header)
     return 0;
-  strncpy(film->version, &scratch[8], 4);
+  memcpy(film->version, &scratch[8], 4);
   llprintf(DEBUG_FILM_LOAD, "0x%X header bytes, version %c%c%c%c\n",
     film_header_size,
     film->version[0],
@@ -201,7 +201,11 @@ static int open_film_file(demux_film_t *film) {
       film->video_type = _x_fourcc_to_buf_video(*(uint32_t *)&film_header[i + 8]);
 
       if( !film->video_type )
+      {
         film->video_type = BUF_VIDEO_UNKNOWN;
+        _x_report_video_fourcc (film->stream->xine, LOG_MODULE,
+				*(uint32_t *)&film_header[i + 8]);
+      }
       
       /* fetch the audio information if the chunk size checks out */
       if (chunk_size == 32) {
@@ -251,12 +255,11 @@ static int open_film_file(demux_film_t *film) {
       llprintf(DEBUG_FILM_LOAD, "parsing STAB chunk\n");
 
       /* load the sample table */
-      if (film->sample_table)
-        free(film->sample_table);
+      free(film->sample_table);
       film->frequency = _X_BE_32(&film_header[i + 8]);
       film->sample_count = _X_BE_32(&film_header[i + 12]);
       film->sample_table =
-        calloc(film->sample_count, sizeof(film_sample_t));
+        xine_xcalloc(film->sample_count, sizeof(film_sample_t));
       if (!film->sample_table)
         goto film_abort;
       for (j = 0; j < film->sample_count; j++) {
@@ -824,8 +827,7 @@ static int demux_film_seek (demux_plugin_t *this_gen, off_t start_pos, int start
 static void demux_film_dispose (demux_plugin_t *this_gen) {
   demux_film_t *this = (demux_film_t *) this_gen;
 
-  if (this->sample_table)
-    free(this->sample_table);
+  free(this->sample_table);
   free(this->interleave_buffer);
   free(this);
 }
@@ -874,19 +876,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   switch (stream->content_detection_method) {
 
-  case METHOD_BY_EXTENSION: {
-    const char *extensions, *mrl;
-
-    mrl = input->get_mrl (input);
-    extensions = class_gen->get_extensions (class_gen);
-
-    if (!_x_demux_check_extension (mrl, extensions)) {
-      free (this);
-      return NULL;
-    }
-  }
-  /* falling through is intended */
-
+  case METHOD_BY_MRL:
   case METHOD_BY_CONTENT:
   case METHOD_EXPLICIT:
 
@@ -905,39 +895,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static const char *get_description (demux_class_t *this_gen) {
-  return "FILM (CPK) demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "FILM (CPK)";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "cpk cak film";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return NULL;
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-  demux_film_class_t *this = (demux_film_class_t *) this_gen;
-
-  free (this);
-}
-
 void *demux_film_init_plugin (xine_t *xine, void *data) {
   demux_film_class_t     *this;
 
   this = calloc(1, sizeof(demux_film_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("FILM (CPK) demux plugin");
+  this->demux_class.identifier      = "FILM (CPK)";
+  this->demux_class.mimetypes       = NULL;
+  this->demux_class.extensions      = "cpk cak film";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }

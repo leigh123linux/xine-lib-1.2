@@ -41,15 +41,21 @@
 #include <ctype.h>
 #include <pthread.h>
 
-#include "xine.h"
-#include "video_out.h"
-#include "vo_scale.h"
-#include "xine_internal.h"
+#include <xine.h>
+#include <xine/video_out.h>
+#include <xine/vo_scale.h>
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
 #include "yuv2rgb.h"
-#include "xineutils.h"
 
 #include <vdpau/vdpau_x11.h>
 #include "accel_vdpau.h"
+
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
 
 #define NUM_FRAMES_BACK 1
 
@@ -254,7 +260,6 @@ typedef struct {
 
   int                width, height, format, flags;
   double             ratio;
-  uint8_t           *chunk[3]; /* mem alloc by xmalloc_aligned           */
 
   vdpau_accel_t     vdpau_accel_data;
 } vdpau_frame_t;
@@ -790,12 +795,9 @@ static void vdpau_frame_dispose (vo_frame_t *vo_img)
 {
   vdpau_frame_t  *frame = (vdpau_frame_t *) vo_img ;
 
-  if ( frame->chunk[0] )
-    free (frame->chunk[0]);
-  if ( frame->chunk[1] )
-    free (frame->chunk[1]);
-  if ( frame->chunk[2] )
-    free (frame->chunk[2]);
+  av_free (frame->vo_frame.base[0]);
+  av_free (frame->vo_frame.base[1]);
+  av_free (frame->vo_frame.base[2]);
   if ( frame->vdpau_accel_data.surface != VDP_INVALID_HANDLE )
     vdp_video_surface_destroy( frame->vdpau_accel_data.surface );
   free (frame);
@@ -815,7 +817,7 @@ static vo_frame_t *vdpau_alloc_frame (vo_driver_t *this_gen)
   if (!frame)
     return NULL;
 
-  frame->chunk[0] = frame->chunk[1] = frame->chunk[2] = NULL;
+  frame->vo_frame.base[0] = frame->vo_frame.base[1] = frame->vo_frame.base[2] = NULL;
   frame->width = frame->height = frame->format = frame->flags = 0;
 
   frame->vo_frame.accel_data = &frame->vdpau_accel_data;
@@ -869,9 +871,9 @@ static void vdpau_provide_standard_frame_data (vo_frame_t *this_gen, xine_curren
       this->vo_frame.pitches[0] = 8*((this->vo_frame.width + 7) / 8);
       this->vo_frame.pitches[1] = 8*((this->vo_frame.width + 15) / 16);
       this->vo_frame.pitches[2] = 8*((this->vo_frame.width + 15) / 16);
-      this->vo_frame.base[0] = xine_xmalloc_aligned(16, this->vo_frame.pitches[0] * this->vo_frame.height, (void **)&this->chunk[0]);
-      this->vo_frame.base[1] = xine_xmalloc_aligned(16, this->vo_frame.pitches[1] * ((this->vo_frame.height+1)/2), (void **)&this->chunk[1]);
-      this->vo_frame.base[2] = xine_xmalloc_aligned(16, this->vo_frame.pitches[2] * ((this->vo_frame.height+1)/2), (void **)&this->chunk[2]);
+      this->vo_frame.base[0] = av_mallocz(this->vo_frame.pitches[0] * this->vo_frame.height);
+      this->vo_frame.base[1] = av_mallocz(this->vo_frame.pitches[1] * ((this->vo_frame.height+1)/2));
+      this->vo_frame.base[2] = av_mallocz(this->vo_frame.pitches[2] * ((this->vo_frame.height+1)/2));
       format = VDP_YCBCR_FORMAT_YV12;
     }
   } else {
@@ -881,7 +883,7 @@ static void vdpau_provide_standard_frame_data (vo_frame_t *this_gen, xine_curren
                    + ((this->vo_frame.width + 1) / 2) * this->vo_frame.height;
     if (data->img) {
       this->vo_frame.pitches[0] = 8*((this->vo_frame.width + 3) / 4);
-      this->vo_frame.base[0] = xine_xmalloc_aligned(16, this->vo_frame.pitches[0] * this->vo_frame.height, (void **)&this->chunk[0]);
+      this->vo_frame.base[0] = av_mallocz(this->vo_frame.pitches[0] * this->vo_frame.height);
       format = VDP_YCBCR_FORMAT_YUYV;
     }
   }
@@ -914,13 +916,9 @@ static void vdpau_provide_standard_frame_data (vo_frame_t *this_gen, xine_curren
         this->vo_frame.width, this->vo_frame.height);
     }
 
-    if (this->chunk[0])
-      free(this->chunk[0]);
-    if (this->chunk[1])
-      free(this->chunk[1]);
-    if (this->chunk[2])
-      free(this->chunk[2]);
-    this->chunk[0] = this->chunk[1] = this->chunk[2] = NULL;
+    av_freep (&this->vo_frame.base[0]);
+    av_freep (&this->vo_frame.base[1]);
+    av_freep (&this->vo_frame.base[2]);
   }
 }
 
@@ -947,13 +945,13 @@ static void vdpau_duplicate_frame_data (vo_frame_t *this_gen, vo_frame_t *origin
     this->vo_frame.pitches[0] = 8*((orig->vo_frame.width + 7) / 8);
     this->vo_frame.pitches[1] = 8*((orig->vo_frame.width + 15) / 16);
     this->vo_frame.pitches[2] = 8*((orig->vo_frame.width + 15) / 16);
-    this->vo_frame.base[0] = xine_xmalloc_aligned(16, this->vo_frame.pitches[0] * orig->vo_frame.height, (void **)&this->chunk[0]);
-    this->vo_frame.base[1] = xine_xmalloc_aligned(16, this->vo_frame.pitches[1] * ((orig->vo_frame.height+1)/2), (void **)&this->chunk[1]);
-    this->vo_frame.base[2] = xine_xmalloc_aligned(16, this->vo_frame.pitches[2] * ((orig->vo_frame.height+1)/2), (void **)&this->chunk[2]);
+    this->vo_frame.base[0] = av_mallocz(this->vo_frame.pitches[0] * orig->vo_frame.height);
+    this->vo_frame.base[1] = av_mallocz(this->vo_frame.pitches[1] * ((orig->vo_frame.height+1)/2));
+    this->vo_frame.base[2] = av_mallocz(this->vo_frame.pitches[2] * ((orig->vo_frame.height+1)/2));
     format = VDP_YCBCR_FORMAT_YV12;
   } else {
     this->vo_frame.pitches[0] = 8*((orig->vo_frame.width + 3) / 4);
-    this->vo_frame.base[0] = xine_xmalloc_aligned(16, this->vo_frame.pitches[0] * orig->vo_frame.height, (void **)&this->chunk[0]);
+    this->vo_frame.base[0] = av_mallocz(this->vo_frame.pitches[0] * orig->vo_frame.height);
     format = VDP_YCBCR_FORMAT_YUYV;
   }
 
@@ -967,13 +965,9 @@ static void vdpau_duplicate_frame_data (vo_frame_t *this_gen, vo_frame_t *origin
 
   this->vdpau_accel_data.color_standard = orig->vdpau_accel_data.color_standard;
 
-  if (this->chunk[0])
-    free(this->chunk[0]);
-  if (this->chunk[1])
-    free(this->chunk[1]);
-  if (this->chunk[2])
-    free(this->chunk[2]);
-  this->chunk[0] = this->chunk[1] = this->chunk[2] = NULL;
+  av_freep (&this->vo_frame.base[0]);
+  av_freep (&this->vo_frame.base[1]);
+  av_freep (&this->vo_frame.base[2]);
 }
 
 
@@ -1000,26 +994,20 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
         (frame->vdpau_accel_data.vdp_runtime_nr != this->vdp_runtime_nr)) {
 
     /* (re-) allocate render space */
-    if ( frame->chunk[0] )
-      free (frame->chunk[0]);
-    if ( frame->chunk[1] )
-      free (frame->chunk[1]);
-    if ( frame->chunk[2] )
-      free (frame->chunk[2]);
-    frame->chunk[0] = frame->chunk[1] = frame->chunk[2] = NULL;
+    av_freep (&frame->vo_frame.base[0]);
+    av_freep (&frame->vo_frame.base[1]);
+    av_freep (&frame->vo_frame.base[2]);
 
     if (format == XINE_IMGFMT_YV12) {
       frame->vo_frame.pitches[0] = 8*((width + 7) / 8);
       frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
       frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
-      frame->vo_frame.base[0] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[0] * height,  (void **) &frame->chunk[0]);
-      frame->vo_frame.base[1] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[1] * ((height+1)/2), (void **) &frame->chunk[1]);
-      frame->vo_frame.base[2] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[2] * ((height+1)/2), (void **) &frame->chunk[2]);
+      frame->vo_frame.base[0] = av_mallocz (frame->vo_frame.pitches[0] * height);
+      frame->vo_frame.base[1] = av_mallocz (frame->vo_frame.pitches[1] * ((height+1)/2));
+      frame->vo_frame.base[2] = av_mallocz (frame->vo_frame.pitches[2] * ((height+1)/2));
     } else if (format == XINE_IMGFMT_YUY2){
       frame->vo_frame.pitches[0] = 8*((width + 3) / 4);
-      frame->vo_frame.base[0] = xine_xmalloc_aligned (16, frame->vo_frame.pitches[0] * height, (void **) &frame->chunk[0]);
-      frame->chunk[1] = NULL;
-      frame->chunk[2] = NULL;
+      frame->vo_frame.base[0] = av_mallocz (frame->vo_frame.pitches[0] * height);
     }
 
     if ( frame->vdpau_accel_data.vdp_runtime_nr != this->vdp_runtime_nr ) {
@@ -2612,14 +2600,12 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
 
 static char* vdpau_get_identifier (video_driver_class_t *this_gen)
 {
-  return "vdpau";
 }
 
 
 
 static char* vdpau_get_description (video_driver_class_t *this_gen)
 {
-  return _("xine video output plugin using VDPAU hardware acceleration");
 }
 
 
@@ -2637,9 +2623,9 @@ static void *vdpau_init_class (xine_t *xine, void *visual_gen)
   vdpau_class_t *this = (vdpau_class_t *) calloc(1, sizeof(vdpau_class_t));
 
   this->driver_class.open_plugin     = vdpau_open_plugin;
-  this->driver_class.get_identifier  = vdpau_get_identifier;
-  this->driver_class.get_description = vdpau_get_description;
-  this->driver_class.dispose         = vdpau_dispose_class;
+  this->driver_class.identifier      = "vdpau";
+  this->driver_class.description     = N_("xine video output plugin using VDPAU hardware acceleration");
+  this->driver_class.dispose         = default_video_driver_class_dispose;
   this->xine                         = xine;
 
   return this;
@@ -2659,6 +2645,6 @@ static const vo_info_t vo_info_vdpau = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_VIDEO_OUT, 21, "vdpau", XINE_VERSION_CODE, &vo_info_vdpau, vdpau_init_class },
+  { PLUGIN_VIDEO_OUT, 22, "vdpau", XINE_VERSION_CODE, &vo_info_vdpau, vdpau_init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

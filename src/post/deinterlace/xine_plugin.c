@@ -31,10 +31,10 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "post.h"
-#include "xineutils.h"
-#include "xine_buffer.h"
+#include <xine/xine_internal.h>
+#include <xine/post.h>
+#include <xine/xineutils.h>
+#include <xine/xine_buffer.h>
 #include <pthread.h>
 
 #include "tvtime.h"
@@ -51,7 +51,7 @@ static const post_info_t deinterlace_special_info = { XINE_POST_TYPE_VIDEO_FILTE
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_POST | PLUGIN_MUST_PRELOAD, 9, "tvtime", XINE_VERSION_CODE, &deinterlace_special_info, &deinterlace_init_plugin },
+  { PLUGIN_POST | PLUGIN_MUST_PRELOAD, 10, "tvtime", XINE_VERSION_CODE, &deinterlace_special_info, &deinterlace_init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 
@@ -60,8 +60,8 @@ typedef struct post_plugin_deinterlace_s post_plugin_deinterlace_t;
 
 #define MAX_NUM_METHODS 30
 static const char *enum_methods[MAX_NUM_METHODS];
-static char *enum_pulldown[] = { "none", "vektor", NULL };
-static char *enum_framerate[] = { "full", "half_top", "half_bottom", NULL };
+static const char *const enum_pulldown[] = { "none", "vektor", NULL };
+static const char *const enum_framerate[] = { "full", "half_top", "half_bottom", NULL };
 
 static void *help_string;
 
@@ -280,8 +280,6 @@ static xine_post_api_t post_api = {
 static post_plugin_t *deinterlace_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target);
-static char          *deinterlace_get_identifier(post_class_t *class_gen);
-static char          *deinterlace_get_description(post_class_t *class_gen);
 static void           deinterlace_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
@@ -311,8 +309,8 @@ static void *deinterlace_init_plugin(xine_t *xine, void *data)
     return NULL;
   
   class->class.open_plugin     = deinterlace_open_plugin;
-  class->class.get_identifier  = deinterlace_get_identifier;
-  class->class.get_description = deinterlace_get_description;
+  class->class.identifier      = "tvtime";
+  class->class.description     = N_("advanced deinterlacer plugin with pulldown detection");
   class->class.dispose         = deinterlace_class_dispose;
 
 
@@ -423,16 +421,6 @@ static post_plugin_t *deinterlace_open_plugin(post_class_t *class_gen, int input
   this->post.dispose = deinterlace_dispose;
   
   return &this->post;
-}
-
-static char *deinterlace_get_identifier(post_class_t *class_gen)
-{
-  return "tvtime";
-}
-
-static char *deinterlace_get_description(post_class_t *class_gen)
-{
-  return "advanced deinterlacer plugin with pulldown detection";
 }
 
 static void deinterlace_class_dispose(post_class_t *class_gen)

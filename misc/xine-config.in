@@ -16,6 +16,7 @@ usage()
 {
 	cat <<EOF
 Usage: xine-config [OPTIONS] [LIBRARIES]
+       DEPRECATED. Use pkg-config instead.
 Options:
 	[--prefix[=DIR]]
 	[--exec-prefix[=DIR]]
@@ -75,6 +76,8 @@ while test $# -gt 0; do
   esac
   shift
 done
+
+echo 'xine-config is DEPRECATED. Use pkg-config instead.' >&2
 
 exec pkg-config "${prefix+--define-variable=prefix=}$prefix" \
 		"${exec_prefix+--define-variable=exec_prefix=}$exec_prefix" \

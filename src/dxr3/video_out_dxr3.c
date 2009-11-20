@@ -60,11 +60,17 @@
 #define LOG_VID 0
 #define LOG_OVR 0
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "video_out.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/video_out.h>
 #include "dxr3.h"
 #include "video_out_dxr3.h"
+
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
 
 /* the amount of extra time we give the card for decoding */
 #define DECODE_PIPE_PREBUFFER 10000
@@ -92,17 +98,15 @@ static const vo_info_t   vo_info_dxr3_aa = {
 const plugin_info_t      xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
 #ifdef HAVE_X11
-  { PLUGIN_VIDEO_OUT, 21, "dxr3", XINE_VERSION_CODE, &vo_info_dxr3_x11, &dxr3_x11_init_plugin },
+  { PLUGIN_VIDEO_OUT, 22, "dxr3", XINE_VERSION_CODE, &vo_info_dxr3_x11, &dxr3_x11_init_plugin },
 #endif
-  { PLUGIN_VIDEO_OUT, 21, "aadxr3", XINE_VERSION_CODE, &vo_info_dxr3_aa, &dxr3_aa_init_plugin },
+  { PLUGIN_VIDEO_OUT, 22, "aadxr3", XINE_VERSION_CODE, &vo_info_dxr3_aa, &dxr3_aa_init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 
 
 /* plugin class functions */
 static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const void *visual);
-static char        *dxr3_vo_get_identifier(video_driver_class_t *class_gen);
-static char        *dxr3_vo_get_description(video_driver_class_t *class_gen);
 static void         dxr3_vo_class_dispose(video_driver_class_t *class_gen);
 
 /* plugin instance functions */
@@ -176,8 +180,8 @@ static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, void *visual_gen)
     CONF_KEY, 0, CONF_NAME, CONF_HELP, 10, NULL, NULL);
 
   this->video_driver_class.open_plugin     = dxr3_vo_open_plugin;
-  this->video_driver_class.get_identifier  = dxr3_vo_get_identifier;
-  this->video_driver_class.get_description = dxr3_vo_get_description;
+  this->video_driver_class.identifier      = DXR3_VO_ID;
+  this->video_driver_class.description     = N_("video output plugin displaying images through your DXR3 decoder card");
   this->video_driver_class.dispose         = dxr3_vo_class_dispose;
   
   this->xine                               = xine;
@@ -187,16 +191,6 @@ static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, void *visual_gen)
   this->scr                                = dxr3_scr_init(xine);
   
   return this;
-}
-
-static char *dxr3_vo_get_identifier(video_driver_class_t *class_gen)
-{
-  return DXR3_VO_ID;
-}
-
-static char *dxr3_vo_get_description(video_driver_class_t *class_gen)
-{
-  return "video output plugin displaying images through your DXR3 decoder card";
 }
 
 static void dxr3_vo_class_dispose(video_driver_class_t *class_gen)
@@ -220,13 +214,14 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
   static char *available_encoders[SUPPORTED_ENCODER_COUNT + 2];
   plugin_node_t *node;
 
+  static const char *const videoout_modes[] = {
+    "letterboxed tv", "widescreen tv",
 #ifdef HAVE_X11
-  static const char const *videoout_modes[] = { "letterboxed tv",      "widescreen tv",
-				    "letterboxed overlay", "widescreen overlay", NULL };
-#else
-  static const char const *videoout_modes[] = { "letterboxed tv", "widescreen tv", NULL };
+    "letterboxed overlay", "widescreen overlay",
 #endif
-  static const char const *tv_modes[] = { "ntsc", "pal", "pal60" , "default", NULL };
+    NULL
+  };
+  static const char *const tv_modes[] = { "ntsc", "pal", "pal60" , "default", NULL };
   int list_id, list_size;
   xine_sarray_t *plugin_list;
   
@@ -297,21 +292,8 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
 #if LOG_VID
   printf("video_out_dxr3: Supported mpeg encoders: ");
 #endif
-  /* check, if ffmpeg plugin is available by looking through plugin
-   * catalog; catalog mutex is already locked here, since this is open_plugin() */
-  node = NULL;
-  plugin_list = class->xine->plugin_catalog->plugin_lists[PLUGIN_VIDEO_DECODER - 1];
-  list_size = xine_sarray_size(plugin_list);
-  for (list_id = 0; list_id < list_size; list_id++) {
-    node = xine_sarray_get (plugin_list, list_id);
-    if (strcasecmp(node->info->id, "ffmpegvideo") == 0) {
-      available_encoders[encoder++] = "libavcodec";
-#if LOG_VID
-      printf("libavcodec, ");
-#endif
-      break;
-    }
-  }
+  available_encoders[encoder++] = "libavcodec";
+  printf("libavcodec, ");
 #ifdef HAVE_LIBFAME
   available_encoders[encoder++] = "fame";
 #if LOG_VID
@@ -587,7 +569,7 @@ static void dxr3_frame_dispose(vo_frame_t *frame_gen)
 {
   dxr3_frame_t *frame = (dxr3_frame_t *)frame_gen;
   
-  if (frame->mem) free(frame->mem);
+  av_free(frame->mem);
   pthread_mutex_destroy(&frame_gen->mutex);
   free(frame);
 }
@@ -627,12 +609,9 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
       frame->aspect         = XINE_VO_ASPECT_ANAMORPHIC;
     frame->pan_scan         = flags & VO_PAN_SCAN_FLAG;
     
-    if (frame->mem) {
-      free(frame->mem);
-      frame->mem = NULL;
-      frame->real_base[0] = frame->real_base[1] = frame->real_base[2] = NULL;
-      frame_gen->base[0] = frame_gen->base[1] = frame_gen->base[2] = NULL;
-    }
+    av_freep(&frame->mem);
+    frame->real_base[0] = frame->real_base[1] = frame->real_base[2] = NULL;
+    frame_gen->base[0] = frame_gen->base[1] = frame_gen->base[2] = NULL;
     
     return;
   }
@@ -717,10 +696,7 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
   /* if dimensions changed, we need to re-allocate frame memory */
   if ((frame->vo_frame.width != width) || (frame->vo_frame.height != height) || 
       (frame->oheight != oheight) || (frame->vo_frame.format != format)) {
-    if (frame->mem) {
-      free (frame->mem);
-      frame->mem = NULL;
-    }
+    av_freep(&frame->mem);
     
     if (format == XINE_IMGFMT_YUY2) {
       int i, image_size;
@@ -731,8 +707,7 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
       
       /* planar format, only base[0] */
       /* add one extra line for field swap stuff */
-      frame->real_base[0] = xine_xmalloc_aligned(16, image_size + frame->vo_frame.pitches[0],
-        &frame->mem);
+      frame->real_base[0] = frame->mem = av_mallocz(image_size + frame->vo_frame.pitches[0]);
 
       /* don't use first line */
       frame->real_base[0] += frame->vo_frame.pitches[0];
@@ -759,8 +734,8 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
       image_size_v = frame->vo_frame.pitches[2] * ((oheight + 1) / 2);
 
       /* add one extra line for field swap stuff */
-      frame->real_base[0] = xine_xmalloc_aligned(16, image_size_y + frame->vo_frame.pitches[0] +
-        image_size_u + image_size_v, &frame->mem);
+      frame->real_base[0] = frame->mem = av_mallocz(image_size_y + frame->vo_frame.pitches[0] +
+						    image_size_u + image_size_v);
 
       /* don't use first line */
       frame->real_base[0] += frame->vo_frame.pitches[0];

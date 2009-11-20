@@ -23,8 +23,8 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "attributes.h"
-#include "array.h"
+#include <xine/attributes.h>
+#include <xine/array.h>
 
 #define MIN_CHUNK_SIZE    32
 

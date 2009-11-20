@@ -30,9 +30,9 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "post.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/post.h>
 #include "bswap.h"
 #include "visualizations.h"
 #include "fft.h"
@@ -477,33 +477,18 @@ static post_plugin_t *fftscope_open_plugin(post_class_t *class_gen, int inputs,
   return &this->post;
 }
 
-static char *fftscope_get_identifier(post_class_t *class_gen)
-{
-  return "FFT Scope";
-}
-
-static char *fftscope_get_description(post_class_t *class_gen)
-{
-  return "FFT Scope";
-}
-
-static void fftscope_class_dispose(post_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 /* plugin class initialization function */
 void *fftscope_init_plugin(xine_t *xine, void *data)
 {
-  post_class_fftscope_t *class = (post_class_fftscope_t *)malloc(sizeof(post_class_fftscope_t));
+  post_class_fftscope_t *class = (post_class_fftscope_t *)xine_xmalloc(sizeof(post_class_fftscope_t));
   
   if (!class)
     return NULL;
   
   class->post_class.open_plugin     = fftscope_open_plugin;
-  class->post_class.get_identifier  = fftscope_get_identifier;
-  class->post_class.get_description = fftscope_get_description;
-  class->post_class.dispose         = fftscope_class_dispose;
+  class->post_class.identifier      = "FFT Scope";
+  class->post_class.description     = N_("FFT Scope");
+  class->post_class.dispose         = default_post_class_dispose;
   
   class->xine                       = xine;
   

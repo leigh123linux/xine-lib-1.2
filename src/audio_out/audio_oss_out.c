@@ -64,10 +64,10 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "compat.h"
-#include "audio_out.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/compat.h>
+#include <xine/audio_out.h>
 
 #include <sys/time.h>
 
@@ -93,7 +93,7 @@
 #       define AFMT_AC3         0x00000400  
 #endif
 
-#define AO_OUT_OSS_IFACE_VERSION 8
+#define AO_OUT_OSS_IFACE_VERSION 9
 
 #define AUDIO_NUM_FRAGMENTS     15
 #define AUDIO_FRAGMENT_SIZE   8192
@@ -662,7 +662,7 @@ static int ao_oss_ctrl(ao_driver_t *this_gen, int cmd, ...) {
  * If not, the function returns 0.
  */
 static int probe_audio_devices(oss_driver_t *this) {
-  const char *base_names[2] = {"/dev/dsp", "/dev/sound/dsp"};
+  static const char *const base_names[2] = {"/dev/dsp", "/dev/sound/dsp"};
   int base_num, i;
   int audio_fd, rate;
   int best_rate;
@@ -1040,16 +1040,13 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
       parse[0] = '\0';
       parse += 3;
       if (devname_val == 0)
-	asprintf(&(this->mixer.name), "%smixer%s", mixer_name, parse);
-      else {
-	if (mixer_num == -1)
-	  asprintf(&(this->mixer.name), "%smixer", mixer_name);
-	else
-	  asprintf(&(this->mixer.name), "%smixer%d", mixer_name, mixer_num);
-      }
-    } else {
-      _x_abort();
+	asprintf(&this->mixer.name, "%smixer%s", mixer_name, parse);
+      else if (mixer_num == -1)
+	asprintf(&this->mixer.name, "%smixer", mixer_name);
+      else
+	asprintf(&this->mixer.name, "%smixer%d", mixer_name, mixer_num);
     }
+    _x_assert(this->mixer.name);
     
     this->mixer.fd = open(this->mixer.name, O_RDONLY);
 
@@ -1146,22 +1143,6 @@ static void oss_speaker_arrangement_cb (void *user_data,
 /*
  * class functions
  */
-
-static char* get_identifier (audio_driver_class_t *this_gen) {
-  return "oss";
-}
-
-static char* get_description (audio_driver_class_t *this_gen) {
-  return _("xine audio output plugin using oss-compliant audio devices/drivers");
-}
-
-static void dispose_class (audio_driver_class_t *this_gen) {
-
-  oss_class_t *this = (oss_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
 
   oss_class_t        *this;
@@ -1171,9 +1152,9 @@ static void *init_class (xine_t *xine, void *data) {
     return NULL;
 
   this->driver_class.open_plugin     = open_plugin;
-  this->driver_class.get_identifier  = get_identifier;
-  this->driver_class.get_description = get_description;
-  this->driver_class.dispose         = dispose_class;
+  this->driver_class.identifier      = "oss";
+  this->driver_class.description     = N_("xine audio output plugin using oss-compliant audio devices/drivers");
+  this->driver_class.dispose         = default_audio_driver_class_dispose;
 
   this->config = xine->config;
   this->xine   = xine;

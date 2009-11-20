@@ -25,12 +25,17 @@
 #include "config.h"
 #endif
 
-#include "xine_internal.h"
-#include "post.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/post.h>
+#include <xine/xineutils.h>
 #include <math.h>
 #include <pthread.h>
 
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
 
 #ifdef ARCH_X86_64
 #  define REG_a  "rax"
@@ -59,7 +64,6 @@ typedef struct noise_param_t {
         shiftptr;
     int8_t *noise,
            *prev_shift[MAX_RES][3];
-    void *base;
 } noise_param_t;
 
 static int nonTempRandShift[MAX_RES]= {-1};
@@ -76,9 +80,8 @@ static int8_t *initNoise(noise_param_t *fp){
     int pattern= fp->pattern;
     int8_t *noise;
     int i, j;
-    void *base;
 
-    noise = xine_xmalloc_aligned(16, MAX_NOISE*sizeof(int8_t), &base);
+    noise = av_mallocz(MAX_NOISE*sizeof(int8_t));
     srand(123457);
 
     for(i=0,j=0; i<MAX_NOISE; i++,j++)
@@ -134,7 +137,6 @@ static int8_t *initNoise(noise_param_t *fp){
     }
 
     fp->noise= noise;
-    fp->base = base;
     fp->shiftptr= 0;
     return noise;
 }
@@ -322,8 +324,8 @@ typedef struct noise_parameters_s {
         type, quality, pattern;
 } noise_parameters_t;
 
-static char *enum_types[] = {"uniform", "gaussian", NULL};
-static char *enum_quality[] = {"fixed", "temporal", "averaged temporal", NULL};
+static const char *const enum_types[] = {"uniform", "gaussian", NULL};
+static const char *const enum_quality[] = {"fixed", "temporal", "averaged temporal", NULL};
 
 /*
  * description of params struct
@@ -433,9 +435,6 @@ static xine_post_api_t post_api = {
 static post_plugin_t *noise_open_plugin(post_class_t *class_gen, int inputs,
                      xine_audio_port_t **audio_target,
                      xine_video_port_t **video_target);
-static char          *noise_get_identifier(post_class_t *class_gen);
-static char          *noise_get_description(post_class_t *class_gen);
-static void           noise_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
 static void           noise_dispose(post_plugin_t *this_gen);
@@ -449,15 +448,15 @@ static int            noise_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 void *noise_init_plugin(xine_t *xine, void *data)
 {
-    post_class_t *class = (post_class_t *)malloc(sizeof(post_class_t));
+    post_class_t *class = (post_class_t *)xine_xmalloc(sizeof(post_class_t));
 
     if (!class)
         return NULL;
   
     class->open_plugin     = noise_open_plugin;
-    class->get_identifier  = noise_get_identifier;
-    class->get_description = noise_get_description;
-    class->dispose         = noise_class_dispose;
+    class->identifier      = "noise";
+    class->description     = N_("Adds noise");
+    class->dispose         = default_post_class_dispose;
 
 #ifdef ARCH_X86
     if (xine_mm_accel() & MM_ACCEL_X86_MMX) {
@@ -519,28 +518,14 @@ static post_plugin_t *noise_open_plugin(post_class_t *class_gen, int inputs,
     return &this->post;
 }
 
-static char *noise_get_identifier(post_class_t *class_gen)
-{
-    return "noise";
-}
-
-static char *noise_get_description(post_class_t *class_gen)
-{
-    return "Adds noise";
-}
-
-static void noise_class_dispose(post_class_t *class_gen)
-{
-    free(class_gen);
-}
-
-
 static void noise_dispose(post_plugin_t *this_gen)
 {
     post_plugin_noise_t *this = (post_plugin_noise_t *)this_gen;
 
     if (_x_post_dispose(this_gen)) {
         pthread_mutex_destroy(&this->lock);
+	av_free(this->params[0].noise);
+	av_free(this->params[1].noise);
         free(this);
     }
 }

@@ -23,8 +23,8 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "attributes.h"
-#include "sorted_array.h"
+#include <xine/attributes.h>
+#include <xine/sorted_array.h>
 
 /* Array internal struct */
 struct xine_sarray_s {

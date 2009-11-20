@@ -45,10 +45,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "compat.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/compat.h>
+#include <xine/demux.h>
 #include "bswap.h"
 #include "group_audio.h"
 
@@ -131,7 +131,7 @@ static int demux_aud_send_chunk(demux_plugin_t *this_gen) {
   demux_aud_t *this = (demux_aud_t *) this_gen;
 
   unsigned char chunk_preamble[AUD_CHUNK_PREAMBLE_SIZE];
-  unsigned int chunk_size;
+  int chunk_size;
   off_t current_file_pos;
   int64_t audio_pts;
   buf_element_t *buf;
@@ -241,11 +241,6 @@ static int demux_aud_seek (demux_plugin_t *this_gen,
   return this->status;
 }
 
-static void demux_aud_dispose (demux_plugin_t *this) {
-
-  free(this);
-}
-
 static int demux_aud_get_status (demux_plugin_t *this_gen) {
   demux_aud_t *this = (demux_aud_t *) this_gen;
 
@@ -277,7 +272,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.send_headers      = demux_aud_send_headers;
   this->demux_plugin.send_chunk        = demux_aud_send_chunk;
   this->demux_plugin.seek              = demux_aud_seek;
-  this->demux_plugin.dispose           = demux_aud_dispose;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
   this->demux_plugin.get_status        = demux_aud_get_status;
   this->demux_plugin.get_stream_length = demux_aud_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_aud_get_capabilities;
@@ -289,19 +284,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   switch (stream->content_detection_method) {
 
   case METHOD_BY_CONTENT: /* no reliable detection */
-  case METHOD_BY_EXTENSION: {
-    const char *extensions, *mrl;
-
-    mrl = input->get_mrl (input);
-    extensions = class_gen->get_extensions (class_gen);
-
-    if (!_x_demux_check_extension (mrl, extensions)) {
-      free (this);
-      return NULL;
-    }
-  }
-  /* falling through is intended */
-
+  case METHOD_BY_MRL:
   case METHOD_EXPLICIT:
 
     if (!open_aud_file(this)) {
@@ -318,39 +301,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static const char *get_description (demux_class_t *this_gen) {
-  return "Westwood Studios AUD file demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "Westwood Studios AUD";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "aud";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return NULL;
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-  demux_aud_class_t *this = (demux_aud_class_t *) this_gen;
-
-  free (this);
-}
-
 void *demux_aud_init_plugin (xine_t *xine, void *data) {
   demux_aud_class_t     *this;
 
   this = calloc(1, sizeof(demux_aud_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("Westwood Studios AUD file demux plugin");
+  this->demux_class.identifier      = "Westwood Studios AUD";
+  this->demux_class.mimetypes       = NULL;
+  this->demux_class.extensions      = "aud";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }

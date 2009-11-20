@@ -52,10 +52,10 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "compat.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/compat.h>
+#include <xine/demux.h>
 #include "bswap.h"
 
 #include "real_common.h"
@@ -287,29 +287,23 @@ static mdpr_t *real_parse_mdpr(const char *data, const unsigned int size)
   mdpr->stream_name_size=data[32];
   if (size < 38 + mdpr->stream_name_size)
     goto fail;
-  mdpr->stream_name=malloc(mdpr->stream_name_size+1);
+  mdpr->stream_name=xine_memdup0(&data[33], mdpr->stream_name_size);
   if (!mdpr->stream_name)
     goto fail;
-  memcpy(mdpr->stream_name, &data[33], mdpr->stream_name_size);
-  mdpr->stream_name[(int)mdpr->stream_name_size]=0;
 
   mdpr->mime_type_size=data[33+mdpr->stream_name_size];
   if (size < 38 + mdpr->stream_name_size + mdpr->mime_type_size)
     goto fail;
-  mdpr->mime_type=malloc(mdpr->mime_type_size+1);
+  mdpr->mime_type=xine_memdup0(&data[34+mdpr->stream_name_size], mdpr->mime_type_size);
   if (!mdpr->mime_type)
     goto fail;
-  memcpy(mdpr->mime_type, &data[34+mdpr->stream_name_size], mdpr->mime_type_size);
-  mdpr->mime_type[(int)mdpr->mime_type_size]=0;
 
   mdpr->type_specific_len=_X_BE_32(&data[34+mdpr->stream_name_size+mdpr->mime_type_size]);
   if (size < 38 + mdpr->stream_name_size + mdpr->mime_type_size + mdpr->type_specific_data)
     goto fail;
-  mdpr->type_specific_data=malloc(mdpr->type_specific_len);
+  mdpr->type_specific_data=xine_memdup(&data[38+mdpr->stream_name_size+mdpr->mime_type_size], mdpr->type_specific_len);
   if (!mdpr->type_specific_data)
     goto fail;
-  memcpy(mdpr->type_specific_data,
-      &data[38+mdpr->stream_name_size+mdpr->mime_type_size], mdpr->type_specific_len);
 
   lprintf("MDPR: stream number: %i\n", mdpr->stream_number);
   lprintf("MDPR: maximal bit rate: %i\n", mdpr->max_bit_rate);
@@ -579,6 +573,9 @@ static void real_parse_headers (demux_real_t *this) {
 	    this->audio_streams[this->num_audio_streams].index = NULL;
 	    this->audio_streams[this->num_audio_streams].mdpr = mdpr;
 
+            if (!this->audio_streams[this->num_audio_streams].buf_type)
+              _x_report_audio_format_tag (this->stream->xine, LOG_MODULE, fourcc);
+
 	    real_parse_audio_specific_data (this,
 					    &this->audio_streams[this->num_audio_streams]);
 	    this->num_audio_streams++;
@@ -602,7 +599,10 @@ static void real_parse_headers (demux_real_t *this) {
 	    this->video_streams[this->num_video_streams].index = NULL;
 	    this->video_streams[this->num_video_streams].mdpr = mdpr;
 
-	    this->num_video_streams++;
+            this->num_video_streams++;
+
+            if (!this->video_streams[this->num_video_streams].buf_type)
+              _x_report_video_fourcc (this->stream->xine, LOG_MODULE, fourcc);
 
 	  } else {
 	    lprintf("unrecognised type specific data\n");
@@ -1734,20 +1734,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     lprintf ("by content accepted.\n");
     break;
 
-  case METHOD_BY_EXTENSION: {
-    const char *const mrl = input->get_mrl (input);
-    const char *const extensions = class_gen->get_extensions (class_gen);
-
-    lprintf ("by extension '%s'\n", mrl);
-
-    if (!_x_demux_check_extension (mrl, extensions)) {
-      return NULL;
-    }
-    lprintf ("by extension accepted.\n");
-  }
-
-  break;
-
+  case METHOD_BY_MRL:
   case METHOD_EXPLICIT:
     break;
 
@@ -1780,40 +1767,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static const char *get_description (demux_class_t *this_gen) {
-  return "RealMedia file demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "Real";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "rm rmvb ram";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return "audio/x-pn-realaudio: ra, rm, ram: Real Media file;"
-         "audio/x-pn-realaudio-plugin: rpm: Real Media plugin file;"
-         "audio/x-real-audio: ra, rm, ram: Real Media file;"
-         "application/vnd.rn-realmedia: ra, rm, ram: Real Media file;"; 
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-  demux_real_class_t *this = (demux_real_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
   demux_real_class_t *const this = calloc(1, sizeof(demux_real_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("RealMedia file demux plugin");
+  this->demux_class.identifier      = "Real";
+  this->demux_class.mimetypes       =
+    "audio/x-pn-realaudio: ra, rm, ram: Real Media file;"
+    "audio/x-pn-realaudio-plugin: rpm: Real Media plugin file;"
+    "audio/x-real-audio: ra, rm, ram: Real Media file;"
+    "application/vnd.rn-realmedia: ra, rm, ram: Real Media file;"; 
+  this->demux_class.extensions      = "rm rmvb ram";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }
@@ -1827,6 +1793,6 @@ static const demuxer_info_t demux_info_real = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_DEMUX, 26, "real", XINE_VERSION_CODE, &demux_info_real, init_class },
+  { PLUGIN_DEMUX, 27, "real", XINE_VERSION_CODE, &demux_info_real, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

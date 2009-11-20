@@ -27,10 +27,8 @@
 
 #ifdef HAVE_FFMPEG_AVUTIL_H
 #  include <avcodec.h>
-#elif defined HAVE_FFMPEG
-#  include <libavcodec/avcodec.h>
 #else
-#  include "../../libffmpeg/libavcodec/avcodec.h"
+#  include <libavcodec/avcodec.h>
 #endif
 
 #if LIBAVCODEC_VERSION_MAJOR > 51

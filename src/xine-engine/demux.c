@@ -42,9 +42,9 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "demuxers/demux.h"
-#include "buffer.h"
+#include <xine/xine_internal.h>
+#include <xine/demux.h>
+#include <xine/buffer.h>
 
 #ifdef WIN32
 #include <winsock.h>
@@ -497,7 +497,7 @@ int _x_demux_stop_thread (xine_stream_t *stream) {
   return 0;
 }
 
-int _x_demux_read_header( input_plugin_t *input, unsigned char *buffer, off_t size){
+int _x_demux_read_header( input_plugin_t *input, void *buffer, off_t size){
   int read_size;
   unsigned char *buf;
 
@@ -522,6 +522,11 @@ int _x_demux_read_header( input_plugin_t *input, unsigned char *buffer, off_t si
 
 int _x_demux_check_extension (const char *mrl, const char *extensions){
   char *last_dot, *e, *ext_copy, *ext_work;
+  int found = 0;
+
+  /* An empty extensions string means that the by-extension method can't
+     be used, so consider those cases as always passing. */
+  if ( extensions == NULL ) return 1;
 
   ext_copy = strdup(extensions);
   ext_work = ext_copy;
@@ -529,15 +534,23 @@ int _x_demux_check_extension (const char *mrl, const char *extensions){
   last_dot = strrchr (mrl, '.');
   if (last_dot) {
     last_dot++;
-    while ( ( e = xine_strsep(&ext_work, " ")) != NULL ) {
+  }
+
+  while ( ( e = xine_strsep(&ext_work, " ")) != NULL ) {
+    if ( strstr(e, ":/") ) {
+      if ( strncasecmp (mrl, e, strlen (e)) == 0 ) {
+	found = 1;
+	break;
+      }
+    } else if (last_dot) {
       if (strcasecmp (last_dot, e) == 0) {
-        free(ext_copy);
-        return 1;
+	found = 1;
+	break;
       }
     }
   }
   free(ext_copy);
-  return 0;
+  return found;
 }
 
 

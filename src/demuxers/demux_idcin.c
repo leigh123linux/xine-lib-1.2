@@ -83,10 +83,10 @@
  * demuxer is dispatching to the engine */
 /* #define LOG */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "compat.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/compat.h>
+#include <xine/demux.h>
 #include "bswap.h"
 #include "group_games.h"
 
@@ -128,7 +128,7 @@ static int demux_idcin_send_chunk(demux_plugin_t *this_gen) {
   unsigned char disk_palette[PALETTE_SIZE * 3];
   palette_entry_t palette[PALETTE_SIZE];
   int i;
-  unsigned int remaining_sample_bytes;
+  int remaining_sample_bytes;
   int scale_bits;
 
   /* figure out what the next data is */
@@ -357,7 +357,8 @@ static void demux_idcin_send_headers(demux_plugin_t *this_gen) {
   demux_idcin_t *this = (demux_idcin_t *) this_gen;
   buf_element_t *buf;
   xine_bmiheader *bih = (xine_bmiheader *)this->bih;
-  uint32_t i, size;
+  uint32_t i;
+  int size;
 
   this->video_fifo  = this->stream->video_fifo;
   this->audio_fifo  = this->stream->audio_fifo;
@@ -443,11 +444,6 @@ static int demux_idcin_seek (demux_plugin_t *this_gen, off_t start_pos, int star
   return this->status;
 }
 
-static void demux_idcin_dispose (demux_plugin_t *this) {
-
-  free(this);
-}
-
 static int demux_idcin_get_status (demux_plugin_t *this_gen) {
   demux_idcin_t *this = (demux_idcin_t *) this_gen;
 
@@ -479,7 +475,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.send_headers      = demux_idcin_send_headers;
   this->demux_plugin.send_chunk        = demux_idcin_send_chunk;
   this->demux_plugin.seek              = demux_idcin_seek;
-  this->demux_plugin.dispose           = demux_idcin_dispose;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
   this->demux_plugin.get_status        = demux_idcin_get_status;
   this->demux_plugin.get_stream_length = demux_idcin_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_idcin_get_capabilities;
@@ -490,19 +486,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   switch (stream->content_detection_method) {
 
-  case METHOD_BY_EXTENSION: {
-    const char *extensions, *mrl;
-
-    mrl = input->get_mrl (input);
-    extensions = class_gen->get_extensions (class_gen);
-
-    if (!_x_demux_check_extension (mrl, extensions)) {
-      free (this);
-      return NULL;
-    }
-  }
-  /* falling through is intended */
-
+  case METHOD_BY_MRL:
   case METHOD_BY_CONTENT:
   case METHOD_EXPLICIT:
 
@@ -521,40 +505,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-
-static const char *get_description (demux_class_t *this_gen) {
-  return "Id Quake II Cinematic file demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "Id CIN";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "cin";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return NULL;
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-  demux_idcin_class_t *this = (demux_idcin_class_t *) this_gen;
-
-  free (this);
-}
-
 void *demux_idcin_init_plugin (xine_t *xine, void *data) {
   demux_idcin_class_t     *this;
 
   this         = calloc(1, sizeof(demux_idcin_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("Id Quake II Cinematic file demux plugin");
+  this->demux_class.identifier      = "Id CIN";
+  this->demux_class.mimetypes       = NULL;
+  this->demux_class.extensions      = "cin";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }

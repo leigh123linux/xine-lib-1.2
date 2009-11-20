@@ -27,9 +27,9 @@
 
 #include <stdio.h>
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "post.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/post.h>
 #include "visualizations.h"
 
 #define FPS 20
@@ -359,33 +359,18 @@ static post_plugin_t *oscope_open_plugin(post_class_t *class_gen, int inputs,
   return &this->post;
 }
 
-static char *oscope_get_identifier(post_class_t *class_gen)
-{
-  return "Oscilloscope";
-}
-
-static char *oscope_get_description(post_class_t *class_gen)
-{
-  return "Oscilloscope";
-}
-
-static void oscope_class_dispose(post_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 /* plugin class initialization function */
 void *oscope_init_plugin(xine_t *xine, void *data)
 {
-  post_class_oscope_t *class = (post_class_oscope_t *)malloc(sizeof(post_class_oscope_t));
+  post_class_oscope_t *class = (post_class_oscope_t *)xine_xmalloc(sizeof(post_class_oscope_t));
   
   if (!class)
     return NULL;
   
   class->post_class.open_plugin     = oscope_open_plugin;
-  class->post_class.get_identifier  = oscope_get_identifier;
-  class->post_class.get_description = oscope_get_description;
-  class->post_class.dispose         = oscope_class_dispose;
+  class->post_class.identifier      = "Oscilloscope";
+  class->post_class.description     = N_("Oscilloscope");
+  class->post_class.dispose         = default_post_class_dispose;
   
   class->xine                       = xine;
   

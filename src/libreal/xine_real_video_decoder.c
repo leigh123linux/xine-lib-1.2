@@ -41,10 +41,10 @@
 #define LOG
 */
 #include "bswap.h"
-#include "xine_internal.h"
-#include "video_out.h"
-#include "buffer.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/video_out.h>
+#include <xine/buffer.h>
+#include <xine/xineutils.h>
 
 #include "real_common.h"
 
@@ -521,19 +521,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
 /*
  * real plugin class
  */
-
-static char *get_identifier (video_decoder_class_t *this) {
-  return "realvdec";
-}
-
-static char *get_description (video_decoder_class_t *this) {
-  return "real binary-only codec based video decoder plugin";
-}
-
-static void dispose_class (video_decoder_class_t *this) {
-  free (this);
-}
-
 void *init_realvdec (xine_t *xine, void *data) {
 
   real_class_t       *this;
@@ -541,9 +528,9 @@ void *init_realvdec (xine_t *xine, void *data) {
   this = (real_class_t *) calloc(1, sizeof(real_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.get_identifier  = get_identifier;
-  this->decoder_class.get_description = get_description;
-  this->decoder_class.dispose         = dispose_class;
+  this->decoder_class.identifier      = "realvdec";
+  this->decoder_class.description     = N_("real binary-only codec based video decoder plugin");
+  this->decoder_class.dispose         = default_video_decoder_class_dispose;
 
   _x_real_codecs_init(xine);
 
@@ -554,7 +541,7 @@ void *init_realvdec (xine_t *xine, void *data) {
  * exported plugin catalog entry
  */
 
-static uint32_t supported_types[] = { BUF_VIDEO_RV30,
+static const uint32_t supported_types[] = { BUF_VIDEO_RV30,
                                       BUF_VIDEO_RV40,
                                       0 };
 

@@ -25,9 +25,9 @@
 #include "config.h"
 #endif
 
-#include "xine_internal.h"
-#include "post.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/post.h>
+#include <xine/xineutils.h>
 #include <pthread.h>
 
 /* plugin class initialization function */
@@ -124,9 +124,6 @@ static xine_post_api_t post_api = {
 static post_plugin_t *boxblur_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target);
-static char          *boxblur_get_identifier(post_class_t *class_gen);
-static char          *boxblur_get_description(post_class_t *class_gen);
-static void           boxblur_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
 static void           boxblur_dispose(post_plugin_t *this_gen);
@@ -140,15 +137,15 @@ static int            boxblur_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 void *boxblur_init_plugin(xine_t *xine, void *data)
 {
-  post_class_t *class = (post_class_t *)malloc(sizeof(post_class_t));
+  post_class_t *class = (post_class_t *)xine_xmalloc(sizeof(post_class_t));
 
   if (!class)
     return NULL;
   
   class->open_plugin     = boxblur_open_plugin;
-  class->get_identifier  = boxblur_get_identifier;
-  class->get_description = boxblur_get_description;
-  class->dispose         = boxblur_class_dispose;
+  class->identifier      = "boxblur";
+  class->description     = N_("box blur filter from mplayer");
+  class->dispose         = default_post_class_dispose;
 
   return class;
 }
@@ -197,22 +194,6 @@ static post_plugin_t *boxblur_open_plugin(post_class_t *class_gen, int inputs,
   
   return &this->post;
 }
-
-static char *boxblur_get_identifier(post_class_t *class_gen)
-{
-  return "boxblur";
-}
-
-static char *boxblur_get_description(post_class_t *class_gen)
-{
-  return "box blur filter from mplayer";
-}
-
-static void boxblur_class_dispose(post_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 
 static void boxblur_dispose(post_plugin_t *this_gen)
 {

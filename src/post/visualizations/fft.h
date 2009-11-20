@@ -44,7 +44,6 @@ void    fft_compute (fft_t *fft, complex_t wave[]);
 void    fft_window (fft_t *fft, complex_t wave[]);
 
 double  fft_amp (int n, complex_t wave[], int bits);
-double  fft_phase (int n, complex_t wave[], int bits);
 void    fft_scale (complex_t wave[], int bits);
 
 #endif /* FFT_H */

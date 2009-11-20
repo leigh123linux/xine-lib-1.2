@@ -47,10 +47,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "demux.h"
-#include "buffer.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/demux.h>
+#include <xine/buffer.h>
 #include "bswap.h"
 
 #include "iff.h"
@@ -1124,92 +1124,29 @@ static int demux_iff_seek (demux_plugin_t *this_gen,
 static void demux_iff_dispose (demux_plugin_t *this_gen) {
   demux_iff_t *this                     = (demux_iff_t *) this_gen;
 
-  if( this->bmhd ) {
-    free(this->bmhd);
-    this->bmhd                          = NULL;
-  }
-  if( this->cmap ) {
-    free( this->cmap );
-    this->cmap                          = NULL;
-  }
-  if( this->grab ) {
-    free(this->grab);
-    this->grab                          = NULL;
-  }
-  if( this->dest ) {
-    free(this->dest);
-    this->dest                          = NULL;
-  }
-  if( this->camg ) {
-    free(this->camg);
-    this->camg                          = NULL;
-  }
-  if( this->ccrt ) {
-    free(this->ccrt);
-    this->ccrt                          = NULL;
-  }
-  if( this->dpi ) {
-    free(this->dpi);
-    this->dpi                           = NULL;
-  }
+  free(this->bmhd);
+  free(this->cmap);
+  free(this->grab);
+  free(this->dest);
+  free(this->camg);
+  free(this->ccrt);
+  free(this->dpi);
+  free(this->vhdr);
+  free(this->atak);
+  free(this->rlse);
+  free(this->anhd);
+  free(this->dpan);
 
-  if( this->vhdr ) {
-    free(this->vhdr);
-    this->vhdr                          = NULL;
-  }
-  if( this->atak )
-  {
-    free( this->atak );
-    this->atak                          = NULL;
-  }
-  if( this->rlse ) {
-    free( this->rlse );
-    this->rlse                          = NULL;
-  }
+  free(this->title);
+  free(this->copyright);
+  free(this->author);
+  free(this->annotations);
+  free(this->version);
+  free(this->text);
 
-  if( this->anhd ) {
-    free( this->anhd );
-    this->anhd                          = NULL;
-  }
+  free (this->audio_interleave_buffer);
+  free (this->audio_read_buffer);
 
-  if( this->dpan ) {
-    free( this->dpan );
-    this->dpan                          = NULL;
-  }
-
-  if( this->title ) {
-    free (this->title);
-    this->title                         = NULL;
-  }
-  if( this->copyright ) {
-    free (this->copyright);
-    this->copyright                     = NULL;
-  }
-  if( this->author ) {
-    free (this->author);
-    this->author                        = NULL;
-  }
-  if( this->annotations ) {
-    free (this->annotations);
-    this->annotations                   = NULL;
-  }
-  if( this->version ) {
-    free (this->version);
-    this->version                       = NULL;
-  }
-  if( this->text ) {
-    free (this->text);
-    this->text                          = NULL;
-  }
-
-  if( this->audio_interleave_buffer ) {
-    free (this->audio_interleave_buffer);
-    this->audio_interleave_buffer       = NULL;
-  }
-  if( this->audio_read_buffer ) {
-    free (this->audio_read_buffer);
-    this->audio_read_buffer             = NULL;
-  }
   this->audio_buffer_filled             = 0;
 
   free(this);
@@ -1260,19 +1197,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   switch (stream->content_detection_method) {
 
-    case METHOD_BY_EXTENSION: {
-      const char *extensions, *mrl;
-
-      mrl                               = input->get_mrl (input);
-      extensions                        = class_gen->get_extensions (class_gen);
-
-      if (!_x_demux_check_extension (mrl, extensions)) {
-        free (this);
-        return NULL;
-      }
-    }
-    /* falling through is intended */
-
+    case METHOD_BY_MRL:
     case METHOD_BY_CONTENT:
     case METHOD_EXPLICIT:
 
@@ -1291,46 +1216,25 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static const char *get_description (demux_class_t *this_gen) {
-  return "IFF demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "IFF";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "iff svx 8svx 16sv ilbm ham ham6 ham8 anim anim3 anim5 anim7 anim8";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return "audio/x-8svx: 8svx: IFF-8SVX Audio;"
-         "audio/8svx: 8svx: IFF-8SVX Audio;"
-         "audio/x-16sv: 16sv: IFF-16SV Audio;"
-         "audio/168sv: 16sv: IFF-16SV Audio;"
-         "image/x-ilbm: ilbm: IFF-ILBM Picture;"
-         "image/ilbm: ilbm: IFF-ILBM Picture;"
-         "video/x-anim: anim: IFF-ANIM Video;"
-         "video/anim: anim: IFF-ANIM Video;";
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-  demux_iff_class_t *this               = (demux_iff_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_plugin (xine_t *xine, void *data) {
   demux_iff_class_t     *this;
 
   this = calloc(1, sizeof(demux_iff_class_t));
 
   this->demux_class.open_plugin         = open_plugin;
-  this->demux_class.get_description     = get_description;
-  this->demux_class.get_identifier      = get_identifier;
-  this->demux_class.get_mimetypes       = get_mimetypes;
-  this->demux_class.get_extensions      = get_extensions;
-  this->demux_class.dispose             = class_dispose;
+  this->demux_class.description         = N_("IFF demux plugin");
+  this->demux_class.identifier          = "IFF";
+  this->demux_class.mimetypes           =
+    "audio/x-8svx: 8svx: IFF-8SVX Audio;"
+    "audio/8svx: 8svx: IFF-8SVX Audio;"
+    "audio/x-16sv: 16sv: IFF-16SV Audio;"
+    "audio/168sv: 16sv: IFF-16SV Audio;"
+    "image/x-ilbm: ilbm: IFF-ILBM Picture;"
+    "image/ilbm: ilbm: IFF-ILBM Picture;"
+    "video/x-anim: anim: IFF-ANIM Video;"
+    "video/anim: anim: IFF-ANIM Video;";
+  this->demux_class.extensions          = "iff svx 8svx 16sv ilbm ham ham6 ham8 anim anim3 anim5 anim7 anim8";
+  this->demux_class.dispose             = default_demux_class_dispose;
 
   return this;
 }
@@ -1344,7 +1248,7 @@ static const demuxer_info_t demux_info_iff = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_DEMUX, 26, "iff", XINE_VERSION_CODE, &demux_info_iff, init_plugin },
+  { PLUGIN_DEMUX, 27, "iff", XINE_VERSION_CODE, &demux_info_iff, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 

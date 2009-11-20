@@ -37,11 +37,17 @@
 #include <cucul.h>
 #include <caca.h>
 
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
+
 #include "xine.h"
-#include "video_out.h"
-#include "xine_internal.h"
+#include <xine/video_out.h>
+#include <xine/xine_internal.h>
 #include "yuv2rgb.h"
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 /*
  * structures
@@ -54,7 +60,6 @@ typedef struct caca_frame_s {
   cucul_dither_t *pixmap_s;  /* pixmap info structure */
   uint8_t            *pixmap_d;  /* pixmap data */
   int                width, height;
-  uint8_t            *mem[3];
 
   int                format;  /* XINE_IMGFMT_* flags */
 
@@ -94,15 +99,11 @@ static uint32_t caca_get_capabilities (vo_driver_t *this) {
 static void caca_dispose_frame (vo_frame_t *vo_img) {
   caca_frame_t *frame = (caca_frame_t *)vo_img;
   
-  if (frame->mem[0])
-    free (frame->mem[0]);
-  if (frame->mem[1])
-    free (frame->mem[1]);
-  if (frame->mem[2])
-    free (frame->mem[2]);
+  av_free (frame->vo_frame.base[0]);
+  av_free (frame->vo_frame.base[1]);
+  av_free (frame->vo_frame.base[2]);
 
-  if (frame->pixmap_d)
-    free (frame->pixmap_d);
+  free (frame->pixmap_d);
   if (frame->pixmap_s)
     cucul_free_dither (frame->pixmap_s);
 
@@ -148,23 +149,12 @@ static void caca_update_frame_format (vo_driver_t *this_gen, vo_frame_t *img,
   if ((frame->width != width) || (frame->height != height) 
       || (frame->format != format)) {
 
-    if (frame->mem[0]) {
-      free (frame->mem[0]);
-      frame->mem[0] = NULL;
-    }
-    if (frame->mem[1]) {
-      free (frame->mem[1]);
-      frame->mem[1] = NULL;
-    }
-    if (frame->mem[2]) {
-      free (frame->mem[2]);
-      frame->mem[2] = NULL;
-    }
+    av_freep (&frame->vo_frame.base[0]);
+    av_freep (&frame->vo_frame.base[1]);
+    av_freep (&frame->vo_frame.base[2]);
 
-    if (frame->pixmap_d) {
-      free (frame->pixmap_d);
-      frame->pixmap_d = NULL;
-    }
+    free (frame->pixmap_d); frame->pixmap_d = NULL;
+
     if (frame->pixmap_s) {
       cucul_free_dither (frame->pixmap_s);
       frame->pixmap_s = NULL;
@@ -182,19 +172,15 @@ static void caca_update_frame_format (vo_driver_t *this_gen, vo_frame_t *img,
       frame->vo_frame.pitches[0] = 8*((width + 7) / 8);
       frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
       frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
-      frame->vo_frame.base[0] = xine_xmalloc_aligned(16,
-        frame->vo_frame.pitches[0] * height, (void**) &frame->mem[0]);
-      frame->vo_frame.base[1] = xine_xmalloc_aligned(16,
-        frame->vo_frame.pitches[1] * ((height+1)/2), (void**) &frame->mem[1]);
-      frame->vo_frame.base[2] = xine_xmalloc_aligned(16,
-        frame->vo_frame.pitches[2] * ((height+1)/2), (void**) &frame->mem[2]);
+      frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
+      frame->vo_frame.base[1] = av_mallocz(frame->vo_frame.pitches[1] * ((height+1)/2));
+      frame->vo_frame.base[2] = av_mallocz(frame->vo_frame.pitches[2] * ((height+1)/2));
       frame->yuv2rgb->configure (frame->yuv2rgb,
         width, height, frame->vo_frame.pitches[0], frame->vo_frame.pitches[1],
         width, height, width * 4);
     } else if (format == XINE_IMGFMT_YUY2) {
       frame->vo_frame.pitches[0] = 8*((width + 3) / 4);
-      frame->vo_frame.base[0] = xine_xmalloc_aligned(16,
-        frame->vo_frame.pitches[0] * height, (void**) &frame->mem[0]);
+      frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
       frame->yuv2rgb->configure (frame->yuv2rgb,
         width, height, frame->vo_frame.pitches[0], frame->vo_frame.pitches[0],
         width, height, width * 4);
@@ -313,27 +299,15 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   return &this->vo_driver;
 }    
 
-static char* get_identifier (video_driver_class_t *this_gen) {
-  return "CACA";
-}
-
-static char* get_description (video_driver_class_t *this_gen) {
-  return _("xine video output plugin using the Color AsCii Art library");
-}
-
-static void dispose_class (video_driver_class_t *this_gen) {
-  caca_class_t   *this = (caca_class_t *) this_gen;
-  free(this);
-}
 static void *init_class (xine_t *xine, void *visual_gen) {
   caca_class_t    *this;
   
   this = calloc(1, sizeof(caca_class_t));
   
   this->driver_class.open_plugin     = open_plugin;
-  this->driver_class.get_identifier  = get_identifier;
-  this->driver_class.get_description = get_description;
-  this->driver_class.dispose         = dispose_class;
+  this->driver_class.identifier      = "CACA";
+  this->driver_class.description     = N_("xine video output plugin using the Color AsCii Art library");
+  this->driver_class.dispose         = default_video_driver_class_dispose;
   
   this->config            = xine->config;
   this->xine              = xine;
@@ -348,6 +322,6 @@ static const vo_info_t vo_info_caca = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */  
-  { PLUGIN_VIDEO_OUT, 21, "caca", XINE_VERSION_CODE, &vo_info_caca, init_class },
+  { PLUGIN_VIDEO_OUT, 22, "caca", XINE_VERSION_CODE, &vo_info_caca, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

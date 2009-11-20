@@ -40,11 +40,11 @@
 
 #define XINE_ENGINE_INTERNAL
 
-#include "xine_internal.h"
-#include "audio_out.h"
-#include "video_out.h"
-#include "demuxers/demux.h"
-#include "post.h"
+#include <xine/xine_internal.h>
+#include <xine/audio_out.h>
+#include <xine/video_out.h>
+#include <xine/demux.h>
+#include <xine/post.h>
 
 /* 
  * version information / checking
@@ -321,15 +321,6 @@ void xine_config_reset (xine_t *this) {
   config->last = NULL;
   pthread_mutex_unlock(&config->config_lock);
 }
-
-#ifndef XINE_DISABLE_DEPRECATED_FEATURES
-int xine_gui_send_vo_data (xine_stream_t *stream,
-			   int type, void *data) {
-
-  return stream->video_driver->gui_data_exchange (stream->video_driver, 
-						  type, data);
-}
-#endif
 
 int xine_port_send_gui_data (xine_video_port_t *vo,
 			   int type, void *data) {
@@ -973,7 +964,7 @@ int _x_message(xine_stream_t *stream, int type, ...) {
   va_list                 ap;
   char                   *s, *params;
   char                   *args[1025];
-  static const char      *std_explanation[] = {
+  static const char *const std_explanation[] = {
     "",
     N_("Warning:"),
     N_("Unknown host:"),

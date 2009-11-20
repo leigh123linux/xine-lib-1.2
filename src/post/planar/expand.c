@@ -27,8 +27,8 @@
  *
  */
 
-#include "xine_internal.h"
-#include "post.h"
+#include <xine/xine_internal.h>
+#include <xine/post.h>
 
 /* The expand trick explained:
  *
@@ -100,9 +100,6 @@ typedef struct post_expand_s {
 static post_plugin_t *expand_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target);
-static char          *expand_get_identifier(post_class_t *class_gen);
-static char          *expand_get_description(post_class_t *class_gen);
-static void           expand_class_dispose(post_class_t *class_gen);
 
 /* plugin instance functions */
 static void           expand_dispose(post_plugin_t *this_gen);
@@ -130,15 +127,15 @@ static int32_t        expand_overlay_add_event(video_overlay_manager_t *this_gen
 
 void *expand_init_plugin(xine_t *xine, void *data)
 {
-  post_class_t *class = (post_class_t *)malloc(sizeof(post_class_t));
+  post_class_t *class = (post_class_t *)xine_xmalloc(sizeof(post_class_t));
   
   if (!class)
     return NULL;
   
   class->open_plugin     = expand_open_plugin;
-  class->get_identifier  = expand_get_identifier;
-  class->get_description = expand_get_description;
-  class->dispose         = expand_class_dispose;
+  class->identifier      = "expand";
+  class->description     = N_("add black borders to top and bottom of video to expand it to 4:3 aspect ratio");
+  class->dispose         = default_post_class_dispose;
   
   return class;
 }
@@ -190,22 +187,6 @@ static post_plugin_t *expand_open_plugin(post_class_t *class_gen, int inputs,
   
   return &this->post;
 }
-
-static char *expand_get_identifier(post_class_t *class_gen)
-{
-  return "expand";
-}
-
-static char *expand_get_description(post_class_t *class_gen)
-{
-  return "add black borders to top and bottom of video to expand it to 4:3 aspect ratio";
-}
-
-static void expand_class_dispose(post_class_t *class_gen)
-{
-  free(class_gen);
-}
-
 
 static void expand_dispose(post_plugin_t *this_gen)
 {
