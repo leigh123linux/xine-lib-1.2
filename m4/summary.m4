@@ -78,7 +78,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     test x"$have_imagemagick" = x"yes" && echo "   - image"
     test x"$have_theora" = x"yes"      && echo "   - theora"
     test x"$have_w32dll" = x"yes"      && echo "   - w32dll"
-    test x$"have_vdpau" = x"yes"       && echo "   - vdpau"
+    test x"$have_vdpau" = x"yes"       && echo "   - vdpau"
     if test x"$with_external_ffmpeg" != x"no"; then
         echo "   - ffmpeg (external library)"
     else
@@ -204,7 +204,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
                 echo "   - OpenGL"
             fi
         fi
-        test x$"have_vdpau" = x"yes"       && echo "   - vdpau (X11 VDPAU)"
+        test x"$have_vdpau" = x"yes"       && echo "   - vdpau (X11 Video Decode and Presentation API for Unix)"
         if test x"$have_sunfb" = x"yes"; then
             if test x"$have_sundga" = x"yes"; then
                 echo "   - PGX64 (for Sun XVR100/PGX64/PGX24 cards)"
