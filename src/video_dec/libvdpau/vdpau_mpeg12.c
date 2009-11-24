@@ -794,7 +794,8 @@ static void vdpau_mpeg12_decode_data (video_decoder_t *this_gen, buf_element_t *
   if ( !buf->size )
     return;
 
-  seq->cur_pts = buf->pts;
+  if ( buf->pts )
+    seq->cur_pts = buf->pts;
 
   int size = seq->bufpos+buf->size;
   if ( seq->bufsize < size ) {
