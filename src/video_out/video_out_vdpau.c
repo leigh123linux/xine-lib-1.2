@@ -352,6 +352,7 @@ typedef struct {
   int               enable_inverse_telecine;
   int               honor_progressive;
   int               skip_chroma;
+  int               studio_levels;
 
   int               vdp_runtime_nr;
   int               reinit_needed;
@@ -1350,15 +1351,58 @@ static void vdpau_update_csc( vdpau_driver_t *this_gen )
   float contrast = this_gen->contrast/100.0;
   float brightness = this_gen->brightness/100.0;
 
-  printf( "vo_vdpau: vdpau_update_csc: hue=%f, saturation=%f, contrast=%f, brightness=%f, color_standard=%d\n", hue, saturation, contrast, brightness, this_gen->color_standard );
+  printf( "vo_vdpau: vdpau_update_csc: hue=%f, saturation=%f, contrast=%f, brightness=%f, color_standard=%d studio_levels=%d\n", hue, saturation, contrast, brightness, this_gen->color_standard, this_gen->studio_levels );
 
+  VdpStatus st;
   VdpCSCMatrix matrix;
   VdpProcamp procamp = { VDP_PROCAMP_VERSION, brightness, contrast, saturation, hue };
 
-  VdpStatus st = vdp_generate_csc_matrix( &procamp, this_gen->color_standard, &matrix );
-  if ( st != VDP_STATUS_OK ) {
-    printf( "vo_vdpau: error, can't generate csc matrix !!\n" );
-    return;
+  if ( this_gen->studio_levels ) {
+    int i;
+    float Kr, Kg, Kb;
+    float uvcos = procamp.saturation * cos(procamp.hue);
+    float uvsin = procamp.saturation * sin(procamp.hue);
+    int rgbmin = 16;
+    int rgbr = 235 - 16;
+    switch ( this_gen->color_standard ) {
+      case VDP_COLOR_STANDARD_SMPTE_240M:
+        Kr = 0.2122;
+        Kg = 0.7013;
+        Kb = 0.0865;
+        break;
+      case VDP_COLOR_STANDARD_ITUR_BT_709:
+        Kr = 0.2125;
+        Kg = 0.7154;
+        Kb = 0.0721;
+        break;
+      case VDP_COLOR_STANDARD_ITUR_BT_601:
+      default:
+        Kr = 0.299;
+        Kg = 0.587;
+        Kb = 0.114;
+        break;
+    }
+    float uv_coeffs[3][2] = {{ 0.000,                                (rgbr / 112.0) * (1 - Kr)           },
+                             {-(rgbr / 112.0) * (1 - Kb) * Kb / Kg, -(rgbr / 112.0) * (1 - Kr) * Kr / Kg },
+                             { (rgbr / 112.0) * (1 - Kb),            0.000                               }};
+    for (i = 0; i < 3; ++i) {
+      matrix[i][3]  = procamp.brightness;
+      matrix[i][0]  = rgbr * procamp.contrast / 219;
+      matrix[i][3] += (-16 / 255.0) * matrix[i][0];
+      matrix[i][1]  = uv_coeffs[i][0] * uvcos + uv_coeffs[i][1] * uvsin;
+      matrix[i][3] += (-128 / 255.0) * matrix[i][1];
+      matrix[i][2]  = uv_coeffs[i][0] * uvsin + uv_coeffs[i][1] * uvcos;
+      matrix[i][3] += (-128 / 255.0) * matrix[i][2];
+      matrix[i][3] += rgbmin / 255.0;
+      matrix[i][3] += 0.5 - procamp.contrast / 2.0;
+    }
+  }
+  else {
+    st = vdp_generate_csc_matrix( &procamp, this_gen->color_standard, &matrix );
+    if ( st != VDP_STATUS_OK ) {
+      printf( "vo_vdpau: error, can't generate csc matrix !!\n" );
+      return;
+    }
   }
   VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_CSC_MATRIX };
   void* attribute_values[] = { &matrix };
@@ -1390,6 +1434,15 @@ static void vdpau_set_skip_chroma( void *this_gen, xine_cfg_entry_t *entry )
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
   this->skip_chroma = entry->num_value;
   vdpau_update_skip_chroma( this );
+}
+
+
+
+static void vdpau_set_studio_levels( void *this_gen, xine_cfg_entry_t *entry )
+{
+  vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
+  this->studio_levels = entry->num_value;
+  vdpau_update_csc( this );
 }
 
 
@@ -2535,6 +2588,11 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
         _("Setting to true may help if your video card isn't able to run advanced deinterlacers.\n\n"),
         10, vdpau_set_skip_chroma, this );
   }
+
+  this->studio_levels = config->register_bool( config, "video.output.vdpau_studio_levels", 0,
+        _("vdpau: disable studio level"),
+        _("Setting to true enables studio levels (16-219) instead of PC levels (0-255) in RGB colors.\n\n"),
+        10, vdpau_set_studio_levels, this );
 
   /* number of video frames from config - register it with the default value. */
   int frame_num = config->register_num (config, "engine.buffers.video_num_frames", 15, /* default */
