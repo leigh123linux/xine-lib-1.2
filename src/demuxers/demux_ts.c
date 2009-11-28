@@ -1471,6 +1471,14 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
       if (this->hdmv > 0) {
 	if (pid >= 0x1200 && pid < 0x1300) {
 	  /* HDMV Presentation Graphics / SPU */
+
+	  if (this->spu_langs_count >= MAX_SPU_LANGS) {
+	    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+		     "demux_ts: too many SPU tracks! ignoring pid 0x%.4x\n",
+		     pid);
+	    break;
+	  }
+
 	  demux_ts_spu_lang *lang = &this->spu_langs[this->spu_langs_count];
 
 	  memset(lang->desc.lang, 0, sizeof(lang->desc.lang));
