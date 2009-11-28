@@ -669,13 +669,12 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
       this->last_pmt_crc = 0;
       this->videoPid = INVALID_PID;
       this->spu_pid = INVALID_PID;
-    }
 
-    this->pmt_pid[program_count] = pmt_pid;
-    if (this->pmt[program_count] != NULL) {
-      free(this->pmt[program_count]);
-      this->pmt[program_count] = NULL;
-      this->pmt_write_ptr[program_count] = NULL;
+      if (this->pmt[program_count] != NULL) {
+	free(this->pmt[program_count]);
+	this->pmt[program_count] = NULL;
+	this->pmt_write_ptr[program_count] = NULL;
+      }
     }
 #ifdef TS_PAT_LOG
     if (this->program_number[program_count] != INVALID_PROGRAM)
