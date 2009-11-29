@@ -1,3 +1,4 @@
+
 /*
  * Copyright (C) 2000-2003 the xine project
  *
@@ -233,6 +234,8 @@
       STREAM_VIDEO_MPEG      = 0x80,
       STREAM_AUDIO_AC3       = 0x81,
       STREAM_SPU_BITMAP_HDMV = 0x90,
+
+      STREAM_VIDEO_VC1       = 0xea,    /* VC-1 Video */
     } streamType;
 
 #define WRAP_THRESHOLD       270000
@@ -272,7 +275,7 @@ typedef struct {
 } demux_ts_media;
 
 /* DVBSUB */
-#define MAX_SPU_LANGS 16
+#define MAX_SPU_LANGS 32
 
 typedef struct {
   spu_dvb_descriptor_t desc;
@@ -281,7 +284,7 @@ typedef struct {
 } demux_ts_spu_lang;
   
 /* Audio Channels */
-#define MAX_AUDIO_TRACKS 16
+#define MAX_AUDIO_TRACKS 32
 
 typedef struct {
     int pid;
@@ -652,13 +655,12 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
       this->last_pmt_crc = 0;
       this->videoPid = INVALID_PID;
       this->spu_pid = INVALID_PID;
-    }
 
-    this->pmt_pid[program_count] = pmt_pid;
-    if (this->pmt[program_count] != NULL) {
-      free(this->pmt[program_count]);
-      this->pmt[program_count] = NULL;
-      this->pmt_write_ptr[program_count] = NULL;
+      if (this->pmt[program_count] != NULL) {
+	free(this->pmt[program_count]);
+	this->pmt[program_count] = NULL;
+	this->pmt_write_ptr[program_count] = NULL;
+      }
     }
 #ifdef TS_PAT_LOG
     if (this->program_number[program_count] != INVALID_PROGRAM)
@@ -745,6 +747,13 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
 
   p += header_len + 9;
   packet_len -= header_len + 3;
+
+  if (m->descriptor_tag == STREAM_VIDEO_VC1) {
+    m->content   = p;
+    m->size      = packet_len;
+    m->type      = BUF_VIDEO_VC1;
+    return 1;
+  }
 
   if (m->descriptor_tag == STREAM_SPU_BITMAP_HDMV) {
     long payload_len = ((buf[4] << 8) | buf[5]) - header_len - 3;
@@ -1316,6 +1325,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
     case ISO_13818_VIDEO:
     case ISO_14496_PART2_VIDEO:
     case ISO_14496_PART10_VIDEO:
+    case STREAM_VIDEO_VC1:
       if (this->videoPid == INVALID_PID) {
 #ifdef TS_PMT_LOG
         printf ("demux_ts: PMT video pid 0x%.4x type %2.2x\n", pid, stream[0]);
@@ -1446,6 +1456,14 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
       if (this->hdmv > 0) {
 	if (pid >= 0x1200 && pid < 0x1300) {
 	  /* HDMV Presentation Graphics / SPU */
+
+	  if (this->spu_langs_count >= MAX_SPU_LANGS) {
+	    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+		     "demux_ts: too many SPU tracks! ignoring pid 0x%.4x\n",
+		     pid);
+	    break;
+	  }
+
 	  demux_ts_spu_lang *lang = &this->spu_langs[this->spu_langs_count];
 
 	  memset(lang->desc.lang, 0, sizeof(lang->desc.lang));
