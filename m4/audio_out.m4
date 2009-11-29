@@ -233,7 +233,7 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
     AC_ARG_ENABLE([sndio],
 		  [AS_HELP_STRING([--without-sndio], [Build without sndio support])],
                   [test x"$enableval" != x"no" && enable_sndio="yes"],
-                  [test $default_enable_sndio = disable && enable_sndio="no"])
+                  [test x"$default_enable_sndio" = x"disable" && enable_sndio="no"])
     if test "x$enable_sndio" != "xno"; then
 	AC_CHECK_LIB([sndio], [sio_open], [SNDIO_LIBS=-lsndio; have_sndio=yes],
 		     [have_sndio=no])
