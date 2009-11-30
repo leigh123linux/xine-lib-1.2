@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -21,9 +21,9 @@
  * other end and you can watch tv anywhere in the house ..)
  *
  * how to set up mp1e for use with this plugin:
- * 
+ *
  * use mp1 to capture the live stream, e.g.
- * mp1e -b 1200 -R 4,32 -a 0 -B 160 -v >live.mpg 
+ * mp1e -b 1200 -R 4,32 -a 0 -B 160 -v >live.mpg
  *
  * add an extra service "xine" to /etc/services and /etc/inetd.conf, e.g.:
  * /etc/services:
@@ -78,11 +78,11 @@ typedef struct {
   input_plugin_t   input_plugin;
 
   xine_stream_t   *stream;
-  
+
   int              fh;
   char            *mrl;
   char            *host_port;
-  
+
   char             preview[MAX_PREVIEW_SIZE];
   off_t            preview_size;
 
@@ -122,21 +122,21 @@ static int host_connect_attempt_ipv4(struct in_addr ia, int port, xine_t *xine) 
     return -1;
   }
 
-  sin.sin_family = AF_INET;	
+  sin.sin_family = AF_INET;
   sin.sin_addr   = ia;
   sin.sin_port   = htons(port);
-  
+
 #ifndef WIN32
-  if (connect(s, (struct sockaddr *)&sin, sizeof(sin))==-1 && errno != EINPROGRESS) 
+  if (connect(s, (struct sockaddr *)&sin, sizeof(sin))==-1 && errno != EINPROGRESS)
 #else
-  if (connect(s, (struct sockaddr *)&sin, sizeof(sin))==-1 && WSAGetLastError() != WSAEINPROGRESS) 
+  if (connect(s, (struct sockaddr *)&sin, sizeof(sin))==-1 && WSAGetLastError() != WSAEINPROGRESS)
 #endif
   {
     xine_log(xine, XINE_LOG_MSG,
              _("input_net: connect(): %s\n"), strerror(errno));
     close(s);
     return -1;
-  }	
+  }
 
   return s;
 }
@@ -144,7 +144,7 @@ static int host_connect_attempt_ipv4(struct in_addr ia, int port, xine_t *xine) 
 static int host_connect_attempt(int family, struct sockaddr* sin, int addrlen, xine_t *xine) {
 
   int                s;
-  
+
   s = socket(family, SOCK_STREAM, IPPROTO_TCP);
   if (s==-1) {
     xine_log(xine, XINE_LOG_MSG,
@@ -153,16 +153,16 @@ static int host_connect_attempt(int family, struct sockaddr* sin, int addrlen, x
   }
 
 #ifndef WIN32
-  if (connect(s, sin, addrlen)==-1 && errno != EINPROGRESS)  
+  if (connect(s, sin, addrlen)==-1 && errno != EINPROGRESS)
 #else
-  if (connect(s, sin, addrlen)==-1 && WSAGetLastError() != WSAEINPROGRESS) 
+  if (connect(s, sin, addrlen)==-1 && WSAGetLastError() != WSAEINPROGRESS)
 #endif
   {
     xine_log(xine, XINE_LOG_MSG,
              _("input_net: connect(): %s\n"), strerror(errno));
     close(s);
     return -1;
-  }	
+  }
 
   return s;
 }
@@ -173,14 +173,14 @@ static int host_connect_ipv4(const char *host, int port, xine_t *xine) {
   struct hostent *h;
   int             i;
   int             s;
-	
+
   h = gethostbyname(host);
   if (h==NULL) {
     xine_log(xine, XINE_LOG_MSG,
              _("input_net: unable to resolve '%s'.\n"), host);
     return -1;
   }
-	
+
   for (i=0; h->h_addr_list[i]; i++) {
     struct in_addr ia;
     memcpy (&ia, h->h_addr_list[i],4);
@@ -205,36 +205,36 @@ static int host_connect(const char *host, int port, xine_t *xine) {
   int error;
   char strport[16];
   int             s;
-	
+
   memset(&hints, 0, sizeof(hints));
   hints.ai_socktype = SOCK_STREAM;
-  hints.ai_family = PF_UNSPEC; 
-  
+  hints.ai_family = PF_UNSPEC;
+
   snprintf(strport, sizeof(strport), "%d", port);
 
   lprintf("Resolving host '%s' at port '%s'\n", host, strport);
 
   error = getaddrinfo(host, strport, &hints, &res);
-  
+
   if (error) {
-      
+
     xine_log(xine, XINE_LOG_MSG,
              _("input_net: unable to resolve '%s'.\n"), host);
     return -1;
   }
-  
+
   /* We loop over all addresses and try to connect */
   tmpaddr = res;
   while (tmpaddr) {
-      
-      s = host_connect_attempt (tmpaddr->ai_family, 
+
+      s = host_connect_attempt (tmpaddr->ai_family,
 				tmpaddr->ai_addr, tmpaddr->ai_addrlen, xine);
       if (s != -1)
 	  return s;
 
       tmpaddr = tmpaddr->ai_next;
   }
-  
+
   xine_log(xine, XINE_LOG_MSG,
            _("input_net: unable to connect to '%s'.\n"), host);
   return -1;
@@ -246,7 +246,7 @@ static int host_connect(const char *host, int port, xine_t *xine) {
 #define LOW_WATER_MARK  50
 #define HIGH_WATER_MARK 100
 
-static off_t net_plugin_read (input_plugin_t *this_gen, 
+static off_t net_plugin_read (input_plugin_t *this_gen,
 			      char *buf, off_t len) {
   net_input_plugin_t *this = (net_input_plugin_t *) this_gen;
   off_t n, total;
@@ -273,7 +273,7 @@ static off_t net_plugin_read (input_plugin_t *this_gen,
     n = _x_read_abort (this->stream, this->fh, &buf[total], len-total);
 
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "input_net: got %" PRIdMAX " bytes (%" PRIdMAX "/%" PRIdMAX " bytes read)\n", (intmax_t)n, (intmax_t)total, (intmax_t)len);
-  
+
     if (n < 0) {
       _x_message(this->stream, XINE_MSG_READ_ERROR, this->host_port, NULL);
       return 0;
@@ -285,7 +285,7 @@ static off_t net_plugin_read (input_plugin_t *this_gen,
   return total;
 }
 
-static buf_element_t *net_plugin_read_block (input_plugin_t *this_gen, 
+static buf_element_t *net_plugin_read_block (input_plugin_t *this_gen,
 					     fifo_buffer_t *fifo, off_t todo) {
   /* net_input_plugin_t   *this = (net_input_plugin_t *) this_gen; */
   buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
@@ -300,7 +300,7 @@ static buf_element_t *net_plugin_read_block (input_plugin_t *this_gen,
 
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
-  
+
   total_bytes = net_plugin_read (this_gen, (char*)buf->content, todo);
 
   if (total_bytes != todo) {
@@ -381,7 +381,7 @@ static const char* net_plugin_get_mrl (input_plugin_t *this_gen) {
   return this->mrl;
 }
 
-static int net_plugin_get_optional_data (input_plugin_t *this_gen, 
+static int net_plugin_get_optional_data (input_plugin_t *this_gen,
 					 void *data, int data_type) {
   net_input_plugin_t *this = (net_input_plugin_t *) this_gen;
 
@@ -404,10 +404,10 @@ static void net_plugin_dispose (input_plugin_t *this_gen ) {
     close(this->fh);
     this->fh = -1;
   }
-    
+
   free (this->mrl);
   free (this->host_port);
-  
+
   if (this->nbc) {
     nbc_close (this->nbc);
     this->nbc = NULL;
@@ -464,28 +464,28 @@ static input_plugin_t *net_class_get_instance (input_class_t *cls_gen, xine_stre
 
   if (!strncasecmp (mrl, "tcp://", 6)) {
     filename = (char *) &mrl[6];
-    
+
     if((!filename) || (strlen(filename) == 0)) {
       return NULL;
     }
-    
+
     nbc = nbc_init (stream);
-    
+
   } else if (!strncasecmp (mrl, "slave://", 8)) {
- 
+
     filename = (char *) &mrl[8];
-    
+
     if((!filename) || (strlen(filename) == 0)) {
       return NULL;
     }
-    
+
     /* the only difference for slave:// is that network buffering control
      * is not used. otherwise, dvd still menus are not displayed (it freezes
      * with "buffering..." all the time)
      */
-    
+
     nbc = NULL;
-    
+
   } else {
     return NULL;
   }
@@ -519,7 +519,7 @@ static input_plugin_t *net_class_get_instance (input_class_t *cls_gen, xine_stre
 /*
  *  net plugin class
  */
- 
+
 static const char *net_class_get_description (input_class_t *this_gen) {
 	return _("net input plugin as shipped with xine");
 }
@@ -558,7 +558,7 @@ static void *init_class (xine_t *xine, void *data) {
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_INPUT, 17, "tcp", XINE_VERSION_CODE, NULL, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

@@ -19,7 +19,7 @@
  *
  * pnm util functions header by joschka
  */
- 
+
 #ifndef HAVE_PNM_H
 #define HAVE_PNM_H
 

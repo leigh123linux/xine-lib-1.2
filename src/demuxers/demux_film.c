@@ -163,7 +163,7 @@ static int open_film_file(demux_film_t *film) {
     film->version[3]);
 
   /* load the rest of the FILM header */
-  if (film->input->read(film->input, film_header, film_header_size) != 
+  if (film->input->read(film->input, film_header, film_header_size) !=
     film_header_size) {
     free (film->interleave_buffer);
     free (film->sample_table);
@@ -202,7 +202,7 @@ static int open_film_file(demux_film_t *film) {
 
       if( !film->video_type )
         film->video_type = BUF_VIDEO_UNKNOWN;
-      
+
       /* fetch the audio information if the chunk size checks out */
       if (chunk_size == 32) {
         film->audio_channels = film_header[21];
@@ -388,7 +388,7 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
   }
 
   /* check if we're only sending audio samples until the next keyframe */
-  if ((this->waiting_for_keyframe) && 
+  if ((this->waiting_for_keyframe) &&
       (!this->sample_table[i].audio)) {
     if (this->sample_table[i].keyframe) {
       this->waiting_for_keyframe = 0;
@@ -428,7 +428,7 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
       /* set the frame duration */
       buf->decoder_flags |= BUF_FLAG_FRAMERATE;
       buf->decoder_info[0] = this->sample_table[i].duration;
-            
+
       if (remaining_sample_bytes > buf->max_size)
         buf->size = buf->max_size;
       else
@@ -443,11 +443,11 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
         }
 
         /* skip over the extra non-spec CVID bytes */
-        this->input->seek(this->input, 
+        this->input->seek(this->input,
           this->sample_table[i].sample_size - cvid_chunk_size, SEEK_CUR);
 
         /* load the rest of the chunk */
-        if (this->input->read(this->input, buf->content + 10, 
+        if (this->input->read(this->input, buf->content + 10,
           buf->size - 10) != buf->size - 10) {
           buf->free_buffer(buf);
           this->status = DEMUX_FINISHED;
@@ -499,7 +499,7 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
       /* set the frame duration */
       buf->decoder_flags |= BUF_FLAG_FRAMERATE;
       buf->decoder_info[0] = this->sample_table[i].duration;
-            
+
       if (remaining_sample_bytes > buf->max_size)
         buf->size = buf->max_size;
       else
@@ -627,8 +627,8 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
           buf->content[j] =     this->interleave_buffer[k];
           buf->content[j + 1] = this->interleave_buffer[k + 1];
         }
-        for (j = 2, 
-             k = interleave_index + this->sample_table[i].sample_size / 2; 
+        for (j = 2,
+             k = interleave_index + this->sample_table[i].sample_size / 2;
              j < buf->size; j += 4, k += 2) {
           buf->content[j] =     this->interleave_buffer[k];
           buf->content[j + 1] = this->interleave_buffer[k + 1];
@@ -638,8 +638,8 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
         for (j = 0, k = interleave_index; j < buf->size; j += 2, k += 1) {
           buf->content[j] = this->interleave_buffer[k] += 0x80;
         }
-        for (j = 1, 
-             k = interleave_index + this->sample_table[i].sample_size / 2; 
+        for (j = 1,
+             k = interleave_index + this->sample_table[i].sample_size / 2;
              j < buf->size; j += 2, k += 1) {
           buf->content[j] = this->interleave_buffer[k] += 0x80;
         }
@@ -654,7 +654,7 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
       this->audio_fifo->put(this->audio_fifo, buf);
     }
   }
-  
+
   return this->status;
 }
 
@@ -737,13 +737,13 @@ static int demux_film_seek (demux_plugin_t *this_gen, off_t start_pos, int start
     this->waiting_for_keyframe = 0;
     this->last_sample = 0;
   }
-    
+
   /* if input is non-seekable, do not proceed with the rest of this
    * seek function */
   if (!INPUT_IS_SEEKABLE(this->input))
     return this->status;
 
-  /* perform a binary search on the sample table, testing the offset 
+  /* perform a binary search on the sample table, testing the offset
    * boundaries first */
   if (start_pos) {
     if (start_pos <= 0)
@@ -760,7 +760,7 @@ static int demux_film_seek (demux_plugin_t *this_gen, off_t start_pos, int start
       while (!found) {
         middle = (left + right) / 2;
         if ((start_pos >= this->sample_table[middle].sample_offset) &&
-            (start_pos <= this->sample_table[middle].sample_offset + 
+            (start_pos <= this->sample_table[middle].sample_offset +
              this->sample_table[middle].sample_size)) {
           found = 1;
         } else if (start_pos < this->sample_table[middle].sample_offset) {
@@ -817,7 +817,7 @@ static int demux_film_seek (demux_plugin_t *this_gen, off_t start_pos, int start
   }
 
   this->current_sample = best_index;
-  
+
   return this->status;
 }
 

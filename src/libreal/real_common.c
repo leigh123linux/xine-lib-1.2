@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2007 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -132,8 +132,8 @@ void _x_real_codecs_init(xine_t *const xine) {
 
 #endif
 
-  real_codecs_path = 
-    xine->config->register_filename (xine->config, "decoder.external.real_codecs_path", 
+  real_codecs_path =
+    xine->config->register_filename (xine->config, "decoder.external.real_codecs_path",
 				     default_real_codecs_path,
 				     XINE_CONFIG_STRING_IS_DIRECTORY_NAME,
 				     _("path to RealPlayer codecs"),
@@ -154,7 +154,7 @@ void *_x_real_codec_open(xine_stream_t *const stream, const char *const path,
 			 const char *const codec_alternate) {
   char *codecpath = NULL;
   void *codecmodule = NULL;
-  
+
   asprintf(&codecpath, "%s/%s", path, codec_name);
   if ( (codecmodule = dlopen(codecpath, RTLD_NOW)) ) {
     free(codecpath);
@@ -178,12 +178,12 @@ void *_x_real_codec_open(xine_stream_t *const stream, const char *const path,
   }
 
   _x_message(stream, XINE_MSG_LIBRARY_LOAD_ERROR, codec_name, NULL);
-  
+
   return NULL;
 }
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_VIDEO_DECODER | PLUGIN_MUST_PRELOAD, 18, "realvdec", XINE_VERSION_CODE, &dec_info_realvideo, init_realvdec },
   { PLUGIN_AUDIO_DECODER | PLUGIN_MUST_PRELOAD, 15, "realadec", XINE_VERSION_CODE, &dec_info_realaudio, init_realadec },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }

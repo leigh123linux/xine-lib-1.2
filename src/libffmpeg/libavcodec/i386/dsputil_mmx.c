@@ -2566,17 +2566,17 @@ static void gmc_mmx(uint8_t *dst, uint8_t *src, int stride, int h, int ox, int o
                 "psrlw    %5,    %%mm0 \n\t"
                 "packuswb %%mm0, %%mm0 \n\t"
 
-                : 
+                :
                 : "m"(src[0]), "m"(src[1]),
                   "m"(src[stride]), "m"(src[stride+1]),
                   "m"(*r4), "m"(shift2)
             );
-            
+
             asm volatile(
                 "movd     %%mm0, %0    \n\t"
 
                 : "=m"(dst[x+y*stride])
-                : 
+                :
             );
             src += stride;
         }

@@ -79,9 +79,9 @@
 
 /****************************************************************************
 ** Field 1 | Field 2 | Field 3 | Field 4 |
-**   T0    |         |    T1   |         | 
-**         |   M0    |         |    M1   | 
-**   B0    |         |    B1   |         | 
+**   T0    |         |    T1   |         |
+**         |   M0    |         |    M1   |
+**   B0    |         |    B1   |         |
 */
 
 
@@ -95,15 +95,15 @@
 #define MASKS_DEFINED
   static const int64_t __attribute__((__used__)) YMask    = 0x00ff00ff00ff00ffll;
   static const int64_t __attribute__((__used__)) Mask = 0x7f7f7f7f7f7f7f7fll;
-  static const int64_t __attribute__((__used__)) DwordOne = 0x0000000100000001ll;    
-  static const int64_t __attribute__((__used__)) DwordTwo = 0x0000000200000002ll;    
+  static const int64_t __attribute__((__used__)) DwordOne = 0x0000000100000001ll;
+  static const int64_t __attribute__((__used__)) DwordTwo = 0x0000000200000002ll;
   static int64_t qwGreedyTwoFrameThreshold;
 #endif
 
 #include <mangle.h>
 
 #if defined(IS_SSE)
-static void DeinterlaceGreedy2Frame_SSE(uint8_t *output, int outstride, 
+static void DeinterlaceGreedy2Frame_SSE(uint8_t *output, int outstride,
                                  deinterlace_frame_data_t *data,
                                  int bottom_field, int second_field, int width, int height )
 #elif defined(IS_3DNOW)
@@ -135,7 +135,7 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
     qwGreedyTwoFrameThreshold = GreedyTwoFrameThreshold;
     qwGreedyTwoFrameThreshold += (GreedyTwoFrameThreshold2 << 8);
     qwGreedyTwoFrameThreshold += (qwGreedyTwoFrameThreshold << 48) +
-                                (qwGreedyTwoFrameThreshold << 32) + 
+                                (qwGreedyTwoFrameThreshold << 32) +
                                 (qwGreedyTwoFrameThreshold << 16);
 
 
@@ -150,7 +150,7 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
         M0 = data->f1;
         T0 = data->f2;
     }
-    
+
     if( bottom_field ) {
         M1 += stride;
         T1 += 0;
@@ -194,9 +194,9 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
             "movq %2, %%mm3			\n\t"     // B1
             "movq %3, %%mm2			\n\t"     // M0
             : /* no output */
-            : "m" (*T1), "m" (*M1), 
+            : "m" (*T1), "m" (*M1),
               "m" (*B1), "m" (*M0), "m" (Mask) );
-          
+
 
           asm volatile(
        /* Figure out what to do with the scanline above the one we just copied.
@@ -271,7 +271,7 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
             "pcmpgtb %3, %%mm5			\n\t"
             "pand    %%mm6, %%mm5		\n\t" /* get rid of sign bit */
 
-            "pcmpgtd %5, %%mm5			\n\t" 
+            "pcmpgtd %5, %%mm5			\n\t"
             "pandn   %5, %%mm5			\n\t"
             "paddd   %%mm5, %%mm4			\n\t"
 
@@ -307,9 +307,9 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
 
             "movq    %%mm4, %%mm5			\n\t"
          /* mm4 now is 1 where we want to weave and 0 where we want to bob */
-            "pand    %%mm0, %%mm4			\n\t"                
-            "pandn   %%mm7, %%mm5			\n\t"                
-            "por     %%mm5, %%mm4			\n\t"                
+            "pand    %%mm0, %%mm4			\n\t"
+            "pandn   %%mm7, %%mm5			\n\t"
+            "por     %%mm5, %%mm4			\n\t"
 #ifdef IS_SSE
             "movntq %%mm4, %0			\n\t"
 #else
@@ -353,9 +353,9 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
     }
     else
     {
-        xine_fast_memcpy(Dest, T1, stride); 
+        xine_fast_memcpy(Dest, T1, stride);
     }
-    
+
     /* clear out the MMX registers ready for doing floating point again */
     asm("emms\n\t");
 #endif

@@ -328,7 +328,7 @@ static int open_idcin_file(demux_idcin_t *this) {
   this->input->seek(this->input, IDCIN_HEADER_SIZE, SEEK_SET);
 
   /* read the Huffman table */
-  if (this->input->read(this->input, huffman_table, HUFFMAN_TABLE_SIZE) != 
+  if (this->input->read(this->input, huffman_table, HUFFMAN_TABLE_SIZE) !=
     HUFFMAN_TABLE_SIZE)
     return 0;
 
@@ -347,7 +347,7 @@ static int open_idcin_file(demux_idcin_t *this) {
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITS,
     this->wave.wBitsPerSample);
 
-  this->filesize = this->input->get_length(this->input) - 
+  this->filesize = this->input->get_length(this->input) -
     IDCIN_HEADER_SIZE - HUFFMAN_TABLE_SIZE;
 
   return 1;
@@ -433,7 +433,7 @@ static int demux_idcin_seek (demux_plugin_t *this_gen, off_t start_pos, int star
     this->status = DEMUX_OK;
 
     /* reposition stream past the Huffman tables */
-    this->input->seek(this->input, IDCIN_HEADER_SIZE + HUFFMAN_TABLE_SIZE, 
+    this->input->seek(this->input, IDCIN_HEADER_SIZE + HUFFMAN_TABLE_SIZE,
       SEEK_SET);
 
     this->pts_counter = 0;

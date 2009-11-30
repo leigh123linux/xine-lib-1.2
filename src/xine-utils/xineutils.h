@@ -61,7 +61,7 @@ extern "C" {
 #include <stdio.h>
 #include <string.h>
 
-/* 
+/*
  * Mark exported data symbols for link engine library clients with older
  * Win32 compilers
  */

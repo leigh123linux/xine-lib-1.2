@@ -16,7 +16,7 @@ CLEANFILES = $(awk_generated)
 noinst_LTLIBRARIES = $(dha_lib)
 
 libdha_la_SOURCES = libdha.c mtrr.c pci.c mmi.c ports.c irq.c cpu_flush.c
-nodist_libdha_la_SOURCES = pci_names.c 
+nodist_libdha_la_SOURCES = pci_names.c
 
 EXTRA_PROGRAMS = test
 

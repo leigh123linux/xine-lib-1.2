@@ -81,7 +81,7 @@ In the following text are used symbols $PREFIX and $USER with this meaning:
   #
   # compile and install the compiler
   #
-  # if you'll want rerun this step, I recommend delete 
+  # if you'll want rerun this step, I recommend delete
   # $PREFIX/i386-mingw32/sys-include
   #
   tar xzf gcc-core-3.3.1-20030804-1-src.tar.gz
@@ -107,7 +107,7 @@ In the following text are used symbols $PREFIX and $USER with this meaning:
 
 
 4. recompile w32api and mingw-runtime from sources (optional)
- 
+
   #
   # installing must be into $PREFIX/i386-mingw32
   #
@@ -153,7 +153,7 @@ In the following text are used symbols $PREFIX and $USER with this meaning:
 
   tar xzf pthreads-w32-2-7-0-release.tar.gz
   cd pthreads-w32-2-7-0-release/
-  make CROSS=i386-mingw32- PTHREAD_DEF=pthreadGC2.def clean GC 
+  make CROSS=i386-mingw32- PTHREAD_DEF=pthreadGC2.def clean GC
   #
   # possibility to use pthread library in M$ Visual C (optional)
   #

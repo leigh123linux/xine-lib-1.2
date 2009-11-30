@@ -46,4 +46,4 @@ noinst_HEADERS = \
 	dvd_reader.h \
 	dvd_input.h \
 	dvd_udf.h \
-	bswap.h 
+	bswap.h

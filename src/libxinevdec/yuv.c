@@ -62,7 +62,7 @@ typedef struct yuv_decoder_s {
   int               width;       /* the width of a video frame */
   int               height;      /* the height of a video frame */
   double            ratio;       /* the width to height ratio */
-  
+
   int               progressive;
   int               top_field_first;
 
@@ -104,10 +104,10 @@ static void yuv_decode_data (video_decoder_t *this_gen,
       this->ratio = (double)buf->decoder_info[1] / (double)buf->decoder_info[2];
     else
       this->ratio = (double)this->width / (double)this->height;
-    
+
     this->progressive = buf->decoder_info[3];
     this->top_field_first = buf->decoder_info[4];
-            
+
     if (this->buf) {
       free (this->buf);
       this->buf = NULL;
@@ -125,7 +125,7 @@ static void yuv_decode_data (video_decoder_t *this_gen,
       case BUF_VIDEO_YUY2:
         _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, "Raw YUY2");
         break;
-      
+
       case BUF_VIDEO_YV12:
         _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, "Raw YV12");
         break;
@@ -137,13 +137,13 @@ static void yuv_decode_data (video_decoder_t *this_gen,
       case BUF_VIDEO_GREY:
         _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, "Greyscale YUV");
         break;
-        
+
       case BUF_VIDEO_I420:
         _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, "Raw I420");
         break;
 
     }
-    
+
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_WIDTH,  this->width);
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_HEIGHT, this->height);
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_RATIO,  this->ratio*10000);
@@ -166,14 +166,14 @@ static void yuv_decode_data (video_decoder_t *this_gen,
       xine_fast_memcpy (&this->buf[this->size], buf->content, buf->size);
 
       this->size += buf->size;
-      
+
       src = this->buf;
     }
 
     if (buf->decoder_flags & BUF_FLAG_FRAME_END) {
 
       if (buf->type == BUF_VIDEO_YUY2) {
-      
+
         img = this->stream->video_out->get_frame (this->stream->video_out,
                                           this->width, this->height,
                                           this->ratio, XINE_IMGFMT_YUY2, VO_BOTH_FIELDS);
@@ -184,14 +184,14 @@ static void yuv_decode_data (video_decoder_t *this_gen,
          /* dst */
           img->base[0], img->pitches[0],
          /* width x height */
-          this->width, this->height);      
-      
+          this->width, this->height);
+
       } else if (buf->type == BUF_VIDEO_YV12) {
 
         img = this->stream->video_out->get_frame (this->stream->video_out,
                                           this->width, this->height,
                                           this->ratio, XINE_IMGFMT_YV12, VO_BOTH_FIELDS);
-        
+
         yv12_to_yv12(
          /* Y */
           src, this->width,
@@ -206,7 +206,7 @@ static void yuv_decode_data (video_decoder_t *this_gen,
           this->width, this->height);
 
       } else if (buf->type == BUF_VIDEO_I420) {
-      
+
         img = this->stream->video_out->get_frame (this->stream->video_out,
                                           this->width, this->height,
                                           this->ratio, XINE_IMGFMT_YV12, VO_BOTH_FIELDS);
@@ -233,17 +233,17 @@ static void yuv_decode_data (video_decoder_t *this_gen,
 
         yuv9_to_yv12(
          /* Y */
-          src, 
+          src,
           this->width,
-          img->base[0], 
+          img->base[0],
           img->pitches[0],
          /* U */
-          src + (this->width * this->height), 
+          src + (this->width * this->height),
           this->width / 4,
           img->base[1],
           img->pitches[1],
          /* V */
-          src + (this->width * this->height) + 
+          src + (this->width * this->height) +
             (this->width * this->height / 16),
           this->width / 4,
           img->base[2],
@@ -373,8 +373,8 @@ static void *init_plugin (xine_t *xine, void *data) {
  * exported plugin catalog entry
  */
 
-static const uint32_t video_types[] = { 
-  BUF_VIDEO_YUY2, 
+static const uint32_t video_types[] = {
+  BUF_VIDEO_YUY2,
   BUF_VIDEO_YV12,
   BUF_VIDEO_YVU9,
   BUF_VIDEO_GREY,
@@ -388,7 +388,7 @@ static const decoder_info_t dec_info_video = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_VIDEO_DECODER, 18, "yuv", XINE_VERSION_CODE, &dec_info_video, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

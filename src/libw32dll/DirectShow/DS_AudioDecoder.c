@@ -15,7 +15,7 @@
 #include "DS_Filter.h"
 
 struct _DS_AudioDecoder
-{ 
+{
     WAVEFORMATEX in_fmt;
     AM_MEDIA_TYPE m_sOurType, m_sDestType;
     DS_Filter* m_pDS_Filter;
@@ -46,20 +46,20 @@ DS_AudioDecoder * DS_AudioDecoder_Open(char* dllname, GUID* guid, WAVEFORMATEX* 
 #endif
 
     this = malloc(sizeof(DS_AudioDecoder));
-    
+
     sz = 18 + wf->cbSize;
     this->m_sVhdr = malloc(sz);
     memcpy(this->m_sVhdr, wf, sz);
     this->m_sVhdr2 = malloc(18);
     memcpy(this->m_sVhdr2, this->m_sVhdr, 18);
-    
+
     pWF = (WAVEFORMATEX*)this->m_sVhdr2;
     pWF->wFormatTag = 1;
     pWF->wBitsPerSample = 16;
     pWF->nBlockAlign = pWF->nChannels * (pWF->wBitsPerSample + 7) / 8;
     pWF->cbSize = 0;
     pWF->nAvgBytesPerSec = pWF->nBlockAlign * pWF->nSamplesPerSec;
-    
+
     memcpy(&this->in_fmt,wf,sizeof(WAVEFORMATEX));
 
     memset(&this->m_sOurType, 0, sizeof(this->m_sOurType));
@@ -105,7 +105,7 @@ print_wave_header(this->m_sVhdr2);
            free(this);
            return NULL;
         }
-        
+
         this->m_pDS_Filter->Start(this->m_pDS_Filter);
 
 	props.cBuffers=1;
@@ -141,7 +141,7 @@ int DS_AudioDecoder_Convert(DS_AudioDecoder *this, const void* in_data, unsigned
 {
     unsigned int written = 0;
     unsigned int read = 0;
-        
+
     if (!in_data || !out_data)
 	return -1;
 
@@ -157,7 +157,7 @@ int DS_AudioDecoder_Convert(DS_AudioDecoder *this, const void* in_data, unsigned
 	IMediaSample* sample=0;
 	char* ptr;
 	int result;
-	
+
 //	this->m_pOurOutput->SetFramePointer(out_data+written);
 	this->m_pDS_Filter->m_pOurOutput->SetFramePointer(this->m_pDS_Filter->m_pOurOutput,&frame_pointer);
 	this->m_pDS_Filter->m_pOurOutput->SetFrameSizePointer(this->m_pDS_Filter->m_pOurOutput,(long*)&frame_size);
@@ -198,7 +198,7 @@ int DS_AudioDecoder_GetSrcSize(DS_AudioDecoder *this, int dest_size)
     double efficiency =(double) this->in_fmt.nAvgBytesPerSec
 	/ (this->in_fmt.nSamplesPerSec*this->in_fmt.nBlockAlign);
     int frames = (int)(dest_size*efficiency);;
-    
+
     if (frames < 1)
 	frames = 1;
     return frames * this->in_fmt.nBlockAlign;

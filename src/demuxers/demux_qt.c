@@ -262,10 +262,10 @@ typedef struct {
 
   /* flags that indicate how a trak is supposed to be used */
   unsigned int flags;
-  
+
   /* formattag-like field that specifies codec in mp4 files */
   unsigned int object_type_id;
-  
+
   /* decoder data pass information to the decoder */
   void *decoder_config;
   int decoder_config_len;
@@ -307,7 +307,7 @@ typedef struct {
   unsigned int modification_time;
   unsigned int timescale;  /* base clock frequency is Hz */
   unsigned int duration;
-        
+
   int64_t moov_first_offset;
 
   int               trak_count;
@@ -381,7 +381,7 @@ typedef struct {
  * lazyqt special debugging functions
  **********************************************************************/
 
-/* define DEBUG_ATOM_LOAD as 1 to get a verbose parsing of the relevant 
+/* define DEBUG_ATOM_LOAD as 1 to get a verbose parsing of the relevant
  * atoms */
 #define DEBUG_ATOM_LOAD 0
 
@@ -403,7 +403,7 @@ typedef struct {
 
 /* Define DEBUG_DUMP_MOOV as 1 to dump the raw moov atom to disk. This is
  * particularly useful in debugging a file with a compressed moov (cmov)
- * atom. The atom will be dumped to the filename specified as 
+ * atom. The atom will be dumped to the filename specified as
  * RAW_MOOV_FILENAME. */
 #define DEBUG_DUMP_MOOV 0
 #define RAW_MOOV_FILENAME "moovatom.raw"
@@ -502,7 +502,7 @@ static void find_moov_atom(input_plugin_t *input, off_t *moov_offset,
     atom = _X_BE_32(&atom_preamble[4]);
 
     /* Special case alert: 'free' atoms sometimes masquerade as 'moov'
-     * atoms. If this is a free atom, check for 'cmov' or 'mvhd' immediately 
+     * atoms. If this is a free atom, check for 'cmov' or 'mvhd' immediately
      * following. QT Player can handle it, so xine should too. */
     if (atom == FREE_ATOM) {
 
@@ -533,7 +533,7 @@ static void find_moov_atom(input_plugin_t *input, off_t *moov_offset,
 
     /* if this atom is not the moov atom, make sure that it is at least one
      * of the other top-level QT atom.
-     * However, allow a configurable amount ( currently 1 ) atom be a 
+     * However, allow a configurable amount ( currently 1 ) atom be a
      * non known atom, in hopes a known atom will be found */
     if ((atom != FREE_ATOM) &&
         (atom != JUNK_ATOM) &&
@@ -712,7 +712,7 @@ static int is_qt_file(input_plugin_t *qt_file) {
     return 0;
   } else {
     /* check that the next atom in the chunk contains alphanumeric
-     * characters in the atom type field; if not, disqualify the file 
+     * characters in the atom type field; if not, disqualify the file
      * as a QT file */
     qt_file->seek(qt_file, moov_atom_offset + ATOM_PREAMBLE_SIZE, SEEK_SET);
     if (qt_file->read(qt_file, atom_preamble, ATOM_PREAMBLE_SIZE) !=
@@ -821,7 +821,7 @@ static void parse_mvhd_atom(qt_info *info, unsigned char *mvhd_atom) {
 static int mp4_read_descr_len(unsigned char *s, uint32_t *length) {
   uint8_t b;
   uint8_t numBytes = 0;
-  
+
   *length = 0;
 
   do {
@@ -900,14 +900,14 @@ static qt_error parse_trak_atom (qt_trak *trak,
       break;
     }
   }
-  
+
   debug_atom_load("  qt: parsing %s trak atom\n",
     (trak->type == MEDIA_VIDEO) ? "video" :
       (trak->type == MEDIA_AUDIO) ? "audio" : "other");
 
   /* search for the useful atoms */
   for (i = ATOM_PREAMBLE_SIZE; i < trak_atom_size - 4; i++) {
-    current_atom_size = _X_BE_32(&trak_atom[i - 4]);	
+    current_atom_size = _X_BE_32(&trak_atom[i - 4]);
     current_atom = _X_BE_32(&trak_atom[i]);
 
     if (current_atom == TKHD_ATOM) {
@@ -947,7 +947,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
     } else if (current_atom == MDHD_ATOM) {
       int version;
       debug_atom_load ("demux_qt: mdhd atom\n");
-      
+
       version = trak_atom[i+4];
       if ( version > 1 ) continue; /* unsupported, undocumented */
 
@@ -975,7 +975,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
       properties_offset = 0x0C;
       for (k = 0; k < trak->stsd_atoms_count; k++) {
 
-        current_stsd_atom_size = _X_BE_32(&trak_atom[atom_pos - 4]);      
+        current_stsd_atom_size = _X_BE_32(&trak_atom[atom_pos - 4]);
         if (current_stsd_atom_size < 4) {
           last_error = QT_HEADER_TROUBLE;
           goto free_trak;
@@ -988,7 +988,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
           /* copy the properties atom */
           trak->stsd_atoms[k].video.properties_atom_size = current_stsd_atom_size - 4;
-          trak->stsd_atoms[k].video.properties_atom = 
+          trak->stsd_atoms[k].video.properties_atom =
             xine_xmalloc(trak->stsd_atoms[k].video.properties_atom_size);
           if (!trak->stsd_atoms[k].video.properties_atom) {
             last_error = QT_NO_MEMORY;
@@ -1006,7 +1006,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
           trak->stsd_atoms[k].video.palette_count = 0;
 
           /* fetch video parameters */
-          if( _X_BE_16(&trak_atom[atom_pos + 0x1C]) && 
+          if( _X_BE_16(&trak_atom[atom_pos + 0x1C]) &&
               _X_BE_16(&trak_atom[atom_pos + 0x1E]) ) {
             trak->stsd_atoms[k].video.width =
               _X_BE_16(&trak_atom[atom_pos + 0x1C]);
@@ -1034,9 +1034,9 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
               /* compute the greyscale palette */
               color_index = 255;
-              color_dec = 256 / 
+              color_dec = 256 /
                 (trak->stsd_atoms[k].video.palette_count - 1);
-              for (j = 0; 
+              for (j = 0;
                    j < trak->stsd_atoms[k].video.palette_count;
                    j++) {
 
@@ -1061,7 +1061,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
               else
                 color_table = qt_default_palette_256;
 
-              for (j = 0; 
+              for (j = 0;
                 j < trak->stsd_atoms[k].video.palette_count;
                 j++) {
 
@@ -1088,7 +1088,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
                 color_index = _X_BE_16(&trak_atom[atom_pos + 0x5A + j * 8]);
                 if (color_count & 0x8000)
                   color_index = j;
-                if (color_index < 
+                if (color_index <
                   trak->stsd_atoms[k].video.palette_count) {
                   trak->stsd_atoms[k].video.palette[color_index].r =
                     trak_atom[atom_pos + 0x5A + j * 8 + 2];
@@ -1131,7 +1131,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
           /* copy the properties atom */
           trak->stsd_atoms[k].audio.properties_atom_size = current_stsd_atom_size - 4;
-          trak->stsd_atoms[k].audio.properties_atom = 
+          trak->stsd_atoms[k].audio.properties_atom =
             xine_xmalloc(trak->stsd_atoms[k].audio.properties_atom_size);
           if (!trak->stsd_atoms[k].audio.properties_atom) {
             last_error = QT_NO_MEMORY;
@@ -1153,12 +1153,12 @@ static qt_error parse_trak_atom (qt_trak *trak,
             trak->stsd_atoms[k].audio.bits / 8;
           trak->stsd_atoms[k].audio.samples_per_frame =
             trak->stsd_atoms[k].audio.channels;
-          trak->stsd_atoms[k].audio.bytes_per_frame = 
-            trak->stsd_atoms[k].audio.bytes_per_sample * 
+          trak->stsd_atoms[k].audio.bytes_per_frame =
+            trak->stsd_atoms[k].audio.bytes_per_sample *
             trak->stsd_atoms[k].audio.samples_per_frame;
-          trak->stsd_atoms[k].audio.samples_per_packet = 
+          trak->stsd_atoms[k].audio.samples_per_packet =
             trak->stsd_atoms[k].audio.samples_per_frame;
-          trak->stsd_atoms[k].audio.bytes_per_packet = 
+          trak->stsd_atoms[k].audio.bytes_per_packet =
             trak->stsd_atoms[k].audio.bytes_per_sample;
 
           /* special case time: A lot of CBR audio codecs stored in the
@@ -1166,7 +1166,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
           if (trak->stsd_atoms[k].audio.codec_fourcc == IMA4_FOURCC) {
             trak->stsd_atoms[k].audio.samples_per_packet = 64;
             trak->stsd_atoms[k].audio.bytes_per_packet = 34;
-            trak->stsd_atoms[k].audio.bytes_per_frame = 34 * 
+            trak->stsd_atoms[k].audio.bytes_per_frame = 34 *
               trak->stsd_atoms[k].audio.channels;
             trak->stsd_atoms[k].audio.bytes_per_sample = 2;
             trak->stsd_atoms[k].audio.samples_per_frame = 64 *
@@ -1182,7 +1182,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
           } else if (trak->stsd_atoms[k].audio.codec_fourcc == MAC6_FOURCC) {
             trak->stsd_atoms[k].audio.samples_per_packet = 6;
             trak->stsd_atoms[k].audio.bytes_per_packet = 1;
-            trak->stsd_atoms[k].audio.bytes_per_frame = 1 * 
+            trak->stsd_atoms[k].audio.bytes_per_frame = 1 *
               trak->stsd_atoms[k].audio.channels;
             trak->stsd_atoms[k].audio.bytes_per_sample = 1;
             trak->stsd_atoms[k].audio.samples_per_frame = 6 *
@@ -1190,7 +1190,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
           } else if (trak->stsd_atoms[k].audio.codec_fourcc == ALAW_FOURCC) {
             trak->stsd_atoms[k].audio.samples_per_packet = 1;
             trak->stsd_atoms[k].audio.bytes_per_packet = 1;
-            trak->stsd_atoms[k].audio.bytes_per_frame = 1 * 
+            trak->stsd_atoms[k].audio.bytes_per_frame = 1 *
               trak->stsd_atoms[k].audio.channels;
             trak->stsd_atoms[k].audio.bytes_per_sample = 2;
             trak->stsd_atoms[k].audio.samples_per_frame = 2 *
@@ -1198,7 +1198,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
           } else if (trak->stsd_atoms[k].audio.codec_fourcc == ULAW_FOURCC) {
             trak->stsd_atoms[k].audio.samples_per_packet = 1;
             trak->stsd_atoms[k].audio.bytes_per_packet = 1;
-            trak->stsd_atoms[k].audio.bytes_per_frame = 1 * 
+            trak->stsd_atoms[k].audio.bytes_per_frame = 1 *
               trak->stsd_atoms[k].audio.channels;
             trak->stsd_atoms[k].audio.bytes_per_sample = 2;
             trak->stsd_atoms[k].audio.samples_per_frame = 2 *
@@ -1217,20 +1217,20 @@ static qt_error parse_trak_atom (qt_trak *trak,
               (trak->stsd_atoms[k].audio.codec_fourcc != RAW_FOURCC)) {
 
             if (_X_BE_32(&trak_atom[atom_pos + 0x20]))
-              trak->stsd_atoms[k].audio.samples_per_packet = 
+              trak->stsd_atoms[k].audio.samples_per_packet =
                 _X_BE_32(&trak_atom[atom_pos + 0x20]);
             if (_X_BE_32(&trak_atom[atom_pos + 0x24]))
-              trak->stsd_atoms[k].audio.bytes_per_packet = 
+              trak->stsd_atoms[k].audio.bytes_per_packet =
                 _X_BE_32(&trak_atom[atom_pos + 0x24]);
             if (_X_BE_32(&trak_atom[atom_pos + 0x28]))
-              trak->stsd_atoms[k].audio.bytes_per_frame = 
+              trak->stsd_atoms[k].audio.bytes_per_frame =
                 _X_BE_32(&trak_atom[atom_pos + 0x28]);
             if (_X_BE_32(&trak_atom[atom_pos + 0x2C]))
-              trak->stsd_atoms[k].audio.bytes_per_sample = 
+              trak->stsd_atoms[k].audio.bytes_per_sample =
                 _X_BE_32(&trak_atom[atom_pos + 0x2C]);
             if (trak->stsd_atoms[k].audio.bytes_per_packet)
               trak->stsd_atoms[k].audio.samples_per_frame =
-                (trak->stsd_atoms[k].audio.bytes_per_frame / 
+                (trak->stsd_atoms[k].audio.bytes_per_frame /
                  trak->stsd_atoms[k].audio.bytes_per_packet) *
                  trak->stsd_atoms[k].audio.samples_per_packet;
           }
@@ -1252,13 +1252,13 @@ static qt_error parse_trak_atom (qt_trak *trak,
             trak->stsd_atoms[k].audio.vbr = 1;
             /* further, FFmpeg's ALAC decoder requires 36 out-of-band bytes */
             trak->stsd_atoms[k].audio.properties_atom_size = 36;
-            trak->stsd_atoms[k].audio.properties_atom = 
+            trak->stsd_atoms[k].audio.properties_atom =
               xine_xmalloc(trak->stsd_atoms[k].audio.properties_atom_size);
             if (!trak->stsd_atoms[k].audio.properties_atom) {
               last_error = QT_NO_MEMORY;
               goto free_trak;
             }
-            memcpy(trak->stsd_atoms[k].audio.properties_atom, 
+            memcpy(trak->stsd_atoms[k].audio.properties_atom,
               &trak_atom[atom_pos + 0x20],
               trak->stsd_atoms[k].audio.properties_atom_size);
           }
@@ -1274,7 +1274,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
               (_X_BE_32(&trak_atom[atom_pos + 0x3C]) == FRMA_ATOM) &&
               (_X_ME_32(&trak_atom[atom_pos + 0x48]) == trak->stsd_atoms[k].audio.codec_fourcc)) {
             int wave_size = _X_BE_32(&trak_atom[atom_pos + 0x44]) - 8;
-            
+
             if ((wave_size >= sizeof(xine_waveformatex)) &&
                 (current_atom_size >= (0x4C + wave_size))) {
               trak->stsd_atoms[k].audio.wave_size = wave_size;
@@ -1331,12 +1331,12 @@ static qt_error parse_trak_atom (qt_trak *trak,
     } else if (current_atom == ESDS_ATOM) {
 
       uint32_t len;
-      
+
       debug_atom_load("    qt/mpeg-4 esds atom\n");
 
-      if ((trak->type == MEDIA_VIDEO) || 
+      if ((trak->type == MEDIA_VIDEO) ||
           (trak->type == MEDIA_AUDIO)) {
-        
+
         j = i + 8;
         if( trak_atom[j++] == 0x03 ) {
           j += mp4_read_descr_len( &trak_atom[j], &len );
@@ -1368,13 +1368,13 @@ static qt_error parse_trak_atom (qt_trak *trak,
       }
 
     } else if (current_atom == AVCC_ATOM) {
-    
+
       debug_atom_load("    avcC atom\n");
-      
+
       trak->decoder_config_len = current_atom_size - 8;
       trak->decoder_config = realloc(trak->decoder_config, trak->decoder_config_len);
       memcpy(trak->decoder_config, &trak_atom[i + 4], trak->decoder_config_len);
-    
+
     } else if (current_atom == STSZ_ATOM) {
 
       /* there should only be one of these atoms */
@@ -1682,9 +1682,9 @@ static qt_error parse_reference_atom (reference_t *ref,
 /* This is a little support function used to process the edit list when
  * building a frame table. */
 #define MAX_DURATION 0x7FFFFFFFFFFFFFFFLL
-static void get_next_edit_list_entry(qt_trak *trak, 
+static void get_next_edit_list_entry(qt_trak *trak,
   int *edit_list_index,
-  unsigned int *edit_list_media_time, 
+  unsigned int *edit_list_media_time,
   int64_t *edit_list_duration,
   unsigned int global_timescale) {
 
@@ -1701,9 +1701,9 @@ static void get_next_edit_list_entry(qt_trak *trak,
     /* otherwise, find an edit list entries whose media time != -1 */
     if (trak->edit_list_table[*edit_list_index].media_time != -1) {
 
-      *edit_list_media_time = 
+      *edit_list_media_time =
         trak->edit_list_table[*edit_list_index].media_time;
-      *edit_list_duration = 
+      *edit_list_duration =
         trak->edit_list_table[*edit_list_index].track_duration;
 
       /* duration is in global timescale units; convert to trak timescale */
@@ -1717,8 +1717,8 @@ static void get_next_edit_list_entry(qt_trak *trak,
     *edit_list_index = *edit_list_index + 1;
   }
 
-  /* on the way out, check if this is the last edit list entry; if so, 
-   * don't let the duration expire (so set it to an absurdly large value) 
+  /* on the way out, check if this is the last edit list entry; if so,
+   * don't let the duration expire (so set it to an absurdly large value)
    */
   if (*edit_list_index == trak->edit_list_count)
     *edit_list_duration = MAX_DURATION;
@@ -1753,7 +1753,7 @@ static qt_error build_frame_table(qt_trak *trak,
 
   /* AUDIO and OTHER frame types follow the same rules; VIDEO and vbr audio
    * frame types follow a different set */
-  if ((trak->type == MEDIA_VIDEO) || 
+  if ((trak->type == MEDIA_VIDEO) ||
       (trak->properties->audio.vbr)) {
 
     /* in this case, the total number of frames is equal to the number of
@@ -1803,7 +1803,7 @@ static qt_error build_frame_table(qt_trak *trak,
               trak->stsd_atoms_count);
             trak->frames[frame_counter].media_id = 0;
           } else {
-            trak->frames[frame_counter].media_id = 
+            trak->frames[frame_counter].media_id =
               trak->sample_to_chunk_table[i].media_id;
             media_id_counts[trak->sample_to_chunk_table[i].media_id - 1]++;
           }
@@ -1863,11 +1863,11 @@ static qt_error build_frame_table(qt_trak *trak,
 
       debug_edit_list("    %d: (before) pts = %"PRId64"...", i, trak->frames[i].pts);
 
-      if (trak->frames[i].pts < edit_list_media_time) 
+      if (trak->frames[i].pts < edit_list_media_time)
         trak->frames[i].pts = edit_list_pts_counter;
       else {
         if (i < trak->frame_count - 1)
-          frame_duration = 
+          frame_duration =
             (trak->frames[i + 1].pts - trak->frames[i].pts);
 
         debug_edit_list("duration = %"PRId64"...", frame_duration);
@@ -1946,7 +1946,7 @@ static qt_error build_frame_table(qt_trak *trak,
               trak->stsd_atoms_count);
             trak->frames[j].media_id = 0;
           } else {
-            trak->frames[j].media_id = 
+            trak->frames[j].media_id =
               trak->sample_to_chunk_table[i].media_id;
           }
 
@@ -2011,10 +2011,10 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
 
       /* create a new trak structure */
       info->trak_count++;
-      info->traks = (qt_trak *)realloc(info->traks, 
+      info->traks = (qt_trak *)realloc(info->traks,
         info->trak_count * sizeof(qt_trak));
 
-      info->last_error = parse_trak_atom (&info->traks[info->trak_count - 1], 
+      info->last_error = parse_trak_atom (&info->traks[info->trak_count - 1],
         &moov_atom[i - 4]);
       if (info->last_error != QT_OK) {
         info->trak_count--;
@@ -2123,11 +2123,11 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
     /* iterate through 1..n-1 reference entries and decide on the right one */
     for (i = 1; i < info->reference_count; i++) {
 
-      if (info->references[i].qtim_version > 
+      if (info->references[i].qtim_version >
           info->references[info->chosen_reference].qtim_version)
         info->chosen_reference = i;
       else if ((info->references[i].data_rate <= bandwidth) &&
-               (info->references[i].data_rate > 
+               (info->references[i].data_rate >
                 info->references[info->chosen_reference].data_rate))
         info->chosen_reference = i;
     }
@@ -2211,7 +2211,7 @@ static qt_error open_qt_file(qt_info *info, input_plugin_t *input,
     info->last_error = QT_FILE_READ_ERROR;
     return info->last_error;
   }
-  if (input->read(input, moov_atom, moov_atom_size) != 
+  if (input->read(input, moov_atom, moov_atom_size) !=
     moov_atom_size) {
     free(moov_atom);
     info->last_error = QT_FILE_READ_ERROR;
@@ -2342,12 +2342,12 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
     /* if audio is present, send pts of current audio frame, otherwise
      * send current video frame pts */
     if (audio_trak)
-      _x_demux_control_newpts(this->stream, 
-        audio_trak->frames[audio_trak->current_frame].pts, 
+      _x_demux_control_newpts(this->stream,
+        audio_trak->frames[audio_trak->current_frame].pts,
         BUF_FLAG_SEEK);
     else
-      _x_demux_control_newpts(this->stream, 
-        video_trak->frames[video_trak->current_frame].pts, 
+      _x_demux_control_newpts(this->stream,
+        video_trak->frames[video_trak->current_frame].pts,
         BUF_FLAG_SEEK);
   }
 
@@ -2454,7 +2454,7 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
                          frame_duration);
 
     debug_video_demux("  qt: sending off video frame %d from offset 0x%"PRIX64", %d bytes, media id %d, %"PRId64" pts\n",
-      i, 
+      i,
       video_trak->frames[i].offset,
       video_trak->frames[i].size,
       video_trak->frames[i].media_id,
@@ -2512,7 +2512,7 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
       SEEK_SET);
 
     debug_audio_demux("  qt: sending off audio frame %d from offset 0x%"PRIX64", %d bytes, media id %d, %"PRId64" pts\n",
-      i, 
+      i,
       audio_trak->frames[i].offset,
       audio_trak->frames[i].size,
       audio_trak->frames[i].media_id,
@@ -2531,8 +2531,8 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
        * turns around and sends out audio buffers as soon as they are
        * received. If 2 or more consecutive audio buffers are dispatched to
        * the audio out unit, the engine will compensate with pops. */
-      if ((buf->type == BUF_AUDIO_LPCM_BE) || 
-          (buf->type == BUF_AUDIO_LPCM_LE)) { 
+      if ((buf->type == BUF_AUDIO_LPCM_BE) ||
+          (buf->type == BUF_AUDIO_LPCM_LE)) {
         if (first_buf) {
           buf->extra_info->input_time = audio_trak->frames[i].pts / 90;
           buf->pts = audio_trak->frames[i].pts;
@@ -2561,7 +2561,7 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
 
       /* Special case alert: If this is signed, 8-bit data, transform
        * the data to unsigned. */
-      if ((audio_trak->properties->audio.bits == 8) && 
+      if ((audio_trak->properties->audio.bits == 8) &&
           ((audio_trak->properties->audio.codec_fourcc == TWOS_FOURCC) ||
            (audio_trak->properties->audio.codec_fourcc == SOWT_FOURCC)))
         for (j = 0; j < buf->size; j++)
@@ -2630,7 +2630,7 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
     this->bih.biBitCount = video_trak->properties->video.depth;
 
     this->bih.biCompression = video_trak->properties->video.codec_fourcc;
-    video_trak->properties->video.codec_buftype = 
+    video_trak->properties->video.codec_buftype =
       _x_fourcc_to_buf_video(this->bih.biCompression);
 
     /* hack: workaround a fourcc clash! 'mpg4' is used by MS and Sorenson
@@ -2638,13 +2638,13 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
      */
     if( video_trak->properties->video.codec_buftype == BUF_VIDEO_MSMPEG4_V1 )
       video_trak->properties->video.codec_buftype = BUF_VIDEO_MPEG4;
-  
-    if( !video_trak->properties->video.codec_buftype && 
+
+    if( !video_trak->properties->video.codec_buftype &&
          video_trak->properties->video.codec_fourcc )
       video_trak->properties->video.codec_buftype = BUF_VIDEO_UNKNOWN;
 
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 1);
-    _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_WIDTH, 
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_WIDTH,
                          this->bih.biWidth);
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_HEIGHT,
                          this->bih.biHeight);
@@ -2677,7 +2677,7 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
           break;
       }
     } else {
-      audio_trak->properties->audio.codec_buftype = 
+      audio_trak->properties->audio.codec_buftype =
         _x_formattag_to_buf_audio(audio_trak->properties->audio.codec_fourcc);
     }
 
@@ -2692,7 +2692,7 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
       audio_trak->properties->audio.sample_rate);
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITS,
       audio_trak->properties->audio.bits);
-    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_FOURCC, 
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_FOURCC,
       audio_trak->properties->audio.codec_fourcc);
 
   } else {
@@ -2733,17 +2733,17 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
       (video_trak->properties->video.codec_buftype)) {
     buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
     buf->decoder_flags = BUF_FLAG_HEADER|BUF_FLAG_STDHEADER|BUF_FLAG_FRAME_END;
-    
+
     memcpy(buf->content, &this->bih, sizeof(this->bih));
     buf->size = sizeof(this->bih);
     buf->type = video_trak->properties->video.codec_buftype;
     this->video_fifo->put (this->video_fifo, buf);
-      
+
     /* send header info to decoder. some mpeg4 streams need this */
     if( video_trak->decoder_config ) {
       buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
       buf->type = video_trak->properties->video.codec_buftype;
-      
+
       if (video_trak->properties->video.codec_fourcc == AVC1_FOURCC) {
         buf->size = 0;
         buf->decoder_flags = BUF_FLAG_SPECIAL|BUF_FLAG_HEADER;
@@ -2787,9 +2787,9 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
 
     /* set the audio bitrate field (only for CBR audio) */
     if (!audio_trak->properties->audio.vbr) {
-      audio_bitrate = 
+      audio_bitrate =
         audio_trak->properties->audio.sample_rate /
-        audio_trak->properties->audio.samples_per_frame * 
+        audio_trak->properties->audio.samples_per_frame *
         audio_trak->properties->audio.bytes_per_frame *
         audio_trak->properties->audio.channels *
         8;
@@ -2804,7 +2804,7 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
     buf->decoder_info[1] = audio_trak->properties->audio.sample_rate;
     buf->decoder_info[2] = audio_trak->properties->audio.bits;
     buf->decoder_info[3] = audio_trak->properties->audio.channels;
-    
+
     if( audio_trak->properties->audio.wave_size ) {
       if( audio_trak->properties->audio.wave_size > buf->max_size )
         buf->size = buf->max_size;
@@ -2815,9 +2815,9 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
       buf->size = 0;
       buf->content = NULL;
     }
-        
+
     this->audio_fifo->put (this->audio_fifo, buf);
-    
+
     if( audio_trak->decoder_config ) {
       buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
       buf->type = audio_trak->properties->audio.codec_buftype;
@@ -2910,7 +2910,7 @@ static int demux_qt_seek (demux_plugin_t *this_gen,
   qt_trak *video_trak = NULL;
   qt_trak *audio_trak = NULL;
   int64_t keyframe_pts;
-  
+
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->data_size );
 
@@ -3171,7 +3171,7 @@ static const demuxer_info_t demux_info_qt = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_DEMUX, 26, "quicktime", XINE_VERSION_CODE, &demux_info_qt, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

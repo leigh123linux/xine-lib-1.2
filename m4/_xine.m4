@@ -81,7 +81,7 @@ AC_DEFUN([AC_CHECK_LIRC],
 
         if test x"$LIRC_PREFIX" != "x"; then
            lirc_libprefix="$LIRC_PREFIX/lib"
-  	   LIRC_INCLUDE="-I$LIRC_PREFIX/include"
+	   LIRC_INCLUDE="-I$LIRC_PREFIX/include"
         fi
         for llirc in $lirc_libprefix /lib /usr/lib /usr/local/lib; do
           AC_CHECK_FILE("$llirc/liblirc_client.a",
@@ -117,14 +117,14 @@ AC_DEFUN([AC_CHECK_DXR3],
     AC_MSG_RESULT([*** checking for a supported mpeg encoder])
     have_encoder=no
     have_libfame=yes
-    AC_CHECK_LIB(fame, fame_open, 
+    AC_CHECK_LIB(fame, fame_open,
       [AC_CHECK_HEADER(fame.h, true, have_libfame=no)], have_libfame=no)
     if test "$have_libfame" = "yes"; then
       AC_DEFINE(HAVE_LIBFAME)
       have_encoder=yes
     fi
     have_librte=yes
-    AC_CHECK_LIB(rte, rte_init, 
+    AC_CHECK_LIB(rte, rte_init,
       [AC_CHECK_HEADER(rte.h, true, have_librte=no)], have_librte=no)
     if test "$have_librte" = "yes"; then
       AC_DEFINE(HAVE_LIBRTE)
@@ -390,7 +390,7 @@ dnl Validate the GMSGFMT program found by gettext.m4; reject old versions
 dnl of GNU msgfmt that do not support the "msgid_plural" extension.
 AC_DEFUN([AC_PROG_GMSGFMT_PLURAL],
  [dnl AC_REQUIRE(AM_GNU_GETTEXT)
-  
+
   if test "$GMSGFMT" != ":"; then
     AC_MSG_CHECKING([for plural forms in GNU msgfmt])
 
@@ -498,7 +498,7 @@ _ACEOF
 	      AC_MSG_RESULT(no)
             fi
 	  fi
-        fi 
+        fi
       else
         AC_MSG_RESULT(no)
       fi

@@ -1,25 +1,25 @@
 /*
  * Copyright (C) 2001-2008 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * xine video decoder plugin using ffmpeg
  */
- 
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #include "../../libffmpeg/ffmpeg_config.h"
@@ -73,7 +73,7 @@ typedef struct ff_video_class_s {
   int                     thread_count;
   int8_t                  skip_loop_filter_enum;
   int8_t                  choose_speed_over_accuracy;
-  
+
   xine_t                 *xine;
 } ff_video_class_t;
 
@@ -107,13 +107,13 @@ struct ff_video_decoder_s {
   int               bufsize;
   int               size;
   int               skipframes;
-  
+
   int               slice_offset_size;
 
   AVFrame          *av_frame;
   AVCodecContext   *context;
   AVCodec          *codec;
-  
+
   int               pp_quality;
   int               pp_flags;
   pp_context_t     *pp_context;
@@ -126,7 +126,7 @@ struct ff_video_decoder_s {
   int               aspect_ratio_prio;
   int               frame_flags;
   int               crop_right, crop_bottom;
-  
+
   int               output_format;
 
   xine_list_t       *dr1_frames;
@@ -154,7 +154,7 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
   vo_frame_t *img;
   int width  = context->width;
   int height = context->height;
-        
+
   if (!this->bih.biWidth || !this->bih.biHeight) {
     this->bih.biWidth = width;
     this->bih.biHeight = height;
@@ -166,12 +166,12 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
       set_stream_info(this);
     }
   }
-  
+
   avcodec_align_dimensions(context, &width, &height);
 
   if( this->context->pix_fmt != PIX_FMT_YUV420P && this->context->pix_fmt != PIX_FMT_YUVJ420P ) {
     if (!this->is_direct_rendering_disabled) {
-      xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
               _("ffmpeg_video_dec: unsupported frame format, DR1 disabled.\n"));
       this->is_direct_rendering_disabled = 1;
     }
@@ -182,14 +182,14 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
     av_frame->data[2]= NULL;
     return avcodec_default_get_buffer(context, av_frame);
   }
-  
+
   if((width != this->bih.biWidth) || (height != this->bih.biHeight)) {
     if(this->stream->video_out->get_capabilities(this->stream->video_out) & VO_CAP_CROP) {
       this->crop_right = width - this->bih.biWidth;
       this->crop_bottom = height - this->bih.biHeight;
     } else {
       if (!this->is_direct_rendering_disabled) {
-        xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+        xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
                 _("ffmpeg_video_dec: unsupported frame dimensions, DR1 disabled.\n"));
         this->is_direct_rendering_disabled = 1;
       }
@@ -204,7 +204,7 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
   img = this->stream->video_out->get_frame (this->stream->video_out,
                                             width,
                                             height,
-                                            this->aspect_ratio, 
+                                            this->aspect_ratio,
                                             this->output_format,
                                             VO_BOTH_FIELDS|this->frame_flags);
 
@@ -246,7 +246,7 @@ static void release_buffer(struct AVCodecContext *context, AVFrame *av_frame){
     }
 
     xine_list_iterator_t it;
-    
+
     it = xine_list_find(this->dr1_frames, av_frame);
     assert(it);
     if( it != NULL )
@@ -300,7 +300,7 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
     }
 
   if (!this->codec) {
-    xprintf (this->stream->xine, XINE_VERBOSITY_LOG, 
+    xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
             _("ffmpeg_video_dec: couldn't find ffmpeg decoder for buf type 0x%X\n"),
             codec_type);
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_HANDLED, 0);
@@ -309,14 +309,14 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
 
   lprintf("lavc decoder found\n");
 
-  /* force (width % 8 == 0), otherwise there will be 
-   * display problems with Xv. 
-   */ 
+  /* force (width % 8 == 0), otherwise there will be
+   * display problems with Xv.
+   */
   this->bih.biWidth = (this->bih.biWidth + 1) & (~1);
 
   this->context->width = this->bih.biWidth;
   this->context->height = this->bih.biHeight;
-  this->context->stream_codec_tag = this->context->codec_tag = 
+  this->context->stream_codec_tag = this->context->codec_tag =
     _x_stream_info_get(this->stream, XINE_STREAM_INFO_VIDEO_FOURCC);
 
 
@@ -325,14 +325,14 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
   if(this->codec->capabilities & CODEC_CAP_DR1 && this->codec->id != CODEC_ID_H264) {
     this->context->flags |= CODEC_FLAG_EMU_EDGE;
   }
- 
+
   if (this->class->choose_speed_over_accuracy)
     this->context->flags2 |= CODEC_FLAG2_FAST;
 
   pthread_mutex_lock(&ffmpeg_lock);
   if (avcodec_open (this->context, this->codec) < 0) {
     pthread_mutex_unlock(&ffmpeg_lock);
-    xprintf (this->stream->xine, XINE_VERBOSITY_LOG, 
+    xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
              _("ffmpeg_video_dec: couldn't open decoder\n"));
     free(this->context);
     this->context = NULL;
@@ -340,14 +340,14 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
     return;
   }
 
-  if (this->codec->id == CODEC_ID_VC1 && 
+  if (this->codec->id == CODEC_ID_VC1 &&
       (!this->bih.biWidth || !this->bih.biHeight)) {
     /* VC1 codec must be re-opened with correct width and height. */
     avcodec_close(this->context);
 
     if (avcodec_open (this->context, this->codec) < 0) {
       pthread_mutex_unlock(&ffmpeg_lock);
-      xprintf (this->stream->xine, XINE_VERBOSITY_LOG, 
+      xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
 	       _("ffmpeg_video_dec: couldn't open decoder (pass 2)\n"));
       free(this->context);
       this->context = NULL;
@@ -384,14 +384,14 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
   (this->stream->video_out->open) (this->stream->video_out, this->stream);
 
   this->skipframes = 0;
-  
+
   /* enable direct rendering by default */
   this->output_format = XINE_IMGFMT_YV12;
 #ifdef ENABLE_DIRECT_RENDERING
   if( this->codec->capabilities & CODEC_CAP_DR1 && this->codec->id != CODEC_ID_H264 ) {
     this->context->get_buffer = get_buffer;
     this->context->release_buffer = release_buffer;
-    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 	    _("ffmpeg_video_dec: direct rendering enabled\n"));
   }
 #endif
@@ -422,25 +422,25 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
 
 static void choose_speed_over_accuracy_cb(void *user_data, xine_cfg_entry_t *entry) {
   ff_video_class_t   *class = (ff_video_class_t *) user_data;
-  
+
   class->choose_speed_over_accuracy = entry->num_value;
 }
 
 static void skip_loop_filter_enum_cb(void *user_data, xine_cfg_entry_t *entry) {
   ff_video_class_t   *class = (ff_video_class_t *) user_data;
-  
+
   class->skip_loop_filter_enum = entry->num_value;
 }
 
 static void thread_count_cb(void *user_data, xine_cfg_entry_t *entry) {
   ff_video_class_t   *class = (ff_video_class_t *) user_data;
-  
+
   class->thread_count = entry->num_value;
 }
 
 static void pp_quality_cb(void *user_data, xine_cfg_entry_t *entry) {
   ff_video_class_t   *class = (ff_video_class_t *) user_data;
-  
+
   class->pp_quality = entry->num_value;
 }
 
@@ -453,15 +453,15 @@ static void pp_change_quality (ff_video_decoder_t *this) {
                                         this->pp_flags);
     if(this->pp_mode)
       pp_free_mode(this->pp_mode);
-      
-    this->pp_mode = pp_get_mode_by_name_and_quality("hb:a,vb:a,dr:a", 
+
+    this->pp_mode = pp_get_mode_by_name_and_quality("hb:a,vb:a,dr:a",
                                                     this->pp_quality);
   } else {
     if(this->pp_mode) {
       pp_free_mode(this->pp_mode);
       this->pp_mode = NULL;
     }
-    
+
     if(this->pp_context) {
       pp_free_context(this->pp_context);
       this->pp_context = NULL;
@@ -486,22 +486,22 @@ static void init_postprocess (ff_video_decoder_t *this) {
       this->pp_available = 0;
       break;
   }
-  
+
   /* Detect what cpu accel we have */
   cpu_caps = xine_mm_accel();
   this->pp_flags = PP_FORMAT_420;
- 
+
   if(cpu_caps & MM_ACCEL_X86_MMX)
     this->pp_flags |= PP_CPU_CAPS_MMX;
-    
+
   if(cpu_caps & MM_ACCEL_X86_MMXEXT)
     this->pp_flags |= PP_CPU_CAPS_MMX2;
-  
-  if(cpu_caps & MM_ACCEL_X86_3DNOW)  
+
+  if(cpu_caps & MM_ACCEL_X86_3DNOW)
     this->pp_flags |= PP_CPU_CAPS_3DNOW;
-   
+
   /* Set level */
-  pp_change_quality(this);    
+  pp_change_quality(this);
 }
 
 static int ff_handle_mpeg_sequence(ff_video_decoder_t *this, mpeg_parser_t *parser) {
@@ -510,13 +510,13 @@ static int ff_handle_mpeg_sequence(ff_video_decoder_t *this, mpeg_parser_t *pars
    * init codec
    */
   if (this->decoder_init_mode) {
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
                           "mpeg-1 (ffmpeg)");
 
     init_video_codec (this, BUF_VIDEO_MPEG);
     this->decoder_init_mode = 0;
   }
-  
+
   /* frame format change */
   if ((parser->width != this->bih.biWidth) ||
       (parser->height != this->bih.biHeight) ||
@@ -542,7 +542,7 @@ static int ff_handle_mpeg_sequence(ff_video_decoder_t *this, mpeg_parser_t *pars
     xine_event_send(this->stream, &event);
   }
   this->video_step = this->mpeg_parser->frame_duration;
-  
+
   return 1;
 }
 
@@ -611,7 +611,7 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
       this->bih.biHeight);
 
   } else if (this->context->pix_fmt == PIX_FMT_RGB32) {
-          
+
     int x, plane_ptr = 0;
     uint32_t *argb_pixels;
     uint32_t argb;
@@ -620,7 +620,7 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
       argb_pixels = (uint32_t *)sy;
       for(x = 0; x < img->width; x++) {
         uint8_t r, g, b;
-              
+
         /* this is endian-safe as the ARGB pixels are stored in
          * machine order */
         argb = *argb_pixels++;
@@ -635,9 +635,9 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
       }
       sy += this->av_frame->linesize[0];
     }
-            
+
     yuv444_to_yuy2(&this->yuv, img->base[0], img->pitches[0]);
-          
+
   } else if (this->context->pix_fmt == PIX_FMT_RGB565) {
 
     int x, plane_ptr = 0;
@@ -648,7 +648,7 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
       src = sy;
       for(x = 0; x < img->width; x++) {
         uint8_t r, g, b;
-              
+
         /* a 16-bit RGB565 pixel is supposed to be stored in native-endian
          * byte order; the following should be endian-safe */
         pixel16 = *((uint16_t *)src);
@@ -664,20 +664,20 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
       }
       sy += this->av_frame->linesize[0];
     }
-            
+
     yuv444_to_yuy2(&this->yuv, img->base[0], img->pitches[0]);
-          
+
   } else if (this->context->pix_fmt == PIX_FMT_RGB555) {
-          
+
     int x, plane_ptr = 0;
     uint8_t *src;
     uint16_t pixel16;
-            
+
     for(y = 0; y < this->bih.biHeight; y++) {
       src = sy;
       for(x = 0; x < img->width; x++) {
         uint8_t r, g, b;
-              
+
         /* a 16-bit RGB555 pixel is supposed to be stored in native-endian
          * byte order; the following should be endian-safe */
         pixel16 = *((uint16_t *)src);
@@ -693,9 +693,9 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
       }
       sy += this->av_frame->linesize[0];
     }
-            
+
     yuv444_to_yuy2(&this->yuv, img->base[0], img->pitches[0]);
-          
+
   } else if (this->context->pix_fmt == PIX_FMT_BGR24) {
 
     int x, plane_ptr = 0;
@@ -705,7 +705,7 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
       src = sy;
       for(x = 0; x < img->width; x++) {
         uint8_t r, g, b;
-              
+
         b = *src++;
         g = *src++;
         r = *src++;
@@ -717,9 +717,9 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
       }
       sy += this->av_frame->linesize[0];
     }
-            
+
     yuv444_to_yuy2(&this->yuv, img->base[0], img->pitches[0]);
-          
+
   } else if (this->context->pix_fmt == PIX_FMT_RGB24) {
 
     int x, plane_ptr = 0;
@@ -729,7 +729,7 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
       src = sy;
       for(x = 0; x < img->width; x++) {
         uint8_t r, g, b;
-              
+
         r = *src++;
         g = *src++;
         b = *src++;
@@ -741,11 +741,11 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
       }
       sy += this->av_frame->linesize[0];
     }
-            
+
     yuv444_to_yuy2(&this->yuv, img->base[0], img->pitches[0]);
-          
+
   } else if (this->context->pix_fmt == PIX_FMT_PAL8) {
-          
+
     int x, plane_ptr = 0;
     uint8_t *src;
     uint8_t pixel;
@@ -780,34 +780,34 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
       }
       sy += this->av_frame->linesize[0];
     }
-            
+
     yuv444_to_yuy2(&this->yuv, img->base[0], img->pitches[0]);
-          
+
   } else {
-          
+
     for (y = 0; y < this->bih.biHeight; y++) {
       xine_fast_memcpy (dy, sy, img->width);
-  
+
       dy += img->pitches[0];
-  
+
       sy += this->av_frame->linesize[0];
     }
 
     for (y = 0; y < this->bih.biHeight / 2; y++) {
-      
+
       if (this->context->pix_fmt != PIX_FMT_YUV444P) {
-        
+
         xine_fast_memcpy (du, su, img->width/2);
         xine_fast_memcpy (dv, sv, img->width/2);
-        
+
       } else {
-        
+
         int x;
         uint8_t *src;
         uint8_t *dst;
-      
+
         /* subsample */
-        
+
         src = su; dst = du;
         for (x=0; x<(img->width/2); x++) {
           *dst = *src;
@@ -822,7 +822,7 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
         }
 
       }
-  
+
       du += img->pitches[1];
       dv += img->pitches[2];
 
@@ -840,8 +840,8 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
 static void ff_check_bufsize (ff_video_decoder_t *this, int size) {
   if (size > this->bufsize) {
     this->bufsize = size + size / 2;
-    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
-	    _("ffmpeg_video_dec: increasing buffer to %d to avoid overflow.\n"), 
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+	    _("ffmpeg_video_dec: increasing buffer to %d to avoid overflow.\n"),
 	    this->bufsize);
     this->buf = realloc(this->buf, this->bufsize + FF_INPUT_BUFFER_PADDING_SIZE );
   }
@@ -887,28 +887,28 @@ static void ff_handle_header_buffer (ff_video_decoder_t *this, buf_element_t *bu
     if (buf->decoder_flags & BUF_FLAG_STDHEADER) {
 
       lprintf("standard header\n");
-    
+
       /* init package containing bih */
       memcpy ( &this->bih, this->buf, sizeof(xine_bmiheader) );
 
       if (this->bih.biSize > sizeof(xine_bmiheader)) {
       this->context->extradata_size = this->bih.biSize - sizeof(xine_bmiheader);
-        this->context->extradata = malloc(this->context->extradata_size + 
+        this->context->extradata = malloc(this->context->extradata_size +
                                           FF_INPUT_BUFFER_PADDING_SIZE);
         memcpy(this->context->extradata, this->buf + sizeof(xine_bmiheader),
               this->context->extradata_size);
       }
-      
+
       this->context->bits_per_sample = this->bih.biBitCount;
-            
+
     } else {
-    
+
       switch (codec_type) {
       case BUF_VIDEO_RV10:
       case BUF_VIDEO_RV20:
         this->bih.biWidth  = _X_BE_16(&this->buf[12]);
         this->bih.biHeight = _X_BE_16(&this->buf[14]);
-        
+
         this->context->sub_id = _X_BE_32(&this->buf[30]);
 
         this->context->slice_offset = calloc(SLICE_OFFSET_SIZE, sizeof(int));
@@ -950,7 +950,7 @@ static void ff_handle_header_buffer (ff_video_decoder_t *this, buf_element_t *bu
 }
 
 static void ff_handle_special_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
-  /* take care of all the various types of special buffers 
+  /* take care of all the various types of special buffers
   * note that order is important here */
   lprintf("special buffer\n");
 
@@ -959,34 +959,34 @@ static void ff_handle_special_buffer (ff_video_decoder_t *this, buf_element_t *b
 
     lprintf("BUF_SPECIAL_STSD_ATOM\n");
     this->context->extradata_size = buf->decoder_info[2];
-    this->context->extradata = malloc(buf->decoder_info[2] + 
+    this->context->extradata = malloc(buf->decoder_info[2] +
 				      FF_INPUT_BUFFER_PADDING_SIZE);
     memcpy(this->context->extradata, buf->decoder_info_ptr[2],
       buf->decoder_info[2]);
 
   } else if (buf->decoder_info[1] == BUF_SPECIAL_DECODER_CONFIG &&
             !this->context->extradata_size) {
-    
+
     lprintf("BUF_SPECIAL_DECODER_CONFIG\n");
     this->context->extradata_size = buf->decoder_info[2];
     this->context->extradata = malloc(buf->decoder_info[2] +
 				      FF_INPUT_BUFFER_PADDING_SIZE);
     memcpy(this->context->extradata, buf->decoder_info_ptr[2],
       buf->decoder_info[2]);
-      
+
   } else if (buf->decoder_info[1] == BUF_SPECIAL_PALETTE) {
     unsigned int i;
 
     palette_entry_t *demuxer_palette;
     AVPaletteControl *decoder_palette;
-    
+
     lprintf("BUF_SPECIAL_PALETTE\n");
     this->context->palctrl = &this->palette_control;
     decoder_palette = (AVPaletteControl *)this->context->palctrl;
     demuxer_palette = (palette_entry_t *)buf->decoder_info_ptr[2];
 
     for (i = 0; i < buf->decoder_info[2]; i++) {
-      decoder_palette->palette[i] = 
+      decoder_palette->palette[i] =
         (demuxer_palette[i].r << 16) |
         (demuxer_palette[i].g <<  8) |
         (demuxer_palette[i].b <<  0);
@@ -995,20 +995,20 @@ static void ff_handle_special_buffer (ff_video_decoder_t *this, buf_element_t *b
 
   } else if (buf->decoder_info[1] == BUF_SPECIAL_RV_CHUNK_TABLE) {
     int i;
-  
+
     lprintf("BUF_SPECIAL_RV_CHUNK_TABLE\n");
     this->context->slice_count = buf->decoder_info[2]+1;
 
     lprintf("slice_count=%d\n", this->context->slice_count);
-    
+
     if(this->context->slice_count > this->slice_offset_size) {
       this->context->slice_offset = realloc(this->context->slice_offset,
                                             sizeof(int)*this->context->slice_count);
       this->slice_offset_size = this->context->slice_count;
     }
-    
+
     for(i = 0; i < this->context->slice_count; i++) {
-      this->context->slice_offset[i] = 
+      this->context->slice_offset[i] =
         ((uint32_t *) buf->decoder_info_ptr[2])[(2*i)+1];
       lprintf("slice_offset[%d]=%d\n", i, this->context->slice_offset[i]);
     }
@@ -1051,7 +1051,7 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
 
     if (!this->decoder_ok)
       return;
-    
+
     if (flush) {
       lprintf("flush lavc buffers\n");
       /* hack: ffmpeg outputs the last frame if size=0 */
@@ -1069,11 +1069,11 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
             len, got_picture);
     len = current - buf->content - offset;
     lprintf("avcodec_decode_video: consumed_size=%d\n", len);
-    
+
     flush = next_flush;
 
     if ((len < 0) || (len > buf->size)) {
-      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
                 "ffmpeg_video_dec: error decompressing frame\n");
       size = 0; /* draw a bad frame and exit */
     } else {
@@ -1088,7 +1088,7 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
         img = this->stream->video_out->get_frame (this->stream->video_out,
                                                   this->bih.biWidth,
                                                   this->bih.biHeight,
-                                                  this->aspect_ratio, 
+                                                  this->aspect_ratio,
                                                   this->output_format,
                                                   VO_BOTH_FIELDS|this->frame_flags);
         free_img = 1;
@@ -1108,7 +1108,7 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
 
       img->crop_right  = this->crop_right;
       img->crop_bottom = this->crop_bottom;
-      
+
       this->skipframes = img->draw(img, this->stream);
 
       if(free_img)
@@ -1121,7 +1121,7 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
         img = this->stream->video_out->get_frame (this->stream->video_out,
                                                   this->bih.biWidth,
                                                   this->bih.biHeight,
-                                                  this->aspect_ratio, 
+                                                  this->aspect_ratio,
                                                   this->output_format,
                                                   VO_BOTH_FIELDS|this->frame_flags);
         img->pts       = 0;
@@ -1265,7 +1265,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
   /* data accumulation */
   if (buf->size > 0) {
     if ((this->size == 0) &&
-	((buf->size + FF_INPUT_BUFFER_PADDING_SIZE) < buf->max_size) && 
+	((buf->size + FF_INPUT_BUFFER_PADDING_SIZE) < buf->max_size) &&
 	(buf->decoder_flags & BUF_FLAG_FRAME_END)) {
       /* buf contains a complete frame */
       /* no memcpy needed */
@@ -1278,7 +1278,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
       chunk_buf = this->buf; /* ff_check_bufsize might realloc this->buf */
 
       xine_fast_memcpy (&this->buf[this->size], buf->content, buf->size);
-      
+
       this->size += buf->size;
       lprintf("accumulate data into this->buf\n");
     }
@@ -1301,7 +1301,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
     memset(&chunk_buf[this->size], 0, FF_INPUT_BUFFER_PADDING_SIZE);
 
     while (this->size > 0) {
-      
+
       /* DV frames can be completely skipped */
       if( codec_type == BUF_VIDEO_DV && this->skipframes ) {
         this->size = 0;
@@ -1322,7 +1322,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
 
         lprintf("consumed size: %d, got_picture: %d\n", len, got_picture);
         if ((len <= 0) || (len > this->size)) {
-          xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+          xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
                     "ffmpeg_video_dec: error decompressing frame\n");
           this->size = 0;
 
@@ -1366,7 +1366,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
           this->bih.biHeight = this->context->height;
         }
 
-	this->aspect_ratio = av_q2d(this->context->sample_aspect_ratio) * 
+	this->aspect_ratio = av_q2d(this->context->sample_aspect_ratio) *
 	  (double)this->bih.biWidth / (double)this->bih.biHeight;
 	this->aspect_ratio_prio = 2;
 	lprintf("ffmpeg aspect ratio: %f\n", this->aspect_ratio);
@@ -1405,7 +1405,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
           img = this->stream->video_out->get_frame (this->stream->video_out,
                                                     (this->bih.biWidth  + 15) & ~15,
                                                     (this->bih.biHeight + 15) & ~15,
-                                                    this->aspect_ratio, 
+                                                    this->aspect_ratio,
                                                     this->output_format,
                                                     VO_BOTH_FIELDS|this->frame_flags);
           free_img = 1;
@@ -1426,17 +1426,17 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
             img = this->stream->video_out->get_frame (this->stream->video_out,
                                                       (img->width  + 15) & ~15,
                                                       (img->height + 15) & ~15,
-                                                      this->aspect_ratio, 
+                                                      this->aspect_ratio,
                                                       this->output_format,
                                                       VO_BOTH_FIELDS|this->frame_flags);
             free_img = 1;
           }
 
-          pp_postprocess(this->av_frame->data, this->av_frame->linesize, 
-                        img->base, img->pitches, 
+          pp_postprocess(this->av_frame->data, this->av_frame->linesize,
+                        img->base, img->pitches,
                         img->width, img->height,
                         this->av_frame->qscale_table, this->av_frame->qstride,
-                        this->pp_mode, this->pp_context, 
+                        this->pp_mode, this->pp_context,
                         this->av_frame->pict_type);
 
         } else if (!this->av_frame->opaque) {
@@ -1476,7 +1476,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
         img->top_field_first   = this->av_frame->top_field_first;
 
         this->skipframes = img->draw(img, this->stream);
-        
+
         if(free_img)
           img->free(img);
       }
@@ -1490,7 +1490,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
       img = this->stream->video_out->get_frame (this->stream->video_out,
                                                 (this->bih.biWidth  <= 0) ? 16 : ((this->bih.biWidth  + 15) & ~15),
                                                 (this->bih.biHeight <= 0) ? 16 : ((this->bih.biHeight + 15) & ~15),
-                                                this->aspect_ratio, 
+                                                this->aspect_ratio,
                                                 this->output_format,
                                                 VO_BOTH_FIELDS|this->frame_flags);
       /* set PTS to allow early syncing */
@@ -1520,7 +1520,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
 static void ff_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
   ff_video_decoder_t *this = (ff_video_decoder_t *) this_gen;
 
-  lprintf ("processing packet type = %08x, len = %d, decoder_flags=%08x\n", 
+  lprintf ("processing packet type = %08x, len = %d, decoder_flags=%08x\n",
            buf->type, buf->size, buf->decoder_flags);
 
   if (buf->decoder_flags & BUF_FLAG_FRAMERATE) {
@@ -1529,7 +1529,7 @@ static void ff_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
   }
 
   if (buf->decoder_flags & BUF_FLAG_PREVIEW) {
-  
+
     ff_handle_preview_buffer(this, buf);
 
   } else {
@@ -1537,7 +1537,7 @@ static void ff_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     if (buf->decoder_flags & BUF_FLAG_SPECIAL) {
 
       ff_handle_special_buffer(this, buf);
-		     
+
     }
 
     if (buf->decoder_flags & BUF_FLAG_HEADER) {
@@ -1551,7 +1551,7 @@ static void ff_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 	  lprintf("aspect ratio: %f\n", this->aspect_ratio);
 	  set_stream_info(this);
 	}
-      }  
+      }
 
     } else {
 
@@ -1582,7 +1582,7 @@ static void ff_reset (video_decoder_t *this_gen) {
 
   if(this->context && this->decoder_ok)
     avcodec_flush_buffers(this->context);
-  
+
   if (this->is_mpeg12)
     mpeg_parser_reset(this->mpeg_parser);
 
@@ -1596,14 +1596,14 @@ static void ff_reset (video_decoder_t *this_gen) {
 
 static void ff_discontinuity (video_decoder_t *this_gen) {
   ff_video_decoder_t *this = (ff_video_decoder_t *) this_gen;
-  
+
   lprintf ("ff_discontinuity\n");
   this->pts = 0;
 
 #ifdef AVCODEC_HAS_REORDERED_OPAQUE
   /*
    * there is currently no way to reset all the pts which are stored in the decoder.
-   * therefore, we add a unique tag (generated from pts_tag_counter) to pts (see 
+   * therefore, we add a unique tag (generated from pts_tag_counter) to pts (see
    * ff_tag_pts()) and wait for it to appear on returned frames.
    * until then, any retrieved pts value will be reset to 0 (see ff_untag_pts()).
    * when we see the tag returned, pts_tag will be reset to 0. from now on, any
@@ -1640,15 +1640,15 @@ static void ff_dispose (video_decoder_t *this_gen) {
   ff_video_decoder_t *this = (ff_video_decoder_t *) this_gen;
 
   lprintf ("ff_dispose\n");
-  
+
   if (this->decoder_ok) {
     xine_list_iterator_t it;
     AVFrame *av_frame;
-        
+
     pthread_mutex_lock(&ffmpeg_lock);
     avcodec_close (this->context);
     pthread_mutex_unlock(&ffmpeg_lock);
-    
+
     /* frame garbage collector here - workaround for buggy ffmpeg codecs that
      * don't release their DR1 frames */
     while( (it = xine_list_front(this->dr1_frames)) != NULL )
@@ -1656,7 +1656,7 @@ static void ff_dispose (video_decoder_t *this_gen) {
       av_frame = (AVFrame *)xine_list_get_value(this->dr1_frames, it);
       release_buffer(this->context, av_frame);
     }
-    
+
     this->stream->video_out->close(this->stream->video_out, this->stream);
     this->decoder_ok = 0;
   }
@@ -1669,27 +1669,27 @@ static void ff_dispose (video_decoder_t *this_gen) {
 
   if(this->yuv_init)
     free_yuv_planes(&this->yuv);
-  
+
   if( this->context )
     av_free( this->context );
 
   if( this->av_frame )
     av_free( this->av_frame );
-  
+
   if (this->buf)
     free(this->buf);
   this->buf = NULL;
-  
+
   if(this->pp_context)
     pp_free_context(this->pp_context);
-    
+
   if(this->pp_mode)
     pp_free_mode(this->pp_mode);
 
   mpeg_parser_dispose(this->mpeg_parser);
-    
+
   xine_list_delete(this->dr1_frames);
-  
+
   free (this_gen);
 }
 
@@ -1715,7 +1715,7 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
   this->context           = avcodec_alloc_context();
   this->context->opaque   = this;
   this->context->palctrl  = NULL;
-  
+
   this->decoder_ok        = 0;
   this->decoder_init_mode = 1;
   this->buf               = calloc(1, VIDEOBUFSIZE + FF_INPUT_BUFFER_PADDING_SIZE);
@@ -1727,9 +1727,9 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
   this->pp_quality        = 0;
   this->pp_context        = NULL;
   this->pp_mode           = NULL;
-  
+
   this->mpeg_parser       = NULL;
-  
+
   this->dr1_frames        = xine_list_new();
 
 #ifdef LOG
@@ -1755,7 +1755,7 @@ void *init_video_plugin (xine_t *xine, void *data) {
 
   ff_video_class_t *this;
   config_values_t  *config;
-  
+
   this = calloc(1, sizeof (ff_video_class_t));
 
   this->decoder_class.open_plugin     = ff_video_open_plugin;
@@ -1765,12 +1765,12 @@ void *init_video_plugin (xine_t *xine, void *data) {
   this->xine                          = xine;
 
   pthread_once( &once_control, init_once_routine );
-  
+
   /* Configuration for post processing quality - default to mid (3) for the
    * moment */
   config = xine->config;
-  
-  this->pp_quality = xine->config->register_range(config, "video.processing.ffmpeg_pp_quality", 3, 
+
+  this->pp_quality = xine->config->register_range(config, "video.processing.ffmpeg_pp_quality", 3,
     0, PP_QUALITY_MAX,
     _("MPEG-4 postprocessing quality"),
     _("You can adjust the amount of post processing applied to MPEG-4 video.\n"
@@ -1779,8 +1779,8 @@ void *init_video_plugin (xine_t *xine, void *data) {
       "too heavy post processing can actually make the image worse by blurring it "
       "too much."),
     10, pp_quality_cb, this);
-  
-  this->thread_count = xine->config->register_num(config, "video.processing.ffmpeg_thread_count", 1, 
+
+  this->thread_count = xine->config->register_num(config, "video.processing.ffmpeg_thread_count", 1,
     _("FFmpeg video decoding thread count"),
     _("You can adjust the number of video decoding threads which FFmpeg may use.\n"
       "Higher values should speed up decoding but it depends on the codec used "
@@ -1789,7 +1789,7 @@ void *init_video_plugin (xine_t *xine, void *data) {
       "A change of this setting will take effect with playing the next stream."),
     10, thread_count_cb, this);
 
-  this->skip_loop_filter_enum = xine->config->register_enum(config, "video.processing.ffmpeg_skip_loop_filter", 0, 
+  this->skip_loop_filter_enum = xine->config->register_enum(config, "video.processing.ffmpeg_skip_loop_filter", 0,
     (char **)skip_loop_filter_enum_names,
     _("Skip loop filter"),
     _("You can control for which frames the loop filter shall be skipped after "
@@ -1800,7 +1800,7 @@ void *init_video_plugin (xine_t *xine, void *data) {
       "A change of this setting will take effect with playing the next stream."),
     10, skip_loop_filter_enum_cb, this);
 
-  this->choose_speed_over_accuracy = xine->config->register_bool(config, "video.processing.ffmpeg_choose_speed_over_accuracy", 0, 
+  this->choose_speed_over_accuracy = xine->config->register_bool(config, "video.processing.ffmpeg_choose_speed_over_accuracy", 0,
     _("Choose speed over specification compliance"),
     _("You may want to allow speed cheats which violate codec specification.\n"
       "Cheating may speed up decoding but can also lead to decoding artefacts.\n"
@@ -1810,14 +1810,14 @@ void *init_video_plugin (xine_t *xine, void *data) {
   return this;
 }
 
-static uint32_t wmv8_video_types[] = { 
+static uint32_t wmv8_video_types[] = {
   BUF_VIDEO_WMV8,
-  0 
+  0
 };
 
-static uint32_t wmv9_video_types[] = { 
+static uint32_t wmv9_video_types[] = {
   BUF_VIDEO_WMV9,
-  0 
+  0
 };
 
 decoder_info_t dec_info_ffmpeg_video = {

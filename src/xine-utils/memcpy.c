@@ -471,7 +471,7 @@ void xine_probe_fast_memcpy(xine_t *xine)
 #endif
     NULL
   };
-  
+
   config_flags = xine_mm_accel();
 
   best = xine->config->register_enum (xine->config, "engine.performance.memcpy_method", 0,

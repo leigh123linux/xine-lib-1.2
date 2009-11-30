@@ -47,7 +47,7 @@
  * Bot 2 : Drop
  * Top 3 : Merge
  * Bot 3 : Drop
- * Top 4 : Show 
+ * Top 4 : Show
  * Bot 4 : Drop
  * Top 5 : Drop
  * Bot 5 : Show
@@ -69,15 +69,15 @@
  *
  *         [       ]
  *         [  * *]                | 0    top      BC
- *           [* *  ]              | 1 BC bottom   BC 
+ *           [* *  ]              | 1 BC bottom   BC
  *
  *             [       ]
  *             [  * *]            | 0    top      CC
- *               [  * *]          | 0 CC bottom   CC 
+ *               [  * *]          | 0 CC bottom   CC
  *
  *                 [       ]
  *                 [* *  ]        | 1    top      DD
- *                   [  * *]      | 0 DD bottom   DD 
+ *                   [  * *]      | 0 DD bottom   DD
  *
  *
  *                     [* *  ]    | 1    top      AA
@@ -608,7 +608,7 @@ int pulldown_drop( int action, int bottom_field )
     if( action == PULLDOWN_SEQ_CC && !bottom_field )
         ret = 0;
     if( action == PULLDOWN_SEQ_DD && bottom_field )
-        ret = 0; 
+        ret = 0;
 
     return ret;
 }

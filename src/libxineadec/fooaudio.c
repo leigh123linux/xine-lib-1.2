@@ -130,7 +130,7 @@ static void fooaudio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
    * the accumulator buffer size as necessary */
   if( this->size + buf->size > this->bufsize ) {
     this->bufsize = this->size + 2 * buf->size;
-    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	    "fooaudio: increasing source buffer to %d to avoid overflow.\n", this->bufsize);
     this->buf = realloc( this->buf, this->bufsize );
   }
@@ -151,8 +151,8 @@ static void fooaudio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
      * This decoder generates a continuous sine pattern based on the pts
      * values sent by the xine engine. Two pts values are needed to know
      * how long to make the audio. Thus, If this is the first frame or
-     * a seek has occurred (indicated by this->last_pts = -1), 
-     * log the pts but do not create any audio. 
+     * a seek has occurred (indicated by this->last_pts = -1),
+     * log the pts but do not create any audio.
      *
      * When a valid pts delta is generated, create n audio samples, where
      * n is given as:
@@ -181,7 +181,7 @@ static void fooaudio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
         /* get an audio buffer */
         audio_buffer = this->stream->audio_out->get_buffer (this->stream->audio_out);
         if (audio_buffer->mem_size == 0) {
-          xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+          xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 		   "fooaudio: Help! Allocated audio buffer with nothing in it!\n");
           return;
         }
@@ -196,7 +196,7 @@ static void fooaudio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 #define WAVE_HZ 300
         /* fill up the samples in the buffer */
         for (i = 0; i < samples_to_send; i++)
-          audio_buffer->mem[i] = 
+          audio_buffer->mem[i] =
             (short)(sin(2 * M_PI * this->iteration++ / WAVE_HZ) * 32767);
 
         /* final prep for audio buffer dispatch */
@@ -308,7 +308,7 @@ static void dispose_class (audio_decoder_class_t *this_gen) {
   free (this);
 }
 
-/* This function allocates a private audio decoder class and initializes 
+/* This function allocates a private audio decoder class and initializes
  * the class's member functions. */
 static void *init_plugin (xine_t *xine, void *data) {
 
@@ -324,18 +324,18 @@ static void *init_plugin (xine_t *xine, void *data) {
   return this;
 }
 
-/* This is a list of all of the internal xine audio buffer types that 
+/* This is a list of all of the internal xine audio buffer types that
  * this decoder is able to handle. Check src/xine-engine/buffer.h for a
  * list of valid buffer types (and add a new one if the one you need does
  * not exist). Terminate the list with a 0. */
-static uint32_t audio_types[] = { 
+static uint32_t audio_types[] = {
   /* BUF_AUDIO_FOO, */
   0
 };
 
 /* This data structure combines the list of supported xine buffer types and
  * the priority that the plugin should be given with respect to other
- * plugins that handle the same buffer type. A plugin with priority (n+1) 
+ * plugins that handle the same buffer type. A plugin with priority (n+1)
  * will be used instead of a plugin with priority (n). */
 static const decoder_info_t dec_info_audio = {
   audio_types,         /* supported types */

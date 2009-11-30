@@ -29,7 +29,7 @@ int xine_private_vasprintf (char **buffer, const char *format, va_list ap)
 {
   char *buf = NULL;
   int size = 128;
-  
+
   for (;;)
   {
     int ret;
@@ -41,11 +41,11 @@ int xine_private_vasprintf (char **buffer, const char *format, va_list ap)
       return -1;
     }
     buf = newbuf;
-    
+
     va_copy (cp, ap);
     ret = vsnprintf (buf, size, format, cp);
     va_end (cp);
-    
+
     if (ret >= 0 && ret < size)
     {
       *buffer = realloc (buf, ret + 1);

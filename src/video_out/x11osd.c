@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2003 the xine project
  *
  * This file is part of xine, a free video player.
@@ -96,7 +96,7 @@ x11osd_expose (x11osd * osd)
   assert (osd);
 
   lprintf("expose (state:%d)\n", osd->clean );
-  
+
   switch (osd->mode) {
     case X11OSD_SHAPED:
       XShapeCombineMask (osd->display, osd->u.shaped.window, ShapeBounding, 0, 0,
@@ -106,7 +106,7 @@ x11osd_expose (x11osd * osd)
 	if( !osd->u.shaped.mapped )
 	  XMapRaised (osd->display, osd->u.shaped.window);
 	osd->u.shaped.mapped = 1;
-    
+
 	XCopyArea (osd->display, osd->bitmap, osd->u.shaped.window, osd->gc, 0, 0,
 		   osd->width, osd->height, 0, 0);
       } else {
@@ -129,7 +129,7 @@ x11osd_resize (x11osd * osd, int width, int height)
   assert (osd);
   assert (width);
   assert (height);
-  
+
   lprintf("resize old:%dx%d new:%dx%d\n", osd->width, osd->height, width, height );
 
   osd->width = width;
@@ -153,7 +153,7 @@ x11osd_resize (x11osd * osd, int width, int height)
 		       osd->width, osd->height, osd->depth);
       break;
   }
-  
+
   osd->clean = UNDEFINED;
   x11osd_clear(osd);
 }
@@ -165,7 +165,7 @@ x11osd_drawable_changed (x11osd * osd, Window window)
   XWindowAttributes getattr;
 
   assert (osd);
-  
+
   lprintf("drawable changed\n");
 
 /*
@@ -183,14 +183,14 @@ x11osd_drawable_changed (x11osd * osd, Window window)
   XSync (osd->display, False);
 
   osd->window = window;
-  
+
   XGetWindowAttributes (osd->display, osd->window, &getattr);
   osd->width = getattr.width;
   osd->height = getattr.height;
-  
+
   assert(osd->width);
   assert(osd->height);
-  
+
   switch(osd->mode) {
     case X11OSD_SHAPED:
       XFreePixmap (osd->display, osd->u.shaped.mask_bitmap);
@@ -199,8 +199,8 @@ x11osd_drawable_changed (x11osd * osd, Window window)
       attr.override_redirect = True;
       attr.background_pixel  = BlackPixel (osd->display, osd->screen);
       osd->u.shaped.window = XCreateWindow(osd->display, osd->window,
-                              0, 0, osd->width, osd->height, 0, 
-                              CopyFromParent, CopyFromParent, CopyFromParent, 
+                              0, 0, osd->width, osd->height, 0,
+                              CopyFromParent, CopyFromParent, CopyFromParent,
                               CWBackPixel | CWOverrideRedirect, &attr);
 
       XSelectInput (osd->display, osd->u.shaped.window, ExposureMask);
@@ -212,18 +212,18 @@ x11osd_drawable_changed (x11osd * osd, Window window)
       osd->bitmap = XCreatePixmap (osd->display, osd->u.shaped.window, osd->width,
 				   osd->height, osd->depth);
 
-      osd->cmap = XCreateColormap(osd->display, osd->u.shaped.window, 
+      osd->cmap = XCreateColormap(osd->display, osd->u.shaped.window,
 				  osd->visual, AllocNone);
       break;
     case X11OSD_COLORKEY:
       osd->bitmap = XCreatePixmap (osd->display, osd->window, osd->width,
 				   osd->height, osd->depth);
-      osd->cmap = XCreateColormap(osd->display, osd->window, 
+      osd->cmap = XCreateColormap(osd->display, osd->window,
                               osd->visual, AllocNone);
 
       break;
   }
-  
+
   osd->clean = UNDEFINED;
   /* do not x11osd_clear() here: osd->u.colorkey.sc has not being updated yet */
 }
@@ -260,11 +260,11 @@ x11osd_create (xine_t *xine, Display *display, int screen, Window window, enum x
 
   osd->visual = DefaultVisual (osd->display, osd->screen);
   osd->depth = DefaultDepth (osd->display, osd->screen);
-  
+
   XGetWindowAttributes (osd->display, osd->window, &getattr);
   osd->width = getattr.width;
   osd->height = getattr.height;
-  
+
   assert(osd->width);
   assert(osd->height);
 
@@ -278,8 +278,8 @@ x11osd_create (xine_t *xine, Display *display, int screen, Window window, enum x
       attr.override_redirect = True;
       attr.background_pixel  = BlackPixel (osd->display, osd->screen);
       osd->u.shaped.window = XCreateWindow(osd->display, osd->window,
-                              0, 0, osd->width, osd->height, 0, 
-                              CopyFromParent, CopyFromParent, CopyFromParent, 
+                              0, 0, osd->width, osd->height, 0,
+                              CopyFromParent, CopyFromParent, CopyFromParent,
                               CWBackPixel | CWOverrideRedirect, &attr);
 
       XSync(osd->display, False);
@@ -288,7 +288,7 @@ x11osd_create (xine_t *xine, Display *display, int screen, Window window, enum x
 	goto error_window;
       }
 
-      osd->u.shaped.mask_bitmap = XCreatePixmap (osd->display, osd->u.shaped.window, osd->width, 
+      osd->u.shaped.mask_bitmap = XCreatePixmap (osd->display, osd->u.shaped.window, osd->width,
                    osd->height, 1);
       XSync(osd->display, False);
       if( x11_error ) {
@@ -296,7 +296,7 @@ x11osd_create (xine_t *xine, Display *display, int screen, Window window, enum x
 	goto error_aftermaskbitmap;
       }
 
-      osd->bitmap = XCreatePixmap (osd->display, osd->u.shaped.window, osd->width, 
+      osd->bitmap = XCreatePixmap (osd->display, osd->u.shaped.window, osd->width,
                    osd->height, osd->depth);
       osd->gc = XCreateGC (osd->display, osd->u.shaped.window, 0, NULL);
 
@@ -315,14 +315,14 @@ x11osd_create (xine_t *xine, Display *display, int screen, Window window, enum x
 
       XSelectInput (osd->display, osd->u.shaped.window, ExposureMask);
       osd->u.shaped.mapped = 0;
-      osd->cmap = XCreateColormap(osd->display, osd->u.shaped.window, 
+      osd->cmap = XCreateColormap(osd->display, osd->u.shaped.window,
                               osd->visual, AllocNone);
       break;
     case X11OSD_COLORKEY:
-      osd->bitmap = XCreatePixmap (osd->display, osd->window, osd->width, 
+      osd->bitmap = XCreatePixmap (osd->display, osd->window, osd->width,
                    osd->height, osd->depth);
       osd->gc = XCreateGC (osd->display, osd->window, 0, NULL);
-      osd->cmap = XCreateColormap(osd->display, osd->window, 
+      osd->cmap = XCreateColormap(osd->display, osd->window,
                               osd->visual, AllocNone);
       /* FIXME: the expose event doesn't seem to happen? */
       /*XSelectInput (osd->display, osd->window, ExposureMask);*/
@@ -342,8 +342,8 @@ x11osd_create (xine_t *xine, Display *display, int screen, Window window, enum x
 
   XSetErrorHandler(old_handler);
 
-  xprintf(osd->xine, XINE_VERBOSITY_DEBUG, 
-    _("x11osd: unscaled overlay created (%s mode).\n"), 
+  xprintf(osd->xine, XINE_VERBOSITY_DEBUG,
+    _("x11osd: unscaled overlay created (%s mode).\n"),
     (mode==X11OSD_SHAPED) ? "XShape" : "Colorkey" );
 
   return osd;
@@ -402,9 +402,9 @@ x11osd_destroy (x11osd * osd)
 void x11osd_clear(x11osd *osd)
 {
   int i;
-  
+
   lprintf("clear (state:%d)\n", osd->clean );
-  
+
   if( osd->clean != WIPED )
     switch (osd->mode) {
       case X11OSD_SHAPED:
@@ -442,7 +442,7 @@ void x11osd_blend(x11osd *osd, vo_overlay_t *overlay)
 {
   if (osd->clean==UNDEFINED)
     x11osd_clear(osd);	/* Workaround. Colorkey mode needs sc data before the clear. */
-  
+
   if (overlay->rle) {
     int i, x, y, len, width;
     int use_clip_palette, max_palette_colour[2];
@@ -474,7 +474,7 @@ void x11osd_blend(x11osd *osd, vo_overlay_t *overlay)
             if (x + width - 1 > overlay->hili_right) {
               width -= overlay->hili_right - x;
               len += overlay->hili_right - x;
-            } 
+            }
           }
         }
 
@@ -482,7 +482,7 @@ void x11osd_blend(x11osd *osd, vo_overlay_t *overlay)
           int j;
           clut_t *src_clut;
           uint8_t *src_trans;
-          
+
           if (use_clip_palette) {
             src_clut = (clut_t *)&overlay->hili_color;
             src_trans = (uint8_t *)&overlay->hili_trans;
@@ -507,7 +507,7 @@ void x11osd_blend(x11osd *osd, vo_overlay_t *overlay)
                 xcolor.green = (65536 * saturate(g, 0, 255)) / 256;
                 b = y + 2 * u - 274;
                 xcolor.blue = (65536 * saturate(b, 0, 255)) / 256;
-                
+
                 xcolor.flags = DoRed | DoBlue | DoGreen;
 
                 XAllocColor(osd->display, osd->cmap, &xcolor);

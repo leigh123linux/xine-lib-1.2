@@ -1,19 +1,19 @@
 /*
  * Copyright (C) 2003-2004 the xine project
  * Copyright (C) 2003 Jeroen Asselman <j.asselman@itsec-ps.nl>
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -120,27 +120,27 @@ static void demux_yuv_frames_send_headers (demux_plugin_t *this_gen){
 
   this->video_fifo  = this->stream->video_fifo;
   this->audio_fifo  = this->stream->audio_fifo;
- 
+
   _x_demux_control_start(this->stream);
 
   if(_x_stream_info_get(this->stream, XINE_STREAM_INFO_HAS_AUDIO)) {
     buf = this->input->read_block(this->input, this->audio_fifo, 0);
-    
+
     if (buf)
       this->audio_fifo->put(this->audio_fifo, buf);
     else
       this->status = DEMUX_FINISHED;
   }
-  
+
   if(_x_stream_info_get(this->stream, XINE_STREAM_INFO_HAS_VIDEO)) {
     buf = this->input->read_block(this->input, this->video_fifo, 0);
-    
+
     if (buf)
       this->video_fifo->put(this->video_fifo, buf);
     else
       this->status = DEMUX_FINISHED;
   }
-  
+
   this->status = DEMUX_OK;
 }
 

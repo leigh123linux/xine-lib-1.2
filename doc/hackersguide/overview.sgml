@@ -201,7 +201,7 @@
      <term><filename>libmad</filename> (imported)</term>
      <listitem>
       <para>
-       Mpeg audio decoder plugin (i.e. mp2 and mp3 decoding). 
+       Mpeg audio decoder plugin (i.e. mp2 and mp3 decoding).
        ISO/IEC compliant decoder using fixed point math.
       </para>
       <para></para>
@@ -529,7 +529,7 @@
  <sect1>
   <title>Object oriented programming in C</title>
   <para>
-   xine uses a lot of design principles normally found in 
+   xine uses a lot of design principles normally found in
    object oriented designs. As xine is written in C, a few
    basic principles shall be explained here on how xine
    is object oriented anyway.
@@ -561,7 +561,7 @@
 &nbsp;&nbsp;&nbsp;  my_stack_t    stack; /* public part */
 &nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;  /* private part follows here */
-&nbsp;&nbsp;&nbsp;  int           values[MAX_STACK_SIZE]; 
+&nbsp;&nbsp;&nbsp;  int           values[MAX_STACK_SIZE];
 &nbsp;&nbsp;&nbsp;  int           stack_size;
 &nbsp;&nbsp;&nbsp;} intstack_t;</programlisting>
    Each method is implemented as a static method (static to prevent
@@ -646,7 +646,7 @@
    </para>
   </sect2>
  </sect1>
- 
+
  <sect1>
   <title>Coding style and guidelines</title>
   <para>
@@ -655,35 +655,35 @@
    Contributions will not be rejected if they do not meet these
    rules but they will be even more appreciated if they do.
    <itemizedlist>
-    <listitem> 
+    <listitem>
      <para>
       Comment your interfaces directly in the header files.
       No doxygen comments, ordinary C comments will do.
      </para>
     </listitem>
-    <listitem> 
+    <listitem>
      <para>
       Use C-style comments (/* */), not C++-style (//).
      </para>
     </listitem>
-    <listitem> 
+    <listitem>
      <para>
       When in doubt, use lower case. BTW: This thing is called xine, never Xine.
      </para>
     </listitem>
-    <listitem> 
+    <listitem>
      <para>
       Use expressive variable and function identifiers on all public interfaces.
       Use underscores to seperate words in identifiers, not uppercase
       letters (my_function_name is ok, myFunctionName is not ok).
      </para>
     </listitem>
-    <listitem> 
+    <listitem>
      <para>
       Avoid macros unless they are really useful. Avoid gotos.
      </para>
     </listitem>
-    <listitem> 
+    <listitem>
      <para>
       use something like
       <programlisting>&nbsp;&nbsp;&nbsp;printf("module: ..."[,&hellip;]);</programlisting>
@@ -692,7 +692,7 @@
       output (see example above).
      </para>
     </listitem>
-    <listitem> 
+    <listitem>
      <para>
       Refer to emac's C-mode for all questions of proper indentiation.
       That first of all means: indent with two spaces.
@@ -701,7 +701,7 @@
    </itemizedlist>
   </para>
  </sect1>
- 
+
  <sect1>
   <title>The xine logging system</title>
   <para>

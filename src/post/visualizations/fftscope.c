@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
  *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -53,7 +53,7 @@ typedef struct post_class_fftscope_s post_class_fftscope_t;
 
 struct post_class_fftscope_s {
   post_class_t post_class;
-  
+
   xine_t      *xine;
 };
 
@@ -63,10 +63,10 @@ struct post_plugin_fftscope_s {
   /* private data */
   xine_video_port_t *vo_port;
   post_out_t         video_output;
-  
+
   /* private metronom for syncing the video */
   metronom_t        *metronom;
-  
+
   double ratio;
 
   int data_idx;
@@ -277,12 +277,12 @@ static int fftscope_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream
 
   _x_post_rewire(&this->post);
   _x_post_inc_usage(port);
-  
+
   port->stream = stream;
   port->bits = bits;
   port->rate = rate;
   port->mode = mode;
-  
+
   this->ratio = (double)FFT_WIDTH/(double)FFT_HEIGHT;
 
   this->channels = _x_ao_mode2channels(mode);
@@ -315,15 +315,15 @@ static void fftscope_port_close(xine_audio_port_t *port_gen, xine_stream_t *stre
   post_plugin_fftscope_t *this = (post_plugin_fftscope_t *)port->post;
 
   port->stream = NULL;
-  
+
   fft_dispose(this->fft);
   this->fft = NULL;
 
   this->vo_port->close(this->vo_port, XINE_ANON_STREAM);
   this->metronom->set_master(this->metronom, NULL);
- 
+
   port->original_port->close(port->original_port, stream );
-  
+
   _x_post_dec_usage(port);
 }
 
@@ -393,8 +393,8 @@ static void fftscope_port_put_buffer (xine_audio_port_t *port_gen,
                                         this->ratio, XINE_IMGFMT_YUY2,
                                         VO_BOTH_FIELDS);
       frame->extra_info->invalid = 1;
-      
-      /* frame is marked as bad if we don't have enough samples for 
+
+      /* frame is marked as bad if we don't have enough samples for
        * updating the viz plugin (calculations may be skipped).
        * we must keep the framerate though. */
       if( this->data_idx == NUMSAMPLES ) {
@@ -406,10 +406,10 @@ static void fftscope_port_put_buffer (xine_audio_port_t *port_gen,
       frame->duration = 90000 * this->samples_per_frame / port->rate;
       frame->pts = pts;
       this->metronom->got_video_frame(this->metronom, frame);
-      
+
       this->sample_counter -= this->samples_per_frame;
 
-      if( this->fft )                                       
+      if( this->fft )
         draw_fftscope(this, frame);
       else
         frame->bad_frame = 1;
@@ -423,7 +423,7 @@ static void fftscope_port_put_buffer (xine_audio_port_t *port_gen,
 static void fftscope_dispose(post_plugin_t *this_gen)
 {
   post_plugin_fftscope_t *this = (post_plugin_fftscope_t *)this_gen;
-  
+
   if (_x_post_dispose(this_gen)) {
 
     this->metronom->exit(this->metronom);
@@ -450,7 +450,7 @@ static post_plugin_t *fftscope_open_plugin(post_class_t *class_gen, int inputs,
     free(this);
     return NULL;
   }
-  
+
   _x_post_init(&this->post, 1, 0);
 
   this->metronom = _x_metronom_init(1, 0, class->xine);
@@ -496,16 +496,16 @@ static void fftscope_class_dispose(post_class_t *class_gen)
 void *fftscope_init_plugin(xine_t *xine, void *data)
 {
   post_class_fftscope_t *class = (post_class_fftscope_t *)malloc(sizeof(post_class_fftscope_t));
-  
+
   if (!class)
     return NULL;
-  
+
   class->post_class.open_plugin     = fftscope_open_plugin;
   class->post_class.get_identifier  = fftscope_get_identifier;
   class->post_class.get_description = fftscope_get_description;
   class->post_class.dispose         = fftscope_class_dispose;
-  
+
   class->xine                       = xine;
-  
+
   return &class->post_class;
 }

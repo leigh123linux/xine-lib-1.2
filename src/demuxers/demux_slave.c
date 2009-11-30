@@ -2,19 +2,19 @@
  * Copyright (C) 2000-2003 the xine project
  * May 2003 - Miguel Freitas
  * This plugin was sponsored by 1Control
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -51,7 +51,7 @@
 #define CHECK_VPTS_INTERVAL 2*90000
 #define NETWORK_PREBUFFER   90000
 
-typedef struct {  
+typedef struct {
   demux_plugin_t      demux_plugin;
 
   xine_stream_t       *stream;
@@ -86,7 +86,7 @@ static int demux_slave_next (demux_slave_t *this) {
   char fifo_name[11];
   uint8_t *p, *s;
   int64_t curvpts;
-  
+
   /* fill the scratch buffer */
   n = this->input->read(this->input, &this->scratch[this->scratch_used],
                         SCRATCH_SIZE - this->scratch_used);
@@ -433,7 +433,7 @@ static const demuxer_info_t demux_info_slave = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_DEMUX, 26, "slave", XINE_VERSION_CODE, &demux_info_slave, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

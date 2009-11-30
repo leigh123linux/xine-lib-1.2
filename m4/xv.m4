@@ -72,15 +72,15 @@ AC_DEFUN([AC_FIND_LIBXV],
     xv_path=/usr/X11R6/lib
   fi
 
-  if test "x$xv_prefer_shared" = "xyes"; then  
+  if test "x$xv_prefer_shared" = "xyes"; then
     AC_PATH_LIBXV_IMPL([libXv.so])
   else
     AC_PATH_LIBXV_IMPL([libXv.a])
   fi
-  
+
   # Try the other lib if prefered failed
   if test x$XV_LIBS = x; then
-    if ! test "x$xv_prefer_shared" = "xyes"; then  
+    if ! test "x$xv_prefer_shared" = "xyes"; then
       AC_PATH_LIBXV_IMPL([libXv.so])
     else
       AC_PATH_LIBXV_IMPL([libXv.a])

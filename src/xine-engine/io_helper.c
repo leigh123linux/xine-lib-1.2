@@ -53,14 +53,14 @@ static int _x_io_tcp_connect_ipv4(xine_stream_t *stream, const char *host, int p
 
   struct hostent *h;
   int             i, s;
-  
+
   h = gethostbyname(host);
   if (h == NULL) {
     _x_message(stream, XINE_MSG_UNKNOWN_HOST, "unable to resolve", host, NULL);
     return -1;
   }
 
-  s = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);  
+  s = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (s == -1) {
     _x_message(stream, XINE_MSG_CONNECTION_REFUSED, "failed to create socket", strerror(errno), NULL);
     return -1;
@@ -88,12 +88,12 @@ static int _x_io_tcp_connect_ipv4(xine_stream_t *stream, const char *host, int p
   for (i = 0; h->h_addr_list[i]; i++) {
     struct in_addr ia;
     struct sockaddr_in sin;
- 
+
     memcpy (&ia, h->h_addr_list[i], 4);
     sin.sin_family = AF_INET;
     sin.sin_addr   = ia;
     sin.sin_port   = htons(port);
-    
+
 #ifndef WIN32
     if (connect(s, (struct sockaddr *)&sin, sizeof(sin))==-1 && errno != EINPROGRESS) {
 #else
@@ -106,7 +106,7 @@ static int _x_io_tcp_connect_ipv4(xine_stream_t *stream, const char *host, int p
       close(s);
       continue;
     }
-    
+
     return s;
   }
   return -1;
@@ -122,10 +122,10 @@ int _x_io_tcp_connect(xine_stream_t *stream, const char *host, int port) {
   struct addrinfo hints, *res, *tmpaddr;
   int error;
   char strport[16];
-	
+
   memset(&hints, 0, sizeof(hints));
   hints.ai_socktype = SOCK_STREAM;
-  hints.ai_family = PF_UNSPEC; 
+  hints.ai_family = PF_UNSPEC;
 
   snprintf(strport, sizeof(strport), "%d", port);
 
@@ -135,7 +135,7 @@ int _x_io_tcp_connect(xine_stream_t *stream, const char *host, int port) {
   error = getaddrinfo(host, strport, &hints, &res);
 
   if (error) {
-    _x_message(stream, XINE_MSG_UNKNOWN_HOST, 
+    _x_message(stream, XINE_MSG_UNKNOWN_HOST,
 		 "unable to resolve", host, NULL);
     return -1;
   }
@@ -143,10 +143,10 @@ int _x_io_tcp_connect(xine_stream_t *stream, const char *host, int port) {
   tmpaddr = res;
 
   while (tmpaddr) {
-      
-      s = socket(tmpaddr->ai_family, SOCK_STREAM, IPPROTO_TCP);  
+
+      s = socket(tmpaddr->ai_family, SOCK_STREAM, IPPROTO_TCP);
       if (s == -1) {
-	  _x_message(stream, XINE_MSG_CONNECTION_REFUSED, 
+	  _x_message(stream, XINE_MSG_CONNECTION_REFUSED,
 		       "failed to create socket", strerror(errno), NULL);
 	  tmpaddr = tmpaddr->ai_next;
 	  continue;
@@ -177,12 +177,12 @@ int _x_io_tcp_connect(xine_stream_t *stream, const char *host, int port) {
       }
 
 #ifndef WIN32
-    if (connect(s, tmpaddr->ai_addr, 
+    if (connect(s, tmpaddr->ai_addr,
 		tmpaddr->ai_addrlen)==-1 && errno != EINPROGRESS) {
-	
+
 #else
-    if (connect(s, tmpaddr->ai_addr, 
-		tmpaddr->ai_addrlen)==-1 && 
+    if (connect(s, tmpaddr->ai_addr,
+		tmpaddr->ai_addrlen)==-1 &&
 	WSAGetLastError() != WSAEWOULDBLOCK) {
 
       if (stream)
@@ -196,12 +196,12 @@ int _x_io_tcp_connect(xine_stream_t *stream, const char *host, int port) {
     } else {
       return s;
     }
-  
+
     tmpaddr = tmpaddr->ai_next;
   }
 
   _x_message(stream, XINE_MSG_CONNECTION_REFUSED, strerror(error), NULL);
-  
+
   return -1;
 #endif
 }
@@ -302,14 +302,14 @@ int _x_io_select (xine_stream_t *stream, int fd, int state, int timeout_msec) {
  */
 int _x_io_tcp_connect_finish(xine_stream_t *stream, int fd, int timeout_msec) {
   int ret;
-  
+
   ret = _x_io_select(stream, fd, XIO_WRITE_READY, timeout_msec);
 
   /* find out, if connection is successfull */
   if (ret == XIO_READY) {
     socklen_t len = sizeof(int);
     int err;
-    
+
     if ((getsockopt(fd, SOL_SOCKET, SO_ERROR, (void *)&err, &len)) == -1) {
       _x_message(stream, XINE_MSG_CONNECTION_REFUSED, _("failed to get status of socket"), strerror(errno), NULL);
       return XIO_ERROR;
@@ -346,14 +346,14 @@ static off_t xio_rw_abort(xine_stream_t *stream, int fd, int cmd, char *buf, off
   } else {
     timeout = 30000; /* 30K msecs = 30 secs */
   }
-  
+
   while (total < todo) {
 
     sret = _x_io_select(stream, fd, state, timeout);
-    
+
     if (sret != XIO_READY)
       return -1;
-    
+
     switch (cmd) {
       case XIO_FILE_READ:
         ret = read(fd, &buf[total], todo - total);
@@ -403,7 +403,7 @@ static off_t xio_rw_abort(xine_stream_t *stream, int fd, int cmd, char *buf, off
       if (stream)
         xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "io_helper: WSAGetLastError() = %d\n", WSAGetLastError());
 #endif
-      
+
       return ret;
     }
     total += ret;

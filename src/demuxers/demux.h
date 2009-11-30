@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -63,7 +63,7 @@ struct demux_class_s {
    */
 
   const char* (*get_identifier) (demux_class_t *this);
-  
+
   /*
    * return MIME types supported for this plugin
    */
@@ -73,7 +73,7 @@ struct demux_class_s {
   /*
    * return ' ' seperated list of file extensions this
    * demuxer is likely to handle
-   * (will be used to filter media files in 
+   * (will be used to filter media files in
    * file selection dialogs)
    */
 
@@ -100,7 +100,7 @@ struct demux_plugin_s {
   void (*send_headers) (demux_plugin_t *this);
 
   /*
-   * ask demux to seek 
+   * ask demux to seek
    *
    * for seekable streams, a start position can be specified
    *
@@ -118,11 +118,11 @@ struct demux_plugin_s {
    *                           starting the demuxer)
    */
 
-  int (*seek) (demux_plugin_t *this, 
+  int (*seek) (demux_plugin_t *this,
 	       off_t start_pos, int start_time, int playing );
 
   /*
-   * send a chunk of data down to decoder fifos 
+   * send a chunk of data down to decoder fifos
    *
    * the meaning of "chunk" is specific to every demux, usually
    * it involves parsing one unit of data from stream.
@@ -132,15 +132,15 @@ struct demux_plugin_s {
    */
 
   int (*send_chunk) (demux_plugin_t *this);
-          
+
   /*
-   * free resources 
+   * free resources
    */
 
   void (*dispose) (demux_plugin_t *this) ;
 
   /*
-   * returns DEMUX_OK or  DEMUX_FINISHED 
+   * returns DEMUX_OK or  DEMUX_FINISHED
    */
 
   int (*get_status) (demux_plugin_t *this) ;
@@ -157,12 +157,12 @@ struct demux_plugin_s {
    */
 
   uint32_t (*get_capabilities) (demux_plugin_t *this);
-  
+
   /*
    * request optional data from input plugin.
    */
   int (*get_optional_data) (demux_plugin_t *this, void *data, int data_type);
-  
+
   /*
    * "backwards" link to plugin class
    */
@@ -181,8 +181,8 @@ struct demux_plugin_s {
 /*
  * DEMUX_CAP_AUDIOLANG:
  * DEMUX_CAP_SPULANG:
- *   demux plugin knows something about audio/spu languages, 
- *   e.g. knows that audio stream #0 is english, 
+ *   demux plugin knows something about audio/spu languages,
+ *   e.g. knows that audio stream #0 is english,
  *   audio stream #1 is german, ...  Same bits as INPUT
  *   capabilities .
  */

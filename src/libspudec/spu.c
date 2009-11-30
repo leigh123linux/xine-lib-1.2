@@ -17,13 +17,13 @@
  *		cleaner implementation of SPU are saving
  *		overlaying (proof of concept for now)
  *		... and yes, it works now with oms
- *		added tranparency (provided by the SPU hdr) 
+ *		added tranparency (provided by the SPU hdr)
  *		changed structures for easy porting to MGAs DVD mode
  * This file is part of xine
  * This file was originally part of the OMS program.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by 
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
  *
@@ -89,7 +89,7 @@ void spudec_decode_nav(spudec_decoder_t *this, buf_element_t *buf) {
 
   p = buf->content;
   if (p[0] || p[1] || (p[2] != 1)) {
-    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	    "libspudec:spudec_decode_nav:nav demux error! %02x %02x %02x (should be 0x000001) \n",p[0],p[1],p[2]);
     return;
   }
@@ -126,7 +126,7 @@ void spudec_decode_nav(spudec_decoder_t *this, buf_element_t *buf) {
       printf("btngr%d_dsp_ty    0x%02x\n", 1, pci.hli.hl_gi.btngr1_dsp_ty);
       printf("btngr%d_dsp_ty    0x%02x\n", 2, pci.hli.hl_gi.btngr2_dsp_ty);
       printf("btngr%d_dsp_ty    0x%02x\n", 3, pci.hli.hl_gi.btngr3_dsp_ty);
-      //navPrint_PCI(&pci); 
+      //navPrint_PCI(&pci);
       //navPrint_PCI_GI(&pci.pci_gi);
       //navPrint_NSML_AGLI(&pci.nsml_agli);
       //navPrint_HLI(&pci.hli);
@@ -142,7 +142,7 @@ void spudec_decode_nav(spudec_decoder_t *this, buf_element_t *buf) {
       packet_len = p[4] << 8 | p[5];
       p += 6;
 #ifdef LOG_NAV
-      printf("NAV DSI packet\n");  
+      printf("NAV DSI packet\n");
 #endif
       navRead_DSI(&dsi, p+1);
 
@@ -150,7 +150,7 @@ void spudec_decode_nav(spudec_decoder_t *this, buf_element_t *buf) {
 //      self->vobu_length = self->dsi.dsi_gi.vobu_ea;
     }
   }
-  
+
   /* NAV packets contain start and end presentation timestamps, which tell the
    * application, when the highlight information in the NAV is supposed to be valid.
    * We handle these timestamps only in a very stripped-down way: We keep a list
@@ -192,18 +192,18 @@ void spudec_decode_nav(spudec_decoder_t *this, buf_element_t *buf) {
 	/* we possibly had buttons before, so we update the UI info */
 	xine_event_t   event;
 	xine_ui_data_t data;
-	
+
 	event.type = XINE_EVENT_UI_NUM_BUTTONS;
 	event.data = &data;
 	event.data_length = sizeof(data);
 	data.num_buttons = 0;
-	
+
 	xine_event_send(this->stream, &event);
       }
       this->button_filter=0;
 
       break;
-    case 1: 
+    case 1:
       /* All New Highlight information for this VOBU */
       if (this->pci_cur.pci.hli.hl_gi.hli_ss != 0 &&
 	  pci.hli.hl_gi.hli_s_ptm > this->pci_cur.pci.hli.hl_gi.hli_s_ptm) {
@@ -259,7 +259,7 @@ void spudec_decode_nav(spudec_decoder_t *this, buf_element_t *buf) {
       }
       break;
    default:
-      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	      "libspudec: unknown pci.hli.hl_gi.hli_ss = %d\n", pci.hli.hl_gi.hli_ss );
       break;
   }
@@ -281,7 +281,7 @@ void spudec_clear_nav_list(spudec_decoder_t *this)
 void spudec_update_nav(spudec_decoder_t *this)
 {
   metronom_clock_t *clock = this->stream->xine->clock;
-  
+
   if (this->pci_cur.next && this->pci_cur.next->vpts <= clock->get_current_time(clock)) {
     pci_node_t *node = this->pci_cur.next;
     xine_fast_memcpy(&this->pci_cur, this->pci_cur.next, sizeof(pci_node_t));
@@ -298,12 +298,12 @@ void spudec_process_nav(spudec_decoder_t *this)
     /* we possibly entered a menu, so we update the UI button info */
     xine_event_t   event;
     xine_ui_data_t data;
-    
+
     event.type = XINE_EVENT_UI_NUM_BUTTONS;
     event.data = &data;
     event.data_length = sizeof(data);
     data.num_buttons = this->pci_cur.pci.hli.hl_gi.btn_ns;
-    
+
     xine_event_send(this->stream, &event);
   }
   this->button_filter=1;
@@ -322,7 +322,7 @@ void spudec_reassembly (xine_t *xine, spudec_seq_t *seq, uint8_t *pkt_data, u_in
   if (seq->complete) {
     seq->seq_len = (((uint32_t)pkt_data[0])<<8) | pkt_data[1];
     seq->cmd_offs = (((uint32_t)pkt_data[2])<<8) | pkt_data[3];
-    if (seq->cmd_offs >= seq->seq_len) { 
+    if (seq->cmd_offs >= seq->seq_len) {
       xprintf(xine, XINE_VERBOSITY_DEBUG, "libspudec:faulty stream\n");
       seq->broken = 1;
     }
@@ -342,7 +342,7 @@ void spudec_reassembly (xine_t *xine, spudec_seq_t *seq, uint8_t *pkt_data, u_in
 
     }
     seq->ra_offs = 0;
-    
+
 #ifdef LOG_DEBUG
     printf ("spu: buf_len: %d\n", seq->buf_len);
     printf ("spu: cmd_off: %d\n", seq->cmd_offs);
@@ -364,7 +364,7 @@ void spudec_reassembly (xine_t *xine, spudec_seq_t *seq, uint8_t *pkt_data, u_in
   } else {
     xprintf(xine, XINE_VERBOSITY_DEBUG, "libspudec:faulty stream\n");
     seq->broken = 1;
-  } 
+  }
 
   if (seq->ra_offs == seq->seq_len) {
     seq->finished = 0;
@@ -382,9 +382,9 @@ void spudec_process (spudec_decoder_t *this, int stream_id) {
   cur_seq = &this->spudec_stream_state[stream_id].ra_seq;
 
 #ifdef LOG_DEBUG
-  printf ("spu: Found SPU from stream %d pts=%lli vpts=%lli\n",stream_id, 
+  printf ("spu: Found SPU from stream %d pts=%lli vpts=%lli\n",stream_id,
           this->spudec_stream_state[stream_id].pts,
-          this->spudec_stream_state[stream_id].vpts); 
+          this->spudec_stream_state[stream_id].vpts);
 #endif
   this->state.cmd_ptr = cur_seq->buf + cur_seq->cmd_offs;
   this->state.modified = 1; /* Only draw picture if = 1 on first event of SPU */
@@ -392,14 +392,14 @@ void spudec_process (spudec_decoder_t *this, int stream_id) {
   this->state.forced_display = 0; /* 0 - No value, 1 - Forced Display. */
   this->state.delay = 0;
   cur_seq->finished=0;
-  
+
   do {
     if (!(cur_seq->finished) ) {
       pci_node_t *node;
-      
+
       /* spu_channel is now set based on whether we are in the menu or not. */
       /* Bit 7 is set if only forced display SPUs should be shown */
-      if ( (this->stream->spu_channel & 0x1f) != stream_id  ) { 
+      if ( (this->stream->spu_channel & 0x1f) != stream_id  ) {
 #ifdef LOG_DEBUG
         printf ("spu: Dropping SPU channel %d. Not selected stream_id\n", stream_id);
 #endif
@@ -417,7 +417,7 @@ void spudec_process (spudec_decoder_t *this, int stream_id) {
 	cur_seq->broken = 0;
 	return;
       }
-      if ( (this->state.forced_display == 0) && (this->stream->spu_channel & 0x80) ) { 
+      if ( (this->state.forced_display == 0) && (this->stream->spu_channel & 0x80) ) {
 #ifdef LOG_DEBUG
         printf ("spu: Dropping SPU channel %d. Only allow forced display SPUs\n", stream_id);
 #endif
@@ -426,7 +426,7 @@ void spudec_process (spudec_decoder_t *this, int stream_id) {
 
 #ifdef LOG_DEBUG
       spudec_print_overlay( &this->overlay );
-      printf ("spu: forced display:%s\n", this->state.forced_display ? "Yes" : "No" ); 
+      printf ("spu: forced display:%s\n", this->state.forced_display ? "Yes" : "No" );
 #endif
       pthread_mutex_lock(&this->nav_pci_lock);
       /* search for a PCI that matches this SPU's PTS */
@@ -444,7 +444,7 @@ void spudec_process (spudec_decoder_t *this, int stream_id) {
         }
         if (node->pci.hli.hl_gi.fosl_btnn > 0) {
 	  xine_event_t event;
-	  
+
           this->buttonN     = node->pci.hli.hl_gi.fosl_btnn;
           event.type        = XINE_EVENT_INPUT_BUTTON_FORCE;
 	  event.stream      = this->stream;
@@ -455,12 +455,12 @@ void spudec_process (spudec_decoder_t *this, int stream_id) {
 #ifdef LOG_BUTTON
         fprintf(stderr, "libspudec:Full Overlay\n");
 #endif
-        if (!spudec_copy_nav_to_overlay(this->stream->xine, 
-					&node->pci, this->state.clut, 
+        if (!spudec_copy_nav_to_overlay(this->stream->xine,
+					&node->pci, this->state.clut,
 					this->buttonN, 0, &this->overlay, &this->overlay)) {
           /* current button does not exist -> use another one */
 	  xine_event_t event;
-	  
+
 	  if (this->buttonN > node->pci.hli.hl_gi.btn_ns)
 	    this->buttonN = node->pci.hli.hl_gi.btn_ns;
 	  else
@@ -470,8 +470,8 @@ void spudec_process (spudec_decoder_t *this, int stream_id) {
 	  event.data        = &this->buttonN;
 	  event.data_length = sizeof(this->buttonN);
           xine_event_send(this->stream, &event);
-	  spudec_copy_nav_to_overlay(this->stream->xine, 
-				     &node->pci, this->state.clut, 
+	  spudec_copy_nav_to_overlay(this->stream->xine,
+				     &node->pci, this->state.clut,
 				     this->buttonN, 0, &this->overlay, &this->overlay);
         }
       } else {
@@ -484,44 +484,44 @@ void spudec_process (spudec_decoder_t *this, int stream_id) {
       }
       pthread_mutex_unlock(&this->nav_pci_lock);
 
-      if ((this->state.modified) ) { 
+      if ((this->state.modified) ) {
         spudec_draw_picture(this->stream->xine, &this->state, cur_seq, &this->overlay);
       }
-      
+
       if (this->state.need_clut) {
         spudec_discover_clut(this->stream->xine, &this->state, &this->overlay);
       }
-      
+
       if (this->state.vobsub) {
         int width, height;
         int64_t duration;
-        
+
         /*
          * vobsubs are usually played with a scaled-down stream (not full DVD
          * resolution), therefore we should try to realign it.
          */
-        
+
         this->stream->video_out->status(this->stream->video_out, NULL,
                                         &width, &height, &duration );
 
         this->overlay.x = (width - this->overlay.width) / 2;
         this->overlay.y = height - this->overlay.height;
       }
-      
+
       /* Subtitle */
       if( this->menu_handle < 0 ) {
         this->menu_handle = ovl_manager->get_handle(ovl_manager,1);
       }
- 
+
       if( this->menu_handle < 0 ) {
-        xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+        xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 		"libspudec: No video_overlay handles left for menu\n");
         return;
       }
       this->event.object.handle = this->menu_handle;
       this->event.object.pts = this->spudec_stream_state[stream_id].pts;
 
-      xine_fast_memcpy(this->event.object.overlay, 
+      xine_fast_memcpy(this->event.object.overlay,
              &this->overlay,
              sizeof(vo_overlay_t));
       this->overlay.rle=NULL;
@@ -529,15 +529,15 @@ void spudec_process (spudec_decoder_t *this, int stream_id) {
       //if ( !(this->state.visible) ) {
       //  this->state.visible = OVERLAY_EVENT_SHOW;
       //}
-     
+
       this->event.event_type = this->state.visible;
       /*
       printf("spu event %d handle: %d vpts: %lli\n", this->event.event_type,
-         this->event.object.handle, this->event.vpts ); 
+         this->event.object.handle, this->event.vpts );
       */
-      
-      this->event.vpts = this->spudec_stream_state[stream_id].vpts+(this->state.delay*1000); 
-      
+
+      this->event.vpts = this->spudec_stream_state[stream_id].vpts+(this->state.delay*1000);
+
       /* Keep all the events in the correct order. */
       /* This corrects for errors during estimation around discontinuity */
       if( this->event.vpts < this->last_event_vpts ) {
@@ -550,7 +550,7 @@ void spudec_process (spudec_decoder_t *this, int stream_id) {
         this->event.event_type,
         this->stream->xine->clock->get_current_time(this->stream->xine->clock),
         this->event.vpts);
-#endif 
+#endif
       ovl_manager->add_event(ovl_manager, (void *)&this->event);
     } else {
       pending = 0;
@@ -578,7 +578,7 @@ static void spudec_do_commands(xine_t *xine, spudec_state_t *state, spudec_seq_t
 #ifdef LOG_DEBUG
   printf ("spu: SPU DO COMMANDS\n");
 #endif
-  
+
   state->delay = (buf[0] << 8) + buf[1];
 #ifdef LOG_DEBUG
   printf ("spu: \tdelay=%d\n",state->delay);
@@ -595,7 +595,7 @@ static void spudec_do_commands(xine_t *xine, spudec_state_t *state, spudec_seq_t
     next_seq = seq->buf + seq->seq_len; /* allow to run until end */
 
   state->cmd_ptr = next_seq;
-	      
+
   while (buf < next_seq && *buf != CMD_SPU_EOF) {
     switch (*buf) {
     case CMD_SPU_SHOW:		/* show subpicture */
@@ -605,7 +605,7 @@ static void spudec_do_commands(xine_t *xine, spudec_state_t *state, spudec_seq_t
       state->visible = OVERLAY_EVENT_SHOW;
       buf++;
       break;
-      
+
     case CMD_SPU_HIDE:		/* hide subpicture */
 #ifdef LOG_DEBUG
       printf ("spu: \thide subpicture\n");
@@ -613,17 +613,17 @@ static void spudec_do_commands(xine_t *xine, spudec_state_t *state, spudec_seq_t
       state->visible = OVERLAY_EVENT_HIDE;
       buf++;
       break;
-      
+
     case CMD_SPU_SET_PALETTE: {	/* CLUT */
       spudec_clut_t *clut = (spudec_clut_t *) (buf+1);
-      
+
       state->cur_colors[3] = clut->entry0;
       state->cur_colors[2] = clut->entry1;
       state->cur_colors[1] = clut->entry2;
       state->cur_colors[0] = clut->entry3;
 
 /* This is a bit out of context for now */
-      ovl->color[3] = state->clut[clut->entry0]; 
+      ovl->color[3] = state->clut[clut->entry0];
       ovl->color[2] = state->clut[clut->entry1];
       ovl->color[1] = state->clut[clut->entry2];
       ovl->color[0] = state->clut[clut->entry3];
@@ -637,11 +637,11 @@ static void spudec_do_commands(xine_t *xine, spudec_state_t *state, spudec_seq_t
       state->modified = 1;
       buf += 3;
       break;
-    }	
+    }
     case CMD_SPU_SET_ALPHA:	{	/* transparency palette */
       spudec_clut_t *trans = (spudec_clut_t *) (buf+1);
 /* This should go into state for now */
-      
+
       ovl->trans[3] = trans->entry0;
       ovl->trans[2] = trans->entry1;
       ovl->trans[1] = trans->entry2;
@@ -655,7 +655,7 @@ static void spudec_do_commands(xine_t *xine, spudec_state_t *state, spudec_seq_t
       buf += 3;
       break;
     }
-    
+
     case CMD_SPU_SET_SIZE:		/* image coordinates */
 /*    state->o_left  = (buf[1] << 4) | (buf[2] >> 4);
       state->o_right = (((buf[2] & 0x0f) << 8) | buf[3]);
@@ -665,7 +665,7 @@ static void spudec_do_commands(xine_t *xine, spudec_state_t *state, spudec_seq_t
  */
       ovl->x      = (buf[1] << 4) | (buf[2] >> 4);
       ovl->y      = (buf[4]  << 4) | (buf[5] >> 4);
-      ovl->width  = (((buf[2] & 0x0f) << 8) | buf[3]) - ovl->x + 1; 
+      ovl->width  = (((buf[2] & 0x0f) << 8) | buf[3]) - ovl->x + 1;
       ovl->height = (((buf[5] & 0x0f) << 8) | buf[6]) - ovl->y + 1;
       ovl->hili_top    = -1;
       ovl->hili_bottom = -1;
@@ -679,7 +679,7 @@ static void spudec_do_commands(xine_t *xine, spudec_state_t *state, spudec_seq_t
       state->modified = 1;
       buf += 7;
       break;
-      
+
     case CMD_SPU_SET_PXD_OFFSET:	/* image top[0] field / image bottom[1] field*/
       state->field_offs[0] = (((u_int)buf[1]) << 8) | buf[2];
       state->field_offs[1] = (((u_int)buf[3]) << 8) | buf[4];
@@ -697,13 +697,13 @@ static void spudec_do_commands(xine_t *xine, spudec_state_t *state, spudec_seq_t
       state->modified = 1;
       buf += 5;
       break;
-      
+
     case CMD_SPU_WIPE:
 #ifdef LOG_DEBUG
       printf ("libspudec: \tSPU_WIPE not implemented yet\n");
 #endif
       param_length = (buf[1] << 8) | (buf[2]);
-      buf += 1 + param_length; 
+      buf += 1 + param_length;
       break;
 
     case CMD_SPU_FORCE_DISPLAY:
@@ -722,7 +722,7 @@ static void spudec_do_commands(xine_t *xine, spudec_state_t *state, spudec_seq_t
       break;
     }
   }
-  
+
   if (next_seq >= seq->buf + seq->seq_len)
     seq->finished = 1;       /* last sub-sequence */
 }
@@ -763,11 +763,11 @@ static u_int get_bits (u_int bits)
 static int spudec_next_line (vo_overlay_t *spu)
 {
   get_bits (0); // byte align rle data
-	
+
   put_x = 0;
   put_y++;
   field ^= 1; // Toggle fields
-	
+
   if (put_y >= spu->height) {
 #ifdef LOG_DEBUG
     printf ("spu: put_y >= spu->height\n");
@@ -801,11 +801,11 @@ static void spudec_draw_picture (xine_t *xine, spudec_state_t *state, spudec_seq
    *  - both fields running to the very end
    *  - 2 RLE elements per byte meaning single pixel RLE
    */
-  ovl->data_size = ((seq->cmd_offs - state->field_offs[0]) + 
+  ovl->data_size = ((seq->cmd_offs - state->field_offs[0]) +
                     (seq->cmd_offs - state->field_offs[1])) * 2 * sizeof(rle_elem_t);
 
   if (ovl->rle) {
-    xprintf (xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (xine, XINE_VERBOSITY_DEBUG,
 	     "libspudec: spudec_draw_picture: ovl->rle is not empty!!!! It should be!!! "
 	     "You should never see this message.\n");
     free(ovl->rle);
@@ -890,7 +890,7 @@ static void spudec_discover_clut(xine_t *xine, spudec_state_t *state, vo_overlay
      why rle is null? */
   if( !rle )
     return;
-  
+
   /* suppose the first and last pixels are bg */
   if( rle[0].color != rle[ovl->num_rle-1].color )
     return;
@@ -976,9 +976,9 @@ int spudec_copy_nav_to_overlay(xine_t *xine, pci_t* nav_pci, uint32_t* clut,
 
   if((button <= 0) || (button > nav_pci->hli.hl_gi.btn_ns))
     return 0;
-  
+
   btns_per_group = 36 / nav_pci->hli.hl_gi.btngr_ns;
-  
+
   /* choose button group: we can always use a normal 4:3 or widescreen button group
    * as long as xine blends the overlay before scaling the image to its aspect */
   if (!button_ptr && nav_pci->hli.hl_gi.btngr_ns >= 1 && !(nav_pci->hli.hl_gi.btngr1_dsp_ty & 6))
@@ -988,11 +988,11 @@ int spudec_copy_nav_to_overlay(xine_t *xine, pci_t* nav_pci, uint32_t* clut,
   if (!button_ptr && nav_pci->hli.hl_gi.btngr_ns >= 3 && !(nav_pci->hli.hl_gi.btngr3_dsp_ty & 6))
     button_ptr = &nav_pci->hli.btnit[2 * btns_per_group + button - 1];
   if (!button_ptr) {
-    xprintf(xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(xine, XINE_VERBOSITY_DEBUG,
 	    "libspudec: No suitable menu button group found, using group 1.\n");
     button_ptr = &nav_pci->hli.btnit[button - 1];
   }
-  
+
   /* button areas in the nav packet are in screen coordinates,
    * overlay clipping areas are in overlay coordinates;
    * therefore we must subtract the display coordinates of the underlying overlay */
@@ -1025,6 +1025,6 @@ int spudec_copy_nav_to_overlay(xine_t *xine, pci_t* nav_pci, uint32_t* clut,
 #ifdef LOG_BUTTON
   printf("libspudec:xine_decoder.c:NAV to SPU pts match!\n");
 #endif
-  
+
   return 1;
 }

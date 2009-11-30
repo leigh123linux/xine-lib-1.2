@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -55,11 +55,11 @@ static void    dxr3_scr_update_priority(void *this_gen, xine_cfg_entry_t *entry)
 static inline int dxr3_mvcommand(int fd_control, int command)
 {
   em8300_register_t reg;
-  
+
   reg.microcode_register = 1;
   reg.reg = 0;
   reg.val = command;
-  
+
   return ioctl(fd_control, EM8300_IOCTL_WRITEREG, &reg);
 }
 
@@ -69,21 +69,21 @@ dxr3_scr_t *dxr3_scr_init(xine_t *xine)
   dxr3_scr_t *this;
   int devnum;
   char tmpstr[128];
-  
+
   this = calloc(1, sizeof(dxr3_scr_t));
-  
+
   devnum = xine->config->register_num(xine->config,
     CONF_KEY, 0, CONF_NAME, CONF_HELP, 10, NULL, NULL);
   snprintf(tmpstr, sizeof(tmpstr), "/dev/em8300-%d", devnum);
   if ((this->fd_control = open(tmpstr, O_WRONLY)) < 0) {
-    xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG,
 	    "dxr3_scr: Failed to open control device %s (%s)\n", tmpstr, strerror(errno));
     free(this);
     return NULL;
   }
-  
+
   this->xine = xine;
-  
+
   this->scr_plugin.interface_version = 3;
   this->scr_plugin.get_priority      = dxr3_scr_get_priority;
   this->scr_plugin.start             = dxr3_scr_start;
@@ -91,7 +91,7 @@ dxr3_scr_t *dxr3_scr_init(xine_t *xine)
   this->scr_plugin.adjust            = dxr3_scr_adjust;
   this->scr_plugin.set_fine_speed    = dxr3_scr_set_speed;
   this->scr_plugin.exit              = dxr3_scr_exit;
-  
+
   this->priority                     = xine->config->register_num(
     xine->config, "dxr3.scr_priority", 10, _("SCR plugin priority"),
     _("Priority of the DXR3 SCR plugin. Values less than 5 mean that the "
@@ -102,9 +102,9 @@ dxr3_scr_t *dxr3_scr_init(xine_t *xine)
   this->last_pts                     = 0;
   this->scanning                     = 0;
   this->sync                         = 0;
-  
+
   pthread_mutex_init(&this->mutex, NULL);
-  
+
   lprintf("init complete\n");
   return this;
 }
@@ -120,7 +120,7 @@ static void dxr3_scr_start(scr_plugin_t *scr, int64_t vpts)
 {
   dxr3_scr_t *this = (dxr3_scr_t *)scr;
   uint32_t vpts32 = vpts >> 1;
-  
+
   pthread_mutex_lock(&this->mutex);
   this->last_pts = vpts32;
   this->offset = vpts - ((int64_t)vpts32 << 1);
@@ -140,7 +140,7 @@ static int64_t dxr3_scr_get_current(scr_plugin_t *scr)
   dxr3_scr_t *this = (dxr3_scr_t *)scr;
   uint32_t pts;
   int64_t current;
-  
+
   pthread_mutex_lock(&this->mutex);
   if (ioctl(this->fd_control, EM8300_IOCTL_SCR_GET, &pts))
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, "dxr3_scr: get current failed (%s)\n", strerror(errno));
@@ -152,7 +152,7 @@ static int64_t dxr3_scr_get_current(scr_plugin_t *scr)
   this->last_pts = pts;
   current = ((int64_t)pts << 1) + this->offset;
   pthread_mutex_unlock(&this->mutex);
-  
+
   return current;
 }
 
@@ -161,7 +161,7 @@ static void dxr3_scr_adjust(scr_plugin_t *scr, int64_t vpts)
   dxr3_scr_t *this = (dxr3_scr_t *)scr;
   uint32_t current_pts32;
   int32_t offset32;
- 
+
   pthread_mutex_lock(&this->mutex);
   if (ioctl(this->fd_control, EM8300_IOCTL_SCR_GET, &current_pts32))
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, "dxr3_scr: adjust get failed (%s)\n", strerror(errno));
@@ -187,7 +187,7 @@ static int dxr3_scr_set_speed(scr_plugin_t *scr, int speed)
   int playmode;
 
   pthread_mutex_lock(&this->mutex);
-  
+
   em_speed = 0x900LL * (int64_t)speed / XINE_FINE_SPEED_NORMAL;
   switch (em_speed) {
   case 0:
@@ -200,24 +200,24 @@ static int dxr3_scr_set_speed(scr_plugin_t *scr, int speed)
       playmode = MVCOMMAND_SYNC;
     else
       playmode = MVCOMMAND_START;
-    break;    
+    break;
   default:
     playmode = MVCOMMAND_START;
   }
-  
+
   if (dxr3_mvcommand(this->fd_control, playmode))
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, "dxr3_scr: failed to playmode (%s)\n", strerror(errno));
-  
+
   if(em_speed > 0x900)
     this->scanning = 1;
   else
     this->scanning = 0;
-  
+
   if (ioctl(this->fd_control, EM8300_IOCTL_SCR_SETSPEED, &em_speed))
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, "dxr3_scr: failed to set speed (%s)\n", strerror(errno));
-  
+
   pthread_mutex_unlock(&this->mutex);
-  
+
   lprintf("speed set to mode %d\n", speed);
   return speed;
 }
@@ -225,7 +225,7 @@ static int dxr3_scr_set_speed(scr_plugin_t *scr, int speed)
 static void dxr3_scr_exit(scr_plugin_t *scr)
 {
   dxr3_scr_t *this = (dxr3_scr_t *)scr;
-  
+
   close(this->fd_control);
   pthread_mutex_destroy(&this->mutex);
   free(this);
@@ -237,8 +237,8 @@ static void dxr3_scr_exit(scr_plugin_t *scr)
 static void dxr3_scr_update_priority(void *this_gen, xine_cfg_entry_t *entry)
 {
   dxr3_scr_t *this = (dxr3_scr_t *)this_gen;
-  
+
   this->priority = entry->num_value;
-  xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->xine, XINE_VERBOSITY_DEBUG,
 	  "dxr3_scr: setting scr priority to %d\n", entry->num_value);
 }

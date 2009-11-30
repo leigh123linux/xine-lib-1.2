@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2002-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -76,26 +76,26 @@ typedef struct {
 
   char            *mrl;
 
-  nbc_t           *nbc; 
+  nbc_t           *nbc;
 
   char             scratch[1025];
 
   int              bandwidth;
   int              protocol;       /* mmst or mmsh */
-  
+
 } mms_input_plugin_t;
 
 typedef struct {
 
   input_class_t       input_class;
-  
+
   mms_input_plugin_t *ip;
   int                 protocol;    /* autoprobe, mmst or mmsh */
 
   xine_t             *xine;
 } mms_input_class_t;
 
-static off_t mms_plugin_read (input_plugin_t *this_gen, 
+static off_t mms_plugin_read (input_plugin_t *this_gen,
                               char *buf, off_t len) {
   mms_input_plugin_t *this = (mms_input_plugin_t *) this_gen;
   off_t               n = 0;
@@ -131,7 +131,7 @@ static buf_element_t *mms_plugin_read_block (input_plugin_t *this_gen,
 
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
-  
+
   total_bytes = mms_plugin_read (this_gen, (char*)buf->content, todo);
 
   if (total_bytes != todo) {
@@ -145,7 +145,7 @@ static buf_element_t *mms_plugin_read_block (input_plugin_t *this_gen,
 }
 
 static off_t mms_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin) {
-  mms_input_plugin_t   *this = (mms_input_plugin_t *) this_gen; 
+  mms_input_plugin_t   *this = (mms_input_plugin_t *) this_gen;
   off_t                 dest = 0;
   off_t                 curpos = 0;
 
@@ -160,7 +160,7 @@ static off_t mms_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin
       curpos = mmsh_get_current_pos (this->mmsh);
       break;
   }
-  
+
   switch (origin) {
     case SEEK_SET:
       dest = offset;
@@ -177,7 +177,7 @@ static off_t mms_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin
     printf ("input_mms: cannot seek back!\n");
     return curpos;
   }
-    
+
   while (curpos < dest) {
     int n = 0;
     int diff;
@@ -195,7 +195,7 @@ static off_t mms_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin
         n = mmsh_read (this->mmsh, this->scratch, diff);
         break;
     }
-    
+
     curpos += n;
 
     if (n < diff)
@@ -211,7 +211,7 @@ static off_t mms_plugin_seek_time (input_plugin_t *this_gen, int time_offset, in
   off_t               curpos = 0;
 
   lprintf ("seek_time %d msec, origin %d\n", time_offset, origin);
-  
+
   switch (this->protocol) {
     case PROTOCOL_MMST:
       if (origin == SEEK_SET)
@@ -224,12 +224,12 @@ static off_t mms_plugin_seek_time (input_plugin_t *this_gen, int time_offset, in
       curpos = mmsh_get_current_pos (this->mmsh);
       break;
   }
-    
+
   return curpos;
 }
 
 static off_t mms_plugin_get_length (input_plugin_t *this_gen) {
-  mms_input_plugin_t   *this = (mms_input_plugin_t *) this_gen; 
+  mms_input_plugin_t   *this = (mms_input_plugin_t *) this_gen;
   off_t                 length = 0;
 
   if (!this->mms)
@@ -261,7 +261,7 @@ static uint32_t mms_plugin_get_blocksize (input_plugin_t *this_gen) {
 static off_t mms_plugin_get_current_pos (input_plugin_t *this_gen){
   mms_input_plugin_t *this = (mms_input_plugin_t *) this_gen;
   off_t curpos = 0;
-  
+
   switch (this->protocol) {
     case PROTOCOL_MMST:
       curpos = mms_get_current_pos(this->mms);
@@ -279,10 +279,10 @@ static void mms_plugin_dispose (input_plugin_t *this_gen) {
 
   if (this->mms)
     mms_close (this->mms);
-  
+
   if (this->mmsh)
     mmsh_close (this->mmsh);
-  
+
   this->mms  = NULL;
   this->mmsh = NULL;
 
@@ -290,10 +290,10 @@ static void mms_plugin_dispose (input_plugin_t *this_gen) {
     nbc_close (this->nbc);
     this->nbc = NULL;
   }
-  
+
   if(this->mrl)
     free(this->mrl);
-  
+
   free (this);
 }
 
@@ -303,7 +303,7 @@ static const char* mms_plugin_get_mrl (input_plugin_t *this_gen) {
   return this->mrl;
 }
 
-static int mms_plugin_get_optional_data (input_plugin_t *this_gen, 
+static int mms_plugin_get_optional_data (input_plugin_t *this_gen,
                                          void *data, int data_type) {
   mms_input_plugin_t *this = (mms_input_plugin_t *) this_gen;
 
@@ -319,7 +319,7 @@ static int mms_plugin_get_optional_data (input_plugin_t *this_gen,
         break;
     }
     break;
-    
+
   default:
     return INPUT_OPTIONAL_UNSUPPORTED;
     break;
@@ -357,7 +357,7 @@ static int mms_plugin_open (input_plugin_t *this_gen) {
   mms_input_plugin_t *this = (mms_input_plugin_t *) this_gen;
   mms_t              *mms  = NULL;
   mmsh_t             *mmsh = NULL;
-  
+
   switch (this->protocol) {
     case PROTOCOL_UNDEFINED:
       mms = mms_connect (this->stream, this->mrl, this->bandwidth);
@@ -375,18 +375,18 @@ static int mms_plugin_open (input_plugin_t *this_gen) {
       mmsh = mmsh_connect (this->stream, this->mrl, this->bandwidth);
       break;
   }
-  
+
   if (!mms && !mmsh) {
     return 0;
   }
-  
+
   this->mms      = mms;
   this->mmsh     = mmsh;
-  
+
   return 1;
 }
 
-static input_plugin_t *mms_class_get_instance (input_class_t *cls_gen, xine_stream_t *stream, 
+static input_plugin_t *mms_class_get_instance (input_class_t *cls_gen, xine_stream_t *stream,
 				    const char *data) {
 
   mms_input_class_t  *cls = (mms_input_class_t *) cls_gen;
@@ -394,7 +394,7 @@ static input_plugin_t *mms_class_get_instance (input_class_t *cls_gen, xine_stre
   char               *mrl  = strdup(data);
   xine_cfg_entry_t    bandwidth_entry;
   int                 protocol;
-  
+
   lprintf ("trying to open '%s'\n", mrl);
 
   if (!strncasecmp (mrl, "mms://", 6)) {
@@ -414,10 +414,10 @@ static input_plugin_t *mms_class_get_instance (input_class_t *cls_gen, xine_stre
   this->mms      = NULL;
   this->mmsh     = NULL;
   this->protocol = protocol;
-  this->mrl      = mrl; 
+  this->mrl      = mrl;
   this->nbc      = nbc_init (this->stream);
 
-  if (xine_config_lookup_entry (stream->xine, "media.network.bandwidth", 
+  if (xine_config_lookup_entry (stream->xine, "media.network.bandwidth",
                                 &bandwidth_entry)) {
     bandwidth_changed_cb(cls, &bandwidth_entry);
   }
@@ -436,7 +436,7 @@ static input_plugin_t *mms_class_get_instance (input_class_t *cls_gen, xine_stre
   this->input_plugin.get_optional_data = mms_plugin_get_optional_data;
   this->input_plugin.input_class       = cls_gen;
 
-  
+
   return &this->input_plugin;
 }
 
@@ -456,7 +456,7 @@ static void mms_class_dispose (input_class_t *this_gen) {
   mms_input_class_t  *this = (mms_input_class_t *) this_gen;
 
   this->xine->config->unregister_callback(this->xine->config,
-		  			  "media.network.bandwidth");
+					  "media.network.bandwidth");
   this->xine->config->unregister_callback(this->xine->config,
 					  "media.network.mms_protocol");
   free (this);
@@ -488,12 +488,12 @@ static void *init_class (xine_t *xine, void *data) {
 			      0, bandwidth_changed_cb, (void*) this);
 
   this->protocol = xine->config->register_enum(xine->config,
-    "media.network.mms_protocol", 
-    0, 
-    mms_protocol_strs, 
+    "media.network.mms_protocol",
+    0,
+    mms_protocol_strs,
     _("MMS protocol"),
     _("Select the protocol to encapsulate MMS.\nTCP is better but you may need HTTP behind a firewall."),
-     20, 
+     20,
      protocol_changed_cb, (void*)this);
 
   return this;
@@ -504,7 +504,7 @@ static void *init_class (xine_t *xine, void *data) {
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 17, "mms", XINE_VERSION_CODE, NULL, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

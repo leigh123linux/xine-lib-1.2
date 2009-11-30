@@ -1,25 +1,25 @@
 /*
  * Copyright (C) 2001-2008 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * xine audio decoder plugin using ffmpeg
  */
- 
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #include "../../libffmpeg/ffmpeg_config.h"
@@ -66,7 +66,7 @@ typedef struct ff_audio_decoder_s {
 
   AVCodecContext    *context;
   AVCodec           *codec;
-  
+
   char              *decode_buffer;
   int               decoder_ok;
 
@@ -79,7 +79,7 @@ typedef struct ff_audio_decoder_s {
   if (size > this->bufsize) {
     this->bufsize = size + size / 2;
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-            _("ffmpeg_audio_dec: increasing buffer to %d to avoid overflow.\n"), 
+            _("ffmpeg_audio_dec: increasing buffer to %d to avoid overflow.\n"),
             this->bufsize);
     this->buf = realloc( this->buf, this->bufsize );
   }
@@ -102,15 +102,15 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
     ff_audio_ensure_buffer_size(this, this->size + buf->size);
     memcpy(this->buf + this->size, buf->content, buf->size);
     this->size += buf->size;
-    
+
     if (buf->decoder_flags & BUF_FLAG_FRAME_END) {
       size_t i;
       unsigned int codec_type;
       xine_waveformatex *audio_header;
-  
+
       codec_type = buf->type & 0xFFFF0000;
       this->codec = NULL;
-  
+
       for(i = 0; i < sizeof(ff_audio_lookup)/sizeof(ff_codec_t); i++)
         if(ff_audio_lookup[i].type == codec_type) {
 	  pthread_mutex_lock (&ffmpeg_lock);
@@ -120,57 +120,57 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
                            ff_audio_lookup[i].name);
           break;
         }
-  
+
       if (!this->codec) {
-        xprintf (this->stream->xine, XINE_VERBOSITY_LOG, 
+        xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
                  _("ffmpeg_audio_dec: couldn't find ffmpeg decoder for buf type 0x%X\n"),
                  codec_type);
         _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_HANDLED, 0);
         return;
       }
-  
+
       this->context = avcodec_alloc_context();
-      
+
       if(buf->decoder_flags & BUF_FLAG_STDHEADER) {
         this->audio_sample_rate = buf->decoder_info[1];
         this->audio_channels    = buf->decoder_info[3];
-      
+
         if(this->size) {
           audio_header = (xine_waveformatex *)this->buf;
-        
+
           this->context->block_align = audio_header->nBlockAlign;
           this->context->bit_rate    = audio_header->nAvgBytesPerSec * 8;
-      
+
           if(audio_header->cbSize > 0) {
             this->context->extradata = malloc(audio_header->cbSize);
             this->context->extradata_size = audio_header->cbSize;
-            memcpy( this->context->extradata, 
+            memcpy( this->context->extradata,
                     (uint8_t *)audio_header + sizeof(xine_waveformatex),
-                    audio_header->cbSize ); 
+                    audio_header->cbSize );
           }
         }
       } else {
         short *ptr;
-        
+
         switch(codec_type) {
           case BUF_AUDIO_14_4:
             this->audio_sample_rate = 8000;
             this->audio_channels    = 1;
-          
+
             this->context->block_align = 240;
             break;
           case BUF_AUDIO_28_8:
             this->audio_sample_rate = _X_BE_16(&this->buf[0x30]);
             this->audio_channels    = this->buf[0x37];
             /* this->audio_bits = buf->content[0x35] */
-  
+
             this->context->block_align = _X_BE_32(&this->buf[0x18]);
 
             this->context->extradata_size = 5*sizeof(short);
             this->context->extradata      = malloc(this->context->extradata_size);
-  
+
             ptr = (short *) this->context->extradata;
-  
+
             ptr[0] = _X_BE_16(&this->buf[0x2C]); /* subpacket size */
             ptr[1] = _X_BE_16(&this->buf[0x28]); /* subpacket height */
             ptr[2] = _X_BE_16(&this->buf[0x16]); /* subpacket flavour */
@@ -227,23 +227,23 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
             break;
         }
       }
-  
-      /* Current ffmpeg audio decoders always use 16 bits/sample 
+
+      /* Current ffmpeg audio decoders always use 16 bits/sample
        * buf->decoder_info[2] can't be used as it doesn't refer to the output
        * bits/sample for some codecs (e.g. MS ADPCM) */
-      this->audio_bits = 16;  
-  
+      this->audio_bits = 16;
+
       this->context->bits_per_sample = this->audio_bits;
       this->context->sample_rate = this->audio_sample_rate;
       this->context->channels    = this->audio_channels;
       this->context->codec_id    = this->codec->id;
       this->context->codec_type  = this->codec->type;
       this->context->codec_tag   = _x_stream_info_get(this->stream, XINE_STREAM_INFO_AUDIO_FOURCC);
-  
+
       this->size = 0;
-  
+
       this->decode_buffer = calloc(1, AVCODEC_MAX_AUDIO_FRAME_SIZE);
-  
+
       return;
     }
   } else if ((buf->decoder_flags & BUF_FLAG_SPECIAL) &&
@@ -268,12 +268,12 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
       pthread_mutex_lock (&ffmpeg_lock);
       if (avcodec_open (this->context, this->codec) < 0) {
 	pthread_mutex_unlock (&ffmpeg_lock);
-        xprintf (this->stream->xine, XINE_VERBOSITY_LOG, 
+        xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
                  _("ffmpeg_audio_dec: couldn't open decoder\n"));
         _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_HANDLED, 0);
         return;
       }
-      pthread_mutex_unlock (&ffmpeg_lock);  
+      pthread_mutex_unlock (&ffmpeg_lock);
       this->decoder_ok = 1;
     }
 
@@ -311,14 +311,14 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
       offset = 0;
       while (this->size>0) {
         decode_buffer_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
-        bytes_consumed = avcodec_decode_audio2 (this->context, 
+        bytes_consumed = avcodec_decode_audio2 (this->context,
                                                (int16_t *)this->decode_buffer,
-                                               &decode_buffer_size, 
+                                               &decode_buffer_size,
                                                &this->buf[offset],
                                                this->size);
 
         if (bytes_consumed<0) {
-          xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+          xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
                    "ffmpeg_audio_dec: error decompressing audio frame\n");
           this->size=0;
           return;
@@ -338,10 +338,10 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
             return;
 	  }
 
-          audio_buffer = 
+          audio_buffer =
             this->stream->audio_out->get_buffer (this->stream->audio_out);
           if (audio_buffer->mem_size == 0) {
-            xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+            xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
                      "ffmpeg_audio_dec: Help! Allocated audio buffer with nothing in it!\n");
             return;
           }
@@ -377,7 +377,7 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 
 static void ff_audio_reset (audio_decoder_t *this_gen) {
   ff_audio_decoder_t *this = (ff_audio_decoder_t *) this_gen;
-  
+
   this->size = 0;
 
   /* try to reset the wma decoder */
@@ -396,7 +396,7 @@ static void ff_audio_discontinuity (audio_decoder_t *this_gen) {
 static void ff_audio_dispose (audio_decoder_t *this_gen) {
 
   ff_audio_decoder_t *this = (ff_audio_decoder_t *) this_gen;
-  
+
   if( this->context && this->decoder_ok ) {
     pthread_mutex_lock (&ffmpeg_lock);
     avcodec_close (this->context);
@@ -437,7 +437,7 @@ static audio_decoder_t *ff_audio_open_plugin (audio_decoder_class_t *class_gen, 
   this->size = 0;
   this->bufsize = 0;
   this->decoder_ok = 0;
-  
+
   ff_audio_ensure_buffer_size(this, AUDIOBUFSIZE);
 
   return &this->audio_decoder;

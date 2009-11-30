@@ -213,7 +213,7 @@ static int demux_eawve_send_chunk(demux_eawve_t *this){
         buf = this->audio_fifo->buffer_pool_alloc(this->audio_fifo);
         buf->type = BUF_AUDIO_EA_ADPCM;
         if( this->input->get_length (this->input) )
-          buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) * 
+          buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) *
                                            65535 / this->input->get_length (this->input) );
         buf->extra_info->input_time = (int)((int64_t)this->sample_counter * 1000 / 22050);
         buf->pts = this->sample_counter;

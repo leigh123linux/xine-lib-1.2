@@ -138,8 +138,8 @@
 #endif
 
 
-/* 
- * mmsh specific types 
+/*
+ * mmsh specific types
  */
 
 
@@ -161,10 +161,10 @@ struct mmsh_s {
   char          str[SCRATCH_SIZE]; /* scratch buffer to built strings */
 
   asf_header_t *asf_header;
-  int           stream_type;  
+  int           stream_type;
 
   /* receive buffer */
-  
+
   /* chunk */
   uint16_t      chunk_type;
   uint16_t      chunk_length;
@@ -178,13 +178,13 @@ struct mmsh_s {
   uint32_t      asf_header_len;
   uint32_t      asf_header_read;
   int           seq_num;
-  
+
   int           video_stream;
   int           audio_stream;
 
   off_t         current_pos;
   int           user_bandwidth;
-  
+
   int           playing;
   unsigned int  start_time;
 };
@@ -201,7 +201,7 @@ static int send_command (mmsh_t *this, char *cmd)  {
 }
 
 static int get_answer (mmsh_t *this) {
- 
+
   int done, len, linenum;
   char *features;
 
@@ -222,14 +222,14 @@ static int get_answer (mmsh_t *this) {
 
       this->buf[len] = '\0';
       len--;
-      
+
       if ((len >= 0) && (this->buf[len] == '\015')) {
         this->buf[len] = '\0';
         len--;
       }
 
       linenum++;
-      
+
       lprintf ("answer: >%s<\n", this->buf);
 
       if (linenum == 1) {
@@ -263,7 +263,7 @@ static int get_answer (mmsh_t *this) {
                     _("libmmsh: Location redirection not implemented\n"));
           return 0;
         }
-        
+
         if (!strncasecmp((char*)this->buf, "Pragma:", 7)) {
           features = strstr((char*)(this->buf + 7), "features=");
           if (features) {
@@ -279,7 +279,7 @@ static int get_answer (mmsh_t *this) {
           }
         }
       }
-      
+
       if (len == -1) {
         done = 1;
       } else {
@@ -314,7 +314,7 @@ static int get_chunk_header (mmsh_t *this) {
   }
   this->chunk_type       = _X_LE_16 (&chunk_header[0]);
   this->chunk_length     = _X_LE_16 (&chunk_header[2]);
-  
+
   switch (this->chunk_type) {
     case CHUNK_TYPE_DATA:
       ext_header_len = 8;
@@ -340,7 +340,7 @@ static int get_chunk_header (mmsh_t *this) {
       return 0;
     }
   }
-  
+
   switch (this->chunk_type) {
     case CHUNK_TYPE_DATA:
       this->chunk_seq_number = _X_LE_32 (&ext_header[0]);
@@ -384,7 +384,7 @@ static int get_header (mmsh_t *this) {
   lprintf("get_header\n");
 
   this->asf_header_len = 0;
-  
+
   /* read chunk */
   while (1) {
     if (get_chunk_header(this)) {
@@ -484,11 +484,11 @@ static void report_progress (xine_stream_t *stream, int p) {
  */
 static int mmsh_tcp_connect(mmsh_t *this) {
   int progress, res;
-  
+
   if (!this->port) this->port = MMSH_PORT;
-  
-  /* 
-   * try to connect 
+
+  /*
+   * try to connect
    */
   lprintf("try to connect to %s on port %d \n", this->host, this->port);
 
@@ -522,24 +522,24 @@ static int mmsh_connect_int(mmsh_t *this, int bandwidth) {
   /*
    * let the negotiations begin...
    */
-   
+
   /* first request */
   lprintf("first http request\n");
-  
+
   snprintf (this->str, SCRATCH_SIZE, mmsh_FirstRequest, this->uri,
             this->host, this->port, 1);
 
   if (!send_command (this, this->str))
     return 0;
 
-  if (!get_answer (this)) 
+  if (!get_answer (this))
     return 0;
 
   get_header (this); /* FIXME: it returns 0 */
 
   if (!interp_header (this))
     return 0;
-  
+
   close (this->s);
   report_progress (this->stream, 20);
 
@@ -548,13 +548,13 @@ static int mmsh_connect_int(mmsh_t *this, int bandwidth) {
 
   lprintf("audio stream %d, video stream %d\n",
           this->audio_stream, this->video_stream);
-           
+
   asf_header_disable_streams (this->asf_header,
                               this->video_stream, this->audio_stream);
-                              
+
   if (mmsh_tcp_connect(this))
     return 0;
-  
+
   return 1;
 }
 
@@ -565,7 +565,7 @@ static int mmsh_connect_int2(mmsh_t *this, int bandwidth) {
   int    i;
   char   stream_selection[10 * ASF_MAX_NUM_STREAMS]; /* 10 chars per stream */
   int    offset;
-  
+
   /* second request */
   lprintf("second http request\n");
 
@@ -606,7 +606,7 @@ static int mmsh_connect_int2(mmsh_t *this, int bandwidth) {
 
   if (!send_command (this, this->str))
     return 0;
-  
+
   lprintf("before read \n");
 
   if (!get_answer (this))
@@ -614,11 +614,11 @@ static int mmsh_connect_int2(mmsh_t *this, int bandwidth) {
 
   if (!get_header (this))
     return 0;
-    
+
 #if 0
   if (!interp_header (this))
     return 0;
-      
+
   asf_header_disable_streams (this->asf_header,
                               this->video_stream, this->audio_stream);
 #endif
@@ -628,7 +628,7 @@ static int mmsh_connect_int2(mmsh_t *this, int bandwidth) {
 
 mmsh_t *mmsh_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   mmsh_t *this;
- 
+
   if (!url)
     return NULL;
 
@@ -647,28 +647,28 @@ mmsh_t *mmsh_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   this->user_bandwidth  = bandwidth;
 
   report_progress (stream, 0);
-  
+
   if (!_x_parse_url (this->url, &this->proto, &this->host, &this->port,
                      &this->user, &this->password, &this->uri, NULL)) {
     xine_log (this->stream->xine, XINE_LOG_MSG, _("invalid url\n"));
     goto fail;
   }
-  
+
   if (!mmsh_valid_proto(this->proto)) {
     xine_log (this->stream->xine, XINE_LOG_MSG, _("unsupported protocol\n"));
     goto fail;
   }
-  
+
   if (mmsh_tcp_connect(this))
     goto fail;
-  
+
   report_progress (stream, 30);
 
   if (!mmsh_connect_int(this, this->user_bandwidth))
     goto fail;
 
   report_progress (stream, 100);
-  
+
   lprintf("mmsh_connect: passed\n" );
 
   return this;
@@ -717,7 +717,7 @@ static int get_media_packet (mmsh_t *this) {
          */
         if (this->chunk_seq_number == 0)
           return 0;
-        
+
         close(this->s);
 
         if (mmsh_tcp_connect(this))
@@ -725,20 +725,20 @@ static int get_media_packet (mmsh_t *this) {
 
         if (!mmsh_connect_int(this, this->user_bandwidth))
           return 0;
-          
+
         this->playing = 0;
 
         /* mmsh_connect_int reads the first data packet */
-        /* this->buf_size is set by mmsh_connect_int */    
+        /* this->buf_size is set by mmsh_connect_int */
         return 2;
 
       case CHUNK_TYPE_DATA:
         /* nothing to do */
         break;
-      
+
       case CHUNK_TYPE_RESET:
         /* next chunk is an ASF header */
-      
+
         if (this->chunk_length != 0) {
           /* that's strange, don't know what to do */
           return 0;
@@ -747,7 +747,7 @@ static int get_media_packet (mmsh_t *this) {
           return 0;
         interp_header(this);
         return 2;
-      
+
       default:
         xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
                  "libmmsh: unexpected chunk type\n");
@@ -755,7 +755,7 @@ static int get_media_packet (mmsh_t *this) {
     }
 
     len = _x_io_tcp_read (this->stream, this->s, (char*)this->buf, this->chunk_length);
-      
+
     if (len == this->chunk_length) {
       /* explicit padding with 0 */
       if (this->chunk_length > this->asf_header->file->packet_size) {
@@ -812,13 +812,13 @@ int mmsh_read (mmsh_t *this, char *data, int len) {
       this->asf_header_read += n;
       total += n;
       this->current_pos += n;
-      
+
       if (this->asf_header_read == this->asf_header_len)
-      	break;
+	break;
     } else {
 
       int n, bytes_left ;
-      
+
       if (!this->playing) {
         if (!mmsh_connect_int2 (this, this->user_bandwidth))
           break;

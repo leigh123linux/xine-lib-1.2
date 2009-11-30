@@ -40,7 +40,7 @@
 /* *******************  Stream Info  *************************** */
 
 /*
- * Compare stream_info, private and public values, 
+ * Compare stream_info, private and public values,
  * return 1 if it's identical, otherwirse 0.
  */
 static int stream_info_is_identical(xine_stream_t *stream, int info) {
@@ -105,7 +105,7 @@ uint32_t _x_stream_info_get(xine_stream_t *stream, int info) {
   pthread_mutex_lock(&stream->info_mutex);
   stream_info = stream->stream_info[info];
   pthread_mutex_unlock(&stream->info_mutex);
-  
+
   return stream_info;
 }
 
@@ -120,7 +120,7 @@ uint32_t _x_stream_info_get_public(xine_stream_t *stream, int info) {
   if(info_valid(info) && (!stream_info_is_identical(stream, info)))
     stream_info = stream->stream_info_public[info] = stream->stream_info[info];
   pthread_mutex_unlock(&stream->info_mutex);
-  
+
   return stream_info;
 }
 
@@ -137,7 +137,7 @@ static void meta_info_chomp(char *str) {
   if (!len)
     return;
   i = len - 1;
-  
+
   while ((i >= 0) && ((unsigned char)str[i] <= 32)) {
     str[i] = 0;
     i--;
@@ -145,13 +145,13 @@ static void meta_info_chomp(char *str) {
 }
 
 /*
- * Compare stream_info, public and private values, 
+ * Compare stream_info, public and private values,
  * return 1 if it's identical, otherwise 0.
  */
 static int meta_info_is_identical(xine_stream_t *stream, int info) {
-  
+
   if((!(stream->meta_info_public[info] && stream->meta_info[info])) ||
-     ((stream->meta_info_public[info] && stream->meta_info[info]) && 
+     ((stream->meta_info_public[info] && stream->meta_info[info]) &&
       strcmp(stream->meta_info_public[info], stream->meta_info[info])))
     return 0;
 
@@ -175,7 +175,7 @@ static int meta_valid(int info) {
  */
 static void meta_info_set_unlocked_utf8(xine_stream_t *stream, int info, const char *value) {
   if(meta_valid(info)) {
-    
+
     if(stream->meta_info[info])
       free(stream->meta_info[info]);
 
@@ -275,7 +275,7 @@ static void meta_info_set_unlocked_encoding(xine_stream_t *stream, int info, con
     }
   }
 #endif
-  
+
   meta_info_set_unlocked_utf8(stream, info, value);
 }
 
@@ -349,7 +349,7 @@ void _x_meta_info_n_set(xine_stream_t *stream, int info, const char *buf, int le
   pthread_mutex_lock(&stream->meta_mutex);
   if(meta_valid(info) && len) {
     char *str = strndup(buf, len);
-    
+
     meta_info_set_unlocked(stream, info, str);
     free(str);
   }
@@ -367,7 +367,7 @@ void _x_meta_info_set_multi(xine_stream_t *stream, int info, ...) {
     char     *args[1025];
     char     *buf;
     size_t    n, len;
-    
+
     len = n = 0;
 
     va_start(ap, info);
@@ -377,32 +377,32 @@ void _x_meta_info_set_multi(xine_stream_t *stream, int info, ...) {
       n++;
     }
     va_end(ap);
-    
+
     args[n] = NULL;
-    
+
     if(len) {
       char *p, *meta;
-      
+
       p = meta = (char *) malloc(len + 1);
-      
+
       n = 0;
       while(args[n]) {
 	strcpy(meta, args[n]);
 	meta += strlen(args[n]) + 1;
 	n++;
       }
-      
+
       *meta = '\0';
 
       if(stream->meta_info[info])
 	free(stream->meta_info[info]);
-      
+
       stream->meta_info[info] = p;
-      
+
       if(stream->meta_info[info] && strlen(stream->meta_info[info]))
 	  meta_info_chomp(stream->meta_info[info]);
     }
-    
+
   }
   pthread_mutex_unlock(&stream->meta_mutex);
 }
@@ -412,11 +412,11 @@ void _x_meta_info_set_multi(xine_stream_t *stream, int info, ...) {
  */
 const char *_x_meta_info_get(xine_stream_t *stream, int info) {
   const char *meta_info = NULL;
-  
+
   pthread_mutex_lock(&stream->meta_mutex);
   meta_info = stream->meta_info[info];
   pthread_mutex_unlock(&stream->meta_mutex);
-  
+
   return meta_info;
 }
 
@@ -430,13 +430,13 @@ const char *_x_meta_info_get_public(xine_stream_t *stream, int info) {
   meta_info = stream->meta_info_public[info];
   if(meta_valid(info) && (!meta_info_is_identical(stream, info))) {
     meta_info_public_reset_unlocked(stream, info);
-    
+
     if(stream->meta_info[info])
       stream->meta_info_public[info] = strdup(stream->meta_info[info]);
 
     meta_info = stream->meta_info_public[info];
   }
   pthread_mutex_unlock(&stream->meta_mutex);
-  
+
   return meta_info;
 }

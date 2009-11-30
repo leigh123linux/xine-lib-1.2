@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2005 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -274,12 +274,12 @@ void *xine_xmalloc(size_t size) {
 void *xine_xmalloc_aligned(size_t alignment, size_t size, void **base) {
 
   char *ptr;
-  
+
   *base = ptr = calloc(1, size+alignment);
-  
+
   while ((size_t) ptr % alignment)
     ptr++;
-    
+
   return ptr;
 }
 
@@ -532,13 +532,13 @@ static const lang_locale_t *_get_first_lang_locale(const char *lcal) {
       lang_len = mod++ - lcal;
     else
       lang_len = strlen(lcal);
-    
+
     while(llocale->language) {
       if(!strncmp(lcal, llocale->language, lang_len)) {
         if ((!mod && !llocale->modifier) || (mod && llocale->modifier && !strcmp(mod, llocale->modifier)))
 	  return llocale;
       }
-      
+
       llocale++;
     }
   }
@@ -548,7 +548,7 @@ static const lang_locale_t *_get_first_lang_locale(const char *lcal) {
 
 static char *_get_lang(void) {
     char *lang;
-    
+
     if(!(lang = getenv("LC_ALL")))
       if(!(lang = getenv("LC_MESSAGES")))
         lang = getenv("LANG");
@@ -562,7 +562,7 @@ static char *_get_lang(void) {
  */
 char *xine_get_system_encoding(void) {
   char *codeset = NULL;
-  
+
 #ifdef HAVE_NL_LANGINFO
   setlocale(LC_CTYPE, "");
   codeset = nl_langinfo(CODESET);
@@ -646,15 +646,15 @@ int xine_monotonic_clock(struct timeval *tv, struct timezone *tz)
 #if _POSIX_TIMERS > 0 && defined(_POSIX_MONOTONIC_CLOCK) && defined(HAVE_POSIX_TIMERS)
   static int initialized = 0;
   static int use_clock_monotonic = 0;
-     
+
   struct timespec tp;
-  
-  if( !initialized ) { 
+
+  if( !initialized ) {
     struct timespec res;
     int ret;
-  
+
     ret = clock_getres(CLOCK_MONOTONIC, &res);
-    
+
     if( ret != 0 ) {
       lprintf("get resolution of monotonic clock failed\n");
     } else {
@@ -673,8 +673,8 @@ int xine_monotonic_clock(struct timeval *tv, struct timezone *tz)
       }
     }
     initialized = 1;
-  }  
-  
+  }
+
   if(use_clock_monotonic && !clock_gettime(CLOCK_MONOTONIC, &tp)) {
     tv->tv_sec = tp.tv_sec;
     tv->tv_usec = tp.tv_nsec / 1000;
@@ -684,7 +684,7 @@ int xine_monotonic_clock(struct timeval *tv, struct timezone *tz)
   }
 
 #else
-  
+
   return gettimeofday(tv, tz);
 
 #endif

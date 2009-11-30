@@ -9,7 +9,7 @@ ogg_module = xineplug_dmx_ogg.la
 endif
 
 if BUILD_ASF
-asf_module = xineplug_dmx_asf.la 
+asf_module = xineplug_dmx_asf.la
 endif
 
 if BUILD_NOSEFART
@@ -49,7 +49,7 @@ xineplug_LTLIBRARIES = $(ogg_module) $(asf_module) $(mng_module) $(image_module)
 	xineplug_dmx_nsv.la \
 	xineplug_dmx_matroska.la \
 	xineplug_dmx_iff.la \
-	xineplug_dmx_flv.la 
+	xineplug_dmx_flv.la
 
 xineplug_dmx_ogg_la_SOURCES = demux_ogg.c
 xineplug_dmx_ogg_la_LIBADD = $(XINE_LIB) $(VORBIS_LIBS) $(SPEEX_LIBS) $(THEORA_LIBS) $(OGG_LIBS) $(LTLIBINTL)

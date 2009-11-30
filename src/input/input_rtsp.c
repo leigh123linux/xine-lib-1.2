@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2002-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -69,14 +69,14 @@ typedef struct {
 
   off_t            curpos;
 
-  nbc_t           *nbc; 
+  nbc_t           *nbc;
 
   char             scratch[BUFSIZE];
 
 } rtsp_input_plugin_t;
 
 
-static off_t rtsp_plugin_read (input_plugin_t *this_gen, 
+static off_t rtsp_plugin_read (input_plugin_t *this_gen,
                               char *buf, off_t len) {
   rtsp_input_plugin_t *this = (rtsp_input_plugin_t *) this_gen;
   off_t               n;
@@ -90,7 +90,7 @@ static off_t rtsp_plugin_read (input_plugin_t *this_gen,
   return n;
 }
 
-static buf_element_t *rtsp_plugin_read_block (input_plugin_t *this_gen, 
+static buf_element_t *rtsp_plugin_read_block (input_plugin_t *this_gen,
                                              fifo_buffer_t *fifo, off_t todo) {
   /*rtsp_input_plugin_t   *this = (rtsp_input_plugin_t *) this_gen; */
   buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
@@ -107,7 +107,7 @@ static buf_element_t *rtsp_plugin_read_block (input_plugin_t *this_gen,
 
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
-  
+
   total_bytes = rtsp_plugin_read (this_gen, (char*)buf->content, todo);
 
   if (total_bytes != todo) {
@@ -151,17 +151,17 @@ static off_t rtsp_plugin_seek_time (input_plugin_t *this_gen, int time_offset, i
   rtsp_input_plugin_t *this = (rtsp_input_plugin_t *) this_gen;
 
   lprintf ("seek_time %d msec, origin %d\n", time_offset, origin);
-  
+
   if (origin == SEEK_SET)
     rtsp_session_set_start_time (this->rtsp, time_offset);
-    
+
   return this->curpos;
 }
 
 static off_t rtsp_plugin_get_length (input_plugin_t *this_gen) {
 
   /*
-  rtsp_input_plugin_t   *this = (rtsp_input_plugin_t *) this_gen; 
+  rtsp_input_plugin_t   *this = (rtsp_input_plugin_t *) this_gen;
   off_t                 length;
   */
 
@@ -198,13 +198,13 @@ static void rtsp_plugin_dispose (input_plugin_t *this_gen) {
     nbc_close (this->nbc);
     this->nbc = NULL;
   }
-  
+
   if(this->mrl)
     free(this->mrl);
-  
+
   if(this->public_mrl)
     free(this->public_mrl);
-  
+
   free (this);
 }
 
@@ -214,7 +214,7 @@ static const char* rtsp_plugin_get_mrl (input_plugin_t *this_gen) {
   return this->public_mrl;
 }
 
-static int rtsp_plugin_get_optional_data (input_plugin_t *this_gen, 
+static int rtsp_plugin_get_optional_data (input_plugin_t *this_gen,
                                          void *data, int data_type) {
   rtsp_input_plugin_t *this = (rtsp_input_plugin_t *) this_gen;
 
@@ -245,11 +245,11 @@ static int rtsp_plugin_open (input_plugin_t *this_gen) {
   }
 
   this->rtsp = rtsp;
-  
+
   return 1;
 }
 
-static input_plugin_t *rtsp_class_get_instance (input_class_t *cls_gen, xine_stream_t *stream, 
+static input_plugin_t *rtsp_class_get_instance (input_class_t *cls_gen, xine_stream_t *stream,
 				    const char *mrl) {
 
   /* rtsp_input_class_t  *cls = (rtsp_input_class_t *) cls_gen; */
@@ -267,7 +267,7 @@ static input_plugin_t *rtsp_class_get_instance (input_class_t *cls_gen, xine_str
    * an .rm extention to force handling by demux_real.
    */
   asprintf(&this->public_mrl, "%s.rm", this->mrl);
-  
+
   this->nbc     = nbc_init (stream);
 
   this->input_plugin.open              = rtsp_plugin_open;
@@ -283,7 +283,7 @@ static input_plugin_t *rtsp_class_get_instance (input_class_t *cls_gen, xine_str
   this->input_plugin.dispose           = rtsp_plugin_dispose;
   this->input_plugin.get_optional_data = rtsp_plugin_get_optional_data;
   this->input_plugin.input_class       = cls_gen;
-  
+
   return &this->input_plugin;
 }
 
@@ -329,7 +329,7 @@ static void *init_class (xine_t *xine, void *data) {
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_INPUT, 17, "rtsp", XINE_VERSION_CODE, NULL, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

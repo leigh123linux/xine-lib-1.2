@@ -65,11 +65,11 @@ int _x_parse_url (char *url, char **proto, char** host, int *port,
   *password = NULL;
   *uri      = NULL;
 
-  /* proto */  
+  /* proto */
   start = strstr(url, "://");
   if (!start || (start == url))
     goto error;
-  
+
   end  = start + strlen(start) - 1;
   *proto = strndup(url, start - url);
 
@@ -85,10 +85,10 @@ int _x_parse_url (char *url, char **proto, char** host, int *port,
   semicolon = strchr(start, ';');
   if (semicolon && (!slash || (semicolon < slash)))
     slash = semicolon;
-  
+
   if (at && slash && (at > slash))
     at = NULL;
-  
+
   if (at) {
     authcolon = strchr(start, ':');
     if(authcolon && authcolon < at) {
@@ -179,7 +179,7 @@ int _x_parse_url (char *url, char **proto, char** host, int *port,
 	  escapechars++;
 	it++;
       }
-      
+
       if ( escapechars == 0 )
 	*uri = strdup(start);
       else {
@@ -204,9 +204,9 @@ int _x_parse_url (char *url, char **proto, char** host, int *port,
   } else {
     *uri = strdup("/");
   }
-  
+
   return 1;
-  
+
 error:
   if (*proto) {
     free (*proto);
@@ -231,7 +231,7 @@ error:
     free (*uri);
     *uri = NULL;
   }
-  return 0;  
+  return 0;
 }
 
 char *_x_canonicalise_url (const char *base, const char *url) {
@@ -267,7 +267,7 @@ static int check_url(char *url, int ok) {
   char *proto, *host, *user, *password, *uri;
   int port;
   int res;
-  
+
   printf("--------------------------------\n");
   printf("url=%s\n", url);
   res = _x_parse_url (url,
@@ -310,7 +310,7 @@ static int check_paste(const char *base, const char *url, const char *ok) {
 int main(int argc, char** argv) {
   char *proto, host, port, user, password, uri;
   int res = 0;
-  
+
   res += check_url("http://www.toto.com/test1.asx", 1);
   res += check_url("http://www.toto.com:8080/test2.asx", 1);
   res += check_url("http://titi:pass@www.toto.com:8080/test3.asx", 1);

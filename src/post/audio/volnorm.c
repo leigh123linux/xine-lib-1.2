@@ -1,24 +1,24 @@
 /*
  * Copyright (C) 2000-2008 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * Volume normalization audio filter for xine.  Ported by Jason Tackaberry
- * from MPlayer's af_volnorm, which is copyright 2004 by Alex Beregszaszi 
+ * from MPlayer's af_volnorm, which is copyright 2004 by Alex Beregszaszi
  * & Pierre Lombard.
  */
 
@@ -117,7 +117,7 @@ struct post_plugin_volnorm_s {
 /**************************************************************************
  * volnorm parameters functions
  *************************************************************************/
-static int set_parameters (xine_post_t *this_gen, void *param_gen) 
+static int set_parameters (xine_post_t *this_gen, void *param_gen)
 {
     post_plugin_volnorm_t *this = (post_plugin_volnorm_t *)this_gen;
     volnorm_parameters_t *param = (volnorm_parameters_t *)param_gen;
@@ -129,7 +129,7 @@ static int set_parameters (xine_post_t *this_gen, void *param_gen)
     return 1;
 }
 
-static int get_parameters (xine_post_t *this_gen, void *param_gen) 
+static int get_parameters (xine_post_t *this_gen, void *param_gen)
 {
     post_plugin_volnorm_t *this = (post_plugin_volnorm_t *)this_gen;
     volnorm_parameters_t *param = (volnorm_parameters_t *)param_gen;
@@ -141,12 +141,12 @@ static int get_parameters (xine_post_t *this_gen, void *param_gen)
     return 1;
 }
 
-static xine_post_api_descr_t * get_param_descr (void) 
+static xine_post_api_descr_t * get_param_descr (void)
 {
     return &param_descr;
 }
 
-static char * get_help (void) 
+static char * get_help (void)
 {
     return _("Normalizes audio by maximizing the volume without distorting "
              "the sound.\n"
@@ -172,14 +172,14 @@ static xine_post_api_t post_api = {
  *************************************************************************/
 
 static int volnorm_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream,
-                             uint32_t bits, uint32_t rate, int mode) 
+                             uint32_t bits, uint32_t rate, int mode)
 {
     post_audio_port_t  *port = (post_audio_port_t *)port_gen;
     post_plugin_volnorm_t *this = (post_plugin_volnorm_t *)port->post;
 
     _x_post_rewire(&this->post);
     _x_post_inc_usage(port);
-    
+
     port->stream = stream;
     port->bits = bits;
     port->rate = rate;
@@ -373,10 +373,10 @@ static void method2_float(post_plugin_volnorm_t *this, audio_buffer_t *buf)
 }
 
 
-static void volnorm_port_put_buffer (xine_audio_port_t *port_gen, 
-                                     audio_buffer_t *buf, xine_stream_t *stream) 
+static void volnorm_port_put_buffer (xine_audio_port_t *port_gen,
+                                     audio_buffer_t *buf, xine_stream_t *stream)
 {
-    
+
     post_audio_port_t  *port = (post_audio_port_t *)port_gen;
     post_plugin_volnorm_t *this = (post_plugin_volnorm_t *)port->post;
 
@@ -391,8 +391,8 @@ static void volnorm_port_put_buffer (xine_audio_port_t *port_gen,
         else if (buf->format.bits == 32)
             method2_float(this, buf);
     }
-    port->original_port->put_buffer(port->original_port, buf, stream );  
-    
+    port->original_port->put_buffer(port->original_port, buf, stream );
+
     return;
 }
 
@@ -416,12 +416,12 @@ static post_plugin_t *volnorm_open_plugin(post_class_t *class_gen, int inputs,
     post_out_t            *output;
     xine_post_in_t        *input_api;
     post_audio_port_t     *port;
-    
+
     if (!this || !audio_target || !audio_target[0] ) {
         free(this);
         return NULL;
     }
-    
+
     _x_post_init(&this->post, 1, 0);
     pthread_mutex_init (&this->lock, NULL);
 
@@ -468,16 +468,16 @@ static void volnorm_class_dispose(post_class_t *class_gen)
 void *volnorm_init_plugin(xine_t *xine, void *data)
 {
     post_class_volnorm_t *class = (post_class_volnorm_t *)malloc(sizeof(post_class_volnorm_t));
-    
+
     if (!class)
         return NULL;
-    
+
     class->post_class.open_plugin     = volnorm_open_plugin;
     class->post_class.get_identifier  = volnorm_get_identifier;
     class->post_class.get_description = volnorm_get_description;
     class->post_class.dispose         = volnorm_class_dispose;
-    
+
     class->xine                       = xine;
-    
+
     return class;
 }

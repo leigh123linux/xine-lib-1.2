@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -46,7 +46,7 @@ struct wavhdr {
 	unsigned char bRiffMagic[4];	// 'RIFF'
 	uint32_t wRiffLength ;		// length of file minus the 8 byte riff header
 	unsigned char bWaveMagic[8];	// 'WAVEfmt '
-	uint32_t wFmtSize;		// length of format chunk minus 8 byte header 
+	uint32_t wFmtSize;		// length of format chunk minus 8 byte header
 	uint16_t wFormatTag;		// identifies PCM, ULAW etc
 	uint16_t wChannels;
 	uint32_t dwSamplesPerSecond;	// samples per second per channel
@@ -93,7 +93,7 @@ static int ao_file_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate, int
 	file_driver_t *this = (file_driver_t *) this_gen;
 	struct wavhdr w;
 
-	xprintf (this->xine, XINE_VERBOSITY_LOG, 
+	xprintf (this->xine, XINE_VERBOSITY_LOG,
 		 "audio_file_out: ao_open bits=%d rate=%d, mode=%d\n", bits, rate, mode);
 
 	this->mode                   = mode;
@@ -314,7 +314,7 @@ static int ao_file_ctrl(ao_driver_t *this_gen, int cmd, ...) {
 	return 0;
 }
 
-static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, 
+static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
 				 const void *data) {
 
 	file_class_t     *class = (file_class_t *) class_gen;
@@ -399,7 +399,7 @@ static const ao_info_t ao_info_file = {
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-	/* type, API, "name", version, special_info, init_function */  
+	/* type, API, "name", version, special_info, init_function */
 	{ PLUGIN_AUDIO_OUT, AO_OUT_FILE_IFACE_VERSION, "file", XINE_VERSION_CODE, &ao_info_file, init_class },
 	{ PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

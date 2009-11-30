@@ -1,5 +1,5 @@
 /*=============================================================================
- *	
+ *
  *  This software has been released under the terms of the GNU Public
  *  license. See http://www.gnu.org/copyleft/gpl.html for details.
  *
@@ -37,7 +37,7 @@
 #define WINDOW_MASK 0x0000001F
 
 /* Parallel filter design */
-#define	FWD   	    0x00000001 /* Forward indexing of polyphase filter */
+#define	FWD	    0x00000001 /* Forward indexing of polyphase filter */
 #define REW         0x00000002 /* Reverse indexing of polyphase filter */
 #define ODD         0x00000010 /* Make filter HP */
 
@@ -60,7 +60,7 @@ extern int szxform(const _ftype_t* a, const _ftype_t* b, _ftype_t Q, _ftype_t fc
 /* Add new data to circular queue designed to be used with a FIR
  * filter. xq is the circular queue, in pointing at the new sample, xi
  * current index for xq and n the length of the filter. xq must be n*2
- * long. 
+ * long.
  */
 #define updateq(n,xi,xq,in)\
   xq[xi]=(xq)[(xi)+(n)]=*(in);\

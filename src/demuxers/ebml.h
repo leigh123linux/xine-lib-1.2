@@ -48,7 +48,7 @@ typedef struct ebml_parser_s {
   /* xine stuff */
   xine_t                *xine;
   input_plugin_t        *input;
-  
+
   /* EBML Parser Stack Management */
   ebml_elem_t            elem_stack[EBML_STACK_SIZE];
   int                    level;
@@ -61,7 +61,7 @@ typedef struct ebml_parser_s {
   char                  *doctype;
   uint64_t               doctype_version;
   uint64_t               doctype_read_version;
-  
+
 } ebml_parser_t;
 
 

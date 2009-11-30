@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
  *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -66,7 +66,7 @@ struct post_plugin_fftgraph_s {
 
   /* private metronom for syncing the video */
   metronom_t        *metronom;
-  
+
   double ratio;
 
   int data_idx;
@@ -92,21 +92,21 @@ static void fade(int r1, int g1, int b1,
 		 int r2, int g2, int b2,
 		 uint32_t *yuy2_colors, int steps) {
   int i, r, g, b, y, u, v;
-  
+
   for (i = 0; i < steps; i++) {
     r = r1 + (r2 - r1) * i / steps;
     g = g1 + (g2 - g1) * i / steps;
     b = b1 + (b2 - b1) * i / steps;
-    
+
     y = COMPUTE_Y(r, g, b);
     u = COMPUTE_U(r, g, b);
     v = COMPUTE_V(r, g, b);
-        
+
     *(yuy2_colors + i) = be2me_32((y << 24) |
 				  (u << 16) |
 				  (y << 8) |
 				  v);
-    
+
   }
 }
 
@@ -212,19 +212,19 @@ static int fftgraph_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream
   int i,j;
   uint32_t *color_ptr;
   uint32_t last_color, yuy2_black;
-  
+
   /* printf("fftgraph_port_open, port_gen=%p, stream=%p, this=%p\n", port_gen, stream, this); */
 
   _x_post_rewire(&this->post);
   _x_post_inc_usage(port);
-  
+
   port->stream = stream;
   port->bits = bits;
   port->rate = rate;
   port->mode = mode;
-  
+
   this->ratio = (double)FFTGRAPH_WIDTH / (double)FFTGRAPH_HEIGHT;
-  
+
   this->channels = _x_ao_mode2channels(mode);
   if( this->channels > MAXCHANNELS )
     this->channels = MAXCHANNELS;
@@ -239,7 +239,7 @@ static int fftgraph_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream
   this->fft = fft_new(FFT_BITS);
 
   this->cur_line = 0;
-  
+
   /* compute colors */
   color_ptr = this->yuy2_colors;
   /* black -> red */
@@ -253,7 +253,7 @@ static int fftgraph_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream
        40, 0, 160,
        color_ptr, 256);
   color_ptr += 256;
-  
+
   /* blue -> green */
   fade(40, 0, 160,
        40, 160, 70,
@@ -294,15 +294,15 @@ static void fftgraph_port_close(xine_audio_port_t *port_gen, xine_stream_t *stre
   post_plugin_fftgraph_t *this = (post_plugin_fftgraph_t *)port->post;
 
   port->stream = NULL;
-  
+
   fft_dispose(this->fft);
   this->fft = NULL;
 
   this->vo_port->close(this->vo_port, XINE_ANON_STREAM);
   this->metronom->set_master(this->metronom, NULL);
- 
+
   port->original_port->close(port->original_port, stream );
-  
+
   _x_post_dec_usage(port);
 }
 
@@ -329,7 +329,7 @@ static void fftgraph_port_put_buffer (xine_audio_port_t *port_gen,
 
   /* pass data to original port */
   port->original_port->put_buffer(port->original_port, buf, stream );
-                        
+
   /* we must not use original data anymore, it should have already being moved
    * to the fifo of free audio buffers. just use our private copy instead.
    */
@@ -372,8 +372,8 @@ static void fftgraph_port_put_buffer (xine_audio_port_t *port_gen,
                                         this->ratio, XINE_IMGFMT_YUY2,
                                         VO_BOTH_FIELDS);
       frame->extra_info->invalid = 1;
-      
-      /* frame is marked as bad if we don't have enough samples for 
+
+      /* frame is marked as bad if we don't have enough samples for
        * updating the viz plugin (calculations may be skipped).
        * we must keep the framerate though. */
       if( this->data_idx == NUMSAMPLES ) {
@@ -385,10 +385,10 @@ static void fftgraph_port_put_buffer (xine_audio_port_t *port_gen,
       frame->duration = 90000 * this->samples_per_frame / port->rate;
       frame->pts = pts;
       this->metronom->got_video_frame(this->metronom, frame);
-      
+
       this->sample_counter -= this->samples_per_frame;
 
-      if( this->fft )                                       
+      if( this->fft )
         draw_fftgraph(this, frame);
       else
         frame->bad_frame = 1;
@@ -431,7 +431,7 @@ static post_plugin_t *fftgraph_open_plugin(post_class_t *class_gen, int inputs,
   }
 
   _x_post_init(&this->post, 1, 0);
-  
+
   this->metronom = _x_metronom_init(1, 0, class->xine);
 
   this->vo_port = video_target[0];
@@ -475,16 +475,16 @@ static void fftgraph_class_dispose(post_class_t *class_gen)
 void *fftgraph_init_plugin(xine_t *xine, void *data)
 {
   post_class_fftgraph_t *class = (post_class_fftgraph_t *)malloc(sizeof(post_class_fftgraph_t));
-  
+
   if (!class)
     return NULL;
-  
+
   class->post_class.open_plugin     = fftgraph_open_plugin;
   class->post_class.get_identifier  = fftgraph_get_identifier;
   class->post_class.get_description = fftgraph_get_description;
   class->post_class.dispose         = fftgraph_class_dispose;
-  
+
   class->xine                       = xine;
-  
+
   return class;
 }

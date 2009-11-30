@@ -152,23 +152,23 @@ static int raw_process_ovl( raw_driver_t *this_gen, vo_overlay_t *overlay )
     x = pos%ovl->ovl_w;
     y = pos/ovl->ovl_w;
     if ( (x>=overlay->hili_left && x<=overlay->hili_right) && (y>=overlay->hili_top && y<=overlay->hili_bottom) ) {
-    	colors = hili_colors;
-    	trans = hili_trans;
+	colors = hili_colors;
+	trans = hili_trans;
     }
     else {
-    	colors = low_colors;
-    	trans = low_trans;
+	colors = low_colors;
+	trans = low_trans;
     }
     rlelen = rle->len;
     clr = rle->color;
     alpha = trans[clr];
     for ( i=0; i<rlelen; ++i ) {
-    	rgba[0] = colors[clr].y;
-    	rgba[1] = colors[clr].cr;
-    	rgba[2] = colors[clr].cb;
-    	rgba[3] = alpha*255/15;
-    	rgba+= 4;
-    	++pos;
+	rgba[0] = colors[clr].y;
+	rgba[1] = colors[clr].cr;
+	rgba[2] = colors[clr].cb;
+	rgba[3] = alpha*255/15;
+	rgba+= 4;
+	++pos;
     }
     ++rle;
     --num_rle;
@@ -182,7 +182,7 @@ static void raw_overlay_begin (vo_driver_t *this_gen, vo_frame_t *frame_gen, int
   raw_driver_t  *this = (raw_driver_t *) this_gen;
 
   if ( !changed )
-  	return;
+	return;
 
   ++this->ovl_changed;
 }

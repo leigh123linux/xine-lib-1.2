@@ -112,7 +112,7 @@ static int open_fli_file(demux_fli_t *this) {
 
   this->speed = _X_LE_32(&this->fli_header[16]);
   if (this->magic_number == FLI_FILE_MAGIC_1) {
-    /* 
+    /*
      * in this case, the speed (n) is number of 1/70s ticks between frames:
      *
      *  xine pts     n * frame #
@@ -123,7 +123,7 @@ static int open_fli_file(demux_fli_t *this) {
      */
      this->frame_pts_inc = this->speed * 1285.7;
   } else if (this->magic_number == FLI_FILE_MAGIC_2) {
-    /* 
+    /*
      * in this case, the speed (n) is number of milliseconds between frames:
      *
      *  xine pts     n * frame #

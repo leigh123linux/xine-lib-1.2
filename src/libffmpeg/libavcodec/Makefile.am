@@ -123,7 +123,7 @@ libavcodec_la_SOURCES = \
 	wnv1.c \
 	xan.c \
 	xl.c \
-	zmbv.c 
+	zmbv.c
 
 libavcodec_la_LDFLAGS = \
 	$(top_builddir)/src/libffmpeg/libavcodec/armv4l/libavcodec_armv4l.la \

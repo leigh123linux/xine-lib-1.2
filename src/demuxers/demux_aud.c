@@ -105,7 +105,7 @@ remove this case for the time being since this audio type is not supported
 anyway.
   if (header[11] == 1)
     this->audio_type = BUF_AUDIO_WESTWOOD;
-  else 
+  else
 #endif
   if (header[11] == 99)
     this->audio_type = BUF_AUDIO_VQA_IMA;

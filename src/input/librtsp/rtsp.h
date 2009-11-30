@@ -20,7 +20,7 @@
  * a minimalistic implementation of rtsp protocol,
  * *not* RFC 2326 compilant yet.
  */
- 
+
 #ifndef HAVE_RTSP_H
 #define HAVE_RTSP_H
 

@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2002-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -54,7 +54,7 @@
 #define LOG_MODULE "mms"
 #define LOG_VERBOSE
 /*
-#define LOG 
+#define LOG
 */
 #include "xine_internal.h"
 #include "xineutils.h"
@@ -65,8 +65,8 @@
 #include "../demuxers/asfheader.h"
 
 
-/* 
- * mms specific types 
+/*
+ * mms specific types
  */
 
 #define MMST_PORT 1755
@@ -107,9 +107,9 @@ struct mms_packet_header_s {
 struct mms_s {
 
   xine_stream_t *stream;
-  
+
   int           s;
-  
+
   /* url parsing */
   char         *url;
   char         *proto;
@@ -123,12 +123,12 @@ struct mms_s {
   char          scmd[CMD_HEADER_LEN + CMD_BODY_LEN];
   char         *scmd_body; /* pointer to &scmd[CMD_HEADER_LEN] */
   int           scmd_len; /* num bytes written in header */
-  
+
   /* receive buffer */
   uint8_t       buf[BUF_SIZE];
   int           buf_size;
   int           buf_read;
-  
+
   asf_header_t *asf_header;
   uint8_t       asf_header_buffer[ASF_HEADER_LEN];
   uint32_t      asf_header_len;
@@ -137,13 +137,13 @@ struct mms_s {
   int           seq_num;
   char          guid[37];
   int           bandwidth;
-  
+
   off_t         current_pos;
   int           eos;
 
   uint8_t       live_flag;
-  
-  uint8_t       playing; 
+
+  uint8_t       playing;
   double        start_time;
 };
 
@@ -230,12 +230,12 @@ static void print_command (char *data, int len) {
 
   for (i = (CMD_HEADER_LEN + CMD_PREFIX_LEN); i < (CMD_HEADER_LEN + CMD_PREFIX_LEN + len); i += 1) {
     unsigned char c = data[i];
-    
+
     if ((c >= 32) && (c < 128))
       printf ("%c", c);
     else
       printf (" %02x ", c);
-    
+
   }
   if (len > CMD_HEADER_LEN)
     printf ("\n");
@@ -271,7 +271,7 @@ static int send_command (mms_t *this, int command,
   mms_buffer_put_32 (&command_buffer, len8 + 2);
   mms_buffer_put_32 (&command_buffer, 0x00030000 | command); /* dir | command */
   /* end of the 40 byte command header */
-  
+
   mms_buffer_put_32 (&command_buffer, prefix1);
   mms_buffer_put_32 (&command_buffer, prefix2);
 
@@ -354,14 +354,14 @@ static int get_packet_header (mms_t *this, mms_packet_header_t *header) {
   len = _x_io_tcp_read (this->stream, this->s, (char*)this->buf, 8);
   if (len != 8)
     goto error;
-    
+
   if (_X_LE_32(this->buf + 4) == 0xb00bface) {
     /* command packet */
     header->flags = this->buf[3];
     len = _x_io_tcp_read (this->stream, this->s, (char*)(this->buf + 8), 4);
     if (len != 4)
       goto error;
-    
+
     header->packet_len = _X_LE_32(this->buf + 8) + 4;
     if (header->packet_len > BUF_SIZE - 12) {
       header->packet_len = 0;
@@ -383,7 +383,7 @@ static int get_packet_header (mms_t *this, mms_packet_header_t *header) {
     }
   }
   return packet_type;
-  
+
 error:
   lprintf("read error, len=%zd\n", len);
   return MMS_PACKET_ERR;
@@ -395,7 +395,7 @@ static int get_packet_command (mms_t *this, uint32_t packet_len) {
 
   int  command = 0;
   size_t len;
-  
+
   /* always enter this loop */
   lprintf("packet_len: %d bytes\n", packet_len);
 
@@ -405,18 +405,18 @@ static int get_packet_command (mms_t *this, uint32_t packet_len) {
   }
 
   print_command ((char*)this->buf, len);
-  
+
   /* check protocol type ("MMS ") */
   if (_X_LE_32(this->buf + 12) != 0x20534D4D) {
     lprintf("unknown protocol type: %c%c%c%c (0x%08X)\n",
             this->buf[12], this->buf[13], this->buf[14], this->buf[15],
-            _X_LE_32(this->buf + 12));  
+            _X_LE_32(this->buf + 12));
     return 0;
   }
 
   command = _X_LE_32 (this->buf + 36) & 0xFFFF;
   lprintf("command = 0x%2x\n", command);
-    
+
   return command;
 }
 
@@ -431,9 +431,9 @@ static int get_answer (mms_t *this) {
       break;
     case MMS_PACKET_COMMAND:
       command = get_packet_command (this, header.packet_len);
-      
+
       if (command == 0x1b) {
-    
+
         if (!send_command (this, 0x1b, 0, 0, 0)) {
           xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
                   "libmms: failed to send command\n");
@@ -452,7 +452,7 @@ static int get_answer (mms_t *this) {
               "libmms: unexpected asf packet\n");
       break;
   }
-  
+
   return command;
 }
 
@@ -461,7 +461,7 @@ static int get_asf_header (mms_t *this) {
 
   off_t len;
   int stop = 0;
-  
+
   this->asf_header_read = 0;
   this->asf_header_len = 0;
 
@@ -477,9 +477,9 @@ static int get_asf_header (mms_t *this) {
         break;
       case MMS_PACKET_COMMAND:
         command = get_packet_command (this, header.packet_len);
-      
+
         if (command == 0x1b) {
-    
+
           if (!send_command (this, 0x1b, 0, 0, 0)) {
             xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
                     "libmms: failed to send command\n");
@@ -560,11 +560,11 @@ static void report_progress (xine_stream_t *stream, int p) {
 
   prg.description = _("Connecting MMS server (over tcp)...");
   prg.percent = p;
-  
+
   event.type = XINE_EVENT_PROGRESS;
   event.data = &prg;
   event.data_length = sizeof (xine_progress_data_t);
-  
+
   xine_event_send (stream, &event);
 }
 
@@ -574,11 +574,11 @@ static void report_progress (xine_stream_t *stream, int p) {
  */
 static int mms_tcp_connect(mms_t *this) {
   int progress, res;
-  
+
   if (!this->port) this->port = MMST_PORT;
 
-  /* 
-   * try to connect 
+  /*
+   * try to connect
    */
   lprintf("try to connect to %s on port %d \n", this->host, this->port);
   this->s = _x_io_tcp_connect (this->stream, this->host, this->port);
@@ -626,7 +626,7 @@ static int mms_choose_best_streams(mms_t *this) {
   /* choose the best quality for the audio stream */
 
   asf_header_choose_streams (this->asf_header, this->bandwidth, &video_stream, &audio_stream);
-    
+
   lprintf("selected streams: audio %d, video %d\n", audio_stream, video_stream);
   lprintf("disabling other streams\n");
   memset (this->scmd_body, 0, 40);
@@ -647,8 +647,8 @@ static int mms_choose_best_streams(mms_t *this) {
   }
 
   /* command 0x33 */
-  if (!send_command (this, 0x33, this->asf_header->stream_count, 
-                     0xFFFF | this->asf_header->streams[0]->stream_number << 16, 
+  if (!send_command (this, 0x33, this->asf_header->stream_count,
+                     0xFFFF | this->asf_header->streams[0]->stream_number << 16,
                      this->asf_header->stream_count * 6 + 2)) {
     xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
             "libmms: mms_choose_best_streams failed\n");
@@ -676,7 +676,7 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   mms_t  *this;
   char    str[1024];
   int     res;
- 
+
   if (!url)
     return NULL;
 
@@ -696,23 +696,23 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   this->eos             = 0;
 
   report_progress (stream, 0);
-  
+
   if (!_x_parse_url (this->url, &this->proto, &this->host, &this->port,
                      &this->user, &this->password, &this->uri, NULL)) {
     lprintf ("invalid url\n");
     goto fail;
   }
-  
+
   if (!mmst_valid_proto(this->proto)) {
     lprintf ("unsupported protocol\n");
     goto fail;
   }
-  
+
   if (mms_tcp_connect(this)) {
     goto fail;
   }
   report_progress (stream, 30);
-  
+
 #ifdef USE_ICONV
   url_conv = string_utf16_open();
 #endif
@@ -732,13 +732,13 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
             "libmms: failed to send command 0x01\n");
     goto fail;
   }
-  
+
   if ((res = get_answer (this)) != 0x01) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             "libmms: unexpected response: %02x (0x01)\n", res);
     goto fail;
   }
-  
+
   report_progress (stream, 40);
 
   /* TODO: insert network timing request here */
@@ -786,7 +786,7 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
       path++;
       pathlen--;
     }
-    
+
     lprintf("send command 0x05\n");
     mms_buffer_init(&command_buffer, this->scmd_body);
     mms_buffer_put_32 (&command_buffer, 0x00000000); /* ?? */
@@ -796,13 +796,13 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
     if (!send_command (this, 5, 1, 0xffffffff, pathlen * 2 + 12))
       goto fail;
   }
-  
+
   switch (res = get_answer (this)) {
     case 0x06:
       {
         int xx, yy;
         /* no authentication required */
-      
+
         /* Warning: sdp is not right here */
         xx = this->buf[62];
         yy = this->buf[63];
@@ -845,7 +845,7 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
       goto fail;
     }
   }
-  
+
   if ((res = get_answer (this)) != 0x11) {
     xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
              "libmms: unexpected response: %02x (0x11)\n", res);
@@ -898,7 +898,7 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
 #endif
 
   lprintf("mms_connect: passed\n" );
- 
+
   return this;
 
 fail:
@@ -924,19 +924,19 @@ fail:
 static int get_media_packet (mms_t *this) {
   mms_packet_header_t header;
   off_t len;
-  
+
   switch (get_packet_header (this, &header)) {
     case MMS_PACKET_ERR:
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
               "libmms: failed to read mms packet header\n");
       return 0;
       break;
-    
+
     case MMS_PACKET_COMMAND:
       {
         int command;
         command = get_packet_command (this, header.packet_len);
-      
+
         switch (command) {
           case 0x1e:
             {
@@ -950,10 +950,10 @@ static int get_media_packet (mms_t *this) {
                 this->eos = 1;
                 return 0;
               }
-              
+
             }
             break;
-  
+
           case 0x20:
             {
               lprintf ("new stream.\n");
@@ -976,7 +976,7 @@ static int get_media_packet (mms_t *this) {
                 mms_buffer_t command_buffer;
                 mms_buffer_init(&command_buffer, this->scmd_body);
                 mms_buffer_put_32 (&command_buffer, 0x00000000);                  /* 64 byte float timestamp */
-                mms_buffer_put_32 (&command_buffer, 0x00000000);                  
+                mms_buffer_put_32 (&command_buffer, 0x00000000);
                 mms_buffer_put_32 (&command_buffer, 0xFFFFFFFF);                  /* ?? */
                 mms_buffer_put_32 (&command_buffer, 0xFFFFFFFF);                  /* first packet sequence */
                 mms_buffer_put_8  (&command_buffer, 0xFF);                        /* max stream time limit (3 bytes) */
@@ -1003,10 +1003,10 @@ static int get_media_packet (mms_t *this) {
               }
             }
             break;
-          
+
           case 0x05:
             break;
-  
+
           default:
             xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
                      "unexpected mms command %02x\n", command);
@@ -1047,7 +1047,7 @@ static int get_media_packet (mms_t *this) {
       }
       break;
   }
-  
+
   lprintf ("get media packet succ\n");
 
   return 1;
@@ -1085,13 +1085,13 @@ int mms_read (mms_t *this, char *data, int len) {
       this->asf_header_read += n;
       total += n;
       this->current_pos += n;
-      
+
       if (this->asf_header_read == this->asf_header_len)
         break;
     } else {
 
       int n, bytes_left ;
-      
+
       if (!this->playing) {
         /* send command 0x07 with initial timestamp */
         mms_buffer_t command_buffer;

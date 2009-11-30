@@ -38,11 +38,11 @@ extern "C" {
 #define CONFIG_FILE_VERSION 2
 
 /*
- * config entries above this experience 
+ * config entries above this experience
  * level must never be changed from MRL
  */
 #define XINE_CONFIG_SECURITY 30
-	
+
 
 typedef struct cfg_entry_s cfg_entry_t;
 typedef struct config_values_s config_values_t;
@@ -190,7 +190,7 @@ struct config_values_s {
    * mutex for modification to the config
    */
   pthread_mutex_t      config_lock;
-  
+
   /*
    * current config file's version number
    */

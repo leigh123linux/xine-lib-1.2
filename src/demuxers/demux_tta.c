@@ -141,7 +141,7 @@ static int demux_tta_send_chunk(demux_plugin_t *this_gen) {
 
     if ( bytes_to_read <= 0 )
       buf->decoder_flags |= BUF_FLAG_FRAME_END;
-    
+
     this->audio_fifo->put(this->audio_fifo, buf);
   }
 

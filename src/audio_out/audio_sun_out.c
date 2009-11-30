@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2001-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -159,7 +159,7 @@ static int realtime_samplecounter_available(xine_t *xine, char *dev)
   silence = calloc(1, len);
   if (silence == NULL)
     goto error;
-    
+
   if ((fd = open(dev, O_WRONLY|O_NONBLOCK)) < 0)
     goto error;
 
@@ -176,7 +176,7 @@ static int realtime_samplecounter_available(xine_t *xine, char *dev)
     xprintf(xine, XINE_VERBOSITY_DEBUG, "rtsc: SETINFO failed\n");
     goto error;
   }
-    
+
   if (write(fd, silence, len) != len) {
     xprintf(xine, XINE_VERBOSITY_DEBUG, "rtsc: write failed\n");
     goto error;
@@ -195,7 +195,7 @@ static int realtime_samplecounter_available(xine_t *xine, char *dev)
     delay.tv_sec = 0;
     delay.tv_nsec = 10000000;
     nanosleep(&delay, NULL);
- 
+
     gettimeofday(&end, NULL);
     usec_delay = (end.tv_sec - start.tv_sec) * 1000000
 	+ end.tv_usec - start.tv_usec;
@@ -230,7 +230,7 @@ static int realtime_samplecounter_available(xine_t *xine, char *dev)
    * sample counter increment from the soundcard driver of less than
    * 2000 samples,  we assume that the driver provides a useable realtime
    * sample counter in the AUDIO_INFO play.samples field.  Timing based
-   * on sample counts should be much more accurate than counting whole 
+   * on sample counts should be much more accurate than counting whole
    * 16kbyte chunks.
    */
   if (min_increment < 2000)
@@ -238,10 +238,10 @@ static int realtime_samplecounter_available(xine_t *xine, char *dev)
 
   /*
   printf("audio_sun_out: minimum sample counter increment per 10msec interval: %d\n"
-  	 "\t%susing sample counter based timing code\n",
+	 "\t%susing sample counter based timing code\n",
 	 min_increment, rtsc_ok == RTSC_ENABLED ? "" : "not ");
   */
-    
+
 
 error:
   if (silence != NULL) free(silence);
@@ -263,7 +263,7 @@ error:
 }
 
 
-/* 
+/*
  * match the requested sample rate |sample_rate| against the
  * sample rates supported by the audio device |dev|.  Return
  * a supported sample rate,  it that sample rate is close to
@@ -294,7 +294,7 @@ find_close_samplerate_match(int dev, int sample_rate)
 
     if (sr->flags & MIXER_SR_LIMITS) {
 	/*
-	 * HW can playback any rate between 
+	 * HW can playback any rate between
 	 * sr->samp_rates[0] .. sr->samp_rates[1]
 	 */
 	free(sr);
@@ -340,7 +340,7 @@ find_close_samplerate_match(int dev, int sample_rate)
     for (i = 0; audiocs_rates[i]; i++) {
 	err = abs(audiocs_rates[i] - sample_rate);
 	if (err == 0) {
-	    /* 
+	    /*
 	     * exact supported sample rate match, no need to
 	     * retry something elise
 	     */
@@ -385,7 +385,7 @@ find_highest_samplerate(int dev)
 
     if (sr->flags & MIXER_SR_LIMITS) {
 	/*
-	 * HW can playback any rate between 
+	 * HW can playback any rate between
 	 * sr->samp_rates[0] .. sr->samp_rates[1]
 	 */
 	max_rate = sr->samp_rates[1];
@@ -412,7 +412,7 @@ find_highest_samplerate(int dev)
  * Implicit assumptions about audio format (bits/rate/mode):
  *
  * bits == 16: We always get 16-bit samples in native endian format,
- * 	using signed linear encoding
+ *	using signed linear encoding
  *
  * bits ==  8: 8-bit samples use unsigned linear encoding,
  *	other 8-bit formats (uLaw, aLaw, etc) are currently not supported
@@ -440,7 +440,7 @@ static int ao_sun_open(ao_driver_t *this_gen,
 
     close (this->audio_fd);
   }
-  
+
   this->mode			= mode;
   this->input_sample_rate	= rate;
 #ifdef __svr4__
@@ -453,11 +453,11 @@ static int ao_sun_open(ao_driver_t *this_gen,
 
   this->audio_fd = open(this->audio_dev, O_WRONLY|O_NONBLOCK);
   if(this->audio_fd < 0) {
-    xprintf(this->xine, XINE_VERBOSITY_LOG, 
+    xprintf(this->xine, XINE_VERBOSITY_LOG,
 	    _("audio_sun_out: opening audio device %s failed: %s\n"), this->audio_dev, strerror(errno));
     return 0;
   }
-  
+
   /* We wanted non blocking open but now put it back to normal */
   fcntl(this->audio_fd, F_SETFL, fcntl(this->audio_fd, F_GETFL) & ~O_NONBLOCK);
 
@@ -485,7 +485,7 @@ static int ao_sun_open(ao_driver_t *this_gen,
 
       if (pass & 1) {
 	  /*
-	   * on some sun audio drivers, 8-bit unsigned LINEAR8 encoding is 
+	   * on some sun audio drivers, 8-bit unsigned LINEAR8 encoding is
 	   * not supported, but 8-bit signed encoding is.
 	   *
 	   * Try S8, and if it works, use our own U8->S8 conversion before
@@ -511,7 +511,7 @@ static int ao_sun_open(ao_driver_t *this_gen,
 	   */
 	  if (!(info.play.sample_rate =
 		find_close_samplerate_match(this->audio_fd,
-					    this->input_sample_rate))) 
+					    this->input_sample_rate)))
 	      continue;
       }
 
@@ -567,7 +567,7 @@ static int ao_sun_open(ao_driver_t *this_gen,
   return this->output_sample_rate;
 }
 
-static int ao_sun_num_channels(ao_driver_t *this_gen) 
+static int ao_sun_num_channels(ao_driver_t *this_gen)
 {
   sun_driver_t *this = (sun_driver_t *) this_gen;
   return this->num_channels;
@@ -589,7 +589,7 @@ static int ao_sun_delay(ao_driver_t *this_gen)
       (this->frames_in_buffer == 0 || info.play.samples > 0)) {
 
     if (info.play.samples < this->last_samplecnt) {
-	xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
+	xprintf(this->xine, XINE_VERBOSITY_DEBUG,
 		"audio_sun_out: broken sound driver, sample counter runs backwards, cur %u < prev %u\n",
 		info.play.samples, this->last_samplecnt);
     }
@@ -728,7 +728,7 @@ static int ao_sun_write(ao_driver_t *this_gen,
   int num_written;
 
   if (this->convert_u8_s8) {
-      /* 
+      /*
        * Audio hardware does not support 8-bit unsigned format,
        * only 8-bit signed.  Convert to 8-bit unsigned before sending
        * the data to the audio device.
@@ -736,7 +736,7 @@ static int ao_sun_write(ao_driver_t *this_gen,
       uint8_t *p = (void *)frame_buffer;
       int i;
 
-      for (i = num_frames * this->bytes_per_frame; --i >= 0; p++) 
+      for (i = num_frames * this->bytes_per_frame; --i >= 0; p++)
 	  *p ^= 0x80;
   }
   num_written = sun_audio_write(this, frame_buffer, num_frames * this->bytes_per_frame);
@@ -747,7 +747,7 @@ static int ao_sun_write(ao_driver_t *this_gen,
     this->frames_in_buffer += num_written / this->bytes_per_frame;
 #endif
 
-    /* 
+    /*
      * Avoid storing too much data in the sound driver's buffers.
      *
      * When we find more than 3 seconds of buffered audio data in the
@@ -783,7 +783,7 @@ static uint32_t ao_sun_get_capabilities (ao_driver_t *this_gen) {
 static void ao_sun_exit(ao_driver_t *this_gen)
 {
   sun_driver_t *this = (sun_driver_t *) this_gen;
-  
+
   if (this->audio_fd >= 0)
     close(this->audio_fd);
 
@@ -869,7 +869,7 @@ static int ao_sun_ctrl(ao_driver_t *this_gen, int cmd, ...) {
     /* flush buffered STEAMS data first */
     ioctl(this->audio_fd, I_FLUSH, FLUSHW);
 
-    /* 
+    /*
      * the flush above discarded an unknown amount of data from the
      * audio device.  To get the "*_delay" computation in sync again,
      * reset the audio device's sample counter to 0, after waiting
@@ -944,7 +944,7 @@ static ao_driver_t *ao_sun_open_plugin (audio_driver_class_t *class_gen, const v
 
   this->audio_fd = open(this->audio_dev = devname, O_WRONLY|O_NONBLOCK);
 
-  if(this->audio_fd < 0) 
+  if(this->audio_fd < 0)
   {
     xprintf(this->xine, XINE_VERBOSITY_LOG,
 	    _("audio_sun_out: opening audio device %s failed: %s\n"), devname, strerror(errno));
@@ -962,7 +962,7 @@ static ao_driver_t *ao_sun_open_plugin (audio_driver_class_t *class_gen, const v
   info.play.precision = AUDIO_PRECISION_16;
   info.play.sample_rate = 44100;
   status = ioctl(this->audio_fd, AUDIO_SETINFO, &info);
-  
+
   if (status < 0) {
     xprintf(this->xine, XINE_VERBOSITY_LOG,
 	    _("audio_sun_out: audio ioctl on device %s failed: %s\n"), devname, strerror(errno));
@@ -976,7 +976,7 @@ static ao_driver_t *ao_sun_open_plugin (audio_driver_class_t *class_gen, const v
    */
 
   this->capabilities = AO_CAP_MODE_MONO | AO_CAP_MODE_STEREO | AO_CAP_8BITS
-  		     | AO_CAP_16BITS | AO_CAP_PCM_VOL;
+		     | AO_CAP_16BITS | AO_CAP_PCM_VOL;
 #ifdef __svr4__
   this->capabilities |= AO_CAP_MUTE_VOL;
 #endif
@@ -1056,7 +1056,7 @@ static const ao_info_t ao_info_sun = {
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_AUDIO_OUT, AO_SUN_IFACE_VERSION, "sun", XINE_VERSION_CODE, &ao_info_sun, ao_sun_init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2005 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -63,18 +63,18 @@ typedef struct {
 
   xine_t           *xine;
   config_values_t  *config;
-  
+
   char             *origin_path;
   int               show_hidden_files;
 
   int               mrls_allocated_entries;
   xine_mrl_t      **mrls;
-  
+
 } file_input_class_t;
 
 typedef struct {
   input_plugin_t    input_plugin;
-  
+
   xine_stream_t    *stream;
 
   int               fh;
@@ -153,10 +153,10 @@ static off_t file_plugin_read (input_plugin_t *this_gen, char *buf, off_t len) {
     off_t l = len;
     if ( (this->mmap_curr + len) > (this->mmap_base + this->mmap_len) )
       l = (this->mmap_base + this->mmap_len) - this->mmap_curr;
-    
+
     memcpy(buf, this->mmap_curr, l);
     this->mmap_curr += l;
-    
+
     return l;
   }
 #endif
@@ -191,7 +191,7 @@ static buf_element_t *file_plugin_read_block (input_plugin_t *this_gen, fifo_buf
 
     /* FIXME: it's completely illegal to free buffer->mem here
      * - buffer->mem has not been allocated by malloc
-     * - demuxers expect buffer->mem != NULL 
+     * - demuxers expect buffer->mem != NULL
      */
     /* free(buf->mem); buf->mem = NULL; */
 
@@ -200,7 +200,7 @@ static buf_element_t *file_plugin_read_block (input_plugin_t *this_gen, fifo_buf
 #endif
   {
     off_t num_bytes, total_bytes = 0;
-    
+
     buf->content = buf->mem;
 
     while (total_bytes < todo) {
@@ -218,11 +218,11 @@ static buf_element_t *file_plugin_read_block (input_plugin_t *this_gen, fifo_buf
       }
       total_bytes += num_bytes;
     }
-    
+
     if( buf != NULL )
       buf->size = total_bytes;
   }
-  
+
   return buf;
 }
 
@@ -296,7 +296,7 @@ static uint32_t file_plugin_get_blocksize (input_plugin_t *this_gen) {
  */
 static int is_a_dir(char *filepathname) {
   struct stat  pstat;
-  
+
   stat(filepathname, &pstat);
 
   return (S_ISDIR(pstat.st_mode));
@@ -308,9 +308,9 @@ static const char* file_plugin_get_mrl (input_plugin_t *this_gen) {
   return this->mrl;
 }
 
-static int file_plugin_get_optional_data (input_plugin_t *this_gen, 
+static int file_plugin_get_optional_data (input_plugin_t *this_gen,
 					  void *data, int data_type) {
-  
+
   return INPUT_OPTIONAL_UNSUPPORTED;
 }
 
@@ -417,7 +417,7 @@ static int file_plugin_open (input_plugin_t *this_gen ) {
   return 1;
 }
 
-static input_plugin_t *file_class_get_instance (input_class_t *cls_gen, xine_stream_t *stream, 
+static input_plugin_t *file_class_get_instance (input_class_t *cls_gen, xine_stream_t *stream,
 				    const char *data) {
 
   /* file_input_class_t  *cls = (file_input_class_t *) cls_gen; */
@@ -484,12 +484,12 @@ static input_plugin_t *file_class_get_instance (input_class_t *cls_gen, xine_str
  */
 static void hidden_bool_cb(void *data, xine_cfg_entry_t *cfg) {
   file_input_class_t *this = (file_input_class_t *) data;
-  
+
   this->show_hidden_files = cfg->num_value;
 }
 static void origin_change_cb(void *data, xine_cfg_entry_t *cfg) {
   file_input_class_t *this = (file_input_class_t *) data;
-  
+
   this->origin_path = cfg->str_value;
 }
 
@@ -540,20 +540,20 @@ static int _strverscmp(const char *s1, const char *s2) {
     c2 = *p2++;
     state |= (c1 == '0') + (ISDIGIT(c1) != 0);
   }
-  
+
   state = result_type[state << 2 | ((c2 == '0') + (ISDIGIT(c2) != 0))];
-  
+
   switch(state) {
   case CMP:
     return diff;
-    
+
   case LEN:
     while(ISDIGIT(*p1++))
       if(!ISDIGIT(*p2++))
 	return 1;
-    
+
     return ISDIGIT(*p2) ? -1 : diff;
-    
+
   default:
     return state;
   }
@@ -583,11 +583,11 @@ static uint32_t get_file_type(char *filepathname, char *origin, xine_t *xine) {
       return file_type;
     }
   }
-  
+
   file_type |= mrl_file;
-  
+
   mode = pstat.st_mode;
-  
+
   if(S_ISLNK(mode))
     file_type |= mrl_file_symlink;
   else if(S_ISDIR(mode))
@@ -607,10 +607,10 @@ static uint32_t get_file_type(char *filepathname, char *origin, xine_t *xine) {
     if(mode & S_IXUGO)
       file_type |= mrl_file_exec;
   }
-  
+
   if(filepathname[strlen(filepathname) - 1] == '~')
     file_type |= mrl_file_backup;
-  
+
   return file_type;
 }
 
@@ -638,7 +638,7 @@ static const char *file_class_get_identifier (input_class_t *this_gen) {
   return "file";
 }
 
-static xine_mrl_t **file_class_get_dir (input_class_t *this_gen, 
+static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
 					const char *filename, int *nFiles) {
 
   /* FIXME: this code needs cleanup badly */
@@ -660,7 +660,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
   *nFiles = 0;
   memset(current_dir, 0, sizeof(current_dir));
 
-  /* 
+  /*
    * No origin location, so got the content of the current directory
    */
   if(!filename) {
@@ -668,7 +668,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
   }
   else {
     snprintf(current_dir, XINE_PATH_MAX, "%s", filename);
-    
+
     /* Remove exceed '/' */
     while((current_dir[strlen(current_dir) - 1] == '/') && strlen(current_dir) > 1)
       current_dir[strlen(current_dir) - 1] = '\0';
@@ -676,14 +676,14 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
 
   /* Store new origin path */
  try_again_from_home:
-  
+
   this->config->update_string(this->config, "media.files.origin_path", current_dir);
 
   if(strcasecmp(current_dir, "/"))
     snprintf(current_dir_slashed, sizeof(current_dir_slashed), "%s/", current_dir);
   else
     sprintf(current_dir_slashed, "/");
-  
+
   /*
    * Ooch!
    */
@@ -698,28 +698,28 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
 
     return NULL;
   }
-  
+
   dir_files  = (xine_mrl_t *) calloc(MAXFILES, sizeof(xine_mrl_t));
   hide_files = (xine_mrl_t *) calloc(MAXFILES, sizeof(xine_mrl_t));
   norm_files = (xine_mrl_t *) calloc(MAXFILES, sizeof(xine_mrl_t));
-  
+
   while((pdirent = readdir(pdir)) != NULL) {
-    
+
     memset(fullfilename, 0, sizeof(fullfilename));
     snprintf(fullfilename, sizeof(fullfilename), "%s/%s", current_dir, pdirent->d_name);
-    
+
     if(is_a_dir(fullfilename)) {
-      
+
       /* if user don't want to see hidden files, ignore them */
-      if(this->show_hidden_files == 0 && 
+      if(this->show_hidden_files == 0 &&
 	 ((strlen(pdirent->d_name) > 1)
 	  && (pdirent->d_name[0] == '.' &&  pdirent->d_name[1] != '.'))) {
 	;
       }
       else {
-	
+
 	dir_files[num_dir_files].origin = strdup(current_dir);
-	asprintf(&(dir_files[num_dir_files].mrl), "%s%s", 
+	asprintf(&(dir_files[num_dir_files].mrl), "%s%s",
 		current_dir_slashed, pdirent->d_name);
 	dir_files[num_dir_files].link   = NULL;
 	dir_files[num_dir_files].type   = get_file_type(fullfilename, current_dir, this->xine);
@@ -729,11 +729,11 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
 	if(dir_files[num_dir_files].type & mrl_file_symlink) {
 	  char linkbuf[XINE_PATH_MAX + XINE_NAME_MAX + 1];
 	  int linksize;
-	  
+
 	  memset(linkbuf, 0, sizeof(linkbuf));
 	  linksize = readlink(fullfilename, linkbuf, XINE_PATH_MAX + XINE_NAME_MAX);
-	  
-	  if(linksize < 0) 
+
+	  if(linksize < 0)
 	    xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 		     "input_file: readlink() failed: %s\n", strerror(errno));
 	  else {
@@ -743,7 +743,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
 	    dir_files[num_dir_files].type |= get_file_type(dir_files[num_dir_files].link, current_dir, this->xine);
 	  }
 	}
-	
+
 	num_dir_files++;
       }
 
@@ -755,20 +755,20 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
       if(this->show_hidden_files) {
 
 	hide_files[num_hide_files].origin = strdup(current_dir);
-	asprintf(&(hide_files[num_hide_files].mrl), "%s%s", 
+	asprintf(&(hide_files[num_hide_files].mrl), "%s%s",
 		current_dir_slashed, pdirent->d_name);
 	hide_files[num_hide_files].link   = NULL;
 	hide_files[num_hide_files].type   = get_file_type(fullfilename, current_dir, this->xine);
 	hide_files[num_hide_files].size   = get_file_size(fullfilename, current_dir);
-	
+
 	/* The file is a link, follow it */
 	if(hide_files[num_hide_files].type & mrl_file_symlink) {
 	  char linkbuf[XINE_PATH_MAX + XINE_NAME_MAX + 1];
 	  int linksize;
-	  
+
 	  memset(linkbuf, 0, sizeof(linkbuf));
 	  linksize = readlink(fullfilename, linkbuf, XINE_PATH_MAX + XINE_NAME_MAX);
-	  
+
 	  if(linksize < 0) {
 	    xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 		     "input_file: readlink() failed: %s\n", strerror(errno));
@@ -779,7 +779,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
 	    hide_files[num_hide_files].type |= get_file_type(hide_files[num_hide_files].link, current_dir, this->xine);
 	  }
 	}
-	
+
 	num_hide_files++;
       }
 
@@ -787,39 +787,39 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
     else {
 
       norm_files[num_norm_files].origin = strdup(current_dir);
-      asprintf(&(norm_files[num_norm_files].mrl), "%s%s", 
+      asprintf(&(norm_files[num_norm_files].mrl), "%s%s",
 	      current_dir_slashed, pdirent->d_name);
       norm_files[num_norm_files].link   = NULL;
       norm_files[num_norm_files].type   = get_file_type(fullfilename, current_dir, this->xine);
       norm_files[num_norm_files].size   = get_file_size(fullfilename, current_dir);
-      
+
       /* The file is a link, follow it */
       if(norm_files[num_norm_files].type & mrl_file_symlink) {
 	char linkbuf[XINE_PATH_MAX + XINE_NAME_MAX + 1];
 	int linksize;
-	
+
 	memset(linkbuf, 0, sizeof(linkbuf));
 	linksize = readlink(fullfilename, linkbuf, XINE_PATH_MAX + XINE_NAME_MAX);
-	
+
 	if(linksize < 0) {
 	  xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 		   "input_file: readlink() failed: %s\n", strerror(errno));
 	}
 	else {
-	  norm_files[num_norm_files].link = 
+	  norm_files[num_norm_files].link =
 	    strndup(linkbuf, linksize);
 	  norm_files[num_norm_files].type |= get_file_type(norm_files[num_norm_files].link, current_dir, this->xine);
 	}
       }
-      
+
       num_norm_files++;
     }
-    
+
     num_files++;
   }
-  
+
   closedir(pdir);
-  
+
   /*
    * Ok, there are some files here, so sort
    * them then store them into global mrls array.
@@ -834,18 +834,18 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
      */
     if(num_dir_files)
       qsort(dir_files, num_dir_files, sizeof(xine_mrl_t), func);
-    
+
     if(num_hide_files)
       qsort(hide_files, num_hide_files, sizeof(xine_mrl_t), func);
-    
+
     if(num_norm_files)
       qsort(norm_files, num_norm_files, sizeof(xine_mrl_t), func);
-    
+
     /*
      * Add directories entries
      */
     for(i = 0; i < num_dir_files; i++) {
-      
+
       if(num_files >= this->mrls_allocated_entries) {
 	++this->mrls_allocated_entries;
 	this->mrls = realloc(this->mrls, (this->mrls_allocated_entries+1) * sizeof(xine_mrl_t*));
@@ -853,8 +853,8 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
       }
       else
 	memset(this->mrls[num_files], 0, sizeof(xine_mrl_t));
-      
-      MRL_DUPLICATE(&dir_files[i], this->mrls[num_files]); 
+
+      MRL_DUPLICATE(&dir_files[i], this->mrls[num_files]);
 
       num_files++;
     }
@@ -863,7 +863,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
      * Add hidden files entries
      */
     for(i = 0; i < num_hide_files; i++) {
-      
+
       if(num_files >= this->mrls_allocated_entries) {
 	++this->mrls_allocated_entries;
 	this->mrls = realloc(this->mrls, (this->mrls_allocated_entries+1) * sizeof(xine_mrl_t*));
@@ -871,13 +871,13 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
       }
       else
 	memset(this->mrls[num_files], 0, sizeof(xine_mrl_t));
-      
-      MRL_DUPLICATE(&hide_files[i], this->mrls[num_files]); 
+
+      MRL_DUPLICATE(&hide_files[i], this->mrls[num_files]);
 
       num_files++;
     }
-    
-    /* 
+
+    /*
      * Add other files entries
      */
     for(i = 0; i < num_norm_files; i++) {
@@ -890,24 +890,24 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
       else
 	memset(this->mrls[num_files], 0, sizeof(xine_mrl_t));
 
-      MRL_DUPLICATE(&norm_files[i], this->mrls[num_files]); 
+      MRL_DUPLICATE(&norm_files[i], this->mrls[num_files]);
 
       num_files++;
     }
-    
+
     /* Some cleanups before leaving */
     for(i = num_dir_files; i == 0; i--)
       MRL_ZERO(&dir_files[i]);
     free(dir_files);
-    
+
     for(i = num_hide_files; i == 0; i--)
       MRL_ZERO(&hide_files[i]);
     free(hide_files);
-    
+
     for(i = num_norm_files; i == 0; i--)
       MRL_ZERO(&norm_files[i]);
     free(norm_files);
-    
+
   }
   else {
     free(hide_files);
@@ -915,12 +915,12 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
     free(norm_files);
     return NULL;
   }
-  
+
   /*
    * Inform caller about files found number.
    */
   *nFiles = num_files;
-  
+
   /*
    * Freeing exceeded mrls if exists.
    */
@@ -928,7 +928,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
     MRL_ZERO(this->mrls[this->mrls_allocated_entries - 1]);
     free(this->mrls[this->mrls_allocated_entries--]);
   }
-  
+
   /*
    * This is useful to let UI know where it should stops ;-).
    */
@@ -970,7 +970,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->xine   = xine;
   this->config = xine->config;
   config       = xine->config;
-  
+
   this->input_class.get_instance       = file_class_get_instance;
   this->input_class.get_identifier     = file_class_get_identifier;
   this->input_class.get_description    = file_class_get_description;
@@ -984,7 +984,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   {
     char current_dir[XINE_PATH_MAX + 1];
-    
+
     if(getcwd(current_dir, sizeof(current_dir)) == NULL)
       strcpy(current_dir, ".");
 
@@ -995,14 +995,14 @@ static void *init_plugin (xine_t *xine, void *data) {
 						  "start at this location."),
 						0, origin_change_cb, (void *) this);
   }
-  
-  this->show_hidden_files = config->register_bool(config, 
-						  "media.files.show_hidden_files", 
+
+  this->show_hidden_files = config->register_bool(config,
+						  "media.files.show_hidden_files",
 						  0, _("list hidden files"),
 						  _("If enabled, the browser to select the file to "
 						    "play will also show hidden files."),
 						  10, hidden_bool_cb, (void *) this);
-  
+
   return this;
 }
 
@@ -1011,7 +1011,7 @@ static void *init_plugin (xine_t *xine, void *data) {
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 17, "FILE", XINE_VERSION_CODE, NULL, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

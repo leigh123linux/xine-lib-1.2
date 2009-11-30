@@ -35,7 +35,7 @@ libwine_la_SOURCES = \
 	vfl.c \
 	win32.c \
 	stubs.s \
-	wrapper.S 
+	wrapper.S
 
 noinst_HEADERS = \
 	avifmt.h \

@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2002-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -61,21 +61,21 @@ typedef struct {
   input_plugin_t   input_plugin;
 
   xine_stream_t   *stream;
-  
+
   pnm_t           *pnm;
 
   char            *mrl;
 
   off_t            curpos;
 
-  nbc_t           *nbc; 
+  nbc_t           *nbc;
 
   char             scratch[BUFSIZE];
 
 } pnm_input_plugin_t;
 
 
-static off_t pnm_plugin_read (input_plugin_t *this_gen, 
+static off_t pnm_plugin_read (input_plugin_t *this_gen,
                               char *buf, off_t len) {
   pnm_input_plugin_t *this = (pnm_input_plugin_t *) this_gen;
   off_t               n;
@@ -89,7 +89,7 @@ static off_t pnm_plugin_read (input_plugin_t *this_gen,
   return n;
 }
 
-static buf_element_t *pnm_plugin_read_block (input_plugin_t *this_gen, 
+static buf_element_t *pnm_plugin_read_block (input_plugin_t *this_gen,
                                              fifo_buffer_t *fifo, off_t todo) {
   /*pnm_input_plugin_t   *this = (pnm_input_plugin_t *) this_gen; */
   buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
@@ -106,7 +106,7 @@ static buf_element_t *pnm_plugin_read_block (input_plugin_t *this_gen,
 
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
-  
+
   total_bytes = pnm_plugin_read (this_gen, (char*)buf->content, todo);
 
   if (total_bytes != todo) {
@@ -149,7 +149,7 @@ static off_t pnm_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin
 static off_t pnm_plugin_get_length (input_plugin_t *this_gen) {
 
   /*
-  pnm_input_plugin_t   *this = (pnm_input_plugin_t *) this_gen; 
+  pnm_input_plugin_t   *this = (pnm_input_plugin_t *) this_gen;
   off_t                 length;
   */
 
@@ -186,10 +186,10 @@ static void pnm_plugin_dispose (input_plugin_t *this_gen) {
     nbc_close (this->nbc);
     this->nbc = NULL;
   }
-  
+
   if(this->mrl)
     free(this->mrl);
-  
+
   free (this);
 }
 
@@ -199,7 +199,7 @@ static const char* pnm_plugin_get_mrl (input_plugin_t *this_gen) {
   return this->mrl;
 }
 
-static int pnm_plugin_get_optional_data (input_plugin_t *this_gen, 
+static int pnm_plugin_get_optional_data (input_plugin_t *this_gen,
                                          void *data, int data_type) {
   pnm_input_plugin_t *this = (pnm_input_plugin_t *) this_gen;
 
@@ -227,11 +227,11 @@ static int pnm_plugin_open (input_plugin_t *this_gen) {
   }
 
   this->pnm    = pnm;
-  
+
   return 1;
 }
 
-static input_plugin_t *pnm_class_get_instance (input_class_t *cls_gen, xine_stream_t *stream, 
+static input_plugin_t *pnm_class_get_instance (input_class_t *cls_gen, xine_stream_t *stream,
 				    const char *data) {
 
   /* pnm_input_class_t  *cls = (pnm_input_class_t *) cls_gen; */
@@ -247,9 +247,9 @@ static input_plugin_t *pnm_class_get_instance (input_class_t *cls_gen, xine_stre
 
   this->stream = stream;
   this->pnm    = NULL;
-  this->mrl    = mrl; 
+  this->mrl    = mrl;
   this->nbc    = nbc_init (this->stream);
-  
+
   this->input_plugin.open              = pnm_plugin_open;
   this->input_plugin.get_capabilities  = pnm_plugin_get_capabilities;
   this->input_plugin.read              = pnm_plugin_read;
@@ -262,7 +262,7 @@ static input_plugin_t *pnm_class_get_instance (input_class_t *cls_gen, xine_stre
   this->input_plugin.dispose           = pnm_plugin_dispose;
   this->input_plugin.get_optional_data = pnm_plugin_get_optional_data;
   this->input_plugin.input_class       = cls_gen;
-  
+
   return &this->input_plugin;
 }
 
@@ -308,7 +308,7 @@ static void *init_class (xine_t *xine, void *data) {
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_INPUT, 17, "pnm", XINE_VERSION_CODE, NULL, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

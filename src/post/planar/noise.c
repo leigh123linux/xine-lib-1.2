@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2006 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -315,7 +315,7 @@ void *noise_init_plugin(xine_t *xine, void *);
 typedef struct post_plugin_noise_s post_plugin_noise_t;
 
 /*
- * this is the struct used by "parameters api" 
+ * this is the struct used by "parameters api"
  */
 typedef struct noise_parameters_s {
     int luma_strength, chroma_strength,
@@ -329,15 +329,15 @@ static char *enum_quality[] = {"fixed", "temporal", "averaged temporal", NULL};
  * description of params struct
  */
 START_PARAM_DESCR( noise_parameters_t )
-PARAM_ITEM( POST_PARAM_TYPE_INT, luma_strength, NULL, 0, 100, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_INT, luma_strength, NULL, 0, 100, 0,
     "Amount of noise to add to luma channel" )
-PARAM_ITEM( POST_PARAM_TYPE_INT, chroma_strength, NULL, 0, 100, 0,   
+PARAM_ITEM( POST_PARAM_TYPE_INT, chroma_strength, NULL, 0, 100, 0,
     "Amount of noise to add to chroma channel" )
-PARAM_ITEM( POST_PARAM_TYPE_INT, quality, enum_quality, 0, 0, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_INT, quality, enum_quality, 0, 0, 0,
     "Quality level of noise" )
-PARAM_ITEM( POST_PARAM_TYPE_INT, type, enum_types, 0, 0, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_INT, type, enum_types, 0, 0, 0,
     "Type of noise" )
-PARAM_ITEM( POST_PARAM_TYPE_BOOL, pattern, NULL, 0, 1, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_BOOL, pattern, NULL, 0, 1, 0,
     "Mix random noise with a (semi)regular pattern" )
 END_PARAM_DESCR( param_descr )
 
@@ -354,7 +354,7 @@ struct post_plugin_noise_s {
 };
 
 
-static int set_parameters (xine_post_t *this_gen, void *param_gen) 
+static int set_parameters (xine_post_t *this_gen, void *param_gen)
 {
     post_plugin_noise_t *this = (post_plugin_noise_t *)this_gen;
     noise_parameters_t *param = (noise_parameters_t *)param_gen;
@@ -376,7 +376,7 @@ static int set_parameters (xine_post_t *this_gen, void *param_gen)
     return 1;
 }
 
-static int get_parameters (xine_post_t *this_gen, void *param_gen) 
+static int get_parameters (xine_post_t *this_gen, void *param_gen)
 {
     post_plugin_noise_t *this = (post_plugin_noise_t *)this_gen;
     noise_parameters_t *param = (noise_parameters_t *)param_gen;
@@ -395,7 +395,7 @@ static int get_parameters (xine_post_t *this_gen, void *param_gen)
     pthread_mutex_unlock (&this->lock);
     return 1;
 }
- 
+
 static xine_post_api_descr_t *get_param_descr (void) {
     return &param_descr;
 }
@@ -453,7 +453,7 @@ void *noise_init_plugin(xine_t *xine, void *data)
 
     if (!class)
         return NULL;
-  
+
     class->open_plugin     = noise_open_plugin;
     class->get_identifier  = noise_get_identifier;
     class->get_description = noise_get_description;
@@ -481,12 +481,12 @@ static post_plugin_t *noise_open_plugin(post_class_t *class_gen, int inputs,
     post_out_t        *output;
     post_video_port_t *port;
     noise_parameters_t params;
-    
+
     if (!this || !video_target || !video_target[0]) {
       free(this);
       return NULL;
     }
-    
+
     _x_post_init(&this->post, 0, 1);
 
     memset(&params, 0, sizeof(noise_parameters_t));
@@ -496,11 +496,11 @@ static post_plugin_t *noise_open_plugin(post_class_t *class_gen, int inputs,
     params.quality = 2;
 
     pthread_mutex_init(&this->lock, NULL);
-    
+
     port = _x_post_intercept_video_port(&this->post, video_target[0], &input, &output);
     port->intercept_frame       = noise_intercept_frame;
     port->new_frame->draw       = noise_draw;
-    
+
     input_api       = &this->params_input;
     input_api->name = "parameters";
     input_api->type = XINE_POST_DATA_PARAMETERS;
@@ -509,13 +509,13 @@ static post_plugin_t *noise_open_plugin(post_class_t *class_gen, int inputs,
 
     input->xine_in.name     = "video";
     output->xine_out.name   = "filtered video";
-    
+
     this->post.xine_post.video_input[0] = &port->new_port;
-    
+
     this->post.dispose = noise_dispose;
 
     set_parameters ((xine_post_t *)this, &params);
-    
+
     return &this->post;
 }
 
@@ -559,7 +559,7 @@ static int noise_draw(vo_frame_t *frame, xine_stream_t *stream)
     vo_frame_t *out_frame;
     int skip;
 
-    if (frame->bad_frame || 
+    if (frame->bad_frame ||
         (this->params[0].strength == 0 && this->params[1].strength == 0)) {
         _x_post_frame_copy_down(frame, frame->next);
         skip = frame->next->draw(frame->next, stream);
@@ -569,26 +569,26 @@ static int noise_draw(vo_frame_t *frame, xine_stream_t *stream)
 
     frame->lock(frame);
     out_frame = port->original_port->get_frame(port->original_port,
-        frame->width, frame->height, frame->ratio, frame->format, 
+        frame->width, frame->height, frame->ratio, frame->format,
         frame->flags | VO_BOTH_FIELDS);
 
     _x_post_frame_copy_down(frame, out_frame);
     pthread_mutex_lock (&this->lock);
 
     if (frame->format == XINE_IMGFMT_YV12) {
-        noise(out_frame->base[0], frame->base[0], 
-              out_frame->pitches[0], frame->pitches[0], 
+        noise(out_frame->base[0], frame->base[0],
+              out_frame->pitches[0], frame->pitches[0],
               frame->width, frame->height, &this->params[0]);
-        noise(out_frame->base[1], frame->base[1], 
-              out_frame->pitches[1], frame->pitches[1], 
+        noise(out_frame->base[1], frame->base[1],
+              out_frame->pitches[1], frame->pitches[1],
               frame->width/2, frame->height/2, &this->params[1]);
-        noise(out_frame->base[2], frame->base[2], 
-              out_frame->pitches[2], frame->pitches[2], 
+        noise(out_frame->base[2], frame->base[2],
+              out_frame->pitches[2], frame->pitches[2],
               frame->width/2, frame->height/2, &this->params[1]);
     } else {
         // Chroma strength is ignored for YUY2.
-        noise(out_frame->base[0], frame->base[0], 
-              out_frame->pitches[0], frame->pitches[0], 
+        noise(out_frame->base[0], frame->base[0],
+              out_frame->pitches[0], frame->pitches[0],
               frame->width * 2, frame->height, &this->params[0]);
     }
 

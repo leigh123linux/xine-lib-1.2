@@ -84,7 +84,7 @@ static int demux_cdda_send_chunk (demux_plugin_t *this_gen) {
 
   buf->type = BUF_AUDIO_LPCM_LE;
   if( this->input->get_length (this->input) )
-    buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) * 
+    buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) *
                                      65535 / this->input->get_length (this->input) );
   buf->pts = this->input->get_current_pos(this->input);
   buf->pts *= 90000;

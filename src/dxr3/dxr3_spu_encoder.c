@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -68,7 +68,7 @@ static void    write_nibble(spu_encoder_t *this, int *offset, int *higher_nibble
 spu_encoder_t *dxr3_spu_encoder_init(void)
 {
   spu_encoder_t *this;
-  
+
   this = (spu_encoder_t *)malloc(sizeof(spu_encoder_t));
   this->target        = NULL;
   this->need_reencode = 0;
@@ -94,7 +94,7 @@ void dxr3_spu_encode(spu_encoder_t *this)
 static void convert_palette(spu_encoder_t *this)
 {
   int i, y, cb, cr, r, g, b;
-  
+
   if (!this->overlay->rgb_clut) {
     for (i = 0; i < OVL_PALETTE_SIZE; i++) {
       y  = (this->overlay->color[i] >> 16) & 0xff;
@@ -137,7 +137,7 @@ static void create_histogram(spu_encoder_t *this)
 {
   rle_elem_t *rle;
   int i, x, y, len, part;
-  
+
   for (i = 0; i < OVL_PALETTE_SIZE; i++)
     this->map[i] = this->clip_map[i] = 0;
   x = y = 0;
@@ -180,14 +180,14 @@ static void generate_clut(spu_encoder_t *this)
 {
   int i, max, spu_color;
   double dist, diff;
-  
+
   /* find first maximum -> first spu color */
   max = 0;
   for (i = 1; i < OVL_PALETTE_SIZE; i++)
     if (this->map[i] > this->map[max]) max = i;
   this->color[0] = this->overlay->color[max];
   this->trans[0] = this->overlay->trans[max];
-  
+
   for (spu_color = 1; spu_color < 4; spu_color++) {
     /* modify histogram and find next maximum -> next spu color */
     max = 0;
@@ -221,7 +221,7 @@ static void generate_clut(spu_encoder_t *this)
     if (this->clip_map[i] > this->clip_map[max]) max = i;
   this->hili_color[0] = this->overlay->hili_color[max];
   this->hili_trans[0] = this->overlay->hili_trans[max];
-  
+
   for (spu_color = 1; spu_color < 4; spu_color++) {
     /* modify histogram and find next maximum -> next spu color */
     max = 0;
@@ -252,7 +252,7 @@ static void map_colors(spu_encoder_t *this)
 {
   int i, min, spu_color;
   double dist, diff, min_dist;
-  
+
   /* for all colors in overlay palette find closest spu color */
   for (i = 0; i < OVL_PALETTE_SIZE; i++) {
     min = 0;
@@ -299,7 +299,7 @@ static void map_colors(spu_encoder_t *this)
 static void convert_clut(spu_encoder_t *this)
 {
   int i, r, g, b, y, cb, cr;
-  
+
   for (i = 0; i < 4; i++) {
     r  = (this->color[i] >> 16) & 0xff;
     g  = (this->color[i] >>  8) & 0xff;
@@ -311,7 +311,7 @@ static void convert_clut(spu_encoder_t *this)
   }
   for (i = 4; i < 16; i++)
     this->color[i] = 0x00008080;
-  
+
   for (i = 0; i < 4; i++) {
     r  = (this->hili_color[i] >> 16) & 0xff;
     g  = (this->hili_color[i] >>  8) & 0xff;
@@ -330,15 +330,15 @@ static void convert_overlay(spu_encoder_t *this)
   int offset = 0, field_start[2];
   rle_elem_t *rle;
   int field, i, len, part, x, y, higher_nibble = 1;
-  
+
   /* size will be determined later */
   write_byte(this, &offset, 0x00);
   write_byte(this, &offset, 0x00);
-  
+
   /* control sequence pointer will be determined later */
   write_byte(this, &offset, 0x00);
   write_byte(this, &offset, 0x00);
-  
+
   for (field = 0; field < 2; field++) {
     write_byte(this, &offset, 0x00);
     write_byte(this, &offset, 0x00);
@@ -373,10 +373,10 @@ static void convert_overlay(spu_encoder_t *this)
       }
     }
   }
-  
+
   /* we should be byte aligned here */
   _x_assert(higher_nibble);
-  
+
   /* control sequence starts here */
   this->target[2] = offset >> 8;
   this->target[3] = offset & 0xff;

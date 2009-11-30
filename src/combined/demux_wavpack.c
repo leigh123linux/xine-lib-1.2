@@ -39,7 +39,7 @@
 
 typedef struct {
   demux_plugin_t demux_plugin;
-  
+
   xine_stream_t *stream;
   fifo_buffer_t *audio_fifo;
   input_plugin_t *input;
@@ -188,7 +188,7 @@ static int demux_wv_send_chunk(demux_plugin_t *const this_gen) {
     this->status = DEMUX_FINISHED;
     return this->status;
   }
-  
+
   lprintf("current sample: %u\n", this->current_sample);
 
   do {
@@ -229,7 +229,7 @@ static int demux_wv_send_chunk(demux_plugin_t *const this_gen) {
       input_time_guess *= buf->extra_info->input_normpos;
       input_time_guess /= 65535;
       buf->extra_info->input_time = input_time_guess;
-      
+
       if ( ! header_sent )
 	offset = sizeof(wvheader_t);
 
@@ -247,7 +247,7 @@ static int demux_wv_send_chunk(demux_plugin_t *const this_gen) {
 
       if ( bytes_to_read <= 0 && (le2me_32(header.flags) & FINAL_BLOCK) == FINAL_BLOCK)
 	buf->decoder_flags |= BUF_FLAG_FRAME_END;
-    
+
       this->audio_fifo->put(this->audio_fifo, buf);
     }
   } while ( (le2me_32(header.flags) & FINAL_BLOCK) != FINAL_BLOCK );
@@ -271,7 +271,7 @@ static void demux_wv_send_headers(demux_plugin_t *const this_gen) {
   /* Send header to decoder */
   if (this->audio_fifo) {
     buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
-    
+
     buf->type            = BUF_AUDIO_WAVPACK;
     buf->decoder_flags   = BUF_FLAG_HEADER|BUF_FLAG_STDHEADER|BUF_FLAG_FRAME_END;
     buf->decoder_info[0] = this->input->get_length(this->input);
@@ -362,12 +362,12 @@ static demux_plugin_t *open_plugin (demux_class_t *const class_gen,
 
   case METHOD_BY_CONTENT:
   case METHOD_EXPLICIT:
-    
+
     if (!open_wv_file(this)) {
       free (this);
       return NULL;
     }
-  
+
   break;
 
   default:

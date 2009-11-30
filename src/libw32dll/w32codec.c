@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2006 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -25,7 +25,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-                   
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <inttypes.h>
@@ -37,8 +37,8 @@
 #include "wine/vfw.h"
 #include "wine/mmreg.h"
 #include "wine/ldt_keeper.h"
-#include "wine/win32.h" 
-#include "wine/wineacm.h" 
+#include "wine/win32.h"
+#include "wine/wineacm.h"
 #include "wine/loader.h"
 
 #define NOAVIFILE_HEADERS
@@ -67,13 +67,13 @@ static GUID CLSID_Voxware =
      0x73f7a062, 0x8829, 0x11d1,
      { 0xb5, 0x50, 0x00, 0x60, 0x97, 0x24, 0x2d, 0x8d }
 };
-    
+
 static GUID CLSID_Acelp =
 {
      0x4009f700, 0xaeba, 0x11d1,
      { 0x83, 0x44, 0x00, 0xc0, 0x4f, 0xb9, 0x2e, 0xb7 }
 };
-  
+
 static GUID wmv1_clsid =
 {
 	0x4facbba1, 0xffd8, 0x4cd7,
@@ -146,11 +146,11 @@ typedef struct w32v_decoder_s {
   video_decoder_t   video_decoder;
 
   xine_stream_t    *stream;
-  
+
   int64_t           video_step;
   int               decoder_ok;
 
-  BITMAPINFOHEADER  *bih, o_bih; 
+  BITMAPINFOHEADER  *bih, o_bih;
   double            ratio;
   char              scratch1[16]; /* some codecs overflow o_bih */
   HIC               hic;
@@ -162,7 +162,7 @@ typedef struct w32v_decoder_s {
   void             *img_buffer;
   int               size;
   long		    outfmt;
-  
+
   int               ex_functions;
   int               driver_type;
   GUID             *guid;
@@ -170,8 +170,8 @@ typedef struct w32v_decoder_s {
   DMO_VideoDecoder *dmo_dec;
 
   int               stream_id;
-  int               skipframes;  
-  
+  int               skipframes;
+
   ldt_fs_t *ldt_fs;
 } w32v_decoder_t;
 
@@ -181,7 +181,7 @@ typedef struct {
 
 typedef struct w32a_decoder_s {
   audio_decoder_t   audio_decoder;
-  
+
   xine_stream_t    *stream;
 
   int               output_open;
@@ -190,25 +190,25 @@ typedef struct w32a_decoder_s {
   unsigned char    *buf;
   int               size;
   int64_t           pts;
-  
+
   /* these are used for pts estimation */
   int64_t           lastpts, sumpts, sumsize;
   double            byterate;
 
   unsigned char    *outbuf;
   int               outsize;
-      
+
   HACMSTREAM        srcstream;
   int               rec_audio_src_size;
   int               max_audio_src_size;
   int               num_channels;
   int               rate;
-  
+
   int               driver_type;
   GUID             *guid;
   DS_AudioDecoder  *ds_dec;
   DMO_AudioDecoder *dmo_dec;
-  
+
   ldt_fs_t *ldt_fs;
 } w32a_decoder_t;
 
@@ -242,7 +242,7 @@ typedef struct {
 #define	CENTERSAMPLE	128
 
 #define	SCALEBITS	16
-#define	FIX(x)	 	( (int32_t) ( (x) * (1<<SCALEBITS) + 0.5 ) )
+#define	FIX(x)		( (int32_t) ( (x) * (1<<SCALEBITS) + 0.5 ) )
 #define	ONE_HALF	( (int32_t) (1<< (SCALEBITS-1)) )
 #define	CBCR_OFFSET	(CENTERSAMPLE << SCALEBITS)
 
@@ -280,7 +280,7 @@ static void w32v_init_rgb_ycc(void)
    * the YCbCr constants times R,G,B for all possible values.
    */
   int i;
-    
+
   if (rgb_ycc_tab) return;
 
   rgb_ycc_tab = malloc(TABLE_SIZE * sizeof(int32_t));
@@ -349,14 +349,14 @@ static char* get_vids_codec_name(w32v_decoder_t *this,
   this->flipped=0;
   this->driver_type = DRIVER_STD;
   this->ex_functions = 0;
-    
+
   buf_type &= 0xffff0000;
 
   switch (buf_type) {
   case BUF_VIDEO_MSMPEG4_V1:
   case BUF_VIDEO_MSMPEG4_V2:
     /* Microsoft MPEG-4 v1/v2 */
-    /* old dll is disabled now due segfaults 
+    /* old dll is disabled now due segfaults
      * (using directshow instead)
     this->yuv_supported=1;
     this->yuv_hack_needed=1;
@@ -368,7 +368,7 @@ static char* get_vids_codec_name(w32v_decoder_t *this,
     this->guid=&msmpeg4_clsid;
     _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "MS MPEG-4 V1/V2 (win32)");
-    return "mpg4ds32.ax";    
+    return "mpg4ds32.ax";
 
   case BUF_VIDEO_MSMPEG4_V3:
     /* Microsoft MPEG-4 v3 */
@@ -383,28 +383,28 @@ static char* get_vids_codec_name(w32v_decoder_t *this,
     /* Video in Indeo Video 5 format */
     this->yuv_supported=1;   /* YUV pic is upside-down :( */
     this->flipped=0;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "Indeo Video 5 (win32)");
     return "ir50_32.dll";
 
   case BUF_VIDEO_IV41:
     /* Video in Indeo Video 4.1 format */
     this->flipped=1;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "Indeo Video 4.1 (win32)");
     return "ir41_32.dll";
-    
+
   case BUF_VIDEO_IV32:
     /* Video in Indeo Video 3.2 format */
     this->flipped=1;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "Indeo Video 3.2 (win32)");
     return "ir32_32.dll";
-    
+
   case BUF_VIDEO_IV31:
     /* Video in Indeo Video 3.1 format */
     this->flipped=1;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "Indeo Video 3.1 (win32)");
     return "ir32_32.dll";
 
@@ -412,7 +412,7 @@ static char* get_vids_codec_name(w32v_decoder_t *this,
     /* Video in Cinepak format */
     this->flipped=1;
     this->yuv_supported=0;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "Cinepak (win32)");
     return "iccvid.dll";
 
@@ -425,15 +425,15 @@ static char* get_vids_codec_name(w32v_decoder_t *this,
   case BUF_VIDEO_ATIVCR2:
     /* Video in ATI VCR2 format */
     this->yuv_supported=1;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "ATI VCR2 (win32)");
     return "ativcr2.dll";
-    
+
   case BUF_VIDEO_I263:
     /* Video in I263 format */
     this->flipped=1;
     this->yuv_supported=1;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "I263 (win32)");
     return "i263_32.drv";
 
@@ -442,22 +442,22 @@ static char* get_vids_codec_name(w32v_decoder_t *this,
     /* note: can't play streams with 8bpp */
     this->flipped=1;
     this->yuv_supported=0;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "MS Windows Video 1 (win32)");
-    return "msvidc32.dll";    
-    
+    return "msvidc32.dll";
+
   case BUF_VIDEO_DV:
     /* Sony DV Codec (not working yet) */
     this->yuv_supported=1;
     this->driver_type = DRIVER_DS;
     this->guid=&dvsd_clsid;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "Sony DV (win32)");
-    return "qdv.dll";    
-  
+    return "qdv.dll";
+
   case BUF_VIDEO_WMV7:
     this->yuv_supported=1;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "MS WMV 7 (win32)");
     if (n == 2) {
       this->driver_type = DRIVER_DMO;
@@ -466,11 +466,11 @@ static char* get_vids_codec_name(w32v_decoder_t *this,
     }
     this->driver_type = DRIVER_DS;
     this->guid=&wmv1_clsid;
-    return "wmvds32.ax";    
-  
+    return "wmvds32.ax";
+
   case BUF_VIDEO_WMV8:
     this->yuv_supported=1;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "MS WMV 8 (win32)");
     if (n == 2) {
       this->driver_type = DRIVER_DMO;
@@ -480,11 +480,11 @@ static char* get_vids_codec_name(w32v_decoder_t *this,
     this->driver_type = DRIVER_DS;
     this->guid=&wmv2_clsid;
     return "wmv8ds32.ax";
- 
+
   case BUF_VIDEO_WMV9:
     this->yuv_supported=1;
     this->driver_type = DRIVER_DMO;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "MS WMV 9 (win32)");
     if (n == 2) {
       this->guid=&wmvdmo_clsid;
@@ -492,14 +492,14 @@ static char* get_vids_codec_name(w32v_decoder_t *this,
     }
     this->guid=&wmv3_clsid;
     return "wmv9dmod.dll";
-  
+
   case BUF_VIDEO_VP31:
     this->yuv_supported=1;
     this->ex_functions=1;
     this->flipped=1;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "On2 VP3.1 (win32)");
-    return "vp31vfw.dll";    
+    return "vp31vfw.dll";
 
   case BUF_VIDEO_VP4:
     this->yuv_supported=1;
@@ -507,46 +507,46 @@ static char* get_vids_codec_name(w32v_decoder_t *this,
     _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "On2 VP4 (win32)");
     return "vp4vfw.dll";
-    
+
   case BUF_VIDEO_VP5:
     this->yuv_supported=1;
     this->ex_functions=1;
     _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "On2 VP5 (win32)");
     return "vp5vfw.dll";
-    
+
   case BUF_VIDEO_VP6:
     this->yuv_supported=1;
     this->ex_functions=1;
     _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "On2 VP6 (win32)");
     return "vp6vfw.dll";
-  
+
   case BUF_VIDEO_MSS1:
     this->driver_type = DRIVER_DS;
     this->guid=&mss1_clsid;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "Windows Screen Video (win32)");
-    return "msscds32.ax";    
+    return "msscds32.ax";
 
   case BUF_VIDEO_TSCC:
     this->flipped=1;
     this->yuv_supported=0;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "TechSmith Screen Capture Codec (win32)");
-    return "tsccvid.dll";    
-    
+    return "tsccvid.dll";
+
   case BUF_VIDEO_UCOD:
     this->yuv_supported=1;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC,
       "ClearVideo (win32)");
-    return "clrviddd.dll";    
-  
+    return "clrviddd.dll";
+
   }
 
   xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	   "w32codec: this didn't happen: unknown video buf type %08x\n", buf_type);
-  
+
 
   return NULL;
 }
@@ -570,9 +570,9 @@ static void w32v_init_codec (w32v_decoder_t *this, int buf_type) {
 
   memset(&this->o_bih, 0, sizeof(BITMAPINFOHEADER));
   this->o_bih.biSize = sizeof(BITMAPINFOHEADER);
-  
+
   this->ldt_fs = Setup_LDT_Keeper();
-  
+
   outfmt = IMGFMT_15RGB;
   if (this->yuv_supported) {
     vo_cap = this->stream->video_out->get_capabilities (this->stream->video_out);
@@ -580,12 +580,12 @@ static void w32v_init_codec (w32v_decoder_t *this, int buf_type) {
       outfmt = IMGFMT_YUY2;
   }
 
-  this->hic = ICOpen ((int)win32_codec_name, 
-		      this->bih->biCompression, 
+  this->hic = ICOpen ((int)win32_codec_name,
+		      this->bih->biCompression,
 		      ICMODE_FASTDECOMPRESS);
 
   if(!this->hic){
-    xine_log (this->stream->xine, XINE_LOG_MSG, 
+    xine_log (this->stream->xine, XINE_LOG_MSG,
               _("w32codec: ICOpen failed! unknown codec %08lx / wrong parameters?\n"),
               this->bih->biCompression);
     this->decoder_ok = 0;
@@ -594,14 +594,14 @@ static void w32v_init_codec (w32v_decoder_t *this, int buf_type) {
 
   ret = ICDecompressGetFormat(this->hic, this->bih, &this->o_bih);
   if(ret){
-    xine_log (this->stream->xine, XINE_LOG_MSG, 
+    xine_log (this->stream->xine, XINE_LOG_MSG,
               _("w32codec: ICDecompressGetFormat (%.4s %08lx/%d) failed: Error %ld\n"),
-              (char*)&this->o_bih.biCompression, this->bih->biCompression, 
-              this->bih->biBitCount, (long)ret);                
+              (char*)&this->o_bih.biCompression, this->bih->biCompression,
+              this->bih->biBitCount, (long)ret);
     this->decoder_ok = 0;
     return;
   }
-    
+
   xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	   "w32codec: video output format: %.4s %08lx\n",
 	   (char*)&this->o_bih.biCompression, this->o_bih.biCompression);
@@ -615,28 +615,28 @@ static void w32v_init_codec (w32v_decoder_t *this, int buf_type) {
       * this->o_bih.biBitCount / 8;
 
   if (this->flipped)
-    this->o_bih.biHeight=-this->bih->biHeight; 
+    this->o_bih.biHeight=-this->bih->biHeight;
 
   if(outfmt==IMGFMT_YUY2 && !this->yuv_hack_needed)
     this->o_bih.biCompression = mmioFOURCC('Y','U','Y','2');
-  else 
+  else
     this->o_bih.biCompression = 0;
-      
-  ret = (!this->ex_functions) 
+
+  ret = (!this->ex_functions)
         ?ICDecompressQuery(this->hic, this->bih, &this->o_bih)
         :ICDecompressQueryEx(this->hic, this->bih, &this->o_bih);
-  
+
   if(ret){
     xine_log (this->stream->xine, XINE_LOG_MSG,
               _("w32codec: ICDecompressQuery failed: Error %ld\n"), (long)ret);
     this->decoder_ok = 0;
     return;
   }
-  
-  ret = (!this->ex_functions) 
+
+  ret = (!this->ex_functions)
         ?ICDecompressBegin(this->hic, this->bih, &this->o_bih)
         :ICDecompressBeginEx(this->hic, this->bih, &this->o_bih);
-  
+
   if(ret){
     xine_log (this->stream->xine, XINE_LOG_MSG,
               _("w32codec: ICDecompressBegin failed: Error %ld\n"), (long)ret);
@@ -645,14 +645,14 @@ static void w32v_init_codec (w32v_decoder_t *this, int buf_type) {
   }
 
   if (outfmt==IMGFMT_YUY2 && this->yuv_hack_needed)
-    this->o_bih.biCompression = mmioFOURCC('Y','U','Y','2'); 
+    this->o_bih.biCompression = mmioFOURCC('Y','U','Y','2');
 
   this->size = 0;
 
   if ( this->img_buffer )
     free (this->img_buffer);
   this->img_buffer = malloc (this->o_bih.biSizeImage);
-    
+
   if ( this->buf )
     free (this->buf);
   this->bufsize = VIDEOBUFSIZE;
@@ -667,14 +667,14 @@ static void w32v_init_codec (w32v_decoder_t *this, int buf_type) {
 static void w32v_init_ds_dmo_codec (w32v_decoder_t *this, int buf_type) {
   uint32_t vo_cap;
   int outfmt;
-  
+
   xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "w32codec: init DirectShow/DMO video codec...\n");
-  
+
   memset(&this->o_bih, 0, sizeof(BITMAPINFOHEADER));
   this->o_bih.biSize = sizeof(BITMAPINFOHEADER);
 
   this->ldt_fs = Setup_LDT_Keeper();
-  
+
   /* hack: dvsd is the only fourcc accepted by qdv.dll */
   if( buf_type ==  BUF_VIDEO_DV )
     this->bih->biCompression = mmioFOURCC('d','v','s','d');
@@ -682,7 +682,7 @@ static void w32v_init_ds_dmo_codec (w32v_decoder_t *this, int buf_type) {
   if( this->driver_type == DRIVER_DS ) {
     this->ds_dec = DS_VideoDecoder_Open(win32_codec_name, this->guid,
                                           this->bih, this->flipped, 0);
-    
+
     if(!this->ds_dec){
       xine_log (this->stream->xine, XINE_LOG_MSG,
                 _("w32codec: DS_VideoDecoder failed! unknown codec %08lx / wrong parameters?\n"),
@@ -693,7 +693,7 @@ static void w32v_init_ds_dmo_codec (w32v_decoder_t *this, int buf_type) {
   } else {
     this->dmo_dec = DMO_VideoDecoder_Open(win32_codec_name, this->guid,
                                           this->bih, this->flipped, 0);
-    
+
     if(!this->dmo_dec){
       xine_log (this->stream->xine, XINE_LOG_MSG,
                 _("w32codec: DMO_VideoDecoder failed! unknown codec %08lx / wrong parameters?\n"),
@@ -702,7 +702,7 @@ static void w32v_init_ds_dmo_codec (w32v_decoder_t *this, int buf_type) {
       return;
     }
   }
-  
+
   outfmt = IMGFMT_15RGB;
   if (this->yuv_supported) {
     vo_cap = this->stream->video_out->get_capabilities (this->stream->video_out);
@@ -717,42 +717,42 @@ static void w32v_init_ds_dmo_codec (w32v_decoder_t *this, int buf_type) {
 
   this->o_bih.biWidth = this->bih->biWidth;
   this->o_bih.biHeight = this->bih->biHeight;
-  
+
   this->o_bih.biSizeImage = this->o_bih.biWidth * this->o_bih.biHeight
       * this->o_bih.biBitCount / 8;
 
   if (this->flipped)
-    this->o_bih.biHeight=-this->bih->biHeight; 
+    this->o_bih.biHeight=-this->bih->biHeight;
 
   if(outfmt==IMGFMT_YUY2 && !this->yuv_hack_needed)
     this->o_bih.biCompression = mmioFOURCC('Y','U','Y','2');
-  else 
+  else
     this->o_bih.biCompression = 0;
-      
+
   if( this->driver_type == DRIVER_DS )
     DS_VideoDecoder_SetDestFmt(this->ds_dec, this->o_bih.biBitCount, this->o_bih.biCompression);
   else
     DMO_VideoDecoder_SetDestFmt(this->dmo_dec, this->o_bih.biBitCount, this->o_bih.biCompression);
-    
+
   if (outfmt==IMGFMT_YUY2 && this->yuv_hack_needed)
-    this->o_bih.biCompression = mmioFOURCC('Y','U','Y','2'); 
-  
+    this->o_bih.biCompression = mmioFOURCC('Y','U','Y','2');
+
   if( this->driver_type == DRIVER_DS )
     DS_VideoDecoder_StartInternal(this->ds_dec);
   else
     DMO_VideoDecoder_StartInternal(this->dmo_dec);
-  
+
   this->size = 0;
 
   if ( this->img_buffer )
     free (this->img_buffer);
   this->img_buffer = malloc (this->o_bih.biSizeImage);
-  
+
   if ( this->buf )
     free (this->buf);
   this->bufsize = VIDEOBUFSIZE;
   this->buf = malloc(this->bufsize);
-  
+
   (this->stream->video_out->open) (this->stream->video_out, this->stream);
 
   this->outfmt = outfmt;
@@ -763,26 +763,26 @@ static void w32v_init_ds_dmo_codec (w32v_decoder_t *this, int buf_type) {
 static void w32v_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
   w32v_decoder_t *this = (w32v_decoder_t *) this_gen;
 
-  lprintf ("processing packet type = %08x, buf->decoder_flags=%08x\n", 
+  lprintf ("processing packet type = %08x, buf->decoder_flags=%08x\n",
 	   buf->type, buf->decoder_flags);
-  
+
   if (buf->decoder_flags & BUF_FLAG_PREVIEW)
     return;
-  
+
   if (buf->decoder_flags & BUF_FLAG_FRAMERATE) {
     this->video_step = buf->decoder_info[0];
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->video_step);
-  
+
     lprintf ("video_step is %lld\n", this->video_step);
   }
-  
+
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) {
     int num_decoders;
 
     if ( buf->type & 0xff )
       return;
-    
-    lprintf ("processing header ...\n"); 
+
+    lprintf ("processing header ...\n");
 
     /* init package containing bih */
     if( this->bih )
@@ -816,7 +816,7 @@ static void w32v_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 
     if( !this->decoder_ok ) {
       xine_log (this->stream->xine, XINE_LOG_MSG,
-		_("w32codec: decoder failed to start. Is '%s' installed?\n"), 
+		_("w32codec: decoder failed to start. Is '%s' installed?\n"),
               win32_codec_name );
       _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_HANDLED, 0);
       _x_message(this->stream, XINE_MSG_LIBRARY_LOAD_ERROR,
@@ -824,30 +824,30 @@ static void w32v_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     }
 
     pthread_mutex_unlock(&win32_codec_mutex);
-      
+
     this->stream_id = -1;
     this->skipframes = 0;
-    
+
   } else if (this->decoder_ok) {
 
-    lprintf ("processing packet ...\n"); 
+    lprintf ("processing packet ...\n");
 
     if( (int) buf->size <= 0 )
         return;
-       
+
     if( this->stream_id < 0 )
        this->stream_id = buf->type & 0xff;
-    
+
     if( this->stream_id != (buf->type & 0xff) )
        return;
-    
+
     if( this->size + buf->size > this->bufsize ) {
       this->bufsize = this->size + 2 * buf->size;
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	      "w32codec: increasing source buffer to %d to avoid overflow.\n", this->bufsize);
       this->buf = realloc( this->buf, this->bufsize );
     }
-    
+
     xine_fast_memcpy (&this->buf[this->size], buf->content, buf->size);
 
     this->size += buf->size;
@@ -864,11 +864,11 @@ static void w32v_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
       /* decoder video frame */
 
       this->bih->biSizeImage = this->size;
-     
+
       img = this->stream->video_out->get_frame (this->stream->video_out,
-					this->bih->biWidth, 
-					this->bih->biHeight, 
-					this->ratio, 
+					this->bih->biWidth,
+					this->bih->biHeight,
+					this->ratio,
 					IMGFMT_YUY2,
 					VO_BOTH_FIELDS);
 
@@ -878,7 +878,7 @@ static void w32v_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 
       if (this->outfmt==IMGFMT_YUY2)
          img_buffer = img->base[0];
-         
+
       flags = 0;
       if( !(buf->decoder_flags & BUF_FLAG_KEYFRAME) )
         flags |= ICDECOMPRESS_NOTKEYFRAME;
@@ -887,16 +887,16 @@ static void w32v_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 
       if( this->skipframes && (buf->type & ~0xff) != BUF_VIDEO_IV32 )
         img_buffer = NULL;
-              
+
       pthread_mutex_lock(&win32_codec_mutex);
       if( this->driver_type == DRIVER_STD )
         ret = (!this->ex_functions)
               ?ICDecompress(this->hic, flags,
-			    this->bih, this->buf, &this->o_bih, 
+			    this->bih, this->buf, &this->o_bih,
 			    img_buffer)
               :ICDecompressEx(this->hic, flags,
 			    this->bih, this->buf, &this->o_bih,
-			    img_buffer); 
+			    img_buffer);
       else if( this->driver_type == DRIVER_DS ) {
         ret = DS_VideoDecoder_DecodeInternal(this->ds_dec, this->buf, this->size,
                             buf->decoder_flags & BUF_FLAG_KEYFRAME,
@@ -907,7 +907,7 @@ static void w32v_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
                             img_buffer);
       }
       pthread_mutex_unlock(&win32_codec_mutex);
-                         
+
       if (!this->skipframes) {
         if (this->outfmt==IMGFMT_YUY2) {
 	  /* already decoded into YUY2 format by DLL */
@@ -921,23 +921,23 @@ static void w32v_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 #if	HAS_SLOW_MULT
 	  int32_t *ctab = rgb_ycc_tab;
 #endif
-  
+
 	  for (row=0; row<this->bih->biHeight; row++) {
-  
+
 	    uint16_t *pixel, *out;
-  
+
 	    pixel = (uint16_t *) ( (uint8_t *)this->img_buffer + 2 * row * this->o_bih.biWidth );
 	    out = (uint16_t *) (img->base[0] + row * img->pitches[0] );
-  
+
 	    for (col=0; col<this->o_bih.biWidth; col++, pixel++, out++) {
-  	    
+
 	      uint8_t   r,g,b;
 	      uint8_t   y,u,v;
-  	    
+
 	      b = (*pixel & 0x001F) << 3;
 	      g = (*pixel & 0x03E0) >> 5 << 3;
 	      r = (*pixel & 0x7C00) >> 10 << 3;
-  	    
+
 #if	HAS_SLOW_MULT
 	      y = (ctab[r+R_Y_OFF] + ctab[g+G_Y_OFF] + ctab[b+B_Y_OFF]) >> SCALEBITS;
 	      if (!(col & 0x0001)) {
@@ -966,19 +966,19 @@ static void w32v_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 	  }
         }
       }
-      
+
       img->pts = buf->pts;
       if (ret || this->skipframes) {
         if (!this->skipframes)
 	  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-		  "w32codec: Error decompressing frame, err=%ld\n", (long)ret); 
+		  "w32codec: Error decompressing frame, err=%ld\n", (long)ret);
 	img->bad_frame = 1;
 	lprintf ("BAD FRAME, duration is %d\n", img->duration);
       } else {
 	img->bad_frame = 0;
 	lprintf ("GOOD FRAME, duration is %d\n\n", img->duration);
       }
-      
+
       this->skipframes = img->draw(img, this->stream);
 
       lprintf ("skipframes is %d\n", this->skipframes);
@@ -1000,15 +1000,15 @@ static void w32v_flush (video_decoder_t *this_gen) {
 static void w32v_reset (video_decoder_t *this_gen) {
 
   w32v_decoder_t *this = (w32v_decoder_t *) this_gen;
-  
+
   /* FIXME: need to improve this function. currently it
      doesn't avoid artifacts when seeking. */
-  
+
   pthread_mutex_lock(&win32_codec_mutex);
   if( this->driver_type == DRIVER_STD ) {
     if( this->hic )
     {
-      if (!this->ex_functions) 
+      if (!this->ex_functions)
         ICDecompressBegin(this->hic, this->bih, &this->o_bih);
       else
         ICDecompressBeginEx(this->hic, this->bih, &this->o_bih);
@@ -1049,7 +1049,7 @@ static void w32v_dispose (video_decoder_t *this_gen) {
     free (this->img_buffer);
     this->img_buffer = NULL;
   }
-  
+
   if ( this->buf ) {
     free (this->buf);
     this->buf = NULL;
@@ -1060,7 +1060,7 @@ static void w32v_dispose (video_decoder_t *this_gen) {
     this->bih = NULL;
   }
 
-  if( this->decoder_ok )  {  
+  if( this->decoder_ok )  {
     this->decoder_ok = 0;
     this->stream->video_out->close(this->stream->video_out, this->stream);
   }
@@ -1079,23 +1079,23 @@ static char* get_auds_codec_name(w32a_decoder_t *this, int buf_type) {
 
   switch (buf_type) {
   case BUF_AUDIO_WMAV1:
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC,
       "Windows Media Audio v1 (win32)");
     return "divxa32.acm";
   case BUF_AUDIO_WMAV2:
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC,
       "Windows Media Audio v2 (win32)");
     return "divxa32.acm";
   case BUF_AUDIO_WMAV3:
     this->driver_type = DRIVER_DMO;
     this->guid=&wma3_clsid;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC,
       "Windows Media Audio v3 (win32)");
     return "wma9dmod.dll";
   case BUF_AUDIO_WMALL:
     this->driver_type = DRIVER_DMO;
     this->guid=&wma3_clsid;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC,
       "Windows Media Audio Lossless (win32)");
     return "wma9dmod.dll";
   case BUF_AUDIO_WMAV:
@@ -1105,43 +1105,43 @@ static char* get_auds_codec_name(w32a_decoder_t *this, int buf_type) {
       "Windows Media Audio Voice (win32)");
     return "wmspdmod.dll";
   case BUF_AUDIO_MSADPCM:
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC,
       "MS ADPCM (win32)");
     return "msadp32.acm";
   case BUF_AUDIO_MSIMAADPCM:
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC,
       "MS IMA ADPCM (win32)");
     return "imaadp32.acm";
   case BUF_AUDIO_MSGSM:
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC,
       "MS GSM (win32)");
     return "msgsm32.acm";
   case BUF_AUDIO_IMC:
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC,
       "Intel Music Coder (win32)");
     return "imc32.acm";
   case BUF_AUDIO_LH:
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC,
       "Lernout & Hauspie (win32)");
     return "lhacm.acm";
   case BUF_AUDIO_VOXWARE:
     this->driver_type = DRIVER_DS;
     this->guid=&CLSID_Voxware;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC,
       "Voxware Metasound (win32)");
     return "voxmsdec.ax";
   case BUF_AUDIO_ACELPNET:
     this->driver_type = DRIVER_DS;
     this->guid=&CLSID_Acelp;
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC,
       "ACELP.net (win32)");
     return "acelpdec.ax";
   case BUF_AUDIO_VIVOG723:
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC,
       "Vivo G.723/Siren Audio Codec (win32)");
     return "vivog723.acm";
   }
-  
+
   xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	   "w32codec: this didn't happen: unknown audio buf type %08x\n", buf_type);
   return NULL;
@@ -1165,7 +1165,7 @@ static int w32a_init_audio (w32a_decoder_t *this,
                             uint8_t *buf, int bufsize, int buftype) {
 
   HRESULT ret;
-  WAVEFORMATEX wf;     
+  WAVEFORMATEX wf;
   WAVEFORMATEX *in_fmt;
   unsigned long in_size;
   unsigned long out_size;
@@ -1178,19 +1178,19 @@ static int w32a_init_audio (w32a_decoder_t *this,
   this->srcstream = 0;
   this->num_channels  = (in_fmt->nChannels >= 2)?2:1;
   this->rate = in_fmt->nSamplesPerSec;
-  
+
   if (this->output_open)
     this->stream->audio_out->close (this->stream->audio_out, this->stream);
 
   this->output_open = (this->stream->audio_out->open) ( this->stream->audio_out, this->stream,
-					      16, in_fmt->nSamplesPerSec, 
+					      16, in_fmt->nSamplesPerSec,
 					      _x_ao_channels2mode(in_fmt->nChannels));
   if (!this->output_open) {
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	    "w32codec: (ACM_Decoder) Cannot open audio output device\n");
     return 0;
   }
-  
+
   audio_buffer = this->stream->audio_out->get_buffer (this->stream->audio_out);
   audio_buffer_mem_size = audio_buffer->mem_size;
   audio_buffer->num_frames = 0;
@@ -1204,12 +1204,12 @@ static int w32a_init_audio (w32a_decoder_t *this,
   wf.nBlockAlign     = 2*in_fmt->nChannels;
   wf.wBitsPerSample  = 16;
   wf.cbSize          = 0;
-  
+
   this->ldt_fs = Setup_LDT_Keeper();
   win32_codec_name = get_auds_codec_name (this, buftype);
-   
+
   if( this->driver_type == DRIVER_STD ) {
-   
+
     MSACM_RegisterDriver(win32_codec_name, in_fmt->wFormatTag, 0);
 
     ret=acmStreamOpen(&this->srcstream,(HACMDRIVER)NULL,
@@ -1229,73 +1229,73 @@ static int w32a_init_audio (w32a_decoder_t *this,
 
     acmStreamSize(this->srcstream, in_size, &out_size, ACM_STREAMSIZEF_SOURCE);
     out_size*=2;
-    if(out_size < audio_buffer_mem_size) 
+    if(out_size < audio_buffer_mem_size)
       out_size=audio_buffer_mem_size;
 
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	    "w32codec: Audio buffer min. size: %d\n",(int)out_size);
-  
-    acmStreamSize(this->srcstream, out_size, (LPDWORD) &this->rec_audio_src_size, 
+
+    acmStreamSize(this->srcstream, out_size, (LPDWORD) &this->rec_audio_src_size,
       ACM_STREAMSIZEF_DESTINATION);
   } else if( this->driver_type == DRIVER_DS ) {
     this->ds_dec=DS_AudioDecoder_Open(win32_codec_name,this->guid, in_fmt);
-    
+
     if( this->ds_dec == NULL ) {
       xine_log (this->stream->xine, XINE_LOG_MSG, _("w32codec: Error initializing DirectShow Audio\n"));
       this->srcstream = 0;
       return 0;
     }
-    
-    out_size = audio_buffer_mem_size;  
+
+    out_size = audio_buffer_mem_size;
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	    "w32codec: output buffer size: %d\n",(int)out_size);
     this->rec_audio_src_size=DS_AudioDecoder_GetSrcSize(this->ds_dec,out_size);
-    
-    /* somehow DS_Filters seems to eat more than rec_audio_src_size if the output 
-       buffer is big enough. Doubling rec_audio_src_size should make this 
+
+    /* somehow DS_Filters seems to eat more than rec_audio_src_size if the output
+       buffer is big enough. Doubling rec_audio_src_size should make this
        impossible */
-    this->rec_audio_src_size*=2; 
+    this->rec_audio_src_size*=2;
   } else if( this->driver_type == DRIVER_DMO ) {
     this->dmo_dec=DMO_AudioDecoder_Open(win32_codec_name,this->guid, in_fmt, wf.nChannels);
-    
+
     if( this->dmo_dec == NULL ) {
       xine_log (this->stream->xine, XINE_LOG_MSG, _("w32codec: Error initializing DMO Audio\n"));
       this->srcstream = 0;
       return 0;
     }
-    
-    out_size = audio_buffer_mem_size;  
+
+    out_size = audio_buffer_mem_size;
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	    "w32codec: output buffer size: %d\n",(int)out_size);
     this->rec_audio_src_size=DMO_AudioDecoder_GetSrcSize(this->dmo_dec,out_size);
-    
+
     /* i don't know if DMO has the same problem as above. so, just in case... */
-    this->rec_audio_src_size*=2; 
+    this->rec_audio_src_size*=2;
   }
-  
+
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	  "w32codec: Recommended source buffer size: %d\n", this->rec_audio_src_size); 
+	  "w32codec: Recommended source buffer size: %d\n", this->rec_audio_src_size);
 
   if( this->rec_audio_src_size < in_fmt->nBlockAlign ) {
     this->rec_audio_src_size = in_fmt->nBlockAlign;
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	    "w32codec: adjusting source buffer size to %d\n", this->rec_audio_src_size); 
+	    "w32codec: adjusting source buffer size to %d\n", this->rec_audio_src_size);
   }
-  
+
   if( this->buf )
     free(this->buf);
-  
+
   if( this->outbuf )
     free(this->outbuf);
 
   this->max_audio_src_size = 2 * this->rec_audio_src_size;
-  
+
   this->buf = malloc( this->max_audio_src_size );
 
   out_size += 32768;
   this->outbuf = malloc( out_size );
   this->outsize = out_size;
-      
+
   this->size = 0;
   this->pts = this->lastpts = this->sumpts = this->sumsize = 0;
 
@@ -1307,7 +1307,7 @@ static void w32a_ensure_buffer_size(w32a_decoder_t *this, int size) {
   if( this->size + size > this->max_audio_src_size ) {
     this->max_audio_src_size = this->size + 2 * size;
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	    "w32codec: increasing source buffer to %d to avoid overflow.\n", 
+	    "w32codec: increasing source buffer to %d to avoid overflow.\n",
       this->max_audio_src_size);
     this->buf = realloc( this->buf, this->max_audio_src_size );
   }
@@ -1315,9 +1315,9 @@ static void w32a_ensure_buffer_size(w32a_decoder_t *this, int size) {
 
 
 static void w32a_decode_audio (w32a_decoder_t *this,
-			       unsigned char *data, 
-			       uint32_t size, 
-			       int frame_end, 
+			       unsigned char *data,
+			       uint32_t size,
+			       int frame_end,
 			       int64_t pts) {
 
   static ACMSTREAMHEADER ash;
@@ -1350,7 +1350,7 @@ static void w32a_decode_audio (w32a_decoder_t *this,
     delay = (int)((double)this->size / this->byterate);
   else
     delay = 0;
-  
+
   this->sumsize += size;
 
   w32a_ensure_buffer_size(this, this->size + size);
@@ -1365,17 +1365,17 @@ static void w32a_decode_audio (w32a_decoder_t *this,
     memset(&ash, 0, sizeof(ash));
     ash.cbStruct=sizeof(ash);
     ash.fdwStatus=0;
-    ash.dwUser=0; 
+    ash.dwUser=0;
     ash.pbSrc=this->buf;
     ash.cbSrcLength=this->rec_audio_src_size;
     ash.pbDst=this->outbuf;
     ash.cbDstLength=this->outsize;
-    
-    lprintf ("decoding %d of %d bytes (%02x %02x %02x %02x ... %02x %02x)\n", 
+
+    lprintf ("decoding %d of %d bytes (%02x %02x %02x %02x ... %02x %02x)\n",
 	     this->rec_audio_src_size, this->size,
 	     this->buf[0], this->buf[1], this->buf[2], this->buf[3],
-	     this->buf[this->rec_audio_src_size-2], this->buf[this->rec_audio_src_size-1]); 
-    
+	     this->buf[this->rec_audio_src_size-2], this->buf[this->rec_audio_src_size-1]);
+
     pthread_mutex_lock(&win32_codec_mutex);
     if( this->driver_type == DRIVER_STD ) {
       hr=acmStreamPrepareHeader(this->srcstream,&ash,0);
@@ -1385,7 +1385,7 @@ static void w32a_decode_audio (w32a_decoder_t *this,
         pthread_mutex_unlock(&win32_codec_mutex);
         return;
       }
-      
+
       hr=acmStreamConvert(this->srcstream,&ash,0);
     } else if( this->driver_type == DRIVER_DS ){
       hr=DS_AudioDecoder_Convert(this->ds_dec, ash.pbSrc, ash.cbSrcLength,
@@ -1401,7 +1401,7 @@ static void w32a_decode_audio (w32a_decoder_t *this,
        ash.cbDstLengthUsed = size_written;
     }
     pthread_mutex_unlock(&win32_codec_mutex);
-   
+
     if(hr){
       xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	       "w32codec: stream convert error %d, used %d bytes\n", (int)hr,(int)ash.cbSrcLengthUsed);
@@ -1416,18 +1416,18 @@ static void w32a_decode_audio (w32a_decoder_t *this,
 
       DstLengthUsed = ash.cbDstLengthUsed;
       p = this->outbuf;
-      
+
       while( DstLengthUsed )
       {
         audio_buffer = this->stream->audio_out->get_buffer (this->stream->audio_out);
-        
+
 	if( DstLengthUsed < audio_buffer->mem_size )
 	  bufsize = DstLengthUsed;
 	else
 	  bufsize = audio_buffer->mem_size;
 
         xine_fast_memcpy( audio_buffer->mem, p, bufsize );
-	
+
 	audio_buffer->num_frames = bufsize / (this->num_channels*2);
         if (this->pts)
           audio_buffer->vpts = this->pts - delay;
@@ -1437,7 +1437,7 @@ static void w32a_decode_audio (w32a_decoder_t *this,
         lprintf("w32a_decode_audio: decoder pts=%lld\n", audio_buffer->vpts);
 
 	this->stream->audio_out->put_buffer (this->stream->audio_out, audio_buffer, this->stream);
-        
+
 	this->pts = 0;
         DstLengthUsed -= bufsize;
 	p += bufsize;
@@ -1470,19 +1470,19 @@ static void w32a_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     lprintf ("preview data ignored.\n");
     return;
   }
-  
+
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) {
     lprintf ("got audio header\n");
-    
+
     /* accumulate init data */
     w32a_ensure_buffer_size(this, this->size + buf->size);
     memcpy(this->buf + this->size, buf->content, buf->size);
     this->size += buf->size;
-    
+
     if (buf->decoder_flags & BUF_FLAG_FRAME_END) {
       pthread_mutex_lock(&win32_codec_mutex);
       this->decoder_ok = w32a_init_audio (this, this->buf, this->size, buf->type);
-      
+
       if( !this->decoder_ok ) {
         xine_log (this->stream->xine, XINE_LOG_MSG,
                   _("w32codec: decoder failed to start. Is '%s' installed?\n"), win32_codec_name );
@@ -1490,7 +1490,7 @@ static void w32a_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       }
       pthread_mutex_unlock(&win32_codec_mutex);
     }
- 
+
   } else if (this->decoder_ok) {
     lprintf ("decoding %d data bytes...\n", buf->size);
 
@@ -1498,9 +1498,9 @@ static void w32a_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       return;
 
     Check_FS_Segment(this->ldt_fs);
-    
+
     w32a_decode_audio (this, buf->content, buf->size,
-		       buf->decoder_flags & BUF_FLAG_FRAME_END, 
+		       buf->decoder_flags & BUF_FLAG_FRAME_END,
 		       buf->pts);
   }
 }
@@ -1509,7 +1509,7 @@ static void w32a_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 static void w32a_dispose (audio_decoder_t *this_gen) {
 
   w32a_decoder_t *this = (w32a_decoder_t *) this_gen;
-  
+
   pthread_mutex_lock(&win32_codec_mutex);
   if( this->driver_type == DRIVER_STD ) {
       if( this->srcstream ) {
@@ -1533,12 +1533,12 @@ static void w32a_dispose (audio_decoder_t *this_gen) {
     free(this->buf);
     this->buf = NULL;
   }
-  
+
   if( this->outbuf ) {
     free(this->outbuf);
     this->outbuf = NULL;
   }
-  
+
   this->decoder_ok = 0;
 
   if (this->output_open) {
@@ -1549,7 +1549,7 @@ static void w32a_dispose (audio_decoder_t *this_gen) {
   free (this);
 }
 
-static video_decoder_t *open_video_decoder_plugin (video_decoder_class_t *class_gen, 
+static video_decoder_t *open_video_decoder_plugin (video_decoder_class_t *class_gen,
 						   xine_stream_t *stream) {
 
   w32v_decoder_t *this ;
@@ -1605,7 +1605,7 @@ static void *init_video_decoder_class (xine_t *xine, void *data) {
   this->decoder_class.dispose         = dispose_video_class;
 
   pthread_once (&once_control, init_routine);
-  
+
   return this;
 }
 
@@ -1613,7 +1613,7 @@ static void *init_video_decoder_class (xine_t *xine, void *data) {
  * audio part
  */
 
-static audio_decoder_t *open_audio_decoder_plugin (audio_decoder_class_t *class_gen, 
+static audio_decoder_t *open_audio_decoder_plugin (audio_decoder_class_t *class_gen,
 						   xine_stream_t *stream) {
 
   w32a_decoder_t *this ;
@@ -1624,11 +1624,11 @@ static audio_decoder_t *open_audio_decoder_plugin (audio_decoder_class_t *class_
   this->audio_decoder.reset               = w32a_reset;
   this->audio_decoder.discontinuity       = w32a_discontinuity;
   this->audio_decoder.dispose             = w32a_dispose;
-  
+
   this->stream      = stream;
   this->output_open = 0;
   this->decoder_ok  = 0;
-  
+
   this->buf         = NULL;
   this->outbuf      = NULL;
 
@@ -1655,7 +1655,7 @@ static void *init_audio_decoder_class (xine_t *xine, void *data) {
 
   w32a_class_t    *this;
   config_values_t *cfg;
-  
+
   cfg = xine->config;
   if ((win32_def_path = get_win32_codecs_path(cfg)) == NULL) return NULL;
 
@@ -1676,12 +1676,12 @@ static void *init_audio_decoder_class (xine_t *xine, void *data) {
  * exported plugin catalog entry
  */
 
-static uint32_t video_types[] = { 
+static uint32_t video_types[] = {
   BUF_VIDEO_MSMPEG4_V1, BUF_VIDEO_MSMPEG4_V2, BUF_VIDEO_MSMPEG4_V3,
   BUF_VIDEO_IV50, BUF_VIDEO_IV41, BUF_VIDEO_IV32, BUF_VIDEO_IV31,
   BUF_VIDEO_CINEPAK, /* BUF_VIDEO_ATIVCR1, */
   BUF_VIDEO_ATIVCR2, BUF_VIDEO_I263, BUF_VIDEO_MSVC,
-  BUF_VIDEO_DV, BUF_VIDEO_WMV7, BUF_VIDEO_WMV8, BUF_VIDEO_WMV9, 
+  BUF_VIDEO_DV, BUF_VIDEO_WMV7, BUF_VIDEO_WMV8, BUF_VIDEO_WMV9,
   BUF_VIDEO_VP31, BUF_VIDEO_MSS1, BUF_VIDEO_TSCC, BUF_VIDEO_UCOD,
   BUF_VIDEO_VP4, BUF_VIDEO_VP5, BUF_VIDEO_VP6,
   0
@@ -1692,8 +1692,8 @@ static const decoder_info_t dec_info_video = {
   1                    /* priority        */
 };
 
-static uint32_t audio_types[] = { 
-  BUF_AUDIO_WMAV1, BUF_AUDIO_WMAV2, BUF_AUDIO_WMAV3, BUF_AUDIO_MSADPCM, 
+static uint32_t audio_types[] = {
+  BUF_AUDIO_WMAV1, BUF_AUDIO_WMAV2, BUF_AUDIO_WMAV3, BUF_AUDIO_MSADPCM,
   BUF_AUDIO_MSIMAADPCM, BUF_AUDIO_MSGSM, BUF_AUDIO_IMC, BUF_AUDIO_LH,
   BUF_AUDIO_VOXWARE, BUF_AUDIO_ACELPNET, BUF_AUDIO_VIVOG723, BUF_AUDIO_WMAV,
   BUF_AUDIO_WMALL,
@@ -1706,7 +1706,7 @@ static const decoder_info_t dec_info_audio = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_VIDEO_DECODER | PLUGIN_MUST_PRELOAD, 18, "win32v", XINE_VERSION_CODE, &dec_info_video, init_video_decoder_class },
   { PLUGIN_AUDIO_DECODER | PLUGIN_MUST_PRELOAD, 15, "win32a", XINE_VERSION_CODE, &dec_info_audio, init_audio_decoder_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }

@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * $Id: 
+ * $Id:
  *
  * expand video filter by James Stembridge 24/05/2003
  *            improved by Michael Roitzsch
@@ -58,7 +58,7 @@
  * bars to the left and right of the image and will then set up cropping
  * to efficiently remove the black border around the 4:3 image, which the
  * plugin would produce otherwise for this case.
- */ 
+ */
 
 
 /* plugin class initialization function */
@@ -85,9 +85,9 @@ END_PARAM_DESCR(expand_param_descr)
 
 typedef struct post_expand_s {
   post_plugin_t            post;
-  
+
   xine_post_in_t           parameter_input;
-  
+
   int                      enable_automatic_shift;
   int                      overlay_y_offset;
   double                   aspect;
@@ -114,8 +114,8 @@ static int            expand_get_parameters(xine_post_t *this_gen, void *param_g
 static char          *expand_get_help (void);
 
 /* replaced video port functions */
-static vo_frame_t    *expand_get_frame(xine_video_port_t *port_gen, uint32_t width, 
-				       uint32_t height, double ratio, 
+static vo_frame_t    *expand_get_frame(xine_video_port_t *port_gen, uint32_t width,
+				       uint32_t height, double ratio,
 				       int format, int flags);
 
 /* replaced vo_frame functions */
@@ -131,15 +131,15 @@ static int32_t        expand_overlay_add_event(video_overlay_manager_t *this_gen
 void *expand_init_plugin(xine_t *xine, void *data)
 {
   post_class_t *class = (post_class_t *)malloc(sizeof(post_class_t));
-  
+
   if (!class)
     return NULL;
-  
+
   class->open_plugin     = expand_open_plugin;
   class->get_identifier  = expand_get_identifier;
   class->get_description = expand_get_description;
   class->dispose         = expand_class_dispose;
-  
+
   return class;
 }
 
@@ -155,39 +155,39 @@ static post_plugin_t *expand_open_plugin(post_class_t *class_gen, int inputs,
   post_video_port_t *port;
   static xine_post_api_t post_api =
     { expand_set_parameters, expand_get_parameters, expand_get_param_descr, expand_get_help };
-  
+
   if (!this || !video_target || !video_target[0]) {
     free(this);
     return NULL;
   }
-  
+
   _x_post_init(&this->post, 0, 1);
-  
+
   this->enable_automatic_shift = 0;
   this->overlay_y_offset       = 0;
   this->aspect                 = 4.0 / 3.0;
   this->centre_cut_out_mode    = 0;
   this->cropping_active        = 0;
-  
+
   port = _x_post_intercept_video_port(&this->post, video_target[0], &input, &output);
   port->new_port.get_frame     = expand_get_frame;
   port->new_frame->draw        = expand_draw;
   port->intercept_ovl          = expand_intercept_ovl;
   port->new_manager->add_event = expand_overlay_add_event;
-  
+
   input_param       = &this->parameter_input;
   input_param->name = "parameters";
   input_param->type = XINE_POST_DATA_PARAMETERS;
   input_param->data = &post_api;
   xine_list_push_back(this->post.input, input_param);
-  
+
   input->xine_in.name   = "video";
   output->xine_out.name = "expanded video";
-  
+
   this->post.xine_post.video_input[0] = &port->new_port;
-  
+
   this->post.dispose = expand_dispose;
-  
+
   return &this->post;
 }
 
@@ -210,7 +210,7 @@ static void expand_class_dispose(post_class_t *class_gen)
 static void expand_dispose(post_plugin_t *this_gen)
 {
   post_expand_t     *this = (post_expand_t *)this_gen;
-  
+
   if (_x_post_dispose(this_gen))
     free(this);
 }
@@ -238,12 +238,12 @@ static int expand_get_parameters(xine_post_t *this_gen, void *param_gen)
 {
   post_expand_t *this = (post_expand_t *)this_gen;
   expand_parameters_t *param = (expand_parameters_t *)param_gen;
-  
+
   param->enable_automatic_shift = this->enable_automatic_shift;
   param->overlay_y_offset       = this->overlay_y_offset;
   param->aspect                 = this->aspect;
   param->centre_cut_out_mode    = this->centre_cut_out_mode;
-  
+
   return 1;
 }
 
@@ -271,7 +271,7 @@ static int is_pixel_black(vo_frame_t *frame, int x, int y)
   if (x >= frame->width)  x = frame->width - 1;
   if (y < 0)              y = 0;
   if (y >= frame->height) y = frame->height - 1;
-  
+
   switch (frame->format)
   {
   case XINE_IMGFMT_YV12:
@@ -279,7 +279,7 @@ static int is_pixel_black(vo_frame_t *frame, int x, int y)
     Cr = *(frame->base[ 1 ] + frame->pitches[ 1 ] * y / 2 + x / 2);
     Cb = *(frame->base[ 2 ] + frame->pitches[ 2 ] * y / 2 + x / 2);
     break;
-    
+
   case XINE_IMGFMT_YUY2:
     Y  = *(frame->base[ 0 ] + frame->pitches[ 0 ] * y + x * 2 + 0);
     x &= ~1;
@@ -340,8 +340,8 @@ static int expand_draw(vo_frame_t *frame, xine_stream_t *stream)
 }
 
 
-static vo_frame_t *expand_get_frame(xine_video_port_t *port_gen, uint32_t width, 
-				    uint32_t height, double ratio, 
+static vo_frame_t *expand_get_frame(xine_video_port_t *port_gen, uint32_t width,
+				    uint32_t height, double ratio,
 				    int format, int flags)
 {
   post_video_port_t *port = (post_video_port_t *)port_gen;
@@ -349,27 +349,27 @@ static vo_frame_t *expand_get_frame(xine_video_port_t *port_gen, uint32_t width,
   vo_frame_t        *frame;
   uint32_t           new_height, top_bar_height;
   int                i, end;
-  
+
   _x_post_rewire(&this->post);
-  
+
   if (ratio <= 0.0) ratio = (double)width / (double)height;
-  
+
   /* Calculate height of expanded frame */
   new_height = (double)height * ratio / this->aspect;
   new_height = (new_height + 1) & ~1;
   top_bar_height = (new_height - height) / 2;
   top_bar_height = (top_bar_height + 1) & ~1;
-  
+
   this->top_bar_height = top_bar_height;
 
   if (new_height > height &&
       (format == XINE_IMGFMT_YV12 || format == XINE_IMGFMT_YUY2)) {
     frame = port->original_port->get_frame(port->original_port,
       width, new_height, this->aspect, format, flags);
-    
+
     _x_post_inc_usage(port);
     frame = _x_post_intercept_video_frame(frame, port);
-    
+
     /* paint black bars in the top and bottom of the frame and hide these
      * from the decoders by modifying the pointers to and
      * the size of the drawing area */
@@ -414,7 +414,7 @@ static vo_frame_t *expand_get_frame(xine_video_port_t *port_gen, uint32_t width,
       width, height, ratio, format, flags);
     /* no need to intercept this one, we are not going to do anything with it */
   }
-  
+
   return frame;
 }
 
@@ -424,7 +424,7 @@ static int expand_intercept_ovl(post_video_port_t *port)
   post_expand_t         *this = (post_expand_t *)port->post;
 
   if (this->centre_cut_out_mode && this->cropping_active) return 0;
-  
+
   /* we always intercept overlay manager */
   return 1;
 }
@@ -435,7 +435,7 @@ static int32_t expand_overlay_add_event(video_overlay_manager_t *this_gen, void 
   video_overlay_event_t *event = (video_overlay_event_t *)event_gen;
   post_video_port_t     *port = _x_post_ovl_manager_to_port(this_gen);
   post_expand_t         *this = (post_expand_t *)port->post;
-  
+
   if (event->event_type == OVERLAY_EVENT_SHOW) {
     switch (event->object.object_type) {
     case 0:
@@ -450,6 +450,6 @@ static int32_t expand_overlay_add_event(video_overlay_manager_t *this_gen, void 
       event->object.overlay->y += this->top_bar_height;
     }
   }
-  
+
   return port->original_manager->add_event(port->original_manager, event_gen);
 }

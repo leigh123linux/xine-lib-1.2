@@ -108,7 +108,7 @@ static int open_aac_file(demux_aac_t *this) {
     if ( this->input->read(this->input, peak, MAX_PREVIEW_SIZE) != MAX_PREVIEW_SIZE )
       return 0;
     this->input->seek(this->input, 0, SEEK_SET);
-  } else if (_x_demux_read_header(this->input, peak, MAX_PREVIEW_SIZE) != 
+  } else if (_x_demux_read_header(this->input, peak, MAX_PREVIEW_SIZE) !=
 	   MAX_PREVIEW_SIZE)
     return 0;
 
@@ -177,7 +177,7 @@ static int demux_aac_send_chunk(demux_plugin_t *this_gen) {
     buf->free_buffer(buf);
     this->status = DEMUX_FINISHED;
     return this->status;
-  } else 
+  } else
     buf->size = bytes_read;
 
   /* each buffer stands on its own */

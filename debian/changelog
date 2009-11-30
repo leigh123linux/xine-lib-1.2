@@ -44,7 +44,7 @@ xine-lib (1.1.2+dfsg-1) unstable; urgency=medium
   * apply patch from http://bugzilla.gnome.org/show_bug.cgi?id=344592 to
     fix title menu if there is no DVD menu. (Closes: #369319)
   * rename to XS-X-Vcs-Bzr field
-  
+
  -- Reinhard Tartler <siretart@tauware.de>  Thu, 26 Oct 2006 23:16:12 +0200
 
 xine-lib (1.1.2-6) unstable; urgency=low
@@ -56,7 +56,7 @@ xine-lib (1.1.2-6) unstable; urgency=low
     -  [xine-lib @ 2006-07-12 21:08:46 by dsalt]
         Tidy up the formatting of tvtime method help texts to allow better wrapping
         by the front end.
-  
+
  -- Reinhard Tartler <siretart@tauware.de>  Fri, 22 Sep 2006 21:49:56 +0200
 
 xine-lib (1.1.2-5) unstable; urgency=low
@@ -96,13 +96,13 @@ xine-lib (1.1.2-5) unstable; urgency=low
     potato!)
   * Dropping Conflicts on sinek and xine-ui (<< 0.9.10) (all only woody)
   * cleaning m4/caca.m4, no longer used
-  * removing doc/faq/faq.html doc/faq/faq.txt doc/hackersguide/hackersguide.html 
+  * removing doc/faq/faq.html doc/faq/faq.txt doc/hackersguide/hackersguide.html
     on clean, missed by build system
   * include some targets to build 'orig' tarballs from the current branch.
     This mainly for my convinience for bootstrapping cvs versions of xine and
     preparing tarballs for the 'main' section of ubuntu, which I carry here in
-    order to minimize divergence    
-  
+    order to minimize divergence
+
  -- Reinhard Tartler <siretart@tauware.de>  Thu, 14 Sep 2006 21:27:27 +0200
 
 xine-lib (1.1.2-4) unstable; urgency=low
@@ -154,7 +154,7 @@ xine-lib (1.1.2-2) unstable; urgency=high
     + src/xine-utils/xine_mutex.c
   * Imported security fix for included copy of libmms from upstream CVS,
     (e.g. USN-315-1)
- 
+
  -- Reinhard Tartler <siretart@tauware.de>  Thu, 13 Jul 2006 21:51:46 +0200
 
 xine-lib (1.1.2-1) unstable; urgency=low
@@ -314,11 +314,11 @@ xine-lib (1.1.1-1) unstable; urgency=low
 
   * Acknowledge NMUs.
     - Backports and gcc 4.0 fixes dropped since they're already in this version.
-      Closes: #288189, #318838   
+      Closes: #288189, #318838
     - slang transition: Closes: #315986
     - aalib transition: Closes: #320317, #323276
-    - flac transition: Closes: #325960 
-    - fix of dependency generation script debian/shlibdeps.sh: 
+    - flac transition: Closes: #325960
+    - fix of dependency generation script debian/shlibdeps.sh:
       Closes: #326935, #327203, #328168, #328184, #328265, #328454
     - fix bashism in debian/rules: Closes: #337996
 
@@ -361,9 +361,9 @@ xine-lib (1.0.1-1.3) unstable; urgency=low
   * Non-maintainer upload.
 
   * Backport patch from 1.0.2 that fixes hard hang-ups when a plugin listed in
-    ~/.xine/catalog.cache becomes unloadable (closes: #328454). Plugins can   
+    ~/.xine/catalog.cache becomes unloadable (closes: #328454). Plugins can
     become unloadable if DT_NEEDED libraries get uninstalled, which is
-    possible because the package lists many of these libraries in the 
+    possible because the package lists many of these libraries in the
     Recommends or Suggests fields only. With this fix, amarok should not
     freeze with the XINE engine anymore (closes: #327203), and totem either
     (closes: #328265).
@@ -378,7 +378,7 @@ xine-lib (1.0.1-1.3) unstable; urgency=low
 
     This means that now the package now suggests libgnomevfs2-0 (closes:
     #326935) and libflac7 (closes: #328168). Submitters may wish to reopen if
-    they want a discussion with the maintainer about the need of these being 
+    they want a discussion with the maintainer about the need of these being
     strong Depends instead of Suggests.
 
   * xineplug_flac.so now links against libflac7 instead of libflac6, which
@@ -401,19 +401,19 @@ xine-lib (1.0.1-1.1) unstable; urgency=medium
   * Multiple fixes for compatibility with gcc 4.0 strictness
     (closes: #288189, #318838)
   * This rebuild also gets rid of the dependency on libslang1
-    (closes: #315986); it only trades it for libslang2 unfortunately, 
+    (closes: #315986); it only trades it for libslang2 unfortunately,
     since libcaca is a static lib.
   * Build-Depend on libaa1-dev instead of the removed aalib1-dev
     (closes: #320317).
   * Build-Depend on libxinerama-dev instead of on xlibs-static-dev,
     which no longer provides this lib; it should be rolled back into
-    xlibs-dev as a dependency eventually, but build-depending on it 
+    xlibs-dev as a dependency eventually, but build-depending on it
     directly is sensible anyway.
   * Disentangle xine from libraries it doesn't actually use directly, so
     that the dependency tree is less brittle and requires fewer rebuilds
     in the future (e.g., it currently has a dependency on libstdc++5
     that it shouldn't need at all); this is doubly important since some
-    plugins aren't mentioned at all in the dependencies, and so can be 
+    plugins aren't mentioned at all in the dependencies, and so can be
     left unusable by library changes:
     - relibtoolize the package to use the Debian version of libtool,
       with support for pruning indirect dependencies from the linker
@@ -421,7 +421,7 @@ xine-lib (1.0.1-1.1) unstable; urgency=medium
     - as part of the above, add AM_MAINTAINER_MODE to configure.ac to
       avoid any need for autotools build-dependencies
     - hard-code -lmodplug, -lartsc, and -lgnomevfs-2, because pkg-config,
-      artsc-config, etc. spit out lib dependencies that are spurious on  
+      artsc-config, etc. spit out lib dependencies that are spurious on
       GNU/* systems.
 
  -- Steve Langasek <vorlon@debian.org>  Wed,  3 Aug 2005 04:21:06 -0700

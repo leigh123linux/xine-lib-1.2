@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2003, 2007 the xine project
  *
  * This file is part of xine, a free video player.
@@ -93,7 +93,7 @@ void xcbosd_expose(xcbosd *osd)
   assert (osd);
 
   lprintf("expose (state:%d)\n", osd->clean );
-  
+
   switch (osd->mode) {
     case XCBOSD_SHAPED:
       xcb_shape_mask(osd->connection, XCB_SHAPE_SO_SET, XCB_SHAPE_SK_BOUNDING,
@@ -106,7 +106,7 @@ void xcbosd_expose(xcbosd *osd)
 	  xcb_map_window(osd->connection, osd->u.shaped.window);
 	}
 	osd->u.shaped.mapped = 1;
-    
+
 	xcb_copy_area(osd->connection, osd->bitmap, osd->u.shaped.window,
 		      osd->gc, 0, 0, 0, 0, osd->width, osd->height);
       } else {
@@ -128,7 +128,7 @@ void xcbosd_resize(xcbosd *osd, int width, int height)
   assert (osd);
   assert (width);
   assert (height);
-  
+
   lprintf("resize old:%dx%d new:%dx%d\n", osd->width, osd->height, width, height );
 
   osd->width = width;
@@ -151,7 +151,7 @@ void xcbosd_resize(xcbosd *osd, int width, int height)
       xcb_create_pixmap(osd->connection, osd->depth, osd->bitmap, osd->window, osd->width, osd->height);
       break;
   }
-  
+
   osd->clean = UNDEFINED;
   xcbosd_clear(osd);
 }
@@ -162,7 +162,7 @@ void xcbosd_drawable_changed(xcbosd *osd, xcb_window_t window)
   xcb_get_geometry_reply_t *get_geometry_reply;
 
   assert (osd);
-  
+
   lprintf("drawable changed\n");
 
 /*
@@ -180,17 +180,17 @@ void xcbosd_drawable_changed(xcbosd *osd, xcb_window_t window)
   /* XSync (osd->display, False); FIXME don't think that we need that --pfister */
 
   osd->window = window;
-  
+
   get_geometry_cookie = xcb_get_geometry(osd->connection, osd->window);
   get_geometry_reply = xcb_get_geometry_reply(osd->connection, get_geometry_cookie, NULL);
   osd->depth = get_geometry_reply->depth;
   osd->width = get_geometry_reply->width;
   osd->height = get_geometry_reply->height;
   free(get_geometry_reply);
-  
+
   assert(osd->width);
   assert(osd->height);
-  
+
   switch(osd->mode) {
     case XCBOSD_SHAPED: {
       xcb_free_pixmap(osd->connection, osd->u.shaped.mask_bitmap);
@@ -223,7 +223,7 @@ void xcbosd_drawable_changed(xcbosd *osd, xcb_window_t window)
 
       break;
   }
-  
+
   osd->clean = UNDEFINED;
   /* do not xcbosd_clear() here: osd->u.colorkey.sc has not being updated yet */
 }
@@ -249,14 +249,14 @@ xcbosd *xcbosd_create(xine_t *xine, xcb_connection_t *connection, xcb_screen_t *
   osd->window = window;
 
   osd->visual = osd->screen->root_visual;
-  
+
   get_geometry_cookie = xcb_get_geometry(osd->connection, osd->window);
   get_geometry_reply = xcb_get_geometry_reply(osd->connection, get_geometry_cookie, NULL);
   osd->depth = get_geometry_reply->depth;
   osd->width = get_geometry_reply->width;
   osd->height = get_geometry_reply->height;
   free(get_geometry_reply);
-  
+
   assert(osd->width);
   assert(osd->height);
 
@@ -326,8 +326,8 @@ xcbosd *xcbosd_create(xine_t *xine, xcb_connection_t *connection, xcb_screen_t *
   osd->clean = UNDEFINED;
   xcbosd_expose(osd);
 
-  xprintf(osd->xine, XINE_VERBOSITY_DEBUG, 
-    _("x11osd: unscaled overlay created (%s mode).\n"), 
+  xprintf(osd->xine, XINE_VERBOSITY_DEBUG,
+    _("x11osd: unscaled overlay created (%s mode).\n"),
     (mode==XCBOSD_SHAPED) ? "XShape" : "Colorkey" );
 
   return osd;
@@ -382,9 +382,9 @@ void xcbosd_destroy(xcbosd *osd)
 void xcbosd_clear(xcbosd *osd)
 {
   int i;
-  
+
   lprintf("clear (state:%d)\n", osd->clean );
-  
+
   if( osd->clean != WIPED )
     switch (osd->mode) {
       case XCBOSD_SHAPED: {
@@ -435,7 +435,7 @@ void xcbosd_blend(xcbosd *osd, vo_overlay_t *overlay)
 
   if (osd->clean==UNDEFINED)
     xcbosd_clear(osd);	/* Workaround. Colorkey mode needs sc data before the clear. */
-  
+
   if (overlay->rle) {
     int i, x, y, len, width;
     int use_clip_palette, max_palette_colour[2];
@@ -467,7 +467,7 @@ void xcbosd_blend(xcbosd *osd, vo_overlay_t *overlay)
             if (x + width - 1 > overlay->hili_right) {
               width -= overlay->hili_right - x;
               len += overlay->hili_right - x;
-            } 
+            }
           }
         }
 
@@ -475,7 +475,7 @@ void xcbosd_blend(xcbosd *osd, vo_overlay_t *overlay)
           int j;
           clut_t *src_clut;
           uint8_t *src_trans;
-          
+
           if (use_clip_palette) {
             src_clut = (clut_t *)&overlay->hili_color;
             src_trans = (uint8_t *)&overlay->hili_trans;

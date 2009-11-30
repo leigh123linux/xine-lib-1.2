@@ -7,7 +7,7 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -93,7 +93,7 @@ typedef struct {
   XvMCMacroBlock      *macroblockbaseptr; /* pointer to base MacroBlock in MB array */
   XvMCMacroBlockArray *macro_blocks;      /* pointer to memory for macroblock array */
   int                  slices;
-} xvmc_macroblocks_t;  
+} xvmc_macroblocks_t;
 
 typedef struct {
   void *xid;
@@ -149,8 +149,8 @@ struct xvmc_driver_s {
   int                  max_surface_height;
   int                  num_frame_buffers;
 
-  int                  surface_width;   
-  int                  surface_height;     
+  int                  surface_width;
+  int                  surface_height;
   int                  surface_ratio;
   int                  surface_format;
   int                  surface_flags;
@@ -168,7 +168,7 @@ struct xvmc_driver_s {
   /* display anatomy */
   double               display_ratio;        /* given by visual parameter
 						from init function            */
-  
+
   xvmc_property_t      props[VO_NUM_PROPERTIES];
   uint32_t             capabilities;
 
@@ -181,7 +181,7 @@ struct xvmc_driver_s {
 
   /* size / aspect ratio calculations */
 
-  /* 
+  /*
    * "delivered" size:
    * frame dimension / aspect as delivered by the decoder
    * used (among other things) to detect frame size changes
@@ -189,7 +189,7 @@ struct xvmc_driver_s {
 
   int                  delivered_duration;
 
-  /* 
+  /*
    * "ideal" size :
    * displayed width/height corrected by aspect ratio
    */
@@ -197,19 +197,19 @@ struct xvmc_driver_s {
   double               ratio_factor;         /* output frame must fullfill:
 						height = width * ratio_factor  */
 
-  
+
   xvmc_frame_t         deinterlace_frame;
   int                  deinterlace_method;
   int                  deinterlace_enabled;
 
   /* gui callback */
-  
+
   void               (*frame_output_cb) (void *user_data,
 					 int video_width, int video_height,
-					 int *dest_x, int *dest_y, 
+					 int *dest_x, int *dest_y,
 					 int *dest_height, int *dest_width,
 					 int *win_x, int *win_y);
-  
+
   int                  use_colorkey;
   uint32_t             colorkey;
 
@@ -245,19 +245,19 @@ static void xvmc_render_macro_blocks(vo_frame_t *current_image,
 
 /**************************************************************************/
 
-/* 
+/*
  * dmvector: differential motion vector
  * mvx, mvy: decoded mv components (always in field format)
  */
-static void calc_DMV(int DMV[][2], int *dmvector, 
+static void calc_DMV(int DMV[][2], int *dmvector,
 		     int mvx, int mvy, int picture_structure, int top_field_first) {
-  
+
   if (picture_structure==VO_BOTH_FIELDS) {
     if (top_field_first) {
       /* vector for prediction of top field from bottom field */
       DMV[0][0] = ((mvx  +(mvx>0))>>1) + dmvector[0];
       DMV[0][1] = ((mvy  +(mvy>0))>>1) + dmvector[1] - 1;
-      
+
       /* vector for prediction of bottom field from top field */
       DMV[1][0] = ((3*mvx+(mvx>0))>>1) + dmvector[0];
       DMV[1][1] = ((3*mvy+(mvy>0))>>1) + dmvector[1] + 1;
@@ -266,7 +266,7 @@ static void calc_DMV(int DMV[][2], int *dmvector,
       /* vector for prediction of top field from bottom field */
       DMV[0][0] = ((3*mvx+(mvx>0))>>1) + dmvector[0];
       DMV[0][1] = ((3*mvy+(mvy>0))>>1) + dmvector[1] - 1;
-      
+
       /* vector for prediction of bottom field from top field */
       DMV[1][0] = ((mvx  +(mvx>0))>>1) + dmvector[0];
       DMV[1][1] = ((mvy  +(mvy>0))>>1) + dmvector[1] + 1;
@@ -276,7 +276,7 @@ static void calc_DMV(int DMV[][2], int *dmvector,
     /* vector for prediction from field of opposite 'parity' */
     DMV[0][0] = ((mvx+(mvx>0))>>1) + dmvector[0];
     DMV[0][1] = ((mvy+(mvy>0))>>1) + dmvector[1];
-    
+
     /* correct for vertical field shift */
     if (picture_structure==VO_TOP_FIELD)
       DMV[0][1]--;
@@ -285,11 +285,11 @@ static void calc_DMV(int DMV[][2], int *dmvector,
   }
 }
 
-static void xvmc_proc_macro_block(int x, int y, int mb_type, int motion_type, 
-				  int (*mv_field_sel)[2], int *dmvector, int cbp, 
-				  int dct_type, vo_frame_t *current_frame, 
-				  vo_frame_t *forward_ref_frame, 
-				  vo_frame_t *backward_ref_frame, int picture_structure, 
+static void xvmc_proc_macro_block(int x, int y, int mb_type, int motion_type,
+				  int (*mv_field_sel)[2], int *dmvector, int cbp,
+				  int dct_type, vo_frame_t *current_frame,
+				  vo_frame_t *forward_ref_frame,
+				  vo_frame_t *backward_ref_frame, int picture_structure,
 				  int second_field, int (*f_mot_pmv)[2], int (*b_mot_pmv)[2]) {
   xvmc_driver_t        *this                = (xvmc_driver_t *) current_frame->driver;
   xvmc_macroblocks_t   *mbs                 = &this->macroblocks;
@@ -298,10 +298,10 @@ static void xvmc_proc_macro_block(int x, int y, int mb_type, int motion_type,
 
   mbs->macroblockptr->x = x;
   mbs->macroblockptr->y = y;
-  
+
   if(mb_type & XINE_MACROBLOCK_INTRA) {
     mbs->macroblockptr->macroblock_type = XVMC_MB_TYPE_INTRA;
-  } 
+  }
   else {
     mbs->macroblockptr->macroblock_type = 0;
     /* XvMC doesn't support skips */
@@ -310,7 +310,7 @@ static void xvmc_proc_macro_block(int x, int y, int mb_type, int motion_type,
       motion_type = (picture_structure == VO_BOTH_FIELDS) ? XINE_MC_FRAME : XINE_MC_FIELD;
       mbs->macroblockptr->PMV[0][0][0] = 0;
       mbs->macroblockptr->PMV[0][0][1] = 0;
-    } 
+    }
     else {
       if(mb_type & XINE_MACROBLOCK_MOTION_BACKWARD) {
 	mbs->macroblockptr->macroblock_type |= XVMC_MB_TYPE_MOTION_BACKWARD;
@@ -342,17 +342,17 @@ static void xvmc_proc_macro_block(int x, int y, int mb_type, int motion_type,
 	calc_DMV(DMV,dmvector, f_mot_pmv[0][0],
 		 f_mot_pmv[0][1]>>1, picture_structure,
 		 top_field_first);
-	
+
 	mbs->macroblockptr->PMV[1][0][0] = DMV[0][0];
 	mbs->macroblockptr->PMV[1][0][1] = DMV[0][1];
 	mbs->macroblockptr->PMV[1][1][0] = DMV[1][0];
 	mbs->macroblockptr->PMV[1][1][1] = DMV[1][1];
-      } 
+      }
       else {
 	calc_DMV(DMV,dmvector, f_mot_pmv[0][0],
 		 f_mot_pmv[0][1]>>1, picture_structure,
 		 top_field_first);
-	
+
 	mbs->macroblockptr->PMV[0][1][0] = DMV[0][0];
 	mbs->macroblockptr->PMV[0][1][1] = DMV[0][1];
       }
@@ -378,7 +378,7 @@ static void xvmc_proc_macro_block(int x, int y, int mb_type, int motion_type,
   mbs->macroblockptr->dct_type = dct_type;
   mbs->macroblockptr->coded_block_pattern = cbp;
 
-  while(cbp) { 
+  while(cbp) {
     if(cbp & 1) mbs->macroblockptr->index--;
     cbp >>= 1;
   }
@@ -446,7 +446,7 @@ static void xvmc_proc_macro_block(int x, int y, int mb_type, int motion_type,
 			  picture_structure,
 			  second_field ? XVMC_SECOND_FIELD : 0,
 			  mbs);
-       
+
     mbs->num_blocks       = 0;
     mbs->macroblockptr    = mbs->macroblockbaseptr;
     mbs->xine_mc.blockptr = mbs->xine_mc.blockbaseptr;
@@ -470,9 +470,9 @@ static void xvmc_frame_dispose (vo_frame_t *vo_img) {
 
   lprintf ("xvmc_frame_dispose\n");
 
-  /* 
+  /*
    * TODO - clean up of images/surfaces and frames
-   * Note this function is not really needed  
+   * Note this function is not really needed
    * set_context does the work
    */
 
@@ -498,9 +498,9 @@ static void xvmc_render_macro_blocks(vo_frame_t *current_image,
 	   (long) forward_frame);
   /* lprintf ("slices %d 0x%08lx 0x%08lx 0x%08lx\n",macroblocks->slices,
 	   (long) current_frame->surface, (long) backward_frame->surface,
-	   (long) forward_frame->surface); 
+	   (long) forward_frame->surface);
   */
-  
+
   flags = second_field;
 
   if(forward_frame) {
@@ -512,7 +512,7 @@ static void xvmc_render_macro_blocks(vo_frame_t *current_image,
 			flags,
 			macroblocks->slices, 0, macroblocks->macro_blocks,
 			macroblocks->blocks);
-    } 
+    }
     else {
       XvMCRenderSurface(this->display, &this->context, picture_structure,
 			&current_frame->surface,
@@ -522,7 +522,7 @@ static void xvmc_render_macro_blocks(vo_frame_t *current_image,
 			macroblocks->slices, 0, macroblocks->macro_blocks,
 			macroblocks->blocks);
     }
-  } 
+  }
   else {
     if(backward_frame) {
       XvMCRenderSurface(this->display, &this->context, picture_structure,
@@ -532,7 +532,7 @@ static void xvmc_render_macro_blocks(vo_frame_t *current_image,
 			flags,
 			macroblocks->slices, 0, macroblocks->macro_blocks,
 			macroblocks->blocks);
-    } 
+    }
     else {
       XvMCRenderSurface(this->display, &this->context, picture_structure,
 			&current_frame->surface,
@@ -564,7 +564,7 @@ static vo_frame_t *xvmc_alloc_frame (vo_driver_t *this_gen) {
 
   /* keep track of frames and how many frames alocated. */
   this->frames[this->num_frame_buffers++] = frame;
-  
+
   pthread_mutex_init (&frame->vo_frame.mutex, NULL);
 
   /*
@@ -591,12 +591,12 @@ static cxid_t *xvmc_set_context (xvmc_driver_t *this,
   xvmc_macroblocks_t  *macroblocks = (xvmc_macroblocks_t *) macro_blocks;
 
   lprintf ("xvmc_set_context %dx%d %04x\n",width,height,format);
-  
+
   /* initialize block & macro block pointers first time */
   if(macroblocks->blocks == NULL ||  macroblocks->macro_blocks == NULL) {
     macroblocks->blocks       = calloc(1, sizeof(XvMCBlockArray));
     macroblocks->macro_blocks = calloc(1, sizeof(XvMCMacroBlockArray));
-    
+
     lprintf("macroblocks->blocks %lx ->macro_blocks %lx\n",
 	    macroblocks->blocks,macroblocks->macro_blocks);
   }
@@ -612,11 +612,11 @@ static cxid_t *xvmc_set_context (xvmc_driver_t *this,
 
     return(&this->context_id);
 
-  } 
-  else { 
+  }
+  else {
     if(this->context_id.xid != NULL) {
 
-      /* 
+      /*
        * flush any drawing and wait till we are done with the old stuff
        * blow away the old stuff
        */
@@ -639,8 +639,8 @@ static cxid_t *xvmc_set_context (xvmc_driver_t *this,
 	    width,height, this->surface_type_id, (int)this->xv_port);
 
     /* now create a new context */
-    result = XvMCCreateContext(this->display, this->xv_port, 
-			       this->surface_type_id, 
+    result = XvMCCreateContext(this->display, this->xv_port,
+			       this->surface_type_id,
 			       width, height, XVMC_DIRECT, &this->context);
 
     if(result != Success) {
@@ -668,7 +668,7 @@ static cxid_t *xvmc_set_context (xvmc_driver_t *this,
     slices = (slices * width/16);
 
     lprintf("CreateBlocks  slices %d\n",slices);
-    
+
     result = XvMCCreateBlocks(this->display, &this->context, slices * 6,
 			      macroblocks->blocks);
     if(result != Success) {
@@ -751,7 +751,7 @@ static XvImage *create_ximage (xvmc_driver_t *this, XShmSegmentInfo *shminfo,
 static void dispose_ximage (xvmc_driver_t *this,
 			    XShmSegmentInfo *shminfo,
 			    XvImage *myimage) {
-  
+
   lprintf ("dispose_ximage\n");
   XFree(myimage);
 }
@@ -779,9 +779,9 @@ static void xvmc_update_frame_format (vo_driver_t *this_gen,
     lprintf ("updating frame to %d x %d (ratio=%f, format=%08x)\n",
 	     width, height, ratio, format);
 
-    /* Note that since we are rendering in hardware, we do not need to 
+    /* Note that since we are rendering in hardware, we do not need to
      * allocate any ximage's for the software rendering buffers.
-     */              
+     */
     frame->width               = width;
     frame->height              = height;
     frame->format              = format;
@@ -791,7 +791,7 @@ static void xvmc_update_frame_format (vo_driver_t *this_gen,
   xvmc->macroblocks = (xine_macroblocks_t *)&this->macroblocks;
   this->macroblocks.num_blocks = 0;
   this->macroblocks.macroblockptr = this->macroblocks.macroblockbaseptr;
-  this->macroblocks.xine_mc.blockptr = 
+  this->macroblocks.xine_mc.blockptr =
     this->macroblocks.xine_mc.blockbaseptr;
   if( flags & VO_NEW_SEQUENCE_FLAG ) {
     xvmc_set_context (this, width, height, ratio, format, flags,
@@ -806,14 +806,14 @@ static void xvmc_clean_output_area (xvmc_driver_t *this) {
   XSetForeground (this->display, this->gc, this->black.pixel);
   XFillRectangle (this->display, this->drawable, this->gc,
 		  this->sc.gui_x, this->sc.gui_y, this->sc.gui_width, this->sc.gui_height);
-  
+
   if (this->use_colorkey) {
     XSetForeground (this->display, this->gc, this->colorkey);
     XFillRectangle (this->display, this->drawable, this->gc,
-		    this->sc.output_xoffset, this->sc.output_yoffset, 
+		    this->sc.output_xoffset, this->sc.output_yoffset,
 		    this->sc.output_width, this->sc.output_height);
   }
-  
+
   XUnlockDisplay (this->display);
 }
 
@@ -834,27 +834,27 @@ static void xvmc_compute_output_size (xvmc_driver_t *this) {
  _x_vo_scale_compute_output_size( &this->sc );
 }
 
-static void xvmc_overlay_blend (vo_driver_t *this_gen, 
+static void xvmc_overlay_blend (vo_driver_t *this_gen,
 				vo_frame_t *frame_gen, vo_overlay_t *overlay) {
   xvmc_driver_t  *this  = (xvmc_driver_t *) this_gen;
   xvmc_frame_t   *frame = (xvmc_frame_t *) frame_gen;
 
   lprintf ("xvmc_overlay_blend\n");
-  
+
   this->alphablend_extra_data.offset_x = frame_gen->overlay_offset_x;
   this->alphablend_extra_data.offset_y = frame_gen->overlay_offset_y;
 
   /* Alpha Blend here
    * As XV drivers improve to support Hardware overlay, we will change this function.
    */
-  
+
   if (overlay->rle) {
     if (frame->format == XINE_IMGFMT_YV12)
-      _x_blend_yuv(frame->vo_frame.base, overlay, 
+      _x_blend_yuv(frame->vo_frame.base, overlay,
 		frame->width, frame->height, frame->vo_frame.pitches,
                 &this->alphablend_extra_data);
     else if (frame->format != XINE_IMGFMT_XVMC)
-      _x_blend_yuy2(frame->vo_frame.base[0], overlay, 
+      _x_blend_yuy2(frame->vo_frame.base[0], overlay,
 		 frame->width, frame->height, frame->vo_frame.pitches[0],
                  &this->alphablend_extra_data);
     else
@@ -899,16 +899,16 @@ static int xvmc_redraw_needed (vo_driver_t *this_gen) {
   int             ret  = 0;
 
   if(this->cur_frame) {
-    
+
     this->sc.delivered_height   = this->cur_frame->height;
     this->sc.delivered_width    = this->cur_frame->width;
     this->sc.delivered_ratio    = this->cur_frame->ratio;
-    
+
     this->sc.crop_left          = this->cur_frame->vo_frame.crop_left;
     this->sc.crop_right         = this->cur_frame->vo_frame.crop_right;
     this->sc.crop_top           = this->cur_frame->vo_frame.crop_top;
     this->sc.crop_bottom        = this->cur_frame->vo_frame.crop_bottom;
-    
+
     xvmc_compute_ideal_size(this);
 
     if(_x_vo_scale_redraw_needed(&this->sc)) {
@@ -929,49 +929,49 @@ static void xvmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
   lprintf ("xvmc_display_frame %d %x\n",frame_gen->id,frame_gen);
 
-  /* 
+  /*
    * queue frames (deinterlacing)
    * free old frames
    */
-  
+
   xvmc_add_recent_frame (this, frame); /* deinterlacing */
-  
+
   this->cur_frame = frame;
-  
+
   /*
    * let's see if this frame is different in size / aspect
    * ratio from the previous one
    */
-  
+
   if ( (frame->width != this->sc.delivered_width)
        || (frame->height != this->sc.delivered_height)
        || (frame->ratio != this->sc.delivered_ratio) ) {
     lprintf("frame format changed\n");
-    
-    /* 
+
+    /*
        this->delivered_width      = frame->width;
        this->delivered_height     = frame->height;
        this->delivered_ratio      = frame->ratio;
        this->delivered_duration   = frame->vo_frame.duration;
-    
+
        xvmc_compute_ideal_size (this);
     */
 
     /* this->gui_width = 0; */ /* trigger re-calc of output size */
     this->sc.force_redraw = 1;    /* trigger re-calc of output size */
   }
-  
-  /* 
+
+  /*
    * tell gui that we are about to display a frame,
    * ask for offset and output size
    */
   xvmc_redraw_needed (this_gen);
-  
+
   XLockDisplay (this->display);
 
-  /* Make sure the surface has finished rendering before we display */  
+  /* Make sure the surface has finished rendering before we display */
   XvMCSyncSurface(this->display, &this->cur_frame->surface);
-  
+
   if (this->deinterlace_enabled &&
       (this->deinterlace_method == DEINTERLACE_ONEFIELD)) {
     XvMCPutSurface(this->display, &this->cur_frame->surface,
@@ -990,9 +990,9 @@ static void xvmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 		   this->sc.output_width, this->sc.output_height,
 		   XVMC_FRAME_PICTURE);
   }
-  
+
   XUnlockDisplay (this->display);
-  
+
   /*
   printf ("video_out_xvmc: xvmc_display_frame... done\n");
   */
@@ -1002,7 +1002,7 @@ static int xvmc_get_property (vo_driver_t *this_gen, int property) {
   xvmc_driver_t *this = (xvmc_driver_t *) this_gen;
 
   lprintf ("xvmc_get_property\n");
-  
+
   switch (property) {
     case VO_PROP_WINDOW_WIDTH:
       this->props[property].value = this->sc.gui_width;
@@ -1023,7 +1023,7 @@ static int xvmc_get_property (vo_driver_t *this_gen, int property) {
       this->props[property].value = this->sc.output_yoffset;
       break;
   }
-  
+
   return this->props[property].value;
 }
 
@@ -1032,7 +1032,7 @@ static void xvmc_property_callback (void *property_gen, xine_cfg_entry_t *entry)
   xvmc_driver_t   *this     = property->this;
 
   lprintf ("xvmc_property_callback\n");
-  
+
   XLockDisplay(this->display);
   XvSetPortAttribute (this->display, this->xv_port,
 		      property->atom, entry->num_value);
@@ -1044,7 +1044,7 @@ static int xvmc_set_property (vo_driver_t *this_gen,
   xvmc_driver_t *this = (xvmc_driver_t *) this_gen;
 
   lprintf ("xvmc_set_property %d value %d\n",property,value);
-  
+
   if (this->props[property].atom != None) {
     /* value is out of bound */
     if((value < this->props[property].min) || (value > this->props[property].max))
@@ -1060,9 +1060,9 @@ static int xvmc_set_property (vo_driver_t *this_gen,
 
     if (this->props[property].entry)
       this->props[property].entry->num_value = this->props[property].value;
-    
+
     return this->props[property].value;
-  } 
+  }
   else {
     switch (property) {
     case VO_PROP_INTERLACED:
@@ -1081,7 +1081,7 @@ static int xvmc_set_property (vo_driver_t *this_gen,
 
       this->props[property].value = value;
       lprintf("VO_PROP_ASPECT_RATIO(%d)\n", this->props[property].value);
-      
+
       xvmc_compute_ideal_size (this);
       xvmc_compute_output_size (this);
       xvmc_clean_output_area (this);
@@ -1091,7 +1091,7 @@ static int xvmc_set_property (vo_driver_t *this_gen,
     case VO_PROP_ZOOM_X:
       if ((value >= XINE_VO_ZOOM_MIN) && (value <= XINE_VO_ZOOM_MAX)) {
         this->props[property].value = value;
-        xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
+        xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 		 "video_out_xvmc: VO_PROP_ZOOM_X = %d\n", this->props[property].value);
 
 	this->sc.zoom_factor_x = (double)value / (double)XINE_VO_ZOOM_STEP;
@@ -1103,7 +1103,7 @@ static int xvmc_set_property (vo_driver_t *this_gen,
     case VO_PROP_ZOOM_Y:
       if ((value >= XINE_VO_ZOOM_MIN) && (value <= XINE_VO_ZOOM_MAX)) {
         this->props[property].value = value;
-        xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
+        xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 		 "video_out_xvmc: VO_PROP_ZOOM_Y = %d\n", this->props[property].value);
 
 	this->sc.zoom_factor_y = (double)value / (double)XINE_VO_ZOOM_STEP;
@@ -1111,7 +1111,7 @@ static int xvmc_set_property (vo_driver_t *this_gen,
 	this->sc.force_redraw = 1;    /* trigger re-calc of output size */
       }
       break;
-    } 
+    }
   }
 
   return value;
@@ -1120,9 +1120,9 @@ static int xvmc_set_property (vo_driver_t *this_gen,
 static void xvmc_get_property_min_max (vo_driver_t *this_gen,
 				     int property, int *min, int *max) {
   xvmc_driver_t *this = (xvmc_driver_t *) this_gen;
-  
+
   lprintf ("xvmc_get_property_min_max\n");
-  
+
   *min = this->props[property].min;
   *max = this->props[property].max;
 }
@@ -1132,32 +1132,32 @@ static int xvmc_gui_data_exchange (vo_driver_t *this_gen,
   xvmc_driver_t     *this = (xvmc_driver_t *) this_gen;
 
   lprintf ("xvmc_gui_data_exchange\n");
-  
+
   switch (data_type) {
   case XINE_GUI_SEND_EXPOSE_EVENT: {
     /* XExposeEvent * xev = (XExposeEvent *) data; */
 
     /* FIXME : take care of completion events */
     lprintf ("XINE_GUI_SEND_EXPOSE_EVENT\n");
-    
+
     if (this->cur_frame) {
       int i;
-      
+
       XLockDisplay (this->display);
-      
+
       XSetForeground (this->display, this->gc, this->black.pixel);
-      
+
       for( i = 0; i < 4; i++ ) {
         if( this->sc.border[i].w && this->sc.border[i].h )
           XFillRectangle(this->display, this->drawable, this->gc,
                          this->sc.border[i].x, this->sc.border[i].y,
                          this->sc.border[i].w, this->sc.border[i].h);
       }
-      
+
       if (this->use_colorkey) {
 	XSetForeground (this->display, this->gc, this->colorkey);
 	XFillRectangle (this->display, this->drawable, this->gc,
-			this->sc.output_xoffset, this->sc.output_yoffset, 
+			this->sc.output_xoffset, this->sc.output_yoffset,
 			this->sc.output_width, this->sc.output_height);
       }
 
@@ -1168,7 +1168,7 @@ static int xvmc_gui_data_exchange (vo_driver_t *this_gen,
 		     this->sc.output_xoffset, this->sc.output_yoffset,
 		     this->sc.output_width, this->sc.output_height,
 		     XVMC_FRAME_PICTURE);
-      
+
       XSync(this->display, False);
       XUnlockDisplay (this->display);
     }
@@ -1187,18 +1187,18 @@ static int xvmc_gui_data_exchange (vo_driver_t *this_gen,
       int x1, y1, x2, y2;
       x11_rectangle_t *rect = data;
 
-      /* 
+      /*
 	 xvmc_translate_gui2video(this, rect->x, rect->y,
-	  	                  &x1, &y1);
+		                  &x1, &y1);
 	xvmc_translate_gui2video(this, rect->x + rect->w, rect->y + rect->h,
-	 			 &x2, &y2);
+				 &x2, &y2);
       */
-      
+
       _x_vo_scale_translate_gui2video(&this->sc, rect->x, rect->y,
 				   &x1, &y1);
       _x_vo_scale_translate_gui2video(&this->sc, rect->x + rect->w, rect->y + rect->h,
 				   &x2, &y2);
-      
+
       rect->x = x1;
       rect->y = y1;
       rect->w = x2-x1;
@@ -1216,9 +1216,9 @@ static int xvmc_gui_data_exchange (vo_driver_t *this_gen,
 static void xvmc_dispose (vo_driver_t *this_gen) {
   xvmc_driver_t *this = (xvmc_driver_t *) this_gen;
   int i;
-  
+
   lprintf ("xvmc_dispose\n");
-  
+
   if(this->context_id.xid) {
     XLockDisplay(this->display);
     for(i = 0; i < this->num_frame_buffers; i++) {
@@ -1228,7 +1228,7 @@ static void xvmc_dispose (vo_driver_t *this_gen) {
     }
     /* XvMCDestroyBlocks(this->display, &macroblocks->blocks); */
     /* XvMCDestroyMacroBlocks(this->display, &macroblocks->macro_blocks); */
-    XvMCDestroyContext(this->display, &this->context);    
+    XvMCDestroyContext(this->display, &this->context);
     XUnlockDisplay(this->display);
   }
 
@@ -1274,16 +1274,16 @@ static void xvmc_check_capability (xvmc_driver_t *this,
   XvGetPortAttribute (this->display, this->xv_port,
 		      this->props[property].atom, &int_default);
 
-  xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 	   "video_out_xvmc: port attribute %s (%d) value is %d\n", str_prop, property, int_default);
-  
+
   if (config_name) {
     /* is this a boolean property ? */
     if ((attr.min_value == 0) && (attr.max_value == 1)) {
       this->config->register_bool (this->config, config_name, int_default,
 				   config_desc,
 				   config_help, 20, xvmc_property_callback, &this->props[property]);
-      
+
     } else {
       this->config->register_range (this->config, config_name, int_default,
 				    this->props[property].min, this->props[property].max,
@@ -1301,7 +1301,7 @@ static void xvmc_check_capability (xvmc_driver_t *this,
       this->use_colorkey = 1;
       this->colorkey     = entry->num_value;
     }
-  } 
+  }
   else
     this->props[property].value  = int_default;
 }
@@ -1310,7 +1310,7 @@ static void xvmc_update_deinterlace(void *this_gen, xine_cfg_entry_t *entry) {
   xvmc_driver_t *this = (xvmc_driver_t *) this_gen;
 
   lprintf ("xvmc_update_deinterlace method = %d\n",entry->num_value);
-  
+
   this->deinterlace_method = entry->num_value;
 }
 
@@ -1319,7 +1319,7 @@ static void xvmc_update_XV_DOUBLE_BUFFER(void *this_gen, xine_cfg_entry_t *entry
   xvmc_driver_t *this = (xvmc_driver_t *) this_gen;
   Atom           atom;
   int            xvmc_double_buffer;
-  
+
   xvmc_double_buffer = entry->num_value;
 
   XLockDisplay(this->display);
@@ -1344,11 +1344,11 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   XvAdaptorInfo        *adaptor_info;
   unsigned int          adaptor_num;
   /* XvImage              *myimage; */
-  
+
   lprintf ("open_plugin\n");
-  
+
   this = calloc(1, sizeof (xvmc_driver_t));
-  
+
   if (!this)
     return NULL;
 
@@ -1425,9 +1425,9 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   /*
    * check this adaptor's capabilities
    */
-  if(this->acceleration&XINE_VO_IDCT_ACCEL) 
+  if(this->acceleration&XINE_VO_IDCT_ACCEL)
     this->capabilities |= VO_CAP_XVMC_IDCT;
-  
+
   XLockDisplay(this->display);
   attr = XvQueryPortAttributes(this->display, xv_port, &nattr);
   if(attr && nattr) {
@@ -1475,7 +1475,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
       }
     }
     XFree(attr);
-  } 
+  }
   else {
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, "video_out_xvmc: no port attributes defined.\n");
   }
@@ -1489,12 +1489,12 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 
   this->xvmc_format_yv12 = 0;
   this->xvmc_format_yuy2 = 0;
-  
+
   for(i = 0; i < formats; i++) {
     lprintf ("XvMC image format: 0x%x (%4.4s) %s\n",
 	     fo[i].id, (char*)&fo[i].id,
 	     (fo[i].format == XvPacked) ? "packed" : "planar");
-    
+
     if (fo[i].id == XINE_IMGFMT_YV12)  {
       this->xvmc_format_yv12 = fo[i].id;
       this->capabilities     |= VO_CAP_YV12;
@@ -1519,15 +1519,15 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
    */
   /*
     XLockDisplay(this->display);
-    myimage = create_ximage (this, &myshminfo, 100, 100, 
+    myimage = create_ximage (this, &myshminfo, 100, 100,
                              (this->xvmc_format_yv12 != 0) ? XINE_IMGFMT_YV12 : IMGFMT_YUY2);
     dispose_ximage (this, &myshminfo, myimage);
     XUnLockDisplay(this->display);
   */
-  
+
   this->deinterlace_method =
     config->register_enum (config, "video.output.xv_deinterlace_method", 4,
-			   deinterlace_methods, 
+			   deinterlace_methods,
 			   _("deinterlace method (deprecated)"),
 			   _("This config setting is deprecated. You should use the new deinterlacing "
 			     "post processing settings instead.\n\n"
@@ -1561,26 +1561,26 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   lprintf("deinterlace_methods %d ",this->deinterlace_method);
 
   switch(this->deinterlace_method) {
-  case DEINTERLACE_NONE: 
-    lprintf("NONE\n"); 
+  case DEINTERLACE_NONE:
+    lprintf("NONE\n");
     break;
-  case DEINTERLACE_BOB: 
-    lprintf("BOB\n"); 
+  case DEINTERLACE_BOB:
+    lprintf("BOB\n");
     break;
-  case DEINTERLACE_WEAVE: 
+  case DEINTERLACE_WEAVE:
     lprintf("WEAVE\n");
     break;
-  case DEINTERLACE_GREEDY: 
+  case DEINTERLACE_GREEDY:
     lprintf("GREEDY\n");
     break;
-  case DEINTERLACE_ONEFIELD: 
+  case DEINTERLACE_ONEFIELD:
     lprintf("ONEFIELD\n");
     break;
-  case DEINTERLACE_ONEFIELDXV: 
+  case DEINTERLACE_ONEFIELDXV:
     lprintf("ONEFIELDXV\n");
     break;
-  case DEINTERLACE_LINEARBLEND: 
-    lprintf("LINEARBLEND\n"); 
+  case DEINTERLACE_LINEARBLEND:
+    lprintf("LINEARBLEND\n");
     break;
   }
 
@@ -1625,7 +1625,7 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   int                surface_type = 0;
 
   display = visual->display;
-  
+
   /*
    * check for Xv and  XvMC video support
    */
@@ -1666,20 +1666,20 @@ static void *init_class (xine_t *xine, void *visual_gen) {
 	for(surface_num  = 0; surface_num < types; surface_num++) {
 	  if((surfaceInfo[surface_num].chroma_format == XVMC_CHROMA_FORMAT_420) &&
 	     (surfaceInfo[surface_num].mc_type == (XVMC_IDCT | XVMC_MPEG_2))) {
-	    
+
 	    max_width  = surfaceInfo[surface_num].max_width;
 	    max_height = surfaceInfo[surface_num].max_height;
-	    
+
 	    for(j = 0; j < adaptor_info[adaptor_num].num_ports; j++) {
 	      /* try to grab a port */
-	      if(Success == XvGrabPort(display, 
-				       adaptor_info[adaptor_num].base_id + j, CurrentTime)) {   
+	      if(Success == XvGrabPort(display,
+				       adaptor_info[adaptor_num].base_id + j, CurrentTime)) {
 		xv_port = adaptor_info[adaptor_num].base_id + j;
 		surface_type = surfaceInfo[surface_num].surface_type_id;
 		break;
 	      }
 	    }
-	    
+
 	    if(xv_port)
 	      break;
 	  }
@@ -1691,22 +1691,22 @@ static void *init_class (xine_t *xine, void *visual_gen) {
 	  for(surface_num  = 0; surface_num < types; surface_num++) {
 	    if((surfaceInfo[surface_num].chroma_format == XVMC_CHROMA_FORMAT_420) &&
 	       ((surfaceInfo[surface_num].mc_type == (XVMC_MOCOMP | XVMC_MPEG_2)))) {
-	      
+
 	      xprintf (xine, XINE_VERBOSITY_DEBUG, "Found XVMC_MOCOMP\n");
 	      max_width = surfaceInfo[surface_num].max_width;
 	      max_height = surfaceInfo[surface_num].max_height;
 
 	      for(j = 0; j < adaptor_info[adaptor_num].num_ports; j++) {
 		/* try to grab a port */
-		if(Success == XvGrabPort(display, 
-					 adaptor_info[adaptor_num].base_id + j, CurrentTime)) {   
+		if(Success == XvGrabPort(display,
+					 adaptor_info[adaptor_num].base_id + j, CurrentTime)) {
 		  xv_port = adaptor_info[adaptor_num].base_id + j;
 		  surface_type = surfaceInfo[surface_num].surface_type_id;
 		  break;
 		}
 	      }
 
-	      if(xv_port) 
+	      if(xv_port)
 		break;
 	    }
 	  }
@@ -1714,7 +1714,7 @@ static void *init_class (xine_t *xine, void *visual_gen) {
 	if(xv_port) {
 	  lprintf ("port %ld surface %d\n",xv_port,j);
 
-          IDCTaccel = 0;            
+          IDCTaccel = 0;
 	  if(surfaceInfo[surface_num].flags & XVMC_OVERLAID_SURFACE)
 	    useOverlay = 1;
 	  if(surfaceInfo[surface_num].flags & XVMC_INTRA_UNSIGNED)
@@ -1733,7 +1733,7 @@ static void *init_class (xine_t *xine, void *visual_gen) {
       }
     }
   } /* outer for adaptor_num loop */
-  
+
 
   if (!xv_port) {
     xprintf (xine, XINE_VERBOSITY_LOG,
@@ -1743,13 +1743,13 @@ static void *init_class (xine_t *xine, void *visual_gen) {
     /* XvFreeAdaptorInfo (adaptor_info); this crashed on me (gb)*/
     XUnlockDisplay(display);
     return NULL;
-  } 
+  }
   else {
-    xprintf (xine, XINE_VERBOSITY_LOG, 
+    xprintf (xine, XINE_VERBOSITY_LOG,
 	     _("video_out_xvmc: using Xv port %ld from adaptor %s\n"
 	       "                for hardware colour space conversion and scaling\n"),
 	     xv_port, adaptor_info[adaptor_num].name);
-    
+
     if(IDCTaccel&XINE_VO_IDCT_ACCEL)
       xprintf (xine, XINE_VERBOSITY_LOG, _("                idct and motion compensation acceleration \n"));
     else if (IDCTaccel&XINE_VO_MOTION_ACCEL)
@@ -1761,7 +1761,7 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   }
 
   XUnlockDisplay(display);
-  
+
   this = (xvmc_class_t *) malloc (sizeof (xvmc_class_t));
 
   if (!this)

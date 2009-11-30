@@ -73,7 +73,7 @@ Conflicts: libxine1-all-plugins, libxine1-bin, libxine1-console, libxine1-ffmpeg
 Replaces: libxine1-all-plugins, libxine1-bin, libxine1-console, libxine1-ffmpeg, libxine1-gnome, libxine1-misc-plugins, libxine1-plugins, libxine1-x
 Provides: libxine1-all-plugins, libxine1-bin, libxine1-console, libxine1-ffmpeg, libxine1-gnome, libxine1-misc-plugins, libxine1-plugins, libxine1-x
 Description: the xine video/media player library, binary files
- This is the xine media player library (libxine). 
+ This is the xine media player library (libxine).
  .
  Libxine provides the complete infrastructure for a video/media player. It
  supports MPEG 1/2 and some AVI and Quicktime videos out of the box, so you
@@ -91,7 +91,7 @@ Priority: extra
 Architecture: any
 Depends: libxine1 (= ${Source-Version})
 Description: the xine video/media player library, debug data
- This is the xine media player library (libxine). 
+ This is the xine media player library (libxine).
  .
  Libxine provides the complete infrastructure for a video/media player. It
  supports MPEG 1/2 and some AVI and Quicktime videos out of the box, so you

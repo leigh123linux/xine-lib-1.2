@@ -47,7 +47,7 @@
 #  define SUPPORT_ATTRIBUTE_UNUSED 1
 #  define SUPPORT_ATTRIBUTE_CONST 1
 # endif
-  
+
 # if __GNUC__ >= 4
 #  define SUPPORT_ATTRIBUTE_VISIBILITY_DEFAULT 1
 #  if __ELF__

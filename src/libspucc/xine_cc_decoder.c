@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2000-2008 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * closed caption spu decoder. receive data by events. 
+ * closed caption spu decoder. receive data by events.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -47,7 +47,7 @@ typedef struct spucc_decoder_s {
   spu_decoder_t      spu_decoder;
 
   xine_stream_t     *stream;
-  
+
   /* closed captioning decoder state */
   cc_decoder_t *ccdec;
   /* true if ccdec has been initialized */
@@ -64,7 +64,7 @@ typedef struct spucc_decoder_s {
 
   /* events will be sent here */
   xine_event_queue_t *queue;
-  
+
 } spucc_decoder_t;
 
 
@@ -157,7 +157,7 @@ static void spucc_font_change(void *this_gen, xine_cfg_entry_t *value)
   spucc_class_t *this = (spucc_class_t *) this_gen;
   cc_config_t *cc_cfg = &this->cc_cfg;
   char *font;
-  
+
   if (strcmp(value->key, "subtitles.closedcaption.font") == 0)
     font = cc_cfg->font;
   else
@@ -176,7 +176,7 @@ static void spucc_num_change(void *this_gen, xine_cfg_entry_t *value)
   spucc_class_t *this = (spucc_class_t *) this_gen;
   cc_config_t *cc_cfg = &this->cc_cfg;
   int *num;
-  
+
   if (strcmp(value->key, "subtitles.closedcaption.font_size") == 0)
     num = &cc_cfg->font_size;
   else
@@ -200,7 +200,7 @@ static void spucc_register_cfg_vars(spucc_class_t *this,
 						_("Closed Captions are subtitles mostly meant "
 						  "to help the hearing impaired."),
 						0, spucc_cfg_enable_change, this);
-  
+
   cc_vars->cc_scheme = xine_cfg->register_enum(xine_cfg,
 					       "subtitles.closedcaption.scheme", 0,
 					       (char **)cc_schemes,
@@ -208,27 +208,27 @@ static void spucc_register_cfg_vars(spucc_class_t *this,
 					       _("Choose your favourite rendering of the closed "
 					         "captions."),
 					       10, spucc_cfg_scheme_change, this);
-  
-  copy_str(cc_vars->font, 
+
+  copy_str(cc_vars->font,
 	   xine_cfg->register_string(xine_cfg, "subtitles.closedcaption.font", "cc",
 				     _("standard closed captioning font"),
 				     _("Choose the font for standard closed captions text."),
 				     20, spucc_font_change, this),
 	   CC_FONT_MAX);
-  
+
   copy_str(cc_vars->italic_font,
 	   xine_cfg->register_string(xine_cfg, "subtitles.closedcaption.italic_font", "cci",
 				     _("italic closed captioning font"),
 				     _("Choose the font for italic closed captions text."),
 				     20, spucc_font_change, this),
 	   CC_FONT_MAX);
-  
+
   cc_vars->font_size = xine_cfg->register_num(xine_cfg, "subtitles.closedcaption.font_size",
 					      24,
 					      _("closed captioning font size"),
 					      _("Choose the font size for closed captions text."),
 					      10, spucc_num_change, this);
-  
+
   cc_vars->center = xine_cfg->register_bool(xine_cfg, "subtitles.closedcaption.center", 1,
 					    _("center-adjust closed captions"),
 					    _("When enabled, closed captions will be positioned "
@@ -238,7 +238,7 @@ static void spucc_register_cfg_vars(spucc_class_t *this,
 
 
 /* called when the video frame size changes */
-static void spucc_notify_frame_change(spucc_decoder_t *this, 
+static void spucc_notify_frame_change(spucc_decoder_t *this,
 				      int width, int height) {
 #ifdef LOG_DEBUG
   printf("spucc: new frame size: %dx%d\n", width, height);
@@ -255,14 +255,14 @@ static void spucc_notify_frame_change(spucc_decoder_t *this,
 static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
   spucc_decoder_t *this = (spucc_decoder_t *) this_gen;
   xine_event_t *event;
-  
+
   while ((event = xine_event_get(this->queue))) {
     switch (event->type) {
     case XINE_EVENT_FRAME_FORMAT_CHANGE:
       {
-        xine_format_change_data_t *frame_change = 
+        xine_format_change_data_t *frame_change =
           (xine_format_change_data_t *)event->data;
-        
+
         spucc_notify_frame_change(this, frame_change->width,
                                  frame_change->height);
       }
@@ -270,17 +270,17 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
     }
     xine_event_free(event);
   }
-  
+
   if (buf->decoder_flags & BUF_FLAG_PREVIEW) {
   } else {
-    
+
     if (this->cc_state.cc_cfg->config_version > this->config_version) {
       spucc_update_intrinsics(this);
       if (!this->cc_state.cc_cfg->cc_enabled)
 	spucc_do_close(this);
       this->config_version = this->cc_state.cc_cfg->config_version;
     }
-    
+
     if (this->cc_state.cc_cfg->cc_enabled) {
       if( !this->cc_open )
 	spucc_do_init (this);
@@ -290,7 +290,7 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
       }
     }
   }
-}  
+}
 
 static void spudec_reset (spu_decoder_t *this_gen) {
 }
@@ -327,7 +327,7 @@ static spu_decoder_t *spudec_open_plugin (spu_decoder_class_t *class, xine_strea
   this->cc_open = 0;
 
   cc_decoder_init();
-   
+
   return &this->spu_decoder;
 }
 
@@ -357,7 +357,7 @@ static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
 
   spucc_register_cfg_vars(this, xine->config);
   this->cc_cfg.config_version = 0;
-  
+
   return &this->spu_class;
 }
 
@@ -370,7 +370,7 @@ static const decoder_info_t spudec_info = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_SPU_DECODER, 16, "spucc", XINE_VERSION_CODE, &spudec_info, &init_spu_decoder_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

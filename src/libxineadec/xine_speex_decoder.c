@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -175,10 +175,10 @@ void read_metadata (speex_decoder_t *this, char * comments, int length)
       if ( !strncasecmp (speex_comment_keys[i].key, c,
 			 keylen) ) {
 	char meta_info[(len - keylen) + 1];
-	
+
 	lprintf ("known metadata %d %d\n",
 		 i, speex_comment_keys[i].xine_metainfo_index);
-	
+
 	strncpy(meta_info, &c[keylen], len-keylen);
 	_x_meta_info_set_utf8(this->stream, speex_comment_keys[i].xine_metainfo_index, meta_info);
       }
@@ -221,7 +221,7 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": invalid mode ID %u\n", modeID);
 	  return;
 	}
-	
+
 	spx_mode = (SpeexMode *) speex_mode_list[modeID];
 
 	if (spx_mode->bitstream_version != spx_header->mode_bitstream_version) {
@@ -243,7 +243,7 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	this->channels = spx_header->nb_channels;
 	if (this->channels == 2) {
 	  SpeexCallback callback;
-	
+
 	  callback.callback_id = SPEEX_INBAND_STEREO;
 	  callback.func = speex_std_stereo_request_handler;
 	  callback.data = &this->stereo;
@@ -252,7 +252,7 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
 	this->nframes = spx_header->frames_per_packet;
 	if (!this->nframes) this->nframes = 1;
-      
+
 	speex_decoder_ctl (this->st, SPEEX_GET_FRAME_SIZE, &this->frame_size);
 
 	speex_decoder_ctl (this->st, SPEEX_GET_BITRATE, &bitrate);
@@ -271,10 +271,10 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
       if (!this->header_count) {
         int mode = _x_ao_channels2mode(this->channels);
-	
+
 	if (!this->output_open) {
 	  this->output_open =
-	    (this->stream->audio_out->open) (this->stream->audio_out, 
+	    (this->stream->audio_out->open) (this->stream->audio_out,
 					  this->stream,
 					  16,
 					  this->rate,
@@ -283,7 +283,7 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	}
       }
     }
-    
+
   } else if (this->output_open) {
     int j;
 
@@ -322,9 +322,9 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       audio_buffer->vpts       = this->pts;
       this->pts=0;
       audio_buffer->num_frames = this->frame_size;
-	
+
       this->stream->audio_out->put_buffer (this->stream->audio_out, audio_buffer, this->stream);
-	
+
       buf->pts=0;
 
     }
@@ -336,20 +336,20 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
 static void speex_dispose (audio_decoder_t *this_gen) {
 
-  speex_decoder_t *this = (speex_decoder_t *) this_gen; 
-  
+  speex_decoder_t *this = (speex_decoder_t *) this_gen;
+
   if (this->st) {
     speex_decoder_destroy (this->st);
   }
   speex_bits_destroy (&this->bits);
 
-  if (this->output_open) 
+  if (this->output_open)
     this->stream->audio_out->close (this->stream->audio_out, this->stream);
 
   free (this_gen);
 }
 
-static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, 
+static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
 				     xine_stream_t *stream) {
 
   speex_decoder_t *this ;
@@ -395,7 +395,7 @@ static void dispose_class (audio_decoder_class_t *this) {
 static void *init_plugin (xine_t *xine, void *data) {
 
   speex_class_t *this;
-  
+
   this = (speex_class_t *) calloc(1, sizeof(speex_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
@@ -406,7 +406,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   return this;
 }
 
-static uint32_t audio_types[] = { 
+static uint32_t audio_types[] = {
   BUF_AUDIO_SPEEX, 0
  };
 
@@ -416,7 +416,7 @@ static const decoder_info_t dec_info_audio = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_AUDIO_DECODER, 15, "speex", XINE_VERSION_CODE, &dec_info_audio, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

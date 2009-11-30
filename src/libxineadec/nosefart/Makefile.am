@@ -13,7 +13,7 @@ libnosefart_la_SOURCES = \
 	memguard.c \
 	nes6502.c \
 	nsf.c \
-	vrcvisnd.c	
+	vrcvisnd.c
 
 libnosefart_la_CFLAGS = $(VISIBILITY_FLAG) -DNSF_PLAYER -fno-strict-aliasing
 

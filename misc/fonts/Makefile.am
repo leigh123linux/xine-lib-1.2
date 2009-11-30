@@ -37,7 +37,7 @@ font_DATA = \
 	serif-24.xinefont.gz \
 	serif-32.xinefont.gz \
 	serif-48.xinefont.gz \
-	serif-64.xinefont.gz 
+	serif-64.xinefont.gz
 
 #
 # font used for osd

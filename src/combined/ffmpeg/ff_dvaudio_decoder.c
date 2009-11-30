@@ -1,25 +1,25 @@
 /*
  * Copyright (C) 2005 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * dv audio decoder based on patch by Dan Dennedy <dan@dennedy.org>
  */
- 
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -246,29 +246,29 @@ static void dvaudio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) 
   int out;
   audio_buffer_t *audio_buffer;
   int bytes_to_send;
-  
+
   if (buf->decoder_flags & BUF_FLAG_PREVIEW)
     return;
-      
+
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) {
     this->buf = calloc(1, AUDIOBUFSIZE);
     this->bufsize = AUDIOBUFSIZE;
     this->size = 0;
     this->decode_buffer = calloc(1, MAXFRAMESIZE);
-    
+
     this->audio_sample_rate = buf->decoder_info[1];
     this->audio_bits = buf->decoder_info[2];
     this->audio_channels = buf->decoder_info[3];
-    
+
     _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, "DV Audio");
-    
+
     this->decoder_ok = 1;
-   
+
     return;
   }
-  
+
   if (this->decoder_ok && !(buf->decoder_flags & (BUF_FLAG_HEADER|BUF_FLAG_SPECIAL))) {
-    
+
     if (!this->output_open) {
       this->output_open = (this->stream->audio_out->open) (this->stream->audio_out,
         this->stream, this->audio_bits, this->audio_sample_rate,
@@ -278,11 +278,11 @@ static void dvaudio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) 
     /* if the audio still isn't open, bail */
     if (!this->output_open)
       return;
-      
+
     if( this->size + buf->size > this->bufsize ) {
       this->bufsize = this->size + 2 * buf->size;
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-              _("dvaudio: increasing buffer to %d to avoid overflow.\n"), 
+              _("dvaudio: increasing buffer to %d to avoid overflow.\n"),
               this->bufsize);
       this->buf = realloc( this->buf, this->bufsize );
     }
@@ -300,14 +300,14 @@ static void dvaudio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) 
           bytes_consumed = dv_frame_profile(&this->buf[offset])->frame_size;
         else
           bytes_consumed = decode_buffer_size;
-        
+
         /* dispatch the decoded audio */
         out = 0;
         while (out < decode_buffer_size) {
-          audio_buffer = 
+          audio_buffer =
             this->stream->audio_out->get_buffer (this->stream->audio_out);
           if (audio_buffer->mem_size == 0) {
-            xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+            xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
                      "dvaudio: Help! Allocated audio buffer with nothing in it!\n");
             return;
           }
@@ -343,7 +343,7 @@ static void dvaudio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) 
 
 static void dvaudio_reset (audio_decoder_t *this_gen) {
   dvaudio_decoder_t *this = (dvaudio_decoder_t *) this_gen;
-  
+
   this->size = 0;
 }
 
@@ -353,7 +353,7 @@ static void dvaudio_discontinuity (audio_decoder_t *this_gen) {
 static void dvaudio_dispose (audio_decoder_t *this_gen) {
 
   dvaudio_decoder_t *this = (dvaudio_decoder_t *) this_gen;
-  
+
   if (this->output_open)
     this->stream->audio_out->close (this->stream->audio_out, this->stream);
   this->output_open = 0;
@@ -381,7 +381,7 @@ static audio_decoder_t *dvaudio_open_plugin (audio_decoder_class_t *class_gen, x
   this->buf = NULL;
   this->size = 0;
   this->decoder_ok = 0;
-  
+
   return &this->audio_decoder;
 }
 
@@ -411,7 +411,7 @@ static void *init_dvaudio_plugin (xine_t *xine, void *data) {
   return this;
 }
 
-static uint32_t supported_audio_types[] = { 
+static uint32_t supported_audio_types[] = {
   BUF_AUDIO_DV,
   0
 };
@@ -420,13 +420,13 @@ static const decoder_info_t dec_info_dvaudio = {
   supported_audio_types,   /* supported types */
   5                        /* priority        */
 };
-    
+
 /*
  * exported plugin catalog entry
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_AUDIO_DECODER, 15, "dvaudio", XINE_VERSION_CODE, &dec_info_dvaudio, init_dvaudio_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

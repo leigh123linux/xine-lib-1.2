@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -68,15 +68,15 @@ typedef struct {
   input_plugin_t   input_plugin;
 
   xine_stream_t   *stream;
-  
+
   int              fh;
   char            *mrl;
 
-  nbc_t           *nbc; 
+  nbc_t           *nbc;
 
   off_t            curpos;
   off_t            contentlength;
-    
+
   char             buf[BUFSIZE];
   char             proxybuf[BUFSIZE];
 
@@ -84,7 +84,7 @@ typedef struct {
   char             proxyauth[BUFSIZE];
 
   char            *mime_type;
-  
+
   char            *proto;
   char            *user;
   char            *password;
@@ -93,10 +93,10 @@ typedef struct {
   char            *uri;
 
   const char      *user_agent;
-  
+
   char             preview[MAX_PREVIEW_SIZE];
   off_t            preview_size;
-  
+
   /* Last.FM streaming server */
   unsigned char    is_lastfm;
 
@@ -112,7 +112,7 @@ typedef struct {
   /* scratch buffer for forward seeking */
 
   char             seek_buf[BUFSIZE];
-  
+
 } http_input_plugin_t;
 
 typedef struct {
@@ -140,7 +140,7 @@ static void proxy_host_change_cb (void *this_gen, xine_cfg_entry_t *cfg) {
 
 static void proxy_port_change_cb(void *this_gen, xine_cfg_entry_t *cfg) {
   http_input_class_t *this = (http_input_class_t *)this_gen;
-  
+
   this->proxyport = cfg->num_value;
 }
 
@@ -172,17 +172,17 @@ static int _x_use_proxy(http_input_class_t *this, const char *host) {
   struct hostent *info;
   size_t i = 0, host_len, noprox_len;
 
-  /* 
-   * get full host name 
+  /*
+   * get full host name
    */
   if ((info = gethostbyname(host)) == NULL) {
-    xine_log(this->xine, XINE_LOG_MSG, 
+    xine_log(this->xine, XINE_LOG_MSG,
         _("input_http: gethostbyname(%s) failed: %s\n"), host,
         hstrerror(h_errno));
     return 1;
   }
   if (!info->h_name) return 1;
-  
+
   if ( info->h_addr_list[0] ) {
     /* \177\0\0\1 is the *octal* representation of 127.0.0.1 */
     if ( info->h_addrtype == AF_INET && !memcmp(info->h_addr_list[0], "\177\0\0\1", 4) ) {
@@ -241,11 +241,11 @@ static int http_plugin_basicauth (const char *user, const char *password, char* 
   char        *dptr;
   size_t       count;
   int          enclen;
-  
+
   count = asprintf(&tmp, "%s:%s", user, (password != NULL) ? password : "");
 
   enclen = ((count + 2) / 3 ) * 4 + 1;
-  
+
   if (len < enclen)
     return -1;
 
@@ -260,29 +260,29 @@ static int http_plugin_basicauth (const char *user, const char *password, char* 
     sptr += 3;
     dptr += 4;
   }
-  
+
   if (count > 0) {
     dptr[0] = enctable[(sptr[0] & 0xFC) >> 2];
     dptr[1] = enctable[(sptr[0] & 0x3) << 4];
     dptr[2] = '=';
-    
+
     if (count > 1) {
       dptr[1] = enctable[((sptr[0] & 0x3) << 4) | ((sptr[1] & 0xF0) >> 4)];
       dptr[2] = enctable[(sptr[1] & 0x0F) << 2];
     }
-    
+
     dptr[3] = '=';
     dptr += 4;
   }
-  
+
   dptr[0] = '\0';
-  
+
   free(tmp);
   return 0;
 }
 
 static int http_plugin_read_metainf (http_input_plugin_t *this) {
- 
+
   char metadata_buf[255 * 16];
   unsigned char len = 0;
   char *title_end;
@@ -290,19 +290,19 @@ static int http_plugin_read_metainf (http_input_plugin_t *this) {
   const char *radio;
   xine_event_t uevent;
   xine_ui_data_t data;
-    
+
   /* get the length of the metadata */
   if (_x_io_tcp_read (this->stream, this->fh, (char*)&len, 1) != 1)
     return 0;
 
   lprintf ("http_plugin_read_metainf: len=%d\n", len);
-  
+
   if (len > 0) {
     if (_x_io_tcp_read (this->stream, this->fh, metadata_buf, len * 16) != (len * 16))
       return 0;
-  
+
     metadata_buf[len * 16] = '\0';
-    
+
     lprintf ("http_plugin_read_metainf: %s\n", metadata_buf);
 
     /* Extract the title of the current song */
@@ -315,13 +315,13 @@ static int http_plugin_read_metainf (http_input_plugin_t *this) {
       }
       if ((title_end = strstr(songtitle, terminator))) {
         *title_end = '\0';
-        
+
         if ((!this->shoutcast_songtitle ||
              (strcmp(songtitle, this->shoutcast_songtitle))) &&
             (strlen(songtitle) > 0)) {
-  
+
           lprintf ("http_plugin_read_metainf: songtitle: %s\n", songtitle);
-          
+
           if (this->shoutcast_songtitle)
             free(this->shoutcast_songtitle);
           this->shoutcast_songtitle = strdup(songtitle);
@@ -358,7 +358,7 @@ static off_t http_plugin_read_int (http_input_plugin_t *this,
                                    char *buf, off_t total) {
   int read_bytes = 0;
   int nlen;
-  
+
   lprintf("total=%"PRId64"\n", total);
   while (total) {
     nlen = total;
@@ -373,7 +373,7 @@ static off_t http_plugin_read_int (http_input_plugin_t *this,
       if (!http_plugin_read_metainf(this))
         goto error;
       this->shoutcast_pos = 0;
-      
+
     } else {
       nlen = _x_io_tcp_read (this->stream, this->fh, &buf[read_bytes], nlen);
       if (nlen < 0)
@@ -400,7 +400,7 @@ static off_t http_plugin_read_int (http_input_plugin_t *this,
 
       this->shoutcast_pos += nlen;
     }
-    
+
     /* end of file */
     if (nlen == 0)
       return read_bytes;
@@ -408,9 +408,9 @@ static off_t http_plugin_read_int (http_input_plugin_t *this,
     total               -= nlen;
   }
   return read_bytes;
-  
+
 error:
-  if (!_x_action_pending(this->stream)) 
+  if (!_x_action_pending(this->stream))
     _x_message (this->stream, XINE_MSG_READ_ERROR, this->host, NULL);
   xine_log (this->stream->xine, XINE_LOG_MSG, _("input_http: read error %d\n"), errno);
   return read_bytes;
@@ -445,7 +445,7 @@ static off_t http_plugin_read (input_plugin_t *this_gen,
   if (n > 0) {
     int read_bytes;
     read_bytes = http_plugin_read_int (this, &buf[num_bytes], n);
-    
+
     if (read_bytes < 0)
       return read_bytes;
 
@@ -463,7 +463,7 @@ static int resync_nsv(http_input_plugin_t *this) {
 
   lprintf("resyncing NSV stream\n");
   while ((pos < 3) && (read_bytes < (1024*1024))) {
-  
+
     if (http_plugin_read_int(this, (char*)&c, 1) != 1)
       return 1;
 
@@ -495,7 +495,7 @@ static int resync_nsv(http_input_plugin_t *this) {
   if (pos == 3) {
     lprintf("NSV stream resynced\n");
   } else {
-    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
       "http: cannot resync NSV stream!\n");
     return 0;
   }
@@ -580,10 +580,10 @@ static off_t http_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin
       if( this->curpos <= this->preview_size )
         this->curpos = offset;
       else
-        xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+        xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
           "http: cannot seek back! (%" PRIdMAX " > %" PRIdMAX ")\n",
           (intmax_t)this->curpos, (intmax_t)offset);
-      
+
     } else {
       offset -= this->curpos;
 
@@ -632,7 +632,7 @@ static void http_plugin_dispose (input_plugin_t *this_gen ) {
     close(this->fh);
     this->fh = -1;
   }
-  
+
   if (this->nbc) {
     nbc_close (this->nbc);
     this->nbc = NULL;
@@ -652,7 +652,7 @@ static void report_progress (xine_stream_t *stream, int p) {
 
   xine_event_t             event;
   xine_progress_data_t     prg;
-  
+
   prg.description = _("Connecting HTTP server...");
   prg.percent = p;
 
@@ -677,7 +677,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 
   mime_type[0] = 0;
   use_proxy = this_class->proxyhost && strlen(this_class->proxyhost);
-  
+
   if (use_proxy) {
     if (this_class->proxyuser && strlen(this_class->proxyuser)) {
       if (http_plugin_basicauth (this_class->proxyuser,
@@ -688,8 +688,8 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
       }
     }
   }
-  
-  
+
+
   if (!_x_parse_url(this->mrl, &this->proto, &this->host, &this->port,
                     &this->user, &this->password, &this->uri,
                     &this->user_agent)) {
@@ -700,14 +700,14 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 
   if (this->port == 0)
     this->port = DEFAULT_HTTP_PORT;
-  
+
   if (this->user && strlen(this->user)) {
     if (http_plugin_basicauth (this->user, this->password, this->auth, BUFSIZE)) {
       _x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "basic auth error", NULL);
       return -1;
     }
   }
-  
+
   if (this_class->proxyport == 0)
     proxyport = DEFAULT_HTTP_PORT;
   else
@@ -721,10 +721,10 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
     printf ("input_http: password : >%s<\n", this->password);
     printf ("input_http: path     : >%s<\n", this->uri);
 
-    
+
     if (use_proxy)
       printf (" via proxy >%s:%d<", this_class->proxyhost, proxyport);
-    
+
     printf ("\n");
   }
 
@@ -734,13 +734,13 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
     this->fh = _x_io_tcp_connect (this->stream, this_class->proxyhost, proxyport);
   else
     this->fh = _x_io_tcp_connect (this->stream, this->host, this->port);
-  
+
   this->curpos = 0;
-  
+
   if (this->fh == -1)
     return -2;
 
-  {  
+  {
     uint32_t         timeout, progress;
     xine_cfg_entry_t cfgentry;
     if (xine_config_lookup_entry (this->stream->xine, "media.network.timeout", &cfgentry)) {
@@ -770,17 +770,17 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
       buflen = snprintf (this->buf, BUFSIZE, "GET http://%s%s HTTP/1.0\015\012",
 			 this->host, this->uri);
     }
-  } 
+  }
   else
     buflen = snprintf (this->buf, BUFSIZE, "GET %s HTTP/1.0\015\012", this->uri);
-  
+
   if (this->port != DEFAULT_HTTP_PORT)
     buflen += snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s:%d\015\012",
 			this->host, this->port);
   else
     buflen += snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s\015\012",
 			this->host);
-  
+
   if (this_class->proxyuser && strlen(this_class->proxyuser)) {
     buflen += snprintf (this->buf + buflen, BUFSIZE - buflen,
 			"Proxy-Authorization: Basic %s\015\012", this->proxyauth);
@@ -789,7 +789,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
     buflen += snprintf (this->buf + buflen, BUFSIZE - buflen,
 			"Authorization: Basic %s\015\012", this->auth);
   }
-  
+
   buflen += snprintf(this->buf + buflen, BUFSIZE - buflen,
 		     "User-Agent: %s%sxine/%s\015\012"
 		     "Accept: */*\015\012"
@@ -821,14 +821,14 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 
       this->buf[len] = '\0';
       len--;
-      
+
       if (len >= 0 && this->buf[len] == '\015') {
 	this->buf[len] = '\0';
 	len--;
       }
 
       linenum++;
-      
+
       lprintf ("answer: >%s<\n", this->buf);
 
       if (linenum == 1) {
@@ -844,13 +844,13 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 		    &httpcode, httpstatus) != 2)
 	   ) {
 	    _x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "invalid http answer", NULL);
-	    xine_log (this->stream->xine, XINE_LOG_MSG, 
+	    xine_log (this->stream->xine, XINE_LOG_MSG,
 		      _("input_http: invalid http answer\n"));
 	    return -6;
 	}
 
 	if (httpcode >= 300 && httpcode < 400) {
-      	  xine_log (this->stream->xine, XINE_LOG_MSG, 
+	  xine_log (this->stream->xine, XINE_LOG_MSG,
 		    _("input_http: 3xx redirection: >%d %s<\n"),
 		    httpcode, httpstatus);
 	} else if (httpcode == 404) {
@@ -868,7 +868,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 	} else if (httpcode < 200 || httpcode >= 300) {
 	  _x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "http status not 2xx: ",
 	               httpstatus, NULL);
-      	  xine_log (this->stream->xine, XINE_LOG_MSG,
+	  xine_log (this->stream->xine, XINE_LOG_MSG,
 		    _("input_http: http status not 2xx: >%d %s<\n"),
 		    httpcode, httpstatus);
 	  return -9;
@@ -876,18 +876,18 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
       } else {
 	if (this->contentlength == 0) {
 	  intmax_t contentlength;
-	  
+
 	  if (sscanf(this->buf, "Content-Length: %" SCNdMAX , &contentlength) == 1) {
-      	    xine_log (this->stream->xine, XINE_LOG_MSG, 
+	    xine_log (this->stream->xine, XINE_LOG_MSG,
               _("input_http: content length = %" PRIdMAX " bytes\n"),
               contentlength);
 	    this->contentlength = (off_t)contentlength;
 	  }
         }
-	
+
 	if (!strncasecmp(this->buf, "Location: ", 10)) {
 	  char *href = (this->buf + 10);
-	  
+
 	  lprintf ("trying to open target of redirection: >%s<\n", href);
 
           href = _x_canonicalise_url (this->mrl, href);
@@ -915,13 +915,13 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
                            (this->buf + sizeof(TAG_ICY_NAME) - 1 +
                             (*(this->buf + sizeof(TAG_ICY_NAME) - 1) == ' ')));
         }
-        
+
         if (!strncasecmp(this->buf, TAG_ICY_GENRE, sizeof(TAG_ICY_GENRE) - 1)) {
           _x_meta_info_set(this->stream, XINE_META_INFO_GENRE,
                           (this->buf + sizeof(TAG_ICY_GENRE) - 1 +
                            (*(this->buf + sizeof(TAG_ICY_GENRE) - 1) == ' ')));
         }
-        
+
         /* icy-notice1 is always the same */
         if (!strncasecmp(this->buf, TAG_ICY_NOTICE2, sizeof(TAG_ICY_NOTICE2) - 1)) {
           char *end;
@@ -932,14 +932,14 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
                            (this->buf + sizeof(TAG_ICY_NOTICE2) - 1 +
                             (*(this->buf + sizeof(TAG_ICY_NOTICE2) - 1) == ' ')));
         }
-  
+
         /* metadata interval (in byte) */
         if (sscanf(this->buf, TAG_ICY_METAINT"%d", &this->shoutcast_metaint) == 1) {
           lprintf("shoutcast_metaint: %d\n", this->shoutcast_metaint);
           this->shoutcast_mode = 1;
           this->shoutcast_pos = 0;
         }
-  
+
         /* content type */
         if (!strncasecmp(this->buf, TAG_CONTENT_TYPE, sizeof(TAG_CONTENT_TYPE) - 1)) {
           const char *type = this->buf + sizeof (TAG_CONTENT_TYPE) - 1;
@@ -956,7 +956,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 	  this->is_lastfm = 1;
 	}
       }
- 
+
       if (len == -1)
 	done = 1;
       else
@@ -989,7 +989,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
       *newline = '\0';
 
       lprintf("mpegurl pointing to %s\n", buf);
-      
+
       href = _x_canonicalise_url (this->mrl, buf);
       free(this->mrl);
       this->mrl = href;
@@ -1004,7 +1004,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   if (this->is_nsv) {
     if (!resync_nsv(this))
       return -11;
-    
+
     /* the first 3 chars are "NSV" */
     this->preview_size = http_plugin_read_int (this, this->preview + 3, MAX_PREVIEW_SIZE - 3);
   } else {
@@ -1015,12 +1015,12 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
     xine_log (this->stream->xine, XINE_LOG_MSG, _("input_http: read error %d\n"), errno);
     return -12;
   }
-  
+
   lprintf("preview_size=%"PRId64"\n", this->preview_size);
   this->curpos = 0;
   if (*mime_type)
     this->mime_type = strdup (mime_type);
-  
+
   return 1;
 }
 
@@ -1031,8 +1031,8 @@ static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_str
 				    const char *mrl) {
   /* http_input_class_t  *cls = (http_input_class_t *) cls_gen;*/
   http_input_plugin_t *this;
-  
-  if (strncasecmp (mrl, "http://", 7) && 
+
+  if (strncasecmp (mrl, "http://", 7) &&
       strncasecmp (mrl, "unsv://", 7) &&
       strncasecmp (mrl, "peercast://pls/", 15) &&
       !_x_url_user_agent (mrl) /* user agent hacks */) {
@@ -1042,14 +1042,14 @@ static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_str
 
   if (!strncasecmp (mrl, "peercast://pls/", 15)) {
     asprintf (&this->mrl, "http://127.0.0.1:7144/stream/%s", mrl+15);
-  } else {    
+  } else {
     this->mrl = strdup (mrl);
   }
-  
+
   this->stream = stream;
   this->fh     = -1;
   this->nbc    = nbc_init (this->stream);
-  
+
   this->input_plugin.open              = http_plugin_open;
   this->input_plugin.get_capabilities  = http_plugin_get_capabilities;
   this->input_plugin.read              = http_plugin_read;
@@ -1076,7 +1076,7 @@ static const char *http_class_get_identifier (input_class_t *this_gen) {
 
 static void http_class_dispose (input_class_t *this_gen) {
   http_input_class_t  *this = (http_input_class_t *) this_gen;
-  
+
   if(this->proxyhost_env)
     free(this->proxyhost_env);
 
@@ -1102,23 +1102,23 @@ static void *init_class (xine_t *xine, void *data) {
   this->input_class.dispose            = http_class_dispose;
   this->input_class.eject_media        = NULL;
 
-  /* 
-   * honour http_proxy envvar 
+  /*
+   * honour http_proxy envvar
    */
   if((proxy_env = getenv("http_proxy")) && *proxy_env) {
     int    proxy_port = DEFAULT_HTTP_PORT;
     char  *p;
-    
+
     if(!strncmp(proxy_env, "http://", 7))
       proxy_env += 7;
 
     this->proxyhost_env = strdup(proxy_env);
-    
+
     if((p = strrchr(this->proxyhost_env, ':')) && (strlen(p) > 1)) {
       *p++ = '\0';
       proxy_port = (int) strtol(p, &p, 10);
     }
-    
+
     this->proxyport_env = proxy_port;
   }
   else
@@ -1127,7 +1127,7 @@ static void *init_class (xine_t *xine, void *data) {
   /*
    * proxy settings
    */
-  this->proxyhost = config->register_string(config, 
+  this->proxyhost = config->register_string(config,
 					    "media.network.http_proxy_host", proxy_env ? this->proxyhost_env : "",
 					    _("HTTP proxy host"), _("The hostname of the HTTP proxy."), 10,
 					    proxy_host_change_cb, (void *) this);
@@ -1135,13 +1135,13 @@ static void *init_class (xine_t *xine, void *data) {
 					 "media.network.http_proxy_port", proxy_env ? this->proxyport_env : DEFAULT_HTTP_PORT,
 					 _("HTTP proxy port"), _("The port number of the HTTP proxy."), 10,
 					 proxy_port_change_cb, (void *) this);
-  
+
   /* registered entries could be empty. Don't ignore envvar */
   if(!strlen(this->proxyhost) && (proxy_env && strlen(proxy_env))) {
     config->update_string(config, "media.network.http_proxy_host", this->proxyhost_env);
     config->update_num(config, "media.network.http_proxy_port", this->proxyport_env);
   }
-  
+
   this->proxyuser = config->register_string(config,
 					    "media.network.http_proxy_user", "", _("HTTP proxy username"),
 					    _("The user name for the HTTP proxy."), 10,
@@ -1154,7 +1154,7 @@ static void *init_class (xine_t *xine, void *data) {
 					      "media.network.http_no_proxy", "", _("Domains for which to ignore the HTTP proxy"),
 					      _("A comma-separated list of domain names for which the proxy is to be ignored.\nIf a domain name is prefixed with '=' then it is treated as a host name only (full match required)."), 10,
 					      no_proxy_list_change_cb, (void *) this);
-  
+
   return this;
 }
 
@@ -1163,7 +1163,7 @@ static void *init_class (xine_t *xine, void *data) {
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 17, "http", XINE_VERSION_CODE, NULL, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

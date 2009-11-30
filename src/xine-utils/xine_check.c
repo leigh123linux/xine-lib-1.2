@@ -114,7 +114,7 @@ static xine_health_check_t* _x_health_check_kernel (xine_health_check_t* hc) {
     hc->status = XINE_HEALTH_CHECK_OK;
   }
   else {
-    set_hc_result (hc, XINE_HEALTH_CHECK_FAIL, 
+    set_hc_result (hc, XINE_HEALTH_CHECK_FAIL,
 		   "FAILED - Could not get kernel information.");
   }
   return hc;
@@ -129,7 +129,7 @@ static xine_health_check_t* _x_health_check_mtrr (xine_health_check_t* hc) {
 
   fd = fopen("/proc/mtrr", "r");
   if (!fd) {
-    set_hc_result (hc, XINE_HEALTH_CHECK_FAIL, 
+    set_hc_result (hc, XINE_HEALTH_CHECK_FAIL,
 		   "FAILED: mtrr is not enabled.");
   } else {
     hc->status = XINE_HEALTH_CHECK_OK;
@@ -143,7 +143,7 @@ static xine_health_check_t* _x_health_check_mtrr (xine_health_check_t* hc) {
   hc->title       = "Check for MTRR support";
   hc->explanation = "Don't worry about this one";
 
-  set_hc_result (hc, XINE_HEALTH_CHECK_OK, 
+  set_hc_result (hc, XINE_HEALTH_CHECK_OK,
 		 "mtrr does not apply on this hw platform.");
   return hc;
 }
@@ -162,12 +162,12 @@ static xine_health_check_t* _x_health_check_cdrom (xine_health_check_t* hc) {
     set_hc_result (hc, XINE_HEALTH_CHECK_FAIL, "FAILED - could not access cdrom: %s\n", hc->cdrom_dev);
     return hc;
   }
-  
+
   if ((cdrom_st.st_mode & S_IFMT) != S_IFBLK) {
     set_hc_result (hc, XINE_HEALTH_CHECK_FAIL, "FAILED - %s is not a block device.\n", hc->cdrom_dev);
     return hc;
   }
-  
+
   if ( (fd = open(hc->cdrom_dev, O_RDWR)) < 0) {
     switch (errno) {
     case EACCES:
@@ -180,7 +180,7 @@ static xine_health_check_t* _x_health_check_cdrom (xine_health_check_t* hc) {
     }
   } else
     close(fd);
-    
+
   hc->status = XINE_HEALTH_CHECK_OK;
   return hc;
 }
@@ -279,7 +279,7 @@ static xine_health_check_t* _x_health_check_x (xine_health_check_t* hc) {
   char* env_display = getenv("DISPLAY");
 
   hc->title       = "Check for X11 environment";
-  hc->explanation = "Make sure you're running X11, if this is an ssh connection,\n" 
+  hc->explanation = "Make sure you're running X11, if this is an ssh connection,\n"
                     "make sure you have X11 forwarding enabled (ssh -X ...)";
 
   if (strlen (env_display) == 0) {
@@ -341,7 +341,7 @@ static xine_health_check_t* _x_health_check_xv (xine_health_check_t* hc) {
     dlclose(x11_handle);
     return hc;
   }
-  
+
   dlerror(); /* clear error code */
   xv_handle = dlopen(LIBXV_SO, RTLD_LAZY);
   if(!xv_handle) {
@@ -362,7 +362,7 @@ static xine_health_check_t* _x_health_check_xv (xine_health_check_t* hc) {
     dlclose(xv_handle);
     return hc;
   }
-  
+
   /* Get reference to XvQueryAdaptors */
   xvqueryadaptors = dlsym(xv_handle,"XvQueryAdaptors");
   if((err = dlerror()) != NULL) {
@@ -372,7 +372,7 @@ static xine_health_check_t* _x_health_check_xv (xine_health_check_t* hc) {
     dlclose(xv_handle);
     return hc;
   }
-  
+
   /* Get reference to XvListImageFormats */
   xvlistimageformats = dlsym(xv_handle,"XvListImageFormats");
   if((err = dlerror()) != NULL) {
@@ -382,7 +382,7 @@ static xine_health_check_t* _x_health_check_xv (xine_health_check_t* hc) {
     dlclose(xv_handle);
     return hc;
   }
-  
+
   if(!(dpy = (*xopendisplay)(disname))) {
 
     if (!disname) {
@@ -445,7 +445,7 @@ static xine_health_check_t* _x_health_check_xv (xine_health_check_t* hc) {
 
   dlclose(x11_handle);
   dlclose(xv_handle);
-  
+
   return hc;
 #else
   hc->title       = "Check for MIT Xv extension";
@@ -501,7 +501,7 @@ xine_health_check_t* xine_health_check (xine_health_check_t* hc, int check_num) 
   hc->title       = "xine health check not supported on this platform";
   hc->explanation = "contact the xine-devel mailing list if you'd like to\n"
                     "contribute code for your platform.";
-  set_hc_result(hc, XINE_HEALTH_CHECK_NO_SUCH_CHECK, 
+  set_hc_result(hc, XINE_HEALTH_CHECK_NO_SUCH_CHECK,
 		"xine health check not supported on the OS.\n");
   return hc;
 }

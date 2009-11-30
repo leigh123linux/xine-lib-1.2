@@ -160,7 +160,7 @@ static int open_dts_file(demux_dts_t *this) {
 	break;
     }
     /* 14 bits and little endian bitstream */
-    else if ((syncword == 0xff1f00e8) && 
+    else if ((syncword == 0xff1f00e8) &&
              ((peak[i] & 0xf0) == 0xf0) && (peak[i+1] == 0x07)) {
 	dts_version = 3;
 	break;
@@ -218,8 +218,8 @@ static int open_dts_file(demux_dts_t *this) {
     {
     case 0: /* BE16 */
     case 1: /* LE16 */
-    	this->frame_size = fsize * 8 / 16 * 2;
-    	break;
+	this->frame_size = fsize * 8 / 16 * 2;
+	break;
     case 2: /* BE14 */
     case 3: /* LE14 */
 	this->frame_size = fsize * 8 / 14 * 2;
@@ -250,7 +250,7 @@ static int demux_dts_send_chunk (demux_plugin_t *this_gen) {
   int frame_number;
   uint32_t blocksize;
 
-  current_stream_pos = this->input->get_current_pos(this->input) - 
+  current_stream_pos = this->input->get_current_pos(this->input) -
                        this->data_start;
   frame_number = current_stream_pos / this->frame_size;
 
@@ -274,7 +274,7 @@ static int demux_dts_send_chunk (demux_plugin_t *this_gen) {
     }
   } else {
     buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
-    buf->size = this->input->read(this->input, buf->content, 
+    buf->size = this->input->read(this->input, buf->content,
                                   this->frame_size);
   }
 
@@ -286,7 +286,7 @@ static int demux_dts_send_chunk (demux_plugin_t *this_gen) {
 
   buf->type = BUF_AUDIO_DTS;
   if( this->input->get_length (this->input) )
-    buf->extra_info->input_normpos = (int)( (double) current_stream_pos * 
+    buf->extra_info->input_normpos = (int)( (double) current_stream_pos *
         65535 / (this->input->get_length(this->input) - this->data_start) );
   buf->extra_info->input_time = audio_pts / 90;
   buf->pts = audio_pts;
@@ -360,7 +360,7 @@ static int demux_dts_seek (demux_plugin_t *this_gen,
   if (start_time) {
     int length = demux_dts_get_stream_length (this_gen);
     if (length != 0) {
-      start_pos = start_time * 
+      start_pos = start_time *
           (this->input->get_length(this->input) - this->data_start) / length;
     }
   }

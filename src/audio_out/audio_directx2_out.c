@@ -70,14 +70,14 @@
 
 /*
  * If GAP_TOLERANCE is lower than AO_MAX_GAP, xine will
- * try to smooth playback without skipping frames or 
+ * try to smooth playback without skipping frames or
  * inserting silence.
  */
 #define GAP_TOLERANCE        (AO_MAX_GAP/3)
 
-/* 
- * buffer size in miliseconds 
- * (one second takes 11-192 KB) 
+/*
+ * buffer size in miliseconds
+ * (one second takes 11-192 KB)
  */
 #define BUFFER_MS 1000
 
@@ -86,7 +86,7 @@
  */
 #define BUFFER_MIN_MS 200
 
-/* 
+/*
  * base power factor for volume remapping
  */
 #define FACTOR 60.0
@@ -117,8 +117,8 @@ typedef struct {
   LPDIRECTSOUNDBUFFER dsbuffer;    /* DirectSound buffer */
 
   size_t buffer_size;              /* size of the buffer */
-  size_t write_pos;                /* positition in ring buffer for writing*/ 
-	
+  size_t write_pos;                /* positition in ring buffer for writing*/
+
   int status;                      /* current status of the driver */
   int paused;                      /* paused mode */
   int finished;                    /* driver finished */
@@ -356,7 +356,7 @@ static int audio_flush(dx2_driver_t *this) {
 }
 
 
-/* 
+/*
  * set the volume
  *
  * DirecSound can only lower the volume by software way.
@@ -403,7 +403,7 @@ static int audio_fill(dx2_driver_t *this, char *data, size_t size) {
 
   // this->read_size += size;
   this->write_pos = (this->write_pos + size ) % this->buffer_size;
-  lprintf("size %u, write_pos %u\n", size, this->write_pos);	
+  lprintf("size %u, write_pos %u\n", size, this->write_pos);
 
   if ((err = IDirectSoundBuffer_Unlock(this->dsbuffer, ptr1, size1, ptr2, size2)) != DS_OK) {
     audio_error(this, err, _("Couldn't unlock direct sound buffer"));
@@ -467,8 +467,8 @@ static int test_capability(LPDIRECTSOUNDBUFFER buffer, uint32_t bits, uint32_t r
 }
 
 
-/* 
- * test capabilities of driver before opening 
+/*
+ * test capabilities of driver before opening
  *
  * Passed only 8 bit and 16 bit with mono or stereo.
  */
@@ -517,7 +517,7 @@ static int test_capabilities(dx2_driver_t *this) {
 
 /* size of free space in the ring buffer */
 static size_t buffer_free_size(dx2_driver_t *this) {
-	
+
   int ret;
   size_t play_pos;
 	size_t free_space;
@@ -526,10 +526,10 @@ static size_t buffer_free_size(dx2_driver_t *this) {
 	ret = audio_tell(this, &play_pos);
 	if (!ret)
 		return 0;
-	
+
 	// calc free space (-1)
 	free_space = (this->buffer_size + play_pos - this->write_pos - 1) % this->buffer_size;
-	
+
 	return free_space;
 }
 
@@ -543,10 +543,10 @@ static size_t buffer_occupied_size(dx2_driver_t *this) {
   // get current play pos
 	ret = audio_tell(this, &play_pos);
 	if (!ret) return 0;
-	
+
 	// calc used space
 	used_space = (this->buffer_size + this->write_pos - play_pos) % this->buffer_size;
-	
+
 	return used_space;
 }
 
@@ -759,7 +759,7 @@ static int ao_dx2_delay(ao_driver_t *this_gen) {
     if (ret){
       frames = buffer_occupied_size(this) / this->frame_size;
     }
-  }	
+  }
 
   pthread_mutex_unlock(&this->data_mutex);
 

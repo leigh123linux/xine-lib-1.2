@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2008 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -24,7 +24,7 @@
  *   (c) 2003 James Courtier-Dutton James@superbug.demon.co.uk
  *   This code might also decode normal MPG files.
  */
- 
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -48,7 +48,7 @@
 #define NUM_PREVIEW_BUFFERS   250
 #define DISC_TRESHOLD       90000
 
-#define WRAP_THRESHOLD     270000 
+#define WRAP_THRESHOLD     270000
 #define PTS_AUDIO 0
 #define PTS_VIDEO 1
 
@@ -60,14 +60,14 @@
 typedef struct demux_mpeg_pes_s {
   demux_plugin_t        demux_plugin;
 
-  xine_stream_t        *stream;  
+  xine_stream_t        *stream;
   fifo_buffer_t        *audio_fifo;
   fifo_buffer_t        *video_fifo;
 
   input_plugin_t       *input;
 
   int                   status;
-  
+
   int                   rate;
 
   char                  cur_mrl[256];
@@ -91,7 +91,7 @@ typedef struct demux_mpeg_pes_s {
   uint8_t               mpeg1:1;
   uint8_t               wait_for_program_stream_pack_header:1;
   uint8_t               mpeg12_h264_detected:2;
-  
+
   int                   last_begin_time;
   int64_t               last_cell_time;
   off_t                 last_cell_pos;
@@ -202,7 +202,7 @@ static int detect_pts_discontinuity( demux_mpeg_pes_t *this, int64_t pts, int vi
   /* no discontinuity detected */
   return 0;
 }
- 
+
 static void check_newpts( demux_mpeg_pes_t *this, int64_t pts, int video )
 {
   if( pts && (this->send_newpts || detect_pts_discontinuity(this, pts, video) ) ) {
@@ -226,7 +226,7 @@ static void check_newpts( demux_mpeg_pes_t *this, int64_t pts, int video )
     /* clear pts on the other track to avoid detecting the same discontinuity again */
     this->last_pts[1-video] = 0;
   }
-  
+
   if( pts )
     this->last_pts[video] = pts;
 }
@@ -258,7 +258,7 @@ static void demux_mpeg_pes_parse_pack (demux_mpeg_pes_t *this, int preview_mode)
   int32_t        result;
   off_t          i;
   uint8_t        buf6[ 6 ];
-  
+
   this->scr = 0;
   this->preview_mode = preview_mode;
 
@@ -280,9 +280,9 @@ static void demux_mpeg_pes_parse_pack (demux_mpeg_pes_t *this, int preview_mode)
       return;
     }
   }
-  
+
   /* FIXME: buf must be allocated from somewhere before calling here. */
-  
+
   /* these streams should be allocated on the audio_fifo, if available. */
   if ((0xC0 <= p[ 3 ] && p[ 3 ] <= 0xDF) /* audio_stream */
       || 0xBD == p[ 3 ])                 /* private_sream_1 */
@@ -301,19 +301,19 @@ static void demux_mpeg_pes_parse_pack (demux_mpeg_pes_t *this, int preview_mode)
       return;
     }
   }
-  
+
   p = buf->mem;
 
   /* copy local buffer to fifo element. */
   memcpy(p, buf6, sizeof(buf6));
-  
+
   if (preview_mode)
     buf->decoder_flags = BUF_FLAG_PREVIEW;
   else
     buf->decoder_flags = 0;
-  
+
   if( this->input->get_length (this->input) )
-    buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) * 
+    buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) *
                                      65535 / this->input->get_length (this->input) );
 
     this->stream_id  = p[3];
@@ -412,7 +412,7 @@ static void demux_mpeg_pes_parse_pack (demux_mpeg_pes_t *this, int preview_mode)
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 	      _("xine-lib:demux_mpeg_pes: Unrecognised stream_id 0x%02x. "
 		"Please report this to xine developers.\n"), this->stream_id);
-      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	      "xine-lib:demux_mpeg_pes: packet_len=%d\n", this->packet_len);
       buf->free_buffer (buf);
       return;
@@ -435,11 +435,11 @@ static int32_t parse_padding_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_elem
   {
     /* Handle Jumbo frames from VDR. */
     int i;
-    
+
     int size = buf->max_size;
     if ((todo - done) < size)
       size = todo - done;
-    
+
     i = read_data(this, buf->mem, (off_t)size);
     if (i != size)
       break;
@@ -456,98 +456,98 @@ static int32_t parse_padding_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_elem
 
 static int32_t parse_program_stream_map(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
-  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x.\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_ecm_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
-  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_emm_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
-  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_dsmcc_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
-  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_iec_13522_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
-  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_h222_typeA_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
-  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_h222_typeB_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
-  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_h222_typeC_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
-  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_h222_typeD_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
-  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_h222_typeE_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
-  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_IEC14496_SL_packetized_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
-  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_IEC14496_FlexMux_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
-  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_program_stream_directory(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
-  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_ancillary_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
-  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
@@ -588,7 +588,7 @@ static int32_t parse_program_stream_pack_header(demux_mpeg_pes_t *this, uint8_t 
     return 12;
 
   } else { /* mpeg2 */
-      
+
     int      num_stuffing_bytes;
 
     /* system_clock_reference */
@@ -662,7 +662,7 @@ static int32_t parse_private_stream_2(demux_mpeg_pes_t *this, uint8_t *p, buf_el
    * the NAV packet for a much more accurate timing */
   if (buf->extra_info->input_time) {
     int64_t cell_time, frames;
-      
+
     cell_time  = (p[7+0x18] >> 4  ) * 10 * 60 * 60 * 1000;
     cell_time += (p[7+0x18] & 0x0f)      * 60 * 60 * 1000;
     cell_time += (p[7+0x19] >> 4  )      * 10 * 60 * 1000;
@@ -671,7 +671,7 @@ static int32_t parse_private_stream_2(demux_mpeg_pes_t *this, uint8_t *p, buf_el
     cell_time += (p[7+0x1a] & 0x0f)                * 1000;
     frames  = ((p[7+0x1b] & 0x30) >> 4) * 10;
     frames += ((p[7+0x1b] & 0x0f)     )     ;
- 
+
     if (p[7+0x1b] & 0x80)
       cell_time += (frames * 1000)/25;
     else
@@ -681,7 +681,7 @@ static int32_t parse_private_stream_2(demux_mpeg_pes_t *this, uint8_t *p, buf_el
     this->last_cell_pos = this->input->get_current_pos (this->input);
     this->last_begin_time = buf->extra_info->input_time;
   }
-    
+
   lprintf ("NAV packet, start pts = %"PRId64", end_pts = %"PRId64"\n",
            start_pts, end_pts);
 
@@ -731,7 +731,7 @@ static int32_t parse_pes_for_pts(demux_mpeg_pes_t *this, uint8_t *p, buf_element
   }
 
   if (this->rate && !buf->extra_info->input_time)
-    buf->extra_info->input_time = (int)((int64_t)this->input->get_current_pos (this->input) 
+    buf->extra_info->input_time = (int)((int64_t)this->input->get_current_pos (this->input)
                                         * 1000 / (this->rate * 50));
 
   /* FIXME: This was determined by comparing a single MPEG1 and a single MPEG2 stream */
@@ -746,7 +746,7 @@ static int32_t parse_pes_for_pts(demux_mpeg_pes_t *this, uint8_t *p, buf_element
     p   += 6; /* packet_len -= 6; */
 
     while ((p[0] & 0x80) == 0x80) {
-      p++; 
+      p++;
       header_len++;
       this->packet_len--;
       /* printf ("stuffing\n");*/
@@ -759,9 +759,9 @@ static int32_t parse_pes_for_pts(demux_mpeg_pes_t *this, uint8_t *p, buf_element
       this->packet_len -= 2;
     }
 
-    this->pts = 0; 
+    this->pts = 0;
     this->dts = 0;
-    
+
     if ((p[0] & 0xf0) == 0x20) {
       this->pts  = (int64_t) (p[ 0] & 0x0E) << 29 ;
       this->pts |= (int64_t)  p[ 1]         << 22 ;
@@ -778,19 +778,19 @@ static int32_t parse_pes_for_pts(demux_mpeg_pes_t *this, uint8_t *p, buf_element
       this->pts |= (int64_t) (p[ 2] & 0xFE) << 14 ;
       this->pts |= (int64_t)  p[ 3]         <<  7 ;
       this->pts |= (int64_t) (p[ 4] & 0xFE) >>  1 ;
-      
+
       this->dts  = (int64_t) (p[ 5] & 0x0E) << 29 ;
       this->dts |= (int64_t)  p[ 6]         << 22 ;
       this->dts |= (int64_t) (p[ 7] & 0xFE) << 14 ;
       this->dts |= (int64_t)  p[ 8]         <<  7 ;
       this->dts |= (int64_t) (p[ 9] & 0xFE) >>  1 ;
-      
+
       p   += 10;
       header_len += 10;
       this->packet_len -= 10;
       return header_len;
     } else {
-      p++; 
+      p++;
       header_len++;
       this->packet_len--;
       return header_len;
@@ -834,13 +834,13 @@ static int32_t parse_pes_for_pts(demux_mpeg_pes_t *this, uint8_t *p, buf_element
       this->pts = 0;
 
     if (p[7] & 0x40) { /* dts avail */
-      
+
       this->dts  = (int64_t) (p[14] & 0x0E) << 29 ;
       this->dts |= (int64_t)  p[15]         << 22 ;
       this->dts |= (int64_t) (p[16] & 0xFE) << 14 ;
       this->dts |= (int64_t)  p[17]         <<  7 ;
       this->dts |= (int64_t) (p[18] & 0xFE) >>  1 ;
-      
+
     } else
       this->dts = 0;
 
@@ -869,16 +869,16 @@ static int32_t parse_private_stream_1(demux_mpeg_pes_t *this, uint8_t *p, buf_el
 
       buf->content   = p+1;
       buf->size      = this->packet_len-1;
-      
+
       buf->type      = BUF_SPU_DVD + spu_id;
       buf->decoder_flags |= BUF_FLAG_SPECIAL;
       buf->decoder_info[1] = BUF_SPECIAL_SPU_DVD_SUBTYPE;
       buf->decoder_info[2] = SPU_DVD_SUBTYPE_PACKAGE;
       buf->pts       = this->pts;
-      
-      this->video_fifo->put (this->video_fifo, buf);    
+
+      this->video_fifo->put (this->video_fifo, buf);
       lprintf ("SPU PACK put on fifo\n");
-      
+
       return this->packet_len + result;
     }
 
@@ -894,9 +894,9 @@ static int32_t parse_private_stream_1(demux_mpeg_pes_t *this, uint8_t *p, buf_el
       if( !preview_mode )
         check_newpts( this, this->pts, PTS_VIDEO );
       */
-      this->video_fifo->put (this->video_fifo, buf);    
+      this->video_fifo->put (this->video_fifo, buf);
       lprintf ("SPU SVCD PACK (%"PRId64", %d) put on fifo\n", this->pts, spu_id);
-      
+
       return this->packet_len + result;
     }
 
@@ -911,15 +911,15 @@ static int32_t parse_private_stream_1(demux_mpeg_pes_t *this, uint8_t *p, buf_el
       /* this is probably wrong:
       if( !preview_mode )
         check_newpts( this, this->pts, PTS_VIDEO );
-      */      
-      this->video_fifo->put (this->video_fifo, buf);    
+      */
+      this->video_fifo->put (this->video_fifo, buf);
       lprintf ("SPU CVD PACK (%"PRId64", %d) put on fifo\n", this->pts, spu_id);
-      
+
       return this->packet_len + result;
     }
 
     if ((p[0]&0xF0) == 0x80) {
-    
+
       track = p[0] & 0x0F; /* hack : ac3 track */
       buf->decoder_info[1] = p[1]; /* Number of frame headers */
       buf->decoder_info[2] = p[2] << 8 | p[3]; /* First access unit pointer */
@@ -943,7 +943,7 @@ static int32_t parse_private_stream_1(demux_mpeg_pes_t *this, uint8_t *p, buf_el
 	buf->free_buffer(buf);
       }
       return this->packet_len + result;
-      
+
     } else if ((p[0]&0xf0) == 0xa0) {
 
       int pcm_offset;
@@ -983,7 +983,7 @@ static int32_t parse_private_stream_1(demux_mpeg_pes_t *this, uint8_t *p, buf_el
       switch ((p[5]>>6) & 3) {
       case 3: /* illegal, use 16-bits? */
       default:
-	xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+	xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 		 "illegal lpcm sample format (%d), assume 16-bit samples\n",
 		(p[5]>>6) & 3 );
       case 0: bits_per_sample = 16; break;
@@ -996,7 +996,7 @@ static int32_t parse_private_stream_1(demux_mpeg_pes_t *this, uint8_t *p, buf_el
       buf->decoder_flags |= BUF_FLAG_SPECIAL;
       buf->decoder_info[1] = BUF_SPECIAL_LPCM_CONFIG;
       buf->decoder_info[2] = p[5];
-      
+
       pcm_offset = 7;
 
       buf->content   = p+pcm_offset;
@@ -1020,7 +1020,7 @@ static int32_t parse_private_stream_1(demux_mpeg_pes_t *this, uint8_t *p, buf_el
       int size;
 
       /*
-       * A52/AC3 streams in some DVB-S recordings made with VDR. 
+       * A52/AC3 streams in some DVB-S recordings made with VDR.
        * It is broadcast by a german tv-station called PRO7.
        * PRO7 uses dolby 5.1 (A52 5.1) in some of the movies they broadcast,
        * (and they would switch it to stereo-sound(A52 2.0) during commercials.)
@@ -1073,18 +1073,18 @@ static int32_t parse_private_stream_1(demux_mpeg_pes_t *this, uint8_t *p, buf_el
           lprintf ("A52 PACK put on fifo\n");
         } else {
 	  buf->free_buffer(buf);
-        } 
+        }
       }
 
       return this->packet_len + result;
     }
-      
+
 
 
     /* Some new streams have been encountered.
        1) DVD+RW disc recorded with a Philips DVD recorder: -  new unknown sub-stream id of 0xff
      */
-    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 	    _("demux_mpeg_pes:Unrecognised private stream 1 0x%02x. Please report this to xine developers.\n"), p[0]);
     buf->free_buffer(buf);
     return this->packet_len + result;
@@ -1166,7 +1166,7 @@ static int32_t parse_video_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_elemen
     if (this->mpeg12_h264_detected > 2) {
       int nal_type_code = -1;
       if (payload_size >= 4 && p[2] == 0x01 && p[1] == 0x00 && p[0] == 0x00)
-        nal_type_code = p[3] & 0x1f; 
+        nal_type_code = p[3] & 0x1f;
       if (nal_type_code == 9) { /* access unit delimiter */
         buf_element_t *b = this->video_fifo->buffer_pool_alloc (this->video_fifo);
         b->content       = b->mem;
@@ -1275,10 +1275,10 @@ static int demux_mpeg_pes_send_chunk (demux_plugin_t *this_gen) {
 }
 
 #ifdef ESTIMATE_RATE_FIXED
-/*! 
-   Estimate bitrate by looking inside the MPEG file for presentation 
-   time stamps (PTS) and computing how far apart these are 
-   in bytes and in time. 
+/*!
+   Estimate bitrate by looking inside the MPEG file for presentation
+   time stamps (PTS) and computing how far apart these are
+   in bytes and in time.
 
    On failure return 0.
 
@@ -1308,23 +1308,23 @@ static int demux_mpeg_pes_estimate_rate (demux_mpeg_pes_t *this) {
   int            rate=0;    /* The return rate value */
   int            stream_id;
 
-  /* We can't estimate by sampling if we don't thave the ability to 
+  /* We can't estimate by sampling if we don't thave the ability to
      randomly access the and more importantly reset after accessessing.  */
   if (!(this->input->get_capabilities(this->input) & INPUT_CAP_SEEKABLE))
     return 0;
 
   mpeg_length= this->input->get_length (this->input);
-  step = TRUNC((mpeg_length/MAX_SAMPLES), 2048); 
+  step = TRUNC((mpeg_length/MAX_SAMPLES), 2048);
   if (step <= 0) step = 2048; /* avoid endless loop for tiny files */
   pos = step;
 
   /* At this point "pos", and "step" are a multiple of blocksize and
      they should continue to be so throughout.
    */
-  
+
   this->input->seek (this->input, pos, SEEK_SET);
 
-  while ( (buf = this->input->read_block (this->input, this->video_fifo, 2048)) 
+  while ( (buf = this->input->read_block (this->input, this->video_fifo, 2048))
 	  && count < MAX_SAMPLES && reads++ < MAX_READS ) {
 
     p = buf->content; /* len = this->mnBlocksize; */
@@ -1333,9 +1333,9 @@ static int demux_mpeg_pes_estimate_rate (demux_mpeg_pes_t *this) {
 
       is_mpeg1 = (p[4] & 0x40) == 0;
 
-      if (is_mpeg1) 
+      if (is_mpeg1)
 	p   += 12;
-      else 
+      else
 	p += 14 + (p[0xD] & 0x07);
     }
 
@@ -1345,14 +1345,14 @@ static int demux_mpeg_pes_estimate_rate (demux_mpeg_pes_t *this) {
     /* we should now have a PES packet here */
 
     if (p[0] || p[1] || (p[2] != 1)) {
-      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	       "demux_mpeg_pes: error %02x %02x %02x (should be 0x000001) \n", p[0], p[1], p[2]);
       buf->free_buffer (buf);
       return rate;
     }
 
     stream_id  = p[3];
-    pts = 0; 
+    pts = 0;
 
     if ((stream_id < 0xbc) || ((stream_id & 0xf0) != 0xe0)) {
       pos += (off_t) 2048;
@@ -1381,18 +1381,18 @@ static int demux_mpeg_pes_estimate_rate (demux_mpeg_pes_t *this) {
 	  pts |= (p[ 2] & 0xFE) << 14 ;
 	  pts |=  p[ 3]         <<  7 ;
 	  pts |= (p[ 4] & 0xFE) >>  1 ;
-	} 
+	}
       }
     } else { /* mpeg 2 */
-      
+
       if (p[7] & 0x80) { /* pts avail */
-	
+
 	pts  = (int64_t)(p[ 9] & 0x0E) << 29 ;
 	pts |=  p[10]         << 22 ;
 	pts |= (p[11] & 0xFE) << 14 ;
 	pts |=  p[12]         <<  7 ;
 	pts |= (p[13] & 0xFE) >>  1 ;
-	
+
       } else
 	pts = 0;
     }
@@ -1402,16 +1402,16 @@ static int demux_mpeg_pes_estimate_rate (demux_mpeg_pes_t *this) {
 
       if ( (pos>last_pos) && (pts>last_pts) ) {
 	int cur_rate;
-      
+
 	cur_rate = ((pos - last_pos)*90000) / ((pts - last_pts) * 50);
-	
+
 	rate = (count * rate + cur_rate) / (count+1);
 
 	count ++;
-	
+
 	/*
-	printf ("demux_mpeg_pes: stream_id %02x, pos: %"PRId64", pts: %d, cur_rate = %d, overall rate : %d\n", 
-		stream_id, pos, pts, cur_rate, rate); 
+	printf ("demux_mpeg_pes: stream_id %02x, pos: %"PRId64", pts: %d, cur_rate = %d, overall rate : %d\n",
+		stream_id, pos, pts, cur_rate, rate);
 	*/
       }
 
@@ -1431,14 +1431,14 @@ static int demux_mpeg_pes_estimate_rate (demux_mpeg_pes_t *this) {
 
   lprintf("est_rate=%d\n",rate);
   return rate;
-  
+
 }
 #endif /*ESTIMATE_RATE_FIXED*/
 
 static void demux_mpeg_pes_dispose (demux_plugin_t *this_gen) {
 
   demux_mpeg_pes_t *this = (demux_mpeg_pes_t *) this_gen;
-  
+
   free (this->scratch_base);
   free (this);
 }
@@ -1456,35 +1456,35 @@ static void demux_mpeg_pes_send_headers (demux_plugin_t *this_gen) {
   this->video_fifo  = this->stream->video_fifo;
   this->audio_fifo  = this->stream->audio_fifo;
 
-  /* 
+  /*
    * send start buffer
    */
-  
+
   _x_demux_control_start(this->stream);
-  
+
 #ifdef USE_ILL_ADVISED_ESTIMATE_RATE_INITIALLY
-  if (!this->rate) 
+  if (!this->rate)
     this->rate = demux_mpeg_pes_estimate_rate (this);
-#else 
+#else
   /* Set to Use rate given in by stream initially. */
-  this->rate = 0; 
+  this->rate = 0;
 #endif
-  
+
   if((this->input->get_capabilities(this->input) & INPUT_CAP_SEEKABLE) != 0) {
-    
+
     int num_buffers = NUM_PREVIEW_BUFFERS;
-    
+
     this->input->seek (this->input, 0, SEEK_SET);
-    
+
     this->status = DEMUX_OK ;
     while ( (num_buffers>0) && (this->status == DEMUX_OK) ) {
-      
+
       demux_mpeg_pes_parse_pack(this, 1);
       num_buffers --;
     }
-  } 
+  }
   else if((this->input->get_capabilities(this->input) & INPUT_CAP_PREVIEW) != 0) {
-    
+
     this->preview_size = this->input->get_optional_data(this->input, &this->preview_data, INPUT_OPTIONAL_DATA_PREVIEW);
     this->preview_done = 0;
 
@@ -1512,14 +1512,14 @@ static int demux_mpeg_pes_seek (demux_plugin_t *this_gen,
               this->input->get_length (this->input) );
 
   if((this->input->get_capabilities(this->input) & INPUT_CAP_SEEKABLE) != 0) {
-    
+
     if (start_pos) {
       start_pos /= (off_t) 2048;
       start_pos *= (off_t) 2048;
-      
+
       this->input->seek (this->input, start_pos, SEEK_SET);
     } else if (start_time) {
-      
+
       if (this->last_cell_time) {
         start_pos = start_time - (this->last_cell_time + this->last_begin_time)/1000;
         start_pos *= this->rate;
@@ -1532,19 +1532,19 @@ static int demux_mpeg_pes_seek (demux_plugin_t *this_gen,
       }
       start_pos /= (off_t) 2048;
       start_pos *= (off_t) 2048;
-      
+
       this->input->seek (this->input, start_pos, SEEK_SET);
     } else
       this->input->seek (this->input, 0, SEEK_SET);
   }
-  
+
   /*
    * now start demuxing
    */
   this->last_cell_time = 0;
   this->send_newpts = 1;
   if( !playing ) {
-    
+
     this->buf_flag_seek = 0;
     this->nav_last_end_pts = this->nav_last_start_pts = 0;
     this->status   = DEMUX_OK ;
@@ -1557,7 +1557,7 @@ static int demux_mpeg_pes_seek (demux_plugin_t *this_gen,
     this->mpeg12_h264_detected = 0;
     _x_demux_flush_engine(this->stream);
   }
-  
+
   return this->status;
 }
 
@@ -1575,7 +1575,7 @@ static void demux_mpeg_pes_accept_input (demux_mpeg_pes_t *this,
 
     lprintf ("mrl %s is new\n", this->cur_mrl);
 
-  } 
+  }
   else {
     lprintf ("mrl %s is known, bitrate: %d\n",
              this->cur_mrl, this->rate * 50 * 8);
@@ -1589,7 +1589,7 @@ static int demux_mpeg_pes_get_stream_length (demux_plugin_t *this_gen) {
    * find input plugin
    */
 
-  if (this->rate) 
+  if (this->rate)
     return (int)((int64_t) 1000 * this->input->get_length (this->input) /
                  (this->rate * 50));
   else
@@ -1614,7 +1614,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this         = calloc(1, sizeof(demux_mpeg_pes_t));
   this->stream = stream;
   this->input  = input;
-  
+
   this->demux_plugin.send_headers      = demux_mpeg_pes_send_headers;
   this->demux_plugin.send_chunk        = demux_mpeg_pes_send_chunk;
   this->demux_plugin.seek              = demux_mpeg_pes_seek;
@@ -1637,9 +1637,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   lprintf ("open_plugin:detection_method=%d\n",
 	   stream->content_detection_method);
- 
+
   switch (stream->content_detection_method) {
-    
+
   case METHOD_BY_CONTENT: {
 
     /* use demux_mpeg_block for block devices */
@@ -1806,7 +1806,7 @@ static const demuxer_info_t demux_info_mpeg_pes = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_DEMUX, 26, "mpeg_pes", XINE_VERSION_CODE, &demux_info_mpeg_pes, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

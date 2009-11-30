@@ -23,7 +23,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
- 
+
 #define LOG_MODULE "sdpplin"
 #define LOG_VERBOSE
 /*
@@ -62,7 +62,7 @@ static char *b64_decode(const char *in, char *out, int *size)
   dtable['='] = 0;
 
   k=0;
-  
+
   /*CONSTANTCONDITION*/
   const size_t in_len = strlen(in);
   for (j=0; j<in_len; j+=4)
@@ -106,10 +106,10 @@ static int filter(const char *in, const char *filter, char **out) {
 
   size_t flen=strlen(filter);
   size_t len;
-  
+
   if (!in)
     return 0;
-  
+
   len = (strchr(in,'\n')) ? (size_t)(strchr(in,'\n')-in) : strlen(in);
 
   if (!strncmp(in,filter,flen))
@@ -122,7 +122,7 @@ static int filter(const char *in, const char *filter, char **out) {
 
     return len-flen;
   }
-  
+
   return 0;
 }
 static sdpplin_stream_t *XINE_MALLOC sdpplin_parse_stream(char **data) {
@@ -131,7 +131,7 @@ static sdpplin_stream_t *XINE_MALLOC sdpplin_parse_stream(char **data) {
   char      *buf=xine_buffer_init(32);
   char      *decoded=xine_buffer_init(32);
   int       handled;
-    
+
   if (filter(*data, "m=", &buf)) {
     desc->id = strdup(buf);
   } else
@@ -146,7 +146,7 @@ static sdpplin_stream_t *XINE_MALLOC sdpplin_parse_stream(char **data) {
   while (*data && **data && *data[0]!='m') {
 
     handled=0;
-    
+
     if(filter(*data,"a=control:streamid=",&buf)) {
       /* This way negative values are mapped to unfeasibly high
        * values, and will be discarded afterward
@@ -175,7 +175,7 @@ static sdpplin_stream_t *XINE_MALLOC sdpplin_parse_stream(char **data) {
       handled=1;
       *data=nl(*data);
     }
-    
+
     if(filter(*data,"a=StartTime:integer;",&buf)) {
       desc->start_time=atoi(buf);
       handled=1;
@@ -218,7 +218,7 @@ static sdpplin_stream_t *XINE_MALLOC sdpplin_parse_stream(char **data) {
 	lprintf("mlti_data_size: %i\n", desc->mlti_data_size);
       }
     }
-    
+
     if(filter(*data,"a=ASMRuleBook:string;",&buf)) {
       desc->asm_rule_book=strdup(buf);
       handled=1;
@@ -238,7 +238,7 @@ static sdpplin_stream_t *XINE_MALLOC sdpplin_parse_stream(char **data) {
 
   xine_buffer_free(buf);
   xine_buffer_free(decoded);
-  
+
   return desc;
 }
 
@@ -256,7 +256,7 @@ sdpplin_t *sdpplin_parse(char *data) {
   while (data && *data) {
 
     handled=0;
-    
+
     if (filter(data, "m=", &buf)) {
       if ( ! desc->stream ) {
 	fprintf(stderr, "sdpplin.c: stream identifier found before stream count, skipping.");
@@ -279,7 +279,7 @@ sdpplin_t *sdpplin_parse(char *data) {
 	data=nl(data);
       }
     }
-    
+
     if(filter(data,"a=Author:buffer;",&buf)) {
       decoded=b64_decode(buf, decoded, &len);
       if ( decoded != NULL ) {
@@ -288,7 +288,7 @@ sdpplin_t *sdpplin_parse(char *data) {
 	data=nl(data);
       }
     }
-    
+
     if(filter(data,"a=Copyright:buffer;",&buf)) {
       decoded=b64_decode(buf, decoded, &len);
       if ( decoded != NULL ) {
@@ -297,7 +297,7 @@ sdpplin_t *sdpplin_parse(char *data) {
 	data=nl(data);
       }
     }
-    
+
     if(filter(data,"a=Abstract:buffer;",&buf)) {
       decoded=b64_decode(buf, decoded, &len);
       if ( decoded != NULL ) {
@@ -306,7 +306,7 @@ sdpplin_t *sdpplin_parse(char *data) {
 	data=nl(data);
       }
     }
-    
+
     if(filter(data,"a=StreamCount:integer;",&buf)) {
       /* This way negative values are mapped to unfeasibly high
        * values, and will be discarded afterward
@@ -340,7 +340,7 @@ sdpplin_t *sdpplin_parse(char *data) {
 
   xine_buffer_free(buf);
   xine_buffer_free(decoded);
-  
+
   return desc;
 }
 

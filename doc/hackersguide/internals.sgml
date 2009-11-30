@@ -15,15 +15,15 @@
    </caption>
   </mediaobject>
   <para>
-   Media streams usually consist of audio and video data multiplexed 
+   Media streams usually consist of audio and video data multiplexed
    into one bitstream in the so-called system-layer (e.g. AVI, Quicktime or MPEG).
    A demuxer plugin is used to parse the system layer and extract audio and video
    packages. The demuxer uses an input plugin to read the data and stores it
-   in pre-allocated buffers from the global buffer pool. 
+   in pre-allocated buffers from the global buffer pool.
    The buffers are then added to the audio or video stream fifo.
   </para>
   <para>
-   From the other end of these fifos the audio and video decoder threads 
+   From the other end of these fifos the audio and video decoder threads
    consume the buffers and hand them over to the current audio or video
    decoder plugin for decompression. These plugins then send the decoded
    data to the output layer. The buffer holding the encoded
@@ -188,7 +188,7 @@
     This plugin list is held in an array named <varname>xine_plugin_info</varname>":
     <programlisting>
 &nbsp;&nbsp;&nbsp;plugin_info_t xine_plugin_info[] = {
-&nbsp;&nbsp;&nbsp;  /* type, API, "name", version, special_info, init_function */  
+&nbsp;&nbsp;&nbsp;  /* type, API, "name", version, special_info, init_function */
 &nbsp;&nbsp;&nbsp;  { PLUGIN_DEMUX, 20, "flac", XINE_VERSION_CODE, NULL, demux_flac_init_class },
 &nbsp;&nbsp;&nbsp;  { PLUGIN_AUDIO_DECODER, 13, "flacdec", XINE_VERSION_CODE, &amp;dec_info_audio, init_plugin },
 &nbsp;&nbsp;&nbsp;  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
@@ -236,7 +236,7 @@
     same plugin are possible.
    </para>
    <para>
-    If you think this is pretty much an object-oriented aproach, 
+    If you think this is pretty much an object-oriented aproach,
     then you're right.
    </para>
    <para>
@@ -278,7 +278,7 @@
    <para>
     Many plugins will need some additional "private" data fields.
     These should be simply added at the end of the plugin structure.
-    For example a demuxer plugin called "foo" with two private 
+    For example a demuxer plugin called "foo" with two private
     fields "xine" and "count" may have a plugin structure declared in
     the following way:
     <programlisting>
@@ -325,13 +325,13 @@
   <para>
    Metronom serves two purposes:
    <itemizedlist>
-    <listitem> 
+    <listitem>
      <para>
       Generate vpts (virtual presentation time stamps) from pts (presentation time stamps)
       for a/v output and synchronization.
      </para>
     </listitem>
-    <listitem> 
+    <listitem>
      <para>
       Provide a master clock (system clock reference, scr), possibly provided
       by external scr plugins (this can be used if some hardware decoder or network
@@ -352,7 +352,7 @@
    The heuristics used in metronom have always been a field of research. Current metronom's
    implementation <emphasis>tries</emphasis> to stick to pts values as reported from demuxers,
    that is, vpts may be obtained by a simple operation of vpts = pts + <varname>vpts_offset</varname>,
-   where <varname>vpts_offset</varname> takes into account any wraps. Whenever pts is zero, 
+   where <varname>vpts_offset</varname> takes into account any wraps. Whenever pts is zero,
    metronom will estimate vpts based on previous values. If a difference is found between the
    estimated and calculated vpts values by above formula, it will be smoothed by using a
    "drift correction".
@@ -369,11 +369,11 @@
    delivered for drawing. Unfortunately the same isn't true for audio: all sound
    systems implement some amount of buffering (or fifo), any data being send to it
    <emphasis>now</emphasis> will only get played some time in future. audio_out thread
-   must take this into account for making perfect A-V sync by asking the sound latency 
+   must take this into account for making perfect A-V sync by asking the sound latency
    to audio driver.
   </para>
   <para>
-   Some audio drivers can't tell the current delay introduced in playback. This is 
+   Some audio drivers can't tell the current delay introduced in playback. This is
    especially true for most sound servers like ESD or aRts and explain why in such
    cases the sync is far from perfect.
   </para>
@@ -388,11 +388,11 @@
    <itemizedlist>
     <listitem>
      <para>
-      The small sound card errors are feedbacked to metronom. The details 
+      The small sound card errors are feedbacked to metronom. The details
       are given by <filename>audio_out.c</filename> comments:
       <programlisting>
 &nbsp;&nbsp;&nbsp;/* By adding gap errors (difference between reported and expected
-&nbsp;&nbsp;&nbsp; * sound card clock) into metronom's vpts_offset we can use its 
+&nbsp;&nbsp;&nbsp; * sound card clock) into metronom's vpts_offset we can use its
 &nbsp;&nbsp;&nbsp; * smoothing algorithms to correct sound card clock drifts.
 &nbsp;&nbsp;&nbsp; * obs: previously this error was added to xine scr.
 &nbsp;&nbsp;&nbsp; *
@@ -438,7 +438,7 @@
  <sect1 id="osd">
   <title>Overlays and OSD</title>
   <para>
-   The roots of xine overlay capabilities are DVD subpictures and subtitles support 
+   The roots of xine overlay capabilities are DVD subpictures and subtitles support
    (also known as 'spu'). The DVD subtitles are encoded in a RLE (Run Length Encoding - the
    most simple compressing technique) format, with a palette of colors and transparency
    levels. You probably thought that subtitles were just simple text saved into DVDs, right?
@@ -446,7 +446,7 @@
   </para>
   <para>
    In order to optimize to the most common case, xine's internal format for screen overlays
-   is a similar representation to the 'spu' data. This brings not only performance 
+   is a similar representation to the 'spu' data. This brings not only performance
    benefit (since blending functions may skip large image areas due to RLE) but also
    compatibility: it's possible to re-encode any xine overlay to the original spu format
    for displaying with mpeg hardware decoders like DXR3.
@@ -456,14 +456,14 @@
    is done using the same kind of pts/vpts stuff of a-v sync code. DVD subtitles,
    for example, may request: show this spu at pts1 and hide it at pts2. This brings the
    concept of the 'video overlay manager', that is a event-driven module for managing
-   overlay's showing and hiding. 
+   overlay's showing and hiding.
   </para>
   <para>
    The drawback of using internal RLE format is the difficulty in manipulating it
    as graphic. To overcome that we created the 'OSD renderer', where OSD stands
-   for On Screen Display just like in TV sets. The osd renderer is a module 
+   for On Screen Display just like in TV sets. The osd renderer is a module
    providing simple graphic primitives (lines, rectagles, draw text etc) over
-   a "virtual" bitmap area. Everytime we want to show that bitmap it will 
+   a "virtual" bitmap area. Everytime we want to show that bitmap it will
    be RLE encoded and sent to the overlay manager for displaying.
   </para>
   <mediaobject>
@@ -496,13 +496,13 @@
 &nbsp;&nbsp;&nbsp;event.object.overlay-&gt;width = 100;
 &nbsp;&nbsp;&nbsp;event.object.overlay-&gt;height = 100;
 &nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;/* clipping region is mostly used by dvd menus for highlighting buttons */ 
+&nbsp;&nbsp;&nbsp;/* clipping region is mostly used by dvd menus for highlighting buttons */
 &nbsp;&nbsp;&nbsp;event.object.overlay-&gt;clip_top    = 0;
 &nbsp;&nbsp;&nbsp;event.object.overlay-&gt;clip_bottom = image_height;
 &nbsp;&nbsp;&nbsp;event.object.overlay-&gt;clip_left   = 0;
 &nbsp;&nbsp;&nbsp;event.object.overlay-&gt;clip_right  = image_width;
 &nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;/* the hard part: provide a RLE image */   
+&nbsp;&nbsp;&nbsp;/* the hard part: provide a RLE image */
 &nbsp;&nbsp;&nbsp;event.object.overlay-&gt;rle = your_rle;
 &nbsp;&nbsp;&nbsp;event.object.overlay-&gt;data_size = your_size;
 &nbsp;&nbsp;&nbsp;event.object.overlay-&gt;num_rle = your_rle_count;
@@ -512,7 +512,7 @@
 &nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;/* this table contains transparency levels for each color index.
 &nbsp;&nbsp;&nbsp;   0 = completely transparent, 15 - completely opaque */
-&nbsp;&nbsp;&nbsp;memcpy(event.object.overlay-&gt;clip_trans, trans, sizeof(trans)); 
+&nbsp;&nbsp;&nbsp;memcpy(event.object.overlay-&gt;clip_trans, trans, sizeof(trans));
 &nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;/* set the event type and time for displaying */
 &nbsp;&nbsp;&nbsp;event.event_type = EVENT_SHOW_SPU;
@@ -527,9 +527,9 @@
     to xine plugins and to frontends.
    </para>
    <para>
-    The first thing you need is to allocate a OSD object for drawing from the 
+    The first thing you need is to allocate a OSD object for drawing from the
     renderer. The code below allocates a 300x200 area. This size can't be changed
-    during the lifetime of a OSD object, but it's possible to place it anywhere 
+    during the lifetime of a OSD object, but it's possible to place it anywhere
     over the image.
    </para>
    <programlisting>
@@ -561,7 +561,7 @@
     <programlisting>
 &nbsp;&nbsp;&nbsp;osd_renderer-&gt;render_text(osd, 0, 0, "white text, black border", OSD_TEXT1);
 &nbsp;&nbsp;&nbsp;osd_renderer-&gt;render_text(osd, 0, 30, "white text, no border", OSD_TEXT2);
-&nbsp;&nbsp;&nbsp;      
+&nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;osd_renderer-&gt;show(osd, 0); /* 0 stands for 'now' */</programlisting>
    </para>
    <para>
@@ -592,7 +592,7 @@
      defined a small convention:
     </para>
     <programlisting>
-&nbsp;&nbsp;&nbsp;/* 
+&nbsp;&nbsp;&nbsp;/*
 &nbsp;&nbsp;&nbsp; Palette entries as used by osd fonts:
 &nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp; 0: not used by font, always transparent
@@ -603,13 +603,13 @@
 &nbsp;&nbsp;&nbsp; 6: font border. if the font is to be displayed without border this
 &nbsp;&nbsp;&nbsp;    will probably be adjusted to font background or near.
 &nbsp;&nbsp;&nbsp; 7-9: transition between border and foreground
-&nbsp;&nbsp;&nbsp; 10: font color (foreground)   
+&nbsp;&nbsp;&nbsp; 10: font color (foreground)
 &nbsp;&nbsp;&nbsp;*/</programlisting>
     <para>
      The so called 'transitions' are used to implement font anti-aliasing. That
      convention requires that any font file must use only the colors from 1 to 10.
      When we use the set_text_palette() function we are just copying 11 palette
-     entries to the specified base index. 
+     entries to the specified base index.
     </para>
     <para>
      That base index is the same we pass to render_text() function to use the
@@ -623,7 +623,7 @@
 &nbsp;&nbsp;&nbsp;/* draws a box using font background color (translucid) */
 &nbsp;&nbsp;&nbsp;renderer-&gt;filled_rect(osd, x1, y1, x1+width, y1+height, OSD_TEXT2 + 1);
 &nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;/* render text */     
+&nbsp;&nbsp;&nbsp;/* render text */
 &nbsp;&nbsp;&nbsp;renderer-&gt;render_text(osd, x1, y1, text, OSD_TEXT2);</programlisting>
    </sect3>
    <sect3>
@@ -669,8 +669,8 @@
     <para>
      A: osd objects have no shadows by itself, but fonts use 11
         colors to produce an anti-aliased effect.
-        if you set a "text palette" with entries 0-9 being transparent 
-        and 10 being foreground you will get rid of any borders or 
+        if you set a "text palette" with entries 0-9 being transparent
+        and 10 being foreground you will get rid of any borders or
         anti-aliasing.
     </para>
    </sect3>

@@ -181,7 +181,7 @@ static int demux_mng_send_chunk(demux_mng_t *this){
     buf->decoder_flags = BUF_FLAG_FRAMERATE;
     buf->decoder_info[0] = 90 * this->timer_count;
     if( this->input->get_length (this->input) )
-      buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) * 
+      buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) *
                                      65535 / this->input->get_length (this->input) );
     buf->extra_info->input_time = this->tick_count;
     buf->pts = 90 * this->tick_count;

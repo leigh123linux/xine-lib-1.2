@@ -74,16 +74,16 @@ typedef struct {
   char                *artist;
   char                *copyright;
   size_t               filesize;
-  
+
   char                *buffer;
 
   int64_t              current_pts;
-  
+
   ModPlug_Settings     settings;
   ModPlugFile         *mpfile;
   int                  mod_length;
   int                  seek_flag;  /* this is set when a seek just occurred */
-  
+
 } demux_mod_t;
 
 typedef struct {
@@ -131,7 +131,7 @@ static int probe_mod_file(demux_mod_t *this) {
 static int open_mod_file(demux_mod_t *this) {
   int total_read;
   off_t input_length;
-  
+
   /* Get size and create buffer */
   input_length = this->input->get_length(this->input);
   /* Avoid potential issues with signed variables and e.g. read() returning -1 */
@@ -139,7 +139,7 @@ static int open_mod_file(demux_mod_t *this) {
     xine_log(this->stream->xine, XINE_LOG_PLUGIN, "modplug - size overflow\n");
     return 0;
   }
-  this->filesize = input_length; 
+  this->filesize = input_length;
   this->buffer = (char *)malloc(this->filesize);
   if(!this->buffer) {
     xine_log(this->stream->xine, XINE_LOG_PLUGIN, "modplug - allocation failure\n");
@@ -148,23 +148,23 @@ static int open_mod_file(demux_mod_t *this) {
 
   /* Seek to beginning */
   this->input->seek(this->input, 0, SEEK_SET);
-  
+
   /* Read data */
   total_read = this->input->read(this->input, this->buffer, this->filesize);
-  
+
   if(total_read != this->filesize) {
     xine_log(this->stream->xine, XINE_LOG_PLUGIN, "modplug - filesize error\n");
     free(this->buffer);
     return 0;
   }
-      
+
   this->mpfile = ModPlug_Load(this->buffer, this->filesize);
   if (this->mpfile==NULL) {
     xine_log(this->stream->xine, XINE_LOG_PLUGIN, "modplug - load error\n");
     free(this->buffer);
     return 0;
   }
-  
+
   /* Set up modplug engine */
   ModPlug_GetSettings(&this->settings);
   this->settings.mResamplingMode = MODPLUG_RESAMPLE_FIR; /* RESAMP */
@@ -172,15 +172,15 @@ static int open_mod_file(demux_mod_t *this) {
   this->settings.mBits = MOD_BITS;
   this->settings.mFrequency = MOD_SAMPLERATE;
   ModPlug_SetSettings(&this->settings);
-  
+
   this->title = strdup(ModPlug_GetName(this->mpfile));
   this->artist = strdup("");
   this->copyright = strdup("");
-  
+
   this->mod_length = ModPlug_GetLength(this->mpfile);
   if (this->mod_length < 1)
     this->mod_length = 1; /* avoids -ve & div-by-0 */
-    
+
   return 1;
 }
 
@@ -201,20 +201,20 @@ static int demux_mod_send_chunk(demux_plugin_t *this_gen) {
     buf->size = mlen;
     buf->pts = this->current_pts;
     buf->extra_info->input_time = buf->pts / 90;
-    
+
     buf->extra_info->input_normpos = buf->extra_info->input_time * 65535 / this->mod_length;
     buf->decoder_flags = BUF_FLAG_FRAME_END;
-    
+
     if (this->seek_flag) {
       _x_demux_control_newpts(this->stream, buf->pts, BUF_FLAG_SEEK);
       this->seek_flag = 0;
     }
 
     this->audio_fifo->put (this->audio_fifo, buf);
-    
+
     this->current_pts += 90000 * mlen / OUT_BYTES_PER_SECOND;
   }
-  
+
   return this->status;
 }
 
@@ -260,9 +260,9 @@ static int demux_mod_seek (demux_plugin_t *this_gen,
 
   demux_mod_t *this = (demux_mod_t *) this_gen;
   int64_t seek_millis;
-  
+
   if (start_pos) {
-    seek_millis = this->mod_length; 
+    seek_millis = this->mod_length;
     seek_millis *= start_pos;
     seek_millis /= 65535;
   } else {
@@ -272,14 +272,14 @@ static int demux_mod_seek (demux_plugin_t *this_gen,
   _x_demux_flush_engine(this->stream);
   ModPlug_Seek(this->mpfile, seek_millis);
   this->current_pts = seek_millis * 90;
-  
+
   this->seek_flag = 1;
   return this->status;
 }
 
 static void demux_mod_dispose (demux_plugin_t *this_gen) {
   demux_mod_t *this = (demux_mod_t *) this_gen;
-  
+
   ModPlug_Unload(this->mpfile);
   free(this->buffer);
   free(this->title);
@@ -335,7 +335,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->status = DEMUX_FINISHED;
 
   xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "TEST mod decode\n");
-  
+
   switch (stream->content_detection_method) {
 
   case METHOD_EXPLICIT:

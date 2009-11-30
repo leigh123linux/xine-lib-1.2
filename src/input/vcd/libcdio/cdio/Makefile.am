@@ -16,4 +16,4 @@ noinst_HEADERS = \
         types.h \
 	util.h \
 	version.h \
-	xa.h 
+	xa.h

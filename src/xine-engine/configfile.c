@@ -225,7 +225,7 @@ static int config_section_enum(const char *sect) {
     NULL
   };
   int i = 0;
-  
+
   while (known_section[i])
     if (strcmp(sect, known_section[i++]) == 0)
       return i;
@@ -234,7 +234,7 @@ static int config_section_enum(const char *sect) {
 
 static void config_key_split(const char *key, char **base, char **section, char **subsect, char **name) {
   char *parse;
-  
+
   *base = strdup(key);
   if ((parse = strchr(*base, '.'))) {
     *section = *base;
@@ -259,10 +259,10 @@ static void config_insert(config_values_t *this, cfg_entry_t *new_entry) {
   cfg_entry_t *cur, *prev;
   char *new_base, *new_section, *new_subsect, *new_name;
   char *cur_base, *cur_section, *cur_subsect, *cur_name;
-  
+
   /* extract parts of the new key */
   config_key_split(new_entry->key, &new_base, &new_section, &new_subsect, &new_name);
-  
+
   /* search right position */
   cur_base = NULL;
   for (cur = this->first, prev = NULL; cur; prev = cur, cur = cur->next) {
@@ -270,7 +270,7 @@ static void config_insert(config_values_t *this, cfg_entry_t *new_entry) {
     if (cur_base)
       free(cur_base);
     config_key_split(cur->key, &cur_base, &cur_section, &cur_subsect, &cur_name);
-    
+
     /* sort by section name */
     if (!new_section &&  cur_section) break;
     if ( new_section && !cur_section) continue;
@@ -302,14 +302,14 @@ static void config_insert(config_values_t *this, cfg_entry_t *new_entry) {
       if (cmp < 0) break;
       if (cmp > 0) continue;
     }
-    
+
     break;
   }
   if (new_base)
     free(new_base);
   if (cur_base)
     free(cur_base);
-  
+
   new_entry->next = cur;
   if (!cur)
     this->last = new_entry;
@@ -330,7 +330,7 @@ static cfg_entry_t *XINE_MALLOC config_add (config_values_t *this, const char *k
   entry->unknown_value = NULL;
   entry->str_value     = NULL;
   entry->exp_level     = exp_level;
-  
+
   config_insert(this, entry);
 
   lprintf ("add entry key=%s\n", key);
@@ -397,7 +397,7 @@ static void config_lookup_entry_int (config_values_t *this, const char *key,
       *prev  = *entry;
       *entry = (*entry)->next;
     }
-  
+
     if (*entry) {
       free(tmp);
       return;
@@ -420,11 +420,11 @@ static void config_lookup_entry_int (config_values_t *this, const char *key,
 
 static cfg_entry_t *config_lookup_entry(config_values_t *this, const char *key) {
   cfg_entry_t *entry, *prev;
-  
+
   pthread_mutex_lock(&this->config_lock);
   config_lookup_entry_int(this, key, &entry, &prev);
   pthread_mutex_unlock(&this->config_lock);
-  
+
   return entry;
 }
 
@@ -525,7 +525,7 @@ static cfg_entry_t *config_register_string_internal (config_values_t *this,
 
   /* set string */
   entry->type = XINE_CONFIG_TYPE_STRING;
-  
+
   if (entry->unknown_value)
     entry->str_value = strdup(entry->unknown_value);
   else
@@ -756,7 +756,7 @@ static int config_register_enum (config_values_t *this,
     entry->num_value = config_parse_enum (entry->unknown_value, (const char **)values);
   else
     entry->num_value = def_value;
-  
+
   /* fill out rest of struct */
   entry->num_default = def_value;
 
@@ -806,7 +806,7 @@ static void config_shallow_copy(xine_cfg_entry_t *dest, cfg_entry_t *src)
 
 static void config_update_num (config_values_t *this,
 			       const char *key, int value) {
-  
+
   cfg_entry_t *entry;
 
   entry = this->lookup_entry (this, key);
@@ -835,13 +835,13 @@ static void config_update_num (config_values_t *this,
     xine_cfg_entry_t cb_entry;
 
     config_shallow_copy(&cb_entry, entry);
-    
+
     /* it is safe to enter the callback from within a locked context
      * because we use a recursive mutex.
      */
     entry->callback (entry->callback_data, &cb_entry);
   }
-  
+
   pthread_mutex_unlock(&this->config_lock);
 }
 
@@ -863,7 +863,7 @@ static void config_update_string (config_values_t *this,
     return;
 
   }
-  
+
   /* if an enum is updated with a string, we convert the string to
    * its index and use update number */
   if (entry->type == XINE_CONFIG_TYPE_ENUM) {
@@ -887,7 +887,7 @@ static void config_update_string (config_values_t *this,
     xine_cfg_entry_t cb_entry;
 
     config_shallow_copy(&cb_entry, entry);
-    
+
     /* it is safe to enter the callback from within a locked context
      * because we use a recursive mutex.
      */
@@ -929,7 +929,7 @@ void xine_config_load (xine_t *xine, const char *filename) {
 
       if (line[0] == '#')
 	continue;
-      
+
       if (line[0] == '.') {
 	if (strncmp(line, ".version:", 9) == 0) {
 	  sscanf(line + 9, "%d", &this->current_version);
@@ -1002,32 +1002,32 @@ void xine_config_save (xine_t *xine, const char *filename) {
   unlink (temp);
 
   if (stat(temp, &backup_stat) != 0) {
-    
+
     lprintf("backing up configfile to %s\n", temp);
 
     f_backup = fopen(temp, "w");
     f_config = fopen(filename, "r");
-    
+
     if (f_config && f_backup && (stat(filename, &config_stat) == 0)) {
       char    *buf = NULL;
       size_t   rlen;
-      
+
       buf = (char *) malloc(config_stat.st_size + 1);
       if((rlen = fread(buf, 1, config_stat.st_size, f_config)) && ((off_t)rlen == config_stat.st_size)) {
 	(void) fwrite(buf, 1, rlen, f_backup);
       }
       free(buf);
-      
+
       fclose(f_config);
       fclose(f_backup);
       stat(temp, &backup_stat);
-      
+
       if (config_stat.st_size == backup_stat.st_size)
 	backup = 1;
       else
 	unlink(temp);
-      
-    } 
+
+    }
     else {
 
       if (f_config)
@@ -1040,17 +1040,17 @@ void xine_config_save (xine_t *xine, const char *filename) {
 
     }
   }
-  
+
   if (!backup && (stat(filename, &config_stat) == 0)) {
     xprintf(xine, XINE_VERBOSITY_LOG, _("configfile: WARNING: backing up configfile to %s failed\n"), temp);
     xprintf(xine, XINE_VERBOSITY_LOG, _("configfile: WARNING: your configuration will not be saved\n"));
     return;
   }
-  
+
   lprintf ("writing config file to %s\n", filename);
 
   f_config = fopen(filename, "w");
-      
+
   if (f_config) {
 
     cfg_entry_t *entry;
@@ -1141,7 +1141,7 @@ void xine_config_save (xine_t *xine, const char *filename) {
       entry = entry->next;
     }
     pthread_mutex_unlock(&this->config_lock);
-    
+
     if (fclose(f_config) != 0) {
       xprintf(xine, XINE_VERBOSITY_LOG, _("configfile: WARNING: writing configuration to %s failed\n"), filename);
       xprintf(xine, XINE_VERBOSITY_LOG, _("configfile: WARNING: removing possibly broken config file %s\n"), filename);
@@ -1152,7 +1152,7 @@ void xine_config_save (xine_t *xine, const char *filename) {
       backup = 0;
     }
   }
-  
+
   if (backup)
     unlink(temp);
 }
@@ -1284,13 +1284,13 @@ int _x_config_change_opt(config_values_t *config, const char *opt) {
     free(key);
     return -1;
   }
-  
+
   switch(entry->type) {
   case XINE_CONFIG_TYPE_STRING:
     config->update_string(config, key, value);
     handled = 1;
     break;
-    
+
   case XINE_CONFIG_TYPE_RANGE:
   case XINE_CONFIG_TYPE_ENUM:
   case XINE_CONFIG_TYPE_NUM:
@@ -1298,13 +1298,13 @@ int _x_config_change_opt(config_values_t *config, const char *opt) {
     config->update_num(config, key, (atoi(value)));
     handled = 1;
     break;
-    
+
   case XINE_CONFIG_TYPE_UNKNOWN:
     entry->unknown_value = strdup(value);
     handled = 1;
     break;
   }
-  
+
   free(key);
   return handled;
 }

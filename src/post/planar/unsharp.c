@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -64,7 +64,7 @@ static void unsharp( uint8_t *dst, uint8_t *src, int dstStride, int srcStride, i
 
     uint32_t **SC = fp->SC;
     uint32_t SR[MAX_MATRIX_SIZE-1], Tmp1, Tmp2;
-    uint8_t* src2 = src; 
+    uint8_t* src2 = src;
 
     int32_t res;
     int x, y, z;
@@ -77,7 +77,7 @@ static void unsharp( uint8_t *dst, uint8_t *src, int dstStride, int srcStride, i
     if( !fp->amount ) {
 	if( src == dst )
 	    return;
-	if( dstStride == srcStride ) 
+	if( dstStride == srcStride )
 	    xine_fast_memcpy( dst, src, srcStride*height );
 	else
 	    for( y=0; y<height; y++, dst+=dstStride, src+=srcStride )
@@ -104,7 +104,7 @@ static void unsharp( uint8_t *dst, uint8_t *src, int dstStride, int srcStride, i
 	    if( x>=stepsX && y>=stepsY ) {
 		uint8_t* srx = src - stepsY*srcStride + x - stepsX;
 		uint8_t* dsx = dst - stepsY*dstStride + x - stepsX;
-		
+
 		res = (int32_t)*srx + ( ( ( (int32_t)*srx - (int32_t)((Tmp1+halfscale) >> scalebits) ) * amount ) >> 16 );
 		*dsx = res>255 ? 255 : res<0 ? 0 : (uint8_t)res;
 	    }
@@ -123,7 +123,7 @@ void *unsharp_init_plugin(xine_t *xine, void *);
 typedef struct post_plugin_unsharp_s post_plugin_unsharp_t;
 
 /*
- * this is the struct used by "parameters api" 
+ * this is the struct used by "parameters api"
  */
 typedef struct unsharp_parameters_s {
 
@@ -141,17 +141,17 @@ typedef struct unsharp_parameters_s {
  * description of params struct
  */
 START_PARAM_DESCR( unsharp_parameters_t )
-PARAM_ITEM( POST_PARAM_TYPE_INT, luma_matrix_width, NULL, 3, 11, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_INT, luma_matrix_width, NULL, 3, 11, 0,
             "width of the matrix (must be odd)" )
-PARAM_ITEM( POST_PARAM_TYPE_INT, luma_matrix_height, NULL, 3, 11, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_INT, luma_matrix_height, NULL, 3, 11, 0,
             "height of the matrix (must be odd)" )
-PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, luma_amount, NULL, -2, 2, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, luma_amount, NULL, -2, 2, 0,
             "relative amount of sharpness/blur (=0 disable, <0 blur, >0 sharpen)" )
-PARAM_ITEM( POST_PARAM_TYPE_INT, chroma_matrix_width, NULL, 3, 11, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_INT, chroma_matrix_width, NULL, 3, 11, 0,
             "width of the matrix (must be odd)" )
-PARAM_ITEM( POST_PARAM_TYPE_INT, chroma_matrix_height, NULL, 3, 11, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_INT, chroma_matrix_height, NULL, 3, 11, 0,
             "height of the matrix (must be odd)" )
-PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, chroma_amount, NULL, -2, 2, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, chroma_amount, NULL, -2, 2, 0,
             "relative amount of sharpness/blur (=0 disable, <0 blur, >0 sharpen)" )
 END_PARAM_DESCR( param_descr )
 
@@ -205,7 +205,7 @@ static int get_parameters (xine_post_t *this_gen, void *param_gen) {
 
   return 1;
 }
- 
+
 static xine_post_api_descr_t * get_param_descr (void) {
   return &param_descr;
 }
@@ -270,7 +270,7 @@ void *unsharp_init_plugin(xine_t *xine, void *data)
 
   if (!class)
     return NULL;
-  
+
   class->open_plugin     = unsharp_open_plugin;
   class->get_identifier  = unsharp_get_identifier;
   class->get_description = unsharp_get_description;
@@ -289,14 +289,14 @@ static post_plugin_t *unsharp_open_plugin(post_class_t *class_gen, int inputs,
   xine_post_in_t        *input_api;
   post_out_t            *output;
   post_video_port_t     *port;
-  
+
   if (!this || !video_target || !video_target[0]) {
     free(this);
     return NULL;
   }
 
   _x_post_init(&this->post, 0, 1);
-  
+
   this->params.luma_matrix_width = 5;
   this->params.luma_matrix_height = 5;
   this->params.luma_amount = 0.0;
@@ -306,11 +306,11 @@ static post_plugin_t *unsharp_open_plugin(post_class_t *class_gen, int inputs,
   this->params.chroma_amount = 0.0;
 
   pthread_mutex_init (&this->lock, NULL);
-  
+
   port = _x_post_intercept_video_port(&this->post, video_target[0], &input, &output);
   port->intercept_frame = unsharp_intercept_frame;
   port->new_frame->draw = unsharp_draw;
-  
+
   input_api       = &this->params_input;
   input_api->name = "parameters";
   input_api->type = XINE_POST_DATA_PARAMETERS;
@@ -319,13 +319,13 @@ static post_plugin_t *unsharp_open_plugin(post_class_t *class_gen, int inputs,
 
   input->xine_in.name     = "video";
   output->xine_out.name   = "unsharped video";
-  
+
   this->post.xine_post.video_input[0] = &port->new_port;
-  
+
   set_parameters ((xine_post_t *)this, &this->params);
-  
+
   this->post.dispose = unsharp_dispose;
-  
+
   return &this->post;
 }
 
@@ -399,15 +399,15 @@ static int unsharp_draw(vo_frame_t *frame, xine_stream_t *stream)
 
       yv12_frame = port->original_port->get_frame(port->original_port,
         frame->width, frame->height, frame->ratio, XINE_IMGFMT_YV12, frame->flags | VO_BOTH_FIELDS);
-  
+
       _x_post_frame_copy_down(frame, yv12_frame);
-  
+
       yuy2_to_yv12(frame->base[0], frame->pitches[0],
                    yv12_frame->base[0], yv12_frame->pitches[0],
                    yv12_frame->base[1], yv12_frame->pitches[1],
                    yv12_frame->base[2], yv12_frame->pitches[2],
                    frame->width, frame->height);
-  
+
     } else {
       yv12_frame = frame;
       yv12_frame->lock(yv12_frame);
@@ -435,7 +435,7 @@ static int unsharp_draw(vo_frame_t *frame, xine_stream_t *stream)
        stepsY = fp->msizeY/2;
        for( z=0; z<2*stepsY; z++ )
          fp->SC[z] = malloc( sizeof(*(fp->SC[z])) * (frame->width+2*stepsX) );
-     
+
        fp = &this->priv.chromaParam;
        stepsX = fp->msizeX/2;
        stepsY = fp->msizeY/2;
@@ -450,7 +450,7 @@ static int unsharp_draw(vo_frame_t *frame, xine_stream_t *stream)
     pthread_mutex_unlock (&this->lock);
 
     skip = out_frame->draw(out_frame, stream);
-  
+
     _x_post_frame_copy_up(frame, out_frame);
 
     out_frame->free(out_frame);

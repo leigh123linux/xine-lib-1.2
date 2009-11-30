@@ -87,7 +87,7 @@ static int demux_vox_send_chunk (demux_plugin_t *this_gen) {
     buf->size = buf->max_size;
 
   if( this->input->get_length (this->input) )
-    buf->extra_info->input_normpos = (int)( (double) current_file_pos * 
+    buf->extra_info->input_normpos = (int)( (double) current_file_pos *
                                      65535 / this->input->get_length (this->input) );
   buf->extra_info->input_time = audio_pts / 90;
   buf->pts = audio_pts;
@@ -166,7 +166,7 @@ static int demux_vox_get_status (demux_plugin_t *this_gen) {
 static int demux_vox_get_stream_length (demux_plugin_t *this_gen) {
   demux_vox_t *this = (demux_vox_t *) this_gen;
 
-  return (int)((int64_t)this->input->get_length(this->input) 
+  return (int)((int64_t)this->input->get_length(this->input)
                * 2 * 1000 / DIALOGIC_SAMPLERATE);
 }
 

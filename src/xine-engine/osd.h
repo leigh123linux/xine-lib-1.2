@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -48,11 +48,11 @@ struct osd_object_s {
   int width, height;    /* work area dimentions */
   uint8_t *area;        /* work area */
   int display_x,display_y;  /* where to display it in screen */
-  
+
   /* clipping box inside work area */
   int x1, y1;
   int x2, y2;
-  
+
   uint32_t color[OVL_PALETTE_SIZE];	/* color lookup table  */
   uint8_t trans[OVL_PALETTE_SIZE];	/* mixer key table */
 
@@ -62,7 +62,7 @@ struct osd_object_s {
   iconv_t cd;                           /* iconv handle of encoding */
   char *encoding;                       /* name of encoding */
 #endif
-  
+
   osd_font_t *font;
   osd_ft2context_t *ft2;
 };
@@ -102,17 +102,17 @@ struct osd_renderer_s {
    */
   int (*hide) (osd_object_t *osd, int64_t vpts );
 
-  /* 
+  /*
    * draw point.
    */
   void (*point) (osd_object_t *osd, int x, int y, int color);
-       
+
        /*
    * Bresenham line implementation on osd object
    */
   void (*line) (osd_object_t *osd,
 		int x1, int y1, int x2, int y2, int color );
-  
+
   /*
    * filled rectangle
    */
@@ -125,7 +125,7 @@ struct osd_renderer_s {
   void (*set_palette) (osd_object_t *osd, const uint32_t *color, const uint8_t *trans );
 
   /*
-   * set on existing text palette 
+   * set on existing text palette
    * (-1 to set used specified palette)
    *
    * color_base specifies the first color index to use for this text
@@ -136,11 +136,11 @@ struct osd_renderer_s {
    */
   void (*set_text_palette) (osd_object_t *osd, int palette_number,
 			    int color_base );
-  
+
   /*
    * get palette (color and transparency)
    */
-  void (*get_palette) (osd_object_t *osd, uint32_t *color, 
+  void (*get_palette) (osd_object_t *osd, uint32_t *color,
 		       uint8_t *trans);
 
   /*
@@ -167,20 +167,20 @@ struct osd_renderer_s {
    * no \n yet
    *
    * The text is assigned the colors starting at the index specified by
-   * color_base up to the size of the text palette. 
+   * color_base up to the size of the text palette.
    *
    * Use OSD_TEXT1, OSD_TEXT2, ... for some preasssigned color indices.
    */
-  int (*render_text) (osd_object_t *osd, int x1, int y1, 
+  int (*render_text) (osd_object_t *osd, int x1, int y1,
 		      const char *text, int color_base);
 
   /*
    * get width and height of how text will be renderized
    */
-  int (*get_text_size) (osd_object_t *osd, const char *text, 
+  int (*get_text_size) (osd_object_t *osd, const char *text,
 			int *width, int *height);
 
-  /* 
+  /*
    * close osd rendering engine
    * loaded fonts are unloaded
    * osd objects are closed
@@ -191,7 +191,7 @@ struct osd_renderer_s {
    * clear an osd object (empty drawing area)
    */
   void (*clear) (osd_object_t *osd );
-    
+
   /*
    * paste a bitmap with optional palette mapping
    */
@@ -210,7 +210,7 @@ struct osd_renderer_s {
    * see xine.h for defined XINE_OSD_CAP_ values.
    */
   uint32_t (*get_capabilities) (osd_object_t *osd);
-  
+
   /* private stuff */
 
   pthread_mutex_t             osd_mutex;
@@ -218,7 +218,7 @@ struct osd_renderer_s {
   osd_object_t               *osds;          /* instances of osd */
   osd_font_t                 *fonts;         /* loaded fonts */
   int                        textpalette;    /* default textpalette */
-  
+
   xine_stream_t              *stream;
 
 };
@@ -230,7 +230,7 @@ osd_renderer_t *_x_osd_renderer_init( xine_stream_t *stream ) XINE_MALLOC;
 
 
 /*
- * The size of a text palette 
+ * The size of a text palette
  */
 
 #define TEXT_PALETTE_SIZE 11
@@ -251,29 +251,29 @@ osd_renderer_t *_x_osd_renderer_init( xine_stream_t *stream ) XINE_MALLOC;
 #define OSD_TEXT9 (8 * TEXT_PALETTE_SIZE)
 #define OSD_TEXT10 (9 * TEXT_PALETTE_SIZE)
 
-/* 
+/*
  * Defined palettes for rendering osd text
  * (more can be added later)
- */ 
+ */
 
 #define NUMBER_OF_TEXT_PALETTES 4
 #define TEXTPALETTE_WHITE_BLACK_TRANSPARENT    0
 #define TEXTPALETTE_WHITE_NONE_TRANSPARENT     1
 #define TEXTPALETTE_WHITE_NONE_TRANSLUCID      2
 #define TEXTPALETTE_YELLOW_BLACK_TRANSPARENT   3
- 
+
 #ifdef __OSD_C__
- 
+
 /* This text descriptions are used for config screen */
 static const char *textpalettes_str[NUMBER_OF_TEXT_PALETTES+1] = {
   "white-black-transparent",
   "white-none-transparent",
   "white-none-translucid",
-  "yellow-black-transparent",    
+  "yellow-black-transparent",
   NULL};
 
 
-/* 
+/*
    Palette entries as used by osd fonts:
 
    0: not used by font, always transparent
@@ -284,10 +284,10 @@ static const char *textpalettes_str[NUMBER_OF_TEXT_PALETTES+1] = {
    6: font border. if the font is to be displayed without border this
       will probably be adjusted to font background or near.
    7-9: transition between border and foreground
-   10: font color (foreground)   
+   10: font color (foreground)
 */
 
-/* 
+/*
     The palettes below were made by hand, ie, i just throw
     values that seemed to do the transitions i wanted.
     This can surelly be improved a lot. [Miguel]

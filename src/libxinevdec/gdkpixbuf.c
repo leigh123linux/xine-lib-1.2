@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2006 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -65,7 +65,7 @@ typedef struct image_decoder_s {
 
   xine_stream_t    *stream;
   int               video_open;
-  
+
   GdkPixbufLoader  *loader;
 
 } image_decoder_t;
@@ -158,8 +158,8 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
      * alloc and draw video frame
      */
     img = this->stream->video_out->get_frame (this->stream->video_out, width,
-					      height, (double)width/(double)height, 
-					      XINE_IMGFMT_YUY2, 
+					      height, (double)width/(double)height,
+					      XINE_IMGFMT_YUY2,
 					      VO_BOTH_FIELDS);
     img->pts = buf->pts;
     img->duration = 3600;
@@ -167,9 +167,9 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 
     yuv444_to_yuy2(&yuv_planes, img->base[0], img->pitches[0]);
     free_yuv_planes(&yuv_planes);
-    
+
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, img->duration);
-    
+
     img->draw(img, this->stream);
     img->free(img);
   }
@@ -178,7 +178,7 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 
 static void image_flush (video_decoder_t *this_gen) {
   /* image_decoder_t *this = (image_decoder_t *) this_gen; */
-  
+
   /*
    * flush out any frames that are still stored in the decoder
    */
@@ -187,7 +187,7 @@ static void image_flush (video_decoder_t *this_gen) {
 
 static void image_reset (video_decoder_t *this_gen) {
   image_decoder_t *this = (image_decoder_t *) this_gen;
-   
+
   /*
    * reset decoder after engine flush (prepare for new
    * video data not related to recently decoded data)
@@ -203,7 +203,7 @@ static void image_reset (video_decoder_t *this_gen) {
 
 static void image_discontinuity (video_decoder_t *this_gen) {
   /* image_decoder_t *this = (image_decoder_t *) this_gen; */
- 
+
   /*
    * a time reference discontinuity has happened.
    * that is, it must forget any currently held pts value
@@ -231,7 +231,7 @@ static void image_dispose (video_decoder_t *this_gen) {
 }
 
 
-static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, 
+static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
 				     xine_stream_t *stream) {
 
   image_class_t   *cls = (image_class_t *) class_gen;
@@ -274,7 +274,7 @@ static void dispose_class (video_decoder_class_t *this_gen) {
   image_class_t   *this = (image_class_t *) this_gen;
 
   lprintf("class closed\n");
-  
+
   free (this);
 }
 
@@ -294,7 +294,7 @@ static void *init_class (xine_t *xine, void *data) {
    */
 
   lprintf("class opened\n");
-    
+
   return this;
 }
 
@@ -310,7 +310,7 @@ static const decoder_info_t dec_info_image = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_VIDEO_DECODER, 18, "gdkpixbuf", XINE_VERSION_CODE, &dec_info_image, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

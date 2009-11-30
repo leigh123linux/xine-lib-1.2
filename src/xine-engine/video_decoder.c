@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2005 the xine project
  *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -45,13 +45,13 @@
 static void update_spu_decoder (xine_stream_t *stream, int type) {
 
   int streamtype = (type>>16) & 0xFF;
-  
+
   if( stream->spu_decoder_streamtype != streamtype ||
       !stream->spu_decoder_plugin ) {
-    
+
     if (stream->spu_decoder_plugin)
       _x_free_spu_decoder (stream, stream->spu_decoder_plugin);
-          
+
     stream->spu_decoder_streamtype = streamtype;
     stream->spu_decoder_plugin = _x_get_spu_decoder (stream, streamtype);
 
@@ -63,27 +63,27 @@ int _x_spu_decoder_sleep(xine_stream_t *stream, int64_t next_spu_vpts)
 {
   int64_t time, wait;
   int thread_vacant = 1;
-  
+
   /* we wait until one second before the next SPU is due */
   next_spu_vpts -= 90000;
-  
+
   do {
     if (next_spu_vpts)
       time = stream->xine->clock->get_current_time(stream->xine->clock);
     else
       time = 0;
-    
+
     /* wait in pieces of one half second */
     if (next_spu_vpts - time < SPU_SLEEP_INTERVAL)
       wait = next_spu_vpts - time;
     else
       wait = SPU_SLEEP_INTERVAL;
-    
+
     if (wait > 0) xine_usec_sleep(wait * 11);
-    
+
     if (stream->xine->port_ticket->ticket_revoked)
       stream->xine->port_ticket->renew(stream->xine->port_ticket, 0);
-    
+
     /* never wait, if we share the thread with a video decoder */
     thread_vacant = !stream->video_decoder_plugin;
     /* we have to return if video out calls for the decoder */
@@ -92,9 +92,9 @@ int _x_spu_decoder_sleep(xine_stream_t *stream, int64_t next_spu_vpts)
     /* we have to return if the demuxer needs us to release a buffer */
     if (thread_vacant)
       thread_vacant = !stream->demux_action_pending;
-    
+
   } while (wait == SPU_SLEEP_INTERVAL && thread_vacant);
-  
+
   return thread_vacant;
 }
 
@@ -117,7 +117,7 @@ static void *video_decoder_loop (void *stream_gen) {
    */
   nice(-1);
 #endif /* WIN32 */
-  
+
   if (prof_video_decode == -1)
     prof_video_decode = xine_profiler_allocate_slot ("video decoder");
   if (prof_spu_decode == -1)
@@ -125,15 +125,15 @@ static void *video_decoder_loop (void *stream_gen) {
 
   while (running) {
 
-    lprintf ("getting buffer...\n");  
+    lprintf ("getting buffer...\n");
 
     buf = stream->video_fifo->get (stream->video_fifo);
-    
+
     _x_extra_info_merge( stream->video_decoder_extra_info, buf->extra_info );
     stream->video_decoder_extra_info->seek_count = stream->video_seek_count;
-    
-    lprintf ("got buffer 0x%08x\n", buf->type);      
-    
+
+    lprintf ("got buffer 0x%08x\n", buf->type);
+
     switch (buf->type & 0xffff0000) {
     case BUF_CONTROL_HEADERS_DONE:
       pthread_mutex_lock (&stream->counter_lock);
@@ -143,34 +143,34 @@ static void *video_decoder_loop (void *stream_gen) {
       break;
 
     case BUF_CONTROL_START:
-      
+
       /* decoder dispose might call port functions */
       running_ticket->acquire(running_ticket, 0);
-      
+
       if (stream->video_decoder_plugin) {
 	_x_free_video_decoder (stream, stream->video_decoder_plugin);
 	stream->video_decoder_plugin = NULL;
       }
-      
+
       if (stream->spu_decoder_plugin) {
         _x_free_spu_decoder (stream, stream->spu_decoder_plugin);
         stream->spu_decoder_plugin = NULL;
         stream->spu_track_map_entries = 0;
       }
-      
+
       running_ticket->release(running_ticket, 0);
-      
+
       if( !(buf->decoder_flags & BUF_FLAG_GAPLESS_SW) )
-        stream->metronom->handle_video_discontinuity (stream->metronom, 
+        stream->metronom->handle_video_discontinuity (stream->metronom,
 						      DISC_STREAMSTART, 0);
-      
+
       buftype_unknown = 0;
       break;
 
     case BUF_CONTROL_SPU_CHANNEL:
       {
 	xine_event_t  ui_event;
-	
+
 	/* We use widescreen spu as the auto selection, because widescreen
 	 * display is common. SPU decoders can choose differently if it suits
 	 * them. */
@@ -179,7 +179,7 @@ static void *video_decoder_loop (void *stream_gen) {
 	stream->spu_channel_pan_scan = buf->decoder_info[2];
 	if (stream->spu_channel_user == -1)
 	  stream->spu_channel = stream->spu_channel_auto;
-	
+
 	/* Inform UI of SPU channel changes */
 	ui_event.type        = XINE_EVENT_UI_CHANNELS_CHANGED;
 	ui_event.data_length = 0;
@@ -189,7 +189,7 @@ static void *video_decoder_loop (void *stream_gen) {
       break;
 
     case BUF_CONTROL_END:
-        
+
       /* flush decoder frames if stream finished naturally (non-user stop) */
       if( buf->decoder_flags ) {
         running_ticket->acquire(running_ticket, 0);
@@ -210,12 +210,12 @@ static void *video_decoder_loop (void *stream_gen) {
        */
       while(1) {
         int num_bufs, num_streams;
-        
+
         running_ticket->acquire(running_ticket, 0);
         num_bufs = stream->video_out->get_property(stream->video_out, VO_PROP_BUFS_IN_FIFO);
         num_streams = stream->video_out->get_property(stream->video_out, VO_PROP_NUM_STREAMS);
         running_ticket->release(running_ticket, 0);
-        
+
         if( num_bufs > 0 && num_streams == 1 && !stream->early_finish_event &&
             stream->master == stream )
           xine_usec_sleep (10000);
@@ -229,7 +229,7 @@ static void *video_decoder_loop (void *stream_gen) {
 
       stream->finished_count_video++;
 
-      lprintf ("reached end marker # %d\n", 
+      lprintf ("reached end marker # %d\n",
 	       stream->finished_count_video);
 
       pthread_cond_broadcast (&stream->counter_changed);
@@ -246,7 +246,7 @@ static void *video_decoder_loop (void *stream_gen) {
           pthread_cond_timedwait (&stream->counter_changed, &stream->counter_lock, &ts);
         }
       }
-          
+
       pthread_mutex_unlock (&stream->counter_lock);
 
       /* Wake up xine_play if it's waiting for a frame */
@@ -261,7 +261,7 @@ static void *video_decoder_loop (void *stream_gen) {
     case BUF_CONTROL_QUIT:
       /* decoder dispose might call port functions */
       running_ticket->acquire(running_ticket, 0);
-      
+
       if (stream->video_decoder_plugin) {
 	_x_free_video_decoder (stream, stream->video_decoder_plugin);
 	stream->video_decoder_plugin = NULL;
@@ -297,7 +297,7 @@ static void *video_decoder_loop (void *stream_gen) {
         running_ticket->release(running_ticket, 0);
       }
       break;
-          
+
     case BUF_CONTROL_DISCONTINUITY:
       lprintf ("discontinuity ahead\n");
 
@@ -309,11 +309,11 @@ static void *video_decoder_loop (void *stream_gen) {
         stream->video_decoder_plugin->discontinuity (stream->video_decoder_plugin);
         running_ticket->release(running_ticket, 0);
       }
-      
+
       stream->metronom->handle_video_discontinuity (stream->metronom, DISC_RELATIVE, buf->disc_off);
 
       break;
-    
+
     case BUF_CONTROL_NEWPTS:
       lprintf ("new pts %"PRId64"\n", buf->disc_off);
 
@@ -325,14 +325,14 @@ static void *video_decoder_loop (void *stream_gen) {
         stream->video_decoder_plugin->discontinuity (stream->video_decoder_plugin);
         running_ticket->release(running_ticket, 0);
       }
-      
+
       if (buf->decoder_flags & BUF_FLAG_SEEK) {
 	stream->metronom->handle_video_discontinuity (stream->metronom, DISC_STREAMSEEK, buf->disc_off);
       } else {
 	stream->metronom->handle_video_discontinuity (stream->metronom, DISC_ABSOLUTE, buf->disc_off);
-      }    
+      }
       break;
-      
+
     case BUF_CONTROL_AUDIO_CHANNEL:
       {
 	xine_event_t  ui_event;
@@ -345,7 +345,7 @@ static void *video_decoder_loop (void *stream_gen) {
 
     case BUF_CONTROL_NOP:
       break;
-      
+
     default:
 
       if ( (buf->type & 0xFF000000) == BUF_VIDEO_BASE ) {
@@ -354,43 +354,43 @@ static void *video_decoder_loop (void *stream_gen) {
           break;
 
         xine_profiler_start_count (prof_video_decode);
-      
+
         running_ticket->acquire(running_ticket, 0);
-      
+
 	/*
-	  printf ("video_decoder: got package %d, decoder_info[0]:%d\n", 
+	  printf ("video_decoder: got package %d, decoder_info[0]:%d\n",
 	  buf, buf->decoder_info[0]);
-	*/      
-	
+	*/
+
 	streamtype = (buf->type>>16) & 0xFF;
- 
+
         if( buf->type != buftype_unknown &&
             (stream->video_decoder_streamtype != streamtype ||
             !stream->video_decoder_plugin) ) {
-          
+
           if (stream->video_decoder_plugin) {
             _x_free_video_decoder (stream, stream->video_decoder_plugin);
           }
-          
+
           stream->video_decoder_streamtype = streamtype;
           stream->video_decoder_plugin = _x_get_video_decoder (stream, streamtype);
-    
+
           _x_stream_info_set(stream, XINE_STREAM_INFO_VIDEO_HANDLED, (stream->video_decoder_plugin != NULL));
         }
 
         if (stream->video_decoder_plugin)
-          stream->video_decoder_plugin->decode_data (stream->video_decoder_plugin, buf);  
- 
-        if (buf->type != buftype_unknown &&  
+          stream->video_decoder_plugin->decode_data (stream->video_decoder_plugin, buf);
+
+        if (buf->type != buftype_unknown &&
             !_x_stream_info_get(stream, XINE_STREAM_INFO_VIDEO_HANDLED)) {
-          xine_log (stream->xine, XINE_LOG_MSG, 
+          xine_log (stream->xine, XINE_LOG_MSG,
                     _("video_decoder: no plugin available to handle '%s'\n"), _x_buf_video_name( buf->type ) );
-          
+
           if( !_x_meta_info_get(stream, XINE_META_INFO_VIDEOCODEC))
 	    _x_meta_info_set_utf8(stream, XINE_META_INFO_VIDEOCODEC, _x_buf_video_name( buf->type ));
-          
+
           buftype_unknown = buf->type;
-          
+
           /* fatal error - dispose plugin */
           if (stream->video_decoder_plugin) {
             _x_free_video_decoder (stream, stream->video_decoder_plugin);
@@ -401,7 +401,7 @@ static void *video_decoder_loop (void *stream_gen) {
         if (running_ticket->ticket_revoked)
           running_ticket->renew(running_ticket, 0);
         running_ticket->release(running_ticket, 0);
-      
+
         xine_profiler_stop_count (prof_video_decode);
 
       } else if ( (buf->type & 0xFF000000) == BUF_SPU_BASE ) {
@@ -414,15 +414,15 @@ static void *video_decoder_loop (void *stream_gen) {
         xine_profiler_start_count (prof_spu_decode);
 
         running_ticket->acquire(running_ticket, 0);
-      
+
         update_spu_decoder(stream, buf->type);
 
         /* update track map */
 
         i = 0;
-        while ( (i<stream->spu_track_map_entries) && (stream->spu_track_map[i]<buf->type) ) 
+        while ( (i<stream->spu_track_map_entries) && (stream->spu_track_map[i]<buf->type) )
           i++;
-        
+
         if ( (i==stream->spu_track_map_entries)
              || (stream->spu_track_map[i] != buf->type) ) {
           xine_event_t  ui_event;
@@ -458,15 +458,15 @@ static void *video_decoder_loop (void *stream_gen) {
         if (running_ticket->ticket_revoked)
           running_ticket->renew(running_ticket, 0);
         running_ticket->release(running_ticket, 0);
-      
+
         xine_profiler_stop_count (prof_spu_decode);
 
       } else if (buf->type != buftype_unknown) {
-	xine_log (stream->xine, XINE_LOG_MSG, 
+	xine_log (stream->xine, XINE_LOG_MSG,
 		  _("video_decoder: error, unknown buffer type: %08x\n"), buf->type );
 	buftype_unknown = buf->type;
       }
-      
+
       break;
 
     }
@@ -478,13 +478,13 @@ static void *video_decoder_loop (void *stream_gen) {
 }
 
 int _x_video_decoder_init (xine_stream_t *stream) {
-  
+
   if (stream->video_out == NULL) {
     stream->video_fifo = _x_dummy_fifo_buffer_new (5, 8192);
     stream->spu_track_map_entries = 0;
     return 1;
   } else {
-     
+
     pthread_attr_t       pth_attrs;
     struct sched_param   pth_params;
     int		       err, num_buffers;
@@ -495,7 +495,7 @@ int _x_video_decoder_init (xine_stream_t *stream) {
      * We provide buffers of 8k size instead of 2k for demuxers sending
      * larger chunks.
      */
-  
+
     num_buffers = stream->xine->config->register_num (stream->xine->config,
                                                       "engine.buffers.video_num_buffers",
                                                       500,
@@ -505,15 +505,15 @@ int _x_video_decoder_init (xine_stream_t *stream) {
 							"mean smoother playback for unreliable inputs, but "
 							"also increased latency and memory consumption."),
                                                       20, NULL, NULL);
-  
+
     stream->video_fifo = _x_fifo_buffer_new (num_buffers, 8192);
     if (stream->video_fifo == NULL) {
       xine_log(stream->xine, XINE_LOG_MSG, "video_decoder: can't allocated video fifo\n");
       return 0;
     }
-    
+
     stream->spu_track_map_entries = 0;
-  
+
     pthread_attr_init(&pth_attrs);
     pthread_attr_getschedparam(&pth_attrs, &pth_params);
     pth_params.sched_priority = sched_get_priority_min(SCHED_OTHER);
@@ -529,7 +529,7 @@ int _x_video_decoder_init (xine_stream_t *stream) {
       pthread_attr_destroy(&pth_attrs);
       return 0;
     }
-    
+
     pthread_attr_destroy(&pth_attrs);
   }
   return 1;
@@ -561,7 +561,7 @@ void _x_video_decoder_shutdown (xine_stream_t *stream) {
     lprintf ("shutdown...4\n");
 
   }
-  
+
   stream->video_fifo->dispose (stream->video_fifo);
   stream->video_fifo = NULL;
 }

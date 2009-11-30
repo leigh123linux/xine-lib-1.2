@@ -97,7 +97,7 @@ void _x_blend_yuy2 (uint8_t * dst_img, vo_overlay_t * img_overl,
  */
 
 void _x_blend_xx44 (uint8_t *dst_img, vo_overlay_t *img_overl,
-		int dst_width, int dst_height, int dst_pitch, 
+		int dst_width, int dst_height, int dst_pitch,
                 alphablend_t *extra_data,
 		xx44_palette_t *palette,int ia44) XINE_PROTECTED;
 

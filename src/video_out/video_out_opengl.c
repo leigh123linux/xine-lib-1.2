@@ -1,13 +1,13 @@
 /*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -142,7 +142,7 @@ typedef struct {
 
   uint8_t           *chunk[4]; /* mem alloc by xmalloc_aligned           */
   uint8_t           *rgb, *rgb_dst;
-    
+
   yuv2rgb_t         *yuv2rgb; /* yuv2rgb converter set up for this frame */
 
 } opengl_frame_t;
@@ -198,7 +198,7 @@ typedef struct {
   PFNMYGLPROGRAMENVPARAMETER4FARBPROC glProgramEnvParameter4fARB;
   PFNMYGLGENTEXTURESEXTPROC          glGenTexturesEXT;
   PFNMYGLBINDTEXTUREEXTPROC          glBindTextureEXT;
-  
+
   int                yuv2rgb_brightness;
   int                yuv2rgb_contrast;
   int                yuv2rgb_saturation;
@@ -233,7 +233,7 @@ typedef struct {
     int (*setup)(opengl_driver_t *);
     /* Flag: needs output converted to rgb (is able to do YUV otherwise) */
     int needsrgb;
-    /* Default action: what to do if there's no new image 
+    /* Default action: what to do if there's no new image
      * typically either RENDER_NONE or RENDER_DRAW (for animated render's) */
     enum render_e defaction;
     /* Fallback: change to following render backend if this one doesn't work */
@@ -327,7 +327,7 @@ static void render_cyl (opengl_driver_t *this, opengl_frame_t *frame) {
   float           off;
   float           tx, ty;
   struct timeval  curtime;
-  
+
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
   /* Calc timing + texture coords */
@@ -341,10 +341,10 @@ static void render_cyl (opengl_driver_t *this, opengl_frame_t *frame) {
   glMatrixMode   (GL_MODELVIEW);
   glLoadIdentity ();
   glTranslatef   (0, 0, -10);
-  glRotatef      (off * CYCLE_FACTOR1, 1, 0, 0);  
-  glRotatef      (off,                 0, 0, 1); 
-  glRotatef      (off * CYCLE_FACTOR2, 0, 1, 0);  
- 
+  glRotatef      (off * CYCLE_FACTOR1, 1, 0, 0);
+  glRotatef      (off,                 0, 0, 1);
+  glRotatef      (off * CYCLE_FACTOR2, 0, 1, 0);
+
   /* Note that this is not aspect ratio corrected */
   glBegin (GL_QUADS);
   for (i = 0; i < CYL_TESSELATION; i++) {
@@ -363,7 +363,7 @@ static void render_cyl (opengl_driver_t *this, opengl_frame_t *frame) {
 }
 
 /* Animated spinning environment mapped torus */
-#define DIST_FACTOR   16.568542  	/* 2 * (sqrt(2)-1) * 20 */
+#define DIST_FACTOR   16.568542	/* 2 * (sqrt(2)-1) * 20 */
 static void render_env_tor (opengl_driver_t *this, opengl_frame_t *frame) {
   float           off;
   float           x1, y1, x2, y2, tx, ty;
@@ -397,7 +397,7 @@ static void render_env_tor (opengl_driver_t *this, opengl_frame_t *frame) {
   glLoadIdentity ();
   glDepthFunc    (GL_ALWAYS);
   glDepthMask    (GL_FALSE);
-  
+
   glBegin        (GL_QUADS);
   glColor3f      (1, 1, 1);
   glTexCoord2f   (tx, 0);     glVertex3f   (x2, y2, -20);
@@ -405,7 +405,7 @@ static void render_env_tor (opengl_driver_t *this, opengl_frame_t *frame) {
   glTexCoord2f   (0,  ty);    glVertex3f   (x1, y1, -20);
   glTexCoord2f   (tx, ty);    glVertex3f   (x2, y1, -20);
   glEnd          ();
-  
+
   glPopMatrix    ();
   glDepthFunc    (GL_LEQUAL);
   glDepthMask    (GL_TRUE);
@@ -442,7 +442,7 @@ static int render_help_image_tex (opengl_driver_t *this, int new_w, int new_h,
       tex_w <<= 1;
     while (tex_h < new_h)
       tex_h <<= 1;
-    
+
     if (tex_w != this->tex_width || tex_h != this->tex_height) {
       char *tmp = calloc (tex_w * tex_h, 4); /* 4 enough until RGBA */
       if (this->glBindTextureEXT)
@@ -458,7 +458,7 @@ static int render_help_image_tex (opengl_driver_t *this, int new_w, int new_h,
       this->tex_width  = tex_w;
       this->tex_height = tex_h;
       lprintf ("* new texsize: %dx%d\n", tex_w, tex_h);
-    }	
+    }
     this->last_width  = new_w;
     this->last_height = new_h;
     return 1;
@@ -481,7 +481,7 @@ static int render_help_image_tiledtex (opengl_driver_t *this,
       tex_w <<= 1;
     while (tex_h < new_h)
       tex_h <<= 1;
-    
+
     if (tex_w != this->tex_width || tex_h != this->tex_height) {
       char *tmp = calloc (tex_w * tex_h, 4); /* 4 enough until RGBA */
       if (this->glBindTextureEXT)
@@ -521,7 +521,7 @@ static int render_help_image_tiledtex (opengl_driver_t *this,
       this->tex_width  = tex_w;
       this->tex_height = tex_h;
       lprintf ("* new texsize: %dx%d on %d tiles\n", tex_w, tex_h, num);
-    }	
+    }
     this->last_width  = new_w;
     this->last_height = new_h;
     return 1;
@@ -710,7 +710,7 @@ static void *getdladdr (const GLubyte *_funcName) {
      handle = dlopen (NULL, RTLD_LAZY);
    }
    return dlsym (handle, funcName);
-    
+
 #else /* all other Un*xes */
   return dlsym (0, funcName);
 
@@ -883,7 +883,7 @@ static int render_setup_cyl (opengl_driver_t *this) {
 static int render_setup_torus (opengl_driver_t *this) {
   int i, j, k;
   int ret;
-  
+
   ret  = render_setup_3d       (this);
   ret &= render_help_setup_tex (this);
 
@@ -937,7 +937,7 @@ static int render_setup_fp_yuv (opengl_driver_t *this) {
     "MAD res, { 0, -.391, 2.018 }, tmp.xxxw, res;"
     "MAD result.color, { 1.596, -.813, 0 }, tmp.yyyw, res;"
     "END";
-  
+
   ret = render_setup_tex2d (this);
   if (! this->has_fragprog)
     return 0;
@@ -963,7 +963,7 @@ static int render_setup_fp_yuv (opengl_driver_t *this) {
  */
 /* name, display, image,  setup, needsrgb, defaction, fallback */
 static const opengl_render_t opengl_rb[] = {
-    {   "2D_Tex_Fragprog",  render_tex2d, render_image_fp_yuv, 
+    {   "2D_Tex_Fragprog",  render_tex2d, render_image_fp_yuv,
 	render_setup_fp_yuv, 0, RENDER_NONE, 1 },
     {   "2D_Tex",           render_tex2d, render_image_tex,
 	render_setup_tex2d,  1, RENDER_NONE, 2 },
@@ -1004,10 +1004,10 @@ static void *render_run (opengl_driver_t *this) {
   struct timeval   curtime;
   struct timespec  timeout;
   const opengl_render_t *render;
-  
+
   lprintf ("* render thread created\n");
   while (1) {
-      
+
     /* Wait for render action */
     pthread_mutex_lock (&this->render_action_mutex);
     if (! this->render_action) {
@@ -1211,28 +1211,28 @@ static uint32_t opengl_get_capabilities (vo_driver_t *this_gen) {
 static void opengl_frame_proc_slice (vo_frame_t *vo_img, uint8_t **src) {
   opengl_frame_t  *frame = (opengl_frame_t *) vo_img ;
 /*   opengl_driver_t *this = (opengl_driver_t *) vo_img->driver; */
-  
+
   vo_img->proc_called = 1;
   if (! frame->rgb_dst)
       return;
 
 /*   lprintf ("%p: frame_copy src %p=%p to %p\n", frame, src[0], frame->chunk[0], frame->rgb_dst); */
 
-  if( frame->vo_frame.crop_left || frame->vo_frame.crop_top || 
+  if( frame->vo_frame.crop_left || frame->vo_frame.crop_top ||
       frame->vo_frame.crop_right || frame->vo_frame.crop_bottom )
   {
     /* TODO: opengl *could* support this?!? */
     /* cropping will be performed by video_out.c */
     return;
   }
-  
+
   if (frame->format == XINE_IMGFMT_YV12)
     frame->yuv2rgb->yuv2rgb_fun (frame->yuv2rgb, frame->rgb_dst,
 				 src[0], src[1], src[2]);
   else
     frame->yuv2rgb->yuy22rgb_fun (frame->yuv2rgb, frame->rgb_dst,
 				  src[0]);
-  
+
 /*   lprintf ("frame_copy...done\n"); */
 }
 
@@ -1243,7 +1243,7 @@ static void opengl_frame_field (vo_frame_t *vo_img, int which_field) {
 /*   lprintf ("%p: frame_field rgb %p which_field %x\n", frame, frame->rgb, which_field); */
 
   if (! opengl_rb[this->render_fun_id].needsrgb) {
-    frame->rgb_dst = NULL;  
+    frame->rgb_dst = NULL;
     return;
   }
 
@@ -1291,7 +1291,7 @@ static vo_frame_t *opengl_alloc_frame (vo_driver_t *this_gen) {
    */
   frame->vo_frame.proc_slice = opengl_frame_proc_slice;
   frame->vo_frame.proc_frame = NULL;
-  frame->vo_frame.field      = opengl_frame_field; 
+  frame->vo_frame.field      = opengl_frame_field;
   frame->vo_frame.dispose    = opengl_frame_dispose;
   frame->vo_frame.driver     = this_gen;
 
@@ -1345,7 +1345,7 @@ static void opengl_update_frame_format (vo_driver_t *this_gen,
 /*     lprintf ("updating frame to %d x %d (ratio=%g, format=%08x)\n", width, height, ratio, format); */
 
     flags &= VO_BOTH_FIELDS;
-	
+
     XLockDisplay (this->display);
 
     /* (re-) allocate render space */
@@ -1399,7 +1399,7 @@ static void opengl_update_frame_format (vo_driver_t *this_gen,
     frame->height = height;
     frame->format = format;
 
-    XUnlockDisplay (this->display); 
+    XUnlockDisplay (this->display);
 
     opengl_frame_field ((vo_frame_t *)frame, flags);
   }
@@ -1433,7 +1433,7 @@ static void opengl_overlay_clut_yuv2rgb(opengl_driver_t  *this, vo_overlay_t *ov
   }
 }
 
-static void opengl_overlay_begin (vo_driver_t *this_gen, 
+static void opengl_overlay_begin (vo_driver_t *this_gen,
 			      vo_frame_t *frame_gen, int changed) {
   opengl_driver_t  *this  = (opengl_driver_t *) this_gen;
 
@@ -1441,10 +1441,10 @@ static void opengl_overlay_begin (vo_driver_t *this_gen,
 
   if (this->ovl_changed && this->xoverlay) {
     XLockDisplay (this->display);
-    x11osd_clear(this->xoverlay); 
+    x11osd_clear(this->xoverlay);
     XUnlockDisplay (this->display);
   }
-  
+
   this->alphablend_extra_data.offset_x = frame_gen->overlay_offset_x;
   this->alphablend_extra_data.offset_y = frame_gen->overlay_offset_y;
 }
@@ -1461,7 +1461,7 @@ static void opengl_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img) {
   this->ovl_changed = 0;
 }
 
-static void opengl_overlay_blend (vo_driver_t *this_gen, 
+static void opengl_overlay_blend (vo_driver_t *this_gen,
 				vo_frame_t *frame_gen, vo_overlay_t *overlay) {
   opengl_driver_t  *this  = (opengl_driver_t *) this_gen;
   opengl_frame_t   *frame = (opengl_frame_t *) frame_gen;
@@ -1471,7 +1471,7 @@ static void opengl_overlay_blend (vo_driver_t *this_gen,
     if (overlay->unscaled) {
       if (this->ovl_changed && this->xoverlay) {
         XLockDisplay (this->display);
-        x11osd_blend (this->xoverlay, overlay); 
+        x11osd_blend (this->xoverlay, overlay);
         XUnlockDisplay (this->display);
       }
     } else {
@@ -1512,7 +1512,7 @@ static int opengl_redraw_needed (vo_driver_t *this_gen) {
 
     opengl_compute_ideal_size(this);
 
-    if( _x_vo_scale_redraw_needed( &this->sc ) ) {  
+    if( _x_vo_scale_redraw_needed( &this->sc ) ) {
       opengl_compute_rgb_size(this);
       pthread_mutex_lock (&this->render_action_mutex);
       if (this->render_action <= RENDER_CLEAN) {
@@ -1522,10 +1522,10 @@ static int opengl_redraw_needed (vo_driver_t *this_gen) {
       pthread_mutex_unlock (&this->render_action_mutex);
       ret = 1;
     }
-  } 
+  }
   else
     ret = 1;
-      
+
 /*   lprintf ("done...redraw_needed: %d\n", ret); */
   return ret;
 }
@@ -1545,7 +1545,7 @@ static void opengl_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) 
   this->frame[0] = frame;
   this->render_frame_changed = 1;
 /*   lprintf ("video_out_opengl: cur_frame updated to %d\n", frame->vo_frame.id); */
-  
+
   /*
    * let's see if this frame is different in size / aspect
    * ratio from the previous one
@@ -1556,7 +1556,7 @@ static void opengl_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) 
 /*     lprintf("frame format changed\n"); */
     this->sc.force_redraw = 1;    /* trigger re-calc of output size */
   }
-  
+
   /*
    * tell gui that we are about to display a frame,
    * ask for offset and output size
@@ -1592,14 +1592,14 @@ static int opengl_get_property (vo_driver_t *this_gen, int property) {
   case VO_PROP_WINDOW_HEIGHT:
     return this->sc.gui_height;
   default:
-    xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG,
 	    "video_out_opengl: tried to get unsupported property %d\n", property);
   }
 
   return 0;
 }
 
-static int opengl_set_property (vo_driver_t *this_gen, 
+static int opengl_set_property (vo_driver_t *this_gen,
 			      int property, int value) {
   opengl_driver_t *this = (opengl_driver_t *) this_gen;
 
@@ -1611,7 +1611,7 @@ static int opengl_set_property (vo_driver_t *this_gen,
     opengl_compute_ideal_size (this);
     this->sc.force_redraw = 1;    /* trigger re-calc of output size */
 
-    xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG,
 	    "video_out_opengl: aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name(value));
     break;
   case VO_PROP_BRIGHTNESS:
@@ -1639,7 +1639,7 @@ static int opengl_set_property (vo_driver_t *this_gen,
     this->sc.force_redraw = 1;
     break;
   default:
-    xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 	     "video_out_opengl: tried to set unsupported property %d\n", property);
   }
 
@@ -1662,7 +1662,7 @@ static void opengl_get_property_min_max (vo_driver_t *this_gen,
   }
 }
 
-static int opengl_gui_data_exchange (vo_driver_t *this_gen, 
+static int opengl_gui_data_exchange (vo_driver_t *this_gen,
 				   int data_type, void *data) {
   opengl_driver_t   *this = (opengl_driver_t *) this_gen;
 
@@ -1677,7 +1677,7 @@ static int opengl_gui_data_exchange (vo_driver_t *this_gen,
     /*     lprintf ("expose event\n"); */
     if (this->frame[0]) {
       XExposeEvent * xev = (XExposeEvent *) data;
-      
+
       if (xev && xev->count == 0) {
 	pthread_mutex_lock (&this->render_action_mutex);
 	if (this->render_action <= RENDER_CLEAN) {
@@ -1714,9 +1714,9 @@ static int opengl_gui_data_exchange (vo_driver_t *this_gen,
 			  &this->render_action_mutex);
     pthread_mutex_unlock (&this->render_action_mutex);
     break;
-    
+
   case XINE_GUI_SEND_DRAWABLE_CHANGED:
-    
+
     pthread_mutex_lock   (&this->render_action_mutex);
     this->render_action = RENDER_RELEASE;
     pthread_cond_signal  (&this->render_action_cond);
@@ -1744,7 +1744,7 @@ static int opengl_gui_data_exchange (vo_driver_t *this_gen,
     if (this->frame[0]) {
       x11_rectangle_t *rect = data;
       int              x1, y1, x2, y2;
-      
+
       _x_vo_scale_translate_gui2video(&this->sc,
 			       rect->x, rect->y,
 			       &x1, &y1);
@@ -1773,7 +1773,7 @@ static void opengl_dispose (vo_driver_t *this_gen) {
   this->render_action = RENDER_EXIT;
   pthread_cond_signal   (&this->render_action_cond);
   pthread_mutex_unlock  (&this->render_action_mutex);
-  pthread_join          (this->render_thread, NULL);  
+  pthread_join          (this->render_thread, NULL);
   pthread_mutex_destroy (&this->render_action_mutex);
   pthread_cond_destroy  (&this->render_action_cond);
   pthread_cond_destroy  (&this->render_return_cond);
@@ -1791,7 +1791,7 @@ static void opengl_dispose (vo_driver_t *this_gen) {
   }
 
   _x_alphablend_free(&this->alphablend_extra_data);
-    
+
   free (this);
 }
 
@@ -1818,7 +1818,7 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
   opengl_driver_t      *this;
   char                **render_fun_names;
   int                   i;
-  
+
   this = (opengl_driver_t *) calloc(1, sizeof(opengl_driver_t));
 
   if (!this)
@@ -1832,9 +1832,9 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
   this->sc.dest_size_cb     = visual->dest_size_cb;
   this->sc.user_data        = visual->user_data;
   this->sc.user_ratio       = XINE_VO_ASPECT_AUTO;
-  
+
   _x_alphablend_init (&this->alphablend_extra_data, class->xine);
-  
+
   this->drawable	    = visual->d;
   this->gui_width  = this->gui_height  = -1;
   this->last_width = this->last_height = -1;
@@ -1844,7 +1844,7 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
   this->ovl_changed             = 0;
   this->xine                    = class->xine;
   this->config                  = config;
-  
+
   this->vo_driver.get_capabilities     = opengl_get_capabilities;
   this->vo_driver.alloc_frame          = opengl_alloc_frame;
   this->vo_driver.update_frame_format  = opengl_update_frame_format;
@@ -1862,8 +1862,8 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
   this->yuv2rgb_brightness = 0;
   this->yuv2rgb_contrast   = 128;
   this->yuv2rgb_saturation = 128;
-  
-  this->yuv2rgb_factory = yuv2rgb_factory_init (YUV_FORMAT, YUV_SWAP_MODE, 
+
+  this->yuv2rgb_factory = yuv2rgb_factory_init (YUV_FORMAT, YUV_SWAP_MODE,
 						NULL);
   this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					 this->yuv2rgb_brightness,
@@ -1915,7 +1915,7 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
 							"it also reduces flickering a lot.\n"
 							"It should not have any performance impact."),
 						      20, NULL, NULL);
-  
+
   pthread_mutex_init (&this->render_action_mutex, NULL);
   pthread_cond_init  (&this->render_action_cond, NULL);
   pthread_cond_init  (&this->render_return_cond, NULL);
@@ -1945,7 +1945,7 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
     xprintf (this->xine, XINE_VERBOSITY_LOG,
 	     "video_out_opengl: default visual not OpenGL capable\n"
 	     "   plugin will only work with clients supporting XINE_GUI_SEND_SELECT_VISUAL.\n");
-    
+
   return &this->vo_driver;
 }
 
@@ -2048,7 +2048,7 @@ static const vo_info_t vo_info_opengl = {
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_VIDEO_OUT, 21, "opengl", XINE_VERSION_CODE, &vo_info_opengl, opengl_init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

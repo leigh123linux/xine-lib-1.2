@@ -93,7 +93,7 @@ static int open_voc_file(demux_voc_t *this) {
   this->input->seek(this->input, first_block_offset, SEEK_SET);
 
   /* load the block preamble */
-  if (this->input->read(this->input, preamble, BLOCK_PREAMBLE_SIZE) != 
+  if (this->input->read(this->input, preamble, BLOCK_PREAMBLE_SIZE) !=
     BLOCK_PREAMBLE_SIZE)
     return 0;
 
@@ -142,7 +142,7 @@ static int demux_voc_send_chunk(demux_plugin_t *this_gen) {
   /* just load data chunks from wherever the stream happens to be
    * pointing; issue a DEMUX_FINISHED status if EOF is reached */
   remaining_sample_bytes = PCM_BLOCK_ALIGN;
-  current_file_pos = 
+  current_file_pos =
     this->input->get_current_pos(this->input) - this->data_start;
 
   current_pts = current_file_pos;
@@ -231,7 +231,7 @@ static int demux_voc_seek (demux_plugin_t *this_gen, off_t start_pos, int start_
 
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->data_size );
-  
+
   this->seek_flag = 1;
   this->status = DEMUX_OK;
   _x_demux_flush_engine (this->stream);

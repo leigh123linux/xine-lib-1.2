@@ -6,7 +6,7 @@ dnl AM_PATH_ARTS([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 dnl Test for ARTS, and define ARTS_CFLAGS and ARTS_LIBS
 dnl
 AC_DEFUN([AM_PATH_ARTS],
-[dnl 
+[dnl
 dnl Get the cflags and libraries from the artsc-config script
 dnl
 AC_ARG_WITH(arts-prefix, AS_HELP_STRING([--with-arts-prefix=DIR], [prefix where ARTS is installed (optional)]),
@@ -22,7 +22,7 @@ AC_ARG_ENABLE(artstest, AS_HELP_STRING([--disable-artstest], [do not try to comp
   fi
 
   AC_PATH_TOOL(ARTS_CONFIG, artsc-config, no)
-  
+
   min_arts_version=ifelse([$1], ,0.9.5,$1)
   AC_MSG_CHECKING(for ARTS artsc - version >= $min_arts_version)
   no_arts=""
@@ -64,7 +64,7 @@ char*
 my_strdup (char *str)
 {
   char *new_str;
-  
+
   if (str)
     {
       new_str = malloc ((strlen (str) + 1) * sizeof(char));
@@ -72,7 +72,7 @@ my_strdup (char *str)
     }
   else
     new_str = NULL;
-  
+
   return new_str;
 }
 
@@ -122,7 +122,7 @@ int main ()
   fi
   if test "x$no_arts" = x ; then
      AC_MSG_RESULT(yes)
-     ifelse([$2], , :, [$2])     
+     ifelse([$2], , :, [$2])
   else
      AC_MSG_RESULT(no)
      if test "$ARTS_CONFIG" = "no" ; then

@@ -49,7 +49,7 @@ in_rtp = xineplug_inp_rtp.la
 endif
 
 if DVB
-in_dvb = xineplug_inp_dvb.la 
+in_dvb = xineplug_inp_dvb.la
 endif
 
 AM_CFLAGS = -D_LARGEFILE64_SOURCE $(GNOME_VFS_CFLAGS) $(ALSA_CFLAGS) $(DVD_CFLAGS)

@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -36,7 +36,7 @@ void *boxblur_init_plugin(xine_t *xine, void *);
 typedef struct post_plugin_boxblur_s post_plugin_boxblur_t;
 
 /*
- * this is the struct used by "parameters api" 
+ * this is the struct used by "parameters api"
  */
 typedef struct boxblur_parameters_s {
 
@@ -51,13 +51,13 @@ typedef struct boxblur_parameters_s {
  * description of params struct
  */
 START_PARAM_DESCR( boxblur_parameters_t )
-PARAM_ITEM( POST_PARAM_TYPE_INT, luma_radius, NULL, 0, 10, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_INT, luma_radius, NULL, 0, 10, 0,
             "radius of luma blur" )
-PARAM_ITEM( POST_PARAM_TYPE_INT, luma_power, NULL, 0, 10, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_INT, luma_power, NULL, 0, 10, 0,
             "power of luma blur" )
-PARAM_ITEM( POST_PARAM_TYPE_INT, chroma_radius, NULL, -1, 10, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_INT, chroma_radius, NULL, -1, 10, 0,
             "radius of chroma blur (-1 = same as luma)" )
-PARAM_ITEM( POST_PARAM_TYPE_INT, chroma_power, NULL, -1, 10, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_INT, chroma_power, NULL, -1, 10, 0,
             "power of chroma blur (-1 = same as luma)" )
 END_PARAM_DESCR( param_descr )
 
@@ -96,7 +96,7 @@ static int get_parameters (xine_post_t *this_gen, void *param_gen) {
 
   return 1;
 }
- 
+
 static xine_post_api_descr_t * get_param_descr (void) {
   return &param_descr;
 }
@@ -144,7 +144,7 @@ void *boxblur_init_plugin(xine_t *xine, void *data)
 
   if (!class)
     return NULL;
-  
+
   class->open_plugin     = boxblur_open_plugin;
   class->get_identifier  = boxblur_get_identifier;
   class->get_description = boxblur_get_description;
@@ -163,14 +163,14 @@ static post_plugin_t *boxblur_open_plugin(post_class_t *class_gen, int inputs,
   xine_post_in_t        *input_api;
   post_out_t            *output;
   post_video_port_t     *port;
-  
+
   if (!this || !video_target || !video_target[0]) {
     free(this);
     return NULL;
   }
-  
+
   _x_post_init(&this->post, 0, 1);
-  
+
   this->params.luma_radius = 2;
   this->params.luma_power = 1;
   this->params.chroma_radius = -1;
@@ -181,7 +181,7 @@ static post_plugin_t *boxblur_open_plugin(post_class_t *class_gen, int inputs,
   port = _x_post_intercept_video_port(&this->post, video_target[0], &input, &output);
   port->intercept_frame = boxblur_intercept_frame;
   port->new_frame->draw = boxblur_draw;
-  
+
   input_api       = &this->params_input;
   input_api->name = "parameters";
   input_api->type = XINE_POST_DATA_PARAMETERS;
@@ -190,11 +190,11 @@ static post_plugin_t *boxblur_open_plugin(post_class_t *class_gen, int inputs,
 
   input->xine_in.name     = "video";
   output->xine_out.name   = "boxblured video";
-  
+
   this->post.xine_post.video_input[0] = &port->new_port;
-  
+
   this->post.dispose = boxblur_dispose;
-  
+
   return &this->post;
 }
 
@@ -217,7 +217,7 @@ static void boxblur_class_dispose(post_class_t *class_gen)
 static void boxblur_dispose(post_plugin_t *this_gen)
 {
   post_plugin_boxblur_t *this = (post_plugin_boxblur_t *)this_gen;
-  
+
   if (_x_post_dispose(this_gen)) {
     pthread_mutex_destroy(&this->lock);
     free(this);
@@ -262,7 +262,7 @@ static inline void blur(uint8_t *dst, uint8_t *src, int w, int radius, int dstSt
 static inline void blur2(uint8_t *dst, uint8_t *src, int w, int radius, int power, int dstStep, int srcStep){
 	uint8_t temp[2][4096];
 	uint8_t *a= temp[0], *b=temp[1];
-	
+
 	if(radius){
 		blur(a, src, w, radius, 1, srcStep);
 		for(; power>2; power--){
@@ -286,9 +286,9 @@ static inline void blur2(uint8_t *dst, uint8_t *src, int w, int radius, int powe
 
 static void hBlur(uint8_t *dst, uint8_t *src, int w, int h, int dstStride, int srcStride, int radius, int power){
 	int y;
-	
+
 	if(radius==0 && dst==src) return;
-	
+
 	for(y=0; y<h; y++){
 		blur2(dst + y*dstStride, src + y*srcStride, w, radius, power, 1, 1);
 	}
@@ -296,7 +296,7 @@ static void hBlur(uint8_t *dst, uint8_t *src, int w, int h, int dstStride, int s
 
 static void vBlur(uint8_t *dst, uint8_t *src, int w, int h, int dstStride, int srcStride, int radius, int power){
 	int x;
-	
+
 	if(radius==0 && dst==src) return;
 
 	for(x=0; x<w; x++){
@@ -345,25 +345,25 @@ static int boxblur_draw(vo_frame_t *frame, xine_stream_t *stream)
 
     pthread_mutex_lock (&this->lock);
 
-    chroma_radius = (this->params.chroma_radius != -1) ? this->params.chroma_radius : 
+    chroma_radius = (this->params.chroma_radius != -1) ? this->params.chroma_radius :
                                                          this->params.luma_radius;
-    chroma_power = (this->params.chroma_power != -1) ? this->params.chroma_power : 
+    chroma_power = (this->params.chroma_power != -1) ? this->params.chroma_power :
                                                        this->params.luma_power;
     cw = yv12_frame->width/2;
     ch = yv12_frame->height/2;
 
-    hBlur(out_frame->base[0], yv12_frame->base[0], yv12_frame->width, yv12_frame->height, 
+    hBlur(out_frame->base[0], yv12_frame->base[0], yv12_frame->width, yv12_frame->height,
           out_frame->pitches[0], yv12_frame->pitches[0], this->params.luma_radius, this->params.luma_power);
-    hBlur(out_frame->base[1], yv12_frame->base[1], cw,ch, 
+    hBlur(out_frame->base[1], yv12_frame->base[1], cw,ch,
           out_frame->pitches[1], yv12_frame->pitches[1], chroma_radius, chroma_power);
-    hBlur(out_frame->base[2], yv12_frame->base[2], cw,ch, 
+    hBlur(out_frame->base[2], yv12_frame->base[2], cw,ch,
           out_frame->pitches[2], yv12_frame->pitches[2], chroma_radius, chroma_power);
 
-    vBlur(out_frame->base[0], out_frame->base[0], yv12_frame->width, yv12_frame->height, 
+    vBlur(out_frame->base[0], out_frame->base[0], yv12_frame->width, yv12_frame->height,
           out_frame->pitches[0], out_frame->pitches[0], this->params.luma_radius, this->params.luma_power);
-    vBlur(out_frame->base[1], out_frame->base[1], cw,ch, 
+    vBlur(out_frame->base[1], out_frame->base[1], cw,ch,
           out_frame->pitches[1], out_frame->pitches[1], chroma_radius, chroma_power);
-    vBlur(out_frame->base[2], out_frame->base[2], cw,ch, 
+    vBlur(out_frame->base[2], out_frame->base[2], cw,ch,
           out_frame->pitches[2], out_frame->pitches[2], chroma_radius, chroma_power);
 
     pthread_mutex_unlock (&this->lock);

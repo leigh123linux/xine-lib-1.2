@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * Color Conversion Utility Functions
- * 
+ *
  * Overview: xine's video output modules only accept YUV images from
  * video decoder modules. A video decoder can either send a planar (YV12)
  * image or a packed (YUY2) image to a video output module. However, many
@@ -140,16 +140,16 @@ void (*yuv411_to_yv12)
    const unsigned char *v_src, int v_src_pitch, unsigned char *v_dest, int v_dest_pitch,
    int width, int height);
 void (*yv12_to_yuy2)
-  (const unsigned char *y_src, int y_src_pitch, 
-   const unsigned char *u_src, int u_src_pitch, 
-   const unsigned char *v_src, int v_src_pitch, 
+  (const unsigned char *y_src, int y_src_pitch,
+   const unsigned char *u_src, int u_src_pitch,
+   const unsigned char *v_src, int v_src_pitch,
    unsigned char *yuy2_map, int yuy2_pitch,
    int width, int height, int progressive);
 void (*yuy2_to_yv12)
   (const unsigned char *yuy2_map, int yuy2_pitch,
-   unsigned char *y_dst, int y_dst_pitch, 
-   unsigned char *u_dst, int u_dst_pitch, 
-   unsigned char *v_dst, int v_dst_pitch, 
+   unsigned char *y_dst, int y_dst_pitch,
+   unsigned char *u_dst, int u_dst_pitch,
+   unsigned char *v_dst, int v_dst_pitch,
    int width, int height);
 
 /*
@@ -183,7 +183,7 @@ void free_yuv_planes(yuv_planes_t *yuv_planes) {
     free(yuv_planes->v);
 }
 
-/* 
+/*
  * yuv444_to_yuy2_c
  *
  * This is the simple, portable C version of the yuv444_to_yuy2() function.
@@ -200,7 +200,7 @@ void free_yuv_planes(yuv_planes_t *yuv_planes) {
  *
  *   YUY2 map: Y0 U0 Y1 V1  Y2 U2 Y3 V3
  */
-static void yuv444_to_yuy2_c(const yuv_planes_t *yuv_planes, unsigned char *yuy2_map, 
+static void yuv444_to_yuy2_c(const yuv_planes_t *yuv_planes, unsigned char *yuy2_map,
   int pitch) {
 
   unsigned int row_ptr, pixel_ptr;
@@ -235,12 +235,12 @@ static void yuv444_to_yuy2_c(const yuv_planes_t *yuv_planes, unsigned char *yuy2
   }
 }
 
-/* 
+/*
  * yuv444_to_yuy2_mmx
  *
  * This is the proper, filtering version of the yuv444_to_yuy2() function
  * optimized with basic Intel MMX instructions.
- * 
+ *
  * yuv_planes contains the 3 non-subsampled planes that represent Y, U,
  * and V samples for every pixel in the image. The goal is to convert the
  * 3 planes to a single packed YUY2 byte stream. Dealing with the Y
@@ -345,7 +345,7 @@ static void yuv444_to_yuy2_mmx(const yuv_planes_t *yuv_planes, unsigned char *yu
     block_loops--;
   }
 
-  /* set up some MMX registers: 
+  /* set up some MMX registers:
    * mm0 = 0, mm7 = color filter */
   pxor_r2r(mm0, mm0);
   movq_m2r(*filter, mm7);
@@ -525,8 +525,8 @@ static void vscale_chroma_line (unsigned char *dst, int pitch,
   }
 }
 
-static void upsample_c_plane_c(const unsigned char *src, int src_width, 
-  int src_height, unsigned char *dest, 
+static void upsample_c_plane_c(const unsigned char *src, int src_width,
+  int src_height, unsigned char *dest,
   unsigned int src_pitch, unsigned int dest_pitch) {
 
   unsigned char *cr1;
@@ -585,11 +585,11 @@ static void yuv9_to_yv12_c
   }
 
   /* U plane */
-  upsample_c_plane_c(u_src, width / 4, height / 4, u_dest, 
+  upsample_c_plane_c(u_src, width / 4, height / 4, u_dest,
     u_src_pitch, u_dest_pitch);
 
   /* V plane */
-  upsample_c_plane_c(v_src, width / 4, height / 4, v_dest, 
+  upsample_c_plane_c(v_src, width / 4, height / 4, v_dest,
     v_src_pitch, v_dest_pitch);
 
 }
@@ -628,7 +628,7 @@ static void yuv411_to_yv12_c
          c_src_pixel++) {
 
       /* downsample by averaging the samples from 2 rows */
-      c_sample = 
+      c_sample =
         (u_src[c_src_pixel] + u_src[c_src_pixel + u_src_pitch] + 1) / 2;
       /* upsample by outputting the sample twice on the YV12 row */
       u_dest[c_dest_pixel++] = c_sample;
@@ -647,7 +647,7 @@ static void yuv411_to_yv12_c
          c_src_pixel++) {
 
       /* downsample by averaging the samples from 2 rows */
-      c_sample = 
+      c_sample =
         (v_src[c_src_pixel] + v_src[c_src_pixel + v_src_pitch] + 1 ) / 2;
       /* upsample by outputting the sample twice on the YV12 row */
       v_dest[c_dest_pixel++] = c_sample;
@@ -670,9 +670,9 @@ static void yuv411_to_yv12_c
  * changed to support interlaced frames and use simple mean interpolation [MF]
  *****************************************************************************/
 static void yv12_to_yuy2_c
-  (const unsigned char *y_src, int y_src_pitch, 
-   const unsigned char *u_src, int u_src_pitch, 
-   const unsigned char *v_src, int v_src_pitch, 
+  (const unsigned char *y_src, int y_src_pitch,
+   const unsigned char *u_src, int u_src_pitch,
+   const unsigned char *v_src, int v_src_pitch,
    unsigned char *yuy2_map, int yuy2_pitch,
    int width, int height, int progressive) {
 
@@ -697,15 +697,15 @@ static void yv12_to_yuy2_c
       {
           p_line1 = p_line2;
           p_line2 += yuy2_pitch;
-  
+
           p_y1 = p_y2;
           p_y2 += y_src_pitch;
-  
+
           for( i_x = width / 2 ; i_x-- ; )
           {
               C_YUV420_YUYV( );
           }
-  
+
           p_y2 += i_source_margin;
           p_u += i_source_u_margin;
           p_v += i_source_v_margin;
@@ -727,15 +727,15 @@ static void yv12_to_yuy2_c
       {
           p_line1 = p_line2;
           p_line2 += 2 * yuy2_pitch;
-  
+
           p_y1 = p_y2;
           p_y2 += 2 * y_src_pitch;
-  
+
           for( i_x = width / 2 ; i_x-- ; )
           {
               C_YUV420_YUYV( );
           }
-  
+
           p_y2 += i_source_margin + y_src_pitch;
           p_u += i_source_u_margin + u_src_pitch;
           p_v += i_source_v_margin + v_src_pitch;
@@ -748,27 +748,27 @@ static void yv12_to_yuy2_c
           }
           p_line2 += i_dest_margin + yuy2_pitch;
       }
-  
+
       p_line2 = yuy2_map + yuy2_pitch;
       p_y2 = y_src + y_src_pitch;
       p_u = u_src + u_src_pitch;
       p_v = v_src + v_src_pitch;
       p_u2 = u_src + 3*u_src_pitch;
       p_v2 = v_src + 3*v_src_pitch;
-  
+
       for( i_y = height / 4 ; i_y-- ; )
       {
           p_line1 = p_line2;
           p_line2 += 2 * yuy2_pitch;
-  
+
           p_y1 = p_y2;
           p_y2 += 2 * y_src_pitch;
-  
+
           for( i_x = width / 2 ; i_x-- ; )
           {
               C_YUV420_YUYV( );
           }
-  
+
           p_y2 += i_source_margin + y_src_pitch;
           p_u += i_source_u_margin + u_src_pitch;
           p_v += i_source_v_margin + v_src_pitch;
@@ -825,9 +825,9 @@ do {                                                                            
 #endif
 
 static void yv12_to_yuy2_mmxext
-  (const unsigned char *y_src, int y_src_pitch, 
-   const unsigned char *u_src, int u_src_pitch, 
-   const unsigned char *v_src, int v_src_pitch, 
+  (const unsigned char *y_src, int y_src_pitch,
+   const unsigned char *u_src, int u_src_pitch,
+   const unsigned char *v_src, int v_src_pitch,
    unsigned char *yuy2_map, int yuy2_pitch,
    int width, int height, int progressive ) {
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
@@ -851,10 +851,10 @@ static void yv12_to_yuy2_mmxext
       {
           p_line1 = p_line2;
           p_line2 += yuy2_pitch;
-  
+
           p_y1 = p_y2;
           p_y2 += y_src_pitch;
-  
+
           for( i_x = width / 8 ; i_x-- ; )
           {
               MMXEXT_YUV420_YUYV( );
@@ -863,7 +863,7 @@ static void yv12_to_yuy2_mmxext
           {
               C_YUV420_YUYV( );
           }
-  
+
           p_y2 += i_source_margin;
           p_u += i_source_u_margin;
           p_v += i_source_v_margin;
@@ -885,10 +885,10 @@ static void yv12_to_yuy2_mmxext
       {
           p_line1 = p_line2;
           p_line2 += 2 * yuy2_pitch;
-  
+
           p_y1 = p_y2;
           p_y2 += 2 * y_src_pitch;
-  
+
           for( i_x = width / 8 ; i_x-- ; )
           {
               MMXEXT_YUV420_YUYV( );
@@ -897,7 +897,7 @@ static void yv12_to_yuy2_mmxext
           {
               C_YUV420_YUYV( );
           }
-  
+
           p_y2 += i_source_margin + y_src_pitch;
           p_u += i_source_u_margin + u_src_pitch;
           p_v += i_source_v_margin + v_src_pitch;
@@ -910,22 +910,22 @@ static void yv12_to_yuy2_mmxext
           }
           p_line2 += i_dest_margin + yuy2_pitch;
       }
-  
+
       p_line2 = yuy2_map + yuy2_pitch;
       p_y2 = y_src + y_src_pitch;
       p_u = u_src + u_src_pitch;
       p_v = v_src + v_src_pitch;
       p_u2 = u_src + 3*u_src_pitch;
       p_v2 = v_src + 3*v_src_pitch;
-  
+
       for( i_y = height / 4 ; i_y-- ; )
       {
           p_line1 = p_line2;
           p_line2 += 2 * yuy2_pitch;
-  
+
           p_y1 = p_y2;
           p_y2 += 2 * y_src_pitch;
-  
+
           for( i_x = width / 8 ; i_x-- ; )
           {
               MMXEXT_YUV420_YUYV( );
@@ -934,7 +934,7 @@ static void yv12_to_yuy2_mmxext
           {
               C_YUV420_YUYV( );
           }
-  
+
           p_y2 += i_source_margin + y_src_pitch;
           p_u += i_source_u_margin + u_src_pitch;
           p_v += i_source_v_margin + v_src_pitch;
@@ -964,9 +964,9 @@ static void yv12_to_yuy2_mmxext
 
 static void yuy2_to_yv12_c
   (const unsigned char *yuy2_map, int yuy2_pitch,
-   unsigned char *y_dst, int y_dst_pitch, 
-   unsigned char *u_dst, int u_dst_pitch, 
-   unsigned char *v_dst, int v_dst_pitch, 
+   unsigned char *y_dst, int y_dst_pitch,
+   unsigned char *u_dst, int u_dst_pitch,
+   unsigned char *v_dst, int v_dst_pitch,
    int width, int height) {
 
     const uint8_t *p_line1, *p_line2 = yuy2_map;
@@ -986,10 +986,10 @@ static void yuy2_to_yv12_c
     {
         p_line1 = p_line2;
         p_line2 += yuy2_pitch;
-  
+
         p_y1 = p_y2;
         p_y2 += y_dst_pitch;
-  
+
         for( i_x = width / 8 ; i_x-- ; )
         {
             C_YUYV_YUV420( );
@@ -997,7 +997,7 @@ static void yuy2_to_yv12_c
             C_YUYV_YUV420( );
             C_YUYV_YUV420( );
         }
-  
+
         p_y2 += i_dest_margin;
         p_u += i_dest_u_margin;
         p_v += i_dest_v_margin;
@@ -1057,9 +1057,9 @@ do {                                                                            
 
 static void yuy2_to_yv12_mmxext
   (const unsigned char *yuy2_map, int yuy2_pitch,
-   unsigned char *y_dst, int y_dst_pitch, 
-   unsigned char *u_dst, int u_dst_pitch, 
-   unsigned char *v_dst, int v_dst_pitch, 
+   unsigned char *y_dst, int y_dst_pitch,
+   unsigned char *u_dst, int u_dst_pitch,
+   unsigned char *v_dst, int v_dst_pitch,
    int width, int height) {
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
     const uint8_t *p_line1, *p_line2 = yuy2_map;
@@ -1083,15 +1083,15 @@ static void yuy2_to_yv12_mmxext
     {
         p_line1 = p_line2;
         p_line2 += yuy2_pitch;
-  
+
         p_y1 = p_y2;
         p_y2 += y_dst_pitch;
-  
+
         for( i_x = width / 8 ; i_x-- ; )
         {
             MMXEXT_YUYV_YUV420( );
         }
-  
+
         p_y2 += i_dest_margin;
         p_u += i_dest_u_margin;
         p_v += i_dest_v_margin;

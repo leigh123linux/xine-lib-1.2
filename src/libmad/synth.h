@@ -34,7 +34,7 @@ struct mad_pcm {
 
 struct mad_synth {
   mad_fixed_t filter[2][2][2][16][8];	/* polyphase filterbank outputs */
-  					/* [ch][eo][peo][s][v] */
+					/* [ch][eo][peo][s][v] */
 
   unsigned int phase;			/* current processing phase */
 

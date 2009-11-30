@@ -4,7 +4,7 @@
  * Copyright (C) James Courtier-Dutton James@superbug.demon.co.uk - July 2001
  *
  * This file is part of xine, a unix video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -14,10 +14,10 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with GNU Make; see the file COPYING. If not, write to
- * the Free Software Foundation, 
+ * the Free Software Foundation,
  *
  */
 
@@ -47,30 +47,30 @@ struct spu_decoder_class_s {
    * open a new instance of this plugin class
    */
   spu_decoder_t* (*open_plugin) (spu_decoder_class_t *this, xine_stream_t *stream);
-  
+
   /*
    * return short, human readable identifier for this plugin class
    */
   char* (*get_identifier) (spu_decoder_class_t *this);
 
   /*
-   * return human readable (verbose = 1 line) description for 
+   * return human readable (verbose = 1 line) description for
    * this plugin class
    */
   char* (*get_description) (spu_decoder_class_t *this);
-  
+
   /*
    * free all class-related resources
    */
   void (*dispose) (spu_decoder_class_t *this);
 };
-  
- 
+
+
 struct spu_decoder_s {
 
   /*
    * decode data from buf and feed the overlay to overlay manager
-   */  
+   */
   void (*decode_data) (spu_decoder_t *this, buf_element_t *buf);
 
   /*
@@ -78,7 +78,7 @@ struct spu_decoder_s {
    * SPU data not related to recently decoded data)
    */
   void (*reset) (spu_decoder_t *this);
-    
+
   /*
    * inform decoder that a time reference discontinuity has happened.
    * that is, it must forget any currently held pts value

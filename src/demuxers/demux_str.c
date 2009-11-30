@@ -102,7 +102,7 @@
  *       - then follows 16-bit RLE data until the EOD
  *         - RLE format: bits 15-10: # of 0s preceding this value (unsigned)
  *                       bits 9-0: this value (signed)
- *         - e.g. 3 bytes (2,10)(0,20)(3,30) -> 0 0 10 20 0 0 0 30 
+ *         - e.g. 3 bytes (2,10)(0,20)(3,30) -> 0 0 10 20 0 0 0 30
  *       - 16 bits: EOD (0xFE00)
  *   - 16 bits: 0xFE00 end-of-data footer
  */
@@ -367,7 +367,7 @@ static int demux_str_send_chunk(demux_plugin_t *this_gen) {
      */
 
     if( this->data_size )
-      buf->extra_info->input_normpos = (int)( (double) current_pos * 
+      buf->extra_info->input_normpos = (int)( (double) current_pos *
                                      65535 / this->data_size );
     buf->extra_info->input_time = (current_pos*1000)/(CD_RAW_SECTOR_SIZE*75);
 
@@ -405,7 +405,7 @@ static int demux_str_send_chunk(demux_plugin_t *this_gen) {
       }
 
       if( this->data_size )
-        buf->extra_info->input_normpos = (int)( (double) current_pos * 
+        buf->extra_info->input_normpos = (int)( (double) current_pos *
                                      65535 / this->data_size );
       buf->extra_info->input_time = (current_pos*1000)/(CD_RAW_SECTOR_SIZE*75);
 
@@ -529,7 +529,7 @@ static int demux_str_get_status (demux_plugin_t *this_gen) {
 static int demux_str_get_stream_length (demux_plugin_t *this_gen) {
   demux_str_t *this = (demux_str_t *) this_gen;
 
-  return (int)((int64_t) this->input->get_length(this->input) 
+  return (int)((int64_t) this->input->get_length(this->input)
                 * 1000 / (CD_RAW_SECTOR_SIZE * 75));
 }
 
@@ -575,7 +575,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
     mrl = input->get_mrl (input);
     extensions = class_gen->get_extensions (class_gen);
-    
+
     if (!_x_demux_check_extension (mrl, extensions)) {
       free (this);
       return NULL;

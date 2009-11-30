@@ -57,7 +57,7 @@ endif
 ##
 # IMPORTANT:
 # ---------
-# all xine audio out plugins should be named like the 
+# all xine audio out plugins should be named like the
 # scheme "xineplug_ao_out_"
 #
 xineplug_LTLIBRARIES = xineplug_ao_out_none.la xineplug_ao_out_file.la \
@@ -94,7 +94,7 @@ xineplug_ao_out_alsa_la_LIBADD = $(XINE_LIB) $(ALSA_LIBS) $(PTHREAD_LIBS) $(LTLI
 xineplug_ao_out_alsa_la_CFLAGS = $(VISIBILITY_FLAG) $(ALSA_CFLAGS)
 xineplug_ao_out_alsa_la_LDFLAGS = -avoid-version -module
 
-xineplug_ao_out_esd_la_SOURCES = audio_esd_out.c 
+xineplug_ao_out_esd_la_SOURCES = audio_esd_out.c
 xineplug_ao_out_esd_la_LIBADD = $(XINE_LIB) $(ESD_LIBS) $(LTLIBINTL)
 xineplug_ao_out_esd_la_CFLAGS = $(VISIBILITY_FLAG) $(ESD_CFLAGS)
 xineplug_ao_out_esd_la_LDFLAGS = -avoid-version -module
@@ -104,7 +104,7 @@ xineplug_ao_out_sun_la_LIBADD = $(XINE_LIB)
 xineplug_ao_out_sun_la_CFLAGS = $(VISIBILITY_FLAG)
 xineplug_ao_out_sun_la_LDFLAGS = -avoid-version -module
 
-#xineplug_ao_out_irixal_la_SOURCES = audio_irixal_out.c 
+#xineplug_ao_out_irixal_la_SOURCES = audio_irixal_out.c
 #xineplug_ao_out_irixal_la_LIBADD = $(IRIXAL_LIBS)
 #xineplug_ao_out_irixal_la_CFLAGS = $(VISIBILITY_FLAG) $(IRIXAL_CFLAGS)
 #xineplug_ao_out_irixal_la_LDFLAGS = -avoid-version -module

@@ -27,7 +27,7 @@ installed TeX system (for example teTeX).
 sgmltools-lite examples:
 ------------------------
 
-to generate html 
+to generate html
 
 $ sgmltools -b onehtml hackersguide.sgml
 

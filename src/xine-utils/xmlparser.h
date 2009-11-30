@@ -71,9 +71,9 @@ int xml_parser_build_tree_r(xml_parser_t *xml_parser, xml_node_t **root_node) XI
 void xml_parser_free_tree(xml_node_t *root_node) XINE_PROTECTED;
 
 const char *xml_parser_get_property (const xml_node_t *node, const char *name) XINE_PROTECTED;
-int   xml_parser_get_property_int (const xml_node_t *node, const char *name, 
+int   xml_parser_get_property_int (const xml_node_t *node, const char *name,
 				   int def_value) XINE_PROTECTED;
-int xml_parser_get_property_bool (const xml_node_t *node, const char *name, 
+int xml_parser_get_property_bool (const xml_node_t *node, const char *name,
 				  int def_value) XINE_PROTECTED;
 
 /* for output:

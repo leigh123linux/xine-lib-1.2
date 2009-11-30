@@ -49,7 +49,7 @@ typedef struct mpeg_parser_s {
   uint8_t         in_slice:1;
 
   uint8_t         rate_code:4;
- 
+
   int             aspect_ratio_info;
 
   /* public properties */

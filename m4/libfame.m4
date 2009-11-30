@@ -4,7 +4,7 @@ dnl Vivien Chappelier 12/11/00
 dnl stolen from ORBit autoconf
 dnl
 AC_DEFUN([AM_PATH_LIBFAME],
-[dnl 
+[dnl
 dnl Get the cflags and libraries from the libfame-config script
 dnl
 AC_ARG_WITH(libfame-prefix, AS_HELP_STRING([--with-libfame-prefix=DIR], [prefix where libfame is installed (optional)]),
@@ -57,7 +57,7 @@ dnl
 #include <stdio.h>
 #include <stdlib.h>
 
-int 
+int
 main ()
 {
   int major, minor, micro;
@@ -76,7 +76,7 @@ main ()
       (libfame_minor_version != $libfame_config_minor_version) ||
       (libfame_micro_version != $libfame_config_micro_version))
     {
-      printf("\n*** 'libfame-config --version' returned %d.%d.%d, but Libfame (%d.%d.%d)\n", 
+      printf("\n*** 'libfame-config --version' returned %d.%d.%d, but Libfame (%d.%d.%d)\n",
              $libfame_config_major_version, $libfame_config_minor_version, $libfame_config_micro_version,
              libfame_major_version, libfame_minor_version, libfame_micro_version);
       printf ("*** was found! If libfame-config was correct, then it is best\n");
@@ -87,7 +87,7 @@ main ()
       printf("*** If libfame-config was wrong, set the environment variable LIBFAME_CONFIG\n");
       printf("*** to point to the correct copy of libfame-config, and remove the file config.cache\n");
       printf("*** before re-running configure\n");
-    } 
+    }
 #if defined (LIBFAME_MAJOR_VERSION) && defined (LIBFAME_MINOR_VERSION) && defined (LIBFAME_MICRO_VERSION)
   else if ((libfame_major_version != LIBFAME_MAJOR_VERSION) ||
 	   (libfame_minor_version != LIBFAME_MINOR_VERSION) ||
@@ -137,7 +137,7 @@ main ()
   fi
   if test "x$no_libfame" = x ; then
      AC_MSG_RESULT(yes)
-     ifelse([$2], , :, [$2])     
+     ifelse([$2], , :, [$2])
   else
      AC_MSG_RESULT(no)
      if test "$LIBFAME_CONFIG" = "no" ; then

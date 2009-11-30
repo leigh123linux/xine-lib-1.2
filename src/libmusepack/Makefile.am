@@ -10,7 +10,7 @@ xineplug_LTLIBRARIES = xineplug_decode_mpc.la
 endif
 
 if EXTERNAL_MPCDEC
-internal_sources = 
+internal_sources =
 else
 internal_sources = huffsv46.c huffsv7.c idtag.c mpc_decoder.c \
 	mpc_reader.c requant.c streaminfo.c synth_filter.c

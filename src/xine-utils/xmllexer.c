@@ -471,7 +471,7 @@ int lexer_get_token_d_r(struct lexer * lexer, char ** _tok, int * _tok_size, int
 	}
       }
     }
-    lprintf ("loop done tok_pos = %d, tok_size=%d, lexbuf_pos=%d, lexbuf_size=%d\n", 
+    lprintf ("loop done tok_pos = %d, tok_size=%d, lexbuf_pos=%d, lexbuf_size=%d\n",
 	     tok_pos, tok_size, lexer->lexbuf_pos, lexer->lexbuf_size);
 
     /* pb */
