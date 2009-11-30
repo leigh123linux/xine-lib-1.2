@@ -29,7 +29,7 @@
  *
  * ID3v2 specs: http://www.id3.org/
  */
- 
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -84,7 +84,7 @@ static const char* const id3_encoding[] = {
    "UTF-16",       /* 0x01 */
    "UTF-16BE",     /* 0x02 */
    "UTF-8"};       /* 0x03 */
-   
+
 int id3v1_parse_tag (input_plugin_t *input, xine_stream_t *stream) {
 
   off_t len;
@@ -113,7 +113,7 @@ int id3v1_parse_tag (input_plugin_t *input, xine_stream_t *stream) {
       if (tag.genre < ID3_GENRE_COUNT) {
         _x_meta_info_set(stream, XINE_META_INFO_GENRE, id3_genre[tag.genre]);
       }
-      
+
     }
     return 1;
   } else {
@@ -126,12 +126,12 @@ static int id3v2_parse_genre(char* dest, char *src, int len) {
   int state = 0;
   char *buf = dest;
   unsigned int index = 0;
-  
+
   while (*src) {
     lprintf("state=%d\n", state);
     if ((buf - dest) >= len)
       return 0;
-      
+
     switch (state) {
       case 0:
         /* initial state */
@@ -276,7 +276,7 @@ static int id3v22_interp_frame(input_plugin_t *input,
   const size_t bufsize = frame_header->size + 2;
   if ( bufsize < 3 ) /* frames has to be _at least_ 1 byte */
     return 0;
-  char buf[bufsize];  
+  char buf[bufsize];
   int enc;
 
   if (input->read (input, buf, frame_header->size) == frame_header->size) {
@@ -290,7 +290,7 @@ static int id3v22_interp_frame(input_plugin_t *input,
       case ( BE_FOURCC(0, 'T', 'C', 'O') ):
         {
           char tmp[1024];
-          
+
           if (id3v2_parse_genre(tmp, buf + 1, 1024)) {
             _x_meta_info_set(stream, XINE_META_INFO_GENRE, tmp);
           }
@@ -344,21 +344,21 @@ static int id3v22_parse_tag(input_plugin_t *input,
 
     if (tag_header.flags & ID3V22_ZERO_FLAG) {
       /* invalid flags */
-      xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
               LOG_MODULE ": invalid header flags (%02x)\n", tag_header.flags);
       input->seek (input, tag_header.size - pos, SEEK_CUR);
       return 0;
     }
     if (tag_header.flags & ID3V22_COMPRESS_FLAG) {
       /* compressed tag: not supported */
-      xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
               LOG_MODULE ": compressed tags are not supported\n");
       input->seek (input, tag_header.size - pos, SEEK_CUR);
       return 0;
     }
     if (tag_header.flags & ID3V22_UNSYNCH_FLAG) {
       /* unsynchronized tag: not supported */
-      xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
               LOG_MODULE ": unsynchronized tags are not supported\n");
       input->seek (input, tag_header.size - pos, SEEK_CUR);
       return 0;
@@ -370,11 +370,11 @@ static int id3v22_parse_tag(input_plugin_t *input,
         if (tag_frame_header.id) {
           if ((pos + tag_frame_header.size) <= tag_header.size) {
             if (!id3v22_interp_frame(input, stream, &tag_frame_header)) {
-              xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
+              xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
                       LOG_MODULE ": invalid frame content\n");
             }
           } else {
-            xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
+            xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
                     LOG_MODULE ": invalid frame header\n");
             input->seek (input, tag_header.size - pos, SEEK_CUR);
             return 1;
@@ -386,7 +386,7 @@ static int id3v22_parse_tag(input_plugin_t *input,
           return 1;
         }
       } else {
-        xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
+        xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
                 LOG_MODULE ": id3v2_parse_frame_header problem\n");
         return 0;
       }
@@ -425,9 +425,9 @@ static int id3v23_parse_frame_ext_header(input_plugin_t *input,
   uint8_t buf[14];
 
   if (input->read (input, buf, 4) == 4) {
-  
+
     frame_ext_header->size  = _X_BE_32(&buf[0]);
-    
+
     if (frame_ext_header->size == 6) {
       if (input->read (input, buf + 4, 6) == 6) {
         frame_ext_header->flags = _X_BE_16(buf + 4);
@@ -435,7 +435,7 @@ static int id3v23_parse_frame_ext_header(input_plugin_t *input,
         frame_ext_header->crc = 0;
       } else {
         return 0;
-      }        
+      }
 
     } else if (frame_ext_header->size == 10) {
       if (input->read (input, buf + 4, 10) == 10) {
@@ -480,7 +480,7 @@ static int id3v23_interp_frame(input_plugin_t *input,
       case ( BE_FOURCC('T', 'C', 'O', 'N') ):
         {
           char tmp[1024];
-          
+
           if (id3v2_parse_genre(tmp, buf + 1, 1024)) {
             _x_meta_info_set(stream, XINE_META_INFO_GENRE, tmp);
           }
@@ -534,14 +534,14 @@ static int id3v23_parse_tag(input_plugin_t *input,
 
     if (tag_header.flags & ID3V23_ZERO_FLAG) {
       /* invalid flags */
-      xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
               LOG_MODULE ": invalid header flags (%02x)\n", tag_header.flags);
       input->seek (input, tag_header.size - pos, SEEK_CUR);
       return 0;
     }
     if (tag_header.flags & ID3V23_UNSYNCH_FLAG) {
       /* unsynchronized tag: not supported */
-      xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
               LOG_MODULE ": unsynchronized tags are not supported\n");
       input->seek (input, tag_header.size - pos, SEEK_CUR);
       return 0;
@@ -560,11 +560,11 @@ static int id3v23_parse_tag(input_plugin_t *input,
         if (tag_frame_header.id) {
           if ((pos + tag_frame_header.size) <= tag_header.size) {
             if (!id3v23_interp_frame(input, stream, &tag_frame_header)) {
-              xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
+              xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
                       LOG_MODULE ": invalid frame content\n");
             }
           } else {
-            xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
+            xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
                     LOG_MODULE ": invalid frame header\n");
             input->seek (input, tag_header.size - pos, SEEK_CUR);
             return 1;
@@ -577,7 +577,7 @@ static int id3v23_parse_tag(input_plugin_t *input,
           return 1;
         }
       } else {
-        xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
+        xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
                 LOG_MODULE ": id3v2_parse_frame_header problem\n");
         return 0;
       }
@@ -594,7 +594,7 @@ static int id3v23_parse_tag(input_plugin_t *input,
 /* id3v2 "genre" parsing code. what a ugly format ! */
 static int id3v24_parse_genre(char* dest, char *src, int len) {
   unsigned int index = 0;
-  
+
   dest[0] = '\0';
   if (sscanf(src, "%u", &index) == 1) {
     if (index < ID3_GENRE_COUNT) {
@@ -632,7 +632,7 @@ static int id3v24_parse_ext_header(input_plugin_t *input,
   uint8_t buf[5];
 
   if (input->read (input, buf, 4) == 4) {
- 
+
     frame_ext_header->size  = _X_BE_32(&buf[0]);
 
     if (input->read (input, buf, 2) == 2) {
@@ -722,14 +722,14 @@ static int id3v24_interp_frame(input_plugin_t *input,
     enc = buf[0];
     if( enc >= ID3_ENCODING_COUNT )
       enc = 0;
-      
+
     lprintf("data: %s\n", buf+1);
 
     switch (frame_header->id) {
       case ( BE_FOURCC('T', 'C', 'O', 'N') ):
         {
           char tmp[1024];
-          
+
           if (id3v24_parse_genre(tmp, buf + 1, 1024)) {
             _x_meta_info_set(stream, XINE_META_INFO_GENRE, tmp);
           }
@@ -784,7 +784,7 @@ static int id3v24_parse_tag(input_plugin_t *input,
 
     if (tag_header.flags & ID3V24_ZERO_FLAG) {
       /* invalid flags */
-      xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
               LOG_MODULE ": invalid header flags (%02x)\n", tag_header.flags);
       input->seek (input, tag_header.size - pos, SEEK_CUR);
       return 0;
@@ -809,11 +809,11 @@ static int id3v24_parse_tag(input_plugin_t *input,
         if (tag_frame_header.id) {
           if ((pos + tag_frame_header.size) <= tag_header.size) {
             if (!id3v24_interp_frame(input, stream, &tag_frame_header)) {
-              xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
+              xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
                       LOG_MODULE ": invalid frame content\n");
             }
           } else {
-            xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
+            xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
                     LOG_MODULE ": invalid frame header\n");
             input->seek (input, tag_header.size - pos, SEEK_CUR);
             return 1;
@@ -825,7 +825,7 @@ static int id3v24_parse_tag(input_plugin_t *input,
           return 1;
         }
       } else {
-        xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
+        xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
                 LOG_MODULE ": id3v2_parse_frame_header problem\n");
         return 0;
       }
@@ -850,7 +850,7 @@ int id3v2_parse_tag(input_plugin_t *input,
   case ID3V22_TAG:
     xprintf(stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": ID3V2.2 tag\n");
     return id3v22_parse_tag(input, stream, id3_signature);
-   
+
   case ID3V23_TAG:
     xprintf(stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": ID3V2.3 tag\n");
     return id3v23_parse_tag(input, stream, id3_signature);

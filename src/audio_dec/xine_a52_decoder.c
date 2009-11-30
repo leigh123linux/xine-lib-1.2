@@ -76,11 +76,11 @@ int a52file;
 typedef struct {
   audio_decoder_class_t   decoder_class;
   config_values_t *config;
-  
+
   float            a52_level;
   int              disable_dynrng_compress;
   int              enable_surround_downmix;
-  
+
   const AVCRC     *av_crc;
 } a52dec_class_t;
 
@@ -226,7 +226,7 @@ static void a52dec_decode_frame (a52dec_decoder_t *this, int64_t pts, int previe
    */
 #ifdef LOG_PTS
   printf("a52dec:decode_frame:pts=%lld\n",pts);
-#endif 
+#endif
   if (!this->bypass_mode) {
 
     int              a52_output_flags, i;
@@ -278,7 +278,7 @@ static void a52dec_decode_frame (a52dec_decoder_t *this, int64_t pts, int previe
 	this->stream->audio_out->close (this->stream->audio_out, this->stream);
 
 
-      this->output_open = (this->stream->audio_out->open) (this->stream->audio_out, 
+      this->output_open = (this->stream->audio_out->open) (this->stream->audio_out,
 							 this->stream, 16,
 							 this->a52_sample_rate,
 							 output_mode) ;
@@ -302,13 +302,13 @@ static void a52dec_decode_frame (a52dec_decoder_t *this, int64_t pts, int previe
     for (i = 0; i < 6; i++) {
       if (a52_block (this->a52_state)) {
 	xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "liba52: a52_block error on audio channel %d\n", i);
-#if 0	
+#if 0
 	for(n=0;n<2000;n++) {
 	  printf("%02x ",this->frame_buffer[n]);
 	  if ((n % 32) == 0) printf("\n");
 	}
 	printf("\n");
-#endif	
+#endif
 	buf->num_frames = 0;
 	break;
       }
@@ -460,7 +460,7 @@ static void a52dec_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
    * We call the start of an A52 frame a frame header.
    * So, if a A52 pack has 2 "Number of frame headers" is means that the A52 pack contains 2 A52 frame headers.
    * The "First access unit" then tells us which A52 frame the PTS value applies to.
-   * 
+   *
    * Take the following example: -
    * PACK1: PTS = 10. Contains the entire A52 frame1, followed by the beginning of the frame2. PTS applies to frame1.
    * PACK2: PTS = 1000, Contains the rest of frame2, and the whole of frame3. and the start of frame4. PTS applies to frame4.
@@ -582,14 +582,14 @@ static void a52dec_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
             }
           }
           break;
-            
+
     case 2:  /* Filling frame_buffer with sync_info bytes */
 	  *this->frame_ptr++ = *current++;
 	  this->frame_todo--;
 	  if (this->frame_todo < 1) {
 	    this->sync_state = 3;
           } else break;
-      
+
     case 3:  { /* Ready for decode */
       if (av_crc(this->class->av_crc, 0, &this->frame_buffer[2], this->frame_length - 2) != 0) { /* CRC16 failed */
 	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "liba52:a52 frame failed crc16 checksum.\n");
@@ -622,7 +622,7 @@ static void a52dec_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	  this->syncword = 0;
 	  this->sync_state = 0;
           break;
-    default: /* No come here */ 
+    default: /* No come here */
           break;
     }
   }
@@ -676,14 +676,14 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
   this->pts_list_position = 0;
 
   if( !this->a52_state ) {
-    this->a52_state = 
+    this->a52_state =
 #ifdef HAVE_A52DEC_A52_H /* External liba52 */
       /* When using external liba52, enable _all_ capabilities, even
 	 if that might break stuff if they add some new capability
 	 that depends on CPU's caps.
 	 At the moment the only capability is DJBFFT, which is tested
 	 only if djbfft is being used at compile time.
-	 
+
 	 The actual question would be: why don't they check for
 	 capabilities themselves?
       */

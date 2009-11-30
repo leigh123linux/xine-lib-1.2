@@ -239,18 +239,18 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     fi
     if test x"$have_vidix" = x"yes"; then
         echo $ECHO_N "   - vidix ("
-      
+
         if test x"$no_x" != x"yes"; then
             echo $ECHO_N "X11"
             if test x"$have_fb" = x"yes"; then
                 echo $ECHO_N " and "
             fi
         fi
-        
+
         if test x"$have_fb" = x"yes"; then
             echo $ECHO_N "framebuffer"
         fi
-      
+
         echo $ECHO_N " support"
 
         if test x"$enable_dha_kmod" != x"no"; then

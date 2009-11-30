@@ -21,7 +21,7 @@ AC_DEFUN([AC_CHECK_LIRC],
 
         if test x"$LIRC_PREFIX" != "x"; then
            lirc_libprefix="$LIRC_PREFIX/lib"
-  	   LIRC_INCLUDE="-I$LIRC_PREFIX/include"
+	   LIRC_INCLUDE="-I$LIRC_PREFIX/include"
         fi
         for llirc in $lirc_libprefix /lib /usr/lib /usr/local/lib; do
           AC_CHECK_FILE("$llirc/liblirc_client.a",

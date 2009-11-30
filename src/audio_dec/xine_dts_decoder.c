@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2007 the xine project
- * 
+ *
  * This file is part of xine, a unix video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -75,7 +75,7 @@ typedef struct {
   dts_state_t     *dts_state;
   int64_t          pts;
 
-  int              audio_caps;  
+  int              audio_caps;
   int              sync_state;
   int              ac5_length, ac5_pcm_length, frame_todo;
   uint32_t         syncdword;
@@ -83,7 +83,7 @@ typedef struct {
   uint8_t         *frame_ptr;
 
   int              output_open;
-  
+
   int              bypass_mode;
   int              dts_flags;
   int              dts_sample_rate;
@@ -91,8 +91,8 @@ typedef struct {
   int              dts_flags_map[11]; /* Convert from stream dts_flags to the dts_flags we want from the dts downmixer */
   int              ao_flags_map[11];  /* Convert from the xine AO_CAP's to dts_flags. */
   int              have_lfe;
-  
-  
+
+
 } dts_decoder_t;
 
 static void dts_reset (audio_decoder_t *const this_gen) {
@@ -143,7 +143,7 @@ static void dts_decode_frame (dts_decoder_t *this, const int64_t pts, const int 
   int output_mode = AO_CAP_MODE_STEREO;
   uint8_t        *data_out;
   uint8_t        *const data_in = this->frame_buffer;
-  
+
   lprintf("decode_frame\n");
   audio_buffer = this->stream->audio_out->get_buffer (this->stream->audio_out);
   audio_buffer->vpts       = pts;
@@ -152,13 +152,13 @@ static void dts_decode_frame (dts_decoder_t *this, const int64_t pts, const int 
       /* SPDIF digital output */
       if (!this->output_open) {
         this->output_open = ((this->stream->audio_out->open) (this->stream->audio_out, this->stream,
-                                                            16, this->dts_sample_rate, 
+                                                            16, this->dts_sample_rate,
                                                             AO_CAP_MODE_AC5));
       }
-      
-      if (!this->output_open) 
+
+      if (!this->output_open)
         return;
-      
+
       data_out=(uint8_t *) audio_buffer->mem;
       if (this->ac5_length > 8191) {
         xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "libdts: ac5_length too long\n");
@@ -176,7 +176,7 @@ static void dts_decode_frame (dts_decoder_t *this, const int64_t pts, const int 
         ac5_spdif_type = 0x0d; /* DTS-1 (2048-sample bursts) */
         break;
       default:
-        xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+        xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 		"libdts: DTS %i-sample bursts not supported\n", this->ac5_pcm_length);
         return;
       }
@@ -256,17 +256,17 @@ static void dts_decode_frame (dts_decoder_t *this, const int64_t pts, const int 
 
       if (!this->output_open) {
         this->output_open = (this->stream->audio_out->open) (this->stream->audio_out, this->stream,
-                                                           16, this->dts_sample_rate, 
+                                                           16, this->dts_sample_rate,
                                                            output_mode);
       }
-      
-      if (!this->output_open) 
+
+      if (!this->output_open)
         return;
-      number_of_dts_blocks = dts_blocks_num (this->dts_state); 
+      number_of_dts_blocks = dts_blocks_num (this->dts_state);
       audio_buffer->num_frames = 256*number_of_dts_blocks;
       for(i = 0; i < number_of_dts_blocks; i++) {
         if(dts_block(this->dts_state)) {
-          xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+          xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
                   "libdts: dts_block error on audio channel %d\n", i);
           audio_buffer->num_frames = 0;
           break;
@@ -320,10 +320,10 @@ static void dts_decode_frame (dts_decoder_t *this, const int64_t pts, const int 
         }
       }
     }
-    
+
     this->stream->audio_out->put_buffer (this->stream->audio_out, audio_buffer, this->stream);
-   
-  
+
+
 }
 
 static void dts_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
@@ -332,7 +332,7 @@ static void dts_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   uint8_t        *current = (uint8_t *)buf->content;
   uint8_t        *sync_start=current + 1;
   uint8_t        *const end = buf->content + buf->size;
-  
+
   lprintf("decode_data\n");
 
   if (buf->decoder_flags & BUF_FLAG_PREVIEW)
@@ -431,14 +431,14 @@ static void dts_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
             }
           }
           break;
-            
+
     case 2:  /* Filling frame_buffer with sync_info bytes */
 	  *this->frame_ptr++ = *current++;
 	  this->frame_todo--;
 	  if (this->frame_todo < 1) {
 	    this->sync_state = 3;
           } else break;
-      
+
     case 3:  /* Ready for decode */
 #if 0
           dtsdec_decode_frame (this, this->pts_list[0], buf->decoder_flags & BUF_FLAG_PREVIEW);
@@ -450,18 +450,18 @@ static void dts_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	  this->syncdword = 0;
 	  this->sync_state = 0;
           break;
-    default: /* No come here */ 
+    default: /* No come here */
           break;
     }
   }
 }
 
 static void dts_dispose (audio_decoder_t *this_gen) {
-  dts_decoder_t *const this = (dts_decoder_t *) this_gen; 
-  
-  if (this->output_open) 
+  dts_decoder_t *const this = (dts_decoder_t *) this_gen;
+
+  if (this->output_open)
     this->stream->audio_out->close (this->stream->audio_out, this->stream);
-  
+
   free (this);
 }
 
@@ -507,7 +507,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
       this->dts_flags_map[DTS_3F2R]   = DTS_3F2R | DTS_LFE;
       this->ao_flags_map[DTS_2F2R]    = AO_CAP_MODE_4CHANNEL;
       this->ao_flags_map[DTS_3F2R]    = AO_CAP_MODE_5CHANNEL;
-                                                                                                                           
+
     } else if (this->audio_caps & AO_CAP_MODE_5CHANNEL) {
 
       this->dts_flags_map[DTS_2F2R]   = DTS_2F2R;
@@ -574,7 +574,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   return this;
 }
 
-static const uint32_t audio_types[] = { 
+static const uint32_t audio_types[] = {
   BUF_AUDIO_DTS, 0
  };
 
@@ -584,7 +584,7 @@ static const decoder_info_t dec_info_audio = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_AUDIO_DECODER, 16, "dts", XINE_VERSION_CODE, &dec_info_audio, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

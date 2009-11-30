@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2008 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -30,7 +30,7 @@
  * 01-Feb-2005 Pekka Jääskeläinen <poj@iki.fi>
  *
  *             - This history log started.
- *             - Disabled the automatic EPG updater thread until EPG demuxer 
+ *             - Disabled the automatic EPG updater thread until EPG demuxer
  *               is done (it caused pausing of video stream), now EPG is
  *               updated only on demand when the EPG OSD is displayed and
  *               no data is in cache.
@@ -39,10 +39,10 @@
  *             - Now tuning to an erroneus channel shouldn't hang but stop
  *               the playback and output a log describing the error.
  *             - Style cleanups here and there.
- * 
+ *
  * 06-Apr-2006 Jack Steven Kelliher
  *	       - Add ATSC support
- *   
+ *
  * TODO/Wishlist: (not in any order)
  * - Parse all Administrative PIDs - NIT,SDT,CAT etc
  * - As per James' suggestion, we need a way for the demuxer
@@ -52,7 +52,7 @@
  *   Alevtd can read it.
  * - Allow the user to view one set of PIDs (channel) while
  *   recording another on the same transponder - this will require either remuxing or
- *   perhaps bypassing the TS demuxer completely - we could easily have access to the 
+ *   perhaps bypassing the TS demuxer completely - we could easily have access to the
  *   individual audio/video streams via seperate read calls, so send them to the decoders
  *   and save the TS output to disk instead of passing it to the demuxer.
  *   This also gives us full control over the streams being played..hmm..control...
@@ -60,7 +60,7 @@
  * - Allow the user to find and tune new stations from within xine, and
  *   do away with the need for dvbscan & channels.conf file.
  * - Enable use of Conditional Access devices for scrambled content.
- * - if multiple cards are available, optionally use these to record/gather si info, 
+ * - if multiple cards are available, optionally use these to record/gather si info,
  *   and leave primary card for viewing.
  * - allow for handing off of EPG data to specialised frontends, instead of displaying via
  *   OSD - this will allow for filtering/searching of epg data - useful for automatic recording :)
@@ -71,7 +71,7 @@
 #endif
 
 /* pthread.h must be included first so rest of the headers are imported
-   thread safely (on some systems). 
+   thread safely (on some systems).
    However, including it before config.h causes problems with asprintf not
    being declared (glibc 2.3.6)
 */
@@ -128,7 +128,7 @@
 
 #define DVB_NOPID 0xffff
 
-/* define stream types 
+/* define stream types
  * administrative/system PIDs first */
 #define INTERNAL_FILTER 0
 #define PATFILTER 1
@@ -201,7 +201,7 @@
 #define EPG_PIXELS_BETWEEN_TEXT_ROWS 2
 #define EPG_PIXELS_BETWEEN_PROGRAM_ENTRIES 2
 
-/* How many pixels the background of the OSD is bigger than the text area? 
+/* How many pixels the background of the OSD is bigger than the text area?
    The margin is for each side of the background box. */
 #define EPG_BACKGROUND_MARGIN 5
 
@@ -212,10 +212,10 @@
 
 /* How many seconds an EPG entry with the running flag on can be "late"
    according to the system time before discarding it as an old program?
-   
-   This margin is needed because in channel list OSD some EPG entries of 
+
+   This margin is needed because in channel list OSD some EPG entries of
    some channels may be updated a very long ago (if user has watched another
-   channel in different mux) so we have to resort to system clock for 
+   channel in different mux) so we have to resort to system clock for
    figuring out the current program. */
 #define MAX_EPG_ENTRY_LATENESS 5*60.0
 
@@ -237,12 +237,12 @@ typedef struct {
   int                            fd_subfilter[MAX_SUBTITLES];
 
   struct dvb_frontend_info       feinfo;
-  
+
   int				 adapter_num;
 
-  char 				*dvr_device;
+  char				*dvr_device;
   char				*demux_device;
-  
+
   struct dmx_pes_filter_params   pesFilterParams[MAX_FILTERS];
   struct dmx_pes_filter_params   subFilterParams[MAX_SUBTITLES];
   struct dmx_sct_filter_params	 sectFilterParams[MAX_FILTERS];
@@ -254,16 +254,16 @@ typedef struct {
 typedef struct {
 
   /* Program's name. */
-  char 		     *progname;
+  char		     *progname;
 
   /* Textual description of the program. */
   char		     *description;
 
   /* The content type string. */
-  char 		     *content;
+  char		     *content;
 
   /* Age recommendation. 0 if not available. */
-  int 		      rating;
+  int		      rating;
 
   time_t             starttime;
 
@@ -272,7 +272,7 @@ typedef struct {
   char               duration_minutes;
 
   /* Is this program running currently according to EPG data? */
-  char               running; 
+  char               running;
 
 } epg_entry_t;
 
@@ -298,7 +298,7 @@ typedef struct {
 
   const char       *mrls[6];
 
-  int 		    numchannels;
+  int		    numchannels;
 
   char		   *autoplaylist[MAX_AUTOCHANNELS];
 
@@ -332,12 +332,12 @@ typedef struct {
   osd_object_t       *rec_osd;
   osd_object_t	     *name_osd;
   osd_object_t	     *paused_osd;
-  osd_object_t 	     *proginfo_osd;
+  osd_object_t	     *proginfo_osd;
   osd_object_t	     *channel_osd;
   osd_object_t	     *background;
-  
+
   xine_event_queue_t *event_queue;
-  
+
   /* scratch buffer for forward seeking */
   char                seek_buf[BUFSIZE];
 
@@ -347,7 +347,7 @@ typedef struct {
   int                 record_fd;
   int		      record_paused;
   /* centre cutout zoom */
-  int 		      zoom_ok;
+  int		      zoom_ok;
   /* Is EPG displaying? */
   int                 epg_displaying;
 
@@ -356,8 +356,8 @@ typedef struct {
   pthread_t           epg_updater_thread;
 
   /* buffer for EIT data */
-    /*char 		     *eitbuffer;*/
-  int 		      num_streams_in_this_ts;
+    /*char		     *eitbuffer;*/
+  int		      num_streams_in_this_ts;
   /* number of timedout reads in plugin_read */
   int		      read_failcount;
 #ifdef DVB_NO_BUFFERING
@@ -474,7 +474,7 @@ static unsigned int getbits(unsigned char *buffer, unsigned int bitpos, unsigned
 }
 
 
-static int find_descriptor(uint8_t tag, const unsigned char *buf, int descriptors_loop_len, 
+static int find_descriptor(uint8_t tag, const unsigned char *buf, int descriptors_loop_len,
                                                 const unsigned char **desc, int *desc_len)
 {
 
@@ -512,7 +512,7 @@ static time_t dvb_mjdtime (uint8_t *buf)
   time_t t;
 
   _x_assert(tma != NULL);
-  
+
   mjd =	(unsigned int)(buf[0] & 0xff) << 8;
   mjd +=(unsigned int)(buf[1] & 0xff);
   hour =(unsigned char)bcdtoint(buf[2] & 0xff);
@@ -521,14 +521,14 @@ static time_t dvb_mjdtime (uint8_t *buf)
   year =(unsigned long)((mjd - 15078.2)/365.25);
   month=(unsigned long)((mjd - 14956.1 - (unsigned long)(year * 365.25))/30.6001);
   day = mjd - 14956 - (unsigned long)(year * 365.25) - (unsigned long)(month * 30.6001);
-  
+
   if (month == 14 || month == 15)
     i = 1;
   else
     i = 0;
   year += i;
   month = month - 1 - i * 12;
-  
+
   tma->tm_sec=sec;
   tma->tm_min=min;
   tma->tm_hour=hour;
@@ -538,7 +538,7 @@ static time_t dvb_mjdtime (uint8_t *buf)
 
 
   t = timegm(tma);
-  
+
   free(tma);
   return t;
 }
@@ -586,7 +586,7 @@ static tuner_t *XINE_MALLOC tuner_init(xine_t * xine, int adapter)
 
     this->xine = xine;
     this->adapter_num = adapter;
-    
+
     asprintf(&this->demux_device,"/dev/dvb/adapter%i/demux0",this->adapter_num);
     asprintf(&this->dvr_device,"/dev/dvb/adapter%i/dvr0",this->adapter_num);
     asprintf(&video_device,"/dev/dvb/adapter%i/video0",this->adapter_num);
@@ -631,7 +631,7 @@ static tuner_t *XINE_MALLOC tuner_init(xine_t * xine, int adapter)
      xprintf(this->xine,XINE_VERBOSITY_DEBUG,"input_dvb: couldn't set INTERNAL to nonblock: %s\n",strerror(errno));
     /* and the frontend */
     fcntl(this->fd_frontend, F_SETFL, O_NONBLOCK);
-   
+
    xprintf(this->xine,XINE_VERBOSITY_DEBUG,"input_dvb: Frontend is <%s> ",this->feinfo.name);
    if(this->feinfo.type==FE_QPSK) xprintf(this->xine,XINE_VERBOSITY_DEBUG,"SAT Card\n");
    if(this->feinfo.type==FE_QAM) xprintf(this->xine,XINE_VERBOSITY_DEBUG,"CAB Card\n");
@@ -648,7 +648,7 @@ static tuner_t *XINE_MALLOC tuner_init(xine_t * xine, int adapter)
  exit:
   free(video_device);
   free(frontend_device);
-  
+
   return this;
 }
 
@@ -660,7 +660,7 @@ static int dvb_set_pidfilter(dvb_input_plugin_t * this, int filter, ushort pid, 
    if(this->channels[this->channel].pid [filter] !=DVB_NOPID) {
       ioctl(tuner->fd_pidfilter[filter], DMX_STOP);
     }
-   
+
     this->channels[this->channel].pid [filter] = pid;
     tuner->pesFilterParams[filter].pid = pid;
     tuner->pesFilterParams[filter].input = DMX_IN_FRONTEND;
@@ -683,7 +683,7 @@ static int dvb_set_sectfilter(dvb_input_plugin_t * this, int filter, ushort pid,
     if(this->channels[this->channel].pid [filter] !=DVB_NOPID) {
       ioctl(tuner->fd_pidfilter[filter], DMX_STOP);
     }
-    
+
     this->channels[this->channel].pid [filter] = pid;
     tuner->sectFilterParams[filter].pid = pid;
     memset(&tuner->sectFilterParams[filter].filter.filter,0,DMX_FILTER_SIZE);
@@ -717,14 +717,14 @@ static int extract_channel_from_string_internal(channel_t * channel,char * str,f
 						<bw>:<fec_hp>:<fec_lp>:<qam>:
 						<transmissionm>:<guardlist>:<hierarchinfo>:<vpid>:<apid>
 		(DVBA) ATSC: <channel name>:<frequency>:<qam>:<vpid>:<apid>
-		
+
 		<channel name> = any string not containing ':'
 		<frequency>    = unsigned long
 		<polarisation> = 'v' or 'h'
 		<sat_no>       = unsigned long, usually 0 :D
 		<sym_rate>     = symbol rate in MSyms/sec
-		
-		
+
+
 		<inversion>    = INVERSION_ON | INVERSION_OFF | INVERSION_AUTO
 		<fec>          = FEC_1_2, FEC_2_3, FEC_3_4 .... FEC_AUTO ... FEC_NONE
 		<qam>          = QPSK, QAM_128, QAM_16, ATSC ...
@@ -741,7 +741,7 @@ static int extract_channel_from_string_internal(channel_t * channel,char * str,f
 	char *field, *tmp;
 
 	tmp = str;
-	
+
 	/* find the channel name */
 	if(!(field = strsep(&tmp,":")))return -1;
 	channel->name = strdup(field);
@@ -762,8 +762,8 @@ static int extract_channel_from_string_internal(channel_t * channel,char * str,f
 				channel->tone = 0;
 			}
 			channel->front_param.inversion = INVERSION_AUTO;
-	  
-			/* find out the polarisation */ 
+
+			/* find out the polarisation */
 			if(!(field = strsep(&tmp, ":")))return -1;
 			channel->pol = (field[0] == 'h' ? 0 : 1);
 
@@ -779,7 +779,7 @@ static int extract_channel_from_string_internal(channel_t * channel,char * str,f
 		break;
 		case FE_QAM:
 			channel->front_param.frequency = freq;
-			
+
 			/* find out the inversion */
 			if(!(field = strsep(&tmp, ":")))return -1;
 			channel->front_param.inversion = find_param(inversion_list, field);
@@ -797,10 +797,10 @@ static int extract_channel_from_string_internal(channel_t * channel,char * str,f
 			channel->front_param.u.qam.modulation = find_param(qam_list, field);
 		break;
 		case FE_OFDM:
-  		        /* DVB-T frequency is in kHz - workaround broken channels.confs */
-  		        if (freq < 1000000) 
-  		          freq*=1000;
-		        
+		        /* DVB-T frequency is in kHz - workaround broken channels.confs */
+		        if (freq < 1000000)
+		          freq*=1000;
+
 		        channel->front_param.frequency = freq;
 
 			/* find out the inversion */
@@ -836,7 +836,7 @@ static int extract_channel_from_string_internal(channel_t * channel,char * str,f
 		break;
 		case FE_ATSC:
 			channel->front_param.frequency = freq;
-			
+
 			/* find out the qam */
 			if(!(field = strsep(&tmp, ":")))return -1;
 			channel->front_param.u.vsb.modulation = find_param(atsc_list, field);
@@ -862,9 +862,9 @@ static int extract_channel_from_string_internal(channel_t * channel,char * str,f
     /* some channel.conf files are generated with the service ID 1 to the right
        this needs investigation */
     if ((field = strsep(&tmp, ":")))
-      if(strtoul(field,NULL,0)>0)  
+      if(strtoul(field,NULL,0)>0)
         channel->service_id = strtoul(field, NULL, 0);
-        
+
 	return 0;
 }
 
@@ -903,7 +903,7 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
   }
 
   /*
-   * load channel list 
+   * load channel list
    */
 
   while ( fgets (str, BUFSIZE, f)) {
@@ -917,7 +917,7 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
         continue;
     str[i] = 0;
 
-    if (extract_channel_from_string(&channel,str,fe_type) < 0) 
+    if (extract_channel_from_string(&channel,str,fe_type) < 0)
 	continue;
 
     if (num_channels >= num_alloc) {
@@ -941,14 +941,14 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
   /* free any trailing unused entries */
   channels = realloc (channels, num_channels * sizeof (channel_t));
 
-  if(num_channels > 0) 
+  if(num_channels > 0)
     xprintf (xine, XINE_VERBOSITY_DEBUG, "input_dvb: found %d channels...\n", num_channels);
   else {
     xprintf (xine, XINE_VERBOSITY_DEBUG, "input_dvb: no channels found in the file: giving up.\n");
     free(channels);
     return NULL;
   }
-  
+
   *num_ch = num_channels;
   return channels;
 }
@@ -1042,7 +1042,7 @@ static int tuner_tune_it (tuner_t *this, struct dvb_frontend_parameters
   }
 
   xprintf(this->xine, XINE_VERBOSITY_DEBUG, "input_dvb: tuner_tune_it - waiting for lock...\n" );
-  
+
   do {
     status = 0;
     if (ioctl(this->fd_frontend, FE_READ_STATUS, &status) < 0) {
@@ -1069,25 +1069,25 @@ static int tuner_tune_it (tuner_t *this, struct dvb_frontend_parameters
     usleep(10000);
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, "Trying to get lock...");
   } while (!(status & FE_TIMEDOUT));
-  
-  /* inform the user of frontend status */ 
+
+  /* inform the user of frontend status */
   xprintf(this->xine,XINE_VERBOSITY_LOG,"input_dvb: Tuner status:  ");
 /*  if (ioctl(this->fd_frontend, FE_READ_STATUS, &status) >= 0){ */
-    if (status & FE_HAS_SIGNAL) 
+    if (status & FE_HAS_SIGNAL)
 	xprintf(this->xine,XINE_VERBOSITY_LOG," FE_HAS_SIGNAL");
-    if (status & FE_TIMEDOUT) 
+    if (status & FE_TIMEDOUT)
 	xprintf(this->xine,XINE_VERBOSITY_LOG," FE_TIMEDOUT");
-    if (status & FE_HAS_LOCK) 
+    if (status & FE_HAS_LOCK)
 	xprintf(this->xine,XINE_VERBOSITY_LOG," FE_HAS_LOCK");
-    if (status & FE_HAS_CARRIER) 
+    if (status & FE_HAS_CARRIER)
 	xprintf(this->xine,XINE_VERBOSITY_LOG," FE_HAS_CARRIER");
-    if (status & FE_HAS_VITERBI) 
+    if (status & FE_HAS_VITERBI)
 	xprintf(this->xine,XINE_VERBOSITY_LOG," FE_HAS_VITERBI");
-    if (status & FE_HAS_SYNC) 
+    if (status & FE_HAS_SYNC)
 	xprintf(this->xine,XINE_VERBOSITY_LOG," FE_HAS_SYNC");
 /*  } */
   xprintf(this->xine,XINE_VERBOSITY_LOG,"\n");
-  
+
   strength=0;
   if(ioctl(this->fd_frontend,FE_READ_BER,&strength) >= 0)
     xprintf(this->xine,XINE_VERBOSITY_LOG,"input_dvb: Bit error rate: %i\n",strength);
@@ -1099,9 +1099,9 @@ static int tuner_tune_it (tuner_t *this, struct dvb_frontend_parameters
   strength=0;
   if(ioctl(this->fd_frontend,FE_READ_SNR,&strength) >= 0)
     xprintf(this->xine,XINE_VERBOSITY_LOG,"input_dvb: Signal/Noise Ratio: %u\n",strength);
- 
+
   if (status & FE_HAS_LOCK && !(status & FE_TIMEDOUT)) {
-    xprintf(this->xine,XINE_VERBOSITY_LOG,"input_dvb: Lock achieved at %lu Hz\n",(unsigned long)front_param->frequency);   
+    xprintf(this->xine,XINE_VERBOSITY_LOG,"input_dvb: Lock achieved at %lu Hz\n",(unsigned long)front_param->frequency);
     return 1;
   } else {
     xprintf(this->xine,XINE_VERBOSITY_LOG,"input_dvb: Unable to achieve lock at %lu Hz\n",(unsigned long)front_param->frequency);
@@ -1110,13 +1110,13 @@ static int tuner_tune_it (tuner_t *this, struct dvb_frontend_parameters
 
 }
 
-/* Parse the PMT, and add filters for all stream types associated with 
- * the 'channel'. We leave it to the demuxer to sort out which PIDs to 
+/* Parse the PMT, and add filters for all stream types associated with
+ * the 'channel'. We leave it to the demuxer to sort out which PIDs to
  * use. to simplify things slightly, (and because the demuxer can't handle it)
  * allow only one of each media type */
 static void parse_pmt(dvb_input_plugin_t *this, const unsigned char *buf, int section_length)
 {
- 
+
   int program_info_len;
   int pcr_pid;
   int has_video=0;
@@ -1146,9 +1146,9 @@ static void parse_pmt(dvb_input_plugin_t *this, const unsigned char *buf, int se
           xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"input_dvb: Adding VIDEO     : PID 0x%04x\n", elementary_pid);
 	  dvb_set_pidfilter(this, VIDFILTER, elementary_pid, DMX_PES_VIDEO, DMX_OUT_TS_TAP);
 	  has_video=1;
-	} 
+	}
 	break;
-	
+
       case 0x03:
       case 0x04:
         if(!has_audio) {
@@ -1157,14 +1157,14 @@ static void parse_pmt(dvb_input_plugin_t *this, const unsigned char *buf, int se
 	  has_audio=1;
 	}
         break;
-        
+
       case 0x06:
         if (find_descriptor(0x56, buf + 5, descriptor_len, NULL, NULL)) {
 	  if(!has_text) {
 	     xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"input_dvb: Adding TELETEXT  : PID 0x%04x\n", elementary_pid);
 	     dvb_set_pidfilter(this,TXTFILTER, elementary_pid, DMX_PES_OTHER,DMX_OUT_TS_TAP);
              has_text=1;
-          } 
+          }
 	  break;
 	} else if (find_descriptor (0x59, buf + 5, descriptor_len, NULL, NULL)) {
            /* Note: The subtitling descriptor can also signal
@@ -1185,7 +1185,7 @@ static void parse_pmt(dvb_input_plugin_t *this, const unsigned char *buf, int se
                this->tuner->subFilterParams[has_subs].flags = DMX_IMMEDIATE_START;
                if (ioctl(this->tuner->fd_subfilter[has_subs], DMX_SET_PES_FILTER, &this->tuner->subFilterParams[has_subs]) < 0)
                {
-               	   xprintf(this->tuner->xine, XINE_VERBOSITY_DEBUG, "input_dvb: set_pid: %s\n", strerror(errno));
+	   xprintf(this->tuner->xine, XINE_VERBOSITY_DEBUG, "input_dvb: set_pid: %s\n", strerror(errno));
                    break;
                }
                has_subs++;
@@ -1193,7 +1193,7 @@ static void parse_pmt(dvb_input_plugin_t *this, const unsigned char *buf, int se
 	    break;
         } else if (find_descriptor (0x6a, buf + 5, descriptor_len, NULL, NULL)) {
             if(!has_ac3) {
- 	      dvb_set_pidfilter(this, AC3FILTER, elementary_pid, DMX_PES_OTHER,DMX_OUT_TS_TAP);
+	      dvb_set_pidfilter(this, AC3FILTER, elementary_pid, DMX_PES_OTHER,DMX_OUT_TS_TAP);
               xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"input_dvb: Adding AC3       : PID 0x%04x\n", elementary_pid);
               has_ac3=1;
         }
@@ -1201,7 +1201,7 @@ static void parse_pmt(dvb_input_plugin_t *this, const unsigned char *buf, int se
 	}
         break;
       case 0x81: /* AC3 audio */
-	fprintf(stderr, "  pid type 0x%x,  has audio %d\n",buf[0],has_audio); 
+	fprintf(stderr, "  pid type 0x%x,  has audio %d\n",buf[0],has_audio);
         if(!has_audio) {
 	  xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"input_dvb: Adding AUDIO     : PID 0x%04x\n", elementary_pid);
 	  dvb_set_pidfilter(this, AUDFILTER, elementary_pid, DMX_PES_AUDIO, DMX_OUT_TS_TAP);
@@ -1209,7 +1209,7 @@ static void parse_pmt(dvb_input_plugin_t *this, const unsigned char *buf, int se
 	}
         break;
 
-      }; 
+      };
 
     buf += descriptor_len + 5;
     section_length -= descriptor_len + 5;
@@ -1220,12 +1220,12 @@ static void dvb_parse_si(dvb_input_plugin_t *this) {
 
   uint8_t *tmpbuffer;
   uint8_t *bufptr;
-  int 	service_id;
+  int	service_id;
   int	result;
-  int  	section_len;
-  int 	x;
+  int	section_len;
+  int	x;
   struct pollfd pfd;
-  
+
   tuner_t *tuner = this->tuner;
   tmpbuffer = calloc(1, 8192);
 
@@ -1239,8 +1239,8 @@ static void dvb_parse_si(dvb_input_plugin_t *this) {
   xprintf(this->stream->xine,XINE_VERBOSITY_DEBUG,"input_dvb: Setting up Internal PAT filter\n");
 
   xine_usec_sleep(500000);
-   
-  /* first - the PAT. retrieve the entire section...*/  
+
+  /* first - the PAT. retrieve the entire section...*/
   dvb_set_sectfilter(this, INTERNAL_FILTER, 0, DMX_PES_OTHER, 0, 0xff);
 
   /* wait for up to 15 seconds */
@@ -1253,13 +1253,13 @@ static void dvb_parse_si(dvb_input_plugin_t *this) {
     return;
   }
   result = read (tuner->fd_pidfilter[INTERNAL_FILTER], tmpbuffer, 3);
-    
+
   if(result!=3)
     xprintf(this->stream->xine,XINE_VERBOSITY_DEBUG,"input_dvb: error reading PAT table - no data!\n");
 
   section_len = getbits(tmpbuffer,12,12);
   result = read (tuner->fd_pidfilter[INTERNAL_FILTER], tmpbuffer+5,section_len);
-  
+
   if(result!=section_len)
     xprintf(this->stream->xine,XINE_VERBOSITY_DEBUG,"input_dvb: error reading in the PAT table\n");
 
@@ -1267,7 +1267,7 @@ static void dvb_parse_si(dvb_input_plugin_t *this) {
 
   bufptr+=10;
   this->num_streams_in_this_ts=0;
-  section_len-=5;    
+  section_len-=5;
 
   while(section_len>4){
     service_id = getbits (bufptr,0,16);
@@ -1279,7 +1279,7 @@ static void dvb_parse_si(dvb_input_plugin_t *this) {
     section_len-=4;
     bufptr+=4;
     if(service_id>0) /* ignore NIT table for now */
-      this->num_streams_in_this_ts++;        
+      this->num_streams_in_this_ts++;
   }
 
   bufptr = tmpbuffer;
@@ -1304,7 +1304,7 @@ static void dvb_parse_si(dvb_input_plugin_t *this) {
   ioctl(tuner->fd_pidfilter[INTERNAL_FILTER], DMX_STOP);
 
   parse_pmt(this,tmpbuffer+8,section_len);
-  
+
 /*
   dvb_set_pidfilter(this, TSDTFILTER, 0x02,DMX_PES_OTHER,DMX_OUT_TS_TAP);
   dvb_set_pidfilter(this, RSTFILTER, 0x13,DMX_PES_OTHER,DMX_OUT_TS_TAP);
@@ -1317,8 +1317,8 @@ static void dvb_parse_si(dvb_input_plugin_t *this) {
 
   /* we use the section filter for EIT because we are guarenteed a complete section */
   if(ioctl(tuner->fd_pidfilter[EITFILTER],DMX_SET_BUFFER_SIZE,8192*this->num_streams_in_this_ts)<0)
-    xprintf(this->stream->xine,XINE_VERBOSITY_DEBUG,"input_dvb: couldn't increase buffer size for EIT: %s \n",strerror(errno)); 
-  dvb_set_sectfilter(this, EITFILTER, 0x12,DMX_PES_OTHER,0x4e, 0xff); 
+    xprintf(this->stream->xine,XINE_VERBOSITY_DEBUG,"input_dvb: couldn't increase buffer size for EIT: %s \n",strerror(errno));
+  dvb_set_sectfilter(this, EITFILTER, 0x12,DMX_PES_OTHER,0x4e, 0xff);
 
   xprintf(this->stream->xine,XINE_VERBOSITY_DEBUG,"input_dvb: Setup of PID filters complete\n");
 
@@ -1330,7 +1330,7 @@ static void dvb_parse_si(dvb_input_plugin_t *this) {
 static int channel_index(dvb_input_plugin_t* this, int service_id) {
   int n;
   for (n=0; n < this->num_channels; n++)
-    if (this->channels[n].service_id == service_id) 
+    if (this->channels[n].service_id == service_id)
 	return n;
 
   return -1;
@@ -1345,7 +1345,7 @@ static int compare_epg_by_starttime(const void* a, const void* b) {
 	return -1;
     } else if ((*epg_a)->starttime > (*epg_b)->starttime) {
 	return 1;
-    } 
+    }
     return 0;
 }
 
@@ -1368,7 +1368,7 @@ static void pthread_sleep(int seconds) {
     struct timespec timeout;
 
     /* Create a dummy mutex which doesn't unlock for sure while waiting. */
-    pthread_mutex_init(&dummy_mutex, NULL); 
+    pthread_mutex_init(&dummy_mutex, NULL);
     pthread_mutex_lock(&dummy_mutex);
 
     /* Create a dummy condition variable. */
@@ -1408,7 +1408,7 @@ static void* epg_data_updater(void *t) {
 }
 #endif
 
-/* This function parses the EIT table and saves the data used in 
+/* This function parses the EIT table and saves the data used in
    EPG OSD of all channels found in the currently tuned stream. */
 static void load_epg_data(dvb_input_plugin_t *this)
 {
@@ -1417,7 +1417,7 @@ static void load_epg_data(dvb_input_plugin_t *this)
   int descriptor_id;
   int section_len = 0;
   unsigned int service_id=-1;
-  int n; 
+  int n;
   uint8_t *eit = NULL;
   uint8_t *foo = NULL;
   char *seen_channels = NULL;
@@ -1432,8 +1432,8 @@ static void load_epg_data(dvb_input_plugin_t *this)
   pthread_mutex_lock(&this->channel_change_mutex);
 
   /* seen_channels array is used to store information of channels that were
-     already "found" in the stream. This information is used to initialize the 
-     channel's EPG structs when the EPG information for the channel is seen in 
+     already "found" in the stream. This information is used to initialize the
+     channel's EPG structs when the EPG information for the channel is seen in
      the stream the first time. */
   seen_channels = calloc(this->num_channels, sizeof(char));
   _x_assert(seen_channels != NULL);
@@ -1443,7 +1443,7 @@ static void load_epg_data(dvb_input_plugin_t *this)
 
   fd.fd = this->tuner->fd_pidfilter[EITFILTER];
   fd.events = POLLPRI;
-  
+
   for (loops = 0; loops <= this->num_streams_in_this_ts*2; loops++) {
     eit = foo;
 
@@ -1452,7 +1452,7 @@ static void load_epg_data(dvb_input_plugin_t *this)
        pthread_mutex_unlock(&this->channel_change_mutex);
        free(seen_channels);
        free(foo);
-       return;  
+       return;
     }
     n = read(this->tuner->fd_pidfilter[EITFILTER], eit, 3);
     table_id = getbits(eit, 0, 8);
@@ -1465,8 +1465,8 @@ static void load_epg_data(dvb_input_plugin_t *this)
       xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,"input_dvb: load_epg_data(): unknown service_id: %d!\n", service_id);
       continue;
     }
-                
- 
+
+
     if (section_len > 15) {
 
       current_channel = &this->channels[current_channel_index];
@@ -1484,14 +1484,14 @@ static void load_epg_data(dvb_input_plugin_t *this)
 	  continue;
       }
 
-      /* Initialize the EPG struct if there's not one we can reuse. 
+      /* Initialize the EPG struct if there's not one we can reuse.
          Allocate space for the strings. */
       if (current_channel->epg[current_channel->epg_count] == NULL) {
 	  current_channel->epg[current_channel->epg_count] =
 	    calloc(1, sizeof(epg_entry_t));
 	  _x_assert(current_channel->epg[current_channel->epg_count] != NULL);
 
-	  current_channel->epg[current_channel->epg_count]->progname = 
+	  current_channel->epg[current_channel->epg_count]->progname =
 	    malloc(MAX_EPG_PROGRAM_NAME_LENGTH + 1);
 	  _x_assert(current_channel->epg[current_channel->epg_count]->progname != NULL);
 
@@ -1499,7 +1499,7 @@ static void load_epg_data(dvb_input_plugin_t *this)
 	    malloc(MAX_EPG_PROGRAM_DESCRIPTION_LENGTH + 1);
 	  _x_assert(current_channel->epg[current_channel->epg_count]->description != NULL);
 
-	  current_channel->epg[current_channel->epg_count]->content = 
+	  current_channel->epg[current_channel->epg_count]->content =
 	    malloc(MAX_EPG_CONTENT_TYPE_LENGTH + 1);
 	  _x_assert(current_channel->epg[current_channel->epg_count]->content != NULL);
 	  current_channel->epg[current_channel->epg_count]->running = 0;
@@ -1514,12 +1514,12 @@ static void load_epg_data(dvb_input_plugin_t *this)
 	 1 not running
 	 2 starts in a few seconds
 	 3 pausing
-	 4 running	 
+	 4 running
        */
       if (getbits(foo,192,3) == 4){
-	  current_epg->running = 1; 
+	  current_epg->running = 1;
       } else {
-	  current_epg->running = 0; 
+	  current_epg->running = 0;
       }
 
 
@@ -1532,7 +1532,7 @@ static void load_epg_data(dvb_input_plugin_t *this)
       current_epg->duration_minutes = (char)bcdtoint(eit[22] & 0xff);
 
       descriptor_id = eit[26];
-      eit += 27;	
+      eit += 27;
       section_len -= 27;
       /* run the descriptor loop for the length of section_len */
       while (section_len > 1)
@@ -1545,23 +1545,23 @@ static void load_epg_data(dvb_input_plugin_t *this)
 
               desc_len = getbits(eit, 0, 8);
 
-	      /* Let's get the EPG data only in the wanted language. */	      	      
+	      /* Let's get the EPG data only in the wanted language. */
 
 	      if (xine_config_lookup_entry(
-		      this->stream->xine, 
+		      this->stream->xine,
 		      "media.dvd.language", &language) &&
-		  language.str_value && strlen(language.str_value) >= 2 && 
+		  language.str_value && strlen(language.str_value) >= 2 &&
 		  strncasecmp(language.str_value, &eit[1], 2)) {
-		  
+
 #ifdef DEBUG_EPG
 
 		  printf("input_dvb: EPG  Skipping language: %C%C%C\n",
-			 eit[1],eit[2],eit[3]);  
-		  printf("input_dvb: EPG  language.str_value: %s\n", 
+			 eit[1],eit[2],eit[3]);
+		  printf("input_dvb: EPG  language.str_value: %s\n",
 			 language.str_value);
-#endif 		  
+#endif
 		break;
-	      } 
+	      }
 
               /* program name */
               name_len = (unsigned char)eit[4];
@@ -1570,20 +1570,20 @@ static void load_epg_data(dvb_input_plugin_t *this)
 		  break;
 	      }
 
-	      /* the first char of the string contains sometimes the character 
+	      /* the first char of the string contains sometimes the character
 		 encoding information, which should not be copied to the
 		 string. (FIXME - we ought to be using this byte to change charsets)*/
-	      
+
 	      if (!isalnum(*(eit + 5)))
 		  skip_byte = 1;
 	      else
 		  skip_byte = 0;
 
-              memcpy(current_epg->progname, eit + 5 + skip_byte, 
-		     name_len - skip_byte); 
+              memcpy(current_epg->progname, eit + 5 + skip_byte,
+		     name_len - skip_byte);
 	      current_epg->progname[name_len - skip_byte] = '\0';
 
-              /* detailed program information (max 256 chars)*/      
+              /* detailed program information (max 256 chars)*/
               text_len = (unsigned char)eit[5 + name_len];
 	      if (text_len == 0) {
 		  current_epg->description[0] = '\0';
@@ -1595,7 +1595,7 @@ static void load_epg_data(dvb_input_plugin_t *this)
 	      else
 		  skip_byte = 0;
 
-              memcpy(current_epg->description, eit + 6 + name_len + skip_byte, 
+              memcpy(current_epg->description, eit + 6 + name_len + skip_byte,
 		     text_len - skip_byte);
 	      current_epg->description[text_len - skip_byte] = '\0';
             }
@@ -1611,7 +1611,7 @@ static void load_epg_data(dvb_input_plugin_t *this)
               snprintf(current_epg->content, MAX_EPG_CONTENT_TYPE_LENGTH, "%s", content[content_bits]);
             }
             break;
-          case 0x55: {  /* Parental Rating descriptor describes minimum recommened age -3 */ 
+          case 0x55: {  /* Parental Rating descriptor describes minimum recommened age -3 */
 
 	      /* A rating value of 0 means that there is no rating defined. Ratings
 		 greater than 0xF are "defined by broadcaster", which is not supported
@@ -1621,7 +1621,7 @@ static void load_epg_data(dvb_input_plugin_t *this)
 	      else
 		  current_epg->rating = 0;
             }
-            break; 
+            break;
           default:
             break;
         }
@@ -1630,28 +1630,28 @@ static void load_epg_data(dvb_input_plugin_t *this)
         eit += getbits(eit, 0, 8);
         descriptor_id = eit[1];
         eit += 2;
-      }      
+      }
     /* Store the entry if we got enough data. */
-    if (current_epg->progname && strlen(current_epg->progname)) 
+    if (current_epg->progname && strlen(current_epg->progname))
 	current_channel->epg_count++;
 
     }
   }
   /* Sort the EPG arrays by starttime. */
   for (i = 0; i < this->num_channels; ++i) {
-      if (!seen_channels[i]) 
+      if (!seen_channels[i])
 	  continue;
-      qsort(this->channels[i].epg, this->channels[i].epg_count, 
+      qsort(this->channels[i].epg, this->channels[i].epg_count,
 	    sizeof(epg_entry_t*), compare_epg_by_starttime);
   }
   free(seen_channels);
-  free(foo); 
+  free(foo);
   pthread_mutex_unlock(&this->channel_change_mutex);
 }
 
 /* Prints text to an area, tries to cut the lines in between words. */
 static void render_text_area(osd_renderer_t* renderer, osd_object_t* osd, const char* text,
-			     int x, int y, int row_space, 
+			     int x, int y, int row_space,
 			     int max_x, int max_y, int* height, int color_base) {
 
   /* The position of the text to be printed. */
@@ -1663,7 +1663,7 @@ static void render_text_area(osd_renderer_t* renderer, osd_object_t* osd, const 
   int text_width, text_height;
   size_t old_line_length, line_cursor;
   const char* bound, *old_bound;
-  
+
   *height = 0;
   while (cursor < text_end) {
     bound = cursor;
@@ -1677,12 +1677,12 @@ static void render_text_area(osd_renderer_t* renderer, osd_object_t* osd, const 
       line_cursor = old_line_length;
 
       /* Strip leading white space. */
-      while (isspace(*bound)) 
+      while (isspace(*bound))
 	bound++;
-      
+
       /* Copy text to the text_line until end of word or end of string. */
       while (!isspace(*bound) && *bound != '\0') {
-	text_line[line_cursor] = *bound;	
+	text_line[line_cursor] = *bound;
 	bound++;
 	line_cursor++;
       }
@@ -1695,13 +1695,13 @@ static void render_text_area(osd_renderer_t* renderer, osd_object_t* osd, const 
       if (x + text_width > max_x) {
 	/* It didn't fit, restore the old line and stop trying to fit more.*/
 	text_line[old_line_length] = '\0';
-	
+
 	/* If no words did fit to the line, fit as many characters as possible in it. */
 	if (old_line_length == 0) {
 	    text_width = 0;
 	    bound = bound - line_cursor + 1; /* rewind to the beginning of the word */
 	    line_cursor = 0;
-	    while (!isspace(*bound) && 
+	    while (!isspace(*bound) &&
 		   *bound != '\0') {
 		text_line[line_cursor++] = *bound++;
 		text_line[line_cursor] = '\0';
@@ -1720,10 +1720,10 @@ static void render_text_area(osd_renderer_t* renderer, osd_object_t* osd, const 
 	bound = old_bound;
 	break;
       }
-  
+
       /* OK, it did fit, let's try to fit some more. */
     } while (bound < text_end);
-    
+
     if (y + text_height + row_space > max_y) {
 	break;
     }
@@ -1734,7 +1734,7 @@ static void render_text_area(osd_renderer_t* renderer, osd_object_t* osd, const 
   }
 }
 
-/* Finds the EPG of the ith next program. 0 means the current program, 1 next. 
+/* Finds the EPG of the ith next program. 0 means the current program, 1 next.
    If not found, returns NULL. All these functions expect the EPG entries
    are sorted by starting time. */
 static epg_entry_t* ith_next_epg(channel_t* channel, int count) {
@@ -1742,14 +1742,14 @@ static epg_entry_t* ith_next_epg(channel_t* channel, int count) {
     int counter = 0;
 
     /* Discard the entries of past programs. */
-    while (counter + 1 < channel->epg_count && 
+    while (counter + 1 < channel->epg_count &&
 	   difftime(channel->epg[counter + 1]->starttime, current_time) < 0.0)
 	counter++;
 
     /* Check whether the previous program has still the running bit on,
        and if it's not more late than the given margin, assume it's still
        running. */
-    if (counter >= 1 && channel->epg[counter - 1]->running && 
+    if (counter >= 1 && channel->epg[counter - 1]->running &&
 	difftime(current_time, channel->epg[counter]->starttime) < MAX_EPG_ENTRY_LATENESS) {
 	counter--;
     }
@@ -1764,13 +1764,13 @@ static epg_entry_t* ith_next_epg(channel_t* channel, int count) {
        ago. In that case do not return any EPG. This fixes the "very last
        program of the day sticking until morning" bug. */
     if (counter == channel->epg_count - 1) {
-	if (difftime(current_time, 
-		     channel->epg[counter]->starttime + 
+	if (difftime(current_time,
+		     channel->epg[counter]->starttime +
 		     channel->epg[counter]->duration_hours*60*60 +
 		     channel->epg[counter]->duration_minutes*60) > MAX_EPG_ENTRY_LATENESS) {
 	    return NULL;
 	}
-    } 
+    }
 
     return channel->epg[counter];
 }
@@ -1781,7 +1781,7 @@ static epg_entry_t* current_epg(channel_t* channel) {
 #ifdef DEBUG_EPG
     if (next != NULL)
 	printf("input_dvb: EPG  current: %s (%d)\n", next->progname, next->running);
-#endif     
+#endif
     return next;
 }
 
@@ -1791,13 +1791,13 @@ static epg_entry_t* next_epg(channel_t* channel) {
 #ifdef DEBUG_EPG
     if (next != NULL)
 	printf("input_dvb: EPG  next: %s (%d)\n", next->progname, next->running);
-#endif     
+#endif
     return next;
 }
 
 
 /* Displays the program info of an EPG entry in OSD.
-   
+
    x,y          The upper left coordinates of the program information area.
    max_x, max_y The maximum right coordinate of the program information area.
    last_y       The position of y after printing the entry.
@@ -1806,7 +1806,7 @@ static epg_entry_t* next_epg(channel_t* channel) {
    Returns the height of the entry in the OSD in pixels.
 */
 static void show_program_info(int x, int y, int max_x, int max_y, int* last_y,
-			      epg_entry_t* epg_data, osd_renderer_t* renderer, 
+			      epg_entry_t* epg_data, osd_renderer_t* renderer,
 			      osd_object_t* osd) {
   char* buffer;
   int time_width, text_width, dummy;
@@ -1845,7 +1845,7 @@ static void show_program_info(int x, int y, int max_x, int max_y, int* last_y,
       snprintf(buffer + strlen(buffer), 7, " (%i+)", prog_rating);
     }
     if (!renderer->set_font(osd, "sans", EPG_CONTENT_FONT_SIZE)) {
-	print_error("Setting content type font failed.");	
+	print_error("Setting content type font failed.");
     }
     renderer->get_text_size(osd, buffer, &content_width, &dummy);
     renderer->render_text(osd, max_x - 2 - content_width, y, buffer, OSD_TEXT3);
@@ -1853,14 +1853,14 @@ static void show_program_info(int x, int y, int max_x, int max_y, int* last_y,
 
   text_width = max_x - x - time_width - content_width - 2;
 
-  renderer->set_font(osd, "sans", EPG_TITLE_FONT_SIZE);	
+  renderer->set_font(osd, "sans", EPG_TITLE_FONT_SIZE);
 
   render_text_area(renderer, osd, epg_data->progname,
-		   x + time_width, y, EPG_PIXELS_BETWEEN_TEXT_ROWS, 
-		   x + text_width + time_width, max_y, &text_height, 
+		   x + time_width, y, EPG_PIXELS_BETWEEN_TEXT_ROWS,
+		   x + text_width + time_width, max_y, &text_height,
 		   OSD_TEXT4);
 
-  if (text_height == 0) 
+  if (text_height == 0)
       *last_y = y + time_height;
   else
       *last_y = y + text_height;
@@ -1879,15 +1879,15 @@ static void show_program_info(int x, int y, int max_x, int max_y, int* last_y,
 
     /* If duration_hours is zero, do not print them. */
     if (epg_data->duration_hours > 0)
-      sprintf(buffer + strlen(buffer), " (%dh%02dmin)", 
+      sprintf(buffer + strlen(buffer), " (%dh%02dmin)",
 	      epg_data->duration_hours, epg_data->duration_minutes);
     else if (epg_data->duration_minutes > 0)
-      sprintf(buffer + strlen(buffer), " (%dmin)", 
+      sprintf(buffer + strlen(buffer), " (%dmin)",
 	      epg_data->duration_minutes);
 
-    render_text_area(renderer, osd, buffer, x + time_width, 
-		     *last_y + EPG_PIXELS_BETWEEN_TEXT_ROWS, 
-		     EPG_PIXELS_BETWEEN_TEXT_ROWS, 
+    render_text_area(renderer, osd, buffer, x + time_width,
+		     *last_y + EPG_PIXELS_BETWEEN_TEXT_ROWS,
+		     EPG_PIXELS_BETWEEN_TEXT_ROWS,
 		     max_x, max_y, &text_height, OSD_TEXT3);
 
     *last_y += EPG_PIXELS_BETWEEN_TEXT_ROWS + text_height;
@@ -1909,7 +1909,7 @@ static void show_eit(dvb_input_plugin_t *this) {
   if (!this->epg_displaying) {
 
 #ifndef EPG_UPDATE_IN_BACKGROUND
-    if (current_epg(&this->channels[this->channel]) == NULL || 
+    if (current_epg(&this->channels[this->channel]) == NULL ||
 	next_epg(&this->channels[this->channel]) == NULL) {
 	load_epg_data(this);
     }
@@ -1919,12 +1919,12 @@ static void show_eit(dvb_input_plugin_t *this) {
     this->stream->osd_renderer->hide(this->proginfo_osd, 0);
     this->stream->osd_renderer->clear(this->proginfo_osd);
 
-    /* Channel Name */       
+    /* Channel Name */
     if (!this->stream->osd_renderer->set_font(
 	    this->proginfo_osd, "sans", EPG_CHANNEL_FONT_SIZE)) {
 	print_error("Error setting channel name font.");
     }
-	
+
     this->stream->osd_renderer->render_text(
       this->proginfo_osd, 0, 0, this->channels[this->channel].name, OSD_TEXT4);
 
@@ -1942,11 +1942,11 @@ static void show_eit(dvb_input_plugin_t *this) {
       this->proginfo_osd, this->channels[this->channel].name, &temp1, &temp2);
 
     this->stream->osd_renderer->render_text(
-      this->proginfo_osd, EPG_WIDTH - 45, 
+      this->proginfo_osd, EPG_WIDTH - 45,
       EPG_CHANNEL_FONT_SIZE - EPG_CLOCK_FONT_SIZE, clock, OSD_TEXT4);
-   
+
     show_program_info(0, EPG_CHANNEL_FONT_SIZE + 2, EPG_WIDTH, EPG_HEIGHT, &y_pos,
-		      current_epg(&this->channels[this->channel]), 
+		      current_epg(&this->channels[this->channel]),
 		      this->stream->osd_renderer,
 		      this->proginfo_osd);
     y = y_pos;
@@ -1957,11 +1957,11 @@ static void show_eit(dvb_input_plugin_t *this) {
 		      this->proginfo_osd);
     y = y_pos;
 
-    window_width = 
+    window_width =
 	this->stream->video_out->get_property(
 	    this->stream->video_out, VO_PROP_WINDOW_WIDTH);
 
-    window_height = 
+    window_height =
 	this->stream->video_out->get_property(
 	    this->stream->video_out, VO_PROP_WINDOW_HEIGHT);
 
@@ -1978,8 +1978,8 @@ static void show_eit(dvb_input_plugin_t *this) {
     this->stream->osd_renderer->set_text_palette(
 	this->background, XINE_TEXTPALETTE_YELLOW_BLACK_TRANSPARENT, OSD_TEXT3);
     this->stream->osd_renderer->filled_rect(
-	this->background, 0, 0, 
-	EPG_WIDTH + EPG_BACKGROUND_MARGIN*2, 
+	this->background, 0, 0,
+	EPG_WIDTH + EPG_BACKGROUND_MARGIN*2,
 	y + EPG_BACKGROUND_MARGIN*2, 4);
 
     /* In case video is downscaled and the EPG fits, show it unscaled to make it
@@ -1993,8 +1993,8 @@ static void show_eit(dvb_input_plugin_t *this) {
       centered_y = (centered_y > 0)?(centered_y):(EPG_TOP);
 
       this->stream->osd_renderer->set_position(
-	  this->proginfo_osd, 
-	  centered_x + EPG_BACKGROUND_MARGIN, 
+	  this->proginfo_osd,
+	  centered_x + EPG_BACKGROUND_MARGIN,
 	  centered_y + EPG_BACKGROUND_MARGIN);
 
       this->stream->osd_renderer->set_position(this->background, centered_x, centered_y);
@@ -2010,15 +2010,15 @@ static void show_eit(dvb_input_plugin_t *this) {
 
       /* Center the OSD to stream. */
       this->stream->osd_renderer->set_position(
-	  this->proginfo_osd, 
-	  centered_x + EPG_BACKGROUND_MARGIN, 
+	  this->proginfo_osd,
+	  centered_x + EPG_BACKGROUND_MARGIN,
 	  centered_y + EPG_BACKGROUND_MARGIN);
 
       this->stream->osd_renderer->set_position(this->background, centered_x, centered_y);
       this->stream->osd_renderer->show(this->background, 0);
       this->stream->osd_renderer->show(this->proginfo_osd, 0);
     }
-	
+
   } else {
     this->epg_displaying = 0;
     this->stream->osd_renderer->hide (this->proginfo_osd,0);
@@ -2048,7 +2048,7 @@ static int tuner_set_channel (dvb_input_plugin_t *this, channel_t *c) {
     if (lastchannel.num_value){
       /* Remember last watched channel. never show this entry*/
       config->update_num(config, "media.dvb.last_channel", this->channel+1);
-    }	
+    }
 #ifdef DVB_NO_BUFFERING
     this->newchannel=1;
 #endif
@@ -2078,14 +2078,14 @@ static void osd_show_channel (dvb_input_plugin_t *this, int channel) {
 	      this->channel_osd, 110, 10+i*35,
 	      this->channels[channel_to_print].name,
 	      (channel_to_print == channel)?(OSD_TEXT4):(OSD_TEXT3));
-	  
+
 	  if ((current_program = current_epg(&this->channels[channel_to_print])) &&
 	      current_program->progname && strlen(current_program->progname) > 0) {
 
 	      this->stream->osd_renderer->set_font(this->channel_osd, "sans", 16);
 
 	      render_text_area(this->stream->osd_renderer, this->channel_osd,
-			       current_program->progname, 400, 10+i*35, 
+			       current_program->progname, 400, 10+i*35,
 			       -5, CHSEL_WIDTH, 10+i*35+CHSEL_CHANNEL_FONT_SIZE+2,
 			       &temp, (channel_to_print == channel)?(OSD_TEXT4):(OSD_TEXT3));
 	  }
@@ -2108,19 +2108,19 @@ static void osd_show_channel (dvb_input_plugin_t *this, int channel) {
 }
 
 static int switch_channel(dvb_input_plugin_t *this, int channel) {
-  
+
   int x;
   xine_event_t     event;
   xine_pids_data_t data;
   xine_ui_data_t   ui_data;
-  
-  /* control_nop appears to stop an occasional (quite long) pause between 
+
+  /* control_nop appears to stop an occasional (quite long) pause between
      channel-changes, which the user may see as a lockup. */
   _x_demux_control_nop(this->stream, BUF_FLAG_END_STREAM);
-  _x_demux_flush_engine(this->stream); 
+  _x_demux_flush_engine(this->stream);
 
   pthread_mutex_lock (&this->channel_change_mutex);
-  
+
   close (this->fd);
   this->tuned_in = 0;
 
@@ -2128,9 +2128,9 @@ static int switch_channel(dvb_input_plugin_t *this, int channel) {
     close(this->tuner->fd_pidfilter[x]);
     this->tuner->fd_pidfilter[x] = open(this->tuner->demux_device, O_RDWR);
    }
-  
+
   if (!tuner_set_channel (this, &this->channels[channel])) {
-    xprintf (this->class->xine, XINE_VERBOSITY_LOG, 
+    xprintf (this->class->xine, XINE_VERBOSITY_LOG,
 	     _("input_dvb: tuner_set_channel failed\n"));
     pthread_mutex_unlock (&this->channel_change_mutex);
     return 0;
@@ -2164,7 +2164,7 @@ static int switch_channel(dvb_input_plugin_t *this, int channel) {
   this->tuned_in = 1;
 
   pthread_mutex_unlock (&this->channel_change_mutex);
-  
+
   /* now read the pat, find all accociated PIDs and add them to the stream */
   dvb_parse_si(this);
 
@@ -2176,7 +2176,7 @@ static int switch_channel(dvb_input_plugin_t *this, int channel) {
 
   /* show eit for this channel if necessary */
   if (this->epg_displaying==1){
-      this->epg_displaying=0; 
+      this->epg_displaying=0;
       show_eit(this);
   }
   return 1;
@@ -2185,7 +2185,7 @@ static int switch_channel(dvb_input_plugin_t *this, int channel) {
 static void do_record (dvb_input_plugin_t *this) {
 
  struct tm *tma;
- time_t *t; 
+ time_t *t;
  char filename [256];
  char dates[64];
  int x=0;
@@ -2211,7 +2211,7 @@ static void do_record (dvb_input_plugin_t *this) {
     free(t);
     t = NULL;
     strftime(dates,63,"%Y-%m-%d_%H%M",tma);
-    
+
     if (xine_config_lookup_entry(this->stream->xine, "media.capture.save_dir", &savedir)){
       if(strlen(savedir.str_value)>1){
         if((dir = opendir(savedir.str_value))==NULL){
@@ -2237,7 +2237,7 @@ static void do_record (dvb_input_plugin_t *this) {
     this->record_fd = open (filename, O_CREAT | O_APPEND | O_WRONLY, 0644);
 
     this->stream->osd_renderer->clear (this->rec_osd);
-    
+
     this->stream->osd_renderer->render_text (this->rec_osd, 10, 10, "Recording to:",
 					     OSD_TEXT3);
 
@@ -2253,7 +2253,7 @@ static void dvb_event_handler (dvb_input_plugin_t *this) {
 
   xine_event_t *event;
   static int channel_menu_visible = 0;
-  static int next_channel = -1;  
+  static int next_channel = -1;
 
   while ((event = xine_event_get (this->event_queue))) {
 
@@ -2279,7 +2279,7 @@ static void dvb_event_handler (dvb_input_plugin_t *this) {
           }
 	  else
 	      this->stream->osd_renderer->hide(this->channel_osd, 0);
-	} 
+	}
 #ifdef LEFT_MOUSE_DOES_EPG
 	else {		/* show EPG on left click of videowindow */
 	  show_eit(this);
@@ -2438,27 +2438,27 @@ static void dvb_event_handler (dvb_input_plugin_t *this) {
 static void ts_rewrite_packets (dvb_input_plugin_t *this, unsigned char * originalPkt, int len) {
 
 #define PKT_SIZE 188
-#define BODY_SIZE (188-4) 
+#define BODY_SIZE (188-4)
   unsigned int  sync_byte;
   unsigned int  data_offset;
   unsigned int  data_len;
-  unsigned int 	pid;
+  unsigned int	pid;
 
   while(len>0){
-  
+
     sync_byte                      = originalPkt[0];
     pid                            = ((originalPkt[1] << 8) | originalPkt[2]) & 0x1fff;
-                                      
+
     /*
      * Discard packets that are obviously bad.
      */
 
     data_offset = 4;
     originalPkt+=data_offset;
-    
+
     if (pid == 0 && sync_byte==0x47) {
       unsigned long crc;
-      
+
       originalPkt[3]=13; /* section length including CRC - first 3 bytes */
       originalPkt[2]=0x80;
       originalPkt[7]=0; /* section number */
@@ -2469,13 +2469,13 @@ static void ts_rewrite_packets (dvb_input_plugin_t *this, unsigned char * origin
       originalPkt[12]=this->channels[this->channel].pmtpid & 0xff;
 
       crc = av_crc(this->class->av_crc, 0xffffffff, originalPkt+1, 12);
-      
+
       originalPkt[13]=(crc>>24) & 0xff;
       originalPkt[14]=(crc>>16) & 0xff;
       originalPkt[15]=(crc>>8) & 0xff;
       originalPkt[16]=crc & 0xff;
       memset(originalPkt+17,0xFF,PKT_SIZE-21); /* stuff the remainder */
-      
+
     }
 
   data_len = PKT_SIZE - data_offset;
@@ -2489,7 +2489,7 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
 			      void *buf_gen, off_t len) {
   dvb_input_plugin_t *this = (dvb_input_plugin_t *) this_gen;
   uint8_t *buf = buf_gen;
-  
+
   off_t n=0, total=0;
   int have_mutex=0;
   struct pollfd pfd;
@@ -2506,32 +2506,32 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
   /* protect against channel changes */
   have_mutex =  pthread_mutex_lock(&this->channel_change_mutex);
   total=0;
-  
-  while (total<len){ 
+
+  while (total<len){
       pfd.fd = this->fd;
       pfd.events = POLLPRI | POLLIN | POLLERR;
       pfd.revents = 0;
-      
+
       if (!this->tuned_in) {
 	  pthread_mutex_unlock( &this->channel_change_mutex );
 	  xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 		  "input_dvb: Channel \"%s\" could not be tuned in. "
 		  "Possibly erroneus settings in channels.conf "
-		  "(frequency changed?).\n", 
+		  "(frequency changed?).\n",
 		  this->channels[this->channel].name);
 	  return 0;
       }
-  
-      if (poll(&pfd, 1, 1500) < 1) { 
+
+      if (poll(&pfd, 1, 1500) < 1) {
 	  xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 		  "input_dvb:  No data available.  Signal Lost??  \n");
-	  _x_demux_control_end(this->stream, BUF_FLAG_END_USER); 
+	  _x_demux_control_end(this->stream, BUF_FLAG_END_USER);
 	  this->read_failcount++;
 	  break;
       }
 
-      if (this->read_failcount) { 
-      /* signal/stream regained after loss - 
+      if (this->read_failcount) {
+      /* signal/stream regained after loss -
 	 kick the net_buf_control layer. */
 	  this->read_failcount=0;
 	  xprintf(this->class->xine,XINE_VERBOSITY_LOG,
@@ -2541,22 +2541,22 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
 
       if (pfd.revents & POLLPRI || pfd.revents & POLLIN) {
 	  n = read (this->fd, &buf[total], len-total);
-      } else 
+      } else
 	  if (pfd.revents & POLLERR) {
 	      xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 		      "input_dvb:  No data available.  Signal Lost??  \n");
-	      _x_demux_control_end(this->stream, BUF_FLAG_END_USER); 
+	      _x_demux_control_end(this->stream, BUF_FLAG_END_USER);
 	      this->read_failcount++;
 	      break;
-	  } 
+	  }
 
 #ifdef LOG_READS
       xprintf(this->class->xine,XINE_VERBOSITY_DEBUG,
-	      "input_dvb: got %" PRIdMAX " bytes (%" PRIdMAX "/%" PRIdMAX " bytes read)\n", 
+	      "input_dvb: got %" PRIdMAX " bytes (%" PRIdMAX "/%" PRIdMAX " bytes read)\n",
 	      (intmax_t)n, (intmax_t)total, (intmax_t)len);
 #endif
-    
-      if (n > 0){  
+
+      if (n > 0){
 	  this->curpos += n;
 	  total += n;
       } else if (n < 0 && errno!=EAGAIN) {
@@ -2573,7 +2573,7 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
 
   /* no data for several seconds - tell the user a possible reason */
   if(this->read_failcount==5){
-    _x_message(this->stream,1,"DVB Signal Lost.  Please check connections.", NULL); 
+    _x_message(this->stream,1,"DVB Signal Lost.  Please check connections.", NULL);
   }
 #ifdef DVB_NO_BUFFERING
   if(this->newchannel){
@@ -2661,7 +2661,7 @@ static void dvb_plugin_dispose (input_plugin_t *this_gen) {
   }
 
   if (this->nbc) {
-    nbc_close (this->nbc); 
+    nbc_close (this->nbc);
     this->nbc = NULL;
   }
 
@@ -2786,7 +2786,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
       * and assume that its format is valid for our tuner type
       */
 
-      if (!(channels = load_channels(this->class->xine, this->stream, &num_channels, tuner->feinfo.type))) 
+      if (!(channels = load_channels(this->class->xine, this->stream, &num_channels, tuner->feinfo.type)))
       {
         /* failed to load the channels */
 	 tuner_dispose(tuner);
@@ -2822,7 +2822,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
          } else {
            /*
             * try a partial match too
-	    * be smart and compare starting from the first char, then from 
+	    * be smart and compare starting from the first char, then from
 	    * the second etc..
 	    * Yes, this is expensive, but it happens really often
 	    * that the channels have really ugly names, sometimes prefixed
@@ -2840,7 +2840,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 	        if (strlen(channels[idx].name) > offset) {
 		  if (strncasecmp(channels[idx].name + offset, channame, chanlen) == 0) {
                      xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("input_dvb: found matching channel %s\n"), channels[idx].name);
-                     break;			  
+                     break;
                   }
 		}
 		idx++;
@@ -2913,12 +2913,12 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
               return 0;
 	   }
 	   this->channel = 0;
-    } else if (strncasecmp(this->mrl, "dvbc://", 7) == 0) 
+    } else if (strncasecmp(this->mrl, "dvbc://", 7) == 0)
     {
       /*
        * This is dvbc://<channel name>:<qam tuning parameters>
        */
-       if (tuner->feinfo.type != FE_QAM) 
+       if (tuner->feinfo.type != FE_QAM)
        {
          xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 	 _("input_dvb: dvbc mrl specified but the tuner doesn't appear to be QAM (DVB-C)\n"));
@@ -2937,15 +2937,15 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
         return 0;
       }
       this->channel = 0;
-    } else if (strncasecmp(this->mrl, "dvba://", 7) == 0) 
+    } else if (strncasecmp(this->mrl, "dvba://", 7) == 0)
     {
-      fprintf(stderr,"input_dvb: 2a %x\n",tuner->feinfo.type); 
+      fprintf(stderr,"input_dvb: 2a %x\n",tuner->feinfo.type);
       /*
        * This is dvba://<channel name>:<atsc tuning parameters>
        */
-       if (tuner->feinfo.type != FE_ATSC) 
+       if (tuner->feinfo.type != FE_ATSC)
        {
-	 fprintf(stderr,"input_dvb: FAILED 1\n"); 
+	 fprintf(stderr,"input_dvb: FAILED 1\n");
          xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 	 _("input_dvb: dvba mrl specified but the tuner doesn't appear to be ATSC (DVB-A)\n"));
          tuner_dispose(tuner);
@@ -2957,7 +2957,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
       _x_assert(channels != NULL);
       if (extract_channel_from_string(channels, ptr, tuner->feinfo.type) < 0)
       {
-	fprintf(stderr,"input_dvb: FAILED 2\n"); 
+	fprintf(stderr,"input_dvb: FAILED 2\n");
         free(channels);
 	channels = NULL;
         tuner_dispose(tuner);
@@ -2973,7 +2973,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     this->tuner = tuner;
     this->channels = channels;
     this->num_channels = num_channels;
-    
+
     if (!tuner_set_channel(this, &this->channels[this->channel])) {
       xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 	   _("input_dvb: tuner_set_channel failed\n"));
@@ -2986,7 +2986,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
       return 0;
     }
     this->tuned_in = 1;
-    
+
     /* now read the pat, find all accociated PIDs and add them to the stream */
     dvb_parse_si(this);
 
@@ -3001,14 +3001,14 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     if (this->dvb_gui_enabled) {
       /* Start the EPG updater thread. */
       this->epg_updater_stop = 0;
-      if (pthread_create(&this->epg_updater_thread, NULL, 
+      if (pthread_create(&this->epg_updater_thread, NULL,
 		         epg_data_updater, this) != 0) {
 	  xprintf(
 	      this->class->xine, XINE_VERBOSITY_LOG,
 	      _("input_dvb: cannot create EPG updater thread\n"));
 	  return 0;
       }
-    } 
+    }
 #endif
     /*
      * this osd is used to draw the "recording" sign
@@ -3027,8 +3027,8 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     this->stream->osd_renderer->set_position(this->channel_osd, 20, 10);
     this->stream->osd_renderer->set_encoding(this->channel_osd, NULL);
 
-    /* 
-     * this osd is for displaying currently shown channel name 
+    /*
+     * this osd is for displaying currently shown channel name
      */
     this->name_osd = this->stream->osd_renderer->new_object(this->stream->osd_renderer, 301, 61);
     this->stream->osd_renderer->set_position(this->name_osd, 20, 10);
@@ -3036,8 +3036,8 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     this->stream->osd_renderer->set_encoding(this->name_osd, NULL);
     this->stream->osd_renderer->set_text_palette(this->name_osd, XINE_TEXTPALETTE_YELLOW_BLACK_TRANSPARENT, OSD_TEXT3);
 
-    /* 
-     * this osd is for displaying Recording Paused 
+    /*
+     * this osd is for displaying Recording Paused
      */
     this->paused_osd = this->stream->osd_renderer->new_object(this->stream->osd_renderer, 301, 161);
     this->stream->osd_renderer->set_position(this->paused_osd, 10, 50);
@@ -3045,10 +3045,10 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     this->stream->osd_renderer->set_encoding(this->paused_osd, NULL);
     this->stream->osd_renderer->set_text_palette(this->paused_osd, XINE_TEXTPALETTE_YELLOW_BLACK_TRANSPARENT, OSD_TEXT3);
 
-    /* 
+    /*
      * This osd is for displaying Program Information (EIT), i.e., EPG.
      */
-    this->proginfo_osd = 
+    this->proginfo_osd =
 	this->stream->osd_renderer->new_object(
 	    this->stream->osd_renderer, EPG_WIDTH, EPG_HEIGHT);
 
@@ -3057,10 +3057,10 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     this->stream->osd_renderer->set_text_palette(this->proginfo_osd, XINE_TEXTPALETTE_WHITE_NONE_TRANSLUCID, OSD_TEXT3);
     this->stream->osd_renderer->set_text_palette(this->proginfo_osd, XINE_TEXTPALETTE_YELLOW_BLACK_TRANSPARENT, OSD_TEXT4);
 
-    this->background = 
+    this->background =
 	this->stream->osd_renderer->new_object(
-	    this->stream->osd_renderer, 
-	    EPG_WIDTH + EPG_BACKGROUND_MARGIN*2, 
+	    this->stream->osd_renderer,
+	    EPG_WIDTH + EPG_BACKGROUND_MARGIN*2,
 	    EPG_HEIGHT + EPG_BACKGROUND_MARGIN*2);
 
     this->epg_displaying = 0;
@@ -3092,7 +3092,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     /* Clear all pids, the pmt will tell us which to use */
     for (x = 0; x < MAX_FILTERS; x++){
       this->channels[this->channel].pid[x] = DVB_NOPID;
-    }  
+    }
 
 
     return 1;
@@ -3128,16 +3128,16 @@ static input_plugin_t *dvb_class_get_instance (input_class_t *class_gen,
   this->fd           = -1;
   this->tuned_in     = 0;
 #ifndef DVB_NO_BUFFERING
-  this->nbc          = nbc_init (this->stream); 
+  this->nbc          = nbc_init (this->stream);
 #else
-  this->nbc 	= NULL;
+  this->nbc	= NULL;
 #endif
   this->osd          = NULL;
   this->event_queue  = NULL;
   this->record_fd    = -1;
   this->read_failcount = 0;
   this->epg_updater_stop = 0;
-  
+
   this->input_plugin.open              = dvb_plugin_open;
   this->input_plugin.get_capabilities  = dvb_plugin_get_capabilities;
   this->input_plugin.read              = dvb_plugin_read;
@@ -3162,7 +3162,7 @@ static void dvb_class_dispose(input_class_t * this_gen)
 {
     dvb_input_class_t *class = (dvb_input_class_t *) this_gen;
     int x;
-    
+
     for(x=0;x<class->numchannels;x++)
        free(class->autoplaylist[x]);
 
@@ -3208,7 +3208,7 @@ static char **dvb_class_get_autoplay_list(input_class_t * this_gen,
        tuner_dispose(tuner);
        return class->mrls;
     }
-   
+
     tuner_dispose(tuner);
 
     if (xine_config_lookup_entry(class->xine, "media.dvb.remember_channel", &lastchannel_enable)
@@ -3311,7 +3311,7 @@ static void *init_class (xine_t *xine, void *data) {
 			 "really have more than 1 card "
 			 "in your system."),
 		       0, NULL, (void *) this);
-    
+
 
   return this;
 }

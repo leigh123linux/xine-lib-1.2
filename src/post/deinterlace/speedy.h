@@ -237,7 +237,7 @@ extern void (*subpix_blit_vertical_packed422_scanline)( uint8_t *output, uint8_t
  * Simple function to convert a 4:4:4 scanline to a 4:4:4:4 scanline by
  * adding an alpha channel.  Result is non-premultiplied.
  */
-extern void (*packed444_to_nonpremultiplied_packed4444_scanline)( uint8_t *output, 
+extern void (*packed444_to_nonpremultiplied_packed4444_scanline)( uint8_t *output,
                                                                   uint8_t *input,
                                                                   int width, int alpha );
 
@@ -248,7 +248,7 @@ extern void (*packed444_to_nonpremultiplied_packed4444_scanline)( uint8_t *outpu
  * aspect ratio.
  */
 extern void (*aspect_adjust_packed4444_scanline)( uint8_t *output,
-                                                  uint8_t *input, 
+                                                  uint8_t *input,
                                                   int width,
                                                   double pixel_aspect );
 

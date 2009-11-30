@@ -24,7 +24,7 @@
  *   APE tag reading
  *   Seeking??
  */
- 
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -66,7 +66,7 @@ typedef struct {
   unsigned int         frames;
   double               samplerate;
   unsigned int         length;
-  
+
   unsigned int         current_frame;
   unsigned int         next_frame_bits;
 } demux_mpc_t;
@@ -82,7 +82,7 @@ typedef struct {
 static int open_mpc_file(demux_mpc_t *this) {
   unsigned int first_frame_size;
   unsigned int id3v2_size = 0;
-  
+
   /* Read the file header */
   if (_x_demux_read_header(this->input, this->header, HEADER_SIZE) != HEADER_SIZE)
       return 0;
@@ -91,39 +91,39 @@ static int open_mpc_file(demux_mpc_t *this) {
   if (INPUT_IS_SEEKABLE(this->input)) {
     /* Check for id3v2 tag */
     if (id3v2_istag(this->header)) {
-      
+
       lprintf("found id3v2 header\n");
-  
+
       /* Read tag size */
-      
+
       id3v2_size = _X_BE_32_synchsafe(&this->header[6]) + 10;
-     
+
       /* Add footer size if one is present */
       if (this->header[5] & 0x10)
         id3v2_size += 10;
-        
+
       lprintf("id3v2 size: %u\n", id3v2_size);
-        
+
       /* Seek past tag */
       if (this->input->seek(this->input, id3v2_size, SEEK_SET) < 0)
         return 0;
-        
+
       /* Read musepack header */
       if (this->input->read(this->input, this->header, HEADER_SIZE) != HEADER_SIZE)
         return 0;
     }
   }
-  
+
   /* Validate signature - We only support SV 7.x at the moment */
   if ( memcmp(this->header, "MP+", 3) != 0 ||
       ((this->header[3]&0x0f) != 0x07))
     return 0;
-    
+
   /* Get frame count */
   this->current_frame = 0;
   this->frames = _X_LE_32(&this->header[4]);
   lprintf("number of frames: %u\n", this->frames);
-  
+
   /* Get sample rate */
   switch ((_X_LE_32(&this->header[8]) >> 16) & 0x3) {
     case 0:
@@ -142,7 +142,7 @@ static int open_mpc_file(demux_mpc_t *this) {
       break;
   }
   lprintf("samplerate: %f kHz\n", this->samplerate);
-  
+
   /* Calculate stream length */
   this->length = (int) ((double) this->frames * 1152 / this->samplerate);
   lprintf("stream length: %d ms\n", this->length);
@@ -151,14 +151,14 @@ static int open_mpc_file(demux_mpc_t *this) {
   first_frame_size = (_X_LE_32(&this->header[24]) >> 4) & 0xFFFFF;
   this->next_frame_bits =  first_frame_size - 4;
   lprintf("first frame size: %u\n", first_frame_size);
-  
+
   /* Move input to start of data (to nearest multiple of 4) */
   this->input->seek(this->input, 28+id3v2_size, SEEK_SET);
-  
+
   /* Set stream info */
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 1);
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_FOURCC, _X_ME_32(this->header));
-  
+
   return 1;
 }
 
@@ -168,30 +168,30 @@ static int demux_mpc_send_chunk(demux_plugin_t *this_gen) {
   off_t bytes_read;
 
   buf_element_t *buf = NULL;
-  
+
   /* Check if we've finished */
   if (this->current_frame++ == this->frames) {
     lprintf("all frames read\n");
     this->status = DEMUX_FINISHED;
-    return this->status;    
+    return this->status;
   }
   lprintf("current frame: %u\n", this->current_frame);
-  
-  /* Get a buffer */  
+
+  /* Get a buffer */
   buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
   buf->type = BUF_AUDIO_MPC;
   buf->pts = 0;
   buf->extra_info->total_time = this->length;
-    
+
   /* Set normalised position */
-  buf->extra_info->input_normpos = 
-    (int) ((double) this->input->get_current_pos(this->input) * 65535 / 
+  buf->extra_info->input_normpos =
+    (int) ((double) this->input->get_current_pos(this->input) * 65535 /
            this->input->get_length(this->input));
-  
+
   /* Set time based on there being 1152 audio frames per frame */
-  buf->extra_info->input_time = 
+  buf->extra_info->input_time =
     (int) ((double) this->current_frame * 1152 / this->samplerate);
-    
+
   /* Calculate the number of bits that need to be read to finish reading
    * the current frame and read the size of the next frame. This number
    * has to be rounded up to the nearest 4 bytes on account of the
@@ -204,35 +204,35 @@ static int demux_mpc_send_chunk(demux_plugin_t *this_gen) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             _("demux_mpc: frame too big for buffer"));
     this->status = DEMUX_FINISHED;
-    return this->status;    
+    return this->status;
   }
-  
+
   /* Read data */
   bytes_read = this->input->read(this->input, buf->content, bytes_to_read);
   if(bytes_read <= 0) {
     buf->free_buffer(buf);
     this->status = DEMUX_FINISHED;
     return this->status;
-  } else 
+  } else
     buf->size = bytes_read;
-  
+
   /* Read the size of the next frame */
   if (this->current_frame < this->frames) {
-    /* The number of bits of the next frame we've read */ 
+    /* The number of bits of the next frame we've read */
     extra_bits_read = bits_to_read - (this->next_frame_bits+20);
-  
+
     if(extra_bits_read <= 12)
       next_frame_size = (_X_LE_32(&buf->content[bytes_to_read-4]) >> extra_bits_read) & 0xFFFFF;
     else
       next_frame_size = ((_X_LE_32(&buf->content[bytes_to_read-8]) << (32-extra_bits_read)) |
                         (_X_LE_32(&buf->content[bytes_to_read-4]) >> extra_bits_read)) & 0xFFFFF;
-      
+
     lprintf("next frame size: %u\n", next_frame_size);
-    
+
     /* The number of bits of the next frame still to read */
-    this->next_frame_bits = next_frame_size - extra_bits_read;     
+    this->next_frame_bits = next_frame_size - extra_bits_read;
   }
-  
+
   /* Each buffer contains at least one frame */
   buf->decoder_flags |= BUF_FLAG_FRAME_END;
 
@@ -255,14 +255,14 @@ static void demux_mpc_send_headers(demux_plugin_t *this_gen) {
   /* Send header to decoder */
   if (this->audio_fifo) {
     buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
-    
+
     buf->type            = BUF_AUDIO_MPC;
     buf->decoder_flags   = BUF_FLAG_HEADER|BUF_FLAG_FRAME_END;
     buf->decoder_info[0] = this->input->get_length(this->input);
     buf->decoder_info[1] = 0;
     buf->decoder_info[2] = 0;
     buf->decoder_info[3] = 0;
-    
+
     /* Copy the header */
     buf->size = HEADER_SIZE;
     memcpy(buf->content, this->header, buf->size);
@@ -333,12 +333,12 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   case METHOD_BY_MRL:
   case METHOD_BY_CONTENT:
   case METHOD_EXPLICIT:
-    
+
     if (!open_mpc_file(this)) {
       free (this);
       return NULL;
     }
-  
+
   break;
 
   default:

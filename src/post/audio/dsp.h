@@ -1,5 +1,5 @@
 /*=============================================================================
- *	
+ *
  *  This software has been released under the terms of the GNU Public
  *  license. See http://www.gnu.org/copyleft/gpl.html for details.
  *
@@ -9,7 +9,7 @@
  */
 
 #ifndef	_DSP_H
-#define	_DSP_H 	1
+#define	_DSP_H	1
 
 /* Implementation of routines used for DSP */
 

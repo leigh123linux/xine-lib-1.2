@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -46,7 +46,7 @@
 #include <xine/demux.h>
 #include <xine/post.h>
 
-/* 
+/*
  * version information / checking
  */
 
@@ -65,12 +65,12 @@ void xine_get_version (int *major, int *minor, int *sub) {
 }
 
 int xine_check_version(int major, int minor, int sub) {
-  
-  if((XINE_MAJOR > major) || 
-     ((XINE_MAJOR == major) && (XINE_MINOR > minor)) || 
+
+  if((XINE_MAJOR > major) ||
+     ((XINE_MAJOR == major) && (XINE_MINOR > minor)) ||
      ((XINE_MAJOR == major) && (XINE_MINOR == minor) && (XINE_SUB >= sub)))
     return 1;
-  
+
   return 0;
 }
 
@@ -86,7 +86,7 @@ const char* xine_config_register_string (xine_t *self,
 					 int   exp_level,
 					 xine_config_cb_t changed_cb,
 					 void *cb_data) {
-  
+
   return self->config->register_string (self->config,
 					key,
 					def_value,
@@ -107,7 +107,7 @@ const char* xine_config_register_filename (xine_t *self,
 					   int   exp_level,
 					   xine_config_cb_t changed_cb,
 					   void *cb_data) {
-  
+
   return self->config->register_filename (self->config,
 					  key, def_value, req_type,
 					  description, help, exp_level,
@@ -128,7 +128,7 @@ int xine_config_register_range (xine_t *self,
 				       description, help, exp_level,
 				       changed_cb, cb_data);
 }
-  
+
 
 int xine_config_register_enum (xine_t *self,
 			       const char *key,
@@ -144,7 +144,7 @@ int xine_config_register_enum (xine_t *self,
 				      description, help, exp_level,
 				      changed_cb, cb_data);
 }
-  
+
 
 int xine_config_register_num (xine_t *self,
 			      const char *key,
@@ -155,7 +155,7 @@ int xine_config_register_num (xine_t *self,
 			      xine_config_cb_t changed_cb,
 			      void *cb_data) {
   return self->config->register_num (self->config,
-				     key, def_value, 
+				     key, def_value,
 				     description, help, exp_level,
 				     changed_cb, cb_data);
 }
@@ -170,11 +170,11 @@ int xine_config_register_bool (xine_t *self,
 			       xine_config_cb_t changed_cb,
 			       void *cb_data) {
   return self->config->register_bool (self->config,
-				      key, def_value, 
+				      key, def_value,
 				      description, help, exp_level,
 				      changed_cb, cb_data);
 }
-  
+
 
 /*
  * helper function:
@@ -210,7 +210,7 @@ static int config_get_current_entry (xine_t *this, xine_cfg_entry_t *entry) {
 }
 
 /*
- * get first config item 
+ * get first config item
  */
 int  xine_config_get_first_entry (xine_t *this, xine_cfg_entry_t *entry) {
   int result;
@@ -227,12 +227,12 @@ int  xine_config_get_first_entry (xine_t *this, xine_cfg_entry_t *entry) {
 
   return result;
 }
-  
+
 
 /*
  * get next config item (iterate through the items)
  * this will return NULL when called after returning the last item
- */     
+ */
 int xine_config_get_next_entry (xine_t *this, xine_cfg_entry_t *entry) {
   int result;
   config_values_t *config = this->config;
@@ -243,7 +243,7 @@ int xine_config_get_next_entry (xine_t *this, xine_cfg_entry_t *entry) {
     pthread_mutex_unlock(&config->config_lock);
     return (xine_config_get_first_entry(this, entry));
   }
-  
+
   /* do not hand out unclaimed entries */
   do {
     config->cur = config->cur->next;
@@ -252,11 +252,11 @@ int xine_config_get_next_entry (xine_t *this, xine_cfg_entry_t *entry) {
   pthread_mutex_unlock(&config->config_lock);
 
   return result;
-} 
-  
+}
+
 
 /*
- * search for a config entry by key 
+ * search for a config entry by key
  */
 
 int xine_config_lookup_entry (xine_t *this, const char *key,
@@ -274,7 +274,7 @@ int xine_config_lookup_entry (xine_t *this, const char *key,
 
   return result;
 }
-  
+
 
 /*
  * update a config entry (which was returned from lookup_entry() )
@@ -294,12 +294,12 @@ void xine_config_update_entry (xine_t *this, const xine_cfg_entry_t *entry) {
     break;
 
   default:
-    xprintf (this, XINE_VERBOSITY_DEBUG, 
+    xprintf (this, XINE_VERBOSITY_DEBUG,
 	     "xine_interface: error, unknown config entry type %d\n", entry->type);
     _x_abort();
   }
 }
-  
+
 
 void xine_config_reset (xine_t *this) {
 
@@ -325,7 +325,7 @@ void xine_config_reset (xine_t *this) {
 int xine_port_send_gui_data (xine_video_port_t *vo,
 			   int type, void *data) {
 
-  return vo->driver->gui_data_exchange (vo->driver, 
+  return vo->driver->gui_data_exchange (vo->driver,
 						  type, data);
 }
 
@@ -360,7 +360,7 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
     _x_set_speed (stream, value);
     pthread_mutex_unlock (&stream->frontend_lock);
     break;
-  
+
   case XINE_PARAM_FINE_SPEED:
     pthread_mutex_lock (&stream->frontend_lock);
     _x_set_fine_speed (stream, value);
@@ -370,7 +370,7 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
   case XINE_PARAM_AV_OFFSET:
     stream->metronom->set_option (stream->metronom, METRONOM_AV_OFFSET, value);
     break;
-  
+
   case XINE_PARAM_SPU_OFFSET:
     stream->metronom->set_option (stream->metronom, METRONOM_SPU_OFFSET, value);
     break;
@@ -408,14 +408,14 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
       stream->audio_out->set_property (stream->audio_out, AO_PROP_MUTE_VOL, value);
     stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
     break;
-    
+
   case XINE_PARAM_AUDIO_COMPR_LEVEL:
     stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
     if (stream->audio_out)
       stream->audio_out->set_property (stream->audio_out, AO_PROP_COMPRESSOR, value);
     stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
     break;
-    
+
   case XINE_PARAM_AUDIO_AMP_LEVEL:
     stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
     if (stream->audio_out) {
@@ -455,8 +455,8 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
   case XINE_PARAM_EQ_16000HZ:
     stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
     if (stream->audio_out)
-      stream->audio_out->set_property (stream->audio_out, 
-				       param - XINE_PARAM_EQ_30HZ + AO_PROP_EQ_30HZ, 
+      stream->audio_out->set_property (stream->audio_out,
+				       param - XINE_PARAM_EQ_30HZ + AO_PROP_EQ_30HZ,
 				       value);
     stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
     break;
@@ -486,15 +486,15 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
   case XINE_PARAM_IGNORE_VIDEO:
     _x_stream_info_set(stream, XINE_STREAM_INFO_IGNORE_VIDEO, value);
     break;
-    
+
   case XINE_PARAM_IGNORE_AUDIO:
     _x_stream_info_set(stream, XINE_STREAM_INFO_IGNORE_AUDIO, value);
     break;
-  
+
   case XINE_PARAM_IGNORE_SPU:
     _x_stream_info_set(stream, XINE_STREAM_INFO_IGNORE_SPU, value);
     break;
-  
+
   case XINE_PARAM_METRONOM_PREBUFFER:
     stream->metronom->set_option(stream->metronom, METRONOM_PREBUFFER, value);
     break;
@@ -507,26 +507,26 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
       stream->broadcaster = NULL;
     }
     break;
-  
+
   case XINE_PARAM_EARLY_FINISHED_EVENT:
     stream->early_finish_event = !!value;
     break;
-  
+
   case XINE_PARAM_DELAY_FINISHED_EVENT:
     stream->delay_finish_event = value;
     break;
-  
+
   case XINE_PARAM_GAPLESS_SWITCH:
     stream->gapless_switch = !!value;
     if( stream->gapless_switch && !stream->early_finish_event ) {
       xprintf (stream->xine, XINE_VERBOSITY_DEBUG, "frontend possibly buggy: gapless_switch without early_finish_event\n");
     }
     break;
-    
+
   default:
     xprintf (stream->xine, XINE_VERBOSITY_DEBUG,
 	     "xine_interface: unknown or deprecated stream param %d set\n", param);
-  }  
+  }
 }
 
 int xine_get_param (xine_stream_t *stream, int param) {
@@ -536,7 +536,7 @@ int xine_get_param (xine_stream_t *stream, int param) {
   case XINE_PARAM_SPEED:
     ret = _x_get_speed(stream);
     break;
-  
+
   case XINE_PARAM_FINE_SPEED:
     ret = _x_get_fine_speed(stream);
     break;
@@ -544,7 +544,7 @@ int xine_get_param (xine_stream_t *stream, int param) {
   case XINE_PARAM_AV_OFFSET:
     ret = stream->metronom->get_option (stream->metronom, METRONOM_AV_OFFSET);
     break;
-  
+
   case XINE_PARAM_SPU_OFFSET:
     ret = stream->metronom->get_option (stream->metronom, METRONOM_SPU_OFFSET);
     break;
@@ -567,7 +567,7 @@ int xine_get_param (xine_stream_t *stream, int param) {
       ret = -1;
     else
       ret = stream->audio_out->get_property (stream->audio_out, AO_PROP_MIXER_VOL);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);  
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
     break;
 
   case XINE_PARAM_AUDIO_MUTE:
@@ -576,7 +576,7 @@ int xine_get_param (xine_stream_t *stream, int param) {
       ret = -1;
     else
       ret = stream->audio_out->get_property (stream->audio_out, AO_PROP_MUTE_VOL);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);  
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
     break;
 
   case XINE_PARAM_AUDIO_COMPR_LEVEL:
@@ -585,7 +585,7 @@ int xine_get_param (xine_stream_t *stream, int param) {
       ret = -1;
     else
       ret = stream->audio_out->get_property (stream->audio_out, AO_PROP_COMPRESSOR);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);  
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
     break;
 
   case XINE_PARAM_AUDIO_AMP_LEVEL:
@@ -594,7 +594,7 @@ int xine_get_param (xine_stream_t *stream, int param) {
       ret = -1;
     else
       ret = stream->audio_out->get_property (stream->audio_out, AO_PROP_AMP);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);  
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
     break;
 
   case XINE_PARAM_AUDIO_AMP_MUTE:
@@ -603,7 +603,7 @@ int xine_get_param (xine_stream_t *stream, int param) {
       ret = -1;
     else
       ret = stream->audio_out->get_property (stream->audio_out, AO_PROP_AMP_MUTE);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);  
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
     break;
 
   case XINE_PARAM_EQ_30HZ:
@@ -620,9 +620,9 @@ int xine_get_param (xine_stream_t *stream, int param) {
     if (!stream->audio_out)
       ret = -1;
     else
-      ret=  stream->audio_out->get_property (stream->audio_out, 
+      ret=  stream->audio_out->get_property (stream->audio_out,
 					     param - XINE_PARAM_EQ_30HZ + AO_PROP_EQ_30HZ);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);  
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
     break;
 
   case XINE_PARAM_VERBOSITY:
@@ -646,17 +646,17 @@ int xine_get_param (xine_stream_t *stream, int param) {
   case XINE_PARAM_VO_CROP_BOTTOM:
     stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
     ret = stream->video_out->get_property(stream->video_out, param);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);  
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
     break;
-  
+
   case XINE_PARAM_IGNORE_VIDEO:
     ret = _x_stream_info_get_public(stream, XINE_STREAM_INFO_IGNORE_VIDEO);
     break;
-    
+
   case XINE_PARAM_IGNORE_AUDIO:
     ret = _x_stream_info_get_public(stream, XINE_STREAM_INFO_IGNORE_AUDIO);
     break;
-  
+
   case XINE_PARAM_IGNORE_SPU:
     ret = _x_stream_info_get_public(stream, XINE_STREAM_INFO_IGNORE_SPU);
     break;
@@ -664,22 +664,22 @@ int xine_get_param (xine_stream_t *stream, int param) {
   case XINE_PARAM_METRONOM_PREBUFFER:
     ret = stream->metronom->get_option(stream->metronom, METRONOM_PREBUFFER);
     break;
-  
+
   case XINE_PARAM_BROADCASTER_PORT:
     if( stream->broadcaster )
       ret = _x_get_broadcaster_port(stream->broadcaster);
     else
       ret = 0;
     break;
-  
+
   case XINE_PARAM_EARLY_FINISHED_EVENT:
     ret = stream->early_finish_event;
     break;
-  
+
   case XINE_PARAM_DELAY_FINISHED_EVENT:
     ret = stream->delay_finish_event;
     break;
-  
+
   case XINE_PARAM_GAPLESS_SWITCH:
     ret = stream->gapless_switch;
     break;
@@ -749,7 +749,7 @@ uint32_t xine_get_stream_info (xine_stream_t *stream, int info) {
 
   case XINE_STREAM_INFO_MAX_SPU_CHANNEL:
     return stream->spu_track_map_entries;
-  
+
   default:
     xprintf (stream->xine, XINE_VERBOSITY_DEBUG,
 	     "xine_interface: unknown or deprecated stream info %d requested\n", info);
@@ -770,11 +770,11 @@ xine_osd_t *xine_osd_new(xine_stream_t *stream, int x, int y, int width, int hei
 
 uint32_t xine_osd_get_capabilities(xine_osd_t *this) {
   return this->osd.renderer->get_capabilities(&this->osd);
-} 
+}
 
 void xine_osd_draw_point(xine_osd_t *this, int x, int y, int color) {
   this->osd.renderer->point(&this->osd, x, y, color);
-} 
+}
 
 void xine_osd_draw_line(xine_osd_t *this, int x1, int y1, int x2, int y2, int color) {
   this->osd.renderer->line(&this->osd, x1, y1, x2, y2, color);
@@ -876,7 +876,7 @@ const char *const *xine_post_list_outputs(xine_post_t *this_gen) {
 xine_post_in_t *xine_post_input(xine_post_t *this_gen, const char *name) {
   post_plugin_t  *this = (post_plugin_t *)this_gen;
   xine_list_iterator_t ite;
-  
+
   ite = xine_list_front(this->input);
   while (ite) {
     xine_post_in_t *input = xine_list_get_value(this->input, ite);
@@ -890,7 +890,7 @@ xine_post_in_t *xine_post_input(xine_post_t *this_gen, const char *name) {
 xine_post_out_t *xine_post_output(xine_post_t *this_gen, const char *name) {
   post_plugin_t   *this = (post_plugin_t *)this_gen;
   xine_list_iterator_t ite;
-  
+
   ite = xine_list_front(this->output);
   while (ite) {
     xine_post_out_t *output = xine_list_get_value(this->output, ite);
@@ -941,7 +941,7 @@ int xine_post_wire_audio_port(xine_post_out_t *source, xine_audio_port_t *ao) {
 }
 
 xine_post_out_t * xine_get_video_source(xine_stream_t *stream) {
-  return &stream->video_source;  
+  return &stream->video_source;
 }
 
 xine_post_out_t * xine_get_audio_source(xine_stream_t *stream) {
@@ -998,14 +998,14 @@ int _x_message(xine_stream_t *stream, int type, ...) {
   va_end(ap);
 
   args[n] = NULL;
-  
+
   size += sizeof(xine_ui_message_data_t) + 1;
   data = calloc(1, size );
 
   strcpy(data->compatibility.str, "Upgrade your frontend to see the error messages");
   data->type           = type;
   data->num_parameters = n;
-  
+
   if( explanation ) {
     strcpy(data->messages, explanation);
     data->explanation = data->messages - (char *)data;
@@ -1016,10 +1016,10 @@ int _x_message(xine_stream_t *stream, int type, ...) {
   }
 
   data->parameters = params - (char *)data;
-  
+
   n       = 0;
   *params = '\0';
-  
+
   while(args[n]) {
     strcpy(params, args[n]);
     params += strlen(args[n]) + 1;

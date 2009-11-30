@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2007 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -98,7 +98,7 @@ typedef struct {
   uint32_t             stream_size;
   uint8_t              toc[XING_TOC_LENGTH];
   uint32_t             vbr_scale;
-  
+
   /* Lame extension */
   uint16_t             start_delay;
   uint16_t             end_delay;
@@ -289,7 +289,7 @@ static int parse_frame_header(mpg_audio_frame_t *const frame, const uint8_t *con
     return 0;
   }
 #endif
-  
+
   {
     const uint16_t samples = mp3_samples[frame->version_idx][frame->layer - 1];
     frame->bitrate = mp3_bitrates[frame->version_idx][frame->layer - 1][frame_header.bitrate_idx] * 1000;
@@ -339,21 +339,21 @@ static xing_header_t *XINE_MALLOC parse_xing_header(mpg_audio_frame_t *frame,
     else
       ptr += (9 + 4);
   }
-  
+
   if (ptr >= (buf + bufsize - 4)) goto exit_error;
   lprintf("checking %08X\n", *ptr);
-  
+
   if (_X_BE_32(ptr) == XING_TAG) {
     int has_frames_flag = 0;
     int has_bytes_flag = 0;
-  
+
     xing = calloc(1, sizeof(xing_header_t));
     if (!xing)
       goto exit_error;
-  
+
     lprintf("found Xing header\n");
     ptr += 4;
-    
+
     if (ptr >= (buf + bufsize - 4)) goto exit_error;
     xing->flags = _X_BE_32(ptr); ptr += 4;
 
@@ -369,7 +369,7 @@ static xing_header_t *XINE_MALLOC parse_xing_header(mpg_audio_frame_t *frame,
       lprintf("stream size: %d\n", xing->stream_size);
       has_bytes_flag = 1;
     }
-  
+
     /* check if it's a useful Xing header */
     if (!has_frames_flag || !has_bytes_flag) {
       lprintf("Stupid Xing tag, cannot do anything with it !\n");
@@ -427,7 +427,7 @@ static xing_header_t *XINE_MALLOC parse_xing_header(mpg_audio_frame_t *frame,
     lprintf("Xing header not found\n");
   }
   return xing;
-  
+
 exit_error:
   lprintf("Xing header parse error\n");
     free(xing);
@@ -450,13 +450,13 @@ static vbri_header_t *XINE_MALLOC parse_vbri_header(mpg_audio_frame_t *frame,
     return NULL;
 
   ptr += (32 + 4);
-  
+
   if ((ptr + 4) >= (buf + bufsize)) return 0;
   lprintf("Checking %08X\n", *ptr);
   if (_X_BE_32(ptr) == VBRI_TAG) {
     lprintf("found Vbri header\n");
     ptr += 4;
-    
+
     if ((ptr + 22) >= (buf + bufsize)) return 0;
     vbri->version           = _X_BE_16(ptr); ptr += 2;
     vbri->delai             = _X_BE_16(ptr); ptr += 2;
@@ -699,7 +699,7 @@ static int sniff_buffer_looks_like_mp3 (uint8_t *buf, int buflen, int *version, 
 static int read_frame_header(demux_mpgaudio_t *this, uint8_t *header_buf, int bytes) {
   off_t len;
   int i;
-  
+
   for (i = 0; i < (4 - bytes); i++) {
     header_buf[i] = header_buf[i + bytes];
   }
@@ -955,7 +955,7 @@ static void demux_mpgaudio_send_headers (demux_plugin_t *this_gen) {
         this->br = ((uint64_t)vbri->stream_size * 8 * 1000) / this->stream_length;
       }
     }
- 
+
     /* Set to default if Vbr header is incomplete or not present */
     if (!this->br) {
       /* assume CBR */
@@ -1144,7 +1144,7 @@ static uint32_t demux_mpgaudio_get_capabilities(demux_plugin_t *this_gen) {
 static int demux_mpgaudio_get_optional_data(demux_plugin_t *this_gen,
 					void *data, int data_type) {
   return DEMUX_OPTIONAL_UNSUPPORTED;
-} 
+}
 
 static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *stream,
                                     input_plugin_t *input) {
@@ -1166,7 +1166,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   case METHOD_BY_MRL:
   case METHOD_EXPLICIT:
   break;
-  
+
   default:
     return NULL;
   }
@@ -1200,9 +1200,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
  * demux mpegaudio class
  */
 void *demux_mpgaudio_init_class (xine_t *xine, void *data) {
-  
+
   demux_mpgaudio_class_t     *this;
-  
+
   this         = calloc(1, sizeof(demux_mpgaudio_class_t));
   this->xine   = xine;
 
@@ -1210,7 +1210,7 @@ void *demux_mpgaudio_init_class (xine_t *xine, void *data) {
   this->demux_class.description     = N_("MPEG audio demux plugin");
   this->demux_class.identifier      = "MPEGAUDIO";
   if( _x_decoder_available(this->xine, BUF_AUDIO_MPEG) ) {
-    this->demux_class.mimetypes = 
+    this->demux_class.mimetypes =
       "audio/mpeg2: mp2: MPEG audio;"
       "audio/x-mpeg2: mp2: MPEG audio;"
       "audio/mpeg3: mp3: MPEG audio;"

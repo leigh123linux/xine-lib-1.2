@@ -4,17 +4,17 @@
  * Copyright (C) James Courtier-Dutton James@superbug.demon.co.uk - July 2001
  *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -112,11 +112,11 @@ typedef struct spudec_decoder_s {
   spudec_class_t  *class;
   xine_stream_t   *stream;
   spudec_stream_state_t spudec_stream_state[MAX_STREAMS];
-  
+
   video_overlay_event_t      event;
-  video_overlay_object_t     object;  
+  video_overlay_object_t     object;
   int32_t          menu_handle;
-  
+
   spudec_state_t      state;
 
   vo_overlay_t     overlay;

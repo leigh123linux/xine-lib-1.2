@@ -9,7 +9,7 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -27,7 +27,7 @@
  *  - master will wait for connections on specified port, accepting new clients.
  *  - several xine clients may connect to the server as "slaves", using mrl:
  *    slave://master_address:port
- *  - streams played on master will appear on every slave. 
+ *  - streams played on master will appear on every slave.
  *    if master is not meant to use video/audio devices it may be started with
  *    'xine -V none -A none'
  */
@@ -73,7 +73,7 @@ struct broadcaster_s {
   int              port;          /* server port                    */
   int              msock;         /* master network socket          */
   xine_list_t     *connections;   /* active connections             */
-  
+
   pthread_t        manager_thread;
   pthread_mutex_t  lock;
 
@@ -87,21 +87,21 @@ static int sock_check_opened(int socket) {
   fd_set   readfds, writefds, exceptfds;
   int      retval;
   struct   timeval timeout;
-  
+
   for(;;) {
-    FD_ZERO(&readfds); 
-    FD_ZERO(&writefds); 
+    FD_ZERO(&readfds);
+    FD_ZERO(&writefds);
     FD_ZERO(&exceptfds);
     FD_SET(socket, &exceptfds);
-    
-    timeout.tv_sec  = 0; 
+
+    timeout.tv_sec  = 0;
     timeout.tv_usec = 0;
-    
+
     retval = select(socket + 1, &readfds, &writefds, &exceptfds, &timeout);
-    
+
     if(retval == -1 && (errno != EAGAIN && errno != EINTR))
       return 0;
-    
+
     if (retval != -1)
       return 1;
   }
@@ -116,21 +116,21 @@ static int sock_data_write(xine_t *xine, int socket, void *buf_gen, int len) {
   ssize_t  size;
   int      wlen = 0;
   uint8_t *buf = buf_gen;
-  
+
   if((socket < 0) || (buf == NULL))
     return -1;
-  
+
   if(!sock_check_opened(socket))
     return -1;
-  
+
   while(len) {
     size = write(socket, buf, len);
-    
+
     if(size <= 0) {
       xprintf(xine, XINE_VERBOSITY_DEBUG, "broadcaster: error writing to socket %d\n",socket);
       return -1;
     }
-    
+
     len -= size;
     wlen += size;
     buf += size;
@@ -143,20 +143,20 @@ static int XINE_FORMAT_PRINTF(3, 4)
 sock_string_write(xine_t *xine, int socket, const char *msg, ...) {
   char     buf[_BUFSIZ];
   va_list  args;
-  
+
   va_start(args, msg);
   vsnprintf(buf, _BUFSIZ - 1, msg, args);
   va_end(args);
-  
+
   /* Each line sent is '\n' terminated */
   if((buf[strlen(buf)] == '\0') && (buf[strlen(buf) - 1] != '\n'))
       strcat(buf, "\n");
- 
+
   return sock_data_write(xine, socket, buf, strlen(buf));
 }
 
 /*
- * this is the most important broadcaster function. 
+ * this is the most important broadcaster function.
  * it sends data to every connected client (slaves).
  */
 static void broadcaster_data_write(broadcaster_t *this, void *buf, int len) {
@@ -166,9 +166,9 @@ static void broadcaster_data_write(broadcaster_t *this, void *buf, int len) {
   while (ite) {
 
     int *psock = xine_list_get_value(this->connections, ite);
-    
+
     ite = xine_list_next(this->connections, ite);
-    
+
     /* in case of failure remove from list */
     if( sock_data_write(this->stream->xine, *psock, buf, len) < 0 ) {
 
@@ -185,15 +185,15 @@ static void XINE_FORMAT_PRINTF(2, 3)
 broadcaster_string_write(broadcaster_t *this, const char *msg, ...) {
   char     buf[_BUFSIZ];
   va_list  args;
-  
+
   va_start(args, msg);
   vsnprintf(buf, _BUFSIZ - 1, msg, args);
   va_end(args);
-  
+
   /* Each line sent is '\n' terminated */
   if((buf[strlen(buf)] == '\0') && (buf[strlen(buf) - 1] != '\n'))
       strcat(buf, "\n");
- 
+
   broadcaster_data_write(this, buf, strlen(buf));
 }
 
@@ -210,40 +210,40 @@ static void *manager_loop (void *this_gen) {
   socklen_t alen;          /* from-address length */
   fd_set rfds;             /* read file descriptor set */
   fd_set efds;             /* exception descriptor set */
-  
+
   while( this->running ) {
     FD_ZERO(&rfds);
     FD_SET(this->msock, &rfds);
     FD_ZERO(&efds);
     FD_SET(this->msock, &efds);
-  
+
     if (select(this->msock+1, &rfds, (fd_set *)0, &efds, (struct timeval *)0) > 0) {
-  
+
       pthread_mutex_lock( &this->lock );
-  
+
       if (FD_ISSET(this->msock, &rfds))
       {
         int   ssock;
         alen = sizeof(fsin.in);
-  
+
         ssock = accept(this->msock, &(fsin.sa), &alen);
         if (ssock >= 0) {
           /* identification string, helps demuxer probing */
           if( sock_string_write(this->stream->xine, ssock,"master xine v1") > 0 ) {
             int *psock = malloc(sizeof(int));
             *psock = ssock;
-       
-            xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+
+            xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 		    "broadcaster: new connection socket %d\n", *psock);
             xine_list_push_back(this->connections, psock);
           }
         }
       }
-      
+
       pthread_mutex_unlock( &this->lock );
     }
   }
-  
+
   return NULL;
 }
 
@@ -254,7 +254,7 @@ static void *manager_loop (void *this_gen) {
  */
 static void send_buf (broadcaster_t *this, const char *from, buf_element_t *buf) {
   int i;
-    
+
   /* ignore END buffers since they would stop the slavery */
   if( buf->type == BUF_CONTROL_END )
     return;
@@ -273,7 +273,7 @@ static void send_buf (broadcaster_t *this, const char *from, buf_element_t *buf)
         broadcaster_data_write(this, buf->decoder_info_ptr[i], buf->decoder_info[i]);
     }
   }
-      
+
   broadcaster_string_write(this, "buffer fifo=%s size=%d type=%u pts=%"PRId64" disc=%"PRId64" flags=%u",
                            from, buf->size, buf->type, buf->pts, buf->disc_off, buf->decoder_flags );
 
@@ -307,7 +307,7 @@ broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port)
     struct sockaddr sa;
   } servAddr;
   int msock, err;
-  
+
   msock = socket(PF_INET, SOCK_STREAM, 0);
   if( msock < 0 )
   {
@@ -325,7 +325,7 @@ broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port)
   }
 
   listen(msock,QLEN);
-   
+
   signal( SIGPIPE, SIG_IGN );
 
   this = calloc(1, sizeof(broadcaster_t));
@@ -333,23 +333,23 @@ broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port)
   this->stream = stream;
   this->msock = msock;
   this->connections = xine_list_new();
-  
+
   pthread_mutex_init (&this->lock, NULL);
-  
+
   stream->video_fifo->register_put_cb(stream->video_fifo, video_put_cb, this);
 
   if(stream->audio_fifo)
     stream->audio_fifo->register_put_cb(stream->audio_fifo, audio_put_cb, this);
-    
+
   this->running = 1;
   if ((err = pthread_create (&this->manager_thread,
                              NULL, manager_loop, (void *)this)) != 0) {
-    xprintf (stream->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (stream->xine, XINE_VERBOSITY_DEBUG,
 	     "broadcaster: can't create new thread (%s)\n", strerror(err));
     _x_abort();
   }
-  
-  return this;  
+
+  return this;
 }
 
 void _x_close_broadcaster(broadcaster_t *this)
@@ -358,15 +358,15 @@ void _x_close_broadcaster(broadcaster_t *this)
   pthread_cancel(this->manager_thread);
   pthread_join(this->manager_thread,NULL);
   close(this->msock);
-  
+
   if (this->stream->video_fifo)
     this->stream->video_fifo->unregister_put_cb(this->stream->video_fifo, video_put_cb);
 
   if(this->stream->audio_fifo)
     this->stream->audio_fifo->unregister_put_cb(this->stream->audio_fifo, audio_put_cb);
-  
+
   xine_list_iterator_t ite;
-  
+
   while ( (ite = xine_list_front(this->connections)) ) {
     int *psock = xine_list_get_value(this->connections, ite);
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "broadcaster: closing socket %d\n", *psock);
@@ -383,5 +383,5 @@ void _x_close_broadcaster(broadcaster_t *this)
 
 int _x_get_broadcaster_port(broadcaster_t *this)
 {
-  return this->port;  
+  return this->port;
 }

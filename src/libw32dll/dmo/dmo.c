@@ -61,7 +61,7 @@ DMO_Filter* DMO_FilterCreate(const char* dllname, const GUID* id,
 //trapbug();
 	hr = func(id, &IID_IClassFactory, (void**)&factory);
 	if (hr || !factory)
-	{            
+	{
 	    em = "no such class object";
 	    break;
 	}

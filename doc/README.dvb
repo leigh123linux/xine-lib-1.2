@@ -130,7 +130,7 @@ file name the recorded stream is being written to. You can select the
 directory to save to in the xine configuration under the MISC tab, otherwise
 the plugin will record to your home directory. You can pause the recording
 at any time by pressing MENU4 (F3 in xine-ui, F4 in gxine). An OSD in the
-top left hand corner will notify you of the status of the recording. 
+top left hand corner will notify you of the status of the recording.
 Pressing MENU4 again will resume recording.
 
 Have fun.

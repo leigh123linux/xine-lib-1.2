@@ -24,7 +24,7 @@ dnl License when using or distributing such scripts, even though portions
 dnl of the text of the Macro appear in them. The GNU General Public
 dnl License (GPL) does govern all other use of the material that
 dnl constitutes the Autoconf Macro.
-dnl 
+dnl
 dnl This special exception to the GPL applies to versions of the
 dnl Autoconf Macro released by the xine project. When you make and
 dnl distribute a modified version of the Autoconf Macro, you may extend

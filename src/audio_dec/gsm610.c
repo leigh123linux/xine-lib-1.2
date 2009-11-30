@@ -34,7 +34,7 @@
  * are deemed to have made any representations as to the suitability of this
  * software for any purpose nor are held responsible for any defects of
  * this software.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
- * 
+ *
  * As a matter of courtesy, the authors request to be informed about uses
  * this software has found, about bugs in this software, and about any
  * improvements that may be of general interest.
@@ -125,7 +125,7 @@ static void gsm610_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
   if( this->size + buf->size > this->bufsize ) {
     this->bufsize = this->size + 2 * buf->size;
-    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	    "gsm610: increasing source buffer to %d to avoid overflow.\n", this->bufsize);
     this->buf = realloc( this->buf, this->bufsize );
   }
@@ -143,7 +143,7 @@ static void gsm610_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
       /* the data should line up on a 65-byte boundary */
       if ((buf->size % 65) != 0) {
-        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 		 "gsm610: received MS GSM block that does not line up\n");
         this->size = 0;
         return;
@@ -263,7 +263,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   return this;
 }
 
-static const uint32_t audio_types[] = { 
+static const uint32_t audio_types[] = {
   BUF_AUDIO_MSGSM,
   BUF_AUDIO_GSM610,
   0
@@ -275,7 +275,7 @@ static const decoder_info_t dec_info_audio = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_AUDIO_DECODER, 16, "gsm610", XINE_VERSION_CODE, &dec_info_audio, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

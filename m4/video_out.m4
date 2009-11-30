@@ -371,7 +371,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
     case "$host_or_hostalias" in
         hppa*) xv_libexts="$acl_cv_shlibext" ;;
         *)
-            if test x"$xv_prefer_static" = x"yes"; then  
+            if test x"$xv_prefer_static" = x"yes"; then
                 xv_libexts="$acl_cv_libext $acl_cv_shlibext"
             else
                 xv_libexts="$acl_cv_shlibext $acl_cv_libext"

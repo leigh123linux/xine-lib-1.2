@@ -256,7 +256,7 @@ static int demux_fourxm_send_chunk(demux_plugin_t *this_gen) {
     buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
     buf->type = BUF_VIDEO_4XM;
     if( this->filesize )
-      buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) * 
+      buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) *
                                        65535 / this->filesize );
     buf->extra_info->input_time = this->video_pts / 90;
     buf->pts = this->video_pts;
@@ -271,7 +271,7 @@ static int demux_fourxm_send_chunk(demux_plugin_t *this_gen) {
       buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
       buf->type = BUF_VIDEO_4XM;
       if( this->filesize )
-        buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) * 
+        buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) *
                                      65535 / this->filesize );
       buf->extra_info->input_time = this->video_pts / 90;
       buf->pts = this->video_pts;
@@ -320,7 +320,7 @@ static int demux_fourxm_send_chunk(demux_plugin_t *this_gen) {
       buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
       buf->type = this->tracks[current_track].audio_type;
       if( this->filesize )
-        buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) * 
+        buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) *
                                      65535 / this->filesize );
       /* let the engine sort it out */
       buf->extra_info->input_time = 0;
@@ -354,7 +354,7 @@ static int demux_fourxm_send_chunk(demux_plugin_t *this_gen) {
     break;
 
   default:
-    lprintf("bad chunk: %c%c%c%c (%02X%02X%02X%02X)\n", 
+    lprintf("bad chunk: %c%c%c%c (%02X%02X%02X%02X)\n",
       header[0], header[1], header[2], header[3],
       header[0], header[1], header[2], header[3]);
     this->status = DEMUX_FINISHED;

@@ -112,7 +112,7 @@ static int open_smjpeg_file(demux_smjpeg_t *this) {
   if (this->input->read(this->input, header_chunk, 4) != 4)
     return 0;
   this->duration = _X_BE_32(&header_chunk[0]);
-  
+
   /* initial state: no video and no audio (until headers found) */
   this->video_type = this->audio_type = 0;
   this->input_length = this->input->get_length (this->input);

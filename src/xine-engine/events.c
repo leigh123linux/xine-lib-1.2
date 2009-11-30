@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -94,7 +94,7 @@ void xine_event_send (xine_stream_t *stream, const xine_event_t *event) {
       cevent->data = NULL;
     }
     gettimeofday (&cevent->tv, NULL);
-    
+
     pthread_mutex_lock (&queue->lock);
     xine_list_push_back (queue->events, cevent);
     pthread_cond_signal (&queue->new_event);
@@ -135,7 +135,7 @@ void xine_event_dispose_queue (xine_event_queue_t *queue) {
   xine_event_t         *qevent;
   xine_event_queue_t   *q;
   xine_list_iterator_t  ite;
-    
+
   pthread_mutex_lock (&stream->event_queues_lock);
 
   ite = xine_list_front (stream->event_queues);
@@ -144,7 +144,7 @@ void xine_event_dispose_queue (xine_event_queue_t *queue) {
   if ( ite ) {
     do {
       q = xine_list_get_value (stream->event_queues, ite);
-      
+
       if ( q == queue )
 	break;
     } while( (ite = xine_list_next (stream->event_queues, ite)) );
@@ -160,17 +160,17 @@ void xine_event_dispose_queue (xine_event_queue_t *queue) {
   xine_list_remove (stream->event_queues, ite);
   pthread_mutex_unlock (&stream->event_queues_lock);
 
-  /* 
-   * send quit event 
+  /*
+   * send quit event
    */
   qevent = (xine_event_t *)malloc(sizeof(xine_event_t));
-  
+
   qevent->type        = XINE_EVENT_QUIT;
   qevent->stream      = stream;
   qevent->data        = NULL;
   qevent->data_length = 0;
   gettimeofday (&qevent->tv, NULL);
-  
+
   pthread_mutex_lock (&queue->lock);
   xine_list_push_back (queue->events, qevent);
   pthread_cond_signal (&queue->new_event);
@@ -179,15 +179,15 @@ void xine_event_dispose_queue (xine_event_queue_t *queue) {
   /*
    * join listener thread, if any
    */
-  
+
   if (queue->listener_thread) {
     void *p;
     pthread_join (*queue->listener_thread, &p);
     free (queue->listener_thread);
   }
-  
+
   /*
-   * clean up pending events 
+   * clean up pending events
    */
 
   while ( (event = xine_event_get (queue)) ) {
@@ -233,7 +233,7 @@ static void *listener_loop (void *queue_gen) {
 }
 
 
-void xine_event_create_listener_thread (xine_event_queue_t *queue, 
+void xine_event_create_listener_thread (xine_event_queue_t *queue,
 					xine_event_listener_cb_t callback,
 					void *user_data) {
   int err;

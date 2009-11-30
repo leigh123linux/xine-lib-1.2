@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -44,7 +44,7 @@ void *pp_init_plugin(xine_t *xine, void *);
 typedef struct post_plugin_pp_s post_plugin_pp_t;
 
 /*
- * this is the struct used by "parameters api" 
+ * this is the struct used by "parameters api"
  */
 typedef struct pp_parameters_s {
 
@@ -57,9 +57,9 @@ typedef struct pp_parameters_s {
  * description of params struct
  */
 START_PARAM_DESCR( pp_parameters_t )
-PARAM_ITEM( POST_PARAM_TYPE_INT, quality, NULL, 0, PP_QUALITY_MAX, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_INT, quality, NULL, 0, PP_QUALITY_MAX, 0,
             "postprocessing quality" )
-PARAM_ITEM( POST_PARAM_TYPE_CHAR, mode, NULL, 0, 0, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_CHAR, mode, NULL, 0, 0, 0,
             "mode string (overwrites all other options except quality)" )
 END_PARAM_DESCR( param_descr )
 
@@ -106,7 +106,7 @@ static int get_parameters (xine_post_t *this_gen, void *param_gen) {
 
   return 1;
 }
- 
+
 static xine_post_api_descr_t * get_param_descr (void) {
   return &param_descr;
 }
@@ -157,7 +157,7 @@ void *pp_init_plugin(xine_t *xine, void *data)
 
   if (!class)
     return NULL;
-  
+
   class->open_plugin     = pp_open_plugin;
   class->identifier      = "pp";
   class->description     = N_("plugin for ffmpeg libpostprocess");
@@ -177,14 +177,14 @@ static post_plugin_t *pp_open_plugin(post_class_t *class_gen, int inputs,
   post_out_t        *output;
   post_video_port_t *port;
   uint32_t           cpu_caps;
-  
+
   if (!this || !video_target || !video_target[0]) {
     free(this);
     return NULL;
   }
 
   _x_post_init(&this->post, 0, 1);
-  
+
   this->params.quality = 3;
   strcpy(this->params.mode, "de");
 
@@ -195,18 +195,18 @@ static post_plugin_t *pp_open_plugin(post_class_t *class_gen, int inputs,
     this->pp_flags |= PP_CPU_CAPS_MMX;
   if(cpu_caps & MM_ACCEL_X86_MMXEXT)
     this->pp_flags |= PP_CPU_CAPS_MMX2;
-  if(cpu_caps & MM_ACCEL_X86_3DNOW)  
+  if(cpu_caps & MM_ACCEL_X86_3DNOW)
     this->pp_flags |= PP_CPU_CAPS_3DNOW;
 
   this->pp_mode = NULL;
   this->pp_context = NULL;
 
   pthread_mutex_init (&this->lock, NULL);
-  
+
   port = _x_post_intercept_video_port(&this->post, video_target[0], &input, &output);
   port->intercept_frame = pp_intercept_frame;
   port->new_frame->draw = pp_draw;
-  
+
   input_api       = &this->params_input;
   input_api->name = "parameters";
   input_api->type = XINE_POST_DATA_PARAMETERS;
@@ -215,11 +215,11 @@ static post_plugin_t *pp_open_plugin(post_class_t *class_gen, int inputs,
 
   input->xine_in.name     = "video";
   output->xine_out.name   = "pped video";
-  
+
   this->post.xine_post.video_input[0] = &port->new_port;
-  
+
   this->post.dispose = pp_dispose;
-  
+
   return &this->post;
 }
 
@@ -263,9 +263,9 @@ static int pp_draw(vo_frame_t *frame, xine_stream_t *stream)
 
       yv12_frame = port->original_port->get_frame(port->original_port,
         frame->width, frame->height, frame->ratio, XINE_IMGFMT_YV12, frame->flags | VO_BOTH_FIELDS);
-  
+
       _x_post_frame_copy_down(frame, yv12_frame);
-  
+
       yuy2_to_yv12(frame->base[0], frame->pitches[0],
                    yv12_frame->base[0], yv12_frame->pitches[0],
                    yv12_frame->base[1], yv12_frame->pitches[1],
@@ -279,12 +279,12 @@ static int pp_draw(vo_frame_t *frame, xine_stream_t *stream)
 
     out_frame = port->original_port->get_frame(port->original_port,
       frame->width, frame->height, frame->ratio, XINE_IMGFMT_YV12, frame->flags | VO_BOTH_FIELDS);
-  
+
     _x_post_frame_copy_down(frame, out_frame);
 
     pthread_mutex_lock (&this->lock);
 
-    if( !this->pp_context || 
+    if( !this->pp_context ||
         this->frame_width != yv12_frame->width ||
         this->frame_height != yv12_frame->height ) {
 
@@ -304,15 +304,15 @@ static int pp_draw(vo_frame_t *frame, xine_stream_t *stream)
     }
 
     if(!this->pp_mode)
-      this->pp_mode = pp_get_mode_by_name_and_quality(this->params.mode, 
+      this->pp_mode = pp_get_mode_by_name_and_quality(this->params.mode,
                                                       this->params.quality);
 
     if(this->pp_mode)
-      pp_postprocess(yv12_frame->base, yv12_frame->pitches, 
-                     out_frame->base, out_frame->pitches, 
+      pp_postprocess(yv12_frame->base, yv12_frame->pitches,
+                     out_frame->base, out_frame->pitches,
                      (frame->width+7)&(~7), frame->height,
                      NULL, 0,
-                     this->pp_mode, this->pp_context, 
+                     this->pp_mode, this->pp_context,
                      0 /*this->av_frame->pict_type*/);
 
     pthread_mutex_unlock (&this->lock);

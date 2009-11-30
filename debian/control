@@ -23,7 +23,7 @@ Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
 	liblircclient-dev,
 	libdirectfb-dev (>= 0.9.22), libgtk2.0-dev,
 	libflac-dev, libsdl1.2-dev, libwavpack-dev,
-	libsmbclient-dev, libspeex-dev, libmng-dev, 
+	libsmbclient-dev, libspeex-dev, libmng-dev,
 	libmad0-dev, libmpcdec-dev, libcdio-dev (>= 0.76-1), libvcdinfo-dev,
 	zlib1g-dev, w3m, xmlto, librsvg2-bin
 Standards-Version: 3.7.2
@@ -73,7 +73,7 @@ Conflicts: libxine2-all-plugins, libxine2-bin, libxine2-console, libxine2-ffmpeg
 Replaces: libxine2-all-plugins, libxine2-bin, libxine2-console, libxine2-ffmpeg, libxine2-gnome, libxine2-misc-plugins, libxine2-plugins, libxine2-x
 Provides: libxine2-all-plugins, libxine2-bin, libxine2-console, libxine2-ffmpeg, libxine2-gnome, libxine2-misc-plugins, libxine2-plugins, libxine2-x
 Description: the xine video/media player library, binary files
- This is the xine media player library (libxine). 
+ This is the xine media player library (libxine).
  .
  Libxine provides the complete infrastructure for a video/media player. It
  supports MPEG 1/2 and some AVI and Quicktime videos out of the box, so you
@@ -91,7 +91,7 @@ Priority: extra
 Architecture: any
 Depends: libxine2 (= ${Source-Version})
 Description: the xine video/media player library, debug data
- This is the xine media player library (libxine). 
+ This is the xine media player library (libxine).
  .
  Libxine provides the complete infrastructure for a video/media player. It
  supports MPEG 1/2 and some AVI and Quicktime videos out of the box, so you

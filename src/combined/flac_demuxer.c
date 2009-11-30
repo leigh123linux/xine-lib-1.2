@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2006 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -64,7 +64,7 @@ typedef struct demux_flac_s {
   demux_plugin_t        demux_plugin;
 
   xine_stream_t        *stream;
-  
+
   fifo_buffer_t        *audio_fifo;
   fifo_buffer_t        *video_fifo;
 
@@ -110,15 +110,15 @@ flac_read_callback (const FLAC__SeekableStreamDecoder *decoder,
                     void *client_data)
 {
     demux_flac_t *this    = (demux_flac_t *)client_data;
-    input_plugin_t *input = this->input; 
+    input_plugin_t *input = this->input;
     off_t offset = *bytes;
 
     lprintf("flac_read_callback\n");
-    
+
     /* This should only be called when flac is reading the metadata
      * of the flac stream.
      */
-    
+
     offset = input->read (input, buffer, offset);
 
     lprintf("Read %lld / %u bytes into buffer\n", offset, *bytes);
@@ -128,7 +128,7 @@ flac_read_callback (const FLAC__SeekableStreamDecoder *decoder,
     {
       *bytes = offset;
       lprintf("Marking EOF\n");
-      
+
       this->status = DEMUX_FINISHED;
 #ifdef LEGACY_FLAC
       return FLAC__SEEKABLE_STREAM_DECODER_READ_STATUS_ERROR;
@@ -140,7 +140,7 @@ flac_read_callback (const FLAC__SeekableStreamDecoder *decoder,
     {
       *bytes = offset;
       lprintf("Read was perfect\n");
-    
+
 #ifdef LEGACY_FLAC
       return FLAC__SEEKABLE_STREAM_DECODER_READ_STATUS_OK;
 #else
@@ -231,7 +231,7 @@ flac_length_callback (const FLAC__SeekableStreamDecoder *decoder,
 #endif
 }
 
-static FLAC__bool 
+static FLAC__bool
 flac_eof_callback (const FLAC__SeekableStreamDecoder *decoder,
                     void *client_data)
 {
@@ -253,28 +253,28 @@ flac_eof_callback (const FLAC__SeekableStreamDecoder *decoder,
     }
 }
 
-static FLAC__StreamDecoderWriteStatus 
-flac_write_callback (const FLAC__SeekableStreamDecoder *decoder, 
+static FLAC__StreamDecoderWriteStatus
+flac_write_callback (const FLAC__SeekableStreamDecoder *decoder,
                      const FLAC__Frame *frame,
                      const FLAC__int32 * const buffer[],
-                     void *client_data) 
+                     void *client_data)
 {
     /* This should never be called, all we use flac for in this demuxer
      * is seeking. We do the decoding in the decoder
      */
-    
+
   lprintf("Error: Write callback was called!\n");
 
   return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 }
 
-static void 
-flac_metadata_callback (const FLAC__SeekableStreamDecoder *decoder, 
-                        const FLAC__StreamMetadata *metadata, 
+static void
+flac_metadata_callback (const FLAC__SeekableStreamDecoder *decoder,
+                        const FLAC__StreamMetadata *metadata,
                         void *client_data)
 {
     demux_flac_t *this = (demux_flac_t *)client_data;
-  
+
     lprintf("IN: Metadata callback\n");
 
     /* This should be called when we first look at a flac stream,
@@ -293,8 +293,8 @@ flac_metadata_callback (const FLAC__SeekableStreamDecoder *decoder,
      return;
 }
 
-static void 
-flac_error_callback (const FLAC__SeekableStreamDecoder *decoder, 
+static void
+flac_error_callback (const FLAC__SeekableStreamDecoder *decoder,
                      FLAC__StreamDecoderErrorStatus status,
                      void *client_data)
 {
@@ -306,24 +306,24 @@ flac_error_callback (const FLAC__SeekableStreamDecoder *decoder,
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_flac: flac_error_callback\n");
 
     if (status == FLAC__STREAM_DECODER_ERROR_STATUS_LOST_SYNC)
-      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	      "demux_flac: Decoder lost synchronization.\n");
     else if (status == FLAC__STREAM_DECODER_ERROR_STATUS_BAD_HEADER)
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	      "demux_flac: Decoder encounted a corrupted frame header.\n");
     else if (status == FLAC__STREAM_DECODER_ERROR_STATUS_FRAME_CRC_MISMATCH)
-      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	      "demux_flac: Frame's data did not match the CRC in the footer.\n");
     else
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_flac: unknown error.\n");
-    
+
     this->status = DEMUX_FINISHED;
-    
+
     return;
 }
 
 /* FLAC Demuxer plugin */
-static int 
+static int
 demux_flac_send_chunk (demux_plugin_t *this_gen) {
     demux_flac_t *this = (demux_flac_t *) this_gen;
     buf_element_t *buf = NULL;
@@ -333,7 +333,7 @@ demux_flac_send_chunk (demux_plugin_t *this_gen) {
 
     remaining_sample_bytes = 2048;
 
-    current_file_pos = this->input->get_current_pos (this->input) 
+    current_file_pos = this->input->get_current_pos (this->input)
                         - this->data_start;
     if( (this->data_size - this->data_start) > 0 )
         file_size = (this->data_size - this->data_start);
@@ -398,7 +398,7 @@ demux_flac_send_chunk (demux_plugin_t *this_gen) {
     return this->status;
 }
 
-static void 
+static void
 demux_flac_send_headers (demux_plugin_t *this_gen) {
     demux_flac_t *this = (demux_flac_t *) this_gen;
 
@@ -432,7 +432,7 @@ demux_flac_send_headers (demux_plugin_t *this_gen) {
     }
 }
 
-static void 
+static void
 demux_flac_dispose (demux_plugin_t *this_gen) {
     demux_flac_t *this = (demux_flac_t *) this_gen;
 
@@ -449,7 +449,7 @@ demux_flac_dispose (demux_plugin_t *this_gen) {
     return;
 }
 
-static int 
+static int
 demux_flac_get_status (demux_plugin_t *this_gen) {
     demux_flac_t *this = (demux_flac_t *) this_gen;
 
@@ -459,7 +459,7 @@ demux_flac_get_status (demux_plugin_t *this_gen) {
 }
 
 
-static int 
+static int
 demux_flac_seek (demux_plugin_t *this_gen, off_t start_pos, int start_time, int playing) {
     demux_flac_t *this = (demux_flac_t *) this_gen;
 
@@ -477,15 +477,15 @@ demux_flac_seek (demux_plugin_t *this_gen, off_t start_pos, int start_time, int 
         }
         start_pos = (uint64_t)(distance * (this->data_size - this->data_start));
     }
-    
+
     if (start_pos || !start_time) {
-        
+
         start_pos += this->data_start;
         this->input->seek (this->input, start_pos, SEEK_SET);
         lprintf ("Seek to position: %lld\n", start_pos);
-    
+
     } else {
-      
+
         double distance = (double)start_time;
         uint64_t target_sample;
         FLAC__bool s = false;
@@ -516,9 +516,9 @@ demux_flac_seek (demux_plugin_t *this_gen, off_t start_pos, int start_time, int 
     return this->status;
 }
 
-static int 
+static int
 demux_flac_get_stream_length (demux_plugin_t *this_gen) {
-    demux_flac_t *this = (demux_flac_t *) this_gen; 
+    demux_flac_t *this = (demux_flac_t *) this_gen;
 
     lprintf("demux_flac_get_stream_length\n");
 
@@ -528,14 +528,14 @@ demux_flac_get_stream_length (demux_plugin_t *this_gen) {
         return 0;
 }
 
-static uint32_t 
+static uint32_t
 demux_flac_get_capabilities (demux_plugin_t *this_gen) {
   lprintf("demux_flac_get_capabilities\n");
 
   return DEMUX_CAP_NOCAP;
 }
 
-static int 
+static int
 demux_flac_get_optional_data (demux_plugin_t *this_gen, void *data, int dtype) {
   lprintf("demux_flac_get_optional_data\n");
 
@@ -543,8 +543,8 @@ demux_flac_get_optional_data (demux_plugin_t *this_gen, void *data, int dtype) {
 }
 
 static demux_plugin_t *
-open_plugin (demux_class_t *class_gen, 
-             xine_stream_t *stream, 
+open_plugin (demux_class_t *class_gen,
+             xine_stream_t *stream,
              input_plugin_t *input) {
     demux_flac_t *this;
 
@@ -556,22 +556,22 @@ open_plugin (demux_class_t *class_gen,
           uint8_t      buf[MAX_PREVIEW_SIZE];
           int          len;
 
-          /* 
+          /*
            * try to get a preview of the data
            */
           len = input->get_optional_data (input, buf, INPUT_OPTIONAL_DATA_PREVIEW);
           if (len == INPUT_OPTIONAL_UNSUPPORTED) {
-      
+
             if (input->get_capabilities (input) & INPUT_CAP_SEEKABLE) {
-      
+
               input->seek (input, 0, SEEK_SET);
               if ( (len=input->read (input, buf, 1024)) <= 0)
                 return NULL;
               input->seek (input, 0, SEEK_SET);
-      
+
             } else
               return NULL;
-          }      
+          }
 
           /* FIXME: Skip id3v2 tag */
           /* Look for fLaC tag at the beginning of file */
@@ -607,7 +607,7 @@ open_plugin (demux_class_t *class_gen,
     this->demux_plugin.demux_class       = class_gen;
 
     this->seek_flag = 0;
-  
+
 
     /* Get a new FLAC decoder and hook up callbacks */
 #ifdef LEGACY_FLAC
@@ -703,7 +703,7 @@ void *
 demux_flac_init_class (xine_t *xine, void *data) {
 
     demux_flac_class_t     *this;
-  
+
     lprintf("demux_flac_init_class\n");
 
     this         = calloc(1, sizeof (demux_flac_class_t));

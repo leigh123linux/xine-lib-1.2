@@ -57,7 +57,7 @@ void mpeg_parser_init (mpeg_parser_t *parser)
 void mpeg_parser_dispose (mpeg_parser_t *parser)
 {
   if ( parser == NULL ) return;
-  
+
   free(parser->chunk_buffer);
 }
 
@@ -124,7 +124,7 @@ static int parse_chunk (mpeg_parser_t *parser, int code, uint8_t *buffer, int le
 {
   int is_frame_done;
   int next_code = parser->code;
-  
+
   /* wait for sequence_header_code */
   if (parser->is_sequence_needed) {
     if (code != 0xb3) {
@@ -133,7 +133,7 @@ static int parse_chunk (mpeg_parser_t *parser, int code, uint8_t *buffer, int le
       return 0;
     }
   }
-  
+
   is_frame_done = parser->in_slice && ((!next_code)  || (next_code == 0xb7));
 
   if (is_frame_done)
@@ -141,7 +141,7 @@ static int parse_chunk (mpeg_parser_t *parser, int code, uint8_t *buffer, int le
 
   switch (code) {
   case 0x00:        /* picture_start_code */
-    
+
     parse_header_picture (parser, buffer);
 
     parser->in_slice = 1;
@@ -150,11 +150,11 @@ static int parse_chunk (mpeg_parser_t *parser, int code, uint8_t *buffer, int le
     case B_TYPE:
       lprintf ("B-Frame\n");
       break;
-      
+
     case P_TYPE:
       lprintf ("P-Frame\n");
       break;
-        
+
     case I_TYPE:
       lprintf ("I-Frame\n");
       break;
@@ -169,11 +169,11 @@ static int parse_chunk (mpeg_parser_t *parser, int code, uint8_t *buffer, int le
     {
       int value;
       uint16_t width, height;
-      
+
       if (parser->is_sequence_needed) {
         parser->is_sequence_needed = 0;
       }
-      
+
       if ((buffer[6] & 0x20) != 0x20) {
         lprintf("Invalid sequence: missing marker_bit\n");
         parser->has_sequence = 0;
@@ -185,7 +185,7 @@ static int parse_chunk (mpeg_parser_t *parser, int code, uint8_t *buffer, int le
                buffer[2];
       width  = ((value >> 12) + 15) & ~15;
       height = ((value & 0xfff) + 15) & ~15;
-      
+
       if ((width > 1920) || (height > 1152)) {
         lprintf("Invalid sequence: width=%d, height=%d\n", width, height);
         parser->has_sequence = 0;
@@ -196,7 +196,7 @@ static int parse_chunk (mpeg_parser_t *parser, int code, uint8_t *buffer, int le
       parser->height = height;
       parser->rate_code = buffer[3] & 15;
       parser->aspect_ratio_info = buffer[3] >> 4;
-      
+
       if (parser->rate_code < (sizeof(frame_rate_tab)/sizeof(*frame_rate_tab))) {
         parser->frame_duration = 90000;
         parser->frame_duration *= frame_rate_tab[parser->rate_code][1];
@@ -211,7 +211,7 @@ static int parse_chunk (mpeg_parser_t *parser, int code, uint8_t *buffer, int le
       parser->is_mpeg1 = 1;
     }
     break;
-    
+
   case 0xb5:     /* extension_start_code */
     switch (buffer[0] & 0xf0) {
     case 0x10:     /* sequence extension */
@@ -282,7 +282,7 @@ uint8_t *mpeg_parser_decode_data (mpeg_parser_t *parser,
 
   ret = 0;
   *flush = 0;
-  
+
   while (current != end) {
     if (parser->chunk_ptr == parser->chunk_buffer) {
       /* write the beginning of the chunk */
@@ -294,9 +294,9 @@ uint8_t *mpeg_parser_decode_data (mpeg_parser_t *parser,
       parser->chunk_start = parser->chunk_ptr;
       parser->has_sequence = 0;
     }
-    
+
     code = parser->code;
-    
+
     current = copy_chunk (parser, current, end);
     if (current == NULL)
       return NULL;
@@ -309,10 +309,10 @@ uint8_t *mpeg_parser_decode_data (mpeg_parser_t *parser,
       }
       parser->buffer_size = parser->chunk_ptr - parser->chunk_buffer - 4;
       parser->chunk_ptr = parser->chunk_buffer;
-      
+
       if (parser->code == 0xb7) /* sequence end, maybe a still menu */
         *flush = 1;
-      
+
       return current;
     }
   }

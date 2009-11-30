@@ -213,7 +213,7 @@ static vo_frame_t *xv_alloc_frame (vo_driver_t *this_gen) {
   frame = (xv_frame_t *) calloc(1, sizeof(xv_frame_t));
   if (!frame)
     return NULL;
-  
+
   pthread_mutex_init (&frame->vo_frame.mutex, NULL);
 
   /*
@@ -230,7 +230,7 @@ static vo_frame_t *xv_alloc_frame (vo_driver_t *this_gen) {
 
 static int HandleXError (Display *display, XErrorEvent *xevent) {
   char str [1024];
-  
+
   XGetErrorText (display, xevent->error_code, str, 1024);
   printf ("received X error event: %s\n", str);
   gX11Fail = 1;
@@ -305,7 +305,7 @@ static XvImage *create_ximage (xv_driver_t *this, XShmSegmentInfo *shminfo,
     lprintf( "XvImage height %d\n", image->height );
     lprintf( "XvImage data_size %d\n", image->data_size );
     lprintf( "XvImage num_planes %d\n", image->num_planes );
-    
+
         for( q=0; q < image->num_planes; q++)
         {
             lprintf( "XvImage pitches[%d] %d\n",  q, image->pitches[q] );
@@ -424,10 +424,10 @@ static void dispose_ximage (xv_driver_t *this,
       shminfo->shmid = -1;
     }
 
-  } 
+  }
   else {
     free (myimage->data);
-    
+
     XFree (myimage);
   }
 }
@@ -465,7 +465,7 @@ static void xv_update_frame_format (vo_driver_t *this_gen,
     if(format == XINE_IMGFMT_YUY2) {
       frame->vo_frame.pitches[0] = frame->image->pitches[0];
       frame->vo_frame.base[0] = frame->image->data + frame->image->offsets[0];
-    } 
+    }
     else {
       frame->vo_frame.pitches[0] = frame->image->pitches[0];
       frame->vo_frame.pitches[1] = frame->image->pitches[2];
@@ -506,12 +506,12 @@ static void xv_clean_output_area (xv_driver_t *this) {
 		    this->sc.output_xoffset, this->sc.output_yoffset,
 		    this->sc.output_width, this->sc.output_height);
   }
-  
+
   if (this->xoverlay) {
     x11osd_resize (this->xoverlay, this->sc.gui_width, this->sc.gui_height);
     this->ovl_changed = 1;
   }
-  
+
   UNLOCK_DISPLAY(this);
 }
 
@@ -534,7 +534,7 @@ static void xv_compute_output_size (xv_driver_t *this) {
   _x_vo_scale_compute_output_size( &this->sc );
 }
 
-static void xv_overlay_begin (vo_driver_t *this_gen, 
+static void xv_overlay_begin (vo_driver_t *this_gen,
 			      vo_frame_t *frame_gen, int changed) {
   xv_driver_t  *this = (xv_driver_t *) this_gen;
 
@@ -542,10 +542,10 @@ static void xv_overlay_begin (vo_driver_t *this_gen,
 
   if( this->ovl_changed && this->xoverlay ) {
     LOCK_DISPLAY(this);
-    x11osd_clear(this->xoverlay); 
+    x11osd_clear(this->xoverlay);
     UNLOCK_DISPLAY(this);
   }
-  
+
   this->alphablend_extra_data.offset_x = frame_gen->overlay_offset_x;
   this->alphablend_extra_data.offset_y = frame_gen->overlay_offset_y;
 }
@@ -562,7 +562,7 @@ static void xv_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img) {
   this->ovl_changed = 0;
 }
 
-static void xv_overlay_blend (vo_driver_t *this_gen, 
+static void xv_overlay_blend (vo_driver_t *this_gen,
 			      vo_frame_t *frame_gen, vo_overlay_t *overlay) {
   xv_driver_t  *this = (xv_driver_t *) this_gen;
   xv_frame_t   *frame = (xv_frame_t *) frame_gen;
@@ -571,16 +571,16 @@ static void xv_overlay_blend (vo_driver_t *this_gen,
     if( overlay->unscaled ) {
       if( this->ovl_changed && this->xoverlay ) {
         LOCK_DISPLAY(this);
-        x11osd_blend(this->xoverlay, overlay); 
+        x11osd_blend(this->xoverlay, overlay);
         UNLOCK_DISPLAY(this);
       }
     } else {
       if (frame->format == XINE_IMGFMT_YV12)
-        _x_blend_yuv(frame->vo_frame.base, overlay, 
+        _x_blend_yuv(frame->vo_frame.base, overlay,
 		  frame->width, frame->height, frame->vo_frame.pitches,
                   &this->alphablend_extra_data);
       else
-        _x_blend_yuy2(frame->vo_frame.base[0], overlay, 
+        _x_blend_yuy2(frame->vo_frame.base[0], overlay,
 		   frame->width, frame->height, frame->vo_frame.pitches[0],
                    &this->alphablend_extra_data);
     }
@@ -624,7 +624,7 @@ static int xv_redraw_needed (vo_driver_t *this_gen) {
     this->sc.delivered_height = this->cur_frame->height;
     this->sc.delivered_width  = this->cur_frame->width;
     this->sc.delivered_ratio  = this->cur_frame->ratio;
-    
+
     this->sc.crop_left        = this->cur_frame->vo_frame.crop_left;
     this->sc.crop_right       = this->cur_frame->vo_frame.crop_right;
     this->sc.crop_top         = this->cur_frame->vo_frame.crop_top;
@@ -663,7 +663,7 @@ static void xv_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   /*
   printf (LOG_MODULE ": xv_display_frame...\n");
   */
-  
+
   /*
    * queue frames (deinterlacing)
    * free old frames
@@ -724,7 +724,7 @@ static void xv_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
   if( factor > 1 )
   {
-    lprintf( "%s PutImage %dX interval (%fs)\n", 
+    lprintf( "%s PutImage %dX interval (%fs)\n",
              LOG_MODULE, factor, elapse_time );
   }
   }
@@ -766,7 +766,7 @@ static int xv_get_property (vo_driver_t *this_gen, int property) {
 static void xv_property_callback (void *property_gen, xine_cfg_entry_t *entry) {
   xv_property_t *property = (xv_property_t *) property_gen;
   xv_driver_t   *this = property->this;
-  
+
   LOCK_DISPLAY(this);
   XvSetPortAttribute (this->display, this->xv_port,
 		      property->atom,
@@ -796,7 +796,7 @@ static int xv_set_property (vo_driver_t *this_gen,
       this->props[property].entry->num_value = this->props[property].value;
 
     return this->props[property].value;
-  } 
+  }
   else {
     switch (property) {
 
@@ -805,7 +805,7 @@ static int xv_set_property (vo_driver_t *this_gen,
 	value = XINE_VO_ASPECT_AUTO;
 
       this->props[property].value = value;
-      xprintf(this->xine, XINE_VERBOSITY_LOG, 
+      xprintf(this->xine, XINE_VERBOSITY_LOG,
 	      LOG_MODULE ": VO_PROP_ASPECT_RATIO(%d)\n", this->props[property].value);
       this->sc.user_ratio = value;
 
@@ -819,7 +819,7 @@ static int xv_set_property (vo_driver_t *this_gen,
         this->props[property].value = value;
 	xprintf(this->xine, XINE_VERBOSITY_LOG,
 		LOG_MODULE ": VO_PROP_ZOOM_X = %d\n", this->props[property].value);
-	
+
 	this->sc.zoom_factor_x = (double)value / (double)XINE_VO_ZOOM_STEP;
 
 	xv_compute_ideal_size (this);
@@ -901,7 +901,7 @@ static int xv_gui_data_exchange (vo_driver_t *this_gen,
 
       if(this->xoverlay)
 	x11osd_expose(this->xoverlay);
-      
+
       XSync(this->display, False);
       UNLOCK_DISPLAY(this);
     }
@@ -946,39 +946,39 @@ static int xv_gui_data_exchange (vo_driver_t *this_gen,
 static void xv_store_port_attribute(xv_driver_t *this, const char *name) {
   Atom                 atom;
   xv_portattribute_t  *attr;
-  
+
   attr = (xv_portattribute_t *)malloc( sizeof(xv_portattribute_t) );
   attr->name = strdup(name);
-  
+
   LOCK_DISPLAY(this);
   atom = XInternAtom (this->display, attr->name, False);
   XvGetPortAttribute (this->display, this->xv_port, atom, &attr->value);
   UNLOCK_DISPLAY(this);
-  
+
   xine_list_push_back (this->port_attributes, attr);
 }
 
 static void xv_restore_port_attributes(xv_driver_t *this) {
   Atom                 atom;
   xine_list_iterator_t ite;
-  
+
   while ((ite = xine_list_front(this->port_attributes)) != NULL) {
     xv_portattribute_t *attr = xine_list_get_value(this->port_attributes, ite);
     xine_list_remove (this->port_attributes, ite);
-  
+
     LOCK_DISPLAY(this);
     atom = XInternAtom (this->display, attr->name, False);
     XvSetPortAttribute (this->display, this->xv_port, atom, attr->value);
     UNLOCK_DISPLAY(this);
-        
+
     free( attr->name );
     free( attr );
   }
-  
+
   LOCK_DISPLAY(this);
   XSync(this->display, False);
   UNLOCK_DISPLAY(this);
- 
+
   xine_list_delete( this->port_attributes );
 }
 
@@ -1010,7 +1010,7 @@ static void xv_dispose (vo_driver_t *this_gen) {
   }
 
   _x_alphablend_free(&this->alphablend_extra_data);
-  
+
   free (this);
 }
 
@@ -1021,7 +1021,7 @@ static int xv_check_yv12 (Display *display, XvPortID port) {
   int                  i;
 
   formatValues = XvListImageFormats (display, port, &formats);
-  
+
   for (i = 0; i < formats; i++)
     if ((formatValues[i].id == XINE_IMGFMT_YV12) &&
 	(! (strcmp (formatValues[i].guid, "YV12")))) {
@@ -1042,7 +1042,7 @@ static void xv_check_capability (xv_driver_t *this,
   int          int_default;
   cfg_entry_t *entry;
   const char  *str_prop = attr.name;
-   
+
   /*
    * some Xv drivers (Gatos ATI) report some ~0 as max values, this is confusing.
    */
@@ -1063,7 +1063,7 @@ static void xv_check_capability (xv_driver_t *this,
   /* might be overridden using config entry */
   if(strcmp(str_prop, "XV_AUTOPAINT_COLORKEY") == 0)
     int_default = 0;
-    
+
   if (config_name) {
     /* is this a boolean property ? */
     if ((attr.min_value == 0) && (attr.max_value == 1)) {
@@ -1080,12 +1080,12 @@ static void xv_check_capability (xv_driver_t *this,
 
     entry = this->config->lookup_entry (this->config, config_name);
 
-    if((entry->num_value < this->props[property].min) || 
+    if((entry->num_value < this->props[property].min) ||
        (entry->num_value > this->props[property].max)) {
 
-      this->config->update_num(this->config, config_name, 
+      this->config->update_num(this->config, config_name,
 			       ((this->props[property].min + this->props[property].max) >> 1));
-      
+
       entry = this->config->lookup_entry (this->config, config_name);
     }
 
@@ -1215,7 +1215,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
     return NULL;
 
   _x_alphablend_init(&this->alphablend_extra_data, class->xine);
-  
+
   this->display           = visual->display;
   this->screen            = visual->screen;
   this->config            = config;
@@ -1278,19 +1278,19 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
 	    _("%s: Xv extension is present but I couldn't find a usable yuv12 port.\n"
 	      "\tLooks like your graphics hardware driver doesn't support Xv?!\n"),
 	    LOG_MODULE);
-    
+
     /* XvFreeAdaptorInfo (adaptor_info); this crashed on me (gb)*/
     UNLOCK_DISPLAY(this);
     return NULL;
-  } 
+  }
   else
     xprintf(class->xine, XINE_VERBOSITY_LOG,
 	    _("%s: using Xv port %ld from adaptor %s for hardware "
 	      "colour space conversion and scaling.\n"), LOG_MODULE, xv_port,
             adaptor_info[adaptor_num].name);
-  
+
   UNLOCK_DISPLAY(this);
-  
+
   this->xv_port           = xv_port;
 
   _x_vo_scale_init (&this->sc, 1, 0, config );
@@ -1363,7 +1363,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
 	const char *const name = attr[k].name;
 	/* store initial port attribute value */
 	xv_store_port_attribute(this, name);
-	
+
 	if(!strcmp(name, "XV_HUE")) {
 	  if (!strncmp(adaptor_info[adaptor_num].name, "NV", 2)) {
             xprintf (this->xine, XINE_VERBOSITY_NONE, LOG_MODULE ": ignoring broken XV_HUE settings on NVidia cards\n");
@@ -1417,7 +1417,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
 	} else if(((this->sync_is_vsync = 0), !strcmp(name, sync_atoms[0])) ||
 		  ((this->sync_is_vsync = 1), !strcmp(name, sync_atoms[1]))) {
 	  int xv_sync_to_vblank;
-	  xv_sync_to_vblank = 
+	  xv_sync_to_vblank =
 	    config->register_bool (config, "video.device.xv_sync_to_vblank", 1,
 	      _("enable vblank sync"),
 	      _("This option will synchronize the update of the video image to the "
@@ -1448,10 +1448,10 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
 
   fo = XvListImageFormats(this->display, this->xv_port, (int*)&formats);
   UNLOCK_DISPLAY(this);
-  
+
   this->xv_format_yv12 = 0;
   this->xv_format_yuy2 = 0;
-  
+
   for(i = 0; i < formats; i++) {
     lprintf ("Xv image format: 0x%x (%4.4s) %s\n",
 	     fo[i].id, (char*)&fo[i].id,
@@ -1467,7 +1467,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
     case XINE_IMGFMT_YUY2:
       this->xv_format_yuy2 = fo[i].id;
       this->capabilities |= VO_CAP_YUY2;
-      xprintf(this->xine, XINE_VERBOSITY_LOG, 
+      xprintf(this->xine, XINE_VERBOSITY_LOG,
 	      _("%s: this adaptor supports the %s format.\n"), LOG_MODULE, "YUY2");
       break;
     default:
@@ -1491,7 +1491,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
   dispose_ximage (this, &myshminfo, myimage);
   UNLOCK_DISPLAY(this);
 
-  this->use_pitch_alignment = 
+  this->use_pitch_alignment =
     config->register_bool (config, "video.device.xv_pitch_alignment", 0,
 			   VIDEO_DEVICE_XV_PITCH_ALIGNMENT_HELP,
 			   10, xv_update_xv_pitch_alignment, this);
@@ -1527,7 +1527,7 @@ static vo_driver_t *open_plugin_old (video_driver_class_t *class_gen, const void
   visual.frame_output_cb = old_visual->frame_output_cb;
   visual.lock_display    = NULL;
   visual.unlock_display  = NULL;
-  
+
   return open_plugin_2(class_gen, (void *)&visual);
 }
 

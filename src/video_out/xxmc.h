@@ -113,7 +113,7 @@ typedef struct {
   XvMCMacroBlock      *macroblockbaseptr; /* pointer to base MacroBlock in MB array */
   XvMCMacroBlockArray  macro_blocks;      /* pointer to memory for macroblock array */
   int                  slices;
-} xvmc_macroblocks_t;  
+} xvmc_macroblocks_t;
 
 
 typedef struct {
@@ -137,7 +137,7 @@ typedef struct {
   XShmSegmentInfo    shminfo;
 
   /* XvMC specific stuff */
-  
+
   XvMCSurface       *xvmc_surf;
   xine_xxmc_t        xxmc_data;
   int                last_sw_format;
@@ -154,7 +154,7 @@ typedef struct{
   XvImageFormatValues subPicType;
   int                flags;
 } xvmc_capabilities_t;
-  
+
 typedef struct xvmc_surface_handler_s {
   XvMCSurface surfaces[XVMC_MAX_SURFACES];
   int surfInUse[XVMC_MAX_SURFACES];
@@ -179,12 +179,12 @@ typedef struct context_lock_s {
   }
 
 #if defined(XVMC_THREAD_SAFE) && defined(XVMC_LOCKDISPLAY_SAFE)
-#define XVMCLOCKDISPLAY(display) 	  
-#define XVMCUNLOCKDISPLAY(display) 
+#define XVMCLOCKDISPLAY(display)
+#define XVMCUNLOCKDISPLAY(display)
 #else
-#define XVMCLOCKDISPLAY(display) XLockDisplay(display)					
+#define XVMCLOCKDISPLAY(display) XLockDisplay(display)
 #define XVMCUNLOCKDISPLAY(display) XUnlockDisplay(display)
-#endif 
+#endif
 
 struct xxmc_driver_s {
   vo_driver_t        vo_driver;
@@ -226,7 +226,7 @@ struct xxmc_driver_s {
   int                (*x11_old_error_handler)  (Display *, XErrorEvent *);
   xine_t             *xine;
 
-  /* XvMC related stuff here */  
+  /* XvMC related stuff here */
   xvmc_macroblocks_t   macroblocks;
   xvmc_capabilities_t  *xvmc_cap;
   unsigned           xvmc_num_cap;
@@ -271,8 +271,8 @@ struct xxmc_driver_s {
 
   /*
    * The mutex below is needed since XlockDisplay wasn't really enough
-   * to protect the XvMC Calls. 
-   */ 
+   * to protect the XvMC Calls.
+   */
   context_lock_t     xvmc_lock;
 
   alphablend_t       alphablend_extra_data;
@@ -292,14 +292,14 @@ extern int xxmc_xvmc_surface_valid(xxmc_driver_t *this, XvMCSurface *surf);
 extern void xvmc_vld_slice(vo_frame_t *this_gen);
 extern void xvmc_vld_frame(struct vo_frame_s *this_gen);
 
-extern void xxmc_xvmc_proc_macro_block(int x, int y, int mb_type, int motion_type, 
-				       int (*mv_field_sel)[2], int *dmvector, 
-				       int cbp, 
-				       int dct_type, vo_frame_t *current_frame, 
-				       vo_frame_t *forward_ref_frame, 
-				       vo_frame_t *backward_ref_frame, 
-				       int picture_structure, 
-				       int second_field, int (*f_mot_pmv)[2], 
+extern void xxmc_xvmc_proc_macro_block(int x, int y, int mb_type, int motion_type,
+				       int (*mv_field_sel)[2], int *dmvector,
+				       int cbp,
+				       int dct_type, vo_frame_t *current_frame,
+				       vo_frame_t *forward_ref_frame,
+				       vo_frame_t *backward_ref_frame,
+				       int picture_structure,
+				       int second_field, int (*f_mot_pmv)[2],
 				       int (*b_mot_pmv)[2]);
 
 #endif

@@ -58,7 +58,7 @@ dist_font_DATA = \
 	fonts/serif-24.xinefont.gz \
 	fonts/serif-32.xinefont.gz \
 	fonts/serif-48.xinefont.gz \
-	fonts/serif-64.xinefont.gz 
+	fonts/serif-64.xinefont.gz
 
 dist_doc_DATA = fonts/README.cetus
 

@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2001-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -101,17 +101,17 @@ static void yuv2frame(yuv_buffer *yuv, vo_frame_t *frame, int offset_x, int offs
 
   crop_offset=offset_x+yuv->y_stride*offset_y;
   for(i=0;i<frame->height;i++)
-    xine_fast_memcpy(frame->base[0]+frame->pitches[0]*i, 
-		     yuv->y+crop_offset+yuv->y_stride*i, 
+    xine_fast_memcpy(frame->base[0]+frame->pitches[0]*i,
+		     yuv->y+crop_offset+yuv->y_stride*i,
 		     frame->width);
 
   crop_offset=(offset_x/2)+(yuv->uv_stride)*(offset_y/2);
   for(i=0;i<frame->height/2;i++){
-    xine_fast_memcpy(frame->base[1]+frame->pitches[1]*i, 
-		     yuv->u+crop_offset+yuv->uv_stride*i, 
+    xine_fast_memcpy(frame->base[1]+frame->pitches[1]*i,
+		     yuv->u+crop_offset+yuv->uv_stride*i,
 		     frame->width/2);
-    xine_fast_memcpy(frame->base[2]+frame->pitches[2]*i, 
-		     yuv->v+crop_offset+yuv->uv_stride*i, 
+    xine_fast_memcpy(frame->base[2]+frame->pitches[2]*i,
+		     yuv->v+crop_offset+yuv->uv_stride*i,
 		     frame->width/2);
 
   }
@@ -123,7 +123,7 @@ static int collect_data (theora_decoder_t *this, buf_element_t *buf ) {
 
   if (buf->decoder_flags & BUF_FLAG_FRAME_START) {
     this->done=0;  /*start from the beginnig*/
-    this->reject=0;/*new packet - new try*/ 
+    this->reject=0;/*new packet - new try*/
 
     /*copy the ogg_packet struct and the sum, correct the adress of the packet*/
     xine_fast_memcpy (&this->op, buf->content, sizeof(ogg_packet));
@@ -142,7 +142,7 @@ static int collect_data (theora_decoder_t *this, buf_element_t *buf ) {
     }
     readin_op (this, buf->content, buf->size );
   }
-  
+
   if ((buf->decoder_flags & BUF_FLAG_FRAME_END) && !this->reject) {
     if ( this->done != this->op.bytes ) {
       printf ("libtheora: A packet changed its size during transfer - rejected\n");
@@ -156,8 +156,8 @@ static int collect_data (theora_decoder_t *this, buf_element_t *buf ) {
 
 static void theora_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
   /*
-   * decode data from buf and feed decoded frames to 
-   * video output 
+   * decode data from buf and feed decoded frames to
+   * video output
    */
   theora_decoder_t *this = (theora_decoder_t *) this_gen;
   vo_frame_t *frame;
@@ -195,7 +195,7 @@ static void theora_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
       }
       /*headers are now decoded. initialize the decoder*/
       theora_decode_init (&this->t_state, &this->t_info);
-      
+
       lprintf("theora stream is Theora %dx%d %.02f fps video.\n"
 	      "           frame content is %dx%d with offset (%d,%d).\n"
 	      "           pixel aspect is %d:%d.\n",
@@ -346,7 +346,7 @@ static video_decoder_t *theora_open_plugin (video_decoder_class_t *class_gen, xi
 void *theora_init_plugin (xine_t *xine, void *data) {
   /*initialize our plugin*/
   theora_class_t *this;
-  
+
   this = (theora_class_t *) calloc(1, sizeof(theora_class_t));
 
   this->decoder_class.open_plugin     = theora_open_plugin;

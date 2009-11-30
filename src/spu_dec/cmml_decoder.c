@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2008 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -104,11 +104,11 @@ static void update_font_size (spucmml_decoder_t *this) {
     this->font_size = vec[1];
   else
     this->font_size = vec[0];
-  
+
   this->line_height = this->font_size + 10;
 
   int y = this->cached_height - (SUB_MAX_TEXT * this->line_height) - 5;
-  
+
   if(((y - this->vertical_offset) >= 0) && ((y - this->vertical_offset) <= this->cached_height))
     y -= this->vertical_offset;
 
@@ -124,7 +124,7 @@ static void update_font_size (spucmml_decoder_t *this) {
       this->cached_width,
       SUB_MAX_TEXT * this->line_height);
 
-  this->osd = this->stream->osd_renderer->new_object (this->stream->osd_renderer, 
+  this->osd = this->stream->osd_renderer->new_object (this->stream->osd_renderer,
           this->cached_width, SUB_MAX_TEXT * this->line_height);
 
   llprintf (LOG_OSD, "post new_object: osd is %p\n", this->osd);
@@ -137,7 +137,7 @@ static void update_font_size (spucmml_decoder_t *this) {
 
 static int get_width(spucmml_decoder_t *this, char* text) {
   int width=0;
-  
+
   while (1)
     switch (*text) {
     case '\0':
@@ -153,7 +153,7 @@ static int get_width(spucmml_decoder_t *this, char* text) {
         /*Do somethink to disable BOLD typeface*/
 	text += 4;
         break;
-      } else if (!strncmp("<i>", text, 3)) {  
+      } else if (!strncmp("<i>", text, 3)) {
         /*Do somethink to enable italics typeface*/
 	text += 3;
         break;
@@ -161,7 +161,7 @@ static int get_width(spucmml_decoder_t *this, char* text) {
         /*Do somethink to disable italics typeface*/
 	text += 4;
         break;
-      } else if (!strncmp("<font>", text, 3)) {       
+      } else if (!strncmp("<font>", text, 3)) {
         /*Do somethink to disable typing
           fixme - no teststreams*/
 	text += 6;
@@ -171,7 +171,7 @@ static int get_width(spucmml_decoder_t *this, char* text) {
           fixme - no teststreams*/
 	text += 7;
         break;
-      } 
+      }
     default:
       {
 	int w, dummy;
@@ -224,11 +224,11 @@ static void draw_subtitle(spucmml_decoder_t *this, int64_t sub_start) {
 
   if( font_size != this->font_size )
     this->stream->osd_renderer->set_font (this->osd, this->font, this->font_size);
-  
+
 
   this->stream->osd_renderer->set_text_palette (this->osd, -1, OSD_TEXT1);
   this->stream->osd_renderer->show (this->osd, sub_start);
-  
+
   llprintf (LOG_SCHEDULING,
       "spucmml: scheduling subtitle >%s< at %"PRId64", current time is %"PRId64"\n",
       this->text[0], sub_start,
@@ -399,7 +399,7 @@ static void video_frame_format_change_callback (void *user_data, const xine_even
 
 static void spudec_reset (spu_decoder_t *this_gen) {
   spucmml_decoder_t *this = (spucmml_decoder_t *) this_gen;
-  
+
   this->cached_width = this->cached_height = 0;
 }
 
@@ -461,16 +461,16 @@ static spu_decoder_t *spucmml_class_open_plugin (spu_decoder_class_t *class_gen,
   this->font_size = 24;
   this->subtitle_size = 1;
 
-  this->font             = class->xine->config->register_string(class->xine->config, 
-                              "subtitles.separate.font", 
-                              "sans", 
-                              _("font for external subtitles"), 
+  this->font             = class->xine->config->register_string(class->xine->config,
+                              "subtitles.separate.font",
+                              "sans",
+                              _("font for external subtitles"),
                               NULL, 0, update_osd_font, this);
 
   this->vertical_offset  = class->xine->config->register_num(class->xine->config,
-                              "subtitles.separate.vertical_offset", 
+                              "subtitles.separate.vertical_offset",
                               0,
-                              _("subtitle vertical offset (relative window size)"), 
+                              _("subtitle vertical offset (relative window size)"),
                               NULL, 0, update_vertical_offset, this);
 
   this->current_anchor.href = NULL;
@@ -498,10 +498,10 @@ static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
 
   this->xine                   = xine;
 
-  this->src_encoding  = xine->config->register_string(xine->config, 
-                                "subtitles.separate.src_encoding", 
-                                "iso-8859-1", 
-                                _("encoding of subtitles"), 
+  this->src_encoding  = xine->config->register_string(xine->config,
+                                "subtitles.separate.src_encoding",
+                                "iso-8859-1",
+                                _("encoding of subtitles"),
                                 NULL, 10, update_src_encoding, this);
 
   return &this->class;
@@ -517,7 +517,7 @@ static const decoder_info_t spudec_info = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_SPU_DECODER, 17, "spucmml", XINE_VERSION_CODE, &spudec_info, &init_spu_decoder_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

@@ -116,7 +116,7 @@ static void nbc_set_speed_normal (nbc_t *this) {
 static void display_stats (nbc_t *this) {
   static const char buffering[2][4] = {"   ", "buf"};
   static const char enabled[2][4]   = {"off", "on "};
-  
+
   printf("bufing: %d, enb: %d\n", this->buffering, this->enabled);
   printf("net_buf_ctrl: vid %3d%% %4.1fs %4" PRId64 "kbps %1d, "\
 	 "aud %3d%% %4.1fs %4" PRId64 "kbps %1d, %s %s\r",
@@ -164,7 +164,7 @@ static void nbc_compute_fifo_length(nbc_t *this,
     this->video_fifo_free = fifo_free;
     this->video_fifo_fill = (100 * fifo_fill) / fifo_div;
     this->video_fifo_size = fifo->fifo_data_size;
-    
+
     if (buf->pts && (this->video_in_disc == 0)) {
       if (action == FIFO_PUT) {
         this->video_last_pts = buf->pts;
@@ -176,7 +176,7 @@ static void nbc_compute_fifo_length(nbc_t *this,
         this->video_first_pts = buf->pts;
       }
     }
-    
+
     if (video_br) {
       this->video_br = video_br;
       this->video_fifo_length_int = (8000 * this->video_fifo_size) / this->video_br;
@@ -197,7 +197,7 @@ static void nbc_compute_fifo_length(nbc_t *this,
     this->audio_fifo_free = fifo_free;
     this->audio_fifo_fill = (100 * fifo_fill) / fifo_div;
     this->audio_fifo_size = fifo->fifo_data_size;
-    
+
     if (buf->pts && (this->audio_in_disc == 0)) {
       if (action == FIFO_PUT) {
         this->audio_last_pts = buf->pts;
@@ -209,7 +209,7 @@ static void nbc_compute_fifo_length(nbc_t *this,
         this->audio_first_pts = buf->pts;
       }
     }
-    
+
     if (audio_br) {
       this->audio_br = audio_br;
       this->audio_fifo_length_int = (8000 * this->audio_fifo_size) / this->audio_br;
@@ -226,7 +226,7 @@ static void nbc_compute_fifo_length(nbc_t *this,
       }
     }
   }
-  
+
   /* decoder buffer compensation */
   if (has_audio && has_video) {
     diff = this->video_first_pts - this->audio_first_pts;
@@ -267,7 +267,7 @@ static void nbc_alloc_cb (fifo_buffer_t *fifo, void *this_gen) {
 
 /* Put callback
  * the fifo mutex is locked */
-static void nbc_put_cb (fifo_buffer_t *fifo, 
+static void nbc_put_cb (fifo_buffer_t *fifo,
                         buf_element_t *buf, void *this_gen) {
   nbc_t *this = (nbc_t*)this_gen;
   int64_t progress = 0;
@@ -281,7 +281,7 @@ static void nbc_put_cb (fifo_buffer_t *fifo,
   if ((buf->type & BUF_MAJOR_MASK) != BUF_CONTROL_BASE) {
 
     if (this->enabled) {
-      
+
       nbc_compute_fifo_length(this, fifo, buf, FIFO_PUT);
 
       if (this->buffering) {
@@ -307,8 +307,8 @@ static void nbc_put_cb (fifo_buffer_t *fifo,
           xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "\nnet_buf_ctrl: nbc_put_cb: stops buffering\n");
 
           nbc_set_speed_normal(this);
-  
-          this->high_water_mark += this->high_water_mark / 2;   
+
+          this->high_water_mark += this->high_water_mark / 2;
 
         } else {
           /*  compute the buffering progress
@@ -435,7 +435,7 @@ static void nbc_get_cb (fifo_buffer_t *fifo,
     if (this->enabled) {
 
       nbc_compute_fifo_length(this, fifo, buf, FIFO_GET);
-      
+
       if (!this->buffering) {
         /* start buffering if one fifo is empty
          */
@@ -450,7 +450,7 @@ static void nbc_get_cb (fifo_buffer_t *fifo,
             this->progress  = 0;
             report_progress (this->stream, 0);
 
-            xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+            xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
                     "\nnet_buf_ctrl: nbc_get_cb: starts buffering, vid: %d, aud: %d\n",
                     this->video_fifo_fill, this->audio_fifo_fill);
             nbc_set_speed_pause(this);
@@ -491,7 +491,7 @@ static void nbc_get_cb (fifo_buffer_t *fifo,
 }
 
 nbc_t *nbc_init (xine_stream_t *stream) {
-  
+
   nbc_t *this = calloc(1, sizeof (nbc_t));
   fifo_buffer_t *video_fifo = stream->video_fifo;
   fifo_buffer_t *audio_fifo = stream->audio_fifo;
@@ -504,7 +504,7 @@ nbc_t *nbc_init (xine_stream_t *stream) {
   this->stream              = stream;
   this->video_fifo          = video_fifo;
   this->audio_fifo          = audio_fifo;
-  
+
   /* when the FIFO sizes are increased compared to the default configuration,
    * apply a factor to the high water mark */
   entry = stream->xine->config->lookup_entry(stream->xine->config, "engine.buffers.video_num_buffers");

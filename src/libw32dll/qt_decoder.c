@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2006 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -110,19 +110,19 @@ typedef struct SoundComponentData {
 
 
 typedef int (__cdecl* LPFUNC1)(long flag);
-typedef int (__cdecl* LPFUNC2)(const SoundComponentData *, 
+typedef int (__cdecl* LPFUNC2)(const SoundComponentData *,
 			       const SoundComponentData *,
 			       SoundConverter *);
 typedef int (__cdecl* LPFUNC3)(SoundConverter sc);
 typedef int (__cdecl* LPFUNC4)(void);
 typedef int (__cdecl* LPFUNC5)(SoundConverter sc, OSType selector,void * infoPtr);
-typedef int (__cdecl* LPFUNC6)(SoundConverter sc, 
+typedef int (__cdecl* LPFUNC6)(SoundConverter sc,
 			       unsigned long inputBytesTarget,
 			       unsigned long *inputFrames,
 			       unsigned long *inputBytes,
 			       unsigned long *outputBytes );
-typedef int (__cdecl* LPFUNC7)(SoundConverter sc, 
-			       const void    *inputPtr, 
+typedef int (__cdecl* LPFUNC7)(SoundConverter sc,
+			       const void    *inputPtr,
 			       unsigned long inputFrames,
 			       void          *outputPtr,
 			       unsigned long *outputFrames,
@@ -131,7 +131,7 @@ typedef int (__cdecl* LPFUNC8)(SoundConverter sc,
 			       void      *outputPtr,
 			       unsigned long *outputFrames,
 			       unsigned long *outputBytes);
-typedef int (__cdecl* LPFUNC9)(SoundConverter sc) ;        
+typedef int (__cdecl* LPFUNC9)(SoundConverter sc) ;
 
 
 typedef struct {
@@ -146,7 +146,7 @@ typedef struct qta_decoder_s {
 
   xine_stream_t      *stream;
 
-  HINSTANCE           qtml_dll; 
+  HINSTANCE           qtml_dll;
 
   xine_waveformatex   wave;
   uint8_t             out_buf[1000000];
@@ -173,7 +173,7 @@ typedef struct qta_decoder_s {
   uint8_t             data[BUFSIZE];
   int                 data_len;
   int                 num_frames;
-  
+
   ldt_fs_t *ldt_fs;
 } qta_decoder_t;
 
@@ -227,9 +227,9 @@ static void qta_init_driver (qta_decoder_t *this, buf_element_t *buf) {
   lprintf ("audio: init_driver... (mutex locked)\n");
 
   this->ldt_fs = Setup_LDT_Keeper();
-  
+
   this->qtml_dll = LoadLibraryA("qtmlClient.dll");
-  
+
   if (this->qtml_dll == NULL ) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "qt_audio: failed to load dll\n" );
     pthread_mutex_unlock(&win32_codec_mutex);
@@ -240,63 +240,63 @@ static void qta_init_driver (qta_decoder_t *this, buf_element_t *buf) {
 
   this->InitializeQTML = (LPFUNC1)GetProcAddress (this->qtml_dll, "InitializeQTML");
   if ( this->InitializeQTML == NULL )  {
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	     "qt_audio: failed geting proc address InitializeQTML\n");
     pthread_mutex_unlock(&win32_codec_mutex);
     return;
   }
   this->SoundConverterOpen = (LPFUNC2)GetProcAddress (this->qtml_dll, "SoundConverterOpen");
   if ( this->SoundConverterOpen == NULL ) {
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	     "qt_audio: failed getting proc address SoundConverterOpen\n");
     pthread_mutex_unlock(&win32_codec_mutex);
     return;
   }
   this->SoundConverterClose = (LPFUNC3)GetProcAddress (this->qtml_dll, "SoundConverterClose");
   if ( this->SoundConverterClose == NULL ) {
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	     "qt_audio: failed getting proc address SoundConverterClose\n");
     pthread_mutex_unlock(&win32_codec_mutex);
     return;
   }
   this->TerminateQTML = (LPFUNC4)GetProcAddress (this->qtml_dll, "TerminateQTML");
   if ( this->TerminateQTML == NULL ) {
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	     "qt_audio: failed getting proc address TerminateQTML\n");
     pthread_mutex_unlock(&win32_codec_mutex);
     return;
   }
   this->SoundConverterSetInfo = (LPFUNC5)GetProcAddress (this->qtml_dll, "SoundConverterSetInfo");
   if ( this->SoundConverterSetInfo == NULL ) {
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	     "qt_audio: failed getting proc address SoundConverterSetInfo\n");
     pthread_mutex_unlock(&win32_codec_mutex);
     return;
   }
   this->SoundConverterGetBufferSizes = (LPFUNC6)GetProcAddress (this->qtml_dll, "SoundConverterGetBufferSizes");
   if ( this->SoundConverterGetBufferSizes == NULL ) {
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	     "qt_audio: failed getting proc address SoundConverterGetBufferSizes\n");
     pthread_mutex_unlock(&win32_codec_mutex);
     return;
   }
   this->SoundConverterConvertBuffer = (LPFUNC7)GetProcAddress (this->qtml_dll, "SoundConverterConvertBuffer");
   if ( this->SoundConverterConvertBuffer == NULL ) {
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	     "qt_audio: failed getting proc address SoundConverterConvertBuffer1\n");
     pthread_mutex_unlock(&win32_codec_mutex);
     return;
   }
   this->SoundConverterEndConversion = (LPFUNC8)GetProcAddress (this->qtml_dll, "SoundConverterEndConversion");
   if ( this->SoundConverterEndConversion == NULL ) {
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	     "qt_audio: failed getting proc address SoundConverterEndConversion\n");
     pthread_mutex_unlock(&win32_codec_mutex);
     return;
   }
   this->SoundConverterBeginConversion = (LPFUNC9)GetProcAddress (this->qtml_dll, "SoundConverterBeginConversion");
   if ( this->SoundConverterBeginConversion == NULL ) {
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	     "qt_audio: failed getting proc address SoundConverterBeginConversion\n");
     pthread_mutex_unlock(&win32_codec_mutex);
     return;
@@ -323,17 +323,17 @@ static void qta_init_driver (qta_decoder_t *this, buf_element_t *buf) {
   switch (buf->type) {
   case BUF_AUDIO_QDESIGN1:
     this->InputFormatInfo.format = FOUR_CHAR_CODE('Q','D','M','C');
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC,
       "QDesign Music Codec v1 (QT DLL)");
     break;
   case BUF_AUDIO_QDESIGN2:
     this->InputFormatInfo.format = FOUR_CHAR_CODE('Q','D','M','2');
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC,
       "QDesign Music Codec v2 (QT DLL)");
     break;
   case BUF_AUDIO_QCLP:
     this->InputFormatInfo.format = FOUR_CHAR_CODE('Q','c','l','p');
-    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, 
+    _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC,
       "Qualcomm Purevoice Codec (QT DLL)");
     break;
   default:
@@ -352,8 +352,8 @@ static void qta_init_driver (qta_decoder_t *this, buf_element_t *buf) {
   qta_hexdump ((unsigned char *)buf->decoder_info_ptr[2], buf->decoder_info[2]);
 #endif
 
-  error = this->SoundConverterOpen (&this->InputFormatInfo, 
-				    &this->OutputFormatInfo, 
+  error = this->SoundConverterOpen (&this->InputFormatInfo,
+				    &this->OutputFormatInfo,
 				    &this->myConverter);
   lprintf ("audio: SoundConverterOpen:%i\n",error);
 
@@ -392,7 +392,7 @@ static void qta_init_driver (qta_decoder_t *this, buf_element_t *buf) {
   error = this->SoundConverterBeginConversion (this->myConverter);
   lprintf ("audio: SoundConverterBeginConversion:%i\n",error);
 
-  if (error) {    
+  if (error) {
     pthread_mutex_unlock(&win32_codec_mutex);
     return;
   }
@@ -403,7 +403,7 @@ static void qta_init_driver (qta_decoder_t *this, buf_element_t *buf) {
 
   this->frame_size = this->wave.nChannels * this->wave.wBitsPerSample / 8;
 
-  this->output_open = (this->stream->audio_out->open) (this->stream->audio_out, 
+  this->output_open = (this->stream->audio_out->open) (this->stream->audio_out,
 						    this->stream,
 						    this->wave.wBitsPerSample,
 						    this->wave.nSamplesPerSec,
@@ -433,17 +433,17 @@ static void qta_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     this->wave.nSamplesPerSec = buf->decoder_info[1];
 
     lprintf ("audio: header copied\n");
-    
+
   } else if (buf->decoder_flags & BUF_FLAG_SPECIAL) {
     lprintf ("audio: special buffer\n");
-    
+
     if (buf->decoder_info[1] == BUF_SPECIAL_STSD_ATOM) {
       lprintf ("audio: got stsd atom -> init codec\n");
 
       if (!this->codec_initialized) {
 	qta_init_driver (this, buf);
       }
-      
+
       if (!this->codec_initialized)
         _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_HANDLED, 0);
     }
@@ -457,13 +457,13 @@ static void qta_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       int num_frames = this->data_len / this->InFrameSize;
       long out_frames, out_bytes;
       int error, frames_left, bytes_sent;
-    
+
       Check_FS_Segment(this->ldt_fs);
 
       pthread_mutex_lock(&win32_codec_mutex);
       error = this->SoundConverterConvertBuffer (this->myConverter,
 						 this->data,
-						 num_frames, 
+						 num_frames,
 						 this->out_buf,
 						 &out_frames, &out_bytes);
       pthread_mutex_unlock(&win32_codec_mutex);
@@ -474,7 +474,7 @@ static void qta_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       this->data_len -= this->InFrameSize * num_frames;
       if (this->data_len>0)
 	memmove (this->data, this->data+num_frames*this->InFrameSize, this->data_len);
-      
+
 
       frames_left = out_frames;
       bytes_sent = 0;
@@ -498,21 +498,21 @@ static void qta_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
 	lprintf ("audio: sending %d frames, %d frames left\n", nframes, frames_left);
 
-	this->stream->audio_out->put_buffer (this->stream->audio_out, 
+	this->stream->audio_out->put_buffer (this->stream->audio_out,
 					     audio_buffer, this->stream);
-	
+
 	bytes_sent += nframes*this->frame_size;
 	frames_left -= nframes;
       }
 
     }
-    
+
   }
 }
 
 static void qta_reset (audio_decoder_t *this_gen) {
   qta_decoder_t *this = (qta_decoder_t *) this_gen;
-  
+
   this->data_len = 0;
 }
 
@@ -522,7 +522,7 @@ static void qta_discontinuity (audio_decoder_t *this_gen) {
 
 static void qta_dispose (audio_decoder_t *this_gen) {
 
-  qta_decoder_t *this = (qta_decoder_t *) this_gen; 
+  qta_decoder_t *this = (qta_decoder_t *) this_gen;
   int error;
   unsigned long ConvertedFrames=0;
   unsigned long ConvertedBytes=0;
@@ -548,7 +548,7 @@ static void qta_dispose (audio_decoder_t *this_gen) {
   free (this);
 }
 
-static audio_decoder_t *qta_open_plugin (audio_decoder_class_t *class_gen, 
+static audio_decoder_t *qta_open_plugin (audio_decoder_class_t *class_gen,
 					 xine_stream_t *stream) {
 
   qta_decoder_t *this ;
@@ -589,7 +589,7 @@ static void *qta_init_class (xine_t *xine, void *data) {
   return this;
 }
 
-static const uint32_t audio_types[] = { 
+static const uint32_t audio_types[] = {
   BUF_AUDIO_QDESIGN1,
   BUF_AUDIO_QDESIGN2,
   BUF_AUDIO_QCLP,
@@ -623,7 +623,7 @@ typedef struct qtv_decoder_s {
 
   xine_stream_t   *stream;
 
-  HINSTANCE        qtml_dll; 
+  HINSTANCE        qtml_dll;
 
   xine_bmiheader   bih;
   double           ratio;
@@ -645,8 +645,8 @@ typedef struct qtv_decoder_s {
   /* ImageSubCodecDecompressCapabilities icap; // for ImageCodecInitialize() */
   Rect                    OutBufferRect;   /* the dimensions of our GWorld */
 
-  GWorldPtr               OutBufferGWorld; /* a GWorld is some kind of 
-					      description for a drawing 
+  GWorldPtr               OutBufferGWorld; /* a GWorld is some kind of
+					      description for a drawing
 					      environment */
   ImageDescriptionHandle  framedescHandle;
 
@@ -678,7 +678,7 @@ typedef struct qtv_decoder_s {
 					       CodecDecompressParams * params);
   ComponentResult   (*ImageCodecBandDecompress)(ComponentInstance      ci,
 						CodecDecompressParams * params);
-  PixMapHandle      (*GetGWorldPixMap)         (GWorldPtr offscreenGWorld);                  
+  PixMapHandle      (*GetGWorldPixMap)         (GWorldPtr offscreenGWorld);
   OSErr             (*QTNewGWorldFromPtr)(GWorldPtr *gw,
 					  OSType pixelFormat,
 					  const Rect *boundsRect,
@@ -686,7 +686,7 @@ typedef struct qtv_decoder_s {
 					  /*GDHandle*/void* aGDevice, /*unused*/
 					  GWorldFlags flags,
 					  void *baseAddr,
-					  long rowBytes); 
+					  long rowBytes);
   OSErr             (*NewHandleClear)(Size byteCount);
 
   ldt_fs_t *ldt_fs;
@@ -746,9 +746,9 @@ static void qtv_init_driver (qtv_decoder_t *this, buf_element_t *buf) {
   lprintf ("video: mutex locked\n");
 
   this->ldt_fs = Setup_LDT_Keeper();
-  
+
   this->qtml_dll = LoadLibraryA("qtmlClient.dll");
-  
+
   if (this->qtml_dll == NULL ) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "qt_video: failed to load dll\n" );
     pthread_mutex_unlock(&win32_codec_mutex);
@@ -771,8 +771,8 @@ static void qtv_init_driver (qtv_decoder_t *this, buf_element_t *buf) {
   this->GetGWorldPixMap = (PixMapHandle(*)(GWorldPtr))GetProcAddress(this->qtml_dll, "GetGWorldPixMap");
   this->QTNewGWorldFromPtr = (OSErr(*)(GWorldPtr*,OSType,const Rect*,CTabHandle,void*,GWorldFlags,void*,long))GetProcAddress(this->qtml_dll, "QTNewGWorldFromPtr");
   this->NewHandleClear = (OSErr(*)(Size))GetProcAddress(this->qtml_dll, "NewHandleClear");
-    
-  if (!this->InitializeQTML || !this->EnterMovies || !this->FindNextComponent 
+
+  if (!this->InitializeQTML || !this->EnterMovies || !this->FindNextComponent
       || !this->ImageCodecBandDecompress){
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "qt_video: invalid qt DLL!\n");
     pthread_mutex_unlock(&win32_codec_mutex);
@@ -859,7 +859,7 @@ static void qtv_init_driver (qtv_decoder_t *this, buf_element_t *buf) {
     memcpy(&id->name,stdata+0x2D,32);
     id->depth           = _X_BE_16 (stdata+0x4E);
     id->clutID          = _X_BE_16 (stdata+0x50);
-    if (stdata_len>0x56)	
+    if (stdata_len>0x56)
       memcpy (((char*)&id->clutID)+2, stdata+0x52, stdata_len-0x52);
 
     lprintf ("video: id (%d bytes)\n", stdata_len);
@@ -887,12 +887,12 @@ static void qtv_init_driver (qtv_decoder_t *this, buf_element_t *buf) {
 
   this->plane = malloc (this->bih.biWidth * this->bih.biHeight * 3);
 
-  result = this->QTNewGWorldFromPtr(&this->OutBufferGWorld,  
+  result = this->QTNewGWorldFromPtr(&this->OutBufferGWorld,
 				    kYUVSPixelFormat, /*pixel format of new GWorld==YUY2 */
 				    &this->OutBufferRect,   /*we should benchmark if yvu9 is faster for svq3, too */
-				    0, 
-				    0, 
-				    0, 
+				    0,
+				    0,
+				    0,
 				    this->plane,
 				    this->bih.biWidth*2);
 
@@ -909,14 +909,14 @@ static void qtv_init_driver (qtv_decoder_t *this, buf_element_t *buf) {
   this->decpar.accuracy         = codecNormalQuality;
   this->decpar.port             = (CGrafPtr)this->OutBufferGWorld;
   this->decpar.srcRect          = this->OutBufferRect;
-      
+
   this->decpar.transferMode     = srcCopy;
   this->decpar.dstPixMap        = **this->GetGWorldPixMap (this->OutBufferGWorld);/*destPixmap;  */
-      
+
   cres = this->ImageCodecPreDecompress (this->ci, &this->decpar);
 
   lprintf ("video: ImageCodecPreDecompress cres=0x%X\n", cres);
-      
+
   this->data_len = 0;
 
   this->codec_initialized = 1;
@@ -930,7 +930,7 @@ static void qtv_init_driver (qtv_decoder_t *this, buf_element_t *buf) {
 static void qtv_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
   qtv_decoder_t *this = (qtv_decoder_t *) this_gen;
 
-  lprintf ("video: decode_data, flags=0x%08x, len=%d, pts=%lld ...\n", 
+  lprintf ("video: decode_data, flags=0x%08x, len=%d, pts=%lld ...\n",
 	   buf->decoder_flags, buf->size, buf->pts);
 
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) {
@@ -944,7 +944,7 @@ static void qtv_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 
   } else if (buf->decoder_flags & BUF_FLAG_SPECIAL) {
     lprintf ("video: special buffer\n");
-    
+
     if (buf->decoder_info[1] == BUF_SPECIAL_STSD_ATOM) {
       lprintf ("video: got stsd atom -> init codec\n");
 
@@ -962,12 +962,12 @@ static void qtv_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     this->data_len += buf->size;
 
     lprintf ("video: got %d bytes in buffer\n", this->data_len);
-    
+
     if (buf->decoder_flags & BUF_FLAG_FRAME_END) {
 
       ComponentResult  cres;
       vo_frame_t      *img;
-    
+
       Check_FS_Segment(this->ldt_fs);
 
       pthread_mutex_lock(&win32_codec_mutex);
@@ -977,30 +977,30 @@ static void qtv_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
       (**this->framedescHandle).dataSize=this->data_len;
 
       cres = this->ImageCodecBandDecompress (this->ci, &this->decpar);
-    
+
       ++this->decpar.frameNumber;
 
       pthread_mutex_unlock(&win32_codec_mutex);
 
       if (cres&0xFFFF){
-	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 		"qt_video: ImageCodecBandDecompress cres=0x%lX (-0x%lX) %ld :(\n", cres,-cres,cres);
       }
 
       img = this->stream->video_out->get_frame (this->stream->video_out,
 						this->bih.biWidth,
 						this->bih.biHeight,
-						this->ratio, 
+						this->ratio,
 						XINE_IMGFMT_YUY2,
 						VO_BOTH_FIELDS);
-	
+
       img->pts       = buf->pts;
       img->duration  = buf->decoder_info[0];
       img->bad_frame = 0;
-	
-      xine_fast_memcpy (img->base[0], this->plane, 
+
+      xine_fast_memcpy (img->base[0], this->plane,
 			this->bih.biWidth*this->bih.biHeight*2);
-	
+
       img->draw(img, this->stream);
       img->free(img);
 
@@ -1019,7 +1019,7 @@ static void qtv_flush (video_decoder_t *this_gen) {
 
 static void qtv_reset (video_decoder_t *this_gen) {
   qtv_decoder_t *this = (qtv_decoder_t *) this_gen;
-  
+
   this->data_len = 0;
 }
 
@@ -1044,7 +1044,7 @@ static void qtv_dispose (video_decoder_t *this_gen) {
   free (this);
 }
 
-static video_decoder_t *qtv_open_plugin (video_decoder_class_t *class_gen, 
+static video_decoder_t *qtv_open_plugin (video_decoder_class_t *class_gen,
 					 xine_stream_t *stream) {
 
   qtv_class_t   *cls = (qtv_class_t *) class_gen;
@@ -1069,13 +1069,13 @@ static video_decoder_t *qtv_open_plugin (video_decoder_class_t *class_gen,
  */
 
 /*
- * some fake functions to make qt codecs happy 
+ * some fake functions to make qt codecs happy
  */
 
 #if 0
 static void codec_path_cb (void *data, xine_cfg_entry_t *cfg) {
   qtv_class_t *this = (qt_class_t *) data;
-  
+
   this->qt_codec_path = cfg->str_value;
 }
 #endif
@@ -1113,7 +1113,7 @@ static const decoder_info_t qtv_dec_info = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_VIDEO_DECODER | PLUGIN_MUST_PRELOAD, 19, "qtv", XINE_VERSION_CODE, &qtv_dec_info, qtv_init_class },
   { PLUGIN_AUDIO_DECODER | PLUGIN_MUST_PRELOAD, 16, "qta", XINE_VERSION_CODE, &qta_dec_info, qta_init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }

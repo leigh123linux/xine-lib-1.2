@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2000-2008 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -110,7 +110,7 @@ extern "C" {
 #define BUF_VIDEO_WMV8		0x02140000
 #define BUF_VIDEO_MSVC		0x02150000
 #define BUF_VIDEO_DV		0x02160000
-#define BUF_VIDEO_REAL    	0x02170000
+#define BUF_VIDEO_REAL	0x02170000
 #define BUF_VIDEO_VP31		0x02180000
 #define BUF_VIDEO_H263		0x02190000
 #define BUF_VIDEO_3IVX          0x021A0000
@@ -215,7 +215,7 @@ extern "C" {
 #define BUF_AUDIO_VOXWARE       0x030c0000
 #define BUF_AUDIO_ACELPNET      0x030d0000
 #define BUF_AUDIO_AAC           0x030e0000
-#define BUF_AUDIO_DNET    	0x030f0000
+#define BUF_AUDIO_DNET	0x030f0000
 #define BUF_AUDIO_VIVOG723      0x03100000
 #define BUF_AUDIO_DK3ADPCM	0x03110000
 #define BUF_AUDIO_DK4ADPCM	0x03120000
@@ -233,10 +233,10 @@ extern "C" {
 #define BUF_AUDIO_GSM610	0x031E0000
 #define BUF_AUDIO_EA_ADPCM      0x031F0000
 #define BUF_AUDIO_WMAV2		0x03200000
-#define BUF_AUDIO_COOK 		0x03210000
-#define BUF_AUDIO_ATRK 		0x03220000
-#define BUF_AUDIO_14_4 		0x03230000
-#define BUF_AUDIO_28_8 		0x03240000
+#define BUF_AUDIO_COOK		0x03210000
+#define BUF_AUDIO_ATRK		0x03220000
+#define BUF_AUDIO_14_4		0x03230000
+#define BUF_AUDIO_28_8		0x03240000
 #define BUF_AUDIO_SIPRO		0x03250000
 #define BUF_AUDIO_WMAV3		0x03260000
 #define BUF_AUDIO_INTERPLAY	0x03270000
@@ -297,11 +297,11 @@ typedef struct extra_info_s extra_info_t;
 /**
  * @brief Structure to pass information from input or demuxer plugins
  *        to output frames (past decoder).
- * 
+ *
  * New data must be added after the existing fields to not break ABI
  * (backward compatibility).
  */
-  
+
 struct extra_info_s {
 
   int                   input_normpos; /**< remember where this buf came from in
@@ -310,10 +310,10 @@ struct extra_info_s {
   int                   input_time;    /**< time offset in miliseconds from
                                         *   beginning of stream */
   uint32_t              frame_number;  /**< number of current frame if known */
-  
+
   int                   seek_count;    /**< internal engine use */
-  int64_t               vpts;          /**< set on output layers only */ 
-  
+  int64_t               vpts;          /**< set on output layers only */
+
   int                   invalid;       /**< do not use this extra info to update anything */
   int                   total_time;    /**< duration in miliseconds of the stream */
 };
@@ -338,7 +338,7 @@ struct buf_element_s {
   uint32_t              decoder_flags; /**< stuff like keyframe, is_header ... see below      */
 
   /** additional decoder flags and other dec-spec. stuff */
-  uint32_t              decoder_info[BUF_NUM_DEC_INFO]; 
+  uint32_t              decoder_info[BUF_NUM_DEC_INFO];
   /** pointers to dec-spec. stuff */
   void                 *decoder_info_ptr[BUF_NUM_DEC_INFO];
 
@@ -386,7 +386,7 @@ struct buf_element_s {
  * xine_waveformatex is actually optional since the most important
  * information for audio init is available from decoder_info[].
  * note: BUF_FLAG_HEADER must also be set.                            */
-#define BUF_FLAG_STDHEADER   0x0400 
+#define BUF_FLAG_STDHEADER   0x0400
 
 /** decoder_info[1] carries numerator for display aspect ratio
  * decoder_info[2] carries denominator for display aspect ratio       */
@@ -473,7 +473,7 @@ struct buf_element_s {
  *   four length bytes at the beginning
  * decoder_info_ptr[2] = pointer to ImageDescription atom, starting with
  *   the codec fourcc
- * Some Quicktime decoders need information contained within the 
+ * Some Quicktime decoders need information contained within the
  * ImageDescription atom inside a Quicktime file's stsd atom. This
  * special buffer carries the ImageDescription atom from the QT demuxer
  * to an A/V decoder.
@@ -506,7 +506,7 @@ struct buf_element_s {
  * In a BUF_SPECIAL_SPU_DVD_SUBTYPE:
  * decoder_info[1] = BUF_SPECIAL_SPU_DVD_SUBTYPE
  * decoder_info[2] = subtype
- * decoder_info[3] = 
+ * decoder_info[3] =
  * This buffer is pass SPU subtypes from DVDs
  */
 #define BUF_SPECIAL_SPU_DVD_SUBTYPE 8
@@ -548,7 +548,7 @@ struct spu_dvb_descriptor_s
   long comp_page_id;
   long aux_page_id;
 } ;
-  
+
 typedef struct palette_entry_s palette_entry_t;
 struct palette_entry_s
 {

@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -49,7 +49,7 @@ struct post_class_s {
   post_plugin_t* (*open_plugin) (post_class_t *this, int inputs,
 				 xine_audio_port_t **audio_target,
 				 xine_video_port_t **video_target);
-  
+
   /**
    * @brief short human readable identifier for this plugin class
    */
@@ -66,7 +66,7 @@ struct post_class_s {
    * @brief Optional non-standard catalog to use with dgettext() for description.
    */
   const char *text_domain;
-  
+
   /*
    * free all class-related resources
    */
@@ -80,22 +80,22 @@ struct post_plugin_s {
 
   /* public part of the plugin */
   xine_post_t         xine_post;
-  
+
   /*
    * the connections announced by the plugin
    * the plugin must fill these with xine_post_{in,out}_t on init
    */
   xine_list_t        *input;
   xine_list_t        *output;
-  
+
   /*
    * close down, free all resources
    */
   void (*dispose) (post_plugin_t *this);
-  
+
   /* plugins don't have to init the stuff below */
-  
-  /* 
+
+  /*
    * the running ticket
    *
    * the plugin must assure to check for ticket revocation in
@@ -106,11 +106,11 @@ struct post_plugin_s {
    * the running ticket is assigned to you by the engine
    */
   xine_ticket_t      *running_ticket;
-  
+
   /* this is needed by the engine to decrement the reference counter
    * on disposal of the plugin, but since this is useful, we expose it */
   xine_t             *xine;
-  
+
   /* used when the user requests a list of all inputs/outputs */
   const char        **input_ids;
   const char        **output_ids;
@@ -138,10 +138,10 @@ struct post_in_s {
 
   /* public part of the input */
   xine_post_in_t   xine_in;
-  
+
   /* backward reference so that you have access to the post plugin */
   post_plugin_t   *post;
-  
+
   /* you can fill this to your liking */
   void            *user_data;
 };
@@ -150,10 +150,10 @@ struct post_out_s {
 
   /* public part of the output */
   xine_post_out_t  xine_out;
-  
+
   /* backward reference so that you have access to the post plugin */
   post_plugin_t   *post;
-  
+
   /* you can fill this to your liking */
   void            *user_data;
 };
@@ -177,19 +177,19 @@ struct post_video_port_s {
 
   /* the new public port with replaced function pointers */
   xine_video_port_t         new_port;
-  
+
   /* the original port to call its functions from inside yours */
   xine_video_port_t        *original_port;
-  
+
   /* if you want to decide yourself, whether a given frame should
    * be intercepted, fill in this function; get_frame() acts as
    * a template method and asks your function; return a boolean;
    * the default is to intercept all frames */
   int (*intercept_frame)(post_video_port_t *self, vo_frame_t *frame);
-  
+
   /* the new frame function pointers */
   vo_frame_t               *new_frame;
-  
+
   /* if you want to decide yourself, whether the preprocessing functions
    * should still be routed when draw is intercepted, fill in this
    * function; _x_post_intercept_video_frame() acts as a template method
@@ -202,34 +202,34 @@ struct post_video_port_s {
    * a template method and asks your function; return a boolean;
    * the default is _not_ to intercept the overlay manager */
   int (*intercept_ovl)(post_video_port_t *self);
-  
+
   /* the new public overlay manager with replaced function pointers */
   video_overlay_manager_t  *new_manager;
-  
+
   /* the original manager to call its functions from inside yours */
   video_overlay_manager_t  *original_manager;
-  
+
   /* usage counter: how many objects are floating around that need
    * these pointers to exist */
   int                       usage_count;
   pthread_mutex_t           usage_lock;
-  
+
   /* the stream we are being fed by; NULL means no stream is connected;
    * this may be an anonymous stream */
   xine_stream_t            *stream;
-  
+
   /* point to a mutex here, if you need some synchronization */
   pthread_mutex_t          *port_lock;
   pthread_mutex_t          *frame_lock;
   pthread_mutex_t          *manager_lock;
-  
+
   /* backward reference so that you have access to the post plugin
    * when the call only gives you the port */
   post_plugin_t            *post;
-  
+
   /* you can fill this to your liking */
   void                     *user_data;
-  
+
 #ifdef POST_INTERNAL
   /* some of the above members are to be directly included here, but
    * adding the structures would mean that post_video_port_t becomes
@@ -237,13 +237,13 @@ struct post_video_port_s {
    * above and have them point into the memory provided here;
    * note that the overlay manager needs to be first so that we can
    * reconstruct the post_video_port_t* from overlay manager calls */
-  
+
   /* any change here requires a change in _x_post_ovl_manager_to_port()
    * below! */
-  
+
   video_overlay_manager_t   manager_storage;
   vo_frame_t                frame_storage;
-  
+
   /* this is used to keep a linked list of free vo_frame_t's */
   vo_frame_t               *free_frame_slots;
   pthread_mutex_t           free_frames_lock;
@@ -303,31 +303,31 @@ struct post_audio_port_s {
 
   /* the new public port with replaced function pointers */
   xine_audio_port_t  new_port;
-  
+
   /* the original port to call its functions from inside yours */
   xine_audio_port_t *original_port;
-  
+
   /* the stream we are being fed by; NULL means no stream is connected;
    * this may be an anonymous stream */
   xine_stream_t     *stream;
-  
+
   pthread_mutex_t    usage_lock;
   /* usage counter: how many objects are floating around that need
    * these pointers to exist */
   int                usage_count;
-  
+
   /* some values remembered by (port->open) () */
   uint32_t           bits;
   uint32_t           rate;
   uint32_t           mode;
-  
+
   /* point to a mutex here, if you need some synchronization */
   pthread_mutex_t   *port_lock;
-  
+
   /* backward reference so that you have access to the post plugin
    * when the call only gives you the port */
   post_plugin_t     *post;
-  
+
   /* you can fill this to your liking */
   void              *user_data;
 };
@@ -389,7 +389,7 @@ do {                                                               \
 } while(0)
 
 
-/* macros to create parameter descriptors */ 
+/* macros to create parameter descriptors */
 
 #define START_PARAM_DESCR( param_t ) \
 static param_t temp_s; \

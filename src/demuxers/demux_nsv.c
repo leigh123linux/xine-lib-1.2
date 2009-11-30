@@ -106,17 +106,17 @@ static void nsv_parse_framerate(demux_nsv_t *this, uint8_t framerate)
       /* 29.97 fps */
       this->frame_pts_inc = 3003;
       break;
-      
+
     case 3:
       /* 23.976 fps */
       this->frame_pts_inc = 3753;
       break;
-      
+
     case 5:
       /* 14.98 fps */
       this->frame_pts_inc = 6006;
       break;
-      
+
     default:
       lprintf("unknown framerate: 0x%02X\n", this->fps);
       this->frame_pts_inc = 90000;
@@ -124,7 +124,7 @@ static void nsv_parse_framerate(demux_nsv_t *this, uint8_t framerate)
     }
   } else
     this->frame_pts_inc = 90000 / this->fps;
-  
+
   lprintf("frame_pts_inc=%d\n", this->frame_pts_inc);
 }
 
@@ -138,7 +138,7 @@ static off_t nsv_read(demux_nsv_t *this, uint8_t *buffer, off_t len) {
 
     int ultravox_rest;
     int buffer_pos = 0;
-    
+
     /* ultravox stuff */
     while (len) {
       ultravox_rest = this->ultravox_size - this->ultravox_pos;
@@ -194,7 +194,7 @@ static off_t nsv_seek(demux_nsv_t *this, off_t offset, int origin) {
     /* ultravox stuff */
     if (origin == SEEK_CUR) {
       uint8_t buffer[1024];
-      
+
       while (offset) {
 	if (offset > sizeof(buffer)) {
 	  if (nsv_read(this, buffer, sizeof(buffer)) != sizeof(buffer))
@@ -221,7 +221,7 @@ static int nsv_resync(demux_nsv_t *this) {
 
   for (i = 0; i < NSV_MAX_RESYNC; i++) {
     uint8_t byte;
-    
+
     if (nsv_read(this, &byte, 1) != 1)
       return NSV_RESYNC_ERROR;
 
@@ -267,11 +267,11 @@ static int open_nsv_file(demux_nsv_t *this) {
 
   while (!NSVs_found) {
     switch (nsv_resync(this)) {
-      
+
     case NSV_RESYNC_NSVf:
       {
 	uint32_t chunk_size;
-	
+
 	/* if there is a NSVs tag, load 24 more header bytes; load starting at
 	 * offset 4 in buffer to keep header data in line with document */
 	if (nsv_read(this, &preview[4], 24) != 24)
@@ -280,20 +280,20 @@ static int open_nsv_file(demux_nsv_t *this) {
 	lprintf("found NSVf chunk\n");
 	/*	this->data_size = _X_LE_32(&preview[8]);*/
 	/*lprintf("data_size: %lld\n", this->data_size);*/
-	
+
 	/* skip the rest of the data */
 	chunk_size = _X_LE_32(&preview[4]);
 	nsv_seek(this, chunk_size - 28, SEEK_CUR);
       }
       break;
-    
+
     case NSV_RESYNC_NSVs:
-      
-      /* fetch the remaining 15 header bytes of the first chunk to get the 
+
+      /* fetch the remaining 15 header bytes of the first chunk to get the
        * relevant information */
       if (nsv_read(this, &preview[4], 15) != 15)
 	return 0;
-      
+
       this->video_fourcc = _X_ME_32(&preview[4]);
       if (_x_is_fourcc(&preview[4], "NONE"))
 	this->video_type = 0;
@@ -303,7 +303,7 @@ static int open_nsv_file(demux_nsv_t *this) {
 	if (!this->video_type)
 	  _x_report_video_fourcc (this->stream->xine, LOG_MODULE, this->video_fourcc);
       }
-      
+
       this->audio_fourcc = _X_ME_32(&preview[8]);
       if (_x_is_fourcc(&preview[8], "NONE"))
 	this->audio_type = 0;
@@ -313,16 +313,16 @@ static int open_nsv_file(demux_nsv_t *this) {
 	if (!this->audio_type)
 	  _x_report_audio_format_tag (this->stream->xine, LOG_MODULE, this->audio_fourcc);
       }
-      
+
       this->bih.biSize = sizeof(this->bih);
       this->bih.biWidth = _X_LE_16(&preview[12]);
       this->bih.biHeight = _X_LE_16(&preview[14]);
       this->bih.biCompression = this->video_fourcc;
       this->video_pts = 0;
-      
+
       /* may not be true, but set it for the time being */
       this->frame_pts_inc = 3003;
-      
+
       lprintf("video: %c%c%c%c, buffer type %08X, %dx%d\n",
 	      preview[4],
 	      preview[5],
@@ -341,10 +341,10 @@ static int open_nsv_file(demux_nsv_t *this) {
       nsv_parse_framerate(this, preview[16]);
       NSVs_found = 1;
       break;
-    
+
     case NSV_RESYNC_ERROR:
       return 0;
-      
+
     }
   }
 
@@ -466,27 +466,27 @@ static int demux_nsv_send_chunk(demux_plugin_t *this_gen) {
   current_file_pos = this->input->get_current_pos(this->input);
 
   lprintf("dispatching video & audio chunks...\n");
-  
+
   if (this->is_first_chunk) {
     chunk_type = NSV_RESYNC_BEEF;
     this->is_first_chunk = 0;
   } else {
     chunk_type = nsv_resync(this);
   }
-  
+
   switch (chunk_type) {
   case NSV_RESYNC_NSVf:
     /* do nothing */
     break;
-    
+
   case NSV_RESYNC_NSVs:
     /* skip header */
     if (nsv_read(this, buffer, 15) != 15)
       return 0;
     nsv_parse_framerate(this, buffer[12]);
-    
+
     /* fall thru */
-    
+
   case NSV_RESYNC_BEEF:
     if (nsv_read(this, buffer, 5) != 5) {
       this->status = DEMUX_FINISHED;
@@ -496,15 +496,15 @@ static int demux_nsv_send_chunk(demux_plugin_t *this_gen) {
     video_size >>= 4;
     video_size &= 0xFFFFF;
     audio_size = _X_LE_16(&buffer[3]);
-    
+
     nsv_parse_payload(this, video_size, audio_size);
     break;
-    
+
   case NSV_RESYNC_ERROR:
     this->status = DEMUX_FINISHED;
     break;
   }
-  
+
   return this->status;
 }
 

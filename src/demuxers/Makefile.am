@@ -12,7 +12,7 @@ AM_LDFLAGS = $(xineplug_ldflags)
 noinst_HEADERS = asfheader.h qtpalette.h group_games.h group_audio.h id3.h ebml.h matroska.h demux_matroska.h iff.h flacutils.h  real_common.h
 
 if ENABLE_ASF
-asf_module = xineplug_dmx_asf.la 
+asf_module = xineplug_dmx_asf.la
 endif
 
 if ENABLE_MNG

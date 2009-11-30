@@ -307,7 +307,7 @@ static int demux_ac3_send_chunk (demux_plugin_t *this_gen) {
     }
   } else {
     buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
-    buf->size = this->input->read(this->input, buf->content, 
+    buf->size = this->input->read(this->input, buf->content,
                                   this->frame_size);
   }
 
@@ -319,7 +319,7 @@ static int demux_ac3_send_chunk (demux_plugin_t *this_gen) {
 
   buf->type = this->buf_type;
   if( this->input->get_length (this->input) )
-    buf->extra_info->input_normpos = (int)( (double) current_stream_pos * 
+    buf->extra_info->input_normpos = (int)( (double) current_stream_pos *
                                      65535 / this->input->get_length (this->input) );
   buf->extra_info->input_time = audio_pts / 90;
   buf->pts = audio_pts;

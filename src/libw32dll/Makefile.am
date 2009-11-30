@@ -5,7 +5,7 @@ AM_CFLAGS   = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_CPPFLAGS = -I$(srcdir)/wine -DWIN32_PATH=\"$(w32_path)\"
 AM_LDFLAGS  = $(xineplug_ldflags)
 
-SUBDIRS = 
+SUBDIRS =
 if ENABLE_W32DLL
 SUBDIRS += wine DirectShow dmo qtx
 endif

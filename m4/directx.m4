@@ -6,7 +6,7 @@ dnl
 dnl
 dnl AM_PATH_DIRECTX([ACTION IF FOUND [, ACTION IF NOT FOUND]]))
 dnl
-dnl It looks for DirectX, defines DIRECTX_CPPFLAGS, DIRECTX_AUDIO_LIBS and 
+dnl It looks for DirectX, defines DIRECTX_CPPFLAGS, DIRECTX_AUDIO_LIBS and
 dnl DIRECTX_VIDEO_LIBS.
 dnl
 AC_DEFUN([AM_PATH_DIRECTX], [

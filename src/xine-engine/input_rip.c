@@ -20,12 +20,12 @@
  * Rip Input Plugin for catching streams
  *
  * It saves raw data into file as go from input plugins.
- * 
+ *
  * Usage:
  *
  * - activation:
  *     xine stream_mrl#save:file.raw
- * 
+ *
  * - it's possible speeder saving streams in the xine without playing:
  *     xine stream_mrl#save:file.raw\;noaudio\;novideo
  */
@@ -96,7 +96,7 @@ static off_t min_off(off_t a, off_t b) {
   return a <= b ? a : b;
 }
 
-/* 
+/*
  * read data from input plugin and write it into file
  */
 static off_t rip_plugin_read(input_plugin_t *this_gen, void *buf_gen, off_t len) {
@@ -125,7 +125,7 @@ static off_t rip_plugin_read(input_plugin_t *this_gen, void *buf_gen, off_t len)
     npreview = 0;
     nread = min_off(this->savepos - this->curpos, len);
   }
-  
+
   /* size to write into file */
   nwrite = len - npreview - nread;
   /* size to read from file */
@@ -151,7 +151,7 @@ static off_t rip_plugin_read(input_plugin_t *this_gen, void *buf_gen, off_t len)
     lprintf("%s => returned %"PRId64"" CLR_RST "\n", retlen == nread_orig + nwrite ? "" : CLR_FAIL, retlen);
 
     if (retlen < 0) {
-      xine_log(this->stream->xine, XINE_LOG_MSG, 
+      xine_log(this->stream->xine, XINE_LOG_MSG,
                _("input_rip: reading by input plugin failed\n"));
       return -1;
     }
@@ -165,10 +165,10 @@ static off_t rip_plugin_read(input_plugin_t *this_gen, void *buf_gen, off_t len)
       }
       this->savepos += nwrite;
       lprintf(" => saved %"PRId64" bytes\n", nwrite);
-    } else 
+    } else
       nwrite = 0;
   }
-  
+
   this->curpos += (npreview + nread + nwrite);
 
   return npreview + nread + nwrite;
@@ -193,7 +193,7 @@ static uint32_t rip_plugin_get_capabilities(input_plugin_t *this_gen) {
   uint32_t caps;
 
   caps = this->main_input_plugin->get_capabilities(this->main_input_plugin);
-  
+
   if (this->regular)
     caps |= INPUT_CAP_SEEKABLE;
 
@@ -201,11 +201,11 @@ static uint32_t rip_plugin_get_capabilities(input_plugin_t *this_gen) {
   return caps;
 }
 
-/* 
+/*
  * read a block of data from input plugin and write it into file
  *
  * This rip plugin returns block unchanged from main input plugin. But special
- * cases are reading over preview or reading already saved data - it returns 
+ * cases are reading over preview or reading already saved data - it returns
  * own allocated block.
  */
 static buf_element_t *rip_plugin_read_block(input_plugin_t *this_gen, fifo_buffer_t *fifo, off_t todo) {
@@ -232,7 +232,7 @@ static buf_element_t *rip_plugin_read_block(input_plugin_t *this_gen, fifo_buffe
     npreview = 0;
     nread = min_off(this->savepos - this->curpos, todo);
   }
-  
+
   /* size to write into file */
   nwrite = todo - npreview - nread;
   /* size to read from file */
@@ -251,7 +251,7 @@ static buf_element_t *rip_plugin_read_block(input_plugin_t *this_gen, fifo_buffe
       lprintf(" => get %"PRId64" bytes from the preview (block)\n", npreview);
       memcpy(buf->content, &this->preview[this->curpos], npreview);
     }
-    
+
     /* re-reading from the file */
     if (nread_file) {
       lprintf(" => read %"PRId64" bytes from the file (block)\n", nread_file);
@@ -288,17 +288,17 @@ static buf_element_t *rip_plugin_read_block(input_plugin_t *this_gen, fifo_buffe
     if (retlen > nread_orig) {
       nwrite = retlen - nread_orig;
       if (fwrite(buf->content + this->savepos - this->curpos, nwrite, 1, this->file) != 1) {
-        xine_log(this->stream->xine, XINE_LOG_MSG, 
+        xine_log(this->stream->xine, XINE_LOG_MSG,
                  _("input_rip: error writing to file %" PRIdMAX " bytes: %s\n"),
                  (intmax_t)(retlen - nread_orig), strerror(errno));
         return NULL;
       }
       this->savepos += nwrite;
       lprintf(" => saved %"PRId64" bytes\n", nwrite);
-    } else 
+    } else
       nwrite = 0;
   }
-  
+
   this->curpos += (npreview + nread + nwrite);
   buf->size = npreview + nread + nwrite;
 
@@ -325,11 +325,11 @@ static off_t rip_seek_original(rip_input_plugin_t *this, off_t reqpos) {
 
   return pos;
 }
- 
+
 /*
  * seek in RIP
- * 
- * If we are seeking back and we can read from saved file, 
+ *
+ * If we are seeking back and we can read from saved file,
  * position of original input plugin isn't changed.
  */
 static off_t rip_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin) {
@@ -341,7 +341,7 @@ static off_t rip_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin)
   double interval = 0;
 
   lprintf("seek, offset %"PRId64", origin %d (curpos %"PRId64", savepos %"PRId64")\n", offset, origin, this->curpos, this->savepos);
-  
+
   switch (origin) {
     case SEEK_SET: newpos = offset; break;
     case SEEK_CUR: newpos = this->curpos + offset; break;
@@ -378,7 +378,7 @@ static off_t rip_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin)
       if ((pos = rip_seek_original(this, reqpos)) == -1) return -1;
       if (pos == reqpos) this->curpos = newpos;
     }
-    
+
     return this->curpos;
   }
 
@@ -395,7 +395,7 @@ static off_t rip_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin)
       if ((pos = rip_seek_original(this, this->savepos)) == -1) return -1;
       if (pos > this->savepos)
         xine_log(this->stream->xine, XINE_LOG_MSG,
-                 _("input_rip: %" PRIdMAX " bytes dropped\n"), 
+                 _("input_rip: %" PRIdMAX " bytes dropped\n"),
                  (intmax_t)(pos - this->savepos));
     }
   }
@@ -427,13 +427,13 @@ static off_t rip_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin)
   }
 
   lprintf(" => new position %"PRId64"\n", this->curpos);
-  
+
   return this->curpos;
 }
 
 static off_t rip_plugin_seek_time(input_plugin_t *this_gen, int time_offset, int origin) {
   rip_input_plugin_t *this = (rip_input_plugin_t *)this_gen;
-  
+
   lprintf("seek_time, time_offset: %d, origin: %d\n", time_offset, origin);
 
   return this->main_input_plugin->seek_time(this->main_input_plugin, time_offset, origin);
@@ -453,13 +453,13 @@ static off_t rip_plugin_get_current_pos(input_plugin_t *this_gen) {
     lprintf(CLR_FAIL "position: computed = %"PRId64", input plugin = %"PRId64"" CLR_RST "\n", this->curpos, pos);
   }
 #endif
-  
+
   return this->curpos;
 }
 
 static int rip_plugin_get_current_time(input_plugin_t *this_gen) {
   rip_input_plugin_t *this = (rip_input_plugin_t *)this_gen;
-  
+
   return this->main_input_plugin->get_current_time(this->main_input_plugin);
 }
 
@@ -486,7 +486,7 @@ static const char* rip_plugin_get_mrl (input_plugin_t *this_gen) {
   return this->main_input_plugin->get_mrl(this->main_input_plugin);
 }
 
-static int rip_plugin_get_optional_data (input_plugin_t *this_gen, 
+static int rip_plugin_get_optional_data (input_plugin_t *this_gen,
 					  void *data, int data_type) {
   rip_input_plugin_t *this = (rip_input_plugin_t *)this_gen;
 
@@ -496,11 +496,11 @@ static int rip_plugin_get_optional_data (input_plugin_t *this_gen,
     return this->preview_size;
   } else
     return this->main_input_plugin->get_optional_data(
-    	this->main_input_plugin, data, data_type);
+	this->main_input_plugin, data, data_type);
 }
 
-/* 
- * dispose main input plugin and self 
+/*
+ * dispose main input plugin and self
  */
 static void rip_plugin_dispose(input_plugin_t *this_gen) {
   rip_input_plugin_t *this = (rip_input_plugin_t *)this_gen;
@@ -542,8 +542,8 @@ static int dir_file_concat(char *target, size_t maxlen, const char *dir, const c
 }
 
 
-/* 
- * create self instance, 
+/*
+ * create self instance,
  * target file for writing stream is specified in 'data'
  */
 input_plugin_t *_x_rip_plugin_get_instance (xine_stream_t *stream, const char *filename) {
@@ -573,7 +573,7 @@ input_plugin_t *_x_rip_plugin_get_instance (xine_stream_t *stream, const char *f
 
 #ifndef SAVING_ALWAYS_PERMIT
   if ( main_plugin->get_capabilities(main_plugin) & INPUT_CAP_RIP_FORBIDDEN ) {
-    xine_log(stream->xine, XINE_LOG_MSG, 
+    xine_log(stream->xine, XINE_LOG_MSG,
 	     _("input_rip: ripping/caching of this source is not permitted!\n"));
     _x_message(stream, XINE_MSG_SECURITY,
 	       _("xine is not allowed to save from this source. (possibly copyrighted material?)"), NULL);
@@ -594,7 +594,7 @@ input_plugin_t *_x_rip_plugin_get_instance (xine_stream_t *stream, const char *f
 
   fnc = strdup(filename);
   target_basename = basename(fnc);
-  dir_file_concat(target, MAX_TARGET_LEN, stream->xine->save_path, 
+  dir_file_concat(target, MAX_TARGET_LEN, stream->xine->save_path,
                   target_basename);
   strcpy(target_no, target);
 
@@ -623,7 +623,7 @@ input_plugin_t *_x_rip_plugin_get_instance (xine_stream_t *stream, const char *f
   lprintf("target file: %s\n", target_no);
 
   if ((this->file = fopen(target_no, mode)) == NULL) {
-    xine_log(this->stream->xine, XINE_LOG_MSG, 
+    xine_log(this->stream->xine, XINE_LOG_MSG,
 	     _("input_rip: error opening file %s: %s\n"), target_no, strerror(errno));
     free(this);
     return NULL;
@@ -641,7 +641,7 @@ input_plugin_t *_x_rip_plugin_get_instance (xine_stream_t *stream, const char *f
       this->preview_size = buf->size;
       this->preview = malloc(this->preview_size);
       memcpy(this->preview, buf->content, this->preview_size);
-    
+
       buf->free_buffer(buf);
     } else {
       this->preview = malloc(MAX_PREVIEW_SIZE);
@@ -653,7 +653,7 @@ input_plugin_t *_x_rip_plugin_get_instance (xine_stream_t *stream, const char *f
 
   if (this->preview && this->preview_size) {
     if (fwrite(this->preview, this->preview_size, 1, this->file) != 1) {
-      xine_log(this->stream->xine, XINE_LOG_MSG, 
+      xine_log(this->stream->xine, XINE_LOG_MSG,
                _("input_rip: error writing to file %" PRIdMAX " bytes: %s\n"),
                (intmax_t)(this->preview_size), strerror(errno));
       fclose(this->file);

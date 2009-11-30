@@ -2,17 +2,17 @@
  * Copyright (C) 2003-2004 the xine project
  *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -75,7 +75,7 @@ vdr_metronom_t;
 typedef struct vdr_osd_s
 {
   xine_osd_t *window;
-  uint8_t    *argb_buffer;  
+  uint8_t    *argb_buffer;
   int         width;
   int         height;
 }
@@ -95,7 +95,7 @@ struct vdr_vpts_offset_s
 struct vdr_input_plugin_s
 {
   input_plugin_t      input_plugin;
-   
+
   xine_stream_t      *stream;
   xine_stream_t      *stream_external;
 
@@ -103,15 +103,15 @@ struct vdr_input_plugin_s
   int                 fh_control;
   int                 fh_result;
   int                 fh_event;
-  
+
   char               *mrl;
 
   off_t               curpos;
   char                seek_buf[ BUF_SIZE ];
-   
+
   char               *preview;
   off_t               preview_size;
-   
+
   enum funcs          cur_func;
   off_t               cur_size;
   off_t               cur_done;
@@ -128,12 +128,12 @@ struct vdr_input_plugin_s
   uint8_t             volume_mode;
   int                 last_volume;
   vdr_frame_size_changed_data_t frame_size;
-  
+
   uint8_t             trick_speed_mode;
   uint8_t             trick_speed_mode_blocked;
   pthread_mutex_t     trick_speed_mode_lock;
   pthread_cond_t      trick_speed_mode_cond;
-  
+
   pthread_t           rpc_thread;
   int                 rpc_thread_shutdown;
   pthread_mutex_t     rpc_thread_shutdown_lock;
@@ -187,7 +187,7 @@ vdr_input_class_t;
 static int vdr_write(int f, void *b, int n)
 {
   int t = 0, r;
-  
+
   while (t < n)
   {
     /*
@@ -206,13 +206,13 @@ static int vdr_write(int f, void *b, int n)
     {
       continue;
     }
-    
+
     if (r < 0)
       return r;
-    
+
     t += r;
   }
-  
+
   return t;
 }
 
@@ -224,7 +224,7 @@ static void event_handler_external(void *user_data, const xine_event_t *event)
 {
   vdr_input_plugin_t *this = (vdr_input_plugin_t *)user_data;
   uint32_t key = key_none;
-/*  
+/*
   printf("event_handler_external(): event->type: %d\n", event->type);
 */
   switch (event->type)
@@ -234,17 +234,17 @@ static void event_handler_external(void *user_data, const xine_event_t *event)
 
   default:
     return;
-  }	
-  
+  }
+
   if (0 != internal_write_event_play_external(this, key))
-    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             _("%s: input event write: %s.\n"), LOG_MODULE, strerror(errno));
 }
 
 static void external_stream_stop(vdr_input_plugin_t *this)
 {
   if (this->stream_external)
-  {    
+  {
     xine_stop(this->stream_external);
     xine_close(this->stream_external);
 
@@ -255,8 +255,8 @@ static void external_stream_stop(vdr_input_plugin_t *this)
     }
 
     _x_demux_flush_engine(this->stream_external);
-    
-    xine_dispose(this->stream_external);    
+
+    xine_dispose(this->stream_external);
     this->stream_external = 0;
   }
 }
@@ -266,7 +266,7 @@ static void external_stream_play(vdr_input_plugin_t *this, char *file_name)
   external_stream_stop(this);
 
   this->stream_external = xine_stream_new(this->stream->xine, this->stream->audio_out, this->stream->video_out);
-  
+
   this->event_queue_external = xine_event_new_queue(this->stream_external);
 
   xine_event_create_listener_thread(this->event_queue_external, event_handler_external, this);
@@ -275,17 +275,17 @@ static void external_stream_play(vdr_input_plugin_t *this, char *file_name)
       || !xine_play(this->stream_external, 0, 0))
   {
     uint32_t key = key_none;
-    
+
     if ( 0 != internal_write_event_play_external(this, key))
-      xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
               _("%s: input event write: %s.\n"), LOG_MODULE, strerror(errno));
   }
 }
 
 static off_t vdr_read_abort(xine_stream_t *stream, int fd, char *buf, off_t todo)
-{  
+{
   off_t ret;
-  
+
   while (1)
   {
     /*
@@ -297,14 +297,14 @@ static off_t vdr_read_abort(xine_stream_t *stream, int fd, char *buf, off_t todo
     pthread_testcancel();
     ret = _x_read_abort(stream, fd, buf, todo);
     pthread_testcancel();
-    
+
     if (ret < 0
         && (errno == EINTR
           || errno == EAGAIN))
     {
       continue;
     }
-    
+
     break;
   }
 
@@ -320,12 +320,12 @@ static off_t vdr_read_abort(xine_stream_t *stream, int fd, char *buf, off_t todo
       return -1; \
     \
     this->cur_size -= n; \
-  } 
+  }
 
 static double _now()
 {
   struct timeval tv;
-  
+
   gettimeofday(&tv, 0);
 
   return (tv.tv_sec * 1000000.0 + tv.tv_usec) / 1000.0;
@@ -333,7 +333,7 @@ static double _now()
 
 static void adjust_zoom(vdr_input_plugin_t *this)
 {
-  pthread_mutex_lock(&this->adjust_zoom_lock); 
+  pthread_mutex_lock(&this->adjust_zoom_lock);
 
   if (this->image4_3_zoom_x && this->image4_3_zoom_y
     && this->image16_9_zoom_x && this->image16_9_zoom_y)
@@ -352,7 +352,7 @@ static void adjust_zoom(vdr_input_plugin_t *this)
     }
   }
 
-  pthread_mutex_unlock(&this->adjust_zoom_lock); 
+  pthread_mutex_unlock(&this->adjust_zoom_lock);
 }
 
 
@@ -382,11 +382,11 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
 {
   data_union_t data_union;
   off_t n;
-   
+
   n = vdr_read_abort(this->stream, this->fh_control, (char *)&data_union, sizeof (data_union.header));
   if (n != sizeof (data_union.header))
     return -1;
-  
+
   this->cur_func = data_union.header.func;
   this->cur_size = data_union.header.len - sizeof (data_union.header);
   this->cur_done = 0;
@@ -406,10 +406,10 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
       LOG_OSD(lprintf("... (%d,%d)-(%d,%d)@(%d,%d)\n", data->x, data->y, data->width, data->height, data->w_ref, data->h_ref));
 
       fprintf(stderr, "vdr: osdnew %d\n", data->window);
-*/    
+*/
       if (data->window >= VDR_MAX_NUM_WINDOWS)
         return -1;
-      
+
       if (0 != this->osd[ data->window ].window)
         return -1;
 
@@ -421,7 +421,7 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
 
       this->osd[ data->window ].width  = data->width;
       this->osd[ data->window ].height = data->height;
-      
+
       if (0 == this->osd[ data->window ].window)
         return -1;
 
@@ -433,12 +433,12 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
   case func_osd_free:
     {
       READ_DATA_OR_FAIL(osd_free, LOG_OSD(lprintf("got OSDFREE\n")));
-/*      
+/*
       fprintf(stderr, "vdr: osdfree %d\n", data->window);
-*/      
+*/
       if (data->window >= VDR_MAX_NUM_WINDOWS)
         return -1;
-      
+
       if (0 != this->osd[ data->window ].window)
         xine_osd_free(this->osd[ data->window ].window);
 
@@ -448,16 +448,16 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
       this->osd[ data->window ].argb_buffer = 0;
     }
     break;
-    
+
   case func_osd_show:
     {
       READ_DATA_OR_FAIL(osd_show, LOG_OSD(lprintf("got OSDSHOW\n")));
-/*      
+/*
       fprintf(stderr, "vdr: osdshow %d\n", data->window);
-*/      
+*/
       if (data->window >= VDR_MAX_NUM_WINDOWS)
         return -1;
-      
+
       if (0 != this->osd[ data->window ].window)
       {
 #ifdef XINE_OSD_CAP_VIDEO_WINDOW
@@ -474,34 +474,34 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
       }
     }
     break;
-    
+
   case func_osd_hide:
     {
       READ_DATA_OR_FAIL(osd_hide, LOG_OSD(lprintf("got OSDHIDE\n")));
-/*      
+/*
       fprintf(stderr, "vdr: osdhide %d\n", data->window);
-*/      
+*/
       if (data->window >= VDR_MAX_NUM_WINDOWS)
         return -1;
-      
+
       if (0 != this->osd[ data->window ].window)
         xine_osd_hide(this->osd[ data->window ].window, 0);
     }
     break;
-    
+
   case func_osd_flush:
     {
       double _t1, _t2;
       int _n = 0;
       int _to = 0;
       int r = 0;
-      
+
       READ_DATA_OR_FAIL(osd_flush, LOG_OSD(lprintf("got OSDFLUSH\n")));
-/*      
+/*
       fprintf(stderr, "vdr: osdflush +\n");
 */
       _t1 = _now();
-      
+
       while ((r = _x_query_unprocessed_osd_events(this->stream)))
       {
         if ((_now() - _t1) > 200)
@@ -509,9 +509,9 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
           _to = 1;
           break;
         }
-/*        
+/*
         fprintf(stderr, "redraw_needed: 1\n");
-*/        
+*/
 /*        sched_yield(); */
         xine_usec_sleep(5000);
         _n++;
@@ -519,57 +519,57 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
 
       _t2 = _now();
       fprintf(stderr, "vdr: osdflush: n: %d, %.1lf, timeout: %d, result: %d\n", _n, _t2 - _t1, _to, r);
-/*      
-      fprintf(stderr, "redraw_needed: 0\n");        
-      
+/*
+      fprintf(stderr, "redraw_needed: 0\n");
+
       fprintf(stderr, "vdr: osdflush -\n");
 */
     }
     break;
-    
+
   case func_osd_set_position:
     {
       READ_DATA_OR_FAIL(osd_set_position, LOG_OSD(lprintf("got OSDSETPOSITION\n")));
 /*
-      fprintf(stderr, "vdr: osdsetposition %d\n", data->window);    
-*/      
+      fprintf(stderr, "vdr: osdsetposition %d\n", data->window);
+*/
       if (data->window >= VDR_MAX_NUM_WINDOWS)
         return -1;
-      
+
       if (0 != this->osd[ data->window ].window)
         xine_osd_set_position(this->osd[ data->window ].window, data->x, data->y);
     }
     break;
-  
+
   case func_osd_draw_bitmap:
     {
       READ_DATA_OR_FAIL(osd_draw_bitmap, LOG_OSD(lprintf("got OSDDRAWBITMAP\n")));
 /*
       fprintf(stderr, "vdr: osddrawbitmap %d, %d, %d, %d, %d, %d\n", data->window, data->x, data->y, data->width, data->height, data->argb);
-*/      
+*/
       if (this->osd_buffer_size < this->cur_size)
       {
         if (this->osd_buffer)
           free(this->osd_buffer);
-        
+
         this->osd_buffer_size = 0;
-        
+
         this->osd_buffer = xine_xmalloc(this->cur_size);
         if (!this->osd_buffer)
           return -1;
-        
+
         this->osd_buffer_size = this->cur_size;
       }
-      
+
       n = vdr_read_abort (this->stream, this->fh_control, (char *)this->osd_buffer, this->cur_size);
       if (n != this->cur_size)
         return -1;
-      
+
       this->cur_size -= n;
-      
+
       if (data->window >= VDR_MAX_NUM_WINDOWS)
         return -1;
-      
+
       if (0 != this->osd[ data->window ].window)
       {
         vdr_osd_t *osd = &this->osd[ data->window ];
@@ -599,7 +599,7 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
               }
             }
           }
-         
+
           xine_osd_set_argb_buffer(osd->window, (uint32_t *)osd->argb_buffer, data->x, data->y, data->width, data->height);
         }
         else
@@ -607,42 +607,42 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
       }
     }
     break;
-    
+
   case func_set_color:
     {
       uint32_t vdr_color[ 256 ];
-      
+
       READ_DATA_OR_FAIL(set_color, lprintf("got SETCOLOR\n"));
-      
+
       if (((data->num + 1) * sizeof (uint32_t)) != this->cur_size)
         return -1;
-      
+
       n = vdr_read_abort (this->stream, this->fh_control, (char *)&vdr_color[ data->index ], this->cur_size);
       if (n != this->cur_size)
         return -1;
-      
+
       this->cur_size -= n;
-      
+
       if (data->window >= VDR_MAX_NUM_WINDOWS)
         return -1;
-      
+
       if (0 != this->osd[ data->window ].window)
       {
         uint32_t color[ 256 ];
         uint8_t trans[ 256 ];
-        
+
         xine_osd_get_palette(this->osd[ data->window ].window, color, trans);
-        
+
         {
           int i;
-          
+
           for (i = data->index; i <= (data->index + data->num); i++)
           {
             int a = (vdr_color[ i ] & 0xff000000) >> 0x18;
             int r = (vdr_color[ i ] & 0x00ff0000) >> 0x10;
             int g = (vdr_color[ i ] & 0x0000ff00) >> 0x08;
             int b = (vdr_color[ i ] & 0x000000ff) >> 0x00;
-            
+
             int y  = (( 66 * r + 129 * g +  25 * b + 128) >> 8) +  16;
             int cr = ((112 * r -  94 * g -  18 * b + 128) >> 8) + 128;
             int cb = ((-38 * r -  74 * g + 112 * b + 128) >> 8) + 128;
@@ -656,7 +656,7 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
             trans[ i ] = a >> 4;
           }
         }
-        
+
         xine_osd_set_palette(this->osd[ data->window ].window, color, trans);
       }
     }
@@ -666,7 +666,7 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
     {
       char file_name[ 1024 ];
       int file_name_len = 0;
-      
+
       READ_DATA_OR_FAIL(play_external, lprintf("got PLAYEXTERNAL\n"));
 
       file_name_len = this->cur_size;
@@ -678,19 +678,19 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
         {
           return -1;
         }
-      
+
         n = vdr_read_abort (this->stream, this->fh_control, file_name, file_name_len);
         if (n != file_name_len)
           return -1;
-      
+
         if (file_name[ file_name_len - 1 ] != '\0')
           return -1;
-      
+
         this->cur_size -= n;
       }
 
       lprintf((file_name_len > 0) ? "----------- play external: %s\n" : "---------- stop external\n", file_name);
-      
+
       if (file_name_len > 0)
         external_stream_play(this, file_name);
       else
@@ -710,13 +710,13 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
         if (!data->s)
         {
           pthread_mutex_lock(&this->find_sync_point_lock);
-          this->find_sync_point = data->i; 
+          this->find_sync_point = data->i;
           pthread_mutex_unlock(&this->find_sync_point_lock);
         }
-/*        
+/*
         if (!this->dont_change_xine_volume)
           xine_set_param(this->stream, XINE_PARAM_AUDIO_VOLUME, 0);
-*/      
+*/
         _x_demux_flush_engine(this->stream);
 /* fprintf(stderr, "=== CLEAR(%d.1)\n", data->n); */
         _x_demux_control_start(this->stream);
@@ -731,7 +731,7 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
 
         _x_trigger_relaxed_frame_drop_mode(this->stream);
 /*        _x_reset_relaxed_frame_drop_mode(this->stream); */
-/*      
+/*
         if (!this->dont_change_xine_volume)
           xine_set_param(this->stream, XINE_PARAM_AUDIO_VOLUME, this->last_volume);
 */
@@ -764,7 +764,7 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
       READ_DATA_OR_FAIL(set_video_window, lprintf("got SET VIDEO WINDOW\n"));
 /*
       fprintf(stderr, "svw: (%d, %d)x(%d, %d), (%d, %d)\n", data->x, data->y, data->w, data->h, data->wRef, data->hRef);
-*/    
+*/
       {
         xine_event_t event;
 
@@ -772,44 +772,44 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
           || data->y != 0
           || data->w != data->w_ref
           || data->h != data->h_ref);
-        
+
         this->video_window_event_data.x = data->x;
         this->video_window_event_data.y = data->y;
         this->video_window_event_data.w = data->w;
         this->video_window_event_data.h = data->h;
         this->video_window_event_data.w_ref = data->w_ref;
         this->video_window_event_data.h_ref = data->h_ref;
-        
+
         event.type = XINE_EVENT_VDR_SETVIDEOWINDOW;
         event.data = &this->video_window_event_data;
         event.data_length = sizeof (this->video_window_event_data);
-        
+
         xine_event_send(this->stream, &event);
       }
     }
     break;
-    
+
   case func_select_audio:
     {
       READ_DATA_OR_FAIL(select_audio, lprintf("got SELECT AUDIO\n"));
 
       this->audio_channels = data->channels;
-      
+
       {
         xine_event_t event;
         vdr_select_audio_data_t event_data;
-        
+
         event_data.channels = this->audio_channels;
-        
+
         event.type = XINE_EVENT_VDR_SELECTAUDIO;
         event.data = &event_data;
         event.data_length = sizeof (event_data);
-        
+
         xine_event_send(this->stream, &event);
       }
     }
     break;
-    
+
   case func_trick_speed_mode:
     {
       READ_DATA_OR_FAIL(trick_speed_mode, lprintf("got TRICK SPEED MODE\n"));
@@ -824,12 +824,12 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
         this->trick_speed_mode = data->on;
 
         pthread_mutex_unlock(&this->trick_speed_mode_lock);
-      
+
         _x_demux_seek(this->stream, 0, 0, 0);
 
         {
           xine_event_t event;
-        
+
           event.type = XINE_EVENT_VDR_TRICKSPEEDMODE;
           event.data = 0;
           event.data_length = 0; /* this->trick_speed_mode; */
@@ -839,7 +839,7 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
       }
     }
     break;
-    
+
   case func_flush:
     {
       READ_DATA_OR_FAIL(flush, lprintf("got FLUSH\n"));
@@ -854,31 +854,31 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
             xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("%s: buffer_pool_alloc() failed!\n"), LOG_MODULE);
             return -1;
           }
-          
+
           buf->type = BUF_CONTROL_FLUSH_DECODER;
-          
+
           this->stream->video_fifo->put(this->stream->video_fifo, buf);
         }
       }
-      
+
       {
         double _t1, _t2;
         int _n = 0;
-        
+
         int vb = -1, ab = -1, vf = -1, af = -1;
-        
+
         uint8_t timed_out = 0;
-        
+
         struct timeval now, then;
-        
+
         if (data->ms_timeout >= 0)
         {
           gettimeofday(&now, 0);
-          
+
           then = now;
           then.tv_usec += (data->ms_timeout % 1000) * 1000;
           then.tv_sec  += (data->ms_timeout / 1000);
-          
+
           if (then.tv_usec >= 1000000)
           {
             then.tv_usec -= 1000000;
@@ -892,45 +892,45 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
         }
 
         _t1 = _now();
-        
+
         while (1)
         {
           _x_query_buffer_usage(this->stream, &vb, &ab, &vf, &af);
-          
+
           if (vb <= 0 && ab <= 0 && vf <= 0 && af <= 0)
             break;
-          
+
           if (data->ms_timeout >= 0
               && timercmp(&now, &then, >=))
           {
             timed_out++;
             break;
           }
-          
+
 /*          sched_yield(); */
           xine_usec_sleep(5000);
           _n++;
-          
+
           if (data->ms_timeout >= 0)
-            gettimeofday(&now, 0);          
+            gettimeofday(&now, 0);
         }
 
         _t2 = _now();
         /* fprintf(stderr, "vdr: flush: n: %d, %.1lf\n", _n, _t2 - _t1); */
-        
+
         xprintf(this->stream->xine
                 , XINE_VERBOSITY_LOG
                 , _("%s: flush buffers (vb: %d, ab: %d, vf: %d, af: %d) %s.\n")
                 , LOG_MODULE, vb, ab, vf, af
                 , (timed_out ? "timed out" : "done"));
-        
+
         {
           result_flush_t result_flush;
           result_flush.header.func = data->header.func;
           result_flush.header.len = sizeof (result_flush);
-          
+
           result_flush.timed_out = timed_out;
-          
+
           if (sizeof (result_flush) != vdr_write(this->fh_result, &result_flush, sizeof (result_flush)))
             return -1;
         }
@@ -942,7 +942,7 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
     {
       READ_DATA_OR_FAIL(mute, lprintf("got MUTE\n"));
 
-      { 
+      {
         int param_mute = (this->volume_mode == XINE_VDR_VOLUME_CHANGE_SW) ? XINE_PARAM_AUDIO_AMP_MUTE : XINE_PARAM_AUDIO_MUTE;
         xine_set_param(this->stream, param_mute, data->mute);
       }
@@ -962,7 +962,7 @@ t0 = _now();
 
         int param_mute   = (this->volume_mode == XINE_VDR_VOLUME_CHANGE_SW) ? XINE_PARAM_AUDIO_AMP_MUTE  : XINE_PARAM_AUDIO_MUTE;
         int param_volume = (this->volume_mode == XINE_VDR_VOLUME_CHANGE_SW) ? XINE_PARAM_AUDIO_AMP_LEVEL : XINE_PARAM_AUDIO_VOLUME;
-        
+
         this->last_volume = data->volume;
 
         if (do_mute || do_unmute)
@@ -972,7 +972,7 @@ t0 = _now();
           case XINE_VDR_MUTE_EXECUTE:
             report_change = 1;
             xine_set_param(this->stream, param_mute, do_mute);
-            
+
           case XINE_VDR_MUTE_IGNORE:
             if (do_mute)
               change_volume = 0;
@@ -987,7 +987,7 @@ t0 = _now();
           };
         }
 t1 = _now();
-        
+
         if (change_volume)
         {
           report_change = 1;
@@ -999,18 +999,18 @@ t2 = _now();
         {
           xine_event_t            event;
           xine_audio_level_data_t data;
-          
+
           data.left
             = data.right
             = xine_get_param(this->stream, param_volume);
           data.mute
             = xine_get_param(this->stream, param_mute);
 t3 = _now();
-          
+
           event.type        = XINE_EVENT_AUDIO_LEVEL;
           event.data        = &data;
           event.data_length = sizeof (data);
-          
+
           xine_event_send(this->stream, &event);
         }
       }
@@ -1021,9 +1021,9 @@ t3 = _now();
   case func_set_speed:
     {
       READ_DATA_OR_FAIL(set_speed, lprintf("got SETSPEED\n"));
-      
+
       lprintf("... got SETSPEED %d\n", data->speed);
-      
+
       if (data->speed != xine_get_param(this->stream, XINE_PARAM_FINE_SPEED))
         xine_set_param(this->stream, XINE_PARAM_FINE_SPEED, data->speed);
     }
@@ -1044,7 +1044,7 @@ t3 = _now();
       _x_demux_control_newpts(this->stream, data->pts, data->flags);
     }
     break;
-    
+
   case func_start:
     {
       READ_DATA_OR_FAIL(start, lprintf("got START\n"));
@@ -1062,7 +1062,7 @@ t3 = _now();
         result_wait_t result_wait;
         result_wait.header.func = data->header.func;
         result_wait.header.len = sizeof (result_wait);
-          
+
         if (sizeof (result_wait) != vdr_write(this->fh_result, &result_wait, sizeof (result_wait)))
           return -1;
 
@@ -1097,7 +1097,7 @@ t3 = _now();
 
         xine_current_frame_data_t frame_data;
         memset(&frame_data, 0, sizeof (frame_data));
-        
+
         if (xine_get_current_frame_data(this->stream, &frame_data, XINE_FRAME_DATA_ALLOCATE_IMG))
         {
           if (frame_data.ratio_code == XINE_VO_ASPECT_SQUARE)
@@ -1112,12 +1112,12 @@ t3 = _now();
 
         if (!frame_data.img)
           memset(&frame_data, 0, sizeof (frame_data));
-       
+
         {
           result_grab_image_t result_grab_image;
           result_grab_image.header.func = data->header.func;
           result_grab_image.header.len = sizeof (result_grab_image) + frame_data.img_size;
-          
+
           result_grab_image.width       = frame_data.width;
           result_grab_image.height      = frame_data.height;
           result_grab_image.ratio       = frame_data.ratio_code;
@@ -1127,22 +1127,22 @@ t3 = _now();
           result_grab_image.crop_right  = frame_data.crop_right;
           result_grab_image.crop_top    = frame_data.crop_top;
           result_grab_image.crop_bottom = frame_data.crop_bottom;
-          
+
           if (sizeof (result_grab_image) == vdr_write(this->fh_result, &result_grab_image, sizeof (result_grab_image)))
           {
             if (!frame_data.img_size || (frame_data.img_size == vdr_write(this->fh_result, frame_data.img, frame_data.img_size)))
               ret_val = 0;
           }
         }
-        
+
         free(frame_data.img);
-        
+
         if (ret_val != 0)
           return ret_val;
       }
     }
     break;
-    
+
   case func_get_pts:
     {
       READ_DATA_OR_FAIL(get_pts, lprintf("got GETPTS\n"));
@@ -1164,25 +1164,25 @@ t3 = _now();
           {
             struct timeval now;
             gettimeofday(&now, 0);
-        
+
             abstime.tv_sec = now.tv_sec + data->ms_timeout / 1000;
             abstime.tv_nsec = now.tv_usec * 1000 + (data->ms_timeout % 1000) * 1e6;
-        
+
             if (abstime.tv_nsec > 1e9)
             {
               abstime.tv_nsec -= 1e9;
               abstime.tv_sec++;
             }
           }
-     
+
           while (this->last_disc_type == DISC_STREAMSTART
             || this->vpts_offset_queue_changes)
-          { 
+          {
             if (0 != pthread_cond_timedwait(&this->vpts_offset_queue_changed_cond, &this->vpts_offset_queue_lock, &abstime))
               break;
           }
         }
-         
+
         if (this->last_disc_type == DISC_STREAMSTART
           || this->vpts_offset_queue_changes)
         {
@@ -1219,7 +1219,7 @@ fprintf(stderr, "C =============================================\n");
         }
 
         pthread_mutex_unlock(&this->vpts_offset_queue_lock);
- 
+
         if (sizeof (result_get_pts) != vdr_write(this->fh_result, &result_get_pts, sizeof (result_get_pts)))
           return -1;
       }
@@ -1229,14 +1229,14 @@ fprintf(stderr, "C =============================================\n");
   case func_get_version:
     {
       READ_DATA_OR_FAIL(get_version, lprintf("got GETVERSION\n"));
-      
+
       {
         result_get_version_t result_get_version;
         result_get_version.header.func = data->header.func;
         result_get_version.header.len = sizeof (result_get_version);
-        
+
         result_get_version.version = XINE_VDR_VERSION;
-        
+
         if (sizeof (result_get_version) != vdr_write(this->fh_result, &result_get_version, sizeof (result_get_version)))
           return -1;
       }
@@ -1249,19 +1249,19 @@ fprintf(stderr, "C =============================================\n");
 
       {
         int format;
-        
+
         result_video_size_t result_video_size;
         result_video_size.header.func = data->header.func;
         result_video_size.header.len = sizeof (result_video_size);
-        
+
         result_video_size.top    = -1;
         result_video_size.left   = -1;
         result_video_size.width  = -1;
         result_video_size.height = -1;
         result_video_size.ratio  = 0;
-        
+
         xine_get_current_frame(this->stream, &result_video_size.width, &result_video_size.height, &result_video_size.ratio, &format, 0);
-        
+
         if (result_video_size.ratio == XINE_VO_ASPECT_SQUARE)
           result_video_size.ratio = 10000;
         else if (result_video_size.ratio == XINE_VO_ASPECT_4_3)
@@ -1270,7 +1270,7 @@ fprintf(stderr, "C =============================================\n");
           result_video_size.ratio = 17778;
         else if (result_video_size.ratio == XINE_VO_ASPECT_DVB)
           result_video_size.ratio = 21100;
-        
+
         if (0 != this->frame_size.x
             || 0 != this->frame_size.y
             || 0 != this->frame_size.w
@@ -1296,7 +1296,7 @@ fprintf(stderr, "C =============================================\n");
     {
       double _t1, _t2;
       int _n = 0;
-      
+
       READ_DATA_OR_FAIL(reset_audio, lprintf("got RESET AUDIO\n"));
 
       if (this->stream->audio_fifo)
@@ -1305,13 +1305,13 @@ fprintf(stderr, "C =============================================\n");
         xine_set_param(this->stream, XINE_PARAM_AUDIO_CHANNEL_LOGICAL, -2);
 
         _t1 = _now();
-        
+
         while (1)
         {
           int n = xine_get_stream_info(this->stream, XINE_STREAM_INFO_MAX_AUDIO_CHANNEL);
           if (n <= 0)
             break;
-          
+
           /* keep the decoder running */
           if (this->stream->audio_fifo)
           {
@@ -1321,12 +1321,12 @@ fprintf(stderr, "C =============================================\n");
               xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("%s: buffer_pool_alloc() failed!\n"), LOG_MODULE);
               return -1;
             }
-            
+
             buf->type = BUF_CONTROL_RESET_TRACK_MAP;
-            
+
             this->stream->audio_fifo->put(this->stream->audio_fifo, buf);
           }
-          
+
 /*          sched_yield(); */
           xine_usec_sleep(5000);
           _n++;
@@ -1334,7 +1334,7 @@ fprintf(stderr, "C =============================================\n");
 
         _t2 = _now();
         /* fprintf(stderr, "vdr: reset_audio: n: %d, %.1lf\n", _n, _t2 - _t1); */
-        
+
         xine_set_param(this->stream, XINE_PARAM_AUDIO_CHANNEL_LOGICAL, -1);
 
         _x_stream_info_reset(this->stream, XINE_STREAM_INFO_AUDIO_BITRATE);
@@ -1344,22 +1344,22 @@ fprintf(stderr, "C =============================================\n");
       }
     }
     break;
-    
+
   case func_query_capabilities:
     {
       READ_DATA_OR_FAIL(query_capabilities, lprintf("got QUERYCAPABILITIES\n"));
-      
+
       {
         result_query_capabilities_t result_query_capabilities;
         result_query_capabilities.header.func = data->header.func;
         result_query_capabilities.header.len = sizeof (result_query_capabilities);
-        
+
         result_query_capabilities.osd_max_num_windows = MAX_SHOWING;
         result_query_capabilities.osd_palette_max_depth = 8;
         result_query_capabilities.osd_palette_is_shared = 0;
         result_query_capabilities.osd_supports_argb_layer = this->osd_supports_argb_layer;
         result_query_capabilities.osd_supports_custom_extent = this->osd_supports_custom_extent;
-        
+
         if (sizeof (result_query_capabilities) != vdr_write(this->fh_result, &result_query_capabilities, sizeof (result_query_capabilities)))
           return -1;
       }
@@ -1369,13 +1369,13 @@ fprintf(stderr, "C =============================================\n");
   default:
     lprintf("unknown function: %d\n", this->cur_func);
   }
-    
+
   if (this->cur_size != this->cur_done)
   {
     off_t skip = this->cur_size - this->cur_done;
 
     lprintf("func: %d, skipping: %lld\n", this->cur_func, skip);
-     
+
     while (skip > BUF_SIZE)
     {
       n = vdr_read_abort(this->stream, this->fh_control, this->seek_buf, BUF_SIZE);
@@ -1403,14 +1403,14 @@ static void *vdr_rpc_thread_loop(void *arg)
   int frontend_lock_failures = 0;
   int failed = 0;
   int was_startup_phase = this->startup_phase;
-  
+
   while (!failed
     && !this->rpc_thread_shutdown
     && was_startup_phase == this->startup_phase)
   {
     struct timeval timeout;
     fd_set rset;
-  
+
     FD_ZERO(&rset);
     FD_SET(this->fh_control, &rset);
 
@@ -1455,10 +1455,10 @@ static void *vdr_rpc_thread_loop(void *arg)
   /* close control and result channel here to have vdr-xine initiate a disconnect for the above error case ... */
   close(this->fh_control);
   this->fh_control = -1;
-  
+
   close(this->fh_result);
   this->fh_result = -1;
-  
+
   xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
           LOG_MODULE ": rpc thread done.\n");
 
@@ -1466,7 +1466,7 @@ static void *vdr_rpc_thread_loop(void *arg)
   this->rpc_thread_shutdown = -1;
   pthread_cond_broadcast(&this->rpc_thread_shutdown_cond);
   pthread_mutex_unlock(&this->rpc_thread_shutdown_lock);
-  
+
   return 0;
 }
 
@@ -1480,7 +1480,7 @@ static int internal_write_event_key(vdr_input_plugin_t *this, uint32_t key)
 
   if (sizeof (event) != vdr_write(this->fh_event, &event, sizeof (event)))
     return -1;
-  
+
   return 0;
 }
 
@@ -1499,7 +1499,7 @@ static int internal_write_event_frame_size(vdr_input_plugin_t *this)
 
   if (sizeof (event) != vdr_write(this->fh_event, &event, sizeof (event)))
     return -1;
-  
+
   return 0;
 }
 
@@ -1513,7 +1513,7 @@ static int internal_write_event_play_external(vdr_input_plugin_t *this, uint32_t
 
   if (sizeof (event) != vdr_write(this->fh_event, &event, sizeof (event)))
     return -1;
-  
+
   return 0;
 }
 
@@ -1527,19 +1527,19 @@ static int internal_write_event_discontinuity(vdr_input_plugin_t *this, int32_t 
 
   if (sizeof (event) != vdr_write(this->fh_event, &event, sizeof (event)))
     return -1;
-  
+
   return 0;
 }
 
-static off_t vdr_plugin_read(input_plugin_t *this_gen, 
+static off_t vdr_plugin_read(input_plugin_t *this_gen,
                              void *buf_gen, off_t len)
 {
   vdr_input_plugin_t  *this = (vdr_input_plugin_t *) this_gen;
   uint8_t *buf = (uint8_t *)buf_gen;
   off_t n, total;
-#ifdef LOG_READ   
+#ifdef LOG_READ
   lprintf ("reading %lld bytes...\n", len);
-#endif   
+#endif
   total=0;
   if (this->curpos < this->preview_size)
   {
@@ -1554,7 +1554,7 @@ static off_t vdr_plugin_read(input_plugin_t *this_gen,
     this->curpos += n;
     total += n;
   }
-   
+
   if( (len-total) > 0 )
   {
     int retries = 0;
@@ -1568,7 +1568,7 @@ static off_t vdr_plugin_read(input_plugin_t *this_gen,
            && !this->stream_external
            && _x_continue_stream_processing(this->stream)
            && 200 > retries++); /* 200 * 50ms */
-#ifdef LOG_READ      
+#ifdef LOG_READ
     lprintf ("got %lld bytes (%lld/%lld bytes read)\n",
             n,total,len);
 #endif
@@ -1586,7 +1586,7 @@ static off_t vdr_plugin_read(input_plugin_t *this_gen,
     && total == 6)
   {
     pthread_mutex_lock(&this->find_sync_point_lock);
-    
+
     while (this->find_sync_point
       && total == 6
       && buf[0] == 0x00
@@ -1613,7 +1613,7 @@ static off_t vdr_plugin_read(input_plugin_t *this_gen,
       {
         break;
       }
-    
+
       l = buf[4] * 256 + buf[5];
       if (l <= 0)
          break;
@@ -1631,7 +1631,7 @@ static off_t vdr_plugin_read(input_plugin_t *this_gen,
   return total;
 }
 
-static buf_element_t *vdr_plugin_read_block(input_plugin_t *this_gen, fifo_buffer_t *fifo, 
+static buf_element_t *vdr_plugin_read_block(input_plugin_t *this_gen, fifo_buffer_t *fifo,
                                             off_t todo)
 {
   off_t          total_bytes;
@@ -1678,7 +1678,7 @@ static off_t vdr_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin)
   {
     if (offset < this->curpos)
     {
-      if (this->curpos <= this->preview_size) 
+      if (this->curpos <= this->preview_size)
         this->curpos = offset;
       else
         lprintf("cannot seek back! (%lld > %lld)\n", this->curpos, offset);
@@ -1751,30 +1751,30 @@ static void vdr_plugin_dispose(input_plugin_t *this_gen)
     if (this->rpc_thread_shutdown > -1)
     {
       this->rpc_thread_shutdown = 1;
-      
+
       {
         struct timeval now;
         gettimeofday(&now, 0);
-        
+
         abstime.tv_sec = now.tv_sec + ms_to_time_out / 1000;
         abstime.tv_nsec = now.tv_usec * 1000 + (ms_to_time_out % 1000) * 1e6;
-        
+
         if (abstime.tv_nsec > 1e9)
         {
           abstime.tv_nsec -= 1e9;
           abstime.tv_sec++;
         }
       }
-      
+
       if (0 != pthread_cond_timedwait(&this->rpc_thread_shutdown_cond, &this->rpc_thread_shutdown_lock, &abstime))
       {
         xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("%s: cancelling rpc thread in function %d...\n"), LOG_MODULE, this->cur_func);
         pthread_cancel(this->rpc_thread);
       }
     }
-    
+
     pthread_mutex_unlock(&this->rpc_thread_shutdown_lock);
-    
+
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("%s: joining rpc thread ...\n"), LOG_MODULE);
     pthread_join(this->rpc_thread, 0);
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("%s: rpc thread joined.\n"), LOG_MODULE);
@@ -1817,16 +1817,16 @@ static void vdr_plugin_dispose(input_plugin_t *this_gen)
 
   pthread_mutex_destroy(&this->find_sync_point_lock);
   pthread_mutex_destroy(&this->adjust_zoom_lock);
-  
+
   if (this->fh_result != -1)
     close(this->fh_result);
-  
+
   if (this->fh_control != -1)
     close(this->fh_control);
 
   if (this->fh_event != -1)
     close(this->fh_event);
-  
+
   for (i = 0; i < VDR_MAX_NUM_WINDOWS; i++)
   {
     if (0 == this->osd[ i ].window)
@@ -1840,7 +1840,7 @@ static void vdr_plugin_dispose(input_plugin_t *this_gen)
 
   if (this->osd_buffer)
     free(this->osd_buffer);
-  
+
   if ((this->fh != STDIN_FILENO) && (this->fh != -1))
     close(this->fh);
 
@@ -1856,7 +1856,7 @@ static void vdr_plugin_dispose(input_plugin_t *this_gen)
   free(this);
 }
 
-static int vdr_plugin_get_optional_data(input_plugin_t *this_gen, 
+static int vdr_plugin_get_optional_data(input_plugin_t *this_gen,
                                         void *data, int data_type)
 {
   vdr_input_plugin_t *this = (vdr_input_plugin_t *)this_gen;
@@ -1995,7 +1995,7 @@ static int vdr_plugin_open_fifo_mrl(input_plugin_t *this_gen)
 
     free(filename_event);
   }
- 
+
   free (filename);
   return 1;
 }
@@ -2033,7 +2033,7 @@ static int vdr_plugin_open_socket(vdr_input_plugin_t *this, struct hostent *host
           _("%s: socket opening (port %d) successful, fd = %d\n"), LOG_MODULE, port, fd);
 
   return fd;
-}    
+}
 
 static int vdr_plugin_open_sockets(vdr_input_plugin_t *this)
 {
@@ -2056,8 +2056,8 @@ static int vdr_plugin_open_sockets(vdr_input_plugin_t *this)
   }
 
   host = gethostbyname(mrl_host);
- 
-  xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+
+  xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
           _("%s: connecting to vdr.\n"), LOG_MODULE);
 
   if (!host)
@@ -2073,9 +2073,9 @@ static int vdr_plugin_open_sockets(vdr_input_plugin_t *this)
 
   if ((this->fh = vdr_plugin_open_socket(this, host, port + 0)) == -1)
     return 0;
-  
+
   fcntl(this->fh, F_SETFL, ~O_NONBLOCK & fcntl(this->fh, F_GETFL, 0));
-  
+
   if ((this->fh_control = vdr_plugin_open_socket(this, host, port + 1)) == -1)
     return 0;
 
@@ -2096,10 +2096,10 @@ static int vdr_plugin_open_socket_mrl(input_plugin_t *this_gen)
   vdr_input_plugin_t *this = (vdr_input_plugin_t *)this_gen;
 
   lprintf("input_vdr: connecting to vdr-xine-server...\n");
- 
+
   if (!vdr_plugin_open_sockets(this))
     return 0;
-   
+
   return 1;
 }
 
@@ -2131,14 +2131,14 @@ static void *vdr_metronom_thread_loop(void *arg)
 
   return 0;
 }
- 
+
 static int vdr_plugin_open(input_plugin_t *this_gen)
 {
   vdr_input_plugin_t *this = (vdr_input_plugin_t *)this_gen;
 
   lprintf("trying to open '%s'...\n", this->mrl);
 
-  if (this->fh == -1) 
+  if (this->fh == -1)
   {
     int err = 0;
 
@@ -2154,7 +2154,7 @@ static int vdr_plugin_open(input_plugin_t *this_gen)
     }
     else
     {
-      xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
               _("%s: MRL (%s) invalid! MRL should start with vdr://path/to/fifo/stream or netvdr://host:port where ':port' is optional.\n"), LOG_MODULE,
               strerror(err));
       return 0;
@@ -2163,10 +2163,10 @@ static int vdr_plugin_open(input_plugin_t *this_gen)
     if ((err = pthread_create(&this->metronom_thread, NULL,
                               vdr_metronom_thread_loop, (void *)this)) != 0)
     {
-      xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
               _("%s: can't create new thread (%s)\n"), LOG_MODULE,
               strerror(err));
-      
+
       return 0;
     }
 
@@ -2180,10 +2180,10 @@ static int vdr_plugin_open(input_plugin_t *this_gen)
     if ((err = pthread_create(&this->rpc_thread, NULL,
                               vdr_rpc_thread_loop, (void *)this)) != 0)
     {
-      xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
               _("%s: can't create new thread (%s)\n"), LOG_MODULE,
               strerror(err));
-      
+
       return 0;
     }
   }
@@ -2213,7 +2213,7 @@ static void event_handler(void *user_data, const xine_event_t *event)
     memcpy(&this->frame_size, event->data, event->data_length);
 
     if (0 != internal_write_event_frame_size(this))
-      xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
               _("%s: input event write: %s.\n"), LOG_MODULE, strerror(errno));
 
     adjust_zoom(this);
@@ -2223,7 +2223,7 @@ static void event_handler(void *user_data, const xine_event_t *event)
   if (XINE_EVENT_VDR_DISCONTINUITY == event->type)
   {
     if (0 != internal_write_event_discontinuity(this, event->data_length))
-      xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
               _("%s: input event write: %s.\n"), LOG_MODULE, strerror(errno));
 
     return;
@@ -2234,7 +2234,7 @@ static void event_handler(void *user_data, const xine_event_t *event)
     if (0 == event->data_length) /* vdr_video */
     {
       xine_event_t event;
-        
+
       event.type = XINE_EVENT_VDR_TRICKSPEEDMODE;
       event.data = 0;
       event.data_length = 0; /* this->trick_speed_mode; */
@@ -2245,13 +2245,13 @@ static void event_handler(void *user_data, const xine_event_t *event)
     {
       xine_event_t event;
       vdr_select_audio_data_t event_data;
-        
+
       event_data.channels = this->audio_channels;
-        
+
       event.type = XINE_EVENT_VDR_SELECTAUDIO;
       event.data = &event_data;
       event.data_length = sizeof (event_data);
-        
+
       xine_event_send(this->stream, &event);
     }
     else
@@ -2323,7 +2323,7 @@ static void event_handler(void *user_data, const xine_event_t *event)
   }
 
   if (0 != internal_write_event_key(this, key))
-    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             _("%s: input event write: %s.\n"), LOG_MODULE, strerror(errno));
 }
 
@@ -2398,7 +2398,7 @@ fprintf(stderr, "B =============================================\n");
   if (!this->trick_speed_mode)
   {
     xine_event_t event;
-        
+
     event.type = XINE_EVENT_VDR_DISCONTINUITY;
     event.data = 0;
     event.data_length = type;
@@ -2527,7 +2527,7 @@ static void vdr_metronom_got_video_frame(metronom_t *self, vo_frame_t *frame)
       pthread_cond_broadcast(&this->input->metronom_thread_request_cond);
       pthread_mutex_unlock(&this->input->metronom_thread_lock);
 
-      vdr_metronom_handle_video_discontinuity_impl(self, DISC_ABSOLUTE, frame->pts);    
+      vdr_metronom_handle_video_discontinuity_impl(self, DISC_ABSOLUTE, frame->pts);
 
       pthread_mutex_lock(&this->input->metronom_thread_lock);
       if (!this->input->metronom_thread_reply)
@@ -2663,7 +2663,7 @@ static input_plugin_t *vdr_class_get_instance(input_class_t *cls_gen, xine_strea
   this->frame_size.w            = 0;
   this->frame_size.h            = 0;
   this->frame_size.r            = 0;
-  
+
   this->stream_external      = 0;
   this->event_queue_external = 0;
 
@@ -2677,7 +2677,7 @@ static input_plugin_t *vdr_class_get_instance(input_class_t *cls_gen, xine_strea
   pthread_cond_init(&this->metronom_thread_request_cond, 0);
   pthread_cond_init(&this->metronom_thread_reply_cond, 0);
   pthread_mutex_init(&this->metronom_thread_call_lock, 0);
-   
+
   pthread_mutex_init(&this->find_sync_point_lock, 0);
   pthread_mutex_init(&this->adjust_zoom_lock, 0);
   this->image4_3_zoom_x  = 0;
@@ -2725,11 +2725,11 @@ static char **vdr_class_get_autoplay_list(input_class_t *this_gen,
 void *vdr_input_init_plugin(xine_t *xine, void *data)
 {
   vdr_input_class_t *this;
-  
+
   lprintf("init_class\n");
-  
+
   this = (vdr_input_class_t *)xine_xmalloc(sizeof (vdr_input_class_t));
-  
+
   this->xine = xine;
 
   this->mrls[ 0 ] = "vdr:/" VDR_ABS_FIFO_DIR "/stream#demux:mpeg_pes";

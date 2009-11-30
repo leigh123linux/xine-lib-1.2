@@ -78,7 +78,7 @@ static const demuxer_info_t demux_info_vmd = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_DEMUX, 27, "wve",      XINE_VERSION_CODE, &demux_info_eawve,    demux_eawve_init_plugin},
   { PLUGIN_DEMUX, 27, "idcin",    XINE_VERSION_CODE, &demux_info_idcin,    demux_idcin_init_plugin },
   { PLUGIN_DEMUX, 27, "ipmovie",  XINE_VERSION_CODE, &demux_info_ipmovie,  demux_ipmovie_init_plugin },

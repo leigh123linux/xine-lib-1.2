@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * Platform dependent types needed by public xine.h. 
+ * Platform dependent types needed by public xine.h.
  * Types not needed by xine.h are specified in os_internal.h.
  *
  * Heavily based on os_types.h from OggVorbis (BSD License),
@@ -97,7 +97,7 @@
 
 #else
 
-  /* 
+  /*
    * CygWin: _WIN32 & __GNUC__
    * BeOS:   __BEOS__
    * Linux, Solaris, Mac and others

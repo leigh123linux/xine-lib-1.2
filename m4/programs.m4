@@ -4,7 +4,7 @@ dnl Validate the GMSGFMT program found by gettext.m4; reject old versions
 dnl of GNU msgfmt that do not support the "msgid_plural" extension.
 AC_DEFUN([AC_PROG_GMSGFMT_PLURAL],
  [dnl AC_REQUIRE(AM_GNU_GETTEXT)
-  
+
   if test "$GMSGFMT" != ":"; then
     AC_MSG_CHECKING([for plural forms in GNU msgfmt])
 
@@ -112,7 +112,7 @@ _ACEOF
 	      AC_MSG_RESULT(no)
             fi
 	  fi
-        fi 
+        fi
       else
         AC_MSG_RESULT(no)
       fi

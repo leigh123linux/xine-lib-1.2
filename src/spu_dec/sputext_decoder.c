@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -173,7 +173,7 @@ typedef struct sputext_decoder_s {
   int64_t            img_duration;
   int64_t            last_subtitle_end; /* no new subtitle before this vpts */
   int                unscaled;          /* use unscaled OSD */
-  
+
   int                last_y;            /* location of the previous subtitle */
   int                last_lines;        /* number of lines of the previous subtitle */
   video2wnd_t        video2wnd;
@@ -194,7 +194,7 @@ static void update_font_size (sputext_decoder_t *this, int force_update) {
   if ((this->subtitle_size != this->class->subtitle_size) ||
       (this->vertical_offset != this->class->vertical_offset) ||
       force_update) {
-  
+
     this->subtitle_size = this->class->subtitle_size;
     this->vertical_offset = this->class->vertical_offset;
     this->last_lines = 0;
@@ -207,7 +207,7 @@ static void update_font_size (sputext_decoder_t *this, int force_update) {
     if( this->osd )
       this->renderer->free_object (this->osd);
 
-    this->osd = this->renderer->new_object (this->renderer, 
+    this->osd = this->renderer->new_object (this->renderer,
                                             this->width,
                                             this->height);
 
@@ -229,14 +229,14 @@ static void update_output_size (sputext_decoder_t *this) {
 
   /* initialize decoder if needed */
   if( this->unscaled ) {
-    if( this->width != this->stream->video_out->get_property(this->stream->video_out, 
+    if( this->width != this->stream->video_out->get_property(this->stream->video_out,
                                                              VO_PROP_WINDOW_WIDTH) ||
-        this->height != this->stream->video_out->get_property(this->stream->video_out, 
+        this->height != this->stream->video_out->get_property(this->stream->video_out,
                                                              VO_PROP_WINDOW_HEIGHT) ||
         !this->img_duration || !this->osd ) {
 
       int width = 0, height = 0;
-        
+
       this->stream->video_out->status(this->stream->video_out, NULL,
                                       &width, &height, &this->img_duration );
       if( width && height ) {
@@ -253,13 +253,13 @@ static void update_output_size (sputext_decoder_t *this) {
           /* and a displacement factor because video may have blacks lines. */
           int output_width, output_height, output_xoffset, output_yoffset;
 
-          output_width = this->stream->video_out->get_property(this->stream->video_out, 
+          output_width = this->stream->video_out->get_property(this->stream->video_out,
                                                                VO_PROP_OUTPUT_WIDTH);
-          output_height = this->stream->video_out->get_property(this->stream->video_out, 
+          output_height = this->stream->video_out->get_property(this->stream->video_out,
                                                                 VO_PROP_OUTPUT_HEIGHT);
-          output_xoffset = this->stream->video_out->get_property(this->stream->video_out, 
+          output_xoffset = this->stream->video_out->get_property(this->stream->video_out,
                                                                  VO_PROP_OUTPUT_XOFFSET);
-          output_yoffset = this->stream->video_out->get_property(this->stream->video_out, 
+          output_yoffset = this->stream->video_out->get_property(this->stream->video_out,
                                                                  VO_PROP_OUTPUT_YOFFSET);
 
           /* driver don't seen to be capable to give us those values */
@@ -283,16 +283,16 @@ static void update_output_size (sputext_decoder_t *this) {
     }
   } else {
     if( !this->width || !this->height || !this->img_duration || !this->osd ) {
-        
+
       this->width = 0;
       this->height = 0;
-      
+
       this->stream->video_out->status(this->stream->video_out, NULL,
                                       &this->width, &this->height, &this->img_duration );
-                                      
+
       if(!this->osd || ( this->width && this->height)) {
         this->renderer = this->stream->osd_renderer;
-        
+
         /* in scaled mode, we have to convert subtitle position in film coordinates. */
         this->video2wnd.x = 0;
         this->video2wnd.y = 0;
@@ -310,14 +310,14 @@ static int parse_utf8_size(const void *buf)
   const uint8_t *c = buf;
   if ( c[0]<0x80 )
       return 1;
-  
+
   if( c[1]==0 )
     return 1;
   if ( (c[0]>=0xC2 && c[0]<=0xDF) && (c[1]>=0x80 && c[1]<=0xBF) )
     return 2;
-  
+
   if( c[2]==0 )
-    return 2;	
+    return 2;
   else if ( c[0]==0xE0 && (c[1]>=0xA0 && c[1]<=0xBF) && (c[2]>=0x80 && c[1]<=0xBF) )
     return 3;
   else if ( (c[0]>=0xE1 && c[0]<=0xEC) && (c[1]>=0x80 && c[1]<=0xBF) && (c[2]>=0x80 && c[1]<=0xBF) )
@@ -350,7 +350,7 @@ static int ogm_render_line_internal(sputext_decoder_t *this, int x, int y, const
 	  this->current_osd_text = OSD_TEXT1;
 	i=i+4;
 	continue;
-      } else if (!strncmp("<i>", text+i, 3)) {	
+      } else if (!strncmp("<i>", text+i, 3)) {
 	/* enable italics color */
 	if (render)
 	  this->current_osd_text = OSD_TEXT3;
@@ -362,7 +362,7 @@ static int ogm_render_line_internal(sputext_decoder_t *this, int x, int y, const
 	  this->current_osd_text = OSD_TEXT1;
 	i=i+4;
 	continue;
-      } else if (!strncmp("<font>", text+i, 6)) {	
+      } else if (!strncmp("<font>", text+i, 6)) {
 	/*Do somethink to disable typing
 	  fixme - no teststreams*/
 	i=i+6;
@@ -408,7 +408,7 @@ static int ogm_render_line_internal(sputext_decoder_t *this, int x, int y, const
     const size_t shift = isutf8 ? parse_utf8_size (&text[i]) : 1;
     memcpy(letter,&text[i],shift);
     letter[shift]=0;
-      
+
     if (render)
       this->renderer->render_text(this->osd, x, y, letter, this->current_osd_text);
 
@@ -433,7 +433,7 @@ static inline void ogm_render_line(sputext_decoder_t *this, int x, int y, char* 
 /* \a   : alignment in SSA code (see #defines)                     */
 /* \an  : alignment in 'numpad code'                               */
 /* \pos : absolute position of subtitles. Alignment define origin. */
-static void read_ssa_tag(sputext_decoder_t *this, const char* text, 
+static void read_ssa_tag(sputext_decoder_t *this, const char* text,
                          int* alignment, int* sub_x, int* sub_y, int* max_width) {
 
   int in_tag = 0;
@@ -469,7 +469,7 @@ static void read_ssa_tag(sputext_decoder_t *this, const char* text,
 
       if (*text == '}') in_tag = 0;
     }
-   
+
     text++;
   }
 
@@ -483,7 +483,7 @@ static void read_ssa_tag(sputext_decoder_t *this, const char* text,
   if ((*sub_x) >= 0 && (*sub_y) >= 0) {
     (*sub_x) = this->video2wnd.x + this->video2wnd.dx * (*sub_x);
     (*sub_y) = this->video2wnd.y + this->video2wnd.dy * (*sub_y);
-  }  
+  }
 
   /* check validity, compute max width */
   if ( (*sub_x) < 0 || (*sub_x) >= this->width ||
@@ -550,7 +550,7 @@ static int is_cjk_encoding(const char *enc) {
 }
 
 static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t sub_end ) {
-  
+
   int y;
   int sub_x, sub_y, max_width;
   int alignment;
@@ -562,7 +562,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
   read_ssa_tag(this, this->text[0], &alignment, &sub_x, &sub_y, &max_width);
 
   update_font_size(this, 0);
-  
+
   const char *const font = get_font (this->class);
   if( strcmp(this->font, font) ) {
     strncpy(this->font, font, FILENAME_MAX);
@@ -585,13 +585,13 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
       char *current_cut, *best_cut;
       int a;
 
-      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
-              "libsputext: Line too long: %d > %d, split at max size.\n", 
+      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+              "libsputext: Line too long: %d > %d, split at max size.\n",
               line_width, max_width);
 
       /* can't fit with keeping existing lines */
       if (this->lines + 1 > SUB_MAX_TEXT) {
-        xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+        xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
                 "libsputext: Can't fit with keeping existing line, we have to rebuild all the subtitle\n");
         rebuild_all = 1;
         break;
@@ -615,7 +615,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
       }
 
       if (best_cut == NULL) {
-        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
                  "libsputext: Can't wrap line: a word is too long, abort.\n");
         break;
       }
@@ -652,7 +652,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
     do {
 
       if (this->lines + 1 < SUB_MAX_TEXT) {
-      
+
         /* find the longest sequence witch fit */
         int line_width = 0;
         current_cut = stream;
@@ -672,7 +672,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
           }
         }
       }
-      
+
       /* line maybe too long, but we have reached last subtitle line */
       else {
         best_cut = current_cut = stream + strlen(stream);
@@ -685,7 +685,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
 
       stream = best_cut + 1;
 
-    } while (best_cut != current_cut);    
+    } while (best_cut != current_cut);
 
   }
 
@@ -693,7 +693,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
   /* Erase subtitle : use last_y and last_lines saved last turn. */
   if (this->last_lines) {
     this->renderer->filled_rect (this->osd, 0, this->last_y,
-                                 this->width - 1, this->last_y + this->last_lines * this->line_height, 
+                                 this->width - 1, this->last_y + this->last_lines * this->line_height,
                                  0);
   }
 
@@ -707,23 +707,23 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
     if (sub_y >= 0) y = sub_y - (this->lines * this->line_height) / 2;
     else y = (this->height - this->lines * this->line_height) / 2;
     break;
-    
+
   case ALIGN_BOTTOM:
   default:
     if (sub_y >= 0) y = sub_y - this->lines * this->line_height;
     else y = this->height - this->lines * this->line_height - this->class->vertical_offset;
     break;
   }
-  if (y < 0 || y >= this->height) 
+  if (y < 0 || y >= this->height)
     y = this->height - this->line_height * this->lines;
 
-  this->last_lines = this->lines;  
-  this->last_y = y;  
+  this->last_lines = this->lines;
+  this->last_y = y;
 
 
   for (line = 0; line < this->lines; line++) {
     int w, x;
-          
+
     while(1) {
       w = ogm_get_width( this, this->text[line]);
 
@@ -737,7 +737,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
         if (sub_x >= 0) x = sub_x - w;
         else x = max_width - w - 5;
         break;
-        
+
       case ALIGN_CENTER:
       default:
         if (sub_x >= 0) x = sub_x - w / 2;
@@ -753,7 +753,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
         break;
       }
     }
-    
+
     if( is_cjk_encoding(encoding) ) {
       this->renderer->render_text (this->osd, x, y + line * this->line_height,
                                    this->text[line], OSD_TEXT1);
@@ -761,31 +761,31 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
       ogm_render_line(this, x, y + line*this->line_height, this->text[line]);
     }
   }
-         
+
   if( font_size != this->font_size )
     this->renderer->set_font (this->osd, get_font (this->class), this->font_size);
-  
+
   if( this->last_subtitle_end && sub_start < this->last_subtitle_end ) {
     sub_start = this->last_subtitle_end;
   }
   this->last_subtitle_end = sub_end;
-          
+
   this->renderer->set_text_palette (this->osd, -1, OSD_TEXT1);
   this->renderer->get_palette(this->osd, this->spu_palette, this->spu_trans);
   /* append some colors for colored typeface tag */
   memcpy(this->spu_palette+OSD_TEXT2, sub_palette, sizeof(sub_palette));
   memcpy(this->spu_trans+OSD_TEXT2, sub_trans, sizeof(sub_trans));
   this->renderer->set_palette(this->osd, this->spu_palette, this->spu_trans);
-  
+
   if (this->unscaled)
     this->renderer->show_unscaled (this->osd, sub_start);
   else
     this->renderer->show (this->osd, sub_start);
-  
+
   this->renderer->hide (this->osd, sub_end);
-  
+
   lprintf ("scheduling subtitle >%s< at %"PRId64" until %"PRId64", current time is %"PRId64"\n",
-	   this->text[0], sub_start, sub_end, 
+	   this->text[0], sub_start, sub_end,
 	   this->stream->xine->clock->get_current_time (this->stream->xine->clock));
 }
 
@@ -810,7 +810,7 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
   }
   if (buf->decoder_flags & BUF_FLAG_PREVIEW)
     return;
-  
+
   if ((this->stream->spu_channel & 0x1f) != (buf->type & 0x1f))
     return;
 
@@ -833,9 +833,9 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
 
     if (!*str) return;
     /* Empty ogm packets (as created by ogmmux) clears out old messages. We already respect the end time. */
-  
+
     this->lines = 0;
-  
+
     i = 0;
     while (*str && (this->lines < SUB_MAX_TEXT) && (i < SUB_BUFSIZE)) {
       if (*str == '\r' || *str == '\n') {
@@ -853,7 +853,7 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
     }
     if (i == SUB_BUFSIZE)
       i--;
-    
+
     if (i) {
       this->text[ this->lines ][i] = 0;
       this->lines++;
@@ -863,7 +863,7 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
 
     this->ogm = 0;
     val = (uint32_t * )buf->content;
-    
+
     this->lines = *val++;
     uses_time = *val++;
     start = *val++;
@@ -875,7 +875,7 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
     }
 
   }
-  
+
   xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
           "libsputext: decoder data [%s]\n", this->text[0]);
   xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
@@ -886,7 +886,7 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
             "libsputext: discarding subtitle with invalid timing\n");
     return;
   }
-  
+
   spu_offset = this->stream->master->metronom->get_option (this->stream->master->metronom,
                                                            METRONOM_SPU_OFFSET);
   if( uses_time ) {
@@ -898,17 +898,17 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
       end += spu_offset / this->img_duration;
     }
   }
-   
+
   while( !this->finished ) {
- 
+
     master_status = xine_get_status (this->stream->master);
     slave_status = xine_get_status (this->stream);
-    vo_discard = this->stream->video_out->get_property(this->stream->video_out, 
+    vo_discard = this->stream->video_out->get_property(this->stream->video_out,
                                                        VO_PROP_DISCARD_FRAMES);
 
     _x_get_current_info (this->stream->master, &extra_info, sizeof(extra_info) );
-   
-    lprintf("master: %d slave: %d input_normpos: %d vo_discard: %d\n", 
+
+    lprintf("master: %d slave: %d input_normpos: %d vo_discard: %d\n",
       master_status, slave_status, extra_info.input_normpos, vo_discard);
 
     if( !this->started && (master_status == XINE_STATUS_PLAY &&
@@ -926,63 +926,63 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
 
     if( this->started ) {
 
-      if( master_status != XINE_STATUS_PLAY || 
+      if( master_status != XINE_STATUS_PLAY ||
           slave_status != XINE_STATUS_PLAY ||
           vo_discard ) {
         lprintf("finished\n");
-  
+
         this->width = this->height = 0;
         this->finished = 1;
         return;
       }
 
       if( this->osd ) {
-        
+
         /* try to use frame number mode */
         if( !uses_time && extra_info.frame_number ) {
-          
+
           diff = end - extra_info.frame_number;
-          
-          /* discard old subtitles */
-          if( diff < 0 ) {
-            xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
-                    "libsputext: discarding old subtitle\n");
-            return;
-          }
-            
-          diff = start - extra_info.frame_number;
-          
-          start_vpts = extra_info.vpts + diff * this->img_duration;
-          end_vpts = start_vpts + (end-start) * this->img_duration;
-          
-        } else {
-          
-          if( !uses_time ) {
-            start = start * this->img_duration / 90;
-            end = end * this->img_duration / 90;
-            uses_time = 1;
-          }
-          
-          diff = end - extra_info.input_time;
-          
+
           /* discard old subtitles */
           if( diff < 0 ) {
             xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
                     "libsputext: discarding old subtitle\n");
             return;
           }
-            
+
+          diff = start - extra_info.frame_number;
+
+          start_vpts = extra_info.vpts + diff * this->img_duration;
+          end_vpts = start_vpts + (end-start) * this->img_duration;
+
+        } else {
+
+          if( !uses_time ) {
+            start = start * this->img_duration / 90;
+            end = end * this->img_duration / 90;
+            uses_time = 1;
+          }
+
+          diff = end - extra_info.input_time;
+
+          /* discard old subtitles */
+          if( diff < 0 ) {
+            xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
+                    "libsputext: discarding old subtitle\n");
+            return;
+          }
+
           diff = start - extra_info.input_time;
-          
+
           start_vpts = extra_info.vpts + diff * 90;
           end_vpts = start_vpts + (end-start) * 90;
         }
-        
+
         _x_spu_decoder_sleep(this->stream, start_vpts);
         update_output_size( this );
         draw_subtitle(this, start_vpts, end_vpts);
-        
-        return;  
+
+        return;
       }
     }
 
@@ -991,12 +991,12 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
     else
       return;
   }
-}  
+}
 
 
 static void spudec_reset (spu_decoder_t *this_gen) {
   sputext_decoder_t *this = (sputext_decoder_t *) this_gen;
-  
+
   lprintf("i guess we just seeked\n");
   this->width = this->height = 0;
   this->started = this->finished = 0;
@@ -1010,7 +1010,7 @@ static void spudec_discontinuity (spu_decoder_t *this_gen) {
 
 static void spudec_dispose (spu_decoder_t *this_gen) {
   sputext_decoder_t *this = (sputext_decoder_t *) this_gen;
-  
+
   if (this->osd) {
     this->renderer->free_object (this->osd);
     this->osd = NULL;
@@ -1031,7 +1031,7 @@ static void update_osd_font(void *class_gen, xine_cfg_entry_t *entry)
 
   strncpy(class->font, entry->str_value, FONTNAME_SIZE);
   class->font[FONTNAME_SIZE - 1] = '\0';
-  
+
   xprintf(class->xine, XINE_VERBOSITY_DEBUG, "libsputext: spu_font = %s\n", class->font );
 }
 
@@ -1042,7 +1042,7 @@ static void update_osd_font_ft(void *class_gen, xine_cfg_entry_t *entry)
 
   strncpy(class->font_ft, entry->str_value, FILENAME_MAX);
   class->font_ft[FILENAME_MAX - 1] = '\0';
-  
+
   xprintf(class->xine, XINE_VERBOSITY_DEBUG, "libsputext: spu_font_ft = %s\n", class->font_ft);
 }
 
@@ -1051,7 +1051,7 @@ static void update_osd_use_font_ft(void *class_gen, xine_cfg_entry_t *entry)
   sputext_class_t *class = (sputext_class_t *)class_gen;
 
   class->use_font_ft = entry->num_value;
-  
+
   xprintf(class->xine, XINE_VERBOSITY_DEBUG, "libsputext: spu_use_font_ft = %d\n", class->use_font_ft);
 }
 #endif
@@ -1114,13 +1114,13 @@ static void update_src_encoding(void *class_gen, xine_cfg_entry_t *entry)
 
 static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
 
-  static const char *const subtitle_size_strings[] = { 
-    "tiny", "small", "normal", "large", "very large", "huge", NULL 
+  static const char *const subtitle_size_strings[] = {
+    "tiny", "small", "normal", "large", "very large", "huge", NULL
   };
   sputext_class_t *this ;
 
   lprintf("init class\n");
-  
+
   this = (sputext_class_t *) calloc(1, sizeof(sputext_class_t));
 
   this->class.open_plugin      = sputext_class_open_plugin;
@@ -1130,8 +1130,8 @@ static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
 
   this->xine                   = xine;
 
-  this->subtitle_size  = xine->config->register_enum(xine->config, 
-			      "subtitles.separate.subtitle_size", 
+  this->subtitle_size  = xine->config->register_enum(xine->config,
+			      "subtitles.separate.subtitle_size",
 			       1,
 			       subtitle_size_strings,
 			       _("subtitle size"),
@@ -1139,7 +1139,7 @@ static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
 			         "be evaluated relative to the window size."),
 			       0, update_subtitle_size, this);
   this->vertical_offset  = xine->config->register_num(xine->config,
-			      "subtitles.separate.vertical_offset", 
+			      "subtitles.separate.vertical_offset",
 			      0,
 			      _("subtitle vertical offset"),
 			      _("You can adjust the vertical position of the subtitle. "
@@ -1168,8 +1168,8 @@ static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
 				NULL,
 				10, update_osd_use_font_ft, this);
 #endif
-  this->src_encoding  = xine->config->register_string(xine->config, 
-				"subtitles.separate.src_encoding", 
+  this->src_encoding  = xine->config->register_string(xine->config,
+				"subtitles.separate.src_encoding",
 				xine_guess_spu_encoding(),
 				_("encoding of the subtitles"),
 				_("The encoding of the subtitle text in the stream. This setting "
@@ -1204,7 +1204,7 @@ static const decoder_info_t spudec_info = {
 extern void *init_sputext_demux_class (xine_t *xine, void *data);
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_SPU_DECODER | PLUGIN_MUST_PRELOAD, 17, "sputext", XINE_VERSION_CODE, &spudec_info, &init_spu_decoder_plugin },
   { PLUGIN_DEMUX, 27, "sputext", XINE_VERSION_CODE, NULL, &init_sputext_demux_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }

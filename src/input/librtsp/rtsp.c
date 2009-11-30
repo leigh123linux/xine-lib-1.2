@@ -46,7 +46,7 @@
 #define LOG_VERBOSE
 /*
 #define LOG
-*/ 
+*/
 
 #include "rtsp.h"
 #include <xine/io_helper.h>
@@ -71,7 +71,7 @@ struct rtsp_s {
   char         *server;
   unsigned int  server_state;
   uint32_t      server_caps;
-  
+
   unsigned int  cseq;
   char         *session;
 
@@ -107,16 +107,16 @@ static const char rtsp_protocol_version[]="RTSP/1.0";
  * rtsp_get gets a line from stream
  * and returns a null terminated string (must be freed).
  */
- 
+
 static char *rtsp_get(rtsp_t *s) {
   char buffer[BUF_SIZE];
   char *string = NULL;
-    
+
   if ( _x_io_tcp_read_line(s->stream, s->s, buffer, BUF_SIZE) >= 0 ) {
     lprintf("<< '%s'\n", buffer);
     string = strdup( buffer );
   }
-  
+
   return string;
 }
 
@@ -124,7 +124,7 @@ static char *rtsp_get(rtsp_t *s) {
 /*
  * rtsp_put puts a line on stream
  */
- 
+
 static void rtsp_put(rtsp_t *s, const char *string) {
 
   size_t len=strlen(string);
@@ -137,7 +137,7 @@ static void rtsp_put(rtsp_t *s, const char *string) {
   buf[len+1]=0x0a;
 
   _x_io_tcp_write(s->stream, s->s, buf, len+2);
-  
+
   lprintf("done.\n");
 }
 
@@ -149,7 +149,7 @@ static int rtsp_get_code(rtsp_t *s, const char *string) {
 
   char buf[4];
   int code=0;
- 
+
   if (!strncmp(string, rtsp_protocol_version, strlen(rtsp_protocol_version)))
   {
     memcpy(buf, string+strlen(rtsp_protocol_version)+1, 3);
@@ -160,7 +160,7 @@ static int rtsp_get_code(rtsp_t *s, const char *string) {
     return RTSP_STATUS_SET_PARAMETER;
   }
 
-  if(code != 200) 
+  if(code != 200)
     xprintf(s->stream->xine, XINE_VERBOSITY_DEBUG, "librtsp: server responds: '%s'\n", string);
 
   return code;
@@ -174,7 +174,7 @@ static void rtsp_send_request(rtsp_t *s, const char *type, const char *what) {
 
   char **payload=s->scheduled;
   char *buf;
-  
+
   asprintf(&buf,"%s %s %s",type, what, rtsp_protocol_version);
   rtsp_put(s,buf);
 
@@ -194,10 +194,10 @@ static void rtsp_send_request(rtsp_t *s, const char *type, const char *what) {
 static void rtsp_schedule_standard(rtsp_t *s) {
 
   char tmp[17];
-  
+
   sprintf(tmp, "Cseq: %u", s->cseq);
   rtsp_schedule_field(s, tmp);
-  
+
   if (s->session) {
     char *buf;
     asprintf(&buf, "Session: %s", s->session);
@@ -207,7 +207,7 @@ static void rtsp_schedule_standard(rtsp_t *s) {
 /*
  * get the answers, if server responses with something != 200, return NULL
  */
- 
+
 static int rtsp_get_answers(rtsp_t *s) {
 
   char *answer=NULL;
@@ -215,7 +215,7 @@ static int rtsp_get_answers(rtsp_t *s) {
   char **answer_ptr=s->answers;
   int code;
   int ans_count = 0;
-  
+
   answer=rtsp_get(s);
   if (!answer)
     return 0;
@@ -223,13 +223,13 @@ static int rtsp_get_answers(rtsp_t *s) {
   free(answer);
 
   rtsp_free_answers(s);
-  
+
   do { /* while we get answer lines */
-  
+
     answer=rtsp_get(s);
     if (!answer)
       return 0;
-    
+
     if (!strncasecmp(answer,"Cseq: ",6)) {
       sscanf(answer+6,"%u",&answer_seq);
       if (s->cseq != answer_seq) {
@@ -246,7 +246,7 @@ static int rtsp_get_answers(rtsp_t *s) {
       char *tmp = answer + 9;
       if (s->session) {
         if (strcmp(tmp, s->session)) {
-          xprintf(s->stream->xine, XINE_VERBOSITY_DEBUG, 
+          xprintf(s->stream->xine, XINE_VERBOSITY_DEBUG,
 		  "rtsp: warning: setting NEW session: %s\n", tmp);
           s->session=strdup(tmp);
         }
@@ -260,12 +260,12 @@ static int rtsp_get_answers(rtsp_t *s) {
     *answer_ptr=answer;
     answer_ptr++;
   } while ((strlen(answer)!=0) && (++ans_count < MAX_FIELDS));
-  
+
   s->cseq++;
-  
+
   *answer_ptr=NULL;
   rtsp_schedule_standard(s);
-    
+
   return code;
 }
 
@@ -275,7 +275,7 @@ static int rtsp_get_answers(rtsp_t *s) {
 
 int rtsp_send_ok(rtsp_t *s) {
   char cseq[16];
-  
+
   rtsp_put(s, "RTSP/1.0 200 OK");
   sprintf(cseq,"CSeq: %u", s->cseq);
   rtsp_put(s, cseq);
@@ -316,14 +316,14 @@ int rtsp_request_describe(rtsp_t *s, const char *what) {
   }
   rtsp_send_request(s,"DESCRIBE",buf);
   free(buf);
-  
+
   return rtsp_get_answers(s);
 }
 
 int rtsp_request_setup(rtsp_t *s, const char *what) {
 
   rtsp_send_request(s,"SETUP",what);
-  
+
   return rtsp_get_answers(s);
 }
 
@@ -339,7 +339,7 @@ int rtsp_request_setparameter(rtsp_t *s, const char *what) {
   }
   rtsp_send_request(s,"SET_PARAMETER",buf);
   free(buf);
-  
+
   return rtsp_get_answers(s);
 }
 
@@ -355,7 +355,7 @@ int rtsp_request_play(rtsp_t *s, const char *what) {
   }
   rtsp_send_request(s,"PLAY",buf);
   free(buf);
-  
+
   return rtsp_get_answers(s);
 }
 
@@ -363,7 +363,7 @@ int rtsp_request_play(rtsp_t *s, const char *what) {
 int rtsp_request_tearoff(rtsp_t *s, const char *what) {
 
   rtsp_send_request(s,"TEAROFF",what);
-  
+
   return rtsp_get_answers(s);
 }
 #endif
@@ -384,7 +384,7 @@ int rtsp_read_data(rtsp_t *s, void *buffer_gen, unsigned int size) {
       char *rest=rtsp_get(s);
       if (!rest)
         return -1;
-      
+
       seq=-1;
       do {
         free(rest);
@@ -431,14 +431,14 @@ rtsp_t *rtsp_connect(xine_stream_t *stream, const char *mrl, const char *user_ag
   char *slash, *colon;
   int hostend, i;
   size_t pathbegin;
-  
+
   if (strncmp(mrl,"rtsp://",7))
   {
     xprintf(stream->xine, XINE_VERBOSITY_LOG, _("rtsp: bad mrl: %s\n"), mrl);
     free(s);
     return NULL;
   }
-  
+
   mrl_ptr+=7;
 
   for (i=0; i<MAX_FIELDS; i++) {
@@ -452,14 +452,14 @@ rtsp_t *rtsp_connect(xine_stream_t *stream, const char *mrl, const char *user_ag
   s->path=NULL;
   s->mrl=NULL;
   s->mrl=strdup(mrl);
-  
+
   s->server=NULL;
   s->server_state=0;
   s->server_caps=0;
-  
+
   s->cseq=0;
   s->session=NULL;
-  
+
   if (user_agent)
     s->user_agent=strdup(user_agent);
   else
@@ -469,7 +469,7 @@ rtsp_t *rtsp_connect(xine_stream_t *stream, const char *mrl, const char *user_ag
   colon=strchr(mrl_ptr,':');
 
   if(!slash) slash=mrl_ptr+strlen(mrl_ptr)+1;
-  if(!colon) colon=slash; 
+  if(!colon) colon=slash;
   if(colon > slash) colon=slash;
 
   pathbegin=slash-mrl_ptr;
@@ -480,7 +480,7 @@ rtsp_t *rtsp_connect(xine_stream_t *stream, const char *mrl, const char *user_ag
   if (pathbegin < strlen(mrl_ptr)) s->path=strdup(mrl_ptr+pathbegin+1);
   if (colon != slash) {
     char buffer[pathbegin-hostend];
-    
+
     strncpy(buffer,mrl_ptr+hostend+1, pathbegin-hostend-1);
     buffer[pathbegin-hostend-1]=0;
     s->port=atoi(buffer);
@@ -516,7 +516,7 @@ rtsp_t *rtsp_connect(xine_stream_t *stream, const char *mrl, const char *user_ag
 
 
 /*
- * closes an rtsp connection 
+ * closes an rtsp connection
  */
 
 void rtsp_close(rtsp_t *s) {
@@ -529,7 +529,7 @@ void rtsp_close(rtsp_t *s) {
   if (s->user_agent) free(s->user_agent);
   rtsp_free_answers(s);
   rtsp_unschedule_all(s);
-  free(s);  
+  free(s);
 }
 
 /*
@@ -541,7 +541,7 @@ char *rtsp_search_answers(rtsp_t *s, const char *tag) {
 
   char **answer;
   char *ptr;
-  
+
   if (!s->answers) return NULL;
   answer=s->answers;
 
@@ -592,7 +592,7 @@ char *rtsp_get_mrl(rtsp_t *s) {
 void rtsp_schedule_field(rtsp_t *s, const char *string) {
 
   int i=0;
-  
+
   if (!string) return;
 
   while(s->scheduled[i]) {
@@ -603,13 +603,13 @@ void rtsp_schedule_field(rtsp_t *s, const char *string) {
 
 #if 0
 /*
- * removes the first scheduled field which prefix matches string. 
+ * removes the first scheduled field which prefix matches string.
  */
 
 void rtsp_unschedule_field(rtsp_t *s, const char *string) {
 
   char **ptr=s->scheduled;
-  
+
   if (!string) return;
 
   while(*ptr) {
@@ -631,7 +631,7 @@ void rtsp_unschedule_field(rtsp_t *s, const char *string) {
 void rtsp_unschedule_all(rtsp_t *s) {
 
   char **ptr;
-  
+
   if (!s->scheduled) return;
   ptr=s->scheduled;
 
@@ -648,7 +648,7 @@ void rtsp_unschedule_all(rtsp_t *s) {
 void rtsp_free_answers(rtsp_t *s) {
 
   char **answer;
-  
+
   if (!s->answers) return;
   answer=s->answers;
 

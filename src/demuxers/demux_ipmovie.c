@@ -183,7 +183,7 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
   while ((chunk_size > 0) && (chunk_type != CHUNK_BAD)) {
 
     /* read the next chunk, wherever the file happens to be pointing */
-    if (this->input->read(this->input, opcode_preamble, 
+    if (this->input->read(this->input, opcode_preamble,
       OPCODE_PREAMBLE_SIZE) != OPCODE_PREAMBLE_SIZE) {
       chunk_type = CHUNK_BAD;
       break;
@@ -221,7 +221,7 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
           chunk_type = CHUNK_BAD;
           break;
         }
-        if (this->input->read(this->input, scratch, opcode_size) != 
+        if (this->input->read(this->input, scratch, opcode_size) !=
           opcode_size) {
           chunk_type = CHUNK_BAD;
           break;
@@ -239,7 +239,7 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
           chunk_type = CHUNK_BAD;
           break;
         }
-        if (this->input->read(this->input, scratch, opcode_size) != 
+        if (this->input->read(this->input, scratch, opcode_size) !=
           opcode_size) {
           chunk_type = CHUNK_BAD;
           break;
@@ -275,7 +275,7 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
           chunk_type = CHUNK_BAD;
           break;
         }
-        if (this->input->read(this->input, scratch, opcode_size) != 
+        if (this->input->read(this->input, scratch, opcode_size) !=
           opcode_size) {
           chunk_type = CHUNK_BAD;
           break;
@@ -336,23 +336,23 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
               buf->extra_info->input_normpos = (int)( (double) current_file_pos * 65535 / this->data_size);
             buf->extra_info->input_time = audio_pts / 90;
             buf->pts = audio_pts;
-  
+
             if (opcode_size > buf->max_size)
               buf->size = buf->max_size;
             else
               buf->size = opcode_size;
             opcode_size -= buf->size;
-  
+
             if (this->input->read(this->input, buf->content, buf->size) !=
               buf->size) {
               buf->free_buffer(buf);
               chunk_type = CHUNK_BAD;
               break;
             }
-  
+
             if (!opcode_size)
               buf->decoder_flags |= BUF_FLAG_FRAME_END;
-  
+
             this->audio_fifo->put (this->audio_fifo, buf);
           }
         }else{
@@ -377,7 +377,7 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
 
       case OPCODE_SET_PALETTE:
         lprintf("set palette\n");
-        /* check for the logical maximum palette size 
+        /* check for the logical maximum palette size
          * (3 * 256 + 4 bytes) */
         if (opcode_size > 0x304) {
           lprintf("set_palette opcode too large\n");

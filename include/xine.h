@@ -265,7 +265,7 @@ void xine_dispose (xine_stream_t *stream) XINE_PROTECTED;
  */
 void xine_engine_set_param(xine_t *self, int param, int value) XINE_PROTECTED;
 int xine_engine_get_param(xine_t *self, int param) XINE_PROTECTED;
-  
+
 #define XINE_ENGINE_PARAM_VERBOSITY        1
 
 /*
@@ -307,7 +307,7 @@ int  xine_get_param (xine_stream_t *stream, int param) XINE_PROTECTED;
 #define XINE_PARAM_EQ_16000HZ             27 /* equalizer gains -100..100   */
 #define XINE_PARAM_AUDIO_CLOSE_DEVICE     28 /* force closing audio device  */
 #define XINE_PARAM_AUDIO_AMP_MUTE         29 /* 1=>mute, 0=>unmute */
-#define XINE_PARAM_FINE_SPEED             30 /* 1.000.000 => normal speed   */ 
+#define XINE_PARAM_FINE_SPEED             30 /* 1.000.000 => normal speed   */
 #define XINE_PARAM_EARLY_FINISHED_EVENT   31 /* send event when demux finish*/
 #define XINE_PARAM_GAPLESS_SWITCH         32 /* next stream only gapless swi*/
 #define XINE_PARAM_DELAY_FINISHED_EVENT   33 /* 1/10sec,0=>disable,-1=>forev*/
@@ -325,7 +325,7 @@ int  xine_get_param (xine_stream_t *stream, int param) XINE_PROTECTED;
 #define XINE_SPEED_NORMAL                  4
 #define XINE_SPEED_FAST_2                  8
 #define XINE_SPEED_FAST_4                  16
- 
+
 /* normal speed value for XINE_PARAM_FINE_SPEED parameter */
 #define XINE_FINE_SPEED_NORMAL             1000000
 
@@ -386,7 +386,7 @@ int  xine_get_param (xine_stream_t *stream, int param) XINE_PROTECTED;
  * image format can be YUV 4:2:0 or 4:2:2
  * will copy the image data into memory that <img> points to
  * (interleaved for yuv 4:2:2 or planary for 4:2:0)
- * 
+ *
  * xine_get_current_frame() requires that <img> must be able
  * to hold the image data. Use a NULL pointer to retrieve the
  * necessary parameters for calculating the buffer size. Be
@@ -400,7 +400,7 @@ int  xine_get_param (xine_stream_t *stream, int param) XINE_PROTECTED;
  * xine_get_current_frame_alloc() takes care of allocating
  * a buffer on its own, so image data can be retrieved by
  * a single call without the need to pause the stream.
- * 
+ *
  * xine_get_current_frame_data() passes the parameters of the
  * previously mentioned functions plus further information in
  * a structure and can work like the _s or _alloc function
@@ -546,18 +546,18 @@ struct xine_post_s {
    * pass them to the initialization of streams
    */
   xine_audio_port_t **audio_input;
-  
+
   /* a NULL-terminated array of video input ports this post plugin
    * provides; you can hand these to other post plugin's outputs or
    * pass them to the initialization of streams
    */
   xine_video_port_t **video_input;
-  
+
   /* the type of the post plugin
    * one of XINE_POST_TYPE_* can be used here
    */
   int type;
-  
+
 };
 
 /*
@@ -597,25 +597,25 @@ struct xine_post_in_s {
 
   /* the name identifying this input */
   const char   *name;
-  
+
   /* the data pointer; input is directed to this memory location,
    * so you simply access the pointer to access the input data */
   void         *data;
-  
+
   /* the datatype of this input, use one of XINE_POST_DATA_* here */
   int           type;
-  
+
 };
 
 struct xine_post_out_s {
 
   /* the name identifying this output */
   const char   *name;
-  
+
   /* the data pointer; output should be directed to this memory location,
    * so in the easy case you simply write through the pointer */
   void         *data;
-  
+
   /* this function is called, when the output should be redirected
    * to another input, you sould set the data pointer to direct
    * any output to this new input;
@@ -629,7 +629,7 @@ struct xine_post_out_s {
 
   /* the datatype of this output, use one of XINE_POST_DATA_* here */
   int           type;
-  
+
 };
 
 /* get a list of all inputs of a post plugin */
@@ -1360,7 +1360,7 @@ typedef struct {
 
   HWND      WndHnd;     /* handle of window associated with primary surface */
   HINSTANCE HInst;      /* handle of windows application instance */
-  RECT      WndRect;    /* rect of window client points translated to screen 
+  RECT      WndRect;    /* rect of window client points translated to screen
                          * cooridnates */
   int       FullScreen; /* is window fullscreen */
   HBRUSH    Brush;      /* window brush for background color */
@@ -1451,7 +1451,7 @@ xine_health_check_t* xine_health_check(xine_health_check_t*, int check_num) XINE
 #define XINE_CONFIG_TYPE_NUM     4
 #define XINE_CONFIG_TYPE_BOOL    5
 
-/* For the string type (1.1.4 and later). These are stored in num_value. */ 
+/* For the string type (1.1.4 and later). These are stored in num_value. */
 #define XINE_CONFIG_STRING_IS_STRING		0
 #define XINE_CONFIG_STRING_IS_FILENAME		1
 #define XINE_CONFIG_STRING_IS_DEVICE_NAME	2
@@ -1834,8 +1834,8 @@ typedef struct {
  * mrl reference data is sent by demuxers when a reference stream is found.
  * this stream just contains pointers (urls) to the real data, which are
  * passed to frontend using this event type. (examples: .asx, .mov and .ram)
- * 
- * ideally, frontends should add these mrls to a "hierarchical playlist". 
+ *
+ * ideally, frontends should add these mrls to a "hierarchical playlist".
  * that is, instead of the original file, the ones provided here should be
  * played instead. on pratice, just using a simple playlist should work.
  *
@@ -1851,7 +1851,7 @@ typedef struct {
  *   2) http://another/another.avi
  *
  * 1 and 2 are the original items on this playlist. 1a and 1b were received
- * by events (they are the mrl references enclosed in 1). 1a is played after 
+ * by events (they are the mrl references enclosed in 1). 1a is played after
  * receiving the finished event from 1. note: 1b is usually ignored, it should
  * only be used in case 1a fails to open.
  *
@@ -1871,12 +1871,12 @@ typedef struct {
 /*const char          title[]; ** immediately follows MRL's terminating NUL */
 } xine_mrl_reference_data_ext_t;
 
-/* 
+/*
  * configuration options for video4linux-like input plugins
  */
 typedef struct {
   /* input selection */
-  int input;                    /* select active input from card */ 
+  int input;                    /* select active input from card */
   int channel;                  /* channel number */
   int radio;                    /* ask for a radio channel */
   uint32_t frequency;           /* frequency divided by 62.5KHz or 62.5 Hz */
@@ -1893,13 +1893,13 @@ typedef struct {
   int frame_height;             /* scaled frame height */
 
   /* let some spare space so we can add new fields without breaking
-   * binary api compatibility. 
+   * binary api compatibility.
    */
   uint32_t spare[20];
 
   /* used by pvr plugin */
   int32_t session_id;           /* -1 stops pvr recording */
-     
+
 } xine_set_v4l2_data_t;
 
 /*
@@ -1916,7 +1916,7 @@ typedef struct {
   int gop_closure;              /* open/closed GOP */
   int b_frames;                 /* number of B frames to use */
   int aspect_ratio;             /* XINE_VO_ASPECT_xxx */
-  
+
   /* let some spare space so we can add new fields without breaking
    * binary api compatibility.
    */
@@ -1931,7 +1931,7 @@ typedef struct {
 
 #ifdef XINE_ENABLE_EXPERIMENTAL_FEATURES
 
-/* 
+/*
  * ask pvr to save (ie. do not discard) the current session
  * see comments on input_pvr.c to understand how it works.
  */
@@ -1942,7 +1942,7 @@ typedef struct {
    * 1 = save from last sync point
    * 2 = save everything on current session
    */
-  int mode; 
+  int mode;
   int id;
   char name[256]; /* name for saving, might be longer */
 } xine_pvr_save_data_t;
@@ -1952,7 +1952,7 @@ typedef struct {
    * 0 = non realtime
    * 1 = realtime
    */
-  int mode; 
+  int mode;
 } xine_pvr_realtime_t;
 
 typedef struct {
@@ -1983,7 +1983,7 @@ typedef struct {
  * Defined message types for XINE_EVENT_UI_MESSAGE
  * This is the mechanism to report async errors from engine.
  *
- * If frontend knows about the XINE_MSG_xxx type it may safely 
+ * If frontend knows about the XINE_MSG_xxx type it may safely
  * ignore the 'explanation' field and provide its own custom
  * dialogue to the 'parameters'.
  *
@@ -2080,9 +2080,9 @@ void xine_event_send (xine_stream_t *stream, const xine_event_t *event) XINE_PRO
 
 #define XINE_OSD_CAP_FREETYPE2     0x0001 /* freetype2 support compiled in     */
 #define XINE_OSD_CAP_UNSCALED      0x0002 /* unscaled overlays supp. by vo drv */
-#define XINE_OSD_CAP_CUSTOM_EXTENT 0x0004 /* hardware scaled to match video output window */ 
+#define XINE_OSD_CAP_CUSTOM_EXTENT 0x0004 /* hardware scaled to match video output window */
 #define XINE_OSD_CAP_ARGB_LAYER    0x0008 /* supports separate true color layer */
-#define XINE_OSD_CAP_VIDEO_WINDOW  0x0010 /* can scale video to an area within osd extent */ 
+#define XINE_OSD_CAP_VIDEO_WINDOW  0x0010 /* can scale video to an area within osd extent */
 
 typedef struct xine_osd_s xine_osd_t;
 
@@ -2110,7 +2110,7 @@ void        xine_osd_get_text_size (xine_osd_t *self, const char *text,
    as 'fontname' here */
 int         xine_osd_set_font      (xine_osd_t *self, const char *fontname,
 				    int size) XINE_PROTECTED;
-/* 
+/*
  * specifying encoding of texts
  *   ""   ... means current locale encoding (default)
  *   NULL ... means latin1
@@ -2147,7 +2147,7 @@ void        xine_osd_get_palette   (xine_osd_t *self, uint32_t *color,
 void        xine_osd_set_palette   (xine_osd_t *self,
 				    const uint32_t *const color,
 				    const uint8_t *const trans ) XINE_PROTECTED;
-				    
+
 /*
  * set an argb buffer to be blended into video
  * the buffer must exactly match the osd dimensions

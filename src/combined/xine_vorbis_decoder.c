@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -88,7 +88,7 @@ static void vorbis_reset (audio_decoder_t *this_gen) {
 
   /* clear block first, as it might contain allocated data */
   vorbis_block_clear(&this->vb);
-  vorbis_block_init(&this->vd,&this->vb);     
+  vorbis_block_init(&this->vd,&this->vb);
 }
 
 static void vorbis_discontinuity (audio_decoder_t *this_gen) {
@@ -146,8 +146,8 @@ static void get_metadata (vorbis_decoder_t *this) {
 static void vorbis_check_bufsize (vorbis_decoder_t *this, int size) {
   if (size > this->bufsize) {
     this->bufsize = size + size / 2;
-    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
-	    _("vorbis: increasing buffer to %d to avoid overflow.\n"), 
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+	    _("vorbis: increasing buffer to %d to avoid overflow.\n"),
 	    this->bufsize);
     this->buf = realloc(this->buf, this->bufsize);
   }
@@ -170,87 +170,87 @@ static void vorbis_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
     /* reset accumultaion buffer */
     this->size = 0;
-  
+
     if ( (buf->decoder_flags & BUF_FLAG_HEADER) &&
         !(buf->decoder_flags & BUF_FLAG_STDHEADER) ) {
-  
+
       lprintf ("%d headers to go\n", this->header_count);
-  
+
       if (this->header_count) {
         int res = 0;
-  
+
         if (this->header_count == 3)
           this->op.b_o_s = 1;
-  
+
         if ( (res = vorbis_synthesis_headerin(&this->vi,&this->vc,&this->op)) < 0 ) {
           /* error case; not a vorbis header */
           xine_log(this->stream->xine, XINE_LOG_MSG, "libvorbis: this bitstream does not contain vorbis audio data. Following first 64 bytes (return: %d).\n", res);
           xine_hexdump((char *)this->op.packet, this->op.bytes < 64 ? this->op.bytes : 64);
           return;
         }
-  
+
         this->header_count--;
-  
+
         if (!this->header_count) {
-        
+
           int mode = AO_CAP_MODE_MONO;
-          
+
           get_metadata (this);
-  
+
           mode = _x_ao_channels2mode(this->vi.channels);
-          
+
           this->convsize=MAX_NUM_SAMPLES/this->vi.channels;
-          
+
           if (!this->output_open) {
-            this->output_open = (this->stream->audio_out->open) (this->stream->audio_out, 
+            this->output_open = (this->stream->audio_out->open) (this->stream->audio_out,
                                                       this->stream,
                                                       16,
                                                       this->vi.rate,
                                                       mode) ;
-          
-            _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITRATE, 
+
+            _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITRATE,
               this->vi.bitrate_nominal);
-          
+
           }
-  
+
           /* OK, got and parsed all three headers. Initialize the Vorbis
                   * packet->PCM decoder. */
           lprintf("all three headers parsed. initializing decoder.\n");
-          /* initialize central decode state */ 
-          vorbis_synthesis_init(&this->vd,&this->vi); 
+          /* initialize central decode state */
+          vorbis_synthesis_init(&this->vd,&this->vi);
           /* initialize local state for most of the decode so multiple
-            * block decodes can proceed in parallel. We could init 
+            * block decodes can proceed in parallel. We could init
             * multiple vorbis_block structures for vd here */
-          vorbis_block_init(&this->vd,&this->vb);      
+          vorbis_block_init(&this->vd,&this->vb);
         }
       }
-  
+
     } else if (this->output_open) {
-  
+
       float **pcm;
       int samples;
-  
-      if(vorbis_synthesis(&this->vb,&this->op)==0) 
+
+      if(vorbis_synthesis(&this->vb,&this->op)==0)
         vorbis_synthesis_blockin(&this->vd,&this->vb);
-  
+
       if (buf->pts!=0)
         this->pts=buf->pts;
-  
+
       while ((samples=vorbis_synthesis_pcmout(&this->vd,&pcm))>0){
-  
+
         /* **pcm is a multichannel float vector. In stereo, for
         * example, pcm[0][...] is left, and pcm[1][...] is right.
         * samples is the size of each channel. Convert the float
         * values (-1.<=range<=1.) to whatever PCM format and write
         * it out
         */
-  
+
         int i,j;
         int bout=(samples<this->convsize?samples:this->convsize);
         audio_buffer_t *audio_buffer;
-  
+
         audio_buffer = this->stream->audio_out->get_buffer (this->stream->audio_out);
-        
+
         /* convert floats to 16 bit signed ints (host order) and
           interleave */
         for(i=0;i<this->vi.channels;i++){
@@ -269,15 +269,15 @@ static void vorbis_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
             ptr+=this->vi.channels;
           }
         }
-  
+
         audio_buffer->vpts       = this->pts;
         this->pts=0;
         audio_buffer->num_frames = bout;
-  
+
         this->stream->audio_out->put_buffer (this->stream->audio_out, audio_buffer, this->stream);
-  
+
         buf->pts=0;
-  
+
         /* tell libvorbis how many samples we actually consumed */
         vorbis_synthesis_read(&this->vd,bout);
       }
@@ -289,7 +289,7 @@ static void vorbis_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
 static void vorbis_dispose (audio_decoder_t *this_gen) {
 
-  vorbis_decoder_t *this = (vorbis_decoder_t *) this_gen; 
+  vorbis_decoder_t *this = (vorbis_decoder_t *) this_gen;
 
   if( !this->header_count ) {
     lprintf("deinitializing decoder\n");
@@ -302,7 +302,7 @@ static void vorbis_dispose (audio_decoder_t *this_gen) {
 
   vorbis_info_clear(&this->vi);  /* must be called last */
 
-  if (this->output_open) 
+  if (this->output_open)
     this->stream->audio_out->close (this->stream->audio_out, this->stream);
 
   lprintf("libvorbis instance destroyed\n");
@@ -310,7 +310,7 @@ static void vorbis_dispose (audio_decoder_t *this_gen) {
   free (this_gen);
 }
 
-static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, 
+static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
 				     xine_stream_t *stream) {
 
   vorbis_decoder_t *this ;
@@ -345,7 +345,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
 void *vorbis_init_plugin (xine_t *xine, void *data) {
 
   vorbis_class_t *this;
-  
+
   this = (vorbis_class_t *) calloc(1, sizeof(vorbis_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
@@ -356,7 +356,7 @@ void *vorbis_init_plugin (xine_t *xine, void *data) {
   return this;
 }
 
-static const uint32_t audio_types[] = { 
+static const uint32_t audio_types[] = {
   BUF_AUDIO_VORBIS, 0
  };
 

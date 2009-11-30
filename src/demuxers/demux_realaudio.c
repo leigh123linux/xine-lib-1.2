@@ -63,7 +63,7 @@ typedef struct {
 
   off_t                data_start;
   off_t                data_size;
-  
+
   uint32_t             cfs;
   uint16_t             w, h;
   int                  frame_len;
@@ -95,7 +95,7 @@ static int open_ra_file(demux_ra_t *this) {
 
   /* read version */
   const uint16_t version = _X_BE_16(&file_header[0x04]);
-  
+
   /* read header size according to version */
   if (version == 3)
     this->header_size = _X_BE_16(&file_header[0x06]) + 8;
@@ -105,45 +105,45 @@ static int open_ra_file(demux_ra_t *this) {
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_realaudio: unknown version number %d\n", version);
     return 0;
   }
-    
+
   /* allocate for and read header data */
   this->header = malloc(this->header_size);
-  
+
   if (!this->header || _x_demux_read_header(this->input, this->header, this->header_size) != this->header_size) {
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_realaudio: unable to read header\n");
     free(this->header);
     return 0;
   }
-    
+
   off_t offset;
   /* read header data according to version */
   if((version == 3) && (this->header_size >= 32)) {
     this->data_size = _X_BE_32(&this->header[0x12]);
-    
+
     this->block_align = 240;
-    
+
     offset = 0x16;
   } else if(this->header_size >= 72) {
-    this->data_size = _X_BE_32(&this->header[0x1C]);    
-    
+    this->data_size = _X_BE_32(&this->header[0x1C]);
+
     this->block_align = _X_BE_16(&this->header[0x2A]);
-    
+
     if(this->header[0x3D] == 4)
       this->fourcc = _X_ME_32(&this->header[0x3E]);
     else {
-      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	      "demux_realaudio: invalid fourcc size %d\n", this->header[0x3D]);
       free(this->header);
       return 0;
     }
-    
+
     offset = 0x45;
   } else {
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_realaudio: header too small\n");
     free(this->header);
     return 0;
   }
-  
+
   /* Read title */
   {
     const uint8_t len = this->header[offset];
@@ -154,7 +154,7 @@ static int open_ra_file(demux_ra_t *this) {
     } else
       offset++;
   }
-  
+
   /* Author */
   {
     const uint8_t len = this->header[offset];
@@ -165,7 +165,7 @@ static int open_ra_file(demux_ra_t *this) {
     } else
       offset++;
   }
-  
+
   /* Copyright/Date */
   {
     const uint8_t len = this->header[offset];
@@ -176,23 +176,23 @@ static int open_ra_file(demux_ra_t *this) {
     } else
       offset++;
   }
-  
+
   /* Fourcc for version 3 comes after meta info */
   if(version == 3) {
     if (((offset+7) <= this->header_size)) {
       if(this->header[offset+2] == 4)
         this->fourcc = _X_ME_32(&this->header[offset+3]);
       else {
-        xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+        xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	        "demux_realaudio: invalid fourcc size %d\n", this->header[offset+2]);
         free(this->header);
         return 0;
       }
     } else {
-      this->fourcc = ME_FOURCC('l', 'p', 'c', 'J'); 
+      this->fourcc = ME_FOURCC('l', 'p', 'c', 'J');
     }
   }
-  
+
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_FOURCC, this->fourcc);
   this->audio_type = _x_formattag_to_buf_audio(this->fourcc);
 
@@ -219,7 +219,7 @@ static int open_ra_file(demux_ra_t *this) {
     if (this->audio_type == BUF_AUDIO_28_8 || this->audio_type == BUF_AUDIO_SIPRO)
       this->block_align = this->cfs;
   }
- 
+
   /* seek to start of data */
   this->data_start = this->header_size;
   if (this->input->seek(this->input, this->data_start, SEEK_SET) !=
@@ -242,7 +242,7 @@ static int demux_ra_send_chunk(demux_plugin_t *this_gen) {
   /* just load data chunks from wherever the stream happens to be
    * pointing; issue a DEMUX_FINISHED status if EOF is reached */
   if( this->input->get_length (this->input) )
-    current_normpos = (int)( (double) (this->input->get_current_pos (this->input) - this->data_start) * 
+    current_normpos = (int)( (double) (this->input->get_current_pos (this->input) - this->data_start) *
                       65535 / this->data_size );
 
   const int64_t current_pts = 0;  /* let the engine sort out the pts for now */
@@ -255,11 +255,11 @@ static int demux_ra_send_chunk(demux_plugin_t *this_gen) {
   if (this->audio_type == BUF_AUDIO_28_8 || this->audio_type == BUF_AUDIO_SIPRO) {
     if (this->audio_type == BUF_AUDIO_SIPRO) {
       if(this->input->read(this->input, this->frame_buffer, this->frame_len) < this->frame_len) {
-	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 		"demux_realaudio: failed to read audio chunk\n");
-	
+
 	this->status = DEMUX_FINISHED;
-	return this->status; 
+	return this->status;
       }
       demux_real_sipro_swap (this->frame_buffer, this->frame_len * 2 / 96);
     } else {
@@ -270,25 +270,25 @@ static int demux_ra_send_chunk(demux_plugin_t *this_gen) {
 	  const int pos = x * 2 * this->w + y * this->cfs;
 	  if(this->input->read(this->input, this->frame_buffer + pos,
 			       this->cfs) < this->cfs) {
-	    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+	    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 		    "demux_realaudio: failed to read audio chunk\n");
-	    
+
 	    this->status = DEMUX_FINISHED;
-	    return this->status; 
+	    return this->status;
 	  }
 	}
     }
 
     _x_demux_send_data(this->audio_fifo,
- 		       this->frame_buffer, this->frame_size,
+		       this->frame_buffer, this->frame_size,
 		       current_pts, this->audio_type, 0,
 		       current_normpos, current_pts / 90, 0, 0);
-  } else if(_x_demux_read_send_data(this->audio_fifo, this->input, this->block_align, 
-                             current_pts, this->audio_type, 0, current_normpos, 
+  } else if(_x_demux_read_send_data(this->audio_fifo, this->input, this->block_align,
+                             current_pts, this->audio_type, 0, current_normpos,
                              current_pts / 90, 0, 0) < 0) {
-    this->status = DEMUX_FINISHED;                           
+    this->status = DEMUX_FINISHED;
   }
-  
+
   return this->status;
 }
 
@@ -314,9 +314,9 @@ static void demux_ra_send_headers(demux_plugin_t *this_gen) {
     buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
     buf->type = this->audio_type;
     buf->decoder_flags = BUF_FLAG_HEADER|BUF_FLAG_FRAME_END;
-    
+
     buf->size = MIN(this->header_size, buf->max_size);
-    
+
     memcpy(buf->content, this->header, buf->size);
 
     this->audio_fifo->put (this->audio_fifo, buf);
@@ -364,7 +364,7 @@ static int demux_ra_seek (demux_plugin_t *this_gen,
 
 static void demux_ra_dispose (demux_plugin_t *this_gen) {
   demux_ra_t *this = (demux_ra_t *) this_gen;
-  
+
   free(this->header);
   free(this->frame_buffer);
   free(this);
@@ -424,7 +424,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     }
 
   break;
-  
+
   default:
     free (this);
     return NULL;
