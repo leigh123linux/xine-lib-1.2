@@ -1,4 +1,4 @@
-xine-lib (1.1.17) 2009-??-??
+xine-lib (1.1.17) 2009-12-01
   * Add support for Matroska SIMPLEBLOCK.
   * Add support for sndio (OpenBSD sound API).
   * Correct invalid MIME info in the MOD demuxer.
