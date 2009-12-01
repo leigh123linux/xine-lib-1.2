@@ -2285,7 +2285,7 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
     if ((err = pthread_create (&this->audio_thread,
 			       &pth_attrs, ao_loop, this)) != 0) {
 
-      xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+      xprintf (this->xine, XINE_VERBOSITY_NONE,
 	       "audio_out: can't create thread (%s)\n", strerror(err));
       xprintf (this->xine, XINE_VERBOSITY_LOG,
 	       _("audio_out: sorry, this should not happen. please restart xine.\n"));

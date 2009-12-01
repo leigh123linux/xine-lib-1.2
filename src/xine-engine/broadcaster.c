@@ -343,7 +343,7 @@ broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port)
   this->running = 1;
   if ((err = pthread_create (&this->manager_thread,
                              NULL, manager_loop, (void *)this)) != 0) {
-    xprintf (stream->xine, XINE_VERBOSITY_DEBUG,
+    xprintf (stream->xine, XINE_VERBOSITY_NONE,
 	     "broadcaster: can't create new thread (%s)\n", strerror(err));
     _x_abort();
   }
