@@ -2656,26 +2656,6 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
  * class functions
  */
 
-static char* vdpau_get_identifier (video_driver_class_t *this_gen)
-{
-}
-
-
-
-static char* vdpau_get_description (video_driver_class_t *this_gen)
-{
-}
-
-
-
-static void vdpau_dispose_class (video_driver_class_t *this_gen)
-{
-  vdpau_class_t *this = (vdpau_class_t *) this_gen;
-  free (this);
-}
-
-
-
 static void *vdpau_init_class (xine_t *xine, void *visual_gen)
 {
   vdpau_class_t *this = (vdpau_class_t *) calloc(1, sizeof(vdpau_class_t));
