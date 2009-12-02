@@ -56,6 +56,9 @@ endif
 if HAVE_RSVG
 .svg.png:
 	rsvg -f png $^ $@
+if HAVE_OPTIPNG
+	optipng $@
+endif
 else
 .svg.png:
 	if test x"$(fail_if_missing)" = x"yes"; then \
