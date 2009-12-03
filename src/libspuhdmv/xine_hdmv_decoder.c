@@ -73,7 +73,7 @@ struct subtitle_object_s {
   uint16_t    width, height;
 
   rle_elem_t *rle;
-  uint        num_rle;
+  unsigned int num_rle;
   size_t      data_size;
 
 #if 0
@@ -150,7 +150,7 @@ struct presentation_segment_s {
 
 #define LIST_REPLACE(list, obj, FREE_FUNC)      \
   do {						\
-    uint id = obj->id;				\
+    unsigned int id = obj->id;			\
 						\
     /* insert to list */			\
     obj->next = list;				\
@@ -291,10 +291,10 @@ static void segbuf_skip_segment(segment_buffer_t *buf)
 
     segbuf_parse_segment_header(buf);
 
-    XINE_HDMV_TRACE("  skip_segment: %d bytes left\n", (uint)buf->len);
+    XINE_HDMV_TRACE("  skip_segment: %zd bytes left\n", buf->len);
   } else {
-    XINE_HDMV_ERROR("  skip_segment: ERROR - %d bytes queued, %d required\n",
-          (uint)buf->len, buf->segment_len);
+    XINE_HDMV_ERROR("  skip_segment: ERROR - %zd bytes queued, %d required\n",
+		    buf->len, buf->segment_len);
     segbuf_reset (buf);
   }
 }
@@ -341,7 +341,7 @@ static uint8_t *segbuf_get_string(segment_buffer_t *buf, size_t len)
     if (buf->segment_data <= buf->segment_end)
       return val;
   }
-  XINE_HDMV_ERROR("segbuf_get_string(%d): read failed (end of segment reached) !", (int)len);
+  XINE_HDMV_ERROR("segbuf_get_string(%zd): read failed (end of segment reached) !", len);
   buf->error = 1;
   return NULL;
 }
@@ -363,12 +363,12 @@ static subtitle_clut_t *segbuf_decode_palette(segment_buffer_t *buf)
     return NULL;
 
   if (len % 5) {
-    XINE_HDMV_ERROR("  decode_palette: segment size error (%d ; expected %d for %d entries)\n",
-	  (uint)len, (uint)(5 * entries), (uint)entries);
+    XINE_HDMV_ERROR("  decode_palette: segment size error (%zd ; expected %zd for %zd entries)\n",
+		    len, (5 * entries), entries);
     return NULL;
   }
-  XINE_HDMV_TRACE("decode_palette: %d items (id %d, version %d)\n",
-	(uint)entries, palette_id, palette_version_number);
+  XINE_HDMV_TRACE("decode_palette: %zd items (id %d, version %d)\n",
+		  entries, palette_id, palette_version_number);
 
   /* convert to xine-lib clut */
   subtitle_clut_t *clut = calloc(1, sizeof(subtitle_clut_t));
@@ -681,7 +681,7 @@ static int decode_presentation_segment(spuhdmv_decoder_t *this)
   return 0;
 }
 
-static int show_overlay(spuhdmv_decoder_t *this, composition_object_t *cobj, uint palette_id_ref,
+static int show_overlay(spuhdmv_decoder_t *this, composition_object_t *cobj, unsigned int palette_id_ref,
 			int overlay_index, int64_t pts, int force_update)
 {
   video_overlay_manager_t *ovl_manager = this->stream->video_out->get_overlay_manager(this->stream->video_out);
@@ -844,7 +844,7 @@ static void free_objs(spuhdmv_decoder_t *this)
 static void decode_segment(spuhdmv_decoder_t *this)
 {
   XINE_HDMV_TRACE("*** new segment, pts %010ld: 0x%02x (%8d bytes)",
-	 this->pts, (uint)this->buf->segment_type, (uint)this->buf->segment_len);
+		  this->pts, this->buf->segment_type, this->buf->segment_len);
 
   switch (this->buf->segment_type) {
   case 0x14:
