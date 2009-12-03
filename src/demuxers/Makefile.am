@@ -62,7 +62,7 @@ xineplug_dmx_mpeg_block_la_SOURCES = demux_mpeg_block.c
 xineplug_dmx_mpeg_block_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineplug_dmx_mpeg_la_SOURCES = demux_mpeg.c
-xineplug_dmx_mpeg_la_LIBADD = $(XINE_LIB)
+xineplug_dmx_mpeg_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineplug_dmx_mpeg_elem_la_SOURCES = demux_elem.c
 xineplug_dmx_mpeg_elem_la_LIBADD = $(XINE_LIB)
