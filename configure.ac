@@ -1262,10 +1262,10 @@ dnl check for libFLAC
 dnl ---------------------------------------------
 
 AC_ARG_WITH([libflac],
-  AS_HELP_STRING([--with-libflac], [build libFLAC-based decoder and demuxer]))
+  AS_HELP_STRING([--without-libflac], [don't build libFLAC-based decoder and demuxer]))
 
 have_libflac="no"
-if test "x$with_libflac" = "xyes"; then
+if test "x$with_libflac" != "xno"; then
   AM_PATH_LIBFLAC([have_libflac="yes"])
 fi
 
