@@ -1180,6 +1180,7 @@ static void ff_check_pts_tagging(ff_video_decoder_t *this, uint64_t pts)
     }
   }
 }
+#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
 
 static int ff_vc1_find_header(ff_video_decoder_t *this, buf_element_t *buf)
 {
@@ -1224,7 +1225,6 @@ static int ff_check_extradata(ff_video_decoder_t *this, unsigned int codec_type,
   return 1;
 }
 
-#endif /* AVCODEC_HAS_REORDERED_OPAQUE */
 static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
   uint8_t *chunk_buf = this->buf;
   AVRational avr00 = {0, 1};
