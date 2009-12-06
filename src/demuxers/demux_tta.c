@@ -19,6 +19,8 @@
  *
  * True Audio demuxer by Diego Pettenò <flameeyes@gentoo.org>
  * Inspired by tta libavformat demuxer by Alex Beregszaszi
+ *
+ * Seek + time support added by Kelvie Wong <kelvie@ieee.org>
  */
 
 #ifdef HAVE_CONFIG_H
@@ -27,6 +29,10 @@
 
 #define LOG_MODULE "demux_tta"
 #define LOG_VERBOSE
+
+// This is from the TTA spec, the length (in seconds) of a frame
+// http://www.true-audio.com/TTA_Lossless_Audio_Codec_-_Format_Description
+#define FRAME_TIME 1.04489795918367346939
 
 #include "xine_internal.h"
 #include "xineutils.h"
@@ -46,6 +52,8 @@ typedef struct {
   uint32_t            *seektable;
   uint32_t             totalframes;
   uint32_t             currentframe;
+
+  off_t                datastart;
 
   int                  status;
 
@@ -82,7 +90,7 @@ static int open_tta_file(demux_tta_t *this) {
   if ( this->input->read(this->input, this->header.buffer, sizeof(this->header)) != sizeof(this->header) )
     return 0;
 
-  framelen = 1.04489795918367346939 * le2me_32(this->header.tta.samplerate);
+  framelen = (uint32_t)(FRAME_TIME * le2me_32(this->header.tta.samplerate));
   this->totalframes = le2me_32(this->header.tta.data_length) / framelen + ((le2me_32(this->header.tta.data_length) % framelen) ? 1 : 0);
   this->currentframe = 0;
 
@@ -96,6 +104,9 @@ static int open_tta_file(demux_tta_t *this) {
 
   /* Skip the CRC32 */
   this->input->seek(this->input, 4, SEEK_CUR);
+
+  /* Store the offset after the header for seeking */
+  this->datastart = this->input->get_current_pos(this->input);
 
   return 1;
 }
@@ -127,7 +138,7 @@ static int demux_tta_send_chunk(demux_plugin_t *this_gen) {
       (int) ((double) this->currentframe * 65535 / this->totalframes);
 
     /* Set time */
-    /* buf->extra_info->input_time = this->current_sample / this->samplerate; */
+    buf->extra_info->input_time = (int)(FRAME_TIME * this->currentframe)*1000;
 
     bytes_read = this->input->read(this->input, buf->content, ( bytes_to_read > buf->max_size ) ? buf->max_size : bytes_to_read);
     if (bytes_read < 0) {
@@ -196,12 +207,36 @@ static void demux_tta_send_headers(demux_plugin_t *this_gen) {
 static int demux_tta_seek (demux_plugin_t *this_gen,
                            off_t start_pos, int start_time, int playing) {
   demux_tta_t *this = (demux_tta_t *) this_gen;
+  uint32_t start_frame;
+  uint32_t frame_index;
+  off_t start_off = this->datastart;
 
   /* if thread is not running, initialize demuxer */
   if( !playing ) {
 
     /* send new pts */
     _x_demux_control_newpts(this->stream, 0, 0);
+
+    this->status = DEMUX_OK;
+
+  } else {
+
+    /* Get the starting frame */
+    if( start_pos )
+      start_frame = start_pos * this->totalframes / 65535;
+    else
+      start_frame = (uint32_t)((double)start_time/ 1000.0 / FRAME_TIME);
+
+    /* Now we find the offset */
+    for( frame_index = 0; frame_index < start_frame; frame_index++ )
+        start_off += le2me_32(this->seektable[frame_index]);
+
+    /* Let's seek!  We store the current frame internally, so let's update that
+     * as well */
+    _x_demux_flush_engine(this->stream);
+    this->input->seek(this->input, start_off, SEEK_SET);
+    this->currentframe = start_frame;
+    _x_demux_control_newpts(this->stream, (int)(FRAME_TIME * start_frame) * 90000, BUF_FLAG_SEEK);
 
     this->status = DEMUX_OK;
   }
@@ -223,9 +258,8 @@ static int demux_tta_get_status (demux_plugin_t *this_gen) {
 }
 
 static int demux_tta_get_stream_length (demux_plugin_t *this_gen) {
-//  demux_tta_t *this = (demux_tta_t *) this_gen;
-
-  return 0;
+  demux_tta_t *this = (demux_tta_t *) this_gen;
+  return (int)(FRAME_TIME * this->totalframes * 1000);
 }
 
 static uint32_t demux_tta_get_capabilities(demux_plugin_t *this_gen) {
