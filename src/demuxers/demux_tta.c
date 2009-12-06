@@ -212,6 +212,7 @@ static int demux_tta_seek (demux_plugin_t *this_gen,
 static void demux_tta_dispose (demux_plugin_t *this_gen) {
   demux_tta_t *this = (demux_tta_t *) this_gen;
 
+  free(this->seektable);
   free(this);
 }
 

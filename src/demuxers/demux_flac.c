@@ -471,6 +471,7 @@ static void demux_flac_dispose (demux_plugin_t *this_gen) {
   demux_flac_t *this = (demux_flac_t *) this_gen;
 
   free(this->seekpoints);
+  free(this);
 }
 
 static int demux_flac_get_status (demux_plugin_t *this_gen) {
