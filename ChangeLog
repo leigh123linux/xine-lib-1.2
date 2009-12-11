@@ -2,6 +2,7 @@ xine-lib (1.1.1?) 20??-??-??
   * Bump the FLAC decoder's priority above ffmpegaudio. This should fix
     various problems with FLAC playback.
   * Build fix (undefined symbol) for when using older ffmpeg.
+  * TTA demuxer fixes; allow seeking.
 
 xine-lib (1.1.17) 2009-12-01
   * Add support for Matroska SIMPLEBLOCK.
