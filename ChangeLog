@@ -3,6 +3,7 @@ xine-lib (1.1.1?) 20??-??-??
     various problems with FLAC playback.
   * Build fix (undefined symbol) for when using older ffmpeg.
   * TTA demuxer fixes; allow seeking.
+  * More meta-information tags. (Nothing sets these yet, though.)
 
 xine-lib (1.1.17) 2009-12-01
   * Add support for Matroska SIMPLEBLOCK.
