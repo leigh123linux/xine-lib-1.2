@@ -130,7 +130,7 @@ static int demux_tta_send_chunk(demux_plugin_t *this_gen) {
     buf = this->audio_fifo->buffer_pool_alloc(this->audio_fifo);
     buf->type = BUF_AUDIO_TTA;
     buf->pts = 0;
-    buf->extra_info->total_time = this->totalframes;
+    buf->extra_info->total_time = (int)(FRAME_TIME * this->totalframes)*1000;
     buf->decoder_flags = 0;
 
     /* Set normalised position */
