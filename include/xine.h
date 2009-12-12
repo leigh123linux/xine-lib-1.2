@@ -939,7 +939,7 @@ const char *xine_get_meta_info   (xine_stream_t *stream, int info) XINE_PROTECTE
 #define XINE_META_INFO_ARTIST              2
 #define XINE_META_INFO_GENRE               3
 #define XINE_META_INFO_ALBUM               4
-#define XINE_META_INFO_YEAR                5
+#define XINE_META_INFO_YEAR                5 /* may be full date */
 #define XINE_META_INFO_VIDEOCODEC          6
 #define XINE_META_INFO_AUDIOCODEC          7
 #define XINE_META_INFO_SYSTEMLAYER         8
@@ -947,6 +947,20 @@ const char *xine_get_meta_info   (xine_stream_t *stream, int info) XINE_PROTECTE
 #define XINE_META_INFO_CDINDEX_DISCID      10
 #define XINE_META_INFO_TRACK_NUMBER        11
 #define XINE_META_INFO_COMPOSER            12
+/* post-1.1.17; taken from the list at http://age.hobba.nl/audio/mirroredpages/ogg-tagging.html on 2009-12-11 */
+#define XINE_META_INFO_PUBLISHER	   13
+#define XINE_META_INFO_COPYRIGHT	   14
+#define XINE_META_INFO_LICENSE		   15
+#define XINE_META_INFO_ARRANGER		   16
+#define XINE_META_INFO_LYRICIST		   17
+#define XINE_META_INFO_AUTHOR		   18
+#define XINE_META_INFO_CONDUCTOR	   19
+#define XINE_META_INFO_PERFORMER	   20
+#define XINE_META_INFO_ENSEMBLE		   21
+#define XINE_META_INFO_OPUS		   22
+#define XINE_META_INFO_PART		   23
+#define XINE_META_INFO_PARTNUMBER	   24
+#define XINE_META_INFO_LOCATION		   25
 
 
 /*********************************************************************

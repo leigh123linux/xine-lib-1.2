@@ -244,7 +244,7 @@ void xine_event_create_listener_thread (xine_event_queue_t *queue,
 
   if ((err = pthread_create (queue->listener_thread,
 			     NULL, listener_loop, queue)) != 0) {
-    xprintf (queue->stream->xine, XINE_VERBOSITY_DEBUG,
+    xprintf (queue->stream->xine, XINE_VERBOSITY_NONE,
 	     "events: can't create new thread (%s)\n", strerror(err));
     _x_abort();
   }

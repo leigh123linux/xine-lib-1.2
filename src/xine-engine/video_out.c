@@ -1958,7 +1958,7 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
     if ((err = pthread_create (&this->video_thread,
 			       &pth_attrs, video_out_loop, this)) != 0) {
 
-      xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out: can't create thread (%s)\n", strerror(err));
+      xprintf (this->xine, XINE_VERBOSITY_NONE, "video_out: can't create thread (%s)\n", strerror(err));
       /* FIXME: how does this happen ? */
       xprintf (this->xine, XINE_VERBOSITY_LOG,
 	       _("video_out: sorry, this should not happen. please restart xine.\n"));
