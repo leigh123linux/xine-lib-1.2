@@ -115,7 +115,7 @@ static int demux_tta_send_chunk(demux_plugin_t *this_gen) {
   demux_tta_t *this = (demux_tta_t *) this_gen;
   uint32_t bytes_to_read;
 
-  if ( this->currentframe > this->totalframes ) {
+  if ( this->currentframe >= this->totalframes ) {
     this->status = DEMUX_FINISHED;
     return this->status;
   }
