@@ -64,7 +64,7 @@ typedef struct {
       uint16_t channels;
       uint16_t bits_per_sample;
       uint32_t samplerate;
-      uint32_t data_length;
+      uint32_t data_length; /* Number of samples */
       uint32_t crc32;
     } XINE_PACKED tta;
     uint8_t buffer[22]; /* This is the size of the header */
@@ -130,7 +130,7 @@ static int demux_tta_send_chunk(demux_plugin_t *this_gen) {
     buf = this->audio_fifo->buffer_pool_alloc(this->audio_fifo);
     buf->type = BUF_AUDIO_TTA;
     buf->pts = 0;
-    buf->extra_info->total_time = (int)(FRAME_TIME * this->totalframes)*1000;
+    buf->extra_info->total_time = (int)(le2me_32(this->header.tta.data_length) * 1000.0 / le2me_32(this->header.tta.samplerate)); /* milliseconds */ 
     buf->decoder_flags = 0;
 
     /* Set normalised position */
@@ -281,7 +281,7 @@ static int demux_tta_get_status (demux_plugin_t *this_gen) {
 
 static int demux_tta_get_stream_length (demux_plugin_t *this_gen) {
   demux_tta_t *this = (demux_tta_t *) this_gen;
-  return (int)(FRAME_TIME * this->totalframes * 1000);
+  return le2me_32(this->header.tta.data_length) * 1000.0 / le2me_32(this->header.tta.samplerate); /* milliseconds */
 }
 
 static uint32_t demux_tta_get_capabilities(demux_plugin_t *this_gen) {
