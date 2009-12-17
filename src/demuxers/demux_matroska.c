@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2008 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -59,7 +59,7 @@ static void check_newpts (demux_matroska_t *this, int64_t pts,
 
   if ((track->track_type == MATROSKA_TRACK_VIDEO) ||
       (track->track_type == MATROSKA_TRACK_AUDIO)) {
-  
+
     diff = pts - track->last_pts;
 
     if (pts && (this->send_newpts || (track->last_pts && abs(diff)>WRAP_THRESHOLD)) ) {
@@ -410,9 +410,9 @@ static int parse_content_encodings (demux_matroska_t *this, matroska_track_t *tr
 
 static void init_codec_video(demux_matroska_t *this, matroska_track_t *track) {
   buf_element_t *buf;
-  
+
   buf = track->fifo->buffer_pool_alloc (track->fifo);
-  
+
   if (track->codec_private_len > buf->max_size) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             "demux_matroska: private decoder data length (%d) is greater than fifo buffer length (%" PRId32 ")\n",
@@ -429,20 +429,20 @@ static void init_codec_video(demux_matroska_t *this, matroska_track_t *track) {
     xine_fast_memcpy (buf->content, track->codec_private, buf->size);
   else
     buf->content = NULL;
-  
+
   if(track->default_duration) {
     buf->decoder_flags   |= BUF_FLAG_FRAMERATE;
-    buf->decoder_info[0]  = (int64_t)track->default_duration * 
+    buf->decoder_info[0]  = (int64_t)track->default_duration *
                             (int64_t)90 / (int64_t)1000000;
   }
-  
-  if(track->video_track && track->video_track->display_width && 
+
+  if(track->video_track && track->video_track->display_width &&
      track->video_track->display_height) {
     buf->decoder_flags   |= BUF_FLAG_ASPECT;
     buf->decoder_info[1]  = track->video_track->display_width;
     buf->decoder_info[2]  = track->video_track->display_height;
   }
-    
+
   track->fifo->put (track->fifo, buf);
 }
 
@@ -460,7 +460,7 @@ static void init_codec_audio(demux_matroska_t *this, matroska_track_t *track) {
     return;
   }
   buf->size = track->codec_private_len;
-  
+
   /* default param */
   buf->decoder_info[0] = 0;
   buf->decoder_info[1] = 44100;
@@ -492,9 +492,9 @@ static void init_codec_audio(demux_matroska_t *this, matroska_track_t *track) {
 
 static void init_codec_real(demux_matroska_t *this, matroska_track_t * track) {
   buf_element_t *buf;
-  
+
   buf = track->fifo->buffer_pool_alloc (track->fifo);
-  
+
   if (track->codec_private_len > buf->max_size) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             "demux_matroska: private decoder data length (%d) is greater than fifo buffer length (%" PRId32 ")\n",
@@ -502,30 +502,30 @@ static void init_codec_real(demux_matroska_t *this, matroska_track_t * track) {
     buf->free_buffer(buf);
     return;
   }
-  
+
   buf->size          = track->codec_private_len;
   buf->decoder_flags = BUF_FLAG_HEADER | BUF_FLAG_FRAME_END;
   buf->type          = track->buf_type;
   buf->pts           = 0;
-    
+
   if (buf->size)
     xine_fast_memcpy (buf->content, track->codec_private, buf->size);
   else
     buf->content = NULL;
-  
+
   if(track->default_duration) {
     buf->decoder_flags   |= BUF_FLAG_FRAMERATE;
-    buf->decoder_info[0]  = (int64_t)track->default_duration * 
+    buf->decoder_info[0]  = (int64_t)track->default_duration *
                             (int64_t)90 / (int64_t)1000000;
   }
-  
-  if(track->video_track && track->video_track->display_width && 
+
+  if(track->video_track && track->video_track->display_width &&
      track->video_track->display_height) {
     buf->decoder_flags   |= BUF_FLAG_ASPECT;
     buf->decoder_info[1]  = track->video_track->display_width;
     buf->decoder_info[2]  = track->video_track->display_height;
   }
-    
+
   track->fifo->put (track->fifo, buf);
 }
 
@@ -551,7 +551,7 @@ static void init_codec_xiph(demux_matroska_t *this, matroska_track_t *track) {
   data = track->codec_private + 3;
   for (i = 0; i < 3; i++) {
     buf = track->fifo->buffer_pool_alloc (track->fifo);
-    
+
     if (frame[i] > buf->max_size) {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
               "demux_matroska: private decoder data length (%d) is greater than fifo buffer length (%" PRId32 ")\n",
@@ -560,7 +560,7 @@ static void init_codec_xiph(demux_matroska_t *this, matroska_track_t *track) {
       return;
     }
     buf->size = frame[i];
-    
+
     buf->decoder_flags = BUF_FLAG_HEADER | BUF_FLAG_FRAME_START | BUF_FLAG_FRAME_END;
     buf->type          = track->buf_type;
     buf->pts           = 0;
@@ -849,7 +849,7 @@ static void handle_realvideo (demux_plugin_t *this_gen, matroska_track_t *track,
     buf->decoder_info[1] = BUF_SPECIAL_RV_CHUNK_TABLE;
     buf->decoder_info[2] = chunks;
     buf->decoder_info_ptr[2] = buf->content;
-    
+
     buf->size = 0;
     buf->type = track->buf_type;
 
@@ -916,7 +916,7 @@ static void handle_sub_ssa (demux_plugin_t *this_gen, matroska_track_t *track,
         }
       }
     }
-    
+
     last_char = *data;
     data++; data_len--;
   }
@@ -927,11 +927,11 @@ static void handle_sub_ssa (demux_plugin_t *this_gen, matroska_track_t *track,
     buf->size = dest - (char *)buf->content;
     buf->extra_info->input_normpos = input_normpos;
     buf->extra_info->input_time    = input_time;
-  
+
     track->fifo->put(track->fifo, buf);
   } else {
     buf->free_buffer(buf);
-  }                            
+  }
 }
 
 static void handle_sub_utf8 (demux_plugin_t *this_gen, matroska_track_t *track,
@@ -946,7 +946,7 @@ static void handle_sub_utf8 (demux_plugin_t *this_gen, matroska_track_t *track,
   buf = track->fifo->buffer_pool_alloc(track->fifo);
 
   buf->size = data_len + 9;  /* 2 uint32_t + '\0' */
-  
+
   if (buf->max_size >= buf->size) {
 
     buf->decoder_flags = decoder_flags;
@@ -955,7 +955,7 @@ static void handle_sub_utf8 (demux_plugin_t *this_gen, matroska_track_t *track,
     buf->decoder_info[1] = BUF_SPECIAL_CHARSET_ENCODING;
     buf->decoder_info_ptr[2] = "utf-8";
     buf->decoder_info[2] = strlen(buf->decoder_info_ptr[2]);
-    
+
     val = (uint32_t *)buf->content;
     *val++ = data_pts / 90;                    /* start time */
     *val++ = (data_pts + data_duration) / 90;  /* end time   */
@@ -1020,7 +1020,7 @@ static void handle_vobsub (demux_plugin_t *this_gen, matroska_track_t *track,
                 (int)track->track_num, result);
         free(dest);
         inflateEnd(&zstream);
-       
+
         if (result == Z_DATA_ERROR && track->compress_algo == MATROSKA_COMPRESS_UNKNOWN) {
           track->compress_algo = MATROSKA_COMPRESS_NONE;
           data_len = old_data_len;
@@ -1033,11 +1033,11 @@ static void handle_vobsub (demux_plugin_t *this_gen, matroska_track_t *track,
       zstream.avail_out += 4000;
     } while ((zstream.avail_out == 4000) &&
             (zstream.avail_in != 0) && (result != Z_STREAM_END));
- 
+
     if (track->compress_algo != MATROSKA_COMPRESS_NONE) {
       data_len = zstream.total_out;
       inflateEnd(&zstream);
- 
+
       data = dest;
       track->compress_algo = MATROSKA_COMPRESS_ZLIB;
       lprintf("VobSub: decompression for track %d from %d to %d\n",
@@ -1098,7 +1098,7 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
         }
         break;
 
-      case MATROSKA_ID_TR_TYPE: 
+      case MATROSKA_ID_TR_TYPE:
         {
           uint64_t num;
           lprintf("TrackType\n");
@@ -1200,7 +1200,7 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
         }
         break;
 
-      case MATROSKA_ID_TR_UID: 
+      case MATROSKA_ID_TR_UID:
         {
           uint64_t val;
 
@@ -1474,10 +1474,10 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
 static int parse_tracks(demux_matroska_t *this) {
   ebml_parser_t *ebml = this->ebml;
   int next_level = 2;
-  
+
   while (next_level == 2) {
     ebml_elem_t elem;
-    
+
     if (!ebml_read_elem_head(ebml, &elem))
       return 0;
 
@@ -1519,10 +1519,10 @@ static int parse_cue_trackposition(demux_matroska_t *this, int *track_num,
                                    int64_t *pos) {
   ebml_parser_t *ebml = this->ebml;
   int next_level = 4;
-  
+
   while (next_level == 4) {
     ebml_elem_t elem;
-    
+
     if (!ebml_read_elem_head(ebml, &elem))
       return 0;
 
@@ -1559,10 +1559,10 @@ static int parse_cue_point(demux_matroska_t *this) {
   int next_level = 3;
   int64_t timecode = -1, pos = -1;
   int track_num = -1;
-  
+
   while (next_level == 3) {
     ebml_elem_t elem;
-    
+
     if (!ebml_read_elem_head(ebml, &elem))
       return 0;
 
@@ -1627,10 +1627,10 @@ static int parse_cue_point(demux_matroska_t *this) {
 static int parse_cues(demux_matroska_t *this) {
   ebml_parser_t *ebml = this->ebml;
   int next_level = 2;
-  
+
   while (next_level == 2) {
     ebml_elem_t elem;
-    
+
     if (!ebml_read_elem_head(ebml, &elem))
       return 0;
 
@@ -1656,10 +1656,10 @@ static int parse_cues(demux_matroska_t *this) {
 static int parse_attachments(demux_matroska_t *this) {
   ebml_parser_t *ebml = this->ebml;
   int next_level = 2;
-  
+
   while (next_level == 2) {
     ebml_elem_t elem;
-    
+
     if (!ebml_read_elem_head(ebml, &elem))
       return 0;
 
@@ -1678,10 +1678,10 @@ static int parse_attachments(demux_matroska_t *this) {
 static int parse_tags(demux_matroska_t *this) {
   ebml_parser_t *ebml = this->ebml;
   int next_level = 2;
-  
+
   while (next_level == 2) {
     ebml_elem_t elem;
-    
+
     if (!ebml_read_elem_head(ebml, &elem))
       return 0;
 
@@ -1717,7 +1717,7 @@ static int parse_ebml_uint(demux_matroska_t *this, uint8_t *data, uint64_t *num)
   }
   if (size > 8) {
     off_t pos = this->input->get_current_pos(this->input);
-    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             "demux_matroska: Invalid Track Number at position %" PRIdMAX "\n",
             (intmax_t)pos);
     return 0;
@@ -1746,7 +1746,7 @@ static int parse_ebml_sint(demux_matroska_t *this, uint8_t *data, int64_t *num) 
     *num = -1;
   else
     *num = unum - ((1 << ((7 * size) - 1)) - 1);
-  
+
   return size;
 }
 
@@ -1816,7 +1816,7 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
 
   flags = *data;
   data += 1;
-  
+
   lprintf("track_num: %" PRIu64 ", timecode_diff: %d, flags: 0x%x\n", track_num, timecode_diff, flags);
 
   gap = flags & 1;
@@ -1923,7 +1923,7 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
         int frame_size;
 
         lprintf("fixed size lacing\n");
-        
+
         frame_size = block_size_left / (lace_num + 1);
         for (i = 0; i < lace_num; i++) {
           frame[i] = frame_size;
@@ -2025,10 +2025,10 @@ static int parse_simpleblock(demux_matroska_t *this, size_t block_len, uint64_t 
   file_len = this->input->get_length(this->input);
   if( file_len )
     normpos = (int) ( (double) block_pos * 65535 / file_len );
-  
+
   if (!read_block_data(this, block_len))
     return 0;
-  
+
   has_block = 1;
     /* we have the duration, we can parse the block now */
   if (!parse_block(this, block_len, cluster_timecode, block_duration,
@@ -2259,10 +2259,10 @@ static int parse_seek_entry(demux_matroska_t *this) {
   int has_position = 0;
   uint64_t id = 0;
   uint64_t pos;
-  
+
   while (next_level == 3) {
     ebml_elem_t elem;
-    
+
     if (!ebml_read_elem_head(ebml, &elem))
       return 0;
 
@@ -2286,26 +2286,26 @@ static int parse_seek_entry(demux_matroska_t *this) {
     }
     next_level = ebml_get_next_level(ebml, &elem);
   }
-  
+
   /* do not parse clusters */
   if (id == MATROSKA_ID_CLUSTER) {
     lprintf("skip cluster\n");
     return 1;
   }
-  
-  /* parse the referenced element */  
+
+  /* parse the referenced element */
   if (has_id && has_position) {
     off_t current_pos, seek_pos;
-    
+
     seek_pos = this->segment.start + pos;
-    
+
     if ((seek_pos > 0) && (seek_pos < this->input->get_length(this->input))) {
       ebml_parser_t ebml_bak;
 
       /* backup current state */
       current_pos = this->input->get_current_pos(this->input);
       memcpy(&ebml_bak, this->ebml, sizeof(ebml_parser_t));   /* FIXME */
-    
+
       /* seek and parse the top_level element */
       this->ebml->level = 1;
       if (this->input->seek(this->input, seek_pos, SEEK_SET) < 0) {
@@ -2344,7 +2344,7 @@ static int parse_seekhead(demux_matroska_t *this) {
 
   while (next_level == 2) {
     ebml_elem_t elem;
-    
+
     if (!ebml_read_elem_head(ebml, &elem))
       return 0;
 
@@ -2382,18 +2382,18 @@ static int parse_top_level_head(demux_matroska_t *this, int *next_level) {
   int ret_value = 1;
   off_t current_pos;
 
-  
+
   current_pos = this->input->get_current_pos(this->input);
   lprintf("current_pos: %" PRIdMAX "\n", (intmax_t)current_pos);
-  
+
   if (!ebml_read_elem_head(ebml, &elem))
     return 0;
-    
+
   if (!find_top_level_entry(this, current_pos)) {
 
     if (!add_top_level_entry(this, current_pos))
       return 0;
-    
+
     switch (elem.id) {
       case MATROSKA_ID_SEEKHEAD:
         lprintf("SeekHead\n");
@@ -2460,7 +2460,7 @@ static int parse_top_level_head(demux_matroska_t *this, int *next_level) {
     if (!ebml_skip(ebml, &elem))
       return 0;
   }
-  
+
   if (next_level)
     *next_level = ebml_get_next_level(ebml, &elem);
 
@@ -2547,12 +2547,12 @@ static int parse_segment(demux_matroska_t *this) {
   if (this->segment.id == MATROSKA_ID_SEGMENT) {
     int res;
     int next_level;
-    
+
     lprintf("Segment detected\n");
 
     if (!ebml_read_master (ebml, &this->segment))
       return 0;
-    
+
     res = 1;
     next_level = 1;
     /* stop the loop on the first cluster */
@@ -2604,14 +2604,14 @@ static void demux_matroska_send_headers (demux_plugin_t *this_gen) {
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, (this->num_video_tracks != 0));
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, (this->num_audio_tracks != 0));
 
-    
+
   /*
    * send preview buffers
    */
 
   /* enter in the segment */
   ebml_read_master (this->ebml, &this->segment);
-  
+
   /* seek back to the beginning of the segment */
   next_level = 1;
   if (this->input->seek(this->input, this->segment.start, SEEK_SET) < 0) {
@@ -2621,7 +2621,7 @@ static void demux_matroska_send_headers (demux_plugin_t *this_gen) {
     this->status = DEMUX_FINISHED;
     return;
   }
-  
+
   this->preview_sent = 0;
   this->preview_mode = 1;
 
@@ -2707,7 +2707,7 @@ static int demux_matroska_seek (demux_plugin_t *this_gen,
   matroska_index_t *index;
   matroska_track_t *track;
   int i, entry;
-  
+
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->input->get_length (this->input) );
 
@@ -2763,10 +2763,10 @@ static int demux_matroska_seek (demux_plugin_t *this_gen,
             index->track_num, start_pos ? "pos" : "time",
             start_pos ? (intmax_t)start_pos : (intmax_t)start_time,
             index->track_num, index->timecode[entry], (intmax_t)index->pos[entry]);
-    
+
     if (this->input->seek(this->input, index->pos[entry], SEEK_SET) < 0)
       this->status = DEMUX_FINISHED;
-    
+
     /* we always seek to the ebml level 1 */
     this->ebml->level = 1;
 
@@ -2780,7 +2780,7 @@ static int demux_matroska_seek (demux_plugin_t *this_gen,
 
 
 static void demux_matroska_dispose (demux_plugin_t *this_gen) {
-  
+
   demux_matroska_t *this = (demux_matroska_t *) this_gen;
   int i;
 
@@ -2796,7 +2796,7 @@ static void demux_matroska_dispose (demux_plugin_t *this_gen) {
     free (track->video_track);
     free (track->audio_track);
     free (track->sub_track);
-    
+
     free (track);
   }
   /* Free the cues. */
@@ -2805,8 +2805,8 @@ static void demux_matroska_dispose (demux_plugin_t *this_gen) {
     free(this->indexes[i].timecode);
   }
   free(this->indexes);
-    
-  /* Free the top_level elem list */    
+
+  /* Free the top_level elem list */
   free(this->top_level_list);
 
   free(this->title);
@@ -2851,7 +2851,7 @@ static int demux_matroska_get_optional_data (demux_plugin_t *this_gen,
       if ((channel >= 0) && (channel < this->num_sub_tracks)) {
         for (track_num = 0; track_num < this->num_tracks; track_num++) {
           matroska_track_t *track = this->tracks[track_num];
-          
+
           if ((track->buf_type & 0xFF00001F) == (BUF_SPU_BASE + channel)) {
             if (track->language) {
               strncpy (str, track->language, XINE_LANG_MAX);
@@ -2867,13 +2867,13 @@ static int demux_matroska_get_optional_data (demux_plugin_t *this_gen,
         }
       }
       return DEMUX_OPTIONAL_UNSUPPORTED;
-      
+
     case DEMUX_OPTIONAL_DATA_AUDIOLANG:
       lprintf ("DEMUX_OPTIONAL_DATA_AUDIOLANG channel = %d\n",channel);
       if ((channel >= 0) && (channel < this->num_audio_tracks)) {
         for (track_num = 0; track_num < this->num_tracks; track_num++) {
           matroska_track_t *track = this->tracks[track_num];
-          
+
           if ((track->buf_type & 0xFF00001F) == (BUF_AUDIO_BASE + channel)) {
             if (track->language) {
               strncpy (str, track->language, XINE_LANG_MAX);

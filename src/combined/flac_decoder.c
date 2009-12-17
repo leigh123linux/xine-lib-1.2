@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -74,8 +74,8 @@ typedef struct flac_decoder_s {
  * FLAC callback functions
  */
 
-static FLAC__StreamDecoderReadStatus 
-flac_read_callback (const FLAC__StreamDecoder *decoder, 
+static FLAC__StreamDecoderReadStatus
+flac_read_callback (const FLAC__StreamDecoder *decoder,
                     FLAC__byte buffer[],
                     unsigned *bytes,
                     void *client_data)
@@ -123,36 +123,36 @@ flac_write_callback (const FLAC__StreamDecoder *decoder,
     lprintf("flac_write_callback\n");
 
     while( samples_left ) {
-     
+
       audio_buffer = this->stream->audio_out->get_buffer(this->stream->audio_out);
 
       if( audio_buffer->mem_size < samples_left * frame->header.channels * bytes_per_sample )
         buf_samples = audio_buffer->mem_size / (frame->header.channels * bytes_per_sample);
       else
         buf_samples = samples_left;
-        
-        
+
+
       if( frame->header.bits_per_sample == 8 ) {
         data8 = (int8_t *)audio_buffer->mem;
-        
+
         for( j=0; j < buf_samples; j++ )
           for( i=0; i < frame->header.channels; i++ )
             *data8++ = buffer[i][j];
-       
+
       } else {
-        
+
         data16 = (int16_t *)audio_buffer->mem;
-        
+
         for( j=0; j < buf_samples; j++ )
           for( i=0; i < frame->header.channels; i++ )
             *data16++ = buffer[i][j];
-      }     
+      }
 
       audio_buffer->num_frames = buf_samples;
       audio_buffer->vpts = this->pts;
       this->pts = 0;
       this->stream->audio_out->put_buffer (this->stream->audio_out, audio_buffer, this->stream);
-      
+
       samples_left -= buf_samples;
     }
     return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
@@ -165,9 +165,9 @@ flac_metadata_callback (const FLAC__StreamDecoder *decoder,
                         void *client_data)
 {
   /* flac_decoder_t *this = (flac_decoder_t *)client_data; */
-  
+
   lprintf("Metadata callback called!\n");
-  
+
 #ifdef LOG
   if (metadata->type == FLAC__METADATA_TYPE_STREAMINFO) {
     printf("libflac: min_blocksize = %d\n", metadata->data.stream_info.min_blocksize);
@@ -201,7 +201,7 @@ flac_error_callback (const FLAC__StreamDecoder *decoder,
   else
     printf("libflac: unknown error.\n");
 #endif
-                                                                                
+
     return;
 }
 
@@ -210,34 +210,34 @@ flac_error_callback (const FLAC__StreamDecoder *decoder,
  * FLAC plugin decoder
  */
 
-static void 
+static void
 flac_reset (audio_decoder_t *this_gen)
 {
   flac_decoder_t *this = (flac_decoder_t *) this_gen;
 
   this->buf_pos = 0;
-  
-  if( FLAC__stream_decoder_get_state(this->flac_decoder) != 
-                FLAC__STREAM_DECODER_SEARCH_FOR_METADATA ) 
+
+  if( FLAC__stream_decoder_get_state(this->flac_decoder) !=
+                FLAC__STREAM_DECODER_SEARCH_FOR_METADATA )
     FLAC__stream_decoder_flush (this->flac_decoder);
 }
 
-static void 
-flac_discontinuity (audio_decoder_t *this_gen) 
+static void
+flac_discontinuity (audio_decoder_t *this_gen)
 {
   flac_decoder_t *this = (flac_decoder_t *) this_gen;
 
   this->pts = 0;
-  
+
   lprintf("Discontinuity!\n");
 }
 
-static void 
+static void
 flac_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 {
     flac_decoder_t *this = (flac_decoder_t *) this_gen;
     int ret = 1;
-        
+
     /* We are getting the stream header, open up the audio
      * device, and collect information about the stream
      */
@@ -277,15 +277,15 @@ flac_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 
         xine_fast_memcpy (&this->buf[this->buf_pos], buf->content, buf->size);
         this->buf_pos += buf->size;
-        
+
         if (buf->pts)
           this->pts = buf->pts;
 
         /* We have enough to decode a frame */
         while( ret && this->buf_pos > this->min_size ) {
-            
+
             FLAC__StreamDecoderState state = FLAC__stream_decoder_get_state(this->flac_decoder);
-                
+
             if( state ==  FLAC__STREAM_DECODER_SEARCH_FOR_METADATA ) {
               lprintf("process_until_end_of_metadata\n");
               ret = FLAC__stream_decoder_process_until_end_of_metadata (this->flac_decoder);
@@ -301,24 +301,24 @@ flac_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
         }
     } else
         return;
-    
+
 
 }
 
 static void
 flac_dispose (audio_decoder_t *this_gen) {
-    flac_decoder_t *this = (flac_decoder_t *) this_gen; 
+    flac_decoder_t *this = (flac_decoder_t *) this_gen;
 
     FLAC__stream_decoder_finish (this->flac_decoder);
 
     FLAC__stream_decoder_delete (this->flac_decoder);
 
-    if (this->output_open) 
+    if (this->output_open)
         this->stream->audio_out->close (this->stream->audio_out, this->stream);
 
     if (this->buf)
       free(this->buf);
-    
+
     free (this_gen);
 }
 
@@ -384,7 +384,7 @@ open_plugin (audio_decoder_class_t *class_gen, xine_stream_t *stream) {
 static void *
 init_plugin (xine_t *xine, void *data) {
     flac_class_t *this;
-  
+
     this = calloc(1, sizeof (flac_class_t));
 
     this->decoder_class.open_plugin     = open_plugin;
@@ -398,17 +398,17 @@ init_plugin (xine_t *xine, void *data) {
 
 void *demux_flac_init_class (xine_t *xine, void *data);
 
-static const uint32_t audio_types[] = { 
+static const uint32_t audio_types[] = {
   BUF_AUDIO_FLAC, 0
  };
 
 static const decoder_info_t dec_info_audio = {
   audio_types,         /* supported types */
-  5                    /* priority        */
+  8                    /* priority        */
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_DEMUX, 27, "flac", XINE_VERSION_CODE, NULL, demux_flac_init_class },
   { PLUGIN_AUDIO_DECODER, 16, "flacdec", XINE_VERSION_CODE, &dec_info_audio, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }

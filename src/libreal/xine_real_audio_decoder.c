@@ -1,25 +1,25 @@
-/* 
+/*
  * Copyright (C) 2000-2008 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * thin layer to use real binary-only codecs in xine
  *
- * code inspired by work from Florian Schneider for the MPlayer Project 
+ * code inspired by work from Florian Schneider for the MPlayer Project
  */
 
 #ifdef HAVE_CONFIG_H
@@ -92,7 +92,7 @@ typedef struct realdec_decoder_s {
   uint64_t         pts;
 
   int              output_open;
-  
+
   int              decoder_ok;
 
 } realdec_decoder_t;
@@ -130,7 +130,7 @@ static int load_syms_linux (realdec_decoder_t *this, const char *const codec_nam
   if (!this->raCloseCodec || !this->raDecode || !this->raFlush || !this->raFreeDecoder ||
       !this->raGetFlavorProperty || !this->raOpenCodec2 || !this->raSetFlavor ||
       /*!raSetDLLAccessPath ||*/ !this->raInitDecoder){
-    xprintf (this->stream->xine, XINE_VERBOSITY_LOG, 
+    xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
 	     _("libareal: (audio) Cannot resolve symbols - incompatible dll: %s\n"), codec_name);
     return 0;
   }
@@ -162,7 +162,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
   int   coded_frame_size2, data_len, flavor;
   int   mode;
   void *extras;
-  
+
   /*
    * extract header data
    */
@@ -173,13 +173,13 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
 #ifdef LOG
   xine_hexdump (buf->content, buf->size);
 #endif
-    
+
   flavor           = _X_BE_16 (buf->content+22);
   coded_frame_size = _X_BE_32 (buf->content+24);
   codec_data_length= _X_BE_16 (buf->content+40);
   coded_frame_size2= _X_BE_16 (buf->content+42);
   subpacket_size   = _X_BE_16 (buf->content+44);
-    
+
   this->sps        = subpacket_size;
   this->w          = coded_frame_size2;
   this->h          = codec_data_length;
@@ -191,8 +191,8 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
 
     /* FIXME: */
     if (buf->type==BUF_AUDIO_COOK) {
-      
-      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	       "libareal: audio header version 4 for COOK audio not supported.\n");
       return 0;
     }
@@ -210,7 +210,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
   this->block_align= coded_frame_size2;
 
   lprintf ("0x%04x 0x%04x 0x%04x 0x%04x data_len 0x%04x\n",
-	   subpacket_size, coded_frame_size, codec_data_length, 
+	   subpacket_size, coded_frame_size, codec_data_length,
 	   coded_frame_size2, data_len);
   lprintf ("%d samples/sec, %d bits/sample, %d channels\n",
 	   samples_per_sec, bits_per_sample, num_channels);
@@ -224,7 +224,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
       return 0;
     this->block_align = subpacket_size;
     break;
-    
+
   case BUF_AUDIO_ATRK:
     _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, "Atrac");
     if (!load_syms_linux (this, "atrc.so", "atrc.so.6.0"))
@@ -252,7 +252,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
     break;
 
   default:
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	     "libareal: error, i don't handle buf type 0x%08x\n", buf->type);
     return 0;
   }
@@ -267,7 +267,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
     return 0;
   }
 
-  { 
+  {
     ra_init_t init_data;
 
     init_data.samplerate = samples_per_sec;
@@ -285,10 +285,10 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
     printf ("libareal: extras :\n");
     xine_hexdump (init_data.extras, data_len);
 #endif
-     
+
     result = this->raInitDecoder (this->context, &init_data);
     if(result){
-      xprintf (this->stream->xine, XINE_VERBOSITY_LOG, 
+      xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
 	       _("libareal: decoder init failed, error code: 0x%x\n"), result);
       return 0;
     }
@@ -344,7 +344,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
     return 0;
   }
 
-  (this->stream->audio_out->open) (this->stream->audio_out, 
+  (this->stream->audio_out->open) (this->stream->audio_out,
 				this->stream,
 				bits_per_sample,
 				samples_per_sec,
@@ -360,7 +360,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
 static void realdec_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   realdec_decoder_t *this = (realdec_decoder_t *) this_gen;
 
-  lprintf ("decode_data %d bytes, flags=0x%08x, pts=%"PRId64" ...\n", 
+  lprintf ("decode_data %d bytes, flags=0x%08x, pts=%"PRId64" ...\n",
 	   buf->size, buf->decoder_flags, buf->pts);
 
   if (buf->decoder_flags & BUF_FLAG_PREVIEW) {
@@ -407,20 +407,20 @@ static void realdec_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) 
 
 	  audio_buffer = this->stream->audio_out->get_buffer (this->stream->audio_out);
 
-	  result = this->raDecode (this->context, 
+	  result = this->raDecode (this->context,
 				   this->frame_buffer + n,
 				   this->block_align,
 				   (char *) audio_buffer->mem, &len, -1);
 
 	  lprintf ("raDecode result %d, len=%d\n", result, len);
 
-	  audio_buffer->vpts       = this->pts; 
+	  audio_buffer->vpts       = this->pts;
 
 	  this->pts = 0;
 
 	  audio_buffer->num_frames = len/this->sample_size;;
-	  
-	  this->stream->audio_out->put_buffer (this->stream->audio_out, 
+
+	  this->stream->audio_out->put_buffer (this->stream->audio_out,
 					       audio_buffer, this->stream);
 	  n += this->block_align;
 	}
@@ -433,13 +433,13 @@ static void realdec_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) 
 
 static void realdec_reset (audio_decoder_t *this_gen) {
   realdec_decoder_t *this = (realdec_decoder_t *) this_gen;
-  
+
   this->frame_num_bytes = 0;
 }
 
 static void realdec_discontinuity (audio_decoder_t *this_gen) {
   realdec_decoder_t *this = (realdec_decoder_t *) this_gen;
-  
+
   this->pts = 0;
 }
 
@@ -475,7 +475,7 @@ static void realdec_dispose (audio_decoder_t *this_gen) {
   lprintf ("dispose done\n");
 }
 
-static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, 
+static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
 				     xine_stream_t *stream) {
 
   real_class_t      *cls = (real_class_t *) class_gen;
@@ -518,7 +518,7 @@ void *init_realadec (xine_t *xine, void *data) {
  * exported plugin catalog entry
  */
 
-static const uint32_t audio_types[] = { 
+static const uint32_t audio_types[] = {
   BUF_AUDIO_COOK, BUF_AUDIO_ATRK, /* BUF_AUDIO_14_4, BUF_AUDIO_28_8, */ BUF_AUDIO_SIPRO, 0
  };
 

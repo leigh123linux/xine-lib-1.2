@@ -25,7 +25,7 @@
  *
  * Quick technical note: VQA files begin with a header that includes a
  * frame index. This ought to be useful for seeking within a VQA file.
- * However, seeking is infeasible due to the audio encoding: Each audio 
+ * However, seeking is infeasible due to the audio encoding: Each audio
  * block needs information from the previous audio block in order to be
  * decoded, thus making random seeking difficult.
  */
@@ -108,7 +108,7 @@ static int open_vqa_file(demux_vqa_t *this) {
     this->filesize = 1;
 
   /* load the VQA header */
-  if (this->input->read(this->input, vqa_header, VQA_HEADER_SIZE) != 
+  if (this->input->read(this->input, vqa_header, VQA_HEADER_SIZE) !=
     VQA_HEADER_SIZE)
     return 0;
 

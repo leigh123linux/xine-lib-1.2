@@ -1,25 +1,25 @@
 /*
  * Copyright (C) 2001-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * OSD stuff (text and graphic primitives)
  *
- * xine-fontconv.c  
+ * xine-fontconv.c
  *
  * converts ttf fonts to xine osd fonts
  *
@@ -92,7 +92,7 @@ struct osd_font_s {
   uint16_t         num_fontchars;
   osd_fontchar_t  *fontchar;
   osd_font_t      *next;
-}; 
+};
 
 
 /* list */
@@ -110,7 +110,7 @@ osd_font_t     font;
 
 
 static int gzwrite_i16(gzFile *fp, uint16_t number) {
-  return gzputc(fp, number & 0xFF) != -1 && 
+  return gzputc(fp, number & 0xFF) != -1 &&
          gzputc(fp, (number >> 8) & 0xFF) != -1;
 }
 
@@ -169,7 +169,7 @@ void list_free(item_t *list) {
   }
 }
 
-/* 
+/*
  * generate sorted list with unicodes in all given pages,
  * returns number of unicodes in the list
  */
@@ -189,7 +189,7 @@ uint16_t generate_unicodes_list(item_t **list, char **pages, int number) {
       continue;
     }
     printf("Used encoding \"%s\"\n", pages[page]);
-    
+
     /* add new unicodes into list */
     for (z = 32; z < 0xFFFF; z++) {
       uint16_t unicode;
@@ -198,7 +198,7 @@ uint16_t generate_unicodes_list(item_t **list, char **pages, int number) {
       size_t inbytesleft = z <= 0xFF ? 1 : 2;
       size_t outbytesleft = 2;
       size_t count;
-     
+
       /* get unicode value from index 'z' in this codepage 'pages[i]' */
       count = iconv(cd, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
       if (count == (size_t)-1 || inbytesleft != 0) {
@@ -218,7 +218,7 @@ uint16_t generate_unicodes_list(item_t **list, char **pages, int number) {
 void print_bitmap (FT_Bitmap *bitmap) {
 
   int x,y;
-  
+
   for( y = 0; y < bitmap->rows; y++ ) {
     for( x = 0; x < bitmap->width; x++ ) {
       if( bitmap->buffer[y*bitmap->width+x] > 1 )
@@ -242,7 +242,7 @@ FT_Bitmap *create_bitmap (int width, int height) {
   bitmap->width = width;
   bitmap->buffer = malloc(width*height);
   memset( bitmap->buffer, 0, width*height );
-  
+
   return bitmap;
 }
 
@@ -250,9 +250,9 @@ void destroy_bitmap (FT_Bitmap * bitmap) {
   free(bitmap->buffer);
   free(bitmap);
 }
- 
 
-/* 
+
+/*
    This function is called to blend a slightly deslocated
    version of the bitmap. This will produce the border effect.
    Note that the displacement may be smaller than 1 pixel
@@ -264,15 +264,15 @@ void add_border_bitmap( FT_Bitmap *dst, FT_Bitmap *src, int left, int top )
   int x,y;
   int x1, y1;
   int dstpos, srcpos;
-  
+
   for( y = 0; y < src->rows; y++ ) {
     for( x = 0; x < src->width; x++ ) {
       srcpos = y * src->width + x;
-      
+
       x1 = x + left;
       if( x1 < 0 || x1 >= dst->width )
         continue;
-        
+
       y1 = y + top;
       if( y1 < 0 || y1 >= dst->rows )
         continue;
@@ -288,9 +288,9 @@ void add_border_bitmap( FT_Bitmap *dst, FT_Bitmap *src, int left, int top )
 /*
    Blend the final version of bitmap (the foreground color) over the
    already generated border. It will be antialiased to the border.
-   
+
    Final palette will be:
-   
+
    0: not used by font, always transparent
    1: font background, usually transparent, may be used to implement
       translucid boxes where the font will be printed.
@@ -299,22 +299,22 @@ void add_border_bitmap( FT_Bitmap *dst, FT_Bitmap *src, int left, int top )
    6: font border. if the font is to be displayed without border this
       will probably be adjusted to font background or near.
    7-9: transition between border and foreground
-   10: font color (foreground)   
+   10: font color (foreground)
 */
 void add_final_bitmap( FT_Bitmap *dst, FT_Bitmap *src, int left, int top )
 {
   int x,y;
   int x1, y1;
   int dstpos, srcpos;
-  
+
   for( y = 0; y < src->rows; y++ ) {
     for( x = 0; x < src->width; x++ ) {
       srcpos = y * src->width + x;
-      
+
       x1 = x + left;
       if( x1 < 0 || x1 >= dst->width )
         continue;
-        
+
       y1 = y + top;
       if( y1 < 0 || y1 >= dst->rows )
         continue;
@@ -325,7 +325,7 @@ void add_final_bitmap( FT_Bitmap *dst, FT_Bitmap *src, int left, int top )
         dst->buffer[dstpos] = src->buffer[srcpos] + 5;
     }
   }
-  
+
   for( y = 0; y < dst->rows; y++ ) {
     for( x = 0; x < dst->width; x++ ) {
       dstpos = y * dst->width + x;
@@ -336,7 +336,7 @@ void add_final_bitmap( FT_Bitmap *dst, FT_Bitmap *src, int left, int top )
 }
 
 
-void render_font (FT_Face face, char *fontname, int size, int thickness, 
+void render_font (FT_Face face, char *fontname, int size, int thickness,
                   item_t *unicodes) {
 
   char                filename[1024];
@@ -348,7 +348,7 @@ void render_font (FT_Face face, char *fontname, int size, int thickness,
   FT_Glyph            glyph;
   FT_BitmapGlyph      glyph_bitmap;
   FT_Vector           origin;
-  int                 max_bearing_y = 0;        
+  int                 max_bearing_y = 0;
   int                 i;
   int                 converted;
   item_t             *item, *error_unicodes;
@@ -358,27 +358,27 @@ void render_font (FT_Face face, char *fontname, int size, int thickness,
     {-1,-1},{1,-1},{-1,1},{1,1}, {0,0}
   };
 
-  
-  /* 
+
+  /*
    * generate filename, open file
    */
-   
+
   snprintf (filename, sizeof(filename), "%s-%d.xinefont.gz", fontname, size);
 
   fp = gzopen(filename,"w");
- 
+
   if (!fp) {
     printf ("error opening output file %s\n", filename);
     return;
   }
 
-  /* 
+  /*
    * set up font
    */
 
   strncpy(font.name, fontname, sizeof(font.name));
   font.name[sizeof(font.name) - 1] = '\0';
-  /* changes from version 1 to version 2: 
+  /* changes from version 1 to version 2:
    *   'code' in characters is defined as little endian 16-bit unicode
    *   characters are sorted by 'code'
    */
@@ -389,7 +389,7 @@ void render_font (FT_Face face, char *fontname, int size, int thickness,
   error = FT_Set_Pixel_Sizes( face,     /* handle to face object */
                               0,        /* pixel_width           */
                               size );   /* pixel_height          */
-                              
+
   if (error) {
     printf("error setting size\n");
     return;
@@ -398,7 +398,7 @@ void render_font (FT_Face face, char *fontname, int size, int thickness,
   if( !thickness )
     thickness = size * 64 / 30;
 
-  /* 
+  /*
    * calc max bearing y.
    * this is needed to align all bitmaps by the upper position.
    */
@@ -417,7 +417,7 @@ void render_font (FT_Face face, char *fontname, int size, int thickness,
     error = FT_Load_Glyph (face,               /* handle to face object */
                            glyph_index,        /* glyph index           */
                            FT_LOAD_DEFAULT );  /* load flags            */
-                         
+
     if (error) {
       error_counter++;
       list_insert(&error_unicodes, item->code);
@@ -447,19 +447,19 @@ void render_font (FT_Face face, char *fontname, int size, int thickness,
 
       glyph_index = FT_Get_Char_Index( face, item->code);
 
-        
+
       if (glyph_index) {
-          
+
         error = FT_Load_Glyph( face,          /* handle to face object */
                                glyph_index,   /* glyph index           */
                                FT_LOAD_DEFAULT );  /* load flags */
-          
+
         if (!error) {
           error = FT_Get_Glyph( face->glyph, &glyph );
-	    
+
           if( i == 0 ) {
             out_bitmap = create_bitmap( f266CeilToInt(thickness + MAX(face->glyph->metrics.horiAdvance, face->glyph->metrics.width + face->glyph->metrics.horiBearingX)),
-                                        f266CeilToInt((max_bearing_y<<6) - face->glyph->metrics.horiBearingY + 
+                                        f266CeilToInt((max_bearing_y<<6) - face->glyph->metrics.horiBearingY +
                                         face->glyph->metrics.height + thickness) );
           }
 
@@ -467,7 +467,7 @@ void render_font (FT_Face face, char *fontname, int size, int thickness,
           origin.y = thickness + border_pos[i][1]*thickness;
 
           error = FT_Glyph_Transform(glyph, NULL, &origin) ||
-                  FT_Glyph_To_Bitmap( &glyph, ft_render_mode_normal, NULL, 1);  
+                  FT_Glyph_To_Bitmap( &glyph, ft_render_mode_normal, NULL, 1);
 
           if (error) {
             printf("error generating bitmap [U+%04X]\n", item->code);
@@ -483,24 +483,24 @@ void render_font (FT_Face face, char *fontname, int size, int thickness,
           else
             add_final_bitmap( out_bitmap, &glyph_bitmap->bitmap, glyph_bitmap->left,
                               max_bearing_y - glyph_bitmap->top );
-          converted = 1;          
-                              
+          converted = 1;
+
           FT_Done_Glyph( glyph );
 	}
       }
     }
-    
+
     if( converted ) {
 #ifdef LOG
       printf("[U+%04X] bitmap width: %d height: %d\n", item->code, out_bitmap->width, out_bitmap->rows );
-      /* 
+      /*
       print_bitmap(out_bitmap);
       */
 #endif
       fontchar.code = item->code;
       fontchar.width = out_bitmap->width;
       fontchar.height = out_bitmap->rows;
-  
+
       gzwrite_i16 (fp, fontchar.code);
       gzwrite_i16 (fp, fontchar.width);
       gzwrite_i16 (fp, fontchar.height);
@@ -523,7 +523,7 @@ void render_font (FT_Face face, char *fontname, int size, int thickness,
     list_free(error_unicodes);
   }
   printf ("generated %s (%d characters)\n", filename, font.num_fontchars);
-}  
+}
 
 
 int main(int argc, char *argv[]) {
@@ -548,7 +548,7 @@ int main(int argc, char *argv[]) {
     printf ("usage: %s font.ttf fontname [encoding1 [encoding2 [...]]]\n", argv[0]);
     exit (1);
   }
-  
+
   len = strlen (argv[1]);
 
   if (strncasecmp (&argv[1][len-4],".ttf",3)) {
@@ -561,8 +561,8 @@ int main(int argc, char *argv[]) {
     printf("error initializing freetype\n");
     return 1;
   }
-  
-  error = FT_New_Face( library, 
+
+  error = FT_New_Face( library,
                        argv[1],
                        0,
                        &face );
@@ -596,21 +596,21 @@ int main(int argc, char *argv[]) {
     render_font (face, argv[2], 32, thickness, unicodes);
     render_font (face, argv[2], 48, thickness, unicodes);
     render_font (face, argv[2], 64, thickness, unicodes);
-  } else 
+  } else
     printf("No font generated\n");
 
   list_free(unicodes);
 
   FT_Done_Face(face);
- 
-  FT_Done_FreeType(library); 
+
+  FT_Done_FreeType(library);
 
   /*
    * some rgb -> yuv conversion,
    * can be used to calc new palettes
    */
   /*
-  { 
+  {
     float f;
     for (f=1.0; f<6.0; f+=1.0) {
 
@@ -622,7 +622,7 @@ int main(int argc, char *argv[]) {
       Y  =  0.29900 * R + 0.58700 * G + 0.11400 * B ;
       Cb = -0.16874 * R - 0.33126 * G + 0.50000 * B  + 128.0;
       Cr =  0.50000 * R - 0.41869 * G - 0.08131 * B  + 128.0;
-      
+
       printf ("CLUT_Y_CR_CB_INIT(0x%x, 0x%x, 0x%x),\n", (int) Y, (int) Cr, (int) Cb);
     }
   }

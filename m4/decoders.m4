@@ -240,7 +240,7 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
                 x86_64-*)
                     AC_DEFINE([FPM_64BIT], 1, [Define to select libmad fixed point arithmetic implementation])
                     ;;
-                ppc-* | powerpc-*) 
+                ppc-* | powerpc-*)
                     AC_DEFINE([FPM_PPC], 1, [Define to select libmad fixed point arithmetic implementation])
                     ;;
                 sparc*-*)

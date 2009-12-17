@@ -1,25 +1,25 @@
-/* 
+/*
  * Copyright (C) 2000-2008 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * 20-8-2001 First implementation of Audio sync and Audio driver separation.
  * Copyright (C) 2001 James Courtier-Dutton James@superbug.demon.co.uk
- * 
+ *
  * General Programming Guidelines: -
  * New concept of an "audio_frame".
  * An audio_frame consists of all the samples required to fill every audio channel
@@ -90,7 +90,7 @@
 #endif
 
 #ifndef AFMT_AC3
-#       define AFMT_AC3         0x00000400  
+#       define AFMT_AC3         0x00000400
 #endif
 
 #define AO_OUT_OSS_IFACE_VERSION 9
@@ -127,7 +127,7 @@ typedef struct oss_driver_s {
   uint32_t	   bytes_per_frame;
   uint32_t         bytes_in_buffer;      /* number of bytes writen to audio hardware   */
   uint32_t         last_getoptr;
-    
+
   int              audio_started;
   int              sync_method;
   int              latency;
@@ -178,7 +178,7 @@ static int ao_oss_open(ao_driver_t *this_gen,
 
     close (this->audio_fd);
   }
-  
+
   this->mode                   = mode;
   this->input_sample_rate      = rate;
   this->bits_per_sample        = bits;
@@ -192,11 +192,11 @@ static int ao_oss_open(ao_driver_t *this_gen,
 
   this->audio_fd=open(this->audio_dev,O_WRONLY|O_NONBLOCK);
   if (this->audio_fd < 0) {
-    xprintf(this->xine, XINE_VERBOSITY_LOG, 
+    xprintf(this->xine, XINE_VERBOSITY_LOG,
 	    _("audio_oss_out: Opening audio device %s: %s\n"), this->audio_dev, strerror(errno));
     return 0;
   }
-  
+
   /* We wanted non blocking open but now put it back to normal */
   fcntl(this->audio_fd, F_SETFL, fcntl(this->audio_fd, F_GETFL)&~O_NONBLOCK);
 
@@ -213,8 +213,8 @@ static int ao_oss_open(ao_driver_t *this_gen,
 
     tmp = this->input_sample_rate;
     if (ioctl(this->audio_fd,SNDCTL_DSP_SPEED, &tmp) == -1) {
-      
-      xprintf(this->xine, XINE_VERBOSITY_LOG, 
+
+      xprintf(this->xine, XINE_VERBOSITY_LOG,
 	      _("audio_oss_out: warning: sampling rate %d Hz not supported, trying 44100 Hz\n"),
 	      this->input_sample_rate);
 
@@ -272,7 +272,7 @@ static int ao_oss_open(ao_driver_t *this_gen,
 
   xprintf(this->xine, XINE_VERBOSITY_LOG, "audio_oss_out: %d channels output\n", this->num_channels);
   this->bytes_per_frame=(this->bits_per_sample*this->num_channels)/8;
-  
+
   /*
    * set format
    */
@@ -303,7 +303,7 @@ static int ao_oss_open(ao_driver_t *this_gen,
         else
           xprintf(this->xine, XINE_VERBOSITY_DEBUG, "audio_oss_out: The AFMT_S16_NE ioctl failed.\n");
         return 0;
-      }          
+      }
     }
     break;
   case AO_CAP_MODE_A52:
@@ -317,7 +317,7 @@ static int ao_oss_open(ao_driver_t *this_gen,
     ioctl(this->audio_fd, SNDCTL_DSP_CHANNELS, &tmp);
     tmp = AFMT_AC3;
     if (ioctl(this->audio_fd, SNDCTL_DSP_SETFMT, &tmp) < 0 || tmp != AFMT_AC3) {
-      xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->xine, XINE_VERBOSITY_DEBUG,
 	      "audio_oss_out: AC3 SNDCTL_DSP_SETFMT failed. %d. Using alternative.\n",tmp);
       tmp = AFMT_S16_LE;
       ioctl(this->audio_fd, SNDCTL_DSP_SETFMT, &tmp);
@@ -344,7 +344,7 @@ static int ao_oss_open(ao_driver_t *this_gen,
 
      printf ("audio_oss_out: audio buffer fragment info : %x\n",tmp);
 
-     ioctl(this->audio_fd,SNDCTL_DSP_SETFRAGMENT,&tmp); 
+     ioctl(this->audio_fd,SNDCTL_DSP_SETFRAGMENT,&tmp);
   */
 
   return this->output_sample_rate;
@@ -395,9 +395,9 @@ static int ao_oss_delay(ao_driver_t *this_gen) {
                   * this->output_sample_k_rate / 1000;
     frames += (tv.tv_sec - this->start_time.tv_sec)
                   * this->output_sample_rate;
-    
+
     frames -= this->latency * this->output_sample_k_rate;
-                  
+
     /* calc delay */
 
     bytes_left = this->bytes_in_buffer - frames * this->bytes_per_frame;
@@ -421,15 +421,15 @@ static int ao_oss_delay(ao_driver_t *this_gen) {
     if (ioctl (this->audio_fd, SNDCTL_DSP_GETOPTR, &info)) {
       perror ("audio_oss_out: SNDCTL_DSP_GETOPTR failed:");
     }
-    
+
     lprintf ("%d bytes output\n", info.bytes);
 
     if (this->bytes_in_buffer < info.bytes) {
       this->bytes_in_buffer -= this->last_getoptr; /* GETOPTR wrapped */
-    }    
-    
+    }
+
     bytes_left = this->bytes_in_buffer - info.bytes; /* calc delay */
-            
+
     if (bytes_left<=0) { /* buffer ran dry */
       bytes_left = 0;
       this->bytes_in_buffer = info.bytes;
@@ -476,7 +476,7 @@ static int ao_oss_write(ao_driver_t *this_gen,
 
   this->bytes_in_buffer += num_frames * this->bytes_per_frame;
 
-  n = write(this->audio_fd, frame_buffer, num_frames * this->bytes_per_frame); 
+  n = write(this->audio_fd, frame_buffer, num_frames * this->bytes_per_frame);
 
   lprintf ("ao_oss_write done\n");
 
@@ -520,20 +520,20 @@ static int ao_oss_get_property (ao_driver_t *this_gen, int property) {
   case AO_PROP_PCM_VOL:
   case AO_PROP_MIXER_VOL:
     if(!this->mixer.mute) {
-      
+
       if(this->mixer.fd != -1) {
 	IOCTL_REQUEST_TYPE cmd = 0;
 	int v;
-	
+
 	ioctl(this->mixer.fd, SOUND_MIXER_READ_DEVMASK, &audio_devs);
-	
+
 	if(audio_devs & SOUND_MASK_PCM)
 	  cmd = SOUND_MIXER_READ_PCM;
 	else if(audio_devs & SOUND_MASK_VOLUME)
 	  cmd = SOUND_MIXER_READ_VOLUME;
 	else
 	  return -1;
-	
+
 	ioctl(this->mixer.fd, cmd, &v);
 	this->mixer.volume = (((v & 0xFF00) >> 8) + (v & 0x00FF)) / 2;
       } else
@@ -559,20 +559,20 @@ static int ao_oss_set_property (ao_driver_t *this_gen, int property, int value) 
   case AO_PROP_PCM_VOL:
   case AO_PROP_MIXER_VOL:
     if(!this->mixer.mute) {
-      
+
       if(this->mixer.fd != -1) {
 	IOCTL_REQUEST_TYPE cmd = 0;
 	int v;
-	
+
 	ioctl(this->mixer.fd, SOUND_MIXER_READ_DEVMASK, &audio_devs);
-	
+
 	if(audio_devs & SOUND_MASK_PCM)
 	  cmd = SOUND_MIXER_WRITE_PCM;
 	else if(audio_devs & SOUND_MASK_VOLUME)
 	  cmd = SOUND_MIXER_WRITE_VOLUME;
 	else
 	  return -1;
-	
+
 	v = (value << 8) | value;
 	ioctl(this->mixer.fd, cmd, &v);
 	this->mixer.volume = value;
@@ -588,26 +588,26 @@ static int ao_oss_set_property (ao_driver_t *this_gen, int property, int value) 
     this->mixer.mute = (value) ? 1 : 0;
 
     if(this->mixer.mute) {
-      
+
       if(this->mixer.fd != -1) {
 	IOCTL_REQUEST_TYPE cmd = 0;
 	int v = 0;
-	
+
 	ioctl(this->mixer.fd, SOUND_MIXER_READ_DEVMASK, &audio_devs);
-	
+
 	if(audio_devs & SOUND_MASK_PCM)
 	  cmd = SOUND_MIXER_WRITE_PCM;
 	else if(audio_devs & SOUND_MASK_VOLUME)
 	  cmd = SOUND_MIXER_WRITE_VOLUME;
 	else
 	  return -1;
-	
+
 	ioctl(this->mixer.fd, cmd, &v);
       } else
 	return -1;
     } else
       (void) ao_oss_set_property(&this->ao_driver, this->mixer.prop, this->mixer.volume);
-    
+
     return value;
     break;
   }
@@ -625,7 +625,7 @@ static int ao_oss_ctrl(ao_driver_t *this_gen, int cmd, ...) {
 
     if (this->sync_method != OSS_SYNC_SOFTSYNC)
       ioctl(this->audio_fd, SNDCTL_DSP_RESET, NULL);
-    
+
     /* close/reopen if RESET causes problems */
     if (this->sync_method == OSS_SYNC_GETOPTR) {
       ao_oss_close(this_gen);
@@ -641,7 +641,7 @@ static int ao_oss_ctrl(ao_driver_t *this_gen, int cmd, ...) {
     lprintf ("AO_CTRL_FLUSH_BUFFERS\n");
     if (this->sync_method != OSS_SYNC_SOFTSYNC)
       ioctl(this->audio_fd, SNDCTL_DSP_RESET, NULL);
-    
+
     if (this->sync_method == OSS_SYNC_GETOPTR) {
       ao_oss_close(this_gen);
       ao_oss_open(this_gen, this->bits_per_sample, this->input_sample_rate, this->mode);
@@ -687,14 +687,14 @@ static int probe_audio_devices(oss_driver_t *this) {
 	  strcpy(this->audio_dev, devname); /* Better, keep this one */
 	  best_rate = rate;
 	}
-	
+
 	close (audio_fd);
       }
     }
   }
   return best_rate; /* Will be zero if we did not find one */
-}  
-  
+}
+
 static void oss_speaker_arrangement_cb (void *user_data,
                                   xine_cfg_entry_t *entry);
 
@@ -728,7 +728,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   #define A52_PASSTHRU	12
   int speakers;
 
-  
+
   this = calloc(1, sizeof (oss_driver_t));
   if (!this)
     return NULL;
@@ -762,7 +762,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
     xprintf(class->xine, XINE_VERBOSITY_LOG,
 	    _("audio_oss_out: audio.device.oss_device_name = auto, probing devs\n"));
     if ( ! probe_audio_devices(this)) {  /* Returns zero on fail */
-      xprintf(class->xine, XINE_VERBOSITY_LOG, 
+      xprintf(class->xine, XINE_VERBOSITY_LOG,
 	      _("audio_oss_out: Auto probe for audio device failed\n"));
       free (this);
       return NULL;
@@ -784,18 +784,18 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   audio_fd = open(this->audio_dev, O_WRONLY|O_NONBLOCK);
 
   if (audio_fd < 0) {
-    xprintf(class->xine, XINE_VERBOSITY_LOG, 
+    xprintf(class->xine, XINE_VERBOSITY_LOG,
 	    _("audio_oss_out: opening audio device %s failed:\n%s\n"), this->audio_dev, strerror(errno));
 
     free (this);
     return NULL;
 
-  } 
+  }
   /*
    * set up driver to reasonable values for capabilities tests
    */
 
-  arg = AFMT_S16_NE; 
+  arg = AFMT_S16_NE;
   status = ioctl(audio_fd, SNDCTL_DSP_SETFMT, &arg);
   arg = 44100;
   status = ioctl(audio_fd, SNDCTL_DSP_SPEED, &arg);
@@ -805,7 +805,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
    */
 
   this->sync_method = config->register_enum (config, "audio.oss_sync_method", OSS_SYNC_AUTO_DETECT,
-					     sync_methods, 
+					     sync_methods,
 					     _("a/v sync method to use by OSS"),
 					     _("xine can use different methods to keep audio and video "
 					       "synchronized. Which setting works best depends on the "
@@ -862,9 +862,9 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 	      "audio_oss_out: ...will use system real-time clock for soft-sync instead\n"
 	      "audio_oss_out: ...there may be audio/video synchronization issues\n"));
     xine_monotonic_clock(&this->start_time, NULL);
-    
+
     this->latency = config->register_range (config, "audio.oss_latency", 0,
-					    -3000, 3000, 
+					    -3000, 3000,
 					    _("OSS audio output latency (adjust a/v sync)"),
 					    _("If you experience audio being not in sync "
 					      "with the video, you can enter a fixed offset "
@@ -873,20 +873,20 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 					      "of a second."),
 					    20, NULL, NULL);
   }
-  
+
   if (this->sync_method == OSS_SYNC_PROBEBUFFER) {
     char *buf;
     int c;
 
     this->buffer_size = 0;
-    
+
     if( (buf=calloc(1, 1024)) != NULL ) {
       do {
         c = write(audio_fd,buf,1024);
         if( c != -1 )
           this->buffer_size += c;
       } while( c == 1024 );
-      
+
       free(buf);
     }
     close(audio_fd);
@@ -896,7 +896,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 
     audio_fd=open(this->audio_dev, O_WRONLY|O_NONBLOCK);
 
-    if(audio_fd < 0) 
+    if(audio_fd < 0)
     {
       xprintf(class->xine, XINE_VERBOSITY_LOG,
 	      _("audio_oss_out: opening audio device %s failed:\n%s\n"), this->audio_dev, strerror(errno));
@@ -907,11 +907,11 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   }
 
   this->capabilities = 0;
-  
+
   arg = AFMT_U8;
   if( ioctl(audio_fd, SNDCTL_DSP_SETFMT, &arg) != -1  && arg == AFMT_U8)
     this->capabilities |= AO_CAP_8BITS;
-  
+
   /* switch back to 16bits, because some soundcards otherwise do not report all their capabilities */
   arg = AFMT_S16_NE;
   if (ioctl(audio_fd, SNDCTL_DSP_SETFMT, &arg) == -1 || arg != AFMT_S16_NE) {
@@ -956,30 +956,30 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 
 
   char *logmsg = strdup (_("audio_oss_out: supported modes are"));
-  num_channels = 1; 
-  status = ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &num_channels); 
+  num_channels = 1;
+  status = ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &num_channels);
   if ( (status != -1) && (num_channels==1) ) {
     this->capabilities |= AO_CAP_MODE_MONO;
     xine_strcat_realloc (&logmsg, _(" mono"));
   }
-  num_channels = 2; 
-  status = ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &num_channels); 
+  num_channels = 2;
+  status = ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &num_channels);
   if ( (status != -1) && (num_channels==2) ) {
     this->capabilities |= AO_CAP_MODE_STEREO;
     xine_strcat_realloc (&logmsg, _(" stereo"));
   }
-  num_channels = 4; 
-  status = ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &num_channels); 
+  num_channels = 4;
+  status = ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &num_channels);
   if ( (status != -1) && (num_channels==4) )  {
     if  ( speakers == SURROUND4 ) {
       this->capabilities |= AO_CAP_MODE_4CHANNEL;
       xine_strcat_realloc (&logmsg, _(" 4-channel"));
-    } 
+    }
     else
       xine_strcat_realloc (&logmsg, _(" (4-channel not enabled in xine config)"));
   }
-  num_channels = 5; 
-  status = ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &num_channels); 
+  num_channels = 5;
+  status = ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &num_channels);
   if ( (status != -1) && (num_channels==5) ) {
     if  ( speakers == SURROUND5 ) {
       this->capabilities |= AO_CAP_MODE_5CHANNEL;
@@ -988,13 +988,13 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
     else
       xine_strcat_realloc (&logmsg, _(" (5-channel not enabled in xine config)"));
   }
-  num_channels = 6; 
-  status = ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &num_channels); 
+  num_channels = 6;
+  status = ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &num_channels);
   if ( (status != -1) && (num_channels==6) ) {
     if  ( speakers == SURROUND51 ) {
       this->capabilities |= AO_CAP_MODE_5_1CHANNEL;
       xine_strcat_realloc (&logmsg, _(" 5.1-channel"));
-    } 
+    }
     else
       xine_strcat_realloc (&logmsg, _(" (5.1-channel not enabled in xine config)"));
   }
@@ -1007,13 +1007,13 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
     this->capabilities |= AO_CAP_MODE_A52;
     this->capabilities |= AO_CAP_MODE_AC5;
     xine_strcat_realloc (&logmsg, _(" a/52 pass-through"));
-  } 
-  else 
+  }
+  else
     xine_strcat_realloc (&logmsg, _(" (a/52 pass-through not enabled in xine config)"));
 
   xprintf(class->xine, XINE_VERBOSITY_DEBUG, "%s\n", logmsg);
   free (logmsg);
-  
+
   /*
    * mixer initialisation.
    */
@@ -1022,7 +1022,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
     int mixer_num;
     int audio_devs;
     char *parse;
-    
+
     mixer_num = config->register_num(config, "audio.device.oss_mixer_number", -1,
 				     _("OSS audio mixer number, -1 for none"),
 				     _("The full mixer device name is created by taking the "
@@ -1033,7 +1033,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 				       "The range of this value is -1 or 0-15. This setting is "
 				       "ignored, when the OSS audio device name is set to \"auto\"."),
 				     10, NULL, NULL);
-    
+
     /* get the mixer device name from the audio device name by replacing "dsp" with "mixer" */
     strcpy(mixer_name, this->audio_dev);
     if ((parse = strstr(mixer_name, "dsp"))) {
@@ -1047,13 +1047,13 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 	asprintf(&this->mixer.name, "%smixer%d", mixer_name, mixer_num);
     }
     _x_assert(this->mixer.name);
-    
+
     this->mixer.fd = open(this->mixer.name, O_RDONLY);
 
     if(this->mixer.fd != -1) {
 
       ioctl(this->mixer.fd, SOUND_MIXER_READ_DEVMASK, &audio_devs);
-      
+
       if(audio_devs & SOUND_MASK_PCM) {
 	this->capabilities |= AO_CAP_PCM_VOL;
 	this->mixer.prop = AO_PROP_PCM_VOL;
@@ -1062,9 +1062,9 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 	this->capabilities |= AO_CAP_MIXER_VOL;
 	this->mixer.prop = AO_PROP_MIXER_VOL;
       }
-      
+
       /*
-       * This is obsolete in Linux kernel OSS 
+       * This is obsolete in Linux kernel OSS
        * implementation, so this will certainly doesn't work.
        * So we just simulate the mute stuff
        */
@@ -1073,11 +1073,11 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 	this->capabilities |= AO_CAP_MUTE_VOL;
       */
       this->capabilities |= AO_CAP_MUTE_VOL;
-      
-    } else 
+
+    } else
       xprintf (class->xine, XINE_VERBOSITY_LOG,
 	       _("audio_oss_out: open() mixer %s failed: %s\n"), this->mixer.name, strerror(errno));
-    
+
     this->mixer.mute = 0;
     this->mixer.volume = ao_oss_get_property (&this->ao_driver, this->mixer.prop);
 
@@ -1171,7 +1171,7 @@ static const ao_info_t ao_info_oss = {
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_AUDIO_OUT, AO_OUT_OSS_IFACE_VERSION, "oss", XINE_VERSION_CODE, &ao_info_oss, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

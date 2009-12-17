@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
- 
+
 /*
  * select audio channel plugin for VDR
  */
@@ -40,10 +40,10 @@ typedef struct vdr_audio_post_plugin_s
 
   xine_event_queue_t *event_queue;
   xine_stream_t      *vdr_stream;
-  
+
   uint8_t audio_channels;
   int num_channels;
-  
+
 }
 vdr_audio_post_plugin_t;
 
@@ -53,7 +53,7 @@ static void vdr_audio_select_audio(vdr_audio_post_plugin_t *this, uint8_t channe
   this->audio_channels = channels;
 }
 
- 
+
 /* plugin class functions */
 static post_plugin_t *vdr_audio_open_plugin(post_class_t *class_gen, int inputs,
                                             xine_audio_port_t **audio_target,
@@ -72,15 +72,15 @@ static void           vdr_audio_port_put_buffer(xine_audio_port_t *port_gen, aud
 void *vdr_audio_init_plugin(xine_t *xine, void *data)
 {
   post_class_t *class = (post_class_t *)xine_xmalloc(sizeof (post_class_t));
-  
+
   if (!class)
     return NULL;
-  
+
   class->open_plugin     = vdr_audio_open_plugin;
   class->identifier      = "vdr_audio";
   class->description     = N_("modifies every audio frame as requested by VDR");
   class->dispose         = default_post_class_dispose;
-  
+
   return class;
 }
 
@@ -92,7 +92,7 @@ static post_plugin_t *vdr_audio_open_plugin(post_class_t *class_gen, int inputs,
   post_in_t               *input;
   post_out_t              *output;
   post_audio_port_t       *port;
-/*  
+/*
 fprintf(stderr, "~~~~~~~~~~ vdr open plugin\n");
 */
   if (!this || !audio_target || !audio_target[ 0 ])
@@ -110,10 +110,10 @@ fprintf(stderr, "~~~~~~~~~~ vdr open plugin\n");
 
   this->post_plugin.xine_post.audio_input[ 0 ] = &port->new_port;
 
-  
+
 
   this->audio_channels = 0;
-  
+
   return &this->post_plugin;
 }
 
@@ -125,10 +125,10 @@ fprintf(stderr, "~~~~~~~~~~ vdr dispose\n");
   if (_x_post_dispose(this_gen))
   {
     vdr_audio_post_plugin_t *this = (vdr_audio_post_plugin_t *)this_gen;
-    
+
     if (this->vdr_stream)
       xine_event_dispose_queue(this->event_queue);
-    
+
     free(this_gen);
   }
 }
@@ -167,13 +167,13 @@ fprintf(stderr, "~~~~~~ vdr_audio\n");
       && !_x_continue_stream_processing(this->vdr_stream))
   {
     this->vdr_stream = 0;
-    
+
     xine_event_dispose_queue(this->event_queue);
     this->event_queue = 0;
-    
+
     this->audio_channels = 0;
   }
-  
+
   if (!this->vdr_stream
       && vdr_is_vdr_stream(stream))
   {
@@ -181,19 +181,19 @@ fprintf(stderr, "~~~~~~ vdr_audio\n");
     if (this->event_queue)
     {
       this->vdr_stream = stream;
-      
+
       {
         xine_event_t event;
-        
+
         event.type = XINE_EVENT_VDR_PLUGINSTARTED;
         event.data = 0;
         event.data_length = 1; /* vdr_audio */
-        
+
         xine_event_send(this->vdr_stream, &event);
       }
     }
   }
-  
+
   if (this->event_queue)
   {
     while ((event = xine_event_get(this->event_queue)))
@@ -201,14 +201,14 @@ fprintf(stderr, "~~~~~~ vdr_audio\n");
       if (event->type == XINE_EVENT_VDR_SELECTAUDIO)
       {
         vdr_select_audio_data_t *data = (vdr_select_audio_data_t *)event->data;
-        
+
         vdr_audio_select_audio(this, data->channels);
       }
 
       xine_event_free(event);
     }
   }
- 
+
   if (this->num_channels == 2
       && this->audio_channels != 0
       && this->audio_channels != 3)
@@ -233,11 +233,11 @@ fprintf(stderr, "~~~~~~ vdr_audio\n");
 
       if (this->audio_channels == 2)
         src += step;
-/*      
+/*
       fprintf(stderr, "~~~~~~~~~~ vdr port put buffer: channels: %d, %d\n"
               , this->audio_channels
               , buf->format.bits);
-*/      
+*/
       int i, k;
       for (i = 0; i < buf->num_frames; i++)
       {
@@ -245,21 +245,21 @@ fprintf(stderr, "~~~~~~ vdr_audio\n");
           *dst++ = *src++;
 
         src -= step;
-        
+
         for (k = 0; k < step; k++)
           *dst++ = *src++;
 
         src += step;
       }
     }
-    
+
     /* pass data to original port */
     port->original_port->put_buffer(port->original_port, vdr_buf, stream);
 
     /* free data from origial buffer */
     buf->num_frames = 0; /* UNDOCUMENTED, but hey, it works! Force old audio_out buffer free. */
   }
- 
+
   port->original_port->put_buffer(port->original_port, buf, stream);
 
   return;

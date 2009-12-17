@@ -110,11 +110,11 @@ static int open_snd_file(demux_snd_t *this) {
       this->audio_bytes_per_second = this->audio_channels *
         this->audio_sample_rate;
       break;
-    
+
     case 2:
       this->audio_type = BUF_AUDIO_LPCM_BE;
       this->audio_bits = 8;
-      this->audio_frames = this->data_size / 
+      this->audio_frames = this->data_size /
         (this->audio_channels * this->audio_bits / 8);
       this->audio_block_align = PCM_BLOCK_ALIGN;
       this->audio_bytes_per_second = this->audio_channels *
@@ -124,7 +124,7 @@ static int open_snd_file(demux_snd_t *this) {
     case 3:
       this->audio_type = BUF_AUDIO_LPCM_BE;
       this->audio_bits = 16;
-      this->audio_frames = this->data_size / 
+      this->audio_frames = this->data_size /
         (this->audio_channels * this->audio_bits / 8);
       this->audio_block_align = PCM_BLOCK_ALIGN;
       this->audio_bytes_per_second = this->audio_channels *
@@ -163,7 +163,7 @@ static int demux_snd_send_chunk(demux_plugin_t *this_gen) {
   /* just load data chunks from wherever the stream happens to be
    * pointing; issue a DEMUX_FINISHED status if EOF is reached */
   remaining_sample_bytes = this->audio_block_align;
-  current_file_pos = 
+  current_file_pos =
     this->input->get_current_pos(this->input) - this->data_start;
 
   current_pts = current_file_pos;
@@ -205,7 +205,7 @@ static int demux_snd_send_chunk(demux_plugin_t *this_gen) {
       for (i = 0; i < buf->size; i++)
         buf->content[i] += 0x80;
     }
-    
+
     this->audio_fifo->put (this->audio_fifo, buf);
   }
   return this->status;
@@ -251,11 +251,11 @@ static int demux_snd_seek (demux_plugin_t *this_gen, off_t start_pos, int start_
   demux_snd_t *this = (demux_snd_t *) this_gen;
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->data_size );
-  
+
   this->seek_flag = 1;
   this->status = DEMUX_OK;
   _x_demux_flush_engine (this->stream);
-  
+
   /* if input is non-seekable, do not proceed with the rest of this
    * seek function */
   if (!INPUT_IS_SEEKABLE(this->input))
@@ -358,7 +358,7 @@ void *demux_snd_init_plugin (xine_t *xine, void *data) {
   this->demux_class.mimetypes       =
     "audio/basic: snd,au: ULAW (Sun) audio;"
     "audio/x-basic: snd,au: ULAW (Sun) audio;"
-    "audio/x-pn-au: snd,au: ULAW (Sun) audio;"; 
+    "audio/x-pn-au: snd,au: ULAW (Sun) audio;";
   this->demux_class.extensions      = "snd au";
   this->demux_class.dispose         = default_demux_class_dispose;
 

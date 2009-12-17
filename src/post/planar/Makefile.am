@@ -2,8 +2,8 @@ include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
 AM_CFLAGS   = $(VISIBILITY_FLAG)
-AM_CPPFLAGS = 
-AM_LDFLAGS  = 
+AM_CPPFLAGS =
+AM_LDFLAGS  =
 
 noinst_LTLIBRARIES = libpost_planar_asm.la
 libpost_planar_asm_la_SOURCES = eq.c eq2.c noise.c

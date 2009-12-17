@@ -19,7 +19,7 @@
 
    <sect2 id="about">
     <title>What is the xine engine?</title>
-    <para> 
+    <para>
      The xine engine is a free media player engine. It comes in the form of
      a shared libarary and is typically used by media player frontends
      and other multimedia applications for playback of multimedia streams
@@ -66,7 +66,7 @@
      may have installed on your system.
     </para>
    </sect2>
-   
+
    <sect2 id="pronounce">
     <title>How do I pronounce "xine"?</title>
     <para>
@@ -105,7 +105,7 @@
     </para>
     <para>
      Other modules in CVS are: <filename>xine-plugin</filename> a mozilla browser plugin
-     for streaming media playback using xine, 
+     for streaming media playback using xine,
      <filename>xine_www</filename> the
      xine project website sources.
     </para>
@@ -217,8 +217,8 @@
    <sect2 id="buildrequirements">
     <title>What do I need to compile everything properly?</title>
     <para>
-     First of all an official and stable release of gcc. Also be aware 
-     that patched gcc versions may break parts of xine and are therefore 
+     First of all an official and stable release of gcc. Also be aware
+     that patched gcc versions may break parts of xine and are therefore
      not supported by the xine project.
     </para>
     <para>
@@ -271,7 +271,7 @@
 &nbsp;&nbsp;&nbsp;<command>make install</command></screen>
      </para>
      <para>
-      Make sure your <filename>/etc/ld.so.conf</filename> contains 
+      Make sure your <filename>/etc/ld.so.conf</filename> contains
       <filename>/usr/local/lib</filename> and continue with:
       <screen>&nbsp;&nbsp;&nbsp;<command>ldconfig</command></screen>
      </para>
@@ -281,7 +281,7 @@
 &nbsp;&nbsp;&nbsp;<command>./configure</command>
 &nbsp;&nbsp;&nbsp;<command>make install</command></screen>
      </para>
-    </sect3>    
+    </sect3>
     <sect3 id="completebuildinstr">
      <title>Complete build instructions</title>
      <para>
@@ -311,7 +311,7 @@
 &nbsp;&nbsp;&nbsp;<command>make</command>
 &nbsp;&nbsp;&nbsp;<command>make install</command></screen>
      </para>
-    </sect3>    
+    </sect3>
    </sect2>
 
    <sect2 id="rpmbuild">
@@ -456,7 +456,7 @@
      <title>The Xv video-out plugin fails to compile!</title>
      <para>
       If you want to have Xv support compiled in, make sure you either have
-      a shared Xv library on your system, e.g. 
+      a shared Xv library on your system, e.g.
       <command>ls /usr/X11R6/lib/libXv*</command>
       should give you some .so libs, like this:
       <screen>
@@ -465,7 +465,7 @@
 &nbsp;&nbsp;&nbsp;/usr/X11R6/lib/libXv.so.1</screen>
      </para>
      <para>
-      Alternatively you need to have libtool 1.4 or newer installed, then 
+      Alternatively you need to have libtool 1.4 or newer installed, then
       libXv.a is sufficient. Otherwise you can create the shared versions yourself:
       <screen>
 &nbsp;&nbsp;&nbsp;<command>ld --whole-archive -shared -o libXv.so.1 libXv.a</command>
@@ -483,7 +483,7 @@
     <sect3 id="xinelibnotfound">
      <title>I have installed xine-lib but the frontend complains about not finding it!</title>
      <para>
-      First of all take a closer look at the compilation instructions above again. 
+      First of all take a closer look at the compilation instructions above again.
       You will probably find your answer there right away.
      </para>
      <para>
@@ -513,7 +513,7 @@
 &nbsp;&nbsp;&nbsp;<command>export LD_LIBRARY_PATH="$HOME/xine/lib:$LD_LIBRARY_PATH"</command></screen>
     </para>
     <para>
-     Now you can unpack tarballs e.g. in <filename>~/xine/src</filename> 
+     Now you can unpack tarballs e.g. in <filename>~/xine/src</filename>
      (<command>mkdir ~/xine/src</command> if necessary) and do a
      <screen>
 &nbsp;&nbsp;&nbsp;<command>./configure --prefix=$HOME/xine</command>
@@ -566,7 +566,7 @@
       <filename>/dev/scd1</filename>, &hellip; in that case).
       Also make sure you (as a user) have sufficient (read and write) permissions
       on your DVD drive. This could mean you either have to change the device
-      permissions or add your user to a special group 
+      permissions or add your user to a special group
       (e.g. <command>addgroup cdrom username</command>),
       depending on your setup and/or distribution.
      </para>
@@ -576,7 +576,7 @@
       smooth video output). Use a command like
       <command>hdparm -d 1 &lt;device&gt;</command>
       on your DVD device. Please note that even if you're using ide-scsi
-      you will have to set the dma flag on the ide device node (e.g. 
+      you will have to set the dma flag on the ide device node (e.g.
       <filename>/dev/hdc</filename>), not the mapped <filename>/dev/scd</filename>
       scsi device.
      </para>
@@ -614,7 +614,7 @@
       Once you have everything set up, try something like
       <command>gxine dvd:/</command> or <command>xine -p dvd:/</command>
       to start dvd playback. Some frontend also offer so-called autoplay
-      buttons or menu entries that start dvd playback immediately. 
+      buttons or menu entries that start dvd playback immediately.
      </para>
      <para>
       Important: do not try to mount the DVD. Just insert it and hit the DVD autoplay
@@ -645,7 +645,7 @@
       drives is limited (usually about 5 times), after that your drive will
       stay locked to the region you last set it up for.
      </para>
-    </sect3>    
+    </sect3>
     <sect3 id="regionset">
      <title>I have problems setting up my RPC-2 drive for the right region!</title>
      <para>
@@ -659,7 +659,7 @@
       drives is limited (usually about 5 times), after that your drive will
       stay locked to the region you last set it up for.
      </para>
-    </sect3>    
+    </sect3>
    </sect2>
 
    <sect2 id="vcdsupport">
@@ -720,7 +720,7 @@
         <filename>test_svcd_pal.bin</filename>. Run xine with the MRL
 <!-- FIXME: This MRL needs to be changed -->
         <filename>vcd:/test_svcd_pal.cue:E0</filename>.
-        If you see something playing then this is a hardware problem. 
+        If you see something playing then this is a hardware problem.
         You might also want to try starting playback-control with
 <!-- FIXME: This MRL needs to be changed -->
         <filename>vcd:/test_svcd_pal.cue:P1</filename>.
@@ -784,7 +784,7 @@
         If you have the VideoCD from the last step, then run the MRL
 <!-- FIXME: This MRL needs to be changed -->
         <filename>vcd:/test_svcd_pal.cue:P1</filename>
-        If this shows a still frame, but it just does not show when you 
+        If this shows a still frame, but it just does not show when you
         hit either the "VCD" autoscan button or give a MRL without the P1 at
         the end then go to the next step.
        </para>
@@ -799,7 +799,7 @@
       </listitem>
       <listitem>
        <para>
-        You have a VideoCD with menu at beginning and can see it using an MRL 
+        You have a VideoCD with menu at beginning and can see it using an MRL
         with P1 at the end, but you want to see it by hitting the "VCD" autoscan button
         as well? Check to see that you have the configuration entry
         <parameter>media.vcd.autoplay</parameter> set to <parameter>playlist</parameter>.
@@ -835,7 +835,7 @@
    <sect2 id="quicktime">
     <title>Can I watch Quicktime (.mov, .mp4) files using xine?</title>
     <para>
-     Quicktime is just a system layer (container format) which can contain various 
+     Quicktime is just a system layer (container format) which can contain various
      different audio and video formats. The system layer itself is fully supported
      in xine. However, some quicktime audio/video codecs are not natively supported yet.
      Luckily, if you are using a x86 compatible machine (any recent PC hardware should do)
@@ -854,7 +854,7 @@
      have to set <parameter>decoder.external.win32_codecs_path</parameter> in your
      xine config file accordingly). Restart xine then and you should be
      able to watch Quicktime trailers.
-    </para>       
+    </para>
    </sect2>
 
    <sect2>
@@ -1015,7 +1015,7 @@
         Try to use the Xv driver, it greatly improves performance and quality
         because your graphics card does image scaling and colourspace conversion. The
         <link linkend="video">video section</link> contains important information
-        about several Xv drivers. 
+        about several Xv drivers.
        </para>
        <para>
         If Xv cannot be used for some reason, make sure your display is set up
@@ -1087,13 +1087,13 @@
         Have your X-server (usually X.org or XFree86) running with higher priority.
         Most recent linux distributions (like RedHat 8.0 or Mandrake 9.0) should
         do that for you, improving not only xine but desktop responsiveness
-        in general. 
+        in general.
        </para>
        <para>
         Use the "top" utility and verify under the "NI" column if
         the X process has a negative value, this indicates a higher priority.
-        See "The X Window User HOWTO &ndash; Performance considerations" for 
-        further instructions 
+        See "The X Window User HOWTO &ndash; Performance considerations" for
+        further instructions
         <ulink url="http://www.tldp.org/HOWTO/XWindow-User-HOWTO/performance.html">
          http://www.tldp.org/HOWTO/XWindow-User-HOWTO/performance.html
         </ulink>.
@@ -1117,7 +1117,7 @@
       <listitem>
        <para>
         xine needs high speed memory access which depends on your chip set.
-        Make sure you enable all speed-improving options. 
+        Make sure you enable all speed-improving options.
        </para>
        <para>
         Especially the via apollo pro chipset is known to be quite weird,
@@ -1130,7 +1130,7 @@
        </para>
        <para>
         This website centers around a windows-tool to tweak the chipset, you
-        can do the same on FreeBSD with <command>pciconf</command>. 
+        can do the same on FreeBSD with <command>pciconf</command>.
         On some linux distributions there are similar tools.
        </para>
       </listitem>
@@ -1179,7 +1179,7 @@
          <parameter>engine.buffers.video_num_buffers:500</parameter>
          to a higher value (e.g. 1000 or 2500).
        </para>
-      </listitem>	  
+      </listitem>
      </itemizedlist>
     </para>
    </sect2>
@@ -1231,7 +1231,7 @@
      To use it make sure you have aalib installed correctly before you
      configure/build xine-lib and xine-ui. In addition to the <command>xine</command> binary a
      binary named <command>aaxine</command> should get built and installed. You can then use
-     something like:      
+     something like:
      <screen>&nbsp;&nbsp;&nbsp;<command>aaxine foo.mpg</command></screen>
      to use aalib video output.
     </para>
@@ -1258,7 +1258,7 @@
     <title>What audio drivers does xine support? OSS? Alsa? Arts? Esd?</title>
     <para>
      Currently xine support audio output via OSS (Linux 2.4 and most
-     *BSD audio drivers), 
+     *BSD audio drivers),
      ALSA 0.9 and 1.0 (ALSA 0.5.x is no longer supported), aRTs (KDE
      3's sound daemon), ESounD (esd, gnome's sound daemon not
      recommended because it has serious issues with a/v sync), JACK,
@@ -1279,7 +1279,7 @@
        <para>
         You can enable xine's audio compressor. Most frontends have
         a settings window and in that you'll find a slider for the
-        compressor setting. The values are percent values, so a 
+        compressor setting. The values are percent values, so a
         slider setting of 200 means that xine will double the volume
         of silent parts of the movie (loud parts stay the same).
        </para>
@@ -1306,7 +1306,7 @@
     <para>
      If this happens with any video, first try a different audio driver
      (<command>gxine -A oss</command>, <command>gxine -A arts</command>,
-     <command>xine -A alsa</command> &hellip;). 
+     <command>xine -A alsa</command> &hellip;).
     </para>
     <para>
      If this problem only occurs with one specific stream, maybe switching to
@@ -1316,8 +1316,8 @@
     <para>
      If all this doesn't help, maybe you're missing an audio codec or you found
      a bug. If you decide to post your problem on the xine-user mailing list,
-     make sure to include all console output xine produced and also clearly 
-     state what type of stream you tried to play back or, even better, make 
+     make sure to include all console output xine produced and also clearly
+     state what type of stream you tried to play back or, even better, make
      a test stream available somewhere for developers to download and try.
     </para>
    </sect2>
@@ -1356,8 +1356,8 @@
    <sect2 id="sblivespdif">
     <title>Getting SPDIF output from a SBLive 5.1 using OSS drivers</title>
     <para>
-     The following explains how to get the above configuration 
-     going with xine. Some parts of it may applicable to other 
+     The following explains how to get the above configuration
+     going with xine. Some parts of it may applicable to other
      configurations (cards that use the EMU10k1 chip) as well.
     </para>
     <sect3>
@@ -1386,24 +1386,24 @@
      <para>
       The OSS driver is maintained by creative and can be downloaded at
       <ulink url="http://opensource.creative.com/">http://opensource.creative.com/</ulink>.
-      The driver package contains documentation on how to install it. 
+      The driver package contains documentation on how to install it.
       Besides that I'd like to add the following notes.
      </para>
      <para>
       In order to compile and install these drivers, you need a valid kernel
       configuration file. For RedHat Linux's pre-compiled kernels these
-      configuration files can be found in 
+      configuration files can be found in
       <filename>/usr/src/linux/configs</filename>.
       After you've located the correct config file for your kernel,
       you need to copy it to <filename>/usr/src/linux/.config</filename>
       For example, when you run the 2.4.18-i686 kernel do :
       <screen>&nbsp;&nbsp;&nbsp;<command>cp /usr/src/linux/configs/kernel-2.4.18-i686.config /usr/src/linux/.config</command></screen>
-      Make sure that the emu10k1 module that is currently installed is 
+      Make sure that the emu10k1 module that is currently installed is
       not loaded. To unload the modules:
       <screen>&nbsp;&nbsp;&nbsp;<command>/sbin/modprobe -rv emu10k1.o ac97_codec.o</command></screen>
-      If this mentions that the device is busy, some program is 
-      using the driver. Some example could be a mixer application 
-      or sound daemon like artsd. You'll need to close down the 
+      If this mentions that the device is busy, some program is
+      using the driver. Some example could be a mixer application
+      or sound daemon like artsd. You'll need to close down the
       applications before continuing.
       At success it should print something like:
       <screen>
@@ -1412,15 +1412,15 @@
 &nbsp;&nbsp;&nbsp;# delete soundcore</screen>
       Run make in the directory where you unpacked the driver and follow the
       instructions printed at the end of each step.
-      The last step should be: 
+      The last step should be:
       <screen>&nbsp;&nbsp;&nbsp;<command>make install-tools</command></screen>
-      As the README of the driver package mentions the SPDIF AC3 
-      output doesn't work by default. In the directory 
+      As the README of the driver package mentions the SPDIF AC3
+      output doesn't work by default. In the directory
       <filename>utils/scripts</filename> an <filename>emu10k1.conf</filename>
       file can be found which need to be placed in the default
-      installation directory (<filename>/usr/local/etc</filename>). 
+      installation directory (<filename>/usr/local/etc</filename>).
       After this the <filename>emu10k1.conf</filename> needs to be modified.
-      The following settings worked fine for me (I don't use the analog 
+      The following settings worked fine for me (I don't use the analog
       outputs of the card):
       <programlisting>
 &nbsp;&nbsp;&nbsp;CARD_IS_5_1=yes
@@ -1434,20 +1434,20 @@
 &nbsp;&nbsp;&nbsp;ANALOG_FRONT_BOOST=no
 &nbsp;&nbsp;&nbsp;SURROUND=no
 &nbsp;&nbsp;&nbsp;PROLOGIC=no
-&nbsp;&nbsp;&nbsp;ENABLE_CD_Spdif=yes  
-&nbsp;&nbsp;&nbsp;ENABLE_OPTICAL_SPDIF=no 
-&nbsp;&nbsp;&nbsp;ENABLE_LINE2_MIC2=no    
-&nbsp;&nbsp;&nbsp;ENABLE_RCA_SPDIF=no     
+&nbsp;&nbsp;&nbsp;ENABLE_CD_Spdif=yes
+&nbsp;&nbsp;&nbsp;ENABLE_OPTICAL_SPDIF=no
+&nbsp;&nbsp;&nbsp;ENABLE_LINE2_MIC2=no
+&nbsp;&nbsp;&nbsp;ENABLE_RCA_SPDIF=no
 &nbsp;&nbsp;&nbsp;ENABLE_RCA_AUX=no</programlisting>
-      After modifying the <filename>emu10k1.conf</filename>, 
+      After modifying the <filename>emu10k1.conf</filename>,
       you need to modify your <filename>/etc/modules.conf</filename> and
       make sure the following lines are in there.
       <programlisting>
 &nbsp;&nbsp;&nbsp;alias sound-slot-0 emu10k1
 &nbsp;&nbsp;&nbsp;post-install emu10k1 /usr/local/etc/emu-script</programlisting>
-      After saving the changes to <filename>modules.conf</filename>, run 
+      After saving the changes to <filename>modules.conf</filename>, run
       <screen>&nbsp;&nbsp;&nbsp;<command>/sbin/depmod -a</command></screen>
-      Now, you're ready to load the new modules and set the correct 
+      Now, you're ready to load the new modules and set the correct
       options for it. To load the modules run:
       <screen>&nbsp;&nbsp;&nbsp;<command>/sbin/modprobe emu10k1</command></screen>
      </para>
@@ -1463,7 +1463,7 @@
     </sect3>
     <sect3>
      <title>
-      The cable used for the SBLive can easily be self-made 
+      The cable used for the SBLive can easily be self-made
       or buy a stereo 3.5mm jack to dual RCA cable.
      </title>
      <para>
@@ -1480,10 +1480,10 @@
      </para>
      <para>
       In order to test it use a DVD with AC3 or DTS track
-      start xine and select the right audio track 
-      from user interface or start xine as: 
+      start xine and select the right audio track
+      from user interface or start xine as:
       <screen>&nbsp;&nbsp;&nbsp;<command>xine dvd:/1 -a 0</command></screen>
-      The external decoder should display something like 
+      The external decoder should display something like
       "Dolby Digital" in case the selected audio track contains
       AC3 data or "DTS" in case the selected audio track
       contains DTS data. Of course stereo audio also goes
@@ -1504,7 +1504,7 @@
     <para>
      Note that recently we added support to "simulate" volume in aRts by
      changing sample values on-the-fly before delivering them to the driver.
-     Not as good as having access to sound card's mixer but at least users 
+     Not as good as having access to sound card's mixer but at least users
      will not complain about lacking of volume bar anymore! :)
     </para>
    </sect2>
@@ -1513,7 +1513,7 @@
     <title>Audio is stuttering and i see a lot of "metronom: fixing sound card drift by -2115 pts" on the console output</title>
     <para>
      Might be a soundcard problem, if it only comes in longer intervals.
-     Your soundcard does not keep it's sampling frequency accurately 
+     Your soundcard does not keep it's sampling frequency accurately
      enough, which results in audio and video
      getting out of sync and xine has to compensate. If you see the message
      only from time to time, you might remedy it by using the resampling sync
@@ -1534,7 +1534,7 @@
     </para>
     <para>
      Occasional messages of "fixing sound card drift" may happen on start and
-     when playing a long stream (like a movie). This is normal behaviour, 
+     when playing a long stream (like a movie). This is normal behaviour,
      nothing to worry about.
     </para>
    </sect2>
@@ -1578,7 +1578,7 @@
      questions.
     </para>
    </sect2>
-   
+
    <sect2 id="bluescreen">
     <title>I only see a blue (or green or black) video image most of the time.</title>
     <para>
@@ -1592,7 +1592,7 @@
      <filename>/etc/X11/xorg.conf</filename> or <filename>/etc/X11/XF86Config</filename>).
     </para>
    </sect2>
-   
+
    <sect2 id="buggyxv">
     <title>The image looks strange, it is shifted, cropped or shows weird lines!</title>
     <para>
@@ -1637,18 +1637,18 @@
      hardware. Here are some hints for individual gfx chips:
      <itemizedlist>
       <listitem>
-       <para> 
+       <para>
         3Dfx: if all you get is a solid black window, upgrade to X.org or XFree 4.1.0 or later.
        </para>
       </listitem>
       <listitem>
-       <para>   
+       <para>
         ATI: if you only get "half a picture", try lowering your resolution
-        or bit depth, disable DRI (looks like you ran out of video RAM)	    
+        or bit depth, disable DRI (looks like you ran out of video RAM)
        </para>
       </listitem>
       <listitem>
-       <para> 
+       <para>
         Trident card: If you see vertical bands jumbled, upgrade to the latest
         xfree/experimental trident drivers (for the CyberBlade XP
         a driver exists here:
@@ -1656,61 +1656,61 @@
        </para>
       </listitem>
       <listitem>
-       <para> 
+       <para>
         nVidia: With newer GeForce cards, Xv should work with XFree 4.2.0 or
         newer, for older RivaTNT cards use the binary drivers from nvidia
         (of course the binary drivers work as well for GeForce cards)
        </para>
       </listitem>
       <listitem>
-       <para> 
+       <para>
         Mach64/Rage3D (not Rage128/Radeon) cards/chips get no XVideo with
-        standard drivers, try 
+        standard drivers, try
         <ulink url="http://gatos.sourceforge.net/">GATOS drivers
         </ulink> instead
        </para>
       </listitem>
       <listitem>
-       <para> 
+       <para>
         intel: i815 has Xv support in XFree 4.x, others unknown
        </para>
       </listitem>
       <listitem>
-       <para> 
+       <para>
         Permedia 2/3 has Xv support in XFree 4.x
        </para>
       </listitem>
       <listitem>
-       <para> 
+       <para>
         Savage: at least some older drivers tend to lock up the whole machine,
-        try the drivers available from 
+        try the drivers available from
         <ulink url="http://www.probo.com/timr/savage40.html">
          http://www.probo.com/timr/savage40.html
         </ulink>.
        </para>
       </listitem>
       <listitem>
-       <para> 
+       <para>
         SIS: certain controllers (more info needed!) have Xv support in XFree 4.x
        </para>
       </listitem>
       <listitem>
-       <para> 
+       <para>
         Chips and Tech 6555x, 68554, 69000, 69030 have Xv support in XFree 4.x
        </para>
       </listitem>
       <listitem>
-       <para> 
+       <para>
         NeoMagic: certain controllers (more info needed!) have Xv support in Xfree 4.x
        </para>
       </listitem>
       <listitem>
-       <para> 
+       <para>
         SiliconMotion: certain controllers (more info needed!) have Xv support in Xfree 4.x
        </para>
       </listitem>
       <listitem>
-       <para> 
+       <para>
         Matrox: G200 or newer (but not Parhelia) have Xv support in XFree 4.x.
         For Parhelia, use the binary only drivers available from matrox' website.
        </para>
@@ -1768,12 +1768,12 @@
     <para>
      Usually xine discovers the screen aspect ratio by
      querying the X-server and then adjusts the video automatically
-     to make it look right. However, if that doesn't work try 
+     to make it look right. However, if that doesn't work try
      pressing "a" to manually change the aspect ratio.
     </para>
     <para>
      If you have a wide screen monitor, make sure the X-server
-     is correctly configured. The X-server must know the physical 
+     is correctly configured. The X-server must know the physical
      size of the screen, which is independent of the resolution
      being used.
     </para>
@@ -1792,7 +1792,7 @@
      For XFree86, the filename is normally <filename>/etc/X11/XF86Config</filename>.
     </para>
     <para>
-     Where <parameter>DisplaySize</parameter> specifies, 
+     Where <parameter>DisplaySize</parameter> specifies,
      in millimeters, the physical size of the monitor's picture area.
     </para>
    </sect2>
@@ -1806,7 +1806,7 @@
     <para>
      The difference between these counters is a little subtle for the non
      developer. There are two threads running in order to display video:
-     the decoder thread will deliver frames to the video output thread. 
+     the decoder thread will deliver frames to the video output thread.
      The latter is responsible for scheduling the frames to be displayed at
      the right time.
     </para>
@@ -1843,7 +1843,7 @@
     </para>
     <para>
      Please note that some frontends save these settings in their config file
-     so when you have found a working combination, make sure you exit 
+     so when you have found a working combination, make sure you exit
      xine cleanly so the values are saved.
     </para>
    </sect2>
@@ -1862,13 +1862,13 @@
      Xv by default.
     </para>
     <para>
-     However some users may want to explore better the available hardware 
+     However some users may want to explore better the available hardware
      capabilities (eg. syncing frame drawing with monitor refresh).
      Also some Xv drivers contain slow copies and accessing the video card
      directly may yield performance gains.
     </para>
     <para>
-     Drivers that access hardware directly includes VIDIX (warning: requires 
+     Drivers that access hardware directly includes VIDIX (warning: requires
      root priviledges or kernel helper).
      User may try one of those, but should be warned that with root access
      they can cause the system to crash hard. The support is also limited to
@@ -1908,7 +1908,7 @@
      altogether.
     </para>
     <para>
-     Unscaled OSD usage by subtitles and xine-ui is controlled by 
+     Unscaled OSD usage by subtitles and xine-ui is controlled by
      the following settings (<filename>~/.xine/config</filename> or
      <filename>~/.config/gxine/config</filename>):
      <programlisting>&nbsp;&nbsp;&nbsp;gui.osd_use_unscaled:0</programlisting>
@@ -1920,17 +1920,17 @@
     <title>I can't see the OSD or it leaves a black box over the image!</title>
     <para>
      If you are using xine-lib version 1-rc3 or newer, this is probably
-     due buggy XV drivers that do not support 
+     due buggy XV drivers that do not support
      <link linkend="unscaledosd">unscaled OSD</link> (the XShape
-     extension) properly. 
+     extension) properly.
     </para>
     <para>
-     There have being reports of some ATI drivers that don't allow 
+     There have being reports of some ATI drivers that don't allow
      displaying anything over the video. The VIA Epia binary drivers
      is reported to leave a black box where the OSD was displayed.
     </para>
     <para>
-     The problem may be fixed by either updating the video driver, 
+     The problem may be fixed by either updating the video driver,
      or disabling xine unscaled OSD support.
     </para>
    </sect2>
@@ -1955,7 +1955,7 @@
     <title>Why external subtitles look so ugly?</title>
     <para>
     You are probably using a xine-lib version older than 1-rc3.
-    Try upgrading your copy and read the 
+    Try upgrading your copy and read the
     <link linkend="unscaledosd">section about unscaled osd</link>.
     </para>
    </sect2>
@@ -1985,7 +1985,7 @@
     </para>
     <para>
     Also notice that DVD overlays (including subtitles) are meant to
-    be displayed in a fixed position, this is how the DVD menu 
+    be displayed in a fixed position, this is how the DVD menu
     highlighting works. xine does not support moving them.
     </para>
    </sect2>
@@ -2074,7 +2074,7 @@
    <sect2 id="subencoding">
     <title>Encoding of external subtitles is bad. What is wrong?</title>
     <para>
-     The encoding of the external subtitles is expected to be iso-8859-1 by 
+     The encoding of the external subtitles is expected to be iso-8859-1 by
      default. You need to set an appropriate encoding in the config option
      <parameter>subtitles.separate.src_encoding</parameter>. Note that you also need
      a font which contains all characters from the given encoding.
@@ -2160,7 +2160,7 @@
      for more information.
     </para>
    </sect2>
-   
+
    <sect2 id="status0x51">
     <title>My drive doesn't work and the kernel says "status=0x51 { DriveReady SeekComplete Error }"</title>
     <para>
@@ -2204,7 +2204,7 @@
      have two possibilities. Either deactivate ESD (temporarily) by right
      clicking on the sound monitor applet and selecting "Place Esound in
      standby" or just kill it. Then xine will use OSS audio output. The other
-     method is to make xine use ESD for audio output with:      
+     method is to make xine use ESD for audio output with:
      <screen>&nbsp;&nbsp;&nbsp;<command>gxine -A esd</command></screen>
      This may result in worse playback &ndash; exact syncronization is not possible
      with esd, so using oss should be preferred.
@@ -2274,7 +2274,7 @@
       <listitem>
        <para>
         Can you reproduce the bug? (e.g. do you remember what you
-        did and when you do it again it crashes again?) 
+        did and when you do it again it crashes again?)
        </para>
       </listitem>
       <listitem>
@@ -2294,7 +2294,7 @@
         Your X server just froze on you? unfortunately that's a known problem
         with some chipsets and drivers (most commonly Savage chipsets) when
         using Xv. You might want to try running <command>gxine -V XShm</command>
-        to see if the problem is related to the Xv driver. This will unfortunately 
+        to see if the problem is related to the Xv driver. This will unfortunately
         be much slower, as lots of things are now done in software instead of
         hardware scaling/colour space conversion.
        </para>

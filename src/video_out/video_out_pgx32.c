@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -149,7 +149,7 @@ typedef struct {
   double ratio;
 } pgx32_frame_t;
 
-typedef struct {   
+typedef struct {
   vo_driver_t vo_driver;
   vo_scale_t vo_scale;
 
@@ -210,7 +210,7 @@ static int setup_dga(pgx32_driver_t *this)
     }
 
     if (strcmp("TSIgfxp", ident.name) != 0) {
-      xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("video_out_pgx32: Error: '%s' is not a pgx32 framebuffer device\n"), devname);    
+      xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("video_out_pgx32: Error: '%s' is not a pgx32 framebuffer device\n"), devname);
       XDgaUnGrabDrawable(this->dgadraw);
       XUnlockDisplay(this->display);
       return 0;
@@ -485,7 +485,7 @@ static void pgx32_display_frame(vo_driver_t *this_gen, vo_frame_t *frame_gen)
     _x_vo_scale_compute_ideal_size(&this->vo_scale);
   }
 
-  if (_x_vo_scale_redraw_needed(&this->vo_scale)) {  
+  if (_x_vo_scale_redraw_needed(&this->vo_scale)) {
     int i;
 
     _x_vo_scale_compute_output_size(&this->vo_scale);
@@ -589,7 +589,7 @@ static void pgx32_overlay_blend(vo_driver_t *this_gen, vo_frame_t *frame_gen, vo
 {
   /*pgx32_driver_t *this = (pgx32_driver_t *)(void *)this_gen;*/
   pgx32_frame_t *frame = (pgx32_frame_t *)frame_gen;
-  
+
   if (overlay->rle) {
     int i, j, x, y, len, width;
     int use_clip_palette;
@@ -757,7 +757,7 @@ static int pgx32_redraw_needed(vo_driver_t *this_gen)
 {
   pgx32_driver_t *this = (pgx32_driver_t *)(void *)this_gen;
 
-  if (_x_vo_scale_redraw_needed(&this->vo_scale)) {  
+  if (_x_vo_scale_redraw_needed(&this->vo_scale)) {
     this->vo_scale.force_redraw = 1;
     return 1;
   }
@@ -775,7 +775,7 @@ static void pgx32_dispose(vo_driver_t *this_gen)
   munmap((void *)this->vregs, GFXP_REGS_MMAPLEN);
 
   _x_alphablend_free(&this->alphablend_extra_data);
-  
+
   free(this);
 }
 
@@ -799,7 +799,7 @@ static vo_driver_t *pgx32_init_driver(video_driver_class_t *class_gen, const voi
   }
 
   _x_alphablend_init(&this->alphablend_extra_data, class->xine);
-  
+
   this->vo_driver.get_capabilities     = pgx32_get_capabilities;
   this->vo_driver.alloc_frame          = pgx32_alloc_frame;
   this->vo_driver.update_frame_format  = pgx32_update_frame_format;

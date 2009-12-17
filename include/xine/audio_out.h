@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -44,9 +44,9 @@ typedef struct ao_driver_s ao_driver_t;
 
 struct ao_driver_s {
 
-  /* 
+  /*
    *
-   * find out what output modes + capatilities are supported by 
+   * find out what output modes + capatilities are supported by
    * this plugin (constants for the bit vector to return see above)
    *
    * See AO_CAP_* bellow.
@@ -54,7 +54,7 @@ struct ao_driver_s {
   uint32_t (*get_capabilities) (ao_driver_t *);
 
   /*
-   * open the driver and make it ready to receive audio data 
+   * open the driver and make it ready to receive audio data
    * buffers may be flushed(!)
    *
    * return value: 0 : failure, >0 : output sample rate
@@ -70,21 +70,21 @@ struct ao_driver_s {
    */
   int (*bytes_per_frame)(ao_driver_t *self_gen);
 
-  /* return the delay is frames measured by 
+  /* return the delay is frames measured by
    * looking at pending samples in the audio output device
    */
   int (*delay)(ao_driver_t *self_gen);
 
-  /* 
+  /*
    * return gap tolerance (in pts) needed for this driver
    */
   int (*get_gap_tolerance) (ao_driver_t *self_gen);
 
   /*
    * write audio data to audio output device
-   * return value: 
+   * return value:
    *  >0 => audio samples were processed ok
-   *   0 => audio samples were not yet processed, 
+   *   0 => audio samples were not yet processed,
    *        call write_audio_data with the _same_ samples again
    */
   int (*write)(ao_driver_t *,
@@ -158,9 +158,9 @@ struct audio_buffer_s {
   int64_t            vpts;
   uint32_t           frame_header_count;
   uint32_t           first_access_unit;
-  
+
   /* extra info coming from input or demuxers */
-  extra_info_t      *extra_info; 
+  extra_info_t      *extra_info;
 
   xine_stream_t     *stream; /* stream that send that buffer */
 
@@ -185,7 +185,7 @@ struct xine_audio_port_s {
   int (*get_property) (xine_audio_port_t *, int property);
   int (*set_property) (xine_audio_port_t *, int property, int value);
 
-  /* open audio driver for audio output 
+  /* open audio driver for audio output
    * return value: 0:failure, >0:output sample rate
    */
   /* when you are not a full-blown stream, but still need to open the port
@@ -194,7 +194,7 @@ struct xine_audio_port_s {
 	       uint32_t bits, uint32_t rate, int mode);
 
   /*
-   * get a piece of memory for audio data 
+   * get a piece of memory for audio data
    */
   audio_buffer_t * (*get_buffer) (xine_audio_port_t *);
 
@@ -224,7 +224,7 @@ struct xine_audio_port_s {
    * Flush audio_out fifo.
    */
   void (*flush) (xine_audio_port_t *);
-  
+
   /*
    * Check if port is opened for this stream and get parameters.
    * The stream can be anonymous.
@@ -242,7 +242,7 @@ struct audio_driver_class_s {
    * open a new instance of this plugin class
    */
   ao_driver_t* (*open_plugin) (audio_driver_class_t *, const void *data);
-  
+
   /**
    * @brief short human readable identifier for this plugin class
    */
@@ -259,7 +259,7 @@ struct audio_driver_class_s {
    * @brief Optional non-standard catalog to use with dgettext() for description.
    */
   const char *text_domain;
-  
+
   /*
    * free all class-related resources
    */
@@ -346,7 +346,7 @@ int _x_ao_channels2mode( int channels ) XINE_PROTECTED;
 /* audio device control ops */
 #define AO_CTRL_PLAY_PAUSE	0
 #define AO_CTRL_PLAY_RESUME	1
-#define AO_CTRL_FLUSH_BUFFERS	2      
+#define AO_CTRL_FLUSH_BUFFERS	2
 
 /* above that value audio frames are discarded */
 #define AO_MAX_GAP              15000

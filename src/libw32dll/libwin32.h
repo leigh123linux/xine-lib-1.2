@@ -38,7 +38,7 @@ typedef struct _CodecInfo
 typedef struct _CImage // public  your_libvo_mem
 {
     char* ptr;
-    
+
     /*char* (*Data)();
     {
 	return 0;
@@ -47,7 +47,7 @@ typedef struct _CImage // public  your_libvo_mem
     /*int (*Supported)(fourcc_t csp, int bits);
     {
 	return true;
-	// if you support such surface 
+	// if you support such surface
     }*/
 }CImage;
 
@@ -105,18 +105,18 @@ struct IAudioEncoder
 
 typedef struct _BitmapInfo
 {
-    long 	biSize;
-    long  	biWidth;
-    long  	biHeight;
-    short 	biPlanes;
-    short 	biBitCount;
-    long 	biCompression;
-    long 	biSizeImage;
-    long  	biXPelsPerMeter;
-    long  	biYPelsPerMeter;
-    long 	biClrUsed;
-    long 	biClrImportant;
-    int 	colors[3];    
+    long	biSize;
+    long	biWidth;
+    long	biHeight;
+    short	biPlanes;
+    short	biBitCount;
+    long	biCompression;
+    long	biSizeImage;
+    long	biXPelsPerMeter;
+    long	biYPelsPerMeter;
+    long	biClrUsed;
+    long	biClrImportant;
+    int	colors[3];
 } BitmapInfo;
 
 typedef struct _IVideoDecoder

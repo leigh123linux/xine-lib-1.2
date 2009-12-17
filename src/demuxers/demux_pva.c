@@ -148,7 +148,7 @@ static int demux_pva_send_chunk(demux_plugin_t *this_gen) {
   current_file_pos = this->input->get_current_pos(this->input);
 
   if (preamble[2] == 1) {
-    
+
     /* video */
 
     /* load the pts if it is the first thing in the chunk */
@@ -253,7 +253,7 @@ static int demux_pva_send_chunk(demux_plugin_t *this_gen) {
     buf->pts = pts;
 
     if( this->data_size )
-      buf->extra_info->input_normpos = (int) ((double) this->input->get_current_pos(this->input) * 
+      buf->extra_info->input_normpos = (int) ((double) this->input->get_current_pos(this->input) *
                                               65535 / this->data_size);
 
     this->audio_fifo->put (this->audio_fifo, buf);
@@ -302,7 +302,7 @@ static void demux_pva_send_headers(demux_plugin_t *this_gen) {
 
   buf->pts = 0;
   if( this->data_size )
-    buf->extra_info->input_normpos = (int) ((double) this->input->get_current_pos(this->input) * 
+    buf->extra_info->input_normpos = (int) ((double) this->input->get_current_pos(this->input) *
                                               65535 / this->data_size);
   buf->type = BUF_VIDEO_MPEG;
 
@@ -329,7 +329,7 @@ static void demux_pva_send_headers(demux_plugin_t *this_gen) {
 
     buf->pts = 0;
     if( this->data_size )
-      buf->extra_info->input_normpos = (int) ((double) this->input->get_current_pos(this->input) * 
+      buf->extra_info->input_normpos = (int) ((double) this->input->get_current_pos(this->input) *
                                               65535 / this->data_size);
     buf->type = BUF_AUDIO_MPEG;
 
@@ -347,7 +347,7 @@ static int demux_pva_seek (demux_plugin_t *this_gen,
   unsigned char seek_buffer[SEEK_BUFFER_SIZE];
   int found = 0;
   int i;
-  
+
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->data_size );
 

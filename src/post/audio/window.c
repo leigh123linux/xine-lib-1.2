@@ -1,5 +1,5 @@
 /*=============================================================================
- *	
+ *
  *  This software has been released under the terms of the GNU Public
  *  license. See http://www.gnu.org/copyleft/gpl.html for details.
  *
@@ -39,7 +39,7 @@ void boxcar(int n, _ftype_t* w)
 /*
  * Triang a.k.a Bartlett
  *
- *               |    (N-1)| 
+ *               |    (N-1)|
  *           2 * |k - -----|
  *               |      2  |
  * w = 1.0 - ---------------
@@ -53,7 +53,7 @@ void triang(int n, _ftype_t* w)
   _ftype_t k2  = 1/((_ftype_t)n + k1);
   int      end = (n + 1) >> 1;
   int	   i;
-  
+
   /* Calculate window coefficients */
   for (i=0 ; i<end ; i++)
     w[i] = w[n-i-1] = (2.0*((_ftype_t)(i+1))-(1.0-k1))*k2;
@@ -72,7 +72,7 @@ void hanning(int n, _ftype_t* w)
 {
   int	   i;
   _ftype_t k = 2*M_PI/((_ftype_t)(n+1)); /* 2*pi/(N+1) */
-  
+
   /* Calculate window coefficients */
   for (i=0; i<n; i++)
     *w++ = 0.5*(1.0 - cos(k*(_ftype_t)(i+1)));
@@ -131,22 +131,22 @@ void flattop(int n,_ftype_t* w)
   int      i;
   _ftype_t k1 = 2*M_PI/((_ftype_t)(n-1)); /* 2*pi/(N-1) */
   _ftype_t k2 = 2*k1;                   /* 4*pi/(N-1) */
-  
+
   /* Calculate window coefficients */
   for (i=0; i<n; i++)
     *w++ = 0.2810638602 - 0.5208971735*cos(k1*(_ftype_t)i) + 0.1980389663*cos(k2*(_ftype_t)i);
 }
 
-/* Computes the 0th order modified Bessel function of the first kind.  
- * (Needed to compute Kaiser window) 
- *   
+/* Computes the 0th order modified Bessel function of the first kind.
+ * (Needed to compute Kaiser window)
+ *
  * y = sum( (x/(2*n))^2 )
  *      n
  */
 #define BIZ_EPSILON 1E-21 /* Max error acceptable */
 
 static _ftype_t besselizero(_ftype_t x)
-{ 
+{
   _ftype_t temp;
   _ftype_t sum   = 1.0;
   _ftype_t u     = 1.0;
@@ -175,10 +175,10 @@ static _ftype_t besselizero(_ftype_t x)
  * Gold (Theory and Application of DSP) under Kaiser windows for more
  * about Beta.  The following table from Rabiner and Gold gives some
  * feel for the effect of Beta:
- * 
+ *
  * All ripples in dB, width of transition band = D*N where N = window
  * length
- * 
+ *
  * BETA    D       PB RIP   SB RIP
  * 2.120   1.50  +-0.27      -30
  * 3.384   2.23    0.0864    -40
@@ -195,8 +195,8 @@ void kaiser(int n, _ftype_t* w, _ftype_t b)
   _ftype_t k1  = 1.0/besselizero(b);
   int	   k2  = 1 - (n & 1);
   int      end = (n + 1) >> 1;
-  int      i; 
-  
+  int      i;
+
   /* Calculate window coefficients */
   for (i=0 ; i<end ; i++){
     tmp = (_ftype_t)(2*i + k2) / ((_ftype_t)n - 1.0);

@@ -20,7 +20,7 @@
  * stream metainfo helper functions
  * hide some xine engine details from demuxers and reduce code duplication
  *
- * $id$ 
+ * $id$
  */
 
 #ifndef INFO_HELPER_H

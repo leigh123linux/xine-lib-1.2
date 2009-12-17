@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -45,7 +45,7 @@ struct audio_decoder_class_s {
    * open a new instance of this plugin class
    */
   audio_decoder_t* (*open_plugin) (audio_decoder_class_t *this, xine_stream_t *stream);
-  
+
   /**
    * @brief short human readable identifier for this plugin class
    */
@@ -62,7 +62,7 @@ struct audio_decoder_class_s {
    * @brief Optional non-standard catalog to use with dgettext() for description.
    */
   const char *text_domain;
-  
+
   /*
    * free all class-related resources
    */
@@ -75,8 +75,8 @@ struct audio_decoder_class_s {
 struct audio_decoder_s {
 
   /*
-   * decode data from buf and feed decoded samples to 
-   * audio output 
+   * decode data from buf and feed decoded samples to
+   * audio output
    */
   void (*decode_data) (audio_decoder_t *this, buf_element_t *buf);
 
@@ -85,13 +85,13 @@ struct audio_decoder_s {
    * audio data not related to recently decoded data)
    */
   void (*reset) (audio_decoder_t *this);
-  
+
   /*
    * inform decoder that a time reference discontinuity has happened.
    * that is, it must forget any currently held pts value
    */
-  void (*discontinuity) (audio_decoder_t *this);  
-  
+  void (*discontinuity) (audio_decoder_t *this);
+
   /*
    * close down, free all resources
    */

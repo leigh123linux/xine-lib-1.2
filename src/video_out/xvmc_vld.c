@@ -39,7 +39,7 @@ void xvmc_vld_frame(struct vo_frame_s *this_gen)
     *ff = XXMC_FRAME(vft->forward_reference_frame),
     *bf = XXMC_FRAME(vft->backward_reference_frame);
   XvMCMpegControl ctl;
-  xxmc_driver_t 
+  xxmc_driver_t
     *driver = (xxmc_driver_t *) cf->vo_frame.driver;
   XvMCSurface *fs=0, *bs=0;
   XvMCQMatrix qmx;
@@ -53,21 +53,21 @@ void xvmc_vld_frame(struct vo_frame_s *this_gen)
   ctl.picture_coding_type = vft->picture_coding_type;
   ctl.mpeg_coding = (vft->mpeg_coding == 0) ? XVMC_MPEG_1 : XVMC_MPEG_2;
   ctl.flags = 0;
-  ctl.flags |= (vft->progressive_sequence) ? 
+  ctl.flags |= (vft->progressive_sequence) ?
     XVMC_PROGRESSIVE_SEQUENCE : 0 ;
-  ctl.flags |= (vft->scan) ? 
+  ctl.flags |= (vft->scan) ?
     XVMC_ALTERNATE_SCAN : XVMC_ZIG_ZAG_SCAN;
-  ctl.flags |= (vft->pred_dct_frame) ? 
+  ctl.flags |= (vft->pred_dct_frame) ?
     XVMC_PRED_DCT_FRAME : XVMC_PRED_DCT_FIELD;
-  ctl.flags |= (this->top_field_first) ? 
+  ctl.flags |= (this->top_field_first) ?
     XVMC_TOP_FIELD_FIRST : XVMC_BOTTOM_FIELD_FIRST;
-  ctl.flags |= (vft->concealment_motion_vectors) ? 
-    XVMC_CONCEALMENT_MOTION_VECTORS : 0 ; 
-  ctl.flags |= (vft->q_scale_type) ? 
+  ctl.flags |= (vft->concealment_motion_vectors) ?
+    XVMC_CONCEALMENT_MOTION_VECTORS : 0 ;
+  ctl.flags |= (vft->q_scale_type) ?
     XVMC_Q_SCALE_TYPE : 0;
-  ctl.flags |= (vft->intra_vlc_format) ? 
+  ctl.flags |= (vft->intra_vlc_format) ?
     XVMC_INTRA_VLC_FORMAT : 0;
-  ctl.flags |= (vft->second_field) ? 
+  ctl.flags |= (vft->second_field) ?
     XVMC_SECOND_FIELD : 0 ;
 
   if (ff) fs=ff->xvmc_surf;
@@ -79,7 +79,7 @@ void xvmc_vld_frame(struct vo_frame_s *this_gen)
 
   if (ctl.picture_coding_type == XVMC_P_PICTURE)
     bs = cf->xvmc_surf;
-    
+
   if ((qmx.load_intra_quantiser_matrix = vft->load_intra_quantizer_matrix)) {
     memcpy(qmx.intra_quantiser_matrix,vft->intra_quantizer_matrix,
 	   sizeof(qmx.intra_quantiser_matrix));
@@ -87,13 +87,13 @@ void xvmc_vld_frame(struct vo_frame_s *this_gen)
   if ((qmx.load_non_intra_quantiser_matrix = vft->load_non_intra_quantizer_matrix)) {
     memcpy(qmx.non_intra_quantiser_matrix,vft->non_intra_quantizer_matrix,
 	   sizeof(qmx.non_intra_quantiser_matrix));
-  }      
-  qmx.load_chroma_intra_quantiser_matrix = 0;    
+  }
+  qmx.load_chroma_intra_quantiser_matrix = 0;
   qmx.load_chroma_non_intra_quantiser_matrix = 0;
 
   XVMCLOCKDISPLAY( driver->display );
-  XvMCLoadQMatrix(driver->display, &driver->context, &qmx);	   
-  
+  XvMCLoadQMatrix(driver->display, &driver->context, &qmx);
+
   while((cf->xxmc_data.result =
 	 XvMCBeginSurface(driver->display, &driver->context, cf->xvmc_surf,
 			  fs, bs, &ctl)));
@@ -101,9 +101,9 @@ void xvmc_vld_frame(struct vo_frame_s *this_gen)
   driver->cpu_saver = 0.;
 }
 
-void xvmc_vld_slice(vo_frame_t *this_gen) 
+void xvmc_vld_slice(vo_frame_t *this_gen)
 {
-  xxmc_frame_t 
+  xxmc_frame_t
     *cf = XXMC_FRAME(this_gen);
   xxmc_driver_t
     *driver = (xxmc_driver_t *) cf->vo_frame.driver;
@@ -115,7 +115,7 @@ void xvmc_vld_slice(vo_frame_t *this_gen)
   /*
    * If CPU-saving mode is enabled, sleep after every xxmc->sleep slice. This will free
    * up the cpu while the decoder is working on the slice. The value of xxmc->sleep is calculated
-   * so that the decoder thread sleeps at most 50% of the frame delay, 
+   * so that the decoder thread sleeps at most 50% of the frame delay,
    * assuming a 2.6 kernel clock of 1000 Hz.
    */
 
@@ -123,7 +123,7 @@ void xvmc_vld_slice(vo_frame_t *this_gen)
   if (driver->cpu_save_enabled) {
     driver->cpu_saver += 1.;
     if (driver->cpu_saver >= cf->xxmc_data.sleep) {
-      usleep(1); 
+      usleep(1);
       driver->cpu_saver -= cf->xxmc_data.sleep;
     }
   }

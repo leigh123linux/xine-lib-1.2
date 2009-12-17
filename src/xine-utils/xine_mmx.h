@@ -173,7 +173,7 @@ typedef	union {
 #define	punpckhwd_m2r(var,reg)		mmx_m2r (punpckhwd, var, reg)
 #define	punpckhwd_r2r(regs,regd)	mmx_r2r (punpckhwd, regs, regd)
 
-#define	punpcklbw_m2r(var,reg) 		mmx_m2r (punpcklbw, var, reg)
+#define	punpcklbw_m2r(var,reg)		mmx_m2r (punpcklbw, var, reg)
 #define	punpcklbw_r2r(regs,regd)	mmx_r2r (punpcklbw, regs, regd)
 #define	punpckldq_m2r(var,reg)		mmx_m2r (punpckldq, var, reg)
 #define	punpckldq_r2r(regs,regd)	mmx_r2r (punpckldq, regs, regd)

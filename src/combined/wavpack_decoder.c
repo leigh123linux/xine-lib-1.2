@@ -140,7 +140,7 @@ static void wavpack_reset (audio_decoder_t *const this_gen)
   this->buf_pos = 0;
 }
 
-static void wavpack_discontinuity (audio_decoder_t *const this_gen) 
+static void wavpack_discontinuity (audio_decoder_t *const this_gen)
 {
   /* wavpack_decoder_t *this = (wavpack_decoder_t *) this_gen; */
 
@@ -150,7 +150,7 @@ static void wavpack_discontinuity (audio_decoder_t *const this_gen)
 static void wavpack_decode_data (audio_decoder_t *const this_gen, buf_element_t *const buf)
 {
     wavpack_decoder_t *const this = (wavpack_decoder_t *) this_gen;
-        
+
     /* We are getting the stream header, open up the audio
      * device, and collect information about the stream
      */
@@ -194,7 +194,7 @@ static void wavpack_decode_data (audio_decoder_t *const this_gen, buf_element_t 
 
       xine_fast_memcpy (&this->buf[this->buf_pos], buf->content, buf->size);
       this->buf_pos += buf->size;
-        
+
       if ( buf->decoder_flags & BUF_FLAG_FRAME_END ) {
 	static WavpackStreamReader wavpack_buffer_reader = {
 	  .read_bytes		= xine_buffer_read_bytes,
@@ -216,7 +216,7 @@ static void wavpack_decode_data (audio_decoder_t *const this_gen, buf_element_t 
 	this->buf_pos = 0;
 
 	if ( le2me_32(header->samples_count) == 0 ) return;
-	
+
 	ctx = WavpackOpenFileInputEx(&wavpack_buffer_reader, this, NULL, error, OPEN_STREAMING, 0);
 	if ( ! ctx ) {
 	  lprintf("unable to open the stream: %s\n", error);
@@ -250,14 +250,14 @@ static void wavpack_decode_data (audio_decoder_t *const this_gen, buf_element_t 
 	  }
 
 	  lprintf("Decoded %d samples\n", buf_samples);
-	  
+
 	  samples_left -= decoded_count;
 
 	  audio_buffer->num_frames = decoded_count;
 	  audio_buffer->vpts = 0; /* TODO: Fix the pts calculation */
 	  // audio_buffer->vpts = (buf->pts * (samples_total-samples_left)) / samples_total;
 	  lprintf("Audio buffer with pts %"PRId64"\n", audio_buffer->vpts);
-	  
+
 	  switch(this->bits_per_sample) {
 	  case 8: {
 	    int8_t *data8 = (int8_t*)audio_buffer->mem;
@@ -282,13 +282,13 @@ static void wavpack_decode_data (audio_decoder_t *const this_gen, buf_element_t 
 }
 
 static void wavpack_dispose (audio_decoder_t *this_gen) {
-    wavpack_decoder_t *this = (wavpack_decoder_t *) this_gen; 
+    wavpack_decoder_t *this = (wavpack_decoder_t *) this_gen;
 
     if (this->output_open)
         this->stream->audio_out->close (this->stream->audio_out, this->stream);
 
     free(this->buf);
-    
+
     free (this_gen);
 }
 
@@ -313,7 +313,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
 void *decoder_wavpack_init_plugin (xine_t *xine, void *data) {
     wavpack_class_t *this;
-  
+
     this = calloc(1, sizeof (wavpack_class_t));
 
     this->decoder_class.open_plugin     = open_plugin;

@@ -207,7 +207,7 @@ int lexer_get_token_d_r(struct lexer * lexer, char ** _tok, int * _tok_size, int
 	    break;
 
 	  case '/':
-	    if (!lexer->in_comment) 
+	    if (!lexer->in_comment)
 	      state = STATE_T_M_STOP_2;
 	    tok[tok_pos] = c;
 	    tok_pos++;
@@ -530,7 +530,7 @@ int lexer_get_token_d_r(struct lexer * lexer, char ** _tok, int * _tok_size, int
 	break;
       }
     }
-    lprintf ("loop done tok_pos = %d, tok_size=%d, lexbuf_pos=%d, lexbuf_size=%d\n", 
+    lprintf ("loop done tok_pos = %d, tok_size=%d, lexbuf_pos=%d, lexbuf_size=%d\n",
 	     tok_pos, tok_size, lexer->lexbuf_pos, lexer->lexbuf_size);
 
     /* pb */

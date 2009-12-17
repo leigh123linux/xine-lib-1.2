@@ -19,7 +19,7 @@
  *
  * Buffered Input Plugin (request optimizer).
  *
- * The goal of this input plugin is to reduce 
+ * The goal of this input plugin is to reduce
  * the number of calls to the real input plugin.
  */
 
@@ -59,7 +59,7 @@ typedef struct {
 } cache_input_plugin_t;
 
 
-/* 
+/*
  * read data from input plugin and write it into file
  */
 static off_t cache_plugin_read(input_plugin_t *this_gen, void *buf_gen, off_t len) {
@@ -130,13 +130,13 @@ static off_t cache_plugin_read(input_plugin_t *this_gen, void *buf_gen, off_t le
       /* readahead bytes */
       main_read = this->main_input_plugin->read(this->main_input_plugin, this->buf, this->buf_size);
       this->main_read_call++;
-      
+
       if( main_read >= 0 ) {
         this->buf_len = main_read;
-  
+
         if (len > this->buf_len)
           len = this->buf_len;
-  
+
         if (len) {
           xine_fast_memcpy(buf + read_len, this->buf, len);
           this->buf_pos = len;
@@ -150,7 +150,7 @@ static off_t cache_plugin_read(input_plugin_t *this_gen, void *buf_gen, off_t le
       /* direct read */
       main_read = this->main_input_plugin->read(this->main_input_plugin, buf + read_len, len);
       this->main_read_call++;
-      
+
       if( main_read >= 0 )
         read_len += main_read;
       else
@@ -158,7 +158,7 @@ static off_t cache_plugin_read(input_plugin_t *this_gen, void *buf_gen, off_t le
         read_len = main_read;
     }
   }
-  
+
   return read_len;
 }
 
@@ -192,7 +192,7 @@ static buf_element_t *cache_plugin_read_block(input_plugin_t *this_gen, fifo_buf
     buf = fifo->buffer_pool_alloc (fifo);
     if (buf) {
       buf->type = BUF_DEMUX_BLOCK;
-   
+
       assert(todo <= buf->max_size);
       read_len = cache_plugin_read (this_gen, buf->content, todo);
       buf->size = read_len;
@@ -228,11 +228,11 @@ static off_t cache_plugin_seek(input_plugin_t *this_gen, off_t offset, int origi
     case SEEK_CUR:
       rel_offset = offset;
       break;
-  
+
     case SEEK_SET:
       rel_offset = offset - cur_pos;
       break;
-      
+
     default:
       /* invalid origin - main input should know better */
       cur_pos = this->main_input_plugin->seek(this->main_input_plugin, offset, origin);
@@ -240,16 +240,16 @@ static off_t cache_plugin_seek(input_plugin_t *this_gen, off_t offset, int origi
       this->main_seek_call++;
       return cur_pos;
     }
-  
+
     new_buf_pos = (off_t)this->buf_pos + rel_offset;
     lprintf("buf_len: %d, rel_offset=%"PRId64", new_buf_pos=%"PRId64"\n",
-  	  this->buf_len, rel_offset, new_buf_pos);
-  
+	  this->buf_len, rel_offset, new_buf_pos);
+
     if ((new_buf_pos < 0) || (new_buf_pos >= this->buf_len)) {
       if( origin == SEEK_SET )
         cur_pos = this->main_input_plugin->seek(this->main_input_plugin, offset, origin);
       else
-        cur_pos = this->main_input_plugin->seek(this->main_input_plugin, 
+        cur_pos = this->main_input_plugin->seek(this->main_input_plugin,
                   offset - (this->buf_len - this->buf_pos), origin);
       this->buf_len = this->buf_pos = 0;
       this->main_seek_call++;
@@ -264,7 +264,7 @@ static off_t cache_plugin_seek(input_plugin_t *this_gen, off_t offset, int origi
 static off_t cache_plugin_seek_time(input_plugin_t *this_gen, int time_offset, int origin) {
   cache_input_plugin_t *this = (cache_input_plugin_t *)this_gen;
   off_t cur_pos;
-  
+
   lprintf("time_offset: %d, origin: %d\n", time_offset, origin);
   this->seek_call++;
 
@@ -277,7 +277,7 @@ static off_t cache_plugin_seek_time(input_plugin_t *this_gen, int time_offset, i
 static off_t cache_plugin_get_current_pos(input_plugin_t *this_gen) {
   cache_input_plugin_t *this = (cache_input_plugin_t *)this_gen;
   off_t cur_pos;
-  
+
   cur_pos = this->main_input_plugin->get_current_pos(this->main_input_plugin);
   if( this->buf_len ) {
     if( cur_pos >= (this->buf_len - this->buf_pos) )
@@ -292,7 +292,7 @@ static off_t cache_plugin_get_current_pos(input_plugin_t *this_gen) {
 static int cache_plugin_get_current_time(input_plugin_t *this_gen) {
   cache_input_plugin_t *this = (cache_input_plugin_t *)this_gen;
   int cur_time;
-  
+
   cur_time = this->main_input_plugin->get_current_time(this->main_input_plugin);
 
   return cur_time;
@@ -316,7 +316,7 @@ static const char* cache_plugin_get_mrl (input_plugin_t *this_gen) {
   return this->main_input_plugin->get_mrl(this->main_input_plugin);
 }
 
-static int cache_plugin_get_optional_data (input_plugin_t *this_gen, 
+static int cache_plugin_get_optional_data (input_plugin_t *this_gen,
 					  void *data, int data_type) {
   cache_input_plugin_t *this = (cache_input_plugin_t *)this_gen;
 
@@ -324,8 +324,8 @@ static int cache_plugin_get_optional_data (input_plugin_t *this_gen,
     this->main_input_plugin, data, data_type);
 }
 
-/* 
- * dispose main input plugin and self 
+/*
+ * dispose main input plugin and self
  */
 static void cache_plugin_dispose(input_plugin_t *this_gen) {
   cache_input_plugin_t *this = (cache_input_plugin_t *)this_gen;
@@ -343,8 +343,8 @@ static void cache_plugin_dispose(input_plugin_t *this_gen) {
 }
 
 
-/* 
- * create self instance, 
+/*
+ * create self instance,
  */
 input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream) {
   cache_input_plugin_t *this;
@@ -361,7 +361,7 @@ input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream) {
   this = calloc(1, sizeof(cache_input_plugin_t));
   if (!this)
     return NULL;
-  
+
   this->main_input_plugin = main_plugin;
   this->stream            = stream;
 

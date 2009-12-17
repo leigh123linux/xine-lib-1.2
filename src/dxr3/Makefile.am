@@ -2,7 +2,7 @@ include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
 AM_CFLAGS   = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
-AM_CPPFLAGS = 
+AM_CPPFLAGS =
 AM_LDFLAGS  = $(xineplug_ldflags)
 
 if HAVE_X11
@@ -43,7 +43,7 @@ xineplug_vo_out_dxr3_la_SOURCES = \
 	ffmpeg_encoder.c \
 	dxr3_spu_encoder.c \
 	dxr3_scr.c \
-	video_out_dxr3.c 
+	video_out_dxr3.c
 
 xineplug_vo_out_dxr3_la_CFLAGS = $(AM_CFLAGS) $(AVUTIL_CFLAGS) $(FFMPEG_CFLAGS)
 xineplug_vo_out_dxr3_la_LIBADD = $(XINE_LIB) $(link_fame) $(link_rte) $(link_x_libs) $(LTLIBINTL) $(AVUTIL_LIBS) $(FFMPEG_LIBS) -lm

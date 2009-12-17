@@ -34,11 +34,11 @@ extern "C" {
 #define CONFIG_FILE_VERSION 2
 
 /**
- * config entries above this experience 
+ * config entries above this experience
  * level must never be changed from MRL
  */
 #define XINE_CONFIG_SECURITY 30
-	
+
 
 typedef struct cfg_entry_s cfg_entry_t;
 typedef struct config_values_s config_values_t;
@@ -179,7 +179,7 @@ struct config_values_s {
   void (*dispose) (config_values_t *self);
 
   /**
-   * callback called when a new config entry is registered 
+   * callback called when a new config entry is registered
    */
   void (*set_new_entry_callback) (config_values_t *self, xine_config_cb_t new_entry_cb, void *cb_data);
 
@@ -216,7 +216,7 @@ struct config_values_s {
    * mutex for modification to the config
    */
   pthread_mutex_t      config_lock;
-  
+
   /**
    * current config file's version number
    */

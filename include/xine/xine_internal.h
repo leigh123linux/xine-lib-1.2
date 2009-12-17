@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2005 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -74,11 +74,11 @@ typedef struct xine_ticket_s xine_ticket_t;
  */
 
 struct xine_s {
-  
+
   config_values_t           *config;
 
   plugin_catalog_t          *plugin_catalog;
-  
+
   int                        verbosity;
 
   int                        demux_strategy;
@@ -89,7 +89,7 @@ struct xine_s {
 
   xine_list_t               *streams;
   pthread_mutex_t            streams_lock;
-  
+
   metronom_clock_t          *clock;
 
   /** Handle for libxdg-basedir functions. It's actually an xdgHandle. */
@@ -115,34 +115,34 @@ struct xine_ticket_s {
    * the ticket before any operation that might block
    *
    * you must never write to this member directly
-   */  
+   */
   int    ticket_revoked;
-  
+
   /* apply for a ticket; between acquire and relese of an irrevocable
    * ticket (be sure to pair them properly!), it is guaranteed that you
    * will never be blocked by ticket revocation */
   void (*acquire)(xine_ticket_t *self, int irrevocable);
-  
+
   /* give a ticket back */
   void (*release)(xine_ticket_t *self, int irrevocable);
-  
+
   /* renew a ticket, when it has been revoked, see ticket_revoked above;
    * irrevocable must be set to one, if your thread might have acquired
    * irrevocable tickets you don't know of; set it to zero only when
    * you know that this is impossible */
   void (*renew)(xine_ticket_t *self, int irrevocable);
-  
+
 #ifdef XINE_ENGINE_INTERNAL
   /* allow handing out new tickets */
   void (*issue)(xine_ticket_t *self, int atomic);
-  
+
   /* revoke all tickets and deny new ones;
    * a pair of atomic revoke and issue cannot be interrupted by another
    * revocation or by other threads acquiring tickets */
   void (*revoke)(xine_ticket_t *self, int atomic);
-  
+
   /* behaves like acquire() but doesn't block the calling thread; when
-   * the thread would have been blocked, 0 is returned otherwise 1 
+   * the thread would have been blocked, 0 is returned otherwise 1
    * this function acquires a ticket even if ticket revocation is active */
   int (*acquire_nonblocking)(xine_ticket_t *self, int irrevocable);
 
@@ -154,7 +154,7 @@ struct xine_ticket_s {
   void (*unlock_port_rewiring)(xine_ticket_t *self);
 
   void (*dispose)(xine_ticket_t *self);
-  
+
   pthread_mutex_t lock;
   pthread_mutex_t revoke_lock;
   pthread_cond_t  issued;
@@ -194,25 +194,25 @@ struct xine_event_queue_s {
  */
 
 struct xine_stream_s {
- 
+
   /* reference to xine context */
   xine_t                    *xine;
 
-  /* metronom instance used by current stream */  
+  /* metronom instance used by current stream */
   metronom_t                *metronom;
-  
+
   /* demuxers use input_plugin to read data */
   input_plugin_t            *input_plugin;
-  
+
   /* used by video decoders */
   xine_video_port_t         *video_out;
-  
+
   /* demuxers send data to video decoders using this fifo */
   fifo_buffer_t             *video_fifo;
-  
+
   /* used by audio decoders */
   xine_audio_port_t         *audio_out;
-  
+
   /* demuxers send data to audio decoders using this fifo */
   fifo_buffer_t             *audio_fifo;
 
@@ -225,10 +225,10 @@ struct xine_stream_s {
 
   /* input_dvd uses this one. is it possible to add helper functions instead? */
   spu_decoder_t             *spu_decoder_plugin;
-    
+
   /* dxr3 use this one, should be possible to fix to use the port instead */
   vo_driver_t               *video_driver;
-  
+
   /* these definitely should be made private! */
   int                        audio_channel_auto;
   int                        spu_decoder_streamtype;
@@ -236,13 +236,13 @@ struct xine_stream_s {
   int                        spu_channel_auto;
   int                        spu_channel_letterbox;
   int                        spu_channel;
-    
+
   /* current content detection method, see METHOD_BY_xxx */
   int                        content_detection_method;
 
 #ifdef XINE_ENGINE_INTERNAL
   /* these are private variables, plugins must not access them */
-  
+
   int                        status;
 
   /* lock controlling speed change access */
@@ -271,7 +271,7 @@ struct xine_stream_s {
   extra_info_t              *video_decoder_extra_info;
   int                        video_decoder_streamtype;
   int                        video_channel;
-  
+
   uint32_t                   audio_track_map[50];
   int                        audio_track_map_entries;
 
@@ -317,15 +317,15 @@ struct xine_stream_s {
   /* wait for headers sent / stream decoding finished */
   pthread_mutex_t            counter_lock;
   pthread_cond_t             counter_changed;
-  int                        header_count_audio; 
-  int                        header_count_video; 
-  int                        finished_count_audio; 
-  int                        finished_count_video; 
+  int                        header_count_audio;
+  int                        header_count_video;
+  int                        finished_count_audio;
+  int                        finished_count_video;
 
   /* event mechanism */
   xine_list_t               *event_queues;
   pthread_mutex_t            event_queues_lock;
-  
+
   /* demux thread stuff */
   pthread_t                  demux_thread;
   pthread_mutex_t            demux_lock;
@@ -339,14 +339,14 @@ struct xine_stream_s {
   int                        delay_finish_event; /* delay event in 1/10 sec units. 0=>no delay, -1=>forever */
 
   int                        slave_affection;   /* what operations need to be propagated down to the slave? */
-  
+
   int                        err;
-  
+
   xine_post_out_t            video_source;
   xine_post_out_t            audio_source;
-  
+
   broadcaster_t             *broadcaster;
-  
+
   refcounter_t              *refcounter;
 #endif
 };
@@ -387,11 +387,11 @@ void _x_extra_info_reset( extra_info_t *extra_info ) XINE_PROTECTED;
 void _x_extra_info_merge( extra_info_t *dst, extra_info_t *src ) XINE_PROTECTED;
 
 void _x_get_current_info (xine_stream_t *stream, extra_info_t *extra_info, int size) XINE_PROTECTED;
-                        
-                        
+
+
 /* demuxer helper functions from demux.c */
 
-/* 
+/*
  *  Flush audio and video buffers. It is called from demuxers on
  *  seek/stop, and may be useful when user input changes a stream and
  *  xine-lib has cached buffers that have yet to be played.
@@ -421,9 +421,9 @@ void _x_demux_send_data(fifo_buffer_t *fifo, uint8_t *data, int size,
                         int input_normpos, int input_time, int total_time,
                         uint32_t frame_number) XINE_PROTECTED;
 
-int _x_demux_read_send_data(fifo_buffer_t *fifo, input_plugin_t *input, 
-                            int size, int64_t pts, uint32_t type, 
-                            uint32_t decoder_flags, off_t input_normpos, 
+int _x_demux_read_send_data(fifo_buffer_t *fifo, input_plugin_t *input,
+                            int size, int64_t pts, uint32_t type,
+                            uint32_t decoder_flags, off_t input_normpos,
                             int input_time, int total_time,
                             uint32_t frame_number) XINE_PROTECTED;
 
@@ -436,7 +436,7 @@ void _x_demux_send_mrl_reference (xine_stream_t *stream, int alternative,
  */
 void _x_mrl_unescape(char *mrl) XINE_PROTECTED;
 
-/* 
+/*
  * plugin_loader functions
  *
  */

@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -40,7 +40,7 @@
 #define AUDIO_NUM_FRAGMENTS     15
 #define AUDIO_FRAGMENT_SIZE   8192
 
-#define GAP_TOLERANCE        AO_MAX_GAP 
+#define GAP_TOLERANCE        AO_MAX_GAP
 
 typedef struct none_driver_s {
 
@@ -74,7 +74,7 @@ static int ao_none_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate, int
 {
   none_driver_t *this = (none_driver_t *) this_gen;
 
-  xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 	   "audio_none_out: ao_open bits=%d rate=%d, mode=%d\n", bits, rate, mode);
 
   this->mode                   = mode;
@@ -115,13 +115,13 @@ static int ao_none_write(ao_driver_t *this_gen, int16_t *data,
                          uint32_t num_frames)
 {
   none_driver_t *this = (none_driver_t *) this_gen;
-  
+
   /* take some time to pretend we are doing something.
    * avoids burning cpu.
    */
   if( (1000 * num_frames / this->sample_rate) > 10 )
     xine_usec_sleep ((1000 * num_frames / this->sample_rate)*1000/2);
-    
+
   return 1;
 }
 
@@ -143,7 +143,7 @@ static uint32_t ao_none_get_capabilities (ao_driver_t *this_gen) {
 static void ao_none_exit(ao_driver_t *this_gen)
 {
   none_driver_t *this = (none_driver_t *) this_gen;
-  
+
   ao_none_close(this_gen);
 
   free (this);
@@ -177,7 +177,7 @@ static int ao_none_ctrl(ao_driver_t *this_gen, int cmd, ...) {
   return 0;
 }
 
-static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, 
+static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
 				 const void *data) {
 
   none_class_t     *class = (none_class_t *) class_gen;
@@ -244,7 +244,7 @@ static const ao_info_t ao_info_none = {
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_AUDIO_OUT, AO_OUT_NONE_IFACE_VERSION, "none", XINE_VERSION_CODE, &ao_info_none, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

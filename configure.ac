@@ -1191,6 +1191,13 @@ AC_CHECK_PROG(RSVG, rsvg, rsvg, no)
 AM_CONDITIONAL([HAVE_RSVG], [test "$RSVG" != "no"])
 
 dnl ---------------------------------------------
+dnl ... and for PNG optimisation tool
+dnl ---------------------------------------------
+
+AC_CHECK_PROG(OPTIPNG, optipng, optipng, no)
+AM_CONDITIONAL([HAVE_OPTIPNG], [test "$OPTIPNG" != "no"])
+
+dnl ---------------------------------------------
 dnl Output configuration files
 dnl ---------------------------------------------
 

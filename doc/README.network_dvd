@@ -86,7 +86,7 @@ installation for dvds
 
   (don't forget the trailing slash)
 
-  
+
 protocol details
 ----------------
 
@@ -110,13 +110,13 @@ cdda commands:
   cdda_read <start_frame> <num_frames>
   <error code> <n>
   <n bytes (frames)>
-  
+
   cdda_tochdr
   <error code> 0 <first_track> <last_track>
 
   cdda_tocentry
   <error code> 0 <track_mode> <first_frame_min> <first_frame_sec> <first_frame_frame>
-  
+
 dvd commands:
 
   dvd_open

@@ -5,7 +5,7 @@ AM_CFLAGS    = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS   = $(xineplug_ldflags)
 AM_OBJCFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 
-SUBDIRS = 
+SUBDIRS =
 
 if ENABLE_MACOSX_VIDEO
 SUBDIRS += macosx
@@ -197,7 +197,7 @@ xineplug_vo_out_stk_la_SOURCES = video_out_stk.c
 xineplug_vo_out_stk_la_LIBADD = $(XINE_LIB) $(LIBSTK_LIBS) $(PTHREAD_LIBS)
 xineplug_vo_out_stk_la_CFLAGS = $(AM_CFLAGS) $(LIBSTK_CFLAGS)
 
-xineplug_vo_out_directx_la_SOURCES = video_out_directx.c 
+xineplug_vo_out_directx_la_SOURCES = video_out_directx.c
 xineplug_vo_out_directx_la_LIBADD = libyuv2rgb.la $(XINE_LIB) $(DIRECTX_VIDEO_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_directx_la_CPPFLAGS = $(AM_CPPFLAGS) $(DIRECTX_CPPFLAGS)
 

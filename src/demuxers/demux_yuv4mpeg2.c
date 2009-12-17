@@ -69,7 +69,7 @@ typedef struct {
   int                  aspect_d;
   int                  progressive;
   int                  top_field_first;
-  
+
   unsigned int         frame_pts_inc;
   unsigned int         frame_size;
 
@@ -86,7 +86,7 @@ static int open_yuv4mpeg2_file(demux_yuv4mpeg2_t *this) {
   char *header_ptr, *header_endptr, *header_end;
 
   this->bih.biWidth = this->bih.biHeight = this->fps_n = this->fps_d =
-    this->aspect_n = this->aspect_d = this->progressive = 
+    this->aspect_n = this->aspect_d = this->progressive =
     this->top_field_first = this->data_start = 0;
 
   if (_x_demux_read_header(this->input, header, Y4M_HEADER_BYTES) != Y4M_HEADER_BYTES)
@@ -98,11 +98,11 @@ static int open_yuv4mpeg2_file(demux_yuv4mpeg2_t *this) {
 
   /* null terminate the read data */
   header[Y4M_HEADER_BYTES] = '\0';
-  
+
   /* check for stream header terminator */
   if ((header_end = strchr(header, '\n')) == NULL)
     return 0;
-  
+
   /* read tagged fields in stream header */
   header_ptr = &header[Y4M_SIGNATURE_SIZE];
   while (header_ptr < header_end) {
@@ -111,7 +111,7 @@ static int open_yuv4mpeg2_file(demux_yuv4mpeg2_t *this) {
       break;
     else
       header_ptr++;
-  
+
     switch (*header_ptr) {
       case 'W':
         /* read the width */
@@ -153,31 +153,31 @@ static int open_yuv4mpeg2_file(demux_yuv4mpeg2_t *this) {
           return 0;
         else
           header_ptr = header_endptr;
-          
+
         /* denominator */
         this->fps_d = strtol(header_ptr + 1, &header_endptr, 10);
         if (header_endptr == header_ptr + 1)
           return 0;
         else
           header_ptr = header_endptr;
-        
+
         break;
       case 'A':
-        /* read aspect ratio - stored as a ratio(!) 
+        /* read aspect ratio - stored as a ratio(!)
          * numerator */
         this->aspect_n = strtol(header_ptr + 1, &header_endptr, 10);
         if ((header_endptr == header_ptr + 1) || (*header_endptr != ':'))
           return 0;
         else
           header_ptr = header_endptr;
-          
+
         /* denominator */
         this->aspect_d = strtol(header_ptr + 1, &header_endptr, 10);
         if (header_endptr == header_ptr + 1)
           return 0;
         else
           header_ptr = header_endptr;
-        
+
         break;
       default:
         /* skip whatever this is */
@@ -185,7 +185,7 @@ static int open_yuv4mpeg2_file(demux_yuv4mpeg2_t *this) {
           header_ptr++;
     }
   }
-  
+
   /* make sure all the data was found */
   if (!this->bih.biWidth || !this->bih.biHeight || !this->fps_n || !this->fps_d)
     return 0;
@@ -194,8 +194,8 @@ static int open_yuv4mpeg2_file(demux_yuv4mpeg2_t *this) {
   this->frame_size = this->bih.biWidth * this->bih.biHeight * 3 / 2;
 
   /* pts difference between frames */
-  this->frame_pts_inc = (90000 * this->fps_d) / this->fps_n;  
-  
+  this->frame_pts_inc = (90000 * this->fps_d) / this->fps_n;
+
   /* finally, look for the first frame */
   char *data_start_ptr = memmem(header_ptr, Y4M_HEADER_BYTES, "FRAME", 5);
 
@@ -204,7 +204,7 @@ static int open_yuv4mpeg2_file(demux_yuv4mpeg2_t *this) {
     return 0;
 
   this->data_start = data_start_ptr - header;
-  
+
   /* compute size of all frames */
   if (INPUT_IS_SEEKABLE(this->input)) {
     this->data_size = this->input->get_length(this->input) -
@@ -271,9 +271,9 @@ static int demux_yuv4mpeg2_send_chunk(demux_plugin_t *this_gen) {
       buf->decoder_flags |= BUF_FLAG_FRAME_END;
     this->video_fifo->put(this->video_fifo, buf);
   }
-  
+
   return this->status;
-} 
+}
 
 static void demux_yuv4mpeg2_send_headers(demux_plugin_t *this_gen) {
   demux_yuv4mpeg2_t *this = (demux_yuv4mpeg2_t *) this_gen;
@@ -299,13 +299,13 @@ static void demux_yuv4mpeg2_send_headers(demux_plugin_t *this_gen) {
   buf->decoder_flags = BUF_FLAG_HEADER|BUF_FLAG_STDHEADER|BUF_FLAG_FRAMERATE|
                        BUF_FLAG_FRAME_END;
   buf->decoder_info[0] = this->frame_pts_inc;  /* initial video step */
-  
+
   if(this->aspect_n && this->aspect_d) {
     buf->decoder_flags  |= BUF_FLAG_ASPECT;
     buf->decoder_info[1] = this->bih.biWidth * this->aspect_n;
     buf->decoder_info[2] = this->bih.biHeight * this->aspect_d;
   }
-    
+
   buf->decoder_info[3] = this->progressive;
   buf->decoder_info[4] = this->top_field_first;
 
@@ -327,7 +327,7 @@ static int demux_yuv4mpeg2_seek (demux_plugin_t *this_gen,
 
      /* YUV4MPEG2 files are essentially constant bit-rate video. Seek along
       * the calculated frame boundaries. Divide the requested seek offset
-      * by the frame size integer-wise to obtain the desired frame number 
+      * by the frame size integer-wise to obtain the desired frame number
       * and then multiply the frame number by the frame size to get the
       * starting offset. Add the data_start offset to obtain the final
       * offset. */
@@ -364,7 +364,7 @@ static int demux_yuv4mpeg2_get_status (demux_plugin_t *this_gen) {
 static int demux_yuv4mpeg2_get_stream_length (demux_plugin_t *this_gen) {
   demux_yuv4mpeg2_t *this = (demux_yuv4mpeg2_t *) this_gen;
 
-  return (int)(((int64_t) this->data_size * 1000 * this->fps_d) / 
+  return (int)(((int64_t) this->data_size * 1000 * this->fps_d) /
                ((this->frame_size + Y4M_FRAME_SIGNATURE_SIZE) * this->fps_n));
 }
 

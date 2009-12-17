@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * Compact Disc Digital Audio (CDDA) Input Plugin 
+ * Compact Disc Digital Audio (CDDA) Input Plugin
  *   by Mike Melanson (melanson@pcisys.net)
  */
 
@@ -140,7 +140,7 @@ typedef struct {
     int                enabled;
     char              *server;
     int                port;
-    
+
     char              *cdiscid;
     char              *disc_title;
     char              *disc_year;
@@ -188,7 +188,7 @@ typedef struct {
 
   char                *cdda_device;
   int                  cddb_error;
-  
+
   cdda_input_plugin_t *ip;
 
   int                  show_hidden_files;
@@ -196,7 +196,7 @@ typedef struct {
 
   int                  mrls_allocated_entries;
   xine_mrl_t         **mrls;
-  
+
   char                *autoplaylist[MAX_TRACKS];
 
 } cdda_input_class_t;
@@ -328,54 +328,54 @@ struct SRB_ExecSCSICmd
 
 #ifdef LOG
 static void print_cdrom_toc(cdrom_toc *toc) {
-  
+
   int i;
   int time1;
   int time2;
   int timediff;
-  
+
   printf("\ntoc:\n");
   printf("\tfirst track  = %d\n", toc->first_track);
   printf("\tlast track   = %d\n", toc->last_track);
   printf("\ttotal tracks = %d\n", toc->total_tracks);
   printf("\ntoc entries:\n");
-  
-  
+
+
   printf("leadout track: Control: %d MSF: %02d:%02d:%04d, first frame = %d\n",
 	 toc->leadout_track.track_mode,
 	 toc->leadout_track.first_frame_minute,
 	 toc->leadout_track.first_frame_second,
 	 toc->leadout_track.first_frame_frame,
 	 toc->leadout_track.first_frame);
-  
+
   /* fetch each toc entry */
-  if (toc->first_track > 0) {		
-    for (i = toc->first_track; i <= toc->last_track; i++) {			
+  if (toc->first_track > 0) {
+    for (i = toc->first_track; i <= toc->last_track; i++) {
       printf("\ttrack mode = %d", toc->toc_entries[i-1].track_mode);
-      printf("\ttrack %d, audio, MSF: %02d:%02d:%02d, first frame = %d\n",  
-	     i, 
+      printf("\ttrack %d, audio, MSF: %02d:%02d:%02d, first frame = %d\n",
+	     i,
 	     toc->toc_entries[i-1].first_frame_minute,
 	     toc->toc_entries[i-1].first_frame_second,
 	     toc->toc_entries[i-1].first_frame_frame,
 	     toc->toc_entries[i-1].first_frame);
-      
-      time1 = ((toc->toc_entries[i-1].first_frame_minute * 60) + 
+
+      time1 = ((toc->toc_entries[i-1].first_frame_minute * 60) +
 	       toc->toc_entries[i-1].first_frame_second);
-      
+
       if (i == toc->last_track) {
 	time2 = ((toc->leadout_track.first_frame_minute * 60) +
 		 toc->leadout_track.first_frame_second);
       }
       else {
-	time2 = ((toc->toc_entries[i].first_frame_minute * 60) + 
+	time2 = ((toc->toc_entries[i].first_frame_minute * 60) +
 		 toc->toc_entries[i].first_frame_second);
       }
-      
+
       timediff = time2 - time1;
-      
+
       printf("\t time: %02d:%02d\n", timediff/60, timediff%60);
     }
-  }	
+  }
 }
 #endif
 
@@ -429,7 +429,7 @@ static int read_cdrom_toc(int fd, cdrom_toc *toc) {
     toc->ignore_last_track = 0;
   }
   toc->total_tracks = toc->last_track - toc->first_track + 1;
-  
+
   /* allocate space for the toc entries */
   toc->toc_entries = calloc(toc->total_tracks, sizeof(cdrom_toc_entry));
   if (!toc->toc_entries) {
@@ -800,7 +800,7 @@ static int read_cdrom_frames(cdda_input_plugin_t *this_gen, int frame, int num_f
       return -1;
     }
 #endif
-    
+
     data += CD_RAW_FRAME_SIZE;
     frame++;
     num_frames--;
@@ -817,44 +817,44 @@ static int read_cdrom_toc(cdda_input_plugin_t *this_gen, cdrom_toc *toc) {
     /* This is for ASPI which obviously isn't supported! */
     lprintf("Windows ASPI support is not complete yet!\n");
     return -1;
-    
+
   }
   else
     {
       DWORD dwBytesReturned;
       CDROM_TOC cdrom_toc;
       int i;
-      
+
       if( DeviceIoControl( this_gen->h_device_handle,
 			   IOCTL_CDROM_READ_TOC,
 			   NULL, 0, &cdrom_toc, sizeof(CDROM_TOC),
 			   &dwBytesReturned, NULL ) == 0 )
 	{
 #ifdef LOG
-	  DWORD dw; 
+	  DWORD dw;
 	  printf( "input_cdda: could not read TOCHDR\n" );
 	  dw = GetLastError();
-	  printf("GetLastError returned %u\n", dw); 
+	  printf("GetLastError returned %u\n", dw);
 #endif
 	  return -1;
 	}
-      
+
       toc->first_track = cdrom_toc.FirstTrack;
       toc->last_track = cdrom_toc.LastTrack;
       toc->total_tracks = toc->last_track - toc->first_track + 1;
 
-     
+
       /* allocate space for the toc entries */
       toc->toc_entries = calloc(toc->total_tracks, sizeof(cdrom_toc_entry));
       if (!toc->toc_entries) {
           perror("calloc");
           return -1;
       }
-  
+
 
       /* fetch each toc entry */
       for (i = toc->first_track; i <= toc->last_track; i++) {
-          
+
           toc->toc_entries[i-1].track_mode = (cdrom_toc.TrackData[i-1].Control & 0x04) ? 1 : 0;
           toc->toc_entries[i-1].first_frame_minute = cdrom_toc.TrackData[i-1].Address[1];
           toc->toc_entries[i-1].first_frame_second = cdrom_toc.TrackData[i-1].Address[2];
@@ -876,7 +876,7 @@ static int read_cdrom_toc(cdda_input_plugin_t *this_gen, cdrom_toc *toc) {
         (toc->leadout_track.first_frame_minute * CD_SECONDS_PER_MINUTE * CD_FRAMES_PER_SECOND) +
         (toc->leadout_track.first_frame_second * CD_FRAMES_PER_SECOND) +
          toc->leadout_track.first_frame_frame;
-  }		
+  }
 
   return 0;
 }
@@ -893,37 +893,37 @@ static int read_cdrom_frames(cdda_input_plugin_t *this_gen, int frame, int num_f
 	  /* This is for ASPI which obviously isn't supported! */
     lprintf("Windows ASPI support is not complete yet!\n");
     return -1;
-    
+
   }
   else
     {
       memset(data, 0, CD_RAW_FRAME_SIZE * num_frames);
-      
+
       while( num_frames ) {
-	
+
 #ifdef LOG
 	/*printf("\t Raw read frame %d\n", frame);*/
 #endif
 	raw_read_info.DiskOffset.QuadPart = frame * CD_SECTOR_SIZE;
 	raw_read_info.SectorCount = 1;
 	raw_read_info.TrackMode = CDDA;
-	
+
 	/* read a frame */
 	if( DeviceIoControl( this_gen->h_device_handle,
 			     IOCTL_CDROM_RAW_READ,
-			     &raw_read_info, sizeof(RAW_READ_INFO), data, 
+			     &raw_read_info, sizeof(RAW_READ_INFO), data,
 			     CD_RAW_FRAME_SIZE,
 			     &dwBytesReturned, NULL ) == 0 )
 	  {
 #ifdef LOG
-	    DWORD dw; 
+	    DWORD dw;
 	    printf( "input_cdda: could not read frame\n" );
 	    dw = GetLastError();
-	    printf("GetLastError returned %u\n", dw); 
+	    printf("GetLastError returned %u\n", dw);
 #endif
 	    return -1;
 	  }
-	
+
 	data += CD_RAW_FRAME_SIZE;
 	frame++;
 	num_frames--;
@@ -1029,7 +1029,7 @@ network_command( xine_stream_t *stream, int socket, void *data_buf, const char *
   if( n ) {
     if( !data_buf ) {
       if (stream)
-        xprintf(stream->xine, XINE_VERBOSITY_DEBUG, 
+        xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
                 "input_cdda: protocol error, data returned but no buffer provided.\n");
       return -1;
     }
@@ -1154,12 +1154,12 @@ static int network_read_cdrom_frames(xine_stream_t *stream, int fd, int first_fr
  */
 static void cdda_device_cb(void *data, xine_cfg_entry_t *cfg) {
   cdda_input_class_t *class = (cdda_input_class_t *) data;
-  
+
   class->cdda_device = cfg->str_value;
 }
 static void enable_cddb_changed_cb(void *data, xine_cfg_entry_t *cfg) {
   cdda_input_class_t *class = (cdda_input_class_t *) data;
-  
+
   if(class->ip) {
     cdda_input_plugin_t *this = class->ip;
 
@@ -1170,7 +1170,7 @@ static void enable_cddb_changed_cb(void *data, xine_cfg_entry_t *cfg) {
 }
 static void server_changed_cb(void *data, xine_cfg_entry_t *cfg) {
   cdda_input_class_t *class = (cdda_input_class_t *) data;
-  
+
   if(class->ip) {
     cdda_input_plugin_t *this = class->ip;
 
@@ -1181,7 +1181,7 @@ static void server_changed_cb(void *data, xine_cfg_entry_t *cfg) {
 }
 static void port_changed_cb(void *data, xine_cfg_entry_t *cfg) {
   cdda_input_class_t *class = (cdda_input_class_t *) data;
-  
+
   if(class->ip) {
     cdda_input_plugin_t *this = class->ip;
 
@@ -1193,7 +1193,7 @@ static void port_changed_cb(void *data, xine_cfg_entry_t *cfg) {
 #ifdef CDROM_SELECT_SPEED
 static void speed_changed_cb(void *data, xine_cfg_entry_t *cfg) {
   cdda_input_class_t *class = (cdda_input_class_t *) data;
-  
+
   if (class->ip) {
     cdda_input_plugin_t *this = class->ip;
     if (this->fd != -1)
@@ -1210,21 +1210,21 @@ static void speed_changed_cb(void *data, xine_cfg_entry_t *cfg) {
 static int _cdda_is_cd_changed(cdda_input_plugin_t *this) {
 #ifdef CDROM_MEDIA_CHANGED
   int err, cd_changed=0;
-  
+
   if(this == NULL || this->fd < 0)
     return -1;
-  
+
   if((err = ioctl(this->fd, CDROM_MEDIA_CHANGED, cd_changed)) < 0) {
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	    "input_cdda: ioctl(CDROM_MEDIA_CHANGED) failed: %s.\n", strerror(errno));
     return -1;
   }
-  
+
   switch(err) {
   case 1:
     return 1;
     break;
-    
+
   default:
     return 0;
     break;
@@ -1234,7 +1234,7 @@ static int _cdda_is_cd_changed(cdda_input_plugin_t *this) {
 #else
   /*
    * At least on solaris, CDROM_MEDIA_CHANGED does not exist. Just return an
-   * error for now 
+   * error for now
    */
   return -1;
 #endif
@@ -1244,18 +1244,18 @@ static int _cdda_is_cd_changed(cdda_input_plugin_t *this) {
  * create a directory, in safe mode
  */
 static void _cdda_mkdir_safe(xine_t *xine, char *path) {
-  
+
   if(path == NULL)
     return;
-  
+
 #ifndef WIN32
   {
     struct stat  pstat;
-    
+
     if((stat(path, &pstat)) < 0) {
       /* file or directory no exist, create it */
       if(mkdir(path, 0755) < 0) {
-	xprintf(xine, XINE_VERBOSITY_DEBUG, 
+	xprintf(xine, XINE_VERBOSITY_DEBUG,
 		"input_cdda: mkdir(%s) failed: %s.\n", path, strerror(errno));
 	return;
       }
@@ -1272,10 +1272,10 @@ static void _cdda_mkdir_safe(xine_t *xine, char *path) {
     HANDLE          hList;
     TCHAR           szDir[MAX_PATH+3];
     WIN32_FIND_DATA FileData;
-    
+
     // Get the proper directory path
     sprintf(szDir, "%s\\*", path);
-    
+
     // Get the first file
     hList = FindFirstFile(szDir, &FileData);
     if (hList == INVALID_HANDLE_VALUE)
@@ -1283,9 +1283,9 @@ static void _cdda_mkdir_safe(xine_t *xine, char *path) {
 	if(_mkdir(path) != 0) {
 	  xprintf(xine, XINE_VERBOSITY_DEBUG, "input_cdda: mkdir(%s) failed.\n", path);
 	  return;
-	}		  
+	}
       }
-    
+
     FindClose(hList);
   }
 #endif /* WIN32 */
@@ -1331,12 +1331,12 @@ static int _cdda_cddb_socket_read(cdda_input_plugin_t *this, char *str, int size
  * Send a command to socket
  */
 static int _cdda_cddb_send_command(cdda_input_plugin_t *this, char *cmd) {
-  
+
   if((this == NULL) || (this->cddb.fd < 0) || (cmd == NULL))
     return -1;
 
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, ">>> %s\n", cmd);
-  
+
   return (int)_x_io_tcp_write(this->stream, this->cddb.fd, cmd, strlen(cmd));
 }
 
@@ -1406,7 +1406,7 @@ static int _cdda_cddb_handle_code(char *buf) {
       break;
     }
   }
-  
+
   return err;
 }
 
@@ -1487,22 +1487,22 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
 
   if(this == NULL)
     return 0;
-  
+
   const size_t cdir_size = strlen(xdg_cache_home) + sizeof("/"PACKAGE"/cddb") + 10 + 1;
   char *const cdir = alloca(cdir_size);
   sprintf(cdir, "%s/" PACKAGE "/cddb", xdg_cache_home);
 
   if((dir = opendir(cdir)) != NULL) {
     struct dirent *pdir;
-    
+
     while((pdir = readdir(dir)) != NULL) {
       char discid[9];
-      
+
       snprintf(discid, sizeof(discid), "%08" PRIx32, this->cddb.disc_id);
-     
+
       if(!strcasecmp(pdir->d_name, discid)) {
 	FILE *fd;
-	
+
 	snprintf(cdir + cdir_size - 12, 10, "/%s", discid);
 	if((fd = fopen(cdir, "r")) == NULL) {
 	  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
@@ -1513,7 +1513,7 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
 	else {
 	  char buffer[2048], *ln;
 	  char *dtitle = NULL;
-	  
+
 	  while ((ln = fgets(buffer, sizeof (buffer) - 1, fd)) != NULL) {
 
 	    int length = strlen (buffer);
@@ -1525,7 +1525,7 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
 	  fclose(fd);
 	  free(dtitle);
 	}
-	
+
 	closedir(dir);
 	return 1;
       }
@@ -1534,7 +1534,7 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
       "input_cdda: cached entry for disc ID %08" PRIx32 " not found.\n", this->cddb.disc_id);
     closedir(dir);
   }
-  
+
   return 0;
 }
 
@@ -1549,7 +1549,7 @@ static void _cdda_save_cached_cddb_infos(cdda_input_plugin_t *this, char *fileco
 
   if((this == NULL) || (filecontent == NULL))
     return;
-  
+
   /* the filename is always 8 characters */
   cfile = alloca(strlen(xdg_cache_home) + sizeof("/"PACKAGE"/cddb") + 9);
   strcpy(cfile, xdg_cache_home);
@@ -1557,9 +1557,9 @@ static void _cdda_save_cached_cddb_infos(cdda_input_plugin_t *this, char *fileco
 
   /* Ensure the cache directory exists */
   _cdda_mkdir_recursive_safe(this->stream->xine, cfile);
-  
+
   sprintf(cfile, "%s/%08" PRIx32, cfile, this->cddb.disc_id);
-  
+
   if((fd = fopen(cfile, "w")) == NULL) {
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	    "input_cdda: fopen(%s) failed: %s.\n", cfile, strerror(errno));
@@ -1569,7 +1569,7 @@ static void _cdda_save_cached_cddb_infos(cdda_input_plugin_t *this, char *fileco
     fprintf(fd, "%s", filecontent);
     fclose(fd);
   }
-  
+
 }
 
 /*
@@ -1597,7 +1597,7 @@ static int _cdda_cddb_socket_open(cdda_input_plugin_t *this) {
  * Close the socket
  */
 static void _cdda_cddb_socket_close(cdda_input_plugin_t *this) {
-  
+
   if((this == NULL) || (this->cddb.fd < 0))
     return;
 
@@ -1617,7 +1617,7 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
   if(this == NULL) {
     return 0;
   }
-  
+
   if(_cdda_load_cached_cddb_infos(this)) {
     this->cddb.have_cddb_info = 1;
     return 1;
@@ -1706,7 +1706,7 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	      "input_cdda: error while sending cddb query command.\n");
       _cdda_cddb_socket_close(this);
-      return 0; 
+      return 0;
     }
 
     memset(&buffer, 0, sizeof(buffer));
@@ -1731,7 +1731,7 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
         i++;
       }
     }
-    
+
     if ((err == 210) || (err == 211)) {
       memset(&buffer, 0, sizeof(buffer));
       err = _cdda_cddb_socket_read(this, buffer, sizeof(buffer) - 1);
@@ -1762,7 +1762,7 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
           return 0;
         }
       }
-    }		  
+    }
     /* Send read command */
     memset(&buffer, 0, sizeof(buffer));
     snprintf(buffer, sizeof(buffer), "cddb read %s %s\n", this->cddb.disc_category, this->cddb.cdiscid);
@@ -1781,7 +1781,7 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
       _cdda_cddb_socket_close(this);
       return 0;
     }
-			
+
     this->cddb.have_cddb_info = 1;
     memset(&buffercache, 0, sizeof(buffercache));
 
@@ -1795,7 +1795,7 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
       _cdda_parse_cddb_info (this, buffer, &dtitle);
     }
     free(dtitle);
-    
+
     /* Save cddb info and close socket */
     _cdda_save_cached_cddb_infos(this, buffercache);
     _cdda_cddb_socket_close(this);
@@ -1811,7 +1811,7 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
  */
 static unsigned int _cdda_cddb_sum(int n) {
   unsigned int ret = 0;
-  
+
   while(n > 0) {
     ret += (n % 10);
     n /= 10;
@@ -1820,15 +1820,15 @@ static unsigned int _cdda_cddb_sum(int n) {
 }
 static uint32_t _cdda_calc_cddb_id(cdda_input_plugin_t *this) {
   int i, tsum = 0;
-  
+
   if(this == NULL || (this->cddb.num_tracks <= 0))
     return 0;
-  
+
   for(i = 0; i < this->cddb.num_tracks; i++)
     tsum += _cdda_cddb_sum((this->cddb.track[i].start / CD_FRAMES_PER_SECOND));
-  
+
   return ((tsum % 0xff) << 24
-	  | (this->cddb.disc_length - (this->cddb.track[0].start / CD_FRAMES_PER_SECOND)) << 8 
+	  | (this->cddb.disc_length - (this->cddb.track[0].start / CD_FRAMES_PER_SECOND)) << 8
 	  | this->cddb.num_tracks);
 }
 
@@ -1904,7 +1904,7 @@ static void _cdda_free_cddb_info(cdda_input_plugin_t *this) {
     free(this->cddb.disc_artist);
     free(this->cddb.disc_category);
     free(this->cddb.disc_year);
-    
+
   }
 }
 /*
@@ -1917,7 +1917,7 @@ static int cdda_open(cdda_input_plugin_t *this_gen,
   int fd = -1;
 
   if ( !cdda_device ) return -1;
- 
+
   *fdd = -1;
 
   if (this_gen)
@@ -1932,7 +1932,7 @@ static int cdda_open(cdda_input_plugin_t *this_gen,
 
   if (this_gen)
     this_gen->fd = fd;
-  
+
 #ifdef CDROM_SELECT_SPEED
   if (this_gen->stream) {
     int speed;
@@ -1962,17 +1962,17 @@ static int cdda_open(cdda_input_plugin_t *this_gen,
   else
       return -1;
 
-  /* We are going to assume that we are opening a 
+  /* We are going to assume that we are opening a
    * device and not a file!
    */
   if( WIN_NT )
     {
       char psz_win32_drive[7];
-      
+
       lprintf( "using winNT/2K/XP ioctl layer" );
-      
+
       sprintf( psz_win32_drive, "\\\\.\\%c:", cdda_device[0] );
-      
+
       this_gen->h_device_handle = CreateFile( psz_win32_drive, GENERIC_READ,
 					      FILE_SHARE_READ | FILE_SHARE_WRITE,
 					      NULL, OPEN_EXISTING,
@@ -1988,7 +1988,7 @@ static int cdda_open(cdda_input_plugin_t *this_gen,
       DWORD dwSupportInfo;
       int i, j, i_hostadapters;
       char c_drive = cdda_device[0];
-      
+
       hASPI = LoadLibrary( "wnaspi32.dll" );
       if( hASPI != NULL )
 	{
@@ -1997,80 +1997,80 @@ static int cdda_open(cdda_input_plugin_t *this_gen,
 	  lpSendCommand = GetProcAddress( hASPI,
 						    "SendASPI32Command" );
 	}
-      
+
       if( hASPI == NULL || lpGetSupport == NULL || lpSendCommand == NULL )
 	{
 	  lprintf( "unable to load aspi or get aspi function pointers" );
-	  
+
 	  if( hASPI ) FreeLibrary( hASPI );
 	  return -1;
 	}
-      
+
       /* ASPI support seems to be there */
-      
+
       dwSupportInfo = lpGetSupport();
-      
+
       if( HIBYTE( LOWORD ( dwSupportInfo ) ) == SS_NO_ADAPTERS )
 	{
 	  lprintf( "no host adapters found (aspi)" );
 	  FreeLibrary( hASPI );
 	  return -1;
 	}
-      
+
       if( HIBYTE( LOWORD ( dwSupportInfo ) ) != SS_COMP )
 	{
 	  lprintf( "unable to initalize aspi layer" );
-	  
+
 	  FreeLibrary( hASPI );
 	  return -1;
 	}
-      
+
       i_hostadapters = LOBYTE( LOWORD( dwSupportInfo ) );
       if( i_hostadapters == 0 )
 	{
 	  FreeLibrary( hASPI );
 	  return -1;
 	}
-      
+
       c_drive = c_drive > 'Z' ? c_drive - 'a' : c_drive - 'A';
-      
+
       for( i = 0; i < i_hostadapters; i++ )
 	{
           for( j = 0; j < 15; j++ )
 	    {
               struct SRB_GetDiskInfo srbDiskInfo;
-	      
+
               srbDiskInfo.SRB_Cmd         = SC_GET_DISK_INFO;
               srbDiskInfo.SRB_HaId        = i;
               srbDiskInfo.SRB_Flags       = 0;
               srbDiskInfo.SRB_Hdr_Rsvd    = 0;
               srbDiskInfo.SRB_Target      = j;
               srbDiskInfo.SRB_Lun         = 0;
-			  
+
               lpSendCommand( (void*) &srbDiskInfo );
-			  
+
               if( (srbDiskInfo.SRB_Status == SS_COMP) &&
                   (srbDiskInfo.SRB_Int13HDriveInfo == c_drive) )
 		{
                   /* Make sure this is a cdrom device */
                   struct SRB_GDEVBlock   srbGDEVBlock;
-		  
+
                   memset( &srbGDEVBlock, 0, sizeof(struct SRB_GDEVBlock) );
                   srbGDEVBlock.SRB_Cmd    = SC_GET_DEV_TYPE;
                   srbGDEVBlock.SRB_HaId   = i;
                   srbGDEVBlock.SRB_Target = j;
-		  
+
                   lpSendCommand( (void*) &srbGDEVBlock );
-		  
+
                   if( ( srbGDEVBlock.SRB_Status == SS_COMP ) &&
                       ( srbGDEVBlock.SRB_DeviceType == DTYPE_CDROM ) )
 		    {
                       this_gen->i_sid = MAKEWORD( i, j );
                       this_gen->hASPI = (long)hASPI;
                       this_gen->lpSendCommand = lpSendCommand;
-		      
+
                       lprintf( "using aspi layer" );
-		      
+
                       return 0;
 		    }
                   else
@@ -2082,12 +2082,12 @@ static int cdda_open(cdda_input_plugin_t *this_gen,
 		}
 	    }
 	}
-      
+
       FreeLibrary( hASPI );
-      
+
       lprintf( "unable to get haid and target (aspi)" );
     }
-  
+
 #endif /* WIN32 */
 
     return -1;
@@ -2158,9 +2158,9 @@ static off_t cdda_plugin_read (input_plugin_t *this_gen, void *buf, off_t len) {
     this->cache_last = this->current_frame + CACHED_FRAMES - 1;
     if( this->cache_last > this->last_frame )
       this->cache_last = this->last_frame;
-    
-#ifndef WIN32		
-    if ( this->fd != -1 )  
+
+#ifndef WIN32
+    if ( this->fd != -1 )
 #else
 	if ( this->h_device_handle )
 #endif /* WIN32 */
@@ -2176,7 +2176,7 @@ static off_t cdda_plugin_read (input_plugin_t *this_gen, void *buf, off_t len) {
 
   if( err < 0 )
     return 0;
-    
+
   memcpy(buf, this->cache[this->current_frame-this->cache_first], CD_RAW_FRAME_SIZE);
   this->current_frame++;
 
@@ -2274,7 +2274,7 @@ static int cdda_plugin_open (input_plugin_t *this_gen ) {
   int                  fd  = -1;
   char                *cdda_device;
   int                  err = -1;
-    
+
   lprintf("cdda_plugin_open\n");
 
   /* get the CD TOC */
@@ -2285,7 +2285,7 @@ static int cdda_plugin_open (input_plugin_t *this_gen ) {
   else
     cdda_device = class->cdda_device;
 
-#ifndef WIN32  
+#ifndef WIN32
   if( strchr(cdda_device,':') ) {
     fd = network_connect(this->stream, cdda_device);
     if( fd != -1 ) {
@@ -2303,7 +2303,7 @@ static int cdda_plugin_open (input_plugin_t *this_gen ) {
       return 0;
     }
 
-#ifndef WIN32    
+#ifndef WIN32
     err = read_cdrom_toc(this->fd, toc);
 #else
     err = read_cdrom_toc(this, toc);
@@ -2315,18 +2315,18 @@ static int cdda_plugin_open (input_plugin_t *this_gen ) {
 
   }
 
-  
-  if ( (err < 0) || (toc->first_track > (this->track + 1)) || 
+
+  if ( (err < 0) || (toc->first_track > (this->track + 1)) ||
       (toc->last_track < (this->track + 1))) {
 
 	cdda_close(this);
-      
+
     free_cdrom_toc(toc);
     return 0;
   }
 
   /* set up the frame boundaries for this particular track */
-  this->first_frame = this->current_frame = 
+  this->first_frame = this->current_frame =
     toc->toc_entries[this->track].first_frame;
   if (this->track + 1 == toc->last_track)
     this->last_frame = toc->leadout_track.first_frame - 1;
@@ -2337,8 +2337,8 @@ static int cdda_plugin_open (input_plugin_t *this_gen ) {
   this->cache_first = this->cache_last = -1;
 
   /* get the Musicbrainz CDIndex */
-  _cdda_cdindex (this, toc); 
-    
+  _cdda_cdindex (this, toc);
+
   /*
    * CDDB
    */
@@ -2352,23 +2352,23 @@ static int cdda_plugin_open (input_plugin_t *this_gen ) {
     this->cddb.track = (trackinfo_t *) calloc(this->cddb.num_tracks, sizeof(trackinfo_t));
 
     for(t = 0; t < this->cddb.num_tracks; t++) {
-      int length = (toc->toc_entries[t].first_frame_minute * CD_SECONDS_PER_MINUTE + 
+      int length = (toc->toc_entries[t].first_frame_minute * CD_SECONDS_PER_MINUTE +
 		    toc->toc_entries[t].first_frame_second);
-      
-      this->cddb.track[t].start = (length * CD_FRAMES_PER_SECOND + 
+
+      this->cddb.track[t].start = (length * CD_FRAMES_PER_SECOND +
 				   toc->toc_entries[t].first_frame_frame);
       this->cddb.track[t].title = NULL;
     }
-    
+
   }
 
-  this->cddb.disc_length = (toc->leadout_track.first_frame_minute * CD_SECONDS_PER_MINUTE + 
+  this->cddb.disc_length = (toc->leadout_track.first_frame_minute * CD_SECONDS_PER_MINUTE +
 			    toc->leadout_track.first_frame_second);
   this->cddb.disc_id     = _cdda_get_cddb_id(this);
 
   if((this->cddb.have_cddb_info == 0) || (_cdda_is_cd_changed(this) == 1))
     _cdda_cddb_retrieve(this);
-  
+
   if(this->cddb.disc_title) {
     lprintf("Disc Title: %s\n", this->cddb.disc_title);
 
@@ -2376,7 +2376,7 @@ static int cdda_plugin_open (input_plugin_t *this_gen ) {
   }
 
   if(this->cddb.track[this->track].title) {
-    /* Check for track 'titles' of the form <artist> / <title>. */ 
+    /* Check for track 'titles' of the form <artist> / <title>. */
     char *pt;
     pt = strstr(this->cddb.track[this->track].title, " / ");
     if (pt != NULL) {
@@ -2392,10 +2392,10 @@ static int cdda_plugin_open (input_plugin_t *this_gen ) {
     else {
       if(this->cddb.disc_artist) {
 	lprintf("Disc Artist: %s\n", this->cddb.disc_artist);
-	
+
 	_x_meta_info_set_utf8(this->stream, XINE_META_INFO_ARTIST, this->cddb.disc_artist);
       }
-  
+
       pt = this->cddb.track[this->track].title;
     }
     lprintf("Track %d Title: %s\n", this->track+1, pt);
@@ -2405,7 +2405,7 @@ static int cdda_plugin_open (input_plugin_t *this_gen ) {
     _x_meta_info_set_utf8(this->stream, XINE_META_INFO_TRACK_NUMBER, tracknum);
     _x_meta_info_set_utf8(this->stream, XINE_META_INFO_TITLE, pt);
   }
-  
+
   if(this->cddb.disc_category) {
     lprintf("Disc Category: %s\n", this->cddb.disc_category);
 
@@ -2423,7 +2423,7 @@ static int cdda_plugin_open (input_plugin_t *this_gen ) {
   return 1;
 }
 
-static char ** cdda_class_get_autoplay_list (input_class_t *this_gen, 
+static char ** cdda_class_get_autoplay_list (input_class_t *this_gen,
 					    int *num_files) {
 
   cdda_input_class_t *this = (cdda_input_class_t *) this_gen;
@@ -2437,8 +2437,8 @@ static char ** cdda_class_get_autoplay_list (input_class_t *this_gen,
   /* free old playlist */
   for( i = 0; this->autoplaylist[i]; i++ ) {
     free( this->autoplaylist[i] );
-    this->autoplaylist[i] = NULL; 
-  }  
+    this->autoplaylist[i] = NULL;
+  }
 
   /* get the CD TOC */
   toc = init_cdrom_toc();
@@ -2484,13 +2484,13 @@ static char ** cdda_class_get_autoplay_list (input_class_t *this_gen,
   print_cdrom_toc(toc);
 #endif
 
-  cdda_close(ip);  
-  
+  cdda_close(ip);
+
   if ( err < 0 ) {
     if (ip != this->ip) free(ip);
     return NULL;
   }
-  
+
   num_tracks = toc->last_track - toc->first_track;
   if (toc->ignore_last_track)
     num_tracks--;
@@ -2550,19 +2550,19 @@ static input_plugin_t *cdda_class_get_instance (input_class_t *cls_gen, xine_str
     return NULL;
 
   this = calloc(1, sizeof (cdda_input_plugin_t));
-  
+
   class->ip = this;
   this->stream      = stream;
   this->mrl         = strdup(mrl);
   this->cdda_device = cdda_device;
-  
+
   /* CD tracks start from 1; internal data structure indexes from 0 */
   this->track      = track - 1;
   this->cddb.track = NULL;
   this->fd         = -1;
   this->net_fd     = -1;
   this->class      = (input_class_t *) class;
-  
+
   this->input_plugin.open               = cdda_plugin_open;
   this->input_plugin.get_capabilities   = cdda_plugin_get_capabilities;
   this->input_plugin.read               = cdda_plugin_read;
@@ -2575,20 +2575,20 @@ static input_plugin_t *cdda_class_get_instance (input_class_t *cls_gen, xine_str
   this->input_plugin.get_optional_data  = cdda_plugin_get_optional_data;
   this->input_plugin.dispose            = cdda_plugin_dispose;
   this->input_plugin.input_class        = cls_gen;
-  
+
   /*
    * Lookup config entries.
    */
-  if(xine_config_lookup_entry(this->stream->xine, "media.audio_cd.use_cddb", 
-			      &enable_entry)) 
+  if(xine_config_lookup_entry(this->stream->xine, "media.audio_cd.use_cddb",
+			      &enable_entry))
     enable_cddb_changed_cb(class, &enable_entry);
 
-  if(xine_config_lookup_entry(this->stream->xine, "media.audio_cd.cddb_server", 
-			      &server_entry)) 
+  if(xine_config_lookup_entry(this->stream->xine, "media.audio_cd.cddb_server",
+			      &server_entry))
     server_changed_cb(class, &server_entry);
-  
-  if(xine_config_lookup_entry(this->stream->xine, "media.audio_cd.cddb_port", 
-			      &port_entry)) 
+
+  if(xine_config_lookup_entry(this->stream->xine, "media.audio_cd.cddb_port",
+			      &port_entry))
     port_changed_cb(class, &port_entry);
 
   class->cddb_error = cddb_error;
@@ -2643,15 +2643,15 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->mrls = NULL;
   this->mrls_allocated_entries = 0;
   this->ip = NULL;
-  
-  this->cdda_device = config->register_filename(config, "media.audio_cd.device", 
+
+  this->cdda_device = config->register_filename(config, "media.audio_cd.device",
 					      DEFAULT_CDDA_DEVICE, XINE_CONFIG_STRING_IS_DEVICE_NAME,
 					      _("device used for CD audio"),
 					      _("The path to the device, usually a "
 						"CD or DVD drive, which you intend to use "
 						"for playing audio CDs."),
 					      10, cdda_device_cb, (void *) this);
-  
+
   config->register_bool(config, "media.audio_cd.use_cddb", 1,
 			_("query CDDB"), _("Enables CDDB queries, which will give you "
 			"convenient title and track names for your audio CDs.\n"
@@ -2659,7 +2659,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 			"is retrieved from an internet server which might collect a profile "
 			"of your listening habits."),
 			10, enable_cddb_changed_cb, (void *) this);
-  
+
   config->register_string(config, "media.audio_cd.cddb_server", CDDB_SERVER,
 			  _("CDDB server name"), _("The CDDB server used to retrieve the "
 			  "title and track information from.\nThis setting is security critical, "
@@ -2667,12 +2667,12 @@ static void *init_plugin (xine_t *xine, void *data) {
 			  "and could answer the queries with malicious replies. Be sure to enter "
 			  "a server you can trust."), XINE_CONFIG_SECURITY,
 			  server_changed_cb, (void *) this);
-  
+
   config->register_num(config, "media.audio_cd.cddb_port", CDDB_PORT,
 		       _("CDDB server port"), _("The server port used to retrieve the "
 		       "title and track information from."), XINE_CONFIG_SECURITY,
 		       port_changed_cb, (void *) this);
-  
+
 #ifdef CDROM_SELECT_SPEED
   config->register_num(config, "media.audio_cd.drive_slowdown", 4,
 		       _("slow down disc drive to this speed factor"),

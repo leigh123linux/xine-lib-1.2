@@ -87,12 +87,12 @@ the file you have to patch is /sys/dev/ata/atapi-cd.c:
 !         case 2048:
 !             ccb[0] = ATAPI_READ_BIG;
 !             break;
-! 
-!         case 2352: 
+!
+!         case 2352:
 !             ccb[0] = ATAPI_READ_CD;
 !             ccb[9] = 0xf8;
 !             break;
-! 
+!
 !         default:
 !             ccb[0] = ATAPI_READ_CD;
 !             ccb[9] = 0x10;

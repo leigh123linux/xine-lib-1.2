@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2008 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -39,54 +39,54 @@
 #define LOG_MODULE "spudvb"
 
 typedef struct {
-  int 			x, y;
-  unsigned char 	is_visible;
+  int			x, y;
+  unsigned char	is_visible;
 } visible_region_t;
 
 typedef struct {
   int			page_time_out;
-  int 			page_version_number;
-  int 			page_state;
-  int 			page_id;
-  visible_region_t 	regions[MAX_REGIONS];
+  int			page_version_number;
+  int			page_state;
+  int			page_id;
+  visible_region_t	regions[MAX_REGIONS];
 } page_t;
 
 typedef struct {
   int                   version_number;
-  int 			width, height;
+  int			width, height;
   int                   empty;
-  int 			depth;
-  int 			CLUT_id;
-  int 			objects_start;
+  int			depth;
+  int			CLUT_id;
+  int			objects_start;
   int			objects_end;
-  unsigned int 		object_pos[65536];
-  unsigned char 	*img;
+  unsigned int		object_pos[65536];
+  unsigned char	*img;
   osd_object_t          *osd;
 } region_t;
 
 typedef struct {
 /* dvbsub stuff */
-  int 			x;
-  int 			y;
-  unsigned int 		curr_obj;
-  unsigned int 		curr_reg[64];
-  uint8_t 	       *buf;
-  int 			i;
-  int 			nibble_flag;
-  int 			in_scanline;
-  page_t 		page;
-  region_t 		regions[MAX_REGIONS];
+  int			x;
+  int			y;
+  unsigned int		curr_obj;
+  unsigned int		curr_reg[64];
+  uint8_t	       *buf;
+  int			i;
+  int			nibble_flag;
+  int			in_scanline;
+  page_t		page;
+  region_t		regions[MAX_REGIONS];
   clut_t		colours[MAX_REGIONS*256];
   unsigned char		trans[MAX_REGIONS*256];
 } dvbsub_func_t;
 
-typedef struct 		dvb_spu_class_s {
-  spu_decoder_class_t 	class;
-  xine_t 	       *xine;
+typedef struct		dvb_spu_class_s {
+  spu_decoder_class_t	class;
+  xine_t	       *xine;
 } dvb_spu_class_t;
 
 typedef struct dvb_spu_decoder_s {
-  spu_decoder_t 	spu_decoder;
+  spu_decoder_t	spu_decoder;
 
   dvb_spu_class_t      *class;
   xine_stream_t        *stream;
@@ -95,21 +95,21 @@ typedef struct dvb_spu_decoder_s {
 
   /* dvbsub_osd_mutex should be locked around all calls to this->osd_renderer->show()
      and this->osd_renderer->hide() */
-  pthread_mutex_t     	dvbsub_osd_mutex;
-  
-  char 		       *pes_pkt;
+  pthread_mutex_t	dvbsub_osd_mutex;
+
+  char		       *pes_pkt;
   char                 *pes_pkt_wrptr;
-  unsigned int  	pes_pkt_size;
-  
-  uint64_t 		pts;
-  uint64_t 		vpts;
+  unsigned int	pes_pkt_size;
+
+  uint64_t		pts;
+  uint64_t		vpts;
   uint64_t		end_vpts;
 
-  pthread_t           	dvbsub_timer_thread;
+  pthread_t	dvbsub_timer_thread;
   struct timespec       dvbsub_hide_timeout;
   pthread_cond_t        dvbsub_restart_timeout;
   dvbsub_func_t        *dvbsub;
-  int 			show;
+  int			show;
 } dvb_spu_decoder_t;
 
 
@@ -173,7 +173,7 @@ static void update_region (dvb_spu_decoder_t * this, int region_id, int region_w
     }
     fill = 1;
   }
-  
+
   if ( fill ) {
     memset( reg->img, fill_color, region_width*region_height );
     reg->empty = 1;
@@ -329,11 +329,11 @@ static void recalculate_trans (dvb_spu_decoder_t *this)
       dvbsub->trans[i] = v * 14 / 255 + 1;
     }
   }
-    
+
 }
 
 static void set_clut(dvb_spu_decoder_t *this,int CLUT_id,int CLUT_entry_id,int Y_value, int Cr_value, int Cb_value, int T_value) {
- 
+
   dvbsub_func_t *dvbsub = this->dvbsub;
 
   if ((CLUT_id>=MAX_REGIONS) || (CLUT_entry_id>15)) {
@@ -375,7 +375,7 @@ static void process_CLUT_definition_segment(dvb_spu_decoder_t *this) {
 
   while (dvbsub->i < j) {
     CLUT_entry_id=dvbsub->buf[dvbsub->i++];
-      
+
     CLUT_flag_2_bit=(dvbsub->buf[dvbsub->i]&0x80)>>7;
     CLUT_flag_4_bit=(dvbsub->buf[dvbsub->i]&0x40)>>6;
     CLUT_flag_8_bit=(dvbsub->buf[dvbsub->i]&0x20)>>5;
@@ -516,7 +516,7 @@ static void process_region_composition_segment (dvb_spu_decoder_t * this)
     return;
 
   dvbsub->regions[region_id].version_number = region_version_number;
-    
+
   /* Check if region size has changed and fill background. */
   update_region (this, region_id, region_width, region_height, region_fill_flag, region_4_bit_pixel_code);
   if ( CLUT_id<MAX_REGIONS )
@@ -632,7 +632,7 @@ static void* dvbsub_timer_func(void *this_gen)
     int result = pthread_cond_timedwait(&this->dvbsub_restart_timeout,
                                         &this->dvbsub_osd_mutex,
                                         &this->dvbsub_hide_timeout);
-    if(result == ETIMEDOUT && 
+    if(result == ETIMEDOUT &&
        timeout.tv_sec == this->dvbsub_hide_timeout.tv_sec &&
        timeout.tv_nsec == this->dvbsub_hide_timeout.tv_nsec)
     {
@@ -689,7 +689,7 @@ static void draw_subtitles (dvb_spu_decoder_t * this)
     return;
 
   for (r = 0; r < MAX_REGIONS; r++) {
-    if (this->dvbsub->regions[r].img) { 
+    if (this->dvbsub->regions[r].img) {
       if (this->dvbsub->page.regions[r].is_visible && !this->dvbsub->regions[r].empty) {
         update_osd( this, r );
 	if ( !this->dvbsub->regions[r].osd )
@@ -745,9 +745,9 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
       int PES_header_data_length;
       int PES_packet_length;
       int i;
-      
+
   if((buf->type & 0xffff0000)!=BUF_SPU_DVB)
-    return;  
+    return;
 
   if (buf->decoder_flags & BUF_FLAG_SPECIAL) {
     if (buf->decoder_info[1] == BUF_SPECIAL_SPU_DVB_DESCRIPTOR) {
@@ -805,7 +805,7 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
   this->vpts = 0;
 
   /* process the pes section */
-     
+
       PES_packet_length = this->pes_pkt_size;
 
       this->dvbsub->buf = this->pes_pkt;
@@ -819,7 +819,7 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
 	/* SUBTITLING SEGMENT */
 	this->dvbsub->i++;
 	segment_type = this->dvbsub->buf[this->dvbsub->i++];
-  
+
 	this->dvbsub->page.page_id = (this->dvbsub->buf[this->dvbsub->i] << 8) | this->dvbsub->buf[this->dvbsub->i + 1];
 	segment_length = (this->dvbsub->buf[this->dvbsub->i + 2] << 8) | this->dvbsub->buf[this->dvbsub->i + 3];
 	new_i = this->dvbsub->i + segment_length + 4;
@@ -829,15 +829,15 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
 	  break;
 	/* verify we've the right segment */
 	if(this->dvbsub->page.page_id==this->spu_descriptor->comp_page_id){
-  	  /* SEGMENT_DATA_FIELD */
-  	  switch (segment_type & 0xff) {
-  	    case 0x10:
-  	      process_page_composition_segment (this);
+	  /* SEGMENT_DATA_FIELD */
+	  switch (segment_type & 0xff) {
+	    case 0x10:
+	      process_page_composition_segment (this);
               break;
             case 0x11:
               process_region_composition_segment (this);
               break;
-            case 0x12: 
+            case 0x12:
               process_CLUT_definition_segment(this);
               break;
             case 0x13:
@@ -848,7 +848,7 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
 	      draw_subtitles( this );
               break;
             default:
-              return;  
+              return;
               break;
           }
 	}
@@ -865,17 +865,17 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
 	case 0x11:
 	  process_region_composition_segment(this);
 	  break;
-	case 0x12: 
+	case 0x12:
 	  process_CLUT_definition_segment(this);
 	  break;
 	case 0x13:
 	  process_object_data_segment (this);
 	  break;
-	case 0x80:		
+	case 0x80:
 	  draw_subtitles( this ); /* Page is now completely rendered */
 	  break;
 	default:
-	  return;  
+	  return;
 	  break;
 	}
       }
@@ -952,7 +952,7 @@ static spu_decoder_t *dvb_spu_class_open_plugin (spu_decoder_class_t * class_gen
 
   this->pes_pkt = calloc(65, 1024);
   this->spu_descriptor = calloc(1, sizeof(spu_dvb_descriptor_t));
-  
+
   this->dvbsub = calloc(1, sizeof (dvbsub_func_t));
 
   int i;

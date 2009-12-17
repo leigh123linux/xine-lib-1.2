@@ -2,19 +2,19 @@
  * CDDA / DVD server
  *
  * Copyright (C) 2003-2007 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -185,21 +185,21 @@ static int sock_check_opened(int socket) {
   fd_set   readfds, writefds, exceptfds;
   int      retval;
   struct   timeval timeout;
-  
+
   for(;;) {
-    FD_ZERO(&readfds); 
-    FD_ZERO(&writefds); 
+    FD_ZERO(&readfds);
+    FD_ZERO(&writefds);
     FD_ZERO(&exceptfds);
     FD_SET(socket, &exceptfds);
-    
-    timeout.tv_sec  = 0; 
+
+    timeout.tv_sec  = 0;
     timeout.tv_usec = 0;
-    
+
     retval = select(socket + 1, &readfds, &writefds, &exceptfds, &timeout);
-    
+
     if(retval == -1 && (errno != EAGAIN && errno != EINTR))
       return 0;
-    
+
     if (retval != -1)
       return 1;
   }
@@ -209,7 +209,7 @@ static int sock_check_opened(int socket) {
 
 #if 0
 /*
- * read binary data from socket 
+ * read binary data from socket
  */
 static int sock_data_read (int socket, char *buf, int nlen) {
   int n, num_bytes;
@@ -219,7 +219,7 @@ static int sock_data_read (int socket, char *buf, int nlen) {
 
   if(!sock_check_opened(socket))
     return -1;
-  
+
   num_bytes = 0;
 
   while (num_bytes < nlen) {
@@ -259,40 +259,40 @@ static int sock_data_read (int socket, char *buf, int nlen) {
 #endif
 
 /*
- * read a line (\n-terminated) from socket 
+ * read a line (\n-terminated) from socket
  */
 static int sock_string_read(int socket, char *buf, int len) {
   char    *pbuf;
   int      r, rr;
   void    *nl;
-  
+
   if((socket < 0) || (buf == NULL))
     return -1;
 
   if(!sock_check_opened(socket))
     return -1;
-  
+
   if (--len < 1)
     return(-1);
-  
+
   pbuf = buf;
-  
+
   do {
-    
+
     if((r = recv(socket, pbuf, len, MSG_PEEK)) <= 0)
       return -1;
 
     if((nl = memchr(pbuf, '\n', r)) != NULL)
       r = ((char *) nl) - pbuf + 1;
-    
+
     if((rr = read(socket, pbuf, r)) < 0)
       return -1;
-    
+
     pbuf += rr;
     len -= rr;
 
   } while((nl == NULL) && len);
-  
+
   if (pbuf > buf && *(pbuf-1) == '\n'){
     *(pbuf-1) = '\0';
   }
@@ -306,21 +306,21 @@ static int sock_string_read(int socket, char *buf, int len) {
 static int sock_data_write(int socket, char *buf, int len) {
   ssize_t  size;
   int      wlen = 0;
-  
+
   if((socket < 0) || (buf == NULL))
     return -1;
-  
+
   if(!sock_check_opened(socket))
     return -1;
-  
+
   while(len) {
     size = write(socket, buf, len);
-    
+
     if(size <= 0) {
       printf("error writing to socket %d\n",socket);
       return -1;
     }
-    
+
     len -= size;
     wlen += size;
     buf += size;
@@ -332,15 +332,15 @@ static int sock_data_write(int socket, char *buf, int len) {
 int sock_string_write(int socket, char *msg, ...) {
   char     buf[_BUFSIZ];
   va_list  args;
-  
+
   va_start(args, msg);
   vsnprintf(buf, _BUFSIZ - 1, msg, args);
   va_end(args);
-  
+
   /* Each line sent is '\n' terminated */
   if((buf[strlen(buf)] == '\0') && (buf[strlen(buf) - 1] != '\n'))
       strcat(buf, "\n");
- 
+
   return sock_data_write(socket, buf, strlen(buf));
 }
 

@@ -1,5 +1,5 @@
 /*=============================================================================
- *	
+ *
  *  This software has been released under the terms of the GNU Public
  *  license. See http://www.gnu.org/copyleft/gpl.html for details.
  *
@@ -25,12 +25,12 @@
  *
  * n number of filter taps, where mod(n,4)==0
  * w filter taps
- * x input signal must be a circular buffer which is indexed backwards 
+ * x input signal must be a circular buffer which is indexed backwards
  */
 inline _ftype_t fir(register unsigned int n, _ftype_t* w, _ftype_t* x)
 {
   register _ftype_t y; /* Output */
-  y = 0.0; 
+  y = 0.0;
   do{
     n--;
     y+=w[n]*x[n];
@@ -44,7 +44,7 @@ inline _ftype_t fir(register unsigned int n, _ftype_t* w, _ftype_t* x)
  * d  number of filters
  * xi current index in xq
  * w  filter taps k by n big
- * x  input signal must be a circular buffers which are indexed backwards 
+ * x  input signal must be a circular buffers which are indexed backwards
  * y  output buffer
  * s  output buffer stride
  */
@@ -67,11 +67,11 @@ inline _ftype_t* pfir(unsigned int n, unsigned int d, unsigned int xi, _ftype_t*
    at the new samples, xi current index in xq and n the length of the
    filter. xq must be n*2 by k big, s is the index for in.
 */
-inline int updatepq(unsigned int n, unsigned int d, unsigned int xi, _ftype_t** xq, _ftype_t* in, unsigned int s)  
+inline int updatepq(unsigned int n, unsigned int d, unsigned int xi, _ftype_t** xq, _ftype_t* in, unsigned int s)
 {
   register _ftype_t* txq = *xq + xi;
   register int nt = n*2;
-  
+
   while(d-- >0){
     *txq= *(txq+n) = *in;
     txq+=nt;
@@ -88,26 +88,26 @@ inline int updatepq(unsigned int n, unsigned int d, unsigned int xi, _ftype_t** 
 
    n     filter length must be odd for HP and BS filters
    w     buffer for the filter taps (must be n long)
-   fc    cutoff frequencies (1 for LP and HP, 2 for BP and BS) 
+   fc    cutoff frequencies (1 for LP and HP, 2 for BP and BS)
          0 < fc < 1 where 1 <=> Fs/2
    flags window and filter type as defined in filter.h
-         variables are ored together: i.e. LP|HAMMING will give a 
-	 low pass filter designed using a hamming window  
+         variables are ored together: i.e. LP|HAMMING will give a
+	 low pass filter designed using a hamming window
    opt   beta constant used only when designing using kaiser windows
-   
+
    returns 0 if OK, -1 if fail
 */
 int design_fir(unsigned int n, _ftype_t* w, _ftype_t* fc, unsigned int flags, _ftype_t opt)
 {
-  unsigned int	o   = n & 1;          	/* Indicator for odd filter length */
+  unsigned int	o   = n & 1;	/* Indicator for odd filter length */
   unsigned int	end = ((n + 1) >> 1) - o;  /* Loop end */
   unsigned int	i;			/* Loop index */
 
   _ftype_t k1 = 2 * M_PI;		/* 2*pi*fc1 */
   _ftype_t k2 = 0.5 * (_ftype_t)(1 - o);/* Constant used if the filter has even length */
   _ftype_t k3;				/* 2*pi*fc2 Constant used in BP and BS design */
-  _ftype_t g  = 0.0;     		/* Gain */
-  _ftype_t t1,t2,t3;     		/* Temporary variables */
+  _ftype_t g  = 0.0;		/* Gain */
+  _ftype_t t1,t2,t3;		/* Temporary variables */
   _ftype_t fc1,fc2;			/* Cutoff frequencies */
 
   /* Sanity check */
@@ -130,10 +130,10 @@ int design_fir(unsigned int n, _ftype_t* w, _ftype_t* fc, unsigned int flags, _f
   case(KAISER):
     kaiser(n,w,opt); break;
   default:
-    return -1;	
+    return -1;
   }
 
-  if(flags & (LP | HP)){ 
+  if(flags & (LP | HP)){
     fc1=*fc;
     /* Cutoff frequency must be < 0.5 where 0.5 <=> Fs/2 */
     fc1 = ((fc1 <= 1.0) && (fc1 > 0.0)) ? fc1/2 : 0.25;
@@ -143,7 +143,7 @@ int design_fir(unsigned int n, _ftype_t* w, _ftype_t* fc, unsigned int flags, _f
 
       /*
        * If the filter length is odd, there is one point which is exactly
-       * in the middle. The value at this point is 2*fCutoff*sin(x)/x, 
+       * in the middle. The value at this point is 2*fCutoff*sin(x)/x,
        * where x is zero. To make sure nothing strange happens, we set this
        * value separately.
        */
@@ -196,9 +196,9 @@ int design_fir(unsigned int n, _ftype_t* w, _ftype_t* fc, unsigned int flags, _f
 	t2 = sin(k3 * t1)/(M_PI * t1); /* Sinc fc2 */
 	t3 = sin(k1 * t1)/(M_PI * t1); /* Sinc fc1 */
 	g += w[end-i-1] * (t3 + t2);   /* Total gain in filter */
-	w[end-i-1] = w[n-end+i] = w[end-i-1] * (t2 - t3); 
+	w[end-i-1] = w[n-end+i] = w[end-i-1] * (t2 - t3);
       }
-    }      
+    }
     else{ /* Band stop */
       if (!o) /* Band stop filters must have odd length */
 	return -1;
@@ -210,7 +210,7 @@ int design_fir(unsigned int n, _ftype_t* w, _ftype_t* fc, unsigned int flags, _f
 	t1 = (_ftype_t)(i+1);
 	t2 = sin(k1 * t1)/(M_PI * t1); /* Sinc fc1 */
 	t3 = sin(k3 * t1)/(M_PI * t1); /* Sinc fc2 */
-	w[end-i-1] = w[n-end+i] = w[end-i-1] * (t2 - t3); 
+	w[end-i-1] = w[n-end+i] = w[end-i-1] * (t2 - t3);
 	g += 2*w[end-i-1]; /* Total gain in filter */
       }
     }
@@ -218,9 +218,9 @@ int design_fir(unsigned int n, _ftype_t* w, _ftype_t* fc, unsigned int flags, _f
 
   /* Normalize gain */
   g=1/g;
-  for (i=0; i<n; i++) 
+  for (i=0; i<n; i++)
     w[i] *= g;
-  
+
   return 0;
 }
 
@@ -229,7 +229,7 @@ int design_fir(unsigned int n, _ftype_t* w, _ftype_t* fc, unsigned int flags, _f
  * n     length of prototype filter
  * k     number of polyphase components
  * w     prototype filter taps
- * pw    Parallel FIR filter 
+ * pw    Parallel FIR filter
  * g     Filter gain
  * flags FWD forward indexing
  *       REW reverse indexing
@@ -240,10 +240,10 @@ int design_fir(unsigned int n, _ftype_t* w, _ftype_t* fc, unsigned int flags, _f
 int design_pfir(unsigned int n, unsigned int k, _ftype_t* w, _ftype_t** pw, _ftype_t g, unsigned int flags)
 {
   int l = (int)n/k;	/* Length of individual FIR filters */
-  int i;     	/* Counters */
+  int i;	/* Counters */
   int j;
   _ftype_t t;	/* g * w[i] */
-  
+
   /* Sanity check */
   if(l<1 || k<1 || !w || !pw)
     return -1;
@@ -276,7 +276,7 @@ int design_pfir(unsigned int n, unsigned int k, _ftype_t* w, _ftype_t** pw, _fty
 
 /* Pre-warp the coefficients of a numerator or denominator.
  * Note that a0 is assumed to be 1, so there is no wrapping
- * of it.  
+ * of it.
  */
 void prewarp(_ftype_t* a, _ftype_t fc, _ftype_t fs)
 {
@@ -303,12 +303,12 @@ void prewarp(_ftype_t* a, _ftype_t fc, _ftype_t fs)
  *  Arguments:
  * a       - s-domain numerator coefficients
  * b       - s-domain denominator coefficients
- * k 	   - filter gain factor. Initially set to 1 and modified by each
+ * k	   - filter gain factor. Initially set to 1 and modified by each
  *           biquad section in such a way, as to make it the
  *           coefficient by which to multiply the overall filter gain
  *           in order to achieve a desired overall filter gain,
- *           specified in initial value of k.  
- * fs 	   - sampling rate (Hz)
+ *           specified in initial value of k.
+ * fs	   - sampling rate (Hz)
  * coef    - array of z-domain coefficients to be filled in.
  *
  * Return: On return, set coef z-domain coefficients and k to the gain
@@ -342,7 +342,7 @@ void bilinear(_ftype_t* a, _ftype_t* b, _ftype_t* k, _ftype_t fs, _ftype_t *coef
  * create a filter fill in a, b, Q and fs and make space for coef and k.
  *
  *
- * Example Butterworth design: 
+ * Example Butterworth design:
  *
  * Below are Butterworth polynomials, arranged as a series of 2nd
  * order sections:
@@ -398,12 +398,12 @@ void bilinear(_ftype_t* a, _ftype_t* b, _ftype_t* k, _ftype_t fs, _ftype_t *coef
  * a       - s-domain numerator coefficients, a[1] is always assumed to be 1.0
  * b       - s-domain denominator coefficients
  * Q	   - Q value for the filter
- * k 	   - filter gain factor. Initially set to 1 and modified by each
+ * k	   - filter gain factor. Initially set to 1 and modified by each
  *           biquad section in such a way, as to make it the
  *           coefficient by which to multiply the overall filter gain
  *           in order to achieve a desired overall filter gain,
- *           specified in initial value of k.  
- * fs 	   - sampling rate (Hz)
+ *           specified in initial value of k.
+ * fs	   - sampling rate (Hz)
  * coef    - array of z-domain coefficients to be filled in.
  *
  * Note: Upon return from each call, the k argument will be set to a
@@ -419,7 +419,7 @@ int szxform(const _ftype_t* a, const _ftype_t* b, _ftype_t Q, _ftype_t fc, _ftyp
   _ftype_t at[3];
   _ftype_t bt[3];
 
-  if(!a || !b || !k || !coef || (Q>1000.0 || Q< 1.0)) 
+  if(!a || !b || !k || !coef || (Q>1000.0 || Q< 1.0))
     return -1;
 
   memcpy(at,a,3*sizeof(_ftype_t));

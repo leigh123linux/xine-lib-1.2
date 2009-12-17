@@ -25,7 +25,7 @@ static const demuxer_info_t demux_info_nsf = {
   10                       /* priority */
 };
 
-static const uint32_t audio_types[] = { 
+static const uint32_t audio_types[] = {
   BUF_AUDIO_NSF,
   0
 };

@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -89,17 +89,17 @@ static int demux_raw_dv_next (demux_raw_dv_t *this) {
   /* TODO: duplicate data and send to audio fifo.
    * however we don't have dvaudio decoder yet.
    */
-  
+
   buf->pts                    = this->pts;
   buf->extra_info->input_time = this->pts/90;
   if( this->input->get_length (this->input) )
-    buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) * 
+    buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) *
                                      65535 / this->input->get_length (this->input) );
   buf->extra_info->frame_number  = this->cur_frame;
   buf->type                   = BUF_VIDEO_DV;
-  
+
   this->video_fifo->put(this->video_fifo, buf);
-  
+
   if (this->audio_fifo) {
     abuf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
     abuf->content = abuf->mem;
@@ -213,11 +213,11 @@ static void demux_raw_dv_send_headers (demux_plugin_t *this_gen) {
   bih->biSizeImage = bih->biWidth*bih->biHeight;
 
   this->video_fifo->put(this->video_fifo, buf);
-  
+
   this->pts = 0;
   this->cur_frame = 0;
   this->bytes_left = this->frame_size;
- 
+
   this->status = DEMUX_OK;
 
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 1);
@@ -305,18 +305,18 @@ static int demux_raw_dv_seek (demux_plugin_t *this_gen,
     /* Upcast start_time in case sizeof(off_t) > sizeof(int) */
     start_pos = ((off_t) start_time * 90 / this->duration) * this->frame_size;
   }
-  
-  start_pos = start_pos - (start_pos % this->frame_size);  
+
+  start_pos = start_pos - (start_pos % this->frame_size);
   this->input->seek(this->input, start_pos, SEEK_SET);
 
   this->cur_frame = start_pos / this->frame_size;
   this->pts = this->cur_frame * this->duration;
   this->bytes_left = this->frame_size;
-  
+
   _x_demux_flush_engine (this->stream);
 
   _x_demux_control_newpts (this->stream, this->pts, BUF_FLAG_SEEK);
-  
+
   this->status = DEMUX_OK;
   return this->status;
 }
@@ -362,7 +362,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   case METHOD_BY_CONTENT: {
     uint8_t buf[8];
-    
+
     if (_x_demux_read_header(input, buf, 8) != 8) {
       free (this);
       return NULL;

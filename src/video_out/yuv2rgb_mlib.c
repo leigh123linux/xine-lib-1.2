@@ -51,7 +51,7 @@ static void mlib_yuv420_rgb24(yuv2rgb_t *this,
     mlib_s32 resize_stride = this->dest_width << 2;
 
     mlib_VideoColorYUV420seq_to_ARGBint((mlib_u32*)this->mlib_buffer,
-    					py, pu, pv, py, 0,
+					py, pu, pv, py, 0,
 					this->source_width,
 					src_height,
 					this->source_width<<2,
@@ -88,7 +88,7 @@ static void mlib_yuv420_argb32(yuv2rgb_t *this,
   dst_height = this->next_slice(this, &image);
   if (this->do_scale) {
     mlib_VideoColorYUV420seq_to_ARGBint((mlib_u32*)this->mlib_buffer,
-    					py, pu, pv, py, 0,
+					py, pu, pv, py, 0,
 					this->source_width,
 					src_height,
 					this->source_width<<2,
@@ -101,7 +101,7 @@ static void mlib_yuv420_argb32(yuv2rgb_t *this,
 				  this->mlib_filter_type);
   } else {
     mlib_VideoColorYUV420seq_to_ARGBint((mlib_u32*)image,
-    					py, pu, pv, py, 0,
+					py, pu, pv, py, 0,
 					this->source_width,
 					dst_height,
 					this->rgb_stride,
@@ -127,7 +127,7 @@ static void mlib_yuv420_abgr32(yuv2rgb_t *this,
   dst_height = this->next_slice (this, &image);
   if (this->do_scale) {
     mlib_VideoColorYUV420seq_to_ABGRint((mlib_u32*)this->mlib_buffer,
-    					py, pu, pv, py, 0,
+					py, pu, pv, py, 0,
 					this->source_width,
 					src_height,
 					this->source_width<<2,
@@ -141,7 +141,7 @@ static void mlib_yuv420_abgr32(yuv2rgb_t *this,
   }
   else {
     mlib_VideoColorYUV420seq_to_ABGRint((mlib_u32*)image,
-    					py, pu, pv, py, 0,
+					py, pu, pv, py, 0,
 					this->source_width,
 					dst_height,
 					this->rgb_stride,

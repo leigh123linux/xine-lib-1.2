@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2003, 2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -98,7 +98,7 @@ static uint32_t caca_get_capabilities (vo_driver_t *this) {
 
 static void caca_dispose_frame (vo_frame_t *vo_img) {
   caca_frame_t *frame = (caca_frame_t *)vo_img;
-  
+
   av_free (frame->vo_frame.base[0]);
   av_free (frame->vo_frame.base[1]);
   av_free (frame->vo_frame.base[2]);
@@ -136,17 +136,17 @@ static vo_frame_t *caca_alloc_frame(vo_driver_t *this_gen) {
   /* colorspace converter for this frame */
   frame->yuv2rgb =
     this->yuv2rgb_factory->create_converter (this->yuv2rgb_factory);
-  
+
   return (vo_frame_t*) frame;
 }
 
 static void caca_update_frame_format (vo_driver_t *this_gen, vo_frame_t *img,
-                                      uint32_t width, uint32_t height, 
+                                      uint32_t width, uint32_t height,
                                       double ratio, int format, int flags) {
   caca_driver_t *this = (caca_driver_t*) this_gen;
   caca_frame_t  *frame = (caca_frame_t *) img;
 
-  if ((frame->width != width) || (frame->height != height) 
+  if ((frame->width != width) || (frame->height != height)
       || (frame->format != format)) {
 
     av_freep (&frame->vo_frame.base[0]);
@@ -214,7 +214,7 @@ static void caca_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
 static int caca_get_property (vo_driver_t *this_gen, int property) {
   caca_driver_t *this = (caca_driver_t*) this_gen;
-  
+
   if ( property == VO_PROP_ASPECT_RATIO) {
     return this->user_ratio;
   } else {
@@ -225,7 +225,7 @@ static int caca_get_property (vo_driver_t *this_gen, int property) {
   return 0;
 }
 
-static int caca_set_property (vo_driver_t *this_gen, 
+static int caca_set_property (vo_driver_t *this_gen,
                               int property, int value) {
   caca_driver_t *this = (caca_driver_t*) this_gen;
 
@@ -242,7 +242,7 @@ static int caca_set_property (vo_driver_t *this_gen,
   return value;
 }
 
-static void caca_get_property_min_max (vo_driver_t *this_gen, 
+static void caca_get_property_min_max (vo_driver_t *this_gen,
                                        int property, int *min, int *max) {
   *min = 0;
   *max = 0;
@@ -266,7 +266,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   caca_driver_t        *this;
 
   this = calloc(1, sizeof (caca_driver_t));
-  
+
   this->config = class->config;
   this->xine   = class->xine;
 
@@ -297,18 +297,18 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 
   caca_refresh_display(this->dp);
   return &this->vo_driver;
-}    
+}
 
 static void *init_class (xine_t *xine, void *visual_gen) {
   caca_class_t    *this;
-  
+
   this = calloc(1, sizeof(caca_class_t));
-  
+
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.identifier      = "CACA";
   this->driver_class.description     = N_("xine video output plugin using the Color AsCii Art library");
   this->driver_class.dispose         = default_video_driver_class_dispose;
-  
+
   this->config            = xine->config;
   this->xine              = xine;
 
@@ -321,7 +321,7 @@ static const vo_info_t vo_info_caca = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_VIDEO_OUT, 22, "caca", XINE_VERSION_CODE, &vo_info_caca, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

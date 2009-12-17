@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2005 the xine project
- * 
+ *
  * This file is part of xine, a unix video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -118,7 +118,7 @@ typedef struct {
 
   LPDIRECTDRAW		   ddobj;	    /* direct draw object */
   LPDIRECTDRAWSURFACE	   primary;	    /* primary dd surface */
-  LPDIRECTDRAWSURFACE 	   secondary;	    /* secondary dd surface  */
+  LPDIRECTDRAWSURFACE	   secondary;	    /* secondary dd surface  */
   LPDIRECTDRAWCLIPPER	   ddclipper;	    /* dd clipper object */
   uint8_t *		   contents;	    /* secondary contents */
   win32_frame_t           *current;         /* current frame */
@@ -151,7 +151,7 @@ typedef struct {
  *
  * ----------------------------------------- */
 
-/* Display formatted error message in 
+/* Display formatted error message in
  * popup message box.*/
 
 static void Error( HWND hwnd, LPSTR szfmt, ... )
@@ -169,7 +169,7 @@ static void UpdateRect( win32_visual_t * win32_visual )
 {
   if( win32_visual->FullScreen )
     {
-      SetRect( &win32_visual->WndRect, 0, 0, 
+      SetRect( &win32_visual->WndRect, 0, 0,
 	       GetSystemMetrics( SM_CXSCREEN ),
 	       GetSystemMetrics( SM_CYSCREEN ) );
     }
@@ -181,12 +181,12 @@ static void UpdateRect( win32_visual_t * win32_visual )
     }
 }
 
-/* Create our direct draw object, primary 
+/* Create our direct draw object, primary
  * surface and clipper object.
  *
- * NOTE : The primary surface is more or 
+ * NOTE : The primary surface is more or
  * less a viewport into the parent desktop
- * window and will always have a pixel format 
+ * window and will always have a pixel format
  * identical to the current display mode. */
 
 static boolean CreatePrimary( win32_driver_t * win32_driver )
@@ -276,7 +276,7 @@ static boolean CreatePrimary( win32_driver_t * win32_driver )
 }
 
 /* Create our secondary ( off screen ) buffer.
- * The optimal secondary buffer is a h/w 
+ * The optimal secondary buffer is a h/w
  * overlay with the same pixel format as the
  * xine frame type. However, since this is
  * not always supported by the host h/w,
@@ -327,7 +327,7 @@ static boolean CreateSecondary( win32_driver_t * win32_driver, int width, int he
       /* the requested format is XINE_IMGFMT_YV12 */
 
       ddsd.dwFlags                       = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
-      ddsd.ddsCaps.dwCaps                = DDSCAPS_VIDEOMEMORY | DDSCAPS_OVERLAY; 
+      ddsd.ddsCaps.dwCaps                = DDSCAPS_VIDEOMEMORY | DDSCAPS_OVERLAY;
       ddsd.ddpfPixelFormat.dwSize        = sizeof(DDPIXELFORMAT);
       ddsd.ddpfPixelFormat.dwFlags       = DDPF_FOURCC;
       ddsd.ddpfPixelFormat.dwYUVBitCount = 16;
@@ -343,7 +343,7 @@ static boolean CreateSecondary( win32_driver_t * win32_driver, int width, int he
       /* the requested format is XINE_IMGFMT_YUY2 */
 
       ddsd.dwFlags                       = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
-      ddsd.ddsCaps.dwCaps                = DDSCAPS_VIDEOMEMORY | DDSCAPS_OVERLAY; 
+      ddsd.ddsCaps.dwCaps                = DDSCAPS_VIDEOMEMORY | DDSCAPS_OVERLAY;
       ddsd.ddpfPixelFormat.dwSize        = sizeof(DDPIXELFORMAT);
       ddsd.ddpfPixelFormat.dwFlags       = DDPF_FOURCC;
       ddsd.ddpfPixelFormat.dwYUVBitCount = 16;
@@ -360,7 +360,7 @@ static boolean CreateSecondary( win32_driver_t * win32_driver, int width, int he
       /* the requested format is IMGFMT_RGB */
 
       ddsd.dwFlags                       = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
-      ddsd.ddsCaps.dwCaps                = DDSCAPS_VIDEOMEMORY | DDSCAPS_OVERLAY; 
+      ddsd.ddsCaps.dwCaps                = DDSCAPS_VIDEOMEMORY | DDSCAPS_OVERLAY;
       ddsd.ddpfPixelFormat.dwSize        = sizeof(DDPIXELFORMAT);
       ddsd.ddpfPixelFormat.dwFlags       = DDPF_RGB;
       ddsd.ddpfPixelFormat.dwYUVBitCount = 24;
@@ -371,7 +371,7 @@ static boolean CreateSecondary( win32_driver_t * win32_driver, int width, int he
       lprintf("CreateSecondary() - act_format = (RGB) %d\n", IMGFMT_RGB);
 
       win32_driver->act_format = IMGFMT_RGB;
-    } 
+    }
 #endif /* RGB_SUPPORT */
 
   lprintf("CreateSecondary() - IDirectDraw_CreateSurface()\n");
@@ -423,7 +423,7 @@ static void Destroy( win32_driver_t * win32_driver )
     IDirectDraw_Release( win32_driver->ddobj );
 
   _x_alphablend_free(&win32_driver->alphablend_extra_data);
-  
+
   free( win32_driver );
 }
 
@@ -447,7 +447,7 @@ static boolean CheckPixelFormat( win32_driver_t * win32_driver )
       Error( 0, "IDirectDrawSurface_GetPixelFormat ( CheckPixelFormat ) : error 0x%lx", result );
       return 0;
     }
-	
+
   /* store pixel format for CreateSecondary */
 
   win32_driver->primary_pixel_format = ddpf;
@@ -508,7 +508,7 @@ static boolean CheckPixelFormat( win32_driver_t * win32_driver )
 /* Create a Direct draw surface from
  * a bitmap resource..
  *
- * NOTE : This is not really useful 
+ * NOTE : This is not really useful
  * anymore since the xine logo code is
  * being pushed to the backend. */
 
@@ -547,7 +547,7 @@ static LPDIRECTDRAWSURFACE CreateBMP( win32_driver_t * win32_driver, int resourc
       Error( 0, "CreateSurface ( bitmap ) : could not create dd surface" );
       return 0;
     }
-	
+
   /* get a handle to our surface dc,
    * create a compat dc and load
    * our bitmap into the compat dc */
@@ -572,7 +572,7 @@ static LPDIRECTDRAWSURFACE CreateBMP( win32_driver_t * win32_driver, int resourc
 }
 #endif
 
-/* Merge overlay with the current primary 
+/* Merge overlay with the current primary
  * surface. This funtion is only used when
  * a h/w overlay of the current frame type
  * is supported. */
@@ -583,7 +583,7 @@ static boolean Overlay( LPDIRECTDRAWSURFACE src_surface, RECT * src_rect,
 {
   DWORD			dw_color_key;
   DDPIXELFORMAT		ddpf;
-  DDOVERLAYFX		ddofx;	
+  DDOVERLAYFX		ddofx;
   int			flags;
   HRESULT		result;
 
@@ -903,7 +903,7 @@ static vo_frame_t * win32_alloc_frame( vo_driver_t * vo_driver )
 }
 
 
-static void win32_update_frame_format( vo_driver_t * vo_driver, vo_frame_t * vo_frame, uint32_t width, 
+static void win32_update_frame_format( vo_driver_t * vo_driver, vo_frame_t * vo_frame, uint32_t width,
 				       uint32_t height, double ratio, int format, int flags )
 {
   win32_driver_t  *win32_driver = ( win32_driver_t * ) vo_driver;
@@ -953,7 +953,7 @@ static void win32_update_frame_format( vo_driver_t * vo_driver, vo_frame_t * vo_
 #endif
       else
 	{
-	  xprintf (win32_driver->xine, XINE_VERBOSITY_DEBUG, 
+	  xprintf (win32_driver->xine, XINE_VERBOSITY_DEBUG,
 		   "vo_out_directx : !!! unsupported image format %04x !!!\n", format );
 	  exit (1);
 	}
@@ -1015,13 +1015,13 @@ static void win32_display_frame( vo_driver_t * vo_driver, vo_frame_t * vo_frame 
 #if NEW_YUV
 	  win32_driver->yuv2rgb->configure( win32_driver->yuv2rgb,
 					    win32_driver->width, win32_driver->height,
-				 	    win32_frame->vo_frame.pitches[0], win32_frame->vo_frame.pitches[1],
+					    win32_frame->vo_frame.pitches[0], win32_frame->vo_frame.pitches[1],
 					    win32_driver->width, win32_driver->height,
 					    win32_driver->width * win32_driver->bytespp);
 #else
 	  yuv2rgb_setup( win32_driver->yuv2rgb,
 			 win32_driver->width, win32_driver->height,
-		 	 win32_frame->vo_frame.pitches[0], win32_frame->vo_frame.pitches[1],
+			 win32_frame->vo_frame.pitches[0], win32_frame->vo_frame.pitches[1],
 			 win32_driver->width, win32_driver->height,
 			 win32_driver->width * win32_driver->bytespp );
 
@@ -1041,7 +1041,7 @@ static void win32_display_frame( vo_driver_t * vo_driver, vo_frame_t * vo_frame 
 #if NEW_YUV
 	  win32_driver->yuv2rgb->configure( win32_driver->yuv2rgb,
 					    win32_driver->width, win32_driver->height,
-				 	    win32_frame->vo_frame.pitches[0], win32_frame->vo_frame.pitches[0] / 2,
+					    win32_frame->vo_frame.pitches[0], win32_frame->vo_frame.pitches[0] / 2,
 					    win32_driver->width, win32_driver->height,
 					    win32_driver->width * win32_driver->bytespp );
 #else
@@ -1087,14 +1087,14 @@ static void win32_display_frame( vo_driver_t * vo_driver, vo_frame_t * vo_frame 
           src += vo_frame->pitches[0];
           dst += win32_driver->ddsd.lPitch;
         }
-        
+
         src = frame->base[2];
         for (line = 0; line < frame->height/2 ; line++){
           xine_fast_memcpy( dst, src, frame->width/2);
           src += vo_frame->pitches[2];
           dst += win32_driver->ddsd.lPitch/2;
         }
-        
+
         src = frame->base[1];
         for (line = 0; line < frame->height/2 ; line++){
           xine_fast_memcpy( dst, src, frame->width/2);
@@ -1102,10 +1102,10 @@ static void win32_display_frame( vo_driver_t * vo_driver, vo_frame_t * vo_frame 
           dst += win32_driver->ddsd.lPitch/2;
         }
 	  break;
-	  
+
 	case XINE_IMGFMT_YUY2:
 	default:
-      src = frame->base[0];	
+      src = frame->base[0];
       for (line = 0; line < frame->height ; line++){
 	    xine_fast_memcpy( dst, src, frame->width*2);
 	    src += vo_frame->pitches[0];
@@ -1184,7 +1184,7 @@ static int win32_gui_data_exchange( vo_driver_t * vo_driver, int data_type, void
     {
       HRESULT result;
       HWND newWndHnd = (HWND) data;
-	  
+
 	  /* set cooperative level */
 	  result = IDirectDraw_SetCooperativeLevel( win32_driver->ddobj, newWndHnd, DDSCL_NORMAL );
       if( result != DD_OK )
@@ -1217,15 +1217,15 @@ static int win32_redraw_needed(vo_driver_t* this_gen)
   int ret = 0;
 
   /* TC - May need to revisit this! */
-#ifdef TC  
+#ifdef TC
   win32_driver_t  *win32_driver = (win32_driver_t *) this_gen;
 
   if( _x_vo_scale_redraw_needed( &win32_driver->sc ) ) {
-    win32_gui_data_exchange(this_gen, GUI_WIN32_MOVED_OR_RESIZED, 0);    
+    win32_gui_data_exchange(this_gen, GUI_WIN32_MOVED_OR_RESIZED, 0);
     ret = 1;
   }
 #endif
-  
+
   return ret;
 }
 
@@ -1246,7 +1246,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *wi
 
 
   _x_alphablend_init(&win32_driver->alphablend_extra_data, class->xine);
-  
+
   win32_driver->xine = class->xine;
 
   /* Make sure that the DirectX drivers are available and present! */
@@ -1302,7 +1302,7 @@ static void *init_class (xine_t *xine, void *visual_gen) {
 
   directx->xine                         = xine;
   directx->config                       = xine->config;
-  
+
   return directx;
 }
 

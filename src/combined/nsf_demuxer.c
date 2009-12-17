@@ -22,7 +22,7 @@
  * NSF File "Demuxer" by Mike Melanson (melanson@pcisys.net)
  * This is really just a loader for NES Music File Format (extension NSF)
  * which loads an entire NSF file and passes it over to the NSF audio
- * decoder. 
+ * decoder.
  *
  * After the file is sent over, the demuxer controls the playback by
  * sending empty buffers with incrementing pts values.
@@ -167,7 +167,7 @@ static int demux_nsf_send_chunk(demux_plugin_t *this_gen) {
       buf->decoder_info[1] = 0;
 
     buf->type = BUF_AUDIO_NSF;
-    if(this->total_songs) 
+    if(this->total_songs)
       buf->extra_info->input_normpos = (this->current_song - 1) * 65535 / this->total_songs;
     buf->extra_info->input_time = this->current_pts / 90;
     buf->pts = this->current_pts;

@@ -19,13 +19,13 @@ int main (int argc, char **argv) {
   int option_index = 0;
   int c;
   opterr = 0;
-  while ((c = getopt_long (argc, argv, "?hv", 
+  while ((c = getopt_long (argc, argv, "?hv",
 			   long_options, &option_index)) != EOF)
     ;
   return 0;
 }
 	]])],
-	[AC_MSG_RESULT(yes); 
+	[AC_MSG_RESULT(yes);
 	 ac_getopt_long=yes;
 	 AC_DEFINE(HAVE_GETOPT_LONG,,[Define this if you have GNU getopt_long() implemented])],
 	[AC_MSG_RESULT(no); ac_getopt_long=no],

@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2008 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -105,11 +105,11 @@ typedef struct {
 typedef struct {
 
   input_plugin_t         input_plugin;
-  
+
   vcd_input_class_t     *cls;
-  
+
   xine_stream_t         *stream;
-  
+
   char                  *mrl;
   config_values_t       *config;
 
@@ -136,7 +136,7 @@ typedef struct {
  */
 static void device_change_cb (void *data, xine_cfg_entry_t *cfg) {
   vcd_input_class_t *this = (vcd_input_class_t *) data;
-  
+
   this->device = cfg->str_value;
 }
 
@@ -146,7 +146,7 @@ static int input_vcd_read_toc (vcd_input_class_t *this, int fd) {
 
   /* read TOC header */
   if ( ioctl(fd, CDROMREADTOCHDR, &this->tochdr) == -1 ) {
-    xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 	     "input_vcd : error in ioctl CDROMREADTOCHDR\n");
     return -1;
   }
@@ -156,7 +156,7 @@ static int input_vcd_read_toc (vcd_input_class_t *this, int fd) {
     this->tocent[i-1].cdte_track = i;
     this->tocent[i-1].cdte_format = CDROM_MSF;
     if ( ioctl(fd, CDROMREADTOCENTRY, &this->tocent[i-1]) == -1 ) {
-      xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 	       "input_vcd: error in ioctl CDROMREADTOCENTRY for track %d\n", i);
       return -1;
     }
@@ -166,9 +166,9 @@ static int input_vcd_read_toc (vcd_input_class_t *this, int fd) {
   this->tocent[this->tochdr.cdth_trk1].cdte_track = CDROM_LEADOUT;
   this->tocent[this->tochdr.cdth_trk1].cdte_format = CDROM_MSF;
 
-  if (ioctl(fd, CDROMREADTOCENTRY, 
+  if (ioctl(fd, CDROMREADTOCENTRY,
 	    &this->tocent[this->tochdr.cdth_trk1]) == -1 ) {
-    xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 	     "input_vcd: error in ioctl CDROMREADTOCENTRY for lead-out\n");
     return -1;
   }
@@ -185,23 +185,23 @@ static int input_vcd_read_toc (vcd_input_class_t *this, int fd) {
 
   /* read TOC header */
   if ( ioctl(fd, CDIOREADTOCHEADER, &this->tochdr) == -1 ) {
-    xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 	     "input_vcd : error in ioctl CDROMREADTOCHDR\n");
     return -1;
   }
 
-  ntracks = this->tochdr.ending_track 
+  ntracks = this->tochdr.ending_track
     - this->tochdr.starting_track + 2;
   this->tocent = (struct cd_toc_entry *)
     xine_xmalloc(sizeof(*this->tocent) * ntracks);
-  
+
   te.address_format = CD_LBA_FORMAT;
   te.starting_track = 0;
   te.data_len = ntracks * sizeof(struct cd_toc_entry);
   te.data = this->tocent;
-  
+
   if ( ioctl(fd, CDIOREADTOCENTRYS, &te) == -1 ){
-    xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 	     "input_vcd: error in ioctl CDROMREADTOCENTRY\n");
     return -1;
   }
@@ -232,11 +232,11 @@ static int sun_vcd_read(vcd_input_plugin_t *this, long lba, cdsector_t *data)
    */
   if (this->controller_type == 0) {
     if ( ioctl(this->fd, DKIOCINFO, &cinfo) == 0
-	 && ((strcmp(cinfo.dki_cname, "ide") == 0) 
+	 && ((strcmp(cinfo.dki_cname, "ide") == 0)
 	     || (strncmp(cinfo.dki_cname, "pci", 3) == 0)) )
       this->controller_type = SUN_CTRL_ATAPI;
     else
-      this->controller_type = SUN_CTRL_SCSI;    
+      this->controller_type = SUN_CTRL_SCSI;
   }
   switch (this->controller_type) {
   case SUN_CTRL_SCSI:
@@ -247,7 +247,7 @@ static int sun_vcd_read(vcd_input_plugin_t *this, long lba, cdsector_t *data)
       cdxa.cdxa_length = 1;
       cdxa.cdxa_data = data->subheader;
       cdxa.cdxa_format = CDROM_XA_SECTOR_DATA;
-  
+
       if(ioctl(this->fd,CDROMCDXA,&cdxa)==-1) {
 	xprintf(this->cls->xine, XINE_VERBOSITY_DEBUG, "CDROMCDXA: %s\n", strerror(errno));
 	return -1;
@@ -304,12 +304,12 @@ static int sun_vcd_read(vcd_input_plugin_t *this, long lba, cdsector_t *data)
       cdb.cdb_opaque[7] = (blocks >>  8) & 0xff;
       cdb.cdb_opaque[8] =  blocks & 0xff;
       cdb.cdb_opaque[9] = (sync << 7) |
-	  		  (header_code << 5) |
-	  		  (user_data << 4) |
-	  		  (edc_ecc << 3) |
-	  		  (error_field << 1);
+			  (header_code << 5) |
+			  (user_data << 4) |
+			  (edc_ecc << 3) |
+			  (error_field << 1);
       cdb.cdb_opaque[10] = sub_channel;
-      
+
       sc.uscsi_cdb = (caddr_t)&cdb;
       sc.uscsi_cdblen = 12;
       sc.uscsi_bufaddr = (caddr_t)data->subheader;
@@ -321,7 +321,7 @@ static int sun_vcd_read(vcd_input_plugin_t *this, long lba, cdsector_t *data)
 	return -1;
       }
       if (sc.uscsi_status) {
-	xprintf (this->cls->xine, XINE_VERBOSITY_DEBUG, 
+	xprintf (this->cls->xine, XINE_VERBOSITY_DEBUG,
 		 "scsi command failed with status %d\n", sc.uscsi_status);
 	return -1;
       }
@@ -336,9 +336,9 @@ static int sun_vcd_read(vcd_input_plugin_t *this, long lba, cdsector_t *data)
 /* ***************************************************************** */
 
 #if defined (__linux__)
-static off_t vcd_plugin_read (input_plugin_t *this_gen, 
+static off_t vcd_plugin_read (input_plugin_t *this_gen,
 			      void *buf_gen, off_t nlen) {
-  
+
   vcd_input_plugin_t *this = (vcd_input_plugin_t *) this_gen;
   char *buf = (char *)buf_gen;
   static struct cdrom_msf  msf ;
@@ -349,14 +349,14 @@ static off_t vcd_plugin_read (input_plugin_t *this_gen,
     return 0;
 
   do
-  {  
+  {
     end_msf = (struct cdrom_msf0 *)
       &this->cls->tocent[this->cur_track+1].cdte_addr.msf;
 
     /*
     printf ("cur: %02d:%02d:%02d  end: %02d:%02d:%02d\n",
-  	  this->cur_min, this->cur_sec, this->cur_frame,
-  	  end_msf->minute, end_msf->second, end_msf->frame);
+	  this->cur_min, this->cur_sec, this->cur_frame,
+	  end_msf->minute, end_msf->second, end_msf->frame);
     */
 
     if ( (this->cur_min>=end_msf->minute) && (this->cur_sec>=end_msf->second)
@@ -370,7 +370,7 @@ static off_t vcd_plugin_read (input_plugin_t *this_gen,
     memcpy (&data, &msf, sizeof (msf));
 
     if (ioctl (this->fd, CDROMREADRAW, &data) == -1) {
-      xprintf (this->cls->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf (this->cls->xine, XINE_VERBOSITY_DEBUG,
 	       "input_vcd: error in CDROMREADRAW\n");
       return 0;
     }
@@ -385,17 +385,17 @@ static off_t vcd_plugin_read (input_plugin_t *this_gen,
         this->cur_min++;
       }
     }
-    
+
     /* Header ID check for padding sector. VCD uses this to keep constant
        bitrate so the CD doesn't stop/start */
   }
   while((data.subheader[2]&~0x01)==0x60);
-  
+
   memcpy (buf, data.data, VCDSECTORSIZE); /* FIXME */
   return VCDSECTORSIZE;
 }
 #elif defined (__FreeBSD_kernel__) || defined (__OpenBSD__)
-static off_t vcd_plugin_read (input_plugin_t *this_gen, 
+static off_t vcd_plugin_read (input_plugin_t *this_gen,
 			      void *buf_gen, off_t nlen) {
   vcd_input_plugin_t *this = (vcd_input_plugin_t *) this_gen;
   char *buf = (char *)buf_gen;
@@ -420,9 +420,9 @@ static off_t vcd_plugin_read (input_plugin_t *this_gen,
   return VCDSECTORSIZE;
 }
 #elif defined (__sun)
-static off_t vcd_plugin_read (input_plugin_t *this_gen, 
+static off_t vcd_plugin_read (input_plugin_t *this_gen,
 			      void *buf_gen, off_t nlen) {
-  
+
   vcd_input_plugin_t *this = (vcd_input_plugin_t *) this_gen;
   char *buf = (char *)buf_gen;
   static cdsector_t        data;
@@ -433,14 +433,14 @@ static off_t vcd_plugin_read (input_plugin_t *this_gen,
     return 0;
 
   do
-  {  
-    end_msf = (struct cdrom_msf0 *) 
+  {
+    end_msf = (struct cdrom_msf0 *)
       &this->cls->tocent[this->cur_track+1].cdte_addr.msf;
 
     /*
     printf ("cur: %02d:%02d:%02d  end: %02d:%02d:%02d\n",
-  	  this->cur_min, this->cur_sec, this->cur_frame,
-  	  end_msf->minute, end_msf->second, end_msf->frame);
+	  this->cur_min, this->cur_sec, this->cur_frame,
+	  end_msf->minute, end_msf->second, end_msf->frame);
     */
 
     if ( (this->cur_min>=end_msf->minute) && (this->cur_sec>=end_msf->second)
@@ -463,21 +463,21 @@ static off_t vcd_plugin_read (input_plugin_t *this_gen,
         this->cur_min++;
       }
     }
-    
+
     /* Header ID check for padding sector. VCD uses this to keep constant
        bitrate so the CD doesn't stop/start */
   }
   while((data.subheader[2]&~0x01)==0x60);
-  
+
   memcpy (buf, data.data, VCDSECTORSIZE); /* FIXME */
   return VCDSECTORSIZE;
 }
 #endif
 
 #if defined (__linux__)
-static buf_element_t *vcd_plugin_read_block (input_plugin_t *this_gen, 
+static buf_element_t *vcd_plugin_read_block (input_plugin_t *this_gen,
 					     fifo_buffer_t *fifo, off_t nlen) {
-  
+
   vcd_input_plugin_t      *this = (vcd_input_plugin_t *) this_gen;
   buf_element_t           *buf;
   static struct cdrom_msf  msf ;
@@ -488,13 +488,13 @@ static buf_element_t *vcd_plugin_read_block (input_plugin_t *this_gen,
     return NULL;
 
   do
-  {  
+  {
     end_msf = &this->cls->tocent[this->cur_track+1].cdte_addr.msf;
 
     /*
     printf ("cur: %02d:%02d:%02d  end: %02d:%02d:%02d\n",
-  	  this->cur_min, this->cur_sec, this->cur_frame,
-  	  end_msf->minute, end_msf->second, end_msf->frame);
+	  this->cur_min, this->cur_sec, this->cur_frame,
+	  end_msf->minute, end_msf->second, end_msf->frame);
     */
 
     if ( (this->cur_min>=end_msf->minute) && (this->cur_sec>=end_msf->second)
@@ -522,12 +522,12 @@ static buf_element_t *vcd_plugin_read_block (input_plugin_t *this_gen,
         this->cur_min++;
       }
     }
-    
+
     /* Header ID check for padding sector. VCD uses this to keep constant
        bitrate so the CD doesn't stop/start */
   }
   while((data.subheader[2]&~0x01)==0x60);
-  
+
   buf = fifo->buffer_pool_alloc (fifo);
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
@@ -535,9 +535,9 @@ static buf_element_t *vcd_plugin_read_block (input_plugin_t *this_gen,
   return buf;
 }
 #elif defined (__FreeBSD_kernel__) || defined (__OpenBSD__)
-static buf_element_t *vcd_plugin_read_block (input_plugin_t *this_gen, 
+static buf_element_t *vcd_plugin_read_block (input_plugin_t *this_gen,
 					     fifo_buffer_t *fifo, off_t nlen) {
-  
+
   vcd_input_plugin_t  *this = (vcd_input_plugin_t *) this_gen;
   buf_element_t       *buf;
   static cdsector_t    data;
@@ -565,9 +565,9 @@ static buf_element_t *vcd_plugin_read_block (input_plugin_t *this_gen,
   return buf;
 }
 #elif defined(__sun)
-static buf_element_t *vcd_plugin_read_block (input_plugin_t *this_gen, 
+static buf_element_t *vcd_plugin_read_block (input_plugin_t *this_gen,
 					     fifo_buffer_t *fifo, off_t nlen) {
-  
+
   vcd_input_plugin_t      *this = (vcd_input_plugin_t *) this_gen;
   buf_element_t           *buf;
   static cdsector_t        data;
@@ -578,14 +578,14 @@ static buf_element_t *vcd_plugin_read_block (input_plugin_t *this_gen,
     return NULL;
 
   do
-  {  
-    end_msf = (struct cdrom_msf0 *) 
+  {
+    end_msf = (struct cdrom_msf0 *)
       &this->cls->tocent[this->cur_track+1].cdte_addr.msf;
 
     /*
     printf ("cur: %02d:%02d:%02d  end: %02d:%02d:%02d\n",
-  	  this->cur_min, this->cur_sec, this->cur_frame,
-  	  end_msf->minute, end_msf->second, end_msf->frame);
+	  this->cur_min, this->cur_sec, this->cur_frame,
+	  end_msf->minute, end_msf->second, end_msf->frame);
     */
 
     if ( (this->cur_min>=end_msf->minute) && (this->cur_sec>=end_msf->second)
@@ -609,12 +609,12 @@ static buf_element_t *vcd_plugin_read_block (input_plugin_t *this_gen,
         this->cur_min++;
       }
     }
-    
+
     /* Header ID check for padding sector. VCD uses this to keep constant
        bitrate so the CD doesn't stop/start */
   }
   while((data.subheader[2]&~0x01)==0x60);
-  
+
   buf = fifo->buffer_pool_alloc (fifo);
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
@@ -628,17 +628,17 @@ static off_t vcd_time_to_offset (int min, int sec, int frame) {
   return min * 60 * 75 + sec * 75 + frame;
 }
 
-static void vcd_offset_to_time (off_t offset, uint8_t *min, uint8_t *sec, 
+static void vcd_offset_to_time (off_t offset, uint8_t *min, uint8_t *sec,
 				uint8_t *frame) {
 
   *min = offset / (60*75);
   offset %= (60*75);
-  *sec = offset / 75; 
-  *frame = offset % 75; 
+  *sec = offset / 75;
+  *frame = offset % 75;
 
 }
 
-static off_t vcd_plugin_seek (input_plugin_t *this_gen, 
+static off_t vcd_plugin_seek (input_plugin_t *this_gen,
 			      off_t offset, int origin) {
 
   vcd_input_plugin_t  *this = (vcd_input_plugin_t *) this_gen;
@@ -650,11 +650,11 @@ static off_t vcd_plugin_seek (input_plugin_t *this_gen,
 
   switch (origin) {
   case SEEK_SET:
-    sector_pos = (offset / VCDSECTORSIZE) 
+    sector_pos = (offset / VCDSECTORSIZE)
       +  vcd_time_to_offset (start_msf->minute,
 			     start_msf->second,
 			     start_msf->frame);
-    
+
 
     vcd_offset_to_time (sector_pos, &this->cur_min,
 			&this->cur_sec, &this->cur_frame);
@@ -666,8 +666,8 @@ static off_t vcd_plugin_seek (input_plugin_t *this_gen,
 
     break;
   case SEEK_CUR:
-    if (offset) 
-      xprintf (this->cls->xine, XINE_VERBOSITY_DEBUG, 
+    if (offset)
+      xprintf (this->cls->xine, XINE_VERBOSITY_DEBUG,
 	       "input_vcd: SEEK_CUR not implemented for offset != 0\n");
 
     /*
@@ -686,7 +686,7 @@ static off_t vcd_plugin_seek (input_plugin_t *this_gen,
 
     break;
   default:
-    xprintf (this->cls->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (this->cls->xine, XINE_VERBOSITY_DEBUG,
 	     "input_vcd: error seek to origin %d not implemented!\n", origin);
     return 0;
   }
@@ -694,7 +694,7 @@ static off_t vcd_plugin_seek (input_plugin_t *this_gen,
   return offset ; /* FIXME */
 }
 #elif defined (__FreeBSD_kernel__) || defined (__OpenBSD__)
-static off_t vcd_plugin_seek (input_plugin_t *this_gen, 
+static off_t vcd_plugin_seek (input_plugin_t *this_gen,
 				off_t offset, int origin) {
 
 
@@ -703,11 +703,11 @@ static off_t vcd_plugin_seek (input_plugin_t *this_gen,
   uint32_t dist ;
   off_t sector_pos;
 
-  start = 
+  start =
     ntohl(this->cls->tocent
 	  [this->cur_track+1 - this->cls->tochdr.starting_track].addr.lba);
 
-  /*  printf("seek: start sector:%lu, origin: %d, offset:%qu\n", 
+  /*  printf("seek: start sector:%lu, origin: %d, offset:%qu\n",
 	 start, origin, offset);
   */
 
@@ -718,7 +718,7 @@ static off_t vcd_plugin_seek (input_plugin_t *this_gen,
     break;
   case SEEK_CUR:
 
-    if (offset) 
+    if (offset)
       xprintf (this->cls->xine, XINE_VERBOSITY_DEBUG, "input_vcd: SEEK_CUR not implemented for offset != 0\n");
 
     sector_pos = this->cur_sec;
@@ -727,7 +727,7 @@ static off_t vcd_plugin_seek (input_plugin_t *this_gen,
 
     break;
   default:
-    xprintf (this->cls->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (this->cls->xine, XINE_VERBOSITY_DEBUG,
 	     "input_vcd: error seek to origin %d not implemented!\n", origin);
     return 0;
   }
@@ -741,27 +741,27 @@ static off_t vcd_plugin_get_length (input_plugin_t *this_gen) {
   vcd_input_plugin_t *this = (vcd_input_plugin_t *) this_gen;
   struct cdrom_msf0       *end_msf, *start_msf;
   off_t len ;
-  
+
   if(this->cls->total_tracks) {
-    
+
     start_msf = (struct cdrom_msf0 *)
       &this->cls->tocent[this->cur_track].cdte_addr.msf;
     end_msf   = (struct cdrom_msf0 *)
       &this->cls->tocent[this->cur_track+1].cdte_addr.msf;
-    
+
     len = 75 - start_msf->frame;
-    
+
     if (start_msf->second<60)
       len += (59 - start_msf->second) * 75;
-    
+
     if (end_msf->minute > start_msf->minute) {
       len += (end_msf->minute - start_msf->minute-1) * 60 * 75;
-      
+
       len += end_msf->second * 60;
-      
+
       len += end_msf->frame ;
     }
-    
+
     return len * VCDSECTORSIZE;
   }
 
@@ -773,14 +773,14 @@ static off_t vcd_plugin_get_length (input_plugin_t *this_gen) {
   off_t len ;
 
 
-  len = 
+  len =
     ntohl(this->cls->tocent
-	  [this->cur_track+2 
+	  [this->cur_track+2
 	  - this->cls->tochdr.starting_track].addr.lba)
     - ntohl(this->cls->tocent
-	    [this->cur_track+1 
+	    [this->cur_track+1
 	    - this->cls->tochdr.starting_track].addr.lba);
-  
+
   return len * 2352; /*VCDSECTORSIZE;*/
 
 }
@@ -793,7 +793,7 @@ static off_t vcd_plugin_get_current_pos (input_plugin_t *this_gen){
 }
 
 static uint32_t vcd_plugin_get_capabilities (input_plugin_t *this_gen) {
-  
+
   return INPUT_CAP_SEEKABLE | INPUT_CAP_BLOCK ;
 }
 
@@ -819,7 +819,7 @@ static const char* vcd_plugin_get_mrl (input_plugin_t *this_gen) {
   return this->mrl;
 }
 
-static int vcd_plugin_get_optional_data (input_plugin_t *this_gen, 
+static int vcd_plugin_get_optional_data (input_plugin_t *this_gen,
 					 void *data, int data_type) {
 
   return INPUT_OPTIONAL_UNSUPPORTED;
@@ -846,13 +846,13 @@ static int vcd_plugin_open (input_plugin_t *this_gen) {
   while (*filename == '/') filename++;
 
   if (sscanf (filename, "%d", &this->cur_track) != 1) {
-    xprintf (cls->xine, XINE_VERBOSITY_LOG, 
+    xprintf (cls->xine, XINE_VERBOSITY_LOG,
 	     _("input_vcd: malformed MRL. Use vcdo:/<track #>\n"));
     return 0;
   }
 
   if (this->cur_track>=this->cls->total_tracks) {
-    xprintf (cls->xine, XINE_VERBOSITY_LOG, 
+    xprintf (cls->xine, XINE_VERBOSITY_LOG,
 	     _("input_vcd: invalid track %d (valid range: 0 .. %d)\n"),
 	     this->cur_track, this->cls->total_tracks-1);
     return 0;
@@ -873,21 +873,21 @@ static int vcd_plugin_open (input_plugin_t *this_gen) {
       xprintf (cls->xine, XINE_VERBOSITY_DEBUG, "input_vcd: error in CDRIOCSETBLOCKSIZE %d\n", errno);
       return 0;
     }
-  
-    this->cur_sec = 
+
+    this->cur_sec =
       ntohl(this->cls->tocent
 	    [this->cur_track+1 - this->cls->tochdr.starting_track].addr.lba);
-    
+
   }
 #endif
-  
+
   return 1;
 }
 
-static input_plugin_t *vcd_class_get_instance (input_class_t *cls_gen, xine_stream_t *stream, 
+static input_plugin_t *vcd_class_get_instance (input_class_t *cls_gen, xine_stream_t *stream,
 				    const char *data) {
 
-  vcd_input_class_t  *cls = (vcd_input_class_t *) cls_gen; 
+  vcd_input_class_t  *cls = (vcd_input_class_t *) cls_gen;
   vcd_input_plugin_t *this;
   char               *mrl = strdup(data);
 
@@ -895,7 +895,7 @@ static input_plugin_t *vcd_class_get_instance (input_class_t *cls_gen, xine_stre
     free (mrl);
     return 0;
   }
-    
+
   this = calloc(1, sizeof(vcd_input_plugin_t));
 
   this->stream = stream;
@@ -953,7 +953,7 @@ static int vcd_class_eject_media (input_class_t *this_gen) {
   return media_eject_media (this->xine, this->device);
 }
 
-static xine_mrl_t **vcd_class_get_dir (input_class_t *this_gen, const char *filename, 
+static xine_mrl_t **vcd_class_get_dir (input_class_t *this_gen, const char *filename,
 				       int *num_files) {
   vcd_input_class_t *this = (vcd_input_class_t *) this_gen;
 
@@ -964,7 +964,7 @@ static xine_mrl_t **vcd_class_get_dir (input_class_t *this_gen, const char *file
   if (filename)
     return NULL;
 
-  
+
   fd = open (this->device, O_RDONLY|O_EXCL);
 
   if (fd == -1) {
@@ -998,9 +998,9 @@ static xine_mrl_t **vcd_class_get_dir (input_class_t *this_gen, const char *file
     else {
       memset(this->mrls[(i-1)], 0, sizeof(xine_mrl_t));
     }
-    
+
     asprintf(&(this->mrls[i-1]->mrl), "vcdo:/%d", i);
-   
+
     this->mrls[i-1]->type = mrl_vcd;
 
     /* hack */
@@ -1017,13 +1017,13 @@ static xine_mrl_t **vcd_class_get_dir (input_class_t *this_gen, const char *file
   }
 
   this->mrls[*num_files] = NULL;
-  
+
   return this->mrls;
 }
 
 static char ** vcd_class_get_autoplay_list (input_class_t *this_gen, int *num_files) {
 
-  vcd_input_class_t  *this = (vcd_input_class_t *) this_gen; 
+  vcd_input_class_t  *this = (vcd_input_class_t *) this_gen;
   int i, fd;
 
 
@@ -1095,7 +1095,7 @@ static void *init_class (xine_t *xine, void *data) {
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "VCDO", XINE_VERSION_CODE, NULL, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

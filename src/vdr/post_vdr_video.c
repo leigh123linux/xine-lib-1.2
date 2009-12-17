@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
- 
+
 /*
  * frame scaler plugin for VDR
  */
@@ -40,10 +40,10 @@ typedef struct vdr_video_post_plugin_s
 
   xine_event_queue_t *event_queue;
   xine_stream_t      *vdr_stream;
-  
+
   int8_t trick_speed_mode;
   int8_t enabled;
-  
+
   int32_t x;
   int32_t y;
   int32_t w;
@@ -56,7 +56,7 @@ typedef struct vdr_video_post_plugin_s
   int32_t old_frame_width;
   int32_t old_frame_height;
   double  old_frame_ratio;
-  
+
 }
 vdr_video_post_plugin_t;
 
@@ -64,7 +64,7 @@ vdr_video_post_plugin_t;
 static void vdr_video_set_video_window(vdr_video_post_plugin_t *this, int32_t x, int32_t y, int32_t w, int32_t h, int32_t w_ref, int32_t h_ref)
 {
   this->enabled = 0;
-  
+
   this->x     = x;
   this->y     = y;
   this->w     = w;
@@ -76,7 +76,7 @@ static void vdr_video_set_video_window(vdr_video_post_plugin_t *this, int32_t x,
     this->enabled = 1;
 }
 
- 
+
 /* plugin class functions */
 static post_plugin_t *vdr_video_open_plugin(post_class_t *class_gen, int inputs,
                                             xine_audio_port_t **audio_target,
@@ -95,15 +95,15 @@ static int            vdr_video_draw(vo_frame_t *frame, xine_stream_t *stream);
 void *vdr_video_init_plugin(xine_t *xine, void *data)
 {
   post_class_t *class = (post_class_t *)xine_xmalloc(sizeof (post_class_t));
-  
+
   if (!class)
     return NULL;
-  
+
   class->open_plugin     = vdr_video_open_plugin;
   class->identifier      = "vdr";
   class->description     = N_("modifies every video frame as requested by VDR");
   class->dispose         = default_post_class_dispose;
-  
+
   return class;
 }
 
@@ -115,7 +115,7 @@ static post_plugin_t *vdr_video_open_plugin(post_class_t *class_gen, int inputs,
   post_in_t               *input;
   post_out_t              *output;
   post_video_port_t       *port;
-  
+
   if (!this || !video_target || !video_target[ 0 ])
   {
     free(this);
@@ -129,7 +129,7 @@ static post_plugin_t *vdr_video_open_plugin(post_class_t *class_gen, int inputs,
   port->route_preprocessing_procs = vdr_video_route_preprocessing_procs;
   port->new_frame->draw           = vdr_video_draw;
   this->post_plugin.xine_post.video_input[ 0 ] = &port->new_port;
-  
+
   this->enabled          = 0;
   this->vdr_stream       = 0;
   this->event_queue      = 0;
@@ -139,7 +139,7 @@ static post_plugin_t *vdr_video_open_plugin(post_class_t *class_gen, int inputs,
   this->old_frame_height = 0;
   this->old_frame_ratio  = 0;
   this->trick_speed_mode = 0;
-  
+
   return &this->post_plugin;
 }
 
@@ -148,7 +148,7 @@ static void vdr_video_dispose(post_plugin_t *this_gen)
   if (_x_post_dispose(this_gen))
   {
     vdr_video_post_plugin_t *this = (vdr_video_post_plugin_t *)this_gen;
-    
+
     if (this->vdr_stream)
     {
       xine_event_t event;
@@ -158,16 +158,16 @@ static void vdr_video_dispose(post_plugin_t *this_gen)
       event_data.y = 0;
       event_data.w = 0;
       event_data.h = 0;
-      
+
       event.type        = XINE_EVENT_VDR_FRAMESIZECHANGED;
       event.data        = &event_data;
       event.data_length = sizeof (event_data);
-      
+
       xine_event_send(this->vdr_stream, &event);
 
       xine_event_dispose_queue(this->event_queue);
     }
-    
+
     free(this_gen);
   }
 }
@@ -201,11 +201,11 @@ static inline void vdr_video_scale(uint8_t *src, uint8_t *dst, int y_inc, int x_
   int dx2    = dx + dx;
   int w_dst2 = w_dst + w_dst;
   int x_eps0 = w_dst - dx2;
-    
+
   for (yy = 0; yy < y0; yy++)
   {
     uint8_t *dst0 = dst;
-    
+
     for (xx = 0; xx < w_dst; xx++)
     {
       *dst0 = init;
@@ -221,18 +221,18 @@ static inline void vdr_video_scale(uint8_t *src, uint8_t *dst, int y_inc, int x_
     uint8_t *src0 = src;
 
     int x_eps = x_eps0;
-    
+
     for (xx = 0; xx < x0; xx++)
     {
       *dst0 = init;
       dst0 += x_inc;
     }
-    
+
     for (xx = x0; xx < x1; xx++)
     {
       *dst0 = *src0;
       dst0 += x_inc;
-      
+
       x_eps += w_dst2;
       while (x_eps >= 0)
       {
@@ -240,7 +240,7 @@ static inline void vdr_video_scale(uint8_t *src, uint8_t *dst, int y_inc, int x_
         x_eps -= dx2;
       }
     }
-    
+
     for (xx = x1; xx < w_dst; xx++)
     {
       *dst0 = init;
@@ -256,11 +256,11 @@ static inline void vdr_video_scale(uint8_t *src, uint8_t *dst, int y_inc, int x_
       y_eps -= dy2;
     }
   }
-  
+
   for (yy = y1; yy < h_dst; yy++)
   {
     uint8_t *dst0 = dst;
-    
+
     for (xx = 0; xx < w_dst; xx++)
     {
       *dst0 = init;
@@ -268,7 +268,7 @@ static inline void vdr_video_scale(uint8_t *src, uint8_t *dst, int y_inc, int x_
     }
 
     dst += y_inc;
-  }  
+  }
 }
 
 static void vdr_video_scale_YUY2(vdr_video_post_plugin_t *this, vo_frame_t *src, vo_frame_t *dst)
@@ -276,10 +276,10 @@ static void vdr_video_scale_YUY2(vdr_video_post_plugin_t *this, vo_frame_t *src,
   int w = dst->width  - dst->crop_left - dst->crop_right;
   int h = dst->height - dst->crop_top  - dst->crop_bottom;
   int offset;
-  
+
   if (w < 0)
     w = 0;
-  
+
   if (h < 0)
     h = 0;
 
@@ -296,10 +296,10 @@ static void vdr_video_scale_YV12(vdr_video_post_plugin_t *this, vo_frame_t *src,
   int w = dst->width  - dst->crop_left - dst->crop_right;
   int h = dst->height - dst->crop_top  - dst->crop_bottom;
   int offset;
-  
+
   if (w < 0)
     w = 0;
-  
+
   if (h < 0)
     h = 0;
 
@@ -324,17 +324,17 @@ static int vdr_video_draw(vo_frame_t *frame, xine_stream_t *stream)
       && !_x_continue_stream_processing(this->vdr_stream))
   {
     this->vdr_stream = 0;
-    
+
     xine_event_dispose_queue(this->event_queue);
     this->event_queue = 0;
-    
+
     this->old_frame_left   = 0;
     this->old_frame_top    = 0;
     this->old_frame_width  = 0;
     this->old_frame_height = 0;
     this->old_frame_ratio  = 0;
   }
-  
+
   if (!this->vdr_stream
       && vdr_is_vdr_stream(stream))
   {
@@ -342,19 +342,19 @@ static int vdr_video_draw(vo_frame_t *frame, xine_stream_t *stream)
     if (this->event_queue)
     {
       this->vdr_stream = stream;
-      
+
       {
         xine_event_t event;
-        
+
         event.type = XINE_EVENT_VDR_PLUGINSTARTED;
         event.data = 0;
         event.data_length = 0; /* vdr_video */
-        
+
         xine_event_send(this->vdr_stream, &event);
       }
     }
   }
-  
+
   if (this->event_queue)
   {
     while ((event = xine_event_get(this->event_queue)))
@@ -362,7 +362,7 @@ static int vdr_video_draw(vo_frame_t *frame, xine_stream_t *stream)
       if (event->type == XINE_EVENT_VDR_SETVIDEOWINDOW)
       {
         vdr_set_video_window_data_t *data = (vdr_set_video_window_data_t *)event->data;
-        
+
         vdr_video_set_video_window(this, data->x, data->y, data->w, data->h, data->w_ref, data->h_ref);
       }
       else if (event->type == XINE_EVENT_VDR_TRICKSPEEDMODE)
@@ -392,7 +392,7 @@ static int vdr_video_draw(vo_frame_t *frame, xine_stream_t *stream)
       frame_top = 0;
     if (frame_height > frame->height)
       frame_height = frame->height;
-    
+
     if (this->vdr_stream
         && frame_width != 0
         && frame_height != 0
@@ -410,16 +410,16 @@ static int vdr_video_draw(vo_frame_t *frame, xine_stream_t *stream)
       event_data.w = frame_width;
       event_data.h = frame_height;
       event_data.r = frame_ratio;
-      
+
       xprintf(this->vdr_stream->xine, XINE_VERBOSITY_LOG,
             _(LOG_MODULE ": osd: (%d, %d)-(%d, %d)@%lg\n"), frame_left, frame_top, frame_width, frame_height, frame_ratio);
-      
+
       event.type        = XINE_EVENT_VDR_FRAMESIZECHANGED;
       event.data        = &event_data;
       event.data_length = sizeof (event_data);
-      
+
       xine_event_send(this->vdr_stream, &event);
-    
+
       this->old_frame_left   = frame_left;
       this->old_frame_top    = frame_top;
       this->old_frame_width  = frame_width;
@@ -428,15 +428,15 @@ static int vdr_video_draw(vo_frame_t *frame, xine_stream_t *stream)
     }
   }
 /*
-  fprintf(stderr, "~~~~~~~~~~~~ trickspeedmode: %d\n", this->trick_speed_mode);  
-  
+  fprintf(stderr, "~~~~~~~~~~~~ trickspeedmode: %d\n", this->trick_speed_mode);
+
   if (this->vdr_stream
       && this->trick_speed_mode)
   {
     frame->pts = 0;
     frame->next->pts = 0;
   }
-*/  
+*/
 #if defined(LOG) && defined(LOG_VERBOSE)
   {
     int a = 0, b = 0, c = 0, d = 0;
@@ -446,7 +446,7 @@ static int vdr_video_draw(vo_frame_t *frame, xine_stream_t *stream)
   }
 #endif
 
-  if (!this->enabled 
+  if (!this->enabled
       || frame->bad_frame
       || (frame->format != XINE_IMGFMT_YUY2
           && frame->format != XINE_IMGFMT_YV12)
@@ -463,21 +463,21 @@ static int vdr_video_draw(vo_frame_t *frame, xine_stream_t *stream)
     frame->width, frame->height, frame->ratio, frame->format, frame->flags | VO_BOTH_FIELDS);
 
   _x_post_frame_copy_down(frame, vdr_frame);
-    
+
   switch (vdr_frame->format)
   {
   case XINE_IMGFMT_YUY2:
     vdr_video_scale_YUY2(this, frame, vdr_frame);
     break;
-    
+
   case XINE_IMGFMT_YV12:
-    vdr_video_scale_YV12(this, frame, vdr_frame);    
+    vdr_video_scale_YV12(this, frame, vdr_frame);
     break;
   }
-  
+
   skip = vdr_frame->draw(vdr_frame, stream);
   _x_post_frame_copy_up(frame, vdr_frame);
   vdr_frame->free(vdr_frame);
-  
+
   return skip;
 }

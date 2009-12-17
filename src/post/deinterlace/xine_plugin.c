@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -50,7 +50,7 @@ static void *deinterlace_init_plugin(xine_t *xine, void *);
 static const post_info_t deinterlace_special_info = { XINE_POST_TYPE_VIDEO_FILTER };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_POST | PLUGIN_MUST_PRELOAD, 10, "tvtime", XINE_VERSION_CODE, &deinterlace_special_info, &deinterlace_init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
@@ -66,7 +66,7 @@ static const char *const enum_framerate[] = { "full", "half_top", "half_bottom",
 static void *help_string;
 
 /*
- * this is the struct used by "parameters api" 
+ * this is the struct used by "parameters api"
  */
 typedef struct deinterlace_parameters_s {
 
@@ -86,15 +86,15 @@ typedef struct deinterlace_parameters_s {
  * description of params struct
  */
 START_PARAM_DESCR( deinterlace_parameters_t )
-PARAM_ITEM( POST_PARAM_TYPE_INT, method, enum_methods, 0, 0, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_INT, method, enum_methods, 0, 0, 0,
             "deinterlace method" )
 PARAM_ITEM( POST_PARAM_TYPE_BOOL, enabled, NULL, 0, 1, 0,
             "enable/disable" )
-PARAM_ITEM( POST_PARAM_TYPE_INT, pulldown, enum_pulldown, 0, 0, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_INT, pulldown, enum_pulldown, 0, 0, 0,
             "pulldown algorithm" )
-PARAM_ITEM( POST_PARAM_TYPE_INT, pulldown_error_wait, NULL, 0, 0, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_INT, pulldown_error_wait, NULL, 0, 0, 0,
             "number of frames of telecine pattern sync required before mode change" )
-PARAM_ITEM( POST_PARAM_TYPE_INT, framerate_mode, enum_framerate, 0, 0, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_INT, framerate_mode, enum_framerate, 0, 0, 0,
             "framerate output mode" )
 PARAM_ITEM( POST_PARAM_TYPE_BOOL, judder_correction, NULL, 0, 1, 0,
             "make frames evenly spaced for film mode (24 fps)" )
@@ -129,7 +129,7 @@ struct post_plugin_deinterlace_s {
   int                tvtime_changed;
   int                tvtime_last_filmmode;
   int                vo_deinterlace_enabled;
-  
+
   int                framecounter;
   uint8_t            rff_pattern;
 
@@ -144,10 +144,10 @@ typedef struct post_class_deinterlace_s {
   deinterlace_parameters_t init_param;
 } post_class_deinterlace_t;
 
-static void _flush_frames(post_plugin_deinterlace_t *this) 
+static void _flush_frames(post_plugin_deinterlace_t *this)
 {
   int i;
-  
+
   for( i = 0; i < NUM_RECENT_FRAMES; i++ ) {
     if( this->recent_frame[i] ) {
       this->recent_frame[i]->free(this->recent_frame[i]);
@@ -189,7 +189,7 @@ static int set_parameters (xine_post_t *this_gen, void *param_gen) {
 static int get_parameters (xine_post_t *this_gen, void *param_gen) {
   post_plugin_deinterlace_t *this = (post_plugin_deinterlace_t *)this_gen;
   deinterlace_parameters_t *param = (deinterlace_parameters_t *)param_gen;
-  
+
   param->method = this->cur_method;
   param->enabled = this->enabled;
   param->pulldown = this->pulldown;
@@ -202,7 +202,7 @@ static int get_parameters (xine_post_t *this_gen, void *param_gen) {
 
   return 1;
 }
- 
+
 static xine_post_api_descr_t * get_param_descr (void) {
   return &param_descr;
 }
@@ -307,7 +307,7 @@ static void *deinterlace_init_plugin(xine_t *xine, void *data)
 
   if (!class)
     return NULL;
-  
+
   class->class.open_plugin     = deinterlace_open_plugin;
   class->class.identifier      = "tvtime";
   class->class.description     = N_("advanced deinterlacer plugin with pulldown detection");
@@ -329,7 +329,7 @@ static void *deinterlace_init_plugin(xine_t *xine, void *data)
 
   filter_deinterlace_methods( config_flags, 5 /*fieldsavailable*/ );
   if( !get_num_deinterlace_methods() ) {
-      xprintf(xine, XINE_VERBOSITY_LOG, 
+      xprintf(xine, XINE_VERBOSITY_LOG,
 	      _("tvtime: No deinterlacing methods available, exiting.\n"));
       return NULL;
   }
@@ -342,7 +342,7 @@ static void *deinterlace_init_plugin(xine_t *xine, void *data)
     deinterlace_method_t *method;
 
     method = get_deinterlace_method(i);
-    
+
     enum_methods[i+1] = method->short_name;
     xine_buffer_strcat( help_string, "[" );
     xine_buffer_strcat( help_string, method->short_name );
@@ -354,7 +354,7 @@ static void *deinterlace_init_plugin(xine_t *xine, void *data)
     xine_buffer_strcat( help_string, "\n---\n" );
   }
   enum_methods[i+1] = NULL;
-  
+
 
   /* Some default values */
   class->init_param.method                     = 1; /* First (plugin) method available */
@@ -362,7 +362,7 @@ static void *deinterlace_init_plugin(xine_t *xine, void *data)
   class->init_param.pulldown                   = 1; /* vektor */
   class->init_param.pulldown_error_wait        = 60; /* about one second */
   class->init_param.framerate_mode             = 0; /* full */
-  class->init_param.judder_correction          = 1; 
+  class->init_param.judder_correction          = 1;
   class->init_param.use_progressive_frame_flag = 1;
   class->init_param.chroma_filter              = 0;
   class->init_param.cheap_mode                 = 0;
@@ -381,12 +381,12 @@ static post_plugin_t *deinterlace_open_plugin(post_class_t *class_gen, int input
   post_out_t                *output;
   post_class_deinterlace_t  *class = (post_class_deinterlace_t *)class_gen;
   post_video_port_t *port;
-  
+
   if (!this || !video_target || !video_target[0]) {
     free(this);
     return NULL;
   }
-  
+
   _x_post_init(&this->post, 0, 1);
 
   this->tvtime = tvtime_new_context();
@@ -396,7 +396,7 @@ static post_plugin_t *deinterlace_open_plugin(post_class_t *class_gen, int input
   pthread_mutex_init (&this->lock, NULL);
 
   set_parameters ((xine_post_t *)&this->post, &class->init_param);
-  
+
   port = _x_post_intercept_video_port(&this->post, video_target[0], &input, &output);
   /* replace with our own get_frame function */
   port->new_port.open         = deinterlace_open;
@@ -406,7 +406,7 @@ static post_plugin_t *deinterlace_open_plugin(post_class_t *class_gen, int input
   port->new_port.flush        = deinterlace_flush;
   port->intercept_frame       = deinterlace_intercept_frame;
   port->new_frame->draw       = deinterlace_draw;
-  
+
   input_api       = &this->parameter_input;
   input_api->name = "parameters";
   input_api->type = XINE_POST_DATA_PARAMETERS;
@@ -415,11 +415,11 @@ static post_plugin_t *deinterlace_open_plugin(post_class_t *class_gen, int input
 
   input->xine_in.name     = "video";
   output->xine_out.name   = "deinterlaced video";
-  
+
   this->post.xine_post.video_input[0] = &port->new_port;
-  
+
   this->post.dispose = deinterlace_dispose;
-  
+
   return &this->post;
 }
 
@@ -465,9 +465,9 @@ static int deinterlace_set_property(xine_video_port_t *port_gen, int property, i
     pthread_mutex_unlock (&this->lock);
 
     this->vo_deinterlace_enabled = this->enabled && (!this->cur_method);
-    
-    port->original_port->set_property(port->original_port, 
-                                      XINE_PARAM_VO_DEINTERLACE, 
+
+    port->original_port->set_property(port->original_port,
+                                      XINE_PARAM_VO_DEINTERLACE,
                                       this->vo_deinterlace_enabled);
 
     return this->enabled;
@@ -488,14 +488,14 @@ static void deinterlace_open(xine_video_port_t *port_gen, xine_stream_t *stream)
 {
   post_video_port_t *port = (post_video_port_t *)port_gen;
   post_plugin_deinterlace_t *this = (post_plugin_deinterlace_t *)port->post;
-  
+
   _x_post_rewire(&this->post);
   _x_post_inc_usage(port);
   port->stream = stream;
   (port->original_port->open) (port->original_port, stream);
   this->vo_deinterlace_enabled = !this->cur_method;
-  port->original_port->set_property(port->original_port, 
-                                    XINE_PARAM_VO_DEINTERLACE, 
+  port->original_port->set_property(port->original_port,
+                                    XINE_PARAM_VO_DEINTERLACE,
                                     this->vo_deinterlace_enabled);
 }
 
@@ -506,8 +506,8 @@ static void deinterlace_close(xine_video_port_t *port_gen, xine_stream_t *stream
 
   port->stream = NULL;
   _flush_frames(this);
-  port->original_port->set_property(port->original_port, 
-                                    XINE_PARAM_VO_DEINTERLACE, 
+  port->original_port->set_property(port->original_port,
+                                    XINE_PARAM_VO_DEINTERLACE,
                                     0);
   port->original_port->close(port->original_port, stream);
   _x_post_dec_usage(port);
@@ -518,21 +518,21 @@ static int deinterlace_intercept_frame(post_video_port_t *port, vo_frame_t *fram
 {
   post_plugin_deinterlace_t *this = (post_plugin_deinterlace_t *)port->post;
   int vo_deinterlace_enabled = 0;
-    
+
   vo_deinterlace_enabled = ( frame->format != XINE_IMGFMT_YV12 &&
                              frame->format != XINE_IMGFMT_YUY2 &&
                              this->enabled );
-  
+
   if( this->cur_method &&
       this->vo_deinterlace_enabled != vo_deinterlace_enabled ) {
     this->vo_deinterlace_enabled = vo_deinterlace_enabled;
-    port->original_port->set_property(port->original_port, 
-                                      XINE_PARAM_VO_DEINTERLACE, 
+    port->original_port->set_property(port->original_port,
+                                      XINE_PARAM_VO_DEINTERLACE,
                                       this->vo_deinterlace_enabled);
   }
-  
+
   return (this->enabled && this->cur_method &&
-      (frame->flags & VO_INTERLACED_FLAG) && 
+      (frame->flags & VO_INTERLACED_FLAG) &&
       (frame->format == XINE_IMGFMT_YV12 || frame->format == XINE_IMGFMT_YUY2) );
 }
 
@@ -547,7 +547,7 @@ static void apply_chroma_filter( uint8_t *data, int stride, int width, int heigh
    */
   for( i = 0; i < height; i++, data += stride ) {
     vfilter_chroma_332_packed422_scanline( data, width,
-                                           data, 
+                                           data,
                                            (i) ? (data - stride) : data,
                                            (i < height-1) ? (data + stride) : data );
   }
@@ -555,7 +555,7 @@ static void apply_chroma_filter( uint8_t *data, int stride, int width, int heigh
 
 /* Build the output frame from the specified field. */
 static int deinterlace_build_output_field(
-             post_plugin_deinterlace_t *this, post_video_port_t *port, 
+             post_plugin_deinterlace_t *this, post_video_port_t *port,
              xine_stream_t *stream,
              vo_frame_t *frame, vo_frame_t *yuy2_frame,
              int bottom_field, int second_field,
@@ -564,14 +564,14 @@ static int deinterlace_build_output_field(
   vo_frame_t *deinterlaced_frame;
   int scaler = 1;
   int force24fps;
-            
+
   force24fps = this->judder_correction && !this->cheap_mode &&
                ( this->pulldown == PULLDOWN_VEKTOR && this->tvtime->filmmode );
-  
+
   if( this->tvtime->curmethod->doscalerbob ) {
     scaler = 2;
   }
-    
+
   pthread_mutex_unlock (&this->lock);
   deinterlaced_frame = port->original_port->get_frame(port->original_port,
     frame->width, frame->height / scaler, frame->ratio, yuy2_frame->format,
@@ -584,7 +584,7 @@ static int deinterlace_build_output_field(
   deinterlaced_frame->crop_bottom = frame->crop_bottom;
 
   _x_extra_info_merge(deinterlaced_frame->extra_info, frame->extra_info);
-    
+
   if( skip > 0 && !this->pulldown ) {
     deinterlaced_frame->bad_frame = 1;
   } else {
@@ -593,60 +593,60 @@ static int deinterlace_build_output_field(
         deinterlaced_frame->bad_frame = !tvtime_build_copied_field(this->tvtime,
                            deinterlaced_frame->base[0],
                            yuy2_frame->base[0], bottom_field,
-                           frame->width, frame->height, 
+                           frame->width, frame->height,
                            yuy2_frame->pitches[0], deinterlaced_frame->pitches[0] );
       } else {
         deinterlaced_frame->bad_frame = !tvtime_build_copied_field(this->tvtime,
                            deinterlaced_frame->base[0],
                            yuy2_frame->base[0], bottom_field,
-                           frame->width/2, frame->height, 
+                           frame->width/2, frame->height,
                            yuy2_frame->pitches[0], deinterlaced_frame->pitches[0] );
         deinterlaced_frame->bad_frame += !tvtime_build_copied_field(this->tvtime,
                            deinterlaced_frame->base[1],
                            yuy2_frame->base[1], bottom_field,
-                           frame->width/4, frame->height/2, 
+                           frame->width/4, frame->height/2,
                            yuy2_frame->pitches[1], deinterlaced_frame->pitches[1] );
         deinterlaced_frame->bad_frame += !tvtime_build_copied_field(this->tvtime,
                            deinterlaced_frame->base[2],
                            yuy2_frame->base[2], bottom_field,
-                           frame->width/4, frame->height/2, 
+                           frame->width/4, frame->height/2,
                            yuy2_frame->pitches[2], deinterlaced_frame->pitches[2] );
       }
     } else {
       if( yuy2_frame->format == XINE_IMGFMT_YUY2 ) {
         deinterlaced_frame->bad_frame = !tvtime_build_deinterlaced_frame(this->tvtime,
                            deinterlaced_frame->base[0],
-                           yuy2_frame->base[0], 
-                           (this->recent_frame[0])?this->recent_frame[0]->base[0]:yuy2_frame->base[0], 
+                           yuy2_frame->base[0],
+                           (this->recent_frame[0])?this->recent_frame[0]->base[0]:yuy2_frame->base[0],
                            (this->recent_frame[1])?this->recent_frame[1]->base[0]:yuy2_frame->base[0],
-                           bottom_field, second_field, frame->width, frame->height, 
+                           bottom_field, second_field, frame->width, frame->height,
                            yuy2_frame->pitches[0], deinterlaced_frame->pitches[0]);
       } else {
         deinterlaced_frame->bad_frame = !tvtime_build_deinterlaced_frame(this->tvtime,
                            deinterlaced_frame->base[0],
-                           yuy2_frame->base[0], 
-                           (this->recent_frame[0])?this->recent_frame[0]->base[0]:yuy2_frame->base[0], 
+                           yuy2_frame->base[0],
+                           (this->recent_frame[0])?this->recent_frame[0]->base[0]:yuy2_frame->base[0],
                            (this->recent_frame[1])?this->recent_frame[1]->base[0]:yuy2_frame->base[0],
-                           bottom_field, second_field, frame->width/2, frame->height, 
+                           bottom_field, second_field, frame->width/2, frame->height,
                            yuy2_frame->pitches[0], deinterlaced_frame->pitches[0]);
         deinterlaced_frame->bad_frame += !tvtime_build_deinterlaced_frame(this->tvtime,
                            deinterlaced_frame->base[1],
-                           yuy2_frame->base[1], 
-                           (this->recent_frame[0])?this->recent_frame[0]->base[1]:yuy2_frame->base[1], 
+                           yuy2_frame->base[1],
+                           (this->recent_frame[0])?this->recent_frame[0]->base[1]:yuy2_frame->base[1],
                            (this->recent_frame[1])?this->recent_frame[1]->base[1]:yuy2_frame->base[1],
                            bottom_field, second_field, frame->width/4, frame->height/2,
                            yuy2_frame->pitches[1], deinterlaced_frame->pitches[1]);
         deinterlaced_frame->bad_frame += !tvtime_build_deinterlaced_frame(this->tvtime,
                            deinterlaced_frame->base[2],
-                           yuy2_frame->base[2], 
-                           (this->recent_frame[0])?this->recent_frame[0]->base[2]:yuy2_frame->base[2], 
+                           yuy2_frame->base[2],
+                           (this->recent_frame[0])?this->recent_frame[0]->base[2]:yuy2_frame->base[2],
                            (this->recent_frame[1])?this->recent_frame[1]->base[2]:yuy2_frame->base[2],
-                           bottom_field, second_field, frame->width/4, frame->height/2, 
+                           bottom_field, second_field, frame->width/4, frame->height/2,
                            yuy2_frame->pitches[2], deinterlaced_frame->pitches[2]);
       }
     }
   }
-      
+
   pthread_mutex_unlock (&this->lock);
   if( force24fps ) {
     if( !deinterlaced_frame->bad_frame ) {
@@ -658,7 +658,7 @@ static int deinterlace_build_output_field(
         deinterlaced_frame->pts = 0;
       deinterlaced_frame->duration = FPS_24_DURATION;
       if( this->chroma_filter && !this->cheap_mode )
-        apply_chroma_filter( deinterlaced_frame->base[0], deinterlaced_frame->pitches[0], 
+        apply_chroma_filter( deinterlaced_frame->base[0], deinterlaced_frame->pitches[0],
                              frame->width, frame->height / scaler );
       skip = deinterlaced_frame->draw(deinterlaced_frame, stream);
     } else {
@@ -668,15 +668,15 @@ static int deinterlace_build_output_field(
     deinterlaced_frame->pts = pts;
     deinterlaced_frame->duration = duration;
     if( this->chroma_filter && !this->cheap_mode && !deinterlaced_frame->bad_frame )
-      apply_chroma_filter( deinterlaced_frame->base[0], deinterlaced_frame->pitches[0], 
+      apply_chroma_filter( deinterlaced_frame->base[0], deinterlaced_frame->pitches[0],
                            frame->width, frame->height / scaler );
     skip = deinterlaced_frame->draw(deinterlaced_frame, stream);
   }
-    
+
   /* _x_post_frame_copy_up(frame, deinterlaced_frame); */
   deinterlaced_frame->free(deinterlaced_frame);
   pthread_mutex_lock (&this->lock);
-  
+
   return skip;
 }
 
@@ -693,7 +693,7 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
   orig_frame = frame;
   _x_post_frame_copy_down(frame, frame->next);
   frame = frame->next;
-  
+
   /* update tvtime context and method */
   pthread_mutex_lock (&this->lock);
   if( this->tvtime_changed ) {
@@ -704,8 +704,8 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
     else
       this->tvtime->curmethod = NULL;
 
-    port->original_port->set_property(port->original_port, 
-                                XINE_PARAM_VO_DEINTERLACE, 
+    port->original_port->set_property(port->original_port,
+                                XINE_PARAM_VO_DEINTERLACE,
                                 !this->cur_method);
 
     this->tvtime_changed = 0;
@@ -724,11 +724,11 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
   lprintf("frame flags pf: %d rff: %d tff: %d duration: %d\n",
            frame->progressive_frame, frame->repeat_first_field,
            frame->top_field_first, frame->duration);
-  
+
   /* detect special rff patterns */
   this->rff_pattern = this->rff_pattern << 1;
   this->rff_pattern |= !!frame->repeat_first_field;
-  
+
   if( ((this->rff_pattern & 0xff) == 0xaa ||
       (this->rff_pattern & 0xff) == 0x55) ) {
     /*
@@ -740,7 +740,7 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
 
   /* using frame->progressive_frame may help displaying still menus.
    * however, it is known that some rare material set it wrong.
-   * 
+   *
    * we also assume that repeat_first_field is progressive (it doesn't
    * make much sense to display interlaced fields out of order)
    */
@@ -748,8 +748,8 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
       (frame->repeat_first_field || frame->progressive_frame) ) {
     progressive = 1;
   }
-  
-  if( !frame->bad_frame && 
+
+  if( !frame->bad_frame &&
       (frame->flags & VO_INTERLACED_FLAG) &&
       this->tvtime->curmethod ) {
 
@@ -761,17 +761,17 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
       yuy2_frame = port->original_port->get_frame(port->original_port,
         frame->width, frame->height, frame->ratio, XINE_IMGFMT_YUY2, frame->flags | VO_BOTH_FIELDS);
       _x_post_frame_copy_down(frame, yuy2_frame);
-  
+
       /* the logic for deciding upsampling to use comes from:
        * http://www.hometheaterhifi.com/volume_8_2/dvd-benchmark-special-report-chroma-bug-4-2001.html
        */
-      yv12_to_yuy2(frame->base[0], frame->pitches[0], 
-                   frame->base[1], frame->pitches[1], 
-                   frame->base[2], frame->pitches[2], 
+      yv12_to_yuy2(frame->base[0], frame->pitches[0],
+                   frame->base[1], frame->pitches[1],
+                   frame->base[2], frame->pitches[2],
                    yuy2_frame->base[0], yuy2_frame->pitches[0],
-                   frame->width, frame->height, 
+                   frame->width, frame->height,
                    frame->progressive_frame || progressive );
-  
+
     } else {
       yuy2_frame = frame;
       yuy2_frame->lock(yuy2_frame);
@@ -781,10 +781,10 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
     pthread_mutex_lock (&this->lock);
     /* check if frame format changed */
     for(i = 0; i < NUM_RECENT_FRAMES; i++ ) {
-      if( this->recent_frame[i] && 
-          (this->recent_frame[i]->width != frame->width || 
-           this->recent_frame[i]->height != frame->height || 
-           this->recent_frame[i]->format != yuy2_frame->format ) ) { 
+      if( this->recent_frame[i] &&
+          (this->recent_frame[i]->width != frame->width ||
+           this->recent_frame[i]->height != frame->height ||
+           this->recent_frame[i]->format != yuy2_frame->format ) ) {
         this->recent_frame[i]->free(this->recent_frame[i]);
         this->recent_frame[i] = NULL;
       }
@@ -797,10 +797,10 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
       framerate_mode = FRAMERATE_HALF_TFF;
       this->tvtime->pulldown_alg = PULLDOWN_NONE;
     }
-    
+
     if( framerate_mode == FRAMERATE_FULL ) {
       int top_field_first = frame->top_field_first;
-      
+
       /* if i understood mpeg2 specs correctly, top_field_first
        * shall be zero for field pictures and the output order
        * is the same that the fields are decoded.
@@ -812,7 +812,7 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
       if ( (frame->flags & VO_BOTH_FIELDS) != VO_BOTH_FIELDS ) {
         top_field_first = (frame->flags & VO_TOP_FIELD) ? 1 : 0;
       }
-      
+
       if ( top_field_first ) {
         fields[0] = 0;
         fields[1] = 1;
@@ -825,8 +825,8 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
     } else if ( framerate_mode == FRAMERATE_HALF_BFF ) {
       fields[0] = 1;
     }
-    
-    
+
+
     if( progressive ) {
 
       /* If the previous field was interlaced and this one is progressive
@@ -838,10 +838,10 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
        * duration is used in the calculation because the generated frame
        * represents the second half of the previous frame.
        */
-      if (this->recent_frame[0] && !this->recent_frame[0]->progressive_frame && 
+      if (this->recent_frame[0] && !this->recent_frame[0]->progressive_frame &&
           this->tvtime->curmethod->delaysfield)
       {
-	skip = deinterlace_build_output_field( 
+	skip = deinterlace_build_output_field(
           this, port, stream,
           frame, yuy2_frame,
           fields[0], 0,
@@ -867,19 +867,19 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
       /* Build the output from the first field. */
       if ( !(this->recent_frame[0] && this->recent_frame[0]->progressive_frame &&
              this->tvtime->curmethod->delaysfield) ) {
-        skip = deinterlace_build_output_field( 
+        skip = deinterlace_build_output_field(
           this, port, stream,
           frame, yuy2_frame,
           fields[0], 0,
           frame->pts,
           (framerate_mode == FRAMERATE_FULL) ? frame->duration/2 : frame->duration,
           0);
-      }  
+      }
 
       if( framerate_mode == FRAMERATE_FULL ) {
-  
+
         /* Build the output from the second field. */
-        skip = deinterlace_build_output_field( 
+        skip = deinterlace_build_output_field(
           this, port, stream,
           frame, yuy2_frame,
           fields[1], 1,
@@ -889,7 +889,7 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
       }
     }
 
-    /* don't drop frames when pulldown mode is enabled. otherwise 
+    /* don't drop frames when pulldown mode is enabled. otherwise
      * pulldown detection fails (yo-yo effect has also been seen)
      */
     if( this->pulldown )
@@ -897,7 +897,7 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
 
     /* store back progressive flag for frame history */
     yuy2_frame->progressive_frame = progressive;
-      
+
     /* keep track of recent frames */
     i = NUM_RECENT_FRAMES-1;
     if( this->recent_frame[i] )
@@ -918,8 +918,8 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
   } else {
     skip = frame->draw(frame, stream);
   }
-  
+
   _x_post_frame_copy_up(orig_frame, frame);
-  
+
   return skip;
 }

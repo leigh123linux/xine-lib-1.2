@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -62,10 +62,10 @@ typedef struct lpcm_decoder_s {
   xine_stream_t   *stream;
 
   uint32_t         rate;
-  uint32_t         bits_per_sample; 
-  uint32_t         number_of_channels; 
-  uint32_t         ao_cap_mode; 
-   
+  uint32_t         bits_per_sample;
+  uint32_t         number_of_channels;
+  uint32_t         ao_cap_mode;
+
   int              output_open;
   int		   cpu_be;	/**< TRUE, if we're a Big endian CPU */
 } lpcm_decoder_t;
@@ -86,7 +86,7 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   int             stream_be;
   audio_buffer_t *audio_buffer;
   int             format_changed = 0;
-  
+
   /* Drop preview data */
   if (buf->decoder_flags & BUF_FLAG_PREVIEW)
     return;
@@ -97,7 +97,7 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     unsigned int bits_per_sample = 16;
     unsigned int sample_rate = 0;
     unsigned int num_channels;
-      
+
     num_channels = (buf->decoder_info[2] & 0x7) + 1;
     switch ((buf->decoder_info[2]>>4) & 3) {
     case 0: sample_rate = 48000; break;
@@ -110,7 +110,7 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       case 1: bits_per_sample = 20; break;
       case 2: bits_per_sample = 24; break;
     }
-    
+
     if( this->bits_per_sample != bits_per_sample ||
         this->number_of_channels != num_channels ||
         this->rate != sample_rate ||
@@ -119,16 +119,16 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       this->number_of_channels = num_channels;
       this->rate = sample_rate;
       format_changed++;
-    } 
+    }
   }
-  
+
   if( buf->decoder_flags & BUF_FLAG_STDHEADER ) {
     this->rate=buf->decoder_info[1];
-    this->bits_per_sample=buf->decoder_info[2] ; 
-    this->number_of_channels=buf->decoder_info[3] ; 
+    this->bits_per_sample=buf->decoder_info[2] ;
+    this->number_of_channels=buf->decoder_info[3] ;
     format_changed++;
   }
-  
+
   /*
    * (re-)open output device
    */
@@ -152,11 +152,11 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
     /* stream/meta info */
     _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, "Linear PCM");
-    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITRATE, 
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITRATE,
         this->bits_per_sample * this->rate * this->number_of_channels);
   }
 
-  if (!this->output_open || (buf->decoder_flags & BUF_FLAG_HEADER) ) 
+  if (!this->output_open || (buf->decoder_flags & BUF_FLAG_HEADER) )
     return;
 
   audio_buffer = this->stream->audio_out->get_buffer (this->stream->audio_out);
@@ -164,7 +164,7 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   /* Swap LPCM samples into native byte order, if necessary */
   buf->type &= 0xffff0000;
   stream_be = ( buf->type == BUF_AUDIO_LPCM_BE );
- 
+
   if( this->bits_per_sample == 16 ){
     if (stream_be != this->cpu_be)
       swab (sample_buffer, audio_buffer->mem, buf->size);
@@ -175,20 +175,20 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     uint8_t *s = (uint8_t *)sample_buffer;
     uint8_t *d = (uint8_t *)audio_buffer->mem;
     int n = buf->size;
-    
+
     if (stream_be != this->cpu_be) {
       while( n >= 0 ) {
         swab( s, d, 8 );
         s += 10;
         d += 8;
-        n -= 10; 
+        n -= 10;
       }
     } else {
       while( n >= 0 ) {
         memcpy( d, s, 8 );
         s += 10;
         d += 8;
-        n -= 10; 
+        n -= 10;
       }
     }
   } else if( this->bits_per_sample == 24 ) {
@@ -227,7 +227,7 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   } else {
     memcpy (audio_buffer->mem, sample_buffer, buf->size);
   }
-  
+
   audio_buffer->vpts       = buf->pts;
   audio_buffer->num_frames = (((buf->size*8)/this->number_of_channels)/this->bits_per_sample);
 
@@ -236,9 +236,9 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 }
 
 static void lpcm_dispose (audio_decoder_t *this_gen) {
-  lpcm_decoder_t *this = (lpcm_decoder_t *) this_gen; 
+  lpcm_decoder_t *this = (lpcm_decoder_t *) this_gen;
 
-  if (this->output_open) 
+  if (this->output_open)
     this->stream->audio_out->close (this->stream->audio_out, this->stream);
   this->output_open = 0;
 
@@ -258,11 +258,11 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   this->output_open   = 0;
   this->rate          = 0;
-  this->bits_per_sample=0; 
-  this->number_of_channels=0; 
-  this->ao_cap_mode=0; 
+  this->bits_per_sample=0;
+  this->number_of_channels=0;
+  this->ao_cap_mode=0;
   this->stream = stream;
- 
+
   this->cpu_be        = ( htons(1) == 1 );
 
   return &this->audio_decoder;
@@ -282,7 +282,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   return this;
 }
 
-static const uint32_t audio_types[] = { 
+static const uint32_t audio_types[] = {
   BUF_AUDIO_LPCM_BE, BUF_AUDIO_LPCM_LE, 0
 };
 
@@ -292,7 +292,7 @@ static const decoder_info_t dec_info_audio = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_AUDIO_DECODER, 16, "pcm", XINE_VERSION_CODE, &dec_info_audio, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

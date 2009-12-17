@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -46,7 +46,7 @@
 #define NUM_PREVIEW_BUFFERS 50
 #define SCRATCH_SIZE 256
 
-typedef struct {  
+typedef struct {
   demux_plugin_t      demux_plugin;
 
   xine_stream_t       *stream;
@@ -83,7 +83,7 @@ static int demux_mpeg_elem_next (demux_mpeg_elem_t *this, int preview_mode) {
   buf->content               = buf->mem;
   buf->pts                   = 0;
   if( this->input->get_length (this->input) )
-    buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) * 
+    buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) *
                                      65535 / this->input->get_length (this->input) );
   buf->type                  = BUF_VIDEO_MPEG;
 
@@ -91,7 +91,7 @@ static int demux_mpeg_elem_next (demux_mpeg_elem_t *this, int preview_mode) {
     buf->decoder_flags = BUF_FLAG_PREVIEW;
 
   this->video_fifo->put(this->video_fifo, buf);
-  
+
   return 1;
 }
 
@@ -269,7 +269,7 @@ static const demuxer_info_t demux_info_elem = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_DEMUX, 27, "elem", XINE_VERSION_CODE, &demux_info_elem, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

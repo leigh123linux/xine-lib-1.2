@@ -12,7 +12,7 @@ AM_LDFLAGS = $(xineplug_ldflags)
 noinst_HEADERS = asfheader.h qtpalette.h group_games.h group_audio.h id3.h ebml.h matroska.h demux_matroska.h iff.h flacutils.h  real_common.h
 
 if ENABLE_ASF
-asf_module = xineplug_dmx_asf.la 
+asf_module = xineplug_dmx_asf.la
 endif
 
 if ENABLE_MNG
@@ -63,7 +63,7 @@ xineplug_dmx_mpeg_block_la_CFLAGS = $(AM_CFLAGS) $(AVUTIL_CFLAGS)
 xineplug_dmx_mpeg_block_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(AVUTIL_LIBS)
 
 xineplug_dmx_mpeg_la_SOURCES = demux_mpeg.c
-xineplug_dmx_mpeg_la_LIBADD = $(XINE_LIB)
+xineplug_dmx_mpeg_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineplug_dmx_mpeg_elem_la_SOURCES = demux_elem.c
 xineplug_dmx_mpeg_elem_la_LIBADD = $(XINE_LIB)

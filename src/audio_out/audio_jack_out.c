@@ -89,7 +89,7 @@ typedef struct
 /**
  * \brief get the number of free bytes in the buffer
  * \return number of free bytes in buffer
- * 
+ *
  * may only be called by Xine's thread
  * return value may change between immediately following two calls,
  * and the real number of free bytes might be larger!

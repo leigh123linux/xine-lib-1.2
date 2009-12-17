@@ -6,7 +6,7 @@ static char *get_win32_codecs_path(config_values_t *cfg) {
   DIR                *dir;
   char               *path, *cfgpath;
   char               *listpath[] = { "",
-                                     "/usr/lib/codecs", 
+                                     "/usr/lib/codecs",
                                      "/usr/local/lib/codecs",
                                      "/usr/lib/win32",
                                      "/usr/local/lib/win32",
@@ -35,5 +35,5 @@ static char *get_win32_codecs_path(config_values_t *cfg) {
     i++;
   }
 
-  return NULL; 
+  return NULL;
 }

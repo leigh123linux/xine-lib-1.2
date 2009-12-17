@@ -139,7 +139,7 @@ static int open_aiff_file(demux_aiff_t *this) {
     }
     chunk_type = _X_BE_32(&preamble[0]);
     chunk_size = _X_BE_32(&preamble[4]);
-    
+
     if (chunk_type == COMM_TAG) {
       unsigned char buffer[100];
 
@@ -174,7 +174,7 @@ static int open_aiff_file(demux_aiff_t *this) {
         (this->audio_bits / 8);
       this->running_time = (this->audio_frames / this->audio_sample_rate) * 1000;
 
-      /* we should send only complete frames to decoder, as it 
+      /* we should send only complete frames to decoder, as it
        * doesn't handle underconsumption yet */
       this->audio_block_align = PCM_BLOCK_ALIGN - PCM_BLOCK_ALIGN % (this->audio_bits / 8 * this->audio_channels);
 
@@ -210,7 +210,7 @@ static int demux_aiff_send_chunk (demux_plugin_t *this_gen) {
   /* just load data chunks from wherever the stream happens to be
    * pointing; issue a DEMUX_FINISHED status if EOF is reached */
   remaining_sample_bytes = this->audio_block_align;
-  current_file_pos = 
+  current_file_pos =
     this->input->get_current_pos(this->input) - this->data_start;
 
   current_pts = current_file_pos;
@@ -258,7 +258,7 @@ static int demux_aiff_send_chunk (demux_plugin_t *this_gen) {
 
     this->audio_fifo->put (this->audio_fifo, buf);
   }
-  
+
   return this->status;
 }
 
@@ -408,7 +408,7 @@ void *demux_aiff_init_plugin (xine_t *xine, void *data) {
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.description     = N_("AIFF file demux plugin");
   this->demux_class.identifier      = "AIFF";
-  this->demux_class.mimetypes       = 
+  this->demux_class.mimetypes       =
     "audio/x-aiff: aif, aiff: AIFF audio;"
     "audio/aiff: aif, aiff: AIFF audio;"
     "audio/x-pn-aiff: aif, aiff: AIFF audio;";

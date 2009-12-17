@@ -83,7 +83,7 @@ static int demux_shn_send_chunk(demux_plugin_t *this_gen) {
   buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
   buf->type = BUF_AUDIO_SHORTEN;
   if( this->input->get_length (this->input) )
-    buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) * 
+    buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) *
                                      65535 / this->input->get_length (this->input) );
   buf->pts = 0;
 
@@ -92,7 +92,7 @@ static int demux_shn_send_chunk(demux_plugin_t *this_gen) {
     buf->free_buffer(buf);
     this->status = DEMUX_FINISHED;
     return this->status;
-  } else 
+  } else
     buf->size = bytes_read;
 
   /* each buffer stands on its own */

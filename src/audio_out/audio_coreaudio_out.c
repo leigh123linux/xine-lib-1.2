@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -54,7 +54,7 @@
 
 #define AO_OUT_COREAUDIO_IFACE_VERSION 9
 
-#define GAP_TOLERANCE        AO_MAX_GAP 
+#define GAP_TOLERANCE        AO_MAX_GAP
 #define BUFSIZE              30720
 /* Number of seconds to wait for buffered data to arrive/be used
  * before giving up. */
@@ -75,7 +75,7 @@ typedef struct coreaudio_driver_s {
 
   Component      au_component;
   Component      converter_component;
- 
+
   AudioUnit      au_unit;
   AudioUnit      converter_unit;
 
@@ -86,7 +86,7 @@ typedef struct coreaudio_driver_s {
 
   int            mute;
   Float32        pre_mute_volume;
-  
+
   pthread_mutex_t mutex;
   pthread_cond_t  buffer_ready_for_reading;
   pthread_cond_t  buffer_ready_for_writing;
@@ -131,7 +131,7 @@ static OSStatus ao_coreaudio_render_proc (coreaudio_driver_t *this,
       pthread_mutex_lock (&this->mutex);
       if(this->buf_head < ((BUFSIZE) >> 2)) {
         set_to_future(&future);
-        if(pthread_cond_timedwait 
+        if(pthread_cond_timedwait
              (&this->buffer_ready_for_reading, &this->mutex, &future) == ETIMEDOUT)
         {
           /* Timed out, give up and fill remainder with silence. */
@@ -143,13 +143,13 @@ static OSStatus ao_coreaudio_render_proc (coreaudio_driver_t *this,
           return noErr;
         }
       }
-      
+
       if(this->buf_head < buffer_size - buffer_progress) {
         chunk_size = this->buf_head;
       } else {
         chunk_size = buffer_size - buffer_progress;
       }
-    
+
       xine_fast_memcpy (ioData->mBuffers[i].mData, this->buf, chunk_size);
       if(chunk_size < this->buf_head) {
         memmove(this->buf, &(this->buf[chunk_size]), this->buf_head - chunk_size);
@@ -188,7 +188,7 @@ static int ao_coreaudio_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate
   AudioStreamBasicDescription format;
   AudioUnitConnection connection;
   ComponentDescription desc;
-  
+
   switch (mode) {
   case AO_CAP_MODE_MONO:
     this->num_channels = 1;
@@ -209,7 +209,7 @@ static int ao_coreaudio_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate
   pthread_cond_init (&this->buffer_ready_for_reading, NULL);
   pthread_cond_init (&this->buffer_ready_for_writing, NULL);
 
-  xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG,
            "audio_coreaudio_out: ao_open bits=%d rate=%d, mode=%d\n", bits, rate, mode);
 
   /* find an audio output unit */
@@ -218,17 +218,17 @@ static int ao_coreaudio_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate
   desc.componentManufacturer = kAudioUnitManufacturer_Apple;
   desc.componentFlags = 0;
   desc.componentFlagsMask = 0;
-                  
+
   this->au_component = FindNextComponent (NULL, &desc);
 
   if (this->au_component == NULL) {
-      xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG,
                "audio_coreaudio_out: Unable to find a usable audio output unit component\n");
       return 0;
   }
-  
+
   OpenAComponent (this->au_component, &this->au_unit);
-  
+
   /* find a converter unit */
   desc.componentType = kAudioUnitType_FormatConverter;
   desc.componentSubType = kAudioUnitSubType_AUConverter;
@@ -236,11 +236,11 @@ static int ao_coreaudio_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate
   this->converter_component = FindNextComponent (NULL, &desc);
 
   if (this->converter_component == NULL) {
-      xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG,
                "audio_coreaudio_out: Unable to find a usable audio converter unit component\n");
       return 0;
   }
-  
+
   OpenAComponent (this->converter_component, &this->converter_unit);
 
   /* set up the render procedure */
@@ -258,7 +258,7 @@ static int ao_coreaudio_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate
   connection.destInputNumber = 0;
   AudioUnitSetProperty (this->au_unit,
                         kAudioUnitProperty_MakeConnection,
-                        kAudioUnitScope_Input, 0, 
+                        kAudioUnitScope_Input, 0,
                         &connection, sizeof(connection));
 
   /* set up the audio format we want to use */
@@ -274,7 +274,7 @@ static int ao_coreaudio_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate
   format.mBytesPerFrame    = this->bytes_per_frame;
   format.mFramesPerPacket  = 1;
   format.mBytesPerPacket   = format.mBytesPerFrame;
- 
+
   AudioUnitSetProperty (this->converter_unit,
                         kAudioUnitProperty_StreamFormat,
                         kAudioUnitScope_Input,
@@ -339,7 +339,7 @@ static int ao_coreaudio_write(ao_driver_t *this_gen, int16_t *data,
     pthread_mutex_lock (&this->mutex);
     if(this->buf_head > ((3 * BUFSIZE)>>2)) {
       set_to_future(&future);
-      if(pthread_cond_timedwait 
+      if(pthread_cond_timedwait
            (&this->buffer_ready_for_writing, &this->mutex, &future) == ETIMEDOUT)
       {
         /* Timed out, give up. */
@@ -354,10 +354,10 @@ static int ao_coreaudio_write(ao_driver_t *this_gen, int16_t *data,
     } else {
       chunk_size = remaining_bytes;
     }
-    
+
     xine_fast_memcpy(&(this->buf[this->buf_head]), data, chunk_size);
     this->buf_head += chunk_size;
-    remaining_bytes -= chunk_size; 
+    remaining_bytes -= chunk_size;
 
     if(this->buf_head > 0) {
       pthread_cond_broadcast (&this->buffer_ready_for_reading);
@@ -389,13 +389,13 @@ static void ao_coreaudio_close(ao_driver_t *this_gen)
       CloseComponent (this->au_unit);
       this->au_unit = 0;
   }
-  
+
   if (this->converter_unit) {
       AudioUnitUninitialize (this->converter_unit);
       CloseComponent (this->converter_unit);
       this->converter_unit = 0;
   }
-  
+
   if (this->au_component) {
       this->au_component = NULL;
   }
@@ -417,7 +417,7 @@ static uint32_t ao_coreaudio_get_capabilities (ao_driver_t *this_gen) {
 static void ao_coreaudio_exit(ao_driver_t *this_gen)
 {
   coreaudio_driver_t *this = (coreaudio_driver_t *) this_gen;
-  
+
   ao_coreaudio_close(this_gen);
 
   free (this);
@@ -436,7 +436,7 @@ static int ao_coreaudio_get_property (ao_driver_t *this_gen, int property) {
                                kAudioUnitScope_Output,
                                0, &val);
 	} else {
-	  val = this->pre_mute_volume;	
+	  val = this->pre_mute_volume;
 	}
         return (int) (val * 12);
 	break;
@@ -472,12 +472,12 @@ static int ao_coreaudio_set_property (ao_driver_t *this_gen, int property, int v
                             kHALOutputParam_Volume,
                             kAudioUnitScope_Output,
                             0, &(this->pre_mute_volume));
-            
+
             AudioUnitSetParameter (this->au_unit,
                             kHALOutputParam_Volume,
                             kAudioUnitScope_Output,
                             0, 0, 0);
-            
+
             this->mute = 1;
           }
         } else {
@@ -487,14 +487,14 @@ static int ao_coreaudio_set_property (ao_driver_t *this_gen, int property, int v
                             kHALOutputParam_Volume,
                             kAudioUnitScope_Output,
                             0, this->pre_mute_volume, 0);
-            
+
             this->mute = 0;
           }
 	}
 	return value;
 	break;
   }
-  
+
   return ~value;
 }
 
@@ -521,7 +521,7 @@ static int ao_coreaudio_ctrl(ao_driver_t *this_gen, int cmd, ...) {
   return 0;
 }
 
-static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, 
+static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
                                  const void *data) {
 
   coreaudio_class_t     *class = (coreaudio_class_t *) class_gen;
@@ -590,7 +590,7 @@ static const ao_info_t ao_info_coreaudio = {
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_AUDIO_OUT, AO_OUT_COREAUDIO_IFACE_VERSION, "coreaudio", XINE_VERSION_CODE, &ao_info_coreaudio, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

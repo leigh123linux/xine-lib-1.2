@@ -49,7 +49,7 @@
 // upon which give the smaller comb factor, and then clip to avoid large damage
 // when wrong.
 //
-// I'd intended this to be part of a larger more elaborate method added to 
+// I'd intended this to be part of a larger more elaborate method added to
 // Blended Clip but this give too good results for the CPU to ignore here.
 
 static void copy_scanline( uint8_t *output,
@@ -135,7 +135,7 @@ static void deinterlace_greedy_packed422_scanline_mmxext( uint8_t *output,
         paddusb_r2r( mm3, mm2 ); // now = Max(L1,L3)
 
         pcmpeqb_r2r( mm7, mm7 ); // all ffffffff
-        psubusb_r2r( mm1, mm7 ); // - L1 
+        psubusb_r2r( mm1, mm7 ); // - L1
         paddusb_r2r( mm7, mm3 ); // add, may sat at fff..
         psubusb_r2r( mm7, mm3 ); // now = Min(L1,L3)
 
@@ -147,7 +147,7 @@ static void deinterlace_greedy_packed422_scanline_mmxext( uint8_t *output,
         paddusb_r2r( mm3, mm4 );        // now = Max(best,Min(L1,L3)
 
         pcmpeqb_r2r( mm7, mm7 );        // all ffffffff
-        psubusb_r2r( mm4, mm7 );        // - Max(best,Min(best,L3) 
+        psubusb_r2r( mm4, mm7 );        // - Max(best,Min(best,L3)
         paddusb_r2r( mm7, mm2 );        // add may sat at FFF..
         psubusb_r2r( mm7, mm2 );        // now = Min( Max(best, Min(L1,L3), L2 )=L2 clipped
 

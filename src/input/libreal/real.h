@@ -20,7 +20,7 @@
  * special functions for real streams.
  * adopted from joschkas real tools.
  */
- 
+
 #ifndef HAVE_REAL_H
 #define HAVE_REAL_H
 

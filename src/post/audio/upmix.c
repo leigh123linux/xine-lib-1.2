@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -167,13 +167,13 @@ static int upmix_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream,
 
   _x_post_rewire(&this->post);
   _x_post_inc_usage(port);
-  
+
   port->stream = stream;
   port->bits = bits;
   port->rate = rate;
   port->mode = mode;
   capabilities = port->original_port->get_capabilities(port->original_port);
-  
+
   this->channels = _x_ao_mode2channels(mode);
   /* FIXME: Handle all desired output formats */
   if ((capabilities & AO_CAP_MODE_5_1CHANNEL) && (capabilities & AO_CAP_FLOAT32)) {
@@ -232,7 +232,7 @@ static int upmix_frames_2to51_any_to_float( uint8_t *dst8, uint8_t *src8, int nu
   float right;
   float sum;
   int frame;
-  int src_units_per_sample=1; 
+  int src_units_per_sample=1;
   if (step_channel_in == 3) src_units_per_sample=step_channel_in; /* Special handling for 24 bit 3byte input */
 
   for (frame=0;frame < num_frames; frame++) {
@@ -297,9 +297,9 @@ static int upmix_frames_2to51_any_to_float( uint8_t *dst8, uint8_t *src8, int nu
   return frame;
 }
 
-static void upmix_port_put_buffer (xine_audio_port_t *port_gen, 
+static void upmix_port_put_buffer (xine_audio_port_t *port_gen,
                              audio_buffer_t *buf, xine_stream_t *stream) {
-  
+
   post_audio_port_t  *port = (post_audio_port_t *)port_gen;
   post_plugin_upmix_t *this = (post_plugin_upmix_t *)port->post;
   int src_step_frame;
@@ -315,7 +315,7 @@ static void upmix_port_put_buffer (xine_audio_port_t *port_gen,
 
   if ((this->channels==2) && (this->channels_out==6)) {
     while (num_frames_processed < buf->num_frames) {
-      this->buf = port->original_port->get_buffer(port->original_port); 
+      this->buf = port->original_port->get_buffer(port->original_port);
       /* this->buf->num_frames is handled after the upmix */
       this->buf->vpts = buf->vpts;
       if (num_frames_processed != 0) this->buf->vpts = 0;
@@ -327,7 +327,7 @@ static void upmix_port_put_buffer (xine_audio_port_t *port_gen,
       this->buf->format.bits = 32; /* Upmix to floats */
       this->buf->format.rate = port->rate;
       this->buf->format.mode = AO_CAP_MODE_5_1CHANNEL;
-      _x_extra_info_merge( this->buf->extra_info, buf->extra_info); 
+      _x_extra_info_merge( this->buf->extra_info, buf->extra_info);
       step_channel_in = port->bits>>3;
       step_channel_out = this->buf->format.bits>>3;
       dst_step_frame = this->channels_out*step_channel_out;
@@ -353,18 +353,18 @@ static void upmix_port_put_buffer (xine_audio_port_t *port_gen,
         }
       }
       pthread_mutex_unlock (&this->lock);
-  
+
       num_frames_done = upmix_frames_2to51_any_to_float(data8dst, data8src, num_frames, step_channel_in, this->sub);
       this->buf->num_frames = num_frames_done;
       num_frames_processed+= num_frames_done;
       /* pass data to original port */
-      port->original_port->put_buffer(port->original_port, this->buf, stream );  
+      port->original_port->put_buffer(port->original_port, this->buf, stream );
     }
     /* free data from origial buffer */
     buf->num_frames=0; /* UNDOCUMENTED, but hey, it works! Force old audio_out buffer free. */
   }
-  port->original_port->put_buffer(port->original_port, buf, stream );  
-  
+  port->original_port->put_buffer(port->original_port, buf, stream );
+
   return;
 }
 
@@ -388,16 +388,16 @@ static post_plugin_t *upmix_open_plugin(post_class_t *class_gen, int inputs,
   post_out_t           *output;
   xine_post_in_t       *input_api;
   post_audio_port_t    *port;
-  
+
   if (!this || !audio_target || !audio_target[0] ) {
     free(this);
     return NULL;
   }
-  
+
   _x_post_init(&this->post, 1, 0);
 
   this->params.cut_off_freq = 100;
-  
+
   port = _x_post_intercept_audio_port(&this->post, audio_target[0], &input, &output);
   port->new_port.open       = upmix_port_open;
 #if 0
@@ -422,16 +422,16 @@ static post_plugin_t *upmix_open_plugin(post_class_t *class_gen, int inputs,
 void *upmix_init_plugin(xine_t *xine, void *data)
 {
   post_class_upmix_t *class = (post_class_upmix_t *)xine_xmalloc(sizeof(post_class_upmix_t));
-  
+
   if (!class)
     return NULL;
-  
+
   class->post_class.open_plugin     = upmix_open_plugin;
   class->post_class.identifier      = "upmix";
   class->post_class.description     = N_("upmix");
   class->post_class.dispose         = default_post_class_dispose;
-  
+
   class->xine                       = xine;
-  
+
   return class;
 }

@@ -423,7 +423,7 @@ static char * exec_path_append_subdir( char * string )
 		if (tmpchar) *tmpchar = 0;
 	}
 
-	// find the last occurance of a back 
+	// find the last occurance of a back
 	// slash or fore slash
 	back_slash = strrchr( tmp_win32_path, '\\' );
 	fore_slash = strrchr( tmp_win32_path, '/' );

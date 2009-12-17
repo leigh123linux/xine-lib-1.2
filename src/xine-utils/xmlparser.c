@@ -399,7 +399,7 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 	    current_subtree = subtree;
 	  } else {
 	    current_subtree->next = subtree;
-	    current_subtree = subtree; 
+	    current_subtree = subtree;
 	  }
 	  state = STATE_IDLE;
 	  break;
@@ -766,7 +766,7 @@ const char *xml_parser_get_property (const xml_node_t *node, const char *name) {
   return NULL;
 }
 
-int xml_parser_get_property_int (const xml_node_t *node, const char *name, 
+int xml_parser_get_property_int (const xml_node_t *node, const char *name,
 				 int def_value) {
 
   const char *v;
@@ -783,7 +783,7 @@ int xml_parser_get_property_int (const xml_node_t *node, const char *name,
     return ret;
 }
 
-int xml_parser_get_property_bool (const xml_node_t *node, const char *name, 
+int xml_parser_get_property_bool (const xml_node_t *node, const char *name,
 				  int def_value) {
 
   const char *v;

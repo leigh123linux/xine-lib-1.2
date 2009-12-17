@@ -37,9 +37,9 @@ noinst_HEADERS = plugins.h greedyhmacros.h
 
 if DEBUG_BUILD
 debug_sources   = greedy2frame.c
-nodebug_sources = 
+nodebug_sources =
 else
-debug_sources   = 
+debug_sources   =
 nodebug_sources = greedy2frame.c
 endif
 

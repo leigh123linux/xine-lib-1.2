@@ -229,7 +229,7 @@ static int config_section_enum(const char *sect) {
     NULL
   };
   int i = 0;
-  
+
   while (known_section[i])
     if (strcmp(sect, known_section[i++]) == 0)
       return i;
@@ -238,7 +238,7 @@ static int config_section_enum(const char *sect) {
 
 static void config_key_split(const char *key, char **base, char **section, char **subsect, char **name) {
   char *parse;
-  
+
   *base = strdup(key);
   if ((parse = strchr(*base, '.'))) {
     *section = *base;
@@ -263,10 +263,10 @@ static void config_insert(config_values_t *this, cfg_entry_t *new_entry) {
   cfg_entry_t *cur, *prev;
   char *new_base, *new_section, *new_subsect, *new_name;
   char *cur_base, *cur_section, *cur_subsect, *cur_name;
-  
+
   /* extract parts of the new key */
   config_key_split(new_entry->key, &new_base, &new_section, &new_subsect, &new_name);
-  
+
   /* search right position */
   cur_base = NULL;
   for (cur = this->first, prev = NULL; cur; prev = cur, cur = cur->next) {
@@ -274,7 +274,7 @@ static void config_insert(config_values_t *this, cfg_entry_t *new_entry) {
     if (cur_base)
       free(cur_base);
     config_key_split(cur->key, &cur_base, &cur_section, &cur_subsect, &cur_name);
-    
+
     /* sort by section name */
     if (!new_section &&  cur_section) break;
     if ( new_section && !cur_section) continue;
@@ -306,14 +306,14 @@ static void config_insert(config_values_t *this, cfg_entry_t *new_entry) {
       if (cmp < 0) break;
       if (cmp > 0) continue;
     }
-    
+
     break;
   }
   if (new_base)
     free(new_base);
   if (cur_base)
     free(cur_base);
-  
+
   new_entry->next = cur;
   if (!cur)
     this->last = new_entry;
@@ -334,7 +334,7 @@ static cfg_entry_t *XINE_MALLOC config_add (config_values_t *this, const char *k
   entry->unknown_value = NULL;
   entry->str_value     = NULL;
   entry->exp_level     = exp_level;
-  
+
   config_insert(this, entry);
 
   lprintf ("add entry key=%s\n", key);
@@ -401,7 +401,7 @@ static void config_lookup_entry_int (config_values_t *this, const char *key,
       *prev  = *entry;
       *entry = (*entry)->next;
     }
-  
+
     if (*entry) {
       free(tmp);
       return;
@@ -424,11 +424,11 @@ static void config_lookup_entry_int (config_values_t *this, const char *key,
 
 static cfg_entry_t *config_lookup_entry(config_values_t *this, const char *key) {
   cfg_entry_t *entry, *prev;
-  
+
   pthread_mutex_lock(&this->config_lock);
   config_lookup_entry_int(this, key, &entry, &prev);
   pthread_mutex_unlock(&this->config_lock);
-  
+
   return entry;
 }
 
@@ -539,7 +539,7 @@ static cfg_entry_t *config_register_string_internal (config_values_t *this,
 
   /* set string */
   entry->type = XINE_CONFIG_TYPE_STRING;
-  
+
   if (entry->unknown_value)
     entry->str_value = strdup(entry->unknown_value);
   else
@@ -770,7 +770,7 @@ static int config_register_enum (config_values_t *this,
     entry->num_value = config_parse_enum (entry->unknown_value, (const char **)values);
   else
     entry->num_value = def_value;
-  
+
   /* fill out rest of struct */
   entry->num_default = def_value;
 
@@ -820,7 +820,7 @@ static void config_shallow_copy(xine_cfg_entry_t *dest, cfg_entry_t *src)
 
 static void config_update_num (config_values_t *this,
 			       const char *key, int value) {
-  
+
   cfg_entry_t *entry;
 
   entry = this->lookup_entry (this, key);
@@ -849,13 +849,13 @@ static void config_update_num (config_values_t *this,
     xine_cfg_entry_t cb_entry;
 
     config_shallow_copy(&cb_entry, entry);
-    
+
     /* it is safe to enter the callback from within a locked context
      * because we use a recursive mutex.
      */
     entry->callback (entry->callback_data, &cb_entry);
   }
-  
+
   pthread_mutex_unlock(&this->config_lock);
 }
 
@@ -877,7 +877,7 @@ static void config_update_string (config_values_t *this,
     return;
 
   }
-  
+
   /* if an enum is updated with a string, we convert the string to
    * its index and use update number */
   if (entry->type == XINE_CONFIG_TYPE_ENUM) {
@@ -901,7 +901,7 @@ static void config_update_string (config_values_t *this,
     xine_cfg_entry_t cb_entry;
 
     config_shallow_copy(&cb_entry, entry);
-    
+
     /* it is safe to enter the callback from within a locked context
      * because we use a recursive mutex.
      */
@@ -943,7 +943,7 @@ void xine_config_load (xine_t *xine, const char *filename) {
 
       if (line[0] == '#')
 	continue;
-      
+
       if (line[0] == '.') {
 	if (strncmp(line, ".version:", 9) == 0) {
 	  sscanf(line + 9, "%d", &this->current_version);
@@ -1016,32 +1016,32 @@ void xine_config_save (xine_t *xine, const char *filename) {
   unlink (temp);
 
   if (stat(temp, &backup_stat) != 0) {
-    
+
     lprintf("backing up configfile to %s\n", temp);
 
     f_backup = fopen(temp, "w");
     f_config = fopen(filename, "r");
-    
+
     if (f_config && f_backup && (stat(filename, &config_stat) == 0)) {
       char    *buf = NULL;
       size_t   rlen;
-      
+
       buf = (char *) malloc(config_stat.st_size + 1);
       if((rlen = fread(buf, 1, config_stat.st_size, f_config)) && ((off_t)rlen == config_stat.st_size)) {
 	(void) fwrite(buf, 1, rlen, f_backup);
       }
       free(buf);
-      
+
       fclose(f_config);
       fclose(f_backup);
       stat(temp, &backup_stat);
-      
+
       if (config_stat.st_size == backup_stat.st_size)
 	backup = 1;
       else
 	unlink(temp);
-      
-    } 
+
+    }
     else {
 
       if (f_config)
@@ -1054,17 +1054,17 @@ void xine_config_save (xine_t *xine, const char *filename) {
 
     }
   }
-  
+
   if (!backup && (stat(filename, &config_stat) == 0)) {
     xprintf(xine, XINE_VERBOSITY_LOG, _("configfile: WARNING: backing up configfile to %s failed\n"), temp);
     xprintf(xine, XINE_VERBOSITY_LOG, _("configfile: WARNING: your configuration will not be saved\n"));
     return;
   }
-  
+
   lprintf ("writing config file to %s\n", filename);
 
   f_config = fopen(filename, "w");
-      
+
   if (f_config) {
 
     cfg_entry_t *entry;
@@ -1155,7 +1155,7 @@ void xine_config_save (xine_t *xine, const char *filename) {
       entry = entry->next;
     }
     pthread_mutex_unlock(&this->config_lock);
-    
+
     if (fclose(f_config) != 0) {
       xprintf(xine, XINE_VERBOSITY_LOG, _("configfile: WARNING: writing configuration to %s failed\n"), filename);
       xprintf(xine, XINE_VERBOSITY_LOG, _("configfile: WARNING: removing possibly broken config file %s\n"), filename);
@@ -1166,7 +1166,7 @@ void xine_config_save (xine_t *xine, const char *filename) {
       backup = 0;
     }
   }
-  
+
   if (backup)
     unlink(temp);
 }
@@ -1237,7 +1237,7 @@ static int put_int(uint8_t *buffer, int pos, int value) {
   buffer[pos + 1] = (value_int32 >> 8) & 0xFF;
   buffer[pos + 2] = (value_int32 >> 16) & 0xFF;
   buffer[pos + 3] = (value_int32 >> 24) & 0xFF;
-  
+
   return 4;
 }
 
@@ -1251,10 +1251,10 @@ static int put_string(uint8_t *buffer, int pos, const char *value, int value_len
 static char* config_get_serialized_entry (config_values_t *this, const char *key) {
   char *output = NULL;
   cfg_entry_t *entry, *prev;
-  
+
   pthread_mutex_lock(&this->config_lock);
   config_lookup_entry_int(this, key, &entry, &prev);
-  
+
   if (entry) {
     /* now serialize this stuff
       fields to serialize :
@@ -1270,7 +1270,7 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
           char            *help;
           char           **enum_values;
     */
-   
+
     int key_len = 0;
     int str_default_len = 0;
     int description_len = 0;
@@ -1281,7 +1281,7 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
     int value_len[10];
     int pos = 0;
     int i;
-    
+
     if (entry->key)
       key_len = strlen(entry->key);
     if (entry->str_default)
@@ -1290,11 +1290,11 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
       description_len = strlen(entry->description);
     if (entry->help)
       help_len = strlen(entry->help);
-    
+
     /* integers */
     /* value: 4 bytes */
     total_len = 6 * sizeof(int32_t);
-    
+
     /* strings (size + char buffer)
      * length: 4 bytes
      * buffer: length bytes
@@ -1303,16 +1303,16 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
     total_len += sizeof(int32_t) + str_default_len;
     total_len += sizeof(int32_t) + description_len;
     total_len += sizeof(int32_t) + help_len;
-    
+
     /* enum values...
      * value count: 4 bytes
      * for each value:
-     *   length: 4 bytes 
+     *   length: 4 bytes
      *   buffer: length bytes
      */
     value_count = 0;
     total_len += sizeof(int32_t);  /* value count */
-    
+
     char **cur_value = entry->enum_values;
     if (cur_value) {
       while (*cur_value && (value_count < (sizeof(value_len) / sizeof(int) ))) {
@@ -1326,9 +1326,9 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
     /* Now we have the length needed to serialize the entry and the length of each string */
     uint8_t *buffer = malloc (total_len);
     if (!buffer) return NULL;
-    
+
     /* Let's go */
-    
+
     /* the integers */
     pos += put_int(buffer, pos, entry->type);
     pos += put_int(buffer, pos, entry->range_min);
@@ -1336,7 +1336,7 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
     pos += put_int(buffer, pos, entry->exp_level);
     pos += put_int(buffer, pos, entry->num_default);
     pos += put_int(buffer, pos, entry->num_value);
-    
+
     /* the strings */
     pos += put_string(buffer, pos, entry->key, key_len);
     pos += put_string(buffer, pos, entry->str_default, str_default_len);
@@ -1346,7 +1346,7 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
     /* the enum stuff */
     pos += put_int(buffer, pos, value_count);
     cur_value = entry->enum_values;
-    
+
     for (i = 0; i < value_count; i++) {
       pos += put_string(buffer, pos, *cur_value, value_len[i]);
       cur_value++;
@@ -1373,7 +1373,7 @@ static int get_int(uint8_t *buffer, int buffer_size, int pos, int *value) {
 
   if ((pos + sizeof(int32_t)) > buffer_size)
     return 0;
-    
+
   value_int32 = _X_LE_32(&buffer[pos]);
   *value = (int)value_int32;
   return sizeof(int32_t);
@@ -1383,15 +1383,15 @@ static int get_string(uint8_t *buffer, int buffer_size, int pos, char **value) {
   int len;
   int bytes = get_int(buffer, buffer_size, pos, &len);
   *value = NULL;
-  
+
   if (!bytes || (len < 0) || (len > 1024*64))
     return 0;
-  
+
   char *str = malloc(len + 1);
   pos += bytes;
   memcpy(str, &buffer[pos], len);
   str[len] = 0;
-  
+
   *value = str;
   return bytes + len;
 }
@@ -1422,25 +1422,25 @@ static char* config_register_serialized_entry (config_values_t *this, const char
   char  *description = NULL;
   char  *help = NULL;
   char **enum_values = NULL;
-  
+
   int    bytes;
   int    pos;
   void  *output = NULL;
   size_t output_len;
   int    value_count = 0;
   int    i;
-  
+
   output_len = strlen(value) * 3 / 4 + 1;
   output = malloc(output_len);
   av_base64_decode(output, value, output_len);
-  
+
   pos = 0;
   pos += bytes = get_int(output, output_len, pos, &type);
   if (!bytes) goto exit;
 
   pos += bytes = get_int(output, output_len, pos, &range_min);
   if (!bytes) goto exit;
-    
+
   pos += bytes = get_int(output, output_len, pos, &range_max);
   if (!bytes) goto exit;
 
@@ -1455,7 +1455,7 @@ static char* config_register_serialized_entry (config_values_t *this, const char
 
   pos += bytes = get_string(output, output_len, pos, &key);
   if (!bytes) goto exit;
-  
+
   pos += bytes = get_string(output, output_len, pos, &str_default);
   if (!bytes) goto exit;
 
@@ -1468,7 +1468,7 @@ static char* config_register_serialized_entry (config_values_t *this, const char
   pos += bytes = get_int(output, output_len, pos, &value_count);
   if (!bytes) goto exit;
   if ((value_count < 0) || (value_count > 256)) goto exit;
-  
+
   enum_values = calloc (value_count + 1, sizeof(void*));
   for (i = 0; i < value_count; i++) {
     pos += bytes = get_string(output, output_len, pos, &enum_values[i]);
@@ -1476,7 +1476,7 @@ static char* config_register_serialized_entry (config_values_t *this, const char
   }
   enum_values[value_count] = NULL;
 
-#ifdef LOG  
+#ifdef LOG
   printf("config entry deserialization:\n");
   printf("  key        : %s\n", key);
   printf("  type       : %d\n", type);
@@ -1489,7 +1489,7 @@ static char* config_register_serialized_entry (config_values_t *this, const char
   printf("  description: %s\n", description);
   printf("  help       : %s\n", help);
   printf("  enum       : %d values\n", value_count);
-  
+
   for (i = 0; i < value_count; i++) {
     printf("    enum[%2d]: %s\n", i, enum_values[i]);
   }
@@ -1625,13 +1625,13 @@ int _x_config_change_opt(config_values_t *config, const char *opt) {
     free(key);
     return -1;
   }
-  
+
   switch(entry->type) {
   case XINE_CONFIG_TYPE_STRING:
     config->update_string(config, key, value);
     handled = 1;
     break;
-    
+
   case XINE_CONFIG_TYPE_RANGE:
   case XINE_CONFIG_TYPE_ENUM:
   case XINE_CONFIG_TYPE_NUM:
@@ -1639,13 +1639,13 @@ int _x_config_change_opt(config_values_t *config, const char *opt) {
     config->update_num(config, key, (atoi(value)));
     handled = 1;
     break;
-    
+
   case XINE_CONFIG_TYPE_UNKNOWN:
     entry->unknown_value = strdup(value);
     handled = 1;
     break;
   }
-  
+
   free(key);
   return handled;
 }

@@ -69,7 +69,14 @@ xine-lib (1.1.90) (Unreleased)
   * Report more video output capabilities via (port)->get_capabilities():
     colour controls, zooming, colour keying.
 
-xine-lib (1.1.17) 2009-??-??
+xine-lib (1.1.1?) 20??-??-??
+  * Bump the FLAC decoder's priority above ffmpegaudio. This should fix
+    various problems with FLAC playback.
+  * Build fix (undefined symbol) for when using older ffmpeg.
+  * TTA demuxer fixes; allow seeking.
+  * More meta-information tags. (Nothing sets these yet, though.)
+
+xine-lib (1.1.17) 2009-12-01
   * Add support for Matroska SIMPLEBLOCK.
   * Add support for sndio (OpenBSD sound API).
   * Correct invalid MIME info in the MOD demuxer.

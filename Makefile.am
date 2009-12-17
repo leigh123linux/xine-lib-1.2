@@ -82,7 +82,7 @@ dist-hook:
 
 
 mostlyclean-generic:
-	-rm -f *~ \#* .*~ .\#* 
+	-rm -f *~ \#* .*~ .\#*
 	-rm -f $(PACKAGE)_$(VERSION).tar.gz $(PACKAGE)_$(VERSION).tar.bz2
 	-rm -f $(distdir).tar.gz $(PACKAGE).tgz package_descriptions
 	-rm -rf $(distdir)
@@ -96,7 +96,7 @@ maintainer-clean-generic:
 	-rm -f config.guess config.sub install-sh missing mkinstalldirs
 	-rm -f depcomp config.log
 
-maintainer-clean-generic-hook: 
+maintainer-clean-generic-hook:
 	rm -f config.status
 
 $(top_srcdir)/configure:  $(am__configure_deps)

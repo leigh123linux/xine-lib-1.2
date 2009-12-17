@@ -25,7 +25,7 @@ dnl License when using or distributing such scripts, even though portions
 dnl of the text of the Macro appear in them. The GNU General Public
 dnl License (GPL) does govern all other use of the material that
 dnl constitutes the Autoconf Macro.
-dnl 
+dnl
 dnl This special exception to the GPL applies to versions of the
 dnl Autoconf Macro released by this project. When you make and
 dnl distribute a modified version of the Autoconf Macro, you may extend
@@ -114,7 +114,7 @@ AC_DEFUN([CC_NOUNDEFINED], [
         dnl First of all check for the --no-undefined variant of GNU ld. This allows
         dnl for a much more readable commandline, so that people can understand what
         dnl it does without going to look for what the heck -z defs does.
-   	for possible_flags in "-Wl,--no-undefined" "-Wl,-z,defs"; do
+	for possible_flags in "-Wl,--no-undefined" "-Wl,-z,defs"; do
           CC_CHECK_LDFLAGS([$possible_flags], [LDFLAGS_NOUNDEFINED="$possible_flags"])
 	  break
         done
@@ -257,7 +257,7 @@ AC_DEFUN([CC_FLAG_VISIBILITY], [
 	cc_cv_flag_visibility='yes',
 	cc_cv_flag_visibility='no')
      CFLAGS="$cc_flag_visibility_save_CFLAGS"])
-  
+
   AS_IF([test "x$cc_cv_flag_visibility" = "xyes"],
     [AC_DEFINE([SUPPORT_FLAG_VISIBILITY], 1,
        [Define this if the compiler supports the -fvisibility flag])

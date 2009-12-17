@@ -129,7 +129,7 @@ typedef struct __attribute__((packed)) data_header_s
 {
   uint32_t func:8;
   uint32_t len:24;
-} 
+}
 data_header_t;
 
 
@@ -150,7 +150,7 @@ data_nop_t;
 typedef struct __attribute__((packed)) data_osd_new_s
 {
   data_header_t header;
-  
+
   uint8_t  window;
   int16_t  x;
   int16_t  y;
@@ -166,7 +166,7 @@ data_osd_new_t;
 typedef struct __attribute__((packed)) data_osd_free_s
 {
   data_header_t header;
-  
+
   uint8_t window;
 }
 data_osd_free_t;
@@ -176,7 +176,7 @@ data_osd_free_t;
 typedef struct __attribute__((packed)) data_osd_show_s
 {
   data_header_t header;
-  
+
   uint8_t window;
 }
 data_osd_show_t;
@@ -186,7 +186,7 @@ data_osd_show_t;
 typedef struct __attribute__((packed)) data_osd_hide_s
 {
   data_header_t header;
-  
+
   uint8_t window;
 }
 data_osd_hide_t;
@@ -212,7 +212,7 @@ data_play_external_t;
 typedef struct __attribute__((packed)) data_osd_set_position_s
 {
   data_header_t header;
-  
+
   uint8_t window;
   int16_t x;
   int16_t y;
@@ -224,7 +224,7 @@ data_osd_set_position_t;
 typedef struct __attribute__((packed)) data_osd_draw_bitmap_s
 {
   data_header_t header;
-  
+
   uint8_t  window;
   int16_t  x;
   int16_t  y;
@@ -239,7 +239,7 @@ data_osd_draw_bitmap_t;
 typedef struct __attribute__((packed)) data_set_color_s
 {
   data_header_t header;
-  
+
   uint8_t window;
   uint8_t index;
   uint8_t num;
@@ -262,7 +262,7 @@ data_flush_t;
 typedef struct __attribute__((packed)) result_flush_s
 {
   result_header_t header;
-  
+
   uint8_t timed_out;
 }
 result_flush_t;
@@ -511,7 +511,7 @@ data_reset_audio_t;
 typedef struct __attribute__((packed)) event_key_s
 {
   event_header_t header;
-  
+
   uint32_t key;
 }
 event_key_t;
@@ -521,7 +521,7 @@ event_key_t;
 typedef struct __attribute__((packed)) event_frame_size_s
 {
   event_header_t header;
-  
+
   int32_t left;
   int32_t top;
   int32_t width;
@@ -536,7 +536,7 @@ event_frame_size_t;
 typedef struct __attribute__((packed)) event_play_external_s
 {
   event_header_t header;
-  
+
   uint32_t key;
 }
 event_play_external_t;
@@ -546,7 +546,7 @@ event_play_external_t;
 typedef struct __attribute__((packed)) data_select_audio_s
 {
   data_header_t header;
-  
+
   uint8_t channels;
 }
 data_select_audio_t;
@@ -566,7 +566,7 @@ data_trick_speed_mode_t;
 typedef struct __attribute__((packed)) event_discontinuity_s
 {
   event_header_t header;
-  
+
   int32_t type;
 }
 event_discontinuity_t;
