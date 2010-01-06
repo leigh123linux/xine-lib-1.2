@@ -887,7 +887,7 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
   int        num_alloc = 0;
   struct stat st;
 
-  snprintf(filename, BUFSIZE, "%s/"PACKAGE"/channels.conf", xdgConfigHome(xine->basedir_handle));
+  snprintf(filename, BUFSIZE, "%s/"PACKAGE"/channels.conf", xdgConfigHome(&xine->basedir_handle));
 
   f = fopen(filename, "r");
   if (!f) {
