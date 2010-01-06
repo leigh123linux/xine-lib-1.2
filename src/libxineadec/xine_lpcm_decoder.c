@@ -96,6 +96,31 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
     lprintf("lpcm_decoder: config data 0x%x\n", buf->decoder_info[2]);
 
+    /* BluRay PCM header is 4 bytes */
+    if (buf->decoder_info[2] & 0xffffff00) {
+      static const uint8_t channels[16] = {0, 1, 0, 2, 3, 3, 4, 4, 5, 6, 7, 8, 0, 0, 0, 0};
+
+      num_channels = channels[(buf->decoder_info[2] >> (16+4)) & 0x0f];
+      switch ((buf->decoder_info[2] >> (24+6)) & 0x03) {
+      case 1:  bits_per_sample = 16; break;
+      case 2:  bits_per_sample = 20; break;
+      case 3:  bits_per_sample = 24; break;
+      default: bits_per_sample =  0; break;
+      }
+      switch ((buf->decoder_info[2] >> 16) & 0x0f) {
+      case 1:  sample_rate =  48000; break;
+      case 4:  sample_rate =  96000; break;
+      case 5:  sample_rate = 192000; break;
+      default: sample_rate =      0; break;
+      }
+
+      if (!num_channels || !sample_rate || !bits_per_sample)
+        xine_log (this->stream->xine, XINE_LOG_MSG,
+                  "lpcm_decoder: unsupported BluRay PCM format: 0x%08x\n", buf->decoder_info[2]);
+
+    } else {
+
+    /* MPEG2/DVD PCM header is one byte */
     num_channels = (buf->decoder_info[2] & 0x7) + 1;
     switch ((buf->decoder_info[2]>>4) & 3) {
     case 0: sample_rate = 48000; break;
@@ -107,6 +132,7 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       case 0: bits_per_sample = 16; break;
       case 1: bits_per_sample = 20; break;
       case 2: bits_per_sample = 24; break;
+    }
     }
 
     if( this->bits_per_sample != bits_per_sample ||
