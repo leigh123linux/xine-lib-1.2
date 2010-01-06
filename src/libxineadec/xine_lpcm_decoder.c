@@ -79,6 +79,7 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
   lpcm_decoder_t *this = (lpcm_decoder_t *) this_gen;
   int16_t        *sample_buffer=(int16_t *)buf->content;
+  int             buf_size = buf->size;
   int             stream_be;
   audio_buffer_t *audio_buffer;
   int             format_changed = 0;
@@ -195,14 +196,14 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
   if( this->bits_per_sample == 16 ){
     if (stream_be != this->cpu_be)
-      swab (sample_buffer, audio_buffer->mem, buf->size);
+      swab (sample_buffer, audio_buffer->mem, buf_size);
     else
-      memcpy (audio_buffer->mem, sample_buffer, buf->size);
+      memcpy (audio_buffer->mem, sample_buffer, buf_size);
   }
   else if( this->bits_per_sample == 20 ) {
     uint8_t *s = (uint8_t *)sample_buffer;
     uint8_t *d = (uint8_t *)audio_buffer->mem;
-    int n = buf->size;
+    int n = buf_size;
 
     if (stream_be != this->cpu_be) {
       while( n >= 0 ) {
@@ -222,7 +223,7 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   } else if( this->bits_per_sample == 24 ) {
     uint8_t *s = (uint8_t *)sample_buffer;
     uint8_t *d = (uint8_t *)audio_buffer->mem;
-    int n = buf->size;
+    int n = buf_size;
 
     while (n >= 3) {
       if ( stream_be ) {
@@ -249,15 +250,15 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       n -= 3;
     }
 
-    if ( (d - (uint8_t*)audio_buffer->mem)/2*3 < buf->size )
-	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "lpcm_decoder: lost %i bytes\n", (int)(buf->size - (d - (uint8_t*)audio_buffer->mem))/2*3);
+    if ( (d - (uint8_t*)audio_buffer->mem)/2*3 < buf_size )
+	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "lpcm_decoder: lost %i bytes\n", (int)(buf_size - (d - (uint8_t*)audio_buffer->mem))/2*3);
 
   } else {
-    memcpy (audio_buffer->mem, sample_buffer, buf->size);
+    memcpy (audio_buffer->mem, sample_buffer, buf_size);
   }
 
   audio_buffer->vpts       = buf->pts;
-  audio_buffer->num_frames = (((buf->size*8)/this->number_of_channels)/this->bits_per_sample);
+  audio_buffer->num_frames = (((buf_size*8)/this->number_of_channels)/this->bits_per_sample);
 
   this->stream->audio_out->put_buffer (this->stream->audio_out, audio_buffer, this->stream);
 
