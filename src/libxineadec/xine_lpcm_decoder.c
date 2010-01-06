@@ -64,15 +64,26 @@ typedef struct lpcm_decoder_s {
 
   int              output_open;
   int		   cpu_be;	/* TRUE, if we're a Big endian CPU */
+
+  int64_t          pts;
+
+  uint8_t         *buf;
+  size_t           buffered_bytes;
+  size_t           buf_size;
+
 } lpcm_decoder_t;
 
 static void lpcm_reset (audio_decoder_t *this_gen) {
 
-  /* lpcm_decoder_t *this = (lpcm_decoder_t *) this_gen; */
+  lpcm_decoder_t *this = (lpcm_decoder_t *) this_gen;
 
+  free (this->buf);
+  this->buf = NULL;
 }
 
 static void lpcm_discontinuity (audio_decoder_t *this_gen) {
+
+  lpcm_reset(this_gen);
 }
 
 static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
@@ -118,6 +129,15 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       if (!num_channels || !sample_rate || !bits_per_sample)
         xine_log (this->stream->xine, XINE_LOG_MSG,
                   "lpcm_decoder: unsupported BluRay PCM format: 0x%08x\n", buf->decoder_info[2]);
+
+      if (this->buffered_bytes)
+        xine_log (this->stream->xine, XINE_LOG_MSG, "lpcm_decoder: %zd bytes lost !\n", this->buffered_bytes);
+
+      if (!this->buf) {
+        this->buffered_bytes = 0;
+        this->buf_size       = 8128;
+        this->buf            = malloc(this->buf_size);
+      }
 
     } else {
 
@@ -188,6 +208,30 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   if (!this->output_open || (buf->decoder_flags & BUF_FLAG_HEADER) )
     return;
 
+  if (buf->pts && !this->pts)
+    this->pts = buf->pts;
+
+  /* data accumulation */
+  if (this->buf) {
+    int frame_end = buf->decoder_flags & BUF_FLAG_FRAME_END;
+    if (this->buffered_bytes || !frame_end) {
+      if (this->buf_size < this->buffered_bytes + buf->size) {
+        this->buf_size *= 2;
+        this->buf = realloc(this->buf, this->buf_size);
+      }
+
+      memcpy(this->buf + this->buffered_bytes, buf->content, buf->size);
+      this->buffered_bytes += buf->size;
+
+      if (!frame_end)
+        return;
+
+      sample_buffer = (int16_t*)this->buf;
+      buf_size = this->buffered_bytes;
+      this->buffered_bytes = 0;
+    }
+  }
+
   audio_buffer = this->stream->audio_out->get_buffer (this->stream->audio_out);
 
   /* Swap LPCM samples into native byte order, if necessary */
@@ -257,11 +301,12 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     memcpy (audio_buffer->mem, sample_buffer, buf_size);
   }
 
-  audio_buffer->vpts       = buf->pts;
+  audio_buffer->vpts       = this->pts;
   audio_buffer->num_frames = (((buf_size*8)/this->number_of_channels)/this->bits_per_sample);
 
   this->stream->audio_out->put_buffer (this->stream->audio_out, audio_buffer, this->stream);
 
+  this->pts = 0;
 }
 
 static void lpcm_dispose (audio_decoder_t *this_gen) {
@@ -270,6 +315,8 @@ static void lpcm_dispose (audio_decoder_t *this_gen) {
   if (this->output_open)
     this->stream->audio_out->close (this->stream->audio_out, this->stream);
   this->output_open = 0;
+
+  free (this->buf);
 
   free (this_gen);
 }
