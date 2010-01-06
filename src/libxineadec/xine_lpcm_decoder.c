@@ -102,16 +102,16 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
       num_channels = channels[(buf->decoder_info[2] >> (16+4)) & 0x0f];
       switch ((buf->decoder_info[2] >> (24+6)) & 0x03) {
-      case 1:  bits_per_sample = 16; break;
-      case 2:  bits_per_sample = 20; break;
-      case 3:  bits_per_sample = 24; break;
-      default: bits_per_sample =  0; break;
+        case 1:  bits_per_sample = 16; break;
+        case 2:  bits_per_sample = 20; break;
+        case 3:  bits_per_sample = 24; break;
+        default: bits_per_sample =  0; break;
       }
       switch ((buf->decoder_info[2] >> 16) & 0x0f) {
-      case 1:  sample_rate =  48000; break;
-      case 4:  sample_rate =  96000; break;
-      case 5:  sample_rate = 192000; break;
-      default: sample_rate =      0; break;
+        case 1:  sample_rate =  48000; break;
+        case 4:  sample_rate =  96000; break;
+        case 5:  sample_rate = 192000; break;
+        default: sample_rate =      0; break;
       }
 
       if (!num_channels || !sample_rate || !bits_per_sample)
@@ -120,19 +120,19 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
     } else {
 
-    /* MPEG2/DVD PCM header is one byte */
-    num_channels = (buf->decoder_info[2] & 0x7) + 1;
-    switch ((buf->decoder_info[2]>>4) & 3) {
-    case 0: sample_rate = 48000; break;
-    case 1: sample_rate = 96000; break;
-    case 2: sample_rate = 44100; break;
-    case 3: sample_rate = 32000; break;
-    }
-    switch ((buf->decoder_info[2]>>6) & 3) {
-      case 0: bits_per_sample = 16; break;
-      case 1: bits_per_sample = 20; break;
-      case 2: bits_per_sample = 24; break;
-    }
+      /* MPEG2/DVD PCM header is one byte */
+      num_channels = (buf->decoder_info[2] & 0x7) + 1;
+      switch ((buf->decoder_info[2]>>4) & 3) {
+        case 0: sample_rate = 48000; break;
+        case 1: sample_rate = 96000; break;
+        case 2: sample_rate = 44100; break;
+        case 3: sample_rate = 32000; break;
+      }
+      switch ((buf->decoder_info[2]>>6) & 3) {
+        case 0: bits_per_sample = 16; break;
+        case 1: bits_per_sample = 20; break;
+        case 2: bits_per_sample = 24; break;
+      }
     }
 
     if( this->bits_per_sample != bits_per_sample ||
@@ -152,8 +152,8 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
   if( buf->decoder_flags & BUF_FLAG_STDHEADER ) {
     this->rate=buf->decoder_info[1];
-    this->bits_per_sample=buf->decoder_info[2] ;
-    this->number_of_channels=buf->decoder_info[3] ;
+    this->bits_per_sample=buf->decoder_info[2];
+    this->number_of_channels=buf->decoder_info[3];
     format_changed++;
   }
 
