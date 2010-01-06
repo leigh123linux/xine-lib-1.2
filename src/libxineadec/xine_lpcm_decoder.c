@@ -94,6 +94,8 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     unsigned int sample_rate = 0;
     unsigned int num_channels;
 
+    lprintf("lpcm_decoder: config data 0x%x\n", buf->decoder_info[2]);
+
     num_channels = (buf->decoder_info[2] & 0x7) + 1;
     switch ((buf->decoder_info[2]>>4) & 3) {
     case 0: sample_rate = 48000; break;
@@ -115,6 +117,10 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       this->number_of_channels = num_channels;
       this->rate = sample_rate;
       format_changed++;
+
+      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+              "lpcm_decoder: format changed to %d channels, %d bits per sample, %d Hz, %d kbit/s\n",
+              num_channels, bits_per_sample, sample_rate, (num_channels * sample_rate * bits_per_sample)/1024);
     }
   }
 
