@@ -241,8 +241,11 @@ AC_SUBST([DYNAMIC_LD_LIBS])
 AC_ARG_WITH([external-libxdg-basedir],
             [AS_HELP_STRING([--without-external-libxdg-basedir], [use internal copy of libxdg-basedir])])
 
+have_xdg_basedir=no
 if test x"$with_external_libxdg_basedir" != x"no"; then
-    PKG_CHECK_MODULES([XDG_BASEDIR], [libxdg-basedir >= 1])
+    PKG_CHECK_MODULES([XDG_BASEDIR], [libxdg-basedir >= 1], [have_xdg_basedir=yes], [have_xdg_basedir=no])
+fi
+if test x"$have_xdg_basedir" = xyes; then
     XDG_BASEDIR_REQUIRES="libxdg-basedir"
 else
     XDG_BASEDIR_CPPFLAGS='-I$(top_srcdir)/contrib/libxdg-basedir'
@@ -255,7 +258,7 @@ AC_SUBST([XDG_BASEDIR_CPPFLAGS])
 AC_SUBST([XDG_BASEDIR_LIBS])
 AC_SUBST([XDG_BASEDIR_DEPS])
 
-AM_CONDITIONAL([EXTERNAL_LIBXDG_BASEDIR], [test x"$with_external_libxdg_basedir" != x"no"])
+AM_CONDITIONAL([EXTERNAL_LIBXDG_BASEDIR], [test x"$have_xdg_basedir" = xyes])
 
 dnl Test for socket and network support library
 AC_CHECK_LIB([socket], [socket],        [NET_LIBS="-lsocket $NET_LIBS"])
