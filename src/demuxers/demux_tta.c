@@ -65,7 +65,7 @@ typedef struct {
       uint16_t channels;
       uint16_t bits_per_sample;
       uint32_t samplerate;
-      uint32_t data_length;
+      uint32_t data_length; /* Number of samples */
       uint32_t crc32;
     } XINE_PACKED tta;
     uint8_t buffer[22]; /* This is the size of the header */
@@ -114,7 +114,7 @@ static int demux_tta_send_chunk(demux_plugin_t *this_gen) {
   demux_tta_t *this = (demux_tta_t *) this_gen;
   uint32_t bytes_to_read;
 
-  if ( this->currentframe > this->totalframes ) {
+  if ( this->currentframe >= this->totalframes ) {
     this->status = DEMUX_FINISHED;
     return this->status;
   }
@@ -129,7 +129,7 @@ static int demux_tta_send_chunk(demux_plugin_t *this_gen) {
     buf = this->audio_fifo->buffer_pool_alloc(this->audio_fifo);
     buf->type = BUF_AUDIO_TTA;
     buf->pts = 0;
-    buf->extra_info->total_time = this->totalframes;
+    buf->extra_info->total_time = (int)(le2me_32(this->header.tta.data_length) * 1000.0 / le2me_32(this->header.tta.samplerate)); /* milliseconds */ 
     buf->decoder_flags = 0;
 
     /* Set normalised position */
@@ -163,6 +163,12 @@ static int demux_tta_send_chunk(demux_plugin_t *this_gen) {
 static void demux_tta_send_headers(demux_plugin_t *this_gen) {
   demux_tta_t *this = (demux_tta_t *) this_gen;
   buf_element_t *buf;
+  xine_waveformatex wave;
+  uint32_t total_size = sizeof(xine_waveformatex) + sizeof(this->header) +
+    sizeof(uint32_t)*this->totalframes;
+  unsigned char *header;
+
+  header = malloc(total_size);
 
   this->audio_fifo  = this->stream->audio_fifo;
 
@@ -180,27 +186,43 @@ static void demux_tta_send_headers(demux_plugin_t *this_gen) {
   /* send start buffers */
   _x_demux_control_start(this->stream);
 
+  /* create header */
+  wave.cbSize = total_size - sizeof(xine_waveformatex);
+
+  memcpy(header, &wave, sizeof(wave));
+  memcpy(header+sizeof(xine_waveformatex), this->header.buffer, sizeof(this->header));
+  memcpy(header+sizeof(xine_waveformatex)+sizeof(this->header), this->seektable, sizeof(uint32_t)*this->totalframes);
+
   /* send init info to decoders */
   if (this->audio_fifo) {
-    xine_waveformatex wave;
+    uint32_t bytes_left = total_size;
 
-    buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
-    buf->type = BUF_AUDIO_TTA;
-    buf->decoder_flags = BUF_FLAG_HEADER|BUF_FLAG_STDHEADER|BUF_FLAG_FRAME_END;
-    buf->decoder_info[0] = 0;
-    buf->decoder_info[1] = le2me_32(this->header.tta.samplerate);
-    buf->decoder_info[2] = le2me_16(this->header.tta.bits_per_sample);
-    buf->decoder_info[3] = le2me_16(this->header.tta.channels);
+    /* We are sending the seektable as well, and this may be larger than
+       buf->max_size */
+    while (bytes_left) {
+      buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
+      buf->decoder_flags = BUF_FLAG_HEADER|BUF_FLAG_STDHEADER;
+      buf->type = BUF_AUDIO_TTA;
 
-    buf->size = sizeof(xine_waveformatex) + sizeof(this->header) + sizeof(uint32_t)*this->totalframes;
-    memcpy(buf->content+sizeof(xine_waveformatex), this->header.buffer, sizeof(this->header));
-    memcpy(buf->content+sizeof(xine_waveformatex)+sizeof(this->header), this->seektable, sizeof(uint32_t)*this->totalframes);
+      /* Copy min(bytes_left, max_size) bytes */
+      buf->size = bytes_left < buf->max_size ? bytes_left : buf->max_size;
+      memcpy(buf->content, header+(total_size-bytes_left), buf->size);
 
-    wave.cbSize = buf->size - sizeof(xine_waveformatex);
-    memcpy(buf->content, &wave, sizeof(wave));
+      bytes_left -= buf->size;
 
-    this->audio_fifo->put (this->audio_fifo, buf);
+      /* The decoder information only needs the decoder information on the last
+         buffer element. */
+      if (!bytes_left) {
+        buf->decoder_flags |= BUF_FLAG_FRAME_END;
+        buf->decoder_info[0] = 0;
+        buf->decoder_info[1] = le2me_32(this->header.tta.samplerate);
+        buf->decoder_info[2] = le2me_16(this->header.tta.bits_per_sample);
+        buf->decoder_info[3] = le2me_16(this->header.tta.channels);
+      }
+      this->audio_fifo->put (this->audio_fifo, buf);
+    }
   }
+  free(header);
 }
 
 static int demux_tta_seek (demux_plugin_t *this_gen,
@@ -258,7 +280,7 @@ static int demux_tta_get_status (demux_plugin_t *this_gen) {
 
 static int demux_tta_get_stream_length (demux_plugin_t *this_gen) {
   demux_tta_t *this = (demux_tta_t *) this_gen;
-  return (int)(FRAME_TIME * this->totalframes * 1000);
+  return le2me_32(this->header.tta.data_length) * 1000.0 / le2me_32(this->header.tta.samplerate); /* milliseconds */
 }
 
 static uint32_t demux_tta_get_capabilities(demux_plugin_t *this_gen) {

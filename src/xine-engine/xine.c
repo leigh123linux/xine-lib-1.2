@@ -1608,7 +1608,7 @@ void xine_exit (xine_t *this) {
   WSACleanup();
 #endif
 
-  xdgFreeHandle(this->basedir_handle);
+  xdgWipeHandle(&this->basedir_handle);
 
   free (this);
 }
@@ -1737,7 +1737,7 @@ void xine_init (xine_t *this) {
 						 "extension", NULL};
 
   /* First of all, initialise libxdg-basedir as it's used by plugins. */
-  this->basedir_handle = xdgAllocHandle();
+  xdgInitHandle(&this->basedir_handle);
 
   /*
    * locks

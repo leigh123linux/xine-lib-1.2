@@ -1483,7 +1483,7 @@ static void _cdda_parse_cddb_info (cdda_input_plugin_t *this, char *buffer, char
 static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
   DIR  *dir;
 
-  const char *const xdg_cache_home = xdgCacheHome(this->stream->xine->basedir_handle);
+  const char *const xdg_cache_home = xdgCacheHome(&this->stream->xine->basedir_handle);
 
   if(this == NULL)
     return 0;
@@ -1545,7 +1545,7 @@ static void _cdda_save_cached_cddb_infos(cdda_input_plugin_t *this, char *fileco
   FILE  *fd;
   char *cfile;
 
-  const char *const xdg_cache_home = xdgCacheHome(this->stream->xine->basedir_handle);
+  const char *const xdg_cache_home = xdgCacheHome(&this->stream->xine->basedir_handle);
 
   if((this == NULL) || (filecontent == NULL))
     return;
