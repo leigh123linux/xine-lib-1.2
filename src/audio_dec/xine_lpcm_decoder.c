@@ -67,22 +67,34 @@ typedef struct lpcm_decoder_s {
   uint32_t         ao_cap_mode;
 
   int              output_open;
-  int		   cpu_be;	/**< TRUE, if we're a Big endian CPU */
+  int		   cpu_be;	/* TRUE, if we're a Big endian CPU */
+
+  int64_t          pts;
+
+  uint8_t         *buf;
+  size_t           buffered_bytes;
+  size_t           buf_size;
+
 } lpcm_decoder_t;
 
 static void lpcm_reset (audio_decoder_t *this_gen) {
 
-  /* lpcm_decoder_t *this = (lpcm_decoder_t *) this_gen; */
+  lpcm_decoder_t *this = (lpcm_decoder_t *) this_gen;
 
+  free (this->buf);
+  this->buf = NULL;
 }
 
 static void lpcm_discontinuity (audio_decoder_t *this_gen) {
+
+  lpcm_reset(this_gen);
 }
 
 static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
   lpcm_decoder_t *this = (lpcm_decoder_t *) this_gen;
   int16_t        *sample_buffer=(int16_t *)buf->content;
+  int             buf_size = buf->size;
   int             stream_be;
   audio_buffer_t *audio_buffer;
   int             format_changed = 0;
@@ -98,17 +110,54 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     unsigned int sample_rate = 0;
     unsigned int num_channels;
 
-    num_channels = (buf->decoder_info[2] & 0x7) + 1;
-    switch ((buf->decoder_info[2]>>4) & 3) {
-    case 0: sample_rate = 48000; break;
-    case 1: sample_rate = 96000; break;
-    case 2: sample_rate = 44100; break;
-    case 3: sample_rate = 32000; break;
-    }
-    switch ((buf->decoder_info[2]>>6) & 3) {
-      case 0: bits_per_sample = 16; break;
-      case 1: bits_per_sample = 20; break;
-      case 2: bits_per_sample = 24; break;
+    lprintf("lpcm_decoder: config data 0x%x\n", buf->decoder_info[2]);
+
+    /* BluRay PCM header is 4 bytes */
+    if (buf->decoder_info[2] & 0xffffff00) {
+      static const uint8_t channels[16] = {0, 1, 0, 2, 3, 3, 4, 4, 5, 6, 7, 8, 0, 0, 0, 0};
+
+      num_channels = channels[(buf->decoder_info[2] >> (16+4)) & 0x0f];
+      switch ((buf->decoder_info[2] >> (24+6)) & 0x03) {
+        case 1:  bits_per_sample = 16; break;
+        case 2:  bits_per_sample = 20; break;
+        case 3:  bits_per_sample = 24; break;
+        default: bits_per_sample =  0; break;
+      }
+      switch ((buf->decoder_info[2] >> 16) & 0x0f) {
+        case 1:  sample_rate =  48000; break;
+        case 4:  sample_rate =  96000; break;
+        case 5:  sample_rate = 192000; break;
+        default: sample_rate =      0; break;
+      }
+
+      if (!num_channels || !sample_rate || !bits_per_sample)
+        xine_log (this->stream->xine, XINE_LOG_MSG,
+                  "lpcm_decoder: unsupported BluRay PCM format: 0x%08x\n", buf->decoder_info[2]);
+
+      if (this->buffered_bytes)
+        xine_log (this->stream->xine, XINE_LOG_MSG, "lpcm_decoder: %zd bytes lost !\n", this->buffered_bytes);
+
+      if (!this->buf) {
+        this->buffered_bytes = 0;
+        this->buf_size       = 8128;
+        this->buf            = malloc(this->buf_size);
+      }
+
+    } else {
+
+      /* MPEG2/DVD PCM header is one byte */
+      num_channels = (buf->decoder_info[2] & 0x7) + 1;
+      switch ((buf->decoder_info[2]>>4) & 3) {
+        case 0: sample_rate = 48000; break;
+        case 1: sample_rate = 96000; break;
+        case 2: sample_rate = 44100; break;
+        case 3: sample_rate = 32000; break;
+      }
+      switch ((buf->decoder_info[2]>>6) & 3) {
+        case 0: bits_per_sample = 16; break;
+        case 1: bits_per_sample = 20; break;
+        case 2: bits_per_sample = 24; break;
+      }
     }
 
     if( this->bits_per_sample != bits_per_sample ||
@@ -119,13 +168,17 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       this->number_of_channels = num_channels;
       this->rate = sample_rate;
       format_changed++;
+
+      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+              "lpcm_decoder: format changed to %d channels, %d bits per sample, %d Hz, %d kbit/s\n",
+              num_channels, bits_per_sample, sample_rate, (num_channels * sample_rate * bits_per_sample)/1024);
     }
   }
 
   if( buf->decoder_flags & BUF_FLAG_STDHEADER ) {
     this->rate=buf->decoder_info[1];
-    this->bits_per_sample=buf->decoder_info[2] ;
-    this->number_of_channels=buf->decoder_info[3] ;
+    this->bits_per_sample=buf->decoder_info[2];
+    this->number_of_channels=buf->decoder_info[3];
     format_changed++;
   }
 
@@ -159,6 +212,30 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   if (!this->output_open || (buf->decoder_flags & BUF_FLAG_HEADER) )
     return;
 
+  if (buf->pts && !this->pts)
+    this->pts = buf->pts;
+
+  /* data accumulation */
+  if (this->buf) {
+    int frame_end = buf->decoder_flags & BUF_FLAG_FRAME_END;
+    if (this->buffered_bytes || !frame_end) {
+      if (this->buf_size < this->buffered_bytes + buf->size) {
+        this->buf_size *= 2;
+        this->buf = realloc(this->buf, this->buf_size);
+      }
+
+      memcpy(this->buf + this->buffered_bytes, buf->content, buf->size);
+      this->buffered_bytes += buf->size;
+
+      if (!frame_end)
+        return;
+
+      sample_buffer = (int16_t*)this->buf;
+      buf_size = this->buffered_bytes;
+      this->buffered_bytes = 0;
+    }
+  }
+
   audio_buffer = this->stream->audio_out->get_buffer (this->stream->audio_out);
 
   /* Swap LPCM samples into native byte order, if necessary */
@@ -167,14 +244,14 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
   if( this->bits_per_sample == 16 ){
     if (stream_be != this->cpu_be)
-      swab (sample_buffer, audio_buffer->mem, buf->size);
+      swab (sample_buffer, audio_buffer->mem, buf_size);
     else
-      memcpy (audio_buffer->mem, sample_buffer, buf->size);
+      memcpy (audio_buffer->mem, sample_buffer, buf_size);
   }
   else if( this->bits_per_sample == 20 ) {
     uint8_t *s = (uint8_t *)sample_buffer;
     uint8_t *d = (uint8_t *)audio_buffer->mem;
-    int n = buf->size;
+    int n = buf_size;
 
     if (stream_be != this->cpu_be) {
       while( n >= 0 ) {
@@ -194,7 +271,7 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   } else if( this->bits_per_sample == 24 ) {
     uint8_t *s = (uint8_t *)sample_buffer;
     uint8_t *d = (uint8_t *)audio_buffer->mem;
-    int n = buf->size;
+    int n = buf_size;
 
     while (n >= 3) {
       if ( stream_be ) {
@@ -221,18 +298,19 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       n -= 3;
     }
 
-    if ( (d - (uint8_t*)audio_buffer->mem)/2*3 < buf->size )
-	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "lpcm_decoder: lost %i bytes\n", (int)(buf->size - (d - (uint8_t*)audio_buffer->mem))/2*3);
+    if ( (d - (uint8_t*)audio_buffer->mem)/2*3 < buf_size )
+	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "lpcm_decoder: lost %i bytes\n", (int)(buf_size - (d - (uint8_t*)audio_buffer->mem))/2*3);
 
   } else {
-    memcpy (audio_buffer->mem, sample_buffer, buf->size);
+    memcpy (audio_buffer->mem, sample_buffer, buf_size);
   }
 
-  audio_buffer->vpts       = buf->pts;
-  audio_buffer->num_frames = (((buf->size*8)/this->number_of_channels)/this->bits_per_sample);
+  audio_buffer->vpts       = this->pts;
+  audio_buffer->num_frames = (((buf_size*8)/this->number_of_channels)/this->bits_per_sample);
 
   this->stream->audio_out->put_buffer (this->stream->audio_out, audio_buffer, this->stream);
 
+  this->pts = 0;
 }
 
 static void lpcm_dispose (audio_decoder_t *this_gen) {
@@ -241,6 +319,8 @@ static void lpcm_dispose (audio_decoder_t *this_gen) {
   if (this->output_open)
     this->stream->audio_out->close (this->stream->audio_out, this->stream);
   this->output_open = 0;
+
+  free (this->buf);
 
   free (this_gen);
 }

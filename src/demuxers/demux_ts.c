@@ -807,6 +807,18 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
       m->type |= BUF_AUDIO_DTS;
       return 1;
 
+    } else if (m->descriptor_tag == HDMV_AUDIO_80_PCM) {
+
+      m->content = p + 4;
+      m->size    = packet_len - 4;
+      m->type   |= BUF_AUDIO_LPCM_BE;
+
+      m->buf->decoder_flags  |= BUF_FLAG_SPECIAL;
+      m->buf->decoder_info[1] = BUF_SPECIAL_LPCM_CONFIG;
+      m->buf->decoder_info[2] = (p[3]<<24) | (p[2]<<16) | (p[1]<<8) | p[0];
+
+      return 1;
+
     } else if (m->descriptor_tag == ISO_13818_PES_PRIVATE
 	     && p[0] == 0x20 && p[1] == 0x00) {
       /* DVBSUB */
@@ -1525,7 +1537,10 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
             demux_ts_get_reg_desc(this, &format_identifier,
                     stream + 5, stream_info_length);
             /* If no format identifier, assume A52 */
-            if ((format_identifier == 0x41432d33) || (format_identifier == 0)) {
+            if (( format_identifier == 0x41432d33) ||
+                ( format_identifier == 0) ||
+                ((format_identifier == 0x48444d56 || this->hdmv>0) && stream[0] == HDMV_AUDIO_80_PCM) /* BluRay PCM */) {
+
                 demux_ts_pes_new(this, this->media_num, pid, this->audio_fifo, stream[0]);
                 this->audio_tracks[this->audio_tracks_count].pid = pid;
                 this->audio_tracks[this->audio_tracks_count].media_index = this->media_num;

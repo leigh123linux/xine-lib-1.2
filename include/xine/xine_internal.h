@@ -73,6 +73,11 @@ typedef struct xine_ticket_s xine_ticket_t;
  * the "big" xine struct, holding everything together
  */
 
+#ifndef XDG_BASEDIR_H
+/* present here for internal convenience only */
+typedef struct { void *reserved; } xdgHandle;
+#endif
+
 struct xine_s {
 
   config_values_t           *config;
@@ -92,8 +97,8 @@ struct xine_s {
 
   metronom_clock_t          *clock;
 
-  /** Handle for libxdg-basedir functions. It's actually an xdgHandle. */
-  void *                     basedir_handle;
+  /** Handle for libxdg-basedir functions. */
+  xdgHandle                  basedir_handle;
 
 #ifdef XINE_ENGINE_INTERNAL
   xine_ticket_t             *port_ticket;

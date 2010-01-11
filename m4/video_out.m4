@@ -515,4 +515,3 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
     AM_CONDITIONAL([ENABLE_VDPAU], test x"$have_vdpau" = x"yes")
     
 ])dnl XINE_VIDEO_OUT_PLUGIN
-S

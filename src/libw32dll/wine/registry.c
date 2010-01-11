@@ -303,8 +303,9 @@ static struct reg_value* insert_reg_value(int handle, const char* name, int type
 
 static void init_registry(void)
 {
-	xdgHandle tmph = xdgAllocHandle();
-	const char *const xdg_cache_home = xdgCacheHome(tmph);
+	xdgHandle tmph;
+	xdgInitHandle(&tmph);
+	const char *const xdg_cache_home = xdgCacheHome(&tmph);
 
 	TRACE("Initializing registry\n");
 	// can't be free-ed - it's static and probably thread
@@ -318,7 +319,7 @@ static void init_registry(void)
 	insert_handle(HKEY_LOCAL_MACHINE, "HKLM");
 	insert_handle(HKEY_CURRENT_USER, "HKCU");
 
-	xdgFreeHandle(tmph);
+	xdgWipeHandle(&tmph);
 }
 
 #if 0
