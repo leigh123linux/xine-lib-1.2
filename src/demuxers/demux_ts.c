@@ -818,7 +818,8 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
       m->type |= BUF_AUDIO_A52;
       return 1;
 
-    } else if (m->descriptor_tag == HDMV_AUDIO_86_DTS_HD_MA ) {
+    } else if (m->descriptor_tag == HDMV_AUDIO_82_DTS ||
+               m->descriptor_tag == HDMV_AUDIO_86_DTS_HD_MA ) {
       m->content = p;
       m->size = packet_len;
       m->type |= BUF_AUDIO_DTS;
