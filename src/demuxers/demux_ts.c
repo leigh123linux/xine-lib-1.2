@@ -233,7 +233,6 @@
       ISO_14496_PART10_VIDEO = 0x1b,    /* ISO/IEC 14496-10 Video (MPEG-4 part 10/AVC, aka H.264) */
       STREAM_VIDEO_MPEG      = 0x80,
       STREAM_AUDIO_AC3       = 0x81,
-      STREAM_SPU_BITMAP_HDMV = 0x90,
 
       STREAM_VIDEO_VC1       = 0xea,    /* VC-1 Video */
 
@@ -243,6 +242,10 @@
       HDMV_AUDIO_84_EAC3      = 0x84, /* Dolby Digital plus, primary audio */
       HDMV_AUDIO_85_DTS_HRA   = 0x85, /* DTS-HRA */
       HDMV_AUDIO_86_DTS_HD_MA = 0x86, /* DTS-HD Master audio */
+
+      HDMV_SPU_BITMAP      = 0x90,
+      HDMV_SPU_INTERACTIVE = 0x91,
+      HDMV_SPU_TEXT        = 0x92,
 
     } streamType;
 
@@ -763,7 +766,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
     return 1;
   }
 
-  if (m->descriptor_tag == STREAM_SPU_BITMAP_HDMV) {
+  if (m->descriptor_tag == HDMV_SPU_BITMAP) {
     long payload_len = ((buf[4] << 8) | buf[5]) - header_len - 3;
 
     m->content = p;
@@ -801,7 +804,8 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
       m->type |= BUF_AUDIO_A52;
       return 1;
 
-    } else if (m->descriptor_tag == HDMV_AUDIO_86_DTS_HD_MA ) {
+    } else if (m->descriptor_tag == HDMV_AUDIO_82_DTS ||
+               m->descriptor_tag == HDMV_AUDIO_86_DTS_HD_MA ) {
       m->content = p;
       m->size = packet_len;
       m->type |= BUF_AUDIO_DTS;
@@ -966,7 +970,7 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
 	else if ( this->numPreview<5 )
 	  m->buf->decoder_flags=BUF_FLAG_PREVIEW;
 	else
-	  m->buf->decoder_flags=BUF_FLAG_FRAME_END;
+	  m->buf->decoder_flags |= BUF_FLAG_FRAME_END;
       }
       m->buf->pts = m->pts;
       m->buf->decoder_info[0] = 1;
@@ -1014,7 +1018,7 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
       m->buf->content = m->buf->mem;
       m->buf->size = m->buffered_bytes;
       m->buf->type = m->type;
-      m->buf->pts = 0; /* m->pts */
+      m->buf->pts = m->pts;
       m->buf->decoder_info[0] = 1;
       if( this->input->get_length (this->input) )
         m->buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) *
@@ -1485,7 +1489,16 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
       }
       break;
 
-    case STREAM_SPU_BITMAP_HDMV:
+    case HDMV_SPU_INTERACTIVE:
+    case HDMV_SPU_TEXT:
+      if (this->hdmv > 0) {
+        printf("demux_ts: Skipping unsupported HDMV subtitle stream_type: 0x%.2x pid: 0x%.4x\n",
+               stream[0], pid);
+        break;
+      }
+      /* fall thru */
+
+    case HDMV_SPU_BITMAP:
       if (this->hdmv > 0) {
 	if (pid >= 0x1200 && pid < 0x1300) {
 	  /* HDMV Presentation Graphics / SPU */
