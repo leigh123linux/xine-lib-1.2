@@ -660,7 +660,7 @@ static void decode_render( vdpau_mpeg12_decoder_t *vd, vdpau_accel_t *accel )
 
 
 
-static void decode_picture( vdpau_mpeg12_decoder_t *vd )
+static void decode_picture( vdpau_mpeg12_decoder_t *vd, uint8_t end_of_sequence )
 {
   sequence_t *seq = (sequence_t*)&vd->sequence;
   picture_t *pic = (picture_t*)&seq->picture;
@@ -740,6 +740,12 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd )
   img->bad_frame = 0;
   img->duration = seq->video_step;
 
+  if ( end_of_sequence ) {
+    if ( seq->backward_ref )
+      seq->backward_ref->free( seq->backward_ref );
+    seq->backward_ref = NULL;
+  }
+
   /* trying to deal with (french) buggy streams that randomly set bottom_field_first
      while stream is top_field_first. So we assume that when top_field_first
      is set one time, the stream _is_ top_field_first. */
@@ -813,7 +819,7 @@ static void vdpau_mpeg12_decode_data (video_decoder_t *this_gen, buf_element_t *
       }
       else {
         if ( parse_code( this, seq->buf+seq->start, seq->bufseek-seq->start ) ) {
-          decode_picture( this );
+          decode_picture( this, 0 );
           parse_code( this, seq->buf+seq->start, seq->bufseek-seq->start );
         }
         uint8_t *tmp = (uint8_t*)malloc(seq->bufsize);
@@ -831,7 +837,7 @@ static void vdpau_mpeg12_decode_data (video_decoder_t *this_gen, buf_element_t *
   /* still image detection -- don't wait for further data if buffer ends in sequence end code */
   if (seq->start >= 0 && seq->buf[seq->start + 3] == sequence_end_code) {
     if (parse_code(this, seq->buf+seq->start, 4)) {
-      decode_picture(this);
+      decode_picture(this, 1);
       parse_code(this, seq->buf+seq->start, 4);
     }
     seq->start = -1;
