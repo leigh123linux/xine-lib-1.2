@@ -1014,7 +1014,7 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
       m->buf->content = m->buf->mem;
       m->buf->size = m->buffered_bytes;
       m->buf->type = m->type;
-      m->buf->pts = 0; /* m->pts */
+      m->buf->pts = m->pts;
       m->buf->decoder_info[0] = 1;
       if( this->input->get_length (this->input) )
         m->buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) *
