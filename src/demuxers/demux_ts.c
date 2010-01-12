@@ -983,7 +983,7 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
 	else if ( this->numPreview<5 )
 	  m->buf->decoder_flags=BUF_FLAG_PREVIEW;
 	else
-	  m->buf->decoder_flags=BUF_FLAG_FRAME_END;
+	  m->buf->decoder_flags |= BUF_FLAG_FRAME_END;
       }
       m->buf->pts = m->pts;
       m->buf->decoder_info[0] = 1;
