@@ -261,6 +261,8 @@ typedef struct {
   int                width, height, format, flags;
   double             ratio;
 
+  int                surface_cleared_nr;
+
   vdpau_accel_t     vdpau_accel_data;
 } vdpau_frame_t;
 
@@ -356,6 +358,8 @@ typedef struct {
 
   int               vdp_runtime_nr;
   int               reinit_needed;
+
+  int               surface_cleared_nr;
 
   int               allocated_surfaces;
   int		            zoom_x;
@@ -835,6 +839,8 @@ static vo_frame_t *vdpau_alloc_frame (vo_driver_t *this_gen)
   frame->vo_frame.dispose    = vdpau_frame_dispose;
   frame->vo_frame.driver     = this_gen;
 
+  frame->surface_cleared_nr = 0;
+
   frame->vdpau_accel_data.vo_frame = &frame->vo_frame;
   frame->vdpau_accel_data.vdp_device = vdp_device;
   frame->vdpau_accel_data.surface = VDP_INVALID_HANDLE;
@@ -979,6 +985,11 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
   vdpau_driver_t *this = (vdpau_driver_t *) this_gen;
   vdpau_frame_t   *frame = VDPAU_FRAME(frame_gen);
 
+  int clear = 0;
+
+  if ( flags & VO_NEW_SEQUENCE_FLAG )
+    ++this->surface_cleared_nr;
+
   VdpChromaType chroma = (flags & VO_CHROMA_422) ? VDP_CHROMA_TYPE_422 : VDP_CHROMA_TYPE_420;
 
   vo_frame_t orig_frame_content;
@@ -1035,6 +1046,7 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
       if ( st!=VDP_STATUS_OK )
         printf( "vo_vdpau: failed to create surface !! %s\n", vdp_get_error_string( st ) );
       else {
+        clear = 1;
         frame->vdpau_accel_data.chroma = chroma;
         ++this->allocated_surfaces;
         frame->vo_frame.proc_duplicate_frame_data = vdpau_duplicate_frame_data;
@@ -1048,6 +1060,32 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
     frame->flags = flags;
 
     vdpau_frame_field ((vo_frame_t *)frame, flags);
+  }
+
+  if ( (format == XINE_IMGFMT_VDPAU) && (clear || (frame->surface_cleared_nr != this->surface_cleared_nr)) ) {
+    printf( "clear surface\n" );
+    if ( frame->vdpau_accel_data.chroma == VDP_CHROMA_TYPE_422 ) {
+      uint8_t *cb = malloc( frame->width * frame->height * 2 );
+      memset( cb, 127, frame->width * frame->height * 2 );
+      uint32_t pitches[] = { frame->width };
+      void* data[] = { cb };
+      VdpStatus st = vdp_video_surface_putbits_ycbcr( frame->vdpau_accel_data.surface, VDP_YCBCR_FORMAT_YUYV, &data, pitches );
+      if ( st!=VDP_STATUS_OK )
+        printf( "vo_vdpau: failed to clear surface: %s\n", vdp_get_error_string( st ) );
+      free( cb );
+    }
+    else {
+      uint8_t *cb = malloc( frame->width * frame->height );
+      memset( cb, 127, frame->width * frame->height );
+      uint32_t pitches[] = { frame->width, frame->height, frame->height };
+      void* data[] = { cb, cb, cb };
+      VdpStatus st = vdp_video_surface_putbits_ycbcr( frame->vdpau_accel_data.surface, VDP_YCBCR_FORMAT_YV12, &data, pitches );
+      if ( st!=VDP_STATUS_OK )
+        printf( "vo_vdpau: failed to clear surface: %s\n", vdp_get_error_string( st ) );
+      free( cb );
+    }
+    if ( frame->surface_cleared_nr != this->surface_cleared_nr )
+      frame->surface_cleared_nr = this->surface_cleared_nr;
   }
 
   frame->vdpau_accel_data.color_standard = VDP_COLOR_STANDARD_ITUR_BT_601;
@@ -2210,6 +2248,8 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->vo_driver.gui_data_exchange    = vdpau_gui_data_exchange;
   this->vo_driver.dispose              = vdpau_dispose;
   this->vo_driver.redraw_needed        = vdpau_redraw_needed;
+
+  this->surface_cleared_nr = 0;
 
   this->video_mixer = VDP_INVALID_HANDLE;
   for ( i=0; i<NOUTPUTSURFACE; ++i )

@@ -152,6 +152,7 @@ typedef struct {
   bits_reader_t  br;
 
   int         vdp_runtime_nr;
+  int         reset;
 
 } sequence_t;
 
@@ -231,6 +232,7 @@ static void reset_sequence( sequence_t *sequence, int free_refs )
     sequence->backward_ref->free( sequence->backward_ref );
   sequence->backward_ref = NULL;
   sequence->top_field_first = 0;
+  sequence->reset = VO_NEW_SEQUENCE_FLAG;
 }
 
 
@@ -701,7 +703,8 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd, uint8_t end_of_sequence 
   }
 
   vo_frame_t *img = vd->stream->video_out->get_frame( vd->stream->video_out, seq->coded_width, seq->coded_height,
-                                                      seq->ratio, XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS|seq->chroma );
+                                                      seq->ratio, XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS|seq->chroma|seq->reset );
+  seq->reset = 0;                                                      
   vdpau_accel_t *accel = (vdpau_accel_t*)img->accel_data;
   if ( !seq->accel_vdpau )
     seq->accel_vdpau = accel;
@@ -721,16 +724,16 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd, uint8_t end_of_sequence 
 
 #ifdef MAKE_DAT
   if ( nframes==0 ) {
-	fwrite( &seq->coded_width, 1, sizeof(seq->coded_width), outfile );
-	fwrite( &seq->coded_height, 1, sizeof(seq->coded_height), outfile );
-	fwrite( &seq->ratio, 1, sizeof(seq->ratio), outfile );
-	fwrite( &seq->profile, 1, sizeof(seq->profile), outfile );
+    fwrite( &seq->coded_width, 1, sizeof(seq->coded_width), outfile );
+    fwrite( &seq->coded_height, 1, sizeof(seq->coded_height), outfile );
+    fwrite( &seq->ratio, 1, sizeof(seq->ratio), outfile );
+    fwrite( &seq->profile, 1, sizeof(seq->profile), outfile );
   }
 
   if ( nframes++ < 25 ) {
-	fwrite( &pic->vdp_infos, 1, sizeof(pic->vdp_infos), outfile );
-	fwrite( &pic->slices_pos, 1, sizeof(pic->slices_pos), outfile );
-	fwrite( pic->slices, 1, pic->slices_pos, outfile );
+    fwrite( &pic->vdp_infos, 1, sizeof(pic->vdp_infos), outfile );
+    fwrite( &pic->slices_pos, 1, sizeof(pic->slices_pos), outfile );
+    fwrite( pic->slices, 1, pic->slices_pos, outfile );
   }
 #endif
 
@@ -942,6 +945,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->sequence.vdp_runtime_nr = runtime_nr;
   free_sequence( &this->sequence );
   this->sequence.ratio = 1;
+  this->sequence.reset = VO_NEW_SEQUENCE_FLAG;
 
   init_picture( &this->sequence.picture );
 

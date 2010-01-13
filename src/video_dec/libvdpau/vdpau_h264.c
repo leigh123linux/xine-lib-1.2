@@ -1,6 +1,8 @@
 /*
  * Copyright (C) 2008 Julian Scheel
  *
+ * kate: space-indent on; indent-width 2; mixedindent off; indent-mode cstyle; remove-trailing-space on;
+ *
  * This file is part of xine, a free video player.
  *
  * xine is free software; you can redistribute it and/or modify
@@ -84,6 +86,8 @@ typedef struct vdpau_h264_decoder_s {
   uint32_t          codec_private_len;
 
   int               vdp_runtime_nr;
+
+  int               reset;
 
 } vdpau_h264_decoder_t;
 
@@ -349,7 +353,8 @@ static int vdpau_decoder_init(video_decoder_t *this_gen)
   img = this->stream->video_out->get_frame (this->stream->video_out,
                                     this->width, this->height,
                                     this->ratio,
-                                    XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS);
+                                    XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS | this->reset);
+  this->reset = 0;                                    
 
   img->duration = this->video_step;
   img->pts = this->completed_pic->pts;
@@ -688,6 +693,7 @@ static void vdpau_h264_flush (video_decoder_t *this_gen) {
     dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
   }
   dpb_free_all(&this->nal_parser->dpb);
+  this->reset = VO_NEW_SEQUENCE_FLAG;
 }
 
 /*
@@ -726,6 +732,8 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
   }
 
   this->last_img = NULL;
+
+  this->reset = VO_NEW_SEQUENCE_FLAG;
 }
 
 /*
@@ -735,6 +743,7 @@ static void vdpau_h264_discontinuity (video_decoder_t *this_gen) {
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *) this_gen;
 
   dpb_clear_all_pts(&this->nal_parser->dpb);
+  this->reset = VO_NEW_SEQUENCE_FLAG;
 }
 
 /*
@@ -803,6 +812,8 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->decoder                           = VDP_INVALID_HANDLE;
   this->vdp_runtime_nr                    = runtime_nr;
   this->color_standard                    = VDP_COLOR_STANDARD_ITUR_BT_601;
+
+  this->reset = VO_NEW_SEQUENCE_FLAG;
 
   this->nal_parser = init_parser();
 
