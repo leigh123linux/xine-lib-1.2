@@ -702,8 +702,9 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd, uint8_t end_of_sequence 
       return;
   }
 
+  int still_image = (end_of_sequence) ? VO_STILL_IMAGE : 0;
   vo_frame_t *img = vd->stream->video_out->get_frame( vd->stream->video_out, seq->coded_width, seq->coded_height,
-                                                      seq->ratio, XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS|seq->chroma|seq->reset );
+                                                      seq->ratio, XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS | seq->chroma | seq->reset | still_image );
   seq->reset = 0;                                                      
   vdpau_accel_t *accel = (vdpau_accel_t*)img->accel_data;
   if ( !seq->accel_vdpau )

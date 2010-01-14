@@ -1656,15 +1656,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   vid_dest.x0 = this->sc.output_xoffset; vid_dest.y0 = this->sc.output_yoffset;
   vid_dest.x1 = this->sc.output_xoffset+this->sc.output_width; vid_dest.y1 = this->sc.output_yoffset+this->sc.output_height;
 
-  /* prepare field delay calculation to not run into a deadlock while display locked */
   stream_speed = frame->vo_frame.stream ? xine_get_param(frame->vo_frame.stream, XINE_PARAM_FINE_SPEED) : 0;
-  if (stream_speed != 0) {
-    int vo_bufs_in_fifo = 0;
-    _x_query_buffer_usage(frame->vo_frame.stream, NULL, NULL, &vo_bufs_in_fifo, NULL);
-    /* fprintf(stderr, "vo_bufs: %d\n", vo_bufs_in_fifo); */
-    if (vo_bufs_in_fifo <= 0)
-      stream_speed = 0; /* still image -> no delay */
-  }
 
   VdpTime last_time;
 
@@ -1716,7 +1708,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   XLockDisplay( this->display );
 #endif
 
-  if ( frame->format==XINE_IMGFMT_VDPAU && this->deinterlace && non_progressive /*&& stream_speed*/ && frame_duration>2500 ) {
+  if ( frame->format==XINE_IMGFMT_VDPAU && this->deinterlace && non_progressive && !(frame->vo_frame.flags & VO_STILL_IMAGE) && frame_duration>2500 ) {
     VdpTime current_time = 0;
     VdpVideoSurface past[2];
     VdpVideoSurface future[1];
@@ -1761,19 +1753,16 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
       if ( st != VDP_STATUS_OK )
         printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
-      /* calculate delay for second field: there should be no delay for still images otherwise, take replay speed into account */
-      if (stream_speed > 0)
+      if ( stream_speed > 0 )
         current_time += frame->vo_frame.duration * 1000000ull * XINE_FINE_SPEED_NORMAL / (180 * stream_speed);
-      else
-        current_time = 0; /* immediately i. e. no delay */
 
-      //current_time = 0;
-      //printf( "vo_vdpau: deint delay = %d\n", frame_duration *1ull * XINE_FINE_SPEED_NORMAL / (180 * stream_speed) );
       vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, current_time );
       vdpau_shift_queue( this_gen );
     }
   }
   else {
+    if ( frame->vo_frame.flags & VO_STILL_IMAGE )
+      printf("vo_vdpau: VO_STILL_IMAGE\n");
     st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME,
                                0, 0, surface, 0, 0, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
     if ( st != VDP_STATUS_OK )
@@ -1787,9 +1776,9 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   XUnlockDisplay( this->display );
 #endif
 
-  if ( stream_speed ) /* do not release past frame if paused, it will be used for redrawing */
+  if ( stream_speed ) 
     vdpau_backup_frame( this_gen, frame_gen );
-  else
+  else /* do not release past frame if paused, it will be used for redrawing */
     frame->vo_frame.free( &frame->vo_frame );
 }
 

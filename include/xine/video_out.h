@@ -283,6 +283,7 @@ struct xine_video_port_s {
 #define VO_INTERLACED_FLAG   8
 #define VO_NEW_SEQUENCE_FLAG 16 /* set after MPEG2 Sequence Header Code (used by XvMC) */
 #define VO_CHROMA_422        32 /* used by VDPAU, default is chroma_420 */
+#define VO_STILL_IMAGE       64
 
 /* video driver capabilities */
 #define VO_CAP_YV12                   0x00000001 /* driver can handle YUV 4:2:0 pictures */
@@ -294,7 +295,7 @@ struct xine_video_port_s {
 #define VO_CAP_XXMC                   0x00000040 /* driver can use extended XvMC */
 #define VO_CAP_VDPAU_H264             0x00000080 /* driver can use VDPAU for H264 */
 #define VO_CAP_VDPAU_MPEG12           0x00000100 /* driver can use VDPAU for mpeg1/2 */
-#define VO_CAP_VDPAU_VC1              0x00000200 /* driver can use VDPAU for mpeg1/2 */
+#define VO_CAP_VDPAU_VC1              0x00000200 /* driver can use VDPAU for VC1 */
 #define VO_CAP_HUE                    0x00010000
 #define VO_CAP_SATURATION             0x00020000
 #define VO_CAP_CONTRAST               0x00040000
