@@ -1,0 +1,16 @@
+# Translation of xine-lib.po into American English.
+# Copyright (C) 2008 the xine project
+# Copyright (C) 2002, 2006, 2007, 2008 Free Software Foundation, Inc.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: xine-lib.hg\n"
+"Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
+"POT-Creation-Date: 2009-01-15 19:04+0000\n"
+"PO-Revision-Date: 2009-01-15 19:04+0000\n"
+"Last-Translator: Not translated <null@example.com>\n"
+"Language-Team: en_US <none>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
