@@ -9,7 +9,8 @@ noinst_LTLIBRARIES = $(wine_lib)
 AM_CFLAGS = $(X_CFLAGS) @W32_NO_OPTIMIZE@ \
 	-Wmissing-prototypes -Wimplicit-function-declaration \
 	-DWIN32_PATH=\"@w32_path@\" -I$(srcdir)/.. -D__WINE__ \
-	-Ddbg_printf=__vprintf -DTRACE=__vprintf
+	-Ddbg_printf=__vprintf -DTRACE=__vprintf \
+	-I$(top_srcdir)/src/xine-utils
 
 # CFLAGS is here to filter out -fomit-frame-pointer,
 # -finline-functions and -frename-registers because they cause bad
@@ -34,7 +35,7 @@ libwine_la_SOURCES = \
 	vfl.c \
 	win32.c \
 	stubs.s \
-	wrapper.S 
+	wrapper.S
 
 noinst_HEADERS = \
 	avifmt.h \

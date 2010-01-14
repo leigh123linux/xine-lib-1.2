@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -37,7 +37,7 @@
 #include "xineutils.h"
 #include "scratch.h"
 
-static void __attribute__((__format__(__printf__, 2, 0)))
+static void XINE_FORMAT_PRINTF(2, 0)
   scratch_printf (scratch_buffer_t *this, const char *format, va_list argp)
 {
   time_t t;
@@ -50,12 +50,11 @@ static void __attribute__((__format__(__printf__, 2, 0)))
   localtime_r (&t, &tm);
 
   if ( ! this->lines[this->cur] )
-    this->lines[this->cur] = xine_xmalloc(SCRATCH_LINE_LEN_MAX+1);
+    this->lines[this->cur] = malloc(SCRATCH_LINE_LEN_MAX+1);
   if ( ! this->lines[this->cur] )
     return;
 
-  strftime (this->lines[this->cur], SCRATCH_LINE_LEN_MAX, "%X: ", &tm);
-  l = strlen (this->lines[this->cur]);
+  l = strftime (this->lines[this->cur], SCRATCH_LINE_LEN_MAX, "%X: ", &tm);
   vsnprintf (this->lines[this->cur] + l, SCRATCH_LINE_LEN_MAX - l, format, argp);
 
   lprintf ("printing format %s to line %d\n", format, this->cur);
@@ -86,14 +85,14 @@ static char **scratch_get_content (scratch_buffer_t *this) {
 
 static void scratch_dispose (scratch_buffer_t *this) {
   int   i;
-  
+
   pthread_mutex_lock (&this->lock);
 
   for(i = 0; i < this->num_lines; i++ ) {
     free(this->ordered[i]);
     free(this->lines[i]);
   }
-  
+
   free (this->lines);
   free (this->ordered);
 
@@ -105,15 +104,11 @@ static void scratch_dispose (scratch_buffer_t *this) {
 
 scratch_buffer_t *_x_new_scratch_buffer (int num_lines) {
   scratch_buffer_t *this;
-  int               i;
 
-  this = xine_xmalloc (sizeof (scratch_buffer_t));
+  this = calloc(1, sizeof(scratch_buffer_t));
 
-  this->lines   = xine_xmalloc (sizeof (char *) * (num_lines + 1));
-  this->ordered = xine_xmalloc (sizeof (char *) * (num_lines + 1));
-
-  for (i = 0; i <= num_lines; i++)
-    this->lines[i] = this->ordered[i] = NULL;
+  this->lines   = calloc ((num_lines + 1), sizeof(char*));
+  this->ordered = calloc ((num_lines + 1), sizeof(char*));
 
   this->scratch_printf = scratch_printf;
   this->get_content    = scratch_get_content;

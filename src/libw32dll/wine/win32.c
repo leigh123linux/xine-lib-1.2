@@ -1430,7 +1430,7 @@ static void WINAPI expDeleteCriticalSection(CRITICAL_SECTION *c)
 }
 static int WINAPI expGetCurrentThreadId()
 {
-    dbgprintf("GetCurrentThreadId() => %ld\n", pthread_self());
+    dbgprintf("GetCurrentThreadId() => %ld\n", (long int)pthread_self());
     return (int)pthread_self();
 }
 static int WINAPI expGetCurrentProcess()
@@ -2134,7 +2134,6 @@ static const char* WINAPI expGetCommandLineA()
     dbgprintf("GetCommandLineA() => \"c:\\aviplay.exe\"\n");
     return "c:\\aviplay.exe";
 }
-static short envs[]={'p', 'a', 't', 'h', ' ', 'c', ':', '\\', 0, 0};
 static LPWSTR WINAPI expGetEnvironmentStringsW()
 {
     dbgprintf("GetEnvironmentStringsW() => 0\n");
@@ -3491,9 +3490,9 @@ static HANDLE WINAPI expCreateFileA(LPCSTR cs1,DWORD i1,DWORD i2,
     if(strstr(cs1, ".qtx"))
     {
 	int result;
-	char* tmp=(char*)malloc(strlen(win32_def_path)+250);
 	char* x=strrchr(cs1,'\\');
-	sprintf(tmp,"%s/%s",win32_def_path,x?(x+1):cs1);
+	char* tmp;
+	asprintf(&tmp,"%s/%s",win32_def_path,x?(x+1):cs1);
 //	printf("### Open: %s -> %s\n",cs1,tmp);
 	result=open(tmp, O_RDONLY);
 	free(tmp);
@@ -3998,7 +3997,7 @@ static int XINE_FORMAT_PRINTF(2, 3) expsprintf(char* str, const char* format, ..
     va_end(args);
     return r;
 }
-static int XINE_FORMAT_PRINTF(2, 3) expsscanf(const char* str, const char* format, ...)
+static int XINE_FORMAT_SCANF(2, 3) expsscanf(const char* str, const char* format, ...)
 {
     va_list args;
     int r;
@@ -4162,7 +4161,7 @@ static void* expmemset(void* dest, int c, size_t n)
 static time_t exptime(time_t* t)
 {
     time_t result = time(t);
-    dbgprintf("time(%p) => %ld\n", t, result);
+    dbgprintf("time(%p) => %ld\n", t, (long int)result);
     return result;
 }
 
@@ -5058,11 +5057,9 @@ struct libs libraries[]={
     LL(ddraw)
 #endif
 };
-#if defined(__CYGWIN__) || defined(__OS2__) || defined (__OpenBSD__)
-#define MANGLE(a) "_" #a
-#else
-#define MANGLE(a) #a
-#endif
+
+#include "mangle.h"
+
 static void ext_stubs(void)
 {
     // expects:

@@ -11,11 +11,13 @@ SUBDIRS = \
 	demuxers \
 	libffmpeg \
 	libmpeg2 \
+	libmpeg2new \
 	liba52 \
 	libspudec \
 	libspucc \
 	libspucmml \
 	libspudvb \
+	libspuhdmv \
 	libsputext \
 	libdts \
 	libmad \

@@ -31,7 +31,7 @@ int main() {
   dlopen(NULL, 0);
   return 0;
 }
-], 
+],
       [DYNAMIC_LD_LIBS=-lkernel32
        have_dl=yes
        AC_MSG_RESULT(yes)],

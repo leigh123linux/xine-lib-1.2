@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2001-2003 the xine project
- * 
+ *
  * This file is part of xine, a unix video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -60,9 +60,13 @@ typedef unsigned char boolean;
  * the linking stage.
  *****************************************************************************/
 #if 1
-static const GUID IID_IDirectSoundNotify = {
+static const GUID xine_IID_IDirectSoundNotify = {
 	0xB0210783,0x89CD,0x11D0,{0xAF,0x08,0x00,0xA0,0xC9,0x25,0xCD,0x16}
 };
+#ifdef IID_IDirectSoundNotify
+#  undef IID_IDirectSoundNotify
+#endif
+#define IID_IDirectSoundNotify xine_IID_IDirectSoundNotify
 #endif
 
 
@@ -77,14 +81,14 @@ typedef struct {
   int			capabilities;
 
   xine_t               *xine;
-  
+
   /* directx objects */
   LPDIRECTSOUND         dsobj;
   LPDIRECTSOUNDBUFFER   dsbuffer;
   DSBCAPS		dsbcaps;
   LPDIRECTSOUNDNOTIFY   notify;
   DSBPOSITIONNOTIFY	notify_events[ 2 ];
-  
+
   /* buffer vars */
   long                  buffer_size;
   int                   write_status;
@@ -92,13 +96,13 @@ typedef struct {
 
   uint8_t               prebuff[ SOUND_BUFFER_MAX ];
   uint32_t              prebuff_size;
-  
+
   /* current buffer properties */
   int		        bits;
   int		        rate;
   int		        chnn;
   int		        frsz;
-  
+
   /* current mixer settings */
   int                   mute;
   int		        volume;
@@ -114,7 +118,7 @@ typedef struct {
  *
  * BEGIN : Direct Sound and win32 handlers
  *         for xine audio output plugins.
- * 
+ *
  * ------------------------------------------- */
 
 void       Error( HWND hwnd, LPSTR szfmt, ... );
@@ -124,7 +128,7 @@ boolean    CreateSoundBuffer( ao_directx_t * ao_directx );
 void       DestroySoundBuffer( ao_directx_t * ao_directx );
 uint32_t   FillSoundBuffer( ao_directx_t * ao_directx, int code, unsigned char * samples );
 
-/* Display formatted error message in 
+/* Display formatted error message in
  * popup message box. */
 
 void Error( HWND hwnd, LPSTR szfmt, ... )
@@ -225,25 +229,25 @@ boolean CreateSoundBuffer( ao_directx_t * ao_directx )
    * related resources */
 
   DestroySoundBuffer( ao_directx );
-	
-  /* create a secondary sound buffer */
-	
-  memset( &pcmwf, 0, sizeof( PCMWAVEFORMAT ) ); 
-  pcmwf.wBitsPerSample     = ( unsigned short ) ao_directx->bits;
-  pcmwf.wf.wFormatTag      = WAVE_FORMAT_PCM; 
-  pcmwf.wf.nChannels       = ao_directx->chnn;
-  pcmwf.wf.nSamplesPerSec  = ao_directx->rate; 
-  pcmwf.wf.nBlockAlign     = ao_directx->frsz;
-  pcmwf.wf.nAvgBytesPerSec = ao_directx->rate * ao_directx->frsz; 
 
-  memset( &dsbdesc, 0, sizeof( DSBUFFERDESC ) ); 
-  dsbdesc.dwSize        = sizeof( DSBUFFERDESC ); 
-  dsbdesc.dwFlags       = (DSBCAPS_CTRLVOLUME | DSBCAPS_GLOBALFOCUS | 
+  /* create a secondary sound buffer */
+
+  memset( &pcmwf, 0, sizeof( PCMWAVEFORMAT ) );
+  pcmwf.wBitsPerSample     = ( unsigned short ) ao_directx->bits;
+  pcmwf.wf.wFormatTag      = WAVE_FORMAT_PCM;
+  pcmwf.wf.nChannels       = ao_directx->chnn;
+  pcmwf.wf.nSamplesPerSec  = ao_directx->rate;
+  pcmwf.wf.nBlockAlign     = ao_directx->frsz;
+  pcmwf.wf.nAvgBytesPerSec = ao_directx->rate * ao_directx->frsz;
+
+  memset( &dsbdesc, 0, sizeof( DSBUFFERDESC ) );
+  dsbdesc.dwSize        = sizeof( DSBUFFERDESC );
+  dsbdesc.dwFlags       = (DSBCAPS_CTRLVOLUME | DSBCAPS_GLOBALFOCUS |
 			   DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLPOSITIONNOTIFY);
   dsbdesc.dwBufferBytes = ao_directx->buffer_size;
   dsbdesc.lpwfxFormat   = ( LPWAVEFORMATEX ) &pcmwf;
 
-  if( IDirectSound_CreateSoundBuffer( ao_directx->dsobj, &dsbdesc, 
+  if( IDirectSound_CreateSoundBuffer( ao_directx->dsobj, &dsbdesc,
 				      &ao_directx->dsbuffer, 0 ) != DS_OK )
     {
       Error( 0, "IDirectSound_CreateSoundBuffer : Unable to create secondary sound buffer" );
@@ -278,7 +282,7 @@ boolean CreateSoundBuffer( ao_directx_t * ao_directx )
   /* get the direct sound notification interface */
 
   if( IDirectSoundBuffer_QueryInterface( ao_directx->dsbuffer,
-					 &IID_IDirectSoundNotify, 
+					 &IID_IDirectSoundNotify,
 					 (LPVOID *)&ao_directx->notify ) != DS_OK )
     {
       Error( 0, "IDirectSoundBuffer_QueryInterface : Unable to get notification interface" );
@@ -376,9 +380,9 @@ uint32_t FillSoundBuffer( ao_directx_t * ao_directx, int code, unsigned char * s
 
 #ifdef LOG
   if ((void*)samples != (void*)0)
-    printf("audio_directx_out: FillSoundBuffer(%08x, %d, Null) Enter\n", (unsigned long)ao_directx, code);	
+    printf("audio_directx_out: FillSoundBuffer(%08x, %d, Null) Enter\n", (unsigned long)ao_directx, code);
   else
-    printf("audio_directx_out: FillSoundBuffer(%08x, %d, Null) Enter\n", (unsigned long)ao_directx, code);	
+    printf("audio_directx_out: FillSoundBuffer(%08x, %d, Null) Enter\n", (unsigned long)ao_directx, code);
 #endif
 
   half_size = ao_directx->buffer_size / 2;
@@ -481,7 +485,7 @@ uint32_t FillSoundBuffer( ao_directx_t * ao_directx, int code, unsigned char * s
 	}
 
       /* write data to our sound buffer */
-	
+
       memcpy( buff_pointer, samples, buff_length );
 
       /* unlock our sound buffer */
@@ -508,7 +512,7 @@ uint32_t FillSoundBuffer( ao_directx_t * ao_directx, int code, unsigned char * s
  * ----------------------------------------- */
 
 static int ao_directx_control(ao_driver_t *this_gen, int cmd, ...) {
-  switch (cmd) 
+  switch (cmd)
     {
 
     case AO_CTRL_PLAY_PAUSE:
@@ -535,7 +539,7 @@ static int ao_directx_open( ao_driver_t * ao_driver, uint32_t bits, uint32_t rat
 
   ao_directx->bits = bits;
   ao_directx->rate = rate;
-	
+
   /* store channel count */
 
   switch( mode )
@@ -624,7 +628,7 @@ static int ao_directx_write( ao_driver_t * ao_driver, int16_t * frame_buffer, ui
   uint32_t	 wrote;	        /* number of bytes written */
   uint32_t	 half_size;     /* half our sound buffer size */
 
-  lprintf("ao_directx_write(%08x, %08x, %d) Enter\n", 
+  lprintf("ao_directx_write(%08x, %08x, %d) Enter\n",
 	  (unsigned long)ao_directx, (unsigned long)frame_buffer, num_frames);
 
   /* zero write counter */
@@ -741,7 +745,7 @@ static int ao_directx_set_property( ao_driver_t * ao_driver, int property, int v
 {
   ao_directx_t  *ao_directx = ( ao_directx_t * ) ao_driver;
 
-  lprintf("ao_directx_set_property(%08x, %d, %d) Enter\n", 
+  lprintf("ao_directx_set_property(%08x, %d, %d) Enter\n",
 	  (unsigned long)ao_directx, property, value);
 
   switch( property )
@@ -755,7 +759,7 @@ static int ao_directx_set_property( ao_driver_t * ao_driver, int property, int v
       if( !ao_directx->mute && ao_directx->dsbuffer )
 	IDirectSoundBuffer_SetVolume( ao_directx->dsbuffer, ao_directx->volume );
 
-      xprintf(ao_directx->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(ao_directx->xine, XINE_VERBOSITY_DEBUG,
 	      "ao_directx : volume set to %d - directX volume = %d\n", value, ao_directx->volume);
 
       return value;
@@ -789,11 +793,11 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 {
   audiox_class_t  *class = (audiox_class_t *) class_gen;
   ao_directx_t    *ao_directx;
-  
-  ao_directx = ( ao_directx_t * ) xine_xmalloc( sizeof( ao_directx_t ) );
+
+  ao_directx = calloc(1, sizeof(ao_directx_t));
   if (!ao_directx)
     return NULL;
-  
+
   lprintf("open_plugin(%08x, %08x) Enter\n", (unsigned long)class_gen, (unsigned long)data);
   lprintf("open_plugin: ao_directx=%08x\n", (unsigned long)ao_directx);
 
@@ -841,10 +845,10 @@ static void *init_class (xine_t *xine, void *data) {
   /*
    * from this point on, nothing should go wrong anymore
    */
-  audiox = (audiox_class_t *) xine_xmalloc (sizeof (audiox_class_t));
+  audiox = calloc(1, sizeof (audiox_class_t));
   if (!audiox)
     return NULL;
-  
+
   audiox->driver_class.open_plugin     = open_plugin;
   audiox->driver_class.get_identifier  = get_identifier;
   audiox->driver_class.get_description = get_description;
@@ -854,7 +858,7 @@ static void *init_class (xine_t *xine, void *data) {
   audiox->config                       = xine->config;
 
   lprintf("init_class() Exit! Returning audiox=%08x\n", audiox);
-  
+
   return audiox;
 }
 
@@ -866,7 +870,7 @@ static const ao_info_t ao_info_directx = {
  * exported plugin catalog entry
  */
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_AUDIO_OUT, AO_DIRECTX_IFACE_VERSION, "directx", XINE_VERSION_CODE, &ao_info_directx, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

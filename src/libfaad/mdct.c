@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -19,10 +19,13 @@
 ** Any non-GPL usage of this software or parts of this software is strictly
 ** forbidden.
 **
-** Commercial non-GPL licensing of this software is possible.
-** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+** The "appropriate copyright message" mentioned in section 2c of the GPLv2
+** must read: "Code from FAAD2 is copyright (c) Nero AG, www.nero.com"
 **
-** $Id: mdct.c,v 1.11 2005/10/29 23:57:07 tmmm Exp $
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
+**
+** $Id: mdct.c,v 1.47 2007/11/01 12:33:31 menno Exp $
 **/
 
 /*
@@ -33,7 +36,7 @@
  * As described in:
  *  P. Duhamel, Y. Mahieux, and J.P. Petit, "A Fast Algorithm for the
  *  Implementation of Filter Banks Based on 'Time Domain Aliasing
- *  Cancellation'," IEEE Proc. on ICASSP'91, 1991, pp. 2209-2212.
+ *  Cancellation’," IEEE Proc. on ICASSP‘91, 1991, pp. 2209-2212.
  *
  *
  * As of April 6th 2002 completely rewritten.

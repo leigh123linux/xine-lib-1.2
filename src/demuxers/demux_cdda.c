@@ -60,6 +60,7 @@ typedef struct {
   input_plugin_t      *input;
   int                  status;
 
+  int                  send_newpts;
   int                  seek_flag;  /* this is set when a seek just occurred */
 } demux_cdda_t;
 
@@ -83,7 +84,7 @@ static int demux_cdda_send_chunk (demux_plugin_t *this_gen) {
 
   buf->type = BUF_AUDIO_LPCM_LE;
   if( this->input->get_length (this->input) )
-    buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) * 
+    buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) *
                                      65535 / this->input->get_length (this->input) );
   buf->pts = this->input->get_current_pos(this->input);
   buf->pts *= 90000;
@@ -91,9 +92,9 @@ static int demux_cdda_send_chunk (demux_plugin_t *this_gen) {
   buf->extra_info->input_time = buf->pts / 90;
   buf->decoder_flags |= BUF_FLAG_FRAME_END;
 
-  if (this->seek_flag) {
-    _x_demux_control_newpts(this->stream, buf->pts, BUF_FLAG_SEEK);
-    this->seek_flag = 0;
+  if (this->send_newpts) {
+    _x_demux_control_newpts(this->stream, buf->pts, this->seek_flag);
+    this->send_newpts = this->seek_flag = 0;
   }
 
   this->audio_fifo->put (this->audio_fifo, buf);
@@ -146,9 +147,14 @@ static int demux_cdda_seek (demux_plugin_t *this_gen, off_t start_pos, int start
     this->input->seek(this->input, start_pos & ~3, SEEK_SET);
   else
     this->input->seek(this->input, start_time * CD_BYTES_PER_SECOND, SEEK_SET);
-  this->seek_flag = 1;
+
   this->status = DEMUX_OK;
-  _x_demux_flush_engine (this->stream);
+
+  this->send_newpts = 1;
+  if (playing) {
+    this->seek_flag = BUF_FLAG_SEEK;
+    _x_demux_flush_engine (this->stream);
+  }
 
   return this->status;
 }
@@ -187,7 +193,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_cdda_t   *this;
 
-  this         = xine_xmalloc (sizeof (demux_cdda_t));
+  this         = calloc(1, sizeof(demux_cdda_t));
   this->stream = stream;
   this->input  = input;
 
@@ -250,7 +256,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_cdda_init_plugin (xine_t *xine, void *data) {
   demux_cdda_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_cdda_class_t));
+  this = calloc(1, sizeof(demux_cdda_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

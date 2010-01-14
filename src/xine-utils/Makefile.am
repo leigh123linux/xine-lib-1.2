@@ -12,7 +12,7 @@ endif
 endif
 
 AM_CFLAGS = $(X_CFLAGS) $(VISIBILITY_FLAG)
-AM_CPPFLAGS=-DXINE_LIBRARY_COMPILE
+AM_CPPFLAGS= -DXINE_LIBRARY_COMPILE
 
 libxineutils_la_SOURCES = $(pppc_files) \
 	cpu_accel.c \
@@ -37,6 +37,7 @@ xineinclude_HEADERS = \
 	compat.h \
 	xine_buffer.h \
 	xineutils.h \
+	xine_mmx.h \
 	xmllexer.h \
 	xmlparser.h \
 	list.h \
@@ -46,5 +47,5 @@ xineinclude_HEADERS = \
 	ring_buffer.h
 
 
-noinst_HEADERS = ppcasm_string.h xine_check.h
+noinst_HEADERS = ppcasm_string.h mangle.h
 

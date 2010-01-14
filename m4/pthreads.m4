@@ -18,23 +18,31 @@ AC_DEFUN([CC_PTHREAD_FLAGS], [
   dnl if PTHREAD_* are not set, default to -pthread (GCC)
   if test "${PTHREAD_CFLAGS-unset}" = "unset"; then
      case $host in
+       *-mingw*)  PTHREAD_CFLAGS=""		;;
        *-hpux11*) PTHREAD_CFLAGS=""		;;
        *-darwin*) PTHREAD_CFLAGS=""		;;
-       *-solaris*)
-                  # Handle Studio compiler
+       *-solaris*|*-linux-gnu)
+                  dnl Handle Sun Studio compiler (also on Linux)
                   CC_CHECK_CFLAGS([-mt], [PTHREAD_CFLAGS="-mt"]);;
+
        *)	  PTHREAD_CFLAGS="-pthread"	;;
      esac
   fi
   if test "${PTHREAD_LIBS-unset}" = "unset"; then
      case $host in
+       *-mingw*)  PTHREAD_LIBS="-lpthreadGC2"	;;
        *-hpux11*) PTHREAD_LIBS="-lpthread"	;;
        *-darwin*) PTHREAD_LIBS=""		;;
        *-solaris*)
-                  # Use the same libraries for gcc and sun studio cc
+                  dnl Use the same libraries for gcc and Sun Studio cc
                   PTHREAD_LIBS="-lpthread -lposix4 -lrt";;
        *)	  PTHREAD_LIBS="-pthread"	;;
      esac
+
+     dnl Again, handle Sun Studio compiler
+     if test "x${PTHREAD_CFLAGS}" = "x-mt"; then
+        PTHREAD_LIBS="-mt"
+     fi
   fi
 
   AC_CACHE_CHECK([if $CC supports Pthread],
@@ -42,12 +50,11 @@ AC_DEFUN([CC_PTHREAD_FLAGS], [
     [ac_save_CFLAGS="$CFLAGS"
      ac_save_LIBS="$LIBS"
      CFLAGS="$CFLAGS $cc_cv_werror $PTHREAD_CFLAGS"
-     
      LIBS="$LIBS $PTHREAD_LIBS"
      AC_LINK_IFELSE(
        [AC_LANG_PROGRAM(
           [[#include <pthread.h>
-	    void *fakethread(void *arg) { return NULL; }
+	    void *fakethread(void *arg) { (void)arg; return NULL; }
 	    pthread_t fakevariable;
 	  ]],
           [[pthread_create(&fakevariable, NULL, &fakethread, NULL);]]
@@ -66,4 +73,31 @@ AC_DEFUN([CC_PTHREAD_FLAGS], [
   else
     ifelse([$2], , [:], [$2])
   fi
+])
+
+AC_DEFUN([CC_PTHREAD_RECURSIVE_MUTEX], [
+  AC_REQUIRE([CC_PTHREAD_FLAGS])
+  AC_CACHE_CHECK(
+    [for recursive mutex support in pthread],
+    [cc_cv_pthread_recursive_mutex],
+    [ac_save_CFLAGS="$CFLAGS"
+     ac_save_LIBS="$LIBS"
+     CFLAGS="$CFLAGS $cc_cv_werror $PTHREAD_CFLAGS"
+     LIBS="$LIBS $PTHREAD_LIBS"
+     AC_COMPILE_IFELSE(
+       [AC_LANG_PROGRAM([
+#include <pthread.h>
+          ], [
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+           ])
+	  ],
+	  [cc_cv_pthread_recursive_mutex=yes],
+	  [cc_cv_pthread_recursive_mutex=no])
+     CFLAGS="$ac_save_CFLAGS"
+     LIBS="$ac_save_LIBS"
+    ])
+
+  AS_IF([test x"$cc_cv_pthread_recursive_mutex" = x"yes"],
+    [$1], [$2])
 ])

@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -86,7 +86,7 @@ static uint32_t aa_get_capabilities (vo_driver_t *this) {
 
 static void aa_dispose_frame (vo_frame_t *vo_img) {
   aa_frame_t *frame = (aa_frame_t *)vo_img;
-  
+
   if (frame->mem[0])
     free (frame->mem[0]);
   if (frame->mem[1])
@@ -106,7 +106,7 @@ static vo_frame_t *aa_alloc_frame(vo_driver_t *this_gen) {
   /* aa_driver_t *this = (aa_driver_t*) this_gen; */
   aa_frame_t  *frame;
 
-  frame = (aa_frame_t *) xine_xmalloc (sizeof (aa_frame_t));
+  frame = calloc(1, sizeof (aa_frame_t));
   if (!frame)
     return NULL;
 
@@ -117,19 +117,19 @@ static vo_frame_t *aa_alloc_frame(vo_driver_t *this_gen) {
   frame->vo_frame.field = aa_frame_field;
   frame->vo_frame.dispose = aa_dispose_frame;
   frame->vo_frame.driver = this_gen;
-  
+
   return (vo_frame_t*) frame;
 }
 
 static void aa_update_frame_format (vo_driver_t *this_gen, vo_frame_t *img,
-				    uint32_t width, uint32_t height, 
+				    uint32_t width, uint32_t height,
 				    double ratio, int format, int flags) {
   aa_driver_t *this = (aa_driver_t*) this_gen;
   aa_frame_t  *frame = (aa_frame_t *) img;
 
   /* printf ("aa_update_format...\n"); */
 
-  if ((frame->width != width) || (frame->height != height) 
+  if ((frame->width != width) || (frame->height != height)
       || (frame->format != format)) {
 
     if (frame->mem[0]) {
@@ -140,7 +140,7 @@ static void aa_update_frame_format (vo_driver_t *this_gen, vo_frame_t *img,
       free (frame->mem[1]);
       frame->mem[1] = NULL;
     }
-      
+
     if (frame->mem[2]) {
       free (frame->mem[2]);
       frame->mem[2] = NULL;
@@ -202,27 +202,27 @@ static void aa_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   if (frame->format == XINE_IMGFMT_YV12) {
     for (y = 0; y<aa_imgheight (this->context); y++) {
       for (x = 0; x<aa_imgwidth (this->context); x++) {
-      
+
 	*img++ = src_image[((int)((double) x * x_fact) +
 			    frame->width * (int)((double) y * y_fact))];
-      
+
       }
     }
   } else {
     for (y = 0; y<aa_imgheight (this->context); y++) {
       for (x = 0; x<aa_imgwidth (this->context); x++) {
-      
+
 	*img++ = src_image[((int)((double) x * x_fact) * 2 +
 			    frame->width * 2 * (int)((double) y * y_fact))];
-      
+
       }
     }
   }
 
   frame->vo_frame.free (&frame->vo_frame);
 
-  aa_fastrender(this->context, 0, 0, 
-		aa_imgwidth (this->context), 
+  aa_fastrender(this->context, 0, 0,
+		aa_imgwidth (this->context),
 		aa_imgheight (this->context));
 
   aa_flush (this->context);
@@ -231,7 +231,7 @@ static void aa_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
 static int aa_get_property (vo_driver_t *this_gen, int property) {
   aa_driver_t *this = (aa_driver_t*) this_gen;
-  
+
   if ( property == VO_PROP_ASPECT_RATIO) {
     return this->user_ratio ;
   } else {
@@ -242,7 +242,7 @@ static int aa_get_property (vo_driver_t *this_gen, int property) {
   return 0;
 }
 
-static int aa_set_property (vo_driver_t *this_gen, 
+static int aa_set_property (vo_driver_t *this_gen,
 			    int property, int value) {
   aa_driver_t *this = (aa_driver_t*) this_gen;
 
@@ -259,7 +259,7 @@ static int aa_set_property (vo_driver_t *this_gen,
   return value;
 }
 
-static void aa_get_property_min_max (vo_driver_t *this_gen, 
+static void aa_get_property_min_max (vo_driver_t *this_gen,
 				     int property, int *min, int *max) {
   *min = 0;
   *max = 0;
@@ -276,10 +276,10 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   aa_class_t           *class = (aa_class_t *) class_gen;
   aa_driver_t          *this;
 
-  this = (aa_driver_t*) xine_xmalloc (sizeof (aa_driver_t));
-  
+  this = (aa_driver_t*) calloc(1, sizeof(aa_driver_t));
+
   this->context = (aa_context*) visual_gen;
-  
+
   this->config = class->config;
   this->xine   = class->xine;
 
@@ -298,7 +298,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   this->vo_driver.dispose              = aa_dispose;
 
   return &this->vo_driver;
-}    
+}
 
 static char* get_identifier (video_driver_class_t *this_gen) {
   return "AA";
@@ -315,14 +315,14 @@ static void dispose_class (video_driver_class_t *this_gen) {
 static void *init_class (xine_t *xine, void *visual_gen) {
   /* aa_context    *context = (aa_context*) visual_gen; */
   aa_class_t    *this;
-  
-  this = (aa_class_t *) xine_xmalloc(sizeof(aa_class_t));
-  
+
+  this = calloc(1, sizeof(aa_class_t));
+
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.get_identifier  = get_identifier;
   this->driver_class.get_description = get_description;
   this->driver_class.dispose         = dispose_class;
-  
+
   this->config            = xine->config;
   this->xine              = xine;
 
@@ -335,7 +335,7 @@ static const vo_info_t vo_info_aa = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_VIDEO_OUT, 21, "aa", XINE_VERSION_CODE, &vo_info_aa, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

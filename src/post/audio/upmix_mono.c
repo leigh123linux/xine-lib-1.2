@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -22,6 +22,10 @@
  * This is an up-mix audio filter post plugin.
  * It simply converts Mono into Stereo.
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 
@@ -64,11 +68,11 @@ struct post_plugin_upmix_mono_s {
 
   /* private data */
   int            channels;
-  
+
   upmix_mono_parameters_t params;
   xine_post_in_t       params_input;
   int                  params_changed;
-  
+
   pthread_mutex_t      lock;
 
 };
@@ -130,7 +134,7 @@ static int upmix_mono_port_open(xine_audio_port_t *port_gen, xine_stream_t *stre
 
   _x_post_rewire(&this->post);
   _x_post_inc_usage(port);
-  
+
   port->stream = stream;
   port->bits = bits;
   port->rate = rate;
@@ -138,7 +142,7 @@ static int upmix_mono_port_open(xine_audio_port_t *port_gen, xine_stream_t *stre
 
   this->channels = _x_ao_mode2channels(mode);
   capabilities = port->original_port->get_capabilities(port->original_port);
-  
+
   if (this->channels == 1 && (capabilities & AO_CAP_MODE_STEREO)) {
     xprintf(stream->xine, XINE_VERBOSITY_LOG,
             _(LOG_MODULE ": upmixing Mono to Stereo.\n"));
@@ -147,7 +151,7 @@ static int upmix_mono_port_open(xine_audio_port_t *port_gen, xine_stream_t *stre
     if ( this->channels != 1)
       xprintf(stream->xine, XINE_VERBOSITY_LOG,
               ngettext(LOG_MODULE ": upmixing a single channel from original %d channel stream.\n",
-                       LOG_MODULE ": upmixing a single channel from original %d channels stream.\n", 
+                       LOG_MODULE ": upmixing a single channel from original %d channels stream.\n",
                        this->channels), this->channels);
     else {
       xprintf(stream->xine, XINE_VERBOSITY_LOG,
@@ -159,15 +163,15 @@ static int upmix_mono_port_open(xine_audio_port_t *port_gen, xine_stream_t *stre
   return (port->original_port->open) (port->original_port, stream, bits, rate, mode);
 }
 
-static void upmix_mono_port_put_buffer(xine_audio_port_t *port_gen, 
+static void upmix_mono_port_put_buffer(xine_audio_port_t *port_gen,
                              audio_buffer_t *buf, xine_stream_t *stream) {
-  
+
   post_audio_port_t        *port = (post_audio_port_t *)port_gen;
   post_plugin_upmix_mono_t *this = (post_plugin_upmix_mono_t *)port->post;
-  
+
   pthread_mutex_lock (&this->lock);
 
-  if (this->channels == 1) 
+  if (this->channels == 1)
   {
     audio_buffer_t *buf0 = port->original_port->get_buffer(port->original_port);
     audio_buffer_t *buf1 = port->original_port->get_buffer(port->original_port);
@@ -192,32 +196,32 @@ static void upmix_mono_port_put_buffer(xine_audio_port_t *port_gen,
     _x_extra_info_merge(buf1->extra_info, buf->extra_info);
 
     {
-      int step = buf->format.bits / 8;
+      const size_t step = buf->format.bits / 8;
       uint8_t *src  = (uint8_t *)buf->mem;
       uint8_t *dst0 = (uint8_t *)buf0->mem;
       uint8_t *dst1 = (uint8_t *)buf1->mem;
 
-      int i, k;
+      int i;
       for (i = 0; i < buf->num_frames / 2; i++)
       {
-        for (k = 0; k < step; k++)
-          *dst0++ = *src++;
+	memcpy(dst0, src, step);
+	dst0 += step;
 
-        src -= step;
+	memcpy(dst0, src, step);
+	dst0 += step;
 
-        for (k = 0; k < step; k++)
-          *dst0++ = *src++;
+	src += step;
       }
 
       for (i = buf->num_frames / 2; i < buf->num_frames; i++)
       {
-        for (k = 0; k < step; k++)
-          *dst1++ = *src++;
+	memcpy(dst1, src, step);
+	dst1 += step;
 
-        src -= step;
+	memcpy(dst1, src, step);
+	dst1 += step;
 
-        for (k = 0; k < step; k++)
-          *dst1++ = *src++;
+	src += step;
       }
     }
 
@@ -228,7 +232,7 @@ static void upmix_mono_port_put_buffer(xine_audio_port_t *port_gen,
     /* free data from origial buffer */
     buf->num_frames = 0; /* UNDOCUMENTED, but hey, it works! Force old audio_out buffer free. */
   }
-  else if (this->channels && this->params.channel >= 0) 
+  else if (this->channels && this->params.channel >= 0)
   {
     audio_buffer_t *buf0 = port->original_port->get_buffer(port->original_port);
     buf0->num_frames = buf->num_frames;
@@ -244,23 +248,23 @@ static void upmix_mono_port_put_buffer(xine_audio_port_t *port_gen,
     _x_extra_info_merge(buf0->extra_info, buf->extra_info);
 
     {
-      int step = buf->format.bits / 8;
+      const size_t step = buf->format.bits / 8;
       uint8_t *src  = (uint8_t *)buf->mem;
       uint8_t *dst0 = (uint8_t *)buf0->mem;
       int cur_channel = this->params.channel;
-      int i, j, k;
-      
+      int i, j;
+
       if( cur_channel >= this->channels )
         cur_channel = this->channels-1;
 
       src += cur_channel * step;
-      
+
       for (i = 0; i < buf->num_frames; i++)
       {
         for (j = 0; j < this->channels; j++ )
         {
-          for (k = 0; k < step; k++)
-            *dst0++ = *(src+k);
+	  memcpy(dst0, src, step);
+	  dst0 += step;
         }
         src += this->channels * step;
       }
@@ -272,11 +276,11 @@ static void upmix_mono_port_put_buffer(xine_audio_port_t *port_gen,
     /* free data from origial buffer */
     buf->num_frames = 0; /* UNDOCUMENTED, but hey, it works! Force old audio_out buffer free. */
   }
-  
+
   pthread_mutex_unlock (&this->lock);
-    
+
   port->original_port->put_buffer(port->original_port, buf, stream);
-  
+
   return;
 }
 
@@ -293,30 +297,30 @@ static post_plugin_t *upmix_mono_open_plugin(post_class_t *class_gen, int inputs
                                              xine_audio_port_t **audio_target,
                                              xine_video_port_t **video_target)
 {
-  post_plugin_upmix_mono_t *this = (post_plugin_upmix_mono_t *)xine_xmalloc(sizeof(post_plugin_upmix_mono_t));
+  post_plugin_upmix_mono_t *this = calloc(1, sizeof(post_plugin_upmix_mono_t));
   post_in_t                *input;
   post_out_t               *output;
   xine_post_in_t       *input_api;
   post_audio_port_t        *port;
   upmix_mono_parameters_t  init_params;
-  
+
   if (!this || !audio_target || !audio_target[0]) {
     free(this);
     return NULL;
   }
-  
+
   _x_post_init(&this->post, 1, 0);
 
   init_params.channel = -1;
- 
+
   pthread_mutex_init (&this->lock, NULL);
 
   set_parameters ((xine_post_t *)&this->post, &init_params);
-  
+
   port = _x_post_intercept_audio_port(&this->post, audio_target[0], &input, &output);
   port->new_port.open       = upmix_mono_port_open;
   port->new_port.put_buffer = upmix_mono_port_put_buffer;
-  
+
   input_api       = &this->params_input;
   input_api->name = "parameters";
   input_api->type = XINE_POST_DATA_PARAMETERS;
@@ -348,17 +352,17 @@ static void upmix_mono_class_dispose(post_class_t *class_gen)
 void *upmix_mono_init_plugin(xine_t *xine, void *data)
 {
   post_class_upmix_mono_t *class = (post_class_upmix_mono_t *)malloc(sizeof(post_class_upmix_mono_t));
-  
+
   if (!class)
     return NULL;
-  
+
   class->post_class.open_plugin     = upmix_mono_open_plugin;
   class->post_class.get_identifier  = upmix_mono_get_identifier;
   class->post_class.get_description = upmix_mono_get_description;
   class->post_class.dispose         = upmix_mono_class_dispose;
-  
+
   class->xine                       = xine;
-  
+
   return class;
 }
 

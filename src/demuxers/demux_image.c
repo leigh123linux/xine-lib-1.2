@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2003-2005 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -82,7 +82,7 @@ static int demux_image_next (demux_plugin_t *this_gen, int preview) {
   } else {
     this->status = DEMUX_OK;
   }
-  
+
   if (preview)
     buf->decoder_flags = BUF_FLAG_PREVIEW;
 
@@ -198,7 +198,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
    * if we reach this point, the input has been accepted.
    */
 
-  this         = xine_xmalloc (sizeof (demux_image_t));
+  this         = calloc(1, sizeof(demux_image_t));
   this->stream = stream;
   this->input  = input;
 
@@ -211,7 +211,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   this->demux_plugin.get_capabilities  = demux_image_get_capabilities;
   this->demux_plugin.get_optional_data = demux_image_get_optional_data;
   this->demux_plugin.demux_class       = class_gen;
-  
+
   this->status = DEMUX_FINISHED;
   this->buf_type = buf_type;
 
@@ -226,7 +226,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 static const char *get_description (demux_class_t *this_gen) {
   return "image demux plugin";
 }
- 
+
 static const char *get_identifier (demux_class_t *this_gen) {
   return "imagedmx";
 }
@@ -249,7 +249,7 @@ static void class_dispose (demux_class_t *this_gen) {
 static void *init_class (xine_t *xine, void *data) {
   demux_image_class_t     *this;
 
-  this  = xine_xmalloc (sizeof (demux_image_class_t));
+  this  = calloc(1, sizeof(demux_image_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

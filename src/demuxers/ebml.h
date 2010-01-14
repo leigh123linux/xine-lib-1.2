@@ -48,7 +48,7 @@ typedef struct ebml_parser_s {
   /* xine stuff */
   xine_t                *xine;
   input_plugin_t        *input;
-  
+
   /* EBML Parser Stack Management */
   ebml_elem_t            elem_stack[EBML_STACK_SIZE];
   int                    level;
@@ -61,11 +61,11 @@ typedef struct ebml_parser_s {
   char                  *doctype;
   uint64_t               doctype_version;
   uint64_t               doctype_read_version;
-  
+
 } ebml_parser_t;
 
 
-ebml_parser_t *new_ebml_parser (xine_t *xine, input_plugin_t *input);
+ebml_parser_t *new_ebml_parser (xine_t *xine, input_plugin_t *input) XINE_MALLOC;
 
 void dispose_ebml_parser (ebml_parser_t *ebml);
 
@@ -90,6 +90,8 @@ int ebml_read_float(ebml_parser_t *ebml, ebml_elem_t  *elem, double *val);
 int ebml_read_ascii(ebml_parser_t *ebml, ebml_elem_t *elem, char *str);
 
 int ebml_read_utf8(ebml_parser_t *ebml, ebml_elem_t *elem, char *str);
+
+char *ebml_alloc_read_ascii(ebml_parser_t *ebml, ebml_elem_t *elem);
 
 int ebml_read_date(ebml_parser_t *ebml, ebml_elem_t *elem, int64_t *date);
 

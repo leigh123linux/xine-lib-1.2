@@ -1,4 +1,4 @@
-/* 
+/*
  * dmx.h
  *
  * Copyright (C) 2000 Marcus Metzler <marcus@convergence.de>
@@ -149,7 +149,7 @@ struct dmx_event
 
 typedef struct dmx_caps {
 	uint32_t caps;
-	int num_decoders; 
+	int num_decoders;
 } dmx_caps_t;
 
 typedef enum {
@@ -164,7 +164,7 @@ typedef enum {
 } dmx_source_t;
 
 
-#define DMX_START                _IO('o',41) 
+#define DMX_START                _IO('o',41)
 #define DMX_STOP                 _IO('o',42)
 #define DMX_SET_FILTER           _IOW('o',43,struct dmx_sct_filter_params)
 #define DMX_SET_PES_FILTER       _IOW('o',44,struct dmx_pes_filter_params)

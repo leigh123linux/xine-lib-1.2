@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2000-2005 the xine project
- * 
+ * Copyright (C) 2000-2008 the xine project
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -20,7 +20,7 @@
  *
  * contents:
  *
- * buffer types management. 
+ * buffer types management.
  * convert FOURCC and audioformattag to BUF_xxx defines
  */
 
@@ -270,7 +270,7 @@ static const video_db_t video_db[] = {
   "Raw RGB"
 },
 {
-  { 
+  {
     /* is this right? copied from demux_qt:
     else if (!strncasecmp (video, "yuv2", 4))
     this->video_type = BUF_VIDEO_YUY2;
@@ -659,6 +659,8 @@ static const video_db_t video_db[] = {
     ME_FOURCC('a','v','c','1'),
     ME_FOURCC('h','2','6','4'),
     ME_FOURCC('H','2','6','4'),
+    ME_FOURCC('x','2','6','4'),
+    ME_FOURCC('X','2','6','4'),
     0
   },
   BUF_VIDEO_H264,
@@ -771,6 +773,22 @@ static const video_db_t video_db[] = {
   BUF_VIDEO_KMVC,
   "Karl Morton's Video Codec"
 },
+{
+  {
+    ME_FOURCC('V','M','n','c'),
+    0
+  },
+  BUF_VIDEO_VMNC,
+  "VMware Screen Codec"
+},
+{
+  {
+    ME_FOURCC('S','N','O','W'),
+    0
+  },
+  BUF_VIDEO_SNOW,
+  "Snow"
+},
 { { 0 }, 0, "last entry" }
 };
 
@@ -795,6 +813,14 @@ static const audio_db_t audio_db[] = {
   },
   BUF_AUDIO_MPEG,
   "MPEG layer 2/3"
+},
+{
+  {
+    ME_FOURCC('a', 'd', 'u', 0x55),
+    0
+  },
+  BUF_AUDIO_MP3ADU,
+  "MPEG layer-3 adu"
 },
 {
   {
@@ -859,7 +885,7 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    0x02, 
+    0x02,
     ME_FOURCC('m', 's', 0, 0x02),
     0
   },
@@ -883,7 +909,7 @@ static const audio_db_t audio_db[] = {
   "MS GSM"
 },
 {
-  {                                  
+  {
     /* these formattags are used by Vorbis ACM encoder and
        supported by NanDub, a variant of VirtualDub. */
     0x674f, 0x676f, 0x6750, 0x6770, 0x6751, 0x6771,
@@ -992,7 +1018,7 @@ static const audio_db_t audio_db[] = {
     ME_FOURCC('M', 'P', '4', 'A'),
     ME_FOURCC('r', 'a', 'a', 'c'),
     ME_FOURCC('r', 'a', 'c', 'p'),
-    ME_FOURCC('A', 'A', 'C', ' '), 
+    ME_FOURCC('A', 'A', 'C', ' '),
     0
   },
   BUF_AUDIO_AAC,
@@ -1124,10 +1150,31 @@ static const audio_db_t audio_db[] = {
 },
 {
   {
-    0
+    ME_FOURCC('W', 'V', 'P', 'K'),
   },
   BUF_AUDIO_WAVPACK,
   "Wavpack"
+},
+{
+  {
+    ME_FOURCC('s', 'a', 'm', 'r'),
+  },
+  BUF_AUDIO_AMR_NB,
+  "AMR narrow band"
+},
+{
+  {
+    ME_FOURCC('s', 'a', 'w', 'b'),
+  },
+  BUF_AUDIO_AMR_WB,
+  "AMR wide band"
+},
+{
+  {
+    ME_FOURCC('T', 'T', 'A', '1'),
+  },
+  BUF_AUDIO_TTA,
+  "True Audio Lossless"
 },
 { { 0 }, 0, "last entry" }
 };
@@ -1140,7 +1187,7 @@ static uint32_t cached_buf_type=0;
 
   if( fourcc_int == cached_fourcc )
     return cached_buf_type;
-    
+
   for( i = 0; video_db[i].buf_type; i++ ) {
     for( j = 0; video_db[i].fourcc[j]; j++ ) {
       if( fourcc_int == video_db[i].fourcc[j] ) {
@@ -1153,11 +1200,11 @@ static uint32_t cached_buf_type=0;
   return 0;
 }
 
-char * _x_buf_video_name( uint32_t buf_type ) {
+const char * _x_buf_video_name( uint32_t buf_type ) {
 int i;
-  
+
   buf_type &= 0xffff0000;
-  
+
   for( i = 0; video_db[i].buf_type; i++ ) {
     if( buf_type == video_db[i].buf_type ) {
         return video_db[i].name;
@@ -1174,7 +1221,7 @@ static uint32_t cached_buf_type=0;
 
   if( formattag == cached_formattag )
     return cached_buf_type;
-    
+
   for( i = 0; audio_db[i].buf_type; i++ ) {
     for( j = 0; audio_db[i].formattag[j]; j++ ) {
       if( formattag == audio_db[i].formattag[j] ) {
@@ -1187,11 +1234,11 @@ static uint32_t cached_buf_type=0;
   return 0;
 }
 
-char * _x_buf_audio_name( uint32_t buf_type ) {
+const char * _x_buf_audio_name( uint32_t buf_type ) {
 int i;
-  
+
   buf_type &= 0xffff0000;
-  
+
   for( i = 0; audio_db[i].buf_type; i++ ) {
     if( buf_type == audio_db[i].buf_type ) {
         return audio_db[i].name;
@@ -1205,7 +1252,7 @@ void _x_bmiheader_le2me( xine_bmiheader *bih ) {
   /* OBS: fourcc must be read using machine endianness
    *      so don't play with biCompression here!
    */
-  
+
   bih->biSize = le2me_32(bih->biSize);
   bih->biWidth = le2me_32(bih->biWidth);
   bih->biHeight = le2me_32(bih->biHeight);
@@ -1219,7 +1266,7 @@ void _x_bmiheader_le2me( xine_bmiheader *bih ) {
 }
 
 void _x_waveformatex_le2me( xine_waveformatex *wavex ) {
-  
+
   wavex->wFormatTag = le2me_16(wavex->wFormatTag);
   wavex->nChannels = le2me_16(wavex->nChannels);
   wavex->nSamplesPerSec = le2me_32(wavex->nSamplesPerSec);

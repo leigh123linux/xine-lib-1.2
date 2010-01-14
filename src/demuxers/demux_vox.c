@@ -77,7 +77,7 @@ static int demux_vox_send_chunk (demux_plugin_t *this_gen) {
   buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
   buf->type = BUF_AUDIO_DIALOGIC_IMA;
   bytes_read = this->input->read(this->input, buf->content, buf->max_size);
-  if (bytes_read == 0) {
+  if (bytes_read <= 0) {
     buf->free_buffer(buf);
     this->status = DEMUX_FINISHED;
     return this->status;
@@ -87,7 +87,7 @@ static int demux_vox_send_chunk (demux_plugin_t *this_gen) {
     buf->size = buf->max_size;
 
   if( this->input->get_length (this->input) )
-    buf->extra_info->input_normpos = (int)( (double) current_file_pos * 
+    buf->extra_info->input_normpos = (int)( (double) current_file_pos *
                                      65535 / this->input->get_length (this->input) );
   buf->extra_info->input_time = audio_pts / 90;
   buf->pts = audio_pts;
@@ -166,7 +166,7 @@ static int demux_vox_get_status (demux_plugin_t *this_gen) {
 static int demux_vox_get_stream_length (demux_plugin_t *this_gen) {
   demux_vox_t *this = (demux_vox_t *) this_gen;
 
-  return (int)((int64_t)this->input->get_length(this->input) 
+  return (int)((int64_t)this->input->get_length(this->input)
                * 2 * 1000 / DIALOGIC_SAMPLERATE);
 }
 
@@ -203,7 +203,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
-  this         = xine_xmalloc (sizeof (demux_vox_t));
+  this         = calloc(1, sizeof(demux_vox_t));
   this->stream = stream;
   this->input  = input;
 
@@ -247,7 +247,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_vox_init_plugin (xine_t *xine, void *data) {
   demux_vox_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_vox_class_t));
+  this = calloc(1, sizeof(demux_vox_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

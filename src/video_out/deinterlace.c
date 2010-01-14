@@ -1,5 +1,5 @@
  /*
- * Copyright (C) 2001 the xine project
+ * Copyright (C) 2001-2008 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -30,11 +30,27 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include "xine_internal.h"
 #include "deinterlace.h"
 #include "xineutils.h"
+
+
+const char *deinterlace_methods[] = {
+  "none",
+  "bob",
+  "weave",
+  "greedy",
+  "onefield",
+  "onefield_xv",
+  "linearblend",
+  NULL
+};
 
 
 /*
@@ -185,7 +201,7 @@ static void deinterlace_bob_yuv_mmx( uint8_t *pdst, uint8_t *psrc[],
 /* Deinterlace the latest field, with a tendency to weave rather than bob.
    Good for high detail on low-movement scenes.
    Seems to produce bad output in general case, need to check if this
-   is normal or if the code is broken. 
+   is normal or if the code is broken.
 */
 static int deinterlace_weave_yuv_mmx( uint8_t *pdst, uint8_t *psrc[],
     int width, int height )
@@ -640,7 +656,7 @@ static void deinterlace_linearblend_yuv_mmx( uint8_t *pdst, uint8_t *psrc[],
   uint64_t *YVal3;
   uint64_t *Dest;
   int LineLength = width;
-  
+
   int n;
 
   /* Copy first line */
@@ -660,7 +676,7 @@ static void deinterlace_linearblend_yuv_mmx( uint8_t *pdst, uint8_t *psrc[],
       movq_m2r (*YVal1++, mm0);
       movq_m2r (*YVal2++, mm1);
       movq_m2r (*YVal3++, mm2);
-      
+
       /* expand bytes to words */
       punpckhbw_r2r (mm0, mm3);
       punpckhbw_r2r (mm1, mm4);
@@ -668,8 +684,8 @@ static void deinterlace_linearblend_yuv_mmx( uint8_t *pdst, uint8_t *psrc[],
       punpcklbw_r2r (mm0, mm0);
       punpcklbw_r2r (mm1, mm1);
       punpcklbw_r2r (mm2, mm2);
-      
-      /* 
+
+      /*
        * deinterlacing:
        * deint_line = (line0 + 2*line1 + line2) / 4
        */
@@ -688,15 +704,15 @@ static void deinterlace_linearblend_yuv_mmx( uint8_t *pdst, uint8_t *psrc[],
 
       /* pack 8 words to 8 bytes in mm0 */
       packuswb_r2r (mm3, mm0);
-      
+
       movq_r2m ( mm0, *Dest++ );
     }
   }
 
   /* Copy last line */
-  xine_fast_memcpy(pdst + Line * LineLength, 
+  xine_fast_memcpy(pdst + Line * LineLength,
                    psrc[0] + Line * LineLength, LineLength);
-                   
+
   /* clear out the MMX registers ready for doing floating point
    * again
    */
@@ -718,7 +734,7 @@ static void deinterlace_linearblend_yuv_mmx( uint8_t *pdst, uint8_t *psrc[],
    * each line on pdst doesn't depend on previous lines;
    * due to the way the algorithm is defined, the first & last lines of the
      screen aren't deinterlaced.
-   
+
 */
 static void deinterlace_linearblend_yuv( uint8_t *pdst, uint8_t *psrc[],
                                          int width, int height )
@@ -735,7 +751,7 @@ static void deinterlace_linearblend_yuv( uint8_t *pdst, uint8_t *psrc[],
   xine_fast_memcpy(l0, l1, width);
   l0 += width;
 
-  for (y = 1; y < height-1; ++y) { 
+  for (y = 1; y < height-1; ++y) {
     /* computes avg of: l1 + 2*l2 + l3 */
 
     for (x = 0; x < width; ++x) {

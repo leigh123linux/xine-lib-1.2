@@ -116,7 +116,7 @@
     <programlisting>
 &nbsp;&nbsp;&nbsp;if (_x_post_dispose(this))
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;really_free(this);</programlisting>
-    <function>_x_post_dispose()</function> frees any ressources allocated by any of the 
+    <function>_x_post_dispose()</function> frees any ressources allocated by any of the
     post plugin helper functions and returns boolean true, if the plugin is not needed
     any more.
    </para>
@@ -267,7 +267,7 @@
      a deep copy of the frame, because the decoder might still use the frame as
      a reference frame for future decoding. The usual procedure is:
      <programlisting>
-&nbsp;&nbsp;&nbsp;modified_frame = port-&gt;original_port-&gt;get_frame(port->original_port, ...);
+&nbsp;&nbsp;&nbsp;modified_frame = port-&gt;original_port-&gt;get_frame(port-&gt;original_port, &hellip;);
 &nbsp;&nbsp;&nbsp;_x_post_frame_copy_down(frame, modified_frame);
 &nbsp;&nbsp;&nbsp;copy_and_modify(frame, modified_frame);
 &nbsp;&nbsp;&nbsp;skip = modified_frame-&gt;draw(modified_frame, stream);
@@ -434,7 +434,7 @@
       <listitem>
        <para>
         This function can only be called by the xine engine, plugins do not have access to it.
-        It ends ticket revocation and hands out new tickets to all threads that applied with a 
+        It ends ticket revocation and hands out new tickets to all threads that applied with a
         <function>acquire()</function> or <function>renew()</function>. If you revoked the
         tickets atomic, you have to issue them atomic.
        </para>
@@ -499,7 +499,7 @@
      <function>_x_post_rewire()</function> should be used in prominent locations
      where it is safe to be suspended. Candidates for such locations are at the
      beginning of the port's <function>open()</function> and
-     <function>get_frame()</function>/<function>get_buffer()</function> functions. 
+     <function>get_frame()</function>/<function>get_buffer()</function> functions.
      The default pass through implementations for intercepted ports already do this.
     </para>
     <para>
@@ -515,7 +515,7 @@
    </sect3>
   </sect2>
  </sect1>
- 
+
  <sect1>
   <title>Video output</title>
   <para>
@@ -539,13 +539,13 @@
     </listitem>
     <listitem>
      <para>
-      Most important, the ability to render/copy a given 
+      Most important, the ability to render/copy a given
       frame to the output device.
      </para>
     </listitem>
     <listitem>
      <para>
-      Optionally the copying of the frame from a file dependant 
+      Optionally the copying of the frame from a file dependant
       colour-space and depth into the frame structure. This is to allow for
       on-the fly colour-space conversion and scaling if required (e.g. the XShm
       ouput plugin uses this mechanism).
@@ -569,7 +569,7 @@
     The <varname>visual_type</varname> field is used by xine to
     determine if the GUI used by the client is supported by the plugin
     (e.g. X11 output plugins require the GUI to be running under the
-    X Windowing system) and also to determine the type of information passed to the 
+    X Windowing system) and also to determine the type of information passed to the
     <function>open_plugin()</function> function as its <varname>visual</varname> parameter.
    </para>
    <para>
@@ -590,7 +590,7 @@
     The <varname>visual</varname> is a pointer to a visual-dependant
     structure/variable. For example, if you had previously claimed your
     plugin was of the VISUAL_TYPE_X11 type, this would be a pointer
-    to a <type>x11_visual_t</type>, which amongst other things hold the 
+    to a <type>x11_visual_t</type>, which amongst other things hold the
     <type>Display</type> variable associated with the
     X-server xine should display to. See plugin source-code for other
     VISUAL_TYPE_* constants and associated structures. Note that this
@@ -609,7 +609,7 @@
 &nbsp;&nbsp;&nbsp;int get_property(vo_driver_t *self, int property);
 &nbsp;&nbsp;&nbsp;int set_property(vo_driver_t *self, int property, int value);
 &nbsp;&nbsp;&nbsp;void get_property_min_max(vo_driver_t *self, int property, int *min, int *max);</programlisting>
-    Handle the getting, setting of properties and define their bounds. 
+    Handle the getting, setting of properties and define their bounds.
     Valid property IDs can be found in the <filename>video_out.h</filename>
     header file.
    </para>

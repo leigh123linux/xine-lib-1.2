@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
- 
+
 /*
  * simple switch video post plugin
  */
@@ -40,7 +40,7 @@ static void *switch_init_plugin(xine_t *xine, void *);
 static const post_info_t switch_special_info = { XINE_POST_TYPE_VIDEO_COMPOSE };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_POST, 9, "switch", XINE_VERSION_CODE, &switch_special_info, &switch_init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
@@ -67,7 +67,7 @@ struct post_class_switch_s {
 struct post_switch_s {
   post_plugin_t    post;
   xine_post_in_t   parameter_input;
-  
+
   int64_t          vpts_limit;
   pthread_cond_t   display_condition_changed;
   int64_t          skip_vpts;
@@ -101,11 +101,11 @@ static int            switch_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 static void *switch_init_plugin(xine_t *xine, void *data)
 {
-  post_class_switch_t *this = (post_class_switch_t *)xine_xmalloc(sizeof(post_class_switch_t));
+  post_class_switch_t *this = calloc(1, sizeof(post_class_switch_t));
 
   if (!this)
     return NULL;
-  
+
   this->class.open_plugin     = switch_open_plugin;
   this->class.get_identifier  = switch_get_identifier;
   this->class.get_description = switch_get_description;
@@ -119,7 +119,7 @@ static post_plugin_t *switch_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target)
 {
-  post_switch_t     *this = (post_switch_t *)xine_xmalloc(sizeof(post_switch_t));
+  post_switch_t     *this = calloc(1, sizeof(post_switch_t));
   post_in_t         *input;
   xine_post_in_t    *input_api;
   post_out_t        *output;
@@ -127,28 +127,28 @@ static post_plugin_t *switch_open_plugin(post_class_t *class_gen, int inputs,
   static xine_post_api_t post_api =
     { switch_set_parameters, switch_get_parameters, switch_get_param_descr, switch_get_help };
   int i;
-    
+
   lprintf("switch open\n");
 
   if (inputs < 2 || !this || !video_target || !video_target[0]) {
     free(this);
     return NULL;
   }
-  
+
   _x_post_init(&this->post, 0, inputs);
 
   this->source_count    = inputs;
   this->selected_source = 1;
-  
+
   pthread_cond_init(&this->display_condition_changed, NULL);
   pthread_mutex_init(&this->mutex, NULL);
-  
+
   port = _x_post_intercept_video_port(&this->post, video_target[0], &input, &output);
   port->new_frame->draw = switch_draw;
   port->port_lock       = &this->mutex;
   port->frame_lock      = &this->mutex;
   this->post.xine_post.video_input[0] = &port->new_port;
-  
+
   for (i = 1; i < inputs; i++) {
     port = _x_post_intercept_video_port(&this->post, video_target[0], &input, NULL);
     port->new_frame->draw = switch_draw;
@@ -156,7 +156,7 @@ static post_plugin_t *switch_open_plugin(post_class_t *class_gen, int inputs,
     port->frame_lock      = &this->mutex;
     this->post.xine_post.video_input[i] = &port->new_port;
   }
-  
+
   input_api       = &this->parameter_input;
   input_api->name = "parameters";
   input_api->type = XINE_POST_DATA_PARAMETERS;
@@ -187,7 +187,7 @@ static void switch_class_dispose(post_class_t *class_gen)
 static void switch_dispose(post_plugin_t *this_gen)
 {
   post_switch_t *this = (post_switch_t *)this_gen;
-  
+
   if (_x_post_dispose(this_gen)) {
     pthread_cond_destroy(&this->display_condition_changed);
     pthread_mutex_destroy(&this->mutex);
@@ -205,7 +205,7 @@ static int switch_set_parameters(xine_post_t *this_gen, void *param_gen)
 {
   post_switch_t *this = (post_switch_t *)this_gen;
   switch_parameter_t *param = (switch_parameter_t *)param_gen;
-  
+
   if (param->select > this->source_count) return 0;
   pthread_mutex_lock(&this->mutex);
   this->selected_source = param->select;
@@ -218,7 +218,7 @@ static int switch_get_parameters(xine_post_t *this_gen, void *param_gen)
 {
   post_switch_t *this = (post_switch_t *)this_gen;
   switch_parameter_t *param = (switch_parameter_t *)param_gen;
-  
+
   param->select = this->selected_source;
   return 1;
 }
@@ -241,7 +241,7 @@ static int switch_draw(vo_frame_t *frame, xine_stream_t *stream)
   for (source_num = 1; source_num <= this->source_count; source_num++)
     if (this->post.xine_post.video_input[source_num-1] == frame->port) break;
   _x_assert(source_num <= this->source_count);
-  
+
   pthread_mutex_lock(&this->mutex);
   /* the original output will probably never see this frame again */
   _x_post_frame_u_turn(frame, stream);
@@ -268,6 +268,6 @@ static int switch_draw(vo_frame_t *frame, xine_stream_t *stream)
       skip = 0;
     pthread_mutex_unlock(&this->mutex);
   }
-  
+
   return skip;
 }

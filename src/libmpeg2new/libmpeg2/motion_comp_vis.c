@@ -22,14 +22,14 @@
 
 #include "config.h"
 
-#ifdef ARCH_SPARC
+#if defined(ARCH_SPARC) && defined(ENABLE_VIS)
 
 #include <inttypes.h>
 
-#include "mpeg2.h"
-#include "attributes.h"
+#include "../include/mpeg2.h"
+#include "../include/attributes.h"
 #include "mpeg2_internal.h"
-#include "vis.h"
+#include "../include/vis.h"
 
 /* The trick used in some of this file is the formula from the MMX
  * motion comp code, which is:
@@ -2058,4 +2058,4 @@ static void MC_avg_xy_8_vis (uint8_t * dest, const uint8_t * _ref,
 
 MPEG2_MC_EXTERN(vis);
 
-#endif  /* !(ARCH_SPARC) */
+#endif  /* defined(ARCH_SPARC) && defined(ENABLE_VIS) */

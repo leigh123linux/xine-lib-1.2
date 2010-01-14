@@ -27,9 +27,13 @@
  * file can be 32-, 24-, 16-, 8-, 4-, 2-, or 1-bit. Any resolutions <= 8
  * can also be greyscale depending on what the QT file specifies.
  *
- * One more catch: Raw RGB from a Microsoft file is upside down. This is 
+ * One more catch: Raw RGB from a Microsoft file is upside down. This is
  * indicated by a negative height parameter.
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -76,7 +80,7 @@ typedef struct rgb_decoder_s {
 
   unsigned char     yuv_palette[256 * 4];
   yuv_planes_t      yuv_planes;
-  
+
 } rgb_decoder_t;
 
 static void rgb_decode_data (video_decoder_t *this_gen,
@@ -117,7 +121,7 @@ static void rgb_decode_data (video_decoder_t *this_gen,
     this->video_step = buf->decoder_info[0];
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->video_step);
   }
-  
+
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) { /* need to initialize */
     (this->stream->video_out->open) (this->stream->video_out, this->stream);
 
@@ -145,7 +149,7 @@ static void rgb_decode_data (video_decoder_t *this_gen,
 
     /* minimal buffer size */
     this->bufsize = this->width * this->height * this->bytes_per_pixel;
-    this->buf = xine_xmalloc(this->bufsize);
+    this->buf = calloc(1, this->bufsize);
     this->size = 0;
 
     init_yuv_planes(&this->yuv_planes, this->width, this->height);
@@ -191,11 +195,11 @@ static void rgb_decode_data (video_decoder_t *this_gen,
 
               palette_index = this->buf[buf_ptr++];
 
-              this->yuv_planes.y[row_ptr + pixel_ptr] = 
+              this->yuv_planes.y[row_ptr + pixel_ptr] =
                 this->yuv_palette[palette_index * 4 + 0];
-              this->yuv_planes.u[row_ptr + pixel_ptr] = 
+              this->yuv_planes.u[row_ptr + pixel_ptr] =
                 this->yuv_palette[palette_index * 4 + 1];
-              this->yuv_planes.v[row_ptr + pixel_ptr] = 
+              this->yuv_planes.v[row_ptr + pixel_ptr] =
                 this->yuv_palette[palette_index * 4 + 2];
 
             } else if (this->bytes_per_pixel == 2) {
@@ -205,11 +209,11 @@ static void rgb_decode_data (video_decoder_t *this_gen,
               buf_ptr += 2;
               UNPACK_BGR15(packed_pixel, r, g, b);
 
-              this->yuv_planes.y[row_ptr + pixel_ptr] = 
+              this->yuv_planes.y[row_ptr + pixel_ptr] =
                 COMPUTE_Y(r, g, b);
-              this->yuv_planes.u[row_ptr + pixel_ptr] = 
+              this->yuv_planes.u[row_ptr + pixel_ptr] =
                 COMPUTE_U(r, g, b);
-              this->yuv_planes.v[row_ptr + pixel_ptr] = 
+              this->yuv_planes.v[row_ptr + pixel_ptr] =
                 COMPUTE_V(r, g, b);
 
             } else {
@@ -222,11 +226,11 @@ static void rgb_decode_data (video_decoder_t *this_gen,
               /* the next line takes care of 'A' in the 32-bit case */
               buf_ptr += this->bytes_per_pixel - 3;
 
-              this->yuv_planes.y[row_ptr + pixel_ptr] = 
+              this->yuv_planes.y[row_ptr + pixel_ptr] =
                 COMPUTE_Y(r, g, b);
-              this->yuv_planes.u[row_ptr + pixel_ptr] = 
+              this->yuv_planes.u[row_ptr + pixel_ptr] =
                 COMPUTE_U(r, g, b);
-              this->yuv_planes.v[row_ptr + pixel_ptr] = 
+              this->yuv_planes.v[row_ptr + pixel_ptr] =
                 COMPUTE_V(r, g, b);
 
             }
@@ -246,18 +250,18 @@ static void rgb_decode_data (video_decoder_t *this_gen,
               }
 
               if (pixel_byte & 0x80) {
-                this->yuv_planes.y[row_ptr + pixel_ptr] = 
+                this->yuv_planes.y[row_ptr + pixel_ptr] =
                   this->yuv_palette[1 * 4 + 0];
-                this->yuv_planes.u[row_ptr + pixel_ptr] = 
+                this->yuv_planes.u[row_ptr + pixel_ptr] =
                   this->yuv_palette[1 * 4 + 1];
-                this->yuv_planes.v[row_ptr + pixel_ptr] = 
+                this->yuv_planes.v[row_ptr + pixel_ptr] =
                   this->yuv_palette[1 * 4 + 2];
               } else {
-                this->yuv_planes.y[row_ptr + pixel_ptr] = 
+                this->yuv_planes.y[row_ptr + pixel_ptr] =
                   this->yuv_palette[0 * 4 + 0];
-                this->yuv_planes.u[row_ptr + pixel_ptr] = 
+                this->yuv_planes.u[row_ptr + pixel_ptr] =
                   this->yuv_palette[0 * 4 + 1];
-                this->yuv_planes.v[row_ptr + pixel_ptr] = 
+                this->yuv_planes.v[row_ptr + pixel_ptr] =
                   this->yuv_palette[0 * 4 + 2];
               }
               pixels_left--;
@@ -271,11 +275,11 @@ static void rgb_decode_data (video_decoder_t *this_gen,
               }
 
               palette_index = (pixel_byte & 0xC0) >> 6;
-              this->yuv_planes.y[row_ptr + pixel_ptr] = 
+              this->yuv_planes.y[row_ptr + pixel_ptr] =
                 this->yuv_palette[palette_index * 4 + 0];
-              this->yuv_planes.u[row_ptr + pixel_ptr] = 
+              this->yuv_planes.u[row_ptr + pixel_ptr] =
                 this->yuv_palette[palette_index * 4 + 1];
-              this->yuv_planes.v[row_ptr + pixel_ptr] = 
+              this->yuv_planes.v[row_ptr + pixel_ptr] =
                 this->yuv_palette[palette_index * 4 + 2];
 
               pixels_left--;
@@ -289,11 +293,11 @@ static void rgb_decode_data (video_decoder_t *this_gen,
               }
 
               palette_index = (pixel_byte & 0xF0) >> 4;
-              this->yuv_planes.y[row_ptr + pixel_ptr] = 
+              this->yuv_planes.y[row_ptr + pixel_ptr] =
                 this->yuv_palette[palette_index * 4 + 0];
-              this->yuv_planes.u[row_ptr + pixel_ptr] = 
+              this->yuv_planes.u[row_ptr + pixel_ptr] =
                 this->yuv_palette[palette_index * 4 + 1];
-              this->yuv_planes.v[row_ptr + pixel_ptr] = 
+              this->yuv_planes.v[row_ptr + pixel_ptr] =
                 this->yuv_palette[palette_index * 4 + 2];
 
               pixels_left--;
@@ -303,11 +307,11 @@ static void rgb_decode_data (video_decoder_t *this_gen,
 
               palette_index = this->buf[buf_ptr++];
 
-              this->yuv_planes.y[row_ptr + pixel_ptr] = 
+              this->yuv_planes.y[row_ptr + pixel_ptr] =
                 this->yuv_palette[palette_index * 4 + 0];
-              this->yuv_planes.u[row_ptr + pixel_ptr] = 
+              this->yuv_planes.u[row_ptr + pixel_ptr] =
                 this->yuv_palette[palette_index * 4 + 1];
-              this->yuv_planes.v[row_ptr + pixel_ptr] = 
+              this->yuv_planes.v[row_ptr + pixel_ptr] =
                 this->yuv_palette[palette_index * 4 + 2];
 
             } else if (this->bytes_per_pixel == 2) {
@@ -317,16 +321,16 @@ static void rgb_decode_data (video_decoder_t *this_gen,
               buf_ptr += 2;
               UNPACK_RGB15(packed_pixel, r, g, b);
 
-              this->yuv_planes.y[row_ptr + pixel_ptr] = 
+              this->yuv_planes.y[row_ptr + pixel_ptr] =
                 COMPUTE_Y(r, g, b);
-              this->yuv_planes.u[row_ptr + pixel_ptr] = 
+              this->yuv_planes.u[row_ptr + pixel_ptr] =
                 COMPUTE_U(r, g, b);
-              this->yuv_planes.v[row_ptr + pixel_ptr] = 
+              this->yuv_planes.v[row_ptr + pixel_ptr] =
                 COMPUTE_V(r, g, b);
 
             } else {
 
-              /* RGB24 or ARGB32; the next line takes care of 'A' in the 
+              /* RGB24 or ARGB32; the next line takes care of 'A' in the
                * 32-bit case */
               buf_ptr += this->bytes_per_pixel - 3;
 
@@ -334,11 +338,11 @@ static void rgb_decode_data (video_decoder_t *this_gen,
               g = this->buf[buf_ptr++];
               b = this->buf[buf_ptr++];
 
-              this->yuv_planes.y[row_ptr + pixel_ptr] = 
+              this->yuv_planes.y[row_ptr + pixel_ptr] =
                 COMPUTE_Y(r, g, b);
-              this->yuv_planes.u[row_ptr + pixel_ptr] = 
+              this->yuv_planes.u[row_ptr + pixel_ptr] =
                 COMPUTE_U(r, g, b);
-              this->yuv_planes.v[row_ptr + pixel_ptr] = 
+              this->yuv_planes.v[row_ptr + pixel_ptr] =
                 COMPUTE_V(r, g, b);
 
             }
@@ -398,7 +402,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
   rgb_decoder_t  *this ;
 
-  this = (rgb_decoder_t *) xine_xmalloc (sizeof (rgb_decoder_t));
+  this = (rgb_decoder_t *) calloc(1, sizeof(rgb_decoder_t));
 
   this->video_decoder.decode_data         = rgb_decode_data;
   this->video_decoder.flush               = rgb_flush;
@@ -432,7 +436,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   rgb_class_t *this;
 
-  this = (rgb_class_t *) xine_xmalloc (sizeof (rgb_class_t));
+  this = (rgb_class_t *) calloc(1, sizeof(rgb_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;
@@ -446,7 +450,7 @@ static void *init_plugin (xine_t *xine, void *data) {
  * exported plugin catalog entry
  */
 
-static const uint32_t video_types[] = { 
+static const uint32_t video_types[] = {
   BUF_VIDEO_RGB,
   0
  };
@@ -457,7 +461,7 @@ static const decoder_info_t dec_info_video = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_VIDEO_DECODER, 18, "rgb", XINE_VERSION_CODE, &dec_info_video, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

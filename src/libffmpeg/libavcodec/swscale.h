@@ -23,7 +23,7 @@
 
 /**
  * @file swscale.h
- * @brief 
+ * @brief
  *     external api for the swscale stuff
  */
 
@@ -76,12 +76,12 @@ extern "C" {
 #define SWS_MAX_REDUCE_CUTOFF 0.002
 
 #define SWS_CS_ITU709		1
-#define SWS_CS_FCC 		4
+#define SWS_CS_FCC		4
 #define SWS_CS_ITU601		5
 #define SWS_CS_ITU624		5
-#define SWS_CS_SMPTE170M 	5
-#define SWS_CS_SMPTE240M 	7
-#define SWS_CS_DEFAULT 		5
+#define SWS_CS_SMPTE170M	5
+#define SWS_CS_SMPTE240M	7
+#define SWS_CS_DEFAULT		5
 
 
 
@@ -128,7 +128,7 @@ SwsVector *sws_cloneVec(SwsVector *a);
 void sws_printVec(SwsVector *a);
 void sws_freeVec(SwsVector *a);
 
-SwsFilter *sws_getDefaultFilter(float lumaGBlur, float chromaGBlur, 
+SwsFilter *sws_getDefaultFilter(float lumaGBlur, float chromaGBlur,
 				float lumaSarpen, float chromaSharpen,
 				float chromaHShift, float chromaVShift,
 				int verbose);

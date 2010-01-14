@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -20,6 +20,10 @@
  * mplayer's denoise3d
  * Copyright (C) 2003 Daniel Moreno <comac@comac.darktech.org>
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "xine_internal.h"
 #include "post.h"
@@ -40,7 +44,7 @@ typedef struct post_plugin_denoise3d_s post_plugin_denoise3d_t;
 
 
 /*
- * this is the struct used by "parameters api" 
+ * this is the struct used by "parameters api"
  */
 typedef struct denoise3d_parameters_s {
 
@@ -54,11 +58,11 @@ typedef struct denoise3d_parameters_s {
  * description of params struct
  */
 START_PARAM_DESCR( denoise3d_parameters_t )
-PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, luma, NULL, 0, 10, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, luma, NULL, 0, 10, 0,
             "spatial luma strength" )
-PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, chroma, NULL, 0, 10, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, chroma, NULL, 0, 10, 0,
             "spatial chroma strength" )
-PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, time, NULL, 0, 10, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, time, NULL, 0, 10, 0,
             "temporal strength" )
 END_PARAM_DESCR( param_descr )
 
@@ -125,7 +129,7 @@ static int get_parameters (xine_post_t *this_gen, void *param_gen) {
 
   return 1;
 }
- 
+
 static xine_post_api_descr_t * get_param_descr (void) {
   return &param_descr;
 }
@@ -180,7 +184,7 @@ void *denoise3d_init_plugin(xine_t *xine, void *data)
 
   if (!class)
     return NULL;
-  
+
   class->open_plugin     = denoise3d_open_plugin;
   class->get_identifier  = denoise3d_get_identifier;
   class->get_description = denoise3d_get_description;
@@ -194,19 +198,19 @@ static post_plugin_t *denoise3d_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target)
 {
-  post_plugin_denoise3d_t *this = (post_plugin_denoise3d_t *)xine_xmalloc(sizeof(post_plugin_denoise3d_t));
+  post_plugin_denoise3d_t *this = calloc(1, sizeof(post_plugin_denoise3d_t));
   post_in_t               *input;
   xine_post_in_t          *input_api;
   post_out_t              *output;
   post_video_port_t       *port;
-  
+
   if (!this || !video_target || !video_target[0]) {
     free(this);
     return NULL;
   }
 
   _x_post_init(&this->post, 0, 1);
-  
+
   this->params.luma = PARAM1_DEFAULT;
   this->params.chroma = PARAM2_DEFAULT;
   this->params.time = PARAM3_DEFAULT;
@@ -218,7 +222,7 @@ static post_plugin_t *denoise3d_open_plugin(post_class_t *class_gen, int inputs,
   port->new_port.close  = denoise3d_close;
   port->intercept_frame = denoise3d_intercept_frame;
   port->new_frame->draw = denoise3d_draw;
-  
+
   input_api       = &this->params_input;
   input_api->name = "parameters";
   input_api->type = XINE_POST_DATA_PARAMETERS;
@@ -227,13 +231,13 @@ static post_plugin_t *denoise3d_open_plugin(post_class_t *class_gen, int inputs,
 
   input->xine_in.name     = "video";
   output->xine_out.name   = "denoise3d video";
-  
+
   this->post.xine_post.video_input[0] = &port->new_port;
-  
+
   this->post.dispose = denoise3d_dispose;
 
   set_parameters ((xine_post_t *)this, &this->params);
-  
+
   return &this->post;
 }
 
@@ -256,7 +260,7 @@ static void denoise3d_class_dispose(post_class_t *class_gen)
 static void denoise3d_dispose(post_plugin_t *this_gen)
 {
   post_plugin_denoise3d_t *this = (post_plugin_denoise3d_t *)this_gen;
-  
+
   if (_x_post_dispose(this_gen)) {
     pthread_mutex_destroy(&this->lock);
     free(this);
@@ -288,10 +292,10 @@ static int denoise3d_intercept_frame(post_video_port_t *port, vo_frame_t *frame)
 
 #define LowPass(Prev, Curr, Coef) (((Prev)*Coef[Prev - Curr] + (Curr)*(65536-(Coef[Prev - Curr]))) / 65536)
 
-static void deNoise(unsigned char *Frame,        
-                    unsigned char *FramePrev,    
-                    unsigned char *FrameDest,    
-                    unsigned char *LineAnt,      
+static void deNoise(unsigned char *Frame,
+                    unsigned char *FramePrev,
+                    unsigned char *FrameDest,
+                    unsigned char *LineAnt,
                     int W, int H, int sStride, int pStride, int dStride,
                     int *Horizontal, int *Vertical, int *Temporal)
 {
@@ -349,15 +353,15 @@ static int denoise3d_draw(vo_frame_t *frame, xine_stream_t *stream)
 
       yv12_frame = port->original_port->get_frame(port->original_port,
         frame->width, frame->height, frame->ratio, XINE_IMGFMT_YV12, frame->flags | VO_BOTH_FIELDS);
-  
+
       _x_post_frame_copy_down(frame, yv12_frame);
-  
+
       yuy2_to_yv12(frame->base[0], frame->pitches[0],
                    yv12_frame->base[0], yv12_frame->pitches[0],
                    yv12_frame->base[1], yv12_frame->pitches[1],
                    yv12_frame->base[2], yv12_frame->pitches[2],
                    frame->width, frame->height);
-  
+
     } else {
       yv12_frame = frame;
       yv12_frame->lock(yv12_frame);
@@ -397,7 +401,7 @@ static int denoise3d_draw(vo_frame_t *frame, xine_stream_t *stream)
     pthread_mutex_unlock (&this->lock);
 
     skip = out_frame->draw(out_frame, stream);
-  
+
     _x_post_frame_copy_up(frame, out_frame);
 
     out_frame->free(out_frame);

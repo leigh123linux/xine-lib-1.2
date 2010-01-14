@@ -23,19 +23,19 @@ building xine on solaris
   GNU C compiler and as a standalone assembler command.
 
   A quick workaround when using the GCC from Sun's
-  "Software Companion" CD is to replace /usr/ccs/bin/as with a 
+  "Software Companion" CD is to replace /usr/ccs/bin/as with a
   link to GNU as,  for example like this:
 
     cd /usr/ccs/bin
     ln -s /opt/sfw/bin/gas gnu-as
     mv as sun-as
     ln -s gnu-as as
-    
+
   (Use "ln -s gnu-as as" or "ln -s sun-as as" to switch between the
   two assemblers)
 
 
-* To get VIS accelerated video decoding and colour space conversion 
+* To get VIS accelerated video decoding and colour space conversion
   on Solaris SPARC with an UltraSPARC cpu, download and install Sun's
   mediaLib 2.0 before compiling xine. mediaLib is available here:
 
@@ -101,15 +101,15 @@ Known Problems
 
   If you have the solaris 8 companion CD installed, an Imlib package is
   already installed on your system, but it uses the "prefix" /opt/sfw.
-  
+
   To work around the problem:
-  
+
   - install a symbolic link /etc/imrc, pointing to /opt/sfw/etc/imrc
     (needs root permission)
 
 	# ln -s /opt/sfw/etc/imrc /etc
 
-  or 
+  or
 
   - install an ".imrc" file in your home directory,
     with the following contents:
@@ -123,7 +123,7 @@ Known Problems
   block >4GB on a device using a logical blocksize != DEV_BSIZE (i.e.
   CDROM and DVD media).  Due to a 32bit int overflow, a disk address
   modulo 4GB is accessed.
-  
+
   There's no workaround available.
 
   See the following message for more details about this bug:

@@ -32,7 +32,7 @@
    Details on the OSD feature can be found in the <link linkend="osd">OSD section</link>.
   </para>
  </sect1>
- 
+
  <sect1>
   <title>Writing a new frontend to xine</title>
   <para>
@@ -51,21 +51,21 @@
    <programlisting>
 /*
 ** Copyright (C) 2003 Daniel Caujolle-Bert &lt;segfault@club-internet.fr&gt;
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**  
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**  
+**
 ** You should have received a copy of the GNU General Public License
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-**  
+**
 */
 
 /*
@@ -127,7 +127,7 @@ static void dest_size_cb(void *data, int video_width, int video_height, double v
 /* this will be called by xine when it's about to draw the frame */
 static void frame_output_cb(void *data, int video_width, int video_height,
                             double video_pixel_aspect, int *dest_x, int *dest_y,
-                            int *dest_width, int *dest_height, 
+                            int *dest_width, int *dest_height,
                             double *dest_pixel_aspect, int *win_x, int *win_y) {
   *dest_x            = 0;
   *dest_y            = 0;
@@ -139,7 +139,7 @@ static void frame_output_cb(void *data, int video_width, int video_height,
 }
 
 static void event_listener(void *user_data, const xine_event_t *event) {
-  switch(event-&gt;type) { 
+  switch(event-&gt;type) {
   case XINE_EVENT_UI_PLAYBACK_FINISHED:
     running = 0;
     break;
@@ -147,11 +147,11 @@ static void event_listener(void *user_data, const xine_event_t *event) {
   case XINE_EVENT_PROGRESS:
     {
       xine_progress_data_t *pevent = (xine_progress_data_t *) event-&gt;data;
-      
+
       printf("%s [%d%%]\n", pevent-&gt;description, pevent-&gt;percent);
     }
     break;
-  
+
   /* you can handle a lot of other interesting events here */
   }
 }
@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
     else if (strcmp(argv[i], "-ao") == 0) {
       ao_driver = argv[++i];
     }
-    else 
+    else
       mrl = argv[i];
   }
 
@@ -195,7 +195,7 @@ int main(int argc, char **argv) {
   snprintf(configfile, sizeof(configfile), "%s%s", xine_get_homedir(), "/.xine/config");
   xine_config_load(xine, configfile);
   xine_init(xine);
-  
+
   display = XOpenDisplay(NULL);
   screen  = XDefaultScreen(display);
   xpos    = 0;
@@ -212,7 +212,7 @@ int main(int argc, char **argv) {
   window[1] = XCreateSimpleWindow(display, XDefaultRootWindow(display),
                                   0, 0, (DisplayWidth(display, screen)),
                                   (DisplayHeight(display, screen)), 0, 0, 0);
-  
+
   XSelectInput(display, window[0], INPUT_MOTION);
 
   XSelectInput(display, window[1], INPUT_MOTION);
@@ -223,14 +223,14 @@ int main(int argc, char **argv) {
   XChangeProperty(display, window[1],
                   XA_NO_BORDER, XA_NO_BORDER, 32, PropModeReplace, (unsigned char *) &amp;mwmhints,
                   PROP_MWM_HINTS_ELEMENTS);
-  
+
   XMapRaised(display, window[fullscreen]);
-  
+
   res_h = (DisplayWidth(display, screen) * 1000 / DisplayWidthMM(display, screen));
   res_v = (DisplayHeight(display, screen) * 1000 / DisplayHeightMM(display, screen));
   XSync(display, False);
   XUnlockDisplay(display);
-  
+
   /* filling in the xine visual struct */
   vis.display           = display;
   vis.screen            = screen;
@@ -239,7 +239,7 @@ int main(int argc, char **argv) {
   vis.frame_output_cb   = frame_output_cb;
   vis.user_data         = NULL;
   pixel_aspect          = res_v / res_h;
-  
+
   /* opening xine output ports */
   vo_port = xine_open_video_driver(xine, vo_driver, XINE_VISUAL_TYPE_X11, (void *)&amp;vis);
   ao_port = xine_open_audio_driver(xine , ao_driver, NULL);
@@ -249,11 +249,11 @@ int main(int argc, char **argv) {
   /* hook our event handler into the streams events */
   event_queue = xine_event_new_queue(stream);
   xine_event_create_listener_thread(event_queue, event_listener, NULL);
-  
+
   /* make the video window visible to xine */
   xine_port_send_gui_data(vo_port, XINE_GUI_SEND_DRAWABLE_CHANGED, (void *) window[fullscreen]);
   xine_port_send_gui_data(vo_port, XINE_GUI_SEND_VIDEOWIN_VISIBLE, (void *) 1);
-  
+
   /* start playback */
   if (!xine_open(stream, mrl) || !xine_play(stream, 0, 0)) {
     printf("Unable to open mrl '%s'\n", mrl);
@@ -269,12 +269,12 @@ int main(int argc, char **argv) {
     if( got_event )
       XNextEvent(display, &amp;xevent);
     XUnlockDisplay(display);
-    
+
     if( !got_event ) {
       xine_usec_sleep(20000);
       continue;
     }
-    
+
     switch(xevent.type) {
 
     case KeyPress:
@@ -283,27 +283,27 @@ int main(int argc, char **argv) {
         KeySym     ksym;
         char       kbuf[256];
         int        len;
-        
+
         kevent = xevent.xkey;
-        
+
         XLockDisplay(display);
         len = XLookupString(&amp;kevent, kbuf, sizeof(kbuf), &amp;ksym, NULL);
         XUnlockDisplay(display);
-        
+
         switch (ksym) {
-        
+
         case XK_q:
         case XK_Q:
           /* user pressed q => quit */
           running = 0;
           break;
-          
+
         case XK_f:
         case XK_F:
           {
             /* user pressed f => toggle fullscreen */
             Window    tmp_win;
-            
+
             XLockDisplay(display);
             XUnmapWindow(display, window[fullscreen]);
             fullscreen = !fullscreen;
@@ -313,36 +313,36 @@ int main(int argc, char **argv) {
                                   DefaultRootWindow(display),
                                   0, 0, &amp;xpos, &amp;ypos, &amp;tmp_win);
             XUnlockDisplay(display);
-            
-            xine_port_send_gui_data(vo_port, XINE_GUI_SEND_DRAWABLE_CHANGED, 
+
+            xine_port_send_gui_data(vo_port, XINE_GUI_SEND_DRAWABLE_CHANGED,
                                     (void*) window[fullscreen]);
           }
           break;
-        
+
         case XK_Up:
           /* cursor up => increase volume */
           xine_set_param(stream, XINE_PARAM_AUDIO_VOLUME,
                          (xine_get_param(stream, XINE_PARAM_AUDIO_VOLUME) + 1));
           break;
-        
+
         case XK_Down:
           /* cursor down => decrease volume */
           xine_set_param(stream, XINE_PARAM_AUDIO_VOLUME,
                          (xine_get_param(stream, XINE_PARAM_AUDIO_VOLUME) - 1));
           break;
-        
+
         case XK_plus:
           /* plus => next audio channel */
-          xine_set_param(stream, XINE_PARAM_AUDIO_CHANNEL_LOGICAL, 
+          xine_set_param(stream, XINE_PARAM_AUDIO_CHANNEL_LOGICAL,
                          (xine_get_param(stream, XINE_PARAM_AUDIO_CHANNEL_LOGICAL) + 1));
           break;
-        
+
         case XK_minus:
           /* minus => previous audio channel */
-          xine_set_param(stream, XINE_PARAM_AUDIO_CHANNEL_LOGICAL, 
+          xine_set_param(stream, XINE_PARAM_AUDIO_CHANNEL_LOGICAL,
                          (xine_get_param(stream, XINE_PARAM_AUDIO_CHANNEL_LOGICAL) - 1));
           break;
-        
+
         case XK_space:
           /* space => toggle pause mode */
           if (xine_get_param(stream, XINE_PARAM_SPEED) != XINE_SPEED_PAUSE)
@@ -350,26 +350,26 @@ int main(int argc, char **argv) {
           else
             xine_set_param(stream, XINE_PARAM_SPEED, XINE_SPEED_NORMAL);
           break;
-        
+
         }
       }
       break;
-      
+
     case Expose:
       /* this handles (partial) occlusion of our video window */
       if (xevent.xexpose.count != 0)
         break;
       xine_port_send_gui_data(vo_port, XINE_GUI_SEND_EXPOSE_EVENT, &amp;xevent);
       break;
-      
+
     case ConfigureNotify:
       {
         XConfigureEvent *cev = (XConfigureEvent *) &amp;xevent;
         Window           tmp_win;
-        
+
         width  = cev-&gt;width;
         height = cev-&gt;height;
-        
+
         if ((cev-&gt;x == 0) &amp;&amp; (cev-&gt;y == 0)) {
           XLockDisplay(display);
           XTranslateCoordinates(display, cev-&gt;window,
@@ -382,26 +382,26 @@ int main(int argc, char **argv) {
         }
       }
       break;
-    
+
     }
   }
-  
+
   /* cleanup */
   xine_close(stream);
   xine_event_dispose_queue(event_queue);
   xine_dispose(stream);
-  xine_close_audio_driver(xine, ao_port);  
-  xine_close_video_driver(xine, vo_port);  
+  xine_close_audio_driver(xine, ao_port);
+  xine_close_video_driver(xine, vo_port);
   xine_exit(xine);
-  
+
   XLockDisplay(display);
   XUnmapWindow(display, window[fullscreen]);
   XDestroyWindow(display, window[0]);
   XDestroyWindow(display, window[1]);
   XUnlockDisplay(display);
-  
+
   XCloseDisplay (display);
-  
+
   return 0;
 }</programlisting>
   </sect2>

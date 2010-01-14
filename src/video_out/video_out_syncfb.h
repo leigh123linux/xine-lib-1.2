@@ -83,16 +83,16 @@ typedef unsigned char uint_8;
 #define SYNCFB_FEATURE_SCALE_H           1
 #define SYNCFB_FEATURE_SCALE_V           2
 #define SYNCFB_FEATURE_SCALE             3
-#define SYNCFB_FEATURE_CROP              4 
+#define SYNCFB_FEATURE_CROP              4
 #define SYNCFB_FEATURE_OFFSET            8
-#define SYNCFB_FEATURE_DEINTERLACE      16 
-#define SYNCFB_FEATURE_PROCAMP          32 
-#define SYNCFB_FEATURE_TRANSITIONS      64 
-#define SYNCFB_FEATURE_COLKEY          128 
-#define SYNCFB_FEATURE_MIRROR_H        256 
-#define SYNCFB_FEATURE_MIRROR_V        512 
-#define SYNCFB_FEATURE_BLOCK_REQUEST  1024 
-#define SYNCFB_FEATURE_FREQDIV2       2048 
+#define SYNCFB_FEATURE_DEINTERLACE      16
+#define SYNCFB_FEATURE_PROCAMP          32
+#define SYNCFB_FEATURE_TRANSITIONS      64
+#define SYNCFB_FEATURE_COLKEY          128
+#define SYNCFB_FEATURE_MIRROR_H        256
+#define SYNCFB_FEATURE_MIRROR_V        512
+#define SYNCFB_FEATURE_BLOCK_REQUEST  1024
+#define SYNCFB_FEATURE_FREQDIV2       2048
 
 
 typedef struct syncfb_config_s
@@ -107,7 +107,7 @@ typedef struct syncfb_config_s
 	uint_32 buffers;		/* RO, number of available buffers */
 	uint_32 buffer_size;		/* RO, filled in by syncfb */
 
-	uint_32 default_repeat; 	/* default repeat time for a single frame, can be overridden in syncfb_buffer_info_t */
+	uint_32 default_repeat;	/* default repeat time for a single frame, can be overridden in syncfb_buffer_info_t */
 
 	uint_32 src_width;		/* source image width in pixel */
 	uint_32 src_height;		/* source image height in pixel */
@@ -121,7 +121,7 @@ typedef struct syncfb_config_s
 	uint_32 scale_filters;		/* 0: no filtering, 255: all filters on */
 	uint_32 image_width;		/* onscreen image width */
 	uint_32 image_height;		/* onscreen image height */
-	
+
 	/* if syncfb has FEATURE_CROP */
 	uint_32 src_crop_left;		/* */
 	uint_32 src_crop_right;		/* */
@@ -176,8 +176,8 @@ typedef struct syncfb_status_info_s
 	uint_32 skip_field_cnt;			/* skipped fields when fifo was about to fill up */
 
 	uint_32 request_frames;			/* number of request_buffer calls */
-	uint_32 commit_frames; 			/* number of commit_buffer calls */
-	
+	uint_32 commit_frames;			/* number of commit_buffer calls */
+
 	uint_32 failed_requests;		/* number of calls to request_buffer that failed */
 
 	uint_32 buffers_waiting;
@@ -188,7 +188,7 @@ typedef struct syncfb_status_info_s
 
 
 
-typedef struct syncfb_capability_s 
+typedef struct syncfb_capability_s
 {
 	char name[64];			/* A name for the syncfb ... */
 	uint_32 palettes;		/* supported palettes - see videodev.h for palettes, test the corresponding bit here */

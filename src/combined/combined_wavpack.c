@@ -27,13 +27,13 @@ static const demuxer_info_t demux_info_wv = {
   0			/* priority */
 };
 
-static uint32_t audio_types[] = { 
+static uint32_t audio_types[] = {
   BUF_AUDIO_WAVPACK, 0
  };
 
 static const decoder_info_t decoder_info_wv = {
   audio_types,         /* supported types */
-  7                    /* priority        */
+  8                    /* priority        */
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {

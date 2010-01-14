@@ -21,6 +21,10 @@
  *   http://www.baisoku.org/
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -90,7 +94,7 @@ static void nsf_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     this->song_number = buf->content[4];
     /* allocate a buffer for the file */
     this->nsf_size = _X_BE_32(&buf->content[0]);
-    this->nsf_file = xine_xmalloc(this->nsf_size);
+    this->nsf_file = calloc(1, this->nsf_size);
     this->nsf_index = 0;
 
     /* peform any other required initialization */
@@ -205,7 +209,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   nsf_decoder_t *this ;
 
-  this = (nsf_decoder_t *) xine_xmalloc (sizeof (nsf_decoder_t));
+  this = (nsf_decoder_t *) calloc(1, sizeof(nsf_decoder_t));
 
   /* connect the member functions */
   this->audio_decoder.decode_data         = nsf_decode_data;
@@ -249,13 +253,13 @@ static void dispose_class (audio_decoder_class_t *this_gen) {
   free (this);
 }
 
-/* This function allocates a private audio decoder class and initializes 
+/* This function allocates a private audio decoder class and initializes
  * the class's member functions. */
 static void *init_plugin (xine_t *xine, void *data) {
 
   nsf_class_t *this ;
 
-  this = (nsf_class_t *) xine_xmalloc (sizeof (nsf_class_t));
+  this = (nsf_class_t *) calloc(1, sizeof(nsf_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;
@@ -265,18 +269,18 @@ static void *init_plugin (xine_t *xine, void *data) {
   return this;
 }
 
-/* This is a list of all of the internal xine audio buffer types that 
+/* This is a list of all of the internal xine audio buffer types that
  * this decoder is able to handle. Check src/xine-engine/buffer.h for a
  * list of valid buffer types (and add a new one if the one you need does
  * not exist). Terminate the list with a 0. */
-static uint32_t audio_types[] = { 
+static uint32_t audio_types[] = {
   BUF_AUDIO_NSF,
   0
 };
 
 /* This data structure combines the list of supported xine buffer types and
  * the priority that the plugin should be given with respect to other
- * plugins that handle the same buffer type. A plugin with priority (n+1) 
+ * plugins that handle the same buffer type. A plugin with priority (n+1)
  * will be used instead of a plugin with priority (n). */
 static const decoder_info_t dec_info_audio = {
   audio_types,         /* supported types */

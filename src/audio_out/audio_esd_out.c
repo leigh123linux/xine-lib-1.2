@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -77,7 +77,7 @@ typedef struct esd_driver_s {
   /*
    * Temporary sample buffer used to reblock the sample output stream
    * to writes using buffer sizes of n*ESD_BUF_SIZE bytes.
-   * 
+   *
    * The reblocking avoids a bug with esd 0.2.18 servers and reduces
    * cpu load with newer versions of the esd server.
    *
@@ -99,7 +99,7 @@ typedef struct {
 
 
 /*
- * connect to esd 
+ * connect to esd
  */
 static int ao_esd_open(ao_driver_t *this_gen,
 		       uint32_t bits, uint32_t rate, int mode)
@@ -107,7 +107,7 @@ static int ao_esd_open(ao_driver_t *this_gen,
   esd_driver_t *this = (esd_driver_t *) this_gen;
   esd_format_t     format;
 
-  xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 	   "audio_esd_out: ao_open bits=%d rate=%d, mode=%d\n", bits, rate, mode);
 
   if ( (mode & this->capabilities) == 0 ) {
@@ -117,12 +117,12 @@ static int ao_esd_open(ao_driver_t *this_gen,
 
   if (this->audio_fd>=0) {
 
-    if ( (mode == this->mode) && (rate == this->input_sample_rate) ) 
+    if ( (mode == this->mode) && (rate == this->input_sample_rate) )
       return this->output_sample_rate;
 
     esd_close (this->audio_fd);
   }
-  
+
   this->mode                   = mode;
   this->input_sample_rate      = rate;
   this->output_sample_rate     = rate;
@@ -170,7 +170,7 @@ static int ao_esd_open(ao_driver_t *this_gen,
   return this->output_sample_rate;
 }
 
-static int ao_esd_num_channels(ao_driver_t *this_gen) 
+static int ao_esd_num_channels(ao_driver_t *this_gen)
 {
   esd_driver_t *this = (esd_driver_t *) this_gen;
   return this->num_channels;
@@ -200,14 +200,14 @@ static int ao_esd_delay(ao_driver_t *this_gen)
   frames += (tv.tv_sec - this->start_time.tv_sec)
     * this->output_sample_rate;
 
-  frames -= this->latency; 
+  frames -= this->latency;
   if (frames < 0)
       frames = 0;
-  
+
   /* calc delay */
-  
+
   bytes_left = this->bytes_in_buffer - frames * this->bytes_per_frame;
-  
+
   if (bytes_left<=0) /* buffer ran dry */
     bytes_left = 0;
   return bytes_left / this->bytes_per_frame;
@@ -230,18 +230,18 @@ static int ao_esd_write(ao_driver_t *this_gen,
   /* check if simulated buffer ran dry */
 
   gettimeofday(&tv, NULL);
-  
+
   frames  = (tv.tv_usec - this->start_time.tv_usec)
     * this->output_sample_k_rate / 1000;
   frames += (tv.tv_sec - this->start_time.tv_sec)
     * this->output_sample_rate;
-  
-  frames -= this->latency; 
+
+  frames -= this->latency;
   if (frames < 0)
       frames = 0;
 
   /* calc delay */
-  
+
   simulated_bytes_in_buffer = frames * this->bytes_per_frame;
 
   if (this->bytes_in_buffer < simulated_bytes_in_buffer)
@@ -296,7 +296,7 @@ static int ao_esd_write(ao_driver_t *this_gen,
     if (nwritten != num_bytes) {
 	if (nwritten < 0)
 	  xprintf(this->xine, XINE_VERBOSITY_DEBUG, "audio_esd_out: writev failed: %s\n", strerror(errno));
-	else 
+	else
 	  xprintf(this->xine, XINE_VERBOSITY_DEBUG, "audio_esd_out: warning, incomplete write: %d\n", nwritten);
     }
     if (nwritten > 0)
@@ -337,7 +337,7 @@ static int ao_esd_get_gap_tolerance (ao_driver_t *this_gen) {
 static void ao_esd_exit(ao_driver_t *this_gen)
 {
   esd_driver_t *this = (esd_driver_t *) this_gen;
-  
+
   if (this->audio_fd != -1)
     esd_close(this->audio_fd);
 
@@ -351,19 +351,19 @@ static int ao_esd_get_property (ao_driver_t *this_gen, int property) {
   int                mixer_fd;
   esd_player_info_t *esd_pi;
   esd_info_t        *esd_i;
-  
+
   switch(property) {
   case AO_PROP_MIXER_VOL:
-    
+
     if((mixer_fd = esd_open_sound(NULL)) >= 0) {
       if((esd_i = esd_get_all_info(mixer_fd)) != NULL) {
 	for(esd_pi = esd_i->player_list; esd_pi != NULL; esd_pi = esd_pi->next) {
 	  if(!strcmp(this->pname, esd_pi->name)) {
 
 	    this->mixer.source_id = esd_pi->source_id;
-	    
+
 	    if(!this->mixer.mute)
-	      this->mixer.volume  = (((esd_pi->left_vol_scale * 100)  / 256) + 
+	      this->mixer.volume  = (((esd_pi->left_vol_scale * 100)  / 256) +
 				     ((esd_pi->right_vol_scale * 100) / 256)) >> 1;
 
 	  }
@@ -372,7 +372,7 @@ static int ao_esd_get_property (ao_driver_t *this_gen, int property) {
       }
       esd_close(mixer_fd);
     }
-    
+
     return this->mixer.volume;
     break;
 
@@ -390,39 +390,39 @@ static int ao_esd_set_property (ao_driver_t *this_gen, int property, int value) 
 
   switch(property) {
   case AO_PROP_MIXER_VOL:
-      
+
     if(!this->mixer.mute) {
-      
+
       /* need this to get source_id */
       (void) ao_esd_get_property(&this->ao_driver, AO_PROP_MIXER_VOL);
 
       if((mixer_fd = esd_open_sound(NULL)) >= 0) {
 	int v = (value * 256) / 100;
-	
+
 	esd_set_stream_pan(mixer_fd, this->mixer.source_id, v, v);
-	
+
 	if(!this->mixer.mute)
 	  this->mixer.volume = value;
-	
+
 	esd_close(mixer_fd);
       }
     }
     else
       this->mixer.volume = value;
-    
+
     return this->mixer.volume;
     break;
-    
+
   case AO_PROP_MUTE_VOL: {
     int mute = (value) ? 1 : 0;
-    
+
     /* need this to get source_id */
     (void) ao_esd_get_property(&this->ao_driver, AO_PROP_MIXER_VOL);
-    
+
     if(mute) {
       if((mixer_fd = esd_open_sound(NULL)) >= 0) {
 	int v = 0;
-	
+
 	esd_set_stream_pan(mixer_fd, this->mixer.source_id, v, v);
 	esd_close(mixer_fd);
       }
@@ -430,14 +430,14 @@ static int ao_esd_set_property (ao_driver_t *this_gen, int property, int value) 
     else {
       if((mixer_fd = esd_open_sound(NULL)) >= 0) {
 	int v = (this->mixer.volume * 256) / 100;
-	
+
 	esd_set_stream_pan(mixer_fd, this->mixer.source_id, v, v);
 	esd_close(mixer_fd);
       }
     }
-    
+
     this->mixer.mute = mute;
-    
+
     return value;
   }
   break;
@@ -465,7 +465,7 @@ static int ao_esd_ctrl(ao_driver_t *this_gen, int cmd, ...) {
   return 0;
 }
 
-static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, 
+static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
 				 const void *data) {
 
   esd_class_t       *class = (esd_class_t *) class_gen;
@@ -491,7 +491,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
 
   sigemptyset(&vo_mask);
   sigaddset(&vo_mask, SIGALRM);
-  if (sigprocmask(SIG_UNBLOCK, &vo_mask, &vo_mask_orig)) 
+  if (sigprocmask(SIG_UNBLOCK, &vo_mask, &vo_mask_orig))
     xprintf(class->xine, XINE_VERBOSITY_DEBUG, "audio_esd_out: cannot unblock SIGALRM: %s\n", strerror(errno));
 
   xprintf(class->xine, XINE_VERBOSITY_LOG, _("audio_esd_out: connecting to esd server...\n"));
@@ -511,7 +511,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
 
     return NULL;
   }
-  
+
   esd_svinfo = esd_get_server_info(audio_fd);
   if (esd_svinfo) {
       server_sample_rate = esd_svinfo->rate;
@@ -521,7 +521,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
 
   esd_close(audio_fd);
 
-  this                     = (esd_driver_t *) xine_xmalloc (sizeof (esd_driver_t));
+  this                     = calloc(1, sizeof (esd_driver_t));
   if (!this)
     return NULL;
   this->xine               = class->xine;
@@ -583,7 +583,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   esd_class_t        *this;
 
-  this = (esd_class_t *) xine_xmalloc (sizeof (esd_class_t));
+  this = calloc(1, sizeof (esd_class_t));
   if (!this)
     return NULL;
 
@@ -606,7 +606,7 @@ static const ao_info_t ao_info_esd = {
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_AUDIO_OUT, AO_OUT_ESD_IFACE_VERSION, "esd", XINE_VERSION_CODE, &ao_info_esd, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

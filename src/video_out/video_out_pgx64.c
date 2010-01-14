@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -213,7 +213,7 @@ typedef struct {
   uint8_t *buffer_ptrs[3];
 } pgx64_frame_t;
 
-typedef struct {   
+typedef struct {
   vo_driver_t vo_driver;
   vo_scale_t vo_scale;
 
@@ -561,7 +561,7 @@ static vo_frame_t *pgx64_alloc_frame(vo_driver_t *this_gen)
   /*pgx64_driver_t *this = (pgx64_driver_t *)(void *)this_gen;*/
   pgx64_frame_t *frame;
 
-  frame = (pgx64_frame_t *) xine_xmalloc(sizeof(pgx64_frame_t));
+  frame = calloc(1, sizeof(pgx64_frame_t));
   if (!frame) {
     return NULL;
   }
@@ -671,7 +671,7 @@ static void pgx64_display_frame(vo_driver_t *this_gen, vo_frame_t *frame_gen)
   DGA_DRAW_UNLOCK(this->dgadraw);
   XUnlockDisplay(this->display);
 
-  if (_x_vo_scale_redraw_needed(&this->vo_scale)) {  
+  if (_x_vo_scale_redraw_needed(&this->vo_scale)) {
     short int *cliprects, wx0, wy0, wx1, wy1, cx0, cy0, cx1, cy1;
     int dgavis;
 
@@ -991,7 +991,7 @@ static void pgx64_overlay_key_blend(vo_driver_t *this_gen, vo_frame_t *frame_gen
           if (x + width - 1 > overlay->hili_right) {
             width -= overlay->hili_right - x;
             len += overlay->hili_right - x;
-          } 
+          }
         }
       }
 
@@ -999,7 +999,7 @@ static void pgx64_overlay_key_blend(vo_driver_t *this_gen, vo_frame_t *frame_gen
         int j;
         clut_t *src_clut;
         uint8_t *src_trans;
-          
+
         if (use_clip_palette) {
           src_clut = (clut_t *)&overlay->hili_color;
           src_trans = (uint8_t *)&overlay->hili_trans;
@@ -1035,7 +1035,7 @@ static void pgx64_overlay_key_blend(vo_driver_t *this_gen, vo_frame_t *frame_gen
               else {
                 palette[use_clip_palette][j] = BlackPixel(this->display, this->screen);
               }
-            } 
+            }
           }
           else {
             palette[use_clip_palette][j] = this->colour_key;
@@ -1273,7 +1273,7 @@ static int pgx64_redraw_needed(vo_driver_t *this_gen)
   DGA_DRAW_UNLOCK(this->dgadraw);
   XUnlockDisplay(this->display);
 
-  if (modif || _x_vo_scale_redraw_needed(&this->vo_scale)) {  
+  if (modif || _x_vo_scale_redraw_needed(&this->vo_scale)) {
     this->vo_scale.force_redraw = 1;
     this->chromakey_regen_needed = 1;
     return 1;
@@ -1320,7 +1320,7 @@ static void pgx64_config_changed(void *user_data, xine_cfg_entry_t *entry)
   if (strcmp(entry->key, "video.device.pgx64_colour_key") == 0) {
     pgx64_set_property(this_gen, VO_PROP_COLORKEY, entry->num_value);
     update_colour_key_rgb(this);
-  } 
+  }
   else if (strcmp(entry->key, "video.device.pgx64_chromakey_en") == 0) {
     this->chromakey_en = entry->num_value;
   }
@@ -1352,7 +1352,7 @@ static vo_driver_t *pgx64_init_driver(video_driver_class_t *class_gen, const voi
   struct fbgattr attr;
   long page_size;
 
-  this = (pgx64_driver_t *)xine_xmalloc(sizeof(pgx64_driver_t));
+  this = calloc(1, sizeof(pgx64_driver_t));
   if (!this) {
     return NULL;
   }
@@ -1493,7 +1493,7 @@ static void *pgx64_init_class(xine_t *xine, void *visual_gen)
 {
   pgx64_driver_class_t *class;
 
-  class = (pgx64_driver_class_t *)xine_xmalloc(sizeof(pgx64_driver_class_t));
+  class = calloc(1, sizeof(pgx64_driver_class_t));
   if (!class) {
     return NULL;
   }

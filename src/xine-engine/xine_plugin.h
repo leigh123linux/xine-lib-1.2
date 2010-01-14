@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -33,7 +33,7 @@
 #define PLUGIN_VIDEO_OUT      7
 #define PLUGIN_POST           8
 
-#define PLUGIN_TYPE_MAX       PLUGIN_POST           
+#define PLUGIN_TYPE_MAX       PLUGIN_POST
 
 /* this flag may be or'ed with type in order to force preloading the plugin.
  * very useful to register config items on xine initialization.

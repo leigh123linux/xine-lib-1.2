@@ -15,7 +15,7 @@ vidix_drivers = \
 	unichrome_vid.la \
 	nvidia_vid.la \
 	sis_vid.la \
-	savage_vid.la 
+	savage_vid.la
 endif
 
 vidix_LTLIBRARIES = $(vidix_drivers)

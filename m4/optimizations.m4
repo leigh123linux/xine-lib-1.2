@@ -17,37 +17,32 @@ AC_DEFUN([AC_OPTIMIZATIONS], [
     if test "$GCC" = yes; then
         dnl
         dnl check cflags not supported by all gcc versions
-        AC_TRY_CFLAGS("-fschedule-insns2", f_si="-fschedule-insns2", f_si="")
-        AC_TRY_CFLAGS("-mwide-multiply", m_wm="-mwide-multiply", m_wm="")
+        CC_CHECK_CFLAGS([-fschedule-insns2], f_si="-fschedule-insns2", f_si="")
+        CC_CHECK_CFLAGS([-mwide-multiply], m_wm="-mwide-multiply", m_wm="")
         dnl
         dnl gcc 3.1 uses the -f version
         dnl
-        AC_TRY_CFLAGS("-falign-functions=4", f_af="-falign-functions=4",
+        CC_CHECK_CFLAGS([-falign-functions=4], f_af="-falign-functions=4",
             f_af="-malign-functions=4")
-        AC_TRY_CFLAGS("-falign-loops=4", f_al="-falign-loops=4",
+        CC_CHECK_CFLAGS([-falign-loops=4], f_al="-falign-loops=4",
             f_al="-malign-loops=4")
-        AC_TRY_CFLAGS("-falign-jumps=4", f_aj="-falign-jumps=4",
+        CC_CHECK_CFLAGS([-falign-jumps=4], f_aj="-falign-jumps=4",
             f_aj="-malign-jumps=4")
         dnl
         dnl Check for some optimization disabling
         dnl needed for win32 code
         dnl
-        AC_TRY_CFLAGS("-fno-omit-frame-pointer", W32_NO_OPTIMIZE="$W32_NO_OPTIMIZE -fno-omit-frame-pointer",)
-        AC_TRY_CFLAGS("-fno-inline-functions", W32_NO_OPTIMIZE="$W32_NO_OPTIMIZE -fno-inline-functions",)
-        AC_TRY_CFLAGS("-fno-rename-registers", W32_NO_OPTIMIZE="$W32_NO_OPTIMIZE -fno-rename-registers",)
+        CC_CHECK_CFLAGS([-fno-omit-frame-pointer], W32_NO_OPTIMIZE="$W32_NO_OPTIMIZE -fno-omit-frame-pointer",)
+        CC_CHECK_CFLAGS([-fno-inline-functions], W32_NO_OPTIMIZE="$W32_NO_OPTIMIZE -fno-inline-functions",)
+        CC_CHECK_CFLAGS([-fno-rename-registers], W32_NO_OPTIMIZE="$W32_NO_OPTIMIZE -fno-rename-registers",)
         AC_SUBST(W32_NO_OPTIMIZE)
         dnl
         dnl Multipass compilation
         dnl
-        AC_TRY_CFLAGS("-fprofile-arcs", PASS1_CFLAGS="-fprofile_arcs $PASS1_CFLAGS",)
-        AC_TRY_CFLAGS("-fbranch-probabilities", PASS2_CFLAGS="-fbranch-probabilities $PASS2_CFLAGS",)
+        CC_CHECK_CFLAGS([-fprofile-arcs], PASS1_CFLAGS="-fprofile_arcs $PASS1_CFLAGS",)
+        CC_CHECK_CFLAGS([-fbranch-probabilities], PASS2_CFLAGS="-fbranch-probabilities $PASS2_CFLAGS",)
         AC_SUBST(PASS1_CFLAGS)
         AC_SUBST(PASS2_CFLAGS)
-        dnl
-        dnl Warnings
-        dnl
-        CFLAGS="-Wchar-subscripts -Wmissing-declarations -Wmissing-prototypes $CFLAGS"
-        CFLAGS="-Wnested-externs -Wcast-align $CFLAGS"
         dnl some combinations of gcc+glibc produce useless warnings on memset
         dnl when compiling with -Wpointer-arith, so we check for this first
         AC_MSG_CHECKING(for sane -Wpointer-arith)
@@ -61,15 +56,12 @@ AC_DEFUN([AC_OPTIMIZATIONS], [
         dnl -finline-functions. Use -fno-inline-functions for gcc < 3.4.0.
 
         AC_MSG_CHECKING(for gcc 3.4.0 or later)
-        newGCC="`"$CC" -dumpversion |
+        newGCC="`$CC -dumpversion |
                 awk -F. '{ if ((@S|@1 * 10000 + @S|@2 * 100 + @S|@3) >= 30400) { print "yes" } }'
                 `"
         AC_MSG_RESULT(${newGCC:-no - assuming bugginess in -finline-functions})
         test "$newGCC" = yes || INLINE_FUNCTIONS=-fno-inline-functions
     fi
-
-    dnl Flags not supported by all *cc* variants
-    AC_TRY_CFLAGS("-Wall", wall="-Wall", wall="")
 
     CFLAGS="$wall ${CFLAGS}"
     DEBUG_CFLAGS="$wall ${DEBUG_CFLAGS}"
@@ -80,11 +72,11 @@ AC_DEFUN([AC_OPTIMIZATIONS], [
 
           if test "$GCC" = yes; then
             dnl Check for gcc cpu optimization support
-            AC_TRY_CFLAGS("-mtune=i386",
+            CC_CHECK_CFLAGS("-mtune=i386",
               sarchopt="-mtune",
-              AC_TRY_CFLAGS("-mcpu=i386",
+              CC_CHECK_CFLAGS("-mcpu=i386",
                 sarchopt="-mcpu",
-                AC_TRY_CFLAGS("-march=i386",
+                CC_CHECK_CFLAGS("-march=i386",
                   sarchopt="-march",
                   [ AC_MSG_RESULT(** no cpu optimization supports **)
                     sarchopt=no
@@ -94,7 +86,7 @@ AC_DEFUN([AC_OPTIMIZATIONS], [
             )
 
             dnl special check for k7 cpu CC support
-            AC_TRY_CFLAGS("$sarchopt=athlon", k7cpu="athlon", k7cpu="i686")
+            CC_CHECK_CFLAGS([$sarchopt=athlon], k7cpu="athlon", k7cpu="i686")
 
             dnl add x86 specific gcc CFLAGS
             CFLAGS="-O3 -pipe -fomit-frame-pointer $f_af $f_al $f_aj $m_wm $m_psb -fexpensive-optimizations $f_si -ffast-math $INLINE_FUNCTIONS $CFLAGS"

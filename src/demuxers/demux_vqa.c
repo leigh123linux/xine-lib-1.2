@@ -25,7 +25,7 @@
  *
  * Quick technical note: VQA files begin with a header that includes a
  * frame index. This ought to be useful for seeking within a VQA file.
- * However, seeking is infeasible due to the audio encoding: Each audio 
+ * However, seeking is infeasible due to the audio encoding: Each audio
  * block needs information from the previous audio block in order to be
  * decoded, thus making random seeking difficult.
  */
@@ -96,8 +96,8 @@ static int open_vqa_file(demux_vqa_t *this) {
     return 0;
 
   /* check for the VQA signatures */
-  if ((_X_BE_32(&scratch[0]) != FORM_TAG) ||
-      (_X_BE_32(&scratch[8]) != WVQA_TAG))
+  if (!_x_is_fourcc(&scratch[0], "FORM") ||
+      !_x_is_fourcc(&scratch[8], "WVQA") )
     return 0;
 
   /* file is qualified; skip to the start of the VQA header */
@@ -108,7 +108,7 @@ static int open_vqa_file(demux_vqa_t *this) {
     this->filesize = 1;
 
   /* load the VQA header */
-  if (this->input->read(this->input, vqa_header, VQA_HEADER_SIZE) != 
+  if (this->input->read(this->input, vqa_header, VQA_HEADER_SIZE) !=
     VQA_HEADER_SIZE)
     return 0;
 
@@ -334,7 +334,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_vqa_t    *this;
 
-  this         = xine_xmalloc (sizeof (demux_vqa_t));
+  this         = calloc(1, sizeof(demux_vqa_t));
   this->stream = stream;
   this->input  = input;
 
@@ -408,7 +408,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_vqa_init_plugin (xine_t *xine, void *data) {
   demux_vqa_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_vqa_class_t));
+  this = calloc(1, sizeof(demux_vqa_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

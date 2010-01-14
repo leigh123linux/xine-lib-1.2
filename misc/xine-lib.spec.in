@@ -66,6 +66,9 @@
 %if %{?BUILD_JACK:0}%{!?BUILD_JACK:1}
 %define BUILD_JACK      0
 %endif
+%if %{?BUILD_PULSE:0}%{!?BUILD_PULSE:1}
+%define BUILD_PULSE     0
+%endif
 
 Name:           %{name}
 Summary:        A portable video/audio library for unix-like systems.
@@ -76,8 +79,8 @@ Version:        %{version}
 Release:        %{release}
 License:        GPL
 Group:          Development/Libraries
-URL:            http://xinehq.de
-Source:         http://xinehq.de/files/@PACKAGE@-@VERSION@.tar.gz
+URL:            http://www.xine-project.org
+Source:         http://prdownloads.sourceforge.net/xine/@PACKAGE@-@VERSION@.tar.bz2
 Packager:       Manfred Tremmel <Manfred.Tremmel@iiv.de>
 Obsoletes:      xine
 Obsoletes:      xine-lib
@@ -145,20 +148,21 @@ lisenssin kanssa yhteensopivia. lisätietoja GPL-lisenssistä löytyy osoitteest
 http://www.gnu.org/licenses/gpl.html
 
 %if %BUILD_DEVEL
-%package devel
+%package -n %{shortname}-devel
 Summary:        Header files and documentation to develope programs with libxine.
 Summary(cs):    Hlavičkové soubory a dokumentace pro vývoj programů používající libxine
 Summary(de):    Headerdateien und Dokumentationen, um Programme mit libxine entwickeln zu können.
 Summary(fi):    Header-tiedostot ja dokumentaatio, joita tarvitset kehittäessäsi ohjelmia libxine:n kanssa.
-Group:	       Development/Libraries
+Group:          Development/Libraries
 Obsoletes:      xine-lib-devel
 Obsoletes:      xine-devel
 Obsoletes:      libxine0-devel
-Provides:       %{shortname}-devel = %{version}-%{release}
+Obsoletes:      %{name}-devel
+Provides:       %{name}-devel = %{version}-%{release}
 Provides:       xine-devel
 Requires:       %{libname} = %{version}-%{release}
 
-%description devel
+%description -n %{shortname}-devel
 This package contains header files and documentation required to develope
 programs with libxine.
 
@@ -173,7 +177,7 @@ Don't hesitate to use libxine in your own projects as long as your usage
 complies to the GPL. More information about GPL-license can be found at
 http://www.gnu.org/licenses/gpl.html
 
-%description devel -l cs
+%description -n %{shortname}-devel -l cs
 Tento balíček obsahuje hlavičkové soubory a dokumentaci potřebnou pro vývoj
 programů, které používají libxine.
 
@@ -188,7 +192,7 @@ Dokud to bude ve shodě s GPL, neváhejte použít libxine ve vašich vlastních
 projektech. Více informací o GPL licenci můžete nalézt na
 http://www.gnu.org/licenses/gpl.html.
 
-%description devel -l de
+%description -n %{shortname}-devel -l de
 Dieses Paket enthält die Headerdateien und Dokumentationen, um Programme
 mit libxine entwickeln zu können.
 
@@ -205,7 +209,7 @@ Zögern Sie nicht libxine in Ihren eigenen Projekten zu nutzen. Beachten Sie
 hierzu jedoch die in der GPL Lizenz vereinbarten Bestimmungen. Weitere
 Informationen zur GPL-Lizenz finden Sie unter http://www.gnu.org/licenses/gpl.html
 
-%description devel -l fi
+%description -n %{shortname}-devel -l fi
 libxine on xinen sydän (vapaa GPL-linsensoitu videosoitinohjelma Unix-tyylisille
 käyttöjärjestelmille), joka muun muassa tarjoaa mahdollisuudet pakatun videon
 ja äänen purkamiseen (sekä näyttämiseen) suurimmalla osalla nykyaikaista äänen-
@@ -547,7 +551,6 @@ libxine Videoausgabeplugin per libstk (Set-top Toolkit)
 %endif
 
 %if %BUILD_DXR3
-%ifarch i386 i486 i586 i686 i786 i868 i986 k6 k7 athlon x86_64 amd64 ia32e
 %package dxr3
 Summary:        libxine video output plugin using mpeg2 decoding cards with dxr3 decoder-chip
 Summary(cs):    Videovýstupní modul libxine používající karty s čipem DXR3
@@ -571,10 +574,8 @@ libxine Videoausgabeplugin, nutzt MPEG2-decoder-Karten mit dxr3 Decoder-Chip
 %description dxr3 -l fi
 libxine-Videolisdke MPEG2-videopurkukorteille, joissa on DXR3 purkusiru
 %endif
-%endif
 
 %if %BUILD_XVMC
-%ifarch i386 i486 i586 i686 i786 i868 i986 k6 k7 athlon x86_64 amd64 ia32e
 %package xvmc
 Summary:        libxine video output plugin using XVideo-extension with motion compensation
 Summary(cs):    Videovýstupní modul libxine používající rozšíření XVideo MC
@@ -592,7 +593,6 @@ Videovýstupní modul libxine, který používá rozšíření XVideo s kompenza
 
 %description xvmc -l de
 libxine Videoausgabeplugin per XVideo-Erweiterung mit Motion Compensation
-%endif
 %endif
 
 %if %BUILD_W32DLL
@@ -624,7 +624,7 @@ libxine-Purkulisdke, joka mahdollistaa Win32 DLL:n kdytvn.
 
 %if %BUILD_JACK
 %package jack
-Summary:        libxine sound output plugin for the jack sooundserver
+Summary:        libxine sound output plugin for the jack soundserver
 Summary(de):    libxine Soundausgabeplugin für den jack-Soundserver
 Group:          Development/Libraries
 Obsoletes:      xine-lib-jack
@@ -632,7 +632,7 @@ Obsoletes:      libxine0-jack
 Requires:       %{libname} = %{version}-%{release}
 
 %description jack
-libxine sound output plugin for the jack sooundserver
+libxine sound output plugin for the jack soundserver
 
 %description jack -l cs
 Zvukový výstupní modul libxine pro zvukový server jack.
@@ -641,12 +641,33 @@ Zvukový výstupní modul libxine pro zvukový server jack.
 libxine Soundausgabeplugin für den jack-Soundserver
 %endif
 
+%if %BUILD_PULSE
+%package pulse
+Summary:        libxine sound output plugin for the pulseaudio soundserver
+Summary(de):    libxine Soundausgabeplugin für den pulseaudio-Soundserver
+Group:          Development/Libraries
+Obsoletes:      xine-lib-pulse
+Obsoletes:      libxine0-pulse
+Requires:       %{libname} = %{version}-%{release}
+
+%description pulse
+libxine sound output plugin for the pulseaudio soundserver
+
+%description pulse -l cs
+Zvukový výstupní modul libxine pro zvukový server pulseaudio.
+
+%description pulse -l de
+libxine Soundausgabeplugin für den pulseaudio-Soundserver
+%endif
+
+
 %prep
 %setup -q -n @TAR_NAME@
 
 %build
 export CFLAGS="${RPM_OPT_FLAGS}"
-export XINE_DOCPATH="%{_docdir}/libxine1"
+export XINE_DOCPATH="%{_docdir}/%{name}"
+export PKG_CONFIG="%{_bindir}/pkg-config"
 
 if [ ! -f configure ]; then
    NO_CONFIGURE=1 ./autogen.sh
@@ -665,286 +686,304 @@ fi
             --localstatedir=%{_localstatedir} \
             --sharedstatedir=%{_sharedstatedir} --mandir=%{_mandir} \
             --infodir=%{_infodir} --enable-directfb --enable-modplug \
-            --with-internal-vcdlibs
+%if %BUILD_STK
+            --with-libstk \
+%endif
+%if %BUILD_ARTS
+            --with-arts \
+%endif
+            --enable-syncfb --without-internal-vcdlibs
 
 # Error in libfaad when compiling with mmx or sse enabled, remove it
-mv src/libfaad/Makefile src/libfaad/Makefile_save
-cat src/libfaad/Makefile_save | sed -e "s/-mmmx/-mno-mmx/g" -e "s/-msse/-mno-sse/g" > src/libfaad/Makefile
+%{__mv} src/libfaad/Makefile src/libfaad/Makefile_save
+%{__cat} src/libfaad/Makefile_save | %{__sed} -e "s/-mmmx/-mno-mmx/g" -e "s/-msse/-mno-sse/g" > src/libfaad/Makefile
 # another problem with libavcodec
-mv src/libffmpeg/libavcodec/i386/Makefile src/libffmpeg/libavcodec/i386/Makefile_save
-cat src/libffmpeg/libavcodec/i386/Makefile_save | sed -e "s/-O3/-Os/g" -e "s/-O2/-Os/g" > src/libffmpeg/libavcodec/i386/Makefile
+%{__mv} src/libffmpeg/libavcodec/i386/Makefile src/libffmpeg/libavcodec/i386/Makefile_save
+%{__cat} src/libffmpeg/libavcodec/i386/Makefile_save | %{__sed} -e "s/-O3/-Os/g" -e "s/-O2/-Os/g" > src/libffmpeg/libavcodec/i386/Makefile
 
-make
+%{__make} %{?jobs:-j%{jobs}}
 
 %install
-rm -rf $RPM_BUILD_ROOT
+[ "${RPM_BUILD_ROOT}" != "/" ] && %{__rm} -rf ${RPM_BUILD_ROOT}
 make DESTDIR=%{?buildroot:%{buildroot}} LIBRARY_PATH=%{?buildroot:%{buildroot}}%{_libdir} install
 
 cd ${RPM_BUILD_ROOT}
 
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_zw
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_zw
 %if %BUILD_DEVEL
-echo "%doc README TODO AUTHORS COPYING ChangeLog" >> ${RPM_BUILD_DIR}/filelist_libxine1_zw
+echo "%doc README TODO AUTHORS COPYING ChangeLog" >> ${RPM_BUILD_DIR}/filelist_%{name}_zw
 %else
-echo "%doc README TODO AUTHORS COPYING ChangeLog doc/hackersguide/*.sgml doc/hackersguide/*.fig doc/hackersguide/README" >> ${RPM_BUILD_DIR}/filelist_libxine1_zw
+echo "%doc README TODO AUTHORS COPYING ChangeLog doc/hackersguide/*.sgml doc/hackersguide/*.fig doc/hackersguide/README" >> ${RPM_BUILD_DIR}/filelist_%{name}_zw
 %endif
-find . -type f | sed 's,^\.%{_datadir}/doc,\%doc %{_datadir}/doc,' | sed 's,^\.,,' >> ${RPM_BUILD_DIR}/filelist_libxine1_zw
-find . -type l | sed 's,^\.%{_datadir}/doc,\%doc %{_datadir}/doc,' | sed 's,^\.,,' >> ${RPM_BUILD_DIR}/filelist_libxine1_zw
-find . -type d | grep xine | sed 's,^\.,\%dir ,' >> ${RPM_BUILD_DIR}/filelist_libxine1_zw
-grep -v "/man/" ${RPM_BUILD_DIR}/filelist_libxine1_zw | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-grep "/man/" ${RPM_BUILD_DIR}/filelist_libxine1_zw | sed -e 's/$/\*/g' | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_zw
+find . -type f | %{__sed} 's,^\.%{_datadir}/doc,\%doc %{_datadir}/doc,' | %{__sed} 's,^\.,,' >> ${RPM_BUILD_DIR}/filelist_%{name}_zw
+find . -type l | %{__sed} 's,^\.%{_datadir}/doc,\%doc %{_datadir}/doc,' | %{__sed} 's,^\.,,' >> ${RPM_BUILD_DIR}/filelist_%{name}_zw
+find . -type d | %{__grep} xine | %{__sed} 's,^\.,\%dir ,' >> ${RPM_BUILD_DIR}/filelist_%{name}_zw
+%{__grep} -v "/man/" ${RPM_BUILD_DIR}/filelist_%{name}_zw | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__grep} "/man/" ${RPM_BUILD_DIR}/filelist_%{name}_zw | %{__sed} -e 's/$/\*/g' | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_zw
 
 %if %BUILD_DEVEL
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_devel
-echo "%doc doc/hackersguide/*.sgml doc/hackersguide/*.fig doc/hackersguide/README" >> ${RPM_BUILD_DIR}/filelist_libxine1_devel
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep -E "/include/|dhahelper\.o|libxine*\.(so|la)$|\.m4$" ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_devel
-grep -v -E "/include/|dhahelper\.o|libxine*\.(so|la)$|\.m4$" ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_devel
+echo "%doc doc/hackersguide/*.sgml doc/hackersguide/*.fig doc/hackersguide/README" >> ${RPM_BUILD_DIR}/filelist_%{name}_devel
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} -E "/include/|dhahelper\.o|libxine*\.(so|la)$|\.m4$" ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_devel
+%{__grep} -v -E "/include/|dhahelper\.o|libxine*\.(so|la)$|\.m4$" ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 
 %if %BUILD_ALSA
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_alsa
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep "xineplug_ao_out_alsa\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_alsa
-grep -v "xineplug_ao_out_alsa\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_alsa
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} "xineplug_ao_out_alsa\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_alsa
+%{__grep} -v "xineplug_ao_out_alsa\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 
 %if %BUILD_ARTS
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_arts
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep "xineplug_ao_out_arts\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_arts
-grep -v "xineplug_ao_out_arts\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_arts
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} "xineplug_ao_out_arts\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_arts
+%{__grep} -v "xineplug_ao_out_arts\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 
 %if %BUILD_ESD
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_esd
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep "xineplug_ao_out_esd\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_esd
-grep -v "xineplug_ao_out_esd\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_esd
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} "xineplug_ao_out_esd\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_esd
+%{__grep} -v "xineplug_ao_out_esd\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 
 %if %BUILD_DXR3
-%ifarch i386 i486 i586 i686 i786 i868 i986 k6 k7 athlon x86_64 amd64 ia32e
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_dxr3
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep "dxr3" ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_dxr3
-grep -v "dxr3" ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
-%endif
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_dxr3
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} "dxr3" ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_dxr3
+%{__grep} -v "dxr3" ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 
 %if %BUILD_SDL
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_sdl
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep "xineplug_vo_out_sdl\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_sdl
-grep -v "xineplug_vo_out_sdl\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_sdl
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} "xineplug_vo_out_sdl\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_sdl
+%{__grep} -v "xineplug_vo_out_sdl\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 
 %if %BUILD_AA
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_aa
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep "xineplug_vo_out_aa\."  ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_aa
-grep -v "xineplug_vo_out_aa\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_aa
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} "xineplug_vo_out_aa\."  ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_aa
+%{__grep} -v "xineplug_vo_out_aa\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 
 %if %BUILD_OPENGL
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_opengl
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep -E "xineplug_vo_out_opengl\.|README.opengl" ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_opengl
-grep -v -E "xineplug_vo_out_opengl\.|README.opengl" ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_opengl
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} -E "xineplug_vo_out_opengl\.|README.opengl" ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_opengl
+%{__grep} -v -E "xineplug_vo_out_opengl\.|README.opengl" ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 
 %if %BUILD_SYNCFB
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_syncfb
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep -E "xineplug_vo_out_syncfb\.|README\.syncfb" ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_syncfb
-grep -v -E "xineplug_vo_out_syncfb\.|README\.syncfb" ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_syncfb
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} -E "xineplug_vo_out_syncfb\.|README\.syncfb" ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_syncfb
+%{__grep} -v -E "xineplug_vo_out_syncfb\.|README\.syncfb" ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 
 %if %BUILD_DIRECTFB
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_directfb
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep -E "xineplug_vo_out_directfb\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_directfb
-grep -v -E "xineplug_vo_out_directfb\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_directfb
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} -E "xineplug_vo_out_(xd|d)irectfb\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_directfb
+%{__grep} -v -E "xineplug_vo_out_(xd|d)irectfb\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 
 %if %BUILD_STK
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_stk
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep -E "xineplug_vo_out_stk\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_stk
-grep -v -E "xineplug_vo_out_stk\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_stk
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} -E "xineplug_vo_out_stk\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_stk
+%{__grep} -v -E "xineplug_vo_out_stk\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 
 %if %BUILD_XVMC
-%ifarch i386 i486 i586 i686 i786 i868 i986 k6 k7 athlon x86_64 amd64 ia32e
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_xvmc
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep "xineplug_vo_out_x[x|v]mc\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_xvmc
-grep -v "xineplug_vo_out_x[x|v]mc\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
-%endif
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_xvmc
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} "xineplug_vo_out_x[x|v]mc\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_xvmc
+%{__grep} -v "xineplug_vo_out_x[x|v]mc\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 
 %if %BUILD_W32DLL
 %ifarch i386 i486 i586 i686 i786 i868 i986 k6 k7 athlon
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_w32dll
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep -E "xineplug_decode_qt\.|xineplug_decode_w32dll\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_w32dll
-grep -v -E "xineplug_decode_qt\.|xineplug_decode_w32dll\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_w32dll
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} -E "xineplug_decode_qt\.|xineplug_decode_w32dll\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_w32dll
+%{__grep} -v -E "xineplug_decode_qt\.|xineplug_decode_w32dll\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 %endif
 
 %if %BUILD_DVB
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_dvb
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep -E "xineplug_inp_dvb\.|README\.dvb" ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_dvb
-grep -v -E "xineplug_inp_dvb\.|README\.dvb" ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_dvb
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} -E "xineplug_inp_dvb\.|README\.dvb" ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_dvb
+%{__grep} -v -E "xineplug_inp_dvb\.|README\.dvb" ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 
 %if %BUILD_DVD
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_dvd
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep -E "xineplug_inp_dvd\.|README\.network_dvd" ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_dvd
-grep -v -E "xineplug_inp_dvd\.|README\.network_dvd" ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_dvd
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} -E "xineplug_inp_dvd\.|README\.network_dvd" ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_dvd
+%{__grep} -v -E "xineplug_inp_dvd\.|README\.network_dvd" ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 
 %if %BUILD_GNOME_VFS
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_gnome_vfs
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep "xineplug_inp_gnome_vfs\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_gnome_vfs
-grep -v "xineplug_inp_gnome_vfs\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_gnome_vfs
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} "xineplug_inp_gnome_vfs\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_gnome_vfs
+%{__grep} -v "xineplug_inp_gnome_vfs\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 
 %if %BUILD_FLAC
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_flac
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep "xineplug_flac\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_flac
-grep -v "xineplug_flac\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_flac
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} "xineplug_flac\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_flac
+%{__grep} -v "xineplug_flac\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 
 %if %BUILD_OGG
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_ogg
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep -E "xineplug_decode_vorbis\.|xineplug_dmx_ogg\.|xineplug_decode_theora\.|xineplug_decode_speex\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_ogg
-grep -v -E "xineplug_decode_vorbis\.|xineplug_dmx_ogg\.|xineplug_decode_theora\.|xineplug_decode_speex\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_ogg
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} -E "xineplug_decode_vorbis\.|xineplug_dmx_ogg\.|xineplug_decode_theora\.|xineplug_decode_speex\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_ogg
+%{__grep} -v -E "xineplug_decode_vorbis\.|xineplug_dmx_ogg\.|xineplug_decode_theora\.|xineplug_decode_speex\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 %if %BUILD_JACK
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_libxine1_jack
-mv ${RPM_BUILD_DIR}/filelist_libxine1 ${RPM_BUILD_DIR}/filelist_libxine1_old
-grep "xineplug_ao_out_jack\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - >> ${RPM_BUILD_DIR}/filelist_libxine1_jack
-grep -v "xineplug_ao_out_jack\." ${RPM_BUILD_DIR}/filelist_libxine1_old | cat - > ${RPM_BUILD_DIR}/filelist_libxine1
-rm ${RPM_BUILD_DIR}/filelist_libxine1_old
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_jack
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} "xineplug_ao_out_jack\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_jack
+%{__grep} -v "xineplug_ao_out_jack\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%endif
+%if %BUILD_PULSE
+echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_pulse
+%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
+%{__grep} "xineplug_ao_out_pulse" ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_pulse
+%{__grep} -v "xineplug_ao_out_pulse" ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
+%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 
 
 %clean
-[ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
+[ "${RPM_BUILD_ROOT}" != "/" ] && %{__rm} -rf ${RPM_BUILD_ROOT}
 
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig
 
-%files -f ../filelist_libxine1
+%files -f ../filelist_%{name}
 
 %if %BUILD_DEVEL
-%files devel -f ../filelist_libxine1_devel
+%files -n %{shortname}-devel -f ../filelist_%{name}_devel
 %endif
 
 %if %BUILD_ALSA
-%files alsa -f ../filelist_libxine1_alsa
+%files alsa -f ../filelist_%{name}_alsa
 %endif
 
 %if %BUILD_ARTS
-%files arts -f ../filelist_libxine1_arts
+%files arts -f ../filelist_%{name}_arts
 %endif
 
 %if %BUILD_ESD
-%files esd -f ../filelist_libxine1_esd
+%files esd -f ../filelist_%{name}_esd
 %endif
 
 %if %BUILD_DXR3
-%ifarch i386 i486 i586 i686 i786 i868 i986 k6 k7 athlon x86_64 amd64 ia32e
-%files dxr3 -f ../filelist_libxine1_dxr3
-%endif
+%files dxr3 -f ../filelist_%{name}_dxr3
 %endif
 
 %if %BUILD_SDL
-%files sdl -f ../filelist_libxine1_sdl
+%files sdl -f ../filelist_%{name}_sdl
 %endif
 
 %if %BUILD_AA
-%files aa -f ../filelist_libxine1_aa
+%files aa -f ../filelist_%{name}_aa
 %endif
 
 %if %BUILD_OPENGL
-%files opengl -f ../filelist_libxine1_opengl
+%files opengl -f ../filelist_%{name}_opengl
 %endif
 
 %if %BUILD_SYNCFB
-%files syncfb -f ../filelist_libxine1_syncfb
+%files syncfb -f ../filelist_%{name}_syncfb
 %endif
 
 %if %BUILD_DIRECTFB
-%files directfb -f ../filelist_libxine1_directfb
+%files directfb -f ../filelist_%{name}_directfb
 %endif
 
 %if %BUILD_STK
-%files stk -f ../filelist_libxine1_stk
+%files stk -f ../filelist_%{name}_stk
 %endif
 
 %if %BUILD_XVMC
-%ifarch i386 i486 i586 i686 i786 i868 i986 k6 k7 athlon x86_64 amd64 ia32e
-%files xvmc -f ../filelist_libxine1_xvmc
-%endif
+%files xvmc -f ../filelist_%{name}_xvmc
 %endif
 
 %if %BUILD_W32DLL
 %ifarch i386 i486 i586 i686 i786 i868 i986 k6 k7 athlon
-%files w32dll -f ../filelist_libxine1_w32dll
+%files w32dll -f ../filelist_%{name}_w32dll
 %endif
 %endif
 
 %if %BUILD_DVB
-%files dvb -f ../filelist_libxine1_dvb
+%files dvb -f ../filelist_%{name}_dvb
 %endif
 
 %if %BUILD_DVD
-%files dvd -f ../filelist_libxine1_dvd
+%files dvd -f ../filelist_%{name}_dvd
 %endif
 
 %if %BUILD_GNOME_VFS
-%files gnome-vfs -f ../filelist_libxine1_gnome_vfs
+%files gnome-vfs -f ../filelist_%{name}_gnome_vfs
 %endif
 
 %if %BUILD_FLAC
-%files flac -f ../filelist_libxine1_flac
+%files flac -f ../filelist_%{name}_flac
 %endif
 
 %if %BUILD_OGG
-%files ogg -f ../filelist_libxine1_ogg
+%files ogg -f ../filelist_%{name}_ogg
 %endif
 
 %if %BUILD_JACK
-%files jack -f ../filelist_libxine1_jack
+%files jack -f ../filelist_%{name}_jack
+%endif
+
+%if %BUILD_PULSE
+%files pulse -f ../filelist_%{name}_pulse
 %endif
 
 %changelog
+* Sun Dec 09 2007 Manfred Tremmel <Manfred.Tremmel@iiv.de>
+- stk and arts plugins are no longer build by default, enable
+  them, when subpackages are selected
+- added optional subpackage for pulseaudio
+- switched to external vcdlibs
+- using macros for shell commands, when rpm provides them
+- some other cleanups
+* Sun Oct 15 2006 Manfred Tremmel <Manfred.Tremmel@iiv.de>
+- some little changes to enable caca plugin
 * Sat Aug 26 2006 František Dvořák <valtri@users.sourceforge.net>
 - tiny translation update
 - fixed rpmbuild

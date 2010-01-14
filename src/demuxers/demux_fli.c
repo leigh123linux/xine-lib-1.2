@@ -112,7 +112,7 @@ static int open_fli_file(demux_fli_t *this) {
 
   this->speed = _X_LE_32(&this->fli_header[16]);
   if (this->magic_number == FLI_FILE_MAGIC_1) {
-    /* 
+    /*
      * in this case, the speed (n) is number of 1/70s ticks between frames:
      *
      *  xine pts     n * frame #
@@ -123,7 +123,7 @@ static int open_fli_file(demux_fli_t *this) {
      */
      this->frame_pts_inc = this->speed * 1285.7;
   } else if (this->magic_number == FLI_FILE_MAGIC_2) {
-    /* 
+    /*
      * in this case, the speed (n) is number of milliseconds between frames:
      *
      *  xine pts     n * frame #
@@ -244,7 +244,7 @@ static void demux_fli_send_headers(demux_plugin_t *this_gen) {
                        BUF_FLAG_FRAME_END;
   buf->decoder_info[0] = this->frame_pts_inc;  /* initial video_step */
   buf->size = this->bih.biSize;
-  memcpy(buf->content, &this->bih, sizeof(xine_bmiheader) + this->bih.biSize);
+  memcpy(buf->content, &this->bih, this->bih.biSize);
   buf->type = BUF_VIDEO_FLI;
   this->video_fifo->put (this->video_fifo, buf);
 }
@@ -303,7 +303,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_fli_t    *this;
 
-  this         = xine_xmalloc (sizeof (demux_fli_t));
+  this         = calloc(1, sizeof(demux_fli_t));
   this->stream = stream;
   this->input  = input;
 
@@ -377,7 +377,7 @@ static void class_dispose (demux_class_t *this_gen) {
 static void *init_plugin (xine_t *xine, void *data) {
   demux_fli_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_fli_class_t));
+  this = calloc(1, sizeof(demux_fli_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

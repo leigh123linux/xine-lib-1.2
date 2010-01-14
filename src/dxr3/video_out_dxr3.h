@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2001 the xine project
- * 
+ *
  * This file is part of xine, a unix video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -48,7 +48,7 @@ struct coeff {
 
 typedef struct dxr3_overlay_s {
   xine_t          *xine;
-  
+
   int              fd_control;
 
   int              xoffset;
@@ -70,12 +70,12 @@ typedef struct dxr3_overlay_s {
 typedef struct dxr3_driver_class_s {
   video_driver_class_t  video_driver_class;
   xine_t               *xine;
-  
+
   int                   visual_type;
   int                   instance;           /* we allow only one instance of this plugin */
-  
+
   int                   devnum;
-  
+
   dxr3_scr_t           *scr;                /* to provide dxr3 clocking */
 } dxr3_driver_class_t;
 
@@ -89,11 +89,11 @@ typedef struct dxr3_driver_s {
   pthread_mutex_t      spu_device_lock;
   int                  fd_spu;              /* to access the relevant dxr3 devices */
   int                  clut_cluttered;      /* to tell spu decoder that it has to restore the palette */
-  
+
   int                  enhanced_mode;
   int                  swap_fields;         /* swap fields */
   int                  add_bars;            /* add black bars to correct a.r. */
-  
+
   int                  aspect;
   int                  tv_mode;
   int                  pan_scan;
@@ -105,14 +105,14 @@ typedef struct dxr3_driver_s {
   encoder_data_t      *enc;                 /* mpeg encoder data */
   spu_encoder_t       *spu_enc;             /* spu encoder */
   int                  need_update;         /* the mpeg encoder needs to be updated */
-  
+
   uint32_t             video_iheight;       /* input height (before adding black bars) */
   uint32_t             video_oheight;       /* output height (after adding black bars) */
   uint32_t             video_width;
   double               video_ratio;
   int                  video_aspect;
   int                  top_bar;             /* the height of the upper black bar */
-  
+
   vo_scale_t           scale;
   alphablend_t         alphablend_extra_data;
 
@@ -143,10 +143,10 @@ struct encoder_data_s {
   int            (*on_display_frame)(dxr3_driver_t *, dxr3_frame_t *);
   int            (*on_unneeded)(dxr3_driver_t *);
   int            (*on_close)(dxr3_driver_t *);
-  
+
   /* this is only used by the libavcodec encoder */
   void            *handle;
-}; 
+};
 
 struct spu_encoder_s {
   vo_overlay_t   *overlay;

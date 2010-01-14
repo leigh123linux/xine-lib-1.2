@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -113,7 +113,7 @@ static int ao_irixal_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate, i
   default:
     xlerror ("irixal Driver does not support the requested mode: 0x%x",mode);
     return 0;
-  } 
+  }
 
   if (! (config = alNewConfig ()))
   {
@@ -126,7 +126,7 @@ static int ao_irixal_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate, i
     alFreeConfig (config);
     return 0;
   }
-    
+
   switch (bits) {
     case 8:
       if ( (alSetWidth (config, AL_SAMPLE_8)) == -1)
@@ -211,7 +211,7 @@ static int ao_irixal_get_gap_tolerance (ao_driver_t *this_gen)
   return this->gap_tolerance;
 }
 
-static int ao_irixal_delay (ao_driver_t *this_gen) 
+static int ao_irixal_delay (ao_driver_t *this_gen)
 {
   irixal_driver_t *this = (irixal_driver_t *) this_gen;
   stamp_t stamp, time;
@@ -230,7 +230,7 @@ static int ao_irixal_write(ao_driver_t *this_gen,int16_t *data, uint32_t num_fra
 {
   irixal_driver_t *this = (irixal_driver_t *) this_gen;
   stamp_t stamp;
-  	
+
   /* Grmbf. IRIX audio does not tell us, wenn we run dry.
    * We have to detect this ourself. */
   /* get absolute number of samples played so far
@@ -249,7 +249,7 @@ static int ao_irixal_write(ao_driver_t *this_gen,int16_t *data, uint32_t num_fra
    * alGetFillable() would tell us, whether space was available */
   alWriteFrames (this->port, data, num_frames);
   this->frames_in_buffer += num_frames;
-  
+
   return num_frames;
 }
 
@@ -376,9 +376,9 @@ static void *init_audio_out_plugin (config_values_t *config)
       }
     }
   }
-  
+
   printf ("  capabilities 0x%X\n",this->capabilities);
- 
+
   /* TODO: anything can change during runtime... move check to the right location */
   this->gap_tolerance = config->register_range (config, "audio.device.irixal_gap_tolerance",
 					        DEFAULT_GAP_TOLERANCE, 0, 90000,
@@ -396,7 +396,7 @@ static void *init_audio_out_plugin (config_values_t *config)
   this->ao_driver.num_channels        = ao_irixal_num_channels;
   this->ao_driver.bytes_per_frame     = ao_irixal_bytes_per_frame;
   this->ao_driver.delay               = ao_irixal_delay;
-  this->ao_driver.write	 	      = ao_irixal_write;
+  this->ao_driver.write		      = ao_irixal_write;
   this->ao_driver.close               = ao_irixal_close;
   this->ao_driver.exit                = ao_irixal_exit;
   this->ao_driver.get_gap_tolerance   = ao_irixal_get_gap_tolerance;
@@ -421,7 +421,7 @@ ao_info_t *get_audio_out_plugin_info()
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_AUDIO_OUT, AO_OUT_IRIXAL_IFACE_VERSION, "irixal", XINE_VERSION_CODE, &ao_info_irixal, init_audio_out_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

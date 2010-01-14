@@ -328,7 +328,7 @@ static int open_idcin_file(demux_idcin_t *this) {
   this->input->seek(this->input, IDCIN_HEADER_SIZE, SEEK_SET);
 
   /* read the Huffman table */
-  if (this->input->read(this->input, huffman_table, HUFFMAN_TABLE_SIZE) != 
+  if (this->input->read(this->input, huffman_table, HUFFMAN_TABLE_SIZE) !=
     HUFFMAN_TABLE_SIZE)
     return 0;
 
@@ -347,7 +347,7 @@ static int open_idcin_file(demux_idcin_t *this) {
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITS,
     this->wave.wBitsPerSample);
 
-  this->filesize = this->input->get_length(this->input) - 
+  this->filesize = this->input->get_length(this->input) -
     IDCIN_HEADER_SIZE - HUFFMAN_TABLE_SIZE;
 
   return 1;
@@ -433,7 +433,7 @@ static int demux_idcin_seek (demux_plugin_t *this_gen, off_t start_pos, int star
     this->status = DEMUX_OK;
 
     /* reposition stream past the Huffman tables */
-    this->input->seek(this->input, IDCIN_HEADER_SIZE + HUFFMAN_TABLE_SIZE, 
+    this->input->seek(this->input, IDCIN_HEADER_SIZE + HUFFMAN_TABLE_SIZE,
       SEEK_SET);
 
     this->pts_counter = 0;
@@ -472,7 +472,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_idcin_t  *this;
 
-  this         = xine_xmalloc (sizeof (demux_idcin_t));
+  this         = calloc(1, sizeof(demux_idcin_t));
   this->stream = stream;
   this->input  = input;
 
@@ -547,7 +547,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_idcin_init_plugin (xine_t *xine, void *data) {
   demux_idcin_class_t     *this;
 
-  this         = xine_xmalloc (sizeof (demux_idcin_class_t));
+  this         = calloc(1, sizeof(demux_idcin_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

@@ -19,7 +19,7 @@ Individual frontends (e.g. xine-ui, gxine, totem, ...) may provide
 additional documentation in their packages.
 
 For more information on xine features (supported multimedia formats etc.)
-see the xine homepage, located at http://xinehq.de/
+see the xine homepage, located at http://www.xine-project.org/
 
 The xine-lib XML parser (src/xine-utils/xmlparser.[ch] and
 src/xine-utils/xmllexer.[ch]) is released under the GNU LGPL, see COPYING.LIB

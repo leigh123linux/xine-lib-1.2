@@ -1,30 +1,30 @@
-/* 
+/*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * metronom: general pts => virtual calculation/assoc
- *                   
+ *
  * virtual pts: unit 1/90000 sec, always increasing
  *              can be used for synchronization
  *              video/audio frame with same pts also have same vpts
  *              but pts is likely to differ from vpts
  *
- * the basic idea is: 
+ * the basic idea is:
  *    video_pts + video_wrap_offset = video_vpts
  *    audio_pts + audio_wrap_offset = audio_vpts
  *
@@ -67,8 +67,8 @@ typedef struct scr_plugin_s scr_plugin_t;
 #define PREBUFFER_PTS_OFFSET  12000
 
   /* see below */
-#define DISC_STREAMSTART 0 
-#define DISC_RELATIVE    1     
+#define DISC_STREAMSTART 0
+#define DISC_RELATIVE    1
 #define DISC_ABSOLUTE    2
 #define DISC_STREAMSEEK  3
 
@@ -91,9 +91,9 @@ struct metronom_s {
    *
    * this function will also update video_wrap_offset if a discontinuity
    * is detected (read the comentaries below about discontinuities).
-   * 
+   *
    */
-  
+
   void (*got_video_frame) (metronom_t *self, vo_frame_t *frame);
 
   /*
@@ -109,8 +109,8 @@ struct metronom_s {
    *
    */
 
-  int64_t (*got_audio_samples) (metronom_t *self, int64_t pts, 
-				int nsamples); 
+  int64_t (*got_audio_samples) (metronom_t *self, int64_t pts,
+				int nsamples);
 
   /*
    * called by SPU decoder whenever a packet is delivered to it
@@ -134,7 +134,7 @@ struct metronom_s {
    *
    * DISC_STREAMSTART : new stream starts, expect pts values to start
    *                    from zero immediately
-   * DISC_RELATIVE    : typically a wrap-around, expect pts with 
+   * DISC_RELATIVE    : typically a wrap-around, expect pts with
    *                    a specified offset from the former ones soon
    * DISC_ABSOLUTE    : typically a new menu stream (nav packets)
    *                    pts will start from given value soon
@@ -152,7 +152,7 @@ struct metronom_s {
    */
   void (*set_option) (metronom_t *self, int option, int64_t value);
   int64_t (*get_option) (metronom_t *self, int option);
-  
+
   /*
    * set a master metronom
    * this is currently useful to sync independently generated streams
@@ -160,7 +160,7 @@ struct metronom_s {
    * metronom
    */
   void (*set_master) (metronom_t *self, metronom_t *master);
-  
+
   void (*exit) (metronom_t *self);
 
 #ifdef METRONOM_INTERNAL
@@ -168,7 +168,7 @@ struct metronom_s {
    * metronom internal stuff
    */
   xine_t         *xine;
-  
+
   metronom_t     *master;
 
   int64_t         pts_per_smpls;
@@ -182,7 +182,7 @@ struct metronom_s {
 
   int64_t         video_drift;
   int64_t         video_drift_step;
-  
+
   int             audio_samples;
   int64_t         audio_drift_step;
 
@@ -223,7 +223,7 @@ struct metronom_s {
 #define METRONOM_VPTS_OFFSET      6
 #define METRONOM_PREBUFFER        7
 
-metronom_t *_x_metronom_init (int have_video, int have_audio, xine_t *xine) XINE_PROTECTED;
+metronom_t *_x_metronom_init (int have_video, int have_audio, xine_t *xine) XINE_MALLOC XINE_PROTECTED;
 
 /* FIXME: reorder this structure on the next cleanup to remove the dummies */
 struct metronom_clock_s {
@@ -293,9 +293,9 @@ struct metronom_clock_s {
 
 #ifdef METRONOM_CLOCK_INTERNAL
   void (*exit) (metronom_clock_t *self);
-  
+
   xine_t         *xine;
-  
+
   scr_plugin_t   *scr_master;
   scr_plugin_t  **scr_list;
   pthread_t       sync_thread;
@@ -310,7 +310,7 @@ struct metronom_clock_s {
   int dummy10;
   int dummy11;
 #endif
-  
+
   int speed;
 
 #ifdef METRONOM_CLOCK_INTERNAL
@@ -319,7 +319,7 @@ struct metronom_clock_s {
 #endif
 };
 
-metronom_clock_t *_x_metronom_clock_init(xine_t *xine) XINE_PROTECTED;
+metronom_clock_t *_x_metronom_clock_init(xine_t *xine) XINE_MALLOC XINE_PROTECTED;
 
 /*
  * clock options
@@ -337,8 +337,8 @@ struct scr_plugin_s
 
   int (*get_priority) (scr_plugin_t *self);
 
-  /* 
-   * set/get clock speed 
+  /*
+   * set/get clock speed
    *
    * for speed constants see xine_internal.h
    * returns actual speed

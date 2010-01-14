@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 2000-2003 the xine project
- * 
- * Copyright (C) Christian Vogler 
+ * Copyright (C) 2000-2008 the xine project
+ *
+ * Copyright (C) Christian Vogler
  *               cvogler@gradient.cis.upenn.edu - December 2001
  *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -31,11 +31,7 @@ typedef struct cc_decoder_s cc_decoder_t;
 typedef struct cc_renderer_s cc_renderer_t;
 
 #define NUM_CC_PALETTES 2
-static const char *cc_schemes[NUM_CC_PALETTES + 1] = {
-  "White/Gray/Translucent",
-  "White/Black/Solid",
-  NULL
-};
+extern const char *cc_schemes[];
 
 #define CC_FONT_MAX 256
 
@@ -47,7 +43,7 @@ typedef struct cc_config_s {
   int center;                 /* true if captions should be centered */
                               /* according to text width */
   int cc_scheme;              /* which captioning scheme to use */
-  
+
   int config_version;         /* the decoder should be updated when this is increased */
 } cc_config_t;
 

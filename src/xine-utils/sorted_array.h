@@ -1,25 +1,25 @@
-/* 
+/*
  * Copyright (C) 2000-2006 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * Sorted array which grows automatically when you add elements.
  * A binary search is used to find the position of a new element.
- * 
+ *
  * Example:
  *   Let's create de comparison method for integers:
  *
@@ -63,7 +63,7 @@ typedef struct xine_sarray_s xine_sarray_t;
 typedef int (*xine_sarray_comparator_t)(void*, void*);
 
 /* Constructor */
-xine_sarray_t *xine_sarray_new(size_t initial_size, xine_sarray_comparator_t comparator) XINE_PROTECTED;
+xine_sarray_t *xine_sarray_new(size_t initial_size, xine_sarray_comparator_t comparator) XINE_MALLOC XINE_PROTECTED;
 
 /* Destructor */
 void xine_sarray_delete(xine_sarray_t *sarray) XINE_PROTECTED;

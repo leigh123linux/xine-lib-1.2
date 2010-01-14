@@ -1,28 +1,28 @@
-/* 
+/*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
- 
-/* mpeg1 encoding video out plugin for the dxr3.  
+
+/* mpeg1 encoding video out plugin for the dxr3.
  *
- * modifications to the original dxr3 video out plugin by 
- * Mike Lampard <mike at web2u.com.au>
- * this first standalone version by 
+ * modifications to the original dxr3 video out plugin by
+ * Mike Lampard <mlampard at users.sourceforge.net>
+ * this first standalone version by
  * Harm van der Heijden <hrm at users.sourceforge.net>
  */
 
@@ -90,7 +90,7 @@ static const vo_info_t   vo_info_dxr3_aa = {
 };
 
 const plugin_info_t      xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
 #ifdef HAVE_X11
   { PLUGIN_VIDEO_OUT, 21, "dxr3", XINE_VERSION_CODE, &vo_info_dxr3_x11, &dxr3_x11_init_plugin },
 #endif
@@ -149,7 +149,7 @@ static void        dxr3_update_enhanced_mode(void *this_gen, xine_cfg_entry_t *e
 static void *dxr3_x11_init_plugin(xine_t *xine, void *visual_gen)
 {
   dxr3_driver_class_t *this = dxr3_vo_init_plugin(xine, visual_gen);
-  
+
   if (!this) return NULL;
   this->visual_type = XINE_VISUAL_TYPE_X11;
   return &this->video_driver_class;
@@ -159,7 +159,7 @@ static void *dxr3_x11_init_plugin(xine_t *xine, void *visual_gen)
 static void *dxr3_aa_init_plugin(xine_t *xine, void *visual_gen)
 {
   dxr3_driver_class_t *this = dxr3_vo_init_plugin(xine, visual_gen);
-  
+
   if (!this) return NULL;
   this->visual_type = XINE_VISUAL_TYPE_AA;
   return &this->video_driver_class;
@@ -168,10 +168,10 @@ static void *dxr3_aa_init_plugin(xine_t *xine, void *visual_gen)
 static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, void *visual_gen)
 {
   dxr3_driver_class_t *this;
-  
-  this = (dxr3_driver_class_t *)xine_xmalloc(sizeof(dxr3_driver_class_t));
+
+  this = calloc(1, sizeof(dxr3_driver_class_t));
   if (!this) return NULL;
-  
+
   this->devnum = xine->config->register_num(xine->config,
     CONF_KEY, 0, CONF_NAME, CONF_HELP, 10, NULL, NULL);
 
@@ -179,13 +179,13 @@ static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, void *visual_gen)
   this->video_driver_class.get_identifier  = dxr3_vo_get_identifier;
   this->video_driver_class.get_description = dxr3_vo_get_description;
   this->video_driver_class.dispose         = dxr3_vo_class_dispose;
-  
+
   this->xine                               = xine;
-  
+
   this->instance                           = 0;
-  
+
   this->scr                                = dxr3_scr_init(xine);
-  
+
   return this;
 }
 
@@ -202,7 +202,7 @@ static char *dxr3_vo_get_description(video_driver_class_t *class_gen)
 static void dxr3_vo_class_dispose(video_driver_class_t *class_gen)
 {
   dxr3_driver_class_t *class = (dxr3_driver_class_t *)class_gen;
-  
+
   if(class->scr)
     class->scr->scr_plugin.exit(&class->scr->scr_plugin);
   free(class_gen);
@@ -229,12 +229,12 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
   static const char const *tv_modes[] = { "ntsc", "pal", "pal60" , "default", NULL };
   int list_id, list_size;
   xine_sarray_t *plugin_list;
-  
+
   if (class->instance) return NULL;
-  
-  this = (dxr3_driver_t *)xine_xmalloc(sizeof(dxr3_driver_t));
+
+  this = calloc(1, sizeof(dxr3_driver_t));
   if (!this) return NULL;
-  
+
   this->vo_driver.get_capabilities     = dxr3_get_capabilities;
   this->vo_driver.alloc_frame          = dxr3_alloc_frame;
   this->vo_driver.update_frame_format  = dxr3_update_frame_format;
@@ -248,13 +248,13 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
   this->vo_driver.get_property_min_max = dxr3_get_property_min_max;
   this->vo_driver.gui_data_exchange    = dxr3_gui_data_exchange;
   this->vo_driver.dispose              = dxr3_dispose;
-  
+
   pthread_mutex_init(&this->video_device_lock, NULL);
   pthread_mutex_init(&this->spu_device_lock, NULL);
-  
+
   _x_vo_scale_init(&this->scale, 0, 0, config);
   _x_alphablend_init(&this->alphablend_extra_data, class->xine);
-  
+
   this->class                          = class;
   this->swap_fields                    = config->register_bool(config,
     "dxr3.encoding.swap_fields", 0, _("swap odd and even lines"),
@@ -271,7 +271,7 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
     _("use smooth play mode for mpeg encoder playback"),
     _("Enabling this option will utilise a smoother play mode for non-MPEG content."),
     20, dxr3_update_enhanced_mode, this);
-  
+
   snprintf(tmpstr, sizeof(tmpstr), "/dev/em8300-%d", class->devnum);
   llprintf(LOG_VID, "Entering video init, devname = %s.\n", tmpstr);
   if ((this->fd_control = open(tmpstr, O_WRONLY)) < 0) {
@@ -281,10 +281,10 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
 
     return 0;
   }
-  
+
   snprintf (tmpstr, sizeof(tmpstr), "/dev/em8300_mv-%d", class->devnum);
   if ((this->fd_video = open (tmpstr, O_WRONLY | O_SYNC )) < 0) {
-    xprintf(this->class->xine, XINE_VERBOSITY_LOG, 
+    xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 	    _("video_out_dxr3: Failed to open video device %s (%s)\n"), tmpstr, strerror(errno));
     return 0;
   }
@@ -342,45 +342,45 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
 	"but xine support for them is outdated, so these might fail to work."),
       0, NULL, NULL);
     if ((strcmp(available_encoders[encoder], "libavcodec") == 0) && !dxr3_lavc_init(this, node)) {
-      xprintf(this->class->xine, XINE_VERBOSITY_LOG, 
+      xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 	      _("video_out_dxr3: Mpeg encoder libavcodec failed to init.\n"));
       return 0;
     }
 #ifdef HAVE_LIBRTE
     if ((strcmp(available_encoders[encoder], "rte") == 0) && !dxr3_rte_init(this)) {
-      xprintf(this->class->xine, XINE_VERBOSITY_LOG, 
+      xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 	      _("video_out_dxr3: Mpeg encoder rte failed to init.\n"));
       return 0;
     }
 #endif
 #ifdef HAVE_LIBFAME
     if ((strcmp(available_encoders[encoder], "fame") == 0) && !dxr3_fame_init(this)) {
-      xprintf(this->class->xine, XINE_VERBOSITY_LOG, 
+      xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 	      _("video_out_dxr3: Mpeg encoder fame failed to init.\n"));
       return 0;
     }
 #endif
     if (strcmp(available_encoders[encoder], "none") == 0)
-      xprintf(this->class->xine, XINE_VERBOSITY_LOG, 
+      xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 	      _("video_out_dxr3: Mpeg encoding disabled.\n"
 		"video_out_dxr3: that's ok, you don't need it for mpeg video like DVDs, but\n"
 		"video_out_dxr3: you will not be able to play non-mpeg content using this video out\n"
 		"video_out_dxr3: driver. See the README.dxr3 for details on configuring an encoder.\n"));
   } else
-    xprintf(this->class->xine, XINE_VERBOSITY_LOG, 
+    xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 	    _("video_out_dxr3: No mpeg encoder compiled in.\n"
 	      "video_out_dxr3: that's ok, you don't need it for mpeg video like DVDs, but\n"
 	      "video_out_dxr3: you will not be able to play non-mpeg content using this video out\n"
 	      "video_out_dxr3: driver. See the README.dxr3 for details on configuring an encoder.\n"));
-  
+
   /* init aspect */
   this->aspect = dxr3_set_property(&this->vo_driver, VO_PROP_ASPECT_RATIO, XINE_VO_ASPECT_4_3);
-  
+
   /* init brightness/contrast/saturation */
   dxr3_set_property(&this->vo_driver, VO_PROP_BRIGHTNESS, 500);
   dxr3_set_property(&this->vo_driver, VO_PROP_CONTRAST  , 500);
   dxr3_set_property(&this->vo_driver, VO_PROP_SATURATION, 500);
-  
+
   /* overlay or tvout? */
   confnum = config->register_enum(config, "dxr3.output.mode", 0, videoout_modes,
     _("video output mode (TV or overlay)"),
@@ -446,7 +446,7 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
         _("Removes one pixel line from the top and bottom of the overlay. Enable this, if "
 	"you see green lines at the top or bottom of the overlay."), 10, NULL, NULL);
     } else {
-      xprintf(this->class->xine, XINE_VERBOSITY_LOG, 
+      xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 	      _("video_out_dxr3: please run autocal, overlay disabled\n"));
       this->overlay_enabled = 0;
       this->tv_switchable = 0;
@@ -454,7 +454,7 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
     }
 #endif
   }
-  
+
   /* init tvmode */
   confnum = config->register_enum(config, "dxr3.output.tvmode", 3, tv_modes,
     _("preferred tv mode"), _("Selects the TV mode to be used by the DXR3. The values mean:\n\n"
@@ -478,50 +478,50 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
   }
   if (this->tv_mode != EM8300_VIDEOMODE_DEFAULT)
     if (ioctl(this->fd_control, EM8300_IOCTL_SET_VIDEOMODE, &this->tv_mode))
-      xprintf(this->class->xine, XINE_VERBOSITY_LOG, 
+      xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 	      _("video_out_dxr3: setting video mode failed.\n"));
-  
+
 #ifdef HAVE_X11
   /* initialize overlay */
   if (this->overlay_enabled) {
     em8300_overlay_screen_t scr;
     int value;
     XColor dummy;
-    
+
     this->overlay.fd_control = this->fd_control;
-    
+
     /* allocate keycolor */
     this->key.red   = ((this->overlay.colorkey >> 16) & 0xff) * 256;
     this->key.green = ((this->overlay.colorkey >>  8) & 0xff) * 256;
     this->key.blue  = ((this->overlay.colorkey      ) & 0xff) * 256;
     XAllocColor(this->display, DefaultColormap(this->display, 0), &this->key);
-    
+
     /* allocate black for output area borders */
     XAllocNamedColor(this->display, DefaultColormap(this->display, 0),
       "black", &this->black, &dummy);
-    
+
     /* set the screen */
     scr.xsize = this->overlay.screen_xres;
     scr.ysize = this->overlay.screen_yres;
     if (ioctl(this->fd_control, EM8300_IOCTL_OVERLAY_SETSCREEN, &scr))
-      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	      "video_out_dxr3: setting the overlay screen failed.\n");
-    
+
     if (dxr3_overlay_set_keycolor(&this->overlay) != 0)
-      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	      "video_out_dxr3: setting the overlay key colour failed.\n");
     if (dxr3_overlay_set_attributes(&this->overlay) != 0)
-      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	      "video_out_dxr3: setting an overlay attribute failed.\n");
-      
+
     /* finally switch to overlay mode */
     value = EM8300_OVERLAY_MODE_OVERLAY;
     if (ioctl(this->fd_control, EM8300_IOCTL_OVERLAY_SETMODE, &value) != 0)
-      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	      "video_out_dxr3: switching to overlay mode failed.\n");
   }
 #endif
-  
+
   return &this->vo_driver;
 }
 
@@ -535,9 +535,9 @@ static vo_frame_t *dxr3_alloc_frame(vo_driver_t *this_gen)
 {
   dxr3_frame_t *frame;
   dxr3_driver_t *this = (dxr3_driver_t *)this_gen;
-  
-  frame = (dxr3_frame_t *)xine_xmalloc(sizeof(dxr3_frame_t));
-  
+
+  frame = calloc(1, sizeof(dxr3_frame_t));
+
   pthread_mutex_init(&frame->vo_frame.mutex, NULL);
 
   if (this->enc && this->enc->on_frame_copy) {
@@ -559,7 +559,7 @@ static void dxr3_frame_proc_frame(vo_frame_t *frame_gen)
   /* we reduce the vpts to give the card some extra decoding time */
   if (frame_gen->format != XINE_IMGFMT_DXR3 && !frame_gen->proc_called)
     frame_gen->vpts -= DECODE_PIPE_PREBUFFER;
-  
+
   frame_gen->proc_called = 1;
 }
 
@@ -567,11 +567,11 @@ static void dxr3_frame_proc_slice(vo_frame_t *frame_gen, uint8_t **src)
 {
   dxr3_frame_t *frame = (dxr3_frame_t *)frame_gen;
   dxr3_driver_t *this = (dxr3_driver_t *)frame_gen->driver;
-  
+
   /* we reduce the vpts to give the card some extra decoding time */
   if (frame_gen->format != XINE_IMGFMT_DXR3 && !frame_gen->proc_called)
     frame_gen->vpts -= DECODE_PIPE_PREBUFFER;
-  
+
   frame_gen->proc_called = 1;
 
   if (frame_gen->format != XINE_IMGFMT_DXR3 && this->enc && this->enc->on_frame_copy)
@@ -586,7 +586,7 @@ static void dxr3_frame_field(vo_frame_t *vo_img, int which_field)
 static void dxr3_frame_dispose(vo_frame_t *frame_gen)
 {
   dxr3_frame_t *frame = (dxr3_frame_t *)frame_gen;
-  
+
   if (frame->mem) free(frame->mem);
   pthread_mutex_destroy(&frame_gen->mutex);
   free(frame);
@@ -595,8 +595,8 @@ static void dxr3_frame_dispose(vo_frame_t *frame_gen)
 static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_gen,
   uint32_t width, uint32_t height, double ratio, int format, int flags)
 {
-  dxr3_driver_t *this = (dxr3_driver_t *)this_gen; 
-  dxr3_frame_t *frame = (dxr3_frame_t *)frame_gen; 
+  dxr3_driver_t *this = (dxr3_driver_t *)this_gen;
+  dxr3_frame_t *frame = (dxr3_frame_t *)frame_gen;
   uint32_t oheight;
 
   if (format == XINE_IMGFMT_DXR3) { /* talking to dxr3 decoder */
@@ -605,7 +605,7 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
     pthread_mutex_lock(&this->video_device_lock);
     if (this->fd_video >= 0) {
       metronom_clock_t *clock = this->class->xine->clock;
-      
+
       clock->unregister_scr(clock, &this->class->scr->scr_plugin);
       close(this->fd_video);
       this->fd_video = -1;
@@ -613,10 +613,10 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
       this->need_update = 1;
     }
     pthread_mutex_unlock(&this->video_device_lock);
-    
+
     /* for mpeg source, we don't have to do much. */
     this->video_width   = 0;
-    
+
     frame->vo_frame.width   = width;
     frame->vo_frame.height  = height;
     frame->vo_frame.ratio   = ratio;
@@ -626,23 +626,23 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
     else
       frame->aspect         = XINE_VO_ASPECT_ANAMORPHIC;
     frame->pan_scan         = flags & VO_PAN_SCAN_FLAG;
-    
+
     if (frame->mem) {
       free(frame->mem);
       frame->mem = NULL;
       frame->real_base[0] = frame->real_base[1] = frame->real_base[2] = NULL;
       frame_gen->base[0] = frame_gen->base[1] = frame_gen->base[2] = NULL;
     }
-    
+
     return;
   }
 
   /* the following is for the mpeg encoding part only */
-  
+
   if (!this->add_bars)
     /* don't add black bars; assume source is in 4:3 */
     ratio = 4.0/3.0;
-  
+
   frame->vo_frame.ratio = ratio;
   frame->pan_scan       = 0;
   frame->aspect         = this->video_aspect;
@@ -653,18 +653,18 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
     metronom_clock_t *clock = this->class->xine->clock;
     char tmpstr[128];
     int64_t time;
-    
+
     /* open the device for the encoder */
     snprintf(tmpstr, sizeof(tmpstr), "/dev/em8300_mv-%d", this->class->devnum);
     if ((this->fd_video = open(tmpstr, O_WRONLY)) < 0)
-      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	      "video_out_dxr3: Failed to open video device %s (%s)\n", tmpstr, strerror(errno));
-    
+
     /* start the scr plugin */
     time = clock->get_current_time(clock);
     this->class->scr->scr_plugin.start(&this->class->scr->scr_plugin, time);
     clock->register_scr(clock, &this->class->scr->scr_plugin);
-    
+
     this->scale.force_redraw = 1;
   }
   pthread_mutex_unlock(&this->video_device_lock);
@@ -684,20 +684,20 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
       /* still too high, use full height */
       oheight = height;
     }
-    
+
     /* use next multiple of 16 */
     oheight = ((oheight - 1) | 15) + 1;
 
     /* Tell the viewers about the aspect ratio stuff. */
     if (oheight - height > 0)
-      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	      "video_out_dxr3: adding %d black lines to get %s aspect ratio.\n",
 	      oheight - height, frame->aspect == XINE_VO_ASPECT_4_3 ? "4:3" : "16:9");
 
-    /* make top black bar multiple of 16, 
-     * so old and new macroblocks overlap */ 
+    /* make top black bar multiple of 16,
+     * so old and new macroblocks overlap */
     this->top_bar            = ((oheight - height) / 32) * 16;
-    
+
     this->video_width        = width;
     this->video_iheight      = height;
     this->video_oheight      = oheight;
@@ -708,27 +708,27 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
 
     if (!this->enc) {
       /* no encoder plugin! Let's bug the user! */
-      xprintf(this->class->xine, XINE_VERBOSITY_LOG, 
+      xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 	      _("video_out_dxr3: Need an mpeg encoder to play non-mpeg videos on dxr3\n"
 		"video_out_dxr3: Read the README.dxr3 for details.\n"));
     }
   }
 
   /* if dimensions changed, we need to re-allocate frame memory */
-  if ((frame->vo_frame.width != width) || (frame->vo_frame.height != height) || 
+  if ((frame->vo_frame.width != width) || (frame->vo_frame.height != height) ||
       (frame->oheight != oheight) || (frame->vo_frame.format != format)) {
     if (frame->mem) {
       free (frame->mem);
       frame->mem = NULL;
     }
-    
+
     if (format == XINE_IMGFMT_YUY2) {
       int i, image_size;
-      
+
       /* calculate pitch and size including black bars */
       frame->vo_frame.pitches[0] = 32 * ((width + 15) / 16);
       image_size = frame->vo_frame.pitches[0] * oheight;
-      
+
       /* planar format, only base[0] */
       /* add one extra line for field swap stuff */
       frame->real_base[0] = xine_xmalloc_aligned(16, image_size + frame->vo_frame.pitches[0],
@@ -749,7 +749,7 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
 
     } else { /* XINE_IMGFMT_YV12 */
       int image_size_y, image_size_u, image_size_v;
-      
+
       /* calculate pitches and sizes including black bars */
       frame->vo_frame.pitches[0] = 16*((width + 15) / 16);
       frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
@@ -771,7 +771,7 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
       frame->vo_frame.base[0] = frame->real_base[0] + frame->vo_frame.pitches[0] * this->top_bar;
       frame->vo_frame.base[1] = frame->real_base[1] + frame->vo_frame.pitches[1] * this->top_bar / 2;
       frame->vo_frame.base[2] = frame->real_base[2] + frame->vo_frame.pitches[2] * this->top_bar / 2;
-      
+
       /* fill with black (yuv 16,128,128) */
       memset(frame->real_base[0], 16, image_size_y);
       memset(frame->real_base[1], 128, image_size_u);
@@ -780,12 +780,12 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
   }
 
   if (this->swap_fields != frame->swap_fields) {
-    if (this->swap_fields) 
+    if (this->swap_fields)
       frame->vo_frame.base[0] -= frame->vo_frame.pitches[0];
-    else  
+    else
       frame->vo_frame.base[0] += frame->vo_frame.pitches[0];
   }
- 
+
   frame->vo_frame.width  = width;
   frame->vo_frame.height = height;
   frame->oheight         = oheight;
@@ -795,20 +795,20 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
 static void dxr3_overlay_begin(vo_driver_t *this_gen, vo_frame_t *frame_gen, int changed)
 {
   dxr3_driver_t *this = (dxr3_driver_t *)this_gen;
-  
+
   /* special treatment is only necessary for mpeg frames */
   if (frame_gen->format != XINE_IMGFMT_DXR3) return;
-  
+
   if (!this->spu_enc) this->spu_enc = dxr3_spu_encoder_init();
-  
+
   if (!changed) {
     this->spu_enc->need_reencode = 0;
     return;
   }
-  
+
   this->spu_enc->need_reencode = 1;
   this->spu_enc->overlay = NULL;
-  
+
   this->alphablend_extra_data.offset_x = frame_gen->overlay_offset_x;
   this->alphablend_extra_data.offset_y = frame_gen->overlay_offset_y;
 }
@@ -817,10 +817,10 @@ static void dxr3_overlay_blend(vo_driver_t *this_gen, vo_frame_t *frame_gen,
   vo_overlay_t *overlay)
 {
   dxr3_driver_t *this = (dxr3_driver_t *)this_gen;
-  
+
   if (frame_gen->format != XINE_IMGFMT_DXR3) {
     dxr3_frame_t *frame = (dxr3_frame_t *)frame_gen;
-    
+
     if (overlay->rle) {
       if (frame_gen->format == XINE_IMGFMT_YV12)
         _x_blend_yuv(frame->vo_frame.base, overlay,
@@ -844,26 +844,26 @@ static void dxr3_overlay_end(vo_driver_t *this_gen, vo_frame_t *frame_gen)
   em8300_button_t btn;
   char tmpstr[128];
   ssize_t written;
-  
+
   if (frame_gen->format != XINE_IMGFMT_DXR3) return;
   if (!this->spu_enc->need_reencode) return;
-  
+
   dxr3_spu_encode(this->spu_enc);
 
   pthread_mutex_lock(&this->spu_device_lock);
-  
+
   /* try to open the dxr3 spu device */
   if (!this->fd_spu) {
     snprintf (tmpstr, sizeof(tmpstr), "/dev/em8300_sp-%d", this->class->devnum);
     if ((this->fd_spu = open (tmpstr, O_WRONLY)) < 0) {
-      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	      "video_out_dxr3: Failed to open spu device %s (%s)\n"
 	      "video_out_dxr3: Overlays are not available\n", tmpstr, strerror(errno));
       pthread_mutex_unlock(&this->spu_device_lock);
       return;
     }
   }
-  
+
   if (!this->spu_enc->overlay) {
     uint8_t empty_spu[] = {
       0x00, 0x26, 0x00, 0x08, 0x80, 0x00, 0x00, 0x80,
@@ -877,7 +877,7 @@ static void dxr3_overlay_end(vo_driver_t *this_gen, vo_frame_t *frame_gen)
     pthread_mutex_unlock(&this->spu_device_lock);
     return;
   }
-  
+
   /* copy clip palette */
   this->spu_enc->color[4] = this->spu_enc->hili_color[0];
   this->spu_enc->color[5] = this->spu_enc->hili_color[1];
@@ -885,16 +885,16 @@ static void dxr3_overlay_end(vo_driver_t *this_gen, vo_frame_t *frame_gen)
   this->spu_enc->color[7] = this->spu_enc->hili_color[3];
   /* set palette */
   if (ioctl(this->fd_spu, EM8300_IOCTL_SPU_SETPALETTE, this->spu_enc->color))
-    xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	    "video_out_dxr3: failed to set CLUT (%s)\n", strerror(errno));
   this->clut_cluttered = 1;
   /* write spu */
   written = write(this->fd_spu, this->spu_enc->target, this->spu_enc->size);
   if (written < 0)
-    xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	    "video_out_dxr3: spu device write failed (%s)\n", strerror(errno));
   else if (written != this->spu_enc->size)
-    xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	    "video_out_dxr3: Could only write %zd of %d spu bytes.\n", written, this->spu_enc->size);
   /* set clipping */
   btn.color = 0x7654;
@@ -908,9 +908,9 @@ static void dxr3_overlay_end(vo_driver_t *this_gen, vo_frame_t *frame_gen)
   btn.top    = this->spu_enc->overlay->y + this->spu_enc->overlay->hili_top;
   btn.bottom = this->spu_enc->overlay->y + this->spu_enc->overlay->hili_bottom - 2;
   if (ioctl(this->fd_spu, EM8300_IOCTL_SPU_BUTTON, &btn))
-    xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	    "dxr3_decode_spu: failed to set spu button (%s)\n", strerror(errno));
-  
+
   pthread_mutex_unlock(&this->spu_device_lock);
 }
 
@@ -968,22 +968,22 @@ static void dxr3_display_frame(vo_driver_t *this_gen, vo_frame_t *frame_gen)
     }
   }
 #endif
-  
+
   if (frame_gen->format != XINE_IMGFMT_DXR3 && this->enc && this->enc->on_display_frame) {
-    
+
     pthread_mutex_lock(&this->video_device_lock);
     if (this->fd_video < 0) {
       /* no need to encode, when the device is already reserved for the decoder */
       frame_gen->free(frame_gen);
     } else {
       uint32_t vpts32 = (uint32_t)(frame_gen->vpts + DECODE_PIPE_PREBUFFER);
-      
+
       if (this->need_update) {
 	/* we cannot do this earlier, because vo_frame.duration is only valid here */
 	if (this->enc && this->enc->on_update_format) {
 	  /* set the dxr3 playmode */
 	  if (this->enc->on_update_format(this, frame) && this->enhanced_mode) {
-	    em8300_register_t reg; 
+	    em8300_register_t reg;
 	    reg.microcode_register = 1;
 	    reg.reg = 0;
 	    reg.val = MVCOMMAND_SYNC;
@@ -995,19 +995,19 @@ static void dxr3_display_frame(vo_driver_t *this_gen, vo_frame_t *frame_gen)
 	}
 	this->need_update = 0;
       }
-      
+
       /* inform the card on the timing */
       if (ioctl(this->fd_video, EM8300_IOCTL_VIDEO_SETPTS, &vpts32))
-	xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+	xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 		"video_out_dxr3: set video pts failed (%s)\n", strerror(errno));
-      /* for non-mpeg, the encoder plugin is responsible for calling 
+      /* for non-mpeg, the encoder plugin is responsible for calling
        * frame_gen->free(frame_gen) ! */
       this->enc->on_display_frame(this, frame);
     }
     pthread_mutex_unlock(&this->video_device_lock);
-  
+
   } else {
-    
+
     if (this->need_update) {
       /* we do not need the mpeg encoders any more */
       if (this->enc && this->enc->on_unneeded)
@@ -1015,7 +1015,7 @@ static void dxr3_display_frame(vo_driver_t *this_gen, vo_frame_t *frame_gen)
       this->need_update = 0;
     }
     frame_gen->free(frame_gen);
-  
+
   }
 }
 
@@ -1023,11 +1023,11 @@ static int dxr3_redraw_needed(vo_driver_t *this_gen)
 {
   dxr3_driver_t *this = (dxr3_driver_t *)this_gen;
 
-#ifdef HAVE_X11  
+#ifdef HAVE_X11
   if (this->overlay_enabled)
     dxr3_overlay_update(this);
 #endif
-  
+
   return 0;
 }
 
@@ -1055,7 +1055,7 @@ static int dxr3_get_property(vo_driver_t *this_gen, int property)
   case VO_PROP_WINDOW_HEIGHT:
     return this->scale.gui_height;
   }
-  xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	  "video_out_dxr3: property %d not implemented.\n", property);
   return 0;
 }
@@ -1086,7 +1086,7 @@ static int dxr3_set_property(vo_driver_t *this_gen, int property, int value)
       /* We should send an anamorphic hint to widescreen tvs, so they
        * can switch to 16:9 mode. But the dxr3 cannot do this. */
       break;
-    
+
     switch(value) {
     case XINE_VO_ASPECT_SQUARE:
     case XINE_VO_ASPECT_4_3:
@@ -1102,13 +1102,13 @@ static int dxr3_set_property(vo_driver_t *this_gen, int property, int value)
     }
 
     if (ioctl(this->fd_control, EM8300_IOCTL_SET_ASPECTRATIO, &val))
-      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	      "video_out_dxr3: failed to set aspect ratio (%s)\n", strerror(errno));
-    
+
     this->scale.force_redraw = 1;
     break;
   case VO_PROP_COLORKEY:
-    xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	    "video_out_dxr3: VO_PROP_COLORKEY not implemented!");
     this->overlay.colorkey = value;
     break;
@@ -1143,16 +1143,16 @@ static int dxr3_set_property(vo_driver_t *this_gen, int property, int value)
     }
 #endif
     if (ioctl(this->fd_control, EM8300_IOCTL_SET_VIDEOMODE, &this->tv_mode))
-      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	      "video_out_dxr3: setting video mode failed (%s)\n", strerror(errno));
     break;
   }
 
   if (bcs_changed)
     if (ioctl(this->fd_control, EM8300_IOCTL_SETBCS, &this->bcs))
-      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	      "video_out_dxr3: bcs set failed (%s)\n", strerror(errno));
-    
+
   return value;
 }
 
@@ -1261,7 +1261,7 @@ static void dxr3_dispose(vo_driver_t *this_gen)
   pthread_mutex_destroy(&this->spu_device_lock);
 
   _x_alphablend_free(&this->alphablend_extra_data);
-  
+
   free(this);
 }
 
@@ -1297,7 +1297,7 @@ static void gather_screen_vars(dxr3_driver_t *this, const x11_visual_t *vis)
 
   this->overlay.screen_depth  = DisplayPlanes(this->display, scrn);
   this->scale.frame_output_cb = (void *)vis->frame_output_cb;
-  
+
   llprintf(LOG_OVR, "xres: %d, yres: %d, depth: %d\n",
     this->overlay.screen_xres, this->overlay.screen_yres, this->overlay.screen_depth);
 }
@@ -1309,9 +1309,9 @@ static void gather_screen_vars(dxr3_driver_t *this, const x11_visual_t *vis)
 #define TYPE_FLOAT 4
 
 struct lut_entry {
-    char *name;   
-    int type;     
-    void *ptr;    
+    char *name;
+    int type;
+    void *ptr;
 };
 
 /* dxr3_overlay_read_state helper function */
@@ -1319,7 +1319,7 @@ static int lookup_parameter(struct lut_entry *lut, char *name,
   void **ptr, int *type)
 {
   int i;
-  
+
   for (i = 0; lut[i].name; i++)
     if (strcmp(name, lut[i].name) == 0) {
       *ptr  = lut[i].ptr;
@@ -1334,7 +1334,7 @@ static int lookup_parameter(struct lut_entry *lut, char *name,
 static int dxr3_overlay_read_state(dxr3_overlay_t *this)
 {
   char *loc;
-  char fname[256], tmp[128], line[256];
+  char *fname, line[256];
   FILE *fp;
   struct lut_entry lut[] = {
     {"xoffset",        TYPE_INT,   &this->xoffset},
@@ -1359,18 +1359,16 @@ static int dxr3_overlay_read_state(dxr3_overlay_t *this)
    * (used by .overlay/res file) */
   setlocale(LC_NUMERIC, "C");
 
-  snprintf(tmp, sizeof(tmp), "/res_%dx%dx%d",
+  asprintf(&fname, "%s/.overlay/res_%dx%dx%d", getenv("HOME"),
     this->screen_xres, this->screen_yres, this->screen_depth);
-  strncpy(fname, getenv("HOME"), sizeof(fname) - strlen(tmp) - sizeof("/.overlay"));
-  fname[sizeof(fname) - strlen(tmp) - sizeof("/.overlay")] = '\0';
-  strcat(fname, "/.overlay");
-  strcat(fname, tmp);
   llprintf(LOG_OVR, "attempting to open %s\n", fname);
   if (!(fp = fopen(fname, "r"))) {
-    xprintf(this->xine, XINE_VERBOSITY_LOG, 
+    xprintf(this->xine, XINE_VERBOSITY_LOG,
 	    _("video_out_dxr3: ERROR Reading overlay init file. Run autocal!\n"));
+    free(fname);
     return -1;
   }
+  free(fname);
 
   while (!feof(fp)) {
     if (!fgets(line, 256, fp))
@@ -1404,11 +1402,11 @@ static int dxr3_overlay_read_state(dxr3_overlay_t *this)
       }
     }
   }
-  
+
   fclose(fp);
   /* restore original locale */
   setlocale(LC_NUMERIC, loc);
-  
+
   return 0;
 }
 
@@ -1443,7 +1441,7 @@ static int dxr3_overlay_set_keycolor(dxr3_overlay_t *this)
   attr.attribute = EM9010_ATTRIBUTE_KEYCOLOR_LOWER;
   attr.value     = overlay_limit;
   if ((ret = ioctl(this->fd_control, EM8300_IOCTL_OVERLAY_SET_ATTRIBUTE, &attr)) < 0) {
-    xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG,
 	    "video_out_dxr3: WARNING: error setting overlay lower limit attribute\n");
     return ret;
   }
@@ -1456,7 +1454,7 @@ static int dxr3_overlay_set_keycolor(dxr3_overlay_t *this)
   attr.attribute = EM9010_ATTRIBUTE_KEYCOLOR_UPPER;
   attr.value     = overlay_limit;
   if ((ret = ioctl(this->fd_control, EM8300_IOCTL_OVERLAY_SET_ATTRIBUTE, &attr)) < 0)
-    xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG,
 	    "video_out_dxr3: WARNING: error setting overlay upper limit attribute\n");
   return ret;
 }
@@ -1464,7 +1462,7 @@ static int dxr3_overlay_set_keycolor(dxr3_overlay_t *this)
 static int dxr3_overlay_set_attributes(dxr3_overlay_t *this)
 {
   em8300_attribute_t attr;
-  
+
   attr.attribute = EM9010_ATTRIBUTE_XOFFSET;
   attr.value     = this->xoffset;
   if(ioctl(this->fd_control, EM8300_IOCTL_OVERLAY_SET_ATTRIBUTE, &attr) == -1)
@@ -1491,9 +1489,9 @@ static void dxr3_overlay_update(dxr3_driver_t *this)
 {
   if (_x_vo_scale_redraw_needed(&this->scale)) {
     em8300_overlay_window_t win;
-    
+
     _x_vo_scale_compute_output_size(&this->scale);
-    
+
     /* fill video window with keycolor */
     XLockDisplay(this->display);
     XSetForeground(this->display, this->gc, this->black.pixel);
@@ -1506,24 +1504,24 @@ static void dxr3_overlay_update(dxr3_driver_t *this)
       this->scale.output_width, this->scale.output_height - 2 * this->overlay.shrink);
     XFlush(this->display);
     XUnlockDisplay(this->display);
-    
+
     win.xpos   = this->scale.output_xoffset + this->scale.gui_win_x;
     win.ypos   = this->scale.output_yoffset + this->scale.gui_win_y;
     win.width  = this->scale.output_width;
     win.height = this->scale.output_height;
-    
+
     if (this->pan_scan) {
       win.xpos  -= win.width / 6;
       win.width *= 4;
       win.width /= 3;
     }
-    
+
     /* is some part of the picture visible? */
     if (win.xpos + win.width  < 0) return;
     if (win.ypos + win.height < 0) return;
     if (win.xpos > this->overlay.screen_xres) return;
     if (win.ypos > this->overlay.screen_yres) return;
-  
+
     ioctl(this->fd_control, EM8300_IOCTL_OVERLAY_SETWINDOW, &win);
   }
 }
@@ -1532,20 +1530,20 @@ static void dxr3_overlay_update(dxr3_driver_t *this)
 static void dxr3_zoomTV(dxr3_driver_t *this)
 {
   em8300_register_t frame, visible, update;
-  
+
   /* change left bound */
   frame.microcode_register   = 1;
   frame.reg                  = 93;   // dicom frame left
   frame.val                  = 0x10;
-  
+
   visible.microcode_register = 1;
   visible.reg                = 97;   // dicom visible left
   visible.val                = 0x10;
-  
+
   update.microcode_register  = 1;
   update.reg                 = 65;   // dicom_update
   update.val                 = 1;
-      
+
   ioctl(this->fd_control, EM8300_IOCTL_WRITEREG, &frame);
   ioctl(this->fd_control, EM8300_IOCTL_WRITEREG, &visible);
   ioctl(this->fd_control, EM8300_IOCTL_WRITEREG, &update);
@@ -1554,15 +1552,15 @@ static void dxr3_zoomTV(dxr3_driver_t *this)
   frame.microcode_register   = 1;
   frame.reg                  = 94;   // dicom frame right
   frame.val                  = 0x10;
-  
+
   visible.microcode_register = 1;
   visible.reg                = 98;   // dicom visible right
   visible.val                = 968;
-  
+
   update.microcode_register  = 1;
   update.reg                 = 65;   // dicom_update
   update.val                 = 1;
-      
+
   ioctl(this->fd_control, EM8300_IOCTL_WRITEREG, &frame);
   ioctl(this->fd_control, EM8300_IOCTL_WRITEREG, &visible);
   ioctl(this->fd_control, EM8300_IOCTL_WRITEREG, &update);
@@ -1573,7 +1571,7 @@ static void dxr3_update_add_bars(void *data, xine_cfg_entry_t *entry)
 {
   dxr3_driver_t *this = (dxr3_driver_t *)data;
   this->add_bars = entry->num_value;
-  xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	  "video_out_dxr3: setting add_bars to correct aspect ratio to %s\n", (this->add_bars ? "on" : "off"));
 }
 
@@ -1581,7 +1579,7 @@ static void dxr3_update_swap_fields(void *data, xine_cfg_entry_t *entry)
 {
   dxr3_driver_t *this = (dxr3_driver_t *)data;
   this->swap_fields = entry->num_value;
-  xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	  "video_out_dxr3: setting swap fields to %s\n", (this->swap_fields ? "on" : "off"));
 }
 
@@ -1589,6 +1587,6 @@ static void dxr3_update_enhanced_mode(void *data, xine_cfg_entry_t *entry)
 {
   dxr3_driver_t *this = (dxr3_driver_t *)data;
   this->enhanced_mode = entry->num_value;
-  xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, 
+  xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	  "video_out_dxr3: setting enhanced encoding playback to %s\n", (this->enhanced_mode ? "on" : "off"));
 }

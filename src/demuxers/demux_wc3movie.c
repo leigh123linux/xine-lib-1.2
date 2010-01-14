@@ -102,7 +102,7 @@ typedef struct {
 } demux_mve_class_t;
 
 /* bizarre palette lookup table */
-const unsigned char wc3_pal_lookup[] = {
+static const unsigned char wc3_pal_lookup[] = {
 0x00, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0E, 0x10, 0x12, 0x13, 0x15, 0x16,
 0x18, 0x19, 0x1A,
 0x1C, 0x1D, 0x1F, 0x20, 0x21, 0x23, 0x24, 0x25, 0x27, 0x28, 0x29, 0x2A, 0x2C,
@@ -177,7 +177,7 @@ static int demux_mve_send_chunk(demux_plugin_t *this_gen) {
         }
       }
       this->current_shot++;
-      
+
       /* this is the start of a new shot; send a new palette */
       if (this->input->read(this->input, preamble, 4) != 4) {
         this->status = DEMUX_FINISHED;
@@ -205,7 +205,7 @@ static int demux_mve_send_chunk(demux_plugin_t *this_gen) {
     } else if (chunk_tag == AUDI_TAG) {
       if( this->audio_fifo ) {
         audio_pts = this->video_pts - WC3_PTS_INC;
-  
+
         while (chunk_size) {
           buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
           buf->type = BUF_AUDIO_LPCM_LE;
@@ -213,23 +213,23 @@ static int demux_mve_send_chunk(demux_plugin_t *this_gen) {
             buf->extra_info->input_normpos = (int)( (double) current_file_pos * 65535 / this->data_size);
           buf->extra_info->input_time = audio_pts / 90;
           buf->pts = audio_pts;
-  
+
           if (chunk_size > buf->max_size)
             buf->size = buf->max_size;
           else
             buf->size = chunk_size;
           chunk_size -= buf->size;
-  
+
           if (this->input->read(this->input, buf->content, buf->size) !=
             buf->size) {
             buf->free_buffer(buf);
             this->status = DEMUX_FINISHED;
             break;
           }
-  
+
           if (!chunk_size)
             buf->decoder_flags |= BUF_FLAG_FRAME_END;
-  
+
           this->audio_fifo->put (this->audio_fifo, buf);
         }
       }else{
@@ -293,7 +293,7 @@ static void demux_mve_send_headers(demux_plugin_t *this_gen) {
 
   /* load stream information */
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 1);
-  /* this is not strictly correct-- some WC3 MVE files do not contain 
+  /* this is not strictly correct-- some WC3 MVE files do not contain
    * audio, but I'm too lazy to check if that is the case */
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 1);
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_WIDTH,
@@ -357,9 +357,9 @@ static int open_mve_file(demux_mve_t *this) {
   if (_x_demux_read_header(this->input, header, WC3_HEADER_SIZE) != WC3_HEADER_SIZE)
     return 0;
 
-  if ((_X_BE_32(&header[0]) != FORM_TAG) ||
-      (_X_BE_32(&header[8]) != MOVE_TAG) ||
-      (_X_BE_32(&header[12]) != PC_TAG))
+  if ( !_x_is_fourcc(&header[0], "FORM") ||
+       !_x_is_fourcc(&header[8], "MOVE") ||
+       !_x_is_fourcc(&header[12], "_PC_") )
     return 0;
 
   /* file is qualified */
@@ -376,19 +376,23 @@ static int open_mve_file(demux_mve_t *this) {
   if (this->input->read(this->input, preamble, 4) != 4)
     return 0;
   this->number_of_shots = _X_LE_32(&preamble[0]);
-  
+
   /* allocate space for the shot offset index and set offsets to 0 */
-  this->shot_offsets = xine_xmalloc(this->number_of_shots * sizeof(off_t));
+  this->shot_offsets = calloc(this->number_of_shots, sizeof(off_t));
   this->current_shot = 0;
-  for (i = 0; i < this->number_of_shots; i++)
-    this->shot_offsets[i] = 0;
 
   /* skip the SOND chunk */
   this->input->seek(this->input, 12, SEEK_CUR);
 
   /* load the palette chunks */
-  this->palettes = xine_xmalloc(this->number_of_shots * PALETTE_SIZE *
+  this->palettes = calloc(this->number_of_shots, PALETTE_SIZE *
     sizeof(palette_entry_t));
+
+  if (!this->shot_offsets || !this->palettes) {
+    free (this->shot_offsets);
+    return 0;
+  }
+
   for (i = 0; i < this->number_of_shots; i++) {
     /* make sure there was a valid palette chunk preamble */
     if (this->input->read(this->input, preamble, PREAMBLE_SIZE) !=
@@ -398,8 +402,8 @@ static int open_mve_file(demux_mve_t *this) {
       return 0;
     }
 
-    if ((_X_BE_32(&preamble[0]) != PALT_TAG) || 
-        (_X_BE_32(&preamble[4]) != PALETTE_CHUNK_SIZE)) {
+    if ( !_x_is_fourcc(&preamble[0], "PALT") ||
+	 (_X_BE_32(&preamble[4]) != PALETTE_CHUNK_SIZE)) {
       xine_log(this->stream->xine, XINE_LOG_MSG,
 	       _("demux_wc3movie: There was a problem while loading palette chunks\n"));
       free (this->palettes);
@@ -460,8 +464,9 @@ static int open_mve_file(demux_mve_t *this) {
 
       case BNAM_TAG:
         /* load the name into the stream attributes */
-        title = realloc (title, chunk_size);
-        if (this->input->read(this->input, title, chunk_size) != chunk_size) {
+        free (title);
+        title = malloc (chunk_size);
+        if (!title || this->input->read(this->input, title, chunk_size) != chunk_size) {
           free (title);
           free (this->palettes);
           free (this->shot_offsets);
@@ -535,13 +540,13 @@ static int demux_mve_seek (demux_plugin_t *this_gen,
   start_time /= 1000;
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->data_size );
-  
+
   this->status = DEMUX_OK;
   _x_demux_flush_engine(this->stream);
   this->seek_flag = 1;
 
   /* if input is non-seekable, do not proceed with the rest of this
-   * seek function */  
+   * seek function */
   if (!INPUT_IS_SEEKABLE(this->input))
     return this->status;
 
@@ -561,7 +566,7 @@ static int demux_mve_seek (demux_plugin_t *this_gen,
       chunk_size = (_X_BE_32(&preamble[4]) + 1) & (~1);
 
       if (chunk_tag == SHOT_TAG) {
-        this->shot_offsets[0] = 
+        this->shot_offsets[0] =
           this->input->get_current_pos(this->input) - PREAMBLE_SIZE;
         /* skip the four SHOT data bytes (palette index) */
         this->input->seek(this->input, 4, SEEK_CUR);
@@ -576,7 +581,7 @@ static int demux_mve_seek (demux_plugin_t *this_gen,
   start_pos += this->data_start;
   for (i = 0; i < this->number_of_shots - 1; i++) {
 
-    /* if the next shot offset has not been recorded, traverse through the 
+    /* if the next shot offset has not been recorded, traverse through the
      * file until it is found */
     if (this->shot_offsets[i + 1] == 0) {
       off_t current_pos;
@@ -602,7 +607,7 @@ static int demux_mve_seek (demux_plugin_t *this_gen,
         chunk_size = (_X_BE_32(&preamble[4]) + 1) & (~1);
 
         if (chunk_tag == SHOT_TAG) {
-          this->shot_offsets[i + 1] = 
+          this->shot_offsets[i + 1] =
             this->input->get_current_pos(this->input) - PREAMBLE_SIZE;
           /* skip the four SHOT data bytes (palette index) */
           this->input->seek(this->input, 4, SEEK_CUR);
@@ -615,7 +620,7 @@ static int demux_mve_seek (demux_plugin_t *this_gen,
 
     /* check if the seek-to offset falls in between this shot offset and
      * the next one */
-    if ((start_pos >= this->shot_offsets[i]) && 
+    if ((start_pos >= this->shot_offsets[i]) &&
         (start_pos <  this->shot_offsets[i + 1])) {
 
       new_shot = i;
@@ -667,7 +672,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_mve_t    *this;
 
-  this         = xine_xmalloc (sizeof (demux_mve_t));
+  this         = calloc(1, sizeof(demux_mve_t));
   this->stream = stream;
   this->input  = input;
 
@@ -741,7 +746,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_wc3movie_init_plugin (xine_t *xine, void *data) {
   demux_mve_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_mve_class_t));
+  this = calloc(1, sizeof(demux_mve_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

@@ -17,7 +17,7 @@ libdmo_filter_la_SOURCES = \
 	dmo.c \
 	dmo_guids.c \
 	DMO_VideoDecoder.c
- 
+
 noinst_HEADERS = \
 	DMO_AudioDecoder.h \
 	dmo_guids.h \

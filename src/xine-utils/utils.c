@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2005 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -236,7 +236,25 @@ static const lang_locale_t lang_locales[] = {
   { NULL,       NULL,          NULL,          NULL       }
 };
 
-
+/**
+ * @brief Allocate and clean memory size_t 'size', then return the
+ *        pointer to the allocated memory.
+ * @param size Size of the memory area to allocate.
+ *
+ * @return A pointer to the allocated memory area, or NULL in case of
+ *         error.
+ *
+ * The behaviour of this function differs from standard malloc() as
+ * xine_xmalloc(0) will not return a NULL pointer, but rather a
+ * pointer to a memory area of size 1 byte.
+ *
+ * The NULL value is only ever returned in case of an error in
+ * malloc(), and is reported to stderr stream.
+ *
+ * @deprecated This function has been deprecated, as the behaviour of
+ *             allocating a 1 byte memory area on zero size is almost
+ *             never desired, and the function is thus mostly misused.
+ */
 void *xine_xmalloc(size_t size) {
   void *ptr;
 
@@ -256,12 +274,12 @@ void *xine_xmalloc(size_t size) {
 void *xine_xmalloc_aligned(size_t alignment, size_t size, void **base) {
 
   char *ptr;
-  
-  *base = ptr = xine_xmalloc (size+alignment);
-  
+
+  *base = ptr = calloc(1, size+alignment);
+
   while ((size_t) ptr % alignment)
     ptr++;
-    
+
   return ptr;
 }
 
@@ -324,21 +342,17 @@ const char *xine_get_homedir(void) {
   char *s;
   int len;
 
-  if (!homedir[0]) {
-    len = xine_strcpy_command(GetCommandLine(), homedir, sizeof(homedir));
-    s = strdup(homedir);
-    GetFullPathName(s, sizeof(homedir), homedir, NULL);
-    free(s);
-    if ((s = strrchr(homedir, '\\'))) *s = '\0';
-  }
+  len = xine_strcpy_command(GetCommandLine(), homedir, sizeof(homedir));
+  s = strdup(homedir);
+  GetFullPathName(s, sizeof(homedir), homedir, NULL);
+  free(s);
+  if ((s = strrchr(homedir, '\\')))
+    *s = '\0';
 
   return homedir;
 #else
   struct passwd pwd, *pw = NULL;
   static char homedir[BUFSIZ] = {0,};
-
-  if(homedir[0])
-    return homedir;
 
 #ifdef HAVE_GETPWUID_R
   if(getpwuid_r(getuid(), &pwd, homedir, sizeof(homedir), &pw) != 0 || pw == NULL) {
@@ -373,6 +387,17 @@ static void xine_get_rootdir(char *rootdir, size_t maxlen) {
   strncpy(rootdir, xine_get_homedir(), maxlen - 1);
   rootdir[maxlen - 1] = '\0';
   if ((s = strrchr(rootdir, XINE_DIRECTORY_SEPARATOR_CHAR))) *s = '\0';
+}
+
+const char *xine_get_pluginroot(void) {
+  static char pluginroot[1024] = {0, };
+
+  if (!pluginroot[0]) {
+    xine_get_rootdir(pluginroot, sizeof(pluginroot) - strlen(XINE_REL_PLUGINROOT) - 1);
+    strcat(pluginroot, XINE_DIRECTORY_SEPARATOR_STRING XINE_REL_PLUGINROOT);
+  }
+
+  return pluginroot;
 }
 
 const char *xine_get_plugindir(void) {
@@ -431,23 +456,22 @@ char *xine_chomp(char *str) {
  * a thread-safe usecond sleep
  */
 void xine_usec_sleep(unsigned usec) {
-#if 0
-#if HAVE_NANOSLEEP
+#ifdef WIN32
+  /* select does not work on win32 */
+  Sleep(usec / 1000);
+#else
+#  if 0
+#    if HAVE_NANOSLEEP
   /* nanosleep is prefered on solaris, because it's mt-safe */
   struct timespec ts, remaining;
-
   ts.tv_sec =   usec / 1000000;
   ts.tv_nsec = (usec % 1000000) * 1000;
   while (nanosleep (&ts, &remaining) == -1 && errno == EINTR)
     ts = remaining;
-#else
-#  if WIN32
-  Sleep(usec / 1000);
-#  else
+#    else
   usleep(usec);
-#  endif
-#endif
-#else
+#    endif
+#  else
   if (usec < 10000) {
       usec = 10000;
   }
@@ -455,6 +479,7 @@ void xine_usec_sleep(unsigned usec) {
   tm.tv_sec  = usec / 1000000;
   tm.tv_usec = usec % 1000000;
   select(0, 0, 0, 0, &tm);
+#  endif
 #endif
 }
 
@@ -497,7 +522,7 @@ void xine_hexdump (const char *buf, int length) {
 
 static const lang_locale_t *_get_first_lang_locale(const char *lcal) {
   const lang_locale_t *llocale;
-  int lang_len;
+  size_t lang_len;
   char *mod;
 
   if(lcal && *lcal) {
@@ -507,13 +532,13 @@ static const lang_locale_t *_get_first_lang_locale(const char *lcal) {
       lang_len = mod++ - lcal;
     else
       lang_len = strlen(lcal);
-    
+
     while(llocale->language) {
       if(!strncmp(lcal, llocale->language, lang_len)) {
         if ((!mod && !llocale->modifier) || (mod && llocale->modifier && !strcmp(mod, llocale->modifier)))
 	  return llocale;
       }
-      
+
       llocale++;
     }
   }
@@ -523,7 +548,7 @@ static const lang_locale_t *_get_first_lang_locale(const char *lcal) {
 
 static char *_get_lang(void) {
     char *lang;
-    
+
     if(!(lang = getenv("LC_ALL")))
       if(!(lang = getenv("LC_MESSAGES")))
         lang = getenv("LANG");
@@ -537,9 +562,9 @@ static char *_get_lang(void) {
  */
 char *xine_get_system_encoding(void) {
   char *codeset = NULL;
-  
+
 #ifdef HAVE_NL_LANGINFO
-  setlocale(LC_ALL, "");
+  setlocale(LC_CTYPE, "");
   codeset = nl_langinfo(CODESET);
 #endif
   /*
@@ -621,15 +646,15 @@ int xine_monotonic_clock(struct timeval *tv, struct timezone *tz)
 #if _POSIX_TIMERS > 0 && defined(_POSIX_MONOTONIC_CLOCK) && defined(HAVE_POSIX_TIMERS)
   static int initialized = 0;
   static int use_clock_monotonic = 0;
-     
+
   struct timespec tp;
-  
-  if( !initialized ) { 
+
+  if( !initialized ) {
     struct timespec res;
     int ret;
-  
+
     ret = clock_getres(CLOCK_MONOTONIC, &res);
-    
+
     if( ret != 0 ) {
       lprintf("get resolution of monotonic clock failed\n");
     } else {
@@ -648,8 +673,8 @@ int xine_monotonic_clock(struct timeval *tv, struct timezone *tz)
       }
     }
     initialized = 1;
-  }  
-  
+  }
+
   if(use_clock_monotonic && !clock_gettime(CLOCK_MONOTONIC, &tp)) {
     tv->tv_sec = tp.tv_sec;
     tv->tv_usec = tp.tv_nsec / 1000;
@@ -659,8 +684,16 @@ int xine_monotonic_clock(struct timeval *tv, struct timezone *tz)
   }
 
 #else
-  
+
   return gettimeofday(tv, tz);
 
 #endif
+}
+
+char *xine_strcat_realloc (char **dest, char *append)
+{
+  char *newstr = realloc (*dest, (*dest ? strlen (*dest) : 0) + strlen (append) + 1);
+  if (newstr)
+    strcat (*dest = newstr, append);
+  return newstr;
 }

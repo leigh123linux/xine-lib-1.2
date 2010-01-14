@@ -1,26 +1,30 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
- 
+
 /*
  * simple video mosaico plugin
  */
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
 #define LOG_MODULE "mosaico"
 #define LOG_VERBOSE
@@ -40,7 +44,7 @@ static void *mosaico_init_plugin(xine_t *xine, void *);
 static const post_info_t mosaico_special_info = { XINE_POST_TYPE_VIDEO_COMPOSE };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_POST, 9, "mosaico", XINE_VERSION_CODE, &mosaico_special_info, &mosaico_init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
@@ -80,9 +84,9 @@ struct mosaico_pip_s {
 };
 
 struct post_mosaico_s {
-  post_plugin_t    post;  
+  post_plugin_t    post;
   xine_post_in_t   parameter_input;
-  
+
   mosaico_pip_t   *pip;
   int64_t          vpts_limit;
   pthread_cond_t   vpts_limit_changed;
@@ -122,11 +126,11 @@ static int            mosaico_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 static void *mosaico_init_plugin(xine_t *xine, void *data)
 {
-  post_class_mosaico_t *this = (post_class_mosaico_t *)xine_xmalloc(sizeof(post_class_mosaico_t));
+  post_class_mosaico_t *this = calloc(1, sizeof(post_class_mosaico_t));
 
   if (!this)
     return NULL;
-  
+
   this->class.open_plugin     = mosaico_open_plugin;
   this->class.get_identifier  = mosaico_get_identifier;
   this->class.get_description = mosaico_get_description;
@@ -140,30 +144,30 @@ static post_plugin_t *mosaico_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target)
 {
-  post_mosaico_t       *this = (post_mosaico_t *)xine_xmalloc(sizeof(post_mosaico_t));
+  post_mosaico_t       *this = calloc(1, sizeof(post_mosaico_t));
   post_in_t            *input;
   xine_post_in_t       *input_api;
   post_out_t           *output;
   post_video_port_t    *port;
-  static xine_post_api_t post_api = 
+  static xine_post_api_t post_api =
     { mosaico_set_parameters, mosaico_get_parameters, mosaico_get_param_descr, mosaico_get_help };
   int i;
-    
+
   lprintf("mosaico open\n");
 
   if (inputs < 2 || !this || !video_target || !video_target[0]) {
     free(this);
     return NULL;
   }
-  
+
   _x_post_init(&this->post, 0, inputs);
 
-  this->pip       = (mosaico_pip_t *)xine_xmalloc(sizeof(mosaico_pip_t) * (inputs - 1));
+  this->pip       = (mosaico_pip_t *)calloc((inputs - 1), sizeof(mosaico_pip_t));
   this->pip_count = inputs - 1;
 
   pthread_cond_init(&this->vpts_limit_changed, NULL);
   pthread_mutex_init(&this->mutex, NULL);
-  
+
   /* the port for the background video */
   port = _x_post_intercept_video_port(&this->post, video_target[0], &input, &output);
   port->intercept_frame = mosaico_intercept_frame;
@@ -178,9 +182,8 @@ static post_plugin_t *mosaico_open_plugin(post_class_t *class_gen, int inputs,
     this->pip[i].y = 50;
     this->pip[i].w = 150;
     this->pip[i].h = 150;
-    this->pip[i].input_name = (char *)xine_xmalloc(sizeof("video in ") + 10);
-    snprintf(this->pip[i].input_name, sizeof("video in ") + 10, "video in %d", i+1);
-    
+    asprintf(&(this->pip[i].input_name), "video in %d", i+1);
+
     port = _x_post_intercept_video_port(&this->post, video_target[0], &input, NULL);
     port->new_port.close  = mosaico_close;
     port->intercept_frame = mosaico_intercept_frame;
@@ -221,7 +224,7 @@ static void mosaico_class_dispose(post_class_t *class_gen)
 static void mosaico_dispose(post_plugin_t *this_gen)
 {
   post_mosaico_t *this = (post_mosaico_t *)this_gen;
-  
+
   if (_x_post_dispose(this_gen)) {
     int i;
     for (i = 0; i < this->pip_count; i++)
@@ -243,7 +246,7 @@ static int mosaico_set_parameters(xine_post_t *this_gen, void *param_gen)
 {
   post_mosaico_t *this = (post_mosaico_t *)this_gen;
   mosaico_parameters_t *param = (mosaico_parameters_t *)param_gen;
-  
+
   if (param->pip_num > this->pip_count) return 0;
   this->pip[param->pip_num - 1].x = param->x;
   this->pip[param->pip_num - 1].y = param->y;
@@ -256,7 +259,7 @@ static int mosaico_get_parameters(xine_post_t *this_gen, void *param_gen)
 {
   post_mosaico_t *this = (post_mosaico_t *)this_gen;
   mosaico_parameters_t *param = (mosaico_parameters_t *)param_gen;
-  
+
   if (param->pip_num > this->pip_count || param->pip_num < 1)
     param->pip_num = 1;
   param->x = this->pip[param->pip_num - 1].x;
@@ -288,7 +291,7 @@ static void mosaico_close(xine_video_port_t *port_gen, xine_stream_t *stream)
 
   for (pip_num = 0; pip_num < this->pip_count; pip_num++)
     if (this->post.xine_post.video_input[pip_num+1] == port_gen) break;
-  
+
   pthread_mutex_lock(&this->mutex);
   free_frame = this->pip[pip_num].frame;
   this->pip[pip_num].frame = NULL;
@@ -317,11 +320,11 @@ static void frame_copy_content(vo_frame_t *to, vo_frame_t *from)
   case XINE_IMGFMT_YUY2:
     /* TODO: implement conversion to YV12 or implement support to paste
      * frames of different types together */
-    break;     
-  
+    break;
+
   case XINE_IMGFMT_YV12:
     /* Y */
-    size = to->pitches[0] * to->height;   
+    size = to->pitches[0] * to->height;
     xine_fast_memcpy(to->base[0], from->base[0], size);
 
     /* U */
@@ -346,7 +349,7 @@ static void frame_paste(post_mosaico_t *this, vo_frame_t *background, int pip_nu
   unsigned long i, j;
 
   if (!this->pip[pip_num].frame) return;
-  
+
   target_width  = this->pip[pip_num].w;
   target_height = this->pip[pip_num].h;
   background_width = background->width;
@@ -361,8 +364,8 @@ static void frame_paste(post_mosaico_t *this, vo_frame_t *background, int pip_nu
   switch (this->pip[pip_num].frame->format) {
   case XINE_IMGFMT_YUY2:
     /* TODO: implement YUY2 */
-    break;     
-  
+    break;
+
   case XINE_IMGFMT_YV12:
     /* Y */
     target_offset = 0;
@@ -379,7 +382,7 @@ static void frame_paste(post_mosaico_t *this, vo_frame_t *background, int pip_nu
     pos = pos_y * background_width + pos_x;
     target_width = (target_width + 1) / 2;
     target_height = (target_height + 1) / 2;
-    
+
     /* U */
     target_offset = 0;
     for (j = 0; j < target_height; j++, target_offset += (background_width - target_width))
@@ -387,7 +390,7 @@ static void frame_paste(post_mosaico_t *this, vo_frame_t *background, int pip_nu
 	source_offset = ((i * scale_x) >> shift_x) + (((j * scale_y) >> shift_y) * source_width);
 	background->base[1][pos + target_offset] = this->pip[pip_num].frame->base[1][source_offset];
       }
-    
+
     /* V */
     target_offset = 0;
     for (j = 0; j < target_height; j++, target_offset += (background_width - target_width))
@@ -395,7 +398,7 @@ static void frame_paste(post_mosaico_t *this, vo_frame_t *background, int pip_nu
 	source_offset = ((i * scale_x) >> shift_x) + (((j * scale_y) >> shift_y) * source_width);
 	background->base[2][pos + target_offset] = this->pip[pip_num].frame->base[2][source_offset];
       }
-    
+
     break;
   }
 }
@@ -408,47 +411,47 @@ static int mosaico_draw_background(vo_frame_t *frame, xine_stream_t *stream)
   int pip_num, skip;
 
   pthread_mutex_lock(&this->mutex);
-  
+
   if (frame->bad_frame) {
     _x_post_frame_copy_down(frame, frame->next);
     skip = frame->next->draw(frame->next, stream);
     _x_post_frame_copy_up(frame, frame->next);
-    
+
     this->vpts_limit = frame->vpts + frame->duration;
     if (skip) {
       this->skip      = skip;
       this->skip_vpts = frame->vpts;
     } else
       this->skip      = 0;
-    
+
     pthread_mutex_unlock(&this->mutex);
     pthread_cond_broadcast(&this->vpts_limit_changed);
-    
+
     return skip;
   }
-  
+
   background = port->original_port->get_frame(port->original_port,
     frame->width, frame->height, frame->ratio, frame->format, frame->flags | VO_BOTH_FIELDS);
   _x_post_frame_copy_down(frame, background);
   frame_copy_content(background, frame);
-  
+
   for (pip_num = 0; pip_num < this->pip_count; pip_num++)
     frame_paste(this, background, pip_num);
-  
+
   skip = background->draw(background, stream);
   _x_post_frame_copy_up(frame, background);
   this->vpts_limit = background->vpts + background->duration;
   background->free(background);
-  
+
   if (skip) {
     this->skip      = skip;
     this->skip_vpts = frame->vpts;
   } else
     this->skip      = 0;
-  
+
   pthread_mutex_unlock(&this->mutex);
   pthread_cond_broadcast(&this->vpts_limit_changed);
-  
+
   return skip;
 }
 
@@ -462,11 +465,11 @@ static int mosaico_draw(vo_frame_t *frame, xine_stream_t *stream)
   for (pip_num = 0; pip_num < this->pip_count; pip_num++)
     if (this->post.xine_post.video_input[pip_num+1] == frame->port) break;
   _x_assert(pip_num < this->pip_count);
-  
+
   frame->lock(frame);
-  
+
   pthread_mutex_lock(&this->mutex);
-  
+
   /* the original output will never see this frame again */
   _x_post_frame_u_turn(frame, stream);
   while (frame->vpts > this->vpts_limit || !this->vpts_limit)
@@ -475,12 +478,12 @@ static int mosaico_draw(vo_frame_t *frame, xine_stream_t *stream)
   free_frame = this->pip[pip_num].frame;
   if (port->stream)
     this->pip[pip_num].frame = frame;
-  
+
   if (this->skip && frame->vpts <= this->skip_vpts)
     skip = this->skip;
   else
     skip = 0;
-  
+
   pthread_mutex_unlock(&this->mutex);
 
   if (free_frame)
@@ -489,6 +492,6 @@ static int mosaico_draw(vo_frame_t *frame, xine_stream_t *stream)
     /* do not keep this frame when no stream is connected to us,
      * otherwise, this frame might never get freed */
     frame->free(frame);
-  
+
   return skip;
 }

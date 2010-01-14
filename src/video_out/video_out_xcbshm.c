@@ -1,13 +1,13 @@
 /*
  * Copyright (C) 2000-2003, 2007 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -23,7 +23,7 @@
  * Aaron Holtzman <aholtzma@ess.engr.uvic.ca>
  *
  * xine-specific code by Guenter Bartsch <bartscgr@studbox.uni-stuttgart.de>
- * 
+ *
  * ported to xcb by Christoph Pfister - Feb 2007
  */
 
@@ -71,7 +71,7 @@ typedef struct {
   int                flags;
 
   vo_scale_t         sc;
-    
+
   uint8_t           *image;
   int                bytes_per_line;
   xcb_shm_seg_t      shmseg;
@@ -96,7 +96,7 @@ typedef struct {
   int                bpp;
   int                scanline_pad;
   int                use_shm;
-  
+
   int                yuv2rgb_brightness;
   int                yuv2rgb_contrast;
   int                yuv2rgb_saturation;
@@ -104,7 +104,7 @@ typedef struct {
   yuv2rgb_factory_t *yuv2rgb_factory;
 
   vo_scale_t         sc;
-  
+
   xshm_frame_t      *cur_frame;
   xcbosd            *xoverlay;
   int                ovl_changed;
@@ -126,7 +126,7 @@ typedef struct {
 
 
 /*
- * allocate an XImage, try XShm first but fall back to 
+ * allocate an XImage, try XShm first but fall back to
  * plain X11 if XShm should fail
  */
 static void create_ximage(xshm_driver_t *this, xshm_frame_t *frame, int width, int height)
@@ -151,9 +151,9 @@ static void create_ximage(xshm_driver_t *this, xshm_frame_t *frame, int width, i
 		"video_out_xcbshm: => not using MIT Shared Memory extension.\n"), strerror(errno));
       goto shm_fail1;
     }
-  
+
     frame->image = shmat(shmid, 0, 0);
-  
+
     if (frame->image == ((void *) -1)) {
       xprintf(this->xine, XINE_VERBOSITY_LOG,
 	      _("video_out_xcbshm: shared memory error (address error) when allocating image \n"
@@ -173,10 +173,10 @@ static void create_ximage(xshm_driver_t *this, xshm_frame_t *frame, int width, i
       goto shm_fail3;
     }
 
-    /* 
+    /*
      * Now that the Xserver has learned about and attached to the
      * shared memory segment,  delete it.  It's actually deleted by
-     * the kernel when all users of that segment have detached from 
+     * the kernel when all users of that segment have detached from
      * it.  Gives an automatic shared memory cleanup in case we crash.
      */
 
@@ -229,10 +229,10 @@ static uint32_t xshm_get_capabilities (vo_driver_t *this_gen) {
 static void xshm_frame_proc_slice (vo_frame_t *vo_img, uint8_t **src) {
   xshm_frame_t  *frame = (xshm_frame_t *) vo_img ;
   /*xshm_driver_t *this = (xshm_driver_t *) vo_img->driver; */
-  
-  vo_img->proc_called = 1;                                    
-  
-  if( frame->vo_frame.crop_left || frame->vo_frame.crop_top || 
+
+  vo_img->proc_called = 1;
+
+  if( frame->vo_frame.crop_left || frame->vo_frame.crop_top ||
       frame->vo_frame.crop_right || frame->vo_frame.crop_bottom )
   {
     /* we don't support crop, so don't even waste cpu cycles.
@@ -240,7 +240,7 @@ static void xshm_frame_proc_slice (vo_frame_t *vo_img, uint8_t **src) {
      */
     return;
   }
-  
+
   lprintf ("copy... (format %d)\n", frame->format);
 
   if (frame->format == XINE_IMGFMT_YV12)
@@ -249,7 +249,7 @@ static void xshm_frame_proc_slice (vo_frame_t *vo_img, uint8_t **src) {
   else
     frame->yuv2rgb->yuy22rgb_fun (frame->yuv2rgb, frame->rgb_dst,
 				  src[0]);
-  
+
   lprintf ("copy...done\n");
 }
 
@@ -295,7 +295,7 @@ static vo_frame_t *xshm_alloc_frame (vo_driver_t *this_gen) {
   xshm_frame_t  *frame;
   xshm_driver_t *this = (xshm_driver_t *) this_gen;
 
-  frame = (xshm_frame_t *) xine_xmalloc (sizeof (xshm_frame_t));
+  frame = (xshm_frame_t *) calloc(1, sizeof(xshm_frame_t));
   if (!frame)
     return NULL;
 
@@ -306,10 +306,10 @@ static vo_frame_t *xshm_alloc_frame (vo_driver_t *this_gen) {
   /*
    * supply required functions/fields
    */
-  
+
   frame->vo_frame.proc_slice = xshm_frame_proc_slice;
   frame->vo_frame.proc_frame = NULL;
-  frame->vo_frame.field      = xshm_frame_field; 
+  frame->vo_frame.field      = xshm_frame_field;
   frame->vo_frame.dispose    = xshm_frame_dispose;
   frame->vo_frame.driver     = this_gen;
 
@@ -369,7 +369,7 @@ static void xshm_update_frame_format (vo_driver_t *this_gen,
                           frame->sc.video_pixel_aspect,
                           &gui_width, &gui_height,
                           &gui_pixel_aspect);
-                          
+
   /* find out if we need to adapt this frame */
   do_adapt = 0;
 
@@ -394,7 +394,7 @@ static void xshm_update_frame_format (vo_driver_t *this_gen,
     frame->sc.user_ratio         = this->sc.user_ratio;
 
     xshm_compute_ideal_size (this, frame);
-  
+
     /* now we have updated video_aspect_pixel we use the callback   */
     /* again to obtain the correct gui_width and gui_height values. */
     frame->sc.dest_size_cb (frame->sc.user_data, width, height,
@@ -402,20 +402,20 @@ static void xshm_update_frame_format (vo_driver_t *this_gen,
                             &gui_width, &gui_height,
                             &gui_pixel_aspect);
   }
-  
+
   if ((frame->sc.gui_width != gui_width) ||
       (frame->sc.gui_height != gui_height) ||
       do_adapt) {
-    
+
     do_adapt = 1;
     frame->sc.gui_width  = gui_width;
     frame->sc.gui_height = gui_height;
-    
+
     xshm_compute_rgb_size (this, frame);
-    
+
     lprintf ("gui_size has changed => adapt\n");
   }
-  
+
 
   /* ok, now do what we have to do */
 
@@ -469,7 +469,7 @@ static void xshm_update_frame_format (vo_driver_t *this_gen,
     lprintf ("stripe out_ht=%i, deliv_ht=%i\n",
 	    frame->sc.output_height, frame->sc.delivered_height);
 
-    /* 
+    /*
      * set up colorspace converter
      */
 
@@ -525,7 +525,7 @@ static void xshm_overlay_clut_yuv2rgb(xshm_driver_t  *this, vo_overlay_t *overla
   }
 }
 
-static void xshm_overlay_begin (vo_driver_t *this_gen, 
+static void xshm_overlay_begin (vo_driver_t *this_gen,
 			      vo_frame_t *frame_gen, int changed) {
   xshm_driver_t  *this  = (xshm_driver_t *) this_gen;
 
@@ -536,7 +536,7 @@ static void xshm_overlay_begin (vo_driver_t *this_gen,
     xcbosd_clear(this->xoverlay);
     pthread_mutex_unlock(&this->main_mutex);
   }
-  
+
   this->alphablend_extra_data.offset_x = frame_gen->overlay_offset_x;
   this->alphablend_extra_data.offset_y = frame_gen->overlay_offset_y;
 }
@@ -553,7 +553,7 @@ static void xshm_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img) {
   this->ovl_changed = 0;
 }
 
-static void xshm_overlay_blend (vo_driver_t *this_gen, 
+static void xshm_overlay_blend (vo_driver_t *this_gen,
 				vo_frame_t *frame_gen, vo_overlay_t *overlay) {
   xshm_driver_t  *this  = (xshm_driver_t *) this_gen;
   xshm_frame_t   *frame = (xshm_frame_t *) frame_gen;
@@ -569,7 +569,7 @@ static void xshm_overlay_blend (vo_driver_t *this_gen,
     } else {
       if (!overlay->rgb_clut || !overlay->hili_rgb_clut)
         xshm_overlay_clut_yuv2rgb (this, overlay, frame);
- 
+
       switch (this->bpp) {
         case 16:
          _x_blend_rgb16(frame->image, overlay,
@@ -590,7 +590,7 @@ static void xshm_overlay_blend (vo_driver_t *this_gen,
                       &this->alphablend_extra_data);
          break;
         default:
-	  xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
+	  xprintf(this->xine, XINE_VERBOSITY_DEBUG,
 		  "xine-lib:video_out_xcbshm:xshm_overlay_blend: Cannot blend bpp:%i\n", this->bpp);
 	/* it should never get here, unless a user tries to play in bpp:8 */
 	break;
@@ -603,11 +603,11 @@ static void clean_output_area (xshm_driver_t *this, xshm_frame_t *frame) {
   int i;
   xcb_rectangle_t rects[4];
   int rects_count = 0;
-  
+
   memcpy( this->sc.border, frame->sc.border, sizeof(this->sc.border) );
-  
+
   pthread_mutex_lock(&this->main_mutex);
-  
+
   for( i = 0; i < 4; i++ ) {
     if( this->sc.border[i].w && this->sc.border[i].h )
       rects[rects_count].x = this->sc.border[i].x;
@@ -624,7 +624,7 @@ static void clean_output_area (xshm_driver_t *this, xshm_frame_t *frame) {
     xcbosd_resize(this->xoverlay, this->sc.gui_width, this->sc.gui_height);
     this->ovl_changed = 1;
   }
-  
+
   pthread_mutex_unlock(&this->main_mutex);
 }
 
@@ -636,15 +636,15 @@ static int xshm_redraw_needed (vo_driver_t *this_gen) {
     this->sc.delivered_height   = this->cur_frame->sc.delivered_height;
     this->sc.delivered_width    = this->cur_frame->sc.delivered_width;
     this->sc.video_pixel_aspect = this->cur_frame->sc.video_pixel_aspect;
-    if( _x_vo_scale_redraw_needed( &this->sc ) ) {  
+    if( _x_vo_scale_redraw_needed( &this->sc ) ) {
 
       clean_output_area (this, this->cur_frame);
       ret = 1;
     }
-  } 
+  }
   else
     ret = 1;
-      
+
   return ret;
 }
 
@@ -657,22 +657,22 @@ static void xshm_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 	   frame->vo_frame.id,
 	   frame->sc.output_width, frame->sc.output_height);
 
-  /* 
+  /*
    * tell gui that we are about to display a frame,
    * ask for offset
    */
-    
+
   this->sc.delivered_height   = frame->sc.delivered_height;
   this->sc.delivered_width    = frame->sc.delivered_width;
   this->sc.video_pixel_aspect = frame->sc.video_pixel_aspect;
-  if( _x_vo_scale_redraw_needed( &this->sc ) ) {  
+  if( _x_vo_scale_redraw_needed( &this->sc ) ) {
 
     clean_output_area (this, frame);
   }
-    
+
   if (this->cur_frame) {
 
-    if ( (this->cur_frame->sc.output_width != frame->sc.output_width) 
+    if ( (this->cur_frame->sc.output_width != frame->sc.output_width)
          || (this->cur_frame->sc.output_height != frame->sc.output_height)
          || (this->cur_frame->sc.output_xoffset != frame->sc.output_xoffset)
          || (this->cur_frame->sc.output_yoffset != frame->sc.output_yoffset) )
@@ -682,10 +682,10 @@ static void xshm_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   }
 
   this->cur_frame = frame;
-    
+
   pthread_mutex_lock(&this->main_mutex);
   lprintf ("display locked...\n");
-  
+
   if (frame->shmseg) {
 
     lprintf ("put image (shm)\n");
@@ -736,14 +736,14 @@ static int xshm_get_property (vo_driver_t *this_gen, int property) {
   case VO_PROP_OUTPUT_YOFFSET:
     return this->cur_frame->sc.output_yoffset;
   default:
-    xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG,
 	    "video_out_xcbshm: tried to get unsupported property %d\n", property);
   }
 
   return 0;
 }
 
-static int xshm_set_property (vo_driver_t *this_gen, 
+static int xshm_set_property (vo_driver_t *this_gen,
 			      int property, int value) {
   xshm_driver_t *this = (xshm_driver_t *) this_gen;
 
@@ -752,7 +752,7 @@ static int xshm_set_property (vo_driver_t *this_gen,
     if (value>=XINE_VO_ASPECT_NUM_RATIOS)
       value = XINE_VO_ASPECT_AUTO;
     this->sc.user_ratio = value;
-    xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG,
 	    "video_out_xcbshm: aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name(value));
 
   } else if (property == VO_PROP_BRIGHTNESS) {
@@ -786,7 +786,7 @@ static int xshm_set_property (vo_driver_t *this_gen,
     this->sc.force_redraw = 1;
 
   } else {
-    xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 	     "video_out_xcbshm: tried to set unsupported property %d\n", property);
   }
 
@@ -812,7 +812,7 @@ static void xshm_get_property_min_max (vo_driver_t *this_gen,
   }
 }
 
-static int xshm_gui_data_exchange (vo_driver_t *this_gen, 
+static int xshm_gui_data_exchange (vo_driver_t *this_gen,
 				   int data_type, void *data) {
   xshm_driver_t   *this = (xshm_driver_t *) this_gen;
 
@@ -823,17 +823,17 @@ static int xshm_gui_data_exchange (vo_driver_t *this_gen,
 #endif
 
   case XINE_GUI_SEND_EXPOSE_EVENT:
-    
+
     lprintf ("expose event\n");
 
     if (this->cur_frame) {
       xcb_expose_event_t *xev = (xcb_expose_event_t *) data;
-      
+
       if (xev && xev->count == 0) {
 	int i;
 	xcb_rectangle_t rects[4];
 	int rects_count = 0;
-	
+
 	pthread_mutex_lock(&this->main_mutex);
 	if (this->cur_frame->shmseg)
 	  xcb_shm_put_image(this->connection, this->window, this->gc, this->cur_frame->sc.output_width,
@@ -868,7 +868,7 @@ static int xshm_gui_data_exchange (vo_driver_t *this_gen,
       }
     }
   break;
-  
+
   case XINE_GUI_SEND_DRAWABLE_CHANGED:
     this->window = (xcb_window_t) data;
 
@@ -887,7 +887,7 @@ static int xshm_gui_data_exchange (vo_driver_t *this_gen,
     if (this->cur_frame) {
       x11_rectangle_t *rect = data;
       int              x1, y1, x2, y2;
-      
+
       _x_vo_scale_translate_gui2video(&this->cur_frame->sc,
 			       rect->x, rect->y,
 			       &x1, &y1);
@@ -910,16 +910,16 @@ static int xshm_gui_data_exchange (vo_driver_t *this_gen,
 
 static void xshm_dispose (vo_driver_t *this_gen) {
   xshm_driver_t *this = (xshm_driver_t *) this_gen;
-  
+
   if (this->cur_frame)
     this->cur_frame->vo_frame.dispose (&this->cur_frame->vo_frame);
 
   this->yuv2rgb_factory->dispose (this->yuv2rgb_factory);
-  
+
   pthread_mutex_lock(&this->main_mutex);
   xcb_free_gc(this->connection, this->gc);
   pthread_mutex_unlock(&this->main_mutex);
-  
+
   if( this->xoverlay ) {
     pthread_mutex_lock(&this->main_mutex);
     xcbosd_destroy(this->xoverlay);
@@ -929,7 +929,7 @@ static void xshm_dispose (vo_driver_t *this_gen) {
   pthread_mutex_destroy(&this->main_mutex);
 
   _x_alphablend_free(&this->alphablend_extra_data);
-  
+
   free (this);
 }
 
@@ -1014,8 +1014,8 @@ static vo_driver_t *xshm_open_plugin(video_driver_class_t *class_gen, const void
   xcb_get_geometry_reply_t *geometry_reply;
 
   const xcb_query_extension_reply_t *query_extension_reply;
-  
-  this = (xshm_driver_t *) xine_xmalloc (sizeof (xshm_driver_t));
+
+  this = (xshm_driver_t *) calloc(1, sizeof(xshm_driver_t));
 
   if (!this)
     return NULL;
@@ -1023,7 +1023,7 @@ static vo_driver_t *xshm_open_plugin(video_driver_class_t *class_gen, const void
   pthread_mutex_init(&this->main_mutex, NULL);
 
   _x_alphablend_init(&this->alphablend_extra_data, class->xine);
-  
+
   this->connection          = visual->connection;
   this->screen              = visual->screen;
   this->window              = visual->window;
@@ -1032,15 +1032,15 @@ static vo_driver_t *xshm_open_plugin(video_driver_class_t *class_gen, const void
   this->sc.frame_output_cb  = visual->frame_output_cb;
   this->sc.dest_size_cb     = visual->dest_size_cb;
   this->sc.user_data        = visual->user_data;
-  
+
   this->sc.user_ratio       = XINE_VO_ASPECT_AUTO;
-  
+
   this->cur_frame           = NULL;
   this->gc                  = xcb_generate_id(this->connection);
   xcb_create_gc(this->connection, this->gc, this->window, XCB_GC_FOREGROUND, &this->screen->black_pixel);
   this->xoverlay            = NULL;
   this->ovl_changed         = 0;
- 
+
   this->xine                = class->xine;
 
   this->vo_driver.get_capabilities     = xshm_get_capabilities;
@@ -1108,7 +1108,7 @@ static vo_driver_t *xshm_open_plugin(video_driver_class_t *class_gen, const void
   query_extension_reply = xcb_get_extension_data(this->connection, &xcb_shm_id);
   if (query_extension_reply && query_extension_reply->present) {
     this->use_shm = 1;
-  } 
+  }
   else {
     xprintf(this->xine, XINE_VERBOSITY_LOG,
 	    _("video_out_xcbshm: MIT shared memory extension not present on display.\n"));
@@ -1147,7 +1147,7 @@ static vo_driver_t *xshm_open_plugin(video_driver_class_t *class_gen, const void
    */
   cpu_byte_order = htonl(1) == 1 ? XCB_IMAGE_ORDER_MSB_FIRST : XCB_IMAGE_ORDER_LSB_FIRST;
   swapped = cpu_byte_order != image_byte_order;
-  
+
   xprintf(this->xine, XINE_VERBOSITY_DEBUG,
 	  "video_out_xcbshm: video mode depth is %d (%d bpp), %s, %sswapped,\n"
 	  "\tred: %08x, green: %08x, blue: %08x\n",
@@ -1209,16 +1209,16 @@ static vo_driver_t *xshm_open_plugin(video_driver_class_t *class_gen, const void
   }
 
   if (!mode) {
-    xprintf (this->xine, XINE_VERBOSITY_LOG, 
+    xprintf (this->xine, XINE_VERBOSITY_LOG,
 	     _("video_out_xcbshm: your video mode was not recognized, sorry :-(\n"));
     return NULL;
   }
-  
+
   this->yuv2rgb_brightness = 0;
   this->yuv2rgb_contrast   = 128;
   this->yuv2rgb_saturation = 128;
-  
-  this->yuv2rgb_factory = yuv2rgb_factory_init (mode, swapped, 
+
+  this->yuv2rgb_factory = yuv2rgb_factory_init (mode, swapped,
 						this->yuv2rgb_cmap);
   this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					 this->yuv2rgb_brightness,
@@ -1250,7 +1250,7 @@ static void xshm_dispose_class (video_driver_class_t *this_gen) {
 }
 
 static void *xshm_init_class (xine_t *xine, void *visual_gen) {
-  xshm_class_t	       *this = (xshm_class_t *) xine_xmalloc (sizeof (xshm_class_t));
+  xshm_class_t	       *this = (xshm_class_t *) calloc(1, sizeof(xshm_class_t));
 
   this->driver_class.open_plugin     = xshm_open_plugin;
   this->driver_class.get_identifier  = xshm_get_identifier;
@@ -1274,7 +1274,7 @@ static const vo_info_t vo_info_xshm = {
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_VIDEO_OUT, 21, "xshm", XINE_VERSION_CODE, &vo_info_xshm, xshm_init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

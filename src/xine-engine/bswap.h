@@ -23,7 +23,7 @@
 
 #include "config.h"
 
-#define always_inline inline 
+#define always_inline inline
 
 #include "ffmpeg_bswap.h"
 
@@ -98,7 +98,7 @@
         ( (uint32_t)(unsigned char)(ch1) << 8 ) |   \
         ( (uint32_t)(unsigned char)(ch2) << 16 ) |  \
         ( (uint32_t)(unsigned char)(ch3) << 24 ) )
-        
+
 #ifdef WORDS_BIGENDIAN
 #define ME_FOURCC BE_FOURCC
 #else

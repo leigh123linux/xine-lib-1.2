@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -42,7 +42,7 @@
 #define AUDIO_NUM_FRAGMENTS     15
 #define AUDIO_FRAGMENT_SIZE   8192
 
-#define GAP_TOLERANCE        AO_MAX_GAP 
+#define GAP_TOLERANCE        AO_MAX_GAP
 
 typedef struct arts_driver_s {
 
@@ -84,7 +84,7 @@ typedef struct {
 static void ao_arts_volume(void *buffer, int length, int volume) {
   int v;
   short *data = (short *)buffer;
-  
+
   while (length--) {
     v=(int) ((*(data) * volume) / 100);
     *(data)=(v>32767) ? 32767 : ((v<-32768) ? -32768 : v);
@@ -118,7 +118,7 @@ static int ao_arts_open(ao_driver_t *this_gen,
     sleep(2); /* arts might segfault if we are still playing */
     arts_close_stream(this->audio_stream);
   }
-  
+
   this->mode                   = mode;
   this->sample_rate            = rate;
   this->bits_per_sample        = bits;
@@ -139,7 +139,7 @@ static int ao_arts_open(ao_driver_t *this_gen,
   this->audio_stream=arts_play_stream(this->sample_rate, bits, this->num_channels, "xine");
 
   this->latency = arts_stream_get (this->audio_stream, ARTS_P_TOTAL_LATENCY);
-  
+
   /* try to keep latency low, if we don't do this we might end
      with very high latencies for low quality sound and audio_out will
      try to fill gaps every time...(values in ms) */
@@ -181,7 +181,7 @@ static int ao_arts_write(ao_driver_t *this_gen, int16_t *data,
   arts_driver_t *this = (arts_driver_t *) this_gen;
   int size = num_frames * this->bytes_per_frame;
 
-  ao_arts_volume(data, num_frames * this->num_channels, this->mixer.vol_scale ); 
+  ao_arts_volume(data, num_frames * this->num_channels, this->mixer.vol_scale );
   arts_write(this->audio_stream, data, size );
 
   return 1;
@@ -220,7 +220,7 @@ static uint32_t ao_arts_get_capabilities (ao_driver_t *this_gen) {
 static void ao_arts_exit(ao_driver_t *this_gen)
 {
   arts_driver_t *this = (arts_driver_t *) this_gen;
-  
+
   ao_arts_close(this_gen);
   /* FIXME: arts_free() freezes on BSD, so don't use it there */
 #if !defined(__OpenBSD__) && !defined (__FreeBSD__) && !defined(__NetBSD__)
@@ -233,7 +233,7 @@ static void ao_arts_exit(ao_driver_t *this_gen)
 static int ao_arts_get_property (ao_driver_t *this_gen, int property) {
 
   arts_driver_t *this = (arts_driver_t *) this_gen;
-  
+
   switch(property) {
   case AO_PROP_PCM_VOL:
   case AO_PROP_MIXER_VOL:
@@ -269,7 +269,7 @@ static int ao_arts_set_property (ao_driver_t *this_gen, int property, int value)
     } else {
         this->mixer.volume = this->mixer.v_mixer;
         this->mixer.vol_scale = this->mixer.volume;
-    }   
+    }
 	this->mixer.mute = mute;
 	return value;
 	break;
@@ -303,7 +303,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 
   lprintf ("audio_arts_out: open_plugin called\n");
 
-  this = (arts_driver_t *) xine_xmalloc (sizeof (arts_driver_t));
+  this = calloc(1, sizeof (arts_driver_t));
   if (!this)
     return NULL;
 
@@ -323,7 +323,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
     free(this);
     return NULL;
   }
-  
+
   /*
    * set volume control
    */
@@ -384,7 +384,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   lprintf ("audio_arts_out: init class\n");
 
-  this = (arts_class_t *) xine_xmalloc (sizeof (arts_class_t));
+  this = calloc(1, sizeof (arts_class_t));
   if (!this)
     return NULL;
 
@@ -409,7 +409,7 @@ static ao_info_t ao_info_arts = {
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_AUDIO_OUT, AO_OUT_ARTS_IFACE_VERSION, "arts", XINE_VERSION_CODE, &ao_info_arts, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

@@ -19,7 +19,7 @@
  */
 
 /*
- * Sierra Video and Music Data (.vmd) File Demuxer 
+ * Sierra Video and Music Data (.vmd) File Demuxer
  *   by Mike Melanson (melanson@pcisys.net)
  * For more information on the VMD file format, visit:
  *   http://www.pcisys.net/~melanson/codecs/
@@ -109,7 +109,7 @@ static int open_vmd_file(demux_vmd_t *this) {
   unsigned int total_frames;
   int64_t current_video_pts = 0;
 
-  if (_x_demux_read_header(this->input, vmd_header, VMD_HEADER_SIZE) != 
+  if (_x_demux_read_header(this->input, vmd_header, VMD_HEADER_SIZE) !=
     VMD_HEADER_SIZE)
     return 0;
 
@@ -168,7 +168,7 @@ static int open_vmd_file(demux_vmd_t *this) {
     return 0;
   }
 
-  this->frame_table = xine_xmalloc(this->frame_count * sizeof(vmd_frame_t));
+  this->frame_table = calloc(this->frame_count, sizeof(vmd_frame_t));
 
   current_offset = this->data_start = _X_LE_32(&vmd_header[20]);
   this->data_size = toc_offset - this->data_start;
@@ -234,7 +234,7 @@ static int demux_vmd_send_chunk(demux_plugin_t *this_gen) {
     buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
     buf->type = BUF_VIDEO_VMD;
     if( this->data_size )
-      buf->extra_info->input_normpos = (int)( (double) (frame->frame_offset - this->data_start) * 
+      buf->extra_info->input_normpos = (int)( (double) (frame->frame_offset - this->data_start) *
                                               65535 / this->data_size);
     memcpy(buf->content, frame->frame_record, BYTES_PER_FRAME_RECORD);
     buf->size = BYTES_PER_FRAME_RECORD;
@@ -246,7 +246,7 @@ static int demux_vmd_send_chunk(demux_plugin_t *this_gen) {
       buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
       buf->type = BUF_VIDEO_VMD;
       if( this->data_size )
-        buf->extra_info->input_normpos = (int)( (double) (frame->frame_offset - this->data_start) * 
+        buf->extra_info->input_normpos = (int)( (double) (frame->frame_offset - this->data_start) *
                                               65535 / this->data_size);
 
       if (remaining_bytes > buf->max_size)
@@ -277,7 +277,7 @@ static int demux_vmd_send_chunk(demux_plugin_t *this_gen) {
     buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
     buf->type = BUF_AUDIO_VMD;
     if( this->data_size )
-      buf->extra_info->input_normpos = (int)( (double) (frame->frame_offset - this->data_start) * 
+      buf->extra_info->input_normpos = (int)( (double) (frame->frame_offset - this->data_start) *
                                               65535 / this->data_size);
     memcpy(buf->content, frame->frame_record, BYTES_PER_FRAME_RECORD);
     buf->size = BYTES_PER_FRAME_RECORD;
@@ -289,7 +289,7 @@ static int demux_vmd_send_chunk(demux_plugin_t *this_gen) {
       buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
       buf->type = BUF_AUDIO_VMD;
       if( this->data_size )
-        buf->extra_info->input_normpos = (int)( (double) (frame->frame_offset - this->data_start) * 
+        buf->extra_info->input_normpos = (int)( (double) (frame->frame_offset - this->data_start) *
                                               65535 / this->data_size);
 
       if (remaining_bytes > buf->max_size)
@@ -421,7 +421,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_vmd_t    *this;
 
-  this         = xine_xmalloc (sizeof (demux_vmd_t));
+  this         = calloc(1, sizeof(demux_vmd_t));
   this->stream = stream;
   this->input  = input;
 
@@ -495,7 +495,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_vmd_init_plugin (xine_t *xine, void *data) {
   demux_vmd_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_vmd_class_t));
+  this = calloc(1, sizeof(demux_vmd_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

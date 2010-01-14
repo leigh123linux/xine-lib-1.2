@@ -1,3 +1,4 @@
+include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
 AM_CFLAGS = $(VISIBILITY_FLAG)
@@ -8,7 +9,7 @@ ogg_module = xineplug_dmx_ogg.la
 endif
 
 if BUILD_ASF
-asf_module = xineplug_dmx_asf.la 
+asf_module = xineplug_dmx_asf.la
 endif
 
 if BUILD_NOSEFART
@@ -48,7 +49,7 @@ xineplug_LTLIBRARIES = $(ogg_module) $(asf_module) $(mng_module) $(image_module)
 	xineplug_dmx_nsv.la \
 	xineplug_dmx_matroska.la \
 	xineplug_dmx_iff.la \
-	xineplug_dmx_flv.la 
+	xineplug_dmx_flv.la
 
 xineplug_dmx_ogg_la_SOURCES = demux_ogg.c
 xineplug_dmx_ogg_la_LIBADD = $(XINE_LIB) $(VORBIS_LIBS) $(SPEEX_LIBS) $(THEORA_LIBS) $(OGG_LIBS) $(LTLIBINTL)
@@ -61,7 +62,7 @@ xineplug_dmx_mpeg_block_la_SOURCES = demux_mpeg_block.c
 xineplug_dmx_mpeg_block_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineplug_dmx_mpeg_la_SOURCES = demux_mpeg.c
-xineplug_dmx_mpeg_la_LIBADD = $(XINE_LIB)
+xineplug_dmx_mpeg_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineplug_dmx_mpeg_elem_la_SOURCES = demux_elem.c
 xineplug_dmx_mpeg_elem_la_LIBADD = $(XINE_LIB)
@@ -70,10 +71,10 @@ xineplug_dmx_mpeg_pes_la_SOURCES = demux_mpeg_pes.c
 xineplug_dmx_mpeg_pes_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineplug_dmx_mpeg_ts_la_SOURCES = demux_ts.c
-xineplug_dmx_mpeg_ts_la_LIBADD = $(XINE_LIB)
+xineplug_dmx_mpeg_ts_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineplug_dmx_qt_la_SOURCES = demux_qt.c
-xineplug_dmx_qt_la_LIBADD = $(XINE_LIB) $(ZLIB_LIBS)
+xineplug_dmx_qt_la_LIBADD = $(XINE_LIB) $(ZLIB_LIBS) $(LTLIBINTL)
 xineplug_dmx_qt_la_CPPFLAGS = $(ZLIB_CPPFLAGS)
 
 xineplug_dmx_asf_la_SOURCES = demux_asf.c asfheader.c
@@ -129,8 +130,8 @@ xineplug_dmx_image_la_LIBADD = $(XINE_LIB)
 xineplug_dmx_nsv_la_SOURCES = demux_nsv.c
 xineplug_dmx_nsv_la_LIBADD = $(XINE_LIB)
 
-xineplug_dmx_matroska_la_SOURCES = demux_matroska.c ebml.c
-xineplug_dmx_matroska_la_LIBADD = $(XINE_LIB) $(ZLIB_LIBS)
+xineplug_dmx_matroska_la_SOURCES = demux_matroska.c demux_matroska-chapters.c ebml.c
+xineplug_dmx_matroska_la_LIBADD = $(XINE_LIB) $(ZLIB_LIBS) $(LTLIBINTL)
 xineplug_dmx_matroska_la_CPPFLAGS = $(ZLIB_CPPFLAGS)
 xineplug_dmx_matroska_la_CFLAGS = $(AM_CFLAGS) -fno-strict-aliasing
 
@@ -141,4 +142,4 @@ xineplug_dmx_flv_la_SOURCES = demux_flv.c
 xineplug_dmx_flv_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineinclude_HEADERS = demux.h
-noinst_HEADERS = asfheader.h qtpalette.h group_games.h group_audio.h id3.h ebml.h matroska.h iff.h flacutils.h
+noinst_HEADERS = asfheader.h qtpalette.h group_games.h group_audio.h id3.h ebml.h matroska.h demux_matroska.h iff.h flacutils.h real_common.h

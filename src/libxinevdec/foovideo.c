@@ -24,6 +24,10 @@
  * frame when the frames are played in succession.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,7 +67,7 @@ typedef struct foovideo_decoder_s {
 
   /* these are variables exclusive to the foo video decoder */
   unsigned char     current_yuv_byte;
-  
+
 } foovideo_decoder_t;
 
 /**************************************************************************
@@ -94,7 +98,7 @@ static void foovideo_decode_data (video_decoder_t *this_gen,
     this->video_step = buf->decoder_info[0];
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->video_step);
   }
-  
+
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) { /* need to initialize */
     (this->stream->video_out->open) (this->stream->video_out, this->stream);
 
@@ -206,7 +210,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
   foovideo_decoder_t  *this ;
 
-  this = (foovideo_decoder_t *) xine_xmalloc (sizeof (foovideo_decoder_t));
+  this = (foovideo_decoder_t *) calloc(1, sizeof(foovideo_decoder_t));
 
   this->video_decoder.decode_data         = foovideo_decode_data;
   this->video_decoder.flush               = foovideo_flush;
@@ -256,7 +260,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   foovideo_class_t *this;
 
-  this = (foovideo_class_t *) xine_xmalloc (sizeof (foovideo_class_t));
+  this = (foovideo_class_t *) calloc(1, sizeof(foovideo_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;
@@ -272,7 +276,7 @@ static void *init_plugin (xine_t *xine, void *data) {
  * list of valid buffer types (and add a new one if the one you need does
  * not exist). Terminate the list with a 0.
  */
-static const uint32_t video_types[] = { 
+static const uint32_t video_types[] = {
   /* BUF_VIDEO_FOOVIDEO, */
   BUF_VIDEO_VQA,
   BUF_VIDEO_SORENSON_V3,

@@ -1,11 +1,11 @@
 <chapter id="stream">
  <title>xine's stream layer</title>
- 
+
  <sect1>
   <title>Input layer</title>
   <para>
    Many media players expect streams to be stored within files on
-   some local medium. In actual fact, media may be streamed over a 
+   some local medium. In actual fact, media may be streamed over a
    network (e.g. via HTTP or RTP), encoded onto a specialized medium
    (e.g. DVD), etc. To allow you to access all this media, xine supports
    the concept of an "input plugin". The tasks performed by an
@@ -156,7 +156,7 @@
    <para>
     xine's demuxer layer is responsible for taking apart multimedia files or
     streams so that the engine can decode them and present them to the user.
-    "Demuxer" is short for demultiplexor, which is the opposite of 
+    "Demuxer" is short for demultiplexor, which is the opposite of
     multiplexing. This refers to the process of combining 2 or more things
     into one. Multimedia streams usually, at a minimum, multiplex an audio
     stream and a video stream together into one stream. Sometimes, there are
@@ -329,7 +329,7 @@
     <programlisting>&nbsp;&nbsp;&nbsp;void demux_send_headers(demux_plugin_t *this_gen);</programlisting>
     This function generally reads the headers of the stream, does whatever it
     has to do to figure out what audio and video codecs are used in the file,
-    and asks the xine engine to initialize the correct decoders with the 
+    and asks the xine engine to initialize the correct decoders with the
     proper parameters (like width and height for video, sample rate and
     channels for audio).
    </para>
@@ -392,9 +392,9 @@
    <programlisting>
 &nbsp;&nbsp;&nbsp;buf_element_t *buf;
 &nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;buf = stream->video_fifo->buffer_pool_alloc(stream->video_fifo);
-&nbsp;&nbsp;&nbsp;buf->type = BUF_CONTROL_START;
-&nbsp;&nbsp;&nbsp;stream->video_fifo->put(stream->video_fifo, buf);</programlisting>
+&nbsp;&nbsp;&nbsp;buf = stream-&gt;video_fifo-&gt;buffer_pool_alloc(stream-&gt;video_fifo);
+&nbsp;&nbsp;&nbsp;buf-&gt;type = BUF_CONTROL_START;
+&nbsp;&nbsp;&nbsp;stream-&gt;video_fifo-&gt;put(stream-&gt;video_fifo, buf);</programlisting>
    <para>
     Buffers must have set the <varname>type</varname> field as shown. All buffer types are
     defined in <filename>xine-engine/buffer.h</filename>.
@@ -410,7 +410,7 @@
     To help finding out buffer types for known codecs, functions from <filename>buffer_types.c</filename>
     may be used to convert "FOURCC" codes or audio format tags (as used in AVI files) to the xine
     byffer type:
-    <programlisting>&nbsp;&nbsp;&nbsp;buf->type = fourcc_to_buf_video((void*)this->avi->bih.biCompression);</programlisting>
+    <programlisting>&nbsp;&nbsp;&nbsp;buf-&gt;type = fourcc_to_buf_video((void*)this-&gt;avi-&gt;bih.biCompression);</programlisting>
    </para>
   </sect2>
  </sect1>
@@ -620,7 +620,7 @@
     video, subtitles do not form a continuous stream. The decoder will therefore
     only be called once in a while. The metronom call for timestamping,
     which for audio and video is done by the engine, has to be done manually for SPU:
-    <programlisting>&nbsp;&nbsp;&nbsp;vpts = metronom->got_spu_packet(metronom, buf->pts);</programlisting>
+    <programlisting>&nbsp;&nbsp;&nbsp;vpts = metronom-&gt;got_spu_packet(metronom, buf-&gt;pts);</programlisting>
    </para>
    <para>
     Another difference is that while both audio and video decoders are automatically

@@ -1,4 +1,7 @@
+include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
+
+SUBDIRS = ffmpeg
 
 if HAVE_WAVPACK
 xineplug_wavpack = xineplug_wavpack.la

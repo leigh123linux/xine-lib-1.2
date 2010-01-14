@@ -116,11 +116,11 @@ void (*composite_bars_packed4444_scanline)( uint8_t *output,
                                             uint8_t *background, int width,
                                             int a, int luma, int cb, int cr,
                                             int percentage );
-void (*packed444_to_nonpremultiplied_packed4444_scanline)( uint8_t *output, 
+void (*packed444_to_nonpremultiplied_packed4444_scanline)( uint8_t *output,
                                                            uint8_t *input,
                                                            int width, int alpha );
 void (*aspect_adjust_packed4444_scanline)( uint8_t *output,
-                                           uint8_t *input, 
+                                           uint8_t *input,
                                            int width,
                                            double pixel_aspect );
 void (*packed444_to_packed422_scanline)( uint8_t *output,
@@ -622,7 +622,7 @@ static void vfilter_chroma_121_packed422_scanline_mmx( uint8_t *output, int widt
         paddw_r2r( mm1, mm2 );
 
         psllw_i2r( 6, mm2 );
-        pand_r2r( mm6, mm2 ); 
+        pand_r2r( mm6, mm2 );
 
         por_r2r ( mm3, mm2 );
 
@@ -637,7 +637,7 @@ static void vfilter_chroma_121_packed422_scanline_mmx( uint8_t *output, int widt
         *output = (*t + *b + (*m << 1)) >> 2;
         output+=2; t+=2; b+=2; m+=2;
     }
-    
+
     emms();
 }
 #endif
@@ -661,7 +661,7 @@ static void vfilter_chroma_332_packed422_scanline_mmx( uint8_t *output, int widt
     const mmx_t cmask = { 0xff00ff00ff00ff00ULL };
 
     // Get width in bytes.
-    width *= 2; 
+    width *= 2;
     i = width / 8;
     width -= i * 8;
 
@@ -1939,7 +1939,7 @@ static int conv_YR_inited = 0;
 
 static int myround(double n)
 {
-  if (n >= 0) 
+  if (n >= 0)
     return (int)(n + 0.5);
   else
     return (int)(n - 0.5);
@@ -1956,7 +1956,7 @@ static void init_RGB_to_YCbCr_tables(void)
    * to one of each, add the following:
    *             + (fixed-point-factor / 2)         --- for rounding later
    *             + (Q-offset * fixed-point-factor)  --- to add the offset
-   *             
+   *
    */
   for (i = 0; i < 256; i++) {
     Y_R[i] = myround(0.299 * (double)i * 219.0 / 255.0 * (double)(1<<FP_BITS));
@@ -1988,7 +1988,7 @@ static void init_YCbCr_to_RGB_tables(void)
    * to one of each, add the following:
    *             + (fixed-point-factor / 2)         --- for rounding later
    *             + (Q-offset * fixed-point-factor)  --- to add the offset
-   *             
+   *
    */
 
   /* clip Y values under 16 */
@@ -2005,7 +2005,7 @@ static void init_YCbCr_to_RGB_tables(void)
     RGB_Y[i] = myround((1.0 * (double)(235) * 255.0 / 219.0 * (double)(1<<FP_BITS))
                        + (double)(1<<(FP_BITS-1)));
   }
-    
+
   /* clip Cb/Cr values below 16 */
   for (i = 0; i < 16; i++) {
     R_Cr[i] = myround(1.402 * (double)(-112) * 255.0 / 224.0 * (double)(1<<FP_BITS));
@@ -2055,7 +2055,7 @@ static void rgba32_to_packed4444_rec601_scanline_c( uint8_t *output, uint8_t *in
         int g = input[ 1 ];
         int b = input[ 2 ];
         int a = input[ 3 ];
-        
+
         output[ 0 ] = a;
         output[ 1 ] = (Y_R[ r ] + Y_G[ g ] + Y_B[ b ]) >> FP_BITS;
         output[ 2 ] = (Cb_R[ r ] + Cb_G[ g ] + Cb_B[ b ]) >> FP_BITS;
@@ -2128,7 +2128,7 @@ static void packed444_to_rgb24_rec601_reference_scanline( uint8_t *output, uint8
 }
 */
 
-static void packed444_to_nonpremultiplied_packed4444_scanline_c( uint8_t *output, 
+static void packed444_to_nonpremultiplied_packed4444_scanline_c( uint8_t *output,
                                                                  uint8_t *input,
                                                                  int width, int alpha )
 {
@@ -2146,7 +2146,7 @@ static void packed444_to_nonpremultiplied_packed4444_scanline_c( uint8_t *output
 }
 
 static void aspect_adjust_packed4444_scanline_c( uint8_t *output,
-                                                 uint8_t *input, 
+                                                 uint8_t *input,
                                                  int width,
                                                  double pixel_aspect )
 {
@@ -2259,7 +2259,7 @@ static void chroma_422_to_444_mpeg2_plane_c( uint8_t *dst, uint8_t *src, int wid
 
             /* odd samples (21 -52 159 159 -52 21) */
             dst[ i2 + 1 ] = clip255( (   21*(src[im2]+src[ip3])
-                                      -  52*(src[im1]+src[ip2]) 
+                                      -  52*(src[im1]+src[ip2])
                                       + 159*(src[i]+src[ip1]) + 128 ) >> 8 );
         }
         src += w;

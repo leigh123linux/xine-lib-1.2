@@ -1,3 +1,4 @@
+include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
 xinepost_LTLIBRARIES = xineplug_post_mosaico.la xineplug_post_switch.la

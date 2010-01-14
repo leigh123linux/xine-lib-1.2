@@ -40,7 +40,7 @@
 
 ebml_parser_t *new_ebml_parser (xine_t *xine, input_plugin_t *input) {
   ebml_parser_t *ebml;
-  
+
   ebml = malloc(sizeof(ebml_parser_t));
   ebml->xine                 = xine;
   ebml->input                = input;
@@ -52,15 +52,15 @@ ebml_parser_t *new_ebml_parser (xine_t *xine, input_plugin_t *input) {
   ebml->doctype              = NULL;
   ebml->doctype_version      = 0;
   ebml->doctype_read_version = 0;
-  
+
   ebml->level                = 0;
-  
+
   return ebml;
 }
 
 
 void dispose_ebml_parser(ebml_parser_t *ebml) {
-  free(ebml);  
+  free(ebml);
 }
 
 
@@ -132,7 +132,7 @@ static int ebml_read_elem_len(ebml_parser_t *ebml, uint64_t *len) {
   int ff_bytes;
   uint64_t value;
   int i;
-                                                                                
+
   if (ebml->input->read(ebml->input, data, 1) != 1) {
     off_t pos = ebml->input->get_current_pos(ebml->input);
     xprintf(ebml->xine, XINE_VERBOSITY_LOG,
@@ -162,7 +162,7 @@ static int ebml_read_elem_len(ebml_parser_t *ebml, uint64_t *len) {
     ff_bytes = 1;
   else
     ff_bytes = 0;
-  
+
   /* read the rest of the len */
   if (ebml->input->read(ebml->input, data + 1, size - 1) != (size - 1)) {
     off_t pos = ebml->input->get_current_pos(ebml->input);
@@ -231,7 +231,7 @@ int ebml_read_uint(ebml_parser_t *ebml, ebml_elem_t *elem, uint64_t *num) {
             "ebml: Invalid integer element size %" PRIu64 "\n", size);
     return 0;
   }
-  
+
   if (!ebml_read_elem_data (ebml, data, size))
     return 0;
 
@@ -253,7 +253,7 @@ int ebml_read_sint (ebml_parser_t *ebml, ebml_elem_t  *elem, int64_t *num) {
             "ebml: Invalid integer element size %" PRIu64 "\n", size);
     return 0;
   }
-  
+
   if (!ebml_read_elem_data(ebml, data, size))
     return 0;
 
@@ -262,7 +262,7 @@ int ebml_read_sint (ebml_parser_t *ebml, ebml_elem_t  *elem, int64_t *num) {
     *num = -1;
   else
     *num = 0;
-  
+
   while (size > 0) {
     *num = (*num << 8) | data[elem->len - size];
     size--;
@@ -310,12 +310,28 @@ int ebml_read_ascii(ebml_parser_t *ebml, ebml_elem_t *elem, char *str) {
 
   if (!ebml_read_elem_data(ebml, str, size))
     return 0;
-  
+
   return 1;
 }
 
 int ebml_read_utf8 (ebml_parser_t *ebml, ebml_elem_t *elem, char *str) {
   return ebml_read_ascii (ebml, elem, str);
+}
+
+char *ebml_alloc_read_ascii (ebml_parser_t *ebml, ebml_elem_t *elem)
+{
+  char *text;
+  if (elem->len >= 4096)
+    return NULL;
+  text = malloc(elem->len + 1);
+  if (text)
+  {
+    text[elem->len] = '\0';
+    if (ebml_read_ascii (ebml, elem, text))
+      return text;
+    free (text);
+  }
+  return NULL;
 }
 
 int ebml_read_date (ebml_parser_t *ebml, ebml_elem_t *elem, int64_t *date) {
@@ -330,7 +346,7 @@ int ebml_read_master (ebml_parser_t *ebml, ebml_elem_t *elem) {
     top_elem->start = elem->start;
     top_elem->len = elem->len;
     top_elem->id = elem->id;
-  
+
     ebml->level++;
     lprintf("id: 0x%x, len: %" PRIu64 ", level: %d\n", elem->id, elem->len, ebml->level);
     if (ebml->level >= EBML_STACK_SIZE) {
@@ -362,20 +378,20 @@ int ebml_check_header(ebml_parser_t *ebml) {
             "ebml: invalid master element\n");
     return 0;
   }
-  
+
   if (master.id != EBML_ID_EBML) {
     xprintf(ebml->xine, XINE_VERBOSITY_LOG,
             "ebml: invalid master element\n");
     return 0;
   }
-  
+
   if (!ebml_read_master (ebml, &master))
     return 0;
 
   next_level = 1;
   while (next_level == 1) {
     ebml_elem_t elem;
-    
+
     if (!ebml_read_elem_head(ebml, &elem))
       return 0;
 
@@ -389,7 +405,7 @@ int ebml_check_header(ebml_parser_t *ebml) {
         ebml->version = num;
         break;
       }
-      
+
       case EBML_ID_EBMLREADVERSION: {
         uint64_t num;
 
@@ -423,10 +439,8 @@ int ebml_check_header(ebml_parser_t *ebml) {
       }
 
       case EBML_ID_DOCTYPE: {
-        char *text = malloc(elem.len + 1);
-
-        text[elem.len] = '\0';
-        if (!ebml_read_ascii (ebml, &elem, text))
+        char *text = ebml_alloc_read_ascii (ebml, &elem);
+        if (!text)
           return 0;
 
         lprintf("doctype: %s\n", text);

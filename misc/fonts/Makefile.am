@@ -1,6 +1,6 @@
 include $(top_srcdir)/misc/Makefile.common
 
-fontdir = $(XINE_FONTPATH)
+fontdir = $(XINE_FONTDIR)
 font_DATA = \
 	cetus-16.xinefont.gz \
 	cetus-20.xinefont.gz \
@@ -37,7 +37,7 @@ font_DATA = \
 	serif-24.xinefont.gz \
 	serif-32.xinefont.gz \
 	serif-48.xinefont.gz \
-	serif-64.xinefont.gz 
+	serif-64.xinefont.gz
 
 #
 # font used for osd

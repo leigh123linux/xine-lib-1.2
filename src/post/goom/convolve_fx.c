@@ -20,7 +20,7 @@ typedef char Motif[CONV_MOTIF_W][CONV_MOTIF_W];
 
 #define NB_THETA 512
 
-#define MAX 2.0f
+//#define MAX 2.0f
 
 typedef struct _CONV_DATA{
   PluginParam light;
@@ -73,7 +73,7 @@ static void set_motif(ConvData *data, Motif motif)
 
 static void convolve_init(VisualFX *_this, PluginInfo *info) {
   ConvData *data;
-  data = (ConvData*)malloc(sizeof(ConvData));
+  data = (ConvData*)calloc(1, sizeof(ConvData));
   _this->fx_data = (void*)data;
 
   data->light = secure_f_param("Screen Brightness");

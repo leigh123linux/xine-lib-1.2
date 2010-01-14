@@ -1,21 +1,21 @@
 /*
  * Copyright (C) 2000-2003 the xine project
- * 
- * Copyright (C) Christian Vogler 
+ *
+ * Copyright (C) Christian Vogler
  *               cvogler@gradient.cis.upenn.edu - December 2001
  *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -26,6 +26,10 @@
  * adapted from CCDecoder 0.9.1 by Mike Baker. The latest version is
  * available at http://sourceforge.net/projects/ccdecoder/.
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,7 +83,7 @@ static const int text_colormap[NUM_FG_COL] = {
 /* FIXME: The colors look fine on an XShm display, but they look *terrible*
    with the Xv display on the NVidia driver on a GeForce 3. The colors bleed
    into each other more than I'd expect from the downsampling into YUV
-   colorspace. 
+   colorspace.
    At this moment, it looks like a problem in the Xv YUV blending functions.
 */
 typedef struct colorinfo_s {
@@ -213,16 +217,14 @@ static const uint8_t *const cc_alpha_palettes[NUM_CC_PALETTES] = {
 
 /* --------------------- misc. EIA 608 definitions -------------------*/
 
-#define TRANSP_SPACE 0x19   /* code for transparent space, essentially 
+#define TRANSP_SPACE 0x19   /* code for transparent space, essentially
 			       arbitrary */
-
-#define MAX(a, b) ((a) > (b)? (a) : (b))
 
 /* mapping from PAC row code to actual CC row */
 static const int  rowdata[] = {10, -1, 0, 1, 2, 3, 11, 12, 13, 14, 4, 5, 6,
 			 7, 8, 9};
 /* FIXME: do real ™ (U+2122) */
-/* Code 182 must be mapped as a musical note ('♪', U+266A) in the caption font */ 
+/* Code 182 must be mapped as a musical note ('♪', U+266A) in the caption font */
 static const char specialchar[] = {
   174 /* ® */, 176 /* ° */, 189 /* ½ */, 191 /* ¿ */,
   'T' /* ™ */, 162 /* ¢ */, 163 /* £ */, 182 /* ¶ => ♪ */,
@@ -269,11 +271,11 @@ struct cc_renderer_s {
      If this happens, the vpts of a hide caption event can actually be
      slightly higher than the vpts of the following show caption event.
      For this reason, we remember the vpts of the hide event and force
-     the next show event's vpts  to be at least equal to the hide event's 
+     the next show event's vpts  to be at least equal to the hide event's
      vpts.
   */
   int64_t last_hide_vpts;
-     
+
   /* caption palette and alpha channel */
   uint32_t cc_palette[OVL_PALETTE_SIZE];
   uint8_t cc_trans[OVL_PALETTE_SIZE];
@@ -359,7 +361,7 @@ struct cc_decoder_s {
 
 /*---------------- general utility functions ---------------------*/
 
-static void get_font_metrics(osd_renderer_t *renderer, 
+static void get_font_metrics(osd_renderer_t *renderer,
 			     const char *fontname, int font_size,
 			     int *maxw, int *maxh)
 {
@@ -373,7 +375,7 @@ static void get_font_metrics(osd_renderer_t *renderer,
   renderer->set_encoding(testc, "iso-8859-1");
   for (c = 32; c < 256; c++) {
     int tw, th;
-    char buf[2]; 
+    char buf[2];
 
     buf[0] = (char)c;
     buf[1] = '\0';
@@ -528,8 +530,8 @@ static void ccrow_set_attributes(cc_renderer_t *renderer, cc_row_t *this,
     fontname = cap_info->italic_font;
   else
     fontname = cap_info->font;
-  renderer->osd_renderer->set_font(renderer->cap_display, (char *) fontname, 
-				   cap_info->font_size); 
+  renderer->osd_renderer->set_font(renderer->cap_display, (char *) fontname,
+				   cap_info->font_size);
 }
 
 
@@ -608,7 +610,7 @@ static void ccrow_render(cc_renderer_t *renderer, cc_row_t *this, int rownum)
       x = renderer->width * pos / CC_COLUMNS;
       y = base_y;
     }
-    
+
 #ifdef LOG_DEBUG
     printf("text_w, text_h = %d, %d\n", text_w, text_h);
     printf("cc from %d to %d; text plotting from %d, %d (basey = %d)\n", pos, endpos, x, y, base_y);
@@ -619,7 +621,7 @@ static void ccrow_render(cc_renderer_t *renderer, cc_row_t *this, int rownum)
       int textcol = text_colormap[this->cells[seg_attr[seg]].attributes.foreground];
       int box_x1 = x + cumulative_seg_width[seg];
       int box_x2 = x + cumulative_seg_width[seg + 1];
- 
+
 #ifdef LOG_DEBUG
       printf("ccrow_render: rendering segment %d from %d to %d / %d to %d\n",
 	     seg, seg_pos[seg], seg_pos[seg + 1],
@@ -644,7 +646,7 @@ static void ccrow_render(cc_renderer_t *renderer, cc_row_t *this, int rownum)
 
       /* text is already mapped from EIA-608 into iso-8859-1 */
       osd_renderer->render_text(renderer->cap_display,
-				x + cumulative_seg_width[seg], y, buf,          
+				x + cumulative_seg_width[seg], y, buf,
 				textcol);
     }
 
@@ -710,7 +712,7 @@ static void ccbuf_add_char(cc_buffer_t *this, uint8_t c)
 }
 
 
-static void ccbuf_set_cursor(cc_buffer_t *this, int row, int column, 
+static void ccbuf_set_cursor(cc_buffer_t *this, int row, int column,
 			     int underline, int italics, int color)
 {
   cc_row_t *rowbuf = &this->rows[row];
@@ -724,7 +726,7 @@ static void ccbuf_set_cursor(cc_buffer_t *this, int row, int column,
   rowbuf->pac_attr = attr;
   rowbuf->pac_attr_chg = 1;
 
-  this->rowpos = row; 
+  this->rowpos = row;
   rowbuf->pos = column;
   rowbuf->attr_chg = 0;
 }
@@ -734,7 +736,7 @@ static void ccbuf_apply_attribute(cc_buffer_t *this, cc_attribute_t *attr)
 {
   cc_row_t *rowbuf = &this->rows[this->rowpos];
   int pos = rowbuf->pos;
-  
+
   rowbuf->attr_chg = 1;
   rowbuf->cells[pos].attributes = *attr;
   /* A midrow attribute always counts as a space */
@@ -802,7 +804,7 @@ static void cc_renderer_build_palette(cc_renderer_t *this)
   int i, j;
   const colorinfo_t *cc_text = cc_text_palettes[this->cc_state->cc_cfg->cc_scheme];
   const uint8_t *cc_alpha = cc_alpha_palettes[this->cc_state->cc_cfg->cc_scheme];
-  
+
   memset(this->cc_palette, 0, sizeof (this->cc_palette));
   memset(this->cc_trans, 0, sizeof (this->cc_trans));
   for (i = 0; i < NUM_FG_COL; i++) {
@@ -877,12 +879,12 @@ static void cc_renderer_show_caption(cc_renderer_t *this, cc_buffer_t *buf,
 
   this->osd_renderer->clear(this->cap_display);
   ccbuf_render(this, buf);
-  this->osd_renderer->set_position(this->cap_display, 
+  this->osd_renderer->set_position(this->cap_display,
 				   this->x,
 				   this->y);
   vpts = MAX(vpts, this->last_hide_vpts);
   this->osd_renderer->show(this->cap_display, vpts);
-  
+
   this->displayed = 1;
   this->display_vpts = vpts;
 }
@@ -922,7 +924,7 @@ cc_renderer_t *cc_renderer_open(osd_renderer_t *osd_renderer,
 				metronom_t *metronom, cc_state_t *cc_state,
 				int video_width, int video_height)
 {
-  cc_renderer_t *this = (cc_renderer_t *) xine_xmalloc(sizeof (cc_renderer_t));
+  cc_renderer_t *this = calloc(1, sizeof (cc_renderer_t));
 
   this->osd_renderer = osd_renderer;
   this->metronom = metronom;
@@ -930,7 +932,7 @@ cc_renderer_t *cc_renderer_open(osd_renderer_t *osd_renderer,
   cc_renderer_update_cfg(this, video_width, video_height);
 #ifdef LOG_DEBUG
   printf("spucc: cc_renderer: open\n");
-#endif  
+#endif
   return this;
 }
 
@@ -942,7 +944,7 @@ void cc_renderer_close(cc_renderer_t *this_obj)
 
 #ifdef LOG_DEBUG
   printf("spucc: cc_renderer: close\n");
-#endif  
+#endif
 }
 
 
@@ -977,7 +979,7 @@ void cc_renderer_update_cfg(cc_renderer_t *this_obj, int video_width,
 #ifdef LOG_DEBUG
   printf("spucc: cc_renderer: update config: max text extents: %d, %d\n",
 	 this_obj->max_char_width, this_obj->max_char_height);
-#endif 
+#endif
 
   /* need to adjust captioning area to accommodate font? */
   required_w = CC_COLUMNS * (this_obj->max_char_width + 1);
@@ -999,7 +1001,7 @@ void cc_renderer_update_cfg(cc_renderer_t *this_obj, int video_width,
     this_obj->y = (this_obj->video_height - required_h) / 2;
   }
 
-  if (required_w <= this_obj->video_width && 
+  if (required_w <= this_obj->video_width &&
       required_h <= this_obj->video_height) {
     this_obj->cc_state->can_cc = 1;
     cc_renderer_adjust_osd_object(this_obj);
@@ -1010,7 +1012,7 @@ void cc_renderer_update_cfg(cc_renderer_t *this_obj, int video_width,
     printf("spucc: required captioning area %dx%d exceeds screen %dx%d!\n"
 	   "       Captions disabled. Perhaps you should choose a smaller"
 	   " font?\n",
-	   required_w, required_h, this_obj->video_width, 
+	   required_w, required_h, this_obj->video_width,
 	   this_obj->video_height);
   }
 }
@@ -1048,10 +1050,10 @@ static void cc_hide_displayed(cc_decoder_t *this)
 
   if (cc_renderer_on_display(this->cc_state->renderer)) {
     int64_t vpts = cc_renderer_calc_vpts(this->cc_state->renderer, this->pts,
-					  this->f_offset); 
+					  this->f_offset);
 #ifdef LOG_DEBUG
     printf("cc_decoder: cc_hide_displayed: hiding caption %u at vpts %u\n", this->capid, vpts);
-#endif    
+#endif
     cc_renderer_hide_caption(this->cc_state->renderer, vpts);
   }
 }
@@ -1068,7 +1070,7 @@ static void cc_show_displayed(cc_decoder_t *this)
 					  this->f_offset);
 #ifdef LOG_DEBUG
     printf("cc_decoder: cc_show_displayed: showing caption %u at vpts %u\n", this->capid, vpts);
-#endif    
+#endif
     this->capid++;
     cc_renderer_show_caption(this->cc_state->renderer,
 			     &this->on_buf->channel[this->on_buf->channel_no],
@@ -1291,7 +1293,7 @@ static void cc_decode_EIA608(cc_decoder_t *this, uint16_t data)
       }
       else {
 	switch (c1) {
-	  
+
 	case 0x10:             /* extended background attribute code */
 	  cc_decode_ext_attribute(this, channel, c1, c2);
 	  break;
@@ -1319,7 +1321,7 @@ static void cc_decode_EIA608(cc_decoder_t *this, uint16_t data)
       }
     }
   }
-  
+
   this->lastcode = data;
 }
 
@@ -1345,13 +1347,13 @@ void decode_cc(cc_decoder_t *this, uint8_t *buffer, uint32_t buf_len,
    *   0x00 is padding, followed by 2 more 0x00.
    *
    *   0x01 always seems to appear at the beginning, always seems to
-   *        be followed by 0xf8, 8-bit number. 
+   *        be followed by 0xf8, 8-bit number.
    *        The lower 7 bits of this 8-bit number seem to denote the
    *        number of code triplets that follow.
-   *        The most significant bit denotes whether the Line 21 field 1 
+   *        The most significant bit denotes whether the Line 21 field 1
    *        captioning information is at odd or even triplet offsets from this
    *        beginning triplet. 1 denotes odd offsets, 0 denotes even offsets.
-   *      
+   *
    *        Most captions are encoded with odd offsets, so this is what we
    *        will assume.
    *
@@ -1376,31 +1378,31 @@ void decode_cc(cc_decoder_t *this, uint8_t *buffer, uint32_t buf_len,
     }
     printf("\n");
   }
-#endif  
+#endif
 
   while (curbytes < buf_len) {
     int skip = 2;
 
     cc_code = *current++;
     curbytes++;
-    
+
     if (buf_len - curbytes < 2) {
 #ifdef LOG_DEBUG
       fprintf(stderr, "Not enough data for 2-byte CC encoding\n");
 #endif
       break;
     }
-    
+
     data1 = *current;
     data2 = *(current + 1);
-    
+
     switch (cc_code) {
     case 0xfe:
       /* expect 2 byte encoding (perhaps CC3, CC4?) */
       /* ignore for time being */
       skip = 2;
       break;
-      
+
     case 0xff:
       /* expect EIA-608 CC1/CC2 encoding */
       if (good_parity(data1 | (data2 << 8))) {
@@ -1409,12 +1411,12 @@ void decode_cc(cc_decoder_t *this, uint8_t *buffer, uint32_t buf_len,
       }
       skip = 5;
       break;
-      
+
     case 0x00:
       /* This seems to be just padding */
       skip = 2;
       break;
-      
+
     case 0x01:
       odd_offset = data2 & 0x80;
       if (odd_offset)
@@ -1422,7 +1424,7 @@ void decode_cc(cc_decoder_t *this, uint8_t *buffer, uint32_t buf_len,
       else
 	skip = 5;
       break;
-      
+
     default:
 #ifdef LOG_DEBUG
       fprintf(stderr, "Unknown CC encoding: %x\n", cc_code);
@@ -1439,7 +1441,7 @@ void decode_cc(cc_decoder_t *this, uint8_t *buffer, uint32_t buf_len,
 
 cc_decoder_t *cc_decoder_open(cc_state_t *cc_state)
 {
-  cc_decoder_t *this = (cc_decoder_t *) xine_xmalloc(sizeof (cc_decoder_t));
+  cc_decoder_t *this = calloc(1, sizeof (cc_decoder_t));
   /* configfile stuff */
   this->cc_state = cc_state;
 

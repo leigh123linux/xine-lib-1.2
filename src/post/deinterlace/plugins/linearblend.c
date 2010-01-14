@@ -254,7 +254,7 @@ static void deinterlace_scanline_linear_blend2_mmxext( uint8_t *output,
     uint8_t *b1 = data->b1;
 
     int i;
- 
+
     READ_PREFETCH_2048( t1 );
     READ_PREFETCH_2048( b1 );
     READ_PREFETCH_2048( m0 );

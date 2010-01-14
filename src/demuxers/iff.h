@@ -27,8 +27,8 @@
 #define IFFP_IFF_H
 
 #define IFF_OKAY                        0L
-#define CLIENT_ERROR                    1L
-#define NOFILE                          5L
+#define IFF_CLIENT_ERROR                1L
+#define IFF_NOFILE                      5L
 
 #define FOURCC_CHUNK BE_FOURCC
 #define IFF_16SV_CHUNK FOURCC_CHUNK('1', '6', 'S', 'V')

@@ -59,7 +59,7 @@ Currently, best practice to get a release out looks like this:
    which the subminor releases like 1.0.1, 1.0.2,... are made and an
    unstable branch in CVS head, which is going to become the next minor
    (1.1) or major (2.0) xine-lib version.
-   
+
    Make sure you know
    - what the new release should be called
      (the "marketing version" part of the tarball name, for example)
@@ -88,11 +88,11 @@ Currently, best practice to get a release out looks like this:
    - does it have the right name?
    - does it unpack, compile and install correctly?
      note: make sure to build with as many features as possible
-           on a Debian box, "apt-get build-dep xine-lib" and 
+           on a Debian box, "apt-get build-dep xine-lib" and
            "dpkg-buildpackage -rfakeroot" are a good way to do that
    - test the candidate (and make sure you are running exactly the new
      version!) This should at least cover the [standard test parcours]
-   
+
    If you find any errors: fix them (get help on xine-devel or #xine)
    and go back to step 4)
 
@@ -127,15 +127,19 @@ hands.
     (also make sure it gets immediately approved by the xine-announce
      moderator!)
 
-12) write the announcement for xinehq:
-    You need to login on xinehq and use your admin privileges to create a
-    news article in the "New Releases" section. Include a link to the
-    SourceForge Release notes/Changelog page and one to the download page.
+12) write the announcement for xine-project.org:
+    You need to have an account on alioth.debian.org and a checked-out copy
+    of ssh://hg.debian.org//hg/xine-lib/xine-project-www/ (using Mercurial).
+    Add the new news item near the top of pages/news/items.xml (use the
+    provided template), run update.sh (requires xsltproc; if this fails,
+    re-edit), check that it looks fine in a convenient browser, then commit
+    and push the change. At present, you will need to request a web site
+    update via #xine on irc.oftc.net or by contacting a site admin.
 
-    Warning: triple-check that you get the HTML correct! If you have
-             unmatched quotes, you might break the whole website so that it
-             can only be repaired by manually fiddling with mysql to get the
-             HTML right!
+    You should include a link to the SourceForge Release notes/Changelog
+    page and one to the download page.
+
+    Warning: triple-check that you get the XML correct!
 
 13) write the Freshmeat announcement:
     use your freshmeat account to log into their website, if you aren't

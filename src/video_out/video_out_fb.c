@@ -1,13 +1,13 @@
 /*
  * Copyright (C) 2000-2003 the xine project and Fredrik Noring
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -52,8 +52,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h> 
-             
+#include <fcntl.h>
+
 #include "xine.h"
 #include "video_out.h"
 
@@ -89,7 +89,7 @@ typedef struct fb_frame_s
 
   int                format;
   int                flags;
-  
+
   vo_scale_t         sc;
 
   uint8_t           *chunk[3]; /* mem alloc by xmalloc_aligned           */
@@ -97,7 +97,7 @@ typedef struct fb_frame_s
   yuv2rgb_t         *yuv2rgb;  /* yuv2rgb converter for this frame */
   uint8_t           *rgb_dst;
   int                yuv_stride;
-  
+
   int                bytes_per_line;
 
   uint8_t*           video_mem;            /* mmapped video memory */
@@ -114,12 +114,12 @@ typedef struct fb_driver_s
   int                fd;
   int                mem_size;
   uint8_t*           video_mem_base;       /* mmapped video memory */
-  
+
   int                depth, bpp, bytes_per_pixel;
-  
+
   int                total_num_native_buffers;
   int                used_num_buffers;
-	
+
   int                yuv2rgb_mode;
   int                yuv2rgb_swap;
   int                yuv2rgb_brightness;
@@ -132,11 +132,11 @@ typedef struct fb_driver_s
 
   /* size / aspect ratio calculations */
   vo_scale_t         sc;
-  
+
   int                fb_bytes_per_line;
 
   fb_frame_t        *cur_frame, *old_frame;
-	
+
   struct fb_var_screeninfo fb_var;
   struct fb_fix_screeninfo fb_fix;
 
@@ -161,10 +161,10 @@ static uint32_t fb_get_capabilities(vo_driver_t *this_gen)
 static void fb_frame_proc_slice(vo_frame_t *vo_img, uint8_t **src)
 {
   fb_frame_t *frame = (fb_frame_t *)vo_img ;
-  
+
   vo_img->proc_called = 1;
- 
-  if( frame->vo_frame.crop_left || frame->vo_frame.crop_top || 
+
+  if( frame->vo_frame.crop_left || frame->vo_frame.crop_top ||
       frame->vo_frame.crop_right || frame->vo_frame.crop_bottom )
   {
     /* we don't support crop, so don't even waste cpu cycles.
@@ -184,18 +184,18 @@ static void fb_frame_proc_slice(vo_frame_t *vo_img, uint8_t **src)
 static void fb_frame_field(vo_frame_t *vo_img, int which_field)
 {
   fb_frame_t *frame = (fb_frame_t *)vo_img ;
-  
+
   switch(which_field)
   {
   case VO_TOP_FIELD:
       frame->rgb_dst    = frame->data;
     break;
-			
+
   case VO_BOTTOM_FIELD:
       frame->rgb_dst    = frame->data +
 			  frame->bytes_per_line ;
     break;
-			
+
   case VO_BOTH_FIELDS:
       frame->rgb_dst    = frame->data;
     break;
@@ -221,23 +221,23 @@ static vo_frame_t *fb_alloc_frame(vo_driver_t *this_gen)
      this->total_num_native_buffers <= this->used_num_buffers)
     return 0;
 
-  frame = (fb_frame_t *)xine_xmalloc(sizeof(fb_frame_t));
+  frame = calloc(1, sizeof(fb_frame_t));
   if(!frame)
     return NULL;
 
   memcpy(&frame->sc, &this->sc, sizeof(vo_scale_t));
 
   pthread_mutex_init(&frame->vo_frame.mutex, NULL);
-  
+
   /* supply required functions */
   frame->vo_frame.proc_slice = fb_frame_proc_slice;
   frame->vo_frame.proc_frame = NULL;
-  frame->vo_frame.field      = fb_frame_field; 
+  frame->vo_frame.field      = fb_frame_field;
   frame->vo_frame.dispose    = fb_frame_dispose;
   frame->vo_frame.driver     = this_gen;
-  
+
   frame->this = this;
-  
+
   /* colorspace converter for this frame */
   frame->yuv2rgb =
     this->yuv2rgb_factory->create_converter(this->yuv2rgb_factory);
@@ -268,7 +268,7 @@ static void fb_compute_ideal_size(fb_driver_t *this, fb_frame_t *frame)
 static void fb_compute_rgb_size(fb_driver_t *this, fb_frame_t *frame)
 {
   _x_vo_scale_compute_output_size(&frame->sc);
-  
+
   /* avoid problems in yuv2rgb */
   if(frame->sc.output_height < (frame->sc.delivered_height+15) >> 4)
     frame->sc.output_height = (frame->sc.delivered_height+15) >> 4;
@@ -277,7 +277,7 @@ static void fb_compute_rgb_size(fb_driver_t *this, fb_frame_t *frame)
     frame->sc.output_width = 8;
 
   /* yuv2rgb_mlib needs an even YUV2 width */
-  if (frame->sc.output_width & 1) 
+  if (frame->sc.output_width & 1)
     frame->sc.output_width++;
 
   lprintf("frame source %d x %d => screen output %d x %d%s\n",
@@ -305,7 +305,7 @@ static void setup_colorspace_converter(fb_frame_t *frame, int flags)
 		  frame->bytes_per_line * 2);
       frame->yuv_stride = frame->bytes_per_line * 2;
       break;
-    
+
     case VO_BOTH_FIELDS:
       frame->yuv2rgb->
 	configure(frame->yuv2rgb,
@@ -324,22 +324,11 @@ static void setup_colorspace_converter(fb_frame_t *frame, int flags)
 static void frame_reallocate(fb_driver_t *this, fb_frame_t *frame,
 			     uint32_t width, uint32_t height, int format)
 {
-  if(frame->chunk[0])
-  {
-    free(frame->chunk[0]);
-        frame->chunk[0] = NULL;
-  }
-  if(frame->chunk[1])
-  {
-    free(frame->chunk[1]);
-        frame->chunk[1] = NULL;
-  }
-  if(frame->chunk[2])
-  {
-    free(frame->chunk[2]);
-        frame->chunk[2] = NULL;
-  }
-      
+  free(frame->chunk[0]);
+  free(frame->chunk[1]);
+  free(frame->chunk[2]);
+  memset(frame->chunk, 0, sizeof(frame->chunk[0])*3);
+
   if(this->use_zero_copy)
   {
     frame->data = frame->video_mem +
@@ -348,10 +337,9 @@ static void frame_reallocate(fb_driver_t *this, fb_frame_t *frame,
   }
   else
   {
-    if(frame->data)
-      free(frame->data);
-    frame->data = xine_xmalloc(frame->sc.output_width *
-			       frame->sc.output_height *
+    free(frame->data);
+    frame->data = calloc(frame->sc.output_width *
+			       frame->sc.output_height,
 			       this->bytes_per_pixel);
   }
 
@@ -360,19 +348,19 @@ static void frame_reallocate(fb_driver_t *this, fb_frame_t *frame,
       frame->vo_frame.pitches[0] = 8*((width + 7) / 8);
       frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
       frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
-		
+
     frame->vo_frame.base[0] =
       xine_xmalloc_aligned(16,
 			   frame->vo_frame.pitches[0] *
 			   height,
                                                       (void **)&frame->chunk[0]);
-		
+
     frame->vo_frame.base[1] =
       xine_xmalloc_aligned(16,
 			   frame->vo_frame.pitches[1] *
 			   ((height+1)/2),
                                                       (void **)&frame->chunk[1]);
-		
+
     frame->vo_frame.base[2] =
       xine_xmalloc_aligned(16,
 			   frame->vo_frame.pitches[2] *
@@ -382,7 +370,7 @@ static void frame_reallocate(fb_driver_t *this, fb_frame_t *frame,
   else
   {
     frame->vo_frame.pitches[0] = 8 * ((width + 3) / 4);
-		
+
     frame->vo_frame.base[0] =
       xine_xmalloc_aligned(16,
 			   frame->vo_frame.pitches[0] *
@@ -392,7 +380,7 @@ static void frame_reallocate(fb_driver_t *this, fb_frame_t *frame,
       frame->chunk[2] = NULL;
   }
 }
-    
+
 static void fb_update_frame_format(vo_driver_t *this_gen,
 				   vo_frame_t *frame_gen,
 				   uint32_t width, uint32_t height,
@@ -400,7 +388,7 @@ static void fb_update_frame_format(vo_driver_t *this_gen,
 {
   fb_driver_t *this = (fb_driver_t *)this_gen;
   fb_frame_t *frame = (fb_frame_t *)frame_gen;
-  
+
   flags &= VO_BOTH_FIELDS;
 
   /* Find out if we need to adapt this frame. */
@@ -430,7 +418,7 @@ static void fb_update_frame_format(vo_driver_t *this_gen,
     else
       frame->bytes_per_line = frame->sc.output_width *
 			      this->bytes_per_pixel;
-    
+
     setup_colorspace_converter(frame, flags);
   }
 
@@ -442,7 +430,7 @@ static void fb_overlay_clut_yuv2rgb(fb_driver_t *this,
 {
   int i;
   clut_t* clut = (clut_t*)overlay->color;
-	
+
   if(!overlay->rgb_clut)
   {
     for(i = 0;
@@ -458,11 +446,11 @@ static void fb_overlay_clut_yuv2rgb(fb_driver_t *this,
     }
     overlay->rgb_clut++;
   }
-	
+
   if(!overlay->hili_rgb_clut)
   {
     clut = (clut_t*) overlay->hili_color;
-		
+
     for(i = 0;
 	i < sizeof(overlay->color)/sizeof(overlay->color[0]);
 	i++)
@@ -504,7 +492,7 @@ static void fb_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
 		    frame->sc.delivered_height,
                     &this->alphablend_extra_data);
         break;
-				
+
        case 24:
 	_x_blend_rgb24(frame->data,
 		    overlay,
@@ -514,7 +502,7 @@ static void fb_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
 		    frame->sc.delivered_height,
                     &this->alphablend_extra_data);
         break;
-				
+
        case 32:
 	_x_blend_rgb32(frame->data,
 		    overlay,
@@ -524,7 +512,7 @@ static void fb_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
 		    frame->sc.delivered_height,
                     &this->alphablend_extra_data);
 	break;
-     }        
+     }
    }
 }
 
@@ -546,11 +534,11 @@ static void fb_display_frame(vo_driver_t *this_gen, vo_frame_t *frame_gen)
     this->sc.output_width    = frame->sc.output_width;
     this->sc.output_height   = frame->sc.output_height;
 
-    xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG,
 	    "video_out_fb: gui size %d x %d, frame size %d x %d\n",
             this->sc.gui_width, this->sc.gui_height,
             frame->sc.output_width, frame->sc.output_height);
-    
+
     memset(this->video_mem_base, 0, this->mem_size);
   }
 
@@ -567,10 +555,10 @@ static void fb_display_frame(vo_driver_t *this_gen, vo_frame_t *frame_gen)
 	(&this->old_frame->vo_frame);
     this->old_frame = this->cur_frame;
     this->cur_frame = frame;
-		
+
     this->fb_var.yoffset = frame->yoffset;
     if(ioctl(this->fd, FBIOPAN_DISPLAY, &this->fb_var) == -1)
-      xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->xine, XINE_VERBOSITY_DEBUG,
 	      "video_out_fb: ioctl FBIOPAN_DISPLAY failed: %s\n", strerror(errno));
   }
   else
@@ -579,14 +567,14 @@ static void fb_display_frame(vo_driver_t *this_gen, vo_frame_t *frame_gen)
 	  frame->sc.output_yoffset * this->fb_bytes_per_line +
         frame->sc.output_xoffset * this->bytes_per_pixel;
     src = frame->data;
-   
+
     for(y = 0; y < frame->sc.output_height; y++)
     {
       xine_fast_memcpy(dst, src, frame->bytes_per_line);
       src += frame->bytes_per_line;
       dst += this->fb_bytes_per_line;
-    } 
-  
+    }
+
     frame->vo_frame.free(&frame->vo_frame);
   }
 }
@@ -609,7 +597,7 @@ static int fb_get_property(vo_driver_t *this_gen, int property)
 
     case VO_PROP_WINDOW_WIDTH:
       return this->sc.gui_width;
-    
+
     case VO_PROP_WINDOW_HEIGHT:
       return this->sc.gui_height;
 
@@ -626,7 +614,7 @@ static int fb_get_property(vo_driver_t *this_gen, int property)
       return this->cur_frame->sc.output_yoffset;
 
     default:
-      xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->xine, XINE_VERBOSITY_DEBUG,
 	      "video_out_fb: tried to get unsupported property %d\n", property);
   }
 
@@ -643,7 +631,7 @@ static int fb_set_property(vo_driver_t *this_gen, int property, int value)
       if(value>=XINE_VO_ASPECT_NUM_RATIOS)
 	value = XINE_VO_ASPECT_AUTO;
       this->sc.user_ratio = value;
-      xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->xine, XINE_VERBOSITY_DEBUG,
 	      "video_out_fb: aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name(value));
       break;
 
@@ -672,7 +660,7 @@ static int fb_set_property(vo_driver_t *this_gen, int property, int value)
       break;
 
     default:
-      xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf(this->xine, XINE_VERBOSITY_DEBUG,
 	      "video_out_fb: tried to set unsupported property %d\n", property);
   }
 
@@ -710,8 +698,8 @@ static int fb_gui_data_exchange(vo_driver_t *this_gen,
 static void fb_dispose(vo_driver_t *this_gen)
 {
   fb_driver_t *this = (fb_driver_t *)this_gen;
-  
-  munmap(0, this->mem_size);   
+
+  munmap(0, this->mem_size);
   close(this->fd);
 
   _x_alphablend_free(&this->alphablend_extra_data);
@@ -722,7 +710,7 @@ static void fb_dispose(vo_driver_t *this_gen)
 static int get_fb_var_screeninfo(int fd, struct fb_var_screeninfo *var, xine_t *xine)
 {
   int i;
-  
+
   if(ioctl(fd, FBIOGET_VSCREENINFO, var))
   {
     xprintf(xine, XINE_VERBOSITY_DEBUG, "video_out_fb: ioctl FBIOGET_VSCREENINFO: %s\n", strerror(errno));
@@ -743,7 +731,7 @@ static int get_fb_var_screeninfo(int fd, struct fb_var_screeninfo *var, xine_t *
       continue;
     break;
   }
-    
+
   /* Get proper value for maximized var->yres_virtual. */
   if(ioctl(fd, FBIOGET_VSCREENINFO, var) == -1)
   {
@@ -843,26 +831,26 @@ static int open_fb_device(config_values_t *config, xine_t *xine)
   {
     device_name = "/dev/fb1";
     fd = open(device_name, O_RDWR);
-    
+
     if(fd < 0)
-    {  
+    {
       device_name = "/dev/fb0";
       fd = open(device_name, O_RDWR);
     }
   }
-  
+
   if(fd < 0)
   {
-    xprintf(xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(xine, XINE_VERBOSITY_DEBUG,
 	    "video_out_fb: Unable to open device \"%s\", aborting: %s\n", device_name, strerror(errno));
     return -1;
   }
-  
+
   config->update_string(config, devkey, device_name);
 
   return fd;
 }
-  
+
 static int mode_visual(fb_driver_t *this, config_values_t *config,
 		       struct fb_var_screeninfo *var,
 		       struct fb_fix_screeninfo *fix)
@@ -888,7 +876,7 @@ static int mode_visual(fb_driver_t *this, config_values_t *config,
 	  if(!var->blue.offset)
 	    return MODE_16_RGB;
 	  return MODE_16_BGR;
-  
+
 	case 15:
 	  if(!var->blue.offset)
 	    return MODE_15_RGB;
@@ -896,16 +884,16 @@ static int mode_visual(fb_driver_t *this, config_values_t *config,
 
 	case 8:
 	  if(!var->blue.offset)
-	    return MODE_8_RGB; 
-	  return MODE_8_BGR; 
+	    return MODE_8_RGB;
+	  return MODE_8_BGR;
 
       }
   }
-  
+
   xprintf(this->xine, XINE_VERBOSITY_LOG, _("video_out_fb: Your video mode was not recognized, sorry.\n"));
   return 0;
 }
-    
+
 static int setup_yuv2rgb(fb_driver_t *this, config_values_t *config,
 			 struct fb_var_screeninfo *var,
 			 struct fb_fix_screeninfo *fix)
@@ -919,13 +907,13 @@ static int setup_yuv2rgb(fb_driver_t *this, config_values_t *config,
   this->yuv2rgb_contrast   = this->yuv2rgb_saturation = 128;
 
   this->yuv2rgb_factory = yuv2rgb_factory_init(this->yuv2rgb_mode,
-					       this->yuv2rgb_swap, 
+					       this->yuv2rgb_swap,
 					       this->yuv2rgb_cmap);
   this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
                                          this->yuv2rgb_brightness,
                                          this->yuv2rgb_contrast,
                                          this->yuv2rgb_saturation);
-  
+
   return 1;
 }
 
@@ -946,7 +934,7 @@ static void setup_buffers(fb_driver_t *this,
    *                 bpp      <= 32
    *                 msb_right = 0
    */
-   
+
   this->bytes_per_pixel = (this->fb_var.bits_per_pixel + 7)/8;
   this->bpp = this->bytes_per_pixel * 8;
   this->depth = this->fb_var.red.length +
@@ -955,9 +943,9 @@ static void setup_buffers(fb_driver_t *this,
 
   this->total_num_native_buffers = var->yres_virtual / var->yres;
   this->used_num_buffers = 0;
-	
+
   this->cur_frame = this->old_frame = 0;
-	
+
   xprintf(this->xine, XINE_VERBOSITY_LOG,
 	  _("video_out_fb: %d video RAM buffers are available.\n"), this->total_num_native_buffers);
 
@@ -967,7 +955,7 @@ static void setup_buffers(fb_driver_t *this,
     xprintf(this->xine, XINE_VERBOSITY_LOG,
 	    _("WARNING: video_out_fb: Zero copy buffers are DISABLED because only %d buffers\n"
 	      "     are available which is less than the recommended %d buffers. Lowering\n"
-	      "     the frame buffer resolution might help.\n"), 
+	      "     the frame buffer resolution might help.\n"),
 	    this->total_num_native_buffers, RECOMMENDED_NUM_BUFFERS);
   }
   else
@@ -995,21 +983,21 @@ static vo_driver_t *fb_open_plugin(video_driver_class_t *class_gen,
   fb_driver_t *this;
   fb_class_t *class;
   fb_visual_t *visual = NULL;
-  
+
   if (visual_gen) {
     visual = (fb_visual_t *) visual_gen;
   }
-          
+
   class = (fb_class_t *)class_gen;
   config = class->config;
 
   /* allocate plugin struct */
-  this = (fb_driver_t *) xine_xmalloc(sizeof(fb_driver_t));
+  this = calloc(1, sizeof(fb_driver_t));
   if(!this)
     return NULL;
 
   _x_alphablend_init(&this->alphablend_extra_data, class->xine);
-  
+
   register_callbacks(this);
 
   this->fd = open_fb_device(config, class->xine);
@@ -1021,7 +1009,7 @@ static vo_driver_t *fb_open_plugin(video_driver_class_t *class_gen,
     goto error;
   if (!set_fb_palette (this->fd, &this->fb_var))
     goto error;
-   
+
   this->xine = class->xine;
 
   if(this->fb_fix.line_length)
@@ -1030,7 +1018,7 @@ static vo_driver_t *fb_open_plugin(video_driver_class_t *class_gen,
     this->fb_bytes_per_line =
       (this->fb_var.xres_virtual *
        this->fb_var.bits_per_pixel)/8;
-    
+
   _x_vo_scale_init(&this->sc, 0, 0, config);
   this->sc.gui_width  = this->fb_var.xres;
   this->sc.gui_height = this->fb_var.yres;
@@ -1055,10 +1043,10 @@ static vo_driver_t *fb_open_plugin(video_driver_class_t *class_gen,
 	  this->fb_var.red.length, this->fb_var.red.offset,
 	  this->fb_var.green.length, this->fb_var.green.offset,
 	  this->fb_var.blue.length, this->fb_var.blue.offset);
-  
+
   if(!setup_yuv2rgb(this, config, &this->fb_var, &this->fb_fix))
     goto error;
-	
+
   /* mmap whole video memory */
   this->mem_size = this->fb_fix.smem_len;
   this->video_mem_base = mmap(0, this->mem_size, PROT_READ | PROT_WRITE,
@@ -1087,7 +1075,7 @@ static void fb_dispose_class(video_driver_class_t *this_gen)
 
 static void *fb_init_class(xine_t *xine, void *visual_gen)
 {
-  fb_class_t *this = (fb_class_t *)xine_xmalloc(sizeof(fb_class_t));
+  fb_class_t *this = calloc(1, sizeof(fb_class_t));
 
   this->driver_class.open_plugin     = fb_open_plugin;
   this->driver_class.get_identifier  = fb_get_identifier;
@@ -1112,7 +1100,7 @@ static const vo_info_t vo_info_fb =
 
 /* exported plugin catalog entry */
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_VIDEO_OUT, 21, "fb", XINE_VERSION_CODE, &vo_info_fb, fb_init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

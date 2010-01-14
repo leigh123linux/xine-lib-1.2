@@ -10,6 +10,9 @@ AM_CPPFLAGS = $(LIBFFMPEG_CPPFLAGS) -I$(top_srcdir)/src/libffmpeg/libavutil -I$(
 
 # Avoid "can't find register" failures with -O1 and higher
 dsputil_mmx.o dsputil_mmx.lo: CFLAGS=$(shell echo @CFLAGS@ | sed -e 's/-funroll-loops//g; s/$$/ -Os/')
+if ARCH_X86_32
+dsputil_mmx.o dsputil_mmx.lo: CFLAGS+=-prefer-non-pic
+endif
 
 # Avoid errors on (at least) amd64 with -O0
 fdct_mmx.o fdct_mmx.lo: CFLAGS=`echo @CFLAGS@ | sed -e 's/^/-Os /; s/-O0\?\s/-Os /g'`

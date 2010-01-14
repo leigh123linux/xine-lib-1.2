@@ -56,6 +56,11 @@ typedef struct {
    */
   deinterlace_method_t *curmethod;
 
+  /**
+   * This is how many frames to wait until deciding if the pulldown phase
+   * has changed or if we've really found a pulldown sequence.
+   */
+  unsigned int pulldown_error_wait;
 
   /* internal data */
   int last_topdiff;
@@ -93,4 +98,4 @@ tvtime_t *tvtime_new_context(void);
 void tvtime_reset_context( tvtime_t *this );
 
 
-#endif 
+#endif

@@ -21,7 +21,7 @@ libvcd_SRCS = \
 	sector.c \
 	stream.c \
 	stream_stdio.c \
-	util.c 
+	util.c
 
 libvcdinfo_SRCS = \
 	info.c \

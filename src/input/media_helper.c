@@ -1,18 +1,18 @@
-/* 
- * Copyright (C) 2000-2003 the xine project, 
- * 
+/*
+ * Copyright (C) 2000-2003 the xine project,
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -66,14 +66,14 @@ static int media_umount_media(const char *device)
     if(waitpid(pid, &status, 0) == -1) {
       if (errno != EINTR)
 	return -1;
-    } 
+    }
     else {
       return WEXITSTATUS(status);
     }
   } while(1);
-  
+
   return -1;
-} 
+}
 #endif
 
 int media_eject_media (xine_t *xine, const char *device)
@@ -91,7 +91,7 @@ int media_eject_media (xine_t *xine, const char *device)
 
   return 0;
 
-#else 
+#else
 
   int fd;
 
@@ -109,14 +109,14 @@ int media_eject_media (xine_t *xine, const char *device)
       case CDS_TRAY_OPEN:
         if((ret = ioctl(fd, CDROMCLOSETRAY)) != 0) {
 #ifdef LOG_MEDIA_EJECT
-          printf("input_dvd: CDROMCLOSETRAY failed: %s\n", strerror(errno));  
+          printf("input_dvd: CDROMCLOSETRAY failed: %s\n", strerror(errno));
 #endif
         }
         break;
       case CDS_DISC_OK:
         if((ret = ioctl(fd, CDROMEJECT)) != 0) {
 #ifdef LOG_MEDIA_EJECT
-          printf("input_dvd: CDROMEJECT failed: %s\n", strerror(errno));  
+          printf("input_dvd: CDROMEJECT failed: %s\n", strerror(errno));
 #endif
         }
         break;

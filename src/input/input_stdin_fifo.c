@@ -2,17 +2,17 @@
  * Copyright (C) 2000-2003 the xine project
  *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -78,13 +78,15 @@ static off_t stdin_plugin_get_current_pos (input_plugin_t *this_gen);
 
 
 
-static off_t stdin_plugin_read (input_plugin_t *this_gen, 
+static off_t stdin_plugin_read (input_plugin_t *this_gen,
 				char *buf, off_t len) {
 
   stdin_input_plugin_t  *this = (stdin_input_plugin_t *) this_gen;
   off_t n, total;
 
   lprintf ("reading %"PRId64" bytes...\n", len);
+  if (len < 0)
+    return -1;
 
   total=0;
   if (this->curpos < this->preview_size) {
@@ -102,7 +104,7 @@ static off_t stdin_plugin_read (input_plugin_t *this_gen,
     n = _x_io_file_read (this->stream, this->fh, &buf[total], len - total);
 
     lprintf ("got %"PRId64" bytes (%"PRId64"/%"PRId64" bytes read)\n", n,total,len);
-  
+
     if (n < 0) {
       _x_message(this->stream, XINE_MSG_READ_ERROR, NULL);
       return 0;
@@ -114,12 +116,19 @@ static off_t stdin_plugin_read (input_plugin_t *this_gen,
   return total;
 }
 
-static buf_element_t *stdin_plugin_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo, 
+static buf_element_t *stdin_plugin_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo,
 					       off_t todo) {
 
   off_t                 total_bytes;
   /* stdin_input_plugin_t  *this = (stdin_input_plugin_t *) this_gen; */
   buf_element_t         *buf = fifo->buffer_pool_alloc (fifo);
+
+  if (todo > buf->max_size)
+    todo = buf->max_size;
+  if (todo < 0) {
+    buf->free_buffer (buf);
+    return NULL;
+  }
 
   buf->content = buf->mem;
   buf->type = BUF_DEMUX_BLOCK;
@@ -146,7 +155,7 @@ static off_t stdin_plugin_seek (input_plugin_t *this_gen, off_t offset, int orig
   if ((origin == SEEK_CUR) && (offset >= 0)) {
 
     for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-      if( !this_gen->read (this_gen, this->seek_buf, BUFSIZE) )
+      if( this_gen->read (this_gen, this->seek_buf, BUFSIZE) <= 0 )
         return this->curpos;
     }
 
@@ -157,18 +166,18 @@ static off_t stdin_plugin_seek (input_plugin_t *this_gen, off_t offset, int orig
 
     if (offset < this->curpos) {
 
-      if( this->curpos <= this->preview_size ) 
+      if( this->curpos <= this->preview_size )
         this->curpos = offset;
       else
-        xprintf (this->xine, XINE_VERBOSITY_LOG, 
-                 _("stdin: cannot seek back! (%" PRIdMAX " > %" PRIdMAX ")\n"), 
+        xprintf (this->xine, XINE_VERBOSITY_LOG,
+                 _("stdin: cannot seek back! (%" PRIdMAX " > %" PRIdMAX ")\n"),
                  (intmax_t)this->curpos, (intmax_t)offset);
 
     } else {
       offset -= this->curpos;
 
       for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-        if( !this_gen->read (this_gen, this->seek_buf, BUFSIZE) )
+        if( this_gen->read (this_gen, this->seek_buf, BUFSIZE) <= 0 )
           return this->curpos;
       }
 
@@ -185,7 +194,7 @@ static off_t stdin_plugin_get_length(input_plugin_t *this_gen) {
 }
 
 static uint32_t stdin_plugin_get_capabilities(input_plugin_t *this_gen) {
-  
+
   return INPUT_CAP_PREVIEW;
 }
 
@@ -209,17 +218,17 @@ static const char* stdin_plugin_get_mrl (input_plugin_t *this_gen) {
 static void stdin_plugin_dispose (input_plugin_t *this_gen ) {
   stdin_input_plugin_t *this = (stdin_input_plugin_t *) this_gen;
 
-  if (this->nbc) 
+  if (this->nbc)
     nbc_close (this->nbc);
 
   if ((this->fh != STDIN_FILENO) && (this->fh != -1))
     close(this->fh);
-  
+
   free (this->mrl);
   free (this);
 }
 
-static int stdin_plugin_get_optional_data (input_plugin_t *this_gen, 
+static int stdin_plugin_get_optional_data (input_plugin_t *this_gen,
 					   void *data, int data_type) {
   stdin_input_plugin_t *this = (stdin_input_plugin_t *) this_gen;
 
@@ -270,13 +279,15 @@ static int stdin_plugin_open (input_plugin_t *this_gen ) {
 
   this->preview_size = stdin_plugin_read (&this->input_plugin, this->preview,
 					  MAX_PREVIEW_SIZE);
+  if (this->preview_size < 0)
+    this->preview_size = 0;
   this->curpos          = 0;
 
   return 1;
 }
 
 
-static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen, 
+static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen,
 						 xine_stream_t *stream, const char *data) {
 
   stdin_input_class_t  *class = (stdin_input_class_t *) class_gen;
@@ -311,7 +322,7 @@ static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen,
    * => create plugin instance
    */
 
-  this       = (stdin_input_plugin_t *) xine_xmalloc(sizeof(stdin_input_plugin_t));
+  this       = calloc(1, sizeof(stdin_input_plugin_t));
 
   this->stream = stream;
   this->curpos = 0;
@@ -362,7 +373,7 @@ static void *init_class (xine_t *xine, void *data) {
 
   stdin_input_class_t  *this;
 
-  this = (stdin_input_class_t *) xine_xmalloc (sizeof (stdin_input_class_t));
+  this = calloc(1, sizeof (stdin_input_class_t));
 
   this->xine   = xine;
 

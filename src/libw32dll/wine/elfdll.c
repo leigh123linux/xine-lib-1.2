@@ -3,7 +3,7 @@
  *
  * Copyright 1999 Bertho A. Stultiens
  */
-#include <config.h>
+#include "config.h"
 
 #ifdef HAVE_LIBDL
 

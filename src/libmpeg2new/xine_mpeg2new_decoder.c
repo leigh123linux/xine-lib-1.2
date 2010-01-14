@@ -1,24 +1,28 @@
-/* 
+/*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
  * stuff needed to turn libmpeg2 into a xine decoder plugin
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 
 #include <stdlib.h>
@@ -35,13 +39,14 @@
 #include "video_out.h"
 #include "buffer.h"
 
-
-
+/*
 #define LOG
 #define LOG_FRAME_ALLOC_FREE
 #define LOG_ENTRY
 #define LOG_FRAME_COUNTER
+*/
 
+#define _x_abort() do {} while (0)
 
 typedef struct {
   video_decoder_class_t   decoder_class;
@@ -63,10 +68,12 @@ typedef struct mpeg2_video_decoder_s {
   img_state_t     img_state[30];
   uint32_t	  frame_number;
   uint32_t        rff_pattern;
-  
+
 } mpeg2_video_decoder_t;
 
-
+#ifndef LOG_FRAME_ALLOC_FREE
+inline static void mpeg2_video_print_bad_state(img_state_t * img_state) {}
+#else
 static void mpeg2_video_print_bad_state(img_state_t * img_state) {
   int32_t n,m;
   m=0;
@@ -78,7 +85,8 @@ static void mpeg2_video_print_bad_state(img_state_t * img_state) {
   }
   if (m > 3) _x_abort();
   if (m == 0) printf("NO FRAMES\n");
-} 
+}
+#endif
 
 static void mpeg2_video_free_all(img_state_t * img_state) {
   int32_t n,m;
@@ -91,7 +99,7 @@ static void mpeg2_video_free_all(img_state_t * img_state) {
       img_state[n].id = 0;
     }
   }
-} 
+}
 
 
 static void mpeg2_video_print_fbuf(const mpeg2_fbuf_t * fbuf) {
@@ -130,7 +138,7 @@ static void mpeg2_video_decode_data (video_decoder_t *this_gen, buf_element_t *b
       else
 	this->force_pan_scan = 0;
     }
-    
+
     return;
   }
 
@@ -143,7 +151,7 @@ static void mpeg2_video_decode_data (video_decoder_t *this_gen, buf_element_t *b
   mpeg2_buffer (this->mpeg2dec, current, end);
 
   info = mpeg2_info (this->mpeg2dec);
-  
+
   while ((state = mpeg2_parse (this->mpeg2dec)) != STATE_BUFFER) {
     switch (state) {
       case STATE_SEQUENCE:
@@ -153,7 +161,7 @@ static void mpeg2_video_decode_data (video_decoder_t *this_gen, buf_element_t *b
         _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_WIDTH,     info->sequence->picture_width);
         _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_HEIGHT,    info->sequence->picture_height);
         _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION,  info->sequence->frame_period / 300);
-        if (this->force_aspect) info->sequence->pixel_width = this->force_aspect;
+        if (this->force_aspect) ((mpeg2_sequence_t *)info->sequence)->pixel_width = this->force_aspect; /* ugly... */
         switch (info->sequence->pixel_width) {
 	case 3:
 	  this->ratio = 16.0 / 9.0;
@@ -186,7 +194,7 @@ static void mpeg2_video_decode_data (video_decoder_t *this_gen, buf_element_t *b
         } else {
           picture_structure = VO_BOTH_FIELDS;
         }
-          
+
         img = this->stream->video_out->get_frame (this->stream->video_out,
                                               info->sequence->picture_width,
                                               info->sequence->picture_height,
@@ -206,7 +214,7 @@ static void mpeg2_video_decode_data (video_decoder_t *this_gen, buf_element_t *b
             img->duration += img->duration/4;
         } else {
           if( img->repeat_first_field ) {
-            img->duration = (img->duration * info->current_picture->nb_fields) / 2; 
+            img->duration = (img->duration * info->current_picture->nb_fields) / 2;
           }
         }
 
@@ -216,7 +224,7 @@ static void mpeg2_video_decode_data (video_decoder_t *this_gen, buf_element_t *b
           img->pts=0;
         }
 
- 
+
 #ifdef LOG_FRAME_ALLOC_FREE
         printf ("libmpeg2:decode_data:get_frame xine=%p (id=%d)\n", img,img->id);
 #endif
@@ -449,7 +457,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   mpeg2_video_decoder_t *this ;
   int32_t n;
 
-  this = (mpeg2_video_decoder_t *) xine_xmalloc (sizeof (mpeg2_video_decoder_t));
+  this = (mpeg2_video_decoder_t *) calloc(1, sizeof(mpeg2_video_decoder_t));
 
   this->video_decoder.decode_data         = mpeg2_video_decode_data;
   this->video_decoder.flush               = mpeg2_video_flush;
@@ -490,7 +498,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   mpeg2_class_t *this;
 
-  this = (mpeg2_class_t *) xine_xmalloc (sizeof (mpeg2_class_t));
+  this = (mpeg2_class_t *) calloc(1, sizeof(mpeg2_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;
@@ -503,15 +511,15 @@ static void *init_plugin (xine_t *xine, void *data) {
  * exported plugin catalog entry
  */
 
-static uint32_t supported_types[] = { BUF_VIDEO_MPEG, 0 };
+static const uint32_t supported_types[] = { BUF_VIDEO_MPEG, 0 };
 
-static decoder_info_t dec_info_mpeg2 = {
+static const decoder_info_t dec_info_mpeg2 = {
   supported_types,     /* supported types */
   6                    /* priority        */
 };
 
-plugin_info_t xine_plugin_info[] = {
-  /* type, API, "name", version, special_info, init_function */  
+const plugin_info_t xine_plugin_info[] EXPORTED = {
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_VIDEO_DECODER, 18, "mpeg2new", XINE_VERSION_CODE, &dec_info_mpeg2, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

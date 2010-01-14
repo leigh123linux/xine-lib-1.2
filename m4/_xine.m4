@@ -81,7 +81,7 @@ AC_DEFUN([AC_CHECK_LIRC],
 
         if test x"$LIRC_PREFIX" != "x"; then
            lirc_libprefix="$LIRC_PREFIX/lib"
-  	   LIRC_INCLUDE="-I$LIRC_PREFIX/include"
+	   LIRC_INCLUDE="-I$LIRC_PREFIX/include"
         fi
         for llirc in $lirc_libprefix /lib /usr/lib /usr/local/lib; do
           AC_CHECK_FILE("$llirc/liblirc_client.a",
@@ -117,14 +117,14 @@ AC_DEFUN([AC_CHECK_DXR3],
     AC_MSG_RESULT([*** checking for a supported mpeg encoder])
     have_encoder=no
     have_libfame=yes
-    AC_CHECK_LIB(fame, fame_open, 
+    AC_CHECK_LIB(fame, fame_open,
       [AC_CHECK_HEADER(fame.h, true, have_libfame=no)], have_libfame=no)
     if test "$have_libfame" = "yes"; then
       AC_DEFINE(HAVE_LIBFAME)
       have_encoder=yes
     fi
     have_librte=yes
-    AC_CHECK_LIB(rte, rte_init, 
+    AC_CHECK_LIB(rte, rte_init,
       [AC_CHECK_HEADER(rte.h, true, have_librte=no)], have_librte=no)
     if test "$have_librte" = "yes"; then
       AC_DEFINE(HAVE_LIBRTE)
@@ -141,36 +141,6 @@ AC_DEFUN([AC_CHECK_DXR3],
     have_dxr3=no
   fi
 ])
-
-dnl AC_TRY_CFLAGS (CFLAGS, [ACTION-IF-WORKS], [ACTION-IF-FAILS])
-dnl check if $CC supports a given set of cflags
-AC_DEFUN([AC_TRY_CFLAGS],
-    [AC_MSG_CHECKING([if $CC supports $1 flags])
-    SAVE_CFLAGS="$CFLAGS"
-    CFLAGS="$1"
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[ac_cv_try_cflags_ok=yes],[ac_cv_try_cflags_ok=no])
-    CFLAGS="$SAVE_CFLAGS"
-    AC_MSG_RESULT([$ac_cv_try_cflags_ok])
-    if test x"$ac_cv_try_cflags_ok" = x"yes"; then
-        ifelse([$2],[],[:],[$2])
-    else
-        ifelse([$3],[],[:],[$3])
-    fi])
-
-dnl AC_TRY_LDFLAGS (CFLAGS, [ACTION-IF-WORKS], [ACTION-IF-FAILS])
-dnl check if $CC supports a given set of ldflags
-AC_DEFUN([AC_TRY_LDFLAGS],
-    [AC_MSG_CHECKING([if $CC supports $1 flags])
-    SAVE_LDFLAGS="$LDFLAGS"
-    LDFLAGS="$1"
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[ac_cv_try_ldflags_ok=yes],[ac_cv_try_ldflags_ok=no])
-    LDFLAGS="$SAVE_LDFLAGS"
-    AC_MSG_RESULT([$ac_cv_try_ldflags_ok])
-    if test x"$ac_cv_try_ldflags_ok" = x"yes"; then
-        ifelse([$2],[],[:],[$2])
-    else
-        ifelse([$3],[],[:],[$3])
-    fi])
 
 dnl AC_CHECK_GENERATE_INTTYPES_H (INCLUDE-DIRECTORY)
 dnl generate a default inttypes.h if the header file does not exist already
@@ -420,7 +390,7 @@ dnl Validate the GMSGFMT program found by gettext.m4; reject old versions
 dnl of GNU msgfmt that do not support the "msgid_plural" extension.
 AC_DEFUN([AC_PROG_GMSGFMT_PLURAL],
  [dnl AC_REQUIRE(AM_GNU_GETTEXT)
-  
+
   if test "$GMSGFMT" != ":"; then
     AC_MSG_CHECKING([for plural forms in GNU msgfmt])
 
@@ -528,7 +498,7 @@ _ACEOF
 	      AC_MSG_RESULT(no)
             fi
 	  fi
-        fi 
+        fi
       else
         AC_MSG_RESULT(no)
       fi
@@ -542,7 +512,6 @@ _ACEOF
 dnl Check for the type of the third argument of getsockname
 AC_DEFUN([AC_CHECK_SOCKLEN_T], [
   AC_MSG_CHECKING(for socklen_t)
-  AC_LANG_PUSH(C++)
 
   AC_CACHE_VAL(ac_cv_socklen_t, [
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
@@ -558,7 +527,6 @@ getsockname(0,(struct sockaddr*)0, &a);]])],
       [ac_cv_socklen_t=int],[ac_cv_socklen_t=size_t])
     fi
   ])
-  AC_LANG_POP([C++])
 
   AC_MSG_RESULT($ac_cv_socklen_t)
   if test "$ac_cv_socklen_t" != "socklen_t"; then

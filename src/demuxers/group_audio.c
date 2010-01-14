@@ -110,7 +110,7 @@ static const demuxer_info_t demux_info_mod = {
 #endif
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_DEMUX, 26, "aac",       XINE_VERSION_CODE, &demux_info_aac,       demux_aac_init_plugin },
   { PLUGIN_DEMUX, 26, "ac3",       XINE_VERSION_CODE, &demux_info_ac3,       demux_ac3_init_plugin },
   { PLUGIN_DEMUX, 26, "aud",       XINE_VERSION_CODE, &demux_info_aud,       demux_aud_init_plugin },

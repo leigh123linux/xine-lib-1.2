@@ -1,12 +1,13 @@
+include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
 POSTPROC_INT_LIB = $(top_builddir)/src/libffmpeg/libavcodec/libpostproc/libpostprocess.la
 
 if HAVE_FFMPEG
 postproc_lib = $(FFMPEG_POSTPROC_LIBS)
-ff_cflags = $(FFMPEG_POSTPROC_CFLAGS)
+ff_cflags = $(FFMPEG_CFLAGS) $(FFMPEG_POSTPROC_CFLAGS)
 else
-ff_cflags = -I$(top_srcdir)/src/libffmpeg/libavcodec/libpostproc
+ff_cflags = -I$(top_srcdir)/src/libffmpeg/libavcodec
 postproc_lib = $(POSTPROC_INT_LIB)
 postproc_dep = $(postproc_lib)
 endif

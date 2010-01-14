@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2006 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -67,9 +67,9 @@ struct xine_list_s {
 /* Allocates a new chunk of n elements
  * One malloc call is used to allocate the struct and the elements.
  */
-static xine_list_chunk_t *xine_list_alloc_chunk(size_t size) {
+static xine_list_chunk_t *XINE_MALLOC xine_list_alloc_chunk(size_t size) {
   xine_list_chunk_t *new_chunk;
-  size_t chunk_mem_size;;
+  size_t chunk_mem_size;
 
   chunk_mem_size  = sizeof(xine_list_chunk_t);
   chunk_mem_size += sizeof(xine_list_elem_t) * size;

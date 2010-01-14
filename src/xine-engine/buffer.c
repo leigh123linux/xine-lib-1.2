@@ -1,13 +1,13 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -64,7 +64,7 @@ static void buffer_pool_free (buf_element_t *element) {
     fprintf(stderr, _("xine-lib: buffer.c: There has been a fatal error: TOO MANY FREE's\n"));
     _x_abort();
   }
-  
+
   pthread_cond_signal (&this->buffer_pool_cond_not_empty);
 
   pthread_mutex_unlock (&this->buffer_pool_mutex);
@@ -104,7 +104,7 @@ static buf_element_t *buffer_pool_alloc (fifo_buffer_t *this) {
   memset(buf->decoder_info, 0, sizeof(buf->decoder_info));
   memset(buf->decoder_info_ptr, 0, sizeof(buf->decoder_info_ptr));
   _x_extra_info_reset( buf->extra_info );
-  
+
   return buf;
 }
 
@@ -151,7 +151,7 @@ static buf_element_t *buffer_pool_try_alloc (fifo_buffer_t *this) {
  */
 static void fifo_buffer_put (fifo_buffer_t *fifo, buf_element_t *element) {
   int i;
-  
+
   pthread_mutex_lock (&fifo->mutex);
 
   for(i = 0; fifo->put_cb[i]; i++)
@@ -177,7 +177,7 @@ static void fifo_buffer_put (fifo_buffer_t *fifo, buf_element_t *element) {
  */
 static void dummy_fifo_buffer_put (fifo_buffer_t *fifo, buf_element_t *element) {
   int i;
-  
+
   pthread_mutex_lock (&fifo->mutex);
 
   for(i = 0; fifo->put_cb[i]; i++)
@@ -444,7 +444,7 @@ static void fifo_unregister_alloc_cb (fifo_buffer_t *this,
         this->alloc_cb_data[j] = this->alloc_cb_data[j+1];
       }
     }
-  }  
+  }
   pthread_mutex_unlock(&this->mutex);
 }
 
@@ -465,7 +465,7 @@ static void fifo_unregister_put_cb (fifo_buffer_t *this,
         this->put_cb_data[j] = this->put_cb_data[j+1];
       }
     }
-  }  
+  }
   pthread_mutex_unlock(&this->mutex);
 }
 
@@ -486,7 +486,7 @@ static void fifo_unregister_get_cb (fifo_buffer_t *this,
         this->get_cb_data[j] = this->get_cb_data[j+1];
       }
     }
-  }  
+  }
   pthread_mutex_unlock(&this->mutex);
 }
 
@@ -500,7 +500,7 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
   int            alignment = 2048;
   unsigned char *multi_buffer = NULL;
 
-  this = xine_xmalloc (sizeof (fifo_buffer_t));
+  this = calloc(1, sizeof(fifo_buffer_t));
 
   this->first               = NULL;
   this->last                = NULL;
@@ -551,7 +551,7 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
   for (i = 0; i<num_buffers; i++) {
     buf_element_t *buf;
 
-    buf = xine_xmalloc (sizeof (buf_element_t));
+    buf = calloc(1, sizeof(buf_element_t));
 
     buf->mem = multi_buffer;
     multi_buffer += buf_size;

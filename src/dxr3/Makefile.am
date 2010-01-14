@@ -1,3 +1,4 @@
+include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
 AM_CFLAGS = $(X_CFLAGS) $(LIBFAME_CFLAGS)
@@ -5,7 +6,7 @@ AM_CFLAGS = $(X_CFLAGS) $(LIBFAME_CFLAGS)
 if HAVE_DXR3
 dxr3_modules = xineplug_decode_dxr3_video.la \
 	xineplug_decode_dxr3_spu.la \
-	xineplug_vo_out_dxr3.la 
+	xineplug_vo_out_dxr3.la
 endif
 if HAVE_X11
 link_x_libs = $(X_LIBS) -lXext
@@ -17,7 +18,7 @@ if HAVE_LIBRTE
 link_rte = -lrte
 endif
 
-xineplug_LTLIBRARIES = $(dxr3_modules) 
+xineplug_LTLIBRARIES = $(dxr3_modules)
 
 xineplug_decode_dxr3_video_la_SOURCES = dxr3_decode_video.c
 xineplug_decode_dxr3_video_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
@@ -40,7 +41,7 @@ xineplug_vo_out_dxr3_la_SOURCES = \
 	dxr3_mpeg_encoders.c \
 	dxr3_spu_encoder.c \
 	dxr3_scr.c \
-	video_out_dxr3.c 
+	video_out_dxr3.c
 
 xineplug_vo_out_dxr3_la_LIBADD = $(XINE_LIB) $(link_fame) $(link_rte) $(link_x_libs) $(LTLIBINTL) $(DYNAMIC_LD_LIBS) -lm
 xineplug_vo_out_dxr3_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)

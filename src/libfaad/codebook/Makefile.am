@@ -12,4 +12,4 @@ EXTRA_DIST = hcb.h \
 	hcb_9.h \
 	hcb_10.h \
 	hcb_11.h \
-	hcb_sf.h 
+	hcb_sf.h

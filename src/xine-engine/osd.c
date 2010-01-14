@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2005 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -83,17 +83,6 @@
 #  define UCS2_ENCODING "UCS-2LE"
 #endif
 
-#ifdef MAX
-#undef MAX
-#endif
-#define MAX(a,b) ( (a) > (b) ) ? (a) : (b)
-
-#ifdef MIN
-#undef MIN
-#endif
-#define MIN(a,b) ( (a) < (b) ) ? (a) : (b)
-
-
 #if (FREETYPE_MAJOR > 2) || \
     (FREETYPE_MAJOR == 2 && FREETYPE_MINOR > 1) || \
     (FREETYPE_MAJOR == 2 && FREETYPE_MINOR == 1 && FREETYPE_PATCH >= 3)
@@ -124,7 +113,7 @@ struct osd_font_s {
   uint16_t         size;
   uint16_t         num_fontchars;
   uint16_t         loaded;
-}; 
+};
 
 #ifdef HAVE_FT2
 struct osd_ft2context_s {
@@ -132,6 +121,20 @@ struct osd_ft2context_s {
   FT_Face    face;
   int        size;
 };
+
+static void osd_free_ft2 (osd_object_t *osd)
+{
+  if( osd->ft2 ) {
+    if ( osd->ft2->face )
+      FT_Done_Face (osd->ft2->face);
+    if ( osd->ft2->library )
+      FT_Done_FreeType(osd->ft2->library);
+    free( osd->ft2 );
+    osd->ft2 = NULL;
+  }
+}
+#else
+static inline void osd_free_ft2 (osd_object_t *osd __attr_unused) {}
 #endif
 
 /*
@@ -143,28 +146,28 @@ struct osd_ft2context_s {
  * for the sake of simplicity)
  */
 
-static osd_object_t *osd_new_object (osd_renderer_t *this, int width, int height) {
-     
+static osd_object_t *XINE_MALLOC osd_new_object (osd_renderer_t *this, int width, int height) {
+
   osd_object_t *osd;
-  
-  pthread_mutex_lock (&this->osd_mutex);  
-  
-  osd = xine_xmalloc( sizeof(osd_object_t) );
+
+  pthread_mutex_lock (&this->osd_mutex);
+
+  osd = calloc(1, sizeof(osd_object_t));
   osd->renderer = this;
   osd->next = this->osds;
   this->osds = osd;
-  
+
   osd->width = width;
   osd->height = height;
-  osd->area = xine_xmalloc( width * height );
-  
+  osd->area = calloc(width, height);
+
   osd->x1 = width;
   osd->y1 = height;
   osd->x2 = 0;
   osd->y2 = 0;
 
-  memcpy(osd->color, textpalettes_color[0], sizeof(textpalettes_color[0])); 
-  memcpy(osd->trans, textpalettes_trans[0], sizeof(textpalettes_trans[0])); 
+  memcpy(osd->color, textpalettes_color[0], sizeof(textpalettes_color[0]));
+  memcpy(osd->trans, textpalettes_trans[0], sizeof(textpalettes_trans[0]));
 
   osd->handle = -1;
 
@@ -172,11 +175,11 @@ static osd_object_t *osd_new_object (osd_renderer_t *this, int width, int height
   osd->cd       = (iconv_t)-1;
   osd->encoding = NULL;
 #endif
-  
-  pthread_mutex_unlock (&this->osd_mutex);  
+
+  pthread_mutex_unlock (&this->osd_mutex);
 
   lprintf("osd=%p size: %dx%d\n", osd, width, height);
-  
+
   return osd;
 }
 
@@ -193,7 +196,7 @@ static int _osd_hide (osd_object_t *osd, int64_t vpts);
  * the object is not changed. there may be subsequent drawing  on it.
  */
 static int _osd_show (osd_object_t *osd, int64_t vpts, int unscaled ) {
-     
+
   osd_renderer_t *this = osd->renderer;
   video_overlay_manager_t *ovl_manager;
   rle_elem_t rle, *rle_p=0;
@@ -201,21 +204,21 @@ static int _osd_show (osd_object_t *osd, int64_t vpts, int unscaled ) {
   uint8_t *c;
 
   lprintf("osd=%p vpts=%"PRId64"\n", osd, vpts);
-  
+
   this->stream->xine->port_ticket->acquire(this->stream->xine->port_ticket, 1);
-  
+
   ovl_manager = this->stream->video_out->get_overlay_manager(this->stream->video_out);
-      
+
   if( osd->handle < 0 ) {
     if( (osd->handle = ovl_manager->get_handle(ovl_manager, 0)) == -1 ) {
       this->stream->xine->port_ticket->release(this->stream->xine->port_ticket, 1);
       return 0;
     }
   }
-  
-  pthread_mutex_lock (&this->osd_mutex);  
- 
-  /* clip update area to allowed range */  
+
+  pthread_mutex_lock (&this->osd_mutex);
+
+  /* clip update area to allowed range */
   if(osd->x1 > osd->width)
     osd->x1 = osd->width;
   if(osd->x2 > osd->width)
@@ -229,13 +232,13 @@ static int _osd_show (osd_object_t *osd, int64_t vpts, int unscaled ) {
   if(osd->y1 < 0) osd->y1 = 0;
   if(osd->y2 < 0) osd->y2 = 0;
 
-#ifdef DEBUG_RLE  
+#ifdef DEBUG_RLE
   lprintf("osd_show %p rle starts\n", osd);
-#endif  
+#endif
 
   /* check if osd is valid (something drawn on it) */
   if( osd->x2 > osd->x1 && osd->y2 > osd->y1 ) {
- 
+
     this->event.object.handle = osd->handle;
 
     memset( this->event.object.overlay, 0, sizeof(*this->event.object.overlay) );
@@ -244,25 +247,25 @@ static int _osd_show (osd_object_t *osd, int64_t vpts, int unscaled ) {
     this->event.object.overlay->y = osd->display_y + osd->y1;
     this->event.object.overlay->width = osd->x2 - osd->x1;
     this->event.object.overlay->height = osd->y2 - osd->y1;
- 
+
     this->event.object.overlay->hili_top    = 0;
     this->event.object.overlay->hili_bottom = this->event.object.overlay->height;
     this->event.object.overlay->hili_left   = 0;
     this->event.object.overlay->hili_right  = this->event.object.overlay->width;
-   
+
     /* there will be at least that many rle objects (one for each row) */
     this->event.object.overlay->num_rle = 0;
     /* We will never need more rle objects than columns in any row
        Rely on lazy page allocation to avoid us actually taking up
        this much RAM */
     this->event.object.overlay->data_size = osd->width * osd->height;
-    rle_p = this->event.object.overlay->rle = 
+    rle_p = this->event.object.overlay->rle =
        malloc(this->event.object.overlay->data_size * sizeof(rle_elem_t) );
-    
+
     for( y = osd->y1; y < osd->y2; y++ ) {
-#ifdef DEBUG_RLE      
+#ifdef DEBUG_RLE
       lprintf("osd_show %p y = %d: ", osd, y);
-#endif      
+#endif
       c = osd->area + y * osd->width + osd->x1;
 
       /* initialize a rle object with the first pixel's color */
@@ -272,17 +275,17 @@ static int _osd_show (osd_object_t *osd, int64_t vpts, int unscaled ) {
       /* loop over the remaining pixels in the row */
       for( x = osd->x1 + rle.len; x < osd->x2; x++, c++ ) {
         if( rle.color != *c ) {
-#ifdef DEBUG_RLE          
+#ifdef DEBUG_RLE
           lprintf("(%d, %d), ", rle.len, rle.color);
 #endif
           *rle_p++ = rle;
-          this->event.object.overlay->num_rle++;            
+          this->event.object.overlay->num_rle++;
 
           rle.color = *c;
           rle.len = 1;
         } else {
           rle.len++;
-        }  
+        }
       }
 #ifdef DEBUG_RLE
       lprintf("(%d, %d)\n", rle.len, rle.color);
@@ -294,12 +297,12 @@ static int _osd_show (osd_object_t *osd, int64_t vpts, int unscaled ) {
     lprintf("osd_show %p rle ends\n", osd);
 #endif
     lprintf("num_rle = %d\n", this->event.object.overlay->num_rle);
-  
-    memcpy(this->event.object.overlay->hili_color, osd->color, sizeof(osd->color)); 
-    memcpy(this->event.object.overlay->hili_trans, osd->trans, sizeof(osd->trans)); 
-    memcpy(this->event.object.overlay->color, osd->color, sizeof(osd->color)); 
-    memcpy(this->event.object.overlay->trans, osd->trans, sizeof(osd->trans)); 
-  
+
+    memcpy(this->event.object.overlay->hili_color, osd->color, sizeof(osd->color));
+    memcpy(this->event.object.overlay->hili_trans, osd->trans, sizeof(osd->trans));
+    memcpy(this->event.object.overlay->color, osd->color, sizeof(osd->color));
+    memcpy(this->event.object.overlay->trans, osd->trans, sizeof(osd->trans));
+
     this->event.event_type = OVERLAY_EVENT_SHOW;
     this->event.vpts = vpts;
     ovl_manager->add_event(ovl_manager, (void *)&this->event);
@@ -307,10 +310,10 @@ static int _osd_show (osd_object_t *osd, int64_t vpts, int unscaled ) {
     /* osd empty - hide it */
     _osd_hide(osd, vpts);
   }
-  pthread_mutex_unlock (&this->osd_mutex);  
-  
+  pthread_mutex_unlock (&this->osd_mutex);
+
   this->stream->xine->port_ticket->release(this->stream->xine->port_ticket, 1);
-  
+
   return 1;
 }
 
@@ -332,24 +335,24 @@ static int osd_show_unscaled (osd_object_t *osd, int64_t vpts) {
  * send event to hide osd at given pts (0=now)
  * the object is not changed. there may be subsequent drawing  on it.
  */
-static int _osd_hide (osd_object_t *osd, int64_t vpts) {     
+static int _osd_hide (osd_object_t *osd, int64_t vpts) {
 
   osd_renderer_t *this = osd->renderer;
   video_overlay_manager_t *ovl_manager;
-  
+
   lprintf("osd=%p vpts=%"PRId64"\n",osd, vpts);
-      
+
   if( osd->handle < 0 )
     return 0;
-  
+
   this->event.object.handle = osd->handle;
-  
+
   /* not really needed this, but good pratice to clean it up */
   memset( this->event.object.overlay, 0, sizeof(this->event.object.overlay) );
-   
+
   this->event.event_type = OVERLAY_EVENT_HIDE;
   this->event.vpts = vpts;
-  
+
   ovl_manager = this->stream->video_out->get_overlay_manager(this->stream->video_out);
   ovl_manager->add_event(ovl_manager, (void *)&this->event);
 
@@ -395,14 +398,14 @@ static void osd_clear (osd_object_t *osd) {
 
 static void osd_point (osd_object_t *osd, int x, int y, int color) {
   uint8_t *c;
-  
+
   lprintf("osd=%p (%d x %d)\n", osd, x, y);
-  
+
   if (x < 0 || x >= osd->width)
     return;
   if (y < 0 || y >= osd->height)
     return;
-  
+
   /* update clipping area */
   osd->x1 = MIN(osd->x1, x);
   osd->x2 = MAX(osd->x2, (x + 1));
@@ -419,14 +422,14 @@ static void osd_point (osd_object_t *osd, int x, int y, int color) {
 
 static void osd_line (osd_object_t *osd,
 		      int x1, int y1, int x2, int y2, int color) {
-     
+
   uint8_t *c;
   int dx, dy, t, inc, d, inc1, inc2;
   int swap_x = 0;
   int swap_y = 0;
 
   lprintf("osd=%p (%d,%d)-(%d,%d)\n",osd, x1,y1, x2,y2 );
-  
+
   /* sort line */
   if (x2 < x1) {
     t  = x1;
@@ -441,7 +444,7 @@ static void osd_line (osd_object_t *osd,
     swap_y = 1;
   }
 
-  /* clip line */ 
+  /* clip line */
   if (x1 < 0) {
     y1 = y1 + (y2-y1) * -x1 / (x2-x1);
     x1 = 0;
@@ -458,19 +461,19 @@ static void osd_line (osd_object_t *osd,
     x2 = x1 + (x2-x1) * (osd->height-y1) / (y2-y1);
     y2 = osd->height;
   }
-  
+
   if (x1 >= osd->width || y1 >= osd->height)
     return;
- 
+
   /* update clipping area */
   osd->x1 = MIN( osd->x1, x1 );
   osd->x2 = MAX( osd->x2, x2 );
   osd->y1 = MIN( osd->y1, y1 );
   osd->y2 = MAX( osd->y2, y2 );
-  
+
   dx = x2 - x1;
   dy = y2 - y1;
-  
+
   /* unsort line */
   if (swap_x) {
     t  = x1;
@@ -489,7 +492,7 @@ static void osd_line (osd_object_t *osd,
       t = x2; x2 = x1; x1 = t;
       t = y2; y2 = y1; y1 = t;
     }
-  
+
     if( y2 > y1 ) inc = 1; else inc = -1;
 
     inc1 = 2*dy;
@@ -497,11 +500,11 @@ static void osd_line (osd_object_t *osd,
     inc2 = 2*(dy-dx);
 
     c = osd->area + y1 * osd->width + x1;
-    
+
     while(x1<x2)
     {
       *c++ = color;
-      
+
       x1++;
       if( d<0 ) {
         d+=inc1;
@@ -526,8 +529,8 @@ static void osd_line (osd_object_t *osd,
     c = osd->area + y1 * osd->width + x1;
 
     while(y1<y2) {
-      *c = color; 
-      
+      *c = color;
+
       c += osd->width;
       y1++;
       if( d<0 ) {
@@ -552,17 +555,17 @@ static void osd_filled_rect (osd_object_t *osd,
   int x, y, dx, dy;
 
   lprintf("osd=%p (%d,%d)-(%d,%d)\n",osd, x1,y1, x2,y2 );
-  
+
   /* sort rectangle */
   x  = MIN( x1, x2 );
   dx = MAX( x1, x2 );
   y  = MIN( y1, y2 );
   dy = MAX( y1, y2 );
-  
+
   /* clip rectangle */
   if (x >= osd->width || y >= osd->height)
     return;
- 
+
   if (x < 0) {
     dx += x;
     x = 0;
@@ -574,7 +577,7 @@ static void osd_filled_rect (osd_object_t *osd,
 
   dx = MIN( dx, osd->width );
   dy = MIN( dy, osd->height );
-   
+
   /* update clipping area */
   osd->x1 = MIN( osd->x1, x );
   osd->x2 = MAX( osd->x2, dx );
@@ -600,7 +603,7 @@ static void osd_set_palette(osd_object_t *osd, const uint32_t *color, const uint
 }
 
 /*
- * set on existing text palette 
+ * set on existing text palette
  * (-1 to set user specified palette)
  */
 
@@ -619,7 +622,7 @@ static void osd_set_text_palette(osd_object_t *osd, int palette_number,
   memcpy(&osd->color[color_base], textpalettes_color[palette_number],
 	 sizeof(textpalettes_color[palette_number]));
   memcpy(&osd->trans[color_base], textpalettes_trans[palette_number],
-	 sizeof(textpalettes_trans[palette_number]));    
+	 sizeof(textpalettes_trans[palette_number]));
 }
 
 
@@ -655,7 +658,7 @@ static uint16_t gzread_i16(gzFile *fp) {
 }
 
 /*
-   load bitmap font into osd engine 
+   load bitmap font into osd engine
 */
 
 static int osd_renderer_load_font(osd_renderer_t *this, char *filename) {
@@ -663,47 +666,47 @@ static int osd_renderer_load_font(osd_renderer_t *this, char *filename) {
   gzFile      *fp;
   osd_font_t  *font = NULL;
   int          i, ret = 0;
-  
+
   lprintf("name=%s\n", filename );
 
   /* load quick & dirt font format */
   /* fixme: check for all read errors... */
   if( (fp = gzopen(filename,"rb")) != NULL ) {
 
-    font = xine_xmalloc( sizeof(osd_font_t) );
+    font = calloc(1, sizeof(osd_font_t));
 
     gzread(fp, font->name, sizeof(font->name) );
     font->version = gzread_i16(fp);
-    
+
     if( font->version == FONT_VERSION ) {
-    
+
       font->size = gzread_i16(fp);
       font->num_fontchars = gzread_i16(fp);
       font->loaded = 1;
-      
+
       font->fontchar = malloc( sizeof(osd_fontchar_t) * font->num_fontchars );
-  
+
       lprintf("font '%s' chars=%d\n", font->name, font->num_fontchars);
-      
+
       /* load all characters */
       for( i = 0; i < font->num_fontchars; i++ ) {
         font->fontchar[i].code = gzread_i16(fp);
         font->fontchar[i].width = gzread_i16(fp);
         font->fontchar[i].height = gzread_i16(fp);
         font->fontchar[i].bmp = malloc(font->fontchar[i].width*font->fontchar[i].height);
-        if( gzread(fp, font->fontchar[i].bmp, 
+        if( gzread(fp, font->fontchar[i].bmp,
               font->fontchar[i].width*font->fontchar[i].height) <= 0 )
           break;
       }
-      
+
       /* check if all expected characters were loaded */
       if( i == font->num_fontchars ) {
         osd_font_t *known_font;
         ret = 1;
-  
+
         lprintf("font '%s' loaded\n",font->name);
-                     
-        /* check if font is already known to us */ 
+
+        /* check if font is already known to us */
         known_font = this->fonts;
         while( known_font ) {
           if( !strcasecmp(known_font->name,font->name) &&
@@ -711,16 +714,16 @@ static int osd_renderer_load_font(osd_renderer_t *this, char *filename) {
             break;
           known_font = known_font->next;
         }
-        
+
         if( !known_font ) {
-          
+
           /* new font, add it to list */
           font->filename = strdup(filename);
           font->next = this->fonts;
           this->fonts = font;
-        
+
         } else {
-          
+
           if( !known_font->loaded ) {
             /* the font was preloaded before.
              * add loaded characters to the existing entry.
@@ -731,7 +734,7 @@ static int osd_renderer_load_font(osd_renderer_t *this, char *filename) {
             known_font->fontchar = font->fontchar;
             free(font);
           } else {
-            xprintf(this->stream->xine, XINE_VERBOSITY_LOG, 
+            xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 		    _("font '%s-%d' already loaded, weird.\n"), font->name, font->size);
             while( --i >= 0 ) {
               free(font->fontchar[i].bmp);
@@ -739,13 +742,13 @@ static int osd_renderer_load_font(osd_renderer_t *this, char *filename) {
             free(font->fontchar);
             free(font);
           }
-          
+
         }
       } else {
-	
+
         xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 		_("font '%s' loading failed (%d < %d)\n") ,font->name, i, font->num_fontchars);
-  
+
         while( --i >= 0 ) {
           free(font->fontchar[i].bmp);
         }
@@ -771,13 +774,13 @@ static int osd_renderer_unload_font(osd_renderer_t *this, char *fontname ) {
   osd_font_t *font, *last;
   osd_object_t *osd;
   int i, ret = 0;
-  
+
   lprintf("font '%s'\n", fontname);
 
   pthread_mutex_lock (&this->osd_mutex);
 
   osd = this->osds;
-  while( osd ) {  
+  while( osd ) {
     if( !strcasecmp(osd->font->name, fontname) )
       osd->font = NULL;
     osd = osd->next;
@@ -789,14 +792,14 @@ static int osd_renderer_unload_font(osd_renderer_t *this, char *fontname ) {
     if ( !strcasecmp(font->name,fontname) ) {
 
       free( font->filename );
-      
+
       if( font->loaded ) {
         for( i = 0; i < font->num_fontchars; i++ ) {
           free( font->fontchar[i].bmp );
         }
         free( font->fontchar );
       }
-      
+
       if( last )
         last->next = font->next;
       else
@@ -818,7 +821,7 @@ static int osd_renderer_unload_font(osd_renderer_t *this, char *fontname ) {
 #ifdef HAVE_FT2
 static int osd_set_font_freetype2( osd_object_t *osd, const char *fontname, int size ) {
   if (!osd->ft2) {
-    osd->ft2 = xine_xmalloc(sizeof(osd_ft2context_t));
+    osd->ft2 = calloc(1, sizeof(osd_ft2context_t));
     if(FT_Init_FreeType( &osd->ft2->library )) {
       xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG,
 	      _("osd: cannot initialize ft2 library\n"));
@@ -827,7 +830,12 @@ static int osd_set_font_freetype2( osd_object_t *osd, const char *fontname, int 
       return 0;
     }
   }
-   
+
+  if (osd->ft2->face) {
+      FT_Done_Face (osd->ft2->face);
+      osd->ft2->face = NULL;
+  }
+
 #ifdef HAVE_FONTCONFIG
   do {
     FcPattern *pat = NULL, *match = NULL;
@@ -840,7 +848,7 @@ static int osd_set_font_freetype2( osd_object_t *osd, const char *fontname, int 
 
     match = FcFontMatch(NULL, pat, &result);
     FcPatternDestroy(pat);
-    
+
     if ( ! match ) {
       FcFontSetDestroy(fs);
       xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG,
@@ -870,7 +878,7 @@ static int osd_set_font_freetype2( osd_object_t *osd, const char *fontname, int 
     /* try load font from current directory */
     if ( !FT_New_Face(osd->ft2->library, fontname, 0, &osd->ft2->face) )
       goto end;
-    
+
     /* try load font from home directory */
     snprintf(pathname, 1024, "%s/.xine/fonts/%s", xine_get_homedir(), fontname);
     if ( !FT_New_Face(osd->ft2->library, pathname, 0, &osd->ft2->face) )
@@ -881,20 +889,18 @@ static int osd_set_font_freetype2( osd_object_t *osd, const char *fontname, int 
     if ( !FT_New_Face(osd->ft2->library, pathname, 0, &osd->ft2->face) )
       goto end;
 
-    xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG, 
+    xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG,
 	    _("osd: error loading font %s with ft2\n"), fontname);
   }
 
-  free(osd->ft2);
-  osd->ft2 = NULL;
+  osd_free_ft2 (osd);
   return 0;
 
  end:
   if (FT_Set_Pixel_Sizes(osd->ft2->face, 0, size)) {
     xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG,
 	    _("osd: error setting font size (no scalable font?)\n"));
-    free(osd->ft2);
-    osd->ft2 = NULL;
+    osd_free_ft2 (osd);
     return 0;
   }
 
@@ -907,11 +913,11 @@ static int osd_set_font_freetype2( osd_object_t *osd, const char *fontname, int 
   set the font of osd object
 */
 
-static int osd_set_font( osd_object_t *osd, const char *fontname, int size) { 
+static int osd_set_font( osd_object_t *osd, const char *fontname, int size) {
   int ret = 1;
 
   lprintf("osd=%p font '%s'\n", osd, fontname);
- 
+
   pthread_mutex_lock (&osd->renderer->osd_mutex);
 
 #ifdef HAVE_FT2
@@ -926,7 +932,7 @@ static int osd_set_font( osd_object_t *osd, const char *fontname, int size) {
       font = osd->renderer->fonts;
       while( font ) {
 
-	if( !strcasecmp(font->name, fontname) && (size>=font->size) 
+	if( !strcasecmp(font->name, fontname) && (size>=font->size)
 	    && (best<font->size)) {
 	  ret = 1;
 	  osd->font = font;
@@ -942,7 +948,7 @@ static int osd_set_font( osd_object_t *osd, const char *fontname, int size) {
 	  ret = osd_renderer_load_font(osd->renderer, osd->font->filename);
 	if(!ret)
 	  osd->font = NULL;
-      }      
+      }
     }
 
   pthread_mutex_unlock (&osd->renderer->osd_mutex);
@@ -972,29 +978,29 @@ static int osd_search(osd_fontchar_t *array, size_t n, uint16_t code) {
 
   if (array[right].code == code)
     return right;
-  else 
+  else
     return ALIAS_CHARACTER_FONT < n ? ALIAS_CHARACTER_FONT : n;
 #else
   size_t i;
-  
+
   for( i = 0; i < n; i++ ) {
     if( font->fontchar[i].code == unicode )
       break;
   }
 
-  if (i < n) 
+  if (i < n)
     return i;
-  else 
+  else
     return ALIAS_CHARACTER_FONT < n ? ALIAS_CHARACTER_FONT : n;
 #endif
 }
 
 
 #ifdef HAVE_ICONV
-/* 
- * get next unicode value 
+/*
+ * get next unicode value
  */
-static uint16_t osd_iconv_getunicode(xine_t *xine, 
+static uint16_t osd_iconv_getunicode(xine_t *xine,
 				     iconv_t cd, const char *encoding, ICONV_CONST char **inbuf,
 				     size_t *inbytesleft) {
   uint16_t unicode;
@@ -1046,7 +1052,7 @@ static void osd_free_encoding(osd_object_t *osd) {
 
 
 /*
- * set encoding of text 
+ * set encoding of text
  *
  * NULL ... no conversion (iso-8859-1)
  * ""   ... locale encoding
@@ -1111,7 +1117,7 @@ static int osd_render_text (osd_object_t *osd, int x1, int y1,
 #endif
 
   lprintf("osd=%p (%d,%d) \"%s\"\n", osd, x1, y1, text);
- 
+
   /* some sanity checks for the color indices */
   if( color_base < 0 )
     color_base = 0;
@@ -1127,7 +1133,7 @@ static int osd_render_text (osd_object_t *osd, int x1, int y1,
 #ifdef HAVE_FT2
     if (osd->ft2) proceed = 1;
 #endif
-    
+
     if (proceed == 0) {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("osd: font isn't defined\n"));
       pthread_mutex_unlock(&this->osd_mutex);
@@ -1140,10 +1146,10 @@ static int osd_render_text (osd_object_t *osd, int x1, int y1,
 
   inbuf = text;
   inbytesleft = strlen(text);
-  
+
   while( inbytesleft ) {
 #ifdef HAVE_ICONV
-    unicode = osd_iconv_getunicode(this->stream->xine, osd->cd, osd->encoding, 
+    unicode = osd_iconv_getunicode(this->stream->xine, osd->cd, osd->encoding,
                                    (ICONV_CONST char **)&inbuf, &inbytesleft);
 #else
     unicode = inbuf[0];
@@ -1201,7 +1207,7 @@ static int osd_render_text (osd_object_t *osd, int x1, int y1,
           while (s < src + slot->bitmap.width) {
             if ((d >= dst) && (d < dst + osd->width) && *s)
               *d = (uint8_t)(*s/25) + (uint8_t) color_base;
-            
+
             d++;
             s++;
           }
@@ -1220,15 +1226,15 @@ static int osd_render_text (osd_object_t *osd, int x1, int y1,
 #endif
 
       i = osd_search(font->fontchar, font->num_fontchars, unicode);
-  
-      lprintf("font '%s' [%d, U+%04X == U+%04X] %dx%d -> %d,%d\n", font->name, i, 
-             unicode, font->fontchar[i].code, font->fontchar[i].width, 
+
+      lprintf("font '%s' [%d, U+%04X == U+%04X] %dx%d -> %d,%d\n", font->name, i,
+             unicode, font->fontchar[i].code, font->fontchar[i].width,
              font->fontchar[i].height, x1, y1);
-  
+
       if ( i != font->num_fontchars ) {
         dst = osd->area + y1 * osd->width;
         src = font->fontchar[i].bmp;
-        
+
         for( y = 0; y < font->fontchar[i].height; y++ ) {
           uint8_t *s = src;
           uint8_t *d = dst + x1;
@@ -1240,7 +1246,7 @@ static int osd_render_text (osd_object_t *osd, int x1, int y1,
             while (s < src + font->fontchar[i].width) {
               if((d >= dst) && (d < dst + osd->width) && (*s > 1)) /* skip drawing transparency */
                 *d = *s + (uint8_t) color_base;
-              
+
               d++;
               s++;
             }
@@ -1248,12 +1254,12 @@ static int osd_render_text (osd_object_t *osd, int x1, int y1,
           dst += osd->width;
         }
         x1 += font->fontchar[i].width - (font->fontchar[i].width * FONT_OVERLAP);
-      
+
         if( x1 > osd->x2 ) osd->x2 = x1;
-        if( y1 + font->fontchar[i].height > osd->y2 ) 
+        if( y1 + font->fontchar[i].height > osd->y2 )
           osd->y2 = y1 + font->fontchar[i].height;
       }
-    
+
 #ifdef HAVE_FT2
     } /* !(osd->ft2) */
 #endif
@@ -1285,7 +1291,7 @@ static int osd_get_text_size(osd_object_t *osd, const char *text, int *width, in
 #endif
 
   lprintf("osd=%p \"%s\"\n", osd, text);
-  
+
   pthread_mutex_lock (&this->osd_mutex);
 
   {
@@ -1295,7 +1301,7 @@ static int osd_get_text_size(osd_object_t *osd, const char *text, int *width, in
 #ifdef HAVE_FT2
     if (osd->ft2) proceed = 1;
 #endif
-    
+
     if (proceed == 0) {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("osd: font isn't defined\n"));
       pthread_mutex_unlock(&this->osd_mutex);
@@ -1308,10 +1314,10 @@ static int osd_get_text_size(osd_object_t *osd, const char *text, int *width, in
 
   inbuf = text;
   inbytesleft = strlen(text);
-  
+
   while( inbytesleft ) {
 #ifdef HAVE_ICONV
-    unicode = osd_iconv_getunicode(this->stream->xine, osd->cd, osd->encoding, 
+    unicode = osd_iconv_getunicode(this->stream->xine, osd->cd, osd->encoding,
                                    (ICONV_CONST char **)&inbuf, &inbytesleft);
 #else
     unicode = inbuf[0];
@@ -1402,7 +1408,7 @@ static void osd_preload_fonts (osd_renderer_t *this, char *path) {
       int  len;
 
       len = strlen (entry->d_name);
-      
+
       if ( (len > 12) && !strncmp (&entry->d_name[len-12], ".xinefont.gz", 12)) {
 
         s = strdup(entry->d_name);
@@ -1410,21 +1416,18 @@ static void osd_preload_fonts (osd_renderer_t *this, char *path) {
 
         if( p ) {
 	  osd_font_t  *font;
-	  char        *pathname;
 
           *p++ = '\0';
-          font = xine_xmalloc( sizeof(osd_font_t) );
-          
+          font = calloc(1, sizeof(osd_font_t) );
+
           strncpy(font->name, s, sizeof(font->name));
           font->size = atoi(p);
 
-          lprintf("font '%s' size %d is preloaded\n", 
+          lprintf("font '%s' size %d is preloaded\n",
                   font->name, font->size);
 
-          pathname = (char *) xine_xmalloc(strlen(path) + strlen(entry->d_name) + 2);
-          sprintf (pathname, "%s/%s", path, entry->d_name);
-          font->filename = pathname;
-          
+          asprintf (&font->filename, "%s/%s", path, entry->d_name);
+
           font->next = this->fonts;
           this->fonts = font;
         }
@@ -1441,30 +1444,30 @@ static void osd_preload_fonts (osd_renderer_t *this, char *path) {
  */
 
 static void osd_free_object (osd_object_t *osd_to_close) {
-     
+
   osd_renderer_t *this = osd_to_close->renderer;
   video_overlay_manager_t *ovl_manager;
   osd_object_t *osd, *last;
 
   if( osd_to_close->handle >= 0 ) {
     osd_hide(osd_to_close,0);
-    
+
     this->event.object.handle = osd_to_close->handle;
-  
+
     /* not really needed this, but good pratice to clean it up */
     memset( this->event.object.overlay, 0, sizeof(this->event.object.overlay) );
     this->event.event_type = OVERLAY_EVENT_FREE_HANDLE;
     this->event.vpts = 0;
-    
+
     this->stream->xine->port_ticket->acquire(this->stream->xine->port_ticket, 1);
     ovl_manager = this->stream->video_out->get_overlay_manager(this->stream->video_out);
     ovl_manager->add_event(ovl_manager, (void *)&this->event);
     this->stream->xine->port_ticket->release(this->stream->xine->port_ticket, 1);
-    
+
     osd_to_close->handle = -1; /* handle will be freed */
   }
-  
-  pthread_mutex_lock (&this->osd_mutex);  
+
+  pthread_mutex_lock (&this->osd_mutex);
 
   last = NULL;
   osd = this->osds;
@@ -1472,17 +1475,9 @@ static void osd_free_object (osd_object_t *osd_to_close) {
     if ( osd == osd_to_close ) {
       free( osd->area );
 
-#ifdef HAVE_FT2
-      if( osd->ft2 ) {
-	if ( osd->ft2->library )
-	  FT_Done_FreeType(osd->ft2->library);
-
-	free( osd->ft2 );
-      }
-#endif
-
+      osd_free_ft2 (osd);
       osd_free_encoding(osd);
-      
+
       if( last )
         last->next = osd->next;
       else
@@ -1494,7 +1489,7 @@ static void osd_free_object (osd_object_t *osd_to_close) {
     last = osd;
     osd = osd->next;
   }
-  pthread_mutex_unlock (&this->osd_mutex);  
+  pthread_mutex_unlock (&this->osd_mutex);
 }
 
 static void osd_renderer_close (osd_renderer_t *this) {
@@ -1552,7 +1547,7 @@ static void osd_draw_bitmap(osd_object_t *osd, uint8_t *bitmap,
 }
 
 static uint32_t osd_get_capabilities (osd_object_t *osd) {
-     
+
   osd_renderer_t *this = osd->renderer;
   uint32_t capabilities = 0;
 
@@ -1565,8 +1560,8 @@ static uint32_t osd_get_capabilities (osd_object_t *osd) {
       VO_CAP_UNSCALED_OVERLAY)
     capabilities |= XINE_OSD_CAP_UNSCALED;
   this->stream->xine->port_ticket->release(this->stream->xine->port_ticket, 1);
- 
-  return capabilities; 
+
+  return capabilities;
 }
 
 
@@ -1579,9 +1574,9 @@ osd_renderer_t *_x_osd_renderer_init( xine_stream_t *stream ) {
   osd_renderer_t *this;
   char str[1024];
 
-  this = xine_xmalloc(sizeof(osd_renderer_t)); 
+  this = calloc(1, sizeof(osd_renderer_t));
   this->stream = stream;
-  this->event.object.overlay = xine_xmalloc( sizeof(vo_overlay_t) );
+  this->event.object.overlay = calloc(1, sizeof(vo_overlay_t));
 
   pthread_mutex_init (&this->osd_mutex, NULL);
 
@@ -1597,13 +1592,13 @@ osd_renderer_t *_x_osd_renderer_init( xine_stream_t *stream ) {
 
   this->textpalette = this->stream->xine->config->register_enum (this->stream->xine->config,
                                              "ui.osd.text_palette", 0,
-                                             textpalettes_str, 
+                                             textpalettes_str,
                                              _("palette (foreground-border-background) to use for subtitles and OSD"),
                                              _("The palette for on-screen-display and some subtitle formats that do "
 					       "not specify any colouring themselves. The palettes are listed in the "
 					       "form: foreground-border-background."),
                                              10, update_text_palette, this);
-  
+
   /*
    * set up function pointer
    */

@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -114,7 +114,7 @@ typedef struct {
   input_plugin_t    input_plugin;
 
   xine_stream_t    *stream;
-  
+
   char             *mrl;
   config_values_t  *config;
 
@@ -122,16 +122,16 @@ typedef struct {
   int               port;
   char             *interface;    /* For multicast,  eth0, eth1 etc */
   int               is_rtp;
-  
+
   int               fh;
-  
+
   unsigned char    *buffer;	  /* circular buffer */
   unsigned char	   *buffer_get_ptr;  /* get pointer used by reader */
   unsigned char	   *buffer_put_ptr;  /* put pointer used by writer */
   long              buffer_count; /* number of bytes in the buffer */
 
   unsigned char     packet_buffer[65536];
-  
+
   int               last_input_error;
   int               input_eof;
 
@@ -184,7 +184,7 @@ static int host_connect_attempt(struct in_addr ia, int port,
     return -1;
   }
 
-  saddr.in.sin_family = AF_INET;	
+  saddr.in.sin_family = AF_INET;
   saddr.in.sin_addr   = ia;
   saddr.in.sin_port   = htons(port);
 
@@ -193,8 +193,8 @@ static int host_connect_attempt(struct in_addr ia, int port,
     LOG_MSG(xine, _("IP address specified is multicast\n"));
     multicast = 1;  /* boolean true */
   }
-  
-  
+
+
   /* Try to increase receive buffer to 1MB to avoid dropping packets */
   optval = BUFFER_SIZE;
   if ((setsockopt(s, SOL_SOCKET, SO_RCVBUF,
@@ -217,7 +217,7 @@ static int host_connect_attempt(struct in_addr ia, int port,
     LOG_MSG(xine, _("bind(): %s.\n"), strerror(errno));
     return -1;
   }
-  
+
   /* multicast ? */
   if (multicast) {
 
@@ -250,14 +250,14 @@ static int host_connect_attempt(struct in_addr ia, int port,
 	     &((struct sockaddr_in *) &ifreq.ifr_addr)->sin_addr,
 	     sizeof(struct in_addr));
     }
-    
+
     if (setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq))) {
       LOG_MSG(xine, _("setsockopt(IP_ADD_MEMBERSHIP) failed (multicast kernel?): %s.\n"),
 	      strerror(errno));
       return -1;
     }
   }
-  
+
   return s;
 }
 
@@ -271,13 +271,13 @@ static int host_connect(const char *host, int port,
   struct hostent *h;
   int i;
   int s;
-  
+
   h=gethostbyname(host);
   if(h==NULL) {
     LOG_MSG(xine, _("unable to resolve '%s'.\n"), host);
     return -1;
   }
-  
+
   for(i=0; h->h_addr_list[i]; i++) {
     struct in_addr ia;
     memcpy(&ia, h->h_addr_list[i],4);
@@ -299,7 +299,7 @@ static void * input_plugin_read_loop(void *arg) {
   fd_set read_fds;
 
   while (1) {
-    
+
     /* System calls are not a thread cancellation point in Linux
      * pthreads.  However, the RT signal sent to cancel the thread
      * will cause recv() to return with EINTR, and we can manually
@@ -339,11 +339,11 @@ static void * input_plugin_read_loop(void *arg) {
     }
     else {
       data = this->packet_buffer;
-      
+
       if (this->is_rtp) {
 	int pad, ext;
 	int csrc;
-	
+
 	/* Do minimal RTP parsing to extract payload.  See
 	 * http://www.faqs.org/rfcs/rfc1889.html for header format.
 	 *
@@ -351,7 +351,7 @@ static void * input_plugin_read_loop(void *arg) {
 	 */
 
 	if (length < 12) continue;
-	
+
 	pad = data[0] & 0x20;
 	ext = data[0] & 0x10;
 	csrc = data[0] & 0x0f;
@@ -361,7 +361,7 @@ static void * input_plugin_read_loop(void *arg) {
 
 	if (ext) {
 	  long hlen;
-		  
+
 	  if (length < 4) continue;
 
 	  hlen = (data[2] << 8) | data[3];
@@ -382,12 +382,12 @@ static void * input_plugin_read_loop(void *arg) {
 
       /* insert data into cyclic buffer */
       if (length > 0) {
-	
-	/* 
+
+	/*
 	 * if the buffer is full, wait for the reader
-	 * to signal 
-	 */ 
-	
+	 * to signal
+	 */
+
         pthread_mutex_lock(&this->buffer_ring_mut);
         /* wait for enough space to write the whole of the recv'ed data */
 	while( (BUFFER_SIZE - this->buffer_count) < length )
@@ -399,23 +399,23 @@ static void * input_plugin_read_loop(void *arg) {
 
           timeout.tv_nsec = tv.tv_usec * 1000;
           timeout.tv_sec = tv.tv_sec + 2;
-          
+
           if( pthread_cond_timedwait(&this->writer_cond, &this->buffer_ring_mut, &timeout) != 0 )
           {
             fprintf( stdout, "input_rtp: buffer ring not read within 2 seconds!\n" );
           }
         }
- 
+
 	/* Now there's enough space to write some bytes into the buffer
 	 * determine how many bytes can be written. If the buffer wraps
 	 * around, write in two pieces: from the head pointer to the
-	 * end of the buffer and from the base to the remaining number 
+	 * end of the buffer and from the base to the remaining number
 	 * of bytes.
 	 */
 
         {
         long buffer_space_remaining = BUFFER_SIZE - (this->buffer_put_ptr - this->buffer);
- 
+
 	if( buffer_space_remaining >= length )
         {
             /* data fits inside the buffer */
@@ -445,14 +445,17 @@ static void * input_plugin_read_loop(void *arg) {
 /*                         END OF PRIVATES                           */
 /* ***************************************************************** */
 
-static off_t rtp_plugin_read (input_plugin_t *this_gen, 
+static off_t rtp_plugin_read (input_plugin_t *this_gen,
 			      char *buf, off_t length) {
   rtp_input_plugin_t *this = (rtp_input_plugin_t *) this_gen;
 
   struct timeval tv;
   struct timespec timeout;
-  off_t copied = 0; 
-  
+  off_t copied = 0;
+
+  if (length < 0)
+    return -1;
+
   while(length > 0) {
 
     off_t n;
@@ -469,7 +472,7 @@ static off_t rtp_plugin_read (input_plugin_t *this_gen,
       gettimeofday(&tv, NULL);
       timeout.tv_nsec = tv.tv_usec * 1000;
       timeout.tv_sec = tv.tv_sec + 5;
-      
+
       if(pthread_cond_timedwait(&this->reader_cond, &this->buffer_ring_mut, &timeout) != 0)
 	{
 	  /* we timed out, no data available */
@@ -480,9 +483,9 @@ static off_t rtp_plugin_read (input_plugin_t *this_gen,
 
     /* Now determine how many bytes can be read. If the buffer
      * will wrap the buffer is read in two pieces, first read
-     * to the end of the buffer, wrap the tail pointer and 
+     * to the end of the buffer, wrap the tail pointer and
      * update the buffer count. Finally read the second piece
-     * from the base to the remaining count  
+     * from the base to the remaining count
      */
     if(length  > this->buffer_count) {
       n = this->buffer_count;
@@ -490,26 +493,26 @@ static off_t rtp_plugin_read (input_plugin_t *this_gen,
     else {
       n = length;
     }
-      
+
     if(((this->buffer_get_ptr - this->buffer) + n) > BUFFER_SIZE) {
       n = BUFFER_SIZE - (this->buffer_get_ptr - this->buffer);
     }
-    
+
     /* the actual read */
     memcpy(buf, this->buffer_get_ptr, n);
 
     buf += n;
     copied += n;
     length -= n;
-    
+
     /* update the tail pointer, watch for wrap arounds */
     this->buffer_get_ptr += n;
     if(this->buffer_get_ptr - this->buffer >= BUFFER_SIZE)
       this->buffer_get_ptr = this->buffer;
-    
+
     this->buffer_count -= n;
-    
-    /* signal the writer that there's space in the buffer again */  
+
+    /* signal the writer that there's space in the buffer again */
     pthread_cond_signal(&this->writer_cond);
     pthread_mutex_unlock(&this->buffer_ring_mut);
   }
@@ -524,6 +527,12 @@ static buf_element_t *rtp_plugin_read_block (input_plugin_t *this_gen,
   buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
   int                   total_bytes;
 
+  if (todo > buf->max_size)
+    todo = buf->max_size;
+  if (todo < 0) {
+    buf->free_buffer (buf);
+    return NULL;
+  }
 
   buf->content = buf->mem;
   buf->type    = BUF_DEMUX_BLOCK;
@@ -545,7 +554,7 @@ static buf_element_t *rtp_plugin_read_block (input_plugin_t *this_gen,
  */
 static off_t rtp_plugin_seek (input_plugin_t *this_gen,
 			      off_t offset, int origin) {
-  
+
   return -1;
 }
 
@@ -562,7 +571,7 @@ static off_t rtp_plugin_get_length (input_plugin_t *this_gen) {
  */
 static off_t rtp_plugin_get_current_pos (input_plugin_t *this_gen){
   rtp_input_plugin_t *this = (rtp_input_plugin_t *) this_gen;
-  
+
   return this->curpos;
 }
 
@@ -570,7 +579,7 @@ static off_t rtp_plugin_get_current_pos (input_plugin_t *this_gen){
  *
  */
 static uint32_t rtp_plugin_get_capabilities (input_plugin_t *this_gen) {
-  
+
   return INPUT_CAP_PREVIEW;
 }
 
@@ -578,7 +587,7 @@ static uint32_t rtp_plugin_get_capabilities (input_plugin_t *this_gen) {
  *
  */
 static uint32_t rtp_plugin_get_blocksize (input_plugin_t *this_gen) {
-  
+
   return 0;
 }
 
@@ -587,14 +596,14 @@ static uint32_t rtp_plugin_get_blocksize (input_plugin_t *this_gen) {
  */
 static const char* rtp_plugin_get_mrl (input_plugin_t *this_gen) {
   rtp_input_plugin_t *this = (rtp_input_plugin_t *) this_gen;
-  
+
   return this->mrl;
 }
 
 /*
  *
  */
-static int rtp_plugin_get_optional_data (input_plugin_t *this_gen, 
+static int rtp_plugin_get_optional_data (input_plugin_t *this_gen,
 					 void *data, int data_type) {
 
   rtp_input_plugin_t *this = (rtp_input_plugin_t *) this_gen;
@@ -609,11 +618,14 @@ static int rtp_plugin_get_optional_data (input_plugin_t *this_gen,
   if (data_type == INPUT_OPTIONAL_DATA_PREVIEW) {
     if (!this->preview_read_done) {
       this->preview_size = rtp_plugin_read(this_gen, this->preview, MAX_PREVIEW_SIZE);
+      if (this->preview_size < 0)
+	this->preview_size = 0;
       lprintf("Preview data length = %d\n", this->preview_size);
 
       this->preview_read_done = 1;
     }
-    memcpy(data, this->preview, this->preview_size);
+    if (this->preview_size)
+      memcpy(data, this->preview, this->preview_size);
     return this->preview_size;
   }
   else {
@@ -623,16 +635,16 @@ static int rtp_plugin_get_optional_data (input_plugin_t *this_gen,
 
 static void rtp_plugin_dispose (input_plugin_t *this_gen ) {
   rtp_input_plugin_t *this = (rtp_input_plugin_t *) this_gen;
-  
+
   if (this->nbc) nbc_close(this->nbc);
-  
+
   if (this->rtp_running) {
     LOG_MSG(this->stream->xine, _("RTP: stopping reading thread...\n"));
     pthread_cancel(this->reader_thread);
     pthread_join(this->reader_thread, NULL);
     LOG_MSG(this->stream->xine, _("RTP: reading thread terminated\n"));
   }
-  
+
   if (this->fh != -1) close(this->fh);
 
   free(this->buffer);
@@ -649,7 +661,7 @@ static int rtp_plugin_open (input_plugin_t *this_gen ) {
 	  this->filename,
 	  this->port,
 	  this->interface);
-  
+
   this->fh = host_connect(this->filename, this->port,
 			  this->interface, this->stream->xine);
 
@@ -660,12 +672,12 @@ static int rtp_plugin_open (input_plugin_t *this_gen ) {
   this->curpos = 0;
   this->rtp_running = 1;
 
-  if ((err = pthread_create(&this->reader_thread, NULL, 
+  if ((err = pthread_create(&this->reader_thread, NULL,
 		            input_plugin_read_loop, (void *)this)) != 0) {
     LOG_MSG(this->stream->xine, _("input_rtp: can't create new thread (%s)\n"), strerror(err));
     _x_abort();
   }
-  
+
   return 1;
 }
 
@@ -679,7 +691,7 @@ static input_plugin_t *rtp_class_get_instance (input_class_t *cls_gen,
   char               *mrl;
   int                 is_rtp = 0;
   int                 port = 7658;
-  
+
 
   mrl = strdup(data);
   if (!strncasecmp (mrl, "rtp://", 6)) {
@@ -690,12 +702,12 @@ static input_plugin_t *rtp_class_get_instance (input_class_t *cls_gen,
     filename = &mrl[6];
     is_rtp = 0;
   }
-  
+
   if (filename == NULL || strlen(filename) == 0) {
     free(mrl);
     return NULL;
   }
-  
+
   /* Locate the port number */
   pptr=strchr(filename, ':');
   iptr = NULL;
@@ -716,8 +728,8 @@ static input_plugin_t *rtp_class_get_instance (input_class_t *cls_gen,
       }
     }
   }
-  
-  this = (rtp_input_plugin_t *) xine_xmalloc(sizeof(rtp_input_plugin_t));
+
+  this = calloc(1, sizeof(rtp_input_plugin_t));
   this->stream       = stream;
   this->mrl          = mrl;
   this->filename     = filename;
@@ -753,8 +765,8 @@ static input_plugin_t *rtp_class_get_instance (input_class_t *cls_gen,
   this->input_plugin.get_optional_data = rtp_plugin_get_optional_data;
   this->input_plugin.dispose           = rtp_plugin_dispose;
   this->input_plugin.input_class       = cls_gen;
- 
-  this->nbc = NULL; 
+
+  this->nbc = NULL;
   this->nbc = nbc_init(this->stream);
 
   return &this->input_plugin;
@@ -764,7 +776,7 @@ static input_plugin_t *rtp_class_get_instance (input_class_t *cls_gen,
 /*
  *  net plugin class
  */
- 
+
 static const char *rtp_class_get_description (input_class_t *this_gen) {
 	return _("RTP and UDP input plugin as shipped with xine");
 }
@@ -783,8 +795,8 @@ static void *init_class (xine_t *xine, void *data) {
 
   rtp_input_class_t  *this;
 
-  
-  this         = (rtp_input_class_t *) xine_xmalloc(sizeof(rtp_input_class_t));
+
+  this         = calloc(1, sizeof(rtp_input_class_t));
   this->config = xine->config;
   this->xine   = xine;
 
@@ -804,7 +816,7 @@ static void *init_class (xine_t *xine, void *data) {
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_INPUT, 17, "rtp", XINE_VERSION_CODE, NULL, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

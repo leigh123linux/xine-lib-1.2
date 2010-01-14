@@ -30,7 +30,10 @@ EXTRA_DIST = greedy2frame_template.c greedyh.asm \
 
 # libpostproc is here so we can use their nice mangle.h
 AM_CFLAGS = -I$(top_srcdir)/src/post/deinterlace \
-	-I$(top_srcdir)/src/libffmpeg/libavcodec/libpostproc
+	-I$(top_srcdir)/src/xine-utils
+
+# Avoid "can't find register" failures with -O0, -O2, -O3 (gcc 4.0)
+libdeinterlaceplugins_la-kdetv_greedyh.o libdeinterlaceplugins_la-kdetv_greedyh.lo: CFLAGS=$(shell echo @CFLAGS@ | sed -e 's/$$/ -O1/')
 
 noinst_LTLIBRARIES = libdeinterlaceplugins.la
 
@@ -45,7 +48,6 @@ libdeinterlaceplugins_la_SOURCES = \
 	scalerbob.c \
 	kdetv_greedyh.c \
 	kdetv_tomsmocomp.c
-libdeinterlaceplugins_la_LIBADD = $(XINE_LIB)
 libdeinterlaceplugins_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 libdeinterlaceplugins_la_LDFLAGS = -avoid-version -module
 

@@ -32,12 +32,18 @@
 #include <string.h>
 #include <inttypes.h>
 
-
 #ifndef HAVE_RMFF_H
 #define HAVE_RMFF_H
 
+#include "attributes.h"
 
 #define RMFF_HEADER_SIZE 0x12
+
+#define RMFF_FILEHEADER_SIZE 18
+#define RMFF_PROPHEADER_SIZE 50
+#define RMFF_MDPRHEADER_SIZE 46
+#define RMFF_CONTHEADER_SIZE 18
+#define RMFF_DATAHEADER_SIZE 18
 
 #define FOURCC_TAG( ch0, ch1, ch2, ch3 ) \
         (((long)(unsigned char)(ch3)       ) | \
@@ -92,7 +98,7 @@ typedef struct {
   uint32_t data_offset;
   uint16_t num_streams;
   uint16_t flags;
-    
+
 } rmff_prop_t;
 
 typedef struct {
@@ -135,11 +141,11 @@ typedef struct {
   char      *copyright;
   uint16_t  comment_len;
   char      *comment;
-  
+
 } rmff_cont_t;
 
 typedef struct {
-  
+
   uint32_t object_id;
   uint32_t size;
   uint16_t object_version;
@@ -172,7 +178,7 @@ typedef struct {
 /*
  * constructors for header structs
  */
- 
+
 rmff_fileheader_t *rmff_new_fileheader(uint32_t num_headers);
 
 rmff_prop_t *rmff_new_prop (
@@ -214,7 +220,7 @@ rmff_data_t *rmff_new_dataheader(
 /*
  * reads header infos from data and returns a newly allocated header struct
  */
-rmff_header_t *rmff_scan_header(const char *data);
+rmff_header_t *rmff_scan_header(const char *data) XINE_MALLOC;
 
 /*
  * scans a data packet header. Notice, that this function does not allocate
@@ -225,7 +231,7 @@ void rmff_scan_pheader(rmff_pheader_t *h, char *data);
 /*
  * reads header infos from stream and returns a newly allocated header struct
  */
-rmff_header_t *rmff_scan_header_stream(int fd);
+rmff_header_t *rmff_scan_header_stream(int fd) XINE_MALLOC;
 
 /*
  * prints header information in human readible form to stdout
@@ -241,11 +247,11 @@ void rmff_fix_header(rmff_header_t *h);
  * returns the size of the header (incl. first data-header)
  */
 int rmff_get_header_size(rmff_header_t *h);
- 
+
 /*
  * dumps the header <h> to <buffer>. <max> is the size of <buffer>
  */
-int rmff_dump_header(rmff_header_t *h, char *buffer, int max);
+int rmff_dump_header(rmff_header_t *h, void *buf_gen, int max);
 
 /*
  * dumps a packet header

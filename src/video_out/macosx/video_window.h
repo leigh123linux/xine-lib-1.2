@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * Written by Daniel Mack <xine@zonque.org>
- * 
+ *
  * Most parts of this code were taken from VLC, http://www.videolan.org
  * Thanks for the good research!
  */

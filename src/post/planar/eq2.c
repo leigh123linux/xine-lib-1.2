@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2000-2006 the xine project
- * 
+ * Copyright (C) 2000-2008 the xine project
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -24,6 +24,10 @@
  * Daniel Moreno <comac@comac.darktech.org> (saturation, R/G/B gamma support)
  * Richard Felker (original MMX contrast/brightness code (vf_eq.c))
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "xine_internal.h"
 #include "post.h"
@@ -110,7 +114,7 @@ void affine_1d_MMX (eq2_param_t *par, unsigned char *dst, unsigned char *src,
   int      pel;
   short    brvec[4];
   short    contvec[4];
-  
+
   contrast = (int) (par->c * 256 * 16);
   brightness = ((int) (100.0 * par->b + 100.0) * 511) / 200 - 128 - contrast / 32;
 
@@ -265,7 +269,7 @@ void *eq2_init_plugin(xine_t *xine, void *);
 typedef struct post_plugin_eq2_s post_plugin_eq2_t;
 
 /*
- * this is the struct used by "parameters api" 
+ * this is the struct used by "parameters api"
  */
 typedef struct eq2_parameters_s {
 
@@ -284,19 +288,19 @@ typedef struct eq2_parameters_s {
  * description of params struct
  */
 START_PARAM_DESCR( eq2_parameters_t )
-PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, gamma, NULL, 0, 5, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, gamma, NULL, 0, 5, 0,
             "gamma" )
-PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, brightness, NULL, -1, 1, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, brightness, NULL, -1, 1, 0,
             "brightness" )
-PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, contrast, NULL, 0, 2, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, contrast, NULL, 0, 2, 0,
             "contrast" )
-PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, saturation, NULL, 0, 2, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, saturation, NULL, 0, 2, 0,
             "saturation" )
-PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, rgamma, NULL, 0, 5, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, rgamma, NULL, 0, 5, 0,
             "rgamma" )
-PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, ggamma, NULL, 0, 5, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, ggamma, NULL, 0, 5, 0,
             "ggamma" )
-PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, bgamma, NULL, 0, 5, 0, 
+PARAM_ITEM( POST_PARAM_TYPE_DOUBLE, bgamma, NULL, 0, 5, 0,
             "bgamma" )
 END_PARAM_DESCR( param_descr )
 
@@ -308,7 +312,7 @@ struct post_plugin_eq2_s {
   /* private data */
   eq2_parameters_t   params;
   xine_post_in_t     params_input;
-  
+
   vf_eq2_t           eq2;
 
   pthread_mutex_t    lock;
@@ -348,7 +352,7 @@ static int get_parameters (xine_post_t *this_gen, void *param_gen) {
 
   return 1;
 }
- 
+
 static xine_post_api_descr_t * get_param_descr (void) {
   return &param_descr;
 }
@@ -413,7 +417,7 @@ void *eq2_init_plugin(xine_t *xine, void *data)
 
   if (!class)
     return NULL;
-  
+
   class->open_plugin     = eq2_open_plugin;
   class->get_identifier  = eq2_get_identifier;
   class->get_description = eq2_get_description;
@@ -427,50 +431,37 @@ static post_plugin_t *eq2_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target)
 {
-  post_plugin_eq2_t *this = (post_plugin_eq2_t *)xine_xmalloc(sizeof(post_plugin_eq2_t));
+  post_plugin_eq2_t *this = calloc(1, sizeof(post_plugin_eq2_t));
   post_in_t         *input;
   xine_post_in_t    *input_api;
   post_out_t        *output;
   post_video_port_t *port;
-  vf_eq2_t          *eq2;
-  int i;
-  
+
   if (!this || !video_target || !video_target[0]) {
     free(this);
     return NULL;
   }
-  
+
   _x_post_init(&this->post, 0, 1);
 
-  eq2 = &this->eq2;
-  for (i = 0; i < 3; i++) {
-    eq2->buf[i] = NULL;
-    eq2->buf_w[i] = 0;
-    eq2->buf_h[i] = 0;
+  memset(&this->eq2, 0, sizeof(this->eq2));
 
-    eq2->param[i].adjust = NULL;
-    eq2->param[i].c = 1.0;
-    eq2->param[i].b = 0.0;
-    eq2->param[i].g = 1.0;
-    eq2->param[i].lut_clean = 0;
-  }
-
-  eq2->gamma = this->params.gamma = 1.0;
-  eq2->contrast = this->params.contrast = 1.0;
-  eq2->brightness = this->params.brightness = 0.0;
-  eq2->saturation = this->params.saturation = 1.0;
-  eq2->rgamma = this->params.rgamma = 1.0;
-  eq2->ggamma = this->params.ggamma = 1.0;
-  eq2->bgamma = this->params.bgamma = 1.0;
+  this->eq2.gamma = this->params.gamma = 1.0;
+  this->eq2.contrast = this->params.contrast = 1.0;
+  this->eq2.brightness = this->params.brightness = 0.0;
+  this->eq2.saturation = this->params.saturation = 1.0;
+  this->eq2.rgamma = this->params.rgamma = 1.0;
+  this->eq2.ggamma = this->params.ggamma = 1.0;
+  this->eq2.bgamma = this->params.bgamma = 1.0;
 
   pthread_mutex_init(&this->lock, NULL);
-  
+
   port = _x_post_intercept_video_port(&this->post, video_target[0], &input, &output);
   port->new_port.get_property = eq2_get_property;
   port->new_port.set_property = eq2_set_property;
   port->intercept_frame       = eq2_intercept_frame;
   port->new_frame->draw       = eq2_draw;
-  
+
   input_api       = &this->params_input;
   input_api->name = "parameters";
   input_api->type = XINE_POST_DATA_PARAMETERS;
@@ -479,13 +470,13 @@ static post_plugin_t *eq2_open_plugin(post_class_t *class_gen, int inputs,
 
   input->xine_in.name     = "video";
   output->xine_out.name   = "eqd video";
-  
+
   this->post.xine_post.video_input[0] = &port->new_port;
-  
+
   this->post.dispose = eq2_dispose;
 
   set_parameters ((xine_post_t *)this, &this->params);
-  
+
   return &this->post;
 }
 
@@ -575,15 +566,15 @@ static int eq2_draw(vo_frame_t *frame, xine_stream_t *stream)
 
       yv12_frame = port->original_port->get_frame(port->original_port,
         frame->width, frame->height, frame->ratio, XINE_IMGFMT_YV12, frame->flags | VO_BOTH_FIELDS);
-  
+
       _x_post_frame_copy_down(frame, yv12_frame);
-  
+
       yuy2_to_yv12(frame->base[0], frame->pitches[0],
                    yv12_frame->base[0], yv12_frame->pitches[0],
                    yv12_frame->base[1], yv12_frame->pitches[1],
                    yv12_frame->base[2], yv12_frame->pitches[2],
                    frame->width, frame->height);
-  
+
     } else {
       yv12_frame = frame;
       yv12_frame->lock(yv12_frame);
@@ -613,7 +604,7 @@ static int eq2_draw(vo_frame_t *frame, xine_stream_t *stream)
     pthread_mutex_unlock (&this->lock);
 
     skip = out_frame->draw(out_frame, stream);
-  
+
     _x_post_frame_copy_up(frame, out_frame);
 
     out_frame->free(out_frame);

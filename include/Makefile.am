@@ -6,7 +6,8 @@ endif
 
 include_HEADERS = xine.h
 
-noinst_HEADERS = config.h configure.h
+noinst_HEADERS = config.h
+nodist_noinst_HEADERS = configure.h
 
 CONFIG_CLEAN_FILES = xine.h $(inttypes_h)
 
@@ -17,7 +18,7 @@ install-debug: debug
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 
 mostlyclean-generic:
-	-rm -f *~ \#* .*~ .\#* 
+	-rm -f *~ \#* .*~ .\#*
 
 maintainer-clean-generic:
 	-@echo "This command is intended for maintainers to use;"

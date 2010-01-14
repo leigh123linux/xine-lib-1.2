@@ -47,7 +47,6 @@
 #include "bswap.h"
 #include "group_games.h"
 
-#define RoQ_MAGIC_NUMBER 0x1084
 #define RoQ_CHUNK_PREAMBLE_SIZE 8
 #define RoQ_AUDIO_SAMPLE_RATE 22050
 
@@ -93,10 +92,11 @@ static int open_roq_file(demux_roq_t *this) {
     return 0;
 
   /* check for the RoQ magic numbers */
-  if ((_X_LE_16(&preamble[0]) != RoQ_MAGIC_NUMBER) ||
-      (_X_LE_32(&preamble[2]) != 0xFFFFFFFF))
+  static const uint8_t RoQ_MAGIC_STRING[] =
+    { 0x10, 0x84, 0xFF, 0xFF, 0xFF, 0xFF };
+  if( memcmp(preamble, RoQ_MAGIC_STRING, sizeof(RoQ_MAGIC_STRING)) != 0 )
     return 0;
-    
+
   this->bih.biSize = sizeof(xine_bmiheader);
   this->bih.biWidth = this->bih.biHeight = 0;
   this->wave.nChannels = 0;  /* assume no audio at first */
@@ -119,7 +119,7 @@ static int open_roq_file(demux_roq_t *this) {
   while (i-- > 0) {
     /* if this read fails, then maybe it's just a really small RoQ file
      * (even less than 2 seconds) */
-    if (this->input->read(this->input, preamble, RoQ_CHUNK_PREAMBLE_SIZE) != 
+    if (this->input->read(this->input, preamble, RoQ_CHUNK_PREAMBLE_SIZE) !=
       RoQ_CHUNK_PREAMBLE_SIZE)
       break;
     chunk_type = _X_LE_16(&preamble[0]);
@@ -181,7 +181,7 @@ static int demux_roq_send_chunk(demux_plugin_t *this_gen) {
   off_t current_file_pos;
 
   /* fetch the next preamble */
-  if (this->input->read(this->input, preamble, RoQ_CHUNK_PREAMBLE_SIZE) != 
+  if (this->input->read(this->input, preamble, RoQ_CHUNK_PREAMBLE_SIZE) !=
     RoQ_CHUNK_PREAMBLE_SIZE) {
     this->status = DEMUX_FINISHED;
     return this->status;
@@ -193,21 +193,21 @@ static int demux_roq_send_chunk(demux_plugin_t *this_gen) {
   if ((chunk_type == RoQ_SOUND_MONO) || (chunk_type == RoQ_SOUND_STEREO)) {
 
     if( this->audio_fifo ) {
-        
+
       /* do this calculation carefully because I can't trust the
        * 64-bit numerical manipulation */
       audio_pts = this->audio_byte_count;
       audio_pts *= 90000;
       audio_pts /= (RoQ_AUDIO_SAMPLE_RATE * this->wave.nChannels);
       this->audio_byte_count += chunk_size - 8;  /* do not count the preamble */
-         
+
       current_file_pos = this->input->get_current_pos(this->input);
 
       /* send out the preamble */
       buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
       buf->type = BUF_AUDIO_ROQ;
       if( this->input->get_length (this->input) )
-        buf->extra_info->input_normpos = (int)( (double) (current_file_pos - RoQ_CHUNK_PREAMBLE_SIZE) * 
+        buf->extra_info->input_normpos = (int)( (double) (current_file_pos - RoQ_CHUNK_PREAMBLE_SIZE) *
                                      65535 / this->input->get_length (this->input) );
       buf->pts = 0;
       buf->size = RoQ_CHUNK_PREAMBLE_SIZE;
@@ -219,7 +219,7 @@ static int demux_roq_send_chunk(demux_plugin_t *this_gen) {
         buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
         buf->type = BUF_AUDIO_ROQ;
         if( this->input->get_length (this->input) )
-          buf->extra_info->input_normpos = (int)( (double) current_file_pos * 
+          buf->extra_info->input_normpos = (int)( (double) current_file_pos *
                                      65535 / this->input->get_length (this->input) );
         buf->pts = audio_pts;
 
@@ -256,7 +256,7 @@ static int demux_roq_send_chunk(demux_plugin_t *this_gen) {
     buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
     buf->type = BUF_VIDEO_ROQ;
     if( this->input->get_length (this->input) )
-      buf->extra_info->input_normpos = (int)( (double) (current_file_pos - RoQ_CHUNK_PREAMBLE_SIZE) * 
+      buf->extra_info->input_normpos = (int)( (double) (current_file_pos - RoQ_CHUNK_PREAMBLE_SIZE) *
                                      65535 / this->input->get_length (this->input) );
     buf->pts = this->video_pts_counter;
     buf->size = RoQ_CHUNK_PREAMBLE_SIZE;
@@ -267,7 +267,7 @@ static int demux_roq_send_chunk(demux_plugin_t *this_gen) {
       buf = this->video_fifo->buffer_pool_alloc (this->audio_fifo);
       buf->type = BUF_VIDEO_ROQ;
       if( this->input->get_length (this->input) )
-        buf->extra_info->input_normpos = (int)( (double) current_file_pos * 
+        buf->extra_info->input_normpos = (int)( (double) current_file_pos *
                                      65535 / this->input->get_length (this->input) );
       buf->pts = this->video_pts_counter;
 
@@ -411,7 +411,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
-  this         = xine_xmalloc (sizeof (demux_roq_t));
+  this         = calloc(1, sizeof(demux_roq_t));
   this->stream = stream;
   this->input  = input;
 
@@ -485,7 +485,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_roq_init_plugin (xine_t *xine, void *data) {
   demux_roq_class_t     *this;
 
-  this  = xine_xmalloc (sizeof (demux_roq_class_t));
+  this  = calloc(1, sizeof(demux_roq_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

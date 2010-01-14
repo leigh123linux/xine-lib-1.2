@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -36,7 +36,7 @@
 #endif
 
 #define INPUT_PLUGIN_IFACE_VERSION   17
- 
+
 typedef struct input_class_s input_class_t ;
 typedef struct input_plugin_s input_plugin_t;
 
@@ -55,7 +55,7 @@ struct input_class_s {
   const char* (*get_identifier) (input_class_t *this);
 
   /*
-   * return human readable (verbose = 1 line) description for 
+   * return human readable (verbose = 1 line) description for
    * this plugin class
    */
   const char* (*get_description) (input_class_t *this);
@@ -97,7 +97,7 @@ struct input_plugin_s {
    * return capabilities of the current playable entity. See
    * get_current_pos below for a description of a "playable entity"
    * Capabilities a created by "OR"ing a mask of constants listed
-   * below which start "INPUT_CAP".  
+   * below which start "INPUT_CAP".
    *
    * depending on the values set, some of the functions below
    * will or will not get called or should (not) be able to
@@ -128,7 +128,7 @@ struct input_plugin_s {
 
 
   /*
-   * seek position, return new position 
+   * seek position, return new position
    *
    * if seeking failed, -1 is returned
    */
@@ -136,7 +136,7 @@ struct input_plugin_s {
 
 
   /*
-   * seek to time position, return new position 
+   * seek to time position, return new position
    * time_offset is given in miliseconds
    *
    * if seeking failed, -1 is returned
@@ -153,7 +153,7 @@ struct input_plugin_s {
    */
   off_t (*get_current_pos) (input_plugin_t *this);
 
-  
+
   /*
    * get current time position in stream in miliseconds.
    *
@@ -165,7 +165,7 @@ struct input_plugin_s {
   /*
    * return number of bytes in the next playable entity or -1 if the
    * input is unlimited, as would be the case in a network stream.
-   * 
+   *
    * A "playable entity" tends to be the entities listed in a playback
    * list or the units on which playback control generally works on.
    * It might be the number of bytes in a VCD "segment" or "track" (if
@@ -186,7 +186,7 @@ struct input_plugin_s {
    * return block size in bytes of next complete playable entity (if
    * supported, 0 otherwise). See the description above under
    * get_length for a description of a "complete playable entity".
-   * 
+   *
    * this block size is only used for mpeg streams stored on
    * a block oriented storage media, e.g. DVDs and VCDs, to speed
    * up the demuxing process. only set this (and the INPUT_CAP_BLOCK
@@ -231,11 +231,11 @@ struct input_plugin_s {
 #define INPUT_CAP_NOCAP                0x00000000
 
 /*
- * INPUT_CAP_SEEKABLE: 
- *   seek () works reliably. 
+ * INPUT_CAP_SEEKABLE:
+ *   seek () works reliably.
  *   even for plugins that do not have this flag set
- *   it is a good idea to implement the seek() function 
- *   in a "best effort" style anyway, so at least 
+ *   it is a good idea to implement the seek() function
+ *   in a "best effort" style anyway, so at least
  *   throw away data for network streams when seeking forward
  */
 
@@ -243,9 +243,9 @@ struct input_plugin_s {
 
 /*
  * INPUT_CAP_BLOCK:
- *   means more or less that a block device sits behind 
- *   this input plugin. get_blocksize must be implemented. 
- *   will be used for fast and efficient demuxing of 
+ *   means more or less that a block device sits behind
+ *   this input plugin. get_blocksize must be implemented.
+ *   will be used for fast and efficient demuxing of
  *   mpeg streams (demux_mpeg_block).
  */
 
@@ -254,8 +254,8 @@ struct input_plugin_s {
 /*
  * INPUT_CAP_AUDIOLANG:
  * INPUT_CAP_SPULANG:
- *   input plugin knows something about audio/spu languages, 
- *   e.g. knows that audio stream #0 is english, 
+ *   input plugin knows something about audio/spu languages,
+ *   e.g. knows that audio stream #0 is english,
  *   audio stream #1 is german, ...
  *   *((int *)data) will provide the requested channel number
  *   and awaits the language back in (char *)data
@@ -263,20 +263,20 @@ struct input_plugin_s {
 
 #define INPUT_CAP_AUDIOLANG            0x00000008
 #define INPUT_CAP_SPULANG              0x00000010
- 
-/* 
+
+/*
  * INPUT_CAP_PREVIEW:
- *   get_optional_data can handle INPUT_OPTIONAL_DATA_PREVIEW 
- *   so a non-seekable stream plugin can povide the first 
- *   few bytes for demuxers to look at them and decide wheter 
- *   they can handle the stream or not. the preview data must 
- *   be buffered and delivered again through subsequent 
+ *   get_optional_data can handle INPUT_OPTIONAL_DATA_PREVIEW
+ *   so a non-seekable stream plugin can povide the first
+ *   few bytes for demuxers to look at them and decide wheter
+ *   they can handle the stream or not. the preview data must
+ *   be buffered and delivered again through subsequent
  *   read() calls.
- *   caller must provide a buffer allocated with at least 
+ *   caller must provide a buffer allocated with at least
  *   MAX_PREVIEW_SIZE bytes.
  */
 
-#define INPUT_CAP_PREVIEW              0x00000040  
+#define INPUT_CAP_PREVIEW              0x00000040
 
 /*
  * INPUT_CAP_CHAPTERS:
@@ -307,6 +307,13 @@ struct input_plugin_s {
 #define INPUT_OPTIONAL_DATA_SPULANG   3
 #define INPUT_OPTIONAL_DATA_PREVIEW   7
 
+/* buffer is a const char **; the string is freed by the input plugin. */
+#define INPUT_OPTIONAL_DATA_MIME_TYPE 8
+/* buffer is unused; true if the demuxer should be determined by the MIME type */
+#define INPUT_OPTIONAL_DATA_DEMUX_MIME_TYPE 9
+/* buffer is a const char **; the string is static or freed by the input plugin. */
+#define INPUT_OPTIONAL_DATA_DEMUXER   10
+
 #define MAX_MRL_ENTRIES 255
 #define MAX_PREVIEW_SIZE 4096
 
@@ -333,65 +340,38 @@ struct input_plugin_s {
 /*
  * Freeing/zeroing all of entries of given mrl.
  */
-#define MRL_ZERO(m) {                                                         \
-  if((m)) {                                                                   \
-    if((m)->origin)                                                           \
-      free((m)->origin);                                                      \
-    if((m)->mrl)                                                              \
-      free((m)->mrl);                                                         \
-    if((m)->link)                                                             \
-      free((m)->link);                                                        \
-    (m)->origin = NULL;                                                       \
-    (m)->mrl    = NULL;                                                       \
-    (m)->link   = NULL;                                                       \
-    (m)->type   = 0;                                                          \
-    (m)->size   = (off_t) 0;                                                  \
-  }                                                                           \
-}
+#define MRL_ZERO(m) {							\
+    if((m)) {								\
+    free((m)->origin);							\
+    free((m)->mrl);							\
+    free((m)->link);							\
+    (m)->origin = NULL;							\
+    (m)->mrl    = NULL;							\
+    (m)->link   = NULL;							\
+    (m)->type   = 0;							\
+    (m)->size   = (off_t) 0;						\
+    }									\
+  }
 
 /*
  * Duplicate two mrls entries (s = source, d = destination).
  */
-#define MRL_DUPLICATE(s, d) {                                                 \
-  _x_assert((s) != NULL);                                                     \
-  _x_assert((d) != NULL);                                                     \
-                                                                              \
-  if((s)->origin) {                                                           \
-    if((d)->origin) {                                                         \
-      (d)->origin = (char *) realloc((d)->origin, strlen((s)->origin) + 1);   \
-      sprintf((d)->origin, "%s", (s)->origin);                                \
-    }                                                                         \
-    else                                                                      \
-      (d)->origin = strdup((s)->origin);                                      \
-  }                                                                           \
-  else                                                                        \
-    (d)->origin = NULL;                                                       \
-                                                                              \
-  if((s)->mrl) {                                                              \
-    if((d)->mrl) {                                                            \
-      (d)->mrl = (char *) realloc((d)->mrl, strlen((s)->mrl) + 1);            \
-      sprintf((d)->mrl, "%s", (s)->mrl);                                      \
-    }                                                                         \
-    else                                                                      \
-      (d)->mrl = strdup((s)->mrl);                                            \
-  }                                                                           \
-  else                                                                        \
-    (d)->mrl = NULL;                                                          \
-                                                                              \
-  if((s)->link) {                                                             \
-    if((d)->link) {                                                           \
-      (d)->link = (char *) realloc((d)->link, strlen((s)->link) + 1);         \
-      sprintf((d)->link, "%s", (s)->link);                                    \
-    }                                                                         \
-    else                                                                      \
-      (d)->link = strdup((s)->link);                                          \
-  }                                                                           \
-  else                                                                        \
-    (d)->link = NULL;                                                         \
-                                                                              \
-  (d)->type = (s)->type;                                                      \
-  (d)->size = (s)->size;                                                      \
-}
+#define MRL_DUPLICATE(s, d) {						\
+    _x_assert((s) != NULL);						\
+    _x_assert((d) != NULL);						\
+									\
+    free((d)->origin);							\
+    (d)->origin = (s)->origin ? strdup((s)->origin) : NULL;		\
+									\
+    free((d)->mrl);							\
+    (d)->mrl = (s)->mrl ? strdup((s)->mrl) : NULL;			\
+									\
+    free((d)->link);							\
+    (d)->link = (s)->link ? strdup((s)->link) : NULL;			\
+									\
+    (d)->type = (s)->type;						\
+    (d)->size = (s)->size;						\
+  }
 
 /*
  * Duplicate two arrays of mrls (s = source, d = destination).

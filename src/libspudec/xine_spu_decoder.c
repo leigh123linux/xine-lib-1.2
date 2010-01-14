@@ -1,26 +1,30 @@
 /*
- * Copyright (C) 2000-2004 the xine project
- * 
+ * Copyright (C) 2000-2008 the xine project
+ *
  * Copyright (C) James Courtier-Dutton James@superbug.demon.co.uk - July 2001
  *
  * This file is part of xine, a unix video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  * stuff needed to turn libspu into a xine decoder plugin
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -68,11 +72,8 @@ static const clut_t default_clut[] = {
 };
 
 static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
-  uint32_t stream_id;
-  spudec_seq_t       *cur_seq;
   spudec_decoder_t *this = (spudec_decoder_t *) this_gen;
-  stream_id = buf->type & 0x1f ;
-  cur_seq = &this->spudec_stream_state[stream_id].ra_seq;
+  const uint8_t stream_id = buf->type & 0x1f ;
 
 #ifdef LOG_DEBUG
   printf("libspudec:got buffer type = %x\n", buf->type);
@@ -84,7 +85,7 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
   pthread_mutex_unlock(&this->nav_pci_lock);
 
   if ( (buf->type & 0xffff0000) != BUF_SPU_DVD ||
-       !(buf->decoder_flags & BUF_FLAG_SPECIAL) || 
+       !(buf->decoder_flags & BUF_FLAG_SPECIAL) ||
        buf->decoder_info[1] != BUF_SPECIAL_SPU_DVD_SUBTYPE )
     return;
 
@@ -103,7 +104,7 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
     this->state.need_clut = 0;
     return;
   }
- 
+
   if ( buf->decoder_info[2] == SPU_DVD_SUBTYPE_NAV ) {
 #ifdef LOG_DEBUG
     printf("libspudec:got nav packet 1\n");
@@ -111,11 +112,11 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
     spudec_decode_nav(this,buf);
     return;
   }
-  
+
   if ( buf->decoder_info[2] == SPU_DVD_SUBTYPE_VOBSUB_PACKAGE ) {
     this->state.vobsub = 1;
   }
-    
+
 #ifdef LOG_DEBUG
   printf("libspudec:got buffer type = %x\n", buf->type);
 #endif
@@ -125,14 +126,14 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
   if (buf->pts) {
     metronom_t *metronom = this->stream->metronom;
     int64_t vpts = metronom->got_spu_packet(metronom, buf->pts);
-    
+
     this->spudec_stream_state[stream_id].vpts = vpts; /* Show timer */
     this->spudec_stream_state[stream_id].pts = buf->pts; /* Required to match up with NAV packets */
   }
 
   spudec_reassembly(this->stream->xine,
 		    &this->spudec_stream_state[stream_id].ra_seq, buf->content, buf->size);
-  if(this->spudec_stream_state[stream_id].ra_seq.complete == 1) { 
+  if(this->spudec_stream_state[stream_id].ra_seq.complete == 1) {
     if(this->spudec_stream_state[stream_id].ra_seq.broken) {
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "libspudec: dropping broken SPU\n");
       this->spudec_stream_state[stream_id].ra_seq.broken = 0;
@@ -145,12 +146,12 @@ static void spudec_reset (spu_decoder_t *this_gen) {
   spudec_decoder_t *this = (spudec_decoder_t *) this_gen;
   video_overlay_manager_t *ovl_manager = this->stream->video_out->get_overlay_manager (this->stream->video_out);
   int i;
-  
+
   if( this->menu_handle >= 0 )
     ovl_manager->free_handle(ovl_manager,
 			     this->menu_handle);
   this->menu_handle = -1;
-  
+
   for (i=0; i < MAX_STREAMS; i++) {
     if( this->spudec_stream_state[i].overlay_handle >= 0 )
       ovl_manager->free_handle(ovl_manager,
@@ -159,7 +160,7 @@ static void spudec_reset (spu_decoder_t *this_gen) {
     this->spudec_stream_state[i].ra_seq.complete = 1;
     this->spudec_stream_state[i].ra_seq.broken = 0;
   }
-  
+
   pthread_mutex_lock(&this->nav_pci_lock);
   spudec_clear_nav_list(this);
   pthread_mutex_unlock(&this->nav_pci_lock);
@@ -167,7 +168,7 @@ static void spudec_reset (spu_decoder_t *this_gen) {
 
 static void spudec_discontinuity (spu_decoder_t *this_gen) {
   spudec_decoder_t *this = (spudec_decoder_t *) this_gen;
-  
+
   pthread_mutex_lock(&this->nav_pci_lock);
   spudec_clear_nav_list(this);
   pthread_mutex_unlock(&this->nav_pci_lock);
@@ -177,7 +178,6 @@ static void spudec_discontinuity (spu_decoder_t *this_gen) {
 static void spudec_dispose (spu_decoder_t *this_gen) {
 
   spudec_decoder_t         *this = (spudec_decoder_t *) this_gen;
-  int                       i;
   video_overlay_manager_t  *ovl_manager = this->stream->video_out->get_overlay_manager (this->stream->video_out);
 
   if( this->menu_handle >= 0 )
@@ -185,6 +185,7 @@ static void spudec_dispose (spu_decoder_t *this_gen) {
 			     this->menu_handle);
   this->menu_handle = -1;
 
+  int i;
   for (i=0; i < MAX_STREAMS; i++) {
     if( this->spudec_stream_state[i].overlay_handle >= 0 )
       ovl_manager->free_handle(ovl_manager,
@@ -192,7 +193,7 @@ static void spudec_dispose (spu_decoder_t *this_gen) {
     this->spudec_stream_state[i].overlay_handle = -1;
     free (this->spudec_stream_state[i].ra_seq.buf);
   }
-  
+
   spudec_clear_nav_list(this);
   pthread_mutex_destroy(&this->nav_pci_lock);
 
@@ -207,9 +208,9 @@ static void spudec_dispose (spu_decoder_t *this_gen) {
 static int spudec_get_interact_info (spu_decoder_t *this_gen, void *data) {
   spudec_decoder_t *this  = (spudec_decoder_t *) this_gen;
   /*printf("get_interact_info() called\n");*/
-  if (!this || !data) 
+  if (!this || !data)
     return 0;
- 
+
   /*printf("get_interact_info() coping nav_pci\n");*/
   pthread_mutex_lock(&this->nav_pci_lock);
   spudec_update_nav(this);
@@ -225,11 +226,9 @@ static void spudec_set_button (spu_decoder_t *this_gen, int32_t button, int32_t 
   * when video_overlay does menus */
 
   video_overlay_manager_t *ovl_manager;
-  video_overlay_event_t *overlay_event = NULL;
-  vo_overlay_t        *overlay = NULL;
-  overlay_event = xine_xmalloc (sizeof(video_overlay_event_t));
+  video_overlay_event_t *overlay_event = calloc(1, sizeof(video_overlay_event_t));
+  vo_overlay_t        *overlay = calloc(1, sizeof(vo_overlay_t));
 
-  overlay = xine_xmalloc (sizeof(vo_overlay_t));
   /* FIXME: Watch out for threads. We should really put a lock on this
    * because events is a different thread than decode_data */
 
@@ -244,14 +243,14 @@ static void spudec_set_button (spu_decoder_t *this_gen, int32_t button, int32_t 
   printf ("libspudec:xine_decoder.c:spudec_event_listener:this->menu_handle=%d\n",this->menu_handle);
 #endif
   if(this->menu_handle < 0) {
-    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	    "Menu handle alloc failed. No more overlays objects available. Only %d at once please.",
 	    MAX_OBJECTS);
     free(overlay_event);
     free(overlay);
     return;
   }
-  
+
   if (show > 0) {
 #ifdef LOG_NAV
     fprintf (stderr,"libspudec:xine_decoder.c:spudec_event_listener:buttonN = %u show=%d\n",
@@ -284,7 +283,7 @@ static void spudec_set_button (spu_decoder_t *this_gen, int32_t button, int32_t 
 			       this->buttonN, show-1, overlay, &this->overlay );
     pthread_mutex_unlock(&this->nav_pci_lock);
   } else {
-    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	    "libspudec:xine_decoder.c:spudec_event_listener:HIDE ????\n");
     printf("We dropped out here for some reason");
     _x_abort();
@@ -313,9 +312,8 @@ static void spudec_set_button (spu_decoder_t *this_gen, int32_t button, int32_t 
 static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t *stream) {
 
   spudec_decoder_t *this ;
-  int i;
 
-  this = (spudec_decoder_t *) xine_xmalloc (sizeof (spudec_decoder_t));
+  this = (spudec_decoder_t *) calloc(1, sizeof (spudec_decoder_t));
 
   this->spu_decoder.decode_data         = spudec_decode_data;
   this->spu_decoder.reset               = spudec_reset;
@@ -328,8 +326,8 @@ static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t
 
   this->menu_handle = -1;
   this->buttonN = 1;
-  this->event.object.overlay = xine_xmalloc(sizeof(vo_overlay_t));
- 
+  this->event.object.overlay = calloc(1, sizeof(vo_overlay_t));
+
   pthread_mutex_init(&this->nav_pci_lock, NULL);
   this->pci_cur.pci.hli.hl_gi.hli_ss  = 0;
   this->pci_cur.next                  = NULL;
@@ -337,6 +335,8 @@ static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t
   this->ovl_caps    = stream->video_out->get_capabilities(stream->video_out);
   this->output_open = 0;
   this->last_event_vpts = 0;
+
+  int i;
   for (i=0; i < MAX_STREAMS; i++) {
     this->spudec_stream_state[i].ra_seq.complete = 1;
     this->spudec_stream_state[i].overlay_handle = -1;
@@ -376,7 +376,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   spudec_class_t *this;
 
-  this = (spudec_class_t *) xine_xmalloc (sizeof (spudec_class_t));
+  this = calloc(1, sizeof (spudec_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.get_identifier  = get_identifier;
@@ -396,7 +396,7 @@ static const decoder_info_t dec_info_data = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_SPU_DECODER, 16, "spudec", XINE_VERSION_CODE, &dec_info_data, &init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

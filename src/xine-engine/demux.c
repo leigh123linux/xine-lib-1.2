@@ -21,6 +21,9 @@
  * hide some xine engine details from demuxers and reduce code duplication
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -47,12 +50,7 @@
 #include <winsock.h>
 #endif
 
-#ifdef MIN
-#undef MIN
-#endif
-#define MIN(a,b) ( (a) < (b) ) ? (a) : (b)
-
-/* 
+/*
  *  Flush audio and video buffers. It is called from demuxers on
  *  seek/stop, and may be useful when user input changes a stream and
  *  xine-lib has cached buffers that have yet to be played.
@@ -64,10 +62,10 @@
 void _x_demux_flush_engine (xine_stream_t *stream) {
 
   buf_element_t *buf;
-  
+
   if( stream->gapless_switch )
     return;
-  
+
   stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
 
   /* only flush/discard output ports on master streams */
@@ -79,23 +77,23 @@ void _x_demux_flush_engine (xine_stream_t *stream) {
       stream->audio_out->set_property(stream->audio_out, AO_PROP_DISCARD_BUFFERS, 1);
     }
   }
-    
+
   stream->video_fifo->clear(stream->video_fifo);
   stream->audio_fifo->clear(stream->audio_fifo);
-  
-  pthread_mutex_lock(&stream->demux_mutex);  
+
+  pthread_mutex_lock(&stream->demux_mutex);
 
   buf = stream->video_fifo->buffer_pool_alloc (stream->video_fifo);
   buf->type = BUF_CONTROL_RESET_DECODER;
   stream->video_fifo->put (stream->video_fifo, buf);
-  
+
   buf = stream->audio_fifo->buffer_pool_alloc (stream->audio_fifo);
   buf->type = BUF_CONTROL_RESET_DECODER;
   stream->audio_fifo->put (stream->audio_fifo, buf);
-  
-  pthread_mutex_unlock(&stream->demux_mutex);  
 
-  /* on seeking we must wait decoder fifos to process before doing flush. 
+  pthread_mutex_unlock(&stream->demux_mutex);
+
+  /* on seeking we must wait decoder fifos to process before doing flush.
    * otherwise we flush too early (before the old data has left decoders)
    */
   _x_demux_control_headers_done (stream);
@@ -104,7 +102,7 @@ void _x_demux_flush_engine (xine_stream_t *stream) {
     video_overlay_manager_t *ovl = stream->video_out->get_overlay_manager(stream->video_out);
     ovl->flush_events(ovl);
   }
-  
+
   /* only flush/discard output ports on master streams */
   if( stream->master == stream ) {
     if (stream->video_out) {
@@ -117,16 +115,44 @@ void _x_demux_flush_engine (xine_stream_t *stream) {
       stream->audio_out->set_property(stream->audio_out, AO_PROP_DISCARD_BUFFERS, 0);
     }
   }
-  
+
   stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
+}
+
+
+static struct timespec _x_compute_interval(unsigned int millisecs) {
+  struct timespec ts;
+#ifdef WIN32
+  FILETIME ft;
+  ULARGE_INTEGER ui;
+
+  GetSystemTimeAsFileTime(&ft);
+  ui.u.LowPart  = ft.dwLowDateTime;
+  ui.u.HighPart = ft.dwHighDateTime;
+  ui.QuadPart  += millisecs * 10000;
+  ts.tv_sec = ui.QuadPart / 10000000;
+  ts.tv_sec = (ui.QuadPart % 10000000)*100;
+#elif _POSIX_TIMERS > 0
+  clock_gettime(CLOCK_REALTIME, &ts);
+  uint64_t ttimer = (uint64_t)ts.tv_sec*1000 + ts.tv_nsec/1000000 + millisecs;
+  ts.tv_sec = ttimer/1000;
+  ts.tv_nsec = (ttimer%1000)*1000000;
+#else
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  uint64_t ttimer = (uint64_t)tv.tv_sec*1000 + tv.tv_usec/1000 + millisecs;
+  ts.tv_sec = ttimer/1000;
+  ts.tv_nsec = (ttimer%1000)*1000000;
+#endif
+  return ts;
 }
 
 
 void _x_demux_control_newpts( xine_stream_t *stream, int64_t pts, uint32_t flags ) {
 
   buf_element_t *buf;
-      
-  pthread_mutex_lock(&stream->demux_mutex);  
+
+  pthread_mutex_lock(&stream->demux_mutex);
 
   buf = stream->video_fifo->buffer_pool_alloc (stream->video_fifo);
   buf->type = BUF_CONTROL_NEWPTS;
@@ -140,7 +166,30 @@ void _x_demux_control_newpts( xine_stream_t *stream, int64_t pts, uint32_t flags
   buf->disc_off = pts;
   stream->audio_fifo->put (stream->audio_fifo, buf);
 
-  pthread_mutex_unlock(&stream->demux_mutex);  
+  pthread_mutex_unlock(&stream->demux_mutex);
+}
+
+/* avoid ao_loop being stuck in a pthread_cond_wait, waiting for data;
+ * return 1 if the stream is stopped
+ * (better fix wanted!)
+ */
+static int demux_unstick_ao_loop (xine_stream_t *stream)
+{
+/*  if (!stream->audio_thread_created)
+    return 0;
+*/
+  int status = xine_get_status (stream);
+  if (status != XINE_STATUS_QUIT && status != XINE_STATUS_STOP && stream->demux_plugin->get_status(stream->demux_plugin) != DEMUX_FINISHED)
+    return 0;
+#if 0
+  /* right, stream is stopped... */
+  audio_buffer_t *buf = stream->audio_out->get_buffer (stream->audio_out);
+  buf->num_frames = 0;
+  buf->stream = NULL;
+  stream->audio_out->put_buffer (stream->audio_out, buf, stream);
+#endif
+  lprintf("stuck\n");
+  return 1;
 }
 
 /* sync with decoder fifos, making sure everything gets processed */
@@ -152,7 +201,7 @@ void _x_demux_control_headers_done (xine_stream_t *stream) {
 
   /* we use demux_action_pending to wake up sleeping spu decoders */
   stream->demux_action_pending = 1;
-  
+
   /* allocate the buffers before grabbing the lock to prevent cyclic wait situations */
   buf_video = stream->video_fifo->buffer_pool_alloc (stream->video_fifo);
   buf_audio = stream->audio_fifo->buffer_pool_alloc (stream->audio_fifo);
@@ -170,8 +219,8 @@ void _x_demux_control_headers_done (xine_stream_t *stream) {
   } else {
     header_count_audio = 0;
   }
-  
-  pthread_mutex_lock(&stream->demux_mutex);  
+
+  pthread_mutex_lock(&stream->demux_mutex);
 
   buf_video->type = BUF_CONTROL_HEADERS_DONE;
   stream->video_fifo->put (stream->video_fifo, buf_video);
@@ -179,26 +228,33 @@ void _x_demux_control_headers_done (xine_stream_t *stream) {
   buf_audio->type = BUF_CONTROL_HEADERS_DONE;
   stream->audio_fifo->put (stream->audio_fifo, buf_audio);
 
-  pthread_mutex_unlock(&stream->demux_mutex);  
+  pthread_mutex_unlock(&stream->demux_mutex);
+  unsigned int max_iterations = 0;
 
-  while ((stream->header_count_audio < header_count_audio) || 
+  while ((stream->header_count_audio < header_count_audio) ||
          (stream->header_count_video < header_count_video)) {
-    struct timeval tv;
-    struct timespec ts;
 
     lprintf ("waiting for headers. v:%d %d   a:%d %d\n",
 	     stream->header_count_video, header_count_video,
-	     stream->header_count_audio, header_count_audio); 
+	     stream->header_count_audio, header_count_audio);
 
-    gettimeofday(&tv, NULL);
-    ts.tv_sec  = tv.tv_sec + 1;
-    ts.tv_nsec = tv.tv_usec * 1000;
+    struct timespec ts = _x_compute_interval(1000);
+    int ret_wait;
+
     /* use timedwait to workaround buggy pthread broadcast implementations */
-    pthread_cond_timedwait (&stream->counter_changed, &stream->counter_lock, &ts);
+    ret_wait = pthread_cond_timedwait (&stream->counter_changed, &stream->counter_lock, &ts);
+
+    if (ret_wait == ETIMEDOUT && demux_unstick_ao_loop (stream) && ++max_iterations > 4) {
+      xine_log(stream->xine,
+	  XINE_LOG_MSG,_("Stuck in _x_demux_control_headers_done(). Taking the emergency exit\n"));
+      stream->emergency_brake = 1;
+      break;
+    }
   }
 
   stream->demux_action_pending = 0;
-  
+  pthread_cond_signal(&stream->demux_resume);
+
   lprintf ("headers processed.\n");
 
   pthread_mutex_unlock (&stream->counter_lock);
@@ -207,25 +263,28 @@ void _x_demux_control_headers_done (xine_stream_t *stream) {
 void _x_demux_control_start( xine_stream_t *stream ) {
 
   buf_element_t *buf;
+  uint32_t flags = (stream->gapless_switch) ? BUF_FLAG_GAPLESS_SW : 0;
 
-  pthread_mutex_lock(&stream->demux_mutex);  
+  pthread_mutex_lock(&stream->demux_mutex);
 
   buf = stream->video_fifo->buffer_pool_alloc (stream->video_fifo);
   buf->type = BUF_CONTROL_START;
+  buf->decoder_flags = flags;
   stream->video_fifo->put (stream->video_fifo, buf);
 
   buf = stream->audio_fifo->buffer_pool_alloc (stream->audio_fifo);
   buf->type = BUF_CONTROL_START;
+  buf->decoder_flags = flags;
   stream->audio_fifo->put (stream->audio_fifo, buf);
 
-  pthread_mutex_unlock(&stream->demux_mutex);  
+  pthread_mutex_unlock(&stream->demux_mutex);
 }
 
 void _x_demux_control_end( xine_stream_t *stream, uint32_t flags ) {
 
   buf_element_t *buf;
 
-  pthread_mutex_lock(&stream->demux_mutex);  
+  pthread_mutex_lock(&stream->demux_mutex);
 
   buf = stream->video_fifo->buffer_pool_alloc (stream->video_fifo);
   buf->type = BUF_CONTROL_END;
@@ -237,26 +296,26 @@ void _x_demux_control_end( xine_stream_t *stream, uint32_t flags ) {
   buf->decoder_flags = flags;
   stream->audio_fifo->put (stream->audio_fifo, buf);
 
-  pthread_mutex_unlock(&stream->demux_mutex);  
+  pthread_mutex_unlock(&stream->demux_mutex);
 }
 
 void _x_demux_control_nop( xine_stream_t *stream, uint32_t flags ) {
 
   buf_element_t *buf;
 
-  pthread_mutex_lock(&stream->demux_mutex);  
+  pthread_mutex_lock(&stream->demux_mutex);
 
   buf = stream->video_fifo->buffer_pool_alloc (stream->video_fifo);
   buf->type = BUF_CONTROL_NOP;
   buf->decoder_flags = flags;
   stream->video_fifo->put (stream->video_fifo, buf);
-  
+
   buf = stream->audio_fifo->buffer_pool_alloc (stream->audio_fifo);
   buf->type = BUF_CONTROL_NOP;
   buf->decoder_flags = flags;
   stream->audio_fifo->put (stream->audio_fifo, buf);
 
-  pthread_mutex_unlock(&stream->demux_mutex);  
+  pthread_mutex_unlock(&stream->demux_mutex);
 }
 
 static void *demux_loop (void *stream_gen) {
@@ -271,7 +330,7 @@ static void *demux_loop (void *stream_gen) {
 
   pthread_mutex_lock( &stream->demux_lock );
   stream->emergency_brake = 0;
-  
+
   /* do-while needed to seek after demux finished */
   do {
 
@@ -284,12 +343,14 @@ static void *demux_loop (void *stream_gen) {
 
       /* someone may want to interrupt us */
       if( stream->demux_action_pending ) {
-        pthread_mutex_unlock( &stream->demux_lock );
+        struct timeval tv;
+        struct timespec ts;
 
-        lprintf ("sched_yield\n");
+        gettimeofday(&tv, NULL);
+        ts.tv_sec  = tv.tv_sec;
+        ts.tv_nsec = (tv.tv_usec + 100000) * 1000;
 
-        sched_yield();
-        pthread_mutex_lock( &stream->demux_lock );
+        pthread_cond_timedwait (&stream->demux_resume, &stream->demux_lock, &ts);
       }
     }
 
@@ -337,7 +398,7 @@ static void *demux_loop (void *stream_gen) {
   /* demux_thread_running is zero if demux loop has been stopped by user */
   non_user = stream->demux_thread_running;
   stream->demux_thread_running = 0;
-  
+
   _x_demux_control_end(stream, non_user);
 
   lprintf ("loop finished, end buffer sent\n");
@@ -345,13 +406,24 @@ static void *demux_loop (void *stream_gen) {
   pthread_mutex_unlock( &stream->demux_lock );
 
   pthread_mutex_lock (&stream->counter_lock);
-  while ((stream->finished_count_audio < finished_count_audio) || 
+  struct timespec ts;
+  unsigned int max_iterations = 0;
+  int ret_wait;
+  while ((stream->finished_count_audio < finished_count_audio) ||
          (stream->finished_count_video < finished_count_video)) {
     lprintf ("waiting for finisheds.\n");
-    pthread_cond_wait (&stream->counter_changed, &stream->counter_lock);
+    ts = _x_compute_interval(1000);
+    ret_wait = pthread_cond_timedwait (&stream->counter_changed, &stream->counter_lock, &ts);
+
+    if (ret_wait == ETIMEDOUT && demux_unstick_ao_loop (stream) && ++max_iterations > 4) {
+      xine_log(stream->xine,
+	  XINE_LOG_MSG,_("Stuck in demux_loop(). Taking the emergency exit\n"));
+      stream->emergency_brake = 1;
+      break;
+    }
   }
   pthread_mutex_unlock (&stream->counter_lock);
-  
+
   _x_handle_stream_end(stream, non_user);
   return NULL;
 }
@@ -359,13 +431,14 @@ static void *demux_loop (void *stream_gen) {
 int _x_demux_start_thread (xine_stream_t *stream) {
 
   int err;
-  
+
   lprintf ("start thread called\n");
-  
+
   stream->demux_action_pending = 1;
   pthread_mutex_lock( &stream->demux_lock );
   stream->demux_action_pending = 0;
-  
+  pthread_cond_signal(&stream->demux_resume);
+
   if( !stream->demux_thread_running ) {
 
     if (stream->demux_thread_created) {
@@ -381,21 +454,22 @@ int _x_demux_start_thread (xine_stream_t *stream) {
       _x_abort();
     }
   }
-  
+
   pthread_mutex_unlock( &stream->demux_lock );
   return 0;
 }
 
 int _x_demux_stop_thread (xine_stream_t *stream) {
-  
+
   void *p;
-  
+
   lprintf ("stop thread called\n");
-  
+
   stream->demux_action_pending = 1;
   pthread_mutex_lock( &stream->demux_lock );
   stream->demux_thread_running = 0;
   stream->demux_action_pending = 0;
+  pthread_cond_signal(&stream->demux_resume);
 
   /* At that point, the demuxer has sent the last audio/video buffer,
    * so it's a safe place to flush the engine.
@@ -404,12 +478,12 @@ int _x_demux_stop_thread (xine_stream_t *stream) {
   pthread_mutex_unlock( &stream->demux_lock );
 
   lprintf ("joining thread %ld\n", stream->demux_thread );
-  
+
   if( stream->demux_thread_created ) {
     pthread_join (stream->demux_thread, &p);
     stream->demux_thread_created = 0;
   }
-  
+
   /*
    * Wake up xine_play if it's waiting for a frame
    */
@@ -435,7 +509,7 @@ int _x_demux_read_header( input_plugin_t *input, unsigned char *buffer, off_t si
     read_size = input->read(input, buffer, size);
     input->seek(input, 0, SEEK_SET);
   } else if (input->get_capabilities(input) & INPUT_CAP_PREVIEW) {
-    buf = xine_xmalloc(MAX_PREVIEW_SIZE);
+    buf = malloc(MAX_PREVIEW_SIZE);
     read_size = input->get_optional_data(input, buf, INPUT_OPTIONAL_DATA_PREVIEW);
     read_size = MIN (read_size, size);
     memcpy(buffer, buf, read_size);
@@ -547,7 +621,7 @@ int _x_action_pending (xine_stream_t *stream) {
  *
  * the other ones help enforcing that demuxers provide the information
  * they have about the stream, so things like the GUI slider bar can
- * work as expected. 
+ * work as expected.
  */
 void _x_demux_send_data(fifo_buffer_t *fifo, uint8_t *data, int size,
                         int64_t pts, uint32_t type, uint32_t decoder_flags,
@@ -595,10 +669,10 @@ void _x_demux_send_data(fifo_buffer_t *fifo, uint8_t *data, int size,
  *
  * If reading fails, -1 is returned
  */
-int _x_demux_read_send_data(fifo_buffer_t *fifo, input_plugin_t *input, 
-                            int size, int64_t pts, uint32_t type, 
-                            uint32_t decoder_flags, off_t input_normpos, 
-                            int input_time, int total_time, 
+int _x_demux_read_send_data(fifo_buffer_t *fifo, input_plugin_t *input,
+                            int size, int64_t pts, uint32_t type,
+                            uint32_t decoder_flags, off_t input_normpos,
+                            int input_time, int total_time,
                             uint32_t frame_number) {
   buf_element_t *buf;
 
@@ -620,7 +694,7 @@ int _x_demux_read_send_data(fifo_buffer_t *fifo, input_plugin_t *input,
 
     if(input->read(input, buf->content, buf->size) < buf->size) {
       buf->free_buffer(buf);
-      return -1;    
+      return -1;
     }
     size -= buf->size;
 
@@ -636,7 +710,7 @@ int _x_demux_read_send_data(fifo_buffer_t *fifo, input_plugin_t *input,
 
     fifo->put (fifo, buf);
   }
-  
+
   return 0;
 }
 
@@ -652,7 +726,7 @@ void _x_demux_send_mrl_reference (xine_stream_t *stream, int alternative,
     xine_mrl_reference_data_ext_t *e;
     xine_mrl_reference_data_t *b;
   } data;
-  int mrl_len = strlen (mrl);
+  const size_t mrl_len = strlen (mrl);
 
   if (!title)
     title = "";
@@ -663,7 +737,7 @@ void _x_demux_send_mrl_reference (xine_stream_t *stream, int alternative,
   event.data_length = offsetof (xine_mrl_reference_data_ext_t, mrl) +
                       mrl_len + strlen (title) + 2;
   data.e = event.data = malloc (event.data_length);
-    
+
   data.e->alternative = alternative;
   data.e->start_time = start_time;
   data.e->duration = duration;

@@ -33,6 +33,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
 
 #define LOG_MODULE "demux_flac"
 #define LOG_VERBOSE
@@ -116,7 +119,7 @@ static int open_flac_file(demux_flac_t *flac) {
    * will always be 1 metadata block */
   do {
 
-    if (flac->input->read(flac->input, preamble, FLAC_SIGNATURE_SIZE) != 
+    if (flac->input->read(flac->input, preamble, FLAC_SIGNATURE_SIZE) !=
         FLAC_SIGNATURE_SIZE)
       return 0;
 
@@ -130,11 +133,11 @@ static int open_flac_file(demux_flac_t *flac) {
     case 0:
       lprintf ("STREAMINFO metadata\n");
       if (block_length != FLAC_STREAMINFO_SIZE) {
-        lprintf ("expected STREAMINFO chunk of %d bytes\n", 
+        lprintf ("expected STREAMINFO chunk of %d bytes\n",
           FLAC_STREAMINFO_SIZE);
         return 0;
       }
-      if (flac->input->read(flac->input, 
+      if (flac->input->read(flac->input,
         flac->streaminfo + sizeof(xine_waveformatex),
         FLAC_STREAMINFO_SIZE) != FLAC_STREAMINFO_SIZE)
         return 0;
@@ -143,8 +146,8 @@ static int open_flac_file(demux_flac_t *flac) {
       flac->bits_per_sample = ((flac->sample_rate >> 4) & 0x1F) + 1;
       flac->sample_rate >>= 12;
       flac->total_samples = _X_BE_64(&streaminfo[10]) & UINT64_C(0x0FFFFFFFFF);  /* 36 bits */
-      lprintf ("%d Hz, %d bits, %d channels, %"PRId64" total samples\n", 
-        flac->sample_rate, flac->bits_per_sample, 
+      lprintf ("%d Hz, %d bits, %d channels, %"PRId64" total samples\n",
+        flac->sample_rate, flac->bits_per_sample,
         flac->channels, flac->total_samples);
       break;
 
@@ -164,8 +167,10 @@ static int open_flac_file(demux_flac_t *flac) {
     case 3:
       lprintf ("SEEKTABLE metadata, %d bytes\n", block_length);
       flac->seekpoint_count = block_length / FLAC_SEEKPOINT_SIZE;
-      flac->seekpoints = xine_xmalloc(flac->seekpoint_count * 
+      flac->seekpoints = calloc(flac->seekpoint_count,
         sizeof(flac_seekpoint_t));
+      if (flac->seekpoint_count && !flac->seekpoints)
+        return 0;
       for (i = 0; i < flac->seekpoint_count; i++) {
         if (flac->input->read(flac->input, buffer, FLAC_SEEKPOINT_SIZE) != FLAC_SEEKPOINT_SIZE)
           return 0;
@@ -173,7 +178,7 @@ static int open_flac_file(demux_flac_t *flac) {
         lprintf (" %d: sample %"PRId64", ", i, flac->seekpoints[i].sample_number);
         flac->seekpoints[i].offset = _X_BE_64(&buffer[8]);
         flac->seekpoints[i].size = _X_BE_16(&buffer[16]);
-        lprintf ("@ 0x%"PRIX64", size = %d bytes, ", 
+        lprintf ("@ 0x%"PRIX64", size = %d bytes, ",
           flac->seekpoints[i].offset, flac->seekpoints[i].size);
         flac->seekpoints[i].pts = flac->seekpoints[i].sample_number;
         flac->seekpoints[i].pts *= 90000;
@@ -182,14 +187,14 @@ static int open_flac_file(demux_flac_t *flac) {
       }
       break;
 
-    /* VORBIS_COMMENT 
+    /* VORBIS_COMMENT
      *
      * For a description of the format please have a look at
      * http://www.xiph.org/vorbis/doc/v-comment.html */
     case 4:
       lprintf ("VORBIS_COMMENT metadata\n");
       {
-        char comments[block_length];
+        char comments[block_length + 1]; /* last byte for NUL termination */
         char *ptr = comments;
         uint32_t length, user_comment_list_length;
         int cn;
@@ -202,27 +207,37 @@ static int open_flac_file(demux_flac_t *flac) {
 
           length = _X_LE_32(ptr);
           ptr += 4 + length;
+          if (length > block_length - 8)
+            return 0; /* bad length or too little left in the buffer */
 
           user_comment_list_length = _X_LE_32(ptr);
           ptr += 4;
 
           cn = 0;
           for (; cn < user_comment_list_length; cn++) {
+            if (ptr > comments + block_length - 4)
+              return 0; /* too little left in the buffer */
+
             length = _X_LE_32(ptr);
             ptr += 4;
+            if (length >= block_length || ptr + length > comments + block_length)
+              return 0; /* bad length */
 
             comment = (char*) ptr;
             c = comment[length];
-            comment[length] = 0;
+            comment[length] = 0; /* NUL termination */
 
             lprintf ("comment[%02d] = %s\n", cn, comment);
 
-            if ((strncasecmp ("TITLE=", comment, 6) == 0) 
+            if ((strncasecmp ("TITLE=", comment, 6) == 0)
                 && (length - 6 > 0)) {
               _x_meta_info_set_utf8 (flac->stream, XINE_META_INFO_TITLE, comment + 6);
             } else if ((strncasecmp ("ARTIST=", comment, 7) == 0)
                 && (length - 7 > 0)) {
               _x_meta_info_set_utf8 (flac->stream, XINE_META_INFO_ARTIST, comment + 7);
+            } else if ((strncasecmp ("COMPOSER=", comment, 9) == 0)
+                && (length - 9 > 0)) {
+              _x_meta_info_set_utf8 (flac->stream, XINE_META_INFO_COMPOSER, comment + 9);
             } else if ((strncasecmp ("ALBUM=", comment, 6) == 0)
                 && (length - 6 > 0)) {
               _x_meta_info_set_utf8 (flac->stream, XINE_META_INFO_ALBUM, comment + 6);
@@ -248,8 +263,8 @@ static int open_flac_file(demux_flac_t *flac) {
           }
 
           if ((tracknumber > 0) && (tracktotal > 0)) {
-            char tn[16];
-            snprintf (tn, 16, "%02d/%02d", tracknumber, tracktotal);
+            char tn[24];
+            snprintf (tn, 24, "%02d/%02d", tracknumber, tracktotal);
             _x_meta_info_set(flac->stream, XINE_META_INFO_TRACK_NUMBER, tn);
           }
           else if (tracknumber > 0) {
@@ -381,12 +396,13 @@ static int demux_flac_seek (demux_plugin_t *this_gen,
   demux_flac_t *this = (demux_flac_t *) this_gen;
   int seekpoint_index = 0;
   int64_t start_pts;
-  
+  unsigned char buf[4];
+
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->data_size );
 
   /* if thread is not running, initialize demuxer */
-  if( !playing ) {
+  if( !playing && !start_pos) {
 
     /* send new pts */
     _x_demux_control_newpts(this->stream, 0, 0);
@@ -394,28 +410,39 @@ static int demux_flac_seek (demux_plugin_t *this_gen,
     this->status = DEMUX_OK;
   } else {
 
-    if (this->seekpoints == NULL) {
+    if (this->seekpoints == NULL && !start_pos) {
       /* cannot seek if there is no seekpoints */
       this->status = DEMUX_OK;
       return this->status;
     }
 
-    /* do a lazy, linear seek based on the assumption that there are not
-     * that many seek points */
+    /* Don't use seekpoints if start_pos != 0. This allows smooth seeking */
     if (start_pos) {
       /* offset-based seek */
-      if (start_pos < this->seekpoints[0].offset)
-        seekpoint_index = 0;
-      else {
-        for (seekpoint_index = 0; seekpoint_index < this->seekpoint_count - 1;
-          seekpoint_index++) {
-          if (start_pos < this->seekpoints[seekpoint_index + 1].offset) {
-            break;
-          }
-        }
+      this->status = DEMUX_OK;
+      start_pos += this->data_start;
+      this->input->seek(this->input, start_pos, SEEK_SET);
+      while(1){ /* here we try to find something that resembles a frame header */
+
+	if (this->input->read(this->input, buf, 2) != 2){
+	  this->status = DEMUX_FINISHED; /* we sought past the end of stream ? */
+	  break;
+	}
+
+	if (buf[0] == 0xff && buf[1] == 0xf8)
+	  break; /* this might be the frame header... or it may be not. We pass it to the decoder
+		  * to decide, but this way we reduce the number of warnings */
+	start_pos +=2;
       }
+
+      _x_demux_flush_engine(this->stream);
+      this->input->seek(this->input, start_pos, SEEK_SET);
+      _x_demux_control_newpts(this->stream, 0, BUF_FLAG_SEEK);
+      return this->status;
+
     } else {
-      /* time-based seek */
+      /* do a lazy, linear seek based on the assumption that there are not
+       * that many seek points; time-based seek */
       start_pts = start_time;
       start_pts *= 90;
       if (start_pts < this->seekpoints[0].pts)
@@ -431,9 +458,9 @@ static int demux_flac_seek (demux_plugin_t *this_gen,
     }
 
     _x_demux_flush_engine(this->stream);
-    this->input->seek(this->input, this->seekpoints[seekpoint_index].offset, 
+    this->input->seek(this->input, this->seekpoints[seekpoint_index].offset,
       SEEK_SET);
-    _x_demux_control_newpts(this->stream, 
+    _x_demux_control_newpts(this->stream,
       this->seekpoints[seekpoint_index].pts, BUF_FLAG_SEEK);
   }
 
@@ -444,6 +471,7 @@ static void demux_flac_dispose (demux_plugin_t *this_gen) {
   demux_flac_t *this = (demux_flac_t *) this_gen;
 
   free(this->seekpoints);
+  free(this);
 }
 
 static int demux_flac_get_status (demux_plugin_t *this_gen) {
@@ -482,7 +510,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
-  this         = xine_xmalloc (sizeof (demux_flac_t));
+  this         = calloc(1, sizeof(demux_flac_t));
   this->stream = stream;
   this->input  = input;
 
@@ -544,7 +572,8 @@ static const char *get_extensions (demux_class_t *this_gen) {
 }
 
 static const char *get_mimetypes (demux_class_t *this_gen) {
-  return NULL;
+  return "audio/x-flac: flac: FLAC Audio;"
+    "audio/flac: flac: FLAC Audio;";
 }
 
 static void class_dispose (demux_class_t *this_gen) {
@@ -556,7 +585,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_flac_init_plugin (xine_t *xine, void *data) {
   demux_flac_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_flac_class_t));
+  this = calloc(1, sizeof(demux_flac_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

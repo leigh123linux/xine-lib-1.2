@@ -1,24 +1,24 @@
 /*
  * Copyright (C) 2000-2004 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
  *
- * xine version of video_out.h 
+ * xine version of video_out.h
  *
  * vo_frame    : frame containing yuv data and timing info,
  *               transferred between video_decoder and video_output
@@ -36,10 +36,6 @@
 extern "C" {
 #endif
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <pthread.h>
 
 #ifdef XINE_COMPILE
@@ -51,7 +47,7 @@ extern "C" {
 #endif
 
 
-typedef struct vo_frame_s vo_frame_t; 
+typedef struct vo_frame_s vo_frame_t;
 typedef struct vo_driver_s vo_driver_t;
 typedef struct video_driver_class_s video_driver_class_t;
 typedef struct vo_overlay_s vo_overlay_t;
@@ -84,7 +80,7 @@ struct vo_frame_s {
   /* tell video driver that the decoder starts a new field */
   void (*field) (vo_frame_t *vo_img, int which_field);
 
-  /* append this frame to the display queue, 
+  /* append this frame to the display queue,
      returns number of frames to skip if decoder is late */
   /* when the frame does not originate from a stream, it is legal to pass an anonymous stream */
   int (*draw) (vo_frame_t *vo_img, xine_stream_t *stream);
@@ -112,7 +108,7 @@ struct vo_frame_s {
 
   /* yv12 (planar)       base[0]: y,       base[1]: u,  base[2]: v  */
   /* yuy2 (interleaved)  base[0]: yuyv..., base[1]: --, base[2]: -- */
-  uint8_t                   *base[3];       
+  uint8_t                   *base[3];
   int                        pitches[3];
 
   /* info that can be used for interlaced output (e.g. tv-out)      */
@@ -123,13 +119,13 @@ struct vo_frame_s {
    */
   int                        progressive_frame;
   int                        picture_coding_type;
-  
+
   /* cropping to be done */
   int                        crop_left, crop_right, crop_top, crop_bottom;
 
   /* extra info coming from input or demuxers */
-  extra_info_t              *extra_info;    
- 
+  extra_info_t              *extra_info;
+
   /* additional information to be able to duplicate frames:         */
   int                        width, height;
   double                     ratio;         /* aspect ratio  */
@@ -138,7 +134,7 @@ struct vo_frame_s {
   int                        drawn;         /* used by decoder, frame has already been drawn */
   int                        flags;         /* remember the frame flags */
   int                        proc_called;   /* track use of proc_*() methods */
-  
+
   /* Used to carry private data for accelerated plugins.*/
   void                      *accel_data;
 
@@ -146,18 +142,18 @@ struct vo_frame_s {
   xine_video_port_t         *port;
   vo_driver_t               *driver;
   xine_stream_t             *stream;
-  
+
   /* displacement for overlays */
   int                       overlay_offset_x, overlay_offset_y;
-  
-  /* 
+
+  /*
    * that part is used only by video_out.c for frame management
    * obs: changing anything here will require recompiling vo drivers
    */
   struct vo_frame_s         *next;
   int                        lock_counter;
   pthread_mutex_t            mutex; /* protect access to lock_count */
-  
+
   int                        id; /* debugging - track this frame */
   int                        is_first;
 };
@@ -177,8 +173,8 @@ struct xine_video_port_s {
    * (e.g. you are a post plugin) it is legal to pass an anonymous stream */
   void (*open) (xine_video_port_t *self, xine_stream_t *stream);
 
-  /* 
-   * get_frame - allocate an image buffer from display driver 
+  /*
+   * get_frame - allocate an image buffer from display driver
    *
    * params : width      == width of video to display.
    *          height     == height of video to display.
@@ -186,16 +182,16 @@ struct xine_video_port_s {
    *          format     == FOURCC descriptor of image format
    *          flags      == field/prediction flags
    */
-  vo_frame_t* (*get_frame) (xine_video_port_t *self, uint32_t width, 
-			    uint32_t height, double ratio, 
+  vo_frame_t* (*get_frame) (xine_video_port_t *self, uint32_t width,
+			    uint32_t height, double ratio,
 			    int format, int flags);
 
   /* retrieves the last displayed frame (useful for taking snapshots) */
   vo_frame_t* (*get_last_frame) (xine_video_port_t *self);
-  
+
   /* overlay stuff */
   void (*enable_ovl) (xine_video_port_t *self, int ovl_enable);
-  
+
   /* get overlay manager */
   video_overlay_manager_t* (*get_overlay_manager) (xine_video_port_t *self);
 
@@ -208,11 +204,11 @@ struct xine_video_port_s {
    */
   int (*get_property) (xine_video_port_t *self, int property);
   int (*set_property) (xine_video_port_t *self, int property, int value);
-  
+
   /* return true if port is opened for this stream, stream can be anonymous */
-  int (*status) (xine_video_port_t *self, xine_stream_t *stream, 
+  int (*status) (xine_video_port_t *self, xine_stream_t *stream,
                  int *width, int *height, int64_t *img_duration);
-  
+
   /* video driver is no longer used by decoder => close */
   /* when you are not a full-blown stream, but still need to close the port
    * (e.g. you are a post plugin) it is legal to pass an anonymous stream */
@@ -235,9 +231,9 @@ struct xine_video_port_s {
 #define VO_PROP_BRIGHTNESS            5
 #define VO_PROP_COLORKEY              6
 #define VO_PROP_AUTOPAINT_COLORKEY    7
-#define VO_PROP_ZOOM_X                8 
-#define VO_PROP_PAN_SCAN              9 
-#define VO_PROP_TVMODE		      10 
+#define VO_PROP_ZOOM_X                8
+#define VO_PROP_PAN_SCAN              9
+#define VO_PROP_TVMODE		      10
 #define VO_PROP_MAX_NUM_FRAMES        11
 #define VO_PROP_ZOOM_Y                13
 #define VO_PROP_DISCARD_FRAMES        14 /* not used by drivers */
@@ -303,7 +299,7 @@ struct vo_driver_s {
    */
   vo_frame_t* (*alloc_frame) (vo_driver_t *self);
 
-  /* 
+  /*
    * check if the given image fullfills the format specified
    * (re-)allocate memory if necessary
    */
@@ -334,7 +330,7 @@ struct vo_driver_s {
    * these can be used by the gui directly:
    */
   int (*get_property) (vo_driver_t *self, int property);
-  int (*set_property) (vo_driver_t *self, 
+  int (*set_property) (vo_driver_t *self,
 		       int property, int value);
   void (*get_property_min_max) (vo_driver_t *self,
 				int property, int *min, int *max);
@@ -349,7 +345,7 @@ struct vo_driver_s {
 			    void *data);
 
   /* check if a redraw is needed (due to resize)
-   * this is only used for still frames, normal video playback 
+   * this is only used for still frames, normal video playback
    * must call that inside display_frame() function.
    */
   int (*redraw_needed) (vo_driver_t *self);
@@ -358,7 +354,7 @@ struct vo_driver_s {
    * free all resources, close driver
    */
   void (*dispose) (vo_driver_t *self);
-  
+
   void *node; /* needed by plugin_loader */
 };
 
@@ -368,14 +364,14 @@ struct video_driver_class_s {
    * open a new instance of this plugin class
    */
   vo_driver_t* (*open_plugin) (video_driver_class_t *self, const void *visual);
-  
+
   /*
    * return short, human readable identifier for this plugin class
    */
   char* (*get_identifier) (video_driver_class_t *self);
 
   /*
-   * return human readable (verbose = 1 line) description for 
+   * return human readable (verbose = 1 line) description for
    * this plugin class
    */
   char* (*get_description) (video_driver_class_t *self);
@@ -401,7 +397,7 @@ struct vo_overlay_s {
   int               y;             /* y start of subpicture area       */
   int               width;         /* width of subpicture area         */
   int               height;        /* height of subpicture area        */
-  
+
   uint32_t          color[OVL_PALETTE_SIZE];  /* color lookup table     */
   uint8_t           trans[OVL_PALETTE_SIZE];  /* mixer key table        */
   int               rgb_clut;      /* true if clut was converted to rgb */
@@ -414,7 +410,7 @@ struct vo_overlay_s {
   uint32_t          hili_color[OVL_PALETTE_SIZE];
   uint8_t           hili_trans[OVL_PALETTE_SIZE];
   int               hili_rgb_clut; /* true if clut was converted to rgb */
-  
+
   int               unscaled;      /* true if it should be blended unscaled */
 };
 
@@ -427,20 +423,20 @@ struct vo_overlay_s {
  */
 struct video_overlay_manager_s {
   void (*init) (video_overlay_manager_t *this_gen);
-  
+
   void (*dispose) (video_overlay_manager_t *this_gen);
-  
+
   int32_t (*get_handle) (video_overlay_manager_t *this_gen, int object_type );
-  
+
   void (*free_handle) (video_overlay_manager_t *this_gen, int32_t handle);
-  
+
   int32_t (*add_event) (video_overlay_manager_t *this_gen, void *event);
-  
+
   void (*flush_events) (video_overlay_manager_t *this_gen );
-  
+
   int (*redraw_needed) (video_overlay_manager_t *this_gen, int64_t vpts );
-  
-  void (*multiple_overlay_blend) (video_overlay_manager_t *this_gen, int64_t vpts, 
+
+  void (*multiple_overlay_blend) (video_overlay_manager_t *this_gen, int64_t vpts,
                                   vo_driver_t *output, vo_frame_t *vo_img, int enabled);
 };
 
@@ -448,7 +444,7 @@ struct video_overlay_manager_s {
  * build a video_out_port from
  * a given video driver
  */
-xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabonly) XINE_PROTECTED;
+xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabonly) XINE_MALLOC XINE_PROTECTED;
 
 #ifdef __cplusplus
 }

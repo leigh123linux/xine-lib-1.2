@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 #
 # Copyright (C) 2000-2003 the xine project
 #
@@ -37,12 +37,13 @@ case `echo -n` in
 *)      _echo_n=-n _echo_c=;;
 esac
 
+srcdir="`dirname "$0"`"
+
 detect_configure_ac() {
 
-  srcdir=`dirname $0`
   test -z "$srcdir" && srcdir=.
 
-  (test -f $srcdir/configure.ac) || {
+  (test -f "$srcdir"/configure.ac) || {
     echo $_echo_n "*** Error ***: Directory "\`$srcdir\`" does not look like the"
     echo " top-level directory"
     exit 1
@@ -106,6 +107,7 @@ run_autoconf () {
 
   echo $_echo_n " + Running autoconf: $_echo_c";
     autoconf;
+    sed -i -e '/gnu_ld/,/;;/ s/--rpath \${wl}/--rpath,/' configure
   echo "done."
 }
 
@@ -227,6 +229,11 @@ run_aclocal () {
     echo
   fi
   
+  echo $_echo_n " + Running autopoint: $_echo_c"
+  
+  autopoint
+  echo "done." 
+
   echo $_echo_n " + Running aclocal: $_echo_c"
 
   aclocal -I m4
@@ -243,7 +250,11 @@ run_configure () {
     echo "   ** If you wish to pass arguments to ./configure, please"
     echo "   ** specify them on the command line."
   fi
-  ./configure "$@" 
+  if test -f configure; then
+    ./configure "$@"
+  else
+    "$srcdir"/configure "$@"
+  fi
 }
 
 
@@ -251,6 +262,7 @@ run_configure () {
 # MAIN
 #---------------
 detect_configure_ac
+cd "$srcdir"
 detect_autoconf
 detect_libtool
 detect_automake
@@ -278,18 +290,20 @@ case "$1" in
     run_libtoolize
     ;;
   noconfig)
-    run_aclocal
     run_libtoolize
+    run_aclocal
     run_autoheader
     run_automake
     run_autoconf
     ;;
   *)
-    run_aclocal
     run_libtoolize
+    run_aclocal
     run_autoheader
     run_automake
     run_autoconf
+    # return to our original directory
+    cd - >/dev/null
     run_configure "$@"
     ;;
 esac

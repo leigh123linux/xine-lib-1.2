@@ -83,7 +83,7 @@ struct sdl_driver_s {
   vo_driver_t        vo_driver;
 
   config_values_t   *config;
-  
+
   int                hw_accel;
 
   SDL_Surface       *surface;
@@ -100,7 +100,7 @@ struct sdl_driver_s {
   int                screen;
   Drawable           drawable;
 #endif
-  
+
   vo_scale_t         sc;
   xine_t            *xine;
 
@@ -138,11 +138,11 @@ static vo_frame_t *sdl_alloc_frame (vo_driver_t *this_gen) {
   /* sdl_driver_t    *this = (sdl_driver_t *) this_gen; */
   sdl_frame_t     *frame ;
 
-  frame = (sdl_frame_t *) xine_xmalloc (sizeof (sdl_frame_t));
+  frame = (sdl_frame_t *) calloc(1, sizeof(sdl_frame_t));
 
   if (!frame)
     return NULL;
-  
+
   pthread_mutex_init (&frame->vo_frame.mutex, NULL);
 
   /*
@@ -207,8 +207,8 @@ static void sdl_update_frame_format (vo_driver_t *this_gen,
     if (frame->overlay == NULL)
       return;
 
-	/* 
-	 * This needs to be done becuase I have found that 
+	/*
+	 * This needs to be done becuase I have found that
 	 * pixels isn't setup until this is called.
 	 */
     SDL_LockYUVOverlay (frame->overlay);
@@ -242,7 +242,7 @@ static void sdl_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen, vo_
 
   this->alphablend_extra_data.offset_x = frame_gen->overlay_offset_x;
   this->alphablend_extra_data.offset_y = frame_gen->overlay_offset_y;
-  
+
   if (overlay->rle) {
     if( frame->format == XINE_IMGFMT_YV12 )
       _x_blend_yuv( frame->vo_frame.base, overlay, frame->width, frame->height, frame->vo_frame.pitches, &this->alphablend_extra_data);
@@ -354,7 +354,7 @@ static void sdl_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 static int sdl_get_property (vo_driver_t *this_gen, int property) {
 
   sdl_driver_t *this = (sdl_driver_t *) this_gen;
-  
+
   switch (property) {
     case VO_PROP_WINDOW_WIDTH:
       return this->sc.gui_width;
@@ -383,7 +383,7 @@ static int sdl_set_property (vo_driver_t *this_gen,
     if (value>=XINE_VO_ASPECT_NUM_RATIOS)
       value = XINE_VO_ASPECT_AUTO;
     this->sc.user_ratio = value;
-    xprintf(this->xine, XINE_VERBOSITY_DEBUG, 
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG,
 	    "video_out_sdl: aspect ratio changed to %s\n", _x_vo_scale_aspect_ratio_name(value));
 
     sdl_compute_ideal_size (this);
@@ -458,7 +458,7 @@ static void sdl_dispose (vo_driver_t * this_gen) {
   SDL_QuitSubSystem (SDL_INIT_VIDEO);
 
   _x_alphablend_free(&this->alphablend_extra_data);
-  
+
   free(this);
 }
 
@@ -469,21 +469,23 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   sdl_driver_t         *this;
 
   const SDL_VideoInfo  *vidInfo;
-#ifdef HAVE_X11
+#if defined(HAVE_X11) || defined(WIN32)
   static char           SDL_windowhack[32];
   x11_visual_t         *visual = (x11_visual_t *) visual_gen;
+#endif
+#ifdef HAVE_X11
   XWindowAttributes     window_attributes;
 #endif
-  
-  this = (sdl_driver_t *) xine_xmalloc (sizeof (sdl_driver_t));
+
+  this = (sdl_driver_t *) calloc(1, sizeof(sdl_driver_t));
   if (!this)
     return NULL;
 
   _x_alphablend_init(&this->alphablend_extra_data, class->xine);
-  
+
   this->sdlflags = SDL_HWSURFACE | SDL_RESIZABLE;
-  
-  this->hw_accel = class->config->register_bool(class->config, 
+
+  this->hw_accel = class->config->register_bool(class->config,
     "video.device.sdl_hw_accel", 1,
     _("use hardware acceleration if available"),
     _("When your system supports it, hardware acceleration provided by your "
@@ -502,12 +504,16 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   _x_vo_scale_init( &this->sc, 0, 0, config);
   this->sc.frame_output_cb   = visual->frame_output_cb;
   this->sc.user_data         = visual->user_data;
-
-  /* set SDL to use our existing X11 window */
-  sprintf(SDL_windowhack,"SDL_WINDOWID=0x%x", (uint32_t) this->drawable );
-  putenv(SDL_windowhack);
 #else
   _x_vo_scale_init( &this->sc, 0, 0, config );
+#endif
+
+#if defined(HAVE_X11) || defined(WIN32)
+  /* set SDL to use our existing X11/win32 window */
+  if (visual->d){
+    sprintf(SDL_windowhack,"SDL_WINDOWID=0x%x", (uint32_t) visual->d);
+    putenv(SDL_windowhack);
+  }
 #endif
 
   if ((SDL_Init (SDL_INIT_VIDEO)) < 0) {
@@ -519,7 +525,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   if (!SDL_ListModes (vidInfo->vfmt, SDL_HWSURFACE | SDL_RESIZABLE)) {
     this->sdlflags = SDL_RESIZABLE;
     if (!SDL_ListModes (vidInfo->vfmt, SDL_RESIZABLE)) {
-      xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 	       "video_out_sdl: open_plugin - sdl couldn't get any acceptable video mode\n");
       return NULL;
     }
@@ -527,7 +533,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 
   this->bpp = vidInfo->vfmt->BitsPerPixel;
   if (this->bpp < 16) {
-    xprintf(this->xine, XINE_VERBOSITY_LOG, 
+    xprintf(this->xine, XINE_VERBOSITY_LOG,
 	    _("sdl has to emulate a 16 bit surfaces, that will slow things down.\n"));
     this->bpp = 16;
   }
@@ -587,17 +593,17 @@ static void dispose_class (video_driver_class_t *this_gen) {
 static void *init_class (xine_t *xine, void *visual_gen) {
   /* x11_visual_t     *visual = (x11_visual_t *) visual_gen; */
   sdl_class_t      *this;
-  
+
   /* check if we have SDL */
   if ((SDL_Init (SDL_INIT_VIDEO)) < 0) {
-    xprintf (xine, XINE_VERBOSITY_DEBUG, 
+    xprintf (xine, XINE_VERBOSITY_DEBUG,
 	     "video_out_sdl: open_plugin - sdl video initialization failed.\n");
     return NULL;
   }
   SDL_QuitSubSystem (SDL_INIT_VIDEO);
 
-  this = (sdl_class_t*) xine_xmalloc (sizeof (sdl_class_t));
-   
+  this = (sdl_class_t*) calloc(1, sizeof(sdl_class_t));
+
   this->driver_class.open_plugin      = open_plugin;
   this->driver_class.get_identifier   = get_identifier;
   this->driver_class.get_description  = get_description;

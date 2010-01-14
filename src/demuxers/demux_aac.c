@@ -95,8 +95,7 @@ static int open_aac_file(demux_aac_t *this) {
     return 0;
 
   /* Check for an ADIF header - should be at the start of the file */
-  if ((peak[0] == 'A') && (peak[1] == 'D') &&
-      (peak[2] == 'I') && (peak[3] == 'F')) {
+  if (_x_is_fourcc(peak, "AIDF")) {
     lprintf("found ADIF header\n");
     return 1;
   }
@@ -109,7 +108,7 @@ static int open_aac_file(demux_aac_t *this) {
     if ( this->input->read(this->input, peak, MAX_PREVIEW_SIZE) != MAX_PREVIEW_SIZE )
       return 0;
     this->input->seek(this->input, 0, SEEK_SET);
-  } else if (_x_demux_read_header(this->input, peak, MAX_PREVIEW_SIZE) != 
+  } else if (_x_demux_read_header(this->input, peak, MAX_PREVIEW_SIZE) !=
 	   MAX_PREVIEW_SIZE)
     return 0;
 
@@ -134,9 +133,7 @@ static int open_aac_file(demux_aac_t *this) {
     if ((frame_size > 0) &&
         (data_start+frame_size < MAX_PREVIEW_SIZE-1) &&
         /* first 28 bits must be identical */
-        (peak[data_start  ]   ==peak[data_start+frame_size  ]) &&
-        (peak[data_start+1]   ==peak[data_start+frame_size+1]) &&
-        (peak[data_start+2]   ==peak[data_start+frame_size+2]) &&
+	memcmp(&peak[data_start], &peak[data_start+frame_size], 4) == 0 &&
         (peak[data_start+3]>>4==peak[data_start+frame_size+3]>>4))
     {
       lprintf("found second ADTS header\n");
@@ -176,11 +173,11 @@ static int demux_aac_send_chunk(demux_plugin_t *this_gen) {
     buf->extra_info->input_time = (8*current_pos) / (bitrate/1000);
 
   bytes_read = this->input->read(this->input, buf->content, buf->max_size);
-  if (bytes_read == 0) {
+  if (bytes_read <= 0) {
     buf->free_buffer(buf);
     this->status = DEMUX_FINISHED;
     return this->status;
-  } else 
+  } else
     buf->size = bytes_read;
 
   /* each buffer stands on its own */
@@ -262,7 +259,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_aac_t    *this;
 
-  this         = xine_xmalloc (sizeof (demux_aac_t));
+  this         = calloc(1, sizeof(demux_aac_t));
   this->stream = stream;
   this->input  = input;
 
@@ -333,7 +330,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_aac_init_plugin (xine_t *xine, void *data) {
   demux_aac_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_aac_class_t));
+  this = calloc(1, sizeof(demux_aac_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

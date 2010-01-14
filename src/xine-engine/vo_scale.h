@@ -7,7 +7,7 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -29,10 +29,6 @@
 extern "C" {
 #endif
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #ifdef XINE_COMPILE
 #  include "configfile.h"
 #else
@@ -48,22 +44,22 @@ struct vo_scale_s {
 
   /* true if driver supports frame zooming */
   int                support_zoom;
-  
+
   /* forces direct mapping between frame pixels and screen pixels */
   int                scaling_disabled;
-  
+
   /* size / aspect ratio calculations */
 
-  /* 
+  /*
    * "delivered" size:
    * frame dimension / aspect as delivered by the decoder
    * used (among other things) to detect frame size changes
    * units: frame pixels
    */
-  int                delivered_width;   
-  int                delivered_height;     
+  int                delivered_width;
+  int                delivered_height;
   double             delivered_ratio;
-  
+
   /*
    * required cropping:
    * units: frame pixels
@@ -73,7 +69,7 @@ struct vo_scale_s {
   int                crop_top;
   int                crop_bottom;
 
-  /* 
+  /*
    * displayed part of delivered images,
    * taking zoom into account
    * units: frame pixels
@@ -97,7 +93,7 @@ struct vo_scale_s {
   int                gui_x, gui_y;
   int                gui_width, gui_height;
   int                gui_win_x, gui_win_y;
-  
+
   /*
    * video + display pixel aspect
    * One pixel of height 1 has this width
@@ -117,11 +113,11 @@ struct vo_scale_s {
   int                output_height;
   int                output_xoffset;
   int                output_yoffset;
-  
+
 
   /* */
   int                force_redraw;
-  
+
 
   /* gui callbacks */
 
@@ -129,13 +125,13 @@ struct vo_scale_s {
   void (*frame_output_cb) (void *user_data,
 			   int video_width, int video_height,
                            double video_pixel_aspect,
-			   int *dest_x, int *dest_y, 
+			   int *dest_x, int *dest_y,
 			   int *dest_width, int *dest_height,
                            double *dest_pixel_aspect,
 			   int *win_x, int *win_y);
-  
+
   void (*dest_size_cb) (void *user_data,
-			int video_width, int video_height, 
+			int video_width, int video_height,
                         double video_pixel_aspect,
 			int *dest_width, int *dest_height,
                         double *dest_pixel_aspect);
@@ -149,10 +145,10 @@ struct vo_scale_s {
    */
   double             output_horizontal_position;
   double             output_vertical_position;
-  
+
 };
 
-typedef struct vo_scale_s vo_scale_t; 
+typedef struct vo_scale_s vo_scale_t;
 
 
 /*
@@ -179,7 +175,7 @@ int _x_vo_scale_redraw_needed (vo_scale_t *self) XINE_PROTECTED;
 /*
  *
  */
- 
+
 void _x_vo_scale_translate_gui2video(vo_scale_t *self,
 				     int x, int y,
 				     int *vid_x, int *vid_y) XINE_PROTECTED;
@@ -190,11 +186,11 @@ void _x_vo_scale_translate_gui2video(vo_scale_t *self,
 
 char *_x_vo_scale_aspect_ratio_name(int a) XINE_PROTECTED;
 
-/* 
+/*
  * initialize rescaling struct
  */
- 
-void _x_vo_scale_init(vo_scale_t *self, int support_zoom, 
+
+void _x_vo_scale_init(vo_scale_t *self, int support_zoom,
 		      int scaling_disabled, config_values_t *config ) XINE_PROTECTED;
 
 #ifdef __cplusplus

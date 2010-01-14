@@ -170,7 +170,7 @@ static void find_mdat_atom(input_plugin_t *input, off_t *mdat_offset,
     } else
       atom_size -= ATOM_PREAMBLE_SIZE;
 
-    
+
     input->seek(input, atom_size, SEEK_CUR);
   }
 }
@@ -279,6 +279,10 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
     if((this->dummy_space[0] & 0xE0) == 0x20) {
 
       buf = this->input->read_block (this->input, this->video_fifo, len-1);
+      if (! buf) {
+	this->status = DEMUX_FINISHED;
+	return;
+      }
 
       track = (this->dummy_space[0] & 0x1f);
 
@@ -298,17 +302,21 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
       int spu_id = this->dummy_space[1] & 0x03;
 
       buf = this->input->read_block (this->input, this->video_fifo, len-1);
+      if (! buf) {
+	this->status = DEMUX_FINISHED;
+	return;
+      }
 
       buf->type      = BUF_SPU_SVCD + spu_id;
       buf->pts       = pts;
 
-      /* There is a bug in WinSubMux doesn't redo PACK headers in 
+      /* There is a bug in WinSubMux doesn't redo PACK headers in
 	 the private stream 1. This might cause the below to mess up.
       if( !preview_mode )
         check_newpts( this, this->pts, PTS_VIDEO );
       */
       this->video_fifo->put (this->video_fifo, buf);
-      lprintf ("SPU SVCD PACK (pts: %"PRId64", spu id: %d) put on FIFO\n", 
+      lprintf ("SPU SVCD PACK (pts: %"PRId64", spu id: %d) put on FIFO\n",
 	       buf->pts, spu_id);
 
       return;
@@ -318,6 +326,10 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
     if((this->dummy_space[0] & 0xfc) == 0x00) {
 
       buf = this->input->read_block (this->input, this->video_fifo, len-1);
+      if (! buf) {
+	this->status = DEMUX_FINISHED;
+	return;
+      }
 
       buf->type      = BUF_SPU_CVD + (this->dummy_space[0] & 0x03);
       buf->pts       = pts;
@@ -330,7 +342,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
     if((this->dummy_space[0] & 0xf0) == 0x80) {
 
       /* read rest of header - AC3 */
-      i = this->input->read (this->input, this->dummy_space+1, 3);
+      this->input->read (this->input, this->dummy_space+1, 3);
 
       /* contents */
       for (i = len - 4; i > 0; i -= (this->audio_fifo)
@@ -356,10 +368,10 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
             buf->decoder_flags = BUF_FLAG_PREVIEW;
 
           if( this->input->get_length (this->input) )
-            buf->extra_info->input_normpos = 
-	      (int)( ((int64_t)this->input->get_current_pos (this->input) * 
+            buf->extra_info->input_normpos =
+	      (int)( ((int64_t)this->input->get_current_pos (this->input) *
 		      65535) / this->input->get_length (this->input) );
-          
+
           if (this->rate)
             buf->extra_info->input_time = (int)((int64_t)this->input->get_current_pos (this->input)
                                                   * 1000 / (this->rate * 50));
@@ -376,6 +388,10 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
       i = this->input->read (this->input, this->dummy_space+1, 6);
 
       buf = this->input->read_block (this->input, this->video_fifo, len-7);
+      if (! buf) {
+	this->status = DEMUX_FINISHED;
+	return;
+      }
 
       buf->type      = BUF_AUDIO_LPCM_BE + track;
       buf->decoder_flags |= BUF_FLAG_SPECIAL;
@@ -389,8 +405,8 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
         buf->decoder_flags |= BUF_FLAG_PREVIEW;
 
       if( this->input->get_length (this->input) )
-        buf->extra_info->input_normpos = 
-	  (int)( ((int64_t)this->input->get_current_pos (this->input) * 
+        buf->extra_info->input_normpos =
+	  (int)( ((int64_t)this->input->get_current_pos (this->input) *
 		  65535) / this->input->get_length (this->input) );
       if (this->rate)
         buf->extra_info->input_time = (int)((int64_t)this->input->get_current_pos (this->input)
@@ -431,9 +447,9 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
       header_len -= 5 ;
     }
 
-    i = this->input->read (this->input, this->dummy_space, header_len);
+    this->input->read (this->input, this->dummy_space, header_len);
 
-    for (i = len; i > 0; i -= (this->audio_fifo) 
+    for (i = len; i > 0; i -= (this->audio_fifo)
 	   ? this->audio_fifo->buffer_pool_buf_size : this->video_fifo->buffer_pool_buf_size) {
       if(this->audio_fifo) {
 	buf = this->input->read_block (this->input, this->audio_fifo,
@@ -453,8 +469,8 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
 	  buf->decoder_flags = BUF_FLAG_PREVIEW;
 
         if( this->input->get_length (this->input) )
-          buf->extra_info->input_normpos = 
-	    (int)( ((int64_t)this->input->get_current_pos (this->input) * 
+          buf->extra_info->input_normpos =
+	    (int)( ((int64_t)this->input->get_current_pos (this->input) *
 		    65535) / this->input->get_length (this->input) );
         if (this->rate)
           buf->extra_info->input_time = (int)((int64_t)this->input->get_current_pos (this->input)
@@ -489,21 +505,21 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
 
       header_len -= 5 ;
     }
-    
+
     if ((flags & 0x40) == 0x40) {
-    
+
       w = read_bytes(this, 1);
       dts = (int64_t)(w & 0x0e) << 29 ;
       w = read_bytes(this, 2);
       dts |= (w & 0xFFFE) << 14;
       w = read_bytes(this, 2);
       dts |= (w & 0xFFFE) >> 1;
-      
+
       header_len -= 5 ;
-    } 
+    }
 
     /* read rest of header */
-    i = this->input->read (this->input, this->dummy_space, header_len);
+    this->input->read (this->input, this->dummy_space, header_len);
 
     /* contents */
 
@@ -526,8 +542,8 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
 	buf->decoder_flags = BUF_FLAG_PREVIEW;
 
       if( this->input->get_length (this->input) )
-        buf->extra_info->input_normpos = 
-	  (int)( ((int64_t)this->input->get_current_pos (this->input) * 
+        buf->extra_info->input_normpos =
+	  (int)( ((int64_t)this->input->get_current_pos (this->input) *
 		  65535) / this->input->get_length (this->input) );
       if (this->rate)
         buf->extra_info->input_time = (int)((int64_t)this->input->get_current_pos (this->input)
@@ -538,7 +554,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
 
   } else {
 
-    for (i = len; i > 0; i -= 10000) 
+    for (i = len; i > 0; i -= 10000)
       this->input->read (this->input, this->dummy_space, (i > 10000) ? 10000 : i);
   }
 
@@ -606,7 +622,7 @@ static void parse_mpeg1_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
       pts |= (w & 0xFFFE) << 14;
 
       w = read_bytes(this, 2); len -= 2;
-      
+
       pts |= (w & 0xFFFE) >> 1;
 
       w = read_bytes(this, 1); len -= 1;
@@ -633,11 +649,11 @@ static void parse_mpeg1_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
     lprintf("use scr\n");
     pts = scr;
   }
-  
+
   if ((stream_id & 0xe0) == 0xc0) {
     int track = stream_id & 0x1f;
 
-    for (i = len; i > 0; i -= (this->audio_fifo) 
+    for (i = len; i > 0; i -= (this->audio_fifo)
 	   ? this->audio_fifo->buffer_pool_buf_size : this->video_fifo->buffer_pool_buf_size) {
       if(this->audio_fifo) {
 	buf = this->input->read_block (this->input, this->audio_fifo,
@@ -657,8 +673,8 @@ static void parse_mpeg1_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
 	  buf->decoder_flags = BUF_FLAG_PREVIEW;
 
         if( this->input->get_length (this->input) )
-          buf->extra_info->input_normpos = 
-	    (int)( ((int64_t)this->input->get_current_pos (this->input) * 
+          buf->extra_info->input_normpos =
+	    (int)( ((int64_t)this->input->get_current_pos (this->input) *
 		    65535) / this->input->get_length (this->input) );
         if (this->rate)
           buf->extra_info->input_time = (int)((int64_t)this->input->get_current_pos (this->input)
@@ -692,8 +708,8 @@ static void parse_mpeg1_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
 	buf->decoder_flags = BUF_FLAG_PREVIEW;
 
       if( this->input->get_length (this->input) )
-        buf->extra_info->input_normpos = 
-	  (int)( ((int64_t)this->input->get_current_pos (this->input) * 
+        buf->extra_info->input_normpos =
+	  (int)( ((int64_t)this->input->get_current_pos (this->input) *
 		  65535) / this->input->get_length (this->input) );
       if (this->rate)
         buf->extra_info->input_time = (int)((int64_t)this->input->get_current_pos (this->input)
@@ -704,12 +720,12 @@ static void parse_mpeg1_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
 
   } else if (stream_id == 0xbd) {
 
-    for (i = len; i > 0; i -= 10000) 
+    for (i = len; i > 0; i -= 10000)
       this->input->read (this->input, this->dummy_space, (i > 10000) ? 10000 : i);
 
   } else {
 
-    for (i = len; i > 0; i -= 10000) 
+    for (i = len; i > 0; i -= 10000)
       this->input->read (this->input, this->dummy_space, (i > 10000) ? 10000 : i);
   }
 }
@@ -920,7 +936,7 @@ static void demux_mpeg_resync (demux_mpeg_t *this, uint32_t buf) {
       if (pos == len) {
 	len = this->input->read(this->input, dummy_buf, sizeof(dummy_buf));
         pos = 0;
-        if (len == 0) {
+        if (len <= 0) {
           this->status = DEMUX_FINISHED;
 	  break;
 	}
@@ -962,40 +978,40 @@ static void demux_mpeg_send_headers (demux_plugin_t *this_gen) {
   demux_mpeg_t *this = (demux_mpeg_t *) this_gen;
   uint32_t w;
   int num_buffers = NUM_PREVIEW_BUFFERS;
-    
+
   this->video_fifo  = this->stream->video_fifo;
   this->audio_fifo  = this->stream->audio_fifo;
 
   this->rate          = 0; /* fixme */
   this->last_pts[0]   = 0;
   this->last_pts[1]   = 0;
-  
+
   _x_demux_control_start(this->stream);
 
   /*
    * send preview buffers for stream/meta_info
    */
-  
+
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 1);
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 1);
 
   this->preview_mode = 1;
-    
+
   this->input->seek (this->input, 4, SEEK_SET);
-    
+
   this->status = DEMUX_OK ;
-    
+
   do {
 
     w = parse_pack_preview (this, &num_buffers);
-      
+
     if (w != 0x000001ba)
       demux_mpeg_resync (this, w);
-      
+
     num_buffers --;
-      
+
   } while ( (this->status == DEMUX_OK) && (num_buffers > 0));
-    
+
   this->status = DEMUX_OK ;
 
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_BITRATE, this->rate * 50 * 8);
@@ -1067,7 +1083,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 				    input_plugin_t *input) {
   demux_mpeg_t       *this;
 
-  this         = xine_xmalloc (sizeof (demux_mpeg_t));
+  this         = calloc(1, sizeof(demux_mpeg_t));
   this->stream = stream;
   this->input  = input;
 
@@ -1139,7 +1155,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       /* go through the same MPEG detection song and dance */
       if (input->read(input, buf, 4) == 4) {
 
-        if (!buf[0] && !buf[1] && (buf[2] == 0x01) 
+        if (!buf[0] && !buf[1] && (buf[2] == 0x01)
 	    && (buf[3] == 0xba)) /* if so, take it */
 	  break;
       }
@@ -1147,7 +1163,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       free (this);
       return NULL;
     }
-    
+
     /* reset position for next check */
     if (input->seek(input, 0, SEEK_SET) != 0) {
       free (this);
@@ -1158,7 +1174,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     fourcc_tag = _X_BE_32(&buf[0]);
     if (fourcc_tag == RIFF_TAG) {
       uint8_t large_buf[1024];
-      
+
       if (input->read(input, large_buf, 12) != 12) {
         free(this);
         return NULL;
@@ -1177,7 +1193,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
        * MPEG video marker. No, it's not a very efficient approach, but
        * if execution has reached this special case, this is currently
        * the best chance for detecting the file automatically. Also,
-       * be extra lazy and do not bother skipping over the data 
+       * be extra lazy and do not bother skipping over the data
        * header. */
       for (i = 0; i < RIFF_CHECK_KILOBYTES && !ok; i++) {
 	if (input->read(input, large_buf, 1024) != 1024)
@@ -1246,7 +1262,7 @@ static void class_dispose (demux_class_t *this_gen) {
 static void *init_plugin (xine_t *xine, void *data) {
   demux_mpeg_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_mpeg_class_t));
+  this = calloc(1, sizeof(demux_mpeg_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;
@@ -1266,7 +1282,7 @@ static const demuxer_info_t demux_info_mpeg = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */  
+  /* type, API, "name", version, special_info, init_function */
   { PLUGIN_DEMUX, 26, "mpeg", XINE_VERSION_CODE, &demux_info_mpeg, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

@@ -1,3 +1,4 @@
+include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
 EXTRA_DIST = input_dvd.c input_vcd.c input_gnome_vfs.c input_rtp.c
@@ -45,7 +46,10 @@ endif
 if WIN32
 else
 in_rtp = xineplug_inp_rtp.la
-in_dvb = xineplug_inp_dvb.la 
+endif
+
+if DVB
+in_dvb = xineplug_inp_dvb.la
 endif
 
 AM_CFLAGS = -D_LARGEFILE64_SOURCE $(GNOME_VFS_CFLAGS) $(ALSA_CFLAGS) $(DVD_CFLAGS)

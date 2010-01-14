@@ -35,14 +35,14 @@ AC_DEFUN([AM_PATH_OPENGL], [
                     AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <GL/gl.h>
 #include <GL/glu.h>]], [[ gluPerspective(45.0f,1.33f,1.0f,1000.0f); glBegin(GL_POINTS); glEnd(); return 0 ]])],
                       [ ac_have_glu="yes"
-                        GLU_LIBS="-lGLU" 
+                        GLU_LIBS="-lGLU"
                         AC_DEFINE(HAVE_GLU,1,[Define this if you have GLU support available])
                         AC_MSG_RESULT(yes)],
                       [ AC_MSG_RESULT(no)
                         echo "*** GLU doesn't link with GL; GLU is disabled ***"])
                     LIBS="$ac_save_LIBS"]
                 )],
-                [], 
+                [],
                 [$X_LIBS $X_PRE_LIBS $OPENGL_LIBS -lGLU $X_EXTRA_LIBS]
               )
             fi

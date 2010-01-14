@@ -4,6 +4,10 @@
 #include <stddef.h>
 #include <stdarg.h>
 
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+
 #ifdef HOST_OS_DARWIN
   /* Darwin (Mac OS X) needs __STDC_LIBRARY_SUPPORTED__ for SCNx64 and
    * SCNxMAX macros */
@@ -32,6 +36,13 @@
 #  define XINE_DIRECTORY_SEPARATOR_CHAR '/'
 #endif
 
+/* replacement of min/max macros */
+#ifndef HAVE_MAX_MACRO
+#define	MAX(a,b) (((a)>(b))?(a):(b))
+#endif
+#ifndef HAVE_MIN_MACRO
+#define	MIN(a,b) (((a)<(b))?(a):(b))
+#endif
 
 /* replacement of strndup */
 #ifndef HAVE_STRNDUP
@@ -59,6 +70,13 @@ const char *xine_private_hstrerror(int err);
 #define HAVE_SETENV
 #define setenv(NAME, VALUE, OVERWRITE) xine_private_setenv((NAME), (VALUE))
 int xine_private_setenv(const char *name, const char *value);
+#endif
+
+/* replacement of strcasestr */
+#ifndef HAVE_STRCASESTR
+#define HAVE_STRCASESTR
+#define strcasestr(HAYSTACK, NEEDLE) xine_private_strcasestr((HAYSTACK), (NEEDLE))
+char *xine_private_strcasestr(const char *haystack, const char *needle);
 #endif
 
 /* replacement of strtok_r */

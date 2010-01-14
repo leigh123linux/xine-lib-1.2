@@ -1,4 +1,266 @@
-xine-lib (1.1.9) (unreleased)
+xine-lib (1.1.1?) 20??-??-??
+  * Bump the FLAC decoder's priority above ffmpegaudio. This should fix
+    various problems with FLAC playback.
+  * Build fix (undefined symbol) for when using older ffmpeg.
+  * TTA demuxer fixes; allow seeking.
+  * More meta-information tags. (Nothing sets these yet, though.)
+
+xine-lib (1.1.17) 2009-12-01
+  * Add support for Matroska SIMPLEBLOCK.
+  * Add support for sndio (OpenBSD sound API).
+  * Correct invalid MIME info in the MOD demuxer.
+  * Fix a resource leak in libdvdnav.
+  * Properly NUL-terminate when reading ID3v2.2 tag content.
+  * Fix handling of the length of UTF-16 content sourced from, e.g., ID3 tags.
+  * Make ~/.xine/catalog.cache writing safer: write a new file & atomically
+    replace the old one.
+  * Initial parsing of Xing header LAME extension.
+  * Fixes for gapless playback.
+  * Added padding delay to the first and last frames (MPEG audio).
+  * Fixed buggy discontinuity handling when playing short streams and using the gapless switch. The current time should not be used here.
+  * Added audio padding handling. (New buffer flag for this.)
+  * Fix seeking in large raw DV files.
+  * Ported to new libmpcdec API (retaining build compat. with the old API).
+  * Cope with CDDB return code 211 (multiple entries).
+  * Allow reading of non-block-sized chunks from audio CDs.
+  * Add a user agent & protocol hack ("qthttp://...") to allow direct
+    viewing of Apple film trailers.
+  * Fixed int-to-float conversion in the JACK output plugin.
+  * Work around MOD files with reported length == 0.
+  * Reworked Matroska demuxer. Now reads files created by mkvmerge 2.7.0.
+  * Support BluRay/HDMV streams & subtitles.
+  * The XML parser & lexer code now has re-entrancy.
+  * Fixed a bug which prevented "dvb://" (no channel specified) working with
+    the default configuration.
+  * Handle VC1 extradata requirement (should fix playback).
+
+xine-lib (1.1.16.3) 2009-04-03
+  * Security fixes:
+    - Fix another possible int overflow in the 4XM demuxer.
+      (ref. TKADV2009-004, CVE-2009-0698)
+    - Fix an integer overflow in the Quicktime demuxer.
+      (TKADV2009-005, CVE-2009-1274)
+  * Enable libmpeg2new (if configured with --enable-libmpeg2new).
+    This is not yet production code; the old mpeg2 decoder remains the default.
+  * Add support for OpenBSD.
+  * Fix a build failure on *BSD due to some rather useful GNUisms.
+  * Protect audio loop so it cannot write to a paused device (fix
+    pause/resume freeze with pulseaudio).
+  * Fix build with libavutil >= 50.0.0.
+  * Fix segfaults when playing VCDs.
+  * Fix calculation of frame duration for ffmpeg-decoded formats.
+  * Don't assume that ID3v2 tags with no content mean "end of ID3 data".
+
+xine-lib (1.1.16.2) 2009-02-10
+  * Build fixes related to ImageMagick 6.4 & later.
+  * Fix an error in Matroska PTS calculation.
+  * Some front ends hang due to the hang fixes in 1.1.16. Fix this by
+    removing a break statement.
+  * Fix broken size checks in various input plugins (ref. CVE-2008-5239).
+  * More malloc checking (ref. CVE-2008-5240).
+  * Fix race conditions in gapless_switch (ref. kde bug #180339)
+  * Fix a possible integer overflow in the 4XM demuxer.
+    (TKADV2009-004, CVE-2009-0698)
+
+xine-lib (1.1.16.1) 2009-01-11
+  * Fix build with older ffmpeg, both internal and in Debian 5.0.
+  * Add version check for CACA library and disable CACA plugin if needed
+  * Fix playback of some H.264 files (broken in 1.1.16).
+  * Various other build & bug fixes.
+  * Some FAQ list updates.
+
+xine-lib (1.1.16) 2009-01-07
+  * Security fixes:
+    - Heap overflow in Quicktime atom parsing.                 (CVE-2008-5234)
+    - Multiple buffer overflows.                               (CVE-2008-5236)
+    - Multiple integer overflows.                              (CVE-2008-5237)
+    - Unchecked or incompletely-checked read function results. (CVE-2008-5239)
+    - Unchecked malloc using untrusted values.  (CVE-2008-5240, CVE-2008-5242)
+    - Integer underflow in qt compressed atom handling.        (CVE-2008-5241)
+    - Buffer indexing using untrusted or unchecked values.     (CVE-2008-5243)
+    - Integer overflows in the ffmpeg audio decoder and the CDDA server.
+    - Heap buffer overflow in the ffmpeg video decoder.
+    - Avoid segfault on invalid track type in Matroska files.
+    - Avoid underflow (compressed atoms) in the Qt demuxer.
+  * Fix reported compilation failures (with C++ programs).
+  * Fix CDDB access in 64-bit builds.
+  * Fix seeking FLV clips that don't specify the movie length in the headers.
+  * Support H.264 and AAC streams within FLV.
+  * Fix timing issues (broken audio) on mingw.
+  * Add ID3 tag TDRC to replace/complement the deprecated tag TYER.
+  * Add a new meta-tag, "Composer", and use it in the FLAC demuxer.
+  * Correct AAC channel ordering for multi-channel audio, at least for FLAC
+    when using ALSA or PulseAudio. (Needs a proper fix.)
+  * Add position-based seeking independent from seekpoints.
+  * Fix some XCB Xv attribute configuration breakage.
+  * Add a configuration option for Xv bicubic filtering, implemented in
+    xf86-video-ati 6.9.1.
+  * Recognise Xv "blitter" adaptors for port selection purposes.
+    NOTE: you will need to remove ~/.xine/catalog.cache when upgrading from
+          xine-lib 1.1.15 or older if you wish to use this extra option.
+  * Fix MMS media requests where the URI contains %-encoded characters.
+  * Fix two hangs related to stopping playback of broken audio streams where
+    no audio data is sent to the output thread.
+  * Fix WAV demuxer to send the last frames when they don't fit perfectly into
+    the buffer
+
+xine-lib (1.1.15) 2008-08-14
+  * Security fixes:
+    - Fix crashes with various corrupted media files, including Ogg.
+      (CVE-2008-3231)
+      This includes a libfaad update from the 1.2 branch.
+    - Delay V4L video frame preallocation until we know how large they'll be.
+      (CVE-2008-5245)
+    - Fix an exploitable ID3 heap buffer overflow.
+      (CVE-2008-5234, vector 2)
+    - Check for possible buffer overflow attempts in the Real demuxer.
+      (CVE-2008-5235)
+    - Use size_t for data length variables where there may be int overflows.
+    - Add some checks for memory allocation failures.
+      (CVE-2008-5233)
+    - Fix crashes with MP3 files with metadata consisting only of separators.
+      (CVE-2008-5248)
+  * Use external ffmpeg and libfaad by default.
+  * V4L: Don't segfault if asked for an input that doesn't exist.
+  * Recognise AMR audio (normally found in 3GP files).
+  * Recognise Snow video.
+  * Xv deinterlacing didn't take the size of the deinterlaced image into
+    account; on some chipsets, this would cause image corruption, while on
+    others, there would be no problem.
+  * V4L: only try and set the tuner if we're going to use it. Setting the tuner
+    when using baseband video (CVBS, S-Video) breaks the input.
+
+xine-lib (1.1.14) 2008-06-29
+  * DVB changes:
+    - Reacquire PIDs whenever a PMT is parsed. (Some channels' PIDs are
+      changed on a regular basis.)
+    - Recognise more stream formats (as defined in the broadcast PMT).
+    - Allow automatic detection of more DVB tuning parameters.
+    - Allow the GUI to be disabled.
+    - Allow configuration of the location of channels.conf.
+  * V4L: allow TV standard selection.
+  * Allow input plugins to report MIME type information.
+    This is used for demuxer plugin selection immediately before testing the
+    filename extension (so it won't work when demuxer selection is done by
+    stream content only). [Bug #120]
+  * Allow input plugins to ask for a specific demuxer, overriding the normal
+    demuxer selection methods. (Most won't need this.)
+  * The Xv and XxMC video output plugins now support Xv port selection via
+    two methods: port number and port type (currently "any", "overlay" and
+    "textured video"). Port number takes precedence; the plugins will fall
+    back on another port of the same type (if a type was specified) then on
+    whatever they can find.
+    XvMC does not support port selection at present.
+    (Backported from the 1.2 branch.)
+  * Fix MPEG TS audio stream problems introduced in 1.1.13.
+  * Add basic aspect ratio detection for Windows Media Video streams.
+
+xine-lib (1.1.13) 2008-06-15
+  * Security fixes:
+    - Buffer overflow in the NSF demuxer which may allow remote attackers to
+      cause a denial of service (crash) or possibly execute arbitrary code
+      via an NSF file with a long title or copyright message. (CVE-2008-1878)
+    - For extra safety against possible Integer overflows like the ones found
+      in CVE-2008-1482, backport more calloc usage from 1.2 branch.
+  * Improved JACK output plugin.
+  * Added MIME types and .mpp for musepack.
+  * Fixed display of some MJPEG streams (YUVJ420P).
+  * Deprecate xine_xmalloc() function, see src/xine-utils/utils.c for more
+    information about the reason.
+  * Provide a useful implementation of xine_register_log_cb().
+
+xine-lib (1.1.12) 2008-04-14
+  * Security fixes:
+    - Insufficient boundary check in speex audio decoder. (CVE-2008-1686)
+  * Fixed and improved the PulseAudio driver.
+  * Fixed a regression in 1.1.11.1 which broke Quicktime container handling.
+  * And another, this time in the Matroska demuxer.
+  * Added a tool to assist with generating front ends' desktop files. It
+    lists MIME types & filename extensions known to the installed xine-lib.
+  * Various Real codec improvements, including:
+    - RV20 no longer causes segfaults (observed on amd64);
+    - Cook is now handled by ffmpeg.
+  * Added a video output plugin intended for passing raw data to the front end.
+
+xine-lib (1.1.11.1) 2008-03-30
+  * Security fixes:
+    - Integer overflows in FLV, Qt, Real, WC3Movie, Matroska and FILM
+      demuxers, allowing remote attackers to trigger heap overflows and
+      possibly execute arbitrary code. (CVE-2008-1482)
+  * Added a few more memory allocation checks to the above demuxers.
+  * WAV file playback fix: don't assume that the first chunk is "fmt ".
+  * Don't try to play partial 24-bit AIFF frames (decoder would lose data).
+  * Fixed AIFF comment chunk handling and sample rate reading.
+  * LPCM fixes: input over-reading, conversion of 24-bit samples.
+
+xine-lib (1.1.11) 2008-03-19
+  * Security fixes:
+    - Array Indexing Vulnerability in sdpplin_parse(). (CVE-2008-0073)
+  * Reworked the plugin directory naming so that external plugins don't have
+    to be rebuilt for every release. We now use a naming scheme based on the
+    API/ABI versioning, checking older directories - with this release, the
+    plugin directory name is 1.20, and if this gets bumped to 1.21 in a
+    future release, 1.20 will still be available for external plugins.
+    (Any directories not 1.* won't be looked in.)
+  * Made the version parsing much more reliable; it wasn't properly coping
+    with four-part version numbers. This affects any program whose build
+    scripts use xine-lib's automake macros.
+  * Fixed an off-by-one in the FLAC security fix patch. This breakage was
+    causing failure to play some files.
+  * Support 16-bit big-endian DTS audio.
+  * Improved frame snapshot API. (ABI extension.)
+  * Re-add support for # (stream parameter separator) in raw filenames,
+    without the bugs found in the original implementation.
+    (This is a convenience feature for users only. Front ends which rely on
+    it for functions like subtitle file detection must instead use file://
+    MRLs; if they don't, we consider them to be buggy.)
+  * Fixed long delay when closing stream on dual core systems [Bug #33]
+  * DVD playback improvement: don't trust the file sizes.
+  * Build fixes for use with recent ffmpeg.
+
+xine-lib (1.1.10.1) 2008-02-07
+  * Security fixes:
+    - Array index vulnerability which may allow remote attackers to execute
+      arbitrary code via a crafted FLAC tag, causing a stack buffer overflow.
+      (CVE-2008-0486)
+    - Buffer overflow in the Matroska demuxer (demuxers/demux_matroska.c)
+      which may allow remote attackers to cause a denial of service (crash)
+      or possibly execute arbitrary code via a Matroska file with invalid
+      frame sizes. (CVE-2008-1161)
+  * Fix a RealPlayer codec detection bug.
+  * Improve detection of MP3 streams with ID3v2 tags. Don't trust the tag
+    size.
+
+xine-lib (1.1.10) 2008-01-26
+  * Security fixes:
+    - Buffer overflow which allows a remote attacker to execute arbitrary
+      code or crash the client program via a crafted ASF header. 
+      (CVE-2008-1110, related to CVE-2006-1664)
+  * Update Ogg and Annodex mimetypes and extensions.
+  * Change the default v4l device paths to /dev/video0 and /dev/radio0.
+  * Fix support for subtitles with schemes (e.g. http://), partly broken
+    since 1.1.8.
+  * Unescape the filename in "#save:". This allows filenames to contain ';'
+    etc. without ambiguity, e.g. "#save:foo%3B1.ts" -> "foo;1.ts", but front
+    end authors should be careful with xine-lib older than 1.1.10.
+  * Backported xine-config & libxine.pc from 1.2.
+    Consequently, xine-config now requires pkg-config.
+  * Don't discard audio samples forever. Fixed streaming playback.
+  * Fix a possible crash on channel change in the DVB plugin.
+  * Flash video demuxer improvements and bug fixes.
+  * Make the V4L ALSA audio input device configurable. (This needs more work.)
+
+xine-lib (1.1.9.1) 2008-01-11
+  * Security fixes:
+    - Buffer overflow which allows a remote attacker to execute arbitrary
+      code via a crafted SDP Abstract attribute.
+      (CVE-2008-0225, a.k.a. CVE-2008-0238)
+      (Fix ported from mplayer changeset 22821)
+  * Fix a read-past-end bug in xine-lib's internal strtok_r replacement.
+    (Only affects systems without strtok_r.) [Bug #19]
+  * Fix a bug which causes video playback display errors on PPC/Darwin.
+
+xine-lib (1.1.9) 2008-01-06
   * Fix dvd://.../title[.chapter] handling (somewhat broken in 1.1.8).
   * Fix switching DVB subtitles channels.
   * DVB sub: switch to dyn mem alloc and allow multiple CLUTs per page.
@@ -9,11 +271,11 @@ xine-lib (1.1.9) (unreleased)
   * Improve handling of invalid or unknown frame sizes.
   * Fixed handling of streamed Flash videos (broken in 1.1.5).
   * Fixed division by zero in sputext decoder
-  * Build fix for when using Linux 2.6.23 headers. [Bug 1820958]
+  * Build fix for when using Linux 2.6.23 headers. [Bug SF 1820958]
   * Implemented decoding of XML character entities with codes >= 256.
     This requires conversion to UTF-8 of entities with codes >= 128.
   * Handle initial Unicde BOMs in XML; convert other UTF encodings to UTF-8.
-  * Fixed ATSC support. [Bug 1749508]
+  * Fixed ATSC support. [Bug SF 1749508]
   * Fixed a possible DVB plugin crash when switching channels.
   * Fixed a crash closing the frontend. [Bug #7]
   * Fixed deadlock on ao_close while paused.
@@ -25,11 +287,11 @@ xine-lib (1.1.9) (unreleased)
     buffer.
   * DXR3 encoding with external ffmpeg should be fixed now.
     (This was broken by ffmpeg revision 9283).
-  * Enabled the WMV VC1 (ffmpeg) codec.
+  * Enabled the WMV VC1 & VMware Screen (ffmpeg) codecs.
   * Fixed a crash that happened when a video output was closed
-  * Made the Real demuxer recognise http references.
+  * Made the Real demuxer recognise simple lists of http references.
   * Require correct URL encoding of '#'s which aren't separators.
-  * Don't decode %nn in raw filenames. [Bug 1784272]
+  * Don't decode %nn in raw filenames. [Bug SF 1784272]
   * Always enable a52dec capabilities for external a52dec, this makes it
     possible to use the DJB accelerated FFT when using the external a52dec
     liba52 library. [Bug #9]
@@ -40,8 +302,13 @@ xine-lib (1.1.9) (unreleased)
     is present but is *not* pointing at libxine.so.1.
   * Update French translation, thanks to Christophe Giraud. [Bug #15]
   * Detect corrupted or broken seek tables in CBR MP3 files. [Bug #3]
+  * Fixed an issue in input_pvr with setting the frequency of the tuner for
+    ivtv versions 0.10.6+
+  * Add Turkish translation by Serdar Soytetir and Server Acim.
+  * Workaround for subtitle rendering when using variable-length character
+    encodings other than UTF-8. (There is probably still some breakage here.)
 
-xine-lib (1.1.8)
+xine-lib (1.1.8) 2007-08-27
   * Send a channel-changed event to the frontend when receiving the SYNC
     string from last.fm streaming server.
   * Disable mediaLib support by default (the licenses probably disallow the
@@ -59,7 +326,7 @@ xine-lib (1.1.8)
   * DVB subtitle fixes: deadlock prevention, thread leakage, spec compliance.
   * Allow the DVB input plugin to timeout if it is receiving no signal.
   * Fix an audio resampling problem which was causing regular clicking.
-  * Fix build with recent glibc and a debugging #define. [Bug 1773769]
+  * Fix build with recent glibc and a debugging #define. [Bug SF 1773769]
   * Fix handling of multiple MPEG TS audio streams & subtitle languages.
   * Add colouring for bold & italic in text subtitles.
   * Simple scaling of subtitles to fit the frame width (intended to cope
@@ -67,12 +334,12 @@ xine-lib (1.1.8)
   * Various small video frame-handling bug fixes.
   * Add options to control bob deinterlacing in the XxMC video output plugin.
 
-xine-lib (1.1.7)
+xine-lib (1.1.7) 2007-06-07
   * Support libdca (new name for libdts) by shuffling around the dts.h file.
-  * Add support for MDHD version 1 atom in demux_qt. [bug #1679398]
+  * Add support for MDHD version 1 atom in demux_qt. [Bug SF 1679398]
   * Handle single-quoted attribute values in XML.
   * Fix default paths for RealPlayer libraries (broken in 1.1.5).
-    [Bug 1707526]
+    [Bug SF 1707526]
   * Fix proxy usage when the hostnames cannot be resolved. Thanks to Jeff
     Mitchell for reporting and testing the fix.
   * Avoid zero-sized frames when demuxing MPEG PES.
@@ -98,7 +365,7 @@ xine-lib (1.1.7)
     in 1.2 series.
   * Fix a colour format conversion crash in the fb video output driver.
 
-xine-lib (1.1.6)
+xine-lib (1.1.6) 2007-04-17
   * Split the DirectFB plugin into X11 and non-X versions.
   * Improve the Mac OS X video output plugin. Thanks to Matt Messier.
   * Fixed the XcbXv plugin - an empty plugin would be built if "old" Xv
@@ -110,10 +377,11 @@ xine-lib (1.1.6)
   * Fixed a CDDA-related crash and a DVD-related hang, both caused by the
     same change in 1.1.5.
 
-xine-lib (1.1.5)
+xine-lib (1.1.5) 2007-04-10
   * Security fixes:
-    - Fix heap overflow in DMO loader. (CVE-2007-1246) [bug #1676925]
+    - Fix heap overflow in DMO and DirectShow loaders.
       Thanks to Kees Cook for reporting.
+      (CVE-2007-1246 & CVE-2007-1387) [Bug SF 1676925]
   * Improved PulseAudio plugin, now only one connection per instance is opened
     and the mainloop is threaded to reduce latency during playback.
   * Added XCB-based output plugins (Xv and XShm), to use in software using
@@ -121,7 +389,7 @@ xine-lib (1.1.5)
     The plugins are contributed by Christoph Pfister with the help of
     Vincent Torri, Jamey Sharp and Christophe Thommeret.
   * Fix race condition in alsa audio out driver.
-  * Fixed a crash in the eq2 plugin. [Bug 1644312]
+  * Fixed a crash in the eq2 plugin. [Bug SF 1644312]
   * Fixed content type detection for AAC (seekable) streams with ID3v2
     tags prefixed clobbering the preview buffer, by skipping over the tag.
   * Parse ID3v2 tags on AAC and FLAC files, as well as mp3 files.
@@ -164,7 +432,7 @@ xine-lib (1.1.5)
   * Support multiple audio PID in MPEG TS. Patch by Julian Scheel.
   * Improvement in portability to OpenBSD, thanks to Pascal S. de Kloe.
 
-xine-lib (1.1.4)
+xine-lib (1.1.4) 2007-01-28
   * Mark string-type configuration items according to whether they're plain
     strings or names of files, device nodes or directories. This information
     is available to front ends (via .num_value) so that they can present
@@ -174,41 +442,42 @@ xine-lib (1.1.4)
     and previously applied by other distributions as well. Fixes the non-PIC
     code being generated. Note: patch reverted for tomsmocomp (segfault).
   * Fix race condition in audio_out by using a recursive mutex; patch by
-    Reinhard Nissl. [bug #1551911]
+    Reinhard Nissl. [Bug SF 1551911]
   * Allow building with Sun CC by fixing the lprintf variadic macro; patch by
-    Taso N. Devetzis. [bug #1614406]
+    Taso N. Devetzis. [Bug SF 1614406]
   * Fix disposing of image buffers in video_out_xv when SHM get disabled by
-    exhaustion of memory; patch by Matthias Drochner. [bug #1620339]
+    exhaustion of memory; patch by Matthias Drochner. [Bug SF 1620339]
   * Fix invalid memory access in Real Media ASM parser; reported by Roland
-    Kay. [bug #1603503]
+    Kay. [Bug SF 1603503]
   * Fix program termination due to invalid Real Media SDP; reported by Roland
-    Kay. [bug #1602663]
+    Kay. [Bug SF 1602663]
   * Fix invalid memory access in Real Media SDP with tailored stream; reported
-    by Roland Kay. [bug #1602631]
+    by Roland Kay. [Bug SF 1602631]
   * Don't check for libpostproc version and assume that if libavcodec is found
     correctly, libpostproc is of the same version, too. Reported by Ville
-    Skyttä. [bug #1617344]
+    Skyttä. [Bug SF 1617344]
   * Fix Shorten demuxer: the whole "ajkg" signature has to be found, not only
-    one character of it. [bug #1601134]
+    one character of it. [Bug SF 1601134]
   * Implement at least a partial content-based detection of ModPlug-decoded
     module files, using the magic numbers from GNU file. This allows to open
     module files based on content rather than on their extension only.
-    [bug #1445746]
+    [Bug SF 1445746]
   * Make the libFLAC-based decoder and demuxer for FLAC files work with recent
     FLAC release 1.1.3.
   * Replace --enable-flac configure option with --with-libflac, as the FLAC
     support is always built-in through the audio demuxer plugin and the FFmpeg
     decoder plugin, the option only controls the extra FLAC plugin that uses
     libFLAC both for demuxing and decoding.
-  * Implement a True Audio files demuxer. [bug #1586381]
+  * Implement a True Audio files demuxer. [Bug SF 1586381]
   * Allow decoding of MusePack SV 7.x files (7.1 files at least play fine).
   * Fix demuxing of uncompressed VobSub subtitles in Matroska files
   * ffmpeg update to 51.29.0
   * Workaround ffmpeg buggy codecs that don't release their DR1 frames.
-    [bugs #1599975, #1601299, #1319154]
+    [Bugs SF 1599975, SF 1601299, SF 1319154]
   * Fix several segfaults and freezing problem with H264 streams that use a lot
-    of reference frames (eg. 15) [bugs #1603305, #1576588, #1267713]
-  * Fix mpeg4 artifacts introduced in cvs (not present in 1.1.3) [#1625911]
+    of reference frames (eg. 15) [Bugs SF 1603305, SF 1576588, SF 1267713]
+  * Fix mpeg4 artifacts introduced in cvs (not present in 1.1.3)
+    [Bug SF 1625911]
   * Initial support to enable/disable ffmpeg codecs. Codecs may be disabled in
     groups by --disable-ffmpeg-uncommon-codecs/--disable-ffmpeg-popular-codecs
     Think of "uncommon" codecs what people would never want to play with their
@@ -227,13 +496,14 @@ xine-lib (1.1.4)
   * Don't crash when caching a file opened through Samba plugin, thanks to
     Timothy Redaelli from Gentoo.
   * Fix audio/video sync problem with NTSC DVDs (introduced in 1.1.2).
-    [bugs #1544349 and #1589644]
+    [Bugs SF 1544349, SF 1589644]
 
-xine-lib (1.1.3)
+xine-lib (1.1.3) 2006-12-03
   * Security fixes:
     - Heap overflow in libmms (related to CVE-2006-2200)
-    - Buffer overrun in Real Media input plugin. [bug #1603458]
+    - Buffer overrun in Real Media input plugin.
       Thanks to Roland Kay for reporting and JW for the patch.
+      (CVE-2006-6172) [Bug SF 1603458]
   * Update build system to support x86 Darwin setups, and merge patches to
     support Darwin OS better.
   * Replace custom ALSA check with pkg-config check, and make sure 0.9.0 is
@@ -250,31 +520,31 @@ xine-lib (1.1.3)
     supported by upstream, and it's replaced by PulseAudio.
   * Allow 0 for DVD title/chapter (navigation or full title).
   * New experimental JACK audio driver.
-  * Fix switch from alsa/dmix 2.0 to 5.1 [bug #1226595]
-  * Don't use proxy for localhost connection. [bug #1553633]
+  * Fix switch from alsa/dmix 2.0 to 5.1 [Bug SF 1226595]
+  * Don't use proxy for localhost connection. [Bug SF 1553633]
   * Use mmap() to open local files if available.
   * Use pkg-config to look for external FFmpeg.
   * Allow FFmpeg to play MP3s in case MAD is not present.
   * Reduce the dead time when trying to connect to dead hosts, by falling back
     to non-blocking sockets on the last address found for an host, and allowing
-    users to provide a connection timeout. [bug #1550844]
+    users to provide a connection timeout. [Bug SF 1550844]
   * Return the correct error message to frontends when a file is inaccessible or
-    the network connection is broken. [bug #1550763]
+    the network connection is broken. [Bug SF 1550763]
   * Support libcaca 0.99, thanks to cjacker huang.
-  * Fix crash on video-only WMV streams. [bug #1564598]
+  * Fix crash on video-only WMV streams. [Bug SF 1564598]
   * Report audio stream on Shorten files (required for Amarok to play them).
-  * Optionally use fontconfig to look up fonts to use for OSD. [bug #1551042]
+  * Optionally use fontconfig to look up fonts to use for OSD. [Bug SF 1551042]
   * Prefer FreeType2 rendered fonts to bitmap fonts.
   * Stone age platforms update
   * Enabled TrueSpeech codec
   * New X11 visual type: xine-lib may now use frontend's mutex/lock mechanism
     instead of XLockDisplay/XUnlockDisplay.
-  * Allow playing of OggFlac files. [bug #1590690]
+  * Allow playing of OggFlac files. [Bug SF 1590690]
   * Allow playing FLAC files with an ID3 tag at the start.
   * Fix some crashes caused by MP3 files (and possibly others) being
     misdetected as AAC.
 
-xine-lib (1.1.2)
+xine-lib (1.1.2) 2006-07-09
   * Security fixes:
     - CVE-2005-4048: possible buffer overflow in libavcodec (crafted PNGs).
     - CVE-2006-2802: possible buffer overflow in the HTTP plugin. 
@@ -310,7 +580,7 @@ xine-lib (1.1.2)
   * Fixed some win32 codec freezes when configured w32-path doesn't exist
   * Add support for RealPlayer 10 codecs (from SUSE)
   
-xine-lib (1.1.1)
+xine-lib (1.1.1) 2005-11-15
   * Improve sound quality when using alsa 1.0.9 or above.
     When playing a 44.1khz stream on a 48khz only capable sound card.
     It bypasses alsa-lib resampler and uses xine's
@@ -333,9 +603,9 @@ xine-lib (1.1.1)
   * support gapless playback while switching streams (requires UI cooperation)
   * fix speed changing race causing deadlock with v4l plugin
   * cddb improvements/fixes (DTITLE/DYEAR parsing, timeout increase and
-    multiline entries support) [#1205274]
+    multiline entries support) [Bug SF 1205274]
 
-xine-lib (1.1.0)
+xine-lib (1.1.0) 2005-07-26
   * new quality deinterlacer from dscaler: GreedyH (Greedy High Motion)
   * new quality deinterlacer from dscaler: TomsMoComp (Tom's Motion Compensated)
   * added help for most deinterlace methods
@@ -361,20 +631,20 @@ xine-lib (1.0.2)
     rtsp://stream.samurai.fm/broadcast/live_hi.rm
   * fixed xxmc / xvmc mocomp / IDCT rendering errors caused by the big update. 
   * support --enable-fpic with recent versions of gcc
-  * clip goom fps value to >= 1 [bug #1193783]
+  * clip goom fps value to >= 1 [Bug SF 1193783]
   * fixed xvmc plugin segfault when it tried software blending on nonexistant xv image
   * cleaned up libmpeg2 behaviour on xxmc plugin abrupt software fallback
   * use -fno-inline-functions with gcc < 3.4.0 (bug known to be in 3.3.5)
   * fix xxmc plugin wanting to change vld xvmc context when stream changes from
-    non-interlaced to interlaced [bug #1194350]
+    non-interlaced to interlaced [Bug SF 1194350]
   * speed up xx44 alphablending of large transparent areas
   * stop libmpeg2 XvMC IDCT / MOCOMP attempting software motion compensation
-    [bug #1194754]
+    [Bug SF 1194754]
   * improve xxmc cpu-usage for IDCT / MOCOMP acceleration through better locking
-    [bug #1195282]
-  * gcc4 build patches [bug #1175002]
-  * don't assume that file is in /usr/bin (build fix) [bug #1195539]
-  * plugin loader fixes - could cause xine to lock up hard on startup [bug #1196819]
+    [Bug SF 1195282]
+  * gcc4 build patches [Bug SF 1175002]
+  * don't assume that file is in /usr/bin (build fix) [Bug SF 1195539]
+  * plugin loader fixes - could cause xine to lock up hard on startup [Bug SF 1196819]
   * Fix xxmc bob deinterlacing for field-coded interlaced streams
   * Fix LE_64/BE_64 macros on non-x86 plataforms. may fixes issues with some
     demuxers like avi, asf and ogg.
@@ -395,10 +665,10 @@ xine-lib (1.0.2)
     greater installed
 
 xine-lib (1.0.1)
-  * Big XvMC quality / correctness / cpu-usage fix. [bug #1114517] 
+  * Big XvMC quality / correctness / cpu-usage fix. [Bug SF 1114517] 
   * fixed builds with Xv or the entire X11 unavailable
   * updated internal copies of VCD libraries to libcdio 0.71 and vcdimager 0.7.21
-  * fixed compatibility with new libtool versions [bug #1094262]
+  * fixed compatibility with new libtool versions [Bug SF 1094262]
   * renamed input.http_no_proxy to media.network.http_no_proxy
   * tightened no-proxy domain matching & added exact host match ('=' prefix)
   * assume that front ends can handle tabs (ffmpeg pp plugin help text)
@@ -411,15 +681,15 @@ xine-lib (1.0.1)
   * fixed support of icecast 2 server
   * fixed some memleaks related to DVD playback and MPEG PES
   * fixed PNG/MNG image distortion and incorrect colouring
-  * fixed build on solaris and other platforms [bugs #1062987, #1114677 and
-    #1115001]
+  * fixed build on solaris and other platforms [Bugs SF 1062987, SF 1114677,
+    SF 1115001]
   * published documentation about Win32 platform
   * brand new DirectX audio output plugin for Windows
   * updated win32 MSVC port
   * used only ASCII characters for C locale
   * fixed cropping and zooming with vidix
   * fixed status reporting to honour IDLE status as documented
-  * fixed aborts on DVB channel switching [bug #1090707]
+  * fixed aborts on DVB channel switching [Bug SF 1090707]
   * updated vidix to 0.9.9
   * plugin description accessor functions (may load plugins)
   * fixed translations, they were not used in some cases
@@ -435,11 +705,11 @@ xine-lib (1.0.1)
     flexible plugin linking
   * support for Windows Media Audio Lossless
 
-xine-lib (1.0)
+xine-lib (1.0) 2004-12-25
   * unbreak DXR3 plugin
   * fix crash in the AIFF demuxer on oversized chunks
   * fix crash in the sputext decoder when subtitles have too many lines
-    [bug #1086775]
+    [Bug SF 1086775]
   * added support for OGG chained streams
   * fixed deadlock with ASF chained streams due to fifo buffer leak
   * DVB Subtitles: fixed flashing, repeating subs, fix sync & timeouts
@@ -450,15 +720,15 @@ xine-lib (1.0)
   * fixed crash related to relative HTTP redirect URLs (implemented canonicalisation)
   * linking libXv dynamically, fixes breakage of Xv plugin
 
-xine-lib (1-rc8)
+xine-lib (1-rc8) 2004-12-15
   * Multiple security vulnerabilities fixed on PNM and Real RTSP clients
   * Rewrote OpenGL output plugin.
   * Fixed segfault when seeking with the "xvmc" and "xxmc" plugins playing 
     files with IDCT / mocomp XvMC acceleration. 
   * polypaudio sound server support
-  * fixed playback of MMS streams with the new input cache layer [bug #1066926]
-  * fixed builds without X11 [bug #1067705]
-  * added support for 24-bit LPCM from DVDs [bug #843786]
+  * fixed playback of MMS streams with the new input cache layer [Bug SF 1066926]
+  * fixed builds without X11 [Bug SF 1067705]
+  * added support for 24-bit LPCM from DVDs [Bug SF 843786]
   * Fixed segfault in xxmc plugin when switch from software decoding to 
     accelerated decoding occured while software surfaces still needed to be 
     duplicated.
@@ -484,7 +754,7 @@ xine-lib (1-rc8)
   * meta info (title, artist, etc) returned by the xine-lib is now UTF8
   * new XINE_META_INFO_TRACK_NUMBER meta info
   
-xine-lib (1-rc7)
+xine-lib (1-rc7) 2004-11-04
   * Build system improvements: replacement functions, better work with headers
   * Set the codec name for Real Media even if we can't play the files
   * Fix win32 playback on recent versions of Linux
@@ -509,9 +779,9 @@ xine-lib (1-rc7)
     "The Lord of the Rings - The Two Towers"
   * fixed wrong subtitle appearing in the trailer of "Girl, Interrupted" RC2
   * fixed "NAV packet expected, but none found" error when toggling between
-    menu and feature with the Escape key [bug #1025469]
+    menu and feature with the Escape key [Bug SF 1025469]
   * video image scaling can now be disabled for more video output plugins
-    than XShm [feature requests #987635, #856408]
+    than XShm [feature requests SF 987635, SF 856408]
   * Updated the xxmc driver with a better software fallback mechanism
   * Fixed playback of OpenDML streams generated by mencoder
   * Fixed playback of incomplete OpenDML streams
@@ -525,12 +795,12 @@ xine-lib (1-rc7)
     overhead of expensive system calls for reading just a couple of
     bytes. may be disabled with MRL parameter "#nocache".
   * use monotonic clock where available (eg. linux 2.6) so system clock
-    updates won't disturb xine playback. [bug #781532]
+    updates won't disturb xine playback. [Bug SF 781532]
   * fixed seeking unresponsiveness when using external subtitles
   * Allowed multiple simultaneous thread access in parts of the xxmc driver, 
     assuming that XvMC libraries are thread-safe.
         
-xine-lib (1-rc6)
+xine-lib (1-rc6) 2004-09-16
   * Moved win32 frontend into separate module.
   * Fixed Xv initialization to enable multiple instances of the Xv plugin
   * Removed XInitThreads() call from some video out plugins because it
@@ -545,9 +815,9 @@ xine-lib (1-rc6)
   * Added quality improvements for full frame rate deinterlacing modes
   * Added support for 44100Hz DTS in .wav files.
   * Added ability to Restore initial xv port attributes on exit
-    [bugs #965572, #957599]
-  * Fixed brightness drift problem (loss of color) [bugs #947520, #963587]
-  * Fixed rare heap overflow with some DVD subpictures [bug #923843]
+    [Bugs SF 965572, SF 957599]
+  * Fixed brightness drift problem (loss of color) [Bugs SF 947520, SF 963587]
+  * Fixed rare heap overflow with some DVD subpictures [Bug SF 923843]
   * Fixed stack overflows in the VCD plugin
   * Added experimental time stretching plugin: play stream faster or 
     slower than original speed, optionally preserving pitch
@@ -561,8 +831,8 @@ xine-lib (1-rc6)
   * next stage of MINGW port - engine library compiles now
   * Improved DVD MRL handling.
   * Improved Transport stream handling.
-  * Fixed wrong, very bright overlays on some DVDs [bug #1018193]
-  * Fixed WIN32 replacement of gettimeofday [bug #995961]
+  * Fixed wrong, very bright overlays on some DVDs [Bug SF 1018193]
+  * Fixed WIN32 replacement of gettimeofday [Bug SF 995961]
   * Removed unistd.h from public header
   * Added experimental support for H.264/AVC video
   * Added support for 3ivx video
@@ -601,7 +871,7 @@ xine-lib (1-rc5)
   * fix DVD playback from a specified title/part with
     dvd:/<title>.<part> MRLs
 
-xine-lib (1-rc4a)
+xine-lib (1-rc4a) 2004-05-12
   * audio out now uses a more user friendly "Speaker arrangement" config item;
     this defaults to stereo, so if you use a different speaker arragement, like
     5.1 or other surround setups, you have to reconfigure xine using this item
@@ -617,7 +887,7 @@ xine-lib (1-rc4a)
   * several DVB improvements. add dvbs://, dvbc:// and dvbt:// mrls
   * fix static noise produced by WMA streams in some systems
 
-xine-lib (1-rc4)
+xine-lib (1-rc4) 2004-04-28
   * experimental DTS software decoder using libdts
   * SPU decoder: timestamp handling for NAV packets fixes the menu on the first
     DVD of "24" season 1
@@ -656,7 +926,7 @@ xine-lib (1-rc4)
   * seeking support for matroska files
   * libmpeg2 now has native VIS motion compensation routines on SPARC
 
-xine-lib (1-rc3c)
+xine-lib (1-rc3c) 2004-04-08
   * fix the deadlock with non-seekable input plugins
   * guess codeset for OSD if nl_langinfo(CODESET) is missing or not working
   * new option - list of domains, where don't use proxy
@@ -676,7 +946,7 @@ xine-lib (1-rc3c)
     DVD of "24" season 1
   * fixed audio sync method "resampling"
 
-xine-lib (1-rc3b)
+xine-lib (1-rc3b) 2004-03-17
   * fix SDL plugin that was broken in rc3
   * updated libfaad 2.0 RC3 cvs (fix some raw aac problems, HE support)
   * Win32 Cygwin updates, using DirectX
@@ -732,7 +1002,7 @@ xine-lib (1-rc3b)
     Sound is now continuous.
   * fix playback of ogg/ogm files larger than 2GB
 
-xine-lib (1-rc3a)
+xine-lib (1-rc3a) 2003-12-28
   * new subtitle formats: jacobsub, subviewer 2.0, subrip 0.9
   * auto hiding of the subtitles
   * raw AAC file demuxer
@@ -744,7 +1014,7 @@ xine-lib (1-rc3a)
   * update win32 port, working ffmpeg decode plugin
   * fixed segfault when running in verbose mode
 	
-xine-lib (1-rc3)
+xine-lib (1-rc3) 2003-12-16
   * fix dvd menu blending when using tvtime plugin (yuy2 blend)
   * fix problems with some more elaborate post plugin setups
   * discontinuity problems in audio only streams fixed
@@ -786,7 +1056,7 @@ xine-lib (1-rc3)
   * fix playback of 8 bit sound when the soundcard doesn't support them
 
  
-xine-lib (1-rc2)
+xine-lib (1-rc2) 2003-10-25
   * XvMC support for hardware accelerated mpeg2 playback (-V xvmc)
   * Fix some errors in sound state when exiting xine and using alsa.
   * new tvtime/deinterlacer algorithm scalerbob
@@ -862,11 +1132,11 @@ xine-lib (1-rc1)
   * initial id3v2 support (id3v2.3 and id3v2.4 are not yet supported)
   * Fix blocking on xine start when using alsa.
 
-xine-lib (1-rc0a)
+xine-lib (1-rc0a) 2003-08-02
   * includes ffmpeg's MPEG encode in dist tarball (fixes DXR3 support)
   * don't abort on MPEG_block stream errors
 
-xine-lib (1-rc0)
+xine-lib (1-rc0) 2003-08-01
   * improved seeking accuracy of ogg_demuxer 
   * xine broadcaster (send stream to multiple xine clients simultaneously)
     start master with 'xine --broadcast-port xxxx'
@@ -915,7 +1185,7 @@ xine-lib (1-beta12)
   * input_pvr (ivtv) updates
   * demux_mpeg_block improved to cure problems with VCDs and bogus encrypted messages.
     
-xine-lib (1-beta11)
+xine-lib (1-beta11) 2003-04-28
   * fix bugs in selecting ogm subtitles
   * fix multiple lines subtitles' display in OGM container
   * fix fastforward bug (slow playback with unused cpu cicles)
@@ -934,7 +1204,7 @@ xine-lib (1-beta11)
   * Quicktime fixes (now all Matrix: Reloaded teasers and trailers play)
   * fix playback of video files created by Canon digital cameras
 
-xine-lib (1-beta10)
+xine-lib (1-beta10) 2003-04-08
   * loading and displaying png images (e.g. for logos)
   * capability of on-the-fly stream rewiring
   * libdvdnav: PGC based positioning:
@@ -955,7 +1225,7 @@ xine-lib (1-beta10)
   * DVD: menu calls ("Escape" in xine-ui) can now jump back from the
     menu into the movie as well
 	
-xine-lib (1-beta9)
+xine-lib (1-beta9) 2003-03-22
   * implement XINE_PARAM_AUDIO_AMP_LEVEL so xine's volume can be
     set independantly from other applications
   * mpeg-4 postprocessing support added to ffmpeg video decoder
@@ -977,7 +1247,7 @@ xine-lib (1-beta9)
 xine-lib (1-beta8)
   * fix DVD highlight problems
 	
-xine-lib (1-beta7)
+xine-lib (1-beta7) 2003-03-07
   * libdvdnav updated to 0.1.6cvs: fixes a whole class of problems caused
     by dvdnav being a bit ahead in the stream due to xine's fifos
   * libdvdread updated to 0.9.4
@@ -994,7 +1264,7 @@ xine-lib (1-beta7)
   * .rm file reference handling bugfxi
   * mute console output unless XINE_PARAM_VERBOSE is set
 	
-xine-lib (1-beta6)
+xine-lib (1-beta6) 2003-02-24
   * inform the width and height for the v4l input plugin
   * ffmpeg aspect ratio detection code fixed
   * demux_ogg arm patch by dilb
@@ -1002,7 +1272,7 @@ xine-lib (1-beta6)
   * plugin loader segfault fix
   * fb configure check fixed
 	
-xine-lib (1-beta5)
+xine-lib (1-beta5) 2003-02-21
   * new AV sync strategy (audio resample) for DXR3 users
   * improved fb driver with zero copy
   * fix the v4l plugin for lower resolution devices (webcam)
@@ -1032,13 +1302,13 @@ xine-lib (1-beta5)
   * make number of video buffer configurable by the user
     (performance tuning option)
 
-xine-lib (1-beta4)
+xine-lib (1-beta4) 2003-01-29
   * http input fixes
   * rtsp input fixes (remove long wait on end of stream)
   * build fixes
   * support for reference streams (.asx, .ram)
 
-xine-lib (1-beta3)
+xine-lib (1-beta3) 2003-01-28
   * PSX STR file demuxer
   * Westwood Studios AUD demuxer
   * PVA file demuxer
@@ -1065,14 +1335,14 @@ xine-lib (1-beta3)
   * fixed yuy2 overlays on big-endian systems
   * experimental tvout support using nvtvd (configure --enable-nvtv)
 	
-xine-lib (1-beta2)
+xine-lib (1-beta2) 2003-01-02
   * what a GOOM! post plugin
   * Digital TV (DVB) input plugin (experimental)
   * Interplay MVE playback system (file demuxer, video decoder, audio decoder)
   * support for real video 4.0 (through external real binary plugins)
   * quicktime binary-only codec support bugfixes
 	
-xine-lib (1-beta1)
+xine-lib (1-beta1) 2002-12-24
   * updated libfaad
   * improved engine for seeking and slider positioning
   * network input plugin is working again
@@ -1089,7 +1359,7 @@ xine-lib (1-beta1)
   * raw dv demuxer added
   * many FLI/FLC fixes
   
-xine-lib (1-beta0)
+xine-lib (1-beta0) 2002-12-11
   * fix decoder priority configuration
   * cache available plugins for faster xine loading
   * metronom's improvements for streams with slightly wrong sample rates
@@ -1102,7 +1372,7 @@ xine-lib (1-beta0)
   * MPEG-4 file (*.mp4) support
   * closed caption support ported to new architecture
   
-xine-lib (1-alpha2)
+xine-lib (1-alpha2) 2002-11-27
   * configurable image position
   * DVD menu button highlight position fixes
   * internal engine changes to allow a new layer of post effect plugins
@@ -1114,7 +1384,7 @@ xine-lib (1-alpha2)
   * arts audio output plugin ported to new architecture
   * esound audio output plugin ported to new architecture
 	
-xine-lib (1-alpha1) 
+xine-lib (1-alpha1) 2002-11-20
   * transport stream demuxer fixes
   * DVD playback should be working again (please report DVDs that don't play!)
   * stdin_fifo input plugin
@@ -1123,7 +1393,7 @@ xine-lib (1-alpha1)
   * XviD decoder is working again
   * DV decoder (ffmpeg)
 
-xine-lib (1-alpha0) 
+xine-lib (1-alpha0) 2002-11-04
 
   * dvd plugin replaced by dvdnav with full menu support
   * fix segfault on exit for w32codecs
@@ -1167,7 +1437,7 @@ xine-lib (1-alpha0)
   * URI conforming MRL syntax, new delimiter # for various stream parameters
   * variuos fixes for dxr3 overlay mode
 	
-xine-lib (0.9.13) unstable; urgency=low
+xine-lib (0.9.13) 2002-08-03
 
   * improved audio resampling for cards limited to 16 bits, stereo or mono
   * native wmv7 decoder using ffmpeg
@@ -1192,7 +1462,7 @@ xine-lib (0.9.13) unstable; urgency=low
 
  -- Siggi Langauf <siggi@debian.org>  Sat,  3 Aug 2002 22:44:16 +0200
 
-xine-lib (0.9.12) unstable; urgency=low
+xine-lib (0.9.12) 2002-06-23
 
   * demux_ts fixes for ATSC streams
   * configurable size of avi subtitles
@@ -1204,7 +1474,7 @@ xine-lib (0.9.12) unstable; urgency=low
 
  -- Guenter Bartsch <guenter@users.sourceforge.net>
 
-xine-lib (0.9.11) unstable; urgency=low
+xine-lib (0.9.11) 2002-06-20
   
   * sync with ffmpeg cvs
   * some endianess and 64bit machine fixes
@@ -1226,7 +1496,7 @@ xine-lib (0.9.11) unstable; urgency=low
 
  -- Guenter Bartsch <guenter@users.sourceforge.net>
  
-xine (0.9.10) unstable; urgency=low
+xine (0.9.10) 2002-05-28
 
   * fixed snapshot: capture current frame with overlays
   * AVI progressive index reconstruction
@@ -1247,7 +1517,7 @@ xine (0.9.10) unstable; urgency=low
 
  -- Guenter Bartsch <guenter@users.sourceforge.net> 
 
-xine (0.9.9) unstable; urgency=low
+xine (0.9.9) 2002-05-28
   
   * new (fast) demuxer seeking
   * libdivx4 updated to support divx5
@@ -1273,7 +1543,7 @@ xine (0.9.9) unstable; urgency=low
 
  -- Guenter Bartsch <guenter@users.sourceforge.net> Sat Apr 20 20:32:33 CEST 2002
 
-xine (0.9.8) unstable; urgency=low
+xine (0.9.8) 2002-01-16
 
   * Linux framebuffer video out driver (experimental)
   * several bugfixes
@@ -1290,7 +1560,7 @@ xine (0.9.8) unstable; urgency=low
 
  -- Guenter Bartsch <guenter@users.sourceforge.net> Sun Jan 13 16:15:07 CET 2002
 
-xine (0.9.7) unstable; urgency=low
+xine (0.9.7) 2001-12-11
 
   * fix some win32 dll segfaults
   * seamless branching on input_dvd
@@ -1302,7 +1572,7 @@ xine (0.9.7) unstable; urgency=low
 
  -- Guenter Bartsch <guenter@users.sourceforge.net> Tue Nov 27 01:20:06 CET 2001
 
-xine (0.9.6) unstable; urgency=low
+xine (0.9.6) 2001-11-28
 
   * demux_asf big fragments handling
   * working setup dialog (experimental)
@@ -1314,7 +1584,7 @@ xine (0.9.6) unstable; urgency=low
 
  -- Guenter Bartsch <guenter@users.sourceforge.net> Tue Nov 27 01:20:06 CET 2001
 
-xine (0.9.5) unstable; urgency=low
+xine (0.9.5) 2001-11-23
 
   * improved responsiveness (pause, stop, resume, seek)
   * catch segfaults when loading plugins
@@ -1333,7 +1603,7 @@ xine (0.9.5) unstable; urgency=low
 
  -- Guenter Bartsch <guenter@users.sourceforge.net> Fri Nov 23 14:10:26 CET 2001
 
-xine (0.9.4) unstable; urgency=low
+xine (0.9.4) 2001-11-04
 
   * new SyncFB video out plugin (see README.syncfb)
   * catch SIGSEGV during libdivxdecore version probing. see README.divx4.
@@ -1341,7 +1611,7 @@ xine (0.9.4) unstable; urgency=low
 
  -- Guenter Bartsch <guenter@users.sourceforge.net> Sun Nov  4 23:43:55 CET 2001
 
-xine (0.9.3) unstable; urgency=low
+xine (0.9.3) 2001-11-02
 
   * XShm gamma adjusting (brightness)
   * bugfix: lot skipped frames and low cpu
@@ -1360,7 +1630,7 @@ xine (0.9.3) unstable; urgency=low
   * dxr3 still-menu/audio sync fixes / menu buttons now auto-display
   * dxr3 now keeps BCS values in .xinerc / Aspect ratio autodetection
   
-xine (0.9.2) unstable; urgency=low
+xine (0.9.2) 2001-10-16
 
   * bugfixes
   * ogg/vorbis support
@@ -1374,7 +1644,7 @@ xine (0.9.2) unstable; urgency=low
 
  -- Guenter Bartsch <guenter@users.sourceforge.net> Sun Oct 14 20:13:20 CEST 2001
 
-xine (0.9.1) unstable; urgency=low
+xine (0.9.1) 2001-09-17
 
   * support for subtitle names
   * new software deinterlacer (try --deinterlace; caution: CPU intensive!)
@@ -1384,7 +1654,7 @@ xine (0.9.1) unstable; urgency=low
 
  -- Siggi Langauf <siggi@debian.org>  Tue, 18 Sep 2001 01:48:38 +0200
 
-xine (0.9.0) unstable; urgency=low
+xine (0.9.0) 2001-09-13
 
   * generic menu support
   * many bugfixes
@@ -1393,13 +1663,13 @@ xine (0.9.0) unstable; urgency=low
 
  -- Guenter Bartsch <guenter@users.sourceforge.net>  Fri Sep 14 01:37:31 CEST 2001
 
-xine (0.5.3) unstable; urgency=low
+xine (0.5.3) 2001-09-05
 
   * small bugfix release
 
  -- Guenter Bartsch <guenter@users.sourceforge.net>  Wed Sep  5 02:41:11 CEST 2001
 
-xine (0.5.2) unstable; urgency=low
+xine (0.5.2) 2001-09-03
 
   * many bugfixes
   * ffmpeg (mpeg4, opendivx ...) works on bigendian machines now
@@ -1411,14 +1681,14 @@ xine (0.5.2) unstable; urgency=low
 
  -- Guenter Bartsch <guenter@users.sourceforge.net>  Sun Sep  2 23:47:00 CEST 2001
 
-xine (0.5.1) unstable; urgency=low
+xine (0.5.1) 2001-08-10
 
   * ffmpeg plugin (OpenDivX, MS mpeg 4, motion-jpeg support)
   * various bugfixes
 
  -- Guenter Bartsch <guenter@users.sourceforge.net>  Sat,  11 Aug 2001 01:39:12 +0200
 
-xine (0.5.0) unstable; urgency=low
+xine (0.5.0) 2001-08-05
 
   This is the big, long-awaited architecture change
 
@@ -1435,7 +1705,7 @@ xine (0.5.0) unstable; urgency=low
 
  -- Guenter Bartsch <guenter@users.sourceforge.net>  Sun,  22 Jul 2001 13:10:52 +0200
 
-xine (0.4.3) unstable; urgency=low
+xine (0.4.3) 2001-05-16
 
   This is a minor bugfix release
 
@@ -1448,7 +1718,7 @@ xine (0.4.3) unstable; urgency=low
 
  -- Guenter Bartsch <guenter@users.sourceforge.net>  Sun,  16 May 2001 22:59:00 +0200
 
-xine (0.4.2) unstable; urgency=low
+xine (0.4.2) 2001-05-06
 
   This is mainly a bugfix release for those who want a stable xine _now_,
   before the new, better, universal 0.5 architecture has stabilized.
@@ -1466,7 +1736,7 @@ xine (0.4.2) unstable; urgency=low
   
  -- Siggi Langauf <siggi@debian.org>  Sun,  6 May 2001 14:24:01 +0200
 
-xine (0.4.0) unstable; urgency=low
+xine (0.4.0) 2001-03-02
 
   * new multithreaded architecture - xine becomes idle
   * notable performance improvements
@@ -1478,7 +1748,7 @@ xine (0.4.0) unstable; urgency=low
 
  -- Siggi Langauf <siggi@debian.org>  Sat,  3 Mar 2001 01:36:39 +0100
 
-xine (0.3.7) unstable; urgency=low
+xine (0.3.7) 2001-02-04
 
   * subpicture/subtitle support
   * experimental AC3 digital output with some ALSA drivers 
@@ -1488,7 +1758,7 @@ xine (0.3.7) unstable; urgency=low
 
  -- Siggi Langauf <siggi@debian.org>  Sun,  4 Feb 2001 14:44:23 +0100
 
-xine (0.3.6) unstable; urgency=low
+xine (0.3.6) 2001-01-22
 
   * support for field pictures
   * added autoprobing for audio driver
@@ -1502,7 +1772,7 @@ xine (0.3.6) unstable; urgency=low
 
  -- Siggi Langauf <siggi@debian.org>  Mon, 22 Jan 2001 02:06:08 +0100
 
-xine (0.3.5) unstable; urgency=low
+xine (0.3.5) 2001-01-10
 
   * (hopefully) fixed autoconf for Athlon processors
   * fixed aspect ratio calculation (=> SVCD support)
@@ -1515,7 +1785,7 @@ xine (0.3.5) unstable; urgency=low
 
  -- Siggi Langauf <siggi@users.sourceforge.net>  Wed, 10 Jan 2001 11:10:57 +0100
 
-xine (0.3.4) unstable; urgency=low
+xine (0.3.4) 2001-01-08
 
   * re-debianized package using debhelper (much cleaner debian packages)
 
@@ -1526,8 +1796,7 @@ xine (0.3.4) unstable; urgency=low
 
  -- Siggi Langauf <siggi@users.sourceforge.net>  Mon,  8 Jan 2001 04:03:11 +0100
 
-
-xine (0.3.3) unstable; urgency=low
+xine (0.3.3) 2001-01-04
 
   * playlist, autoplay function
   * seamless branching
@@ -1538,8 +1807,7 @@ xine (0.3.3) unstable; urgency=low
 
  -- Siggi Langauf <siggi@users.sourceforge.net>  Thu, 04 Jan 2001 01:37:42 +0100
 
-
-xine (0.3.2) unstable; urgency=low
+xine (0.3.2) 2000-12-13
   
   * audio rate up/downsampling
   * new yuv2rgb routines
@@ -1553,16 +1821,14 @@ xine (0.3.2) unstable; urgency=low
 
    -- Siggi Langauf <siggi@users.sourceforge.net>  Wed, 13 Dec 2000 02:44:18 +0100
 
-
-xine (0.3.1p1) unstable; urgency=high
+xine (0.3.1p1) 2000-11-21
 
   * Bugfix for Debian package: 0.3.1 always segfaulted. This release should
     work... 
 
  -- Siggi Langauf <siggi@users.sourceforge.net>  Tue, 21 Nov 2000 21:43:18 +0100
 
-
-xine (0.3.1) unstable; urgency=low
+xine (0.3.1) 2000-11-20
 
   * Initial release of Debian package.
 
@@ -1574,36 +1840,42 @@ xine (0.3.1) unstable; urgency=low
 
  -- Siggi Langauf <siggi@users.sourceforge.net>  Sun, 19 Nov 2000 15:33:28 +0100
 
-xine (0.3.0+older) unstable; urgency=low
-  
-  0.3.0
-        - NULL audio driver (ability to run without sound card) 
-        - ALSA audio driver
-	- pause function
-	- simple playlist function
-	- massive performance improvements for xshm
- 	  through subslice output
-	- gui/skin improvements
-	- improved build process
-	- improved internal architecture
-	- many minor updates/bugfixes
+xine (0.3.0) 2000-11-18
 
-  0.2.4
-	this is a maintenance/bugfix
-	release, just wanted to release all the small little changes
-	before we go for the next big architecture update that will
-	be in the 0.3.x series
+  - NULL audio driver (ability to run without sound card) 
+  - ALSA audio driver
+  - pause function
+  - simple playlist function
+  - massive performance improvements for xshm through subslice output
+  - gui/skin improvements
+  - improved build process
+  - improved internal architecture
+  - many minor updates/bugfixes
 
-	
-  0.2.3
-	- included patches by Alan Cox:
-	  net_plugin, bug fixes (i.e. VCD ...)
-	- xshm video output module fixed for bpp>16
-	  (but don't use that for speed reasons!)
-	- new iDCT_mmx code from walken 
-	  => picture quality massively improved :))
-	- FAQ update
-	- speed improvements due to new compiler switches
-	- minor Makefile fixes for FreeBSD ports 
+xine (0.2.4) 2000-10-30
+
+  - this is a maintenance/bugfix release, just wanted to release all the
+    small little changes before we go for the next big architecture update
+    that will be in the 0.3.x series
+
+xine (0.2.3) 2000-10-15
+
+  - included patches by Alan Cox:
+    net_plugin, bug fixes (i.e. VCD ...)
+  - xshm video output module fixed for bpp>16
+    (but don't use that for speed reasons!)
+  - new iDCT_mmx code from walken 
+    => picture quality massively improved :))
+  - FAQ update
+  - speed improvements due to new compiler switches
+  - minor Makefile fixes for FreeBSD ports 
   
  -- Siggi Langauf <siggi@users.sourceforge.net>  Sun,  7 Jan 2001 23:59:12 +0100
+
+xine (0.2.2) 2000-10-10
+
+xine (0.2.1) 2000-10-10
+
+xine (0.2.0) 2000-09-28
+
+xine (0.1.3) 2000-08-17

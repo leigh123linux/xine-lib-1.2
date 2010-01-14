@@ -40,6 +40,10 @@
 
 #include "xineutils.h"
 
+#if defined(PIC) && ! defined(__PIC__)
+#define __PIC__
+#endif
+
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
 
 static jmp_buf sigill_return;
@@ -281,10 +285,10 @@ static uint32_t arch_accel (void)
   }
 
   canjump = 1;
- 
+
   /* pdist %f0, %f0, %f0 */
   __asm__ __volatile__(".word\t0x81b007c0");
-                                                                                
+
   canjump = 0;
   flags |= MM_ACCEL_SPARC_VIS;
 
@@ -292,15 +296,15 @@ static uint32_t arch_accel (void)
     signal(SIGILL, SIG_DFL);
     return flags;
   }
-                                                                                
+
   canjump = 1;
-                                                                                
+
   /* edge8n %g0, %g0, %g0 */
   __asm__ __volatile__(".word\t0x81b00020");
-                                                                                
+
   canjump = 0;
   flags |= MM_ACCEL_SPARC_VIS2;
-                                                                                
+
   signal(SIGILL, SIG_DFL);
   return flags;
 }

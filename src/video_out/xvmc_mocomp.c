@@ -23,15 +23,15 @@
 #include "xxmc.h"
 
 
-static void calc_DMV(int DMV[][2], int *dmvector, 
+static void calc_DMV(int DMV[][2], int *dmvector,
 		     int mvx, int mvy, int picture_structure, int top_field_first) {
-  
+
   if (picture_structure==VO_BOTH_FIELDS) {
     if (top_field_first) {
       /* vector for prediction of top field from bottom field */
       DMV[0][0] = ((mvx  +(mvx>0))>>1) + dmvector[0];
       DMV[0][1] = ((mvy  +(mvy>0))>>1) + dmvector[1] - 1;
-      
+
       /* vector for prediction of bottom field from top field */
       DMV[1][0] = ((3*mvx+(mvx>0))>>1) + dmvector[0];
       DMV[1][1] = ((3*mvy+(mvy>0))>>1) + dmvector[1] + 1;
@@ -40,7 +40,7 @@ static void calc_DMV(int DMV[][2], int *dmvector,
       /* vector for prediction of top field from bottom field */
       DMV[0][0] = ((3*mvx+(mvx>0))>>1) + dmvector[0];
       DMV[0][1] = ((3*mvy+(mvy>0))>>1) + dmvector[1] - 1;
-      
+
       /* vector for prediction of bottom field from top field */
       DMV[1][0] = ((mvx  +(mvx>0))>>1) + dmvector[0];
       DMV[1][1] = ((mvy  +(mvy>0))>>1) + dmvector[1] + 1;
@@ -50,13 +50,13 @@ static void calc_DMV(int DMV[][2], int *dmvector,
     /* vector for prediction from field of opposite 'parity' */
     DMV[0][0] = ((mvx+(mvx>0))>>1) + dmvector[0];
     DMV[0][1] = ((mvy+(mvy>0))>>1) + dmvector[1];
-    
+
     /* correct for vertical field shift */
     if (picture_structure==VO_TOP_FIELD)
       DMV[0][1]--;
     else
       DMV[0][1]++;
-    
+
   }
 }
 
@@ -96,12 +96,12 @@ static void xvmc_render_macro_blocks(vo_frame_t *current_image,
 
 
 
-void xxmc_xvmc_proc_macro_block(int x, int y, int mb_type, int motion_type, 
-				int (*mv_field_sel)[2], int *dmvector, int cbp, 
-				int dct_type, vo_frame_t *current_frame, 
-				vo_frame_t *forward_ref_frame, 
-				vo_frame_t *backward_ref_frame, int picture_structure, 
-				int second_field, int (*f_mot_pmv)[2], int (*b_mot_pmv)[2]) 
+void xxmc_xvmc_proc_macro_block(int x, int y, int mb_type, int motion_type,
+				int (*mv_field_sel)[2], int *dmvector, int cbp,
+				int dct_type, vo_frame_t *current_frame,
+				vo_frame_t *forward_ref_frame,
+				vo_frame_t *backward_ref_frame, int picture_structure,
+				int second_field, int (*f_mot_pmv)[2], int (*b_mot_pmv)[2])
 {
   xxmc_driver_t        *this                = (xxmc_driver_t *) current_frame->driver;
   xvmc_macroblocks_t   *mbs                 = &this->macroblocks;
@@ -110,10 +110,10 @@ void xxmc_xvmc_proc_macro_block(int x, int y, int mb_type, int motion_type,
 
   mbs->macroblockptr->x = x;
   mbs->macroblockptr->y = y;
-  
+
   if(mb_type & XINE_MACROBLOCK_INTRA) {
     mbs->macroblockptr->macroblock_type = XVMC_MB_TYPE_INTRA;
-  } 
+  }
   else {
     mbs->macroblockptr->macroblock_type = 0;
     /* XvMC doesn't support skips */
@@ -122,7 +122,7 @@ void xxmc_xvmc_proc_macro_block(int x, int y, int mb_type, int motion_type,
       motion_type = (picture_structure == VO_BOTH_FIELDS) ? XINE_MC_FRAME : XINE_MC_FIELD;
       mbs->macroblockptr->PMV[0][0][0] = 0;
       mbs->macroblockptr->PMV[0][0][1] = 0;
-    } 
+    }
     else {
       if(mb_type & XINE_MACROBLOCK_MOTION_BACKWARD) {
 	mbs->macroblockptr->macroblock_type |= XVMC_MB_TYPE_MOTION_BACKWARD;
@@ -154,17 +154,17 @@ void xxmc_xvmc_proc_macro_block(int x, int y, int mb_type, int motion_type,
 	calc_DMV(DMV,dmvector, f_mot_pmv[0][0],
 		 f_mot_pmv[0][1]>>1, picture_structure,
 		 top_field_first);
-	
+
 	mbs->macroblockptr->PMV[1][0][0] = DMV[0][0];
 	mbs->macroblockptr->PMV[1][0][1] = DMV[0][1];
 	mbs->macroblockptr->PMV[1][1][0] = DMV[1][0];
 	mbs->macroblockptr->PMV[1][1][1] = DMV[1][1];
-      } 
+      }
       else {
 	calc_DMV(DMV,dmvector, f_mot_pmv[0][0],
 		 f_mot_pmv[0][1]>>1, picture_structure,
 		 top_field_first);
-	
+
 	mbs->macroblockptr->PMV[0][1][0] = DMV[0][0];
 	mbs->macroblockptr->PMV[0][1][1] = DMV[0][1];
       }
@@ -185,14 +185,14 @@ void xxmc_xvmc_proc_macro_block(int x, int y, int mb_type, int motion_type,
 
   mbs->macroblockptr->index = ((unsigned long)mbs->xine_mc.blockptr -
 			       (unsigned long)mbs->xine_mc.blockbaseptr) >> 7;
-  
+
   mbs->macroblockptr->dct_type = dct_type;
   mbs->macroblockptr->coded_block_pattern = cbp;
 
   cbp &= 0x3F;
   mbs->macroblockptr->coded_block_pattern = cbp;
 
-  while(cbp) { 
+  while(cbp) {
     if(cbp & 1) mbs->macroblockptr->index--;
     cbp >>= 1;
   }
@@ -238,9 +238,9 @@ void xxmc_xvmc_proc_macro_block(int x, int y, int mb_type, int motion_type,
 
     xvmc_render_macro_blocks(
 			     current_frame,
-			     (picture_coding_type == XINE_PICT_B_TYPE) ? 
+			     (picture_coding_type == XINE_PICT_B_TYPE) ?
 			     backward_ref_frame : NULL,
-			     (picture_coding_type != XINE_PICT_I_TYPE) ? 
+			     (picture_coding_type != XINE_PICT_I_TYPE) ?
 			     forward_ref_frame : NULL,
 			     picture_structure,
 			     second_field ? XVMC_SECOND_FIELD : 0,

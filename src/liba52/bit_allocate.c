@@ -100,7 +100,7 @@ static int8_t latab[256] = {
       0,   0,   0,   0
 };
 
-#define UPDATE_LEAK() 		\
+#define UPDATE_LEAK()		\
 do {				\
     fastleak += fdecay;		\
     if (fastleak > psd + fgain)	\

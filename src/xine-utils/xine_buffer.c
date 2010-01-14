@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -47,6 +47,10 @@
  *   (eg during reallocation). The user must respect that.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -70,9 +74,9 @@ typedef struct {
 
   uint32_t size;
   uint32_t chunk_size;
-  
+
   uint8_t magic;
-  
+
 } xine_buffer_header_t;
 
 #define XINE_BUFFER_HEADER_SIZE 9
@@ -116,8 +120,8 @@ typedef struct {
  * reallocation on slow growing buffers.
  */
 void *xine_buffer_init(int chunk_size) {
-  
-  uint8_t *data=xine_xmalloc(chunk_size+XINE_BUFFER_HEADER_SIZE);
+
+  uint8_t *data=calloc(1, chunk_size+XINE_BUFFER_HEADER_SIZE);
   xine_buffer_header_t *header=(xine_buffer_header_t*)data;
 
   header->size=chunk_size;
@@ -153,7 +157,7 @@ void *_xine_buffer_free(void *buf) {
 void *xine_buffer_dup(const void *buf) {
 
   uint8_t *new;
-  
+
 #ifdef CHECKS
   if (!buf) {
     lprintf("warning: got NULL pointer\n");
@@ -162,9 +166,9 @@ void *xine_buffer_dup(const void *buf) {
   CHECK_MAGIC(buf);
 #endif
 
-new=xine_xmalloc(GET_HEADER(buf)->size+XINE_BUFFER_HEADER_SIZE);
+  new = malloc(GET_HEADER(buf)->size+XINE_BUFFER_HEADER_SIZE);
 
-  xine_fast_memcpy(new, ((uint8_t*)buf)-XINE_BUFFER_HEADER_SIZE, 
+  xine_fast_memcpy(new, ((uint8_t*)buf)-XINE_BUFFER_HEADER_SIZE,
       GET_HEADER(buf)->size+XINE_BUFFER_HEADER_SIZE);
 
   return new+XINE_BUFFER_HEADER_SIZE;
@@ -176,7 +180,7 @@ new=xine_xmalloc(GET_HEADER(buf)->size+XINE_BUFFER_HEADER_SIZE);
 #define xine_buffer_copyin(buf,i,data,len) \
   buf=_xine_buffer_copyin(buf,i,data,len)
 void *_xine_buffer_copyin(void *buf, int index, const void *data, int len) {
-  
+
 #ifdef CHECKS
   if (!buf || !data) {
     lprintf("warning: got NULL pointer\n");
@@ -233,7 +237,7 @@ void *_xine_buffer_set(void *buf, int index, uint8_t b, int len) {
 #endif
 
   GROW_TO(buf, index+len);
-  
+
   memset(((uint8_t*)buf)+index, b, len);
 
   return buf;
@@ -322,6 +326,6 @@ void *_xine_buffer_ensure_size(void *buf, int size) {
 #endif
 
   GROW_TO(buf, size);
-  
+
   return buf;
 }

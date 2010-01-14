@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000-2003 the xine project
- * 
+ *
  * This file is part of xine, a free video player.
- * 
+ *
  * xine is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
@@ -40,7 +40,7 @@ int xine_mutex_init (xine_mutex_t *mutex, const pthread_mutexattr_t *mutexattr,
 
   return pthread_mutex_init (&mutex->mutex, mutexattr);
 }
-  
+
 int xine_mutex_lock (xine_mutex_t *mutex, const char *who) {
 
 #ifndef DBG_MUTEX
@@ -50,13 +50,13 @@ int xine_mutex_lock (xine_mutex_t *mutex, const char *who) {
 #else
 
   if (pthread_mutex_trylock (&mutex->mutex)) {
-    printf ("xine_mutex: BLOCK when %s tried to lock mutex %s because it is locked by %s. continue trying...)\n", 
+    printf ("xine_mutex: BLOCK when %s tried to lock mutex %s because it is locked by %s. continue trying...)\n",
 	    who, mutex->id, mutex->locked_by);
 
     pthread_mutex_lock (&mutex->mutex);
   }
 
-  printf ("xine_mutex: %s has now locked mutex %s\n", 
+  printf ("xine_mutex: %s has now locked mutex %s\n",
 	  who, mutex->id);
   mutex->locked_by = who;
 

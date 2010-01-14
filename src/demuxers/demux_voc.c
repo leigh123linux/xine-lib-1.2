@@ -85,7 +85,7 @@ static int open_voc_file(demux_voc_t *this) {
     return 0;
 
   /* check the signature */
-  if (strncmp(header, VOC_SIGNATURE, strlen(VOC_SIGNATURE)) != 0)
+  if (memcmp(header, VOC_SIGNATURE, sizeof(VOC_SIGNATURE)-1) != 0)
     return 0;
 
   /* file is qualified */
@@ -93,7 +93,7 @@ static int open_voc_file(demux_voc_t *this) {
   this->input->seek(this->input, first_block_offset, SEEK_SET);
 
   /* load the block preamble */
-  if (this->input->read(this->input, preamble, BLOCK_PREAMBLE_SIZE) != 
+  if (this->input->read(this->input, preamble, BLOCK_PREAMBLE_SIZE) !=
     BLOCK_PREAMBLE_SIZE)
     return 0;
 
@@ -106,7 +106,7 @@ static int open_voc_file(demux_voc_t *this) {
   }
 
   /* assemble 24-bit, little endian length */
-  this->data_size = preamble[1] | (preamble[2] << 8) | (preamble[3] << 16);
+  this->data_size = _X_LE_24(&preamble[1]);
 
   /* get the next 2 bytes (re-use preamble bytes) */
   if (this->input->read(this->input, preamble, 2) != 2)
@@ -142,7 +142,7 @@ static int demux_voc_send_chunk(demux_plugin_t *this_gen) {
   /* just load data chunks from wherever the stream happens to be
    * pointing; issue a DEMUX_FINISHED status if EOF is reached */
   remaining_sample_bytes = PCM_BLOCK_ALIGN;
-  current_file_pos = 
+  current_file_pos =
     this->input->get_current_pos(this->input) - this->data_start;
 
   current_pts = current_file_pos;
@@ -231,7 +231,7 @@ static int demux_voc_seek (demux_plugin_t *this_gen, off_t start_pos, int start_
 
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->data_size );
-  
+
   this->seek_flag = 1;
   this->status = DEMUX_OK;
   _x_demux_flush_engine (this->stream);
@@ -296,7 +296,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_voc_t    *this;
 
-  this         = xine_xmalloc (sizeof (demux_voc_t));
+  this         = calloc(1, sizeof(demux_voc_t));
   this->stream = stream;
   this->input  = input;
 
@@ -370,7 +370,7 @@ static void class_dispose (demux_class_t *this_gen) {
 void *demux_voc_init_plugin (xine_t *xine, void *data) {
   demux_voc_class_t     *this;
 
-  this = xine_xmalloc (sizeof (demux_voc_class_t));
+  this = calloc(1, sizeof(demux_voc_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.get_description = get_description;

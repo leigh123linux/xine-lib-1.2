@@ -1,3 +1,4 @@
+include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
 if DTS
@@ -11,7 +12,7 @@ fnsa =
 internal_sources =
 else
 fnsa = -fno-strict-aliasing
-internal_sources = bitstream.c downmix.c parse.c 
+internal_sources = bitstream.c downmix.c parse.c
 endif
 
 xineplug_decode_dts_la_SOURCES = xine_dts_decoder.c $(internal_sources)

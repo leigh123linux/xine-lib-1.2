@@ -186,7 +186,7 @@ typedef struct {
 #define IRQSTATUS_AUDIO_FIFO 0x8
 
 #define ENCODER_UNKNOWN 0
-#define ENCODER_ADV7175 1 
+#define ENCODER_ADV7175 1
 #define ENCODER_ADV7170 2
 #define ENCODER_BT865   3
 
@@ -235,21 +235,21 @@ struct em8300_audio_s {
 struct em8300_s
 {
 	char name[40];
-	
+
 	int chip_revision;
 	int pci_revision;
-	
+
 	int inuse[4];
 	int nonblock[4];
 	int ucodeloaded;
-	
+
 	struct pci_dev *dev;
 	ulong adr;
 	volatile unsigned *mem;
 	ulong memsize;
-	
+
 	int playmode;
-	
+
 	/* Sysfs */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,46)
 	struct class_device classdev;
@@ -263,7 +263,7 @@ struct em8300_s
 	struct fifo_s *mafifo;
 	struct fifo_s *spfifo;
 	int mtrr_reg;
-	
+
 	/* DICOM */
 	int dicom_vertoffset;
 	int dicom_horizoffset;
@@ -272,47 +272,47 @@ struct em8300_s
 	int dicom_saturation;
 	int dicom_tvout;
 	struct displaybuffer_info_s dbuf_info;
-	
+
 	/* I2C */
 	int i2c_pin_reg;
 	int i2c_oe_reg;
-	
+
 	/* different between revision 1 and revision 2 boards */
 	int mystery_divisor;
-	
+
 	/* I2C bus 1*/
 	struct i2c_algo_bit_data i2c_data_1;
 	struct i2c_adapter i2c_ops_1;
-	
+
 	/* I2C bus 2*/
 	struct i2c_algo_bit_data i2c_data_2;
 	struct i2c_adapter i2c_ops_2;
-	
+
 	/* I2C clients */
 	int encoder_type;
 	struct i2c_client *encoder;
-	
+
 	/* Microcode registers */
 	unsigned ucode_regs[MAX_UCODE_REGISTER];
 	int var_ucode_reg1; /* These are registers that differ */
 	int var_ucode_reg2; /* between versions 1 and 2 of the board */
 	int var_ucode_reg3; /* " */
-	
+
 	/* Interrupt */
 	unsigned irqmask;
-	
+
 	/* Clockgenerator */
 	int clockgen;
 	int clockgen_overlaymode;
 	int clockgen_tvmode;
-	
+
 	/* Timing measurement */
 	struct timeval tv, last_status_time;
 	long irqtimediff;
 	int irqcount;
 	int frames;
 	int scr;
-	
+
 	/* Audio */
 	struct em8300_audio_s audio;
 	int audio_mode;
@@ -321,7 +321,7 @@ struct em8300_s
 /* */
 	int dword_DB4;
 	unsigned char byte_D90[24];
-	
+
 	/* Video */
 	int video_mode;
 	int video_playmode;
@@ -330,7 +330,7 @@ struct em8300_s
 	uint32_t video_lastpts;
 	int video_ptsvalid,video_offset,video_count;
 	int video_ptsfifo_ptr;
-#if LINUX_VERSION_CODE < 0x020314    
+#if LINUX_VERSION_CODE < 0x020314
 	struct wait_queue *video_ptsfifo_wait;
 	struct wait_queue *vbi_wait;
 #else
@@ -340,20 +340,20 @@ struct em8300_s
 	int video_ptsfifo_waiting;
 	int video_first;
 	int var_video_value;
-	
+
 	/* Sub Picture */
 	int sp_pts, sp_ptsvalid, sp_count;
 	int sp_ptsfifo_ptr;
-#if LINUX_VERSION_CODE < 0x020314    
+#if LINUX_VERSION_CODE < 0x020314
 	struct wait_queue *sp_ptsfifo_wait;
 #else
 	wait_queue_head_t sp_ptsfifo_wait;
 #endif
 	int sp_ptsfifo_waiting;
 	int sp_mode;
-	
+
 	int linecounter;
-	
+
 	/* EM9010 overlay processor */
 	int overlay_enabled;
 	int overlay_mode;
@@ -373,7 +373,7 @@ struct em8300_s
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2,4,0)
 	/* Memory exported via mmap() */
 	struct list_head  memory;
-#endif	
+#endif
 
 	/* To support different options for different cards */
 	unsigned int card_nr;
