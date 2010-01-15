@@ -94,6 +94,7 @@ int parse_nal(uint8_t *buf, int buf_len, struct h264_parser *parser,
 int seek_for_nal(uint8_t *buf, int buf_len, struct h264_parser *parser);
 
 struct h264_parser* init_parser(xine_t *xine);
+void reset_parser(struct h264_parser *parser);
 void free_parser(struct h264_parser *parser);
 int parse_frame(struct h264_parser *parser, uint8_t *inbuf, int inbuf_len,
     int64_t pts,

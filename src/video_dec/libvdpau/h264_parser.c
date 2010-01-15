@@ -1549,9 +1549,31 @@ struct h264_parser* init_parser(xine_t *xine)
   return parser;
 }
 
+void reset_parser(struct h264_parser *parser)
+{
+  parser->position = NON_VCL;
+  parser->buf_len = parser->prebuf_len = 0;
+  parser->next_nal_position = 0;
+  parser->last_nal_res = 0;
+
+  if(parser->last_vcl_nal) {
+    release_nal_unit(parser->last_vcl_nal);
+  }
+  parser->last_vcl_nal = NULL;
+
+  parser->prev_pic_order_cnt_msb = 1 << 16;
+  parser->prev_pic_order_cnt_lsb = 0;
+  parser->frame_num_offset = 0;
+  parser->prev_top_field_order_cnt = 0;
+  parser->curr_pic_num = 0;
+  parser->flag_mask = 0;
+}
+
 void free_parser(struct h264_parser *parser)
 {
   dpb_free_all(&parser->dpb);
+  free_nal_buffer(parser->pps_buffer);
+  free_nal_buffer(parser->sps_buffer);
   free(parser);
 }
 

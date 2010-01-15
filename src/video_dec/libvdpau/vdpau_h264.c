@@ -709,13 +709,12 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
     this->decoder = VDP_INVALID_HANDLE;
   }
 
-  free_parser(this->nal_parser);
+  reset_parser(this->nal_parser);
 
   this->color_standard = VDP_COLOR_STANDARD_ITUR_BT_601;
   this->wait_for_bottom_field = 0;
   this->video_step = 0;
 
-  this->nal_parser = init_parser(this->stream->xine);
   if(this->codec_private_len > 0) {
     parse_codec_private(this->nal_parser, this->codec_private, this->codec_private_len);
 
