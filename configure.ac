@@ -1275,6 +1275,7 @@ src/video_dec/libmpeg2/Makefile
 src/video_dec/libmpeg2new/Makefile
 src/video_dec/libmpeg2new/include/Makefile
 src/video_dec/libmpeg2new/libmpeg2/Makefile
+src/video_dec/libvdpau/Makefile
 src/video_out/Makefile
 src/video_out/macosx/Makefile
 src/xine-utils/Makefile

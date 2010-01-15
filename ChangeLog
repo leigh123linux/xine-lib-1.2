@@ -1,5 +1,6 @@
 xine-lib (1.1.90) (Unreleased)
   * Add support for VDR.
+  * Add support for VDPAU.
   * xine-config is deprecated in favour of pkg-config libxine.
     Use "pkgconfig --variable=foo libxine" where you previously used
     "xine-config --foo".

@@ -1,3 +1,4 @@
+
 /*
  * Copyright (C) 2007-2008 the xine project
  *
@@ -166,11 +167,16 @@ static int raw_process_ovl( raw_driver_t *this_gen, vo_overlay_t *overlay )
     clr = rle->color;
     alpha = trans[clr];
     for ( i=0; i<rlelen; ++i ) {
-	rgba[0] = colors[clr].y;
-	rgba[1] = colors[clr].cr;
-	rgba[2] = colors[clr].cb;
-	rgba[3] = alpha*255/15;
-	rgba+= 4;
+      if ( alpha == 0 ) {
+        rgba[0] = rgba[1] = rgba[2] = rgba[3] = 0;
+      }
+      else {
+        rgba[0] = colors[clr].y;
+        rgba[1] = colors[clr].cr;
+        rgba[2] = colors[clr].cb;
+        rgba[3] = alpha*255/15;
+      }
+      rgba+= 4;
 	++pos;
     }
     ++rle;
@@ -300,6 +306,9 @@ static vo_frame_t *raw_alloc_frame (vo_driver_t *this_gen)
   if (!frame)
     return NULL;
 
+  frame->vo_frame.base[0] = frame->vo_frame.base[1] = frame->vo_frame.base[2] = frame->rgb = NULL;
+  frame->width = frame->height = frame->format = frame->flags = 0;
+
   pthread_mutex_init (&frame->vo_frame.mutex, NULL);
 
   /*
@@ -333,8 +342,6 @@ static void raw_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_ge
       || (frame->flags  != flags)) {
 /*     lprintf ("updating frame to %d x %d (ratio=%g, format=%08x)\n", width, height, ratio, format); */
 
-    flags &= VO_BOTH_FIELDS;
-
     /* (re-) allocate render space */
     av_free (frame->vo_frame.base[0]);
     av_free (frame->vo_frame.base[1]);
@@ -357,7 +364,7 @@ static void raw_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_ge
     frame->rgb = av_mallocz (BYTES_PER_PIXEL*width*height);
 
     /* set up colorspace converter */
-    switch (flags) {
+    switch (flags & VO_BOTH_FIELDS) {
     case VO_TOP_FIELD:
     case VO_BOTTOM_FIELD:
       frame->yuv2rgb->configure (frame->yuv2rgb,
@@ -384,6 +391,7 @@ static void raw_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_ge
     frame->width = width;
     frame->height = height;
     frame->format = format;
+    frame->flags = flags;
 
     raw_frame_field ((vo_frame_t *)frame, flags);
   }

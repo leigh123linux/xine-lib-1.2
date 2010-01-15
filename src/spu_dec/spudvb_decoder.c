@@ -32,7 +32,11 @@
 #include <xine/osd.h>
 #define MAX_REGIONS 7
 
-/*#define LOG 1*/
+#define SPU_MAX_WIDTH 720
+#define SPU_MAX_HEIGHT 576
+
+/*#define LOG*/
+#define LOG_MODULE "spudvb"
 
 typedef struct {
   int			x, y;
@@ -145,21 +149,17 @@ static void update_region (dvb_spu_decoder_t * this, int region_id, int region_w
   page_t *page = &dvbsub->page;
 
   /* reject invalid sizes and set some limits ! */
-  if ( region_width<=0 || region_height<=0 || region_width>720 || region_height>576 ) {
+  if ( region_width<=0 || region_height<=0 || region_width>SPU_MAX_WIDTH || region_height>SPU_MAX_HEIGHT ) {
     if ( reg->img ) {
       free( reg->img );
       reg->img = NULL;
     }
-#ifdef LOG
-    printf("SPUDVB: rejected region %d = %dx%d\n", region_id, region_width, region_height );
-#endif
+    lprintf("rejected region %d = %dx%d\n", region_id, region_width, region_height );
     return;
   }
 
   if ( reg->width*reg->height<region_width*region_height ) {
-#ifdef LOG
-    printf("SPUDVB: update size of region %d = %dx%d\n", region_id, region_width, region_height);
-#endif
+    lprintf("update size of region %d = %dx%d\n", region_id, region_width, region_height);
     if ( reg->img ) {
       free( reg->img );
       reg->img = NULL;
@@ -177,9 +177,7 @@ static void update_region (dvb_spu_decoder_t * this, int region_id, int region_w
   if ( fill ) {
     memset( reg->img, fill_color, region_width*region_height );
     reg->empty = 1;
-#ifdef LOG
-    printf("SPUDVB : FILL REGION %d\n", region_id);
-#endif
+    lprintf("FILL REGION %d\n", region_id);
   }
   reg->width = region_width;
   reg->height = region_height;
@@ -645,9 +643,7 @@ static void* dvbsub_timer_func(void *this_gen)
 	for ( i=0; i<MAX_REGIONS; i++ ) {
 	  if ( this->dvbsub->regions[i].osd ) {
 	    this->stream->osd_renderer->hide( this->dvbsub->regions[i].osd, 0 );
-#ifdef LOG
-	    printf("SPUDVB: thread hiding = %d\n",i);
-#endif
+	    lprintf("thread hiding = %d\n",i);
 	  }
 	}
       }
@@ -680,7 +676,7 @@ static void draw_subtitles (dvb_spu_decoder_t * this)
   unsigned char tmp[dest_width*576];
   unsigned char *reg;
 
-  if ( !dest_width )
+  if ( !dest_width || !dest_height )
     return;
 
   /* render all regions onto the page */
@@ -700,7 +696,7 @@ static void draw_subtitles (dvb_spu_decoder_t * this)
 	  continue;
         /* clear osd */
         this->stream->osd_renderer->clear( this->dvbsub->regions[r].osd );
-        if (this->dvbsub->regions[r].width>dest_width) {
+        if ( this->dvbsub->regions[r].width>dest_width && !(this->stream->video_driver->get_capabilities(this->stream->video_driver) & VO_CAP_CUSTOM_EXTENT_OVERLAY)) {
 	  downscale_region_image(&this->dvbsub->regions[r], tmp, dest_width);
 	  reg = tmp;
 	  reg_width = dest_width;
@@ -716,34 +712,25 @@ static void draw_subtitles (dvb_spu_decoder_t * this)
   }
 
   pthread_mutex_lock(&this->dvbsub_osd_mutex);
-#ifdef LOG
-  printf("SPUDVB: this->vpts=%llu\n",this->vpts);
-#endif
+  lprintf("this->vpts=%llu\n",this->vpts);
   for ( r=0; r<MAX_REGIONS; r++ ) {
-#ifdef LOG
-    printf("SPUDVB : region=%d, visible=%d, osd=%d, empty=%d\n", r, this->dvbsub->page.regions[r].is_visible, this->dvbsub->regions[r].osd?1:0, this->dvbsub->regions[r].empty );
-#endif
+    lprintf("region=%d, visible=%d, osd=%d, empty=%d\n", r, this->dvbsub->page.regions[r].is_visible, this->dvbsub->regions[r].osd?1:0, this->dvbsub->regions[r].empty );
     if ( this->dvbsub->page.regions[r].is_visible && this->dvbsub->regions[r].osd && !this->dvbsub->regions[r].empty ) {
+      this->stream->osd_renderer->set_extent(this->dvbsub->regions[r].osd, SPU_MAX_WIDTH, SPU_MAX_HEIGHT);
       this->stream->osd_renderer->set_position( this->dvbsub->regions[r].osd, this->dvbsub->page.regions[r].x, this->dvbsub->page.regions[r].y );
       this->stream->osd_renderer->show( this->dvbsub->regions[r].osd, this->vpts );
-#ifdef LOG
-      printf("SPUDVB: show region = %d\n",r);
-#endif
+      lprintf("show region = %d\n",r);
     }
     else {
       if ( this->dvbsub->regions[r].osd ) {
         this->stream->osd_renderer->hide( this->dvbsub->regions[r].osd, this->vpts );
-#ifdef LOG
-        printf("SPUDVB: hide region = %d\n",r);
-#endif
+        lprintf("hide region = %d\n",r);
       }
     }
   }
   this->dvbsub_hide_timeout.tv_nsec = 0;
   this->dvbsub_hide_timeout.tv_sec = time(NULL) + this->dvbsub->page.page_time_out;
-#ifdef LOG
-  printf("SPUDVB: page_time_out %d\n",this->dvbsub->page.page_time_out);
-#endif
+  lprintf("page_time_out %d\n",this->dvbsub->page.page_time_out);
   pthread_cond_signal(&this->dvbsub_restart_timeout);
   pthread_mutex_unlock(&this->dvbsub_osd_mutex);
 }
@@ -807,9 +794,7 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
     metronom_clock_t *clock = this->stream->xine->clock;
     int64_t curvpts = clock->get_current_time( clock );
     /* if buf->pts is unreliable, show page asap (better than nothing) */
-#ifdef LOG
-    printf("SPUDVB: spu_vpts=%lld - current_vpts=%lld\n", vpts, curvpts);
-#endif
+    lprintf("spu_vpts=%lld - current_vpts=%lld\n", vpts, curvpts);
     if ( vpts<=curvpts || (vpts-curvpts)>(5*90000) )
       this->vpts = 0;
     else

@@ -155,6 +155,9 @@ struct vo_frame_s {
   /* displacement for overlays */
   int                       overlay_offset_x, overlay_offset_y;
 
+  /* pointer to the next frame in display order, used by some vo deint */
+  struct vo_frame_s         *future_frame;
+
   /*
    * that part is used only by video_out.c for frame management
    * obs: changing anything here will require recompiling vo drivers
@@ -255,7 +258,9 @@ struct xine_video_port_s {
 #define VO_PROP_OUTPUT_HEIGHT         20 /* read-only */
 #define VO_PROP_OUTPUT_XOFFSET        21 /* read-only */
 #define VO_PROP_OUTPUT_YOFFSET        22 /* read-only */
-#define VO_NUM_PROPERTIES             23
+#define VO_PROP_SHARPNESS             24
+#define VO_PROP_NOISE_REDUCTION       25
+#define VO_NUM_PROPERTIES             26
 
 /* number of colors in the overlay palette. Currently limited to 256
    at most, because some alphablend functions use an 8-bit index into
@@ -277,6 +282,8 @@ struct xine_video_port_s {
 #define VO_PAN_SCAN_FLAG     4
 #define VO_INTERLACED_FLAG   8
 #define VO_NEW_SEQUENCE_FLAG 16 /* set after MPEG2 Sequence Header Code (used by XvMC) */
+#define VO_CHROMA_422        32 /* used by VDPAU, default is chroma_420 */
+#define VO_STILL_IMAGE       64
 
 /* video driver capabilities */
 #define VO_CAP_YV12                   0x00000001 /* driver can handle YUV 4:2:0 pictures */
@@ -286,6 +293,9 @@ struct xine_video_port_s {
 #define VO_CAP_UNSCALED_OVERLAY       0x00000010 /* driver can blend overlay at output resolution */
 #define VO_CAP_CROP                   0x00000020 /* driver can crop */
 #define VO_CAP_XXMC                   0x00000040 /* driver can use extended XvMC */
+#define VO_CAP_VDPAU_H264             0x00000080 /* driver can use VDPAU for H264 */
+#define VO_CAP_VDPAU_MPEG12           0x00000100 /* driver can use VDPAU for mpeg1/2 */
+#define VO_CAP_VDPAU_VC1              0x00000200 /* driver can use VDPAU for VC1 */
 #define VO_CAP_HUE                    0x00010000
 #define VO_CAP_SATURATION             0x00020000
 #define VO_CAP_CONTRAST               0x00040000
@@ -297,6 +307,7 @@ struct xine_video_port_s {
 #define VO_CAP_CUSTOM_EXTENT_OVERLAY  0x01000000 /* driver can blend custom extent overlay to output extent */
 #define VO_CAP_ARGB_LAYER_OVERLAY     0x02000000 /* driver supports true color overlay */
 #define VO_CAP_VIDEO_WINDOW_OVERLAY   0x04000000 /* driver can scale video to an area within overlay */
+
 
 /*
  * vo_driver_s contains the functions every display driver
@@ -467,7 +478,6 @@ struct vo_overlay_s {
   int               hili_rgb_clut; /* true if clut was converted to rgb */
 
   int               unscaled;      /* true if it should be blended unscaled */
-
 
   argb_layer_t     *argb_layer;
 };

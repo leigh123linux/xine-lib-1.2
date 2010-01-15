@@ -499,4 +499,19 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
     fi
     AM_CONDITIONAL([ENABLE_XVMC], [test x"$have_xvmc" = x"yes"])
     AM_CONDITIONAL([ENABLE_XXMC], [test x"$have_xxmc" = x"yes"])
-])dnl XINE_VIDEO_OUT_PLUGINS
+
+
+    dnl VDPAU
+    AC_ARG_ENABLE([vdpau], [AS_HELP_STRING([--disable-vdpau], [Disable VDPAU output plugin])])
+    if test x"$no_x" != x"yes" && test x"$enable_vdpau" != x"no"; then
+        AC_CHECK_HEADERS([vdpau/vdpau_x11.h], [have_vdpau=yes], [have_vdpau=no])
+        if test x"$have_vdpau" = x"yes"; then
+            AC_CHECK_LIB([vdpau], [vdp_device_create_x11], [], [have_vdpau=no], [$X_LIBS $X_PRE_LIBS -lXext $X_EXTRA_LIBS])
+        fi
+        if test x"$enable_vdpau" = x"yes" && test x"$have_vdpau" != x"yes"; then
+            AC_MSG_ERROR([VDPAU support requested, but not all requirements are met])
+        fi
+    fi
+    AM_CONDITIONAL([ENABLE_VDPAU], test x"$have_vdpau" = x"yes")
+    
+])dnl XINE_VIDEO_OUT_PLUGIN

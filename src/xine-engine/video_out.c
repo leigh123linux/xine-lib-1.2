@@ -933,8 +933,8 @@ static vo_frame_t *get_next_frame (vos_t *this, int64_t cur_vpts,
         img->vpts = cur_vpts;
         /* extra info of the backup is thrown away, because it is not up to date */
         _x_extra_info_reset(img->extra_info);
+        img->future_frame = NULL;
       }
-
       return img;
 
     } else {
@@ -993,6 +993,13 @@ static vo_frame_t *get_next_frame (vos_t *this, int64_t cur_vpts,
      * remove frame from display queue and show it
      */
 
+    if ( img ) {
+      if ( img->next )
+        img->future_frame = img->next;
+      else
+        img->future_frame = NULL;
+    }
+    
     img = vo_remove_from_img_buf_queue_int (this->display_img_buf_queue, 1, 0, 0, 0, 0, 0);
     pthread_mutex_unlock(&this->display_img_buf_queue->mutex);
 
@@ -1459,6 +1466,8 @@ static int vo_get_property (xine_video_port_t *this_gen, int property) {
     ret = this->crop_bottom;
     break;
 
+  case XINE_PARAM_VO_SHARPNESS:
+  case XINE_PARAM_VO_NOISE_REDUCTION:
   case XINE_PARAM_VO_HUE:
   case XINE_PARAM_VO_SATURATION:
   case XINE_PARAM_VO_CONTRAST:
@@ -1548,6 +1557,8 @@ static int vo_set_property (xine_video_port_t *this_gen, int property, int value
     ret = this->crop_bottom = value;
     break;
 
+  case XINE_PARAM_VO_SHARPNESS:
+  case XINE_PARAM_VO_NOISE_REDUCTION:
   case XINE_PARAM_VO_HUE:
   case XINE_PARAM_VO_SATURATION:
   case XINE_PARAM_VO_CONTRAST:

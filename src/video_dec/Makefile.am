@@ -1,6 +1,7 @@
 SUBDIRS = \
 	libmpeg2 \
-	libmpeg2new
+	libmpeg2new \
+	libvdpau
 
 include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common

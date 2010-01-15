@@ -52,7 +52,8 @@ xineplug_LTLIBRARIES = \
 	xineplug_dmx_matroska.la \
 	xineplug_dmx_iff.la \
 	xineplug_dmx_flv.la \
-	xineplug_dmx_playlist.la
+	xineplug_dmx_playlist.la \
+	xineplug_dmx_vc1_es.la
 
 xineplug_dmx_avi_la_SOURCES = demux_avi.c
 xineplug_dmx_avi_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
@@ -66,6 +67,9 @@ xineplug_dmx_mpeg_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineplug_dmx_mpeg_elem_la_SOURCES = demux_elem.c
 xineplug_dmx_mpeg_elem_la_LIBADD = $(XINE_LIB)
+
+xineplug_dmx_vc1_es_la_SOURCES = demux_vc1es.c
+xineplug_dmx_vc1_es_la_LIBADD = $(XINE_LIB)
 
 xineplug_dmx_mpeg_pes_la_SOURCES = demux_mpeg_pes.c
 xineplug_dmx_mpeg_pes_la_CFLAGS = $(AM_CFLAGS) $(AVUTIL_CFLAGS)
