@@ -753,7 +753,7 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd, uint8_t end_of_sequence 
   /* trying to deal with (french) buggy streams that randomly set bottom_field_first
      while stream is top_field_first. So we assume that when top_field_first
      is set one time, the stream _is_ top_field_first. */
-  //printf("pic->vdp_infos.top_field_first = %d\n", pic->vdp_infos.top_field_first);
+  lprintf("pic->vdp_infos.top_field_first = %d\n", pic->vdp_infos.top_field_first);
   if ( pic->vdp_infos.top_field_first )
     seq->top_field_first = 1;
   img->top_field_first = seq->top_field_first;

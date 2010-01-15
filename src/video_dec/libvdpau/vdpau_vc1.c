@@ -333,7 +333,7 @@ static void sequence_header( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int le
   switch ( read_bits( &sequence->br, 2 ) ) {
     case 0: sequence->profile = VDP_DECODER_PROFILE_VC1_SIMPLE; lprintf("VDP_DECODER_PROFILE_VC1_SIMPLE\n"); break;
     case 1: sequence->profile = VDP_DECODER_PROFILE_VC1_MAIN; lprintf("VDP_DECODER_PROFILE_VC1_MAIN\n"); break;
-    case 2: sequence->profile = VDP_DECODER_PROFILE_VC1_MAIN; lprintf("vc1_complex profile not supported by vdpau, trying vc1_main.\n"); break;
+    case 2: sequence->profile = VDP_DECODER_PROFILE_VC1_MAIN; fprintf(stderr, "vc1_complex profile not supported by vdpau, forcing vc1_main, expect corruption!.\n"); break;
     case 3: return sequence_header_advanced( this_gen, buf, len ); break;
     default: return; /* illegal value, broken header? */
   }
@@ -648,7 +648,7 @@ static void decode_render( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel, uint8_
     }
     st = accel->vdp_decoder_create( accel->vdp_device, seq->profile, seq->coded_width, seq->coded_height, 2, &vd->decoder);
     if ( st!=VDP_STATUS_OK )
-      printf( "vdpau_vc1: failed to create decoder !! %s\n", accel->vdp_get_error_string( st ) );
+      fprintf(stderr, "vdpau_vc1: failed to create decoder !! %s\n", accel->vdp_get_error_string( st ) );
     else {
       lprintf( "decoder created.\n" );
       vd->decoder_profile = seq->profile;
@@ -666,7 +666,7 @@ static void decode_render( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel, uint8_
     vbit.bitstream_bytes = pic->field;
   st = accel->vdp_decoder_render( vd->decoder, accel->surface, (VdpPictureInfo*)&pic->vdp_infos, 1, &vbit );
   if ( st!=VDP_STATUS_OK )
-    printf( "vdpau_vc1: decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
+    fprintf(stderr, "vdpau_vc1: decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
   else {
     lprintf( "DECODER SUCCESS : slices=%d, slices_bytes=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
               pic->vdp_infos.slice_count, vbit.bitstream_bytes, accel->surface, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->seq_pts );
@@ -701,7 +701,7 @@ static void decode_render( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel, uint8_
     vbit.bitstream_bytes = len-pic->field-4;
     st = accel->vdp_decoder_render( vd->decoder, accel->surface, (VdpPictureInfo*)&pic->vdp_infos, 1, &vbit );
     if ( st!=VDP_STATUS_OK )
-      printf( "vdpau_vc1: decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
+      fprintf(stderr, "vdpau_vc1: decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
     else {
       lprintf( "DECODER SUCCESS (second field): slices=%d, slices_bytes=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
                 pic->vdp_infos.slice_count, vbit.bitstream_bytes, accel->surface, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->seq_pts );

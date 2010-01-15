@@ -452,7 +452,7 @@ static void vdpau_process_argb_ovls(vdpau_driver_t *this_gen, vo_frame_t *frame_
 
       VdpStatus st = vdp_output_surface_create(vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, total_extent_width, total_extent_height, &this->argb_overlay);
       if (st != VDP_STATUS_OK)
-        printf("vdpau_process_argb_ovl: vdp_output_surface_create failed : %s\n", vdp_get_error_string(st));
+        fprintf(stderr, "vdpau_process_argb_ovl: vdp_output_surface_create failed : %s\n", vdp_get_error_string(st));
 
       this->argb_overlay_width  = total_extent_width;
       this->argb_overlay_height = total_extent_height;
@@ -495,7 +495,7 @@ static void vdpau_process_argb_ovls(vdpau_driver_t *this_gen, vo_frame_t *frame_
         VdpRect dest = { curr_ovl_data->x, curr_ovl_data->y, curr_ovl_data->x + curr_ovl_data->w, curr_ovl_data->y + curr_ovl_data->h };
         VdpStatus st = vdp_output_surface_put_bits(this->argb_overlay, (void *)&zeros, &pitch, &dest);
         if (st != VDP_STATUS_OK)
-          printf("vdpau_process_argb_ovl: vdp_output_surface_put_bits_native failed : %s\n", vdp_get_error_string(st));
+          fprintf(stderr, "vdpau_process_argb_ovl: vdp_output_surface_put_bits_native failed : %s\n", vdp_get_error_string(st));
       }
     }
     free(zeros);
@@ -513,7 +513,7 @@ static void vdpau_process_argb_ovls(vdpau_driver_t *this_gen, vo_frame_t *frame_
 
     VdpStatus st = vdp_output_surface_put_bits(this->argb_overlay, (void *)&buffer_start, &pitch, &dest);
     if (st != VDP_STATUS_OK)
-      printf( "vdpau_process_argb_ovl: vdp_output_surface_put_bits_native failed : %s\n", vdp_get_error_string(st));
+      fprintf(stderr, "vdpau_process_argb_ovl: vdp_output_surface_put_bits_native failed : %s\n", vdp_get_error_string(st));
     else
       this->has_argb_overlay = 1;
   }
@@ -543,7 +543,7 @@ static int vdpau_process_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overlay )
     }
     VdpStatus st = vdp_bitmap_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, overlay->width, overlay->height, 0, &ovl->ovl_bitmap );
     if ( st != VDP_STATUS_OK ) {
-      printf( "vdpau_process_ovl: vdp_bitmap_create failed : %s\n", vdp_get_error_string(st) );
+      fprintf(stderr, "vdpau_process_ovl: vdp_bitmap_create failed : %s\n", vdp_get_error_string(st) );
     }
     ovl->bitmap_width = overlay->width;
     ovl->bitmap_height = overlay->height;
@@ -607,7 +607,7 @@ static int vdpau_process_ovl( vdpau_driver_t *this_gen, vo_overlay_t *overlay )
   VdpRect dest = { 0, 0, ovl->ovl_w, ovl->ovl_h };
   VdpStatus st = vdp_bitmap_put_bits( ovl->ovl_bitmap, &buf, &pitch, &dest);
   if ( st != VDP_STATUS_OK ) {
-    printf( "vdpau_process_ovl: vdp_bitmap_put_bits failed : %s\n", vdp_get_error_string(st) );
+    fprintf(stderr, "vdpau_process_ovl: vdp_bitmap_put_bits failed : %s\n", vdp_get_error_string(st) );
   }
   free(buf);
   return 1;
@@ -701,7 +701,7 @@ static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame)
   if ( (this->overlay_output_width!=out_w || this->overlay_output_height!=out_h) && this->overlay_output != VDP_INVALID_HANDLE ) {
     st = vdp_output_surface_destroy( this->overlay_output );
     if ( st != VDP_STATUS_OK ) {
-      printf( "vdpau_overlay_end: vdp_output_surface_destroy failed : %s\n", vdp_get_error_string(st) );
+      fprintf(stderr, "vdpau_overlay_end: vdp_output_surface_destroy failed : %s\n", vdp_get_error_string(st) );
     }
     this->overlay_output = VDP_INVALID_HANDLE;
   }
@@ -722,7 +722,7 @@ static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame)
   if ( (this->overlay_unscaled_width!=w || this->overlay_unscaled_height!=h) && this->overlay_unscaled != VDP_INVALID_HANDLE ) {
     st = vdp_output_surface_destroy( this->overlay_unscaled );
     if ( st != VDP_STATUS_OK ) {
-      printf( "vdpau_overlay_end: vdp_output_surface_destroy failed : %s\n", vdp_get_error_string(st) );
+      fprintf(stderr, "vdpau_overlay_end: vdp_output_surface_destroy failed : %s\n", vdp_get_error_string(st) );
     }
     this->overlay_unscaled = VDP_INVALID_HANDLE;
   }
@@ -733,13 +733,13 @@ static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame)
   if ( this->overlay_unscaled == VDP_INVALID_HANDLE ) {
     st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->overlay_unscaled_width, this->overlay_unscaled_height, &this->overlay_unscaled );
     if ( st != VDP_STATUS_OK )
-      printf( "vdpau_overlay_end: vdp_output_surface_create failed : %s\n", vdp_get_error_string(st) );
+      fprintf(stderr, "vdpau_overlay_end: vdp_output_surface_create failed : %s\n", vdp_get_error_string(st) );
   }
 
   if ( this->overlay_output == VDP_INVALID_HANDLE ) {
     st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->overlay_output_width, this->overlay_output_height, &this->overlay_output );
     if ( st != VDP_STATUS_OK )
-      printf( "vdpau_overlay_end: vdp_output_surface_create failed : %s\n", vdp_get_error_string(st) );
+      fprintf(stderr, "vdpau_overlay_end: vdp_output_surface_create failed : %s\n", vdp_get_error_string(st) );
   }
 
   w = (this->overlay_unscaled_width>this->overlay_output_width) ? this->overlay_unscaled_width : this->overlay_output_width;
@@ -750,12 +750,12 @@ static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame)
   VdpRect clear = { 0, 0, this->overlay_output_width, this->overlay_output_height };
   st = vdp_output_surface_put_bits( this->overlay_output, &buf, &pitch, &clear );
   if ( st != VDP_STATUS_OK ) {
-    printf( "vdpau_overlay_end: vdp_output_surface_put_bits (clear) failed : %s\n", vdp_get_error_string(st) );
+    fprintf(stderr, "vdpau_overlay_end: vdp_output_surface_put_bits (clear) failed : %s\n", vdp_get_error_string(st) );
   }
   clear.x1 = this->overlay_unscaled_width; clear.y1 = this->overlay_unscaled_height;
   st = vdp_output_surface_put_bits( this->overlay_unscaled, &buf, &pitch, &clear );
   if ( st != VDP_STATUS_OK ) {
-    printf( "vdpau_overlay_end: vdp_output_surface_put_bits (clear) failed : %s\n", vdp_get_error_string(st) );
+    fprintf(stderr, "vdpau_overlay_end: vdp_output_surface_put_bits (clear) failed : %s\n", vdp_get_error_string(st) );
   }
   free(buf);
 
@@ -772,7 +772,7 @@ static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame)
     surface = (this->overlays[i].unscaled) ? &this->overlay_unscaled : &this->overlay_output;
     st = vdp_output_surface_render_bitmap_surface( *surface, &dest, this->overlays[i].ovl_bitmap, &src, 0, &blend, 0 );
     if ( st != VDP_STATUS_OK ) {
-      printf( "vdpau_overlay_end: vdp_output_surface_render_bitmap_surface failed : %s\n", vdp_get_error_string(st) );
+      fprintf(stderr, "vdpau_overlay_end: vdp_output_surface_render_bitmap_surface failed : %s\n", vdp_get_error_string(st) );
     }
   }
   this->has_overlay = 1;
@@ -898,7 +898,7 @@ static void vdpau_provide_standard_frame_data (vo_frame_t *this_gen, xine_curren
   if (data->img) {
     st = vdp_video_surface_getbits_ycbcr(this->vdpau_accel_data.surface, format, this->vo_frame.base, this->vo_frame.pitches);
     if (st != VDP_STATUS_OK)
-      printf("vo_vdpau: failed to get surface bits !! %s\n", vdp_get_error_string(st));
+      fprintf(stderr, "vo_vdpau: failed to get surface bits !! %s\n", vdp_get_error_string(st));
 
     if (format == VDP_YCBCR_FORMAT_YV12) {
       yv12_to_yv12(
@@ -964,11 +964,11 @@ static void vdpau_duplicate_frame_data (vo_frame_t *this_gen, vo_frame_t *origin
 
   st = vdp_video_surface_getbits_ycbcr(orig->vdpau_accel_data.surface, format, this->vo_frame.base, this->vo_frame.pitches);
   if (st != VDP_STATUS_OK)
-    printf("vo_vdpau: failed to get surface bits !! %s\n", vdp_get_error_string(st));
+    fprintf(stderr, "vo_vdpau: failed to get surface bits !! %s\n", vdp_get_error_string(st));
 
   st = vdp_video_surface_putbits_ycbcr(this->vdpau_accel_data.surface, format, this->vo_frame.base, this->vo_frame.pitches);
   if (st != VDP_STATUS_OK)
-    printf("vo_vdpau: failed to put surface bits !! %s\n", vdp_get_error_string(st));
+    fprintf(stderr, "vo_vdpau: failed to put surface bits !! %s\n", vdp_get_error_string(st));
 
   this->vdpau_accel_data.color_standard = orig->vdpau_accel_data.color_standard;
 
@@ -1044,7 +1044,7 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
     if ( (format == XINE_IMGFMT_VDPAU) && (frame->vdpau_accel_data.surface == VDP_INVALID_HANDLE) ) {
       VdpStatus st = vdp_video_surface_create( vdp_device, chroma, width, height, &frame->vdpau_accel_data.surface );
       if ( st!=VDP_STATUS_OK )
-        printf( "vo_vdpau: failed to create surface !! %s\n", vdp_get_error_string( st ) );
+        fprintf(stderr, "vo_vdpau: failed to create surface !! %s\n", vdp_get_error_string( st ) );
       else {
         clear = 1;
         frame->vdpau_accel_data.chroma = chroma;
@@ -1063,7 +1063,7 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
   }
 
   if ( (format == XINE_IMGFMT_VDPAU) && (clear || (frame->surface_cleared_nr != this->surface_cleared_nr)) ) {
-    printf( "clear surface\n" );
+    lprintf( "clear surface: %d\n", frame->vdpau_accel_data.surface );
     if ( frame->vdpau_accel_data.chroma == VDP_CHROMA_TYPE_422 ) {
       uint8_t *cb = malloc( frame->width * frame->height * 2 );
       memset( cb, 127, frame->width * frame->height * 2 );
@@ -1071,7 +1071,7 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
       void* data[] = { cb };
       VdpStatus st = vdp_video_surface_putbits_ycbcr( frame->vdpau_accel_data.surface, VDP_YCBCR_FORMAT_YUYV, &data, pitches );
       if ( st!=VDP_STATUS_OK )
-        printf( "vo_vdpau: failed to clear surface: %s\n", vdp_get_error_string( st ) );
+        fprintf(stderr, "vo_vdpau: failed to clear surface: %s\n", vdp_get_error_string( st ) );
       free( cb );
     }
     else {
@@ -1081,7 +1081,7 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
       void* data[] = { cb, cb, cb };
       VdpStatus st = vdp_video_surface_putbits_ycbcr( frame->vdpau_accel_data.surface, VDP_YCBCR_FORMAT_YV12, &data, pitches );
       if ( st!=VDP_STATUS_OK )
-        printf( "vo_vdpau: failed to clear surface: %s\n", vdp_get_error_string( st ) );
+        fprintf(stderr, "vo_vdpau: failed to clear surface: %s\n", vdp_get_error_string( st ) );
       free( cb );
     }
     if ( frame->surface_cleared_nr != this->surface_cleared_nr )
@@ -1193,41 +1193,41 @@ static void vdpau_set_deinterlace( vo_driver_t *this_gen )
       feature_enables[0] = feature_enables[1] = 1;
 	    if ( this->temporal_is_supported ) {
 	      if ( this->temporal_spatial_is_supported )
-	        printf("vo_vdpau: deinterlace: temporal_spatial\n" );
+	        fprintf(stderr, "vo_vdpau: deinterlace: temporal_spatial\n" );
 		    else
-		      printf("vo_vdpau: deinterlace: temporal\n" );
+		      fprintf(stderr, "vo_vdpau: deinterlace: temporal\n" );
       }
       else
-        printf("vo_vdpau: deinterlace: bob\n" );
+        fprintf(stderr, "vo_vdpau: deinterlace: bob\n" );
     }
     else {
       switch ( this->deinterlacers_method[this->deinterlace_method] ) {
         case DEINT_BOB:
           feature_enables[0] = feature_enables[1] = 0;
-          printf("vo_vdpau: deinterlace: bob\n" );
+          fprintf(stderr, "vo_vdpau: deinterlace: bob\n" );
           break;
         case DEINT_HALF_TEMPORAL:
           feature_enables[0] = 1; feature_enables[1] = 0;
-          printf("vo_vdpau: deinterlace: half_temporal\n" );
+          fprintf(stderr, "vo_vdpau: deinterlace: half_temporal\n" );
           break;
         case DEINT_TEMPORAL:
           feature_enables[0] = 1; feature_enables[1] = 0;
-          printf("vo_vdpau: deinterlace: temporal\n" );
+          fprintf(stderr, "vo_vdpau: deinterlace: temporal\n" );
           break;
         case DEINT_HALF_TEMPORAL_SPATIAL:
           feature_enables[0] = feature_enables[1] = 1;
-          printf("vo_vdpau: deinterlace: half_temporal_spatial\n" );
+          fprintf(stderr, "vo_vdpau: deinterlace: half_temporal_spatial\n" );
           break;
         case DEINT_TEMPORAL_SPATIAL:
           feature_enables[0] = feature_enables[1] = 1;
-          printf("vo_vdpau: deinterlace: temporal_spatial\n" );
+          fprintf(stderr, "vo_vdpau: deinterlace: temporal_spatial\n" );
           break;
       }
     }
   }
   else {
     feature_enables[0] = feature_enables[1] = 0;
-    printf("vo_vdpau: deinterlace: none\n" );
+    fprintf(stderr, "vo_vdpau: deinterlace: none\n" );
   }
 
   vdp_video_mixer_set_feature_enables( this->video_mixer, features_count, features, feature_enables );
@@ -1251,7 +1251,7 @@ static void vdpau_set_inverse_telecine( vo_driver_t *this_gen )
 
   vdp_video_mixer_set_feature_enables( this->video_mixer, 1, features, feature_enables );
   vdp_video_mixer_get_feature_enables( this->video_mixer, 1, features, feature_enables );
-  printf("vo_vdpau: enabled features: inverse_telecine=%d\n", feature_enables[0] );
+  fprintf(stderr, "vo_vdpau: enabled features: inverse_telecine=%d\n", feature_enables[0] );
 }
 
 
@@ -1261,7 +1261,7 @@ static void vdpau_update_deinterlace_method( void *this_gen, xine_cfg_entry_t *e
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
 
   this->deinterlace_method = entry->num_value;
-  printf( "vo_vdpau: deinterlace_method=%d\n", this->deinterlace_method );
+  fprintf(stderr,  "vo_vdpau: deinterlace_method=%d\n", this->deinterlace_method );
   vdpau_set_deinterlace( (vo_driver_t*)this_gen );
 }
 
@@ -1286,7 +1286,7 @@ static void vdpau_set_scaling_level( vo_driver_t *this_gen )
     vdp_video_mixer_set_feature_enables( this->video_mixer, 1, features, feature_enables );
   }
 
-  printf( "vo_vdpau: set_scaling_level=%d\n", this->scaling_level_current );
+  fprintf(stderr,  "vo_vdpau: set_scaling_level=%d\n", this->scaling_level_current );
 #endif
 }
 
@@ -1297,7 +1297,7 @@ static void vdpau_update_scaling_level( void *this_gen, xine_cfg_entry_t *entry 
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
 
   this->scaling_level_current = entry->num_value;
-  printf( "vo_vdpau: scaling_quality=%d\n", this->scaling_level_current );
+  fprintf(stderr,  "vo_vdpau: scaling_quality=%d\n", this->scaling_level_current );
   vdpau_set_scaling_level( (vo_driver_t*)this_gen );
 }
 
@@ -1308,7 +1308,7 @@ static void vdpau_update_enable_inverse_telecine( void *this_gen, xine_cfg_entry
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
 
   this->enable_inverse_telecine = entry->num_value;
-  printf( "vo_vdpau: enable inverse_telecine=%d\n", this->enable_inverse_telecine );
+  fprintf(stderr, "vo_vdpau: enable inverse_telecine=%d\n", this->enable_inverse_telecine );
   vdpau_set_inverse_telecine( (vo_driver_t*)this_gen );
 }
 
@@ -1319,7 +1319,7 @@ static void vdpau_honor_progressive_flag( void *this_gen, xine_cfg_entry_t *entr
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
 
   this->honor_progressive = entry->num_value;
-  printf( "vo_vdpau: honor_progressive=%d\n", this->honor_progressive );
+  fprintf(stderr, "vo_vdpau: honor_progressive=%d\n", this->honor_progressive );
 }
 
 
@@ -1334,21 +1334,21 @@ static void vdpau_update_noise( vdpau_driver_t *this_gen )
     VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION };
     VdpBool feature_enables[] = { 0 };
     vdp_video_mixer_set_feature_enables( this_gen->video_mixer, 1, features, feature_enables );
-    printf( "vo_vdpau: disable noise reduction.\n" );
+    fprintf(stderr, "vo_vdpau: disable noise reduction.\n" );
     return;
   }
   else {
     VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION };
     VdpBool feature_enables[] = { 1 };
     vdp_video_mixer_set_feature_enables( this_gen->video_mixer, 1, features, feature_enables );
-    printf( "vo_vdpau: enable noise reduction.\n" );
+    fprintf(stderr, "vo_vdpau: enable noise reduction.\n" );
   }
 
   VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_NOISE_REDUCTION_LEVEL };
   void* attribute_values[] = { &value };
   VdpStatus st = vdp_video_mixer_set_attribute_values( this_gen->video_mixer, 1, attributes, attribute_values );
   if ( st != VDP_STATUS_OK )
-    printf( "vo_vdpau: error, can't set noise reduction level !!\n" );
+    fprintf(stderr, "vo_vdpau: error, can't set noise reduction level !!\n" );
 }
 
 
@@ -1363,21 +1363,21 @@ static void vdpau_update_sharpness( vdpau_driver_t *this_gen )
     VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_SHARPNESS  };
     VdpBool feature_enables[] = { 0 };
     vdp_video_mixer_set_feature_enables( this_gen->video_mixer, 1, features, feature_enables );
-    printf( "vo_vdpau: disable sharpness.\n" );
+    fprintf(stderr, "vo_vdpau: disable sharpness.\n" );
     return;
   }
   else {
     VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_SHARPNESS  };
     VdpBool feature_enables[] = { 1 };
     vdp_video_mixer_set_feature_enables( this_gen->video_mixer, 1, features, feature_enables );
-    printf( "vo_vdpau: enable sharpness.\n" );
+    fprintf(stderr, "vo_vdpau: enable sharpness.\n" );
   }
 
   VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_SHARPNESS_LEVEL };
   void* attribute_values[] = { &value };
   VdpStatus st = vdp_video_mixer_set_attribute_values( this_gen->video_mixer, 1, attributes, attribute_values );
   if ( st != VDP_STATUS_OK )
-    printf( "vo_vdpau: error, can't set sharpness level !!\n" );
+    fprintf(stderr, "vo_vdpau: error, can't set sharpness level !!\n" );
 }
 
 
@@ -1389,7 +1389,7 @@ static void vdpau_update_csc( vdpau_driver_t *this_gen )
   float contrast = this_gen->contrast/100.0;
   float brightness = this_gen->brightness/100.0;
 
-  printf( "vo_vdpau: vdpau_update_csc: hue=%f, saturation=%f, contrast=%f, brightness=%f, color_standard=%d studio_levels=%d\n", hue, saturation, contrast, brightness, this_gen->color_standard, this_gen->studio_levels );
+  fprintf(stderr, "vo_vdpau: vdpau_update_csc: hue=%f, saturation=%f, contrast=%f, brightness=%f, color_standard=%d studio_levels=%d\n", hue, saturation, contrast, brightness, this_gen->color_standard, this_gen->studio_levels );
 
   VdpStatus st;
   VdpCSCMatrix matrix;
@@ -1438,7 +1438,7 @@ static void vdpau_update_csc( vdpau_driver_t *this_gen )
   else {
     st = vdp_generate_csc_matrix( &procamp, this_gen->color_standard, &matrix );
     if ( st != VDP_STATUS_OK ) {
-      printf( "vo_vdpau: error, can't generate csc matrix !!\n" );
+      fprintf(stderr, "vo_vdpau: error, can't generate csc matrix !!\n" );
       return;
     }
   }
@@ -1446,7 +1446,7 @@ static void vdpau_update_csc( vdpau_driver_t *this_gen )
   void* attribute_values[] = { &matrix };
   st = vdp_video_mixer_set_attribute_values( this_gen->video_mixer, 1, attributes, attribute_values );
   if ( st != VDP_STATUS_OK )
-    printf( "vo_vdpau: error, can't set csc matrix !!\n" );
+    fprintf(stderr, "vo_vdpau: error, can't set csc matrix !!\n" );
 }
 
 
@@ -1460,9 +1460,9 @@ static void vdpau_update_skip_chroma( vdpau_driver_t *this_gen )
   void* attribute_values[] = { &(this_gen->skip_chroma) };
   VdpStatus st = vdp_video_mixer_set_attribute_values( this_gen->video_mixer, 1, attributes, attribute_values );
   if ( st != VDP_STATUS_OK )
-    printf( "vo_vdpau: error, can't set skip_chroma !!\n" );
+    fprintf(stderr, "vo_vdpau: error, can't set skip_chroma !!\n" );
   else
-    printf( "vo_vdpau: skip_chroma = %d\n", this_gen->skip_chroma );
+    fprintf(stderr, "vo_vdpau: skip_chroma = %d\n", this_gen->skip_chroma );
 }
 
 
@@ -1563,12 +1563,12 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     if ( frame->format==XINE_IMGFMT_YV12 ) {
       st = vdp_video_surface_putbits_ycbcr( this->soft_surface, VDP_YCBCR_FORMAT_YV12, &data, pitches );
       if ( st != VDP_STATUS_OK )
-        printf( "vo_vdpau: vdp_video_surface_putbits_ycbcr YV12 error : %s\n", vdp_get_error_string( st ) );
+        fprintf(stderr, "vo_vdpau: vdp_video_surface_putbits_ycbcr YV12 error : %s\n", vdp_get_error_string( st ) );
     }
     else {
       st = vdp_video_surface_putbits_ycbcr( this->soft_surface, VDP_YCBCR_FORMAT_YUYV, &data, pitches );
       if ( st != VDP_STATUS_OK )
-        printf( "vo_vdpau: vdp_video_surface_putbits_ycbcr YUY2 error : %s\n", vdp_get_error_string( st ) );
+        fprintf(stderr, "vo_vdpau: vdp_video_surface_putbits_ycbcr YUY2 error : %s\n", vdp_get_error_string( st ) );
     }
     surface = this->soft_surface;
     mix_w = this->soft_surface_width;
@@ -1583,7 +1583,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   }
   else {
     /* unknown format */
-    printf( "vo_vdpau: got an unknown image -------------\n" );
+    fprintf(stderr, "vo_vdpau: got an unknown image -------------\n" );
     frame->vo_frame.free( &frame->vo_frame );
     return;
   }
@@ -1721,7 +1721,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, picture_structure,
                                2, past, surface, 1, future, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
     if ( st != VDP_STATUS_OK )
-      printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
+      fprintf(stderr, "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
     vdp_queue_get_time( vdp_queue, &current_time );
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, 0 ); /* display _now_ */
@@ -1751,7 +1751,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
       st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, picture_structure,
                                2, past, surface, 1, future, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
       if ( st != VDP_STATUS_OK )
-        printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
+        fprintf(stderr, "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
       if ( stream_speed > 0 )
         current_time += frame->vo_frame.duration * 1000000ull * XINE_FINE_SPEED_NORMAL / (180 * stream_speed);
@@ -1762,11 +1762,11 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   }
   else {
     if ( frame->vo_frame.flags & VO_STILL_IMAGE )
-      printf("vo_vdpau: VO_STILL_IMAGE\n");
+      lprintf( "vo_vdpau: VO_STILL_IMAGE\n");
     st = vdp_video_mixer_render( this->video_mixer, VDP_INVALID_HANDLE, 0, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME,
                                0, 0, surface, 0, 0, &vid_source, this->output_surface[this->current_output_surface], &out_dest, &vid_dest, layer_count, layer_count?layer:NULL );
     if ( st != VDP_STATUS_OK )
-      printf( "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
+      fprintf(stderr, "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, 0 );
     vdpau_shift_queue( this_gen );
@@ -1832,7 +1832,7 @@ static int vdpau_set_property (vo_driver_t *this_gen, int property, int value)
 {
   vdpau_driver_t *this = (vdpau_driver_t*)this_gen;
 
-  printf("vdpau_set_property: property=%d, value=%d\n", property, value );
+  fprintf(stderr,"vdpau_set_property: property=%d, value=%d\n", property, value );
 
   switch (property) {
     case VO_PROP_INTERLACED:
@@ -1932,7 +1932,7 @@ static int vdpau_gui_data_exchange (vo_driver_t *this_gen, int data_type, void *
       vdp_queue_target_destroy( vdp_queue_target );
       st = vdp_queue_target_create_x11( vdp_device, this->drawable, &vdp_queue_target );
       if ( st != VDP_STATUS_OK ) {
-        printf( "vo_vdpau: FATAL !! Can't recreate presentation queue target after drawable change !!\n" );
+        fprintf(stderr, "vo_vdpau: FATAL !! Can't recreate presentation queue target after drawable change !!\n" );
 #ifdef LOCKDISPLAY
         XUnlockDisplay( this->display );
 #endif
@@ -1940,7 +1940,7 @@ static int vdpau_gui_data_exchange (vo_driver_t *this_gen, int data_type, void *
       }
       st = vdp_queue_create( vdp_device, vdp_queue_target, &vdp_queue );
       if ( st != VDP_STATUS_OK ) {
-        printf( "vo_vdpau: FATAL !! Can't recreate presentation queue after drawable change !!\n" );
+        fprintf(stderr, "vo_vdpau: FATAL !! Can't recreate presentation queue after drawable change !!\n" );
 #ifdef LOCKDISPLAY
         XUnlockDisplay( this->display );
 #endif
@@ -2036,7 +2036,7 @@ static void vdpau_dispose (vo_driver_t *this_gen)
 static int vdpau_reinit_error( VdpStatus st, const char *msg )
 {
   if ( st != VDP_STATUS_OK ) {
-    printf( "vo_vdpau: %s : %s\n", msg, vdp_get_error_string( st ) );
+    fprintf(stderr, "vo_vdpau: %s : %s\n", msg, vdp_get_error_string( st ) );
     return 1;
   }
   return 0;
@@ -2046,7 +2046,7 @@ static int vdpau_reinit_error( VdpStatus st, const char *msg )
 
 static void vdpau_reinit( vo_driver_t *this_gen )
 {
-  printf("vo_vdpau: VDPAU was pre-empted. Reinit.\n");
+  fprintf(stderr,"vo_vdpau: VDPAU was pre-empted. Reinit.\n");
   vdpau_driver_t *this = (vdpau_driver_t *)this_gen;
 
 #ifdef LOCKDISPLAY
@@ -2057,11 +2057,11 @@ static void vdpau_reinit( vo_driver_t *this_gen )
   VdpStatus st = vdp_device_create_x11( this->display, this->screen, &vdp_device, &vdp_get_proc_address );
 
   if ( st != VDP_STATUS_OK ) {
-    printf( "vo_vdpau: Can't create vdp device : " );
+    fprintf(stderr, "vo_vdpau: Can't create vdp device : " );
     if ( st == VDP_STATUS_NO_IMPLEMENTATION )
-      printf( "No vdpau implementation.\n" );
+      fprintf(stderr, "No vdpau implementation.\n" );
     else
-      printf( "unsupported GPU?\n" );
+      fprintf(stderr, "unsupported GPU?\n" );
     return;
   }
 
@@ -2165,14 +2165,14 @@ static void vdpau_reinit( vo_driver_t *this_gen )
 #ifdef LOCKDISPLAY
   XUnlockDisplay(guarded_display);
 #endif
-  printf("vo_vdpau: Reinit done.\n");
+  fprintf(stderr,"vo_vdpau: Reinit done.\n");
 }
 
 
 
 static void vdp_preemption_callback(VdpDevice device, void *context)
 {
-  printf("vo_vdpau: VDPAU preemption callback\n");
+  fprintf(stderr,"vo_vdpau: VDPAU preemption callback\n");
   vdpau_driver_t *this = (vdpau_driver_t *)context;
   this->reinit_needed = 1;
 }
@@ -2183,9 +2183,9 @@ static int vdpau_init_error( VdpStatus st, const char *msg, vo_driver_t *driver,
 {
   if ( st != VDP_STATUS_OK ) {
     if ( error_string )
-      printf( "vo_vdpau: %s : %s\n", msg, vdp_get_error_string( st ) );
+      fprintf(stderr, "vo_vdpau: %s : %s\n", msg, vdp_get_error_string( st ) );
     else
-      printf( "vo_vdpau: %s\n", msg );
+      fprintf(stderr, "vo_vdpau: %s\n", msg );
     vdpau_dispose( driver );
     return 1;
   }
@@ -2282,11 +2282,11 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
 
   VdpStatus st = vdp_device_create_x11( visual->display, visual->screen, &vdp_device, &vdp_get_proc_address );
   if ( st != VDP_STATUS_OK ) {
-    printf( "vo_vdpau: Can't create vdp device : " );
+    fprintf(stderr, "vo_vdpau: Can't create vdp device : " );
     if ( st == VDP_STATUS_NO_IMPLEMENTATION )
-      printf( "No vdpau implementation.\n" );
+      fprintf(stderr, "No vdpau implementation.\n" );
     else
-      printf( "unsupported GPU?\n" );
+      fprintf(stderr, "unsupported GPU?\n" );
     vdpau_dispose( &this->vo_driver );
     return NULL;
   }
@@ -2298,13 +2298,13 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     return NULL;
   uint32_t tmp;
   vdp_get_api_version( &tmp );
-  printf( "vo_vdpau: vdpau API version : %d\n", tmp );
+  fprintf(stderr, "vo_vdpau: vdpau API version : %d\n", tmp );
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_GET_INFORMATION_STRING , (void*)&vdp_get_information_string );
   if ( vdpau_init_error( st, "Can't get GET_INFORMATION_STRING proc address !!", &this->vo_driver, 1 ) )
     return NULL;
   const char *s;
   st = vdp_get_information_string( &s );
-  printf( "vo_vdpau: vdpau implementation description : %s\n", s );
+  fprintf(stderr, "vo_vdpau: vdpau implementation description : %s\n", s );
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_SURFACE_QUERY_GET_PUT_BITS_Y_CB_CR_CAPABILITIES , (void*)&vdp_video_surface_query_get_put_bits_ycbcr_capabilities );
   if ( vdpau_init_error( st, "Can't get VIDEO_SURFACE_QUERY_GET_PUT_BITS_Y_CB_CR_CAPABILITIES proc address !!", &this->vo_driver, 1 ) )
     return NULL;
@@ -2313,7 +2313,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   if ( vdpau_init_error( st, "Failed to check vdpau yuy2 capability", &this->vo_driver, 1 ) )
     return NULL;
   if ( !ok ) {
-    printf( "vo_vdpau: VideoSurface doesn't support yuy2, sorry.\n");
+    fprintf(stderr, "vo_vdpau: VideoSurface doesn't support yuy2, sorry.\n");
     vdpau_dispose( &this->vo_driver );
     return NULL;
   }
@@ -2321,7 +2321,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   if ( vdpau_init_error( st, "Failed to check vdpau yv12 capability", &this->vo_driver, 1 ) )
     return NULL;
   if ( !ok ) {
-    printf( "vo_vdpau: VideoSurface doesn't support yv12, sorry.\n");
+    fprintf(stderr, "vo_vdpau: VideoSurface doesn't support yv12, sorry.\n");
     vdpau_dispose( &this->vo_driver );
     return NULL;
   }
@@ -2489,11 +2489,11 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   for ( i=0; i<9; ++i ) {
     st = vdp_video_mixer_query_feature_support( vdp_device, VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L1 + i, &hqscaling );
     if ( ( st != VDP_STATUS_OK ) || !hqscaling ) {
-      //printf("unsupported scaling quality=%d\n", i);
+      /*printf("unsupported scaling quality=%d\n", i);*/
       break;
     }
     else {
-      //printf("supported scaling quality=%d\n", i);
+      /*printf("supported scaling quality=%d\n", i);*/
       ++this->scaling_level_max;
     }
   }
@@ -2641,25 +2641,25 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   uint32_t mw, mh, ml, mr;
   st = vdp_decoder_query_capabilities( vdp_device, VDP_DECODER_PROFILE_H264_MAIN, &ok, &ml, &mr, &mw, &mh );
   if ( st != VDP_STATUS_OK  )
-    printf( "vo_vdpau: getting h264_supported failed! : %s\n", vdp_get_error_string( st ) );
+    fprintf(stderr, "vo_vdpau: getting h264_supported failed! : %s\n", vdp_get_error_string( st ) );
   else if ( !ok )
-    printf( "vo_vdpau: this hardware doesn't support h264.\n" );
+    fprintf(stderr, "vo_vdpau: this hardware doesn't support h264.\n" );
   else
     this->capabilities |= VO_CAP_VDPAU_H264;
 
   st = vdp_decoder_query_capabilities( vdp_device, VDP_DECODER_PROFILE_VC1_MAIN, &ok, &ml, &mr, &mw, &mh );
   if ( st != VDP_STATUS_OK  )
-    printf( "vo_vdpau: getting vc1_supported failed! : %s\n", vdp_get_error_string( st ) );
+    fprintf(stderr, "vo_vdpau: getting vc1_supported failed! : %s\n", vdp_get_error_string( st ) );
   else if ( !ok )
-    printf( "vo_vdpau: this hardware doesn't support vc1.\n" );
+    fprintf(stderr, "vo_vdpau: this hardware doesn't support vc1.\n" );
   else
     this->capabilities |= VO_CAP_VDPAU_VC1;
 
   st = vdp_decoder_query_capabilities( vdp_device, VDP_DECODER_PROFILE_MPEG2_MAIN, &ok, &ml, &mr, &mw, &mh );
   if ( st != VDP_STATUS_OK  )
-    printf( "vo_vdpau: getting mpeg12_supported failed! : %s\n", vdp_get_error_string( st ) );
+    fprintf(stderr, "vo_vdpau: getting mpeg12_supported failed! : %s\n", vdp_get_error_string( st ) );
   else if ( !ok )
-    printf( "vo_vdpau: this hardware doesn't support mpeg1/2.\n" );
+    fprintf(stderr, "vo_vdpau: this hardware doesn't support mpeg1/2.\n" );
   else
     this->capabilities |= VO_CAP_VDPAU_MPEG12;
 
