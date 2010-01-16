@@ -715,6 +715,7 @@ static char *qtl_file_url (input_plugin_t *input, const unsigned char *preview, 
 
 not_qtl:
   xml_parser_free_tree (tree);
+  xml_parser_finalize_r (xml);
   return url;
 }
 
