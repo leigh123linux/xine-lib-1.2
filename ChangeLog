@@ -4,6 +4,7 @@ xine-lib (1.1.1?) 20??-??-??
   * Build fix (undefined symbol) for when using older ffmpeg.
   * TTA demuxer fixes; allow seeking.
   * More meta-information tags. (Nothing sets these yet, though.)
+  * Added basic support for .qtl (Quicktime media link).
 
 xine-lib (1.1.17) 2009-12-01
   * Add support for Matroska SIMPLEBLOCK.

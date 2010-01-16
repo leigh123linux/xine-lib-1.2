@@ -670,9 +670,100 @@ static void free_qt_info(qt_info *info) {
   }
 }
 
-/* returns 1 if the file is determined to be a QT file, 0 otherwise */
-static int is_qt_file(input_plugin_t *qt_file) {
+static char *qtl_file_url (input_plugin_t *input, const unsigned char *preview, int len)
+{
+  char *url = NULL;
 
+  if (len < 64)
+    return NULL;
+
+  /* skip BOM, if present */
+  if (preview[0] == 0xEF && preview[1] == 0xBB && preview[2] == 0xBF)
+  {
+    preview += 3;
+    len -= 3;
+  }
+
+  xml_node_t *tree = NULL;
+  xml_parser_t *xml = xml_parser_init_r (preview, len, XML_PARSER_CASE_INSENSITIVE);
+  if (xml_parser_build_tree_r (xml, &tree) < 0)
+    return NULL;
+
+  xml_node_t *node = tree;
+  while (node && strcasecmp (node->name, "embed"))
+    node = node->next;
+
+  if (!node)
+    goto not_qtl;
+
+  url = (char *) xml_parser_get_property (node, "src");
+  if (url) {
+    char *slash = strchr (url, '/');
+    char *proto = strstr (url, "://");
+    if (proto + 1 == slash)
+      /* absolute */
+      url = strdup (url);
+    else
+    { /* relative */
+      const char *dir = input->get_mrl (input);
+      slash = strrchr (dir, '/');
+      asprintf (&url, "%.*s/%s",
+                slash ? (int)(slash - dir) : 1,
+                slash ? dir : ".", url);
+    }
+  }
+
+not_qtl:
+  xml_parser_free_tree (tree);
+  return url;
+}
+
+/* Simple approach for parsing qtl files. */
+static int demux_qt_parse_references (demux_qt_t *this, int send)
+{
+  char *buf = NULL;
+  int buf_size = 0;
+  int buf_used = 0;
+  int len = 0;
+
+  off_t pos = this->input->get_current_pos (this->input);
+  this->input->seek (this->input, 0, SEEK_SET);
+
+  /* Read in a chunk from the file.
+   * Hopefully fine since the reference file is small...
+   */
+  do {
+    buf_size += 1024;
+    buf = realloc(buf, buf_size+1);
+
+    len = this->input->read (this->input, &buf[buf_used], buf_size - buf_used);
+
+    if (len > 0)
+      buf_used += len;
+
+    /* 50K of reference file? Something must be wrong */
+    if (buf_used > 50*1024)
+      break;
+  } while (len > 0);
+
+  this->input->seek (this->input, pos, SEEK_SET);
+
+  char *url = qtl_file_url (this->input, buf, buf_used);
+  if (url && send)
+    _x_demux_send_mrl_reference (this->stream, 0, url, NULL, 0, 0);
+  free (url);
+  free (buf);
+
+  return !!url;
+}
+
+/* returns 1 if the file is determined to be a QT file,
+ *         2 if it is a QTL file,
+ *         0 otherwise
+ */
+static int id_qt_file(demux_qt_t *this) {
+
+  input_plugin_t *const qt_file = this->input;
   off_t moov_atom_offset = -1;
   int64_t moov_atom_size = -1;
   int i;
@@ -685,6 +776,13 @@ static int is_qt_file(input_plugin_t *qt_file) {
   if ((qt_file->get_capabilities(qt_file) & INPUT_CAP_SEEKABLE) == 0) {
     memset (&preview, 0, MAX_PREVIEW_SIZE);
     len = qt_file->get_optional_data(qt_file, preview, INPUT_OPTIONAL_DATA_PREVIEW);
+
+    char *url = qtl_file_url (qt_file, preview, len);
+    if (url) {
+      free (url);
+      return 2;
+    }
+
     if (_X_BE_32(&preview[4]) == MOOV_ATOM)
       return 1;
     else {
@@ -706,6 +804,9 @@ static int is_qt_file(input_plugin_t *qt_file) {
         return 0;
     }
   }
+
+  if (demux_qt_parse_references (this, 0))
+    return 2;
 
   find_moov_atom(qt_file, &moov_atom_offset, &moov_atom_size);
   if (moov_atom_offset == -1) {
@@ -2305,6 +2406,13 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
   int dispatch_audio;  /* boolean for deciding which trak to dispatch */
   int64_t pts_diff;
 
+  /* handle QTL here */
+  if (!this->qt) {
+    demux_qt_parse_references (this, 1);
+    this->status = DEMUX_FINISHED;
+    return this->status;
+  }
+
   /* if this is DRM-protected content, finish playback before it even
    * tries to start */
   if (this->qt->last_error == QT_DRM_NOT_SUPPORTED) {
@@ -2596,6 +2704,12 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
   this->audio_fifo = this->stream->audio_fifo;
 
   this->status = DEMUX_OK;
+
+  if (!this->qt) {
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 0);
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 0);
+    return;
+  }
 
   /* figure out where the data begins and ends */
   if (this->qt->video_trak != -1) {
@@ -2914,6 +3028,10 @@ static int demux_qt_seek (demux_plugin_t *this_gen,
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->data_size );
 
+  /* we could be handling QTL */
+  if (!this->qt)
+    return this->status = DEMUX_OK;
+
   /* short-circuit any attempts to seek in a non-seekable stream, including
    * seeking in the forward direction; this may change later */
   if ((this->input->get_capabilities(this->input) & INPUT_CAP_SEEKABLE) == 0) {
@@ -3013,6 +3131,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   demux_qt_t     *this;
   xine_cfg_entry_t entry;
   qt_error last_error;
+  int type;
 
   if ((input->get_capabilities(input) & INPUT_CAP_BLOCK)) {
     return NULL;
@@ -3046,10 +3165,14 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   case METHOD_BY_CONTENT:
 
-    if (!is_qt_file(this->input)) {
+    type = id_qt_file(this);
+    if (type < 1) {
       free (this);
       return NULL;
     }
+    if (type != 1)
+      break;
+
     if ((this->qt = create_qt_info()) == NULL) {
       free (this);
       return NULL;
@@ -3082,6 +3205,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
     if (strncasecmp (ending, ".mov", 4) &&
         strncasecmp (ending, ".qt", 3) &&
+        strncasecmp (ending, ".qtl", 4) &&
         strncasecmp (ending, ".mp4", 4)) {
       free (this);
       return NULL;
@@ -3091,10 +3215,14 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   /* we want to fall through here */
   case METHOD_EXPLICIT: {
 
-    if (!is_qt_file(this->input)) {
+    type = id_qt_file(this);
+    if (type < 1) {
       free (this);
       return NULL;
     }
+    if (type != 1)
+      break;
+
     if ((this->qt = create_qt_info()) == NULL) {
       free (this);
       return NULL;
@@ -3126,7 +3254,7 @@ static const char *get_identifier (demux_class_t *this_gen) {
 }
 
 static const char *get_extensions (demux_class_t *this_gen) {
-  return "mov qt mp4 m4a m4b";
+  return "mov qt qtl mp4 m4a m4b";
 }
 
 static const char *get_mimetypes (demux_class_t *this_gen) {
