@@ -364,12 +364,15 @@ static void demux_flac_send_headers(demux_plugin_t *this_gen) {
     return;
   }
 
+  /* lie about 24bps */
+  int bits = this->bits_per_sample > 16 ? 16 : this->bits_per_sample;
+
   buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
   buf->type = BUF_AUDIO_FLAC;
   buf->decoder_flags = BUF_FLAG_HEADER|BUF_FLAG_STDHEADER|BUF_FLAG_FRAME_END;
   buf->decoder_info[0] = 0;
   buf->decoder_info[1] = this->sample_rate;
-  buf->decoder_info[2] = this->bits_per_sample;
+  buf->decoder_info[2] = bits;
   buf->decoder_info[3] = this->channels;
   /* copy the faux WAV header */
   buf->size = sizeof(xine_waveformatex) + FLAC_STREAMINFO_SIZE;
@@ -386,7 +389,7 @@ static void demux_flac_send_headers(demux_plugin_t *this_gen) {
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_SAMPLERATE,
                        this->sample_rate);
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITS,
-                       this->bits_per_sample);
+                       bits);
 
   this->status = DEMUX_OK;
 }

@@ -5,6 +5,7 @@ xine-lib (1.1.1?) 20??-??-??
   * TTA demuxer fixes; allow seeking.
   * More meta-information tags. (Nothing sets these yet, though.)
   * Added basic support for .qtl (Quicktime media link).
+  * "Fixed" playback of 24-bit FLAC.
 
 xine-lib (1.1.17) 2009-12-01
   * Add support for Matroska SIMPLEBLOCK.
