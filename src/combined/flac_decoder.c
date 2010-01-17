@@ -114,7 +114,7 @@ flac_write_callback (const FLAC__StreamDecoder *decoder,
     flac_decoder_t *this = (flac_decoder_t *)client_data;
     audio_buffer_t *audio_buffer = NULL;
     int samples_left = frame->header.blocksize;
-    int bytes_per_sample = (frame->header.bits_per_sample == 8)?1:2;
+    int bytes_per_sample = (frame->header.bits_per_sample <= 8) ? 1 : 2;
     int buf_samples;
     int8_t *data8;
     int16_t *data16;
@@ -131,21 +131,31 @@ flac_write_callback (const FLAC__StreamDecoder *decoder,
       else
         buf_samples = samples_left;
 
-
-      if( frame->header.bits_per_sample == 8 ) {
+      switch (frame->header.bits_per_sample) {
+      case 8:
         data8 = (int8_t *)audio_buffer->mem;
 
         for( j=0; j < buf_samples; j++ )
           for( i=0; i < frame->header.channels; i++ )
             *data8++ = buffer[i][j];
+        break;
 
-      } else {
-
+      case 16:
         data16 = (int16_t *)audio_buffer->mem;
 
         for( j=0; j < buf_samples; j++ )
           for( i=0; i < frame->header.channels; i++ )
             *data16++ = buffer[i][j];
+        break;
+
+      case 24:
+        data16 = (int16_t *)audio_buffer->mem;
+
+        for( j=0; j < buf_samples; j++ )
+          for( i=0; i < frame->header.channels; i++ )
+            *data16++ = buffer[i][j] >> 8;
+        break;
+
       }
 
       audio_buffer->num_frames = buf_samples;
@@ -250,14 +260,13 @@ flac_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 
         if (!this->output_open)
         {
+            const int bits = this->bits_per_sample;
             this->output_open = (this->stream->audio_out->open) (
                                             this->stream->audio_out,
                                             this->stream,
-                                            bits_per_sample,
-                                            sample_rate,
+                                            bits > 16 ? 16 : bits,
+                                            this->sample_rate,
                                             mode);
-
-
         }
         this->buf_pos = 0;
     } else if (this->output_open)
