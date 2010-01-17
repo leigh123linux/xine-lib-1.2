@@ -529,6 +529,9 @@ static void demux_playlist_send_headers (demux_plugin_t *this_gen) {
 
   this->status = DEMUX_OK;
 
+  _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 0);
+  _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 0);
+
   _x_demux_control_start (this->stream);
 
   this->input->seek (this->input, 0, SEEK_SET);
