@@ -150,10 +150,10 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
     AM_CONDITIONAL([WITH_EXTERNAL_LIBDTS], [test x"$have_external_dts" = x"yes"])
 
 
-    dnl libFLAC (optional; disabled by default)
+    dnl libFLAC (optional; enabled by default)
     AC_ARG_WITH([libflac],
-                [AS_HELP_STRING([--with-libflac], [build libFLAC-based decoder and demuxer])],
-                [test x"$withval" != x"no" && with_libflac="yes"], [with_libflac="no"])
+                [AS_HELP_STRING([--with-libflac], [build libFLAC-based decoder and demuxer (default: enabled)])],
+                [test x"$withval" != x"no" && with_libflac="yes"])
     AC_ARG_WITH([libFLAC-prefix],
                 [AS_HELP_STRING([--with-libFLAC-prefix=DIR], [prefix where libFLAC is installed (optional)])])
     AC_ARG_WITH([libFLAC-libraries],
