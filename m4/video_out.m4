@@ -14,54 +14,53 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
     dnl - Vidix is FreeBSD and Linux only
     dnl - XvMC and xxmc depend on Xv
 
-    default_enable_aalib=enable
-    default_enable_dha_kmod=disable
-    default_enable_directfb=disable
-    default_enable_directx=disable
-    default_enable_dxr3=disable
-    default_enable_glu=enable
-    default_enable_linuxfb=disable
-    default_enable_macosx_video=disable
-    default_enable_opengl=enable
-    default_enable_vidix=disable
-    default_enable_xinerama=enable
-    default_enable_xvmc=enable
+    default_enable_aalib=yes
+    default_enable_dha_kmod=no
+    default_enable_directfb=no
+    default_enable_directx=no
+    default_enable_dxr3=no
+    default_enable_glu=yes
+    default_enable_fb=no
+    default_enable_macosx_video=no
+    default_enable_opengl=yes
+    default_enable_vidix=no
+    default_enable_xinerama=yes
+    default_enable_xvmc=yes
+    default_enable_vdpau=no
 
-    default_with_caca=with
-    default_with_libstk=without
-    default_with_sdl=with
-    default_with_xcb=with
+    default_with_caca=yes
+    default_with_libstk=no
+    default_with_sdl=yes
+    default_with_xcb=yes
 
     case "$host_os" in
         cygwin* | mingw*)
-            default_enable_directx=enable
+            default_enable_directx=yes
             ;;
 
         darwin*)
-            default_enable_macosx_video=enable
+            default_enable_macosx_video=yes
             ;;
 
         freebsd*)
-            default_enable_vidix=enable
+            default_enable_vidix=yes
             ;;
 
         linux*)
-            default_enable_dxr3=enable
-            default_enable_linuxfb=enable
-            default_enable_vidix=enable
+            default_enable_dxr3=yes
+            default_enable_fb=yes
+            default_enable_vidix=yes
+            default_enable_vdpau=yes
             enable_linux=yes
             ;;
     esac
 
 
     dnl Ascii-Art
-    AC_ARG_ENABLE([aalib],
-                  [AS_HELP_STRING([--enable-aalib], [enable support for AALIB])],
-                  [test x"$enableval" != x"no" && enable_aalib="yes"],
-                  [test $default_enable_aalib = disable && enable_aalib="no"])
+    XINE_ARG_ENABLE([aalib], [enable support for AALIB])
     if test x"$enable_aalib" != x"no"; then
         ACX_PACKAGE_CHECK([AALIB], [1.4], [aalib-config], [have_aalib=yes], [have_aalib=no])
-        if test x"$enable_aalib" = x"yes" && test x"$have_aalib" != x"yes"; then
+        if test x"$hard_enable_aalib" = x"yes" && test x"$have_aalib" != x"yes"; then
             AC_MSG_ERROR([aalib support requested, but aalib not found])
         fi
     fi
@@ -69,13 +68,10 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
 
     dnl Color AsCii Art
-    AC_ARG_WITH([caca],
-                [AS_HELP_STRING([--with-caca], [enable support for CACA])],
-                [test x"$withval" != x"no" && with_caca="yes"],
-                [test $default_with_caca = without && with_caca=no])
+    XINE_ARG_WITH([caca], [enable support for CACA])
     if test x"$with_caca" != x"no"; then
         PKG_CHECK_MODULES([CACA], [caca >= 0.99beta14 cucul >= 0.99beta14], [have_caca="yes"], [have_caca="no"])
-        if test x"$with_caca" = x"yes" && test x"$have_caca" != x"yes"; then
+        if test x"$hard_with_caca" = x"yes" && test x"$have_caca" != x"yes"; then
             AC_MSG_ERROR([CACA support requested, but libcaca 0.99 not found])
         fi
     fi
@@ -83,10 +79,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
 
     dnl dha (Linux only)
-    AC_ARG_ENABLE([dha-kmod],
-                  [AS_HELP_STRING([--enable-dha-kmod], [build Linux DHA kernel module])],
-                  [test x"$enableval" != x"no" && enable_dha_kmod="yes"],
-                  [test $default_enable_dha_kmod = disable && enable_dha_kmod="no"])
+    XINE_ARG_ENABLE([dha-kmod], [build Linux DHA kernel module])
     if test x"$enable_dha_kmod" != x"no"; then
         AC_ARG_WITH([linux-path],
                     [AS_HELP_STRING([--with-linux-path=PATH], [where the linux sources are located])],
@@ -101,13 +94,10 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
 
     dnl DirectFB
-    AC_ARG_ENABLE([directfb],
-                  [AS_HELP_STRING([--enable-directfb], [enable use of DirectFB])],
-                  [test x"$enableval" != x"no" && enable_directfb="yes"],
-                  [test $default_enable_directfb = disable && enable_directfb="no"])
+    XINE_ARG_ENABLE([directfb], [enable use of DirectFB])
     if test "x$enable_directfb" = "xyes"; then
         PKG_CHECK_MODULES([DIRECTFB], [directfb >= 0.9.22], [have_directfb=yes], [have_directfb=no])
-        if test x"$enable_directfb" = x"yes" && test x"$have_directfb" != x"yes"; then
+        if test x"$hard_enable_directfb" = x"yes" && test x"$have_directfb" != x"yes"; then
             AC_MSG_ERROR([DirectFB support requested, but DirectFB not found])
         fi
     fi
@@ -119,10 +109,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
 
     dnl dxr3 / hollywood plus card
-    AC_ARG_ENABLE([dxr3],
-                  [AS_HELP_STRING([--enable-dxr3], [enable support for DXR3/HW+])],
-                  [test x"$enableval" != x"no" && enable_dxr3="yes"],
-                  [test $default_enable_dxr3 = disable && enable_dxr3="no"])
+    XINE_ARG_ENABLE([dxr3], [enable support for DXR3/HW+])
     if test x"$enable_dxr3" != x"no"; then
         have_dxr3=yes
         AC_MSG_RESULT([*** checking for a supported mpeg encoder])
@@ -155,13 +142,10 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
 
     dnl LibSTK - http://www.libstk.net (project appears to be dead)
-    AC_ARG_WITH([libstk],
-                [AS_HELP_STRING([--with-libstk], [Build with STK surface video driver])],
-                [test x"$withval" != x"no" && with_libstk="yes"],
-                [test $default_with_libstk = without && with_libstk="no"])
+    XINE_ARG_WITH([libstk], [Build with STK surface video driver])
     if test x"$with_libstk" != x"no"; then
         PKG_CHECK_MODULES([LIBSTK], [libstk >= 0.2.0], [have_libstk=yes], [have_libstk=no])
-        if test x"$with_libstk" = x"yes" && test x"$have_libstk" != x"yes"; then
+        if test x"$hard_with_libstk" = x"yes" && test x"$have_libstk" != x"yes"; then
             AC_MSG_ERROR([libstk support requested, but libstk not found])
         fi
     fi
@@ -169,13 +153,10 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
 
     dnl Linux framebuffer device
-    AC_ARG_ENABLE([fb],
-                  [AS_HELP_STRING([--enable-fb], [enable Linux framebuffer support])],
-                  [test x"$enableval" != x"no" && enable_fb="yes"],
-                  [test $default_enable_linuxfb = disable && enable_linuxfb="no"])
-    if test x"$enable_linuxfb" != x"no"; then
+    XINE_ARG_ENABLE([fb], [enable Linux framebuffer support])
+    if test x"$enable_fb" != x"no"; then
         AC_CHECK_HEADERS([linux/fb.h], [have_fb=yes], [have_fb=no])
-        if test x"$enable_fb" = x"yes" && test x"$have_fb" != x"yes"; then
+        if test x"$hard_enable_fb" = x"yes" && test x"$have_fb" != x"yes"; then
             AC_MSG_ERROR([Linux framebuffer support requested, but required header file(s) not found])
         elif test x"$have_fb" = x"yes"; then
             dnl This define is needed by src/video_out/video_out_vidix.c
@@ -186,17 +167,14 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
 
     dnl Mac OS X OpenGL video output
-    AC_ARG_ENABLE([macosx-video],
-                  [AS_HELP_STRING([--enable-macosx-video], [enable support for Mac OS X OpenGL video output])],
-                  [test x"$enableval" != x"no" && enable_macosx_video="yes"],
-                  [test $default_enable_macosx_video = disable && enable_macosx_video="no"])
+    XINE_ARG_ENABLE([macosx-video], [enable support for Mac OS X OpenGL video output])
     if test x"$enable_macosx_video" != x"no"; then
         AC_MSG_CHECKING([for Mac OS X video output frameworks])
         ac_save_LIBS="$LIBS" LIBS="$LIBS -framework Cocoa -framework OpenGL"
         AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[return 0]])], [have_macosx_video=yes], [have_macosx_video=no])
         LIBS="$ac_save_LIBS"
         AC_MSG_RESULT([$have_macosx_video])
-        if test x"$enable_macosx_video" = x"yes" && test x"$have_macosx_video" != x"yes"; then
+        if test x"$hard_enable_macosx_video" = x"yes" && test x"$have_macosx_video" != x"yes"; then
             AC_MSG_ERROR([Mac OS X OpenGL video output support requested, but required frameworks not found])
         fi
     fi
@@ -204,17 +182,11 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
 
     dnl OpenGL, including GLut and/or GLU
-    AC_ARG_ENABLE([opengl],
-                  [AS_HELP_STRING([--enable-opengl], [enable support for X-based OpenGL video output])],
-                  [test x"$enableval" != x"no" && enable_opengl="yes"],
-                  [test $default_enable_opengl = disable && enable_opengl="no"])
-    AC_ARG_ENABLE([glu],
-                  [AS_HELP_STRING([--enable-glu], [enable support for GLU in the OpenGL plugin])],
-                  [test x"$enableval" != x"no" && enable_glu="yes"],
-                  [test $default_enable_glu = disable && enable_glu="no"])
+    XINE_ARG_ENABLE([opengl], [enable support for X-based OpenGL video output])
+    XINE_ARG_ENABLE([glu], [enable support for GLU in the OpenGL plugin])
     if test x"$enable_opengl" != x"no"; then
         if test x"$no_x" = x"yes"; then
-            if test x"$enable_opengl" = x"yes"; then
+            if test x"$hard_enable_opengl" = x"yes"; then
                 AC_MSG_ERROR([OpenGL support requested, but X support is disabled])
             fi
             enable_opengl=no
@@ -225,7 +197,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
         AC_CHECK_LIB([GL], [glBegin],
                      [AC_CHECK_HEADERS([GL/gl.h], [have_opengl=yes], [have_opengl=no])], [have_opengl=no],
                      [$X_LIBS -lm])
-        if test x"$enable_opengl" = x"yes" && test x"$have_opengl" != x"yes"; then
+        if test x"$hard_enable_opengl" = x"yes" && test x"$have_opengl" != x"yes"; then
             AC_MSG_ERROR([OpenGL support requested, but OpenGL not found])
         elif test x"$have_opengl" = x"yes"; then
             OPENGL_LIBS="-lGL -lm"
@@ -243,7 +215,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
                                                 LIBS="$ac_save_LIBS"
                                                 AC_MSG_RESULT([$have_glu])], [have_glu=no])], [have_glu=no],
                              [$X_LIBS $OPENGL_LIBS])
-                if test x"$enable_glu" = x"yes" && test x"$have_glu" != x"yes"; then
+                if test x"$hard_enable_glu" = x"yes" && test x"$have_glu" != x"yes"; then
                     AC_MSG_ERROR([OpenGL GLU support requested, but GLU not found])
                 elif test x"$have_glu" = x"yes"; then
                     AC_DEFINE([HAVE_GLU], 1, [Define this if you have GLU support available])
@@ -260,13 +232,10 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
 
     dnl SDL
-    AC_ARG_WITH([sdl],
-                [AS_HELP_STRING([--with-sdl], [Enable support for SDL video output])],
-                [test x"$withval" != x"no" && with_sdl="yes"],
-                [test $default_with_sdl = without && with_sdl="no"])
+    XINE_ARG_WITH([sdl], [Enable support for SDL video output])
     if test x"$with_sdl" != x"no"; then
         PKG_CHECK_MODULES([SDL], [sdl], [have_sdl=yes], [have_sdl=no])
-        if test x"$with_sdl" = x"yes" && test x"$have_sdl" != x"yes"; then
+        if test x"$hard_with_sdl" = x"yes" && test x"$have_sdl" != x"yes"; then
             AC_MSG_ERROR([SDL support requested, but SDL not found])
         fi
     fi
@@ -292,13 +261,10 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
 
     dnl xcb
-    AC_ARG_WITH([xcb],
-                [AS_HELP_STRING([--with-xcb], [Enable support for XCB video out plugins])],
-                [test x"$withval" != x"no" && with_xcb="yes"],
-                [test $default_with_xcb = without && with_xcb="no"])
+    XINE_ARG_WITH([xcb], [Enable support for XCB video out plugins])
     if test x"$with_xcb" != x"no"; then
         PKG_CHECK_MODULES([XCB], [xcb-shape >= 1.0], [have_xcb=yes], [have_xcb=no])
-        if test x"$enable_xcb" = x"yes" && test x"$have_xcb" != x"yes"; then
+        if test x"$hard_enable_xcb" = x"yes" && test x"$have_xcb" != x"yes"; then
             AC_MSG_ERROR([XCB support requested, but XCB not found])
         elif test x"$have_xcb" = x"yes"; then
             PKG_CHECK_MODULES([XCBSHM], [xcb-shm], [have_xcbshm=yes], [have_xcbshm=no])
@@ -312,10 +278,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
     dnl vidix/libdha
     dnl Requires X11 or Linux framebuffer
-    AC_ARG_ENABLE([vidix],
-                  [AS_HELP_STRING([--enable-vidix], [enable support for Vidix])],
-                  [test x"$enableval" != x"no" && enable_vidix="yes"],
-                  [test $default_enable_vidix = disable && enable_vidix="no"])
+    XINE_ARG_ENABLE([vidix], [enable support for Vidix])
     if test x"$enable_vidix" != x"no"; then
         have_vidix=yes
         if test x"$ac_cv_prog_AWK" = x"no"; then
@@ -331,7 +294,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
                 esac
             fi
         fi
-        if test x"$enable_vidix" = x"yes" && test x"$have_vidix" != x"yes"; then
+        if test x"$hard_enable_vidix" = x"yes" && test x"$have_vidix" != x"yes"; then
             AC_MSG_ERROR([Vidix support requested, but not all requirements are met])
         fi
     fi
@@ -339,10 +302,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
 
     dnl Xinerama
-    AC_ARG_ENABLE([xinerama],
-                  [AS_HELP_STRING([--enable-xinerama], [enable support for Xinerama])],
-                  [test x"$enableval" != x"no" && enable_xinerama="yes"],
-                  [test $default_enable_xinerama = disable && enable_xinerama="no"])
+    XINE_ARG_ENABLE([xinerama], [enable support for Xinerama])
     if test x"$enable_xinerama" != x"no"; then
         if test x"$no_x" != x"yes"; then
             PKG_CHECK_MODULES([XINERAMA], [xinerama], [have_xinerama=yes],
@@ -413,10 +373,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
 
     dnl XvMC
-    AC_ARG_ENABLE([xvmc],
-                  [AS_HELP_STRING([--enable-xvmc], [Disable xxmc and XvMC outplut plugins])],
-                  [test x"$enableval" != x"no" && enable_xvmc="yes"],
-                  [test $default_enable_xvmc = disable && enable_xvmc="no"])
+    XINE_ARG_ENABLE([xvmc], [Enable xxmc and XvMC outplut plugins])
     AC_ARG_WITH([xvmc-path],
                 [AS_HELP_STRING([--with-xvmc-path=PATH], [where libXvMC for the xvmc plugin are installed])],
                 [], [with_xvmc_path="$x_libraries"])
@@ -477,7 +434,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
             CPPFLAGS="$ac_save_CPPFLAGS" LIBS="$ac_save_LIBS"
         fi
         have_xvmc_or_xxmc="$have_xvmc"; test x"$have_xxmc" = x"yes" && have_xvmc_or_xxmc=yes
-        if test x"$enable_xvmc" = x"yes" && test x"$have_xvmc_or_xxmc" != x"yes"; then
+        if test x"$hard_enable_xvmc" = x"yes" && test x"$have_xvmc_or_xxmc" != x"yes"; then
             AC_MSG_ERROR([XvMC support requested, but neither XvMC nor xxmc could be found, or X is disabled])
         else
             if test x"$have_xvmc" = x"yes"; then
@@ -502,13 +459,13 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
 
 
     dnl VDPAU
-    AC_ARG_ENABLE([vdpau], [AS_HELP_STRING([--disable-vdpau], [Disable VDPAU output plugin])])
+    XINE_ARG_ENABLE([vdpau], [Disable VDPAU output plugin])
     if test x"$no_x" != x"yes" && test x"$enable_vdpau" != x"no"; then
         AC_CHECK_HEADERS([vdpau/vdpau_x11.h], [have_vdpau=yes], [have_vdpau=no])
         if test x"$have_vdpau" = x"yes"; then
             AC_CHECK_LIB([vdpau], [vdp_device_create_x11], [], [have_vdpau=no], [$X_LIBS $X_PRE_LIBS -lXext $X_EXTRA_LIBS])
         fi
-        if test x"$enable_vdpau" = x"yes" && test x"$have_vdpau" != x"yes"; then
+        if test x"$hard_enable_vdpau" = x"yes" && test x"$have_vdpau" != x"yes"; then
             AC_MSG_ERROR([VDPAU support requested, but not all requirements are met])
         fi
     fi

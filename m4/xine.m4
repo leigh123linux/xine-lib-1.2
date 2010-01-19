@@ -117,3 +117,27 @@ AC_DEFUN([AM_PATH_XINE], [
     AC_SUBST(XINE_LIBS)
     AC_SUBST(XINE_ACFLAGS)
 ])
+
+dnl XINE_ARG_WITH(VARIABLE, HELP-TEXT)
+dnl Like AC_ARG_WITH but strictly sets variables
+dnl hard_with_VARIABLE = "yes" or "no" if the option is present, else undefined
+dnl with_VARIABLE      = "yes" or "no" if the option is enabled or disabled
+dnl                      (falls back on default_with_VARIABLE)
+dnl if both = yes, error is permissible if missing requirement(s)
+AC_DEFUN([XINE_ARG_WITH], [
+	if test "x$default_with_[]m4_translit([[$1]], [-], [_])" = x; then
+		AC_MSG_ERROR([default_with_[]m4_translit([[$1]], [-], [_]) is not set])
+	fi
+	AC_ARG_WITH([$1], [AS_HELP_STRING([--with-$1], [$2])],
+		[test x"$withval" != xno && with_[]m4_translit([[$1]], [-], [_])=yes || with_[]m4_translit([[$1]], [-], [_])=no; hard_with_$1="$with_[]m4_translit([[$1]], [-], [_])"],
+		[with_[]m4_translit([[$1]], [-], [_])="$default_with_[]m4_translit([[$1]], [-], [_])"; hard_with_[]m4_translit([[$1]], [-], [_])=''])])
+
+dnl XINE_ARG_ENABLE(VARIABLE, HELP-TEXT)
+dnl Like AC_ARG_WITH_X but wrapping AC_ARG_ENABLE
+AC_DEFUN([XINE_ARG_ENABLE], [
+	if test "x$default_enable_[]m4_translit([[$1]], [-], [_])" = x; then
+		AC_MSG_ERROR([default_enable_[]m4_translit([[$1]], [-], [_]) is not set])
+	fi
+	AC_ARG_ENABLE([$1], [AS_HELP_STRING([--enable-$1], [$2])],
+		[test x"$enableval" != xno && enable_[]m4_translit([[$1]], [-], [_])=yes || enable_[]m4_translit([[$1]], [-], [_])=no; hard_enable_$1="$enable_[]m4_translit([[$1]], [-], [_])"],
+		[enable_[]m4_translit([[$1]], [-], [_])="$default_enable_[]m4_translit([[$1]], [-], [_])"; hard_enable_[]m4_translit([[$1]], [-], [_])=''])])

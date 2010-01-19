@@ -9,46 +9,45 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     dnl - dvb is Linux only
     dnl - v4l is Linux only
 
-    default_enable_dvb=disable
-    default_enable_gnomevfs=enable
-    default_enable_samba=enable
-    default_enable_v4l=disable
-    default_enable_vcd=enable
-    default_enable_vcdo=disable
+    default_enable_dvb=no
+    default_enable_gnomevfs=yes
+    default_enable_samba=yes
+    default_enable_v4l=no
+    default_enable_vcd=yes
+    default_enable_vcdo=no
+    default_enable_vdr=yes
+    default_with_external_dvdnav=no
 
     case "$host_os" in
         cygwin* | mingw*)
-            default_enable_gnomevfs=disable
-            default_enable_samba=disable
+            default_enable_gnomevfs=no
+            default_enable_samba=no
             ;;
         darwin*)
-            default_enable_gnomevfs=disable
-            default_enable_samba=disable
+            default_enable_gnomevfs=no
+            default_enable_samba=no
             ;;
         freebsd*)
-            default_enable_vcdo=enable
+            default_enable_vcdo=yes
             ;;
         linux*)
-            default_enable_dvb=enable
-            default_enable_v4l=enable
-            default_enable_vcdo=enable
+            default_enable_dvb=yes
+            default_enable_v4l=yes
+            default_enable_vcdo=yes
             ;;
         solaris*)
-            default_enable_vcdo=enable
+            default_enable_vcdo=yes
             ;;
     esac
 
     dnl dvb
-    AC_ARG_ENABLE([dvb],
-                  [AS_HELP_STRING([--enable-dvb], [Enable support for the DVB plugin (Linux only)])],
-                  [test x"$enableval" != x"no" && enable_dvb="yes"],
-                  [test $default_enable_dvb = disable && enable_dvb="no"])
+    XINE_ARG_ENABLE([dvb], [Enable support for the DVB plugin (Linux only)])
     if test x"$enable_dvb" != x"no"; then
         case "$host_os" in
             linux*) have_dvb=yes ;;
             *) have_dvb=no ;;
         esac
-        if test x"$enable_dvb" = x"yes" && test x"$have_dvb" != x"yes"; then
+        if test x"$hard_enable_dvb" = x"yes" && test x"$have_dvb" != x"yes"; then
             AC_MSG_ERROR([DVB support requested, but DVB not found])
         fi
     fi
@@ -56,13 +55,10 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
 
 
     dnl gnome-vfs
-    AC_ARG_ENABLE([gnomevfs],
-                  [AS_HELP_STRING([--enable-gnomevfs], [Enable support for the Gnome-VFS plugin])],
-                  [test x"$enableval" != x"no" && enable_gnomevfs="yes"],
-                  [test $default_enable_gnomevfs = disable && enable_gnomevfs="no"])
+    XINE_ARG_ENABLE([gnomevfs], [Enable support for the Gnome-VFS plugin])
     if test x"$enable_gnomevfs" != x"no"; then
         PKG_CHECK_MODULES([GNOME_VFS], [gnome-vfs-2.0], [have_gnomevfs=yes], [have_gnome_vfs=no])
-        if test x"$enable_gnomevfs" = x"yes" && test x"$have_gnomevfs" != x"yes"; then
+        if test x"$hard_enable_gnomevfs" = x"yes" && test x"$have_gnomevfs" != x"yes"; then
             AC_MSG_ERROR([Gnome-VFS support requested, but Gnome-VFS not found])
         fi
     fi
@@ -70,15 +66,12 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
 
 
     dnl libsmbclient
-    AC_ARG_ENABLE([samba],
-                  [AS_HELP_STRING([--enable-samba], [Enable support for the Samba plugin])],
-                  [test x"$enableval" != x"no" && enable_samba="yes"],
-                  [test $default_enable_samba = disable && enable_samba="no"])
+    XINE_ARG_ENABLE([samba], [Enable support for the Samba plugin])
     if test x"$enable_samba" != x"no"; then
         AC_CHECK_LIB([smbclient], [smbc_init],
                      [AC_CHECK_HEADERS([libsmbclient.h], [have_samba=yes LIBSMBCLIENT_LIBS="-lsmbclient"])])
         AC_SUBST(LIBSMBCLIENT_LIBS)
-        if test x"$enable_samba" = x"yes" && test x"$have_samba" != x"yes"; then
+        if test x"$hard_enable_samba" = x"yes" && test x"$have_samba" != x"yes"; then
             AC_MSG_ERROR([Samba support requested, but Samba not found])
         fi
     fi
@@ -86,15 +79,12 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
 
 
     dnl video-for-linux (v4l)
-    AC_ARG_ENABLE([v4l],
-                  [AS_HELP_STRING([--enable-v4l], [Enable Video4Linux support])],
-                  [test x"$enableval" != x"no" && enable_v4l="yes"],
-                  [test $default_enable_v4l = disable && enable_v4l="no"])
+    XINE_ARG_ENABLE([v4l], [Enable Video4Linux support])
     if test x"$enable_v4l" != x"no"; then
         have_v4l=yes
         AC_CHECK_HEADERS([linux/videodev.h linux/videodev2.h], , [have_v4l=no])
         AC_CHECK_HEADERS([asm/types.h])
-        if test x"$enable_v4l" = x"yes" && test x"$have_v4l" != x"yes"; then
+        if test x"$hard_enable_v4l" = x"yes" && test x"$have_v4l" != x"yes"; then
             AC_MSG_ERROR([Video4Linux support requested, but prerequisite headers not found.])
         fi
     fi
@@ -103,9 +93,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
 
     dnl dvdnav
     dnl XXX: This could be cleaned up so that code does not have to ifdef so much
-    AC_ARG_WITH([external-dvdnav],
-                [AS_HELP_STRING([--with-external-dvdnav], [Use external dvdnav library (not recommended)])],
-                [test x"$withval" != x"no" && with_external_dvdnav="yes"], [with_external_dvdnav="no"])
+    XINE_ARG_WITH([external-dvdnav], [Use external dvdnav library (not recommended)])
     if test x"$with_external_dvdnav" != x"no"; then
         ACX_PACKAGE_CHECK([DVDNAV], [0.1.9], [dvdnav-config],
                           [AC_DEFINE([HAVE_DVDNAV], 1, [Define this if you have a suitable version of libdvdnav])],
@@ -118,10 +106,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
 
     dnl Video CD
     dnl XXX: This could be cleaned up so that code does not have it ifdef so much
-    AC_ARG_ENABLE([vcd],
-                  [AS_HELP_STRING([--enable-vcd], [Enable VCD (VideoCD) support])],
-                  [test x"$enableval" != x"no" && enable_vcd="yes"],
-                  [test $default_enable_vcd = disable && enable_vcd="no"])
+    XINE_ARG_ENABLE([vcd], [Enable VCD (VideoCD) support])
     if test x"$enable_vcd" != x"no"; then
         PKG_CHECK_MODULES([LIBCDIO], [libcdio >= 0.71])
         PKG_CHECK_MODULES([LIBVCDINFO], [libvcdinfo >= 0.7.23])
@@ -129,7 +114,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     fi
 
     enable_vcdo=no
-    test $default_enable_vcdo = enable && test x"$enable_vcd" != x"no" && enable_vcdo=yes
+    test $default_enable_vcdo = no && test x"$enable_vcd" != x"no" && enable_vcdo=yes
 
     AC_DEFINE([LIBCDIO_CONFIG_H], 1, [Get of rid system libcdio build configuration])
     AC_DEFINE([EXTERNAL_LIBCDIO_CONFIG_H], 1, [Get of rid system libcdio build configuration])
@@ -142,8 +127,6 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
 
 
     dnl vdr
-    AC_ARG_ENABLE([vdr],
-                  [AS_HELP_STRING([--enable-vdr], [Enable support for the VDR plugin (default: enabled)])],
-                  [test x"$enableval" != x"no" && enable_vdr="yes"])
+    XINE_ARG_ENABLE([vdr], [Enable support for the VDR plugin (default: enabled)])
     AM_CONDITIONAL([ENABLE_VDR], [test x"$enable_vdr" != x"no"])
 ])
