@@ -329,6 +329,7 @@ typedef struct {
   VdpBool              sharpness_is_supported;
   VdpBool              inverse_telecine_is_supported;
   VdpBool              skip_chroma_is_supported;
+  VdpBool              background_is_supported;
 
   char*                deinterlacers_name[NUMBER_OF_DEINTERLACERS+1];
   int                  deinterlacers_method[NUMBER_OF_DEINTERLACERS];
@@ -355,6 +356,7 @@ typedef struct {
   int               honor_progressive;
   int               skip_chroma;
   int               studio_levels;
+  int               background;
 
   int               vdp_runtime_nr;
   int               reinit_needed;
@@ -1485,6 +1487,33 @@ static void vdpau_set_studio_levels( void *this_gen, xine_cfg_entry_t *entry )
 
 
 
+static void vdpau_update_background( vdpau_driver_t *this_gen )
+{
+  if ( !this_gen->background_is_supported )
+    return;
+
+  VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_BACKGROUND_COLOR };
+  VdpColor bg = { (this_gen->background >> 16) / 255.f, ((this_gen->background >> 8) & 0xff) / 255.f, (this_gen->background & 0xff) / 255.f, 1 };
+  void* attribute_values[] = { &bg };
+  VdpStatus st = vdp_video_mixer_set_attribute_values( this_gen->video_mixer, 1, attributes, attribute_values );
+  if ( st != VDP_STATUS_OK )
+    printf( "vo_vdpau: error, can't set background_color !!\n" );
+  else
+    printf( "vo_vdpau: background_color = %d\n", this_gen->background );
+}
+
+
+
+static void vdpau_set_background( void *this_gen, xine_cfg_entry_t *entry )
+{
+  vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
+  entry->num_value &= 0xffffff;
+  this->background = entry->num_value;
+  vdpau_update_background( this );
+}
+
+
+
 static void vdpau_shift_queue( vo_driver_t *this_gen )
 {
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
@@ -1638,6 +1667,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     this->color_standard = color_standard;
     vdpau_update_csc( this );
     vdpau_update_skip_chroma( this );
+    vdpau_update_background( this );
   }
 
   if (color_standard != this->color_standard) {
@@ -2157,6 +2187,7 @@ static void vdpau_reinit( vo_driver_t *this_gen )
   vdpau_update_sharpness( this );
   vdpau_update_csc( this );
   vdpau_update_skip_chroma( this );
+  vdpau_update_background( this );
 
   vdp_preemption_callback_register(vdp_device, &vdp_preemption_callback, (void*)this);
 
@@ -2257,6 +2288,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->temporal_spatial_is_supported = 0;
   this->inverse_telecine_is_supported = 0;
   this->skip_chroma_is_supported = 0;
+  this->background_is_supported = 0;
 
   for ( i=0; i<XINE_VORAW_MAX_OVL; ++i ) {
     this->overlays[i].ovl_w = this->overlays[i].ovl_h = 0;
@@ -2505,6 +2537,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   vdp_video_mixer_query_feature_support( vdp_device, VDP_VIDEO_MIXER_FEATURE_SHARPNESS, &this->sharpness_is_supported );
   vdp_video_mixer_query_feature_support( vdp_device, VDP_VIDEO_MIXER_FEATURE_INVERSE_TELECINE, &this->inverse_telecine_is_supported );
   vdp_video_mixer_query_attribute_support( vdp_device, VDP_VIDEO_MIXER_ATTRIBUTE_SKIP_CHROMA_DEINTERLACE, &this->skip_chroma_is_supported );
+  vdp_video_mixer_query_attribute_support( vdp_device, VDP_VIDEO_MIXER_ATTRIBUTE_BACKGROUND_COLOR, &this->background_is_supported );
 
   this->color_standard = VDP_COLOR_STANDARD_ITUR_BT_601;
   this->video_mixer_chroma = chroma;
@@ -2622,6 +2655,13 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
         _("vdpau: disable studio level"),
         _("Setting to true enables studio levels (16-219) instead of PC levels (0-255) in RGB colors.\n\n"),
         10, vdpau_set_studio_levels, this );
+
+  if ( this->background_is_supported ) {
+    this->background = config->register_num( config, "video.output.vdpau_background_color", 0,
+        _("vdpau: color of none video area in output window"),
+        _("Displaying 4:3 images on 16:9 plasma TV sets lets the inactive pixels outside the video age slower than the pixels in the active area. Setting a different background color (e. g. 8421504) makes all pixels age similarly. The number to enter for a certain color can be derived from its 6 digit hexadecimal RGB value.\n\n"),
+        10, vdpau_set_background, this );
+  }
 
   /* number of video frames from config - register it with the default value. */
   int frame_num = config->register_num (config, "engine.buffers.video_num_frames", 15, /* default */
