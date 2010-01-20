@@ -461,12 +461,27 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
     dnl VDPAU
     XINE_ARG_ENABLE([vdpau], [Disable VDPAU output plugin])
     if test x"$no_x" != x"yes" && test x"$enable_vdpau" != x"no"; then
-        AC_CHECK_HEADERS([vdpau/vdpau_x11.h], [have_vdpau=yes], [have_vdpau=no])
-        if test x"$have_vdpau" = x"yes"; then
-            AC_CHECK_LIB([vdpau], [vdp_device_create_x11], [], [have_vdpau=no], [$X_LIBS $X_PRE_LIBS -lXext $X_EXTRA_LIBS])
-        fi
-        if test x"$hard_enable_vdpau" = x"yes" && test x"$have_vdpau" != x"yes"; then
-            AC_MSG_ERROR([VDPAU support requested, but not all requirements are met])
+        PKG_CHECK_MODULES([VDPAU], [vdpau], [have_vdpau=yes], [have_vdpau=no])
+        if test x"$have_vdpau" = xno; then
+            saved_CFLAGS="$CFLAGS"
+            saved_LIBS="$LIBS"
+            CFLAGS=
+            LIBS=
+            dnl likely defaults
+            dnl if these are bad, blame nVidia for not supplying vdpau.pc
+            VDPAU_CFLAGS=
+            VDPAU_LIBS=-lvdpau
+            AC_CHECK_HEADERS([vdpau/vdpau_x11.h], [have_vdpau=yes], [have_vdpau=no])
+            if test x"$have_vdpau" = x"yes"; then
+                AC_CHECK_LIB([vdpau], [vdp_device_create_x11], [], [have_vdpau=no], [$X_LIBS $X_PRE_LIBS -lXext $X_EXTRA_LIBS])
+            fi
+            if test x"$hard_enable_vdpau" = x"yes" && test x"$have_vdpau" != x"yes"; then
+                AC_MSG_ERROR([VDPAU support requested, but not all requirements are met])
+            fi
+            CFLAGS="$saved_CFLAGS"
+            LIBS="$saved_LIBS"
+            AC_SUBST([VDPAU_CFLAGS])
+            AC_SUBST([VDPAU_LIBS])
         fi
     fi
     AM_CONDITIONAL([ENABLE_VDPAU], test x"$have_vdpau" = x"yes")

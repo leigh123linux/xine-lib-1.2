@@ -118,8 +118,8 @@ xineplug_LTLIBRARIES = $(xshm_module) $(xv_module) $(xvmc_module) \
                   xineplug_vo_out_none.la
 
 xineplug_vo_out_vdpau_la_SOURCES = video_out_vdpau.c
-xineplug_vo_out_vdpau_la_LIBADD = libyuv2rgb.la $(XINE_LIB) $(MLIB_LIBS) $(PTHREAD_LIBS) $(X_LIBS) $(LTLIBINTL) -lvdpau
-xineplug_vo_out_vdpau_la_CFLAGS = $(VISIBILITY_FLAG) $(MLIB_CFLAGS) $(X_CFLAGS)
+xineplug_vo_out_vdpau_la_LIBADD = libyuv2rgb.la $(XINE_LIB) $(MLIB_LIBS) $(PTHREAD_LIBS) $(X_LIBS) $(LTLIBINTL) $(VDPAU_LIBS)
+xineplug_vo_out_vdpau_la_CFLAGS = $(VISIBILITY_FLAG) $(MLIB_CFLAGS) $(X_CFLAGS) $(VDPAU_CFLAGS)
 
 xineplug_vo_out_xcbshm_la_SOURCES = video_out_xcbshm.c $(XCBOSD)
 xineplug_vo_out_xcbshm_la_LIBADD = libyuv2rgb.la $(XINE_LIB) $(PTHREAD_LIBS) $(XCB_LIBS) $(XCBSHM_LIBS) $(LTLIBINTL) $(AVUTIL_LIBS)

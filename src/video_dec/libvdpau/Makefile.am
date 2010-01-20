@@ -7,7 +7,7 @@ noinst_HEADERS = bits_reader.h dpb.h cpb.h h264_parser.h nal.h
 
 if ENABLE_VDPAU
 vdpau_h264_module = xineplug_decode_vdpau_h264.la
-VDPAU_CFLAGS = -D_ISOC99_SOURCE
+VDPAU_CFLAGS += -D_ISOC99_SOURCE
 
 vdpau_mpeg12_module = xineplug_decode_vdpau_mpeg12.la
 
