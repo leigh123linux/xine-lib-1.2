@@ -257,6 +257,7 @@ static void sequence_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int
 
   if ( sequence->cur_pts ) {
     sequence->seq_pts = sequence->cur_pts;
+    sequence->cur_pts = 0;
   }
 
   bits_reader_set( &sequence->br, buf );
@@ -348,6 +349,7 @@ static void picture_header( sequence_t *sequence, uint8_t *buf, int len )
 
   if ( sequence->cur_pts ) {
     sequence->seq_pts = sequence->cur_pts;
+    sequence->cur_pts = 0;
   }
 
   if ( sequence->profile==VDP_DECODER_PROFILE_MPEG1 )
