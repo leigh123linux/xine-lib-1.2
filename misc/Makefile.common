@@ -8,8 +8,10 @@ xineplug_ldflags = $(LDFLAGS_NOUNDEFINED) $(GCSECTIONS) -avoid-version -module
 xinepostdir = $(XINE_PLUGINDIR)/post
 vidixdir = $(XINE_PLUGINDIR)/vidix
 
-$(XINE_LIB):
-	$(MAKE) -C $(top_builddir)/src/xine-engine
+$(XINE_LIB): $(top_builddir)/src/xine-engine/libxine-interface.la
+
+$(top_builddir)/src/xine-engine/libxine-interface.la:
+	$(MAKE) -C $(top_builddir)/src/xine-engine libxine-interface.la
 
 $(top_builddir)/contrib/libxdg-basedir/libxdg-basedir.la:
 	$(MAKE) -C $(top_builddir)/contrib/libxdg-basedir

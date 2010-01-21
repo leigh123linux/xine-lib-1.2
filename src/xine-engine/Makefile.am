@@ -13,11 +13,14 @@ EXTRA_DIST = lrb.c lrb.h accel_xvmc.h
 if WIN32
 DEF_FILE = libxine-$(XINE_MAJOR).def
 def_ldflags="-Wl,--output-def,$(DEF_FILE)"
+else
+DEF_FILE =
 endif
 
 noinst_HEADERS = bswap.h ffmpeg_bswap.h
 
 lib_LTLIBRARIES = libxine.la
+noinst_LTLBRARIES = libxine-interface.la
 
 libxine_la_SOURCES = xine.c metronom.c configfile.c buffer.c \
 	load_plugins.c video_decoder.c buffer_types.c \
@@ -36,7 +39,17 @@ libxine_la_LIBADD = $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL) $(ZLIB_LIBS)
                     $(AVUTIL_LIBS)
 
 libxine_la_LDFLAGS = $(AM_LDFLAGS) $(def_ldflags) $(GCSECTIONS) \
+	-weak libxine-interface.la \
 	-version-info $(XINE_LT_CURRENT):$(XINE_LT_REVISION):$(XINE_LT_AGE)
+
+libxine-interface.la: libxine.la
+	sed -e "/^dependency_libs/ s/'.*'/''/" <$< >$@
+
+install-exec-hook: libxine-interface.la
+	$(INSTALL_DATA) "$(builddir)"/libxine-interface.la "$(DESTDIR)$(libdir)"/libxine-interface.la
+
+clean-local:
+	rm -f "$(builddir)"/libxine-interface.la
 
 $(XINEUTILS_LIB):
 	$(MAKE) -C $(top_builddir)/src/xine-utils libxineutils.la
@@ -44,7 +57,7 @@ $(XINEUTILS_LIB):
 if WIN32
 install-exec-local:
 	cp -p $(DEF_FILE) $(DESTDIR)$(libdir)
+endif
 
 uninstall-local:
-	rm -f $(DEF_FILE)
-endif
+	rm -f $(DEF_FILE) "$(DESTDIR)$(libdir)"/libxine-interface.la
