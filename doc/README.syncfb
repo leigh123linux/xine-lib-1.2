@@ -1,0 +1,280 @@
+
+  =====                                                               =====
+       XINE video output plugin for MATROX G200/G400/G450 cards *only*
+  =====                                                               =====
+
+
+* WHAT IS THIS PLUGIN ABOUT and WHY SHOULD I EVEN CONSIDER TO USE IT? :)
+
+  This xine video output plugin uses the so called  SyncFB  driver (from
+  the Teletux project)  which  provides  special  hardware  features  of
+  Matrox G200 and newer cards like hardware  deinterlacing, scaling  and
+  synchronization of your video output to the vertical retrace  of  your
+  monitor - just to name a few. The  plugin  makes  all  those  features
+  available to xine and because all this tasks are done by  the  graphic
+  card there  is  no need for xine to do them in software -- so you save
+  precious CPU time which you may gonna need for other things. :-)
+
+  Ok ok -- why should you want to have your video output synchronized to
+  something called the vertical retrace of your monitor?! Well... :)
+
+  In order to have an optimal DVD playback the update of the image needs
+  to be syncronized with the vertical refresh of the screen.   Otherwise
+  you will sometimes see part of frame n and part of  frame  n+1  during
+  playback of a movie. Resulting in tearing artefacts on moving objects.
+
+  When using this plugin the update of the screen  is  done  during  the
+  vertical retrace of your monitor and  those tearing artefacts are gone
+  forever.
+
+  Also the SyncFB kernel module and this plugin totally  by-pass XFree86
+  for anything else but some data gathering routines needed to place the
+  overlay at the right spot.      So on some machines you will gain some
+  performance too because of the different way the SyncFB kernel  module
+  handles your video output.
+
+  Last but not least, you may ask what's so special about deinterlacing?
+  There are already several deinterlacing methods  available in xine and
+  why should you care about another one? Well (again)... ;-))
+
+  All current deinterlacers in xine are done in software  and  therefore
+  will cost you some CPU power. The SyncFB video out plugin will use the
+  hardware deinterlacing support of your graphic card,  thus saving your
+  CPU power because everything is done by your GPU...
+
+
+* WILL IT WORK WITH MY G200/G400/G450/... CARD?
+
+  So far the plugin and the kernel module itself are only  being  tested
+  on G400 cards by its  developers  thus  we  cannot  tell  about  newer
+  or older generation chips.
+
+  Nevertheless we have received positive feedback that the SyncFB kernel
+  module and this plugin work fine with G450 cards too.
+
+  If you have got things working on older/newer  chips,  please  let  us
+  know about your success and we will place a note here... :-)
+
+
+* AND HOW DOES IT WORK?
+
+  The SyncFB driver is a kernel  module you will have to load that makes
+  a special device (e.g. /dev/syncfb) available which  is  opened by the
+  plugin and controlled with certain ioctl calls. Easy, isn't it? ;-)
+
+  That module is based on the mga_vid driver from Aaron Holzmann and was
+  advanced (and reworked) by Matthias Oelmann.
+
+
+* OK I HEARD ENOUGH - HOW DO I INSTALL and USE IT? :)
+
+  Currently the Teletux project  which maintains the kernel module seems
+  orphaned and therefore there hasn't been any progress nor release in a
+  fair amount of time. :(  We will try to resolve this situation so that
+  the development continues again. As soon as there are any news on this
+  matter, this README will be updated accordingly.    For the time being
+  you can still use the current Teletux SyncFB kernel module which works
+  just fine, so there is no need to worry. :-)
+
+  Back to the original subject.   In order to install and use the SyncFB
+  kernel module,  you  *will*  need a fresh CVS checkout  of the sources
+  because the last official release is rather outdated.
+
+  This sounds more complicated than it actually is.   You will only have
+  to execute the following two commands to get the sources in  a sub-dir
+  called teletux. When you are asked for password, just press return.
+
+  cvs -d:pserver:anonymous@cvs.teletux.sf.net:/cvsroot/teletux login
+  cvs -d:pserver:anonymous@cvs.teletux.sf.net:/cvsroot/teletux co -P teletux
+
+  Now enter the directory teletux/syncfb, that's where the actual kernel
+  modul sources are located. Before you can compile the module, you will
+  have to change two lines in the Makefile itself to make it work.
+
+  In the second line, there is a phrase like  "-I/usr/include" which you
+  have to change to "-I/usr/src/linux/include".  In line seven, you need
+  to remove syncfbtv and syncfb_test from the OBJ list.
+
+  Now execute a  "make"  and  the  module  will  be  compiled. Place the
+  resulting syncfb.o in your modules dir which is usually...
+
+   /lib/modules/KERNEL_VERSION/
+
+  ... and issue a "depmod -a" after it. That's it - the kernel module is
+  installed.  To load the syncfb module, execute "modprobe syncfb" every
+  time you (re)start your computer.   This will automatically create the
+  required /dev/syncfb device if you have devfs support,  otherwise  you
+  need  to  issue  a  "mknod /dev/syncfb c 178 0"  once  to  create  the
+  device yourself permanently.
+
+  Once the module is loaded, you can start  xine  with  the  "-V SyncFB"
+  option to use this plugin.  xine automatically remembers the video out
+  plugin you last used, so you only have to use this option once too. :)
+  But don't forget, the module *always* has to be already loaded  before
+  you start xine, otherwise xine will fallback to  Xv/XShm or some other
+  available video out plugin.
+
+
+* THE VIDEO IS JERKING - WHAT'S THE MATTER?!
+
+  Playing back video material that is mastered for e.g. NTSC  can  cause
+  this jerking if your monitor is not running at a refresh rate  that is
+  a multiple of 30 (PAL: 25).
+
+  You can try to fix that by switching your monitor to  the  appropriate
+  refresh rates (e.g. 50/75/100 Hz for PAL, 60/90/120 Hz for NTSC).  You
+  will need to add so called modelines to your XFree86  config  to  make
+  those modes available, if you don't already have them.
+
+  Here is is a short listing of some sample modelines. Please  add  only
+  those two lines (for NTSC and PAL) which exactly  fit  the  screensize
+  you are running your X Server with. You need to add those lines to the
+  monitor section of your XF86Config file as well as include their names
+  in the screen section  (subsection display of the color depth your are
+  using).
+
+  USE THE FOLLOWING MODELINES AT YOUR OWN RISK.   THEY COULD DAMAGE YOUR
+  MONITOR PERMANTELY - PLEASE TAKE CAUTION AND DON'T BLAME US.  YOU HAVE
+  BEEN WARNED.
+
+  So much for the standard disclaimer. :)
+
+  Note: If you want to be on the  safe  side,  generate  your  very  own
+        modelines with an application like kvideogen for example.
+
+	Also the modelines may need some fine tuning for your setup. You
+	can use xvidtune (comes with XFree86) to do that.
+
+  # 1024x768
+
+    Modeline "1024x768pal"  64.94 1024 1040 1216 1328 768 768 775 802
+    Modeline "1024x768ntsc" 54.32 1024 1040 1216 1328 768 768 774 802
+
+  # 1152x864
+
+    Modeline "1152x864pal"  68.82 1152 1168 1384 1496 864 864 871 902
+    Modeline "1152x864ntsc" 80.93 1152 1168 1384 1496 864 864 872 902
+
+  # 1280x1024
+
+    none yet - might be added in the future
+
+  So before you run  xine  just turn to the appropriate refresh rate and
+  the jerking *should* be gone. (you may also want to have a look at the
+  XF86VidMode support included in xine which makes on-the-fly resolution
+  switching possible when fullscreen is toggled)
+
+
+* WHAT SCREENSIZE SHOULD I PREFER?
+
+  Well. It is important that the screensize  you choose for DVD playback
+  is exactly the same screensize  you're starting up your X Server  with
+  if you are not using the XF86VidMode extension which will properly  do
+  the switching for you  and  take  care  that  the  plugin  is  updated
+  accordingly. So you shouldn't switch down to 1024x768 yourself if  you
+  are running 1280x1024 because that  gives  you  a  virtual  screensize
+  of 1280x1024 in a resolution of 1024x768 - and the plugin can't handle
+  that - and probably never will... ok... never say never. ;)
+
+  You may want to have a look at the XF86VidMode support in  xine  which
+  will enable on-the-fly resolution switching when activating fullscreen.
+
+  Now back to the question.     A screensize of 800x600 should be it for
+  non-anamorphic DVDs because their resolution is 720x576 for  pal  DVDs
+  and 720x480 for ntsc ones. If you've an anamorphic DVD, you should use
+  a higher resolution - 1024x768 will be best because the image only has
+  to be horizontally scaled to get back to the original geometry of 16:9
+  which is easier to be done.
+
+
+* WHAT ABOUT DEINTERLACING?!
+
+  Pressing 'i' during playback will toggle hardware deinterlacing.     A
+  decrease in picture quality is a known side effect,  yet you won't see
+  any artefacts caused by interlacing anymore. :-)
+
+  One more note, hardware deinterlacing uses BOB as deinterlacing method
+  and is totally independent from the software deinterlacing in xine. So
+  specifing a different deinterlacing method in your .xinerc won't  have
+  any effect on this feature.
+
+  Nevertheless we are thinking about making software  deinterlacing also
+  available as an option. It's on the TODO list... :)
+
+
+* HEY! THE OVERLAY TURNS OFF WHEN THE WINDOW IS PARTLY OFF THE DESKTOP!?
+
+  That's done on purpose.  It  prevents  possible  yet  harmless  screen
+  corruption. And by the way - why would you want to see  a  movie  just
+  partly?! ;-)
+
+
+* MY DESKTOP BACKGROUND IMAGE GETS CORRUPTED WHEN USING THIS PLUGIN!
+
+  Even though it doesn't look nice, it's nevertheless harmless.    So no
+  need to worry about it. XFree86 is using your  free  video  memory  as
+  cache for certain things. Now when you use this plugin  that  part  of
+  your video memory could also be used by the syncfb module.     So your
+  image data cached there will be corrupted.   Unfortunately there is no
+  way to avoid it. Yet, like stated earlier, it is truely  harmless  and
+  just a cosmetical side effect.
+
+
+* THE XINE PANEL DOES NOT APPEAR WHEN I WATCH A MOVIE IN FULLSCREEN?!
+
+  Actually it does appear - you just don't see it. :)     This is a side
+  effect of how SyncFB works.  The X server can't display anything where
+  the actual overlay from SyncFB is being displayed because this area in
+  your video memory is constantly over written - so are the changes done
+  by your X Server (like a window graphic that is placed there).
+
+  This is just cosmetical and harmless, so no need to worry. If you want
+  to do something with the xine panel when the video overlay  is  taking
+  all your screen, just switch back to window mode and do  what you have
+  to do and after that, back to fullscreen it goes. :-)
+
+
+* KNOWN BUGs
+
+  + the default_repeat config option is currently hardcoded to 0 because
+    any higher value than 1 will trigger a bug with the SyncFB kernel module
+    that results in a distorted picture (depending on video resolution)
+    [this bug is hard to trace, so don't hold your breath for now]
+
+  + SyncFB overlay won't turn off when video window is minimized or
+    somehow else hidden.
+    [currently there is no way for the SyncFB plugin to know about the
+     state of the video window except if the original xine-ui hide function
+     is used to hide the video window... this will be fixed soon]
+
+  + zooming feature is currently deactivated because it exposes a bug
+    with the SyncFB kernel module
+    [for now, don't expect this to be fixed soon - sorry]
+
+  + the syncfb kernel module needs updating pretty badly
+
+
+* WHAT IS ON THE TODO LIST?
+
+  + fix above listed bugs in the SyncFB kernel module
+
+  + make software deinterlacing available as an option
+
+  + RGB support
+    (unlikely at the moment because there is no need for it)
+
+  + check if the video source is not too big in terms of  dimensions for
+    the video memory left (video memory - X reserved video memory)
+
+  + bug fixes
+  + more sanity checks
+  + new features
+  + optimizations
+
+
+* CONTACTS and FEEDBACK
+
+  Your first starting point should be this README followed by the FAQ. :-)
+  If you don't find your answers there or if you found a bug, please leave
+  a message on the xine user mailinglist (see the general README).
+
