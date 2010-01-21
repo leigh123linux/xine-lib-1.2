@@ -25,13 +25,7 @@ DEB_BUILD_CONFIG_OPTIONS :=
 CFLAGS += -g
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 	CFLAGS += -O0
-	DEB_BUILD_CONFIG_OPTIONS += --disable-optimizations
-endif
-INSTALL_TARGET := install
-BUILD_TARGET := all
-ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
-	INSTALL_TARGET := install-debug
-	BUILD_TARGET := debug
+	DEB_BUILD_CONFIG_OPTIONS += --disable-optimizations --enable-debug
 endif
 
 ifneq (,$(findstring mips,$(DEB_HOST_GNU_TYPE)))
