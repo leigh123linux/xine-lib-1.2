@@ -611,7 +611,7 @@ static int render_image_fp_yuv (opengl_driver_t *this, opengl_frame_t *frame) {
       return 0;
   }
 
-  ret = render_help_image_tex (this, frame->width+3, frame->height + h2 + 3,
+  ret = render_help_image_tex (this, w2 + frame->vo_frame.pitches[2] + 3, frame->height + h2 + 3,
 			       GL_LUMINANCE, GL_LUMINANCE);
   if (! ret)
     return 0;
@@ -633,16 +633,21 @@ static int render_image_fp_yuv (opengl_driver_t *this, opengl_frame_t *frame) {
     this->glProgramEnvParameter4fARB (MYGL_FRAGMENT_PROGRAM_ARB, 0,
 				      1.0                     /this->tex_width,
 				      (float)(frame->height+2)/this->tex_height,
-				      (float)(w2+1)           /this->tex_width,
+				      (float)(w2+2)           /this->tex_width,
 				      0);
   }
+  if (w2 & 7)
+    for (i = 0; i < h2; i++) {
+      frame->vo_frame.base[1][i*frame->vo_frame.pitches[1]+w2] = 128;
+      frame->vo_frame.base[2][i*frame->vo_frame.pitches[2]+w2] = 128;
+    }
   /* Load texture */
   CHECKERR ("pre-texsubimage");
-  glTexSubImage2D (GL_TEXTURE_2D, 0,  1, 0,  frame->width, frame->height,
+  glTexSubImage2D (GL_TEXTURE_2D, 0,  1, 0,  frame->vo_frame.pitches[0], frame->height,
 		   GL_LUMINANCE, GL_UNSIGNED_BYTE, frame->vo_frame.base[0]);
-  glTexSubImage2D (GL_TEXTURE_2D, 0,  1, frame->height+2,  w2, h2,
+  glTexSubImage2D (GL_TEXTURE_2D, 0,  1, frame->height+2,  frame->vo_frame.pitches[1], h2,
 		   GL_LUMINANCE, GL_UNSIGNED_BYTE, frame->vo_frame.base[1]);
-  glTexSubImage2D (GL_TEXTURE_2D, 0,  w2+2, frame->height+2,  w2, h2,
+  glTexSubImage2D (GL_TEXTURE_2D, 0,  w2+2, frame->height+2,  frame->vo_frame.pitches[2], h2,
 		   GL_LUMINANCE, GL_UNSIGNED_BYTE, frame->vo_frame.base[2]);
   CHECKERR ("texsubimage");
   return 1;

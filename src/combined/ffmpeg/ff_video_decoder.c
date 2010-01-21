@@ -50,22 +50,6 @@
 #  include <libpostproc/postprocess.h>
 #endif
 
-/* As of 2010-01-17, libavutil trunk doesn't define a few useful macros.
- * While we may still be able to #define things to cause them to be used,
- * it's safest to assume that they'll go away.
- */
-#ifndef PIX_FMT_RGB32
-#  ifdef WORDS_BIGENDIAN
-#    define PIX_FMT_RGB32  PIX_FMT_ARGB
-#    define PIX_FMT_RGB555 PIX_FMT_RGB555BE
-#    define PIX_FMT_RGB565 PIX_FMT_RGB565BE
-#  else
-#    define PIX_FMT_RGB32  PIX_FMT_BGRA
-#    define PIX_FMT_RGB555 PIX_FMT_RGB555LE
-#    define PIX_FMT_RGB565 PIX_FMT_RGB565LE
-#  endif
-#endif
-
 #define VIDEOBUFSIZE        (128*1024)
 #define SLICE_BUFFER_SIZE   (1194*1024)
 
