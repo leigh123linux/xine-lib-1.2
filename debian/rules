@@ -22,9 +22,7 @@ DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 DEB_BUILD_CONFIG_OPTIONS :=
 
-CFLAGS += -g
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-	CFLAGS += -O0
 	DEB_BUILD_CONFIG_OPTIONS += --disable-optimizations --enable-debug
 endif
 
@@ -72,8 +70,7 @@ CONFIGURE_FLAGS := \
 	--with-freetype \
 	--with-wavpack \
 	--enable-ipv6 \
-	$(DEB_BUILD_CONFIG_OPTIONS) \
-	CFLAGS="$(CFLAGS)"
+	$(DEB_BUILD_CONFIG_OPTIONS)
 
 configure: configure-stamp
 configure-stamp:
