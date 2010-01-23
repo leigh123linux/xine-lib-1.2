@@ -3,7 +3,7 @@ Section: libs
 Priority: optional
 Maintainer: xine Developers <xine-devel@lists.sourceforge.net>
 Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
-	automake1.9, autoconf, libtool, cvs,
+	automake | automaken, autoconf, libtool, cvs,
 	libavcodec-dev (>= 0.cvs20080206) | libavcodeccvs-dev,
 	libavformat-dev (>= 0.cvs20080206) | libavformatcvs-dev,
 	libpostproc-dev (>= 0.cvs20080206) | libpostproccvs-dev,
@@ -12,7 +12,7 @@ Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
 	libxcb-shm0-dev | libxv-dev (<< 1:1.0.3),
 	libxcb-shape0-dev | libxv-dev (<< 1:1.0.3),
 	libxinerama-dev, libxv-dev, libxvmc-dev, libxt-dev,
-	libvdpau-dev | nvidia-libvdpau-dev,
+	libvdpau-dev | nvidia-libvdpau-dev | libxv-dev (<< 1:1.0.3),
 	libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
 	libcam-dev [kfreebsd-i386 kfreebsd-amd64],
 	libaa1-dev, libcaca-dev, libmodplug-dev,
