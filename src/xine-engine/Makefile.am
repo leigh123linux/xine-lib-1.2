@@ -20,7 +20,9 @@ endif
 noinst_HEADERS = bswap.h ffmpeg_bswap.h
 
 lib_LTLIBRARIES = libxine.la
-noinst_LTLBRARIES = libxine-interface.la
+
+# Technically, this is a lie; it just makes sure that we get a static lib.
+noinst_LTLIBRARIES = libxine-interface.la
 
 libxine_la_SOURCES = xine.c metronom.c configfile.c buffer.c \
 	load_plugins.c video_decoder.c buffer_types.c \
@@ -32,7 +34,8 @@ libxine_la_SOURCES = xine.c metronom.c configfile.c buffer.c \
 	xine_private.h
 
 libxine_la_DEPENDENCIES = $(XINEUTILS_LIB) $(XDG_BASEDIR_DEPS) \
-                          $(pthread_dep) $(LIBXINEPOSIX)
+                          $(pthread_dep) $(LIBXINEPOSIX) \
+                          libxine-interface.la
 libxine_la_LIBADD = $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL) $(ZLIB_LIBS) \
 		    -lm $(XINEUTILS_LIB) $(LTLIBICONV) $(FT2_LIBS) $(FONTCONFIG_LIBS) \
                     $(LIBXINEPOSIX) $(RT_LIBS) $(NET_LIBS) $(XDG_BASEDIR_LIBS) \
@@ -42,14 +45,17 @@ libxine_la_LDFLAGS = $(AM_LDFLAGS) $(def_ldflags) $(GCSECTIONS) \
 	-weak libxine-interface.la \
 	-version-info $(XINE_LT_CURRENT):$(XINE_LT_REVISION):$(XINE_LT_AGE)
 
-libxine-interface.la: libxine.la
-	sed -e "/^dependency_libs/ s/'.*'/''/" <$< >$@
+libxine_interface_la_SOURCES =
 
+libxine_interface_la_LDFLAGS = $(AM_LDFLAGS) $(def_ldflags) \
+	-version-info $(XINE_LT_CURRENT):$(XINE_LT_REVISION):$(XINE_LT_AGE)
+
+# Yes, we need to install this.
 install-exec-hook: libxine-interface.la
-	$(INSTALL_DATA) "$(builddir)"/libxine-interface.la "$(DESTDIR)$(libdir)"/libxine-interface.la
+	$(INSTALL_DATA) libxine-interface.la "$(DESTDIR)$(libdir)"/libxine-interface.la
 
 clean-local:
-	rm -f "$(builddir)"/libxine-interface.la
+	rm -f libxine-interface.la
 
 $(XINEUTILS_LIB):
 	$(MAKE) -C $(top_builddir)/src/xine-utils libxineutils.la
