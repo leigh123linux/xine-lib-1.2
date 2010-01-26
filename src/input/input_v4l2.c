@@ -107,8 +107,8 @@ static int v4l2_input_open(input_plugin_t *this_gen) {
 	ret = v4l2_ioctl(this->fd, VIDIOC_QUERYCAP, &(this->cap));
 	if (ret < 0)
 	{
-	  xine_log (this->stream->xine, XINE_LOG_MSG,
-		    LOG_MODULE": %s: %s\n", _("capability query failed"), strerror (-ret));
+	  xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
+		   LOG_MODULE": capability query failed: %s\n", strerror (-ret));
 	  return 0;
 	}
         if (this->cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
@@ -124,19 +124,19 @@ static int v4l2_input_open(input_plugin_t *this_gen) {
                     return 1;
                 } else {
                     /* TODO: Fallbacks */
-		    xine_log (this->stream->xine, XINE_LOG_MSG,
-			      LOG_MODULE": %s\n", _("video streaming setup failed"));
+		    xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
+			     LOG_MODULE": video streaming setup failed\n");
                     return 0;
                 }
             } else {
                 /* TODO: Radio streaming */
-		xine_log (this->stream->xine, XINE_LOG_MSG,
-			  LOG_MODULE": %s\n", _("sorry, only video is supported for now"));
+		xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
+			 LOG_MODULE": sorry, only video is supported for now\n");
                 return 0;
             }
         } else {
-	    xine_log (this->stream->xine, XINE_LOG_MSG,
-		      LOG_MODULE": %s\n", _("device doesn't support streaming - prod the author to support the other methods"));
+	    xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
+		     LOG_MODULE": device doesn't support streaming - prod the author to support the other methods\n");
             return 0;
         }
     } else {
@@ -418,8 +418,8 @@ static input_plugin_t *v4l2_class_get_instance(input_class_t *gen_cls, xine_stre
     this->radio = NULL;
     lprintf("Ready to read!\n");
 
-    xine_log (this->stream->xine, XINE_LOG_MSG,
-	      LOG_MODULE": %s\n", _("WARNING: this plugin is not of release quality"));
+    xprintf (this->stream->xine, XINE_VERBOSITY_NONE,
+	     LOG_MODULE": WARNING: this plugin is not of release quality\n");
 
     return &this->input_plugin;
 }
