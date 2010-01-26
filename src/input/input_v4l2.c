@@ -26,9 +26,9 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-
+/*
 #define LOG
-
+*/
 #include "input_plugin.h"
 #include "xine_plugin.h"
 #include "xine_internal.h"
@@ -107,7 +107,8 @@ static int v4l2_input_open(input_plugin_t *this_gen) {
 	ret = v4l2_ioctl(this->fd, VIDIOC_QUERYCAP, &(this->cap));
 	if (ret < 0)
 	{
-	  lprintf ("Capability query failed: %s\n", strerror (-ret));
+	  xine_log (this->stream->xine, XINE_LOG_MSG,
+		    LOG_MODULE": %s: %s\n", _("capability query failed"), strerror (-ret));
 	  return 0;
 	}
         if (this->cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
@@ -123,16 +124,19 @@ static int v4l2_input_open(input_plugin_t *this_gen) {
                     return 1;
                 } else {
                     /* TODO: Fallbacks */
-                    lprintf("Video streaming setup failed.\n");
+		    xine_log (this->stream->xine, XINE_LOG_MSG,
+			      LOG_MODULE": %s\n", _("video streaming setup failed"));
                     return 0;
                 }
             } else {
                 /* TODO: Radio streaming */
-                lprintf("Sorry, only video is supported for now.\n");
+		xine_log (this->stream->xine, XINE_LOG_MSG,
+			  LOG_MODULE": %s\n", _("sorry, only video is supported for now"));
                 return 0;
             }
         } else {
-            lprintf("Device doesn't support streaming. Prod the author to support the other methods.\n");
+	    xine_log (this->stream->xine, XINE_LOG_MSG,
+		      LOG_MODULE": %s\n", _("device doesn't support streaming - prod the author to support the other methods"));
             return 0;
         }
     } else {
@@ -413,6 +417,9 @@ static input_plugin_t *v4l2_class_get_instance(input_class_t *gen_cls, xine_stre
     this->video = NULL;
     this->radio = NULL;
     lprintf("Ready to read!\n");
+
+    xine_log (this->stream->xine, XINE_LOG_MSG,
+	      LOG_MODULE": %s\n", _("WARNING: this plugin is not of release quality"));
 
     return &this->input_plugin;
 }
