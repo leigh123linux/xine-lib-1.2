@@ -236,7 +236,7 @@ static buf_element_t* v4l2_input_read_block(input_plugin_t *this_gen, fifo_buffe
         this->video->index = 0;
         buf->type = BUF_VIDEO_YUY2;
     } else {
-        lprintf("Sending video frame (sent %d of %d)\n", this->video->index, this->video->buffers[this->video->inbuf.index].length);
+        lprintf("Sending video frame (sent %zd of %zd)\n", this->video->index, this->video->buffers[this->video->inbuf.index].length);
         /* TODO: Add audio support */
         this->video->headerSent = v4l2_input_dequeue_video_buffer(this, buf);
 	if (this->video->headerSent < 0)
@@ -285,7 +285,7 @@ static int v4l2_input_dequeue_video_buffer(v4l2_input_plugin_t *this, buf_elemen
     if (output->size > output->max_size)
 	output->size = output->max_size;
 
-    xine_fast_memcpy (output->content, this->video->buffers[this->video->inbuf.index].start + this->video->index, output->size);
+    xine_fast_memcpy (output->content, (char *)this->video->buffers[this->video->inbuf.index].start + this->video->index, output->size);
 
     this->video->index += output->size;
     if (this->video->index == this->video->buffers[this->video->inbuf.index].length)
