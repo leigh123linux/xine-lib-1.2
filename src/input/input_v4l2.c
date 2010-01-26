@@ -91,19 +91,25 @@ typedef struct {
     v4l2_radio_t* radio;
 } v4l2_input_plugin_t;
 
-static void v4l2_input_enqueue_video_buffer(v4l2_input_plugin_t *this, int idx);
+static int v4l2_input_enqueue_video_buffer(v4l2_input_plugin_t *this, int idx);
 static int v4l2_input_dequeue_video_buffer(v4l2_input_plugin_t *this, buf_element_t *input);
 static int v4l2_input_setup_video_streaming(v4l2_input_plugin_t *this);
 
 
 static int v4l2_input_open(input_plugin_t *this_gen) {
     v4l2_input_plugin_t *this = (v4l2_input_plugin_t*) this_gen;
+    int ret;
     lprintf("Opening %s\n", this->mrl);
 	this->fd = v4l2_open(this->mrl, O_RDWR);
 	if (this->fd) {
         /* TODO: Clean up this mess */
         this->events = xine_event_new_queue(this->stream);
-        v4l2_ioctl(this->fd, VIDIOC_QUERYCAP, &(this->cap));
+	ret = v4l2_ioctl(this->fd, VIDIOC_QUERYCAP, &(this->cap));
+	if (ret < 0)
+	{
+	  lprintf ("Capability query failed: %s\n", strerror (-ret));
+	  return 0;
+	}
         if (this->cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
             this->video = malloc(sizeof(v4l2_video_t));
             this->video->headerSent = 0;
@@ -180,7 +186,8 @@ static int v4l2_input_setup_video_streaming(v4l2_input_plugin_t *this) {
             this->video->bufcount = 0;
             return 0;
         }
-        v4l2_input_enqueue_video_buffer(this, i);
+	if (v4l2_input_enqueue_video_buffer(this, i) < 0)
+	  goto fail;
     }
 
     struct v4l2_format fmt;
@@ -232,6 +239,11 @@ static buf_element_t* v4l2_input_read_block(input_plugin_t *this_gen, fifo_buffe
         lprintf("Sending video frame (sent %d of %d)\n", this->video->index, this->video->buffers[this->video->inbuf.index].length);
         /* TODO: Add audio support */
         this->video->headerSent = v4l2_input_dequeue_video_buffer(this, buf);
+	if (this->video->headerSent < 0)
+	{
+	  buf->free_buffer (buf);
+	  buf = NULL;
+	}
     }
     return buf;
 }
@@ -251,12 +263,16 @@ static uint32_t v4l2_input_blocksize(input_plugin_t *this_gen) {
 
 static int v4l2_input_dequeue_video_buffer(v4l2_input_plugin_t *this, buf_element_t *output)
 {
+    int ret;
+
     if (!this->video->index)
     {
 	memset (&this->video->inbuf, 0, sizeof (this->video->inbuf));
 	this->video->inbuf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	this->video->inbuf.memory = V4L2_MEMORY_MMAP;
-	v4l2_ioctl(this->fd, VIDIOC_DQBUF, &this->video->inbuf);
+	ret = v4l2_ioctl(this->fd, VIDIOC_DQBUF, &this->video->inbuf);
+	if (ret < 0)
+	  return -1; /* failure */
 	output->decoder_flags = BUF_FLAG_FRAME_START;
     }
     else
@@ -275,20 +291,20 @@ static int v4l2_input_dequeue_video_buffer(v4l2_input_plugin_t *this, buf_elemen
     if (this->video->index == this->video->buffers[this->video->inbuf.index].length)
     {
 	output->decoder_flags |= BUF_FLAG_FRAME_END;
-	v4l2_input_enqueue_video_buffer(this, this->video->inbuf.index);
-	return 0;
+	ret = v4l2_input_enqueue_video_buffer(this, this->video->inbuf.index);
+	return -(ret < 0);
     }
 
     return 1;
 }
 
-static void v4l2_input_enqueue_video_buffer(v4l2_input_plugin_t *this, int idx) {
+static int v4l2_input_enqueue_video_buffer(v4l2_input_plugin_t *this, int idx) {
     struct v4l2_buffer buf;
     memset(&buf, 0, sizeof(buf));
     buf.index = idx;
     buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     buf.memory = V4L2_MEMORY_MMAP;
-    v4l2_ioctl(this->fd, VIDIOC_QBUF, &buf);
+    return v4l2_ioctl(this->fd, VIDIOC_QBUF, &buf);
 }
 
 static void v4l2_input_dispose(input_plugin_t *this_gen) {
