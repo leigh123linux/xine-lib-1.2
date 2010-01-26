@@ -395,14 +395,15 @@ static void parse_flv_script(demux_flv_t *this, int size) {
 static int read_flv_packet(demux_flv_t *this, int preview) {
   fifo_buffer_t *fifo = NULL;
   buf_element_t *buf  = NULL;
-  unsigned char  buffer[12];
-  unsigned char  tag_type;
-  unsigned int   remaining_bytes;
-  unsigned int   buf_type = 0;
-  unsigned int   buf_flags = 0;
-  unsigned int   pts;
 
   while (1) {
+    unsigned char buffer[12], extrabuffer[4];
+    unsigned char tag_type, avinfo;
+    unsigned int  remaining_bytes;
+    unsigned int  buf_type = 0;
+    unsigned int  buf_flags = 0;
+    unsigned int  pts;
+
     lprintf ("  reading FLV tag...\n");
     this->input->seek(this->input, 4, SEEK_CUR);
     if (this->input->read(this->input, buffer, 11) != 11) {
@@ -420,13 +421,13 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
     switch (tag_type) {
       case FLV_TAG_TYPE_AUDIO:
         lprintf("  got audio tag..\n");
-        if (this->input->read(this->input, buffer, 1) != 1) {
+        if (this->input->read(this->input, &avinfo, 1) != 1) {
           this->status = DEMUX_FINISHED;
           return this->status;
         }
         remaining_bytes--;
 
-        this->audiocodec = buffer[0] >> 4; /* override */
+        this->audiocodec = avinfo >> 4; /* override */
         switch (this->audiocodec) {
           case FLV_SOUND_FORMAT_PCM_BE:
             buf_type = BUF_AUDIO_LPCM_BE;
@@ -450,11 +451,11 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
           case FLV_SOUND_FORMAT_AAC:
             buf_type = BUF_AUDIO_AAC;
             /* AAC extra header */
-            this->input->read(this->input, buffer, 1 );
+            this->input->read(this->input, extrabuffer, 1 );
             remaining_bytes--;
             break;
           default:
-            lprintf("  unsupported audio format (%d)...\n", buffer[0] >> 4);
+            lprintf("  unsupported audio format (%d)...\n", this->audiocodec);
             buf_type = BUF_AUDIO_UNKNOWN;
             break;
         }
@@ -465,9 +466,9 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
           buf = fifo->buffer_pool_alloc(fifo);
           buf->decoder_flags = BUF_FLAG_HEADER | BUF_FLAG_STDHEADER | BUF_FLAG_FRAME_END;
           buf->decoder_info[0] = 0;
-          buf->decoder_info[1] = 44100 >> (3 - ((buffer[0] >> 2) & 3)); /* samplerate */
-          buf->decoder_info[2] = (buffer[0] & 2) ? 16 : 8; /* bits per sample */
-          buf->decoder_info[3] = (buffer[0] & 1) + 1; /* channels */
+          buf->decoder_info[1] = 44100 >> (3 - ((avinfo >> 2) & 3)); /* samplerate */
+          buf->decoder_info[2] = (avinfo & 2) ? 16 : 8; /* bits per sample */
+          buf->decoder_info[3] = (avinfo & 1) + 1; /* channels */
           buf->size = 0; /* no extra data */
           buf->type = buf_type;
           fifo->put(fifo, buf);
@@ -477,13 +478,13 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
 
       case FLV_TAG_TYPE_VIDEO:
         lprintf("  got video tag..\n");
-        if (this->input->read(this->input, buffer, 1) != 1) {
+        if (this->input->read(this->input, &avinfo, 1) != 1) {
           this->status = DEMUX_FINISHED;
           return this->status;
         }
         remaining_bytes--;
 
-        switch ((buffer[0] >> 4)) {
+        switch ((avinfo >> 4)) {
           case 0x01:
             buf_flags = BUF_FLAG_KEYFRAME;
             break;
@@ -495,7 +496,7 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
             break;
         }
 
-        this->videocodec = buffer[0] & 0x0F; /* override */
+        this->videocodec = avinfo & 0x0F; /* override */
         switch (this->videocodec) {
           case FLV_VIDEO_FORMAT_FLV1:
             buf_type = BUF_VIDEO_FLV1;
@@ -503,23 +504,23 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
           case FLV_VIDEO_FORMAT_VP6:
             buf_type = BUF_VIDEO_VP6F;
             /* VP6 extra header */
-            this->input->read(this->input, buffer, 1 );
+            this->input->read(this->input, extrabuffer, 1 );
             remaining_bytes--;
             break;
           case FLV_VIDEO_FORMAT_VP6A:
             buf_type = BUF_VIDEO_VP6F;
             /* VP6A extra header */
-            this->input->read(this->input, buffer, 4);
+            this->input->read(this->input, extrabuffer, 4);
             remaining_bytes -= 4;
             break;
           case FLV_VIDEO_FORMAT_H264:
             buf_type = BUF_VIDEO_H264;
             /* AVC extra header */
-            this->input->read(this->input, buffer, 4);
+            this->input->read(this->input, extrabuffer, 4);
             remaining_bytes -= 4;
             break;
           default:
-            lprintf("  unsupported video format (%d)...\n", buffer[0] & 0x0F);
+            lprintf("  unsupported video format (%d)...\n", this->videocodec);
             buf_type = BUF_VIDEO_UNKNOWN;
             break;
         }
@@ -541,11 +542,11 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
           buf->size = sizeof(xine_bmiheader);
           buf->type = buf_type;
           if (buf_type == BUF_VIDEO_VP6F) {
-            *((unsigned char *)buf->content+buf->size) = buffer[0];
+            *((unsigned char *)buf->content+buf->size) = extrabuffer[0];
             bih->biSize++;
             buf->size++;
           }
-          else if (buf_type == BUF_VIDEO_H264 && buffer[0] == 0) {
+          else if (buf_type == BUF_VIDEO_H264 && extrabuffer[0] == 0) {
             /* AVC sequence header */
             if (remaining_bytes > buf->max_size-buf->size) {
               xprintf(this->xine, XINE_VERBOSITY_LOG,
@@ -670,7 +671,7 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
             (int)((double)this->input->get_current_pos(this->input) * 65535.0 / this->size);
       }
 
-      if ((buf_type == BUF_VIDEO_H264 || buf_type == BUF_AUDIO_AAC) && buffer[0] == 0) {
+      if ((buf_type == BUF_VIDEO_H264 || buf_type == BUF_AUDIO_AAC) && extrabuffer[0] == 0) {
         /* AVC/AAC sequence header */
         buf->pts = 0;
         buf->size = 0;

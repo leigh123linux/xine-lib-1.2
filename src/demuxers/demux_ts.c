@@ -973,7 +973,6 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
 	  m->buf->decoder_flags |= BUF_FLAG_FRAME_END;
       }
       m->buf->pts = m->pts;
-      m->pts = 0;
       m->buf->decoder_info[0] = 1;
 
       if( this->input->get_length (this->input) )
@@ -982,12 +981,12 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
       if (this->rate)
         m->buf->extra_info->input_time = (int)((int64_t)this->input->get_current_pos (this->input)
                                          * 1000 / (this->rate * 50));
-#ifdef TS_LOG
-      printf ("demux_ts: produced buffer, pts=%lld\n", m->buf->pts);
-#endif
       m->fifo->put(m->fifo, m->buf);
       m->buffered_bytes = 0;
       m->buf = NULL; /* forget about buf -- not our responsibility anymore */
+#ifdef TS_LOG
+      printf ("demux_ts: produced buffer, pts=%lld\n", m->pts);
+#endif
     }
     /* allocate the buffer here, as pes_header needs a valid buf for dvbsubs */
      m->buf = m->fifo->buffer_pool_alloc(m->fifo);
@@ -1020,7 +1019,6 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
       m->buf->size = m->buffered_bytes;
       m->buf->type = m->type;
       m->buf->pts = m->pts;
-      m->pts = 0;
       m->buf->decoder_info[0] = 1;
       if( this->input->get_length (this->input) )
         m->buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) *
@@ -1028,12 +1026,15 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
       if (this->rate)
         m->buf->extra_info->input_time = (int)((int64_t)this->input->get_current_pos (this->input)
                                          * 1000 / (this->rate * 50));
-#ifdef TS_LOG
-      printf ("demux_ts: produced buffer, pts=%lld\n", m->buf->pts);
-#endif
+
       m->fifo->put(m->fifo, m->buf);
       m->buffered_bytes = 0;
       m->buf = m->fifo->buffer_pool_alloc(m->fifo);
+
+#ifdef TS_LOG
+      printf ("demux_ts: produced buffer, pts=%lld\n", m->pts);
+#endif
+
     }
     memcpy(m->buf->mem + m->buffered_bytes, ts, len);
     m->buffered_bytes += len;

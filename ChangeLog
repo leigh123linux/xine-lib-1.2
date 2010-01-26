@@ -69,7 +69,7 @@ xine-lib (1.1.90) (Unreleased)
   * Report more video output capabilities via (port)->get_capabilities():
     colour controls, zooming, colour keying.
 
-xine-lib (1.1.1?) 20??-??-??
+xine-lib (1.1.18) 20??-??-??
   * Bump the FLAC decoder's priority above ffmpegaudio. This should fix
     various problems with FLAC playback.
   * Build fix (undefined symbol) for when using older ffmpeg.
