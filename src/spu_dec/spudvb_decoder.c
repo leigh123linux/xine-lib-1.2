@@ -79,7 +79,9 @@ typedef struct {
   region_t		regions[MAX_REGIONS];
   clut_t		colours[MAX_REGIONS*256];
   unsigned char		trans[MAX_REGIONS*256];
-  unsigned char		lut24[4], lut28[4], lut48[16];
+  struct {
+    unsigned char	  lut24[4], lut28[4], lut48[16];
+  }			lut[MAX_REGIONS];
 } dvbsub_func_t;
 
 typedef struct		dvb_spu_class_s {
@@ -117,6 +119,33 @@ typedef struct dvb_spu_decoder_s {
 static clut_t default_clut[256];
 static unsigned char default_trans[256];
 static int default_colours_init = 0;
+
+static void reset_clut (dvbsub_func_t *dvbsub)
+{
+  int i, r;
+
+  /* Reset the colour LUTs */
+  for (r = 0; r < MAX_REGIONS; ++r)
+  {
+    memcpy (dvbsub->colours + r * 256, default_clut, sizeof (default_clut));
+    memcpy (dvbsub->trans + r * 256, default_trans, sizeof (default_trans));
+  }
+
+  /* Reset the colour index LUTs */
+  for (r = 0; r < MAX_REGIONS; ++r)
+  {
+    dvbsub->lut[r].lut24[0] = 0x0;
+    dvbsub->lut[r].lut24[1] = 0x7;
+    dvbsub->lut[r].lut24[2] = 0x8;
+    dvbsub->lut[r].lut24[3] = 0xF;
+    dvbsub->lut[r].lut28[0] = 0x00;
+    dvbsub->lut[r].lut28[1] = 0x77;
+    dvbsub->lut[r].lut28[2] = 0x88;
+    dvbsub->lut[r].lut28[3] = 0xFF;
+    for (i = 0; i < 16; ++i)
+      dvbsub->lut[r].lut48[i] = i | i << 4;
+  }
+}
 
 static void update_osd(dvb_spu_decoder_t *this, int region_id)
 {
@@ -215,15 +244,15 @@ static void plot (dvb_spu_decoder_t * this, int r, int run_length, unsigned char
   }
 }
 
-static const uint8_t *lookup_lut (const dvbsub_func_t *dvbsub)
+static const uint8_t *lookup_lut (const dvbsub_func_t *dvbsub, int r)
 {
   static const uint8_t identity_lut[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
   switch (dvbsub->compat_depth)
   {
-  case 012: return dvbsub->lut24;
-  case 013: return dvbsub->lut28;
-  case 023: return dvbsub->lut48;
+  case 012: return dvbsub->lut[r].lut24;
+  case 013: return dvbsub->lut[r].lut28;
+  case 023: return dvbsub->lut[r].lut48;
   default:  return identity_lut;
   }
 }
@@ -258,7 +287,7 @@ static void decode_2bit_pixel_code_string (dvb_spu_decoder_t * this, int r, int 
 {
   dvbsub_func_t *dvbsub = this->dvbsub;
   int j;
-  const uint8_t *lut = lookup_lut (dvbsub);
+  const uint8_t *lut = lookup_lut (dvbsub, r);
 
   if (dvbsub->in_scanline == 0)
     dvbsub->in_scanline = 1;
@@ -324,7 +353,7 @@ static void decode_4bit_pixel_code_string (dvb_spu_decoder_t * this, int r, int 
 {
   dvbsub_func_t *dvbsub = this->dvbsub;
   int j;
-  const uint8_t *lut = lookup_lut (dvbsub);
+  const uint8_t *lut = lookup_lut (dvbsub, r);
 
   if (dvbsub->in_scanline == 0)
     dvbsub->in_scanline = 1;
@@ -456,7 +485,7 @@ static void set_clut(dvb_spu_decoder_t *this,int CLUT_id,int CLUT_entry_id,int Y
 
   dvbsub_func_t *dvbsub = this->dvbsub;
 
-  if ((CLUT_id>=MAX_REGIONS) || (CLUT_entry_id>15)) {
+  if ((CLUT_id>=MAX_REGIONS) || (CLUT_entry_id>255)) {
     return;
   }
 
@@ -546,18 +575,18 @@ static void process_pixel_data_sub_block (dvb_spu_decoder_t * this, int r, int o
       break;
     case 0x20: /* 2-to-4bit colour index map */
       /* should this be implemented since we have an 8-bit overlay? */
-      dvbsub->lut24[0] = dvbsub->buf[dvbsub->i    ] >> 4;
-      dvbsub->lut24[1] = dvbsub->buf[dvbsub->i    ] & 0x0f;
-      dvbsub->lut24[2] = dvbsub->buf[dvbsub->i + 1] >> 4;
-      dvbsub->lut24[3] = dvbsub->buf[dvbsub->i + 1] & 0x0f;
+      dvbsub->lut[r].lut24[0] = dvbsub->buf[dvbsub->i    ] >> 4;
+      dvbsub->lut[r].lut24[1] = dvbsub->buf[dvbsub->i    ] & 0x0f;
+      dvbsub->lut[r].lut24[2] = dvbsub->buf[dvbsub->i + 1] >> 4;
+      dvbsub->lut[r].lut24[3] = dvbsub->buf[dvbsub->i + 1] & 0x0f;
       dvbsub->i += 2;
       break;
     case 0x21: /* 2-to-8bit colour index map */
-      memcpy (dvbsub->lut28, dvbsub->buf + dvbsub->i, 4);
+      memcpy (dvbsub->lut[r].lut28, dvbsub->buf + dvbsub->i, 4);
       dvbsub->i += 4;
       break;
     case 0x22:
-      memcpy (dvbsub->lut48, dvbsub->buf + dvbsub->i, 16);
+      memcpy (dvbsub->lut[r].lut48, dvbsub->buf + dvbsub->i, 16);
       dvbsub->i += 16;
       break;
     case 0xf0:
@@ -890,7 +919,6 @@ static void draw_subtitles (dvb_spu_decoder_t * this)
   pthread_mutex_unlock(&this->dvbsub_osd_mutex);
 }
 
-
 static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
 {
   dvb_spu_decoder_t *this = (dvb_spu_decoder_t *) this_gen;
@@ -959,25 +987,7 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
   /* completely ignore pts since it makes a lot of problems with various providers */
   this->vpts = 0;
 
-  /* Reset the colour LUTs */
-  for (i = 0; i < MAX_REGIONS; ++i)
-  {
-    memcpy (this->dvbsub->colours + i * 256, default_clut, sizeof (default_clut));
-    memcpy (this->dvbsub->trans + i * 256, default_trans, sizeof (default_trans));
-  }
-
-  /* Reset the colour index LUTs */
-  this->dvbsub->lut24[0] = 0x0;
-  this->dvbsub->lut24[1] = 0x7;
-  this->dvbsub->lut24[2] = 0x8;
-  this->dvbsub->lut24[3] = 0xF;
-  this->dvbsub->lut28[0] = 0x00;
-  this->dvbsub->lut28[1] = 0x77;
-  this->dvbsub->lut28[2] = 0x88;
-  this->dvbsub->lut28[3] = 0xFF;
-  for (i = 0; i < 16; ++i)
-    this->dvbsub->lut48[i] = i | i << 4;
-
+  reset_clut (this->dvbsub);
   /* process the pes section */
 
       PES_packet_length = this->pes_pkt_size;
