@@ -987,7 +987,6 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
   /* completely ignore pts since it makes a lot of problems with various providers */
   this->vpts = 0;
 
-  reset_clut (this->dvbsub);
   /* process the pes section */
 
       PES_packet_length = this->pes_pkt_size;
@@ -1058,8 +1057,9 @@ static void spudec_reset (spu_decoder_t * this_gen)
     this->dvbsub->regions[i].version_number = -1;
   }
   this->dvbsub->page.page_version_number = -1;
-  pthread_mutex_unlock(&this->dvbsub_osd_mutex);
+  reset_clut (this->dvbsub);
 
+  pthread_mutex_unlock(&this->dvbsub_osd_mutex);
 }
 
 static void spudec_discontinuity (spu_decoder_t * this_gen)
