@@ -90,8 +90,11 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
             AC_MSG_ERROR([Video4Linux support requested, but prerequisite headers not found.])
         fi
 	XINE_ARG_ENABLE([libv4l], [Enable libv4l support])
-	if test "x$enable_libv4l" != "xno"; then
-	    AC_CHECK_HEADERS([libv4l2.h], [have_libv4l=yes], [have_libv4l=no])
+ 	if test "x$enable_libv4l" != "xno"; then
+	    PKG_CHECK_MODULES([V4L2], [libv4l2],
+		[have_libv4l=yes
+		 AC_DEFINE([HAVE_LIBV4L2_H], [1], [Define this if you have libv4l installed])],
+		[have_libv4l=no])
 	    if test "x$hard_enable_libv4l" = "xyes" && test "x$have_libv4l" = "xno"; then
 		AC_MSG_ERROR([libv4l requested, but libv4l not found])
 	    fi
