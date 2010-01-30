@@ -1541,11 +1541,6 @@ struct h264_parser* init_parser(xine_t *xine)
   parser->xine = xine;
   memset(&parser->dpb, 0x00, sizeof(struct dpb));
 
-  /* no idea why we do that. inspired by libavcodec,
-   * as we couldn't figure in the specs....
-   */
-  parser->prev_pic_order_cnt_msb = 1 << 16;
-
   return parser;
 }
 
@@ -1561,7 +1556,7 @@ void reset_parser(struct h264_parser *parser)
   }
   parser->last_vcl_nal = NULL;
 
-  parser->prev_pic_order_cnt_msb = 1 << 16;
+  parser->prev_pic_order_cnt_msb = 0;
   parser->prev_pic_order_cnt_lsb = 0;
   parser->frame_num_offset = 0;
   parser->prev_top_field_order_cnt = 0;
@@ -1898,7 +1893,7 @@ int parse_nal(uint8_t *buf, int buf_len, struct h264_parser *parser,
     }
 
     /* increase the slice_cnt until a new frame is detected */
-    if (ret) {
+    if (ret && *completed_picture == NULL) {
       *completed_picture = parser->pic;
       parser->pic = create_coded_picture();
     }

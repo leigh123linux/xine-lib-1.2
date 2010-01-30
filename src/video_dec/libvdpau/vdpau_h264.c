@@ -396,7 +396,10 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
   // picture? - should we keep the first field in dpb?
   if(this->completed_pic->flag_mask & IDR_PIC) {
     dpb_flush(&(this->nal_parser->dpb));
-    this->last_ref_pic = NULL;
+    if(this->last_ref_pic) {
+      release_decoded_picture(this->last_ref_pic);
+      this->last_ref_pic = NULL;
+    }
   }
 
   VdpPictureInfoH264 pic;
@@ -471,8 +474,8 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
 
   VdpVideoSurface surface = this->vdpau_accel->surface;
 
-  //xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-  //    "Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer->bitstream_bytes, this->completed_pic->pts);
+  /*xprintf(this->xine, XINE_VERBOSITY_DEBUG,
+      "Decode: NUM: %d, REF: %d, BYTES: %d, PTS: %lld\n", pic.frame_num, pic.is_reference, vdp_buffer->bitstream_bytes, this->completed_pic->pts);*/
   VdpStatus status = this->vdpau_accel->vdp_decoder_render(this->decoder,
       surface, (VdpPictureInfo*)&pic, 1, vdp_buffer);
 
@@ -529,16 +532,19 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
       if(!slc->field_pic_flag || !this->wait_for_bottom_field) {
         decoded_pic = init_decoded_picture(this->completed_pic, surface, img);
         this->completed_pic = NULL;
+        if(this->last_ref_pic) {
+          release_decoded_picture(this->last_ref_pic);
+          this->last_ref_pic = NULL;
+        }
         this->last_ref_pic = decoded_pic;
+        lock_decoded_picture(this->last_ref_pic);
         decoded_pic->used_for_reference = 1;
         dpb_add_picture(&(this->nal_parser->dpb), decoded_pic, sps->num_ref_frames);
         this->dangling_img = NULL;
       } else if(slc->field_pic_flag && this->wait_for_bottom_field) {
         if(this->last_ref_pic) {
           decoded_pic = this->last_ref_pic;
-          //copy_nal_unit(decoded_pic->nal, this->nal_parser->current_nal);
-
-          dpb_add_coded_picture(this->last_ref_pic, this->completed_pic);
+          dpb_add_coded_picture(decoded_pic, this->completed_pic);
           this->completed_pic = NULL;
         }
       }
@@ -550,7 +556,7 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
       if(!decoded_pic) {
         decoded_pic = init_decoded_picture(this->completed_pic, surface, img);
         this->completed_pic = NULL;
-        //decoded_pic->nal->top_field_order_cnt = this->last_top_field_order_cnt;
+
         dpb_add_picture(&(this->nal_parser->dpb), decoded_pic, sps->num_ref_frames);
         this->dangling_img = NULL;
       }
@@ -570,10 +576,13 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
       this->wait_for_bottom_field = 0;
 
     } else if(slc->field_pic_flag && !slc->bottom_field_flag) {
-      // don't draw yet, second field is missing.
-      //this->last_top_field_order_cnt = this->nal_parser->completed_pic->top_field_order_cnt;
+      /* don't draw yet, second field is missing. */
       this->wait_for_bottom_field = 1;
       this->last_img = img;
+      if(this->completed_pic) {
+        free_coded_picture(this->completed_pic);
+      }
+      this->completed_pic = NULL;
     }
   }
 
@@ -664,6 +673,8 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           this->completed_pic->slc_nal != NULL &&
           this->completed_pic->pps_nal != NULL) {
         vdpau_decoder_render(this_gen, &vdp_buffer, this->completed_pic->slice_cnt);
+      } else if (this->completed_pic != NULL) {
+        free_coded_picture(this->completed_pic);
       }
 
       /* in case the last nal was detected as END_OF_SEQUENCE
