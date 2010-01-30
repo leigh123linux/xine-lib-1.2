@@ -50,6 +50,8 @@ struct decoded_picture {
   uint8_t delayed_output;
 
   struct decoded_picture *next;
+
+  uint32_t lock_counter;
 };
 
 /* Decoded Picture Buffer */
@@ -62,7 +64,8 @@ struct dpb {
 
 struct decoded_picture* init_decoded_picture(struct coded_picture *cpic,
     VdpVideoSurface surface, vo_frame_t *img);
-void free_decoded_picture(struct decoded_picture *pic);
+void release_decoded_picture(struct decoded_picture *pic);
+void lock_decoded_picture(struct decoded_picture *pic);
 void dpb_add_coded_picture(struct decoded_picture *pic,
     struct coded_picture *cpic);
 

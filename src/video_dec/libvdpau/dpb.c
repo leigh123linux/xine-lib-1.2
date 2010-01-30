@@ -30,6 +30,8 @@
 
 #include <xine/video_out.h>
 
+void free_decoded_picture(struct decoded_picture *pic);
+
 struct decoded_picture* init_decoded_picture(struct coded_picture *cpic,
     VdpVideoSurface surface, vo_frame_t *img)
 {
@@ -43,6 +45,7 @@ struct decoded_picture* init_decoded_picture(struct coded_picture *cpic,
   pic->surface = surface;
   pic->img = img;
   pic->delayed_output = 1;
+  pic->lock_counter = 1;
 
   return pic;
 }
@@ -64,12 +67,32 @@ void dpb_add_coded_picture(struct decoded_picture *pic,
   }
 }
 
+void release_decoded_picture(struct decoded_picture *pic)
+{
+  if(!pic)
+    return;
+
+  pic->lock_counter--;
+
+  if(pic->lock_counter <= 0) {
+    free_decoded_picture(pic);
+  }
+}
+
+void lock_decoded_picture(struct decoded_picture *pic)
+{
+  if(!pic)
+    return;
+
+  pic->lock_counter++;
+}
+
 void free_decoded_picture(struct decoded_picture *pic)
 {
   pic->img->free(pic->img);
+  free_coded_picture(pic->coded_pic[1]);
   free_coded_picture(pic->coded_pic[0]);
   pic->coded_pic[0] = NULL;
-  free_coded_picture(pic->coded_pic[1]);
   pic->coded_pic[1] = NULL;
   free(pic);
 }
@@ -126,13 +149,6 @@ struct decoded_picture* dpb_get_next_out_picture(struct dpb *dpb, int do_flush)
       }
     } while ((pic = pic->next) != NULL);
   }
-
-  int32_t out_top_field_order_cnt = outpic != NULL ?
-              outpic->coded_pic[0]->top_field_order_cnt : 0;
-  int32_t out_bottom_field_order_cnt = outpic != NULL ?
-              (outpic->coded_pic[1] != NULL ?
-                outpic->coded_pic[1]->bottom_field_order_cnt :
-                outpic->coded_pic[0]->top_field_order_cnt) : 0;
 
   return outpic;
 }
@@ -327,7 +343,7 @@ int dpb_set_unused_ref_picture_lidx_gt(struct dpb *dpb, int32_t longterm_idx)
 
 int dpb_set_output_picture(struct dpb *dpb, struct decoded_picture *outpic)
 {
-  struct decoded_picture *pic = dpb->pictures;
+  /*struct decoded_picture *pic = dpb->pictures;
   if (pic != NULL)
     do {
       if (pic == outpic) {
@@ -336,9 +352,15 @@ int dpb_set_output_picture(struct dpb *dpb, struct decoded_picture *outpic)
           dpb_remove_picture(dpb, pic);
         return 0;
       }
-    } while ((pic = pic->next) != NULL);
+    } while ((pic = pic->next) != NULL);*/
+  if(!outpic)
+    return -1;
 
-  return -1;
+  outpic->delayed_output = 0;
+  if(!outpic->used_for_reference)
+    dpb_remove_picture(dpb, outpic);
+
+  return 0;
 }
 
 int dpb_remove_picture(struct dpb *dpb, struct decoded_picture *rempic)
@@ -353,7 +375,7 @@ int dpb_remove_picture(struct dpb *dpb, struct decoded_picture *rempic)
           last_pic->next = pic->next;
         else
           dpb->pictures = pic->next;
-        free_decoded_picture(pic);
+        release_decoded_picture(pic);
         dpb->used--;
         return 0;
       }
@@ -376,7 +398,7 @@ static int dpb_remove_picture_by_img(struct dpb *dpb, vo_frame_t *remimg)
           last_pic->next = pic->next;
         else
           dpb->pictures = pic->next;
-        free_decoded_picture(pic);
+        release_decoded_picture(pic);
         dpb->used--;
         return 0;
       }
@@ -460,7 +482,7 @@ void dpb_free_all( struct dpb *dpb )
   if (pic != NULL)
     do {
       struct decoded_picture *next_pic = pic->next;
-      free_decoded_picture(pic);
+      release_decoded_picture(pic);
       --dpb->used;
       pic = next_pic;
     } while (pic != NULL);
@@ -493,7 +515,9 @@ int fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist)
         reflist[i].is_long_term = pic->coded_pic[0]->used_for_long_term_ref ||
             (pic->coded_pic[1] != NULL && pic->coded_pic[1]->used_for_long_term_ref);
 
-        reflist[i].frame_idx = pic->coded_pic[0]->slc_nal->slc.frame_num;
+        reflist[i].frame_idx = pic->coded_pic[0]->used_for_long_term_ref ?
+            pic->coded_pic[0]->long_term_pic_num :
+            pic->coded_pic[0]->slc_nal->slc.frame_num;
         reflist[i].top_is_reference = pic->top_is_reference;
         reflist[i].bottom_is_reference = pic->bottom_is_reference;
         reflist[i].field_order_cnt[0] = pic->coded_pic[0]->top_field_order_cnt;
