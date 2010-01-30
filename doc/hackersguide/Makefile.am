@@ -52,6 +52,7 @@ hackersguide.html: $(hackersguide_docbook)
 	  touch $^; \
 	fi
 endif
+	$(SED) -i -e '/<img [^>]*alt=/! s/<img /<img alt="" /g' $@ # we want valid XHTML 1.1
 
 if HAVE_RSVG
 .svg.png:
