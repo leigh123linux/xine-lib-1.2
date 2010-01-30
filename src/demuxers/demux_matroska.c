@@ -810,6 +810,17 @@ static void init_codec_vobsub(demux_matroska_t *this,
   }
 }
 
+static void init_codec_spu(demux_matroska_t *this, matroska_track_t *track) {
+  buf_element_t *buf;
+
+  buf = track->fifo->buffer_pool_alloc (track->fifo);
+
+  buf->size = 0;
+  buf->type = track->buf_type;
+
+  track->fifo->put (track->fifo, buf);
+}
+
 static void handle_realvideo (demux_plugin_t *this_gen, matroska_track_t *track,
                               int decoder_flags,
                               uint8_t *data, size_t data_len,
@@ -1429,6 +1440,10 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       if (track->compress_algo == MATROSKA_COMPRESS_NONE) {
         track->compress_algo = MATROSKA_COMPRESS_UNKNOWN;
       }
+    } else if (!strcmp(track->codec_id, MATROSKA_CODEC_ID_S_HDMV_PGS)) {
+      lprintf("MATROSKA_CODEC_ID_S_HDMV_PGS\n");
+      track->buf_type = BUF_SPU_HDMV;
+      init_codec = init_codec_spu;
     } else {
       lprintf("unknown codec\n");
     }
