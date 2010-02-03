@@ -101,6 +101,9 @@ static int xine_buffer_set_pos_rel(void *const this_gen, const int32_t delta,
     this->buf_pos = this->buf_size - delta;
 
     return 0;
+
+  default:
+    return -1;
   }
 }
 
