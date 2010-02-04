@@ -3,7 +3,8 @@ xine-lib (1.1.18) 20??-??-??
     various problems with FLAC playback.
   * Build fix (undefined symbol) for when using older ffmpeg.
   * TTA demuxer fixes; allow seeking.
-  * More meta-information tags. (Nothing sets these yet, though.)
+  * More meta-information tags.
+    Only the Ogg demuxer knows about these at present.
   * Added basic support for .qtl (Quicktime media link).
   * "Fixed" playback of 24-bit FLAC.
   * Work around an ffmpeg bug concerning Sorenson Video 3.

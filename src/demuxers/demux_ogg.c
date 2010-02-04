@@ -148,7 +148,7 @@ typedef struct demux_ogg_s {
 
   off_t                 avg_bitrate;
 
-  char                 *title;
+  char		       *meta[XINE_STREAM_INFO_MAX];
   chapter_info_t       *chapter_info;
   xine_event_queue_t   *event_queue;
 
@@ -414,9 +414,79 @@ static void ogg_handle_event (demux_ogg_t *this) {
   return;
 }
 
+
+#define OGG_META(TAG,APPEND) { #TAG"=", XINE_META_INFO_##TAG, APPEND }
+#define OGG_META_L(TAG,APPEND,META) { #TAG"=", XINE_META_INFO_##META, APPEND }
+static const struct ogg_meta {
+  char tag[16];
+  int meta;
+  int append;
+} metadata[] = {
+  OGG_META   (ALBUM,       0),
+  OGG_META   (ARTIST,      0),
+  OGG_META   (PUBLISHER,   0),
+  OGG_META   (COPYRIGHT,   0),
+  OGG_META   (LICENSE,     0),
+  OGG_META   (TITLE,       0),
+  OGG_META_L (TRACKNUMBER, 0, TRACK_NUMBER),
+  OGG_META   (COMPOSER,    1),
+  OGG_META   (ARRANGER,    1),
+  OGG_META   (LYRICIST,    1),
+  OGG_META   (AUTHOR,      1),
+  OGG_META   (CONDUCTOR,   1),
+  OGG_META   (PERFORMER,   1),
+  OGG_META   (ENSEMBLE,    1),
+  OGG_META   (OPUS,        0),
+  OGG_META   (PART,        0),
+  OGG_META   (PARTNUMBER,  0),
+  OGG_META   (GENRE,       1),
+  OGG_META_L (DATE,        1, YEAR), /* hmm... */
+  OGG_META   (LOCATION,    0),
+  OGG_META   (COMMENT,     0),
+};
+
+/* ensure that those marked "append" are cleared */
+/* FIXME: is this useful? Should they be cleared on first write? */
+static void prepare_read_comments (demux_ogg_t *this)
+{
+  int i;
+
+  for (i = 0; i < sizeof (metadata) / sizeof (struct ogg_meta); ++i)
+    if (metadata[i].append) {
+      free (this->meta[metadata[i].meta]);
+      this->meta[metadata[i].meta] = NULL;
+    }
+}
+
+static int read_comments (demux_ogg_t *this, const char *comment)
+{
+  int i;
+
+  for (i = 0; i < sizeof (metadata) / sizeof (struct ogg_meta); ++i) {
+    size_t ml = strlen (metadata[i].tag);
+    if (!strncasecmp (metadata[i].tag, comment, ml) && comment[ml]) {
+      if (metadata[i].append && this->meta[metadata[i].meta]) {
+        char *newstr;
+        asprintf (&newstr, "%s\n%s", this->meta[metadata[i].meta], comment + ml);
+        free (this->meta[metadata[i].meta]);
+        this->meta[metadata[i].meta] = newstr;
+      }
+      else {
+        free (this->meta[metadata[i].meta]);
+        this->meta[metadata[i].meta] = strdup (comment + ml);
+      }
+      _x_meta_info_set_utf8(this->stream, metadata[i].meta, this->meta[metadata[i].meta]);
+      return 1;
+    }
+  }
+  return 0;
+}
+
 /*
  * utility function to read a LANGUAGE= line from the user_comments,
  * to label audio and spu streams
+ * utility function to read CHAPTER*=, TITLE= etc. from the user_comments,
+ * to name (parts of) the stream
  */
 static void read_language_comment (demux_ogg_t *this, ogg_packet *op, int stream_num) {
   char           **ptr;
@@ -433,11 +503,12 @@ static void read_language_comment (demux_ogg_t *this, ogg_packet *op, int stream
   if ( vorbis_synthesis_headerin(&vi, &vc, op) >= 0) {
     ptr=vc.user_comments;
     while(*ptr) {
-      comment=*ptr;
+      comment=*ptr++;
       if ( !strncasecmp ("LANGUAGE=", comment, 9) ) {
         this->si[stream_num]->language = strdup (comment + strlen ("LANGUAGE=") );
       }
-      ++ptr;
+      else
+        read_comments (this, comment);
     }
   }
   vorbis_comment_clear(&vc);
@@ -445,8 +516,8 @@ static void read_language_comment (demux_ogg_t *this, ogg_packet *op, int stream
 }
 
 /*
- * utility function to read CHAPTER*= and TITLE= from the user_comments,
- * to name parts of the videostream
+ * utility function to read CHAPTER*= from the user_comments,
+ * to name parts of the stream
  */
 static void read_chapter_comment (demux_ogg_t *this, ogg_packet *op) {
   char           **ptr;
@@ -464,13 +535,14 @@ static void read_chapter_comment (demux_ogg_t *this, ogg_packet *op) {
     char *chapter_time = 0;
     char *chapter_name = 0;
     int   chapter_no = 0;
+
     ptr=vc.user_comments;
+
     while(*ptr) {
-      comment=*ptr;
-      if ( !strncasecmp ("TITLE=", comment,6) ) {
-        this->title = strdup (comment + strlen ("TITLE=") );
-        _x_meta_info_set(this->stream, XINE_META_INFO_TITLE, this->title);
-      }
+      comment=*ptr++;
+      if (read_comments (this, comment))
+        continue;
+
       if ( !chapter_time && strlen(comment) == 22 &&
           !strncasecmp ("CHAPTER" , comment, 7) &&
           isdigit(*(comment+7)) && isdigit(*(comment+8)) &&
@@ -510,7 +582,6 @@ static void read_chapter_comment (demux_ogg_t *this, ogg_packet *op) {
         chapter_no = 0;
         chapter_time = chapter_name = 0;
       }
-      ++ptr;
     }
   }
   vorbis_comment_clear(&vc);
@@ -545,13 +616,13 @@ static void update_chapter_display (demux_ogg_t *this, int stream_num, ogg_packe
     this->chapter_info->current_chapter = chapter;
 
     if (chapter >= 0) {
-      if (this->title) {
-        data.str_len = snprintf(data.str, sizeof(data.str), "%s / %s", this->title, this->chapter_info->entries[chapter].name);
+      if (this->meta[XINE_META_INFO_TITLE]) {
+        data.str_len = snprintf(data.str, sizeof(data.str), "%s / %s", this->meta[XINE_META_INFO_TITLE], this->chapter_info->entries[chapter].name);
       } else {
 	strncpy(data.str, this->chapter_info->entries[chapter].name, sizeof(data.str)-1);
       }
     } else {
-      strncpy(data.str, this->title, sizeof(data.str));
+      strncpy(data.str, this->meta[XINE_META_INFO_TITLE], sizeof(data.str));
     }
     if ( data.str_len == 0 )
       data.str_len = strlen(data.str);
@@ -1668,9 +1739,9 @@ static void demux_ogg_dispose (demux_plugin_t *this_gen) {
     free (this->chapter_info->entries);
     free (this->chapter_info);
   }
-  if (this->title){
-    free (this->title);
-  }
+  for (i = 0; i < XINE_STREAM_INFO_MAX; ++i)
+    free (this->meta[i]);
+
   if (this->event_queue)
     xine_event_dispose_queue (this->event_queue);
 
@@ -2025,6 +2096,7 @@ static demux_plugin_t *anx_open_plugin (demux_class_t *class_gen,
 				        input_plugin_t *input) {
 
   demux_ogg_t *this;
+  int i;
 
   if (detect_anx_content(stream->content_detection_method, class_gen, input) == 0)
     return NULL;
@@ -2058,8 +2130,9 @@ static demux_plugin_t *anx_open_plugin (demux_class_t *class_gen,
   theora_comment_init (&this->t_comment);
 #endif
 
+  for (i = 0; i < XINE_STREAM_INFO_MAX; ++i)
+    this->meta[i] = NULL;
   this->chapter_info = 0;
-  this->title = 0;
   this->event_queue = xine_event_new_queue (this->stream);
 
   return &this->demux_plugin;
@@ -2070,6 +2143,7 @@ static demux_plugin_t *ogg_open_plugin (demux_class_t *class_gen,
 				        input_plugin_t *input) {
 
   demux_ogg_t *this;
+  int i;
 
   if (detect_ogg_content(stream->content_detection_method, class_gen, input) == 0)
     return NULL;
@@ -2100,7 +2174,8 @@ static demux_plugin_t *ogg_open_plugin (demux_class_t *class_gen,
 #endif
 
   this->chapter_info = 0;
-  this->title = 0;
+  for (i = 0; i < XINE_STREAM_INFO_MAX; ++i)
+    this->meta[i] = NULL;
   this->event_queue = xine_event_new_queue (this->stream);
 
   return &this->demux_plugin;
