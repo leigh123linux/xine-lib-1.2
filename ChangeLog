@@ -6,6 +6,7 @@ xine-lib (1.1.18) 20??-??-??
   * More meta-information tags. (Nothing sets these yet, though.)
   * Added basic support for .qtl (Quicktime media link).
   * "Fixed" playback of 24-bit FLAC.
+  * Work around an ffmpeg bug concerning Sorenson Video 3.
 
 xine-lib (1.1.17) 2009-12-01
   * Add support for Matroska SIMPLEBLOCK.
