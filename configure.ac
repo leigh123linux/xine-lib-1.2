@@ -252,12 +252,12 @@ dnl ---------------------------------------------
 have_supported_dvb=yes
 SYS=other
 
-case "$host" in
-  *-gnu*.*)
+case "$build_os" in
+  gnu*)
     have_supported_dvb=no
     SYS=hurd
     ;;
-  *-*-mingw* | *-*-cygwin*)
+  mingw* | cygwin*)
     have_supported_dvb=no
     dnl check if we are using the cygwin, mingw or cygwin with mno-cygwin mode
     dnl in which case we are actually dealing with a mingw32 compiler
