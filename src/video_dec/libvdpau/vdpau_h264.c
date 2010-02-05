@@ -702,6 +702,7 @@ static void vdpau_h264_flush (video_decoder_t *this_gen) {
         "h264 flush, draw pts: %lld\n", decoded_pic->img->pts);
     decoded_pic->img->draw(decoded_pic->img, this->stream);
     dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
+    this->last_img = NULL;
   }
   dpb_free_all(&this->nal_parser->dpb);
   this->reset = VO_NEW_SEQUENCE_FLAG;
