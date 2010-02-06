@@ -708,7 +708,7 @@ static void vdpau_h264_flush (video_decoder_t *this_gen) {
   while ((decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb), 1)) != NULL) {
     decoded_pic->img->top_field_first = dp_top_field_first(decoded_pic);
     xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-        "h264 flush, draw pts: %lld\n", decoded_pic->img->pts);
+        "h264 flush, draw pts: %"PRId64"\n", decoded_pic->img->pts);
     decoded_pic->img->draw(decoded_pic->img, this->stream);
     dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
   }
