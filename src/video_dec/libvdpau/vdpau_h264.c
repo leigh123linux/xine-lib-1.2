@@ -696,13 +696,21 @@ static void vdpau_h264_flush (video_decoder_t *this_gen) {
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t*) this_gen;
   struct decoded_picture *decoded_pic = NULL;
 
+  if(this->dangling_img)
+    this->dangling_img->free(this->dangling_img);
+  this->last_img = this->dangling_img = NULL;
+
+  if (this->last_ref_pic) {
+    release_decoded_picture(this->last_ref_pic);
+    this->last_ref_pic = NULL;
+  }
+
   while ((decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb), 1)) != NULL) {
     decoded_pic->img->top_field_first = dp_top_field_first(decoded_pic);
     xprintf(this->xine, XINE_VERBOSITY_DEBUG,
         "h264 flush, draw pts: %lld\n", decoded_pic->img->pts);
     decoded_pic->img->draw(decoded_pic->img, this->stream);
     dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
-    this->last_img = NULL;
   }
   dpb_free_all(&this->nal_parser->dpb);
   this->reset = VO_NEW_SEQUENCE_FLAG;
@@ -737,6 +745,11 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
     this->wait_for_frame_start = this->have_frame_boundary_marks;
   }
 
+  if (this->last_ref_pic) {
+    release_decoded_picture(this->last_ref_pic);
+    this->last_ref_pic = NULL;
+  }
+
   if (this->dangling_img) {
     this->dangling_img->free(this->dangling_img);
     this->dangling_img = NULL;
@@ -763,6 +776,11 @@ static void vdpau_h264_discontinuity (video_decoder_t *this_gen) {
 static void vdpau_h264_dispose (video_decoder_t *this_gen) {
 
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *) this_gen;
+
+  if (this->last_ref_pic) {
+    release_decoded_picture(this->last_ref_pic);
+    this->last_ref_pic = NULL;
+  }
 
   if (this->dangling_img) {
     this->dangling_img->free(this->dangling_img);
