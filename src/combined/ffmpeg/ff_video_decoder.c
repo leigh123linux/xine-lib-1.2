@@ -346,8 +346,9 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
   }
 
   if (this->class->thread_count > 1) {
-    avcodec_thread_init(this->context, this->class->thread_count);
-    this->context->thread_count = this->class->thread_count;
+    if (this->codec->id != CODEC_ID_SVQ3
+        && avcodec_thread_init(this->context, this->class->thread_count) != -1)
+      this->context->thread_count = this->class->thread_count;
   }
 
   this->context->skip_loop_filter = skip_loop_filter_enum_values[this->class->skip_loop_filter_enum];

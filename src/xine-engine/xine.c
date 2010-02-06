@@ -335,6 +335,7 @@ static void ticket_dispose(xine_ticket_t *this) {
   pthread_cond_destroy(&this->issued);
   pthread_cond_destroy(&this->revoked);
 
+  free(this->holder_threads);
   free(this);
 }
 
