@@ -698,7 +698,8 @@ if test "x$have_v4l" = xyes; then
   have_libv4l=no
   PKG_CHECK_MODULES([V4L2], [libv4l2],
 	[have_libv4l=yes
-	 AC_DEFINE([HAVE_LIBV4L2_H], [1], [Define this if you have libv4l installed])])
+	 AC_DEFINE([HAVE_LIBV4L2_H], [1], [Define this if you have libv4l installed])],
+	[have_libv4l=no])
   if test "x$enable_libv4l" = "xyes" && test "x$have_libv4l" = "xno"; then
     AC_MSG_ERROR([libv4l requested but not found.])
   fi
