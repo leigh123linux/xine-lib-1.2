@@ -42,11 +42,13 @@ void free_nal_buffer(struct nal_buffer *nal_buffer)
 {
   struct nal_unit *nal = nal_buffer->first;
 
-  do {
-    struct nal_unit *delete = nal;
-    nal = nal->next;
-    release_nal_unit(delete);
-  } while(nal != NULL);
+  if(nal != NULL) {
+    do {
+      struct nal_unit *delete = nal;
+      nal = nal->next;
+      release_nal_unit(delete);
+    } while(nal != NULL);
+  }
 
   free(nal_buffer);
 }
