@@ -473,6 +473,12 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
           buf->type = buf_type;
           fifo->put(fifo, buf);
           this->got_audio_header = 1;
+          if (!INPUT_IS_SEEKABLE(this->input)) {
+             /* stop preview processing immediately, this enables libfaad to
+              * initialize even without INPUT_CAP_SEEKABLE of input stream.
+              */
+             preview = 0;
+          }
         }
         break;
 
