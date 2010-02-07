@@ -61,7 +61,7 @@ struct coded_picture
   struct nal_unit *slc_nal;
 };
 
-struct coded_picture* create_coded_picture();
+struct coded_picture* create_coded_picture(void);
 void free_coded_picture(struct coded_picture *pic);
 
 #endif /* CPB_H_ */

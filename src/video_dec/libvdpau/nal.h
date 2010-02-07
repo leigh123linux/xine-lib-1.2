@@ -487,7 +487,7 @@ struct nal_unit* nal_buffer_get_by_pps_id(struct nal_buffer *nal_buffer,
     uint32_t pic_parameter_set_id);
 struct nal_unit* nal_buffer_get_last(struct nal_buffer *nal_buffer);
 
-struct nal_unit* create_nal_unit();
+struct nal_unit* create_nal_unit(void);
 void lock_nal_unit(struct nal_unit *nal);
 void release_nal_unit(struct nal_unit *nal);
 void copy_nal_unit(struct nal_unit *dest, struct nal_unit *src);

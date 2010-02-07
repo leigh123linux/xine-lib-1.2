@@ -20,6 +20,10 @@
  * dpb.c: Implementing Decoded Picture Buffer
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -113,6 +117,8 @@ struct decoded_picture* dpb_get_next_ref_pic(struct dpb *dpb,
 
     pic = pic->next;
   }
+
+  return NULL;
 }
 
 struct decoded_picture* dpb_get_next_out_picture(struct dpb *dpb, int do_flush)

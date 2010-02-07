@@ -20,6 +20,10 @@
  * h264_parser.c: Almost full-features H264 NAL-Parser
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -1662,7 +1666,8 @@ int parse_frame(struct h264_parser *parser, uint8_t *inbuf, int inbuf_len,
   int32_t offset = 0;
   int start_seq_len = 3;
 
-  *ret_pic = *ret_buf = NULL;
+  *ret_pic = NULL;
+  *ret_buf = NULL;
   *ret_len = 0;
 
   if(parser->nal_size_length > 0)

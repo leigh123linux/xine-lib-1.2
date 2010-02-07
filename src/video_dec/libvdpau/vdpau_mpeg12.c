@@ -25,6 +25,9 @@
 /*#define LOG*/
 #define LOG_MODULE "vdpau_mpeg12"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -925,7 +928,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   VdpStatus st = accel->vdp_decoder_create( accel->vdp_device, VDP_DECODER_PROFILE_MPEG2_MAIN, 1920, 1080, 2, &decoder );
   if ( st!=VDP_STATUS_OK ) {
     lprintf( "can't create vdpau decoder.\n" );
-    return 1;
+    return NULL;
   }
 
   accel->vdp_decoder_destroy( decoder );

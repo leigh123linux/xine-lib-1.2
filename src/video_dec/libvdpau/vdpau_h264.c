@@ -22,6 +22,10 @@
  * vdpau_h264.c: H264 Video Decoder utilizing nvidia VDPAU engine
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -657,7 +661,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
       this->wait_for_frame_start = 0;
       len += parse_frame(this->nal_parser, buf->content + len, buf->size - len,
           buf->pts,
-          (uint8_t*)&vdp_buffer.bitstream, &vdp_buffer.bitstream_bytes, &this->completed_pic);
+          (uint8_t**)&vdp_buffer.bitstream, &vdp_buffer.bitstream_bytes, &this->completed_pic);
 
       if(this->decoder == VDP_INVALID_HANDLE &&
           this->completed_pic &&

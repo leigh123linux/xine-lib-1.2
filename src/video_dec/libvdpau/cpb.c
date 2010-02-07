@@ -20,6 +20,10 @@
  * cpb.c: Coded Picture Buffer
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "cpb.h"
 
 #include <stdlib.h>
