@@ -174,3 +174,9 @@ int dxr3_lavc_init(dxr3_driver_t *, plugin_node_t *);
 /* spu encoder functions */
 spu_encoder_t *dxr3_spu_encoder_init(void);
 void           dxr3_spu_encode(spu_encoder_t *);
+
+#define dxr3_video_setpts(fd,arg)	dxr3_compat_ioctl((fd), EM8300_IOCTL_VIDEO_SETPTS, (arg))
+#define dxr3_spu_setpts(fd,arg)		dxr3_compat_ioctl((fd), EM8300_IOCTL_SPU_SETPTS, (arg))
+#define dxr3_spu_setpalette(fd,arg)	dxr3_compat_ioctl((fd), EM8300_IOCTL_SPU_SETPALETTE, (arg))
+#define dxr3_spu_button(fd,arg)		dxr3_compat_ioctl((fd), EM8300_IOCTL_SPU_BUTTON, (arg))
+int dxr3_compat_ioctl (int, int, void *);

@@ -49,6 +49,8 @@
 #include "video_out_dxr3.h"
 #include "dxr3.h"
 
+#include "compat.c"
+
 /* once activated, we wait for this amount of missing pan&scan info
  * before disabling it again */
 #define PAN_SCAN_WINDOW_SIZE 50
@@ -592,7 +594,7 @@ static void dxr3_decode_data(video_decoder_t *this_gen, buf_element_t *buf)
       (this->sync_every_frame || buf->pts)) {
       uint32_t vpts32 = vpts;
       /* update the dxr3's current pts value */
-      if (ioctl(this->fd_video, EM8300_IOCTL_VIDEO_SETPTS, &vpts32))
+      if (dxr3_video_setpts(this->fd_video, &vpts32))
         xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 		"dxr3_decode_video: set video pts failed (%s)\n", strerror(errno));
     }

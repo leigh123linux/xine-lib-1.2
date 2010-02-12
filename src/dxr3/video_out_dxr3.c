@@ -66,6 +66,8 @@
 #include "dxr3.h"
 #include "video_out_dxr3.h"
 
+#include "compat.c"
+
 /* the amount of extra time we give the card for decoding */
 #define DECODE_PIPE_PREBUFFER 10000
 
@@ -872,7 +874,7 @@ static void dxr3_overlay_end(vo_driver_t *this_gen, vo_frame_t *frame_gen)
       0x00, 0x01, 0x06, 0x00, 0x04, 0x00, 0x07, 0xFF,
       0x00, 0x01, 0x00, 0x20, 0x02, 0xFF };
     /* just clear any previous spu */
-    ioctl(this->fd_spu, EM8300_IOCTL_SPU_BUTTON, NULL);
+    dxr3_spu_button(this->fd_spu, NULL);
     write(this->fd_spu, empty_spu, sizeof(empty_spu));
     pthread_mutex_unlock(&this->spu_device_lock);
     return;
@@ -884,7 +886,7 @@ static void dxr3_overlay_end(vo_driver_t *this_gen, vo_frame_t *frame_gen)
   this->spu_enc->color[6] = this->spu_enc->hili_color[2];
   this->spu_enc->color[7] = this->spu_enc->hili_color[3];
   /* set palette */
-  if (ioctl(this->fd_spu, EM8300_IOCTL_SPU_SETPALETTE, this->spu_enc->color))
+  if (dxr3_spu_setpalette(this->fd_spu, this->spu_enc->color))
     xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	    "video_out_dxr3: failed to set CLUT (%s)\n", strerror(errno));
   this->clut_cluttered = 1;
@@ -907,7 +909,7 @@ static void dxr3_overlay_end(vo_driver_t *this_gen, vo_frame_t *frame_gen)
   btn.right  = this->spu_enc->overlay->x + this->spu_enc->overlay->hili_right - 1;
   btn.top    = this->spu_enc->overlay->y + this->spu_enc->overlay->hili_top;
   btn.bottom = this->spu_enc->overlay->y + this->spu_enc->overlay->hili_bottom - 2;
-  if (ioctl(this->fd_spu, EM8300_IOCTL_SPU_BUTTON, &btn))
+  if (dxr3_spu_button(this->fd_spu, &btn))
     xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	    "dxr3_decode_spu: failed to set spu button (%s)\n", strerror(errno));
 
@@ -997,7 +999,7 @@ static void dxr3_display_frame(vo_driver_t *this_gen, vo_frame_t *frame_gen)
       }
 
       /* inform the card on the timing */
-      if (ioctl(this->fd_video, EM8300_IOCTL_VIDEO_SETPTS, &vpts32))
+      if (dxr3_video_setpts(this->fd_video, &vpts32))
 	xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 		"video_out_dxr3: set video pts failed (%s)\n", strerror(errno));
       /* for non-mpeg, the encoder plugin is responsible for calling
@@ -1252,7 +1254,7 @@ static void dxr3_dispose(vo_driver_t *this_gen)
       0x00, 0x01, 0x06, 0x00, 0x04, 0x00, 0x07, 0xFF,
       0x00, 0x01, 0x00, 0x20, 0x02, 0xFF };
     /* clear any remaining spu */
-    ioctl(this->fd_spu, EM8300_IOCTL_SPU_BUTTON, NULL);
+    dxr3_spu_button(this->fd_spu, NULL);
     write(this->fd_spu, empty_spu, sizeof(empty_spu));
     close(this->fd_spu);
   }
