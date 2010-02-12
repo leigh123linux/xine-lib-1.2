@@ -736,11 +736,11 @@ static char *parse_data_atom(const uint8_t *data_atom, uint32_t max_size) {
   static const int data_atom_max_version = 0;
   const int data_atom_version = data_atom[8];
 
-  if (data_atom_size < 8)
-    return NULL; /* too small */
-
   if (data_atom_size > max_size)
     data_atom_size = max_size;
+
+  if (data_atom_size < 8)
+    return NULL; /* too small */
 
   const size_t alloc_size = data_atom_size - 8 + 1;
   char *alloc_str = NULL;
