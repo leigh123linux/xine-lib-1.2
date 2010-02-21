@@ -1086,11 +1086,11 @@ static char* get_auds_codec_name(w32a_decoder_t *this, int buf_type) {
     _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC,
       "Windows Media Audio v2 (win32)");
     return "divxa32.acm";
-  case BUF_AUDIO_WMAV3:
+  case BUF_AUDIO_WMAPRO:
     this->driver_type = DRIVER_DMO;
     this->guid=&wma3_clsid;
     _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC,
-      "Windows Media Audio v3 (win32)");
+      "Windows Media Audio Professional (win32)");
     return "wma9dmod.dll";
   case BUF_AUDIO_WMALL:
     this->driver_type = DRIVER_DMO;
@@ -1693,7 +1693,7 @@ static const decoder_info_t dec_info_video = {
 };
 
 static uint32_t audio_types[] = {
-  BUF_AUDIO_WMAV1, BUF_AUDIO_WMAV2, BUF_AUDIO_WMAV3, BUF_AUDIO_MSADPCM,
+  BUF_AUDIO_WMAV1, BUF_AUDIO_WMAV2, BUF_AUDIO_WMAPRO, BUF_AUDIO_MSADPCM,
   BUF_AUDIO_MSIMAADPCM, BUF_AUDIO_MSGSM, BUF_AUDIO_IMC, BUF_AUDIO_LH,
   BUF_AUDIO_VOXWARE, BUF_AUDIO_ACELPNET, BUF_AUDIO_VIVOG723, BUF_AUDIO_WMAV,
   BUF_AUDIO_WMALL,

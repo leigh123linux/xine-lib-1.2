@@ -6,6 +6,7 @@ config=MP3ADU=
 
 WMAV1			WMAV1			MS Windows Media Audio 1
 WMAV2			WMAV2			MS Windows Media Audio 2
+WMAPRO			WMAPRO			MS Windows Media Audio Professional
 14_4			RA_144			Real 14.4
 28_8			RA_288			Real 28.8
 MPEG			MP3			MP3
