@@ -11,6 +11,7 @@ xine-lib (1.1.18) 20??-??-??
   * Work around an ffmpeg bug concerning Sorenson Video 3.
   * Flash audio bug fixes, mostly concerning AAC.
   * Fix DXR3 support for newer versions of the em8300 driver.
+  * Added support for WMA Pro.
 
 xine-lib (1.1.17) 2009-12-01
   * Add support for Matroska SIMPLEBLOCK.
