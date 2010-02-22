@@ -269,8 +269,8 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     uint8_t *d = (uint8_t *)audio_buffer->mem;
     int n = buf_size;
 
-    while (n >= 12) {
-      if ( stream_be ) {
+    if ( stream_be ) {
+      while (n >= 12) {
         if ( stream_be == this->cpu_be ) {
           *d++ = s[0];
           *d++ = s[1];
@@ -290,12 +290,11 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
           *d++ = s[7];
           *d++ = s[6];
         }
-      } else {
-        xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "lpcm_decoder: I don't know what should decode lpcm 24bit little endian byte stream");
+	s += 12;
+	n -= 12;
       }
-
-      s += 12;
-      n -= 12;
+    } else {
+      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "lpcm_decoder: I don't know what should decode lpcm 24bit little endian byte stream");
     }
 
     if ( (d - (uint8_t*)audio_buffer->mem)/2*3 < buf_size )
