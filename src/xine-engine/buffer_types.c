@@ -861,8 +861,8 @@ static const audio_db_t audio_db[] = {
   {
     0x162, 0
   },
-  BUF_AUDIO_WMAV3,
-  "Windows Media Audio v3"
+  BUF_AUDIO_WMAPRO,
+  "Windows Media Audio Professional"
 },
 {
   {

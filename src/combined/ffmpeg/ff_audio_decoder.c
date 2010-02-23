@@ -93,6 +93,7 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
   int out;
   audio_buffer_t *audio_buffer;
   int bytes_to_send;
+  unsigned int codec_type = buf->type & 0xFFFF0000;
 
   if ( (buf->decoder_flags & BUF_FLAG_HEADER) &&
       !(buf->decoder_flags & BUF_FLAG_SPECIAL) ) {
@@ -104,10 +105,8 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 
     if (buf->decoder_flags & BUF_FLAG_FRAME_END) {
       size_t i;
-      unsigned int codec_type;
       xine_waveformatex *audio_header;
 
-      codec_type = buf->type & 0xFFFF0000;
       this->codec = NULL;
 
       for(i = 0; i < sizeof(ff_audio_lookup)/sizeof(ff_codec_t); i++)
@@ -227,7 +226,7 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
         }
       }
 
-      /* Current ffmpeg audio decoders always use 16 bits/sample
+      /* Current ffmpeg audio decoders usually use 16 bits/sample
        * buf->decoder_info[2] can't be used as it doesn't refer to the output
        * bits/sample for some codecs (e.g. MS ADPCM) */
       this->audio_bits = 16;
@@ -345,14 +344,36 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
             return;
           }
 
-          if ((decode_buffer_size - out) > audio_buffer->mem_size)
-            bytes_to_send = audio_buffer->mem_size;
-          else
-            bytes_to_send = decode_buffer_size - out;
-
           /* fill up this buffer */
-          xine_fast_memcpy(audio_buffer->mem, &this->decode_buffer[out],
-			   bytes_to_send);
+          if (codec_type == BUF_AUDIO_WMAPRO) {
+            /* the above codecs output float samples, not 16-bit integers */
+            int bytes_per_sample = sizeof(float);
+            if (((decode_buffer_size - out) * 2 / bytes_per_sample) > audio_buffer->mem_size)
+              bytes_to_send = audio_buffer->mem_size * bytes_per_sample / 2;
+            else
+              bytes_to_send = decode_buffer_size - out;
+
+            int16_t *int_buffer = calloc(1, bytes_to_send * 2 / bytes_per_sample);
+            int i;
+            for (i = 0; i < (bytes_to_send / bytes_per_sample); i++) {
+              float *float_sample = (float *)&this->decode_buffer[i * bytes_per_sample + out];
+              int_buffer[i] = (int16_t)lrintf(*float_sample * 32768.);
+            }
+
+            out += bytes_to_send;
+            bytes_to_send = bytes_to_send * 2 / bytes_per_sample;
+            xine_fast_memcpy(audio_buffer->mem, int_buffer, bytes_to_send);
+            free(int_buffer);
+          } else {
+            if ((decode_buffer_size - out) > audio_buffer->mem_size)
+              bytes_to_send = audio_buffer->mem_size;
+            else
+              bytes_to_send = decode_buffer_size - out;
+
+            xine_fast_memcpy(audio_buffer->mem, &this->decode_buffer[out], bytes_to_send);
+            out += bytes_to_send;
+          }
+
           /* byte count / 2 (bytes / sample) / channels */
           audio_buffer->num_frames = bytes_to_send / 2 / this->audio_channels;
 
@@ -360,8 +381,6 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
           buf->pts = 0;  /* only first buffer gets the real pts */
           this->stream->audio_out->put_buffer (this->stream->audio_out,
             audio_buffer, this->stream);
-
-          out += bytes_to_send;
         }
 
         this->size -= bytes_consumed;

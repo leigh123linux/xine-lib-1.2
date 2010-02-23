@@ -60,6 +60,8 @@
 #include "video_out_dxr3.h"
 #include "dxr3.h"
 
+#include "compat.c"
+
 #define MAX_SPU_STREAMS 32
 
 
@@ -299,7 +301,7 @@ static void dxr3_spudec_decode_data(spu_decoder_t *this_gen, buf_element_t *buf)
     if (buf->content[0] == 0)  /* cheap endianess detection */
       dxr3_swab_clut((int *)buf->content);
     pthread_mutex_lock(&this->dxr3_vo->spu_device_lock);
-    if (ioctl(this->fd_spu, EM8300_IOCTL_SPU_SETPALETTE, buf->content))
+    if (dxr3_spu_setpalette(this->fd_spu, buf->content))
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	      "dxr3_decode_spu: failed to set CLUT (%s)\n", strerror(errno));
     /* remember clut, when video out places some overlay we may need to restore it */
@@ -368,7 +370,7 @@ static void dxr3_spudec_decode_data(spu_decoder_t *this_gen, buf_element_t *buf)
 	this->menu = 0;
 	this->button_filter = 1;
 	pthread_mutex_lock(&this->dxr3_vo->spu_device_lock);
-        ioctl(this->fd_spu, EM8300_IOCTL_SPU_BUTTON, NULL);
+        dxr3_spu_button(this->fd_spu, NULL);
         write(this->fd_spu, empty_spu, sizeof(empty_spu));
 	pthread_mutex_unlock(&this->dxr3_vo->spu_device_lock);
       }
@@ -486,14 +488,14 @@ static void dxr3_spudec_decode_data(spu_decoder_t *this_gen, buf_element_t *buf)
     vpts = this->stream->metronom->got_spu_packet(this->stream->metronom, buf->pts);
     llprintf(LOG_PTS, "pts = %" PRId64 " vpts = %" PRIu64 "\n", buf->pts, vpts);
     vpts32 = vpts;
-    if (ioctl(this->fd_spu, EM8300_IOCTL_SPU_SETPTS, &vpts32))
+    if (dxr3_spu_setpts(this->fd_spu, &vpts32))
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	      "dxr3_decode_spu: spu setpts failed (%s)\n", strerror(errno));
   }
 
   /* has video out tampered with our palette */
   if (this->dxr3_vo->clut_cluttered) {
-    if (ioctl(this->fd_spu, EM8300_IOCTL_SPU_SETPALETTE, this->clut))
+    if (dxr3_spu_setpalette(this->fd_spu, this->clut))
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	      "dxr3_decode_spu: failed to set CLUT (%s)\n", strerror(errno));
     this->dxr3_vo->clut_cluttered = 0;
@@ -549,7 +551,7 @@ static void dxr3_spudec_dispose(spu_decoder_t *this_gen)
   llprintf(LOG_SPU, "close: SPU_FD = %i\n",this->fd_spu);
   pthread_mutex_lock(&this->dxr3_vo->spu_device_lock);
   /* clear any remaining spu */
-  ioctl(this->fd_spu, EM8300_IOCTL_SPU_BUTTON, NULL);
+  dxr3_spu_button(this->fd_spu, NULL);
   write(this->fd_spu, empty_spu, sizeof(empty_spu));
   close(this->fd_spu);
   this->fd_spu = 0;
@@ -586,7 +588,7 @@ static void dxr3_spudec_set_button(spu_decoder_t *this_gen, int32_t button, int3
   if (mode > 0 && !this->button_filter &&
       (dxr3_spudec_copy_nav_to_btn(this, mode - 1, &btn ) > 0)) {
     pthread_mutex_lock(&this->dxr3_vo->spu_device_lock);
-    if (ioctl(this->fd_spu, EM8300_IOCTL_SPU_BUTTON, &btn))
+    if (dxr3_spu_button(this->fd_spu, &btn))
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	      "dxr3_decode_spu: failed to set spu button (%s)\n", strerror(errno));
     pthread_mutex_unlock(&this->dxr3_vo->spu_device_lock);
@@ -617,7 +619,7 @@ static void dxr3_spudec_process_nav(dxr3_spudec_t *this)
   }
   if ((dxr3_spudec_copy_nav_to_btn(this, 0, &btn ) > 0)) {
     pthread_mutex_lock(&this->dxr3_vo->spu_device_lock);
-    if (ioctl(this->fd_spu, EM8300_IOCTL_SPU_BUTTON, &btn))
+    if (dxr3_spu_button(this->fd_spu, &btn))
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
         "dxr3_decode_spu: failed to set spu button (%s)\n", strerror(errno));
     pthread_mutex_unlock(&this->dxr3_vo->spu_device_lock);
@@ -639,7 +641,7 @@ static void dxr3_spudec_process_nav(dxr3_spudec_t *this)
 
     if ((dxr3_spudec_copy_nav_to_btn(this, 0, &btn ) > 0)) {
       pthread_mutex_lock(&this->dxr3_vo->spu_device_lock);
-      if (ioctl(this->fd_spu, EM8300_IOCTL_SPU_BUTTON, &btn))
+      if (dxr3_spu_button(this->fd_spu, &btn))
 	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	 "dxr3_decode_spu: failed to set spu button (%s)\n", strerror(errno));
       pthread_mutex_unlock(&this->dxr3_vo->spu_device_lock);

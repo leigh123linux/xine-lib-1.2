@@ -1,3 +1,32 @@
+/*
+ * em8300.h
+ *
+ * Copyright (C) 2000 Henrik Johansson <lhj@users.sourceforge.net>
+ *           (C) 2000 Ze'ev Maor <zeev@users.sourceforge.net>
+ *           (C) 2001 Rick Haines <rick@kuroyi.net>
+ *           (C) 2001 Edward Salley <drawdeyellas@hotmail.com>
+ *           (C) 2001 Jeremy T. Braun <jtbraun@mmit.edu>
+ *           (C) 2001 Ralph Zimmermann <rz@ooe.net>
+ *           (C) 2001 Daniel Chassot <Daniel.Chassot@vibro-meter.com>
+ *           (C) 2002 Michael Hunold <michael@mihu.de>
+ *           (C) 2002-2003 David Holm <mswitch@users.sourceforge.net>
+ *           (C) 2003-2008 Nicolas Boullis <nboullis@debian.org>
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either version 2
+ *  of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 #ifndef LINUX_EM8300_H
 #define LINUX_EM8300_H
 
@@ -85,13 +114,13 @@ typedef struct {
 #define EM8300_OVERLAY_SIGNAL_WITH_VGA 2
 #define EM8300_OVERLAY_VGA_ONLY 3
 
-#define EM8300_IOCTL_VIDEO_SETPTS 1
+#define EM8300_IOCTL_VIDEO_SETPTS _IOW('C',1,int)
 #define EM8300_IOCTL_VIDEO_GETSCR _IOR('C',2,unsigned)
 #define EM8300_IOCTL_VIDEO_SETSCR _IOW('C',2,unsigned)
 
-#define EM8300_IOCTL_SPU_SETPTS 1
-#define EM8300_IOCTL_SPU_SETPALETTE 2
-#define EM8300_IOCTL_SPU_BUTTON 3
+#define EM8300_IOCTL_SPU_SETPTS _IOW('C',1,int)
+#define EM8300_IOCTL_SPU_SETPALETTE _IOW('C',2,unsigned[16])
+#define EM8300_IOCTL_SPU_BUTTON _IOW('C',3,em8300_button_t)
 
 #define EM8300_ASPECTRATIO_4_3 0
 #define EM8300_ASPECTRATIO_16_9 1
@@ -196,6 +225,25 @@ typedef struct {
 
 #define EM8300_MAJOR 121
 #define EM8300_LOGNAME "em8300"
+extern int major;
+
+#include <linux/version.h>
+#include <linux/types.h> /* ulong, uint32_t */
+#include <linux/i2c.h> /* struct i2c_adapter */
+#include <linux/i2c-algo-bit.h> /* struct i2c_algo_bit_data */
+#include <linux/time.h> /* struct timeval */
+#include <linux/wait.h> /* wait_queue_head_t */
+#include <linux/list.h> /* struct list_head */
+
+#if defined(CONFIG_SND) || defined(CONFIG_SND_MODULE)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,16)
+#define snd_card_t struct snd_card
+#else
+#include <sound/driver.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#endif
+#endif
 
 struct dicom_s {
 	int luma;
@@ -232,6 +280,31 @@ struct em8300_audio_s {
 	int enable_bits;
 };
 
+struct em8300_model_config_s {
+	int use_bt865;
+	int dicom_other_pal;
+	int dicom_fix;
+	int dicom_control;
+	int bt865_ucode_timeout;
+	int activate_loopback;
+};
+
+struct adv717x_model_config_s {
+	int pixelport_16bit;
+	int pixelport_other_pal;
+	int pixeldata_adjust_ntsc;
+	int pixeldata_adjust_pal;
+};
+
+struct bt865_model_config_s {
+};
+
+struct em8300_config_s {
+	struct em8300_model_config_s model;
+	struct adv717x_model_config_s adv717x_model;
+	struct bt865_model_config_s bt865_model;
+};
+
 struct em8300_s
 {
 	char name[40];
@@ -250,12 +323,8 @@ struct em8300_s
 
 	int playmode;
 
-	/* Sysfs */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,46)
-	struct class_device classdev;
-	struct class_device classdev_mv;
-	struct class_device classdev_ma;
-	struct class_device classdev_sp;
+#if defined(CONFIG_SND) || defined(CONFIG_SND_MODULE)
+	snd_card_t *alsa_card;
 #endif
 
 	/* Fifos */
@@ -291,6 +360,7 @@ struct em8300_s
 	/* I2C clients */
 	int encoder_type;
 	struct i2c_client *encoder;
+	struct i2c_client *eeprom;
 
 	/* Microcode registers */
 	unsigned ucode_regs[MAX_UCODE_REGISTER];
@@ -318,14 +388,17 @@ struct em8300_s
 	int audio_mode;
         int pcm_mode;
 	int dsp_num;
-/* */
-	int dword_DB4;
-	unsigned char byte_D90[24];
+	/* Channel status for S/PDIF */
+	unsigned int channel_status_pos;
+	unsigned char channel_status[24];
+	enum { NONE, OSS, ALSA } audio_driver_style;
+	struct semaphore audio_driver_style_lock;
 
 	/* Video */
 	int video_mode;
 	int video_playmode;
 	int aspect_ratio;
+	int zoom;
 	uint32_t video_pts;
 	uint32_t video_lastpts;
 	int video_ptsvalid,video_offset,video_count;
@@ -375,9 +448,22 @@ struct em8300_s
 	struct list_head  memory;
 #endif
 
+	/* Checksum for the on-board eeprom */
+	u8 *eeprom_checksum;
+
+	int model;
+
+	struct em8300_config_s config;
+
 	/* To support different options for different cards */
 	unsigned int card_nr;
 };
+
+#if defined(CONFIG_SND) || defined(CONFIG_SND_MODULE)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,16)
+#undef snd_card_t
+#endif
+#endif
 
 #define TIMEDIFF(a,b) a.tv_usec - b.tv_usec + \
 	    1000000 * (a.tv_sec - b.tv_sec)
@@ -388,7 +474,8 @@ struct em8300_s
 */
 
 /* em8300_i2c.c */
-int em8300_i2c_init(struct em8300_s *em);
+int em8300_i2c_init1(struct em8300_s *em);
+int em8300_i2c_init2(struct em8300_s *em);
 void em8300_i2c_exit(struct em8300_s *em);
 void em8300_clockgen_write(struct em8300_s *em, int abyte);
 
@@ -408,7 +495,8 @@ ssize_t em8300_audio_write(struct em8300_s *em, const char * buf,
 int mpegaudio_command(struct em8300_s *em, int cmd);
 
 /* em8300_ucode.c */
-int em8300_ucode_upload(struct em8300_s *em, void *ucode_user, int ucode_size);
+void em8300_ucode_upload(struct em8300_s *em, void *ucode, int ucode_size);
+void em8300_require_ucode(struct em8300_s *em);
 
 /* em8300_misc.c */
 int em8300_setregblock(struct em8300_s *em, int offset, int val, int len);
@@ -453,7 +541,7 @@ void em8300_spu_release(struct em8300_s *em);
 int em8300_control_ioctl(struct em8300_s *em, int cmd, unsigned long arg);
 int em8300_ioctl_setvideomode(struct em8300_s *em, int mode);
 int em8300_ioctl_setaspectratio(struct em8300_s *em, int ratio);
-void em8300_ioctl_getstatus(struct em8300_s *em, char *usermsg);
+int em8300_ioctl_getstatus(struct em8300_s *em, char *usermsg);
 int em8300_ioctl_init(struct em8300_s *em, em8300_microcode_t *useruc);
 void em8300_ioctl_enable_videoout(struct em8300_s *em, int mode);
 int em8300_ioctl_setplaymode(struct em8300_s *em, int mode);

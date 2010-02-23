@@ -145,7 +145,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
         echo "   - ffmpeg (external library)"
     else
         echo "   - ffmpeg (*INTERNAL* library):"
-        echo "     - Windows Media Audio v1/v2"
+        echo "     - Windows Media Audio v1/v2/Pro"
         echo "     - DV            - logarithmic PCM"
         echo "     - 14k4          - 28k8"
         echo "     - MS ADPCM      - IMA ADPCM"
