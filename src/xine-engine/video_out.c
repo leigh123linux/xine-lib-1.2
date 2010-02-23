@@ -1469,8 +1469,11 @@ static int vo_set_property (xine_video_port_t *this_gen, int property, int value
     pthread_mutex_lock(&this->display_img_buf_queue->mutex);
     if(value)
       this->discard_frames++;
-    else
+    else if (this->discard_frames)
       this->discard_frames--;
+    else
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+	       "vo_set_property: discard_frames is already zero\n");
     pthread_mutex_unlock(&this->display_img_buf_queue->mutex);
     ret = this->discard_frames;
 

@@ -1889,8 +1889,11 @@ static int ao_set_property (xine_audio_port_t *this_gen, int property, int value
     /* recursive discard buffers setting */
     if(value)
       this->discard_buffers++;
-    else
+    else if (this->discard_buffers)
       this->discard_buffers--;
+    else
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+	       "ao_set_property: discard_buffers is already zero\n");
 
     ret = this->discard_buffers;
 
