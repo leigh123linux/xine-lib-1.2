@@ -18,6 +18,8 @@ if HAVE_LIBRTE
 link_rte = -lrte
 endif
 
+EXTRA_DIST = compat.c
+
 xineplug_LTLIBRARIES = $(dxr3_modules)
 
 xineplug_decode_dxr3_video_la_SOURCES = dxr3_decode_video.c

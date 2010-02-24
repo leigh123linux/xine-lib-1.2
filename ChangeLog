@@ -1,3 +1,6 @@
+xine-lib (1.1.18.1) 2010-??-??
+  * Oops. compat.c (for DXR3 support) was omitted.
+
 xine-lib (1.1.18) 2010-02-23
   * Bump the FLAC decoder's priority above ffmpegaudio. This should fix
     various problems with FLAC playback.
