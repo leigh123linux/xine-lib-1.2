@@ -678,15 +678,19 @@ dnl ----------------------------------------------
 AC_ARG_ENABLE([v4l],
 	AS_HELP_STRING([--disable-v4l], [do not build Video4Linux input plugins]))
 
+have_v4l=no
+have_v4l2=no
 if test "x$enable_v4l" != "xno"; then
-  AC_CHECK_HEADERS([linux/videodev.h linux/videodev2.h], [have_v4l=yes], [have_v4l=no])
+  AC_CHECK_HEADERS([linux/videodev.h], [have_v4l=yes], [])
+  AC_CHECK_HEADERS([linux/videodev2.h sys/videoio.h sys/videodev2.h], [have_v4l2=yes], [])
   AC_CHECK_HEADERS([asm/types.h])
-  if test "x$enable_v4l" = "xyes" && test "x$have_v4l" = "xno"; then
+  if test "x$enable_v4l" = "xyes" && test "x$have_v4l$have_v4l2" = "xnono"; then
      AC_MSG_ERROR([Video4Linux support requested, but prerequisite headers not found.])
   fi
 fi
 
 AM_CONDITIONAL(HAVE_V4L, [test "x$have_v4l" = "xyes"])
+AM_CONDITIONAL(HAVE_V4L2, [test "x$have_v4l2" = "xyes"])
 
 dnl ----------------------------------------------
 dnl Check for libv4l support
@@ -694,7 +698,7 @@ dnl ----------------------------------------------
 AC_ARG_ENABLE([libv4l],
 	AS_HELP_STRING([--disable-libv4l], [do not build with libv4l support]))
 
-if test "x$have_v4l" = xyes; then
+if test "x$have_v4l2" = xyes; then
   have_libv4l=no
   PKG_CHECK_MODULES([V4L2], [libv4l2],
 	[have_libv4l=yes

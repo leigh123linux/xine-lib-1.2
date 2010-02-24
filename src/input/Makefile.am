@@ -21,8 +21,11 @@ endif
 
 if HAVE_V4L
 in_v4l = xineplug_inp_v4l.la
-in_v4l2 = xineplug_inp_v4l2.la
 in_pvr = xineplug_inp_pvr.la
+endif
+
+if HAVE_V4L2
+in_v4l2 = xineplug_inp_v4l2.la
 endif
 
 if HAVE_GNOME_VFS
