@@ -2,6 +2,7 @@ xine-lib (1.1.18.1) 2010-??-??
   * Oops. compat.c (for DXR3 support) was omitted.
   * Fix up V4L/V4L2 compilation. Some non-Linux have V4L2 but not V4L.
   * Fix a size check (wrong variable, causing int/ptr comparison) in rmff.c.
+  * Fix build with the old, outdated and deprecated internal ffmpeg.
 
 xine-lib (1.1.18) 2010-02-23
   * Bump the FLAC decoder's priority above ffmpegaudio. This should fix

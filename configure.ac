@@ -3008,8 +3008,10 @@ echo " * audio decoder plugins:"
 echo "   - GSM 06.10       - linear PCM"
 if test "x$with_external_ffmpeg" = "xyes"; then
   echo "   - ffmpeg (external library):"
+  echo "     - Windows Media Audio v1/v2/Pro"
 else
   echo "   - ffmpeg (internal library):"
+  echo "     - Windows Media Audio v1/v2"
 fi
 echo "     - Windows Media Audio v1/v2/Pro"
 echo "     - DV            - logarithmic PCM"
