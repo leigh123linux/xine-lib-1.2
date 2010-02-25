@@ -375,7 +375,7 @@ static rmff_mdpr_t *rmff_scan_mdpr(const char *data)
   mdpr->mime_type[mdpr->mime_type_size]=0;
 
   mdpr->type_specific_len=_X_BE_32(&data[42+mdpr->stream_name_size+mdpr->mime_type_size]);
-  if (mdpr->size < 46 + mdpr->stream_name_size + mdpr->mime_type_size + mdpr->type_specific_data)
+  if (mdpr->size < 46 + mdpr->stream_name_size + mdpr->mime_type_size + mdpr->type_specific_len)
     goto fail;
   mdpr->type_specific_data = malloc(mdpr->type_specific_len);
   if (!mdpr->type_specific_data)
