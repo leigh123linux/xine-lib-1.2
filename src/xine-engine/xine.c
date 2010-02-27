@@ -1740,6 +1740,7 @@ void xine_init (xine_t *this) {
 						 "extension", NULL};
 
   /* First of all, initialise libxdg-basedir as it's used by plugins. */
+  setenv ("HOME", xine_get_homedir (), 0); /* libxdg-basedir needs $HOME */
   xdgInitHandle(&this->basedir_handle);
 
   /*
