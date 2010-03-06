@@ -2910,6 +2910,9 @@ fi
 if test "x$have_v4l" = "xyes"; then
   echo "   - v4l"
 fi
+if test "x$have_v4l2" = "xyes"; then
+  echo "   - v4l2"
+fi
 if test "x$have_libsmbclient" = "xyes"; then
   echo "   - smbclient"
 fi
