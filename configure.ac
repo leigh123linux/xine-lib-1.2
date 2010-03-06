@@ -1690,10 +1690,13 @@ AM_CONDITIONAL(HAVE_LIBSMBCLIENT, test "x$have_libsmbclient" = "xyes")
 dnl ---------------------------------------------
 dnl SUN style audio interface
 dnl ---------------------------------------------
+AC_ARG_ENABLE([sunaudio],
+	AS_HELP_STRING([--disable-sunaudio], [Do not build Sun audio output support]))
 
-AC_MSG_CHECKING(for Sun audio support)
-have_sunaudio=no
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+if test "x$enable_sunaudio" != "xno"; then
+   AC_MSG_CHECKING(for Sun audio support)
+   have_sunaudio=no
+   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 	    #include <sys/types.h>
 	    #include <sys/audioio.h>
 	]], [[
@@ -1702,14 +1705,17 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 	]])],[
 	    have_sunaudio=yes
 	],[])
-AC_MSG_RESULT($have_sunaudio)
-AM_CONDITIONAL(HAVE_SUNAUDIO, test "x$have_sunaudio" = "xyes")
+   AC_MSG_RESULT($have_sunaudio)
+   AM_CONDITIONAL(HAVE_SUNAUDIO, test "x$have_sunaudio" = "xyes")
 
-if test "x$have_sunaudio" = "xyes"; then
-   dnl NetBSD and OpenBSD don't have this, but check for it
-   dnl rather than assuming that it doesn't happen elsewhere.
-   AC_CHECK_MEMBERS([audio_info_t.output_muted])
+   if test "x$have_sunaudio" = "xyes"; then
+      dnl NetBSD and OpenBSD don't have this, but check for it
+      dnl rather than assuming that it doesn't happen elsewhere.
+      AC_CHECK_MEMBERS([audio_info_t.output_muted])
+   fi
 fi
+
+AM_CONDITIONAL(HAVE_SUNAUDIO, test "x$have_sunaudio" = "xyes")
 
 
 dnl ---------------------------------------------
