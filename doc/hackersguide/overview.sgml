@@ -793,7 +793,7 @@
   </sect2>
  </sect1>
 
- <sect1>
+ <sect1 id="contribute">
   <title>How to contribute</title>
   <para>
    Make sure you send your patches in unified diff format to
@@ -811,21 +811,60 @@
    committable. This normally means that we want your name and email address
    (we're not keen on pseudonyms), a subject line which provides a
    convenient summary of your changes, and body text which provides a longer
-   description (if needed). Patches must be generated using <command>hg
-   diff</command> or <command>cvs -z9 diff</command>, depending on which is
-   used for the repository, and always from within the top level of the
-   checked-out source.
+   description (if needed).
   </para>
   <para>
-   If your patch is intended for a Mercurial-format repository, then
-   committing it locally and using
-   <command>hg export <parameter>.</parameter> &gt;<filename>foo.patch</filename></command>
-   to create the file to be attached is acceptable (but note that the first
-   line &ndash; up to the first line feed &ndash; of the commit message is regarded as
-   the patch summary; if you're not sure, check with
-   <command>hg log -r<parameter>.</parameter></command>.
-   Alternatively, use <token>From:</token> and <token>Subject:</token> lines
-   in the patch file itself; this is useful when forwarding.
+   There are a few ways to submit your patches:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     <command>hg diff</command> is probably the easiest. You'll need a
+     subject line and body text as described above. If you're copying or
+     renaming files, or a file should be marked as executable, then use
+     <command>hg diff --git</command>; this will include the necessary
+     information (if copying or renaming, you need to have used <command>hg
+     copy</command> or <command>hg rename</command> for this to work).
+    </para>
+    <para>
+     If you're attaching the patch (recommended), then including the
+     metadata in the patch file is recommended, e.g.
+    </para>
+    <screen>From: Fred Patcher &lt;patcher@example.com&gt;
+Subject: Properly toggle the randomiser switch
+
+The randomiser switch was sometimes not being toggled, leading to random
+behaviour.
+
+diff --git a/foo/control.c b/foo/control.c
+...</screen>
+   </listitem>
+   <listitem>
+    <para>
+     <command>diff -u</command> is also acceptable, but we prefer that you
+     do so from the top-level directory within the source code (prefix the
+     files' path names with <parameter>./</parameter>) or from the directory
+     containing the source code directory. Basically, use <command>hg
+     diff</command> if you can.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <command>hg email</command> is preferred. You'll need to commit your
+     changes locally for this to work, but this is the easiest way of
+     sending a set of patches for inclusion and review; it'll send the mail
+     directly.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <command>hg export</command> can also be used with specific changeset
+     identifiers. Again, you'll need to commit your changes locally for
+     this to work.
+    </para>
+   </listitem>
+  </itemizedlist>
+  <para>
   </para>
   <para>
    Patches should normally be included as attachments. Some mail clients and
