@@ -17,6 +17,8 @@ if HAVE_LIBRTE
 link_rte = -lrte
 endif
 
+EXTRA_DIST = compat.c
+
 noinst_HEADERS = em8300.h dxr3.h dxr3_scr.h video_out_dxr3.h
 
 if ENABLE_DXR3

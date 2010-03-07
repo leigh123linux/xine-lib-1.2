@@ -37,7 +37,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <linux/videodev2.h>
+#ifdef HAVE_SYS_VIDEOIO_H
+# include <sys/videoio.h>
+#elif defined(HAVE_SYS_VIDEODEV2_H)
+# include <sys/videodev2.h>
+#else
+# include <linux/videodev2.h>
+#endif
 #include <sys/mman.h>
 #include <stdio.h>
 #include <errno.h>

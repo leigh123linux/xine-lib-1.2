@@ -13,6 +13,8 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     default_enable_gnomevfs=yes
     default_enable_samba=yes
     default_enable_v4l=no
+    default_enable_v4l2=no
+    default_enable_libv4l=no
     default_enable_vcd=yes
     default_enable_vcdo=no
     default_enable_vdr=yes
@@ -30,17 +32,23 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
         freebsd*)
             default_enable_vcdo=yes
             ;;
+        netbsd* | openbsd*)
+            default_enable_v4l2=yes
+            ;;
         linux*)
             default_enable_dvb=yes
             default_enable_v4l=yes
+            default_enable_v4l2=yes
+            default_enable_libv4l=yes
             default_enable_vcdo=yes
             ;;
         solaris*)
             default_enable_vcdo=yes
+            default_enable_v4l2=yes
             ;;
     esac
 
-    default_enable_libv4l="$default_enable_v4l"
+    dnl default_enable_libv4l="$default_enable_v4l2"
 
     dnl dvb
     XINE_ARG_ENABLE([dvb], [Enable support for the DVB plugin (Linux only)])
@@ -84,10 +92,21 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     XINE_ARG_ENABLE([v4l], [Enable Video4Linux support])
     if test x"$enable_v4l" != x"no"; then
         have_v4l=yes
-        AC_CHECK_HEADERS([linux/videodev.h linux/videodev2.h], , [have_v4l=no])
+        AC_CHECK_HEADERS([linux/videodev.h], , [have_v4l=no])
         AC_CHECK_HEADERS([asm/types.h])
         if test x"$hard_enable_v4l" = x"yes" && test x"$have_v4l" != x"yes"; then
             AC_MSG_ERROR([Video4Linux support requested, but prerequisite headers not found.])
+        fi
+    fi
+    AM_CONDITIONAL([ENABLE_V4L], [test x"$have_v4l" = x"yes"])
+
+    XINE_ARG_ENABLE([v4l2], [Enable Video4Linux 2 support])
+    if test x"$enable_v4l2" != x"no"; then
+        have_v4l2=yes
+	AC_CHECK_HEADERS([linux/videodev2.h sys/videoio.h sys/videodev2.h], [have_v4l2=yes], [])
+        AC_CHECK_HEADERS([asm/types.h])
+        if test x"$hard_enable_v4l2" = x"yes" && test x"$have_v4l2" != x"yes"; then
+            AC_MSG_ERROR([Video4Linux 2 support requested, but prerequisite headers not found.])
         fi
 	XINE_ARG_ENABLE([libv4l], [Enable libv4l support])
  	if test "x$enable_libv4l" != "xno"; then
@@ -100,7 +119,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
 	    fi
 	fi
     fi
-    AM_CONDITIONAL([ENABLE_V4L], [test x"$have_v4l" = x"yes"])
+    AM_CONDITIONAL([ENABLE_V4L2], [test x"$have_v4l2" = x"yes"])
 
     dnl dvdnav
     dnl XXX: This could be cleaned up so that code does not have to ifdef so much

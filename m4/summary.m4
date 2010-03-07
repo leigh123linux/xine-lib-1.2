@@ -29,6 +29,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     test x"$have_gnomevfs" = x"yes" && echo "   - gnome-vfs"
     test x"$have_samba" = x"yes"    && echo "   - smb"
     test x"$have_v4l" = x"yes"      && echo "   - v4l"
+    test x"$have_v4l2" = x"yes"     && echo "   - v4l2"
     echo "   - cdda"
     echo ""
 

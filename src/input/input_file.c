@@ -408,6 +408,7 @@ static int file_plugin_open (input_plugin_t *this_gen ) {
   if (file_plugin_get_length (this_gen) == 0) {
       _x_message(this->stream, XINE_MSG_FILE_EMPTY, this->mrl, NULL);
       close (this->fh);
+      this->fh = -1;
       xine_log (this->stream->xine, XINE_LOG_MSG,
 		_("input_file: File empty: >%s<\n"), this->mrl);
       return -1;

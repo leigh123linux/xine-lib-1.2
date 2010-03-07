@@ -129,7 +129,7 @@ static void display_stats (nbc_t *this) {
 	 this->audio_in_disc,
 	 buffering[this->buffering],
 	 enabled[this->enabled],
-	 isatty (stdout) ? '\r' : '\n'
+	 isatty (STDOUT_FILENO) ? '\r' : '\n'
 	 );
   fflush(stdout);
 }
