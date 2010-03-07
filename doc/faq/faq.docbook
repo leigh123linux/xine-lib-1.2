@@ -5,15 +5,16 @@
 <book>
 
  <bookinfo>
-  <title>The xine engine FAQ</title>
-  <titleabbrev>xine FAQ</titleabbrev>
+  <title>The xine engine FAQ list</title>
+  <titleabbrev>xine FAQs</titleabbrev>
   <copyright>
-   <year>2001-2008</year>
+   <year>2001-2010</year>
    <holder>the xine project team</holder>
   </copyright>
  </bookinfo>
 
- <article>
+ <article class="faq">
+
   <sect1 id="general">
    <title>General questions about xine and this document</title>
 
@@ -77,7 +78,7 @@
    </sect2>
 
    <sect2 id="modules">
-    <title>What are those xine-lib, xine-ui, gnome-xine, &hellip; modules in cvs for?</title>
+    <title>What are those xine-lib, xine-ui, gxine, &hellip; Mercurial repositories for?</title>
     <para>
      Some time ago xine just became too complex to be just one big program.
      Therefore it was split into two major parts.
@@ -90,10 +91,10 @@
     <para>
      Then there are frontends &ndash; applications that use xine. The most
      common frontend is that of a media player. There are currently
-     two frontends being developed in the xine project, xine-ui (skinned
-     dvd-player style frontend directly based on xlib) and gxine,
-     a desktop media-player style frontend using the standard gtk widget set
-     and comes with a mozilla browser plugin.
+     three frontends being developed in the xine project: xine-ui, a skinned
+     dvd-player style frontend directly based on xlib; gxine, a desktop
+     media-player style frontend using the standard GTK widget set; and
+     xine-plugin, a plugin for browsers such as Firefox.
      External projects like kaffeine, sinek and totem develop additional frontends.
      In the future you will likely see more and different types of applications
      being developed which will use the xine engine for video processing
@@ -104,90 +105,47 @@
      first and then choose and install a player frontend like xine-ui or gxine.
     </para>
     <para>
-     Other modules in CVS are: <filename>xine-plugin</filename> a mozilla browser plugin
-     for streaming media playback using xine,
-     <filename>xine_www</filename> the
-     xine project website sources.
+     Other repositories include <filename>xine-project-www</filename>,
+     which contains the xine project website sources, and various packaging
+     and development branches.
+    </para>
+   </sect2>
+
+   <sect2 id="hg">
+    <title>Where and how do I get the latest development version?</title>
+    <para>
+     Be advised that end-users should stick to the official xine releases.
+     The Mercurial repositories are only intended for developers and for others who know why they use it.
+    </para>
+    <para>
+     The repositories are listed at <ulink url="http://hg.debian.org/hg/">http://hg.debian.org/hg/</ulink>;
+     however, this is a list of all repositories which are kept there, not just the
+     xine project's (which are the ones which begin with <filename>xine-lib/</filename>). To check one out:
+     <screen>&nbsp;&nbsp;&nbsp;<command>hg clone http://hg.debian.org/hg/<filename>repository</filename> <filename>local_copy</filename></command></screen>
+     e.g.
+     <screen>&nbsp;&nbsp;&nbsp;<command>hg clone http://hg.debian.org/hg/xine-lib/xine-lib xine-lib</command></screen>
+    </para>
+    <para>
+     You can see a full list of repositories by visiting
+     <ulink url="http://hg.debian.org/hg/xine-lib/">http://hg.debian.org/hg/xine-lib/</ulink>.
     </para>
    </sect2>
 
    <sect2 id="cvs">
-    <title>Where and how do I get the latest development version?</title>
+    <title>Don't you use CVS?</title>
     <para>
-     Be advised that end-users should stick to the official xine releases.
-     The CVS and Mercurial repositories are only intended for developers and for others who know why they use it.
+     We used to, but there are some significant problems with CVS. Merging
+     is easier with Mercurial (and, for that matter, git); and we can commit
+     changes locally, change them if mistakes have been made, then make them
+     public whenever we're ready.
     </para>
-    <sect3>
-     <title>Checking out xine modules from Mercurial</title>
-     <para>
-      The repositories are listed at <ulink url="http://hg.debian.org/hg/">http://hg.debian.org/hg/</ulink>;
-      however, this is a list of all repositories which are kept there, not just the
-      xine project's (which are the ones which begin with <filename>xine-lib/</filename>). To check one out:
-      <screen>&nbsp;&nbsp;&nbsp;<command>hg clone http://hg.debian.org/hg/<filename>repository</filename> <filename>local_copy</filename></command></screen>
-      e.g.
-      <screen>&nbsp;&nbsp;&nbsp;<command>hg clone http://hg.debian.org/hg/xine-lib/xine-lib xine-lib</command></screen>
-     </para>
-     <para>
-      Currently, only xine-lib and gxine are present here.
-     </para>
-    </sect3>
-    <sect3>
-     <title>Checking out xine modules from CVS</title>
-     <para>
-      To check out xine modules from CVS, first do this:
-      <screen>&nbsp;&nbsp;&nbsp;<command>cvs -d :pserver:anonymous@xine.cvs.sourceforge.net:/cvsroot/xine login</command></screen>
-      The password is empty, just press Enter.
-     </para>
-     <para>
-      Then, to check out individual modules (e.g. <filename>xine-lib</filename> or <filename>xine-ui</filename>):
-      <screen>&nbsp;&nbsp;&nbsp;<command>cvs -d :pserver:anonymous@xine.cvs.sourceforge.net:/cvsroot/xine co &lt;modulename&gt;</command></screen>
-     </para>
-     <para>
-      If you want xine-lib or gxine, you should use Mercurial instead.
-      The CVS repositories for these are not maintained.
-     </para>
-    </sect3>
    </sect2>
 
    <sect2 id="patch">
     <title>How do I submit patches?</title>
     <para>
-     First, make sure that you're using a current development version
-     (see above) or at least the current release version. Then, once you're
-     ready to send the patch&hellip;
-    </para>
-    <para>
-     Generate your patch using either <command>cvs diff -u &gt;
-     my.patch</command> or <command>hg diff &gt; my.patch</command> (as
-     appropriate). Make sure that your message subject briefly describes the
-     patch; your message body should contain a longer description of the
-     patch. Your patch should be applicable using <command>patch -p0 -i
-     my.patch</command> or, preferably, <command>patch -p1 -i
-     my.patch</command> from the top-level directory in the source tree
-     (i.e. where configure.ac is) &ndash; this is fairly important for our
-     Mercurial-based repositories since it makes importing your patch that
-     much easier (hg import defaults to -p1).
-    </para>
-    <para>
-     Alternatively, if you've been hacking away at a module which is
-     maintained using mercurial, you can make them available as diffs &ndash; use
-     <command>hg export</command> or, if you have several patches, you could
-     use <command>hg bundle</command> instead (both require extra
-     parameters; <command>hg help export</command> and <command>hg help
-     bundle</command> for more details) &ndash; or via HTTP by using <command>hg
-     serve</command>. In the latter case, you'll need to post a URL from
-     which a developer can pull the changes.
-    </para>
-    <para>
-     Patches should normally be sent to the xine-devel mailing list,
-     <email>xine-devel@lists.sourceforge.net</email>.
-    </para>
-   </sect2>
-
-   <sect2 id="gnome-xine">
-    <title>Why is gxine's CVS module named &quot;gnome-xine&quot;?</title>
-    <para>
-     Historical reasons: gxine was originally named gnome-xine.
+     See the xine Hackers' Guide, chapter 3, "How to contribute".
+     (This is available online at <ulink url="http://www.xine-project.org/hackersguide#contribute">http://www.xine-project.org/hackersguide#contribute</ulink>.)
     </para>
    </sect2>
 
@@ -228,7 +186,7 @@
      often found in a package called zlib-devel or similar.)
     </para>
     <para>
-     If you want to compile xine from CVS, you'll need to have the autobuild tools
+     If you want to compile xine from Mercurial, you'll need to have the autobuild tools
      installed (automake, autoconf and libtool &ndash; in recent versions).
     </para>
     <para>
@@ -306,7 +264,7 @@
       Last but not least. Here the build instructions. As stated earlier,
       those are the same for every xine module.
       <screen>
-&nbsp;&nbsp;&nbsp;<command>./autogen.sh</command> [&rarr; <emphasis>only</emphasis> if you checked your sources out of CVS]
+&nbsp;&nbsp;&nbsp;<command>./autogen.sh</command> [&rarr; <emphasis>only</emphasis> if you're building from hg]
 &nbsp;&nbsp;&nbsp;<command>./configure</command>
 &nbsp;&nbsp;&nbsp;<command>make</command>
 &nbsp;&nbsp;&nbsp;<command>make install</command></screen>
@@ -330,7 +288,7 @@
      (e.g. <filename>/usr/src/RPM/SRPMS</filename>).
     </para>
     <para>
-     In case that you have a fresh CVS checkout, you will need to do the
+     In case that you have an up-to-date hg repository, you will need to do the
      following first in order to get a tarball release out of it which you
      can later use with the <command>rpmbuild -ta</command> command above:
      <screen>&nbsp;&nbsp;&nbsp;<command>./autogen.sh &amp;&amp; make clean &amp;&amp; make dist</command></screen>
@@ -344,7 +302,7 @@
    <sect2 id="debbuild">
     <title>Making your own .deb packages (xine-lib, xine-ui, gxine)</title>
     <para>
-     You'll need a CVS or HG snapshot tarball or source checked out from the repository.
+     You'll need an HG snapshot tarball or source checked out from the repository.
     </para>
     <para>
      First, make sure that the "devscripts" package is installed. You'll
