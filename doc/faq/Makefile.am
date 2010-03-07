@@ -3,7 +3,7 @@ include $(top_srcdir)/misc/Makefile.common
 doc_DATA = faq.txt
 html_DATA = faq.html
 
-EXTRA_DIST = README faq.docbook $(doc_DATA) $(html_DATA)
+EXTRA_DIST = README faq.docbook faq.xsl $(doc_DATA) $(html_DATA)
 
 DISTCLEANFILES = $(doc_DATA) $(html_DATA)
 
@@ -22,11 +22,10 @@ dist-hook:
 distclean-local: clean-docs
 
 if HAVE_XMLTO
-faq.html: faq.docbook
-	xmlto xhtml-nochunks $^
-
-faq.txt: faq.docbook
-	xmlto txt $^
+faq.html: faq.docbook faq.xsl
+	xmlto -m faq.xsl xhtml-nochunks $<
+faq.txt: faq.docbook faq.xsl
+	xmlto -m faq.xsl txt $<
 else
 faq.html faq.txt: faq.docbook
 	if test x"$(fail_if_missing)" = x"yes"; then \
