@@ -144,7 +144,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     fi
 
     enable_vcdo=no
-    test $default_enable_vcdo = no && test x"$enable_vcd" != x"no" && enable_vcdo=yes
+    test $default_enable_vcdo = yes && test x"$enable_vcd" != x"no" && enable_vcdo=yes
 
     AC_DEFINE([LIBCDIO_CONFIG_H], 1, [Get of rid system libcdio build configuration])
     AC_DEFINE([EXTERNAL_LIBCDIO_CONFIG_H], 1, [Get of rid system libcdio build configuration])
