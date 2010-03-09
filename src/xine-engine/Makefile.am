@@ -8,7 +8,7 @@ AM_CPPFLAGS = $(XDG_BASEDIR_CPPFLAGS) $(ZLIB_CPPFLAGS) -DXINE_LIBRARY_COMPILE
 XINEUTILS_LIB = $(top_builddir)/src/xine-utils/libxineutils.la
 
 # FIXME: these are currently unused:
-EXTRA_DIST = lrb.c lrb.h accel_xvmc.h
+EXTRA_DIST = lrb.c lrb.h accel_vdpau.h accel_xvmc.h
 
 if WIN32
 DEF_FILE = libxine-$(XINE_MAJOR).def
