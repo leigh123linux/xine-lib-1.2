@@ -309,11 +309,6 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
 
   lprintf("lavc decoder found\n");
 
-  /* force (width % 8 == 0), otherwise there will be
-   * display problems with Xv.
-   */
-  this->bih.biWidth = (this->bih.biWidth + 1) & (~1);
-
   this->context->width = this->bih.biWidth;
   this->context->height = this->bih.biHeight;
   this->context->stream_codec_tag = this->context->codec_tag =
@@ -1389,7 +1384,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
 	        (this->context->pix_fmt == PIX_FMT_RGB24) ||
 	        (this->context->pix_fmt == PIX_FMT_PAL8)) {
 	      this->output_format = XINE_IMGFMT_YUY2;
-	      init_yuv_planes(&this->yuv, this->bih.biWidth, this->bih.biHeight);
+	      init_yuv_planes(&this->yuv, (this->bih.biWidth + 15) & ~15, this->bih.biHeight);
 	      this->yuv_init = 1;
 	    }
 	    this->cs_convert_init = 1;
