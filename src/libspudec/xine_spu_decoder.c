@@ -39,8 +39,13 @@
 #include "xineutils.h"
 #include "spu.h"
 #ifdef HAVE_DVDNAV
-#  include <dvdnav/nav_read.h>
-#  include <dvdnav/nav_types.h>
+#  ifdef HAVE_DVDNAV_NAVTYPES_H
+#    include <dvdnav/nav_types.h>
+#    include <dvdnav/nav_read.h>
+#  else
+#    include <dvdread/nav_types.h>
+#    include <dvdread/nav_read.h>
+#  endif
 #else
 #  include "nav_read.h"
 #  include "nav_types.h"

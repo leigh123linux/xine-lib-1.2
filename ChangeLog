@@ -4,6 +4,7 @@ xine-lib (1.1.18.1) 2010-03-06
   * Fix a size check (wrong variable, causing int/ptr comparison) in rmff.c.
   * Fix build with the old, outdated and deprecated internal ffmpeg.
   * Handle odd widths properly (for ffmpeg-decoded video).
+  * Make buildable with current (external) libdvdnav & libdvdread.
 
 xine-lib (1.1.18) 2010-02-23
   * Bump the FLAC decoder's priority above ffmpegaudio. This should fix

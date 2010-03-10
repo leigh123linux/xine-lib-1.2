@@ -79,7 +79,13 @@
 /* DVDNAV includes */
 #ifdef HAVE_DVDNAV
 #  include <dvdnav/dvdnav.h>
-#  include <dvdnav/nav_read.h>
+#  ifdef HAVE_DVDNAV_NAVTYPES_H
+#    include <dvdnav/nav_types.h>
+#    include <dvdnav/nav_read.h>
+#  else
+#    include <dvdread/nav_types.h>
+#    include <dvdread/nav_read.h>
+#  endif
 #else
 #  define DVDNAV_COMPILE
 #  include "dvdnav.h"

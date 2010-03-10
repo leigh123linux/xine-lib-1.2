@@ -84,7 +84,7 @@ dnl checks the results of dvdnav-config to some extent
 dnl
       rm -f conf.dvdnavtest
       AC_RUN_IFELSE([AC_LANG_SOURCE([[
-#include <dvdnav.h>
+#include <dvdnav/dvdnav.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -129,7 +129,7 @@ main ()
 ]])],[],[no_dvdnav=yes],[no_dvdnav=cc])
        if test "x$no_dvdnav" = xcc; then
          AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-#include <dvdnav.h>
+#include <dvdnav/dvdnav.h>
 #include <stdio.h>
 ]], [[ return 0; ]])],[no_dvdnav=''],[no_dvdnav=yes])
        fi
@@ -140,6 +140,8 @@ main ()
     if test "x$no_dvdnav" = x ; then
        AC_MSG_RESULT(yes)
        ifelse([$2], , :, [$2])
+       dnl nav_*.h seem to have been moved from dvdnav at some point?
+       AC_CHECK_HEADERS([dvdread/nav_types.h])
     else
       AC_MSG_RESULT(no)
       if test "$DVDNAV_CONFIG" = "no" ; then
@@ -155,7 +157,7 @@ main ()
           CFLAGS="$CFLAGS $DVDNAV_CFLAGS"
           LIBS="$LIBS $DVDNAV_LIBS"
           AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-#include <dvdnav.h>
+#include <dvdnav/dvdnav.h>
 #include <stdio.h>
 ]], [[ return 0; ]])],
         [ echo "*** The test program compiled, but did not run. This usually means"
