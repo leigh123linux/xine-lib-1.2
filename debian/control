@@ -25,6 +25,7 @@ Build-Depends: debhelper (>= 5.0.1), binutils (>= 2.12.90.0.9), pkg-config,
 	libflac-dev, libsdl1.2-dev, libwavpack-dev,
 	libsmbclient-dev, libspeex-dev, libmng-dev,
 	libmad0-dev, libmpcdec-dev, libcdio-dev (>= 0.76-1),
+	libdvdnav-dev, libdvdread-dev,
 	zlib1g-dev, w3m, transfig, sgmltools-lite,
 	ghostscript | gs-gpl | gs
 Standards-Version: 3.7.2

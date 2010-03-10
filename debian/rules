@@ -81,6 +81,7 @@ CONFIGURE_FLAGS := \
 	--with-external-libdts \
 	--with-external-ffmpeg \
 	--with-external-libmpcdec \
+	--with-external-dvdnav \
 	--with-freetype \
 	--with-wavpack \
 	--enable-ipv6 \
