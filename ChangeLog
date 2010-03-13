@@ -1,6 +1,7 @@
 xine-lib (1.1.19) 2010-??-??
   * Handle odd widths properly (for ffmpeg-decoded video).
   * Make buildable with current (external) libdvdnav & libdvdread.
+  * Fix V4L2 check.
 
 xine-lib (1.1.18.1) 2010-03-06
   * Oops. compat.c (for DXR3 support) was omitted.

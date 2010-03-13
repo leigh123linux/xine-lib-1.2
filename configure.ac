@@ -698,7 +698,7 @@ dnl ----------------------------------------------
 AC_ARG_ENABLE([libv4l],
 	AS_HELP_STRING([--disable-libv4l], [do not build with libv4l support]))
 
-if test "x$have_v4l2$" = xyes && test "x$enable_libv4l" != xno; then
+if test "x$have_v4l2" = xyes && test "x$enable_libv4l" != xno; then
   have_libv4l=no
   PKG_CHECK_MODULES([V4L2], [libv4l2],
 	[have_libv4l=yes
