@@ -69,7 +69,7 @@
 */
 
 /*
- * compile-command: "gcc -Wall -O2 `xine-config --cflags` `xine-config --libs` -L/usr/X11R6/lib -lX11 -lm -o  xinimin xinimin.c"
+ * compile-command: "gcc -Wall -O2 `pkg-config --cflags --libs libxine x11` -lm -o xinimin xinimin.c"
  */
 
 #include &lt;stdio.h&gt;
