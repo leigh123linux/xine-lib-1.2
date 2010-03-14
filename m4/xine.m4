@@ -65,19 +65,20 @@ AC_ARG_ENABLE(xinetest,
     if test "$XINE_CONFIG" = "no" ; then
       no_xine=yes
     else
-      XINE_CFLAGS=`$XINE_CONFIG $xine_config_args --cflags`
-      XINE_LIBS=`$XINE_CONFIG $xine_config_args --libs`
-      XINE_ACFLAGS=`$XINE_CONFIG $xine_config_args --acflags`
-      xine_config_major_version=`$XINE_CONFIG $xine_config_args --version | \
+      XINE_CFLAGS=`$XINE_CONFIG $xine_config_args --cflags 2>/dev/null`
+      XINE_LIBS=`$XINE_CONFIG $xine_config_args --libs 2>/dev/null`
+      XINE_ACFLAGS=`$XINE_CONFIG $xine_config_args --acflags 2>/dev/null`
+      xine_version=`$XINE_CONFIG $xine_config_args --version 2>/dev/null`
+      xine_config_major_version=`echo "$xine_version" | \
              sed -n 's/^\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\).*$/\1/p'`
-      xine_config_minor_version=`$XINE_CONFIG $xine_config_args --version | \
+      xine_config_minor_version=`echo "$xine_version" | \
              sed -n 's/^\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\).*$/\2/p'`
-      xine_config_sub_version=`$XINE_CONFIG $xine_config_args --version | \
+      xine_config_sub_version=`echo "$xine_version" | \
              sed -n 's/^\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\).*$/\3/p'`
-      xine_data_dir=`$XINE_CONFIG $xine_config_args --datadir`
-      xine_script_dir=`$XINE_CONFIG $xine_config_args --scriptdir`
-      xine_plugin_dir=`$XINE_CONFIG $xine_config_args --plugindir`
-      xine_locale_dir=`$XINE_CONFIG $xine_config_args --localedir`
+      xine_data_dir=`$XINE_CONFIG $xine_config_args --datadir 2>/dev/null`
+      xine_script_dir=`$XINE_CONFIG $xine_config_args --scriptdir 2>/dev/null`
+      xine_plugin_dir=`$XINE_CONFIG $xine_config_args --plugindir 2>/dev/null`
+      xine_locale_dir=`$XINE_CONFIG $xine_config_args --localedir 2>/dev/null`
       dnl    if test "x$enable_xinetest" = "xyes" ; then
       ac_save_CFLAGS="$CFLAGS"
       ac_save_LIBS="$LIBS"
