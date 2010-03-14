@@ -56,8 +56,13 @@
 #include <xine/buffer.h>
 #include "xine-engine/bswap.h"
 #ifdef HAVE_DVDNAV
-#  include <dvdnav/nav_read.h>
-#  include <dvdnav/nav_print.h>
+#  ifdef HAVE_DVDNAV_NAVTYPES_H
+#    include <dvdnav/nav_read.h>
+#    include <dvdnav/nav_print.h>
+#  else
+#    include <dvdread/nav_read.h>
+#    include <dvdread/nav_print.h>
+#  endif
 #else
 #  include "nav_read.h"
 #  include "nav_print.h"

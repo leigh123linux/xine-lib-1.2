@@ -70,6 +70,7 @@ CONFIGURE_FLAGS := \
 	--with-freetype \
 	--with-wavpack \
 	--enable-ipv6 \
+	--with-external-dvdnav \
 	$(DEB_BUILD_CONFIG_OPTIONS)
 
 configure: configure-stamp

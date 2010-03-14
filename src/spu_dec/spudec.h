@@ -33,7 +33,11 @@
 #include <xine/video_out.h>
 #include <xine/video_overlay.h>
 #ifdef HAVE_DVDNAV
-#  include <dvdnav/nav_types.h>
+#  ifdef HAVE_DVDNAV_NAVTYPES_H
+#    include <dvdnav/nav_types.h>
+#  else
+#    include <dvdread/nav_types.h>
+#  endif
 #else
 #  include "nav_types.h"
 #endif

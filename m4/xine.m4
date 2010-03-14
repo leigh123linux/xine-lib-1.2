@@ -82,14 +82,14 @@ AC_DEFUN([AM_PATH_XINE], [
 	min_xine_version=ifelse([$1], , [0.5.0], [$1])
 	AC_PATH_TOOL([XINE_CONFIG], [xine-config], [no])
         AC_MSG_CHECKING([for XINE-LIB version >= $min_xine_version])
-        XINE_CFLAGS="`$XINE_CONFIG $xine_config_args --cflags`"
-        XINE_LIBS="`$XINE_CONFIG $xine_config_args --libs`"
-        XINE_VERSION="`$XINE_CONFIG $xine_config_args --version`"
-        XINE_ACFLAGS="`$XINE_CONFIG $xine_config_args --acflags`"
-        xine_data_dir="`$XINE_CONFIG $xine_config_args --datadir`"
-        xine_script_dir="`$XINE_CONFIG $xine_config_args --scriptdir`"
-        xine_plugin_dir="`$XINE_CONFIG $xine_config_args --plugindir`"
-        xine_locale_dir="`$XINE_CONFIG $xine_config_args --localedir`"
+        XINE_CFLAGS="`$XINE_CONFIG $xine_config_args --cflags 2>/dev/null`"
+        XINE_LIBS="`$XINE_CONFIG $xine_config_args --libs 2>/dev/null`"
+        XINE_VERSION="`$XINE_CONFIG $xine_config_args --version 2>/dev/null`"
+        XINE_ACFLAGS="`$XINE_CONFIG $xine_config_args --acflags 2>/dev/null`"
+        xine_data_dir="`$XINE_CONFIG $xine_config_args --datadir 2>/dev/null`"
+        xine_script_dir="`$XINE_CONFIG $xine_config_args --scriptdir 2>/dev/null`"
+        xine_plugin_dir="`$XINE_CONFIG $xine_config_args --plugindir 2>/dev/null`"
+        xine_locale_dir="`$XINE_CONFIG $xine_config_args --localedir 2>/dev/null`"
         _XINE_VERSION_CHECK([$min_xine_version], [$XINE_VERSION],
                             [xine_version_ok=yes; AC_MSG_RESULT([yes, $XINE_VERSION])],
                             [xine_version_ok=no;  AC_MSG_RESULT([no, $XINE_VERSION])])
