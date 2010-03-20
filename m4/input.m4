@@ -29,7 +29,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
             default_enable_gnomevfs=no
             default_enable_samba=no
             ;;
-        freebsd*)
+        freebsd*|kfreebsd*)
             default_enable_vcdo=yes
             ;;
         netbsd* | openbsd*)

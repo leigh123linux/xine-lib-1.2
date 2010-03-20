@@ -42,7 +42,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
             default_enable_macosx_video=yes
             ;;
 
-        freebsd*)
+        freebsd*|kfreebsd*)
             default_enable_vidix=yes
             default_enable_vdpau=yes
             ;;
