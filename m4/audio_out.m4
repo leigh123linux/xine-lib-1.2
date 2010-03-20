@@ -37,7 +37,7 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
             default_with_jack=yes
             default_enable_oss=no
             ;;
-        freebsd*)
+        freebsd*|kfreebsd*)
             default_with_pulseaudio=yes
             ;;
         irix*)
