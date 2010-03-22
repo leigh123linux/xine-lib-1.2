@@ -1008,6 +1008,8 @@ const char *xine_get_meta_info   (xine_stream_t *stream, int info) XINE_PROTECTE
 #define XINE_META_INFO_PART		   23
 #define XINE_META_INFO_PARTNUMBER	   24
 #define XINE_META_INFO_LOCATION		   25
+/* post-1.1.18.1 */
+#define XINE_META_INFO_DISCNUMBER	   26
 
 
 /*********************************************************************

@@ -525,6 +525,10 @@ static int id3v23_interp_frame(input_plugin_t *input,
         _x_meta_info_set(stream, XINE_META_INFO_TRACK_NUMBER, buf + 1);
         break;
 
+      case FOURCC_TAG('T', 'P', 'O', 'S'):
+        _x_meta_info_set(stream, XINE_META_INFO_DISCNUMBER, buf + 1);
+        break;
+
       default:
         lprintf("unhandled frame\n");
     }
@@ -781,6 +785,10 @@ static int id3v24_interp_frame(input_plugin_t *input,
 
       case ( FOURCC_TAG('T', 'R', 'C', 'K') ):
         _x_meta_info_set(stream, XINE_META_INFO_TRACK_NUMBER, buf + 1);
+        break;
+
+      case FOURCC_TAG('T', 'P', 'O', 'S'):
+        _x_meta_info_set(stream, XINE_META_INFO_DISCNUMBER, buf + 1);
         break;
 
       default:
