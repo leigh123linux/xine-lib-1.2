@@ -180,6 +180,9 @@ void avcodec_register_all(void)
     REGISTER_DECODER(AC3, ac3);
 #endif
     REGISTER_ENCODER(AC3, ac3);
+#ifdef CODEC_ID_EAC3
+    REGISTER_DECODER(EAC3, eac3);
+#endif
     REGISTER_DECODER(ALAC, alac);
 #if defined(CONFIG_AMR_NB) || defined(CONFIG_AMR_NB_FIXED)
     REGISTER_ENCDEC (AMR_NB, amr_nb);

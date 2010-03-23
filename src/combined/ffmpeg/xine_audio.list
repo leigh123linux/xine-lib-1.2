@@ -41,6 +41,7 @@ FLVADPCM		ADPCM_SWF		Flash ADPCM
 WAVPACK			WAVPACK			WavPack
 AMR_NB			AMR_NB			AMR narrow band
 AMR_WB			AMR_WB			AMR wide band
+EAC3			EAC3			E-AC-3
 
 # disabled codecs (ref. configure.ac)
 !			AAC
