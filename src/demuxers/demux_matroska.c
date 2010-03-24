@@ -1352,6 +1352,11 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       track->buf_type = BUF_AUDIO_A52;
       init_codec = init_codec_audio;
 
+    } else if (!strcmp(track->codec_id, MATROSKA_CODEC_ID_A_EAC3)) {
+      lprintf("MATROSKA_CODEC_ID_A_EAC3\n");
+      track->buf_type = BUF_AUDIO_EAC3;
+      init_codec = init_codec_audio;
+
     } else if (!strcmp(track->codec_id, MATROSKA_CODEC_ID_A_DTS)) {
       lprintf("MATROSKA_CODEC_ID_A_DTS\n");
       track->buf_type = BUF_AUDIO_DTS;

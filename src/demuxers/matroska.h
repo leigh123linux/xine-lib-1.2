@@ -320,6 +320,7 @@ struct matroska_track_s {
 #define MATROSKA_CODEC_ID_A_PCM_INT_LE   "A_PCM/INT/LIT"
 #define MATROSKA_CODEC_ID_A_PCM_FLOAT    "A_PCM/FLOAT/IEEE"
 #define MATROSKA_CODEC_ID_A_AC3          "A_AC3"
+#define MATROSKA_CODEC_ID_A_EAC3         "A_EAC3"
 #define MATROSKA_CODEC_ID_A_DTS          "A_DTS"
 #define MATROSKA_CODEC_ID_A_VORBIS       "A_VORBIS"
 #define MATROSKA_CODEC_ID_A_ACM          "A_MS/ACM"

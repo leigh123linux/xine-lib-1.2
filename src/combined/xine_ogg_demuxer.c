@@ -429,6 +429,7 @@ static const struct ogg_meta {
   OGG_META   (ARTIST,      0),
   OGG_META   (PUBLISHER,   0),
   OGG_META   (COPYRIGHT,   0),
+  OGG_META   (DISCNUMBER,  0),
   OGG_META   (LICENSE,     0),
   OGG_META   (TITLE,       0),
   OGG_META_L (TRACKNUMBER, 0, TRACK_NUMBER),

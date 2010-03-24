@@ -61,6 +61,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
             echo "   - ac3 (*INTERNAL* library)"
         fi
     fi
+    echo "   - E-AC-3"
     test x"$enable_asf" != x"no"     && echo "   - asf"
     test x"$enable_nosefart" != xno  && echo "   - Nosefart (NSF)"
     test x"$enable_mng" != x"no"     && echo "   - mng"

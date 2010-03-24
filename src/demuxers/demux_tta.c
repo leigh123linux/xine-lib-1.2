@@ -128,7 +128,7 @@ static int demux_tta_send_chunk(demux_plugin_t *this_gen) {
     /* Get a buffer */
     buf = this->audio_fifo->buffer_pool_alloc(this->audio_fifo);
     buf->type = BUF_AUDIO_TTA;
-    buf->pts = 0;
+    buf->pts = (int64_t)(FRAME_TIME * this->currentframe) * 90000;
     buf->extra_info->total_time = (int)(le2me_32(this->header.tta.data_length) * 1000.0 / le2me_32(this->header.tta.samplerate)); /* milliseconds */ 
     buf->decoder_flags = 0;
 
@@ -230,6 +230,7 @@ static int demux_tta_seek (demux_plugin_t *this_gen,
   demux_tta_t *this = (demux_tta_t *) this_gen;
   uint32_t start_frame;
   uint32_t frame_index;
+  int64_t pts;
   off_t start_off = this->datastart;
 
   /* if thread is not running, initialize demuxer */
@@ -243,10 +244,14 @@ static int demux_tta_seek (demux_plugin_t *this_gen,
   } else {
 
     /* Get the starting frame */
-    if( start_pos )
+    if( start_pos ) {
+        pts = start_pos * le2me_32(this->header.tta.data_length) * 1000.0 / le2me_32(this->header.tta.samplerate) * 90 / 65535;
       start_frame = start_pos * this->totalframes / 65535;
-    else
+
+    } else {
+      pts = start_time * 90;
       start_frame = (uint32_t)((double)start_time/ 1000.0 / FRAME_TIME);
+    }
 
     /* Now we find the offset */
     for( frame_index = 0; frame_index < start_frame; frame_index++ )
@@ -257,7 +262,7 @@ static int demux_tta_seek (demux_plugin_t *this_gen,
     _x_demux_flush_engine(this->stream);
     this->input->seek(this->input, start_off, SEEK_SET);
     this->currentframe = start_frame;
-    _x_demux_control_newpts(this->stream, (int)(FRAME_TIME * start_frame) * 90000, BUF_FLAG_SEEK);
+    _x_demux_control_newpts(this->stream, pts, BUF_FLAG_SEEK);
 
     this->status = DEMUX_OK;
   }
