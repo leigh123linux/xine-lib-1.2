@@ -129,7 +129,7 @@ AC_DEFUN([XINE_ARG_WITH], [
 		AC_MSG_ERROR([default_with_[]m4_translit([[$1]], [-], [_]) is not set])
 	fi
 	AC_ARG_WITH([$1], [AS_HELP_STRING([--with-$1], [$2])],
-		[test x"$withval" != xno && with_[]m4_translit([[$1]], [-], [_])=yes || with_[]m4_translit([[$1]], [-], [_])=no; hard_with_$1="$with_[]m4_translit([[$1]], [-], [_])"],
+		[test x"$withval" != xno && with_[]m4_translit([[$1]], [-], [_])=yes || with_[]m4_translit([[$1]], [-], [_])=no; hard_with_[]m4_translit([[$1]], [-], [_])="$with_[]m4_translit([[$1]], [-], [_])"],
 		[with_[]m4_translit([[$1]], [-], [_])="$default_with_[]m4_translit([[$1]], [-], [_])"; hard_with_[]m4_translit([[$1]], [-], [_])=''])])
 
 dnl XINE_ARG_ENABLE(VARIABLE, HELP-TEXT)
@@ -139,5 +139,5 @@ AC_DEFUN([XINE_ARG_ENABLE], [
 		AC_MSG_ERROR([default_enable_[]m4_translit([[$1]], [-], [_]) is not set])
 	fi
 	AC_ARG_ENABLE([$1], [AS_HELP_STRING([--enable-$1], [$2])],
-		[test x"$enableval" != xno && enable_[]m4_translit([[$1]], [-], [_])=yes || enable_[]m4_translit([[$1]], [-], [_])=no; hard_enable_$1="$enable_[]m4_translit([[$1]], [-], [_])"],
+		[test x"$enableval" != xno && enable_[]m4_translit([[$1]], [-], [_])=yes || enable_[]m4_translit([[$1]], [-], [_])=no; hard_enable_[]m4_translit([[$1]], [-], [_])="$enable_[]m4_translit([[$1]], [-], [_])"],
 		[enable_[]m4_translit([[$1]], [-], [_])="$default_enable_[]m4_translit([[$1]], [-], [_])"; hard_enable_[]m4_translit([[$1]], [-], [_])=''])])
