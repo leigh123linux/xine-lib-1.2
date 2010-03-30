@@ -31,8 +31,6 @@ Debian policy, version 3.8.1
 
 init ();
 
-my $version;
-
 foreach my $package (@{$dh{DOPACKAGES}}) {
   my $tmp = tmpdir ($package);
 
