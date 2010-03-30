@@ -93,7 +93,10 @@ void lock_decoded_picture(struct decoded_picture *pic)
 
 void free_decoded_picture(struct decoded_picture *pic)
 {
-  pic->img->free(pic->img);
+  if(pic->img != NULL) {
+    pic->img->free(pic->img);
+  }
+
   free_coded_picture(pic->coded_pic[1]);
   free_coded_picture(pic->coded_pic[0]);
   pic->coded_pic[0] = NULL;
@@ -363,6 +366,11 @@ int dpb_set_output_picture(struct dpb *dpb, struct decoded_picture *outpic)
     return -1;
 
   outpic->delayed_output = 0;
+  if(outpic->img != NULL) {
+    outpic->img->free(outpic->img);
+    outpic->img = NULL;
+  }
+
   if(!outpic->used_for_reference)
     dpb_remove_picture(dpb, outpic);
 
@@ -458,6 +466,13 @@ int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_r
         last_pic = pic;
       }
     } while (pic != NULL && (pic = pic->next) != NULL);
+
+    /* if all pictured in dpb are marked as delayed for output
+     * we need to drop a not yet drawn image. take the oldest one
+     */
+    if(!discard_ref) {
+      discard_ref = dpb->pictures;
+    }
   }
 
   if(discard_ref != NULL) {
