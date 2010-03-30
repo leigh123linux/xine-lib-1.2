@@ -11,7 +11,7 @@ use Debian::Debhelper::Dh_Lib;
 
 =head1 SYNOPSIS
 
-B<dh_xine> [S<I<debhelper options>>]
+B<dh_xine> [S<I<debhelper options>>] [S<I<package name suffixes>>]
 
 =head1 DESCRIPTION
 
@@ -23,6 +23,19 @@ Each xine-lib front end is required to have one of these two substvars
 listed in its Depends line in debian/control. Using package names directly
 will, sooner or later, break.
 
+By listing package name suffixes, you can generate dependencies and
+recommendations (almost) at will.  If you don't specify any, then 'x' and
+'console' are used, generating xine-x:Depends and xine-console:Depends.
+
+=head1 EXAMPLES
+
+dh_xine is usually called indirectly in a rules file via the dh command.
+
+	%:
+		dh --with xine $@
+
+It can also be called directly, prior to calling dh_gencontrol.
+
 =head1 CONFORMS TO
 
 Debian policy, version 3.8.1
@@ -31,14 +44,27 @@ Debian policy, version 3.8.1
 
 init ();
 
+no locale;
+
+my @suffix;
+
+foreach my $suffix (@ARGV) {
+  if ($suffix =~ /^[-[:lower:]]*$/) {
+    push @suffix, $suffix;
+  } else {
+    warn "bad package name suffix: $suffix";
+  }
+}
+
+@suffix = ('x', 'console') if $#suffix < 0;
+
 foreach my $package (@{$dh{DOPACKAGES}}) {
   my $tmp = tmpdir ($package);
 
-  delsubstvar($package, 'xine-x:Depends');
-  addsubstvar ($package, 'xine-x:Depends', 'libxine1-x');
-
-  delsubstvar($package, 'xine-console:Depends');
-  addsubstvar ($package, 'xine-console:Depends', 'libxine1-console');
+  foreach my $suffix (@suffix) {
+    delsubstvar($package, "xine-$suffix:Depends");
+    addsubstvar ($package, "xine-$suffix:Depends", "libxine1-$suffix");
+  }
 }
 
 =head1 SEE ALSO
