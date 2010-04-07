@@ -1771,7 +1771,7 @@ static const char *get_extensions (demux_class_t *this_gen) {
 }
 
 static const char *get_mimetypes (demux_class_t *this_gen) {
-  return NULL;
+  return "video/mp2p: m2p: MPEG2 program stream;";
 }
 
 static void class_dispose (demux_class_t *this_gen) {
