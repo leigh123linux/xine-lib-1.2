@@ -309,6 +309,8 @@ struct xine_video_port_s {
 #define VO_CAP_ARGB_LAYER_OVERLAY     0x02000000 /* driver supports true color overlay */
 #define VO_CAP_VIDEO_WINDOW_OVERLAY   0x04000000 /* driver can scale video to an area within overlay */
 #define VO_CAP_GAMMA                  0x08000000
+#define VO_CAP_SHARPNESS              0x10000000
+#define VO_CAP_NOISE_REDUCTION        0x20000000
 
 
 /*

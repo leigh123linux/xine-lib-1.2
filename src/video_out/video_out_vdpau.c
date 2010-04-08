@@ -2677,6 +2677,16 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     config->update_num(config,"engine.buffers.video_num_frames",22);
 
   this->capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP | VO_CAP_UNSCALED_OVERLAY | VO_CAP_CUSTOM_EXTENT_OVERLAY | VO_CAP_ARGB_LAYER_OVERLAY | VO_CAP_VIDEO_WINDOW_OVERLAY;
+
+  this->capabilities |= VO_CAP_HUE;
+  this->capabilities |= VO_CAP_SATURATION;
+  this->capabilities |= VO_CAP_CONTRAST;
+  this->capabilities |= VO_CAP_BRIGHTNESS;
+  if (this->sharpness_is_supported)
+    this->capabilities |= VO_CAP_SHARPNESS;
+  if (this->noise_reduction_is_supported)
+    this->capabilities |= VO_CAP_NOISE_REDUCTION;
+
   ok = 0;
   uint32_t mw, mh, ml, mr;
   st = vdp_decoder_query_capabilities( vdp_device, VDP_DECODER_PROFILE_H264_MAIN, &ok, &ml, &mr, &mw, &mh );
