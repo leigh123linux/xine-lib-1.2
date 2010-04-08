@@ -235,6 +235,7 @@ struct xine_video_port_s {
 #define VO_PROP_PAN_SCAN              9
 #define VO_PROP_TVMODE		      10
 #define VO_PROP_MAX_NUM_FRAMES        11
+#define VO_PROP_GAMMA		      12
 #define VO_PROP_ZOOM_Y                13
 #define VO_PROP_DISCARD_FRAMES        14 /* not used by drivers */
 #define VO_PROP_WINDOW_WIDTH          15 /* read-only */

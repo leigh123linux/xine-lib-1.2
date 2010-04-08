@@ -2581,6 +2581,11 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 				 adaptor_info[adaptor_num].base_id,
 				 NULL, NULL, NULL);
 
+	} else if(!strcmp(name, "XV_GAMMA")) {
+	  xxmc_check_capability (this, VO_PROP_GAMMA, attr[k],
+				 adaptor_info[adaptor_num].base_id,
+				 NULL, NULL, NULL);
+
 	} else if(!strcmp(name, "XV_COLORKEY")) {
 	  xxmc_check_capability (this, VO_PROP_COLORKEY, attr[k],
 				 adaptor_info[adaptor_num].base_id,

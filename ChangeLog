@@ -6,6 +6,7 @@ xine-lib (1.1.19) 2010-??-??
   * Add support for EAC3.
   * Recognise video/mp2t and video/mp2p.
   * TTA fixes.
+  * Add support for Xv gamma adjustment.
 
 xine-lib (1.1.18.1) 2010-03-06
   * Oops. compat.c (for DXR3 support) was omitted.

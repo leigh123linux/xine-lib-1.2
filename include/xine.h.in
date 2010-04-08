@@ -369,6 +369,7 @@ int  xine_get_param (xine_stream_t *stream, int param) XINE_PROTECTED;
 #define XINE_PARAM_VO_SATURATION           0x01000003 /* 0..65535           */
 #define XINE_PARAM_VO_CONTRAST             0x01000004 /* 0..65535           */
 #define XINE_PARAM_VO_BRIGHTNESS           0x01000005 /* 0..65535           */
+#define XINE_PARAM_VO_GAMMA                0x0100000c /* 0..65535           */
 #define XINE_PARAM_VO_ZOOM_X               0x01000008 /* percent            */
 #define XINE_PARAM_VO_ZOOM_Y               0x0100000d /* percent            */
 #define XINE_PARAM_VO_PAN_SCAN             0x01000009 /* bool               */
