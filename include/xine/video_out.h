@@ -308,7 +308,7 @@ struct xine_video_port_s {
 #define VO_CAP_CUSTOM_EXTENT_OVERLAY  0x01000000 /* driver can blend custom extent overlay to output extent */
 #define VO_CAP_ARGB_LAYER_OVERLAY     0x02000000 /* driver supports true color overlay */
 #define VO_CAP_VIDEO_WINDOW_OVERLAY   0x04000000 /* driver can scale video to an area within overlay */
-#define VO_CAP_GAMMA                  0x00080000
+#define VO_CAP_GAMMA                  0x08000000
 
 
 /*
