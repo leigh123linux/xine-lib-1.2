@@ -128,7 +128,7 @@ static int demux_tta_send_chunk(demux_plugin_t *this_gen) {
     /* Get a buffer */
     buf = this->audio_fifo->buffer_pool_alloc(this->audio_fifo);
     buf->type = BUF_AUDIO_TTA;
-    buf->pts = (int64_t)(FRAME_TIME * this->currentframe) * 90000;
+    buf->pts = (int64_t)(FRAME_TIME * this->currentframe * 90000);
     buf->extra_info->total_time = (int)(le2me_32(this->header.tta.data_length) * 1000.0 / le2me_32(this->header.tta.samplerate)); /* milliseconds */ 
     buf->decoder_flags = 0;
 
@@ -137,7 +137,7 @@ static int demux_tta_send_chunk(demux_plugin_t *this_gen) {
       (int) ((double) this->currentframe * 65535 / this->totalframes);
 
     /* Set time */
-    buf->extra_info->input_time = (int)(FRAME_TIME * this->currentframe)*1000;
+    buf->extra_info->input_time = (int)(FRAME_TIME * this->currentframe * 1000);
 
     bytes_read = this->input->read(this->input, buf->content, ( bytes_to_read > buf->max_size ) ? buf->max_size : bytes_to_read);
     if (bytes_read < 0) {

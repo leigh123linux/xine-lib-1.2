@@ -471,6 +471,7 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
   case XINE_PARAM_VO_SATURATION:
   case XINE_PARAM_VO_CONTRAST:
   case XINE_PARAM_VO_BRIGHTNESS:
+  case XINE_PARAM_VO_GAMMA:
   case XINE_PARAM_VO_DEINTERLACE:
   case XINE_PARAM_VO_ASPECT_RATIO:
   case XINE_PARAM_VO_ZOOM_X:
@@ -637,6 +638,7 @@ int xine_get_param (xine_stream_t *stream, int param) {
   case XINE_PARAM_VO_SATURATION:
   case XINE_PARAM_VO_CONTRAST:
   case XINE_PARAM_VO_BRIGHTNESS:
+  case XINE_PARAM_VO_GAMMA:
   case XINE_PARAM_VO_DEINTERLACE:
   case XINE_PARAM_VO_ASPECT_RATIO:
   case XINE_PARAM_VO_ZOOM_X:

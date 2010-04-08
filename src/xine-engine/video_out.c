@@ -1471,7 +1471,9 @@ static int vo_get_property (xine_video_port_t *this_gen, int property) {
   case XINE_PARAM_VO_HUE:
   case XINE_PARAM_VO_SATURATION:
   case XINE_PARAM_VO_CONTRAST:
-  case XINE_PARAM_VO_BRIGHTNESS: {
+  case XINE_PARAM_VO_BRIGHTNESS:
+  case XINE_PARAM_VO_GAMMA:
+   {
     int v, min_v, max_v, range_v;
 
     pthread_mutex_lock( &this->driver_lock );
@@ -1566,6 +1568,7 @@ static int vo_set_property (xine_video_port_t *this_gen, int property, int value
   case XINE_PARAM_VO_SATURATION:
   case XINE_PARAM_VO_CONTRAST:
   case XINE_PARAM_VO_BRIGHTNESS:
+  case XINE_PARAM_VO_GAMMA:
     if (!this->grab_only) {
       int v, min_v, max_v, range_v;
 

@@ -2441,7 +2441,7 @@ static void *init_class (xine_t *xine, void *data) {
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.description     = N_("MPEG Transport Stream demuxer");
   this->demux_class.identifier      = "MPEG_TS";
-  this->demux_class.mimetypes       = NULL;
+  this->demux_class.mimetypes       = "video/mp2t: m2t: MPEG2 transport stream;";
 
   /* accept dvb streams; also handle the special dvbs,dvbt and dvbc
    * mrl formats: the content is exactly the same but the input plugin

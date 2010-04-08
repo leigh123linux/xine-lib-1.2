@@ -1340,6 +1340,11 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 	  xv_check_capability (this, VO_PROP_CONTRAST, attribute_it.data,
 			       adaptor_it.data->base_id,
 			       NULL, NULL, NULL);
+	} else if(!strcmp(name, "XV_GAMMA")) {
+	  this->capabilities |= VO_CAP_GAMMA;
+	  xv_check_capability (this, VO_PROP_GAMMA, attribute_it.data,
+			       adaptor_it.data->base_id,
+			       NULL, NULL, NULL);
 	} else if(!strcmp(name, "XV_COLORKEY")) {
 	  this->capabilities |= VO_CAP_COLORKEY;
 	  xv_check_capability (this, VO_PROP_COLORKEY, attribute_it.data,
