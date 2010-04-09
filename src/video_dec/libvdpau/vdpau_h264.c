@@ -733,7 +733,12 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
     this->decoder = VDP_INVALID_HANDLE;
   }
 
-  reset_parser(this->nal_parser);
+  // Doing a full parser reinit here works more reliable than
+  // resetting
+
+  //reset_parser(this->nal_parser);
+  free_parser(this->nal_parser);
+  this->nal_parser = init_parser(this->xine);
 
   this->color_standard = VDP_COLOR_STANDARD_ITUR_BT_601;
   this->wait_for_bottom_field = 0;
