@@ -1441,26 +1441,26 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
             if(this->audio_tracks[i].pid == pid) {
               found = 1;
               break;
-             }
+	    }
 	  }
-          if(!found) {
+          if (!found) {
 #ifdef TS_PMT_LOG
             printf ("demux_ts: PMT AC3 audio pid 0x%.4x type %2.2x\n", pid, stream[0]);
 #endif
-          if (stream[i] == 0x6a)
-            demux_ts_pes_new(this, this->media_num, pid,
-                             this->audio_fifo, STREAM_AUDIO_AC3);
-          else
-            demux_ts_pes_new(this, this->media_num, pid,
-                             this->audio_fifo, HDMV_AUDIO_84_EAC3);
+            if (stream[i] == 0x6a)
+              demux_ts_pes_new(this, this->media_num, pid,
+                               this->audio_fifo, STREAM_AUDIO_AC3);
+            else
+              demux_ts_pes_new(this, this->media_num, pid,
+                               this->audio_fifo, HDMV_AUDIO_84_EAC3);
 
-          this->audio_tracks[this->audio_tracks_count].pid = pid;
-          this->audio_tracks[this->audio_tracks_count].media_index = this->media_num;
-          this->media[this->media_num].type = this->audio_tracks_count;
-          demux_ts_get_lang_desc(this, this->audio_tracks[this->audio_tracks_count].lang,
-                                 stream + 5, stream_info_length);
-          this->audio_tracks_count++;
-          break;
+            this->audio_tracks[this->audio_tracks_count].pid = pid;
+            this->audio_tracks[this->audio_tracks_count].media_index = this->media_num;
+            this->media[this->media_num].type = this->audio_tracks_count;
+            demux_ts_get_lang_desc(this, this->audio_tracks[this->audio_tracks_count].lang,
+                                   stream + 5, stream_info_length);
+            this->audio_tracks_count++;
+            break;
           }
         }
         /* Teletext */
@@ -1473,7 +1473,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
               printf ("%.2x ", stream[i]);
             printf ("\n");
 #endif
-          break;
+            break;
           }
 
 	/* DVBSUB */
