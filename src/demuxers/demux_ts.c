@@ -804,7 +804,13 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
      * these "raw" streams may begin with a byte that looks like a stream type.
      * For audio streams, m->type already contains the stream no.
      */
-    if((m->descriptor_tag == STREAM_AUDIO_AC3) ||    /* ac3 - raw */
+    if(m->descriptor_tag == HDMV_AUDIO_84_EAC3) {
+      m->content   = p;
+      m->size = packet_len;
+      m->type |= BUF_AUDIO_EAC3;
+      return 1;
+
+    } else if((m->descriptor_tag == STREAM_AUDIO_AC3) ||    /* ac3 - raw */
        (p[0] == 0x0B && p[1] == 0x77)) { /* ac3 - syncword */
       m->content   = p;
       m->size = packet_len;
@@ -1429,9 +1435,9 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
       break;
     case ISO_13818_PES_PRIVATE:
       for (i = 5; i < coded_length; i += stream[i+1] + 2) {
-          if ((stream[i] == 0x6a) && (this->audio_tracks_count < MAX_AUDIO_TRACKS)) {
-          int i, found = 0;
-          for(i = 0; i < this->audio_tracks_count; i++) {
+        if (((stream[i] == 0x6a) || (stream[i] == 0x7a)) && (this->audio_tracks_count < MAX_AUDIO_TRACKS)) {
+          int j, found = 0;
+          for(j = 0; j < this->audio_tracks_count; j++) {
             if(this->audio_tracks[i].pid == pid) {
               found = 1;
               break;
@@ -1441,8 +1447,12 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
 #ifdef TS_PMT_LOG
             printf ("demux_ts: PMT AC3 audio pid 0x%.4x type %2.2x\n", pid, stream[0]);
 #endif
-          demux_ts_pes_new(this, this->media_num, pid,
-                           this->audio_fifo, STREAM_AUDIO_AC3);
+          if (stream[i] == 0x6a)
+            demux_ts_pes_new(this, this->media_num, pid,
+                             this->audio_fifo, STREAM_AUDIO_AC3);
+          else
+            demux_ts_pes_new(this, this->media_num, pid,
+                             this->audio_fifo, HDMV_AUDIO_84_EAC3);
 
           this->audio_tracks[this->audio_tracks_count].pid = pid;
           this->audio_tracks[this->audio_tracks_count].media_index = this->media_num;
