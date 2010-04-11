@@ -1721,6 +1721,7 @@ void xine_config_reset (xine_t *self) XINE_PROTECTED;
 #define XINE_EVENT_DROPPED_FRAMES        12 /* number of dropped frames is too high */
 #define XINE_EVENT_MRL_REFERENCE_EXT     13 /* demuxer->frontend: MRL reference(s) for the real stream */
 #define XINE_EVENT_AUDIO_AMP_LEVEL       14 /* report current audio amp level (l/r/mute) */
+#define XINE_EVENT_NBC_STATS             15 /* nbc buffer status */
 
 
 /* input events coming from frontend */
@@ -1903,6 +1904,23 @@ typedef struct {
   const char         *description; /* e.g. "connecting..." */
   int                 percent;
 } xine_progress_data_t;
+
+/*
+ * nbc buffer status
+ */
+typedef struct {
+  int                 v_percent;    /* fill of video buffer */
+  int64_t             v_remaining;  /* remaining time in ms till underrun */
+  int64_t             v_bitrate;    /* current bitrate */
+  int                 v_in_disc;    /* in discontinuity */
+  int                 a_percent;    /* like video, but for audio */
+  int64_t             a_remaining;
+  int64_t             a_bitrate;
+  int                 a_in_disc;
+  int                 buffering;    /* currently filling buffer */
+  int                 enabled;      /* buffer disabled by engine */
+  int                 type;         /* 0=buffer put, 1=buffer get */
+} xine_nbc_stats_data_t;
 
 /*
  * mrl reference data is sent by demuxers when a reference stream is found.
