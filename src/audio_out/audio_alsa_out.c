@@ -668,6 +668,34 @@ static int ao_alsa_delay (ao_driver_t *this_gen)  {
   printf("audio_alsa_out:delay:FINISHED\n");
 #endif
 
+  /*
+   * try to recover from errors and recalculate delay
+   */
+  if(err) {
+#ifdef LOG_DEBUG
+    printf("gap audio_alsa_out:delay: recovery\n");
+#endif
+    err = snd_pcm_recover( this->audio_fd, err, 1 );
+    err = snd_pcm_delay( this->audio_fd, &delay );
+  }
+
+  /*
+   * if we have a negative delay try to forward within the buffer
+   */
+  if(!err && (delay < 0)) {
+#ifdef LOG_DEBUG
+    printf("gap audio_alsa_out:delay: forwarding frames: %d\n", (int)-delay);
+#endif
+    err = snd_pcm_forward( this->audio_fd, -delay );
+    if(err >= 0) {
+      err = snd_pcm_delay( this->audio_fd, &delay );
+    }
+  }
+
+  /*
+   * on error or (still) negative delays ensure delay 
+   * is not negative
+   */
   if (err || (delay < 0))
     delay = 0;
 
