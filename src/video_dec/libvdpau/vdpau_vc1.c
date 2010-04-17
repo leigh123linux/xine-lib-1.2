@@ -624,20 +624,6 @@ static int parse_code( vdpau_vc1_decoder_t *this_gen, uint8_t *buf, int len )
 
 
 
-static void duplicate_image( vdpau_vc1_decoder_t *vd, vo_frame_t *dst )
-{
-  lprintf("duplicate_image\n");
-  sequence_t *seq = (sequence_t*)&vd->sequence;
-  picture_t *pic = (picture_t*)&seq->picture;
-
-  if ( !seq->backward_ref ) /* Should not happen! */
-    return;
-
-  dst->proc_duplicate_frame_data( dst, seq->backward_ref );
-}
-
-
-
 static void decode_render( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel, uint8_t *buf, int len )
 {
   sequence_t *seq = (sequence_t*)&vd->sequence;
@@ -690,9 +676,14 @@ static void decode_render( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel, uint8_
         pic->vdp_infos.forward_reference = VDP_INVALID_HANDLE;
         break;
       case FIELDS_I_P:
-      case FIELDS_P_P:
         pic->vdp_infos.forward_reference = accel->surface;
-        pic->vdp_infos.picture_type = P_FRAME; break;
+        pic->vdp_infos.picture_type = P_FRAME;
+        break;
+      case FIELDS_P_P:
+        if ( seq->backward_ref )
+          pic->vdp_infos.forward_reference = ((vdpau_accel_t*)seq->backward_ref->accel_data)->surface;
+        pic->vdp_infos.picture_type = P_FRAME;
+        break;
       case FIELDS_B_B:
       case FIELDS_BI_B:
         pic->vdp_infos.picture_type = B_FRAME;
@@ -778,6 +769,9 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
       pic->skipped = 1;
   }
 
+  if ( pic->skipped )
+    pic->vdp_infos.picture_type = P_FRAME;
+
   if ( pic->vdp_infos.interlace && pic->vdp_infos.frame_coding_mode == PICTURE_FIELD_INTERLACE ) {
     if ( !(field = search_field( vd, buf, len )) )
       lprintf("error, no fields found!\n");
@@ -834,10 +828,7 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
     vd->decoder = VDP_INVALID_HANDLE;
   }
 
-  if ( pic->skipped )
-    duplicate_image( vd, img );
-  else
-    decode_render( vd, accel, buf, len );
+  decode_render( vd, accel, buf, len );
 
 
 #ifdef MAKE_DAT
