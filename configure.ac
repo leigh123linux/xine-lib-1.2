@@ -252,7 +252,7 @@ dnl ---------------------------------------------
 have_supported_dvb=yes
 SYS=other
 
-case "$build_os" in
+case "$host_os" in
   gnu*)
     have_supported_dvb=no
     SYS=hurd
