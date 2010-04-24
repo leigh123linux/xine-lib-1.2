@@ -476,7 +476,7 @@ int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_r
   }
 
   if(discard_ref != NULL) {
-    dpb_remove_picture(dpb, pic);
+    dpb_remove_picture(dpb, discard_ref);
   }
 
   return 0;
