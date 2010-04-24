@@ -467,10 +467,10 @@ int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_r
       }
     } while (pic != NULL && (pic = pic->next) != NULL);
 
-    /* if all pictured in dpb are marked as delayed for output
+    /* if all pictures in dpb are marked as delayed for output
      * we need to drop a not yet drawn image. take the oldest one
      */
-    if(!discard_ref) {
+    if(i > num_ref_frames && !discard_ref) {
       discard_ref = dpb->pictures;
     }
   }
