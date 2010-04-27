@@ -2092,22 +2092,37 @@ static void vdpau_reinit( vo_driver_t *this_gen )
       fprintf(stderr, "No vdpau implementation.\n" );
     else
       fprintf(stderr, "unsupported GPU?\n" );
+#ifdef LOCKDISPLAY
+    XUnlockDisplay(guarded_display);
+#endif	
     return;
   }
 
   st = vdp_queue_target_create_x11( vdp_device, this->drawable, &vdp_queue_target );
-  if ( vdpau_reinit_error( st, "Can't create presentation queue target !!" ) )
+  if ( vdpau_reinit_error( st, "Can't create presentation queue target !!" ) ) {
+#ifdef LOCKDISPLAY
+    XUnlockDisplay(guarded_display);
+#endif
     return;
+  }
   st = vdp_queue_create( vdp_device, vdp_queue_target, &vdp_queue );
-  if ( vdpau_reinit_error( st, "Can't create presentation queue !!" ) )
+  if ( vdpau_reinit_error( st, "Can't create presentation queue !!" ) ) {
+#ifdef LOCKDISPLAY
+    XUnlockDisplay(guarded_display);
+#endif
     return;
+  }
   vdp_queue_set_background_color( vdp_queue, &this->back_color );
 
 
   VdpChromaType chroma = VDP_CHROMA_TYPE_420;
   st = orig_vdp_video_surface_create( vdp_device, chroma, this->soft_surface_width, this->soft_surface_height, &this->soft_surface );
-  if ( vdpau_reinit_error( st, "Can't create video surface !!" ) )
+  if ( vdpau_reinit_error( st, "Can't create video surface !!" ) ) {
+#ifdef LOCKDISPLAY
+    XUnlockDisplay(guarded_display);
+#endif
     return;
+  }
 
   this->current_output_surface = 0;
   this->init_queue = 0;
@@ -2119,6 +2134,9 @@ static void vdpau_reinit( vo_driver_t *this_gen )
       for ( j=0; j<i; ++j )
         vdp_output_surface_destroy( this->output_surface[j] );
       vdp_video_surface_destroy( this->soft_surface );
+#ifdef LOCKDISPLAY
+      XUnlockDisplay(guarded_display);
+#endif
       return;
     }
   }
@@ -2177,6 +2195,9 @@ static void vdpau_reinit( vo_driver_t *this_gen )
     orig_vdp_video_surface_destroy( this->soft_surface );
     for ( i=0; i<NOUTPUTSURFACE; ++i )
       vdp_output_surface_destroy( this->output_surface[i] );
+#ifdef LOCKDISPLAY
+    XUnlockDisplay(guarded_display);
+#endif
     return;
   }
   this->video_mixer_chroma = chroma;
