@@ -352,6 +352,7 @@ static void demux_flac_send_headers(demux_plugin_t *this_gen) {
   demux_flac_t *this = (demux_flac_t *) this_gen;
   buf_element_t *buf;
   xine_waveformatex wave;
+  int bits;
 
   this->audio_fifo  = this->stream->audio_fifo;
 
@@ -365,7 +366,7 @@ static void demux_flac_send_headers(demux_plugin_t *this_gen) {
   }
 
   /* lie about 24bps */
-  int bits = this->bits_per_sample > 16 ? 16 : this->bits_per_sample;
+  bits = this->bits_per_sample > 16 ? 16 : this->bits_per_sample;
 
   buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
   buf->type = BUF_AUDIO_FLAC;
