@@ -1191,40 +1191,27 @@ static void vdpau_set_deinterlace( vo_driver_t *this_gen )
     return;
 
   if ( this->deinterlace ) {
-    if ( this->video_mixer_width<800 ) {
-      feature_enables[0] = feature_enables[1] = 1;
-	    if ( this->temporal_is_supported ) {
-	      if ( this->temporal_spatial_is_supported )
-	        fprintf(stderr, "vo_vdpau: deinterlace: temporal_spatial\n" );
-		    else
-		      fprintf(stderr, "vo_vdpau: deinterlace: temporal\n" );
-      }
-      else
+    switch ( this->deinterlacers_method[this->deinterlace_method] ) {
+      case DEINT_BOB:
+        feature_enables[0] = feature_enables[1] = 0;
         fprintf(stderr, "vo_vdpau: deinterlace: bob\n" );
-    }
-    else {
-      switch ( this->deinterlacers_method[this->deinterlace_method] ) {
-        case DEINT_BOB:
-          feature_enables[0] = feature_enables[1] = 0;
-          fprintf(stderr, "vo_vdpau: deinterlace: bob\n" );
-          break;
-        case DEINT_HALF_TEMPORAL:
-          feature_enables[0] = 1; feature_enables[1] = 0;
-          fprintf(stderr, "vo_vdpau: deinterlace: half_temporal\n" );
-          break;
-        case DEINT_TEMPORAL:
-          feature_enables[0] = 1; feature_enables[1] = 0;
-          fprintf(stderr, "vo_vdpau: deinterlace: temporal\n" );
-          break;
-        case DEINT_HALF_TEMPORAL_SPATIAL:
-          feature_enables[0] = feature_enables[1] = 1;
-          fprintf(stderr, "vo_vdpau: deinterlace: half_temporal_spatial\n" );
-          break;
-        case DEINT_TEMPORAL_SPATIAL:
-          feature_enables[0] = feature_enables[1] = 1;
-          fprintf(stderr, "vo_vdpau: deinterlace: temporal_spatial\n" );
-          break;
-      }
+        break;
+      case DEINT_HALF_TEMPORAL:
+        feature_enables[0] = 1; feature_enables[1] = 0;
+        fprintf(stderr, "vo_vdpau: deinterlace: half_temporal\n" );
+        break;
+      case DEINT_TEMPORAL:
+        feature_enables[0] = 1; feature_enables[1] = 0;
+        fprintf(stderr, "vo_vdpau: deinterlace: temporal\n" );
+        break;
+      case DEINT_HALF_TEMPORAL_SPATIAL:
+        feature_enables[0] = feature_enables[1] = 1;
+        fprintf(stderr, "vo_vdpau: deinterlace: half_temporal_spatial\n" );
+        break;
+      case DEINT_TEMPORAL_SPATIAL:
+        feature_enables[0] = feature_enables[1] = 1;
+        fprintf(stderr, "vo_vdpau: deinterlace: temporal_spatial\n" );
+        break;
     }
   }
   else {
@@ -2102,7 +2089,8 @@ static void vdpau_reinit( vo_driver_t *this_gen )
   if ( vdpau_reinit_error( st, "Can't create presentation queue target !!" ) ) {
 #ifdef LOCKDISPLAY
     XUnlockDisplay(guarded_display);
-#endif
+#endif	  
+
     return;
   }
   st = vdp_queue_create( vdp_device, vdp_queue_target, &vdp_queue );
@@ -2136,7 +2124,7 @@ static void vdpau_reinit( vo_driver_t *this_gen )
       vdp_video_surface_destroy( this->soft_surface );
 #ifdef LOCKDISPLAY
       XUnlockDisplay(guarded_display);
-#endif
+#endif	  
       return;
     }
   }
@@ -2647,7 +2635,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   }
 
   this->deinterlace_method = config->register_enum( config, "video.output.vdpau_deinterlace_method", deint_default,
-         this->deinterlacers_name, _("vdpau: HD deinterlace method"),
+         this->deinterlacers_name, _("vdpau: deinterlace method"),
          deinterlacers_description,
          10, vdpau_update_deinterlace_method, this );
 
