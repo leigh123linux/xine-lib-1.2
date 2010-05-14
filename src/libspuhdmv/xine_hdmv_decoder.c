@@ -118,7 +118,7 @@ struct window_def_s {
 typedef struct composition_object_s composition_object_t;
 struct composition_object_s {
   uint8_t     window_id_ref;
-  uint8_t     object_id_ref;
+  uint16_t    object_id_ref;
 
   uint16_t    xpos, ypos;
 
@@ -450,7 +450,7 @@ static int segbuf_decode_rle(segment_buffer_t *buf, subtitle_object_t *obj)
 
 static subtitle_object_t *segbuf_decode_object(segment_buffer_t *buf)
 {
-  uint8_t  object_id = segbuf_get_u16(buf);
+  uint16_t object_id = segbuf_get_u16(buf);
   uint8_t  version   = segbuf_get_u8 (buf);
   uint8_t  seq_desc  = segbuf_get_u8 (buf);
 
