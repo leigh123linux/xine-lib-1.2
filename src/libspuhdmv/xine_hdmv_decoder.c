@@ -50,6 +50,10 @@
 #define XINE_HDMV_ERROR(x...) fprintf(stderr, "spuhdmv: " x)
 /*#define XINE_HDMV_ERROR(x...) lprintf(x) */
 
+#ifndef MAX
+#  define MAX(a,b) (a>b)?(a):(b)
+#endif
+
 enum {
   SEGTYPE_PALETTE              = 0x14,
   SEGTYPE_OBJECT               = 0x15,
@@ -86,11 +90,11 @@ struct subtitle_object_s {
   unsigned int num_rle;
   size_t      data_size;
 
-#if 0
-  uint8_t    *raw_data; /* partial RLE data in HDMV format */
-  size_t      raw_data_len;
-  size_t      raw_data_size;
-#endif
+  /* HDMV format (used when object does not fit to single segment) */
+  uint32_t    data_len;      /* size of complete object */
+  uint8_t    *raw_data;      /* partial RLE data in HDMV format */
+  size_t      raw_data_len;  /* bytes buffered */
+  size_t      raw_data_size; /* allocated size */
 
   subtitle_object_t *next;
 
@@ -187,6 +191,7 @@ static void free_subtitle_object(void *ptr)
 {
   if (ptr) {
     free(((subtitle_object_t*)ptr)->rle);
+    free(((subtitle_object_t*)ptr)->raw_data);
     free(ptr);
   }
 }
@@ -448,42 +453,103 @@ static int segbuf_decode_rle(segment_buffer_t *buf, subtitle_object_t *obj)
   return buf->error;
 }
 
-static subtitle_object_t *segbuf_decode_object(segment_buffer_t *buf)
+static subtitle_object_t *segbuf_decode_object(segment_buffer_t *buf, subtitle_object_t *objects)
 {
   uint16_t object_id = segbuf_get_u16(buf);
   uint8_t  version   = segbuf_get_u8 (buf);
   uint8_t  seq_desc  = segbuf_get_u8 (buf);
 
   XINE_HDMV_TRACE("  decode_object: object_id %d, version %d, seq 0x%x\n",
-        object_id, version, seq_desc);
-
-  //LIST_FIND();
-  subtitle_object_t *obj = calloc(1, sizeof(subtitle_object_t));
-  obj->id = object_id;
+                  object_id, version, seq_desc);
 
   if (seq_desc & 0x80) {
+    /* new object (first-in-sequence flag set) */
 
-    uint32_t data_len = segbuf_get_u24(buf);
+    subtitle_object_t *obj = calloc(1, sizeof(subtitle_object_t));
+
+    obj->id       = object_id;
+    obj->data_len = segbuf_get_u24(buf);
     obj->width    = segbuf_get_u16(buf);
     obj->height   = segbuf_get_u16(buf);
 
-    XINE_HDMV_TRACE("    object length %d bytes, size %dx%d\n", data_len, obj->width, obj->height);
-
-    segbuf_decode_rle (buf, obj);
-
     if (buf->error) {
+      XINE_HDMV_TRACE("    decode error at object header\n");
       free_subtitle_object(obj);
       return NULL;
     }
 
-  } else {
-    XINE_HDMV_ERROR("    TODO: APPEND RLE, length %d bytes\n", buf->segment_len - 4);
-    /* TODO */
-    free_subtitle_object(obj);
+    obj->data_len -= 4; /* width, height parsed */
+
+    XINE_HDMV_TRACE("    object length %d bytes, size %dx%d\n", obj->data_len, obj->width, obj->height);
+
+    if (obj->data_len > segbuf_data_length(buf)) {
+      XINE_HDMV_TRACE("    object length %d bytes, have only %zd bytes -> missing %d bytes\n",
+                      obj->data_len, segbuf_data_length(buf), obj->data_len - (int)segbuf_data_length(buf));
+
+      if (obj->raw_data)
+        free(obj->raw_data);
+
+      /* store partial RLE data in HDMV format */
+      obj->raw_data_len  = segbuf_data_length(buf);
+      obj->raw_data_size = MAX(obj->data_len, obj->raw_data_len);
+      obj->raw_data      = malloc(obj->raw_data_size);
+      memcpy(obj->raw_data, buf->segment_data, obj->raw_data_len);
+
+      return obj;
+    }
+
+    segbuf_decode_rle (buf, obj);
+
+    if (buf->error) {
+      XINE_HDMV_TRACE("    decode error at RLE data\n");
+      free_subtitle_object(obj);
+      return NULL;
+    }
+
+    return obj;
+  }
+
+  /* not first-of-sequence --> append data to already existing objct */
+
+  /* search for object */
+  while (objects && objects->id != object_id)
+    objects = objects->next;
+
+  if (!objects) {
+    XINE_HDMV_TRACE("    object not found from list, discarding segment\n");
     return NULL;
   }
 
-  return obj;
+  /* store partial RLE data in HDMV format */
+  if (objects->raw_data_size < objects->raw_data_len + segbuf_data_length(buf)) {
+    XINE_HDMV_ERROR("object larger than object size !\n");
+    return NULL;
+  }
+  memcpy(objects->raw_data + objects->raw_data_len, buf->segment_data, segbuf_data_length(buf));
+  objects->raw_data_len  += segbuf_data_length(buf);
+
+  /* if complete, decode RLE data */
+  if (objects->raw_data_len >= objects->data_len) {
+    /* create dummy buffer for segbuf_decode_rle */
+    segment_buffer_t tmpbuf = {};
+    tmpbuf.segment_data = objects->raw_data;
+    tmpbuf.segment_end  = objects->raw_data + objects->raw_data_len;
+
+    /* decode RLE data */
+    segbuf_decode_rle (&tmpbuf, objects);
+
+    if (tmpbuf.error) {
+      XINE_HDMV_TRACE("    error decoding multi-segment object\n");
+    }
+
+    /* free decode buffer */
+    free(objects->raw_data);
+    objects->raw_data      = NULL;
+    objects->raw_data_len  = 0;
+    objects->raw_data_size = 0;
+  }
+
+  return NULL;
 }
 
 static window_def_t *segbuf_decode_window_definition(segment_buffer_t *buf)
@@ -641,7 +707,7 @@ static int decode_palette(spuhdmv_decoder_t *this)
 static int decode_object(spuhdmv_decoder_t *this)
 {
   /* decode */
-  subtitle_object_t *obj = segbuf_decode_object(this->buf);
+  subtitle_object_t *obj = segbuf_decode_object(this->buf, this->objects);
   if (!obj)
     return 1;
 
@@ -702,6 +768,10 @@ static int show_overlay(spuhdmv_decoder_t *this, composition_object_t *cobj, uns
     obj = obj->next;
   if (!obj) {
     XINE_HDMV_TRACE("  show_overlay: object %d not found !\n", cobj->object_id_ref);
+    return -1;
+  }
+  if (!obj->rle) {
+    XINE_HDMV_TRACE("  show_overlay: object %d RLE data not decoded !\n", cobj->object_id_ref);
     return -1;
   }
 
