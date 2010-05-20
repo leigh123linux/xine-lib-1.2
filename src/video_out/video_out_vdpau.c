@@ -1,4 +1,5 @@
 /*
+ * kate: space-indent on; indent-width 2; mixedindent off; indent-mode cstyle; remove-trailing-space on;
  * Copyright (C) 2008 the xine project
  * Copyright (C) 2008 Christophe Thommeret <hftom@free.fr>
  *
@@ -351,7 +352,8 @@ typedef struct {
   int               sharpness;
   int               noise;
   int               deinterlace;
-  int               deinterlace_method;
+  int               deinterlace_method_hd;
+  int               deinterlace_method_sd;
   int               enable_inverse_telecine;
   int               honor_progressive;
   int               skip_chroma;
@@ -1178,6 +1180,8 @@ static void vdpau_set_deinterlace( vo_driver_t *this_gen )
   VdpVideoMixerFeature features[2];
   VdpBool feature_enables[2];
   int features_count = 0;
+  int deinterlace_method;
+  
   if ( this->temporal_is_supported ) {
     features[features_count] = VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL;
     ++features_count;
@@ -1191,7 +1195,12 @@ static void vdpau_set_deinterlace( vo_driver_t *this_gen )
     return;
 
   if ( this->deinterlace ) {
-    switch ( this->deinterlacers_method[this->deinterlace_method] ) {
+    if ( this->video_mixer_width < 800 )
+      deinterlace_method = this->deinterlace_method_sd;
+    else
+      deinterlace_method = this->deinterlace_method_hd;
+  
+    switch ( this->deinterlacers_method[deinterlace_method] ) {
       case DEINT_BOB:
         feature_enables[0] = feature_enables[1] = 0;
         fprintf(stderr, "vo_vdpau: deinterlace: bob\n" );
@@ -1245,12 +1254,23 @@ static void vdpau_set_inverse_telecine( vo_driver_t *this_gen )
 
 
 
-static void vdpau_update_deinterlace_method( void *this_gen, xine_cfg_entry_t *entry )
+static void vdpau_update_deinterlace_method_sd( void *this_gen, xine_cfg_entry_t *entry )
 {
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
 
-  this->deinterlace_method = entry->num_value;
-  fprintf(stderr,  "vo_vdpau: deinterlace_method=%d\n", this->deinterlace_method );
+  this->deinterlace_method_sd = entry->num_value;
+  fprintf(stderr,  "vo_vdpau: deinterlace_method_sd=%d\n", this->deinterlace_method_sd );
+  vdpau_set_deinterlace( (vo_driver_t*)this_gen );
+}
+
+
+
+static void vdpau_update_deinterlace_method_hd( void *this_gen, xine_cfg_entry_t *entry )
+{
+  vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
+
+  this->deinterlace_method_hd = entry->num_value;
+  fprintf(stderr,  "vo_vdpau: deinterlace_method_hd=%d\n", this->deinterlace_method_hd );
   vdpau_set_deinterlace( (vo_driver_t*)this_gen );
 }
 
@@ -1719,7 +1739,11 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     if ( duration>0 && duration<4000 )
       frame_duration = duration;
   }
-  int non_progressive = (this->honor_progressive && !frame->vo_frame.progressive_frame) || !this->honor_progressive;
+  int non_progressive;
+  if ( frame->vo_frame.progressive_frame < 0 )
+    non_progressive = 0;
+  else
+    non_progressive = (this->honor_progressive && !frame->vo_frame.progressive_frame) || !this->honor_progressive;
 
 #ifdef LOCKDISPLAY
   XLockDisplay( this->display );
@@ -1744,7 +1768,12 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, 0 ); /* display _now_ */
     vdpau_shift_queue( this_gen );
 
-    int dm = this->deinterlacers_method[this->deinterlace_method];
+    int dm;
+    if ( this->video_mixer_width < 800 )
+      dm = this->deinterlacers_method[this->deinterlace_method_sd];
+    else
+      dm = this->deinterlacers_method[this->deinterlace_method_hd];
+    
     if ( (dm != DEINT_HALF_TEMPORAL) && (dm != DEINT_HALF_TEMPORAL_SPATIAL) && frame->vo_frame.future_frame ) {  /* process second field */
       if ( this->init_queue>1 ) {
 #ifdef LOCKDISPLAY
@@ -2634,10 +2663,15 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
            10, vdpau_update_scaling_level, this );
   }
 
-  this->deinterlace_method = config->register_enum( config, "video.output.vdpau_deinterlace_method", deint_default,
-         this->deinterlacers_name, _("vdpau: deinterlace method"),
+  this->deinterlace_method_hd = config->register_enum( config, "video.output.vdpau_hd_deinterlace_method", deint_default,
+         this->deinterlacers_name, _("vdpau: HD deinterlace method"),
          deinterlacers_description,
-         10, vdpau_update_deinterlace_method, this );
+         10, vdpau_update_deinterlace_method_hd, this );
+
+  this->deinterlace_method_sd = config->register_enum( config, "video.output.vdpau_sd_deinterlace_method", deint_default,
+         this->deinterlacers_name, _("vdpau: SD deinterlace method"),
+         deinterlacers_description,
+         10, vdpau_update_deinterlace_method_sd, this );
 
   if ( this->inverse_telecine_is_supported ) {
     this->enable_inverse_telecine = config->register_bool( config, "video.output.vdpau_enable_inverse_telecine", 1,
