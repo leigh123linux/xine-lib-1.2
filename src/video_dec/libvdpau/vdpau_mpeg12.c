@@ -263,7 +263,7 @@ static void sequence_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int
     sequence->cur_pts = 0;
   }
 
-  bits_reader_set( &sequence->br, buf );
+  bits_reader_set( &sequence->br, buf, len );
   sequence->coded_width = read_bits( &sequence->br, 12 );
   lprintf( "coded_width: %d\n", sequence->coded_width );
   sequence->coded_height = read_bits( &sequence->br, 12 );
@@ -370,14 +370,14 @@ static void picture_header( sequence_t *sequence, uint8_t *buf, int len )
     infos = &sequence->picture.vdp_infos2;
   }
 
-  bits_reader_set( &sequence->br, buf );
+  bits_reader_set( &sequence->br, buf, len );
   int tmp = read_bits( &sequence->br, 10 );
   lprintf( "temporal_reference: %d\n", tmp );
   infos->picture_coding_type = read_bits( &sequence->br, 3 );
   lprintf( "picture_coding_type: %d\n", infos->picture_coding_type );
   infos->forward_reference = VDP_INVALID_HANDLE;
   infos->backward_reference = VDP_INVALID_HANDLE;
-  read_bits( &sequence->br, 16 );
+  skip_bits( &sequence->br, 16 );
   if ( infos->picture_coding_type > I_FRAME ) {
     infos->full_pel_forward_vector = read_bits( &sequence->br, 1 );
     infos->f_code[0][0] = infos->f_code[0][1] = read_bits( &sequence->br, 3 );
@@ -400,15 +400,15 @@ static void picture_header( sequence_t *sequence, uint8_t *buf, int len )
 
 static void sequence_extension( sequence_t *sequence, uint8_t *buf, int len )
 {
-  bits_reader_set( &sequence->br, buf );
+  bits_reader_set( &sequence->br, buf, len );
   int tmp = read_bits( &sequence->br, 4 );
   lprintf( "extension_start_code_identifier: %d\n", tmp );
-  read_bits( &sequence->br, 1 );
+  skip_bits( &sequence->br, 1 );
   switch ( read_bits( &sequence->br, 3 ) ) {
     case 5: sequence->profile = VDP_DECODER_PROFILE_MPEG2_SIMPLE; break;
     default: sequence->profile = VDP_DECODER_PROFILE_MPEG2_MAIN;
   }
-  read_bits( &sequence->br, 4 );
+  skip_bits( &sequence->br, 4 );
   tmp = read_bits( &sequence->br, 1 );
   lprintf( "progressive_sequence: %d\n", tmp );
   if ( read_bits( &sequence->br, 2 ) == 2 )
@@ -442,7 +442,7 @@ static void picture_coding_extension( sequence_t *sequence, uint8_t *buf, int le
   if ( infos->picture_structure && infos->picture_structure!=PICTURE_FRAME )
     infos = &sequence->picture.vdp_infos2;
 
-  bits_reader_set( &sequence->br, buf );
+  bits_reader_set( &sequence->br, buf, len );
   int tmp = read_bits( &sequence->br, 4 );
   lprintf( "extension_start_code_identifier: %d\n", tmp );
   infos->f_code[0][0] = read_bits( &sequence->br, 4 );
@@ -484,8 +484,8 @@ static void quant_matrix_extension( sequence_t *sequence, uint8_t *buf, int len 
 {
   int i, j;
 
-  bits_reader_set( &sequence->br, buf );
-  read_bits( &sequence->br, 4 );
+  bits_reader_set( &sequence->br, buf, len );
+  skip_bits( &sequence->br, 4 );
   i = read_bits( &sequence->br, 1 );
   lprintf( "load_intra_quantizer_matrix: %d\n", i );
   if ( i ) {
