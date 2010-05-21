@@ -297,6 +297,7 @@ struct xine_video_port_s {
 #define VO_CAP_VDPAU_H264             0x00000080 /* driver can use VDPAU for H264 */
 #define VO_CAP_VDPAU_MPEG12           0x00000100 /* driver can use VDPAU for mpeg1/2 */
 #define VO_CAP_VDPAU_VC1              0x00000200 /* driver can use VDPAU for VC1 */
+#define VO_CAP_VDPAU_MPEG4            0x00000400 /* driver can use VDPAU for mpeg4-part2 */
 #define VO_CAP_HUE                    0x00010000
 #define VO_CAP_SATURATION             0x00020000
 #define VO_CAP_CONTRAST               0x00040000

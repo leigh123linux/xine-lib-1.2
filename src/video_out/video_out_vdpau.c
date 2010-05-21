@@ -2756,6 +2756,16 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   else
     this->capabilities |= VO_CAP_VDPAU_MPEG12;
 
+#ifdef VDP_DECODER_PROFILE_MPEG4_PART2_ASP
+  st = vdp_decoder_query_capabilities( vdp_device, VDP_DECODER_PROFILE_MPEG4_PART2_ASP, &ok, &ml, &mr, &mw, &mh );
+  if ( st != VDP_STATUS_OK  )
+    fprintf(stderr, "vo_vdpau: getting mpeg4-part2_supported failed! : %s\n", vdp_get_error_string( st ) );
+  else if ( !ok )
+    fprintf(stderr, "vo_vdpau: this hardware doesn't support mpeg4-part2.\n" );
+  else
+    this->capabilities |= VO_CAP_VDPAU_MPEG4;
+#endif
+
   for ( i=0; i<NUM_FRAMES_BACK; i++)
     this->back_frame[i] = NULL;
 
