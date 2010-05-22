@@ -2992,7 +2992,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     goto error;
   if (ebml->max_size_len > 8)
     goto error;
-  if (strcmp(ebml->doctype, "matroska"))
+  /* handle both Matroska and WebM here; we don't (presently) differentiate */
+  if (strcmp(ebml->doctype, "matroska") && strcmp(ebml->doctype, "webm"))
     goto error;
 
   this->event_queue = xine_event_new_queue(this->stream);
@@ -3016,7 +3017,7 @@ error:
  */
 
 static const char *get_description (demux_class_t *this_gen) {
-  return "matroska demux plugin";
+  return "matroska & webm demux plugin";
 }
 
 
@@ -3026,13 +3027,14 @@ static const char *get_identifier (demux_class_t *this_gen) {
 
 
 static const char *get_extensions (demux_class_t *this_gen) {
-  return "mkv";
+  return "mkv wbm webm";
 }
 
 
 static const char *get_mimetypes (demux_class_t *this_gen) {
   return "video/mkv: mkv: matroska;"
-        "video/x-matroska: mkv: matroska;";
+	 "video/x-matroska: mkv: matroska;"
+	 "video/webm: wbm,webm: WebM;";
 }
 
 
