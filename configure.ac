@@ -109,7 +109,7 @@ dnl ---------------------------------------------
 AC_CANONICAL_HOST
 AC_CANONICAL_BUILD
 
-test "$host" == "$build" && check_athlon=yes
+test "$host" = "$build" && check_athlon=yes
 
 AC_CONFIG_HEADERS([include/configure.h])
 
@@ -792,7 +792,7 @@ XXMC_LIBS="${xxmc_path:+-L}$xxmc_path -l$xxmc_stub"
 AC_MSG_CHECKING(whether to enable the xxmc plugin with vld extensions)
 AC_MSG_RESULT()
 dnl Check if vld "extended" XvMC is available
-if test "x$xxmc_stub" == "xXvMCW" && test "x$ac_have_xv" == "xyes"; then
+if test "x$xxmc_stub" = "xXvMCW" && test "x$ac_have_xv" = "xyes"; then
 	AC_CHECK_LIB($xxmc_stub, XvMCPutSlice,
              	     ac_have_xxmc="yes",
 	             [ac_have_xxmc="no"
@@ -822,7 +822,7 @@ if test "x$ac_have_xxmc" = "xyes"; then
 fi
 dnl Try fallback to standard XvMC if vld failed
 if test "x$ac_have_xxmc" = "xno"; then
-  if test "x$xxmc_stub" == "xXvMCW"; then
+  if test "x$xxmc_stub" = "xXvMCW"; then
 	  AC_CHECK_LIB($xxmc_stub, XvMCCreateContext,
                ac_have_xxmc="yes",
 	       [ac_have_xxmc="no"
@@ -876,7 +876,7 @@ saved_libs="$LIBS"
 XVMC_LIBS="${xvmc_path:+-L}$xvmc_path -l$xvmc_stub"
 AC_MSG_CHECKING(whether to enable the xvmc plugin)
 AC_MSG_RESULT()
-if test "x$xvmc_stub" == "xXvMCW"; then
+if test "x$xvmc_stub" = "xXvMCW"; then
 	AC_CHECK_LIB($xvmc_stub, XvMCCreateContext,
              ac_have_xvmc="yes",
 	     [ac_have_xvmc="no"
