@@ -24,7 +24,7 @@
  *
  */
 
-#define LOG
+/*#define LOG*/
 #define LOG_MODULE "vdpau_mpeg4"
 
 
@@ -138,10 +138,6 @@ uint8_t mpeg_scan_norm[64] = {
 
 typedef struct {
   VdpPictureInfoMPEG4Part2  vdp_infos; /* first field, also used for frame */
-  int                     slices_count;
-  uint8_t                 *slices;
-  int                     slices_size;
-  int                     slices_pos;
 
   int                     viso_verid;
   int                     newpred_enable;
@@ -194,6 +190,11 @@ typedef struct {
 
   int         fixed_vop_time_increment;
   int         time_increment_bits;
+  int         last_time_base;
+  int         time_base;
+  int         time;
+  int         last_non_b_time;
+  int         t_frame;
 
 } sequence_t;
 
@@ -237,8 +238,6 @@ static void reset_picture( picture_t *pic )
   pic->vdp_infos.short_video_header = 0;
   pic->vdp_infos.rounding_control = 0;
   pic->vdp_infos.top_field_first = 1;
-  pic->slices_count = 0;
-  pic->slices_pos = 0;
   pic->progressive_frame = 1;
   pic->viso_verid = 1;
   pic->newpred_enable = 0;
@@ -246,16 +245,14 @@ static void reset_picture( picture_t *pic )
   pic->complexity_estimation_disable = 1;
   pic->vol_shape = SHAPE_RECT;
   pic->quant_precision = 5;
-  pic->vdp_infos.trd[0] = pic->vdp_infos.trd[1] = 2;
-  pic->vdp_infos.trb[0] = pic->vdp_infos.trb[1] = 1;
+  pic->vdp_infos.trd[0] = pic->vdp_infos.trd[1] = 0;
+  pic->vdp_infos.trb[0] = pic->vdp_infos.trb[1] = 0;
 }
 
 
 
 static void init_picture( picture_t *pic )
 {
-  pic->slices_size = 2048;
-  pic->slices = (uint8_t*)malloc(pic->slices_size);
   reset_picture( pic );
 }
 
@@ -284,6 +281,12 @@ static void reset_sequence( sequence_t *sequence, int free_refs )
   sequence->top_field_first = 0;
   sequence->reset = VO_NEW_SEQUENCE_FLAG;
   sequence->color_standard = VDP_COLOR_STANDARD_ITUR_BT_709;
+
+  sequence->last_time_base = 0;
+  sequence->time_base = 0;
+  sequence->time = 0;
+  sequence->last_non_b_time = 0;
+  sequence->t_frame = 0;
 }
 
 
@@ -361,6 +364,7 @@ static void video_object_layer( vdpau_mpeg4_decoder_t *this_gen, uint8_t *buf, i
   int vol_verid = 1;
 
   picture->vdp_infos.short_video_header = 0;
+  sequence->t_frame = 0;
 
   skip_bits( &sequence->br, 9 );
   if ( read_bits( &sequence->br, 1 ) ) {
@@ -414,7 +418,7 @@ static void video_object_layer( vdpau_mpeg4_decoder_t *this_gen, uint8_t *buf, i
   skip_bits( &sequence->br, 1 );
 
   if ( read_bits( &sequence->br, 1 ) ) {
-    sequence->fixed_vop_time_increment = read_bits( &sequence->br, length );
+    sequence->fixed_vop_time_increment = read_bits( &sequence->br, sequence->time_increment_bits );
   }
   else
     sequence->fixed_vop_time_increment = 1;
@@ -562,35 +566,70 @@ static void video_object_layer( vdpau_mpeg4_decoder_t *this_gen, uint8_t *buf, i
 }
 
 
+#define ROUNDED_DIV(a,b) (((a)>0 ? (a) + ((b)>>1) : (a) - ((b)>>1))/(b))
 
 static void video_object_plane( vdpau_mpeg4_decoder_t *this_gen, uint8_t *buf, int len )
 {
   sequence_t *sequence = (sequence_t*)&this_gen->sequence;
   picture_t *picture = (picture_t*)&sequence->picture;
   bits_reader_set( &sequence->br, buf, len );
-  int time_inc, time_increment;
+  int time_inc=0, time_increment;
 
   sequence->seq_pts = sequence->cur_pts;
   sequence->cur_pts = 0;
-
-  picture->vdp_infos.vop_fcode_forward = picture->vdp_infos.vop_fcode_backward = 1;
 
   picture->vdp_infos.vop_coding_type = read_bits( &sequence->br, 2 );
   while ( read_bits( &sequence->br, 1 ) )
     ++time_inc;
 
-  if ( sequence->time_increment_bits == 0 ) {
-    fprintf(stderr, "hmm, seems the headers are not complete, trying to guess time_increment_bits\n");
+  skip_bits( &sequence->br, 1 );
+
+  if ( sequence->time_increment_bits == 0 || !(get_bits( &sequence->br, sequence->time_increment_bits + 1) & 1) ) {
+    for ( sequence->time_increment_bits = 1; sequence->time_increment_bits < 16; ++sequence->time_increment_bits ) {
+      if ( picture->vdp_infos.vop_coding_type == P_FRAME ) {
+        if ( (get_bits( &sequence->br, sequence->time_increment_bits + 6 ) & 0x37) == 0x30 )
+          break;
+      }
+      else {
+        if ( (get_bits( &sequence->br, sequence->time_increment_bits + 5 ) & 0x1f) == 0x18 )
+          break;
+      }
+      fprintf(stderr, "Headers are not complete, guessing time_increment_bits: %d\n", sequence->time_increment_bits);
+    }
   }
 
-  skip_bits( &sequence->br, 1 );
   time_increment = read_bits( &sequence->br, sequence->time_increment_bits );
 
   if ( picture->vdp_infos.vop_coding_type != B_FRAME ) {
-    
+    sequence->last_time_base = sequence->time_base;
+    sequence->time_base += time_inc;
+    sequence->time = sequence->time_base * picture->vdp_infos.vop_time_increment_resolution + time_increment;
+    if ( sequence->time < sequence->last_non_b_time ) {
+      ++sequence->time_base;
+      sequence->time += picture->vdp_infos.vop_time_increment_resolution;
+    }
+    picture->vdp_infos.trd[0] = sequence->time - sequence->last_non_b_time;
+    sequence->last_non_b_time = sequence->time;
   }
   else {
+    sequence->time = (sequence->last_time_base + time_inc) * picture->vdp_infos.vop_time_increment_resolution + time_increment;
+    picture->vdp_infos.trb[0] = picture->vdp_infos.trd[0] - (sequence->last_non_b_time - sequence->time);
+    if ( (picture->vdp_infos.trd[0] <= picture->vdp_infos.trb[0] ) || (picture->vdp_infos.trd[0] <= (picture->vdp_infos.trd[0] - picture->vdp_infos.trb[0])) || (picture->vdp_infos.trd[0] <= 0) ) {
+      /* FIXME */
+    }
+    if ( sequence->t_frame == 0 )
+      sequence->t_frame = picture->vdp_infos.trb[0];
+    if ( sequence->t_frame == 0 )
+      sequence->t_frame = 1;
+    picture->vdp_infos.trd[1] = (  ROUNDED_DIV(sequence->last_non_b_time, sequence->t_frame) - ROUNDED_DIV(sequence->last_non_b_time - picture->vdp_infos.trd[0], sequence->t_frame));
+    picture->vdp_infos.trb[1] = (  ROUNDED_DIV(sequence->time, sequence->t_frame) - ROUNDED_DIV(sequence->last_non_b_time - picture->vdp_infos.trd[0], sequence->t_frame));
+    if ( picture->vdp_infos.interlaced ) {
+      /* FIXME */
+    }
   }
+
+  /*if ( sequence->fixed_vop_time_increment )
+    sequence->seq_pts = ( sequence->time + sequence->fixed_vop_time_increment/2 ) / sequence->fixed_vop_time_increment;*/
   
   skip_bits( &sequence->br, 1 );
   if ( !read_bits( &sequence->br, 1 ) )
@@ -634,15 +673,28 @@ static void video_object_plane( vdpau_mpeg4_decoder_t *this_gen, uint8_t *buf, i
       fprintf(stderr, "vdpau_mpeg4: unsupported SHAPE_GRAY!\n");
       return;
     }
-    if ( picture->vdp_infos.vop_coding_type != I_FRAME ) {
+    if ( picture->vdp_infos.vop_coding_type != I_FRAME )
       picture->vdp_infos.vop_fcode_forward = read_bits( &sequence->br, 3 );
-      lprintf("vop_fcode_forward: %d\n", picture->vdp_infos.vop_fcode_forward);
-    }
-    if ( picture->vdp_infos.vop_coding_type == B_FRAME ) {
+    if ( picture->vdp_infos.vop_coding_type == B_FRAME )
       picture->vdp_infos.vop_fcode_backward = read_bits( &sequence->br, 3 );
-      lprintf("vop_fcode_backward: %d\n", picture->vdp_infos.vop_fcode_backward);
-    }
   }
+}
+
+
+
+static void gop_header( vdpau_mpeg4_decoder_t *this_gen, uint8_t *buf, int len )
+{
+  int h, m, s;
+
+  sequence_t *sequence = (sequence_t*)&this_gen->sequence;
+  bits_reader_set( &sequence->br, buf, len );
+
+  h = read_bits( &sequence->br, 5 );
+  m = read_bits( &sequence->br, 6 );
+  skip_bits( &sequence->br, 1 );
+  s = read_bits( &sequence->br, 6 );
+
+  sequence->time_base = s + (60 * (m + (60 * h)));
 }
 
 
@@ -748,6 +800,7 @@ static int parse_code( vdpau_mpeg4_decoder_t *this_gen, uint8_t *buf, int len )
   switch ( buf[3] ) {
     case group_start_code:
       lprintf( " ----------- group_start_code\n" );
+      gop_header( this_gen, buf+4, len-4 );
       break;
     case user_data_start_code:
       lprintf( " ----------- user_data_start_code\n" );
@@ -956,7 +1009,6 @@ static void vdpau_mpeg4_decode_data (video_decoder_t *this_gen, buf_element_t *b
       else {
         if ( parse_code( this, seq->buf+seq->start, seq->bufseek-seq->start ) ) {
           decode_picture( this );
-          parse_code( this, seq->buf+seq->start, seq->bufseek-seq->start );
         }
         uint8_t *tmp = (uint8_t*)malloc(seq->bufsize);
         xine_fast_memcpy( tmp, seq->buf+seq->bufseek, seq->bufpos-seq->bufseek );
@@ -1018,7 +1070,6 @@ static void vdpau_mpeg4_dispose (video_decoder_t *this_gen) {
 
   this->stream->video_out->close( this->stream->video_out, this->stream );
 
-  free( this->sequence.picture.slices );
   free( this->sequence.buf );
   free( this_gen );
 }
