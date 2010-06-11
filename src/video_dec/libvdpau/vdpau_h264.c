@@ -287,7 +287,7 @@ static void fill_vdpau_pictureinfo_h264(video_decoder_t *this_gen, uint32_t slic
   /* set num_ref_frames to the number of actually available reference frames,
    * if this is not set generation 3 decoders will fail. */
   /*pic->num_ref_frames =*/
-  fill_vdpau_reference_list(&(this->nal_parser->dpb), pic->referenceFrames);
+  fill_vdpau_reference_list(this->nal_parser->dpb, pic->referenceFrames);
 
 }
 
@@ -399,7 +399,7 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
   // FIXME: what is if this is the second field of a field coded
   // picture? - should we keep the first field in dpb?
   if(this->completed_pic->flag_mask & IDR_PIC) {
-    dpb_flush(&(this->nal_parser->dpb));
+    dpb_flush(this->nal_parser->dpb);
     if(this->last_ref_pic) {
       release_decoded_picture(this->last_ref_pic);
       this->last_ref_pic = NULL;
@@ -542,13 +542,14 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
         }
         this->last_ref_pic = decoded_pic;
         lock_decoded_picture(this->last_ref_pic);
-        decoded_pic->used_for_reference = 1;
-        dpb_add_picture(&(this->nal_parser->dpb), decoded_pic, sps->num_ref_frames);
+
+        dpb_add_picture(this->nal_parser->dpb, decoded_pic, sps->num_ref_frames);
         this->dangling_img = NULL;
       } else if(slc->field_pic_flag && this->wait_for_bottom_field) {
         if(this->last_ref_pic) {
           decoded_pic = this->last_ref_pic;
-          dpb_add_coded_picture(decoded_pic, this->completed_pic);
+          lock_decoded_picture(decoded_pic);
+          decoded_pic_add_field(decoded_pic, this->completed_pic);
           this->completed_pic = NULL;
         }
       }
@@ -561,20 +562,24 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
         decoded_pic = init_decoded_picture(this->completed_pic, surface, img);
         this->completed_pic = NULL;
 
-        dpb_add_picture(&(this->nal_parser->dpb), decoded_pic, sps->num_ref_frames);
+        dpb_add_picture(this->nal_parser->dpb, decoded_pic, sps->num_ref_frames);
         this->dangling_img = NULL;
       }
 
-      decoded_pic->delayed_output = 1;
-
       this->last_img = img = NULL;
 
-      /* now retrieve the next output frame */
-      if ((decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb), 0)) != NULL) {
+      /* release the decoded picture, which was headed
+       * over to the dpb
+       */
+      release_decoded_picture(decoded_pic);
+      decoded_pic = NULL;
 
+      /* now retrieve the next output frame */
+      if ((decoded_pic = dpb_get_next_out_picture(this->nal_parser->dpb, 0)) != NULL) {
         decoded_pic->img->top_field_first = dp_top_field_first(decoded_pic);
         decoded_pic->img->draw(decoded_pic->img, this->stream);
-        dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
+        dpb_unmark_picture_delayed(this->nal_parser->dpb, decoded_pic);
+        decoded_pic = NULL;
       }
 
       this->wait_for_bottom_field = 0;
@@ -588,6 +593,11 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
       }
       this->completed_pic = NULL;
     }
+
+    /* release the decoded picture as we won't use it
+     * in this method anymore
+     */
+    release_decoded_picture(decoded_pic);
   }
 
   return 1;
@@ -672,6 +682,16 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
         vdpau_decoder_init(this_gen);
       }
 
+      if(this->completed_pic &&
+          this->completed_pic->sps_nal != NULL &&
+          this->completed_pic->sps_nal->sps.vui_parameters_present_flag &&
+          this->completed_pic->sps_nal->sps.vui_parameters.bitstream_restriction_flag) {
+        this->nal_parser->dpb->output_list_size =
+            this->completed_pic->sps_nal->sps.vui_parameters.num_reorder_frames + 1;
+        xprintf(this->xine, XINE_VERBOSITY_DEBUG,
+            "Reorder count: %d\n", this->nal_parser->dpb->output_list_size);
+      }
+
       if(this->decoder != VDP_INVALID_HANDLE &&
           vdp_buffer.bitstream_bytes > 0 &&
           this->completed_pic->slc_nal != NULL &&
@@ -684,8 +704,11 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
       /* in case the last nal was detected as END_OF_SEQUENCE
        * we will flush the dpb, so that all pictures get drawn
        */
-      if(this->nal_parser->last_nal_res == 3)
+      if(this->nal_parser->last_nal_res == 3) {
+        xprintf(this->xine, XINE_VERBOSITY_DEBUG,
+            "END_OF_SEQUENCE, flush buffers\n");
         vdpau_h264_flush(this_gen);
+      }
     }
   }
 
@@ -709,14 +732,14 @@ static void vdpau_h264_flush (video_decoder_t *this_gen) {
     this->last_ref_pic = NULL;
   }
 
-  while ((decoded_pic = dpb_get_next_out_picture(&(this->nal_parser->dpb), 1)) != NULL) {
+  while ((decoded_pic = dpb_get_next_out_picture(this->nal_parser->dpb, 1)) != NULL) {
     decoded_pic->img->top_field_first = dp_top_field_first(decoded_pic);
     xprintf(this->xine, XINE_VERBOSITY_DEBUG,
         "h264 flush, draw pts: %"PRId64"\n", decoded_pic->img->pts);
     decoded_pic->img->draw(decoded_pic->img, this->stream);
-    dpb_set_output_picture(&(this->nal_parser->dpb), decoded_pic);
+    dpb_unmark_picture_delayed(this->nal_parser->dpb, decoded_pic);
   }
-  dpb_free_all(&this->nal_parser->dpb);
+  dpb_free_all(this->nal_parser->dpb);
   this->reset = VO_NEW_SEQUENCE_FLAG;
 }
 
@@ -726,7 +749,7 @@ static void vdpau_h264_flush (video_decoder_t *this_gen) {
 static void vdpau_h264_reset (video_decoder_t *this_gen) {
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *) this_gen;
 
-  dpb_free_all( &(this->nal_parser->dpb) );
+  dpb_free_all(this->nal_parser->dpb);
 
   if (this->decoder != VDP_INVALID_HANDLE) {
     this->vdpau_accel->vdp_decoder_destroy( this->decoder );
@@ -775,7 +798,7 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
 static void vdpau_h264_discontinuity (video_decoder_t *this_gen) {
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *) this_gen;
 
-  dpb_clear_all_pts(&this->nal_parser->dpb);
+  dpb_clear_all_pts(this->nal_parser->dpb);
   this->reset = VO_NEW_SEQUENCE_FLAG;
 }
 
@@ -796,7 +819,7 @@ static void vdpau_h264_dispose (video_decoder_t *this_gen) {
     this->dangling_img = NULL;
   }
 
-  dpb_free_all( &(this->nal_parser->dpb) );
+  dpb_free_all(this->nal_parser->dpb);
 
   if (this->decoder != VDP_INVALID_HANDLE) {
     this->vdpau_accel->vdp_decoder_destroy( this->decoder );
@@ -837,6 +860,8 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
   this = (vdpau_h264_decoder_t *) calloc(1, sizeof(vdpau_h264_decoder_t));
 
+  this->nal_parser = init_parser(stream->xine);
+
   this->video_decoder.decode_data         = vdpau_h264_decode_data;
   this->video_decoder.flush               = vdpau_h264_flush;
   this->video_decoder.reset               = vdpau_h264_reset;
@@ -852,8 +877,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->color_standard                    = VDP_COLOR_STANDARD_ITUR_BT_601;
 
   this->reset = VO_NEW_SEQUENCE_FLAG;
-
-  this->nal_parser = init_parser(stream->xine);
 
   (this->stream->video_out->open) (this->stream->video_out, this->stream);
 

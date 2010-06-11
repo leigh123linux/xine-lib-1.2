@@ -1285,7 +1285,10 @@ void calculate_pic_nums(struct h264_parser *parser, struct coded_picture *cpic)
   struct decoded_picture *pic = NULL;
   struct slice_header *cslc = &cpic->slc_nal->slc;
 
-  while((pic = dpb_get_next_ref_pic(&parser->dpb, pic)) != NULL) {
+  xine_list_iterator_t ite = xine_list_front(parser->dpb->reference_list);
+  while (ite) {
+    pic = xine_list_get_value(parser->dpb->reference_list, ite);
+
     int i;
     for (i=0; i<2; i++) {
       if(pic->coded_pic[i] == NULL)
@@ -1320,6 +1323,8 @@ void calculate_pic_nums(struct h264_parser *parser, struct coded_picture *cpic)
           pic->coded_pic[i]->long_term_pic_num++;
       }
     }
+
+    ite = xine_list_next(parser->dpb->reference_list, ite);
   }
 }
 
@@ -1337,16 +1342,16 @@ void execute_ref_pic_marking(struct coded_picture *cpic,
   if (!cpic->slc_nal)
     return;
   struct slice_header *slc = &cpic->slc_nal->slc;
-  struct dpb *dpb = &parser->dpb;
+  struct dpb *dpb = parser->dpb;
 
   calculate_pic_nums(parser, cpic);
 
   if (cpic->flag_mask & IDR_PIC) {
     if(slc->dec_ref_pic_marking[marking_nr].long_term_reference_flag) {
       cpic->used_for_long_term_ref = 1;
-      dpb_set_unused_ref_picture_lidx_gt(&parser->dpb, 0);
+      dpb_set_unused_ref_picture_lidx_gt(dpb, 0);
     } else {
-      dpb_set_unused_ref_picture_lidx_gt(&parser->dpb, -1);
+      dpb_set_unused_ref_picture_lidx_gt(dpb, -1);
     }
     return;
   }
@@ -1360,7 +1365,7 @@ void execute_ref_pic_marking(struct coded_picture *cpic,
     struct decoded_picture* pic = NULL;
     if ((pic = dpb_get_picture(dpb, pic_num_x)) != NULL) {
       if (cpic->slc_nal->slc.field_pic_flag == 0) {
-        dpb_set_unused_ref_picture_a(dpb, pic);
+        dpb_unmark_reference_picture(dpb, pic);
       } else {
 
         if (pic->coded_pic[0]->slc_nal->slc.field_pic_flag == 1) {
@@ -1370,10 +1375,10 @@ void execute_ref_pic_marking(struct coded_picture *cpic,
             pic->bottom_is_reference = 0;
 
           if(!pic->top_is_reference && !pic->bottom_is_reference)
-            dpb_set_unused_ref_picture_a(dpb, pic);
+            dpb_unmark_reference_picture(dpb, pic);
         } else {
           pic->top_is_reference = pic->bottom_is_reference = 0;
-          dpb_set_unused_ref_picture_a(dpb, pic);
+          dpb_unmark_reference_picture(dpb, pic);
         }
       }
     } else {
@@ -1554,7 +1559,7 @@ struct h264_parser* init_parser(xine_t *xine)
   parser->sps_buffer = create_nal_buffer(32);
   parser->pps_buffer = create_nal_buffer(32);
   parser->xine = xine;
-  memset(&parser->dpb, 0x00, sizeof(struct dpb));
+  parser->dpb = create_dpb();
 
   return parser;
 }
@@ -1586,7 +1591,8 @@ void reset_parser(struct h264_parser *parser)
 
 void free_parser(struct h264_parser *parser)
 {
-  dpb_free_all(&parser->dpb);
+  dpb_free_all(parser->dpb);
+  release_dpb(parser->dpb);
   free_nal_buffer(parser->pps_buffer);
   free_nal_buffer(parser->sps_buffer);
   free(parser);

@@ -83,7 +83,7 @@ struct h264_parser {
     /* this is dpb used for reference frame
      * heading to vdpau + unordered frames
      */
-    struct dpb dpb;
+    struct dpb *dpb;
 
     xine_t *xine;
 };
