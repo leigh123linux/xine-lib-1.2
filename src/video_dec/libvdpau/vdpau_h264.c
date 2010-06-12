@@ -411,15 +411,6 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
     }
   }
 
-  VdpPictureInfoH264 pic;
-
-  fill_vdpau_pictureinfo_h264(this_gen, slice_count, &pic);
-
-  if(!this->decoder_started && !pic.is_reference)
-    return 0;
-
-  this->decoder_started = 1;
-
   struct seq_parameter_set_rbsp *sps = &this->completed_pic->sps_nal->sps;
   struct slice_header *slc = &this->completed_pic->slc_nal->slc;
 
@@ -451,12 +442,31 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
 #endif
 
   /* check if we expect a second field, but got a frame */
-  if (this->incomplete_pic && img && !slc->field_pic_flag) {
-    xprintf(this->xine, XINE_VERBOSITY_DEBUG, "H264 warning: Expected a second field, but got a frame\n");
-    release_decoded_picture(this->incomplete_pic);
-    this->incomplete_pic = NULL;
-    img = NULL;
+  if (this->incomplete_pic && img) {
+    if ((this->completed_pic->slc_nal->slc.frame_num !=
+        this->incomplete_pic->coded_pic[0]->slc_nal->slc.frame_num) ||
+        !slc->field_pic_flag) {
+      xprintf(this->xine, XINE_VERBOSITY_DEBUG, "H264 warning: Expected a second field, stream might be broken\n");
+
+      /* remove this pic from dpb, as it is not complete */
+      dpb_unmark_picture_delayed(this->nal_parser->dpb, this->incomplete_pic);
+      dpb_unmark_reference_picture(this->nal_parser->dpb, this->incomplete_pic);
+
+      release_decoded_picture(this->incomplete_pic);
+      this->incomplete_pic = NULL;
+      img = NULL;
+    }
   }
+
+
+  VdpPictureInfoH264 pic;
+
+  fill_vdpau_pictureinfo_h264(this_gen, slice_count, &pic);
+
+  if(!this->decoder_started && !pic.is_reference)
+    return 0;
+
+  this->decoder_started = 1;
 
   if(img == NULL) {
     img = this->stream->video_out->get_frame (this->stream->video_out,

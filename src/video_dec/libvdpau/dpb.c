@@ -40,7 +40,7 @@
 
 int dp_top_field_first(struct decoded_picture *decoded_pic)
 {
-  int top_field_first = 0;
+  int top_field_first = 1;
 
 
   if (decoded_pic->coded_pic[1] != NULL) {
@@ -51,9 +51,9 @@ int dp_top_field_first(struct decoded_picture *decoded_pic)
       top_field_first = decoded_pic->coded_pic[0]->top_field_order_cnt < decoded_pic->coded_pic[1]->bottom_field_order_cnt;
     } else if (decoded_pic->coded_pic[0]->slc_nal->slc.bottom_field_flag &&
         !decoded_pic->coded_pic[1]->slc_nal->slc.bottom_field_flag &&
-        decoded_pic->coded_pic[0]->top_field_order_cnt !=
-            decoded_pic->coded_pic[1]->bottom_field_order_cnt) {
-      top_field_first = decoded_pic->coded_pic[0]->top_field_order_cnt > decoded_pic->coded_pic[1]->bottom_field_order_cnt;
+        decoded_pic->coded_pic[0]->bottom_field_order_cnt !=
+            decoded_pic->coded_pic[1]->top_field_order_cnt) {
+      top_field_first = decoded_pic->coded_pic[0]->bottom_field_order_cnt > decoded_pic->coded_pic[1]->top_field_order_cnt;
     }
   }
 
@@ -62,8 +62,11 @@ int dp_top_field_first(struct decoded_picture *decoded_pic)
     if(pic_struct == DISP_TOP_BOTTOM ||
         pic_struct == DISP_TOP_BOTTOM_TOP) {
       top_field_first = 1;
-    } else if (pic_struct == DISP_FRAME) {
+    } else if (pic_struct == DISP_BOTTOM_TOP ||
+        pic_struct == DISP_BOTTOM_TOP_BOTTOM) {
       top_field_first = 0;
+    } else if (pic_struct == DISP_FRAME) {
+      top_field_first = 1;
     }
   }
 
