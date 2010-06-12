@@ -32,9 +32,43 @@
 #include "dpb.h"
 #include "nal.h"
 
+#include "h264_parser.h"
+
 #include "accel_vdpau.h"
 
 #include <xine/video_out.h>
+
+int dp_top_field_first(struct decoded_picture *decoded_pic)
+{
+  int top_field_first = 0;
+
+
+  if (decoded_pic->coded_pic[1] != NULL) {
+    if (!decoded_pic->coded_pic[0]->slc_nal->slc.bottom_field_flag &&
+        decoded_pic->coded_pic[1]->slc_nal->slc.bottom_field_flag &&
+        decoded_pic->coded_pic[0]->top_field_order_cnt !=
+            decoded_pic->coded_pic[1]->bottom_field_order_cnt) {
+      top_field_first = decoded_pic->coded_pic[0]->top_field_order_cnt < decoded_pic->coded_pic[1]->bottom_field_order_cnt;
+    } else if (decoded_pic->coded_pic[0]->slc_nal->slc.bottom_field_flag &&
+        !decoded_pic->coded_pic[1]->slc_nal->slc.bottom_field_flag &&
+        decoded_pic->coded_pic[0]->top_field_order_cnt !=
+            decoded_pic->coded_pic[1]->bottom_field_order_cnt) {
+      top_field_first = decoded_pic->coded_pic[0]->top_field_order_cnt > decoded_pic->coded_pic[1]->bottom_field_order_cnt;
+    }
+  }
+
+  if (decoded_pic->coded_pic[0]->flag_mask & PIC_STRUCT_PRESENT) {
+    uint8_t pic_struct = decoded_pic->coded_pic[0]->sei_nal->sei.pic_timing.pic_struct;
+    if(pic_struct == DISP_TOP_BOTTOM ||
+        pic_struct == DISP_TOP_BOTTOM_TOP) {
+      top_field_first = 1;
+    } else if (pic_struct == DISP_FRAME) {
+      top_field_first = 0;
+    }
+  }
+
+  return top_field_first;
+}
 
 /**
  * ----------------------------------------------------------------------------
@@ -44,8 +78,7 @@
 
 void free_decoded_picture(struct decoded_picture *pic);
 
-struct decoded_picture* init_decoded_picture(struct coded_picture *cpic,
-    VdpVideoSurface surface, vo_frame_t *img)
+struct decoded_picture* init_decoded_picture(struct coded_picture *cpic, vo_frame_t *img)
 {
   struct decoded_picture *pic = calloc(1, sizeof(struct decoded_picture));
 

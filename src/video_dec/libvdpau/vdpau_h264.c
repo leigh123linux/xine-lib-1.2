@@ -66,8 +66,8 @@ typedef struct vdpau_h264_decoder_s {
 
 
   struct h264_parser *nal_parser;  /* h264 nal parser. extracts stream data for vdpau */
-  uint8_t           wait_for_bottom_field;
-  struct decoded_picture *last_ref_pic;
+
+  struct decoded_picture *incomplete_pic;
   uint32_t          last_top_field_order_cnt;
 
   int               have_frame_boundary_marks;
@@ -83,7 +83,6 @@ typedef struct vdpau_h264_decoder_s {
   xine_t            *xine;
 
   struct coded_picture *completed_pic;
-  vo_frame_t        *last_img;
   vo_frame_t        *dangling_img;
 
   uint8_t           *codec_private;
@@ -369,7 +368,6 @@ static int vdpau_decoder_init(video_decoder_t *this_gen)
     this->dangling_img->free(this->dangling_img);
   }
   this->dangling_img = img;
-  this->last_img = img;
 
   this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
 
@@ -394,15 +392,22 @@ static int vdpau_decoder_init(video_decoder_t *this_gen)
 static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *vdp_buffer, uint32_t slice_count)
 {
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *)this_gen;
-  vo_frame_t *img = this->last_img;
+  vo_frame_t *img = NULL;
+
+  /* if we wait for a second field for this frame, we
+   * have to render to the same surface again.
+   */
+  if (this->incomplete_pic) {
+    img = this->incomplete_pic->img;
+  }
 
   // FIXME: what is if this is the second field of a field coded
   // picture? - should we keep the first field in dpb?
   if(this->completed_pic->flag_mask & IDR_PIC) {
     dpb_flush(this->nal_parser->dpb);
-    if(this->last_ref_pic) {
-      release_decoded_picture(this->last_ref_pic);
-      this->last_ref_pic = NULL;
+    if(this->incomplete_pic) {
+      release_decoded_picture(this->incomplete_pic);
+      this->incomplete_pic = NULL;
     }
   }
 
@@ -444,6 +449,14 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
   }
   printf("\nE: ---------------------------------------------------------------\n");
 #endif
+
+  /* check if we expect a second field, but got a frame */
+  if (this->incomplete_pic && img && !slc->field_pic_flag) {
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG, "H264 warning: Expected a second field, but got a frame\n");
+    release_decoded_picture(this->incomplete_pic);
+    this->incomplete_pic = NULL;
+    img = NULL;
+  }
 
   if(img == NULL) {
     img = this->stream->video_out->get_frame (this->stream->video_out,
@@ -495,7 +508,8 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
     xprintf(this->xine, XINE_VERBOSITY_LOG, "vdpau_h264: Decoder failure: %s\n",  this->vdpau_accel->vdp_get_error_string(status));
     if (this->dangling_img)
       this->dangling_img->free(this->dangling_img);
-    img = this->last_img = this->dangling_img = NULL;
+    img = NULL;
+    this->dangling_img = NULL;
     free_coded_picture(this->completed_pic);
     this->completed_pic = NULL;
   }
@@ -532,72 +546,55 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
     this->vdpau_accel->color_standard = this->color_standard;
 
     struct decoded_picture *decoded_pic = NULL;
-    if(pic.is_reference) {
-      if(!slc->field_pic_flag || !this->wait_for_bottom_field) {
-        decoded_pic = init_decoded_picture(this->completed_pic, surface, img);
+
+
+    uint8_t draw_frame = 0;
+    if (!slc->field_pic_flag) { /* frame coded: simply add to dpb */
+      decoded_pic = init_decoded_picture(this->completed_pic, img);
+      this->completed_pic = NULL;
+      this->dangling_img = NULL;
+
+      dpb_add_picture(this->nal_parser->dpb, decoded_pic, sps->num_ref_frames);
+
+      draw_frame = 1;
+    } else { /* field coded: check for second field */
+      if (!this->incomplete_pic) {
+        decoded_pic = init_decoded_picture(this->completed_pic, img);
         this->completed_pic = NULL;
-        if(this->last_ref_pic) {
-          release_decoded_picture(this->last_ref_pic);
-          this->last_ref_pic = NULL;
-        }
-        this->last_ref_pic = decoded_pic;
-        lock_decoded_picture(this->last_ref_pic);
+        this->incomplete_pic = decoded_pic;
+        lock_decoded_picture(this->incomplete_pic);
 
         dpb_add_picture(this->nal_parser->dpb, decoded_pic, sps->num_ref_frames);
+
+        /* don't do a draw yet as the field was incomplete */
+        draw_frame = 0;
+      } else {
+        decoded_pic = this->incomplete_pic;
+        lock_decoded_picture(decoded_pic);
+
+        /* picture is complete now */
+        release_decoded_picture(this->incomplete_pic);
+        this->incomplete_pic = NULL;
         this->dangling_img = NULL;
-      } else if(slc->field_pic_flag && this->wait_for_bottom_field) {
-        if(this->last_ref_pic) {
-          decoded_pic = this->last_ref_pic;
-          lock_decoded_picture(decoded_pic);
-          decoded_pic_add_field(decoded_pic, this->completed_pic);
-          this->completed_pic = NULL;
-        }
+
+        decoded_pic_add_field(decoded_pic, this->completed_pic);
+        this->completed_pic = NULL;
+
+        draw_frame = 1;
       }
     }
 
-    if(!slc->field_pic_flag ||
-        (slc->field_pic_flag && slc->bottom_field_flag && this->wait_for_bottom_field)) {
+    release_decoded_picture(decoded_pic);
 
-      if(!decoded_pic) {
-        decoded_pic = init_decoded_picture(this->completed_pic, surface, img);
-        this->completed_pic = NULL;
-
-        dpb_add_picture(this->nal_parser->dpb, decoded_pic, sps->num_ref_frames);
-        this->dangling_img = NULL;
-      }
-
-      this->last_img = img = NULL;
-
-      /* release the decoded picture, which was headed
-       * over to the dpb
-       */
-      release_decoded_picture(decoded_pic);
-      decoded_pic = NULL;
-
-      /* now retrieve the next output frame */
+    /* draw the next frame in display order */
+    if (draw_frame) {
       if ((decoded_pic = dpb_get_next_out_picture(this->nal_parser->dpb, 0)) != NULL) {
         decoded_pic->img->top_field_first = dp_top_field_first(decoded_pic);
         decoded_pic->img->draw(decoded_pic->img, this->stream);
         dpb_unmark_picture_delayed(this->nal_parser->dpb, decoded_pic);
         decoded_pic = NULL;
       }
-
-      this->wait_for_bottom_field = 0;
-
-    } else if(slc->field_pic_flag && !slc->bottom_field_flag) {
-      /* don't draw yet, second field is missing. */
-      this->wait_for_bottom_field = 1;
-      this->last_img = img;
-      if(this->completed_pic) {
-        free_coded_picture(this->completed_pic);
-      }
-      this->completed_pic = NULL;
     }
-
-    /* release the decoded picture as we won't use it
-     * in this method anymore
-     */
-    release_decoded_picture(decoded_pic);
   }
 
   return 1;
@@ -725,11 +722,11 @@ static void vdpau_h264_flush (video_decoder_t *this_gen) {
 
   if(this->dangling_img)
     this->dangling_img->free(this->dangling_img);
-  this->last_img = this->dangling_img = NULL;
+  this->dangling_img = NULL;
 
-  if (this->last_ref_pic) {
-    release_decoded_picture(this->last_ref_pic);
-    this->last_ref_pic = NULL;
+  if (this->incomplete_pic) {
+    release_decoded_picture(this->incomplete_pic);
+    this->incomplete_pic = NULL;
   }
 
   while ((decoded_pic = dpb_get_next_out_picture(this->nal_parser->dpb, 1)) != NULL) {
@@ -764,7 +761,6 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
   this->nal_parser = init_parser(this->xine);
 
   this->color_standard = VDP_COLOR_STANDARD_ITUR_BT_601;
-  this->wait_for_bottom_field = 0;
   this->video_step = 0;
 
   if(this->codec_private_len > 0) {
@@ -777,17 +773,15 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
     this->wait_for_frame_start = this->have_frame_boundary_marks;
   }
 
-  if (this->last_ref_pic) {
-    release_decoded_picture(this->last_ref_pic);
-    this->last_ref_pic = NULL;
+  if (this->incomplete_pic) {
+    release_decoded_picture(this->incomplete_pic);
+    this->incomplete_pic = NULL;
   }
 
   if (this->dangling_img) {
     this->dangling_img->free(this->dangling_img);
     this->dangling_img = NULL;
   }
-
-  this->last_img = NULL;
 
   this->reset = VO_NEW_SEQUENCE_FLAG;
 }
@@ -809,9 +803,9 @@ static void vdpau_h264_dispose (video_decoder_t *this_gen) {
 
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *) this_gen;
 
-  if (this->last_ref_pic) {
-    release_decoded_picture(this->last_ref_pic);
-    this->last_ref_pic = NULL;
+  if (this->incomplete_pic) {
+    release_decoded_picture(this->incomplete_pic);
+    this->incomplete_pic = NULL;
   }
 
   if (this->dangling_img) {

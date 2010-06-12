@@ -63,7 +63,7 @@ struct dpb* create_dpb();
 void release_dpb(struct dpb *dpb);
 
 struct decoded_picture* init_decoded_picture(struct coded_picture *cpic,
-    VdpVideoSurface surface, vo_frame_t *img);
+    vo_frame_t *img);
 void release_decoded_picture(struct decoded_picture *pic);
 void lock_decoded_picture(struct decoded_picture *pic);
 void decoded_pic_check_reference(struct decoded_picture *pic);
@@ -91,20 +91,6 @@ void dpb_clear_all_pts(struct dpb *dpb);
 
 int fill_vdpau_reference_list(struct dpb *dpb, VdpReferenceFrameH264 *reflist);
 
-static int dp_top_field_first(struct decoded_picture *decoded_pic)
-{
-  int top_field_first = 0;
-
-
-  if (decoded_pic->coded_pic[0]->slc_nal->slc.field_pic_flag == 0) {
-    top_field_first = 1;
-  } else {
-    if (decoded_pic->coded_pic[0]->slc_nal->slc.delta_pic_order_cnt_bottom == 1) {
-      top_field_first = 1;
-    }
-  }
-
-  return top_field_first;
-}
+int dp_top_field_first(struct decoded_picture *decoded_pic);
 
 #endif /* DPB_H_ */
