@@ -533,11 +533,12 @@ void dpb_free_all(struct dpb *dpb)
 
   ite = xine_list_front(dpb->reference_list);
   while(ite) {
-    dpb_unmark_picture_delayed(dpb, xine_list_get_value(dpb->reference_list, ite));
+    dpb_unmark_reference_picture(dpb, xine_list_get_value(dpb->reference_list, ite));
     /* CAUTION: xine_list_next would return an item, but not the one we
      * expect, as the current one was deleted
      */
-    ite = xine_list_front(dpb->output_list);  }
+    ite = xine_list_front(dpb->reference_list);
+  }
 }
 
 void dpb_clear_all_pts(struct dpb *dpb)
