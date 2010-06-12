@@ -290,6 +290,41 @@ static void fill_vdpau_pictureinfo_h264(video_decoder_t *this_gen, uint32_t slic
 
 }
 
+int check_progressive(struct coded_picture *pic)
+{
+  if (pic->flag_mask & PIC_STRUCT_PRESENT) {
+    uint8_t pic_struct = pic->sei_nal->sei.pic_timing.pic_struct;
+
+    if (pic_struct == DISP_FRAME) {
+      return 1;
+    } else if (pic_struct == DISP_TOP_BOTTOM ||
+        pic_struct == DISP_BOTTOM_TOP) {
+      return 0;
+    }
+
+    /* FIXME: seems unreliable, maybe it's has to be interpreted more complex */
+    /*if (pic->sei_nal->sei.pic_timing.ct_type == CT_INTERLACED) {
+      return 0;
+    } else if (pic->sei_nal->sei.pic_timing.ct_type == CT_PROGRESSIVE) {
+      return 1;
+    } */
+  }
+
+  if (pic->slc_nal->slc.field_pic_flag && pic->pps_nal->pps.pic_order_present_flag) {
+    if(pic->slc_nal->slc.delta_pic_order_cnt_bottom == 1 ||
+        pic->slc_nal->slc.delta_pic_order_cnt_bottom == -1) {
+      return 0;
+    } else {
+      return 1;
+    }
+  }
+  if (!pic->slc_nal->slc.field_pic_flag & pic->sps_nal->sps.frame_mbs_only_flag) {
+    return 1;
+  }
+
+  return 0;
+}
+
 static int vdpau_decoder_init(video_decoder_t *this_gen)
 {
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *)this_gen;
@@ -526,13 +561,8 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
   else {
     img->bad_frame = 0;
 
-    img->progressive_frame = 0;
-
-    if(/*(sps->vui_parameters_present_flag &&
-        sps->vui_parameters.pic_struct_present_flag &&
-        !(this->completed_pic->flag_mask & INTERLACED)) ||*/
-        (!pic.field_pic_flag && !pic.mb_adaptive_frame_field_flag))
-      img->progressive_frame = 1;
+    img->progressive_frame = check_progressive(this->completed_pic);
+    printf("progressive: %d\n", img->progressive_frame);
 
     if(!img->progressive_frame && this->completed_pic->repeat_pic)
       img->repeat_first_field = 1;

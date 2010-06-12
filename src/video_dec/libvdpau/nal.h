@@ -56,6 +56,13 @@ enum pic_struct {
   DISP_FRAME_TRIPLING
 };
 
+enum ct_type {
+    CT_PROGRESSIVE = 0,
+    CT_INTERLACED,
+    CT_UNKNOWN,
+    CT_RESERVED
+};
+
 /* slice types repeat from 5-9, we
  * need a helper function for comparison
  */
