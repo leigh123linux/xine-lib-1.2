@@ -292,7 +292,7 @@ static void fill_vdpau_pictureinfo_h264(video_decoder_t *this_gen, uint32_t slic
 
 int check_progressive(struct coded_picture *pic)
 {
-  if (pic->flag_mask & PIC_STRUCT_PRESENT) {
+  if (pic->flag_mask & PIC_STRUCT_PRESENT && pic->sei_nal != NULL) {
     uint8_t pic_struct = pic->sei_nal->sei.pic_timing.pic_struct;
 
     if (pic_struct == DISP_FRAME) {

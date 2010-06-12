@@ -57,7 +57,7 @@ int dp_top_field_first(struct decoded_picture *decoded_pic)
     }
   }
 
-  if (decoded_pic->coded_pic[0]->flag_mask & PIC_STRUCT_PRESENT) {
+  if (decoded_pic->coded_pic[0]->flag_mask & PIC_STRUCT_PRESENT && decoded_pic->coded_pic[0]->sei_nal != NULL) {
     uint8_t pic_struct = decoded_pic->coded_pic[0]->sei_nal->sei.pic_timing.pic_struct;
     if(pic_struct == DISP_TOP_BOTTOM ||
         pic_struct == DISP_TOP_BOTTOM_TOP) {
