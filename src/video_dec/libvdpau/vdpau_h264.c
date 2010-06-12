@@ -571,6 +571,7 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
       if (!this->incomplete_pic) {
         decoded_pic = init_decoded_picture(this->completed_pic, img);
         this->completed_pic = NULL;
+        this->dangling_img = NULL;
         this->incomplete_pic = decoded_pic;
         lock_decoded_picture(this->incomplete_pic);
 
@@ -730,9 +731,10 @@ static void vdpau_h264_flush (video_decoder_t *this_gen) {
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t*) this_gen;
   struct decoded_picture *decoded_pic = NULL;
 
-  if(this->dangling_img)
+  if(this->dangling_img){
     this->dangling_img->free(this->dangling_img);
-  this->dangling_img = NULL;
+    this->dangling_img = NULL;
+  }
 
   if (this->incomplete_pic) {
     release_decoded_picture(this->incomplete_pic);
@@ -745,6 +747,7 @@ static void vdpau_h264_flush (video_decoder_t *this_gen) {
         "h264 flush, draw pts: %"PRId64"\n", decoded_pic->img->pts);
     decoded_pic->img->draw(decoded_pic->img, this->stream);
     dpb_unmark_picture_delayed(this->nal_parser->dpb, decoded_pic);
+    decoded_pic = NULL;
   }
   dpb_free_all(this->nal_parser->dpb);
   this->reset = VO_NEW_SEQUENCE_FLAG;
