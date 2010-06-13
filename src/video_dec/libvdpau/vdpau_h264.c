@@ -742,7 +742,7 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
         this->nal_parser->dpb->max_dpb_frames = this->completed_pic->sps_nal->sps.vui_parameters.max_dec_frame_buffering;
 
         xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-                    "max reorder count: %d, max dpb count\n",
+                    "max reorder count: %d, max dpb count %d\n",
                     this->nal_parser->dpb->max_reorder_frames,
                     this->nal_parser->dpb->max_dpb_frames);
       }
