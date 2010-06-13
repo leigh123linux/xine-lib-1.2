@@ -499,7 +499,7 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
 
   fill_vdpau_pictureinfo_h264(this_gen, slice_count, &pic);
 
- #ifdef DEBUG_H264
+#ifdef DEBUG_H264
   dump_pictureinfo_h264(&pic);
 
   int i;

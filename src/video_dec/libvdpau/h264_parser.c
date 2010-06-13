@@ -1941,8 +1941,19 @@ int parse_nal(uint8_t *buf, int buf_len, struct h264_parser *parser,
       parser->pic->flag_mask |= IDR_PIC;
     }
 
-    if (nal->nal_ref_idc) {
+    /* reference flag is only set for slice NALs,
+     * as PPS/SPS/SEI only references are not relevant
+     * for the vdpau decoder.
+     */
+    if (nal->nal_ref_idc &&
+        nal->nal_unit_type <= NAL_SLICE_IDR) {
       parser->pic->flag_mask |= REFERENCE;
+    } else if (!nal->nal_ref_idc &&
+        nal->nal_unit_type >= NAL_SLICE &&
+        nal->nal_unit_type <= NAL_PART_C) {
+      /* remove reference flag if a picture is not
+       * continously flagged as reference. */
+      parser->pic->flag_mask &= ~REFERENCE;
     }
 
     if (nal->nal_unit_type >= NAL_SLICE &&
