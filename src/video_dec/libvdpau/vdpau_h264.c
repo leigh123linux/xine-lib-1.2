@@ -75,6 +75,7 @@ typedef struct vdpau_h264_decoder_s {
 
   VdpDecoder        decoder;
   int               decoder_started;
+  int               progressive_cnt; /* count of progressive marked frames in line */
 
   VdpColorStandard  color_standard;
   VdpDecoderProfile profile;
@@ -290,39 +291,63 @@ static void fill_vdpau_pictureinfo_h264(video_decoder_t *this_gen, uint32_t slic
 
 }
 
-int check_progressive(struct coded_picture *pic)
+int check_progressive(video_decoder_t *this_gen, struct decoded_picture *dpic)
 {
-  if (pic->flag_mask & PIC_STRUCT_PRESENT && pic->sei_nal != NULL) {
-    uint8_t pic_struct = pic->sei_nal->sei.pic_timing.pic_struct;
+  vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *)this_gen;
+  int progressive = 0;
+  int i;
 
-    if (pic_struct == DISP_FRAME) {
-      return 1;
-    } else if (pic_struct == DISP_TOP_BOTTOM ||
-        pic_struct == DISP_BOTTOM_TOP) {
-      return 0;
+  for(i = 0; i < 2; i++) {
+    struct coded_picture *pic = dpic->coded_pic[i];
+    if (!pic) {
+      continue;
     }
 
-    /* FIXME: seems unreliable, maybe it's has to be interpreted more complex */
-    /*if (pic->sei_nal->sei.pic_timing.ct_type == CT_INTERLACED) {
-      return 0;
-    } else if (pic->sei_nal->sei.pic_timing.ct_type == CT_PROGRESSIVE) {
-      return 1;
-    } */
-  }
+    if (pic->flag_mask & PIC_STRUCT_PRESENT && pic->sei_nal != NULL) {
+      uint8_t pic_struct = pic->sei_nal->sei.pic_timing.pic_struct;
 
-  if (pic->slc_nal->slc.field_pic_flag && pic->pps_nal->pps.pic_order_present_flag) {
-    if(pic->slc_nal->slc.delta_pic_order_cnt_bottom == 1 ||
-        pic->slc_nal->slc.delta_pic_order_cnt_bottom == -1) {
-      return 0;
-    } else {
-      return 1;
+      if (pic_struct == DISP_FRAME) {
+        progressive = 1;
+        continue;
+      } else if (pic_struct == DISP_TOP_BOTTOM ||
+          pic_struct == DISP_BOTTOM_TOP) {
+        progressive = 0;
+        break;
+      }
+
+      /* FIXME: seems unreliable, maybe it's has to be interpreted more complex */
+      /*if (pic->sei_nal->sei.pic_timing.ct_type == CT_INTERLACED) {
+        return 0;
+      } else if (pic->sei_nal->sei.pic_timing.ct_type == CT_PROGRESSIVE) {
+        return 1;
+      } */
+    }
+
+    if (pic->slc_nal->slc.field_pic_flag && pic->pps_nal->pps.pic_order_present_flag) {
+      if(pic->slc_nal->slc.delta_pic_order_cnt_bottom == 1 ||
+          pic->slc_nal->slc.delta_pic_order_cnt_bottom == -1) {
+        progressive = 0;
+        break;
+      } else {
+        progressive = 1;
+        continue;
+      }
+    }
+    if (!pic->slc_nal->slc.field_pic_flag && pic->sps_nal->sps.frame_mbs_only_flag) {
+      progressive = 1;
+      continue;
     }
   }
-  if (!pic->slc_nal->slc.field_pic_flag && pic->sps_nal->sps.frame_mbs_only_flag) {
-    return 1;
+
+  if (progressive) {
+    this->progressive_cnt++;
+  } else {
+    this->progressive_cnt = 0;
   }
 
-  return 0;
+  /* only switch to progressive mode if at least 5
+   * frames in order were marked as progressive */
+  return (this->progressive_cnt >= 5);
 }
 
 static int vdpau_decoder_init(video_decoder_t *this_gen)
@@ -431,7 +456,7 @@ static void draw_frames(video_decoder_t *this_gen, int flush)
   struct decoded_picture *decoded_pic = NULL;
   while ((decoded_pic = dpb_get_next_out_picture(this->nal_parser->dpb, flush)) != NULL) {
     decoded_pic->img->top_field_first = dp_top_field_first(decoded_pic);
-    decoded_pic->img->progressive_frame = check_progressive(decoded_pic->coded_pic[0]);
+    decoded_pic->img->progressive_frame = check_progressive(this_gen, decoded_pic);
     printf("progressive: %d\n", decoded_pic->img->progressive_frame);
     if (flush) {
       xprintf(this->xine, XINE_VERBOSITY_DEBUG,
@@ -837,6 +862,7 @@ static void vdpau_h264_reset (video_decoder_t *this_gen) {
     this->dangling_img = NULL;
   }
 
+  this->progressive_cnt = 0;
   this->reset = VO_NEW_SEQUENCE_FLAG;
 }
 
@@ -923,6 +949,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->decoder                           = VDP_INVALID_HANDLE;
   this->vdp_runtime_nr                    = runtime_nr;
   this->color_standard                    = VDP_COLOR_STANDARD_ITUR_BT_601;
+  this->progressive_cnt                   = 0;
 
   this->reset = VO_NEW_SEQUENCE_FLAG;
 
