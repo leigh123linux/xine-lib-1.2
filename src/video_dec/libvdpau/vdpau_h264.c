@@ -424,6 +424,26 @@ static int vdpau_decoder_init(video_decoder_t *this_gen)
   return 1;
 }
 
+static void draw_frames(video_decoder_t *this_gen, int flush)
+{
+  vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *)this_gen;
+
+  struct decoded_picture *decoded_pic = NULL;
+  while ((decoded_pic = dpb_get_next_out_picture(this->nal_parser->dpb, flush)) != NULL) {
+    decoded_pic->img->top_field_first = dp_top_field_first(decoded_pic);
+    decoded_pic->img->progressive_frame = check_progressive(decoded_pic->coded_pic[0]);
+    printf("progressive: %d\n", decoded_pic->img->progressive_frame);
+    if (flush) {
+      xprintf(this->xine, XINE_VERBOSITY_DEBUG,
+          "h264 flush, draw pts: %"PRId64"\n", decoded_pic->img->pts);
+    }
+
+    decoded_pic->img->draw(decoded_pic->img, this->stream);
+    dpb_unmark_picture_delayed(this->nal_parser->dpb, decoded_pic);
+    decoded_pic = NULL;
+  }
+}
+
 static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *vdp_buffer, uint32_t slice_count)
 {
   vdpau_h264_decoder_t *this = (vdpau_h264_decoder_t *)this_gen;
@@ -561,9 +581,6 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
   else {
     img->bad_frame = 0;
 
-    img->progressive_frame = check_progressive(this->completed_pic);
-    printf("progressive: %d\n", img->progressive_frame);
-
     if(!img->progressive_frame && this->completed_pic->repeat_pic)
       img->repeat_first_field = 1;
     //else if(img->progressive_frame && this->nal_parser->current_nal->repeat_pic)
@@ -629,12 +646,7 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
 
     /* draw the next frame in display order */
     if (draw_frame) {
-      while ((decoded_pic = dpb_get_next_out_picture(this->nal_parser->dpb, 0)) != NULL) {
-        decoded_pic->img->top_field_first = dp_top_field_first(decoded_pic);
-        decoded_pic->img->draw(decoded_pic->img, this->stream);
-        dpb_unmark_picture_delayed(this->nal_parser->dpb, decoded_pic);
-        decoded_pic = NULL;
-      }
+      draw_frames(this_gen, 0);
     }
   }
 
@@ -776,14 +788,7 @@ static void vdpau_h264_flush (video_decoder_t *this_gen) {
     this->incomplete_pic = NULL;
   }
 
-  while ((decoded_pic = dpb_get_next_out_picture(this->nal_parser->dpb, 1)) != NULL) {
-    decoded_pic->img->top_field_first = dp_top_field_first(decoded_pic);
-    xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-        "h264 flush, draw pts: %"PRId64"\n", decoded_pic->img->pts);
-    decoded_pic->img->draw(decoded_pic->img, this->stream);
-    dpb_unmark_picture_delayed(this->nal_parser->dpb, decoded_pic);
-    decoded_pic = NULL;
-  }
+  draw_frames(this_gen, 1);
   dpb_free_all(this->nal_parser->dpb);
   this->reset = VO_NEW_SEQUENCE_FLAG;
 }
