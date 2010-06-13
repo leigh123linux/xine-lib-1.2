@@ -476,25 +476,6 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
   }
 
   /* go and decode a frame */
-#ifdef DEBUG_H264
-  dump_pictureinfo_h264(&pic);
-
-  int i;
-  printf("E: Bytes used: %d\n", vdp_buffer->bitstream_bytes);
-  printf("E: Decode data: \nE:");
-  for(i = 0; i < ((vdp_buffer->bitstream_bytes < 20) ? vdp_buffer->bitstream_bytes : 20); i++) {
-    printf("%02x ", ((uint8_t*)vdp_buffer->bitstream)[i]);
-    if((i+1) % 10 == 0)
-      printf("\nE:");
-  }
-  printf("\n...\n");
-  for(i = vdp_buffer->bitstream_bytes - 20; i < vdp_buffer->bitstream_bytes; i++) {
-    printf("%02x ", ((uint8_t*)vdp_buffer->bitstream)[i]);
-    if((i+1) % 10 == 0)
-      printf("\nE:");
-  }
-  printf("\nE: ---------------------------------------------------------------\n");
-#endif
 
   /* check if we expect a second field, but got a frame */
   if (this->incomplete_pic && img) {
@@ -517,6 +498,26 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
   VdpPictureInfoH264 pic;
 
   fill_vdpau_pictureinfo_h264(this_gen, slice_count, &pic);
+
+ #ifdef DEBUG_H264
+  dump_pictureinfo_h264(&pic);
+
+  int i;
+  printf("E: Bytes used: %d\n", vdp_buffer->bitstream_bytes);
+  printf("E: Decode data: \nE:");
+  for(i = 0; i < ((vdp_buffer->bitstream_bytes < 20) ? vdp_buffer->bitstream_bytes : 20); i++) {
+    printf("%02x ", ((uint8_t*)vdp_buffer->bitstream)[i]);
+    if((i+1) % 10 == 0)
+      printf("\nE:");
+  }
+  printf("\n...\n");
+  for(i = vdp_buffer->bitstream_bytes - 20; i < vdp_buffer->bitstream_bytes; i++) {
+    printf("%02x ", ((uint8_t*)vdp_buffer->bitstream)[i]);
+    if((i+1) % 10 == 0)
+      printf("\nE:");
+  }
+  printf("\nE: ---------------------------------------------------------------\n");
+#endif
 
   if(!this->decoder_started && !pic.is_reference)
     return 0;
