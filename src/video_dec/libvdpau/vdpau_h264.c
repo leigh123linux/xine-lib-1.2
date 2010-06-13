@@ -318,7 +318,7 @@ int check_progressive(struct coded_picture *pic)
       return 1;
     }
   }
-  if (!pic->slc_nal->slc.field_pic_flag & pic->sps_nal->sps.frame_mbs_only_flag) {
+  if (!pic->slc_nal->slc.field_pic_flag && pic->sps_nal->sps.frame_mbs_only_flag) {
     return 1;
   }
 
