@@ -23,7 +23,7 @@
 #ifndef DPB_H_
 #define DPB_H_
 
-#define MAX_REORDER_COUNT 16
+#define MAX_DPB_COUNT 16
 
 #include "nal.h"
 #include "cpb.h"
@@ -31,6 +31,12 @@
 #include <xine/list.h>
 
 #define USED_FOR_REF (top_is_reference || bottom_is_reference)
+
+/**
+ * ----------------------------------------------------------------------------
+ * decoded picture
+ * ----------------------------------------------------------------------------
+ */
 
 struct decoded_picture {
   vo_frame_t *img; /* this is the image we block, to make sure
@@ -51,17 +57,6 @@ struct decoded_picture {
   uint32_t lock_counter;
 };
 
-/* Decoded Picture Buffer */
-struct dpb {
-  xine_list_t *reference_list;
-  xine_list_t *output_list;
-
-  int output_list_size;
-};
-
-struct dpb* create_dpb();
-void release_dpb(struct dpb *dpb);
-
 struct decoded_picture* init_decoded_picture(struct coded_picture *cpic,
     vo_frame_t *img);
 void release_decoded_picture(struct decoded_picture *pic);
@@ -70,6 +65,32 @@ void decoded_pic_check_reference(struct decoded_picture *pic);
 void decoded_pic_add_field(struct decoded_picture *pic,
     struct coded_picture *cpic);
 
+
+/**
+ * ----------------------------------------------------------------------------
+ * dpb code starting here
+ * ----------------------------------------------------------------------------
+ */
+
+/* Decoded Picture Buffer */
+struct dpb {
+  xine_list_t *reference_list;
+  xine_list_t *output_list;
+
+  int max_reorder_frames;
+  int max_dpb_frames;
+};
+
+struct dpb* create_dpb();
+void release_dpb(struct dpb *dpb);
+
+/**
+ * calculates the total number of frames in the dpb
+ * when frames are used for reference and are not drawn
+ * yet the result would be less then reference_list-size+
+ * output_list-size
+ */
+int dpb_total_frames(struct dpb *dpb);
 
 struct decoded_picture* dpb_get_next_out_picture(struct dpb *dpb, int do_flush);
 

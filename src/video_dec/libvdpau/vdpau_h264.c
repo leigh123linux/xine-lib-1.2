@@ -629,7 +629,7 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
 
     /* draw the next frame in display order */
     if (draw_frame) {
-      if ((decoded_pic = dpb_get_next_out_picture(this->nal_parser->dpb, 0)) != NULL) {
+      while ((decoded_pic = dpb_get_next_out_picture(this->nal_parser->dpb, 0)) != NULL) {
         decoded_pic->img->top_field_first = dp_top_field_first(decoded_pic);
         decoded_pic->img->draw(decoded_pic->img, this->stream);
         dpb_unmark_picture_delayed(this->nal_parser->dpb, decoded_pic);
@@ -724,10 +724,15 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
           this->completed_pic->sps_nal != NULL &&
           this->completed_pic->sps_nal->sps.vui_parameters_present_flag &&
           this->completed_pic->sps_nal->sps.vui_parameters.bitstream_restriction_flag) {
-        this->nal_parser->dpb->output_list_size =
+
+        this->nal_parser->dpb->max_reorder_frames =
             this->completed_pic->sps_nal->sps.vui_parameters.num_reorder_frames + 1;
+        this->nal_parser->dpb->max_dpb_frames = this->completed_pic->sps_nal->sps.vui_parameters.max_dec_frame_buffering;
+
         xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-            "Reorder count: %d\n", this->nal_parser->dpb->output_list_size);
+                    "max reorder count: %d, max dpb count\n",
+                    this->nal_parser->dpb->max_reorder_frames,
+                    this->nal_parser->dpb->max_dpb_frames);
       }
 
       if(this->decoder != VDP_INVALID_HANDLE &&

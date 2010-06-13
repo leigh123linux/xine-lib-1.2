@@ -174,9 +174,27 @@ struct dpb* create_dpb()
     dpb->output_list = xine_list_new();
     dpb->reference_list = xine_list_new();
 
-    dpb->output_list_size = MAX_REORDER_COUNT;
+    dpb->max_reorder_frames = MAX_DPB_COUNT;
+    dpb->max_dpb_frames = MAX_DPB_COUNT;
 
     return dpb;
+}
+
+int dpb_total_frames(struct dpb *dpb)
+{
+  int num_frames = xine_list_size(dpb->output_list);
+
+  xine_list_iterator_t ite = xine_list_front(dpb->reference_list);
+  while(ite) {
+    struct decoded_picture *pic = xine_list_get_value(dpb->reference_list, ite);
+    if (xine_list_find(dpb->output_list, pic) == NULL) {
+      num_frames++;
+    }
+
+    ite = xine_list_next(dpb->reference_list, ite);
+  }
+
+  return num_frames;
 }
 
 void release_dpb(struct dpb *dpb)
@@ -197,7 +215,9 @@ struct decoded_picture* dpb_get_next_out_picture(struct dpb *dpb, int do_flush)
   struct decoded_picture *pic = NULL;;
   struct decoded_picture *outpic = NULL;
 
-  if(!do_flush && xine_list_size(dpb->output_list) < dpb->output_list_size) {
+  if(!do_flush &&
+      xine_list_size(dpb->output_list) < dpb->max_reorder_frames &&
+      dpb_total_frames(dpb) < dpb->max_dpb_frames) {
     return NULL;
   }
 
@@ -494,7 +514,9 @@ int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_r
     }
   }
 
-  printf("DPB list sizes: Output: %2d, Reference: %2d\n", xine_list_size(dpb->output_list), xine_list_size(dpb->reference_list));
+  printf("DPB list sizes: Total: %2d, Output: %2d, Reference: %2d\n",
+      dpb_total_frames(dpb), xine_list_size(dpb->output_list),
+      xine_list_size(dpb->reference_list));
 
   return 0;
 }
