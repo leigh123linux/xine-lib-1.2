@@ -38,6 +38,8 @@
 
 #include <xine/video_out.h>
 
+//#define DEBUG_DPB
+
 int dp_top_field_first(struct decoded_picture *decoded_pic)
 {
   int top_field_first = 1;
@@ -514,9 +516,11 @@ int dpb_add_picture(struct dpb *dpb, struct decoded_picture *pic, uint32_t num_r
     }
   }
 
+#if DEBUG_DPB
   printf("DPB list sizes: Total: %2d, Output: %2d, Reference: %2d\n",
       dpb_total_frames(dpb), xine_list_size(dpb->output_list),
       xine_list_size(dpb->reference_list));
+#endif
 
   return 0;
 }
@@ -526,11 +530,9 @@ int dpb_flush(struct dpb *dpb)
   struct decoded_picture *pic = NULL;
 
   xine_list_iterator_t ite = xine_list_front(dpb->reference_list);
-  printf("flush, list size: %d\n", xine_list_size(dpb->reference_list));
   while (ite) {
     pic = xine_list_get_value(dpb->reference_list, ite);
 
-    printf("remove reference pic: %d\n", pic->coded_pic[0]->top_field_order_cnt);
     dpb_unmark_reference_picture(dpb, pic);
 
     /* CAUTION: xine_list_next would return an item, but not the one we
@@ -538,7 +540,7 @@ int dpb_flush(struct dpb *dpb)
      */
     ite = xine_list_front(dpb->reference_list);
   }
-printf("flush done, list size: %d\n", xine_list_size(dpb->reference_list));
+
   return 0;
 }
 
