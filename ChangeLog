@@ -79,6 +79,10 @@ xine-lib (1.1.19) 2010-??-??
   * Recognise video/mp2t and video/mp2p.
   * TTA fixes.
   * Add support for Xv gamma adjustment.
+  * Better recovery from ALSA-reported errors.
+  * Report stream buffer stats to the application.
+  * Recognise and handle the WebM container format.
+    (VP8 video is not yet supported.)
 
 xine-lib (1.1.18.1) 2010-03-06
   * Oops. compat.c (for DXR3 support) was omitted.

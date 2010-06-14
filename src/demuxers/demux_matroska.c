@@ -810,6 +810,17 @@ static void init_codec_vobsub(demux_matroska_t *this,
   }
 }
 
+static void init_codec_spu(demux_matroska_t *this, matroska_track_t *track) {
+  buf_element_t *buf;
+
+  buf = track->fifo->buffer_pool_alloc (track->fifo);
+
+  buf->size = 0;
+  buf->type = track->buf_type;
+
+  track->fifo->put (track->fifo, buf);
+}
+
 static void handle_realvideo (demux_plugin_t *this_gen, matroska_track_t *track,
                               int decoder_flags,
                               uint8_t *data, size_t data_len,
@@ -1433,6 +1444,10 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       if (track->compress_algo == MATROSKA_COMPRESS_NONE) {
         track->compress_algo = MATROSKA_COMPRESS_UNKNOWN;
       }
+    } else if (!strcmp(track->codec_id, MATROSKA_CODEC_ID_S_HDMV_PGS)) {
+      lprintf("MATROSKA_CODEC_ID_S_HDMV_PGS\n");
+      track->buf_type = BUF_SPU_HDMV;
+      init_codec = init_codec_spu;
     } else {
       lprintf("unknown codec\n");
     }
@@ -2956,7 +2971,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     goto error;
   if (ebml->max_size_len > 8)
     goto error;
-  if (strcmp(ebml->doctype, "matroska"))
+  /* handle both Matroska and WebM here; we don't (presently) differentiate */
+  if (strcmp(ebml->doctype, "matroska") && strcmp(ebml->doctype, "webm"))
     goto error;
 
   this->event_queue = xine_event_new_queue(this->stream);
@@ -2986,11 +3002,13 @@ static void *init_class (xine_t *xine, void *data) {
   this->xine   = xine;
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("matroska demux plugin");
+  this->demux_class.description     = N_("matroska & webm demux plugin");
   this->demux_class.identifier      = "matroska";
   this->demux_class.mimetypes       = "video/mkv: mkv: matroska;"
-                                      "video/x-matroska: mkv: matroska;";
-  this->demux_class.extensions      = "mkv";
+				      "video/x-matroska: mkv: matroska;"
+				      "video/webm: wbm,webm: WebM;";
+
+  this->demux_class.extensions      = "mkv wbm webm";
   this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;

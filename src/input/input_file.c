@@ -292,7 +292,7 @@ static uint32_t file_plugin_get_blocksize (input_plugin_t *this_gen) {
 }
 
 /*
- * Return 1 is filepathname is a directory, otherwise 0
+ * Return 1 if filepathname is a directory, otherwise 0
  */
 static int is_a_dir(char *filepathname) {
   struct stat  pstat;

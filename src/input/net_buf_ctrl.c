@@ -96,7 +96,6 @@ static void report_progress (xine_stream_t *stream, int p) {
   xine_event_send (stream, &event);
 }
 
-
 static void nbc_set_speed_pause (nbc_t *this) {
   xine_stream_t *stream = this->stream;
 
@@ -132,6 +131,29 @@ static void display_stats (nbc_t *this) {
 	 isatty (STDOUT_FILENO) ? '\r' : '\n'
 	 );
   fflush(stdout);
+}
+
+static void report_stats (nbc_t *this, int type) {
+  xine_event_t             event;
+  xine_nbc_stats_data_t    bs;
+
+  bs.v_percent = this->video_fifo_fill;
+  bs.v_remaining = this->video_fifo_length;
+  bs.v_bitrate = this->video_br;
+  bs.v_in_disc = this->video_in_disc;
+  bs.a_percent = this->audio_fifo_fill;
+  bs.a_remaining = this->audio_fifo_length;
+  bs.a_bitrate = this->audio_br;
+  bs.a_in_disc = this->audio_in_disc;
+  bs.buffering = this->buffering;
+  bs.enabled = this->enabled;
+  bs.type = type;
+
+  event.type = XINE_EVENT_NBC_STATS;
+  event.data = &bs;
+  event.data_length = sizeof (xine_nbc_stats_data_t);
+
+  xine_event_send (this->stream, &event);
 }
 
 /*  Try to compute the length of the fifo in 1/1000 s
@@ -343,6 +365,8 @@ static void nbc_put_cb (fifo_buffer_t *fifo,
       }
       if(this->stream->xine->verbosity >= XINE_VERBOSITY_DEBUG)
         display_stats(this);
+
+      report_stats(this, 0);
     }
   } else {
 
@@ -462,6 +486,8 @@ static void nbc_get_cb (fifo_buffer_t *fifo,
 
       if(this->stream->xine->verbosity >= XINE_VERBOSITY_DEBUG)
         display_stats(this);
+
+      report_stats(this, 1);
     }
   } else {
     /* discontinuity management */

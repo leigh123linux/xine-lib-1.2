@@ -94,7 +94,7 @@ void _x_real_codecs_init(xine_t *const xine) {
     const char *path;
   } paths[] = {
     { O | UL,			"win32" },
-    { O | UL,			"codecs" },
+    { O | UL | UL64,		"codecs" },
     { O | UL | UL64,		"real" },
     { O,			"real/RealPlayer/codecs" },
     { OL | OL64 | UL | UL64,	"RealPlayer10GOLD/codecs" },
