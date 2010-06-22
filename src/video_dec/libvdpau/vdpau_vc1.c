@@ -788,9 +788,9 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
       pic->vdp_infos.forward_reference = ref_accel->surface;
     }
     else {
-	  reset_picture( &seq->picture );
+      reset_picture( &seq->picture );
       return;
-	}
+    }
   }
   else if ( pic->vdp_infos.picture_type>=B_FRAME ) {
     if ( seq->forward_ref ) {
@@ -798,17 +798,17 @@ static void decode_picture( vdpau_vc1_decoder_t *vd )
       pic->vdp_infos.forward_reference = ref_accel->surface;
     }
     else {
-	  reset_picture( &seq->picture );
+      reset_picture( &seq->picture );
       return;
-	}
+    }
     if ( seq->backward_ref ) {
       ref_accel = (vdpau_accel_t*)seq->backward_ref->accel_data;
       pic->vdp_infos.backward_reference = ref_accel->surface;
     }
     else {
-	  reset_picture( &seq->picture );
+      reset_picture( &seq->picture );
       return;
-	}
+    } 
   }
 
   vo_frame_t *img = vd->stream->video_out->get_frame( vd->stream->video_out, seq->coded_width, seq->coded_height,
@@ -953,47 +953,46 @@ static void vdpau_vc1_decode_data (video_decoder_t *this_gen, buf_element_t *buf
   xine_fast_memcpy( seq->buf+seq->bufpos, buf->content, buf->size );
   seq->bufpos += buf->size;
 
-  if ( seq->mode == MODE_FRAME ) {
-    if (buf->decoder_flags & BUF_FLAG_FRAME_END) {
-      lprintf("BUF_FLAG_FRAME_END\n");
-      seq->picture.vdp_infos.slice_count = 1;
-      decode_picture( this );
-      seq->bufpos = 0;
-    }
-  }
-  else {
-    int res;
-    while ( seq->bufseek <= seq->bufpos-4 ) {
-      uint8_t *buffer = seq->buf+seq->bufseek;
-      if ( buffer[0]==0 && buffer[1]==0 && buffer[2]==1 ) {
-		seq->current_code = buffer[3];
-		lprintf("current_code = %d\n", seq->current_code);
-        if ( seq->start<0 ) {
-          seq->start = seq->bufseek;
-          seq->code_start = buffer[3];
-		  lprintf("code_start = %d\n", seq->code_start);
-          if ( seq->cur_pts )
-            seq->seq_pts = seq->cur_pts;
+  int res, startcode=0;
+  while ( seq->bufseek <= seq->bufpos-4 ) {
+    uint8_t *buffer = seq->buf+seq->bufseek;
+    if ( buffer[0]==0 && buffer[1]==0 && buffer[2]==1 ) {
+      startcode = 1;
+      seq->current_code = buffer[3];
+      lprintf("current_code = %d\n", seq->current_code);
+      if ( seq->start<0 ) {
+        seq->start = seq->bufseek;
+        seq->code_start = buffer[3];
+        lprintf("code_start = %d\n", seq->code_start);
+        if ( seq->cur_pts )
+          seq->seq_pts = seq->cur_pts;
+      }
+      else {
+        res = parse_code( this, seq->buf+seq->start, seq->bufseek-seq->start );
+        if ( res==1 ) {
+          seq->mode = MODE_STARTCODE;
+          decode_picture( this );
+          parse_code( this, seq->buf+seq->start, seq->bufseek-seq->start );
         }
-        else {
-          res = parse_code( this, seq->buf+seq->start, seq->bufseek-seq->start );
-          if ( res==1 ) {
-            decode_picture( this );
-            parse_code( this, seq->buf+seq->start, seq->bufseek-seq->start );
-          }
-          if ( res!=-1 ) {
-            uint8_t *tmp = (uint8_t*)malloc(seq->bufsize);
-            xine_fast_memcpy( tmp, seq->buf+seq->bufseek, seq->bufpos-seq->bufseek );
-            seq->bufpos -= seq->bufseek;
-            seq->start = -1;
-            seq->bufseek = -1;
-            free( seq->buf );
-            seq->buf = tmp;
-          }
+        if ( res!=-1 ) {
+          uint8_t *tmp = (uint8_t*)malloc(seq->bufsize);
+          xine_fast_memcpy( tmp, seq->buf+seq->bufseek, seq->bufpos-seq->bufseek );
+          seq->bufpos -= seq->bufseek;
+          seq->start = -1;
+          seq->bufseek = -1;
+          free( seq->buf );
+          seq->buf = tmp;
         }
       }
-      ++seq->bufseek;
     }
+    ++seq->bufseek;
+  }
+
+  if ( !startcode && (seq->start < 0) && (buf->decoder_flags & BUF_FLAG_FRAME_END) ) {
+    lprintf("BUF_FLAG_FRAME_END\n");
+    seq->mode = MODE_FRAME;
+    decode_picture( this );
+    seq->bufpos = 0;
   }
 }
 
