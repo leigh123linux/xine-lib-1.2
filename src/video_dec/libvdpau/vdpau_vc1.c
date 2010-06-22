@@ -22,7 +22,7 @@
  *
  */
 
-/*#define LOG*/
+#define LOG
 #define LOG_MODULE "vdpau_vc1"
 
 #ifdef HAVE_CONFIG_H
@@ -920,11 +920,6 @@ static void vdpau_vc1_decode_data (video_decoder_t *this_gen, buf_element_t *buf
     lprintf("arx=%d ary=%d ratio=%f\n", buf->decoder_info[1], buf->decoder_info[2], seq->ratio);
   }
 
-  if (buf->decoder_flags & BUF_FLAG_FRAME_START) {
-    lprintf("BUF_FLAG_FRAME_START\n");
-    seq->seq_pts = buf->pts;
-  }
-
   if ( !buf->size )
     return;
 
@@ -952,6 +947,26 @@ static void vdpau_vc1_decode_data (video_decoder_t *this_gen, buf_element_t *buf
   }
   xine_fast_memcpy( seq->buf+seq->bufpos, buf->content, buf->size );
   seq->bufpos += buf->size;
+
+  if (buf->decoder_flags & BUF_FLAG_FRAME_START) {
+    lprintf("BUF_FLAG_FRAME_START\n");
+    seq->seq_pts = buf->pts;
+    seq->mode = MODE_FRAME;
+    if ( seq->bufpos > 3 ) {
+      if ( seq->buf[0]==0 && seq->buf[1]==0 && seq->buf[2]==1 ) {
+        seq->mode = MODE_STARTCODE;
+      }
+    }
+  }
+
+  if ( seq->mode == MODE_FRAME ) {
+    if ( buf->decoder_flags & BUF_FLAG_FRAME_END ) {
+      lprintf("BUF_FLAG_FRAME_END\n");
+      decode_picture( this );
+      seq->bufpos = 0;
+    }
+    return;
+  }
 
   int res, startcode=0;
   while ( seq->bufseek <= seq->bufpos-4 ) {
@@ -986,13 +1001,6 @@ static void vdpau_vc1_decode_data (video_decoder_t *this_gen, buf_element_t *buf
       }
     }
     ++seq->bufseek;
-  }
-
-  if ( !startcode && (seq->start < 0) && (buf->decoder_flags & BUF_FLAG_FRAME_END) ) {
-    lprintf("BUF_FLAG_FRAME_END\n");
-    seq->mode = MODE_FRAME;
-    decode_picture( this );
-    seq->bufpos = 0;
   }
 }
 
