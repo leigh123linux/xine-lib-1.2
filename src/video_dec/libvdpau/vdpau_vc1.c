@@ -22,7 +22,7 @@
  *
  */
 
-#define LOG
+/*#define LOG*/
 #define LOG_MODULE "vdpau_vc1"
 
 #ifdef HAVE_CONFIG_H
