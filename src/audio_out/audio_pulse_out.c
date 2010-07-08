@@ -78,6 +78,8 @@ typedef struct pulse_driver_s {
   uint32_t          bits_per_sample;
   uint32_t          bytes_per_frame;
 
+  int               volume_bool;
+
 } pulse_driver_t;
 
 
@@ -409,6 +411,55 @@ static int ao_pulse_open(ao_driver_t *this_gen,
   }
 
   pa_threaded_mainloop_unlock(this->mainloop);
+
+  /* Now we must handle a problem: at init time, xine might have tried to set the default volume value
+   * This won't work with pulseaudio, because, at that time, pulseaudio doesn't have a stream.
+   * As a workaround, we re-do the volume thingie here */
+
+  config_values_t *cfg;
+  cfg = this->xine->config;
+  
+  cfg_entry_t *entry;
+
+  if (this->volume_bool) {
+    this->volume_bool = 0;
+    
+    if (this->num_channels)
+      pa_cvolume_reset(&this->cvolume, this->num_channels);
+
+    entry = cfg->lookup_entry (cfg, "audio.volume.remember_volume");
+
+    if (entry && entry->num_value) {
+      entry = cfg->lookup_entry (cfg, "audio.volume.mixer_volume");
+      if (entry) {
+	this->ao_driver.set_property(&this->ao_driver, AO_PROP_MIXER_VOL, entry->num_value);
+
+	/* Notify frontend about the volume change */
+	xine_event_t              event;
+	xine_audio_level_data_t   data;
+	xine_stream_t            *stream;
+	xine_list_iterator_t      ite;
+
+	data.right        = data.left = entry->num_value;
+	data.mute         = 0;
+
+	event.type        = XINE_EVENT_AUDIO_LEVEL;
+	event.data        = &data;
+	event.data_length = sizeof(data);
+
+	pthread_mutex_lock(&this->xine->streams_lock);
+	for(ite = xine_list_front(this->xine->streams); ite; ite =
+	    xine_list_next(this->xine->streams, ite)) {
+	  stream = xine_list_get_value(this->xine->streams, ite);
+	  event.stream = stream;
+	  xine_event_send(stream, &event);
+	}
+	pthread_mutex_unlock(&this->xine->streams_lock);
+
+      }
+    }
+
+  }
 
   return this->sample_rate;
 
@@ -829,6 +880,8 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
     ao_pulse_exit((ao_driver_t *) this);
     return NULL;
   }
+
+  this->volume_bool = 1;
 
   return &this->ao_driver;
 }
