@@ -276,6 +276,7 @@ typedef struct {
   Display           *display;
   int                screen;
   Drawable           drawable;
+  pthread_mutex_t    drawable_lock;
 
   config_values_t   *config;
 
@@ -1563,6 +1564,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   uint32_t mix_h = this->video_mixer_height;
   VdpTime stream_speed;
 
+  pthread_mutex_lock(&this->drawable_lock); /* protect drawble from being changed */
 
   if(this->reinit_needed)
     vdpau_reinit(this_gen);
@@ -1621,6 +1623,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     /* unknown format */
     fprintf(stderr, "vo_vdpau: got an unknown image -------------\n" );
     frame->vo_frame.free( &frame->vo_frame );
+    pthread_mutex_unlock(&this->drawable_lock); /* allow changing drawable again */
     return;
   }
 
@@ -1826,6 +1829,8 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdpau_backup_frame( this_gen, frame_gen );
   else /* do not release past frame if paused, it will be used for redrawing */
     frame->vo_frame.free( &frame->vo_frame );
+
+  pthread_mutex_unlock(&this->drawable_lock); /* allow changing drawable again */
 }
 
 
@@ -1957,10 +1962,12 @@ static int vdpau_gui_data_exchange (vo_driver_t *this_gen, int data_type, void *
 #ifdef LOCKDISPLAY
         XLockDisplay( this->display );
 #endif
+        pthread_mutex_lock(&this->drawable_lock); /* wait for other thread which is currently displaying */
         int previous = this->current_output_surface - 1;
         if ( previous < 0 )
           previous = NOUTPUTSURFACE - 1;
         vdp_queue_display( vdp_queue, this->output_surface[previous], 0, 0, 0 );
+        pthread_mutex_unlock(&this->drawable_lock);
 #ifdef LOCKDISPLAY
         XUnlockDisplay( this->display );
 #endif
@@ -1973,12 +1980,14 @@ static int vdpau_gui_data_exchange (vo_driver_t *this_gen, int data_type, void *
 #ifdef LOCKDISPLAY
       XLockDisplay( this->display );
 #endif
+      pthread_mutex_lock(&this->drawable_lock); /* wait for other thread which is currently displaying */
       this->drawable = (Drawable) data;
       vdp_queue_destroy( vdp_queue );
       vdp_queue_target_destroy( vdp_queue_target );
       st = vdp_queue_target_create_x11( vdp_device, this->drawable, &vdp_queue_target );
       if ( st != VDP_STATUS_OK ) {
         fprintf(stderr, "vo_vdpau: FATAL !! Can't recreate presentation queue target after drawable change !!\n" );
+        pthread_mutex_unlock(&this->drawable_lock);
 #ifdef LOCKDISPLAY
         XUnlockDisplay( this->display );
 #endif
@@ -1987,12 +1996,14 @@ static int vdpau_gui_data_exchange (vo_driver_t *this_gen, int data_type, void *
       st = vdp_queue_create( vdp_device, vdp_queue_target, &vdp_queue );
       if ( st != VDP_STATUS_OK ) {
         fprintf(stderr, "vo_vdpau: FATAL !! Can't recreate presentation queue after drawable change !!\n" );
+        pthread_mutex_unlock(&this->drawable_lock);
 #ifdef LOCKDISPLAY
         XUnlockDisplay( this->display );
 #endif
         break;
       }
       vdp_queue_set_background_color( vdp_queue, &this->back_color );
+      pthread_mutex_unlock(&this->drawable_lock);
 #ifdef LOCKDISPLAY
       XUnlockDisplay( this->display );
 #endif
@@ -2074,6 +2085,7 @@ static void vdpau_dispose (vo_driver_t *this_gen)
   if ( (vdp_device != VDP_INVALID_HANDLE) && vdp_device_destroy )
     vdp_device_destroy( vdp_device );
 
+  pthread_mutex_destroy(&this->drawable_lock);
   free (this);
 }
 
@@ -2280,6 +2292,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->display       = visual->display;
   this->screen        = visual->screen;
   this->drawable      = visual->d;
+  pthread_mutex_init(&this->drawable_lock, 0);
 
   _x_vo_scale_init(&this->sc, 1, 0, config);
   this->sc.frame_output_cb  = visual->frame_output_cb;
