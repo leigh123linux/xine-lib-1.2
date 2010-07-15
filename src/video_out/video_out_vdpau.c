@@ -1564,11 +1564,6 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   uint32_t mix_h = this->video_mixer_height;
   VdpTime stream_speed;
 
-  pthread_mutex_lock(&this->drawable_lock); /* protect drawble from being changed */
-
-  if(this->reinit_needed)
-    vdpau_reinit(this_gen);
-
   if ( (frame->width != this->sc.delivered_width) || (frame->height != this->sc.delivered_height) || (frame->ratio != this->sc.delivered_ratio) ) {
     this->sc.force_redraw = 1;    /* trigger re-calc of output size */
   }
@@ -1582,6 +1577,11 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   this->sc.crop_bottom      = frame->vo_frame.crop_bottom;
 
   vdpau_redraw_needed( this_gen );
+
+  pthread_mutex_lock(&this->drawable_lock); /* protect drawble from being changed */
+
+  if(this->reinit_needed)
+    vdpau_reinit(this_gen);
 
   if ( (frame->format == XINE_IMGFMT_YV12) || (frame->format == XINE_IMGFMT_YUY2) ) {
     chroma = ( frame->format==XINE_IMGFMT_YV12 )? VDP_CHROMA_TYPE_420 : VDP_CHROMA_TYPE_422;
