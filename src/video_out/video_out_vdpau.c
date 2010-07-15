@@ -1959,54 +1959,54 @@ static int vdpau_gui_data_exchange (vo_driver_t *this_gen, int data_type, void *
 
     case XINE_GUI_SEND_EXPOSE_EVENT: {
       if ( this->init_queue ) {
+        pthread_mutex_lock(&this->drawable_lock); /* wait for other thread which is currently displaying */
 #ifdef LOCKDISPLAY
         XLockDisplay( this->display );
 #endif
-        pthread_mutex_lock(&this->drawable_lock); /* wait for other thread which is currently displaying */
         int previous = this->current_output_surface - 1;
         if ( previous < 0 )
           previous = NOUTPUTSURFACE - 1;
         vdp_queue_display( vdp_queue, this->output_surface[previous], 0, 0, 0 );
-        pthread_mutex_unlock(&this->drawable_lock);
 #ifdef LOCKDISPLAY
         XUnlockDisplay( this->display );
 #endif
+        pthread_mutex_unlock(&this->drawable_lock);
       }
       break;
     }
 
     case XINE_GUI_SEND_DRAWABLE_CHANGED: {
       VdpStatus st;
+      pthread_mutex_lock(&this->drawable_lock); /* wait for other thread which is currently displaying */
 #ifdef LOCKDISPLAY
       XLockDisplay( this->display );
 #endif
-      pthread_mutex_lock(&this->drawable_lock); /* wait for other thread which is currently displaying */
       this->drawable = (Drawable) data;
       vdp_queue_destroy( vdp_queue );
       vdp_queue_target_destroy( vdp_queue_target );
       st = vdp_queue_target_create_x11( vdp_device, this->drawable, &vdp_queue_target );
       if ( st != VDP_STATUS_OK ) {
         fprintf(stderr, "vo_vdpau: FATAL !! Can't recreate presentation queue target after drawable change !!\n" );
-        pthread_mutex_unlock(&this->drawable_lock);
 #ifdef LOCKDISPLAY
         XUnlockDisplay( this->display );
 #endif
+        pthread_mutex_unlock(&this->drawable_lock);
         break;
       }
       st = vdp_queue_create( vdp_device, vdp_queue_target, &vdp_queue );
       if ( st != VDP_STATUS_OK ) {
         fprintf(stderr, "vo_vdpau: FATAL !! Can't recreate presentation queue after drawable change !!\n" );
-        pthread_mutex_unlock(&this->drawable_lock);
 #ifdef LOCKDISPLAY
         XUnlockDisplay( this->display );
 #endif
+        pthread_mutex_unlock(&this->drawable_lock);
         break;
       }
       vdp_queue_set_background_color( vdp_queue, &this->back_color );
-      pthread_mutex_unlock(&this->drawable_lock);
 #ifdef LOCKDISPLAY
       XUnlockDisplay( this->display );
 #endif
+      pthread_mutex_unlock(&this->drawable_lock);
       this->sc.force_redraw = 1;
       break;
     }
