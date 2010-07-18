@@ -11,6 +11,7 @@ xine-lib (1.1.19) 2010-??-??
   * Report stream buffer stats to the application.
   * Recognise and handle the WebM container format.
     (VP8 video is not yet supported.)
+  * Recognise ScreamTracker 2 & 3 files. (ST3 untested.)
 
 xine-lib (1.1.18.1) 2010-03-06
   * Oops. compat.c (for DXR3 support) was omitted.
