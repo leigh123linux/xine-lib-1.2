@@ -339,13 +339,16 @@ static void adjust_zoom(vdr_input_plugin_t *this)
     && this->image16_9_zoom_x && this->image16_9_zoom_y)
   {
     int ratio = (int)(10000 * this->frame_size.r + 0.5);
+    int matches4_3 = abs(ratio - 13333);
+    int matches16_9 = abs(ratio - 17778);
+
     /* fprintf(stderr, "ratio: %d\n", ratio); */
-    if (13332 <= ratio && ratio <= 13334)
+    if (matches4_3 < matches16_9)
     {
       xine_set_param(this->stream, XINE_PARAM_VO_ZOOM_X, this->image4_3_zoom_x);
       xine_set_param(this->stream, XINE_PARAM_VO_ZOOM_Y, this->image4_3_zoom_y);
     }
-    else /* if (17777 <= ratio && ratio <= 17779) */
+    else
     {
       xine_set_param(this->stream, XINE_PARAM_VO_ZOOM_X, this->image16_9_zoom_x);
       xine_set_param(this->stream, XINE_PARAM_VO_ZOOM_Y, this->image16_9_zoom_y);
