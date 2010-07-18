@@ -13,6 +13,8 @@ xine-lib (1.1.19) 2010-??-??
     (VP8 video is not yet supported.)
   * Recognise ScreamTracker 2 & 3 files. (ST3 untested.)
   * Fix playback of the first file handled by the modplug demuxer.
+  * Refuse to build with known-broken libmodplug (0.8.8).
+    http://bugs.debian.org/588465
 
 xine-lib (1.1.18.1) 2010-03-06
   * Oops. compat.c (for DXR3 support) was omitted.

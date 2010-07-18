@@ -2094,8 +2094,11 @@ AC_ARG_ENABLE([modplug],
 
 if test "x$enable_modplug" != "xno"; then
   PKG_CHECK_MODULES([LIBMODPLUG], [libmodplug >= 0.7],
-    AC_DEFINE([HAVE_MODPLUG], 1, [define this if you have libmodplug installed]),
+    [AC_DEFINE([HAVE_MODPLUG], 1, [define this if you have libmodplug installed])],
     [enable_modplug=no])
+  if test "`"$PKG_CONFIG" --modversion libmodplug`" = 0.8.8; then
+    AC_MSG_ERROR([you have a broken version of libmodplug (0.8.8); cowardly refusing to use it])
+  fi
 fi
 
 AC_SUBST(LIBMODPLUG_CFLAGS)
