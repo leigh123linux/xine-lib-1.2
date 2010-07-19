@@ -300,6 +300,9 @@ static int asf_header_parse_stream_properties(asf_header_t *header, uint8_t *buf
   if (!asf_stream)
     goto exit_error;
 
+  asf_stream->private_data = NULL;
+  asf_stream->error_correction_data = NULL;
+
   asf_reader_init(&reader, buffer, buffer_len);
 
   asf_reader_get_guid(&reader, &guid);
