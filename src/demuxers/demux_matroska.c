@@ -1445,7 +1445,7 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       track->buf_type = BUF_SPU_HDMV;
       init_codec = init_codec_spu;
     } else {
-      lprintf("unknown codec\n");
+      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "unknown codec %s\n", track->codec_id);
     }
 
     if (track->buf_type) {
