@@ -24,6 +24,7 @@
 #include "config.h"
 #endif
 
+#include <errno.h>
 #include <time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1001,7 +1002,13 @@ void xine_config_load (xine_t *xine, const char *filename) {
     }
 
     fclose (f_config);
+    xine_log(xine, XINE_LOG_MSG,
+	     _("Loaded configuration from file '%s'\n"), filename);
+
   }
+  else if (errno != ENOENT)
+    xine_log(xine, XINE_LOG_MSG,
+	     _("Failed to load configuration from file '%s': %s\n"), filename, strerror (errno));
 }
 
 void xine_config_save (xine_t *xine, const char *filename) {

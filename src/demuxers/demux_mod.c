@@ -121,6 +121,14 @@ static int probe_mod_file(demux_mod_t *this) {
     return 1;
   }
 
+  /* ScreamTracker 2 */
+  if (!memcmp (header.buffer + 20, "!Scream!", 7))
+    return 1;
+
+  /* ScreamTracker 3 */
+  if (_X_ABE_32(header.values + 0x2C / sizeof (uint32_t)) == FOURCC_32('S', 'C', 'R', 'M'))
+    return 1;
+
   return 0;
 }
 
@@ -155,13 +163,6 @@ static int open_mod_file(demux_mod_t *this) {
     return 0;
   }
 
-  this->mpfile = ModPlug_Load(this->buffer, this->filesize);
-  if (this->mpfile==NULL) {
-    xine_log(this->stream->xine, XINE_LOG_PLUGIN, "modplug - load error\n");
-    free(this->buffer);
-    return 0;
-  }
-
   /* Set up modplug engine */
   ModPlug_GetSettings(&this->settings);
   this->settings.mResamplingMode = MODPLUG_RESAMPLE_FIR; /* RESAMP */
@@ -169,6 +170,13 @@ static int open_mod_file(demux_mod_t *this) {
   this->settings.mBits = MOD_BITS;
   this->settings.mFrequency = MOD_SAMPLERATE;
   ModPlug_SetSettings(&this->settings);
+
+  this->mpfile = ModPlug_Load(this->buffer, this->filesize);
+  if (this->mpfile==NULL) {
+    xine_log(this->stream->xine, XINE_LOG_PLUGIN, "modplug - load error\n");
+    free(this->buffer);
+    return 0;
+  }
 
   this->title = strdup(ModPlug_GetName(this->mpfile));
   this->artist = strdup("");

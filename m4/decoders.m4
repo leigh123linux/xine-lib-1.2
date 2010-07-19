@@ -286,6 +286,9 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
         if test x"$enable_modplug" = x"yes" && test x"$have_modplug" != x"yes"; then
             AC_MSG_ERROR([MODPlug support requested, but MODPlug not found])
         fi
+	if test "`"$PKG_CONFIG" --modversion libmodplug`" = 0.8.8; then
+	    AC_MSG_ERROR([you have a broken version of libmodplug (0.8.8); cowardly refusing to use it])
+	fi
     fi
     AM_CONDITIONAL([ENABLE_MODPLUG], [test x"$have_modplug" = x"yes"])
 
