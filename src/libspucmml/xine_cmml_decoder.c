@@ -331,9 +331,9 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
   /* how many lines does the anchor text take up? */
   this->lines=0;
   {
-    int i = 0;
-    while (*anchor_text) {
-      if (*anchor_text == '\r' || *anchor_text == '\n') {
+    int i = 0, index = 0;
+    while (anchor_text[index]) {
+      if (anchor_text[index] == '\r' || anchor_text[index] == '\n') {
         if (i) {
           /* match a newline and there are chars on the current line ... */
           this->text[ this->lines ][i] = '\0';
@@ -342,11 +342,11 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
         }
       } else {
         /* found a normal (non-line-ending) character */
-        this->text[ this->lines ][i] = *anchor_text;
+        this->text[ this->lines ][i] = anchor_text[index];
         if (i<SUB_BUFSIZE-1)
           i++;
       }
-      anchor_text++;
+      index++;
     }
 
     /* always NULL-terminate the string */
@@ -355,6 +355,7 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
       this->lines++;
     }
   }
+  free (anchor_text);
 
   /* initialize decoder if needed */
   if( !this->cached_width || !this->cached_height || !this->cached_img_duration || !this->osd ) {

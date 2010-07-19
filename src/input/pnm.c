@@ -712,6 +712,7 @@ pnm_t *pnm_connect(xine_stream_t *stream, const char *mrl) {
 
   if (strncmp(mrl,"pnm://",6))
   {
+    free (mrl_ptr);
     return NULL;
   }
 
