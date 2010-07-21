@@ -1911,7 +1911,9 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
     this->grab_only            = 0;
 
     pthread_attr_init(&pth_attrs);
+#ifdef _POSIX_THREAD_PRIORITY_SCHEDULING
     pthread_attr_setscope(&pth_attrs, PTHREAD_SCOPE_SYSTEM);
+#endif
 
     if ((err = pthread_create (&this->video_thread,
 			       &pth_attrs, video_out_loop, this)) != 0) {
