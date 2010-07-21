@@ -131,6 +131,7 @@ typedef struct {
   uint32_t    coded_height;
 
   uint64_t    video_step; /* frame duration in pts units */
+  uint64_t    reported_video_step; /* frame duration in pts units */
   double      ratio;
   VdpDecoderProfile profile;
   int         chroma;
@@ -288,6 +289,9 @@ static void sequence_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int
     case 7: sequence->video_step = 1525; break; /* 59.94.. */
     case 8: sequence->video_step = 1509; break; /* 60 */
   }
+  if (sequence->reported_video_step != sequence->video_step){
+    _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_FRAME_DURATION, (sequence->reported_video_step = sequence->video_step) );
+  }
   lprintf( "frame_rate: %d\n", fr );
   int tmp;
   tmp = read_bits( &sequence->br, 18 );
@@ -328,7 +332,7 @@ static void sequence_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int
     _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_VIDEO_WIDTH, sequence->coded_width );
     _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_VIDEO_HEIGHT, sequence->coded_height );
     _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_VIDEO_RATIO, ((double)10000*sequence->ratio) );
-    _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_FRAME_DURATION, sequence->video_step );
+    _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_FRAME_DURATION, (sequence->reported_video_step = sequence->video_step) );
     _x_meta_info_set_utf8( this_gen->stream, XINE_META_INFO_VIDEOCODEC, "MPEG1/2 (vdpau)" );
     xine_event_t event;
     xine_format_change_data_t data;

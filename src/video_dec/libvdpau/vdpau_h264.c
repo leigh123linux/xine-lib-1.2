@@ -59,6 +59,7 @@ typedef struct vdpau_h264_decoder_s {
 
   /* these are traditional variables in a video decoder object */
   uint64_t          video_step;  /* frame duration in pts units */
+  uint64_t          reported_video_step;  /* frame duration in pts units */
 
   int               width;       /* the width of a video frame */
   int               height;      /* the height of a video frame */
@@ -365,7 +366,7 @@ static int vdpau_decoder_init(video_decoder_t *this_gen)
   _x_stream_info_set( this->stream, XINE_STREAM_INFO_VIDEO_WIDTH, this->width );
   _x_stream_info_set( this->stream, XINE_STREAM_INFO_VIDEO_HEIGHT, this->height );
   _x_stream_info_set( this->stream, XINE_STREAM_INFO_VIDEO_RATIO, ((double)10000*this->ratio) );
-  _x_stream_info_set( this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->video_step );
+  _x_stream_info_set( this->stream, XINE_STREAM_INFO_FRAME_DURATION, (this->reported_video_step = this->video_step) );
   _x_meta_info_set_utf8( this->stream, XINE_META_INFO_VIDEOCODEC, "H264/AVC (vdpau)" );
   xine_event_t event;
   xine_format_change_data_t data;
@@ -703,6 +704,10 @@ static void vdpau_h264_decode_data (video_decoder_t *this_gen,
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->video_step);
   }
 
+  if (this->video_step != this->reported_video_step){
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, (this->reported_video_step = this->video_step));
+  }
+  
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) { /* need to initialize */
     this->have_frame_boundary_marks = 0;
 

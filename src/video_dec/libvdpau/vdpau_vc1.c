@@ -119,6 +119,7 @@ typedef struct {
   uint32_t    coded_height;
 
   uint64_t    video_step; /* frame duration in pts units */
+  uint64_t    reported_video_step; /* frame duration in pts units */
   double      ratio;
   VdpDecoderProfile profile;
 
@@ -227,7 +228,7 @@ static void update_metadata( vdpau_vc1_decoder_t *this_gen )
     _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_VIDEO_WIDTH, sequence->coded_width );
     _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_VIDEO_HEIGHT, sequence->coded_height );
     _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_VIDEO_RATIO, ((double)10000*sequence->ratio) );
-    _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_FRAME_DURATION, sequence->video_step );
+    _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_FRAME_DURATION, (sequence->reported_video_step = sequence->video_step) );
     _x_meta_info_set_utf8( this_gen->stream, XINE_META_INFO_VIDEOCODEC, "VC1/WMV9 (vdpau)" );
     xine_event_t event;
     xine_format_change_data_t data;
@@ -908,6 +909,10 @@ static void vdpau_vc1_decode_data (video_decoder_t *this_gen, buf_element_t *buf
       this->sequence.video_step = buf->decoder_info[0];
       _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->sequence.video_step);
     }
+  }
+  
+  if (this->sequence.reported_video_step != this->sequence.video_step){
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, (this->sequence.reported_video_step = this->sequence.video_step));
   }
 
   if (buf->decoder_flags & BUF_FLAG_HEADER) {
