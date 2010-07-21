@@ -319,6 +319,7 @@ static int file_read(dvd_input_t dev, void *buffer, int blocks, int flags)
       return (int) (bytes / DVD_VIDEO_LB_LEN);
     }
     
+    buffer += ret;
     len -= ret;
   }
 
