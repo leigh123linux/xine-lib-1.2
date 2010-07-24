@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib 1.1.6\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2010-05-02 14:04+0100\n"
+"POT-Creation-Date: 2010-07-24 23:32+0100\n"
 "PO-Revision-Date: 2007-04-18 11:00+0200\n"
 "Last-Translator: Philipp Hahn <pmhahn@users.sf.net>\n"
 "Language-Team: German <de@li.org>\n"
@@ -796,15 +796,15 @@ msgstr "audio_oss_out: open() Mixer %s schlug fehl: %s\n"
 msgid "xine audio output plugin using oss-compliant audio devices/drivers"
 msgstr "xine Soundausgabe benutzt OSS-kompatibles Gerät/Treiber"
 
-#: src/audio_out/audio_pulse_out.c:763
+#: src/audio_out/audio_pulse_out.c:814
 msgid "device used for pulseaudio"
 msgstr "Gerät für Pulse-Audio"
 
-#: src/audio_out/audio_pulse_out.c:764
+#: src/audio_out/audio_pulse_out.c:815
 msgid "use 'server[:sink]' for setting the pulseaudio sink device."
 msgstr "Benutze 'Server[:Senke]' um das Zeil des Puse-Audio Gerätes zu setzen."
 
-#: src/audio_out/audio_pulse_out.c:845
+#: src/audio_out/audio_pulse_out.c:898
 msgid "xine audio output plugin using pulseaudio sound server"
 msgstr "xine Soundausgabe benutzt Pulse-Audio Soundserver"
 
@@ -2591,35 +2591,35 @@ msgstr "Pfad zum V4L Radiogerät"
 msgid "The path to your Video4Linux radio device."
 msgstr "Pfad zum Video4Linux Radiogerät"
 
-#: src/input/input_vcd.c:847
+#: src/input/input_vcd.c:848
 #, c-format
 msgid "input_vcd: malformed MRL. Use vcdo:/<track #>\n"
 msgstr "input_vcd: Ungültige MRL: Benutze vcdo:/<Track #>\n"
 
-#: src/input/input_vcd.c:853
+#: src/input/input_vcd.c:854
 #, c-format
 msgid "input_vcd: invalid track %d (valid range: 0 .. %d)\n"
 msgstr "input_vcd: Fehlerhafter Track %d (Gültiger Bereich: 0 .. %d)\n"
 
-#: src/input/input_vcd.c:924
+#: src/input/input_vcd.c:925
 msgid "Video CD input plugin"
 msgstr "Video-CD Plugin"
 
-#: src/input/input_vcd.c:978
+#: src/input/input_vcd.c:979
 #, c-format
 msgid "unable to open %s: %s.\n"
 msgstr "Kann %s nicht öffnen: %s.\n"
 
-#: src/input/input_vcd.c:1040
+#: src/input/input_vcd.c:1041
 #, c-format
 msgid "input_vcd: unable to open %s: %s.\n"
 msgstr "input_vcd: Kann %s nicht öffnen: %s.\n"
 
-#: src/input/input_vcd.c:1088
+#: src/input/input_vcd.c:1089
 msgid "device used for VCD playback"
 msgstr "Gerät für VCD Wiedergabe"
 
-#: src/input/input_vcd.c:1089
+#: src/input/input_vcd.c:1090
 msgid ""
 "The path to the device, usually a CD or DVD drive, you intend to play your "
 "VideoCDs with."
@@ -2720,12 +2720,12 @@ msgstr ""
 "input_pnm: Während dem Lesen ist eine Nachricht vom Server eingetroffen:\n"
 "%s\n"
 
-#: src/input/pnm.c:752
+#: src/input/pnm.c:753
 #, c-format
 msgid "input_pnm: failed to connect '%s'\n"
 msgstr "input_pnm: Kann keine Verbindung zu '%s' herstellen.\n"
 
-#: src/input/pnm.c:763
+#: src/input/pnm.c:764
 #, c-format
 msgid "input_pnm: failed to set up stream\n"
 msgstr "input_pnm: Datenstrom konnte nicht eingerichtet werden\n"
@@ -3158,15 +3158,15 @@ msgstr ""
 "Falls aktiviert werden die Zeilen des Untertitels jeweils mittig "
 "ausgerichtet."
 
-#: src/libspucmml/xine_cmml_decoder.c:467
+#: src/libspucmml/xine_cmml_decoder.c:468
 msgid "font for external subtitles"
 msgstr "Zeichensatz für externe Untertitel"
 
-#: src/libspucmml/xine_cmml_decoder.c:473
+#: src/libspucmml/xine_cmml_decoder.c:474
 msgid "subtitle vertical offset (relative window size)"
 msgstr "Vertikaler Versatz für Untertitel (Relativ zu Fenstergröße)"
 
-#: src/libspucmml/xine_cmml_decoder.c:516
+#: src/libspucmml/xine_cmml_decoder.c:517
 msgid "encoding of subtitles"
 msgstr "Zeichenkodierung für Untertitel"
 
@@ -5204,11 +5204,11 @@ msgstr "audio_decoder: Kein Plugin verfügbar zur Berhandlung von '%s'\n"
 msgid "audio_decoder: error, unknown buffer type: %08x\n"
 msgstr "audio_decoder: Fehler, unbekannter Puffertyp: %08x\n"
 
-#: src/xine-engine/audio_decoder.c:486
+#: src/xine-engine/audio_decoder.c:488
 msgid "number of audio buffers"
 msgstr "Anzahl der Audiopuffer"
 
-#: src/xine-engine/audio_decoder.c:487
+#: src/xine-engine/audio_decoder.c:489
 msgid ""
 "The number of audio buffers (each is 8k in size) xine uses in its internal "
 "queue. Higher values mean smoother playback for unreliable inputs, but also "
@@ -5374,7 +5374,7 @@ msgid "If disabled, xine will not modify any mixer settings at startup."
 msgstr ""
 "Wenn nicht angewählte, lässt xine die Lautstärke beim Starten unverändert."
 
-#: src/xine-engine/audio_out.c:2296
+#: src/xine-engine/audio_out.c:2298
 #, c-format
 msgid "audio_out: sorry, this should not happen. please restart xine.\n"
 msgstr ""
@@ -5386,40 +5386,50 @@ msgstr ""
 msgid "xine-lib: buffer.c: There has been a fatal error: TOO MANY FREE's\n"
 msgstr "xine-lib: buffer.c: Fataler Defekt: ZU VIELE FREIGABEN\n"
 
-#: src/xine-engine/configfile.c:938
+#: src/xine-engine/configfile.c:939
 #, c-format
 msgid "The current config file has been modified by a newer version of xine."
 msgstr ""
 "Die Konfigurationsdatei wurde von einer neueren Version von xine modifiziert."
 
-#: src/xine-engine/configfile.c:1045
+#: src/xine-engine/configfile.c:992
+#, c-format
+msgid "Loaded configuration from file '%s'\n"
+msgstr ""
+
+#: src/xine-engine/configfile.c:997
+#, fuzzy, c-format
+msgid "Failed to load configuration from file '%s': %s\n"
+msgstr "input_dvb: Öffnen der DVB-Kanaldatei '%s' schlug fehl\n"
+
+#: src/xine-engine/configfile.c:1052
 #, c-format
 msgid "configfile: WARNING: backing up configfile to %s failed\n"
 msgstr ""
 "configfile: WARNUNG: Sichern der Konfigurationsdatei nach %s schlug fehl\n"
 
-#: src/xine-engine/configfile.c:1046
+#: src/xine-engine/configfile.c:1053
 #, c-format
 msgid "configfile: WARNING: your configuration will not be saved\n"
 msgstr "configfile: WARNUNG: Ihre Konfigurationsdatei wird nicht gesichert\n"
 
-#: src/xine-engine/configfile.c:1146
+#: src/xine-engine/configfile.c:1153
 #, c-format
 msgid "configfile: WARNING: writing configuration to %s failed\n"
 msgstr "configfile: WARNUNG: Schreiben der Konfiguration nach %s schlug fehl\n"
 
-#: src/xine-engine/configfile.c:1147
+#: src/xine-engine/configfile.c:1154
 #, c-format
 msgid "configfile: WARNING: removing possibly broken config file %s\n"
 msgstr ""
 "configfile: WARNUNG: Entferne möglicherweise kaputte Konfigurationsdatei %s\n"
 
-#: src/xine-engine/configfile.c:1148
+#: src/xine-engine/configfile.c:1155
 #, c-format
 msgid "configfile: WARNING: you should check the backup file %s\n"
 msgstr "configfile: WARNUNG: Überprüfen Sie die Sicherheitskopie %s\n"
 
-#: src/xine-engine/configfile.c:1283
+#: src/xine-engine/configfile.c:1290
 #, c-format
 msgid "configfile: entry '%s' mustn't be modified from MRL\n"
 msgstr "configfile: Eintrag '%s' darf nicht per MRL geändert werden\n"
@@ -5832,21 +5842,21 @@ msgstr ""
 "Färbung spezifizieren. Die Paletten sind in der Form Vordergrund-Rand-"
 "Hintergrund aufgelistst."
 
-#: src/xine-engine/video_decoder.c:387
+#: src/xine-engine/video_decoder.c:391
 #, c-format
 msgid "video_decoder: no plugin available to handle '%s'\n"
 msgstr "video_decoder: Kein Plugin gefunden zur Behandlung von '%s'\n"
 
-#: src/xine-engine/video_decoder.c:466
+#: src/xine-engine/video_decoder.c:470
 #, c-format
 msgid "video_decoder: error, unknown buffer type: %08x\n"
 msgstr "video_decoder: Fehler, unbekannter Puffertyp: %08x\n"
 
-#: src/xine-engine/video_decoder.c:502
+#: src/xine-engine/video_decoder.c:508
 msgid "number of video buffers"
 msgstr "Anzahl der Videopuffer"
 
-#: src/xine-engine/video_decoder.c:503
+#: src/xine-engine/video_decoder.c:509
 msgid ""
 "The number of video buffers (each is 8k in size) xine uses in its internal "
 "queue. Higher values mean smoother playback for unreliable inputs, but also "
@@ -5908,7 +5918,7 @@ msgstr ""
 "xine zeigt eine Meldung an, wenn mehr Frames als dieser Prozentsatz nicht "
 "angezeigt werden, weil sie nicht rechtzeitig dargestellt werden konnten."
 
-#: src/xine-engine/video_out.c:1922
+#: src/xine-engine/video_out.c:1924
 #, c-format
 msgid "video_out: sorry, this should not happen. please restart xine.\n"
 msgstr ""
