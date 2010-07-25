@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib 1.1.90hg\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2010-05-02 14:28+0100\n"
+"POT-Creation-Date: 2010-07-25 16:37+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -63,97 +63,97 @@ msgid ""
 "available: %s\n"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1295
+#: src/audio_out/audio_alsa_out.c:1323
 msgid "notify changes to the hardware mixer"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1296
+#: src/audio_out/audio_alsa_out.c:1324
 msgid ""
 "When the hardware mixer changes, your application will receive a "
 "notification so that it can update its graphical representation of the mixer "
 "settings on the fly."
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1361
+#: src/audio_out/audio_alsa_out.c:1389
 #, c-format
 msgid "snd_lib_error_set_handler() failed: %d"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1368
+#: src/audio_out/audio_alsa_out.c:1396
 msgid "sound card can do mmap"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1369
+#: src/audio_out/audio_alsa_out.c:1397
 msgid ""
 "Enable this, if your sound card and alsa driver support memory mapped IO.\n"
 "You can try enabling it and check, if everything works. If it does, this "
 "will increase performance."
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1378
+#: src/audio_out/audio_alsa_out.c:1406
 msgid "device used for mono output"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1379
+#: src/audio_out/audio_alsa_out.c:1407
 msgid ""
 "xine will use this alsa device to output mono sound.\n"
 "See the alsa documentation for information on alsa devices."
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1387
+#: src/audio_out/audio_alsa_out.c:1415
 msgid "device used for stereo output"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1388
+#: src/audio_out/audio_alsa_out.c:1416
 msgid ""
 "xine will use this alsa device to output stereo sound.\n"
 "See the alsa documentation for information on alsa devices."
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1396
+#: src/audio_out/audio_alsa_out.c:1424
 msgid "device used for 4-channel output"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1397
+#: src/audio_out/audio_alsa_out.c:1425
 msgid ""
 "xine will use this alsa device to output 4 channel (4.0) surround sound.\n"
 "See the alsa documentation for information on alsa devices."
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1406 src/audio_out/audio_alsa_out.c:1416
+#: src/audio_out/audio_alsa_out.c:1434 src/audio_out/audio_alsa_out.c:1444
 msgid "device used for 5.1-channel output"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1407
+#: src/audio_out/audio_alsa_out.c:1435
 msgid ""
 "xine will use this alsa device to output 5 channel plus LFE (5.1) surround "
 "sound.\n"
 "See the alsa documentation for information on alsa devices."
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1417
+#: src/audio_out/audio_alsa_out.c:1445
 msgid ""
 "xine will use this alsa device to output undecoded digital surround sound. "
 "This can be used be external surround decoders.\n"
 "See the alsa documentation for information on alsa devices."
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1437
+#: src/audio_out/audio_alsa_out.c:1465
 #, c-format
 msgid "snd_pcm_open() failed:%d:%s\n"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1439
+#: src/audio_out/audio_alsa_out.c:1467
 #, c-format
 msgid ">>> Check if another program already uses PCM <<<\n"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1470 src/audio_out/audio_jack_out.c:742
+#: src/audio_out/audio_alsa_out.c:1498 src/audio_out/audio_jack_out.c:742
 #: src/audio_out/audio_oss_out.c:927
 msgid "speaker arrangement"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1471 src/audio_out/audio_jack_out.c:743
+#: src/audio_out/audio_alsa_out.c:1499 src/audio_out/audio_jack_out.c:743
 #: src/audio_out/audio_oss_out.c:928
 msgid ""
 "Select how your speakers are arranged, this determines which speakers xine "
@@ -186,85 +186,85 @@ msgid ""
 "formats you want to play to your sound card's digital output."
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1500
+#: src/audio_out/audio_alsa_out.c:1528
 msgid "audio_alsa_out : supported modes are"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1504
+#: src/audio_out/audio_alsa_out.c:1532
 msgid " 8bit"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1509
+#: src/audio_out/audio_alsa_out.c:1537
 msgid " 16bit"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1513
+#: src/audio_out/audio_alsa_out.c:1541
 msgid " 24bit"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1517
+#: src/audio_out/audio_alsa_out.c:1545
 msgid " 32bit"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1530 src/audio_out/audio_oss_out.c:963
+#: src/audio_out/audio_alsa_out.c:1558 src/audio_out/audio_oss_out.c:963
 msgid " mono"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1534 src/audio_out/audio_oss_out.c:969
+#: src/audio_out/audio_alsa_out.c:1562 src/audio_out/audio_oss_out.c:969
 msgid " stereo"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1539 src/audio_out/audio_oss_out.c:976
+#: src/audio_out/audio_alsa_out.c:1567 src/audio_out/audio_oss_out.c:976
 msgid " 4-channel"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1542 src/audio_out/audio_oss_out.c:979
+#: src/audio_out/audio_alsa_out.c:1570 src/audio_out/audio_oss_out.c:979
 msgid " (4-channel not enabled in xine config)"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1547
+#: src/audio_out/audio_alsa_out.c:1575
 msgid " 4.1-channel"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1550
+#: src/audio_out/audio_alsa_out.c:1578
 msgid " (4.1-channel not enabled in xine config)"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1555 src/audio_out/audio_oss_out.c:986
+#: src/audio_out/audio_alsa_out.c:1583 src/audio_out/audio_oss_out.c:986
 msgid " 5-channel"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1558 src/audio_out/audio_oss_out.c:989
+#: src/audio_out/audio_alsa_out.c:1586 src/audio_out/audio_oss_out.c:989
 msgid " (5-channel not enabled in xine config)"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1563 src/audio_out/audio_oss_out.c:996
+#: src/audio_out/audio_alsa_out.c:1591 src/audio_out/audio_oss_out.c:996
 msgid " 5.1-channel"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1566 src/audio_out/audio_oss_out.c:999
+#: src/audio_out/audio_alsa_out.c:1594 src/audio_out/audio_oss_out.c:999
 msgid " (5.1-channel not enabled in xine config)"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1589
+#: src/audio_out/audio_alsa_out.c:1617
 msgid " a/52 and DTS pass-through"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1592
+#: src/audio_out/audio_alsa_out.c:1620
 msgid " (a/52 and DTS pass-through not enabled in xine config)"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1602
+#: src/audio_out/audio_alsa_out.c:1630
 msgid "alsa mixer device"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1603
+#: src/audio_out/audio_alsa_out.c:1631
 msgid ""
 "xine will use this alsa mixer device to change the volume.\n"
 "See the alsa documentation for information on alsa devices."
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1681
+#: src/audio_out/audio_alsa_out.c:1709
 msgid "xine audio output plugin using alsa-compliant audio devices/drivers"
 msgstr ""
 
@@ -676,15 +676,15 @@ msgstr ""
 msgid "xine audio output plugin using oss-compliant audio devices/drivers"
 msgstr ""
 
-#: src/audio_out/audio_pulse_out.c:763
+#: src/audio_out/audio_pulse_out.c:814
 msgid "device used for pulseaudio"
 msgstr ""
 
-#: src/audio_out/audio_pulse_out.c:764
+#: src/audio_out/audio_pulse_out.c:815
 msgid "use 'server[:sink]' for setting the pulseaudio sink device."
 msgstr ""
 
-#: src/audio_out/audio_pulse_out.c:861
+#: src/audio_out/audio_pulse_out.c:914
 msgid "xine audio output plugin using pulseaudio sound server"
 msgstr ""
 
@@ -916,7 +916,7 @@ msgstr ""
 msgid "demux_tta: total frames count too high\n"
 msgstr ""
 
-#: src/demuxers/demux_tta.c:348
+#: src/demuxers/demux_tta.c:326
 msgid "True Audio demux plugin"
 msgstr ""
 
@@ -2098,35 +2098,35 @@ msgstr ""
 msgid "The path to your Video4Linux radio device."
 msgstr ""
 
-#: src/input/input_vcd.c:850
+#: src/input/input_vcd.c:851
 #, c-format
 msgid "input_vcd: malformed MRL. Use vcdo:/<track #>\n"
 msgstr ""
 
-#: src/input/input_vcd.c:856
+#: src/input/input_vcd.c:857
 #, c-format
 msgid "input_vcd: invalid track %d (valid range: 0 .. %d)\n"
 msgstr ""
 
-#: src/input/input_vcd.c:972
+#: src/input/input_vcd.c:973
 #, c-format
 msgid "unable to open %s: %s.\n"
 msgstr ""
 
-#: src/input/input_vcd.c:1034
+#: src/input/input_vcd.c:1035
 #, c-format
 msgid "input_vcd: unable to open %s: %s.\n"
 msgstr ""
 
-#: src/input/input_vcd.c:1075
+#: src/input/input_vcd.c:1076
 msgid "Video CD input plugin"
 msgstr ""
 
-#: src/input/input_vcd.c:1082
+#: src/input/input_vcd.c:1083
 msgid "device used for VCD playback"
 msgstr ""
 
-#: src/input/input_vcd.c:1083
+#: src/input/input_vcd.c:1084
 msgid ""
 "The path to the device, usually a CD or DVD drive, you intend to play your "
 "VideoCDs with."
@@ -2223,12 +2223,12 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/input/pnm.c:754
+#: src/input/pnm.c:755
 #, c-format
 msgid "input_pnm: failed to connect '%s'\n"
 msgstr ""
 
-#: src/input/pnm.c:765
+#: src/input/pnm.c:766
 #, c-format
 msgid "input_pnm: failed to set up stream\n"
 msgstr ""
@@ -2684,19 +2684,19 @@ msgstr ""
 msgid "closed caption decoder plugin"
 msgstr ""
 
-#: src/spu_dec/cmml_decoder.c:467
+#: src/spu_dec/cmml_decoder.c:468
 msgid "font for external subtitles"
 msgstr ""
 
-#: src/spu_dec/cmml_decoder.c:473
+#: src/spu_dec/cmml_decoder.c:474
 msgid "subtitle vertical offset (relative window size)"
 msgstr ""
 
-#: src/spu_dec/cmml_decoder.c:496
+#: src/spu_dec/cmml_decoder.c:497
 msgid "CMML subtitle decoder plugin"
 msgstr ""
 
-#: src/spu_dec/cmml_decoder.c:504
+#: src/spu_dec/cmml_decoder.c:505
 msgid "encoding of subtitles"
 msgstr ""
 
@@ -3006,7 +3006,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/post/audio/upmix.c:431
+#: src/post/audio/upmix.c:433
 msgid "upmix"
 msgstr ""
 
@@ -3360,105 +3360,105 @@ msgstr ""
 msgid "unsharp mask & gaussian blur"
 msgstr ""
 
-#: src/vdr/input_vdr.c:241 src/vdr/input_vdr.c:281 src/vdr/input_vdr.c:2217
-#: src/vdr/input_vdr.c:2227 src/vdr/input_vdr.c:2327
+#: src/vdr/input_vdr.c:241 src/vdr/input_vdr.c:281 src/vdr/input_vdr.c:2220
+#: src/vdr/input_vdr.c:2230 src/vdr/input_vdr.c:2330
 #, c-format
 msgid "%s: input event write: %s.\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:854 src/vdr/input_vdr.c:1321
+#: src/vdr/input_vdr.c:857 src/vdr/input_vdr.c:1324
 #, c-format
 msgid "%s: buffer_pool_alloc() failed!\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:923
+#: src/vdr/input_vdr.c:926
 #, c-format
 msgid "%s: flush buffers (vb: %d, ab: %d, vf: %d, af: %d) %s.\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:1747
+#: src/vdr/input_vdr.c:1750
 #, c-format
 msgid "%s: shutting down rpc thread (timeout: %d ms) ...\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:1771
+#: src/vdr/input_vdr.c:1774
 #, c-format
 msgid "%s: cancelling rpc thread in function %d...\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:1778
+#: src/vdr/input_vdr.c:1781
 #, c-format
 msgid "%s: joining rpc thread ...\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:1780
+#: src/vdr/input_vdr.c:1783
 #, c-format
 msgid "%s: rpc thread joined.\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:1788
+#: src/vdr/input_vdr.c:1791
 #, c-format
 msgid "%s: joining metronom thread ...\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:1808
+#: src/vdr/input_vdr.c:1811
 #, c-format
 msgid "%s: metronom thread joined.\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:1905 src/vdr/input_vdr.c:1919 src/vdr/input_vdr.c:1943
-#: src/vdr/input_vdr.c:1965 src/vdr/input_vdr.c:1987
+#: src/vdr/input_vdr.c:1908 src/vdr/input_vdr.c:1922 src/vdr/input_vdr.c:1946
+#: src/vdr/input_vdr.c:1968 src/vdr/input_vdr.c:1990
 #, c-format
 msgid "%s: failed to open '%s' (%s)\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:1921
+#: src/vdr/input_vdr.c:1924
 msgid "timeout expired during setup phase"
 msgstr ""
 
-#: src/vdr/input_vdr.c:2012
+#: src/vdr/input_vdr.c:2015
 #, c-format
 msgid "%s: failed to create socket for port %d (%s)\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:2026
+#: src/vdr/input_vdr.c:2029
 #, c-format
 msgid "%s: failed to connect to port %d (%s)\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:2033
+#: src/vdr/input_vdr.c:2036
 #, c-format
 msgid "%s: socket opening (port %d) successful, fd = %d\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:2061
+#: src/vdr/input_vdr.c:2064
 #, c-format
 msgid "%s: connecting to vdr.\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:2066
+#: src/vdr/input_vdr.c:2069
 #, c-format
 msgid "%s: failed to resolve hostname '%s' (%s)\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:2089
+#: src/vdr/input_vdr.c:2092
 #, c-format
 msgid "%s: connecting to all sockets (port %d .. %d) was successful.\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:2158
+#: src/vdr/input_vdr.c:2161
 #, c-format
 msgid ""
 "%s: MRL (%s) invalid! MRL should start with vdr://path/to/fifo/stream or "
 "netvdr://host:port where ':port' is optional.\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:2167 src/vdr/input_vdr.c:2184
+#: src/vdr/input_vdr.c:2170 src/vdr/input_vdr.c:2187
 #, c-format
 msgid "%s: can't create new thread (%s)\n"
 msgstr ""
 
-#: src/vdr/input_vdr.c:2740
+#: src/vdr/input_vdr.c:2743
 msgid "VDR display device plugin"
 msgstr ""
 
@@ -4309,11 +4309,11 @@ msgstr ""
 msgid "audio_decoder: error, unknown buffer type: %08x\n"
 msgstr ""
 
-#: src/xine-engine/audio_decoder.c:486
+#: src/xine-engine/audio_decoder.c:488
 msgid "number of audio buffers"
 msgstr ""
 
-#: src/xine-engine/audio_decoder.c:487
+#: src/xine-engine/audio_decoder.c:489
 msgid ""
 "The number of audio buffers (each is 8k in size) xine uses in its internal "
 "queue. Higher values mean smoother playback for unreliable inputs, but also "
@@ -4435,7 +4435,7 @@ msgstr ""
 msgid "If disabled, xine will not modify any mixer settings at startup."
 msgstr ""
 
-#: src/xine-engine/audio_out.c:2298
+#: src/xine-engine/audio_out.c:2300
 #, c-format
 msgid "audio_out: sorry, this should not happen. please restart xine.\n"
 msgstr ""
@@ -4445,37 +4445,47 @@ msgstr ""
 msgid "xine-lib: buffer.c: There has been a fatal error: TOO MANY FREE's\n"
 msgstr ""
 
-#: src/xine-engine/configfile.c:952
+#: src/xine-engine/configfile.c:953
 #, c-format
 msgid "The current config file has been modified by a newer version of xine."
 msgstr ""
 
-#: src/xine-engine/configfile.c:1059
+#: src/xine-engine/configfile.c:1006
+#, c-format
+msgid "Loaded configuration from file '%s'\n"
+msgstr ""
+
+#: src/xine-engine/configfile.c:1011
+#, c-format
+msgid "Failed to load configuration from file '%s': %s\n"
+msgstr ""
+
+#: src/xine-engine/configfile.c:1066
 #, c-format
 msgid "configfile: WARNING: backing up configfile to %s failed\n"
 msgstr ""
 
-#: src/xine-engine/configfile.c:1060
+#: src/xine-engine/configfile.c:1067
 #, c-format
 msgid "configfile: WARNING: your configuration will not be saved\n"
 msgstr ""
 
-#: src/xine-engine/configfile.c:1160
+#: src/xine-engine/configfile.c:1167
 #, c-format
 msgid "configfile: WARNING: writing configuration to %s failed\n"
 msgstr ""
 
-#: src/xine-engine/configfile.c:1161
+#: src/xine-engine/configfile.c:1168
 #, c-format
 msgid "configfile: WARNING: removing possibly broken config file %s\n"
 msgstr ""
 
-#: src/xine-engine/configfile.c:1162
+#: src/xine-engine/configfile.c:1169
 #, c-format
 msgid "configfile: WARNING: you should check the backup file %s\n"
 msgstr ""
 
-#: src/xine-engine/configfile.c:1624
+#: src/xine-engine/configfile.c:1631
 #, c-format
 msgid "configfile: entry '%s' mustn't be modified from MRL\n"
 msgstr ""
@@ -4863,21 +4873,21 @@ msgstr ""
 msgid "opacity for the colour parts of bitmapped subtitles"
 msgstr ""
 
-#: src/xine-engine/video_decoder.c:388
+#: src/xine-engine/video_decoder.c:392
 #, c-format
 msgid "video_decoder: no plugin available to handle '%s'\n"
 msgstr ""
 
-#: src/xine-engine/video_decoder.c:467
+#: src/xine-engine/video_decoder.c:471
 #, c-format
 msgid "video_decoder: error, unknown buffer type: %08x\n"
 msgstr ""
 
-#: src/xine-engine/video_decoder.c:503
+#: src/xine-engine/video_decoder.c:509
 msgid "number of video buffers"
 msgstr ""
 
-#: src/xine-engine/video_decoder.c:504
+#: src/xine-engine/video_decoder.c:510
 msgid ""
 "The number of video buffers (each is 8k in size) xine uses in its internal "
 "queue. Higher values mean smoother playback for unreliable inputs, but also "
@@ -4926,7 +4936,7 @@ msgid ""
 "not scheduled for display in time, xine sends a notification."
 msgstr ""
 
-#: src/xine-engine/video_out.c:1981
+#: src/xine-engine/video_out.c:1983
 #, c-format
 msgid "video_out: sorry, this should not happen. please restart xine.\n"
 msgstr ""

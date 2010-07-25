@@ -343,13 +343,8 @@ static void *demux_loop (void *stream_gen) {
 
       /* someone may want to interrupt us */
       if (_x_action_pending(stream)) {
-        struct timeval tv;
         struct timespec ts;
-
-        gettimeofday(&tv, NULL);
-        ts.tv_sec  = tv.tv_sec;
-        ts.tv_nsec = (tv.tv_usec + 100000) * 1000;
-
+	ts = _x_compute_interval(100);
         pthread_cond_timedwait (&stream->demux_resume, &stream->demux_lock, &ts);
       }
     }

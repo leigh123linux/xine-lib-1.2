@@ -190,7 +190,7 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     mad_stream_buffer (&this->stream, this->buffer,
 		       this->bytes_in_buffer);
 
-    if (this->bytes_in_buffer < MAD_MIN_SIZE)
+    if (this->bytes_in_buffer < MAD_MIN_SIZE && buf->pts == 0)
       return;
 
     if (!this->needs_more_data) {

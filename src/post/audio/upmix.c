@@ -396,6 +396,8 @@ static post_plugin_t *upmix_open_plugin(post_class_t *class_gen, int inputs,
 
   _x_post_init(&this->post, 1, 0);
 
+  pthread_mutex_init(&this->lock, NULL);
+
   this->params.cut_off_freq = 100;
 
   port = _x_post_intercept_audio_port(&this->post, audio_target[0], &input, &output);
