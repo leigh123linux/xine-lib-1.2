@@ -17,9 +17,9 @@ dnl   XINE_SUB += 1; XINE_PATCH = ''; continue with XINE_LT_* values below
 dnl
 XINE_MAJOR=1
 XINE_MINOR=1
-XINE_SUB=18
+XINE_SUB=19
 dnl XINE_PATCH should be left empty or set to ".1" or ".2" or something similar
-XINE_PATCH=.1
+XINE_PATCH=
 dnl Release series number (usually $XINE_MAJOR.$XINE_MINOR)
 XINE_SERIES=1.1
 
@@ -29,7 +29,7 @@ dnl else
   XINE_SUBPART=".$XINE_SUB$XINE_PATCH"
 dnl fi
 
-dnl The libtool version numbers (XINE_LT_*); Don't even think about faking this!
+dnl The libtool version numbers (XINE_LT_*). Don't even think about faking this!
 dnl 
 dnl immediately before every release do:
 dnl ===================================
@@ -46,17 +46,18 @@ dnl }
 dnl 
 dnl If you want to know more about what you are doing, here are some details:
 dnl  * XINE_LT_CURRENT is the current API version
-dnl  * XINE_LT_REVISION is an internal revision number which is increased when the API
-dnl    itself did not change
-dnl  * XINE_LT_AGE is the number of previous API versions still supported by this library
-dnl  * libtool has its own numbering scheme, because local library numbering schemes
-dnl    are platform dependent
+dnl  * XINE_LT_REVISION is an internal revision number which is increased when
+dnl    the API itself did not change
+dnl  * XINE_LT_AGE is the number of previous API versions still supported by
+dnl    this library
+dnl  * libtool has its own numbering scheme, because local library numbering
+dnl    schemes are platform dependent
 dnl  * in Linux, the library will be named
 dnl    libname.so.(XINE_LT_CURRENT - XINE_LT_AGE).XINE_LT_AGE.XINE_LT_REVISION
 
-XINE_LT_CURRENT=29
+XINE_LT_CURRENT=30
 XINE_LT_REVISION=0
-XINE_LT_AGE=28
+XINE_LT_AGE=29
 
 dnl for a release tarball do "rm .cvsversion" before "make dist"
 if test -f "${srcdir-.}/.cvsversion"; then
