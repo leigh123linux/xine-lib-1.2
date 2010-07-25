@@ -15,7 +15,7 @@ xine-lib (1.1.19) 2010-07-25
   * Fix playback of the first file handled by the modplug demuxer.
   * Refuse to build with known-broken libmodplug (0.8.8).
     http://bugs.debian.org/588465
-  * Fix a potential freeing of unallocated memory (CVE-2010-xxxx).
+  * Fix a potential freeing of unallocated memory.
 
 xine-lib (1.1.18.1) 2010-03-06
   * Oops. compat.c (for DXR3 support) was omitted.
