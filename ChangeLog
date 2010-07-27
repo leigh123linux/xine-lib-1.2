@@ -1,3 +1,5 @@
+xine-lib (1.1.??) 2010-??-??
+
 xine-lib (1.1.19) 2010-07-25
   * Handle odd widths properly (for ffmpeg-decoded video).
   * Make buildable with current (external) libdvdnav & libdvdread.
