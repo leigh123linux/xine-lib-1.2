@@ -93,7 +93,7 @@ typedef struct {
 #if defined (__linux__) || defined(__sun)
   struct cdrom_tochdr    tochdr;
   struct cdrom_tocentry  tocent[100];
-#elif (defined(BSD) && BSD >= 199306)
+#elif defined (__FreeBSD_kernel__) || (defined(BSD) && BSD >= 199306)
   struct ioc_toc_header  tochdr;
   struct cd_toc_entry    *tocent;
   off_t                  cur_sec;
@@ -118,7 +118,7 @@ typedef struct {
 
   int                    cur_track;
 
-#if defined (__linux__) || defined(__sun) || (defined(BSD) && BSD >= 199306)
+#if defined (__linux__) || defined(__sun) || defined (__FreeBSD_kernel__) || (defined(BSD) && BSD >= 199306)
   uint8_t                cur_min, cur_sec, cur_frame;
 #endif
 
@@ -178,7 +178,7 @@ static int input_vcd_read_toc (vcd_input_class_t *this, int fd) {
 
   return 0;
 }
-#elif (defined(BSD) && BSD >= 199306)
+#elif defined (__FreeBSD_kernel__) || (defined(BSD) && BSD >= 199306)
 static int input_vcd_read_toc (vcd_input_class_t *this, int fd) {
 
   struct ioc_read_toc_entry te;
@@ -394,7 +394,7 @@ static off_t vcd_plugin_read (input_plugin_t *this_gen,
   memcpy (buf, data.data, VCDSECTORSIZE); /* FIXME */
   return VCDSECTORSIZE;
 }
-#elif (defined(BSD) && BSD >= 199306)
+#elif defined (__FreeBSD_kernel__) || (defined(BSD) && BSD >= 199306)
 static off_t vcd_plugin_read (input_plugin_t *this_gen,
 				char *buf, off_t nlen) {
   vcd_input_plugin_t *this = (vcd_input_plugin_t *) this_gen;
@@ -532,7 +532,7 @@ static buf_element_t *vcd_plugin_read_block (input_plugin_t *this_gen,
   memcpy (buf->mem, data.data, VCDSECTORSIZE); /* FIXME */
   return buf;
 }
-#elif (defined(BSD) && BSD >= 199306)
+#elif defined (__FreeBSD_kernel__) || (defined(BSD) && BSD >= 199306)
 static buf_element_t *vcd_plugin_read_block (input_plugin_t *this_gen,
 					     fifo_buffer_t *fifo, off_t nlen) {
 
@@ -691,7 +691,7 @@ static off_t vcd_plugin_seek (input_plugin_t *this_gen,
 
   return offset ; /* FIXME */
 }
-#elif (defined(BSD) && BSD >= 199306)
+#elif defined (__FreeBSD_kernel__) || (defined(BSD) && BSD >= 199306)
 static off_t vcd_plugin_seek (input_plugin_t *this_gen,
 				off_t offset, int origin) {
 
@@ -765,7 +765,7 @@ static off_t vcd_plugin_get_length (input_plugin_t *this_gen) {
 
   return (off_t) 0;
 }
-#elif (defined(BSD) && BSD >= 199306)
+#elif defined (__FreeBSD_kernel__) || (defined(BSD) && BSD >= 199306)
 static off_t vcd_plugin_get_length (input_plugin_t *this_gen) {
   vcd_input_plugin_t *this = (vcd_input_plugin_t *) this_gen;
   off_t len ;
