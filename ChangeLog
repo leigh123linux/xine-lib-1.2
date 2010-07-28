@@ -1,4 +1,6 @@
 xine-lib (1.1.??) 2010-??-??
+  * Allow use of GraphicsMagick instead of ImageMagick.
+  * Fix build on Debian GNU/kFreeBSD (broken in 1.1.19).
 
 xine-lib (1.1.19) 2010-07-25
   * Handle odd widths properly (for ffmpeg-decoded video).
