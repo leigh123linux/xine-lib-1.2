@@ -375,7 +375,7 @@ void calculate_pic_order(struct h264_parser *parser, struct coded_picture *pic,
       pic->top_field_order_cnt = parser->prev_top_field_order_cnt;
 
   } else if (sps->pic_order_cnt_type == 2) {
-    uint32_t prev_frame_num = parser->last_vcl_nal->slc.frame_num;
+    uint32_t prev_frame_num = parser->last_vcl_nal ? parser->last_vcl_nal->slc.frame_num : 0;
     uint32_t prev_frame_num_offset = parser->frame_num_offset;
     uint32_t temp_pic_order_cnt = 0;
 
