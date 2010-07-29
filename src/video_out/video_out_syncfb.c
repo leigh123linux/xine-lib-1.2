@@ -996,7 +996,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
      xprintf(this->xine, XINE_VERBOSITY_LOG,
 	     _("video_out_syncfb: info. (brightness/contrast control won\'t be available because "
 	       "your SyncFB kernel module seems to be outdated. Please refer to README."
-	       "syncfb for informations on how to update it.)\n"));
+	       "syncfb for information on how to update it.)\n"));
    }
 
   /* check for virtual screen size and screen depth - this is rather important
