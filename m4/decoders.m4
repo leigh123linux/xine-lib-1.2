@@ -116,12 +116,23 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
                 [AS_HELP_STRING([--with-imagemagick], [Enable ImageMagick image decoder support (default: enabled)])],
                 [test x"$withval" != x"no" && with_imagemagick="yes"])
     if test x"$with_imagemagick" != x"no"; then
-        PKG_CHECK_MODULES([WAND], [Wand], [have_imagemagick=yes], [have_imagemagick=no])
-        if test "x$with_imagemagick" = 'xno'; then
-            PKG_CHECK_MODULES([WAND], [MagickWand], [have_imagemagick=yes], [have_imagemagick=no])
+        PKG_CHECK_MODULES([WAND], [Wand], [have_imagemagick=yes], [AC_MSG_RESULT([no]); have_imagemagick=no])
+        if test "x$have_imagemagick" = 'xno'; then
+            PKG_CHECK_MODULES([MAGICKWAND], [MagickWand], [have_imagemagick=yes], [AC_MSG_RESULT([no]); have_imagemagick=no])
+            dnl Avoid $(WAND_FLAGS) $(MAGICKWAND_FLAGS) ...
+            WAND_CFLAGS="$MAGICKWAND_CFLAGS"
+            WAND_LIBS="$MAGICKWAND_LIBS"
+        fi
+        if test "x$have_imagemagick" = 'xno'; then
+            PKG_CHECK_MODULES([GRAPHICSMAGICK], [ImageMagick], [have_imagemagick=yes], [AC_MSG_RESULT([no]); have_imagemagick=no])
+            PKG_CHECK_MODULES([GRAPHICSMAGICKWAND], [GraphicsMagickWand], [have_imagemagick=yes], [AC_MSG_RESULT([no]); have_imagemagick=no])
+            dnl The following assignments are safe, since they include
+            dnl the flags for plain GraphicsMagick
+            WAND_CFLAGS="$GRAPHICSMAGICKWAND_CFLAGS"
+            WAND_LIBS="$GRAPHICSMAGICKWAND_LIBS"
         fi
         if test x"$with_imagemagick" = x"yes" && test x"$have_imagemagick" = x"no"; then
-            AC_MSG_ERROR([ImageMagick support requested, but ImageMagick not found])
+            AC_MSG_ERROR([ImageMagick support requested, but neither Wand, MagickWand, nor GraphicsMagick were found])
         fi
     fi
     AM_CONDITIONAL([ENABLE_IMAGEMAGICK], [test x"$have_imagemagick" = x"yes"])
