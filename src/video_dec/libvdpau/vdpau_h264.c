@@ -458,7 +458,9 @@ static void draw_frames(video_decoder_t *this_gen, int flush)
   while ((decoded_pic = dpb_get_next_out_picture(this->nal_parser->dpb, flush)) != NULL) {
     decoded_pic->img->top_field_first = dp_top_field_first(decoded_pic);
     decoded_pic->img->progressive_frame = check_progressive(this_gen, decoded_pic);
+#ifdef DEBUG_H264
     printf("progressive: %d\n", decoded_pic->img->progressive_frame);
+#endif
     if (flush) {
       xprintf(this->xine, XINE_VERBOSITY_DEBUG,
           "h264 flush, draw pts: %"PRId64"\n", decoded_pic->img->pts);
