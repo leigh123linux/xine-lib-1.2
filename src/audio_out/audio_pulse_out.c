@@ -202,7 +202,8 @@ static void __xine_pa_context_success_callback(pa_context *c, int success, void 
  *        instance.
  *
  * This function saves the volume field of the passed structure to the
- * @c cvolume variable of the output instance.
+ * @c cvolume variable of the output instance and send an update volume
+ * event to the frontend.
  */
 static void __xine_pa_sink_info_callback(pa_context *c, const pa_sink_input_info *info,
                                          int is_last, void *userdata) {
@@ -226,6 +227,63 @@ static void __xine_pa_sink_info_callback(pa_context *c, const pa_sink_input_info
 #else
   this->muted = pa_cvolume_is_muted (&this->cvolume);
 #endif
+
+  /* send update volume event to frontend */
+
+  xine_event_t              event;
+  xine_audio_level_data_t   data;
+  xine_stream_t            *stream;
+  xine_list_iterator_t      ite;
+
+  data.right        = data.left = (int) (pa_sw_volume_to_linear(this->swvolume)*100);
+
+  data.mute         = this->muted;
+
+  event.type        = XINE_EVENT_AUDIO_LEVEL;
+  event.data        = &data;
+  event.data_length = sizeof(data);
+
+  pthread_mutex_lock(&this->xine->streams_lock);
+  for(ite = xine_list_front(this->xine->streams); ite; ite =
+    xine_list_next(this->xine->streams, ite)) {
+    stream = xine_list_get_value(this->xine->streams, ite);
+    event.stream = stream;
+    xine_event_send(stream, &event);
+  }
+  pthread_mutex_unlock(&this->xine->streams_lock);
+}
+
+/**
+ * @brief Callback function called when the state of the daemon changes
+ * @param c Context in which the state of the daemon changes
+ * @param t Subscription event type
+ * @param idx Index of the sink
+ * @param this_gen pulse_driver_t pointer for the PulseAudio output
+ *        instance.
+ */
+static void __xine_pa_context_subscribe_callback(pa_context *c,
+    pa_subscription_event_type_t t, uint32_t idx, void *this_gen)
+{
+  pulse_driver_t * this = (pulse_driver_t*) this_gen;
+  int index;
+
+  index = pa_stream_get_index(this->stream);
+
+  if (index != idx)
+    return;
+
+  if ((t & PA_SUBSCRIPTION_EVENT_TYPE_MASK) != PA_SUBSCRIPTION_EVENT_CHANGE)
+    return;
+
+  pa_operation *operation = pa_context_get_sink_input_info(
+      this->context, index, __xine_pa_sink_info_callback, this);
+
+  if (operation == NULL) {
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: failed to get sink info: %s\n", pa_strerror(pa_context_errno (this->context)));
+    return;
+  }
+
+  pa_operation_unref(operation);
 }
 
 static int connect_context(pulse_driver_t *this) {
@@ -248,6 +306,10 @@ static int connect_context(pulse_driver_t *this) {
     _x_assert(this->context);
 
     pa_context_set_state_callback(this->context, __xine_pa_context_state_callback, this);
+
+    /* set subscribe callback (for volume change information) */
+
+    pa_context_set_subscribe_callback(this->context, __xine_pa_context_subscribe_callback, this);
   }
 
   if (pa_context_get_state(this->context) == PA_CONTEXT_UNCONNECTED) {
@@ -270,6 +332,17 @@ static int connect_context(pulse_driver_t *this) {
       break;
 
     pa_threaded_mainloop_wait(this->mainloop);
+  }
+
+  /* subscribe to sink input events (for volume change information) */
+
+  pa_operation *operation = pa_context_subscribe(this->context,
+    PA_SUBSCRIPTION_MASK_SINK_INPUT,
+    __xine_pa_context_success_callback, this);
+
+  if (operation == NULL) {
+     xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: failed to enable event notification: %s\n", pa_strerror(pa_context_errno(this->context)));
+     return -1;
   }
 
   return 0;
@@ -433,33 +506,22 @@ static int ao_pulse_open(ao_driver_t *this_gen,
       entry = cfg->lookup_entry (cfg, "audio.volume.mixer_volume");
       if (entry) {
 	this->ao_driver.set_property(&this->ao_driver, AO_PROP_MIXER_VOL, entry->num_value);
-
-	/* Notify frontend about the volume change */
-	xine_event_t              event;
-	xine_audio_level_data_t   data;
-	xine_stream_t            *stream;
-	xine_list_iterator_t      ite;
-
-	data.right        = data.left = entry->num_value;
-	data.mute         = 0;
-
-	event.type        = XINE_EVENT_AUDIO_LEVEL;
-	event.data        = &data;
-	event.data_length = sizeof(data);
-
-	pthread_mutex_lock(&this->xine->streams_lock);
-	for(ite = xine_list_front(this->xine->streams); ite; ite =
-	    xine_list_next(this->xine->streams, ite)) {
-	  stream = xine_list_get_value(this->xine->streams, ite);
-	  event.stream = stream;
-	  xine_event_send(stream, &event);
-	}
-	pthread_mutex_unlock(&this->xine->streams_lock);
-
       }
     }
-
   }
+
+  /* get pa sink input information to trigger a update volume event in the frontend */
+
+  pa_operation *operation = pa_context_get_sink_input_info(
+      this->context, pa_stream_get_index(this->stream),
+      __xine_pa_sink_info_callback, this);
+
+  if (operation == NULL) {
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: failed to get sink info: %s\n", pa_strerror(pa_context_errno (this->context)));
+    goto fail;
+  }
+
+  pa_operation_unref(operation);
 
   return this->sample_rate;
 
