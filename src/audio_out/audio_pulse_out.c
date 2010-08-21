@@ -267,6 +267,9 @@ static void __xine_pa_context_subscribe_callback(pa_context *c,
   pulse_driver_t * this = (pulse_driver_t*) this_gen;
   int index;
 
+  if (this->stream == NULL)
+    return;
+
   index = pa_stream_get_index(this->stream);
 
   if (index != idx)
