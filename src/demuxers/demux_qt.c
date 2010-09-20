@@ -3255,7 +3255,7 @@ static const char *get_identifier (demux_class_t *this_gen) {
 }
 
 static const char *get_extensions (demux_class_t *this_gen) {
-  return "mov qt qtl mp4 m4a m4b";
+  return "mov qt qtl mp4 m4a m4b f4a f4v";
 }
 
 static const char *get_mimetypes (demux_class_t *this_gen) {
