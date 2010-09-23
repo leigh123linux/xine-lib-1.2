@@ -74,6 +74,7 @@ xine-lib (1.1.??) 2010-??-??
   * Fix build-time check for dvdnav.
   * Allow use of GraphicsMagick instead of ImageMagick.
   * Fix build on Debian GNU/kFreeBSD (broken in 1.1.19).
+  * Add a Japanese translation from Takeshi Hamasaki.
 
 xine-lib (1.1.19) 2010-07-25
   * Handle odd widths properly (for ffmpeg-decoded video).
@@ -93,6 +94,7 @@ xine-lib (1.1.19) 2010-07-25
   * Refuse to build with known-broken libmodplug (0.8.8).
     http://bugs.debian.org/588465
   * Fix a potential freeing of unallocated memory.
+    [Rafael Dominguez-Vega, MWR InfoSecurity]
 
 xine-lib (1.1.18.1) 2010-03-06
   * Oops. compat.c (for DXR3 support) was omitted.

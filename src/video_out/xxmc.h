@@ -77,11 +77,9 @@
 #include <X11/extensions/XShm.h>
 #include <X11/extensions/Xv.h>
 #include <X11/extensions/Xvlib.h>
+#include <X11/extensions/XvMClib.h>
 #ifdef HAVE_VLDXVMC
   #include <X11/extensions/vldXvMC.h>
-#else
-  #include <X11/extensions/XvMClib.h>
-  #include <X11/extensions/XvMC.h>
 #endif
 
 #define LOG_MODULE "video_out_xxmc"

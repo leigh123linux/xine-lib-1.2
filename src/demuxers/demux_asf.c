@@ -1961,7 +1961,7 @@ static int demux_asf_seek (demux_plugin_t *this_gen,
       start_pos -= this->packet_size;
     }
     if (state != 5) {
-      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_asf: demux_asf_seek: begining of the stream\n");
+      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_asf: demux_asf_seek: beginning of the stream\n");
       this->input->seek (this->input, this->first_packet_pos, SEEK_SET);
       this->keyframe_found = 1;
     } else {
@@ -2079,7 +2079,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 
   default:
     xprintf (stream->xine, XINE_VERBOSITY_DEBUG,
-	     "demux_asf: warning, unkown method %d\n", stream->content_detection_method);
+	     "demux_asf: warning, unknown method %d\n", stream->content_detection_method);
     return NULL;
   }
 

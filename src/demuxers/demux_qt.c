@@ -3174,9 +3174,9 @@ static void *init_plugin (xine_t *xine, void *data) {
     "video/quicktime: mov,qt: Quicktime animation;"
     "video/x-quicktime: mov,qt: Quicktime animation;"
     "audio/x-m4a: m4a,m4b: MPEG-4 audio;"
-    "video/mp4: mp4,mpg4: MPEG-4 video;"
-    "audio/mp4: mp4,mpg4: MPEG-4 audio;";
-  this->demux_class.extensions      = "mov qt mp4 m4a m4b";
+    "video/mp4: f4v,mp4,mpg4: MPEG-4 video;"
+    "audio/mp4: f4a,mp4,mpg4: MPEG-4 audio;";
+  this->demux_class.extensions      = "mov qt mp4 m4a m4b f4a f4v";
   this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;

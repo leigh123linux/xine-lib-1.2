@@ -1143,6 +1143,8 @@ CC_CHECK_CFLAGS_APPEND([-Wformat=2 -Wformat],
    break;
   ])
 
+CC_CHECK_CFLAGS_APPEND([-Wformat-security])
+
 dnl check for strict aliasing problem, get the highest between =2 and
 dnl normal.
 CC_CHECK_CFLAGS_APPEND([-Wstrict-aliasing=2 -Wstrict-aliasing], [break;])

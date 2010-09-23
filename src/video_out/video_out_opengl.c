@@ -960,7 +960,7 @@ static int render_setup_fp_yuv (opengl_driver_t *this) {
   glGetIntegerv             (MYGL_PROGRAM_ERROR_POSITION_ARB, &errorpos);
   if (errorpos != -1)
     xprintf (this->xine, XINE_VERBOSITY_NONE,
-	     "video_out_opengl: fragprog_yuv errorpos %d begining with '%.20s'. Ask a wizard.\n",
+	     "video_out_opengl: fragprog_yuv errorpos %d beginning with '%.20s'. Ask a wizard.\n",
 	     errorpos, fragprog_yuv+errorpos);
 
   glEnable (MYGL_FRAGMENT_PROGRAM_ARB);
