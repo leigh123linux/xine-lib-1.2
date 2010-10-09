@@ -4,10 +4,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: xine-lib 1.0.1\n"
+"Project-Id-Version: xine-lib 1.1.18\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2010-07-24 23:32+0100\n"
-"PO-Revision-Date: 2008-11-10 16:33+0200\n"
+"POT-Creation-Date: 2010-10-10 00:20+0200\n"
+"PO-Revision-Date: 2010-10-10 01:06+0200\n"
 "Last-Translator: František Dvořák <valtri@civ.zcu.cz>\n"
 "Language-Team: Czech <cs@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -801,15 +801,15 @@ msgstr "audio_oss_out: open() mixer %s selhalo: %s\n"
 msgid "xine audio output plugin using oss-compliant audio devices/drivers"
 msgstr "výstupní zvukový modul xine použije zvuková zařízení/ovladače OSS"
 
-#: src/audio_out/audio_pulse_out.c:814
+#: src/audio_out/audio_pulse_out.c:879
 msgid "device used for pulseaudio"
 msgstr "zařízení použité pro pulseaudio"
 
-#: src/audio_out/audio_pulse_out.c:815
+#: src/audio_out/audio_pulse_out.c:880
 msgid "use 'server[:sink]' for setting the pulseaudio sink device."
 msgstr "pro nastavení jímacího zařízení pulseaudia použijte '[server[:sink]]'"
 
-#: src/audio_out/audio_pulse_out.c:898
+#: src/audio_out/audio_pulse_out.c:963
 msgid "xine audio output plugin using pulseaudio sound server"
 msgstr "modul zvukového výstupu xine použije server pulseaudio"
 
@@ -890,9 +890,9 @@ msgid "ffmpeg_video_dec: couldn't open decoder\n"
 msgstr "ffmpeg_video_dec: nelze otevřít dekodér\n"
 
 #: src/combined/ffmpeg/ff_video_decoder.c:346
-#, fuzzy, c-format
+#, c-format
 msgid "ffmpeg_video_dec: couldn't open decoder (pass 2)\n"
-msgstr "ffmpeg_video_dec: nelze otevřít dekodér\n"
+msgstr "ffmpeg_video_dec: nelze otevřít dekodér (2. průchod)\n"
 
 #: src/combined/ffmpeg/ff_video_decoder.c:391
 #, c-format
@@ -3042,9 +3042,9 @@ msgid "libfaad: libfaad NeAACDecInit failed.\n"
 msgstr "libfaad: selhala funkce NeAACDecInit.\n"
 
 #: src/libmusepack/xine_musepack_decoder.c:287
-#, fuzzy, c-format
+#, c-format
 msgid "libmusepack: mpc_demux_init failed.\n"
-msgstr "libmusepack: selhalo mpc_decoder_initialise\n"
+msgstr "libmusepack: selhalo mpc_demux_init\n"
 
 #: src/libmusepack/xine_musepack_decoder.c:298
 #, c-format
@@ -3447,7 +3447,6 @@ msgstr ""
 "vzorky.\n"
 
 #: src/post/deinterlace/xine_plugin.c:211
-#, fuzzy
 msgid ""
 "Advanced tvtime/deinterlacer plugin with pulldown detection\n"
 "This plugin aims to provide deinterlacing mechanisms comparable to high "
@@ -3502,7 +3501,7 @@ msgid ""
 "Deinterlacing methods: (Not all methods are available for all plataforms)\n"
 "\n"
 msgstr ""
-"Zdokonalený modul tvtime/deinterlacer s pulldown detekcí\n"
+"Zdokonalený modul tvtime/deinterlacer s detekcí \"pulldown\"\n"
 "Tento modul má za cíl poskytnout mechanizmy korekce prokládání srovnatelné s "
 "vysoce kvalitními postupnými přehrávači DVD a takzvanými \"zdvojovači řádek"
 "\" (line-doublers) pro použití s počítačovými monitory, projektory a jinými "
@@ -3511,21 +3510,23 @@ msgstr ""
 "Parametry\n"
 "\n"
 "  Method: Vybrat metodu (algoritmus), kterou použít. Vysvětlení všech metod "
-"je dále.\n"
+"viz dále.\n"
 "\n"
 "  Enabled: Povolit nebo zakázat modul.\n"
 "\n"
+"  Pulldown_error_wait: Zajistí, že před změnou filmového režimu zůstane typ vzorkování pro zadaný počet snímků stálý.\n"
+"\n"
 "  Pulldown: Vybrat detekční algoritmus 2-3 pulldown. Filmy s rychlostí 24 "
-"snímků/s, které byly konvertovány do NTSC mohou být detekovány a "
+"snímků/s, které se konvertují do NTSC, mohou být detekovány a "
 "inteligentně rekonstruovány do původních (neprokládaných) snímků.\n"
 "\n"
 "  Framerate_mode: Vybráním 'full' se bude korigovat prokládání každého "
 "půlsnímku do unikátního snímku. Získá se tím televizní nebo i vyšší kvalita. "
-"Tato funkce účinně zdvojnásobí rychlost snímků, což zlepší hladkost. "
+"Tato funkce účinně zdvojnásobí rychlost snímků, což zlepší plynulost. "
 "Poznamenejme však, že plných 59.94 snímků/s nelze dosáhnout s neupraveným "
 "jádrem Linuxu 2.4 (to používá frekvenci přerušení časovače 100 Hz). Novější "
-"jádra RedHatu a jádra 2.6 používají vyšší nastavení HZ (512 a 1000, v "
-"pořadí) a měly by v pohodě fungovat.\n"
+"jádra RedHatu a jádra 2.6 používají vyšší nastavení HZ (512, případně 1000) "
+"a měly fungovat dobře.\n"
 "\n"
 "  Judder_correction: Je-li povoleno 2-3 pulldown a je detekován filmový "
 "materiál, je možné omezit rychlost snímků na původní použitou rychlost (24 "
@@ -3533,7 +3534,7 @@ msgstr ""
 "čas bude souhlasit a eliminuje se chvění.\n"
 "\n"
 "  Use_progressive_frame_flag: Dobře nahrané streamy MPEG2 používají příznak "
-"k indikaci postupného materiálu. Toto nastavení řídí, zda věříme či nevěříme "
+"indikující postupný materiál. Toto nastavení řídí, zda věříme či nevěříme "
 "tomuto příznaku (některé ojedinělé chybné streamy mpeg2 ho mají nastavený "
 "špatně).\n"
 "\n"
@@ -4406,7 +4407,7 @@ msgstr ""
 msgid ""
 "video_out_syncfb: info. (brightness/contrast control won't be available "
 "because your SyncFB kernel module seems to be outdated. Please refer to "
-"README.syncfb for informations on how to update it.)\n"
+"README.syncfb for information on how to update it.)\n"
 msgstr ""
 "video_out_syncfb: info. (nebude k dispozici řízení jasu a kontrastu, protože "
 "se zdá, že je váš modul jádra SyncFB zastaralý. Informace o tom, jak ho "
@@ -4624,7 +4625,7 @@ msgstr "%s: nepodařilo se otevřít Xv port %d - najde se automaticky\n"
 #: src/video_out/video_out_xxmc.c:2469
 #, c-format
 msgid "%s: no available ports of type \"%s\", defaulting...\n"
-msgstr ""
+msgstr "%s: není k dispozici port typu \"%s\", použije se výchozí...\n"
 
 #: src/video_out/video_out_xcbxv.c:1405
 #, c-format
@@ -4848,9 +4849,9 @@ msgid "video_out_xv: Xv extension not present.\n"
 msgstr "video_out_xv: Rozšíření Xv není přítomno.\n"
 
 #: src/video_out/video_out_xv.c:1428
-#, fuzzy, c-format
+#, c-format
 msgid "%s: could not open Xv port %<PRId32> - autodetecting\n"
-msgstr "%s: nepodařilo se otevřít Xv port %d - najde se automaticky\n"
+msgstr "%s: nepodařilo se otevřít Xv port %<PRId32> - vyhledá se automaticky\n"
 
 #: src/video_out/video_out_xv.c:1447
 #, c-format
@@ -5174,15 +5175,16 @@ msgstr ""
 "(Platí jen při použití autodetekce portů Xv.)"
 
 #: src/video_out/xv_common.h:81
-#, fuzzy
 msgid "bicubic filtering"
-msgstr "filtr mihotání"
+msgstr "bikubický filtr"
 
 #: src/video_out/xv_common.h:82
 msgid ""
 "This option controls bicubic filtering of the video image. It may be used "
 "instead of, or as well as, xine's deinterlacers."
 msgstr ""
+"Tato volba řídí bikubický filtr obrazu videa. Filtr může být použit společně "
+"s korekcemi prokládání, nebo jako jejich náhrada."
 
 #: src/xine-engine/alphablend.c:2150
 msgid "disable exact alpha blending of overlays"
@@ -5395,12 +5397,12 @@ msgstr "Stávající konfigurační soubor byl upraven novější verzí xine."
 #: src/xine-engine/configfile.c:992
 #, c-format
 msgid "Loaded configuration from file '%s'\n"
-msgstr ""
+msgstr "Načtena konfigurace ze souboru '%s'\n"
 
 #: src/xine-engine/configfile.c:997
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to load configuration from file '%s': %s\n"
-msgstr "input_dvb: selhalo otevření souboru kanálu dvb '%s': %s\n"
+msgstr "Selhalo načtení konfigurace ze souboru '%s': %s\n"
 
 #: src/xine-engine/configfile.c:1052
 #, c-format
@@ -5688,17 +5690,17 @@ msgstr "load_plugins: Co?! %s neobsahuje informace modulu.\n"
 #: src/xine-engine/load_plugins.c:1092
 #, c-format
 msgid "failed to save catalogue cache: %s\n"
-msgstr ""
+msgstr "uložení do katalogu selhalo: %s\n"
 
 #: src/xine-engine/load_plugins.c:1099
 #, c-format
 msgid "failed to replace catalogue cache: %s\n"
-msgstr ""
+msgstr "nahrazení katalogu selhalo: %s\n"
 
 #: src/xine-engine/load_plugins.c:1105
 #, c-format
 msgid "failed to remove new catalogue cache: %s\n"
-msgstr ""
+msgstr "smazání nového katalogu selhalo: %s\n"
 
 #: src/xine-engine/load_plugins.c:1362
 #, c-format
