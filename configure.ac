@@ -2883,10 +2883,22 @@ dnl
 dnl This should be fixed in the libtool package itself as all other dir names
 dnl there have no trailing slash.
 dnl ---------------------------------------------
+dnl Work around problem due to LTCFLAGS:
+dnl
+dnl CFLAGS is passed to LTCFLAGS directly from configure instead of Makefiles.
+dnl Fixing LTCFLAGS here will help compile xine-list on some crazy platforms.
+dnl
+dnl It disables multi-pass compilation of xine-list.
+dnl ---------------------------------------------
 
 dnl Note: Brackets [] must be doubled as they are treated as m4 macro quotes.
 cat libtool | sed -e '/sys_lib_search_path_spec=/s/\/\([[ "]]\)/\1/g' > libtool.tmp
 mv -f libtool.tmp libtool
+
+dnl removing make-specific variable
+cat libtool | sed 's/\\$(MULTIPASS_CFLAGS)//' > libtool.tmp
+mv -f libtool.tmp libtool
+
 chmod +x libtool
 
 dnl ---------------------------------------------
