@@ -278,8 +278,9 @@ case "$host_os" in
     if test "$SYS" = "mingw32"; then
       WIN32_CPPFLAGS='-I$(top_srcdir)/win32/include'
       LIBS="-lwinmm -lwsock32 $LIBS"
-      GOOM_LIBS="-liberty"
       LDFLAGS="-Wl,--enable-stdcall-fixup $LDFLAGS"
+      dnl iberty has been needed only in older versions
+      AC_CHECK_LIB(iberty, strncomp, [GOOM_LIBS="-liberty"])
     fi
     LDFLAGS="-no-undefined $LDFLAGS"
     ;;
