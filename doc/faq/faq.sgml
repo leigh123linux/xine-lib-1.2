@@ -303,7 +303,7 @@
      You'll need an HG snapshot tarball or source checked out from the repository.
     </para>
     <para>
-     First, make sure that the "devscripts" package is installed. You'll
+     First, make sure that the "devscripts" and "build-essential" packages are installed. You'll
      then need the following commands (the first one isn't needed unless you're using a snapshot tarball):
      <screen>
 &nbsp;&nbsp;&nbsp;<command>tar xzf &lt;PACKAGE-VER.tar.gz&gt;</command>
