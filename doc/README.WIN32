@@ -44,8 +44,6 @@ How to build:
     # install and manually remove the static plugins
     #
     make install DESTDIR=/tmp/xine-lib
-    rm /tmp/xine-lib/bin/plugins/*.a
-    rm /tmp/xine-lib/bin/plugins/post/*.a
 
 Prepare xine library for using in M$ compilers too:
     # run terminal window (MinGW for example)
@@ -55,6 +53,9 @@ Prepare xine library for using in M$ compilers too:
     cp ../bin/libxine-1.dll .
     <path_to_M$VC>/VC98/BIN/LIB.EXE /machine:i386 /def:libxine-1.def
     rm libxine-1.dll
+
+For 64bit, use x86 instead of i386:
+    <path_to_M$VC>/VC98/BIN/LIB.EXE /machine:x86 /def:libxine-1.def
 
 
 2. CygWin port
@@ -165,8 +166,8 @@ There remains many of work yet on Windows port.
 
 Limitations:
  - file > 1GB doesn't work (MinGW problem?)
- - build system isn't fully tuned for cross-compiling
  - seeking doesn't work with testing frontend, but it should be OK in library
+ - libcdio not ported to mingw32-w64 (frelling headers :-))
 
 Bugs:
  - random crashes and random locks in stress tests
