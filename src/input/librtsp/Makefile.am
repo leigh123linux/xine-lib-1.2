@@ -9,7 +9,7 @@ librtsp_la_SOURCES = \
   rtsp_session.c
 
 librtsp_la_CFLAGS = $(VISIBILITY_FLAG)
-librtsp_la_LDFLAGS = -avoid-version -module
+librtsp_la_LDFLAGS = $(xineplug_ldflags)
 
 noinst_HEADERS = \
   rtsp.h \

@@ -13,7 +13,7 @@ xineplug_post_tvtime_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(PTHREAD_LIBS) \
 	$(top_builddir)/src/post/deinterlace/plugins/libdeinterlaceplugins.la
 
 xineplug_post_tvtime_la_CFLAGS = $(VISIBILITY_FLAG)
-xineplug_post_tvtime_la_LDFLAGS = -avoid-version -module \
+xineplug_post_tvtime_la_LDFLAGS = $(xineplug_ldflags) \
 	@IMPURE_TEXT_LDFLAGS@
 
 noinst_HEADERS = deinterlace.h pulldown.h speedtools.h speedy.h tvtime.h

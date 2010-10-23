@@ -106,7 +106,6 @@ xineplug_dmx_games_la_SOURCES = group_games.c demux_eawve.c \
 				demux_film.c demux_smjpeg.c demux_4xm.c \
 				demux_vmd.c
 xineplug_dmx_games_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
-xineplug_dmx_games_la_LDFLAGS = -avoid-version -module
 
 xineplug_dmx_audio_la_SOURCES = group_audio.c demux_aud.c demux_aiff.c \
 				demux_cdda.c demux_mpgaudio.c $(nsf_demuxer) \

@@ -15,7 +15,7 @@ libgsm610_la_SOURCES = \
 	table.c
 
 libgsm610_la_CFLAGS = $(VISIBILITY_FLAG)
-libgsm610_la_LDFLAGS = -avoid-version -module
+libgsm610_la_LDFLAGS = $(xineplug_ldflags)
 
 noinst_HEADERS = \
 	gsm_config.h \

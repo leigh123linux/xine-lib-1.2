@@ -24,7 +24,7 @@ libdvdnav_la_SOURCES = \
         dvd_udf.c
 libdvdnav_la_LIBADD = $(PTHREAD_LIBS)
 libdvdnav_la_CFLAGS = $(VISIBILITY_FLAG)
-libdvdnav_la_LDFLAGS = -avoid-version -module
+libdvdnav_la_LDFLAGS = $(xineplug_ldflags)
 
 noinst_HEADERS = \
 	decoder.h \

@@ -10,7 +10,7 @@ lib_LTLIBRARIES = libxine.la
 XINEUTILS_LIB  = $(top_builddir)/src/xine-utils/libxineutils.la
 DEF_FILE = libxine-$(XINE_MAJOR).def
 if WIN32
-def_ldflags="-Wl,--output-def,$(DEF_FILE)"
+def_ldflags=-Wl,--output-def,$(DEF_FILE) $(LDFLAGS_NOUNDEFINED)
 endif
 
 libxine_la_SOURCES = xine.c metronom.c configfile.c buffer.c \

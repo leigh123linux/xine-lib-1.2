@@ -282,7 +282,6 @@ case "$host_os" in
       dnl iberty has been needed only in older versions
       AC_CHECK_LIB(iberty, strncomp, [GOOM_LIBS="-liberty"])
     fi
-    LDFLAGS="-no-undefined $LDFLAGS"
     ;;
 esac
 AC_SUBST(GOOM_LIBS)

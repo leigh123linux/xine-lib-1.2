@@ -109,14 +109,21 @@ AC_DEFUN([CC_NOUNDEFINED], [
      dnl FreeBSD (et al.) does not complete linking for shared objects when pthreads
      dnl are requested, as different implementations are present; to avoid problems
      dnl use -Wl,-z,defs only for those platform not behaving this way.
+     dnl
+     dnl MinGW platforms: for libraries required -no-undefined,
+     dnl use it only for libraries in mingw32-w64 
+
      *-freebsd* | *-openbsd*) ;;
+     *-mingw*)
+        LDFLAGS_NOUNDEFINED="-no-undefined"
+        ;;
      *)
         dnl First of all check for the --no-undefined variant of GNU ld. This allows
         dnl for a much more readable commandline, so that people can understand what
         dnl it does without going to look for what the heck -z defs does.
 	for possible_flags in "-Wl,--no-undefined" "-Wl,-z,defs"; do
           CC_CHECK_LDFLAGS([$possible_flags], [LDFLAGS_NOUNDEFINED="$possible_flags"])
-	  break
+	  if test "x$LDFLAGS_NOUNDEFINED" = "x"; then break; fi
         done
 	;;
   esac
