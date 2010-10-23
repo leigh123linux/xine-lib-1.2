@@ -124,7 +124,7 @@ quote of the day:
 /* for small memory blocks (<256 bytes) this version is faster */
 #define small_memcpy(to,from,n)\
 {\
-register unsigned long int dummy;\
+register uintptr_t dummy;\
 __asm__ __volatile__(\
   "rep; movsb"\
   :"=&D"(to), "=&S"(from), "=&c"(dummy)\
@@ -154,7 +154,7 @@ int d0, d1, d2;
     "movsb\n"
     "2:"
     : "=&c" (d0), "=&D" (d1), "=&S" (d2)
-    :"0" (n/4), "q" (n),"1" ((long) to),"2" ((long) from)
+    :"0" (n/4), "q" (n),"1" ((uintptr_t) to),"2" ((uintptr_t) from)
     : "memory");
 
   return (to);
@@ -191,9 +191,9 @@ static void * sse_memcpy(void * to, const void * from, size_t len)
 
   if(len >= MIN_LEN)
   {
-    register unsigned long int delta;
+    register uintptr_t delta;
     /* Align destinition to MMREG_SIZE -boundary */
-    delta = ((unsigned long int)to)&(SSE_MMREG_SIZE-1);
+    delta = ((uintptr_t)to)&(SSE_MMREG_SIZE-1);
     if(delta)
     {
       delta=SSE_MMREG_SIZE-delta;
@@ -202,7 +202,7 @@ static void * sse_memcpy(void * to, const void * from, size_t len)
     }
     i = len >> 6; /* len/64 */
     len&=63;
-    if(((unsigned long)from) & 15)
+    if(((uintptr_t)from) & 15)
       /* if SRC is misaligned */
       for(; i>0; i--)
       {
@@ -263,9 +263,9 @@ static void * mmx_memcpy(void * to, const void * from, size_t len)
 
   if(len >= MMX1_MIN_LEN)
   {
-    register unsigned long int delta;
+    register uintptr_t delta;
     /* Align destinition to MMREG_SIZE -boundary */
-    delta = ((unsigned long int)to)&(MMX_MMREG_SIZE-1);
+    delta = ((uintptr_t)to)&(MMX_MMREG_SIZE-1);
     if(delta)
     {
       delta=MMX_MMREG_SIZE-delta;
@@ -328,9 +328,9 @@ static void * mmx2_memcpy(void * to, const void * from, size_t len)
 
   if(len >= MIN_LEN)
   {
-    register unsigned long int delta;
+    register uintptr_t delta;
     /* Align destinition to MMREG_SIZE -boundary */
-    delta = ((unsigned long int)to)&(MMX_MMREG_SIZE-1);
+    delta = ((uintptr_t)to)&(MMX_MMREG_SIZE-1);
     if(delta)
     {
       delta=MMX_MMREG_SIZE-delta;
