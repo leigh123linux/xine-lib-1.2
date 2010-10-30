@@ -39,6 +39,8 @@
 
 #ifdef HAVE_SYS_TIMES_H
 #include <sys/times.h>
+#else
+#include <time.h>
 #endif
 
 #include <stdlib.h>
@@ -429,7 +431,7 @@ static uint64_t rdtsc(int config_flags)
   struct tms tp;
   return times(&tp);
 #else
-	return ((uint64_t)0);
+	return clock();
 #endif /* HAVE_SYS_TIMES_H */
 }
 #endif
