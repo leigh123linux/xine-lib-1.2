@@ -1561,6 +1561,8 @@ void xine_exit (xine_t *this) {
   if(this->port_ticket)
     this->port_ticket->dispose(this->port_ticket);
 
+  pthread_mutex_destroy(&this->log_lock);
+
 #if defined(WIN32)
   WSACleanup();
 #endif
@@ -1604,6 +1606,7 @@ xine_t *xine_new (void) {
    * log buffers
    */
   memset(this->log_buffers, 0, sizeof(this->log_buffers));
+  pthread_mutex_init (&this->log_lock, NULL);
 
 
 #ifdef WIN32
@@ -1696,7 +1699,6 @@ void xine_init (xine_t *this) {
    * locks
    */
   pthread_mutex_init (&this->streams_lock, NULL);
-  pthread_mutex_init (&this->log_lock, NULL);
 
   /* initialize color conversion tables and functions */
   init_yuv_conversion();
