@@ -1012,8 +1012,8 @@ void xine_config_save (xine_t *xine, const char *filename) {
 
     lprintf("backing up configfile to %s\n", temp);
 
-    f_backup = fopen(temp, "w");
-    f_config = fopen(filename, "r");
+    f_backup = fopen(temp, "wb");
+    f_config = fopen(filename, "rb");
 
     if (f_config && f_backup && (stat(filename, &config_stat) == 0)) {
       char    *buf = NULL;
