@@ -101,12 +101,14 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     /*
      * this->image -> rgb data
      */
+    InitializeMagick(NULL);
     wand = NewMagickWand();
     status = MagickReadImageBlob(wand, this->image, this->index);
     this->index = 0;
 
     if (!status) {
       DestroyMagickWand(wand);
+      DestroyMagick();
       lprintf("error loading image\n");
       return;
     }
@@ -116,6 +118,7 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     img_buf = malloc(width * height * 3);
     MagickGetImagePixels(wand, 0, 0, width, height, "RGB", CharPixel, img_buf);
     DestroyMagickWand(wand);
+    DestroyMagick();
 
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_WIDTH, width);
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_HEIGHT, height);
