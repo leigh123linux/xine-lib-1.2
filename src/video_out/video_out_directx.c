@@ -110,6 +110,12 @@ typedef struct {
  *
  * ----------------------------------------- */
 
+typedef enum {
+  VO_DIRECTX_HWACCEL_FULL = 0,
+  VO_DIRECTX_HWACCEL_SCALE = 1,
+  VO_DIRECTX_HWACCEL_NONE = 2
+} vo_directx_hwaccel_enum;
+
 typedef struct {
   vo_driver_t		   vo_driver;
   win32_visual_t          *win32_visual;
@@ -128,6 +134,7 @@ typedef struct {
   uint32_t			   width;	    /* frame with */
   uint32_t			   height;	    /* frame height */
   double		   ratio;	    /* frame ratio */
+  vo_directx_hwaccel_enum  hwaccel;         /* requested level of HW acceleration */
 
   yuv2rgb_factory_t       *yuv2rgb_factory; /* used for format conversion */
   yuv2rgb_t               *yuv2rgb;         /* used for format conversion */
@@ -143,6 +150,8 @@ typedef struct {
   config_values_t         *config;
   xine_t                  *xine;
 } directx_class_t;
+
+char *config_hwaccel_values[] = {"full", "scale", "none", NULL };
 
 /* -----------------------------------------
  *
@@ -322,6 +331,8 @@ static boolean CreateSecondary( win32_driver_t * win32_driver, int width, int he
   ddsd.dwWidth        = width;
   ddsd.dwHeight       = height;
 
+  if (win32_driver->hwaccel <= VO_DIRECTX_HWACCEL_FULL) {
+
   if( format == XINE_IMGFMT_YV12 )
     {
       /* the requested format is XINE_IMGFMT_YV12 */
@@ -378,6 +389,10 @@ static boolean CreateSecondary( win32_driver_t * win32_driver, int width, int he
   if( IDirectDraw_CreateSurface( win32_driver->ddobj, &ddsd, &win32_driver->secondary, 0 ) == DD_OK )
     return TRUE;
 
+  }
+
+  if (win32_driver->hwaccel <= VO_DIRECTX_HWACCEL_SCALE) {
+
   /*  Our fallback method is to create a back buffer
    *  with the same image format as the primary surface */
 
@@ -392,10 +407,13 @@ static boolean CreateSecondary( win32_driver_t * win32_driver, int width, int he
   if( IDirectDraw_CreateSurface( win32_driver->ddobj, &ddsd, &win32_driver->secondary, 0 ) == DD_OK )
     return TRUE;
 
+  }
+
   /*  Our second fallback - all w/o HW acceleration */
   lprintf("CreateSecondary() - Falling back, disabling HW acceleration \n");
   ddsd.dwFlags        = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
   ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+  win32_driver->act_format = IMGFMT_NATIVE;
   if( (result = IDirectDraw_CreateSurface( win32_driver->ddobj, &ddsd, &win32_driver->secondary, 0 )) == DD_OK )
     return TRUE;
 
@@ -625,7 +643,7 @@ static boolean Overlay( LPDIRECTDRAWSURFACE src_surface, RECT * src_rect,
 	}
       else
 	{
-	  Error( 0, "IDirectDrawSurface_UpdateOverlay : error 0x%lx", result );
+	  Error( 0, "IDirectDrawSurface_UpdateOverlay : error 0x%lx. You can try disable hardware acceleration (option video.directx.hwaccel).", result );
 	  return FALSE;
 	}
     }
@@ -1264,6 +1282,15 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *wi
   win32_driver->vo_driver.gui_data_exchange	= win32_gui_data_exchange;
   win32_driver->vo_driver.dispose		= win32_exit;
   win32_driver->vo_driver.redraw_needed         = win32_redraw_needed;
+
+  win32_driver->hwaccel = class->config->register_enum(class->config,
+    "video.directx.hwaccel", 0, config_hwaccel_values,
+    _("HW acceleration level"),
+    _("Possible values (default full):\n\n"
+"full: full acceleration\n"
+"scale: disable colorspace conversion (HW scaling only)\n"
+"none: disable all acceleration"),
+    10, NULL, NULL);
 
   if (!CreatePrimary( win32_driver )) {
       Destroy( win32_driver );
