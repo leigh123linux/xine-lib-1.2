@@ -3,6 +3,10 @@ xine-lib (1.1.??) 2010-??-??
   * Allow use of GraphicsMagick instead of ImageMagick.
   * Fix build on Debian GNU/kFreeBSD (broken in 1.1.19).
   * Add a Japanese translation from Takeshi Hamasaki.
+  * Czech translation update.
+  * New MinGW-w64 port, various portability fixes.
+  * MinGW port updates.
+  * Possibility to disable HW acceleration in directx video output.
 
 xine-lib (1.1.19) 2010-07-25
   * Handle odd widths properly (for ffmpeg-decoded video).
