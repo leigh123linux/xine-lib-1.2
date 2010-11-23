@@ -380,7 +380,7 @@ static void realdec_decode_data (video_decoder_t *this_gen, buf_element_t *buf) 
         xine_hexdump (this->chunk_buffer, this->chunk_buffer_size);
 
         printf ("libreal: transform_in:\n");
-        xine_hexdump ((uint8_t *) &transform_in, sizeof(rv_xform_in_t));
+        xine_hexdump ((uint8_t *) &transform_in, sizeof(transform_in_t));
 
         printf ("libreal: chunk_table:\n");
         xine_hexdump ((uint8_t *) buf->decoder_info_ptr[2],
