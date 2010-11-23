@@ -16,7 +16,7 @@ scriptdir=@XINE_SCRIPTPATH@
 localedir=@XINE_LOCALEDIR@
 objcflags=@OBJCFLAGS@
 
-xine_list=${bindir}/xine-list-@XINE_SERIES@
+xine_list=${bindir}/xine-list-@XINE_SERIES@@EXEEXT@
 
 Name: libxine
 Description: The xine engine library
