@@ -7,6 +7,7 @@ xine-lib (1.1.??) 2010-??-??
   * New MinGW-w64 port, various portability fixes.
   * MinGW port updates.
   * Possibility to disable HW acceleration in directx video output.
+  * Header stripping support in Matroska demuxer.
 
 xine-lib (1.1.19) 2010-07-25
   * Handle odd widths properly (for ffmpeg-decoded video).

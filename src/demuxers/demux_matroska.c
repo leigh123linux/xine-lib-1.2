@@ -304,8 +304,12 @@ static int parse_content_compression (demux_matroska_t *this, matroska_track_t *
         }
         break;
       case MATROSKA_ID_CE_COMPSETTINGS:
-        lprintf("ContentCompSettings (UNSUPPORTED)\n");
-        if (!ebml_skip(ebml, &elem))
+        lprintf("ContentCompSettings\n");
+        track->compress_settings = calloc(1, elem.len);
+        track->compress_len = elem.len;
+        if (elem.len > this->compress_maxlen)
+		this->compress_maxlen = elem.len;
+        if(!ebml_read_binary(ebml, &elem, track->compress_settings))
           return 0;
         break;
       default:
@@ -1784,8 +1788,8 @@ static int find_track_by_id(demux_matroska_t *this, int track_num,
 }
 
 
-static int read_block_data (demux_matroska_t *this, size_t len) {
-  alloc_block_data(this, len);
+static int read_block_data (demux_matroska_t *this, size_t len, size_t offset) {
+  alloc_block_data(this, len + offset);
 
   /* block datas */
   if (! this->block_data) {
@@ -1793,7 +1797,7 @@ static int read_block_data (demux_matroska_t *this, size_t len) {
             "demux_matroska: memory allocation error\n");
     return 0;
   }
-  if (this->input->read(this->input, this->block_data, len) != len) {
+  if (this->input->read(this->input, this->block_data + offset, len) != len) {
     off_t pos = this->input->get_current_pos(this->input);
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             "demux_matroska: read error at position %" PRIdMAX "\n",
@@ -1823,8 +1827,9 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
   int16_t           timecode_diff;
   int64_t           pts, xduration;
   int               decoder_flags = 0;
+  size_t            headers_len = 0;
 
-  data = this->block_data;
+  data = this->block_data + this->compress_maxlen;
   if (!(num_len = parse_ebml_uint(this, data, &track_num)))
     return 0;
   data += num_len;
@@ -1877,12 +1882,21 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
     decoder_flags |= BUF_FLAG_PREVIEW;
   }
 
+  if (track->compress_algo == MATROSKA_COMPRESS_HEADER_STRIP)
+    headers_len = track->compress_len;
+
   if (lacing == MATROSKA_NO_LACING) {
     size_t block_size_left;
     lprintf("no lacing\n");
 
-    block_size_left = (this->block_data + block_size) - data;
-    lprintf("size: %d, block_size: %u\n", block_size_left, block_size);
+    block_size_left = (this->block_data + block_size + this->compress_maxlen) - data;
+    lprintf("size: %d, block_size: %u, block_offset: %u\n", block_size_left, block_size, this->compress_maxlen);
+
+    if (headers_len) {
+      data -= headers_len;
+      xine_fast_memcpy(data, track->compress_settings, headers_len);
+      block_size_left += headers_len;
+    }
 
     if (track->handle_content != NULL) {
       track->handle_content((demux_plugin_t *)this, track,
@@ -1912,7 +1926,7 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
               "demux_matroska: too many frames: %d\n", lace_num);
       return 0;
     }
-    block_size_left = this->block_data + block_size - data;
+    block_size_left = this->block_data + block_size + this->compress_maxlen - data;
 
     switch (lacing) {
       case MATROSKA_XIPH_LACING: {
@@ -2045,7 +2059,7 @@ static int parse_simpleblock(demux_matroska_t *this, size_t block_len, uint64_t 
   if( file_len )
     normpos = (int) ( (double) block_pos * 65535 / file_len );
 
-  if (!read_block_data(this, block_len))
+  if (!read_block_data(this, block_len, this->compress_maxlen))
     return 0;
 
   has_block = 1;
@@ -2084,7 +2098,7 @@ static int parse_block_group(demux_matroska_t *this,
         if( file_len )
           normpos = (int) ( (double) block_pos * 65535 / file_len );
 
-        if (!read_block_data(this, elem.len))
+        if (!read_block_data(this, elem.len, this->compress_maxlen))
           return 0;
 
           has_block = 1;
