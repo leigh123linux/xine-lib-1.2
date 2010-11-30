@@ -39,7 +39,7 @@ AC_DEFUN([AC_OPTIMIZATIONS], [
         dnl
         dnl Multipass compilation
         dnl
-        CC_CHECK_CFLAGS([-fprofile-arcs], PASS1_CFLAGS="-fprofile_arcs $PASS1_CFLAGS",)
+        CC_CHECK_CFLAGS([-fprofile-arcs], PASS1_CFLAGS="-fprofile-arcs $PASS1_CFLAGS",)
         CC_CHECK_CFLAGS([-fbranch-probabilities], PASS2_CFLAGS="-fbranch-probabilities $PASS2_CFLAGS",)
         AC_SUBST(PASS1_CFLAGS)
         AC_SUBST(PASS2_CFLAGS)
