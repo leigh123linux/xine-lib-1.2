@@ -654,6 +654,7 @@ xine_stream_t *xine_stream_new (xine_t *this,
   pthread_mutexattr_init(&attr);
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
   pthread_mutex_init (&stream->frontend_lock, &attr);
+  pthread_mutexattr_destroy(&attr);
 
   /*
    * Clear meta/stream info
@@ -1488,6 +1489,8 @@ static void xine_dispose_internal (xine_stream_t *stream) {
 
   stream->metronom->exit (stream->metronom);
 
+  xine_list_delete(stream->event_queues);
+
   pthread_mutex_lock(&stream->xine->streams_lock);
   ite = xine_list_find(stream->xine->streams, stream);
   if (ite) {
@@ -1531,7 +1534,6 @@ void xine_dispose (xine_stream_t *stream) {
 
   if (stream->osd_renderer)
     stream->osd_renderer->close( stream->osd_renderer );
-
 
   _x_refcounter_dec(stream->refcounter);
 }

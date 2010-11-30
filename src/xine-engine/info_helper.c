@@ -241,9 +241,6 @@ static void meta_info_set_unlocked_encoding(xine_stream_t *stream, int info, con
         xprintf(stream->xine, XINE_VERBOSITY_LOG,
                 _("info_helper: unsupported conversion %s -> UTF-8, no conversion performed\n"), enc);
 
-      if (system_enc)
-        free(system_enc);
-
       if (cd != (iconv_t)-1) {
         char *utf8_value;
         ICONV_CONST char *inbuf;
@@ -273,6 +270,8 @@ static void meta_info_set_unlocked_encoding(xine_stream_t *stream, int info, con
         return;
       }
     }
+
+    free(system_enc);
   }
 #endif
 
