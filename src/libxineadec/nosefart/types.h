@@ -31,10 +31,9 @@
 #endif
 
 /* Define this if running on little-endian (x86) systems */
-#ifdef WORDS_BIGENDIAN
-#undef	 HOST_LITTLE_ENDIAN
-#else
-#define  HOST_LITTLE_ENDIAN
+
+#ifndef DCPLAYA
+# define  HOST_LITTLE_ENDIAN
 #endif
 
 #ifdef __GNUC__
@@ -46,13 +45,25 @@
 #endif
 
 /* These should be changed depending on the platform */
-typedef  char     int8;
-typedef  short    int16;
-typedef  int      int32;
 
-typedef  unsigned char  uint8;
-typedef  unsigned short uint16;
-typedef  unsigned int   uint32;
+
+
+#ifdef __BEOS__		/* added by Eli Dayan (for compiling under BeOS) */
+	
+	/* use types in the BeOS Support Kit instead */
+	#include <be/support/SupportDefs.h>
+#elif defined (DCPLAYA) /* $$$ added by ben (for compiling with dcplaya) */
+# include <arch/types.h>
+#else	
+	typedef  char     int8;
+	typedef  short    int16;
+	typedef  int      int32;
+
+	typedef  unsigned char  uint8;
+	typedef  unsigned short uint16;
+	typedef  unsigned int   uint32;
+
+#endif
 
 typedef  uint8    boolean;
 

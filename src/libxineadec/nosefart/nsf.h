@@ -60,28 +60,29 @@ enum
 {
    NSF_FILTER_NONE,
    NSF_FILTER_LOWPASS,
-   NSF_FILTER_WEIGHTED
+   NSF_FILTER_WEIGHTED,
+   NSF_FILTER_MAX, /* $$$ ben : add this one for range chacking */
 };
 
 typedef struct nsf_s
 {
    /* NESM header */
-   uint8  id[5];               /* NESM\x1A */
-   uint8  version;             /* spec version */
-   uint8  num_songs;           /* total num songs */
-   uint8  start_song;          /* first song */
-   uint16 load_addr;           /* loc to load code */
-   uint16 init_addr;           /* init call address */
-   uint16 play_addr;           /* play call address */
-   uint8  song_name[32];       /* name of song */
-   uint8  artist_name[32];     /* artist name */
-   uint8  copyright[32];       /* copyright info */
-   uint16 ntsc_speed;          /* playback speed (if NTSC) */
-   uint8  bankswitch_info[8];  /* initial code banking */
-   uint16 pal_speed;           /* playback speed (if PAL) */
-   uint8  pal_ntsc_bits;       /* NTSC/PAL determination bits */
-   uint8  ext_sound_type;      /* type of external sound gen. */
-   uint8  reserved[4];         /* reserved */
+   uint8  id[5];              /* NESM\x1A */
+   uint8  version;            /* spec version */
+   uint8  num_songs;          /* total num songs */
+   uint8  start_song;         /* first song */
+   uint16 load_addr;          /* loc to load code */
+   uint16 init_addr;          /* init call address */
+   uint16 play_addr;          /* play call address */
+   uint8  song_name[32];      /* name of song */
+   uint8  artist_name[32];    /* artist name */
+   uint8  copyright[32];      /* copyright info */
+   uint16 ntsc_speed;         /* playback speed (if NTSC) */
+   uint8  bankswitch_info[8]; /* initial code banking */
+   uint16 pal_speed;          /* playback speed (if PAL) */
+   uint8  pal_ntsc_bits;      /* NTSC/PAL determination bits */
+   uint8  ext_sound_type;     /* type of external sound gen. */
+   uint8  reserved[4];        /* reserved */
 
    /* things that the NSF player needs */
    uint8  *data;              /* actual NSF data */
@@ -89,6 +90,14 @@ typedef struct nsf_s
    uint32 playback_rate;      /* current playback rate */
    uint8  current_song;       /* current song */
    boolean bankswitched;      /* is bankswitched? */
+
+  /* $$$ ben : Playing time ... */
+  uint32 cur_frame;
+  uint32 cur_frame_end;
+  uint32 * song_frames;
+
+  /* $$$ ben : Last error string */
+   const char * errstr;       
 
    /* CPU and APU contexts */
    nes6502_context *cpu;
@@ -98,30 +107,55 @@ typedef struct nsf_s
    void (*process)(void *buffer, int num_samples);
 } __PACKED__ nsf_t;
 
-/* Function prototypes */
-extern void nsf_init(void);
+/* $$$ ben : Generic loader struct */
+struct nsf_loader_t {
+  /* Init and open. */
+  int (*open)(struct nsf_loader_t * loader);
 
-extern nsf_t *nsf_load(char *filename, void *source, int length);
+  /* Close and shutdown. */
+  void (*close) (struct nsf_loader_t * loader);
+
+  /* This function should return <0 on error, else the number of byte NOT read.
+   * that way a simple 0 test tell us if read was complete.
+   */
+  int (*read) (struct nsf_loader_t * loader, void *data, int n);
+
+  /* Get file length. */
+  int (*length) (struct nsf_loader_t * loader);
+
+  /* Skip n bytes. */
+  int (*skip) (struct nsf_loader_t * loader,int n);
+
+  /* Get filename (for debug). */
+  const char * (*fname) (struct nsf_loader_t * loader);
+
+};
+
+/* Function prototypes */
+extern int nsf_init(void);
+
+extern nsf_t * nsf_load_extended(struct nsf_loader_t * loader);
+extern nsf_t *nsf_load(const char *filename, void *source, int length);
 extern void nsf_free(nsf_t **nsf_info);
 
-extern void nsf_playtrack(nsf_t *nsf, int track, int sample_rate, int sample_bits, 
-                          boolean stereo);
+extern int nsf_playtrack(nsf_t *nsf, int track, int sample_rate,
+			 int sample_bits, boolean stereo);
 extern void nsf_frame(nsf_t *nsf);
-extern void nsf_setchan(nsf_t *nsf, int chan, boolean enabled);
-extern void nsf_setfilter(nsf_t *nsf, int filter_type);
+extern int nsf_setchan(nsf_t *nsf, int chan, boolean enabled);
+extern int nsf_setfilter(nsf_t *nsf, int filter_type);
 
 #endif /* _NSF_H_ */
 
 /*
 ** $Log: nsf.h,v $
-** Revision 1.3  2007/01/18 21:34:10  dgp85
-** __attribute__(packed) is used on the struct, not on its members.
+** Revision 1.3  2003/05/01 22:34:20  benjihan
+** New NSF plugin
 **
-** Revision 1.2  2003/12/05 15:55:01  f1rmb
-** cleanup phase II. use xprintf when it's relevant, use xine_xmalloc when it's relevant too. Small other little fix (can't remember). Change few internal function prototype because it xine_t pointer need to be used if some xine's internal sections. NOTE: libdvd{nav,read} is still too noisy, i will take a look to made it quit, without invasive changes. To be continued...
+** Revision 1.2  2003/04/09 14:50:32  ben
+** Clean NSF api.
 **
-** Revision 1.1  2003/01/08 07:04:35  tmmm
-** initial import of Nosefart sources
+** Revision 1.1  2003/04/08 20:53:00  ben
+** Adding more files...
 **
 ** Revision 1.11  2000/07/04 04:59:24  matt
 ** removed DOS-specific stuff
