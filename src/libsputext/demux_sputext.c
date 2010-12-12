@@ -1386,7 +1386,8 @@ static demux_plugin_t *open_demux_plugin (demux_class_t *class_gen, xine_stream_
 	  (strncasecmp(ending, ".sub", 4) != 0) &&
 	  (strncasecmp(ending, ".srt", 4) != 0) &&
 	  (strncasecmp(ending, ".smi", 4) != 0) &&
-	  (strncasecmp(ending, ".ssa", 4) != 0))) {
+	  (strncasecmp(ending, ".ssa", 4) != 0) &&
+	  (strncasecmp(ending, ".ass", 4) != 0))) {
         free (this);
         return NULL;
       }
