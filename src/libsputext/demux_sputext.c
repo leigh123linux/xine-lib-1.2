@@ -1433,7 +1433,7 @@ static const char *get_demux_identifier (demux_class_t *this_gen) {
 }
 
 static const char *get_demux_extensions (demux_class_t *this_gen) {
-  return "asc txt sub srt smi ssa";
+  return "asc txt sub srt smi ssa ass";
 }
 
 static const char *get_demux_mimetypes (demux_class_t *this_gen) {
