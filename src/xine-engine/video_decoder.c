@@ -102,6 +102,11 @@ int _x_spu_decoder_sleep(xine_stream_t *stream, int64_t next_spu_vpts)
   return thread_vacant;
 }
 
+static void video_decoder_update_disable_flush_at_discontinuity(void *disable_decoder_flush_at_discontinuity, xine_cfg_entry_t *entry)
+{
+  *(int *)disable_decoder_flush_at_discontinuity = entry->num_value;
+}
+
 static void *video_decoder_loop (void *stream_gen) {
 
   buf_element_t   *buf;
@@ -112,6 +117,7 @@ static void *video_decoder_loop (void *stream_gen) {
   int              prof_video_decode = -1;
   int              prof_spu_decode = -1;
   uint32_t         buftype_unknown = 0;
+  int              disable_decoder_flush_at_discontinuity;
 
 #ifndef WIN32
   /* nice(-value) will fail silently for normal users.
@@ -126,6 +132,15 @@ static void *video_decoder_loop (void *stream_gen) {
     prof_video_decode = xine_profiler_allocate_slot ("video decoder");
   if (prof_spu_decode == -1)
     prof_spu_decode = xine_profiler_allocate_slot ("spu decoder");
+
+  disable_decoder_flush_at_discontinuity = stream->xine->config->register_bool(stream->xine->config, "engine.decoder.disable_flush_at_discontinuity", 0,
+      _("disable decoder flush at discontinuity"),
+      _("when watching live tv a discontinuity happens for example about every 26.5 hours due to a pts wrap.\n"
+        "flushing the decoder at that time causes decoding errors for images after the pts wrap.\n"
+        "to avoid the decoding errors, decoder flush at discontinuity should be disabled.\n\n"
+        "WARNING: as the flush was introduced to fix some issues when playing DVD still images, it is\n"
+        "likely that these issues may reappear in case they haven't been fixed differently meanwhile.\n"),
+        20, video_decoder_update_disable_flush_at_discontinuity, &disable_decoder_flush_at_discontinuity);
 
   while (running) {
 
@@ -310,7 +325,8 @@ static void *video_decoder_loop (void *stream_gen) {
         stream->video_decoder_plugin->discontinuity (stream->video_decoder_plugin);
         /* it might be a long time before we get back from a handle_video_discontinuity,
 	 * so we better flush the decoder before */
-        stream->video_decoder_plugin->flush (stream->video_decoder_plugin);
+        if (!disable_decoder_flush_at_discontinuity)
+          stream->video_decoder_plugin->flush (stream->video_decoder_plugin);
         running_ticket->release(running_ticket, 0);
       }
 
@@ -326,7 +342,8 @@ static void *video_decoder_loop (void *stream_gen) {
         stream->video_decoder_plugin->discontinuity (stream->video_decoder_plugin);
         /* it might be a long time before we get back from a handle_video_discontinuity,
 	 * so we better flush the decoder before */
-        stream->video_decoder_plugin->flush (stream->video_decoder_plugin);
+        if (!disable_decoder_flush_at_discontinuity)
+          stream->video_decoder_plugin->flush (stream->video_decoder_plugin);
         running_ticket->release(running_ticket, 0);
       }
 
