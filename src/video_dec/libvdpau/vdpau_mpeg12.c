@@ -257,11 +257,6 @@ static void sequence_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int
 
   int i, j;
 
-  if ( sequence->cur_pts ) {
-    sequence->seq_pts = sequence->cur_pts;
-    sequence->cur_pts = 0;
-  }
-
   bits_reader_set( &sequence->br, buf, len );
   sequence->coded_width = read_bits( &sequence->br, 12 );
   lprintf( "coded_width: %d\n", sequence->coded_width );
@@ -351,11 +346,6 @@ static void picture_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int 
 {
   sequence_t *sequence = (sequence_t*)&this_gen->sequence;
 
-  if ( sequence->cur_pts ) {
-    sequence->seq_pts = sequence->cur_pts;
-    sequence->cur_pts = 0;
-  }
-
   if ( sequence->profile==VDP_DECODER_PROFILE_MPEG1 )
     sequence->picture.vdp_infos.picture_structure = PICTURE_FRAME;
 
@@ -372,6 +362,14 @@ static void picture_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int 
   else if ( sequence->picture.vdp_infos.picture_structure ) {
     infos = &sequence->picture.vdp_infos2;
 	sequence->picture.slices_pos_top = sequence->picture.slices_pos;
+
+    sequence->cur_pts = 0; /* ignore pts of second field */
+  }
+
+  /* take over pts for next issued image */ 
+  if ( sequence->cur_pts ) {
+    sequence->seq_pts = sequence->cur_pts;
+    sequence->cur_pts = 0;
   }
 
   bits_reader_set( &sequence->br, buf, len );
