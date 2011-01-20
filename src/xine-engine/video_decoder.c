@@ -308,10 +308,10 @@ static void *video_decoder_loop (void *stream_gen) {
 
       if (stream->video_decoder_plugin) {
         running_ticket->acquire(running_ticket, 0);
-        /* it might be a long time before we get back from a discontinuity, so we better flush
-	 * the decoder before */
-        stream->video_decoder_plugin->flush (stream->video_decoder_plugin);
         stream->video_decoder_plugin->discontinuity (stream->video_decoder_plugin);
+        /* it might be a long time before we get back from a handle_video_discontinuity,
+	 * so we better flush the decoder before */
+        stream->video_decoder_plugin->flush (stream->video_decoder_plugin);
         running_ticket->release(running_ticket, 0);
       }
 
@@ -324,10 +324,10 @@ static void *video_decoder_loop (void *stream_gen) {
 
       if (stream->video_decoder_plugin) {
         running_ticket->acquire(running_ticket, 0);
-        /* it might be a long time before we get back from a discontinuity, so we better flush
-	 * the decoder before */
-        stream->video_decoder_plugin->flush (stream->video_decoder_plugin);
         stream->video_decoder_plugin->discontinuity (stream->video_decoder_plugin);
+        /* it might be a long time before we get back from a handle_video_discontinuity,
+	 * so we better flush the decoder before */
+        stream->video_decoder_plugin->flush (stream->video_decoder_plugin);
         running_ticket->release(running_ticket, 0);
       }
 
