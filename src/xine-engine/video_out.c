@@ -1124,6 +1124,11 @@ static void paused_loop( vos_t *this, int64_t vpts )
   pthread_mutex_unlock( &this->free_img_buf_queue->mutex );
 }
 
+static void video_out_update_disable_flush_from_video_out(void *disable_decoder_flush_from_video_out, xine_cfg_entry_t *entry)
+{
+  *(int *)disable_decoder_flush_from_video_out = entry->num_value;
+}
+
 static void *video_out_loop (void *this_gen) {
 
   int64_t            vpts, diff;
@@ -1131,6 +1136,7 @@ static void *video_out_loop (void *this_gen) {
   vos_t             *this = (vos_t *) this_gen;
   int64_t            next_frame_vpts = 0;
   int64_t            usec_to_sleep;
+  int                disable_decoder_flush_from_video_out;
 
 #ifndef WIN32
   /* nice(-value) will fail silently for normal users.
@@ -1140,6 +1146,16 @@ static void *video_out_loop (void *this_gen) {
    */
   nice(-2);
 #endif /* WIN32 */
+
+  disable_decoder_flush_from_video_out = this->xine->config->register_bool(this->xine->config, "engine.decoder.disable_flush_from_video_out", 0,
+      _("disable decoder flush from video out"),
+      _("video out causes a decoder flush when video out runs out of frames for displaying,\n"
+        "because the decoder hasn't deliverd new frames for quite a while.\n"
+        "flushing the decoder causes decoding errors for images decoded after the flush.\n"
+        "to avoid the decoding errors, decoder flush at video out should be disabled.\n\n"
+        "WARNING: as the flush was introduced to fix some issues when playing DVD still images, it is\n"
+        "likely that these issues may reappear in case they haven't been fixed differently meanwhile.\n"),
+        20, video_out_update_disable_flush_from_video_out, &disable_decoder_flush_from_video_out);
 
   /*
    * here it is - the heart of xine (or rather: one of the hearts
@@ -1191,7 +1207,7 @@ static void *video_out_loop (void *this_gen) {
            ite = xine_list_next(this->streams, ite)) {
 	xine_stream_t *stream = xine_list_get_value(this->streams, ite);
 	if (stream == XINE_ANON_STREAM) continue;
-        if (stream->video_decoder_plugin && stream->video_fifo) {
+        if (stream->video_decoder_plugin && stream->video_fifo && !disable_decoder_flush_from_video_out) {
           buf_element_t *buf;
 
 	  lprintf ("flushing current video decoder plugin\n");
