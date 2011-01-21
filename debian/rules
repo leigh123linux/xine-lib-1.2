@@ -105,7 +105,7 @@ endif
 build: configure-stamp build-stamp
 build-stamp: configure-stamp
 	dh_testdir
-	$(MAKE) -j $(NJOBS)
+	$(MAKE) -j$(NJOBS)
 	touch build-stamp
 
 update-config-sub-guess:
@@ -130,7 +130,8 @@ install: build
 	dh_testroot
 	dh_clean -k
 	dh_installdirs
-	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp \
+	$(MAKE) install -j$(NJOBS) \
+			DESTDIR=$(CURDIR)/debian/tmp \
 			LIBRARY_PATH=$(CURDIR)/debian/tmp/usr/lib
 
 binary-indep: build install
