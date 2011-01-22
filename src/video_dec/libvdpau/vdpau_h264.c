@@ -420,17 +420,10 @@ static int vdpau_decoder_init(video_decoder_t *this_gen)
                                     XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS | this->reset);
   this->reset = 0;                                    
 
-  img->duration = this->video_step;
-  img->pts = this->completed_pic->pts;
-
-  if (this->dangling_img) {
-    xprintf(this->xine, XINE_VERBOSITY_LOG,
-        "broken stream: current img wasn't processed -- freeing it\n!");
-    this->dangling_img->free(this->dangling_img);
-  }
-  this->dangling_img = img;
-
   this->vdpau_accel = (vdpau_accel_t*)img->accel_data;
+
+  img->free(img);
+  img = NULL;
 
   /*VdpBool is_supported;
   uint32_t max_level, max_references, max_width, max_height;*/
