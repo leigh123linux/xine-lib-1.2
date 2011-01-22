@@ -2399,6 +2399,69 @@ int _x_query_buffer_usage(xine_stream_t *stream, int *num_video_buffers, int *nu
   return ticket_acquired != 0;
 }
 
+static void _x_query_buffers_fix_data(xine_query_buffers_data_t *data)
+{
+  if (data->total < 0)
+    data->total = 0;
+
+  if (data->ready < 0)
+    data->ready = 0;
+
+  if (data->avail < 0)
+    data->avail = 0;
+
+  /* fix race condition of not filling data atomically */
+  if (data->ready + data->avail > data->total)
+    data->avail = data->total - data->ready;
+}
+
+int _x_query_buffers(xine_stream_t *stream, xine_query_buffers_t *query)
+{
+  int ticket_acquired = -1;
+
+  memset(query, 0, sizeof (*query));
+
+  if (stream->video_fifo)
+  {
+    query->vi.total = stream->video_fifo->buffer_pool_capacity;
+    query->vi.ready = stream->video_fifo->size(stream->video_fifo);
+    query->vi.avail = stream->video_fifo->num_free(stream->video_fifo);
+    _x_query_buffers_fix_data(&query->vi);
+  }
+
+  if (stream->audio_fifo)
+  {
+    query->ai.total = stream->audio_fifo->buffer_pool_capacity;
+    query->ai.ready = stream->audio_fifo->size(stream->audio_fifo);
+    query->ai.avail = stream->audio_fifo->num_free(stream->audio_fifo);
+    _x_query_buffers_fix_data(&query->ai);
+  }
+
+  if (stream->video_out || stream->audio_out)
+    ticket_acquired = stream->xine->port_ticket->acquire_nonblocking(stream->xine->port_ticket, 1);
+
+  if (ticket_acquired > 0)
+  {
+    if (stream->video_out)
+    {
+      query->vo.total = stream->video_out->get_property(stream->video_out, VO_PROP_BUFS_TOTAL);
+      query->vo.ready = stream->video_out->get_property(stream->video_out, VO_PROP_BUFS_IN_FIFO);
+      query->vo.avail = stream->video_out->get_property(stream->video_out, VO_PROP_BUFS_FREE);
+    }
+
+    if (stream->audio_out)
+    {
+      query->ao.total = stream->audio_out->get_property(stream->audio_out, AO_PROP_BUFS_TOTAL);
+      query->ao.ready = stream->audio_out->get_property(stream->audio_out, AO_PROP_BUFS_IN_FIFO);
+      query->ao.avail = stream->audio_out->get_property(stream->audio_out, AO_PROP_BUFS_FREE);
+    }
+
+    stream->xine->port_ticket->release_nonblocking(stream->xine->port_ticket, 1);
+  }
+
+  return ticket_acquired != 0;
+}
+
 int _x_lock_port_rewiring(xine_t *xine, int ms_timeout)
 {
   return xine->port_ticket->lock_port_rewiring(xine->port_ticket, ms_timeout);

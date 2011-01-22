@@ -291,6 +291,7 @@ struct audio_fifo_s {
   pthread_cond_t     empty;
 
   int                num_buffers;
+  int                num_buffers_max;
 };
 
 static int ao_get_property (xine_audio_port_t *this_gen, int property);
@@ -305,9 +306,10 @@ static audio_fifo_t *XINE_MALLOC fifo_new (xine_t *xine) {
   if (!fifo)
     return NULL;
 
-  fifo->first       = NULL;
-  fifo->last        = NULL;
-  fifo->num_buffers = 0;
+  fifo->first           = NULL;
+  fifo->last            = NULL;
+  fifo->num_buffers     = 0;
+  fifo->num_buffers_max = 0;
   pthread_mutex_init (&fifo->mutex, NULL);
   pthread_cond_init  (&fifo->not_empty, NULL);
   pthread_cond_init  (&fifo->empty, NULL);
@@ -334,6 +336,10 @@ static void fifo_append_int (audio_fifo_t *fifo,
     fifo->num_buffers++;
 
   }
+  
+  if (fifo->num_buffers_max < fifo->num_buffers)
+    fifo->num_buffers_max = fifo->num_buffers;
+
   pthread_cond_signal (&fifo->not_empty);
 }
 
@@ -1777,6 +1783,14 @@ static int ao_get_property (xine_audio_port_t *this_gen, int property) {
 
   case AO_PROP_BUFS_IN_FIFO:
     ret = this->audio_loop_running ? this->out_fifo->num_buffers : -1;
+    break;
+
+  case AO_PROP_BUFS_FREE:
+    ret = this->audio_loop_running ? this->free_fifo->num_buffers : -1;
+    break;
+
+  case AO_PROP_BUFS_TOTAL:
+    ret = this->audio_loop_running ? this->free_fifo->num_buffers_max : -1;
     break;
 
   case AO_PROP_NUM_STREAMS:

@@ -1460,6 +1460,14 @@ static int vo_get_property (xine_video_port_t *this_gen, int property) {
     ret = this->video_loop_running ? this->display_img_buf_queue->num_buffers : -1;
     break;
 
+  case VO_PROP_BUFS_FREE:
+    ret = this->video_loop_running ? this->free_img_buf_queue->num_buffers : -1;
+    break;
+
+  case VO_PROP_BUFS_TOTAL:
+    ret = this->video_loop_running ? this->free_img_buf_queue->num_buffers_max : -1;
+    break;
+
   case VO_PROP_NUM_STREAMS:
     pthread_mutex_lock(&this->streams_lock);
     ret = xine_list_size(this->streams);

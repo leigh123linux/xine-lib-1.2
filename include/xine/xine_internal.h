@@ -361,11 +361,28 @@ struct xine_stream_s {
  * which is a valid stream that does not want to be addressed. */
 #define XINE_ANON_STREAM ((xine_stream_t *)-1)
 
+typedef struct
+{
+  int total;
+  int ready;
+  int avail;
+}
+xine_query_buffers_data_t;
+
+typedef struct
+{
+  xine_query_buffers_data_t vi;
+  xine_query_buffers_data_t ai;
+  xine_query_buffers_data_t vo;
+  xine_query_buffers_data_t ao;
+}
+xine_query_buffers_t;
 
 /*
  * private function prototypes:
  */
 
+int _x_query_buffers(xine_stream_t *stream, xine_query_buffers_t *query) XINE_PROTECTED;
 int _x_query_buffer_usage(xine_stream_t *stream, int *num_video_buffers, int *num_audio_buffers, int *num_video_frames, int *num_audio_frames) XINE_PROTECTED;
 int _x_lock_port_rewiring(xine_t *xine, int ms_to_time_out) XINE_PROTECTED;
 void _x_unlock_port_rewiring(xine_t *xine) XINE_PROTECTED;
