@@ -1825,6 +1825,8 @@ int parse_nal(uint8_t *buf, int buf_len, struct h264_parser *parser,
    * we detect the start of a new access unit if
    * a non-vcl nal unit is received after a vcl
    * nal unit
+   * NAL_END_OF_SEQUENCE terminates the current
+   * access unit
    */
   if (nal->nal_unit_type >= NAL_SLICE &&
       nal->nal_unit_type <= NAL_SLICE_IDR) {
@@ -1832,7 +1834,8 @@ int parse_nal(uint8_t *buf, int buf_len, struct h264_parser *parser,
   } else if ((parser->position == VCL &&
       nal->nal_unit_type >= NAL_SEI &&
       nal->nal_unit_type <= NAL_PPS) ||
-      nal->nal_unit_type == NAL_AU_DELIMITER) {
+      nal->nal_unit_type == NAL_AU_DELIMITER ||
+      nal->nal_unit_type == NAL_END_OF_SEQUENCE) {
     /* start of a new access unit! */
     *completed_picture = parser->pic;
     parser->pic = create_coded_picture();
