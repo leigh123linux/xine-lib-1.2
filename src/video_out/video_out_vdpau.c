@@ -168,8 +168,8 @@ static void vdpau_reinit( vo_driver_t *this_gen );
 static VdpVideoSurfaceCreate *orig_vdp_video_surface_create;
 static VdpVideoSurfaceDestroy *orig_vdp_video_surface_destroy;
 
-static VdpVideoSurfaceCreate *orig_vdp_output_surface_create;
-static VdpVideoSurfaceDestroy *orig_vdp_output_surface_destroy;
+static VdpOutputSurfaceCreate *orig_vdp_output_surface_create;
+static VdpOutputSurfaceDestroy *orig_vdp_output_surface_destroy;
 
 static VdpVideoSurfacePutBitsYCbCr *orig_vdp_video_surface_putbits_ycbcr;
 
