@@ -230,9 +230,13 @@ static VdpStatus guarded_vdp_output_surface_create(VdpDevice device, VdpChromaTy
 static VdpStatus guarded_vdp_output_surface_destroy(VdpVideoSurface surface)
 {
   VdpStatus r;
+#ifdef LOCKDISPLAY
   XLockDisplay(guarded_display);
+#endif
   r = orig_vdp_output_surface_destroy(surface);
+#ifdef LOCKDISPLAY
   XUnlockDisplay(guarded_display);
+#endif
   return r;
 }
 
