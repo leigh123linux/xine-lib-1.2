@@ -121,6 +121,7 @@ VdpVideoSurfaceCreate *vdp_video_surface_create;
 VdpVideoSurfaceDestroy *vdp_video_surface_destroy;
 VdpVideoSurfacePutBitsYCbCr *vdp_video_surface_putbits_ycbcr;
 VdpVideoSurfaceGetBitsYCbCr *vdp_video_surface_getbits_ycbcr;
+VdpVideoSurfaceGetParameters *vdp_video_surface_get_parameters;
 
 VdpOutputSurfaceCreate *vdp_output_surface_create;
 VdpOutputSurfaceDestroy *vdp_output_surface_destroy;
@@ -1034,6 +1035,8 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
 {
   vdpau_driver_t *this = (vdpau_driver_t *) this_gen;
   vdpau_frame_t   *frame = VDPAU_FRAME(frame_gen);
+  uint32_t requested_width = width;
+  uint32_t requested_height = height;
 
   int clear = 0;
 
@@ -1050,6 +1053,15 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
        xine_fast_memcpy(&orig_frame_content, &frame->vo_frame, sizeof (vo_frame_t));
     }
   }
+
+  /* adjust width and height to meet xine and VDPAU constraints */
+  width = (width + ((flags & VO_CHROMA_422) ? 3 : 15)) & ~((flags & VO_CHROMA_422) ? 3 : 15); /* xine constraint */
+  height = (height + 3) & ~3; /* VDPAU constraint */
+  /* any excess pixels from the adjustment will be cropped away */
+  frame->vo_frame.width = width;
+  frame->vo_frame.height = height;
+  frame->vo_frame.crop_right += width - requested_width;
+  frame->vo_frame.crop_bottom += height - requested_height;
 
   /* Check frame size and format and reallocate if necessary */
   if ( (frame->width != width) || (frame->height != height) || (frame->format != format) || (frame->format==XINE_IMGFMT_VDPAU && frame->vdpau_accel_data.chroma!=chroma) ||
@@ -1101,6 +1113,22 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
         ++this->allocated_surfaces;
         frame->vo_frame.proc_duplicate_frame_data = vdpau_duplicate_frame_data;
         frame->vo_frame.proc_provide_standard_frame_data = vdpau_provide_standard_frame_data;
+
+        /* check whether allocated surface matches constraints */
+        {
+          VdpChromaType ct = (VdpChromaType)-1;
+          int w = -1;
+          int h = -1;
+
+          st = vdp_video_surface_get_parameters(frame->vdpau_accel_data.surface, &ct, &w, &h);
+          if (st != VDP_STATUS_OK)
+            fprintf(stderr, "vo_vdpau: failed to get parameters !! %s\n", vdp_get_error_string(st));
+          else if (w != width || h != height) {
+   
+            fprintf(stderr, "vo_vdpau: video surface doesn't match size contraints (%d x %d) -> (%d x %d) != (%d x %d). Segfaults ahead!\n"
+              , requested_width, requested_height, width, height, w, h);
+          }
+        }
       }
     }
 
@@ -2468,6 +2496,9 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     return NULL;
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_SURFACE_GET_BITS_Y_CB_CR , (void*)&vdp_video_surface_getbits_ycbcr );
   if ( vdpau_init_error( st, "Can't get VIDEO_SURFACE_GET_BITS_Y_CB_CR proc address !!", &this->vo_driver, 1 ) )
+    return NULL;
+  st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_VIDEO_SURFACE_GET_PARAMETERS , (void*)&vdp_video_surface_get_parameters );
+  if ( vdpau_init_error( st, "Can't get VIDEO_SURFACE_GET_PARAMETERS proc address !!", &this->vo_driver, 1 ) )
     return NULL;
   st = vdp_get_proc_address( vdp_device, VDP_FUNC_ID_OUTPUT_SURFACE_CREATE , (void*)&orig_vdp_output_surface_create ); vdp_output_surface_create = guarded_vdp_output_surface_create;
   if ( vdpau_init_error( st, "Can't get OUTPUT_SURFACE_CREATE proc address !!", &this->vo_driver, 1 ) )
