@@ -1115,9 +1115,9 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
   if ( (format == XINE_IMGFMT_VDPAU) && (clear || (frame->surface_cleared_nr != this->surface_cleared_nr)) ) {
     lprintf( "clear surface: %d\n", frame->vdpau_accel_data.surface );
     if ( frame->vdpau_accel_data.chroma == VDP_CHROMA_TYPE_422 ) {
-      uint8_t *cb = malloc( frame->width * frame->height * 2 );
-      memset( cb, 127, frame->width * frame->height * 2 );
-      uint32_t pitches[] = { frame->width };
+      uint8_t *cb = malloc( frame->width * 2 );
+      memset( cb, 127, frame->width * 2 );
+      uint32_t pitches[] = { 0 };
       void* data[] = { cb };
       VdpStatus st = vdp_video_surface_putbits_ycbcr( frame->vdpau_accel_data.surface, VDP_YCBCR_FORMAT_YUYV, &data, pitches );
       if ( st!=VDP_STATUS_OK )
@@ -1125,9 +1125,9 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
       free( cb );
     }
     else {
-      uint8_t *cb = malloc( frame->width * frame->height );
-      memset( cb, 127, frame->width * frame->height );
-      uint32_t pitches[] = { frame->width, frame->width, frame->width };
+      uint8_t *cb = malloc( frame->width );
+      memset( cb, 127, frame->width );
+      uint32_t pitches[] = { 0, 0, 0 };
       void* data[] = { cb, cb, cb };
       VdpStatus st = vdp_video_surface_putbits_ycbcr( frame->vdpau_accel_data.surface, VDP_YCBCR_FORMAT_YV12, &data, pitches );
       if ( st!=VDP_STATUS_OK )
