@@ -1127,7 +1127,7 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
     else {
       uint8_t *cb = malloc( frame->width * frame->height );
       memset( cb, 127, frame->width * frame->height );
-      uint32_t pitches[] = { frame->width, frame->height, frame->height };
+      uint32_t pitches[] = { frame->width, frame->width, frame->width };
       void* data[] = { cb, cb, cb };
       VdpStatus st = vdp_video_surface_putbits_ycbcr( frame->vdpau_accel_data.surface, VDP_YCBCR_FORMAT_YV12, &data, pitches );
       if ( st!=VDP_STATUS_OK )
