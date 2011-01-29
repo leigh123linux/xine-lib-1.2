@@ -1296,7 +1296,8 @@ static void *video_out_loop (void *this_gen) {
 
       if (usec_to_sleep > 0)
       {
-        if (0 == interruptable_sleep(this, usec_to_sleep))
+        /* honor trigger update only when a backup img is available */
+        if (0 == interruptable_sleep(this, usec_to_sleep) && this->img_backup)
           break;
       }
 
