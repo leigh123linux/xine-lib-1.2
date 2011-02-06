@@ -262,12 +262,10 @@ static osd_object_t *XINE_MALLOC osd_new_object (osd_renderer_t *this, int width
   osd->area = calloc(width, height);
   osd->area_touched = 0;
 
-  osd->x1 = osd->argb_layer.x1 = width;
-  osd->y1 = osd->argb_layer.y1 = height;
-  osd->x2 = osd->argb_layer.x2 = 0;
-  osd->y2 = osd->argb_layer.y2 = 0;
-
-  pthread_mutex_init(&osd->argb_layer.mutex, NULL);
+  osd->x1 = width;
+  osd->y1 = height;
+  osd->x2 = 0;
+  osd->y2 = 0;
 
   memcpy(osd->color, textpalettes_color[0], sizeof(textpalettes_color[0]));
   memcpy(osd->trans, textpalettes_trans[0], sizeof(textpalettes_trans[0]));
@@ -311,6 +309,41 @@ static void osd_set_video_window (osd_object_t *osd, int window_x, int window_y,
   osd->video_window_height = window_height;
 }
 
+static argb_layer_t *argb_layer_create() {
+
+  argb_layer_t *argb_layer = (argb_layer_t *)calloc(1, sizeof (argb_layer_t));
+
+  pthread_mutex_init(&argb_layer->mutex, NULL);
+  return argb_layer;
+}
+
+static void argb_layer_destroy(argb_layer_t *argb_layer) {
+
+  pthread_mutex_destroy(&argb_layer->mutex);
+  free(argb_layer);
+}
+
+void set_argb_layer_ptr(argb_layer_t **dst, argb_layer_t *src) {
+
+  if (src) {
+    pthread_mutex_lock(&src->mutex);
+    ++src->ref_count;
+    pthread_mutex_unlock(&src->mutex);
+  }
+
+  if (*dst) {
+    int free_argb_layer;
+
+    pthread_mutex_lock(&(*dst)->mutex);
+    free_argb_layer = (0 == --(*dst)->ref_count);
+    pthread_mutex_unlock(&(*dst)->mutex);
+
+    if (free_argb_layer)
+      argb_layer_destroy(*dst);
+  }
+  
+  *dst = src;
+}
 
 
 /*
@@ -371,7 +404,7 @@ static int _osd_show (osd_object_t *osd, int64_t vpts, int unscaled ) {
 
     memset( this->event.object.overlay, 0, sizeof(*this->event.object.overlay) );
 
-    this->event.object.overlay->argb_layer = &osd->argb_layer;
+    set_argb_layer_ptr(&this->event.object.overlay->argb_layer, osd->argb_layer);
 
     this->event.object.overlay->unscaled = unscaled;
     this->event.object.overlay->x = osd->display_x + osd->x1;
@@ -451,6 +484,8 @@ static int _osd_show (osd_object_t *osd, int64_t vpts, int unscaled ) {
     this->event.event_type = OVERLAY_EVENT_SHOW;
     this->event.vpts = vpts;
     ovl_manager->add_event(ovl_manager, (void *)&this->event);
+
+    set_argb_layer_ptr(&this->event.object.overlay->argb_layer, NULL);
   } else {
     /* osd empty - hide it */
     _osd_hide(osd, vpts);
@@ -534,10 +569,20 @@ static void osd_clear (osd_object_t *osd) {
     osd->area_touched = 0;
     memset(osd->area, 0, osd->width * osd->height);
   }
-  osd->x1 = osd->argb_layer.x1 = osd->width;
-  osd->y1 = osd->argb_layer.y1 = osd->height;
-  osd->x2 = osd->argb_layer.x2 = 0;
-  osd->y2 = osd->argb_layer.y2 = 0;
+
+  osd->x1 = osd->width;
+  osd->y1 = osd->height;
+  osd->x2 = 0;
+  osd->y2 = 0;
+
+  if (osd->argb_layer) {
+    pthread_mutex_lock(&osd->argb_layer->mutex);
+    osd->argb_layer->x1 = osd->x1;
+    osd->argb_layer->y1 = osd->y1;
+    osd->argb_layer->x2 = osd->x2;
+    osd->argb_layer->y2 = osd->y2;
+    pthread_mutex_unlock(&osd->argb_layer->mutex);
+  }
 }
 
 /*
@@ -1657,6 +1702,12 @@ static void osd_free_object (osd_object_t *osd_to_close) {
     osd_to_close->handle = -1; /* handle will be freed */
   }
 
+  if (osd_to_close->argb_layer) {
+    /* clear argb buffer pointer so that buffer may be freed safely after returning */
+    this->set_argb_buffer(osd_to_close, NULL, 0, 0, 0, 0);
+    set_argb_layer_ptr(&osd_to_close->argb_layer, NULL);
+  }
+
   pthread_mutex_lock (&this->osd_mutex);
 
   last = NULL;
@@ -1673,7 +1724,6 @@ static void osd_free_object (osd_object_t *osd_to_close) {
       else
         this->osds = osd->next;
 
-      pthread_mutex_destroy(&osd->argb_layer.mutex);
       free( osd );
       break;
     }
@@ -1741,7 +1791,10 @@ static void osd_draw_bitmap(osd_object_t *osd, uint8_t *bitmap,
 static void osd_set_argb_buffer(osd_object_t *osd, uint32_t *argb_buffer,
     int dirty_x, int dirty_y, int dirty_width, int dirty_height)
 {
-  if (osd->argb_layer.buffer != argb_buffer) {
+  if (!osd->argb_layer)
+    set_argb_layer_ptr(&osd->argb_layer, argb_layer_create());
+
+  if (osd->argb_layer->buffer != argb_buffer) {
     dirty_x = 0;
     dirty_y = 0;
     dirty_width = osd->width;
@@ -1754,17 +1807,17 @@ static void osd_set_argb_buffer(osd_object_t *osd, uint32_t *argb_buffer,
   osd->y1 = MIN( osd->y1, dirty_y );
   osd->y2 = MAX( osd->y2, dirty_y + dirty_height );
 
-  pthread_mutex_lock(&osd->argb_layer.mutex);
+  pthread_mutex_lock(&osd->argb_layer->mutex);
 
   /* argb layer update area accumulation */
-  osd->argb_layer.x1 = MIN( osd->argb_layer.x1, dirty_x );
-  osd->argb_layer.x2 = MAX( osd->argb_layer.x2, dirty_x + dirty_width );
-  osd->argb_layer.y1 = MIN( osd->argb_layer.y1, dirty_y );
-  osd->argb_layer.y2 = MAX( osd->argb_layer.y2, dirty_y + dirty_height );
+  osd->argb_layer->x1 = MIN( osd->argb_layer->x1, dirty_x );
+  osd->argb_layer->x2 = MAX( osd->argb_layer->x2, dirty_x + dirty_width );
+  osd->argb_layer->y1 = MIN( osd->argb_layer->y1, dirty_y );
+  osd->argb_layer->y2 = MAX( osd->argb_layer->y2, dirty_y + dirty_height );
 
-  osd->argb_layer.buffer = argb_buffer;
+  osd->argb_layer->buffer = argb_buffer;
 
-  pthread_mutex_unlock(&osd->argb_layer.mutex);
+  pthread_mutex_unlock(&osd->argb_layer->mutex);
 }
 
 static uint32_t osd_get_capabilities (osd_object_t *osd) {

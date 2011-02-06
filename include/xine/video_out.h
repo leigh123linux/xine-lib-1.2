@@ -449,6 +449,7 @@ typedef struct argb_layer_s {
   /* dirty area */
   int x1, y1;
   int x2, y2;
+  int ref_count;
 } argb_layer_t;
 
 struct vo_overlay_s {
@@ -489,6 +490,7 @@ struct vo_overlay_s {
   argb_layer_t     *argb_layer;
 };
 
+void set_argb_layer_ptr(argb_layer_t **dst, argb_layer_t *src);
 
 /* API to video_overlay manager
  *

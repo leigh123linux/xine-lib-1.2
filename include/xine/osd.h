@@ -69,7 +69,7 @@ struct osd_object_s {
   /* this holds an optional ARGB overlay, which
    * is only be used by supported video_out modules.
    * right now this is only vdpau */
-  argb_layer_t argb_layer;
+  argb_layer_t *argb_layer;
 
   int32_t handle;
 };
