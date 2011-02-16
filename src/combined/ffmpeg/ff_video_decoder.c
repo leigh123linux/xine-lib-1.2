@@ -843,7 +843,6 @@ static void ff_handle_preview_buffer (ff_video_decoder_t *this, buf_element_t *b
     if ( this->mpeg_parser == NULL ) {
       this->mpeg_parser = calloc(1, sizeof(mpeg_parser_t));
       mpeg_parser_init(this->mpeg_parser);
-      this->decoder_init_mode = 0;
     }
   }
 
@@ -1517,6 +1516,8 @@ static void ff_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
       }
 
     } else {
+      if (this->decoder_init_mode && !this->is_mpeg12)
+        ff_handle_preview_buffer(this, buf);
 
       /* decode */
       if (buf->pts)
