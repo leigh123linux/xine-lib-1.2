@@ -118,6 +118,7 @@ typedef struct {
   int                     slices_pos, slices_pos_top;
 
   int                     progressive_frame;
+  int                     repeat_first_field;
 } picture_t;
 
 
@@ -126,14 +127,27 @@ typedef struct {
   uint32_t    coded_width;
   uint32_t    coded_height;
 
-  uint64_t    video_step; /* frame duration in pts units */
-  uint64_t    reported_video_step; /* frame duration in pts units */
+  double      video_step; /* frame duration in pts units */
+  double      reported_video_step; /* frame duration in pts units */
   double      ratio;
+   
   VdpDecoderProfile profile;
+  int         horizontal_size_value;
+  int         vertical_size_value;
+  int         aspect_ratio_information;
+  int         frame_rate_code;
+  int         progressive_sequence;
   int         chroma;
+  int         horizontal_size_extension;
+  int         vertical_size_extension;
+  int         frame_rate_extension_n;
+  int         frame_rate_extension_d;
+  int         display_horizontal_size;
+  int         display_vertical_size;
   int         top_field_first;
 
   int         have_header;
+  int         have_display_extension;
 
   uint8_t     *buf; /* accumulate data */
   int         bufseek;
@@ -200,6 +214,7 @@ static void reset_picture( picture_t *pic )
   pic->slices_pos = 0;
   pic->slices_pos_top = 0;
   pic->progressive_frame = 0;
+  pic->repeat_first_field = 0;
 }
 
 
@@ -245,7 +260,7 @@ static void free_sequence( sequence_t *sequence )
   sequence->have_header = 0;
   sequence->profile = VDP_DECODER_PROFILE_MPEG1;
   sequence->chroma = 0;
-	sequence->video_step = 3600;
+  sequence->video_step = 3600;
   reset_sequence( sequence, 1 );
 }
 
@@ -257,35 +272,23 @@ static void sequence_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int
 
   int i, j;
 
+  if ( !sequence->have_header )
+    sequence->have_header = 1;
+
+  sequence->profile = VDP_DECODER_PROFILE_MPEG1;
+  sequence->horizontal_size_extension = 0;
+  sequence->vertical_size_extension = 0;
+  sequence->have_display_extension = 0;
+
   bits_reader_set( &sequence->br, buf, len );
-  sequence->coded_width = read_bits( &sequence->br, 12 );
-  lprintf( "coded_width: %d\n", sequence->coded_width );
-  sequence->coded_height = read_bits( &sequence->br, 12 );
-  lprintf( "coded_height: %d\n", sequence->coded_height );
-  int rt = read_bits( &sequence->br, 4 );
-  switch ( rt ) {
-    case 1: sequence->ratio = 1.0; break;
-    case 2: sequence->ratio = 4.0/3.0; break;
-    case 3: sequence->ratio = 16.0/9.0; break;
-    case 4: sequence->ratio = 2.21; break;
-    default: sequence->ratio = (double)sequence->coded_width/(double)sequence->coded_height;
-  }
-  lprintf( "ratio: %d\n", rt );
-  int fr = read_bits( &sequence->br, 4 );
-  switch ( fr ) {
-    case 1: sequence->video_step = 3913; break; /* 23.976.. */
-    case 2: sequence->video_step = 3750; break; /* 24 */
-    case 3: sequence->video_step = 3600; break; /* 25 */
-    case 4: sequence->video_step = 3003; break; /* 29.97.. */
-    case 5: sequence->video_step = 3000; break; /* 30 */
-    case 6: sequence->video_step = 1800; break; /* 50 */
-    case 7: sequence->video_step = 1525; break; /* 59.94.. */
-    case 8: sequence->video_step = 1509; break; /* 60 */
-  }
-  if (sequence->reported_video_step != sequence->video_step) {
-    _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_FRAME_DURATION, (sequence->reported_video_step = sequence->video_step) );
-  }
-  lprintf( "frame_rate: %d\n", fr );
+  sequence->horizontal_size_value = read_bits( &sequence->br, 12 );
+  lprintf( "horizontal_size_value: %d\n", sequence->horizontal_size_value );
+  sequence->vertical_size_value = read_bits( &sequence->br, 12 );
+  lprintf( "vertical_size_value: %d\n", sequence->vertical_size_value );
+  sequence->aspect_ratio_information = read_bits( &sequence->br, 4 );
+  lprintf( "aspect_ratio_information: %d\n", sequence->aspect_ratio_information );
+  sequence->frame_rate_code = read_bits( &sequence->br, 4 );
+  lprintf( "frame_rate_code: %d\n", sequence->frame_rate_code );
   int tmp;
   tmp = read_bits( &sequence->br, 18 );
   lprintf( "bit_rate_value: %d\n", tmp );
@@ -319,9 +322,72 @@ static void sequence_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int
     memset( sequence->picture.vdp_infos.non_intra_quantizer_matrix, 16, 64 );
     memset( sequence->picture.vdp_infos2.non_intra_quantizer_matrix, 16, 64 );
   }
+}
 
-  if ( !sequence->have_header ) {
-    sequence->have_header = 1;
+
+
+static void process_sequence_mpeg12_dependent_data( vdpau_mpeg12_decoder_t *this_gen )
+{
+  sequence_t *sequence = (sequence_t*)&this_gen->sequence;
+
+  int frame_rate_value_n, frame_rate_value_d;
+
+  sequence->coded_width  = sequence->horizontal_size_value | (sequence->horizontal_size_extension << 14);
+  sequence->coded_height = sequence->vertical_size_value   | (sequence->vertical_size_extension   << 14);
+
+  switch ( sequence->frame_rate_code ) {
+    case 1:  frame_rate_value_n = 24; frame_rate_value_d = 1001; break; /* 23.976.. */
+    case 2:  frame_rate_value_n = 24; frame_rate_value_d = 1000; break; /* 24 */
+    case 3:  frame_rate_value_n = 25; frame_rate_value_d = 1000; break; /* 25 */
+    case 4:  frame_rate_value_n = 30; frame_rate_value_d = 1001; break; /* 29.97.. */
+    case 5:  frame_rate_value_n = 30; frame_rate_value_d = 1000; break; /* 30 */
+    case 6:  frame_rate_value_n = 50; frame_rate_value_d = 1000; break; /* 50 */
+    case 7:  frame_rate_value_n = 60; frame_rate_value_d = 1001; break; /* 59.94.. */
+    case 8:  frame_rate_value_n = 60; frame_rate_value_d = 1000; break; /* 60 */
+    default: frame_rate_value_n = 50; frame_rate_value_d = 1000; /* assume 50 */
+  }
+
+  sequence->video_step = 90.0 * (frame_rate_value_d * (sequence->frame_rate_extension_d + 1))
+                              / (frame_rate_value_n * (sequence->frame_rate_extension_n + 1));
+
+  if ( sequence->profile==VDP_DECODER_PROFILE_MPEG1 ) {
+    double pel_aspect_ratio; /* height / width */
+
+    switch ( sequence->aspect_ratio_information ) {
+      case  1: pel_aspect_ratio = 1.0000;
+      case  2: pel_aspect_ratio = 0.6735;
+      case  3: pel_aspect_ratio = 0.7031;
+      case  4: pel_aspect_ratio = 0.7615;
+      case  5: pel_aspect_ratio = 0.8055;
+      case  6: pel_aspect_ratio = 0.8437;
+      case  7: pel_aspect_ratio = 0.8935;
+      case  8: pel_aspect_ratio = 0.9157;
+      case  9: pel_aspect_ratio = 0.9815;
+      case 10: pel_aspect_ratio = 1.0255;
+      case 11: pel_aspect_ratio = 1.0695;
+      case 12: pel_aspect_ratio = 1.0950;
+      case 13: pel_aspect_ratio = 1.1575;
+      case 14: pel_aspect_ratio = 1.2015;
+      default: pel_aspect_ratio = 1.0000; /* fallback */
+    }
+
+    sequence->ratio = ((double)sequence->coded_width/(double)sequence->coded_height)/pel_aspect_ratio;
+  }
+  else {
+    switch ( sequence->aspect_ratio_information ) {
+      case 1:  sequence->ratio = sequence->have_display_extension
+                               ? ((double)sequence->display_horizontal_size/(double)sequence->display_vertical_size)/1.0
+                               : ((double)sequence->coded_width/(double)sequence->coded_height)/1.0;
+                               break;
+      case 2:  sequence->ratio = 4.0/3.0;  break;
+      case 3:  sequence->ratio = 16.0/9.0; break;
+      case 4:  sequence->ratio = 2.21;     break;
+      default: sequence->ratio = ((double)sequence->coded_width/(double)sequence->coded_height)/1.0;
+    }
+  }
+
+  if ( sequence->have_header == 1 ) {
+    sequence->have_header = 2;
     _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_VIDEO_WIDTH, sequence->coded_width );
     _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_VIDEO_HEIGHT, sequence->coded_height );
     _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_VIDEO_RATIO, ((double)10000*sequence->ratio) );
@@ -338,6 +404,9 @@ static void sequence_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int
     data.aspect = sequence->ratio;
     xine_event_send( this_gen->stream, &event );
   }
+  else if ( sequence->have_header == 2 && sequence->reported_video_step != sequence->video_step ) {
+    _x_stream_info_set( this_gen->stream, XINE_STREAM_INFO_FRAME_DURATION, (sequence->reported_video_step = sequence->video_step) );
+  }
 }
 
 
@@ -345,6 +414,8 @@ static void sequence_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int
 static void picture_header( vdpau_mpeg12_decoder_t *this_gen, uint8_t *buf, int len )
 {
   sequence_t *sequence = (sequence_t*)&this_gen->sequence;
+
+  process_sequence_mpeg12_dependent_data(this_gen);
 
   if ( sequence->profile==VDP_DECODER_PROFILE_MPEG1 )
     sequence->picture.vdp_infos.picture_structure = PICTURE_FRAME;
@@ -407,8 +478,8 @@ static void sequence_extension( sequence_t *sequence, uint8_t *buf, int len )
     default: sequence->profile = VDP_DECODER_PROFILE_MPEG2_MAIN;
   }
   skip_bits( &sequence->br, 4 );
-  tmp = read_bits( &sequence->br, 1 );
-  lprintf( "progressive_sequence: %d\n", tmp );
+  sequence->progressive_sequence = read_bits( &sequence->br, 1 );
+  lprintf( "progressive_sequence: %d\n", sequence->progressive_sequence );
   if ( read_bits( &sequence->br, 2 ) == 2 )
     sequence->chroma = VO_CHROMA_422;
   tmp = read_bits( &sequence->br, 2 );
@@ -423,10 +494,10 @@ static void sequence_extension( sequence_t *sequence, uint8_t *buf, int len )
   lprintf( "vbv_buffer_size_extension: %d\n", tmp );
   tmp = read_bits( &sequence->br, 1 );
   lprintf( "low_delay: %d\n", tmp );
-  tmp = read_bits( &sequence->br, 2 );
-  lprintf( "frame_rate_extension_n: %d\n", tmp );
-  tmp = read_bits( &sequence->br, 5 );
-  lprintf( "frame_rate_extension_d: %d\n", tmp );
+  sequence->frame_rate_extension_n = read_bits( &sequence->br, 2 );
+  lprintf( "frame_rate_extension_n: %d\n", sequence->frame_rate_extension_n );
+  sequence->frame_rate_extension_d = read_bits( &sequence->br, 5 );
+  lprintf( "frame_rate_extension_d: %d\n", sequence->frame_rate_extension_d );
 }
 
 
@@ -464,8 +535,8 @@ static void picture_coding_extension( sequence_t *sequence, uint8_t *buf, int le
   lprintf( "intra_vlc_format: %d\n", infos->intra_vlc_format );
   infos->alternate_scan = read_bits( &sequence->br, 1 );
   lprintf( "alternate_scan: %d\n", infos->alternate_scan );
-  tmp = read_bits( &sequence->br, 1 );
-  lprintf( "repeat_first_field: %d\n", tmp );
+  sequence->picture.repeat_first_field = read_bits( &sequence->br, 1 );
+  lprintf( "repeat_first_field: %d\n", sequence->picture.repeat_first_field );
   tmp = read_bits( &sequence->br, 1 );
   lprintf( "chroma_420_type: %d\n", tmp );
   sequence->picture.progressive_frame = read_bits( &sequence->br, 1 );
@@ -727,7 +798,6 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd, uint8_t end_of_sequence 
   img->pts = seq->seq_pts;
   seq->seq_pts = 0; /* reset */
   img->bad_frame = 0;
-  img->duration = seq->video_step;
 
   if ( end_of_sequence ) {
     if ( seq->backward_ref )
@@ -735,6 +805,7 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd, uint8_t end_of_sequence 
     seq->backward_ref = NULL;
   }
 
+#if 0
   /* trying to deal with (french) buggy streams that randomly set bottom_field_first
      while stream is top_field_first. So we assume that when top_field_first
      is set one time, the stream _is_ top_field_first. */
@@ -742,12 +813,34 @@ static void decode_picture( vdpau_mpeg12_decoder_t *vd, uint8_t end_of_sequence 
   if ( pic->vdp_infos.top_field_first )
     seq->top_field_first = 1;
   img->top_field_first = seq->top_field_first;
+#else
+  img->top_field_first = pic->vdp_infos.top_field_first;
+#endif
 
   /* progressive_frame is unreliable with most mpeg2 streams */
   if ( pic->vdp_infos.picture_structure!=PICTURE_FRAME )
     img->progressive_frame = 0;
   else
     img->progressive_frame = pic->progressive_frame;
+
+  img->repeat_first_field = pic->repeat_first_field;
+
+  double duration = seq->video_step;
+
+  if ( img->repeat_first_field ) {
+    if( !seq->progressive_sequence && pic->progressive_frame ) {
+      /* decoder should output 3 fields, so adjust duration to
+         count on this extra field time */
+      duration *= 3;
+      duration /= 2;
+    } else if ( seq->progressive_sequence ) {
+      /* for progressive sequences the output should repeat the
+         frame 1 or 2 times depending on top_field_first flag. */
+      duration *= (pic->vdp_infos.top_field_first ? 3 : 2);
+    }
+  }
+
+  img->duration = (int)(duration + .5);
 
   if ( pic->vdp_infos.picture_coding_type!=B_FRAME ) {
     if ( pic->vdp_infos.picture_coding_type==I_FRAME && !seq->backward_ref ) {
