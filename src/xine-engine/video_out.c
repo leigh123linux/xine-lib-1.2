@@ -34,6 +34,7 @@
 #include <pthread.h>
 #include <inttypes.h>
 #include <assert.h>
+#include <errno.h>
 
 #define XINE_ENABLE_EXPERIMENTAL_FEATURES
 #define XINE_ENGINE_INTERNAL
@@ -1139,12 +1140,9 @@ static void *video_out_loop (void *this_gen) {
   int                disable_decoder_flush_from_video_out;
 
 #ifndef WIN32
-  /* nice(-value) will fail silently for normal users.
-   * however when running as root this may provide smoother
-   * playback. follow the link for more information:
-   * http://cambuca.ldhs.cetuc.puc-rio.br/~miguel/multimedia_sim/
-   */
-  nice(-2);
+  errno = 0;
+  if (nice(-2) == -1 && errno)
+    xine_log(this->xine, XINE_LOG_MSG, "video_out: can't raise nice priority by 2: %s\n", strerror(errno));
 #endif /* WIN32 */
 
   disable_decoder_flush_from_video_out = this->xine->config->register_bool(this->xine->config, "engine.decoder.disable_flush_from_video_out", 0,

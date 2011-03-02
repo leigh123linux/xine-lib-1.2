@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #define XINE_ENGINE_INTERNAL
 
@@ -120,12 +121,9 @@ static void *video_decoder_loop (void *stream_gen) {
   int              disable_decoder_flush_at_discontinuity;
 
 #ifndef WIN32
-  /* nice(-value) will fail silently for normal users.
-   * however when running as root this may provide smoother
-   * playback. follow the link for more information:
-   * http://cambuca.ldhs.cetuc.puc-rio.br/~miguel/multimedia_sim/
-   */
-  nice(-1);
+  errno = 0;
+  if (nice(-1) == -1 && errno)
+    xine_log(stream->xine, XINE_LOG_MSG, "video_decoder: can't raise nice priority by 1: %s\n", strerror(errno));
 #endif /* WIN32 */
 
   if (prof_video_decode == -1)
