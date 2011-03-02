@@ -648,9 +648,13 @@ static void vidix_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   pthread_mutex_lock(&this->mutex);
 
   if ( (frame->width != this->sc.delivered_width)
-	 || (frame->height != this->sc.delivered_height)
-	 || (frame->ratio != this->sc.delivered_ratio)
-	 || (frame->format != this->delivered_format ) ) {
+       || (frame->height != this->sc.delivered_height)
+       || (frame->ratio != this->sc.delivered_ratio)
+       || (frame->format != this->delivered_format )
+       || (frame->vo_frame.crop_left != this->sc.crop_left)
+       || (frame->vo_frame.crop_right != this->sc.crop_right)
+       || (frame->vo_frame.crop_top != this->sc.crop_top)
+       || (frame->vo_frame.crop_bottom != this->sc.crop_bottom) ) {
     lprintf("video_out_vidix: change frame format\n");
 
     this->sc.delivered_width  = frame->width;
