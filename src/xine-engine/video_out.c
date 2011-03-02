@@ -533,8 +533,8 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
     xine_list_iterator_t ite;
 
     /* add cropping requested by frontend */
-    img->crop_left   += this->crop_left;
-    img->crop_right  += this->crop_right;
+    img->crop_left   = (img->crop_left + this->crop_left) & ~1;
+    img->crop_right  = (img->crop_right + this->crop_right) & ~1;
     img->crop_top    += this->crop_top;
     img->crop_bottom += this->crop_bottom;
 
@@ -1757,7 +1757,7 @@ static vo_frame_t * crop_frame( xine_video_port_t *this_gen, vo_frame_t *img ) {
     yuy2_to_yuy2(
      /* src */
       img->base[0] + img->crop_top * img->pitches[0] +
-        img->crop_left/2, img->pitches[0],
+        img->crop_left*2, img->pitches[0],
      /* dst */
       dupl->base[0], dupl->pitches[0],
      /* width x height */
