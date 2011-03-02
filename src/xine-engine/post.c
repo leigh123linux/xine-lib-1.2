@@ -424,7 +424,6 @@ void _x_post_frame_copy_down(vo_frame_t *from, vo_frame_t *to) {
   to->progressive_frame   = from->progressive_frame;
   to->picture_coding_type = from->picture_coding_type;
   to->drawn               = from->drawn;
-  to->accel_data          = from->accel_data;
   to->stream              = from->stream;
   to->crop_left           = from->crop_left;
   to->crop_right          = from->crop_right;
