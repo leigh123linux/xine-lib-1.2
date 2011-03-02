@@ -1034,7 +1034,7 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
       uint32_t width, uint32_t height, double ratio, int format, int flags)
 {
   vdpau_driver_t *this = (vdpau_driver_t *) this_gen;
-  vdpau_frame_t   *frame = VDPAU_FRAME(frame_gen);
+  vdpau_frame_t *frame = (vdpau_frame_t *) frame_gen;
   uint32_t requested_width = width;
   uint32_t requested_height = height;
 
@@ -1044,15 +1044,6 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
     ++this->surface_cleared_nr;
 
   VdpChromaType chroma = (flags & VO_CHROMA_422) ? VDP_CHROMA_TYPE_422 : VDP_CHROMA_TYPE_420;
-
-  vo_frame_t orig_frame_content;
-  if (format == XINE_IMGFMT_VDPAU) {
-    if (frame_gen != &frame->vo_frame) {
-      /* this is an intercepted frame, so we need to detect and propagate any
-       * changes on the original vo_frame to all the intercepted frames */
-       xine_fast_memcpy(&orig_frame_content, &frame->vo_frame, sizeof (vo_frame_t));
-    }
-  }
 
   /* adjust width and height to meet xine and VDPAU constraints */
   width = (width + ((flags & VO_CHROMA_422) ? 3 : 15)) & ~((flags & VO_CHROMA_422) ? 3 : 15); /* xine constraint */
@@ -1169,36 +1160,6 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
   frame->vdpau_accel_data.color_standard = VDP_COLOR_STANDARD_ITUR_BT_601;
   frame->ratio = ratio;
   frame->vo_frame.future_frame = NULL;
-
-  if (format == XINE_IMGFMT_VDPAU) {
-    if (frame_gen != &frame->vo_frame) {
-      /* this is an intercepted frame, so we need to detect and propagate any
-       * changes on the original vo_frame to all the intercepted frames */
-      unsigned char *p0 = (unsigned char *)&orig_frame_content;
-      unsigned char *p1 = (unsigned char *)&frame->vo_frame;
-      int i;
-      for (i = 0; i < sizeof (vo_frame_t); i++) {
-        if (*p0 != *p1) {
-          /* propagate the change */
-          vo_frame_t *f = frame_gen;
-          while (f->next) {
-            /* serveral restrictions apply when intercepting VDPAU frames. So let's check
-             * the intercepted frames before modifing them and fail otherwise. */
-            unsigned char *p = (unsigned char *)f + i;
-            if (*p != *p0) {
-              xprintf(this->xine, XINE_VERBOSITY_DEBUG, "vdpau_update_frame_format: a post plugin violates the restrictions on intercepting VDPAU frames\n");
-              _x_abort();
-            }
-
-            *p = *p1;
-            f = f->next;
-          }
-        }
-        p0++;
-        p1++;
-      }
-    }
-  }
 }
 
 

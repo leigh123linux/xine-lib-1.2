@@ -57,9 +57,6 @@ typedef struct {
 
 } vdpau_accel_t;
 
-#define VDPAU_DATA(frame_gen)  ((frame_gen) ? (vdpau_accel_t *)(frame_gen)->accel_data : (vdpau_accel_t *)0)
-#define VDPAU_FRAME(frame_gen) ((frame_gen) ? (vdpau_accel_t *)VDPAU_DATA(frame_gen)->vo_frame : (vdpau_frame_t *)0)
-
 #ifdef __cplusplus
 }
 #endif
