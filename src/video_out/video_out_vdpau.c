@@ -907,74 +907,55 @@ static vo_frame_t *vdpau_alloc_frame (vo_driver_t *this_gen)
 
 
 
-static void vdpau_provide_standard_frame_data (vo_frame_t *this_gen, xine_current_frame_data_t *data)
+static void vdpau_provide_standard_frame_data (vo_frame_t *this, xine_current_frame_data_t *data)
 {
-  vdpau_frame_t *this = (vdpau_frame_t *)this_gen;
   VdpStatus st;
   VdpYCbCrFormat format;
+  uint32_t pitches[3];
+  void *base[3];
 
-  if (this->vo_frame.format != XINE_IMGFMT_VDPAU) {
-    fprintf(stderr, "vdpau_provide_standard_frame_data: unexpected frame format 0x%08x!\n", this->vo_frame.format);
+  if (this->format != XINE_IMGFMT_VDPAU) {
+    fprintf(stderr, "vdpau_provide_standard_frame_data: unexpected frame format 0x%08x!\n", this->format);
     return;
   }
 
-  if (!(this->flags & VO_CHROMA_422)) {
+  vdpau_accel_t *accel = (vdpau_accel_t *) this->accel_data;
+
+  if (accel->vdp_runtime_nr != *(accel->current_vdp_runtime_nr))
+    return;
+
+  this = accel->vo_frame;
+
+  if (accel->chroma == VDP_CHROMA_TYPE_420) {
     data->format = XINE_IMGFMT_YV12;
-    data->img_size = this->vo_frame.width * this->vo_frame.height
-                   + ((this->vo_frame.width + 1) / 2) * ((this->vo_frame.height + 1) / 2)
-                   + ((this->vo_frame.width + 1) / 2) * ((this->vo_frame.height + 1) / 2);
+    data->img_size = this->width * this->height
+                   + ((this->width + 1) / 2) * ((this->height + 1) / 2)
+                   + ((this->width + 1) / 2) * ((this->height + 1) / 2);
     if (data->img) {
-      this->vo_frame.pitches[0] = 8*((this->vo_frame.width + 7) / 8);
-      this->vo_frame.pitches[1] = 8*((this->vo_frame.width + 15) / 16);
-      this->vo_frame.pitches[2] = 8*((this->vo_frame.width + 15) / 16);
-      this->vo_frame.base[0] = av_mallocz(this->vo_frame.pitches[0] * this->vo_frame.height);
-      this->vo_frame.base[1] = av_mallocz(this->vo_frame.pitches[1] * ((this->vo_frame.height+1)/2));
-      this->vo_frame.base[2] = av_mallocz(this->vo_frame.pitches[2] * ((this->vo_frame.height+1)/2));
+      pitches[0] = this->width;
+      pitches[2] = this->width / 2;
+      pitches[1] = this->width / 2;
+      base[0] = data->img;
+      base[2] = data->img + this->width * this->height;
+      base[1] = data->img + this->width * this->height + this->width * this->height / 4;
       format = VDP_YCBCR_FORMAT_YV12;
     }
   } else {
     data->format = XINE_IMGFMT_YUY2;
-    data->img_size = this->vo_frame.width * this->vo_frame.height
-                   + ((this->vo_frame.width + 1) / 2) * this->vo_frame.height
-                   + ((this->vo_frame.width + 1) / 2) * this->vo_frame.height;
+    data->img_size = this->width * this->height
+                   + ((this->width + 1) / 2) * this->height
+                   + ((this->width + 1) / 2) * this->height;
     if (data->img) {
-      this->vo_frame.pitches[0] = 8*((this->vo_frame.width + 3) / 4);
-      this->vo_frame.base[0] = av_mallocz(this->vo_frame.pitches[0] * this->vo_frame.height);
+      pitches[0] = this->width * 2;
+      base[0] = data->img;
       format = VDP_YCBCR_FORMAT_YUYV;
     }
   }
 
   if (data->img) {
-    st = vdp_video_surface_getbits_ycbcr(this->vdpau_accel_data.surface, format, this->vo_frame.base, this->vo_frame.pitches);
+    st = vdp_video_surface_getbits_ycbcr(accel->surface, format, base, pitches);
     if (st != VDP_STATUS_OK)
       fprintf(stderr, "vo_vdpau: failed to get surface bits !! %s\n", vdp_get_error_string(st));
-
-    if (format == VDP_YCBCR_FORMAT_YV12) {
-      yv12_to_yv12(
-       /* Y */
-        this->vo_frame.base[0], this->vo_frame.pitches[0],
-        data->img, this->vo_frame.width,
-       /* U */
-        this->vo_frame.base[2], this->vo_frame.pitches[2],
-        data->img+this->vo_frame.width*this->vo_frame.height, this->vo_frame.width/2,
-       /* V */
-        this->vo_frame.base[1], this->vo_frame.pitches[1],
-        data->img+this->vo_frame.width*this->vo_frame.height+this->vo_frame.width*this->vo_frame.height/4, this->vo_frame.width/2,
-       /* width x height */
-        this->vo_frame.width, this->vo_frame.height);
-    } else {
-      yuy2_to_yuy2(
-       /* src */
-        this->vo_frame.base[0], this->vo_frame.pitches[0],
-       /* dst */
-        data->img, this->vo_frame.width*2,
-       /* width x height */
-        this->vo_frame.width, this->vo_frame.height);
-    }
-
-    av_freep (&this->vo_frame.base[0]);
-    av_freep (&this->vo_frame.base[1]);
-    av_freep (&this->vo_frame.base[2]);
   }
 }
 
