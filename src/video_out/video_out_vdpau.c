@@ -90,6 +90,14 @@ char* vdpau_deinterlacer_description [] = {
 };
 
 
+char *vdpau_sd_only_properties[] = {
+  "none",
+  "noise",
+  "sharpness",
+  "noise+sharpness",
+  NULL
+};
+
 VdpOutputSurfaceRenderBlendState blend = {
   VDP_OUTPUT_SURFACE_RENDER_BLEND_STATE_VERSION,
   VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ONE,
@@ -391,6 +399,7 @@ typedef struct {
   int               enable_inverse_telecine;
   int               honor_progressive;
   int               skip_chroma;
+  int               sd_only_properties;
   int               studio_levels;
   int               background;
 
@@ -1353,7 +1362,7 @@ static void vdpau_update_noise( vdpau_driver_t *this_gen )
     return;
 
   float value = this_gen->noise/100.0;
-  if ( value==0 ) {
+  if ( value==0 || ((this_gen->sd_only_properties & 1) && this_gen->video_mixer_width >= 800)) {
     VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION };
     VdpBool feature_enables[] = { 0 };
     vdp_video_mixer_set_feature_enables( this_gen->video_mixer, 1, features, feature_enables );
@@ -1382,7 +1391,7 @@ static void vdpau_update_sharpness( vdpau_driver_t *this_gen )
     return;
 
   float value = this_gen->sharpness/100.0;
-  if ( value==0 ) {
+  if ( value==0 || (this_gen->sd_only_properties >= 2 && this_gen->video_mixer_width >= 800)) {
     VdpVideoMixerFeature features[] = { VDP_VIDEO_MIXER_FEATURE_SHARPNESS  };
     VdpBool feature_enables[] = { 0 };
     vdp_video_mixer_set_feature_enables( this_gen->video_mixer, 1, features, feature_enables );
@@ -1401,6 +1410,18 @@ static void vdpau_update_sharpness( vdpau_driver_t *this_gen )
   VdpStatus st = vdp_video_mixer_set_attribute_values( this_gen->video_mixer, 1, attributes, attribute_values );
   if ( st != VDP_STATUS_OK )
     fprintf(stderr, "vo_vdpau: error, can't set sharpness level !!\n" );
+}
+
+
+
+static void vdpau_update_sd_only_properties( void *this_gen, xine_cfg_entry_t *entry )
+{
+  vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
+
+  this->sd_only_properties = entry->num_value;
+  printf( "vo_vdpau: enable sd only noise=%d, sd only sharpness %d\n", ((this->sd_only_properties & 1) != 0), (this->sd_only_properties >= 2) );
+  vdpau_update_noise(this);
+  vdpau_update_sharpness(this);
 }
 
 
@@ -2734,6 +2755,18 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
         _("Displaying 4:3 images on 16:9 plasma TV sets lets the inactive pixels outside the video age slower than the pixels in the active area. Setting a different background color (e. g. 8421504) makes all pixels age similarly. The number to enter for a certain color can be derived from its 6 digit hexadecimal RGB value.\n\n"),
         10, vdpau_set_background, this );
   }
+
+  this->sd_only_properties = config->register_enum( config, "video.output.vdpau_sd_only_properties", 0, vdpau_sd_only_properties,
+        _("vdpau: restrict enabling video properties for SD video only"),
+        _("none\n"
+          "No restrictions\n\n"
+          "noise\n"
+          "Restrict noise reduction property.\n\n"
+          "sharpness\n"
+          "Restrict sharpness property.\n\n"
+          "noise+sharpness"
+          "Restrict noise and sharpness properties.\n\n"),
+        10, vdpau_update_sd_only_properties, this );
 
   /* number of video frames from config - register it with the default value. */
   int frame_num = config->register_num (config, "engine.buffers.video_num_frames", 15, /* default */
