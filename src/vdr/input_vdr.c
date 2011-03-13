@@ -2544,6 +2544,8 @@ static void vdr_metronom_got_video_frame(metronom_t *self, vo_frame_t *frame)
 
     if (this->input->trick_speed_mode)
     {
+      frame->progressive_frame = -1; /* force progressive */
+
       pthread_mutex_lock(&this->input->metronom_thread_call_lock);
 
       pthread_mutex_lock(&this->input->metronom_thread_lock);
