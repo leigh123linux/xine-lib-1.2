@@ -121,6 +121,7 @@ enum keys
   key_next,
   key_previous,
   key_subtitles,
+  key_user0,
 };
 
 

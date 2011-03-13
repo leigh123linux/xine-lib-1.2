@@ -2303,6 +2303,7 @@ static void event_handler(void *user_data, const xine_event_t *event)
   case XINE_EVENT_INPUT_NUMBER_7:      key = key_7;                break;
   case XINE_EVENT_INPUT_NUMBER_8:      key = key_8;                break;
   case XINE_EVENT_INPUT_NUMBER_9:      key = key_9;                break;
+  case XINE_EVENT_VDR_USER0:           key = key_user0;            break;
   case XINE_EVENT_VDR_USER1:           key = key_user1;            break;
   case XINE_EVENT_VDR_USER2:           key = key_user2;            break;
   case XINE_EVENT_VDR_USER3:           key = key_user3;            break;
