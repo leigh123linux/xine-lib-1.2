@@ -75,7 +75,7 @@ vdr_metronom_t;
 typedef struct vdr_osd_s
 {
   xine_osd_t *window;
-  uint8_t    *argb_buffer;
+  uint8_t    *argb_buffer[ 2 ];
   int         width;
   int         height;
 }
@@ -435,6 +435,7 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
 
   case func_osd_free:
     {
+      int i;
       READ_DATA_OR_FAIL(osd_free, LOG_OSD(lprintf("got OSDFREE\n")));
 /*
       fprintf(stderr, "vdr: osdfree %d\n", data->window);
@@ -447,8 +448,11 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
 
       this->osd[ data->window ].window = 0;
 
-      free(this->osd[ data->window ].argb_buffer);
-      this->osd[ data->window ].argb_buffer = 0;
+      for (i = 0; i < 2; i++)
+      {
+        free(this->osd[ data->window ].argb_buffer[ i ]);
+        this->osd[ data->window ].argb_buffer[ i ] = 0;
+      }
     }
     break;
 
@@ -507,6 +511,7 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
 
       while ((r = _x_query_unprocessed_osd_events(this->stream)))
       {
+break;
         if ((_now() - _t1) > 200)
         {
           _to = 1;
@@ -521,7 +526,9 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
       }
 
       _t2 = _now();
+/*
       fprintf(stderr, "vdr: osdflush: n: %d, %.1lf, timeout: %d, result: %d\n", _n, _t2 - _t1, _to, r);
+*/
 /*
       fprintf(stderr, "redraw_needed: 0\n");
 
@@ -579,31 +586,42 @@ static off_t vdr_execute_rpc_command(vdr_input_plugin_t *this)
 
         if (data->argb)
         {
-          if (!osd->argb_buffer)
-            osd->argb_buffer = calloc(4 * osd->width, osd->height);
-
+          int i;
+          for (i = 0; i < 2; i++)
           {
-            int src_stride = 4 * data->width;
-            int dst_stride = 4 * osd->width;
+            if (!osd->argb_buffer[ i ])
+              osd->argb_buffer[ i ] = calloc(4 * osd->width, osd->height);
 
-            uint8_t *src = this->osd_buffer;
-            uint8_t *dst = osd->argb_buffer + data->y * dst_stride + data->x * 4;
-            int y;
-
-            if (src_stride == dst_stride)
-              xine_fast_memcpy(dst, src, src_stride * data->height);
-            else
             {
-              for (y = 0; y < data->height; y++)
+              int src_stride = 4 * data->width;
+              int dst_stride = 4 * osd->width;
+
+              uint8_t *src = this->osd_buffer;
+              uint8_t *dst = osd->argb_buffer[ i ] + data->y * dst_stride + data->x * 4;
+              int y;
+
+              if (src_stride == dst_stride)
+                xine_fast_memcpy(dst, src, src_stride * data->height);
+              else
               {
-                xine_fast_memcpy(dst, src, src_stride);
-                dst += dst_stride;
-                src += src_stride;
+                for (y = 0; y < data->height; y++)
+                {
+                  xine_fast_memcpy(dst, src, src_stride);
+                  dst += dst_stride;
+                  src += src_stride;
+                }
               }
             }
-          }
 
-          xine_osd_set_argb_buffer(osd->window, (uint32_t *)osd->argb_buffer, data->x, data->y, data->width, data->height);
+            if (i == 0)
+              xine_osd_set_argb_buffer(osd->window, (uint32_t *)osd->argb_buffer[ i ], data->x, data->y, data->width, data->height);
+          }
+          /* flip render and display buffer */
+          {
+            uint8_t *argb_buffer = osd->argb_buffer[ 0 ];
+            osd->argb_buffer[ 0 ] = osd->argb_buffer[ 1 ];
+            osd->argb_buffer[ 1 ] = argb_buffer;
+          }
         }
         else
           xine_osd_draw_bitmap(osd->window, this->osd_buffer, data->x, data->y, data->width, data->height, 0);
@@ -1832,13 +1850,16 @@ static void vdr_plugin_dispose(input_plugin_t *this_gen)
 
   for (i = 0; i < VDR_MAX_NUM_WINDOWS; i++)
   {
+    int k;
+
     if (0 == this->osd[ i ].window)
       continue;
 
     xine_osd_hide(this->osd[ i ].window, 0);
     xine_osd_free(this->osd[ i ].window);
 
-    free(this->osd[ i ].argb_buffer);
+    for (k = 0; k < 2; k++)
+      free(this->osd[ i ].argb_buffer[ k ]);
   }
 
   if (this->osd_buffer)
