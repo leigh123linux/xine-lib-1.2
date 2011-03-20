@@ -2344,6 +2344,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   demux_ts_t *this;
   int         i;
   int         hdmv = -1;
+  int         size;
 
   switch (stream->content_detection_method) {
 
@@ -2352,12 +2353,13 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
     int     i, j;
     int     try_again, ts_detected;
 
-    if (!_x_demux_read_header(input, buf, sizeof(buf)))
+    size = _x_demux_read_header(input, buf, sizeof(buf));
+    if (size < PKT_SIZE)
       return NULL;
 
     if (detect_ts(buf, sizeof(buf), PKT_SIZE))
       hdmv = 0;
-    else if (detect_ts(buf, sizeof(buf), PKT_SIZE+4))
+    else if (size >= PKT_SIZE + 4 && detect_ts(buf, sizeof(buf), PKT_SIZE+4))
       hdmv = 1;
     else
       return NULL;

@@ -531,8 +531,9 @@ case "$host_or_hostalias" in
         if test "$WIN32_SYS" = "mingw32"; then
             WIN32_INCLUDES='-I$(top_srcdir)/win32/include'
             LIBS="-lwinmm -lwsock32 $LIBS"
-            GOOM_LIBS="-liberty"
             LDFLAGS="-Wl,--enable-stdcall-fixup $LDFLAGS"
+            dnl iberty has been needed only in older versions
+            AC_CHECK_LIB(iberty, strncomp, [GOOM_LIBS="-liberty"])
             AC_SUBST(GOOM_LIBS)
         fi
         LDFLAGS="-no-undefined $LDFLAGS"
@@ -1305,6 +1306,13 @@ dnl
 dnl This should be fixed in the libtool package itself as all other dir names
 dnl there have no trailing slash.
 dnl ---------------------------------------------
+dnl Work around problem due to LTCFLAGS:
+dnl
+dnl CFLAGS is passed to LTCFLAGS directly from configure instead of Makefiles.
+dnl Fixing LTCFLAGS here will help compile xine-list on some crazy platforms.
+dnl
+dnl It disables multi-pass compilation of xine-list.
+dnl ---------------------------------------------
 
 dnl Note: Brackets [] must be doubled as they are treated as m4 macro quotes.
 if test x"$enable_macosx_universal" = x"no"; then
@@ -1313,6 +1321,11 @@ else
     cat libtool | sed -e 's,sys_lib_search_path_spec=.*$,sys_lib_search_path_spec=\"/Developer/SDKs/MacOSX10.4u.sdk/usr/lib\",' > libtool.tmp
 fi
 mv -f libtool.tmp libtool
+
+dnl removing make-specific variable
+cat libtool | sed 's/\\$(MULTIPASS_CFLAGS)//' > libtool.tmp
+mv -f libtool.tmp libtool
+
 chmod +x libtool
 
 XINE_LIB_SUMMARY

@@ -1374,7 +1374,8 @@ static demux_plugin_t *open_demux_plugin (demux_class_t *class_gen, xine_stream_
 	  (strncasecmp(ending, ".sub", 4) != 0) &&
 	  (strncasecmp(ending, ".srt", 4) != 0) &&
 	  (strncasecmp(ending, ".smi", 4) != 0) &&
-	  (strncasecmp(ending, ".ssa", 4) != 0))) {
+	  (strncasecmp(ending, ".ssa", 4) != 0) &&
+	  (strncasecmp(ending, ".ass", 4) != 0))) {
         free (this);
         return NULL;
       }
@@ -1431,7 +1432,7 @@ void *init_sputext_demux_class (xine_t *xine, void *data) {
   /* do not report this mimetype, it might confuse browsers. */
   /* "text/plain: asc txt sub srt: VIDEO subtitles;" */
   this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = "asc txt sub srt smi ssa";
+  this->demux_class.extensions      = "asc txt sub srt smi ssa ass";
   this->demux_class.dispose         = default_demux_class_dispose;
 
   /*

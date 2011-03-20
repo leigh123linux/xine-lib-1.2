@@ -457,7 +457,7 @@ static inline void dump_moov_atom(unsigned char *moov_atom, int moov_atom_size) 
 
   FILE *f;
 
-  f = fopen(RAW_MOOV_FILENAME, "w");
+  f = fopen(RAW_MOOV_FILENAME, "wb");
   if (!f) {
     perror(RAW_MOOV_FILENAME);
     return;

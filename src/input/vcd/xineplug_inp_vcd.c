@@ -1500,6 +1500,10 @@ vcd_class_dispose (input_class_t *this_gen) {
   dbg_print((INPUT_DBG_CALL|INPUT_DBG_EXT), "called\n");
 
   vcd_close(class);
+  free(class->vcd_device);
+  free(my_vcd.v_config.title_format);
+  free(my_vcd.v_config.comment_format);
+  free(class);
 }
 
 /* Update the xine player title text. */

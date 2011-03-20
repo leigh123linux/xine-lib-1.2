@@ -1280,7 +1280,7 @@ static void _cdda_mkdir_safe(xine_t *xine, char *path) {
     hList = FindFirstFile(szDir, &FileData);
     if (hList == INVALID_HANDLE_VALUE)
       {
-	if(_mkdir(path) != 0) {
+	if(mkdir(path, 0) != 0) {
 	  xprintf(xine, XINE_VERBOSITY_DEBUG, "input_cdda: mkdir(%s) failed.\n", path);
 	  return;
 	}

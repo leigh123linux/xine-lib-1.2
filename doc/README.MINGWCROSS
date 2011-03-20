@@ -8,10 +8,13 @@ In this case "native" means programs which don't require extra DLLs like
 cygwin DLL. Mingw32 programs use DLLs supplied with all current Win32
 platforms. Thus the programs are light weight and easy to distribute.
 
-
 This document describes by shell commands how to compile and install MinGW
 cross development tools on Unix host and how to use it for building windows
-version of xine.
+version of xine. See README.WIN32 how to use it to build xine.
+
+For creating 64bit version of Mingw32 toolchain, see
+mingw/mingw-w64-doc/howto-build/mingw-w64-howto-build.txt in mingw32-w64
+sources.
 
 
 Download
@@ -19,7 +22,8 @@ Download
 
   MinGW packages:
 
-    http://mingw.org/download.shtml
+    http://mingw.org, or
+    http://mingw-w64.sourceforge.net
 
     1) binutils (sources), binutils-build.sh
     2) gcc-core, gcc-c++ (sources), gcc-build.sh
@@ -33,6 +37,7 @@ Download
   Pthread Win32:
 
     ftp://sources.redhat.com/pub/pthreads-win32/
+    (plus 64bit external patches for mingw32-w64)
 
   zlib:
 
@@ -54,7 +59,7 @@ In the following text are used symbols $PREFIX and $USER with this meaning:
   mkdir bin
   cd bin
   ../binutils-2.13.90-20030111-1-src/configure \
-    --target=i386-mingw32 \
+    --target=i686-pc-mingw32 \
     --prefix=$PREFIX
   make
   su
@@ -82,7 +87,7 @@ In the following text are used symbols $PREFIX and $USER with this meaning:
   # compile and install the compiler
   #
   # if you'll want rerun this step, I recommend delete
-  # $PREFIX/i386-mingw32/sys-include
+  # $PREFIX/i686-pc-mingw32/sys-include
   #
   tar xzf gcc-core-3.3.1-20030804-1-src.tar.gz
   tar xzf gcc-g++-3.3.1-20030804-1-src.tar.gz
@@ -94,7 +99,7 @@ In the following text are used symbols $PREFIX and $USER with this meaning:
   # see gcc-3.3.1-1-build.sh
   ../gcc-3.3.1-20030804-1/configure \
     --disable-shared \
-    --target=i386-mingw32 \
+    --target=i686-pc-mingw32 \
     --with-headers=../runtime/include \
     --with-libs=../runtime/lib \
     --prefix=$PREFIX
@@ -109,18 +114,18 @@ In the following text are used symbols $PREFIX and $USER with this meaning:
 4. recompile w32api and mingw-runtime from sources (optional)
 
   #
-  # installing must be into $PREFIX/i386-mingw32
+  # installing must be into $PREFIX/i686-pc-mingw32
   #
   tar xzf w32api-2.5-src.tar.gz
   cd w32api-2.5
-  ./configure --prefix=$PREFIX/i386-mingw32 --host=i386-mingw32
+  ./configure --prefix=$PREFIX/i686-pc-mingw32 --host=i686-pc-mingw32
   make
   su
   make install
   exit
 
   #
-  # installing must be into $PREFIX/i386-mingw32
+  # installing must be into $PREFIX/i686-pc-mingw32
   #
   tar xzf mingw-runtime-3.3-src.tar.gz
   cd mingw-runtime-3.3
@@ -128,12 +133,12 @@ In the following text are used symbols $PREFIX and $USER with this meaning:
   # package)
   ...
   # compiling
-  CC=i386-mingw32-gcc \
-  DLLTOOL=i386-mingw32-dlltool \
-  AR=i386-mingw32-ar \
-  AS=i386-mingw32-as \
-  RANLIB=i386-mingw32-ranlib \
-  ./configure --prefix=$PREFIX/i386-mingw32 --target=i386-mingw32
+  CC=i686-pc-mingw32-gcc \
+  DLLTOOL=i686-pc-mingw32-dlltool \
+  AR=i686-pc-mingw32-ar \
+  AS=i686-pc-mingw32-as \
+  RANLIB=i686-pc-mingw32-ranlib \
+  ./configure --prefix=$PREFIX/i686-pc-mingw32 --target=i686-pc-mingw32
   make
   su
   make install
@@ -151,14 +156,14 @@ In the following text are used symbols $PREFIX and $USER with this meaning:
 
 6. compile and install pthreads-win32
 
-  tar xzf pthreads-w32-2-7-0-release.tar.gz
-  cd pthreads-w32-2-7-0-release/
-  make CROSS=i386-mingw32- PTHREAD_DEF=pthreadGC2.def clean GC
+  tar xzf pthreads-w32-2-8-0-release.tar.gz
+  cd pthreads-w32-2-8-0-release/
+  make CROSS=i686-pc-mingw32- clean GC
   #
   # possibility to use pthread library in M$ Visual C (optional)
   #
   mv pthread.def pthreadGC2.def
-  wine LIB.EXE /machine:i386 /def:pthreadGC2.def
+  wine LIB.EXE /machine:i686 /def:pthreadGC2.def
   #
   # installing
   #
@@ -176,16 +181,9 @@ In the following text are used symbols $PREFIX and $USER with this meaning:
 
 7. compile and install zlib
 
-  tar xjf zlib-1.2.3.tar.bz2
-  cd zlib-1.2.3
-  #
-  # small workaround in Makefile:
-  #
-  sed -e 's/dllwrap /i386-mingw32-dllwrap /g' win32/Makefile.gcc > Makefile
-  #
-  # compiling
-  #
-  make CC=i386-mingw32-gcc AR=i386-mingw32-ar RC=i386-mingw32-windres STATICLIB=libz-static.a IMPLIB=libz.a
+  tar xzf zlib-1.2.5.tar.gz
+  cd zlib-1.2.5
+  make -f win32/Makefile.gcc PREFIX=i686-pc-mingw32- STATICLIB=libz-static.a IMPLIB=libz.a
   #
   # possibility to use zlib library in M$ Visual C (optional)
   #
@@ -212,7 +210,7 @@ Now we can build xine library for Windows by this way:
   # (the build option is needed only for forcing cross compilation mode)
   #
   ./configure \
-    --host=i386-mingw32 \
+    --host=i686-pc-mingw32 \
     --build=i686-debian-linux \
     --disable-freetype \
     --disable-vcd \

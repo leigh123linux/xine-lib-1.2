@@ -257,7 +257,11 @@ int xine_private_pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct ti
 #  ifdef HAVE_SYS_STAT_H
 #    include <sys/stat.h>
 #  endif
-#  define mkdir(A, B) _mkdir((A))
+#  ifdef __MINGW64__
+#    define mkdir(A, B) mkdir((A))
+#  else
+#    define mkdir(A, B) _mkdir((A))
+#  endif
 
 #  ifndef S_ISDIR
 #    define S_ISDIR(m) ((m) & _S_IFDIR)

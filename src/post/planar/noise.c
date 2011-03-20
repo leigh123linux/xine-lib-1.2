@@ -39,8 +39,10 @@
 
 #ifdef ARCH_X86_64
 #  define REG_a  "rax"
+#  define intarch_t int64_t
 #else
 #  define REG_a  "eax"
+#  define intarch_t int32_t
 #endif
 
 #define MAX_NOISE 4096
@@ -155,7 +157,7 @@ static inline void lineNoise_C(uint8_t *dst, uint8_t *src, int8_t *noise, int le
 
 #ifdef ARCH_X86
 static inline void lineNoise_MMX(uint8_t *dst, uint8_t *src, int8_t *noise, int len, int shift){
-    long mmx_len= len&(~7);
+    intarch_t mmx_len= len&(~7);
     noise+=shift;
 
     asm volatile(
@@ -182,7 +184,7 @@ static inline void lineNoise_MMX(uint8_t *dst, uint8_t *src, int8_t *noise, int 
 
 //duplicate of previous except movntq
 static inline void lineNoise_MMX2(uint8_t *dst, uint8_t *src, int8_t *noise, int len, int shift){
-    long mmx_len= len&(~7);
+    intarch_t mmx_len= len&(~7);
     noise+=shift;
 
     asm volatile(
@@ -225,7 +227,7 @@ static inline void lineNoiseAvg_C(uint8_t *dst, uint8_t *src, int len, int8_t **
 #ifdef ARCH_X86
 
 static inline void lineNoiseAvg_MMX(uint8_t *dst, uint8_t *src, int len, int8_t **shift){
-    long mmx_len= len&(~7);
+    intarch_t mmx_len= len&(~7);
 
     asm volatile(
         "mov %5, %%"REG_a"      \n\t"

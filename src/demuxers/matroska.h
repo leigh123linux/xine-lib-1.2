@@ -272,6 +272,8 @@ struct matroska_track_s {
   uint32_t                 codec_private_len;
   int                      default_flag;
   uint32_t                 compress_algo;
+  uint32_t                 compress_len;
+  char                    *compress_settings;
 
   uint32_t                 buf_type;
   fifo_buffer_t           *fifo;

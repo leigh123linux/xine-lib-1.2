@@ -696,6 +696,7 @@ xine_stream_t *xine_stream_new (xine_t *this,
   pthread_mutexattr_init(&attr);
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
   pthread_mutex_init (&stream->frontend_lock, &attr);
+  pthread_mutexattr_destroy(&attr);
 
   /*
    * Clear meta/stream info
@@ -1534,6 +1535,8 @@ static void xine_dispose_internal (xine_stream_t *stream) {
 
   stream->metronom->exit (stream->metronom);
 
+  xine_list_delete(stream->event_queues);
+
   pthread_mutex_lock(&stream->xine->streams_lock);
   ite = xine_list_find(stream->xine->streams, stream);
   if (ite) {
@@ -1578,7 +1581,6 @@ void xine_dispose (xine_stream_t *stream) {
   if (stream->osd_renderer)
     stream->osd_renderer->close( stream->osd_renderer );
 
-
   _x_refcounter_dec(stream->refcounter);
 }
 
@@ -1606,6 +1608,8 @@ void xine_exit (xine_t *this) {
 
   if(this->port_ticket)
     this->port_ticket->dispose(this->port_ticket);
+
+  pthread_mutex_destroy(&this->log_lock);
 
 #if defined(WIN32)
   WSACleanup();
@@ -1652,6 +1656,7 @@ xine_t *xine_new (void) {
    * log buffers
    */
   memset(this->log_buffers, 0, sizeof(this->log_buffers));
+  pthread_mutex_init (&this->log_lock, NULL);
 
 
 #ifdef WIN32
@@ -1747,7 +1752,6 @@ void xine_init (xine_t *this) {
    * locks
    */
   pthread_mutex_init (&this->streams_lock, NULL);
-  pthread_mutex_init (&this->log_lock, NULL);
 
   /* initialize color conversion tables and functions */
   init_yuv_conversion();

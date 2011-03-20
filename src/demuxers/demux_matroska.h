@@ -96,6 +96,7 @@ typedef struct {
   int                  num_sub_tracks;
 
   matroska_track_t    *tracks[MAX_STREAMS];
+  size_t               compress_maxlen;
 
   /* maintain editions, number and capacity */
   int                  num_editions, cap_editions;

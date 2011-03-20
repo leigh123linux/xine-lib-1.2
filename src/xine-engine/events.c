@@ -193,6 +193,7 @@ void xine_event_dispose_queue (xine_event_queue_t *queue) {
   while ( (event = xine_event_get (queue)) ) {
     xine_event_free (event);
   }
+  xine_list_delete(queue->events);
 
   pthread_mutex_destroy(&queue->lock);
   pthread_cond_destroy(&queue->new_event);

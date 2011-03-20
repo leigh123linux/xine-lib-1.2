@@ -22,7 +22,7 @@ libmad				0.15.1b			Miguel Freitas
 libmpeg2			0.2.1 [*]
 libmpcdec			1.2.5
 libxdg-basedir			0.1.3			Diego Pettenò
-nosefart                        1.92                    Mike Melanson
+nosefart                        2.7-mls                 Mike Melanson
 tvtime				0.9.8.4			Miguel Freitas
 wine
 vidix				cvs 6/03/05		James Stembridge

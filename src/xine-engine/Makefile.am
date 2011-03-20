@@ -12,7 +12,7 @@ EXTRA_DIST = lrb.c lrb.h accel_vdpau.h accel_xvmc.h
 
 if WIN32
 DEF_FILE = libxine-$(XINE_MAJOR).def
-def_ldflags="-Wl,--output-def,$(DEF_FILE)"
+def_ldflags=-Wl,--output-def,$(DEF_FILE) $(LDFLAGS_NOUNDEFINED)
 else
 DEF_FILE =
 endif
