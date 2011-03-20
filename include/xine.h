@@ -1745,6 +1745,7 @@ void xine_config_reset (xine_t *self) XINE_PROTECTED;
 #define XINE_EVENT_VDR_INFO             333
 #define XINE_EVENT_VDR_CHANNELPREVIOUS  334
 #define XINE_EVENT_VDR_SUBTITLES        335
+#define XINE_EVENT_VDR_USER0            336
 /* some space for further keys */
 #define XINE_EVENT_VDR_SETVIDEOWINDOW   350
 #define XINE_EVENT_VDR_FRAMESIZECHANGED 351
