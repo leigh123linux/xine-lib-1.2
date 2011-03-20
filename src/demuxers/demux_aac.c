@@ -122,6 +122,10 @@ static int open_aac_file(demux_aac_t *this) {
     syncword = (syncword << 8) | peak[i];
   }
 
+  /* did we really find the ADTS header? */
+  if (i == MAX_PREVIEW_SIZE)
+    return 0; /* No, we didn't */
+
   /* Look for second ADTS header to confirm it's really aac */
   if (data_start + 5 < MAX_PREVIEW_SIZE) {
     int frame_size = ((peak[data_start+3] & 0x03) << 11) |
