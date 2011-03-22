@@ -22,6 +22,8 @@
  * vdpau_h264.c: H264 Video Decoder utilizing nvidia VDPAU engine
  */
 
+#define LOG_MODULE "vdpau_h264"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -557,7 +559,7 @@ static int vdpau_decoder_render(video_decoder_t *this_gen, VdpBitstreamBuffer *v
 
     if (this->dangling_img) {
       xprintf(this->xine, XINE_VERBOSITY_LOG,
-          "broken stream: current img wasn't processed -- freeing it\n!");
+          "broken stream: current img wasn't processed -- freeing it!\n");
       this->dangling_img->free(this->dangling_img);
     }
     this->dangling_img = img;
