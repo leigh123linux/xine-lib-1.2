@@ -2028,8 +2028,6 @@ static int _x_get_current_frame_data (xine_stream_t *stream,
 
   stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
   frame = stream->video_out->get_last_frame (stream->video_out);
-  if (frame)
-    frame->lock(frame);
   stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
 
   if (!frame) {

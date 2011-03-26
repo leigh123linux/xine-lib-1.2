@@ -91,6 +91,7 @@ typedef struct {
   img_buf_fifo_t           *free_img_buf_queue;
   img_buf_fifo_t           *display_img_buf_queue;
 
+  pthread_mutex_t           last_frame_mutex;
   vo_frame_t               *last_frame;
   vo_frame_t               *img_backup;
 
@@ -1038,11 +1039,15 @@ static void overlay_and_display_frame (vos_t *this,
   }
 
   /* hold current frame for snapshot feature */
+  pthread_mutex_lock(&this->last_frame_mutex);
+
   if( this->last_frame ) {
     vo_frame_dec_lock( this->last_frame );
   }
   vo_frame_inc_lock( img );
   this->last_frame = img;
+
+  pthread_mutex_unlock(&this->last_frame_mutex);
 
   this->driver->display_frame (this->driver, img);
 
@@ -1325,8 +1330,10 @@ static void *video_out_loop (void *this_gen) {
     this->img_backup = NULL;
   }
   if (this->last_frame) {
+    pthread_mutex_lock(&this->last_frame_mutex);
     vo_frame_dec_lock( this->last_frame );
     this->last_frame = NULL;
+    pthread_mutex_unlock(&this->last_frame_mutex);
   }
 
   return NULL;
@@ -1698,6 +1705,8 @@ static void vo_exit (xine_video_port_t *this_gen) {
   free (this->free_img_buf_queue);
   free (this->display_img_buf_queue);
 
+  pthread_mutex_destroy(&this->last_frame_mutex);
+
   pthread_cond_destroy(&this->trigger_drawing_cond);
   pthread_mutex_destroy(&this->trigger_drawing_mutex);
 
@@ -1706,7 +1715,17 @@ static void vo_exit (xine_video_port_t *this_gen) {
 
 static vo_frame_t *vo_get_last_frame (xine_video_port_t *this_gen) {
   vos_t      *this = (vos_t *) this_gen;
-  return this->last_frame;
+  vo_frame_t *last_frame;
+  
+  pthread_mutex_lock(&this->last_frame_mutex);
+
+  last_frame = this->last_frame;
+  if (last_frame)
+    vo_frame_inc_lock(last_frame);
+
+  pthread_mutex_unlock(&this->last_frame_mutex);
+
+  return last_frame;
 }
 
 /*
@@ -1887,6 +1906,7 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this->display_img_buf_queue = vo_new_img_buf_queue ();
   this->video_loop_running    = 0;
 
+  pthread_mutex_init(&this->last_frame_mutex, NULL);
   this->last_frame            = NULL;
   this->img_backup            = NULL;
 
