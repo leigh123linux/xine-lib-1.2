@@ -2902,6 +2902,19 @@ mv -f libtool.tmp libtool
 chmod +x libtool
 
 dnl ---------------------------------------------
+dnl Libtool flag for Windows:
+dnl
+dnl The "-no-undefined" flag must be added after all other
+dnl configure checks, because it is only for libtool and
+dnl must not be passed to GCC by accident.
+dnl ---------------------------------------------
+case "$host_os" in
+  mingw* | cygwin*)
+    LDFLAGS="-no-undefined $LDFLAGS"
+    ;;
+esac
+
+dnl ---------------------------------------------
 dnl Some infos:
 dnl ---------------------------------------------
 
