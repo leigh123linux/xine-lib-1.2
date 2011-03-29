@@ -1,11 +1,13 @@
 include $(top_srcdir)/misc/Makefile.common
 include $(top_srcdir)/lib/Makefile.common
 
-AM_CFLAGS   = $(DEFAULT_OCFLAGS) $(X_CFLAGS) $(FT2_CFLAGS) $(FONTCONFIG_CFLAGS) \
+AM_CFLAGS   = -I$(top_builddir)/src/video_out $(DEFAULT_OCFLAGS) $(X_CFLAGS) $(FT2_CFLAGS) $(FONTCONFIG_CFLAGS) \
               $(AVUTIL_CFLAGS) $(VISIBILITY_FLAG)
 AM_CPPFLAGS = $(XDG_BASEDIR_CPPFLAGS) $(ZLIB_CPPFLAGS) -DXINE_LIBRARY_COMPILE
 
 XINEUTILS_LIB = $(top_builddir)/src/xine-utils/libxineutils.la
+
+YUV_LIB = $(top_builddir)/src/video_out/libyuv2rgb.la
 
 # FIXME: these are currently unused:
 EXTRA_DIST = lrb.c lrb.h accel_vdpau.h accel_xvmc.h
@@ -33,11 +35,11 @@ libxine_la_SOURCES = xine.c metronom.c configfile.c buffer.c \
 	alphablend.c \
 	xine_private.h
 
-libxine_la_DEPENDENCIES = $(XINEUTILS_LIB) $(XDG_BASEDIR_DEPS) \
+libxine_la_DEPENDENCIES = $(XINEUTILS_LIB) $(YUV_LIB) $(XDG_BASEDIR_DEPS) \
                           $(pthread_dep) $(LIBXINEPOSIX) \
                           libxine-interface.la
 libxine_la_LIBADD = $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL) $(ZLIB_LIBS) \
-		    -lm $(XINEUTILS_LIB) $(LTLIBICONV) $(FT2_LIBS) $(FONTCONFIG_LIBS) \
+		    -lm $(XINEUTILS_LIB) $(YUV_LIB) $(LTLIBICONV) $(FT2_LIBS) $(FONTCONFIG_LIBS) \
                     $(LIBXINEPOSIX) $(RT_LIBS) $(NET_LIBS) $(XDG_BASEDIR_LIBS) \
                     $(AVUTIL_LIBS)
 
@@ -59,6 +61,9 @@ clean-local:
 
 $(XINEUTILS_LIB):
 	$(MAKE) -C $(top_builddir)/src/xine-utils libxineutils.la
+
+$(YUV_LIB):
+	$(MAKE) -C $(top_builddir)/src/video_out libyuv2rgb.la
 
 if WIN32
 install-exec-local:

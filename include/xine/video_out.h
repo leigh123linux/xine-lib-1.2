@@ -196,6 +196,9 @@ struct xine_video_port_s {
 			    uint32_t height, double ratio,
 			    int format, int flags);
 
+  /* create a new grab video frame */
+  xine_grab_video_frame_t* (*new_grab_video_frame) (xine_video_port_t *self);
+
   /* retrieves the last displayed frame (useful for taking snapshots) */
   vo_frame_t* (*get_last_frame) (xine_video_port_t *self);
 
@@ -387,6 +390,9 @@ struct vo_driver_s {
    * must call that inside display_frame() function.
    */
   int (*redraw_needed) (vo_driver_t *self);
+
+  /* Create a new grab video frame */
+  xine_grab_video_frame_t* (*new_grab_video_frame)(vo_driver_t *self);
 
   /*
    * free all resources, close driver

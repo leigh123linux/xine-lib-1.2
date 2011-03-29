@@ -460,6 +460,83 @@ int  xine_get_current_frame_data (xine_stream_t *stream,
 int64_t xine_get_current_vpts(xine_stream_t *stream) XINE_PROTECTED;
 
 
+/*
+ * Continuous video frame grabbing feature.
+ *
+ * In opposite to the 'xine_get_current_frame' based snapshot function this grabbing
+ * feature allow continuous grabbing of last or next displayed video frame.
+ * Grabbed video frames are returned in simple three byte RGB format.
+ *
+ * Depending on the capabilities of the used video output driver video image data is
+ * taken as close as possible at the end of the video processing chain. Thus a returned
+ * video image could contain the blended OSD data, is deinterlaced, cropped and scaled
+ * and video properties like hue, sat could be applied.
+ * If a video output driver does not have a decent grabbing implementation then there
+ * is a generic fallback feature that grabs the video frame as they are taken from the video
+ * display queue (like the xine_get_current_frame' function).
+ * In this case color correct conversation to a RGB image incorporating source cropping
+ * and scaling to the requested grab size is also supported.
+ *
+ * The caller must first request a new video grab frame using the public 'xine_new_grab_video_frame'
+ * function. Then the caller should populate the frame with the wanted source cropping, grab image
+ * size and control flags. After that grab requests could be done by calling the supplied grab() feature
+ * of the frame. At the end a call to the supplied dispose() feature of the frame releases all needed
+ * resources.
+ * The caller should have acquired a port ticket while calling these features.
+ *
+ */
+#define HAVE_XINE_GRAB_VIDEO_FRAME      1
+
+/*
+ * frame structure used for grabbing video frames of format RGB.
+ */
+typedef struct xine_grab_video_frame_s xine_grab_video_frame_t;
+struct xine_grab_video_frame_s {
+  /*
+   *  grab last/next displayed image.
+   *  returns 0 if grab is successful, 1 on timeout and -1 on error
+   */
+  int (*grab) (xine_grab_video_frame_t *self);
+
+  /*
+   *  free all resources.
+   */
+  void (*dispose) (xine_grab_video_frame_t *self);
+
+  /*
+   *  Cropping of source image. Has to be specified by caller.
+   */
+  int crop_left;
+  int crop_right;
+  int crop_top;
+  int crop_bottom;
+
+  /*
+   * Parameters of returned RGB image.
+   * Caller can specify wanted frame size giving width and/or height a value > 0.
+   * In this case the grabbed image is scaled to the requested size.
+   * Otherwise the grab function returns the actual size of the grabbed image
+   * in width/height without scaling the image.
+   */
+  int width, height; /* requested/returned size of image */
+  uint8_t *img;      /* returned RGB image data taking three bytes per pixel */
+  int64_t vpts;      /* virtual presentation timestamp (1/90000 sec) of returned frame */
+
+  int timeout;       /* Max. time to wait for next displayed frame in milliseconds */
+  int flags;         /* Controlling flags. See XINE_GRAB_VIDEO_FRAME_FLAGS_* definitions */
+};
+
+#define XINE_GRAB_VIDEO_FRAME_FLAGS_CONTINUOUS  0x01    /* optimize resource allocation for continuous frame grabbing */
+#define XINE_GRAB_VIDEO_FRAME_FLAGS_WAIT_NEXT   0x02    /* wait for next display frame instead of using last displayed frame */
+
+#define XINE_GRAB_VIDEO_FRAME_DEFAULT_TIMEOUT   500
+
+/*
+ * Allocate new grab video frame. Returns NULL on error.
+ */
+xine_grab_video_frame_t*  xine_new_grab_video_frame (xine_stream_t *stream) XINE_PROTECTED;
+
+
 /*********************************************************************
  * media processing                                                  *
  *********************************************************************/

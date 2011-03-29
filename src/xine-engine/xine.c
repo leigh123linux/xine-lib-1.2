@@ -2219,6 +2219,17 @@ int xine_get_current_frame (xine_stream_t *stream, int *width, int *height,
   return result;
 }
 
+xine_grab_video_frame_t* xine_new_grab_video_frame (xine_stream_t *stream) {
+  xine_grab_video_frame_t *frame;
+
+  if (stream->video_out->driver->new_grab_video_frame)
+    frame = stream->video_out->driver->new_grab_video_frame(stream->video_out->driver);
+  else
+    frame = stream->video_out->new_grab_video_frame(stream->video_out);
+
+  return frame;
+}
+
 int xine_get_spu_lang (xine_stream_t *stream, int channel, char *lang) {
 
   /* Ask the demuxer first (e.g. TS extracts this information from

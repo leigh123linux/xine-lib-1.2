@@ -90,6 +90,16 @@ static vo_frame_t *post_video_get_last_frame(xine_video_port_t *port_gen) {
   return frame;
 }
 
+static xine_grab_video_frame_t *post_video_new_grab_video_frame(xine_video_port_t *port_gen) {
+  post_video_port_t *port = (post_video_port_t *)port_gen;
+  xine_grab_video_frame_t *frame;
+
+  if (port->port_lock) pthread_mutex_lock(port->port_lock);
+  frame = port->original_port->new_grab_video_frame(port->original_port);
+  if (port->port_lock) pthread_mutex_unlock(port->port_lock);
+  return frame;
+}
+
 static void post_video_enable_ovl(xine_video_port_t *port_gen, int ovl_enable) {
   post_video_port_t *port = (post_video_port_t *)port_gen;
 
@@ -223,6 +233,7 @@ post_video_port_t *_x_post_intercept_video_port(post_plugin_t *post, xine_video_
   port->new_port.open                = post_video_open;
   port->new_port.get_frame           = post_video_get_frame;
   port->new_port.get_last_frame      = post_video_get_last_frame;
+  port->new_port.new_grab_video_frame = post_video_new_grab_video_frame;
   port->new_port.enable_ovl          = post_video_enable_ovl;
   port->new_port.close               = post_video_close;
   port->new_port.exit                = post_video_exit;
