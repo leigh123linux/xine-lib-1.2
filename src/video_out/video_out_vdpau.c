@@ -1744,7 +1744,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
   VdpTime last_time;
 
-  if ( this->init_queue>1 )
+  if ( this->init_queue >= this->queue_length )
     vdp_queue_block( vdp_queue, this->output_surface[this->current_output_surface], &last_time );
 
   uint32_t layer_count;
@@ -1822,7 +1822,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
       dm = this->deinterlacers_method[this->deinterlace_method_hd];
     
     if ( (dm != DEINT_HALF_TEMPORAL) && (dm != DEINT_HALF_TEMPORAL_SPATIAL) && frame->vo_frame.future_frame ) {  /* process second field */
-      if ( this->init_queue>=this->queue_length ) {
+      if ( this->init_queue >= this->queue_length ) {
 #ifdef LOCKDISPLAY
         XUnlockDisplay(this->display);
 #endif
