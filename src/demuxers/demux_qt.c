@@ -90,6 +90,7 @@ typedef unsigned int qt_atom;
 #define WAVE_ATOM QT_ATOM('w', 'a', 'v', 'e')
 #define FRMA_ATOM QT_ATOM('f', 'r', 'm', 'a')
 #define AVCC_ATOM QT_ATOM('a', 'v', 'c', 'C')
+#define ENDA_ATOM QT_ATOM('e', 'n', 'd', 'a')
 
 #define IMA4_FOURCC ME_FOURCC('i', 'm', 'a', '4')
 #define MAC3_FOURCC ME_FOURCC('M', 'A', 'C', '3')
@@ -103,6 +104,8 @@ typedef unsigned int qt_atom;
 #define TWOS_FOURCC ME_FOURCC('t', 'w', 'o', 's')
 #define SOWT_FOURCC ME_FOURCC('s', 'o', 'w', 't')
 #define RAW_FOURCC  ME_FOURCC('r', 'a', 'w', ' ')
+#define IN24_FOURCC ME_FOURCC('i', 'n', '2', '4')
+#define NI42_FOURCC ME_FOURCC('4', '2', 'n', 'i')
 #define AVC1_FOURCC ME_FOURCC('a', 'v', 'c', '1')
 
 #define UDTA_ATOM QT_ATOM('u', 'd', 't', 'a')
@@ -1250,6 +1253,13 @@ static qt_error parse_trak_atom (qt_trak *trak,
           trak->stsd_atoms[k].audio.channels = trak_atom[atom_pos + 0x15];
           trak->stsd_atoms[k].audio.bits = trak_atom[atom_pos + 0x17];
 
+          /* 24-bit audio doesn't always declare itself properly, and can be big- or little-endian */
+          if (trak->stsd_atoms[k].audio.codec_fourcc == IN24_FOURCC) {
+            trak->stsd_atoms[k].audio.bits = 24;
+            if (_X_BE_32(&trak_atom[atom_pos + 0x48]) == ENDA_ATOM && trak_atom[atom_pos + 0x4D])
+              trak->stsd_atoms[k].audio.codec_fourcc = NI42_FOURCC;
+          }
+
           /* assume uncompressed audio parameters */
           trak->stsd_atoms[k].audio.bytes_per_sample =
             trak->stsd_atoms[k].audio.bits / 8;
@@ -1312,11 +1322,13 @@ static qt_error parse_trak_atom (qt_trak *trak,
            * appears to be a handler for uncompressed data; if there are an
            * extra 0x10 bytes, there are some more useful decoding params;
            * further, do not do load these parameters if the audio is just
-           * PCM ('raw ', 'twos', or 'sowt') */
+           * PCM ('raw ', 'twos', 'sowt' or 'in24') */
           if ((current_stsd_atom_size > 0x24) &&
               (trak->stsd_atoms[k].audio.codec_fourcc != TWOS_FOURCC) &&
               (trak->stsd_atoms[k].audio.codec_fourcc != SOWT_FOURCC) &&
-              (trak->stsd_atoms[k].audio.codec_fourcc != RAW_FOURCC)) {
+              (trak->stsd_atoms[k].audio.codec_fourcc != RAW_FOURCC)  &&
+              (trak->stsd_atoms[k].audio.codec_fourcc != IN24_FOURCC) &&
+              (trak->stsd_atoms[k].audio.codec_fourcc != NI42_FOURCC)) {
 
             if (_X_BE_32(&trak_atom[atom_pos + 0x20]))
               trak->stsd_atoms[k].audio.samples_per_packet =
@@ -2400,6 +2412,7 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
   buf_element_t *buf = NULL;
   unsigned int i, j;
   unsigned int remaining_sample_bytes;
+  unsigned int frame_aligned_buf_size;
   int frame_duration;
   int first_buf;
   qt_trak *video_trak = NULL;
@@ -2655,8 +2668,14 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
         buf->pts = audio_trak->frames[i].pts;
       }
 
-      if (remaining_sample_bytes > buf->max_size)
-        buf->size = buf->max_size;
+      /* 24-bit audio doesn't fit evenly into the default 8192-byte buffers */
+      if (audio_trak->properties->audio.bits == 24)
+        frame_aligned_buf_size = 8184;
+      else
+        frame_aligned_buf_size = buf->max_size;
+
+      if (remaining_sample_bytes > frame_aligned_buf_size)
+        buf->size = frame_aligned_buf_size;
       else
         buf->size = remaining_sample_bytes;
       remaining_sample_bytes -= buf->size;

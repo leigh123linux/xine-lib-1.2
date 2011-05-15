@@ -836,6 +836,7 @@ static const audio_db_t audio_db[] = {
     0x01,
     ME_FOURCC('r','a','w',' '),
     ME_FOURCC('s','o','w','t'),
+    ME_FOURCC('4','2','n','i'),
     0
   },
   BUF_AUDIO_LPCM_LE,
