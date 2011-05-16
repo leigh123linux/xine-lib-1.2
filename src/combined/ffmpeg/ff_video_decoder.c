@@ -57,6 +57,14 @@
 
 #define ENABLE_DIRECT_RENDERING
 
+#if LIBAVCODEC_VERSION_MAJOR >= 53 || (LIBAVCODEC_VERSION_MAJOR == 52 && LIBAVCODEC_VERSION_MINOR >= 32)
+#  define AVVIDEO 2
+#else
+#  define AVVIDEO 1
+#  define pp_context	pp_context_t
+#  define pp_mode	pp_mode_t
+#endif
+
 typedef struct ff_video_decoder_s ff_video_decoder_t;
 
 typedef struct ff_video_class_s {
@@ -107,8 +115,8 @@ struct ff_video_decoder_s {
 
   int               pp_quality;
   int               pp_flags;
-  pp_context_t     *pp_context;
-  pp_mode_t        *pp_mode;
+  pp_context       *our_context;
+  pp_mode          *our_mode;
 
   /* mpeg-es parsing */
   mpeg_parser_t    *mpeg_parser;
@@ -433,23 +441,23 @@ static void pp_change_quality (ff_video_decoder_t *this) {
   this->pp_quality = this->class->pp_quality;
 
   if(this->pp_available && this->pp_quality) {
-    if(!this->pp_context && this->context)
-      this->pp_context = pp_get_context(this->context->width, this->context->height,
+    if(!this->our_context && this->context)
+      this->our_context = pp_get_context(this->context->width, this->context->height,
                                         this->pp_flags);
-    if(this->pp_mode)
-      pp_free_mode(this->pp_mode);
+    if(this->our_mode)
+      pp_free_mode(this->our_mode);
 
-    this->pp_mode = pp_get_mode_by_name_and_quality("hb:a,vb:a,dr:a",
+    this->our_mode = pp_get_mode_by_name_and_quality("hb:a,vb:a,dr:a",
                                                     this->pp_quality);
   } else {
-    if(this->pp_mode) {
-      pp_free_mode(this->pp_mode);
-      this->pp_mode = NULL;
+    if(this->our_mode) {
+      pp_free_mode(this->our_mode);
+      this->our_mode = NULL;
     }
 
-    if(this->pp_context) {
-      pp_free_context(this->pp_context);
-      this->pp_context = NULL;
+    if(this->our_context) {
+      pp_free_context(this->our_context);
+      this->our_context = NULL;
     }
   }
 }
@@ -1043,12 +1051,26 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
     }
 
     /* skip decoding b frames if too late */
+#if AVVIDEO > 1
+    /* FIXME: alternative for avcodec_decode_video2? */
+#else
     this->context->hurry_up = (this->skipframes > 0);
+#endif
 
     lprintf("avcodec_decode_video: size=%d\n", this->mpeg_parser->buffer_size);
+#if AVVIDEO > 1
+    AVPacket avpkt;
+    av_init_packet(&avpkt);
+    avpkt.data = (uint8_t *)this->mpeg_parser->chunk_buffer;
+    avpkt.size = this->mpeg_parser->buffer_size;
+    avpkt.flags = AV_PKT_FLAG_KEY;
+    len = avcodec_decode_video2 (this->context, this->av_frame,
+				 &got_picture, &avpkt);
+#else
     len = avcodec_decode_video (this->context, this->av_frame,
                                 &got_picture, this->mpeg_parser->chunk_buffer,
                                 this->mpeg_parser->buffer_size);
+#endif
     lprintf("avcodec_decode_video: decoded_size=%d, got_picture=%d\n",
             len, got_picture);
     len = current - buf->content - offset;
@@ -1100,7 +1122,14 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
 
     } else {
 
-      if (this->context->hurry_up) {
+      if (
+#if AVVIDEO > 1
+	  /* FIXME: alternative for avcodec_decode_video2? */
+	  this->skipframes
+#else
+	  this->context->hurry_up
+#endif
+	 ) {
         /* skipped frame, output a bad frame */
         img = this->stream->video_out->get_frame (this->stream->video_out,
                                                   this->bih.biWidth,
@@ -1288,13 +1317,25 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
         got_picture = 0;
       } else {
         /* skip decoding b frames if too late */
+#if AVVIDEO > 1
+	/* FIXME: alternative for avcodec_decode_video2? */
+#else
         this->context->hurry_up = (this->skipframes > 0);
-
+#endif
         lprintf("buffer size: %d\n", this->size);
+#if AVVIDEO > 1
+	AVPacket avpkt;
+	av_init_packet(&avpkt);
+	avpkt.data = (uint8_t *)&chunk_buf[offset];
+	avpkt.size = this->size;
+	avpkt.flags = AV_PKT_FLAG_KEY;
+	len = avcodec_decode_video2 (this->context, this->av_frame,
+				     &got_picture, &avpkt);
+#else
         len = avcodec_decode_video (this->context, this->av_frame,
                                     &got_picture, &chunk_buf[offset],
                                     this->size);
-
+#endif
         /* reset consumed pts value */
         this->context->reordered_opaque = ff_tag_pts(this, 0);
 
@@ -1408,7 +1449,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
                         img->base, img->pitches,
                         img->width, img->height,
                         this->av_frame->qscale_table, this->av_frame->qstride,
-                        this->pp_mode, this->pp_context,
+                        this->our_mode, this->our_context,
                         this->av_frame->pict_type);
 
         } else if (!this->av_frame->opaque) {
@@ -1640,11 +1681,11 @@ static void ff_dispose (video_decoder_t *this_gen) {
     free(this->buf);
   this->buf = NULL;
 
-  if(this->pp_context)
-    pp_free_context(this->pp_context);
+  if(this->our_context)
+    pp_free_context(this->our_context);
 
-  if(this->pp_mode)
-    pp_free_mode(this->pp_mode);
+  if(this->our_mode)
+    pp_free_mode(this->our_mode);
 
   mpeg_parser_dispose(this->mpeg_parser);
 
@@ -1685,8 +1726,8 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
   this->aspect_ratio      = 0;
 
   this->pp_quality        = 0;
-  this->pp_context        = NULL;
-  this->pp_mode           = NULL;
+  this->our_context       = NULL;
+  this->our_mode          = NULL;
 
   this->mpeg_parser       = NULL;
 

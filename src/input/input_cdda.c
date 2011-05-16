@@ -64,7 +64,11 @@
 #  include <sha1.h>
 #else
 #  include <libavutil/base64.h>
-#  include <libavutil/sha1.h>
+#  ifdef HAVE_LIBAVUTIL_SHA1_H
+#    include <libavutil/sha1.h>
+#  else
+#    include <libavutil/sha.h>
+#  endif
 #endif
 
 #define LOG_MODULE "input_cdda"
@@ -99,6 +103,14 @@
 #define CD_RAW_FRAME_SIZE       2352
 #define CD_LEADOUT_TRACK        0xAA
 #define CD_BLOCK_OFFSET         150
+
+#ifdef HAVE_LIBAVUTIL_SHA1_H
+/* old libavutil/sha1.h was found... */
+#define AVSHA AVSHA1
+#  define av_sha_init(c,b) 	av_sha1_init(c)
+#  define av_sha_update		av_sha1_update
+#  define av_sha_final		av_sha1_final
+#endif
 
 typedef struct _cdrom_toc_entry {
   int   track_mode;
@@ -1837,7 +1849,7 @@ static uint32_t _cdda_calc_cddb_id(cdda_input_plugin_t *this) {
  */
 static void _cdda_cdindex(cdda_input_plugin_t *this, cdrom_toc *toc) {
   char temp[10];
-  struct AVSHA1 *sha_ctx = malloc(av_sha1_size);
+  struct AVSHA *sha_ctx = malloc(av_sha_size);
   unsigned char digest[20];
   /* We're going to encode 20 bytes in base64, which will become
    * 6 * 32 / 8 = 24 bytes.
@@ -1847,27 +1859,27 @@ static void _cdda_cdindex(cdda_input_plugin_t *this, cdrom_toc *toc) {
   char base64[39];
   int i;
 
-  av_sha1_init(sha_ctx);
+  av_sha_init(sha_ctx, 160);
 
   sprintf(temp, "%02X", toc->first_track);
-  av_sha1_update(sha_ctx, (unsigned char*) temp, strlen(temp));
+  av_sha_update(sha_ctx, (unsigned char*) temp, strlen(temp));
 
   sprintf(temp, "%02X", toc->last_track - toc->ignore_last_track);
-  av_sha1_update(sha_ctx, (unsigned char*) temp, strlen(temp));
+  av_sha_update(sha_ctx, (unsigned char*) temp, strlen(temp));
 
   sprintf (temp, "%08X", toc->leadout_track.first_frame);// + 150);
-  av_sha1_update(sha_ctx, (unsigned char*) temp, strlen(temp));
+  av_sha_update(sha_ctx, (unsigned char*) temp, strlen(temp));
 
   for (i = toc->first_track; i <= toc->last_track - toc->ignore_last_track; i++) {
     sprintf(temp, "%08X", toc->toc_entries[i - 1].first_frame);
-    av_sha1_update(sha_ctx, (unsigned char*) temp, strlen(temp));
+    av_sha_update(sha_ctx, (unsigned char*) temp, strlen(temp));
   }
 
   for (i = toc->last_track - toc->ignore_last_track + 1; i < 100; i++) {
-    av_sha1_update(sha_ctx, (unsigned char*) temp, strlen(temp));
+    av_sha_update(sha_ctx, (unsigned char*) temp, strlen(temp));
   }
 
-  av_sha1_final(sha_ctx, digest);
+  av_sha_final(sha_ctx, digest);
   free(sha_ctx);
 
   av_base64_encode(base64, 39, digest, 20);
