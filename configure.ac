@@ -16,6 +16,8 @@ AC_CONFIG_LIBOBJ_DIR([lib])
 AC_CONFIG_HEADERS([include/configure.h])
 AM_MAINTAINER_MODE
 
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
+
 AH_TOP([#ifndef __XINE_LIB_CONFIG_H__
 #define __XINE_LIB_CONFIG_H__ 1
 ])

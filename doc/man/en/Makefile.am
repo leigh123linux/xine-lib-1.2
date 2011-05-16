@@ -1,3 +1,4 @@
+include $(top_srcdir)/misc/Makefile.quiet
 include $(top_srcdir)/misc/Makefile.common
 
 STATICMANS = xine-config.1 xine.5

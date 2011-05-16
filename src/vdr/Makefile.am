@@ -1,3 +1,4 @@
+include $(top_srcdir)/misc/Makefile.quiet
 include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 

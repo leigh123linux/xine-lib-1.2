@@ -1,3 +1,4 @@
+include $(top_srcdir)/misc/Makefile.quiet
 AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 
 EXTRA_DIST = COPYING

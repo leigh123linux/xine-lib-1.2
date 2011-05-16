@@ -1,3 +1,4 @@
+include $(top_srcdir)/misc/Makefile.quiet
 AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 
 if ENABLE_A52DEC

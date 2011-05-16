@@ -1,3 +1,4 @@
+include $(top_srcdir)/misc/Makefile.quiet
 EXTRA_DIST = xine/version.h.in
 
 if GENERATED_INTTYPES_H

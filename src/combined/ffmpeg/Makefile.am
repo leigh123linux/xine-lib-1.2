@@ -1,3 +1,4 @@
+include $(top_srcdir)/misc/Makefile.quiet
 include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
@@ -35,12 +36,12 @@ avcodec_audio.list: AV_CODECS:=/CODEC_ID_PCM_S16LE/,/CODEC_ID_DVD_SUBTITLE/
 avcodec_video.list: AV_CODECS:=/CODEC_ID_MPEG1VIDEO/,/CODEC_ID_PCM_S16LE/
 
 avcodec_audio.list avcodec_video.list:
-	echo '#include "$(srcdir)/ffmpeg_decoder.h"' | $(AV_CPP) - |\
+	$(AM_V_GEN)echo '#include "$(srcdir)/ffmpeg_decoder.h"' | $(AV_CPP) - |\
 	  sed -e $(AV_CODECS)'! d; s/^[ \t]*//; s/[=,].*//; /^$$/ d' >$@
 
 # Generate the mappings. These are #included where needed.
 ff_%_list.h: $(srcdir)/mkcodeclist.pl avcodec_%.list $(srcdir)/xine_%.list
-	$(PERL) $^ $@
+	$(AM_V_GEN)$(PERL) $^ $@
 
 ff_audio_decoder.c: ff_audio_list.h
 ff_video_decoder.c: ff_video_list.h

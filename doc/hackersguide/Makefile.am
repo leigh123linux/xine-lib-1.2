@@ -1,3 +1,4 @@
+include $(top_srcdir)/misc/Makefile.quiet
 include $(top_srcdir)/misc/Makefile.common
 
 hackersguide_docbook = hackersguide.docbook \
@@ -37,35 +38,39 @@ dist-hook:
 
 distclean-local: clean-docs
 
+AM_V_FAKE = $(am__v_FAKE_$(V))
+am__v_FAKE_ = $(am__v_FAKE_$(AM_DEFAULT_VERBOSITY))
+am__v_FAKE_0 = @echo "  FAKE  " $@;
+
 if HAVE_XMLTO
 hackersguide.html: $(hackersguide_docbook)
-	xmlto xhtml-nochunks "$(srcdir)/hackersguide.docbook"
+	$(AM_V_GEN)xmlto xhtml-nochunks "$(srcdir)/hackersguide.docbook"
 else
 hackersguide.html: $(hackersguide_docbook)
-	if test x"$(fail_if_missing)" = x"yes"; then \
+	$(AM_V_FAKE)if test x"$(fail_if_missing)" = x"yes"; then \
 	  echo "Please install xmlto."; \
 	  exit 1; \
-	fi
+	fi; \
 	if test x"$(fail_if_missing)" != x"yes"; then \
 	  touch $@; \
 	  sleep 1; \
 	  touch $^; \
 	fi
 endif
-	$(SED) -i -e '/<img [^>]*alt=/! s/<img /<img alt="" /g' $@ # we want valid XHTML 1.1
+	$(AM_V_at)$(SED) -i -e '/<img [^>]*alt=/! s/<img /<img alt="" /g' $@ # we want valid XHTML 1.1
 
 if HAVE_RSVG
 .svg.png:
-	rsvg -f png $^ $@
+	$(AM_V_GEN)rsvg -f png $^ $@
 if HAVE_OPTIPNG
-	optipng $@
+	$(AM_V_at)optipng $@
 endif
 else
 .svg.png:
-	if test x"$(fail_if_missing)" = x"yes"; then \
+	$(AM_V_FAKE)if test x"$(fail_if_missing)" = x"yes"; then \
 	  echo "Please install rsvg."; \
 	  exit 1; \
-	fi
+	fi; \
 	if test x"$(fail_if_missing)" != x"yes"; then \
 	  touch $@; \
 	  sleep 1; \

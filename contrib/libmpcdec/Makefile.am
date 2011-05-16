@@ -1,3 +1,4 @@
+include $(top_srcdir)/misc/Makefile.quiet
 AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 
 EXTRA_DIST = diff_from_libmpcdec_1.2.5.patch COPYING

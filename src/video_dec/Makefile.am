@@ -1,3 +1,4 @@
+include $(top_srcdir)/misc/Makefile.quiet
 SUBDIRS = \
 	libmpeg2 \
 	libmpeg2new \

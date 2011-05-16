@@ -1,3 +1,4 @@
+include $(top_srcdir)/misc/Makefile.quiet
 include $(top_srcdir)/misc/Makefile.common
 
 AM_CFLAGS   = $(X_CFLAGS) -fno-omit-frame-pointer

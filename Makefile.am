@@ -2,6 +2,8 @@
 ## Process this file with automake to produce Makefile.in
 ##
 
+include $(top_srcdir)/misc/Makefile.quiet
+
 AUTOMAKE_OPTIONS = 1.9 no-dist-gzip dist-bzip2
 
 ACLOCAL_AMFLAGS = -I m4

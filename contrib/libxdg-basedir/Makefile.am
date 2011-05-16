@@ -1,3 +1,4 @@
+include $(top_srcdir)/misc/Makefile.quiet
 if !EXTERNAL_LIBXDG_BASEDIR
 noinst_LTLIBRARIES = libxdg-basedir.la
 endif
