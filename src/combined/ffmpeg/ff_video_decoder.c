@@ -1052,7 +1052,7 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
 
     /* skip decoding b frames if too late */
 #if AVVIDEO > 1
-    /* FIXME: alternative for avcodec_decode_video2? */
+    this->context->skip_frame = (this->skipframes > 0) ? AVDISCARD_NONREF : AVDISCARD_DEFAULT;
 #else
     this->context->hurry_up = (this->skipframes > 0);
 #endif
@@ -1124,8 +1124,7 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
 
       if (
 #if AVVIDEO > 1
-	  /* FIXME: alternative for avcodec_decode_video2? */
-	  this->skipframes
+	  this->context->skip_frame != AVDISCARD_DEFAULT
 #else
 	  this->context->hurry_up
 #endif
@@ -1318,7 +1317,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
       } else {
         /* skip decoding b frames if too late */
 #if AVVIDEO > 1
-	/* FIXME: alternative for avcodec_decode_video2? */
+	this->context->skip_frame = (this->skipframes > 0) ? AVDISCARD_NONREF : AVDISCARD_DEFAULT;
 #else
         this->context->hurry_up = (this->skipframes > 0);
 #endif
