@@ -110,6 +110,7 @@
 #  define av_sha_init(c,b) 	av_sha1_init(c)
 #  define av_sha_update		av_sha1_update
 #  define av_sha_final		av_sha1_final
+#  define av_sha_size		av_sha1_size
 #endif
 
 typedef struct _cdrom_toc_entry {
