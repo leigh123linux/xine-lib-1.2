@@ -96,7 +96,7 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
 	AC_CHECK_HEADERS([libavutil/avutil.h])
 	AC_CHECK_HEADERS([libavutil/sha1.h])
 	AC_CHECK_HEADERS([libavutil/sha.h])
-	if test "$ac_cv_header_ffmpeg_avutil_h$ac_cv_header_libavutil_avutil_h" = "yesyes" || test "$ac_cv_header_libavutil_sha1_h$ac_cv_header_libavutil_sha_h" = "yesyes"; then
+	if test "$ac_cv_header_ffmpeg_avutil_h" = "yes" && test "$ac_cv_header_libavutil_avutil_h" = "yes"; then
 	    AC_MSG_ERROR([old & new ffmpeg headers found - you need to clean up!])
 	fi
 
