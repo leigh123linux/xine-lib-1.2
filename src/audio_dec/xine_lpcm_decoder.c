@@ -98,6 +98,7 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   int             stream_be;
   audio_buffer_t *audio_buffer;
   int             format_changed = 0;
+  int             special_dvd_audio = 0;
 
   /* Drop preview data */
   if (buf->decoder_flags & BUF_FLAG_PREVIEW)
@@ -120,7 +121,7 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       switch ((buf->decoder_info[2] >> (24+6)) & 0x03) {
         case 1:  bits_per_sample = 16; break;
         case 2:  bits_per_sample = 20; break;
-        case 3:  bits_per_sample = 24; break;
+        case 3:  bits_per_sample = 24; special_dvd_audio = 1; break;
         default: bits_per_sample =  0; break;
       }
       switch ((buf->decoder_info[2] >> 16) & 0x0f) {
@@ -156,7 +157,7 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       switch ((buf->decoder_info[2]>>6) & 3) {
         case 0: bits_per_sample = 16; break;
         case 1: bits_per_sample = 20; break;
-        case 2: bits_per_sample = 24; break;
+        case 2: bits_per_sample = 24; special_dvd_audio = 1; break;
       }
     }
 
@@ -274,35 +275,58 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     int n = buf_size;
 
     if ( stream_be ) {
-      while (n >= 12) {
-        if ( stream_be == this->cpu_be ) {
-          *d++ = s[0];
-          *d++ = s[1];
-          *d++ = s[2];
-          *d++ = s[3];
-          *d++ = s[4];
-          *d++ = s[5];
-          *d++ = s[6];
-          *d++ = s[7];
-        } else {
-          *d++ = s[1];
-          *d++ = s[0];
-          *d++ = s[3];
-          *d++ = s[2];
-          *d++ = s[5];
-          *d++ = s[4];
-          *d++ = s[7];
-          *d++ = s[6];
+      if (special_dvd_audio)
+        while (n >= 12) {
+          if ( stream_be == this->cpu_be ) {
+            *d++ = s[0];
+            *d++ = s[1];
+            *d++ = s[2];
+            *d++ = s[3];
+            *d++ = s[4];
+            *d++ = s[5];
+            *d++ = s[6];
+            *d++ = s[7];
+          } else {
+            *d++ = s[1];
+            *d++ = s[0];
+            *d++ = s[3];
+            *d++ = s[2];
+            *d++ = s[5];
+            *d++ = s[4];
+            *d++ = s[7];
+            *d++ = s[6];
+          }
+          s += 12;
+          n -= 12;
         }
-	s += 12;
-	n -= 12;
-      }
+      else
+        while (n >= 3) {
+          if ( stream_be == this->cpu_be ) {
+            *d++ = s[0];
+            *d++ = s[1];
+          } else {
+            *d++ = s[1];
+            *d++ = s[0];
+          }
+          s += 3;
+          n -= 3;
+        }
     } else {
-      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "lpcm_decoder: I don't know what should decode lpcm 24bit little endian byte stream");
+      while (n >= 3) {
+        if ( stream_be == this->cpu_be ) {
+          *d++ = s[1];
+          *d++ = s[2];
+        } else {
+          *d++ = s[2];
+          *d++ = s[1];
+        }
+        s += 3;
+        n -= 3;
+      }
     }
 
     if ( (d - (uint8_t*)audio_buffer->mem)/2*3 < buf_size )
-	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "lpcm_decoder: lost %i bytes\n", (int)(buf_size - (d - (uint8_t*)audio_buffer->mem))/2*3);
+	xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "lpcm_decoder: lost %i bytes of %i in the buffer\n", (int)(buf_size - (d - (uint8_t*)audio_buffer->mem)/2*3), buf_size);
 
   } else {
     memcpy (audio_buffer->mem, sample_buffer, buf_size);
