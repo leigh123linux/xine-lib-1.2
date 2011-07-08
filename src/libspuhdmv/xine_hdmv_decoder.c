@@ -737,6 +737,11 @@ static int decode_presentation_segment(spuhdmv_decoder_t *this)
 
   seg->pts = this->pts;
 
+  /* epoch start or acquistion point -> drop cached objects */
+  if (seg->comp_descr.state) {
+    free_objs(this);
+  }
+
   /* replace */
   if (this->segments)
     LIST_DESTROY(this->segments, free_presentation_segment);
@@ -936,8 +941,10 @@ static void decode_segment(spuhdmv_decoder_t *this)
     break;
   case SEGTYPE_END_OF_DISPLAY:
     XINE_HDMV_TRACE("  segment: END OF DISPLAY\n");
+#if 0
     /* drop all cached objects */
     free_objs(this);
+#endif
     break;
   default:
     XINE_HDMV_ERROR("  segment type 0x%x unknown, skipping\n", segbuf_segment_type(this->buf));
