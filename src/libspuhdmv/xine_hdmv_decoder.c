@@ -294,7 +294,7 @@ static void segbuf_fill(segment_buffer_t *buf, uint8_t *data, size_t len)
 
 static int segbuf_segment_complete(segment_buffer_t *buf)
 {
-  return (buf->segment_len >= 0) && (buf->len >= buf->segment_len + 3);
+  return (buf->segment_len >= 0) && (buf->len >= (unsigned)buf->segment_len + 3);
 }
 
 static void segbuf_skip_segment(segment_buffer_t *buf)
@@ -359,7 +359,7 @@ static subtitle_clut_t *segbuf_decode_palette(segment_buffer_t *buf)
 
   size_t  len     = segbuf_data_length(buf);
   size_t  entries = len / 5;
-  int     i;
+  size_t  i;
 
   if (buf->error)
     return NULL;
@@ -531,9 +531,10 @@ static subtitle_object_t *segbuf_decode_object(segment_buffer_t *buf, subtitle_o
   /* if complete, decode RLE data */
   if (objects->raw_data_len >= objects->data_len) {
     /* create dummy buffer for segbuf_decode_rle */
-    segment_buffer_t tmpbuf = {};
-    tmpbuf.segment_data = objects->raw_data;
-    tmpbuf.segment_end  = objects->raw_data + objects->raw_data_len;
+    segment_buffer_t tmpbuf = {
+      .segment_data = objects->raw_data,
+      .segment_end  = objects->raw_data + objects->raw_data_len,
+    };
 
     /* decode RLE data */
     segbuf_decode_rle (&tmpbuf, objects);
