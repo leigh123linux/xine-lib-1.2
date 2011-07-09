@@ -693,6 +693,14 @@ typedef struct spuhdmv_decoder_s {
 
 } spuhdmv_decoder_t;
 
+static void free_objs(spuhdmv_decoder_t *this)
+{
+  LIST_DESTROY (this->cluts,    free);
+  LIST_DESTROY (this->objects,  free_subtitle_object);
+  LIST_DESTROY (this->windows,  free);
+  LIST_DESTROY (this->segments, free_presentation_segment);
+}
+
 static int decode_palette(spuhdmv_decoder_t *this)
 {
   /* decode */
@@ -905,14 +913,6 @@ static void update_overlays(spuhdmv_decoder_t *this)
 
     pseg = pseg->next;
   }
-}
-
-static void free_objs(spuhdmv_decoder_t *this)
-{
-  LIST_DESTROY (this->cluts,    free);
-  LIST_DESTROY (this->objects,  free_subtitle_object);
-  LIST_DESTROY (this->windows,  free);
-  LIST_DESTROY (this->segments, free_presentation_segment);
 }
 
 static void decode_segment(spuhdmv_decoder_t *this)
