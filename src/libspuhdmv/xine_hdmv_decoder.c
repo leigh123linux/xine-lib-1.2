@@ -589,7 +589,7 @@ static int segbuf_decode_video_descriptor(segment_buffer_t *buf)
 static int segbuf_decode_composition_descriptor(segment_buffer_t *buf, composition_descriptor_t *descr)
 {
   descr->number = segbuf_get_u16(buf);
-  descr->state  = segbuf_get_u8 (buf);
+  descr->state  = segbuf_get_u8 (buf) & 0xc0;
 
   XINE_HDMV_TRACE("  composition_descriptor: number %d, state %d\n", descr->number, descr->state);
   return buf->error;
