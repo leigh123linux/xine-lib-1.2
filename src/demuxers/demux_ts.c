@@ -691,8 +691,7 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
 }
 
 static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
-				      uint8_t *buf, int packet_len,
-                                      xine_stream_t *stream) {
+                                      uint8_t *buf, int packet_len) {
 
   unsigned char *p;
   uint32_t       header_len;
@@ -1006,7 +1005,7 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
     /* allocate the buffer here, as pes_header needs a valid buf for dvbsubs */
      m->buf = m->fifo->buffer_pool_alloc(m->fifo);
 
-    if (!demux_ts_parse_pes_header(this->stream->xine, m, ts, len, this->stream)) {
+    if (!demux_ts_parse_pes_header(this->stream->xine, m, ts, len)) {
       m->buf->free_buffer(m->buf);
       m->buf = NULL;
 
