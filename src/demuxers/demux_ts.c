@@ -1136,6 +1136,15 @@ static inline int ts_payloadsize(unsigned char * tsp)
   return 184;
 }
 
+/* check if an apid is in the list of known apids */
+static int apid_check(demux_ts_t*this, unsigned int pid) {
+  int i;
+  for (i = 0; i < this->audio_tracks_count; i++) {
+    if (this->audio_tracks[i].pid == pid)
+      return i;
+  }
+  return -1;
+}
 
 /*
  * NAME demux_ts_parse_pmt
@@ -1385,14 +1394,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
     case ISO_13818_PART7_AUDIO:
     case ISO_14496_PART3_AUDIO:
       if (this->audio_tracks_count < MAX_AUDIO_TRACKS) {
-        int i, found = 0;
-        for(i = 0; i < this->audio_tracks_count; i++) {
-            if(this->audio_tracks[i].pid == pid) {
-                found = 1;
-                break;
-            }
-        }
-        if(!found) {
+        if (apid_check(this, pid) < 0) {
 #ifdef TS_PMT_LOG
             printf ("demux_ts: PMT audio pid 0x%.4x type %2.2x\n", pid, stream[0]);
 #endif
@@ -1423,14 +1425,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
     case ISO_13818_PES_PRIVATE:
       for (i = 5; i < coded_length; i += stream[i+1] + 2) {
         if (((stream[i] == 0x6a) || (stream[i] == 0x7a)) && (this->audio_tracks_count < MAX_AUDIO_TRACKS)) {
-          int j, found = 0;
-          for(j = 0; j < this->audio_tracks_count; j++) {
-            if(this->audio_tracks[j].pid == pid) {
-              found = 1;
-              break;
-	    }
-	  }
-          if (!found) {
+          if (apid_check(this, pid) < 0) {
 #ifdef TS_PMT_LOG
             printf ("demux_ts: PMT AC3 audio pid 0x%.4x type %2.2x\n", pid, stream[0]);
 #endif
@@ -1549,14 +1544,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
  * FIXME: This will need expanding if we ever see a DTS or other media format here.
  */
         if ((this->audio_tracks_count < MAX_AUDIO_TRACKS) && (stream[0] >= 0x80) ) {
-        int i, found = 0;
-        for(i = 0; i < this->audio_tracks_count; i++) {
-            if(this->audio_tracks[i].pid == pid) {
-                found = 1;
-                break;
-            }
-        }
-        if(!found) {
+          if (apid_check(this,pid) < 0) {
             uint32_t format_identifier=0;
             demux_ts_get_reg_desc(this, &format_identifier,
                     stream + 5, stream_info_length);
@@ -1845,16 +1833,6 @@ static int64_t demux_ts_adaptation_field_parse(uint8_t *data,
   }
 #endif
   return PCR;
-}
-
-/* check if an apid is in the list of known apids */
-static int apid_check(demux_ts_t*this, unsigned int pid) {
-  int i;
-  for(i=0; i<this->audio_tracks_count; i++) {
-    if(this->audio_tracks[i].pid == pid)
-      return i;
-  }
-  return -1;
 }
 
 /* transport stream packet layer */
