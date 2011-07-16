@@ -697,7 +697,6 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   uint32_t       header_len;
   int64_t        pts;
   uint32_t       stream_id;
-  int            pkt_len;
 
   if (packet_len < 9) {
     xprintf (xine, XINE_VERBOSITY_DEBUG,
@@ -706,7 +705,6 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   }
 
   p = buf;
-  pkt_len = packet_len;
 
   /* we should have a PES packet here */
 
@@ -716,13 +714,12 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
     return 0 ;
   }
 
-  packet_len -= 6;
   /* packet_len = p[4] << 8 | p[5]; */
   stream_id  = p[3];
   header_len = p[8];
 
   /* sometimes corruption on header_len causes segfault in memcpy below */
-  if (header_len + 9 > pkt_len) {
+  if (header_len + 9 > packet_len) {
     xprintf (xine, XINE_VERBOSITY_DEBUG,
              "demux_ts: illegal value for PES_header_data_length (0x%x)\n", header_len);
     return 0;
@@ -764,7 +761,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   m->pts       = pts;
 
   p += header_len + 9;
-  packet_len -= header_len + 3;
+  packet_len -= header_len + 9;
 
   if (m->descriptor_tag == STREAM_VIDEO_VC1) {
     m->content   = p;
