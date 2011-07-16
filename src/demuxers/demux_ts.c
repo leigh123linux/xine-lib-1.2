@@ -699,6 +699,12 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   uint32_t       stream_id;
   int            pkt_len;
 
+  if (packet_len < 9) {
+    xprintf (xine, XINE_VERBOSITY_DEBUG,
+	     "demux_ts: too short PES packet header (%d bytes)\n", packet_len);
+    return 0;
+  }
+
   p = buf;
   pkt_len = packet_len;
 
@@ -713,13 +719,6 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   packet_len -= 6;
   /* packet_len = p[4] << 8 | p[5]; */
   stream_id  = p[3];
-
-  if (packet_len==0)
-  {
-    xprintf (xine, XINE_VERBOSITY_DEBUG,
-             "demux_ts: error pes length 0\n");
-    return 0;
-  }
 
 #ifdef TS_LOG
   printf ("demux_ts: packet stream id: %.2x len: %d (%x)\n",
