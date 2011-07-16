@@ -719,6 +719,14 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   packet_len -= 6;
   /* packet_len = p[4] << 8 | p[5]; */
   stream_id  = p[3];
+  header_len = p[8];
+
+  /* sometimes corruption on header_len causes segfault in memcpy below */
+  if (header_len + 9 > pkt_len) {
+    xprintf (xine, XINE_VERBOSITY_DEBUG,
+             "demux_ts: illegal value for PES_header_data_length (0x%x)\n", header_len);
+    return 0;
+  }
 
 #ifdef TS_LOG
   printf ("demux_ts: packet stream id: %.2x len: %d (%x)\n",
@@ -726,6 +734,10 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
 #endif
 
   if (p[7] & 0x80) { /* pts avail */
+
+    if (header_len < 5) {
+      return 0;
+    }
 
     pts  = (int64_t)(p[ 9] & 0x0E) << 29 ;
     pts |=  p[10]         << 22 ;
@@ -750,15 +762,6 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   */
 
   m->pts       = pts;
-
-  header_len = p[8];
-
-  /* sometimes corruption on header_len causes segfault in memcpy below */
-  if (header_len + 9 > pkt_len) {
-    xprintf (xine, XINE_VERBOSITY_DEBUG,
-	     "demux_ts: illegal value for PES_header_data_length (0x%x)\n", header_len);
-    return 0;
-  }
 
   p += header_len + 9;
   packet_len -= header_len + 3;
