@@ -2422,7 +2422,7 @@ static const char *get_identifier (demux_class_t *this_gen) {
 }
 
 static const char *get_extensions (demux_class_t *this_gen) {
-  return "ts m2t trp";
+  return "ts m2t trp m2ts mts";
 }
 
 static const char *get_mimetypes (demux_class_t *this_gen) {
