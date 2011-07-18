@@ -1917,8 +1917,10 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
     for (i=0; i < this->scrambled_npids; i++) {
       if (this->scrambled_pids[i] == pid) return;
     }
-    this->scrambled_pids[this->scrambled_npids] = pid;
-    this->scrambled_npids++;
+    if (this->scrambled_npids < MAX_PIDS) {
+      this->scrambled_pids[this->scrambled_npids] = pid;
+      this->scrambled_npids++;
+    }
 
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_ts: PID 0x%.4x is scrambled!\n", pid);
     return;
