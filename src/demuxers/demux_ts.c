@@ -878,9 +878,11 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
       m->type      |= BUF_AUDIO_A52;
       return 1;
 
+#if 0
+    /* commented out: does not set PCM type. Decoder can't handle raw PCM stream without configuration. */
     } else if ((p[0]&0xf0) == 0xa0) {
 
-      int pcm_offset;
+      unsigned int pcm_offset;
 
       for (pcm_offset=0; ++pcm_offset < packet_len-1 ; ){
         if (p[pcm_offset] == 0x01 && p[pcm_offset+1] == 0x80 ) { /* START */
@@ -897,6 +899,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
       m->size      = packet_len-pcm_offset;
       m->type      |= BUF_AUDIO_LPCM_BE;
       return 1;
+#endif
     }
 
   } else if ((stream_id & 0xf0) == 0xe0) {
