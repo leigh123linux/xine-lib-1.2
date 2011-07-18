@@ -1191,7 +1191,7 @@ static void demux_ts_parse_pmt (demux_ts_t     *this,
     pkt+=pkt[4]; /* pointer to start of section */
     offset=1;
 
-    if (this->pmt[program_count] != NULL) free(this->pmt[program_count]);
+    free(this->pmt[program_count]);
     this->pmt[program_count] = (uint8_t *) calloc(4096, sizeof(unsigned char));
     this->pmt_write_ptr[program_count] = this->pmt[program_count];
 
