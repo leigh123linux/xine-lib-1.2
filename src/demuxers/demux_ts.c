@@ -271,7 +271,6 @@ typedef struct {
   buf_element_t   *buf;
   unsigned int     counter;
   uint16_t         descriptor_tag; /* +0x100 for PES stream IDs (no available TS descriptor tag?) */
-  int64_t          packet_count;
   int              corrupted_pes;
   uint32_t         buffered_bytes;
 
@@ -316,7 +315,6 @@ typedef struct {
   int              pkt_size;   /* TS packet size */
   int              pkt_offset; /* TS packet offset */
 
-  int              blockSize;
   int              rate;
   int              media_num;
   demux_ts_media   media[MAX_PIDS];
@@ -331,17 +329,12 @@ typedef struct {
    * and audio PIDs, we keep the index of the corresponding entry
    * inthe media[] array.
    */
-  unsigned int     programNumber;
-  unsigned int     pcrPid;
-  unsigned int     pid;
-  unsigned int     pid_count;
   unsigned int     videoPid;
   unsigned int     videoMedia;
 
   demux_ts_audio_track audio_tracks[MAX_AUDIO_TRACKS];
   int              audio_tracks_count;
 
-  int              send_end_buffers;
   int64_t          last_pts[2];
   int              send_newpts;
   int              buf_flag_seek;
@@ -1600,6 +1593,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
     section_length -= coded_length;
   }
 
+#if 0
   /*
    * Get the current PCR PID.
    */
@@ -1615,6 +1609,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
 #endif
     this->pcrPid = pid;
   }
+#endif
 
   if ( this->stream->spu_channel>=0 && this->spu_langs_count>0 )
     demux_ts_update_spu_channel( this );
@@ -2146,7 +2141,6 @@ static void demux_ts_send_headers (demux_plugin_t *this_gen) {
 
   this->status = DEMUX_OK ;
 
-  this->send_end_buffers  = 1;
   this->scrambled_npids   = 0;
 
   /* DVBSUB */
@@ -2363,7 +2357,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   this            = calloc(1, sizeof(*this));
   this->stream    = stream;
   this->input     = input;
-  this->blockSize = PKT_SIZE;
 
   this->demux_plugin.send_headers      = demux_ts_send_headers;
   this->demux_plugin.send_chunk        = demux_ts_send_chunk;
@@ -2390,8 +2383,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
     this->pmt_write_ptr[i]           = NULL;
   }
 
-  this->programNumber = INVALID_PROGRAM;
-  this->pcrPid = INVALID_PID;
   this->scrambled_npids = 0;
   this->videoPid = INVALID_PID;
   this->audio_tracks_count = 0;
