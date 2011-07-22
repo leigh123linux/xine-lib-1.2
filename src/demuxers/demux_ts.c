@@ -804,9 +804,8 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
       m->type |= BUF_AUDIO_EAC3;
       return 1;
 
-    } else if((m->descriptor_tag == STREAM_AUDIO_AC3) ||    /* ac3 - raw */
-       (packet_len > 1 && p[0] == 0x0B && p[1] == 0x77)) { /* ac3 - syncword */
-      m->content   = p;
+    } else if(m->descriptor_tag == STREAM_AUDIO_AC3) {    /* ac3 - raw */
+      m->content = p;
       m->size = packet_len;
       m->type |= BUF_AUDIO_A52;
       return 1;
@@ -854,6 +853,13 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
       m->type |= BUF_SPU_DVB;
       m->buf->decoder_info[2] = payload_len;
       return 1;
+
+    } else if (p[0] == 0x0B && p[1] == 0x77) { /* ac3 - syncword */
+      m->content = p;
+      m->size = packet_len;
+      m->type |= BUF_AUDIO_A52;
+      return 1;
+
     } else if ((p[0] & 0xE0) == 0x20) {
       spu_id = (p[0] & 0x1f);
 
