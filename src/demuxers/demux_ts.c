@@ -875,7 +875,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
       return 1;
     }
 
-  } else if ((stream_id >= 0xbc) && ((stream_id & 0xf0) == 0xe0)) {
+  } else if ((stream_id & 0xf0) == 0xe0) {
 
     m->content   = p;
     m->size      = packet_len;
