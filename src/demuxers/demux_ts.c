@@ -1806,6 +1806,9 @@ static int64_t demux_ts_adaptation_field_parse(uint8_t *data,
   }
 #endif
   if(PCR_flag) {
+    if (adaptation_field_length < offset + 6)
+      return 0;
+
     PCR  = (((int64_t) data[offset]) & 0xFF) << 25;
     PCR += (int64_t) ((data[offset+1] & 0xFF) << 17);
     PCR += (int64_t) ((data[offset+2] & 0xFF) << 9);
@@ -1820,6 +1823,9 @@ static int64_t demux_ts_adaptation_field_parse(uint8_t *data,
     offset+=6;
   }
   if(OPCR_flag) {
+    if (adaptation_field_length < offset + 6)
+      return PCR;
+
     OPCR = data[offset] << 25;
     OPCR |= data[offset+1] << 17;
     OPCR |= data[offset+2] << 9;
