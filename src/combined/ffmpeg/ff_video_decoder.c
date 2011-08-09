@@ -878,6 +878,10 @@ static void ff_handle_preview_buffer (ff_video_decoder_t *this, buf_element_t *b
   }
 
   if (this->decoder_init_mode && !this->is_mpeg12) {
+
+    if (!ff_check_extradata(this, codec_type, buf))
+      return;
+
     init_video_codec(this, codec_type);
     init_postprocess(this);
     this->decoder_init_mode = 0;
