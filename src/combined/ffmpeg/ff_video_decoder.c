@@ -66,6 +66,10 @@
 #  define pp_mode	pp_mode_t
 #endif
 
+#if LIBAVCODEC_VERSION_MAJOR >= 53 || (LIBAVCODEC_VERSION_MAJOR == 52 && LIBAVCODEC_VERSION_MINOR >= 112)
+#  define DEPRECATED_AVCODEC_THREAD_INIT 1
+#endif
+
 /* reordered_opaque appeared in libavcodec 51.68.0 */
 #define AVCODEC_HAS_REORDERED_OPAQUE
 #if LIBAVCODEC_VERSION_INT < 0x334400
@@ -365,7 +369,10 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
 
   if (this->class->thread_count > 1) {
     if (this->codec->id != CODEC_ID_SVQ3
-        && avcodec_thread_init(this->context, this->class->thread_count) != -1)
+#ifndef DEPRECATED_AVCODEC_THREAD_INIT
+	&& avcodec_thread_init(this->context, this->class->thread_count) != -1
+#endif
+	)
       this->context->thread_count = this->class->thread_count;
   }
 
