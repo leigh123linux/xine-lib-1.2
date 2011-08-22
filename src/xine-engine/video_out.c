@@ -802,7 +802,7 @@ static void expire_frames (vos_t *this, int64_t cur_vpts) {
 
   while (img) {
 
-    if (img->is_first) {
+    if (img->is_first > 0) {
       lprintf("expire_frames: first_frame !\n");
 
       /*
@@ -819,6 +819,8 @@ static void expire_frames (vos_t *this, int64_t cur_vpts) {
         img->vpts = cur_vpts + FIRST_FRAME_POLL_DELAY;
       }
       img->is_first--;
+      /* make sure to wake up xine_play even if this first frame gets discarded */
+      if (img->is_first == 0) img->is_first = -1;
       break;
     }
 
@@ -848,6 +850,24 @@ static void expire_frames (vos_t *this, int64_t cur_vpts) {
 	pthread_mutex_lock( &img->stream->current_extra_info_lock );
 	_x_extra_info_merge( img->stream->current_extra_info, img->extra_info );
 	pthread_mutex_unlock( &img->stream->current_extra_info_lock );
+	/* wake up xine_play now if we just discarded first frame */
+	if (img->is_first != 0) {
+	  xine_list_iterator_t ite;
+	  pthread_mutex_lock (&this->streams_lock);
+	  for (ite = xine_list_front(this->streams); ite;
+	    ite = xine_list_next(this->streams, ite)) {
+	    xine_stream_t *stream = xine_list_get_value (this->streams, ite);
+	    if (stream == XINE_ANON_STREAM) continue;
+	    pthread_mutex_lock (&stream->first_frame_lock);
+	    if (stream->first_frame_flag) {
+	      stream->first_frame_flag = 0;
+	      pthread_cond_broadcast (&stream->first_frame_reached);
+	    }
+	    pthread_mutex_unlock (&stream->first_frame_lock);
+	  }
+	  pthread_mutex_unlock(&this->streams_lock);
+	  xine_log (this->xine, XINE_LOG_MSG, _("video_out: just discarded first frame after seek\n"));
+	}
       }
 
       /* when flushing frames, keep the first one as backup */
