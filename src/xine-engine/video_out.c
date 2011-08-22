@@ -572,25 +572,28 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
      * check for first frame after seek and mark it
      */
     img->is_first = 0;
-    pthread_mutex_lock(&this->streams_lock);
-    for (ite = xine_list_front(this->streams); ite;
-         ite = xine_list_next(this->streams, ite)) {
-      stream = xine_list_get_value(this->streams, ite);
-      if (stream == XINE_ANON_STREAM) continue;
-      pthread_mutex_lock (&stream->first_frame_lock);
-      if (stream->first_frame_flag == 2) {
-        if (this->grab_only) {
-          stream->first_frame_flag = 0;
-          pthread_cond_broadcast(&stream->first_frame_reached);
-        } else
-          stream->first_frame_flag = 1;
-        img->is_first = FIRST_FRAME_MAX_POLL;
+    /* avoid a complex deadlock situation caused by net_buf_control */
+    if (!pthread_mutex_trylock(&this->streams_lock)) {
+      for (ite = xine_list_front(this->streams); ite;
+           ite = xine_list_next(this->streams, ite)) {
+        stream = xine_list_get_value(this->streams, ite);
+        if (stream == XINE_ANON_STREAM) continue;
+        pthread_mutex_lock (&stream->first_frame_lock);
+        if (stream->first_frame_flag == 2) {
+          if (this->grab_only) {
+            stream->first_frame_flag = 0;
+            pthread_cond_broadcast(&stream->first_frame_reached);
+          } else {
+            stream->first_frame_flag = 1;
+          }
+          img->is_first = FIRST_FRAME_MAX_POLL;
 
-        lprintf ("get_next_video_frame first_frame_reached\n");
+          lprintf ("get_next_video_frame first_frame_reached\n");
+        }
+        pthread_mutex_unlock (&stream->first_frame_lock);
       }
-      pthread_mutex_unlock (&stream->first_frame_lock);
+      pthread_mutex_unlock(&this->streams_lock);
     }
-    pthread_mutex_unlock(&this->streams_lock);
 
     if (!img_already_locked)
       vo_frame_inc_lock( img );
