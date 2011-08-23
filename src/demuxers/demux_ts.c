@@ -1438,7 +1438,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
         if (((stream[i] == 0x6a) || (stream[i] == 0x7a)) && (this->audio_tracks_count < MAX_AUDIO_TRACKS)) {
           int j, found = 0;
           for(j = 0; j < this->audio_tracks_count; j++) {
-            if(this->audio_tracks[i].pid == pid) {
+            if(this->audio_tracks[j].pid == pid) {
               found = 1;
               break;
 	    }
