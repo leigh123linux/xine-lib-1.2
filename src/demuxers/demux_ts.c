@@ -921,9 +921,12 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
       m->type      |= BUF_AUDIO_MPEG;
       break;
     case  ISO_13818_PART7_AUDIO:
-    case  ISO_14496_PART3_AUDIO:
       lprintf ("demux_ts: found AAC audio track.\n");
       m->type      |= BUF_AUDIO_AAC;
+      break;
+    case  ISO_14496_PART3_AUDIO:
+      lprintf ("demux_ts: found AAC LATM audio track.\n");
+      m->type      |= BUF_AUDIO_AAC_LATM;
       break;
     default:
       lprintf ("demux_ts: unknown audio type: %d, defaulting to MPEG.\n", m->descriptor_tag);
