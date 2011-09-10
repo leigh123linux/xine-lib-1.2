@@ -321,27 +321,36 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 
     if (!this->output_open) {
       if (!this->audio_bits || !this->audio_sample_rate || !this->audio_channels) {
+        int ret;
+
         decode_buffer_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
 #if AVAUDIO > 2
 	av_init_packet (&avpkt);
 	avpkt.data = (uint8_t *)&this->buf[0];
 	avpkt.size = this->size;
 	avpkt.flags = AV_PKT_FLAG_KEY;
-	avcodec_decode_audio3 (this->context,
-			       (int16_t *)this->decode_buffer,
-			       &decode_buffer_size, &avpkt);
+	ret = avcodec_decode_audio3 (this->context,
+				     (int16_t *)this->decode_buffer,
+				     &decode_buffer_size, &avpkt);
 #else
-        avcodec_decode_audio2 (this->context,
-                              (int16_t *)this->decode_buffer,
-                              &decode_buffer_size,
-                              &this->buf[0],
-                              this->size);
+        ret = avcodec_decode_audio2 (this->context,
+                                     (int16_t *)this->decode_buffer,
+                                     &decode_buffer_size,
+                                     &this->buf[0],
+                                     this->size);
 #endif
 	this->audio_bits = this->context->bits_per_sample;
 	this->audio_sample_rate = this->context->sample_rate;
 	this->audio_channels = this->context->channels;
-	if (!this->audio_bits || !this->audio_sample_rate || !this->audio_channels)
+	if (!this->audio_bits || !this->audio_sample_rate || !this->audio_channels) {
+	  xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+	          _("ffmpeg_audio_dec: cannot read codec parameters from packet (error=%d)\n"), ret);
+
+	  /* We can't use this packet, so we must discard it
+	   * and wait for another one. */
+	  this->size = 0;
 	  return;
+	}
       }
       this->output_open = (this->stream->audio_out->open) (this->stream->audio_out,
         this->stream, this->audio_bits, this->audio_sample_rate,
