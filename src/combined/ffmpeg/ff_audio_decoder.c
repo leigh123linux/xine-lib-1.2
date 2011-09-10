@@ -134,7 +134,7 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 
     /* accumulate init data */
     ff_audio_ensure_buffer_size(this, this->size + buf->size);
-    memcpy(this->buf + this->size, buf->content, buf->size);
+    xine_fast_memcpy(this->buf + this->size, buf->content, buf->size);
     this->size += buf->size;
 
     if (buf->decoder_flags & BUF_FLAG_FRAME_END) {
