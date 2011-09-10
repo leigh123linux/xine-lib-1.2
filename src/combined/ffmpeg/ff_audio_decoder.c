@@ -115,7 +115,7 @@ static void *realloc16 (void *m, size_t s) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             _("ffmpeg_audio_dec: increasing buffer to %d to avoid overflow.\n"),
             this->bufsize);
-    this->buf = realloc16 (this->buf, this->bufsize);
+    this->buf = realloc16 (this->buf, this->bufsize + FF_INPUT_BUFFER_PADDING_SIZE);
   }
 }
 
@@ -355,6 +355,10 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
     if (buf->decoder_flags & BUF_FLAG_FRAME_END)  { /* time to decode a frame */
 
       offset = 0;
+
+      /* pad input data */
+      memset(&this->buf[this->size], 0, FF_INPUT_BUFFER_PADDING_SIZE);
+
       while (this->size>0) {
         decode_buffer_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
 #if AVAUDIO > 2
