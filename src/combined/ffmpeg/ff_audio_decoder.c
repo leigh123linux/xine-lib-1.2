@@ -128,10 +128,9 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
   int out;
   audio_buffer_t *audio_buffer;
   int bytes_to_send;
-  unsigned int codec_type = buf->type & 0xFFFF0000;
+  unsigned int codec_type = buf->type & (BUF_MAJOR_MASK | BUF_DECODER_MASK);
 
-  if ( (buf->decoder_flags & BUF_FLAG_HEADER) &&
-      !(buf->decoder_flags & BUF_FLAG_SPECIAL) ) {
+  if ( (buf->decoder_flags & (BUF_FLAG_HEADER | BUF_FLAG_SPECIAL)) == BUF_FLAG_HEADER ) {
 
     /* accumulate init data */
     ff_audio_ensure_buffer_size(this, this->size + buf->size);
