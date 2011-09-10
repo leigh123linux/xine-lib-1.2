@@ -1274,7 +1274,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
 
   if (!this->decoder_ok) {
     if (this->decoder_init_mode) {
-      int codec_type = buf->type & 0xFFFF0000;
+      int codec_type = buf->type & (BUF_MAJOR_MASK | BUF_DECODER_MASK);
 
       if (!ff_check_extradata(this, codec_type, buf))
 	return;
