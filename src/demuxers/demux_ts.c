@@ -990,10 +990,8 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
 
       switch (m->type & BUF_MAJOR_MASK) {
       case BUF_SPU_BASE:
-        if( (m->buf->type & 0xffff0000) == BUF_SPU_DVD ) {
-          m->buf->decoder_flags |= BUF_FLAG_SPECIAL;
-          m->buf->decoder_info[1] = BUF_SPECIAL_SPU_DVD_SUBTYPE;
-          m->buf->decoder_info[2] = SPU_DVD_SUBTYPE_PACKAGE;
+        if( (m->buf->type & (BUF_MAJOR_MASK | BUF_DECODER_MASK)) == BUF_SPU_DVB ) {
+            /* TODO: DVBSUB handling needed? */
         }
         break;
 
