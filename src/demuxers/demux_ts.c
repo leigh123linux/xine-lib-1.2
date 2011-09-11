@@ -646,7 +646,7 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
    */
   program_count = 0;
   for (program = pkt + 13;
-       program < pkt + 13 + section_length - 9;
+       (program < pkt + 13 + section_length - 9) && (program_count < MAX_PMTS);
        program += 4) {
     program_number = ((unsigned int)program[0] << 8) | program[1];
     pmt_pid = (((unsigned int)program[2] & 0x1f) << 8) | program[3];
@@ -658,18 +658,14 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
       continue;
 
     /*
-     * If we have yet to learn our program number, then learn it,
-     * use this loop to eventually add support for dynamically changing
-     * PATs.
+     * Add the program number to the table if we haven't already
+     * seen it. The order of the program numbers is assumed not
+     * to change between otherwise identical PATs.
      */
-    program_count = 0;
-
-    while ((this->program_number[program_count] != INVALID_PROGRAM) &&
-           (this->program_number[program_count] != program_number)  &&
-           (program_count+1 < MAX_PMTS ) ) {
-      program_count++;
+    if (this->program_number[program_count] != program_number) {
+      this->program_number[program_count] = program_number;
+      this->pmt_pid[program_count] = INVALID_PID;
     }
-    this->program_number[program_count] = program_number;
 
     /* force PMT reparsing when pmt_pid changes */
     if (this->pmt_pid[program_count] != pmt_pid) {
@@ -693,6 +689,14 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
               this->program_number[program_count],
               this->pmt_pid[program_count]);
 #endif
+
+    ++program_count;
+  }
+
+  /* Add "end of table" markers. */
+  if (program_count < MAX_PMTS) {
+    this->program_number[program_count] = INVALID_PROGRAM;
+    this->pmt_pid[program_count] = INVALID_PID;
   }
 }
 
