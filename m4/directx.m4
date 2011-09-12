@@ -28,7 +28,7 @@ ac_save_CPPFLAGS="$CPPFLAGS"
 ac_save_LIBS="$LIBS"
 CPPFLAGS="$CPPFLAGS $DIRECTX_CPPFLAGS"
 LIBS="$LIBS  $DIRECTX_VIDEO_LIBS $DIRECTX_AUDIO_LIBS"
-AC_COMPILE_IFELSE(
+AC_COMPILE_IFELSE([AC_LANG_SOURCE(
   [
 #include <stddef.h>
 
@@ -42,7 +42,7 @@ int main() {
 
   return 0;
 }
-  ],
+  ])],
   [have_directx=yes
    AC_DEFINE(HAVE_DIRECTX,1,[Define this if you have DirectX])],,)
 CPPFLAGS=$ac_save_CPPFLAGS
