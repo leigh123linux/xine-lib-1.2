@@ -23,7 +23,7 @@ AC_DEFUN([AM_DL], [
     ac_save_LIBS="$LIBS"
     CPPFLAGS="-I${srcdir}/win32/include $CPPFLAGS"
     LIBS="$LIBS -lkernel32"
-    AC_COMPILE_IFELSE([
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #include <stddef.h>
 #include <dlfcn.h>
 
@@ -31,7 +31,7 @@ int main() {
   dlopen(NULL, 0);
   return 0;
 }
-],
+])],
       [DYNAMIC_LD_LIBS=-lkernel32
        have_dl=yes
        AC_MSG_RESULT(yes)],
