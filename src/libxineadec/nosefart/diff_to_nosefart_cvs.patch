@@ -1,0 +1,325 @@
+--- a/src/libxineadec/nosefart/log.h	2010-11-28 19:57:41.000000000 +0100
++++ b/src/libxineadec/nosefart/log.h	2010-10-10 21:03:43.000000000 +0200
+@@ -27,11 +27,12 @@
+ #define _LOG_H_
+ 
+ #include <stdio.h>
++#include "attributes.h"
+ 
+ extern int log_init(void);
+ extern void log_shutdown(void);
+ extern void log_print(const char *string);
+-extern void log_printf(const char *format, ...);
++extern void log_printf(const char *format, ...) XINE_FORMAT_PRINTF(1, 2);
+ 
+ #endif /* _LOG_H_ */
+ 
+diff -r fe4287194cac src/libxineadec/nosefart/nes_apu.h
+--- /src/libxineadec/nosefart/nes_apu.h	2007-12-14 05:46:22.000000000 +0100
++++ /src/libxineadec/nosefart/nes_apu.h	2010-11-28 20:13:05.000000000 +0100
+@@ -289,6 +289,7 @@ extern void apu_write(uint32 address, ui
+ /* for visualization */
+ extern void apu_getpcmdata(void **data, int *num_samples, int *sample_bits);
+ 
++extern void apu_setcontext(apu_t *src_apu);
+ 
+ #ifdef __cplusplus
+ }
+diff -r fe4287194cac src/libxineadec/nosefart/fmopl.c
+--- a/src/libxineadec/nosefart/fmopl.c	Sun Nov 28 20:32:56 2010 +0100
++++ b/src/libxineadec/nosefart/fmopl.c	Sun Nov 28 20:22:51 2010 +0100
+@@ -18,9 +18,9 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <stdarg.h>
++#include <math.h>
+ //#include "driver.h"		/* use M.A.M.E. */
+ #include "fmopl.h"
+-#include <math.h>
+ 
+ /* MPC - hacks */
+ #include "types.h"
+@@ -218,19 +218,6 @@ static INT32 feedback2;		/* connect for 
+ 
+ /* --------------------- subroutines  --------------------- */
+ 
+-/* There's no good reason why I should have to do this, but using "pow"
+-(the POSIX fuction) causes it to not compile on my machine 
+---Matthew Strait */
+-double mypow(float base, int power)
+-{
+-	int ans = 1, k;
+-	
+-	for( k = 0; k < power; k++)
+-		ans *= (int)base;
+-	
+-	return ans;
+-}
+-
+ INLINE int Limit( int val, int max, int min ) {
+ 	if ( val > max )
+ 		val = max;
+@@ -628,7 +615,7 @@ static int OPLOpenTable( void )
+ 	}
+ 	/* make total level table */
+ 	for (t = 0;t < EG_ENT-1 ;t++){
+-		rate = ((1<<TL_BITS)-1)/mypow(10,EG_STEP*t/20);	/* dB -> voltage */
++		rate = ((1<<TL_BITS)-1)/pow(10,EG_STEP*t/20);	/* dB -> voltage */
+ 		TL_TABLE[       t] =  (int)rate;
+ 		TL_TABLE[TL_MAX+t] = -TL_TABLE[t];
+ /*		LOG(LOG_INF,("TotalLevel(%3d) = %x\n",t,TL_TABLE[t]));*/
+@@ -663,7 +650,7 @@ static int OPLOpenTable( void )
+ 	for (i=0; i<EG_ENT; i++)
+ 	{
+ 		/* ATTACK curve */
+-		pom = (float)mypow( ((double)(EG_ENT-1-i)/EG_ENT) , 8 ) * EG_ENT;
++		pom = pow( ((double)(EG_ENT-1-i)/EG_ENT) , 8 ) * EG_ENT;
+ 		/* if( pom >= EG_ENT ) pom = EG_ENT-1; */
+ 		ENV_CURVE[i] = (int)pom;
+ 		/* DECAY ,RELEASE curve */
+@@ -1334,5 +1321,3 @@ int OPLTimerOver(FM_OPL *OPL,int c)
+ 	if (OPL->TimerHandler) (OPL->TimerHandler)(OPL->TimerParam+c,(double)OPL->T[c]*OPL->TimerBase);
+ 	return OPL->status>>7;
+ }
+-
+-
+diff -r d92191344055 src/libxineadec/nosefart/memguard.c
+--- a/src/libxineadec/nosefart/memguard.c	Sun Nov 28 20:42:19 2010 +0100
++++ b/src/libxineadec/nosefart/memguard.c	Sun Nov 28 20:47:08 2010 +0100
+@@ -33,6 +33,15 @@
+ 
+ #include <string.h>
+ #include <stdlib.h>
++
++#if HAVE_INTTYPES_H
++# include <inttypes.h>
++#else
++# if HAVE_STDINT_H
++#  include <stdint.h>
++# endif
++#endif
++
+ #include "memguard.h"
+ #include "log.h"
+ 
+@@ -271,7 +280,7 @@
+    char fail[256];
+ 
+    if (NULL == data || NULL == *data
+-       || 0xFFFFFFFF == (uint32) *data || 0xFFFFFFFF == (uint32) data)
++       || ((uintptr_t)-1) == (uintptr_t) *data || ((uintptr_t)-1) == (uintptr_t) data)
+    {
+ #ifdef NOFRENDO_DEBUG
+       sprintf(fail, "free: attempted to free NULL pointer at line %d of %s\n",
+diff -r 075029931740 src/libxineadec/nosefart/osd.h
+--- a/src/libxineadec/nosefart/osd.h	Sun Nov 28 21:04:01 2010 +0100
++++ b/src/libxineadec/nosefart/osd.h	Sun Nov 28 15:12:02 2010 +0100
+@@ -27,7 +27,7 @@
+ #define _OSD_H_
+ 
+ 
+-#ifdef __GNUC__
++#if defined(__GNUC__) || defined(__ICC)
+ #define  __PACKED__  __attribute__ ((packed))
+ #define  PATH_SEP    '/'
+ #ifdef __DJGPP__
+diff -r 075029931740 src/libxineadec/nosefart/types.h
+--- a/src/libxineadec/nosefart/types.h	2010-11-28 21:11:10.000000000 +0100
++++ b/src/libxineadec/nosefart/types.h	2010-11-28 21:07:45.000000000 +0100
+@@ -23,8 +23,12 @@
+ ** $Id: types.h,v 1.4 2004/08/27 19:33:37 valtri Exp $
+ */
+ 
+-#ifndef _TYPES_H_
+-#define _TYPES_H_
++#ifndef _NOSEFART_TYPES_H_
++#define _NOSEFART_TYPES_H_
++
++#ifdef HAVE_CONFIG_H
++#include "config.h"
++#endif
+ 
+ /* Define this if running on little-endian (x86) systems */
+ 
+@@ -95,7 +99,7 @@
+ #define  ASSERT_MSG(msg)
+ #endif
+ 
+-#endif /* _TYPES_H_ */
++#endif /* _NOSEFART_TYPES_H_ */
+ 
+ /*
+ ** $Log: types.h,v $
+diff -r 075029931740 src/libxineadec/nosefart/nes6502.h
+--- a/src/libxineadec/nosefart/nes6502.h	Sun Nov 28 15:12:02 2010 +0100
++++ b/src/libxineadec/nosefart/nes6502.h	Sun Nov 28 21:18:28 2010 +0100
+@@ -23,6 +23,9 @@
+ ** $Id: nes6502.h,v 1.2 2003/12/05 15:55:01 f1rmb Exp $
+ */
+ 
++/* straitm */
++#include "types.h"
++
+ /* NOTE: 16-bit addresses avoided like the plague: use 32-bit values
+ **       wherever humanly possible
+ */
+diff -r 075029931740 src/libxineadec/nosefart/nsf.c
+--- a/src/libxineadec/nosefart/nsf.c	2007-12-14 05:46:22.000000000 +0100
++++ b/src/libxineadec/nosefart/nsf.c	2010-11-28 21:31:22.000000000 +0100
+@@ -693,7 +693,7 @@ nsf_t * nsf_load_extended(struct nsf_loa
+ #if 0
+   if (length <= NSF_HEADER_SIZE) {
+     log_printf("nsf : [%s] not an NSF format file\n",
+-	       loader->fname(loader));
++	       loader->fname);
+     goto error;
+   }
+ #endif
+@@ -701,14 +701,14 @@ nsf_t * nsf_load_extended(struct nsf_loa
+   /* Read magic */
+   if (loader->read(loader, id, 5)) {
+     log_printf("nsf : [%s] error reading magic number\n",
+-	       loader->fname(loader));
++	       loader->fname);
+     goto error;
+   }
+ 
+   /* Check magic */
+   if (memcmp(id, NSF_MAGIC, 5)) {
+     log_printf("nsf : [%s] is not an NSF format file\n",
+-	       loader->fname(loader));
++	       loader->fname);
+     goto error;
+   }
+ 
+@@ -719,7 +719,7 @@ nsf_t * nsf_load_extended(struct nsf_loa
+   
+   if (NULL == temp_nsf) {
+     log_printf("nsf : [%s] error allocating nsf header\n",
+-	       loader->fname(loader));
++	       loader->fname);
+     goto error;
+   }
+   /* $$$ ben : safety net */
+@@ -730,7 +730,7 @@ nsf_t * nsf_load_extended(struct nsf_loa
+   /* Read header (without MAGIC) */
+   if (loader->read(loader, (int8 *)temp_nsf+5, NSF_HEADER_SIZE - 5)) {
+     log_printf("nsf : [%s] error reading nsf header\n",
+-	       loader->fname(loader));
++	       loader->fname);
+     goto error;
+   }
+ 
+@@ -763,7 +763,7 @@ nsf_t * nsf_load_extended(struct nsf_loa
+ 
+   if (temp_nsf->length <= 0) {
+     log_printf("nsf : [%s] not an NSF format file (missing data)\n",
+-	       loader->fname(loader));
++	       loader->fname);
+     goto error;
+   }
+ 
+@@ -778,14 +778,14 @@ nsf_t * nsf_load_extended(struct nsf_loa
+   }
+   if (NULL == temp_nsf->data) {
+     log_printf("nsf : [%s] error allocating nsf data\n",
+-	       loader->fname(loader));
++	       loader->fname);
+     goto error;
+   }
+ 
+   /* Read data */
+   if (loader->read(loader, temp_nsf->data, temp_nsf->length)) {
+     log_printf("nsf : [%s] error reading NSF data\n",
+-	       loader->fname(loader));
++	       loader->fname);
+     goto error;
+   }
+ 
+@@ -805,7 +805,7 @@ nsf_t * nsf_load_extended(struct nsf_loa
+ 
+     if (size < sizeof(nsf_file_ext)) {
+       log_printf("nsf : [%s] corrupt extension size (%d)\n",
+-		 loader->fname(loader), size);
++		 loader->fname, size);
+       /* Not a fatal error here. Just skip extension loading. */
+       break;
+     }
+@@ -827,7 +827,7 @@ nsf_t * nsf_load_extended(struct nsf_loa
+ 
+       if (loader->read(loader, tmp_time, size)) {
+ 	log_printf("nsf : [%s] missing extension data\n",
+-		   loader->fname(loader));
++		   loader->fname);
+ 	/* Not a fatal error here. Just skip extension loading. */
+ 	break;
+       }
+@@ -835,7 +835,7 @@ nsf_t * nsf_load_extended(struct nsf_loa
+       temp_nsf->song_frames = malloc(sizeof(*temp_nsf->song_frames) * songs);
+       if (!temp_nsf->song_frames) {
+ 	log_printf("nsf : [%s] extension alloc failed\n",
+-		   loader->fname(loader));
++		   loader->fname);
+ 	/* Not a fatal error here. Just skip extension loading. */
+ 	break;
+       }
+@@ -858,7 +858,7 @@ nsf_t * nsf_load_extended(struct nsf_loa
+       }
+     } else if (loader->skip(loader, size)) {
+ 	log_printf("nsf : [%s] extension skip failed\n",
+-		   loader->fname(loader));
++		   loader->fname);
+ 	/* Not a fatal error here. Just skip extension loading. */
+ 	break;
+     }
+diff -r 8bf4ad557dac src/libxineadec/nosefart/nsf.h
+--- a/src/libxineadec/nosefart/nsf.h	Tue Nov 30 23:30:19 2010 +0100
++++ b/src/libxineadec/nosefart/nsf.h	Tue Nov 30 23:38:15 2010 +0100
+@@ -67,22 +67,22 @@
+ typedef struct nsf_s
+ {
+    /* NESM header */
+-   uint8  id[5]               __PACKED__; /* NESM\x1A */
+-   uint8  version             __PACKED__; /* spec version */
+-   uint8  num_songs           __PACKED__; /* total num songs */
+-   uint8  start_song          __PACKED__; /* first song */
+-   uint16 load_addr           __PACKED__; /* loc to load code */
+-   uint16 init_addr           __PACKED__; /* init call address */
+-   uint16 play_addr           __PACKED__; /* play call address */
+-   uint8  song_name[32]       __PACKED__; /* name of song */
+-   uint8  artist_name[32]     __PACKED__; /* artist name */
+-   uint8  copyright[32]       __PACKED__; /* copyright info */
+-   uint16 ntsc_speed          __PACKED__; /* playback speed (if NTSC) */
+-   uint8  bankswitch_info[8]  __PACKED__; /* initial code banking */
+-   uint16 pal_speed           __PACKED__; /* playback speed (if PAL) */
+-   uint8  pal_ntsc_bits       __PACKED__; /* NTSC/PAL determination bits */
+-   uint8  ext_sound_type      __PACKED__; /* type of external sound gen. */
+-   uint8  reserved[4]         __PACKED__; /* reserved */
++   uint8  id[5];              /* NESM\x1A */
++   uint8  version;            /* spec version */
++   uint8  num_songs;          /* total num songs */
++   uint8  start_song;         /* first song */
++   uint16 load_addr;          /* loc to load code */
++   uint16 init_addr;          /* init call address */
++   uint16 play_addr;          /* play call address */
++   uint8  song_name[32];      /* name of song */
++   uint8  artist_name[32];    /* artist name */
++   uint8  copyright[32];      /* copyright info */
++   uint16 ntsc_speed;         /* playback speed (if NTSC) */
++   uint8  bankswitch_info[8]; /* initial code banking */
++   uint16 pal_speed;          /* playback speed (if PAL) */
++   uint8  pal_ntsc_bits;      /* NTSC/PAL determination bits */
++   uint8  ext_sound_type;     /* type of external sound gen. */
++   uint8  reserved[4];        /* reserved */
+ 
+    /* things that the NSF player needs */
+    uint8  *data;              /* actual NSF data */
+@@ -105,7 +105,7 @@
+ 
+    /* our main processing routine, calls all external mixing routines */
+    void (*process)(void *buffer, int num_samples);
+-} nsf_t;
++} __PACKED__ nsf_t;
+ 
+ /* $$$ ben : Generic loader struct */
+ struct nsf_loader_t {
