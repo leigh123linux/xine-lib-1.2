@@ -178,8 +178,6 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
         return;
       }
 
-      this->context = avcodec_alloc_context();
-
       if(buf->decoder_flags & BUF_FLAG_STDHEADER) {
         this->audio_sample_rate = buf->decoder_info[1];
         this->audio_channels    = buf->decoder_info[3];
@@ -535,6 +533,8 @@ static audio_decoder_t *ff_audio_open_plugin (audio_decoder_class_t *class_gen, 
   this->decoder_ok = 0;
 
   ff_audio_ensure_buffer_size(this, AUDIOBUFSIZE);
+
+  this->context = avcodec_alloc_context();
 
   return &this->audio_decoder;
 }
