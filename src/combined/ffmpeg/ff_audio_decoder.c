@@ -299,7 +299,7 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 #endif
 
     if( !this->decoder_ok ) {
-      if ( ! this->context || ! this->codec ) {
+      if ( !this->codec ) {
         xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
 		_("ffmpeg_audio_dec: trying to open null codec\n"));
 	_x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_HANDLED, 0);
@@ -475,7 +475,7 @@ static void ff_audio_reset (audio_decoder_t *this_gen) {
   this->size = 0;
 
   /* try to reset the wma decoder */
-  if( this->context && this->decoder_ok ) {
+  if( this->decoder_ok ) {
     pthread_mutex_lock (&ffmpeg_lock);
     avcodec_close (this->context);
     if (avcodec_open (this->context, this->codec) < 0)
