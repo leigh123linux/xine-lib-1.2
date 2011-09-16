@@ -1095,6 +1095,11 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
 
   lprintf("handle_mpeg12_buffer\n");
 
+  if (!this->is_mpeg12) {
+    /* initialize mpeg parser */
+    ff_init_mpeg12_mode(this);
+  }
+
   while ((size > 0) || (flush == 1)) {
 
     uint8_t *current;
@@ -1617,7 +1622,7 @@ static void ff_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
       if (buf->pts)
 	this->pts = buf->pts;
 
-      if (this->is_mpeg12) {
+      if ((buf->type & 0xFFFF0000) == BUF_VIDEO_MPEG) {
 	ff_handle_mpeg12_buffer(this, buf);
       } else {
 	ff_handle_buffer(this, buf);
