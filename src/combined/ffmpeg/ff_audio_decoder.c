@@ -109,13 +109,25 @@ static void *realloc16 (void *m, size_t s) {
 }
 
 
- static void ff_audio_ensure_buffer_size(ff_audio_decoder_t *this, int size) {
+static void ff_audio_ensure_buffer_size(ff_audio_decoder_t *this, int size) {
   if (size > this->bufsize) {
     this->bufsize = size + size / 2;
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             _("ffmpeg_audio_dec: increasing buffer to %d to avoid overflow.\n"),
             this->bufsize);
     this->buf = realloc16 (this->buf, this->bufsize + FF_INPUT_BUFFER_PADDING_SIZE);
+  }
+}
+
+static void ff_audio_handle_special_buffer(ff_audio_decoder_t *this, buf_element_t *buf) {
+
+  if (buf->decoder_info[1] == BUF_SPECIAL_STSD_ATOM) {
+
+    this->context->extradata_size = buf->decoder_info[2];
+    this->context->extradata = malloc(buf->decoder_info[2] +
+                                      FF_INPUT_BUFFER_PADDING_SIZE);
+    memcpy(this->context->extradata, buf->decoder_info_ptr[2],
+           buf->decoder_info[2]);
   }
 }
 
@@ -130,7 +142,12 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
   int bytes_to_send;
   unsigned int codec_type = buf->type & (BUF_MAJOR_MASK | BUF_DECODER_MASK);
 
-  if ( (buf->decoder_flags & (BUF_FLAG_HEADER | BUF_FLAG_SPECIAL)) == BUF_FLAG_HEADER ) {
+  if (buf->decoder_flags & BUF_FLAG_SPECIAL) {
+    ff_audio_handle_special_buffer(this, buf);
+    return;
+  }
+
+  if (buf->decoder_flags & BUF_FLAG_HEADER) {
 
     /* accumulate init data */
     ff_audio_ensure_buffer_size(this, this->size + buf->size);
@@ -275,19 +292,10 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
       this->size = 0;
 
       this->decode_buffer = malloc16 (AVCODEC_MAX_AUDIO_FRAME_SIZE);
-
-      return;
     }
-  } else if ((buf->decoder_flags & BUF_FLAG_SPECIAL) &&
-             (buf->decoder_info[1] == BUF_SPECIAL_STSD_ATOM)) {
 
-    this->context->extradata_size = buf->decoder_info[2];
-    this->context->extradata = malloc(buf->decoder_info[2] +
-				      FF_INPUT_BUFFER_PADDING_SIZE);
-    memcpy(this->context->extradata, buf->decoder_info_ptr[2],
-      buf->decoder_info[2]);
+  } else {
 
-  } else if (!(buf->decoder_flags & BUF_FLAG_SPECIAL)) {
 #if AVAUDIO > 2
     AVPacket avpkt;
 #endif
