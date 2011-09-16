@@ -85,7 +85,7 @@ typedef struct ff_audio_decoder_s {
 #define free16(p) realloc16(p,0)
 
 static void *realloc16 (void *m, size_t s) {
-  unsigned int diff, diff2;
+  unsigned long diff, diff2;
   unsigned char *p = m, *q;
   if (p) {
     diff = p[-1];
@@ -95,13 +95,13 @@ static void *realloc16 (void *m, size_t s) {
     }
     q = realloc (p - diff, s + 16);
     if (!q) return (q);
-    diff2 = 16 - ((unsigned int)q & 15);
+    diff2 = 16 - ((unsigned long)q & 15);
     if (diff2 != diff) memmove (q + diff2, q + diff, s);
   } else {
     if (s == 0) return (NULL);
     q = malloc (s + 16);
     if (!q) return (q);
-    diff2 = 16 - ((unsigned int)q & 15);
+    diff2 = 16 - ((unsigned long)q & 15);
   }
   q += diff2;
   q[-1] = diff2;
