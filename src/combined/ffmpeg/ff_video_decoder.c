@@ -905,6 +905,16 @@ static int ff_check_extradata(ff_video_decoder_t *this, unsigned int codec_type,
   return 1;
 }
 
+static void ff_init_mpeg12_mode(ff_video_decoder_t *this)
+{
+  this->is_mpeg12 = 1;
+  if ( this->mpeg_parser == NULL ) {
+    this->mpeg_parser = calloc(1, sizeof(mpeg_parser_t));
+    mpeg_parser_init(this->mpeg_parser);
+    this->decoder_init_mode = 0;
+  }
+}
+
 static void ff_handle_preview_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
   int codec_type;
 
@@ -912,12 +922,7 @@ static void ff_handle_preview_buffer (ff_video_decoder_t *this, buf_element_t *b
 
   codec_type = buf->type & 0xFFFF0000;
   if (codec_type == BUF_VIDEO_MPEG) {
-    this->is_mpeg12 = 1;
-    if ( this->mpeg_parser == NULL ) {
-      this->mpeg_parser = calloc(1, sizeof(mpeg_parser_t));
-      mpeg_parser_init(this->mpeg_parser);
-      this->decoder_init_mode = 0;
-    }
+    ff_init_mpeg12_mode(this);
   }
 
   if (this->decoder_init_mode && !this->is_mpeg12) {
