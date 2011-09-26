@@ -1801,7 +1801,7 @@ static int64_t demux_ts_adaptation_field_parse(uint8_t *data,
   uint32_t    random_access_indicator=0;
   uint32_t    elementary_stream_priority_indicator=0;
   uint32_t    PCR_flag=0;
-  int64_t     PCR=0;
+  int64_t     PCR=-1;
   uint32_t    EPCR=0;
   uint32_t    OPCR_flag=0;
   uint32_t    OPCR=0;
@@ -1838,7 +1838,7 @@ static int64_t demux_ts_adaptation_field_parse(uint8_t *data,
 #endif
   if(PCR_flag) {
     if (adaptation_field_length < offset + 6)
-      return 0;
+      return -1;
 
     PCR  = (((int64_t) data[offset]) & 0xFF) << 25;
     PCR += (int64_t) ((data[offset+1] & 0xFF) << 17);
