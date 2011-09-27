@@ -270,7 +270,6 @@ typedef struct {
   int64_t          pts;
   buf_element_t   *buf;
   unsigned int     counter;
-  unsigned int     numPreview;
   uint16_t         descriptor_tag; /* +0x100 for PES stream IDs (no available TS descriptor tag?) */
   int              corrupted_pes;
   uint32_t         buffered_bytes;
@@ -952,15 +951,6 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   return 0 ;
 }
 
-
-/*
- * Track how many of these types of packets we have seen in this stream.
- */
-static inline unsigned get_preview_frame_number(unsigned *numPreview, unsigned limit) {
-  unsigned preview = *numPreview;
-  return (preview < limit) ? ++(*numPreview) : preview;
-}
-
 /*
  *  buffer arriving pes data
  */
@@ -992,44 +982,11 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
 
   if (pus) { /* new PES packet */
     if (m->buffered_bytes) {
-      unsigned previewLimit = 0;
 
       m->buf->content = m->buf->mem;
       m->buf->size = m->buffered_bytes;
       m->buf->type = m->type;
-
-      switch (m->type & BUF_MAJOR_MASK) {
-      case BUF_SPU_BASE:
-        if( (m->buf->type & (BUF_MAJOR_MASK | BUF_DECODER_MASK)) == BUF_SPU_DVB ) {
-            /* TODO: DVBSUB handling needed? */
-        }
-        break;
-
-      case BUF_VIDEO_BASE:
-        previewLimit = 5;
-        break;
-
-      case BUF_AUDIO_BASE:
-        previewLimit = 2;
-        break;
-
-      default:
-        break;
-      }
-
-      if (previewLimit != 0) {
-        unsigned numPreview;
-
-        numPreview = get_preview_frame_number(&m->numPreview, previewLimit);
-
-        if (numPreview == 1)
-          m->buf->decoder_flags = BUF_FLAG_HEADER | BUF_FLAG_FRAME_END;
-        else if (numPreview < previewLimit)
-          m->buf->decoder_flags = BUF_FLAG_PREVIEW;
-        else
-          m->buf->decoder_flags |= BUF_FLAG_FRAME_END;
-      }
-
+      m->buf->decoder_flags |= BUF_FLAG_FRAME_END;
       m->buf->pts = m->pts;
       m->buf->decoder_info[0] = 1;
 
@@ -1110,7 +1067,6 @@ static void demux_ts_pes_new(demux_ts_t*this,
   if (m->buf != NULL) m->buf->free_buffer(m->buf);
   m->buf = NULL;
   m->counter = INVALID_CC;
-  m->numPreview = 0;
   m->descriptor_tag = descriptor;
   m->corrupted_pes = 1;
   m->buffered_bytes = 0;
