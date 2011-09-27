@@ -167,6 +167,30 @@ static void ff_audio_init_codec(ff_audio_decoder_t *this, unsigned int codec_typ
   this->context->codec_tag   = _x_stream_info_get(this->stream, XINE_STREAM_INFO_AUDIO_FOURCC);
 }
 
+static int ff_audio_open_codec(ff_audio_decoder_t *this, unsigned int codec_type) {
+
+  if ( !this->codec ) {
+    xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
+             _("ffmpeg_audio_dec: trying to open null codec\n"));
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_HANDLED, 0);
+    return -1;
+  }
+
+  pthread_mutex_lock (&ffmpeg_lock);
+  if (avcodec_open (this->context, this->codec) < 0) {
+    pthread_mutex_unlock (&ffmpeg_lock);
+    xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
+             _("ffmpeg_audio_dec: couldn't open decoder\n"));
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_HANDLED, 0);
+    return -1;
+  }
+  pthread_mutex_unlock (&ffmpeg_lock);
+
+  this->decoder_ok = 1;
+
+  return 1;
+}
+
 static void ff_handle_header_buffer(ff_audio_decoder_t *this, buf_element_t *buf)
 {
   unsigned int codec_type = buf->type & (BUF_MAJOR_MASK | BUF_DECODER_MASK);
@@ -310,23 +334,9 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 #endif
 
     if( !this->decoder_ok ) {
-      if ( !this->codec ) {
-        xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-		_("ffmpeg_audio_dec: trying to open null codec\n"));
-	_x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_HANDLED, 0);
+      if (ff_audio_open_codec(this, codec_type) < 0) {
 	return;
       }
-
-      pthread_mutex_lock (&ffmpeg_lock);
-      if (avcodec_open (this->context, this->codec) < 0) {
-	pthread_mutex_unlock (&ffmpeg_lock);
-        xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-                 _("ffmpeg_audio_dec: couldn't open decoder\n"));
-        _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_HANDLED, 0);
-        return;
-      }
-      pthread_mutex_unlock (&ffmpeg_lock);
-      this->decoder_ok = 1;
     }
 
     if( buf->decoder_flags & BUF_FLAG_PREVIEW )
