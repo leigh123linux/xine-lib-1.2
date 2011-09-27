@@ -288,8 +288,6 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
       this->context->codec_tag   = _x_stream_info_get(this->stream, XINE_STREAM_INFO_AUDIO_FOURCC);
 
       this->size = 0;
-
-      this->decode_buffer = malloc16 (AVCODEC_MAX_AUDIO_FRAME_SIZE);
     }
 
   } else {
@@ -535,6 +533,7 @@ static audio_decoder_t *ff_audio_open_plugin (audio_decoder_class_t *class_gen, 
   ff_audio_ensure_buffer_size(this, AUDIOBUFSIZE);
 
   this->context = avcodec_alloc_context();
+  this->decode_buffer = malloc16 (AVCODEC_MAX_AUDIO_FRAME_SIZE);
 
   return &this->audio_decoder;
 }
