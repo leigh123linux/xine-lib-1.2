@@ -3072,6 +3072,7 @@ echo "     - XA ADPCM      - Game DPCM/ADPCM"
 echo "     - Mace 3:13     - Mace 6:1"
 echo "     - FLAC"
 echo "     - E-AC-3"
+echo "     - AAC LATM"
 if test "x$enable_nosefart" != "xno"; then
   echo "   - Nosefart (NSF)"
 fi
