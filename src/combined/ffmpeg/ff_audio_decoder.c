@@ -131,6 +131,153 @@ static void ff_audio_handle_special_buffer(ff_audio_decoder_t *this, buf_element
   }
 }
 
+static void ff_handle_header_buffer(ff_audio_decoder_t *this, buf_element_t *buf)
+{
+  unsigned int codec_type = buf->type & (BUF_MAJOR_MASK | BUF_DECODER_MASK);
+  size_t i;
+  xine_waveformatex *audio_header;
+
+  /* accumulate init data */
+  ff_audio_ensure_buffer_size(this, this->size + buf->size);
+  xine_fast_memcpy(this->buf + this->size, buf->content, buf->size);
+  this->size += buf->size;
+
+  if (!(buf->decoder_flags & BUF_FLAG_FRAME_END)) {
+    return;
+  }
+
+  this->codec = NULL;
+
+  for(i = 0; i < sizeof(ff_audio_lookup)/sizeof(ff_codec_t); i++)
+    if(ff_audio_lookup[i].type == codec_type) {
+      pthread_mutex_lock (&ffmpeg_lock);
+      this->codec = avcodec_find_decoder(ff_audio_lookup[i].id);
+      pthread_mutex_unlock (&ffmpeg_lock);
+      _x_meta_info_set(this->stream, XINE_META_INFO_AUDIOCODEC,
+                       ff_audio_lookup[i].name);
+      break;
+    }
+
+  if (!this->codec) {
+    xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
+             _("ffmpeg_audio_dec: couldn't find ffmpeg decoder for buf type 0x%X\n"),
+             codec_type);
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_HANDLED, 0);
+    return;
+  }
+
+  if(buf->decoder_flags & BUF_FLAG_STDHEADER) {
+    this->audio_sample_rate = buf->decoder_info[1];
+    this->audio_channels    = buf->decoder_info[3];
+
+    if(this->size) {
+      audio_header = (xine_waveformatex *)this->buf;
+
+      this->context->block_align = audio_header->nBlockAlign;
+      this->context->bit_rate    = audio_header->nAvgBytesPerSec * 8;
+
+      if(audio_header->cbSize > 0) {
+        this->context->extradata = malloc(audio_header->cbSize);
+        this->context->extradata_size = audio_header->cbSize;
+        memcpy( this->context->extradata,
+                (uint8_t *)audio_header + sizeof(xine_waveformatex),
+                audio_header->cbSize );
+      }
+    }
+  } else {
+    short *ptr;
+
+    switch(codec_type) {
+    case BUF_AUDIO_14_4:
+      this->audio_sample_rate = 8000;
+      this->audio_channels    = 1;
+
+      this->context->block_align = 240;
+      break;
+    case BUF_AUDIO_28_8:
+      this->audio_sample_rate = _X_BE_16(&this->buf[0x30]);
+      this->audio_channels    = this->buf[0x37];
+      /* this->audio_bits = buf->content[0x35] */
+
+      this->context->block_align = _X_BE_32(&this->buf[0x18]);
+
+      this->context->extradata_size = 5*sizeof(short);
+      this->context->extradata      = malloc(this->context->extradata_size);
+
+      ptr = (short *) this->context->extradata;
+
+      ptr[0] = _X_BE_16(&this->buf[0x2C]); /* subpacket size */
+      ptr[1] = _X_BE_16(&this->buf[0x28]); /* subpacket height */
+      ptr[2] = _X_BE_16(&this->buf[0x16]); /* subpacket flavour */
+      ptr[3] = _X_BE_32(&this->buf[0x18]); /* coded frame size */
+      ptr[4] = 0;                          /* codec's data length  */
+
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              "ffmpeg_audio_dec: 28_8 audio channels %d bits %d sample rate %d block align %d\n",
+              this->audio_channels, this->audio_bits, this->audio_sample_rate,
+              this->context->block_align);
+      break;
+    case BUF_AUDIO_COOK:
+      {
+        int version;
+        int data_len;
+        int extradata;
+
+        version = _X_BE_16 (this->buf+4);
+        if (version == 4) {
+          this->audio_sample_rate = _X_BE_16 (this->buf+48);
+          this->audio_bits = _X_BE_16 (this->buf+52);
+          this->audio_channels = _X_BE_16 (this->buf+54);
+          data_len = _X_BE_32 (this->buf+67);
+          extradata = 71;
+        } else {
+          this->audio_sample_rate = _X_BE_16 (this->buf+54);
+          this->audio_bits = _X_BE_16 (this->buf+58);
+          this->audio_channels = _X_BE_16 (this->buf+60);
+          data_len = _X_BE_32 (this->buf+74);
+          extradata = 78;
+        }
+        this->context->block_align = _X_BE_16 (this->buf+44);
+
+        xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                "ffmpeg_audio_dec: cook audio channels %d bits %d sample rate %d block align %d\n",
+                this->audio_channels, this->audio_bits, this->audio_sample_rate,
+                this->context->block_align);
+
+        if (extradata + data_len > this->size)
+          break; /* abort early - extradata length is bad */
+        if (extradata > INT_MAX - data_len)
+          break;/*integer overflow*/
+
+        this->context->extradata_size = data_len;
+        this->context->extradata      = malloc(this->context->extradata_size +
+                                               FF_INPUT_BUFFER_PADDING_SIZE);
+        xine_fast_memcpy (this->context->extradata, this->buf + extradata,
+                          this->context->extradata_size);
+        break;
+      }
+    default:
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              "ffmpeg_audio_dec: unknown header with buf type 0x%X\n", codec_type);
+      break;
+    }
+  }
+
+  /* Current ffmpeg audio decoders usually use 16 bits/sample
+   * buf->decoder_info[2] can't be used as it doesn't refer to the output
+   * bits/sample for some codecs (e.g. MS ADPCM) */
+  this->audio_bits = 16;
+
+  this->context->bits_per_sample = this->audio_bits;
+  this->context->sample_rate = this->audio_sample_rate;
+  this->context->channels    = this->audio_channels;
+  this->context->codec_id    = this->codec->id;
+  this->context->codec_type  = this->codec->type;
+  this->context->codec_tag   = _x_stream_info_get(this->stream, XINE_STREAM_INFO_AUDIO_FOURCC);
+
+  this->size = 0;
+}
+
 static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
   ff_audio_decoder_t *this = (ff_audio_decoder_t *) this_gen;
@@ -148,147 +295,8 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
   }
 
   if (buf->decoder_flags & BUF_FLAG_HEADER) {
-
-    /* accumulate init data */
-    ff_audio_ensure_buffer_size(this, this->size + buf->size);
-    xine_fast_memcpy(this->buf + this->size, buf->content, buf->size);
-    this->size += buf->size;
-
-    if (buf->decoder_flags & BUF_FLAG_FRAME_END) {
-      size_t i;
-      xine_waveformatex *audio_header;
-
-      this->codec = NULL;
-
-      for(i = 0; i < sizeof(ff_audio_lookup)/sizeof(ff_codec_t); i++)
-        if(ff_audio_lookup[i].type == codec_type) {
-	  pthread_mutex_lock (&ffmpeg_lock);
-          this->codec = avcodec_find_decoder(ff_audio_lookup[i].id);
-	  pthread_mutex_unlock (&ffmpeg_lock);
-          _x_meta_info_set(this->stream, XINE_META_INFO_AUDIOCODEC,
-                           ff_audio_lookup[i].name);
-          break;
-        }
-
-      if (!this->codec) {
-        xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-                 _("ffmpeg_audio_dec: couldn't find ffmpeg decoder for buf type 0x%X\n"),
-                 codec_type);
-        _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_HANDLED, 0);
-        return;
-      }
-
-      if(buf->decoder_flags & BUF_FLAG_STDHEADER) {
-        this->audio_sample_rate = buf->decoder_info[1];
-        this->audio_channels    = buf->decoder_info[3];
-
-        if(this->size) {
-          audio_header = (xine_waveformatex *)this->buf;
-
-          this->context->block_align = audio_header->nBlockAlign;
-          this->context->bit_rate    = audio_header->nAvgBytesPerSec * 8;
-
-          if(audio_header->cbSize > 0) {
-            this->context->extradata = malloc(audio_header->cbSize);
-            this->context->extradata_size = audio_header->cbSize;
-            memcpy( this->context->extradata,
-                    (uint8_t *)audio_header + sizeof(xine_waveformatex),
-                    audio_header->cbSize );
-          }
-        }
-      } else {
-        short *ptr;
-
-        switch(codec_type) {
-          case BUF_AUDIO_14_4:
-            this->audio_sample_rate = 8000;
-            this->audio_channels    = 1;
-
-            this->context->block_align = 240;
-            break;
-          case BUF_AUDIO_28_8:
-            this->audio_sample_rate = _X_BE_16(&this->buf[0x30]);
-            this->audio_channels    = this->buf[0x37];
-            /* this->audio_bits = buf->content[0x35] */
-
-            this->context->block_align = _X_BE_32(&this->buf[0x18]);
-
-            this->context->extradata_size = 5*sizeof(short);
-            this->context->extradata      = malloc(this->context->extradata_size);
-
-            ptr = (short *) this->context->extradata;
-
-            ptr[0] = _X_BE_16(&this->buf[0x2C]); /* subpacket size */
-            ptr[1] = _X_BE_16(&this->buf[0x28]); /* subpacket height */
-            ptr[2] = _X_BE_16(&this->buf[0x16]); /* subpacket flavour */
-            ptr[3] = _X_BE_32(&this->buf[0x18]); /* coded frame size */
-            ptr[4] = 0;                          /* codec's data length  */
-
-	    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-                    "ffmpeg_audio_dec: 28_8 audio channels %d bits %d sample rate %d block align %d\n",
-		     this->audio_channels, this->audio_bits, this->audio_sample_rate,
-		     this->context->block_align);
-            break;
-	  case BUF_AUDIO_COOK:
-	    {
-	      int version;
-	      int data_len;
-	      int extradata;
-
-	      version = _X_BE_16 (this->buf+4);
-	      if (version == 4) {
-		this->audio_sample_rate = _X_BE_16 (this->buf+48);
-		this->audio_bits = _X_BE_16 (this->buf+52);
-		this->audio_channels = _X_BE_16 (this->buf+54);
-		data_len = _X_BE_32 (this->buf+67);
-		extradata = 71;
-	      } else {
-		this->audio_sample_rate = _X_BE_16 (this->buf+54);
-		this->audio_bits = _X_BE_16 (this->buf+58);
-		this->audio_channels = _X_BE_16 (this->buf+60);
-		data_len = _X_BE_32 (this->buf+74);
-		extradata = 78;
-	      }
-	      this->context->block_align = _X_BE_16 (this->buf+44);
-
-              xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-	              "ffmpeg_audio_dec: cook audio channels %d bits %d sample rate %d block align %d\n",
-		      this->audio_channels, this->audio_bits, this->audio_sample_rate,
-		      this->context->block_align);
-
-              if (extradata + data_len > this->size)
-                break; /* abort early - extradata length is bad */
-              if (extradata > INT_MAX - data_len)
-                break;/*integer overflow*/
-
-	      this->context->extradata_size = data_len;
-	      this->context->extradata      = malloc(this->context->extradata_size +
-						     FF_INPUT_BUFFER_PADDING_SIZE);
-	      xine_fast_memcpy (this->context->extradata, this->buf + extradata,
-				this->context->extradata_size);
-	      break;
-	    }
-          default:
-            xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-                    "ffmpeg_audio_dec: unknown header with buf type 0x%X\n", codec_type);
-            break;
-        }
-      }
-
-      /* Current ffmpeg audio decoders usually use 16 bits/sample
-       * buf->decoder_info[2] can't be used as it doesn't refer to the output
-       * bits/sample for some codecs (e.g. MS ADPCM) */
-      this->audio_bits = 16;
-
-      this->context->bits_per_sample = this->audio_bits;
-      this->context->sample_rate = this->audio_sample_rate;
-      this->context->channels    = this->audio_channels;
-      this->context->codec_id    = this->codec->id;
-      this->context->codec_type  = this->codec->type;
-      this->context->codec_tag   = _x_stream_info_get(this->stream, XINE_STREAM_INFO_AUDIO_FOURCC);
-
-      this->size = 0;
-    }
+    ff_handle_header_buffer(this, buf);
+    return;
 
   } else {
 
