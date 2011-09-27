@@ -131,20 +131,8 @@ static void ff_audio_handle_special_buffer(ff_audio_decoder_t *this, buf_element
   }
 }
 
-static void ff_handle_header_buffer(ff_audio_decoder_t *this, buf_element_t *buf)
-{
-  unsigned int codec_type = buf->type & (BUF_MAJOR_MASK | BUF_DECODER_MASK);
+static void ff_audio_init_codec(ff_audio_decoder_t *this, unsigned int codec_type) {
   size_t i;
-  xine_waveformatex *audio_header;
-
-  /* accumulate init data */
-  ff_audio_ensure_buffer_size(this, this->size + buf->size);
-  xine_fast_memcpy(this->buf + this->size, buf->content, buf->size);
-  this->size += buf->size;
-
-  if (!(buf->decoder_flags & BUF_FLAG_FRAME_END)) {
-    return;
-  }
 
   this->codec = NULL;
 
@@ -163,6 +151,33 @@ static void ff_handle_header_buffer(ff_audio_decoder_t *this, buf_element_t *buf
              _("ffmpeg_audio_dec: couldn't find ffmpeg decoder for buf type 0x%X\n"),
              codec_type);
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_HANDLED, 0);
+    return;
+  }
+
+  /* Current ffmpeg audio decoders usually use 16 bits/sample
+   * buf->decoder_info[2] can't be used as it doesn't refer to the output
+   * bits/sample for some codecs (e.g. MS ADPCM) */
+  this->audio_bits = 16;
+
+  this->context->bits_per_sample = this->audio_bits;
+  this->context->sample_rate = this->audio_sample_rate;
+  this->context->channels    = this->audio_channels;
+  this->context->codec_id    = this->codec->id;
+  this->context->codec_type  = this->codec->type;
+  this->context->codec_tag   = _x_stream_info_get(this->stream, XINE_STREAM_INFO_AUDIO_FOURCC);
+}
+
+static void ff_handle_header_buffer(ff_audio_decoder_t *this, buf_element_t *buf)
+{
+  unsigned int codec_type = buf->type & (BUF_MAJOR_MASK | BUF_DECODER_MASK);
+  xine_waveformatex *audio_header;
+
+  /* accumulate init data */
+  ff_audio_ensure_buffer_size(this, this->size + buf->size);
+  xine_fast_memcpy(this->buf + this->size, buf->content, buf->size);
+  this->size += buf->size;
+
+  if (!(buf->decoder_flags & BUF_FLAG_FRAME_END)) {
     return;
   }
 
@@ -263,17 +278,7 @@ static void ff_handle_header_buffer(ff_audio_decoder_t *this, buf_element_t *buf
     }
   }
 
-  /* Current ffmpeg audio decoders usually use 16 bits/sample
-   * buf->decoder_info[2] can't be used as it doesn't refer to the output
-   * bits/sample for some codecs (e.g. MS ADPCM) */
-  this->audio_bits = 16;
-
-  this->context->bits_per_sample = this->audio_bits;
-  this->context->sample_rate = this->audio_sample_rate;
-  this->context->channels    = this->audio_channels;
-  this->context->codec_id    = this->codec->id;
-  this->context->codec_type  = this->codec->type;
-  this->context->codec_tag   = _x_stream_info_get(this->stream, XINE_STREAM_INFO_AUDIO_FOURCC);
+  ff_audio_init_codec(this, codec_type);
 
   this->size = 0;
 }
