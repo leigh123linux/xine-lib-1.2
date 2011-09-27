@@ -170,6 +170,10 @@ static void ff_audio_init_codec(ff_audio_decoder_t *this, unsigned int codec_typ
 static int ff_audio_open_codec(ff_audio_decoder_t *this, unsigned int codec_type) {
 
   if ( !this->codec ) {
+    ff_audio_init_codec(this, codec_type);
+  }
+
+  if ( !this->codec ) {
     xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
              _("ffmpeg_audio_dec: trying to open null codec\n"));
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_HANDLED, 0);
