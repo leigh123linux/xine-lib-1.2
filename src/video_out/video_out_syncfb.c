@@ -888,7 +888,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
    _x_alphablend_init(&this->alphablend_extra_data, class->xine);
 
    /* check for syncfb device */
-   if((this->fd = open(class->device_name, O_RDWR)) < 0) {
+   if((this->fd = open_cloexec(class->device_name, O_RDWR)) < 0) {
       xprintf(class->xine, XINE_VERBOSITY_DEBUG,
 	      "video_out_syncfb: aborting. (unable to open syncfb device \"%s\")\n", class->device_name);
       free(this);
@@ -1095,7 +1095,7 @@ static void *init_class (xine_t *xine, void *visual_gen) {
 					XINE_CONFIG_SECURITY, NULL, NULL);
 
   /* check for syncfb device */
-  if((fd = open(device_name, O_RDWR)) < 0) {
+  if((fd = open_cloexec(device_name, O_RDWR)) < 0) {
      xprintf(xine, XINE_VERBOSITY_DEBUG,
 	     "video_out_syncfb: aborting. (unable to open syncfb device \"%s\")\n", device_name);
      return NULL;
