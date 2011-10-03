@@ -227,6 +227,8 @@ static void *manager_loop (void *this_gen) {
 
         ssock = accept(this->msock, &(fsin.sa), &alen);
         if (ssock >= 0) {
+          _x_set_socket_close_on_exec(ssock);
+
           /* identification string, helps demuxer probing */
           if( sock_string_write(this->stream->xine, ssock,"master xine v1") > 0 ) {
             int *psock = malloc(sizeof(int));
@@ -307,7 +309,7 @@ broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port)
   } servAddr;
   int msock, err;
 
-  msock = socket(PF_INET, SOCK_STREAM, 0);
+  msock = xine_socket_cloexec(PF_INET, SOCK_STREAM, 0);
   if( msock < 0 )
   {
     xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "broadcaster: error opening master socket.\n");

@@ -48,6 +48,7 @@ extern "C" {
 #  include "io_helper.h"
 #  include "info_helper.h"
 #  include "alphablend.h"
+#  include "xine_private.h"
 #else
 #  include <xine.h>
 #  include <xine/refcounter.h>

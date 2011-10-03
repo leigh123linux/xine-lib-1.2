@@ -2299,6 +2299,10 @@ CC_ATTRIBUTE_VISIBILITY([protected], [visibility_export="protected"],
   [CC_ATTRIBUTE_VISIBILITY([default], [visibility_export="default"])]
 )
 
+CC_ATTRIBUTE_VISIBILITY([internal], [visibility_export="internal"],
+  [CC_ATTRIBUTE_VISIBILITY([default], [visibility_export="default"])]
+)
+
 if test "x$visibility_export" != "x"; then
   CC_FLAG_VISIBILITY([
     AC_DEFINE([EXPORTED], [__attribute__((visibility("default")))],

@@ -41,7 +41,7 @@ xineinclude_HEADERS  = buffer.h metronom.h configfile.h vo_scale.h \
 	plugin_catalog.h audio_decoder.h video_decoder.h post.h \
 	io_helper.h broadcaster.h info_helper.h refcounter.h alphablend.h
 
-noinst_HEADERS = bswap.h ffmpeg_bswap.h
+noinst_HEADERS = bswap.h ffmpeg_bswap.h xine_private.h
 
 if WIN32
 install-exec-local:
