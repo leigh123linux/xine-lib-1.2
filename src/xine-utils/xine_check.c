@@ -46,6 +46,10 @@
 
 #include "xineutils.h"
 
+#ifndef O_CLOEXEC
+#  define O_CLOEXEC  0
+#endif
+
 #if defined(__linux__)
 
 #include <dlfcn.h>
