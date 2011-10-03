@@ -35,10 +35,12 @@
 
 #include <errno.h>
 #include <pwd.h>
+#include <sys/types.h>
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/socket.h>
 
 #if HAVE_EXECINFO_H
 #include <execinfo.h>
@@ -734,7 +736,7 @@ static int set_close_on_execute(int fd)
 }
 
 
-int open_cloexec(const char *name, int flags)
+int xine_open_cloexec(const char *name, int flags)
 {
   int fd = open(name, (flags | O_CLOEXEC));
 
@@ -745,7 +747,7 @@ int open_cloexec(const char *name, int flags)
   return fd;
 }
 
-int create_cloexec(const char *name, int flags, mode_t mode)
+int xine_create_cloexec(const char *name, int flags, mode_t mode)
 {
   int fd = open(name, (flags | O_CREAT | O_CLOEXEC), mode);
 
@@ -754,5 +756,20 @@ int create_cloexec(const char *name, int flags, mode_t mode)
   }
 
   return fd;
+}
+
+int xine_socket_cloexec(int domain, int type, int protocol)
+{
+  int s = socket(domain, type, protocol);
+
+  if (s >= 0) {
+#ifndef WIN32
+    fcntl(s, F_SETFD, FD_CLOEXEC);
+#else
+    SetHandleInformation((HANDLE)s, HANDLE_FLAG_INHERIT, 0);
+#endif
+  }
+
+  return s;
 }
 
