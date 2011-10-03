@@ -648,7 +648,7 @@ static tuner_t *XINE_MALLOC tuner_init(xine_t * xine, int adapter)
    if(this->feinfo.type==FE_OFDM) xprintf(this->xine,XINE_VERBOSITY_DEBUG,"TER Card\n");
    if(this->feinfo.type==FE_ATSC) xprintf(this->xine,XINE_VERBOSITY_DEBUG,"US Card\n");
 
-   if ((test_video=open(video_device, O_RDWR)) < 0) {
+   if ((test_video=open_cloexec(video_device, O_RDWR)) < 0) {
        xprintf(this->xine,XINE_VERBOSITY_DEBUG,"input_dvb: Card has no hardware decoder\n");
    }else{
        xprintf(this->xine,XINE_VERBOSITY_DEBUG,"input_dvb: Card HAS HARDWARE DECODER\n");
