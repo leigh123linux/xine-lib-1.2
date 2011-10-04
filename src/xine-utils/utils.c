@@ -32,6 +32,7 @@
 #ifdef _MSC_VER
 #include <xine/xine_internal.h>
 #endif
+#include "xine_private.h"
 
 #include <errno.h>
 #include <pwd.h>

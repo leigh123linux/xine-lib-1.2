@@ -47,9 +47,6 @@ extern "C" {
 #include <xine/io_helper.h>
 #include <xine/info_helper.h>
 #include <xine/alphablend.h>
-#ifdef XINE_COMPILE
-#  include "xine_private.h"
-#endif
 
 #define XINE_MAX_EVENT_LISTENERS         50
 #define XINE_MAX_EVENT_TYPES             100
