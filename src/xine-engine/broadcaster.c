@@ -64,6 +64,7 @@
 #include "xine_internal.h"
 #include "buffer.h"
 #include "xineutils.h"
+#include "xine_private.h"
 
 #define QLEN 5    /* maximum connection queue length */
 #define _BUFSIZ 512
