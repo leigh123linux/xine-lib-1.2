@@ -592,7 +592,7 @@ static tuner_t *XINE_MALLOC tuner_init(xine_t * xine, int adapter)
     asprintf(&video_device,"/dev/dvb/adapter%i/video0",this->adapter_num);
 
     asprintf(&frontend_device,"/dev/dvb/adapter%i/frontend0",this->adapter_num);
-    if ((this->fd_frontend = open(frontend_device, O_RDWR)) < 0) {
+    if ((this->fd_frontend = xine_open_cloexec(frontend_device, O_RDWR)) < 0) {
       xprintf(this->xine, XINE_VERBOSITY_DEBUG, "FRONTEND DEVICE: %s\n", strerror(errno));
       tuner_dispose(this);
       this = NULL;
@@ -608,7 +608,7 @@ static tuner_t *XINE_MALLOC tuner_init(xine_t * xine, int adapter)
     }
 
     for (x = 0; x < MAX_FILTERS; x++) {
-      this->fd_pidfilter[x] = open(this->demux_device, O_RDWR);
+      this->fd_pidfilter[x] = xine_open_cloexec(this->demux_device, O_RDWR);
       if (this->fd_pidfilter[x] < 0) {
         xprintf(this->xine, XINE_VERBOSITY_DEBUG, "DEMUX DEVICE PIDfilter: %s\n", strerror(errno));
         tuner_dispose(this);
