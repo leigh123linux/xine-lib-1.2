@@ -446,6 +446,7 @@ static const struct ogg_meta {
   OGG_META   (COMMENT,     0),
 };
 
+#if 0
 /* ensure that those marked "append" are cleared */
 /* FIXME: is this useful? Should they be cleared on first write? */
 static void prepare_read_comments (demux_ogg_t *this)
@@ -458,6 +459,7 @@ static void prepare_read_comments (demux_ogg_t *this)
       this->meta[metadata[i].meta] = NULL;
     }
 }
+#endif
 
 static int read_comments (demux_ogg_t *this, const char *comment)
 {
