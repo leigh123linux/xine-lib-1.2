@@ -468,9 +468,10 @@ static int read_comments (demux_ogg_t *this, const char *comment)
     if (!strncasecmp (metadata[i].tag, comment, ml) && comment[ml]) {
       if (metadata[i].append && this->meta[metadata[i].meta]) {
         char *newstr;
-        asprintf (&newstr, "%s\n%s", this->meta[metadata[i].meta], comment + ml);
-        free (this->meta[metadata[i].meta]);
-        this->meta[metadata[i].meta] = newstr;
+        if (asprintf (&newstr, "%s\n%s", this->meta[metadata[i].meta], comment + ml) >= 0) {
+          free (this->meta[metadata[i].meta]);
+          this->meta[metadata[i].meta] = newstr;
+        }
       }
       else {
         free (this->meta[metadata[i].meta]);
