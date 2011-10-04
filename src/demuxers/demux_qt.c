@@ -710,9 +710,11 @@ static char *qtl_file_url (input_plugin_t *input, const unsigned char *preview, 
     { /* relative */
       const char *dir = input->get_mrl (input);
       slash = strrchr (dir, '/');
-      asprintf (&url, "%.*s/%s",
-                slash ? (int)(slash - dir) : 1,
-                slash ? dir : ".", url);
+      if (asprintf (&url, "%.*s/%s",
+                    slash ? (int)(slash - dir) : 1,
+                    slash ? dir : ".", url) < 0) {
+        url = NULL;
+      }
     }
   }
 
