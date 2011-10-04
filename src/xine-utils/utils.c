@@ -29,9 +29,7 @@
 
 #include "xineutils.h"
 #include "xineintl.h"
-#ifdef _MSC_VER
 #include "xine_internal.h"
-#endif
 
 #include <errno.h>
 #include <pwd.h>
