@@ -21,6 +21,21 @@
 #ifndef HAVE_XINE_PRIVATE_H
 #define HAVE_XINE_PRIVATE_H
 
+#ifndef XINE_LIBRARY_COMPILE
+# error xine_private.h is for libxine's private use only!
+#endif
+
+#include "configure.h"
+
+/* Export internal only for functions that are unavailable to plugins */
+#if defined(SUPPORT_ATTRIBUTE_VISIBILITY_INTERNAL)
+# define INTERNAL __attribute__((__visibility__("internal")))
+#elif defined(SUPPORT_ATTRIBUTE_VISIBILITY_DEFAULT)
+# define INTERNAL __attribute__((__visibility__("default")))
+#else
+# define INTERNAL
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -28,9 +43,9 @@ extern "C" {
 /*
  * make file descriptors and sockets uninheritable
  */
-int _x_set_file_close_on_exec(int fd) XINE_INTERNAL;
+int _x_set_file_close_on_exec(int fd) INTERNAL;
 
-int _x_set_socket_close_on_exec(int s) XINE_INTERNAL;
+int _x_set_socket_close_on_exec(int s) INTERNAL;
 
 #ifdef __cplusplus
 }
