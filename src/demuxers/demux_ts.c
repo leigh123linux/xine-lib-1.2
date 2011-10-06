@@ -1957,11 +1957,14 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
     return;
   }
 
-  data_len = PKT_SIZE - data_offset;
+  /* PAT */
+  if (pid == 0) {
+    demux_ts_parse_pat(this, originalPkt, originalPkt+data_offset-4,
+		       payload_unit_start_indicator);
+    return;
+  }
 
-  /*
-   * audio/video pid auto-detection, if necessary
-   */
+  /* PMT */
    program_count=0;
    if(this->media_num<MAX_PMTS)
       while ((this->program_number[program_count] != INVALID_PROGRAM) &&
@@ -1981,11 +1984,7 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
       program_count++;
     }
 
-  if (payload_unit_start_indicator && (this->media_num < MAX_PIDS) && (pid == 0)) {
-    demux_ts_parse_pat(this, originalPkt, originalPkt+data_offset-4,
-                       payload_unit_start_indicator);
-    return;
-  }
+  data_len = PKT_SIZE - data_offset;
 
   if (data_len > PKT_SIZE) {
 
