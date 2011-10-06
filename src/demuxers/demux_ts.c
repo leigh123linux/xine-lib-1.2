@@ -318,6 +318,10 @@ typedef struct {
   int              rate;
   int              media_num;
   demux_ts_media   media[MAX_PIDS];
+
+  /* PAT */
+  uint32_t         last_pat_crc;
+  /* programs */
   uint32_t         program_number[MAX_PMTS];
   uint32_t         pmt_pid[MAX_PMTS];
   uint8_t         *pmt[MAX_PMTS];
@@ -633,6 +637,13 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
     printf ("demux_ts: PAT CRC32 ok.\n");
   }
 #endif
+
+  if (crc32 == this->last_pat_crc) {
+    lprintf("demux_ts: PAT CRC unchanged\n");
+    return;
+  }
+
+  this->last_pat_crc = crc32;
 
   /*
    * Process all programs in the program loop.
@@ -2378,6 +2389,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   /*
    * Initialise our specialised data.
    */
+
+  this->last_pat_crc = 0;
+
   for (i = 0; i < MAX_PIDS; i++) {
     this->media[i].pid = INVALID_PID;
     this->media[i].buf = NULL;
