@@ -1965,23 +1965,23 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
   }
 
   /* PMT */
-   program_count=0;
-      while ((this->program_number[program_count] != INVALID_PROGRAM) &&
-		 (program_count < MAX_PMTS)) {
-        if (pid == this->pmt_pid[program_count]) {
+  program_count=0;
+  while ((this->program_number[program_count] != INVALID_PROGRAM) &&
+         (program_count < MAX_PMTS)) {
+    if (pid == this->pmt_pid[program_count]) {
 
 #ifdef TS_LOG
-          printf ("demux_ts: PMT prog: 0x%.4x pid: 0x%.4x\n",
-            this->program_number[program_count],
-            this->pmt_pid[program_count]);
+      printf ("demux_ts: PMT prog: 0x%.4x pid: 0x%.4x\n",
+              this->program_number[program_count],
+              this->pmt_pid[program_count]);
 #endif
-	demux_ts_parse_pmt (this, originalPkt, originalPkt+data_offset-4,
-	  payload_unit_start_indicator,
-	  program_count);
-	  return;
-      }
-      program_count++;
+      demux_ts_parse_pmt (this, originalPkt, originalPkt+data_offset-4,
+                          payload_unit_start_indicator,
+                          program_count);
+      return;
     }
+    program_count++;
+  }
 
   data_len = PKT_SIZE - data_offset;
 
