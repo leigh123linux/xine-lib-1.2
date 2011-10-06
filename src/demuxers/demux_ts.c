@@ -321,6 +321,7 @@ typedef struct {
 
   /* PAT */
   uint32_t         last_pat_crc;
+  uint32_t         transport_stream_id;
   /* programs */
   uint32_t         program_number[MAX_PMTS];
   uint32_t         pmt_pid[MAX_PMTS];
@@ -638,12 +639,19 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
   }
 #endif
 
-  if (crc32 == this->last_pat_crc) {
+  if (crc32 == this->last_pat_crc &&
+      this->transport_stream_id == transport_stream_id) {
     lprintf("demux_ts: PAT CRC unchanged\n");
     return;
   }
 
+  if (this->transport_stream_id != transport_stream_id) {
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+             "demux_ts: PAT transport_stream_id changed\n");
+  }
+
   this->last_pat_crc = crc32;
+  this->transport_stream_id = transport_stream_id;
 
   /*
    * Process all programs in the program loop.
@@ -2391,6 +2399,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
    */
 
   this->last_pat_crc = 0;
+  this->transport_stream_id = -1;
 
   for (i = 0; i < MAX_PIDS; i++) {
     this->media[i].pid = INVALID_PID;
