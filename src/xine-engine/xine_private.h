@@ -22,7 +22,7 @@
 #define HAVE_XINE_PRIVATE_H
 
 #ifndef XINE_LIBRARY_COMPILE
-# error xine_private.h is for libxine's private use only!
+# error xine_private.h is for libxine private use only!
 #endif
 
 #include "configure.h"
