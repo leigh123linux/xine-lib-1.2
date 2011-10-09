@@ -404,7 +404,7 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
     if test x"$with_speex" != x"no"; then
         PKG_CHECK_MODULES([SPEEX], [ogg speex], [have_speex=yes], [have_speex=no])
         if test x"$with_speex" = x"yes" && test x"$have_speex" != x"yes"; then
-            AC_MSG_ERROR([Speex support requested, but libspeex not found])
+            AC_MSG_ERROR([Speex support requested, but libspeex and/or libogg not found])
         elif test x"$have_speex" = x"yes"; then
             AC_DEFINE([HAVE_SPEEX], 1, [Define this if you have speex])
         fi
@@ -419,7 +419,7 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
     if test x"$with_theora" != x"no"; then
         PKG_CHECK_MODULES([THEORA], [ogg theora], [have_theora=yes], [have_theora=no])
         if test x"$with_theora" = x"yes" && test x"$have_theora" = x"no"; then
-            AC_MSG_ERROR([Theora support requested, but libtheora not found])
+            AC_MSG_ERROR([Theora support requested, but libtheora and/or libogg not found])
         elif test x"$have_theora" = x"yes"; then
             AC_DEFINE([HAVE_THEORA], 1, [Define this if you have theora])
         fi
@@ -434,7 +434,7 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
     if test x"$with_vorbis" != x"no"; then
         PKG_CHECK_MODULES([VORBIS], [ogg vorbis], [have_vorbis=yes], [have_vorbis=no])
         if test x"$with_vorbis" = x"yes" && test x"$have_vorbis" = "xno"; then
-            AC_MSG_ERROR([Vorbis support requested, but libvorbis not found])
+            AC_MSG_ERROR([Vorbis support requested, but libvorbis and/or libogg not found])
         elif test x"$have_vorbis" = x"yes"; then
             AC_DEFINE([HAVE_VORBIS], 1, [Define this if you have vorbis])
         fi
