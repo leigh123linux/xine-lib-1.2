@@ -384,10 +384,10 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
     AC_ARG_ENABLE([mng],
                   [AS_HELP_STRING([--enable-mng], [Enable MNG decoder support (default: enabled)])],
                   [test x"$enableval" != x"no" && enable_mng="yes"])
-    if test x"$with_mng" != x"no"; then
+    if test x"$enable_mng" != x"no"; then
         AC_CHECK_LIB([mng], [mng_initialize],
                      [AC_CHECK_HEADERS([libmng.h], [have_mng=yes], [have_mng=no])], [have_mng=no])
-        if test x"$with_mng" = x"yes" && test x"$have_mng" != x"yes"; then
+        if test x"$enable_mng" = x"yes" && test x"$have_mng" != x"yes"; then
             AC_MSG_ERROR([MNG support requested, but libmng not found])
         elif test x"$have_mng" = x"yes"; then
             MNG_LIBS="-lmng"
