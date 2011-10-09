@@ -374,7 +374,7 @@ static int ao_oss_delay(ao_driver_t *this_gen) {
 
   count_info    info;
   oss_driver_t *this = (oss_driver_t *) this_gen;
-  int           bytes_left;
+  int           bytes_left = 0;
   int           frames;
   struct        timeval tv;
 
