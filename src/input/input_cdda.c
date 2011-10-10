@@ -1495,7 +1495,7 @@ static void _cdda_parse_cddb_info (cdda_input_plugin_t *this, char *buffer, char
       int nyear;
       char *y = strstr (buffer, "YEAR:");
       if (y && sscanf (y + 5, "%4d", &nyear) == 1)
-	asprintf (&this->cddb.disc_year, "%d", nyear);
+	this->cddb.disc_year = _x_asprintf ("%d", nyear);
     }
   }
 }
@@ -2652,7 +2652,7 @@ static char ** cdda_class_get_autoplay_list (input_class_t *this_gen,
   if (num_tracks >= MAX_TRACKS-1)
     num_tracks = MAX_TRACKS - 2;
   for ( i = 0; i <= num_tracks; i++ )
-    asprintf(&this->autoplaylist[i],"cdda:/%d",i+toc->first_track);
+    this->autoplaylist[i] = _x_asprintf("cdda:/%d",i+toc->first_track);
 
   *num_files = toc->last_track - toc->first_track + 1;
 

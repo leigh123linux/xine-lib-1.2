@@ -1426,7 +1426,7 @@ static void osd_preload_fonts (osd_renderer_t *this, char *path) {
           lprintf("font '%s' size %d is preloaded\n",
                   font->name, font->size);
 
-          asprintf (&font->filename, "%s/%s", path, entry->d_name);
+          font->filename = _x_asprintf ("%s/%s", path, entry->d_name);
 
           font->next = this->fonts;
           this->fonts = font;

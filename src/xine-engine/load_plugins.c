@@ -381,7 +381,7 @@ static void _insert_node (xine_t *this,
      * does not strdup() it, so we have to provide a different pointer
      * for each decoder */
     for (i = 0; catalog->prio_desc[i]; i++);
-    asprintf(&catalog->prio_desc[i], _("priority for %s decoder"), info->id);
+    catalog->prio_desc[i] = _x_asprintf(_("priority for %s decoder"), info->id);
     this->config->register_num (this->config,
 				key,
 				0,
@@ -1068,11 +1068,11 @@ static void save_catalog (xine_t *this) {
 
   const char *const homedir = xine_get_homedir();
 
-  asprintf(&cachefile, "%s/%s", homedir, relname);
-  asprintf(&cachefile_new, "%s.new", cachefile);
+  cachefile     = _x_asprintf("%s/%s", homedir, relname);
+  cachefile_new = _x_asprintf("%s.new", cachefile);
 
   /* make sure homedir (~/.xine) exists */
-  asprintf(&dirfile, "%s/%s", homedir, dirname);
+  dirfile = _x_asprintf("%s/%s", homedir, dirname);
   mkdir (dirfile, 0755);
   free (dirfile);
 
@@ -1119,7 +1119,7 @@ static void load_cached_catalog (xine_t *this) {
   char *cachefile;
   const char *relname = CACHE_CATALOG_FILE;
 
-  asprintf(&cachefile, "%s/%s", xine_get_homedir(), relname);
+  cachefile = _x_asprintf("%s/%s", xine_get_homedir(), relname);
 
   if( (fp = fopen(cachefile,"r")) != NULL ) {
     load_plugin_list (fp, this->plugin_catalog->cache_list);
@@ -1175,7 +1175,7 @@ void _x_scan_plugins (xine_t *this) {
       } else
         len = strlen(q);
       if (q[0] == '~' && q[1] == '/')
-	asprintf (&dir, "%s%.*s", homedir, (int)(len - 1), q + 1);
+	dir = _x_asprintf ("%s%.*s", homedir, (int)(len - 1), q + 1);
       else
 	dir = strndup (q, len);
       push_if_dir (plugindirs, dir); /* store or free it */
@@ -1183,11 +1183,11 @@ void _x_scan_plugins (xine_t *this) {
   } else {
     char *dir;
     int i;
-    asprintf (&dir, "%s/.xine/plugins", homedir);
+    dir = _x_asprintf ("%s/.xine/plugins", homedir);
     push_if_dir (plugindirs, dir);
     for (i = 0; i <= XINE_LT_AGE; ++i)
     {
-      asprintf (&dir, "%s.%d", XINE_PLUGINROOT, XINE_LT_AGE - i);
+      dir = _x_asprintf ("%s.%d", XINE_PLUGINROOT, XINE_LT_AGE - i);
       push_if_dir (plugindirs, dir);
     }
   }

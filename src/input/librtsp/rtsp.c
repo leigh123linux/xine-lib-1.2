@@ -177,7 +177,7 @@ static void rtsp_send_request(rtsp_t *s, const char *type, const char *what) {
   char **payload=s->scheduled;
   char *buf;
 
-  asprintf(&buf,"%s %s %s",type, what, rtsp_protocol_version);
+  buf = _x_asprintf("%s %s %s",type, what, rtsp_protocol_version);
   rtsp_put(s,buf);
   free(buf);
   if (payload)
@@ -202,7 +202,7 @@ static void rtsp_schedule_standard(rtsp_t *s) {
 
   if (s->session) {
     char *buf;
-    asprintf(&buf, "Session: %s", s->session);
+    buf = _x_asprintf("Session: %s", s->session);
     rtsp_schedule_field(s, buf);
     free(buf);
   }
@@ -299,7 +299,7 @@ int rtsp_request_options(rtsp_t *s, const char *what) {
     buf=strdup(what);
   } else
   {
-    asprintf(&buf,"rtsp://%s:%i", s->host, s->port);
+    buf = _x_asprintf("rtsp://%s:%i", s->host, s->port);
   }
   rtsp_send_request(s,"OPTIONS",buf);
   free(buf);
@@ -315,7 +315,7 @@ int rtsp_request_describe(rtsp_t *s, const char *what) {
     buf=strdup(what);
   } else
   {
-    asprintf(&buf,"rtsp://%s:%i/%s", s->host, s->port, s->path);
+    buf = _x_asprintf("rtsp://%s:%i/%s", s->host, s->port, s->path);
   }
   rtsp_send_request(s,"DESCRIBE",buf);
   free(buf);
@@ -338,7 +338,7 @@ int rtsp_request_setparameter(rtsp_t *s, const char *what) {
     buf=strdup(what);
   } else
   {
-    asprintf(&buf,"rtsp://%s:%i/%s", s->host, s->port, s->path);
+    buf = _x_asprintf("rtsp://%s:%i/%s", s->host, s->port, s->path);
   }
   rtsp_send_request(s,"SET_PARAMETER",buf);
   free(buf);
@@ -354,7 +354,7 @@ int rtsp_request_play(rtsp_t *s, const char *what) {
     buf=strdup(what);
   } else
   {
-    asprintf(&buf,"rtsp://%s:%i/%s", s->host, s->port, s->path);
+    buf = _x_asprintf("rtsp://%s:%i/%s", s->host, s->port, s->path);
   }
   rtsp_send_request(s,"PLAY",buf);
   free(buf);
@@ -403,7 +403,7 @@ int rtsp_read_data(rtsp_t *s, char *buffer, unsigned int size) {
       }
       /* lets make the server happy */
       rtsp_put(s, "RTSP/1.0 451 Parameter Not Understood");
-      asprintf(&rest,"CSeq: %u", seq);
+      rest = _x_asprintf("CSeq: %u", seq);
       rtsp_put(s, rest);
       free(rest);
       rtsp_put(s, "");

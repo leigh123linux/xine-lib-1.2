@@ -3249,7 +3249,7 @@ static char **dvb_class_get_autoplay_list(input_class_t * this_gen,
          ch < num_channels && ch < MAX_AUTOCHANNELS;
          ++ch, ++apch) {
       free(class->autoplaylist[apch]);
-      asprintf(&(class->autoplaylist[apch]), "dvb://%s", channels[ch].name);
+      class->autoplaylist[apch] = _x_asprintf("dvb://%s", channels[ch].name);
       _x_assert(class->autoplaylist[apch] != NULL);
     }
 
@@ -3257,10 +3257,10 @@ static char **dvb_class_get_autoplay_list(input_class_t * this_gen,
       free(class->autoplaylist[0]);
       if (default_channel != -1)
 	/* plugin has been used before - channel is valid */
-	asprintf (&(class->autoplaylist[0]), "dvb://%s", channels[default_channel].name);
+	class->autoplaylist[0] = _x_asprintf("dvb://%s", channels[default_channel].name);
       else
 	/* set a reasonable default - the first channel */
-	asprintf (&(class->autoplaylist[0]), "dvb://%s", num_channels ? channels[0].name : "0");
+	class->autoplaylist[0] = _x_asprintf("dvb://%s", num_channels ? channels[0].name : "0");
     }
 
     free_channel_list(channels, num_channels);
@@ -3296,9 +3296,8 @@ static void *init_class (xine_t *xine, void *data) {
   this->mrls[4] = "dvba://";
   this->mrls[5] = 0;
 
-  asprintf(&this->default_channels_conf_filename,
-           "%s/.xine/channels.conf",
-           xine_get_homedir());
+  this->default_channels_conf_filename = _x_asprintf("%s/.xine/channels.conf",
+                                                     xine_get_homedir());
 
   xprintf(this->xine,XINE_VERBOSITY_DEBUG,"init class succeeded\n");
 

@@ -132,7 +132,7 @@ static char * get_help (void) {
   static char *help = NULL;
 
   if( !help )
-    asprintf(&help, "%s%s%s", help1, help2, pp_help);
+    help = _x_asprintf("%s%s%s", help1, help2, pp_help);
 
   return help;
 }

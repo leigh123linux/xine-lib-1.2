@@ -28,6 +28,7 @@
 
 #include "xine_internal.h"
 #include "http_helper.h"
+#include "xineutils.h"
 
 
 const char *_x_url_user_agent (const char *url)
@@ -237,7 +238,7 @@ error:
 char *_x_canonicalise_url (const char *base, const char *url) {
 
   size_t base_length;
-  char *cut, *ret;
+  char *cut;
 
   if ((cut = strstr (url, "://")))
     return strdup (url);
@@ -254,8 +255,8 @@ char *_x_canonicalise_url (const char *base, const char *url) {
       ++cut;
   }
   base_length = cut ? (size_t)(cut - base) : strlen (base);
-  asprintf (&ret, "%.*s%s", (int)base_length, base, url);
-  return ret;
+
+  return _x_asprintf ("%.*s%s", (int)base_length, base, url);
 }
 
 #ifdef TEST_URL

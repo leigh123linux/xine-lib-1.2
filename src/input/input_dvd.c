@@ -1380,8 +1380,8 @@ check_solaris_vold_device(dvd_input_class_t *this)
       (volume_action = getenv("VOLUME_ACTION")) != NULL &&
       strcmp(volume_action, "insert") == 0) {
 
-    asprintf(&device, "%s/%s", volume_device, volume_name);
-    if (stat(device, &stb) != 0 || !S_ISCHR(stb.st_mode)) {
+    device = _x_asprintf("%s/%s", volume_device, volume_name);
+    if (!device || stat(device, &stb) != 0 || !S_ISCHR(stb.st_mode)) {
       free(device);
       return;
     }
@@ -1828,7 +1828,7 @@ static void *init_class (xine_t *xine, void *data) {
 				   "playing scrambled DVDs."), 20, NULL, NULL);
     xine_setenv("DVDCSS_METHOD", decrypt_modes[mode], 0);
 
-    asprintf(&css_cache_default, "%s/.dvdcss/", xine_get_homedir());
+    css_cache_default = _x_asprintf("%s/.dvdcss/", xine_get_homedir());
     css_cache = config->register_filename(config, "media.dvd.css_cache_path", css_cache_default, XINE_CONFIG_STRING_IS_DIRECTORY_NAME,
 					_("path to the title key cache"),
 					_("Since cracking the copy protection of scrambled DVDs can "
