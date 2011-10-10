@@ -405,7 +405,7 @@ msgstr "Estas neeble agordi laŭtecon"
 
 #: src/audio_out/audio_directx2_out.c:392
 #, c-format
-msgid ": buffer lost, tryig to restore\n"
+msgid ": buffer lost, trying to restore\n"
 msgstr ": perdita bufro, mi provas restarigi ĝin\n"
 
 #: src/audio_out/audio_directx2_out.c:396
@@ -3017,7 +3017,7 @@ msgstr "bitplane: Tiu ĉi anim-speco nun ne estas ankoraŭ subtenita\n"
 msgid ""
 "This filter will perform a time stretch, playing the stream faster or slower "
 "by a factor. Pitch is optionally preserved, so it is possible, for example, "
-"to use it to watch a movie in less time than it was originaly shot.\n"
+"to use it to watch a movie in less time than it was originally shot.\n"
 msgstr ""
 "Tiu ĉi filtrilo plenumos tempodilatadon, legante datumstrion pli aŭ malpli "
 "rapide per iu faktoro. La tembro estas, laŭpete, konservita, do vi povas uzi "
@@ -3123,7 +3123,7 @@ msgid ""
 "usage.\n"
 "\n"
 "* Uses several algorithms from tvtime and dscaler projects.\n"
-"Deinterlacing methods: (Not all methods are available for all plataforms)\n"
+"Deinterlacing methods: (Not all methods are available for all platforms)\n"
 "\n"
 msgstr ""
 
