@@ -540,6 +540,30 @@ static void demux_ts_update_spu_channel(demux_ts_t *this)
   this->video_fifo->put(this->video_fifo, buf);
 }
 
+static void demux_ts_flush_media(demux_ts_media *m)
+{
+  if (m->buf) {
+    m->buf->content = m->buf->mem;
+    m->buf->size = m->buffered_bytes;
+    m->buf->type = m->type;
+    m->buf->decoder_flags |= BUF_FLAG_FRAME_END;
+    m->buf->pts = m->pts;
+    m->buf->extra_info->input_normpos = m->input_normpos;
+    m->buf->extra_info->input_time = m->input_time;
+    m->fifo->put(m->fifo, m->buf);
+    m->buffered_bytes = 0;
+    m->buf = NULL;
+  }
+}
+
+static void demux_ts_flush(demux_ts_t *this)
+{
+  unsigned int i;
+  for (i = 0; i < this->media_num; ++i) {
+    demux_ts_flush_media(&this->media[i]);
+  }
+}
+
 /*
  * demux_ts_parse_pat
  *
@@ -2075,6 +2099,11 @@ static void demux_ts_event_handler (demux_ts_t *this) {
 
 
     switch (event->type) {
+
+    case XINE_EVENT_END_OF_CLIP:
+      /* flush all streams */
+      demux_ts_flush(this);
+      /* fall thru */
 
     case XINE_EVENT_PIDS_CHANGE:
 
