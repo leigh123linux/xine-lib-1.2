@@ -2449,7 +2449,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   this            = calloc(1, sizeof(*this));
   this->stream    = stream;
   this->input     = input;
-  this->class     = class_gen;
+  this->class     = (demux_ts_class_t*)class_gen;
 
   this->demux_plugin.send_headers      = demux_ts_send_headers;
   this->demux_plugin.send_chunk        = demux_ts_send_chunk;
