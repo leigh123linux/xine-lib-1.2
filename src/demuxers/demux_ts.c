@@ -257,6 +257,17 @@
 #define PTS_AUDIO 0
 #define PTS_VIDEO 1
 
+/* bitrate estimation */
+#define TBRE_MIN_TIME (  2 * 90000)
+#define TBRE_TIME     (480 * 90000)
+
+#define TBRE_MODE_PROBE     0
+#define TBRE_MODE_AUDIO_PTS 1
+#define TBRE_MODE_AUDIO_PCR 2
+#define TBRE_MODE_PCR       3
+#define TBRE_MODE_DONE      4
+
+
 #undef  MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #undef  MAX
@@ -382,6 +393,11 @@ typedef struct {
 
   off_t   frame_pos; /* current ts packet position in input stream (bytes from beginning) */
 
+  /* bitrate estimation */
+  off_t        tbre_bytes, tbre_lastpos;
+  int64_t      tbre_time, tbre_lasttime;
+  unsigned int tbre_mode, tbre_pid;
+
 } demux_ts_t;
 
 typedef struct {
@@ -394,6 +410,41 @@ typedef struct {
   config_values_t  *config;
 } demux_ts_class_t;
 
+static void demux_ts_tbre_reset (demux_ts_t *this) {
+  if (this->tbre_time <= TBRE_TIME) {
+    this->tbre_pid  = INVALID_PID;
+    this->tbre_mode = TBRE_MODE_PROBE;
+  }
+}
+
+static void demux_ts_tbre_update (demux_ts_t *this, int mode, int64_t now) {
+  /* select best available timesource on the fly */
+  if ((mode < this->tbre_mode) || (now <= 0))
+    return;
+
+  if (mode == this->tbre_mode) {
+    /* skip discontinuities */
+    int64_t diff = now - this->tbre_lasttime;
+    if ((diff < 0 ? -diff : diff) < 220000) {
+      /* add this step */
+      this->tbre_bytes += this->frame_pos - this->tbre_lastpos;
+      this->tbre_time += diff;
+      /* update bitrate */
+      if (this->tbre_time > TBRE_MIN_TIME)
+        this->rate = this->tbre_bytes * 90000 / this->tbre_time;
+      /* stop analyzing */
+      if (this->tbre_time > TBRE_TIME)
+        this->tbre_mode = TBRE_MODE_DONE;
+    }
+  } else {
+    /* upgrade timesource */
+    this->tbre_mode = mode;
+  }
+
+  /* remember where and when */
+  this->tbre_lastpos  = this->frame_pos;
+  this->tbre_lasttime = now;
+}
 
 static void demux_ts_build_crc32_table(demux_ts_t*this) {
   uint32_t  i, j, k;
@@ -1090,6 +1141,12 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
       if (this->rate) {
         m->input_time = this->frame_pos * 1000 / (this->rate * 50);
       }
+
+      /* rate estimation */
+      if ((this->tbre_pid == INVALID_PID) && (this->audio_fifo == m->fifo))
+        this->tbre_pid = m->pid;
+      if (m->pid == this->tbre_pid)
+        demux_ts_tbre_update (this, TBRE_MODE_AUDIO_PTS, m->pts);
     }
 
   } else if (!m->corrupted_pes) { /* no pus -- PES packet continuation */
@@ -1668,6 +1725,8 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
   if ( this->stream->spu_channel>=0 && this->spu_langs_count>0 )
     demux_ts_update_spu_channel( this );
 
+  demux_ts_tbre_reset (this);
+
   /* Inform UI of channels changes */
   xine_event_t ui_event;
   ui_event.type = XINE_EVENT_UI_CHANNELS_CHANGED;
@@ -2007,7 +2066,11 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
   if( adaptation_field_control & 0x2 ){
     uint32_t adaptation_field_length = originalPkt[4];
     if (adaptation_field_length > 0) {
-      demux_ts_adaptation_field_parse (originalPkt+5, adaptation_field_length);
+      int64_t pcr = demux_ts_adaptation_field_parse (originalPkt+5, adaptation_field_length);
+      if (pid == this->pcr_pid)
+        demux_ts_tbre_update (this, TBRE_MODE_PCR, pcr);
+      else if (pid == this->tbre_pid)
+        demux_ts_tbre_update (this, TBRE_MODE_AUDIO_PCR, pcr);
     }
     /*
      * Skip adaptation header.
@@ -2239,9 +2302,7 @@ static int demux_ts_seek (demux_plugin_t *this_gen,
   if (this->input->get_capabilities(this->input) & INPUT_CAP_SEEKABLE) {
 
     if ((!start_pos) && (start_time)) {
-      start_pos = start_time;
-      start_pos *= this->rate;
-      start_pos *= 50;
+      start_pos = (int64_t)start_time * this->rate / 1000;
     }
     this->input->seek (this->input, start_pos, SEEK_SET);
 
@@ -2272,6 +2333,8 @@ static int demux_ts_seek (demux_plugin_t *this_gen,
 
   }
 
+  demux_ts_tbre_reset (this);
+
   return this->status;
 }
 
@@ -2281,7 +2344,7 @@ static int demux_ts_get_stream_length (demux_plugin_t *this_gen) {
 
   if (this->rate)
     return (int)((int64_t) this->input->get_length (this->input)
-                 * 1000 / (this->rate * 50));
+                 * 1000 / this->rate);
   else
     return 0;
 }
@@ -2467,7 +2530,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   this->audio_tracks_count = 0;
   this->last_pmt_crc = 0;
 
-  this->rate = 16000; /* FIXME */
+  this->rate = 1000000; /* byte/sec */
+  this->tbre_pid = INVALID_PID;
 
   this->status = DEMUX_FINISHED;
 
