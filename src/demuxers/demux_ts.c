@@ -281,6 +281,8 @@ typedef struct {
   int              corrupted_pes;
   uint32_t         buffered_bytes;
 
+  int              input_normpos;
+  int              input_time;
 } demux_ts_media;
 
 /* DVBSUB */
@@ -388,6 +390,8 @@ typedef struct {
   int32_t npkt_read;
 
   uint8_t buf[BUF_SIZE]; /* == PKT_SIZE * NPKT_PER_READ */
+
+  off_t   frame_pos; /* current ts packet position in input stream (bytes from beginning) */
 
 } demux_ts_t;
 
@@ -522,6 +526,30 @@ static void demux_ts_update_spu_channel(demux_ts_t *this)
  }
 
   this->video_fifo->put(this->video_fifo, buf);
+}
+
+static void demux_ts_flush_media(demux_ts_media *m)
+{
+  if (m->buf) {
+    m->buf->content = m->buf->mem;
+    m->buf->size = m->buffered_bytes;
+    m->buf->type = m->type;
+    m->buf->decoder_flags |= BUF_FLAG_FRAME_END;
+    m->buf->pts = m->pts;
+    m->buf->extra_info->input_normpos = m->input_normpos;
+    m->buf->extra_info->input_time = m->input_time;
+    m->fifo->put(m->fifo, m->buf);
+    m->buffered_bytes = 0;
+    m->buf = NULL;
+  }
+}
+
+static void demux_ts_flush(demux_ts_t *this)
+{
+  unsigned int i;
+  for (i = 0; i < this->media_num; ++i) {
+    demux_ts_flush_media(&this->media[i]);
+  }
 }
 
 /*
@@ -1006,13 +1034,8 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
       m->buf->decoder_flags |= BUF_FLAG_FRAME_END;
       m->buf->pts = m->pts;
       m->buf->decoder_info[0] = 1;
-
-      if( this->input->get_length (this->input) )
-        m->buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) *
-                                         65535 / this->input->get_length (this->input) );
-      if (this->rate)
-        m->buf->extra_info->input_time = (int)((int64_t)this->input->get_current_pos (this->input)
-                                         * 1000 / (this->rate * 50));
+      m->buf->extra_info->input_normpos = m->input_normpos;
+      m->buf->extra_info->input_time = m->input_time;
       m->fifo->put(m->fifo, m->buf);
       m->buffered_bytes = 0;
       m->buf = NULL; /* forget about buf -- not our responsibility anymore */
@@ -1035,6 +1058,15 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
       m->corrupted_pes = 0;
       memcpy(m->buf->mem, ts+len-m->size, m->size);
       m->buffered_bytes = m->size;
+
+      /* cache frame position */
+      off_t length = this->input->get_length (this->input);
+      if (length > 0) {
+        m->input_normpos = (double)this->frame_pos * 65535.0 / length;
+      }
+      if (this->rate) {
+        m->input_time = this->frame_pos * 1000 / (this->rate * 50);
+      }
     }
 
   } else if (!m->corrupted_pes) { /* no pus -- PES packet continuation */
@@ -1045,13 +1077,8 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
       m->buf->type = m->type;
       m->buf->pts = m->pts;
       m->buf->decoder_info[0] = 1;
-      if( this->input->get_length (this->input) )
-        m->buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) *
-                                         65535 / this->input->get_length (this->input) );
-      if (this->rate)
-        m->buf->extra_info->input_time = (int)((int64_t)this->input->get_current_pos (this->input)
-                                         * 1000 / (this->rate * 50));
-
+      m->buf->extra_info->input_normpos = m->input_normpos;
+      m->buf->extra_info->input_time = m->input_time;
       m->fifo->put(m->fifo, m->buf);
       m->buffered_bytes = 0;
       m->buf = m->fifo->buffer_pool_alloc(m->fifo);
@@ -1719,10 +1746,15 @@ static unsigned char * demux_synchronise(demux_ts_t* this) {
 
   uint8_t *return_pointer = NULL;
   int32_t read_length;
+
+  this->frame_pos += this->pkt_size;
+
   if ( (this->packet_number) >= this->npkt_read) {
 
     /* NEW: handle read returning less packets than NPKT_PER_READ... */
     do {
+      this->frame_pos = this->input->get_current_pos (this->input);
+
       read_length = this->input->read(this->input, this->buf,
 				      this->pkt_size * NPKT_PER_READ);
       if (read_length < 0 || read_length % this->pkt_size) {
@@ -2054,6 +2086,11 @@ static void demux_ts_event_handler (demux_ts_t *this) {
 
 
     switch (event->type) {
+
+    case XINE_EVENT_END_OF_CLIP:
+      /* flush all streams */
+      demux_ts_flush(this);
+      /* fall thru */
 
     case XINE_EVENT_PIDS_CHANGE:
 
