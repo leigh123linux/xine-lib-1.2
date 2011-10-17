@@ -1139,7 +1139,7 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
         m->input_normpos = (double)this->frame_pos * 65535.0 / length;
       }
       if (this->rate) {
-        m->input_time = this->frame_pos * 1000 / (this->rate * 50);
+        m->input_time = this->frame_pos * 1000 / this->rate;
       }
 
       /* rate estimation */
