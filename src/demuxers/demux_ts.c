@@ -2420,8 +2420,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 
   case METHOD_BY_CONTENT: {
     uint8_t buf[2069];
-    int     i, j;
-    int     try_again, ts_detected;
 
     size = _x_demux_read_header(input, buf, sizeof(buf));
     if (size < PKT_SIZE)
